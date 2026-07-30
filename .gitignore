@@ -1,0 +1,11 @@
+# Dependencies
+node_modules/
+
+# Build output (dist/bundle.js is inlined into index.html by build.js)
+dist/
+
+# Editor / OS
+.DS_Store
+*.log
+.vscode/
+.idea/
