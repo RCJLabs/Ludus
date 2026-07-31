@@ -66,6 +66,108 @@ Measured over 72 weeks, all stats starting at 60, training strength:
 ### Scars
 Injuries carry the `part` they came from. On healing there's a **45%** chance of a scar (**75%** if `pen ≥ 8`). Each scar marks the figure permanently and shaves the mapped stat (`brow→dis, shoulder/arm→str, hand→tec, thigh→agi, flank→end`): first scar on a part −1 and a −2 training ceiling, **every repeat on the same part −3 and −7 ceiling** (`statCap()`, capped at −34). Scarred men draw a bigger crowd (+1.2 initial per scar). `scarBurden()` totals the ceiling loss.
 
+### The aftermath
+Opening the gates used to set a flag and print five lines. It now starts a war that takes about two years to come back and find you.
+
+**Four stages**, on the same clock as everything else:
+
+| Week | | |
+|---|---|---|
+| 1 | *A band in the hills* | A villa near Nola, a burned press. Nobody is calling it a war yet. |
+| 11 | *An army* | Thousands. **Every man in your cells has worked out that it was possible** — defiance floors at 18. The block runs 25% dearer. |
+| 27 | *The legions* | Eight of them, and Crassus has bought the command. **−20 fame and −14 with every patron**: nobody has forgotten which gate he walked out of. |
+| 44 | *The road* | Six thousand crucified from Capua to Rome, at intervals, so the whole of it can be walked. The block collapses to 55% and the men on it were taken in the south. |
+
+Standing leaks the whole time — measured at **0–38 after a full war** against a normal 35–60.
+
+**Four events come to your gate.** *A Levy for the South* wants coin, and has your name at the top of the second column. *They Want Bodies* wants your strongest man for the legions, and is offering not to remember that he had to ask twice. *Word From the South* is a messenger before dawn: he remembers who opened the gate, there is a place in the column, and there is coin if you look away while some of your men walk — capped so it never empties the house. And *The Road to Rome*, where you can walk the first mile yourself, keep the gate shut, or **march the familia out to look at it**, which drops defiance 22 → 6 and works exactly as well as you were told it would.
+
+### The collegium
+A burial society, and one of the few things in the game that is history rather than invention. Roman *collegia funeraticia* took small regular dues and buried their members properly; gladiators formed them, and we know it mostly from tombstones raised by a man's society giving his name, his fighting style, and his record of bouts.
+
+**180d to found, then 3d a week for every man on the roster.** Founding it is worth +9 morale across the yard, −5 unrest and 8 toward a merciful reputation, and it shaves 0.4 off unrest every week it is paid for.
+
+Its real work is on the day somebody dies. **A burial costs 8.5 unrest without it and 4.8 with it**, it halves what a death takes out of the lanista's own health, and the man's annals entry reads *"Buried under his own name."* All six death sites route through it — the sand, the beasts, a melee, a pair bout, and both ways to die the night the cells rise.
+
+**It is designed to be easy to cut.** A year of dues on a small house is about 450 denarii for which *nothing visible happens*, right up until the month you bury three men. Stopping costs 7 unrest and 12 morale if nobody has needed it yet — and **14 unrest and 22 morale if they have**, because every man still in the cells watched those burials.
+
+*The Stone* — bury ten men under the society's name — is the eighteenth feat.
+
+### The lanista
+You were a number in the corner of the screen for thirty-two versions. You have a name now — three names, in the Roman way — an age of 34 to 46, and a body that the work takes pieces off.
+
+**Health is driven by how you run the place, not by the calendar.** Age past 42 erodes it slowly; a house above 60 unrest erodes it faster; the rebellion's later stages erode it faster still; and **every man you bury costs 1.3** wherever he dies. A bath house, a feast, and an ordinary quiet week put a little back. Measured over 195 weeks, a house of butchers with fifteen men in the ground left its lanista at **health 8, age 55, ailing**, while careful houses stayed hale.
+
+**Six traits, all earned by play rather than chosen:**
+
+| | Earned by | Does |
+|---|---|---|
+| **Hard** | fifteen weeks of a butcher's reputation | defiance drifts down 0.3, morale down 0.2 |
+| **Merciful** | fifteen weeks of a merciful one | unrest falls a further 0.3 a week |
+| **Shrewd** | five wagers won | the bookmakers' cut drops from 12% to 6% |
+| **Respected** | standing above 65 for twenty weeks | patrons cool at half speed |
+| **Marked** | being caught arranging a bout | patrons cool at nearly double |
+| **Ailing** | health broken below thirty | training slows 8% |
+
+At zero health the run ends on **THE STAIRS TO THE GALLERY** — a personal ending rather than the house's. *"The doctore finds him. The men are told at the post and go back to it, because there is nothing else in the day for them to do."*
+
+The header shows your own condition once it drops below 45, which is the point at which you should start caring.
+
+### The circuit
+Three towns down the bay who have never heard of you.
+
+| | Road | Purses | The crowd |
+|---|---|---|---|
+| **Pompeii** | 1 wk | ×1.20 | Wants blood — 30% of its cards are sine missione |
+| **Neapolis** | 1 wk | ×1.05 | Greek, and can tell a feint from a flinch |
+| **Puteoli** | 2 wk | ×1.40 | A port full of sailors with money and nothing to spend it on |
+
+Travel costs a week each way and 25d, and while you are gone **Capua's business stops**: no market, no doctore, no festivals, no funeral games, no primacy — and no poaching, because nobody can reach your men on the road.
+
+**Your standing does not travel.** Away, the missio roll uses *local* standing instead — 12 at nothing, rising with `known`, which grows 7–12 a win and more if the town's taste matches your reputation. On top of that a stranger takes a **−19 penalty** to the roll, decaying to nothing as they learn the name:
+
+| Your man goes down | Spared |
+|---|---|
+| At home, well regarded | 100% |
+| A stranger in Pompeii | **56%** |
+| Known there (25) | 89% |
+| Known there (50+) | 100% |
+
+So the first tour is genuinely dangerous and the third is a payday. Local standing persists between visits, and at 30 and 60 it opens tier-2 and tier-3 cards.
+
+### Feats
+Seventeen things a house does once and is afterwards, checked every week. Each pays coin or fame on the day, and eleven of them leave a **permanent perk** behind — six distinct ones that stack:
+
+- **Training +6%** · **unrest falls 0.45 faster every week** · **+1 fame a week**
+- **gear 8% cheaper and wears 15% slower** · **patrons warm half again as fast** · **a death costs the familia 30% less morale**
+
+They range from *First Blood* through *The Wooden Sword* (free a man), *The White Cloth* (stop a bout to save a life), *A Word Kept* (promise a man his one wish and deliver it), *The Numidian* (kill a lion), *The Circuit* (win in all three towns), *A Quiet House* (thirty weeks under twenty unrest), to *Ten Years a Lanista* and *The Sand at Rome*. Most of the perks sit on the merciful ones, which is deliberate.
+
+### The Primus of Capua
+One man in the city holds it, and at the start of a run he is not yours. `d.primus` tracks the holder whether he is in your cells or another house's; among the rivals it changes hands on its own, so the city's title is alive with or without you — 14 times across 300 weeks in testing, between four different men.
+
+**Challenging** needs a man at **5 wins and 35 renown** — calibrated against 2,906 man-weeks of real play, which puts a qualified man on your roster about 7% of the time. The offer arrives on the games card at tier 3 for a purse near 1,400d, sometimes sine missione.
+
+**Holding it** pays +3 fame a week, feeds the holder's renown, warms every patron by a quarter point, and marks him everywhere. Taking it is worth 60 fame, 8 standing with every patron, and lifts the whole house.
+
+**And then they come for it.** While you hold it, 45% of games cards carry a defence against a tier-3 challenger with 7–14 wins. Lose one and the title goes, at −25 fame and a morale hit across the familia. If the holder dies, it simply leaves.
+
+**The man four doors down.** Six weeks in, the second-best eligible man in your own cells wants the bout — the one against someone who sleeps four doors down. Make the match and **the challenger takes it 42% of the time**, whichever way it goes the tie between them is struck from the record, and the loser has to live in the same building as the answer. Refuse and he takes 20 morale, 16 defiance, and it **breaks his ambition outright**. Tell him to wait and he goes back to the post and hits it harder than the wood deserves.
+
+### Calling in a favour
+Standing has only ever sat on the missio roll and gated Rome. Each of the four patrons can now do **one thing nobody else in Capua can**, and it is spent from your standing with that man — so a favour costs you the very thing that keeps your men alive when they fall.
+
+| | Costs | Waits | Does |
+|---|---|---|---|
+| **Magistrate** | 30 | 22wk | Has a word with the angriest rival house — **grudge −55**, and cancels any poaching attempt or non-lethal nemesis from them |
+| **Merchant** | 28 | 26wk | **Carries your entire upkeep for ten weeks** |
+| **Noblewoman** | 26 | 20wk | A story at the baths costs the leading rival **60–100 fame** — and they work out who started it (+18 grudge) |
+| **Senator** | 34 | 30wk | **+45–80 fame**, and the imperial invitation will come **110 fame early** |
+
+Each has its own gate: the magistrate needs somebody to actually be angry with you, the noblewoman needs a rival worth slandering. The button says which of those is missing.
+
+Measured over 120 weeks, a house that calls in everything the moment it can finishes on **7–32 standing** against **31–60** for one that never asks — powerful, and paid for out of the same pocket that buys mercy on the sand.
+
 ### Ambitions that speak
 An ambition was a flag you had to go looking for. It is now a ladder a man walks up, and it has its own weekly roll (14%) rather than competing with nineteen other events for a slot.
 
@@ -99,6 +201,400 @@ Every bout takes `WEAR_RATE` off each paid piece — weapon 3–6, offhand 2–5
 
 **The forge.** At L3 the smith will make **one piece for one man** — `FORGE_FEE 700`. It gains +5% attack and guard, wears **half as fast** (75 condition after 12 bouts against 47 for an ordinary one), cannot be equipped to anyone else, and **bends instead of breaking**: driven to nothing it comes back at 25 rather than snapping. Eight names, each used once per house.
 
+### The doctrine of the house
+Reputation is something you drift into. A doctrine is something you **declare**, in front of Capua, and then have to live inside. Six of them, each costing about as much as it gives:
+
+| | | |
+|---|---|---|
+| **The Heavy Shield** | 400d | Murmillo and secutor train **×1.22**, everything else **×0.86**. Shields and armour 18% cheaper. **Scutarii +22, parmularii −18** |
+| **The Small Shield** | 400d | The mirror of it — thraex, hoplomachus, net and twin blades. Blades 12% cheaper |
+| **The Red School** | 300d | Purses **×1.18**, sine offers **11% → 33%**, +0.55 unrest a week, and your own health goes 43% faster |
+| **The Long Apprenticeship** | 500d | Training +12%, **training injuries 49% → 35%**, purses ×0.90. The front rows adopt you |
+| **The Open Hand** | 350d | Missio **+14**, sine offers **→ 0%**, unrest falls, regard climbs, fame ×0.90 |
+| **The Travelling School** | 350d | Local standing builds **70% faster** and being a stranger is **half** as unforgiving |
+
+Declaring lifts the yard 6 morale and swings the stands hard. **Turning the house over later costs 1.8× the fee, twenty fame, six unrest and eight morale off every man** — *"everything the men were taught last year is now the wrong thing, and Capua watches a lanista change his mind in public."*
+
+Measured: at standing 8 a fallen man is spared **74% with no school and 100% under the Open Hand**; a bronzed scutum costs **320d normally and 262d** in a heavy-shield house.
+
+### Two of your men, in front of you
+The cells have kept feuds since v0.19 and not one of them ever arrived. This is the morning it does: both of them eight feet apart in the training square, the whole familia stopped working to watch, *"the doctore has not moved and is not going to. This is yours."*
+
+It ripens on tie strength, defiance and low morale, and fires at **20% a week** once a feud is genuinely bitter — flagged in the agenda before it does. **The cause is drawn from what actually happened**: one has taken the other's place on three cards, one killed a man the other trained beside, one was condemned and the other chose this, one has worked out who has been carrying the cells' talk up to the house, or one is plainly your favourite.
+
+| | Feud | Unrest | |
+|---|---|---|---|
+| **Put them on the sand** | **gone** | −5 | Wooden swords, the doctore counting. **15%** somebody is hurt. The rest of the yard lifts |
+| **Take one off the card for a month** | 70 → 40 | +3 | He is benched, off every card, −6 regard. *"It stops it happening today, which some weeks is the whole of the job"* |
+| **Say one is in the right** | 70 → **84** | +4 | +14 and −21 regard, and **every bystander loses 3** — they have learned this is a house where the lanista picks |
+| **Walk away** | 70 → **88** | **+9** | **42%** somebody is hurt, both lose 11 regard, the yard gains defiance |
+
+Only one of the four actually settles it, and it is the one this trade would reach for.
+
+### The arena view
+The animation had not changed since v0.4, when there was one crowd and one floor.
+
+**The stands are drawn as four blocks now**, one per faction, each in its own colour — the parmularii in purple, the scutarii in bronze, the mob in red, the front rows in green. A block's brightness and how hard it bobs come from that faction's actual standing with you, so a house the scutarii adore and the parmularii despise *looks* like one from the first frame.
+
+**And the venue is drawn rather than captioned.** Six grounds with their own floor and border: the pit's near-black earth, the courtyard's marble, the field's turf, the amphitheatre's sand, the imperial gold, the harbour's grey. The crowd thins with the place — **thirty heads in the amphitheatre, fourteen in a magistrate's courtyard.**
+
+Verified by rendering the component through `react-dom/server` and asserting on the markup: nine checks covering head counts, faction colours, and that a partisan crowd is visibly brighter than an indifferent one.
+
+### What carries between houses
+Feats are per-run. This is the other book: what **Capua remembers about you as a lanista**, written by every house you have ever run and read by every house you run after. It is stored outside any save slot and **it survives losing**, which is the entire point.
+
+| | Needs | Gives |
+|---|---|---|
+| **The Wooden Sword** | 12 men freed | new men arrive with **+6 regard** |
+| **The Long Bill** | 60 men buried | the block fears you — bought men **6% cheaper** |
+| **A Thousand Afternoons** | 900 bouts | **+40 fame** and you already know the week |
+| **The Primacy** | held 3 times | patrons start **8 warmer** |
+| **The Imperial Sand** | 1 bout won at Rome | a **senator already watching** |
+| **The Long Tenure** | 40 years across all houses | your lanista starts **three years younger** and healthier |
+
+A house that burned to the ground in week 30 still contributed its forty bouts, its freed man and its two years. Founding with everything earned starts you at **45 fame against 5, standing 46 against 32, a lanista of 41 in better health, and a block averaging 444d against 524d.**
+
+The title screen shows the tally, including the best man any of your houses ever had, by name.
+
+### Mastery, and a second style
+Six stats forever is not a career. A man who has been at this long enough now stops getting bigger and starts getting particular.
+
+**Mastery** comes at **12 victories and 55 renown** — named, not automatic, and the agenda tells you when he has earned it. Each style has its own, with its own line: *The Wall*, *The Gap*, *The Length*, *The Patient Man*, *The Cast*, *Both Hands*. It is worth **61% against 51%** on the sand, plus six crowd, and it belongs to *that style* — a master of the hoplomachus fighting as a murmillo gets none of it.
+
+**A second trade** needs a master, a doctore, and **340d plus his renown**. He goes to the far post for **eight weeks off every card** — a master of one style spending two months as a beginner in another. He comes back able to fight both, switching between them any week he has not already fought.
+
+> *"He comes back off the far post a murmillo, and keeps the hoplomachus in his hands for whenever it is wanted. There are not five men in Campania who can do both."*
+
+That makes a long-lived gladiator into a thing rather than a bigger number, and it gives the venue and footing systems something to answer — a man with two trades can be put into whichever the ground favours.
+
+### The sacramentum
+*Uri, vinciri, verberari, ferroque necari* — to be burned, to be bound, to be beaten, and to be killed by the sword. It has been a word in the vocabulary since v0.1. It is a moment now.
+
+Every man who joins the house owes the oath, and it appears in the agenda until it is said. Three ways to do it:
+
+| | | Him | The yard |
+|---|---|---|---|
+| **Get it said** | — | — | — |
+| **Properly, with the familia stood down** | 40d | +9 | +3 morale |
+| **With wine afterward** | 150d | +16 | +7 morale |
+
+**And it lands differently depending on what he is.** A free man swearing it himself gets ×1.4; a condemned man, who has no say in it at all, gets ×0.6. From a regard of 50, the full ceremony leaves a **free man at 72, a bought man at 66, and a condemned man at 60** — because *"a free man agreeing to be burned, bound, beaten and killed by the sword"* is a different act from words said over property.
+
+It goes into his memory, so his page carries the oath in the form it was given.
+
+### Damnatio ad ludum
+Rome had three sentences involving the arena. Two were executions. **This one was not** — condemned to the school, and a man who fought out his term earned the wooden sword from it. That distinction is the whole feature.
+
+A clerk arrives with one or two men and their paperwork: arson in the insulae, killing a freedman in a wine shop, striking his master and refusing to say why. **The city pays you 105–150d to take them**, and warms the magistrate by 8; sending the clerk away cools him by 7.
+
+**What arrives** is a man of about 24 average stat against a bought man's 46, with morale in the twenties, almost no defiance — he is not defiant, he is finished — and a sentence of **10 to 18 bouts**. He costs nothing and **cannot be sold**: he belongs to the sentence until it is served.
+
+**The yard does not want him.** Every other man loses 5 morale and 4 regard the day he arrives, and unrest rises 4. And his death is worth **0.72 of the lanista's health against 1.30 for a bought man** — Capua does not mind losing him, which is exactly the thing your own cells notice.
+
+**And then he serves it out.** Every bout counts down; at zero the paper is discharged, he gains 26 regard and 24 morale, the yard lifts, unrest falls 6, and the house gains toward a merciful reputation. *"He is a gladiator of this house like any other, which is a sentence of a different kind and he knows it."*
+
+### The gatekeeper, brought up to date
+Nine lessons written when the game had a third of its systems. **Twenty-eight now**, and — the actual fix — **seventeen of them wait for a condition** rather than firing on a tab.
+
+A new house is offered exactly six, one per tab, and nothing else. The rest arrive when the thing they explain does. Measured over a 91-week campaign:
+
+> wk2 unrest · wk3 the agenda, the drills, the venue, the moneylenders · wk5 watching an opponent · wk9 form · wk10 the seasons · wk12 regard, the stands · wk13 refusal · wk14 the aedile · wk15 the record book, the collegium · wk16 munera · wk21 the circuit · wk32 gear wear · wk33 the staff
+
+Twenty-seven of twenty-eight taught across that run, paced at roughly one a week early and one a month later. The heir lesson never fired, correctly — it waits for a lanista who is 48 or failing.
+
+The new lessons cover training and strain, regard, form, refusal, the agenda, seasons, the record book, the heir, the factions, venues, watching an opponent, the circuit, the moneylenders, the aedileship, the collegium, munera, the seller's account, the staff, and gear wear.
+
+### The overhaul
+Thirty versions of adding features meant thirty versions of adding panels to columns. The home tab carried thirteen; opening it told you everything about the house and nothing about what to do.
+
+**This week** replaces them. One prioritised list of everything actually wanting an answer, each row tapping through to the tab where the answer is, sorted **now / soon / when you can** and red-bordered when something is due. It reads from twenty different systems: the pending event, deadlines inside two weeks, patron wants about to lapse, Rome's window, a man refusing, a man who has given up asking, strain, steel about to break, an unburied man, the election, the card, a poaching attempt, a debt getting away, a doctore waiting, unrest, and a failing lanista with no heir named.
+
+Above it, the four permanent situation panels — the war, the primacy, a nemesis, the aedile, the circuit — collapse into a **single row of compact chips** that only appear when they apply.
+
+**Moved:** hiring the medicus and armourer went to the Market, where you acquire people. The standings went behind a tile with the other reference sheets, of which there are now six.
+
+The home tab is a strip, an agenda, six tiles and five panels. Verified across **1,500 houses × 8 weeks** with zero malformed or thrown agendas.
+
+### Seeded runs
+Every roll came out of `Math.random`, so no house could be handed to anybody else and no measurement could be repeated. There is one **mulberry32** behind the same `R()` that everything already called, so nothing else in the codebase changed.
+
+A seed is eight characters in two groups — **`7KK9-UFV4`** — drawn from an alphabet with no I, O, 0 or 1, so it survives being read out loud. Leave the field empty when you found a house and you get one nobody has run.
+
+**What it guarantees.** The same seed builds the same Capua: the same three men in your cells, the same lanista at the same age, the same rivals, the same block. Verified identical across repeated founding, and a 40-week campaign of identical play reproduces to the denarius. The generator's position is written into the save on every change and restored when you pick the house up, so it survives a reload mid-campaign.
+
+**What it does not.** A seed fixes the world, not the story. The moment your choices differ from someone else's, the two houses diverge, because rolls are consumed in a different order. It is the same opening position, not the same run.
+
+Quality: 200,000 draws across ten buckets came out **19,738 to 20,255** — a 2.6% spread.
+
+The seed showed its worth immediately by making a pre-existing bug reproducible: a house could be founded with **two men of the same name**. Fixed — new gladiators now draw from names not already taken on the roster or the block, and 3,000 fresh houses produce zero collisions.
+
+### Form
+Morale is how he lives. Momentum is inside one bout and resets at the horn. **Form is the four weeks between them** — how the last few afternoons went, carried out to the next one.
+
+Five words on his card: **in form · sharp · level · off his stride · shaken**. A win moves him +18, +24 at tier 2 or above; a loss −22, being carried off another −13, killing his man +7. Three wins then a loss and an injury runs 0 → 18 → 36 → 54 → 32 → 19, which is a man who has stopped being frightening without being a wreck.
+
+**It is deliberately small.** Power ×0.964 to ×1.036 and a shade off his stamina drain, which measures as an **8-point win-rate spread** at the true extremes — half what gear is worth and two-thirds of a good read. It is felt at the edges, which is where it belongs, and a man at the extremes has earned it with four or five straight results.
+
+**And it fades.** Proportional decay puts half of it away in two quiet weeks and all of it in eight, so it is genuinely short memory rather than a sixth slow-drifting stat. His page lists what put him there — *"Lately: beat Gannicus, beat Oenomaus, carried off against Crixus"*.
+
+An opponent's bad month is also a **tell** you can pay to see: *"He has had a bad month and it is on him. He starts slowly now, and he did not used to."*
+
+### Venues
+Every bout in this game was fought in the same rectangle. There are **nine places** now, chosen by the kind of bout, and each changes it.
+
+| | Crowd | Footing | Missio | Fame |
+|---|---|---|---|---|
+| **The pit behind the ludus** | −22 | 0.88 | −5 | ×0.72 |
+| **The forum stands** | +2 | 0.97 | +3 | ×1.00 |
+| **The amphitheatre** | +9 | 1.00 | — | ×1.15 |
+| **A magistrate's courtyard** | −16 | **1.12** | **+12** | ×0.86 |
+| **A field outside the walls** | −9 | **0.80** | +6 | ×0.92 |
+| **The stone bowl** (Pompeii) | +12 | 1.00 | −3 | ×1.10 |
+| **The harbour ground** (Puteoli) | +6 | 0.91 | −4 | ×1.05 |
+| **The Greek theatre** (Neapolis) | +4 | 1.06 | +8 | ×1.08 |
+| **The imperial sand** | +20 | 1.00 | −2 | ×1.40 |
+
+**Footing is the mechanic.** It scales what a man's speed and precision are worth, so the ground decides which of your men should go out:
+
+| | A quick man | A strong man |
+|---|---|---|
+| A magistrate's courtyard (marble) | **52%** | 48% |
+| The amphitheatre | 46% | 54% |
+| A field outside the walls (turf) | **36%** | **59%** |
+
+They cross over: the courtyard is the only place the quick man is favoured. At footing 1.00 the power formula is arithmetically identical to before, so nothing that was balanced has moved.
+
+A courtyard of forty people who have eaten well is also the most merciful floor in the game, and the pit behind your own ludus is the least — *"nobody is here who was not already here."*
+
+### The aedileship
+Capua elected its magistrates and the **aedile** was the man who put on the games. Pompeii's walls are still covered in the campaign graffiti; this is what it was for.
+
+**Week 13 of every year**, three men stand. Each has a platform — the biggest card in twenty years and no word on who pays for it, a quiet town and views about schools that keep armed men in it, bread and shade over the seats — and any of them may already have a rival house behind him.
+
+| | Buys | Your man takes it |
+|---|---|---|
+| **Nothing** | — | 0% |
+| **180d**, quietly | +11 | **57%** |
+| **520d**, with your name on it | +26 | **86%** |
+| **1300d** | +44 | **98%** |
+
+The vote falls three weeks later, and the office runs a full year.
+
+**A friendly aedile** is worth **+1 bout on every card, purses ×1.14**, and a thumb on the missio. **One you bet against** is −1 bout, ×0.89, and he does not look your way when a decision is being made.
+
+That last part is honest about its own size: at a comfortable standing the missio roll clears regardless and the aedile changes nothing. At **standing 8 it runs 87% hostile against 100% friendly** — he matters exactly when you are already thin, which is when you would want a friend in that chair. He is a Capuan office and does nothing at all on the circuit.
+
+### The medicus and the armourer
+The infirmary and the armoury were building levels. **The building is the room; these are the men in it**, hired like the doctore, with a name, an origin, a skill from 28 to 84, a fee and a weekly wage — and both can be bought away or simply leave.
+
+| | | |
+|---|---|---|
+| **The medicus** | mending **×1.25 to ×1.71** on top of the room | and a wound is **17–46% less likely to set badly** |
+| **The armourer** | steel **5–15% cheaper**, wears **7–21% slower** | and mends faster in the racks |
+
+Room and man multiply: a level-3 infirmary alone heals at ×2.35, a skilled medicus alone at ×1.68, and the two together at **×3.95**. In whole weeks — which is how the injury system has always counted — a mangled hand goes **4 weeks with neither, 3 with one, 2 with both**. A one-week cut cannot be improved on, which is honest.
+
+**They leave.** A medicus in a house at 80 unrest, or one Capua calls butchers, is gone within forty weeks **87% of the time** — *"he has simply been carried enough of your men and would rather do something else."* An armourer paid late goes 90% of the time, and *"his tools go with him, because they were always his."* Either can also be bought away by a rival house with a grudge.
+
+### The record book
+Fifty versions of accumulated history with no way to ask it anything. Every bout in all four engines is now counted, and the book derives the rest.
+
+**What it answers.** Years standing, bouts and win rate, men served, victories, killed, buried, freed, purses taken and per bout, average crowd, largest single purse and where, longest bout ever fought and against what. Then the breakdowns — **by tier, by style, by stakes, by kind of bout, by city, and against each of the great houses** — each showing win rate and record, filtered to four bouts or more so a single fluke does not sit at the top. Then the best man the house ever had, how every one of them ended, and the line of lanistae who held it.
+
+A sample 130-week campaign read: 233 bouts at 46%, and the style table came back **Hoplomachus 60%, Thraex 56%, Secutor 51%, Dimachaerus 30%, Murmillo 20%, Retiarius 8%** — the kind of thing a player would change their buying on. Against the houses it read Vettius 31%, Solonius 20%, **Tullius 10% from 31 bouts.**
+
+It is counters rather than a log, so the whole book serialises to **890 bytes after 233 bouts** and costs nothing to carry in a save.
+
+### A man who will not go out
+Men had only ever left this house by dying, by the rudis, by sale, or in a revolt of the whole cell block. The commonest human failure — one man, sitting down, on a Tuesday — was missing.
+
+He is on the boards with his back to the wall and will not put his hands up. **The reason is drawn from his own memory**: the wound you sent him out on, the brother you sold, the promise you spent, the cards with no mercy in them — or none at all, and *"he has simply had enough, and today is the day."*
+
+It happens at **20% a week to a man who hates you, 13% at regard 18, 6% at 26, and never above 32.** He cannot be put on any card until it is settled.
+
+| | | |
+|---|---|---|
+| **The whip** | back on the sand | +8 unrest, +5 defiance across the yard, −5 regard from every man watching. *"It works, in that he is on the sand. It works in no other way at all."* |
+| **Talk to him** | **sometimes** | Costs nothing. Works 24% at regard 10 and 40% at 25 — **57% for a merciful lanista, 36% for a hard one.** |
+| **Give him the thing he wants** | back on the sand | Meets his ambition outright. −12 unrest and the whole block hears which way that went |
+| **Take him off the card** | **still sitting** | +6 defiance a week across the yard, and it compounds — *"by the evening every man in the block has worked out that sitting down is a thing that can be done and survived."* |
+
+Eight weeks of one man sitting drags the rest from 40 to 47 defiance. Talking is free and unreliable and depends entirely on what you have been to him, which is the point of the previous two versions.
+
+### Munera for your own dead
+Funeral games were exactly that — combat staged at a rich man's tomb, paid for by his heirs. The game has always hired you out for other people's: *funeral games for a magistrate's father, for an old soldier of Sulla, for a merchant with no sons.* Holding them for a dead gladiator inverts the whole institution, which is the point.
+
+When one of yours dies you have **six weeks** to decide, and then the moment has gone:
+
+| | Cost | Unrest | The yard |
+|---|---|---|---|
+| **Nothing** | — | **+4** | *"He goes into the ground and the week goes on. Nobody says anything about it, which is how you know."* |
+| **A rite at the gate** | 70–235d | −7 | Wine, a fire, his name said aloud, the familia stood down for the afternoon |
+| **Games in his name** | 320–1270d | **−19** | A card at your own expense with his name where the dead man's usually goes |
+
+It scales with what he was — 320d for a man nobody knew, 1,270d for one with twenty victories — and it is **never profitable**: full games for a middling man cost 320d and return eleven fame.
+
+The men who called him brother feel it nearly twice as hard as the rest. Measured on his closest friend: regard **35 after doing nothing, 57 after a rite, 81 after games.** The annals record which, and *Munera* — three men given full games — is the nineteenth feat.
+
+### What he makes of you
+Every gladiator had bonds with the other men, a thing he privately wanted, and no opinion whatsoever about the person who owned him. He has one now, and it is built out of specific things you did rather than a mood.
+
+**Seventeen memories** — nine he counts in your favour, eight against — hooked into machinery that already existed:
+
+| | |
+|---|---|
+| **+22** | You stopped a bout to keep him alive |
+| **+20** | You gave him your word and then you kept it |
+| **+15** | You gave the rudis to a man he called brother |
+| **+12 / +11 / +9** | Steel made for him alone · the surgeon when the cheap answer was there · the burial society |
+| **−26** | You left him on the sand until he had to finish a man from his own cells |
+| **−24 / −20** | A promise spent elsewhere · you sold a man he called brother |
+| **−16 / −14 / −13** | Sent out on a wound that had not closed · the whip · you said no to the one thing he wanted |
+
+They accumulate, they are listed on his page in his own terms, and repeats are counted. Two acts of mercy can take a new man from *takes you as he finds you* to **would follow you anywhere**.
+
+**What it buys.** A man's regard scales his power on the sand — measured at **48% win rate at the bottom against 56% at the top** — and pulls his defiance down a little every week instead of up. At 70 he is **unpoachable**: no other house's coin will move him. At 18 or below he does what he is told and not one thing more.
+
+That last threshold exists to be built on: *a man who will not go out* is the next thing in the queue.
+
+### Reading a man before you fight him
+The loop was: pick a man, pick a tactic word, watch. There is a week between the card going up and the bout, and it is worth spending now.
+
+**Have him watched** — 28d plus tier and a slice of the purse, so 55d for a pit bout and 121d for a tier-3 card. It buys **two tells** about the specific man, or **three if you keep a doctore**, drawn from his actual stats and record:
+
+> *"He is blowing hard by the sixth exchange. He has been for years and he knows it, which is why he goes early."*
+> *"He drops his shield-arm for a beat every time he lands one. Every time."*
+> *"He has almost no bouts behind him. Whatever he does under pressure, he has not done it often."*
+
+Then pick one of **five plans** — let him spend himself, keep him at the end of it, wait for the opening, crowd him, break him early — and the card marks which ones fit what your man saw.
+
+| | Win rate |
+|---|---|
+| No plan | baseline |
+| A plan that reads him right | **+7 to +8 points** |
+| A plan that reads him wrong | **−4 to −7 points** |
+
+Eight tells, all pointing at a plan that beats them, and none of the five plans is unreachable. A man with nothing wrong with him reports *"nothing to report — he does everything correctly and nothing twice"*, and you fight him blind like everyone else.
+
+The first calibration made a right read worth **+20 points**, which was larger than gear, class counters and momentum combined; it is halved from there.
+
+### The heir
+The lanista's death used to stop the run. Name somebody and it does not — the house carries its men, its buildings, its racks, its collegium and every debt it owes, and loses almost everything Capua thought of the last man.
+
+| | Keeps | Cells | |
+|---|---|---|---|
+| **A son** | 72% fame, 50% standing | +6 unrest, −4 morale | grown up in this yard, and they have watched him do it since he was nine |
+| **A nephew** | 62% fame, **62% standing** | +12 unrest, −9 morale | brings **900d** of his own, and no idea what any of these men are called |
+| **Your freed doctore** | 48% fame, **34% standing** | **−16 unrest, +14 morale** | he was on that sand himself and every man knows it — Capua knows it too |
+
+That last row is the design in miniature: the man the cells would follow anywhere is the man Capua will hold against you, because a freedman running a ludus is exactly what it looks like. A son needs the lanista to be 40; the doctore needs to be one of your own freed men.
+
+The new man starts at 22–31 (or 34–44 for the doctore) in full health with **no traits at all** — he has to earn his own reputation, and *Hard* or *Merciful* is not inherited. The house gains a numeral in the header, and the men who held it before are recorded with their age at death and what Capua had made of them.
+
+Verified across three successions: generation 4, fame decaying 1500 → 560 across the line, every gladiator and building intact.
+
+### The other houses
+The three rivals had been training, poaching and buying invisibly since v0.9, which made the standings read as scenery. They take a **visible turn** now — measured at one every 1.4 weeks over 120 weeks — and it goes in a feed on the Ludus tab.
+
+**Nine moves:** they **buy** the best man off your block (he is simply gone), **sell** one onto it (tagged *Sold on by House Vettius*), **retrain** a fighter into another class, **free** a man with the rudis in front of the whole city, **hire a doctore** — worth ×1.3 to their training, and shown in the standings — **tour the coast**, which takes them off your card entirely for three to six weeks, **lose** a man on somebody else's sand, **win** one at Nola or Cales, or simply be **heard at the baths** putting one of theirs above one of yours.
+
+Each lanista plays to his existing type. Tullius, who is simply better funded, buys and hires and retrains; Solonius schemes; Vettius grinds. The weights come off the `LANISTAE` table that already described them, so nothing new had to be invented about who they are.
+
+The move that matters most is the tour: a house on the road appeared in **0% of 500 opponent draws** against 59% at home, so when Vettius leaves for the coast the shape of your card changes and you can see why.
+
+### The seasons
+The eighteen-week year already ran from March, with each festival in its real month. The weather now runs with it, derived from the week — nothing stored, so every existing save has a season the moment it loads.
+
+| | Weeks | | |
+|---|---|---|---|
+| **Spring** | 1–4 | March–May | training **×1.09** — the best weeks for putting work into a man |
+| **Summer** | 5–10 | May–August | purses ×1.12, **+6 crowd**, fatigue ×1.18, mending ×0.90 |
+| **Autumn** | 11–14 | Sept–Nov | **purses ×1.18** — harvest money, and the Ludi Romani |
+| **Winter** | 15–18 | Dec–Feb | purses ×0.82, **pits ×0.45**, +4d a man, +0.55 unrest, training ×0.88 — but **mending ×1.35** |
+
+Measured across eight campaigns, net income by season runs **autumn +249d a week, spring +183, summer +124, winter +28**. Winter is lean rather than lethal — one failure in six landed there — and it pays you back in a different currency: a pierced side that takes five weeks to close in summer closes in **three** in the cold, because there is nothing else for a man to do.
+
+So the year has a shape to play against. Build in winter, earn in autumn, and watch what the heat takes out of them in between.
+
+### Deadlines
+Nothing in this house had ever had to be done by a particular week. Five things do now, and they share one panel — **Owed by a date** — that sorts by how soon and turns red inside a week.
+
+**A name on the bill.** An editor contracts *one named man* for *one named festival*, two to six weeks out: about a third of the fee now, the rest on the day. On that festival's card his bout appears flagged **Contracted**, and honouring it pays the balance, ten fame and five with every patron. Missing it — injured, strained, sold, dead, or you were at Puteoli — returns **the advance doubled**, costs 22 fame and 9 standing, and *"he mentions it to the others, which is the part that costs."*
+
+**Named in public.** A rival lanista with a grudge of 45+ names your best man against his, inside three to five weeks, in front of the editors. Answering pays 6 fame up front and 26 more for a win; letting the week pass costs 14 fame, the mob's regard, and — pointedly — **cools his grudge**, because he got his answer.
+
+**A levy.** Once past 90 fame the magistrate lays a charge on the schools of Capua toward the amphitheatre awnings or a statue nobody asked for. Pay it and only the magistrate notices; miss it and it is 16 fame and 12 with every patron.
+
+**Patron wants** now carry the week they are due, so standing is managed against a clock rather than a vague intention. **And the invitation to Rome expires** — four weeks to answer, then the place on the bill goes to another house at −12 fame and −22 with the senator who put you forward.
+
+### The cells at night
+Almost everything about these men reaches you as a word like *restless*. Somebody has to be listening, and there are only two kinds of somebody.
+
+**The gatekeeper** — 14d a week, no risk, and he hears what anyone at the door would: who does the talking after the lamps go out, who has stopped eating with the rest, who cannot get off the boards in the morning, whose bedding has moved.
+
+**One of your own** — costs no coin and hears **3.5 fragments a week against the gatekeeper's 1.5**, including five things only somebody inside the cells could know: what a man privately wants and has told the others but not you, **who the ringleader is before the rebellion names him**, who has been at the wall after dark, who has been repeating your promise the way people repeat a thing they are not sure of, and which of your men has worked out his own record against the one holding the primacy.
+
+He is found out **27% of the time by week 20 and 69% by week 40**, and when he is: −13 morale and +11 defiance across the whole yard, +16 unrest, his own ties struck off, and *"he eats alone now and will for as long as he is here."*
+
+All twelve fragments are generated from state that is actually true, so nothing it tells you is flavour.
+
+### The moneylenders
+Three named men will put coin on your table this afternoon, and choosing between them is choosing what kind of trouble you want.
+
+| | Rate | Cap | Quiet for | |
+|---|---|---|---|---|
+| **Novius Gratus** | 3.5%/wk | 1400d | 12 wks | cheap, because he does not need to argue — **collects in men** |
+| **Titus Murena** | 5.8%/wk | 2400d | 20 wks | dear and unhurried, and **never takes a man** |
+| **Scaeva** | 8.2%/wk | 900d | 8 wks | lends to anyone at a price that says so — **collects in men** |
+
+Interest **compounds weekly**, so 800d untouched becomes 1,053d by week eight and 1,827d by week twenty-four. It is entirely survivable if you pay it down — a few hundred a week clears it inside a month — and fatal if you look away.
+
+**The escalation is the feature.** He is quiet for exactly as long as he said: his man appears at the gate at his patience limit and does not come in; eight weeks later word is round Capua that you are carrying his paper, which costs 12 fame and 8 with every patron; eight weeks after that a hard lender **takes a gladiator against the debt** at 70% of his value, with nobody asking you first. At **4× the principal** he stops discussing it, and the ending is `foreclosed`.
+
+Carrying paper also buys you a little room at the bottom — the creditors come at −250 gold normally and −420 while a loan is open — which is the trap in miniature.
+
+### The stands
+The crowd was a meter that filled and reset. It is four constituencies now, and the two biggest are historical: Roman gladiator audiences really did divide into **parmularii** (partisans of the small shield) and **scutarii** (the big one), a rivalry entrenched enough that Titus and Domitian each publicly backed a side.
+
+| | Sits at | Wants |
+|---|---|---|
+| **The Parmularii** | the small shield | a light man winning on his feet — thraex, hoplomachus, net-man, twin blades |
+| **The Scutarii** | the big shield | a murmillo or secutor walking a man down behind a wall of wood |
+| **The Mob** | the upper tiers | blood, sine missione, a crowd on its feet |
+| **The Front Rows** | the magistrate's end | craft, a clean win, a man spared |
+
+**Each pair is zero-sum.** Courting one cools its opposite at 55% of the rate, so you cannot please both shields. Eight murmillo wins takes it to parm 25 / scut 67; eight thraex wins after that puts it back at 52 / 52.
+
+Over thirty weeks a murmillo house that kills reaches **scut 99, parm 1, mob 97, front 11**. A thraex house that wins cleanly reaches **parm 99, front 97, scut 1**. It pays: whoever is warmest sets your purses (up to ×1.18), and the shield factions set how loud the stands are for that style and what the win is worth — a scutarii-partisan house gets **+10.6 crowd and ×1.19 fame** for a murmillo and **−5.7 and ×0.90** for a thraex.
+
+They all drift back toward indifference at 1.4% a week, so a reputation with the stands has to be kept up. Away on the circuit none of it applies — they have never heard of you.
+
+### Judging a man before you buy him
+The block used to print a man's exact numbers, so buying was arithmetic. It shows the **seller's account** now, which is a different document.
+
+**Three levels of knowing:**
+
+| | Stats shown as | Centred on | The flaw |
+|---|---|---|---|
+| The seller only | a **±14 range** | his own generous claim | not mentioned |
+| Your doctore | a **±7 range** | the actual man | hinted at |
+| Scouted, ~15% of his price | the exact number | — | **named** |
+
+Every range genuinely contains the truth — the seller does not lie about the band, only about where the man sits in it. He overstates a sound man by 2.5 points a stat and a **flawed one by 4.5**, so the patter is thickest where there is most to hide.
+
+**Roughly a third of the block has something wrong with it**, and is priced about 19% under a sound man for it: *An old wound* (a stat down and a permanent ceiling on it), *Broken already* (the trait, and the heart gone out of him), *Trouble* (+32 defiance and Defiant), *Slower than he looks*, *No wind in him*, and *He is what he is* — 26 points of potential that will never arrive.
+
+Scouting names it outright: *"He favours one side when he thinks nobody is watching. The seller does not meet your eye about it."* A cheap man is now genuinely either a find or a wreck, and a doctore earns part of his wage standing at the block.
+
+### The circuit of Capua
+Half the men your gladiators fought were generated on the spot and thrown away. There is a **standing pool of sixteen independents** now — men of small houses, or of no house at all: the school at Atella, Rufio's yard, the Praenestine school.
+
+They are real in the ways that matter. They **train** (key stats climb every fourth week), they **age** on the same clock as everyone else and lose a step past thirty, and roughly every fourteen weeks one of them stops turning up — *"somebody says the sand, somebody says a fever, and nobody says it twice."* The pool holds at sixteen, weighted as a pyramid so most of them are pit fighters rather than champions.
+
+And they **remember**. Every bout writes into a per-man record of who he has met and how it went, so the card can say *"He has beaten Crixus twice"* or *"Crixus has put him down three times."* Measured over four campaigns, **44% of pit bouts are now against a man that gladiator has already faced.**
+
+The pits, the towns down the bay, and the rival-house fallback all draw from the pool, so the only fights against a stranger are genuinely new arrivals. A pit fighter who beats your house twice can now become a **nemesis** exactly as a rival-house man can — it happened in 30% of test runs after five meetings.
+
 ### The nemesis
 A rival gladiator who has **beaten your house twice**, or killed one of your men, stops being an opponent. `d.nemesis` names him, your own familia gives him a title, and the chronicle records the day they started using it.
 
@@ -107,6 +603,23 @@ While he stands: facing him costs your man **8 morale before the bout** (14 if h
 Settling it pays: **+11 morale across the house, −4 unrest, +12 fame** for beating him, and **+18 / −7 / +22** for killing him — *"Whatever the cells were carrying about him, they put it down tonight."* He clears if he dies elsewhere or leaves his house, so the slot never strands.
 
 Only one at a time, unless a second man kills one of yours — a killer always displaces a mere rival.
+
+### The crux in the melee
+The fourth engine holds now, and its version is a different decision rather than a port. It fires when the **field has thinned far enough that you can see the forced duel coming** — four or fewer standing with two of them yours — or when one of yours is badly used. Early enough to still act.
+
+- **Let them finish it** — the sand decides, and it may decide that two of yours are the last two.
+- **Pull one out** — he walks off. No share, no wound, and **if he was your second, the editor has nobody left to make him fight.**
+- **Pull them all out** — forfeit. −11 fame, −5 with every patron, +9 toward a merciful house, and the cells lift 5 morale.
+
+Measured entering three:
+
+| | Win | Dead | Injured | Forced to finish |
+|---|---|---|---|---|
+| Let them finish | 10% | 0.41 | 2.48 | 4% |
+| Pull one out | 8% | **0.29** | **1.63** | 2% |
+| Pull them all out | 0% | **0.16** | **0.53** | **0%** |
+
+And entering two, which is where the threat is sharpest: pulling one out takes the forced duel from 1% to **zero**, and halves the deaths, for two points of win rate. You are buying your way out of the exact thing the melee holds over you.
 
 ### The crux, everywhere
 The intervention now reaches every engine that can kill a man.
@@ -444,6 +957,28 @@ New event `plea` — a man stops you in the yard and asks that his brother be re
 
 Ties are pruned every week for men who died, were sold, freed, escaped or retired — verified zero leaks across 200 houses.
 
+### Training
+Four regimens and a stat picker became **eight named drills**, each with something it costs:
+
+| | Trains | Costs | Fatigue |
+|---|---|---|---|
+| **The Palus** | whatever you point him at | — | +12 |
+| **The Weights** | Strength ×1.55 | Agility | **+16** |
+| **The Pila** | Technique + Discipline | — | +12 |
+| **Footwork** | Agility + Technique | — | +11 |
+| **The Hill** | Endurance ×1.25 | — | **−9** |
+| **Sparring** | *whatever his partner is better at* | injury risk | +14 |
+| **Playing to the Yard** | Showmanship ×1.35 | Discipline | +10 |
+| **Rest** | — | — | −24, and takes strain off |
+
+Over twelve weeks from 50: the palus gives +16.6 strength, the weights **+25.6 and −2.6 agility**, footwork +17.4 agility and +6.6 technique, the yard +22.4 showmanship and −2.6 discipline.
+
+**Sparring stopped being a multiplier.** He now learns whatever his partner most exceeds him at, regardless of what you picked — a partner 28 ahead on technique teaches technique, and once the gap closes he falls back to your choice. Set against a partner better at nothing and it is just the post.
+
+**Strain** is deep tiredness a night does not touch. It accrues above 62 fatigue and faster on the heavy drills, eats gains (`1 − strain/150`) and multiplies injury risk (`1 + strain/90`). **Only rest takes it off** — the hill sheds fatigue but barely touches strain.
+
+That turns the heavy drill into a cycle rather than a trap. Thirty weeks of nothing but weights injures **64%** of men; the same thirty weeks cycled with rest and the hill reaches **identical strength with nobody hurt at all**.
+
 ### The doctore's pupil
 He can drill the whole yard, or take **one man** and work only on him — `d.doctore.pupil`. The bonus share moves from a flat 0.32 to **0.85 for the pupil and 0.13 for everyone else**, so it is a genuine reallocation rather than an upgrade. His pupil also gets 1.8× the injury guard and +2 morale a week.
 
@@ -571,6 +1106,74 @@ Tuning dials, in the order you'd reach for them:
 | Fixed-fight penalty | `doFight` | ×0.74 on str/agi/tec/dis |
 | Discovery | `settleBet` | .22 base, +.18 loud, +.12 tier 2+, +.30 if he wins |
 | Beast power | `BEAST_SCALE` | `pow × 2.05 × (0.6 + spd×0.4)` |
+| The circuit | `CIRCUIT_SIZE` | 16, pyramid-weighted, ~7% churn a week |
+| Their records | `circuitRecord` | per-man memory of every meeting |
+| Concealed flaws | `FLAWS` | 6 kinds, 34% of the block, −18% price |
+| What you can see | `bandOf` | ±14 seller / ±7 doctore / exact |
+| Having him looked at | `SCOUT_FEE` | `35 + price × 0.10` |
+| Faction pairs | `FACTIONS` | opposed at 55% of the gain |
+| What they pay | `facPurse` / `facFame` | ×1.18 purse, ×0.90–1.19 fame |
+| Forgetting | `facWeek` | 1.4% a week back toward indifference |
+| Lenders | `LENDERS` | 3.5–8.2% a week, compounding |
+| His patience | `LENDERS[].patience` | 8–20 weeks, then the gate, then a man |
+| Foreclosure | `loanWeek` | 4× the principal |
+| The gatekeeper | `EAR_FEE` | 14d/wk, 1–2 surface fragments |
+| A man inside | `listenWeek` | 3–4 fragments, 5 of them deep |
+| Being found out | `d.ear.risk` | +1/wk, `R() < risk/700` |
+| A booking | `offerBooking` | 35% advance, 2–6 weeks, doubled back if missed |
+| A challenge | `offerChallenge` | grudge ≥ 45, 3–5 weeks |
+| The levy | `offerLevy` | `140 + fame×0.5`, 3–6 weeks |
+| Rome's window | `romeOffer.due` | 4 weeks |
+| The seasons | `SEASONS` | 4, derived from the week |
+| Winter | `seasonOf` | pits ×0.45, +4d a man, mending ×1.35 |
+| Autumn | `seasonPurse` | ×1.18 |
+| Rival turns | `rivalTurn` | ~1 move per 1.4 weeks |
+| Their moves | `RIVAL_MOVES` | 9, weighted by lanista |
+| A house away | `h.away` | 3–6 weeks, off your card entirely |
+| Succession | `HEIRS` | 48–72% fame, 34–62% standing |
+| The freedman | `HEIRS.doctore` | −16 unrest, +14 morale, worst standing |
+| The line | `d.forebears` | every man who held it, and how he ended |
+| Watching him | `watchCost` | `28 + tier×22 + purse×0.045` |
+| A right read | `planEffect` | pow ×1.052, stamina ×0.93, guard ×0.955 |
+| A wrong one | `planEffect` | pow ×0.974, stamina ×1.04, guard ×1.028 |
+| Regard | `REGARD` | 17 memories, −26 to +22 |
+| On the sand | `regardPower` | ×0.97 to ×1.03 |
+| Loyalty | `regardLoyal` | 70+ cannot be poached |
+| Rites | `RITES` | 0 / 70–235d / 320–1270d |
+| The window | `RITE_WINDOW` | 6 weeks, then it is gone |
+| Doing nothing | `RITES.none` | +4 unrest, −6 regard, −9 for kin |
+| Refusal odds | `refuseWeek` | `0.05 + (24−regard)×0.011` |
+| Talking him up | `EVENTS.refusal` | `0.16 + regard×0.011` ± the lanista |
+| Letting him sit | `refuseWeek` | +0.9 defiance a week to everyone else |
+| The book | `bookBout` | counters from all four engines |
+| Its breakdowns | `bookOf` | 4-bout minimum before a row shows |
+| The medicus | `medicusMult` | ×1.25–1.71 mending, 17–46% bad-set guard |
+| The armourer | `armourerCut` | −5–15% steel, −7–21% wear |
+| Losing them | `staffWeek` | 6% a week once the condition holds |
+| The election | `ELECTION_WEEK` | week 13, resolved 3 weeks later |
+| Backing him | `backLevels` | 180 / 520 / 1300d → +11 / +26 / +44 |
+| The office | `aedilePurse` | ×1.14 or ×0.89, ±1 bout, ±9 missio |
+| Venues | `VENUES` | 9, assigned when the card goes up |
+| Footing | `power()` | scales agility ×ft² and technique ×(0.5+ft/2) |
+| Form | `formPower` | ×0.964–1.036, an 8-point spread |
+| Its decay | `formWeek` | `f×0.78 − 3` — half gone in two weeks |
+| The generator | `R()` | mulberry32, state in `d.rngState` |
+| Seeds | `newSeedWord` | 8 chars, no I/O/0/1 |
+| The agenda | `agenda()` | 20 sources, 3 urgencies |
+| Lessons | `LESSONS` | 28, of which 17 gated on `when(d)` |
+| The condemned | `CRIMES` | 10–18 bouts, free, unsellable |
+| What he costs the yard | `damnArrive` | −5 morale, −4 regard, +4 unrest |
+| Serving out | `damnCheck` | +26 regard, −6 unrest, +6 mercy |
+| The oath | `SWEARING` | 0 / 40 / 150d, ×1.4 free, ×0.6 condemned |
+| Mastery | `MASTERY_GATE` | 12 wins, 55 renown; ×1.055 in that style |
+| A second trade | `secondFee` | `340 + renown×2.2`, 8 weeks off the card |
+| The trade's memory | `TRADE_KEY` | outside the save slots, survives a loss |
+| The stands | `FAC_TINT` | 4 blocks, lit by faction standing |
+| The ground | `.v-*` | 6 venue floors, crowd thinned to match |
+| A feud arriving | `feudWeek` | 20% a week once bitter |
+| Settling it | `EVENTS.feud` | 15% hurt supervised, 42% not |
+| Doctrines | `DOCTRINES` | 6, 300–500d, 1.8× to change |
+| A school's own | `docTrainMult` | ×1.22 taught, ×0.86 tolerated |
 | Reach vs beasts | `reachVsBeast` | spear ×1.20 … dagger ×0.86, power only |
 | Handlers pull him out | `simulateVenatio` | `.26 + crowd×.0022 + patron×.0018` |
 | Hunt morale cost | `doVenatio` | −12, or −22 at 60+ renown |
@@ -608,12 +1211,17 @@ Tuning dials, in the order you'd reach for them:
 | Cover's guard | `simulateFight` | incoming ×0.44, spare +12 |
 | The cloth | `doFight` | −9 fame, −5 patrons, −4 unrest, +8 mercy |
 | Pupil share | `docTrain` | 0.85 pupil / 0.13 the rest / 0.32 nobody |
+| Drills | `REGIMENS` | 8, with gains, costs and fatigue |
+| Strain | `strainDrag` / `strainRisk` | −gains, ×risk; only rest clears it |
+| Weekly recovery | `endWeek` | 13 fatigue, so light drills break even |
 | Lesson odds | `docLesson` | `skill/340`, ×1.5 if he is one of yours |
 | Remaking | `RETRAIN_FEE` | 240d and 3 weeks |
 | Nemesis trigger | `nemesisCheck` | 2 defeats, or one of your dead |
 | Facing him | `doFight` | −8 morale, −14 if he has killed |
 | Settling it | `nemesisSettled` | +11/+18 morale, +12/+22 fame |
 | Hunt crux | `simulateVenatio` | rounds 3–7, `vA ≤ 58 \|\| vB ≤ 42` |
+| Melee crux | `simulateMelee` | round 4+, ≤4 standing with 2 yours |
+| Pulling a man | `MELEE_CRUX` | forfeits his share, forecloses the duel |
 | Wear per bout | `WEAR_RATE` | 3–6 weapon … 1–3 helm, ×1.5 hard |
 | Worn value | `wearEff` | `0.5 + condition/200` |
 | Weekly repair | `repairWeek` | 2.2 × armamentarium level |
@@ -622,6 +1230,27 @@ Tuning dials, in the order you'd reach for them:
 | Gap before pressing | `EVENTS.ambition` | 5 weeks, then 9 |
 | Despair | `ambWeek` | 12 weeks after the second asking |
 | A promise kept / spent | `ambitionMet` | +34/−26 · −38/+26 and the yard hears |
+| Favour costs | `FAVOURS` | 26–34 standing, 20–30 week wait |
+| The magistrate | `FAVOURS` | grudge −55, cancels a poach |
+| The merchant | `flags.underwritten` | upkeep 0 for 10 weeks |
+| The senator | `flags.romeEarly` | Rome gate −110 fame |
+| Primacy gate | `PRIMUS_GATE` | 5 wins, 35 renown |
+| Defence frequency | `makeGames` | 45% of cards while you hold it |
+| Holding it | `primusWeek` | +3 fame/wk, +0.25 to every patron |
+| The house challenge | `EVENTS.primacy` | 42% the challenger takes it |
+| Local standing | `knownIn` | 7–12 a win, +5 if the taste fits |
+| Being a stranger | `simCtx.strange` | −19 to the missio roll, decaying to 0 |
+| City tiers | `cityTier` | 30 known → tier 2, 60 → tier 3 |
+| Feat perks | `PERKS` | 6 distinct, 11 feats carry one |
+| Your health | `lanistaWeek` | −0.045/yr past 42, −1.3 a burial, +0.06 idle |
+| Your traits | `LAN_TRAITS` | 6, all earned by play |
+| Dying of it | `over.lanistaDied` | health 0 |
+| The society | `COLL_FEE` / `COLL_DUES` | 180d, then 3d a man a week |
+| A burial under it | `collSoften` | half the unrest, half the health |
+| Cutting it | `lapseCollegium` | +7 unrest, or +14 once it has been used |
+| The war | `WAR` | 4 stages at weeks 1, 11, 27, 44; over at 58 |
+| What it leaks | `warWeek` | standing, unrest, and a defiance floor |
+| The block | `warMarket` | ×1.25 at its height, ×0.55 after |
 
 Measured outcomes at standard stakes, equal fighters:
 
@@ -638,6 +1267,272 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v0.65.0 — The doctrine of the house
+You could always end up with a reputation. Now you can commit to one, out loud, and pay for it in both directions.
+
+A heavy-shield house teaches the murmillo and the secutor and grudgingly tolerates everything else, buys its armour cheap, and is adopted by half the amphitheatre and written off by the other half. A red school takes triple the sine missione offers and a fifth more coin for them, and spends the difference out of the cells and the lanista's own body. The open hand gets no such offers at all and keeps its men alive. The travelling school builds a name down the bay in two-thirds the time.
+
+And a lanista who changes his mind pays nearly double, loses twenty fame, and spends a week with every man in the yard wondering what the last year was for.
+
+### v0.64.1 — Removing the event it replaced
+The new feud shared its key with a two-choice `Bad Blood` event written in v0.11, which JavaScript silently resolved by keeping whichever came last. The old one had been unreachable since the moment the new one shipped; it is deleted rather than left to rot, and the events table is back to thirty unique keys.
+
+### v0.64.0 — Two of your men, in front of you
+A feud in the cells has always been a number that made the whispers more interesting. Now it comes to a head: two of them in the square, everybody watching, and the doctore deliberately not intervening.
+
+You can put them on the sand with wooden swords, which settles it and hurts somebody one time in seven. You can bench one for a month, which settles nothing and stops it happening today. You can say out loud which of them is right, which costs you the other man entirely and teaches every bystander that this is a house where the lanista picks. Or you can go back inside, which is free, and which they all watched you do.
+
+### v0.63.1 — Fix: fighting crashed
+v0.62.0 put the legacy loader inside `FightModal` instead of `App`. Both components hold a `SFX.mute` effect on an identical line and I anchored on the wrong one, so every fight mounted a component referencing `S` — state that does not exist there — and threw `ReferenceError: S is not defined` the moment the arena opened. The same rename also pointed the old single-slot save migration at the trade-memory key. Both corrected.
+
+The render harness only ever mounted the title screen, which is why it passed. There is now a **mount test that renders every top-level component in isolation** — the fight modal in all four of its shapes, the crowd, the fighter, the bars — with no App state in scope. It reproduces the crash on the broken build and passes on this one.
+
+### v0.63.0 — The arena view
+The fight has been happening in the same rectangle in front of the same anonymous crowd since v0.4. The crowd is four blocks now, one per faction, each in its own colour and lit by how warmly that faction actually regards you — so you can see at a glance that half the amphitheatre wants you to lose. And the ground is drawn: black earth in your own pit, marble in a magistrate's courtyard, turf in a field outside the walls, gold at Rome. Fourteen people watch a courtyard bout. Thirty watch one in the amphitheatre.
+
+### v0.62.0 — What carries between houses
+Losing a house has always cost you everything in it. Now it does not quite: the bouts you fought, the men you freed, the men you buried, the years you stood and the primacies you held are written into a book that belongs to you rather than to the house, and read by the next one you found.
+
+Free enough men and the block hears about it before you arrive. Bury enough and it fears you, which is cheaper. Stand long enough and the next lanista in your line starts younger. It is on the title screen with the name of the best gladiator any of your houses ever owned.
+
+### v0.61.0 — Mastery, and a second style
+A man with twelve victories and a name can be made a master of his style, which is worth ten bouts in a hundred and only in the style he mastered. Past that, if you keep a doctore and can spare the fee, he can be sent to the far post for two months and taught a second trade from nothing — and comes back able to fight either, which no more than five men in Campania can do.
+
+A veteran stops being a stat block with good numbers and becomes a particular kind of fighter you deploy according to the ground.
+
+### v0.60.0 — The sacramentum
+The oath every gladiator took has been a word in this game's vocabulary since the first version. Now every man who comes through the gate owes it, and you decide how it is given: read out at the post while the yard carries on, spoken through properly with the familia stood down, or followed by wine and a table until dark.
+
+A free man says the words himself and it is worth half again as much, because agreeing to be burned, bound, beaten and killed by the sword is a different thing from having it said over you. A condemned man gets the least of it, for the same reason.
+
+### v0.59.0 — Damnatio ad ludum
+A clerk from the magistrate's office arrives with two men, their paperwork, and a hundred and fifty denarii for taking them off the city's hands. They are condemned — arson, a knife in a wine shop, striking a master and not saying why — and the court sent them to the school rather than the beasts, which is a mercy in the way that a longer road is a mercy.
+
+They arrive knowing nothing, owning nothing, and despised by every man in the cells who chose this life or was at least bought for it. They cannot be sold. Their deaths cost you about half what a bought man's does, because Capua does not mind — and your own men are watching you notice that.
+
+Fight the sentence out, though, and the paper is discharged.
+
+### v0.58.0 — The gatekeeper, brought up to date
+The old man on the gate knew nine things, all of them from when the game was a third of its current size. He knows twenty-eight now, and more importantly he waits: a lesson only appears once the thing it describes is actually in front of you. A new house gets six, one per tab. Regard arrives when a man first has something to remember about you, refusal when somebody is close to sitting down, the moneylenders when you are short, munera when there is a man unburied, and the heir when you are old enough to think about it.
+
+Writing the pacing test found something else: a Dimachaerus had been founding his house carrying a 420-denarius weapon that wears out, while every other class started on thirty-denarius house stock. The v0.32 stock pass had missed it because the item was already priced. There are Paired Blades on the rack now, and all six classes found on comparable kit.
+
+### v0.57.0 — The overhaul
+Every feature this session arrived as another box in a column, and the home tab ended up with thirteen of them. It now opens with **This week**: one list of what actually wants an answer, in priority order, each row tapping straight through to where the answer is. The permanent situations — a war, the primacy, a nemesis, an aedile who owes you — became a row of chips instead of four full panels. Hiring moved to the Market and the standings moved behind a tile.
+
+Writing the agenda's test found a crash that had been shipping since v0.43.0: the deadline panel called `WANTS[kind].label`, and `WANTS` has never had a `label` field, so any patron want within two weeks of its due date threw the entire Ludus tab. The labels exist now.
+
+### v0.56.0 — Seeded runs
+Houses can be handed to other people now. Type `CAPVA-7719` when you found one and you get exactly the Capua somebody else got: the same men in the cells, the same rivals, the same block, the same lanista. What you do with it is still yours, and the two runs part company the first time you choose differently.
+
+One mulberry32 behind the `R()` that everything already called, its position saved with the house so a reload picks up mid-sequence rather than starting again.
+
+It paid for itself before it shipped by making an old bug reproducible: a house could be founded with two men answering to the same name. Now it cannot.
+
+### v0.55.0 — Form
+The four weeks between a man's last bout and his next one now count for something. Three straight wins and he walks out expecting to win; carried off twice and he has not been right since. Five words on his card, the reasons listed on his page, and an opponent's bad month is something you can pay to find out about before you send anybody at him.
+
+It is small on purpose — an eight-point swing at the extremes against sixteen for a full set of gear — and it fades fast enough to be memory rather than another slow stat. The temptation to ride a streak is the point; so is the cost of resting a shaken man.
+
+### v0.54.0 — Venues
+Nine places instead of one rectangle: the pit behind your own ludus where nobody is watching who was not already there, boards thrown up across the market for the week, the stone amphitheatre with an awning that does not quite reach, a magistrate's courtyard with forty people who have eaten well and a silence you can hear yourself breathing in, and turf cut outside the walls with the dead man's family standing where the editor would be.
+
+Footing is what makes it a decision rather than a caption. On marble a quick man wins 52% and a strong one 48%; on wet turf that becomes 36% and 59%. The ground decides who you send.
+
+### v0.53.0 — The aedileship
+Once a year the names go up on the walls. Three men stand for the office that decides whose gladiators are on the card, what they are paid, and whether anybody leans forward when one of them is down.
+
+You can put money behind one of them quietly, or openly with your name on the subscription list, or you can stay out of it entirely and have no particular standing with whoever wins. The other houses are doing the same thing, and it is usually obvious which of them is behind which man.
+
+Win and you have the games in your pocket for a year. Lose and the new aedile knows exactly whose name was on the other list, because everyone does.
+
+### v0.52.0 — The medicus and the armourer
+Two building levels became two men. You hire them the way you hire a doctore, they have names and origins and a skill worth paying for, and the room they work in is now a floor rather than the whole answer — a good medicus in a bad infirmary can only do so much, and the two together are worth nearly four times what neither is.
+
+They also have opinions. A medicus in a house that fills his table every week gives notice without making a speech about it. An armourer paid late twice does not wait for a third, and his tools go with him because they were always his. A rival with a grudge can buy either of them out from under you.
+
+### v0.51.0 — The record book
+The house has been accumulating history since the first version and there was no way to ask it how it had actually done. Now there is: every bout in every engine is counted, and the book will tell you which style has served you best, which stakes you should stop accepting, which of the three great houses is quietly taking you apart, the biggest purse you ever took and the longest bout anyone ever fought.
+
+It is counters rather than a log, so a full campaign costs under a kilobyte.
+
+### v0.50.0 — A man who will not go out
+One of them sits down on the boards with his back to the wall and will not put his hands up, and the reason is something you did that he wrote down at the time.
+
+You can have him whipped, which works and costs you every other man in the room. You can sit down on the boards with him and talk, which is free, unreliable, and depends entirely on what you have been to him. You can give him the thing he stopped asking for. Or you can leave him there, and find out how quickly the rest of the block does the arithmetic.
+
+Nothing else in the game required so little new machinery: regard supplies the trigger, his memory supplies the reason, and his ambition supplies one of the four answers.
+
+### v0.49.0 — Munera
+The game has always paid you to stage funeral games for other people's dead — a magistrate's father, an old soldier of Sulla, a merchant with no sons. It never occurred to it that you might stage them for one of your own.
+
+Six weeks after a man dies you can burn a fire at the gate with his name said aloud, or put on a full card at your own expense with his name where the dead man's usually goes, or do nothing at all and let the week go on. The third costs no money and the men notice it more than either of the others.
+
+It is priced by what he was and it never returns what it costs, which is the whole of the feature.
+
+### v0.48.0 — What he makes of you
+The game's whole argument is that these are men and not units, and until now not one of them had any view of you at all. Each of them now keeps a short list of things you actually did — the bout you stopped to keep him alive, the promise you kept, the brother you freed, the brother you sold, the wound you sent him out on, the night you left him on the sand until he had to finish somebody from his own cells.
+
+It moves how hard he fights for you, whether his defiance climbs or settles, and whether another house's money can reach him at all. A man who would follow you anywhere wins eight bouts in a hundred more than one who hates you, and cannot be poached at any price.
+
+### v0.47.0 — Reading a man before you fight him
+The football-manager half of this game had no preparation in it. Now you can pay to have an opponent watched during the week before the bout, and what comes back is specific to him: that he is blowing by the sixth, that he drops his arm every time he lands one, that he has almost no bouts behind him.
+
+Then you pick a plan built against what you were told. Read him right and it is worth seven or eight bouts in a hundred; read him wrong and it costs five. A doctore on the payroll sees one tell more than a hired watcher does, which is a second reason to keep one.
+
+### v0.46.0 — The heir
+Name nobody and the house is sold off in pieces the morning after you die. Name somebody and it goes on: the same men in the same cells, the same buildings, the same moneylender waiting, and a new man in the chair who has none of your reputation and none of your faults.
+
+A son has grown up in the yard and the men have watched him do it since he was nine, which cuts both ways. A nephew arrives from Neapolis with his own money and a very clear idea of how this will be run. And your own freed doctore — the one who fought on that sand — can take it, which the cells will love and Capua will not forgive quickly.
+
+The house takes a numeral. The men who held it before are written down with the age they died at and what Capua had decided they were.
+
+### v0.45.1 — Fix: the rival feed was not in the build
+The panel that shows what the other houses have been doing, and the tag marking a man they sold on, were both in an edit batch that failed on a bad anchor and therefore never reached the file. The engine had been taking its turns since v0.45.0 with nowhere to display them. Both are in now.
+
+### v0.45.0 — The other houses
+The rivals have been playing the whole time where you could not see them. Now, roughly every other week, one of them does something in public: buys the man you were looking at, puts one of his own on the block, takes a fighter off the card for a month and puts him back on it as something else, gives a ten-victory man the rudis in front of the entire city, hires a doctore out of Ravenna at a price people talk about, or loads the wagons for the coast and takes his whole stable off your card for a month.
+
+They also lose men, win cards at Nola, and stand in the baths putting their best man above yours in a way calculated to carry.
+
+Each of the three plays to the character he already had; the weights come straight off the table that described them.
+
+### v0.44.0 — The seasons
+The year had festivals and no weather. It has both now. Spring is when a man learns fastest; summer is the season of games and the sand is hot enough to burn anyone who goes down on it; autumn brings the harvest money and the great games and the best purses of the year; and in winter almost nobody is putting on games, the pits pay less than half, the cells cost four denarii a man more to keep, and wounds close faster than they ever will again because there is nothing else for anybody to do.
+
+It is derived entirely from the week, so it costs nothing to save and every existing house has a season the moment it loads.
+
+### v0.43.0 — Deadlines
+The calendar was scenery. An editor now puts one of your men on a bill by name, five weeks out, and pays a third up front — so when he tears something in week three you find out what a promise is worth. A rival names your best fighter in public and the whole of Capua waits to see whether you answer. The magistrate wants money by a date. The patrons' wants have a week on them. And the invitation to Rome stops waiting politely forever.
+
+All five sit in one list, sorted by how soon, and it goes red when something is due inside the week.
+
+### v0.42.0 — The cells at night
+The game hides a great deal behind vague words, and there was no way to look behind them. Now you can pay the old man on the gate a retainer to keep his ears open, or put one of your own men inside the thing you want to hear.
+
+The gatekeeper tells you who is doing the talking and who has stopped eating. A man inside tells you what somebody privately wants and has told everyone except you, which of them the others are listening to before the rebellion gives you the name, and who has been at the wall after dark. He hears more than twice as much — and he gets found out, sooner or later, and when he does the whole yard turns on him and stays turned.
+
+Every fragment is generated from something the game actually knows to be true.
+
+### v0.41.0 — Debt and the moneylenders
+Three men in Capua will lend you coin: one cheap who collects in gladiators, one expensive who never touches your men, and one who lends to anybody at a rate that explains why. Interest compounds every week and the debt grows whether you look at it or not.
+
+Each is quiet for exactly as long as he said he would be. Then his man is at the gate — he does not come in, he wants you to know he was here. Then Capua knows you are carrying his paper and the editors are polite in a slightly different way. Then, if he is that sort, he takes a man against the debt at seven-tenths of his value and nobody asks you first.
+
+It is the way out of a bad month, and it is very hard to stop taking once you have started.
+
+### v0.40.1 — Fix: the pair-bout purse
+v0.40.0 shipped with a crash. The faction purse multiplier was applied to `doPairFight` instead of `doFight` — the two purse lines are near-identical and I matched the wrong one — so every pair bout threw on an undefined `away`. Corrected, and the multiplier now sits where it was meant to.
+
+### v0.40.0 — The stands
+Capua stopped being a meter. There are four groups in the seats now, each wanting a different afternoon: the parmularii and the scutarii — a real rivalry, over shield size, which Roman emperors took sides in — plus the mob in the upper tiers who want blood, and the front rows who want craft and can afford to.
+
+The shield factions cannot both be pleased; courting one cools the other. A house of murmillones that kills ends up adored by half the amphitheatre and hated by the other half, which is worth a fifth more fame every time a heavy man walks out and a tenth less every time a light one does. Whoever likes you most sets what the editors offer.
+
+They forget, slowly, if you stop giving them reasons.
+
+### v0.39.0 — Judging a man before you buy him
+Buying used to be arithmetic: the block printed exact numbers and you compared them to a price. It now shows the seller's version — a range, centred somewhere flattering, and no mention of the thing wrong with the man.
+
+A third of the block has something wrong with it and is priced accordingly. An old wound that will cap a stat forever, a spirit already broken, a man sold twice in a year and nobody saying why, or one who has been at this three years and has not improved once. Your doctore narrows the range and hints; paying to have a man looked over gives you the number and names the problem.
+
+The seller overstates a sound man by two and a half points a stat and a flawed one by four and a half, which is the whole feature in one number.
+
+### v0.38.0 — Every opponent a person
+The three rival houses had names, records and grudges. Everybody else was a stat block that evaporated after one bout, which is a strange thing in a game whose whole argument is that men are not units.
+
+There is a standing circuit of sixteen independents now, from small houses or none. They train, they age, they drop off the cards, and they keep a record of every time they have met each of your men — so the offer card can tell you he has beaten this one twice before, and 44% of pit bouts are now against a familiar face. Any of them can become a nemesis.
+
+Also moved the gear-ownership helpers out of the interface and into the engine, where the wear system had been reaching across a layer to call them.
+
+### v0.37.0 — Training
+The decision you make most often was the one with least in it. Eight named drills now, each with a real cost: the weights build strength half again as fast and take agility off him, the hill works fatigue out rather than in, playing to the yard sells tickets and teaches him to think about being watched.
+
+Sparring stopped being a flat multiplier and became the thing it should always have been — he learns whatever his partner is better at, not whatever you selected, and stops learning it when the gap closes.
+
+And **strain**: the deep tiredness that a week's rest does not fix. It accumulates on the hard drills, eats what he gains and is how men tear things. Thirty weeks of grinding the weights injures 64% of them; the same thirty weeks cycled with rest reaches the same strength with nobody hurt. The drill is not a trap — it is a thing that wants managing.
+
+### v0.36.0 — The crux in the melee
+The last engine holds. Its intervention is not the duel's — there is no single bout to lean into — so it fires when the field has thinned to the point where you can see what is coming, and offers a way out rather than a tactic.
+
+Pull one man off the sand and he loses his share and takes no wound; more to the point, if he was the second of yours still up, there is no longer anyone for the editor to make him kill. Entering two, that takes the forced duel from happening to not happening, and halves the deaths, and costs two points of win rate. Pull them all out and you forfeit the purse and a piece of your name, and everybody walks.
+
+All four combat engines now pause exactly once at the moment it matters.
+
+### v0.35.0 — The aftermath
+The fire you fed for years comes back. Opening the gates now starts a four-stage war that runs for about two years: a band in the hills, then an army, then eight legions and Crassus, then six thousand crosses along the road north.
+
+It costs you the whole time. Standing leaks every week and craters when the legions march, because nobody in Capua has forgotten which gate he walked out of. Your own men hold a defiance floor once the thing is an army, having watched it be done. The slave block first inflates and then collapses, and the men on it late in the war were taken in the south.
+
+Four events come to the gate, and the last two are the point. A messenger before dawn with a place in the column for anyone who wants one and coin for you if you look away. And then the road, where you can walk the first mile, shut the gate — or march the familia out to look at it, which quiets them for a very long time and is the thing you will have to live with.
+
+### v0.34.0 — The collegium
+A burial society, on the Villa tab beside the feasts. The house pays in three denarii a week per man and when one of them dies there is a stone with his name, his style and his victories on it instead of a pit outside the wall.
+
+It never wins a bout. What it does is halve what a death costs the cells — and what it costs you personally — because men who know what happens to them afterward take a burial differently. It is the cheapest humane thing available and by some distance the easiest line to cut in a bad month, which is the entire point: stopping the dues after men have already gone into the ground under it costs double what stopping before does.
+
+### v0.33.0 — The lanista
+You are a person now. Three Roman names, an age, and health that the job erodes — slowly with the years, faster with a house on the edge of fire, and by a fixed amount for every single man you put in the ground. Feasts, a bath house and a quiet week mend a little of it.
+
+Six traits, none of them chosen: run a bloody house long enough and you become **Hard**, and the men do as they are told quickly while looking at the floor. Run a merciful one and you become **Merciful**, and word gets round which houses bury their men and which free them. Win five wagers and the bookmakers stop giving you the tourist's price. Get caught arranging a bout and every editor in Campania hears.
+
+And at the end of it there is now an ending that belongs to you rather than the house.
+
+### v0.32.1 — What the marks mean
+A man's card carries up to seven tags and the game never explained one of them. **What the marks mean** now sits at the top of the Familia tab and opens a glossary in five parts:
+
+- **The styles** — all six, with their key stats, what each beats and what beats it, read straight out of `CLASSES` and `COUNTERS`
+- **Where they came from** — all seven origins, with which stats each favours and which it is short on, derived from `ORIGINS`
+- **Marks on a man** — the twelve status tags: Gladiatrix, Auctoratus, Primus, Firebrand, rare fire, Given up, Your word, With the doctore, Being remade, Kit failing, a named piece, and the four age words
+- **Bearing** — the five-step defiance scale and what each step means in the yard
+- **The weapon on his card** — and the cost of wearing something outside his own style
+
+The first two sections are generated from the data tables rather than written out, so adding a class or an origin later cannot leave the glossary lying.
+
+### v0.32.0 — The racks start empty
+Everyone used to walk out of the gate in a full set of house kit, which made the armoury irrelevant for the first thirty weeks and armour something you never thought about.
+
+**House stock is now owned, not assumed.** A gladius, a scutum, a galea and a manica have prices (22–45d) and sit in `d.gear` like anything else. You found the house with **one weapon per man and nothing else** — three men, three blades, bare heads and bare chests. The exception is *One Good Man*, who has nobody behind him and gets the whole set.
+
+A free hand, a bare head and a bare chest still cost nothing and always will, so a man is never unable to fight — he is just **42% to win at standard stakes against 58% fully kitted**, and hurt 58% of the time against 41%. Kitting a murmillo out costs 111d; doing it for three is 333d of an 800d purse, against a doctore, a fourth man, or the first building.
+
+Stock still does not wear — that distinction moved from `price > 0` to an explicit flag — and when a fine piece finally snaps, the man drops to a house spare if you own one and to bare skin if you do not.
+
+### v0.31.2 — Racks in the armoury
+Twenty-nine pieces in one column was a long scroll to reach a helmet. The armoury now opens on four racks — **Weapon (12), Offhand (6), Helm (6), Armor (5)** — one at a time, with each tab face carrying how many of that kind you own and how many are sitting idle on the rack rather than on a man.
+
+### v0.31.1 — The Ludus tab, tidied
+Thirteen stacked panels had accumulated on the home screen, and seventeen feats at the bottom of it was the point where scrolling past everything to reach the chronicle stopped being reasonable.
+
+**The House**, **Feats**, **What Capua Says** and **The Annals** now sit behind a four-tile row, each opening as its own sheet with a summary on the tile face — how many buildings are up, how many feats are taken, what Capua calls you, how many have served. The tab keeps only what you act on or glance at every week: the year, the doctore, the standings, unrest, the chronicle, and whichever of Rome, the primacy, a nemesis or the road is currently true.
+
+### v0.31.0 — The circuit, and feats
+Pompeii, Neapolis and Puteoli: a week or two down the road, better purses, local houses, and crowds with their own taste. Nothing you built in Capua travels — the editor there weighs what he has seen himself, and a man of yours who falls in front of a town that has never heard of him is spared 56% of the time against 100% at home. Win there often enough and they learn the name; local standing persists, and opens better cards next visit. Your grudges do not travel either, so a tour is also a way to get out from under one.
+
+Added **seventeen feats**, checked weekly, from First Blood to Ten Years a Lanista. Each pays on the day and eleven leave a permanent perk on the house — faster training, calmer cells, cheaper and longer-lasting steel, warmer patrons, or a familia that takes a death better. Most of the perks hang off the merciful feats, which is the point.
+
+### v0.30.0 — The Primus of Capua
+There is one title in the city and it starts in somebody else's house. Get a man to five wins and thirty-five renown and the editors will hear of it; beat the holder and it is yours, along with three fame a week, a warmer word from every patron, and a queue of tier-3 challengers on nearly every card.
+
+The interesting part is internal. Six weeks in, the second-best man in your own cells asks for the one bout in Capua that means anything, against a man who sleeps four doors down. He takes it off the holder two times in five, the bond between them is gone either way, and refusing him breaks whatever he was privately hoping for.
+
+Calibrating the gate meant sampling 2,906 man-weeks of real play; the first three attempts were set where **no gladiator in the game could ever reach them.**
+
+### v0.29.0 — Calling in a favour
+Standing was a number that sat there. Now each of the four patrons will do exactly one thing for you and nobody else will do it: the magistrate makes another house drop a grudge, the merchant carries your upkeep for ten weeks, the noblewoman ruins a rival's name at the baths, and the senator says yours in a room in Rome.
+
+It is spent from your standing with that man, which is the same standing that leans on the editor when your man is in the sand — so every favour is paid for out of the pocket that buys mercy. A house that asks for everything the moment it can ends up with a third of the standing of one that never asks.
+
+### v0.28.2 — Scrolling, restored
+The shell fix in v0.28.1 locked the whole app to the viewport height and stopped the page scrolling — which is correct for the main screen, where a flex column supplies its own scroller, and completely wrong for the title screen, which has none and simply became unreachable below the fold.
+
+The viewport lock now applies only to `.shell` (the in-game screen). `.lr` grows with its content again, the page scrolls normally on the title and ending screens, and those two use `align-items: safe center` so a card list taller than the screen is never centre-clipped out of reach.
+
+### v0.28.1 — The navigation bar stays put
+The bottom bar was `position: sticky`, and the `overflow-x: hidden` added in v0.18 to stop the horizontal clipping had quietly turned its ancestors into scroll containers — which makes a sticky child stick to the bottom of *that container* rather than the viewport, so on any tab longer than a screen the tabs scrolled off and never came back.
+
+Rebuilt as a proper app shell instead of patching the sticky: the root is a fixed-height flex column, the header and nav are non-shrinking rows, and **one** middle region scrolls. No sticky positioning survives anywhere, so no ancestor's overflow can break it again. The nav also clears the iOS home indicator via `env(safe-area-inset-bottom)`, and the page itself no longer scrolls at all.
 
 ### v0.28.0 — Ambitions that speak
 A man's one private want used to sit on his page waiting to be noticed. Now he raises it himself, at the moment it is on his mind, and each of the seven has its own voice. Give him your word, tell him no, or walk on — and if you have said nothing twice, twelve weeks later he stops asking, which costs more than either answer would have.
@@ -824,21 +1719,50 @@ Weekly loop, roster, training, fight sim with missio, market, parties, feasts, e
 - ✅ Nemesis fighters, named by your own familia
 - ✅ Gear wear, the armourer's repairs, and named forged pieces
 - ✅ Ambitions that speak, escalate, and are given up on
+- ✅ Patron favours you can call in, paid for out of your standing
+- ✅ The Primus of Capua — a title held, defended, and wanted from inside
+- ✅ The circuit — three towns, local standing, and no benefit of the doubt
+- ✅ Seventeen feats with permanent house perks
+- ✅ The lanista — an age, a body the job wears down, and six earned traits
+- ✅ The collegium — a stone with his name on it, and the cost of stopping
+- ✅ The aftermath — the war you started, coming back for two years
+- ✅ The crux in the melee — all four engines now hold
+- ✅ Eight training drills, partner-led sparring, and strain
+- ✅ A standing circuit of independents who persist, age and remember
+- ✅ The seller's account, concealed flaws, and paying to look properly
+- ✅ Four crowd factions, two of them historically at war
+- ✅ Three moneylenders, compounding interest, and what he does when you stop paying
+- ✅ The cells at night — twelve true fragments, and the price of hearing them
+- ✅ Five kinds of deadline, and one list of what is owed by when
+- ✅ Four seasons, and a year with a shape to play against
+- ✅ Rival houses that take visible turns you can watch
+- ✅ The heir — an ending that becomes a continuation
+- ✅ Watching an opponent, and a plan built against what you saw
+- ✅ What he makes of you — seventeen things a man remembers
+- ✅ Munera for your own dead, and the cost of doing nothing
+- ✅ A man who will not go out, and the four things you can do about it
+- ✅ The record book — everything the house ever did, in under a kilobyte
+- ✅ The medicus and the armourer as men who can quit
+- ✅ The aedileship — buying the man who runs the games
+- ✅ Nine venues, and footing that decides who you send
+- ✅ Form — the four weeks between one bout and the next
+- ✅ Seeded runs — a house you can hand to somebody else
+- ✅ The overhaul — an agenda instead of a wall of panels
+- ✅ Twenty-eight lessons that wait for their moment
+- ✅ Damnatio ad ludum — the sentence that is not an execution
+- ✅ The sacramentum — the oath, and who is able to swear it
+- ✅ Mastery, and a second trade taught at the far post
+- ✅ What carries between houses — a book that survives losing
+- ✅ The arena view — a crowd with sides and a floor you can see
+- ✅ Two of your men in the yard, and four ways to answer it
+- ✅ Six house doctrines you declare and then live inside
 - ✅ Self-contained layout CSS — no Tailwind dependency in the standalone build
 
-**Next up — deepening what exists**
-- **The crux in the melee.** The single and pair engines and the hunt all hold now; the melee does not. Its version is different — pulling *one* man out of a running free-for-all while the rest fight on.
-- **Patron favours you can call in.** Standing is passive — it sits on the missio roll and gates Rome. Make it spendable: the magistrate quashes a grudge, the merchant buys a man at a fair price, the senator moves a date, the noblewoman spreads a story that costs a rival fame.
-
-**Next up — new ground**
-- **The circuit.** Capua is the whole world until Rome, which is a long way between structures. Pompeii and Neapolis: a week's travel, local crowds with their own taste, local houses who have never heard of you, and purses that do not care about your Capuan standing.
-- **The collegium.** Historically real — gladiators paid into a burial society so they would be interred under their own name. Fund it and a death costs a fraction of the unrest it does now, because the cells know what happens to them afterward. The cheapest humane thing in the game, and an ongoing cost rather than a purchase.
-- **The lanista.** You have no character at all. An age, a health, and traits earned by how you actually play — the game already knows whether you are a butcher or merciful. A lanista who gets old, or hated, or sick, and a personal ending that is not just the house's.
-- **The Primus of Capua.** One gladiator in the city holds the title. Challenge for it, take it, then defend it against everyone who wants it — including your own rising men. The mid-game structure between the local games and Rome, which is currently a long empty stretch.
-- **The aftermath.** Opening the gates sets `spartacusAtLarge` and produces five chronicle lines, then nothing. Make the war you started come back: requisitions, refugees, a magistrate who remembers whose house he came from, and eventually a choice about the man you let go.
+**Next up — the queue**
+- **Weather on the day.** Seasons exist but no individual afternoon is wet. Venue footing already provides the machinery.
 
 **Later**
 
 ---
 
-*Last updated: v0.28.0*
+*Last updated: v0.65.0*
