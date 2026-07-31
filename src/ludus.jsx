@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Coins, Star, Crown, Flame, Swords, Shield, Wine, Users, Landmark, ShoppingBag, X, ChevronRight, Check } from "lucide-react";
+import { Coins, Star, Crown, Flame, Swords, Shield, Wine, Users, Landmark, ShoppingBag, X, ChevronRight, Check, Settings } from "lucide-react";
 
 /* ================= LUDUS — a lanista's chronicle ================= */
 
@@ -86,6 +86,8 @@ const CSS = `
 .optrow{width:100%;text-align:left;padding:11px;margin-bottom:7px;cursor:pointer;color:inherit;font:inherit;
   background:linear-gradient(165deg,#261d15,#1d1610);border:1px solid #3e2f1f;border-radius:10px}
 .optrow.on{border-color:#c99a4b;background:linear-gradient(165deg,#332816,#241b11)}
+.reduce-motion *,.reduce-motion *::before,.reduce-motion *::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+.lr.large-text{font-size:19.5px}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}.spurt{display:none}.hitflash{display:none}}
 `;
 
@@ -6624,6 +6626,10 @@ const SLOTS_N = 3;
 const LEGACY_KEY = "ludus-save-v1";
 const slotKey = i => `ludus-slot-${i}`;
 
+/* Device-wide preferences, kept apart from the save slots. */
+const PREFS_KEY = "ludus-prefs-v1";
+const DEFAULT_PREFS = { sound: true, reduceMotion: false, largeText: false };
+
 /* A house at a glance, for the title screen. */
 function saveSummary(s){
   if(!s) return null;
@@ -6686,6 +6692,21 @@ export default function App(){
       setLegacy(r && r.value ? JSON.parse(r.value) : blankLegacy()); }
     catch(e){ setLegacy(blankLegacy()); }
   })(); }, []);
+
+  // Device-wide preferences (sound, accessibility), loaded once and persisted
+  // apart from the save slots so they survive switching or wiping houses.
+  const [prefs,setPrefs] = useState(DEFAULT_PREFS);
+  const [showSettings,setShowSettings] = useState(false);
+  useEffect(()=>{ (async ()=>{
+    try { const r = await window.storage.get(PREFS_KEY);
+      setPrefs({ ...DEFAULT_PREFS, ...(r && r.value ? JSON.parse(r.value) : {}) }); }
+    catch(e){ setPrefs({ ...DEFAULT_PREFS }); }
+  })(); }, []);
+  const setPref = (k,v) => setPrefs(p => { const n = { ...p, [k]: v };
+    (async()=>{ try { await window.storage.set(PREFS_KEY, JSON.stringify(n)); } catch(e){} })();
+    return n; });
+  // Keep the audio engine in step with the sound preference.
+  useEffect(()=>{ SFX.mute = !prefs.sound; if(!prefs.sound) SFX.stopCrowd(); }, [prefs.sound]);
   // The header (top) and nav (bottom) are position:fixed over a naturally
   // scrolling body. Measure their real heights so the content always pads
   // clear of them — this avoids viewport-height units, which mobile Chrome
@@ -7530,7 +7551,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
   };
 
   return (
-    <div className="lr shell">
+    <div className={`lr shell${prefs.reduceMotion?" reduce-motion":""}${prefs.largeText?" large-text":""}`}>
       <style>{CSS}</style>
 
       <div className="bar" style={{position:"fixed",top:0,left:0,right:0,zIndex:20,background:"linear-gradient(180deg,#1d1610,rgba(23,18,16,.96))",borderBottom:"1px solid #3e2f1f",padding:"calc(10px + env(safe-area-inset-top)) 14px 10px"}}>
@@ -7539,7 +7560,10 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             <div className="disp" style={{fontSize:15,fontWeight:900,color:"#e8d092",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{S.name.toUpperCase()}{(S.generation||1)>1 && <span style={{fontSize:12,color:"#b09b7d"}}> · {["","","II","III","IV","V","VI","VII"][S.generation]||S.generation}</span>}</div>
             <div className="dim" style={{fontSize:12.5}}>{seasonOf(S).name} · year {yearOf(S)}, week {yearWeek(S)} · {S.travel? "on the road" : S.city? CITIES[S.city].name : fameTitle(S.fame)}</div>
           </div>
-          <button className="btn" onClick={advance} disabled={!!S.pendingEvent || !!S.doctoreOffer || !!S.romeOffer || !!S.reSignOffer || !!S.over}>End Week</button>
+          <div className="flex items-center gap-2" style={{flexShrink:0}}>
+            <button className="btn btn-ghost" aria-label="Settings" style={{padding:"9px 10px"}} onClick={()=>setShowSettings(true)}><Settings size={16} aria-hidden="true"/></button>
+            <button className="btn" onClick={advance} disabled={!!S.pendingEvent || !!S.doctoreOffer || !!S.romeOffer || !!S.reSignOffer || !!S.over}>End Week</button>
+          </div>
         </div>
         <div className="flex items-center gap-3" style={{marginTop:7,fontSize:13.5,flexWrap:"wrap"}}>
           <span className="flex items-center gap-1 gold"><Coins size={13} aria-hidden="true"/>{rnd(S.gold)}</span>
@@ -9274,6 +9298,52 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         </div>
       )}
 
+      {showSettings && (()=>{
+        const Row = ({label, desc, on, onToggle}) => (
+          <button className={`optrow${on?" on":""}`} onClick={onToggle} aria-pressed={on} style={{display:"block",marginBottom:8}}>
+            <div className="flex items-center justify-between gap-2">
+              <span className="disp" style={{fontSize:12.5,color:"#e8d092"}}>{label}</span>
+              <span className="chip" style={{pointerEvents:"none",...(on?{borderColor:"#c99a4b",color:"#e0bd72",background:"#2b2115"}:{})}}>{on?"On":"Off"}</span>
+            </div>
+            {desc && <div className="dim" style={{fontSize:12.5,marginTop:3,lineHeight:1.35}}>{desc}</div>}
+          </button>
+        );
+        return (
+          <div className="modalwrap" role="dialog" aria-modal="true" aria-label="Settings" style={{zIndex:64}} onClick={()=>setShowSettings(false)}>
+            <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
+              <div className="flex items-center justify-between" style={{marginBottom:12}}>
+                <div className="disp" style={{fontSize:15,fontWeight:900,letterSpacing:".12em",color:"#e8d092"}}>SETTINGS</div>
+                <button className="btn btn-ghost" style={{padding:"6px 10px"}} aria-label="Close" onClick={()=>setShowSettings(false)}><X size={14}/></button>
+              </div>
+
+              <div className="tag" style={{marginBottom:8}}>Sound</div>
+              <Row label="Sound effects" desc="The clash of arms and the roar of the crowd."
+                on={prefs.sound} onToggle={()=>setPref("sound", !prefs.sound)}/>
+
+              <div className="tag" style={{display:"block",marginTop:12,marginBottom:8}}>Accessibility</div>
+              <Row label="Reduce motion" desc="Stills the shake, blood, and other movement in the arena."
+                on={prefs.reduceMotion} onToggle={()=>setPref("reduceMotion", !prefs.reduceMotion)}/>
+              <Row label="Larger text" desc="Enlarges the body text throughout the house."
+                on={prefs.largeText} onToggle={()=>setPref("largeText", !prefs.largeText)}/>
+              <Row label="Show tips" desc="The gatekeeper's notes on each part of the ludus."
+                on={!S.flags.noLessons} onToggle={()=>mut(d=>{ const off = !S.flags.noLessons; d.flags.noLessons = off?1:0; if(!off) d.flags.learned = {}; })}/>
+
+              <div className="tag" style={{display:"block",marginTop:12,marginBottom:8}}>This house</div>
+              <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:9,lineHeight:1.4}}>
+                Kept automatically{saved? ` — last saved ${whenWord(saved)}`:""}. Slot {slot||1} of {SLOTS_N}.
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button className="btn btn-ghost" onClick={()=>{ setShowSettings(false); setXfer({mode:"export"}); }}>Copy transfer code</button>
+                <button className="btn btn-ghost" onClick={()=>{ setShowSettings(false); toTitle(); }}>Switch houses</button>
+              </div>
+
+              <div className="dim" style={{fontSize:12,textAlign:"center",marginTop:14,fontStyle:"italic"}}>LVDVS — Blood &amp; Sand</div>
+              <button className="btn" style={{width:"100%",marginTop:10}} onClick={()=>setShowSettings(false)}>Done</button>
+            </div>
+          </div>
+        );
+      })()}
+
       {S.succession && (()=>{ const H = HEIRS[S.succession.kind];
         return (
           <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:70}}>
@@ -9499,10 +9569,10 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         </div>
       )}
 
-      {fight && <FightModal fight={fight} startMuted={!!S.flags.mute}
+      {fight && <FightModal fight={fight} startMuted={!prefs.sound}
         onClose={()=>{ if(held) return; SFX.stopCrowd(); setFight(null); }}
         onSpeak={fight.crux ? speak : null}
-        onMute={v=>mut(d=>{ d.flags.mute = v?1:0; })}/>}
+        onMute={v=>setPref("sound", !v)}/>}
 
       {(S.pendingEvent || evResult) && !fight && (
         <div className="modalwrap" role="dialog" aria-modal="true">
