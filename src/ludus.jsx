@@ -174,9 +174,48 @@ const GEAR = {
   subarm:   {slot:"armor",art:"padded", name:"Subarmalis",        price:240, atk:0,  def:.14, spd:-.06,sho:0,   styles:[], desc:"Padded torso guard. Slow, but you keep your ribs."},
   gilded:   {slot:"armor",art:"gilded", name:"Gilded Harness",    price:520, atk:0,  def:.12, spd:-.04,sho:.12, styles:[], desc:"Gold leaf over good iron. Vanity that happens to work."},
   armnone:  {slot:"armor",art:"none",   name:"Bare",              stock:1, price:0,   atk:.02,def:-.04,spd:.07, sho:.03, styles:[], desc:"Nothing but a loincloth and nerve."},
+
+  // --- MORE WEAPONS ---
+  gladius_m:{slot:"weapon",art:"sword",  name:"Legion Gladius",    price:130, atk:.07,def:.01, spd:.01, sho:.01, styles:["Murmillo","Secutor","Hoplomachus"], desc:"Army pattern, army price. More blade than the rack, less than the master's."},
+  spatha:   {slot:"weapon",art:"sword",  name:"Spatha",            price:360, atk:.13,def:.01, spd:-.02,sho:.05, styles:["Murmillo","Secutor"], desc:"A long cavalry sword. Reach and weight, at the cost of a quick hand."},
+  sica_m:   {slot:"weapon",art:"curved", name:"Honed Sica",        price:130, atk:.07,def:0,   spd:.025,sho:.04, styles:["Thraex"], desc:"A working sica kept sharp enough to shave. No silver, all edge."},
+  falx:     {slot:"weapon",art:"curved", name:"Falx",              price:400, atk:.16,def:-.05,spd:-.03,sho:.09, styles:["Thraex"], desc:"The two-handed Dacian hook. It takes a shield arm off at the elbow, and the crowd with it."},
+  hasta_m:  {slot:"weapon",art:"spear",  name:"Iron Hasta",        price:150, atk:.08,def:.035,spd:-.01,sho:.01, styles:["Hoplomachus"], desc:"A soldier's spear, plain and true, and longer in the reach than the rack's."},
+  venabulum:{slot:"weapon",art:"spear",  name:"Venabulum",         price:330, atk:.12,def:.03, spd:0,   sho:.05, styles:["Hoplomachus"], desc:"A boar spear with a crossbar, made to stop a charge dead on the point."},
+  fuscina_m:{slot:"weapon",art:"trident",name:"Iron Fuscina",      price:150, atk:.08,def:.02, spd:.02, sho:.05, styles:["Retiarius"], desc:"Heavier heads, deeper barbs. It holds what it catches."},
+  fuscina_x:{slot:"weapon",art:"trident",name:"Neptune's Fuscina", price:470, atk:.12,def:.02, spd:.03, sho:.13, styles:["Retiarius"], desc:"Silver-tined and sea-god blessed. The mob names the fish before the net is even cast."},
+  twin_m:   {slot:"weapon",art:"dual",   name:"Matched Pair",      price:210, atk:.10,def:-.075,spd:.03,sho:.08, styles:["Dimachaerus"], desc:"Two decent swords sold as a set. A step up from whatever came off the rack."},
+  dolabra:  {slot:"weapon",art:"axe",    name:"Dolabra",           stock:1, price:95,  atk:.08,def:-.02,spd:-.02,sho:.03, styles:["Murmillo","Secutor"], desc:"A pioneer's pick-axe pressed into the arena. Ugly, cheap, and it bites."},
+  bipennis: {slot:"weapon",art:"axe",    name:"Bipennis",          price:560, atk:.18,def:-.05,spd:-.07,sho:.13, styles:["Murmillo","Secutor"], desc:"A double-headed axe. One swing decides the afternoon — if it lands."},
+  pugio_f:  {slot:"weapon",art:"dagger", name:"Fine Pugio",        price:190, atk:0,  def:.01, spd:.10, sho:.03, styles:[], desc:"A gentleman's killing knife, balanced for the throw and the close."},
+  sicula:   {slot:"weapon",art:"dagger", name:"Sicula",            price:160, atk:-.01,def:0,  spd:.08, sho:.04, styles:["Thraex"], desc:"A little curved dagger, sister to the sica. For work done inside a man's guard."},
+  // --- MORE OFF-HAND ---
+  scutum_x: {slot:"offhand",art:"scutum", name:"Legion Scutum",    price:490, atk:0,  def:.20, spd:-.05,sho:.05, styles:["Murmillo","Secutor"], desc:"Full army pattern, curved and iron-rimmed. A door with a handle."},
+  parmula_f:{slot:"offhand",art:"parmula",name:"Bronze Parmula",   price:220, atk:.02,def:.10, spd:-.01,sho:.05, styles:["Thraex","Dimachaerus"], desc:"Faced in bronze and kept bright. Small, quick, and it catches the light."},
+  clipeus_f:{slot:"offhand",art:"clipeus",name:"Bronze Clipeus",   price:260, atk:0,  def:.13, spd:-.03,sho:.05, styles:["Hoplomachus"], desc:"A hoplite's round shield in beaten bronze. Old-country pride."},
+  rete_f:   {slot:"offhand",art:"net",    name:"Weighted Rete",    price:210, atk:.05,def:.03, spd:.01, sho:.11, styles:["Retiarius"], desc:"Lead weights sewn to the rim. It falls faster and it falls right."},
+  // --- MORE HELMS ---
+  galea_mf: {slot:"helm",art:"crest",  name:"Bronze Crested Galea",price:260, atk:0,  def:.10, spd:-.02,sho:.06, styles:["Murmillo","Dimachaerus","Secutor"], desc:"A tall crest in beaten bronze. Weight up top, and your name up in the stands."},
+  galea_sf: {slot:"helm",art:"smooth", name:"Iron Secutor Helm",   price:250, atk:0,  def:.13, spd:-.03,sho:0,   styles:["Secutor"], desc:"Round, smooth, two small eyeholes. The net finds nothing to hold — and neither does the air."},
+  galea_tf: {slot:"helm",art:"griffin",name:"Silvered Griffin",    price:270, atk:0,  def:.09, spd:-.02,sho:.10, styles:["Thraex"], desc:"The griffin picked out in silver. Capua knows the Thracian before he draws."},
+  galea_hf: {slot:"helm",art:"brim",   name:"Plumed Galea",        price:250, atk:0,  def:.10, spd:-.02,sho:.07, styles:["Hoplomachus"], desc:"Wide brim, tall plume, Greek to the bone. Made to be looked at."},
+  // --- MORE ARMOR ---
+  manica_f: {slot:"armor",art:"manica", name:"Scaled Manica",      price:180, atk:0,  def:.09, spd:-.01,sho:.02, styles:[], desc:"Iron scales down the sword arm over the linen. Turns a cut the padding would let through."},
+  ocreae_f: {slot:"armor",art:"greaves",name:"Bronze Ocreae",      price:170, atk:0,  def:.10, spd:-.02,sho:.04, styles:[], desc:"Tall bronze greaves, chased and fitted. A man fights on his legs, so guard them well."},
+  lorica:   {slot:"armor",art:"padded", name:"Lorica Squamata",    price:430, atk:0,  def:.17, spd:-.08,sho:.06, styles:[], desc:"A shirt of iron scales. Heavy as a bad conscience — but little gets through."},
 };
 const SLOTS = ["weapon","offhand","helm","armor"];
 const SLOT_NAME = { weapon:"Weapon", offhand:"Off-hand", helm:"Helm", armor:"Armor" };
+/* Sub-sections within each armory tab, named by the art of the piece. */
+const ART_NAME = {
+  sword:"Straight Blades", curved:"Curved Blades", spear:"Spears & Reach", trident:"Tridents",
+  dual:"Paired Blades", axe:"Heavy Arms", dagger:"Sidearms",
+  scutum:"Tower Shields", parmula:"Small Shields", clipeus:"Round Shields", net:"The Net",
+  crest:"Crested Helms", smooth:"Faced Helms", griffin:"Griffin Helms", brim:"Brimmed Helms",
+  silver:"Showpieces", bare:"Bare-headed",
+  manica:"Arm Guards", greaves:"Greaves", padded:"Body Armour", gilded:"Showpieces",
+};
+const artName = (slot, art) => art==="none" ? (slot==="offhand" ? "Free Hand" : "Unarmoured") : (ART_NAME[art] || art);
 const DEFAULT_KIT = {
   Murmillo:    {weapon:"gladius", offhand:"scutum",  helm:"galea_m",  armor:"manica"},
   Thraex:      {weapon:"sica",    offhand:"parmula", helm:"galea_t",  armor:"manica"},
@@ -2248,6 +2287,52 @@ function endRefusal(d, g){
   g.refusing = null;
   return w;
 }
+/* The three ways a sitting man is brought back to his feet — used both by the
+   moment it first happens and by his page afterwards, so he is never stuck.
+   method: "whip" | "talk" | "give" | "sit". Returns the line to show. */
+function applyRefusal(d, g, method){
+  const others = () => d.gladiators.filter(o=>o.status==="active" && o.id!==g.id);
+  if(method==="whip"){
+    endRefusal(d, g);
+    remember(d, g, "whipped");
+    g.morale = clamp(g.morale-16,0,100);
+    g.defiance = clamp(g.defiance+6,0,100);
+    g.fatigue = clamp(g.fatigue+12,0,100);
+    g.broken = true;
+    others().forEach(o=>{ o.morale = clamp(o.morale-7,0,100); o.defiance = clamp(o.defiance+5,0,100);
+      o.regard = clamp(regardOf(o)-5,0,100); });
+    d.unrest = clamp(d.unrest+8,0,100);
+    addRep(d, "blood", 5);
+    return `He goes out. Everyone watches him go out and everyone knows exactly how it was arranged. It works, in that he is on the sand. It works in no other way at all.`;
+  }
+  if(method==="talk"){
+    const p = clamp(0.16 + regardOf(g)*0.011 + (hasLT(d,"merciful")?0.14:0) - (hasLT(d,"hard")?0.08:0), 0.05, 0.8);
+    if(R() < p){
+      endRefusal(d, g);
+      remember(d, g, "heard", 1);
+      g.morale = clamp(g.morale+13,0,100);
+      g.defiance = clamp(g.defiance-9,0,100);
+      return `You sit down on the boards with him, which nobody in this house has ever seen a lanista do, and after a while he gets up. Nothing was promised. Something was heard.`;
+    }
+    g.morale = clamp(g.morale-4,0,100);
+    others().forEach(o=>{ o.defiance = clamp(o.defiance+2,0,100); });
+    return `You talk. He listens to all of it, politely, and does not move. There is nothing further to say and both of you know it.`;
+  }
+  if(method==="give" && g.ambition && !g.ambition.met && !g.ambition.broken){
+    endRefusal(d, g);
+    ambitionMet(d, g);
+    remember(d, g, "kept");
+    g.defiance = clamp(g.defiance-18,0,100);
+    others().forEach(o=>{ o.morale = clamp(o.morale+6,0,100); o.regard = clamp(regardOf(o)+5,0,100); });
+    d.unrest = clamp(d.unrest-9,0,100);
+    return `You give him the thing he had stopped asking for. He is on his feet before you have finished saying it, and the whole block heard which way that went.`;
+  }
+  /* he sits, and the arithmetic goes round the cells */
+  g.morale = clamp(g.morale-3,0,100);
+  others().forEach(o=>{ o.defiance = clamp(o.defiance+6,0,100); });
+  d.unrest = clamp(d.unrest+5,0,100);
+  return `You leave him where he is. By the evening every man in the block has worked out that sitting down is a thing that can be done and survived.`;
+}
 
 /* ---- MUNERA ----
    Funeral games were exactly that: combat staged at a rich man's tomb by his heirs.
@@ -3239,7 +3324,7 @@ const LESSONS = [
     text:"Form is the four weeks between his last bout and his next. Three straight wins and he walks out expecting to win; carried off twice and he has not been right since. It is a small thing and it fades inside a month, but it is the difference between sending him out now and sending him out later." },
   { id:"refusal", tab:"men", title:"A Man Who Sits Down",
     when:d=>activeG(d).some(g=>refusing(g)) || activeG(d).some(g=>regardOf(g)<=26),
-    text:"Sooner or later one of them will not go out, and the reason will be something you did. The whip works and costs you every other man in the room. Talking is free and unreliable and depends entirely on what you have been to him. Giving him the thing he wanted works outright. And leaving him where he is teaches the whole block that sitting down can be survived." },
+    text:"Sooner or later one of them will not go out, and the reason will be something you did. Open his page in the familia and settle it there — any week, not just the day it starts. The whip works and costs you every other man in the room. Talking is free and unreliable and depends entirely on what you have been to him. Giving him the thing he wanted works outright. And leaving him where he is teaches the whole block that sitting down can be survived." },
 
   { id:"stands", tab:"arena", title:"Four Crowds, Not One",
     when:d=>d.fame>=60,
@@ -5200,48 +5285,9 @@ const EVENTS = {
     run(d,ev,i){
       const g = d.gladiators.find(x=>x.id===ev.data.gid);
       if(!g) return "The matter resolves itself.";
-      const others = () => d.gladiators.filter(o=>o.status==="active" && o.id!==g.id);
-      if(i===0){
-        endRefusal(d, g, "whip");
-        remember(d, g, "whipped");
-        g.morale = clamp(g.morale-16,0,100);
-        g.defiance = clamp(g.defiance+6,0,100);
-        g.fatigue = clamp(g.fatigue+12,0,100);
-        g.broken = true;
-        others().forEach(o=>{ o.morale = clamp(o.morale-7,0,100); o.defiance = clamp(o.defiance+5,0,100);
-          o.regard = clamp(regardOf(o)-5,0,100); });
-        d.unrest = clamp(d.unrest+8,0,100);
-        addRep(d, "blood", 5);
-        return `He goes out. Everyone watches him go out and everyone knows exactly how it was arranged. It works, in that he is on the sand. It works in no other way at all.`;
-      }
-      if(i===1){
-        /* whether talking works depends entirely on what you have been to him */
-        const p = clamp(0.16 + regardOf(g)*0.011 + (hasLT(d,"merciful")?0.14:0) - (hasLT(d,"hard")?0.08:0), 0.05, 0.8);
-        if(R() < p){
-          endRefusal(d, g, "talk");
-          remember(d, g, "heard", 1);
-          g.morale = clamp(g.morale+13,0,100);
-          g.defiance = clamp(g.defiance-9,0,100);
-          return `You sit down on the boards with him, which nobody in this house has ever seen a lanista do, and after a while he gets up. Nothing was promised. Something was heard.`;
-        }
-        g.morale = clamp(g.morale-4,0,100);
-        others().forEach(o=>{ o.defiance = clamp(o.defiance+2,0,100); });
-        return `You talk. He listens to all of it, politely, and does not move. There is nothing further to say and both of you know it.`;
-      }
-      if(i===2 && g.ambition && !g.ambition.met && !g.ambition.broken){
-        endRefusal(d, g, "gave");
-        ambitionMet(d, g);
-        remember(d, g, "kept");
-        g.defiance = clamp(g.defiance-18,0,100);
-        others().forEach(o=>{ o.morale = clamp(o.morale+6,0,100); o.regard = clamp(regardOf(o)+5,0,100); });
-        d.unrest = clamp(d.unrest-9,0,100);
-        return `You give him the thing he had stopped asking for. He is on his feet before you have finished saying it, and the whole block heard which way that went.`;
-      }
-      /* he sits, and the arithmetic goes round the cells */
-      g.morale = clamp(g.morale-3,0,100);
-      others().forEach(o=>{ o.defiance = clamp(o.defiance+6,0,100); });
-      d.unrest = clamp(d.unrest+5,0,100);
-      return `You leave him where he is. By the evening every man in the block has worked out that sitting down is a thing that can be done and survived.`;
+      const method = i===0 ? "whip" : i===1 ? "talk"
+        : (i===2 && g.ambition && !g.ambition.met && !g.ambition.broken) ? "give" : "sit";
+      return applyRefusal(d, g, method);
     } },
   booking: {
     make(){ return null; },
@@ -8741,38 +8787,49 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             })}
           </div>
 
-          {SLOTS.filter(s=>s===rack).map(slot=>(
+          {SLOTS.filter(s=>s===rack).map(slot=>{
+            const items = Object.entries(GEAR).filter(([,it])=>it.slot===slot);
+            const arts = [...new Set(items.map(([,it])=>it.art))];
+            return (
             <div key={slot} className="panel" style={{padding:13}}>
-              <div className="flex items-center justify-between" style={{marginBottom:6}}>
+              <div className="flex items-center justify-between" style={{marginBottom:2}}>
                 <span className="disp" style={{fontSize:13,fontWeight:700}}>{SLOT_NAME[slot].toUpperCase()}</span>
-                <span className="rowval dim" style={{fontSize:12.5}}>{Object.values(GEAR).filter(it=>it.slot===slot).length} pieces</span>
+                <span className="rowval dim" style={{fontSize:12.5}}>{items.length} pieces</span>
               </div>
-              {Object.entries(GEAR).filter(([,it])=>it.slot===slot).map(([id,it])=>{
-                const owned = S.gear[id]||0, free = gearFree(S,id);
+              {arts.map(art=>{
+                const group = items.filter(([,it])=>it.art===art).sort((a,b)=>(a[1].price||0)-(b[1].price||0));
                 return (
-                  <div key={id} style={{borderTop:"1px dotted #33271a",paddingTop:8,marginTop:8}}>
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="disp" style={{fontSize:13.5,color:it.price?"#e8d9b8":"#b9a37c"}}>{it.name}</div>
-                      {it.price>0
-                        ? <span className="gold" style={{fontSize:14,whiteSpace:"nowrap"}}>{it.price}d{owned?` · ${owned} owned`:""}</span>
-                        : <span className="tag">Costs nothing</span>}
-                    </div>
-                    <div className="dim" style={{fontSize:14,fontStyle:"italic",margin:"2px 0 3px"}}>{it.desc}</div>
-                    <GearStats it={it}/>
-                    {it.styles && it.styles.length>0 && <div className="dim" style={{fontSize:12.5,marginTop:2}}>Suits: {it.styles.join(", ")}</div>}
-                    {it.price>0 && (
-                      <button className={`btn ${it.stock?"btn-ghost":""}`} style={{width:"100%",marginTop:7}} disabled={S.gold<gearPrice(S,it.price,it.slot)} onClick={()=>buyGear(id)}>
-                        {S.gold<gearPrice(S,it.price,it.slot) ? "Not enough coin"
-                          : `${it.stock?"Order":"Buy"} for ${gearPrice(S,it.price,it.slot)}d${free>0?` · ${free} on the rack`:""}`}
-                      </button>
-                    )}
-                    {it.price>0 && owned>0 && free===0 && <div className="dim" style={{fontSize:12.5,marginTop:3}}>Every one you own is on a man.</div>}
-                    {owned>0 && free===0 && <div className="dim" style={{fontSize:12.5,marginTop:3}}>All owned pieces are in use.</div>}
+                  <div key={art} style={{marginTop:14}}>
+                    <div className="tag tag-gold" style={{marginBottom:2}}>{artName(slot, art)}</div>
+                    {group.map(([id,it])=>{
+                      const owned = S.gear[id]||0, free = gearFree(S,id);
+                      return (
+                        <div key={id} style={{borderTop:"1px dotted #33271a",paddingTop:8,marginTop:8}}>
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="disp" style={{fontSize:13.5,color:it.price?"#e8d9b8":"#b9a37c"}}>{it.name}</div>
+                            {it.price>0
+                              ? <span className="gold" style={{fontSize:14,whiteSpace:"nowrap"}}>{it.price}d{owned?` · ${owned} owned`:""}</span>
+                              : <span className="tag">Costs nothing</span>}
+                          </div>
+                          <div className="dim" style={{fontSize:14,fontStyle:"italic",margin:"2px 0 3px"}}>{it.desc}</div>
+                          <GearStats it={it}/>
+                          {it.styles && it.styles.length>0 && <div className="dim" style={{fontSize:12.5,marginTop:2}}>Suits: {it.styles.join(", ")}</div>}
+                          {it.price>0 && (
+                            <button className={`btn ${it.stock?"btn-ghost":""}`} style={{width:"100%",marginTop:7}} disabled={S.gold<gearPrice(S,it.price,it.slot)} onClick={()=>buyGear(id)}>
+                              {S.gold<gearPrice(S,it.price,it.slot) ? "Not enough coin"
+                                : `${it.stock?"Order":"Buy"} for ${gearPrice(S,it.price,it.slot)}d${free>0?` · ${free} on the rack`:""}`}
+                            </button>
+                          )}
+                          {it.price>0 && owned>0 && free===0 && <div className="dim" style={{fontSize:12.5,marginTop:3}}>Every one you own is on a man.</div>}
+                          {owned>0 && free===0 && <div className="dim" style={{fontSize:12.5,marginTop:3}}>All owned pieces are in use.</div>}
+                        </div>
+                      );
+                    })}
                   </div>
                 );
               })}
             </div>
-          ))}
+          );})}
         </div>)}
 
       </div></div>
@@ -8933,17 +8990,38 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 </div>
               </div>
             )}
-            {refusing(selG) && (
-              <div className="panel" style={{padding:11,marginBottom:9,background:"#2a1512",borderColor:"#7c2a22"}}>
-                <div className="tag tag-blood" style={{marginBottom:4}}>He will not go out</div>
-                <div style={{fontSize:15}}>{REFUSE_REASONS[selG.refusing.reason].say(selG)}</div>
-                <div className="dim" style={{fontSize:14,fontStyle:"italic",marginTop:4}}>
-                  {selG.refusing.weeks===0
-                    ? "It began this week. He cannot be put on any card until it is settled one way or another."
-                    : `${selG.refusing.weeks} week${selG.refusing.weeks===1?"":"s"} now. Every one of them, the rest of the block adds it up.`}
+            {refusing(selG) && (()=>{
+              const canGive = selG.ambition && !selG.ambition.met && !selG.ambition.broken;
+              const bring = (method, title) => { let msg="";
+                mut(d=>{ const g = d.gladiators.find(x=>x.id===selG.id); if(g && g.refusing) msg = applyRefusal(d, g, method); });
+                if(msg) setAsk({ title, confirm:"So it goes", text:msg, run:()=>{} }); };
+              return (
+                <div className="panel" style={{padding:11,marginBottom:9,background:"#2a1512",borderColor:"#7c2a22"}}>
+                  <div className="tag tag-blood" style={{marginBottom:4}}>He will not go out</div>
+                  <div style={{fontSize:15}}>{REFUSE_REASONS[selG.refusing.reason].say(selG)}</div>
+                  <div className="dim" style={{fontSize:14,fontStyle:"italic",marginTop:4}}>
+                    {selG.refusing.weeks===0
+                      ? "It began this week. He cannot be put on any card until it is settled — do it here."
+                      : `${selG.refusing.weeks} week${selG.refusing.weeks===1?"":"s"} now, and he still cannot be carded. Settle it here. Every week he sits, the rest of the block adds it up.`}
+                  </div>
+                  <div className="dim" style={{fontSize:13,marginTop:9,marginBottom:6,textTransform:"uppercase",letterSpacing:".06em"}}>Get him on his feet</div>
+                  <button className="optrow" style={{display:"block",marginBottom:6}} onClick={()=>bring("talk","You Talk to Him")}>
+                    <div className="disp" style={{fontSize:12.5,color:"#e8d092"}}>Talk to him</div>
+                    <div className="dim" style={{fontSize:12.5,marginTop:2,lineHeight:1.35}}>Costs nothing and may fail — it turns on what you have been to him. The better he regards you, the likelier he rises.</div>
+                  </button>
+                  {canGive && (
+                    <button className="optrow" style={{display:"block",marginBottom:6}} onClick={()=>bring("give","You Give Him What He Wants")}>
+                      <div className="disp" style={{fontSize:12.5,color:"#e8d092"}}>Give him what he wants</div>
+                      <div className="dim" style={{fontSize:12.5,marginTop:2,lineHeight:1.35}}>Grant the thing he stopped asking for. He is on his feet at once — and the whole block sees it.</div>
+                    </button>
+                  )}
+                  <button className="optrow" style={{display:"block",borderColor:"#7c2a22"}} onClick={()=>bring("whip","The Whip")}>
+                    <div className="blood" style={{fontSize:12.5,fontWeight:700}}>The whip</div>
+                    <div className="dim" style={{fontSize:12.5,marginTop:2,lineHeight:1.35}}>He goes out for certain, but breaks something in him — and every other man loses heart and hardens against you.</div>
+                  </button>
                 </div>
-              </div>
-            )}
+              );
+            })()}
             {(()=>{ const v = regardOf(selG), mem = (selG.memory||[]).slice().reverse();
               return (
                 <div className="panel" style={{padding:11,marginBottom:9,background:"#1c1610",borderColor:regardColour(v)}}>
