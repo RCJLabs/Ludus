@@ -96,29 +96,29 @@ const STAT_NAMES = { str:"Strength", agi:"Agility", end:"Endurance", tec:"Techni
 
 const ORIGINS = {
   Thracian: { mod:{str:2,tec:1,sho:1,end:1,dis:-1,agi:0}, blurb:"fury of the mountain tribes",
-    names:["Sitalkes","Rhaskos","Bithus","Cotys","Seuthes","Teres","Mucapor","Ziles","Dromas","Spartokos"] },
+    names:["Sitalkes","Rhaskos","Bithus","Cotys","Seuthes","Teres","Mucapor","Ziles","Dromas","Spartokos","Amatokos","Medokos","Kersebleptes","Rhoemetalces","Sadalas","Bergaios","Diegylis","Zibelmios","Rhescuporis","Beithys","Tarutinos","Auluzenes","Dolens","Zipoites","Skostokos","Rholes","Oroles","Dromichaetes","Burebista","Napris"] },
   Gaul: { mod:{str:3,end:2,tec:-1,agi:0,sho:0,dis:0}, blurb:"wild strength of the north",
-    names:["Crixus","Gannicus","Brennus","Segovax","Ambiorix","Dumnorix","Litavicus","Viridomar","Orgetorix","Catuvolcus"] },
+    names:["Crixus","Gannicus","Brennus","Segovax","Ambiorix","Dumnorix","Litavicus","Viridomar","Orgetorix","Catuvolcus","Vercingetorix","Cingetorix","Divico","Camulogenus","Boduognatus","Indutiomarus","Cassivellaunus","Commius","Correus","Lucterius","Acco","Eporedorix","Sedullus","Vertico","Bituitus","Cavarillus","Teutomatus","Gutuater","Convictolitavis","Adiatorix"] },
   Numidian: { mod:{agi:3,end:2,str:-1,tec:0,sho:0,dis:0}, blurb:"swift as desert wind",
-    names:["Juba","Masinissa","Gulussa","Micipsa","Jugurtha","Naravas","Oxynta","Capussa","Barca","Adherbal"] },
+    names:["Juba","Masinissa","Gulussa","Micipsa","Jugurtha","Naravas","Oxynta","Capussa","Barca","Adherbal","Syphax","Vermina","Massiva","Hiempsal","Mastanabal","Gauda","Bocchus","Bogud","Iarbas","Tacfarinas","Firmus","Nubel","Gildo","Mazippa","Bomilcar","Hanno","Gala","Aptasa","Sacar","Zabari"] },
   Greek: { mod:{tec:2,dis:2,sho:1,str:-1,agi:0,end:0}, blurb:"schooled in the old arts",
-    names:["Nikandros","Theron","Lykos","Demetrios","Kallias","Philon","Xanthos","Alexios","Oenomaus","Hektor"] },
+    names:["Nikandros","Theron","Lykos","Demetrios","Kallias","Philon","Xanthos","Alexios","Oenomaus","Hektor","Aristion","Diophantos","Menandros","Timon","Kleon","Polydeukes","Herakleides","Sostratos","Kritias","Aineas","Melanthios","Pyrrhos","Isidoros","Nikias","Damon","Leonidas","Kastor","Straton","Zenon","Agathon"] },
   Syrian: { mod:{sho:2,agi:2,tec:1,end:-1,str:0,dis:0}, blurb:"a flair the crowd adores",
-    names:["Azizus","Malchus","Barates","Zabdas","Iarhai","Abgar","Sohaemus","Bassus"] },
+    names:["Azizus","Malchus","Barates","Zabdas","Iarhai","Abgar","Sohaemus","Bassus","Odainath","Wahballat","Zenobios","Mocimu","Hairan","Antiochos","Seleukos","Zabbaios","Nasor","Themarsa","Ogelos","Taimarsu","Bariki","Zabdibol","Yedibel","Nebuzabad","Worod","Marinos","Zabdilah","Alaphata","Male","Simon"] },
   Iberian: { mod:{tec:2,agi:1,end:1,dis:1,str:0,sho:-1}, blurb:"born to the blade",
-    names:["Indibilis","Mandonius","Audax","Ditalco","Minurus","Corocotta","Retogenes","Istolatius"] },
+    names:["Indibilis","Mandonius","Audax","Ditalco","Minurus","Corocotta","Retogenes","Istolatius","Viriathus","Tautalus","Olyndicus","Caros","Megaravicus","Allucius","Culchas","Bilistages","Cerdubelus","Luxinius","Turrus","Colua","Besadines","Cordus","Attenes","Balarus","Tanginus","Elandus","Turaius","Sanga","Ambon","Docilico"] },
   Germanic: { mod:{str:2,end:3,sho:-1,dis:-1,agi:0,tec:0}, blurb:"relentless as winter",
-    names:["Agron","Segimer","Chariovalda","Sigmund","Baldric","Warin","Theudobald","Duro"] },
+    names:["Agron","Segimer","Chariovalda","Sigmund","Baldric","Warin","Theudobald","Duro","Arminius","Segestes","Inguiomerus","Maroboduus","Catualda","Chariomerus","Ariovistus","Nasua","Cimberius","Flavus","Italicus","Baetorix","Actumerus","Vadomarius","Gundomar","Ricmer","Radbod","Wulfric","Adalhard","Gernot","Hildebrand","Ansgar"] },
 };
 
 const FNAMES = {
-  Thracian:["Bendida","Zoila","Rhodope","Sitalka","Teuta","Berenike","Doris"],
-  Gaul:["Boudica","Epona","Rigantona","Cartimandua","Damona","Solimara"],
-  Numidian:["Tanit","Sophonisba","Zaina","Massyla","Kahina","Aelia"],
-  Greek:["Achillia","Amazonia","Thalia","Kleio","Melite","Phoibe","Xanthe"],
-  Syrian:["Zenobia","Bathzabbai","Aziza","Shamsi","Martha","Salma"],
-  Iberian:["Ilerda","Bastia","Turia","Aracia","Baria","Nerea"],
-  Germanic:["Ganna","Veleda","Alruna","Swanhild","Thusnelda","Frida"],
+  Thracian:["Bendida","Zoila","Rhodope","Sitalka","Teuta","Berenike","Doris","Kotyto","Meda","Rhescupa","Bithynis","Seuthia","Zibela","Amytis","Tereia"],
+  Gaul:["Boudica","Epona","Rigantona","Cartimandua","Damona","Solimara","Nantosuelta","Rosmerta","Sirona","Andarta","Belisama","Bricta","Sequana","Divona","Icovellauna"],
+  Numidian:["Tanit","Sophonisba","Zaina","Massyla","Kahina","Aelia","Dihya","Kella","Iaia","Numida","Salammbo","Tanaquil","Bomilca","Iarbia","Tinhinan"],
+  Greek:["Achillia","Amazonia","Thalia","Kleio","Melite","Phoibe","Xanthe","Lysandra","Kallisto","Theodora","Eirene","Areta","Glykera","Chryseis","Melissa"],
+  Syrian:["Zenobia","Bathzabbai","Aziza","Shamsi","Martha","Salma","Julia","Domna","Maesa","Mamaea","Soaemias","Nafsha","Amtallat","Batzabai","Marthein"],
+  Iberian:["Ilerda","Bastia","Turia","Aracia","Baria","Nerea","Segia","Contrebia","Numantia","Complega","Uxama","Tagia","Arsia","Belia","Cauca"],
+  Germanic:["Ganna","Veleda","Alruna","Swanhild","Thusnelda","Frida","Ramis","Gudrun","Sigrun","Brunhild","Ostara","Waldrada","Hildegund","Ermengard","Adela"],
 };
 /* Pronouns, so the chronicle is not talking about the wrong person. */
 const PR = g => (g && g.sex==="f")
@@ -1901,20 +1901,25 @@ const fullName = g=> g.nick? `${g.name}, ${g.nick}` : g.name;
 function chron(d, text, kind){ d.log.unshift({ week:d.week, text, kind:kind||"info" }); d.log = d.log.slice(0,40); }
 
 /* two men in one house answering to the same name is nobody's idea of a roster */
-function freshName(d, pool){
+function freshName(d, pool, fem){
   const taken = new Set([
     ...(d.gladiators||[]).filter(g=>!isGone(g)).map(g=>g.name),
     ...(d.market||[]).map(g=>g.name),
   ]);
   const open = pool.filter(n=>!taken.has(n));
-  return pick(open.length ? open : pool);
+  if(open.length) return pick(open);
+  /* the man's own people are all spoken for — reach across the provinces for an
+     unused name of the right sex before ever handing out a duplicate */
+  const wider = [].concat(...(fem ? Object.values(FNAMES) : Object.values(ORIGINS).map(o=>o.names)))
+    .filter(n=>!taken.has(n));
+  return pick(wider.length ? wider : pool);
 }
 function genGladiator(d, quality){
   const origin = pick(Object.keys(ORIGINS));
   const cls = pick(Object.keys(CLASSES));
   const fem = R() < 0.10;
   const g = { id:d.nextId++, sex: fem?"f":"m",
-    name: freshName(d, fem ? FNAMES[origin] : ORIGINS[origin].names), nick:null, origin, cls,
+    name: freshName(d, fem ? FNAMES[origin] : ORIGINS[origin].names, fem), nick:null, origin, cls,
     morale:60, fatigue:0, wins:0, losses:0, kills:0, pfame:0, status:"active", injury:null,
     focus:CLASSES[cls].key[0], regimen:"palus", sparWith:null, age:ri(18,32), lastFought:-9, traits:[], legend:false, returnWeek:0,
     kit: defaultKit(cls), wear:{weapon:100,offhand:100,helm:100,armor:100}, strain:0, form:0, formLog:[], regard:ri(38,54), memory:[], scars:[], scarCap:{}, weeksAged:0 };
