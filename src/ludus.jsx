@@ -7557,7 +7557,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         </div>
       </div>
 
-      <div className="scroll" style={{width:"100%"}}><div style={{width:"100%",maxWidth:640,margin:"0 auto",padding:"14px 14px 20px"}}>
+      <div className="scroll" style={{width:"100%"}}><div style={{width:"100%",maxWidth:640,margin:"0 auto",padding:"14px 14px calc(76px + env(safe-area-inset-bottom))"}}>
 
         {(()=>{ const L = lessonFor(S, tab); if(!L || S.flags.noLessons) return null;
           return (
@@ -8751,7 +8751,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
 
       </div></div>
 
-      <nav className="bar" role="tablist" aria-label="Sections" style={{zIndex:20,background:"#14100c",borderTop:"1px solid #3e2f1f",display:"flex",paddingBottom:"env(safe-area-inset-bottom)"}}>
+      <nav className="bar" role="tablist" aria-label="Sections" style={{position:"fixed",left:0,right:0,bottom:0,zIndex:20,background:"#14100c",borderTop:"1px solid #3e2f1f",display:"flex",paddingBottom:"env(safe-area-inset-bottom)"}}>
         {[["ludus","Ludus",Landmark],["men","Familia",Users],["arena","Arena",Swords],["armory","Armory",Shield],["market","Market",ShoppingBag],["villa","Villa",Wine]].map(([k,l,I])=>(
           <button key={k} role="tab" aria-selected={tab===k} aria-label={l}
             className={`tabbtn ${tab===k?"on":""}`} onClick={()=>setTab(k)}><I size={17} aria-hidden="true"/>{l}</button>
