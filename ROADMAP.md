@@ -1268,6 +1268,11 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v0.65.2 — And the nav back
+v0.65.1 pinned the shell with all four insets *and* gave it a height. In CSS, when `top` and `height` are both set, `bottom` is ignored — so the box was as tall as the unit said rather than as tall as the viewport, and on a device where that unit resolved larger than the visible area the navigation row sat below the fold of an `overflow: hidden` box, unreachable.
+
+The height declarations are gone. `top: 0` and `bottom: 0` with no height makes the box exactly the viewport the browser reports, whatever that is this frame, and the flex column pins the header and the nav to its two ends. No units to guess wrong.
+
 ### v0.65.1 — The header, under Chrome's URL bar
 The shell was sized in `dvh`, which on Chrome for Android is the viewport with the toolbar *hidden*. While the URL bar is showing, that is taller than what you can actually see, so the body gained a hundred pixels of scroll and the top row — the house name and END WEEK — slid up underneath the browser.
 
@@ -1770,4 +1775,4 @@ Weekly loop, roster, training, fight sim with missio, market, parties, feasts, e
 
 ---
 
-*Last updated: v0.65.1*
+*Last updated: v0.65.2*
