@@ -8,7 +8,7 @@ const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap');
 .lr{overflow-x:hidden;max-width:100%;background:#171210;background-image:radial-gradient(1100px 560px at 50% -8%, #2b2115 0%, #171210 62%);color:#e8d9b8;font-family:'Cormorant Garamond',Georgia,serif;min-height:100vh;font-size:17px;line-height:1.45}
 .shell{position:fixed;top:0;left:0;right:0;display:flex;flex-direction:column;overflow:hidden;
-  height:100vh;height:100dvh;
+  height:100vh;height:100dvh;height:var(--app-h,100dvh);
   padding-top:env(safe-area-inset-top);z-index:1}
 .scroll{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 .bar{flex:0 0 auto}
@@ -6688,6 +6688,25 @@ export default function App(){
       setLegacy(r && r.value ? JSON.parse(r.value) : blankLegacy()); }
     catch(e){ setLegacy(blankLegacy()); }
   })(); }, []);
+  // Pin the app shell to the real visible height. Mobile Chrome mis-sizes
+  // position:fixed with vh/dvh/svh units, which pushes the bottom nav off
+  // screen; measuring the visual viewport in JS is the reliable fix.
+  useEffect(()=>{
+    const vv = window.visualViewport;
+    const setH = () => {
+      const h = (vv && vv.height) || window.innerHeight;
+      document.documentElement.style.setProperty("--app-h", h + "px");
+    };
+    setH();
+    window.addEventListener("resize", setH);
+    window.addEventListener("orientationchange", setH);
+    if (vv) vv.addEventListener("resize", setH);
+    return () => {
+      window.removeEventListener("resize", setH);
+      window.removeEventListener("orientationchange", setH);
+      if (vv) vv.removeEventListener("resize", setH);
+    };
+  }, []);
   const [plan,setPlan] = useState("none");
   const [held,setHeld] = useState(null);
   const [retrainFor,setRetrainFor] = useState(null);
