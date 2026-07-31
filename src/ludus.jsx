@@ -6,9 +6,9 @@ import { Coins, Star, Crown, Flame, Swords, Shield, Wine, Users, Landmark, Shopp
 const CSS = `
 *,*::before,*::after{box-sizing:border-box}
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap');
-.lr{overflow-x:hidden;max-width:100%;background:#171210;background-image:radial-gradient(1100px 560px at 50% -8%, #2b2115 0%, #171210 62%);color:#e8d9b8;font-family:'Cormorant Garamond',Georgia,serif;min-height:100vh;font-size:17px;line-height:1.45}
+.lr{overflow-x:clip;max-width:100%;background:#171210;background-image:radial-gradient(1100px 560px at 50% -8%, #2b2115 0%, #171210 62%);color:#e8d9b8;font-family:'Cormorant Garamond',Georgia,serif;min-height:100vh;font-size:17px;line-height:1.45}
 .shell{position:relative;min-height:100vh}
-.scroll{width:100%;overflow-x:hidden}
+.scroll{width:100%}
 .bar{flex:0 0 auto}
 .disp{font-family:'Cinzel',serif;letter-spacing:.1em}
 .panel{background:linear-gradient(165deg,#261d15,#1d1610);border:1px solid #3e2f1f;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.35)}
