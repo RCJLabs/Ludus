@@ -7,10 +7,8 @@ const CSS = `
 *,*::before,*::after{box-sizing:border-box}
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap');
 .lr{overflow-x:hidden;max-width:100%;background:#171210;background-image:radial-gradient(1100px 560px at 50% -8%, #2b2115 0%, #171210 62%);color:#e8d9b8;font-family:'Cormorant Garamond',Georgia,serif;min-height:100vh;font-size:17px;line-height:1.45}
-.shell{position:fixed;top:0;left:0;right:0;display:flex;flex-direction:column;overflow:hidden;
-  height:100vh;height:100dvh;height:var(--app-h,100dvh);
-  padding-top:env(safe-area-inset-top);z-index:1}
-.scroll{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.shell{position:relative;min-height:100vh}
+.scroll{width:100%;overflow-x:hidden}
 .bar{flex:0 0 auto}
 .disp{font-family:'Cinzel',serif;letter-spacing:.1em}
 .panel{background:linear-gradient(165deg,#261d15,#1d1610);border:1px solid #3e2f1f;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.35)}
@@ -6688,25 +6686,29 @@ export default function App(){
       setLegacy(r && r.value ? JSON.parse(r.value) : blankLegacy()); }
     catch(e){ setLegacy(blankLegacy()); }
   })(); }, []);
-  // Pin the app shell to the real visible height. Mobile Chrome mis-sizes
-  // position:fixed with vh/dvh/svh units, which pushes the bottom nav off
-  // screen; measuring the visual viewport in JS is the reliable fix.
+  // The header (top) and nav (bottom) are position:fixed over a naturally
+  // scrolling body. Measure their real heights so the content always pads
+  // clear of them — this avoids viewport-height units, which mobile Chrome
+  // mis-reports (it was cutting off the nav and the last on-screen controls).
   useEffect(()=>{
-    const vv = window.visualViewport;
-    const setH = () => {
-      const h = (vv && vv.height) || window.innerHeight;
-      document.documentElement.style.setProperty("--app-h", h + "px");
+    const root = document.documentElement;
+    const hdr = document.querySelector(".shell > .bar");
+    const nav = document.querySelector('.shell > nav[role="tablist"]');
+    const set = () => {
+      if (hdr) root.style.setProperty("--hdr-h", hdr.offsetHeight + "px");
+      if (nav) root.style.setProperty("--nav-h", nav.offsetHeight + "px");
     };
-    setH();
-    window.addEventListener("resize", setH);
-    window.addEventListener("orientationchange", setH);
-    if (vv) vv.addEventListener("resize", setH);
+    set();
+    const ro = typeof ResizeObserver!=="undefined" ? new ResizeObserver(set) : null;
+    if (ro){ if(hdr) ro.observe(hdr); if(nav) ro.observe(nav); }
+    window.addEventListener("resize", set);
+    window.addEventListener("orientationchange", set);
     return () => {
-      window.removeEventListener("resize", setH);
-      window.removeEventListener("orientationchange", setH);
-      if (vv) vv.removeEventListener("resize", setH);
+      if (ro) ro.disconnect();
+      window.removeEventListener("resize", set);
+      window.removeEventListener("orientationchange", set);
     };
-  }, []);
+  }, [screen]);
   const [plan,setPlan] = useState("none");
   const [held,setHeld] = useState(null);
   const [retrainFor,setRetrainFor] = useState(null);
@@ -7531,7 +7533,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
     <div className="lr shell">
       <style>{CSS}</style>
 
-      <div className="bar" style={{zIndex:20,background:"linear-gradient(180deg,#1d1610,rgba(23,18,16,.96))",borderBottom:"1px solid #3e2f1f",padding:"10px 14px"}}>
+      <div className="bar" style={{position:"fixed",top:0,left:0,right:0,zIndex:20,background:"linear-gradient(180deg,#1d1610,rgba(23,18,16,.96))",borderBottom:"1px solid #3e2f1f",padding:"calc(10px + env(safe-area-inset-top)) 14px 10px"}}>
         <div className="flex items-center justify-between gap-2">
           <div style={{minWidth:0}}>
             <div className="disp" style={{fontSize:15,fontWeight:900,color:"#e8d092",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{S.name.toUpperCase()}{(S.generation||1)>1 && <span style={{fontSize:12,color:"#b09b7d"}}> · {["","","II","III","IV","V","VI","VII"][S.generation]||S.generation}</span>}</div>
@@ -7557,7 +7559,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         </div>
       </div>
 
-      <div className="scroll" style={{width:"100%"}}><div style={{width:"100%",maxWidth:640,margin:"0 auto",padding:"14px 14px calc(76px + env(safe-area-inset-bottom))"}}>
+      <div className="scroll" style={{width:"100%"}}><div style={{width:"100%",maxWidth:640,margin:"0 auto",padding:"calc(var(--hdr-h,84px) + 14px) 14px calc(var(--nav-h,72px) + 14px)"}}>
 
         {(()=>{ const L = lessonFor(S, tab); if(!L || S.flags.noLessons) return null;
           return (
