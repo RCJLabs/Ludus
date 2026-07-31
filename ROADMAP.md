@@ -1268,6 +1268,11 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v0.65.1 — The header, under Chrome's URL bar
+The shell was sized in `dvh`, which on Chrome for Android is the viewport with the toolbar *hidden*. While the URL bar is showing, that is taller than what you can actually see, so the body gained a hundred pixels of scroll and the top row — the house name and END WEEK — slid up underneath the browser.
+
+Three changes: the shell is now `position: fixed` and pinned to all four edges rather than merely being tall; it is sized in **`svh`**, which is the viewport *with* browser chrome shown and therefore always fits; and the body is stopped from scrolling at all while the shell is up. It also pads for a notch at the top, matching the home-indicator padding already on the nav.
+
 ### v0.65.0 — The doctrine of the house
 You could always end up with a reputation. Now you can commit to one, out loud, and pay for it in both directions.
 
@@ -1765,4 +1770,4 @@ Weekly loop, roster, training, fight sim with missio, market, parties, feasts, e
 
 ---
 
-*Last updated: v0.65.0*
+*Last updated: v0.65.1*

@@ -19,7 +19,7 @@ const html = `<!doctype html>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 <title>LVDVS — Blood &amp; Sand</title>
-<style>*,*::before,*::after{box-sizing:border-box}html,body{margin:0;padding:0;background:#171210;max-width:100%;overflow-x:hidden}#root{min-height:100vh}</style>
+<style>*,*::before,*::after{box-sizing:border-box}html,body{margin:0;padding:0;background:#171210;max-width:100%;overflow-x:hidden}#root{min-height:100vh}html:has(.shell),body:has(.shell){height:100%;overflow:hidden;overscroll-behavior:none}</style>
 <script>
 (function(){
   if (window.storage) return;
