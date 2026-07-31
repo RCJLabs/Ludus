@@ -1,6 +1,6 @@
 {
   "name": "lvdvs",
-  "version": "0.65.2",
+  "version": "0.65.3",
   "private": true,
   "description": "LVDVS - a gladiator ludus management sim. Blood, sand, and the fortunes of a Roman house.",
   "scripts": { "build": "node build.js" },
