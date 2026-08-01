@@ -88,6 +88,13 @@ const CSS = `
 .optrow.on{border-color:#c99a4b;background:linear-gradient(165deg,#332816,#241b11)}
 .reduce-motion *,.reduce-motion *::before,.reduce-motion *::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
 .lr.large-text{font-size:19.5px}
+.sect{border:1px solid #3e2f1f;border-radius:10px;background:linear-gradient(165deg,#241b11,#1d1610);overflow:hidden}
+.sect>summary{list-style:none;cursor:pointer;padding:12px 13px;display:flex;align-items:center;justify-content:space-between;gap:8px;
+  font-family:'Cinzel',serif;font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:#d8ac5f}
+.sect>summary::-webkit-details-marker{display:none}
+.sect>summary .chev{font-size:15px;color:#8a6a2c;line-height:1;transition:transform .15s;flex:0 0 auto}
+.sect[open]>summary .chev{transform:rotate(180deg)}
+.sect>.sectbody{padding:0 13px 13px}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}.spurt{display:none}.hitflash{display:none}}
 `;
 
@@ -8473,6 +8480,26 @@ function decodeSave(txt){
   }catch(e){ return null; }
 }
 
+/* A collapsible section. Uncontrolled <details> so the browser owns the
+   open/closed state and it survives the game's frequent re-renders; the
+   initial state is set once on mount. */
+function Sect({ title, note, open, children }){
+  const ref = useRef(null);
+  useEffect(()=>{ if(ref.current) ref.current.open = !!open; }, []);
+  return (
+    <details className="sect" ref={ref}>
+      <summary>
+        <span style={{minWidth:0,overflow:"hidden",textOverflow:"ellipsis"}}>{title}</span>
+        <span style={{display:"flex",alignItems:"center",gap:8,flex:"0 0 auto"}}>
+          {note!=null && note!=="" && <span className="dim" style={{fontSize:12,letterSpacing:0,textTransform:"none",fontFamily:"'Cormorant Garamond',Georgia,serif"}}>{note}</span>}
+          <span className="chev" aria-hidden="true">⌄</span>
+        </span>
+      </summary>
+      <div className="sectbody">{children}</div>
+    </details>
+  );
+}
+
 export default function App(){
   const [screen,setScreen] = useState("loading");
   const [S,setS] = useState(null);
@@ -8511,6 +8538,7 @@ export default function App(){
   // apart from the save slots so they survive switching or wiping houses.
   const [prefs,setPrefs] = useState(DEFAULT_PREFS);
   const [showSettings,setShowSettings] = useState(false);
+  const [allTodos,setAllTodos] = useState(false);
   useEffect(()=>{ (async ()=>{
     try { const r = await window.storage.get(PREFS_KEY);
       setPrefs({ ...DEFAULT_PREFS, ...(r && r.value ? JSON.parse(r.value) : {}) }); }
@@ -9562,7 +9590,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
 
 
         {tab==="ludus" && (<div className="flex flex-col gap-3">
-          {(()=>{ const ALL = agenda(S), AG = ALL.slice(0, 7), rest = ALL.length - AG.length;
+          {(()=>{ const ALL = agenda(S), AG = allTodos ? ALL : ALL.slice(0, 7), rest = ALL.length - AG.length;
+            const TABN = { ludus:"Ludus", men:"Familia", arena:"Arena", armory:"Armory", market:"Market", villa:"Villa" };
             const banners = [];
             if(S.war && !S.war.done) banners.push(["#7c2a22", warStage(S).name, "the war in the south"]);
             if(S.primus) banners.push([S.primus.mine?"#c99a4b":"#4e3c26", S.primus.mine?"Primus of Capua":`Primacy · ${S.primus.house}`, S.primus.mine?S.primus.name:""]);
@@ -9631,13 +9660,21 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                           <span style={{fontSize:14.5,color:a.urgency===3?"#e8d9b8":"#cfc0a0",textAlign:"left"}}>{a.label}</span>
                           <span className="rowval" style={{fontSize:12,color:URG[a.urgency].c,whiteSpace:"nowrap"}}>{URG[a.urgency].w}</span>
                         </div>
-                        <div className="dim" style={{fontSize:13,textAlign:"left"}}>{a.sub}</div>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="dim" style={{fontSize:13,textAlign:"left"}}>{a.sub}</span>
+                          <span className="rowval" style={{fontSize:11.5,color:"#8a7a58",whiteSpace:"nowrap"}}>{TABN[a.tab]||""} ›</span>
+                        </div>
                       </button>
                     ))}
                 {rest > 0 && (
-                  <div className="dim" style={{fontSize:13,fontStyle:"italic",textAlign:"center",marginTop:5}}>
-                    and {rest} smaller thing{rest===1?"":"s"} besides
-                  </div>
+                  <button className="btn btn-ghost" style={{width:"100%",marginTop:3,padding:"7px 9px",fontSize:11}} onClick={()=>setAllTodos(true)}>
+                    Show {rest} more
+                  </button>
+                )}
+                {allTodos && ALL.length > 7 && (
+                  <button className="btn btn-ghost" style={{width:"100%",marginTop:3,padding:"7px 9px",fontSize:11}} onClick={()=>setAllTodos(false)}>
+                    Show fewer
+                  </button>
                 )}
               </div>
             </>); })()}
@@ -10492,11 +10529,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         {tab==="villa" && (<div className="flex flex-col gap-3">
           <div className="dim" style={{fontSize:14.5,fontStyle:"italic"}}>Favor opens doors fame cannot — sway in the arena when your man falls, and a seat at the primus when you have earned one.</div>
 
-          <div className="panel" style={{padding:13}}>
-            <div className="flex items-center justify-between" style={{marginBottom:6}}>
-              <span className="tag tag-gold">Those Who Watch</span>
-              <span className="dim" style={{fontSize:13}}>house standing {rnd(S.favor)}</span>
-            </div>
+          <Sect title="Those Who Watch" note={`standing ${rnd(S.favor)}`} open>
             {(S.patrons||[]).length===0 && <div className="dim" style={{fontSize:14.5,fontStyle:"italic"}}>No one of consequence has heard of you yet.</div>}
             {(S.patrons||[]).map(p=>{
               const w = p.want, item = w ? WANTS[w.kind] : null;
@@ -10550,7 +10583,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:9}}>
               A patron kept warm leans on the editor when your man is in the sand. One left to go cold talks at the baths instead.
             </div>
-          </div>
+          </Sect>
+          <Sect title="Throw a party" note="favor & fame">
           {Object.entries(PARTY).map(([k,p])=>(
             <div key={k} className="panel" style={{padding:13}}>
               <div className="flex items-center justify-between">
@@ -10563,14 +10597,9 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               </button>
             </div>
           ))}
+          </Sect>
           {lawOf(S).edicts.length>0 && (
-            <div className="panel" style={{padding:13, borderColor: inBreach(S).length? "#7c2a22" : "#4e3c26"}}>
-              <div className="flex items-center justify-between" style={{marginBottom:4}}>
-                <span className="tag tag-gold">What the law says</span>
-                <span className="rowval" style={{fontSize:12.5,color:lawOf(S).heat>=40?"#d96f5d":lawOf(S).heat>=15?"#d8ac5f":"#7a6b52"}}>
-                  {lawWord(S)}
-                </span>
-              </div>
+            <Sect title="What the law says" note={lawWord(S)}>
               {lawOf(S).edicts.map(k=>{ const E = EDICTS[k], bad = (()=>{ try{ return E.check(S); }catch(e){ return false; } })();
                 return (
                   <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:7,marginTop:7}}>
@@ -10588,15 +10617,11 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   </div>
                 ); })}
               {lawOf(S).fines>0 && <div className="dim" style={{fontSize:13,marginTop:6}}>Paid in fines: {lawOf(S).fines}d</div>}
-            </div>
+            </Sect>
           )}
 
           {(S.gold >= 4000 || Object.keys(S.works||{}).length>0) && (
-            <div className="panel" style={{padding:13, borderColor: workAny(S).length? "#c99a4b" : "#4e3c26"}}>
-              <div className="flex items-center justify-between" style={{marginBottom:4}}>
-                <span className="tag tag-gold">Great works</span>
-                <span className="rowval dim" style={{fontSize:12.5}}>{workAny(S).length} of {WORK_KEYS.length} standing</span>
-              </div>
+            <Sect title="Great works" note={`${workAny(S).length} of ${WORK_KEYS.length}`}>
               <div className="dim" style={{fontSize:14.5,fontStyle:"italic",marginBottom:7}}>
                 Things a house builds when it has outgrown buying men. They cost more than everything else put together and take years to finish.
               </div>
@@ -10620,17 +10645,10 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     )}
                   </div>
                 ); })}
-            </div>
+            </Sect>
           )}
 
-          <div className="panel" style={{padding:13}}>
-            <div className="flex items-center justify-between" style={{marginBottom:4}}>
-              <span className="tag tag-gold">The household</span>
-              <span className="rowval dim" style={{fontSize:12.5}}>
-                {householdCount(S)} of {HH_KEYS.length}
-                {householdCount(S)>0 && ` · ${HH_KEYS.reduce((n,k)=>n+(hasFolk(S,k)?HOUSEHOLD[k].wage:0),0)}d a week`}
-              </span>
-            </div>
+          <Sect title="The household" note={`${householdCount(S)} of ${HH_KEYS.length}`}>
             <div className="dim" style={{fontSize:14.5,fontStyle:"italic",marginBottom:7}}>
               A ludus was a household before it was a business. None of these people will ever be on a card and the place does not run without them.
             </div>
@@ -10651,16 +10669,10 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   </button>}
                 </div>
               ); })}
-          </div>
+          </Sect>
 
           {owedList(S).length>0 && (
-            <div className="panel" style={{padding:13, borderColor: liquid(S)<100 ? "#7c2a22" : "#4e3c26"}}>
-              <div className="flex items-center justify-between" style={{marginBottom:4}}>
-                <span className="tag tag-gold">Owed to the house</span>
-                <span className="rowval" style={{fontSize:13,color:liquid(S)<100?"#d96f5d":"#e0bd72"}}>
-                  {owedTotal(S)}d · you are {cashWord(S)}
-                </span>
-              </div>
+            <Sect title="Owed to the house" note={`${owedTotal(S)}d · ${cashWord(S)}`}>
               <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:6}}>
                 An editor who pays in sixty days is not the same as an editor who pays. You can wait, or sell the paper at {Math.round(discountRate(S)*100)}% to a man who does nothing else.
               </div>
@@ -10682,16 +10694,12 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     </div>
                   </div>
                 ); })}
-            </div>
+            </Sect>
           )}
 
           {(()=>{ const D = doctrineOf(S);
             return (
-              <div className="panel" style={{padding:13, borderColor: D? "#c99a4b":"#3e2f1f"}}>
-                <div className="flex items-center justify-between" style={{marginBottom:5}}>
-                  <span className="tag tag-gold">The doctrine of the house</span>
-                  {D && <span className="rowval dim" style={{fontSize:12.5}}>declared week {S.doctrine.since}</span>}
-                </div>
+              <Sect title="The doctrine of the house" note={D? D.name : "none set"}>
                 {D ? (<>
                   <div className="disp" style={{fontSize:16,color:"#e8d092"}}>{D.name}</div>
                   <div style={{fontSize:15,fontStyle:"italic",marginTop:3}}>{D.creed}</div>
@@ -10719,17 +10727,11 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 {D && <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:4}}>
                   Turning the house over costs nearly twice as much, twenty fame, and a week of every man wondering what the last year was for.
                 </div>}
-              </div>
+              </Sect>
             ); })()}
 
           {S.election && !S.election.done && (
-            <div className="panel" style={{padding:13, borderColor:"#6d5426"}}>
-              <div className="flex items-center justify-between" style={{marginBottom:5}}>
-                <span className="tag tag-gold">The aedileship</span>
-                <span className="rowval dim" style={{fontSize:12.5}}>
-                  {Math.max(0, 3-(S.week-S.election.week))} week{3-(S.week-S.election.week)===1?"":"s"} to the vote
-                </span>
-              </div>
+            <Sect title="The aedileship" note={`${Math.max(0, 3-(S.week-S.election.week))}w to the vote`} open>
               <div className="dim" style={{fontSize:14.5,fontStyle:"italic",marginBottom:8}}>
                 The names are on the walls. The aedile is the man who decides whose gladiators are on the card, what they are paid, and — when one of them is down and looking up — whether he leans forward.
               </div>
@@ -10759,16 +10761,11 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   Stay out of it
                 </button>
               )}
-            </div>
+            </Sect>
           )}
 
           {aedileOn(S) && (
-            <div className="panel" style={{padding:13,
-              borderColor: S.aedile.friendly? "#5a6a35" : S.aedile.hostile? "#7c2a22" : "#3e2f1f"}}>
-              <div className="flex items-center justify-between" style={{marginBottom:4}}>
-                <span className="tag">The aedile</span>
-                <span className="rowval dim" style={{fontSize:12.5}}>{S.aedile.until - S.week} weeks of his year left</span>
-              </div>
+            <Sect title="The aedile" note={`${S.aedile.until - S.week}w left`}>
               <div className="disp" style={{fontSize:14.5,color:"#e8d092"}}>{S.aedile.name}</div>
               <div className="dim" style={{fontSize:14,fontStyle:"italic",marginTop:3}}>
                 {S.aedile.friendly
@@ -10777,15 +10774,11 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   ? "He knows whose name was on the other man's list. One fewer bout on every card, purses a ninth lighter, and he does not look your way when a decision is being made."
                   : "He has no particular view of you, which is its own kind of position."}
               </div>
-            </div>
+            </Sect>
           )}
 
           {unhonoured(S).filter(m=>!m.done).length > 0 && (
-            <div className="panel" style={{padding:13, borderColor:"#6d5426"}}>
-              <div className="flex items-center justify-between" style={{marginBottom:5}}>
-                <span className="tag tag-gold">Not yet buried properly</span>
-                <span className="rowval dim" style={{fontSize:12.5}}>{RITE_WINDOW} weeks to decide</span>
-              </div>
+            <Sect title="Not yet buried properly" note={`${RITE_WINDOW}w to decide`} open>
               <div className="dim" style={{fontSize:14.5,fontStyle:"italic",marginBottom:8}}>
                 Funeral games are what a rich man's sons stage at his tomb. Nobody has ever staged them for a gladiator, which is exactly what makes it worth doing.
               </div>
@@ -10815,7 +10808,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     ); })}
                 </div>
               ))}
-            </div>
+            </Sect>
           )}
 
           {(()=>{ const L = loanLender(S);
@@ -10875,11 +10868,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               </div>
             ); })()}
 
-          <div className="panel" style={{padding:13, borderColor: collOn(S)? "#5a6a35":undefined}}>
-            <div className="flex items-center justify-between" style={{marginBottom:4}}>
-              <div className="disp" style={{fontSize:14,fontWeight:700}}>THE COLLEGIUM</div>
-              {collOn(S) && <span className="rowval dim" style={{fontSize:13}}>{collDues(S)}d / week</span>}
-            </div>
+          <Sect title="The collegium" note={collOn(S)? `${collDues(S)}d/wk` : "burial society"}>
             {!S.collegium ? (<>
               <div style={{fontSize:15}}>
                 A burial society. The house pays {COLL_DUES} denarii a week for every man on the roster, and when one of them dies there is a stone with his name on it, his style and the number of his victories — instead of a pit outside the wall.
@@ -10910,18 +10899,14 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 <button className="btn btn-ghost" style={{width:"100%",marginTop:8}} onClick={stopCollegium}>Stop the dues</button>
               </div>
             )}
-          </div>
+          </Sect>
 
-          <div className="panel" style={{padding:13,borderColor:"#4a5a35"}}>
-            <div className="flex items-center justify-between">
-              <div className="disp" style={{fontSize:14,fontWeight:700}}>A FEAST FOR THE FAMILIA</div>
-              <span className="gold">120d</span>
-            </div>
+          <Sect title="A feast for the familia" note="120d">
             <div className="dim" style={{fontSize:14.5,margin:"4px 0 8px"}}>Meat, honeyed wine, and a night without the whip. Loyalty is cheaper than rebellion.</div>
             <button className="btn" style={{width:"100%"}} disabled={S.gold<120 || S.week-S.lastFeast<3} onClick={feast}>
               {S.week-S.lastFeast<3? `The men feasted recently — ${3-(S.week-S.lastFeast)} week${3-(S.week-S.lastFeast)>1?"s":""}` : S.gold<120? "Not enough coin" : "Set the tables"}
             </button>
-          </div>
+          </Sect>
         </div>)}
 
         {tab==="armory" && (<div className="flex flex-col gap-3">
@@ -11286,11 +11271,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             })()}
             {(()=>{ const v = regardOf(selG), mem = (selG.memory||[]).slice().reverse();
               return (
-                <div className="panel" style={{padding:11,marginBottom:9,background:"#1c1610",borderColor:regardColour(v)}}>
-                  <div className="flex items-center justify-between" style={{marginBottom:3}}>
-                    <span className="tag">What he makes of you</span>
-                    <span className="rowval" style={{fontSize:13,color:regardColour(v)}}>{regardWord(v)}</span>
-                  </div>
+                <Sect title="What he makes of you" note={regardWord(v)}>
                   <Bar v={v} label="regard" color={`linear-gradient(90deg,#4a3a24,${regardColour(v)})`}/>
                   {mem.length===0
                     ? <div className="dim" style={{fontSize:14,fontStyle:"italic",marginTop:4}}>
@@ -11305,16 +11286,10 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                       </div>}
                   {regardLoyal(selG) && <div className="laurel" style={{fontSize:13.5,marginTop:5}}>No other house's coin will move him.</div>}
                   {regardRefuse(selG) && <div className="blood" style={{fontSize:13.5,marginTop:5}}>He does what he is told and not one thing more.</div>}
-                </div>
+                </Sect>
               ); })()}
             {selG.ambition && (
-              <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",
-                borderColor: selG.ambition.met? "#5a6a35" : selG.ambition.broken? "#7c2a22" : "#4e3c26"}}>
-                <div className="flex items-center justify-between gap-2" style={{marginBottom:4}}>
-                  <span className="tag">What he wants</span>
-                  {selG.ambition.promised && !selG.ambition.met && !selG.ambition.broken &&
-                    <span className="rowval tag tag-gold">You gave your word</span>}
-                </div>
+              <Sect title="What he wants" note={selG.ambition.met?"granted":selG.ambition.broken?"broken":selG.ambition.promised?"your word given":""}>
                 <div style={{fontSize:15}}>{ambWord(selG)}</div>
                 {(()=>{ const st = ambState(selG);
                   const line = {
@@ -11327,7 +11302,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   }[st] || ["dim",""];
                   return <div className={line[0]} style={{fontSize:13.5,fontStyle:"italic",marginTop:3}}>{line[1]}</div>;
                 })()}
-              </div>
+              </Sect>
             )}
             {selG.traits.length>0 && <div style={{marginBottom:8}}>
               {selG.traits.map(t=><div key={t} style={{fontSize:14.5}}><span className="tag tag-gold" style={{marginRight:6}}>{t}</span><span className="dim">{TRAITS[t]}</span></div>)}
