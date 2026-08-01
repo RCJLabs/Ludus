@@ -8539,6 +8539,7 @@ export default function App(){
   const [prefs,setPrefs] = useState(DEFAULT_PREFS);
   const [showSettings,setShowSettings] = useState(false);
   const [allTodos,setAllTodos] = useState(false);
+  const [showChron,setShowChron] = useState(false);
   useEffect(()=>{ (async ()=>{
     try { const r = await window.storage.get(PREFS_KEY);
       setPrefs({ ...DEFAULT_PREFS, ...(r && r.value ? JSON.parse(r.value) : {}) }); }
@@ -9789,9 +9790,10 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               ["book","The Record Book", `${(S.book&&S.book.n)||0} bouts`],
               ["carry","Carry It Out", "share this house"],
               ["standings","The Houses", (()=>{ const me = [...(S.rivals||[]).map(h=>h.fame), S.fame].sort((a,b)=>b-a);
-                return `${me.indexOf(S.fame)+1} of ${me.length} in Capua`; })()]].map(([k,l,sub])=>(
+                return `${me.indexOf(S.fame)+1} of ${me.length} in Capua`; })()],
+              ["chron","The Chronicle", `${S.log.length} line${S.log.length===1?"":"s"}`]].map(([k,l,sub])=>(
               <button key={k} className="optrow" style={{padding:11}}
-                onClick={()=>k==="annals"? setAnnals(true) : k==="carry"? carryOut() : setSheet(k)}>
+                onClick={()=>k==="annals"? setAnnals(true) : k==="carry"? carryOut() : k==="chron"? setShowChron(true) : setSheet(k)}>
                 <div className="disp" style={{fontSize:12.5,color:"#e8d092"}}>{l}</div>
                 <div className="dim" style={{fontSize:13.5,marginTop:2}}>{sub}</div>
               </button>
@@ -9947,16 +9949,6 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               <div style={{fontSize:15}}>Fight in the pits to earn coin and fame — first blood keeps your men alive; anything bloodier down there is a coin flip with a blade. At 25 fame the editors take notice and the games open, where famed men are far more likely to be spared. Train between bouts, watch fatigue, and mind the fire in your men — the best fighters are often the most dangerous to own.</div>
             </div>
           )}
-          <div className="panel" style={{padding:13}}>
-            <div className="tag" style={{marginBottom:8}}>The Chronicle</div>
-            {S.log.map((e,i)=>(
-              <div key={i} style={{padding:"4px 0",borderBottom:"1px dotted #33271a",fontSize:15,color:e.kind==="bad"?"#d98476":e.kind==="good"?"#cbc08e":e.kind==="event"?"#b9a8c8":"#cfc0a0"}}>
-                <span className="dim" style={{fontSize:12.5}}>W{e.week}</span> — {e.text}
-              </div>
-            ))}
-          </div>
-
-
           <div className="panel" style={{padding:13}}>
             {S.flags.noLessons && (
               <button className="btn btn-ghost" style={{width:"100%",marginBottom:9}}
@@ -11682,6 +11674,25 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             </div>
             {SHEETS[sheet].body()}
             <button className="btn" style={{width:"100%",marginTop:12}} onClick={()=>setSheet(null)}>Close</button>
+          </div>
+        </div>
+      )}
+
+      {showChron && (
+        <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:62}} onClick={()=>setShowChron(false)}>
+          <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
+            <div className="flex items-center justify-between" style={{marginBottom:10}}>
+              <div className="disp" style={{fontSize:15,fontWeight:900,letterSpacing:".12em",color:"#e8d092"}}>THE CHRONICLE</div>
+              <button className="btn btn-ghost" style={{padding:"6px 10px"}} aria-label="Close" onClick={()=>setShowChron(false)}><X size={14}/></button>
+            </div>
+            {S.log.length===0
+              ? <div className="dim" style={{fontSize:14.5,fontStyle:"italic"}}>Nothing written down yet. The house is new.</div>
+              : S.log.map((e,i)=>(
+                  <div key={i} style={{padding:"4px 0",borderBottom:"1px dotted #33271a",fontSize:15,color:e.kind==="bad"?"#d98476":e.kind==="good"?"#cbc08e":e.kind==="event"?"#b9a8c8":"#cfc0a0"}}>
+                    <span className="dim" style={{fontSize:12.5}}>W{e.week}</span> — {e.text}
+                  </div>
+                ))}
+            <button className="btn" style={{width:"100%",marginTop:12}} onClick={()=>setShowChron(false)}>Close</button>
           </div>
         </div>
       )}
