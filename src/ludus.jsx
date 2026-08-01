@@ -753,7 +753,7 @@ const legacyEarned = (L,k) => !!(L && LEGACIES[k] && (L[k]||0) >= LEGACIES[k].ne
 function legacyFrom(d){
   const R2 = houseRecord(d);
   return { freed:R2.freed, buried:R2.lost, bouts:(d.book&&d.book.n)||0,
-    primus:(d.flags.primusHeld||0), rome:(d.rome&&d.rome.won)||0, years:R2.years, houses:1,
+    primus:(d.flags.primusHeld||0), rome:Math.max((d.rome&&d.rome.won)||0, d.flags.romeBest||0), years:R2.years, houses:1,
     best:R2.best ? { name:R2.best.name, wins:R2.best.wins, house:d.name } : null };
 }
 function mergeLegacy(L, add){
@@ -4966,8 +4966,12 @@ function poachWeek(d){
    The invitation is the end of the run whichever way it falls. Three bouts on the
    imperial sand, where a lanista's Capuan standing buys him precisely nothing. */
 const ROME_BOUTS = 3;
-const romeReady = d => !d.rome && !d.romeOffer && !d.over && d.fame >= TIERS[4].fame - (d.flags.romeEarly?110:0)
+const ROME_FAME = 1000;      // the imperial games are the summit, not the next rung up
+const ROME_COOLDOWN = 45;    // weeks the city forgets you between campaigns
+const romeReady = d => !d.rome && !d.romeOffer && !d.over && d.fame >= ROME_FAME - (d.flags.romeEarly?150:0)
+  && (d.flags.primusHeld||0) >= 1                                          // prove it in Capua first
   && (!d.flags.romeDeclined || d.week - d.flags.romeDeclined >= 30)
+  && (!d.flags.romeReturned || d.week - d.flags.romeReturned >= ROME_COOLDOWN)
   && patronsOf(d).some(p=>p.rank==="senator" && p.favor>=70)
   && activeG(d).length >= 2;
 
@@ -4999,7 +5003,17 @@ function romeWeek(d){
     return;
   }
   if(r.fought >= ROME_BOUTS){
-    d.over = r.won >= 2 ? { kind:"triumph", won:r.won, name:d.name } : { kind:"romeFall", won:r.won, name:d.name };
+    const won = r.won, triumph = won >= 2;
+    const purse = rnd(triumph ? 1700 + won*750 : 500 + won*320);
+    d.gold += purse;
+    d.fame += triumph ? 280 : 90;
+    d.flags.romeRuns = (d.flags.romeRuns||0) + 1;
+    d.flags.romeBest = Math.max(d.flags.romeBest||0, won);
+    d.flags.romeReturned = d.week;
+    if(triumph){ addRep(d, "show", 8); d.flags.romeTriumph = (d.flags.romeTriumph||0) + 1; }
+    activeG(d).forEach(g=>{ g.morale = clamp(g.morale + (triumph ? 12 : -6), 0, 100); });
+    d.rome = null;                     // the house comes home — Rome is a milestone, not the grave
+    d.pendingRome = { won, triumph, purse };
   }
 }
 
@@ -6427,6 +6441,17 @@ const EVENTS = {
       return isAuctor(g) && key!=="quick"
         ? `${g.name} says it himself, which is the part nobody in the cells will forget: a man who was free this morning agreeing to be burned, bound, beaten and killed by the sword.`
         : SWEARING[key].line(d, g); } },
+  romeReturn: {
+    make(){ return null; },
+    run(d,ev,i){
+      if(ev.data.triumph && i===1){
+        d.over = { kind:"triumph", won:ev.data.won, name:d.name, chosen:true };
+        return `You lay the house down at its height, on the imperial laurel, with the ledger open at its best page. Few lanistae ever get to choose the moment. Fewer still choose this one.`;
+      }
+      return ev.data.triumph
+        ? `The house carries on — a Roman name now, with everything that brings to the gate. Rome remembers a while, and may send for you again.`
+        : `You put Rome behind you and go back to the sand you know. There is another card to make and men to make it with.`;
+    } },
   bayCall: {
     make(d){ if(d.city || d.travel || d.rome || d.fame < 90) return null;
       const men = activeG(d).filter(g=>g.pfame >= 22);
@@ -6931,7 +6956,7 @@ function endWeek(d){
   patronWeek(d);
   if(!d.rome && !d.city && !d.travel) poachWeek(d);
   romeWeek(d);
-  if(romeReady(d) && R()<0.5) offerRome(d);
+  if(romeReady(d) && R()<0.3) offerRome(d);
   sparSocial(d);
   weaveTies(d);
   d.gladiators.forEach(g=>{
@@ -6996,6 +7021,16 @@ function endWeek(d){
   }
   d.pendingEvent = null;
   updateRebellion(d);
+  if(d.pendingRome){ const pr = d.pendingRome; d.pendingRome = null;
+    d.pendingEvent = { id:"romeReturn", title: pr.triumph ? "Home in Triumph" : "The Long Road Home",
+      text: pr.triumph
+        ? `${pr.won} of ${ROME_BOUTS} won on the imperial sand, and the house comes home to Capua under the laurel — ${pr.purse}d in the strongbox and your name spoken in rooms you will never stand in. The games at Capua will look small for a while. What you make of it now is yours to decide.`
+        : `${pr.won} of ${ROME_BOUTS} on the imperial sand. Not the triumph the letter promised — but the house walked off Rome's floor on its own feet, which more than one great name has not. You come home lighter than you went. Capua is still Capua, and there is work in the morning.`,
+      choices: pr.triumph
+        ? ["Carry on — there is more to build", "Lay the house down here, at its height"]
+        : ["Take up the work again"],
+      data:{ won:pr.won, triumph:pr.triumph } };
+  }
   if(!d.pendingEvent && !d.rome && R()<0.14){ const ev=EVENTS.ambition.make(d); if(ev) d.pendingEvent=ev; }
   if(!d.pendingEvent && !d.rome && R()<0.45){ const ev=pickEvent(d); if(ev) d.pendingEvent=ev; }
   if(d.flags.spartacusAtLarge && R()<0.25){
@@ -8490,6 +8525,17 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         <button className="btn btn-ghost" style={{width:"100%",marginTop:4}} onClick={()=>{ setXfer({mode:"import"}); setXferIn(""); }}>Restore a house from a transfer code</button>
         <div className="dim" style={{textAlign:"center",fontSize:12.5,marginTop:10,fontStyle:"italic"}}>Three houses may run at once. Each keeps its own ledger between visits.</div>
       </div>
+      {ask && (
+        <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:70}} onClick={()=>setAsk(null)}>
+          <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()} style={{borderColor: ask.danger? "#7c2a22":"#4e3c26"}}>
+            <div className={`disp ${ask.danger?"blood":""}`} style={{fontSize:15,fontWeight:700,letterSpacing:".1em",marginBottom:8}}>{ask.title.toUpperCase()}</div>
+            <div style={{fontSize:16}}>{ask.text}</div>
+            <button className={`btn ${ask.danger?"btn-blood":""}`} style={{width:"100%",marginTop:14}}
+              onClick={()=>{ const r=ask.run; setAsk(null); r(); }}>{ask.confirm}</button>
+            <button className="btn btn-ghost" style={{width:"100%",marginTop:8}} onClick={()=>setAsk(null)}>Think again</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 
