@@ -1268,6 +1268,135 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v0.96.0 — The law
+Rome legislated this trade constantly — caps on how many armed men a private citizen could keep, a tax on every sale, decrees about who could be put on the sand. In ninety-five versions the game has never once told you that you cannot do something.
+
+**Five edicts**, up to three per campaign, arriving from week 22:
+
+| | |
+|---|---|
+| **On the keeping of armed men** | a cap set **one to three below what you already keep** — it is aimed at you |
+| **The tax on the sale of gladiators** | 8–14% on every purchase, collected before the man is off the block |
+| **On women upon the sand** | *"It names no house and everybody knows which houses it means"* |
+| **On fights without mercy** | not banned, licensed — 40–90d for the magistrate's seal on every sine card |
+| **On the condemned** | a house holding condemned men will account for them |
+
+Each arrives as a decision: **comply**, which costs nothing today and something on a day you have not thought about — or **carry on and hope**, which is what most houses do, *"and the difference between you and most houses is that somebody is already writing your name down."*
+
+**Heat accumulates while you are in breach** — 1.6 a week per edict broken, falling 0.9 a week when you are clean. *Nobody is looking at you · noticed once or twice · you are being watched · the magistrate has your name on a list.*
+
+**And then the inspector, who does not send word.** A man from the aedile's office standing in your yard with a wax tablet, who has been there long enough to have counted things. **Pay the fine** (−25 heat), **buy the tablet** at 55% of the fine — which works 72% of the time and, when it does not, *"he takes the money, writes it all down anyway, and adds a line about the money"* — or **let him write**, which is free and puts an account of exactly what this house is into the aedile's office.
+
+Measured on a house that plays: **1.6 edicts complying against 2.2 ignoring, heat 36 against 49.** A house that stays three men over the cap gets **8.1 visits and 2,519d in fines** across 120 weeks. A house that obeys never sees him at all.
+
+
+### v0.95.0 — The plan of the house
+A ludus was a square of cells around a yard. The game's subject has been pure abstraction for ninety-five versions — a list of numbers describing a place nobody could picture.
+
+**It is drawn now**, at the top of the home tab, and it changes as the house does:
+
+- **Carceres** along the north — six cells that light as the level rises
+- **The palus** down the west, with a post appearing for each level
+- **Armoury and infirmary** down the east — racked blades on one, and beds on the other that **turn red for each man currently on them**
+- **Balneae** along the south, which doubles in width if you build the great baths
+- **The yard** in the middle, with the **spina** in it once that work is standing
+- **The shrine** in the north-west corner, **the school** in the north-east, and **the tomb outside the south wall**, each appearing only when finished
+- **And the men**, standing about in it — pale for a sound man, amber for one at the far post, rust for one carrying something permanent, and red for a man who is refusing
+
+Underneath: *"Four walls, a yard, and whatever you brought with you"* for a new house, or *"12 of 15 wings raised, and 5 things that will outlast you"* for an old one.
+
+Rendered server-side and rasterised at both extremes before shipping — an empty house reads as dark rooms around a bare yard, and a complete one reads as a lit square with three monuments and a tomb on the road out. The difference is legible at a glance, which was the whole point.
+
+
+### v0.94.0 — A man better than you deserve
+Everything on the block has always scaled with the house looking at it. Nothing ever arrived that was simply out of your league.
+
+**Once per run**, after week 30 and 120 fame, a man appears that the whole town has come out to look at. Four of them exist and you will meet one: Verus, whose lanista died and whose estate is being broken up by a nephew who does not want any of it. Priscus, who fought a man to a standstill in front of the emperor and then sold himself back into it because there was nothing else he knew how to do. Flamma, who refused the rudis four times. Spiculus, who had a house and land and lost both in a way nobody will discuss.
+
+**What he is:** average stat **93 against an ordinary man's 55**, twenty-nine bouts behind him, potential 99 — and **3,096 denarii against 578** for the best man you would otherwise see. On the sand he wins **99% against your ordinary man's 58%.** His bearing is correspondingly high, because the best man you will ever own is the most dangerous to own.
+
+**And you almost certainly cannot afford him.** So the market offers the other way: **take the house apart.** Every piece of steel off the racks, every debt sold at a discount, and every gladiator but one led out through the gate — in one measured case **35 pieces, one debt and five men, raising 6,242d**. It costs 25 unrest, a memory in every surviving man, and *"everybody in Capua knows exactly what you are about to do."*
+
+**He waits three weeks.** Then *"Priscus, the Fury goes to House Solonius. Marcus Solonius paid it without haggling, in front of people, which was most of the point"* — and that rival gains 60 fame permanently.
+
+He appears in **92% of long campaigns, typically around week 74.** A house under 120 fame never sees him at all.
+
+
+### v0.93.0 — The week that is not a week
+Every turn has been seven days of identical shape, costing the same attention whether anything was in it or not. Measured across 960 weeks of a running house: **38% of weeks are genuinely quiet**, 53% ordinary, 9% full.
+
+A week is now weighted by what is actually in it — a pending event, a card your men can take, a deadline inside two weeks, a man refusing, an open election, an editor who has stopped paying, unrest near the fire. **When the total comes to nothing, the End Week button gains a companion: *Let it run · 4w*.**
+
+It advances as far as it can and **stops the instant anything wants you** — an event, a card, a doctore at the gate, a contract up, a succession. Nothing is skipped. Verified against the identical RNG state: three weeks batched and three weeks by hand produce **byte-identical week, gold, unrest and fame**. It is exactly N calls to `endWeek` with an early exit.
+
+Afterward a sheet says what went by: *"Four quiet weeks. They train, they eat, they argue about nothing, and the doctore reports that nothing needs reporting"* — followed by whatever the chronicle recorded while you were not looking.
+
+**27% fewer presses of the button across eighty weeks**, and every one of the removed presses was a week where the honest answer to *what do you want to do* was *nothing*.
+
+Two corrections during the build. The skip initially halted on any card at all rather than a card that had just arrived, so it never ran past one week; and a card nobody in the house could fight still counted as a busy week. Both now check whether the card is this week's and whether anyone can actually take it.
+
+
+### v0.92.0 — Great works, and the long middle
+Measured a campaign in 25-week bands and found the problem precisely. **Gold climbs from 638 a week to 27,569 while bouts stay flat at three.** The entire buildable game — every building level and one of every piece of steel — costs **26,580d**. A house at week 175 is sitting on more than that with nothing left to buy, and after week 75 the count of new things seen per band falls from 20 to 7.
+
+The long middle had no sink and no escalation. **Five great works**, each costing more than a wing of the ludus and taking years:
+
+| | | | |
+|---|---|---|---|
+| **A proper shrine** | 5,500d | 1 year | unrest falls 1.1 a week, forever |
+| **A spina for the yard** | 7,000d | 2 years | +4 crowd on every bout |
+| **A tomb for the house** | 8,500d | 2 years | +0.4 regard a week, and a death costs the cells far less |
+| **Baths worth the name** | 9,500d | 2 years | six more fatigue shed weekly |
+| **A school under your name** | 12,000d | 3 years | +3 fame a week |
+
+All five is **42,500d** against 26,580 for everything else in the game combined.
+
+They are slow on purpose — *"9,500 denarii gone in a morning, and nothing to show for it for two years"* — and they are the only things in the game that pay a dividend forever rather than once. The tomb is the one I would build: *"Every man in that block has now seen exactly where he is going, and it is not a ditch."*
+
+Measured effect on the problem: end-of-campaign gold falls from **27,569d to 13,088d**, and a long house finishes one or two. The agenda now says when there is coin in the box and nothing being built.
+
+
+### v0.91.0 — Rome remembers
+The gate moved to fame 1000 with a 45-week cooldown, which turned Rome from an ending into a summit you can revisit. The content still assumed one visit. **The city keeps notes now.**
+
+**Standing, which is not fame** — 12 per visit, 26 per triumph, 8 per bout taken:
+
+| | |
+|---|---|
+| never been | *nobody at all* |
+| one visit, took one | *nobody at all* |
+| two of three taken | *Rome has heard of you* |
+| three visits, two triumphs | *they know your house in Rome* |
+
+**And the greeting changes.** First time: *"Nobody here has heard of you and the man taking your names spells them wrong twice."* After a bad visit: *"They remember that you came and that you took nothing, and somebody says so within earshot on the first afternoon."* After a good one: *"He knows the house. You took 2 of three the last time and he has the tablet open at the page."*
+
+**Three editors**, one per visit, each with his own habit — the one who keeps a tablet on every house that ever fought there, the one who says almost nothing, and the one who is charming and has bankrupted two houses this year by being both.
+
+**The terms move with the standing.** Purses **×1.00 → ×1.45** (3,386d → 5,255d a card) and no-mercy cards **53% → 73%**, because a city that knows your house wants more from it. Being known is worth money and costs men.
+
+**And Rome does three things to a house that keeps coming back**, once per visit, gated on what you have already done there:
+
+- **matched** — the editor has thought about your man. The opponent comes with **6.4 wins behind him instead of none**
+- **watched** — somebody in the imperial box asks who owns the house from Capua. *"Your name is said aloud in a place where names are not usually said aloud."* +40 fame, +14 senator
+- **offer** — a Roman familia asks what it would take to buy your best, and *"names a figure that is not an insult, which is the insulting part"*
+
+A first visit gets none of these. A house that has triumphed gets two. It fires on **56% of return trips**, and the record book now carries what Rome makes of you.
+
+
+### v0.90.0 — The consolidation pass
+Thirty-one features across three bursts, every one verified in isolation and none against the others. This read the whole thing as a composite. Full findings in `CONSOLIDATION.md`; four things were wrong and one thing I expected to be wrong was fine.
+
+**Careers were dying out.** 245 men across ten 200-week campaigns: **171 died, and only 19% ever reached ten wins.** No per-bout rate had drifted — standard stakes still killed 2.1% and blood stakes still killed nobody. The composite was the problem: a campaign now runs 504 bouts across a roster of six, so 35 bouts is a coin flip and everyone eventually rolls it. The bout count rose when fatigue softened in v0.77 and the road to Rome lengthened in v0.89.1; the death rate was never re-checked against it.
+
+A veteran now carries his own guard on the missio — **+0.5 per win to a cap of 11**. Death per bout at standard stakes is now **12.3% for a novice in a house at no standing, 2% at standing 25, and near zero for a man with eight wins behind him.** A young house at low standing is where men die, which is where they should. **Mortality across a full campaign: 70% → 36%.**
+
+**Renown had drifted an order of magnitude past its gate.** The rudis wanted 62; a long career now reaches 625. Re-sampled across 1,950 man-weeks of ten-win veterans: median 119, 75th percentile 217. **The gate is 180**, where a third qualify — the same intent I calibrated at v0.77 against a game that produced a tenth of the numbers.
+
+**The agenda overflowed.** Busiest week seen was **11 items against a UI that shows 7**, and the four dropped were always the lowest urgency. Patron wants and strain warnings now collapse into single lines when several are live, and the panel says *"and 3 smaller things besides"* rather than silently hiding them. Busiest week is now **6**.
+
+**What was fine.** Multiplier stacking, the thing I most expected to be broken. Across 5,872 sampled man-weeks the total power multiplier runs 0.69 at the worst percentile to 1.00 at the best, median 0.92 — and almost all of the spread is fatigue rather than the trait stack, which spans 0.98 to 1.00. Fifteen systems compose sanely. And only two pieces of player-facing prose contain hard numbers, both still accurate, because the lessons describe mechanics qualitatively. That is worth keeping to as a rule.
+
+
 ### v0.89.0 — What never quite closes
 Scars already cost a stat and capped it. But a man carried off four times is not the same fighter with marks drawn on him. **Three wounds to the same place now leave something permanent**, and he finds out about it in the eleventh round.
 
@@ -2165,7 +2294,6 @@ Weekly loop, roster, training, fight sim with missio, market, parties, feasts, e
 - ✅ Self-contained layout CSS — no Tailwind dependency in the standalone build
 
 **Next up — the queue**
-- **A consolidation pass.** Thirty-one features in three bursts. Nothing has been played end to end asking *is this coherent* rather than *does this work*.
 - **The weekly loop's actual shape.** Agenda, charter, morning-afters, yard events, rival beats, deadlines, patron wants and events all compete for one screen. A turn may need triage rather than more content.
 - **The doctore as a character.** A training multiplier who appears in a dozen text lines as if he were a person. The most-mentioned man in the game and the least realised.
 - **Training that is not eight buttons.** A season plan that builds a man toward something over months, with a cost for changing your mind.
@@ -2179,4 +2307,4 @@ Weekly loop, roster, training, fight sim with missio, market, parties, feasts, e
 
 ---
 
-*Last updated: v0.89.0*
+*Last updated: v0.96.0*

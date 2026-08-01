@@ -1708,14 +1708,16 @@ function agenda(d){
       : `A levy of ${x.amount}d`;
     add(n<=0?3:2, x.kind==="levy"?"villa":"arena", lbl, n<=0?"due this week":n===1?"due next week":`${n} weeks`);
   }
-  for(const p of patronsOf(d)) if(p.want && p.want.due && p.want.due - d.week <= 2)
-    add(p.want.due<=d.week?3:2, "villa", `${p.name} is still waiting`, WANTS[p.want.kind].label.toLowerCase());
+  { const waiting = patronsOf(d).filter(p=>p.want && p.want.due && p.want.due - d.week <= 2);
+    if(waiting.length===1) add(waiting[0].want.due<=d.week?3:2, "villa", `${waiting[0].name} is still waiting`, WANTS[waiting[0].want.kind].label.toLowerCase());
+    else if(waiting.length>1) add(waiting.some(p=>p.want.due<=d.week)?3:2, "villa",
+      `${waiting.length} patrons are still waiting`, waiting.map(p=>p.name.split(" ").pop()).join(", ")); }
   if(d.romeOffer) add(3, "ludus", "Rome has sent for you", `${d.romeOffer.due - d.week} weeks to answer`);
   /* men */
   for(const g of activeG(d)){
     if(refusing(g)) add(3, "men", `${g.name} will not go out`, "and the block is watching");
     else if(g.ambition && g.ambition.despair) add(2, "men", `${g.name} has stopped asking`, "for the thing he wanted");
-    else if(strainOf(g) > 62) add(1, "men", `${g.name} is worked past what he has`, strainWord(strainOf(g)));
+
     if(SLOTS.some(s=>wears(GEAR[g.kit&&g.kit[s]]) && (g.wear&&g.wear[s]||100) < 25))
       add(1, "armory", `${g.name}'s steel is close to going`, "have it mended");
     else if(kitFaults(d,g).some(f=>f.why==="unfamiliar"))
@@ -1730,12 +1732,20 @@ function agenda(d){
   if(d.poach) add(2, "men", `${(d.gladiators.find(x=>x.id===d.poach.gid)||{}).name} is being talked to`, `House ${d.poach.house}`);
   if(d.loan && owes(d) > d.loan.principal*2) add(2, "villa", `${loanLender(d).name} is owed ${owes(d)}d`, "and it is getting away from you");
   if(d.reSignOffer) add(2, "men", "A contract is up", "he can re-sign or walk");
+  { const worn = activeG(d).filter(g=>strainOf(g) > 62);
+    if(worn.length===1) add(1, "men", `${worn[0].name} is worked past what he has`, strainWord(strainOf(worn[0])));
+    else if(worn.length>1) add(1, "men", `${worn.length} men are worked past what they have`, worn.map(g=>g.name).join(", ")); }
   for(const g of unsworn(d)) add(1, "men", `${g.name} has not been sworn in`, "open his page to have the oath said");
   for(const g of activeG(d)) if(canMaster(d,g)) add(1, "men", `${g.name} has earned his mastery`, "the doctore would say so out loud");
   { const f = ripeFeud(d); if(f) add(2, "men", `${f.a.name} and ${f.b.name} are close to it`, "the yard has noticed"); }
   if(d.doctoreOffer) add(2, "market", "A doctore is offering", "he will not wait long");
   if(d.unrest >= 70) add(2, "ludus", "The cells are close to fire", unrestWord(d.unrest));
   if(d.lanista && d.lanista.health < 30 && !d.heir) add(2, "ludus", "You are failing and have named nobody", "the house dies with you");
+  { const br = inBreach(d);
+    if(br.length) add(lawOf(d).heat>=45?3:2, "villa",
+      `The house is in breach of ${br.length===1?"an edict":br.length+" edicts"}`, lawWord(d)); }
+  if(d.gold >= 9000 && !WORK_KEYS.some(k=>workOn(d,k)) && WORK_KEYS.some(k=>!workDone(d,k)))
+    add(1, "villa", `${Math.round(d.gold)}d sitting in the box`, "there are things a house this old can build");
   if(liquid(d) < 120 && owedTotal(d) >= 250)
     add(2, "villa", `${owedTotal(d)}d owed to you and ${Math.round(liquid(d))} in the box`, "rich on paper is not rich");
   { const bad = owedList(d).filter(x=>d.week - x.due >= 4);
@@ -1831,6 +1841,14 @@ const LASTING = {
 };
 const LAST_KEYS = Object.keys(LASTING);
 const lastingOf = g => (g && g.lasting) || [];
+/* A veteran does not die at a novice's rate. He has been down before, he knows how
+   to go down, and the editor has more reason to lean the other way. Without this the
+   2% per bout that is right for one afternoon compounds to a coin flip over a career. */
+const veteranGuard = g => {
+  if(!g) return 0;
+  const w = g.wins || 0;
+  return Math.min(11, w*0.5 + Math.min(4, (g.pfame||0)/45));
+};
 const hasLasting = (g,k) => lastingOf(g).includes(k);
 const lastNum = (g, field, dflt) => lastingOf(g).reduce((n,k)=>{
   const L = LASTING[k]; return (L && L[field]!=null) ? n * L[field] : n; }, dflt==null?1:dflt);
@@ -2688,7 +2706,7 @@ function offerDoctore(d, g, kind){
 const potentialWord = p=> p<50?"a modest ceiling": p<70?"promise in him": p<85?"exceptional promise":"a fire the arena has not yet seen";
 const demeanor = dv=> dv<25?"Compliant": dv<45?"Watchful": dv<65?"Restless": dv<85?"Defiant":"A storm barely chained";
 const unrestWord = u=> u<25?"Docile": u<45?"Restless": u<65?"Simmering": u<80?"Mutinous":"On the edge of fire";
-const rudisEligible = g=> !isAuctor(g) && g.wins>=10 && g.pfame>=62;
+const rudisEligible = g=> !isAuctor(g) && g.wins>=10 && g.pfame>=180;
 const fullName = g=> g.nick? `${g.name}, ${g.nick}` : g.name;
 
 function chron(d, text, kind){ d.log.unshift({ week:d.week, text, kind:kind||"info" }); d.log = d.log.slice(0,40); }
@@ -3803,6 +3821,8 @@ function migrate(S){
   if(!S.metHouse) S.metHouse = {};
   if(!S.owed) S.owed = [];
   if(!S.household) S.household = {};
+  if(!S.works) S.works = {};
+  if(!S.law) S.law = { cap:99, tax:0, women:false, sineFee:0, damnati:false, edicts:[], heat:0, fines:0 };
   if(S.yardSeen==null) S.yardSeen = 0;
   if(S.yardMissed==null) S.yardMissed = 0;
   if(!S.pitch) S.pitch = "plain";
@@ -3880,7 +3900,7 @@ function newGameState(name, scen, seed, pitch){
     gladiators:[], market:[], games:null, pendingEvent:null, log:[], fallen:[], freed:[],
     seed: null, rngState: 0,
     lastParty:-9, lastFeast:-9, over:null, milestone600:false, flags:{learned:{}}, escaped:[], rebellion:null, gear:{}, retired:[],
-    doctore:null, doctoreMarket:[], doctoreOffer:null, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, defected:[], nemesis:null, primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], doctrine:null, kits:[], deadSteel:[], bay:null, mark:null, after:null, metHouse:{}, owed:[], household:{}, yardSeen:0, yardMissed:0, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, departed:[], reSignOffer:null, annals:[] };
+    doctore:null, doctoreMarket:[], doctoreOffer:null, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, defected:[], nemesis:null, primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], works:{}, law:null, doctrine:null, kits:[], deadSteel:[], bay:null, mark:null, after:null, metHouse:{}, owed:[], household:{}, yardSeen:0, yardMissed:0, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, departed:[], reSignOffer:null, annals:[] };
   d.rivals = makeRivals(d);
   const solo = S.men.length === 1;
   S.men.forEach((band,i)=>{
@@ -4300,7 +4320,7 @@ const bUpkeep = d => BKEYS.reduce((s,k)=>{ const L=bLevel(d,k); return s + (L? B
 const healSpeed   = (d,g) => (1 + bLevel(d,"valetudinarium")*0.45) * medicusMult(d) * pit(d,"heal") * (g? lastNum(g,"heal") : 1);
 const scarGuard   = d => [1, 0.85, 0.70, 0.55][bLevel(d,"valetudinarium")];
 const surgeonOK   = d => bLevel(d,"valetudinarium") >= 1;
-const bathRest    = d => bLevel(d,"balneae")*3;                        // fatigue shed per week
+const bathRest    = d => bLevel(d,"balneae")*3 + workPerk(d,"rest");                        // fatigue shed per week
 const bathMorale  = d => bLevel(d,"balneae")*0.5;
 const cellCalm    = d => bLevel(d,"carceres")*0.5;
 const gearPrice   = (d,p,slot) => { const F = festivalNow(d);
@@ -4975,21 +4995,360 @@ const romeReady = d => !d.rome && !d.romeOffer && !d.over && d.fame >= ROME_FAME
   && patronsOf(d).some(p=>p.rank==="senator" && p.favor>=70)
   && activeG(d).length >= 2;
 
+/* ---- THE LAW ----
+   Rome legislated this trade constantly — caps on how many armed men a private
+   citizen could keep, the tax on every sale, bans on who could be put on the sand.
+   You have never once been told you cannot do something. */
+const EDICTS = {
+  numbers: { name:"On the keeping of armed men", w:9,
+    say:"The Senate has taken an interest in how many trained fighters private citizens keep behind walls. There have been incidents. There is a number now.",
+    check:d=>d.gladiators.filter(g=>!isGone(g)).length > (d.law && d.law.cap || 6),
+    broke:d=>`You are keeping ${d.gladiators.filter(g=>!isGone(g)).length} where the edict allows ${d.law.cap}.`,
+    set:d=>{ d.law.cap = Math.max(4, d.gladiators.filter(g=>!isGone(g)).length - ri(1,3)); } },
+  vectigal:{ name:"The tax on the sale of gladiators", w:8,
+    say:"A levy on every man bought or sold, payable by the buyer, collected by a man who does not accept excuses and keeps his own ledger.",
+    check:()=>false,
+    set:d=>{ d.law.tax = 0.08 + R()*0.06; } },
+  women:   { name:"On women upon the sand", w:6,
+    say:"A decree of the Senate. It names no house and everybody knows which houses it means.",
+    check:d=>activeG(d).some(g=>isF(g)),
+    broke:d=>`You have ${activeG(d).filter(g=>isF(g)).length} on the roster in defiance of it.`,
+    set:d=>{ d.law.women = true; } },
+  sine:    { name:"On fights without mercy", w:7,
+    say:"Not banned. Licensed. Every card without missio now needs the magistrate's seal, and the seal is not free.",
+    check:()=>false,
+    set:d=>{ d.law.sineFee = ri(40, 90); } },
+  damnati: { name:"On the condemned", w:6,
+    say:"The courts want their sentences served where they can be seen. A house holding condemned men will account for them.",
+    check:d=>activeG(d).some(g=>isDamn(g)),
+    broke:d=>`There are ${activeG(d).filter(g=>isDamn(g)).length} condemned men in your cells and the paperwork has not been kept.`,
+    set:d=>{ d.law.damnati = true; } },
+};
+const EDICT_KEYS = Object.keys(EDICTS);
+const lawOf = d => d.law || (d.law = { cap:99, tax:0, women:false, sineFee:0, damnati:false, edicts:[], heat:0, fines:0 });
+const hasEdict = (d,k) => lawOf(d).edicts.includes(k);
+const inBreach = d => lawOf(d).edicts.filter(k=>{ try { return EDICTS[k].check(d); } catch(e){ return false; } });
+const lawWord = d => { const h = lawOf(d).heat;
+  return h>=70?"the magistrate has your name on a list" : h>=40?"you are being watched" : h>=15?"noticed once or twice" : "nobody is looking at you"; };
+/* an edict arrives, and it is aimed at houses like yours */
+function edictWeek(d){
+  const L = lawOf(d);
+  if(d.over || d.rome || d.city || d.travel) return;
+  if(d.week < 22 || L.edicts.length >= 3) return;
+  if(R() > 0.055) return;
+  const fit = EDICT_KEYS.filter(k=>!hasEdict(d,k));
+  if(!fit.length) return;
+  const tot = fit.reduce((n,k)=>n+EDICTS[k].w, 0);
+  let x = R()*tot, k = fit[0];
+  for(const c of fit){ x -= EDICTS[c].w; if(x<=0){ k=c; break; } }
+  L.edicts = [...L.edicts, k];
+  try { EDICTS[k].set(d); } catch(e){}
+  const E = EDICTS[k];
+  chron(d, `An edict is read out in the forum: ${E.name.toLowerCase()}. ${E.say}`, "bad");
+  if(d.pendingEvent){ lawOf(d).heat = clamp(lawOf(d).heat + 6, 0, 100); return; }
+  d.pendingEvent = { id:"edict", title:"An Edict Is Read Out",
+    text:`${E.name}. ${E.say}${EDICTS[k].check(d) ? " " + E.broke(d) : ""}`,
+    choices:["Comply", "Carry on and hope"], data:{ k } };
+}
+/* the inspector, who does not send word */
+function lawWeek(d){
+  const L = lawOf(d);
+  if(d.over || d.rome || d.city || d.travel) return;
+  const breach = inBreach(d);
+  L.heat = clamp(L.heat + (breach.length ? breach.length*1.6 : -0.9), 0, 100);
+  if(!breach.length || d.pendingEvent) return;
+  if(R() > 0.03 + L.heat*0.0012) return;
+  const fine = rnd((160 + d.fame*0.6) * breach.length);
+  d.pendingEvent = { id:"inspector", title:"He Did Not Send Word",
+    text:`A man from the aedile's office is standing in your yard with a wax tablet, and he has been there long enough to have counted things. ${breach.map(k=>EDICTS[k].broke(d)).join(" ")} He can write down what he has seen, or he can be persuaded that he saw something else.`,
+    choices:[`Pay the fine · ${fine}d`, `Buy the tablet · ${rnd(fine*0.55)}d`, "Let him write it down"],
+    data:{ fine, breach } };
+}
+const lawTax   = d => lawOf(d).tax || 0;
+const lawSine  = d => lawOf(d).sineFee || 0;
+const lawCap   = d => lawOf(d).cap || 99;
+
+/* ---- A MAN BETTER THAN YOU DESERVE ----
+   Everything on the block scales with the house looking at it. Nothing has ever
+   arrived that is simply out of your league. This is one man, once, whose price you
+   can only meet by taking the house apart — and a decade of consequence either way. */
+const PARAGONS = [
+  { name:"Verus", origin:"Thracian",
+    tale:"Twenty-nine bouts and the crowd at Praeneste stood for the whole of the last one. His lanista is dead and the estate is being broken up by a nephew who does not want any of it." },
+  { name:"Priscus", origin:"Gaul",
+    tale:"He fought the same man to a standstill in front of the emperor and they were both given the wooden sword, and then he sold himself back into it because there was nothing else he knew how to do." },
+  { name:"Flamma", origin:"Syrian",
+    tale:"Refused the rudis four times, which people say is either courage or a kind of illness. Nobody who has seen him on the sand argues that he does not belong there." },
+  { name:"Spiculus", origin:"Numidian",
+    tale:"A man with a house and land, given to him by somebody important, who lost both in a way nobody will discuss and is on the block by Thursday." },
+];
+const paragonOf = d => (d.market||[]).find(g=>g.paragon) || null;
+function makeParagon(d){
+  const P = pick(PARAGONS.filter(p=>!(d.flags.paragonSeen||[]).includes(p.name))) || pick(PARAGONS);
+  const g = genGladiator(d, ri(88, 97));
+  g.name = P.name; g.origin = P.origin;
+  g.paragon = { tale:P.tale };
+  STATS.forEach(k=>{ g[k] = clamp(g[k] + ri(14, 26), 20, 96); });
+  g.potential = clamp(g.potential + ri(10,18), 60, 99);
+  g.wins = ri(18, 34); g.losses = ri(2, 7); g.kills = ri(3, 11);
+  g.pfame = ri(180, 320);
+  g.age = ri(26, 31);
+  g.nick = pick(NICKS);
+  g.flaw = null; g.scouted = true;
+  g.defiance = clamp(g.defiance + ri(12, 24), 0, 100);   // the best man you will ever own
+  g.regard = ri(24, 40);                                  // and he owes you nothing yet
+  g.sworn = null;
+  g.price = rnd(gladValue(g) * 2.4);
+  d.flags.paragonSeen = [...(d.flags.paragonSeen||[]), P.name];
+  return g;
+}
+/* what he is worth against what you have */
+const paragonReach = (d,g) => {
+  const worth = d.gold + owedTotal(d) + Object.entries(d.gear||{})
+    .reduce((n,[id,c])=>n + (GEAR[id]&&wears(GEAR[id]) ? GEAR[id].price*0.5*c : 0), 0);
+  return { worth:Math.round(worth), price:g.price, short:Math.max(0, g.price - Math.round(worth)) };
+};
+/* everything you could turn into coin by Thursday */
+function liquidate(d, g){
+  const out = { steel:0, steelN:0, men:0, menN:0, debt:0, debtN:0 };
+  for(const [id,c] of Object.entries(d.gear||{})){
+    const it = GEAR[id]; if(!wears(it)) continue;
+    const free = (c||0) - gearUsed(d,id);
+    if(free > 0){ out.steel += rnd(it.price * resaleRate(d) * free); out.steelN += free; }
+  }
+  for(const x of owedList(d)){ out.debt += rnd(x.amount * discountRate(d)); out.debtN++; }
+  const spare = activeG(d).filter(x=>!isDamn(x) && !isAuctor(x)).sort((a,b)=>gladValue(a)-gladValue(b));
+  for(const m of spare.slice(0, Math.max(0, spare.length-1))){ out.men += rnd(gladValue(m)*0.55); out.menN++; }
+  out.total = out.steel + out.debt + out.men;
+  return out;
+}
+function sellTheHouse(d){
+  const L = liquidate(d);
+  for(const [id,c] of Object.entries(Object.assign({}, d.gear||{}))){
+    const it = GEAR[id]; if(!wears(it)) continue;
+    let free = (c||0) - gearUsed(d,id);
+    while(free-- > 0) sellGear(d, id);
+  }
+  for(const x of owedList(d).slice()) sellDebt(d, x.id);
+  const spare = activeG(d).filter(x=>!isDamn(x) && !isAuctor(x)).sort((a,b)=>gladValue(a)-gladValue(b));
+  const sold = spare.slice(0, Math.max(0, spare.length-1));
+  for(const m of sold){
+    d.gold += rnd(gladValue(m)*0.55);
+    favourLost(d, m, "sold");
+    annalsClose(d, m, "sold"); m.status = "sold";
+    d.gladiators.forEach(o=>{ if(o.status==="active"){ remember(d, o, "sold"); o.morale = clamp(o.morale-9,0,100); } });
+  }
+  d.unrest = clamp(d.unrest + sold.length*5, 0, 100);
+  chron(d, `The house is stripped to the walls. ${L.steelN} pieces of steel out the door, ${L.debtN? `every debt sold at a discount, ` : ""}and ${sold.length} men led out through the gate in one morning. Everybody in Capua knows exactly what you are about to do.`, "bad");
+  return L;
+}
+
+function paragonWeek(d){
+  if(d.over || d.rome || d.city || d.travel) return;
+  if(d.flags.paragonDone || paragonOf(d)) return;
+  if(d.week < 30 || d.fame < 120) return;
+  if((d.flags.paragonSeen||[]).length >= 2) return;
+  if(R() > 0.018) return;
+  const g = makeParagon(d);
+  d.market = [g, ...(d.market||[])];
+  d.flags.paragonWeek = d.week;
+  chron(d, `There is a man on the block this morning that the whole of Capua has come out to look at. ${fullName(g)}. ${g.paragon.tale} They want ${g.price} denarii and they are not going to have to wait long for it.`, "event");
+}
+/* he does not stay long */
+function paragonExpire(d){
+  const g = paragonOf(d);
+  if(!g) return;
+  if(d.week - (d.flags.paragonWeek||d.week) < 3) return;
+  d.market = (d.market||[]).filter(x=>x.id!==g.id);
+  d.flags.paragonDone = 1;
+  const h = pick(d.rivals||[]);
+  if(h){ h.fame += 60; h.grudge = clamp(h.grudge - 5, 0, 100);
+    chron(d, `${fullName(g)} goes to House ${h.name}. ${lanistaOf(h.name).name} paid it without haggling, in front of people, which was most of the point.`, "bad"); }
+  else chron(d, `${fullName(g)} is sold out of Capua entirely and that is the last anybody here sees of him.`, "bad");
+}
+
+/* ---- THE WEEK THAT IS NOT A WEEK ----
+   Every turn has been seven days of identical shape, costing the same attention
+   whether anything was in it or not. Measured: after week 75 a campaign sees a
+   third as many new things per band while the weeks keep arriving at the same rate.
+   This lets an empty stretch pass as one decision and a full one slow down. */
+function weekWeight(d){
+  if(d.over || d.rome || d.travel) return { kind:"held", n:1 };
+  let load = 0;
+  if(d.pendingEvent) load += 4;
+  if(d.games && d.games.offers && d.games.offers.length
+     && activeG(d).some(g=>canFight(g) && g.lastFought < d.week)) load += 3;
+  if(d.city) load += 2;
+  load += Math.min(4, deadlines(d).filter(x=>x.due - d.week <= 2).length * 2);
+  load += activeG(d).filter(g=>refusing(g)).length * 3;
+  if(d.election && !d.election.done) load += 2;
+  if((d.unburied||[]).some(m=>!m.done)) load += 1;
+  if(d.poach || d.doctoreOffer || d.reSignOffer || d.romeOffer) load += 2;
+  if(activeG(d).some(g=>canMaster(d,g))) load += 1;
+  if(owedList(d).some(x=>d.week - x.due >= 4)) load += 1;
+  if(d.unrest >= 68) load += 2;
+  return load >= 5 ? { kind:"full", n:1, load }
+       : load >= 1 ? { kind:"ordinary", n:1, load }
+       : { kind:"quiet", n:1, load };
+}
+/* how far you can safely skip: to the next thing that wants you */
+function weeksToSomething(d, cap){
+  const lim = cap || 6;
+  let n = 0;
+  const probe = clone(d);
+  for(let i=0;i<lim;i++){
+    /* the things that are already dated */
+    const dl = deadlines(probe).filter(x=>x.due - probe.week <= i+1);
+    if(dl.length && i>0) break;
+    if(probe.games && probe.games.week > probe.week && i>0) break;
+    n++;
+  }
+  return Math.max(1, Math.min(lim, n));
+}
+const QUIET_LINES = [
+  "Four quiet weeks. They train, they eat, they argue about nothing, and the doctore reports that nothing needs reporting.",
+  "A stretch of nothing. The yard works, the racks are counted, and the only thing anybody remembers afterward is the weather.",
+  "Weeks pass in the way weeks pass when a house is running properly, which is to say nobody could tell you what happened in any of them.",
+  "The season turns over without asking your opinion. Drills, meals, mending, and a great deal of sitting on the wall watching the road.",
+];
+/* run several weeks as one, stopping the moment something wants you */
+function skipWeeks(d, want){
+  const start = d.week;
+  let ran = 0;
+  for(let i=0;i<want;i++){
+    endWeek(d);
+    ran++;
+    if(d.pendingEvent || d.over || d.succession || d.romeOffer || d.doctoreOffer || d.reSignOffer) break;
+    if(d.games && d.games.week === d.week && d.games.offers && d.games.offers.length) break;
+  }
+  if(ran >= 2) chron(d, `${pick(QUIET_LINES)}`, "info");
+  return { ran, from:start, to:d.week };
+}
+
+/* ---- THE LONG MIDDLE ----
+   Measured: gold climbs from 638 a week to 27,569 while bouts stay flat at three.
+   The entire buildable game costs 26,580d, so a house past week 100 has more money
+   than uses for it and nothing new arrives. These are things only a rich, old house
+   can do, and each one costs more than everything else put together. */
+const WORKS = {
+  spina:   { name:"A spina for the yard", cost:7000, years:2,
+    blurb:"A stone spine down the middle of the training square, the way the real ones have. They will fight around it every day for the rest of their lives.",
+    done:"The men train around stone now, and the first time one of them goes out to a venue with a spina he does not have to think about it.",
+    perk:"crowd", n:4, say:"+4 crowd on every bout, forever." },
+  baths:   { name:"Baths worth the name", cost:9500, years:2,
+    blurb:"Not the plunge in the corner. Hot rooms, a masseur, and the kind of place a man will talk in.",
+    done:"They come out of it different. Whatever the medicus does, this does the other half.",
+    perk:"rest", n:6, say:"Six more fatigue shed every week, on top of everything else." },
+  chapel:  { name:"A proper shrine", cost:5500, years:1,
+    blurb:"Nemesis in stone, with a priest who comes on the right days. The men built one themselves out of nothing; this is the answer to that.",
+    done:"Somebody who is not you decided the house was worth a god, and then you agreed with him in stone.",
+    perk:"calm", n:1.1, say:"Unrest falls 1.1 a week, forever." },
+  school:  { name:"A school under your name", cost:12000, years:3,
+    blurb:"Boys sent to you to be trained and sent back. It is not a ludus, it is a reputation with a roof, and Capua has not had one in thirty years.",
+    done:"There are men in three towns who learned it here, and they say so.",
+    perk:"fame", n:3, say:"+3 fame a week, and the block hears about it." },
+  tomb:    { name:"A tomb for the house", cost:8500, years:2,
+    blurb:"Not a plot. A tomb, on the road out, with room for every man who ever wore your colours and space for the names to be cut.",
+    done:"Every man in that block has now seen exactly where he is going, and it is not a ditch.",
+    perk:"regard", n:0.4, say:"Every man's regard climbs 0.4 a week, and a death costs the cells far less." },
+};
+const WORK_KEYS = Object.keys(WORKS);
+const worksOf = d => d.works || {};
+const workDone = (d,k) => { const w = worksOf(d)[k]; return !!(w && w.left <= 0); };
+const workOn   = (d,k) => { const w = worksOf(d)[k]; return w && w.left > 0 ? w : null; };
+const workAny  = d => WORK_KEYS.filter(k=>workDone(d,k));
+const workPerk = (d, kind) => WORK_KEYS.reduce((n,k)=>
+  (workDone(d,k) && WORKS[k].perk===kind) ? n + WORKS[k].n : n, 0);
+function beginWork(d, k){
+  const W = WORKS[k];
+  if(!W || worksOf(d)[k]) return false;
+  if(d.gold < W.cost) return false;
+  d.gold -= W.cost;
+  d.works = Object.assign({}, worksOf(d), { [k]: { left: W.years * YEAR_WEEKS, began: d.week } });
+  chron(d, `Work begins on ${W.name.toLowerCase()}. ${W.cost} denarii gone in a morning, and nothing to show for it for ${W.years} years.`, "info");
+  return true;
+}
+function worksWeek(d){
+  const w = worksOf(d);
+  for(const k of Object.keys(w)){
+    if(w[k].left <= 0) continue;
+    w[k].left--;
+    if(w[k].left <= 0){
+      const W = WORKS[k];
+      d.fame += 30;
+      activeG(d).forEach(g=>{ g.morale = clamp(g.morale+8,0,100); });
+      chron(d, `${W.name} is finished. ${W.done}`, "good");
+    }
+  }
+  /* what the finished ones do, week by week */
+  if(workPerk(d,"calm"))   d.unrest = clamp(d.unrest - workPerk(d,"calm"), 0, 100);
+  if(workPerk(d,"fame"))   d.fame += workPerk(d,"fame");
+  if(workPerk(d,"regard")) activeG(d).forEach(g=>{ g.regard = clamp(Math.round((regardOf(g) + workPerk(d,"regard"))*10)/10, 0, 100); });
+}
+
+/* ---- ROME REMEMBERS ----
+   The gate moved to fame 1000 with a cooldown, so Rome became a summit you can
+   revisit. The content still assumed one visit. This is what the second one is:
+   the same city, which has seen you, and an editor who kept the notes. */
+const ROME_EDITORS = [
+  { name:"Aulus Didius Gallus", note:"keeps a wax tablet on every house that has ever fought here and refers to it in front of you." },
+  { name:"Sextus Afranius Burrus", note:"says almost nothing and has already decided what your men are worth." },
+  { name:"Titus Vinius", note:"is charming, thorough, and has bankrupted two houses this year by being both." },
+];
+const romeRuns    = d => (d.flags && d.flags.romeRuns) || 0;
+const romeBest    = d => (d.flags && d.flags.romeBest) || 0;
+const romeTriumphs= d => (d.flags && d.flags.romeTriumph) || 0;
+/* the city's standing opinion of you, which is not fame */
+const romeStanding = d => clamp(romeRuns(d)*12 + romeTriumphs(d)*26 + romeBest(d)*8, 0, 100);
+const romeWord = d => { const v = romeStanding(d);
+  return v>=78?"they know your house in Rome" : v>=50?"Rome has heard of you" : v>=22?"a name they half recognise" : "nobody at all"; };
+const romeEditor = d => ROME_EDITORS[Math.min(ROME_EDITORS.length-1, romeRuns(d))] || ROME_EDITORS[0];
+/* what a second visit is not: the same visit */
+function romeGreeting(d){
+  const n = romeRuns(d), t = romeTriumphs(d), b = romeBest(d);
+  if(n === 0) return `Nobody here has heard of you and the man taking your names spells them wrong twice.`;
+  if(t > 0)   return `${romeEditor(d).name} knows the house. You took ${b} of three the last time and he has the tablet open at the page.`;
+  if(b > 0)   return `They remember you took ${b === 1 ? "one" : String(b)}. It was not enough to be talked about and it was enough not to be forgotten.`;
+  return `They remember that you came and that you took nothing, and somebody says so within earshot on the first afternoon.`;
+}
+/* a house Rome knows is offered better and worse */
+const romePurseMult = d => 1 + romeStanding(d)/100 * 0.45;
+const romeSineOdds  = d => 0.5 + romeStanding(d)/100 * 0.22;   // they want more from a house they know
+
 function offerRome(d){
   const sen = patronsOf(d).find(p=>p.rank==="senator" && p.favor>=70);
-  d.romeOffer = { senator: sen ? sen.name : "a senator of Rome", due: d.week + 4 };
-  chron(d, `A letter under an imperial seal. ${d.romeOffer.senator} has put your house forward for the games at Rome.`, "good");
+  d.romeOffer = { senator: sen ? sen.name : "a senator of Rome", due: d.week + 4, run: romeRuns(d)+1 };
+  chron(d, romeRuns(d)===0
+    ? `A letter under an imperial seal. ${d.romeOffer.senator} has put your house forward for the games at Rome.`
+    : `Another letter under the same seal. ${d.romeOffer.senator} does not explain why Rome wants you again, and the letter is shorter than the first one was.`, "good");
 }
 
 function makeImperialBout(d){
-  const opp = genOpponent(3, ri(92, 99));
+  const hard = !!(d.flags && d.flags.romeHardCard);
+  const opp = genOpponent(3, hard ? ri(97, 99) : ri(92, 99));
+  if(hard){ d.flags.romeHardCard = 0; opp.wins = (opp.wins||0) + ri(4,9); }
   opp.kit = kitFor(opp.cls, 3);
   opp.nick = opp.nick || pick(NICKS);
-  const sine = R() < 0.5;
+  const sine = R() < romeSineOdds(d);
   return { id:d.nextId++, tier:4, festival:"the imperial games", imperial:true,
     opp, oppRef:null, rematch:false, grudgeM:false, stakes: sine ? "sine" : "standard",
-    purse: rnd((TIERS[4].purse[0] + R()*TIERS[4].purse[1]) * (sine?1.5:1)) };
+    editor: romeEditor(d).name,
+    purse: rnd((TIERS[4].purse[0] + R()*TIERS[4].purse[1]) * (sine?1.5:1) * romePurseMult(d)) };
 }
+
+/* three things Rome does to a house that keeps coming back */
+const ROME_TURNS = {
+  matched: { need:d=>romeRuns(d)>=1, w:8,
+    say:d=>`${romeEditor(d).name} has matched your man against somebody he has clearly thought about. It is not a favour and it is not an insult. It is the card he thinks will fill the seats.`,
+    hit:d=>{ d.flags.romeHardCard = 1; } },
+  watched:  { need:d=>romeTriumphs(d)>=1, w:9,
+    say:d=>`Somebody in the imperial box asks who owns the house from Capua. Nobody answers immediately, which is answer enough, and your name is said aloud in a place where names are not usually said aloud.`,
+    hit:d=>{ d.fame += 40; patronsOf(d).forEach(p=>{ if(p.rank==="senator") p.favor = clamp(p.favor+14,0,100); }); recomputeFavor(d); } },
+  offer:    { need:d=>romeStanding(d)>=55, w:7,
+    say:d=>`A man from a Roman familia asks, without much circling, what it would take to buy your best. He names a figure that is not an insult, which is the insulting part.`,
+    hit:d=>{ d.flags.romeBid = 1; } },
+};
+const RT_KEYS = Object.keys(ROME_TURNS);
 
 function romeWeek(d){
   const r = d.rome;
@@ -4999,12 +5358,24 @@ function romeWeek(d){
     d.gold -= 40;
     chron(d, r.travel>0
       ? `The road north. Wagons, tolls, and men who have never been out of Campania looking at the hills.`
-      : `Rome. The imperial sand is bigger than the whole of your ludus, and it is already stained.`, "event");
+      : `Rome. The imperial sand is bigger than the whole of your ludus, and it is already stained. ${romeGreeting(d)}`, "event");
     return;
+  }
+  /* the city has its own business with you */
+  if(r.fought > 0 && r.fought < ROME_BOUTS && !r.turned){
+    const fit = RT_KEYS.filter(k=>{ try{ return ROME_TURNS[k].need(d); }catch(e){ return false; } });
+    if(fit.length && R() < 0.55){
+      const tot = fit.reduce((n,k)=>n+ROME_TURNS[k].w,0);
+      let x = R()*tot, k = fit[0];
+      for(const c of fit){ x -= ROME_TURNS[c].w; if(x<=0){ k=c; break; } }
+      r.turned = true;
+      try { ROME_TURNS[k].hit(d); } catch(e){}
+      chron(d, ROME_TURNS[k].say(d), k==="matched" ? "info" : "good");
+    }
   }
   if(r.fought >= ROME_BOUTS){
     const won = r.won, triumph = won >= 2;
-    const purse = rnd(triumph ? 1700 + won*750 : 500 + won*320);
+    const purse = rnd((triumph ? 1700 + won*750 : 500 + won*320) * romePurseMult(d));
     d.gold += purse;
     d.fame += triumph ? 280 : 90;
     d.flags.romeRuns = (d.flags.romeRuns||0) + 1;
@@ -5463,7 +5834,7 @@ function doMelee(d, ids, offer, pending, choice){
     if(e.dead){
       g.status = "dead";
       d.fallen.push({ name:fullName(g), week:d.week });
-      if(d.lanista) d.lanista.health = clamp(d.lanista.health - 1.3*collSoften(d)*(isDamn(g)?0.55:1)/docHealth(d), 0, 100);
+      if(d.lanista) d.lanista.health = clamp(d.lanista.health - 1.3*collSoften(d)*(isDamn(g)?0.55:1)*(workPerk(d,"regard")?0.7:1)/docHealth(d), 0, 100);
       collBury(d, g);
       markUnburied(d, g);
     if(d.lanista) d.lanista.health = clamp(d.lanista.health - 1.3, 0, 100);
@@ -5568,7 +5939,7 @@ function doVenatio(d, gid, offer, tactic, pending, choice){
   if(res.aDies){
     g.status = "dead"; g.fateNote = "beasts";
     d.fallen.push({ name:fullName(g)+" — to the beasts", week:d.week });
-    if(d.lanista) d.lanista.health = clamp(d.lanista.health - 1.3*collSoften(d)*(isDamn(g)?0.55:1)/docHealth(d), 0, 100);
+    if(d.lanista) d.lanista.health = clamp(d.lanista.health - 1.3*collSoften(d)*(isDamn(g)?0.55:1)*(workPerk(d,"regard")?0.7:1)/docHealth(d), 0, 100);
     favourLost(d, g, "dead");
     weekMark(d, "deaths");
     retireSteel(d, g);
@@ -5669,7 +6040,7 @@ function doPairFight(d, ids, offer, tactic, pending, choice){
     if(res.dead.A[i]){
       g.status = "dead";
       d.fallen.push({ name:fullName(g), week:d.week });
-      if(d.lanista) d.lanista.health = clamp(d.lanista.health - 1.3*collSoften(d)*(isDamn(g)?0.55:1)/docHealth(d), 0, 100);
+      if(d.lanista) d.lanista.health = clamp(d.lanista.health - 1.3*collSoften(d)*(isDamn(g)?0.55:1)*(workPerk(d,"regard")?0.7:1)/docHealth(d), 0, 100);
       collBury(d, g);
       markUnburied(d, g);
     if(d.lanista) d.lanista.health = clamp(d.lanista.health - 1.3, 0, 100);
@@ -5880,10 +6251,11 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   gc.lastStam = lastNum(g,"stam");
   gc.lastLate = lastNum(g,"latePow");
   gc.formStam = formStam(g);
-  const simCtx = { plan:PE, fav:favMissio(g) + pit(d,"mercy",0), doctrine:docMissio(d), footing:V.footing * W.footing, sky:W.stam, venue:V.missio, aedile: away ? 0 : aedileMissio(d), strange: away ? Math.max(0, 19 - knownIn(d, offer.city)*0.19) * docStrange(d) : 0,
+  if(offer.stakes==="sine" && lawSine(d) && !offer.sealed){ d.gold -= lawSine(d); offer.sealed = 1; }
+  const simCtx = { plan:PE, fav:favMissio(g) + veteranGuard(g) + pit(d,"mercy",0), doctrine:docMissio(d), footing:V.footing * W.footing, sky:W.stam, venue:V.missio, aedile: away ? 0 : aedileMissio(d), strange: away ? Math.max(0, 19 - knownIn(d, offer.city)*0.19) * docStrange(d) : 0,
       favor: imperial ? Math.min(d.favor, 20) : (away ? localStanding : d.favor), tier: Math.min(offer.tier,3),
       hostile:!!bribeHouse, patron: imperial ? null : (patron ? {name:patron.name, favor:patron.favor} : null),
-      repShow: femCrowd(g) + favCrowd(g) + W.crowd + provCrowd(g) + ((g.mastery && g.mastery.cls===g.cls) ? masteryCrowd(g) : 0) + (repStyle(d)==="show" ? 8 : 0) + (nem ? 10 : 0) + (away ? 0 : facCrowd(d, g.cls)) + seasonCrowd(d) + V.crowd,
+      repShow: workPerk(d,"crowd") + femCrowd(g) + favCrowd(g) + W.crowd + provCrowd(g) + ((g.mastery && g.mastery.cls===g.cls) ? masteryCrowd(g) : 0) + (repStyle(d)==="show" ? 8 : 0) + (nem ? 10 : 0) + (away ? 0 : facCrowd(d, g.cls)) + seasonCrowd(d) + V.crowd,
       guarded: choice==="cover" };
   let res;
   if(choice==="cloth"){
@@ -5990,7 +6362,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   if(res.aDies){
     g.status = "dead";
     d.fallen.push({ name:fullName(g), week:d.week });
-    if(d.lanista) d.lanista.health = clamp(d.lanista.health - 1.3*collSoften(d)*(isDamn(g)?0.55:1)/docHealth(d), 0, 100);
+    if(d.lanista) d.lanista.health = clamp(d.lanista.health - 1.3*collSoften(d)*(isDamn(g)?0.55:1)*(workPerk(d,"regard")?0.7:1)/docHealth(d), 0, 100);
     favourLost(d, g, "dead");
     weekMark(d, "deaths");
     retireSteel(d, g);
@@ -6451,6 +6823,46 @@ const EVENTS = {
       return ev.data.triumph
         ? `The house carries on — a Roman name now, with everything that brings to the gate. Rome remembers a while, and may send for you again.`
         : `You put Rome behind you and go back to the sand you know. There is another card to make and men to make it with.`;
+    } },
+  edict: {
+    make(){ return null; },
+    run(d,ev,i){
+      const E = EDICTS[ev.data.k];
+      if(i===0){
+        addRep(d, "craft", 4);
+        patronsOf(d).forEach(p=>{ if(p.rank==="magistrate") p.favor = clamp(p.favor+9,0,100); }); recomputeFavor(d);
+        lawOf(d).heat = clamp(lawOf(d).heat - 12, 0, 100);
+        return `You send word that the house will comply. It costs you nothing today and it will cost you something on a day you have not thought about yet.`;
+      }
+      lawOf(d).heat = clamp(lawOf(d).heat + 14, 0, 100);
+      addRep(d, "blood", 3);
+      return `You do nothing at all, which is what most houses will do, and the difference between you and most houses is that somebody is already writing your name down.`;
+    } },
+  inspector: {
+    make(){ return null; },
+    run(d,ev,i){
+      const L = lawOf(d);
+      if(i===0){
+        d.gold -= ev.data.fine;
+        L.fines += ev.data.fine;
+        L.heat = clamp(L.heat - 25, 0, 100);
+        return `You pay it in front of him and he writes the receipt out slowly. It is the cheapest thing that happened to you this month and it does not feel like it.`;
+      }
+      if(i===1){
+        const bribe = rnd(ev.data.fine*0.55);
+        d.gold -= bribe;
+        if(R() < 0.72){
+          L.heat = clamp(L.heat - 8, 0, 100);
+          return `The tablet is scraped clean in front of you and he leaves without writing anything. He will be back, and he will remember the arrangement, and so will you.`;
+        }
+        L.heat = clamp(L.heat + 22, 0, 100);
+        d.fame = Math.max(0, d.fame - 14);
+        patronsOf(d).forEach(p=>{ if(p.rank==="magistrate") p.favor = clamp(p.favor-20,0,100); }); recomputeFavor(d);
+        return `He takes the money, writes it all down anyway, and adds a line about the money. There is no version of this you come out of well.`;
+      }
+      L.heat = clamp(L.heat + 18, 0, 100);
+      d.fame = Math.max(0, d.fame - 6);
+      return `You let him write. He is thorough, he is not unkind about it, and the aedile's office now holds an account of exactly what this house is.`;
     } },
   bayCall: {
     make(d){ if(d.city || d.travel || d.rome || d.fame < 90) return null;
@@ -6929,6 +7341,11 @@ function endWeek(d){
   learnWeek(d);
   charterWeek(d);
   yardWeek(d);
+  edictWeek(d);
+  lawWeek(d);
+  paragonWeek(d);
+  paragonExpire(d);
+  worksWeek(d);
   householdWeek(d);
   owedWeek(d);
   rivalArc(d);
@@ -7573,6 +7990,110 @@ const BEAT_SFX = { clash:"clash", graze:"graze", hit:"hit", crit:"crit", fall:"f
 
 /* the stands are four constituencies and they do not sit together */
 const FAC_TINT = { parm:"#7d6a9c", scut:"#8a6a3c", mob:"#8c4438", front:"#5c6f4a" };
+/* ---- THE PLAN OF THE HOUSE ----
+   A ludus was a square of cells around a yard. The game's subject has been pure
+   abstraction for ninety versions. This is the place, drawn, changing as it is
+   built, with the men standing in it. */
+function LudusPlan({ S }){
+  const B = k => bLevel(S, k);
+  const has = k => workDone(S, k);
+  const men = activeG(S);
+  const hurt = S.gladiators.filter(g=>g.status==="injured").length;
+  const W = 300, H = 226;
+  const stone = "#4a3c28", lit = "#6d5531", dim = "#2b2318", floor = "#3a2f1e";
+  /* a room's fill deepens with its level */
+  const lvl = (k, base) => { const n = B(k); return n===0 ? dim : n===1 ? "#3c3120" : n===2 ? "#4e3f27" : base; };
+  const label = (x, y, t, on) => (
+    <text x={x} y={y} fontSize="7.2" fill={on ? "#c9b489" : "#6b5a44"}
+      fontFamily="Cormorant Garamond, Georgia, serif" textAnchor="middle" letterSpacing="0.4">{t}</text>
+  );
+  /* men stand about the yard */
+  const spots = [[118,120],[150,112],[178,126],[132,142],[164,146],[106,138],[190,110],[146,130]];
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{display:"block",borderRadius:8,background:"#1a1510"}}>
+      <defs>
+        <linearGradient id="sand" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#6b5533"/><stop offset="100%" stopColor="#8a6d40"/>
+        </linearGradient>
+      </defs>
+      <rect x="0" y="0" width={W} height={H} fill="#1a1510"/>
+      {/* the outer wall */}
+      <rect x="10" y="10" width={W-20} height={H-20} rx="3" fill={floor} stroke={stone} strokeWidth="2.5"/>
+      {/* the yard */}
+      <rect x="86" y="70" width="128" height="96" rx="2" fill="url(#sand)" opacity="0.85"/>
+      {has("spina") && <rect x="132" y="102" width="36" height="32" rx="3" fill="#5a4a30" stroke="#7d6640" strokeWidth="1"/>}
+      {label(150, 62, "THE YARD", true)}
+
+      {/* cells along the north — carceres */}
+      {[0,1,2,3,4,5].map(i=>(
+        <rect key={i} x={30+i*40} y="22" width="34" height="34" rx="1.5"
+          fill={lvl("carceres", lit)} stroke={stone} strokeWidth="1"/>
+      ))}
+      {label(150, 17, `CARCERES ${B("carceres")||""}`, B("carceres")>0)}
+
+      {/* palus posts down the west side */}
+      <rect x="22" y="70" width="56" height="96" rx="2" fill={lvl("palus", lit)} stroke={stone} strokeWidth="1"/>
+      {[0,1,2].map(i=>(
+        <g key={i}>
+          <rect x={46} y={82+i*30} width="7" height="18" rx="2" fill={B("palus")>i ? "#8a6d40" : "#3a3020"}/>
+        </g>
+      ))}
+      {label(50, 176, `PALUS ${B("palus")||""}`, B("palus")>0)}
+
+      {/* armoury and infirmary down the east */}
+      <rect x="222" y="70" width="56" height="44" rx="2" fill={lvl("armamentarium", lit)} stroke={stone} strokeWidth="1"/>
+      {[0,1,2].map(i=>(
+        <rect key={i} x={234+i*13} y="82" width="3" height="20" fill={B("armamentarium")>i ? "#c9b489" : "#3a3020"}/>
+      ))}
+      {label(250, 124, `ARMOURY ${B("armamentarium")||""}`, B("armamentarium")>0)}
+
+      <rect x="222" y="122" width="56" height="44" rx="2" fill={lvl("valetudinarium", lit)} stroke={stone} strokeWidth="1"/>
+      {[0,1,2].map(i=>(
+        <rect key={i} x={232} y={130+i*11} width="36" height="6" rx="1.5"
+          fill={i < hurt ? "#7c2a22" : (B("valetudinarium")>i ? "#5a4a30" : "#3a3020")}/>
+      ))}
+      {label(250, 176, `INFIRMARY ${B("valetudinarium")||""}`, B("valetudinarium")>0)}
+
+      {/* baths along the south */}
+      <rect x="86" y="180" width={has("baths") ? 128 : 74} height="26" rx="2"
+        fill={lvl("balneae", lit)} stroke={stone} strokeWidth="1"/>
+      {B("balneae")>0 && <ellipse cx={has("baths")?150:123} cy="193" rx={has("baths")?42:22} ry="8" fill="#3d5560" opacity="0.7"/>}
+      {label(has("baths")?150:123, 197, `BALNEAE ${B("balneae")||""}`, B("balneae")>0)}
+
+      {/* the great works stand where they were built */}
+      {has("chapel") && (<g>
+        <rect x="22" y="22" width="34" height="34" rx="1.5" fill="#3f3a2a" stroke="#8a9a5b" strokeWidth="1.2"/>
+        <path d="M 32 46 L 39 30 L 46 46 Z" fill="#8a9a5b" opacity="0.8"/>
+      </g>)}
+      {has("school") && (<g>
+        <rect x="244" y="22" width="34" height="34" rx="1.5" fill="#3f3629" stroke="#c99a4b" strokeWidth="1.2"/>
+        {[0,1,2].map(i=><rect key={i} x={250+i*9} y="30" width="4" height="18" fill="#c99a4b" opacity="0.75"/>)}
+      </g>)}
+      {has("tomb") && (<g>
+        <rect x="238" y="186" width="42" height="22" rx="1.5" fill="#332b20" stroke="#b09b7d" strokeWidth="1.2"/>
+        <rect x="256" y="190" width="6" height="14" fill="#b09b7d" opacity="0.7"/>
+      </g>)}
+
+      {/* the gate */}
+      <rect x="130" y={H-14} width="40" height="8" rx="1" fill="#2a2318" stroke={stone} strokeWidth="1.5"/>
+
+      {/* and the men, standing about in it */}
+      {men.slice(0,8).map((g,i)=>{
+        const [x,y] = spots[i] || spots[0];
+        const c = refusing(g) ? "#d96f5d" : g.learning ? "#d8ac5f" : lastingOf(g).length ? "#a8563f" : "#e8d9b8";
+        return (
+          <g key={g.id} opacity="0.95">
+            <circle cx={x} cy={y-5} r="2.6" fill={c}/>
+            <rect x={x-1.6} y={y-2} width="3.2" height="7.5" rx="1.4" fill={c}/>
+          </g>
+        );
+      })}
+      {hurt>0 && <text x={250} y="166" fontSize="6.5" fill="#d96f5d" textAnchor="middle"
+        fontFamily="Cormorant Garamond, Georgia, serif">{hurt} on the tables</text>}
+    </svg>
+  );
+}
+
 const CrowdRow = React.memo(function CrowdRow({ level, factions, venue }){
   const V = VEN(venue||"forum");
   const heads = V.crowd <= -16 ? 14 : V.crowd <= -9 ? 20 : 30;
@@ -8109,6 +8630,8 @@ export default function App(){
       setAsk({ title:"Ledger Restored", confirm:"Good", text:`${o.name} takes its place in the records — week ${o.week}, ${o.gladiators.filter(g=>!isGone(g)).length} men.`, run:()=>{} });
     })(); };
   const advance = ()=> mut(d=>endWeek(d));
+  const [skipped,setSkipped] = useState(null);
+  const runOn = () => mut(d=>{ const r = skipWeeks(d, weeksToSomething(d, 6)); setSkipped(r); });
 
   const chooseEv = i => {
     const d = clone(S);
@@ -8232,12 +8755,22 @@ export default function App(){
     g.regimen="spar"; g.sparWith=m.id; m.regimen="spar"; m.sparWith=g.id; });
   const buyG = id => mut(d=>{ const i=d.market.findIndex(m=>m.id===id); if(i<0) return;
     const g=d.market[i]; const count=d.gladiators.filter(x=>!isGone(x)).length;
-    if(d.gold<g.price || count>=8) return;
-    d.gold-=g.price; d.market.splice(i,1);
+    const tax = rnd(g.price * lawTax(d));
+    if(d.gold < g.price + tax || count>=8) return;
+    d.gold -= g.price + tax; d.market.splice(i,1);
+    if(tax) chron(d, `${tax} denarii to the vectigal on top of the price, collected before the man is off the block.`, "info");
     const w = defaultKit(g.cls).weapon;
     if(gearFree(d,w)<=0) d.gear[w] = (d.gear[w]||0)+1;   // he comes with the blade he was sold with
     g.kit = bareKit(g.cls);
     d.gladiators.push(g);
+    if(g.paragon){
+      d.flags.paragonDone = 1; d.flags.paragonBought = d.week;
+      d.fame += 70; addRep(d, "show", 10);
+      FAC_KEYS.forEach(k=>facMove(d, k, 8));
+      d.gladiators.forEach(o=>{ if(o.status==="active" && o.id!==g.id){ o.morale = clamp(o.morale+10,0,100); o.defiance = clamp(o.defiance+4,0,100); } });
+      chron(d, `${fullName(g)} is yours. Capua watched you pay it and the men in your cells watched the wagon come in, and nobody in either place is going to forget which morning this was.`, "good");
+      return;
+    }
     chron(d, isAuctor(g)
       ? `${g.name} of ${g.origin} signs for ${g.price} denarii and ${g.auctor.bouts} bouts. He swears the same sacramentum as every man in the cells — burned, bound, beaten, slain — and he chose it, which they find harder to watch than they expected.`
       : `${g.name} of ${g.origin} joins the ludus for ${g.price} denarii. ${PR(g).He} swears the sacramentum: to be burned, bound, beaten, and slain by the sword.`); });
@@ -8250,6 +8783,7 @@ export default function App(){
       ? `You pay to have ${g.name} looked over properly. He ${FLAWS[g.flaw].tell}. The seller does not meet your eye about it.`
       : `You pay to have ${g.name} looked over properly. He is exactly what the man said he was, which happens.`,
       g.flaw ? "bad" : "good"); });
+  const takeHouseApart = () => mut(d=>{ sellTheHouse(d); });
   const sellOne = id => mut(d=>{ const paid = sellGear(d, id);
     if(paid) chron(d, `${GEAR[id].name} goes back out the door for ${paid} denarii. The armoury is a room, not a warehouse.`, "info"); });
   const buyGear = id => mut(d=>{ const it=GEAR[id]; if(!it || d.gold<it.price) return;
@@ -8394,7 +8928,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
     const o = d.romeOffer; if(!o) return;
     d.romeOffer = null;
     if(accept){
-      d.rome = { travel:2, fought:0, won:0 };
+      d.rome = { travel:2, fought:0, won:0, turned:false, run:romeRuns(d)+1 };
       d.games = null;
       d.gladiators.forEach(g=>{ if(g.status==="active"){ g.morale=clamp(g.morale+8,0,100); g.defiance=clamp(g.defiance+4,0,100); } });
       chron(d, `You accept. The wagons are loaded within the week, and everyone in the cells knows where they are going.`, "good");
@@ -8786,6 +9320,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           Everything this house has done, since the day you were given the keys to it.
         </div>
         <div className="tag tag-gold" style={{marginBottom:3}}>The house</div>
+        {romeRuns(S)>0 && <Row l="Rome" v={romeWord(S)}
+          sub={`${romeRuns(S)} visit${romeRuns(S)===1?"":"s"}${romeTriumphs(S)?`, ${romeTriumphs(S)} taken`:""}, best ${romeBest(S)} of 3`}/>}
         <Row l="Seed" v={S.seed || "—"} sub="the same one builds the same Capua"/>
         <Row l="Years standing" v={K.R2.years} sub={(S.generation||1)>1 ? `${S.generation} lanistae` : null}/>
         <Row l="Bouts fought" v={B.n} sub={B.n? `${K.winPc}% won` : null}/>
@@ -8973,7 +9509,21 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           </div>
           <div className="flex items-center gap-2" style={{flexShrink:0}}>
             <button className="btn btn-ghost" aria-label="Settings" style={{padding:"9px 10px"}} onClick={()=>setShowSettings(true)}><Settings size={16} aria-hidden="true"/></button>
-            <button className="btn" onClick={advance} disabled={!!S.pendingEvent || !!S.doctoreOffer || !!S.romeOffer || !!S.reSignOffer || !!S.over}>End Week</button>
+            {(()=>{ const W = weekWeight(S);
+              const blocked = !!S.pendingEvent || !!S.doctoreOffer || !!S.romeOffer || !!S.reSignOffer || !!S.over;
+              if(W.kind==="quiet" && !blocked){
+                const n = weeksToSomething(S, 6);
+                return (
+                  <span className="flex gap-2">
+                    <button className="btn btn-ghost" onClick={advance}>End Week</button>
+                    <button className="btn" onClick={runOn} style={{whiteSpace:"nowrap"}}>
+                      Let it run · {n}w
+                    </button>
+                  </span>
+                );
+              }
+              return <button className="btn" onClick={advance} disabled={blocked}>End Week</button>;
+            })()}
           </div>
         </div>
         <div className="flex items-center gap-3" style={{marginTop:7,fontSize:13.5,flexWrap:"wrap"}}>
@@ -9012,7 +9562,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
 
 
         {tab==="ludus" && (<div className="flex flex-col gap-3">
-          {(()=>{ const AG = agenda(S).slice(0, 7);
+          {(()=>{ const ALL = agenda(S), AG = ALL.slice(0, 7), rest = ALL.length - AG.length;
             const banners = [];
             if(S.war && !S.war.done) banners.push(["#7c2a22", warStage(S).name, "the war in the south"]);
             if(S.primus) banners.push([S.primus.mine?"#c99a4b":"#4e3c26", S.primus.mine?"Primus of Capua":`Primacy · ${S.primus.house}`, S.primus.mine?S.primus.name:""]);
@@ -9031,7 +9581,20 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   ))}
                 </div>
               )}
-              {(()=>{ const C = charterAt(S); if(!C) return null;
+              <div className="panel" style={{padding:9}}>
+            <LudusPlan S={S}/>
+            <div className="flex items-center justify-between" style={{marginTop:6}}>
+              <span className="dim" style={{fontSize:13,fontStyle:"italic"}}>
+                {(()=>{ const built = BKEYS.reduce((n,k)=>n+bLevel(S,k),0), works = workAny(S).length;
+                  return built===0 ? "Four walls, a yard, and whatever you brought with you."
+                    : works>0 ? `${built} of 15 wings raised, and ${works} thing${works===1?"":"s"} that will outlast you.`
+                    : `${built} of 15 wings raised.`; })()}
+              </span>
+              <span className="rowval dim" style={{fontSize:12.5}}>{activeG(S).length} in the yard</span>
+            </div>
+          </div>
+
+          {(()=>{ const C = charterAt(S); if(!C) return null;
                 const i = S.charter.i;
                 return (
                   <div className="panel" style={{padding:13,borderColor:"#6d5426",background:"#1c1610"}}>
@@ -9071,6 +9634,11 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                         <div className="dim" style={{fontSize:13,textAlign:"left"}}>{a.sub}</div>
                       </button>
                     ))}
+                {rest > 0 && (
+                  <div className="dim" style={{fontSize:13,fontStyle:"italic",textAlign:"center",marginTop:5}}>
+                    and {rest} smaller thing{rest===1?"":"s"} besides
+                  </div>
+                )}
               </div>
             </>); })()}
           <div className="panel" style={{padding:16,textAlign:"center"}}>
@@ -9789,7 +10357,54 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               </div>
             ); })}
           <div className="dim" style={{fontSize:14,fontStyle:"italic"}}>The slaver's block. Fresh stock every third week. Roster holds 8 men.</div>
-          {S.market.map(g=>(
+          {(()=>{ const p = paragonOf(S); if(!p) return null;
+            const R2 = paragonReach(S, p), L = liquidate(S);
+            const canNow = S.gold >= p.price, canAfter = S.gold + L.total >= p.price;
+            const left = 3 - (S.week - (S.flags.paragonWeek||S.week));
+            return (
+              <div className="panel" style={{padding:13,borderColor:"#c99a4b",background:"#1c1610"}}>
+                <div className="flex items-center justify-between" style={{marginBottom:4}}>
+                  <span className="tag tag-gold">✦ The whole town has come to look</span>
+                  <span className="rowval dim" style={{fontSize:12.5}}>{left>0?`${left} week${left===1?"":"s"} to decide`:"today or not at all"}</span>
+                </div>
+                <div className="disp" style={{fontSize:17,color:"#e8d092"}}>{fullName(p)}</div>
+                <div className="dim" style={{fontSize:13.5,marginTop:1}}>
+                  {p.origin} · {p.cls} · {p.wins}–{p.losses}{p.kills?`, ${p.kills} killed`:""} · {rnd(p.pfame)} renown · {p.age}
+                </div>
+                <div style={{fontSize:15,fontStyle:"italic",marginTop:5}}>{p.paragon.tale}</div>
+                <div className="flex items-center justify-between gap-2" style={{marginTop:8}}>
+                  <span className="rowname" style={{fontSize:15}}>They want</span>
+                  <span className="rowval gold" style={{fontSize:16}}>{p.price}d</span>
+                </div>
+                <div className="dim" style={{fontSize:13.5}}>
+                  You have {Math.round(S.gold)} in the box{R2.short>0 && ` — ${R2.short} short`}.
+                </div>
+                {canNow ? (
+                  <button className="btn" style={{width:"100%",marginTop:8}} onClick={()=>buyG(p.id)}>
+                    Pay it
+                  </button>
+                ) : (
+                  <>
+                    <div className="panel" style={{padding:10,marginTop:8,background:"#2a1512",borderColor:"#7c2a22"}}>
+                      <div className="tag tag-blood" style={{marginBottom:3}}>Or take the house apart</div>
+                      <div className="dim" style={{fontSize:13.5}}>
+                        {L.steelN} pieces of steel off the racks, {L.debtN} debt{L.debtN===1?"":"s"} sold at a discount, and {L.menN} men led out through the gate — about <span className="gold">{L.total}d</span>.
+                      </div>
+                      <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:3}}>
+                        {canAfter ? "It would be enough. Every man left will remember the morning it happened." : `It would still leave you ${p.price - S.gold - L.total} short, which settles it.`}
+                      </div>
+                    </div>
+                    <button className="btn btn-ghost" style={{width:"100%",marginTop:6}} disabled={!canAfter}
+                      onClick={()=>setAsk({ title:"Strip The House", danger:true, confirm:"Sell it all",
+                        text:`Everything not on a man's back, every debt owed to you, and every gladiator but one. It raises about ${L.total} denarii and it cannot be undone.`,
+                        run:takeHouseApart })}>
+                      {canAfter ? "Take the house apart" : "Not even then"}
+                    </button>
+                  </>
+                )}
+              </div>
+            ); })()}
+          {S.market.filter(g=>!g.paragon).map(g=>(
             <div key={g.id} className="panel" style={{padding:12,borderColor:isAuctor(g)?"#5a7a8a":g.legend?"#8a6a2c":undefined}}>
               <div className="flex items-center justify-between">
                 <div className="disp" style={{fontSize:15,fontWeight:700}}>{g.name}</div>
@@ -9948,6 +10563,66 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               </button>
             </div>
           ))}
+          {lawOf(S).edicts.length>0 && (
+            <div className="panel" style={{padding:13, borderColor: inBreach(S).length? "#7c2a22" : "#4e3c26"}}>
+              <div className="flex items-center justify-between" style={{marginBottom:4}}>
+                <span className="tag tag-gold">What the law says</span>
+                <span className="rowval" style={{fontSize:12.5,color:lawOf(S).heat>=40?"#d96f5d":lawOf(S).heat>=15?"#d8ac5f":"#7a6b52"}}>
+                  {lawWord(S)}
+                </span>
+              </div>
+              {lawOf(S).edicts.map(k=>{ const E = EDICTS[k], bad = (()=>{ try{ return E.check(S); }catch(e){ return false; } })();
+                return (
+                  <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:7,marginTop:7}}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="rowname" style={{fontSize:14.5,color:bad?"#d98476":"#cfc0a0"}}>{E.name}</span>
+                      {bad && <span className="tag tag-blood">in breach</span>}
+                    </div>
+                    <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:1}}>
+                      {bad ? E.broke(S)
+                        : k==="numbers" ? `The edict allows ${lawCap(S)}. You keep ${S.gladiators.filter(g=>!isGone(g)).length}.`
+                        : k==="vectigal" ? `${Math.round(lawTax(S)*100)}% on every man you buy.`
+                        : k==="sine" ? `${lawSine(S)} denarii for the seal on every card without missio.`
+                        : "The house is within it."}
+                    </div>
+                  </div>
+                ); })}
+              {lawOf(S).fines>0 && <div className="dim" style={{fontSize:13,marginTop:6}}>Paid in fines: {lawOf(S).fines}d</div>}
+            </div>
+          )}
+
+          {(S.gold >= 4000 || Object.keys(S.works||{}).length>0) && (
+            <div className="panel" style={{padding:13, borderColor: workAny(S).length? "#c99a4b" : "#4e3c26"}}>
+              <div className="flex items-center justify-between" style={{marginBottom:4}}>
+                <span className="tag tag-gold">Great works</span>
+                <span className="rowval dim" style={{fontSize:12.5}}>{workAny(S).length} of {WORK_KEYS.length} standing</span>
+              </div>
+              <div className="dim" style={{fontSize:14.5,fontStyle:"italic",marginBottom:7}}>
+                Things a house builds when it has outgrown buying men. They cost more than everything else put together and take years to finish.
+              </div>
+              {WORK_KEYS.map(k=>{ const W = WORKS[k], on = workOn(S,k), done = workDone(S,k);
+                return (
+                  <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:8,marginTop:8}}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="disp" style={{fontSize:13.5,color:done?"#e8d092":on?"#d8ac5f":"#b09b7d"}}>{W.name}</span>
+                      <span className="rowval dim" style={{fontSize:12.5}}>
+                        {done ? "standing" : on ? `${on.left} weeks` : `${W.cost}d · ${W.years} years`}
+                      </span>
+                    </div>
+                    <div className="dim" style={{fontSize:14,fontStyle:"italic",marginTop:2}}>{done ? W.done : W.blurb}</div>
+                    {done && <div className="laurel" style={{fontSize:13.5,marginTop:3}}>{W.say}</div>}
+                    {on && <Bar v={100 - on.left/(W.years*YEAR_WEEKS)*100} label="" color="linear-gradient(90deg,#4a3a24,#c99a4b)"/>}
+                    {!done && !on && (
+                      <button className="btn btn-ghost" style={{width:"100%",marginTop:6}}
+                        disabled={S.gold < W.cost} onClick={()=>mut(d=>{ beginWork(d, k); })}>
+                        {S.gold < W.cost ? `${W.cost}d — not yet` : `Begin it · ${W.cost}d`}
+                      </button>
+                    )}
+                  </div>
+                ); })}
+            </div>
+          )}
+
           <div className="panel" style={{padding:13}}>
             <div className="flex items-center justify-between" style={{marginBottom:4}}>
               <span className="tag tag-gold">The household</span>
@@ -11296,6 +11971,24 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
       )}
 
       <CarrySheet/>
+      {skipped && skipped.ran>=2 && (
+        <div className="ovl" onClick={()=>setSkipped(null)}>
+          <div className="sheet" onClick={e=>e.stopPropagation()}>
+            <div className="disp" style={{fontSize:17,color:"#e8d092",marginBottom:6}}>
+              WEEKS {skipped.from}–{skipped.to-1}
+            </div>
+            <div className="dim" style={{fontSize:14.5,fontStyle:"italic",marginBottom:9}}>
+              {skipped.ran} weeks went by without asking anything of you.
+            </div>
+            {(S.log||[]).filter(l=>l.week>=skipped.from).slice(0,8).map((l,i)=>(
+              <div key={i} style={{borderTop:"1px dotted #33271a",padding:"6px 0",fontSize:14.5}}>
+                <span className="dim" style={{fontSize:12.5}}>wk {l.week} · </span>{l.text}
+              </div>
+            ))}
+            <button className="btn" style={{width:"100%",marginTop:9}} onClick={()=>setSkipped(null)}>Carry on</button>
+          </div>
+        </div>
+      )}
       {ask && (
         <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:70}} onClick={()=>setAsk(null)}>
           <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()} style={{borderColor: ask.danger? "#7c2a22":"#4e3c26"}}>
