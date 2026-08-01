@@ -1268,6 +1268,18 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v0.68.0 — Offline play
+The downloaded file has always worked without a network. The hosted copy needed one to load, which meant no home screen and nothing on a plane. It is a proper installable app now.
+
+`build.js` emits three companions beside `index.html`: a **web manifest**, a **service worker**, and **three icons** — a bronze gladius point-down between laurel, at 192, 512, and a maskable 512 with Android's safe zone. Install it and it opens standalone, portrait, with no browser chrome at all, which also disposes of the URL-bar problem from v0.65 entirely.
+
+The worker precaches the whole shell on install, names its cache after the build version so a new one purges the old, and serves **cache-first with a background refresh** — the game is a single file and never needs the network twice. Cross-origin and non-GET requests are left alone.
+
+**The single-file build is unchanged.** Registration is guarded behind `/^https?:$/`, so opening `index.html` from disk skips all of it and behaves exactly as before.
+
+Verified by running the worker in a sandboxed context with a mock Cache API: 29 checks covering manifest validity and installability, icon files existing, relative paths, install precaching all six entries, activate purging a previous version, and — with the network forcibly down — the page still being served.
+
+
 ### v0.65.2 — And the nav back
 v0.65.1 pinned the shell with all four insets *and* gave it a height. In CSS, when `top` and `height` are both set, `bottom` is ignored — so the box was as tall as the unit said rather than as tall as the viewport, and on a device where that unit resolved larger than the visible area the navigation row sat below the fold of an `overflow: hidden` box, unreachable.
 
@@ -1775,4 +1787,4 @@ Weekly loop, roster, training, fight sim with missio, market, parties, feasts, e
 
 ---
 
-*Last updated: v0.65.2*
+*Last updated: v0.68.0*
