@@ -1730,7 +1730,7 @@ function agenda(d){
   if(d.poach) add(2, "men", `${(d.gladiators.find(x=>x.id===d.poach.gid)||{}).name} is being talked to`, `House ${d.poach.house}`);
   if(d.loan && owes(d) > d.loan.principal*2) add(2, "villa", `${loanLender(d).name} is owed ${owes(d)}d`, "and it is getting away from you");
   if(d.reSignOffer) add(2, "men", "A contract is up", "he can re-sign or walk");
-  for(const g of unsworn(d)) add(1, "men", `${g.name} has not been sworn in`, "the oath is still owed");
+  for(const g of unsworn(d)) add(1, "men", `${g.name} has not been sworn in`, "open his page to have the oath said");
   for(const g of activeG(d)) if(canMaster(d,g)) add(1, "men", `${g.name} has earned his mastery`, "the doctore would say so out loud");
   { const f = ripeFeud(d); if(f) add(2, "men", `${f.a.name} and ${f.b.name} are close to it`, "the yard has noticed"); }
   if(d.doctoreOffer) add(2, "market", "A doctore is offering", "he will not wait long");
@@ -10421,6 +10421,35 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   </div>
                 </div>
               ); })()}
+            {!selG.sworn && (()=>{
+              const free = isAuctor(selG), cond = isDamn(selG);
+              const swear = key => mut(d=>{ const g = d.gladiators.find(x=>x.id===selG.id); if(g && !g.sworn) swearIn(d, g.id, key); });
+              return (
+                <div className="panel" style={{padding:11,marginBottom:9,background:"#241b11",borderColor:"#6d5426"}}>
+                  <div className="tag" style={{marginBottom:4,borderColor:"#6d5426",color:"#d8ac5f"}}>Not yet sworn</div>
+                  <div className="dim" style={{fontSize:14,fontStyle:"italic"}}>
+                    {free
+                      ? `The oath is his to say — ${OATH}, and he says it knowing what it signs away.`
+                      : cond
+                      ? `He is condemned, so the words are said over him rather than by him.`
+                      : `${OATH} — ${OATH_EN}. Said over him, as the house has always done it.`}
+                  </div>
+                  <div className="dim" style={{fontSize:13,marginTop:9,marginBottom:6,textTransform:"uppercase",letterSpacing:".06em"}}>Have the oath said</div>
+                  {SW_KEYS.map(k=>{ const S2 = SWEARING[k], afford = S.gold >= S2.cost;
+                    return (
+                      <button key={k} className="optrow" disabled={!afford} style={{display:"block",marginBottom:6,opacity:afford?1:0.5}}
+                        onClick={()=>{ if(afford) swear(k); }}>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="disp" style={{fontSize:12.5,color:"#e8d092"}}>{S2.name}</span>
+                          <span className="rowval gold" style={{fontSize:12.5}}>{S2.cost? `${S2.cost}d` : "free"}</span>
+                        </div>
+                        <div className="dim" style={{fontSize:12.5,marginTop:2,lineHeight:1.35}}>{S2.desc}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            })()}
             {selG.sworn && selG.sworn.how!=="quick" && (
               <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",borderColor:"#4e3c26"}}>
                 <div className="tag" style={{marginBottom:3}}>Sworn in</div>
