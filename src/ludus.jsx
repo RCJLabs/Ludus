@@ -418,6 +418,195 @@ function houseRecord(d){
   return { served, w, l, k, lost, freed, out, best, years:yearOf(d) };
 }
 
+/* ---- WHAT THE RACKS WILL HOLD ----
+   Fifty-four kinds of thing and nowhere to put them. A ludus armoury was a room,
+   and a room has walls. House issue is unlimited — it is issue. Bought steel takes
+   space, and steel kept in a crowded room is steel nobody is maintaining. */
+const rackCap   = d => 8 + bLevel(d,"armamentarium")*7;        // 8 / 15 / 22 / 29
+const rackUsed  = d => Object.entries(d.gear||{}).reduce((n,[id,c])=> n + (wears(GEAR[id])?(c||0):0), 0);
+const rackOver  = d => Math.max(0, rackUsed(d) - rackCap(d));
+const rackStrain= d => { const o = rackOver(d); return o ? 1 + Math.min(0.75, o*0.07) : 1; };
+const rackRent  = d => rackOver(d) * 4;                         // a week of it, in coin
+const rackWord  = d => { const u = rackUsed(d), c = rackCap(d);
+  return u > c ? "overfull" : u >= c-1 ? "full" : u >= c*0.7 ? "filling" : "room enough"; };
+/* what a piece fetches when it goes back out the door */
+const resaleRate = d => 0.42 + (d.armourer ? 0.13 : 0) + (docIs(d,"scutum")||docIs(d,"parma") ? 0.05 : 0);
+function sellGear(d, id){
+  const it = GEAR[id];
+  if(!it || isBasic(id) || (d.gear[id]||0) - gearUsed(d,id) <= 0) return 0;
+  const pool = (d.gearCond && d.gearCond[id]) || [];
+  const cond = pool.length ? Math.min(...pool) : 100;
+  const i = pool.indexOf(cond);
+  if(i >= 0) d.gearCond[id] = pool.filter((_,k)=>k!==i);
+  d.gear[id] = (d.gear[id]||1) - 1;
+  if(d.gear[id] <= 0) delete d.gear[id];
+  const paid = rnd(it.price * resaleRate(d) * (0.45 + cond/180));
+  d.gold += paid;
+  return paid;
+}
+function rackWeek(d){
+  const rent = rackRent(d);
+  if(!rent) return;
+  d.gold -= rent;
+  if(d.week % 6 === 0)
+    chron(d, `The armoury is past what it will hold. ${rackUsed(d)} pieces in a room built for ${rackCap(d)}, stacked against the wall and going off in the damp.`, "bad");
+}
+
+/* ---- WHERE A PIECE CAME FROM ----
+   Fifty-four kinds of steel told apart by four numbers. A piece with a history is
+   the same four numbers and a different object entirely, and the story is carried
+   by the slot rather than the item, so it survives the man who earned it. */
+const PROV = {
+  forged:  { colour:"#c99a4b", crowd:5, morale:8, dread:0,
+    line:p=>`Made for him by your own smith, week ${p.week}.` },
+  spoils:  { colour:"#d8ac5f", crowd:7, morale:6, dread:0,
+    line:p=>`Taken off ${p.from}${p.house?` of House ${p.house}`:""} on the sand, after.` },
+  gift:    { colour:"#bfa8c8", crowd:6, morale:5, dread:0,
+    line:p=>`Sent up from ${p.from} with no note and no explanation.` },
+  imperial:{ colour:"#e8d092", crowd:11, morale:10, dread:0,
+    line:p=>`Carried onto the imperial sand at Rome and carried off it again.` },
+  primacy: { colour:"#e8d092", crowd:8, morale:7, dread:0,
+    line:p=>`He held the primacy of Capua in this.` },
+  dead:    { colour:"#7c2a22", crowd:4, morale:-7, dread:1,
+    line:p=>`${p.from} was wearing this when he died in it. The cells know which piece it is.` },
+};
+const provOf   = (g,s) => (g && g.prov && g.prov[s]) || null;
+const provAny  = g => (g && g.prov) ? SLOTS.filter(s=>g.prov[s]) : [];
+const provCrowd= g => provAny(g).reduce((n,s)=>n + PROV[g.prov[s].kind].crowd, 0);
+const provDread= g => provAny(g).some(s=>PROV[g.prov[s].kind].dread);
+function giveProv(d, g, slot, kind, extra){
+  if(!g || !GEAR[g.kit && g.kit[slot]]) return false;
+  if(!wears(GEAR[g.kit[slot]])) return false;        // only real steel carries a story
+  g.prov = g.prov || {};
+  if(g.prov[slot]) return false;                     // one history to a piece
+  g.prov[slot] = Object.assign({ kind, week:d.week }, extra||{});
+  const P = PROV[kind];
+  g.morale = clamp(g.morale + P.morale, 0, 100);
+  if(P.morale > 0) remember(d, g, "steel", P.morale/8);
+  return true;
+}
+const clearProv = (g, slot) => { if(g && g.prov) delete g.prov[slot]; };
+/* a piece somebody died in does not vanish — it goes back on the rack, and the
+   next man to be handed it knows exactly what it is */
+function retireSteel(d, g){
+  if(!g || !g.kit) return;
+  d.deadSteel = d.deadSteel || [];
+  for(const s of SLOTS){
+    const it = GEAR[g.kit[s]];
+    if(!wears(it)) continue;
+    if(d.deadSteel.some(x=>x.id===g.kit[s] && x.slot===s)) continue;
+    d.deadSteel.push({ id:g.kit[s], slot:s, from:g.name, week:d.week });
+  }
+  d.deadSteel = d.deadSteel.slice(-6);
+}
+function claimDeadSteel(d, g, slot){
+  const list = d.deadSteel || [];
+  const i = list.findIndex(x=>x.slot===slot && x.id===(g.kit&&g.kit[slot]));
+  if(i < 0 || provOf(g, slot)) return false;
+  const rec = list[i];
+  d.deadSteel = list.filter((_,k)=>k!==i);
+  giveProv(d, g, slot, "dead", { from:rec.from });
+  chron(d, `${g.name} is handed the piece ${rec.from} died in. He takes it, because the alternative is going out without one.`, "bad");
+  return true;
+}
+
+/* ---- ARMING A MAN ----
+   Fifty-four pieces, four slots, eight men. Doing that by hand every time somebody
+   is bought or something breaks is not a decision, it is bookkeeping. */
+function gearAvailable(d, g, slot){
+  return Object.entries(GEAR).filter(([id,it])=>{
+    if(it.slot !== slot) return false;
+    if(g.kit && g.kit[slot] === id) return true;      // what he already carries counts
+    return isBasic(id) || gearFree(d, id) > 0;
+  }).map(([id])=>id);
+}
+/* score a piece the way the fight engine will actually read it */
+function gearScore(d, g, id){
+  const it = GEAR[id]; if(!it) return -99;
+  const alien = it.styles && it.styles.length && !it.styles.includes(g.cls);
+  const cond = wears(it) ? condOf(d, g, it) : 100;
+  const scale = wears(it) ? (0.5 + cond/200) : 1;
+  let s = (it.atk*0.6 + it.def*0.30) * scale * 100;
+  s += it.sho * 8;
+  s += it.spd * 5;
+  if(alien) s -= 22;                                   // clumsy is rarely worth it
+  if(wears(it) && cond < 25) s -= 14;                  // about to go
+  const D = doctrineOf(d);
+  if(D && D.gear && D.gear[it.slot]) s += 3;           // the school's own kind of steel
+  return s;
+}
+const condOf = (d, g, it) => {
+  if(!wears(it)) return 100;
+  const w = g.wear && g.wear[it.slot];
+  return w==null ? 100 : w;
+};
+function bestKitFor(d, g){
+  const out = {};
+  for(const s of SLOTS){
+    const pool = gearAvailable(d, g, s);
+    if(!pool.length){ out[s] = (g.kit && g.kit[s]) || BARE[s]; continue; }
+    out[s] = pool.reduce((m,id)=> gearScore(d,g,id) > gearScore(d,g,m) ? id : m, pool[0]);
+  }
+  return out;
+}
+function armFromRack(d, gid){
+  const g = d.gladiators.find(x=>x.id===gid);
+  if(!g || g.status!=="active") return null;
+  const was = Object.assign({}, g.kit);
+  const now = bestKitFor(d, g);
+  const changed = SLOTS.filter(s=>was[s]!==now[s]);
+  if(!changed.length) return { changed:[] };
+  g.kit = now;
+  g.wear = g.wear || {};
+  changed.forEach(s=>{ if(g.wear[s]==null) g.wear[s] = 100; });
+  changed.forEach(s=>{ clearProv(g, s); claimDeadSteel(d, g, s); });
+  return { changed, was, now };
+}
+/* a kit you liked, kept by name */
+const kitName = (d,g) => { const w = GEAR[g.kit && g.kit.weapon];
+  return `${g.cls} · ${w ? w.name : "bare"}`; };
+function saveKit(d, gid){
+  const g = d.gladiators.find(x=>x.id===gid); if(!g) return false;
+  d.kits = d.kits || [];
+  const slots = Object.assign({}, g.kit);
+  const name = kitName(d, g);
+  const ex = d.kits.find(k=>k.name===name);
+  if(ex) ex.slots = slots;
+  else d.kits = [{ id:d.nextId++, name, cls:g.cls, slots }, ...d.kits].slice(0, 8);
+  return true;
+}
+function applyKit(d, gid, kid){
+  const g = d.gladiators.find(x=>x.id===gid);
+  const K = (d.kits||[]).find(k=>k.id===kid);
+  if(!g || !K || g.status!=="active") return null;
+  const out = {}, missing = [];
+  for(const s of SLOTS){
+    const want = K.slots[s];
+    if(want && (isBasic(want) || gearFree(d,want)>0 || g.kit[s]===want)) out[s] = want;
+    else { out[s] = BARE[s]; if(want && GEAR[want]) missing.push(GEAR[want].name); }
+  }
+  g.kit = out;
+  g.wear = g.wear || {};
+  SLOTS.forEach(s=>{ if(g.wear[s]==null) g.wear[s] = 100; });
+  return { missing };
+}
+const dropKit = (d, kid) => { d.kits = (d.kits||[]).filter(k=>k.id!==kid); };
+/* what is wrong with what he is carrying */
+function kitFaults(d, g){
+  const out = [];
+  if(!g.kit) return out;
+  for(const s of SLOTS){
+    const it = GEAR[g.kit[s]];
+    if(!it) continue;
+    if(it.styles && it.styles.length && !it.styles.includes(g.cls)) out.push({ s, why:"unfamiliar", name:it.name });
+    if(wears(it) && (g.wear&&g.wear[s]||100) < 25) out.push({ s, why:"failing", name:it.name });
+  }
+  const better = bestKitFor(d, g);
+  const gain = SLOTS.reduce((n,s)=> n + Math.max(0, gearScore(d,g,better[s]) - gearScore(d,g,g.kit[s])), 0);
+  if(gain > 6) out.push({ s:null, why:"better on the rack", gain:Math.round(gain) });
+  return out;
+}
+
 /* ---- THE DOCTRINE ----
    Reputation is something you drift into. This is something you declare, in front
    of Capua, and then have to live inside. Every one of them costs as much as it
@@ -1058,6 +1247,141 @@ const FAME_TIERS = [[0,"Unknown"],[40,"Noticed"],[120,"Respected"],[300,"Renowne
 
 /* ================= HELPERS ================= */
 
+/* ---- CARRYING A HOUSE OUT OF THE APP ----
+   A seed shares an opening. This shares an actual house, mid-campaign, in a string
+   somebody can paste into a message. Base64 of the save, with a checksum so a
+   truncated paste fails loudly rather than loading a half-house. */
+const HOUSE_TAG = "LVDVS1";
+function b64enc(s){
+  const bytes = new TextEncoder().encode(s);
+  let bin = "";
+  for(let i=0;i<bytes.length;i+=0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i+0x8000));
+  return btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+}
+function b64dec(t){
+  const s = String(t||"").replace(/-/g,"+").replace(/_/g,"/");
+  const bin = atob(s + "===".slice((s.length+3)%4));
+  const bytes = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
+  return new TextDecoder().decode(bytes);
+}
+/* fnv-1a, enough to catch a paste that lost its tail */
+function sum32(s){
+  let h = 2166136261>>>0;
+  for(let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619)>>>0; }
+  return h.toString(36);
+}
+/* deflate takes a 42,000-character paste down to about 9,000, which is the
+   difference between shareable and not. It is async, so both ends are promises. */
+const CAN_ZIP = typeof CompressionStream !== "undefined";
+async function zipStr(s){
+  const cs = new CompressionStream("deflate-raw");
+  const w = cs.writable.getWriter(); w.write(new TextEncoder().encode(s)); w.close();
+  const buf = await new Response(cs.readable).arrayBuffer();
+  let bin = "", b = new Uint8Array(buf);
+  for(let i=0;i<b.length;i+=0x8000) bin += String.fromCharCode.apply(null, b.subarray(i, i+0x8000));
+  return btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+}
+async function unzipStr(t){
+  const s = String(t||"").replace(/-/g,"+").replace(/_/g,"/");
+  const bin = atob(s + "===".slice((s.length+3)%4));
+  const b = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) b[i] = bin.charCodeAt(i);
+  const ds = new DecompressionStream("deflate-raw");
+  const w = ds.writable.getWriter();
+  /* a damaged paste rejects the writer as well as the reader — swallow both,
+     or the failure escapes the caller's try/catch as an unhandled rejection */
+  w.write(b).catch(()=>{});
+  w.close().catch(()=>{});
+  return new TextDecoder().decode(await new Response(ds.readable).arrayBuffer());
+}
+async function exportHouse(d){
+  const body = JSON.stringify(d);
+  const sum = sum32(body);
+  if(CAN_ZIP){
+    try { return `${HOUSE_TAG}z.${sum}.${await zipStr(body)}`; } catch(e){}
+  }
+  return `${HOUSE_TAG}.${sum}.${b64enc(body)}`;
+}
+async function importHouse(text){
+  const raw = String(text||"").trim().replace(/\s+/g,"");
+  const parts = raw.split(".");
+  const zipped = parts[0] === HOUSE_TAG+"z";
+  if(parts.length !== 3 || (parts[0] !== HOUSE_TAG && !zipped))
+    return { err:"That is not a house. It should begin LVDVS1 and have two full stops in it." };
+  let body;
+  try { body = zipped ? await unzipStr(parts[2]) : b64dec(parts[2]); }
+  catch(e){ return { err:"The text is damaged — some of it did not survive being copied." }; }
+  if(sum32(body) !== parts[1])
+    return { err:"The house is incomplete. Something was cut off when it was pasted." };
+  let d;
+  try { d = JSON.parse(body); }
+  catch(e){ return { err:"The house will not read. It may be from a much older version." }; }
+  if(!d || typeof d !== "object" || !Array.isArray(d.gladiators))
+    return { err:"That is a valid string but it is not a ludus." };
+  try { d = migrate(d); } catch(e){ return { err:"The house is from a version this build cannot repair." }; }
+  return { house:d, name:d.name, week:d.week, men:d.gladiators.filter(g=>!isGone(g)).length,
+    fame:Math.round(d.fame), ver:d.ver };
+}
+
+/* ---- THE FIRST YEAR ----
+   Twenty-eight lessons explain the machinery as it arrives. None of them tells a
+   new lanista what to actually do on a Tuesday. This is ten things, in the order
+   a man would learn them, each finished by doing it rather than by reading it. */
+const CHARTER = [
+  { id:"train", tab:"men", title:"Put them to work",
+    how:"Everyone in the yard has a week and none of it spends itself. Open a man and set what he works on.",
+    done:d=>activeG(d).some(g=>g.regimen && g.regimen!=="palus") || (d.flags.everTrained||0)>0 },
+  { id:"fight", tab:"arena", title:"Send one out",
+    how:"The pits are always open and they are how a house eats before it has a name. Take a bout at first blood — nobody dies at those stakes.",
+    done:d=>(d.book && d.book.n) >= 1 },
+  { id:"week", tab:"ludus", title:"End the week",
+    how:"Nothing resolves until you do. Training, wounds, the rivals moving, the coin going out — all of it happens at once when the week ends.",
+    done:d=>d.week >= 2 },
+  { id:"buy", tab:"market", title:"Buy a man",
+    how:"Three is not a house. The block lies about what it is selling, so pay to have one looked over if the price is worth it.",
+    done:d=>d.gladiators.filter(g=>!isGone(g)).length >= 4 },
+  { id:"arm", tab:"armory", title:"Arm somebody properly",
+    how:"House issue keeps a man alive and does nothing else. Buy a real piece, then arm him off the rack.",
+    done:d=>rackUsed(d) > 0 || d.gladiators.some(g=>SLOTS.some(s=>wears(GEAR[g.kit&&g.kit[s]]))) },
+  { id:"games", tab:"arena", title:"Take a card at the games",
+    how:"The games run every third week once Capua has heard of you. The purses are a different order of thing and so is the risk.",
+    done:d=>(d.book && Object.keys(d.book.tier||{}).some(k=>k!=="T0")) },
+  { id:"watch", tab:"arena", title:"Look at a man before you fight him",
+    how:"Pay to have an opponent watched. What comes back is specific — that he tires, that he drops his arm — and you pick a plan against it.",
+    done:d=>(d.flags.everWatched||0) > 0 },
+  { id:"quiet", tab:"villa", title:"Keep the cells quiet",
+    how:"Unrest is the only number that ends a run outright. A feast costs 120 denarii and buys more than it looks like it does.",
+    done:d=>(d.flags.everFeast||0) > 0 || d.unrest < 12 },
+  { id:"cloth", tab:"arena", title:"Let a beaten man up",
+    how:"A bout can be stopped partway. Throw the cloth when one of them is done and you have spent a purse to buy a man's life — his, or the other house's. Every man in your cells keeps a list, and this goes on it.",
+    done:d=>(d.flags.everCloth||0) > 0 || activeG(d).some(g=>(g.memory||[]).length > 0) },
+  { id:"year", tab:"ludus", title:"Stand for a year",
+    how:"Eighteen weeks is a year. Get there with a house still standing and you have done the difficult part.",
+    done:d=>d.week >= YEAR_WEEKS + 1 },
+];
+const charterAt = d => (d.charter && !d.charter.done && !d.charter.skipped)
+  ? CHARTER[d.charter.i] || null : null;
+function charterWeek(d){
+  if(!d.charter || d.charter.done || d.charter.skipped) return;
+  let moved = false;
+  /* skip anything already true — a player who worked it out gets no homework */
+  while(d.charter.i < CHARTER.length){
+    let ok = false;
+    try { ok = !!CHARTER[d.charter.i].done(d); } catch(e){ ok = false; }
+    if(!ok) break;
+    d.charter.i++; moved = true;
+  }
+  if(d.charter.i >= CHARTER.length && !d.charter.done){
+    d.charter.done = true;
+    d.gold += 250;
+    d.fame += 12;
+    chron(d, `A year of it. You have bought men, buried some, argued with the stands and kept the cells from burning, and the house is still here. Nobody hands you anything for that except the next week.`, "good");
+  }
+  return moved;
+}
+const charterSkip = d => { if(d.charter) d.charter.skipped = true; };
+
 /* ---- THE AGENDA ----
    Thirty versions of bolting panels onto columns. This is the one list that says
    what actually wants an answer this week, and where the answer is. */
@@ -1085,6 +1409,8 @@ function agenda(d){
     else if(strainOf(g) > 62) add(1, "men", `${g.name} is worked past what he has`, strainWord(strainOf(g)));
     if(SLOTS.some(s=>wears(GEAR[g.kit&&g.kit[s]]) && (g.wear&&g.wear[s]||100) < 25))
       add(1, "armory", `${g.name}'s steel is close to going`, "have it mended");
+    else if(kitFaults(d,g).some(f=>f.why==="unfamiliar"))
+      add(1, "armory", `${g.name} is carrying the wrong thing`, "it is not his style");
   }
   for(const m of unhonoured(d)) if(!m.done)
     add(2, "villa", `${m.name} is not buried properly`, `${RITE_WINDOW-(d.week-m.week)} weeks to decide`);
@@ -1101,6 +1427,8 @@ function agenda(d){
   if(d.doctoreOffer) add(2, "market", "A doctore is offering", "he will not wait long");
   if(d.unrest >= 70) add(2, "ludus", "The cells are close to fire", unrestWord(d.unrest));
   if(d.lanista && d.lanista.health < 30 && !d.heir) add(2, "ludus", "You are failing and have named nobody", "the house dies with you");
+  if(rackOver(d)) add(2, "armory", `The armoury is ${rackOver(d)} past what it holds`, `${rackRent(d)}d a week and everything wearing faster`);
+  if((d.deadSteel||[]).length) add(1, "armory", `${d.deadSteel.length} piece${d.deadSteel.length===1?"":"s"} came back off a body`, "somebody will have to carry it");
   if((d.market||[]).length && d.gold > 500 && activeG(d).length < 6)
     add(1, "market", "There are men on the block", `${d.market.length} standing`);
   return A.sort((a,b)=>b.urgency-a.urgency);
@@ -1594,7 +1922,7 @@ function wearKit(d, g, hard){
     const [lo,hi] = WEAR_RATE[s];
     let n = ri(lo,hi) * (hard?1.5:1);
     if(isNamed(g,s)) n *= 0.5;
-    n *= perkWear(d) * armourerWear(d);
+    n *= perkWear(d) * armourerWear(d) * rackStrain(d);
     g.wear[s] = Math.max(0, g.wear[s] - n);
     if(g.wear[s] <= 0){
       if(isNamed(g,s)){ g.wear[s] = 25;
@@ -1703,6 +2031,113 @@ function formWeek(d){
    Every bout in this game has been fought in the same rectangle. Footing scales
    how much a man's speed is worth to him, which is the whole of the difference
    between a stone floor and a wet field. */
+/* ---- A MAN THE TIERS KNOW BY NAME ----
+   The stands have opinions about styles and none at all about men. Renown is what
+   Capua thinks he is worth. This is whether it likes him, which is a different
+   thing and worth more, and it is why a favourite is dangerous to own: he earns
+   more alive than any other man and costs more than any other man to lose. */
+const favourOf = g => clamp((g && g.favour) || 0, 0, 100);
+const favWord  = v => v>=82?"the darling of Capua" : v>=62?"they chant for him" : v>=40?"a name in the stands"
+  : v>=18?"known by sight" : "one more man on the sand";
+const favColour= v => v>=62?"#e8d092" : v>=40?"#c99a4b" : v>=18?"#b09b7d" : "#7a6b52";
+/* what the affection is worth */
+const favPurse  = g => 1 + favourOf(g)/100 * 0.22;
+const favMissio = g => favourOf(g)/100 * 15;          // they lean, they do not overrule
+const favCrowd  = g => rnd(favourOf(g)/100 * 9);
+/* and what it costs to lose him */
+const favGrief  = g => favourOf(g)/100;
+function favourBout(d, g, res, offer){
+  if(!g) return;
+  const crowd = res.crowd || 0;
+  const close = res.beats ? res.beats.some(b=>b.kind==="clash") : false;
+  const won = !!res.win;
+  /* they warm to a man who gives them an afternoon, not a man who wins tidily */
+  let n = 0;
+  n += (crowd - 46) * 0.10;
+  if(won) n += 3.2;
+  if(close) n += 1.6;
+  if(res.spared) n += 3.4;                        // a man let up is a man they asked for
+  if(g.nick) n += 0.8;
+  n += (g.sho - 50) * 0.045;
+  if(offer && offer.tier >= 2) n += 1.4;
+  if(offer && offer.imperial) n += 8;
+  if(!won && crowd < 40) n -= 2.6;
+  g.favour = clamp(favourOf(g) + n, 0, 100);
+}
+/* affection is short — they forget a man who stops appearing */
+function favourWeek(d){
+  for(const g of d.gladiators){
+    if(isGone(g)) continue;
+    const idle = d.week - (g.lastFought||0);
+    if(idle > 2 && favourOf(g) > 0) g.favour = clamp(favourOf(g) - 1.3, 0, 100);
+  }
+}
+/* the stands notice when one of theirs is sold or buried */
+function favourLost(d, g, how){
+  const f = favGrief(g);
+  if(f < 0.2) return;
+  const shock = rnd(f * (how==="dead" ? 14 : how==="sold" ? 18 : 0));
+  if(how==="freed"){
+    d.fame += rnd(f * 16);
+    FAC_KEYS.forEach(k=>facMove(d, k, rnd(f*7)));
+    chron(d, `Capua takes the freeing of ${g.name} personally, in the way a town takes anything it had decided was its own. ${favWord(favourOf(g))}, and now he is somebody's neighbour.`, "good");
+    return;
+  }
+  d.unrest = clamp(d.unrest + shock*0.5, 0, 100);
+  d.fame = Math.max(0, d.fame - shock);
+  FAC_KEYS.forEach(k=>facMove(d, k, -rnd(f*9)));
+  chron(d, how==="dead"
+    ? `The tiers do not make a noise when ${g.name} goes down. That is the noise. He was ${favWord(favourOf(g))} and Capua will remember whose house he fought for.`
+    : `Selling ${g.name} is not a private arrangement. He was ${favWord(favourOf(g))}, and the stands find out inside a day.`, "bad");
+}
+
+/* ---- THE WEATHER ON THE DAY ----
+   The seasons already decide the year. This decides the afternoon. Footing is the
+   same dial the venues use, so a wet field and a dry courtyard are the same
+   mechanism arriving from two directions. */
+const WEATHER = {
+  fair:    { name:"Fair", footing:1.00, stam:1.00, crowd:0,  purse:1.00, open:1,
+    say:"Dry, still, and nothing to blame afterward." },
+  perfect: { name:"A good day for it", footing:1.03, stam:0.96, crowd:8, purse:1.06, open:1,
+    say:"Cool, bright, and half of Capua has decided to be here." },
+  hot:     { name:"Blazing", footing:1.01, stam:1.24, crowd:-5, purse:1.00, open:1,
+    say:"The sand is white and nobody in the upper tiers has any shade at all." },
+  rain:    { name:"Rain", footing:0.84, stam:1.08, crowd:-16, purse:0.86, open:1,
+    say:"It has been coming down since dawn and the sand is not sand any more." },
+  wind:    { name:"A hard wind", footing:0.96, stam:1.02, crowd:-3, purse:0.97, open:1,
+    say:"The awnings are cracking and anything thrown goes where the wind says." },
+  cold:    { name:"Bitter", footing:0.93, stam:1.12, crowd:-9, purse:0.92, open:1,
+    say:"Cold enough that the men do not want to take their cloaks off, and the crowd came anyway." },
+};
+const W_KEYS = Object.keys(WEATHER);
+/* what the sky does, by season */
+const SEASON_SKY = {
+  Spring: ["fair","fair","perfect","perfect","rain","wind"],
+  Summer: ["hot","hot","hot","fair","fair","perfect"],
+  Autumn: ["fair","fair","perfect","rain","rain","wind"],
+  Winter: ["cold","cold","cold","rain","rain","fair"],
+};
+/* a wind that goes where it likes matters more to a net than to a shield */
+const windHurts = ["Retiarius"];
+function skyFor(d, offer){
+  const s = seasonOf(d).name;
+  const pool = SEASON_SKY[s] || SEASON_SKY.Spring;
+  return pool[Math.floor(R()*pool.length)];
+}
+const SKY = k => WEATHER[k] || WEATHER.fair;
+/* an awning is worth something, and a courtyard more */
+const shelterOf = v => v==="yard" ? 0.72 : v==="greek" ? 0.5 : v==="amphi" ? 0.32 : v==="imperial" ? 0.38 : 0;
+const dampen = (n, sh) => 1 + (n - 1) * (1 - sh);
+function skyMods(k, venue, cls){
+  const W = SKY(k), sh = shelterOf(venue);
+  return {
+    footing: dampen(W.footing, sh) * (k==="wind" && windHurts.includes(cls) ? 0.95 : 1),
+    stam:    dampen(W.stam, sh),
+    crowd:   rnd(W.crowd * (1 - sh)),
+    purse:   dampen(W.purse, sh),
+  };
+}
+
 const VENUES = {
   pit:     { name:"The pit behind the ludus", crowd:-22, footing:0.88, missio:-5, fame:0.72,
     say:"Packed earth, a rope, and whoever from the house is not working. Nobody is here who was not already here." },
@@ -1895,7 +2330,7 @@ function offerDoctore(d, g, kind){
 const potentialWord = p=> p<50?"a modest ceiling": p<70?"promise in him": p<85?"exceptional promise":"a fire the arena has not yet seen";
 const demeanor = dv=> dv<25?"Compliant": dv<45?"Watchful": dv<65?"Restless": dv<85?"Defiant":"A storm barely chained";
 const unrestWord = u=> u<25?"Docile": u<45?"Restless": u<65?"Simmering": u<80?"Mutinous":"On the edge of fire";
-const rudisEligible = g=> !isAuctor(g) && g.wins>=10 && g.pfame>=90;
+const rudisEligible = g=> !isAuctor(g) && g.wins>=10 && g.pfame>=62;
 const fullName = g=> g.nick? `${g.name}, ${g.nick}` : g.name;
 
 function chron(d, text, kind){ d.log.unshift({ week:d.week, text, kind:kind||"info" }); d.log = d.log.slice(0,40); }
@@ -2019,6 +2454,7 @@ function makeGames(d){
   if(d.rome && d.rome.travel<=0){
     if(d.rome.fought >= ROME_BOUTS){ d.games = null; return; }
     d.games = { festival:"the imperial games", offers:[makeImperialBout(d)], week:d.week };
+    d.games.offers.forEach(o=>{ if(!o.venue) o.venue = venueFor(d, o); if(!o.sky) o.sky = skyFor(d, o); });
     return;
   }
   const F = d.munera
@@ -2094,7 +2530,7 @@ function makeGames(d){
   if(d.fame>=TIERS[2].fame) add(2);
   if(d.fame>=TIERS[2].fame && R()<0.5) add(2);
   if(d.fame>=TIERS[3].fame && d.favor>=40 && R()<0.45) add(3);
-  offers.forEach(o=>{ if(!o.venue) o.venue = venueFor(d, o); });
+  offers.forEach(o=>{ if(!o.venue) o.venue = venueFor(d, o); if(!o.sky) o.sky = skyFor(d, o); });
   d.games = { festival, offers, week:d.week, fest:F.key };
 }
 
@@ -2403,6 +2839,7 @@ const REGARD = {
   munera:    { n: 13, say:"You held games for one of them, out of your own coin, for nothing." },
   servedOut: { n: 18, say:"You kept him alive long enough to fight his sentence out." },
   sworn:     { n: 10, say:"You had the oath said over him properly, in front of everybody." },
+  steel:     { n: 12, say:"You put a piece into his hands that meant something." },
   mastered:  { n: 12, say:"You kept him on the sand long enough to become a master of it." },
   taught:    { n: 16, say:"You paid to have him taught a second trade at an age when nobody bothers." },
   sided:     { n: 14, say:"There was a thing in the yard and you took his part in front of everybody." },
@@ -2490,6 +2927,7 @@ const tellsOf = (d, offer) => {
   return shuffled(found).slice(0, n);
 };
 function watchHim(d, offer){
+  d.flags.everWatched = (d.flags.everWatched||0) + 1;
   if(!offer || offer.watched) return false;
   const c = watchCost(d, offer);
   if(d.gold < c) return false;
@@ -2872,7 +3310,7 @@ function facAfterBout(d, g, res, offer, tactic, choice){
   if(res.crowd >= 82) facMove(d, "mob", 2.0);
   if(win && res.vA >= 72) facMove(d, "front", 3.6);
   if(res.spared && !res.bDies) facMove(d, "front", 2.4);
-  if(choice === "cloth") facMove(d, "front", 3.0);
+  if(choice === "cloth"){ facMove(d, "front", 3.0); d.flags.everCloth = (d.flags.everCloth||0)+1; }
   if(tactic === "showboat") facMove(d, "mob", 1.8);
 }
 
@@ -2998,6 +3436,9 @@ function migrate(S){
     if(g.form==null) g.form = 0; if(!g.formLog) g.formLog = []; });
   if(!S.deadlines) S.deadlines = [];
   if(S.doctrine===undefined) S.doctrine = null;
+  if(!S.kits) S.kits = [];
+  if(!S.deadSteel) S.deadSteel = [];
+  if(!S.charter) S.charter = { i:0, done:true, skipped:true };   // a house already underway is past this
   if(!S.rivalLog) S.rivalLog = [];
   if(!S.unburied) S.unburied = [];
   if(!S.book) S.book = newBook();
@@ -3070,7 +3511,7 @@ function newGameState(name, scen, seed){
     gladiators:[], market:[], games:null, pendingEvent:null, log:[], fallen:[], freed:[],
     seed: null, rngState: 0,
     lastParty:-9, lastFeast:-9, over:null, milestone600:false, flags:{learned:{}}, escaped:[], rebellion:null, gear:{}, retired:[],
-    doctore:null, doctoreMarket:[], doctoreOffer:null, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, defected:[], nemesis:null, primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], doctrine:null, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, departed:[], reSignOffer:null, annals:[] };
+    doctore:null, doctoreMarket:[], doctoreOffer:null, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, defected:[], nemesis:null, primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], doctrine:null, kits:[], deadSteel:[], deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, departed:[], reSignOffer:null, annals:[] };
   d.rivals = makeRivals(d);
   const solo = S.men.length === 1;
   S.men.forEach((band,i)=>{
@@ -3092,6 +3533,7 @@ function newGameState(name, scen, seed){
   if(S.buildings) d.buildings = Object.assign({}, S.buildings);
   d.scenario = scen || "clean";
   d.seed = sw;
+  d.charter = { i:0, done:false, skipped:false };
   d.gladiators.forEach(g=>{ g.sworn = { how:"proper", week:1, free:false }; });
   d.rngState = rngGet();
   d.lanista = makeLanista(d);
@@ -3135,7 +3577,8 @@ function power(f, tactic, oppCls, mom, atkMod){
   const ft = f.footing||1;
   let p = e("tec")*1.25*(0.5+ft*0.5) + e("str") + e("agi")*0.85*ft*ft + e("dis")*0.3;
   p *= 0.85 + (f.morale/100)*0.3;
-  p *= 1 - clamp(f.fatigue,0,100)/300;
+  { const ft = clamp(f.fatigue,0,100);
+    p *= 1 - (ft<=45 ? ft/560 : (45/560 + (ft-45)/230)); }
   if(COUNTERS[f.cls]===oppCls) p *= 1.12;
   if(tactic==="aggressive") p *= 1.13;
   if(tactic==="defensive") p *= 0.9;
@@ -3194,7 +3637,7 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
     const PL = ctx.plan || { pow:1, stam:1, guard:1 };
     const pA = power(A,tA,B.cls,mom,modA) * PL.pow * (0.72+R()*0.56) * (sA<22?0.78:1);
     const pB = power(B,tB,A.cls,-mom,modB) * (0.72+R()*0.56) * (sB<22?0.78:1);
-    sA -= (tA==="aggressive"?9:7) * (1 - A.mods.spd*0.5) * PL.stam * (A.formStam||1);
+    sA -= (tA==="aggressive"?9:7) * (1 - A.mods.spd*0.5) * PL.stam * (A.formStam||1) * (ctx.sky||1);
     sB -= (tB==="aggressive"?9:7) * (1 - B.mods.spd*0.5);
     const diff = Math.abs(pA-pB);
     if(diff < 7){
@@ -3264,7 +3707,7 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
       push("appeal", `${A.name} raises two fingers — the appeal. The arena holds its breath...`, {actor:"A"});
       const pat = ctx.patron;
       const lean = pat ? pat.favor*0.12 : 0;
-      const spare = crowd*0.33 + A.pfame*0.3 + ctx.favor*0.5 + A.sho*0.2 + A.heart*0.1 + (100-vB)*0.15 + lean
+      const spare = crowd*0.33 + A.pfame*0.3 + ctx.favor*0.5 + (ctx.fav||0) + A.sho*0.2 + A.heart*0.1 + (100-vB)*0.15 + lean
         + (ctx.guarded?12:0) + R()*22 - (ctx.tier===0?8:0) - (ctx.hostile?18:0) - (ctx.strange||0) + (ctx.aedile||0) + (ctx.venue||0) + (ctx.doctrine||0);
       if(spare>=42){
         spared = true;
@@ -3726,6 +4169,7 @@ function makeCityGames(d){
       opp, oppRef:pr.ref, rematch:false, grudgeM:false, stakes: sine?"sine":"standard",
       purse: rnd((t.purse[0]+R()*t.purse[1]) * C.purse * (sine?1.6:1)) });
   }
+  offers.forEach(o=>{ if(!o.venue) o.venue = venueFor(d, o); if(!o.sky) o.sky = skyFor(d, o); });
   d.games = { festival:`the games at ${C.name}`, offers, week:d.week, city:key };
 }
 
@@ -4502,6 +4946,8 @@ function doVenatio(d, gid, offer, tactic, pending, choice){
     g.status = "dead"; g.fateNote = "beasts";
     d.fallen.push({ name:fullName(g)+" — to the beasts", week:d.week });
     if(d.lanista) d.lanista.health = clamp(d.lanista.health - 1.3*collSoften(d)*(isDamn(g)?0.55:1)/docHealth(d), 0, 100);
+    favourLost(d, g, "dead");
+    retireSteel(d, g);
     collBury(d, g);
     markUnburied(d, g);
     const grieving = kinReact(d, gid, "brother", -22, 12);
@@ -4801,15 +5247,17 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   if(g.injury && g.injury.care==="work") remember(d, g, "hurt");
   if(offer.stakes==="sine") remember(d, g, "sine");
   if(!offer.venue) offer.venue = venueFor(d, offer);
+  if(!offer.sky) offer.sky = skyFor(d, offer);
   const V = VEN(offer.venue);
+  const W = skyMods(offer.sky, offer.venue, g.cls);
   const planKey = (pending && pending.plan) || plan || offer.plan || "none";
   const PE = planEffect(planKey, offer.opp);
   gc.regardMult = regardPower(g) * formPower(g) * ((g.mastery && g.mastery.cls===g.cls) ? masteryPower(g) : 1);
   gc.formStam = formStam(g);
-  const simCtx = { plan:PE, doctrine:docMissio(d), footing:V.footing, venue:V.missio, aedile: away ? 0 : aedileMissio(d), strange: away ? Math.max(0, 19 - knownIn(d, offer.city)*0.19) * docStrange(d) : 0,
+  const simCtx = { plan:PE, fav:favMissio(g), doctrine:docMissio(d), footing:V.footing * W.footing, sky:W.stam, venue:V.missio, aedile: away ? 0 : aedileMissio(d), strange: away ? Math.max(0, 19 - knownIn(d, offer.city)*0.19) * docStrange(d) : 0,
       favor: imperial ? Math.min(d.favor, 20) : (away ? localStanding : d.favor), tier: Math.min(offer.tier,3),
       hostile:!!bribeHouse, patron: imperial ? null : (patron ? {name:patron.name, favor:patron.favor} : null),
-      repShow: ((g.mastery && g.mastery.cls===g.cls) ? masteryCrowd(g) : 0) + (repStyle(d)==="show" ? 8 : 0) + (nem ? 10 : 0) + (away ? 0 : facCrowd(d, g.cls)) + seasonCrowd(d) + V.crowd,
+      repShow: favCrowd(g) + W.crowd + provCrowd(g) + ((g.mastery && g.mastery.cls===g.cls) ? masteryCrowd(g) : 0) + (repStyle(d)==="show" ? 8 : 0) + (nem ? 10 : 0) + (away ? 0 : facCrowd(d, g.cls)) + seasonCrowd(d) + V.crowd,
       guarded: choice==="cover" };
   let res;
   if(choice==="cloth"){
@@ -4860,7 +5308,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   const sum = [`Appearance fee: ${t.app} denarii.`];
 
   if(win){
-    purse = rnd(offer.purse * (away?1:facPurse(d)) * (away?1:aedilePurse(d)) * docPurse(d)); d.gold += purse; g.wins++;
+    purse = rnd(offer.purse * (away?1:facPurse(d)) * (away?1:aedilePurse(d)) * docPurse(d) * W.purse * favPurse(g)); d.gold += purse; g.wins++;
     const fineKit = F && F.fineBonus && GEAR[gc.kit.weapon] && GEAR[gc.kit.weapon].price>0;
     const fg = rnd((t.fameGain + res.crowd/18 + (offer.stakes==="sine"?6:0)) * (offer.stakes==="blood"?0.55:1)
       * (isF(g)?1.2:1) * (F? F.fame : 1) * (fineKit?1.25:1) * (away?1:facFame(d, g.cls)) * V.fame * docFame(d));
@@ -4909,6 +5357,8 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
     g.status = "dead";
     d.fallen.push({ name:fullName(g), week:d.week });
     if(d.lanista) d.lanista.health = clamp(d.lanista.health - 1.3*collSoften(d)*(isDamn(g)?0.55:1)/docHealth(d), 0, 100);
+    favourLost(d, g, "dead");
+    retireSteel(d, g);
     collBury(d, g);
     markUnburied(d, g);
     d.gladiators.forEach(o=>{ if(o.status==="active"){ o.morale=clamp(o.morale-8,0,100); o.defiance=clamp(o.defiance+(offer.stakes==="sine"?5:3),0,100); } });
@@ -5017,6 +5467,21 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   if(PE.right===true) sum.push(`The plan held. ${PLANS[planKey].name} was the right read of him.`);
   else if(PE.right===false) sum.push(`The plan was wrong. He was not the man you took him for.`);
   if(!away) facAfterBout(d, g, res, offer, tacticNow, choice);
+  if(win && res.bDies && offer.opp && offer.opp.kit){
+    const s = shuffled(SLOTS).find(x=>wears(GEAR[offer.opp.kit[x]]) && !provOf(g,x) && GEAR[g.kit[x]]);
+    if(s && R() < 0.38){
+      const id = offer.opp.kit[s];
+      d.gear[id] = (d.gear[id]||0)+1;
+      d.gearCond = d.gearCond || {}; (d.gearCond[id] = d.gearCond[id] || []).push(ri(55,85));
+      g.kit = Object.assign({}, g.kit, { [s]: id });
+      g.wear = Object.assign({}, g.wear||{}, { [s]: ri(55,85) });
+      giveProv(d, g, s, "spoils", { from:offer.opp.name, house:offer.opp.house });
+      chron(d, `${g.name} comes off the sand carrying ${offer.opp.name}'s ${GEAR[id].name.toLowerCase()}. Nobody stops him and nobody asks for it back.`, "good");
+    }
+  }
+  if(offer.imperial && win) SLOTS.forEach(s=>{ if(wears(GEAR[g.kit[s]])) giveProv(d, g, s, "imperial"); });
+  if(holdsPrimus(d,g)) SLOTS.forEach(s=>{ if(wears(GEAR[g.kit[s]]) && !provOf(g,s)) giveProv(d, g, s, "primacy"); });
+  favourBout(d, g, { crowd:res.crowd, beats:res.beats, win, spared:res.beats && res.beats.some(b=>b.kind==="spared" && b.actor==="A") }, offer);
   if(isDamn(g)) damnCheck(d, g);
   if(offer.oppRef && offer.oppRef.circuit){
     const f = (d.circuit||[]).find(x=>x.id===offer.oppRef.fid);
@@ -5787,8 +6252,11 @@ function endWeek(d){
   for(const g of d.gladiators) if(g.benched && g.benched.weeks>0 && --g.benched.weeks<=0) g.benched = null;
   feudWeek(d);
   learnWeek(d);
+  charterWeek(d);
+  favourWeek(d);
   formWeek(d);
   electionWeek(d);
+  rackWeek(d);
   staffWeek(d);
   refuseWeek(d);
   facWeek(d);
@@ -5894,6 +6362,7 @@ function endWeek(d){
 }
 
 function grantRudis(d, gid){
+  { const gf = d.gladiators.find(x=>x.id===gid); if(gf) favourLost(d, gf, "freed"); }
   { const g0 = d.gladiators.find(x=>x.id===gid);
     if(g0) tieList(d).filter(t=>(t.a===gid||t.b===gid) && t.kind==="brother").forEach(t=>{
       const o = d.gladiators.find(x=>x.id===(t.a===gid?t.b:t.a));
@@ -6269,6 +6738,19 @@ function Beast({ art, pose, wounds, dead }){
    created until the player's first tap, because browsers will not allow it before. */
 const SFX = (()=>{
   let ctx = null, master = null, muted = false, crowdNode = null;
+  let room = null, dry = null, wet = null, weather = null;
+  /* the venue is a room, and a room is a convolution plus how much of it you hear */
+  const ROOMS = {
+    pit:      { size:0.16, mix:0.05, tone:2600, size2:0.34 },   // packed earth, no walls
+    field:    { size:0.10, mix:0.02, tone:3000, size2:0.30 },   // outdoors, nothing to bounce off
+    forum:    { size:0.34, mix:0.12, tone:2400, size2:0.55 },   // boards and buildings
+    yard:     { size:0.55, mix:0.30, tone:3400, size2:0.75 },   // marble, and forty people
+    amphi:    { size:1.10, mix:0.26, tone:1900, size2:1.00 },   // stone tiers
+    bowl:     { size:1.25, mix:0.30, tone:1750, size2:1.00 },
+    greek:    { size:0.95, mix:0.34, tone:2500, size2:0.90 },   // built to carry a voice
+    harbour:  { size:0.40, mix:0.10, tone:2200, size2:0.60 },
+    imperial: { size:1.60, mix:0.32, tone:1600, size2:1.00 },   // the largest room in the world
+  };
   const ready = ()=>{
     if(ctx) return ctx;
     try{
@@ -6290,7 +6772,9 @@ const SFX = (()=>{
     const f = c.createBiquadFilter(); f.type = type||"bandpass"; f.frequency.value = freq; f.Q.value = q;
     const g = c.createGain(); g.gain.setValueAtTime(vol, c.currentTime);
     g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime+dur);
-    s.connect(f); f.connect(g); g.connect(master); s.start();
+    s.connect(f); f.connect(g); g.connect(master);
+    if(room && room.cv) { try{ g.connect(room.cv); }catch(e){} }
+    s.start();
   };
   const tone = (f0, f1, dur, vol, type)=>{
     const c = ready(); if(!c || muted) return;
@@ -6299,10 +6783,37 @@ const SFX = (()=>{
     o.frequency.exponentialRampToValueAtTime(Math.max(20,f1), c.currentTime+dur);
     const g = c.createGain(); g.gain.setValueAtTime(vol, c.currentTime);
     g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime+dur);
-    o.connect(g); g.connect(master); o.start(); o.stop(c.currentTime+dur+0.02);
+    o.connect(g); g.connect(master);
+    if(room && room.cv) { try{ g.connect(room.cv); }catch(e){} }
+    o.start(); o.stop(c.currentTime+dur+0.02);
   };
+  /* an impulse response, decaying noise, cheap and convincing enough */
+  const impulse = (c, secs, decay)=>{
+    const n = Math.max(1, Math.floor(c.sampleRate*secs));
+    const b = c.createBuffer(2, n, c.sampleRate);
+    for(let ch=0; ch<2; ch++){
+      const d2 = b.getChannelData(ch);
+      for(let i=0;i<n;i++) d2[i] = (Math.random()*2-1) * Math.pow(1 - i/n, decay);
+    }
+    return b;
+  };
+  const buildRoom = (c)=>{
+    if(room) return room;
+    dry = c.createGain(); dry.gain.value = 1; dry.connect(master);
+    const cv = c.createConvolver();
+    wet = c.createGain(); wet.gain.value = 0;
+    const damp = c.createBiquadFilter(); damp.type = "lowpass"; damp.frequency.value = 2400;
+    cv.connect(damp); damp.connect(wet); wet.connect(master);
+    room = { cv, damp, set:false };
+    return room;
+  };
+  /* everything an event plays goes through here */
+  const out = ()=>{ const c = ready(); if(!c) return master;
+    buildRoom(c); return dry; };
   return {
-    set mute(v){ muted = !!v; if(muted && crowdNode){ try{ crowdNode.g.gain.value = 0; }catch(e){} } },
+    set mute(v){ muted = !!v;
+      if(muted && crowdNode){ try{ crowdNode.g.gain.value = 0; }catch(e){} }
+      if(muted && weather){ try{ weather.g.gain.value = 0; }catch(e){} } },
     get mute(){ return muted; },
     tap(){ burst(1800, 1, 0.03, 0.10, "highpass"); },
     clash(){ burst(3200, 6, 0.10, 0.22); burst(5200, 9, 0.06, 0.14); },
@@ -6323,13 +6834,44 @@ const SFX = (()=>{
         s.connect(f); f.connect(g); g.connect(master); s.start();
         crowdNode = { s, f, g };
       }
-      const target = muted ? 0 : Math.max(0, (level-25)/100) * 0.16;
+      const target = muted ? 0 : Math.max(0, (level-25)/100) * 0.16 * (this._size==null?1:this._size);
       try{
         crowdNode.g.gain.setTargetAtTime(target, c.currentTime, 0.4);
         crowdNode.f.frequency.setTargetAtTime(500 + level*7, c.currentTime, 0.5);
       }catch(e){}
     },
     stopCrowd(){ if(crowdNode){ try{ crowdNode.g.gain.setTargetAtTime(0, ready().currentTime, 0.25); }catch(e){} } },
+    /* where we are, and what the sky is doing */
+    place(venue, sky){
+      const c = ready(); if(!c) return;
+      buildRoom(c);
+      const R2 = ROOMS[venue] || ROOMS.forum;
+      try{
+        room.cv.buffer = impulse(c, Math.max(0.08, R2.size), 2.2 + R2.size);
+        room.damp.frequency.setTargetAtTime(R2.tone, c.currentTime, 0.2);
+        wet.gain.setTargetAtTime(muted ? 0 : R2.mix, c.currentTime, 0.3);
+      }catch(e){}
+      this._size = R2.size2;
+      this.rain(sky);
+    },
+    /* rain on the sand, wind in the awnings */
+    rain(sky){
+      const c = ready(); if(!c) return;
+      if(!weather){
+        const s = c.createBufferSource(); s.buffer = noiseBuf(c, 3); s.loop = true;
+        const f = c.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 2200; f.Q.value = 0.4;
+        const g = c.createGain(); g.gain.value = 0;
+        s.connect(f); f.connect(g); g.connect(master); s.start();
+        weather = { s, f, g };
+      }
+      const on = { rain:[0.055, 2400, 0.5], wind:[0.040, 700, 0.7], cold:[0.014, 900, 0.6] }[sky];
+      try{
+        weather.g.gain.setTargetAtTime(muted || !on ? 0 : on[0], c.currentTime, 0.6);
+        if(on){ weather.f.frequency.setTargetAtTime(on[1], c.currentTime, 0.6);
+                weather.f.Q.setTargetAtTime(on[2], c.currentTime, 0.6); }
+      }catch(e){}
+    },
+    stopWeather(){ if(weather){ try{ weather.g.gain.setTargetAtTime(0, ready().currentTime, 0.3); }catch(e){} } },
   };
 })();
 const BEAT_SFX = { clash:"clash", graze:"graze", hit:"hit", crit:"crit", fall:"fall",
@@ -6382,7 +6924,8 @@ function HPBar({ label, v, s, cls, flip }){
 function FightModal({ fight, onClose, startMuted, onMute, onSpeak }){
   const [muted,setMuted] = useState(!!startMuted);
   useEffect(()=>{ SFX.mute = !!startMuted; }, [startMuted]);
-  useEffect(()=>()=>SFX.stopCrowd(), []);
+  useEffect(()=>{ SFX.place(fight.venue || "forum", fight.sky); }, [fight.venue, fight.sky]);
+  useEffect(()=>()=>{ SFX.stopCrowd(); SFX.stopWeather(); }, []);
   const [i,setI] = useState(0);
   const [playing,setPlaying] = useState(true);
   const [speed,setSpeed] = useState(1);
@@ -6488,7 +7031,8 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak }){
           </div>
           <div className="flex items-center gap-2">
             <button className="chip" aria-label={SFX.mute? "Unmute sound":"Mute sound"}
-              onClick={()=>{ SFX.mute = !SFX.mute; if(SFX.mute) SFX.stopCrowd(); setMuted(SFX.mute); onMute(SFX.mute); }}>
+              onClick={()=>{ SFX.mute = !SFX.mute; if(SFX.mute){ SFX.stopCrowd(); SFX.stopWeather(); }
+                else SFX.place(fight.venue||"forum", fight.sky); setMuted(SFX.mute); onMute(SFX.mute); }}>
               {muted? "Sound off":"Sound on"}
             </button>
             {!done && <button className="chip" onClick={()=>setPlaying(p=>!p)}>{playing? "Pause":"Play"}</button>}
@@ -6738,6 +7282,7 @@ export default function App(){
   const [rack,setRack] = useState("weapon");
   const [seedIn,setSeedIn] = useState("");
   const [legacy,setLegacy] = useState(null);
+  const [carry,setCarry] = useState(null);      // {mode:"out"|"in", text, err, found}
   useEffect(()=>{ (async ()=>{
     try { const r = await window.storage.get(TRADE_KEY);
       setLegacy(r && r.value ? JSON.parse(r.value) : blankLegacy()); }
@@ -6833,6 +7378,26 @@ export default function App(){
   const openSlot = i => { const d = slots[i]; if(!d) { setSlot(i); setScreen("intro"); return; }
     clearTransient(); setSlot(i); rngSet(d.rngState || seedToNum(d.seed)); setS(d); setScreen("game"); setTab("ludus"); };
   const toTitle = ()=>{ clearTransient(); setS(null); setSlot(null); setScreen("title"); };
+  const carryOut = ()=>{ if(!S) return;
+    setCarry({ mode:"out", text:"" });
+    exportHouse(S).then(t=>setCarry(c=>c && c.mode==="out" ? Object.assign({},c,{text:t}) : c)); };
+  const carryIn = ()=>{ setCarry({ mode:"in", text:"", err:null, found:null }); };
+  const readHouse = t => {
+    setCarry(c=>Object.assign({}, c, { text:t, err:null, found:null }));
+    if(!t.trim()) return;
+    importHouse(t).then(r=>setCarry(c=>
+      (c && c.text===t) ? Object.assign({}, c, { err:r.err||null, found:r.house? r : null }) : c));
+  };
+  const takeHouse = ()=>{
+    if(!carry || !carry.found) return;
+    const d = carry.found.house;
+    let free = null;
+    for(let i=1;i<=SLOTS_N;i++) if(!slots[i]){ free = i; break; }
+    const target = free || slot || 1;
+    clearTransient();
+    rngSet(d.rngState || seedToNum(d.seed));
+    setSlot(target); setS(d); setCarry(null); setScreen("game"); setTab("ludus");
+  };
   const wipeSlot = i => { const sum = saveSummary(slots[i]); if(!sum) return;
     setAsk({ title:"Strike the Ledger", danger:true, confirm:"Erase it",
       text:`${sum.name} — week ${sum.week}, ${sum.men} men, ${sum.fallen} fallen. Erase this house and the slot stands empty for another.`,
@@ -6933,6 +7498,7 @@ export default function App(){
     setAsk({ title:"Sell Him On", danger:true, confirm:`Take ${v} denarii`,
       text:`A buyer offers ${v} denarii for ${fullName(g)}. The other men will see him led out through the gate, and draw their own conclusions.`,
       run:()=>{ mut(d=>{ d.gold+=v;
+        { const gg = d.gladiators.find(x=>x.id===id); if(gg) favourLost(d, gg, "sold"); }
         tieList(d).filter(t=>(t.a===id||t.b===id) && t.kind==="brother").forEach(t=>{
           const o = d.gladiators.find(x=>x.id===(t.a===id?t.b:t.a));
           if(o && o.status==="active") remember(d, o, "soldKin"); });
@@ -6958,6 +7524,7 @@ export default function App(){
       run:()=>{ mut(d=>grantRudis(d,id)); setSelId(null); } }); };
   const setFocus = (id,f)=> mut(d=>{ const g=d.gladiators.find(x=>x.id===id); if(g) g.focus=f; });
   const setRegimen = (id,r)=> mut(d=>{ const g=d.gladiators.find(x=>x.id===id); if(!g) return;
+    d.flags.everTrained = (d.flags.everTrained||0) + 1;
     if(g.regimen==="spar" && g.sparWith){ const old=d.gladiators.find(x=>x.id===g.sparWith);
       if(old && old.sparWith===g.id){ old.regimen="palus"; old.sparWith=null; } }
     g.regimen = r; g.sparWith = null; });
@@ -6986,6 +7553,8 @@ export default function App(){
       ? `You pay to have ${g.name} looked over properly. He ${FLAWS[g.flaw].tell}. The seller does not meet your eye about it.`
       : `You pay to have ${g.name} looked over properly. He is exactly what the man said he was, which happens.`,
       g.flaw ? "bad" : "good"); });
+  const sellOne = id => mut(d=>{ const paid = sellGear(d, id);
+    if(paid) chron(d, `${GEAR[id].name} goes back out the door for ${paid} denarii. The armoury is a room, not a warehouse.`, "info"); });
   const buyGear = id => mut(d=>{ const it=GEAR[id]; if(!it || d.gold<it.price) return;
 d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
     d.gearCond = d.gearCond || {}; (d.gearCond[id] = d.gearCond[id] || []).push(100);
@@ -7040,6 +7609,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
     const title = pick(FORGE_NAMES.filter(t=>!(d.forged||[]).includes(t))) || pick(FORGE_NAMES);
     d.forged = [...(d.forged||[]), title];
     g.named = { slot, title, made:d.week };
+    giveProv(d, g, slot, "forged");
     g.wear = g.wear || {}; g.wear[slot] = 100;
     g.morale = clamp(g.morale+16, 0, 100);
     g.defiance = clamp(g.defiance-6, 0, 100);
@@ -7070,6 +7640,14 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
   const letStaffGo = kind => mut(d=>{ const s = d[kind]; if(!s) return;
     d[kind] = null;
     chron(d, `${s.name} is let go. He packs without comment.`, "info"); });
+  const armHim = gid => mut(d=>{ const r = armFromRack(d, gid);
+    if(r && r.changed.length) chron(d, `${(d.gladiators.find(x=>x.id===gid)||{}).name} is re-armed off the rack — ${r.changed.length} piece${r.changed.length===1?"":"s"} changed.`, "info"); });
+  const armAll = () => mut(d=>{ let n=0;
+    for(const g of activeG(d)){ const r = armFromRack(d, g.id); if(r && r.changed.length) n++; }
+    chron(d, n ? `The armourer goes down the line and re-arms ${n} man${n===1?"":"men"} out of the racks.` : `Everyone is already carrying the best of what the house owns.`, "info"); });
+  const keepKit = gid => mut(d=>{ saveKit(d, gid); });
+  const useKit = (gid,kid) => mut(d=>{ applyKit(d, gid, kid); });
+  const forgetKit = kid => mut(d=>{ dropKit(d, kid); });
   const declare = key => mut(d=>{ declareDoctrine(d, key); });
   const backHim = (cid, lvl) => mut(d=>{ backCandidate(d, cid, lvl); });
   const doRite = (gid, key) => mut(d=>{ holdMunera(d, gid, key); });
@@ -7156,7 +7734,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
     patronsOf(d).forEach(pt=>{ pt.favor = clamp(pt.favor+bump, 0, 100); });
     serveWants(d, { type:"party", kind }); });
   const feast = ()=> mut(d=>{ if(d.gold<120 || d.week-d.lastFeast<3) return;
-    d.gold-=120; d.lastFeast=d.week;
+    d.gold-=120; d.lastFeast=d.week; d.flags.everFeast=(d.flags.everFeast||0)+1;
     if(d.lanista) d.lanista.health = clamp(d.lanista.health + 3, 0, 100);
     rememberAll(d, "feast");
     d.gladiators.forEach(g=>{ if(!isGone(g)){ g.morale=clamp(g.morale+9,0,100); g.defiance=clamp(g.defiance-4,0,100); } });
@@ -7165,13 +7743,61 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
 
   if(screen==="loading") return <div className="lr" style={{display:"flex",alignItems:"center",justifyContent:"center"}}><style>{CSS}</style><div className="disp dim">Lighting the torches...</div></div>;
 
+  const CarrySheet = ()=> !carry ? null : (
+    <div className="ovl" onClick={()=>setCarry(null)}>
+      <div className="sheet" onClick={e=>e.stopPropagation()}>
+        <div className="disp" style={{fontSize:18,color:"#e8d092",marginBottom:6}}>
+          {carry.mode==="out" ? "CARRY THIS HOUSE OUT" : "BRING A HOUSE IN"}
+        </div>
+        {carry.mode==="out" ? (<>
+          <div className="dim" style={{fontSize:14.5,fontStyle:"italic",marginBottom:8}}>
+            Everything about this house, in one string. Copy it into a message and somebody else can pick it up exactly where you left it.
+          </div>
+          <textarea readOnly value={carry.text} onFocus={e=>e.target.select()}
+            style={{width:"100%",height:120,boxSizing:"border-box",background:"#100d0a",color:"#b09b7d",
+              border:"1px solid #4e3c26",borderRadius:8,padding:9,fontSize:11,fontFamily:"monospace",resize:"none"}}/>
+          <div className="dim" style={{fontSize:13,marginTop:5}}>
+            {carry.text ? `${carry.text.length} characters` : "packing it up…"} · week {S?S.week:0} · {S?S.gladiators.filter(g=>!isGone(g)).length:0} men
+          </div>
+          <button className="btn" style={{width:"100%",marginTop:8}}
+            onClick={()=>{ try{ navigator.clipboard.writeText(carry.text); }catch(e){} }}>Copy it</button>
+        </>) : (<>
+          <div className="dim" style={{fontSize:14.5,fontStyle:"italic",marginBottom:8}}>
+            Paste a house here. It goes into an empty record and does not touch the ones you have.
+          </div>
+          <textarea value={carry.text} onChange={e=>readHouse(e.target.value)} placeholder="LVDVS1...."
+            style={{width:"100%",height:120,boxSizing:"border-box",background:"#100d0a",color:"#b09b7d",
+              border:"1px solid "+(carry.err?"#7c2a22":carry.found?"#5a6a35":"#4e3c26"),borderRadius:8,padding:9,
+              fontSize:11,fontFamily:"monospace",resize:"none"}}/>
+          {carry.err && <div className="blood" style={{fontSize:14,marginTop:6}}>{carry.err}</div>}
+          {carry.found && (
+            <div className="panel" style={{padding:10,marginTop:7,borderColor:"#5a6a35"}}>
+              <div className="disp" style={{fontSize:15,color:"#e8d092"}}>{carry.found.name}</div>
+              <div className="dim" style={{fontSize:14}}>
+                week {carry.found.week} · {carry.found.men} men · {carry.found.fame} fame
+              </div>
+            </div>
+          )}
+          <button className="btn" style={{width:"100%",marginTop:8}} disabled={!carry.found} onClick={takeHouse}>
+            {carry.found ? "Take it up" : "Nothing to take up yet"}
+          </button>
+        </>)}
+        <button className="btn btn-ghost" style={{width:"100%",marginTop:6}} onClick={()=>setCarry(null)}>Close</button>
+      </div>
+    </div>
+  );
+
   if(screen==="title") return (
     <div className="lr" style={{display:"flex",alignItems:"safe center",justifyContent:"center",padding:20}}>
       <style>{CSS}</style>
+      <CarrySheet/>
       <div style={{maxWidth:460,width:"100%"}}>
         <div className="disp" style={{fontSize:46,fontWeight:900,textAlign:"center",letterSpacing:".22em",color:"#e8d092"}}>LVDVS</div>
         <div className="dim" style={{textAlign:"center",fontStyle:"italic",marginTop:2,marginBottom:18}}>Blood, sand, and the fortunes of a Roman house.</div>
-        <div className="tag tag-gold" style={{marginBottom:8}}>The Records</div>
+        <div className="flex items-center justify-between" style={{marginBottom:8}}>
+          <span className="tag tag-gold">The Records</span>
+          <button className="btn btn-ghost" style={{padding:"5px 10px",fontSize:12}} onClick={carryIn}>Bring one in</button>
+        </div>
         {[1,2,3].map(i=>{
           const sum = saveSummary(slots[i]);
           return (
@@ -7671,6 +8297,25 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   ))}
                 </div>
               )}
+              {(()=>{ const C = charterAt(S); if(!C) return null;
+                const i = S.charter.i;
+                return (
+                  <div className="panel" style={{padding:13,borderColor:"#6d5426",background:"#1c1610"}}>
+                    <div className="flex items-center justify-between" style={{marginBottom:5}}>
+                      <span className="tag tag-gold">The first year</span>
+                      <span className="rowval dim" style={{fontSize:12.5}}>{i+1} of {CHARTER.length}</span>
+                    </div>
+                    <div className="disp" style={{fontSize:15.5,color:"#e8d092"}}>{C.title}</div>
+                    <div style={{fontSize:15,marginTop:3}}>{C.how}</div>
+                    <div className="flex gap-2" style={{marginTop:8}}>
+                      <button className="btn" style={{flex:1}} onClick={()=>setTab(C.tab)}>Take me there</button>
+                      <button className="btn btn-ghost" style={{whiteSpace:"nowrap"}}
+                        onClick={()=>setAsk({ title:"Leave Off The Charter", confirm:"I know the work",
+                          text:"You will stop being told what to do next. Nothing else changes and it cannot be turned back on.",
+                          run:()=>mut(d=>{ charterSkip(d); }) })}>I know the work</button>
+                    </div>
+                  </div>
+                ); })()}
               <div className="panel" style={{padding:13, borderColor: AG.some(a=>a.urgency===3)?"#7c2a22":AG.length?"#6d5426":"#3e2f1f"}}>
                 <div className="flex items-center justify-between" style={{marginBottom:6}}>
                   <span className="tag tag-gold">This week</span>
@@ -7798,10 +8443,11 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               ["lanista","The Lanista", S.lanista? `${S.lanista.age}, ${healthWord(S.lanista.health)}` : "—"],
               ["factions","The Stands", FACTIONS[facTop(S)].short + " " + facWord(facOf(S,facTop(S)))],
               ["book","The Record Book", `${(S.book&&S.book.n)||0} bouts`],
+              ["carry","Carry It Out", "share this house"],
               ["standings","The Houses", (()=>{ const me = [...(S.rivals||[]).map(h=>h.fame), S.fame].sort((a,b)=>b-a);
                 return `${me.indexOf(S.fame)+1} of ${me.length} in Capua`; })()]].map(([k,l,sub])=>(
               <button key={k} className="optrow" style={{padding:11}}
-                onClick={()=>k==="annals"? setAnnals(true) : setSheet(k)}>
+                onClick={()=>k==="annals"? setAnnals(true) : k==="carry"? carryOut() : setSheet(k)}>
                 <div className="disp" style={{fontSize:12.5,color:"#e8d092"}}>{l}</div>
                 <div className="dim" style={{fontSize:13.5,marginTop:2}}>{sub}</div>
               </button>
@@ -8156,6 +8802,9 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 <div style={{fontSize:15.5}}>{o.opp.nick? `${o.opp.name}, ${o.opp.nick}` : o.opp.name} · House of {o.opp.house}</div>
                 <div className="dim" style={{fontSize:14}}>{o.opp.cls} · {o.opp.origin}{o.opp.wins!=null? ` · ${o.opp.wins}–${o.opp.losses}${o.opp.kills?` · ${o.opp.kills} kills`:""}`:""} · looks {menace(o.opp).toLowerCase()}</div>
                 {o.venue && <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:3}}>{VEN(o.venue).say}</div>}
+                {o.sky && <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:2,color:"#9dc0d4"}}>
+                  {SKY(o.sky).say}{shelterOf(o.venue)>0.3 ? " There is a roof of a kind over most of it." : ""}
+                </div>}
                 {o.opp.house && <div className="dim" style={{fontSize:13}}>{o.opp.house.startsWith("the")||o.opp.house.startsWith("no")? o.opp.house : "House "+o.opp.house}</div>}
                 {(()=>{ const me = fGid ? S.gladiators.find(g=>g.id===fGid) : null;
                   if(!me) return null;
@@ -8390,6 +9039,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               <div className="flex items-center gap-1" style={{flexWrap:"wrap",margin:"5px 0"}}>
                 <span className="tag">{g.cls}</span><span className="tag">{g.origin}</span>
                 {isF(g) && <span className="tag" style={{borderColor:"#8a6a9c",color:"#c8aad4"}}>Gladiatrix</span>}
+                {favourOf(g)>=40 && <span className="tag" style={{borderColor:favColour(favourOf(g)),color:favColour(favourOf(g))}}>{favWord(favourOf(g))}</span>}
                 {masterOf(g) && g.mastery.cls===g.cls && <span className="tag tag-gold">✦ {MASTERY[g.mastery.cls].name}</span>}
                 {g.benched && g.benched.weeks>0 && <span className="tag" style={{borderColor:"#6d5426",color:"#d8ac5f"}}>Kept apart · {g.benched.weeks}w</span>}
                 {g.learning && <span className="tag" style={{borderColor:"#6d5426",color:"#d8ac5f"}}>At the far post · {g.learning.weeks}w</span>}
@@ -8777,6 +9427,56 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         </div>)}
 
         {tab==="armory" && (<div className="flex flex-col gap-3">
+          {(()=>{ const u = rackUsed(S), c = rackCap(S), over = rackOver(S);
+            return (
+              <div className="panel" style={{padding:12, borderColor: over? "#7c2a22" : u>=c-1 ? "#6d5426" : "#3e2f1f"}}>
+                <div className="flex items-center justify-between" style={{marginBottom:4}}>
+                  <span className="tag tag-gold">The racks</span>
+                  <span className="rowval" style={{fontSize:13,color:over?"#d96f5d":u>=c-1?"#d8ac5f":"#9aa86a"}}>
+                    {u} of {c} · {rackWord(S)}
+                  </span>
+                </div>
+                <Bar v={Math.min(100, u/c*100)} label="" color={over
+                  ? "linear-gradient(90deg,#5a1a14,#d96f5d)" : "linear-gradient(90deg,#4a3a24,#c99a4b)"}/>
+                <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:4}}>
+                  {over
+                    ? `Past what the room holds. Everything wears ${Math.round((rackStrain(S)-1)*100)}% faster and it costs ${rackRent(S)} denarii a week to keep it stacked against the wall.`
+                    : `House issue does not count — it is issue. A bigger armoury holds seven more.`}
+                </div>
+              </div>
+            ); })()}
+
+          {(S.deadSteel||[]).length>0 && (
+            <div className="panel" style={{padding:11,borderColor:"#7c2a22"}}>
+              <div className="tag tag-blood" style={{marginBottom:4}}>Off the dead</div>
+              <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:5}}>
+                Pieces that came back off a body. Somebody will end up carrying them, and he will know it.
+              </div>
+              {S.deadSteel.map((x,i)=>(
+                <div key={i} className="flex items-center justify-between gap-2" style={{borderTop:"1px dotted #33271a",padding:"4px 0"}}>
+                  <span className="rowname" style={{fontSize:14}}>{GEAR[x.id] ? GEAR[x.id].name : x.id}</span>
+                  <span className="rowval dim" style={{fontSize:12.5}}>{x.from}, week {x.week}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {activeG(S).length>0 && (
+            <div className="panel" style={{padding:11}}>
+              <div className="flex items-center justify-between gap-2">
+                <div style={{minWidth:0}}>
+                  <div className="disp" style={{fontSize:13,color:"#e8d092"}}>Arm the whole line</div>
+                  <div className="dim" style={{fontSize:13.5}}>
+                    {(()=>{ const n = activeG(S).filter(g=>kitFaults(S,g).length).length;
+                      return n ? `${n} man${n===1?" is":"men are"} carrying less than the racks can give ${n===1?"him":"them"}.`
+                        : "Everyone is carrying the best of what the house owns."; })()}
+                  </div>
+                </div>
+                <button className="btn" style={{whiteSpace:"nowrap"}} onClick={armAll}>Go down the line</button>
+              </div>
+            </div>
+          )}
+
           <div className="dim" style={{fontSize:14.5,fontStyle:"italic"}}>The racks hold what you have bought and nothing else. Every piece arms one man at a time — equip it from his page. A free hand, a bare head and a bare chest cost nothing and always will.</div>
 
           <div className="grid grid-cols-4 gap-2">
@@ -8823,6 +9523,12 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                             <button className={`btn ${it.stock?"btn-ghost":""}`} style={{width:"100%",marginTop:7}} disabled={S.gold<gearPrice(S,it.price,it.slot)} onClick={()=>buyGear(id)}>
                               {S.gold<gearPrice(S,it.price,it.slot) ? "Not enough coin"
                                 : `${it.stock?"Order":"Buy"} for ${gearPrice(S,it.price,it.slot)}d${free>0?` · ${free} on the rack`:""}`}
+                            </button>
+                          )}
+                          {!it.stock && it.price>0 && free>0 && (
+                            <button className="btn btn-ghost" style={{width:"100%",marginTop:5,fontSize:12.5,padding:"7px 10px"}}
+                              onClick={()=>sellOne(id)}>
+                              Sell one back · about {rnd(it.price*resaleRate(S)*0.85)}d
                             </button>
                           )}
                           {it.price>0 && owned>0 && free===0 && <div className="dim" style={{fontSize:12.5,marginTop:3}}>Every one you own is on a man.</div>}
@@ -8883,6 +9589,30 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 </div>
               );
             })()}
+            {(()=>{ const mine = (S.kits||[]).filter(k=>k.cls===selG.cls);
+              return (
+                <div className="panel" style={{padding:10,marginTop:8,marginBottom:9,background:"#1c1610",borderColor:"#3e2f1f"}}>
+                  <div className="flex items-center justify-between" style={{marginBottom:4}}>
+                    <span className="tag">Kits you keep</span>
+                    <button className="btn btn-ghost" style={{padding:"4px 9px",fontSize:12}} onClick={()=>keepKit(selG.id)}>
+                      Keep this one
+                    </button>
+                  </div>
+                  {mine.length===0
+                    ? <div className="dim" style={{fontSize:13.5,fontStyle:"italic"}}>
+                        Nothing kept for a {selG.cls.toLowerCase()} yet. Keep a kit and you can put it on the next one in a tap.
+                      </div>
+                    : mine.map(k=>(
+                        <div key={k.id} className="flex items-center justify-between gap-2" style={{borderTop:"1px dotted #33271a",padding:"5px 0"}}>
+                          <span className="rowname" style={{fontSize:14}}>{k.name}</span>
+                          <span className="flex gap-1">
+                            <button className="btn btn-ghost" style={{padding:"4px 9px",fontSize:12}} onClick={()=>useKit(selG.id,k.id)}>Put it on him</button>
+                            <button className="btn btn-ghost" style={{padding:"4px 8px",fontSize:12}} onClick={()=>forgetKit(k.id)}>×</button>
+                          </span>
+                        </div>
+                      ))}
+                </div>
+              ); })()}
             {isAuctor(selG) && (
               <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",borderColor:"#5a7a8a"}}>
                 <div className="flex items-center justify-between gap-2" style={{marginBottom:4}}>
@@ -9152,7 +9882,52 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               </div>
               <div className="dim" style={{position:"absolute",bottom:5,left:9,fontSize:11,fontStyle:"italic"}}>as he takes the sand</div>
             </div>
-            <div className="tag tag-gold" style={{marginBottom:6}}>Kit</div>
+            <div className="flex items-center justify-between" style={{marginBottom:6}}>
+              <span className="tag tag-gold">Kit</span>
+              <button className="btn btn-ghost" style={{padding:"5px 10px",fontSize:12}} onClick={()=>armHim(selG.id)}>
+                Arm him from the rack
+              </button>
+            </div>
+            {(()=>{ const v = favourOf(selG); if(v < 8) return null;
+              return (
+                <div className="panel" style={{padding:11,marginBottom:9,background:"#1c1610",borderColor:favColour(v)}}>
+                  <div className="flex items-center justify-between" style={{marginBottom:3}}>
+                    <span className="tag">What Capua makes of him</span>
+                    <span className="rowval" style={{fontSize:13,color:favColour(v)}}>{favWord(v)}</span>
+                  </div>
+                  <Bar v={v} label="" color="linear-gradient(90deg,#4a3a24,#e8d092)"/>
+                  <div className="dim" style={{fontSize:13.5,marginTop:4}}>
+                    Purses ×{favPurse(selG).toFixed(2)} when he is on the card{v>=25 ? `, and they are ${Math.round(favMissio(selG))} less willing to watch him die.` : "."}
+                  </div>
+                  {v>=40 && <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:3}}>
+                    Selling him or burying him is not a private arrangement any more.
+                  </div>}
+                </div>
+              ); })()}
+            {provCrowd(selG)>0 && (
+              <div className="panel" style={{padding:9,marginBottom:7,background:"#1c1610",borderColor:"#6d5426"}}>
+                <div className="laurel" style={{fontSize:13.5}}>
+                  The crowd knows his steel when he walks out — {provCrowd(selG)} to them.
+                </div>
+                {provDread(selG) && <div className="blood" style={{fontSize:13.5,marginTop:2}}>
+                  And the cells know which piece he is wearing.
+                </div>}
+              </div>
+            )}
+            {(()=>{ const faults = kitFaults(S, selG);
+              if(!faults.length) return null;
+              return (
+                <div className="panel" style={{padding:9,marginBottom:7,background:"#1c1610",
+                  borderColor: faults.some(f=>f.why!=="better on the rack") ? "#7c2a22" : "#6d5426"}}>
+                  {faults.map((f,i)=>(
+                    <div key={i} style={{fontSize:13.5,color:f.why==="unfamiliar"?"#d98476":f.why==="failing"?"#d96f5d":"#d8ac5f"}}>
+                      {f.why==="unfamiliar" ? `${f.name} is not his style — he carries it clumsily.`
+                        : f.why==="failing" ? `${f.name} is close to going.`
+                        : `There is better on the rack for him.`}
+                    </div>
+                  ))}
+                </div>
+              ); })()}
             {(()=>{ const kit = selG.kit || defaultKit(selG.cls); const m = kitMods(kit, selG.cls, selG); return (
               <div style={{marginBottom:12}}>
                 {SLOTS.map(slot=>{
@@ -9163,6 +9938,12 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                         <span className="dim" style={{fontSize:13}}>{SLOT_NAME[slot]}</span>
                         {cur && <span style={{fontSize:12.5}}><GearStats it={cur} cls={selG.cls}/></span>}
                       </div>
+                      {provOf(selG,slot) && (
+                        <div style={{fontSize:12.5,fontStyle:"italic",marginBottom:3,
+                          color:PROV[provOf(selG,slot).kind].colour}}>
+                          {PROV[provOf(selG,slot).kind].line(provOf(selG,slot))}
+                        </div>
+                      )}
                       <button className="selbtn" onClick={()=>setGearPick({gid:selG.id, slot})}>
                         <span style={{minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                           {isNamed(selG,slot) ? <span className="gold">{selG.named.title}</span> : (cur ? cur.name : "—")}
@@ -9640,6 +10421,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         </div>
       )}
 
+      <CarrySheet/>
       {ask && (
         <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:70}} onClick={()=>setAsk(null)}>
           <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()} style={{borderColor: ask.danger? "#7c2a22":"#4e3c26"}}>

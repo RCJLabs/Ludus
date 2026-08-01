@@ -1268,6 +1268,162 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v0.78.0 — Carrying a house out
+A seed shares an opening position. This shares an actual house, mid-campaign, in a string somebody can paste into a message: **every man, the chronicle, the record book, the annals, the relationships, and the generator's exact position**, so the receiving copy continues the same run rather than a similar one.
+
+**`LVDVS1z.checksum.body`** — deflate-compressed and base64url encoded, no `+`, `/` or `=`, so it survives URLs and chat apps. A 41-week house is **11,623 characters compressed against 53,578 plain**, a 4.6× saving that is the difference between shareable and not. It falls back to uncompressed automatically where `CompressionStream` is unavailable.
+
+**It fails loudly rather than quietly.** An FNV-1a checksum sits between the tag and the body, and every corruption is refused with a specific reason: an empty box, random words, a bare JSON save, a seed pasted by mistake, a paste truncated by a chat app, and a single flipped character all come back with something a person can act on. A save from an older version is migrated on the way in.
+
+Verified across 19 checks on a real 41-week house: byte-identical round trip including the chronicle, the book and the RNG position, plus all seven refusals.
+
+One real bug found in building it — a damaged paste rejects the **writer** of the decompression stream as well as the reader, and that rejection escaped the caller's `try/catch` as an unhandled error that crashed the tab rather than showing a message. Both sides are caught now.
+
+
+### v0.77.0 — Fatigue, and a correction
+The v0.76.0 audit reported that fatigue blocked 49% of all man-weeks. **That number was wrong.** The game has never prevented a tired man from fighting — the 60-point cutoff was my own test harness's policy, and the audit measured the harness rather than the game. Diagnosing it properly turned up two real things instead.
+
+**Fatigue was punishingly steep.** It cost up to 33% power on a straight line, so a man at 55 fatigue — a normal state two weeks after a bout — dropped from **53% to 21%** against a fresh equal. An 11% power loss producing a 32-point swing is why every sensible player rests every man every time. The curve is now gentle to 45 and steep after: **43% at 30 fatigue (was 36), 30% at 55 (was 21), 7% at 95 (was 5).** A lightly tired man is a real option; an exhausted one is still a bad idea. A fresh man is unchanged at 52%.
+
+**And the rudis works after all.** A house that actually keeps its men on the sand produces **250 bouts and 76 peak renown per campaign** — the earlier figure of 55 came from a harness sending two men a week. So the v0.76.0 renown boost was an overcorrection and **has been reverted to ×0.7**, with the gate set at **62** rather than 90 or 45.
+
+Final measurement across 30 campaigns: **1.97 men freed per run, 0.5 buried.** At the start of this session it was 0.03 freed. The wooden sword is an achievement — roughly twice in a lanista's career — rather than a formality or an impossibility.
+
+The lesson, recorded because it cost two versions: **a harness that models a player's policy will measure that policy, not the game.** Anything the harness chooses not to do looks like something the game forbids.
+
+
+### v0.76.0 — The audit, and the rudis
+Rather than guess which systems were over-built, thirty campaigns were instrumented and played through — **2,655 weeks, 1,809 bouts** — counting every state the game can be in.
+
+**It found the worst bug in the game.** The rudis fired **once in 2,655 weeks.** The gate wanted 90 renown; the best gladiator across twelve full campaigns reached **55**. The wooden sword — the thing the design calls the strongest long game and the moral centre of the whole thing — has been unreachable for the entire life of the project.
+
+Sampling 332 man-weeks of ten-win veterans gave the real distribution: median 41 renown, 75th percentile 51, maximum 69. **The gate is 45**, where a third of ten-win men qualify, and **renown earned per victory is up from ×0.7 to ×1.15**. Combat is untouched — even fighters still win 52%.
+
+**What the audit found healthy.** Ambitions, form, the aedileship, weather, venues, the crux, condemned men and the nemesis all appear constantly. Every one of the six skies is drawn. Seventeen events never fired, and sixteen of those are correct: four are pushed by their own systems rather than the random draw, and the rest are gated on unrest, grudges or the war — a house at 80 unrest with a grudge unlocks *sabotage*, *thugs* and *bribedEditor* immediately. Cruelty unlocking its own content is the design working.
+
+**What it found unused.** Five venues never appeared in thirty campaigns — the courtyard, the stone bowl, the harbour, the Greek theatre and the imperial sand — because four are on the circuit and one is Rome, and a house that never travels never sees them. That is content behind a door, not content that is broken.
+
+**And it found the real bottleneck, unfixed:** fatigue blocks **49% of all man-weeks**. Men cannot fight often enough to build the careers the rudis, mastery and favour systems all assume. That is a balance change with a wide blast radius and it is the next thing to look at, deliberately, on its own.
+
+
+### v0.75.0 — Sound that knows where it is
+The synth predated venues, factions and weather, so every bout sounded like the same bout. Every sound now plays **into a room**.
+
+Nine acoustics, a convolution impulse each, measured at 44.1kHz:
+
+| | Impulse | Wet |
+|---|---|---|
+| **A field outside the walls** | 4,410 samples (0.10s) | 2% |
+| **The pit behind the ludus** | 7,056 | 5% |
+| **The forum stands** | 14,994 | 12% |
+| **A magistrate's courtyard** | 24,255 | 30% |
+| **The Greek theatre** | 41,895 | 34% |
+| **The amphitheatre** | 48,510 | 26% |
+| **The imperial sand** | **70,560 (1.60s)** | 32% |
+
+A blow in a field is dead on arrival; the same blow on the imperial sand rings for a second and a half. Damping runs with it — 3000Hz outdoors, 1600Hz under stone — so a big room is darker as well as longer.
+
+**The crowd bed is sized by the house.** It scales by the same figure the arena view uses for head count, so fourteen people in a courtyard sound like fourteen people and the amphitheatre sounds full.
+
+**And the sky is audible.** Rain lays a bright 2400Hz bed under the whole bout, a hard wind a low 700Hz one, bitter cold a thin trace. A fair day is silent, as it should be.
+
+Verified by running the audio graph against a mocked Web Audio API and asserting on the constructed nodes — eleven checks covering impulse length per venue, the ordering of the rooms, the weather bed opening only on the right skies, and muting closing everything.
+
+
+### v0.74.0 — The first year
+Twenty-eight lessons explain the machinery as it arrives. None of them told a new lanista what to actually do on a Tuesday.
+
+**Ten objectives, in the order a man would learn them**, sitting above the agenda: put them to work · send one out · end the week · buy a man · arm somebody properly · take a card at the games · look at a man before you fight him · keep the cells quiet · **let a beaten man up** · stand for a year.
+
+Every one is finished **by doing it**, never by reading it, and the charter **skips anything already true** — a player who worked out the first three on his own is handed the fourth without being congratulated for the others. It can be put down permanently at any point, and a save already underway is never given homework.
+
+Measured across 60 first campaigns played plausibly: **85% finish, typically by week 21**, which is the "stand for a year" step arriving as the last one. Finishing pays 250 denarii and 12 fame, and the chronicle says the only true thing available: *"Nobody hands you anything for that except the next week."*
+
+The ninth step is the cloth deliberately. It is the decision the whole game is built around, and a first-year lanista should have made it once on purpose rather than stumbled into it.
+
+
+### v0.73.0 — A man the tiers know by name
+The stands had opinions about styles and none at all about men. Renown is what Capua thinks a gladiator is worth; **favour is whether it likes him**, which is a different thing, worth more, and the reason a favourite is dangerous to own.
+
+Five degrees of it — *one more man on the sand · known by sight · a name in the stands · they chant for him · **the darling of Capua***.
+
+**It is built by afternoons, not victories.** The crowd score is the biggest lever: a bout at 74 crowd is worth +2.8, one at 38 is worth −0.8. Winning adds 3.2, a bout with real exchanges 1.6, and **being spared adds 3.4** — a man they asked for is a man they have invested in. Showmanship, a nickname, and the imperial sand all count. And it fades **1.3 a week** once he stops appearing: from 70, twelve quiet weeks leave him at 56.
+
+| Favour | Purse | Missio | Crowd |
+|---|---|---|---|
+| 25 · known by sight | ×1.05 | +4 | +2 |
+| 50 · a name | ×1.11 | +8 | +5 |
+| 90 · the darling | ×1.20 | +14 | +8 |
+
+At a thin standing of 6, a fallen man is spared **76% unknown, 87% known by sight, 92% a name, 99% a favourite** — they lean, they do not overrule, and at a comfortable standing it changes nothing because the roll clears anyway.
+
+**And losing one is not a private matter.** Killed: −12 fame, +6 unrest, 32 off the stands. Sold: −15 fame, +8 unrest, the same 32 — *"Selling him is not a private arrangement. The stands find out inside a day."* **Freed: +14 fame and 11 back to the stands** — the only exit that pays, which is the whole argument of this game in one number. A man nobody knows costs nothing to lose either way.
+
+
+### v0.72.0 — The weather on the day
+The seasons decide the year. This decides the afternoon. Six of them, drawn per card and shown on it before you commit — and footing is the same dial the venues already use, so a wet field and a dry courtyard are one mechanism arriving from two directions.
+
+| | Footing | Stamina | Crowd | Purse |
+|---|---|---|---|---|
+| **Fair** | — | — | — | — |
+| **A good day for it** | 1.03 | ×0.96 | **+8** | ×1.06 |
+| **Blazing** | 1.01 | **×1.24** | −5 | — |
+| **Rain** | **0.84** | ×1.08 | **−16** | **×0.86** |
+| **A hard wind** | 0.96 | ×1.02 | −3 | ×0.97 |
+| **Bitter** | 0.93 | ×1.12 | −9 | ×0.92 |
+
+Each season sends its own: summer is **50% blazing**, winter **50% bitter and 33% rain**, spring and autumn mixed. Across six years it comes out fair 27%, rain 21%, a good day 17%, blazing 17%, bitter 10%, wind 8%.
+
+**A roof is worth a great deal.** Shelter runs 0% in a field or your own pit, 32% under the amphitheatre's awning, 50% in the Greek theatre, **72% in a magistrate's courtyard** — where rain leaves the footing at 1.07, better than a dry field, and costs four crowd instead of sixteen.
+
+Rain swings a quick man from 52% to 46% and a strong one from 61% to 65%. Heat does nothing at blood stakes, where bouts end in a round, and a great deal at standard: a man of 40 endurance goes from **58% to 83% gassed**, a man of 75 from 27% to 46%. And a hard wind is worse for a net than for a shield.
+
+
+### v0.71.0 — What the racks will hold
+Fifty-four kinds of thing and nowhere to put them. A ludus armoury was a room, and a room has walls.
+
+**House issue does not count** — it is issue, and twenty gladii off the rack read as zero. Bought steel takes space: **8 pieces at no armamentarium, then 15, 22 and 29.**
+
+Go past it and the room stops being an armoury. Everything wears **up to 75% faster** and it costs **4 denarii a week per piece over**. Measured over eight bouts, a blade in a room with space ends at **64 of 100**; the same blade in a room stuffed to 1.75× strain ends at **37**. The agenda raises it, and every sixth week the chronicle notes *"stacked against the wall and going off in the damp."*
+
+So a piece can now **go back out the door**. Resale runs **42% of list, 55% with an armourer**, 47% under a shield doctrine, scaled by condition — and it sells your worst example first, so a 260d blade at 40 condition fetches 73d while a mint one with an armourer fetches 144d. It will not sell what a man is wearing.
+
+
+### v0.70.0 — Where a piece came from
+Fifty-four kinds of steel told apart by four numbers. A piece with a history is the same four numbers and a different object entirely.
+
+**Six ways one gets a story**, and the story attaches to the slot rather than the item, so it survives the man who earned it:
+
+| | Crowd | Him | |
+|---|---|---|---|
+| **forged** | +5 | +8 | Made for him by your own smith |
+| **spoils** | +7 | +6 | Taken off a named man on the sand, after |
+| **gift** | +6 | +5 | Sent up from a patron with no note |
+| **imperial** | +11 | +10 | Carried onto the sand at Rome and off it again |
+| **primacy** | +8 | +7 | He held the primacy of Capua in this |
+| **dead** | +4 | **−7** | Somebody died in it, and the cells know which piece |
+
+Only bought steel carries a history — house stock is refused — and a piece takes **one** story and no more. A man carrying a taken weapon, a Roman helm and a dead man's armour walks out at **+22 crowd** and with the whole block watching what he is wearing.
+
+**Kill a man at sine missione and 36% of the time your gladiator comes off the sand with his weapon.** *"Nobody stops him and nobody asks for it back."*
+
+And what a man dies in does not vanish: every wearing piece goes back on the rack as **dead steel**, listed in the armoury and raised in the agenda, until somebody is handed it — *"He takes it, because the alternative is going out without one."*
+
+
+### v0.69.0 — Loadouts
+Fifty-four pieces, four slots, eight men. Arming a house by hand had stopped being a decision and become bookkeeping.
+
+**Arm him from the rack** picks the best the house actually owns for that man, scoring each piece the way the fight engine will read it — attack and guard weighted as `power()` weights them, showmanship and speed counted, condition scaled in, and a hard penalty on anything outside his style. Verified across 600 men armed from a full armoury: **not one ended up carrying something unfamiliar**, and arming three men from a rack holding exactly one of everything **double-issued nothing**.
+
+It is worth having. From a full rack, a man goes from **42% to 67%** on the sand and from 9%/4% attack and guard to **18%/25%**.
+
+**Go down the line** does the whole familia from the armoury, and tells you first how many are carrying less than the racks can give them.
+
+**Kits you keep** saves a loadout by class and weapon — *"Retiarius · Neptune's Fuscina"* — to put on the next man in a tap. Applying one the house can no longer supply falls back to bare in those slots and says which pieces were missing.
+
+And a man's page now flags what is wrong with what he carries: **unfamiliar**, **failing**, and **there is better on the rack**, each reported independently, with the first two also raised in the agenda.
+
+
 ### v0.68.0 — Offline play
 The downloaded file has always worked without a network. The hosted copy needed one to load, which meant no home screen and nothing on a plane. It is a proper installable app now.
 
@@ -1780,11 +1936,14 @@ Weekly loop, roster, training, fight sim with missio, market, parties, feasts, e
 - ✅ Six house doctrines you declare and then live inside
 - ✅ Self-contained layout CSS — no Tailwind dependency in the standalone build
 
-**Next up — the queue**
-- **Weather on the day.** Seasons exist but no individual afternoon is wet. Venue footing already provides the machinery.
+**Next up**
+- Nothing outstanding. All twenty items from both brainstorms are shipped.
 
 **Later**
 
+**Next up**
+- Nothing outstanding. All twenty items from both brainstorms are shipped.
+
 ---
 
-*Last updated: v0.68.0*
+*Last updated: v0.78.0*
