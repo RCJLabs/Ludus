@@ -1549,6 +1549,93 @@ function repWeek(d){
   }
 }
 
+/* ---- THE HOUSE AS A NAME ----
+   Fame is what the editors and the good families make of you. This is what the
+   street makes of you — the wine-shops, the walls by the gate, the potters' stalls.
+   A house the whole city can name is a different animal from a house that merely
+   wins. d.acclaim (0..100) is that name; d.brand holds the merchandising decision
+   and which tiers the street has already announced; g.graffiti puts a man on a wall. */
+const ACCLAIM_TIERS = [
+  { at:0,  name:"unknown to the street", blurb:"Nobody in the wine-shops has heard of you." },
+  { at:20, name:"known in the wine-shops", blurb:"They argue your bouts over cheap wine.",
+    once:"Your house's name has started coming up in the wine-shops of Capua — a win argued over, a man's name half-remembered. A small thing, and it is how all of it begins." },
+  { at:40, name:"names on the walls", blurb:"Your men's names are scratched on the walls.",
+    once:"The first graffito goes up on a wall by the Capua gate — one of your men's names, scratched by a hand that paid to watch him fight. The city has started writing you down." },
+  { at:62, name:"figures on the shelves", blurb:"Potters sell your figures; lamps carry your crest.",
+    once:"A potter by the forum has begun turning out little clay figures of your best man, and an oil-lamp with your crest on it is selling two streets over. Your name is a thing that can be bought now — and a cut of it comes home." },
+  { at:82, name:"a name the whole city plays at", blurb:"Boys play at being your men; the stands chant the house.",
+    once:"The boys in the street have split themselves into your house and a rival's and fight it out with sticks in the dust. Grown men wear your colours to the games. You are not a ludus any more — you are a name." },
+];
+const acclaimOf  = d => clamp(d.acclaim||0, 0, 100);
+const acclaimIdx = d => { const a = acclaimOf(d); let i=0; for(let k=0;k<ACCLAIM_TIERS.length;k++) if(a>=ACCLAIM_TIERS[k].at) i=k; return i; };
+const acclaimTier = d => ACCLAIM_TIERS[acclaimIdx(d)];
+const acclaimWord = a => a>=82?"a name in itself" : a>=62?"widely known" : a>=40?"on the walls" : a>=20?"talked of" : "unknown to the street";
+const topPfame   = d => activeG(d).reduce((m,g)=>Math.max(m, g.pfame||0), 0);
+const acclaimCrowd = d => Math.round(acclaimOf(d)/14);               // louder stands for a famous house, up to ~7
+const merchLive  = d => acclaimOf(d) >= 62;
+function merchWeekly(d){
+  if(!merchLive(d)) return 0;
+  const base = (acclaimOf(d) - 55) * (1 + topPfame(d)/140);
+  return Math.round(Math.max(0, base) * ((d.brand && d.brand.licensed) ? 1.9 : 1));
+}
+const GRAFFITI = [
+  g => `${g.name}, the sigh of the girls`,
+  g => `${g.name} the ${g.origin||"Thracian"}, and no other`,
+  g => `all the girls love ${g.name}`,
+  g => `here fought ${g.name}, and won`,
+  g => `${g.name} holds this wall`,
+  g => `${g.name}, ${g.wins||0} times crowned`,
+  g => `${g.name} makes the whole tier roar`,
+  g => `${g.name} — the doctor's despair`,
+];
+function acclaimTarget(d){
+  const men = activeG(d).map(g=>g.pfame||0).sort((a,b)=>b-a);
+  const top3 = (men[0]||0)*0.5 + (men[1]||0)*0.28 + (men[2]||0)*0.16;   // your famous few
+  const spectacle = repShare(d,"show")*22 + repShare(d,"blood")*10;      // the popular styles
+  const freedLegends = (d.freed||[]).filter(f=>(f.wins||0)>=10).length * 6;
+  const primus = d.primus ? 14 : 0;
+  const spill = Math.min(20, (d.fame||0)*0.06);                          // your standing spills into the street
+  const graff = activeG(d).filter(g=>g.graffiti).length * 3;
+  return clamp(top3*0.5 + spectacle + freedLegends + primus + spill + graff, 0, 100);
+}
+function acclaimWeek(d){
+  if(d.over) return;
+  if(!d.brand) d.brand = { licensed:false, decided:false, tier:0, earned:0 };
+  const tgt = acclaimTarget(d), a0 = acclaimOf(d);
+  /* it climbs quickly toward a hot house and settles slowly out of a cold one */
+  d.acclaim = clamp(a0 + (tgt - a0) * (tgt > a0 ? 0.10 : 0.03) - 0.15, 0, 100);
+  const idx = acclaimIdx(d);
+  if(idx > (d.brand.tier||0)){
+    for(let k=(d.brand.tier||0)+1; k<=idx; k++){ const T = ACCLAIM_TIERS[k]; if(T && T.once) chron(d, T.once, "good"); }
+    d.brand.tier = idx;
+  }
+  /* a famous man gets on the walls */
+  if(acclaimOf(d) >= 40 && !d.rome){
+    const cand = activeG(d).filter(g=>!g.graffiti && (g.pfame||0) >= 55);
+    if(cand.length && R() < 0.2){ const g = pick(cand); g.graffiti = { line: pick(GRAFFITI)(g), week:d.week };
+      chron(d, `Somebody has scratched ${g.name} onto the wall by the ${pick(["baths","gate","forum","theatre"])}: “${g.graffiti.line}.” He pretends he has not seen it.`, "good"); }
+  }
+  /* the potters pay their cut */
+  if(merchLive(d)){ const m = merchWeekly(d); if(m > 0){ d.gold += m; d.brand.earned = (d.brand.earned||0) + m; } }
+  /* the licensing decision surfaces once, when there is a name worth selling */
+  if(merchLive(d) && !d.brand.decided && !d.pendingEvent && !d.rome && !d.city && !d.travel && R()<0.4)
+    d.pendingEvent = licenceEvent(d);
+}
+function licenceEvent(d){
+  return { id:"licence", title:"Your Name for Sale",
+    text:"A potter with three stalls and an eye for a coming thing comes up to the villa. He wants the right to put your crest and your best man on every lamp, cup and figurine between here and Neapolis — a proper trade, and a proper cut back to you. Or you keep the thing fine and few, made only at the good workshop by the forum, and worth the more for being rare.",
+    choices:["License it wide — the coin, and the whole city carrying your name","Keep it fine and few — less coin, but a name that stays worth something"], data:{} };
+}
+function resolveLicence(d, i){
+  if(!d.brand) d.brand = { licensed:false, decided:false, tier:acclaimIdx(d), earned:0 };
+  d.brand.decided = true;
+  if(i===0){ d.brand.licensed = true; d.gold += rnd(400 + acclaimOf(d)*8); d.acclaim = clamp(acclaimOf(d)+4, 0, 100);
+    return "The presses of a dozen little workshops start turning. Within a month there is a lamp with your crest on it in half the houses in Capua, and a cut of every one comes to you. The good families think it vulgar. The street does not."; }
+  d.brand.licensed = false; d.fame += 8;
+  patronsOf(d).forEach(p=>{ p.favor = clamp(p.favor+3,0,100); }); recomputeFavor(d);
+  return "You keep it to the one good workshop. Fewer coins in it — but a figure of your man is a thing worth having, not a thing everyone has. The good families notice a house that does not sell itself cheap.";
+}
+
 /* ---- THE FESTIVAL YEAR ----
    Six festivals in their real order through the Roman year, on the same 18-week
    clock the men age by. The year recurs, so it can be planned around. */
@@ -3121,7 +3208,9 @@ function makeMarket(d){
   for(let i=0;i<4;i++){
     const sk = here[i % here.length];
     const S = SLAVERS[sk];
-    const quality = clamp((R()<0.12 ? ri(75,92) : ri(30,68)) + S.quality, 18, 95);
+    /* a famous house draws better men to its gate — the good ones want to fight for a name */
+    const fineChance = 0.12 + (acclaimOf(d) >= 62 ? 0.14 : acclaimOf(d) >= 40 ? 0.06 : 0);
+    const quality = clamp((R()<fineChance ? ri(75,92) : ri(30,68)) + S.quality, 18, 95);
     const g = genGladiator(d, quality);
     g.slaver = sk;
     if(S.origins && S.origins.length) g.origin = pick(S.origins);
@@ -4780,6 +4869,8 @@ function migrate(S){
   if(S.heir===undefined) S.heir = null;
   if(S.succession===undefined) S.succession = null;
   if(!S.domus) S.domus = { wife:null, children:[], nextKin:1 };
+  if(S.acclaim==null) S.acclaim = 0;
+  if(!S.brand) S.brand = { licensed:false, decided:false, tier:0, earned:0 };
   if(!S.generation) S.generation = 1;
   if(!S.forebears) S.forebears = [];
   if(!S.gearCond) S.gearCond = {};
@@ -4838,7 +4929,7 @@ function newGameState(name, scen, seed, pitch){
     gladiators:[], market:[], games:null, pendingEvent:null, log:[], fallen:[], freed:[],
     seed: null, rngState: 0,
     lastParty:-9, lastFeast:-9, over:null, milestone600:false, flags:{learned:{}}, escaped:[], rebellion:null, gear:{}, retired:[],
-    doctore:null, doctoreMarket:[], doctoreOffer:null, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, defected:[], nemesis:null, nemHouse:null, saga:null, arcs:[], crest:{ c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" }, primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], works:{}, slavers:{}, pact:null, gambits:{}, pendingLesson:null, law:null, doctrine:null, kits:[], deadSteel:[], bay:null, mark:null, after:null, metHouse:{}, owed:[], household:{}, yardSeen:0, yardMissed:0, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, domus:{ wife:null, children:[], nextKin:1 }, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, departed:[], reSignOffer:null, annals:[], rise:{ rank:0, standing:0 }, munusLast:-99, league:{ first:null, since:1, held:0, best:99, year:1, snap:null }, piety:30, blessing:null, vow:null, lastOffering:-9, powLot:null };
+    doctore:null, doctoreMarket:[], doctoreOffer:null, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, defected:[], nemesis:null, nemHouse:null, saga:null, arcs:[], crest:{ c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" }, primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], works:{}, slavers:{}, pact:null, gambits:{}, pendingLesson:null, law:null, doctrine:null, kits:[], deadSteel:[], bay:null, mark:null, after:null, metHouse:{}, owed:[], household:{}, yardSeen:0, yardMissed:0, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, domus:{ wife:null, children:[], nextKin:1 }, acclaim:0, brand:{ licensed:false, decided:false, tier:0, earned:0 }, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, departed:[], reSignOffer:null, annals:[], rise:{ rank:0, standing:0 }, munusLast:-99, league:{ first:null, since:1, held:0, best:99, year:1, snap:null }, piety:30, blessing:null, vow:null, lastOffering:-9, powLot:null };
   d.rivals = makeRivals(d);
   const solo = S.men.length === 1;
   S.men.forEach((band,i)=>{
@@ -8649,7 +8740,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   const simCtx = { plan:PE, fav:favMissio(g) + veteranGuard(g) + (away ? 0 : riseFav(d)) + blessMercy(d) + pit(d,"mercy",0), doctrine:docMissio(d), footing:V.footing * W.footing, sky:W.stam, venue:V.missio, aedile: away ? 0 : aedileMissio(d), strange: away ? Math.max(0, 19 - knownIn(d, offer.city)*0.19) * docStrange(d) : 0,
       favor: imperial ? Math.min(d.favor, 20) : (away ? localStanding : d.favor), tier: Math.min(offer.tier,3),
       hostile:!!bribeHouse, patron: imperial ? null : (patron ? {name:patron.name, favor:patron.favor} : null),
-      repShow: workPerk(d,"crowd") + femCrowd(g) + favCrowd(g) + W.crowd + provCrowd(g) + ((g.mastery && g.mastery.cls===g.cls) ? masteryCrowd(g) : 0) + signatureCrowd(g) + (repStyle(d)==="show" ? 8 : 0) + (nem ? 10 : 0) + (away ? 0 : facCrowd(d, g.cls)) + seasonCrowd(d) + V.crowd,
+      repShow: workPerk(d,"crowd") + femCrowd(g) + favCrowd(g) + W.crowd + provCrowd(g) + ((g.mastery && g.mastery.cls===g.cls) ? masteryCrowd(g) : 0) + signatureCrowd(g) + (repStyle(d)==="show" ? 8 : 0) + (nem ? 10 : 0) + (away ? 0 : facCrowd(d, g.cls)) + seasonCrowd(d) + V.crowd + (away ? 0 : acclaimCrowd(d)) + (g.graffiti ? 3 : 0),
       guarded: choice==="cover" };
   let res;
   if(choice==="cloth"){
@@ -8951,6 +9042,7 @@ const EVENTS = {
   raising:  { make(){ return null; }, run(d,ev,i){ try { return resolveRaise(d,ev,i); } catch(e){ return "The years go on regardless."; } } },
   toga:     { make(){ return null; }, run(d,ev,i){ try { return resolveToga(d,ev,i); } catch(e){ return "He is a man now, whatever you decide."; } } },
   daughter: { make(){ return null; }, run(d,ev,i){ try { return resolveDaughter(d,ev,i); } catch(e){ return "The match is left for another day."; } } },
+  licence:  { make(){ return null; }, run(d,ev,i){ try { return resolveLicence(d,i); } catch(e){ return "The potter is sent away to think on it."; } } },
   fever: {
     make(d){ if(!activeG(d).length) return null;
       return { id:"fever", title:"Fever in the Cells", text:"A sickness creeps along the cell block. The medicus wants coin for herbs and clean water.",
@@ -10239,6 +10331,7 @@ function endWeek(d){
   freedWeek(d);
   kinWeek(d);
   familyWeek(d);
+  acclaimWeek(d);
   fireArc(d);   /* a beat planted weeks ago comes due — ahead of the week's random event */
   if(!d.pendingEvent && !d.rome && R()<0.45){ const ev=pickEvent(d); if(ev) d.pendingEvent=ev; }
   if(d.flags.spartacusAtLarge && R()<0.25){
@@ -11869,6 +11962,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
   const useStyle = (gid,to) => mut(d=>{ switchStyle(d,gid,to); });
   const chooseHeir = kind => mut(d=>{ nameHeir(d, kind); });
   const seekMatch = () => { mut(d=>{ if(marryReady(d) && !d.pendingEvent){ const ev = matchEvent(d); if(ev) d.pendingEvent = ev; } }); setSheet(null); };
+  const openLicence = () => mut(d=>{ if(merchLive(d) && !d.brand.decided && !d.pendingEvent) d.pendingEvent = licenceEvent(d); });
   const takeUpHouse = () => mut(d=>{ succeed(d); d.succession = null; });
   const setEar = (who, gid) => mut(d=>{
     if(!who){ d.ear = null; d.heard = []; return; }
@@ -13734,6 +13828,48 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 <button key={m} className={`chip ${S.crest&&S.crest.motto===m?"on":""}`} onClick={()=>setCrest({motto:m})}>{m}</button>
               ))}
             </div>
+          </Sect>
+
+          <Sect title="The house as a name" note={acclaimWord(acclaimOf(S))}>
+            <div className="dim" style={{fontSize:14.5,fontStyle:"italic",marginBottom:8}}>
+              What the street makes of you — not the editors, not the good families. The wine-shops, the walls by the gate, the potters' stalls. Won by famous men, spectacle, and the primus; it cools if you go quiet.
+            </div>
+            <Bar v={acclaimOf(S)} label="the name" color="linear-gradient(90deg,#4a3a24,#e0bd72)"/>
+            <div className="flex items-center justify-between" style={{fontSize:13.5,marginTop:4}}>
+              <span className="disp" style={{color:"#e8d092"}}>{acclaimTier(S).name}</span>
+              <span className="rowval dim">{Math.round(acclaimOf(S))}/100</span>
+            </div>
+            <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:3}}>{acclaimTier(S).blurb}</div>
+
+            {(()=>{ const walls = activeG(S).filter(g=>g.graffiti);
+              return walls.length>0 && (<>
+                <div className="tag tag-gold" style={{margin:"11px 0 4px"}}>Names on the walls</div>
+                {walls.map(g=>(
+                  <div key={g.id} style={{borderTop:"1px dotted #33271a",padding:"5px 0"}}>
+                    <div className="rowname" style={{fontSize:14,color:"#e8d092"}}>{g.name}</div>
+                    <div className="dim" style={{fontSize:13,fontStyle:"italic"}}>“{g.graffiti.line}”</div>
+                  </div>
+                ))}
+              </>); })()}
+
+            {merchLive(S) ? (<>
+              <div className="tag tag-gold" style={{margin:"11px 0 4px"}}>Figures on the shelves</div>
+              <div className="flex items-center justify-between" style={{fontSize:14}}>
+                <span>The potters' cut</span>
+                <span className="rowval gold">{merchWeekly(S)}d a week</span>
+              </div>
+              <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:2}}>
+                {S.brand&&S.brand.licensed ? "Licensed wide — lamps and figures in half the houses of Capua." : "Made only at the good workshop by the forum."}
+                {S.brand&&S.brand.earned>0 ? ` ${S.brand.earned}d earned so far.` : ""}
+              </div>
+              {!S.brand.decided && (
+                <button className="btn" style={{width:"100%",marginTop:8}} onClick={openLicence}>Hear the potter's offer</button>
+              )}
+            </>) : (
+              <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:9}}>
+                Make a bigger name — a famous man or two, a run of good spectacle — and the potters will come wanting to sell it.
+              </div>
+            )}
           </Sect>
 
           <Sect title="Those Who Watch" note={`standing ${rnd(S.favor)}`} open>
