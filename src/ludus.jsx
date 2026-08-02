@@ -4076,6 +4076,9 @@ const HEIRS = {
   doctore: { name:"Your freed doctore", fameKeep:0.48, favorKeep:0.34, unrest:-16, morale:14, gold:0,
     line:"He was on that sand himself and every man in the cells knows it. They would follow him anywhere. Capua will take rather longer, because Capua knows it too.",
     took:n=>`${n} — who fought on that sand and was freed off it — takes the house. The cells are quieter tonight than they have been in years. The magistrate's people are noticeably cooler.` },
+  scion:   { name:"Your son and heir", fameKeep:0.86, favorKeep:0.72, unrest:-4, morale:6, gold:0,
+    line:"You raised him for this — in this yard, under your own eye. Capua knows whose son he is, and the cells know they half-raised him too. Almost nothing is lost in the handover.",
+    took:n=>`${n} takes the house his father built and raised him to keep. There is no scramble, no doubt, no season of testing — the men knew him as a boy and follow him as a man. The thing simply continues, which is the rarest thing a ludus does.` },
 };
 const heirEligible = d => {
   const out = [];
@@ -4107,16 +4110,178 @@ function succeed(d){
   d.unrest = clamp(d.unrest + H.unrest, 0, 100);
   d.gold += H.gold;
   d.gladiators.forEach(g=>{ if(g.status==="active") g.morale = clamp(g.morale + H.morale, 0, 100); });
-  /* he starts with nothing Capua can hold against him, and nothing it credits him for */
-  d.lanista = { name:nm, age: d.heir.kind==="doctore" ? ri(34,44) : ri(22,31),
-    health: ri(84,95), traits:[], since:d.week, wonBets:0, quietStanding:0, styleRun:0, styleWas:null };
+  /* he starts with nothing Capua can hold against him, and nothing it credits him for —
+     unless you raised him yourself, in which case he starts as the man you made */
+  d.lanista = { name:nm, age: d.heir.kind==="doctore" ? ri(34,44) : d.heir.kind==="scion" ? ri(18,24) : ri(22,31),
+    health: ri(84,95), traits:(d.heir.traits||[]).slice(), since:d.week, wonBets:0, quietStanding:0, styleRun:0, styleWas:null };
   if(d.heir.kind==="doctore") d.doctore = null;
+  if(d.heir.kind==="scion" && d.heir.palusRaised){ d.gladiators.forEach(g=>{ if(g.status==="active") g.morale = clamp(g.morale+8,0,100); }); d.unrest = clamp(d.unrest-6,0,100); }
+  if(d.heir.cid && d.domus && d.domus.children){ const c = d.domus.children.find(x=>x.id===d.heir.cid); if(c) c.tookHouse = d.week; }
   d.heir = null;
   d.forebears = [...(d.forebears||[]), { name:old.name, age:old.age, traits:old.traits.slice(),
     from:old.since||1, to:d.week, gen:d.generation-1 }];
   chron(d, `${H.took(nm)} ${old.name} is carried out of a gate he came in through forty years ago, and the week's training goes ahead because it was always going to.`, "event");
   d.over = null;
   return true;
+}
+
+/* ---- THE DOMUS: A WIFE, CHILDREN, A BLOODLINE ----
+   The heir above is a name on a paper. This is the family that makes a better one.
+   A lanista who has climbed far enough takes a wife into the house; she bears it
+   children; a son raised in the yard becomes an heir you shaped rather than one you
+   settled for, and a daughter is a thread you tie to a patron or a rival. It lives
+   at d.domus so the blood of the house survives a succession. */
+const domusOf = d => d.domus || (d.domus = { wife:null, children:[], nextKin:1 });
+const childAge = (d,c) => Math.floor((d.week - c.born) / YEAR_WEEKS);
+const livingKids = d => domusOf(d).children.filter(c=>!c.wed && !c.dead);
+const marryReady = d => !!d.lanista && !domusOf(d).wife && d.lanista.age < 56 && (riseOf(d) >= 1 || d.fame >= 60);
+
+function matchEvent(d){
+  if(!marryReady(d)) return null;
+  const used = new Set();
+  const wname = () => { let n, i=0; do { n = pick(HH_NAMES); i++; } while(used.has(n) && i<20); used.add(n); return n; };
+  const cands = [];
+  cands.push({ kind:"merchant", who:wname(), family:`the ${pick(["Vettii","Popidii","Caecilii","Numisii","Epidii"])}`,
+    dowry: rnd(500 + d.fame*1.2 + R()*300), favor:0 });
+  cands.push({ kind:"magistrate", who:wname(), family:`the ${pick(["Blossii","Magii","Calavii","Seppii","Luccii"])}`,
+    dowry: rnd(180 + R()*160), favor:14 });
+  const riv = (d.rivals||[]).filter(h=>(h.grudge||0) >= 30).sort((a,b)=>(b.grudge||0)-(a.grudge||0))[0];
+  if(riv) cands.push({ kind:"rival", who:wname(), family:`House ${riv.name}`, house:riv.name,
+    dowry: rnd(300 + R()*220), favor:4, fame:14 });
+  const choices = cands.map(c=> c.kind==="merchant" ? `${c.who} of ${c.family} — a merchant's daughter (${c.dowry}d dowry)`
+    : c.kind==="magistrate" ? `${c.who} of ${c.family} — a magistrate's niece (standing)`
+    : `${c.who} of ${c.family} — a rival's daughter (ends the feud)`);
+  choices.push("Not now — the house is enough for the moment");
+  return { id:"match", title:"A Match Is Proposed",
+    text:"You are established enough now that the matchmakers have started to call. A house like yours wants a wife in it — for the peace of it, for the standing, and because a man alone at the head of a ludus leaves nothing behind but a ledger. Word is, three families are willing.",
+    choices, data:{ cands } };
+}
+function resolveMatch(d, ev, i){
+  const cands = (ev.data && ev.data.cands) || [];
+  if(i >= cands.length){ d.flags.matchCool = d.week + ri(14,24); return "You let it lie. There is time — or you tell yourself there is."; }
+  const c = cands[i];
+  const dmm = domusOf(d);
+  dmm.wife = { name:c.who, family:c.family, married:d.week, age:ri(18,27), from:c.kind };
+  d.gold += c.dowry||0;
+  if(c.favor){ patronsOf(d).forEach(p=>{ p.favor = clamp(p.favor + c.favor, 0, 100); }); recomputeFavor(d); }
+  if(c.fame) d.fame += c.fame;
+  if(d.lanista) d.lanista.health = clamp(d.lanista.health + 4, 0, 100);
+  d.unrest = clamp(d.unrest - 3, 0, 100);
+  if(c.kind==="rival" && c.house){ const h=(d.rivals||[]).find(x=>x.name===c.house); if(h){ h.grudge = clamp((h.grudge||0) - 40, 0, 100); h.kin = true; } }
+  chron(d, c.kind==="rival"
+    ? `${c.who} of ${c.family} comes into the house as your wife, and a feud older than either of you is folded up and put away. The bay does not know what to make of it.`
+    : `${c.who} of ${c.family} comes into the house as your wife — ${c.dowry} denarii in dowry, and a settledness the cells feel within the week.`, "good");
+  return `${c.who} is mistress of the house now. ${c.kind==="magistrate"?"Her people are your people, which opens doors that coin does not.":c.kind==="merchant"?"Her dowry is already in the strongbox.":"The oldest grudge in the bay is a family matter now."}`;
+}
+
+function bearChild(d){
+  const dmm = domusOf(d);
+  if(!dmm.wife) return;
+  const sex = R()<0.52 ? "m" : "f";
+  const fam = d.lanista ? d.lanista.name.split(" ").slice(1).join(" ") : pick(NOMINA);
+  const name = sex==="m" ? `${pick(PRAENOMINA)} ${fam}` : `${pick(HH_NAMES)}`;
+  dmm.children.push({ id:dmm.nextKin++, name, sex, born:d.week, up:{palus:0,rhetor:0,box:0} });
+  d.fame += 4;
+  activeG(d).forEach(g=>{ g.morale = clamp(g.morale+2,0,100); });
+  chron(d, sex==="m"
+    ? `A son is born to the house — ${name}. The men drink your wine and mean it tonight: a ludus with an heir in the cradle is a ludus with a tomorrow.`
+    : `A daughter is born to the house — ${name}. She is held up before the familia, and even the hard cases soften for a night.`, "good");
+}
+
+function raiseEvent(d, c, stage){
+  return { id:"raising", title: stage===1 ? "The Boy in the Yard" : "The Young Man's Road",
+    text: stage===1
+      ? `${c.name} is old enough now to be underfoot everywhere — the cells, the square, the armoury. What he becomes starts about now, and it is worth deciding on purpose rather than by neglect.`
+      : `${c.name} is nearly grown, and the shape of the man is setting hard. There is still time to point him, if you mean to.`,
+    choices:[
+      "Put him at the palus with the men — let the yard raise him",
+      "Send him to a rhetor in Neapolis — letters, law, the forum",
+      "Keep him at your elbow in the box — coin, cards, the trade",
+    ], data:{ cid:c.id, stage } };
+}
+function resolveRaise(d, ev, i){
+  const c = domusOf(d).children.find(x=>x.id===ev.data.cid); if(!c) return "The moment passes.";
+  c.up = c.up || {palus:0,rhetor:0,box:0};
+  if(ev.data.stage===1) c.up1 = true; else c.up2 = true;
+  const key = ["palus","rhetor","box"][i] || "palus";
+  c.up[key] = (c.up[key]||0) + 1;
+  return ({
+    palus:`${c.name} spends his days at the post with the men. He comes in bruised and happy, and the cells have started to treat him as half theirs — worth more at your deathbed than at your dinner table.`,
+    rhetor:`${c.name} goes down to Neapolis to a rhetor. He comes back at the holidays speaking better than you do and looking at the sand a little differently. Capua will remember he was educated.`,
+    box:`${c.name} sits the cards at your elbow, learning which editor lies and how the book is really kept. He has a head for it — and it is the truth of the house, even if it is not a gentle thing to teach a boy.`,
+  })[key];
+}
+
+function togaEvent(d, c){
+  return { id:"toga", title:"The Toga Virilis",
+    text:`${c.name} puts off the boy's clothes and puts on a man's. He is of age now, and he is yours — raised in this house, under your eye, for this. Name him your heir and the succession is not a scramble after you are gone. It is a handover.`,
+    choices:[`Name ${c.name} your heir and successor`, "Not yet — let him prove himself first"], data:{ cid:c.id } };
+}
+function heirTraitsFromUp(up){
+  up = up || {}; const p=up.palus||0, r=up.rhetor||0, b=up.box||0;
+  if(r>=p && r>=b && r>0) return ["respected"];
+  if(b>=p && b>0) return ["shrewd"];
+  return [];
+}
+function resolveToga(d, ev, i){
+  const c = domusOf(d).children.find(x=>x.id===ev.data.cid); if(!c) return "The moment passes.";
+  if(i!==0){ c.togaTil = d.week + ri(8,14); return `${c.name} is a man now, but not yet named. There is time — you hope.`; }
+  c.grown = true;
+  const up = c.up || {}, p=up.palus||0, r=up.rhetor||0, b=up.box||0;
+  d.heir = { kind:"scion", name:c.name, named:d.week, raised:true, cid:c.id,
+    traits: heirTraitsFromUp(up), palusRaised: (p>=r && p>=b && p>0) };
+  return `${c.name} is your named heir — a son you raised for this. When the day comes, the house will not skip a beat.`;
+}
+
+function daughterEvent(d, c){
+  const patron = patronsOf(d).slice().sort((a,b)=>(b.favor||0)-(a.favor||0))[0];
+  const riv = (d.rivals||[]).filter(h=>(h.grudge||0)>=25).sort((a,b)=>(b.grudge||0)-(a.grudge||0))[0];
+  const choices = [], opts = [];
+  if(patron){ choices.push(`Marry her to ${patron.name} — bind a patron to the house for good`); opts.push({kind:"patron", pid:patron.id, name:patron.name}); }
+  if(riv){ choices.push(`Marry her into House ${riv.name} — end the feud in a wedding`); opts.push({kind:"rival", house:riv.name}); }
+  choices.push("Marry her to a merchant house — a heavy dowry comes back"); opts.push({kind:"merchant"});
+  choices.push("Keep her home a while yet"); opts.push({kind:"keep"});
+  return { id:"daughter", title:"A Match for Your Daughter",
+    text:`${c.name} is of an age to be married, and a daughter of a house like yours is not a small thing to place. Where you tie her is where you tie the house.`,
+    choices, data:{ cid:c.id, opts } };
+}
+function resolveDaughter(d, ev, i){
+  const c = domusOf(d).children.find(x=>x.id===ev.data.cid); if(!c) return "The moment passes.";
+  const o = (ev.data.opts||[])[i] || {kind:"keep"};
+  if(o.kind==="keep"){ c.keepTil = d.week + ri(12,18); return `${c.name} stays home a while longer. The offers will keep.`; }
+  c.wed = d.week; c.wedTo = o.kind;
+  if(o.kind==="patron"){ const p = patronsOf(d).find(x=>x.id===o.pid) || patronsOf(d)[0];
+    if(p){ p.favor = clamp(p.favor+22,0,100); p.kin = true; } recomputeFavor(d); d.fame += 8;
+    return `${c.name} is married to ${o.name}. A patron is not the same as kin — but this is close, and it will not cool the way bought favor does.`; }
+  if(o.kind==="rival"){ const h=(d.rivals||[]).find(x=>x.name===o.house); if(h){ h.grudge = clamp((h.grudge||0)-45,0,100); h.kin = true; } d.fame += 12;
+    return `${c.name} is married into House ${o.house}, and two houses that hated each other for a generation stand together at the wedding, being scrupulously polite. It will hold longer than any truce you could buy.`; }
+  const dowry = rnd(600 + d.fame*1.4 + R()*400); d.gold += dowry;
+  return `${c.name} is married to a merchant house, and ${dowry} denarii comes back into yours with her. Not romantic. Useful.`;
+}
+
+/* the family, week by week: a match, a birth, a child coming of age */
+function familyWeek(d){
+  if(d.over || d.rome || d.city || d.travel || d.pendingEvent) return;
+  const dmm = domusOf(d);
+  if(!dmm.wife){
+    if(marryReady(d) && (d.flags.matchCool==null || d.week>=d.flags.matchCool) && R()<0.10) d.pendingEvent = matchEvent(d);
+    return;
+  }
+  const wifeAge = (dmm.wife.age||24) + Math.floor((d.week - dmm.wife.married)/YEAR_WEEKS);
+  if(livingKids(d).length < 3 && wifeAge < 40 && (d.week - (dmm.lastBorn!=null?dmm.lastBorn:dmm.wife.married)) >= 6 && R()<0.06){
+    dmm.lastBorn = d.week; bearChild(d); return;
+  }
+  for(const c of dmm.children){
+    if(c.wed || c.dead) continue;
+    const age = childAge(d, c);
+    if(c.sex==="m"){
+      if(age>=16 && !c.grown && (c.togaTil==null || d.week>=c.togaTil)){ d.pendingEvent = togaEvent(d,c); return; }
+      if(age>=12 && !c.up2){ d.pendingEvent = raiseEvent(d,c,2); return; }
+      if(age>=7  && !c.up1){ d.pendingEvent = raiseEvent(d,c,1); return; }
+    } else {
+      if(age>=15 && (c.keepTil==null || d.week>=c.keepTil)){ d.pendingEvent = daughterEvent(d,c); return; }
+    }
+  }
 }
 
 /* ---- DEADLINES ----
@@ -4614,6 +4779,7 @@ function migrate(S){
   if(S.honoured==null) S.honoured = 0;
   if(S.heir===undefined) S.heir = null;
   if(S.succession===undefined) S.succession = null;
+  if(!S.domus) S.domus = { wife:null, children:[], nextKin:1 };
   if(!S.generation) S.generation = 1;
   if(!S.forebears) S.forebears = [];
   if(!S.gearCond) S.gearCond = {};
@@ -4672,7 +4838,7 @@ function newGameState(name, scen, seed, pitch){
     gladiators:[], market:[], games:null, pendingEvent:null, log:[], fallen:[], freed:[],
     seed: null, rngState: 0,
     lastParty:-9, lastFeast:-9, over:null, milestone600:false, flags:{learned:{}}, escaped:[], rebellion:null, gear:{}, retired:[],
-    doctore:null, doctoreMarket:[], doctoreOffer:null, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, defected:[], nemesis:null, nemHouse:null, saga:null, arcs:[], crest:{ c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" }, primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], works:{}, slavers:{}, pact:null, gambits:{}, pendingLesson:null, law:null, doctrine:null, kits:[], deadSteel:[], bay:null, mark:null, after:null, metHouse:{}, owed:[], household:{}, yardSeen:0, yardMissed:0, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, departed:[], reSignOffer:null, annals:[], rise:{ rank:0, standing:0 }, munusLast:-99, league:{ first:null, since:1, held:0, best:99, year:1, snap:null }, piety:30, blessing:null, vow:null, lastOffering:-9, powLot:null };
+    doctore:null, doctoreMarket:[], doctoreOffer:null, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, defected:[], nemesis:null, nemHouse:null, saga:null, arcs:[], crest:{ c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" }, primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], works:{}, slavers:{}, pact:null, gambits:{}, pendingLesson:null, law:null, doctrine:null, kits:[], deadSteel:[], bay:null, mark:null, after:null, metHouse:{}, owed:[], household:{}, yardSeen:0, yardMissed:0, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, domus:{ wife:null, children:[], nextKin:1 }, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, departed:[], reSignOffer:null, annals:[], rise:{ rank:0, standing:0 }, munusLast:-99, league:{ first:null, since:1, held:0, best:99, year:1, snap:null }, piety:30, blessing:null, vow:null, lastOffering:-9, powLot:null };
   d.rivals = makeRivals(d);
   const solo = S.men.length === 1;
   S.men.forEach((band,i)=>{
@@ -8781,6 +8947,10 @@ const EVENTS = {
     },
     run(d,ev,i){ const sit = ev.data && ev.data.sit; if(!sit || !NIGHT[sit.kind]) return "The night passes.";
       try { return NIGHT[sit.kind].run(d, sit, i) || "The night passes."; } catch(e){ return "The night passes."; } } },
+  match:    { make(){ return null; }, run(d,ev,i){ try { return resolveMatch(d,ev,i); } catch(e){ return "The matchmakers move on."; } } },
+  raising:  { make(){ return null; }, run(d,ev,i){ try { return resolveRaise(d,ev,i); } catch(e){ return "The years go on regardless."; } } },
+  toga:     { make(){ return null; }, run(d,ev,i){ try { return resolveToga(d,ev,i); } catch(e){ return "He is a man now, whatever you decide."; } } },
+  daughter: { make(){ return null; }, run(d,ev,i){ try { return resolveDaughter(d,ev,i); } catch(e){ return "The match is left for another day."; } } },
   fever: {
     make(d){ if(!activeG(d).length) return null;
       return { id:"fever", title:"Fever in the Cells", text:"A sickness creeps along the cell block. The medicus wants coin for herbs and clean water.",
@@ -10068,6 +10238,7 @@ function endWeek(d){
   if(!d.pendingEvent && !d.rome && R()<0.14){ const ev=EVENTS.ambition.make(d); if(ev) d.pendingEvent=ev; }
   freedWeek(d);
   kinWeek(d);
+  familyWeek(d);
   fireArc(d);   /* a beat planted weeks ago comes due — ahead of the week's random event */
   if(!d.pendingEvent && !d.rome && R()<0.45){ const ev=pickEvent(d); if(ev) d.pendingEvent=ev; }
   if(d.flags.spartacusAtLarge && R()<0.25){
@@ -11697,6 +11868,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
     chron(d, `${fullName(g)} goes to the far post to drill ${TECHNIQUES[key].name} until it is his. ${SIG_WEEKS} weeks of one thing, over and over, ${SIG_FEE} denarii to the doctore for the hours.`); });
   const useStyle = (gid,to) => mut(d=>{ switchStyle(d,gid,to); });
   const chooseHeir = kind => mut(d=>{ nameHeir(d, kind); });
+  const seekMatch = () => { mut(d=>{ if(marryReady(d) && !d.pendingEvent){ const ev = matchEvent(d); if(ev) d.pendingEvent = ev; } }); setSheet(null); };
   const takeUpHouse = () => mut(d=>{ succeed(d); d.succession = null; });
   const setEar = (who, gid) => mut(d=>{
     if(!who){ d.ear = null; d.heard = []; return; }
@@ -12101,6 +12273,44 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             </button>
           ))}
         </>)}
+
+        {(()=>{ const dm = domusOf(S), w = dm.wife, kids = dm.children.filter(c=>!c.dead);
+          const UPWORD = c => { const u=c.up||{}, p=u.palus||0, r=u.rhetor||0, b=u.box||0; if(!(p+r+b)) return "still small";
+            return p>=r&&p>=b ? "raised in the yard" : r>=b ? "sent for letters" : "learning the trade"; };
+          return (<>
+          <div className="tag tag-gold" style={{margin:"12px 0 4px"}}>The house's blood</div>
+          {w ? (<>
+            <div className="panel" style={{padding:9,marginBottom:8,background:"#1c1610",borderColor:"#5a4a6a"}}>
+              <div className="flex items-center justify-between gap-2">
+                <span className="disp" style={{fontSize:13.5,color:"#d9c0e0"}}>{w.name}</span>
+                <span className="rowval dim" style={{fontSize:12}}>of {w.family} · your wife</span>
+              </div>
+              <div className="dim" style={{fontSize:13.5,marginTop:3}}>
+                {w.from==="rival"?"A marriage that folded up a feud." : w.from==="magistrate"?"Her people open doors coin does not." : "Her dowry settled the house."} Married since week {w.married}.
+              </div>
+            </div>
+            {kids.length===0 && <div className="dim" style={{fontSize:14,fontStyle:"italic",marginBottom:6}}>No children yet. The house waits.</div>}
+            {kids.map(c=>{ const age=childAge(S,c); const heir = S.heir && S.heir.cid===c.id;
+              return (
+                <div key={c.id} style={{borderTop:"1px dotted #33271a",padding:"6px 0"}}>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="rowname" style={{fontSize:14,color:heir?"#e8d092":undefined}}>{c.name}{heir?" · heir":""}</span>
+                    <span className="rowval dim" style={{fontSize:12}}>{c.sex==="m"?"son":"daughter"} · {age} yr{c.wed?" · married out":""}</span>
+                  </div>
+                  {!c.wed && <div className="dim" style={{fontSize:13}}>{c.sex==="m"? UPWORD(c) : age>=15?"of an age to be matched":"still at home"}</div>}
+                </div>
+              ); })}
+          </>) : marryReady(S) ? (<>
+            <div className="dim" style={{fontSize:14,fontStyle:"italic",marginBottom:7}}>
+              A man alone at the head of a ludus leaves nothing behind but a ledger. Take a wife, and the house can make its own heir — one you raise for it — rather than settling on whoever is left when you are gone.
+            </div>
+            <button className="btn" style={{width:"100%"}} onClick={seekMatch}>Let it be known you are looking for a match</button>
+          </>) : (
+            <div className="dim" style={{fontSize:14,fontStyle:"italic"}}>
+              Climb a little higher — a name, or a heavier purse — and the matchmakers of Capua will come calling with daughters of the good families.
+            </div>
+          )}
+        </>); })()}
         {(S.forebears||[]).length>0 && (<>
           <div className="tag tag-gold" style={{margin:"12px 0 4px"}}>Those who had it before you</div>
           {(S.forebears||[]).map((f,i)=>(
