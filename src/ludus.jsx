@@ -4248,6 +4248,10 @@ function migrate(S){
   if(!S.rise) S.rise = { rank:0, standing:0 };
   if(S.munusLast===undefined) S.munusLast = -99;
   if(!S.league) S.league = { first:null, since:S.week||1, held:0, best:99, year:yearOf(S), snap:null };
+  if(S.piety==null) S.piety = 30;
+  if(S.blessing===undefined) S.blessing = null;
+  if(S.vow===undefined) S.vow = null;
+  if(S.lastOffering==null) S.lastOffering = -9;
   S.gladiators.forEach(g=>{ if(g.sworn===undefined) g.sworn = { how:"proper", week:1, free:isAuctor(g) }; });
   if(!S.seed) S.seed = newSeedWord();
   if(S.rngState==null) S.rngState = rngGet();
@@ -4312,7 +4316,7 @@ function newGameState(name, scen, seed, pitch){
     gladiators:[], market:[], games:null, pendingEvent:null, log:[], fallen:[], freed:[],
     seed: null, rngState: 0,
     lastParty:-9, lastFeast:-9, over:null, milestone600:false, flags:{learned:{}}, escaped:[], rebellion:null, gear:{}, retired:[],
-    doctore:null, doctoreMarket:[], doctoreOffer:null, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, defected:[], nemesis:null, nemHouse:null, saga:null, arcs:[], crest:{ c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" }, primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], works:{}, slavers:{}, pact:null, gambits:{}, pendingLesson:null, law:null, doctrine:null, kits:[], deadSteel:[], bay:null, mark:null, after:null, metHouse:{}, owed:[], household:{}, yardSeen:0, yardMissed:0, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, departed:[], reSignOffer:null, annals:[], rise:{ rank:0, standing:0 }, munusLast:-99, league:{ first:null, since:1, held:0, best:99, year:1, snap:null } };
+    doctore:null, doctoreMarket:[], doctoreOffer:null, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, defected:[], nemesis:null, nemHouse:null, saga:null, arcs:[], crest:{ c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" }, primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], works:{}, slavers:{}, pact:null, gambits:{}, pendingLesson:null, law:null, doctrine:null, kits:[], deadSteel:[], bay:null, mark:null, after:null, metHouse:{}, owed:[], household:{}, yardSeen:0, yardMissed:0, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, departed:[], reSignOffer:null, annals:[], rise:{ rank:0, standing:0 }, munusLast:-99, league:{ first:null, since:1, held:0, best:99, year:1, snap:null }, piety:30, blessing:null, vow:null, lastOffering:-9 };
   d.rivals = makeRivals(d);
   const solo = S.men.length === 1;
   S.men.forEach((band,i)=>{
@@ -4743,8 +4747,94 @@ const BUILDINGS = {
 const BKEYS = Object.keys(BUILDINGS);
 const bLevel = (d, k) => (d.buildings && d.buildings[k]) || 0;
 const bUpkeep = d => BKEYS.reduce((s,k)=>{ const L=bLevel(d,k); return s + (L? BUILDINGS[k].upkeep[L-1] : 0); }, 0);
+
+/* ---- THE GODS ----
+   Rome did nothing without the gods, least of all put men on sand to die. A house
+   keeps its piety with offerings and vows; in return a god's blessing rides with it
+   a while — steadier nerve, a kinder wheel, a faster mending, a richer purse, a
+   warmer city. Break a vow and the wheel turns the other way. */
+const GODS = {
+  mars:     { name:"Mars", of:"the soldier's god", weeks:5, cost:d=>rnd(180 + d.fame*0.6),
+    boon:"Your men fight with a soldier's steadiness — heart in the cold weeks, and no flinching at the post.",
+    ask:"To Mars, that the house keep its nerve." },
+  fortuna:  { name:"Fortuna", of:"who turns the wheel", weeks:4, cost:d=>rnd(220 + d.fame*0.8),
+    boon:"The wheel turns your man's way in the box. When the finger goes up, it goes up for him.",
+    ask:"To Fortuna, that the wheel run kind." },
+  aesculapius:{ name:"Aesculapius", of:"the healer", weeks:6, cost:d=>rnd(160 + d.fame*0.5),
+    boon:"Wounds close faster than they have any right to. The medicus takes the credit; you know better.",
+    ask:"To Aesculapius, that the hurt mend clean." },
+  victoria: { name:"Victoria", of:"victory herself", weeks:4, cost:d=>rnd(260 + d.fame*0.9),
+    boon:"A win under her eye is a richer, louder thing — the purse fatter, the name carried further.",
+    ask:"To Victoria, that the wins be great ones." },
+  jupiter:  { name:"Jupiter", of:"Best and Greatest", weeks:5, cost:d=>rnd(300 + d.fame*1.0),
+    boon:"The house stands in the light of the greatest god, and Capua's better sort feel it — patrons warm, crowds kind.",
+    ask:"To Jupiter, that the house be seen to be favoured." },
+};
+const GOD_KEYS = Object.keys(GODS);
+const blessOf   = d => (d.blessing && d.week < d.blessing.until) ? d.blessing.god : null;
+const blessLeft = d => (d.blessing && d.week < d.blessing.until) ? d.blessing.until - d.week : 0;
+const blessMercy = d => blessOf(d)==="fortuna" ? 9 : 0;      // rides into simCtx.fav
+const blessHeal  = d => blessOf(d)==="aesculapius" ? 1.4 : 1;
+const blessPurse = d => blessOf(d)==="victoria" ? 1.10 : 1;
+const blessFame  = d => blessOf(d)==="victoria" ? 1.15 : 1;
+const pietyOf   = d => clamp(d.piety==null ? 30 : d.piety, 0, 100);
+const pietyWord = p => p>=80 ? "devout" : p>=60 ? "pious" : p>=38 ? "observant" : p>=18 ? "lax" : "godless";
+const OFFERING_COOL = 3;
+const offeringReady = d => (d.week - (d.lastOffering==null ? -9 : d.lastOffering)) >= OFFERING_COOL;
+function makeOffering(d, god){
+  const G = GODS[god]; if(!G || !offeringReady(d)) return null;
+  const cost = G.cost(d); if(d.gold < cost) return null;
+  d.gold -= cost; d.lastOffering = d.week;
+  d.blessing = { god, until: d.week + G.weeks };
+  d.piety = clamp(pietyOf(d) + 8, 0, 100);
+  chron(d, `${cost} denarii to the altar of ${G.name}, ${G.of}. The smoke goes up straight, which the priest takes for a good sign, as priests do.`, "good");
+  return { cost, god };
+}
+function swearVow(d, god){
+  const G = GODS[god]; if(!G || d.vow) return null;
+  const stake = rnd(150 + d.fame*0.6); if(d.gold < stake) return null;
+  d.gold -= stake;
+  const until = d.week + ri(4, 6);
+  d.vow = { god, until, stake, deaths0:(d.fallen||[]).length };
+  chron(d, `A vow to ${G.name}: ${stake} denarii pledged, and not a man of this house to fall before the month is out. The words are said over the altar and cannot be unsaid.`, "info");
+  return { stake, god };
+}
+function resolveVow(d){
+  const v = d.vow; if(!v || d.week < v.until) return;
+  const G = GODS[v.god] || { name:"the god" };
+  const kept = (d.fallen||[]).length === v.deaths0;
+  d.vow = null;
+  if(kept){
+    d.gold += v.stake + rnd(v.stake*0.4);
+    d.piety = clamp(pietyOf(d) + 16, 0, 100);
+    d.blessing = { god:v.god, until:d.week + (GODS[v.god]?GODS[v.god].weeks:4) };
+    patronsOf(d).forEach(p=>{ p.favor = clamp(p.favor+4,0,100); }); recomputeFavor(d);
+    chron(d, `The vow to ${G.name} is kept — the month is out and every man still stands. The pledge comes back to you doubled in goodwill, and the god's blessing rides with the house.`, "good");
+  } else {
+    d.piety = clamp(pietyOf(d) - 22, 0, 100);
+    d.unrest = clamp(d.unrest + 8, 0, 100);
+    d.flags.illOmen = d.week + ri(3,5);
+    d.blessing = null;
+    chron(d, `The vow to ${G.name} is broken — a man fell before the month was out, and the pledged coin is forfeit to the temple. The gods are not mocked, and the cells feel the cold of it.`, "bad");
+  }
+}
+const illLuck = d => !!(d.flags && d.flags.illOmen && d.week < d.flags.illOmen);
+function templeWeek(d){
+  if(d.over) return;
+  if(d.piety==null) d.piety = 30;
+  resolveVow(d);
+  /* piety drifts back to the middling reverence of an ordinary house */
+  d.piety = clamp(d.piety + (30 - d.piety)*0.03, 0, 100);
+  const bg = blessOf(d);
+  if(bg==="mars") d.gladiators.forEach(g=>{ if(g.status==="active"){ g.morale=clamp(g.morale+3,0,100); g.defiance=clamp(g.defiance-1,0,100); } });
+  if(bg==="jupiter"){ patronsOf(d).forEach(p=>{ p.favor=clamp(p.favor+0.5,0,100); }); recomputeFavor(d); }
+  const pi = pietyOf(d);
+  if(pi>=65){ patronsOf(d).forEach(p=>{ p.favor=clamp(p.favor+0.25,0,100); }); recomputeFavor(d); }
+  else if(pi<=20){ d.unrest = clamp(d.unrest+0.5,0,100); }
+  if(illLuck(d) && R()<0.35){ d.unrest = clamp(d.unrest+1,0,100); }
+}
 /* the rates each one moves */
-const healSpeed   = (d,g) => (1 + bLevel(d,"valetudinarium")*0.45) * medicusMult(d) * pit(d,"heal") * (g? lastNum(g,"heal") : 1);
+const healSpeed   = (d,g) => (1 + bLevel(d,"valetudinarium")*0.45) * medicusMult(d) * pit(d,"heal") * blessHeal(d) * (g? lastNum(g,"heal") : 1);
 const scarGuard   = d => [1, 0.85, 0.70, 0.55][bLevel(d,"valetudinarium")];
 const surgeonOK   = d => bLevel(d,"valetudinarium") >= 1;
 const bathRest    = d => bLevel(d,"balneae")*3 + workPerk(d,"rest");                        // fatigue shed per week
@@ -7991,7 +8081,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   gc.lastLate = lastNum(g,"latePow");
   gc.formStam = formStam(g);
   if(offer.stakes==="sine" && lawSine(d) && !offer.sealed){ d.gold -= lawSine(d); offer.sealed = 1; }
-  const simCtx = { plan:PE, fav:favMissio(g) + veteranGuard(g) + (away ? 0 : riseFav(d)) + pit(d,"mercy",0), doctrine:docMissio(d), footing:V.footing * W.footing, sky:W.stam, venue:V.missio, aedile: away ? 0 : aedileMissio(d), strange: away ? Math.max(0, 19 - knownIn(d, offer.city)*0.19) * docStrange(d) : 0,
+  const simCtx = { plan:PE, fav:favMissio(g) + veteranGuard(g) + (away ? 0 : riseFav(d)) + blessMercy(d) + pit(d,"mercy",0), doctrine:docMissio(d), footing:V.footing * W.footing, sky:W.stam, venue:V.missio, aedile: away ? 0 : aedileMissio(d), strange: away ? Math.max(0, 19 - knownIn(d, offer.city)*0.19) * docStrange(d) : 0,
       favor: imperial ? Math.min(d.favor, 20) : (away ? localStanding : d.favor), tier: Math.min(offer.tier,3),
       hostile:!!bribeHouse, patron: imperial ? null : (patron ? {name:patron.name, favor:patron.favor} : null),
       repShow: workPerk(d,"crowd") + femCrowd(g) + favCrowd(g) + W.crowd + provCrowd(g) + ((g.mastery && g.mastery.cls===g.cls) ? masteryCrowd(g) : 0) + (repStyle(d)==="show" ? 8 : 0) + (nem ? 10 : 0) + (away ? 0 : facCrowd(d, g.cls)) + seasonCrowd(d) + V.crowd,
@@ -8045,7 +8135,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   const sum = [`Appearance fee: ${t.app} denarii.`];
 
   if(win){
-    purse = rnd(offer.purse * (away?1:facPurse(d)) * (away?1:aedilePurse(d)) * docPurse(d) * W.purse * favPurse(g) * femPurse(g) * fanPurse(g) * risePurse(d) * (away?1:leaguePurse(d)) * (away?1:nemPurse(d)) * pit(d,"purse"));
+    purse = rnd(offer.purse * (away?1:facPurse(d)) * (away?1:aedilePurse(d)) * docPurse(d) * W.purse * favPurse(g) * femPurse(g) * fanPurse(g) * risePurse(d) * (away?1:leaguePurse(d)) * (away?1:nemPurse(d)) * blessPurse(d) * pit(d,"purse"));
     /* the pits pay out of a bag at the rope. an editor pays when his clerk gets to it. */
     const onCredit = offer.imperial ? "imperial" : offer.city ? "city" : offer.booking ? "booking" : offer.festival ? "games" : null;
     if(onCredit && purse >= 140){
@@ -8056,7 +8146,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
     weekMark(d,"purse",purse); g.wins++;
     const fineKit = F && F.fineBonus && GEAR[gc.kit.weapon] && GEAR[gc.kit.weapon].price>0;
     const fg = rnd((t.fameGain + res.crowd/18 + (offer.stakes==="sine"?6:0)) * (offer.stakes==="blood"?0.55:1)
-      * (isF(g)?1.2:1) * (F? F.fame : 1) * (fineKit?1.25:1) * (away?1:facFame(d, g.cls)) * V.fame * docFame(d));
+      * (isF(g)?1.2:1) * (F? F.fame : 1) * (fineKit?1.25:1) * (away?1:facFame(d, g.cls)) * V.fame * docFame(d) * blessFame(d));
     if(fineKit) sum.push(`Vulcan's day, and the crowd saw whose steel he carried.`);
     if(away){
       const fit = repStyle(d)===away.taste;
@@ -8830,6 +8920,46 @@ const EVENTS = {
     make(){ return null; },
     run(d,ev){ const F = FREEDMEN[ev.data.k];
       try { return F.run(d, ev.data.man || { name:"He", wins:0 }); } catch(e){ return `He is seen about the town.`; } } },
+  omen: {
+    make(d){
+      if(d.rome || d.city || d.travel || d.week < 8) return null;
+      if(d.flags.omenWk && d.week - d.flags.omenWk < 6) return null;
+      const soon = nextFestivals(d, 1)[0];
+      const near = soon && weeksUntil(d, soon) <= 1;
+      if(!near && R() > 0.14) return null;                   // omens cluster around the great games
+      const ill = R() < clamp(0.55 - pietyOf(d)/200, 0.2, 0.72);
+      const where = near ? `${soon.name} are almost upon Capua, and` : "This week";
+      return { id:"omen", title: ill ? "An Ill Reading" : "A Fair Reading",
+        text: ill
+          ? `${where} the haruspex will not meet your eye. The liver is the wrong colour, he says; a crow sat on the gate through the reading and would not be moved. He has seen better days to send men to the sand.`
+          : `${where} the birds flew right and the entrails were clean. The haruspex is almost cheerful about it — the gods, he says, are inclined to look kindly on this house just now.`,
+        choices: ill
+          ? ["Heed it — hold the men careful this week", "Defy it — the gods respect boldness too"]
+          : ["Seal it with an offering at the altar", "Take heart, and go on"],
+        data:{ ill } };
+    },
+    run(d,ev,i){
+      d.flags.omenWk = d.week;
+      if(ev.data.ill){
+        if(i===0){ d.piety = clamp(pietyOf(d)+5,0,100); d.unrest = clamp(d.unrest+2,0,100);
+          return `You hold the men careful and make the small offerings. Nothing is dared and nothing is lost, and the priest is satisfied that reverence was shown.`; }
+        d.gladiators.forEach(g=>{ if(g.status==="active") g.defiance = clamp(g.defiance+3,0,100); });
+        if(R()<0.5){ d.fame += ri(3,6); d.piety = clamp(pietyOf(d)+3,0,100);
+          return `You send them out anyway. The reading was wrong, or the gods admired the nerve — either way the week passes clean, and a house that fears no omen is a house men talk about.`; }
+        d.flags.illOmen = d.week + ri(3,5); d.unrest = clamp(d.unrest+6,0,100); d.piety = clamp(pietyOf(d)-6,0,100);
+        d.gladiators.forEach(g=>{ if(g.status==="active") g.morale = clamp(g.morale-5,0,100); });
+        return `You send them out anyway, and the week goes wrong in the small mean ways the gods use when they are making a point. The cells noticed the crow too, and they noticed you ignored it.`;
+      } else {
+        if(i===0){ const god = pick(GOD_KEYS), cost = rnd(GODS[god].cost(d)*0.6);
+          if(d.gold >= cost){ d.gold -= cost; d.blessing = { god, until:d.week+3 }; d.piety = clamp(pietyOf(d)+7,0,100);
+            return `You seal the fair reading with ${cost} denarii to ${GODS[god].name}. For a while the house goes about under a god's eye, and knows it.`; }
+          d.piety = clamp(pietyOf(d)+3,0,100);
+          return `You would seal it, but the strongbox is too light for a proper offering. You make the small gestures instead, and hope the god grades on effort.`; }
+        d.gladiators.forEach(g=>{ if(g.status==="active") g.morale = clamp(g.morale+4,0,100); });
+        d.piety = clamp(pietyOf(d)+3,0,100);
+        return `You take the good reading for what it is. The men hear of it — they always hear of it — and go to the post a little lighter for the week.`;
+      }
+    } },
   leagueYear: {
     make(){ return null; },
     build(d, data){ return { id:"leagueYear", title:"The Year's Reckoning",
@@ -9442,6 +9572,7 @@ function endWeek(d){
   warWeek(d);
   lanistaWeek(d);
   riseWeek(d);
+  templeWeek(d);
   featWeek(d);
   travelWeek(d);
   if(!d.city && !d.travel) primusWeek(d);
@@ -11269,6 +11400,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
     d.gladiators.forEach(g=>{ if(!isGone(g)){ g.morale=clamp(g.morale+9,0,100); g.defiance=clamp(g.defiance-4,0,100); } });
     d.unrest=clamp(d.unrest-7,0,100);
     chron(d, "Meat and honeyed wine for the familia. Songs in the cells past midnight."); });
+  const offerTo = god => mut(d=>{ makeOffering(d, god); });
+  const vowTo = god => mut(d=>{ swearVow(d, god); });
 
   if(screen==="loading") return <div className="lr" style={{display:"flex",alignItems:"center",justifyContent:"center"}}><style>{CSS}</style><div className="disp dim">Lighting the torches...</div></div>;
 
@@ -13028,6 +13161,64 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   <div className="dim" style={{fontSize:14,fontStyle:"italic"}}>There is no higher rung. A slaver climbed all the way to Rome, and men will tell the story long after the sand forgets your name.</div>
                 </div>
               )}
+            </Sect>
+          ); })()}
+          {(()=>{ const bg = blessOf(S), pi = pietyOf(S);
+            return (
+            <Sect title="The Temple" note={pietyWord(pi)} open={!!S.vow || pi<=20}>
+              <div className="flex items-center justify-between" style={{marginBottom:3,fontSize:14}}>
+                <span>Piety of the house</span>
+                <span style={{color: pi>=60?"#e0bd72":pi>=38?"#cfc0a0":pi>=18?"#d8ac5f":"#d96f5d"}}>{pietyWord(pi)}</span>
+              </div>
+              <div className="track" style={{height:6}}>
+                <div className="fill" style={{width:`${pi}%`, background: pi<20? "linear-gradient(90deg,#7c2a22,#cf5a49)" : "linear-gradient(90deg,#6a5a2c,#e0bd72)"}}/>
+              </div>
+              <div className="dim" style={{fontSize:13,fontStyle:"italic",margin:"5px 0 9px"}}>
+                Rome did nothing without the gods. A pious house keeps the patrons and the crowd warm; a godless one, the streets restless — and the omens turn against it.
+              </div>
+              {bg && (
+                <div className="panel" style={{padding:9,marginBottom:9,background:"#1c1610",borderColor:"#c99a4b"}}>
+                  <div className="flex items-center justify-between">
+                    <span className="tag tag-gold">Blessed · {GODS[bg].name}</span>
+                    <span className="rowval dim" style={{fontSize:12.5}}>{blessLeft(S)}w left</span>
+                  </div>
+                  <div className="dim" style={{fontSize:13.5,marginTop:3}}>{GODS[bg].boon}</div>
+                </div>
+              )}
+              {illLuck(S) && !bg && <div className="blood" style={{fontSize:13,fontStyle:"italic",marginBottom:8}}>
+                The house is under an ill turn — an omen defied, or a vow let go. It will pass.
+              </div>}
+              {S.vow ? (
+                <div className="panel" style={{padding:9,marginBottom:9,background:"#241b11",borderColor:"#6d5426"}}>
+                  <span className="tag" style={{borderColor:"#6d5426",color:"#d8ac5f"}}>A vow stands · {GODS[S.vow.god]?GODS[S.vow.god].name:"a god"}</span>
+                  <div style={{fontSize:14,marginTop:4}}>Not a man to fall before it is out — <span className="dim">{Math.max(1,S.vow.until-S.week)} week{S.vow.until-S.week===1?"":"s"} left</span>. {S.vow.stake}d pledged on it.</div>
+                </div>
+              ) : (
+                <div className="dim" style={{fontSize:12.5,textTransform:"uppercase",letterSpacing:".06em",marginBottom:6}}>An offering, or a vow</div>
+              )}
+              {GOD_KEYS.map(k=>{ const G = GODS[k], cost = G.cost(S), ready = offeringReady(S), afford = S.gold>=cost;
+                return (
+                  <div key={k} className="panel" style={{padding:9,marginBottom:6,background:"#1c1610"}}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="disp" style={{fontSize:13.5,color:"#e8d092"}}>{G.name} <span className="dim" style={{fontWeight:400}}>· {G.of}</span></span>
+                      <span className="rowval gold" style={{fontSize:12.5}}>{cost}d</span>
+                    </div>
+                    <div className="dim" style={{fontSize:13,marginTop:2}}>{G.boon}</div>
+                    <div className="flex gap-2" style={{marginTop:6}}>
+                      <button className="btn" style={{flex:1}} disabled={!ready || !afford} onClick={()=>offerTo(k)}>
+                        {!ready ? `Altar rests · ${OFFERING_COOL-(S.week-S.lastOffering)}w` : !afford ? "Not enough coin" : `Offer · ${G.weeks}w blessing`}
+                      </button>
+                      {!S.vow && <button className="btn btn-ghost" style={{flex:1}} disabled={S.gold < rnd(150+S.fame*0.6)}
+                        onClick={()=>setAsk({ title:`A Vow to ${G.name}`, confirm:`Swear it · ${rnd(150+S.fame*0.6)}d`,
+                          text:`You pledge ${rnd(150+S.fame*0.6)} denarii to ${G.name} and swear that not a man of this house will fall in the month to come. Keep it and the coin returns doubled in goodwill, with the god's blessing on the house. Break it — bury a man before it is out — and the coin is forfeit and the gods turn cold.`,
+                          run:()=>vowTo(k) })}>Vow ·  stake</button>}
+                    </div>
+                  </div>
+                );
+              })}
+              <div className="dim" style={{fontSize:12.5,fontStyle:"italic",marginTop:4}}>
+                One blessing rides with the house at a time; a fresh offering takes the last one's place. The gods keep their own counsel about which houses they favour.
+              </div>
             </Sect>
           ); })()}
           <Sect title="Throw a party" note="favor & fame">
