@@ -3392,6 +3392,61 @@ function rivalWeekly(d){
   });
 }
 
+/* ---- THE LEAGUE OF CAPUA ----
+   Every house in the bay is chasing the same thing you are: to be the one the city
+   names first. Their fame drifts up and down week by week on bouts you never see, and
+   yours sits in the same table. Top it and you are the First House of Capua — worth a
+   little at the gate and a great deal to say — and at every year's turn the city reckons
+   up who rose, who fell, and who stood first. */
+function leagueTable(d){
+  const rows = (d.rivals||[]).filter(h=>!h.retired).map(h=>({ name:`House ${h.name}`, raw:h.name, fame:h.fame, you:false }));
+  rows.push({ name:d.name, fame:d.fame, you:true });
+  return rows.sort((a,b)=> b.fame - a.fame);
+}
+const isFirstHouse = d => !!(d.league && d.league.first === "__you__");
+const leaguePurse  = d => isFirstHouse(d) ? 1.06 : 1;      // the first house of the city commands the better bill
+const leagueRank   = d => { const t = leagueTable(d); const i = t.findIndex(r=>r.you); return i<0 ? t.length : i+1; };
+const leagueHeld   = d => (d.league && d.league.first==="__you__") ? Math.max(1, d.week - d.league.since + 1) : 0;
+const ordN = n => n===1?"first" : n===2?"second" : n===3?"third" : n===4?"fourth" : n===5?"fifth" : n+"th";
+function leagueReckoning(d, table){
+  const you = table.find(r=>r.you), rank = table.indexOf(you)+1, first = table[0];
+  let reward = "";
+  if(first && first.you){
+    const fameBonus = ri(18,30), gold = rnd(280 + d.fame*0.5);
+    d.fame += fameBonus; d.gold += gold;
+    patronsOf(d).forEach(p=>{ p.favor = clamp(p.favor+6,0,100); }); recomputeFavor(d);
+    addRep(d, "craft", 8);
+    reward = `You close the year the First House of Capua. The magistracy marks it — ${fameBonus} fame, ${gold} denarii, and every patron a shade warmer.`;
+  } else {
+    reward = `${first ? first.name : "Another house"} closes the year first in Capua; yours stands ${ordN(rank)} of ${table.length}. There is next year, and the year after.`;
+  }
+  const snap = {}; table.forEach(r=>{ snap[r.you?"__you__":r.name] = r.fame; });
+  d.league.snap = snap;
+  chron(d, `The year turns, and Capua reckons its houses. ${first&&first.you?"Yours stands first of them all.":`${first?first.name:"Another house"} stands first; you ${ordN(rank)}.`}`, first&&first.you?"good":"info");
+  /* the announcement is scheduled, not set here: this runs before endWeek's own d.pendingEvent=null wipe */
+  scheduleArc(d, "leagueYear", 1, { first:!!(first&&first.you), firstName:first?first.name:"Another house", rank, total:table.length, reward });
+}
+function leagueWeek(d){
+  if(d.over || d.rome) return;
+  if(!d.league) d.league = { first:null, since:d.week, held:0, best:99, year:yearOf(d), snap:null };
+  const table = leagueTable(d);
+  if(!table.length) return;
+  const top = table[0], firstKey = top.you ? "__you__" : top.name;
+  const you = table.find(r=>r.you), rank = table.indexOf(you)+1;
+  if(rank < (d.league.best||99)) d.league.best = rank;
+  if(d.league.first !== firstKey){
+    const prev = d.league.first;
+    d.league.first = firstKey; d.league.since = d.week;
+    if(top.you) chron(d, `The fame table turns over — yours is the First House of Capua now. Let them come and take it.`, "good");
+    else if(prev==="__you__") chron(d, `${top.name} has passed you at the head of Capua. Yours is no longer the First House.`, "bad");
+    else if(prev!=null) chron(d, `${top.name} is the talk of the bay now, first of all its houses.`, "info");
+  }
+  if(top.you){ d.league.held = (d.league.held||0)+1;
+    d.fame += 1; patronsOf(d).forEach(p=>{ p.favor = clamp(p.favor+0.2,0,100); }); recomputeFavor(d); }
+  const yr = yearOf(d);
+  if(yr > (d.league.year||1)){ d.league.year = yr; leagueReckoning(d, table); }
+}
+
 /* ---- A MAN WHO WILL NOT GO OUT ----
    Men have only ever left this house by dying, by the rudis, by sale, or in a
    revolt of the whole cell block. The commonest human failure — one man, sitting
@@ -4192,6 +4247,7 @@ function migrate(S){
   if(S.aedile===undefined) S.aedile = null;
   if(!S.rise) S.rise = { rank:0, standing:0 };
   if(S.munusLast===undefined) S.munusLast = -99;
+  if(!S.league) S.league = { first:null, since:S.week||1, held:0, best:99, year:yearOf(S), snap:null };
   S.gladiators.forEach(g=>{ if(g.sworn===undefined) g.sworn = { how:"proper", week:1, free:isAuctor(g) }; });
   if(!S.seed) S.seed = newSeedWord();
   if(S.rngState==null) S.rngState = rngGet();
@@ -4256,7 +4312,7 @@ function newGameState(name, scen, seed, pitch){
     gladiators:[], market:[], games:null, pendingEvent:null, log:[], fallen:[], freed:[],
     seed: null, rngState: 0,
     lastParty:-9, lastFeast:-9, over:null, milestone600:false, flags:{learned:{}}, escaped:[], rebellion:null, gear:{}, retired:[],
-    doctore:null, doctoreMarket:[], doctoreOffer:null, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, defected:[], nemesis:null, nemHouse:null, saga:null, arcs:[], crest:{ c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" }, primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], works:{}, slavers:{}, pact:null, gambits:{}, pendingLesson:null, law:null, doctrine:null, kits:[], deadSteel:[], bay:null, mark:null, after:null, metHouse:{}, owed:[], household:{}, yardSeen:0, yardMissed:0, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, departed:[], reSignOffer:null, annals:[], rise:{ rank:0, standing:0 }, munusLast:-99 };
+    doctore:null, doctoreMarket:[], doctoreOffer:null, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, defected:[], nemesis:null, nemHouse:null, saga:null, arcs:[], crest:{ c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" }, primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], works:{}, slavers:{}, pact:null, gambits:{}, pendingLesson:null, law:null, doctrine:null, kits:[], deadSteel:[], bay:null, mark:null, after:null, metHouse:{}, owed:[], household:{}, yardSeen:0, yardMissed:0, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, departed:[], reSignOffer:null, annals:[], rise:{ rank:0, standing:0 }, munusLast:-99, league:{ first:null, since:1, held:0, best:99, year:1, snap:null } };
   d.rivals = makeRivals(d);
   const solo = S.men.length === 1;
   S.men.forEach((band,i)=>{
@@ -7897,7 +7953,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   const sum = [`Appearance fee: ${t.app} denarii.`];
 
   if(win){
-    purse = rnd(offer.purse * (away?1:facPurse(d)) * (away?1:aedilePurse(d)) * docPurse(d) * W.purse * favPurse(g) * femPurse(g) * fanPurse(g) * risePurse(d) * pit(d,"purse"));
+    purse = rnd(offer.purse * (away?1:facPurse(d)) * (away?1:aedilePurse(d)) * docPurse(d) * W.purse * favPurse(g) * femPurse(g) * fanPurse(g) * risePurse(d) * (away?1:leaguePurse(d)) * pit(d,"purse"));
     /* the pits pay out of a bag at the rope. an editor pays when his clerk gets to it. */
     const onCredit = offer.imperial ? "imperial" : offer.city ? "city" : offer.booking ? "booking" : offer.festival ? "games" : null;
     if(onCredit && purse >= 140){
@@ -8682,6 +8738,14 @@ const EVENTS = {
     make(){ return null; },
     run(d,ev){ const F = FREEDMEN[ev.data.k];
       try { return F.run(d, ev.data.man || { name:"He", wins:0 }); } catch(e){ return `He is seen about the town.`; } } },
+  leagueYear: {
+    make(){ return null; },
+    build(d, data){ return { id:"leagueYear", title:"The Year's Reckoning",
+      text: `${data.first?"Capua names yours the First House of the year.":`${data.firstName} is named first of Capua's houses this year, and yours ${ordN(data.rank)} of ${data.total}.`} ${data.reward}`,
+      choices:["So it stands"], data:{} }; },
+    run(d,ev){ return (ev.data && ev.data.first) || isFirstHouse(d)
+      ? `First of all the houses of Capua. It is a thing men would once not have believed of a slaver's yard.`
+      : `The table is the table. You know what has to happen next year.`; } },
   kinReturn: {
     make(){ return null; },
     run(d,ev,i){
@@ -9350,6 +9414,7 @@ function endWeek(d){
     }
   }
   rivalWeekly(d);
+  leagueWeek(d);
   if(d.romeOffer && d.romeOffer.due && d.week > d.romeOffer.due){
     d.romeOffer = null;
     d.flags.romeDeclined = d.week;
@@ -11477,31 +11542,53 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           </div>
         )}
       </>); } },
-    standings: { title:"THE HOUSES OF CAPUA", body:()=>(<>
-<div className="panel" style={{padding:13}}>
-  <div className="tag tag-gold" style={{marginBottom:8}}>The Houses of Capua</div>
-  {standings.map((h,i)=>(
-    <div key={h.name} className="flex items-center justify-between" style={{padding:"5px 0",borderBottom:"1px dotted #33271a"}}>
-      <div className="rowname" style={{fontSize:15.5, color:h.you?"#e8d092":undefined}}>
-        {!h.you && (S.rivals||[]).find(x=>x.name===h.name && x.away) && <span className="dim" style={{fontSize:12}}>away · </span>}
-        {!h.you && (S.rivals||[]).find(x=>x.name===h.name && x.doctore) && <span className="laurel" style={{fontSize:12}}>doctore · </span>}
-        <span className="dim" style={{marginRight:8,fontSize:13}}>{i+1}</span>
-        {h.name}
-        {!h.you && warmth(S,h.name)>=25
-          ? <span style={{fontSize:12.5,marginLeft:7,fontStyle:"italic",color:warmth(S,h.name)>=50?"#9aa86a":"#b09b7d"}}>{houseWord(warmth(S,h.name))}</span>
-          : !h.you && <span className="dim" style={{fontSize:12.5,marginLeft:7,fontStyle:"italic"}}>{grudgeWord(h.grudge)}</span>}
-        {!h.you && h.lan.trait && <div className="dim" style={{fontSize:12.5,marginTop:1}}>{h.lan.name} — {h.lan.trait}</div>}
-        {!h.you && (()=>{ const m=(S.metHouse||{})[h.name];
-          return m && m.met>=4 ? <div className="dim" style={{fontSize:12,marginTop:1,fontStyle:"italic"}}>
-            {m.met} cards against him{(S.rivals||[]).find(x=>x.name===h.name && x.retired) ? " · gone to a farm near Nola" : ""}
-          </div> : null; })()}
-      </div>
-      <div className={`rowval ${h.you?"gold":"dim"}`} style={{fontSize:14}}>{rnd(h.fame)} fame</div>
-    </div>
-  ))}
-  <div className="dim" style={{fontSize:13.5,marginTop:6,fontStyle:"italic"}}>Their men fill the card at the games. Beat them and their masters remember; kill them and they never forget.</div>
-</div>
-    </>) },
+    standings: { title:"THE HOUSES OF CAPUA", body:()=>{
+      const table = leagueTable(S);
+      const rank = table.findIndex(r=>r.you)+1;
+      const snap = (S.league && S.league.snap) || null;
+      const move = row => { if(!snap) return null; const key = row.you?"__you__":row.name; const was = snap[key];
+        if(was==null) return { a:"new", c:"#b09b7d" };
+        return row.fame>was+3 ? { a:"▲", c:"#9aa86a" } : row.fame<was-3 ? { a:"▼", c:"#d96f5d" } : { a:"–", c:"#6d5d47" }; };
+      return (<>
+        <div className="panel" style={{padding:13}}>
+          <div className="flex items-center justify-between" style={{marginBottom:9}}>
+            <span className="tag tag-gold">The League of Capua</span>
+            <span className="rowval" style={{fontSize:12.5, color: isFirstHouse(S)?"#e0bd72":"#cfc0a0"}}>
+              {isFirstHouse(S) ? `First House · held ${leagueHeld(S)}w` : `you stand ${ordN(rank)} of ${table.length}`}
+            </span>
+          </div>
+          {table.map((h,i)=>{ const riv = h.you ? null : houseOf(S, h.raw); const mv = move(h);
+            const bookH = (S.book && S.book.house && S.book.house[h.raw]) || null;
+            return (
+              <div key={h.name+i} className="flex items-center justify-between" style={{padding:"6px 0",borderBottom:"1px dotted #33271a",
+                ...(h.you?{background:"#1c1610",borderRadius:6,padding:"6px 8px"}:{})}}>
+                <div className="rowname" style={{fontSize:15, color:h.you?"#e8d092":undefined, minWidth:0}}>
+                  <span className="dim" style={{marginRight:7,fontSize:13}}>{i+1}</span>
+                  {i===0 && <span style={{color:"#e0bd72",marginRight:4}}>✦</span>}
+                  {riv && riv.away>0 && <span className="dim" style={{fontSize:12}}>away · </span>}
+                  {riv && riv.doctore && <span className="laurel" style={{fontSize:12}}>doctore · </span>}
+                  {h.name}
+                  {riv && (warmth(S,h.raw)>=25
+                    ? <span style={{fontSize:12.5,marginLeft:7,fontStyle:"italic",color:warmth(S,h.raw)>=50?"#9aa86a":"#b09b7d"}}>{houseWord(warmth(S,h.raw))}</span>
+                    : <span className="dim" style={{fontSize:12.5,marginLeft:7,fontStyle:"italic"}}>{grudgeWord(riv.grudge)}</span>)}
+                  {riv && lanistaOf(h.raw).trait && <div className="dim" style={{fontSize:12.5,marginTop:1}}>{lanistaOf(h.raw).name} — {lanistaOf(h.raw).trait}</div>}
+                  {riv && bookH && bookH.n>=1 && <div className="dim" style={{fontSize:12,marginTop:1,fontStyle:"italic"}}>
+                    {bookH.n} card{bookH.n>1?"s":""} against him — you {bookH.w}–{bookH.n-bookH.w}
+                  </div>}
+                  {h.you && i===0 && <div className="laurel" style={{fontSize:12,marginTop:1,fontStyle:"italic"}}>the first house of the city</div>}
+                </div>
+                <div className="flex items-center gap-2" style={{flexShrink:0}}>
+                  {mv && <span style={{fontSize:12,color:mv.c}}>{mv.a}</span>}
+                  <span className={`rowval ${h.you?"gold":"dim"}`} style={{fontSize:14}}>{rnd(h.fame)}</span>
+                </div>
+              </div>
+            );
+          })}
+          <div className="dim" style={{fontSize:13.5,marginTop:8,fontStyle:"italic"}}>
+            Their men fill the card at the games, and their fame drifts week to week whether you watch or not. Top the table and Capua calls yours the First House — a fatter purse, and a great deal to say. The city reckons it up at every year's turn.
+          </div>
+        </div>
+      </>); } },
     book: { title:"THE RECORD BOOK", body:()=>{ const K = bookOf(S), B = K.B;
       const Row = ({l,v,sub}) => (
         <div className="flex items-center justify-between gap-2" style={{borderTop:"1px dotted #33271a",padding:"5px 0"}}>
@@ -11777,6 +11864,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             const bnr = (c,title,sub,urgent)=>banners.push({c,title,sub,urgent:!!urgent});
             /* urgent = something you can act on now; the rest are threads you are simply in */
             if(S.war && !S.war.done) bnr("#7c2a22", warStage(S).name, "the war in the south");
+            if(isFirstHouse(S)) bnr("#e0bd72", "First House of Capua", `held ${leagueHeld(S)}w`);
             if(S.primus) bnr(S.primus.mine?"#c99a4b":"#4e3c26", S.primus.mine?"Primus of Capua":`Primacy · ${S.primus.house}`, S.primus.mine?S.primus.name:"");
             if(S.nemesis) bnr("#7c2a22", S.nemesis.name, "has your measure");
             if(S.saga){ const sg = S.gladiators.find(x=>x.id===S.saga.gid);
@@ -12024,8 +12112,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               ["factions","The Stands", FACTIONS[facTop(S)].short + " " + facWord(facOf(S,facTop(S)))],
               ["book","The Record Book", `${(S.book&&S.book.n)||0} bouts`],
               ["carry","Carry It Out", "share this house"],
-              ["standings","The Houses", (()=>{ const me = [...(S.rivals||[]).map(h=>h.fame), S.fame].sort((a,b)=>b-a);
-                return `${me.indexOf(S.fame)+1} of ${me.length} in Capua`; })()],
+              ["standings","The Houses", isFirstHouse(S) ? "✦ First House of Capua" : (()=>{ const t=leagueTable(S);
+                return `${ordN(t.findIndex(r=>r.you)+1)} of ${t.length} in Capua`; })()],
               ["chron","The Chronicle", `${S.log.length} line${S.log.length===1?"":"s"}`]].map(([k,l,sub])=>(
               <button key={k} className="optrow" style={{padding:11}}
                 onClick={()=>k==="annals"? setAnnals(true) : k==="carry"? carryOut() : k==="chron"? setShowChron(true) : setSheet(k)}>
