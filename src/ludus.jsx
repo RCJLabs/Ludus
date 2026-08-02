@@ -1916,6 +1916,54 @@ function addScar(g, target, severe){
 }
 const retireEligible = g => g.age>=31 || scarBurden(g)>=20;
 
+/* ---- THE BODY REMEMBERS ----
+   A fighter is the sum of everything that has happened to him. Years past his
+   prime, every old scar, every hurt that never mended right — they add up into
+   a body that breaks a little easier than it used to. It is what makes a grizzled
+   veteran worth watching and a worry to send out on the same afternoon. */
+function bodyWear(g){
+  if(!g) return 0;
+  const yrs  = Math.max(0, (g.age||24) - PRIME[1]) * 0.045;   // the years past his peak
+  const scar = scarBurden(g) * 0.011;                          // what the old wounds cost
+  const last = lastingOf(g).length * 0.10;                     // and what never closed
+  return clamp(yrs + scar + last, 0, 0.85);
+}
+const wornWord = w => w<0.12 ? "sound" : w<0.26 ? "seasoned" : w<0.44 ? "battle-worn"
+  : w<0.64 ? "breaking down" : "held together with linen";
+const wornColour = w => w<0.12 ? "#8a9c6a" : w<0.26 ? "#b5a06a" : w<0.44 ? "#cf9a4b"
+  : w<0.64 ? "#d07a4a" : "#cf5a49";
+/* a grave wound can leave something permanent on its own — no need to be opened
+   three times, only to be opened badly once, and the more worn the body the likelier */
+function graveLasting(d, g, part, care){
+  if(!g || !part) return null;
+  const k = LAST_KEYS.find(x=>LASTING[x].part===part && !hasLasting(g,x));
+  if(!k) return null;
+  const careMult = care==="surgeon" ? 0.45 : care==="convalesce" ? 0.3 : 1;
+  const risk = (0.12 + bodyWear(g)*0.55) * scarGuard(d) * careMult;
+  if(R() >= risk) return null;
+  g.lasting = [...lastingOf(g), k];
+  g.morale = clamp(g.morale-10, 0, 100);
+  remember(d, g, "hurt");
+  chron(d, `${fullName(g)} rises from the table, but not whole. ${LASTING[k].say} He has ${LASTING[k].name} now, and it does not go away.`, "bad");
+  return k;
+}
+/* a worn body takes a felling harder than a young one — longer to mend, and it hurts more */
+function agonyWear(g, inj){
+  const w = bodyWear(g);
+  if(w <= 0.22 || !inj) return;
+  inj.weeks = Math.ceil(inj.weeks * (1 + w*0.55));
+  inj.pen   = Math.round(inj.pen  * (1 + w*0.38));
+}
+/* one turn of the year on a man's body */
+function ageManOneYear(d, g){
+  const before = g.age;
+  g.age = (g.age||24) + 1;
+  const cross = (lo) => before <= lo && g.age > lo;
+  if(cross(PRIME[1]))      chron(d, `${g.name} is ${g.age} now. The doctore has started resting him a day the younger men do not get.`);
+  else if(cross(31))       chron(d, `${g.name} turns ${g.age}. He is a veteran of the sand, and the sand is beginning to ask for it back.`, "bad");
+  else if(cross(34))       chron(d, `${g.name} is ${g.age}. Old for this. Every card now, someone in the crowd wonders aloud if it is his last.`, "bad");
+}
+
 /* ---- PATRONS ----
    Favor was a number. It is four or five Romans with names, appetites and long memories,
    and one of them has his hand on the editor's thumb when your man is in the sand. */
@@ -4509,6 +4557,7 @@ const lessonFor = (d, tab) => LESSONS.find(l => {
    on it and find out what that costs. */
 const CARE = {
   rest:    { name:"Let it mend",  desc:"The slow way. He is off the sand until it closes." },
+  convalesce: { name:"Full convalescence", desc:"Bed, broth and no hurry. Slower to heal, but he rises clean — scars and lasting hurts rarely take hold, and his spirits mend with him." },
   surgeon: { name:"The surgeon",  desc:"Cut, cleaned and stitched properly. Halves the time and most of the scarring." },
   through: { name:"Work him through it", desc:"He fights and trains on it. The wound does not close, and it may set badly." },
 };
@@ -7753,10 +7802,12 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
     sum.push(`${g.name} is dead. ${PR(g).His} cell stands empty tonight.`);
   } else if(!win && res.fell){
     const inj = injuryFor(res.lastTarget, true);
+    agonyWear(g, inj);
     g.injury = inj; g.status = "injured"; weekMark(d, "hurt", 1, fullName(g));
-    sum.push(`${PR(g).He} is carried to the medicus: ${inj.name.toLowerCase()}, ${inj.weeks} week${inj.weeks>1?"s":""} to mend.`);
+    sum.push(`${PR(g).He} is carried to the medicus: ${inj.name.toLowerCase()}, ${inj.weeks} week${inj.weeks>1?"s":""} to mend.${bodyWear(g)>0.4?" An old body does not shrug these off the way it used to.":""}`);
   } else if(win && res.vA<45 && R()<0.4){
     const inj = injuryFor(res.lastTarget, false);
+    agonyWear(g, inj);
     g.injury = inj; g.status = "injured"; weekMark(d, "hurt", 1, fullName(g));
     sum.push(`Victory, but not unmarked: ${inj.name.toLowerCase()}, ${inj.weeks} week${inj.weeks>1?"s":""} to mend.`);
   }
@@ -8866,20 +8917,29 @@ function endWeek(d){
   d.gladiators.forEach(g=>{
     if(isGone(g)) return;
     upkeep += (10 + seasonUpkeep(d)) * pit(d,"upkeep") + (isAuctor(g) ? g.auctor.wage : 0);
+    /* the years turn on every man, injured or not — one for every year in your keeping */
+    g.weeksAged = (g.weeksAged||0) + 1;
+    if(g.weeksAged >= YEAR_WEEKS){ g.weeksAged -= YEAR_WEEKS; ageManOneYear(d, g); }
     if(g.status==="injured"){
       injured++;
-      g.injury.weeks -= (g.injury.care==="surgeon" ? healSpeed(d,g)*1.6 : healSpeed(d,g)) * seasonHeal(d);
+      const rate = g.injury.care==="surgeon" ? healSpeed(d,g)*1.6 : g.injury.care==="convalesce" ? healSpeed(d,g)*0.72 : healSpeed(d,g);
+      g.injury.weeks -= rate * seasonHeal(d);
+      if(g.injury.care==="convalesce") g.morale = clamp(g.morale+3, 0, 100);   // rest of the spirit as well as the body
       g.fatigue=clamp(g.fatigue-22,0,100);
       if(g.injury.weeks<=0){
         const part = g.injury.part, care = g.injury.care, sev = (g.injury.pen>=8);
         g.injury=null; g.status="active";
-        const guard = scarGuard(d) * (care==="surgeon" ? 0.6 : 1);
+        const careGuard = care==="surgeon" ? 0.6 : care==="convalesce" ? 0.4 : 1;
+        const guard = scarGuard(d) * careGuard;
         if(part && R() < (sev ? 0.75 : 0.45) * guard){
           const repeat = addScar(g, part, sev);
-          checkLasting(d, g, part);
+          const lasted = checkLasting(d, g, part) || (sev ? graveLasting(d, g, part, care) : null);
           chron(d, repeat
             ? `${g.name} leaves the medicus' table. That ${SCAR_WORD[part]||"wound"} has been opened twice now, and it will not come back all the way.`
+            : lasted ? `${g.name} leaves the table alive. Not every part of him came with him.`
             : `${g.name} rises from the medicus' table. ${PR(g).He} will carry the mark.`);
+        } else if(part && sev && graveLasting(d, g, part, care)){
+          /* no fresh scar, but a grave wound left its own quiet ruin */
         } else chron(d, `${g.name} rises from the medicus' table, whole.`);
       }
     } else if(g.status==="active"){
@@ -8957,6 +9017,16 @@ function endWeek(d){
       if(g.age>PRIME[1]){
         const rate = (g.age-PRIME[1])*0.05;
         for(const k of Object.keys(DECAY_RATE)) g[k] = Math.max(8, g[k] - rate*DECAY_RATE[k]);
+      }
+      /* old wounds ache in the cold — a well-worn man moves stiff through the wet months */
+      if(seasonOf(d).key==="winter" && bodyWear(g) > 0.28 && R() < bodyWear(g)*0.22){
+        g.morale = clamp(g.morale-5, 0, 100);
+        g.fatigue = clamp(g.fatigue+8, 0, 100);
+        const bath = bLevel(d,"balneae");
+        chron(d, bath>=2
+          ? `${g.name}'s old wounds pull in the cold, but the hot rooms take the worst of it out of him.`
+          : `${g.name}'s old wounds ache in the wet months. ${PR(g).He} moves stiff all week.`, "bad");
+        if(bath>=2){ g.morale = clamp(g.morale+3, 0, 100); g.fatigue = clamp(g.fatigue-5, 0, 100); }
       }
       g.morale = clamp(g.morale + bathMorale(d), 0, 100);
       g.morale = clamp(g.morale + lanMorale(d), 0, 100);
@@ -10682,6 +10752,9 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
     if(care==="through"){ g.status = "active";
       g.morale = clamp(g.morale-6,0,100); g.defiance = clamp(g.defiance+4,0,100);
       chron(d, `${g.name} is sent back to the post on an open wound.`, "bad"); }
+    else if(care==="convalesce"){ g.status = "injured";
+      g.morale = clamp(g.morale+4,0,100);
+      chron(d, `${g.name} is given the long bed. No sand, no post, no hurry — he rises when he rises.`); }
     else g.status = "injured"; });
   const mendKit = gid => mut(d=>{ const g=d.gladiators.find(x=>x.id===gid); if(!g) return;
     const fee = repairFee(d, g);
@@ -11916,6 +11989,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 {rudisEligible(g) && <span className="tag tag-gold">Rudis earned</span>}
                 {g.age>PRIME[1] && <span className="tag" style={{borderColor:g.age>31?"#7c2a22":undefined, color:g.age>31?"#d98476":undefined}}>{ageTag(g.age)} · {g.age}</span>}
                 {(g.scars||[]).length>0 && <span className="tag">{g.scars.length} scar{g.scars.length>1?"s":""}</span>}
+                {bodyWear(g)>=0.44 && <span className="tag" style={{borderColor:wornColour(bodyWear(g)),color:wornColour(bodyWear(g))}}>{wornWord(bodyWear(g))}</span>}
                 {kinOf(S,g.id,"brother").length>0 && <span className="tag" style={{borderColor:"#5a6a35",color:"#b9c58a"}}>{kinOf(S,g.id,"brother").length} brother{kinOf(S,g.id,"brother").length>1?"s":""}</span>}
                 {kinOf(S,g.id,"rival").length>0 && <span className="tag tag-blood">bad blood</span>}
                 {isFavourite(g) && <span className="tag tag-gold">♦ crowd favourite</span>}
@@ -12934,7 +13008,26 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 </div>}
               </div>
             )}
-            {(selG.scars||[]).length>0 && (()=>{ 
+            {bodyWear(selG) >= 0.12 && (()=>{ const w = bodyWear(selG);
+              return (
+                <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",borderColor:wornColour(w)}}>
+                  <div className="flex items-center justify-between" style={{marginBottom:6}}>
+                    <span className="tag" style={{color:wornColour(w),borderColor:wornColour(w)}}>The body</span>
+                    <span className="rowval" style={{fontSize:13,color:wornColour(w)}}>{wornWord(w)}</span>
+                  </div>
+                  <div className="track" style={{height:6}}>
+                    <div className="fill" style={{width:`${Math.round(w/0.85*100)}%`, background:`linear-gradient(90deg,#4a3a24,${wornColour(w)})`}}/>
+                  </div>
+                  <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:6}}>
+                    {w<0.26 ? `${PR(selG).He} has taken his knocks and carries them well.`
+                     : w<0.44 ? `The years and the wounds are on him. He goes down harder to mend when he goes down, and the cold finds his old hurts.`
+                     : w<0.64 ? `A worn body. Send him out knowing a felling costs him more than it once did, and that some of it may not come back.`
+                     : `He is held together with linen and habit. Every card is a gamble with what is left of him.`}
+                  </div>
+                </div>
+              );
+            })()}
+            {(selG.scars||[]).length>0 && (()=>{
               const byPart = {};
               selG.scars.forEach(s=>{ byPart[s.part]=(byPart[s.part]||0)+1; });
               const cap = selG.scarCap||{};
@@ -13196,14 +13289,15 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     <span className="tag tag-blood">{selG.injury.name}</span>
                     <span className="rowval dim" style={{fontSize:13}}>{Math.max(1,Math.ceil(selG.injury.weeks))} week{Math.ceil(selG.injury.weeks)>1?"s":""}</span>
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    {["rest","surgeon","through"].map(c=>{
+                  <div className="grid grid-cols-2 gap-2">
+                    {["rest","convalesce","surgeon","through"].map(c=>{
                       const off = c==="surgeon" && (!surgeonOK(S) || S.gold<fee);
                       return (
                         <button key={c} className={`focusbtn ${care===c?"on":""}`} disabled={off}
                           style={off?{opacity:.4}:undefined} onClick={()=>setCare(selG.id,c)}>
-                          {c==="rest"?"MEND":c==="surgeon"?"SURGEON":"WORK ON"}
+                          {c==="rest"?"MEND":c==="convalesce"?"CONVALESCE":c==="surgeon"?"SURGEON":"WORK ON"}
                           {c==="surgeon" && <span className="sub">{surgeonOK(S)? fee+"d" : "needs medicus"}</span>}
+                          {c==="convalesce" && <span className="sub">slow &amp; clean</span>}
                         </button>
                       );
                     })}
