@@ -3033,6 +3033,43 @@ function slaverPitch(d, g){
   return `He is enthusiastic in a way that tells you nothing at all.`;
 }
 
+/* ---- WHERE A MAN CAME FROM ----
+   A slave was a price and a flaw. But every man on the block was a person a month
+   ago, and Capua is close enough to a great many wars that his story is often worth
+   the hearing — and sometimes it is worth a stat or two, one way or the other. */
+const STORIES = {
+  chieftain: { line:"a chieftain of his people, taken in the last war in the north", war:true,
+    apply(g){ g.defiance=clamp(g.defiance+16,0,100); g.pfame=(g.pfame||0)+ri(5,10);
+      if(!g.traits.includes("Defiant")) g.traits.push("Defiant"); } },
+  deserter:  { line:"a deserter from the legions — sold rather than crucified, which he knows was mercy", war:true,
+    apply(g){ g.tec=clamp(g.tec+6,8,95); g.dis=clamp(g.dis+6,8,95); g.morale=clamp(g.morale-12,0,100); } },
+  debtor:    { line:"sold for his father's debts by his own city, and burning with the shame of it",
+    apply(g){ g.defiance=clamp(g.defiance-10,0,100); g.price=rnd(g.price*0.9); } },
+  scion:     { line:"the disgraced son of a good house, if the story is even half true",
+    apply(g){ g.potential=clamp(g.potential+8,20,99); g.heart=clamp((g.heart||50)+8,0,100); } },
+  vernae:    { line:"born a slave in a great house and raised to it — he has known nothing else",
+    apply(g){ g.dis=clamp(g.dis+7,8,95); g.defiance=clamp(g.defiance-8,0,100); } },
+  brawler:   { line:"a dock brawler with a name in the wrong quarter of some port town",
+    apply(g){ g.str=clamp(g.str+7,8,95); g.tec=clamp(g.tec-4,8,95); g.fans=(g.fans||0)+ri(3,7); } },
+  wronged:   { line:"sold twice in a year, and he looks at you rather than past you",
+    apply(g){ g.defiance=clamp(g.defiance+18,0,100); } },
+};
+const STORY_KEYS = Object.keys(STORIES);
+const WAR_STORIES = STORY_KEYS.filter(k=>STORIES[k].war);
+/* what a rival will pay over the odds to take a man off the block before you do */
+function assignContests(d){
+  const rivs = (d.rivals||[]).filter(h=>!h.retired);
+  if(!rivs.length || d.fame < 40) return;
+  const pool = (d.market||[]).filter(g=>!isAuctor(g) && !g.paragon).sort((a,b)=>gladValue(b)-gladValue(a));
+  const n = Math.min(pool.length, ri(0,2) + (d.war && !d.war.done ? 1 : 0));
+  for(let i=0;i<n;i++){ const g = pool[i]; if(!g) break;
+    const buyers = rivs.map(h=>({ h, L:lanistaOf(h.name), w:(lanistaOf(h.name).bid||1) + h.grudge/70 + R()*0.3 }))
+      .sort((a,b)=>b.w-a.w);
+    const buyer = buyers[Math.min(i, buyers.length-1)];
+    const bid = buyer.L.bid || 1;
+    g.contested = { house:buyer.h.name, ceiling: rnd(g.price * (1.12 + (bid-1)*0.35)) };
+  }
+}
 function makeMarket(d){
   d.market = [];
   /* three of the four sellers are standing there on any given week */
@@ -3050,12 +3087,19 @@ function makeMarket(d){
       FLAWS[g.flaw].apply(g);
       g.price = rnd(g.price * 0.82);          // and it is priced a little keen
     }
+    const wm0 = warMarket(d);
+    if(wm0 < 1) g.warCaptive = 1;
+    /* his provenance — often a war captive at the captive-dealer's stall */
+    if(R() < 0.58){
+      const warlean = (g.warCaptive || sk==="batiatus") && R()<0.72;
+      const st = pick(warlean && WAR_STORIES.length ? WAR_STORIES : STORY_KEYS);
+      g.story = st; STORIES[st].apply(g);
+    }
     g.price = rnd(g.price * S.markup * slaverPrice(d, sk));
     g.pitch = slaverPitch(d, g);
     g.shown = sellerSays(g);
     g.scouted = false;
-    const wm = warMarket(d);
-    if(wm !== 1){ g.price = rnd(g.price * wm); if(wm < 1) g.warCaptive = 1; }
+    if(wm0 !== 1) g.price = rnd(g.price * wm0);
     g.price = rnd(g.price * pit(d,"market"));
     d.market.push(g);
   }
@@ -3063,6 +3107,52 @@ function makeMarket(d){
   if(R()<0.3){ const a = makeAuctoratus(d, ri(44,72));
     a.shown = Object.assign({}, ...STATS.map(k=>({[k]:a[k]}))); a.scouted = true;
     d.market[ri(0,3)] = a; }
+  assignContests(d);
+  /* the legions are selling in bulk while the war in the south drags on */
+  d.powLot = null;
+  if(d.war && !d.war.done && R() < 0.7){
+    const n = ri(2,3);
+    d.powLot = { n, price: rnd((110 + d.fame*0.35) * n * 0.82) };
+  }
+}
+/* each week a rival's patience for a contested man may run out — buy him now or lose him */
+function marketWeek(d){
+  if(d.rome || d.city || d.travel) return;
+  const contested = (d.market||[]).filter(g=>g.contested && !g.paragon);
+  for(const g of contested){
+    if(R() < 0.28){
+      const c = g.contested, h = houseOf(d, c.house);
+      d.market = d.market.filter(x=>x.id!==g.id);
+      if(h && !h.retired){ const f = makeRivalFighter(d, h.name, 55);
+        ["str","agi","end","tec","sho","dis","potential"].forEach(k=>{ f[k]=g[k]; });
+        f.name=g.name; f.origin=g.origin; f.cls=g.cls; f.kit=g.kit; h.fighters.push(f); }
+      chron(d, `You waited too long. ${lanistaOf(c.house).name} paid over the odds for ${g.name} and took him off the block — no haggling, no second look. He wanted him too.`, "bad");
+      break;   // at most one taken a week
+    }
+  }
+}
+/* a lot of war captives, bought in bulk and sight-unseen */
+function buyLot(d){
+  const lot = d.powLot; if(!lot) return null;
+  const space = 8 - d.gladiators.filter(x=>!isGone(x)).length;
+  if(space <= 0 || d.gold < lot.price) return null;
+  d.gold -= lot.price;
+  const take = Math.min(lot.n, space);
+  const got = [];
+  for(let i=0;i<take;i++){
+    const g = genGladiator(d, clamp(ri(28,52) - 4, 18, 70));
+    g.origin = pick(["Gaul","Thracian","Germanic"]);
+    g.warCaptive = 1; g.regard = ri(28,42); g.defiance = clamp(g.defiance+ri(6,16),0,100);
+    if(R() < 0.45){ g.flaw = pick(FLAW_KEYS); FLAWS[g.flaw].apply(g); }
+    const st = pick(WAR_STORIES); g.story = st; STORIES[st].apply(g);
+    g.kit = bareKit(g.cls);
+    const w = defaultKit(g.cls).weapon; if(gearFree(d,w)<=0) d.gear[w] = (d.gear[w]||0)+1;
+    d.gladiators.push(g); got.push(g.name);
+  }
+  d.powLot = null;
+  dealt(d, "batiatus", "bought", take);
+  chron(d, `You take the whole lot off Lentulus — ${take} men out of a legion's chains, ${lot.price} denarii for the string of them. Rough, unlooked-at, and yours: ${got.join(", ")}.`, "good");
+  return { take, names:got };
 }
 
 function makeGames(d){
@@ -4304,6 +4394,7 @@ function migrate(S){
   if(S.blessing===undefined) S.blessing = null;
   if(S.vow===undefined) S.vow = null;
   if(S.lastOffering==null) S.lastOffering = -9;
+  if(S.powLot===undefined) S.powLot = null;
   S.gladiators.forEach(g=>{ if(g.sworn===undefined) g.sworn = { how:"proper", week:1, free:isAuctor(g) }; });
   if(!S.seed) S.seed = newSeedWord();
   if(S.rngState==null) S.rngState = rngGet();
@@ -4368,7 +4459,7 @@ function newGameState(name, scen, seed, pitch){
     gladiators:[], market:[], games:null, pendingEvent:null, log:[], fallen:[], freed:[],
     seed: null, rngState: 0,
     lastParty:-9, lastFeast:-9, over:null, milestone600:false, flags:{learned:{}}, escaped:[], rebellion:null, gear:{}, retired:[],
-    doctore:null, doctoreMarket:[], doctoreOffer:null, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, defected:[], nemesis:null, nemHouse:null, saga:null, arcs:[], crest:{ c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" }, primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], works:{}, slavers:{}, pact:null, gambits:{}, pendingLesson:null, law:null, doctrine:null, kits:[], deadSteel:[], bay:null, mark:null, after:null, metHouse:{}, owed:[], household:{}, yardSeen:0, yardMissed:0, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, departed:[], reSignOffer:null, annals:[], rise:{ rank:0, standing:0 }, munusLast:-99, league:{ first:null, since:1, held:0, best:99, year:1, snap:null }, piety:30, blessing:null, vow:null, lastOffering:-9 };
+    doctore:null, doctoreMarket:[], doctoreOffer:null, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, defected:[], nemesis:null, nemHouse:null, saga:null, arcs:[], crest:{ c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" }, primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], works:{}, slavers:{}, pact:null, gambits:{}, pendingLesson:null, law:null, doctrine:null, kits:[], deadSteel:[], bay:null, mark:null, after:null, metHouse:{}, owed:[], household:{}, yardSeen:0, yardMissed:0, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, departed:[], reSignOffer:null, annals:[], rise:{ rank:0, standing:0 }, munusLast:-99, league:{ first:null, since:1, held:0, best:99, year:1, snap:null }, piety:30, blessing:null, vow:null, lastOffering:-9, powLot:null };
   d.rivals = makeRivals(d);
   const solo = S.men.length === 1;
   S.men.forEach((band,i)=>{
@@ -9676,18 +9767,8 @@ function endWeek(d){
   }
   chron(d, `Week ${d.week}. Upkeep paid: ${upkeep} denarii.`);
   afterWeek(d);
-  if((d.week-1)%3===0 && !d.rome && !d.city && !d.travel){ makeMarket(d); makeDoctoreMarket(d); makeStaffMarket(d);
-    const rich = (d.rivals||[]).map(h=>({h,L:lanistaOf(h.name)})).sort((a,b)=>b.L.bid-a.L.bid)[0];
-    if(rich && rich.L.bid>=1.4 && d.market.length>1 && R()<0.45){
-      const best = d.market.reduce((m,g)=>gladValue(g)>gladValue(m)?g:m, d.market[0]);
-      d.market = d.market.filter(g=>g.id!==best.id);
-      const f = makeRivalFighter(d, rich.h.name, 55);
-      ["str","agi","end","tec","sho","dis","potential"].forEach(k=>{ f[k]=best[k]; });
-      f.name = best.name; f.origin = best.origin; f.cls = best.cls; f.kit = best.kit;
-      rich.h.fighters.push(f);
-      chron(d, `${rich.L.name} took ${best.name} off the block before you had finished looking at him. He did not haggle.`, "bad");
-    }
-  }
+  if((d.week-1)%3===0 && !d.rome && !d.city && !d.travel){ makeMarket(d); makeDoctoreMarket(d); makeStaffMarket(d); }
+  marketWeek(d);
   rivalWeekly(d);
   leagueWeek(d);
   if(d.romeOffer && d.romeOffer.due && d.week > d.romeOffer.due){
@@ -11199,12 +11280,15 @@ export default function App(){
     [g,m].forEach(x=>{ if(x.sparWith){ const o=d.gladiators.find(y=>y.id===x.sparWith);
       if(o && o.id!==g.id && o.id!==m.id && o.sparWith===x.id){ o.regimen="palus"; o.sparWith=null; } } });
     g.regimen="spar"; g.sparWith=m.id; m.regimen="spar"; m.sparWith=g.id; });
-  const buyG = id => mut(d=>{ const i=d.market.findIndex(m=>m.id===id); if(i<0) return;
+  const buyG = (id, bidPrice) => mut(d=>{ const i=d.market.findIndex(m=>m.id===id); if(i<0) return;
     const g=d.market[i]; const count=d.gladiators.filter(x=>!isGone(x)).length;
+    const price = bidPrice!=null ? bidPrice : g.price;
     if(g.slaver){ dealt(d, g.slaver, "bought"); if(g.flaw && g.scouted) dealt(d, g.slaver, "burned"); }
-    const tax = rnd(g.price * lawTax(d));
-    if(d.gold < g.price + tax || count>=8) return;
-    d.gold -= g.price + tax; d.market.splice(i,1);
+    const tax = rnd(price * lawTax(d));
+    if(d.gold < price + tax || count>=8) return;
+    d.gold -= price + tax; d.market.splice(i,1);
+    if(g.contested){ const c = g.contested; delete g.contested;
+      chron(d, `You outbid ${lanistaOf(c.house).name} for ${g.name} at the block, and were seen to do it. ${price} denarii, more than he was worth and worth it to have taken him from that house.`, "good"); }
     if(tax) chron(d, `${tax} denarii to the vectigal on top of the price, collected before the man is off the block.`, "info");
     const w = defaultKit(g.cls).weapon;
     if(gearFree(d,w)<=0) d.gear[w] = (d.gear[w]||0)+1;   // he comes with the blade he was sold with
@@ -11219,8 +11303,16 @@ export default function App(){
       return;
     }
     chron(d, isAuctor(g)
-      ? `${g.name} of ${g.origin} signs for ${g.price} denarii and ${g.auctor.bouts} bouts. He swears the same sacramentum as every man in the cells — burned, bound, beaten, slain — and he chose it, which they find harder to watch than they expected.`
-      : `${g.name} of ${g.origin} joins the ludus for ${g.price} denarii. ${PR(g).He} swears the sacramentum: to be burned, bound, beaten, and slain by the sword.`); });
+      ? `${g.name} of ${g.origin} signs for ${price} denarii and ${g.auctor.bouts} bouts. He swears the same sacramentum as every man in the cells — burned, bound, beaten, slain — and he chose it, which they find harder to watch than they expected.`
+      : `${g.name} of ${g.origin} joins the ludus for ${price} denarii. ${PR(g).He} swears the sacramentum: to be burned, bound, beaten, and slain by the sword.`); });
+  const bidFor = g => { const c = g.contested;
+    if(!c){ buyG(g.id); return; }
+    const cost = c.ceiling;
+    setAsk({ title:"A Bidding War", confirm:`Outbid House ${c.house} · ${cost}d`,
+      text:`House ${c.house} wants ${g.name} as much as you do — ${lanistaOf(c.house).name}'s man is at the block with his purse open, and he does not lose these quietly. Take ${g.name} now for ${cost} denarii, over the odds, or leave him to ${lanistaOf(c.house).name}.`,
+      run:()=>buyG(g.id, cost) });
+  };
+  const takeLot = () => mut(d=>{ buyLot(d); });
   const scout = gid => mut(d=>{ const g = d.market.find(x=>x.id===gid); if(!g || g.scouted) return;
     const fee = SCOUT_FEE(d,g);
     if(d.gold < fee) return;
@@ -12980,8 +13072,26 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 )}
               </div>
             ); })()}
+          {S.powLot && (()=>{ const lot = S.powLot, space = 8 - roster.length, afford = S.gold>=lot.price;
+            return (
+              <div className="panel" style={{padding:12,borderColor:"#7c2a22",background:"#241511"}}>
+                <div className="flex items-center justify-between">
+                  <span className="tag tag-blood">A lot of captives</span>
+                  <span className="gold" style={{fontSize:14.5}}>{lot.price}d the lot</span>
+                </div>
+                <div style={{fontSize:14.5,marginTop:4}}>{lot.n} men off the legions' chains, sold in a string while the war in the south drags on.</div>
+                <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:3}}>
+                  Rough, unlooked-at, and cheap by the head — buy them sight-unseen and see what the string is worth once they are yours. Some will carry hidden hurts.
+                </div>
+                <button className="btn" style={{width:"100%",marginTop:8}} disabled={!afford || space<=0}
+                  onClick={takeLot}>
+                  {space<=0 ? "No room in the cells" : !afford ? "Not enough coin"
+                    : `Take the lot — ${Math.min(lot.n,space)} men, ${lot.price}d`}
+                </button>
+              </div>
+            ); })()}
           {S.market.filter(g=>!g.paragon).map(g=>(
-            <div key={g.id} className="panel" style={{padding:12,borderColor:isAuctor(g)?"#5a7a8a":g.legend?"#8a6a2c":undefined}}>
+            <div key={g.id} className="panel" style={{padding:12,borderColor:g.contested?"#8a6a2c":isAuctor(g)?"#5a7a8a":g.legend?"#8a6a2c":undefined}}>
               <div className="flex items-center justify-between">
                 <div className="disp" style={{fontSize:15,fontWeight:700}}>{g.name}</div>
                 <span className="gold" style={{fontSize:15}}>{g.price}d</span>
@@ -13000,12 +13110,16 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 {isDamn(g) && <span className="tag" style={{borderColor:"#7c2a22",color:"#d98476"}}>Condemned · {damnLeft(g)} to serve</span>}
                 {isAuctor(g) && <span className="tag" style={{borderColor:"#5a7a8a",color:"#9dc0d4"}}>Auctoratus · free</span>}
                 {g.warCaptive && <span className="tag tag-blood">Taken in the south</span>}
+                {g.contested && <span className="tag tag-gold">✦ House {g.contested.house} is bidding</span>}
                 {g.soldBy && <span className="tag">Sold on by House {g.soldBy}</span>}
                 {g.slaver && <span className="tag" style={{borderColor:"#5a6a4a",color:"#9aa86a"}}>{slaverOf(g.slaver).name}</span>}
                 <span className="tag" style={{borderColor:g.age>31?"#7c2a22":g.age<=PRIME[1]?"#5a6a35":undefined,
                   color:g.age>31?"#d98476":g.age<=PRIME[1]?"#b9c58a":undefined}}>{ageTag(g.age)} · {g.age}</span>
                 {(g.scars||[]).length>0 && <span className="tag">{g.scars.length} scar{g.scars.length>1?"s":""}</span>}
               </div>
+              {g.story && STORIES[g.story] && (
+                <div style={{fontSize:13.5,fontStyle:"italic",color:"#bfa8c8",marginBottom:3}}>They say he is {STORIES[g.story].line}.</div>
+              )}
               {(()=>{ const lvl = readLevel(S, g), src2 = lvl>=1 ? g : (g.shown || g);
                 return (<>
                   {g.pitch && !g.scouted && (
@@ -13061,10 +13175,15 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   <div key={k}><span className="dim">{STAT_NAMES[k].slice(0,4)}</span><Bar v={g[k]} color={CLASSES[g.cls].key.includes(k)?BRONZE:"#6a5a40"}/></div>
                 ))}
               </div>
-              <button className="btn" style={{width:"100%",marginTop:8}} disabled={S.gold<g.price || roster.length>=8} onClick={()=>buyG(g.id)}>
-                {roster.length>=8? "The cells are full" : S.gold<g.price
-                  ? "Not enough coin" : isAuctor(g) ? `Take his oath — ${g.price} denarii` : `Buy for ${g.price} denarii`}
-              </button>
+              {(()=>{ const cost = g.contested ? g.contested.ceiling : g.price;
+                return (
+                  <button className="btn" style={{width:"100%",marginTop:8, ...(g.contested?{borderColor:"#c99a4b"}:{})}}
+                    disabled={S.gold<cost || roster.length>=8} onClick={()=>bidFor(g)}>
+                    {roster.length>=8? "The cells are full" : S.gold<cost ? "Not enough coin"
+                      : g.contested ? `Outbid House ${g.contested.house} — ${cost} denarii`
+                      : isAuctor(g) ? `Take his oath — ${g.price} denarii` : `Buy for ${g.price} denarii`}
+                  </button>
+                ); })()}
             </div>
           ))}
         </div>)}
