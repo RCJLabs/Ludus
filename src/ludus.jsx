@@ -10524,6 +10524,28 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
       g.wear[slot] = pool.length ? pool.splice(pool.indexOf(Math.max(...pool)),1)[0] : 100;
     } else g.wear[slot] = 100;
   });
+  /* strip every man back to house issue, returning bought steel to the rack — for
+     starting a loadout over from scratch. Nothing is sold; named weapons stay. */
+  const unequipAll = () => mut(d=>{
+    d.gearCond = d.gearCond || {}; let n = 0;
+    d.gladiators.forEach(g=>{
+      if(isGone(g)) return;
+      if(!g.kit){ g.kit = defaultKit(g.cls); return; }
+      g.wear = g.wear || {};
+      const def = defaultKit(g.cls);
+      SLOTS.forEach(s=>{
+        if(g.named && g.named.slot===s) return;   // a forged, named piece stays with him
+        const cur = g.kit[s];
+        if(cur === def[s]) return;
+        const old = GEAR[cur];
+        if(wears(old)){ (d.gearCond[cur] = d.gearCond[cur] || []).push(wearOf(g, s)); n++; }
+        g.kit[s] = def[s]; g.wear[s] = 100;
+      });
+    });
+    chron(d, n
+      ? `Every man is stripped back to house issue. ${n} piece${n>1?"s go":" goes"} back on the rack, and the yard's loadout starts over from nothing but the standard kit.`
+      : "There was nothing but house issue to strip. The rack stands as it was.", "info");
+  });
   const build = k => mut(d=>{ const L = bLevel(d,k); if(L>=3) return;
     const cost = BUILDINGS[k].cost[L];
     if(d.gold < cost) return;
@@ -12553,6 +12575,16 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     ? `Past what the room holds. Everything wears ${Math.round((rackStrain(S)-1)*100)}% faster and it costs ${rackRent(S)} denarii a week to keep it stacked against the wall.`
                     : `House issue does not count — it is issue. A bigger armoury holds seven more.`}
                 </div>
+                {(()=>{ const eq = S.gladiators.reduce((n,g)=> n + (isGone(g)||!g.kit ? 0 : SLOTS.filter(s=>!(g.named&&g.named.slot===s) && wears(GEAR[g.kit[s]])).length), 0);
+                  return (
+                    <button className="btn btn-ghost" style={{width:"100%",marginTop:9}} disabled={eq===0}
+                      onClick={()=>setAsk({ title:"Strip Every Man",
+                        confirm:`Rack all ${eq} piece${eq>1?"s":""}`,
+                        text:`Every gladiator goes back to plain house issue, and ${eq} bought piece${eq>1?"s go":" goes"} back on the rack — ready to hand out again from scratch. Nothing is sold and nothing is lost; you are only starting the loadout over. Named weapons stay with the men who earned them.`,
+                        run:()=>unequipAll() })}>
+                      {eq ? `Strip all men to the rack · ${eq}` : "Every man is on house issue"}
+                    </button>
+                  ); })()}
               </div>
             ); })()}
 
