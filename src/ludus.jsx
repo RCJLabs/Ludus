@@ -3066,7 +3066,7 @@ function makeGames(d){
     const h = (d.rivals||[]).find(y=>y.name===ch.house);
     const f = h && h.fighters.find(y=>y.id===ch.fid);
     if(f){ const oc = clone(f); oc.house = h.name;
-      offers.push({ id:d.nextId++, tier:2, festival, challenge:ch.id, nemGrudge:!!ch.nem, bookedGid:ch.gid,
+      offers.push({ id:d.nextId++, tier:2, festival, challenge:ch.id, nemGrudge:!!ch.nem, sagaBout:!!ch.saga, bookedGid:ch.gid,
         opp:oc, oppRef:{house:h.name,fid:f.id}, rematch:true, grudgeM:true, stakes:"standard", purse:ch.purse }); }
   }
   const slots = (F.offers==null ? 2 : F.offers) + (st==="show" ? 1 : 0) + aedileOffers(d);
@@ -3646,10 +3646,13 @@ function deadlineWeek(d){
         const h = (d.rivals||[]).find(y=>y.name===x.house);
         if(h) h.grudge = clamp(h.grudge-12, 0, 100);
         d.gladiators.forEach(o=>{ if(o.status==="active") o.morale = clamp(o.morale-6,0,100); });
-        chron(d, x.nem
+        chron(d, x.saga
+          ? `The day of the reckoning came, and ${x.name} did not stand on the sand for it. Whatever the crowd was building toward, it lets the breath out all at once. A story you do not finish is a story people stop telling.`
+          : x.nem
           ? `The day came and went and ${x.name} did not stand. ${x.lan} does not have to say a word — House ${x.house} spent the season demanding the grudge match, and your house did not make it.`
           : `${x.name} did not answer ${x.lan}'s challenge. House ${x.house} says nothing about it publicly, which is how they say the most.`, "bad");
         if(x.nem && d.nemHouse){ d.nemHouse.stage = 2; d.nemHouse.heat = clamp(d.nemHouse.heat-20, 25, 100); d.flags.nemCool = d.week; }
+        if(x.saga && d.saga){ d.saga.stage = 2; d.saga.renown = clamp(d.saga.renown-30, 30, 100); }
       }
       dropDeadline(d, x.id);
     } else if(x.kind==="levy"){
@@ -3992,6 +3995,7 @@ function migrate(S){
   if(!S.ties) S.ties = [];
   if(!S.arcs) S.arcs = [];
   if(S.nemHouse===undefined) S.nemHouse = null;
+  if(S.saga===undefined) S.saga = null;
   if(S.rome===undefined) S.rome = null;
   if(S.poach===undefined) S.poach = null;
   if(!S.defected) S.defected = [];
@@ -4105,7 +4109,7 @@ function newGameState(name, scen, seed, pitch){
     gladiators:[], market:[], games:null, pendingEvent:null, log:[], fallen:[], freed:[],
     seed: null, rngState: 0,
     lastParty:-9, lastFeast:-9, over:null, milestone600:false, flags:{learned:{}}, escaped:[], rebellion:null, gear:{}, retired:[],
-    doctore:null, doctoreMarket:[], doctoreOffer:null, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, defected:[], nemesis:null, primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], works:{}, slavers:{}, pact:null, gambits:{}, pendingLesson:null, law:null, doctrine:null, kits:[], deadSteel:[], bay:null, mark:null, after:null, metHouse:{}, owed:[], household:{}, yardSeen:0, yardMissed:0, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, departed:[], reSignOffer:null, annals:[] };
+    doctore:null, doctoreMarket:[], doctoreOffer:null, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, defected:[], nemesis:null, nemHouse:null, saga:null, arcs:[], primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], works:{}, slavers:{}, pact:null, gambits:{}, pendingLesson:null, law:null, doctrine:null, kits:[], deadSteel:[], bay:null, mark:null, after:null, metHouse:{}, owed:[], household:{}, yardSeen:0, yardMissed:0, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, departed:[], reSignOffer:null, annals:[] };
   d.rivals = makeRivals(d);
   const solo = S.men.length === 1;
   S.men.forEach((band,i)=>{
@@ -5249,6 +5253,120 @@ function nemHouseWeek(d){
     if(!(d.flags.nemCool && d.week - d.flags.nemCool < 6)) issueGrudgeMatch(d);
   }
   if(n.stage<3) n.heat = clamp(n.heat + 1.4, 0, 100);
+}
+
+/* ---- THE CHAMPION'S ROAD ----
+   One of your own men rises far enough that the crowd starts telling a story about
+   him, and the story wants an ending. A personal saga on d.saga (one at a time):
+   he rises, the crowd names his equal, they meet in a reckoning, and then the road
+   forks on the one thing every gladiator is really fighting for — the wooden sword.
+   Modelled on the nemesis-house arc; renown is its meter, and it culminates in a
+   choice about his freedom. */
+const SAGA_BEATS = {
+  low: [
+    (n)=>`The pit crowd has started chanting ${n}'s name before he is on the sand. He hears it. Everyone hears him hear it.`,
+    (n)=>`A potter in the forum is selling little clay ${n}s, arms raised. He is becoming a thing people own a piece of.`,
+    (n)=>`Two other lanistae asked after ${n} at the baths this week, careful not to seem to.`,
+  ],
+  mid: [
+    (n)=>`Mothers point ${n} out to their sons in the street now. The boy is a long way from the ditch he was bought out of.`,
+    (n)=>`${n}'s name is scratched on the amphitheatre wall in a dozen hands, and painted over in none of them.`,
+    (n)=>`An editor offered a purse just to have ${n} walk out and salute, and fight no one. You have not answered yet.`,
+  ],
+  high: [
+    (n)=>`They are betting on ${n} in towns that have never seen him. A man can be famous now in places he will never stand.`,
+    (n)=>`The crowd has begun to shout for the rudis when ${n} wins, before the editor has even raised his hand.`,
+    (n)=>`${n} carries himself like a man who has understood something about what he is worth, and is waiting to see if you have.`,
+  ],
+};
+function sagaLog(d, text){ (d.rivalLog = d.rivalLog || []).unshift({ text, week:d.week, house:"" }); d.rivalLog = d.rivalLog.slice(0,8); }
+function sagaBeat(d){
+  const s = d.saga; if(!s) return;
+  const g = d.gladiators.find(x=>x.id===s.gid); if(!g) return;
+  const tier = s.renown>=64 ? "high" : s.renown>=34 ? "mid" : "low";
+  const line = pick(SAGA_BEATS[tier])(g.name);
+  chron(d, line, "good"); sagaLog(d, line);
+  s.renown = clamp(s.renown + 2, 0, 100);
+}
+function igniteSaga(d){
+  if(d.saga || d.city || d.travel || d.rome) return;
+  const cand = activeG(d).filter(g=>!isAuctor(g) && !isDamn(g) && g.pfame>=40 && g.wins>=8);
+  if(!cand.length) return;
+  if(d.flags.sagaCool && d.week - d.flags.sagaCool < 18) return;
+  const g = cand.reduce((m,x)=>x.pfame>m.pfame?x:m, cand[0]);
+  d.saga = { gid:g.id, name:g.name, stage:1, renown: clamp(g.pfame*0.5+18, 22, 55), since:d.week, foe:null };
+  chron(d, `${fullName(g)} is becoming someone. There is a difference between a gladiator the crowd will watch and one it comes to see, and ${g.name} crossed it this week without asking your leave. The house has a champion, and a champion has a story that will want an ending.`, "good");
+  sagaLog(d, `${g.name} is the crowd's champion now — his road has begun.`);
+}
+function nameRival(d){
+  const s = d.saga; if(!s) return;
+  const g = d.gladiators.find(x=>x.id===s.gid); if(!g) return;
+  const houses = (d.rivals||[]).filter(h=>!h.retired && h.fighters.length);
+  let best=null;
+  for(const h of houses) for(const f of h.fighters){
+    if(f.injury) continue;
+    const sc = (f.pfame||0) + (f.beatYou||0)*10 - Math.abs((f.pfame||0)-(g.pfame||0))*0.15;
+    if(!best || sc>best.sc) best={ h, f, sc };
+  }
+  if(!best) return;
+  s.foe = { fid:best.f.id, house:best.h.name, name:best.f.name };
+  s.stage = 2;
+  const line = `The crowd has decided who ${g.name}'s equal is: ${best.f.name} of House ${best.h.name}. It has decided this the way crowds do, out loud and all at once, and now the only question anyone in Capua is asking is when the two of them meet.`;
+  chron(d, line, "bad"); sagaLog(d, `${g.name}'s road runs through ${best.f.name} of House ${best.h.name}.`);
+}
+function issueReckoning(d){
+  const s = d.saga; if(!s || !s.foe) return false;
+  if((d.deadlines||[]).some(x=>x.kind==="challenge")) return false;
+  const g = d.gladiators.find(x=>x.id===s.gid); if(!g || g.status!=="active") return false;
+  const h = houseOf(d, s.foe.house);
+  if(!h){ s.stage = 1; s.foe = null; return false; }   // the rival's house folded; his story finds another equal
+  let f = h.fighters.find(x=>x.id===s.foe.fid && !x.injury);
+  if(!f) f = h.fighters.filter(x=>!x.injury).sort((a,b)=>b.pfame-a.pfame)[0];
+  if(!f) return false;
+  s.foe = { fid:f.id, house:h.name, name:f.name };
+  addDeadline(d, { kind:"challenge", saga:true, gid:g.id, name:g.name, house:h.name, lan:lanistaOf(h.name).name,
+    fid:f.id, foe:f.name, due:d.week+ri(4,7), purse: rnd(600 + R()*500), met:false });
+  s.stage = 3;
+  chron(d, `It is set. ${g.name} against ${f.name}, named and dated, the bout the whole season has been leaning toward. Capua will close its shops for it.`, "bad");
+  sagaLog(d, `The reckoning is set — ${g.name} against ${f.name}.`);
+  return true;
+}
+function sagaFree(d, g){
+  /* the champion's freedom — the road's best ending. Frees him with full ceremony,
+     without the strict rudis gate, because the story has earned it. */
+  g.status = "freed";
+  (d.freed = d.freed || []).push({ name:fullName(g), week:d.week, wins:g.wins||0, cls:g.cls });
+  d.fame += 80;
+  patronsOf(d).forEach(p=>{ p.favor = clamp(p.favor+5,0,100); }); recomputeFavor(d);
+  d.unrest = clamp(d.unrest-14, 0, 100);
+  addRep(d, "mercy", 20);
+  d.gladiators.forEach(o=>{ if(o.status==="active"){ o.morale = clamp(o.morale+8,0,100); o.defiance = clamp(o.defiance-10,0,100); o.regard = clamp(regardOf(o)+7,0,100); } });
+  if(g.ambition && g.ambition.kind==="freedom") ambitionMet(d, g);
+  { tieList(d).filter(t=>(t.a===g.id||t.b===g.id) && t.kind==="brother").forEach(t=>{
+      const o = d.gladiators.find(x=>x.id===(t.a===g.id?t.b:t.a));
+      if(o && o.status==="active") remember(d, o, "freedKin"); }); }
+  kinReact(d, g.id, "brother", 16, -10);
+  favourLost(d, g, "freed"); dropTies(d, g.id);
+  chron(d, `${fullName(g)} takes the wooden sword in front of a Capua that has come only to see it. He does not weep and he does not gloat; he raises the rudis once, the way he raised the gladius a hundred times, and walks out of your house a free man. They will tell this for years, and every telling is your house's name.`, "good");
+  offerDoctore(d, g, "rudis");
+}
+function endSaga(d, g){
+  if(!d.saga) return;
+  const nm = d.saga.name;
+  d.flags.sagaCool = d.week;
+  if(g && g.status==="dead") chron(d, `The story the crowd was telling about ${nm} ends the way half of them always do — on the sand, mid-sentence. They will finish it for him, and it will not be true, and it will not matter.`, "bad");
+  d.saga = null;
+}
+function sagaWeek(d){
+  const s = d.saga;
+  if(!s){ if(R()<0.5) igniteSaga(d); return; }
+  const g = d.gladiators.find(x=>x.id===s.gid);
+  if(!g || g.status!=="active"){ endSaga(d, g); return; }
+  if(s.stage>=4) return;   // reckoning won — the freedom fork is scheduled and fires with priority via fireArc
+  if(R()<0.22) sagaBeat(d);
+  if(s.stage<2 && s.renown>=42) nameRival(d);
+  if(s.stage===2 && s.renown>=70 && !(d.deadlines||[]).some(x=>x.kind==="challenge")) issueReckoning(d);
+  if(s.stage<3) s.renown = clamp(s.renown + 1.2, 0, 100);
 }
 
 /* ---- POACHING ----
@@ -7466,6 +7584,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
     }
     d.fame += fg;
     g.pfame += fg + rnd(res.crowd/14) + (g.traits.includes("Glory-Seeker")?3:0);
+    if(d.saga && d.saga.gid===g.id && d.saga.stage<3) d.saga.renown = clamp(d.saga.renown + (res.bDies?7:5) + (res.crowd>=80?3:0), 0, 100);
     g.morale = clamp(g.morale+10, 0, 100);
     for(const k of CLASSES[g.cls].key) g[k] = clamp(g[k]+0.7, 5, statCap(g,k));
     sum.push(`Purse: ${purse} denarii. Fame of the house +${fg}.`);
@@ -7601,7 +7720,14 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
       d.fame += win ? 26 : 8;
       facMove(d, "mob", win?7:3);
       sum.push(win ? `You answered ${x.lan} in public and your man won it.` : `The challenge was answered. That is most of what it was for.`);
-      if(x.nem) settleNemHouse(d, win); } }
+      if(x.nem) settleNemHouse(d, win);
+      if(x.saga && d.saga && d.saga.gid===g.id){
+        if(win){ d.saga.stage = 4; d.saga.renown = 100; scheduleArc(d, "sagaFreedom", ri(1,2), {});
+          sum.push(`${g.name} has beaten the man the crowd named his equal. There is only one thing left they will accept.`);
+          chron(d, `${g.name} put ${x.foe} down in front of all of Capua. The chant that went up was not his name. It was one word, over and over: the rudis.`, "good"); }
+        else { d.saga.stage = 2; d.saga.renown = clamp(d.saga.renown-25, 30, 100);
+          chron(d, `${g.name} met ${x.foe} and did not win it. The story does not end here — the crowd will want it told again — but tonight it belongs to the other man.`, "bad"); }
+      } } }
   if(win) formShift(d, g, offer.tier>=2 ? 24 : 18, `beat ${offer.opp.name}`);
   else formShift(d, g, res.aDies ? 0 : -22, `lost to ${offer.opp.name}`);
   if(res.bDies) formShift(d, g, 7, `killed ${offer.opp.name}`);
@@ -7912,6 +8038,42 @@ const EVENTS = {
       d.gold += 180;
       return `You take the purse. Whatever the name was, it goes back down the coast with him, and the house is 180 denarii the richer for a kindness you had half forgotten.`; } },
   /* ===== ARC: the shared prospect (the poaching war of a nemesis-house feud) ===== */
+  /* ===== ARC: the champion's freedom (the fork at the end of a personal saga) ===== */
+  sagaFreedom: {
+    make(){ return null; },
+    build(d){
+      const s = d.saga; if(!s) return null;
+      const g = d.gladiators.find(x=>x.id===s.gid);
+      if(!g || g.status!=="active") return null;
+      const price = rnd(gladValue(g) * 0.9);
+      return { id:"sagaFreedom", title:"The Wooden Sword", data:{ gid:g.id, price },
+        text:`${fullName(g)} has done everything the sand can ask of a man and more than you had a right to expect the day you bought him. The crowd chants for the rudis at the end of his bouts now — for his freedom, to your face, as though it were theirs to give. He has never once asked; he is a slave and knows better. He is also the finest thing your house has ever made, and both of you know what that is worth on an open market. The road forks here.`,
+        choices:[`Grant ${g.name} the rudis — let him walk free`, "Keep him — the house is not done with him", `Sell him at his height · ${price}d`] }; },
+    run(d,ev,i){
+      const g = d.gladiators.find(x=>x.id===ev.data.gid);
+      if(!g){ d.saga=null; return "He is gone before the choice could be made."; }
+      d.flags.sagaCool = d.week;
+      if(i===0){
+        sagaFree(d, g); d.saga = null;
+        return `You grant ${g.name} the wooden sword. It is the most expensive thing you will do this year, and the men will fight the harder for having watched you do it. The house is poorer by its champion and richer by something that will not fit in the ledger.`; }
+      if(i===2){
+        const price = ev.data.price || rnd(gladValue(g)*0.9);
+        d.gold += price;
+        const sore = tieList(d).filter(t=>(t.a===g.id||t.b===g.id) && t.kind==="brother")
+          .map(t=>d.gladiators.find(x=>x.id===(t.a===g.id?t.b:t.a))).filter(o=>o&&o.status==="active");
+        sore.forEach(o=>remember(d, o, "soldKin"));
+        annalsClose(d, g, "sold"); favourLost(d, g, "sold"); dropTies(d, g.id);
+        d.gladiators = d.gladiators.filter(x=>x.id!==g.id);
+        d.gladiators.forEach(o=>{ if(o.status==="active"){ o.morale=clamp(o.morale-12,0,100); o.defiance=clamp(o.defiance+8,0,100); o.regard=clamp(regardOf(o)-14,0,100); } });
+        d.unrest = clamp(d.unrest+14, 0, 100); d.fame = Math.max(0, d.fame-20); addRep(d, "blood", 6);
+        d.saga = null;
+        chron(d, `${fullName(g)} is sold at the height of his worth to a house that could meet the number. The crowd that chanted for his freedom watched him led out in another lanista's colours, and has drawn the obvious conclusion about yours.`, "bad");
+        return `${price} denarii, and the finest man you ever owned goes out the gate in someone else's train. The coin is real. So is the silence in the cells tonight.`; }
+      g.morale = clamp(g.morale-16, 0, 100); g.defiance = clamp(g.defiance+12, 0, 100);
+      d.gladiators.forEach(o=>{ if(o.status==="active" && o.id!==g.id) o.defiance = clamp(o.defiance+4,0,100); });
+      d.unrest = clamp(d.unrest+8, 0, 100); d.saga = null;
+      chron(d, `You keep ${g.name}. The crowd's chant for the rudis curdles into something else when it becomes plain it is not coming, and ${g.name} salutes you afterward with a correctness that is worse than any defiance. He is still yours — that was the question, and that is the answer.`, "bad");
+      return `${g.name} stays. He is the best fighter in Capua and he will go on being it for you, for exactly as long as that arrangement holds — which both of you have just begun to count.`; } },
   nemProspect: {
     make(){ return null; },
     build(d, data){
@@ -8735,6 +8897,7 @@ function endWeek(d){
   repairWeek(d);
   nemesisWeek(d);
   if(!d.city && !d.travel) nemHouseWeek(d);
+  if(!d.city && !d.travel) sagaWeek(d);
   doctoreWeek(d);
   annalsSync(d);
   repWeek(d);
@@ -11071,6 +11234,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             if(S.war && !S.war.done) banners.push(["#7c2a22", warStage(S).name, "the war in the south"]);
             if(S.primus) banners.push([S.primus.mine?"#c99a4b":"#4e3c26", S.primus.mine?"Primus of Capua":`Primacy · ${S.primus.house}`, S.primus.mine?S.primus.name:""]);
             if(S.nemesis) banners.push(["#7c2a22", S.nemesis.name, "has your measure"]);
+            if(S.saga){ const sg = S.gladiators.find(x=>x.id===S.saga.gid);
+              if(sg) banners.push(["#c99a4b", sg.name, S.saga.stage>=3?"his reckoning is set":"the crowd's champion"]); }
             if(aedileOn(S)) banners.push([S.aedile.friendly?"#5a6a35":S.aedile.hostile?"#7c2a22":"#3e2f1f", "The aedile", S.aedile.friendly?"owes you":S.aedile.hostile?"knows whose list":"neutral"]);
             if(S.city) banners.push(["#6d5426", CITIES[S.city].name, "you are on the circuit"]);
             if(S.travel) banners.push(["#6d5426", "On the road", `${S.travel.weeks}w`]);
@@ -12802,6 +12967,21 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 </div>
               </div>
             )}
+            {S.saga && S.saga.gid===selG.id && (()=>{ const s = S.saga;
+              const word = s.stage>=4 ? "The crowd wants the wooden sword for him"
+                : s.stage===3 ? `His reckoning is set${s.foe?` — against ${s.foe.name}`:""}`
+                : s.stage>=2 && s.foe ? `The crowd has named his equal: ${s.foe.name} of House ${s.foe.house}`
+                : "A champion the crowd comes to see";
+              return (
+                <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",borderColor:"#8a6a2c"}}>
+                  <div className="flex items-center justify-between" style={{marginBottom:6}}>
+                    <span className="tag tag-gold">The Champion's Road</span>
+                    <span className="rowval" style={{fontSize:12,color:"#e0bd72"}}>Act {Math.min(s.stage,4)} of 4</span>
+                  </div>
+                  <div className="dim" style={{fontSize:14,fontStyle:"italic",marginBottom:6}}>{word}.</div>
+                  <Bar v={s.renown} label="renown" color="linear-gradient(90deg,#6d5426,#e0bd72)"/>
+                </div>
+              ); })()}
             <div style={{position:"relative",height:176,borderRadius:10,overflow:"hidden",
               border:"1px solid #4e3c26",marginBottom:10,
               background:"linear-gradient(#100c08 0%,#241a0e 22%,#6d5531 66%,#9a7844 100%)"}}>
@@ -13575,7 +13755,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 {o.primus && <span className="tag tag-gold">✦ {o.defence?"Defend primacy":"For the primacy"}</span>}
                 {o.booking && <span className="tag tag-gold">✦ Contracted</span>}
                 {o.nemGrudge && <span className="tag tag-blood">✦ The Grudge</span>}
-                {o.challenge && !o.nemGrudge && <span className="tag tag-blood">✦ Challenge</span>}
+                {o.sagaBout && <span className="tag tag-gold">✦ The Reckoning</span>}
+                {o.challenge && !o.nemGrudge && !o.sagaBout && <span className="tag tag-blood">✦ Challenge</span>}
                 {o.stakes==="sine" && <span className="tag tag-blood">Sine missione</span>}
                 {o.rematch && <span className="tag tag-blood">Rematch</span>}
                 {nemesisIn(S,o.opp) && <span className="tag tag-blood">✦ {nemesisIn(S,o.opp).title}</span>}
@@ -13707,7 +13888,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 {o.primus && <span className="tag tag-gold">✦ {o.defence?"Defend the primacy":"For the primacy"}</span>}
                 {o.booking && <span className="tag tag-gold">✦ Contracted</span>}
                 {o.nemGrudge && <span className="tag tag-blood">✦ The Grudge</span>}
-                {o.challenge && !o.nemGrudge && <span className="tag tag-blood">✦ The challenge</span>}
+                {o.sagaBout && <span className="tag tag-gold">✦ The Reckoning</span>}
+                {o.challenge && !o.nemGrudge && !o.sagaBout && <span className="tag tag-blood">✦ The challenge</span>}
                 {o.stakes==="sine" && <span className="tag tag-blood">Sine missione</span>}
                 {o.rematch && <span className="tag tag-blood">Rematch</span>}
                 {nemesisIn(S,o.opp) && <span className="tag tag-blood">✦ {nemesisIn(S,o.opp).title}</span>}
