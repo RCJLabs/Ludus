@@ -5496,22 +5496,40 @@ function issueGrudgeMatch(d){
 function settleNemHouse(d, won){
   const n = d.nemHouse; if(!n) return;
   const h = houseOf(d, n.house);
+  const edge = nemEdge(d), L = lanistaOf(n.house).name;
   if(won){
-    d.fame += 40;
     d.gladiators.forEach(g=>{ if(g.status==="active"){ g.morale=clamp(g.morale+16,0,100); g.defiance=clamp(g.defiance-8,0,100); } });
     d.unrest = clamp(d.unrest-8,0,100);
-    if(h){ h.grudge = clamp(h.grudge-40,0,100); h.fame = Math.max(0, h.fame-20); }
     addRep(d, "craft", 10);
-    chron(d, `It is finished. House ${n.house} was beaten where it chose to fight, before the crowd it chose to fight before, and ${lanistaOf(n.house).name} has nothing left to say. Your house is the one still standing at the end of the season.`, "good");
-    nemLog(d, `The grudge with House ${n.house} is settled — your way.`);
     d.flags.nemWon = (d.flags.nemWon||0)+1;
     d.flags.nemCool = d.week; d.nemHouse = null;
+    if(edge >= 1 && h){
+      /* you won the cold war and the match — you do not just beat him, you finish him */
+      h.retired = true; d.fame += 55;
+      patronsOf(d).forEach(p=>{ p.favor = clamp(p.favor+5,0,100); }); recomputeFavor(d);
+      chron(d, `It is finished, and so is he. House ${n.house} was beaten on the sand it chose, after a season in which you answered ${L} for every blow and landed more of your own. Within the month he sells up and takes the road to Nola. There is one fewer house in the bay, and everyone knows whose doing that was.`, "good");
+      nemLog(d, `House ${n.house} is broken — folded, gone. Your way, and decisively.`);
+    } else {
+      d.fame += 40;
+      if(h){ h.grudge = clamp(h.grudge-40,0,100); h.fame = Math.max(0, h.fame-20); }
+      chron(d, `It is finished. House ${n.house} was beaten where it chose to fight, before the crowd it chose to fight before, and ${L} has nothing left to say. Your house is the one still standing at the end of the season.`, "good");
+      nemLog(d, `The grudge with House ${n.house} is settled — your way.`);
+    }
   } else {
     if(h) h.grudge = clamp(h.grudge+10,0,100);
     d.gladiators.forEach(g=>{ if(g.status==="active") g.morale=clamp(g.morale-8,0,100); });
-    d.unrest = clamp(d.unrest+5,0,100);
-    n.heat = clamp(n.heat-30, 25, 100); n.stage = 2;   // not over; they will come again
-    chron(d, `${lanistaOf(n.house).name} got what he named the day for. House ${n.house} took the grudge match, and there is no pretending otherwise. It is not finished — but tonight it is theirs.`, "bad");
+    if(edge <= -2){
+      /* he out-schemed you all season and won the day too — it is a rout */
+      d.fame = Math.max(0, d.fame-24); d.unrest = clamp(d.unrest+11,0,100);
+      const g = activeG(d).sort((a,b)=>gladValue(b)-gladValue(a))[0];
+      if(g){ g.morale = clamp(g.morale-20,0,100); g.defiance = clamp(g.defiance+14,0,100); }
+      n.heat = clamp(n.heat-20, 30, 100); n.stage = 2;
+      chron(d, `${L} took the grudge match, and he had spent the whole season taking everything else besides. This was not close, and Capua saw that it was not. Your house is still standing — but only just, and only for now.`, "bad");
+    } else {
+      d.unrest = clamp(d.unrest+5,0,100);
+      n.heat = clamp(n.heat-30, 25, 100); n.stage = 2;   // not over; they will come again
+      chron(d, `${L} got what he named the day for. House ${n.house} took the grudge match, and there is no pretending otherwise. It is not finished — but tonight it is theirs.`, "bad");
+    }
     d.flags.nemCool = d.week;
   }
 }
@@ -5523,12 +5541,83 @@ function nemHouseWeek(d){
     chron(d, `Whatever it was going to be between you and House ${n.house}, it will not be. ${!h?"They folded and sold up before it came to blood.":`${lanistaOf(n.house).name} has gone to a farm near Nola, and the grudge with him.`} The cells are almost disappointed.`, "info");
     d.nemHouse = null; d.flags.nemCool = d.week; return;
   }
-  if(R()<0.20) nemBeat(d);
+  if(n.stage>=3){ if(R()<0.20) nemBeat(d); return; }   /* the day is named; no more scheming, only the sand */
+  if(R() < 0.14 + n.stage*0.06) nemScheme(d);          /* he does something real to you */
+  else if(R()<0.20) nemBeat(d);
   if(n.stage<2 && n.heat>=38 && !n.prospect){ n.prospect = 1; n.stage = 2; scheduleArc(d, "nemProspect", ri(1,3), { house:n.house }); }
   if(n.stage>=2 && n.heat>=72 && !(d.deadlines||[]).some(x=>x.kind==="challenge" && x.nem)){
     if(!(d.flags.nemCool && d.week - d.flags.nemCool < 6)) issueGrudgeMatch(d);
   }
   if(n.stage<3) n.heat = clamp(n.heat + 1.4, 0, 100);
+}
+/* ---- THE ARCH-RIVAL'S SCHEMES ----
+   A feud is not just taunts. He does things to you — buys the editor against you,
+   whispers to the magistrate, gets at your stores, works on your best man — each a
+   real hit, and each one you can answer in kind. Who lands more of them decides how
+   the reckoning is staked when it finally comes. */
+const NEM_SCHEMES = {
+  editor: { w:d=>lanistaOf(d.nemHouse.house).bribe||1,
+    run:(d,L,hn)=>{ d.flags.nemBribe = d.week + ri(6,10);
+      return `${L} has bought the editor's ear against you. For a while your men are matched hard and House ${hn}'s soft — and the purses will show it.`; } },
+  poach:  { w:d=>lanistaOf(d.nemHouse.house).poach||1,
+    run:(d,L,hn)=>{ const g = activeG(d).filter(x=>!isAuctor(x)).sort((a,b)=>gladValue(b)-gladValue(a))[0];
+      if(!g) return null;
+      g.morale = clamp(g.morale-12,0,100); g.defiance = clamp(g.defiance+8,0,100);
+      return `${L}'s man has been in ${g.name}'s ear — a softer house, a fatter cut. He has not gone, but he listened, and the block saw him listen.`; } },
+  grain:  { w:d=>(lanistaOf(d.nemHouse.house).sabotage||1),
+    run:(d,L,hn)=>{ d.unrest = clamp(d.unrest+ri(3,6),0,100);
+      activeG(d).forEach(x=>{ x.morale = clamp(x.morale-4,0,100); });
+      return `Something was got at in your stores — grain gone sour, the well thick — and nobody will say by whose hand. The cells sleep badly, and everyone looks toward House ${hn}.`; } },
+  law:    { w:d=>1,
+    run:(d,L,hn)=>{ lawOf(d).heat = clamp(lawOf(d).heat + ri(8,14), 0, 100);
+      return `A word from ${L} in the right ear, and the magistrate's clerk is suddenly very interested in how your house keeps its books.`; } },
+  slander:{ w:d=>1,
+    run:(d,L,hn)=>{ d.fame = Math.max(0, d.fame - ri(6,12));
+      patronsOf(d).forEach(p=>{ p.favor = clamp(p.favor-3,0,100); }); recomputeFavor(d);
+      return `Six conversations in the right places, and Capua has heard something about your house — nothing anyone can name, and nothing that does you any good.`; } },
+};
+function nemScheme(d){
+  const n = d.nemHouse; if(!n) return;
+  if(d.flags.nemSchemeWk && d.week - d.flags.nemSchemeWk < 4) return;
+  const hn = n.house, L = lanistaOf(hn).name;
+  const bag = [];
+  for(const k of Object.keys(NEM_SCHEMES)){ const w = Math.max(0.3, NEM_SCHEMES[k].w(d));
+    for(let i=0;i<Math.round(w*10);i++) bag.push(k); }
+  const k = pick(bag);
+  let line = null; try { line = NEM_SCHEMES[k].run(d, L, hn); } catch(e){ line = null; }
+  if(!line) return;
+  d.flags.nemSchemeWk = d.week;
+  n.hits = (n.hits||0)+1; n.lastScheme = line; n.heat = clamp(n.heat+4, 0, 100);
+  chron(d, line, "bad"); nemLog(d, line);
+}
+const nemPurse = d => (d.flags.nemBribe && d.week < d.flags.nemBribe) ? 0.85 : 1;
+const nemEdge = d => d.nemHouse ? (d.nemHouse.answered||0) - (d.nemHouse.hits||0) : 0;
+const nemAnswerReady = d => !!(d.nemHouse && (!d.flags.nemAnswerWk || d.week - d.flags.nemAnswerWk >= 3));
+/* strike back at the arch-rival in his own coin */
+function answerNem(d){
+  const n = d.nemHouse; if(!n || !nemAnswerReady(d)) return null;
+  const h = houseOf(d, n.house); if(!h) return null;
+  const cost = rnd(160 + d.fame*0.5);
+  if(d.gold < cost) return null;
+  d.gold -= cost; d.flags.nemAnswerWk = d.week;
+  n.answered = (n.answered||0)+1; n.heat = clamp(n.heat-3, 0, 100);
+  let line;
+  if(d.flags.nemBribe && d.week < d.flags.nemBribe){ delete d.flags.nemBribe;
+    line = `You put more in front of the editor than ${lanistaOf(n.house).name} did, and the matchings come right again. He will know it was answered.`; }
+  else { h.fame = Math.max(0, h.fame - ri(10,18)); h.grudge = clamp(h.grudge+8,0,100);
+    line = `You answer House ${n.house} in its own coin — a word here, a favour called there — and by month's end it is their name Capua is uncertain about. ${lanistaOf(n.house).name} knows exactly whose hand it was.`; }
+  addRep(d, "craft", 3);
+  chron(d, line, "good"); nemLog(d, line);
+  return { cost, line };
+}
+/* when you hold the upper hand, name the day yourself */
+const nemCanCallOut = d => !!(d.nemHouse && d.nemHouse.stage>=2 && nemEdge(d) >= 1 && d.nemHouse.heat>=45
+  && activeG(d).some(g=>g.pfame>=18) && !(d.deadlines||[]).some(x=>x.kind==="challenge"));
+function nemCallOut(d){
+  if(!nemCanCallOut(d)) return false;
+  const ok = issueGrudgeMatch(d);
+  if(ok) chron(d, `You did not wait to be challenged. You named the day to ${lanistaOf(d.nemHouse.house).name} yourself, before the whole of Capua, and he could not be seen to refuse.`, "good");
+  return ok;
 }
 
 /* ---- THE CHAMPION'S ROAD ----
@@ -5949,6 +6038,9 @@ function runGambit(d, k, houseName){
   const won = R() < p;
   lawOf(d).heat = clamp(lawOf(d).heat + (won ? G.heat*0.4 : G.heat), 0, 100);
   addRep(d, "blood", won ? 2 : 5);
+  /* a trick landed on your declared rival is a blow struck in the feud */
+  if(won && d.nemHouse && d.nemHouse.house===houseName){
+    d.nemHouse.answered = (d.nemHouse.answered||0)+1; d.nemHouse.heat = clamp(d.nemHouse.heat-2, 0, 100); }
   const line = won ? G.win(d, h) : G.lose(d, h);
   chron(d, line, won ? "good" : "bad");
   return { won, line, cost };
@@ -7953,7 +8045,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   const sum = [`Appearance fee: ${t.app} denarii.`];
 
   if(win){
-    purse = rnd(offer.purse * (away?1:facPurse(d)) * (away?1:aedilePurse(d)) * docPurse(d) * W.purse * favPurse(g) * femPurse(g) * fanPurse(g) * risePurse(d) * (away?1:leaguePurse(d)) * pit(d,"purse"));
+    purse = rnd(offer.purse * (away?1:facPurse(d)) * (away?1:aedilePurse(d)) * docPurse(d) * W.purse * favPurse(g) * femPurse(g) * fanPurse(g) * risePurse(d) * (away?1:leaguePurse(d)) * (away?1:nemPurse(d)) * pit(d,"purse"));
     /* the pits pay out of a bag at the rope. an editor pays when his clerk gets to it. */
     const onCredit = offer.imperial ? "imperial" : offer.city ? "city" : offer.booking ? "booking" : offer.festival ? "games" : null;
     if(onCredit && purse >= 140){
@@ -11002,6 +11094,12 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
   });
   const setCrest = patch => mut(d=>{ d.crest = Object.assign({ c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" }, d.crest||{}, patch); });
   const takeRise = () => mut(d=>{ claimRise(d); });
+  const nemAnswer = () => mut(d=>{ answerNem(d); });
+  const nemCall = () => { const g = S.nemHouse && activeG(S).filter(x=>x.pfame>=18).sort((a,b)=>b.pfame-a.pfame)[0];
+    if(!nemCanCallOut(S)) return;
+    setAsk({ title:"Name the Day", confirm:"Call him out", danger:false,
+      text:`You hold the upper hand over ${lanistaOf(S.nemHouse.house).name}. Call him out now and the reckoning is set on your terms — ${g?g.name:"your best man"} against his best, before all of Capua. Win it and you may not just beat House ${S.nemHouse.house}, but finish it.`,
+      run:()=>mut(d=>{ nemCallOut(d); }) }); };
   const build = k => mut(d=>{ const L = bLevel(d,k); if(L>=3) return;
     const cost = BUILDINGS[k].cost[L];
     if(d.gold < cost) return;
@@ -11867,6 +11965,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             if(isFirstHouse(S)) bnr("#e0bd72", "First House of Capua", `held ${leagueHeld(S)}w`);
             if(S.primus) bnr(S.primus.mine?"#c99a4b":"#4e3c26", S.primus.mine?"Primus of Capua":`Primacy · ${S.primus.house}`, S.primus.mine?S.primus.name:"");
             if(S.nemesis) bnr("#7c2a22", S.nemesis.name, "has your measure");
+            if(S.nemHouse){ const grudgeLive=(S.deadlines||[]).some(x=>x.kind==="challenge"&&x.nem);
+              bnr("#7c2a22", `The feud · House ${S.nemHouse.name}`, grudgeLive?"the day is named":(nemEdge(S)>0?"you hold the upper hand":nemEdge(S)<0?"he holds the upper hand":"even, for now"), grudgeLive); }
             if(S.saga){ const sg = S.gladiators.find(x=>x.id===S.saga.gid);
               if(sg) bnr("#c99a4b", sg.name, S.saga.stage>=3?"his reckoning is set":"the crowd's champion", S.saga.stage>=3); }
             if(aedileOn(S)) bnr(S.aedile.friendly?"#5a6a35":S.aedile.hostile?"#7c2a22":"#3e2f1f", "The aedile", S.aedile.friendly?"owes you":S.aedile.hostile?"knows whose list":"neutral", S.aedile.hostile);
@@ -12388,10 +12488,39 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 </div>
                 <div className="dim" style={{fontSize:14, fontStyle:"italic", marginBottom:6}}>{stageWord}.</div>
                 <Bar v={n.heat} label="bad blood" color="linear-gradient(90deg,#5a1a14,#d96f5d)"/>
-                {beat && <div style={{fontSize:13.5, marginTop:6, color:"#cdb89a"}}>{beat.text}</div>}
-                {grudgeLive && <div className="blood" style={{fontSize:13.5, marginTop:5, fontWeight:600}}>
-                  The grudge match is on the card below — it will not wait past its day.
-                </div>}
+                {(()=>{ const edge = nemEdge(S), hits=(n.hits||0), ans=(n.answered||0);
+                  return (hits||ans) ? (
+                    <div className="flex items-center justify-between gap-2" style={{marginTop:7,fontSize:13}}>
+                      <span className="dim">His blows landed: <span style={{color:"#d98476"}}>{hits}</span> · yours answered: <span style={{color:"#9aa86a"}}>{ans}</span></span>
+                      <span className="rowval" style={{fontSize:12.5,color:edge>0?"#9aa86a":edge<0?"#d96f5d":"#b09b7d",whiteSpace:"nowrap"}}>
+                        {edge>0?"upper hand: yours":edge<0?"upper hand: his":"dead even"}
+                      </span>
+                    </div>
+                  ) : null; })()}
+                {n.lastScheme && !grudgeLive && <div style={{fontSize:13.5, marginTop:6, color:"#cdb89a", fontStyle:"italic"}}>Last: {n.lastScheme}</div>}
+                {!n.lastScheme && beat && <div style={{fontSize:13.5, marginTop:6, color:"#cdb89a"}}>{beat.text}</div>}
+                {grudgeLive ? (
+                  <div className="blood" style={{fontSize:13.5, marginTop:6, fontWeight:600}}>
+                    The grudge match is on the card below — it will not wait past its day.
+                  </div>
+                ) : (<>
+                  <div className="grid grid-cols-2 gap-2" style={{marginTop:9}}>
+                    <button className="btn btn-ghost" disabled={!nemAnswerReady(S) || S.gold < rnd(160+S.fame*0.5)}
+                      onClick={nemAnswer}>
+                      {!nemAnswerReady(S) ? `Answered · ${3-(S.week-(S.flags.nemAnswerWk||0))}w`
+                        : S.gold < rnd(160+S.fame*0.5) ? `Answer · ${rnd(160+S.fame*0.5)}d`
+                        : `Answer him · ${rnd(160+S.fame*0.5)}d`}
+                    </button>
+                    <button className={`btn ${nemCanCallOut(S)?"":"btn-ghost"}`} disabled={!nemCanCallOut(S)} onClick={nemCall}>
+                      {nemCanCallOut(S) ? "Name the day" : "Name the day"}
+                    </button>
+                  </div>
+                  <div className="dim" style={{fontSize:12.5, marginTop:5, fontStyle:"italic"}}>
+                    {nemCanCallOut(S) ? "You hold the upper hand. Call him out and take the reckoning on your terms."
+                      : nemEdge(S) < 0 ? "He is ahead of you in this. Answer his blows, or the reckoning will be staked his way."
+                      : "Land more blows than he does with your own quiet tricks below, and you can name the day yourself."}
+                  </div>
+                </>)}
               </div>
             ); })()}
           {(()=>{ const rivals = (S.rivals||[]).filter(h=>!h.retired);
