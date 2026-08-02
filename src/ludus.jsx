@@ -5142,6 +5142,9 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
   const orderTgt = order && order.target || null;/* aim your blows at one place */
   if(order && order.breather){ sA = Math.min(smA, sA + smA*0.24); mom = clamp(mom-1,-3,3); crowd = clamp(crowd-6,0,100); }
   if(order && order.debuff==="legs") bLegged = true;
+  /* stagecraft — you spend the moment on the tiers instead of the man */
+  if(order && order.rouse){ crowd = clamp(crowd + 20, 0, 100); }
+  if(order && order.milk){ crowd = clamp(crowd + 14, 0, 100); vB = clamp(vB - 6, 0, 100); sB = Math.max(smB*0.15, sB - smB*0.10); }
   let aDies=false, bDies=false, fell=false, winner=null, ended=false, lastTarget="flank", spared=false;
   const takeMult = t => t==="aggressive"?1.12 : t==="defensive"?0.82 : t==="showboat"?1.08 : 1;
   const oppName = B.nick? `${B.name}, ${B.nick}` : B.name;
@@ -5160,6 +5163,13 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
     if(COUNTERS[A.cls]===B.cls) push("intro", `The pairing favours your fighter: ${A.cls} against ${B.cls}.`);
     else if(COUNTERS[B.cls]===A.cls) push("intro", `An ill pairing — the ${B.cls.toLowerCase()} was made to break the ${A.cls.toLowerCase()}.`);
     if(stakes==="sine") push("intro", `The lanistae have agreed: sine missione. No mercy will be asked, and none given.`);
+    /* the entrance — how he came onto the sand, and what it bought him */
+    if(ctx.entrance){ const E = ctx.entrance;
+      if(E.crowd) crowd = clamp(crowd + E.crowd, 0, 100);
+      if(E.stam) sA = Math.max(smA*0.5, sA + E.stam);
+      if(E.dread) vB = clamp(vB - E.dread*8, 45, 100);
+      if(E.enter) push("intro", E.enter(A, B));
+    }
   } else push("crux", O.resumeLine || `${A.name} hears you and answers.`);
 
   /* the moments the bout is in the balance and a word from the box would matter. it
@@ -8704,6 +8714,24 @@ function simulatePair(As, Bs, tA, stakes, ctx, opts){
    orders that reach into the exchange itself. Each carries an `order` the fight
    engine reads on the next round, and a `when` that keeps it off the card when it
    would make no sense. */
+/* ---- STAGECRAFT: THE ENTRANCE ----
+   A bout is a performance before it is a fight. How a man comes onto the sand is
+   the first thing the crowd and the other man see, and it is worth deciding. */
+const ENTRANCES = {
+  none:    { name:"Straight to the mark", short:"—",
+    blurb:"No theatre. He walks to his place and waits for the horn." },
+  showman: { name:"Work the mob", short:"Mob", crowd:16, stam:-5, fame:2,
+    blurb:"Arms up, the slow turn, the whole way in. The stands are his before a blow lands — but strutting is not resting.",
+    enter:(a,b)=>`${a.name} takes the long way to his mark, arms wide to the tiers, and the noise comes up to meet him.` },
+  grim:    { name:"Silent and grim", short:"Grim", dread:1,
+    blurb:"Helmeted, unhurried, saying nothing. It gets into the other man before the steel does.",
+    enter:(a,b)=>`${a.name} comes on slow and says nothing at all, and ${b.name} watches him the whole way, which is the point.` },
+  boxes:   { name:"Salute the boxes", short:"Boxes", missio:10, favor:2,
+    blurb:"He gives the editor and the good seats their due first. When he is on the ground looking up, they remember it.",
+    enter:(a,b)=>`${a.name} turns to the editor's box and the front rows before he turns to the man, and the right people notice.` },
+};
+const ENTRANCE_KEYS = Object.keys(ENTRANCES);
+
 const CRUX = {
   press: { label:"Press him", short:"PRESS",
     desc:"Front foot. He hits harder and takes more doing it.",
@@ -8723,6 +8751,14 @@ const CRUX = {
     desc:"Give ground and get your wind. You lose the crowd and the front foot, not the bout.",
     when:cx=>cx.sA==null || cx.sA<=45 || cx.vA<=55,
     line:g=>`${g.name} gives ground on purpose, hands high, dragging air back into his chest.` },
+  rouse: { label:"Play the crowd", short:"ROUSE", tactic:"defensive", order:{ rouse:true },
+    desc:"Work the moment, not the man — the stands come alive. You give up the front foot for it, and bank the noise for his life or his fame.",
+    when:cx=>cx.crowd==null || cx.crowd<84,
+    line:g=>`${g.name} throws his arms wide to the tiers and lets them roar before he turns back to the work.` },
+  milk: { label:"Milk the wound", short:"MILK", tactic:"measured", order:{ milk:true },
+    desc:"Turn the other man's hurt into theatre. The crowd feeds on it — and it gets into him.",
+    when:cx=>cx.vB!=null && cx.vB<=58,
+    line:g=>`${g.name} steps off and shows the tiers the blood on his blade before he goes back in.` },
   cloth: { label:"Throw in the cloth", short:"THE CLOTH",
     desc:"Forfeit. He loses and lives, and Capua watches you call it.",
     tactic:null, line:g=>`` },
@@ -8767,8 +8803,16 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   const simCtx = { plan:PE, fav:favMissio(g) + veteranGuard(g) + (away ? 0 : riseFav(d)) + blessMercy(d) + pit(d,"mercy",0), doctrine:docMissio(d), footing:V.footing * W.footing, sky:W.stam, venue:V.missio, aedile: away ? 0 : aedileMissio(d), strange: away ? Math.max(0, 19 - knownIn(d, offer.city)*0.19) * docStrange(d) : 0,
       favor: imperial ? Math.min(d.favor, 20) : (away ? localStanding : d.favor), tier: Math.min(offer.tier,3),
       hostile:!!bribeHouse, patron: imperial ? null : (patron ? {name:patron.name, favor:patron.favor} : null),
-      repShow: workPerk(d,"crowd") + femCrowd(g) + favCrowd(g) + W.crowd + provCrowd(g) + ((g.mastery && g.mastery.cls===g.cls) ? masteryCrowd(g) : 0) + signatureCrowd(g) + (repStyle(d)==="show" ? 8 : 0) + (nem ? 10 : 0) + (away ? 0 : facCrowd(d, g.cls)) + seasonCrowd(d) + V.crowd + (away ? 0 : acclaimCrowd(d)) + (g.graffiti ? 3 : 0),
+      repShow: workPerk(d,"crowd") + femCrowd(g) + favCrowd(g) + W.crowd + provCrowd(g) + ((g.mastery && g.mastery.cls===g.cls) ? masteryCrowd(g) : 0) + signatureCrowd(g) + (repStyle(d)==="show" ? 8 : 0) + (nem ? 10 : 0) + (offer.rematch ? 8 : 0) + (away ? 0 : facCrowd(d, g.cls)) + seasonCrowd(d) + V.crowd + (away ? 0 : acclaimCrowd(d)) + (g.graffiti ? 3 : 0),
       guarded: choice==="cover" };
+  /* the entrance — a bout-start effect only, never re-applied on a coached resume */
+  const ENT = ENTRANCES[offer.entrance||"none"] || ENTRANCES.none;
+  if(!pending){
+    simCtx.fav += (ENT.missio||0);
+    simCtx.entrance = ENT;
+    if(ENT.fame) d.fame += ENT.fame;
+    if(ENT.favor){ patronsOf(d).forEach(p=>{ p.favor = clamp(p.favor+ENT.favor,0,100); }); recomputeFavor(d); }
+  }
   let res;
   if(choice==="cloth"){
     /* you stop it yourself; there is no appeal to lose because nobody asked for one */
@@ -11327,6 +11371,9 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
             <div className="momtrack" style={{flex:1}}>
               <div className="momfill" style={{ left: momPct<50? `${momPct}%`:"50%", right: momPct<50? "50%":`${100-momPct}%` }}/>
             </div>
+            <span className="disp" style={{fontSize:10.5,letterSpacing:".06em",color: b.crowd>=78?"#e0bd72":b.crowd>=45?"#d8ac5f":"#8d7e65",whiteSpace:"nowrap"}}>
+              CROWD {Math.round(b.crowd||0)}
+            </span>
           </div>
         </div>
 
@@ -11615,6 +11662,7 @@ export default function App(){
     };
   }, [screen]);
   const [plan,setPlan] = useState("none");
+  const [entrance,setEntrance] = useState("none");
   const [held,setHeld] = useState(null);
   const [retrainFor,setRetrainFor] = useState(null);
   const [gView,setGView] = useState("record");   /* which face of the man's record is showing */
@@ -11733,9 +11781,10 @@ export default function App(){
     if(!g || !canFight(g) || g.lastFought>=d.week) return;
     const bet = makeBet(g, offer.opp);
     if(bet) d.gold -= bet.amount;
+    offer.entrance = entrance;
     const res = doFight(d, fGid, offer, tactic, bet, null, null, offer.watched ? plan : "none");
     if(res.crux){ setHeld({ base:d, res }); setFight(res); setFGid(null); setStake(0); setAgainst(false); return; }
-    setS(d); setFight(res); setFGid(null); setStake(0); setAgainst(false); setPlan("none");
+    setS(d); setFight(res); setFGid(null); setStake(0); setAgainst(false); setPlan("none"); setEntrance("none");
   };
   const openMunus = () => { setMunusPlan({ occasion:"funeral", scale:"modest", hunt:false, sine:false, spectacle:null, headliner:null, sell:false }); setMunusWiz(true); };
   const stageMunusNow = () => { let report = "";
@@ -16039,6 +16088,18 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               </div>
             </div>
           );
+          const entranceRow = (
+            <div style={{marginTop:11}}>
+              <div className="tag" style={{marginBottom:6}}>The entrance</div>
+              <div className="flex gap-2" style={{flexWrap:"wrap"}}>
+                {ENTRANCE_KEYS.map(k=>(
+                  <button key={k} className={`chip ${entrance===k?"on":""}`} onClick={()=>setEntrance(k)}
+                    style={entrance===k?{borderColor:"#c99a4b",color:"#e0bd72",background:"#2b2115"}:undefined}>{ENTRANCES[k].name}</button>
+                ))}
+              </div>
+              <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:5}}>{ENTRANCES[entrance].blurb}</div>
+            </div>
+          );
           const wagerRow = (
             <div style={{borderTop:"1px dotted #33271a",marginTop:12,paddingTop:10}}>
               <div className="flex items-center justify-between" style={{marginBottom:6}}>
@@ -16116,6 +16177,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               )}
               {me && <div style={{fontSize:13.5,marginTop:6}}><span className="dim">Bookmakers: </span><span className="gold">{oddsWord(oddsFor(p))}</span><span className="dim"> on {me.name} · {oddsWord(oddsFor(1-p))} against</span></div>}
               {tacticRow}
+              {entranceRow}
               {wagerRow}
               <button className="btn btn-blood" style={{width:"100%",marginTop:13}} disabled={!fGid} onClick={()=>startFight(()=>fightOffer(o))}>Send {me?me.name:"him"} to the sand</button>
             </>);
