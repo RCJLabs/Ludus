@@ -3573,7 +3573,7 @@ function makeRivalFighter(d, house, quality){
 }
 
 function makeRivals(d){
-  return RIVAL_SEED.map(seed=>({ name:seed[0], fame:seed[1]+ri(-10,15), grudge:ri(0,10),
+  return RIVAL_SEED.map(seed=>({ name:seed[0], fame:seed[1]+ri(-10,15), grudge:ri(0,10), form:ri(-12,12), formTier:0, star:null,
     fighters: Array.from({length:4}, ()=>makeRivalFighter(d, seed[0], ri(seed[2][0], seed[2][1]))) }));
 }
 
@@ -3691,6 +3691,54 @@ function rivalWeekly(d){
     if(h.fame>60) h.fame -= 1;
     while(h.fighters.length<4) h.fighters.push(makeRivalFighter(d, h.name, clamp(rnd(h.fame/4)+ri(15,35), 25, 85)));
   });
+}
+
+/* ---- A LIVING CAMPANIA ----
+   The other houses do not merely drift. They have good years and bad ones — a run
+   of form that persists, a rising man the whole bay starts to name, a season that
+   goes wrong. It moves the fame table on its own, and the city talks about it. */
+const houseFortune = h => { const f=h.form||0; return f>=45?"having a season" : f>=18?"in good form" : f<=-45?"in decline" : f<=-18?"struggling" : "steady"; };
+const fortuneColour = h => { const f=h.form||0; return f>=18?"#9aa86a" : f<=-18?"#d96f5d" : "#b09b7d"; };
+const STAR_GATE = 52;
+const houseStar = h => { const s = (h.fighters||[]).filter(f=>!f.injury).sort((a,b)=>(b.pfame||0)-(a.pfame||0))[0]; return s && (s.pfame||0)>=STAR_GATE ? s : null; };
+const BAY_NEWS = [
+  (d,h)=>`${lanistaOf(h.name).name} has spent a fortune on a fresh sword off the block — House ${h.name} means to win the year.`,
+  (d,h)=>`A man of House ${h.name} died on the sand at Puteoli. The house fights on, a little quieter for it.`,
+  (d,h)=>`House ${h.name} freed a proven man before a roaring crowd — good for the house's name, and one fewer sword in it.`,
+  (d,h)=>`${lanistaOf(h.name).name} hosted the magistrate at his villa. Doors open for House ${h.name} that stay shut to the rest of you.`,
+  (d,h)=>`The editors are booking House ${h.name} first this season. Their colours are on every wall in the lower town.`,
+  (d,h)=>`Word from the bay: House ${h.name} has lost three cards running. ${lanistaOf(h.name).name} is said to be selling to cover the feed bill.`,
+];
+function bayNews(d){
+  const live = (d.rivals||[]).filter(x=>!x.retired);
+  if(!live.length) return;
+  chron(d, pick(BAY_NEWS)(d, pick(live)), "info");
+}
+function campaniaWeek(d){
+  if(d.over || d.rome || !d.rivals) return;
+  for(const h of d.rivals){
+    if(h.retired) continue;
+    if(h.form==null) h.form = 0;
+    /* form drifts back to nothing, with the occasional real swing — good years and bad */
+    let dv = ri(-4,4);
+    if(R()<0.06) dv += ri(-18,18);
+    h.form = clamp(h.form*0.94 + dv, -100, 100);
+    h.fame = Math.max(0, h.fame + (h.form||0)*0.03);
+    /* a house crosses into a season, or out of one, and the bay talks */
+    const tier = h.form>=55?2 : h.form<=-55?-2 : h.form>=25?1 : h.form<=-25?-1 : 0;
+    if(tier!==(h.formTier||0)){
+      if(tier===2 && (h.formTier||0)<2) chron(d, `${lanistaOf(h.name).name}'s house is having a season — winning at every card, and the talk of the bay.`, "info");
+      else if(tier===-2 && (h.formTier||0)>-2) chron(d, `House ${h.name} has fallen on hard times. ${lanistaOf(h.name).name} has not had a good card in weeks.`, "info");
+      h.formTier = tier;
+    }
+    /* a rising man the bay begins to name */
+    const s = houseStar(h);
+    if(s && (!h.star || h.star.id!==s.id)){
+      h.star = { id:s.id, name:s.name, nick:s.nick||null, cls:s.cls };
+      chron(d, `They are calling ${s.nick?`${s.name}, ${s.nick},`:s.name} of House ${h.name} the best young ${s.cls.toLowerCase()} in Campania. You will meet him one day.`, "info");
+    } else if(h.star && !(h.fighters||[]).some(f=>f.id===h.star.id)){ h.star = null; }
+  }
+  if(!d.city && !d.travel && R()<0.09) bayNews(d);
 }
 
 /* ---- THE LEAGUE OF CAPUA ----
@@ -4898,6 +4946,7 @@ function migrate(S){
   if(S.acclaim==null) S.acclaim = 0;
   if(!S.brand) S.brand = { licensed:false, decided:false, tier:0, earned:0 };
   if(S.doctore && S.doctore.drill===undefined) S.doctore.drill = "none";
+  (S.rivals||[]).forEach(h=>{ if(h.form==null){ h.form=0; h.formTier=0; h.star=null; } });
   if(!S.generation) S.generation = 1;
   if(!S.forebears) S.forebears = [];
   if(!S.gearCond) S.gearCond = {};
@@ -10369,6 +10418,7 @@ function endWeek(d){
   if((d.week-1)%3===0 && !d.rome && !d.city && !d.travel){ makeMarket(d); makeDoctoreMarket(d); makeStaffMarket(d); }
   marketWeek(d);
   rivalWeekly(d);
+  campaniaWeek(d);
   leagueWeek(d);
   if(d.romeOffer && d.romeOffer.due && d.week > d.romeOffer.due){
     d.romeOffer = null;
@@ -12629,6 +12679,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     ? <span style={{fontSize:12.5,marginLeft:7,fontStyle:"italic",color:warmth(S,h.raw)>=50?"#9aa86a":"#b09b7d"}}>{houseWord(warmth(S,h.raw))}</span>
                     : <span className="dim" style={{fontSize:12.5,marginLeft:7,fontStyle:"italic"}}>{grudgeWord(riv.grudge)}</span>)}
                   {riv && lanistaOf(h.raw).trait && <div className="dim" style={{fontSize:12.5,marginTop:1}}>{lanistaOf(h.raw).name} — {lanistaOf(h.raw).trait}</div>}
+                  {riv && <div style={{fontSize:12.5,marginTop:1,color:fortuneColour(riv)}}>{houseFortune(riv)}{riv.star?` · ★ ${riv.star.name}`:""}</div>}
                   {riv && bookH && bookH.n>=1 && <div className="dim" style={{fontSize:12,marginTop:1,fontStyle:"italic"}}>
                     {bookH.n} card{bookH.n>1?"s":""} against him — you {bookH.w}–{bookH.n-bookH.w}
                   </div>}
