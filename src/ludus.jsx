@@ -10441,6 +10441,8 @@ export default function App(){
   const [plan,setPlan] = useState("none");
   const [held,setHeld] = useState(null);
   const [retrainFor,setRetrainFor] = useState(null);
+  const [gView,setGView] = useState("record");   /* which face of the man's record is showing */
+  useEffect(()=>{ setGView("record"); }, [selId]);   /* open every man on his overview */
   const [stake,setStake] = useState(0);
   const [against,setAgainst] = useState(false);
   const [arenaWiz,setArenaWiz] = useState(false);   /* the guided to-the-sand flow */
@@ -11507,23 +11509,36 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           {(()=>{ const ALL = agenda(S), AG = allTodos ? ALL : ALL.slice(0, 7), rest = ALL.length - AG.length;
             const TABN = { ludus:"Ludus", men:"Familia", arena:"Arena", armory:"Armory", market:"Market", villa:"Villa" };
             const banners = [];
-            if(S.war && !S.war.done) banners.push(["#7c2a22", warStage(S).name, "the war in the south"]);
-            if(S.primus) banners.push([S.primus.mine?"#c99a4b":"#4e3c26", S.primus.mine?"Primus of Capua":`Primacy · ${S.primus.house}`, S.primus.mine?S.primus.name:""]);
-            if(S.nemesis) banners.push(["#7c2a22", S.nemesis.name, "has your measure"]);
+            const bnr = (c,title,sub,urgent)=>banners.push({c,title,sub,urgent:!!urgent});
+            /* urgent = something you can act on now; the rest are threads you are simply in */
+            if(S.war && !S.war.done) bnr("#7c2a22", warStage(S).name, "the war in the south");
+            if(S.primus) bnr(S.primus.mine?"#c99a4b":"#4e3c26", S.primus.mine?"Primus of Capua":`Primacy · ${S.primus.house}`, S.primus.mine?S.primus.name:"");
+            if(S.nemesis) bnr("#7c2a22", S.nemesis.name, "has your measure");
             if(S.saga){ const sg = S.gladiators.find(x=>x.id===S.saga.gid);
-              if(sg) banners.push(["#c99a4b", sg.name, S.saga.stage>=3?"his reckoning is set":"the crowd's champion"]); }
-            if(aedileOn(S)) banners.push([S.aedile.friendly?"#5a6a35":S.aedile.hostile?"#7c2a22":"#3e2f1f", "The aedile", S.aedile.friendly?"owes you":S.aedile.hostile?"knows whose list":"neutral"]);
-            if(S.city) banners.push(["#6d5426", CITIES[S.city].name, "you are on the circuit"]);
-            if(S.travel) banners.push(["#6d5426", "On the road", `${S.travel.weeks}w`]);
-            if(canClaimRise(S)) banners.push(["#c99a4b", `Received as ${riseNext(S).name}`, "your standing awaits"]);
+              if(sg) bnr("#c99a4b", sg.name, S.saga.stage>=3?"his reckoning is set":"the crowd's champion", S.saga.stage>=3); }
+            if(aedileOn(S)) bnr(S.aedile.friendly?"#5a6a35":S.aedile.hostile?"#7c2a22":"#3e2f1f", "The aedile", S.aedile.friendly?"owes you":S.aedile.hostile?"knows whose list":"neutral", S.aedile.hostile);
+            if(S.city) bnr("#6d5426", CITIES[S.city].name, "you are on the circuit");
+            if(S.travel) bnr("#6d5426", "On the road", `${S.travel.weeks}w`);
+            if(canClaimRise(S)) bnr("#c99a4b", `Received as ${riseNext(S).name}`, "your standing awaits", true);
+            const urgent = banners.filter(b=>b.urgent), ongoing = banners.filter(b=>!b.urgent);
             return (<>
-              {banners.length>0 && (
+              {urgent.length>0 && (
                 <div className="flex gap-2" style={{flexWrap:"wrap"}}>
-                  {banners.map((b,i)=>(
-                    <div key={i} className="panel" style={{padding:"10px 9px",borderColor:b[0],flex:"1 1 auto",minWidth:0}}>
-                      <div className="disp" style={{fontSize:12,color:"#e8d092",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{b[1]}</div>
-                      {b[2] && <div className="dim" style={{fontSize:11.5,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{b[2]}</div>}
+                  {urgent.map((b,i)=>(
+                    <div key={i} className="panel" style={{padding:"10px 9px",borderColor:b.c,flex:"1 1 auto",minWidth:0}}>
+                      <div className="disp" style={{fontSize:12,color:"#e8d092",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{b.title}</div>
+                      {b.sub && <div className="dim" style={{fontSize:11.5,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{b.sub}</div>}
                     </div>
+                  ))}
+                </div>
+              )}
+              {ongoing.length>0 && (
+                <div className="flex gap-1" style={{flexWrap:"wrap",alignItems:"center"}}>
+                  <span className="dim" style={{fontSize:10.5,textTransform:"uppercase",letterSpacing:".07em",marginRight:2}}>Ongoing</span>
+                  {ongoing.map((b,i)=>(
+                    <span key={i} className="chip" style={{borderColor:b.c,fontSize:11.5,padding:"3px 8px",whiteSpace:"nowrap"}} title={b.sub||""}>
+                      {b.title}{b.sub?<span className="dim" style={{marginLeft:5}}>{b.sub}</span>:null}
+                    </span>
                   ))}
                 </div>
               )}
@@ -12996,7 +13011,23 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             <div style={{fontSize:15,fontStyle:"italic",marginBottom:8,color:selG.legend?"#e0bd72":"#cfc0a0"}}>
               The doctore's eye: {selG.read ? `potential ${rnd(selG.potential)}, heart ${rnd(selG.heart)}` : potentialWord(selG.potential)}. Bearing: {demeanor(selG.defiance).toLowerCase()}{selG.read? ` (${rnd(selG.defiance)})`:""}. At {selG.age} {PR(selG).he} is {ageWord(selG.age)}.
             </div>
-            {fansOf(selG)>=12 && (
+            {(()=>{ const hurt = !!selG.injury, worn = bodyWear(selG)>=0.44;
+              const views = [["record","Record"],["body", hurt?"Body ·":"Body"],["train","Training"],["kit","Kit"],["standing","Standing"]];
+              return (
+                <div className="flex gap-1" role="tablist" aria-label="Record sections"
+                  style={{marginBottom:10,overflowX:"auto",borderBottom:"1px solid #33271a",paddingBottom:8}}>
+                  {views.map(([k,l])=>(
+                    <button key={k} role="tab" aria-selected={gView===k} onClick={()=>setGView(k)}
+                      className={`chip ${gView===k?"on":""}`}
+                      style={{whiteSpace:"nowrap",...(gView===k?{borderColor:"#c99a4b",color:"#e0bd72",background:"#2b2115"}:{})}}>
+                      {l}{k==="body" && hurt && <span className="blood" style={{marginLeft:3}}>●</span>}
+                      {k==="body" && !hurt && worn && <span style={{marginLeft:3,color:wornColour(bodyWear(selG))}}>●</span>}
+                    </button>
+                  ))}
+                </div>
+              );
+            })()}
+            {gView==="standing" && fansOf(selG)>=12 && (
               <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",borderColor:isFavourite(selG)?"#8a6a2c":"#3e2f1f"}}>
                 <div className="flex items-center justify-between" style={{marginBottom:6}}>
                   <span className={`tag ${isFavourite(selG)?"tag-gold":""}`}>{isFavourite(selG)?"♦ Crowd Favourite":"The crowd"}</span>
@@ -13008,7 +13039,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 </div>}
               </div>
             )}
-            {bodyWear(selG) >= 0.12 && (()=>{ const w = bodyWear(selG);
+            {gView==="body" && bodyWear(selG) >= 0.12 && (()=>{ const w = bodyWear(selG);
               return (
                 <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",borderColor:wornColour(w)}}>
                   <div className="flex items-center justify-between" style={{marginBottom:6}}>
@@ -13027,7 +13058,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 </div>
               );
             })()}
-            {(selG.scars||[]).length>0 && (()=>{
+            {gView==="body" && (selG.scars||[]).length>0 && (()=>{
               const byPart = {};
               selG.scars.forEach(s=>{ byPart[s.part]=(byPart[s.part]||0)+1; });
               const cap = selG.scarCap||{};
@@ -13047,7 +13078,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 </div>
               );
             })()}
-            {(()=>{ const mine = (S.kits||[]).filter(k=>k.cls===selG.cls);
+            {gView==="kit" && (()=>{ const mine = (S.kits||[]).filter(k=>k.cls===selG.cls);
               return (
                 <div className="panel" style={{padding:10,marginTop:8,marginBottom:9,background:"#1c1610",borderColor:"#3e2f1f"}}>
                   <div className="flex items-center justify-between" style={{marginBottom:4}}>
@@ -13071,7 +13102,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                       ))}
                 </div>
               ); })()}
-            {isAuctor(selG) && (
+            {gView==="standing" && isAuctor(selG) && (
               <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",borderColor:"#5a7a8a"}}>
                 <div className="flex items-center justify-between gap-2" style={{marginBottom:4}}>
                   <span className="tag" style={{borderColor:"#5a7a8a",color:"#9dc0d4"}}>Under contract</span>
@@ -13084,7 +13115,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 </div>
               </div>
             )}
-            {(()=>{ const v = formOf(selG); if(Math.abs(v)<7) return null;
+            {gView==="record" && (()=>{ const v = formOf(selG); if(Math.abs(v)<7) return null;
               return (
                 <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",borderColor:formColour(v)}}>
                   <div className="flex items-center justify-between">
@@ -13131,7 +13162,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 </div>
               );
             })()}
-            {selG.sworn && selG.sworn.how!=="quick" && (
+            {gView==="standing" && selG.sworn && selG.sworn.how!=="quick" && (
               <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",borderColor:"#4e3c26"}}>
                 <div className="tag" style={{marginBottom:3}}>Sworn in</div>
                 <div className="dim" style={{fontSize:14,fontStyle:"italic"}}>
@@ -13141,7 +13172,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 </div>
               </div>
             )}
-            {(canMaster(S,selG) || masterOf(selG) || selG.learning || selG.second) && (
+            {gView==="train" && (canMaster(S,selG) || masterOf(selG) || selG.learning || selG.second) && (
               <div className="panel" style={{padding:11,marginBottom:9,background:"#1c1610",
                 borderColor: selG.learning ? "#6d5426" : masterOf(selG) ? "#c99a4b" : "#4e3c26"}}>
                 {selG.learning ? (<>
@@ -13198,7 +13229,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 </>)}
               </div>
             )}
-            {isDamn(selG) && (
+            {gView==="standing" && isDamn(selG) && (
               <div className="panel" style={{padding:11,marginBottom:9,background:"#2a1512",borderColor:"#7c2a22"}}>
                 <div className="flex items-center justify-between" style={{marginBottom:3}}>
                   <span className="tag tag-blood">Condemned to the school</span>
@@ -13244,7 +13275,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 </div>
               );
             })()}
-            {(()=>{ const v = regardOf(selG), mem = (selG.memory||[]).slice().reverse();
+            {gView==="standing" && (()=>{ const v = regardOf(selG), mem = (selG.memory||[]).slice().reverse();
               return (
                 <Sect title="What he makes of you" note={regardWord(v)}>
                   <Bar v={v} label="regard" color={`linear-gradient(90deg,#4a3a24,${regardColour(v)})`}/>
@@ -13263,7 +13294,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   {regardRefuse(selG) && <div className="blood" style={{fontSize:13.5,marginTop:5}}>He does what he is told and not one thing more.</div>}
                 </Sect>
               ); })()}
-            {selG.ambition && (
+            {gView==="standing" && selG.ambition && (
               <Sect title="What he wants" note={selG.ambition.met?"granted":selG.ambition.broken?"broken":selG.ambition.promised?"your word given":""}>
                 <div style={{fontSize:15}}>{ambWord(selG)}</div>
                 {(()=>{ const st = ambState(selG);
@@ -13279,10 +13310,10 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 })()}
               </Sect>
             )}
-            {selG.traits.length>0 && <div style={{marginBottom:8}}>
+            {gView==="record" && selG.traits.length>0 && <div style={{marginBottom:8}}>
               {selG.traits.map(t=><div key={t} style={{fontSize:14.5}}><span className="tag tag-gold" style={{marginRight:6}}>{t}</span><span className="dim">{TRAITS[t]}</span></div>)}
             </div>}
-            {selG.injury && (()=>{ const care = selG.injury.care || "rest"; const fee = surgeonFee(S, selG.injury);
+            {gView==="body" && selG.injury && (()=>{ const care = selG.injury.care || "rest"; const fee = surgeonFee(S, selG.injury);
               return (
                 <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",borderColor:"#7c2a22"}}>
                   <div className="flex items-center justify-between gap-2" style={{marginBottom:5}}>
@@ -13309,6 +13340,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 </div>
               );
             })()}
+            {gView==="record" && (
             <div className="grid grid-cols-2 gap-x-4 gap-y-2" style={{marginBottom:10}}>
               {STATS.map(k=>(
                 <div key={k}>
@@ -13328,7 +13360,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 <Bar v={selG.fatigue} color={BRONZE}/>
               </div>
             </div>
-            {(tiesOf(S, selG.id).length>0 || selG.mentor || selG.protege) && (
+            )}
+            {gView==="standing" && (tiesOf(S, selG.id).length>0 || selG.mentor || selG.protege) && (
               <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610"}}>
                 <div className="tag" style={{marginBottom:6}}>Bonds</div>
                 {selG.mentor && (()=>{ const m=S.gladiators.find(x=>x.id===selG.mentor);
@@ -13376,7 +13409,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 </div>
               </div>
             )}
-            {S.saga && S.saga.gid===selG.id && (()=>{ const s = S.saga;
+            {gView==="standing" && S.saga && S.saga.gid===selG.id && (()=>{ const s = S.saga;
               const word = s.stage>=4 ? "The crowd wants the wooden sword for him"
                 : s.stage===3 ? `His reckoning is set${s.foe?` — against ${s.foe.name}`:""}`
                 : s.stage>=2 && s.foe ? `The crowd has named his equal: ${s.foe.name} of House ${s.foe.house}`
@@ -13391,6 +13424,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   <Bar v={s.renown} label="renown" color="linear-gradient(90deg,#6d5426,#e0bd72)"/>
                 </div>
               ); })()}
+            {gView==="kit" && (<>
             <div style={{position:"relative",height:176,borderRadius:10,overflow:"hidden",
               border:"1px solid #4e3c26",marginBottom:10,
               background:"linear-gradient(#100c08 0%,#241a0e 22%,#6d5531 66%,#9a7844 100%)"}}>
@@ -13405,7 +13439,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 Arm him from the rack
               </button>
             </div>
-            {lastingOf(selG).length>0 && (
+            </>)}
+            {gView==="body" && lastingOf(selG).length>0 && (
               <div className="panel" style={{padding:11,marginBottom:9,background:"#2a1512",borderColor:"#7c2a22"}}>
                 <div className="tag tag-blood" style={{marginBottom:4}}>What never closed</div>
                 {lastingOf(selG).map(k=>(
@@ -13419,7 +13454,12 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 </div>
               </div>
             )}
-            {isF(selG) && (
+            {gView==="body" && !selG.injury && (selG.scars||[]).length===0 && bodyWear(selG)<0.12 && lastingOf(selG).length===0 && (
+              <div className="dim" style={{fontSize:14,fontStyle:"italic",padding:"6px 2px 12px"}}>
+                Sound and unmarked. Nothing has been taken out of {PR(selG).him} yet — no wound to mend, no scar, no old hurt. Long may it last.
+              </div>
+            )}
+            {gView==="standing" && isF(selG) && (
               <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",borderColor:"#8a6a9c"}}>
                 <div className="tag" style={{marginBottom:3,borderColor:"#8a6a9c",color:"#bfa8c8"}}>A woman on the sand</div>
                 <div className="dim" style={{fontSize:14}}>
@@ -13427,7 +13467,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 </div>
               </div>
             )}
-            {(()=>{ const v = favourOf(selG); if(v < 8) return null;
+            {gView==="standing" && (()=>{ const v = favourOf(selG); if(v < 8) return null;
               return (
                 <div className="panel" style={{padding:11,marginBottom:9,background:"#1c1610",borderColor:favColour(v)}}>
                   <div className="flex items-center justify-between" style={{marginBottom:3}}>
@@ -13443,7 +13483,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   </div>}
                 </div>
               ); })()}
-            {provCrowd(selG)>0 && (
+            {gView==="kit" && provCrowd(selG)>0 && (
               <div className="panel" style={{padding:9,marginBottom:7,background:"#1c1610",borderColor:"#6d5426"}}>
                 <div className="laurel" style={{fontSize:13.5}}>
                   The crowd knows his steel when he walks out — {provCrowd(selG)} to them.
@@ -13453,7 +13493,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 </div>}
               </div>
             )}
-            {(()=>{ const faults = kitFaults(S, selG);
+            {gView==="kit" && (()=>{ const faults = kitFaults(S, selG);
               if(!faults.length) return null;
               return (
                 <div className="panel" style={{padding:9,marginBottom:7,background:"#1c1610",
@@ -13467,7 +13507,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   ))}
                 </div>
               ); })()}
-            {(()=>{ const kit = selG.kit || defaultKit(selG.cls); const m = kitMods(kit, selG.cls, selG); return (
+            {gView==="kit" && (()=>{ const kit = selG.kit || defaultKit(selG.cls); const m = kitMods(kit, selG.cls, selG); return (
               <div style={{marginBottom:12}}>
                 {SLOTS.map(slot=>{
                   const cur = GEAR[kit[slot]];
@@ -13539,7 +13579,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 )}
               </div>
             ); })()}
-            {S.doctore && selG.status==="active" && (
+            {gView==="train" && S.doctore && selG.status==="active" && (
               <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",
                 borderColor: docPupil(S)===selG.id ? "#c99a4b" : "#4e3c26"}}>
                 <div className="flex items-center justify-between gap-2" style={{marginBottom:5}}>
@@ -13574,7 +13614,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 </>)}
               </div>
             )}
-            {(()=>{ const p = seasonOfMan(selG);
+            {gView==="train" && (()=>{ const p = seasonOfMan(selG);
               if(p){ const P = PLANSEASON[p.kind];
                 return (
                   <div className="panel" style={{padding:11,marginBottom:9,background:"#1c1610",borderColor:"#c99a4b"}}>
@@ -13621,6 +13661,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     ); })}
                 </div>
               ); })()}
+            {gView==="train" && (<>
             {!seasonOfMan(selG) && <div className="tag" style={{marginBottom:6}}>This week</div>}
             <div className="grid grid-cols-2 gap-2" style={{marginBottom:6, display: seasonOfMan(selG) ? "none" : undefined}}>
               {REG_KEYS.map(k=>{ const r = REGIMENS[k], on = (selG.regimen||"palus")===k;
@@ -13675,6 +13716,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   </button>
                 ))}
               </div>
+            </>)}
             </>)}
             <div className="grid grid-cols-2 gap-2">
               <button className="btn" disabled={S.gold<50} onClick={()=>rewardG(selG.id)}>Reward · 50d</button>
