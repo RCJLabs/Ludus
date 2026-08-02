@@ -2257,6 +2257,53 @@ function weaveTies(d){
     : `${a.name} and ${b.name} have stopped speaking. The doctore has begun keeping them at opposite ends of the square.`);
 }
 
+/* ---- MENTOR AND PROTEGE ----
+   An old hand takes a green one under his wing. The boy learns faster and drifts
+   toward what the veteran is good at; the bond runs deeper than an ordinary tie.
+   When one of them is carried out, the other takes it harder than the ledger does.
+   Formed by the "mentor" event; stored as g.mentor / g.protege (with names kept so
+   grief can still speak after the man is off the books). */
+const bestStatKey = g => STATS.reduce((b,k)=> (g[k]||0)>(g[b]||0)?k:b, STATS[0]);
+const isMentored = g => !!(g.mentor || g.protege);
+function mentorWeek(d){
+  for(const g of d.gladiators){
+    if(g.status!=="active") continue;
+    /* the boy's side */
+    if(g.mentor){
+      const m = d.gladiators.find(x=>x.id===g.mentor);
+      if(!m || m.status!=="active"){
+        const nm = g.mentorName || (m && m.name) || "the old hand";
+        g.morale = clamp(g.morale-14,0,100); g.defiance = clamp(g.defiance+6,0,100);
+        g.mentor = null; g.mentorName = null;
+        chron(d, `${g.name} lost the man who taught him. ${nm} is gone, and the boy works the palus alone now, harder and with something behind it.`, "bad");
+      } else {
+        if(g.regimen && g.regimen!=="rest"){
+          const bk = bestStatKey(m);
+          g[bk] = clamp((g[bk]||10) + 0.6, 5, statCap(g,bk));
+          g.morale = clamp(g.morale+0.5,0,100);
+        }
+        if(g.wins>=5){   /* the teaching is done */
+          m.protege = null; m.protegeName = null; g.mentor = null; g.mentorName = null;
+          remember(d, m, "taught");
+          if(tieBetween(d,g.id,m.id)) addTie(d,g.id,m.id,"brother",0); else addTie(d,g.id,m.id,"brother",52);
+          m.morale = clamp(m.morale+8,0,100);
+          chron(d, `${m.name} watched ${g.name} take his fifth. The boy is made — the teaching is done, and the two of them are something else now.`, "good");
+        }
+      }
+    }
+    /* the old man's side — his boy taken from him */
+    if(g.protege){
+      const r = d.gladiators.find(x=>x.id===g.protege);
+      if(!r || r.status!=="active"){
+        const nm = g.protegeName || (r && r.name) || "the boy";
+        g.morale = clamp(g.morale-12,0,100);
+        g.protege = null; g.protegeName = null;
+        chron(d, `${g.name} has no one to bring on now. ${nm} is gone, and the old man has gone quiet with it.`, "bad");
+      }
+    }
+  }
+}
+
 /* ---- THE DOCTORE ----
    The man who runs the training square. A hired one is competent and costly;
    one of your own, freed and choosing to stay, is worth more than any of them —
@@ -7611,6 +7658,35 @@ const EVENTS = {
       A.morale=clamp(A.morale-12,0,100); A.defiance=clamp(A.defiance+8,0,100);
       d.unrest=clamp(d.unrest+3,0,100);
       return `You tell ${PR(A).him} the card is set. ${PR(A).He} nods, the way someone nods when they have learned something they suspected.`; } },
+  mentor: {
+    make(d){
+      if(d.city||d.travel||d.rome) return null;
+      const act = activeG(d);
+      if(act.length<3) return null;
+      const vets = act.filter(g=>!isMentored(g) && g.wins>=4 && (g.age>=29 || g.wins>=8));
+      const rooks = act.filter(g=>!isMentored(g) && g.wins<=1 && g.age<=26);
+      if(!vets.length || !rooks.length) return null;
+      let best=null;
+      for(const v of vets) for(const r of rooks){ if(v.id===r.id) continue;
+        const t = tieBetween(d,v.id,r.id);
+        const s = (t&&t.kind==="brother"?t.strength:0) + (v.origin===r.origin?20:0) + (v.cls===r.cls?8:0) + regardOf(v)/6;
+        if(!best || s>best.s) best={v,r,s};
+      }
+      if(!best || best.s<14) return null;
+      const {v,r} = best;
+      return { id:"mentor", title:"The Old Hand",
+        text:`${fullName(v)} has taken to standing at the edge of the square when ${r.name} drills — saying little, correcting less, but the boy has started setting his feet the way ${PR(v).he} does. ${v.name} has never asked you for a thing. ${PR(v).He} asks now: let him bring ${r.name} on himself.`,
+        choices:[`Let ${v.name} teach the boy`, "Every man learns alone"], data:{ vid:v.id, rid:r.id } }; },
+    run(d,ev,i){
+      const v=d.gladiators.find(g=>g.id===ev.data.vid), r=d.gladiators.find(g=>g.id===ev.data.rid);
+      if(!v||!r||v.status!=="active"||r.status!=="active") return "The moment passes; one of them is no longer in the yard.";
+      if(i!==0){ v.morale=clamp(v.morale-5,0,100); v.defiance=clamp(v.defiance+3,0,100);
+        return `You tell ${v.name} the boy will learn as ${PR(v).he} did — the hard way, from strangers across the sand. ${PR(v).He} nods once, and does not offer again.`; }
+      v.protege=r.id; v.protegeName=r.name; r.mentor=v.id; r.mentorName=v.name;
+      addTie(d,v.id,r.id,"brother",36);
+      v.morale=clamp(v.morale+6,0,100); r.morale=clamp(r.morale+8,0,100); r.defiance=clamp(r.defiance-4,0,100);
+      remember(d,v,"heard");
+      return `Before the others are awake ${v.name} has ${r.name} at the far post, walking him through a thing too slow to be a drill and too deliberate to be anything else. Whatever the old man knows, the boy will have it now.`; } },
   poached: {
     make(d){ if(!d.poach) return null;
       const g = d.gladiators.find(x=>x.id===d.poach.gid);
@@ -8393,6 +8469,7 @@ function endWeek(d){
   if(romeReady(d) && R()<0.3) offerRome(d);
   sparSocial(d);
   weaveTies(d);
+  mentorWeek(d);
   d.gladiators.forEach(g=>{
     if(isGone(g)) return;
     g.weeksAged = (g.weeksAged||0) + 1;
@@ -12377,26 +12454,50 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 <Bar v={selG.fatigue} color={BRONZE}/>
               </div>
             </div>
-            {tiesOf(S, selG.id).length>0 && (
+            {(tiesOf(S, selG.id).length>0 || selG.mentor || selG.protege) && (
               <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610"}}>
-                <div className="tag" style={{marginBottom:6}}>The cells</div>
+                <div className="tag" style={{marginBottom:6}}>Bonds</div>
+                {selG.mentor && (()=>{ const m=S.gladiators.find(x=>x.id===selG.mentor);
+                  return (
+                    <button className="optrow" style={{width:"100%",marginBottom:5,padding:8}} disabled={!m} onClick={()=>m&&setSelId(m.id)}>
+                      <div className="flex items-center justify-between gap-2" style={{fontSize:14.5}}>
+                        <span><span style={{color:"#e8d092"}}>Taught by</span><span className="dim"> · </span>{m?m.name:(selG.mentorName||"—")}</span>
+                        <span className="dim" style={{fontSize:13,whiteSpace:"nowrap"}}>the old hand</span>
+                      </div>
+                    </button>
+                  ); })()}
+                {selG.protege && (()=>{ const r=S.gladiators.find(x=>x.id===selG.protege);
+                  return (
+                    <button className="optrow" style={{width:"100%",marginBottom:5,padding:8}} disabled={!r} onClick={()=>r&&setSelId(r.id)}>
+                      <div className="flex items-center justify-between gap-2" style={{fontSize:14.5}}>
+                        <span><span style={{color:"#e8d092"}}>Bringing on</span><span className="dim"> · </span>{r?r.name:(selG.protegeName||"—")}</span>
+                        <span className="dim" style={{fontSize:13,whiteSpace:"nowrap"}}>{r?`toward his fifth · ${clamp(r.wins,0,5)}/5`:"his protégé"}</span>
+                      </div>
+                    </button>
+                  ); })()}
                 {tiesOf(S, selG.id).map((t,i)=>{
                   const o = S.gladiators.find(x=>x.id===tieOther(t,selG.id));
                   if(!o) return null;
                   const bro = t.kind==="brother";
                   return (
-                    <div key={i} className="flex items-center justify-between gap-2" style={{padding:"3px 0",fontSize:14.5}}>
-                      <span>
-                        <span style={{color: bro?"#b9c58a":"#d98476"}}>{bro? "Brother":"Bad blood"}</span>
-                        <span className="dim"> · </span>{o.name}
-                      </span>
-                      <span className="dim" style={{fontSize:13,whiteSpace:"nowrap"}}>{tieWord(t)}</span>
-                    </div>
+                    <button key={i} className="optrow" style={{width:"100%",marginBottom:5,padding:8}} onClick={()=>setSelId(o.id)}>
+                      <div className="flex items-center justify-between gap-2" style={{fontSize:14.5}}>
+                        <span>
+                          <span style={{color: bro?"#b9c58a":"#d98476"}}>{bro? "Brother":"Bad blood"}</span>
+                          <span className="dim"> · </span>{o.name}
+                        </span>
+                        <span className="dim" style={{fontSize:13,whiteSpace:"nowrap"}}>{tieWord(t)}</span>
+                      </div>
+                    </button>
                   );
                 })}
                 <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:4}}>
-                  {kinOf(S,selG.id,"brother").length
-                    ? "What happens to them happens to {PR(selG).him} — and they would follow {PR(selG).him} out of the gate."
+                  {selG.protege
+                    ? `He is teaching ${selG.protegeName||"a green one"} what he knows — lose either of them and the other feels it.`
+                    : selG.mentor
+                    ? `${selG.mentorName||"An old hand"} is bringing him on. He learns faster for it, and would not take that loss well.`
+                    : kinOf(S,selG.id,"brother").length
+                    ? `What happens to them happens to ${PR(selG).him} — and they would follow ${PR(selG).him} out of the gate.`
                     : "Spite sharpens a fighter, and costs them sleep."}
                 </div>
               </div>
