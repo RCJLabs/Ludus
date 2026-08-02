@@ -9485,6 +9485,52 @@ function decodeSave(txt){
   }catch(e){ return null; }
 }
 
+/* A portrait bust for the doctore — a grizzled man off the sand, drawn in the
+   same flat SVG as the fighters. Seeded off his name so a given doctore always
+   wears the same face, and every doctore is his own man. */
+function DoctoreBust({ name, size=56 }){
+  let h = 2166136261 >>> 0;
+  const s = name || "doctore";
+  for(let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+  const rnd = () => { h = (Math.imul(h, 1103515245) + 12345) >>> 0; return h / 4294967296; };
+  const pick = arr => arr[Math.floor(rnd()*arr.length)];
+  const skin  = pick(["#a8763e","#b5823f","#9a6a37","#c18d54","#8c6033"]);
+  const skinD = "#6f4a22";
+  const hair  = pick(["#2a1b0f","#3a2c1c","#5b4a38","#8a8076","#9a938a"]);   // last two grey — old men
+  const beard = rnd() < 0.8;
+  const bald  = rnd() < 0.24;
+  const scar  = rnd() < 0.6;
+  return (
+    <svg viewBox="0 0 100 100" width={size} height={size} style={{display:"block"}} aria-hidden="true">
+      <rect x="0" y="0" width="100" height="100" fill="#1c1610"/>
+      {/* shoulders and the oxblood of the house */}
+      <path d="M14,100 Q17,73 34,67 L66,67 Q83,73 86,100 Z" fill="#8d3b2c"/>
+      <path d="M40,69 Q50,79 60,69 L60,67 L40,67 Z" fill="#6f2c20"/>
+      {/* neck */}
+      <rect x="43" y="55" width="14" height="16" rx="4" fill={skinD}/>
+      {/* ears, head */}
+      <circle cx="31" cy="43" r="3.6" fill={skin}/><circle cx="69" cy="43" r="3.6" fill={skin}/>
+      <ellipse cx="50" cy="41" rx="19" ry="22" fill={skin}/>
+      {/* hair */}
+      {!bald
+        ? <path d="M31,39 Q30,17 50,16 Q70,17 69,39 Q64,27 50,26 Q36,27 31,39 Z" fill={hair}/>
+        : <path d="M33,33 Q40,23 50,23 Q60,23 67,33 Q60,29 50,29 Q40,29 33,33 Z" fill={hair} opacity="0.45"/>}
+      {/* brow, eyes, nose */}
+      <path d="M38,36 Q43,33 47,36" stroke={skinD} strokeWidth="1.6" fill="none"/>
+      <path d="M53,36 Q57,33 62,36" stroke={skinD} strokeWidth="1.6" fill="none"/>
+      <circle cx="42.5" cy="40" r="2" fill="#241a12"/>
+      <circle cx="57.5" cy="40" r="2" fill="#241a12"/>
+      <path d="M50,41 L48,49 Q50,51 52,49" stroke={skinD} strokeWidth="1.4" fill="none"/>
+      {/* mouth or beard */}
+      {beard
+        ? <path d="M35,49 Q37,66 50,68 Q63,66 65,49 Q58,58 50,58 Q42,58 35,49 Z" fill={hair}/>
+        : <path d="M44,54 Q50,57 56,54" stroke={skinD} strokeWidth="1.6" fill="none"/>}
+      {/* a mark the sand left on him */}
+      {scar && <path d="M60,28 L67,47" stroke="#9a4a3a" strokeWidth="1.7" fill="none"/>}
+    </svg>
+  );
+}
+
 /* A collapsible section. Uncontrolled <details> so the browser owns the
    open/closed state and it survives the game's frequent re-renders; the
    initial state is set once on mount. */
@@ -10685,9 +10731,14 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 {(()=>{ const C = counsel(S); if(!C) return null;
                   return (
                     <div style={{borderTop:"1px dotted #4e3c26",marginTop:8,paddingTop:8}}>
-                      <div className="flex items-baseline gap-2">
-                        <span className="tag" style={{borderColor:"#5a6a4a",color:"#9aa86a",flexShrink:0}}>The doctore</span>
-                        <span style={{fontSize:14.5,fontStyle:"italic",color:"#cfc0a0"}}>{C.say(S)}</span>
+                      <div className="flex gap-2" style={{alignItems:"flex-start"}}>
+                        {S.doctore && <div style={{flex:"0 0 auto",width:46,height:46,borderRadius:"50%",overflow:"hidden",border:"1px solid #5a6a4a"}}>
+                          <DoctoreBust name={S.doctore.name} size={46}/>
+                        </div>}
+                        <div style={{minWidth:0}}>
+                          <span className="tag" style={{borderColor:"#5a6a4a",color:"#9aa86a"}}>The doctore</span>
+                          <div style={{fontSize:14.5,fontStyle:"italic",color:"#cfc0a0",marginTop:3}}>{C.say(S)}</div>
+                        </div>
                       </div>
                     </div>
                   ); })()}
@@ -10909,13 +10960,20 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               {S.doctore && <span className="dim" style={{fontSize:13}}>{S.doctore.wage}d / week</span>}
             </div>
             {S.doctore ? (<div>
-              <div className="disp" style={{fontSize:15,fontWeight:700,color:"#e8d092"}}>
-                {S.doctore.name}{S.doctore.nick? <span style={{color:"#d8c08a"}}>, {S.doctore.nick}</span>:null}
-              </div>
-              <div className="flex items-center gap-1" style={{flexWrap:"wrap",margin:"5px 0"}}>
-                <span className="tag">{docWord(S.doctore.skill)}</span>
-                <span className="tag tag-gold">{STAT_NAMES[S.doctore.spec]}</span>
-                {S.doctore.fromHouse && <span className="tag tag-gold">✦ of this house</span>}
+              <div className="flex gap-3" style={{alignItems:"center",marginBottom:6}}>
+                <div style={{flex:"0 0 auto",width:60,height:60,borderRadius:"50%",overflow:"hidden",border:"1px solid #6d5426"}}>
+                  <DoctoreBust name={S.doctore.name} size={60}/>
+                </div>
+                <div style={{minWidth:0}}>
+                  <div className="disp" style={{fontSize:15,fontWeight:700,color:"#e8d092"}}>
+                    {S.doctore.name}{S.doctore.nick? <span style={{color:"#d8c08a"}}>, {S.doctore.nick}</span>:null}
+                  </div>
+                  <div className="flex items-center gap-1" style={{flexWrap:"wrap",marginTop:5}}>
+                    <span className="tag">{docWord(S.doctore.skill)}</span>
+                    <span className="tag tag-gold">{STAT_NAMES[S.doctore.spec]}</span>
+                    {S.doctore.fromHouse && <span className="tag tag-gold">✦ of this house</span>}
+                  </div>
+                </div>
               </div>
               <div className="dim" style={{fontSize:14,fontStyle:"italic"}}>{S.doctore.past}.</div>
               {S.doctore.tag && (<>
