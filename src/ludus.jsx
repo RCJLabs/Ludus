@@ -2314,6 +2314,32 @@ const REGIMENS = {
     desc:"A day out of the sun. Nothing gained, everything mended, and strain finally comes off." },
 };
 const REG_KEYS = Object.keys(REGIMENS);
+
+/* ---- THE DOCTORE'S DRILL ----
+   The doctore can put the whole yard on one emphasis for the week — a hard week of
+   wind, or the edge, or the crowd — laid over each man's own regimen. It needs a
+   doctore, and a good one gets far more out of it than a poor one. d.doctore.drill. */
+const DRILLS = {
+  none:  { name:"Free drill", short:"Free", blurb:"Each man works his own plan; the doctore spreads himself across the yard as he always has." },
+  cond:  { name:"Conditioning", short:"Wind", blurb:"A hard week of the hill and the stone. Strain comes off the whole yard and wind builds — and the week's other gains run a little thinner for it.",
+    gain:{end:1.3}, allGain:0.9, strainRelief:4.5 },
+  blade: { name:"Bladework", short:"Blade", blurb:"Nothing but the edge and the point, all week, for every man. Technique and discipline sharpen across the whole yard.",
+    gain:{tec:1.32, dis:1.22} },
+  crowd: { name:"Playing the crowd", short:"Crowd", blurb:"Flourishes and the turn and the pause, drilled into the whole familia. Showmanship for everyone, at a little cost to their edge.",
+    gain:{sho:1.4}, allGain:0.97 },
+  spar:  { name:"Hard sparring", short:"Spar", blurb:"A week of paired steel under the doctore's own eye. Sparring men learn faster — and with a good doctore watching, get hurt less doing it.",
+    sparGain:1.28, sparInj:0.6 },
+};
+const DRILL_KEYS = Object.keys(DRILLS);
+const drillOf = d => (d.doctore ? (DRILLS[d.doctore.drill] || DRILLS.none) : DRILLS.none);
+/* a weak doctore gets little out of a house drill; the finest in Capua, a great deal */
+const drillPower = d => d.doctore ? clamp(0.55 + d.doctore.skill/160, 0.55, 1.1) : 0;
+const drillStatMult = (d,k) => { const D=drillOf(d); if(D===DRILLS.none) return 1;
+  const g = (D.gain && D.gain[k]) || 1, all = D.allGain || 1; return 1 + (g*all - 1) * drillPower(d); };
+const drillStrainRelief = d => (drillOf(d).strainRelief || 0) * drillPower(d);
+const drillSparGain = d => { const D=drillOf(d); return D.sparGain ? 1 + (D.sparGain-1)*drillPower(d) : 1; };
+const drillSparInj  = d => { const D=drillOf(d); return D.sparInj ? 1 - (1-D.sparInj)*drillPower(d) : 1; };
+
 /* work him past what he has and it stops coming back with a night's sleep */
 const strainOf = g => clamp(g.strain||0, 0, 100);
 const strainWord = s => s<12?"fresh" : s<32?"working" : s<55?"worn thin" : s<75?"overworked" : "run into the ground";
@@ -2682,7 +2708,7 @@ function makeDoctore(d, quality){
   const skill = clamp(quality + ri(-8,8), 30, 82);
   const P = pick(DOC_PASTS);
   return { id:d.nextId++, name:pick(ORIGINS[origin].names), origin, fromHouse:false,
-    spec: pick(STATS), skill, weeks:0,
+    spec: pick(STATS), skill, weeks:0, drill:"none",
     creed: pick(DOC_CREED_KEYS), tag:P.tag, pastLine:P.line,
     fee: rnd(skill*7 + 60), wage: rnd(8 + skill*0.22),
     past: `${ri(3,14)} years on the sand, and the scars to argue it` };
@@ -4871,6 +4897,7 @@ function migrate(S){
   if(!S.domus) S.domus = { wife:null, children:[], nextKin:1 };
   if(S.acclaim==null) S.acclaim = 0;
   if(!S.brand) S.brand = { licensed:false, decided:false, tier:0, earned:0 };
+  if(S.doctore && S.doctore.drill===undefined) S.doctore.drill = "none";
   if(!S.generation) S.generation = 1;
   if(!S.forebears) S.forebears = [];
   if(!S.gearCond) S.gearCond = {};
@@ -10132,8 +10159,8 @@ function endWeek(d){
           const t = tieBetween(d, g.id, mate.id);
           const k = Object.keys(targets)[0] || g.focus;
           const learn = clamp((mate[k]-g[k])*0.010, 0, 0.45);
-          mult = SPAR_BASE + learn;
-          injChance = SPAR_INJ * palusGuard(d);
+          mult = (SPAR_BASE + learn) * drillSparGain(d);
+          injChance = SPAR_INJ * palusGuard(d) * drillSparInj(d);
           if(t && t.kind==="brother"){ mult *= 1.10; injChance *= 0.6; g.morale=clamp(g.morale+1,0,100); }
           else if(t && t.kind==="rival"){ mult *= 1.25; injChance *= 2; g.morale=clamp(g.morale-1,0,100); }
         }
@@ -10142,7 +10169,7 @@ function endWeek(d){
           * mult * (g.traits.includes("Swift Learner")?1.3:1)
           * (g.fatigue>75?0.4:1) * strainDrag(g);
         for(const [k,w] of Object.entries(targets)){
-          const gain = base * w * docTrain(d, k, g);
+          const gain = base * w * docTrain(d, k, g) * drillStatMult(d, k);
           g[k] = clamp(g[k]+gain, 5, statCap(g, k));
         }
         if(D.costs) for(const [k,w] of Object.entries(D.costs)) g[k] = Math.max(8, g[k] - base*w*0.55);
@@ -10150,7 +10177,7 @@ function endWeek(d){
         if(D.fat < 0) g.morale = clamp(g.morale+1, 0, 100);
         /* worked past what he has, and it does not come off with a night's sleep */
         const over = Math.max(0, g.fatigue - 55) * 0.105 + (D.fat>=15 ? 1.2 : 0);
-        g.strain = clamp(strainOf(g) + over - (D.fat<0 ? 3.4 : 0.4), 0, 100);
+        g.strain = clamp(strainOf(g) + over - (D.fat<0 ? 3.4 : 0.4) - drillStrainRelief(d), 0, 100);
         const heavy = g.fatigue>88 ? 0.11 : 0;
         const risk = (heavy + injChance*(g.fatigue>70?1.6:1)) * docInjuryGuard(d, g) * strainRisk(g) * docInjure(d);
         if(R()<risk && !g.traits.includes("Iron Hide")){
@@ -11592,6 +11619,7 @@ export default function App(){
   const [retrainFor,setRetrainFor] = useState(null);
   const [gView,setGView] = useState("record");   /* which face of the man's record is showing */
   const [vView,setVView] = useState("house");     /* which face of the villa is showing */
+  const [mView,setMView] = useState("roster");     /* familia: the roster, or the training board */
   useEffect(()=>{ setGView("record"); }, [selId]);   /* open every man on his overview */
   const [stake,setStake] = useState(0);
   const [against,setAgainst] = useState(false);
@@ -11814,6 +11842,15 @@ export default function App(){
     [g,m].forEach(x=>{ if(x.sparWith){ const o=d.gladiators.find(y=>y.id===x.sparWith);
       if(o && o.id!==g.id && o.id!==m.id && o.sparWith===x.id){ o.regimen="palus"; o.sparWith=null; } } });
     g.regimen="spar"; g.sparWith=m.id; m.regimen="spar"; m.sparWith=g.id; });
+  const setDrill = key => mut(d=>{ if(d.doctore && DRILLS[key]) d.doctore.drill = key; });
+  const clearSparOf = (d,g)=>{ if(g.regimen==="spar" && g.sparWith){ const o=d.gladiators.find(x=>x.id===g.sparWith); if(o && o.sparWith===g.id){ o.regimen="palus"; o.sparWith=null; } } g.sparWith=null; };
+  const boardMen = d => d.gladiators.filter(g=>g.status==="active" && !seasonOfMan(g));
+  const restWorn = () => mut(d=>{ boardMen(d).forEach(g=>{ if(strainOf(g)>50 || g.fatigue>80){ clearSparOf(d,g); g.regimen="rest"; } }); });
+  const allPalus = () => mut(d=>{ boardMen(d).forEach(g=>{ clearSparOf(d,g); g.regimen="palus"; }); });
+  const autoPair = () => mut(d=>{ const men = boardMen(d);
+    men.forEach(g=>{ clearSparOf(d,g); if(g.regimen==="spar") g.regimen="palus"; });
+    const pool = men.slice().sort((a,b)=> STATS.reduce((s,k)=>s+b[k],0) - STATS.reduce((s,k)=>s+a[k],0));
+    for(let i=0;i+1<pool.length;i+=2){ const a=pool[i], b=pool[i+1]; a.regimen="spar"; a.sparWith=b.id; b.regimen="spar"; b.sparWith=a.id; } });
   const buyG = (id, bidPrice) => mut(d=>{ const i=d.market.findIndex(m=>m.id===id); if(i<0) return;
     const g=d.market[i]; const count=d.gladiators.filter(x=>!isGone(x)).length;
     const price = bidPrice!=null ? bidPrice : g.price;
@@ -13262,6 +13299,22 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     )}
                   </div>
                 ); })()}
+              {(()=>{ const D = drillOf(S), k = S.doctore.drill||"none";
+                return (
+                  <div className="panel" style={{padding:10,marginTop:9,background:"#1c1610",borderColor:k!=="none"?"#5a6a35":"#4e3c26"}}>
+                    <div className="tag tag-gold" style={{marginBottom:5}}>The week's drill · the whole yard</div>
+                    <div className="flex gap-1" style={{flexWrap:"wrap",marginBottom:6}}>
+                      {DRILL_KEYS.map(dk=>(
+                        <button key={dk} className={`chip ${k===dk?"on":""}`} onClick={()=>setDrill(dk)}
+                          style={k===dk?{borderColor:"#c99a4b",color:"#e0bd72",background:"#2b2115"}:{}}>{DRILLS[dk].short}</button>
+                      ))}
+                    </div>
+                    <div className="dim" style={{fontSize:13.5,fontStyle:"italic"}}>{D.blurb}</div>
+                    {k!=="none" && <div className="laurel" style={{fontSize:12.5,marginTop:4}}>
+                      {S.doctore.skill<50 ? "A modest hand — the drill only half takes." : S.doctore.skill<72 ? "He gets a good week's work out of it." : "The finest in Capua — the whole yard moves as one."}
+                    </div>}
+                  </div>
+                ); })()}
               <button className="btn btn-ghost" style={{width:"100%",marginTop:8}} onClick={dismissDoc}>Dismiss him</button>
             </div>) : (<div>
               <div className="dim" style={{fontSize:14.5,fontStyle:"italic",marginBottom:8}}>
@@ -13336,6 +13389,19 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               <span className="rowval dim" style={{fontSize:12.5}}>styles · origins · tags</span>
             </div>
           </button>
+
+          <div className="flex gap-1" role="tablist" aria-label="Familia sections"
+            style={{borderBottom:"1px solid #33271a",paddingBottom:8}}>
+            {[["roster","The Roster"],["board","The Doctore's Board"]].map(([k,l])=>(
+              <button key={k} role="tab" aria-selected={mView===k} aria-label={l} onClick={()=>setMView(k)}
+                className={`chip ${mView===k?"on":""}`}
+                style={{whiteSpace:"nowrap",...(mView===k?{borderColor:"#c99a4b",color:"#e0bd72",background:"#2b2115"}:{})}}>
+                {l}
+              </button>
+            ))}
+          </div>
+
+          {mView==="roster" && (<>
           {roster.length===0 && <div className="panel dim" style={{padding:16,textAlign:"center",fontStyle:"italic"}}>The cells stand empty. The market has men, if you have coin.</div>}
           {roster.map(g=>(
             <button key={g.id} className="panel" style={{width:"100%",textAlign:"left",padding:12,cursor:"pointer",color:"inherit",font:"inherit",borderColor:g.legend?"#8a6a2c":undefined}} onClick={()=>setSelId(g.id)}>
@@ -13377,6 +13443,81 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               </div>
             </button>
           ))}
+          </>)}
+
+          {mView==="board" && (()=>{ const men = activeG(S);
+            const fatWord = g => g.fatigue>82?"spent":g.fatigue>60?"tired":g.fatigue>35?"working":"fresh";
+            const fatCol = g => g.fatigue>82?"#d96f5d":g.fatigue>60?"#d8ac5f":"#9aa86a";
+            const strCol = g => strainOf(g)>55?"#d96f5d":strainOf(g)>32?"#d8ac5f":"#8d7e65";
+            return (<>
+              {S.doctore ? (
+                <div className="panel" style={{padding:10,borderColor:(S.doctore.drill||"none")!=="none"?"#5a6a35":"#3e2f1f"}}>
+                  <div className="flex items-center justify-between" style={{marginBottom:6}}>
+                    <span className="tag tag-gold">The week's drill — the whole yard</span>
+                    <span className="rowval dim" style={{fontSize:12}}>{S.doctore.name} · {docWord(S.doctore.skill)}</span>
+                  </div>
+                  <div className="flex gap-1" style={{flexWrap:"wrap",marginBottom:6}}>
+                    {DRILL_KEYS.map(dk=>(
+                      <button key={dk} className={`chip ${(S.doctore.drill||"none")===dk?"on":""}`} onClick={()=>setDrill(dk)}
+                        style={(S.doctore.drill||"none")===dk?{borderColor:"#c99a4b",color:"#e0bd72",background:"#2b2115"}:{}}>{DRILLS[dk].short}</button>
+                    ))}
+                  </div>
+                  <div className="dim" style={{fontSize:13.5,fontStyle:"italic"}}>{drillOf(S).blurb}</div>
+                </div>
+              ) : (
+                <div className="panel dim" style={{padding:12,fontSize:14,fontStyle:"italic"}}>
+                  No doctore. Hire one from the Ludus and he can put the whole yard on a week's drill — conditioning, bladework, the crowd, hard sparring.
+                </div>
+              )}
+
+              {men.length>1 && (
+                <div className="flex gap-2" style={{flexWrap:"wrap"}}>
+                  <button className="btn btn-ghost" style={{flex:1,fontSize:12.5,padding:"9px 6px"}} onClick={restWorn}>Rest the worn</button>
+                  <button className="btn btn-ghost" style={{flex:1,fontSize:12.5,padding:"9px 6px"}} onClick={allPalus}>All to the palus</button>
+                  <button className="btn btn-ghost" style={{flex:1,fontSize:12.5,padding:"9px 6px"}} onClick={autoPair}>Pair for sparring</button>
+                </div>
+              )}
+
+              {men.length===0 && <div className="panel dim" style={{padding:16,textAlign:"center",fontStyle:"italic"}}>No man is fit to train just now.</div>}
+              {men.map(g=>{ const season = seasonOfMan(g), reg = g.regimen||"palus";
+                return (
+                  <div key={g.id} className="panel" style={{padding:9}}>
+                    <div className="flex items-center justify-between gap-2" style={{marginBottom:5}}>
+                      <button onClick={()=>setSelId(g.id)} style={{background:"none",border:0,padding:0,font:"inherit",color:"#e8d092",cursor:"pointer",minWidth:0,textAlign:"left"}}>
+                        <span className="disp" style={{fontSize:14,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{g.name}</span>
+                        <span className="dim" style={{fontSize:12}}> · {g.cls}</span>
+                      </button>
+                      <span style={{fontSize:11.5,whiteSpace:"nowrap"}}>
+                        <span style={{color:fatCol(g)}}>{fatWord(g)}</span>
+                        {strainOf(g)>32 && <span style={{color:strCol(g)}}> · {strainWord(strainOf(g))}</span>}
+                      </span>
+                    </div>
+                    {season ? (
+                      <div className="dim" style={{fontSize:13,fontStyle:"italic"}}>On a season — {PLANSEASON[season.kind]?PLANSEASON[season.kind].name:"in training"}, {planWeeksLeft(g)}w left. He drills at nothing else.</div>
+                    ) : (<>
+                      <div className="flex gap-1" style={{flexWrap:"wrap"}}>
+                        {REG_KEYS.map(k=>(
+                          <button key={k} className={`chip ${reg===k?"on":""}`} style={{fontSize:11,padding:"3px 7px",...(reg===k?{borderColor:"#c99a4b",color:"#e0bd72",background:"#2b2115"}:{})}}
+                            onClick={()=>{ if(k==="spar") setSparPick(g.id); else setRegimen(g.id,k); }}>{REGIMENS[k].short}</button>
+                        ))}
+                      </div>
+                      {reg==="palus" && (
+                        <div className="flex gap-1" style={{flexWrap:"wrap",marginTop:5}}>
+                          {STATS.map(s=>(
+                            <button key={s} className={`chip ${g.focus===s?"on":""}`} style={{fontSize:10.5,padding:"2px 6px",...(g.focus===s?{borderColor:"#8a6a2c",color:"#e0bd72"}:{})}}
+                              onClick={()=>setFocus(g.id,s)}>{STAT_NAMES[s].slice(0,3)}</button>
+                          ))}
+                        </div>
+                      )}
+                      {reg==="spar" && (
+                        <div className="dim" style={{fontSize:12.5,marginTop:4,color:sparPartner(S,g)?"#b9c58a":"#d8ac5f"}}>
+                          {sparPartner(S,g) ? `Paired with ${sparPartner(S,g).name}` : "Tap SPAR again to pick a partner"}
+                        </div>
+                      )}
+                    </>)}
+                  </div>
+                ); })}
+            </>); })()}
         </div>)}
 
         {tab==="arena" && (<div className="flex flex-col gap-3">
