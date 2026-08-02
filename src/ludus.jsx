@@ -3976,6 +3976,7 @@ function migrate(S){
   if(!S.doctoreMarket) S.doctoreMarket = [];
   if(S.doctoreOffer===undefined) S.doctoreOffer = null;
   if(!S.ties) S.ties = [];
+  if(!S.arcs) S.arcs = [];
   if(S.rome===undefined) S.rome = null;
   if(S.poach===undefined) S.poach = null;
   if(!S.defected) S.defected = [];
@@ -7687,6 +7688,109 @@ const EVENTS = {
       v.morale=clamp(v.morale+6,0,100); r.morale=clamp(r.morale+8,0,100); r.defiance=clamp(r.defiance-4,0,100);
       remember(d,v,"heard");
       return `Before the others are awake ${v.name} has ${r.name} at the far post, walking him through a thing too slow to be a drill and too deliberate to be anything else. Whatever the old man knows, the boy will have it now.`; } },
+  /* ===== ARC: the foundling (a boy at the gate, and what he becomes weeks later) ===== */
+  foundling: {
+    make(d){
+      if(d.city||d.travel||d.rome) return null;
+      if(d.fame < 12) return null;
+      if((d.arcs||[]).some(a=>a.id==="foundlingBack")) return null;
+      if(d.flags.foundlingCool && d.week - d.flags.foundlingCool < 24) return null;
+      if(activeG(d).length >= ((d.law && d.law.cap) || 99)) return null;
+      const origin = pick(Object.keys(ORIGINS));
+      const nm = freshName(d, ORIGINS[origin].names, false);
+      return { id:"foundling", title:"A Boy at the Gate",
+        text:`A boy no older than fourteen has slept against the gate three nights running. He says his name is ${nm}, that he has nowhere and nothing, and that he would rather die on the sand than in a ditch — which he says as though he has weighed both. He is half-starved and looks at the men in the yard the way other boys look at gods.`,
+        choices:["Put him to the kitchens and see", "Buy his bond and start him at the palus · 80d", "Send him on his way"],
+        data:{ name:nm, origin } }; },
+    run(d,ev,i){
+      d.flags.foundlingCool = d.week;
+      if(i===1){
+        if(d.gold<80) return `You reach for the coin to buy his bond and find the house cannot spare even that. ${ev.data.name} watches you decide it, and says nothing.`;
+        d.gold-=80; scheduleArc(d, "foundlingBack", ri(8,10), { path:"palus", name:ev.data.name });
+        return `Eighty denarii makes the boy yours. ${ev.data.name} is put at the far post with a wooden sword too big for him, and does not set it down when the others stop.`; }
+      if(i===2){
+        scheduleArc(d, "foundlingBack", ri(10,13), { path:"sent", name:ev.data.name });
+        return `You send ${ev.data.name} off with bread, a copper, and the name of a farm that might take him. He does not look back, which plainly costs him something.`; }
+      scheduleArc(d, "foundlingBack", ri(6,8), { path:"kitchen", name:ev.data.name });
+      return `${ev.data.name} is put to the pots, the water, and the raking of the sand. He works like a boy afraid the offer will be taken back.`; } },
+  foundlingBack: {
+    make(){ return null; },
+    build(d, data){
+      const nm = data.name || "the boy";
+      if(data.path==="palus") return { id:"foundlingBack", title:"The Boy is Made", data,
+        text:`The boy whose bond you bought a season ago is not a boy any longer. ${nm} has put on shoulders and taken every bruise the palus had without once asking to stop. The doctore, who does not praise, has stopped correcting him. He is ready to swear, if you will have him.`,
+        choices:[`Give ${nm} the oath — he is one of yours`, "Sell his bond on while it is worth something"] };
+      if(data.path==="kitchen") return { id:"foundlingBack", title:"The Kitchen Boy", data,
+        text:`${nm} has been slipping from the kitchens at night to copy the drills by moonlight. One of the men caught him at it and, instead of a cuff, showed him how to set his feet. The yard has quietly decided he is theirs. He wants the sand.`,
+        choices:[`Put ${nm} to the palus properly`, "He stays where he is of use"] };
+      return { id:"foundlingBack", title:"The One You Turned Away", data,
+        text:`Word comes up the road: the boy you turned away, ${nm}, is fighting in the pits at Nola under a lanista who takes anyone. They say he is quick, that he wins more than he should, and that he tells whoever asks that he learned it watching your yard through the gate.`,
+        choices:[`Send for him — buy out his contract · 140d`, "Leave him to the life he chose"] }; },
+    run(d,ev,i){
+      const data = ev.data, nm = data.name || "the boy";
+      const raise = (potBonus, age, wins)=>{
+        const g = genGladiator(d, ri(24,40));
+        g.name = nm; g.age = age; g.wins = wins||0; g.losses = 0; g.kills = 0; g.pfame = 0; g.nick = null;
+        g.potential = clamp(g.potential + potBonus, 32, 99);
+        g.price = 0; g.morale = 72; g.regard = 64; g.defiance = ri(4,16);
+        g.sworn = { how:"proper", week:d.week, free:false }; g.status = "active"; g.lastFought = -9;
+        d.gladiators.push(g);
+        d.gladiators.forEach(o=>{ if(o.status==="active" && o.id!==g.id) o.morale = clamp(o.morale+2,0,100); });
+        d.unrest = clamp(d.unrest-3,0,100);
+        return g; };
+      if(data.path==="palus"){
+        if(i===0){ raise(14, ri(16,18), 0);
+          chron(d, `${nm} takes the oath. The house raised this one out of nothing, and every man in the cells knows it.`, "good");
+          return `${nm} says the sacramentum in a voice that does not shake. He is yours now — young, unproven, and made entirely of this house.`; }
+        d.gold += 120;
+        return `You sell ${nm}'s bond to a passing lanista for 120 denarii. He goes quietly. The men who taught him watch the gate a beat too long.`; }
+      if(data.path==="kitchen"){
+        if(i===0){ raise(6, ri(15,17), 0);
+          chron(d, `${nm} leaves the kitchens for the palus. The cook complains; the yard does not.`, "good");
+          return `${nm} is put to the sand properly — behind the others, and training like a boy making up a lost year in a season.`; }
+        d.unrest = clamp(d.unrest+2,0,100);
+        return `You tell ${nm} the kitchens are where he is worth something. He nods, and stops slipping out at night — which is its own kind of answer.`; }
+      if(i===0){
+        if(d.gold<140) return `You would send for ${nm}, but the house cannot spare the 140 denarii to buy him back. By the time it can, he may be another man's.`;
+        d.gold -= 140; raise(18, ri(17,19), ri(1,3));
+        chron(d, `${nm} comes back up the road to the house he learned to fight by watching. Not grateful, exactly. Home.`, "good");
+        return `You buy out ${nm}'s contract. He walks back through the gate he once slept against and takes a place at the post as though he had never left.`; }
+      return `You leave ${nm} to Nola and the pits. Some weeks on, the word simply stops coming, the way it does. You never hear how it ended — only that it did.`; } },
+  /* ===== ARC: a life owed (a mercy on the sand, repaid weeks later) ===== */
+  owedLife: {
+    make(d){
+      if(d.city||d.travel||d.rome) return null;
+      if(!d.flags.everCloth) return null;
+      if(d.flags.owedDone) return null;
+      if((d.arcs||[]).some(a=>a.id==="owedBack")) return null;
+      if(R()>0.5) return null;
+      return { id:"owedLife", title:"A Man Who Remembers",
+        text:`A freedman you do not know waits at the gate with his cap in his hands. He was on the sand against one of yours, he says, on a day you threw the cloth and let him live. He has done well enough since to be able to say thank you — and he would like to. He does not say how.`,
+        choices:["Hear him out", "Tell him the debt is nothing — send him off"] }; },
+    run(d,ev,i){
+      d.flags.owedDone = 1;
+      if(i===0){ scheduleArc(d, "owedBack", ri(3,6), {});
+        return `You tell him to come back when he has something to say rather than something to feel. He grins — not the answer you expected — and goes.`; }
+      d.gladiators.forEach(o=>{ if(o.status==="active") o.regard = clamp(regardOf(o)+3,0,100); });
+      return `You send him off, his thanks unspent. The cells hear that a lanista who spares a man is remembered for it, which is worth more down there than whatever he was carrying.`; } },
+  owedBack: {
+    make(){ return null; },
+    build(d, data){
+      if(!activeG(d).length) return null;
+      return { id:"owedBack", title:"The Debt Paid", data,
+        text:`The freedman is back, and this time he has something. He deals in men and rumours down the coast, and he has heard which Capuan house has put quiet coin on taking one of yours — and which of your own has been listening. He will give you the name. Or he will hand you a purse and call it square, if you would rather not know.`,
+        choices:["Take the name", "Take the purse · 180d"] }; },
+    run(d,ev,i){
+      if(i===0){
+        const men = activeG(d);
+        if(!men.length) return `He gives you a name — but the man he names is no longer in your cells. The warning arrives after the door has already shut.`;
+        const target = men.reduce((m,g)=> gladValue(g)>gladValue(m)?g:m, men[0]);
+        target.regard = clamp(regardOf(target)+18,0,100);
+        remember(d, target, "heard");
+        chron(d, `A warning bought with an old mercy: ${target.name} was being courted by another house. He knows now that you know.`, "info");
+        return `He gives you the name. You have a quiet word with ${target.name}, who did not know he had been for sale — and now cannot be, not to them.`; }
+      d.gold += 180;
+      return `You take the purse. Whatever the name was, it goes back down the coast with him, and the house is 180 denarii the richer for a kindness you had half forgotten.`; } },
   poached: {
     make(d){ if(!d.poach) return null;
       const g = d.gladiators.find(x=>x.id===d.poach.gid);
@@ -8258,6 +8362,23 @@ function pickEvent(d){
   return null;
 }
 
+/* ---- EVENT ARCS ----
+   A choice now can plant a beat that arrives weeks later. A scheduled beat names
+   an EVENTS entry that has build(d,data) instead of a random make() — so the
+   weekly roll never surfaces it, but fireArc raises it when its week comes, ahead
+   of the random event. If the context is gone by then (build returns null) the
+   beat quietly lapses. */
+function scheduleArc(d, id, weeks, data){ (d.arcs || (d.arcs=[])).push({ id, fire: d.week + Math.max(1, weeks|0), data: data||{} }); }
+function fireArc(d){
+  if(d.pendingEvent || d.rome || d.over) return;
+  const arcs = d.arcs || (d.arcs = []);
+  const idx = arcs.findIndex(a => a.fire <= d.week && EVENTS[a.id] && EVENTS[a.id].build);
+  if(idx < 0) return;
+  const a = arcs.splice(idx, 1)[0];
+  const ev = EVENTS[a.id].build(d, a.data);
+  if(ev) d.pendingEvent = ev;   /* build returned null -> the moment passed, the beat is spent */
+}
+
 /* ================= WEEK RESOLUTION & ACTIONS ================= */
 
 function updateRebellion(d){
@@ -8544,6 +8665,7 @@ function endWeek(d){
   }
   if(!d.pendingEvent && !d.rome && R()<0.14){ const ev=EVENTS.ambition.make(d); if(ev) d.pendingEvent=ev; }
   freedWeek(d);
+  fireArc(d);   /* a beat planted weeks ago comes due — ahead of the week's random event */
   if(!d.pendingEvent && !d.rome && R()<0.45){ const ev=pickEvent(d); if(ev) d.pendingEvent=ev; }
   if(d.flags.spartacusAtLarge && R()<0.25){
     d.flags.sparkCount = (d.flags.sparkCount||0)+1;
