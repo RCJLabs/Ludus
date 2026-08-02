@@ -3155,6 +3155,101 @@ function makeGames(d){
     exclusive: !!(pactOf(d) && PACTS[pactOf(d).kind] && PACTS[pactOf(d).kind].exclusive) };
 }
 
+/* ---- THE MUNUS ----
+   Editors book you all year. But a house of standing does not only wait to be
+   asked — it gives the city its own games. You choose the occasion and the
+   card, then either host it out of your own coin for the whole of the glory,
+   or sell the bill to an editor who puts his name on it and pays you for the
+   trouble. Either way the city remembers who gave it an afternoon. */
+const MUNUS_COOL = 6;
+const MUNUS_OCCASIONS = {
+  funeral: { name:"Funeral Games", tag:"for the dead", rep:"mercy", fac:"front",
+    fameM:1.0, favorM:1.6, mob:2, unrest:-3, honoursDead:true,
+    blurb:"Held in the name of the fallen — a patron's father, or your own dead. The oldest reason to open the gates.",
+    line:"A munus in the proper sense, and the men of standing note who paid for it." },
+  votive:  { name:"Votive Games", tag:"to the gods", rep:"show", fac:"mob",
+    fameM:0.8, favorM:0.8, mob:9, unrest:-10,
+    blurb:"Vowed to the gods for the city's good — a plague passed, a harvest in. The streets take it as their due.",
+    line:"The city needed placating, and you did the placating. The streets are quiet for it." },
+  triumph: { name:"Triumphal Games", tag:"for the house", rep:"show", fac:"front",
+    fameM:1.7, favorM:1.1, mob:4, unrest:0, fans:true,
+    blurb:"For your own glory — a great win, a rank taken, a name made. Loud, gilded, and entirely about you.",
+    line:"Nobody left in any doubt whose house this was. Capua will be saying the name for weeks." },
+  people:  { name:"The People's Games", tag:"bread and circuses", rep:"blood", fac:"mob",
+    fameM:0.6, favorM:0.5, mob:13, unrest:-6,
+    blurb:"No pretext but the mob's pleasure. Cheap, loud, and adored by exactly the people who riot.",
+    line:"The cheap seats will forgive a house a great deal after an afternoon like that." },
+};
+const MUN_OCC_KEYS = Object.keys(MUNUS_OCCASIONS);
+const MUNUS_SCALES = {
+  modest: { name:"Modest", gate:120, cost:500,  mag:1.0, fame:14,
+    blurb:"An afternoon's card — a few pairings and a decent crowd." },
+  grand:  { name:"Grand",  gate:300, cost:1600, mag:2.2, fame:32,
+    blurb:"A full day. The good seats fill and the whole town takes notice." },
+  lavish: { name:"Lavish", gate:600, cost:4200, mag:4.0, fame:64,
+    blurb:"Days of it — the kind of games men date their memories by." },
+};
+const MUN_SCALE_KEYS = Object.keys(MUNUS_SCALES);
+const munusReady = d => !d.travel && !d.city && !(d.rome && d.rome.travel<=0)
+  && (d.week - (d.munusLast==null ? -99 : d.munusLast)) >= MUNUS_COOL;
+const munusWait = d => Math.max(0, MUNUS_COOL - (d.week - (d.munusLast==null ? -99 : d.munusLast)));
+const munusCost = plan => { const S = MUNUS_SCALES[plan.scale]; if(!S) return 0;
+  return Math.round(S.cost * (1 + (plan.hunt?0.3:0) + (plan.sine?0.15:0))); };
+const munusSellFee = (d, plan) => { const S = MUNUS_SCALES[plan.scale], O = MUNUS_OCCASIONS[plan.occasion];
+  if(!S || !O) return 0;
+  return Math.round(munusCost(plan) * 0.55 * (0.9 + O.fameM*0.15) * (1 + (plan.hunt?0.1:0)) * seasonPurse(d)); };
+/* stage or broker the card; returns a summary for the "it is decided" modal */
+function stageMunus(d, plan){
+  const O = MUNUS_OCCASIONS[plan.occasion], S = MUNUS_SCALES[plan.scale];
+  if(!O || !S) return "";
+  const sell = !!plan.sell, m = S.mag * (sell ? 0.45 : 1), half = k => Math.round(k*m/2);
+  const parts = [];
+  if(sell){ const fee = munusSellFee(d, plan); d.gold += fee;
+    parts.push(`The editor's clerk counts out ${fee} denarii for the card — his name goes on the bill, not yours.`); }
+  else { const c = munusCost(plan); d.gold -= c;
+    parts.push(`${c} denarii of your own coin, poured into an afternoon of sand.`); }
+  const fame = rnd(S.fame * O.fameM * (sell?0.5:1) * (plan.hunt?1.12:1) * (plan.sine?1.1:1));
+  d.fame += fame; parts.push(`The house takes ${fame} fame from it.`);
+  const favUp = half(6 * O.favorM);
+  patronsOf(d).forEach(p=>{ let n = favUp;
+    if(plan.sine && (p.rank==="senator" || p.rank==="noble")) n -= half(4);   // the elite dislike butchery
+    p.favor = clamp(p.favor + n, 0, 100); });
+  recomputeFavor(d);
+  facMove(d, "mob", Math.round((O.mob + (plan.hunt?3:0) + (plan.sine?6:0)) * (sell?0.6:1)));
+  facMove(d, O.fac, half(5));
+  if(plan.sine) facMove(d, "front", -half(4));           // the front rows sniff at a bloodbath
+  d.unrest = clamp(d.unrest + Math.round((O.unrest - (plan.hunt?1:0)) * (sell?0.6:1)), 0, 100);
+  addRep(d, O.rep, half(6));
+  if(plan.hunt) addRep(d, "blood", half(3));
+  if(plan.sine) addRep(d, "blood", half(6));
+  if(plan.hunt) parts.push(`The morning hunt opened it, and the cheap seats were on their feet before noon.`);
+  if(O.honoursDead && (d.fallen||[]).length){
+    const names = d.fallen.slice(-3).map(f=>f.name).join(", ");
+    parts.push(`Your own dead were named before the crowd: ${names}.`);
+    patronsOf(d).forEach(p=>p.favor=clamp(p.favor+2,0,100)); recomputeFavor(d); d.honoured = (d.honoured||0)+1;
+  }
+  if(plan.sine && R()<0.5){ facMove(d, "mob", half(4));
+    parts.push(`A man was left on the sand at the close of it — the mob will remember which games gave them that.`); }
+  const hg = plan.headliner ? d.gladiators.find(g=>g.id===plan.headliner && g.status==="active") : null;
+  if(hg){
+    hg.pfame = clamp((hg.pfame||0) + Math.round((10 + S.mag*4) * (sell?0.8:1)), 0, 100);
+    hg.fans  = clamp((hg.fans||0)  + Math.round(8 + S.mag*3), 0, 100);
+    hg.favour= clamp((hg.favour||0)+ Math.round(6 + S.mag*2), 0, 100);
+    remember(d, hg, "munera", 1.4);
+    d.fame += half(4);
+    /* the crowd will not vote to kill the host's own champion — but the sand can still hurt him */
+    if(R() < 0.12 + (plan.sine?0.14:0)){
+      const part = pick(TARGETS)[0], inj = injuryFor(part, plan.sine);
+      agonyWear(hg, inj); hg.injury = inj; hg.status = "injured";
+      parts.push(`${hg.name} headlined and carried it, but limped off with ${inj.name.toLowerCase()}.`);
+    } else parts.push(`${hg.name} headlined, and the crowd carried his name out into the streets.`);
+  }
+  d.munusLast = d.week;
+  const head = sell ? `You brokered ${O.name.toLowerCase()} for an editor.` : `Your house gave ${O.name.toLowerCase()}.`;
+  chron(d, `${head} ${O.line}`, "good");
+  return `${head} ${O.line} ${parts.join(" ")}`;
+}
+
 /* ================= RIVAL HOUSES ================= */
 
 const RIVAL_SEED = [["Solonius",60,[30,50]],["Vettius",150,[42,62]],["Tullius",330,[58,80]]];
@@ -4096,6 +4191,7 @@ function migrate(S){
   if(S.election===undefined) S.election = null;
   if(S.aedile===undefined) S.aedile = null;
   if(!S.rise) S.rise = { rank:0, standing:0 };
+  if(S.munusLast===undefined) S.munusLast = -99;
   S.gladiators.forEach(g=>{ if(g.sworn===undefined) g.sworn = { how:"proper", week:1, free:isAuctor(g) }; });
   if(!S.seed) S.seed = newSeedWord();
   if(S.rngState==null) S.rngState = rngGet();
@@ -4160,7 +4256,7 @@ function newGameState(name, scen, seed, pitch){
     gladiators:[], market:[], games:null, pendingEvent:null, log:[], fallen:[], freed:[],
     seed: null, rngState: 0,
     lastParty:-9, lastFeast:-9, over:null, milestone600:false, flags:{learned:{}}, escaped:[], rebellion:null, gear:{}, retired:[],
-    doctore:null, doctoreMarket:[], doctoreOffer:null, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, defected:[], nemesis:null, nemHouse:null, saga:null, arcs:[], crest:{ c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" }, primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], works:{}, slavers:{}, pact:null, gambits:{}, pendingLesson:null, law:null, doctrine:null, kits:[], deadSteel:[], bay:null, mark:null, after:null, metHouse:{}, owed:[], household:{}, yardSeen:0, yardMissed:0, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, departed:[], reSignOffer:null, annals:[], rise:{ rank:0, standing:0 } };
+    doctore:null, doctoreMarket:[], doctoreOffer:null, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, defected:[], nemesis:null, nemHouse:null, saga:null, arcs:[], crest:{ c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" }, primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], works:{}, slavers:{}, pact:null, gambits:{}, pendingLesson:null, law:null, doctrine:null, kits:[], deadSteel:[], bay:null, mark:null, after:null, metHouse:{}, owed:[], household:{}, yardSeen:0, yardMissed:0, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, departed:[], reSignOffer:null, annals:[], rise:{ rank:0, standing:0 }, munusLast:-99 };
   d.rivals = makeRivals(d);
   const solo = S.men.length === 1;
   S.men.forEach((band,i)=>{
@@ -10448,6 +10544,8 @@ export default function App(){
   const [arenaWiz,setArenaWiz] = useState(false);   /* the guided to-the-sand flow */
   const [arenaStep,setArenaStep] = useState(0);      /* 0 where · 1 who · 2 ready */
   const [arenaPick,setArenaPick] = useState(null);   /* the chosen occasion */
+  const [munusWiz,setMunusWiz] = useState(false);    /* the give-the-city-games builder */
+  const [munusPlan,setMunusPlan] = useState({ occasion:"funeral", scale:"modest", hunt:false, sine:false, headliner:null, sell:false });
 
   useEffect(()=>{ (async()=>{
     const found = {};
@@ -10556,6 +10654,12 @@ export default function App(){
     const res = doFight(d, fGid, offer, tactic, bet, null, null, offer.watched ? plan : "none");
     if(res.crux){ setHeld({ base:d, res }); setFight(res); setFGid(null); setStake(0); setAgainst(false); return; }
     setS(d); setFight(res); setFGid(null); setStake(0); setAgainst(false); setPlan("none");
+  };
+  const openMunus = () => { setMunusPlan({ occasion:"funeral", scale:"modest", hunt:false, sine:false, headliner:null, sell:false }); setMunusWiz(true); };
+  const stageMunusNow = () => { let report = "";
+    mut(d=>{ report = stageMunus(d, munusPlan); });
+    setMunusWiz(false);
+    if(report) setEvResult(report);
   };
   /* the one word from the box */
   const speak = choice => {
@@ -12116,6 +12220,20 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             </button>
             {eligible.length===0 && <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:8}}>No one is fit to fight this week — rest and heal, then come back.</div>}
           </div>
+
+          {S.fame>=MUNUS_SCALES.modest.gate && !S.travel && !S.city && (
+            <div className="panel" style={{padding:14,borderColor:"#6d5426"}}>
+              <div className="disp" style={{fontSize:15,fontWeight:700,letterSpacing:".04em",marginBottom:3}}>GIVE THE CITY GAMES</div>
+              <div className="dim" style={{fontSize:14.5,marginBottom:11}}>
+                {munusReady(S)
+                  ? "You need not wait for an editor. Commission your own munus — set the occasion and the card, then host it for the glory or sell the bill to an editor."
+                  : `Capua has had its fill of your generosity for now. ${munusWait(S)} week${munusWait(S)===1?"":"s"} before you can put on games again.`}
+              </div>
+              <button className="btn" style={{width:"100%"}} disabled={!munusReady(S)} onClick={openMunus}>
+                Plan a munus ›
+              </button>
+            </div>
+          )}
 
           {(()=>{ const C = awayIn(S);
             if(S.travel) return (
@@ -14418,6 +14536,112 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
               {header}
               {body}
+            </div>
+          </div>
+        );
+      })()}
+
+      {munusWiz && !fight && (()=>{
+        const p = munusPlan, set = patch => setMunusPlan({ ...p, ...patch });
+        const O = MUNUS_OCCASIONS[p.occasion], Sc = MUNUS_SCALES[p.scale];
+        const cost = munusCost(p), fee = munusSellFee(S, p);
+        const hg = p.headliner ? S.gladiators.find(g=>g.id===p.headliner) : null;
+        const canAfford = p.sell || S.gold >= cost;
+        const close = ()=> setMunusWiz(false);
+        return (
+          <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:55}} onClick={close}>
+            <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
+              <div className="flex items-center justify-between" style={{marginBottom:9}}>
+                <div className="disp" style={{fontSize:15,fontWeight:900,letterSpacing:".1em",color:"#e8d092"}}>GIVE THE CITY GAMES</div>
+                <button className="btn btn-ghost" style={{padding:"8px 10px"}} aria-label="Close" onClick={close}><X size={14}/></button>
+              </div>
+
+              <div className="tag" style={{marginBottom:6}}>The occasion</div>
+              {MUN_OCC_KEYS.map(k=>{ const oc = MUNUS_OCCASIONS[k], on = p.occasion===k;
+                return (
+                  <button key={k} className={`optrow ${on?"on":""}`} style={{marginBottom:6,width:"100%"}} onClick={()=>set({occasion:k})}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="disp" style={{fontSize:13.5,color:on?"#e8d092":"#e8d9b8"}}>{oc.name}</span>
+                      <span className="dim" style={{fontSize:12.5,whiteSpace:"nowrap"}}>{oc.tag}</span>
+                    </div>
+                    <div className="dim" style={{fontSize:13,marginTop:2}}>{oc.blurb}</div>
+                  </button>
+                ); })}
+
+              <div className="tag" style={{margin:"11px 0 6px"}}>The scale</div>
+              <div className="flex gap-2" style={{flexWrap:"wrap",marginBottom:5}}>
+                {MUN_SCALE_KEYS.map(k=>{ const sc = MUNUS_SCALES[k], locked = S.fame < sc.gate;
+                  return (
+                    <button key={k} className={`chip ${p.scale===k?"on":""}`} disabled={locked}
+                      style={locked?{opacity:.4}:(p.scale===k?{borderColor:"#c99a4b",color:"#e0bd72",background:"#2b2115"}:undefined)}
+                      onClick={()=>set({scale:k})}>{sc.name}{locked?` · ${sc.gate} fame`:""}</button>
+                  ); })}
+              </div>
+              <div className="dim" style={{fontSize:13,fontStyle:"italic",marginBottom:11}}>{Sc.blurb}</div>
+
+              <div className="tag" style={{marginBottom:6}}>The card</div>
+              <button className={`optrow ${p.hunt?"on":""}`} style={{marginBottom:6,width:"100%"}} onClick={()=>set({hunt:!p.hunt})}>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="disp" style={{fontSize:13,color:p.hunt?"#e8d092":"#e8d9b8"}}>A morning hunt</span>
+                  <span className="rowval dim" style={{fontSize:12.5}}>{p.hunt?"✓ ":""}the mob's delight</span>
+                </div>
+                <div className="dim" style={{fontSize:12.5,marginTop:2}}>Beasts to open the day. The cheap seats love it; it costs more and reads as blood.</div>
+              </button>
+              <button className={`optrow ${p.sine?"on":""}`} style={{marginBottom:6,width:"100%"}} onClick={()=>set({sine:!p.sine})}>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="disp" style={{fontSize:13,color:p.sine?"#d98476":"#e8d9b8"}}>To the death</span>
+                  <span className="rowval" style={{fontSize:12.5,color:p.sine?"#d98476":"#9c8a6f"}}>{p.sine?"✓ ":""}sine missione</span>
+                </div>
+                <div className="dim" style={{fontSize:12.5,marginTop:2}}>No mercy on the card. The mob roars for it; the good seats look away, and their favour cools.</div>
+              </button>
+
+              <div className="tag" style={{margin:"11px 0 6px"}}>Your champion on the bill</div>
+              <div className="flex gap-1" style={{flexWrap:"wrap",marginBottom:5}}>
+                <button className={`chip ${!p.headliner?"on":""}`} onClick={()=>set({headliner:null})}>None</button>
+                {eligible.slice(0,8).map(g=>(
+                  <button key={g.id} className={`chip ${p.headliner===g.id?"on":""}`}
+                    style={p.headliner===g.id?{borderColor:"#c99a4b",color:"#e0bd72",background:"#2b2115"}:undefined}
+                    onClick={()=>set({headliner:p.headliner===g.id?null:g.id})}>{g.name}</button>
+                ))}
+              </div>
+              <div className="dim" style={{fontSize:13,fontStyle:"italic",marginBottom:11}}>
+                {hg ? `${hg.name} headlines — renown, a following and the crowd's favour, for the risk of a hard afternoon. No editor lets the host's own man be killed, whatever the stakes.`
+                    : eligible.length ? "Put one of your own men at the top of the card, or let an anonymous star headline for you."
+                    : "No one is fit to headline this week — an anonymous star will carry the top of the card."}
+              </div>
+
+              <div className="tag" style={{marginBottom:6}}>Whose name goes on it</div>
+              <div className="grid grid-cols-2 gap-2" style={{marginBottom:11}}>
+                <button className={`focusbtn ${!p.sell?"on":""}`} onClick={()=>set({sell:false})}>
+                  HOST IT<span className="sub">your coin · full glory</span>
+                </button>
+                <button className={`focusbtn ${p.sell?"on":""}`} onClick={()=>set({sell:true})}>
+                  SELL THE CARD<span className="sub">an editor pays you</span>
+                </button>
+              </div>
+
+              <div className="panel" style={{padding:11,marginBottom:11,background:"#1c1610",borderColor:canAfford?"#6d5426":"#7c2a22"}}>
+                {p.sell ? (
+                  <div className="flex items-center justify-between" style={{fontSize:14.5}}>
+                    <span className="dim">The editor pays you</span><span className="gold">+{fee}d</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between" style={{fontSize:14.5}}>
+                    <span className="dim">Out of your own coin</span>
+                    <span style={{color:canAfford?"#e0bd72":"#d96f5d"}}>−{cost}d</span>
+                  </div>
+                )}
+                <div className="dim" style={{fontSize:12.5,marginTop:4}}>
+                  {p.sell ? "His name on the bill, so the house takes less of the fame and favour — but the coin is real and nobody of yours is at risk."
+                          : "Every denarius of it yours, and so is every scrap of the glory."}
+                </div>
+              </div>
+
+              <button className="btn btn-blood" style={{width:"100%"}} disabled={!canAfford} onClick={stageMunusNow}>
+                {!canAfford ? `Not enough coin · ${cost}d`
+                  : p.sell ? `Sell ${O.name.toLowerCase()} to an editor`
+                  : `Host ${O.name.toLowerCase()} · ${cost}d`}
+              </button>
             </div>
           </div>
         );
