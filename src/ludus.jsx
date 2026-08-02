@@ -3135,6 +3135,14 @@ function makeGames(d){
     offers.push({ id:d.nextId++, tier, festival, melee:true, field, stakes:"melee",
       purse: rnd((TIERS[tier].purse[0]+R()*TIERS[tier].purse[1]) * 4.0 * (F.purse||1) * seasonPurse(d)) });
   }
+  /* the great games throw up things no lone house could ever stage — a mock sea-battle on flooded sand */
+  if((F.key==="romani" || (F.tier||0)>=1) && d.fame>=TIERS[2].fame && activeG(d).length>=2 && R()<0.4){
+    const size = ri(6,8);
+    const field = [];
+    for(let i=0;i<size;i++) field.push(pickRivalOpp(d, 1).opp);
+    offers.push({ id:d.nextId++, tier:2, festival, melee:true, spectacle:"naumachia", field, stakes:"melee",
+      purse: rnd((TIERS[2].purse[0]+R()*TIERS[2].purse[1]) * 6.0 * (F.purse||1) * seasonPurse(d)) });
+  }
   if(R()<0.5){
     const tier = d.fame>=TIERS[2].fame ? 2 : d.fame>=TIERS[1].fame ? 1 : 0;
     const opts = beastTier(tier);
@@ -3190,11 +3198,36 @@ const MUNUS_SCALES = {
     blurb:"Days of it — the kind of games men date their memories by." },
 };
 const MUN_SCALE_KEYS = Object.keys(MUNUS_SCALES);
+/* ---- THE CENTREPIECE ----
+   The munus says whose games; the centrepiece says what kind of show. These are the
+   set-pieces a real editor reached for — a mock sea-battle, the noon execution, a
+   staged re-enactment. The grand ones are a bet: pour coin into the production and,
+   done at scale, they are the thing men date their memories by; done cheap, an
+   enormously public flop. */
+const SPECTACLES = {
+  execution:  { name:"A Noon Execution", tag:"the condemned, at midday", cost:600, flopBase:0.08,
+    mob:12, front:-6, rep:"blood", fameBonus:12, lavishOnly:false, fameGate:0,
+    blurb:"The midday slot, given to the condemned. The mob's darkest appetite fed in full — and the good seats find somewhere else to look.",
+    win:"The condemned were given to the crowd at noon, and the crowd took them. The cheap seats will forgive you a great deal now; the front rows will remember it differently.",
+    flop:"Even an execution can be botched — a bungling headsman, a man who would not die quietly — and a squeamish murmur went round the good seats instead of the roar you paid for." },
+  reenactment:{ name:"A Re-enactment", tag:"a famous battle, staged", cost:1500, flopBase:0.26,
+    mob:4, front:6, rep:"show", fameBonus:22, lavishOnly:false, fameGate:250,
+    blurb:"Cannae, or the Horatii, or Hercules and the lion — staged in costume with a field of men. Done well it is magnificent; done cheap it is a pantomime.",
+    win:"They staged the whole battle in costume, a hundred men and a painted sea, and for an afternoon Capua watched history happen on its own sand. Nobody left unmoved.",
+    flop:"The costumes were thin and the men did not know the steps, and a re-enactment that is not magnificent is only funny. Capua laughed at the wrong moments, and remembers." },
+  naumachia:  { name:"A Naumachia", tag:"a mock sea-battle", cost:3000, flopBase:0.34,
+    mob:11, front:5, rep:"show", fameBonus:40, lavishOnly:true, fameGate:500,
+    blurb:"They flood the arena and fight it out from boats. No house in Capua has the coin to do it twice, and every soul in the town will come to the once.",
+    win:"They flooded the arena and fought a sea-battle on it, ships and all, and the whole of Campania came to see. There has not been a spectacle like it in living memory, and your house's name is on it.",
+    flop:"The waterworks failed at the worst possible moment and the ships sat in a foot of stinking mud while the crowd jeered them home. An enormous amount of money, spent to be laughed at by everyone who is anyone." },
+};
+const SPEC_KEYS = Object.keys(SPECTACLES);
 const munusReady = d => !d.travel && !d.city && !(d.rome && d.rome.travel<=0)
   && (d.week - (d.munusLast==null ? -99 : d.munusLast)) >= MUNUS_COOL;
 const munusWait = d => Math.max(0, MUNUS_COOL - (d.week - (d.munusLast==null ? -99 : d.munusLast)));
 const munusCost = plan => { const S = MUNUS_SCALES[plan.scale]; if(!S) return 0;
-  return Math.round(S.cost * (1 + (plan.hunt?0.3:0) + (plan.sine?0.15:0))); };
+  const spec = plan.spectacle && SPECTACLES[plan.spectacle] ? SPECTACLES[plan.spectacle].cost : 0;
+  return Math.round(S.cost * (1 + (plan.hunt?0.3:0) + (plan.sine?0.15:0))) + spec; };
 const munusSellFee = (d, plan) => { const S = MUNUS_SCALES[plan.scale], O = MUNUS_OCCASIONS[plan.occasion];
   if(!S || !O) return 0;
   return Math.round(munusCost(plan) * 0.55 * (0.9 + O.fameM*0.15) * (1 + (plan.hunt?0.1:0)) * seasonPurse(d)); };
@@ -3243,6 +3276,25 @@ function stageMunus(d, plan){
       agonyWear(hg, inj); hg.injury = inj; hg.status = "injured";
       parts.push(`${hg.name} headlined and carried it, but limped off with ${inj.name.toLowerCase()}.`);
     } else parts.push(`${hg.name} headlined, and the crowd carried his name out into the streets.`);
+  }
+  const SP = plan.spectacle ? SPECTACLES[plan.spectacle] : null;
+  if(SP){
+    const flopP = clamp(SP.flopBase - (S.mag-1)*0.09 + (sell?0.05:0), 0.03, 0.6);
+    if(R() < flopP){
+      /* an expensive, public failure — no rep gained, and the people who matter saw it */
+      d.fame = Math.max(0, d.fame - Math.round(18*m/2));
+      facMove(d, "front", -half(4)); facMove(d, "mob", -half(3));
+      patronsOf(d).forEach(p=>{ p.favor = clamp(p.favor - half(4), 0, 100); }); recomputeFavor(d);
+      d.unrest = clamp(d.unrest + half(4), 0, 100);
+      parts.push(SP.flop);
+    } else {
+      d.fame += Math.round((SP.fameBonus||20) * m/2);
+      facMove(d, "mob", half(SP.mob||0));
+      if(SP.front) facMove(d, "front", half(SP.front));   // a re-enactment courts the boxes; an execution cools them
+      if(SP.front < 0){ patronsOf(d).forEach(p=>{ if(p.rank==="senator"||p.rank==="noble") p.favor = clamp(p.favor - half(3), 0, 100); }); recomputeFavor(d); }
+      addRep(d, SP.rep, half(7));
+      parts.push(SP.win);
+    }
   }
   d.munusLast = d.week;
   const head = sell ? `You brokered ${O.name.toLowerCase()} for an editor.` : `Your house gave ${O.name.toLowerCase()}.`;
@@ -10932,7 +10984,7 @@ export default function App(){
   const [arenaStep,setArenaStep] = useState(0);      /* 0 where · 1 who · 2 ready */
   const [arenaPick,setArenaPick] = useState(null);   /* the chosen occasion */
   const [munusWiz,setMunusWiz] = useState(false);    /* the give-the-city-games builder */
-  const [munusPlan,setMunusPlan] = useState({ occasion:"funeral", scale:"modest", hunt:false, sine:false, headliner:null, sell:false });
+  const [munusPlan,setMunusPlan] = useState({ occasion:"funeral", scale:"modest", hunt:false, sine:false, spectacle:null, headliner:null, sell:false });
 
   useEffect(()=>{ (async()=>{
     const found = {};
@@ -11042,7 +11094,7 @@ export default function App(){
     if(res.crux){ setHeld({ base:d, res }); setFight(res); setFGid(null); setStake(0); setAgainst(false); return; }
     setS(d); setFight(res); setFGid(null); setStake(0); setAgainst(false); setPlan("none");
   };
-  const openMunus = () => { setMunusPlan({ occasion:"funeral", scale:"modest", hunt:false, sine:false, headliner:null, sell:false }); setMunusWiz(true); };
+  const openMunus = () => { setMunusPlan({ occasion:"funeral", scale:"modest", hunt:false, sine:false, spectacle:null, headliner:null, sell:false }); setMunusWiz(true); };
   const stageMunusNow = () => { let report = "";
     mut(d=>{ report = stageMunus(d, munusPlan); });
     setMunusWiz(false);
@@ -14906,10 +14958,10 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               o.opps.map(x=>x.name).join(" & "),
               <span className="gold" style={{fontSize:14}}>{o.purse}d</span>,
               <div style={{marginTop:3}}><span className="tag tag-gold">{TIERS[o.tier].name}</span> <span className="tag tag-blood">Two men</span></div>))}
-            {gamesReady && melees.map(o=> occRow({kind:"melee",o}, "The Melee",
-              `${o.field.length} men on the sand at once`,
+            {gamesReady && melees.map(o=> occRow({kind:"melee",o}, o.spectacle==="naumachia"?"The Naumachia":"The Melee",
+              o.spectacle==="naumachia" ? `A mock sea-battle — ${o.field.length} men on flooded sand` : `${o.field.length} men on the sand at once`,
               <span className="gold" style={{fontSize:14}}>{o.purse}d</span>,
-              <div style={{marginTop:3}}><span className="tag tag-blood">Last man standing</span></div>))}
+              <div style={{marginTop:3}}>{o.spectacle==="naumachia" && <span className="tag tag-gold">✦ Spectacle</span>} <span className="tag tag-blood">Last man standing</span></div>))}
             {gamesReady && hunts.map(o=> occRow({kind:"hunt",o}, "The Morning Hunt",
               BEASTS[o.beast].name,
               <span className="gold" style={{fontSize:14}}>{o.purse}d</span>,
@@ -15076,9 +15128,11 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             body = (<>
               {backBtn}
               <div className="flex items-center gap-1" style={{flexWrap:"wrap",marginBottom:5}}>
-                <div className="disp" style={{fontSize:14,fontWeight:700}}>THE MELEE</div><span className="tag tag-blood">Last man standing</span>
+                <div className="disp" style={{fontSize:14,fontWeight:700}}>{o.spectacle==="naumachia"?"THE NAUMACHIA":"THE MELEE"}</div>
+                {o.spectacle==="naumachia" && <span className="tag tag-gold">✦ Spectacle</span>}<span className="tag tag-blood">Last man standing</span>
                 <span className="gold" style={{marginLeft:"auto",fontSize:14.5}}>{o.purse}d purse</span>
               </div>
+              {o.spectacle==="naumachia" && <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:4}}>They have flooded the arena. Ships, and a battle fought from them — the whole of Campania is in the seats.</div>}
               <div style={{fontSize:15}}>{o.field.length} men from the other houses. You enter {pairSel.length}.</div>
               <div className="blood" style={{fontSize:14,margin:"6px 0"}}>The editor pays one man. If your two are the last upright, they will be made to finish it.</div>
               <button className="btn btn-blood" style={{width:"100%",marginTop:11}} disabled={pairSel.length<2} onClick={()=>startFight(()=>meleeGo(o))}>Enter {pairSel.length} men</button>
@@ -15165,6 +15219,34 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 </div>
                 <div className="dim" style={{fontSize:12.5,marginTop:2}}>No mercy on the card. The mob roars for it; the good seats look away, and their favour cools.</div>
               </button>
+
+              <div className="tag" style={{margin:"11px 0 6px"}}>The centrepiece</div>
+              <button className={`optrow ${!p.spectacle?"on":""}`} style={{marginBottom:6,width:"100%"}} onClick={()=>set({spectacle:null})}>
+                <div className="disp" style={{fontSize:13,color:!p.spectacle?"#e8d092":"#e8d9b8"}}>No centrepiece</div>
+                <div className="dim" style={{fontSize:12.5,marginTop:2}}>An honest card of bouts. Nothing grand, nothing to go wrong.</div>
+              </button>
+              {SPEC_KEYS.map(k=>{ const SP = SPECTACLES[k];
+                const lockedScale = SP.lavishOnly && p.scale!=="lavish";
+                const lockedFame = S.fame < SP.fameGate;
+                const locked = lockedScale || lockedFame;
+                const on = p.spectacle===k;
+                return (
+                  <button key={k} className={`optrow ${on?"on":""}`} style={{marginBottom:6,width:"100%",opacity:locked?0.5:1}}
+                    disabled={locked} onClick={()=>set({spectacle:on?null:k})}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="disp" style={{fontSize:13,color:on?"#e8d092":"#e8d9b8"}}>{SP.name}</span>
+                      <span className="rowval gold" style={{fontSize:12}}>+{SP.cost}d</span>
+                    </div>
+                    <div className="dim" style={{fontSize:12.5,marginTop:2}}>{SP.blurb}</div>
+                    {locked
+                      ? <div className="blood" style={{fontSize:12,marginTop:2}}>{lockedScale?"Needs a Lavish munus":`Needs ${SP.fameGate} fame`}</div>
+                      : <div style={{fontSize:12,marginTop:2,color: k==="execution"?"#d96f5d" : "#b09b7d"}}>
+                          {k==="execution" ? "The mob feasts; the front rows and the senator go cold."
+                            : `A bet on the production — grander scale, likelier to land. ${on?"":""}`}
+                        </div>}
+                  </button>
+                );
+              })}
 
               <div className="tag" style={{margin:"11px 0 6px"}}>Your champion on the bill</div>
               <div className="flex gap-1" style={{flexWrap:"wrap",marginBottom:5}}>
