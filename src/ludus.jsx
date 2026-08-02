@@ -11591,6 +11591,7 @@ export default function App(){
   const [held,setHeld] = useState(null);
   const [retrainFor,setRetrainFor] = useState(null);
   const [gView,setGView] = useState("record");   /* which face of the man's record is showing */
+  const [vView,setVView] = useState("house");     /* which face of the villa is showing */
   useEffect(()=>{ setGView("record"); }, [selId]);   /* open every man on his overview */
   const [stake,setStake] = useState(0);
   const [against,setAgainst] = useState(false);
@@ -12828,6 +12829,39 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
 
 
         {tab==="ludus" && (<div className="flex flex-col gap-3">
+          {(()=>{ const upkeepEst = Math.round(
+              activeG(S).reduce((n,g)=> n + (10 + seasonUpkeep(S)) * pit(S,"upkeep") + (isAuctor(g)? g.auctor.wage : 0), 0)
+              + bUpkeep(S) + collDues(S) + (S.doctore? docWage(S.doctore) : 0));
+            const owedIn = owedTotal(S), merch = merchLive(S) ? merchWeekly(S) : 0;
+            const Stat = ({label, val, colour})=>(
+              <div style={{minWidth:0}}>
+                <div className="dim" style={{fontSize:10.5,textTransform:"uppercase",letterSpacing:".06em"}}>{label}</div>
+                <div className="disp" style={{fontSize:15,color:colour||"#e8d092",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{val}</div>
+              </div>
+            );
+            return (
+              <div className="panel" style={{padding:11}}>
+                <div className="flex items-center justify-between" style={{marginBottom:8}}>
+                  <span className="tag tag-gold">The house at a glance</span>
+                  <span className="rowval dim" style={{fontSize:12}}>{activeG(S).length} in the yard</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2" style={{marginBottom:9}}>
+                  <Stat label="Coin" val={`${rnd(S.gold)}d`} colour={S.gold<0?"#d96f5d":"#e0bd72"}/>
+                  <Stat label="Upkeep" val={`−${upkeepEst}d/wk`} colour="#cfa88a"/>
+                  <Stat label={merch>0?"Potters":"Owed you"} val={merch>0?`+${merch}d/wk`:`${owedIn}d`} colour={merch>0?"#9aa86a":"#cfc0a0"}/>
+                  <Stat label="Fame" val={rnd(S.fame)} colour="#d8c08a"/>
+                  <Stat label="Standing" val={rnd(S.favor)} colour="#bfa8c8"/>
+                  <Stat label="The name" val={acclaimWord(acclaimOf(S))} colour="#e0bd72"/>
+                </div>
+                <div className="flex items-center justify-between" style={{fontSize:12,marginBottom:3}}>
+                  <span className="dim" style={{textTransform:"uppercase",letterSpacing:".06em",fontSize:10.5}}>Unrest — the one number that ends a run</span>
+                  <span style={{color: S.unrest>=68?"#d96f5d":S.unrest>=45?"#d8ac5f":"#9aa86a"}}>{unrestWord(S.unrest)}</span>
+                </div>
+                <div className="track" style={{height:6}}>
+                  <div className="fill" style={{width:`${clamp(S.unrest,0,100)}%`, background: S.unrest>=68?"linear-gradient(90deg,#7c2a22,#d96f5d)":"linear-gradient(90deg,#5a4a2c,#d8ac5f)"}}/>
+                </div>
+              </div>
+            ); })()}
           {(()=>{ const ALL = agenda(S), AG = allTodos ? ALL : ALL.slice(0, 7), rest = ALL.length - AG.length;
             const TABN = { ludus:"Ludus", men:"Familia", arena:"Arena", armory:"Armory", market:"Market", villa:"Villa" };
             const banners = [];
@@ -13784,8 +13818,18 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         </div>)}
 
         {tab==="villa" && (<div className="flex flex-col gap-3">
-          <div className="dim" style={{fontSize:14.5,fontStyle:"italic"}}>Favor opens doors fame cannot — sway in the arena when your man falls, and a seat at the primus when you have earned one.</div>
+          <div className="flex gap-1" role="tablist" aria-label="Villa sections"
+            style={{overflowX:"auto",borderBottom:"1px solid #33271a",paddingBottom:8}}>
+            {[["house","The House"],["standing","Standing"],["council","Coin & Council"],["familia","The Familia"]].map(([k,l])=>(
+              <button key={k} role="tab" aria-selected={vView===k} aria-label={l} onClick={()=>setVView(k)}
+                className={`chip ${vView===k?"on":""}`}
+                style={{whiteSpace:"nowrap",...(vView===k?{borderColor:"#c99a4b",color:"#e0bd72",background:"#2b2115"}:{})}}>
+                {l}
+              </button>
+            ))}
+          </div>
 
+          {vView==="house" && (<>
           <Sect title="House Colours" note={(S.crest&&S.crest.motto)||"colours, crest & motto"}>
             <div className="flex items-center gap-3" style={{marginBottom:11}}>
               <Crest crest={S.crest} size={54}/>
@@ -13872,6 +13916,9 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             )}
           </Sect>
 
+          </>)}
+
+          {vView==="standing" && (<>
           <Sect title="Those Who Watch" note={`standing ${rnd(S.favor)}`} open>
             {(S.patrons||[]).length===0 && <div className="dim" style={{fontSize:14.5,fontStyle:"italic"}}>No one of consequence has heard of you yet.</div>}
             {(S.patrons||[]).map(p=>{
@@ -14093,6 +14140,9 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             </Sect>
           )}
 
+          </>)}
+
+          {vView==="council" && (<>
           <Sect title="The household" note={`${householdCount(S)} of ${HH_KEYS.length}`}>
             <div className="dim" style={{fontSize:14.5,fontStyle:"italic",marginBottom:7}}>
               A ludus was a household before it was a business. None of these people will ever be on a card and the place does not run without them.
@@ -14346,6 +14396,9 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             )}
           </Sect>
 
+          </>)}
+
+          {vView==="familia" && (<>
           <Sect title="A feast for the familia" note="120d">
             <div className="dim" style={{fontSize:14.5,margin:"4px 0 8px"}}>Meat, honeyed wine, and a night without the whip. Loyalty is cheaper than rebellion.</div>
             <button className="btn" style={{width:"100%"}} disabled={S.gold<120 || S.week-S.lastFeast<3} onClick={feast}>
@@ -14375,6 +14428,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 : "Go down to the block"}
             </button>
           </Sect>
+          </>)}
         </div>)}
 
         {tab==="armory" && (<div className="flex flex-col gap-3">
