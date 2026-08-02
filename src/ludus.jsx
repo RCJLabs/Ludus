@@ -3829,6 +3829,175 @@ function remember(d, g, kind, mult){
   if(g.memory.length > 8) g.memory = g.memory.slice(-8);
 }
 const rememberAll = (d, kind, mult) => activeG(d).forEach(g=>remember(d, g, kind, mult));
+
+/* ---- LIFE IN THE LUDUS ----
+   Most of a man's life here is the week between fights: the bench, the dice, the
+   dark, the men on either side of him. What happens in the cell block when nobody
+   is bleeding is where a house is really held together or quietly lost. These are
+   the nights the block asks you to decide something — drawn from who is actually
+   in it and what stands between them right now. You can wait for them, or go
+   looking by walking the cells yourself. */
+const gById = (d,id) => d.gladiators.find(g=>g.id===id);
+const bothActive = (d,a,b) => { const A=gById(d,a), B=gById(d,b); return A&&B&&A.status==="active"&&B.status==="active" ? [A,B] : null; };
+function twoDistinct(pool){ if(!pool || pool.length<2) return null; const a=pick(pool); const rest=pool.filter(x=>x.id!==a.id); if(!rest.length) return null; return [a, pick(rest)]; }
+
+const NIGHT = {
+  /* two men with bad blood, and the block choosing sides */
+  brawl: {
+    need: d => tieList(d).some(t=>t.kind==="rival" && t.strength>=30 && bothActive(d,t.a,t.b)),
+    build: d => { const pool = tieList(d).filter(x=>x.kind==="rival" && x.strength>=30 && bothActive(d,x.a,x.b));
+      if(!pool.length) return null; const t = pick(pool); return { aid:t.a, bid:t.b }; },
+    make: (d, s) => { const m = bothActive(d, s.aid, s.bid); if(!m) return null; const [A,B]=m;
+      return { title:"Bad Blood in the Cells",
+        text:`${A.name} and ${B.name} have stopped pretending. The block has taken sides, and the doctore says one will put the other in the ground over nothing if it is left to fester. It comes to you tonight — before it comes to knives.`,
+        choices:["Set them against each other in the square — wood, and an end to it",
+          "Have the doctore pull them apart and keep them apart",
+          "Leave it. Men work these things out."] }; },
+    run: (d, s, i) => { const m = bothActive(d, s.aid, s.bid); if(!m) return "By morning it has gone quiet on its own."; const [A,B]=m;
+      const t = tieBetween(d, s.aid, s.bid);
+      if(i===0){
+        A.fatigue=clamp(A.fatigue+10,0,100); B.fatigue=clamp(B.fatigue+10,0,100);
+        activeG(d).forEach(g=>{ g.morale=clamp(g.morale+3,0,100); });
+        const loser = R()<0.5 ? A : B;
+        let hurt = false;
+        if(R()<0.18){ const inj=INJURIES[0]; loser.injury={name:inj[0],weeks:inj[1],pen:inj[2]}; loser.status="injured"; hurt=true; }
+        if(t && R()<0.6){ t.kind="brother"; t.strength=clamp(t.strength,30,60);
+          return `They go at each other in the square until neither can lift the sword, and somewhere in it the thing between them breaks. ${A.name} and ${B.name} walk off leaning on one another. The block got its afternoon.`; }
+        if(t) t.strength=clamp(t.strength-14,1,100);
+        return `They fight it out under the doctore's eye. ${hurt?`${loser.name} takes a knock that will keep him off the sand a while, but`:"Nobody is badly hurt, and"} the pressure is off the block for now.`;
+      }
+      if(i===1){
+        A.morale=clamp(A.morale-4,0,100); B.morale=clamp(B.morale-4,0,100);
+        A.defiance=clamp(A.defiance+4,0,100); B.defiance=clamp(B.defiance+4,0,100);
+        d.unrest=clamp(d.unrest+2,0,100);
+        return `The doctore keeps them at opposite ends of the square, and the two of them sullen at both. It holds. It does not heal.`;
+      }
+      if(t) t.strength=clamp(t.strength+16,1,100);
+      const loser = R()<0.5 ? A : B;
+      d.unrest=clamp(d.unrest+3,0,100);
+      remember(d, loser, "watched", 0.5);
+      if(R()<0.25){ const inj=INJURIES[0]; loser.injury={name:inj[0],weeks:inj[1],pen:inj[2]}; loser.status="injured"; loser.morale=clamp(loser.morale-8,0,100);
+        return `You leave it. It is settled in the dark three nights later, and ${loser.name} is carried to the medicus with a face nobody will own to. The block is quieter than you would like.`; }
+      loser.morale=clamp(loser.morale-6,0,100);
+      return `You leave it. Whatever passes between them passes where you cannot see it, and the yard is colder for a while.`;
+    }
+  },
+  /* a man low enough to break, and what you do about it */
+  cracking: {
+    need: d => activeG(d).some(g => g.morale<38 && ((g.memory&&g.memory.length) || strainOf(g)>50 || (g.scars&&g.scars.length))),
+    build: d => { const g = activeG(d).filter(x=>x.morale<38 && ((x.memory&&x.memory.length)||strainOf(x)>50||(x.scars&&x.scars.length))).sort((a,b)=>a.morale-b.morale)[0];
+      if(!g) return null;
+      const bro = kinOf(d,g.id,"brother").map(id=>gById(d,id)).find(x=>x&&x.status==="active");
+      return { gid:g.id, broId: bro?bro.id:null }; },
+    make: (d, s) => { const g=gById(d,s.gid); if(!g||g.status!=="active") return null;
+      const why = strainOf(g)>50 ? `${PR(g).He} has been worked past the end of himself, and it does not come off with a night's sleep.`
+        : (g.scars&&g.scars.length) ? `The wounds have added up. ${PR(g).He} sits apart, turning something over.`
+        : `Something is eating at him — a thing done to him, or one he did.`;
+      const ch = ["Go down and sit with him yourself","Take him off the drills for the week"];
+      if(s.broId && gById(d,s.broId)){ ch.push(`Send ${gById(d,s.broId).name} to him`); }
+      ch.push("Leave him to find his own feet");
+      return { title:"A Man Going Under",
+        text:`The doctore has a word with you about ${g.name}. ${why} A man like that either comes back or he breaks, and which one is partly yours to decide.`,
+        choices: ch }; },
+    run: (d, s, i) => { const g=gById(d,s.gid); if(!g||g.status!=="active") return "Whatever was in him has passed, one way or another.";
+      const acts=["sit","rest"]; if(s.broId && gById(d,s.broId)) acts.push("brother"); acts.push("leave");
+      const a = acts[i] || "leave";
+      if(a==="sit"){ remember(d, g, "heard"); g.morale=clamp(g.morale+18,0,100); g.defiance=clamp(g.defiance-6,0,100); d.unrest=clamp(d.unrest-2,0,100);
+        return `You sit down on the boards with ${g.name} after the lamps are lit, and let him talk, or not talk, until it is late. Nothing is fixed. But he is not alone with it — and he will not forget that you came down.`; }
+      if(a==="rest"){ g.regimen="rest"; g.morale=clamp(g.morale+10,0,100); g.fatigue=clamp(g.fatigue-25,0,100); g.strain=clamp(strainOf(g)-14,0,100);
+        return `${g.name} is off the palus this week. He sleeps, and eats, and by the end of it there is something back behind his eyes.`; }
+      if(a==="brother"){ const b=gById(d,s.broId);
+        if(b&&b.status==="active"){ g.morale=clamp(g.morale+14,0,100); b.morale=clamp(b.morale+3,0,100); const t=tieBetween(d,g.id,b.id); if(t) t.strength=clamp(t.strength+8,1,100);
+          return `${b.name} moves his roll next to ${g.name}'s without being told twice. Whatever they say to each other in the dark, it is more than you could have said.`; }
+        g.morale=clamp(g.morale+8,0,100); return `${g.name} is not left entirely alone with it.`; }
+      if(R()<0.42){ g.morale=clamp(g.morale+6,0,100);
+        return `You leave him to it, and ${g.name} finds his own feet — slowly, and harder than he needed to, but he finds them. Some men have to.`; }
+      g.morale=clamp(g.morale-10,0,100); g.defiance=clamp(g.defiance+8,0,100); d.unrest=clamp(d.unrest+3,0,100);
+      if(R()<0.3 && !g.traits.includes("Broken")){ g.traits.push("Broken"); g.defiance=Math.max(2,g.defiance-25); g.sho=Math.max(8,g.sho-8);
+        return `You leave him to it, and something in ${g.name} quietly goes out. He does what he is told now, and nothing more. The fire is gone, and it does not come back.`; }
+      return `You leave him to it, and ${g.name} sinks — sullen at the palus and worse in the cells. The block feels it.`;
+    }
+  },
+  /* the block has been on nothing but sand and drills, and wants a night */
+  night: {
+    need: d => activeG(d).length>=3 && (d.unrest>=22 || (activeG(d).reduce((s,g)=>s+g.morale,0)/Math.max(1,activeG(d).length)) < 52),
+    build: d => ({}),
+    make: (d, s) => { const ch=[];
+      if(d.gold>=80) ch.push("Wine and meat, and a morning off the whip — 80d");
+      if(d.gold>=120) ch.push("Bring women up from the town — 120d");
+      ch.push("Hold the line. They are here to fight.");
+      return { title:"The Block Wants a Night",
+        text:`It has been a long stretch of the palus and the sand and nothing else, and the cells are restless in the way that turns into something if it is ignored. A word from the doctore: the men could do with a night.`,
+        choices: ch }; },
+    run: (d, s, i) => { const acts=[]; if(d.gold>=80) acts.push("wine"); if(d.gold>=120) acts.push("women"); acts.push("hold");
+      const a = acts[i] || "hold";
+      if(a==="wine"){ d.gold-=80; activeG(d).forEach(g=>{ g.morale=clamp(g.morale+8,0,100); g.defiance=clamp(g.defiance-3,0,100); }); d.unrest=clamp(d.unrest-6,0,100);
+        return `Wine and roast meat and no drills in the morning. Somebody has a flute nobody knew about. The cells sleep easy for once.`; }
+      if(a==="women"){ d.gold-=120; activeG(d).forEach(g=>{ g.morale=clamp(g.morale+13,0,100); g.defiance=clamp(g.defiance-4,0,100); }); d.unrest=clamp(d.unrest-9,0,100);
+        if(R()<0.22){ const two=twoDistinct(activeG(d)); if(two){ addTie(d, two[0].id, two[1].id, "rival", ri(10,18)); two[0].morale=clamp(two[0].morale-6,0,100); d.unrest=clamp(d.unrest+2,0,100);
+          return `Women come up from the town, and for one night the ludus is very nearly a place men live in. In the morning ${two[0].name} and ${two[1].name} will not look at each other — something over a girl — but the rest of the block has not been this loose in months.`; } }
+        return `Women come up from the town, and for one night the ludus is very nearly a place men live in. The block is loose and warm for it, and remembers who allowed it.`; }
+      activeG(d).forEach(g=>{ g.morale=clamp(g.morale-4,0,100); g.defiance=clamp(g.defiance+4,0,100); });
+      d.unrest=clamp(d.unrest+3,0,100);
+      return `No night. They are here to fight, and you tell them so. The hard ones respect it. The rest add it to the tally they keep.`;
+    }
+  },
+  /* a debt over dice, and how you let it land */
+  dice: {
+    need: d => activeG(d).length>=3,
+    build: d => { const two = twoDistinct(activeG(d)); return two ? { aid:two[0].id, bid:two[1].id } : null; },
+    make: (d, s) => { const m=bothActive(d,s.aid,s.bid); if(!m) return null; const [A,B]=m;
+      return { title:"A Debt Over Dice",
+        text:`${B.name} owes ${A.name} more than ${PR(B).he} can pay, lost over knucklebones, and the whole block is enjoying it more than either of them. The kind of small thing that becomes a large thing if it sits.`,
+        choices:["Pay the debt off yourself — 40d","Make them settle it at the post","Let it ride. It is their business."] }; },
+    run: (d, s, i) => { const m=bothActive(d,s.aid,s.bid); if(!m) return "The debt sorts itself out."; const [A,B]=m;
+      if(i===0){ d.gold-=40; A.morale=clamp(A.morale+5,0,100); B.morale=clamp(B.morale+7,0,100); addTie(d,A.id,B.id,"brother",ri(6,12));
+        return `You cover what ${B.name} owes and tell them both to leave it there. Forty denarii, and two men who remember it — and each other.`; }
+      if(i===1){ A.fatigue=clamp(A.fatigue+6,0,100); B.fatigue=clamp(B.fatigue+6,0,100); const win=R()<0.5?A:B, lose=win===A?B:A; win.morale=clamp(win.morale+7,0,100); lose.morale=clamp(lose.morale-4,0,100); addTie(d,A.id,B.id, R()<0.55?"brother":"rival", ri(12,20));
+        return `You send them to the post to settle it with wood. ${win.name} has the better of it. Whatever they owe each other now, they owe it clean.`; }
+      addTie(d,A.id,B.id,"rival",ri(10,16)); B.morale=clamp(B.morale-5,0,100);
+      return `You let it ride. The debt does not go away, and neither does what grows around it. ${A.name} does not let ${B.name} forget.`;
+    }
+  },
+  /* a veteran quietly holding the cells together — reward it, or leave it be */
+  steadied: {
+    need: d => activeG(d).length>=3 && activeG(d).some(g=>(g.wins||0)>=6 && regardOf(g)>=55) && (d.unrest>=25 || activeG(d).some(g=>g.morale<40)),
+    build: d => { const v = activeG(d).filter(g=>(g.wins||0)>=6 && regardOf(g)>=55).sort((a,b)=>regardOf(b)-regardOf(a))[0]; return v ? { vid:v.id } : null; },
+    make: (d, s) => { const v=gById(d,s.vid); if(!v||v.status!=="active") return null;
+      return { title:"The Old Hand Holds Them",
+        text:`It has been a hard stretch, and the block should be uglier than it is. The doctore tells you why: ${v.name} has been holding it together down there — settling the green ones, sitting on the hotheads, keeping the worst of it off your ledger. He did not ask to, and would not thank you for noticing.`,
+        choices:["Let him be — a good sergeant of the cells is worth more than coin","Reward him openly — 30d and a word before the familia"] }; },
+    run: (d, s, i) => { const v=gById(d,s.vid); if(!v||v.status!=="active") return "The moment passes.";
+      if(i===0){ v.regard=clamp(regardOf(v)+6,0,100); activeG(d).forEach(g=>{ g.morale=clamp(g.morale+4,0,100); }); d.unrest=clamp(d.unrest-4,0,100);
+        return `You leave ${v.name} to it, and the block stays held. Some things are better for not being said out loud.`; }
+      d.gold-=30; v.morale=clamp(v.morale+8,0,100); v.pfame=clamp((v.pfame||0)+6,0,999); activeG(d).forEach(g=>{ g.morale=clamp(g.morale+3,0,100); }); d.unrest=clamp(d.unrest-3,0,100);
+      if(R()<0.2){ const other = pick(activeG(d).filter(g=>g.id!==v.id)); if(other){ addTie(d, v.id, other.id, "rival", ri(8,14)); other.morale=clamp(other.morale-4,0,100);
+        return `You give ${v.name} thirty denarii and his due before the whole familia. He stands taller for it — but ${other.name} has decided the old man has grown too close to the man who holds the keys, and that is its own kind of trouble.`; } }
+      return `You give ${v.name} thirty denarii and his due before the whole familia. A man who holds the cells together, held up where the cells can see it. Coin well spent.`;
+    }
+  },
+};
+const NIGHT_KEYS = Object.keys(NIGHT);
+function pickNight(d){
+  if(activeG(d).length<2) return null;
+  const fit = NIGHT_KEYS.filter(k=>{ try { return NIGHT[k].need(d); } catch(e){ return false; } });
+  if(!fit.length) return null;
+  const k = pick(fit);
+  let c; try { c = NIGHT[k].build(d); } catch(e){ return null; }
+  if(c==null) return null;
+  return Object.assign({ kind:k }, c);
+}
+function nightEvent(d, sit){
+  if(!sit) return null;
+  const N = NIGHT[sit.kind]; if(!N) return null;
+  let body; try { body = N.make(d, sit); } catch(e){ return null; }
+  if(!body) return null;
+  return { id:"ludusNight", title:body.title, text:body.text, choices:body.choices, data:{ sit } };
+}
+const WALK_COOL = 3;
+const walkReady = d => !d.over && !d.rome && !d.city && !d.travel && activeG(d).length>=1
+  && (d.week - (d.flags && d.flags.walkWk!=null ? d.flags.walkWk : -99)) >= WALK_COOL;
+
 /* what it is worth on the sand and in the yard */
 const regardPower  = g => 0.97 + regardOf(g)/100*0.06;      // 0.97 at nothing, 1.03 at everything
 const regardCalm   = g => (regardOf(g)-50)*0.016;           // drifts his defiance
@@ -8603,6 +8772,15 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
 /* ================= EVENTS ================= */
 
 const EVENTS = {
+  ludusNight: {
+    make(d){
+      if(d.rome || d.city || d.travel || d.games || d.munera || d.pendingEvent) return null;
+      if(activeG(d).length<2) return null;
+      if(R()>0.5) return null;
+      return nightEvent(d, pickNight(d));
+    },
+    run(d,ev,i){ const sit = ev.data && ev.data.sit; if(!sit || !NIGHT[sit.kind]) return "The night passes.";
+      try { return NIGHT[sit.kind].run(d, sit, i) || "The night passes."; } catch(e){ return "The night passes."; } } },
   fever: {
     make(d){ if(!activeG(d).length) return null;
       return { id:"fever", title:"Fever in the Cells", text:"A sickness creeps along the cell block. The medicus wants coin for herbs and clean water.",
@@ -11643,6 +11821,22 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
   const offerTo = god => mut(d=>{ makeOffering(d, god); });
   const vowTo = god => mut(d=>{ swearVow(d, god); });
   const doTourney = () => mut(d=>{ holdTourney(d); });
+  const walkCells = () => mut(d=>{
+    if(!walkReady(d)) return;
+    d.flags.walkWk = d.week;
+    activeG(d).forEach(g=>{ g.morale=clamp(g.morale+3,0,100); g.defiance=clamp(g.defiance-1.5,0,100); });
+    d.unrest=clamp(d.unrest-2,0,100);
+    const low = activeG(d).filter(g=>g.morale<48).sort((a,b)=>a.morale-b.morale)[0];
+    if(low) remember(d, low, "heard", 0.4);
+    chron(d, `You go down among the cells after the lamps are lit, and stay a while. It is not much — but a house whose master walks its floor is a different house from one whose master does not.`, "good");
+    const rivals = tieList(d).filter(t=>t.kind==="rival" && t.strength>=45 && bothActive(d,t.a,t.b));
+    const bros   = tieList(d).filter(t=>t.kind==="brother" && t.strength>=60 && bothActive(d,t.a,t.b));
+    const near   = activeG(d).filter(g=>g.morale<32);
+    if(rivals.length){ const t=pick(rivals); const A=gById(d,t.a), B=gById(d,t.b); chron(d, `You see it plainly now: ${A.name} and ${B.name} carry something you had not marked. It will not stay in the cells forever.`, "info"); }
+    if(bros.length){ const t=pick(bros); const A=gById(d,t.a), B=gById(d,t.b); chron(d, `${A.name} and ${B.name} would go into the ground for one another. It is the best thing you own, and the most dangerous.`, "info"); }
+    if(near.length){ const g=pick(near); chron(d, `${g.name} is closer to the edge than the ledger shows. You would not have seen it from the gallery.`, "bad"); }
+    if(R()<0.5){ const ev = nightEvent(d, pickNight(d)); if(ev) d.pendingEvent = ev; }
+  });
 
   if(screen==="loading") return <div className="lr" style={{display:"flex",alignItems:"center",justifyContent:"center"}}><style>{CSS}</style><div className="disp dim">Lighting the torches...</div></div>;
 
@@ -13822,6 +14016,17 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 : (S.week - (S.flags.tourneyWk!=null?S.flags.tourneyWk:-99)) < TOURNEY_COOL
                 ? `The yard is still sore — ${TOURNEY_COOL-(S.week-S.flags.tourneyWk)}w`
                 : "Hold the tournament"}
+            </button>
+          </Sect>
+
+          <Sect title="Walk the cells tonight" note="among the men">
+            <div className="dim" style={{fontSize:14.5,margin:"4px 0 8px"}}>
+              Go down among the familia after the lamps are lit. It costs nothing but an evening — a little warmth to the block, and the truth of what passes between the men, which you will not learn from the gallery. Some nights, the block asks something of you.
+            </div>
+            <button className="btn" style={{width:"100%"}} disabled={!walkReady(S)} onClick={walkCells}>
+              {(S.rome||S.city||S.travel) ? "Not while the house is on the road"
+                : !walkReady(S) ? `You were down there recently — ${WALK_COOL-(S.week-(S.flags.walkWk!=null?S.flags.walkWk:-99))}w`
+                : "Go down to the block"}
             </button>
           </Sect>
         </div>)}
