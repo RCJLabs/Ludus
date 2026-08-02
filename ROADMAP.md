@@ -1268,6 +1268,269 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v1.11.0 — What they ask you for
+They remember, refuse, form ties and carry ambitions, and in ninety versions not one of them has ever asked you for anything directly. **A man who has fought for you and thinks well enough of you now comes and stands in front of your table.** Once each, about 2.4 a campaign.
+
+- **That his brother not be sold.** *"He does not ask for himself and he has clearly been working up to it for some weeks."* Give your word and it binds — that man cannot be sold for the rest of the run.
+- **A particular man.** Somebody on the circuit put him down in front of a house that laughed. Arrange it and he trains differently from that afternoon on: +18 form, +12 morale.
+- **One more year.** He has earned the wooden sword and knows it, and wants to go out at the top. Refuse and you free him anyway, *"which is a strange way to be generous and is generous."*
+- **The burial society**, on behalf of men who did not want to ask. Three denarii a week each and a name cut in stone instead of a ditch.
+- **A woman in the town.** Leave to see her on the days he is not fighting. *"He now has a reason to want to live through this, which cuts both ways and you knew that when you said yes."*
+
+**Saying no is always allowed and always costs** — 5 to 14 regard and up to 14 morale, and it goes in his memory. *"He stays behind the wall. It is the correct decision for a lanista and you are not required to feel any particular way about it."*
+
+Two silent failures caught by the harness. The eligibility used `g.since`, which does not exist on a gladiator — no man would ever have qualified. And the brother request read tie strength as `t.n` when the field is `t.strength`, so that request could never fire and its `try/catch` would have hidden it forever.
+
+
+### v1.10.0 — Ways to be finished
+Debt, ruin, rebellion, and the lanista dying. But there is now a law with heat, a reputation the town holds, and rivals with grudges — three systems that generate pressure and could not conclude anything. **They can now.**
+
+**STRUCK FROM THE ROLL** — heat at 90, two edicts, two live breaches and a history of fines. *"The aedile does not send for you. He publishes... Nothing burned. Nobody died. It took four years to build and eleven days to be told it was over."*
+
+**NOBODY WILL BOOK YOU** — a blood reputation at 88, no standing, and the front rows gone cold. *"It is not a decision anybody makes. The editors simply stop asking, one after another, over about two months, and each of them has a reason that is not the reason."*
+
+**THEY TOOK IT APART** — a rival at 95 grudge against a house down to two men. *"He sends nothing, says nothing, and does not come to watch you close. That is the part you will think about."*
+
+**None of them lands without warning.** The first week over the line writes a chronicle line and puts a three-urgency item on the agenda — *"This house has 6 weeks to change something"* — and **six weeks is enough to fix any of them.** If the pressure comes off, the warning lapses: *"Whatever was about to happen to this house has stopped being about to happen."*
+
+Measured across sixteen ordinary campaigns: **15 survive.** A deliberately lawless house — over the cap, a woman on the sand in defiance of a decree, fines already paid — is still finishable, which is the point.
+
+The first pass banned 4 of 16 ordinary houses, because heat accrues from the numbers cap that sets itself below your roster and a house that keeps buying men is quietly always in breach. Requiring two live breaches and prior fines separates defiance from drift.
+
+
+### v1.9.0 — What you can do back
+They have poached, sabotaged, bribed editors and sent men round since v0.2, and you have never had any way to do it in return. **Four gambits**, one every six weeks, from week 16:
+
+| | | Works | Heat |
+|---|---|---|---|
+| **Put a word about** | 140d + | 60%, 72% if your house is known for craft | 5 |
+| **Put money in front of his best man** | 420d + | 48% — and his best fighter walks into your yard | 9 |
+| **Buy the editor's ear** | 300d + | 58% — twelve weeks of soft matching | 12 |
+| **Get at his steel** | 220d + | 50% — two of his men lose afternoons they should have won | 16 |
+
+**Every one of them can fail publicly.** The poached man tells his lanista, who tells the town. The editor mentions it at dinner to somebody who mentions it to the aedile. *"His armourer catches it, and the man you paid gives your name up before anybody has to hit him."* A failure costs 15–30 fame, up to 22 heat, and adds far more to that house's grudge than success does.
+
+**And the same trick stops working.** Each use of a gambit drops its odds seven points: poaching runs **48 → 40 → 31 → 23 → 14** across five attempts, with heat climbing to 31 along the way. **A house the magistrate is already watching finds all of it harder** — at heat 80, getting at his steel falls from 50% to 26%.
+
+The bought editor is real and temporary: while it holds, your men are matched a full tier softer. A rival's fame has a floor of 35, so a rival can be damaged and not annihilated — there is no way to remove a house from Capua by whispering about it.
+
+
+### v1.8.0 — What became of them
+The rudis is the moral centre of this game and a freed man has always vanished into a list. He is a person with one trade and nowhere else to use it, and Capua is not a large town. **He comes back.** Five weeks after the wooden sword, six things can become of him:
+
+- **He comes back to teach.** *"Three months at a trade he is not good at, and he knows this yard."* A doctore for nothing but keep, tagged **who was freed here** — and every man in the block just watched what the wooden sword is actually worth. +9 morale, +7 regard across the house.
+- **He sets up on his own.** Two men and a yard on the Neapolis road. *"He learned the trade somewhere and everybody knows where."*
+- **He is in the front row.** *"He does not shout. He is simply there and a number of people notice him being there."* Every faction warms.
+- **He sends something.** A cart of wine, oil and forty denarii he does not explain. *"The men drink it and talk about him for a week."*
+- **He asks to come back** — signed as an auctoratus, for wages, with his wins intact and regard at 82. *"A free man choosing this on purpose."*
+- **It did not go well.** Sleeping under the arches by the river. *"A free man with one trade and nobody buying it, which is most of them."* +5 unrest, and it takes something off the wooden sword for a while.
+
+Measured across sixteen campaigns: **29 men freed, 8 came back — 28%** — and all six outcomes appear. A man becomes something exactly once; verified across 120,000 rolls with no repeats.
+
+
+### v1.7.0 — What you have promised
+A booking is one afternoon. Nothing in this game has ever held a house to anything longer than that. **Three standing obligations**, offered from week 20 at about two a campaign, and every one of them is a thing you cannot quietly stop doing.
+
+| | | Kept | Broken |
+|---|---|---|---|
+| **A season with one editor** | 6 cards / 18 weeks, 280d each | +40 fame, +1,560d, every patron warms | −45 fame, and *"he tells four people who matter, quietly, over a month"* |
+| **An exclusive with the aedile** | 4 cards / 24 weeks, 500d each | +55 fame, +2,500d, the aedile turns friendly, **−20 heat** | −60 fame, **+25 heat**, and *"the aedile's office simply stops answering"* |
+| **A debt paid in men** | 8 cards / 30 weeks, no coin at all | **the loan is gone** | the debt grows 40% and he wants it now |
+
+**The exclusive genuinely shuts doors** — measured, a card offers **4.5 bouts normally and 1.0 while you are bound to him.** That is the cost, and it is why the bonus is what it is. The debt pact is only offered if you actually owe somebody, and it is the one route out of the moneylenders that does not involve coin.
+
+**The agenda watches the pace** — *comfortable*, *behind*, or **impossible**, at which point it says so plainly: *"There are not enough weeks left. Whatever happens now, it will be remembered as broken."*
+
+
+### v1.6.0 — What the stands say
+Four factions with real standings, eleven beat kinds carrying full state, and not one voice among them. **The stands talk now, and they disagree with each other about the same blow.**
+
+A retiarius lands one and the parmularii say *"there, that is what the small shield is for"* while the scutarii say *"he is being pulled apart out there."* A murmillo walks through his man and it reverses: *"on the shield, on the shield, exactly on the shield"* against *"that is not fighting, that is leaning."* The mob wants blood and says so. The front rows manage *"a small noise of approval that costs them nothing"* — or, when it is going badly, *"the word vulgar is used, clearly, by somebody who wanted it heard."*
+
+**Who you hear depends on where you are.** The upper tiers are loud in an amphitheatre and barely present in a courtyard; the front rows are the reverse. **And a faction that has gone cold on your house says less** — at standing 10 only 21% of loud beats draw a voice, against 43% at standing 70.
+
+**Silence is a voice too.** A man goes down and 37% of the time the answer is *"The noise stops. That is the noise."*
+
+**They use his name once he is somebody** — a crowd favourite at 45 hears himself shouted for.
+
+**78 lines**, and the honest measurement is that a 250-bout campaign draws **539 shouts, so each line is seen about seven times.** The first pass fired at 3.2 a bout and burned through the whole table in a fortnight; dropping to **2.2 a bout** — with **8% of bouts watched in complete silence** — is the difference between a crowd and wallpaper.
+
+
+### v1.5.0 — A season, not a week
+Eight drills chosen weekly, each independent, none constraining another: that was bookkeeping, not strategy. **A plan declares what a man is being made into over a season, runs itself, and pays only if you let it finish.**
+
+| | | Pays |
+|---|---|---|
+| **Make him a wall** | 18 weeks | +5 strength, +6 endurance, +3 discipline, **Iron Hide** |
+| **Make him quick** | 18 weeks | +7 agility, +4 technique, +3 endurance, **Swift Learner** |
+| **Teach him the trade** | 14 weeks | +8 technique, +4 discipline, +2 agility, **Stoic** |
+| **Make him theirs** | 12 weeks | +9 showmanship, +3 technique, **Showman** |
+| **Bring him back** | 8 weeks | +4 endurance, +2 discipline |
+
+The drills follow the plan in a fixed order — a wall goes *weights → palus → sand → weights → palus → hill* and keeps going — and the weekly picker disappears while it runs.
+
+**Commitment is the whole mechanic.** Finish and he takes the stats, the trait, +14 morale and +9 regard. **Come off at halfway and you keep only what the weekly drills gave and none of the bonus.** *"He comes off his season at 50 in the hundred."*
+
+**The doctore sets the pace.** The one who drives them finishes a season in **16 weeks**; the patient one takes **20**.
+
+**And the world keeps interrupting.** The agenda warns when a man on a season is being run into the ground, because a broken season pays nothing. Freeing him clears it. A card he is the only fit man for is the real question the system exists to ask.
+
+Measured on the worry I flagged before building it — that plans would strip a turn bare. **Drill choices per week fall from 4.7 to 0.7 and the agenda holds at 6.1.** The turn loses repetition, not substance.
+
+
+### v1.4.0 — The men who sell men
+The block has been a price and a concealed flaw. Somebody is standing behind it, he has been doing this longer than you have, and he remembers exactly how the last four went.
+
+**Four sellers**, three of whom are at the block on any given week. Their stalls are measurably different places to shop:
+
+| | Lies | Avg price | Flawed | Avg stat |
+|---|---|---|---|---|
+| **Cossutius**, at the far end | 70% | **199d** | **72%** | 46 |
+| **Lentulus**, who deals in war captives | 20% | 380d | 42% | 52 |
+| **Ashur** of the eastern block | 55% | 460d | 33% | 55 |
+| **Verrus**, thirty years at this | 5% | **658d** | **9%** | 57 |
+
+Lentulus sells only Gauls, Thracians and Germans, straight off the legions at the docks. Ashur sells only easterners and *"talks constantly, knows every man's history, and half of what he tells you is true and useful."* Cossutius *"sells what the others would not take."*
+
+**And the pitch is character, not data.** Selling a man with something wrong, Verrus says *"there is something you should have looked at"* 94% of the time and does not say what. Cossutius says the man has never been beaten by anybody worth naming — or, when he is not lying, *"is very keen to talk about something else."* The same information, delivered as a person.
+
+**They remember.** Buy four from Ashur and he *has your measure* at **9% off**; buy eight from Verrus and he goes **18% off**. Pay to have three of his men looked over and catch a flaw each time and he *will not meet your eye* — and charges you **6% more** for the privilege of dealing with somebody who checks.
+
+
+### v1.3.0 — Somewhere to practise
+Every decision in this game has been permanent from the first morning. Somebody who has never seen the arena had to risk a man to find out what it is.
+
+**Watch a bout**, on the title screen next to the records. Oenomaus, the Wall — a murmillo of the House of Batiatus — against Barca the thraex, in the amphitheatre on a fair day. Eleven beats, five rounds, and nobody dies.
+
+It is **the same bout every time**, seeded and deterministic, so it can be described and recommended. It builds its own house and touches nothing of yours: a real save is byte-identical after watching it twice. And it **resolves its own crux** rather than asking a first-time watcher to make the hardest decision in the game before they have any stake in it.
+
+It opens with *"Somebody else's afternoon, on somebody else's sand. Nothing here is yours and nothing here counts"* and closes with the one thing a new player most needs to be told:
+
+> *"That is the whole of it. You choose who goes out and against whom, and then you watch. The men decide the rest, out of what you have trained into them and what they think of you."*
+
+The v0.97 reading appears underneath it, so the first thing anyone sees is not just a fight but an explanation of why it went that way.
+
+
+### v1.2.0 — The doctore
+The most-mentioned man in the game and the least realised: a training multiplier with a name. He was a gladiator who lived, which is rare, and he has a view about how you are running this.
+
+**Six pasts**, one per man:
+
+- *who was let up* — fought eleven years and was let up twice, which he mentions when a man of yours goes down and not otherwise
+- *who bought himself out* — a coin at a time over nine years, and has never once said what it cost him
+- *who taught the man who killed him* — trained a boy in another house who later put a man of his in the ground. He does not blame the boy
+- *who broke* — went out one afternoon and could not do it, and came back to the trade the only way left to him
+
+**And four ways of running a yard**, which are mechanically different houses to work in:
+
+| | Believes | |
+|---|---|---|
+| **He drives them** | a man not broken in the yard breaks on the sand | training ×1.12, strain ×1.22, regard −0.35/wk |
+| **He is patient with them** | a man in four years beats a corpse in two | training ×0.94, strain ×0.78, injuries ×0.86 |
+| **He teaches the trick of it** | the sand is won before either of them moves | technique ×1.18, crowd +2 |
+| **He is fond of them** | knows every man's name and which are lying about it | regard +0.7/wk, unrest −0.35/wk |
+
+Measured over ten weeks on the same yard: **regard falls 3.5 under a hard doctore and rises 7.0 under a fond one.** Hiring is now a choice about what kind of place this is, not a number.
+
+**And he reports.** A line in his own register that reads the yard: *"Half of them are hanging off the post and he says that is what the post is for"* against *"He wants 3 of them rested and has said so twice, which for him is shouting"* — the same week, two different men. An existing save whose doctore predates all this keeps working at ×1.00 and simply has no creed.
+
+
+### v1.1.0 — The shape of a week
+Measured a turn by thirty-week band and found the problem exactly: **urgent demands rise from 4.2 a week to 7.0, while first-time events fall from 86 to zero.** The late game asks more of you and gives less back. Both halves fixed.
+
+**The noise.** Thirty-nine per cent of a mature agenda was a single line — *"has not been sworn in"*, one per unsworn man, forever, for a ceremony that costs nothing. Unsworn men, worn steel and unfamiliar kit now collapse into one line each when several apply. **Agenda items per week fall from 10.8 to 7.5 at the peak**, and no single line is more than 13% of it.
+
+**The silence.** Four things that only a house with a decade behind it can meet, once each:
+
+- **A man from Rome with questions** — writing something about the trade. He wants to know how many you have buried, how many you have freed, and whether it was worth doing. *"He writes down everything you say, including the pauses."* Tell him the truth for fame and the reputation you have actually earned, or tell him the version with the good afternoons in it for nearly twice as much.
+- **Somebody's son at the gate** — fifteen, too thin, walked a long way to say his father fought here. *"He is not lying about the father."* Take him on, put him in the kitchens, or send him home; every man in that block notices which.
+- **An offer from across the sand** — a rival proposes you stop bidding against each other. It saves both of you money and it is exactly what the aedile exists to prevent. **+18 heat** if you shake on it.
+- **A morning you do not get up** — *"the house runs, the men are fed, the ledger is in order, and you cannot think of one thing you want to walk out into."* Get up anyway at six health, hand the week to the doctore, or sit in the sun and find out the house does not need you every single day.
+
+Nine of ten campaigns reach year 8, and 1.1 of these arrive per run.
+
+
+### v1.0.1 — The accessibility audit
+Never done, and the one item on the list that was a defect rather than an absence. Audited first — contrast is measurable — then fixed.
+
+**Contrast.** Seventeen text colours checked against both the panel and page backgrounds by WCAG relative luminance. Three failed AA: the plan's unbuilt-wing labels at **2.71:1**, the faint dim text at 3.46 and the tab hint at 4.27. All three lifted to the nearest tone clearing **4.5:1 on both backgrounds** — 4.55, 4.53 and 4.51. **Seventeen of seventeen now pass**, and the plan was re-rendered to confirm unbuilt wings still read as unbuilt.
+
+**Tap targets.** **All 21 inline button paddings** were under 10px vertical, below a 44px target once line-height is counted. All raised.
+
+**Text size.** Six pieces of real interface text sat under 11px, the smallest at **8.5px**. Raised to an 11px floor. Textareas holding pasted house strings keep their monospace 11px, which is correct for that job.
+
+**Semantics.** The plan and the arena were unlabelled graphics — both now carry `role="img"` and a live description: *"A plan of the ludus. 7 of 15 wings built, 5 men in the yard, 1 in the infirmary."* The house-name and seed inputs had no accessible names and now do.
+
+**What was already right**, and worth recording: every action is a real `<button>` (153 of them, none without an accessible name), the tab bar is a proper `role="tablist"` with `aria-selected`, the bout narration is an `aria-live` region so a screen reader follows the fight, decorative icons are `aria-hidden`, and `prefers-reduced-motion` is honoured in the stylesheet.
+
+
+### v1.0.0 — The first purchase, the first death, and a number
+Two moments that happen once per house, and then the version number.
+
+**Before you buy anybody.** The block has never warned anyone that it lies. *"He is not obliged to be right and he is not obliged to be honest — the numbers on the block are his account of them, out by a couple either way on a sound man and further on one who is not. About a third of the men standing there have something wrong that he has not mentioned... Buy the cheap one if you must. Everybody does. Just know which of the two things you are doing."*
+
+**The first one.** The emotional centre of the game has always arrived with no framing at all. *"The cells took it harder than the ledger did. Every man in that block watched a decision get made about somebody they ate beside, and they will each have formed a view about what kind of house this is. That view is worth real points on the sand and it does not reset.*
+
+*A man who goes down can be let up. The cloth costs you the purse and it costs you nothing else, and the men who see you throw it fight measurably harder for you afterward. It is the strongest thing in this game and it looks like weakness, which is most of why it works."*
+
+Both fire exactly once and never again, verified across fourteen campaigns and three hundred deaths. The death word initially fired from `d.fallen.push`, which turns out not to be the path a bout death takes — it is wired to all five places a man is actually marked dead.
+
+**And the number.** Thirty-eight regression harnesses, every one passing. A full component mount. A game that installs to a home screen, plays offline, seeds and shares houses, teaches itself in twenty-eight lessons and a ten-step charter, tells you what decided every bout, says whether your numbers are any good, and offers an opinion when you are stuck.
+
+
+### v0.99.0 — The doctore's opinion
+The agenda has always said what is *pending*. It has never said what is *wise*. A player looking at six tabs with no idea which to open had nowhere to turn.
+
+**One line at the foot of the agenda**, read off the actual state of the house — seventeen pieces of concrete advice, weighted so the most urgent wins:
+
+- *"You are into the moneylenders and the week does not care. Put somebody on the sand at first blood — nobody dies at those stakes and the purse is real."*
+- *"The cells are close to going up. A feast is a hundred and twenty denarii and it is the cheapest thing you will ever buy."*
+- *"Nobody is fit to go out. Rest the worst of them this week; a man sent out tired is a man sent out to lose."*
+- *"You are owed money and short of it at the same time. Sell the paper at a discount — a purse you cannot spend is not a purse."*
+- *"There is coin sitting still. A wing of the ludus pays every week for the rest of the run; coin in a box does not."*
+
+And when there is genuinely nothing wrong: *"Nothing is urgent. Train them, keep the cells fed, and take what cards you are offered — a house is built out of quiet weeks more than loud ones."*
+
+Verified across **1,200 houses in every scenario and at every age: none silent, none malformed.** Following one house for sixty weeks, the advice changed ten times and tracked what was actually happening.
+
+Two fixes during the build. Every line reached into a `find()` that its own condition guaranteed — correct today and one refactor from a crash, so all five now survive their condition not holding. And the weights were wrong twice: hiring a doctore outranked a card already on the table, and a mastery outranked the rudis.
+
+
+### v0.98.0 — Is that good?
+Fame 340. Unrest 44. Regard 61. Nothing in ninety-seven versions has said whether those are numbers to be pleased about.
+
+**The house header now carries a comparison**, against a house the same age as yours. It is measured rather than asserted: twenty-six campaigns sampled every week for two hundred weeks, quartiled into ten twenty-week bands and baked in as a table.
+
+| Week | Fame (25/50/75) | Coin | Regard |
+|---|---|---|---|
+| 20 | 54 / 78 / 108 | 627 / 1,194 / 1,890 | 48 / 56 / 63 |
+| 60 | 65 / 103 / 186 | 1,121 / 1,886 / 2,610 | 57 / 67 / 75 |
+| 100 | 123 / 196 / 402 | 1,921 / 2,757 / 6,472 | 62 / 73 / 83 |
+| 180 | 271 / 738 / 1,113 | 3,771 / 26,189 / 49,981 | 70 / 81 / 98 |
+
+Four words per line — *behind most houses · a little behind · about typical · ahead of most houses* — and unrest reads the other way round, since low is good: *quieter than most · about typical · higher than most · dangerously high*.
+
+**Verified against the game it describes.** Playing houses and counting which band they land in gives fame 17/22/26/35, coin 15/31/31/24 and regard 22/23/26/28 — close to the 25/25/25/25 a well-calibrated band should produce.
+
+**And it says nothing at all before week 6.** The first pass told a brand-new house it was *behind most houses* on its first morning, which is both true and a terrible thing to tell somebody who has just started.
+
+
+### v0.97.0 — What decided it
+The arena is watched, not driven. A new lanista sees his man carried off and has no way of knowing whether he was under-armed, exhausted, badly matched or simply unlucky. **Every bout now ends with a reading of what actually decided it** — the three heaviest causes, worst first, drawn from the man's state as he walked out.
+
+It weighs eighteen things: fatigue, deep strain, a lasting wound, form, what he thought of the house, unfamiliar steel, gear nearly gone, how well armed he was, the win gap against his opponent, the style counter, the tier against his renown, the footing, the rain, the heat against his wind, the plan you gave him, a cold front row, the crowd, and whether there was mercy on the card at all.
+
+- *"He went out at 64 fatigue, which is most of a man's edge before anything else happens."*
+- *"The murmillo is the wrong match for a thraex and everyone at the editor's table knew it."*
+- *"He thinks very little of this house, and a man who thinks little of you does not spend himself for you."*
+- *"His knee that goes — past the sixth round he is not the same man."*
+- *"There was no mercy on that card. There was never going to be a decision to lean on."*
+
+**And it does not invent a lesson where there was none.** A man who went out fresh, well armed and fairly matched and lost anyway gets: *"Nothing was wrong with any of it. Some afternoons the other man is simply better and there is nothing in the ledger to blame."*
+
+Verified across 400 bouts — every one produces a reading, averaging 1.6 lines, and eleven deliberately broken setups each name their own fault first. Compliments no longer explain defeats, which was the first pass's mistake: a man who lost while well armed was being told he was well armed.
+
+
 ### v0.96.0 — The law
 Rome legislated this trade constantly — caps on how many armed men a private citizen could keep, a tax on every sale, decrees about who could be put on the sand. In ninety-five versions the game has never once told you that you cannot do something.
 
@@ -2294,17 +2557,10 @@ Weekly loop, roster, training, fight sim with missio, market, parties, feasts, e
 - ✅ Self-contained layout CSS — no Tailwind dependency in the standalone build
 
 **Next up — the queue**
-- **The weekly loop's actual shape.** Agenda, charter, morning-afters, yard events, rival beats, deadlines, patron wants and events all compete for one screen. A turn may need triage rather than more content.
-- **The doctore as a character.** A training multiplier who appears in a dozen text lines as if he were a person. The most-mentioned man in the game and the least realised.
-- **Training that is not eight buttons.** A season plan that builds a man toward something over months, with a cost for changing your mind.
-- **What the crowd actually shouts.** The arena has beats and a crowd number, not voices.
-- **Contracts and obligations.** You can be booked. You cannot be contracted — a season with an editor, an exclusive, a debt paid in bouts.
-- **The market as people.** Slavers are a price and a flaw. They should have habits, reputations, and memories of how you have dealt with them.
 - **A second city to live in.** The circuit is visiting. A second house elsewhere is the natural next scale.
-- **Accessibility.** Never audited. Contrast, tap targets, screen-reader labels, and whether reduce-motion is honoured everywhere.
 
 **Later**
 
 ---
 
-*Last updated: v0.96.0*
+*Last updated: v1.11.0*

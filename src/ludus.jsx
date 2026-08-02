@@ -1725,11 +1725,13 @@ function agenda(d){
     if(refusing(g)) add(3, "men", `${g.name} will not go out`, "and the block is watching");
     else if(g.ambition && g.ambition.despair) add(2, "men", `${g.name} has stopped asking`, "for the thing he wanted");
 
-    if(SLOTS.some(s=>wears(GEAR[g.kit&&g.kit[s]]) && (g.wear&&g.wear[s]||100) < 25))
-      add(1, "armory", `${g.name}'s steel is close to going`, "have it mended");
-    else if(kitFaults(d,g).some(f=>f.why==="unfamiliar"))
-      add(1, "armory", `${g.name} is carrying the wrong thing`, "it is not his style");
   }
+  { const going = activeG(d).filter(g=>SLOTS.some(s=>wears(GEAR[g.kit&&g.kit[s]]) && (g.wear&&g.wear[s]||100) < 25));
+    if(going.length === 1) add(1, "armory", `${going[0].name}'s steel is close to going`, "have it mended");
+    else if(going.length > 1) add(1, "armory", `${going.length} men have steel close to going`, going.map(g=>g.name).join(", "));
+    const wrong = activeG(d).filter(g=>!going.includes(g) && kitFaults(d,g).some(f=>f.why==="unfamiliar"));
+    if(wrong.length === 1) add(1, "armory", `${wrong[0].name} is carrying the wrong thing`, "it is not his style");
+    else if(wrong.length > 1) add(1, "armory", `${wrong.length} men are carrying the wrong thing`, "none of it is their style"); }
   for(const m of unhonoured(d)) if(!m.done)
     add(2, "villa", `${m.name} is not buried properly`, `${RITE_WINDOW-(d.week-m.week)} weeks to decide`);
   /* the town */
@@ -1742,7 +1744,22 @@ function agenda(d){
   { const worn = activeG(d).filter(g=>strainOf(g) > 62);
     if(worn.length===1) add(1, "men", `${worn[0].name} is worked past what he has`, strainWord(strainOf(worn[0])));
     else if(worn.length>1) add(1, "men", `${worn.length} men are worked past what they have`, worn.map(g=>g.name).join(", ")); }
-  for(const g of unsworn(d)) add(1, "men", `${g.name} has not been sworn in`, "open his page to have the oath said");
+  { const p = pactOf(d);
+    if(p){ const pace = pactPace(d);
+      if(pace === "impossible") add(3, "arena", `${pactOwed(d)} cards owed and ${pactLeft(d)} weeks left`, "it cannot be done now");
+      else if(pace === "behind") add(2, "arena", `${pactOwed(d)} cards still owed on your word`, `${pactLeft(d)} weeks to give them`); } }
+  { const rp = ruinPending(d);
+    if(rp) add(3, "villa", `This house has ${rp.weeks} week${rp.weeks===1?"":"s"} to change something`,
+      rp.kind==="banned" ? "the aedile is preparing to strike you off"
+      : rp.kind==="disgrace" ? "the editors are not asking any more"
+      : "a rival is taking it apart"); }
+  { const onPlan = activeG(d).filter(g=>seasonOfMan(g));
+    const risk = onPlan.filter(g=>g.fatigue > 70 || strainOf(g) > 66);
+    if(risk.length) add(1, "men", `${risk.length===1?risk[0].name+" is":risk.length+" men are"} being run into the ground on a season`,
+      "a broken season pays nothing"); }
+  { const un = unsworn(d);
+    if(un.length === 1) add(1, "men", `${un[0].name} has not been sworn in`, "open his page to have the oath said");
+    else if(un.length > 1) add(1, "men", `${un.length} men have not been sworn in`, un.map(g=>g.name).join(", ")); }
   for(const g of activeG(d)) if(canMaster(d,g)) add(1, "men", `${g.name} has earned his mastery`, "the doctore would say so out loud");
   { const f = ripeFeud(d); if(f) add(2, "men", `${f.a.name} and ${f.b.name} are close to it`, "the yard has noticed"); }
   if(d.doctoreOffer) add(2, "market", "A doctore is offering", "he will not wait long");
@@ -2378,11 +2395,58 @@ function doctoreWeek(d){
 const docCalm = d => d.doctore ? (d.doctore.fromHouse ? 1.2 : 0.4) : 0;
 const docWage = doc => doc ? doc.wage : 0;
 
+/* ---- THE DOCTORE ----
+   The most-mentioned man in the game and the least realised: a training multiplier
+   with a name. He was a gladiator who lived, which is rare, and he has opinions
+   about how you are running this. */
+const DOC_PASTS = [
+  { tag:"who was let up", line:"Fought eleven years and was let up twice, which he mentions when a man of yours goes down and not otherwise." },
+  { tag:"who bought himself out", line:"Bought his own freedom a coin at a time over nine years and has never once said what it cost him." },
+  { tag:"who was freed at Rome", line:"Given the rudis on the imperial sand in front of people who did not know his name an hour before." },
+  { tag:"who broke", line:"Went out one afternoon and could not do it, and was sold on, and came back to the trade the only way left to him." },
+  { tag:"who taught the man who killed him", line:"Trained a boy in another house who later put a man of his in the ground. He does not blame the boy." },
+  { tag:"who never lost", line:"Nineteen and none against, and retired the week his hand stopped closing properly." },
+];
+const DOC_CREEDS = {
+  hard:   { name:"drives them", line:"Believes a man who has not been broken in the yard breaks on the sand.",
+    train:1.12, strain:1.22, regard:-0.35 },
+  patient:{ name:"is patient with them", line:"Would rather have a man in four years than a corpse in two.",
+    train:0.94, strain:0.78, regard:0.4, injure:0.86 },
+  crafty: { name:"teaches the trick of it", line:"Thinks the sand is won before either of them moves, and drills accordingly.",
+    train:1.0, tec:1.18, crowd:2 },
+  kind:   { name:"is fond of them", line:"Knows every man's name, where he is from, and which of them are lying about it.",
+    train:0.97, regard:0.7, calm:0.35 },
+};
+const DOC_CREED_KEYS = Object.keys(DOC_CREEDS);
+const docCreed = d => (d.doctore && DOC_CREEDS[d.doctore.creed]) || null;
+const docCreedNum = (d, k, dflt) => { const C = docCreed(d); return C && C[k]!=null ? C[k] : (dflt==null?1:dflt); };
+/* what he says about the week, in his own register */
+function docSays(d){
+  if(!d.doctore) return null;
+  const C = DOC_CREEDS[d.doctore.creed]; if(!C) return null;
+  const men = activeG(d);
+  const worn = men.filter(g=>g.fatigue > 58).length;
+  const green = men.filter(g=>g.wins === 0).length;
+  const hurt = d.gladiators.filter(g=>g.status==="injured").length;
+  const opts = [];
+  if(worn >= 2) opts.push(d.doctore.creed==="hard"
+    ? `Half of them are hanging off the post and he says that is what the post is for.`
+    : `He wants ${worn} of them rested and has said so twice, which for him is shouting.`);
+  if(green >= 2 && d.week > 8) opts.push(`He has ${green} who have never been out and he is drilling them like it is the only thing that matters, because it is.`);
+  if(hurt) opts.push(d.doctore.creed==="patient"
+    ? `He has been down to the infirmary twice this week and he does not think either of them should go out next month.`
+    : `He looked in on the infirmary and said nothing at all about it.`);
+  if(d.unrest > 55) opts.push(`He hears what they say in the block and he has started telling you some of it.`);
+  if(!opts.length) opts.push(`Nothing to report from the yard, which from him is a good week.`);
+  return pick(opts);
+}
 function makeDoctore(d, quality){
   const origin = pick(Object.keys(ORIGINS));
   const skill = clamp(quality + ri(-8,8), 30, 82);
+  const P = pick(DOC_PASTS);
   return { id:d.nextId++, name:pick(ORIGINS[origin].names), origin, fromHouse:false,
     spec: pick(STATS), skill, weeks:0,
+    creed: pick(DOC_CREED_KEYS), tag:P.tag, pastLine:P.line,
     fee: rnd(skill*7 + 60), wage: rnd(8 + skill*0.22),
     past: `${ri(3,14)} years on the sand, and the scars to argue it` };
 }
@@ -2422,7 +2486,7 @@ function formWeek(d){
 const favourOf = g => clamp((g && g.favour) || 0, 0, 100);
 const favWord  = v => v>=82?"the darling of Capua" : v>=62?"they chant for him" : v>=40?"a name in the stands"
   : v>=18?"known by sight" : "one more man on the sand";
-const favColour= v => v>=62?"#e8d092" : v>=40?"#c99a4b" : v>=18?"#b09b7d" : "#7a6b52";
+const favColour= v => v>=62?"#e8d092" : v>=40?"#c99a4b" : v>=18?"#b09b7d" : "#8d7e65";
 /* what the affection is worth */
 const favPurse  = g => 1 + favourOf(g)/100 * 0.22;
 const favMissio = g => favourOf(g)/100 * 15;          // they lean, they do not overrule
@@ -2810,17 +2874,78 @@ function sellerSays(g){
   return s;
 }
 
+/* ---- THE MEN WHO SELL MEN ----
+   The block has been a price and a concealed flaw. Somebody is standing behind it,
+   and he has been doing this longer than you have, and he remembers exactly how the
+   last four went. */
+const SLAVERS = {
+  batiatus: { name:"Lentulus", full:"Lentulus, who deals in war captives",
+    line:"Buys off the legions at the docks and does not pretend the men are anything but what they are.",
+    lies:0.2, markup:0.92, flaw:1.15, origins:["Gaul","Thracian","Germanic"], quality:-4 },
+  syrian:   { name:"Ashur", full:"Ashur of the eastern block",
+    line:"Talks constantly, knows every man's history, and half of what he tells you is true and useful.",
+    lies:0.55, markup:1.0, flaw:0.85, origins:["Syrian","Numidian","Greek"], quality:2 },
+  honest:   { name:"Verrus", full:"Verrus, who has been at this thirty years",
+    line:"Slow, expensive, and has never once sold a man who was not what he said he was.",
+    lies:0.05, markup:1.28, flaw:0.25, origins:null, quality:8 },
+  bones:    { name:"Cossutius", full:"Cossutius, at the far end",
+    line:"Sells what the others would not take. Something is wrong with most of it and the prices say so.",
+    lies:0.7, markup:0.62, flaw:2.1, origins:null, quality:-14 },
+};
+const SLAVER_KEYS = Object.keys(SLAVERS);
+const slaverOf = k => SLAVERS[k] || SLAVERS.syrian;
+const dealings = (d,k) => (d.slavers && d.slavers[k]) || { bought:0, scouted:0, burned:0, warm:0 };
+function dealt(d, k, field, n){
+  d.slavers = d.slavers || {};
+  const x = Object.assign({ bought:0, scouted:0, burned:0, warm:0 }, d.slavers[k]);
+  x[field] = (x[field]||0) + (n==null?1:n);
+  d.slavers[k] = x;
+}
+/* he remembers, and it shows in the price */
+const slaverPrice = (d,k) => { const x = dealings(d,k);
+  return clamp(1 - x.bought*0.022 + x.burned*0.05, 0.82, 1.2); };
+const slaverWord = (d,k) => { const x = dealings(d,k);
+  const n = x.bought;
+  return x.burned >= 2 ? "will not meet your eye" : n >= 6 ? "knows exactly what you want"
+    : n >= 3 ? "has your measure" : n >= 1 ? "has sold to you before" : "has never dealt with you"; };
+/* what he says about a man he is selling */
+function slaverPitch(d, g){
+  const S = slaverOf(g.slaver);
+  const honest = R() > S.lies;
+  if(g.flaw && !honest) return pick([
+    `He says the man has never been beaten by anybody worth naming.`,
+    `He says there is nothing to look into and you are welcome to look.`,
+    `He does not mention anything and moves on to the price.`,
+  ]);
+  if(g.flaw && honest) return S.lies > 0.4
+    ? `He is very keen to talk about something else.`
+    : `He says there is something you should have looked at, and does not say what.`;
+  if(!g.flaw && honest) return pick([
+    `He says the man is sound and, for once, he is not selling you anything.`,
+    `He has nothing to add. That is usually the tell that there is nothing to add.`,
+  ]);
+  return `He is enthusiastic in a way that tells you nothing at all.`;
+}
+
 function makeMarket(d){
   d.market = [];
+  /* three of the four sellers are standing there on any given week */
+  const here = shuffled(SLAVER_KEYS).slice(0, 3);
   for(let i=0;i<4;i++){
-    const quality = R()<0.12 ? ri(75,92) : ri(30,68);
+    const sk = here[i % here.length];
+    const S = SLAVERS[sk];
+    const quality = clamp((R()<0.12 ? ri(75,92) : ri(30,68)) + S.quality, 18, 95);
     const g = genGladiator(d, quality);
-    /* roughly a third of the block has something wrong with it */
-    if(R() < 0.34){
+    g.slaver = sk;
+    if(S.origins && S.origins.length) g.origin = pick(S.origins);
+    /* roughly a third of the block has something wrong with it — more at some stalls */
+    if(R() < 0.34 * S.flaw){
       g.flaw = pick(FLAW_KEYS);
       FLAWS[g.flaw].apply(g);
       g.price = rnd(g.price * 0.82);          // and it is priced a little keen
     }
+    g.price = rnd(g.price * S.markup * slaverPrice(d, sk));
+    g.pitch = slaverPitch(d, g);
     g.shown = sellerSays(g);
     g.scouted = false;
     const wm = warMarket(d);
@@ -2915,7 +3040,13 @@ function makeGames(d){
   if(d.fame>=TIERS[2].fame && R()<0.5) add(2);
   if(d.fame>=TIERS[3].fame && d.favor>=40 && R()<0.45) add(3);
   offers.forEach(o=>{ if(!o.venue) o.venue = venueFor(d, o); if(!o.sky) o.sky = skyFor(d, o); });
-  d.games = { festival, offers, week:d.week, fest:F.key };
+  { const p = pactOf(d);
+    if(p && PACTS[p.kind] && PACTS[p.kind].exclusive && offers.length > 1){
+      const keep = offers.slice(0, 1);
+      offers.length = 0; offers.push(...keep);
+    } }
+  d.games = { festival, offers, week:d.week, fest:F.key,
+    exclusive: !!(pactOf(d) && PACTS[pactOf(d).kind] && PACTS[pactOf(d).kind].exclusive) };
 }
 
 /* ================= RIVAL HOUSES ================= */
@@ -3763,7 +3894,7 @@ function pickAnyOpp(d, tier){
   const bands = [[22,46],[38,60],[54,76],[66,99]];
   const avg = f => STATS.reduce((s,k)=>s+f[k],0)/6;
   const pool = (d.circuit||[]).filter(f=>{ const a=avg(f); return a>=bands[tier][0]-12 && a<=bands[tier][1]+12; });
-  if(!pool.length) return { opp: genOpponent(tier), ref:null, known:false };
+  if(!pool.length) return { opp: genOpponent(editorBought(d) ? Math.max(0, tier-1) : tier), ref:null, known:false };
   /* somebody with a score to settle turns up more often */
   const grudged = pool.filter(f=>f.beatYou>0 || f.lostToYou>0);
   const f = (grudged.length && R()<0.55) ? pick(grudged) : pick(pool);
@@ -3829,6 +3960,10 @@ function migrate(S){
   if(!S.owed) S.owed = [];
   if(!S.household) S.household = {};
   if(!S.works) S.works = {};
+  if(!S.slavers) S.slavers = {};
+  if(S.pact===undefined) S.pact = null;
+  if(!S.gambits) S.gambits = {};
+  if(S.pendingLesson===undefined) S.pendingLesson = null;
   if(!S.law) S.law = { cap:99, tax:0, women:false, sineFee:0, damnati:false, edicts:[], heat:0, fines:0 };
   if(S.yardSeen==null) S.yardSeen = 0;
   if(S.yardMissed==null) S.yardMissed = 0;
@@ -3907,7 +4042,7 @@ function newGameState(name, scen, seed, pitch){
     gladiators:[], market:[], games:null, pendingEvent:null, log:[], fallen:[], freed:[],
     seed: null, rngState: 0,
     lastParty:-9, lastFeast:-9, over:null, milestone600:false, flags:{learned:{}}, escaped:[], rebellion:null, gear:{}, retired:[],
-    doctore:null, doctoreMarket:[], doctoreOffer:null, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, defected:[], nemesis:null, primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], works:{}, law:null, doctrine:null, kits:[], deadSteel:[], bay:null, mark:null, after:null, metHouse:{}, owed:[], household:{}, yardSeen:0, yardMissed:0, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, departed:[], reSignOffer:null, annals:[] };
+    doctore:null, doctoreMarket:[], doctoreOffer:null, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, defected:[], nemesis:null, primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], works:{}, slavers:{}, pact:null, gambits:{}, pendingLesson:null, law:null, doctrine:null, kits:[], deadSteel:[], bay:null, mark:null, after:null, metHouse:{}, owed:[], household:{}, yardSeen:0, yardMissed:0, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, departed:[], reSignOffer:null, annals:[] };
   d.rivals = makeRivals(d);
   const solo = S.men.length === 1;
   S.men.forEach((band,i)=>{
@@ -5002,6 +5137,803 @@ const romeReady = d => !d.rome && !d.romeOffer && !d.over && d.fame >= ROME_FAME
   && patronsOf(d).some(p=>p.rank==="senator" && p.favor>=70)
   && activeG(d).length >= 2;
 
+/* ---- WHAT THEY ASK YOU FOR ----
+   They remember, they refuse, they form ties and they carry ambitions, and in ninety
+   versions not one of them has ever asked you for anything directly. A man who has
+   been here long enough and thinks well enough of you will come and stand in front
+   of your table. Saying no is always allowed and always costs. */
+const ASKS = {
+  brother: { w:10, need:(d,g)=>{ const t = tieList(d).find(x=>(x.a===g.id||x.b===g.id) && x.kind==="brother" && (x.strength||0)>=40);
+      if(!t) return false; const o = d.gladiators.find(x=>x.id===(t.a===g.id?t.b:t.a));
+      return !!(o && o.status==="active"); },
+    say:(d,g)=>{ const t = tieList(d).find(x=>(x.a===g.id||x.b===g.id) && x.kind==="brother" && (x.strength||0)>=40);
+      if(!t) return null;
+      const o = d.gladiators.find(x=>x.id===(t.a===g.id?t.b:t.a));
+      return { text:`${fullName(g)} asks that ${o.name} not be sold. He does not ask for himself and he has clearly been working up to it for some weeks.`,
+        choices:["Give him your word","Promise nothing"], oid:o.id }; },
+    yes:(d,g,ex)=>{ d.flags.noSell = [...(d.flags.noSell||[]), ex.oid];
+      g.regard = clamp(regardOf(g)+16,0,100); remember(d, g, "kept");
+      activeG(d).forEach(x=>{ x.regard = clamp(regardOf(x)+3,0,100); });
+      return `You give it. It costs you nothing today and it is now a thing you have said out loud in front of a man who will remember it.`; },
+    no:(d,g)=>{ g.regard = clamp(regardOf(g)-14,0,100); g.morale = clamp(g.morale-10,0,100);
+      remember(d, g, "refused");
+      return `You promise nothing, which is the honest answer. He says he understands, and he does, and it does not help.`; } },
+  match:   { w:9, need:(d,g)=>g.wins >= 4 && (d.circuit||[]).some(f=>f.beatYou>0),
+    say:(d,g)=>{ const f = pick((d.circuit||[]).filter(x=>x.beatYou>0)) || {name:"the man"};
+      return { text:`${fullName(g)} wants a particular man. ${f.name} put him down in front of a house that laughed, and he has been carrying it since, and he would like it seen to.`,
+        choices:["Arrange it","Tell him he fights who he is given"], fid:f.id, fname:f.name }; },
+    yes:(d,g,ex)=>{ d.flags.wantMatch = { gid:g.id, fid:ex.fid, until:d.week+14 };
+      g.regard = clamp(regardOf(g)+11,0,100); g.morale = clamp(g.morale+12,0,100); g.form = clamp(formOf(g)+18,-100,100);
+      return `You will put it in front of the editor. He does not thank you and he trains differently from that afternoon on.`; },
+    no:(d,g)=>{ g.regard = clamp(regardOf(g)-9,0,100); g.morale = clamp(g.morale-8,0,100);
+      return `He fights who he is given. That is the arrangement, he knows it is the arrangement, and he asked anyway.`; } },
+  year:    { w:8, need:(d,g)=>rudisEligible(g) && regardOf(g) >= 60,
+    say:(d,g)=>({ text:`${fullName(g)} has earned the wooden sword and knows it. He is asking for one more year before you give it to him — he wants to go out at the top and he would like the house to have the season.`,
+      choices:["One more year, then","Free him now"] }),
+    yes:(d,g)=>{ g.plan = null; g.regard = clamp(regardOf(g)+14,0,100);
+      d.flags.oneMoreYear = { gid:g.id, until:d.week + YEAR_WEEKS };
+      activeG(d).forEach(x=>{ x.morale = clamp(x.morale+5,0,100); });
+      return `He stays. Every man in that block watched somebody choose another year of this and could not tell you why it made them feel better.`; },
+    no:(d,g)=>{ grantRudis(d, g.id);
+      return `You free him anyway, over his own objection, which is a strange way to be generous and is generous.`; } },
+  burial:  { w:7, need:(d,g)=>!d.collegium && (d.fallen||[]).length >= 2,
+    say:(d,g)=>({ text:`${fullName(g)} asks about the burial society, on behalf of men who did not want to ask. Three denarii a week each, and a name cut in stone instead of a ditch.`,
+      choices:["Start it","Not this year"] }),
+    yes:(d,g)=>{ d.collegium = { since:d.week, buried:0 };
+      activeG(d).forEach(x=>{ x.regard = clamp(regardOf(x)+8,0,100); x.morale = clamp(x.morale+8,0,100); });
+      d.unrest = clamp(d.unrest-8,0,100);
+      return `It is started. The men pay into it themselves and it is somehow still the best thing you have done for them.`; },
+    no:(d,g)=>{ activeG(d).forEach(x=>{ x.regard = clamp(regardOf(x)-5,0,100); });
+      d.unrest = clamp(d.unrest+6,0,100);
+      return `Not this year. He nods, and goes back to the yard, and tells them, and you do not hear about it again in words.`; } },
+  woman:   { w:6, need:(d,g)=>g.wins >= 6 && regardOf(g) >= 55 && !g.flags,
+    say:(d,g)=>({ text:`There is a woman in the town. ${fullName(g)} would like leave to see her on the days he is not fighting, which is not a thing a man in his position is owed and he knows that too.`,
+      choices:["Let him go","He stays behind the wall"] }),
+    yes:(d,g)=>{ g.flags = 1; g.regard = clamp(regardOf(g)+18,0,100); g.morale = clamp(g.morale+14,0,100);
+      g.defiance = clamp(g.defiance+6,0,100);
+      return `He goes on the quiet days and comes back every time. He now has a reason to want to live through this, which cuts both ways and you knew that when you said yes.`; },
+    no:(d,g)=>{ g.regard = clamp(regardOf(g)-12,0,100); g.morale = clamp(g.morale-14,0,100);
+      return `He stays behind the wall. It is the correct decision for a lanista and you are not required to feel any particular way about it.`; } },
+};
+const ASK_KEYS = Object.keys(ASKS);
+function askWeek(d){
+  if(d.over || d.rome || d.city || d.travel || d.pendingEvent) return;
+  const men = activeG(d).filter(g=>regardOf(g) >= 45 && ((g.wins||0)+(g.losses||0)) >= 3 && !(d.flags.asked||[]).includes(g.id));
+  if(!men.length) return;
+  if(R() > 0.06) return;
+  const g = pick(men);
+  const fit = ASK_KEYS.filter(k=>{ try { return ASKS[k].need(d, g); } catch(e){ return false; } });
+  if(!fit.length) return;
+  const tot = fit.reduce((n,k)=>n + ASKS[k].w, 0);
+  let x = R()*tot, k = fit[0];
+  for(const c of fit){ x -= ASKS[c].w; if(x<=0){ k=c; break; } }
+  let ex = null;
+  try { ex = ASKS[k].say(d, g); } catch(e){ return; }
+  if(!ex) return;
+  d.flags.asked = [...(d.flags.asked||[]), g.id];
+  d.pendingEvent = { id:"ask", title:"He Wants A Word", text:ex.text,
+    choices:ex.choices, data:{ k, gid:g.id, ex } };
+}
+
+/* ---- WAYS TO BE FINISHED ----
+   Debt, ruin, rebellion, and the lanista dying. But there is now a law with heat, a
+   reputation the town holds, patrons who can turn, and rivals with grudges — four
+   systems that generate pressure and cannot conclude anything. They can now. */
+const RUINS = {
+  banned:  { need:d=>lawOf(d).heat >= 90 && (lawOf(d).edicts||[]).length >= 2 && inBreach(d).length >= 2 && lawOf(d).fines > 0,
+    warnAt:72,
+    warn:d=>`A man from the aedile's office has been in the forum asking who else has dealt with your house, which is not a thing he does idly.`,
+    title:"STRUCK FROM THE ROLL",
+    text:o=>`The aedile does not send for you. He publishes. Your house is struck from the roll of ludi permitted to supply the games at Capua, and the notice is nailed up where the notices go, and it names ${o.edicts} edicts by number.
+
+There is no appeal because there is no procedure to appeal to. Men who owe you money stop being at home. ${o.name} sells the racks to Verrus at a price that is an opinion about you, and the men go, one at a time, to houses that are still on the roll.
+
+Nothing burned. Nobody died. It took four years to build and eleven days to be told it was over.` },
+  disgrace:{ need:d=>repOf(d,"blood") >= 88 && d.favor <= 6 && facOf(d,"front") <= 12,
+    warnAt:0,
+    warn:d=>`The front rows have stopped coming to your cards. Not all of them and not loudly, but the good seats are emptier every time and the editor has noticed before you did.`,
+    title:"NOBODY WILL BOOK YOU",
+    text:o=>`It is not a decision anybody makes. The editors simply stop asking, one after another, over about two months, and each of them has a reason that is not the reason.
+
+You are the house that kills, and Capua has decided it would rather watch something else. The pits will still have you. The pits do not pay enough to feed ${o.men} men and you have known that for some time.
+
+${o.name} goes out the way houses actually go out, which is quietly, and to a great deal of politeness.` },
+  ruined:  { need:d=>(d.rivals||[]).some(h=>(h.grudge||0)>=95) && d.fame < 120 && d.gladiators.filter(g=>!isGone(g)).length <= 2,
+    warnAt:0,
+    warn:d=>`House ${((d.rivals||[]).find(h=>(h.grudge||0)>=80)||{name:"a rival"}).name} is buying every man you look at, a day before you look at him, and paying too much on purpose.`,
+    title:"THEY TOOK IT APART",
+    text:o=>`No single thing did it. ${o.rival} outbid you on the block for a year, took two of your men with money you could not match, and made sure every editor in Capua heard about the afternoon at the amphitheatre.
+
+You are down to ${o.men} men and a yard, and he has fourteen and the aedile's ear. There is a version of this where you hold on for another season and both of you know exactly what it looks like.
+
+He sends nothing, says nothing, and does not come to watch you close. That is the part you will think about.` },
+};
+const RUIN_KEYS = Object.keys(RUINS);
+function ruinWeek(d){
+  if(d.over || d.rome) return;
+  for(const k of RUIN_KEYS){
+    const R2 = RUINS[k];
+    let hit = false;
+    try { hit = R2.need(d); } catch(e){ hit = false; }
+    if(!hit) continue;
+    /* it never lands without warning first */
+    d.flags.ruinWarn = d.flags.ruinWarn || {};
+    if(!d.flags.ruinWarn[k]){
+      d.flags.ruinWarn[k] = d.week;
+      chron(d, R2.warn(d), "bad");
+      return;
+    }
+    if(d.week - d.flags.ruinWarn[k] < 6) return;
+    const rival = ((d.rivals||[]).sort((a,b)=>(b.grudge||0)-(a.grudge||0))[0]||{name:"a rival"}).name;
+    d.over = { kind:k, name:d.name, men:d.gladiators.filter(g=>!isGone(g)).length,
+      edicts:(lawOf(d).edicts||[]).length, rival, years:yearOf(d) };
+    return;
+  }
+  /* pressure that comes off means the warning lapses */
+  if(d.flags.ruinWarn) for(const k of Object.keys(d.flags.ruinWarn)){
+    let still = false;
+    try { still = RUINS[k].need(d); } catch(e){}
+    if(!still){ delete d.flags.ruinWarn[k];
+      chron(d, `Whatever was about to happen to this house has stopped being about to happen.`, "good"); }
+  }
+}
+const ruinPending = d => { const w = d.flags && d.flags.ruinWarn; if(!w) return null;
+  const k = Object.keys(w)[0]; return k ? { kind:k, since:w[k], weeks: 6 - (d.week - w[k]) } : null; };
+
+/* ---- WHAT YOU CAN DO BACK ----
+   They poach, they sabotage, they bribe editors and they send men round. Since v0.2
+   you have had no way to do any of it in return. Every one of these costs coin, may
+   fail publicly, and puts heat on a house that the magistrate is already watching. */
+const GAMBITS = {
+  poach:   { name:"Put money in front of his best man", cost:d=>rnd(420 + d.fame*1.2),
+    blurb:"A quiet offer, through somebody else, to the man who wins his cards. It is not legal and it is extremely common.",
+    odds:d=>0.42 + facPurse(d)*0.06 - lawOf(d).heat*0.002,
+    win:(d,h)=>{ const r = (h.fighters||[]).slice().sort((a,b)=>(b.wins||0)-(a.wins||0))[0];
+      if(!r) return `There was nobody worth the money.`;
+      h.fighters = (h.fighters||[]).filter(x=>x!==r);
+      const g = genGladiator(d, clamp(52 + (r.wins||0)*2.4, 52, 88));
+      g.name = r.name; g.wins = r.wins||0; g.pfame = 40 + (r.wins||0)*5; g.regard = 44;
+      if(d.gladiators.filter(x=>!isGone(x)).length < 8) d.gladiators.push(g);
+      h.grudge = clamp(h.grudge + 30, 0, 100);
+      return `${r.name} walks out of House ${h.name} in the night and into yours. Everybody knows. Nobody can prove it.`; },
+    lose:(d,h)=>{ h.grudge = clamp(h.grudge + 18, 0, 100);
+      return `The man tells his lanista, who tells the town. The money is gone and so is any doubt about what kind of house you run.`; },
+    heat:9 },
+  bribe:   { name:"Buy the editor's ear", cost:d=>rnd(300 + d.fame*0.9),
+    blurb:"He decides who is matched against whom. He is not well paid and he has expensive habits.",
+    odds:d=>0.58 + (aedileOn(d) && d.aedile.friendly ? 0.14 : 0) - lawOf(d).heat*0.0025,
+    win:(d,h)=>{ d.flags.editorBought = d.week + 12; h.grudge = clamp(h.grudge + 14, 0, 100);
+      return `For the next few months your men are matched softly and House ${h.name}'s are not. Nobody says a word about it because everybody does it.`; },
+    lose:(d,h)=>{ d.fame = Math.max(0, d.fame - 22); lawOf(d).heat = clamp(lawOf(d).heat + 14, 0, 100);
+      return `He takes the money and mentions it at dinner to somebody who mentions it to the aedile.`; },
+    heat:12 },
+  poison:  { name:"Get at his steel", cost:d=>rnd(220 + d.fame*0.5),
+    blurb:"A man who works his armoury, a file, and three of his best blades that will go at exactly the wrong moment.",
+    odds:d=>0.5 - lawOf(d).heat*0.003,
+    win:(d,h)=>{ h.fame = Math.max(35, (h.fame||100) - 40);
+      (h.fighters||[]).slice(0,2).forEach(x=>{ x.wins = Math.max(0,(x.wins||0)-1); });
+      h.grudge = clamp(h.grudge + 26, 0, 100);
+      return `Two of his men go down in a fortnight on afternoons they should have won, and House ${h.name} cannot work out why.`; },
+    lose:(d,h)=>{ lawOf(d).heat = clamp(lawOf(d).heat + 22, 0, 100); d.fame = Math.max(0, d.fame - 30);
+      h.grudge = clamp(h.grudge + 34, 0, 100);
+      return `His armourer catches it, and the man you paid gives your name up before anybody has to hit him.`; },
+    heat:16 },
+  word:    { name:"Put a word about", cost:d=>rnd(140 + d.fame*0.4),
+    blurb:"Nothing that can be traced. Six conversations in the right places about what happened in his cells last winter.",
+    odds:d=>repStyle(d)==="craft" ? 0.72 : 0.6,
+    win:(d,h)=>{ h.fame = Math.max(35, (h.fame||100) - 55); h.grudge = clamp(h.grudge + 10, 0, 100);
+      return `Within a month House ${h.name} is a house people have heard something about, and nobody can say what or from whom.`; },
+    lose:(d,h)=>{ d.fame = Math.max(0, d.fame - 15); h.grudge = clamp(h.grudge + 20, 0, 100);
+      return `It gets back to him with your name attached inside a week, because six conversations is two too many.`; },
+    heat:5 },
+};
+const GAM_KEYS = Object.keys(GAMBITS);
+const gambitDone = (d,k) => (d.gambits||{})[k] || 0;
+const gambitReady = d => !d.flags.gambitWeek || d.week - d.flags.gambitWeek >= 6;
+function runGambit(d, k, houseName){
+  const G = GAMBITS[k]; if(!G || !gambitReady(d)) return null;
+  const h = (d.rivals||[]).find(x=>x.name===houseName); if(!h) return null;
+  const cost = G.cost(d);
+  if(d.gold < cost) return null;
+  d.gold -= cost;
+  d.flags.gambitWeek = d.week;
+  d.gambits = Object.assign({}, d.gambits||{}, { [k]: gambitDone(d,k)+1 });
+  /* it gets harder each time you use the same trick */
+  const p = clamp(G.odds(d) - gambitDone(d,k)*0.07, 0.12, 0.86);
+  const won = R() < p;
+  lawOf(d).heat = clamp(lawOf(d).heat + (won ? G.heat*0.4 : G.heat), 0, 100);
+  addRep(d, "blood", won ? 2 : 5);
+  const line = won ? G.win(d, h) : G.lose(d, h);
+  chron(d, line, won ? "good" : "bad");
+  return { won, line, cost };
+}
+const editorBought = d => !!(d.flags.editorBought && d.week < d.flags.editorBought);
+
+/* ---- WHAT BECAME OF THEM ----
+   The rudis is the moral centre of this game and a freed man has always vanished
+   into a list. He is a person with a trade and nowhere else to use it, and Capua is
+   not a large town. He comes back. */
+const FREEDMEN = {
+  doctore: { w:10, name:"He comes back to teach",
+    need:(d,f)=>!d.doctore && f.wins >= 8,
+    say:(d,f)=>`${f.name} is at the gate with nothing to say for himself except that he has been three months at a trade he is not good at, and he knows this yard.`,
+    run:(d,f)=>{ const doc = makeDoctore(d, clamp(40 + f.wins*2.2, 40, 82));
+      doc.name = f.name.split(",")[0]; doc.fromHouse = true; doc.fee = 0;
+      doc.tag = "who was freed here"; doc.pastLine = `Fought ${f.wins} times under your colours and was given the wooden sword for it. He does not need telling how any of this works.`;
+      d.doctore = doc;
+      activeG(d).forEach(g=>{ g.morale = clamp(g.morale+9,0,100); g.regard = clamp(regardOf(g)+7,0,100); });
+      return `He takes the doctore's place for nothing but keep. Every man in that block just watched what the wooden sword is actually worth.`; } },
+  lanista: { w:8, name:"He sets up on his own",
+    need:(d,f)=>f.wins >= 10 && (d.rivals||[]).length < 5,
+    say:(d,f)=>`${f.name} has bought two men and a yard on the Neapolis road. He learned the trade somewhere and everybody knows where.`,
+    run:(d,f)=>{ d.fame += 25; addRep(d, "craft", 8);
+      return `There is a fourth house in the bay now and it fights the way yours does, which people notice and say out loud.` } },
+  crowd:   { w:9, name:"He is in the front row",
+    need:(d,f)=>true,
+    say:(d,f)=>`${f.name} is in the stands, in a decent seat, on the afternoon one of yours goes out. He does not shout. He is simply there and a number of people notice him being there.`,
+    run:(d,f)=>{ FAC_KEYS.forEach(k=>facMove(d, k, 4)); d.fame += 8;
+      activeG(d).forEach(g=>{ g.regard = clamp(regardOf(g)+4,0,100); });
+      return `The block hears about it before you do.` } },
+  gift:    { w:7, name:"He sends something",
+    need:(d,f)=>true,
+    say:(d,f)=>`A cart from ${f.name}, who is apparently doing well enough at something to send one. Wine, oil, and forty denarii he does not explain.`,
+    run:(d,f)=>{ d.gold += 40; activeG(d).forEach(g=>{ g.morale = clamp(g.morale+6,0,100); });
+      return `The men drink it and talk about him for a week, which is worth considerably more than the wine.` } },
+  bad:     { w:6, name:"It did not go well",
+    need:(d,f)=>true,
+    say:(d,f)=>`Word comes that ${f.name} is sleeping under the arches by the river. A free man with one trade and nobody buying it, which is most of them.`,
+    run:(d,f)=>{ d.unrest = clamp(d.unrest+5,0,100);
+      activeG(d).forEach(g=>{ g.morale = clamp(g.morale-4,0,100); });
+      return `The cells hear it the same day and it takes something off the wooden sword for a while.` } },
+  back:    { w:7, name:"He asks to come back",
+    need:(d,f)=>d.gladiators.filter(g=>!isGone(g)).length < 8,
+    say:(d,f)=>`${f.name} wants to fight again. Not sold, not bound — signed, for money, like any auctoratus. He has thought about it and he would rather do the thing he is good at.`,
+    run:(d,f)=>{ const g = genGladiator(d, clamp(48 + f.wins*2, 48, 88));
+      g.name = f.name.split(",")[0]; g.wins = f.wins; g.pfame = 60 + f.wins*4; g.regard = 82; g.sworn = "feast";
+      g.auctor = { bouts: ri(6,12), served:0, wage: rnd(14 + f.wins*1.4) };
+      d.gladiators.push(g);
+      return `He signs for ${g.auctor.bouts} bouts at ${g.auctor.wage} a week. Every man in that block watches a free man choose this on purpose.` } },
+};
+const FM_KEYS = Object.keys(FREEDMEN);
+function freedWeek(d){
+  if(d.over || d.rome || d.city || d.travel || d.pendingEvent) return;
+  /* a man who was freed here outranks the week's random draw */
+  const pool = (d.freed||[]).filter(f=>!f.became && d.week - f.week >= 5);
+  if(!pool.length) return;
+  if(R() > 0.11) return;
+  const f = pick(pool);
+  const fit = FM_KEYS.filter(k=>{ try { return FREEDMEN[k].need(d, f); } catch(e){ return false; } });
+  if(!fit.length) return;
+  const tot = fit.reduce((n,k)=>n + FREEDMEN[k].w, 0);
+  let x = R()*tot, k = fit[0];
+  for(const c of fit){ x -= FREEDMEN[c].w; if(x<=0){ k=c; break; } }
+  f.became = k;
+  const F = FREEDMEN[k];
+  d.pendingEvent = { id:"freedman", title:F.name, text:F.say(d, f),
+    choices:["Go on"], data:{ k, man:{ name:f.name, wins:f.wins||0, cls:f.cls } } };
+}
+
+/* ---- WHAT YOU HAVE PROMISED ----
+   A booking is one afternoon. Nothing in this game has ever held a house to anything
+   longer than that. These are standing obligations: a season with one editor, an
+   exclusive that shuts every other door, and a debt paid in men rather than coin. */
+const PACTS = {
+  season:  { name:"A season with one editor", weeks:YEAR_WEEKS, need:6,
+    blurb:d=>`Six cards over the year, whenever he asks, at a fixed rate. He pays better than the open market and he does not ask twice.`,
+    pay:d=>rnd(180 + d.fame*0.5), bonus:d=>rnd(900 + d.fame*2.2),
+    kept:"He pays the balance without being asked and puts it about that your house keeps its word.",
+    broke:"He does not shout. He tells four people who matter, quietly, over a month.",
+    keptRun:d=>{ d.fame += 40; addRep(d, "craft", 10); patronsOf(d).forEach(p=>{ p.favor=clamp(p.favor+8,0,100); }); recomputeFavor(d); },
+    brokeRun:d=>{ d.fame = Math.max(0, d.fame-45); addRep(d, "blood", 6);
+      patronsOf(d).forEach(p=>{ p.favor=clamp(p.favor-16,0,100); }); recomputeFavor(d); } },
+  exclusive:{ name:"An exclusive with the aedile", weeks:24, need:4,
+    blurb:d=>`Four cards, and your men appear at no other editor's games in Capua for half a year. He is paying for the right to say your house is his.`,
+    pay:d=>rnd(320 + d.fame*0.9), bonus:d=>rnd(1600 + d.fame*3),
+    kept:"He is re-elected largely on the back of afternoons your men gave him, and he knows it.",
+    broke:"He does not need to do anything. The aedile's office simply stops answering.",
+    exclusive:true,
+    keptRun:d=>{ d.fame += 55; if(d.aedile) d.aedile.friendly = true; lawOf(d).heat = clamp(lawOf(d).heat-20,0,100); },
+    brokeRun:d=>{ d.fame = Math.max(0, d.fame-60); if(d.aedile){ d.aedile.friendly=false; d.aedile.hostile=true; }
+      lawOf(d).heat = clamp(lawOf(d).heat+25,0,100); } },
+  debt:    { name:"A debt paid in men", weeks:30, need:8,
+    blurb:d=>`He forgives what you owe and you owe him eight afternoons instead. It is a worse rate than coin and it is available when coin is not.`,
+    pay:()=>0, bonus:()=>0, forgives:true,
+    kept:"The tablet is broken in front of you. Whatever else is true, you do not owe that man anything.",
+    broke:"He wants the coin now, all of it, and he has been extremely patient about it up to this exact moment.",
+    keptRun:d=>{ d.loan = null; d.fame += 15; activeG(d).forEach(g=>{ g.morale=clamp(g.morale+6,0,100); }); },
+    brokeRun:d=>{ if(d.loan) d.loan.owed = rnd((d.loan.owed||400) * 1.4); d.fame = Math.max(0, d.fame-20); } },
+};
+const PACT_KEYS = Object.keys(PACTS);
+const pactOf = d => d.pact || null;
+const pactLeft = d => { const p = pactOf(d); return p ? Math.max(0, p.until - d.week) : 0; };
+const pactOwed = d => { const p = pactOf(d); return p ? Math.max(0, p.need - p.done) : 0; };
+const pactPace = d => { const p = pactOf(d); if(!p) return null;
+  const left = pactLeft(d), owed = pactOwed(d);
+  return owed === 0 ? "kept" : left <= 0 ? "failed" : owed > left ? "impossible" : owed >= left*0.6 ? "behind" : "comfortable"; };
+const pactBlocks = (d, offer) => { const p = pactOf(d); if(!p) return false;
+  const P = PACTS[p.kind]; if(!P || !P.exclusive) return false;
+  return !!(offer && offer.festival && !offer.city && offer.editor !== p.editor); };
+function offerPact(d){
+  if(d.pact || d.over || d.rome || d.city || d.travel || d.pendingEvent) return;
+  if(d.week < 20 || d.fame < 55) return;
+  if((d.flags.pactsSeen||0) >= 3) return;
+  if(R() > 0.045) return;
+  const fit = PACT_KEYS.filter(k=>k !== "debt" || (d.loan && d.loan.owed > 0));
+  const k = pick(fit); if(!k) return;
+  const P = PACTS[k];
+  d.flags.pactsSeen = (d.flags.pactsSeen||0) + 1;
+  d.pendingEvent = { id:"pact", title:P.name,
+    text:`${P.blurb(d)}${P.pay(d) ? ` Each card pays ${P.pay(d)} denarii, and there is ${P.bonus(d)} at the end of it if you finish.` : ""} ${P.need} cards, ${P.weeks} weeks.`,
+    choices:["Give him your word", "Stay free"], data:{ k } };
+}
+function takePact(d, k){
+  const P = PACTS[k]; if(!P) return;
+  d.pact = { kind:k, need:P.need, done:0, until:d.week + P.weeks, began:d.week,
+    editor:`the editor`, rate:P.pay(d), bonus:P.bonus(d) };
+  chron(d, `You give your word: ${P.need} cards inside ${P.weeks} weeks. ${P.exclusive ? "And nobody else's games until it is done." : "It is not a thing you can quietly stop doing."}`, "info");
+}
+/* every card taken counts toward it */
+function pactBout(d, offer){
+  const p = pactOf(d); if(!p || !offer || !offer.festival) return;
+  p.done++;
+  if(p.rate) d.gold += p.rate;
+}
+function pactWeek(d){
+  const p = pactOf(d); if(!p) return;
+  if(pactOwed(d) === 0){
+    const P = PACTS[p.kind];
+    d.gold += p.bonus || 0;
+    try { P.keptRun(d); } catch(e){}
+    chron(d, `The word you gave is kept — ${p.need} cards inside ${d.week - p.began} weeks. ${P.kept}`, "good");
+    d.pact = null; d.flags.pactsKept = (d.flags.pactsKept||0) + 1;
+    return;
+  }
+  if(d.week >= p.until){
+    const P = PACTS[p.kind];
+    try { P.brokeRun(d); } catch(e){}
+    chron(d, `The season runs out with ${pactOwed(d)} cards still owed. ${P.broke}`, "bad");
+    d.pact = null; d.flags.pactsBroke = (d.flags.pactsBroke||0) + 1;
+  }
+}
+
+/* ---- WHAT THE STANDS SAY ----
+   Four factions with real standings, eleven beat kinds carrying full state, and not
+   one voice among them. The stands disagree with each other on the same blow, and
+   which of them you hear depends on who is in that venue and what they make of you. */
+const LIGHT = ["Retiarius","Thraex","Dimachaerus","Hoplomachus"];
+const VOICES = {
+  parm: { who:"the parmularii", cheers:g=>LIGHT.includes(g.cls),
+    good:["there, that is what the small shield is for","let him work, he is doing it properly","that is the whole art of it and the rest of you are asleep",
+      "he does not need a door to hide behind","this is why we come","that is footwork, that is not luck",
+      "he has been reading him for four rounds and there it is","the small shield, the small shield",
+      "he did not have to be there and he was","let the butchers watch and learn something",
+      "that is a man who has been taught, not a man who was bought","the whole thing turned on where he put his feet"],
+    bad:["he is being crowded and they know it","get off him and let him fight","that is not fighting, that is leaning",
+      "somebody get him off the wall","he has nowhere to go and they have made sure of it",
+      "that is not a bout, that is a siege","he cannot breathe out there"],
+    flat:["somebody starts a chant and it does not take"] },
+  scut: { who:"the scutarii", cheers:g=>!LIGHT.includes(g.cls),
+    good:["on the shield, on the shield, exactly on the shield","that is how it is done and it has always been how it is done",
+      "walk through him","he has not moved a foot backwards all afternoon","let the other one dance",
+      "he does not need to be clever, he needs to be there","the shield does not get tired",
+      "that is weight and it beats art every afternoon of the year","stand, and let him come to you, and there it is",
+      "no dancing, no nonsense, a man doing a job","he has been walking forward since the salute"],
+    bad:["he is being pulled apart out there","hold, will you hold","he has lost his shape",
+      "he is chasing and you cannot chase a man like that","the guard is gone, the guard has been gone for rounds",
+      "somebody tell him to plant his feet"],
+    flat:["a slow handclap starts on the shield side and stops"] },
+  mob: { who:"the upper tiers", cheers:()=>true,
+    good:["blood, blood, blood","finish him","that one felt like something","again, do that again","kill",
+      "there it is, there it is","hit him again in the same place","that is what we came up the hill for",
+      "do not let him up","the whole tier is on its feet and none of them could tell you why",
+      "somebody starts a chant with his name in it and it takes"],
+    bad:["what is this","get somebody out there who can do it","we paid for this",
+      "boo, and it spreads","somebody throws something and misses","this is a rehearsal, not a bout",
+      "put the beasts on, put anything on"],
+    flat:["the upper tiers have started talking amongst themselves"] },
+  front: { who:"the front rows", cheers:()=>true,
+    good:["a small noise of approval that costs them nothing","one of them says, to nobody, that the boy has been taught well",
+      "polite, and meant","a senator's man leans forward, which is as much as they ever do",
+      "an aedile nods once and goes back to his conversation","somebody remarks that the house has clearly spent money on him",
+      "two of them stop talking, which is the loudest thing they do","a magistrate's wife applauds and is looked at"],
+    bad:["they look at their hands","somebody says loudly that this is beneath the town","a man in the front row does not look up at all",
+      "a senator leaves early and makes sure it is noticed","somebody asks whether they intend to do this all afternoon",
+      "the word vulgar is used, clearly, by somebody who wanted it heard"],
+    flat:["the front rows are discussing something else entirely"] },
+};
+const V_KEYS = Object.keys(VOICES);
+/* who is loud in this venue, and how do they feel about your house */
+function crowdVoice(d, beat, g, offer){
+  if(!beat || !g) return null;
+  const loud = { crit:1, fall:1, appeal:1, spared:1, death:1, crowd:0.9, hit:0.45, gas:0.5, graze:0.2, clash:0.25 }[beat.kind];
+  if(!loud) return null;
+  if(R() > loud * 0.26) return null;
+  /* the mob is louder in a big house, the front rows in a small one */
+  const V2 = VEN(offer && offer.venue);
+  const w = { parm:10, scut:10, mob: V2 && V2.crowd >= 0 ? 14 : 6, front: V2 && V2.crowd >= 0 ? 8 : 12 };
+  const tot = V_KEYS.reduce((n,k)=>n + w[k], 0);
+  let x = R()*tot, k = V_KEYS[0];
+  for(const c of V_KEYS){ x -= w[c]; if(x<=0){ k=c; break; } }
+  const F = VOICES[k];
+  const standing = d ? facOf(d, k) : 40;
+  const forHim = F.cheers(g);
+  /* a faction that dislikes your house says less and means it less */
+  if(standing < 20 && R() < 0.5) return null;
+  const winning = beat.kind==="crit" || beat.kind==="spared" || (beat.actor==="A" && beat.kind==="hit");
+  const line = (forHim && winning) ? pick(F.good)
+    : (!forHim && winning) ? pick(F.bad)
+    : (forHim && !winning) ? pick(F.bad)
+    : pick(F.good);
+  /* they use his name once he is somebody */
+  const named = favourOf(g) >= 45 && R() < 0.4;
+  return { who:F.who, line: named ? line.replace(/\bhe\b/, g.name).replace(/\bhim\b/, g.name) : line, fac:k };
+}
+/* the loudest thing the stands can do is nothing at all */
+const SILENCES = [
+  "The noise stops. That is the noise.",
+  "Nobody in that whole house says anything, which is worse than any of it.",
+  "Eight thousand people decide at the same moment not to make a sound.",
+  "Somewhere up in the cheap tiers a single voice carries, and then stops itself.",
+  "The quiet goes on a beat longer than anybody in that place is comfortable with.",
+  "A house that was screaming a moment ago is now only a great many people breathing.",
+];
+function crowdSilence(beat, res){
+  if(!beat || beat.kind !== "fall") return null;
+  if(R() > 0.35) return null;
+  return pick(SILENCES);
+}
+
+/* ---- A SEASON, NOT A WEEK ----
+   Eight drills chosen weekly, each independent, none constraining another: that is
+   bookkeeping, not strategy. A plan declares what a man is being made into over a
+   season, runs itself, and pays only if you let it finish. */
+const PLANSEASON = {
+  wall:    { name:"Make him a wall", weeks:YEAR_WEEKS,
+    blurb:"Stone, the post, and the measured square until he can be hit all afternoon and still be standing.",
+    drills:["weights","palus","sand","weights","palus","hill","weights","sand","palus","weights","hill","palus","sand","weights","palus","hill","rest","palus"],
+    pays:{ str:5, end:6, dis:3 }, trait:"Iron Hide",
+    done:"He does not go backwards any more. Men who have fought him say it is like working against a door." },
+  quick:   { name:"Make him quick", weeks:YEAR_WEEKS,
+    blurb:"Footwork, the pila, and the hill, over and over, until the distance is something he owns.",
+    drills:["sand","pila","hill","sand","pila","sand","hill","pila","sand","hill","sand","pila","hill","sand","pila","sand","rest","hill"],
+    pays:{ agi:7, tec:4, end:3 }, trait:"Swift Learner",
+    done:"He is somewhere else by the time the blow arrives, and he has stopped thinking about it." },
+  crowd:   { name:"Make him theirs", weeks:12,
+    blurb:"Flourishes, the turn, the pause before the kill. It is not how you win. It is how you are paid.",
+    drills:["crowd","palus","crowd","spar","crowd","sand","crowd","palus","crowd","spar","crowd","rest"],
+    pays:{ sho:9, tec:3 }, trait:"Showman",
+    done:"The stands know him before the herald finishes, which is worth more than most of what he can do with a sword." },
+  smith:   { name:"Teach him the trade", weeks:14,
+    blurb:"Sparring and the post, matched against better men every week, learning the thing that cannot be drilled alone.",
+    drills:["spar","palus","spar","pila","spar","palus","spar","sand","spar","palus","spar","pila","rest","spar"],
+    pays:{ tec:8, dis:4, agi:2 }, trait:"Stoic",
+    done:"He has stopped making the mistakes and started making other men make them." },
+  mend:    { name:"Bring him back", weeks:8,
+    blurb:"Rest, the hill, and nothing that will open anything. Slow, and the only thing that works.",
+    drills:["rest","hill","rest","sand","hill","rest","hill","sand"],
+    pays:{ end:4, dis:2 }, heal:true,
+    done:"He is not the man he was and he is a great deal closer to it than he was two months ago." },
+};
+const PS_KEYS = Object.keys(PLANSEASON);
+const seasonOfMan = g => (g && g.plan) || null;
+const planWeeksLeft = g => { const p = seasonOfMan(g); return p ? Math.max(0, p.weeks - p.done) : 0; };
+const planPct = g => { const p = seasonOfMan(g); return p ? Math.round(p.done / p.weeks * 100) : 0; };
+function startPlan(d, g, k){
+  const P = PLANSEASON[k];
+  if(!P || !g || seasonOfMan(g)) return false;
+  const C = docCreed(d);
+  const weeks = Math.max(6, Math.round(P.weeks * (C && C.train > 1 ? 0.9 : C && C.train < 1 ? 1.1 : 1)));
+  g.plan = { kind:k, weeks, done:0, began:d.week, broke:false };
+  chron(d, `${fullName(g)} goes on a season: ${P.name.toLowerCase()}. ${weeks} weeks of it, and it is worth nothing at all until it is finished.`, "info");
+  return true;
+}
+function breakPlan(d, g, why){
+  const p = seasonOfMan(g); if(!p) return;
+  const P = PLANSEASON[p.kind];
+  g.plan = null;
+  g.morale = clamp(g.morale - 6, 0, 100);
+  remember(d, g, "broken");
+  chron(d, `${fullName(g)} comes off his season at ${Math.round(p.done/p.weeks*100)} in the hundred. ${why||"The work is not wasted and it is not finished either."}`, "bad");
+}
+/* the drill for this week comes off the plan, not off you */
+const planDrill = g => { const p = seasonOfMan(g); if(!p) return null;
+  const P = PLANSEASON[p.kind]; if(!P) return null;
+  return P.drills[p.done % P.drills.length] || "palus"; };
+function planWeek(d, g){
+  const p = seasonOfMan(g); if(!p) return;
+  if(g.status !== "active"){ if(g.status === "injured" && PLANSEASON[p.kind].heal){} else return; }
+  p.done++;
+  if(p.done < p.weeks) return;
+  /* it finished, and finishing is the whole point */
+  const P = PLANSEASON[p.kind];
+  for(const [k,v] of Object.entries(P.pays||{})) g[k] = clamp(g[k] + v, 8, statCap(g,k));
+  if(P.trait && !(g.traits||[]).includes(P.trait) && TRAITS[P.trait]) g.traits = [...(g.traits||[]), P.trait];
+  g.morale = clamp(g.morale + 14, 0, 100);
+  g.regard = clamp(regardOf(g) + 9, 0, 100);
+  g.plan = null;
+  d.fame += 6;
+  chron(d, `${fullName(g)} finishes his season. ${P.done}`, "good");
+}
+
+/* ---- SOMEWHERE TO PRACTISE ----
+   Every decision in this game is permanent from the first morning. A person who has
+   never seen the arena has to risk a man to find out what it is. This is somebody
+   else's bout, on somebody else's sand, with nothing of yours in it. */
+function demoFight(){
+  const d = newGameState("The House of Batiatus", "champion", "DEMO-SAND");
+  d.fame = 240; d.favor = 30;
+  const a = activeG(d)[0];
+  if(!a) return null;
+  a.name = "Oenomaus"; a.nick = "the Wall"; a.cls = "Murmillo";
+  a.kit = defaultKit("Murmillo");
+  STATS.forEach(k=>{ a[k] = 64; });
+  a.str = 72; a.end = 70; a.wins = 8; a.losses = 2; a.pfame = 70; a.fatigue = 0; a.lastFought = -9;
+  const offer = makePitOffer(d, a, "standard");
+  offer.venue = "amphi"; offer.sky = "fair"; offer.tier = 2;
+  offer.opp.name = "Barca"; offer.opp.cls = "Thraex"; offer.opp.kit = defaultKit("Thraex");
+  STATS.forEach(k=>{ offer.opp[k] = 62; });
+  offer.opp.wins = 7; offer.opp.losses = 3;
+  const res = doFight(d, a.id, offer, "measured");
+  const out = res.crux ? (()=>{ const p = res.pending; p.beats = res.beats;
+    return doFight(d, p.gid, p.offer, p.tactic, p.bet, p, "cloth"); })() : res;
+  out.demo = true;
+  out.crux = false; out.pending = null;
+  out.sum = [`Somebody else's afternoon, on somebody else's sand. Nothing here is yours and nothing here counts.`,
+    `That is the whole of it. You choose who goes out and against whom, and then you watch. The men decide the rest, out of what you have trained into them and what they think of you.`];
+  return out;
+}
+
+/* ---- THE YEARS THAT COME AFTER ----
+   Measured: a mature house faces seven demands a week and sees nothing it has not
+   seen before — first-time events fall from 86 in the opening thirty weeks to zero
+   past week 150. The late game asks more and gives less. These are things that only
+   a house with a decade behind it can be offered. */
+const LATE = {
+  memoir:  { need:d=>yearOf(d) >= 8, w:8,
+    title:"A Man From Rome With Questions",
+    text:d=>`He is writing something about the trade and somebody told him your house was worth the journey. He wants to know how many you have buried, how many you have freed, and whether you would say the whole thing was worth doing. He writes down everything you say, including the pauses.`,
+    choices:["Tell him the truth", "Tell him what he came for", "Send him away"],
+    run:(d,i)=>{ if(i===0){ const R2=houseRecord(d); d.fame += 20 + R2.freed*4;
+        addRep(d, R2.freed > R2.lost ? "mercy" : "blood", 8);
+        return `You give him the numbers and he does not flinch at any of them, which is somehow worse. ${R2.freed} out on their own legs and ${R2.lost} not.`; }
+      if(i===1){ d.fame += 45; addRep(d, "show", 10);
+        return `You give him the version with the good afternoons in it and none of the others. It will be read by people who have never smelled the place.`; }
+      d.fame = Math.max(0, d.fame-8);
+      return `You send him off. Whatever he writes now, it will not have your name spelled right in it.` } },
+  boy:     { need:d=>yearOf(d) >= 6 && activeG(d).length >= 3, w:9,
+    title:"Somebody's Son At The Gate",
+    text:d=>`A boy of about fifteen at the gate who says his father fought here and that he wants to do the same. He is not lying about the father. He is too young and too thin and he has walked a long way to say it.`,
+    choices:["Take him on", "Send him to the kitchens", "Send him home"],
+    run:(d,i)=>{ if(i===0){ const g=genGladiator(d, ri(30,48)); g.age=16; g.potential=clamp(g.potential+12,20,99);
+        g.regard=68; d.gladiators.push(g); d.unrest = clamp(d.unrest+4,0,100);
+        return `${g.name} is signed. Half the block thinks you have done him no favours and the other half remembers being him.`; }
+      if(i===1){ d.gold -= 40; activeG(d).forEach(g=>{ g.morale=clamp(g.morale+5,0,100); g.regard=clamp(regardOf(g)+3,0,100); });
+        return `He carries water and sleeps warm and does not go on the sand. Every man in that block noticed which of the two things you chose.`; }
+      d.unrest = clamp(d.unrest+2,0,100);
+      return `You send him back down the road. It is the right answer and nobody in the yard says a word to you about it for a week.` } },
+  rival:   { need:d=>yearOf(d) >= 7 && (d.rivals||[]).some(h=>(h.grudge||0) >= 45), w:8,
+    title:"An Offer From Across The Sand",
+    text:d=>{ const h=(d.rivals||[]).find(x=>(x.grudge||0)>=45)||{name:"a rival"};
+      return `${lanistaOf(h.name).name} proposes that the two houses stop bidding against each other on the block. It would save you both a great deal of money and it is, strictly speaking, the sort of arrangement the aedile exists to prevent.`; },
+    choices:["Shake on it", "Refuse, and let him know why"],
+    run:(d,i)=>{ const h=(d.rivals||[]).find(x=>(x.grudge||0)>=45);
+      if(i===0){ d.flags.cartel = d.week; if(h) h.grudge = clamp(h.grudge-25,0,100);
+        lawOf(d).heat = clamp(lawOf(d).heat + 18, 0, 100);
+        return `You shake on it in a doorway. Men on the block will cost both of you less for a while and there is now a thing about you that somebody could tell the magistrate.`; }
+      if(h) h.grudge = clamp(h.grudge+12,0,100);
+      addRep(d, "craft", 6); d.fame += 10;
+      return `You tell him no, and you tell him why, and he takes it better than you expected because he had to ask.` } },
+  tired:   { need:d=>yearOf(d) >= 9 && d.lanista && d.lanista.age >= 52, w:7,
+    title:"A Morning You Do Not Get Up",
+    text:d=>`There is no reason for it. The house runs, the men are fed, the ledger is in order, and you lie there listening to the yard start without you and cannot think of one thing you want to walk out into.`,
+    choices:["Get up anyway", "Give the week to the doctore", "Sit in the sun"],
+    run:(d,i)=>{ if(i===0){ if(d.lanista) d.lanista.health = clamp(d.lanista.health-6,0,100);
+        d.fame += 4;
+        return `You get up. It is what you have always done and it is most of why you are still here and it costs something every time.`; }
+      if(i===1){ if(d.doctore) d.trainMult = 1.12; if(d.lanista) d.lanista.health = clamp(d.lanista.health+8,0,100);
+        return `${d.doctore ? d.doctore.name : "The doctore"} takes the week and does it better than you would have, which is the part you will think about afterward.`; }
+      if(d.lanista) d.lanista.health = clamp(d.lanista.health+14,0,100);
+      d.unrest = clamp(d.unrest+5,0,100); d.fame = Math.max(0, d.fame-6);
+      return `You sit in the sun until the afternoon and nothing at all falls over. It turns out the house does not need you every single day, which is either a relief or the other thing.` } },
+};
+const LATE_KEYS = Object.keys(LATE);
+function lateWeek(d){
+  if(d.over || d.rome || d.city || d.travel || d.pendingEvent) return;
+  d.flags.lateSeen = d.flags.lateSeen || [];
+  const fit = LATE_KEYS.filter(k=>!d.flags.lateSeen.includes(k) && (()=>{ try{ return LATE[k].need(d); }catch(e){ return false; } })());
+  if(!fit.length) return;
+  if(R() > 0.045) return;
+  const tot = fit.reduce((n,k)=>n+LATE[k].w,0);
+  let x = R()*tot, k = fit[0];
+  for(const c of fit){ x -= LATE[c].w; if(x<=0){ k=c; break; } }
+  d.flags.lateSeen = [...d.flags.lateSeen, k];
+  const L = LATE[k];
+  d.pendingEvent = { id:"late", title:L.title, text:L.text(d), choices:L.choices, data:{ k } };
+}
+
+/* ---- TWO MOMENTS THAT ONLY HAPPEN ONCE ----
+   The first purchase is a trap the game never warns you about, and the first death
+   is the emotional centre of the whole thing arriving with no framing at all. Both
+   fire exactly once per house and never again. */
+const SPLIT2 = String.fromCharCode(10,10);
+const FIRST_BUY = {
+  title:"Before You Buy Anybody",
+  text:`The man selling has told you what these men are. He is not obliged to be right and he is not obliged to be honest — the numbers on the block are his account of them, out by a couple either way on a sound man and further on one who is not.
+
+About a third of the men standing there have something wrong that he has not mentioned: an old wound, a temper that has been sold twice already, no wind at all past the fourth round. Paying to have one looked over costs coin you do not have this week and it is very often the cheapest money you will ever spend.
+
+Buy the cheap one if you must. Everybody does. Just know which of the two things you are doing.`,
+};
+const FIRST_DEATH = {
+  title:"The First One",
+  text:(d,name)=>`${name} is dead, and the arithmetic of it is short: you paid for him, fed him, and he is gone, and there is nothing at the end of that sentence.
+
+The cells took it harder than the ledger did. Every man in that block watched a decision get made about somebody they ate beside, and they will each have formed a view about what kind of house this is. That view is worth real points on the sand and it does not reset.
+
+A man who goes down can be let up. The cloth costs you the purse and it costs you nothing else, and the men who see you throw it fight measurably harder for you afterward. It is the strongest thing in this game and it looks like weakness, which is most of why it works.`,
+};
+function firstBuyWarn(d){
+  if(d.flags.sawFirstBuy) return null;
+  if(!(d.market||[]).some(g=>!isAuctor(g) && !g.paragon)) return null;
+  d.flags.sawFirstBuy = 1;
+  d.pendingLesson = { title:FIRST_BUY.title, text:FIRST_BUY.text };
+  return true;
+}
+function firstDeathWord(d, name){
+  if(d.flags.sawFirstDeath) return;
+  d.flags.sawFirstDeath = 1;
+  d.pendingLesson = { title:FIRST_DEATH.title, text:FIRST_DEATH.text(d, name) };
+}
+
+/* ---- THE DOCTORE'S OPINION ----
+   The agenda says what is pending. It has never said what is wise. This is one
+   sentence of concrete advice, read off the actual state of the house, for a
+   player who is looking at six tabs and does not know which one to open. */
+const COUNSEL = [
+  { w:100, when:d=>d.gold < 0,
+    say:d=>`You are into the moneylenders and the week does not care. Put somebody on the sand at first blood — nobody dies at those stakes and the purse is real.` },
+  { w:96, when:d=>d.unrest >= 68,
+    say:d=>`The cells are close to going up. A feast is a hundred and twenty denarii and it is the cheapest thing you will ever buy.` },
+  { w:92, when:d=>activeG(d).some(g=>refusing(g)),
+    say:d=>`${(activeG(d).find(g=>refusing(g))||{name:'A man'}).name} is sitting down and the whole block is doing the arithmetic. Whatever you do about it, do it this week.` },
+  { w:88, when:d=>d.gladiators.filter(g=>!isGone(g)).length <= 2,
+    say:d=>`Two men is not a house. Buy somebody before the next card, even a flawed one — an empty yard earns nothing at all.` },
+  { w:84, when:d=>activeG(d).filter(g=>canFight(g) && g.lastFought < d.week && g.fatigue < 55).length === 0 && activeG(d).length > 0,
+    say:d=>`Nobody is fit to go out. Rest the worst of them this week; a man sent out tired is a man sent out to lose.` },
+  { w:80, when:d=>activeG(d).some(g=>g.fatigue >= 62 && g.regimen !== "rest"),
+    say:d=>`${(activeG(d).find(g=>g.fatigue>=62)||{name:'A man'}).name} is worn through and still on the palus. Put him on rest before you put him on a card.` },
+  { w:76, when:d=>d.games && d.games.offers && d.games.offers.length && activeG(d).some(g=>canFight(g) && g.lastFought < d.week),
+    say:d=>`There is a card up and men who can take it. The games are where the money is; the pits are where you survive between them.` },
+  { w:72, when:d=>activeG(d).some(g=>kitFaults(d,g).some(f=>f.why==="unfamiliar")),
+    say:d=>`${(activeG(d).find(g=>kitFaults(d,g).some(f=>f.why==="unfamiliar"))||{name:'A man'}).name} is carrying something that is not his style. Arm him off the rack — it costs nothing and it is worth a good deal.` },
+  { w:68, when:d=>d.gold > 900 && activeG(d).some(g=>!SLOTS.some(s=>wears(GEAR[g.kit&&g.kit[s]]))),
+    say:d=>`You have coin and men carrying house issue. Real steel is the single cheapest thing that makes a man win.` },
+  { w:64, when:d=>activeG(d).some(g=>canMaster(d,g)),
+    say:d=>`${(activeG(d).find(g=>canMaster(d,g))||{name:'A man'}).name} has earned his mastery and nobody has said so out loud. Do it — it costs nothing and it is worth ten bouts in a hundred.` },
+  { w:60, when:d=>owedList(d).some(x=>d.week - x.due >= 4) && d.gold < 300,
+    say:d=>`You are owed money and short of it at the same time. Sell the paper at a discount — a purse you cannot spend is not a purse.` },
+  { w:56, when:d=>d.gold > 2200 && BKEYS.some(k=>bLevel(d,k) < 3),
+    say:d=>`There is coin sitting still. A wing of the ludus pays every week for the rest of the run; coin in a box does not.` },
+  { w:66, when:d=>activeG(d).some(g=>rudisEligible(g)),
+    say:d=>`${(activeG(d).find(g=>rudisEligible(g))||{name:'A man'}).name} has earned the rudis. Freeing him costs you a fighter and buys you something the whole block is watching for.` },
+  { w:38, when:d=>!d.doctore && d.gold > 700,
+    say:d=>`You have no doctore. A man who knows the trade is worth a third again on everything the yard does all week.` },
+  { w:44, when:d=>d.week > 26 && !d.collegium && d.gold > 500,
+    say:d=>`No burial society. Three denarii a man a week halves what a death does to the cells, and there will be deaths.` },
+  { w:40, when:d=>d.games && d.games.offers && d.games.offers.length && d.gold > 400 && !(d.flags.everWatched),
+    say:d=>`You have never paid to have an opponent watched. It is worth seven bouts in a hundred and it is the only way to know what you are sending a man into.` },
+  { w:20, when:()=>true,
+    say:d=>`Nothing is urgent. Train them, keep the cells fed, and take what cards you are offered — a house is built out of quiet weeks more than loud ones.` },
+];
+function counsel(d){
+  const fit = COUNSEL.filter(c=>{ try { return c.when(d); } catch(e){ return false; } });
+  if(!fit.length) return null;
+  return fit.reduce((m,c)=>c.w>m.w?c:m, fit[0]);
+}
+const doctoreName = d => d.doctore ? d.doctore.name : "The doctore";
+
+/* ---- IS THAT GOOD? ----
+   Fame 340. Unrest 44. Regard 61. Nothing has ever said whether those are numbers
+   to be pleased about. These are the real quartiles of a plausibly-played house,
+   sampled every week across twenty-six campaigns, so the answer is measured rather
+   than asserted. Bands are [week, 25th, 50th, 75th]. */
+const NORMS = {
+  fame:   [[0,26,35,50],[20,54,78,108],[40,82,105,127],[60,65,103,186],[80,81,141,298],
+           [100,123,196,402],[120,135,279,488],[140,193,366,795],[160,296,645,1018],[180,271,738,1113]],
+  gold:   [[0,422,554,717],[20,627,1194,1890],[40,934,1689,2125],[60,1121,1886,2610],[80,1380,2301,3359],
+           [100,1921,2757,6472],[120,1964,3039,16624],[140,2035,9675,30792],[160,2800,19851,42300],[180,3771,26189,49981]],
+  regard: [[0,45,47,51],[20,48,56,63],[40,55,62,70],[60,57,67,75],[80,60,71,81],
+           [100,62,73,83],[120,65,73,83],[140,64,74,84],[160,68,76,87],[180,70,81,98]],
+  men:    [[0,3,4,6],[20,5,6,6],[40,6,6,7],[60,5,6,7],[80,4,6,6],
+           [100,3,5,6],[120,3,5,6],[140,3,4,6],[160,2,3,6],[180,2,3,5]],
+};
+/* unrest and favor are not "higher is better", so they read differently */
+const normOf = (kind, week) => {
+  const rows = NORMS[kind]; if(!rows) return null;
+  let r = rows[0];
+  for(const x of rows) if(week >= x[0]) r = x;
+  return { lo:r[1], mid:r[2], hi:r[3] };
+};
+/* where a value sits, and the word for it */
+function standing(kind, v, week){
+  if(week < 6) return null;              // nobody is behind anybody in the first month
+  const n = normOf(kind, week); if(!n) return null;
+  const band = v >= n.hi ? 3 : v >= n.mid ? 2 : v >= n.lo ? 1 : 0;
+  const word = ["behind most houses","a little behind","about typical","ahead of most houses"][band];
+  return { band, word, n, colour:["#d96f5d","#d8ac5f","#b09b7d","#9aa86a"][band] };
+}
+/* the two that are better low */
+function standingLow(kind, v, marks){
+  const m = marks || [12, 30, 55];
+  const band = v >= m[2] ? 0 : v >= m[1] ? 1 : v >= m[0] ? 2 : 3;
+  const word = ["dangerously high","higher than most","about typical","quieter than most"][band];
+  return { band, word, colour:["#d96f5d","#d8ac5f","#b09b7d","#9aa86a"][band] };
+}
+
+/* ---- WHY IT WENT THAT WAY ----
+   The arena is watched, not driven, which means a new lanista sees his man die and
+   has no idea whether he was under-armed, exhausted, badly matched or unlucky. This
+   reads the bout back and says what actually decided it, in order of weight. */
+function readBout(d, g, offer, res, ctx){
+  const R2 = [];
+  const opp = offer.opp || {};
+  const push = (w, s) => R2.push({ w, s });
+  const won = !!res.win;
+
+  /* the ground and the sky */
+  const V = VEN(offer.venue), W = SKY(offer.sky);
+  const quick = (g.agi||50) - (g.str||50);
+  if(V.footing <= 0.92 && quick > 12) push(7, `The footing was against him — ${V.name.toLowerCase()} suits a heavy man and he is not one.`);
+  if(V.footing >= 1.04 && quick > 12 && won) push(5, `The footing suited him. He is quick and it was somewhere he could be quick.`);
+  if(offer.sky === "rain") push(5, `It rained, which took the sand away from anybody trying to move on it.`);
+  if(offer.sky === "hot" && (g.end||50) < 48) push(6, `It was blazing and he has never had much wind.`);
+
+  /* what he was carrying */
+  const m = kitMods(g.kit, g.cls, g);
+  if(m.clumsy && m.clumsy.length) push(9, m.clumsy.length===1
+    ? `He went out carrying a piece that is not his style, and it showed in his hands.`
+    : `He went out carrying ${m.clumsy.length} pieces that are not his style, and it showed in his hands.`);
+  if(m.atk + m.def < -0.05) push(8, `He was under-armed for that card. The other man had the better of it before either of them moved.`);
+  else if(m.atk + m.def > 0.25 && won) push(4, `He was well armed and it did half the work.`);
+  const worn = SLOTS.filter(s=>wears(GEAR[g.kit&&g.kit[s]]) && (g.wear&&g.wear[s]||100) < 30);
+  if(worn.length) push(6, `His ${GEAR[g.kit[worn[0]]].name.toLowerCase()} was close to gone before the first exchange.`);
+
+  /* the state he was in */
+  if(g.fatigue >= 55) push(9, `He went out at ${Math.round(g.fatigue)} fatigue, which is most of a man's edge before anything else happens.`);
+  else if(g.fatigue >= 38) push(4, `He was not fresh.`);
+  if(strainOf(g) > 55) push(6, `He is carrying deep strain from the yard and it does not rest off in a week.`);
+  if(lastingOf(g).length) push(7, `${LASTING[lastingOf(g)[0]].name.replace(/^a /,"His ").replace(/^the /,"His ")} — past the sixth round he is not the same man.`);
+  if(formOf(g) <= -30) push(5, `He has been off his stride for weeks and it has not turned round on its own.`);
+  else if(formOf(g) >= 40 && won) push(3, `He has been in form and it carried.`);
+  if(regardOf(g) <= 22) push(6, `He thinks very little of this house, and a man who thinks little of you does not spend himself for you.`);
+
+  /* the matching */
+  const gap = (opp.wins||0) - (g.wins||0);
+  if(gap >= 6) push(8, `He was matched against a man with ${opp.wins} behind him and ${g.wins===0?"none":g.wins} of his own.`);
+  else if(gap <= -6 && won) push(3, `He was the harder man on that card and it went the way it should.`);
+  if(offer.tier >= 3 && (g.pfame||0) < 60) push(6, `That was a tier ${offer.tier} card and he is not a tier ${offer.tier} man yet.`);
+  const cnt = COUNTERS[opp.cls] === g.cls;
+  const has2 = COUNTERS[g.cls] === opp.cls;
+  if(cnt) push(9.5, `The ${opp.cls.toLowerCase()} is the wrong match for a ${g.cls.toLowerCase()} and everyone at the editor's table knew it.`);
+  else if(has2 && won) push(4, `The style match was his, and against a ${opp.cls.toLowerCase()} that is worth a good deal.`);
+
+  /* what you told him to do */
+  if(ctx && ctx.plan && ctx.plan.right === false) push(7, `The plan was wrong for him. You had him ${ctx.plan.label || "fighting to a plan"} and that was not what the man in front of him needed.`);
+  else if(ctx && ctx.plan && ctx.plan.right === true) push(4, `You read him correctly beforehand and it was worth about seven bouts in a hundred.`);
+
+  /* and the room */
+  if(!offer.city && facOf(d, "front") < 22 && res.crowd < 40) push(4, `The front rows have gone cold on this house, and a cold house gets no help when a decision is being made.`);
+  if(res.crowd >= 76) push(3, `The crowd was with him from the third exchange, which is worth more than it sounds.`);
+  if(offer.stakes === "sine") push(5, `There was no mercy on that card. There was never going to be a decision to lean on.`);
+
+  R2.sort((a,b)=>b.w - a.w);
+  const top = R2.slice(0, 3).map(x=>x.s);
+  if(!top.length) top.push(won
+    ? `Nothing decided it but the two of them. He was the better man on the day.`
+    : `Nothing was wrong with any of it. Some afternoons the other man is simply better and there is nothing in the ledger to blame.`);
+  return top;
+}
+
 /* ---- THE LAW ----
    Rome legislated this trade constantly — caps on how many armed men a private
    citizen could keep, the tax on every sale, bans on who could be put on the sand.
@@ -5839,7 +6771,7 @@ function doMelee(d, ids, offer, pending, choice){
     if(!g) return;
     if(e.withdrew){ sum.push(`${g.name} was taken off the sand before it finished.`); return; }
     if(e.dead){
-      g.status = "dead";
+      g.status = "dead"; firstDeathWord(d, fullName(g)); firstDeathWord(d, fullName(g));
       d.fallen.push({ name:fullName(g), week:d.week });
       if(d.lanista) d.lanista.health = clamp(d.lanista.health - 1.3*collSoften(d)*(isDamn(g)?0.55:1)*(workPerk(d,"regard")?0.7:1)/docHealth(d), 0, 100);
       collBury(d, g);
@@ -5944,7 +6876,7 @@ function doVenatio(d, gid, offer, tactic, pending, choice){
   if(highborn) sum.push(`A man of his renown, sent to the beasts. The whole ludus heard about it before he was back through the gate.`);
 
   if(res.aDies){
-    g.status = "dead"; g.fateNote = "beasts";
+    g.status = "dead"; firstDeathWord(d, fullName(g)); g.fateNote = "beasts";
     d.fallen.push({ name:fullName(g)+" — to the beasts", week:d.week });
     if(d.lanista) d.lanista.health = clamp(d.lanista.health - 1.3*collSoften(d)*(isDamn(g)?0.55:1)*(workPerk(d,"regard")?0.7:1)/docHealth(d), 0, 100);
     favourLost(d, g, "dead");
@@ -6045,7 +6977,7 @@ function doPairFight(d, ids, offer, tactic, pending, choice){
   // your dead and wounded
   gs.forEach((g,i)=>{
     if(res.dead.A[i]){
-      g.status = "dead";
+      g.status = "dead"; firstDeathWord(d, fullName(g)); firstDeathWord(d, fullName(g));
       d.fallen.push({ name:fullName(g), week:d.week });
       if(d.lanista) d.lanista.health = clamp(d.lanista.health - 1.3*collSoften(d)*(isDamn(g)?0.55:1)*(workPerk(d,"regard")?0.7:1)/docHealth(d), 0, 100);
       collBury(d, g);
@@ -6254,6 +7186,9 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   const W = skyMods(offer.sky, offer.venue, g.cls);
   const planKey = (pending && pending.plan) || plan || offer.plan || "none";
   const PE = planEffect(planKey, offer.opp);
+  const wasG = { fatigue:g.fatigue, wins:g.wins, pfame:g.pfame, cls:g.cls, agi:g.agi, str:g.str, end:g.end,
+    kit:Object.assign({},g.kit), wear:Object.assign({},g.wear||{}), strain:strainOf(g), form:formOf(g),
+    regard:regardOf(g), lasting:lastingOf(g).slice() };
   gc.regardMult = regardPower(g) * formPower(g) * lastNum(g,"atk") * lastNum(g,"guard") * ((g.mastery && g.mastery.cls===g.cls) ? masteryPower(g) : 1);
   gc.lastStam = lastNum(g,"stam");
   gc.lastLate = lastNum(g,"latePow");
@@ -6367,7 +7302,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
     sum.push(`A kill recorded. The cells are quieter tonight.`);
   }
   if(res.aDies){
-    g.status = "dead";
+    g.status = "dead"; firstDeathWord(d, fullName(g));
     d.fallen.push({ name:fullName(g), week:d.week });
     if(d.lanista) d.lanista.health = clamp(d.lanista.health - 1.3*collSoften(d)*(isDamn(g)?0.55:1)*(workPerk(d,"regard")?0.7:1)/docHealth(d), 0, 100);
     favourLost(d, g, "dead");
@@ -6497,6 +7432,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   if(holdsPrimus(d,g)) SLOTS.forEach(s=>{ if(wears(GEAR[g.kit[s]]) && !provOf(g,s)) giveProv(d, g, s, "primacy"); });
   favourBout(d, g, { crowd:res.crowd, beats:res.beats, win, spared:res.beats && res.beats.some(b=>b.kind==="spared" && b.actor==="A") }, offer);
   weekMark(d, "bouts");
+  pactBout(d, offer);
   femBout(d, g);
   if(offer.opp && offer.opp.house) metHouse(d, offer.opp.house);
   weekMark(d, "crowdBest", res.crowd, fullName(g));
@@ -6514,7 +7450,17 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   betLines.forEach(l=>sum.push(l));
   serveWants(d, { type:"fight", gid, win, oppDied:!!res.bDies, spared:!!res.spared,
     crowd:rnd(res.crowd), tier:offer.tier, stakes:offer.stakes });
-  return { beats:res.beats, sum, win, dead:!!res.aDies, crowd:rnd(res.crowd), name:g.name, venue:offer.venue, factions:d.factions,
+  { let last = -9;
+    for(let i=0;i<res.beats.length;i++){
+      const b = res.beats[i];
+      if(i - last < 2) continue;
+      const s = crowdSilence(b, res);
+      if(s){ b.stands = { line:s, silent:true }; last = i; continue; }
+      const v = crowdVoice(d, b, g, offer);
+      if(v){ b.stands = v; last = i; }
+    } }
+  const reading = readBout(d, wasG, offer, { win, crowd:res.crowd }, { plan:{ right:PE.right, label: PLANS[planKey] && PLANS[planKey].name } });
+  return { beats:res.beats, sum, reading, win, dead:!!res.aDies, crowd:rnd(res.crowd), name:g.name, venue:offer.venue, factions:d.factions,
     A:{ name:g.name, nick:g.nick, cls:g.cls, origin:g.origin, sub:"your house", kit:gc.kit, scars:gc.scars||[], fem:isF(g) },
     B:{ name:offer.opp.name, nick:offer.opp.nick, cls:offer.opp.cls, origin:offer.opp.origin, sub:offer.opp.house? `House ${offer.opp.house}`:"the pits", kit:oc.kit, scars:oc.scars||[], fem:isF(offer.opp) },
     tier:offer.tier, stakes:offer.stakes, festival:offer.festival };
@@ -6830,6 +7776,30 @@ const EVENTS = {
       return ev.data.triumph
         ? `The house carries on — a Roman name now, with everything that brings to the gate. Rome remembers a while, and may send for you again.`
         : `You put Rome behind you and go back to the sand you know. There is another card to make and men to make it with.`;
+    } },
+  late: {
+    make(){ return null; },
+    run(d,ev,i){ const L = LATE[ev.data.k];
+      try { return L.run(d, i); } catch(e){ return "It passes."; } } },
+  ask: {
+    make(){ return null; },
+    run(d,ev,i){
+      const A = ASKS[ev.data.k];
+      const g = d.gladiators.find(x=>x.id===ev.data.gid);
+      if(!g || !A) return `He has gone back to the yard.`;
+      try { return i===0 ? A.yes(d, g, ev.data.ex||{}) : A.no(d, g, ev.data.ex||{}); }
+      catch(e){ return `Whatever was said, it is said.`; } } },
+  freedman: {
+    make(){ return null; },
+    run(d,ev){ const F = FREEDMEN[ev.data.k];
+      try { return F.run(d, ev.data.man || { name:"He", wins:0 }); } catch(e){ return `He is seen about the town.`; } } },
+  pact: {
+    make(){ return null; },
+    run(d,ev,i){
+      if(i!==0) return `You keep your hands free. There will be another offer and it will not be from him.`;
+      takePact(d, ev.data.k);
+      const P = PACTS[ev.data.k];
+      return `It is done on a handshake and written down anyway. ${P.need} cards, ${P.weeks} weeks, and everybody in Capua will know inside a fortnight whether you kept it.`;
     } },
   edict: {
     make(){ return null; },
@@ -7255,7 +8225,8 @@ function endWeek(d){
         }
       }
       g.fatigue = clamp(g.fatigue-13-bathRest(d), 0, 100);
-      const reg = g.regimen || "palus";
+      const reg = planDrill(g) || g.regimen || "palus";
+      if(seasonOfMan(g)) planWeek(d, g);
       if(reg==="rest"){ g.fatigue=clamp(g.fatigue-30,0,100); g.morale=clamp(g.morale+4,0,100);
         if(strainOf(g)>45) remember(d, g, "rested");
         g.strain = clamp(strainOf(g)-11, 0, 100); }
@@ -7283,7 +8254,7 @@ function endWeek(d){
           else if(t && t.kind==="rival"){ mult *= 1.25; injChance *= 2; g.morale=clamp(g.morale-1,0,100); }
         }
         const base = (0.5 + g.potential/100*1.3) * d.trainMult * ageTrain(g.age)
-          * palusTrain(d) * perkTrain(d) * lanTrain(d) * seasonTrain(d) * docTrainMult(d,g) * (fest && fest.train ? fest.train : 1)
+          * palusTrain(d) * perkTrain(d) * lanTrain(d) * seasonTrain(d) * docTrainMult(d,g) * docCreedNum(d,"train") * (fest && fest.train ? fest.train : 1)
           * mult * (g.traits.includes("Swift Learner")?1.3:1)
           * (g.fatigue>75?0.4:1) * strainDrag(g);
         for(const [k,w] of Object.entries(targets)){
@@ -7348,10 +8319,18 @@ function endWeek(d){
   learnWeek(d);
   charterWeek(d);
   yardWeek(d);
+  lateWeek(d);
+  offerPact(d);
+  pactWeek(d);
   edictWeek(d);
   lawWeek(d);
+  askWeek(d);
+  ruinWeek(d);
   paragonWeek(d);
   paragonExpire(d);
+  { const C = docCreed(d);
+    if(C){ if(C.regard) activeG(d).forEach(g=>{ g.regard = clamp(regardOf(g) + C.regard, 0, 100); });
+      if(C.calm) d.unrest = clamp(d.unrest - C.calm, 0, 100); } }
   worksWeek(d);
   householdWeek(d);
   owedWeek(d);
@@ -7456,6 +8435,7 @@ function endWeek(d){
       data:{ won:pr.won, triumph:pr.triumph } };
   }
   if(!d.pendingEvent && !d.rome && R()<0.14){ const ev=EVENTS.ambition.make(d); if(ev) d.pendingEvent=ev; }
+  freedWeek(d);
   if(!d.pendingEvent && !d.rome && R()<0.45){ const ev=pickEvent(d); if(ev) d.pendingEvent=ev; }
   if(d.flags.spartacusAtLarge && R()<0.25){
     d.flags.sparkCount = (d.flags.sparkCount||0)+1;
@@ -7480,6 +8460,7 @@ function endWeek(d){
 }
 
 function grantRudis(d, gid){
+  { const gp = d.gladiators.find(x=>x.id===gid); if(gp && gp.plan) gp.plan = null; }
   { const gf = d.gladiators.find(x=>x.id===gid); if(gf) favourLost(d, gf, "freed"); }
   { const g0 = d.gladiators.find(x=>x.id===gid);
     if(g0) tieList(d).filter(t=>(t.a===gid||t.b===gid) && t.kind==="brother").forEach(t=>{
@@ -7488,7 +8469,7 @@ function grantRudis(d, gid){
   const g = d.gladiators.find(x=>x.id===gid);
   if(!g || !rudisEligible(g)) return;
   g.status = "freed";
-  d.freed.push({ name:fullName(g), week:d.week });
+  d.freed.push({ name:fullName(g), week:d.week, wins:g.wins||0, cls:g.cls });
   d.fame += 60;
   patronsOf(d).forEach(p=>{ p.favor = clamp(p.favor+4,0,100); });
   recomputeFavor(d);
@@ -8011,13 +8992,15 @@ function LudusPlan({ S }){
   /* a room's fill deepens with its level */
   const lvl = (k, base) => { const n = B(k); return n===0 ? dim : n===1 ? "#3c3120" : n===2 ? "#4e3f27" : base; };
   const label = (x, y, t, on) => (
-    <text x={x} y={y} fontSize="7.2" fill={on ? "#c9b489" : "#6b5a44"}
+    <text x={x} y={y} fontSize="7.2" fill={on ? "#c9b489" : "#8f7e62"}
       fontFamily="Cormorant Garamond, Georgia, serif" textAnchor="middle" letterSpacing="0.4">{t}</text>
   );
   /* men stand about the yard */
   const spots = [[118,120],[150,112],[178,126],[132,142],[164,146],[106,138],[190,110],[146,130]];
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{display:"block",borderRadius:8,background:"#1a1510"}}>
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img"
+      aria-label={`A plan of the ludus. ${BKEYS.reduce((n,k)=>n+B(k),0)} of 15 wings built, ${men.length} men in the yard${hurt?`, ${hurt} in the infirmary`:""}.`}
+      style={{display:"block",borderRadius:8,background:"#1a1510"}}>
       <defs>
         <linearGradient id="sand" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#6b5533"/><stop offset="100%" stopColor="#8a6d40"/>
@@ -8129,8 +9112,8 @@ const CrowdRow = React.memo(function CrowdRow({ level, factions, venue }){
 function HPBar({ label, v, s, cls, flip }){
   return (
     <div style={{flex:1, textAlign: flip?"right":"left", minWidth:0}}>
-      <div className="disp" style={{fontSize:10.5, letterSpacing:".07em", color:"#e0bd72", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{label}</div>
-      <div className="dim" style={{fontSize:10, marginBottom:3}}>{cls}</div>
+      <div className="disp" style={{fontSize:11, letterSpacing:".07em", color:"#e0bd72", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{label}</div>
+      <div className="dim" style={{fontSize:11, marginBottom:3}}>{cls}</div>
       <div className="track" style={{height:6}} role="progressbar" aria-label={`${label} health`}
         aria-valuenow={Math.round(clamp((v-20)/80*100,0,100))} aria-valuemin={0} aria-valuemax={100}>
         <div className="fill" style={{width:`${clamp((v-20)/80*100,0,100)}%`, marginLeft: flip? "auto":0,
@@ -8259,7 +9242,7 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak }){
             </button>
             {!done && <button className="chip" onClick={()=>setPlaying(p=>!p)}>{playing? "Pause":"Play"}</button>}
             {!done && <button className="chip" onClick={()=>setSpeed(s=>s===1?2:1)}>{speed}×</button>}
-            {done && !fight.crux && <button className="btn btn-ghost" style={{padding:"6px 10px"}} aria-label="Close" onClick={onClose}><X size={14}/></button>}
+            {done && !fight.crux && <button className="btn btn-ghost" style={{padding:"10px 10px"}} aria-label="Close" onClick={onClose}><X size={14}/></button>}
           </div>
         </div>
 
@@ -8267,7 +9250,7 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak }){
           <div style={{marginBottom:6}}>
             <div className="flex items-end gap-2">
               <HPBar label={fight.A[0].name} v={b.hA[0]} s={b.sA} cls={fight.A[0].cls}/>
-              <div className="disp dim" style={{fontSize:10,padding:"0 2px",whiteSpace:"nowrap"}}>{b.round>0? `RND ${b.round}`:"—"}</div>
+              <div className="disp dim" style={{fontSize:11,padding:"0 2px",whiteSpace:"nowrap"}}>{b.round>0? `RND ${b.round}`:"—"}</div>
               <HPBar label={fight.B[0].name} v={b.hB[0]} s={b.sB} cls={fight.B[0].cls} flip/>
             </div>
             <div className="flex items-end gap-2" style={{marginTop:4}}>
@@ -8281,7 +9264,7 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak }){
           <HPBar label={isMelee ? (meleeA? meleeA.name : "—") : nameA}
             v={isMelee ? (b.a!=null? b.hp[b.a]:100) : b.vA} s={b.sA}
             cls={isMelee ? (meleeA? (meleeA.mine? meleeA.cls+" · yours" : meleeA.cls+" · "+meleeA.house) : "") : `${fight.A.cls} · ${fight.A.sub}`}/>
-          <div className="disp dim" style={{fontSize:10, padding:"0 2px", whiteSpace:"nowrap"}}>{b.round>0? `RND ${b.round}`:"—"}</div>
+          <div className="disp dim" style={{fontSize:11, padding:"0 2px", whiteSpace:"nowrap"}}>{b.round>0? `RND ${b.round}`:"—"}</div>
           <HPBar label={isMelee ? (meleeB? meleeB.name : "—") : (isBeast ? fight.B.name : nameB)}
             v={isMelee ? (b.b!=null? b.hp[b.b]:100) : b.vB} s={b.sB}
             cls={isMelee ? (meleeB? (meleeB.mine? meleeB.cls+" · yours" : meleeB.cls+" · "+meleeB.house) : "") : (isBeast ? "the hunt" : `${fight.B.cls} · ${fight.B.sub}`)} flip/>
@@ -8293,14 +9276,15 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak }){
             {fight.ents.map((e,i)=>(
               <span key={i} className="tag" style={{
                 borderColor: b.dead[i] ? "#5a1a14" : b.out[i] ? "#3e2f1f" : e.mine ? "#8a3a2b" : "#3d5a6b",
-                color: b.dead[i] ? "#6b4038" : b.out[i] ? "#6b5a44" : e.mine ? "#e8a08c" : "#9dc0d4",
-                textDecoration: b.out[i] ? "line-through" : "none", fontSize:9.5 }}>
+                color: b.dead[i] ? "#6b4038" : b.out[i] ? "#8f7e62" : e.mine ? "#e8a08c" : "#9dc0d4",
+                textDecoration: b.out[i] ? "line-through" : "none", fontSize:11 }}>
                 {e.name}{b.dead[i] ? " ✝" : ""}
               </span>
             ))}
           </div>
         )}
-        <div className={`arena v-${fight.venue||"forum"} ${shaking? "arenashake":""}`}>
+        <div className={`arena v-${fight.venue||"forum"} ${shaking? "arenashake":""}`}
+          role="img" aria-label={b && b.text ? b.text : "The arena"}>
           <CrowdRow level={b.crowd} factions={fight.factions} venue={fight.venue}/>
           <div className="roar" style={{opacity: b.crowd/130}}/>
           <div className="dust"/>
@@ -8376,7 +9360,7 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak }){
           ))}
           {(b.kind==="crit"||b.kind==="death") && <div className="hitflash" key={`f${i}`}/>}
           <div style={{position:"absolute",bottom:4,left:8,right:8,display:"flex",alignItems:"center",gap:6}}>
-            <span className="disp dim" style={{fontSize:8.5,letterSpacing:".08em"}}>MOMENTUM</span>
+            <span className="disp dim" style={{fontSize:11,letterSpacing:".08em"}}>MOMENTUM</span>
             <div className="momtrack" style={{flex:1}}>
               <div className="momfill" style={{ left: momPct<50? `${momPct}%`:"50%", right: momPct<50? "50%":`${100-momPct}%` }}/>
             </div>
@@ -8387,6 +9371,15 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak }){
           style={{marginTop:10, color: b.kind==="crit"||b.kind==="death"? "#eab6a8" : b.kind==="crowd"? "#e0bd72":"#e8d9b8"}}>
           {b.text}
         </div>
+        {b.stands && (
+          <div style={{marginTop:5,fontSize:14.5,fontStyle:"italic",
+            color: b.stands.silent ? "#8d7e65" : (FAC_TINT[b.stands.fac] ? "#cfc0a0" : "#cfc0a0")}}>
+            {b.stands.silent ? b.stands.line : <>
+              <span style={{color:FAC_TINT[b.stands.fac]||"#9aa86a"}}>“{b.stands.line}”</span>
+              <span className="dim" style={{fontSize:13}}> — {b.stands.who}</span>
+            </>}
+          </div>
+        )}
 
         {!done && <button className="btn btn-ghost" style={{width:"100%",marginTop:4}} onClick={()=>{setPlaying(false); setI(beats.length-1);}}>Skip to the verdict</button>}
 
@@ -8421,6 +9414,15 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak }){
               {fight.dead? "A DEATH IN THE HOUSE" : fight.win? "VICTORY" : "DEFEAT"}
             </div>
             {fight.sum.map((s,k)=><div key={k} style={{fontSize:15.5, padding:"2px 0"}}>{s}</div>)}
+            {fight.reading && fight.reading.length>0 && (
+              <div className="panel" style={{padding:11,marginTop:9,background:"#1c1610",
+                borderColor: fight.win ? "#4e3c26" : "#7c2a22"}}>
+                <div className="tag" style={{marginBottom:4}}>What decided it</div>
+                {fight.reading.map((s,k)=>(
+                  <div key={k} style={{fontSize:14.5,borderTop:k?"1px dotted #33271a":"none",paddingTop:k?5:0,marginTop:k?5:0}}>{s}</div>
+                ))}
+              </div>
+            )}
             <button className="btn" style={{marginTop:10, width:"100%"}} onClick={onClose}>Return to the ludus</button>
           </div>
         )}
@@ -8438,6 +9440,9 @@ const OVER_TEXT = {
   debt: ()=>({ title:"THE CREDITORS COME", text:"Hard men with soft voices arrive at your gate bearing a magistrate's seal. The ludus, the familia, the very sand of your training square — seized, itemized, sold. Capua forgets you before the next games." }),
   closed: o=>({ title:"THE GATES STAND OPEN", text:`You free the last of them on a Tuesday, which is not a day anybody chooses for anything. ${o.freed} men have walked out of ${o.name} on their own legs across ${o.years} year${o.years===1?"":"s"}, and there is nobody left in the cells to see the last one go. The sand will be a yard for something else inside a year and the racks are already sold. Capua thinks you have lost your mind, and one lanista in Neapolis writes to ask how it was done.` }),
   oldAge: o=>({ title:"THE LONG TENURE", text:`${o.lan} is ${o.age} and has been doing this for ${o.years} year${o.years===1?"":"s"}. There is no single morning it ends. There is a winter where the walk down to the square gets long, and a spring where somebody else has already set the drills before he arrives, and by summer the house is being run by ${o.heir} and everybody has agreed not to say so. He keeps the ledger. It is the part he was always best at.` }),
+  banned: o=>({ title:RUINS.banned.title, text:RUINS.banned.text(o) }),
+  disgrace: o=>({ title:RUINS.disgrace.title, text:RUINS.disgrace.text(o) }),
+  ruined: o=>({ title:RUINS.ruined.title, text:RUINS.ruined.text(o) }),
   ruin: ()=>({ title:"AN EMPTY HOUSE", text:"No men. No coin. A lanista with an empty ludus is only a man with a large, quiet building. The gates are shuttered, and the wind moves the sand where champions might have trained." }),
 };
 
@@ -8525,6 +9530,7 @@ export default function App(){
   const [sheet,setSheet] = useState(null);
   const [rack,setRack] = useState("weapon");
   const [seedIn,setSeedIn] = useState("");
+  useEffect(()=>{ if(tab==="market" && S && !S.flags.sawFirstBuy) mut(d=>{ firstBuyWarn(d); }); }, [tab]);
   const [pitchIn,setPitchIn] = useState("plain");
   const [legacy,setLegacy] = useState(null);
   const [carry,setCarry] = useState(null);      // {mode:"out"|"in", text, err, found}
@@ -8629,6 +9635,7 @@ export default function App(){
     setCarry({ mode:"out", text:"" });
     exportHouse(S).then(t=>setCarry(c=>c && c.mode==="out" ? Object.assign({},c,{text:t}) : c)); };
   const carryIn = ()=>{ setCarry({ mode:"in", text:"", err:null, found:null }); };
+  const watchOne = ()=>{ try { const f = demoFight(); if(f) setFight(f); } catch(e){} };
   const readHouse = t => {
     setCarry(c=>Object.assign({}, c, { text:t, err:null, found:null }));
     if(!t.trim()) return;
@@ -8784,6 +9791,7 @@ export default function App(){
     g.regimen="spar"; g.sparWith=m.id; m.regimen="spar"; m.sparWith=g.id; });
   const buyG = id => mut(d=>{ const i=d.market.findIndex(m=>m.id===id); if(i<0) return;
     const g=d.market[i]; const count=d.gladiators.filter(x=>!isGone(x)).length;
+    if(g.slaver){ dealt(d, g.slaver, "bought"); if(g.flaw && g.scouted) dealt(d, g.slaver, "burned"); }
     const tax = rnd(g.price * lawTax(d));
     if(d.gold < g.price + tax || count>=8) return;
     d.gold -= g.price + tax; d.market.splice(i,1);
@@ -8808,9 +9816,10 @@ export default function App(){
     if(d.gold < fee) return;
     d.gold -= fee;
     g.scouted = true;
+    if(g.slaver){ dealt(d, g.slaver, "scouted"); if(g.flaw) dealt(d, g.slaver, "burned"); }
     chron(d, g.flaw
-      ? `You pay to have ${g.name} looked over properly. He ${FLAWS[g.flaw].tell}. The seller does not meet your eye about it.`
-      : `You pay to have ${g.name} looked over properly. He is exactly what the man said he was, which happens.`,
+      ? `You pay to have ${g.name} looked over properly. He ${FLAWS[g.flaw].tell}. ${g.slaver? slaverOf(g.slaver).name : "The seller"} does not meet your eye about it.`
+      : `You pay to have ${g.name} looked over properly. He is exactly what ${g.slaver? slaverOf(g.slaver).name : "the man"} said he was, which happens.`,
       g.flaw ? "bad" : "good"); });
   const takeHouseApart = () => mut(d=>{ sellTheHouse(d); });
   const sellOne = id => mut(d=>{ const paid = sellGear(d, id);
@@ -9051,12 +10060,18 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
     <div className="lr" style={{display:"flex",alignItems:"safe center",justifyContent:"center",padding:20}}>
       <style>{CSS}</style>
       <CarrySheet/>
+      {fight && <FightModal fight={fight} startMuted={!prefs.sound}
+        onClose={()=>{ SFX.stopCrowd(); setFight(null); }}
+        onSpeak={null} onMute={v=>setPref("sound", !v)}/>}
       <div style={{maxWidth:460,width:"100%"}}>
         <div className="disp" style={{fontSize:46,fontWeight:900,textAlign:"center",letterSpacing:".22em",color:"#e8d092"}}>LVDVS</div>
         <div className="dim" style={{textAlign:"center",fontStyle:"italic",marginTop:2,marginBottom:18}}>Blood, sand, and the fortunes of a Roman house.</div>
         <div className="flex items-center justify-between" style={{marginBottom:8}}>
           <span className="tag tag-gold">The Records</span>
-          <button className="btn btn-ghost" style={{padding:"5px 10px",fontSize:12}} onClick={carryIn}>Bring one in</button>
+          <span className="flex gap-2">
+            <button className="btn btn-ghost" style={{padding:"10px 10px",fontSize:12}} onClick={watchOne}>Watch a bout</button>
+            <button className="btn btn-ghost" style={{padding:"10px 10px",fontSize:12}} onClick={carryIn}>Bring one in</button>
+          </span>
         </div>
         {[1,2,3].map(i=>{
           const sum = saveSummary(slots[i]);
@@ -9110,7 +10125,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         <div className="dim" style={{textAlign:"center",fontStyle:"italic",marginTop:2,marginBottom:18}}>Blood, sand, and the fortunes of a Roman house.</div>
         <div className="panel" style={{padding:14, marginBottom:12}}>
           <div className="tag" style={{marginBottom:8}}>Name your house</div>
-          <input className="sel" style={{width:"100%",boxSizing:"border-box"}} value={nameIn} onChange={e=>setNameIn(e.target.value)} maxLength={30}/>
+          <input className="sel" aria-label="The name of your house" style={{width:"100%",boxSizing:"border-box"}} value={nameIn} onChange={e=>setNameIn(e.target.value)} maxLength={30}/>
           {legacy && legacy.houses>0 && (
             <div className="panel" style={{padding:11,margin:"14px 0 4px",background:"#1c1610",borderColor:"#4e3c26"}}>
               <div className="flex items-center justify-between" style={{marginBottom:4}}>
@@ -9125,7 +10140,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 return (
                   <div key={k} style={{borderTop:"1px dotted #33271a",padding:"5px 0"}}>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="rowname disp" style={{fontSize:12.5,color:got?"#e8d092":"#7a6b52"}}>{L2.name}</span>
+                      <span className="rowname disp" style={{fontSize:12.5,color:got?"#e8d092":"#8d7e65"}}>{L2.name}</span>
                       <span className="rowval dim" style={{fontSize:12}}>{Math.min(have,L2.need)}/{L2.need} {L2.unit}</span>
                     </div>
                     {got && <div className="dim" style={{fontSize:13,fontStyle:"italic"}}>{L2.say} <span className="laurel">{L2.boon}</span></div>}
@@ -9154,7 +10169,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               </button>
             ); })}
           <div className="tag" style={{margin:"14px 0 5px"}}>The seed</div>
-          <input className="sel" style={{width:"100%",boxSizing:"border-box",letterSpacing:".12em"}}
+          <input className="sel" aria-label="Seed — leave empty for a house nobody has run" style={{width:"100%",boxSizing:"border-box",letterSpacing:".12em"}}
             value={seedIn} onChange={e=>setSeedIn(e.target.value.toUpperCase())} maxLength={16}
             placeholder="leave empty for a house nobody has run"/>
           <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:4}}>
@@ -9273,7 +10288,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           return (
             <div key={k} style={{borderTop:"1px dotted #33271a",padding:"6px 0",opacity:has?1:0.45}}>
               <div className="flex items-center justify-between gap-2">
-                <span className="rowname disp" style={{fontSize:13,color:has?(T.bad?"#d96f5d":"#e8d092"):"#7a6b52"}}>{T.name}</span>
+                <span className="rowname disp" style={{fontSize:13,color:has?(T.bad?"#d96f5d":"#e8d092"):"#8d7e65"}}>{T.name}</span>
                 <span className="rowval dim" style={{fontSize:12}}>{has? "yours" : T.earn}</span>
               </div>
               <div className="dim" style={{fontSize:14}}>{T.line}</div>
@@ -9490,7 +10505,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         return (
           <div key={k} style={{borderTop:"1px dotted #33271a",padding:"6px 0"}}>
             <div className="flex items-center justify-between gap-2">
-              <span className="rowname disp" style={{fontSize:13,color:done?"#e8d092":"#7a6b52"}}>{F.name}</span>
+              <span className="rowname disp" style={{fontSize:13,color:done?"#e8d092":"#8d7e65"}}>{F.name}</span>
               {done
                 ? <span className="rowval laurel" style={{fontSize:12}}>year {Math.floor((S.feats[k]-1)/YEAR_WEEKS)+1}</span>
                 : <span className="rowval dim" style={{fontSize:12}}>—</span>}
@@ -9537,7 +10552,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             <div className="dim" style={{fontSize:12.5}}>{seasonOf(S).name} · year {yearOf(S)}, week {yearWeek(S)} · {S.travel? "on the road" : S.city? CITIES[S.city].name : fameTitle(S.fame)}</div>
           </div>
           <div className="flex items-center gap-2" style={{flexShrink:0}}>
-            <button className="btn btn-ghost" aria-label="Settings" style={{padding:"9px 10px"}} onClick={()=>setShowSettings(true)}><Settings size={16} aria-hidden="true"/></button>
+            <button className="btn btn-ghost" aria-label="Settings" style={{padding:"10px 10px"}} onClick={()=>setShowSettings(true)}><Settings size={16} aria-hidden="true"/></button>
             {(()=>{ const W = weekWeight(S);
               const blocked = !!S.pendingEvent || !!S.doctoreOffer || !!S.romeOffer || !!S.reSignOffer || !!S.over;
               if(W.kind==="quiet" && !blocked){
@@ -9604,7 +10619,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               {banners.length>0 && (
                 <div className="flex gap-2" style={{flexWrap:"wrap"}}>
                   {banners.map((b,i)=>(
-                    <div key={i} className="panel" style={{padding:"6px 9px",borderColor:b[0],flex:"1 1 auto",minWidth:0}}>
+                    <div key={i} className="panel" style={{padding:"10px 9px",borderColor:b[0],flex:"1 1 auto",minWidth:0}}>
                       <div className="disp" style={{fontSize:12,color:"#e8d092",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{b[1]}</div>
                       {b[2] && <div className="dim" style={{fontSize:11.5,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{b[2]}</div>}
                     </div>
@@ -9655,7 +10670,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                       Nothing is asking anything of you. Train them, or find them something to do.
                     </div>
                   : AG.map((a,i)=>(
-                      <button key={i} className="optrow" style={{padding:"8px 9px",marginBottom:5,borderColor:URG[a.urgency].c}}
+                      <button key={i} className="optrow" style={{padding:"10px 9px",marginBottom:5,borderColor:URG[a.urgency].c}}
                         onClick={()=>setTab(a.tab)}>
                         <div className="flex items-center justify-between gap-2">
                           <span style={{fontSize:14.5,color:a.urgency===3?"#e8d9b8":"#cfc0a0",textAlign:"left"}}>{a.label}</span>
@@ -9663,17 +10678,26 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                         </div>
                         <div className="flex items-center justify-between gap-2">
                           <span className="dim" style={{fontSize:13,textAlign:"left"}}>{a.sub}</span>
-                          <span className="rowval" style={{fontSize:11.5,color:"#8a7a58",whiteSpace:"nowrap"}}>{TABN[a.tab]||""} ›</span>
+                          <span className="rowval" style={{fontSize:11.5,color:"#8e7e5c",whiteSpace:"nowrap"}}>{TABN[a.tab]||""} ›</span>
                         </div>
                       </button>
                     ))}
+                {(()=>{ const C = counsel(S); if(!C) return null;
+                  return (
+                    <div style={{borderTop:"1px dotted #4e3c26",marginTop:8,paddingTop:8}}>
+                      <div className="flex items-baseline gap-2">
+                        <span className="tag" style={{borderColor:"#5a6a4a",color:"#9aa86a",flexShrink:0}}>The doctore</span>
+                        <span style={{fontSize:14.5,fontStyle:"italic",color:"#cfc0a0"}}>{C.say(S)}</span>
+                      </div>
+                    </div>
+                  ); })()}
                 {rest > 0 && (
-                  <button className="btn btn-ghost" style={{width:"100%",marginTop:3,padding:"7px 9px",fontSize:11}} onClick={()=>setAllTodos(true)}>
+                  <button className="btn btn-ghost" style={{width:"100%",marginTop:3,padding:"10px 9px",fontSize:11}} onClick={()=>setAllTodos(true)}>
                     Show {rest} more
                   </button>
                 )}
                 {allTodos && ALL.length > 7 && (
-                  <button className="btn btn-ghost" style={{width:"100%",marginTop:3,padding:"7px 9px",fontSize:11}} onClick={()=>setAllTodos(false)}>
+                  <button className="btn btn-ghost" style={{width:"100%",marginTop:3,padding:"10px 9px",fontSize:11}} onClick={()=>setAllTodos(false)}>
                     Show fewer
                   </button>
                 )}
@@ -9687,6 +10711,30 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               <span className="blood">Fallen {S.fallen.length}</span>
               <span className="gold">Freed {S.freed.length}</span>
             </div>
+            {(()=>{ const reg = activeG(S);
+              const avgReg = reg.length ? reg.reduce((n,g)=>n+regardOf(g),0)/reg.length : 0;
+              const rows = [
+                ["Fame", rnd(S.fame), standing("fame", S.fame, S.week)],
+                ["Coin", rnd(S.gold), standing("gold", S.gold, S.week)],
+                ["The cells", `${Math.round(S.unrest)} unrest`, standingLow("unrest", S.unrest)],
+                ["What they make of you", Math.round(avgReg), standing("regard", avgReg, S.week)],
+              ].filter(r=>r[2]);
+              return (
+                <div style={{marginTop:10,borderTop:"1px dotted #33271a",paddingTop:7}}>
+                  <div className="dim" style={{fontSize:12,marginBottom:4,letterSpacing:".08em"}}>
+                    AGAINST A HOUSE {S.week} WEEKS OLD
+                  </div>
+                  {rows.map(([label,v,st],i)=>(
+                    <div key={i} className="flex items-center justify-between gap-2" style={{padding:"3px 0"}}>
+                      <span className="rowname" style={{fontSize:13.5}}>{label}</span>
+                      <span className="flex items-center gap-2">
+                        <span className="rowval" style={{fontSize:13.5,color:"#e0bd72"}}>{v}</span>
+                        <span style={{fontSize:12,color:st.colour,whiteSpace:"nowrap",minWidth:118,textAlign:"right"}}>{st.word}</span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ); })()}
           </div>
           {S.rome && (
             <div className="panel" style={{padding:14,borderColor:"#c99a4b",background:"linear-gradient(165deg,#2f2415,#1d1610)"}}>
@@ -9870,6 +10918,29 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 {S.doctore.fromHouse && <span className="tag tag-gold">✦ of this house</span>}
               </div>
               <div className="dim" style={{fontSize:14,fontStyle:"italic"}}>{S.doctore.past}.</div>
+              {S.doctore.tag && (<>
+                <div style={{fontSize:14.5,marginTop:5,color:"#cfc0a0"}}>
+                  <span className="laurel">{S.doctore.name}, {S.doctore.tag}.</span> {S.doctore.pastLine}
+                </div>
+                {docCreed(S) && (
+                  <div className="panel" style={{padding:9,marginTop:7,background:"#1c1610"}}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="disp" style={{fontSize:13,color:"#e8d092"}}>He {docCreed(S).name}</span>
+                      <span className="rowval dim" style={{fontSize:12}}>
+                        {(()=>{ const C=docCreed(S), b=[];
+                          if(C.train!==1 && C.train!=null) b.push(`training ×${C.train.toFixed(2)}`);
+                          if(C.strain!=null) b.push(`strain ×${C.strain.toFixed(2)}`);
+                          if(C.regard) b.push(`regard ${C.regard>0?"+":""}${C.regard}/wk`);
+                          if(C.calm) b.push(`unrest −${C.calm}/wk`);
+                          if(C.injure) b.push(`injuries ×${C.injure.toFixed(2)}`);
+                          return b.join(" · "); })()}
+                      </span>
+                    </div>
+                    <div className="dim" style={{fontSize:14,fontStyle:"italic",marginTop:2}}>{docCreed(S).line}</div>
+                    {docSays(S) && <div style={{fontSize:14,marginTop:5,borderTop:"1px dotted #33271a",paddingTop:5}}>{docSays(S)}</div>}
+                  </div>
+                )}
+              </>)}
               <div style={{fontSize:14.5,marginTop:6}}>
                 Training <span className="laurel">+{Math.round((docTrain(S,"__none")-1)*100)}%</span> to all,
                 <span className="laurel"> +{Math.round((docTrain(S,S.doctore.spec)-1)*100)}%</span> to {STAT_NAMES[S.doctore.spec].toLowerCase()}.
@@ -10019,6 +11090,70 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         </div>)}
 
         {tab==="arena" && (<div className="flex flex-col gap-3">
+          {(()=>{ const rivals = (S.rivals||[]).filter(h=>!h.retired);
+            if(!rivals.length || S.week < 16) return null;
+            const ready = gambitReady(S);
+            return (
+              <div className="panel" style={{padding:12}}>
+                <div className="flex items-center justify-between" style={{marginBottom:4}}>
+                  <span className="tag tag-blood">What can be done quietly</span>
+                  <span className="rowval dim" style={{fontSize:12}}>
+                    {ready ? lawWord(S) : `not for ${6 - (S.week - (S.flags.gambitWeek||0))} weeks`}
+                  </span>
+                </div>
+                <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:6}}>
+                  They have been doing all of this to you since the day you opened. None of it is legal and all of it is ordinary.
+                </div>
+                {GAM_KEYS.map(k=>{ const G = GAMBITS[k], cost = G.cost(S);
+                  const p = clamp(G.odds(S) - gambitDone(S,k)*0.07, 0.12, 0.86);
+                  return (
+                    <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:7,marginTop:7}}>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="rowname" style={{fontSize:14.5}}>{G.name}</span>
+                        <span className="rowval gold" style={{fontSize:13}}>{cost}d</span>
+                      </div>
+                      <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:1}}>{G.blurb}</div>
+                      <div style={{fontSize:12.5,marginTop:2,color:p>=0.55?"#9aa86a":p>=0.35?"#d8ac5f":"#d96f5d"}}>
+                        about {Math.round(p*100)} in a hundred{gambitDone(S,k)>0 ? ` · you have tried this ${gambitDone(S,k)} time${gambitDone(S,k)>1?"s":""}` : ""}
+                      </div>
+                      {ready && S.gold >= cost && (
+                        <div className="flex gap-2" style={{marginTop:5}}>
+                          {rivals.map(h=>(
+                            <button key={h.name} className="btn btn-ghost" style={{flex:1,padding:"10px 6px",fontSize:11}}
+                              onClick={()=>setAsk({ title:G.name, danger:true, confirm:`Against ${h.name} · ${cost}d`,
+                                text:`${G.blurb} About ${Math.round(p*100)} in a hundred it works. If it does not, it will be known that you tried, and the magistrate is ${lawWord(S)}.`,
+                                run:()=>mut(d=>{ runGambit(d, k, h.name); }) })}>
+                              {h.name}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ); })}
+              </div>
+            ); })()}
+          {(()=>{ const p = pactOf(S); if(!p) return null;
+            const P = PACTS[p.kind], pace = pactPace(S);
+            const col = pace==="impossible" ? "#d96f5d" : pace==="behind" ? "#d8ac5f" : "#9aa86a";
+            return (
+              <div className="panel" style={{padding:12,borderColor:col}}>
+                <div className="flex items-center justify-between" style={{marginBottom:3}}>
+                  <span className="tag tag-gold">Your word is given</span>
+                  <span className="rowval" style={{fontSize:12.5,color:col}}>
+                    {pactOwed(S)} owed · {pactLeft(S)} weeks
+                  </span>
+                </div>
+                <div className="disp" style={{fontSize:14.5,color:"#e8d092"}}>{P.name}</div>
+                <Bar v={p.done/p.need*100} label="" color={`linear-gradient(90deg,#4a3a24,${col})`}/>
+                <div className="dim" style={{fontSize:13.5,marginTop:3}}>
+                  {p.done} of {p.need} given{p.rate ? `, ${p.rate}d a card` : ""}{p.bonus ? `, ${p.bonus}d at the end of it` : ""}.
+                  {P.exclusive ? " Nobody else's games in Capua until it is done." : ""}
+                </div>
+                {pace==="impossible" && <div className="blood" style={{fontSize:13.5,marginTop:3}}>
+                  There are not enough weeks left. Whatever happens now, it will be remembered as broken.
+                </div>}
+              </div>
+            ); })()}
           <div className="panel" style={{padding:13}}>
             <div className="tag" style={{marginBottom:8}}>Choose your man</div>
             {eligible.length===0 ? <div className="dim" style={{fontStyle:"italic",fontSize:15}}>No one is fit to fight this week — rested, healthy, and unfought only.</div> : (
@@ -10386,6 +11521,29 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               </div>
             ); })}
           <div className="dim" style={{fontSize:14,fontStyle:"italic"}}>The slaver's block. Fresh stock every third week. Roster holds 8 men.</div>
+          {(()=>{ const here = [...new Set((S.market||[]).map(g=>g.slaver).filter(Boolean))];
+            if(!here.length) return null;
+            return (
+              <div className="panel" style={{padding:11}}>
+                <div className="tag tag-gold" style={{marginBottom:5}}>Who is standing at the block</div>
+                {here.map(k=>{ const S2 = slaverOf(k), x = dealings(S,k);
+                  return (
+                    <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:6,marginTop:6}}>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="rowname" style={{fontSize:14.5}}>{S2.full}</span>
+                        <span className="rowval dim" style={{fontSize:12,whiteSpace:"nowrap"}}>{slaverWord(S,k)}</span>
+                      </div>
+                      <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:1}}>{S2.line}</div>
+                      {(x.bought>0 || x.burned>0) && (
+                        <div style={{fontSize:12.5,marginTop:2,color:x.burned>=2?"#d96f5d":"#8f7e62"}}>
+                          {x.bought} bought from him{x.burned>0 ? `, ${x.burned} not what he said` : ""}
+                          {slaverPrice(S,k)<1 ? ` · prices you ${Math.round((1-slaverPrice(S,k))*100)}% keener` : slaverPrice(S,k)>1 ? ` · ${Math.round((slaverPrice(S,k)-1)*100)}% dearer for you` : ""}
+                        </div>
+                      )}
+                    </div>
+                  ); })}
+              </div>
+            ); })()}
           {(()=>{ const p = paragonOf(S); if(!p) return null;
             const R2 = paragonReach(S, p), L = liquidate(S);
             const canNow = S.gold >= p.price, canAfter = S.gold + L.total >= p.price;
@@ -10454,12 +11612,16 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 {isAuctor(g) && <span className="tag" style={{borderColor:"#5a7a8a",color:"#9dc0d4"}}>Auctoratus · free</span>}
                 {g.warCaptive && <span className="tag tag-blood">Taken in the south</span>}
                 {g.soldBy && <span className="tag">Sold on by House {g.soldBy}</span>}
+                {g.slaver && <span className="tag" style={{borderColor:"#5a6a4a",color:"#9aa86a"}}>{slaverOf(g.slaver).name}</span>}
                 <span className="tag" style={{borderColor:g.age>31?"#7c2a22":g.age<=PRIME[1]?"#5a6a35":undefined,
                   color:g.age>31?"#d98476":g.age<=PRIME[1]?"#b9c58a":undefined}}>{ageTag(g.age)} · {g.age}</span>
                 {(g.scars||[]).length>0 && <span className="tag">{g.scars.length} scar{g.scars.length>1?"s":""}</span>}
               </div>
               {(()=>{ const lvl = readLevel(S, g), src2 = lvl>=1 ? g : (g.shown || g);
                 return (<>
+                  {g.pitch && !g.scouted && (
+                    <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:3}}>{g.pitch}</div>
+                  )}
                   <div style={{fontSize:14.5,fontStyle:"italic",color:g.legend?"#e0bd72":"#cfc0a0"}}>
                     {g.legend ? "There is something in this one's eyes the arena has not yet seen."
                      : lvl>=2 ? `Assessed: ${potentialWord(g.potential)}. At ${g.age}, ${ageWord(g.age)}.`
@@ -10676,10 +11838,10 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                       <span className="rowval gold" style={{fontSize:13.5}}>{x.amount}d</span>
                     </div>
                     <div className="flex items-center justify-between gap-2" style={{marginTop:2}}>
-                      <span style={{fontSize:13,color: late>=4?"#d96f5d" : late>0?"#d8ac5f" : "#7a6b52"}}>
+                      <span style={{fontSize:13,color: late>=4?"#d96f5d" : late>0?"#d8ac5f" : "#8d7e65"}}>
                         {late >= 4 ? `${late} weeks late and not at home` : late > 0 ? `${late} week${late===1?"":"s"} late` : `due in ${x.due - S.week}`}
                       </span>
-                      <button className="btn btn-ghost" style={{padding:"4px 9px",fontSize:12}}
+                      <button className="btn btn-ghost" style={{padding:"10px 9px",fontSize:12}}
                         onClick={()=>mut(d=>{ sellDebt(d, x.id); })}>
                         Sell it for {rnd(x.amount*discountRate(S))}d
                       </button>
@@ -10793,7 +11955,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                         disabled={S.gold<c} onClick={()=>doRite(m.gid,k)}>
                         <div className="flex items-center justify-between gap-2">
                           <span className="disp" style={{fontSize:13,color:k==="none"?"#a08e70":"#e8d092"}}>{R2.name}</span>
-                          <span className="rowval" style={{fontSize:12.5,color:c>S.gold?"#d96f5d":c?"#d8ac5f":"#7a6b52"}}>{c? c+"d" : "costs nothing"}</span>
+                          <span className="rowval" style={{fontSize:12.5,color:c>S.gold?"#d96f5d":c?"#d8ac5f":"#8d7e65"}}>{c? c+"d" : "costs nothing"}</span>
                         </div>
                         <div className="dim" style={{fontSize:13.5,marginTop:2}}>{R2.desc}</div>
                       </button>
@@ -11001,7 +12163,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                             </button>
                           )}
                           {!it.stock && it.price>0 && free>0 && (
-                            <button className="btn btn-ghost" style={{width:"100%",marginTop:5,fontSize:12.5,padding:"7px 10px"}}
+                            <button className="btn btn-ghost" style={{width:"100%",marginTop:5,fontSize:12.5,padding:"10px 10px"}}
                               onClick={()=>sellOne(id)}>
                               Sell one back · about {rnd(it.price*resaleRate(S)*0.85)}d
                             </button>
@@ -11032,7 +12194,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
             <div className="flex items-center justify-between" style={{marginBottom:4}}>
               <div className="disp" style={{fontSize:17,fontWeight:900}}>{selG.name}{selG.nick?<span style={{color:"#d8c08a"}}>, {selG.nick}</span>:null}</div>
-              <button className="btn btn-ghost" style={{padding:"6px 10px"}} aria-label="Close" onClick={()=>setSelId(null)}><X size={14}/></button>
+              <button className="btn btn-ghost" style={{padding:"10px 10px"}} aria-label="Close" onClick={()=>setSelId(null)}><X size={14}/></button>
             </div>
             <div className="dim" style={{fontSize:14.5,marginBottom:8}}>{selG.cls} — {CLASSES[selG.cls].desc} {ORIGINS[selG.origin].blurb.charAt(0).toUpperCase()+ORIGINS[selG.origin].blurb.slice(1)}.</div>
             <div className="flex gap-3" style={{fontSize:14.5,flexWrap:"wrap",marginBottom:8}}>
@@ -11069,7 +12231,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 <div className="panel" style={{padding:10,marginTop:8,marginBottom:9,background:"#1c1610",borderColor:"#3e2f1f"}}>
                   <div className="flex items-center justify-between" style={{marginBottom:4}}>
                     <span className="tag">Kits you keep</span>
-                    <button className="btn btn-ghost" style={{padding:"4px 9px",fontSize:12}} onClick={()=>keepKit(selG.id)}>
+                    <button className="btn btn-ghost" style={{padding:"10px 9px",fontSize:12}} onClick={()=>keepKit(selG.id)}>
                       Keep this one
                     </button>
                   </div>
@@ -11081,8 +12243,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                         <div key={k.id} className="flex items-center justify-between gap-2" style={{borderTop:"1px dotted #33271a",padding:"5px 0"}}>
                           <span className="rowname" style={{fontSize:14}}>{k.name}</span>
                           <span className="flex gap-1">
-                            <button className="btn btn-ghost" style={{padding:"4px 9px",fontSize:12}} onClick={()=>useKit(selG.id,k.id)}>Put it on him</button>
-                            <button className="btn btn-ghost" style={{padding:"4px 8px",fontSize:12}} onClick={()=>forgetKit(k.id)}>×</button>
+                            <button className="btn btn-ghost" style={{padding:"10px 9px",fontSize:12}} onClick={()=>useKit(selG.id,k.id)}>Put it on him</button>
+                            <button className="btn btn-ghost" style={{padding:"10px 8px",fontSize:12}} onClick={()=>forgetKit(k.id)}>×</button>
                           </span>
                         </div>
                       ))}
@@ -11378,7 +12540,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             </div>
             <div className="flex items-center justify-between" style={{marginBottom:6}}>
               <span className="tag tag-gold">Kit</span>
-              <button className="btn btn-ghost" style={{padding:"5px 10px",fontSize:12}} onClick={()=>armHim(selG.id)}>
+              <button className="btn btn-ghost" style={{padding:"10px 10px",fontSize:12}} onClick={()=>armHim(selG.id)}>
                 Arm him from the rack
               </button>
             </div>
@@ -11551,8 +12713,55 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 </>)}
               </div>
             )}
-            <div className="tag" style={{marginBottom:6}}>This week</div>
-            <div className="grid grid-cols-2 gap-2" style={{marginBottom:6}}>
+            {(()=>{ const p = seasonOfMan(selG);
+              if(p){ const P = PLANSEASON[p.kind];
+                return (
+                  <div className="panel" style={{padding:11,marginBottom:9,background:"#1c1610",borderColor:"#c99a4b"}}>
+                    <div className="flex items-center justify-between" style={{marginBottom:3}}>
+                      <span className="tag tag-gold">On a season</span>
+                      <span className="rowval" style={{fontSize:12.5,color:"#e0bd72"}}>{planWeeksLeft(selG)} weeks left</span>
+                    </div>
+                    <div className="disp" style={{fontSize:14.5,color:"#e8d092"}}>{P.name}</div>
+                    <Bar v={planPct(selG)} label="" color="linear-gradient(90deg,#4a3a24,#c99a4b)"/>
+                    <div className="dim" style={{fontSize:13.5,marginTop:3}}>
+                      This week: {REGIMENS[planDrill(selG)] ? REGIMENS[planDrill(selG)].name : "the post"}. It pays{" "}
+                      {Object.entries(P.pays).map(([k,v])=>`+${v} ${STAT_NAMES[k].toLowerCase()}`).join(", ")}
+                      {P.trait ? ` and makes him ${P.trait}` : ""}, and only when it is finished.
+                    </div>
+                    <button className="btn btn-ghost" style={{width:"100%",marginTop:7}}
+                      onClick={()=>setAsk({ title:"Come Off The Season", danger:true, confirm:"Take him off it",
+                        text:`He is ${planPct(selG)} in the hundred through. Coming off now keeps what he has gained week by week and loses the whole of what finishing would have paid.`,
+                        run:()=>mut(d=>{ const g=d.gladiators.find(x=>x.id===selG.id); if(g) breakPlan(d, g, "You wanted him back on the card."); }) })}>
+                      Take him off it
+                    </button>
+                  </div>
+                ); }
+              if(selG.status !== "active") return null;
+              return (
+                <div className="panel" style={{padding:11,marginBottom:9}}>
+                  <div className="tag tag-gold" style={{marginBottom:4}}>Put him on a season</div>
+                  <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:6}}>
+                    Months of one thing, drilled in order, worth nothing until it is done and a great deal more than a week of picking when it is.
+                  </div>
+                  {PS_KEYS.map(k=>{ const P = PLANSEASON[k];
+                    return (
+                      <button key={k} className="optrow" style={{padding:10,marginBottom:6}}
+                        onClick={()=>mut(d=>{ const g=d.gladiators.find(x=>x.id===selG.id); if(g) startPlan(d, g, k); })}>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="disp" style={{fontSize:13,color:"#e8d092"}}>{P.name}</span>
+                          <span className="rowval dim" style={{fontSize:12}}>{P.weeks} weeks</span>
+                        </div>
+                        <div className="dim" style={{fontSize:13.5,textAlign:"left",marginTop:2}}>{P.blurb}</div>
+                        <div style={{fontSize:12.5,textAlign:"left",marginTop:2,color:"#9aa86a"}}>
+                          {Object.entries(P.pays).map(([s,v])=>`+${v} ${STAT_NAMES[s].toLowerCase()}`).join(" · ")}
+                          {P.trait ? ` · ${P.trait}` : ""}
+                        </div>
+                      </button>
+                    ); })}
+                </div>
+              ); })()}
+            {!seasonOfMan(selG) && <div className="tag" style={{marginBottom:6}}>This week</div>}
+            <div className="grid grid-cols-2 gap-2" style={{marginBottom:6, display: seasonOfMan(selG) ? "none" : undefined}}>
               {REG_KEYS.map(k=>{ const r = REGIMENS[k], on = (selG.regimen||"palus")===k;
                 const what = r.focus ? "your pick" : r.learn ? "his partner's best"
                   : r.gains ? Object.keys(r.gains).map(s=>STAT_NAMES[s].slice(0,4)).join("+")
@@ -11635,7 +12844,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
               <div className="flex items-center justify-between" style={{marginBottom:4}}>
                 <div className="disp" style={{fontSize:14,fontWeight:700,letterSpacing:".1em"}}>{SLOT_NAME[gearPick.slot].toUpperCase()}</div>
-                <button className="btn btn-ghost" style={{padding:"6px 10px"}} aria-label="Close" onClick={()=>setGearPick(null)}><X size={14}/></button>
+                <button className="btn btn-ghost" style={{padding:"10px 10px"}} aria-label="Close" onClick={()=>setGearPick(null)}><X size={14}/></button>
               </div>
               <div className="dim" style={{fontSize:14,fontStyle:"italic",marginBottom:10}}>
                 For {g.name} — {g.cls}.{dualLock ? " Both his hands are full; a shield would only hinder him." : ""}
@@ -11670,7 +12879,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
             <div className="flex items-center justify-between" style={{marginBottom:10}}>
               <div className="disp" style={{fontSize:15,fontWeight:900,letterSpacing:".12em",color:"#e8d092"}}>{SHEETS[sheet].title}</div>
-              <button className="btn btn-ghost" style={{padding:"6px 10px"}} aria-label="Close" onClick={()=>setSheet(null)}><X size={14}/></button>
+              <button className="btn btn-ghost" style={{padding:"10px 10px"}} aria-label="Close" onClick={()=>setSheet(null)}><X size={14}/></button>
             </div>
             {SHEETS[sheet].body()}
             <button className="btn" style={{width:"100%",marginTop:12}} onClick={()=>setSheet(null)}>Close</button>
@@ -11683,7 +12892,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
             <div className="flex items-center justify-between" style={{marginBottom:10}}>
               <div className="disp" style={{fontSize:15,fontWeight:900,letterSpacing:".12em",color:"#e8d092"}}>THE CHRONICLE</div>
-              <button className="btn btn-ghost" style={{padding:"6px 10px"}} aria-label="Close" onClick={()=>setShowChron(false)}><X size={14}/></button>
+              <button className="btn btn-ghost" style={{padding:"10px 10px"}} aria-label="Close" onClick={()=>setShowChron(false)}><X size={14}/></button>
             </div>
             {S.log.length===0
               ? <div className="dim" style={{fontSize:14.5,fontStyle:"italic"}}>Nothing written down yet. The house is new.</div>
@@ -11712,7 +12921,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
               <div className="flex items-center justify-between" style={{marginBottom:12}}>
                 <div className="disp" style={{fontSize:15,fontWeight:900,letterSpacing:".12em",color:"#e8d092"}}>SETTINGS</div>
-                <button className="btn btn-ghost" style={{padding:"6px 10px"}} aria-label="Close" onClick={()=>setShowSettings(false)}><X size={14}/></button>
+                <button className="btn btn-ghost" style={{padding:"10px 10px"}} aria-label="Close" onClick={()=>setShowSettings(false)}><X size={14}/></button>
               </div>
 
               <div className="tag" style={{marginBottom:8}}>Sound</div>
@@ -11800,7 +13009,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
               <div className="flex items-center justify-between" style={{marginBottom:4}}>
                 <div className="disp" style={{fontSize:15,fontWeight:900,letterSpacing:".12em",color:"#e8d092"}}>THE ANNALS</div>
-                <button className="btn btn-ghost" style={{padding:"6px 10px"}} aria-label="Close" onClick={()=>setAnnals(false)}><X size={14}/></button>
+                <button className="btn btn-ghost" style={{padding:"10px 10px"}} aria-label="Close" onClick={()=>setAnnals(false)}><X size={14}/></button>
               </div>
               <div className="dim" style={{fontSize:14,fontStyle:"italic",marginBottom:10}}>
                 {S.name} — {R2.years} year{R2.years===1?"":"s"}, {R2.served} men and women through these gates,
@@ -11890,7 +13099,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
               <div className="flex items-center justify-between" style={{marginBottom:4}}>
                 <div className="disp" style={{fontSize:14,fontWeight:700,letterSpacing:".1em"}}>PAIR HIM AT THE POST</div>
-                <button className="btn btn-ghost" style={{padding:"6px 10px"}} aria-label="Close" onClick={()=>setSparPick(null)}><X size={14}/></button>
+                <button className="btn btn-ghost" style={{padding:"10px 10px"}} aria-label="Close" onClick={()=>setSparPick(null)}><X size={14}/></button>
               </div>
               <div className="dim" style={{fontSize:14,fontStyle:"italic",marginBottom:10}}>
                 Both men improve faster than they would alone, and a man learns most from someone better than him. Both can also be hurt.
@@ -11929,7 +13138,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
             <div className="flex items-center justify-between" style={{marginBottom:6}}>
               <div className="disp" style={{fontSize:14,fontWeight:700,letterSpacing:".1em"}}>{xfer.mode==="export"? "LIFT THE LEDGER":"RESTORE A LEDGER"}</div>
-              <button className="btn btn-ghost" style={{padding:"6px 10px"}} aria-label="Close" onClick={()=>setXfer(null)}><X size={14}/></button>
+              <button className="btn btn-ghost" style={{padding:"10px 10px"}} aria-label="Close" onClick={()=>setXfer(null)}><X size={14}/></button>
             </div>
             {xfer.mode==="export" ? (<div>
               <div className="dim" style={{fontSize:14,fontStyle:"italic",marginBottom:8}}>Every man, every denarius, every line of the chronicle, written small. Keep it somewhere safe.</div>
@@ -11957,6 +13166,21 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
       )}
 
       <CarrySheet/>
+      {S && S.pendingLesson && (
+        <div className="ovl">
+          <div className="sheet" style={{maxWidth:430}}>
+            <div className="disp" style={{fontSize:18,color:"#e8d092",letterSpacing:".1em",marginBottom:8}}>
+              {S.pendingLesson.title.toUpperCase()}
+            </div>
+            {S.pendingLesson.text.split(SPLIT2).map((p,i)=>(
+
+              <div key={i} style={{fontSize:15.5,marginBottom:9}}>{p}</div>
+            ))}
+            <button className="btn" style={{width:"100%",marginTop:4}}
+              onClick={()=>mut(d=>{ d.pendingLesson = null; })}>The doctore nods</button>
+          </div>
+        </div>
+      )}
       {skipped && skipped.ran>=2 && (
         <div className="ovl" onClick={()=>setSkipped(null)}>
           <div className="sheet" onClick={e=>e.stopPropagation()}>
