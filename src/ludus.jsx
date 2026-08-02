@@ -3114,7 +3114,7 @@ function makeGames(d){
     const h = (d.rivals||[]).find(y=>y.name===ch.house);
     const f = h && h.fighters.find(y=>y.id===ch.fid);
     if(f){ const oc = clone(f); oc.house = h.name;
-      offers.push({ id:d.nextId++, tier:2, festival, challenge:ch.id, nemGrudge:!!ch.nem, sagaBout:!!ch.saga, bookedGid:ch.gid,
+      offers.push({ id:d.nextId++, tier:2, festival, challenge:ch.id, nemGrudge:!!ch.nem, sagaBout:!!ch.saga, huntBout:!!ch.hunt, bookedGid:ch.gid,
         opp:oc, oppRef:{house:h.name,fid:f.id}, rematch:true, grudgeM:true, stakes:"standard", purse:ch.purse }); }
   }
   const slots = (F.offers==null ? 2 : F.offers) + (st==="show" ? 1 : 0) + aedileOffers(d);
@@ -5916,8 +5916,17 @@ const FREEDMEN = {
   lanista: { w:8, name:"He sets up on his own",
     need:(d,f)=>f.wins >= 10 && (d.rivals||[]).length < 5,
     say:(d,f)=>`${f.name} has bought two men and a yard on the Neapolis road. He learned the trade somewhere and everybody knows where.`,
-    run:(d,f)=>{ d.fame += 25; addRep(d, "craft", 8);
-      return `There is a fourth house in the bay now and it fights the way yours does, which people notice and say out loud.` } },
+    run:(d,f)=>{
+      const nm = (f.name||"He").split(",")[0].split(" ").slice(-1)[0];
+      const bitter = f.regardAt!=null && f.regardAt < 45;   // a man freed grudgingly does not stay grateful
+      const q = 40 + Math.min(24, (f.wins||0));
+      const h = { name:nm, fame: 40 + (f.wins||0)*3, grudge: bitter?ri(28,42):ri(0,6), freedFrom:true, bitter,
+        fighters: Array.from({length:3}, ()=>makeRivalFighter(d, nm, ri(q, q+20))) };
+      (d.rivals = d.rivals || []).push(h);
+      d.fame += 25; addRep(d, "craft", 8);
+      return bitter
+        ? `${nm} has bought a yard on the Neapolis road, and he did not leave here loving you. He knows every trick this house owns — and now he has men to try them on you.`
+        : `There is a new house in the bay now, and it fights the way yours does. ${nm} learned the trade under your colours and tells anyone who asks.`; } },
   crowd:   { w:9, name:"He is in the front row",
     need:(d,f)=>true,
     say:(d,f)=>`${f.name} is in the stands, in a decent seat, on the afternoon one of yours goes out. He does not shout. He is simply there and a number of people notice him being there.`,
@@ -5961,6 +5970,79 @@ function freedWeek(d){
   const F = FREEDMEN[k];
   d.pendingEvent = { id:"freedman", title:F.name, text:F.say(d, f),
     choices:["Go on"], data:{ k, man:{ name:f.name, wins:f.wins||0, cls:f.cls } } };
+}
+
+/* ---- THE FALLEN ----
+   A dead man does not simply vanish into a list. Capua is small; he had people, and
+   the crowd learned his name. His kin come to the gate — some to take his place, some
+   to take the man who did it — and the stands go on calling for him long after the
+   sand has forgotten the rest of them. */
+function recordFallen(d, g, how, killer){
+  (d.fallen = d.fallen || []).push({ name:fullName(g), week:d.week, gid:g.id, cls:g.cls,
+    fans:rnd(fansOf(g)), fav:rnd(favourOf(g)), how:how||"bout", killer:killer||null,
+    kinCame:false, avenged:false });
+}
+const KIN_TRAITS = ["Defiant","Stoic","Iron Hide","Brutal","Swift Learner"];
+function raiseKin(d, f, vengeful){
+  const g = genGladiator(d, ri(30, 52));
+  if(f.cls){ g.cls = f.cls; g.kit = defaultKit(f.cls); }   // he takes up his kinsman's style, and the steel to match
+  g.pfame = 0; g.wins = 0; g.losses = 0; g.kills = 0; g.nick = null;
+  g.price = 0; g.status = "active"; g.lastFought = -9;
+  g.sworn = { how:"proper", week:d.week, free:false };
+  const t = pick(KIN_TRAITS); if(!g.traits.includes(t)) g.traits.push(t);
+  if(vengeful){ g.regard = ri(40,55); g.defiance = clamp(g.defiance+22, 0, 100); g.morale = 66;
+    if(!g.traits.includes("Defiant")) g.traits.push("Defiant"); g.avenging = f.gid; }
+  else { g.regard = ri(74,88); g.morale = 74; g.defiance = clamp(g.defiance-6, 0, 100); }
+  d.gladiators.push(g);
+  d.gladiators.forEach(o=>{ if(o.status==="active" && o.id!==g.id) o.morale = clamp(o.morale+2,0,100); });
+  return g;
+}
+/* the man who did it, if he can still be found on a rival's roster */
+function seedHunt(d, f, kin){
+  if(!f.killer || f.killer.fid==null) return false;
+  if((d.deadlines||[]).some(x=>x.kind==="challenge")) return false;   // one grudge on the books at a time
+  const h = (d.rivals||[]).find(y=>y.name===f.killer.house);
+  const foe = h && h.fighters.find(y=>y.id===f.killer.fid);
+  if(!h || !foe) return false;
+  addDeadline(d, { kind:"challenge", hunt:true, gid:kin.id, name:kin.name, house:h.name,
+    lan:lanistaOf(h.name).name, fid:foe.id, foe:foe.name, fallenName:(f.name||"").split(",")[0],
+    due:d.week+ri(4,8), purse:rnd(600+R()*500), met:false });
+  return true;
+}
+function settleHunt(d, won, x){
+  const fal = (d.fallen||[]).find(f=>(f.name||"").split(",")[0]===x.fallenName && f.killer);
+  if(won){ if(fal) fal.avenged = true; d.fame += 14; facMove(d, "mob", 6);
+    activeG(d).forEach(o=>{ o.morale = clamp(o.morale+4,0,100); });
+    chron(d, `The man who killed ${x.fallenName} has been answered for. The cells sleep easier tonight.`, "good"); }
+  else chron(d, `${x.name} went out for the man who killed ${x.fallenName}, and did not get him. It is not finished.`, "bad");
+}
+function kinWeek(d){
+  if(d.over || d.rome || d.city || d.travel || d.pendingEvent) return;
+  if(d.flags.kinCool && d.week - d.flags.kinCool < 8) return;
+  if(activeG(d).length >= ((d.law && d.law.cap) || 99)) return;
+  const pool = (d.fallen||[]).filter(f=>f.gid && !f.kinCame && d.week-f.week>=4 && d.week-f.week<=70);
+  if(!pool.length || R()>0.11) return;
+  const f = pick(pool); f.kinCame = true; d.flags.kinCool = d.week;
+  const short = (f.name||"a dead man").split(",")[0];
+  const vengeful = (f.how==="sine" || f.how==="beasts") ? true : (f.killer ? R()<0.5 : false);
+  d.pendingEvent = { id:"kinReturn", title: vengeful ? "Blood for Blood" : "One of His Blood",
+    text: vengeful
+      ? `A young man is at the gate, and he has ${short}'s face. ${f.how==="beasts"?`They gave ${short} to the beasts,`:`${short} died on the sand,`} and he has come to sign his own name under it — not for the purse, but for the man who did it.`
+      : `A young man is at the gate with ${short}'s name on his lips. ${short} died under your colours, and his kin would sooner take up the sword here than anywhere else. He asks for nothing but the oath.`,
+    choices: [ vengeful ? `Take him in — he will have his blood` : `Take him in — he fights in ${short}'s name`, "Send him away" ],
+    data:{ f, vengeful } };
+}
+function fallenWeek(d){
+  if(d.over || d.rome || d.city || d.travel) return;
+  const fav = (d.fallen||[]).filter(f=>f.gid && (f.fans||0)>=45);
+  if(!fav.length || R()>0.10) return;
+  const f = pick(fav), short = (f.name||"him").split(",")[0];
+  d.fame += ri(2,5); facMove(d, "mob", ri(2,4));
+  const heir = activeG(d).find(g=>g.cls===f.cls);
+  let extra = "";
+  if(heir){ heir.fans = clamp((heir.fans||0)+ri(4,8), 0, 100); heir.morale = clamp(heir.morale+4,0,100);
+    extra = ` It settles on ${heir.name}, who fights his style — the seats warm to him for it.`; }
+  chron(d, `The crowd still calls for ${short}, dead these ${d.week-f.week} weeks.${extra}`, "good");
 }
 
 /* ---- WHAT YOU HAVE PROMISED ----
@@ -7427,7 +7509,7 @@ function doVenatio(d, gid, offer, tactic, pending, choice){
 
   if(res.aDies){
     g.status = "dead"; firstDeathWord(d, fullName(g)); g.fateNote = "beasts";
-    d.fallen.push({ name:fullName(g)+" — to the beasts", week:d.week });
+    recordFallen(d, g, "beasts", null);
     if(d.lanista) d.lanista.health = clamp(d.lanista.health - 1.3*collSoften(d)*(isDamn(g)?0.55:1)*(workPerk(d,"regard")?0.7:1)/docHealth(d), 0, 100);
     favourLost(d, g, "dead");
     weekMark(d, "deaths");
@@ -7873,7 +7955,8 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   }
   if(res.aDies){
     g.status = "dead"; firstDeathWord(d, fullName(g));
-    d.fallen.push({ name:fullName(g), week:d.week });
+    recordFallen(d, g, offer.stakes==="sine" ? "sine" : "bout",
+      offer.oppRef ? { name:offer.opp.name, house:offer.oppRef.house, cls:offer.opp.cls, fid:offer.oppRef.fid } : null);
     if(d.lanista) d.lanista.health = clamp(d.lanista.health - 1.3*collSoften(d)*(isDamn(g)?0.55:1)*(workPerk(d,"regard")?0.7:1)/docHealth(d), 0, 100);
     favourLost(d, g, "dead");
     loseFavourite(d, g, "dead");
@@ -7978,6 +8061,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
       facMove(d, "mob", win?7:3);
       sum.push(win ? `You answered ${x.lan} in public and your man won it.` : `The challenge was answered. That is most of what it was for.`);
       if(x.nem) settleNemHouse(d, win);
+      if(x.hunt) settleHunt(d, win, x);
       if(x.saga && d.saga && d.saga.gid===g.id){
         if(win){ d.saga.stage = 4; d.saga.renown = 100; scheduleArc(d, "sagaFreedom", ri(1,2), {});
           sum.push(`${g.name} has beaten the man the crowd named his equal. There is only one thing left they will accept.`);
@@ -8598,6 +8682,19 @@ const EVENTS = {
     make(){ return null; },
     run(d,ev){ const F = FREEDMEN[ev.data.k];
       try { return F.run(d, ev.data.man || { name:"He", wins:0 }); } catch(e){ return `He is seen about the town.`; } } },
+  kinReturn: {
+    make(){ return null; },
+    run(d,ev,i){
+      const f = ev.data.f, vengeful = ev.data.vengeful, short = (f.name||"a dead man").split(",")[0];
+      if(i!==0) return `You send him back up the road. Whatever he came for, he will have to find it somewhere else.`;
+      const g = raiseKin(d, f, vengeful);
+      const hunted = vengeful ? seedHunt(d, f, g) : false;
+      chron(d, `${g.name} takes the oath${vengeful?` with ${short}'s killer in mind`:` in ${short}'s name`}.`, "good");
+      return vengeful
+        ? (hunted ? `${g.name} is one of yours now, and there is a man on House ${f.killer.house}'s roster he means to meet. Put him on the card when the challenge comes up.`
+                  : `${g.name} is one of yours now. The man he came for is beyond his reach — dead, sold, or vanished — so he will have to make do with everyone else who steps on the sand.`)
+        : `${g.name} takes up his kinsman's style and his place at the post. The block took the oath hard, in the good way.`;
+    } },
   pact: {
     make(){ return null; },
     run(d,ev,i){
@@ -9198,6 +9295,7 @@ function endWeek(d){
   if(!d.city && !d.travel) nemHouseWeek(d);
   if(!d.city && !d.travel) sagaWeek(d);
   favouriteWeek(d);
+  fallenWeek(d);
   doctoreWeek(d);
   annalsSync(d);
   repWeek(d);
@@ -9282,6 +9380,7 @@ function endWeek(d){
   }
   if(!d.pendingEvent && !d.rome && R()<0.14){ const ev=EVENTS.ambition.make(d); if(ev) d.pendingEvent=ev; }
   freedWeek(d);
+  kinWeek(d);
   fireArc(d);   /* a beat planted weeks ago comes due — ahead of the week's random event */
   if(!d.pendingEvent && !d.rome && R()<0.45){ const ev=pickEvent(d); if(ev) d.pendingEvent=ev; }
   if(d.flags.spartacusAtLarge && R()<0.25){
@@ -9316,7 +9415,7 @@ function grantRudis(d, gid){
   const g = d.gladiators.find(x=>x.id===gid);
   if(!g || !rudisEligible(g)) return;
   g.status = "freed";
-  d.freed.push({ name:fullName(g), week:d.week, wins:g.wins||0, cls:g.cls });
+  d.freed.push({ name:fullName(g), week:d.week, wins:g.wins||0, cls:g.cls, regardAt:rnd(regardOf(g)) });
   d.fame += 60;
   patronsOf(d).forEach(p=>{ p.favor = clamp(p.favor+4,0,100); });
   recomputeFavor(d);
@@ -11316,6 +11415,68 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         Whoever is warmest to you sets the purses you are offered; the shield factions set how loud the stands are when a man of that style walks out, and what a win is worth in fame. They all drift back toward indifference if you stop giving them reasons.
       </div>
     </>) },
+    roll: { title:"ROLL OF THE HOUSE", body:()=>{
+      const freed = (S.freed||[]), fallen = (S.fallen||[]), retired = (S.retired||[]), fore = (S.forebears||[]);
+      const howWord = f => f.how==="beasts" ? "to the beasts" : f.how==="sine" ? "to the death" : "on the sand";
+      const whatBecame = k => ({
+        doctore:"Came back to teach in this yard.",
+        lanista:"Set up his own house on the Neapolis road.",
+        crowd:"Turns up in the good seats when yours fight.",
+        gift:"Does well enough out there to send wine.",
+        bad:"It did not go well for him.",
+        back:"Signed on again, for coin, of his own free will.",
+      })[k] || "Free, and getting on with it somewhere.";
+      const Row = ({name, right, sub, colour}) => (
+        <div style={{padding:"5px 0",borderBottom:"1px dotted #33271a"}}>
+          <div className="flex items-center justify-between gap-2">
+            <span className="rowname" style={{fontSize:14.5,color:colour||undefined}}>{name}</span>
+            {right && <span className="rowval dim" style={{fontSize:12.5,whiteSpace:"nowrap"}}>{right}</span>}
+          </div>
+          {sub && <div className="dim" style={{fontSize:12.5,fontStyle:"italic",marginTop:1}}>{sub}</div>}
+        </div>
+      );
+      const nothing = !freed.length && !fallen.length && !retired.length && !fore.length;
+      return (<>
+        <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:9}}>
+          Everyone who has passed through these gates and out the other side. The house remembers them, whatever Capua does.
+        </div>
+        {nothing && <div className="dim" style={{fontSize:14.5,fontStyle:"italic"}}>No one has left yet — freed, fallen, or otherwise. Give it time.</div>}
+        {fore.length>0 && (
+          <div className="panel" style={{padding:12,marginBottom:9}}>
+            <div className="tag tag-gold" style={{marginBottom:6}}>Those who held the keys before you</div>
+            {fore.map((pr,i)=>(<Row key={i} name={pr.name} right={pr.age?`${pr.age} years`:""} colour="#e8d092"/>))}
+          </div>
+        )}
+        {fallen.length>0 && (
+          <div className="panel" style={{padding:12,marginBottom:9,borderColor:"#5a2a22"}}>
+            <div className="tag tag-blood" style={{marginBottom:6}}>The dead of this house · {fallen.length}</div>
+            {fallen.slice().reverse().slice(0,30).map((f,i)=>(
+              <Row key={i} name={(f.name||"—").split(" — ")[0].split(",")[0]} colour="#d9a89e"
+                right={f.avenged ? "avenged" : (f.week!=null?`year ${Math.floor((f.week-1)/YEAR_WEEKS)+1}`:"")}
+                sub={`Died ${howWord(f)}${f.killer? ` — ${f.killer.name} of House ${f.killer.house}`:""}${(f.fans||0)>=45?" · the crowd's own":""}${f.kinCame?" · his kin came":""}`}/>
+            ))}
+          </div>
+        )}
+        {freed.length>0 && (
+          <div className="panel" style={{padding:12,marginBottom:9,borderColor:"#5a4a2c"}}>
+            <div className="tag" style={{marginBottom:6,borderColor:"#c99a4b",color:"#e0bd72"}}>Given the rudis · {freed.length}</div>
+            {freed.slice().reverse().slice(0,30).map((f,i)=>(
+              <Row key={i} name={(f.name||"—").split(",")[0]} colour="#e8d092"
+                right={f.wins!=null?`${f.wins} wins`:""}
+                sub={f.became ? whatBecame(f.became) : "Walked out a free man. Capua is small; he may yet turn up."}/>
+            ))}
+          </div>
+        )}
+        {retired.length>0 && (
+          <div className="panel" style={{padding:12,marginBottom:9}}>
+            <div className="tag" style={{marginBottom:6}}>Put out to grass · {retired.length}</div>
+            {retired.slice().reverse().slice(0,20).map((r,i)=>(
+              <Row key={i} name={(r.name||"—").split(",")[0]} right={r.wins!=null?`${r.wins} wins`:""}
+                sub={`${r.age?`${r.age} years old`:""}${r.scars?` · ${r.scars} scars`:""} when you let him go.`}/>
+            ))}
+          </div>
+        )}
+      </>); } },
     standings: { title:"THE HOUSES OF CAPUA", body:()=>(<>
 <div className="panel" style={{padding:13}}>
   <div className="tag tag-gold" style={{marginBottom:8}}>The Houses of Capua</div>
@@ -11858,6 +12019,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               ["feats","Feats", `${FEAT_KEYS.filter(k=>hasFeat(S,k)).length}/${FEAT_KEYS.length}`],
               ["repute","What Capua Says", repStyle(S)? REP_KINDS[repStyle(S)].name : "undecided"],
               ["annals","The Annals", `${(S.annals||[]).length} served`],
+              ["roll","Roll of the House", `${((S.freed||[]).length)+((S.fallen||[]).length)+((S.retired||[]).length)} remembered`],
               ["lanista","The Lanista", S.lanista? `${S.lanista.age}, ${healthWord(S.lanista.health)}` : "—"],
               ["factions","The Stands", FACTIONS[facTop(S)].short + " " + facWord(facOf(S,facTop(S)))],
               ["book","The Record Book", `${(S.book&&S.book.n)||0} bouts`],
@@ -14325,7 +14487,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 {o.booking && <span className="tag tag-gold">✦ Contracted</span>}
                 {o.nemGrudge && <span className="tag tag-blood">✦ The Grudge</span>}
                 {o.sagaBout && <span className="tag tag-gold">✦ The Reckoning</span>}
-                {o.challenge && !o.nemGrudge && !o.sagaBout && <span className="tag tag-blood">✦ Challenge</span>}
+                {o.huntBout && <span className="tag tag-blood">✦ The Hunt</span>}
+                {o.challenge && !o.nemGrudge && !o.sagaBout && !o.huntBout && <span className="tag tag-blood">✦ Challenge</span>}
                 {o.stakes==="sine" && <span className="tag tag-blood">Sine missione</span>}
                 {o.rematch && <span className="tag tag-blood">Rematch</span>}
                 {nemesisIn(S,o.opp) && <span className="tag tag-blood">✦ {nemesisIn(S,o.opp).title}</span>}
