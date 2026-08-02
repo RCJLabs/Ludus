@@ -9681,6 +9681,9 @@ export default function App(){
   const [retrainFor,setRetrainFor] = useState(null);
   const [stake,setStake] = useState(0);
   const [against,setAgainst] = useState(false);
+  const [arenaWiz,setArenaWiz] = useState(false);   /* the guided to-the-sand flow */
+  const [arenaStep,setArenaStep] = useState(0);      /* 0 where · 1 who · 2 ready */
+  const [arenaPick,setArenaPick] = useState(null);   /* the chosen occasion */
 
   useEffect(()=>{ (async()=>{
     const found = {};
@@ -9719,7 +9722,7 @@ export default function App(){
 
   const mut = fn => { const d = clone(S); fn(d); d.rngState = rngGet(); setS(d); };
 
-  const clearTransient = ()=>{ setFight(null); setSelId(null); setEvResult(null); setGearPick(null); setAsk(null); setFGid(null); };
+  const clearTransient = ()=>{ setFight(null); setSelId(null); setEvResult(null); setGearPick(null); setAsk(null); setFGid(null); setArenaWiz(false); setArenaStep(0); setArenaPick(null); };
   const begin = ()=>{ clearTransient();
     if(!slot){ let free=1; for(let i=1;i<=SLOTS_N;i++) if(!slots[i]){ free=i; break; } setSlot(free); }
     const d0 = newGameState(nameIn.trim()||"House of Aurelius", bonus, seedIn, pitchIn);
@@ -11265,238 +11268,18 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 </div>}
               </div>
             ); })()}
-          <div className="panel" style={{padding:13}}>
-            <div className="tag" style={{marginBottom:8}}>Choose your man</div>
-            {eligible.length===0 ? <div className="dim" style={{fontStyle:"italic",fontSize:15}}>No one is fit to fight this week — rested, healthy, and unfought only.</div> : (
-              <div>
-                {eligible.map(g=>{
-                  const on = fGid===g.id;
-                  const kit = g.kit || defaultKit(g.cls);
-                  return (
-                    <button key={g.id} className={`optrow ${on?"on":""}`} onClick={()=>setFGid(on? null : g.id)}>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="disp" style={{fontSize:13.5,color:on?"#e8d092":"#e8d9b8"}}>{fullName(g)}</span>
-                        {on ? <Check size={15} style={{color:"#c99a4b",flexShrink:0}}/> : <span className="dim" style={{fontSize:13}}>{g.wins}–{g.losses}</span>}
-                      </div>
-                      <div className="dim" style={{fontSize:13.5,marginTop:2}}>
-                        {g.cls} · {GEAR[kit.weapon] ? GEAR[kit.weapon].name : "unarmed"}{GEAR[kit.offhand] && GEAR[kit.offhand].art!=="none" ? ` & ${GEAR[kit.offhand].name}` : ""}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-            <div className="flex gap-2" style={{marginTop:10,flexWrap:"wrap"}}>
-              {[["aggressive","Aggressive"],["measured","Measured"],["defensive","Defensive"],["showboat","Showboat"]].map(([k,l])=>(
-                <button key={k} className={`chip ${tactic===k?"on":""}`} onClick={()=>setTactic(k)}>{l}</button>
-              ))}
+          <div className="panel" style={{padding:14}}>
+            <div className="disp" style={{fontSize:15,fontWeight:700,letterSpacing:".04em",marginBottom:3}}>TO THE SAND</div>
+            <div className="dim" style={{fontSize:14.5,marginBottom:11}}>
+              {(()=>{ const n=((S.games&&S.games.offers)||[]).length;
+                return `The pits are always open.${n? ` ${n} ${n===1?"card":"cards"} at the games this week.` : S.fame<TIERS[1].fame ? " Win to 25 fame in the pits and the editors will start sending cards." : " No games this week."}`; })()}
             </div>
-            <div style={{borderTop:"1px dotted #33271a",marginTop:11,paddingTop:9}}>
-              <div className="flex items-center justify-between" style={{marginBottom:6}}>
-                <span className="tag">The bookmakers</span>
-                {stake>0 && <span className="gold" style={{fontSize:13.5}}>{stake}d at risk</span>}
-              </div>
-              <div className="flex gap-2" style={{flexWrap:"wrap",marginBottom:7}}>
-                <button className={`chip ${stake===0?"on":""}`} onClick={()=>{setStake(0); setAgainst(false);}}>No wager</button>
-                {STAKES_OPTS.map(v=>(
-                  <button key={v} className={`chip ${stake===v?"on":""}`} disabled={S.gold<v}
-                    style={S.gold<v?{opacity:.4}:undefined} onClick={()=>setStake(v)}>{v}d</button>
-                ))}
-              </div>
-              {stake>0 && (
-                <div className="grid grid-cols-2 gap-2">
-                  <button className={`chip ${!against?"on":""}`} onClick={()=>setAgainst(false)}>Back your man</button>
-                  <button className={`chip ${against?"on":""}`} style={against?{borderColor:"#7c2a22",color:"#d98476",background:"#2a1512"}:undefined}
-                    onClick={()=>setAgainst(true)}>Have him lose</button>
-                </div>
-              )}
-              {stake>0 && against && (
-                <div className="blood" style={{fontSize:13.5,fontStyle:"italic",marginTop:6}}>
-                  He will be told to go down. He will do it, and he will know you asked. If the editor's men are watching the bookmakers, the house pays for it.
-                </div>
-              )}
-              {stake===0 && <div className="dim" style={{fontSize:13.5,fontStyle:"italic"}}>Coin can be laid on any bout — on your man, or against him.</div>}
-            </div>
+            <button className="btn btn-blood" style={{width:"100%"}}
+              onClick={()=>{ setArenaPick(null); setArenaStep(0); setFGid(null); setPairSel([]); setArenaWiz(true); }}>
+              Choose a bout ›
+            </button>
+            {eligible.length===0 && <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:8}}>No one is fit to fight this week — rest and heal, then come back.</div>}
           </div>
-
-          <div className="panel" style={{padding:13}}>
-            <div className="flex items-center justify-between" style={{marginBottom:6}}>
-              <div className="disp" style={{fontSize:14,fontWeight:700}}>THE GAMES</div>
-              {S.games && <span className="dim" style={{fontSize:13,fontStyle:"italic"}}>{S.games.festival}</span>}
-            </div>
-            {S.fame<TIERS[1].fame && <div className="dim" style={{fontSize:15}}>No editor books an unknown house. Build 25 fame in the pits and the invitations will come.</div>}
-            {S.fame>=TIERS[1].fame && (!S.games || S.games.offers.length===0) && (()=>{
-              const nxt = nextFestivals(S,1)[0];
-              const away = nxt ? weeksUntil(S,nxt) : 0;
-              return <div className="dim" style={{fontSize:15}}>
-                {S.games ? "The festival's matches are done."
-                  : festivalNow(S) && festivalNow(S).rest ? "The Saturnalia. No editor in Capua is booking anyone this week."
-                  : away===0 ? "The editors are quiet this week."
-                  : `${nxt.name} in ${away} week${away===1?"":"s"}. Offers expire when the week ends.`}
-              </div>; })()}
-            {S.games && S.games.offers.filter(o=>o.pair).map(o=>{
-              const chosen = pairSel.map(id=>S.gladiators.find(g=>g.id===id)).filter(Boolean);
-              const t = chosen.length===2 ? tieBetween(S, chosen[0].id, chosen[1].id) : null;
-              return (
-                <div key={o.id} style={{borderTop:"1px dotted #33271a",paddingTop:10,marginTop:10}}>
-                  <div className="flex items-center gap-1" style={{flexWrap:"wrap",marginBottom:5}}>
-                    <span className="tag tag-gold">{TIERS[o.tier].name}</span>
-                    <span className="tag tag-blood">Pair bout</span>
-                    <span className="gold" style={{marginLeft:"auto",fontSize:14.5}}>{o.purse}d purse</span>
-                  </div>
-                  <div style={{fontSize:15.5}}>{o.opps.map(x=>x.nick?`${x.name}, ${x.nick}`:x.name).join(" and ")}</div>
-                  <div className="dim" style={{fontSize:14}}>{o.opps.map(x=>x.cls).join(" · ")} — two men, and they have fought together before.</div>
-                  <div className="dim" style={{fontSize:13.5,margin:"7px 0 4px"}}>Choose two of yours ({pairSel.length}/2):</div>
-                  {eligible.map(g=>(
-                    <button key={g.id} className={`optrow ${pairSel.includes(g.id)?"on":""}`} style={{marginBottom:5,padding:9}} onClick={()=>togglePair(g.id)}>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="disp" style={{fontSize:13,color:pairSel.includes(g.id)?"#e8d092":"#e8d9b8"}}>{g.name}</span>
-                        <span className="dim" style={{fontSize:12.5}}>{g.cls}</span>
-                      </div>
-                    </button>
-                  ))}
-                  {t && <div style={{fontSize:14.5,margin:"4px 0",color:t.kind==="brother"?"#b9c58a":"#d98476"}}>
-                    {t.kind==="brother"
-                      ? "Brothers. Each will fight harder for having the other at his shoulder."
-                      : "Bad blood. Neither will cover the other, and both will be worse for it."}
-                  </div>}
-                  {chosen.length===2 && !t && <div className="dim" style={{fontSize:14.5,margin:"4px 0"}}>They barely know each other. They will fight their own fights.</div>}
-                  <button className="btn btn-blood" style={{width:"100%",marginTop:6}} disabled={pairSel.length!==2} onClick={()=>fightPair(o)}>
-                    {pairSel.length!==2 ? "Choose two men" : "Send them out together"}
-                  </button>
-                </div>
-              );
-            })}
-            {S.games && S.games.offers.filter(o=>!o.pair && !o.venatio && !o.melee).map(o=>(
-              <div key={o.id} style={{borderTop:"1px dotted #33271a",paddingTop:10,marginTop:10}}>
-                <div className="flex items-center gap-1" style={{flexWrap:"wrap",marginBottom:5}}>
-                  <span className={`tag ${o.imperial?"tag-gold":"tag-gold"}`}>{TIERS[o.tier].name}</span>
-                  {o.imperial && <span className="tag tag-gold">✦ Rome</span>}
-                  {o.primus && <span className="tag tag-gold">✦ {o.defence? "Defend the primacy" : "For the primacy"}</span>}
-                  {o.booking && <span className="tag tag-gold">✦ Contracted</span>}
-                  {o.challenge && <span className="tag tag-blood">✦ The challenge</span>}
-                  {o.stakes==="sine" && <span className="tag tag-blood">Sine missione</span>}
-                  {o.rematch && <span className="tag tag-blood">Rematch</span>}
-                  {nemesisIn(S,o.opp) && <span className="tag tag-blood">✦ {nemesisIn(S,o.opp).title}</span>}
-                  {!o.rematch && o.grudgeM && <span className="tag">Old foe</span>}
-                  <span className="gold" style={{marginLeft:"auto",fontSize:14.5}}>{o.purse}d purse</span>
-                </div>
-                <div style={{fontSize:15.5}}>{o.opp.nick? `${o.opp.name}, ${o.opp.nick}` : o.opp.name} · House of {o.opp.house}</div>
-                <div className="dim" style={{fontSize:14}}>{o.opp.cls} · {o.opp.origin}{o.opp.wins!=null? ` · ${o.opp.wins}–${o.opp.losses}${o.opp.kills?` · ${o.opp.kills} kills`:""}`:""} · looks {menace(o.opp).toLowerCase()}</div>
-                {o.venue && <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:3}}>{VEN(o.venue).say}</div>}
-                {o.sky && <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:2,color:"#9dc0d4"}}>
-                  {SKY(o.sky).say}{shelterOf(o.venue)>0.3 ? " There is a roof of a kind over most of it." : ""}
-                </div>}
-                {o.opp.house && <div className="dim" style={{fontSize:13}}>{o.opp.house.startsWith("the")||o.opp.house.startsWith("no")? o.opp.house : "House "+o.opp.house}</div>}
-                {(()=>{ const me = fGid ? S.gladiators.find(g=>g.id===fGid) : null;
-                  if(!me) return null;
-                  const w = metWord(o.opp, me);
-                  if(!w) return null;
-                  return <div style={{fontSize:14,marginTop:2,color:"#d8ac5f"}}>{w}</div>;
-                })()}
-                {!o.watched ? (
-                  <button className="btn btn-ghost" style={{width:"100%",marginTop:7}}
-                    disabled={S.gold<watchCost(S,o)} onClick={()=>haveWatched(o.id)}>
-                    Have him watched · {watchCost(S,o)}d
-                  </button>
-                ) : (
-                  <div className="panel" style={{padding:9,marginTop:7,background:"#1c1610",borderColor:"#6d5426"}}>
-                    <div className="tag tag-gold" style={{marginBottom:4}}>What they saw</div>
-                    {o.watched[0]==="nothing"
-                      ? <div className="dim" style={{fontSize:14,fontStyle:"italic"}}>Nothing to report. He does everything correctly and nothing twice.</div>
-                      : o.watched.map((k,i)=>(
-                          <div key={i} style={{fontSize:14.5,padding:"3px 0"}}>{TELLS[k].say(o.opp)}</div>
-                        ))}
-                    <div className="tag" style={{margin:"7px 0 4px"}}>The plan</div>
-                    <div className="grid grid-cols-2 gap-2">
-                      {PLAN_KEYS.map(k=>{
-                        const hints = o.watched[0]!=="nothing" && o.watched.some(t=>TELLS[t].plan===k);
-                        return (
-                          <button key={k} className={`focusbtn ${plan===k?"on":""}`} onClick={()=>setPlan(k)}
-                            style={hints?{borderColor:"#c99a4b"}:undefined}>
-                            {PLANS[k].name}
-                            <span className="sub">{hints? "fits what they saw" : PLANS[k].desc}</span>
-                          </button>
-                        ); })}
-                    </div>
-                    <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:5}}>
-                      A plan that reads him right is worth about seven bouts in a hundred. One that does not costs five.
-                    </div>
-                  </div>
-                )}
-                {fGid && (()=>{ const me=S.gladiators.find(g=>g.id===fGid); if(!me) return null;
-                  const p=winChance(me,o.opp);
-                  return <div style={{fontSize:13.5,marginTop:3}}>
-                    <span className="dim">Bookmakers: </span>
-                    <span className="gold">{oddsWord(oddsFor(p))}</span>
-                    <span className="dim"> on {me.name}</span>
-                    <span className="dim"> · {oddsWord(oddsFor(1-p))} against</span>
-                  </div>; })()}
-                <button className="btn btn-blood" style={{width:"100%",marginTop:8}} disabled={!fGid} onClick={()=>fightOffer(o)}>Send him to the sand</button>
-              </div>
-            ))}
-          </div>
-
-          {S.games && S.games.offers.filter(o=>o.melee).map(o=>{
-            const chosen = pairSel.map(id=>S.gladiators.find(g=>g.id===id)).filter(Boolean);
-            const bros = chosen.length===2 && (()=>{ const t=tieBetween(S,chosen[0].id,chosen[1].id); return t && t.kind==="brother"; })();
-            return (
-              <div key={o.id} className="panel" style={{padding:13,borderColor:"#7c2a22"}}>
-                <div className="flex items-center gap-1" style={{flexWrap:"wrap",marginBottom:5}}>
-                  <div className="disp" style={{fontSize:14,fontWeight:700}}>THE MELEE</div>
-                  <span className="tag tag-blood">Last man standing</span>
-                  <span className="gold" style={{marginLeft:"auto",fontSize:14.5}}>{o.purse}d purse</span>
-                </div>
-                <div style={{fontSize:15}}>{o.field.length} men from the other houses go on the sand at once. Enter as many of yours as you dare.</div>
-                <div className="blood" style={{fontSize:14,margin:"6px 0"}}>
-                  The editor pays one man and no others. If yours are the last two upright, they will be made to finish it.
-                </div>
-                <div className="dim" style={{fontSize:13.5,margin:"7px 0 4px"}}>Enter which men ({pairSel.length} chosen):</div>
-                {eligible.map(g=>(
-                  <button key={g.id} className={`optrow ${pairSel.includes(g.id)?"on":""}`} style={{marginBottom:5,padding:9}} onClick={()=>togglePair(g.id)}>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="disp" style={{fontSize:13,color:pairSel.includes(g.id)?"#e8d092":"#e8d9b8"}}>{g.name}</span>
-                      <span className="dim" style={{fontSize:12.5}}>{g.cls}</span>
-                    </div>
-                  </button>
-                ))}
-                {bros && <div className="blood" style={{fontSize:14.5,margin:"4px 0",fontStyle:"italic"}}>
-                  These two are brothers. Think about what you are asking for.
-                </div>}
-                <button className="btn btn-blood" style={{width:"100%",marginTop:6}} disabled={pairSel.length<2} onClick={()=>meleeGo(o)}>
-                  {pairSel.length<2 ? "Enter at least two" : `Enter ${pairSel.length} men`}
-                </button>
-              </div>
-            );
-          })}
-
-          {S.games && S.games.offers.filter(o=>o.venatio).map(o=>{
-            const B = BEASTS[o.beast];
-            const me = fGid ? S.gladiators.find(g=>g.id===fGid) : null;
-            const reach = me ? reachVsBeast(me.kit || defaultKit(me.cls)) : 1;
-            return (
-              <div key={o.id} className="panel" style={{padding:13,borderColor:"#6b4a2c"}}>
-                <div className="flex items-center gap-1" style={{flexWrap:"wrap",marginBottom:5}}>
-                  <div className="disp" style={{fontSize:14,fontWeight:700}}>THE MORNING HUNT</div>
-                  <span className="gold" style={{marginLeft:"auto",fontSize:14.5}}>{o.purse}d purse</span>
-                </div>
-                <div style={{fontSize:15.5,textTransform:"capitalize"}}>{B.name}</div>
-                <div className="dim" style={{fontSize:14,fontStyle:"italic",margin:"2px 0 6px"}}>{B.desc}</div>
-                <div className="blood" style={{fontSize:14,marginBottom:6}}>
-                  No missio. A beast does not see a raised finger, and the handlers are slow when the crowd is enjoying itself.
-                </div>
-                {me && (
-                  <div style={{fontSize:14,marginBottom:6}}>
-                    {reach>=1.2 ? <span className="laurel">{me.name} carries the reach for this — a hunting spear is the whole trick.</span>
-                     : reach<0.9 ? <span className="blood">{me.name} has nothing longer than his arm. He will have to get close.</span>
-                     : <span className="dim">{me.name}'s weapon will serve, but a spear would serve better.</span>}
-                    {me.pfame>=60 && <div className="blood" style={{marginTop:3}}>{PR(me).He} is too well known for this. Sending {PR(me).him} will be taken as an insult by everyone in the cells.</div>}
-                  </div>
-                )}
-                <button className="btn btn-blood" style={{width:"100%"}} disabled={!fGid} onClick={()=>huntOffer(o)}>Send him to the beast</button>
-              </div>
-            );
-          })}
 
           {(()=>{ const C = awayIn(S);
             if(S.travel) return (
@@ -11562,29 +11345,6 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   ); })}
               </div>
             ); })()}
-
-          <div className="panel" style={{padding:13}}>
-            <div className="disp" style={{fontSize:14,fontWeight:700,marginBottom:4}}>THE PITS</div>
-            <div className="dim" style={{fontSize:14.5,marginBottom:8}}>Always open, always hungry. Small purses, no glory to lose — and the crowd down there rarely votes for mercy.</div>
-            <div className="flex gap-2" style={{flexWrap:"wrap",marginBottom:8}}>
-              {[["blood","First blood"],["standard","To surrender"],["sine","To the death"]].map(([k,l])=>(
-                <button key={k} className={`chip ${pitStakes===k?"on":""}`} onClick={()=>setPitStakes(k)}>{l}</button>
-              ))}
-            </div>
-            {(()=>{ const me = fGid ? S.gladiators.find(g=>g.id===fGid) : null;
-              if(!me || !S.circuit) return null;
-              const known = S.circuit.filter(f=>f.met && f.met[me.id] && (f.met[me.id].w+f.met[me.id].l)>0);
-              if(!known.length) return null;
-              return <div className="dim" style={{fontSize:13.5,marginBottom:7,fontStyle:"italic"}}>
-                {me.name} has history down here with {known.length===1? known[0].name : `${known.length} men`}. The pits are a small world.
-              </div>; })()}
-            {fGid && stake>0 && <div className="dim" style={{fontSize:13.5,marginBottom:7,fontStyle:"italic"}}>
-              Odds in the pits are set after the pairings are made. Down here nobody much minds who wins, which cuts both ways.
-            </div>}
-            <button className="btn" style={{width:"100%"}} disabled={!fGid} onClick={fightPit}>
-              Fight in the pits{stake>0 ? ` · ${stake}d ${against?"against him":"on him"}` : ""}
-            </button>
-          </div>
         </div>)}
 
         {tab==="market" && (<div className="flex flex-col gap-3">
@@ -13325,6 +13085,272 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         onClose={()=>{ if(held) return; SFX.stopCrowd(); setFight(null); }}
         onSpeak={fight.crux ? speak : null}
         onMute={v=>setPref("sound", !v)}/>}
+
+      {arenaWiz && !fight && (()=>{
+        const OFF = (S.games && S.games.offers) || [];
+        const singles = OFF.filter(o=>!o.pair && !o.venatio && !o.melee);
+        const pairs = OFF.filter(o=>o.pair), melees = OFF.filter(o=>o.melee), hunts = OFF.filter(o=>o.venatio);
+        const gamesReady = S.fame >= TIERS[1].fame;
+        let pick = arenaPick;
+        if(pick && pick.o){ const live = OFF.find(o=>o.id===pick.o.id); if(!live) pick = null; else pick = {...pick, o:live}; }
+        const step = pick ? arenaStep : 0;
+        const me = fGid ? S.gladiators.find(g=>g.id===fGid) : null;
+        const chosen = pairSel.map(id=>S.gladiators.find(g=>g.id===id)).filter(Boolean);
+        const close = ()=>{ setArenaWiz(false); setArenaStep(0); setArenaPick(null); };
+        const goPick = occ => { setArenaPick(occ); setFGid(null); setPairSel([]); setPlan("none"); setArenaStep(1); };
+        const startFight = fn => { setArenaWiz(false); fn(); };
+        const steps = [["Where",0],["Your man",1],["Ready",2]];
+        const header = (
+          <div className="flex items-center justify-between" style={{marginBottom:11}}>
+            <div className="flex items-center gap-2" style={{flexWrap:"wrap"}}>
+              {steps.map(([l,n])=>(
+                <span key={n} className="disp" style={{fontSize:11,letterSpacing:".05em",
+                  color: step===n?"#e8d092":step>n?"#9aa86a":"#6d5d47"}}>{n>0?"› ":""}{n+1}. {l}</span>
+              ))}
+            </div>
+            <button className="btn btn-ghost" style={{padding:"8px 10px"}} aria-label="Close" onClick={close}><X size={14}/></button>
+          </div>
+        );
+        const occRow = (occ, title, sub, right, tags)=>(
+          <button className="optrow" style={{marginBottom:7,width:"100%"}} onClick={()=>goPick(occ)}>
+            <div className="flex items-center justify-between gap-2">
+              <span className="disp" style={{fontSize:14,color:"#e8d9b8"}}>{title}</span>
+              {right}
+            </div>
+            {tags}
+            {sub && <div className="dim" style={{fontSize:13.5,marginTop:2}}>{sub}</div>}
+          </button>
+        );
+
+        let body;
+        if(step===0){
+          body = (<>
+            <div className="disp" style={{fontSize:15,fontWeight:700,marginBottom:2}}>WHERE WILL HE FIGHT?</div>
+            <div className="dim" style={{fontSize:14,marginBottom:10}}>Pick the card. You choose your man next.</div>
+            {occRow({kind:"pits"}, "The Pits", "Always open. Small purses, and the crowd rarely votes for mercy.",
+              <span className="dim" style={{fontSize:12.5}}>your stakes</span>)}
+            {gamesReady && singles.map(o=> occRow({kind:"single",o},
+              (o.imperial?"✦ ":"")+(o.opp.nick?`${o.opp.name}, ${o.opp.nick}`:o.opp.name),
+              `${o.opp.cls} · ${o.opp.house? (o.opp.house.startsWith("the")||o.opp.house.startsWith("no")?o.opp.house:"House "+o.opp.house) : o.opp.origin}`,
+              <span className="gold" style={{fontSize:14}}>{o.purse}d</span>,
+              <div className="flex items-center gap-1" style={{flexWrap:"wrap",marginTop:3}}>
+                <span className="tag tag-gold">{TIERS[o.tier].name}</span>
+                {o.imperial && <span className="tag tag-gold">✦ Rome</span>}
+                {o.primus && <span className="tag tag-gold">✦ {o.defence?"Defend primacy":"For the primacy"}</span>}
+                {o.booking && <span className="tag tag-gold">✦ Contracted</span>}
+                {o.challenge && <span className="tag tag-blood">✦ Challenge</span>}
+                {o.stakes==="sine" && <span className="tag tag-blood">Sine missione</span>}
+                {o.rematch && <span className="tag tag-blood">Rematch</span>}
+                {nemesisIn(S,o.opp) && <span className="tag tag-blood">✦ {nemesisIn(S,o.opp).title}</span>}
+              </div>
+            ))}
+            {gamesReady && pairs.map(o=> occRow({kind:"pair",o}, "Pair Bout",
+              o.opps.map(x=>x.name).join(" & "),
+              <span className="gold" style={{fontSize:14}}>{o.purse}d</span>,
+              <div style={{marginTop:3}}><span className="tag tag-gold">{TIERS[o.tier].name}</span> <span className="tag tag-blood">Two men</span></div>))}
+            {gamesReady && melees.map(o=> occRow({kind:"melee",o}, "The Melee",
+              `${o.field.length} men on the sand at once`,
+              <span className="gold" style={{fontSize:14}}>{o.purse}d</span>,
+              <div style={{marginTop:3}}><span className="tag tag-blood">Last man standing</span></div>))}
+            {gamesReady && hunts.map(o=> occRow({kind:"hunt",o}, "The Morning Hunt",
+              BEASTS[o.beast].name,
+              <span className="gold" style={{fontSize:14}}>{o.purse}d</span>,
+              <div style={{marginTop:3}}><span className="tag">Beast · no missio</span></div>))}
+            {!gamesReady && <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:4}}>
+              No editor books an unknown house yet. Win in the pits to 25 fame and the games open.
+            </div>}
+            {gamesReady && !singles.length && !pairs.length && !melees.length && !hunts.length &&
+              <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:4}}>
+                {(()=>{ const nxt=nextFestivals(S,1)[0]; const away=nxt?weeksUntil(S,nxt):0;
+                  return S.games? "The festival's matches are done — the pits remain." : away? `${nxt.name} in ${away} week${away===1?"":"s"}. The pits are open until then.` : "The editors are quiet this week. The pits remain."; })()}
+              </div>}
+          </>);
+        } else if(step===1){
+          const multi = pick.kind==="pair" || pick.kind==="melee";
+          const needTwo = pick.kind==="pair";
+          const enough = multi ? eligible.length>=2 : eligible.length>=1;
+          const valid = needTwo ? pairSel.length===2 : multi ? pairSel.length>=2 : !!fGid;
+          const occTitle = pick.kind==="pits" ? "The pits"
+            : pick.kind==="single" ? `Against ${pick.o.opp.nick?`${pick.o.opp.name}, ${pick.o.opp.nick}`:pick.o.opp.name}`
+            : pick.kind==="pair" ? "Pair bout" : pick.kind==="melee" ? "The melee"
+            : `The hunt · ${BEASTS[pick.o.beast].name}`;
+          body = (<>
+            <button className="btn btn-ghost" style={{fontSize:12,padding:"6px 10px",marginBottom:9}} onClick={()=>{ setArenaStep(0); setArenaPick(null); }}>‹ Back</button>
+            <div className="disp" style={{fontSize:15,fontWeight:700,marginBottom:2}}>
+              {multi ? (needTwo?"CHOOSE TWO MEN":"ENTER YOUR MEN") : "CHOOSE YOUR MAN"}
+            </div>
+            <div className="dim" style={{fontSize:13.5,marginBottom:10}}>{occTitle}</div>
+            {!enough ? (
+              <div className="dim" style={{fontStyle:"italic",fontSize:15}}>
+                {eligible.length===0 ? "No one is fit to fight this week — rested, healthy and unfought only."
+                  : "This needs at least two fit men, and only one is ready."}
+              </div>
+            ) : eligible.map(g=>{
+              const on = multi ? pairSel.includes(g.id) : fGid===g.id;
+              const kit = g.kit || defaultKit(g.cls);
+              return (
+                <button key={g.id} className={`optrow ${on?"on":""}`} style={{marginBottom:6,width:"100%"}}
+                  onClick={()=> multi ? togglePair(g.id) : setFGid(on?null:g.id)}>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="disp" style={{fontSize:13.5,color:on?"#e8d092":"#e8d9b8"}}>{fullName(g)}</span>
+                    {on ? <Check size={15} style={{color:"#c99a4b",flexShrink:0}}/> : <span className="dim" style={{fontSize:13}}>{g.wins}–{g.losses}</span>}
+                  </div>
+                  <div className="dim" style={{fontSize:13.5,marginTop:2}}>
+                    {g.cls} · {GEAR[kit.weapon]?GEAR[kit.weapon].name:"unarmed"}{GEAR[kit.offhand]&&GEAR[kit.offhand].art!=="none"?` & ${GEAR[kit.offhand].name}`:""}
+                  </div>
+                  {pick.kind==="single" && (()=>{ const w=metWord(pick.o.opp,g); return w?<div style={{fontSize:13,marginTop:2,color:"#d8ac5f"}}>{w}</div>:null; })()}
+                </button>
+              );
+            })}
+            {needTwo && chosen.length===2 && (()=>{ const t=tieBetween(S,chosen[0].id,chosen[1].id);
+              return <div style={{fontSize:14,marginTop:2,color:t&&t.kind==="brother"?"#b9c58a":t?"#d98476":"#8f7e62"}}>
+                {t? (t.kind==="brother"?"Brothers — each fights harder for the other at his shoulder.":"Bad blood — neither will cover the other."):"They barely know each other."}
+              </div>; })()}
+            {enough && <button className="btn" style={{width:"100%",marginTop:10}} disabled={!valid} onClick={()=>setArenaStep(2)}>
+              {valid ? "Next ›" : needTwo ? `Choose two (${pairSel.length}/2)` : multi ? "Enter at least two" : "Choose a man"}
+            </button>}
+          </>);
+        } else {
+          const backBtn = <button className="btn btn-ghost" style={{fontSize:12,padding:"6px 10px",marginBottom:9}} onClick={()=>setArenaStep(1)}>‹ Back</button>;
+          const tacticRow = (
+            <div style={{marginTop:11}}>
+              <div className="tag" style={{marginBottom:6}}>How he fights</div>
+              <div className="flex gap-2" style={{flexWrap:"wrap"}}>
+                {[["aggressive","Aggressive"],["measured","Measured"],["defensive","Defensive"],["showboat","Showboat"]].map(([k,l])=>(
+                  <button key={k} className={`chip ${tactic===k?"on":""}`} onClick={()=>setTactic(k)}>{l}</button>
+                ))}
+              </div>
+            </div>
+          );
+          const wagerRow = (
+            <div style={{borderTop:"1px dotted #33271a",marginTop:12,paddingTop:10}}>
+              <div className="flex items-center justify-between" style={{marginBottom:6}}>
+                <span className="tag">The bookmakers</span>
+                {stake>0 && <span className="gold" style={{fontSize:13.5}}>{stake}d at risk</span>}
+              </div>
+              <div className="flex gap-2" style={{flexWrap:"wrap",marginBottom:7}}>
+                <button className={`chip ${stake===0?"on":""}`} onClick={()=>{setStake(0);setAgainst(false);}}>No wager</button>
+                {STAKES_OPTS.map(v=>(<button key={v} className={`chip ${stake===v?"on":""}`} disabled={S.gold<v} style={S.gold<v?{opacity:.4}:undefined} onClick={()=>setStake(v)}>{v}d</button>))}
+              </div>
+              {stake>0 && (<div className="grid grid-cols-2 gap-2">
+                <button className={`chip ${!against?"on":""}`} onClick={()=>setAgainst(false)}>Back your man</button>
+                <button className={`chip ${against?"on":""}`} style={against?{borderColor:"#7c2a22",color:"#d98476",background:"#2a1512"}:undefined} onClick={()=>setAgainst(true)}>Have him lose</button>
+              </div>)}
+              {stake>0 && against && <div className="blood" style={{fontSize:13,fontStyle:"italic",marginTop:6}}>He will be told to go down, and he will know you asked.</div>}
+            </div>
+          );
+          if(pick.kind==="pits"){
+            body = (<>
+              {backBtn}
+              <div className="disp" style={{fontSize:15,fontWeight:700,marginBottom:2}}>THE PITS</div>
+              <div className="dim" style={{fontSize:14,marginBottom:9}}>{me?`${me.name} takes whoever the pits put in front of him.`:""}</div>
+              <div className="tag" style={{marginBottom:6}}>Stakes</div>
+              <div className="flex gap-2" style={{flexWrap:"wrap"}}>
+                {[["blood","First blood"],["standard","To surrender"],["sine","To the death"]].map(([k,l])=>(
+                  <button key={k} className={`chip ${pitStakes===k?"on":""}`} onClick={()=>setPitStakes(k)}>{l}</button>
+                ))}
+              </div>
+              <div className="dim" style={{fontSize:12.5,fontStyle:"italic",marginTop:5}}>
+                {pitStakes==="blood"?"Ends at the first real wound — nobody dies."
+                  :pitStakes==="standard"?"A beaten man is left to the editor and the crowd."
+                  :"No mercy asked or given."}
+              </div>
+              {tacticRow}
+              {wagerRow}
+              <button className="btn btn-blood" style={{width:"100%",marginTop:13}} disabled={!fGid} onClick={()=>startFight(fightPit)}>
+                Send {me?me.name:"him"} to the pits{stake>0?` · ${stake}d ${against?"against":"on"} him`:""}
+              </button>
+            </>);
+          } else if(pick.kind==="single"){ const o=pick.o; const p=me?winChance(me,o.opp):0.5;
+            body = (<>
+              {backBtn}
+              <div className="flex items-center gap-1" style={{flexWrap:"wrap",marginBottom:5}}>
+                <span className="tag tag-gold">{TIERS[o.tier].name}</span>
+                {o.imperial && <span className="tag tag-gold">✦ Rome</span>}
+                {o.primus && <span className="tag tag-gold">✦ {o.defence?"Defend the primacy":"For the primacy"}</span>}
+                {o.booking && <span className="tag tag-gold">✦ Contracted</span>}
+                {o.challenge && <span className="tag tag-blood">✦ The challenge</span>}
+                {o.stakes==="sine" && <span className="tag tag-blood">Sine missione</span>}
+                {o.rematch && <span className="tag tag-blood">Rematch</span>}
+                {nemesisIn(S,o.opp) && <span className="tag tag-blood">✦ {nemesisIn(S,o.opp).title}</span>}
+                <span className="gold" style={{marginLeft:"auto",fontSize:14.5}}>{o.purse}d purse</span>
+              </div>
+              <div style={{fontSize:15.5}}>{me?me.name:"—"} <span className="dim">against</span> {o.opp.nick?`${o.opp.name}, ${o.opp.nick}`:o.opp.name}</div>
+              <div className="dim" style={{fontSize:14}}>{o.opp.cls} · {o.opp.origin}{o.opp.wins!=null?` · ${o.opp.wins}–${o.opp.losses}${o.opp.kills?` · ${o.opp.kills} kills`:""}`:""} · looks {menace(o.opp).toLowerCase()}</div>
+              {o.opp.house && <div className="dim" style={{fontSize:13}}>{o.opp.house.startsWith("the")||o.opp.house.startsWith("no")?o.opp.house:"House "+o.opp.house}</div>}
+              {o.venue && <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:3}}>{VEN(o.venue).say}</div>}
+              {o.sky && <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:2,color:"#9dc0d4"}}>{SKY(o.sky).say}{shelterOf(o.venue)>0.3?" There is a roof of a kind over most of it.":""}</div>}
+              {me && (()=>{ const w=metWord(o.opp,me); return w?<div style={{fontSize:14,marginTop:2,color:"#d8ac5f"}}>{w}</div>:null; })()}
+              {!o.watched ? (
+                <button className="btn btn-ghost" style={{width:"100%",marginTop:8}} disabled={S.gold<watchCost(S,o)} onClick={()=>haveWatched(o.id)}>Have him watched · {watchCost(S,o)}d</button>
+              ) : (
+                <div className="panel" style={{padding:9,marginTop:8,background:"#1c1610",borderColor:"#6d5426"}}>
+                  <div className="tag tag-gold" style={{marginBottom:4}}>What they saw</div>
+                  {o.watched[0]==="nothing" ? <div className="dim" style={{fontSize:14,fontStyle:"italic"}}>Nothing to report. He does everything correctly and nothing twice.</div>
+                    : o.watched.map((k,i)=><div key={i} style={{fontSize:14.5,padding:"3px 0"}}>{TELLS[k].say(o.opp)}</div>)}
+                  <div className="tag" style={{margin:"7px 0 4px"}}>The plan</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {PLAN_KEYS.map(k=>{ const hints=o.watched[0]!=="nothing"&&o.watched.some(t=>TELLS[t].plan===k);
+                      return <button key={k} className={`focusbtn ${plan===k?"on":""}`} onClick={()=>setPlan(k)} style={hints?{borderColor:"#c99a4b"}:undefined}>{PLANS[k].name}<span className="sub">{hints?"fits what they saw":PLANS[k].desc}</span></button>; })}
+                  </div>
+                </div>
+              )}
+              {me && <div style={{fontSize:13.5,marginTop:6}}><span className="dim">Bookmakers: </span><span className="gold">{oddsWord(oddsFor(p))}</span><span className="dim"> on {me.name} · {oddsWord(oddsFor(1-p))} against</span></div>}
+              {tacticRow}
+              {wagerRow}
+              <button className="btn btn-blood" style={{width:"100%",marginTop:13}} disabled={!fGid} onClick={()=>startFight(()=>fightOffer(o))}>Send {me?me.name:"him"} to the sand</button>
+            </>);
+          } else if(pick.kind==="pair"){ const o=pick.o;
+            body = (<>
+              {backBtn}
+              <div className="flex items-center gap-1" style={{flexWrap:"wrap",marginBottom:5}}>
+                <span className="tag tag-gold">{TIERS[o.tier].name}</span><span className="tag tag-blood">Pair bout</span>
+                <span className="gold" style={{marginLeft:"auto",fontSize:14.5}}>{o.purse}d purse</span>
+              </div>
+              <div style={{fontSize:15.5}}>{chosen.map(g=>g.name).join(" & ")} <span className="dim">against</span> {o.opps.map(x=>x.name).join(" & ")}</div>
+              <div className="dim" style={{fontSize:14}}>{o.opps.map(x=>x.cls).join(" · ")} — they have fought together before.</div>
+              {tacticRow}
+              <button className="btn btn-blood" style={{width:"100%",marginTop:13}} disabled={pairSel.length!==2} onClick={()=>startFight(()=>fightPair(o))}>Send them out together</button>
+            </>);
+          } else if(pick.kind==="melee"){ const o=pick.o;
+            body = (<>
+              {backBtn}
+              <div className="flex items-center gap-1" style={{flexWrap:"wrap",marginBottom:5}}>
+                <div className="disp" style={{fontSize:14,fontWeight:700}}>THE MELEE</div><span className="tag tag-blood">Last man standing</span>
+                <span className="gold" style={{marginLeft:"auto",fontSize:14.5}}>{o.purse}d purse</span>
+              </div>
+              <div style={{fontSize:15}}>{o.field.length} men from the other houses. You enter {pairSel.length}.</div>
+              <div className="blood" style={{fontSize:14,margin:"6px 0"}}>The editor pays one man. If your two are the last upright, they will be made to finish it.</div>
+              <button className="btn btn-blood" style={{width:"100%",marginTop:11}} disabled={pairSel.length<2} onClick={()=>startFight(()=>meleeGo(o))}>Enter {pairSel.length} men</button>
+            </>);
+          } else if(pick.kind==="hunt"){ const o=pick.o; const B=BEASTS[o.beast]; const reach=me?reachVsBeast(me.kit||defaultKit(me.cls)):1;
+            body = (<>
+              {backBtn}
+              <div className="flex items-center gap-1" style={{flexWrap:"wrap",marginBottom:5}}>
+                <div className="disp" style={{fontSize:14,fontWeight:700}}>THE MORNING HUNT</div>
+                <span className="gold" style={{marginLeft:"auto",fontSize:14.5}}>{o.purse}d purse</span>
+              </div>
+              <div style={{fontSize:15.5,textTransform:"capitalize"}}>{B.name}</div>
+              <div className="dim" style={{fontSize:14,fontStyle:"italic",margin:"2px 0 6px"}}>{B.desc}</div>
+              <div className="blood" style={{fontSize:14,marginBottom:6}}>No missio. A beast does not see a raised finger.</div>
+              {me && <div style={{fontSize:14,marginBottom:6}}>
+                {reach>=1.2?<span className="laurel">{me.name} carries the reach — a hunting spear is the whole trick.</span>:reach<0.9?<span className="blood">{me.name} has nothing longer than his arm. He will have to get close.</span>:<span className="dim">{me.name}'s weapon will serve, but a spear would serve better.</span>}
+                {me.pfame>=60 && <div className="blood" style={{marginTop:3}}>{PR(me).He} is too well known for this — the cells will take it as an insult.</div>}
+              </div>}
+              {tacticRow}
+              <button className="btn btn-blood" style={{width:"100%",marginTop:13}} disabled={!fGid} onClick={()=>startFight(()=>huntOffer(o))}>Send {me?me.name:"him"} to the beast</button>
+            </>);
+          }
+        }
+        return (
+          <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:55}} onClick={close}>
+            <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
+              {header}
+              {body}
+            </div>
+          </div>
+        );
+      })()}
 
       {(S.pendingEvent || evResult) && !fight && (
         <div className="modalwrap" role="dialog" aria-modal="true">
