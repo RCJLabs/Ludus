@@ -4047,6 +4047,7 @@ function migrate(S){
   if(!S.staffMarket) S.staffMarket = {};
   if(S.election===undefined) S.election = null;
   if(S.aedile===undefined) S.aedile = null;
+  if(!S.rise) S.rise = { rank:0, standing:0 };
   S.gladiators.forEach(g=>{ if(g.sworn===undefined) g.sworn = { how:"proper", week:1, free:isAuctor(g) }; });
   if(!S.seed) S.seed = newSeedWord();
   if(S.rngState==null) S.rngState = rngGet();
@@ -4111,7 +4112,7 @@ function newGameState(name, scen, seed, pitch){
     gladiators:[], market:[], games:null, pendingEvent:null, log:[], fallen:[], freed:[],
     seed: null, rngState: 0,
     lastParty:-9, lastFeast:-9, over:null, milestone600:false, flags:{learned:{}}, escaped:[], rebellion:null, gear:{}, retired:[],
-    doctore:null, doctoreMarket:[], doctoreOffer:null, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, defected:[], nemesis:null, nemHouse:null, saga:null, arcs:[], crest:{ c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" }, primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], works:{}, slavers:{}, pact:null, gambits:{}, pendingLesson:null, law:null, doctrine:null, kits:[], deadSteel:[], bay:null, mark:null, after:null, metHouse:{}, owed:[], household:{}, yardSeen:0, yardMissed:0, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, departed:[], reSignOffer:null, annals:[] };
+    doctore:null, doctoreMarket:[], doctoreOffer:null, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, defected:[], nemesis:null, nemHouse:null, saga:null, arcs:[], crest:{ c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" }, primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], works:{}, slavers:{}, pact:null, gambits:{}, pendingLesson:null, law:null, doctrine:null, kits:[], deadSteel:[], bay:null, mark:null, after:null, metHouse:{}, owed:[], household:{}, yardSeen:0, yardMissed:0, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, departed:[], reSignOffer:null, annals:[], rise:{ rank:0, standing:0 } };
   d.rivals = makeRivals(d);
   const solo = S.men.length === 1;
   S.men.forEach((band,i)=>{
@@ -4793,6 +4794,78 @@ const lanDefiance = d => hasLT(d,"hard") ? -0.3 : 0;
 const lanMorale = d => (hasLT(d,"merciful")?0.25:0) + (hasLT(d,"hard")?-0.2:0);
 const lanPatronDecay = d => hasLT(d,"respected") ? 0.5 : hasLT(d,"marked") ? 1.8 : 1;
 const lanVig = d => hasLT(d,"shrewd") ? 0.06 : VIG;
+
+/* ---- THE LANISTA'S RISE ----
+   A ludus is a slaver's trade, and a slaver is no gentleman. But coin and a
+   loud arena buy a man his way up out of that, rung by rung, until the same
+   people who would not have dined with you send their sons to your sand.
+   d.rise lives at the top of the save so a heir inherits the family's standing. */
+const RISE_RANKS = [
+  { name:"Lanista",                 short:"a keeper of slaves",
+    blurb:"A man who buys other men and sells their blood. The city needs you; it does not receive you." },
+  { name:"Man of Means",            short:"a man with coin",     fame:40,  favor:0,  cost:400,
+    blurb:"Your purse is heavy enough that a merchant stands when you enter. It is a start.",
+    perk:"The good bookings come to you first. Purses run a touch richer." },
+  { name:"Citizen of Standing",     short:"a citizen of note",   fame:120, favor:40, cost:1200,
+    blurb:"You have paid for a name. Men who once looked past you now nod in the forum.",
+    perk:"Editors weigh your word in the box. Missio comes a little easier when you ask it." },
+  { name:"Friend of the Magistracy", short:"a friend of the town", fame:250, favor:55, cost:3000,
+    blurb:"The magistrates take your calls. The town's purse and yours are on speaking terms.",
+    perk:"Standing pays its own rents — clients and gifts arrive every week." },
+  { name:"Eques",                   short:"of the equestrian order", fame:450, favor:65, cost:8000,
+    blurb:"The census counts you among the knights. There is a ring on your hand that says so.",
+    perk:"Every ledger tilts your way — purses, the box, and the weekly income all grow." },
+  { name:"Known in Rome",           short:"a name in the capital", fame:600, favor:75, cost:15000,
+    blurb:"They speak of your house in the capital. A slaver climbed all the way, and the climb is the story." },
+];
+const riseOf   = d => (d.rise ? d.rise.rank : 0);
+const riseRank = d => RISE_RANKS[riseOf(d)] || RISE_RANKS[0];
+const riseName = d => riseRank(d).name;
+const riseNext = d => RISE_RANKS[riseOf(d)+1] || null;
+/* the graduated perks — all keyed to the rung you stand on */
+const risePurse   = d => 1 + riseOf(d)*0.03;   // better bookings the higher you climb
+const riseFav     = d => riseOf(d)*3;          // your name carries weight in the editor's box
+const riseStipend = d => riseOf(d) >= 3 ? (riseOf(d)-2)*8 : 0;  // rents and clients, from Friend upward
+/* how close you are to being received at the next rung */
+function riseWeek(d){
+  if(d.over || d.succession) return;
+  if(!d.rise) d.rise = { rank:0, standing:0 };
+  if(riseStipend(d) > 0) d.gold += riseStipend(d);
+  const nx = riseNext(d);
+  if(!nx){ d.rise.standing = 100; return; }
+  const meets = d.fame >= (nx.fame||0) && d.favor >= (nx.favor||0);
+  let s = d.rise.standing;
+  if(meets){
+    /* the town gets used to you faster the further past the gate you already are */
+    const over = (d.fame - (nx.fame||0)) / 200 + (d.favor - (nx.favor||0)) / 60;
+    s += 4 + clamp(over, 0, 5);
+    if(d.unrest > 60) s -= 3;                 // a house in uproar is no advertisement
+  } else {
+    s -= 2;                                    // slip below the gate and the goodwill cools
+  }
+  d.rise.standing = clamp(s, 0, 100);
+}
+const riseNeed = d => {
+  const nx = riseNext(d); if(!nx) return null;
+  return { fame: nx.fame||0, favor: nx.favor||0, cost: nx.cost||0,
+    fameOk: d.fame >= (nx.fame||0), favorOk: d.favor >= (nx.favor||0),
+    goldOk: d.gold >= (nx.cost||0), full: d.rise && d.rise.standing >= 100 };
+};
+const canClaimRise = d => {
+  const n = riseNeed(d); return !!(n && n.fameOk && n.favorOk && n.goldOk && n.full);
+};
+function claimRise(d){
+  if(!canClaimRise(d)) return false;
+  const nx = riseNext(d);
+  d.gold -= nx.cost;
+  d.rise.rank++;
+  d.rise.standing = 0;
+  d.fame += ri(10, 18);                        // the elevation is itself talked about
+  patronsOf(d).forEach(p => p.favor = clamp(p.favor + ri(3,6), 0, 100));
+  recomputeFavor(d);
+  chron(d, `${d.name} is received as ${nx.name} — ${nx.short}.`, "good");
+  return true;
+}
 
 /* ---- THE CIRCUIT ----
    Three towns down the bay who have never heard of you. Your standing in Capua
@@ -7543,7 +7616,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   gc.lastLate = lastNum(g,"latePow");
   gc.formStam = formStam(g);
   if(offer.stakes==="sine" && lawSine(d) && !offer.sealed){ d.gold -= lawSine(d); offer.sealed = 1; }
-  const simCtx = { plan:PE, fav:favMissio(g) + veteranGuard(g) + pit(d,"mercy",0), doctrine:docMissio(d), footing:V.footing * W.footing, sky:W.stam, venue:V.missio, aedile: away ? 0 : aedileMissio(d), strange: away ? Math.max(0, 19 - knownIn(d, offer.city)*0.19) * docStrange(d) : 0,
+  const simCtx = { plan:PE, fav:favMissio(g) + veteranGuard(g) + (away ? 0 : riseFav(d)) + pit(d,"mercy",0), doctrine:docMissio(d), footing:V.footing * W.footing, sky:W.stam, venue:V.missio, aedile: away ? 0 : aedileMissio(d), strange: away ? Math.max(0, 19 - knownIn(d, offer.city)*0.19) * docStrange(d) : 0,
       favor: imperial ? Math.min(d.favor, 20) : (away ? localStanding : d.favor), tier: Math.min(offer.tier,3),
       hostile:!!bribeHouse, patron: imperial ? null : (patron ? {name:patron.name, favor:patron.favor} : null),
       repShow: workPerk(d,"crowd") + femCrowd(g) + favCrowd(g) + W.crowd + provCrowd(g) + ((g.mastery && g.mastery.cls===g.cls) ? masteryCrowd(g) : 0) + (repStyle(d)==="show" ? 8 : 0) + (nem ? 10 : 0) + (away ? 0 : facCrowd(d, g.cls)) + seasonCrowd(d) + V.crowd,
@@ -7597,7 +7670,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   const sum = [`Appearance fee: ${t.app} denarii.`];
 
   if(win){
-    purse = rnd(offer.purse * (away?1:facPurse(d)) * (away?1:aedilePurse(d)) * docPurse(d) * W.purse * favPurse(g) * femPurse(g) * fanPurse(g) * pit(d,"purse"));
+    purse = rnd(offer.purse * (away?1:facPurse(d)) * (away?1:aedilePurse(d)) * docPurse(d) * W.purse * favPurse(g) * femPurse(g) * fanPurse(g) * risePurse(d) * pit(d,"purse"));
     /* the pits pay out of a bag at the rope. an editor pays when his clerk gets to it. */
     const onCredit = offer.imperial ? "imperial" : offer.city ? "city" : offer.booking ? "booking" : offer.festival ? "games" : null;
     if(onCredit && purse >= 140){
@@ -8949,6 +9022,7 @@ function endWeek(d){
   circuitWeek(d);
   warWeek(d);
   lanistaWeek(d);
+  riseWeek(d);
   featWeek(d);
   travelWeek(d);
   if(!d.city && !d.travel) primusWeek(d);
@@ -10587,6 +10661,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
       : "There was nothing but house issue to strip. The rack stands as it was.", "info");
   });
   const setCrest = patch => mut(d=>{ d.crest = Object.assign({ c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" }, d.crest||{}, patch); });
+  const takeRise = () => mut(d=>{ claimRise(d); });
   const build = k => mut(d=>{ const L = bLevel(d,k); if(L>=3) return;
     const cost = BUILDINGS[k].cost[L];
     if(d.gold < cost) return;
@@ -10974,6 +11049,9 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         <div className="disp" style={{fontSize:17,fontWeight:700,color:"#e8d092"}}>{L.name}</div>
         <div className="dim" style={{fontSize:14.5,fontStyle:"italic",marginBottom:9}}>
           {L.age} years old · {yearOf(S)} year{yearOf(S)===1?"":"s"} at the head of this house
+        </div>
+        <div className="flex items-center justify-between" style={{fontSize:14,marginBottom:9}}>
+          <span>Rank</span><span style={{color:riseOf(S)>0?"#e8d092":"#cfc0a0"}}>{riseName(S)}{riseNext(S)?"":" · the top rung"}</span>
         </div>
         <div className="flex items-center justify-between" style={{fontSize:14}}>
           <span>Health</span><span style={{color:healthColour(L.health)}}>{healthWord(L.health)}</span>
@@ -11364,6 +11442,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             if(aedileOn(S)) banners.push([S.aedile.friendly?"#5a6a35":S.aedile.hostile?"#7c2a22":"#3e2f1f", "The aedile", S.aedile.friendly?"owes you":S.aedile.hostile?"knows whose list":"neutral"]);
             if(S.city) banners.push(["#6d5426", CITIES[S.city].name, "you are on the circuit"]);
             if(S.travel) banners.push(["#6d5426", "On the road", `${S.travel.weeks}w`]);
+            if(canClaimRise(S)) banners.push(["#c99a4b", `Received as ${riseNext(S).name}`, "your standing awaits"]);
             return (<>
               {banners.length>0 && (
                 <div className="flex gap-2" style={{flexWrap:"wrap"}}>
@@ -12321,6 +12400,50 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               A patron kept warm leans on the editor when your man is in the sand. One left to go cold talks at the baths instead.
             </div>
           </Sect>
+
+          {(()=>{ const rk = riseRank(S), nx = riseNext(S), need = riseNeed(S), can = canClaimRise(S);
+            const stand = S.rise ? S.rise.standing : 0;
+            return (
+            <Sect title="Your Standing" note={rk.name} open={can}>
+              <div className="disp" style={{fontSize:15,color:"#e8d092"}}>{rk.name}</div>
+              <div className="dim" style={{fontSize:13.5,fontStyle:"italic",margin:"3px 0 9px"}}>{rk.blurb}</div>
+              {riseOf(S)>0 && rk.perk && (
+                <div className="panel" style={{padding:9,marginBottom:10,background:"#171712",borderColor:"#3e4a30"}}>
+                  <span className="tag" style={{color:"#a9c98a",borderColor:"#3e4a30"}}>What it buys</span>
+                  <div style={{fontSize:14,marginTop:3}}>{rk.perk}</div>
+                </div>
+              )}
+              {nx ? (
+                <div className="panel" style={{padding:11,background:"#1c1610",borderColor:can?"#c99a4b":"#3e2f1f"}}>
+                  <div className="flex items-center justify-between gap-2" style={{marginBottom:5}}>
+                    <span className="disp" style={{fontSize:13.5,color:can?"#e8d092":"#cfc0a0"}}>Next: {nx.name}</span>
+                    <span className="tag">{nx.short}</span>
+                  </div>
+                  <div className="tag" style={{marginBottom:5}}>The town must grow used to you</div>
+                  <div className="track" style={{height:6,marginBottom:9}}>
+                    <div className="fill" style={{width:`${stand}%`, background: stand>=100? "linear-gradient(90deg,#6a5a2c,#e8d092)" : "linear-gradient(90deg,#4a4030,#c99a4b)"}}/>
+                  </div>
+                  {[["Renown", need.fame, rnd(S.fame), need.fameOk],
+                    ["Patrons' favour", need.favor, rnd(S.favor), need.favorOk],
+                    ["The price of the name", need.cost, rnd(S.gold), need.goldOk]].filter(r=>r[1]>0).map(([lbl,req,have,ok])=>(
+                    <div key={lbl} className="flex items-center justify-between gap-2" style={{fontSize:13.5,padding:"2px 0"}}>
+                      <span style={{color:ok?"#a9c98a":"#cfc0a0"}}>{ok?"✓":"·"} {lbl}</span>
+                      <span className="rowval dim" style={{color:ok?"#a9c98a":undefined}}>{have} / {req}</span>
+                    </div>
+                  ))}
+                  <button className={`btn ${can?"":"btn-ghost"}`} style={{width:"100%",marginTop:8}} disabled={!can} onClick={takeRise}>
+                    {can ? `Take your place as ${nx.name}`
+                      : !need.full ? "The town is not yet used to you"
+                      : `Pay ${nx.cost}d to be received`}
+                  </button>
+                </div>
+              ) : (
+                <div className="panel" style={{padding:11,background:"#1c1610",borderColor:"#c99a4b"}}>
+                  <div className="dim" style={{fontSize:14,fontStyle:"italic"}}>There is no higher rung. A slaver climbed all the way to Rome, and men will tell the story long after the sand forgets your name.</div>
+                </div>
+              )}
+            </Sect>
+          ); })()}
           <Sect title="Throw a party" note="favor & fame">
           {Object.entries(PARTY).map(([k,p])=>(
             <div key={k} className="panel" style={{padding:13}}>
