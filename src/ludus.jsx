@@ -10112,8 +10112,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
   if(screen==="loading") return <div className="lr" style={{display:"flex",alignItems:"center",justifyContent:"center"}}><style>{CSS}</style><div className="disp dim">Lighting the torches...</div></div>;
 
   const CarrySheet = ()=> !carry ? null : (
-    <div className="ovl" onClick={()=>setCarry(null)}>
-      <div className="sheet" onClick={e=>e.stopPropagation()}>
+    <div className="modalwrap" role="dialog" aria-modal="true" onClick={()=>setCarry(null)}>
+      <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
         <div className="disp" style={{fontSize:18,color:"#e8d092",marginBottom:6}}>
           {carry.mode==="out" ? "CARRY THIS HOUSE OUT" : "BRING A HOUSE IN"}
         </div>
@@ -13278,13 +13278,12 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
 
       <CarrySheet/>
       {S && S.pendingLesson && (
-        <div className="ovl">
-          <div className="sheet" style={{maxWidth:430}}>
+        <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:65}}>
+          <div className="modal" tabIndex={-1} style={{maxWidth:430,borderColor:"#c99a4b"}}>
             <div className="disp" style={{fontSize:18,color:"#e8d092",letterSpacing:".1em",marginBottom:8}}>
               {S.pendingLesson.title.toUpperCase()}
             </div>
             {S.pendingLesson.text.split(SPLIT2).map((p,i)=>(
-
               <div key={i} style={{fontSize:15.5,marginBottom:9}}>{p}</div>
             ))}
             <button className="btn" style={{width:"100%",marginTop:4}}
@@ -13293,8 +13292,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         </div>
       )}
       {skipped && skipped.ran>=2 && (
-        <div className="ovl" onClick={()=>setSkipped(null)}>
-          <div className="sheet" onClick={e=>e.stopPropagation()}>
+        <div className="modalwrap" role="dialog" aria-modal="true" onClick={()=>setSkipped(null)}>
+          <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
             <div className="disp" style={{fontSize:17,color:"#e8d092",marginBottom:6}}>
               WEEKS {skipped.from}–{skipped.to-1}
             </div>
