@@ -4179,6 +4179,13 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
   let sA = R0 ? R0.sA : smA, sB = R0 ? R0.sB : smB, mom = R0 ? R0.mom : 0;
   let tiredA = R0? R0.tiredA : false, tiredB = R0? R0.tiredB : false,
       c50 = R0? R0.c50 : false, c80 = R0? R0.c80 : false;
+  let bLegged = R0 ? !!R0.bLegged : false;      /* his legs have been worked — a lasting thing */
+  const cruxCount = R0 ? (R0.count||0) : 0;      /* how many times you have spoken already */
+  const order = O.order || null;                 /* the tactical order you gave at the last crux */
+  let orderSigA = !!(order && order.sig);        /* force your man's signature on the first resumed round */
+  const orderTgt = order && order.target || null;/* aim your blows at one place */
+  if(order && order.breather){ sA = Math.min(smA, sA + smA*0.24); mom = clamp(mom-1,-3,3); crowd = clamp(crowd-6,0,100); }
+  if(order && order.debuff==="legs") bLegged = true;
   let aDies=false, bDies=false, fell=false, winner=null, ended=false, lastTarget="flank", spared=false;
   const takeMult = t => t==="aggressive"?1.12 : t==="defensive"?0.82 : t==="showboat"?1.08 : 1;
   const oppName = B.nick? `${B.name}, ${B.nick}` : B.name;
@@ -4199,8 +4206,12 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
     if(stakes==="sine") push("intro", `The lanistae have agreed: sine missione. No mercy will be asked, and none given.`);
   } else push("crux", O.resumeLine || `${A.name} hears you and answers.`);
 
-  /* the moment the bout is genuinely in the balance and one word from the box would matter */
-  const cruxNow = r => O.stopAtCrux && !ended && stakes!=="blood" && r>=3 && r<=6 && (vA<=74 || vB<=70);
+  /* the moments the bout is in the balance and a word from the box would matter. it
+     comes round more than once now — up to three times — with a beat or two between,
+     so a fight is coached, not decided by one call. */
+  const lastCruxR = R0 ? (R0.round||0) : -99;
+  const cruxNow = r => O.stopAtCrux && !ended && stakes!=="blood"
+    && cruxCount < 3 && r>=3 && r<=11 && (r-lastCruxR)>=2 && (vA<=82 || vB<=78);
   let crux = null;
   const startR = R0 ? R0.round : 0;
 
@@ -4211,21 +4222,24 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
     A.footing = ctx.footing || 1; B.footing = ctx.footing || 1;
     const PL = ctx.plan || { pow:1, stam:1, guard:1 };
     const pA = power(A,tA,B.cls,mom,modA) * PL.pow * (0.72+R()*0.56) * (sA<22?0.78:1) * (A.sigOpen||1) * (round>=6 ? (A.lastLate||1) : 1);
-    const pB = power(B,tB,A.cls,-mom,modB) * (0.72+R()*0.56) * (sB<22?0.78:1) * (B.sigOpen||1);
+    const pB = power(B,tB,A.cls,-mom,modB) * (0.72+R()*0.56) * (sB<22?0.78:1) * (B.sigOpen||1) * (bLegged?0.9:1);
     A.sigOpen = 1; B.sigOpen = 1;
     sA -= (tA==="aggressive"?9:7) * (1 - A.mods.spd*0.5) * PL.stam * (A.formStam||1) * (ctx.sky||1) * (A.lastStam||1);
-    sB -= (tB==="aggressive"?9:7) * (1 - B.mods.spd*0.5);
-    /* one of them may go for the thing his style is for */
+    sB -= (tB==="aggressive"?9:7) * (1 - B.mods.spd*0.5) * (bLegged?1.25:1);
+    /* one of them may go for the thing his style is for — or you may have ordered it */
+    const forcedSig = orderSigA; orderSigA = false;
     const sigTurn = (()=>{
-      const aGo = triesSignature(A, mom, sA, tA), bGo = triesSignature(B, -mom, sB, tB);
+      let aGo = triesSignature(A, mom, sA, tA);
+      const bGo = triesSignature(B, -mom, sB, tB);
+      if(forcedSig && sigOf(A.cls)) aGo = true;
       if(!aGo && !bGo) return null;
-      const isA = aGo && (!bGo || pA >= pB);
+      const isA = aGo && (!bGo || forcedSig || pA >= pB);
       return { isA, g:isA?A:B, foe:isA?B:A, S:sigOf((isA?A:B).cls) };
     })();
     if(sigTurn && sigTurn.S){
       const { isA, g, foe, S } = sigTurn;
       const edge = (isA ? pA-pB : pB-pA) / 60;
-      const landed = R() < clamp(0.42 + edge*0.5 + (g.tec-50)/300, 0.16, 0.86);
+      const landed = R() < clamp(0.42 + edge*0.5 + (g.tec-50)/300 + (isA&&forcedSig?0.12:0), 0.16, 0.9);
       if(landed){
         const tgt = pick(TARGETS);
         let dmg = (5 + Math.abs(pA-pB)/9 + g.str/14) * S.win.dmg * tgt[2] * (1 + g.mods.atk*0.7) * (1 - foe.mods.def);
@@ -4252,7 +4266,7 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
       const atkIsA = pA>pB;
       const atk = atkIsA?A:B, def = atkIsA?B:A;
       const move = atkIsA?moveA:moveB;
-      const tgt = pick(TARGETS);
+      const tgt = (atkIsA && orderTgt) ? (TARGETS.find(t=>t[0]===orderTgt) || pick(TARGETS)) : pick(TARGETS);
       let dmg = 5 + diff/9 + atk.str/14;
       dmg *= takeMult(atkIsA?tB:tA) * tgt[2];
       if(ctx.guarded && atkIsA===false) dmg *= 0.44;
@@ -4281,7 +4295,7 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
     if(crowd>=80 && !c80){ c80=true; push("crowd", `CAPUA IS ON ITS FEET!`); }
     if(vA<=20 || vB<=20) break;
     if(cruxNow(r)){
-      crux = { vA, vB, sA, sB, crowd, mom, round:r, tB, tiredA, tiredB, c50, c80 };
+      crux = { vA, vB, sA, sB, crowd, mom, round:r, tB, tiredA, tiredB, c50, c80, count:cruxCount+1, bLegged };
       push("crux", vA<=58 && vA<vB
         ? `${A.name} is hurt and going backwards. The crowd is looking at your box.`
         : vB<=58 && vB<vA
@@ -7147,15 +7161,31 @@ function simulatePair(As, Bs, tA, stakes, ctx, opts){
   return { beats, win: !(down.A[0] && down.A[1]), crowd, dead, down, hp };
 }
 
+/* The word from the box. Press/cover/the cloth are the old three; the rest are
+   orders that reach into the exchange itself. Each carries an `order` the fight
+   engine reads on the next round, and a `when` that keeps it off the card when it
+   would make no sense. */
 const CRUX = {
   press: { label:"Press him", short:"PRESS",
-    desc:"Onto the front foot. He hits harder and takes more doing it.",
+    desc:"Front foot. He hits harder and takes more doing it.",
     tactic:"aggressive", line:g=>`You put your voice across the sand and ${g.name} goes forward.` },
   cover: { label:"Cover up", short:"COVER",
-    desc:"Behind the guard and wait. He wins less and lives more.",
+    desc:"Behind the guard. He wins less and lives more.",
     tactic:"measured", line:g=>`${g.name} hears it and gets everything behind the guard.` },
+  finish: { label:"Go for the finish", short:"FINISH", tactic:"aggressive", order:{ sig:true },
+    desc:"His one move, now — whatever it costs. It ends the bout or leaves him wide open.",
+    when:cx=>cx.vA==null || cx.vB==null || cx.vA >= cx.vB-6 || (cx.sA==null||cx.sA>=45),
+    line:g=>`${g.name} sets his feet for the one thing his style is for.` },
+  legs: { label:"Work his legs", short:"LEGS", tactic:"measured", order:{ target:"thigh", debuff:"legs" },
+    desc:"Take him apart a piece at a time. Slower, but he stops moving.",
+    when:cx=>cx.vB==null || cx.vB>=42,
+    line:g=>`${g.name} stops hunting the kill and starts hunting the legs.` },
+  breather: { label:"Wave him off", short:"BREATHE", tactic:"defensive", order:{ breather:true },
+    desc:"Give ground and get your wind. You lose the crowd and the front foot, not the bout.",
+    when:cx=>cx.sA==null || cx.sA<=45 || cx.vA<=55,
+    line:g=>`${g.name} gives ground on purpose, hands high, dragging air back into his chest.` },
   cloth: { label:"Throw in the cloth", short:"THE CLOTH",
-    desc:"Forfeit. He loses and lives, and Capua watches you do it.",
+    desc:"Forfeit. He loses and lives, and Capua watches you call it.",
     tactic:null, line:g=>`` },
 };
 
@@ -7172,14 +7202,15 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   const patron = topPatron(d);
   const nem = nemesisIn(d, offer.opp);
   if(nem){ gc.morale = clamp(gc.morale - (nem.hated?14:8), 0, 100); }
-  if(offer.stakes==="sine" && g.ambition && g.ambition.kind==="nokill") ambitionBroken(d, g);
-  if(offer.rematch && g.ambition && g.ambition.kind==="revenge") ambitionMet(d, g);
+  /* these are bout-start effects — only on the opening call, never on a coached resume */
+  if(!pending && offer.stakes==="sine" && g.ambition && g.ambition.kind==="nokill") ambitionBroken(d, g);
+  if(!pending && offer.rematch && g.ambition && g.ambition.kind==="revenge") ambitionMet(d, g);
   const F = (d.games && d.games.fest) ? CALENDAR.find(x=>x.key===d.games.fest) : null;
   const imperial = !!offer.imperial;
   const away = offer.city ? CITIES[offer.city] : null;
   const localStanding = offer.city ? 12 + knownIn(d, offer.city)*0.45 : 0;
-  if(g.injury && g.injury.care==="work") remember(d, g, "hurt");
-  if(offer.stakes==="sine") remember(d, g, "sine");
+  if(!pending && g.injury && g.injury.care==="work") remember(d, g, "hurt");
+  if(!pending && offer.stakes==="sine") remember(d, g, "sine");
   if(!offer.venue) offer.venue = venueFor(d, offer);
   if(!offer.sky) offer.sky = skyFor(d, offer);
   const V = VEN(offer.venue);
@@ -7211,7 +7242,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
       aDies:false, bDies:false, lastTarget:"flank", spared:false, forfeit:true };
   } else {
     res = simulateFight(gc, oc, tacticNow, offer.stakes, simCtx,
-      pending ? { from: pending.crux, resumeLine: C ? C.line(g) : undefined }
+      pending ? { from: pending.crux, resumeLine: C ? C.line(g) : undefined, stopAtCrux: !offer.imperial, order: C ? C.order : null }
               : { stopAtCrux: !offer.imperial });
   }
   if(res.unfinished){
@@ -9383,30 +9414,50 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak }){
 
         {!done && <button className="btn btn-ghost" style={{width:"100%",marginTop:4}} onClick={()=>{setPlaying(false); setI(beats.length-1);}}>Skip to the verdict</button>}
 
-        {done && fight.crux && onSpeak && (
+        {done && fight.crux && onSpeak && (()=>{
+          /* solo human bouts get the full, contextual set of orders and can be coached
+             more than once; hunts, pairs and melees keep the single old three. */
+          const solo = !fight.melee && !fight.venatio && !fight.pair;
+          const cx = beats[beats.length-1] || {};
+          const base = fight.melee ? MELEE_CRUX
+            : solo ? CRUX
+            : { press:CRUX.press, cover:CRUX.cover, cloth:CRUX.cloth };
+          const entries = Object.entries(base).filter(([k,c]) => !c.when || c.when(cx));
+          const sig = solo && fight.A ? SIGNATURES[fight.A.cls] : null;
+          return (
           <div className="panel" style={{marginTop:8,padding:12,borderColor:"#c99a4b"}}>
-            <div className="disp" style={{fontSize:13,fontWeight:700,letterSpacing:".1em",marginBottom:4,color:"#e8d092"}}>ONE WORD FROM THE BOX</div>
-            <div className="dim" style={{fontSize:14,fontStyle:"italic",marginBottom:9}}>
-              He can hear you from here, and he will only hear you once.
+            <div className="disp" style={{fontSize:13,fontWeight:700,letterSpacing:".1em",marginBottom:4,color:"#e8d092"}}>
+              {solo ? "FROM THE BOX" : "ONE WORD FROM THE BOX"}
             </div>
-            {Object.entries(fight.melee ? MELEE_CRUX : CRUX).map(([k,c])=>(
-              <button key={k} className={`btn ${(k==="cloth"||k==="pullall")?"btn-blood":""}`} style={{width:"100%",marginBottom:7}} onClick={()=>onSpeak(k)}>
-                {!fight.melee && k==="cloth" && fight.venatio ? "Call the handlers in"
-                  : !fight.melee && k==="cloth" && fight.pair ? "Throw in the cloth for both"
-                  : c.label}
-              </button>
-            ))}
-            <div className="dim" style={{fontSize:13.5,fontStyle:"italic"}}>
+            <div className="dim" style={{fontSize:14,fontStyle:"italic",marginBottom:9}}>
+              {solo ? "He can hear you between the exchanges. Say the word and watch it land."
+                : "He can hear you from here, and he will only hear you once."}
+            </div>
+            {entries.map(([k,c])=>{
+              const label = (k==="cloth" && fight.venatio) ? "Call the handlers in"
+                : (k==="cloth" && fight.pair) ? "Throw in the cloth for both"
+                : (k==="finish") ? (sig ? `Go for ${sig.name}` : "Go for the finish")
+                : c.label;
+              return (
+                <button key={k} className={`btn ${(k==="cloth"||k==="pullall")?"btn-blood":""}`}
+                  style={{width:"100%",marginBottom: solo?4:7, textAlign: solo?"left":"center"}} onClick={()=>onSpeak(k)}>
+                  <span>{label}</span>
+                  {solo && c.desc && <span className="dim" style={{display:"block",fontSize:12,fontStyle:"italic",fontWeight:400,marginTop:1,whiteSpace:"normal"}}>{c.desc}</span>}
+                </button>
+              );
+            })}
+            <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:solo?4:0}}>
               {fight.melee
                 ? "Pulling a man off the sand costs you his share and nothing else — and if he was your second, the editor has nobody left to make him fight."
                 : fight.venatio
                 ? "There is no editor in a hunt and no appeal to make. The handlers come only if you call them, and only you can."
                 : fight.pair
                 ? "Whatever you say, you say to both of them."
-                : "Press: he hits harder and takes more doing it. Cover: he wins less and lives more. The cloth: he loses and lives, and Capua watches you call it."}
+                : "Whatever you call, he answers for the next exchange or two — then the crowd looks to your box again."}
             </div>
           </div>
-        )}
+          );
+        })()}
 
         {done && !fight.crux && (
           <div className="panel" style={{marginTop:8, padding:12, borderColor: fight.dead? "#7c2a22" : fight.win? "#5a6a35":"#4e3c26"}}>
@@ -9748,6 +9799,8 @@ export default function App(){
       : p.venatio ? doVenatio(d, p.gid, p.offer, p.tactic, p, choice)
       : p.pair ? doPairFight(d, p.ids, p.offer, p.tactic, p, choice)
       : doFight(d, p.gid, p.offer, p.tactic, p.bet, p, choice);
+    /* the bout may come to the balance again — keep it held so the next word lands too */
+    if(res.crux){ setHeld({ base:d, res }); setFight(res); return; }
     setHeld(null); setS(d); setFight(res);
   };
   const meleeGo = (offer)=>{
