@@ -2860,7 +2860,7 @@ function genGladiator(d, quality){
   const fem = R() < 0.10;
   const g = { id:d.nextId++, sex: fem?"f":"m",
     name: freshName(d, fem ? FNAMES[origin] : ORIGINS[origin].names, fem), nick:null, origin, cls,
-    morale:60, fatigue:0, wins:0, losses:0, kills:0, pfame:0, status:"active", injury:null,
+    morale:60, fatigue:0, wins:0, losses:0, kills:0, pfame:0, fans:0, status:"active", injury:null,
     focus:CLASSES[cls].key[0], regimen:"palus", sparWith:null, age:ri(18,32), lastFought:-9, traits:[], legend:false, returnWeek:0,
     kit: defaultKit(cls), wear:{weapon:100,offhand:100,helm:100,armor:100}, strain:0, form:0, formLog:[], regard:ri(38,54), memory:[], scars:[], scarCap:{}, weeksAged:0 };
   for(const s of STATS) g[s] = clamp(24 + quality*0.5 + ri(-9,9) + (ORIGINS[origin].mod[s]||0)*2.2, 8, 92);
@@ -3891,6 +3891,7 @@ function facAfterBout(d, g, res, offer, tactic, choice){
   if(res.spared && !res.bDies) facMove(d, "front", 2.4);
   if(choice === "cloth"){ facMove(d, "front", 3.0); d.flags.everCloth = (d.flags.everCloth||0)+1; }
   if(tactic === "showboat") facMove(d, "mob", 1.8);
+  if(win && isFavourite(g)) facMove(d, "mob", 2.6);   /* the mob loves to watch its own win */
 }
 
 /* ---- THE CIRCUIT OF CAPUA ----
@@ -4015,7 +4016,7 @@ function migrate(S){
   if(S.ear===undefined) S.ear = null;
   if(!S.heard) S.heard = [];
   S.gladiators.forEach(g=>{ if(g.regard==null) g.regard = ri(38,54); if(!g.memory) g.memory = [];
-    if(g.form==null) g.form = 0; if(!g.formLog) g.formLog = []; });
+    if(g.form==null) g.form = 0; if(!g.formLog) g.formLog = []; if(g.fans==null) g.fans = 0; });
   if(!S.deadlines) S.deadlines = [];
   if(S.doctrine===undefined) S.doctrine = null;
   if(!S.kits) S.kits = [];
@@ -5367,6 +5368,38 @@ function sagaWeek(d){
   if(s.stage<2 && s.renown>=42) nameRival(d);
   if(s.stage===2 && s.renown>=70 && !(d.deadlines||[]).some(x=>x.kind==="challenge")) issueReckoning(d);
   if(s.stage<3) s.renown = clamp(s.renown + 1.2, 0, 100);
+}
+
+/* ---- THE FAVOURITE ----
+   The crowd does not love skill; it loves spectacle. A man who wins with flair and
+   a full house builds a following (g.fans) that fills the stands and fattens the
+   purse — and turns on you if you bench him, sell him, or bury him. Distinct from
+   renown: fans are the mob's affection, quick to earn and quick to cool. */
+const fansOf = g => clamp(g && g.fans!=null ? g.fans : 0, 0, 100);
+const isFavourite = g => fansOf(g) >= 55;
+const fanWord = v => v>=82?"an idol of the mob" : v>=55?"a crowd favourite" : v>=30?"a following of his own" : v>=12?"a few admirers" : "unknown to the crowd";
+const fanPurse = g => 1 + fansOf(g)/100 * 0.4;    /* the seats fill for the name alone */
+function fanGain(res, g, tactic){
+  return clamp((res.crowd-38)/8 + (tactic==="showboat"?4:0) + ((g.sho||0)>58?2:0)
+    + (g.traits && g.traits.includes("Showman")?3:0) + (res.bDies?2:0), 0, 15);
+}
+/* the mob does not forgive losing one of its own */
+function loseFavourite(d, g, how){
+  const f = fansOf(g);
+  if(f < 40) return;
+  const bite = how==="sold" ? 1 : how==="dead" ? 0.8 : 0.5;
+  facMove(d, "mob", -(6 + f/12) * bite);
+  d.unrest = clamp(d.unrest + (3 + f/22) * bite, 0, 100);
+  d.fame = Math.max(0, d.fame - rnd((6 + f/14) * bite));
+  if(how==="sold") chron(d, `The mob does not care what ${g.name} cost or fetched. It cared that he was theirs, and you sold him, and it will remember that longer than he does.`, "bad");
+}
+function favouriteWeek(d){
+  for(const g of d.gladiators){
+    if(g.status!=="active") continue;
+    if(g.fans==null){ g.fans = 0; continue; }
+    const idle = d.week - (g.lastFought!=null ? g.lastFought : d.week);
+    if(idle >= 2) g.fans = clamp(g.fans - (2 + (idle>=5?2:0)), 0, 100);   /* the crowd forgets a man it cannot see */
+  }
 }
 
 /* ---- POACHING ----
@@ -7563,7 +7596,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   const sum = [`Appearance fee: ${t.app} denarii.`];
 
   if(win){
-    purse = rnd(offer.purse * (away?1:facPurse(d)) * (away?1:aedilePurse(d)) * docPurse(d) * W.purse * favPurse(g) * femPurse(g) * pit(d,"purse"));
+    purse = rnd(offer.purse * (away?1:facPurse(d)) * (away?1:aedilePurse(d)) * docPurse(d) * W.purse * favPurse(g) * femPurse(g) * fanPurse(g) * pit(d,"purse"));
     /* the pits pay out of a bag at the rope. an editor pays when his clerk gets to it. */
     const onCredit = offer.imperial ? "imperial" : offer.city ? "city" : offer.booking ? "booking" : offer.festival ? "games" : null;
     if(onCredit && purse >= 140){
@@ -7585,6 +7618,8 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
     d.fame += fg;
     g.pfame += fg + rnd(res.crowd/14) + (g.traits.includes("Glory-Seeker")?3:0);
     if(d.saga && d.saga.gid===g.id && d.saga.stage<3) d.saga.renown = clamp(d.saga.renown + (res.bDies?7:5) + (res.crowd>=80?3:0), 0, 100);
+    { const wasFav = isFavourite(g); g.fans = clamp(fansOf(g) + fanGain(res, g, tacticNow), 0, 100);
+      if(!wasFav && isFavourite(g)) sum.push(`The crowd has taken ${g.name} for its own — he is a favourite of the sand now, and favourites fill seats.`); }
     g.morale = clamp(g.morale+10, 0, 100);
     for(const k of CLASSES[g.cls].key) g[k] = clamp(g[k]+0.7, 5, statCap(g,k));
     sum.push(`Purse: ${purse} denarii. Fame of the house +${fg}.`);
@@ -7622,6 +7657,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
     d.fallen.push({ name:fullName(g), week:d.week });
     if(d.lanista) d.lanista.health = clamp(d.lanista.health - 1.3*collSoften(d)*(isDamn(g)?0.55:1)*(workPerk(d,"regard")?0.7:1)/docHealth(d), 0, 100);
     favourLost(d, g, "dead");
+    loseFavourite(d, g, "dead");
     weekMark(d, "deaths");
     retireSteel(d, g);
     collBury(d, g);
@@ -8037,6 +8073,28 @@ const EVENTS = {
         return `He gives you the name. You have a quiet word with ${target.name}, who did not know he had been for sale — and now cannot be, not to them.`; }
       d.gold += 180;
       return `You take the purse. Whatever the name was, it goes back down the coast with him, and the house is 180 denarii the richer for a kindness you had half forgotten.`; } },
+  /* ===== the mob calls for its favourite by name ===== */
+  crowdCalls: {
+    make(d){
+      if(d.city||d.travel||d.rome) return null;
+      const favs = activeG(d).filter(isFavourite);
+      if(!favs.length) return null;
+      if(d.flags.calledFav && d.week - d.flags.calledFav < 8) return null;
+      const g = favs.reduce((m,x)=>fansOf(x)>fansOf(m)?x:m, favs[0]);
+      return { id:"crowdCalls", title:"They Want Him",
+        text:`The mob has taken to chanting ${g.name}'s name outside the amphitheatre on days he is not even fighting. An editor noticed — editors always do — and sent word: put ${g.name} on his next card and there is a purse in it fatter than the bout is worth, because the seats fill for the name alone.`,
+        choices:[`Promise ${g.name} to the crowd`, "He fights when you say he fights"], data:{ gid:g.id } }; },
+    run(d,ev,i){
+      d.flags.calledFav = d.week;
+      const g = d.gladiators.find(x=>x.id===ev.data.gid);
+      if(!g || g.status!=="active") return "The moment, and the man, have passed.";
+      if(i===0){
+        const advance = rnd(60 + fansOf(g)*3);
+        d.gold += advance; facMove(d, "mob", 5);
+        g.fans = clamp(fansOf(g)+6, 0, 100); g.morale = clamp(g.morale+6, 0, 100);
+        return `You give your word. ${g.name} will fight the games, and the editor's clerk counts out ${advance} denarii on the strength of a name before a blow is struck.`; }
+      facMove(d, "mob", -5); g.fans = clamp(fansOf(g)-8, 0, 100); d.unrest = clamp(d.unrest+2, 0, 100);
+      return `You tell them ${g.name} fights when you decide it, not when a crowd decides it for you. It is the correct answer, and it is not free.`; } },
   /* ===== ARC: the shared prospect (the poaching war of a nemesis-house feud) ===== */
   /* ===== ARC: the champion's freedom (the fork at the end of a personal saga) ===== */
   sagaFreedom: {
@@ -8898,6 +8956,7 @@ function endWeek(d){
   nemesisWeek(d);
   if(!d.city && !d.travel) nemHouseWeek(d);
   if(!d.city && !d.travel) sagaWeek(d);
+  favouriteWeek(d);
   doctoreWeek(d);
   annalsSync(d);
   repWeek(d);
@@ -10376,7 +10435,7 @@ export default function App(){
     setAsk({ title:"Sell Him On", danger:true, confirm:`Take ${v} denarii`,
       text:`A buyer offers ${v} denarii for ${fullName(g)}. The other men will see him led out through the gate, and draw their own conclusions.`,
       run:()=>{ mut(d=>{ d.gold+=v;
-        { const gg = d.gladiators.find(x=>x.id===id); if(gg) favourLost(d, gg, "sold"); }
+        { const gg = d.gladiators.find(x=>x.id===id); if(gg){ favourLost(d, gg, "sold"); loseFavourite(d, gg, "sold"); } }
         tieList(d).filter(t=>(t.a===id||t.b===id) && t.kind==="brother").forEach(t=>{
           const o = d.gladiators.find(x=>x.id===(t.a===id?t.b:t.a));
           if(o && o.status==="active") remember(d, o, "soldKin"); });
@@ -11714,6 +11773,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 {(g.scars||[]).length>0 && <span className="tag">{g.scars.length} scar{g.scars.length>1?"s":""}</span>}
                 {kinOf(S,g.id,"brother").length>0 && <span className="tag" style={{borderColor:"#5a6a35",color:"#b9c58a"}}>{kinOf(S,g.id,"brother").length} brother{kinOf(S,g.id,"brother").length>1?"s":""}</span>}
                 {kinOf(S,g.id,"rival").length>0 && <span className="tag tag-blood">bad blood</span>}
+                {isFavourite(g) && <span className="tag tag-gold">♦ crowd favourite</span>}
               </div>
               {g.status==="active" && <div className="dim" style={{fontSize:13.5,marginBottom:5}}>{regimenWord(S,g)}</div>}
               <div className="flex gap-3" style={{fontSize:12.5}}>
@@ -12619,6 +12679,18 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             <div style={{fontSize:15,fontStyle:"italic",marginBottom:8,color:selG.legend?"#e0bd72":"#cfc0a0"}}>
               The doctore's eye: {selG.read ? `potential ${rnd(selG.potential)}, heart ${rnd(selG.heart)}` : potentialWord(selG.potential)}. Bearing: {demeanor(selG.defiance).toLowerCase()}{selG.read? ` (${rnd(selG.defiance)})`:""}. At {selG.age} {PR(selG).he} is {ageWord(selG.age)}.
             </div>
+            {fansOf(selG)>=12 && (
+              <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",borderColor:isFavourite(selG)?"#8a6a2c":"#3e2f1f"}}>
+                <div className="flex items-center justify-between" style={{marginBottom:6}}>
+                  <span className={`tag ${isFavourite(selG)?"tag-gold":""}`}>{isFavourite(selG)?"♦ Crowd Favourite":"The crowd"}</span>
+                  <span className="rowval dim" style={{fontSize:12.5}}>{fanWord(fansOf(selG))}</span>
+                </div>
+                <Bar v={fansOf(selG)} label="following" color="linear-gradient(90deg,#6d5426,#e0bd72)"/>
+                {isFavourite(selG) && <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:5}}>
+                  The seats fill for his name — a fatter purse when he fights, and a mob that will not forgive you for benching, selling, or burying him.
+                </div>}
+              </div>
+            )}
             {(selG.scars||[]).length>0 && (()=>{ 
               const byPart = {};
               selG.scars.forEach(s=>{ byPart[s.part]=(byPart[s.part]||0)+1; });
