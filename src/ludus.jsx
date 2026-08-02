@@ -3997,6 +3997,7 @@ function migrate(S){
   if(!S.arcs) S.arcs = [];
   if(S.nemHouse===undefined) S.nemHouse = null;
   if(S.saga===undefined) S.saga = null;
+  if(!S.crest) S.crest = { c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" };
   if(S.rome===undefined) S.rome = null;
   if(S.poach===undefined) S.poach = null;
   if(!S.defected) S.defected = [];
@@ -4110,7 +4111,7 @@ function newGameState(name, scen, seed, pitch){
     gladiators:[], market:[], games:null, pendingEvent:null, log:[], fallen:[], freed:[],
     seed: null, rngState: 0,
     lastParty:-9, lastFeast:-9, over:null, milestone600:false, flags:{learned:{}}, escaped:[], rebellion:null, gear:{}, retired:[],
-    doctore:null, doctoreMarket:[], doctoreOffer:null, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, defected:[], nemesis:null, nemHouse:null, saga:null, arcs:[], primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], works:{}, slavers:{}, pact:null, gambits:{}, pendingLesson:null, law:null, doctrine:null, kits:[], deadSteel:[], bay:null, mark:null, after:null, metHouse:{}, owed:[], household:{}, yardSeen:0, yardMissed:0, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, departed:[], reSignOffer:null, annals:[] };
+    doctore:null, doctoreMarket:[], doctoreOffer:null, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, defected:[], nemesis:null, nemHouse:null, saga:null, arcs:[], crest:{ c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" }, primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], works:{}, slavers:{}, pact:null, gambits:{}, pendingLesson:null, law:null, doctrine:null, kits:[], deadSteel:[], bay:null, mark:null, after:null, metHouse:{}, owed:[], household:{}, yardSeen:0, yardMissed:0, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, departed:[], reSignOffer:null, annals:[] };
   d.rivals = makeRivals(d);
   const solo = S.men.length === 1;
   S.men.forEach((band,i)=>{
@@ -9163,7 +9164,7 @@ const SKIN="#a8763e", SKIN_D="#7d5527", LEATHER="#4a3216", LEATHER_D="#33220f",
    Weapons hang off a real arm: shoulder -> forearm -> fist -> grip -> guard -> blade,
    so a sword reads as held rather than growing out of him.
    Drawn facing RIGHT (+x is toward the opponent); side B is mirrored by the parent. */
-const Fighter = React.memo(function Fighter({ kit, pose, wounds, scars, fallen, dead, foe, fem }){
+const Fighter = React.memo(function Fighter({ kit, pose, wounds, scars, fallen, dead, foe, fem, col }){
   const K = kit || {};
   const wArt = kitArt(K,"weapon") || "sword";
   const oArt = kitArt(K,"offhand") || "none";
@@ -9175,9 +9176,10 @@ const Fighter = React.memo(function Fighter({ kit, pose, wounds, scars, fallen, 
   const hasGreaves = aArt==="greaves" || aArt==="gilded";
   const hasChest   = aArt==="padded" || aArt==="gilded";
   const MET = gilt ? "#d9a842" : BRASS, MET_D = gilt ? "#9c7420" : BRASS_D;
-  /* house colours: your men fight in oxblood, the other house in slate blue */
-  const PLUME = foe ? "#3f5f74" : CLOTH;
-  const FACE  = gilt ? "#c9992f" : (foe ? "#3a5668" : "#8e3a2b");
+  /* house colours: your men fight in the house's chosen colours (default oxblood),
+     the other house in slate blue */
+  const PLUME = foe ? "#3f5f74" : (col && col.c1 ? col.c1 : CLOTH);
+  const FACE  = gilt ? "#c9992f" : (foe ? "#3a5668" : (col && col.c2 ? col.c2 : "#8e3a2b"));
 
   const POSES = {
     idle:    { x:0,  y:0,  rot:0,  arm:0,   armRot:0 },
@@ -9367,6 +9369,44 @@ const Fighter = React.memo(function Fighter({ kit, pose, wounds, scars, fallen, 
     </svg>
   );
 });
+
+/* ---- HOUSE IDENTITY ---- the colours a house fights in, its crest and its motto */
+const HOUSE_COLOURS = [
+  ["#8d3b2c","Oxblood"], ["#7c2a22","Blood"], ["#b0603a","Terracotta"], ["#c99a4b","Gold"],
+  ["#8a6a2c","Ochre"], ["#6d5426","Bronze"], ["#2f5e4a","Legion green"], ["#3f5f74","Slate"],
+  ["#3a5668","Deep blue"], ["#5c4a6b","Imperial purple"], ["#6b1f2a","Wine"], ["#4a4a52","Iron"],
+  ["#c0c0c8","Silver"], ["#2c2c30","Black"],
+];
+const CREST_SYMS = ["gladius","laurel","star","trident","bars","chevron"];
+const HOUSE_MOTTOS = [
+  "Blood buys bread", "We do not kneel", "The sand remembers", "Bought, not broken",
+  "Steel and patience", "No man dies cheap", "The wall that advances", "Every name is earned",
+  "First on the sand", "What the crowd wants", "We were slaves once", "Made in Capua",
+];
+function Crest({ crest, size=22 }){
+  const c1 = (crest && crest.c1) || "#8d3b2c";
+  const c2 = (crest && crest.c2) || "#c99a4b";
+  const sym = (crest && crest.sym) || "gladius";
+  const SYM = {
+    gladius: <g stroke={c2} strokeWidth="3.2" fill={c2} strokeLinecap="round">
+      <line x1="50" y1="28" x2="50" y2="70"/><line x1="39" y1="37" x2="61" y2="37"/><circle cx="50" cy="75" r="3.4"/></g>,
+    laurel: <g stroke={c2} strokeWidth="3" fill="none" strokeLinecap="round">
+      <path d="M50,78 Q33,62 36,36"/><path d="M50,78 Q67,62 64,36"/>
+      <path d="M39,46 l-6,-4 M39,57 l-7,-3 M61,46 l6,-4 M61,57 l7,-3"/></g>,
+    star: <path d="M50,28 L57,46 L76,46 L60,58 L66,76 L50,64 L34,76 L40,58 L24,46 L43,46 Z" fill={c2}/>,
+    trident: <g stroke={c2} strokeWidth="3.2" fill="none" strokeLinecap="round">
+      <line x1="50" y1="36" x2="50" y2="76"/><path d="M37,36 L37,50 M63,36 L63,50 M37,36 Q50,26 63,36"/></g>,
+    bars: <g fill={c2}><rect x="28" y="34" width="44" height="7" rx="2.5"/><rect x="28" y="50" width="44" height="7" rx="2.5"/><rect x="28" y="66" width="44" height="7" rx="2.5"/></g>,
+    chevron: <path d="M28,70 L50,40 L72,70 L62,70 L50,54 L38,70 Z" fill={c2}/>,
+  };
+  return (
+    <svg width={size} height={Math.round(size*1.14)} viewBox="0 0 100 114" aria-hidden="true" style={{flexShrink:0,display:"block"}}>
+      <path d="M50,4 L92,16 V56 Q92,92 50,110 Q8,92 8,56 V16 Z" fill={c1} stroke="#160f09" strokeWidth="4"/>
+      <path d="M50,10 L86,20 V55 Q86,87 50,103 Q14,87 14,55 V20 Z" fill="none" stroke={c2} strokeWidth="1.6" opacity=".55"/>
+      {SYM[sym] || SYM.gladius}
+    </svg>
+  );
+}
 
 /* A beast for the morning hunt. One quadruped, six sets of bones.
    Drawn facing RIGHT like the fighter; the arena mirrors it. */
@@ -9732,7 +9772,7 @@ function HPBar({ label, v, s, cls, flip }){
   );
 }
 
-function FightModal({ fight, onClose, startMuted, onMute, onSpeak }){
+function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
   const [muted,setMuted] = useState(!!startMuted);
   useEffect(()=>{ SFX.mute = !!startMuted; }, [startMuted]);
   useEffect(()=>{ SFX.place(fight.venue || "forum", fight.sky); }, [fight.venue, fight.sky]);
@@ -9897,7 +9937,7 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak }){
           {isMelee ? (<>
             {meleeA && <div className="fig" style={{left:`calc(50% - 130px)`}}>
               <div className={b.kind==="clash"?"bob":""}>
-                <Fighter fem={meleeA.fem} kit={meleeA.kit} scars={meleeA.scars}
+                <Fighter foe={meleeA && !meleeA.mine} col={meleeA && meleeA.mine ? houseCol : null} fem={meleeA.fem} kit={meleeA.kit} scars={meleeA.scars}
                   pose={b.actor==="a" && (b.kind==="hit"||b.kind==="crit"||b.kind==="graze") ? "lunge"
                     : b.out[b.a] ? "fallen" : b.kind==="end" ? "victor" : "idle"}
                   wounds={[]} fallen={b.out[b.a]} dead={b.dead[b.a]}/>
@@ -9915,7 +9955,7 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak }){
               <div key={`a${i}`} className="fig" style={{ left:`calc(50% - ${118 + (i===0?4:44)}px)`,
                 bottom: i===0 ? 14 : 40, zIndex: i===0?3:2, opacity: i===0?1:0.88, transform:`scale(${i===0?1:0.86})`, transformOrigin:"50% 100%" }}>
                 <div className={pairPose("A",i)==="idle" && !b.dA[i] ? "bob":""}>
-                  <Fighter fem={fight.A[i].fem} kit={fight.A[i].kit} scars={fight.A[i].scars} pose={pairPose("A",i)}
+                  <Fighter col={houseCol} fem={fight.A[i].fem} kit={fight.A[i].kit} scars={fight.A[i].scars} pose={pairPose("A",i)}
                     wounds={pairWounds("A",i)} fallen={b.dA[i]} dead={b.xA[i]}/>
                 </div>
               </div>
@@ -9933,7 +9973,7 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak }){
           </>) : (<>
           <div className="fig" style={{left:`calc(50% - ${closeA}px)`}}>
             <div className={poseFor("A")==="idle" && !downSide ? "bob":""}>
-              <Fighter fem={fight.A.fem} kit={fight.A.kit} scars={fight.A.scars} pose={poseFor("A")} wounds={woundsFor("A")} fallen={fallenSide==="A"} dead={deadSide==="A"}/>
+              <Fighter col={houseCol} fem={fight.A.fem} kit={fight.A.kit} scars={fight.A.scars} pose={poseFor("A")} wounds={woundsFor("A")} fallen={fallenSide==="A"} dead={deadSide==="A"}/>
             </div>
           </div>
           {isBeast ? (
@@ -10546,6 +10586,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
       ? `Every man is stripped back to house issue. ${n} piece${n>1?"s go":" goes"} back on the rack, and the yard's loadout starts over from nothing but the standard kit.`
       : "There was nothing but house issue to strip. The rack stands as it was.", "info");
   });
+  const setCrest = patch => mut(d=>{ d.crest = Object.assign({ c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" }, d.crest||{}, patch); });
   const build = k => mut(d=>{ const L = bLevel(d,k); if(L>=3) return;
     const cost = BUILDINGS[k].cost[L];
     if(d.gold < cost) return;
@@ -10763,7 +10804,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
     <div className="lr" style={{display:"flex",alignItems:"safe center",justifyContent:"center",padding:20}}>
       <style>{CSS}</style>
       <CarrySheet/>
-      {fight && <FightModal fight={fight} startMuted={!prefs.sound}
+      {fight && <FightModal fight={fight} startMuted={!prefs.sound} houseCol={S && S.crest}
         onClose={()=>{ SFX.stopCrowd(); setFight(null); }}
         onSpeak={null} onMute={v=>setPref("sound", !v)}/>}
       <div style={{maxWidth:460,width:"100%"}}>
@@ -11250,9 +11291,12 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
 
       <div className="bar" style={{position:"fixed",top:0,left:0,right:0,zIndex:20,background:"linear-gradient(180deg,#1d1610,rgba(23,18,16,.96))",borderBottom:"1px solid #3e2f1f",padding:"calc(10px + env(safe-area-inset-top)) 14px 10px"}}>
         <div className="flex items-center justify-between gap-2">
-          <div style={{minWidth:0}}>
-            <div className="disp" style={{fontSize:15,fontWeight:900,color:"#e8d092",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{S.name.toUpperCase()}{(S.generation||1)>1 && <span style={{fontSize:12,color:"#b09b7d"}}> · {["","","II","III","IV","V","VI","VII"][S.generation]||S.generation}</span>}</div>
-            <div className="dim" style={{fontSize:12.5}}>{seasonOf(S).name} · year {yearOf(S)}, week {yearWeek(S)} · {S.travel? "on the road" : S.city? CITIES[S.city].name : fameTitle(S.fame)}</div>
+          <div className="flex items-center gap-2" style={{minWidth:0}}>
+            {S.crest && <Crest crest={S.crest} size={26}/>}
+            <div style={{minWidth:0}}>
+              <div className="disp" style={{fontSize:15,fontWeight:900,color:"#e8d092",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{S.name.toUpperCase()}{(S.generation||1)>1 && <span style={{fontSize:12,color:"#b09b7d"}}> · {["","","II","III","IV","V","VI","VII"][S.generation]||S.generation}</span>}</div>
+              <div className="dim" style={{fontSize:12.5}}>{seasonOf(S).name} · year {yearOf(S)}, week {yearWeek(S)} · {S.travel? "on the road" : S.city? CITIES[S.city].name : fameTitle(S.fame)}</div>
+            </div>
           </div>
           <div className="flex items-center gap-2" style={{flexShrink:0}}>
             <button className="btn btn-ghost" aria-label="Settings" style={{padding:"10px 10px"}} onClick={()=>setShowSettings(true)}><Settings size={16} aria-hidden="true"/></button>
@@ -12178,6 +12222,50 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         {tab==="villa" && (<div className="flex flex-col gap-3">
           <div className="dim" style={{fontSize:14.5,fontStyle:"italic"}}>Favor opens doors fame cannot — sway in the arena when your man falls, and a seat at the primus when you have earned one.</div>
 
+          <Sect title="House Colours" note={(S.crest&&S.crest.motto)||"colours, crest & motto"}>
+            <div className="flex items-center gap-3" style={{marginBottom:11}}>
+              <Crest crest={S.crest} size={54}/>
+              <div>
+                <div className="disp" style={{fontSize:15,color:"#e8d092"}}>{S.name}</div>
+                {S.crest && S.crest.motto && <div style={{fontSize:14.5,fontStyle:"italic",color:"#cfc0a0"}}>“{S.crest.motto}”</div>}
+                <div className="dim" style={{fontSize:12.5,marginTop:2}}>Your men fight in these colours — the plume they wear and the face of their shields.</div>
+              </div>
+            </div>
+            <div className="tag" style={{marginBottom:6}}>The field</div>
+            <div className="flex gap-2" style={{flexWrap:"wrap",marginBottom:11}}>
+              {HOUSE_COLOURS.map(([hex,nm])=>(
+                <button key={hex} aria-label={nm} title={nm} onClick={()=>setCrest({c1:hex})}
+                  style={{width:30,height:30,borderRadius:8,background:hex,cursor:"pointer",padding:0,
+                    border:(S.crest&&S.crest.c1===hex)?"2px solid #e8d092":"1px solid #3e2f1f"}}/>
+              ))}
+            </div>
+            <div className="tag" style={{marginBottom:6}}>The device</div>
+            <div className="flex gap-2" style={{flexWrap:"wrap",marginBottom:11}}>
+              {HOUSE_COLOURS.map(([hex,nm])=>(
+                <button key={hex} aria-label={nm} title={nm} onClick={()=>setCrest({c2:hex})}
+                  style={{width:30,height:30,borderRadius:8,background:hex,cursor:"pointer",padding:0,
+                    border:(S.crest&&S.crest.c2===hex)?"2px solid #e8d092":"1px solid #3e2f1f"}}/>
+              ))}
+            </div>
+            <div className="tag" style={{marginBottom:6}}>The crest</div>
+            <div className="flex gap-2" style={{flexWrap:"wrap",marginBottom:11}}>
+              {CREST_SYMS.map(sym=>(
+                <button key={sym} aria-label={sym} onClick={()=>setCrest({sym})}
+                  style={{padding:5,borderRadius:8,background:"#1a1410",cursor:"pointer",lineHeight:0,
+                    border:(S.crest&&S.crest.sym===sym)?"2px solid #e8d092":"1px solid #3e2f1f"}}>
+                  <Crest crest={Object.assign({}, S.crest, { sym })} size={34}/>
+                </button>
+              ))}
+            </div>
+            <div className="tag" style={{marginBottom:6}}>The motto</div>
+            <div className="flex gap-2" style={{flexWrap:"wrap"}}>
+              <button className={`chip ${!S.crest||!S.crest.motto?"on":""}`} onClick={()=>setCrest({motto:""})}>None</button>
+              {HOUSE_MOTTOS.map(m=>(
+                <button key={m} className={`chip ${S.crest&&S.crest.motto===m?"on":""}`} onClick={()=>setCrest({motto:m})}>{m}</button>
+              ))}
+            </div>
+          </Sect>
+
           <Sect title="Those Who Watch" note={`standing ${rnd(S.favor)}`} open>
             {(S.patrons||[]).length===0 && <div className="dim" style={{fontSize:14.5,fontStyle:"italic"}}>No one of consequence has heard of you yet.</div>}
             {(S.patrons||[]).map(p=>{
@@ -13090,7 +13178,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               border:"1px solid #4e3c26",marginBottom:10,
               background:"linear-gradient(#100c08 0%,#241a0e 22%,#6d5531 66%,#9a7844 100%)"}}>
               <div style={{position:"absolute",left:"50%",bottom:10,transform:"translateX(-50%)"}}>
-                <Fighter fem={isF(selG)} kit={selG.kit || defaultKit(selG.cls)} scars={selG.scars} pose="idle" wounds={[]}/>
+                <Fighter col={S.crest} fem={isF(selG)} kit={selG.kit || defaultKit(selG.cls)} scars={selG.scars} pose="idle" wounds={[]}/>
               </div>
               <div className="dim" style={{position:"absolute",bottom:5,left:9,fontSize:11,fontStyle:"italic"}}>as he takes the sand</div>
             </div>
@@ -13801,7 +13889,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         </div>
       )}
 
-      {fight && <FightModal fight={fight} startMuted={!prefs.sound}
+      {fight && <FightModal fight={fight} startMuted={!prefs.sound} houseCol={S && S.crest}
         onClose={()=>{ if(held) return; SFX.stopCrowd(); setFight(null); }}
         onSpeak={fight.crux ? speak : null}
         onMute={v=>setPref("sound", !v)}/>}
