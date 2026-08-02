@@ -858,6 +858,50 @@ function learnWeek(d){
     chron(d, `${fullName(g)} comes back off the far post a ${to.toLowerCase()}, and keeps the ${g.second.cls.toLowerCase()} in his hands for whenever it is wanted. There are not five men in Campania who can do both.`, "good");
   }
 }
+/* the doctore drills a fighter in a move of his own until it is his to keep */
+function teachWeek(d){
+  for(const g of d.gladiators){
+    if(g.status!=="active" || !g.teaching) continue;
+    g.teaching.weeks--;
+    if(g.teaching.weeks > 0) continue;
+    const key = g.teaching.key, T = TECHNIQUES[key];
+    g.teaching = null;
+    if(!T || T.cls!==g.cls){ continue; }       // he changed style mid-lesson; the move does not fit
+    g.signature = { key, cls:g.cls, learned:d.week };
+    g.morale = clamp(g.morale+8, 0, 100);
+    remember(d, g, "taught");
+    addRep(d, T.kind==="show" ? "show" : "craft", 8);
+    d.fame += 6;
+    chron(d, `${fullName(g)} has ${T.name} now — drilled until it is his and no one else's. Capua will learn to call it by his name.`, "good");
+  }
+}
+/* ---- THE YARD TOURNAMENT ----
+   Wooden swords, no editor, and every man in the block with something to prove to the
+   men he eats with. It settles the pecking order, lifts the winner, and sharpens or
+   sours whatever was already between the last two standing. */
+const TOURNEY_COOL = 10;
+const tourneyReady = d => !d.rome && !d.city && !d.travel && !d.over
+  && (d.week - (d.flags && d.flags.tourneyWk!=null ? d.flags.tourneyWk : -99) >= TOURNEY_COOL)
+  && activeG(d).filter(g=>canFight(g)).length >= 4;
+function holdTourney(d){
+  const men = activeG(d).filter(g=>canFight(g));
+  if(men.length < 4 || !tourneyReady(d)) return null;
+  d.flags.tourneyWk = d.week;
+  const score = g => CLASSES[g.cls].key.reduce((s,k)=>s+(g[k]||0),0)*0.8
+    + (g.str+g.agi+g.tec+g.dis)*0.2 + regardOf(g)*0.2 + (g.wins||0)*0.7 + R()*24;
+  const ranked = men.map(g=>({ g, s:score(g) })).sort((a,b)=>b.s-a.s);
+  const win = ranked[0].g, second = ranked[1].g;
+  win.morale = clamp(win.morale+10, 0, 100);
+  win.pfame  = clamp((win.pfame||0)+ri(3,6), 0, 200);
+  win.fans   = clamp((win.fans||0)+ri(3,7), 0, 100);
+  win.regard = clamp(regardOf(win)+4, 0, 100);
+  win.fatigue= clamp(win.fatigue+12, 0, 100);
+  men.forEach(g=>{ if(g.id!==win.id){ g.morale = clamp(g.morale+3, 0, 100); g.fatigue = clamp(g.fatigue+8, 0, 100); } });
+  d.unrest = clamp(d.unrest-3, 0, 100);
+  if(second && R()<0.5) addTie(d, win.id, second.id, R()<0.55 ? "rival" : "brother");
+  chron(d, `You set the whole yard against itself for an afternoon — wooden swords, no editor, every man with something to prove to the men he eats beside. ${win.name} came out on top of the lot, and walks the cells tonight like a man told the thing he already suspected.`, "good");
+  return { win:win.name, second: second? second.name : null };
+}
 /* a man with two styles takes whichever the card needs */
 const stylesOf = g => g ? [g.cls, g.second && g.second.cls].filter(Boolean) : [];
 function switchStyle(d, gid, to){
@@ -4529,7 +4573,48 @@ const SIGNATURES = {
     miss:(a,b)=>`The lunge falls short and ${a} is a long way forward with a long weapon.` },
 };
 const sigOf = cls => SIGNATURES[cls] || null;
-/* a man goes for it when he is winning, or when he is desperate */
+/* ---- A MOVE OF HIS OWN ----
+   A signature is what the style does. A technique is what one man makes of it — drilled
+   until the crowd knows it by his name, taught by the doctore to a fighter who has
+   earned it. Two to a style: one that ends men, one that brings the seats up. It rides
+   the same signature exchange the whole sim already runs — it just fires oftener, lands
+   harder, and has his name on it. */
+const TECHNIQUES = {
+  snare:    { cls:"Retiarius", name:"the Snare", kind:"blood", say:"the net a certainty, not a gamble",
+    odds:1.5, dmg:1.18, crowd:1.1, line:(a,b)=>`${a} works ${b} to the one spot he wanted him, and the net comes down like a verdict.` },
+  dance:    { cls:"Retiarius", name:"the Fisherman's Dance", kind:"show", say:"he plays the crowd before he takes the man",
+    odds:1.3, dmg:1.0, crowd:1.6, line:(a,b)=>`${a} runs ${b} round the sand on the end of the net, and the whole amphitheatre is up before the trident even moves.` },
+  bulwark:  { cls:"Murmillo", name:"the Bulwark", kind:"blood", say:"he walks a man down behind the shield like a wall on the move",
+    odds:1.25, dmg:1.35, crowd:1.1, line:(a,b)=>`${a} puts the whole shield into ${b} and the blade follows it, and ${b} folds around both.` },
+  toll:     { cls:"Murmillo", name:"the Toll", kind:"show", say:"the shield-boom the crowd counts along with",
+    odds:1.3, dmg:1.15, crowd:1.5, line:(a,b)=>`${a} rings the boss off ${b}'s helm — once, twice — and by the third the seats are counting it out loud.` },
+  widow:    { cls:"Thraex", name:"the Widow's Hook", kind:"blood", say:"the sica round the rim, and it does not come back empty",
+    odds:1.3, dmg:1.4, crowd:1.15, line:(a,b)=>`The sica curls round ${b}'s shield the way it was forged to and finds the soft of him behind it.` },
+  ribbon:   { cls:"Thraex", name:"the Ribbon", kind:"show", say:"the cut that opens a man for show and not for killing",
+    odds:1.35, dmg:1.0, crowd:1.55, line:(a,b)=>`${a} lays a long shallow line across ${b} — showy, red, and no more than skin — and the crowd loves the cruelty of it.` },
+  reach:    { cls:"Hoplomachus", name:"the Long Reach", kind:"blood", say:"he kills at a distance no shorter man will close",
+    odds:1.3, dmg:1.3, crowd:1.1, line:(a,b)=>`${a} takes ${b} at the very tip of the spear, from a range ${b} will never in his life answer.` },
+  pin:      { cls:"Hoplomachus", name:"the Pin", kind:"show", say:"he holds a man off all day and the crowd wills him closer",
+    odds:1.4, dmg:0.95, crowd:1.55, line:(a,b)=>`${a} keeps ${b} pinned at spear's length, prodding, denying, until the crowd is howling for someone to close the distance.` },
+  vice:     { cls:"Secutor", name:"the Vice", kind:"blood", say:"he closes it down and it stays closed",
+    odds:1.3, dmg:1.3, crowd:1.1, line:(a,b)=>`${a} shuts ${b} against nothing and keeps him there, and the blade goes in over the shield rim with nowhere left to give.` },
+  relentless:{ cls:"Secutor", name:"the Hound", kind:"show", say:"he runs a man down and the crowd runs with him",
+    odds:1.35, dmg:1.1, crowd:1.5, line:(a,b)=>`${a} hunts ${b} across the whole of the sand, never once letting up, and the seats bay along with every step.` },
+  storm:    { cls:"Dimachaerus", name:"the Twin Storm", kind:"blood", say:"both blades inside a heartbeat, and no answer to either",
+    odds:1.4, dmg:1.3, crowd:1.2, line:(a,b)=>`${a} comes on with both edges in the space of one breath, and ${b} cannot begin to answer the second before the first is in.` },
+  mirror:   { cls:"Dimachaerus", name:"the Mirror", kind:"show", say:"a blur of steel that the crowd cannot follow and adores",
+    odds:1.35, dmg:1.05, crowd:1.65, line:(a,b)=>`${a} spins both blades into a blur ${b} cannot read and the crowd cannot follow, and the sound it makes is pure delight.` },
+};
+const TECH_KEYS = Object.keys(TECHNIQUES);
+const techsFor = cls => TECH_KEYS.filter(k=>TECHNIQUES[k].cls===cls);
+const sigTech = g => (g && g.signature && TECHNIQUES[g.signature.key] && g.signature.cls===g.cls) ? TECHNIQUES[g.signature.key] : null;
+const signatureCrowd = g => sigTech(g) ? 5 : 0;    // the crowd knows his move and comes for it
+const SIG_GATE = { wins:6 };
+const SIG_FEE = 260;
+const SIG_WEEKS = 4;
+const canLearnSig = (d,g) => !!(d.doctore && !g.signature && !g.teaching && !g.learning
+  && g.status==="active" && techsFor(g.cls).length && (g.wins||0) >= SIG_GATE.wins);
+/* a man goes for it when he is winning, or when he is desperate — and oftener if it is his own */
 function triesSignature(g, mom, stam, tac){
   const S = sigOf(g.cls); if(!S) return false;
   let p = S.odds;
@@ -4537,6 +4622,7 @@ function triesSignature(g, mom, stam, tac){
   if(mom > 0) p *= 1.2;
   if(stam < 30) p *= 0.6;
   p *= 0.85 + (g.tec||50)/330;
+  const T = sigTech(g); if(T) p *= T.odds;
   return R() < clamp(p, 0.04, 0.7);
 }
 
@@ -4655,16 +4741,17 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
     })();
     if(sigTurn && sigTurn.S){
       const { isA, g, foe, S } = sigTurn;
+      const T = sigTech(g);      /* his own drilled version of the move, if he has one */
       const edge = (isA ? pA-pB : pB-pA) / 60;
-      const landed = R() < clamp(0.42 + edge*0.5 + (g.tec-50)/300 + (isA&&forcedSig?0.12:0), 0.16, 0.9);
+      const landed = R() < clamp(0.42 + edge*0.5 + (g.tec-50)/300 + (isA&&forcedSig?0.12:0) + (T?0.08:0), 0.16, 0.92);
       if(landed){
         const tgt = pick(TARGETS);
-        let dmg = (5 + Math.abs(pA-pB)/9 + g.str/14) * S.win.dmg * tgt[2] * (1 + g.mods.atk*0.7) * (1 - foe.mods.def);
+        let dmg = (5 + Math.abs(pA-pB)/9 + g.str/14) * S.win.dmg * (T?T.dmg:1) * tgt[2] * (1 + g.mods.atk*0.7) * (1 - foe.mods.def);
         dmg = Math.max(3, dmg);
         if(isA){ vB = clamp(vB-dmg,0,100); sB -= S.win.stam; mom = clamp(mom+1,-3,3); lastTarget = tgt; }
         else   { vA = clamp(vA-dmg,0,100); sA -= S.win.stam; mom = clamp(mom-1,-3,3); lastTarget = tgt; }
-        crowd = clamp(crowd + S.win.crowd, 0, 100);
-        push("crit", S.hit(g.name, foe.name), { sig:S.move, target:tgt });
+        crowd = clamp(crowd + S.win.crowd * (T?T.crowd:1), 0, 100);
+        push("crit", T ? T.line(g.name, foe.name) : S.hit(g.name, foe.name), { sig:S.move, target:tgt, named: T? T.name : null });
       } else {
         if(isA){ sA -= S.fail.selfStam; A.sigOpen = S.fail.guard; mom = clamp(mom-1,-3,3); }
         else   { sB -= S.fail.selfStam; B.sigOpen = S.fail.guard; mom = clamp(mom+1,-3,3); }
@@ -8227,7 +8314,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   const simCtx = { plan:PE, fav:favMissio(g) + veteranGuard(g) + (away ? 0 : riseFav(d)) + blessMercy(d) + pit(d,"mercy",0), doctrine:docMissio(d), footing:V.footing * W.footing, sky:W.stam, venue:V.missio, aedile: away ? 0 : aedileMissio(d), strange: away ? Math.max(0, 19 - knownIn(d, offer.city)*0.19) * docStrange(d) : 0,
       favor: imperial ? Math.min(d.favor, 20) : (away ? localStanding : d.favor), tier: Math.min(offer.tier,3),
       hostile:!!bribeHouse, patron: imperial ? null : (patron ? {name:patron.name, favor:patron.favor} : null),
-      repShow: workPerk(d,"crowd") + femCrowd(g) + favCrowd(g) + W.crowd + provCrowd(g) + ((g.mastery && g.mastery.cls===g.cls) ? masteryCrowd(g) : 0) + (repStyle(d)==="show" ? 8 : 0) + (nem ? 10 : 0) + (away ? 0 : facCrowd(d, g.cls)) + seasonCrowd(d) + V.crowd,
+      repShow: workPerk(d,"crowd") + femCrowd(g) + favCrowd(g) + W.crowd + provCrowd(g) + ((g.mastery && g.mastery.cls===g.cls) ? masteryCrowd(g) : 0) + signatureCrowd(g) + (repStyle(d)==="show" ? 8 : 0) + (nem ? 10 : 0) + (away ? 0 : facCrowd(d, g.cls)) + seasonCrowd(d) + V.crowd,
       guarded: choice==="cover" };
   let res;
   if(choice==="cloth"){
@@ -9684,6 +9771,7 @@ function endWeek(d){
   for(const g of d.gladiators) if(g.benched && g.benched.weeks>0 && --g.benched.weeks<=0) g.benched = null;
   feudWeek(d);
   learnWeek(d);
+  teachWeek(d);
   charterWeek(d);
   yardWeek(d);
   lateWeek(d);
@@ -10773,8 +10861,11 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
           </div>
         </div>
 
+        {b.named && (
+          <div className="disp" style={{marginTop:8,textAlign:"center",fontSize:13,letterSpacing:".1em",color:"#e0bd72"}}>✦ {b.named.toUpperCase()} ✦</div>
+        )}
         <div className="caption" role="log" aria-live="polite" aria-atomic="true"
-          style={{marginTop:10, color: b.kind==="crit"||b.kind==="death"? "#eab6a8" : b.kind==="crowd"? "#e0bd72":"#e8d9b8"}}>
+          style={{marginTop:b.named?4:10, color: b.named? "#e0bd72" : b.kind==="crit"||b.kind==="death"? "#eab6a8" : b.kind==="crowd"? "#e0bd72":"#e8d9b8"}}>
           {b.text}
         </div>
         {b.stands && (
@@ -11421,6 +11512,11 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
   const askFavour = pid => mut(d=>{ callFavour(d, pid); });
   const doMaster = gid => mut(d=>{ const g=d.gladiators.find(x=>x.id===gid); if(g) makeMaster(d,g); });
   const teachSecond = (gid,to) => mut(d=>{ startSecond(d,gid,to); });
+  const teachSig = (gid, key) => mut(d=>{ const g=d.gladiators.find(x=>x.id===gid);
+    if(!g || !canLearnSig(d,g) || d.gold<SIG_FEE) return;
+    if(!TECHNIQUES[key] || TECHNIQUES[key].cls!==g.cls) return;
+    d.gold -= SIG_FEE; g.teaching = { key, weeks:SIG_WEEKS };
+    chron(d, `${fullName(g)} goes to the far post to drill ${TECHNIQUES[key].name} until it is his. ${SIG_WEEKS} weeks of one thing, over and over, ${SIG_FEE} denarii to the doctore for the hours.`); });
   const useStyle = (gid,to) => mut(d=>{ switchStyle(d,gid,to); });
   const chooseHeir = kind => mut(d=>{ nameHeir(d, kind); });
   const takeUpHouse = () => mut(d=>{ succeed(d); d.succession = null; });
@@ -11546,6 +11642,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
     chron(d, "Meat and honeyed wine for the familia. Songs in the cells past midnight."); });
   const offerTo = god => mut(d=>{ makeOffering(d, god); });
   const vowTo = god => mut(d=>{ swearVow(d, god); });
+  const doTourney = () => mut(d=>{ holdTourney(d); });
 
   if(screen==="loading") return <div className="lr" style={{display:"flex",alignItems:"center",justifyContent:"center"}}><style>{CSS}</style><div className="disp dim">Lighting the torches...</div></div>;
 
@@ -13715,6 +13812,18 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               {S.week-S.lastFeast<3? `The men feasted recently — ${3-(S.week-S.lastFeast)} week${3-(S.week-S.lastFeast)>1?"s":""}` : S.gold<120? "Not enough coin" : "Set the tables"}
             </button>
           </Sect>
+
+          <Sect title="A tournament in the yard" note="settles the block">
+            <div className="dim" style={{fontSize:14.5,margin:"4px 0 8px"}}>
+              Set the whole familia against itself for an afternoon — wooden swords, no editor, every man with something to prove. The winner walks tall for weeks; who meets him in the final may come out of it a brother or a rival.
+            </div>
+            <button className="btn" style={{width:"100%"}} disabled={!tourneyReady(S)} onClick={doTourney}>
+              {activeG(S).filter(g=>canFight(g)).length<4 ? "Not enough fit men — you need four"
+                : (S.week - (S.flags.tourneyWk!=null?S.flags.tourneyWk:-99)) < TOURNEY_COOL
+                ? `The yard is still sore — ${TOURNEY_COOL-(S.week-S.flags.tourneyWk)}w`
+                : "Hold the tournament"}
+            </button>
+          </Sect>
         </div>)}
 
         {tab==="armory" && (<div className="flex flex-col gap-3">
@@ -14031,6 +14140,39 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 </div>
               </div>
             )}
+            {gView==="train" && (selG.signature || selG.teaching || canLearnSig(S,selG)) && (()=>{
+              const has = sigTech(selG);
+              return (
+                <div className="panel" style={{padding:11,marginBottom:9,background:"#1c1610",
+                  borderColor: has ? "#c99a4b" : selG.teaching ? "#6d5426" : "#4e3c26"}}>
+                  {has ? (<>
+                    <div className="flex items-center justify-between" style={{marginBottom:3}}>
+                      <span className="tag tag-gold">{has.name}</span>
+                      <span className="rowval dim" style={{fontSize:12.5}}>his own move</span>
+                    </div>
+                    <div className="dim" style={{fontSize:14,fontStyle:"italic"}}>They call it his — {has.say}. It comes oftener than the plain move, lands harder, and the crowd knows to wait for it.</div>
+                    {selG.signature.cls!==selG.cls && <div className="blood" style={{fontSize:13.5,marginTop:3}}>He fights another style now, so it is idle in his hands.</div>}
+                  </>) : selG.teaching ? (<>
+                    <div className="tag tag-gold" style={{marginBottom:3}}>At the far post</div>
+                    <div style={{fontSize:15}}>Drilling {TECHNIQUES[selG.teaching.key]?TECHNIQUES[selG.teaching.key].name:"a move"} — {selG.teaching.weeks} week{selG.teaching.weeks===1?"":"s"} left.</div>
+                    <div className="dim" style={{fontSize:14,fontStyle:"italic",marginTop:3}}>The same move, over and over, until it is his and no one else's.</div>
+                  </>) : (<>
+                    <div className="tag" style={{marginBottom:4}}>Teach him a move of his own</div>
+                    <div className="dim" style={{fontSize:13.5,marginBottom:6}}>The doctore can drill one technique into a proven man until Capua knows it by his name. {SIG_WEEKS} weeks, {SIG_FEE}d, and he still takes the card while he learns.</div>
+                    <div className="grid grid-cols-2 gap-2">
+                      {techsFor(selG.cls).map(k=>{ const T = TECHNIQUES[k];
+                        return (
+                          <button key={k} className="focusbtn" disabled={S.gold<SIG_FEE} onClick={()=>teachSig(selG.id,k)}>
+                            {T.name}
+                            <span className="sub">{T.kind==="show"?"for the crowd":"to end men"}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </>)}
+                </div>
+              );
+            })()}
             {gView==="train" && (canMaster(S,selG) || masterOf(selG) || selG.learning || selG.second) && (
               <div className="panel" style={{padding:11,marginBottom:9,background:"#1c1610",
                 borderColor: selG.learning ? "#6d5426" : masterOf(selG) ? "#c99a4b" : "#4e3c26"}}>
