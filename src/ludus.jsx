@@ -88,6 +88,9 @@ const CSS = `
 .optrow.on{border-color:#c99a4b;background:linear-gradient(165deg,#332816,#241b11)}
 .reduce-motion *,.reduce-motion *::before,.reduce-motion *::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
 .lr.large-text{font-size:19.5px}
+/* colourblind-friendly: the confusable pair here is "good" green vs "bad" red — remap green to a blue that reads clear against the red for red-green colour vision */
+.lr.cb .laurel{color:#5aa9e6}
+.lr.cb .dot-good{background:#5aa9e6}
 .sect{border:1px solid #3e2f1f;border-radius:10px;background:linear-gradient(165deg,#241b11,#1d1610);overflow:hidden}
 .sect>summary{list-style:none;cursor:pointer;padding:12px 13px;display:flex;align-items:center;justify-content:space-between;gap:8px;
   font-family:'Cinzel',serif;font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:#d8ac5f}
@@ -97,6 +100,14 @@ const CSS = `
 .sect>.sectbody{padding:0 13px 13px}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}.spurt{display:none}.hitflash{display:none}}
 `;
+
+/* Colourblind remap. Status colour across the game is green = good, red = bad, with
+   amber/tan in between — and green vs red is exactly the pair red-green colour vision
+   cannot separate. When the pref is on, cbc() turns the greens blue at the few colour
+   helpers and the Bar fill they all pass through; reds and ambers stay as they are. */
+let CB_ON = false;
+const CB_GREEN = { "#9aa86a":"#5aa9e6", "#8a9a5b":"#4e9fd8", "#b9c58a":"#8fc3ea" };
+const cbc = c => (CB_ON && typeof c==="string" && CB_GREEN[c.toLowerCase()]) || c;
 
 const STATS = ["str","agi","end","tec","sho","dis"];
 const STAT_NAMES = { str:"Strength", agi:"Agility", end:"Endurance", tec:"Technique", sho:"Showmanship", dis:"Discipline" };
@@ -249,7 +260,7 @@ const wears = it => !!it && !it.stock && it.price > 0;
 const wearOf = (g, s) => (g && g.wear && g.wear[s]!=null) ? clamp(g.wear[s], 0, 100) : 100;
 const wearEff = c => 0.5 + c/200;
 const wearWord = c => c>=85 ? "keen" : c>=60 ? "serviceable" : c>=35 ? "worn" : c>=15 ? "failing" : "all but gone";
-const wearColour = c => c>=60 ? "#9aa86a" : c>=35 ? "#d8ac5f" : "#d96f5d";
+const wearColour = c => cbc(c>=60 ? "#9aa86a" : c>=35 ? "#d8ac5f" : "#d96f5d");
 const isNamed = (g, s) => !!(g && g.named && g.named.slot===s);
 
 function kitMods(kit, cls, g){
@@ -2503,7 +2514,7 @@ function makeDoctore(d, quality){
    Deliberately small — it is felt at the edges, not in the middle. */
 const formOf = g => clamp(g.form || 0, -100, 100);
 const formWord = v => v>=58?"in form" : v>=24?"sharp" : v>-24?"level" : v>-58?"off his stride" : "shaken";
-const formColour = v => v>=24?"#9aa86a" : v>-24?"#b09b7d" : "#d96f5d";
+const formColour = v => cbc(v>=24?"#9aa86a" : v>-24?"#b09b7d" : "#d96f5d");
 const formPower = g => 1 + formOf(g)/100 * 0.036;      // ±3.6% at the extremes
 const formStam  = g => 1 - formOf(g)/100 * 0.04;       // and he tires a shade slower on a run
 function formShift(d, g, n, note){
@@ -3423,7 +3434,7 @@ const REGARD_KEYS = Object.keys(REGARD);
 const regardOf = g => clamp(g.regard==null ? 50 : g.regard, 0, 100);
 const regardWord = v => v>=82?"would follow you anywhere" : v>=64?"trusts you" : v>=46?"takes you as he finds you"
   : v>=28?"has his doubts" : v>=12?"does not trust you" : "hates you";
-const regardColour = v => v>=64?"#9aa86a" : v>=46?"#b09b7d" : v>=28?"#d8ac5f" : "#d96f5d";
+const regardColour = v => cbc(v>=64?"#9aa86a" : v>=46?"#b09b7d" : v>=28?"#d8ac5f" : "#d96f5d");
 function remember(d, g, kind, mult){
   if(!g || !REGARD[kind]) return;
   const R2 = REGARD[kind];
@@ -3844,7 +3855,7 @@ const FACTIONS = {
 const FAC_KEYS = Object.keys(FACTIONS);
 const facOf = (d,k) => (d.factions && d.factions[k]!=null) ? d.factions[k] : 40;
 const facWord = v => v>=78?"partisan" : v>=60?"warm" : v>=40?"indifferent" : v>=22?"cold" : "hostile";
-const facColour = v => v>=60?"#9aa86a" : v>=40?"#b09b7d" : v>=22?"#d8ac5f" : "#d96f5d";
+const facColour = v => cbc(v>=60?"#9aa86a" : v>=40?"#b09b7d" : v>=22?"#d8ac5f" : "#d96f5d");
 const isHeavy = cls => HEAVY.includes(cls);
 function facMove(d, k, n){
   if(!d.factions) d.factions = { parm:40, scut:40, mob:40, front:40 };
@@ -4731,7 +4742,7 @@ const LAN_TRAITS = {
 const LAN_KEYS = Object.keys(LAN_TRAITS);
 const hasLT = (d,k) => !!(d.lanista && d.lanista.traits && d.lanista.traits.includes(k));
 const healthWord = h => h>=80?"hale" : h>=60?"well enough" : h>=40?"tired" : h>=22?"failing" : "not long";
-const healthColour = h => h>=60?"#9aa86a" : h>=35?"#d8ac5f" : "#d96f5d";
+const healthColour = h => cbc(h>=60?"#9aa86a" : h>=35?"#d8ac5f" : "#d96f5d");
 
 function makeLanista(d){
   return { name:`${pick(PRAENOMINA)} ${pick(NOMINA)} ${pick(COGNOMINA)}`, age: ri(34,46), health: ri(78,92),
@@ -6029,14 +6040,14 @@ function standing(kind, v, week){
   const n = normOf(kind, week); if(!n) return null;
   const band = v >= n.hi ? 3 : v >= n.mid ? 2 : v >= n.lo ? 1 : 0;
   const word = ["behind most houses","a little behind","about typical","ahead of most houses"][band];
-  return { band, word, n, colour:["#d96f5d","#d8ac5f","#b09b7d","#9aa86a"][band] };
+  return { band, word, n, colour:cbc(["#d96f5d","#d8ac5f","#b09b7d","#9aa86a"][band]) };
 }
 /* the two that are better low */
 function standingLow(kind, v, marks){
   const m = marks || [12, 30, 55];
   const band = v >= m[2] ? 0 : v >= m[1] ? 1 : v >= m[0] ? 2 : 3;
   const word = ["dangerously high","higher than most","about typical","quieter than most"][band];
-  return { band, word, colour:["#d96f5d","#d8ac5f","#b09b7d","#9aa86a"][band] };
+  return { band, word, colour:cbc(["#d96f5d","#d8ac5f","#b09b7d","#9aa86a"][band]) };
 }
 
 /* ---- WHY IT WENT THAT WAY ----
@@ -8919,7 +8930,7 @@ function GearStats({ it, cls }){
 function Bar({v, max=100, color, label}){
   return <div className="track" role="progressbar" aria-valuenow={Math.round(clamp(v,0,max))}
     aria-valuemin={0} aria-valuemax={max} aria-label={label||undefined}>
-    <div className="fill" style={{width:`${clamp(v/max*100,0,100)}%`, background:color}}/></div>;
+    <div className="fill" style={{width:`${clamp(v/max*100,0,100)}%`, background:cbc(color)}}/></div>;
 }
 
 const SKIN="#a8763e", SKIN_D="#7d5527", LEATHER="#4a3216", LEATHER_D="#33220f",
@@ -9845,7 +9856,7 @@ const slotKey = i => `ludus-slot-${i}`;
 
 /* Device-wide preferences, kept apart from the save slots. */
 const PREFS_KEY = "ludus-prefs-v1";
-const DEFAULT_PREFS = { sound: true, reduceMotion: false, largeText: false };
+const DEFAULT_PREFS = { sound: true, reduceMotion: false, largeText: false, colorblind: false, guideDone: false };
 
 /* A house at a glance, for the title screen. */
 function saveSummary(s){
@@ -9982,6 +9993,9 @@ export default function App(){
   // Device-wide preferences (sound, accessibility), loaded once and persisted
   // apart from the save slots so they survive switching or wiping houses.
   const [prefs,setPrefs] = useState(DEFAULT_PREFS);
+  CB_ON = !!prefs.colorblind;   /* keep the module remap in step with the pref, before any colour helper runs this render */
+  const [showGuide,setShowGuide] = useState(false);
+  const [guideStep,setGuideStep] = useState(0);
   const [showSettings,setShowSettings] = useState(false);
   const [allTodos,setAllTodos] = useState(false);
   const [showChron,setShowChron] = useState(false);
@@ -10069,7 +10083,8 @@ export default function App(){
     if(!slot){ let free=1; for(let i=1;i<=SLOTS_N;i++) if(!slots[i]){ free=i; break; } setSlot(free); }
     const d0 = newGameState(nameIn.trim()||"House of Aurelius", bonus, seedIn, pitchIn);
     applyLegacy(d0, legacy);
-    setS(d0); setSeedIn(""); setScreen("game"); setTab("ludus"); };
+    setS(d0); setSeedIn(""); setScreen("game"); setTab("ludus");
+    if(!prefs.guideDone){ setGuideStep(0); setShowGuide(true); } };
   const openSlot = i => { const d = slots[i]; if(!d) { setSlot(i); setScreen("intro"); return; }
     clearTransient(); setSlot(i); rngSet(d.rngState || seedToNum(d.seed)); setS(d); setScreen("game"); setTab("ludus"); };
   const toTitle = ()=>{ clearTransient(); setS(null); setSlot(null); setScreen("title"); };
@@ -10986,7 +11001,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
   };
 
   return (
-    <div className={`lr shell${prefs.reduceMotion?" reduce-motion":""}${prefs.largeText?" large-text":""}`}>
+    <div className={`lr shell${prefs.reduceMotion?" reduce-motion":""}${prefs.largeText?" large-text":""}${prefs.colorblind?" cb":""}`}>
       <style>{CSS}</style>
 
       <div className="bar" style={{position:"fixed",top:0,left:0,right:0,zIndex:20,background:"linear-gradient(180deg,#1d1610,rgba(23,18,16,.96))",borderBottom:"1px solid #3e2f1f",padding:"calc(10px + env(safe-area-inset-top)) 14px 10px"}}>
@@ -13190,8 +13205,12 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 on={prefs.reduceMotion} onToggle={()=>setPref("reduceMotion", !prefs.reduceMotion)}/>
               <Row label="Larger text" desc="Enlarges the body text throughout the house."
                 on={prefs.largeText} onToggle={()=>setPref("largeText", !prefs.largeText)}/>
+              <Row label="Colourblind-friendly" desc="Turns the 'good' greens on meters and status to a blue that reads clear against the reds."
+                on={prefs.colorblind} onToggle={()=>setPref("colorblind", !prefs.colorblind)}/>
               <Row label="Show tips" desc="The gatekeeper's notes on each part of the ludus."
                 on={!S.flags.noLessons} onToggle={()=>mut(d=>{ const off = !S.flags.noLessons; d.flags.noLessons = off?1:0; if(!off) d.flags.learned = {}; })}/>
+              <button className="btn btn-ghost" style={{width:"100%",marginTop:8}}
+                onClick={()=>{ setShowSettings(false); setGuideStep(0); setShowGuide(true); }}>Replay the opening guide</button>
 
               <div className="tag" style={{display:"block",marginTop:12,marginBottom:8}}>This house</div>
               <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:9,lineHeight:1.4}}>
@@ -13423,6 +13442,37 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
       )}
 
       <CarrySheet/>
+      {showGuide && (()=>{
+        const STEPS = [
+          { t:"The House is Yours", b:"You are the lanista now — you own the men, the debts, and every decision. The work is to build a house of gladiators famous enough to be remembered and rich enough to survive being famous. Here is where the week turns." },
+          { t:"The Familia", b:"Your men live under Familia. Each has a temper, a ceiling you cannot see, and a fire in him — the best fighters carry the most. Set what each one trains, and watch morale and the fire in the cells more closely than the gold." },
+          { t:"The Market", b:"Buy men and steel under Market. The seller's numbers are his opinion, not the truth — a cheap man is cheap for a reason. Bought kit arms one fighter; the racks arm everyone else for free." },
+          { t:"The Sand", b:"Fame is won in the Arena. Tap “Choose a bout” and it walks you through it — where he fights, who he faces, and how. First blood keeps men alive; anything bloodier is a gamble with a life. Reach 25 fame and the great games open to you." },
+          { t:"The Week Turns", b:"Nothing happens until you end the week — and then everything does at once: training, wounds mending, rivals moving, coin going out. End it when you have set what you dare. The gatekeeper leaves a note on each tab as you arrive; you can silence him in Settings." },
+        ];
+        const st = clamp(guideStep, 0, STEPS.length-1);
+        const S0 = STEPS[st], last = st===STEPS.length-1;
+        const done = ()=>{ setShowGuide(false); setPref("guideDone", true); };
+        return (
+          <div className="modalwrap" role="dialog" aria-modal="true" aria-label="Opening guide" style={{zIndex:66}}>
+            <div className="modal" tabIndex={-1} style={{maxWidth:440,borderColor:"#c99a4b"}}>
+              <div className="flex items-center justify-between" style={{marginBottom:8}}>
+                <div className="disp" style={{fontSize:12,letterSpacing:".12em",color:"#b09b7d"}}>A FEW WORDS BEFORE YOU START · {st+1}/{STEPS.length}</div>
+                <button className="btn btn-ghost" style={{padding:"6px 10px",fontSize:11}} onClick={done}>Skip</button>
+              </div>
+              <div className="disp" style={{fontSize:19,color:"#e8d092",letterSpacing:".08em",marginBottom:8}}>{S0.t}</div>
+              <div style={{fontSize:16,lineHeight:1.5,marginBottom:14}}>{S0.b}</div>
+              <div className="flex items-center gap-1" style={{marginBottom:12,justifyContent:"center"}}>
+                {STEPS.map((_,i)=>(<span key={i} style={{width:7,height:7,borderRadius:99,background:i===st?"#c99a4b":"#4a3a26"}}/>))}
+              </div>
+              <div className="flex gap-2">
+                {st>0 && <button className="btn btn-ghost" style={{flex:1}} onClick={()=>setGuideStep(st-1)}>‹ Back</button>}
+                <button className="btn" style={{flex:2}} onClick={()=> last ? done() : setGuideStep(st+1)}>{last ? "To the ludus" : "Next ›"}</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
       {S && S.pendingLesson && (
         <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:65}}>
           <div className="modal" tabIndex={-1} style={{maxWidth:430,borderColor:"#c99a4b"}}>
