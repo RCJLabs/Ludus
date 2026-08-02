@@ -3055,7 +3055,7 @@ function makeGames(d){
     const h = (d.rivals||[]).find(y=>y.name===ch.house);
     const f = h && h.fighters.find(y=>y.id===ch.fid);
     if(f){ const oc = clone(f); oc.house = h.name;
-      offers.push({ id:d.nextId++, tier:2, festival, challenge:ch.id, bookedGid:ch.gid,
+      offers.push({ id:d.nextId++, tier:2, festival, challenge:ch.id, nemGrudge:!!ch.nem, bookedGid:ch.gid,
         opp:oc, oppRef:{house:h.name,fid:f.id}, rematch:true, grudgeM:true, stakes:"standard", purse:ch.purse }); }
   }
   const slots = (F.offers==null ? 2 : F.offers) + (st==="show" ? 1 : 0) + aedileOffers(d);
@@ -3635,7 +3635,10 @@ function deadlineWeek(d){
         const h = (d.rivals||[]).find(y=>y.name===x.house);
         if(h) h.grudge = clamp(h.grudge-12, 0, 100);
         d.gladiators.forEach(o=>{ if(o.status==="active") o.morale = clamp(o.morale-6,0,100); });
-        chron(d, `${x.name} did not answer ${x.lan}'s challenge. House ${x.house} says nothing about it publicly, which is how they say the most.`, "bad");
+        chron(d, x.nem
+          ? `The day came and went and ${x.name} did not stand. ${x.lan} does not have to say a word — House ${x.house} spent the season demanding the grudge match, and your house did not make it.`
+          : `${x.name} did not answer ${x.lan}'s challenge. House ${x.house} says nothing about it publicly, which is how they say the most.`, "bad");
+        if(x.nem && d.nemHouse){ d.nemHouse.stage = 2; d.nemHouse.heat = clamp(d.nemHouse.heat-20, 25, 100); d.flags.nemCool = d.week; }
       }
       dropDeadline(d, x.id);
     } else if(x.kind==="levy"){
@@ -3977,6 +3980,7 @@ function migrate(S){
   if(S.doctoreOffer===undefined) S.doctoreOffer = null;
   if(!S.ties) S.ties = [];
   if(!S.arcs) S.arcs = [];
+  if(S.nemHouse===undefined) S.nemHouse = null;
   if(S.rome===undefined) S.rome = null;
   if(S.poach===undefined) S.poach = null;
   if(!S.defected) S.defected = [];
@@ -5131,6 +5135,109 @@ function nemesisSettled(d, killed){
   chron(d, out[0], "good");
   d.nemesis = null;
   return out;
+}
+
+/* ---- THE NEMESIS HOUSE ----
+   One rival stops being a fighter and becomes a whole house you feud with for a
+   season: it declares itself when the bad blood runs deep, escalates in the
+   chronicle, drags a shared prospect between you, and comes to a head in a named
+   grudge match you build toward. Its own state (d.nemHouse), separate from the
+   single fighter-nemesis (d.nemesis). */
+const NEM_BEATS = {
+  low: [
+    (L,h)=>`${L} let it be known at the baths that your house fights above its station and below its weight.`,
+    (L,h)=>`A man of House ${h} spat at the gate of yours on his way past. Nobody saw who, which is the point.`,
+    (L,h)=>`${L} has been buying the crowd cheap by naming your house the one worth beating.`,
+  ],
+  mid: [
+    (L,h)=>`${L} offered the editors coin to put your men on harder cards. The editors, being editors, mentioned it to you.`,
+    (L,h)=>`House ${h} paraded past your yard in full colours on the way to the games. Slowly.`,
+    (L,h)=>`Word from the market: ${L} has a wager standing that none of your men lasts the season against his.`,
+  ],
+  high: [
+    (L,h)=>`${L} said your name in the forum, and the men who carried it back to you did not soften it.`,
+    (L,h)=>`House ${h} has stopped pretending it is about the sand. It is about you now, and Capua knows it.`,
+    (L,h)=>`${L} will not take a cup from your hand or a bout on even terms. There is one way this ends and both houses have started saying so.`,
+  ],
+};
+function nemLog(d, text){ (d.rivalLog = d.rivalLog || []).unshift({ text, week:d.week, house:(d.nemHouse&&d.nemHouse.house)||"" }); d.rivalLog = d.rivalLog.slice(0,8); }
+function nemBeat(d){
+  const n = d.nemHouse; if(!n) return;
+  const L = lanistaOf(n.house).name;
+  const tier = n.heat>=60 ? "high" : n.heat>=30 ? "mid" : "low";
+  const line = pick(NEM_BEATS[tier])(L, n.house);
+  chron(d, line, "bad"); nemLog(d, line);
+  n.heat = clamp(n.heat + 3, 0, 100);
+}
+function nemClash(d, houseName, delta){
+  const n = d.nemHouse;
+  if(n && houseName && houseName===n.house) n.heat = clamp(n.heat + delta, 0, 100);
+}
+function declareNemHouse(d){
+  if(d.nemHouse || !d.rivals) return;
+  if(d.week < 14 || d.fame < 40) return;
+  if(d.flags.nemCool && d.week - d.flags.nemCool < 20) return;
+  const cand = d.rivals.filter(h=>!h.retired && (h.grudge>=45 || h.fighters.some(f=>(f.killedYours||0)>0 || (f.beatYou||0)>=2)));
+  if(!cand.length) return;
+  const h = cand.sort((a,b)=>b.grudge-a.grudge)[0];
+  const L = lanistaOf(h.name).name;
+  d.nemHouse = { house:h.name, heat: clamp(h.grudge*0.5+22, 20, 55), stage:1, since:d.week };
+  chron(d, `It has a name now. Whatever it was between your house and House ${h.name}, ${L} said the thing in public this week that cannot be taken back — and Capua has settled in to watch which of you is standing at the end of the season.`, "bad");
+  nemLog(d, `House ${h.name} is your house's declared rival. ${L} means to end you.`);
+}
+function issueGrudgeMatch(d){
+  const n = d.nemHouse; if(!n) return false;
+  if((d.deadlines||[]).some(x=>x.kind==="challenge")) return false;
+  const h = houseOf(d, n.house); if(!h) return false;
+  const men = activeG(d).filter(g=>g.pfame>=18);
+  if(!men.length) return false;
+  const g = men.reduce((m,x)=>x.pfame>m.pfame?x:m, men[0]);
+  const f = h.fighters.filter(x=>!x.injury && x.name!==g.name).sort((a,b)=>b.pfame-a.pfame)[0];
+  if(!f) return false;
+  const L = lanistaOf(h.name).name;
+  addDeadline(d, { kind:"challenge", nem:true, gid:g.id, name:g.name, house:h.name, lan:L,
+    fid:f.id, foe:f.name, due:d.week+ri(4,7), purse: rnd(700 + R()*600), met:false });
+  n.stage = 3;
+  chron(d, `${L} has named the day and the men: ${f.name} of his house against ${g.name} of yours, and made it a thing the whole of Capua will attend. This is the one the season has been walking toward.`, "bad");
+  nemLog(d, `The grudge match is set — ${g.name} against ${f.name}.`);
+  return true;
+}
+function settleNemHouse(d, won){
+  const n = d.nemHouse; if(!n) return;
+  const h = houseOf(d, n.house);
+  if(won){
+    d.fame += 40;
+    d.gladiators.forEach(g=>{ if(g.status==="active"){ g.morale=clamp(g.morale+16,0,100); g.defiance=clamp(g.defiance-8,0,100); } });
+    d.unrest = clamp(d.unrest-8,0,100);
+    if(h){ h.grudge = clamp(h.grudge-40,0,100); h.fame = Math.max(0, h.fame-20); }
+    addRep(d, "craft", 10);
+    chron(d, `It is finished. House ${n.house} was beaten where it chose to fight, before the crowd it chose to fight before, and ${lanistaOf(n.house).name} has nothing left to say. Your house is the one still standing at the end of the season.`, "good");
+    nemLog(d, `The grudge with House ${n.house} is settled — your way.`);
+    d.flags.nemWon = (d.flags.nemWon||0)+1;
+    d.flags.nemCool = d.week; d.nemHouse = null;
+  } else {
+    if(h) h.grudge = clamp(h.grudge+10,0,100);
+    d.gladiators.forEach(g=>{ if(g.status==="active") g.morale=clamp(g.morale-8,0,100); });
+    d.unrest = clamp(d.unrest+5,0,100);
+    n.heat = clamp(n.heat-30, 25, 100); n.stage = 2;   // not over; they will come again
+    chron(d, `${lanistaOf(n.house).name} got what he named the day for. House ${n.house} took the grudge match, and there is no pretending otherwise. It is not finished — but tonight it is theirs.`, "bad");
+    d.flags.nemCool = d.week;
+  }
+}
+function nemHouseWeek(d){
+  const n = d.nemHouse;
+  if(!n){ if(R()<0.4) declareNemHouse(d); return; }
+  const h = houseOf(d, n.house);
+  if(!h || h.retired){
+    chron(d, `Whatever it was going to be between you and House ${n.house}, it will not be. ${!h?"They folded and sold up before it came to blood.":`${lanistaOf(n.house).name} has gone to a farm near Nola, and the grudge with him.`} The cells are almost disappointed.`, "info");
+    d.nemHouse = null; d.flags.nemCool = d.week; return;
+  }
+  if(R()<0.20) nemBeat(d);
+  if(n.stage<2 && n.heat>=38 && !n.prospect){ n.prospect = 1; n.stage = 2; scheduleArc(d, "nemProspect", ri(1,3), { house:n.house }); }
+  if(n.stage>=2 && n.heat>=72 && !(d.deadlines||[]).some(x=>x.kind==="challenge" && x.nem)){
+    if(!(d.flags.nemCool && d.week - d.flags.nemCool < 6)) issueGrudgeMatch(d);
+  }
+  if(n.stage<3) n.heat = clamp(n.heat + 1.4, 0, 100);
 }
 
 /* ---- POACHING ----
@@ -7439,6 +7546,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
           sum.push(`He has taken one of yours now. The cells will hear the name before you get home.`); }
         nemesisCheck(d, h, f);
       }
+      nemClash(d, h.name, win ? (res.bDies?16:8) : (res.aDies?22:12));
     }
   }
 
@@ -7481,7 +7589,8 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
     if(x){ x.met = true;
       d.fame += win ? 26 : 8;
       facMove(d, "mob", win?7:3);
-      sum.push(win ? `You answered ${x.lan} in public and your man won it.` : `The challenge was answered. That is most of what it was for.`); } }
+      sum.push(win ? `You answered ${x.lan} in public and your man won it.` : `The challenge was answered. That is most of what it was for.`);
+      if(x.nem) settleNemHouse(d, win); } }
   if(win) formShift(d, g, offer.tier>=2 ? 24 : 18, `beat ${offer.opp.name}`);
   else formShift(d, g, res.aDies ? 0 : -22, `lost to ${offer.opp.name}`);
   if(res.bDies) formShift(d, g, 7, `killed ${offer.opp.name}`);
@@ -7791,6 +7900,39 @@ const EVENTS = {
         return `He gives you the name. You have a quiet word with ${target.name}, who did not know he had been for sale — and now cannot be, not to them.`; }
       d.gold += 180;
       return `You take the purse. Whatever the name was, it goes back down the coast with him, and the house is 180 denarii the richer for a kindness you had half forgotten.`; } },
+  /* ===== ARC: the shared prospect (the poaching war of a nemesis-house feud) ===== */
+  nemProspect: {
+    make(){ return null; },
+    build(d, data){
+      const houseName = (d.nemHouse && d.nemHouse.house) || data.house;
+      if(!houseName || !houseOf(d, houseName)) return null;
+      const L = lanistaOf(houseName).name;
+      const cost = rnd(220 + d.fame*0.6);
+      const origin = pick(Object.keys(ORIGINS));
+      const nm = freshName(d, ORIGINS[origin].names, false);
+      return { id:"nemProspect", title:"The Prospect", data:{ house:houseName, name:nm, cost },
+        text:`A free swordsman has come up from the south with his name ahead of him — ${nm}: young, quick, expensive, and not yet anyone's. ${L} of House ${houseName} wants him as badly as you do, and has said so where you would hear it. Whoever takes ${nm} takes something off the other, and both of you know it.`,
+        choices:[`Outbid ${L} — take ${nm} · ${cost}d`, "Let them have him — he is not worth a war"] }; },
+    run(d,ev,i){
+      const data = ev.data, nm = data.name || "the prospect", houseName = data.house;
+      const n = d.nemHouse, L = lanistaOf(houseName).name;
+      if(i===0){
+        if(d.gold < data.cost) return `You reach to outbid ${L} and find the coin is not there. ${nm} watches two lanistae discover which of them is the poorer, and signs with the other.`;
+        d.gold -= data.cost;
+        const g = genGladiator(d, ri(58,74));
+        g.name = nm; g.age = ri(19,23); g.wins=0; g.losses=0; g.kills=0; g.nick=null; g.pfame=ri(6,14);
+        g.price=0; g.morale=70; g.regard=58; g.defiance=ri(8,22);
+        g.sworn={how:"proper",week:d.week,free:false}; g.status="active"; g.lastFought=-9;
+        d.gladiators.push(g);
+        if(n) n.heat = clamp(n.heat+12,0,100);
+        const hh = houseOf(d, houseName); if(hh) hh.grudge = clamp(hh.grudge+10,0,100);
+        chron(d, `${nm} signs with your house over House ${houseName}'s open hand. ${L} will remember being outbid in public.`, "good");
+        return `${nm} is yours — young and good and dear, and ${L} watched you take him, which was most of why you did.`; }
+      const hh = houseOf(d, houseName);
+      if(hh){ const f = makeRivalFighter(d, houseName, 68); f.name = nm; f.pfame = ri(6,14); hh.fighters.push(f); hh.fame += 6; }
+      if(n) n.heat = clamp(n.heat+16,0,100);
+      d.gladiators.forEach(o=>{ if(o.status==="active") o.morale=clamp(o.morale-3,0,100); });
+      return `You let ${nm} go south to House ${houseName}. He is good, and now he is theirs — and your men noted that you decided he was not worth the fight. It will be answered on the sand.`; } },
   poached: {
     make(d){ if(!d.poach) return null;
       const g = d.gladiators.find(x=>x.id===d.poach.gid);
@@ -8581,6 +8723,7 @@ function endWeek(d){
   ambWeek(d);
   repairWeek(d);
   nemesisWeek(d);
+  if(!d.city && !d.travel) nemHouseWeek(d);
   doctoreWeek(d);
   annalsSync(d);
   repWeek(d);
@@ -11403,6 +11546,26 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         </div>)}
 
         {tab==="arena" && (<div className="flex flex-col gap-3">
+          {S.nemHouse && (()=>{ const n = S.nemHouse; const L = lanistaOf(n.house).name;
+            const grudgeLive = (S.deadlines||[]).some(x=>x.kind==="challenge" && x.nem && !x.met);
+            const stageWord = grudgeLive ? "The grudge match is set — answer it on the sand"
+              : n.stage>=2 ? "A season-long feud, building toward a reckoning"
+              : "A house that means to end yours";
+            const beat = (S.rivalLog||[]).find(r=>r.house===n.house);
+            return (
+              <div className="panel" style={{padding:13, borderColor:"#7c2a22", background:"#2a1512"}}>
+                <div className="flex items-center justify-between" style={{marginBottom:4}}>
+                  <span className="tag tag-blood">The Feud · House {n.house}</span>
+                  <span className="rowval" style={{fontSize:12.5, color:"#d98476"}}>{L}</span>
+                </div>
+                <div className="dim" style={{fontSize:14, fontStyle:"italic", marginBottom:6}}>{stageWord}.</div>
+                <Bar v={n.heat} label="bad blood" color="linear-gradient(90deg,#5a1a14,#d96f5d)"/>
+                {beat && <div style={{fontSize:13.5, marginTop:6, color:"#cdb89a"}}>{beat.text}</div>}
+                {grudgeLive && <div className="blood" style={{fontSize:13.5, marginTop:5, fontWeight:600}}>
+                  The grudge match is on the card below — it will not wait past its day.
+                </div>}
+              </div>
+            ); })()}
           {(()=>{ const rivals = (S.rivals||[]).filter(h=>!h.retired);
             if(!rivals.length || S.week < 16) return null;
             const ready = gambitReady(S);
@@ -13361,7 +13524,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 {o.imperial && <span className="tag tag-gold">✦ Rome</span>}
                 {o.primus && <span className="tag tag-gold">✦ {o.defence?"Defend primacy":"For the primacy"}</span>}
                 {o.booking && <span className="tag tag-gold">✦ Contracted</span>}
-                {o.challenge && <span className="tag tag-blood">✦ Challenge</span>}
+                {o.nemGrudge && <span className="tag tag-blood">✦ The Grudge</span>}
+                {o.challenge && !o.nemGrudge && <span className="tag tag-blood">✦ Challenge</span>}
                 {o.stakes==="sine" && <span className="tag tag-blood">Sine missione</span>}
                 {o.rematch && <span className="tag tag-blood">Rematch</span>}
                 {nemesisIn(S,o.opp) && <span className="tag tag-blood">✦ {nemesisIn(S,o.opp).title}</span>}
@@ -13492,7 +13656,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 {o.imperial && <span className="tag tag-gold">✦ Rome</span>}
                 {o.primus && <span className="tag tag-gold">✦ {o.defence?"Defend the primacy":"For the primacy"}</span>}
                 {o.booking && <span className="tag tag-gold">✦ Contracted</span>}
-                {o.challenge && <span className="tag tag-blood">✦ The challenge</span>}
+                {o.nemGrudge && <span className="tag tag-blood">✦ The Grudge</span>}
+                {o.challenge && !o.nemGrudge && <span className="tag tag-blood">✦ The challenge</span>}
                 {o.stakes==="sine" && <span className="tag tag-blood">Sine missione</span>}
                 {o.rematch && <span className="tag tag-blood">Rematch</span>}
                 {nemesisIn(S,o.opp) && <span className="tag tag-blood">✦ {nemesisIn(S,o.opp).title}</span>}
