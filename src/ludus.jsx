@@ -143,6 +143,24 @@ const PR = g => (g && g.sex==="f")
   ? { he:"she", him:"her", his:"her", He:"She", Him:"Her", His:"Her", man:"woman", Man:"Woman" }
   : { he:"he", him:"him", his:"his", He:"He", Him:"Him", His:"His", man:"man", Man:"Man" };
 const isF = g => !!g && g.sex==="f";
+/* Most of the house's prose was written for a man, because most of the sand is men.
+   A gladiatrix is not a special case in the rules and should not be one in the telling:
+   where a line is about one fighter and nobody else, this turns it over to her.
+   Only the pronouns turn — "a man" in these lines is as often the opponent, the block
+   or the slaver as it is the fighter, and those are all still men. */
+const her = (t, g) => (!isF(g) || !t) ? t : String(t)
+  .replace(/\bhimself\b/g, "herself").replace(/\bHimself\b/g, "Herself")
+  .replace(/\bhim\b/g, "her").replace(/\bHim\b/g, "Her")
+  .replace(/\bhis\b/g, "her").replace(/\bHis\b/g, "Her")
+  .replace(/\bhe\b/g, "she").replace(/\bHe\b/g, "She");
+/* For lines that choose their own subject: if exactly one fighter of the house is
+   named in it and she is a woman, the line is hers. Two names and we leave it alone —
+   there is no telling which "he" belongs to whom. */
+function herOwn(d, line){
+  if(!line || !d || !d.gladiators) return line;
+  const named = d.gladiators.filter(g => g && g.name && String(line).includes(g.name));
+  return named.length === 1 ? her(line, named[0]) : line;
+}
 
 const CLASSES = {
   Murmillo: { key:["str","end"], desc:"Heavy shield and gladius. The wall that advances." },
@@ -822,7 +840,7 @@ function makeMaster(d, g){
   remember(d, g, "mastered");
   d.fame += 12;
   addRep(d, "craft", 8);
-  chron(d, `${fullName(g)} is a master of his style now, and the doctore says so out loud, which he does not do. ${MASTERY[g.cls].say}`, "good");
+  chron(d, her(`${fullName(g)} is a master of his style now, and the doctore says so out loud, which he does not do. ${MASTERY[g.cls].say}`, g), "good");
   return true;
 }
 /* the second style: slow, expensive, and it costs him what he was */
@@ -1156,7 +1174,7 @@ function ambDespair(d, g){
   g.defiance = clamp(g.defiance+25, 0, 100);
   d.unrest = clamp(d.unrest + (a.promised?11:7), 0, 100);
   kinReact(d, g.id, "brother", -9, 6);
-  chron(d, AMBITIONS[a.kind].despair(g), "bad");
+  chron(d, her(AMBITIONS[a.kind].despair(g), g), "bad");
   if(a.promised) chron(d, `He had your word on it, which he mentioned to people.`, "bad");
 }
 function ambWeek(d){
@@ -1176,7 +1194,7 @@ function ambitionMet(d, g){
   g.defiance = clamp(g.defiance - (kept?26:18), 0, 100);
   d.unrest = clamp(d.unrest - (kept?7:4), 0, 100);
   if(a.despair){ a.despair = false; g.morale = clamp(g.morale+10,0,100); }
-  chron(d, `${fullName(g)}: ${AMBITIONS[a.kind].met.replace("${name}", g.name)}`, "good");
+  chron(d, her(`${fullName(g)}: ${AMBITIONS[a.kind].met.replace("${name}", g.name)}`, g), "good");
   if(kept){
     d.gladiators.forEach(o=>{ if(o.status==="active" && o.id!==g.id) o.morale = clamp(o.morale+4,0,100); });
     d.flags.keptWord = 1;
@@ -1203,7 +1221,7 @@ function ambitionBroken(d, g){
     chron(d, `The whole yard knows what you promised him. They have drawn the obvious conclusion about what yours is worth.`, "bad");
   }
 }
-const ambWord = g => g && g.ambition ? AMBITIONS[g.ambition.kind].line(g) : "";
+const ambWord = g => g && g.ambition ? her(AMBITIONS[g.ambition.kind].line(g), g) : "";
 
 /* ---- THE OTHER LANISTAE ----
    Three men, not three numbers. Each runs his house a particular way, and the
@@ -1845,7 +1863,7 @@ const charterSkip = d => { if(d.charter) d.charter.skipped = true; };
    what actually wants an answer this week, and where the answer is. */
 function agenda(d){
   const A = [];
-  const add = (urgency, tab, label, sub) => A.push({ urgency, tab, label, sub });
+  const add = (urgency, tab, label, sub) => A.push({ urgency, tab, label:herOwn(d,label), sub:herOwn(d,sub) });
   if(d.pendingEvent) add(3, "ludus", d.pendingEvent.title, "a decision is waiting");
   if(d.succession) add(3, "ludus", "The house has no head", "somebody must take it up");
   /* anything with a date on it */
@@ -2039,7 +2057,7 @@ function checkLasting(d, g, part){
   g.lasting = [...lastingOf(g), k];
   g.morale = clamp(g.morale-12, 0, 100);
   remember(d, g, "hurt");
-  chron(d, `${fullName(g)} has been opened up in the same place too many times. ${LASTING[k].say} He has ${LASTING[k].name} now and he will have it for the rest of it.`, "bad");
+  chron(d, her(`${fullName(g)} has been opened up in the same place too many times. ${LASTING[k].say} He has ${LASTING[k].name} now and he will have it for the rest of it.`, g), "bad");
   return k;
 }
 
@@ -2086,7 +2104,7 @@ function graveLasting(d, g, part, care){
   g.lasting = [...lastingOf(g), k];
   g.morale = clamp(g.morale-10, 0, 100);
   remember(d, g, "hurt");
-  chron(d, `${fullName(g)} rises from the table, but not whole. ${LASTING[k].say} He has ${LASTING[k].name} now, and it does not go away.`, "bad");
+  chron(d, her(`${fullName(g)} rises from the table, but not whole. ${LASTING[k].say} He has ${LASTING[k].name} now, and it does not go away.`, g), "bad");
   return k;
 }
 /* a worn body takes a felling harder than a young one — longer to mend, and it hurts more */
@@ -2101,8 +2119,8 @@ function ageManOneYear(d, g){
   const before = g.age;
   g.age = (g.age||24) + 1;
   const cross = (lo) => before <= lo && g.age > lo;
-  if(cross(PRIME[1]))      chron(d, `${g.name} is ${g.age} now. The doctore has started resting him a day the younger men do not get.`);
-  else if(cross(31))       chron(d, `${g.name} turns ${g.age}. He is a veteran of the sand, and the sand is beginning to ask for it back.`, "bad");
+  if(cross(PRIME[1]))      chron(d, her(`${g.name} is ${g.age} now. The doctore has started resting him a day the younger men do not get.`, g));
+  else if(cross(31))       chron(d, her(`${g.name} turns ${g.age}. He is a veteran of the sand, and the sand is beginning to ask for it back.`, g), "bad");
   else if(cross(34))       chron(d, `${g.name} is ${g.age}. Old for this. Every card now, someone in the crowd wonders aloud if it is his last.`, "bad");
 }
 
@@ -3094,7 +3112,7 @@ const unrestWord = u=> u<25?"Docile": u<45?"Restless": u<65?"Simmering": u<80?"M
 const rudisEligible = g=> !isAuctor(g) && g.wins>=10 && g.pfame>=180;
 const fullName = g=> g.nick? `${g.name}, ${g.nick}` : g.name;
 
-function chron(d, text, kind){ d.log.unshift({ week:d.week, text, kind:kind||"info" }); d.log = d.log.slice(0,40); }
+function chron(d, text, kind){ d.log.unshift({ week:d.week, text:herOwn(d, text), kind:kind||"info" }); d.log = d.log.slice(0,40); }
 
 /* two men in one house answering to the same name is nobody's idea of a roster */
 function freshName(d, pool, fem){
@@ -3936,7 +3954,7 @@ function refuseWeek(d){
     try { return REFUSE_REASONS[k].when(d,g); } catch(e){ return false; } }) || "plain";
   g.refusing = { since:d.week, weeks:0, reason:key };
   d.pendingEvent = { id:"refusal", title:"He Will Not Go Out",
-    text:`${fullName(g)} is sitting on the boards with his back to the wall and will not put his hands up. ${REFUSE_REASONS[key].say(g)} The doctore has asked him twice. The other men are not looking at him and are not looking away either.`,
+    text:her(`${fullName(g)} is sitting on the boards with his back to the wall and will not put his hands up. ${REFUSE_REASONS[key].say(g)} The doctore has asked him twice.`, g) + ` The other men are not looking at ${PR(g).him} and are not looking away either.`,
     choices:["The whip", "Talk to him", (g.ambition && !g.ambition.met && !g.ambition.broken) ? "Give him the thing he wants" : "Let him sit", "Take him off the card"],
     data:{ gid:g.id, key } };
 }
@@ -4750,7 +4768,7 @@ function listenWeek(d){
   const bag = shuffled(pool).slice(0, want);
   for(const w of bag){ let line = null;
     try { line = w.say(d); } catch(e){ line = null; }
-    if(line) d.heard.push(line);
+    if(line) d.heard.push(herOwn(d, line));
   }
   if(inside){
     const ear = d.gladiators.find(g=>g.id===d.ear.gid);
@@ -5340,8 +5358,12 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
   const spareRead = () => { if(stakes==="sine") return null;
     const sc = spareFixed + clamp(crowd,0,100)*0.33 + (100-clamp(vB,0,100))*0.15 + 11;   // +11 = the average of R()*22
     return sc>=46 ? 2 : sc>=36 ? 1 : 0; };
+  /* a beat that names only one of them belongs to that one, and turns for her */
+  const oneOf = t => { if(!t) return t;
+    const inA = t.includes(A.name), inB = t.includes(B.name);
+    return inA && !inB ? her(t, A) : inB && !inA ? her(t, B) : t; };
   const push = (kind, text, extra) => beats.push(Object.assign({
-    kind, text, actor:null, round,
+    kind, text:oneOf(text), actor:null, round,
     vA:clamp(vA,0,100), vB:clamp(vB,0,100),
     sA:clamp(sA/smA*100,0,100), sB:clamp(sB/smB*100,0,100),
     crowd:clamp(crowd,0,100), mom:clamp(mom,-3,3), sp:spareRead()
@@ -6937,7 +6959,7 @@ function askWeek(d){
   try { ex = ASKS[k].say(d, g); } catch(e){ return; }
   if(!ex) return;
   d.flags.asked = [...(d.flags.asked||[]), g.id];
-  d.pendingEvent = { id:"ask", title:"He Wants A Word", text:ex.text,
+  d.pendingEvent = { id:"ask", title: isF(g) ? "She Wants A Word" : "He Wants A Word", text:her(ex.text, g),
     choices:ex.choices, data:{ k, gid:g.id, ex } };
 }
 
@@ -8675,7 +8697,7 @@ function doMelee(d, ids, offer, pending, choice, tactic){
   serveWants(d, { type:"fight", gid:ids[0], win:won, oppDied:res.ents.some(e=>!e.mine&&e.dead),
     spared:false, crowd:rnd(res.crowd), tier:offer.tier, stakes:"melee" });
   if(d.games) d.games.offers = d.games.offers.filter(o=>o.id!==offer.id);
-  return { beats:res.beats, sum, win:won, dead:res.ents.some(e=>e.mine&&e.dead), crowd:rnd(res.crowd), venue:offer.venue, factions:d.factions,
+  return { beats:res.beats, sum:sum.map(x=>herOwn(d,x)), win:won, dead:res.ents.some(e=>e.mine&&e.dead), crowd:rnd(res.crowd), venue:offer.venue, factions:d.factions,
     melee:true, tier:offer.tier, festival:offer.festival, stakes:"melee",
     ents: res.ents.map(e=>({ name:e.name, cls:e.cls, kit:e.kit, scars:e.scars||[], mine:!!e.mine, house:e.house,
       out:!!e.out, dead:!!e.dead, fem:isF(e) })) };
@@ -8785,7 +8807,7 @@ function doVenatio(d, gid, offer, tactic, pending, choice){
   serveWants(d, { type:"fight", gid, win:res.killed, oppDied:res.killed,
     spared:false, crowd:rnd(res.crowd), tier:offer.tier, stakes:"venatio" });
   if(d.games) d.games.offers = d.games.offers.filter(o=>o.id!==offer.id);
-  return { beats:res.beats, sum, win:res.killed, dead:res.aDies, crowd:rnd(res.crowd), venue:offer.venue, factions:d.factions,
+  return { beats:res.beats, sum:sum.map(x=>herOwn(d,x)), win:res.killed, dead:res.aDies, crowd:rnd(res.crowd), venue:offer.venue, factions:d.factions,
     venatio:true, beast:offer.beast, tier:offer.tier, stakes:"venatio", festival:offer.festival,
     A:{ name:g.name, nick:g.nick, cls:g.cls, origin:g.origin, sub:"your house", kit:gc.kit, scars:gc.scars||[], fem:isF(g) },
     B:{ name:B.name, cls:"beast", sub:"the hunt" } };
@@ -8893,7 +8915,7 @@ function doPairFight(d, ids, offer, tactic, pending, choice){
   serveWants(d, { type:"fight", gid:gs[0].id, win:res.win, oppDied:kills>0,
     spared:res.beats.some(b=>b.kind==="spared" && b.actor==="A"), crowd:rnd(res.crowd), tier:offer.tier, stakes:offer.stakes });
   if(d.games) d.games.offers = d.games.offers.filter(o=>o.id!==offer.id);
-  return { beats:res.beats, sum, win:res.win, dead:res.dead.A.some(Boolean), crowd:rnd(res.crowd), venue:offer.venue, factions:d.factions,
+  return { beats:res.beats, sum:sum.map(x=>herOwn(d,x)), win:res.win, dead:res.dead.A.some(Boolean), crowd:rnd(res.crowd), venue:offer.venue, factions:d.factions,
     pair:true, tier:offer.tier, stakes:offer.stakes, festival:offer.festival,
     A:clones.map((c,i)=>({ name:c.name, nick:c.nick, cls:c.cls, kit:c.kit, scars:c.scars||[], sub:"your house", fem:isF(c) })),
     B:opps.map(o=>({ name:o.name, nick:o.nick, cls:o.cls, kit:o.kit, scars:o.scars||[], sub:o.house?`House ${o.house}`:"the pits", fem:isF(o) })) };
@@ -9424,7 +9446,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
       if(v){ b.stands = v; last = i; }
     } }
   const reading = readBout(d, wasG, offer, { win, crowd:res.crowd }, { plan:{ right:PE.right, label: PLANS[planKey] && PLANS[planKey].name } });
-  return { beats:res.beats, sum, reading, win, dead:!!res.aDies, crowd:rnd(res.crowd), name:g.name, venue:offer.venue, factions:d.factions,
+  return { beats:res.beats, sum:sum.map(x=>herOwn(d,x)), reading, win, dead:!!res.aDies, crowd:rnd(res.crowd), name:g.name, venue:offer.venue, factions:d.factions,
     A:{ name:g.name, nick:g.nick, cls:g.cls, origin:g.origin, sub:"your house", kit:gc.kit, scars:gc.scars||[], fem:isF(g) },
     B:{ name:offer.opp.name, nick:offer.opp.nick, cls:offer.opp.cls, origin:offer.opp.origin, sub:offer.opp.house? `House ${offer.opp.house}`:"the pits", kit:oc.kit, scars:oc.scars||[], fem:isF(offer.opp) },
     tier:offer.tier, stakes:offer.stakes, festival:offer.festival };
@@ -10252,7 +10274,7 @@ const EVENTS = {
       const a = g.ambition;
       const second = a.voiced>=1;
       return { id:"ambition", title: second ? "He Asks Again" : "A Man Asks",
-        text: second ? AMBITIONS[a.kind].press(g) : AMBITIONS[a.kind].ask(g),
+        text: her(second ? AMBITIONS[a.kind].press(g) : AMBITIONS[a.kind].ask(g), g),
         choices: second
           ? ["Give him your word", "Tell him plainly it will not happen", "Give him nothing"]
           : ["Give him your word", "Tell him no, and tell him why", "Say nothing and walk on"],
@@ -10681,7 +10703,7 @@ function endWeek(d){
       g.weeksAged = 0; g.age = (g.age||24) + 1;
       if(g.age===PRIME[0]) chron(d, `${g.name} turns ${g.age}. The doctore says ${PR(g).he} has finally grown into ${PR(g).his} frame.`);
       else if(g.age===PRIME[1]+1) chron(d, `${g.name} turns ${g.age}. ${PR(g).He} is a step slower off the mark than ${PR(g).he} was, and ${PR(g).he} knows it.`);
-      else if(g.age===32) chron(d, `${g.name} turns ${g.age}. Old for the sand. The younger men have started calling him doctore, half in jest.`);
+      else if(g.age===32) chron(d, her(`${g.name} turns ${g.age}. Old for the sand. The younger men have started calling him doctore, half in jest.`, g));
       else if(g.age>=35) chron(d, `${g.name} turns ${g.age}. Every year past this one is borrowed.`, "bad");
     }
   });
@@ -15567,7 +15589,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                           const bad = isGrief ? !m.settled : REGARD[m.kind].bad;
                           const txt = isGrief
                             ? (m.settled ? `He carried ${m.forName} onto the sand, and left the grief there.` : `He is still carrying ${m.forName}, who died beside him.`)
-                            : REGARD[m.kind].say;
+                            : her(REGARD[m.kind].say, selG);
                           return (
                           <div key={i} style={{fontSize:14,padding:"2px 0",color:bad?"#d9a89e":"#cfc0a0"}}>
                             {txt}{!isGrief && m.again>1 && <span className="dim"> ({m.again} times)</span>}
@@ -16657,7 +16679,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 <div className="panel" style={{padding:9,marginTop:8,background:"#1c1610",borderColor:"#6d5426"}}>
                   <div className="tag tag-gold" style={{marginBottom:4}}>What they saw</div>
                   {o.watched[0]==="nothing" ? <div className="dim" style={{fontSize:14,fontStyle:"italic"}}>Nothing to report. He does everything correctly and nothing twice.</div>
-                    : o.watched.map((k,i)=><div key={i} style={{fontSize:14.5,padding:"3px 0"}}>{TELLS[k].say(o.opp)}</div>)}
+                    : o.watched.map((k,i)=><div key={i} style={{fontSize:14.5,padding:"3px 0"}}>{her(TELLS[k].say(o.opp), o.opp)}</div>)}
                   <div className="tag" style={{margin:"7px 0 4px"}}>The plan</div>
                   <div className="grid grid-cols-2 gap-2">
                     {PLAN_KEYS.map(k=>{ const hints=o.watched[0]!=="nothing"&&o.watched.some(t=>TELLS[t].plan===k);
