@@ -13209,15 +13209,17 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
       <style>{CSS}</style>
 
       <div className="bar" style={{position:"fixed",top:0,left:0,right:0,zIndex:20,background:"linear-gradient(180deg,#1d1610,rgba(23,18,16,.96))",borderBottom:"1px solid #3e2f1f",padding:"calc(10px + env(safe-area-inset-top)) 14px 10px"}}>
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2" style={{minWidth:0}}>
+        {/* the title must never be crushed by the buttons — it holds its ground and
+            they drop to a second row instead */}
+        <div className="flex items-center justify-between gap-2" style={{flexWrap:"wrap"}}>
+          <div className="flex items-center gap-2" style={{minWidth:150,flex:"1 1 auto"}}>
             {S.crest && <Crest crest={S.crest} size={26}/>}
-            <div style={{minWidth:0}}>
+            <div style={{minWidth:0,flex:"1 1 auto"}}>
               <div className="disp" style={{fontSize:15,fontWeight:900,color:"#e8d092",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{S.name.toUpperCase()}{(S.generation||1)>1 && <span style={{fontSize:12,color:"#b09b7d"}}> · {["","","II","III","IV","V","VI","VII"][S.generation]||S.generation}</span>}</div>
-              <div className="dim" style={{fontSize:12.5}}>{seasonOf(S).name} · year {yearOf(S)}, week {yearWeek(S)} · {S.travel? "on the road" : S.city? CITIES[S.city].name : fameTitle(S.fame)}</div>
+              <div className="dim" style={{fontSize:12.5,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{seasonOf(S).name} · year {yearOf(S)}, week {yearWeek(S)} · {S.travel? "on the road" : S.city? CITIES[S.city].name : fameTitle(S.fame)}</div>
             </div>
           </div>
-          <div className="flex items-center gap-2" style={{flexShrink:0}}>
+          <div className="flex items-center gap-2" style={{flexShrink:0,marginLeft:"auto"}}>
             <button className="btn btn-ghost" aria-label="Settings" style={{padding:"10px 10px"}} onClick={()=>setShowSettings(true)}><Settings size={16} aria-hidden="true"/></button>
             {(()=>{ const W = weekWeight(S);
               const blocked = !!S.pendingEvent || !!S.doctoreOffer || !!S.romeOffer || !!S.reSignOffer || !!S.over;
