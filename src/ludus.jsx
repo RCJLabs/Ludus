@@ -2839,8 +2839,18 @@ const SEASON_SKY = {
   Autumn: ["fair","fair","perfect","rain","rain","wind"],
   Winter: ["cold","cold","cold","rain","rain","fair"],
 };
-/* a wind that goes where it likes matters more to a net than to a shield */
-const windHurts = ["Retiarius"];
+/* the sky does not fall on every style the same way. mud drowns the quick and the
+   net-man while a shield-wall barely notices; the heat cooks a man in iron and armour
+   worse than one who fights half-naked; a hard wind takes anything thrown or cast.
+   footing < 1 or stam > 1 makes it worse for that class, dampened by any shelter. */
+const CLASS_WEATHER = {
+  rain: { Murmillo:{footing:1.07}, Secutor:{footing:1.06}, Hoplomachus:{footing:1.02},
+          Thraex:{footing:0.96}, Dimachaerus:{footing:0.95}, Retiarius:{footing:0.93} },
+  hot:  { Murmillo:{stam:1.10}, Secutor:{stam:1.10}, Hoplomachus:{stam:1.03},
+          Dimachaerus:{stam:0.95}, Retiarius:{stam:0.92} },
+  cold: { Thraex:{footing:0.97}, Dimachaerus:{footing:0.97} },
+  wind: { Retiarius:{footing:0.94}, Hoplomachus:{footing:0.96} },
+};
 function skyFor(d, offer){
   const s = seasonOf(d).name;
   const pool = SEASON_SKY[s] || SEASON_SKY.Spring;
@@ -2852,9 +2862,10 @@ const shelterOf = v => v==="yard" ? 0.72 : v==="greek" ? 0.5 : v==="amphi" ? 0.3
 const dampen = (n, sh) => 1 + (n - 1) * (1 - sh);
 function skyMods(k, venue, cls){
   const W = SKY(k), sh = shelterOf(venue);
+  const cw = (CLASS_WEATHER[k] && CLASS_WEATHER[k][cls]) || null;
   return {
-    footing: dampen(W.footing, sh) * (k==="wind" && windHurts.includes(cls) ? 0.95 : 1),
-    stam:    dampen(W.stam, sh),
+    footing: dampen(W.footing, sh) * (cw && cw.footing ? dampen(cw.footing, sh) : 1),
+    stam:    dampen(W.stam, sh) * (cw && cw.stam ? dampen(cw.stam, sh) : 1),
     crowd:   rnd(W.crowd * (1 - sh)),
     purse:   dampen(W.purse, sh),
   };
@@ -5216,7 +5227,7 @@ function power(f, tactic, oppCls, mom, atkMod){
   const pen = f.injury ? f.injury.pen : 0;
   const e = k => Math.max(5, f[k]-pen);
   const ft = f.footing||1;
-  let p = e("tec")*1.25*(0.5+ft*0.5) + e("str") + e("agi")*0.85*ft*ft + e("dis")*0.3;
+  let p = e("tec")*1.25*(0.5+ft*0.5) + e("str") + e("agi")*0.85*ft*ft + e("end")*0.45 + e("dis")*0.3;
   p *= 0.85 + (f.morale/100)*0.3;
   { const ft = clamp(f.fatigue,0,100);
     p *= 1 - (ft<=45 ? ft/560 : (45/560 + (ft-45)/230)); }
@@ -5289,6 +5300,12 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
       if(E.mom) mom = clamp(mom + E.mom, -3, 3);
       if(E.enter) push("intro", E.enter(A, B));
     }
+    /* the ground and the sky do not fall on both of them the same way */
+    if(ctx.footingB && Math.abs((ctx.footing||1) - ctx.footingB) >= 0.045){
+      push("intro", (ctx.footing||1) > ctx.footingB
+        ? `The ground suits your ${A.cls.toLowerCase()} better than it does the ${B.cls.toLowerCase()}.`
+        : `The ground is against your ${A.cls.toLowerCase()} — it was made for a ${B.cls.toLowerCase()}.`);
+    }
   } else push("crux", O.resumeLine || `${A.name} hears you and answers.`);
 
   /* the moments the bout is in the balance and a word from the box would matter. it
@@ -5310,13 +5327,20 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
       push("crowd", `The whole city is chanting ${A.name}'s name, and he feeds on it — you can see him gather himself.`); }
     const moveA = pick(ATTACKS[A.cls]), moveB = pick(ATTACKS[B.cls]);
     const modA = 0.97+R()*0.06, modB = 0.97+R()*0.06;
-    A.footing = ctx.footing || 1; B.footing = ctx.footing || 1;
+    A.footing = ctx.footing || 1; B.footing = ctx.footingB || ctx.footing || 1;
     const PL = ctx.plan || { pow:1, stam:1, guard:1 };
-    const pA = power(A,tA,B.cls,mom,modA) * PL.pow * (0.72+R()*0.56) * (sA<22?0.78:1) * (A.sigOpen||1) * (round>=6 ? (A.lastLate||1) : 1);
-    const pB = power(B,tB,A.cls,-mom,modB) * (0.72+R()*0.56) * (sB<22?0.78:1) * (B.sigOpen||1) * (bLegged?0.9:1);
+    /* showmanship is a weapon: a man the mob has taken up fights taller, and the peak is his alone */
+    const cf = clamp(crowd,0,100)/100;
+    const shoA = 1 + cf * (A.sho/100) * 0.14 * (cPeak?1.5:1);
+    const shoB = 1 + cf * (B.sho/100) * 0.10;
+    /* a man bred to endure keeps his blows honest when the others are swinging on empty */
+    const gasA = sA<22 ? (0.72 + A.end/450) : 1;
+    const gasB = sB<22 ? (0.72 + B.end/450) : 1;
+    const pA = power(A,tA,B.cls,mom,modA) * PL.pow * (0.72+R()*0.56) * gasA * (A.sigOpen||1) * shoA * (round>=6 ? (A.lastLate||1) : 1);
+    const pB = power(B,tB,A.cls,-mom,modB) * (0.72+R()*0.56) * gasB * (B.sigOpen||1) * shoB * (bLegged?0.9:1);
     A.sigOpen = 1; B.sigOpen = 1;
     sA -= (tA==="aggressive"?9:7) * (1 - A.mods.spd*0.5) * PL.stam * (A.formStam||1) * (ctx.sky||1) * (A.lastStam||1);
-    sB -= (tB==="aggressive"?9:7) * (1 - B.mods.spd*0.5) * (bLegged?1.25:1);
+    sB -= (tB==="aggressive"?9:7) * (1 - B.mods.spd*0.5) * (bLegged?1.25:1) * (ctx.skyB||1);
     /* one of them may go for the thing his style is for — or you may have ordered it */
     const forcedSig = orderSigA; orderSigA = false;
     const sigTurn = (()=>{
@@ -8936,6 +8960,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   if(!offer.sky) offer.sky = skyFor(d, offer);
   const V = VEN(offer.venue);
   const W = skyMods(offer.sky, offer.venue, g.cls);
+  const Wb = skyMods(offer.sky, offer.venue, offer.opp.cls);
   const planKey = (pending && pending.plan) || plan || offer.plan || "none";
   const PE = planEffect(planKey, offer.opp);
   const wasG = { fatigue:g.fatigue, wins:g.wins, pfame:g.pfame, cls:g.cls, agi:g.agi, str:g.str, end:g.end,
@@ -8946,7 +8971,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   gc.lastLate = lastNum(g,"latePow");
   gc.formStam = formStam(g);
   if(offer.stakes==="sine" && lawSine(d) && !offer.sealed){ d.gold -= lawSine(d); offer.sealed = 1; }
-  const simCtx = { plan:PE, fav:favMissio(g) + veteranGuard(g) + (away ? 0 : riseFav(d)) + blessMercy(d) + pit(d,"mercy",0), doctrine:docMissio(d), footing:V.footing * W.footing, sky:W.stam, venue:V.missio, aedile: away ? 0 : aedileMissio(d), strange: away ? Math.max(0, 19 - knownIn(d, offer.city)*0.19) * docStrange(d) : 0,
+  const simCtx = { plan:PE, fav:favMissio(g) + veteranGuard(g) + (away ? 0 : riseFav(d)) + blessMercy(d) + pit(d,"mercy",0), doctrine:docMissio(d), footing:V.footing * W.footing, footingB:V.footing * Wb.footing, sky:W.stam, skyB:Wb.stam, venue:V.missio, aedile: away ? 0 : aedileMissio(d), strange: away ? Math.max(0, 19 - knownIn(d, offer.city)*0.19) * docStrange(d) : 0,
       favor: imperial ? Math.min(d.favor, 20) : (away ? localStanding : d.favor), tier: Math.min(offer.tier,3),
       hostile:!!bribeHouse, patron: imperial ? null : (patron ? {name:patron.name, favor:patron.favor} : null),
       repShow: workPerk(d,"crowd") + femCrowd(g) + favCrowd(g) + W.crowd + provCrowd(g) + ((g.mastery && g.mastery.cls===g.cls) ? masteryCrowd(g) : 0) + signatureCrowd(g) + (repStyle(d)==="show" ? 8 : 0) + (nem ? 10 : 0) + (offer.rematch ? 8 : 0) + (away ? 0 : facCrowd(d, g.cls)) + seasonCrowd(d) + V.crowd + (away ? 0 : acclaimCrowd(d)) + (g.graffiti ? 3 : 0),
