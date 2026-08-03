@@ -69,7 +69,9 @@ const CSS = `
 :focus-visible{outline:2px solid #e0bd72;outline-offset:2px;border-radius:6px}
 .sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 .rowname{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.rowval{flex-shrink:0;white-space:nowrap}
+.rowval{flex-shrink:0;white-space:nowrap;max-width:64%;overflow:hidden;text-overflow:ellipsis}
+/* for a right-hand value that is prose rather than a number — it wraps instead of being cut */
+.rowval.long{white-space:normal;overflow:visible;max-width:60%;overflow-wrap:anywhere}
 .flex{display:flex}.flex-col{flex-direction:column}
 .items-center{align-items:center}.items-end{align-items:flex-end}
 .justify-between{justify-content:space-between}.justify-center{justify-content:center}
@@ -11586,7 +11588,9 @@ function LudusPlan({ S }){
       {[0,1,2].map(i=>(
         <rect key={i} x={234+i*13} y="82" width="3" height="20" fill={B("armamentarium")>i ? "#c9b489" : "#3a3020"}/>
       ))}
-      {label(250, 124, `ARMOURY ${B("armamentarium")||""}`, B("armamentarium")>0)}
+      {/* the armoury's name sits inside its own wall — below it is the infirmary, which
+          is drawn after this and would paint straight over the letters */}
+      {label(250, 110, `ARMOURY ${B("armamentarium")||""}`, B("armamentarium")>0)}
 
       <rect x="222" y="122" width="56" height="44" rx="2" fill={lvl("valetudinarium", lit)} stroke={stone} strokeWidth="1"/>
       {[0,1,2].map(i=>(
