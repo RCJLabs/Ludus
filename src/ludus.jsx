@@ -5193,7 +5193,7 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
   let vA = R0 ? R0.vA : 100, vB = R0 ? R0.vB : 100;
   let sA = R0 ? R0.sA : smA, sB = R0 ? R0.sB : smB, mom = R0 ? R0.mom : 0;
   let tiredA = R0? R0.tiredA : false, tiredB = R0? R0.tiredB : false,
-      c50 = R0? R0.c50 : false, c80 = R0? R0.c80 : false;
+      c50 = R0? R0.c50 : false, c80 = R0? R0.c80 : false, cPeak = R0? !!R0.peak : false;
   let bLegged = R0 ? !!R0.bLegged : false;      /* his legs have been worked — a lasting thing */
   const cruxCount = R0 ? (R0.count||0) : 0;      /* how many times you have spoken already */
   const order = O.order || null;                 /* the tactical order you gave at the last crux */
@@ -5209,11 +5209,19 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
   const oppName = B.nick? `${B.name}, ${B.nick}` : B.name;
   const prA = PR(A), prB = PR(B);
   let round = R0 ? R0.round : 0;
+  /* everything in the missio verdict except the live crowd, the opponent's blood, and luck —
+     so the box can be read a beat at a time, and the player can see what the crowd is buying */
+  const spareFixed = A.pfame*0.3 + ctx.favor*0.5 + (ctx.fav||0) + A.sho*0.2 + (A.heart||50)*0.1
+    + (ctx.patron ? ctx.patron.favor*0.12 : 0) + (ctx.guarded?12:0)
+    - (ctx.tier===0?8:0) - (ctx.hostile?18:0) - (ctx.strange||0) + (ctx.aedile||0) + (ctx.venue||0) + (ctx.doctrine||0);
+  const spareRead = () => { if(stakes==="sine") return null;
+    const sc = spareFixed + clamp(crowd,0,100)*0.33 + (100-clamp(vB,0,100))*0.15 + 11;   // +11 = the average of R()*22
+    return sc>=46 ? 2 : sc>=36 ? 1 : 0; };
   const push = (kind, text, extra) => beats.push(Object.assign({
     kind, text, actor:null, round,
     vA:clamp(vA,0,100), vB:clamp(vB,0,100),
     sA:clamp(sA/smA*100,0,100), sB:clamp(sB/smB*100,0,100),
-    crowd:clamp(crowd,0,100), mom:clamp(mom,-3,3)
+    crowd:clamp(crowd,0,100), mom:clamp(mom,-3,3), sp:spareRead()
   }, extra||{}));
 
   if(!R0){
@@ -5226,7 +5234,8 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
     if(ctx.entrance){ const E = ctx.entrance;
       if(E.crowd) crowd = clamp(crowd + E.crowd, 0, 100);
       if(E.stam) sA = Math.max(smA*0.5, sA + E.stam);
-      if(E.dread) vB = clamp(vB - E.dread*8, 45, 100);
+      if(E.dread) vB = clamp(vB - E.dread*8, 40, 100);
+      if(E.mom) mom = clamp(mom + E.mom, -3, 3);
       if(E.enter) push("intro", E.enter(A, B));
     }
   } else push("crux", O.resumeLine || `${A.name} hears you and answers.`);
@@ -5242,6 +5251,12 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
 
   for(let r=startR+1; r<=12 && !ended; r++){
     round = r;
+    /* crowd milestones run at the head of the round so a signature exchange (which loops back)
+       cannot skip them — a house worked to its feet always gets its moment */
+    if(crowd>=50 && !c50){ c50=true; push("crowd", `The crowd begins to chant — the sound rolls around the walls.`); }
+    if(crowd>=80 && !c80){ c80=true; push("crowd", `CAPUA IS ON ITS FEET!`); }
+    if(crowd>=82 && !cPeak){ cPeak=true; orderSigA = true; A.sigOpen = Math.max(A.sigOpen||1, 1.12);
+      push("crowd", `The whole city is chanting ${A.name}'s name, and he feeds on it — you can see him gather himself.`); }
     const moveA = pick(ATTACKS[A.cls]), moveB = pick(ATTACKS[B.cls]);
     const modA = 0.97+R()*0.06, modB = 0.97+R()*0.06;
     A.footing = ctx.footing || 1; B.footing = ctx.footing || 1;
@@ -5317,11 +5332,9 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
     }
     if(sA<22 && !tiredA){ tiredA=true; push("gas", `${A.name}'s arms grow heavy; breath comes ragged.`, {actor:"A"}); }
     if(sB<22 && !tiredB){ tiredB=true; push("gas", `${B.name} is flagging — sweat and blood in ${prB.his} eyes.`, {actor:"B"}); }
-    if(crowd>=50 && !c50){ c50=true; push("crowd", `The crowd begins to chant — the sound rolls around the walls.`); }
-    if(crowd>=80 && !c80){ c80=true; push("crowd", `CAPUA IS ON ITS FEET!`); }
     if(vA<=20 || vB<=20) break;
     if(cruxNow(r)){
-      crux = { vA, vB, sA, sB, crowd, mom, round:r, tB, tiredA, tiredB, c50, c80, count:cruxCount+1, bLegged };
+      crux = { vA, vB, sA, sB, crowd, mom, round:r, tB, tiredA, tiredB, c50, c80, peak:cPeak, count:cruxCount+1, bLegged };
       push("crux", vA<=58 && vA<vB
         ? `${A.name} is hurt and going backwards. The crowd is looking at your box.`
         : vB<=58 && vB<vA
@@ -8799,8 +8812,8 @@ function simulatePair(As, Bs, tA, stakes, ctx, opts){
 const ENTRANCES = {
   none:    { name:"Straight to the mark", short:"—",
     blurb:"No theatre. He walks to his place and waits for the horn." },
-  showman: { name:"Work the mob", short:"Mob", crowd:16, stam:-5, fame:2,
-    blurb:"Arms up, the slow turn, the whole way in. The stands are his before a blow lands — but strutting is not resting.",
+  showman: { name:"Work the mob", short:"Mob", crowd:16, stam:-5, fame:2, mom:1,
+    blurb:"Arms up, the slow turn, the whole way in. The stands are his before a blow lands, and the noise carries him into the first exchange — but strutting is not resting.",
     enter:(a,b)=>`${a.name} takes the long way to his mark, arms wide to the tiers, and the noise comes up to meet him.` },
   grim:    { name:"Silent and grim", short:"Grim", dread:1,
     blurb:"Helmeted, unhurried, saying nothing. It gets into the other man before the steel does.",
@@ -8888,7 +8901,9 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   const ENT = ENTRANCES[offer.entrance||"none"] || ENTRANCES.none;
   if(!pending){
     simCtx.fav += (ENT.missio||0);
-    simCtx.entrance = ENT;
+    /* the grim approach gets further into a green man than a seasoned one */
+    const oppGreen = (offer.opp && offer.opp.wins!=null ? offer.opp.wins : 99) < 4;
+    simCtx.entrance = (ENT.dread && oppGreen) ? Object.assign({}, ENT, { dread: ENT.dread + 1 }) : ENT;
     if(ENT.fame) d.fame += ENT.fame;
     if(ENT.favor){ patronsOf(d).forEach(p=>{ p.favor = clamp(p.favor+ENT.favor,0,100); }); recomputeFavor(d); }
   }
@@ -11456,6 +11471,15 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
             </span>
           </div>
         </div>
+
+        {!done && b.sp!=null && (
+          <div className="disp" style={{textAlign:"center",fontSize:10.5,letterSpacing:".07em",marginTop:6,
+            color: b.sp===2?"#9aa86a":b.sp===1?"#d8ac5f":"#d96f5d"}}>
+            {b.sp===2 ? "IF HE FALLS NOW — THE BOX WOULD SPARE HIM"
+              : b.sp===1 ? "IF HE FALLS NOW — IT WOULD BE CLOSE"
+              : "IF HE FALLS NOW — THE THUMB WOULD TURN"}
+          </div>
+        )}
 
         {b.named && (
           <div className="disp" style={{marginTop:8,textAlign:"center",fontSize:13,letterSpacing:".1em",color:"#e0bd72"}}>✦ {b.named.toUpperCase()} ✦</div>
