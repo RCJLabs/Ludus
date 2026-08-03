@@ -13529,7 +13529,11 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 )}
               </div>
             ); })()}
-          {(()=>{ const ALL = agenda(S), AG = allTodos ? ALL : ALL.slice(0, 7), rest = ALL.length - AG.length;
+          {/* the men's business belongs on the men's tab; this one keeps the house's */}
+          {(()=>{ const EVERY = agenda(S);
+            const MEN = EVERY.filter(a=>a.tab==="men");
+            const ALL = EVERY.filter(a=>a.tab!=="men");
+            const AG = allTodos ? ALL : ALL.slice(0, 7), rest = ALL.length - AG.length;
             const TABN = { ludus:"Ludus", men:"Familia", arena:"Arena", armory:"Armory", market:"Market", villa:"Villa" };
             const banners = [];
             const bnr = (c,title,sub,urgent,explain)=>banners.push({c,title,sub,urgent:!!urgent,explain});
@@ -13626,7 +13630,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     {seasonOf(S).name.toLowerCase()} · year {yearOf(S)}, week {yearWeek(S)}
                   </span>
                 </div>
-                {AG.length===0
+                {AG.length===0 && MEN.length===0
                   ? <div className="dim" style={{fontSize:14.5,fontStyle:"italic"}}>
                       Nothing is asking anything of you. Train them, or find them something to do.
                     </div>
@@ -13643,6 +13647,23 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                         </div>
                       </button>
                     ))}
+                {MEN.length>0 && (
+                  <button className="optrow" style={{padding:"10px 9px",marginBottom:5,borderColor:URG[Math.max(...MEN.map(a=>a.urgency))].c}}
+                    onClick={()=>setTab("men")}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span style={{fontSize:14.5,color:"#cfc0a0",textAlign:"left"}}>
+                        {MEN.length} thing{MEN.length===1?"":"s"} in the familia
+                      </span>
+                      <span className="rowval" style={{fontSize:12,color:URG[Math.max(...MEN.map(a=>a.urgency))].c,whiteSpace:"nowrap"}}>
+                        {URG[Math.max(...MEN.map(a=>a.urgency))].w}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="dim" style={{fontSize:13,textAlign:"left"}}>{MEN[0].label}{MEN.length>1?` · and ${MEN.length-1} more`:""}</span>
+                      <span className="rowval" style={{fontSize:11.5,color:"#8e7e5c",whiteSpace:"nowrap"}}>Familia ›</span>
+                    </div>
+                  </button>
+                )}
                 {(()=>{ const C = counsel(S); if(!C) return null;
                   return (
                     <div style={{borderTop:"1px dotted #4e3c26",marginTop:8,paddingTop:8}}>
@@ -14035,6 +14056,26 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         </div>)}
 
         {tab==="men" && (<div className="flex flex-col gap-3">
+          {/* what the men themselves are asking for, where the men are */}
+          {(()=>{ const MEN = agenda(S).filter(a=>a.tab==="men"); if(!MEN.length) return null;
+            return (
+              <div className="panel" style={{padding:12, borderColor: MEN.some(a=>a.urgency===3)?"#7c2a22":"#6d5426"}}>
+                <div className="flex items-center justify-between" style={{marginBottom:6}}>
+                  <span className="tag tag-gold">What the men need</span>
+                  <span className="rowval dim" style={{fontSize:12.5}}>{MEN.length} thing{MEN.length===1?"":"s"}</span>
+                </div>
+                {MEN.map((a,i)=>(
+                  <div key={i} className="optrow" style={{padding:"9px 9px",marginBottom:5,borderColor:URG[a.urgency].c,cursor:"default"}}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span style={{fontSize:14.5,color:a.urgency===3?"#e8d9b8":"#cfc0a0",textAlign:"left"}}>{a.label}</span>
+                      <span className="rowval" style={{fontSize:12,color:URG[a.urgency].c,whiteSpace:"nowrap"}}>{URG[a.urgency].w}</span>
+                    </div>
+                    {a.sub && <div className="dim" style={{fontSize:13,textAlign:"left"}}>{a.sub}</div>}
+                  </div>
+                ))}
+              </div>
+            ); })()}
+
           <button className="optrow" style={{padding:10}} onClick={()=>setSheet("glossary")}>
             <div className="flex items-center justify-between gap-2">
               <span className="disp" style={{fontSize:12.5,color:"#e8d092"}}>What the marks mean</span>
@@ -14134,7 +14175,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               {men.map(g=>{ const season = seasonOfMan(g), reg = g.regimen||"palus";
                 return (
                   <div key={g.id} className="panel" style={{padding:9}}>
-                    <div className="flex items-center justify-between gap-2" style={{marginBottom:5}}>
+                    <div className="flex items-center justify-between gap-2" style={{marginBottom:3}}>
                       <button onClick={()=>setSelId(g.id)} style={{background:"none",border:0,padding:0,font:"inherit",color:"#e8d092",cursor:"pointer",minWidth:0,textAlign:"left"}}>
                         <span className="disp" style={{fontSize:14,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{g.name}</span>
                         <span className="dim" style={{fontSize:12}}> · {g.cls}</span>
@@ -14143,6 +14184,19 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                         <span style={{color:fatCol(g)}}>{fatWord(g)}</span>
                         {strainOf(g)>32 && <span style={{color:strCol(g)}}> · {strainWord(strainOf(g))}</span>}
                       </span>
+                    </div>
+                    {/* the same four readings for every man, so the yard can be compared at a glance */}
+                    <div className="flex items-center gap-2" style={{flexWrap:"wrap",marginBottom:5,fontSize:11}}>
+                      <span style={{color: canFight(g) && g.lastFought < S.week ? "#9aa86a" : "#8d7e65"}}>
+                        {!canFight(g) ? (g.injury ? "hurt" : "not fit") : g.lastFought >= S.week ? "fought this week" : "ready"}
+                      </span>
+                      <span className="dim">·</span>
+                      <span style={{color:formColour(formOf(g))}}>{formWord(formOf(g))}</span>
+                      <span className="dim">·</span>
+                      <span style={{color:regardColour(regardOf(g))}}>{regardWord(regardOf(g))}</span>
+                      {g.ambition && !g.ambition.met && !g.ambition.broken && (
+                        <><span className="dim">·</span><span className="dim">{ambState(g)==="despair"?"has given up asking":"wants something"}</span></>
+                      )}
                     </div>
                     {season ? (
                       <div className="dim" style={{fontSize:13,fontStyle:"italic"}}>On a season — {PLANSEASON[season.kind]?PLANSEASON[season.kind].name:"in training"}, {planWeeksLeft(g)}w left. He drills at nothing else.</div>
