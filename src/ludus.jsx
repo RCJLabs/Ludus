@@ -1958,6 +1958,7 @@ function agenda(d){
   return A.sort((a,b)=>b.urgency-a.urgency);
 }
 const URG = { 3:{c:"#d96f5d",w:"now"}, 2:{c:"#d8ac5f",w:"soon"}, 1:{c:"#b09b7d",w:"when you can"} };
+const TAB_NAMES = { ludus:"Ludus", men:"Familia", arena:"Arena", armory:"Armory", market:"Market", villa:"Villa" };
 
 /* ---- SEEDED RANDOMNESS ----
    Every roll in this game came out of Math.random, which means no house could
@@ -7183,6 +7184,79 @@ function scoutMan(d, hName, fid){
   f.seen = d.week;
   chron(d, `Somebody of yours spends three afternoons at House ${h.name}'s wall watching ${f.name} work, and ${c} denarii buys the rest of it from a man who sweeps their yard.`, "info");
   return { ok:true, cost:c };
+}
+
+/* ---- THE YEAR AHEAD ----
+   Nine or ten different systems each kept their own date and told you about it in
+   their own corner: a festival on the wall calendar, a levy in the to-do list, a
+   contract in the arena, a patron waiting in the villa, a reading going stale in a
+   rival's file. Nothing ever put them on one line together, which is the only way a
+   man plans anything. This does. */
+const CAL_TONE = { fest:"#e0bd72", season:"#b09b7d", duty:"#d96f5d", coin:"#d8ac5f",
+                   town:"#bfa8c8", house:"#9aa86a", road:"#9dc0d4", quiet:"#8a7a5c" };
+function calendarRows(d, span){
+  const N = span == null ? YEAR_WEEKS : span;
+  const out = [];
+  const put = (wk, kind, title, sub, tab) => {
+    if(wk == null || !isFinite(wk)) return;
+    const w = Math.max(d.week, Math.round(wk));
+    if(w > d.week + N) return;
+    out.push({ week:w, kind, title, sub, tone:CAL_TONE[kind]||"#cfc0a0", tab });
+  };
+  /* the fixed year — the festivals and the turn of the seasons */
+  for(let i=0;i<=N;i++){
+    const w = d.week + i, yw = ((w-1) % YEAR_WEEKS) + 1;
+    const F = CALENDAR.find(x=>x.w===yw);
+    if(F) put(w, "fest", F.name,
+      F.rest ? "no games are held — the house is served at your table"
+             : `${F.month} · ${F.offers==null?2:F.offers} on the card${(F.tier||0)>0?" · the great games":""}`, "arena");
+    const SS = SEASONS.find(x=>x.at===yw);
+    if(SS && i>0) put(w, "season", `${SS.name} begins`, SS.months, null);
+  }
+  /* what you have promised, or been told */
+  for(const x of deadlines(d)){
+    if(x.kind==="booking") put(x.due, "duty", `${x.name} is on the bill`,
+      `${x.festName} · ${x.balance}d on the day, ${x.advance*2}d back if he is not there`, "arena");
+    else if(x.kind==="challenge") put(x.due, "duty",
+      x.mine ? `${x.name} against ${x.foe}` : `${x.name} must answer ${x.lan}`,
+      x.mine ? `the day you named · House ${x.house} · ${x.purse}d`
+             : `House ${x.house} named the day · ${x.purse}d`, "arena");
+    else if(x.kind==="levy") put(x.due, "coin", `A levy of ${x.amount}d falls due`, x.what, "villa");
+  }
+  /* the men who are waiting on you */
+  for(const p of patronsOf(d)) if(p.want && p.want.due != null)
+    put(p.want.due, "town", `${p.name} is still waiting`,
+      (WANTS[p.want.kind] ? WANTS[p.want.kind].label : "something") + " — or his standing goes the other way", "villa");
+  for(const m of unhonoured(d)) if(!m.done)
+    put(m.week + RITE_WINDOW, "duty", `${m.name} is still not buried`, "after this nobody can put it right", "villa");
+  /* the town's own business */
+  if(d.election && !d.election.done) put(d.election.week + 3, "town", "The aedileship is decided",
+    "the aedile is the man who decides whose men are on the card", "villa");
+  { const p = pactOf(d);
+    if(p) put(p.until, "duty", `Your word to ${p.editor||"the editor"} runs out`,
+      `${pactOwed(d)} card${pactOwed(d)===1?"":"s"} still owed on it`, "arena"); }
+  { const rp = ruinPending(d);
+    if(rp) put(d.week + rp.weeks, "duty", "This house has to change something",
+      rp.kind==="banned" ? "the aedile is preparing to strike you off"
+      : rp.kind==="disgrace" ? "the editors have stopped asking"
+      : "a rival is taking it apart", "villa"); }
+  /* the road */
+  if(d.travel) put(d.week + d.travel.weeks, "road",
+    d.travel.home ? "The house comes home to Capua" : `The house reaches ${CITIES[d.travel.to] ? CITIES[d.travel.to].name : "the town"}`,
+    "nothing happens on the sand until you arrive", "arena");
+  if(d.rome && d.rome.travel>0) put(d.week + d.rome.travel, "road", "Rome", "the imperial sand, and three bouts on it", "arena");
+  /* the quiet business with other houses */
+  if(d.poach){ const g = d.gladiators.find(x=>x.id===d.poach.gid);
+    put(d.week + d.poach.weeks, "house", `${g?g.name:"A man of yours"} makes up his mind`,
+      `House ${d.poach.house} has been talking to him`, "men"); }
+  if(d.court) put(d.week + d.court.weeks, "house", `${d.court.name} makes up his mind`,
+    `your word, House ${d.court.house}'s wall`, "men");
+  /* the readings you paid for, going stale */
+  for(const h of (d.rivals||[])) for(const f of (h.fighters||[])) if(f.seen != null)
+    put(f.seen + SCOUT_KEEPS, "quiet", `What you know of ${f.name} goes stale`,
+      `House ${h.name} — he is training too`, null);
+  out.sort((a,b)=> a.week - b.week || (a.kind==="fest"?-1:1) - (b.kind==="fest"?-1:1));
+  return out;
 }
 
 /* ---- NAMING A MAN IN PUBLIC ----
@@ -12444,6 +12518,7 @@ export default function App(){
   const [sheet,setSheet] = useState(null);
   const [dealH,setDealH] = useState(null);   /* the rival house you are treating with */
   const [dealMsg,setDealMsg] = useState(null);
+  const [cal,setCal] = useState(false);      /* the year ahead, everything dated in one place */
   const [manCard,setManCard] = useState(null); /* {house, fid} — a rival's man, opened up */
   const [nameFor,setNameFor] = useState(null);  /* the rival's man you are about to name in public */
   const [rack,setRack] = useState("weapon");
@@ -12622,6 +12697,7 @@ export default function App(){
     [!!annals,       ()=>setAnnals(false)],
     [!!sheet,        ()=>setSheet(null)],
     [!!showSettings, ()=>setShowSettings(false)],
+    [!!cal,          ()=>setCal(false)],
     [!!munusWiz,     ()=>setMunusWiz(false)],
     [!!arenaWiz,     ()=>{ setArenaWiz(false); setArenaStep(0); setArenaPick(null); }],
     [!!skipped,      ()=>setSkipped(null)],
@@ -13860,7 +13936,11 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             {S.crest && <Crest crest={S.crest} size={26}/>}
             <div style={{minWidth:0,flex:"1 1 auto"}}>
               <div className="disp" style={{fontSize:15,fontWeight:900,color:"#e8d092",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{S.name.toUpperCase()}{(S.generation||1)>1 && <span style={{fontSize:12,color:"#b09b7d"}}> · {["","","II","III","IV","V","VI","VII"][S.generation]||S.generation}</span>}</div>
-              <div className="dim" style={{fontSize:12.5,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{seasonOf(S).name} · year {yearOf(S)}, week {yearWeek(S)} · {S.travel? "on the road" : S.city? CITIES[S.city].name : fameTitle(S.fame)}</div>
+              <button className="dim" onClick={()=>setCal(true)} aria-label="The year ahead"
+                style={{background:"none",border:"none",padding:0,margin:0,font:"inherit",textAlign:"left",cursor:"pointer",
+                  width:"100%",fontSize:12.5,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",color:"inherit"}}>
+                {seasonOf(S).name} · year {yearOf(S)}, week {yearWeek(S)} · {S.travel? "on the road" : S.city? CITIES[S.city].name : fameTitle(S.fame)} <span style={{color:"#8a6a2c"}}>›</span>
+              </button>
             </div>
           </div>
           <div className="flex items-center gap-2" style={{flexShrink:0,marginLeft:"auto"}}>
@@ -14010,7 +14090,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             const MEN = EVERY.filter(a=>a.tab==="men");
             const ALL = EVERY.filter(a=>a.tab!=="men");
             const AG = allTodos ? ALL : ALL.slice(0, 7), rest = ALL.length - AG.length;
-            const TABN = { ludus:"Ludus", men:"Familia", arena:"Arena", armory:"Armory", market:"Market", villa:"Villa" };
+            const TABN = TAB_NAMES;
             const banners = [];
             const bnr = (c,title,sub,urgent,explain)=>banners.push({c,title,sub,urgent:!!urgent,explain});
             /* urgent = something you can act on now; the rest are threads you are simply in.
@@ -14170,6 +14250,9 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     Show fewer
                   </button>
                 )}
+                <button className="btn btn-ghost" style={{width:"100%",marginTop:6,fontSize:12}} onClick={()=>setCal(true)}>
+                  The year ahead ›
+                </button>
               </Sect>
                 ); })()}
             </>); })()}
@@ -17039,6 +17122,56 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           </div>
         </div>
       )}
+
+      {cal && (()=>{
+        const rows = calendarRows(S, YEAR_WEEKS);
+        const byWeek = [];
+        for(const r of rows){ let g = byWeek.find(x=>x.week===r.week); if(!g){ g={week:r.week, rows:[]}; byWeek.push(g); } g.rows.push(r); }
+        const away = w => { const n = w - S.week;
+          return n<=0 ? "this week" : n===1 ? "next week" : `in ${n} weeks`; };
+        const go = tab => { setCal(false); if(tab) setTab(tab); };
+        return (
+          <div className="modalwrap" role="dialog" aria-modal="true" aria-label="The year ahead" style={{zIndex:63}} onClick={()=>setCal(false)}>
+            <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
+              <div className="flex items-center justify-between gap-2" style={{marginBottom:3}}>
+                <div className="disp" style={{fontSize:15,fontWeight:900,letterSpacing:".12em",color:"#e8d092"}}>THE YEAR AHEAD</div>
+                <button className="btn btn-ghost" style={{padding:"10px 10px",flexShrink:0}} aria-label="Close" onClick={()=>setCal(false)}><X size={14}/></button>
+              </div>
+              <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:10,lineHeight:1.4}}>
+                {seasonOf(S).name.toLowerCase()} · year {yearOf(S)}, week {yearWeek(S)} — everything the house has a date for,
+                {" "}from now to the same week next year.
+              </div>
+              {byWeek.length===0 ? (
+                <div className="dim" style={{fontSize:14.5,fontStyle:"italic"}}>
+                  Nothing is written down between here and next year. That will not last.
+                </div>
+              ) : byWeek.map(g=>(
+                <div key={g.week} style={{marginBottom:10}}>
+                  <div className="flex items-center justify-between gap-2" style={{marginBottom:4}}>
+                    <span className="tag tag-gold">{away(g.week)}</span>
+                    <span className="rowval dim" style={{fontSize:12}}>
+                      week {((g.week-1) % YEAR_WEEKS)+1} of year {Math.floor((g.week-1)/YEAR_WEEKS)+1}
+                    </span>
+                  </div>
+                  {g.rows.map((r,i)=>{
+                    const inner = (<>
+                      <div className="flex items-center justify-between gap-2">
+                        <span style={{fontSize:14.5,color:r.tone,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.title}</span>
+                        {r.tab && <span className="rowval dim" style={{fontSize:12,color:"#8a6a2c"}}>{TAB_NAMES[r.tab]||r.tab} ›</span>}
+                      </div>
+                      {r.sub && <div className="dim" style={{fontSize:13,marginTop:2,lineHeight:1.35}}>{r.sub}</div>}
+                    </>);
+                    return r.tab
+                      ? <button key={i} className="optrow" style={{padding:"9px 10px",marginBottom:5,borderLeft:`3px solid ${r.tone}`}} onClick={()=>go(r.tab)}>{inner}</button>
+                      : <div key={i} className="panel" style={{padding:"9px 10px",marginBottom:5,borderLeft:`3px solid ${r.tone}`}}>{inner}</div>;
+                  })}
+                </div>
+              ))}
+              <button className="btn" style={{width:"100%",marginTop:4}} onClick={()=>setCal(false)}>Close</button>
+            </div>
+          </div>
+        );
+      })()}
 
       {showSettings && settingsSheet()}
 
