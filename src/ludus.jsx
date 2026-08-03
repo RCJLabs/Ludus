@@ -3657,7 +3657,11 @@ function makeRivalFighter(d, house, quality){
   const origin = pick(Object.keys(ORIGINS));
   const cls = pick(Object.keys(CLASSES));
   const fem = R() < 0.07;
+  /* a rival's man is a man: he came in young or he came in already made, and either
+     way the sand will have him in the end. A better fighter is usually an older one. */
+  const age = clamp(ri(19, 24) + Math.round(quality/16), 18, 34);
   const f = { id:d.nextId++, sex: fem?"f":"m", name: pick(fem ? FNAMES[origin] : ORIGINS[origin].names), nick:null, house, cls, origin,
+    age, weeks:0,
     morale:62, fatigue:0, injury:null, traits:[], heart:ri(30,90), pfame:ri(0,30),
     kit:kitFor(cls, quality>=58?2:quality>=42?1:0),
     wins:ri(0,6), losses:ri(0,3), kills:0, beatYou:0, lostToYou:0,
@@ -3768,9 +3772,23 @@ function rivalWeekly(d){
     const L = lanistaOf(h.name);
     h.grudge = clamp(h.grudge - 1*L.grudgeDecay, 0, 100);
     h.fighters.forEach(f=>{
+      if(f.age==null){ f.age = ri(21,29); f.weeks = 0; }        /* men from an older save */
+      f.weeks = (f.weeks||0) + 1;
+      if(f.weeks % WEEKS_PER_YEAR === 0) f.age++;
+      const young = f.age <= PRIME[1];
       if(f.injury){ f.injury.weeks--; if(f.injury.weeks<=0) f.injury=null; }
-      else { for(const k of CLASSES[f.cls].key) f[k] = clamp(f[k] + (0.25 + f.potential/300)*L.train*(h.doctore?1.3:1), 5, 97); }
+      else if(young){ for(const k of CLASSES[f.cls].key) f[k] = clamp(f[k] + (0.25 + f.potential/300)*L.train*(h.doctore?1.3:1), 5, 97); }
+      /* past the top of the hill a man goes the other way, the same as yours do */
+      if(f.age > 30) for(const k of STATS) f[k] = Math.max(8, f[k] - 0.045*(1 + (f.age-30)*0.35));
       f.fatigue = 0;
+    });
+    /* and one day he stops being on anybody's card */
+    h.fighters = h.fighters.filter(f=>{
+      if(f.age < 33) return true;
+      if(R() > (0.02 + (f.age-32)*0.02)) return true;
+      if(f.pfame >= 45 || f.wins >= 18)
+        chron(d, `House ${h.name} retires ${f.name}${f.nick?`, ${f.nick}`:""} — ${f.wins} victories and ${f.age} years, and ${lanistaOf(h.name).name} would rather have him on the sand teaching than under it.`, "info");
+      return false;
     });
     const fit = h.fighters.filter(f=>!f.injury);
     if(fit.length && R()<0.55){
@@ -13007,7 +13025,10 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     ? <span style={{fontSize:12.5,marginLeft:7,fontStyle:"italic",color:warmth(S,h.raw)>=50?"#9aa86a":"#b09b7d"}}>{houseWord(warmth(S,h.raw))}</span>
                     : <span className="dim" style={{fontSize:12.5,marginLeft:7,fontStyle:"italic"}}>{grudgeWord(riv.grudge)}</span>)}
                   {riv && lanistaOf(h.raw).trait && <div className="dim" style={{fontSize:12.5,marginTop:1}}>{lanistaOf(h.raw).name} — {lanistaOf(h.raw).trait}</div>}
-                  {riv && <div style={{fontSize:12.5,marginTop:1,color:fortuneColour(riv)}}>{houseFortune(riv)}{riv.star?` · ★ ${riv.star.name}`:""}</div>}
+                  {riv && <div style={{fontSize:12.5,marginTop:1,color:fortuneColour(riv)}}>{houseFortune(riv)}
+                    {riv.star?` · ★ ${riv.star.name}`:""}
+                    {(()=>{ if(!riv.star) return ""; const sf=(riv.fighters||[]).find(f=>f.id===riv.star.id);
+                      return sf && sf.age ? ` (${sf.age}${sf.age>=32?", old for it":sf.age>30?", past his peak":""})` : ""; })()}</div>}
                   {riv && bookH && bookH.n>=1 && <div className="dim" style={{fontSize:12,marginTop:1,fontStyle:"italic"}}>
                     {bookH.n} card{bookH.n>1?"s":""} against him — you {bookH.w}–{bookH.n-bookH.w}
                   </div>}
