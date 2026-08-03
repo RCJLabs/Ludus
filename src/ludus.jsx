@@ -6008,7 +6008,10 @@ const riseNext = d => RISE_RANKS[riseOf(d)+1] || null;
 /* the graduated perks — all keyed to the rung you stand on */
 const risePurse   = d => 1 + riseOf(d)*0.03;   // better bookings the higher you climb
 const riseFav     = d => riseOf(d)*3;          // your name carries weight in the editor's box
-const riseStipend = d => riseOf(d) >= 3 ? (riseOf(d)-2)*8 : 0;  // rents and clients, from Friend upward
+/* rents and clients, from Friend upward — and the greater the house's name, the more
+   its standing quietly pays. a famous, acclaimed house at the top of the ladder draws
+   real weekly income, not a token. */
+const riseStipend = d => riseOf(d) >= 3 ? Math.round((riseOf(d)-2)*8 + d.fame*0.03*(riseOf(d)-2) + acclaimOf(d)*0.35) : 0;
 /* how close you are to being received at the next rung */
 function riseWeek(d){
   if(d.over || d.succession) return;
@@ -6810,7 +6813,7 @@ const ROME_FAME = 1000;      // the imperial games are the summit, not the next 
 const ROME_COOLDOWN = 45;    // weeks the city forgets you between campaigns
 /* your rank in Capua carries word to Rome — an Eques is heard of there before an unknown lanista is */
 const riseRomeCut = d => riseOf(d)>=5 ? 150 : riseOf(d)>=4 ? 90 : riseOf(d)>=3 ? 45 : 0;
-const romeReady = d => !d.rome && !d.romeOffer && !d.over && d.fame >= ROME_FAME - (d.flags.romeEarly?150:0) - riseRomeCut(d)
+const romeReady = d => !d.rome && !d.romeOffer && !d.over && d.fame >= ROME_FAME + romeRuns(d)*300 - (d.flags.romeEarly?150:0) - riseRomeCut(d)
   && (d.flags.primusHeld||0) >= 1                                          // prove it in Capua first
   && (!d.flags.romeDeclined || d.week - d.flags.romeDeclined >= 30)
   && (!d.flags.romeReturned || d.week - d.flags.romeReturned >= ROME_COOLDOWN)
@@ -7957,15 +7960,41 @@ const WORKS = {
     perk:"regard", n:0.4, say:"Every man's regard climbs 0.4 a week, and a death costs the cells far less." },
 };
 const WORK_KEYS = Object.keys(WORKS);
+/* ---- MONUMENTS ----
+   What a house builds when even the great works are finished and the strongbox is
+   still full — the true late-game sink, and the only thing left that gold can buy
+   once the men and the yard are as good as they will get. They cost a fortune and
+   pay the house back in the coin the very top of the game runs on: name and acclaim. */
+const MONUMENTS = {
+  colossus: { name:"A colossus of your champion", cost:30000, years:2, tier:2,
+    blurb:"A bronze the height of four men, of the best fighter your house ever raised, on the road where everyone coming into Capua must pass under it.",
+    done:"He stands over the road now, and men who never saw him fight point him out to their sons.",
+    perk:"fame", n:6, say:"+6 fame a week, forever — the thing is the size of a house." },
+  endow:    { name:"Games endowed in your name", cost:44000, years:3, tier:2,
+    blurb:"Not games you hold — games that hold themselves, funded out of a sum so large the interest alone pays for blood every year after you are gone.",
+    done:"There are games in your name now that will run when your grandsons are old, and the mob knows exactly whose coin buys the spectacle.",
+    perk:"acclaim", n:1.1, say:"Your name climbs 1.1 acclaim a week, forever. The mob does not forget a house that feeds it." },
+  arena:    { name:"A stone arena of your own", cost:70000, years:3, tier:2,
+    blurb:"Your own amphitheatre, in stone, on your own ground. No other lanista in Campania has ever owned the floor his men fight on. The largest sum a house can spend on anything.",
+    done:"You fight in a house the city now calls by your name, and the tiers are full every time the gates open.",
+    perk:"crowd", n:10, say:"+10 crowd on every bout — the floor itself is yours." },
+};
+const MONU_KEYS = Object.keys(MONUMENTS);
+const workDef  = k => WORKS[k] || MONUMENTS[k];
+const ALL_WORK_KEYS = [...WORK_KEYS, ...MONU_KEYS];
 const worksOf = d => d.works || {};
 const workDone = (d,k) => { const w = worksOf(d)[k]; return !!(w && w.left <= 0); };
 const workOn   = (d,k) => { const w = worksOf(d)[k]; return w && w.left > 0 ? w : null; };
 const workAny  = d => WORK_KEYS.filter(k=>workDone(d,k));
-const workPerk = (d, kind) => WORK_KEYS.reduce((n,k)=>
-  (workDone(d,k) && WORKS[k].perk===kind) ? n + WORKS[k].n : n, 0);
+const monuAny  = d => MONU_KEYS.filter(k=>workDone(d,k));
+/* the monuments are what a house that has already built everything spends its fortune on */
+const monuReady = d => WORK_KEYS.every(k=>workDone(d,k));
+const workPerk = (d, kind) => ALL_WORK_KEYS.reduce((n,k)=>{ const W = workDef(k);
+  return (workDone(d,k) && W && W.perk===kind) ? n + W.n : n; }, 0);
 function beginWork(d, k){
-  const W = WORKS[k];
+  const W = workDef(k);
   if(!W || worksOf(d)[k]) return false;
+  if(W.tier===2 && !monuReady(d)) return false;
   if(d.gold < W.cost) return false;
   d.gold -= W.cost;
   d.works = Object.assign({}, worksOf(d), { [k]: { left: W.years * YEAR_WEEKS, began: d.week } });
@@ -7978,16 +8007,19 @@ function worksWeek(d){
     if(w[k].left <= 0) continue;
     w[k].left--;
     if(w[k].left <= 0){
-      const W = WORKS[k];
-      d.fame += 30;
-      activeG(d).forEach(g=>{ g.morale = clamp(g.morale+8,0,100); });
+      const W = workDef(k); if(!W) continue;
+      const grand = W.tier===2;
+      d.fame += grand ? 90 : 30;
+      if(grand) d.acclaim = clamp((d.acclaim||0) + 14, 0, 100);
+      activeG(d).forEach(g=>{ g.morale = clamp(g.morale+(grand?14:8),0,100); });
       chron(d, `${W.name} is finished. ${W.done}`, "good");
     }
   }
   /* what the finished ones do, week by week */
-  if(workPerk(d,"calm"))   d.unrest = clamp(d.unrest - workPerk(d,"calm"), 0, 100);
-  if(workPerk(d,"fame"))   d.fame += workPerk(d,"fame");
-  if(workPerk(d,"regard")) activeG(d).forEach(g=>{ g.regard = clamp(Math.round((regardOf(g) + workPerk(d,"regard"))*10)/10, 0, 100); });
+  if(workPerk(d,"calm"))    d.unrest = clamp(d.unrest - workPerk(d,"calm"), 0, 100);
+  if(workPerk(d,"fame"))    d.fame += workPerk(d,"fame");
+  if(workPerk(d,"acclaim")) d.acclaim = clamp((d.acclaim||0) + workPerk(d,"acclaim"), 0, 100);
+  if(workPerk(d,"regard"))  activeG(d).forEach(g=>{ g.regard = clamp(Math.round((regardOf(g) + workPerk(d,"regard"))*10)/10, 0, 100); });
 }
 
 /* ---- ROME REMEMBERS ----
@@ -8002,6 +8034,14 @@ const ROME_EDITORS = [
 const romeRuns    = d => (d.flags && d.flags.romeRuns) || 0;
 const romeBest    = d => (d.flags && d.flags.romeBest) || 0;
 const romeTriumphs= d => (d.flags && d.flags.romeTriumph) || 0;
+/* each triumph on the imperial sand is worth more than the last, and carries its own name home */
+const ROME_PRIZES = [
+  { name:"the laurel of the games", purse:0,    acclaim:8 },
+  { name:"a golden palm from the editor's own hand", purse:1800, acclaim:11 },
+  { name:"a corona awarded before the imperial box", purse:3600, acclaim:14 },
+  { name:"a statue voted you at the foot of the Capitoline", purse:7000, acclaim:18 },
+];
+const romePrize = d => ROME_PRIZES[Math.min(ROME_PRIZES.length-1, romeTriumphs(d))];
 /* the city's standing opinion of you, which is not fame */
 const romeStanding = d => clamp(romeRuns(d)*12 + romeTriumphs(d)*26 + romeBest(d)*8, 0, 100);
 const romeWord = d => { const v = romeStanding(d);
@@ -8029,7 +8069,8 @@ function offerRome(d){
 
 function makeImperialBout(d){
   const hard = !!(d.flags && d.flags.romeHardCard);
-  const opp = genOpponent(3, hard ? ri(97, 99) : ri(92, 99));
+  const floor = Math.min(96, 92 + romeRuns(d));    // Rome asks more of a house it already knows
+  const opp = genOpponent(3, hard ? ri(97, 99) : ri(floor, 99));
   if(hard){ d.flags.romeHardCard = 0; opp.wins = (opp.wins||0) + ri(4,9); }
   opp.kit = kitFor(opp.cls, 3);
   opp.nick = opp.nick || pick(NICKS);
@@ -8079,16 +8120,19 @@ function romeWeek(d){
   }
   if(r.fought >= ROME_BOUTS){
     const won = r.won, triumph = won >= 2;
-    const purse = rnd((triumph ? 1700 + won*750 : 500 + won*320) * romePurseMult(d));
+    const prize = triumph ? romePrize(d) : null;   // read before the triumph count ticks up
+    let purse = rnd((triumph ? 1700 + won*750 : 500 + won*320) * romePurseMult(d));
+    if(prize) purse += prize.purse;
     d.gold += purse;
     d.fame += triumph ? 280 : 90;
     d.flags.romeRuns = (d.flags.romeRuns||0) + 1;
     d.flags.romeBest = Math.max(d.flags.romeBest||0, won);
     d.flags.romeReturned = d.week;
-    if(triumph){ addRep(d, "show", 8); d.flags.romeTriumph = (d.flags.romeTriumph||0) + 1; }
+    if(triumph){ addRep(d, "show", 8); d.flags.romeTriumph = (d.flags.romeTriumph||0) + 1;
+      if(prize) d.acclaim = clamp((d.acclaim||0) + prize.acclaim, 0, 100); }
     activeG(d).forEach(g=>{ g.morale = clamp(g.morale + (triumph ? 12 : -6), 0, 100); });
     d.rome = null;                     // the house comes home — Rome is a milestone, not the grave
-    d.pendingRome = { won, triumph, purse };
+    d.pendingRome = { won, triumph, purse, prize: prize ? prize.name : null };
   }
 }
 
@@ -10614,7 +10658,7 @@ function endWeek(d){
   if(d.pendingRome){ const pr = d.pendingRome; d.pendingRome = null;
     d.pendingEvent = { id:"romeReturn", title: pr.triumph ? "Home in Triumph" : "The Long Road Home",
       text: pr.triumph
-        ? `${pr.won} of ${ROME_BOUTS} won on the imperial sand, and the house comes home to Capua under the laurel — ${pr.purse}d in the strongbox and your name spoken in rooms you will never stand in. The games at Capua will look small for a while. What you make of it now is yours to decide.`
+        ? `${pr.won} of ${ROME_BOUTS} won on the imperial sand, and the house comes home to Capua carrying ${pr.prize||"the laurel"} — ${pr.purse}d in the strongbox and your name spoken in rooms you will never stand in. The games at Capua will look small for a while. What you make of it now is yours to decide.`
         : `${pr.won} of ${ROME_BOUTS} on the imperial sand. Not the triumph the letter promised — but the house walked off Rome's floor on its own feet, which more than one great name has not. You come home lighter than you went. Capua is still Capua, and there is work in the morning.`,
       choices: pr.triumph
         ? ["Carry on — there is more to build", "Lay the house down here, at its height"]
@@ -14582,6 +14626,34 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 Things a house builds when it has outgrown buying men. They cost more than everything else put together and take years to finish.
               </div>
               {WORK_KEYS.map(k=>{ const W = WORKS[k], on = workOn(S,k), done = workDone(S,k);
+                return (
+                  <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:8,marginTop:8}}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="disp" style={{fontSize:13.5,color:done?"#e8d092":on?"#d8ac5f":"#b09b7d"}}>{W.name}</span>
+                      <span className="rowval dim" style={{fontSize:12.5}}>
+                        {done ? "standing" : on ? `${on.left} weeks` : `${W.cost}d · ${W.years} years`}
+                      </span>
+                    </div>
+                    <div className="dim" style={{fontSize:14,fontStyle:"italic",marginTop:2}}>{done ? W.done : W.blurb}</div>
+                    {done && <div className="laurel" style={{fontSize:13.5,marginTop:3}}>{W.say}</div>}
+                    {on && <Bar v={100 - on.left/(W.years*YEAR_WEEKS)*100} label="" color="linear-gradient(90deg,#4a3a24,#c99a4b)"/>}
+                    {!done && !on && (
+                      <button className="btn btn-ghost" style={{width:"100%",marginTop:6}}
+                        disabled={S.gold < W.cost} onClick={()=>mut(d=>{ beginWork(d, k); })}>
+                        {S.gold < W.cost ? `${W.cost}d — not yet` : `Begin it · ${W.cost}d`}
+                      </button>
+                    )}
+                  </div>
+                ); })}
+            </Sect>
+          )}
+
+          {monuReady(S) && (
+            <Sect title="Monuments" note={`${monuAny(S).length} of ${MONU_KEYS.length}`} open={monuAny(S).length<MONU_KEYS.length}>
+              <div className="dim" style={{fontSize:14.5,fontStyle:"italic",marginBottom:7}}>
+                The great works are finished and the strongbox is still heavy. This is what is left to spend a fortune on — not blood or a better yard, but a name that outlives the man who made it.
+              </div>
+              {MONU_KEYS.map(k=>{ const W = MONUMENTS[k], on = workOn(S,k), done = workDone(S,k);
                 return (
                   <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:8,marginTop:8}}>
                     <div className="flex items-center justify-between gap-2">
