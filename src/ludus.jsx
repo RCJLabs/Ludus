@@ -1924,6 +1924,16 @@ function agenda(d){
   if((d.deadSteel||[]).length) add(1, "armory", `${d.deadSteel.length} piece${d.deadSteel.length===1?"":"s"} came back off a body`, "somebody will have to carry it");
   if((d.market||[]).length && d.gold > 500 && activeG(d).length < 6)
     add(1, "market", "There are men on the block", `${d.market.length} standing`);
+  /* the house's newer trades, surfaced so they introduce themselves */
+  if(d.doctore && d.gold>=SIG_FEE){ const sig = activeG(d).filter(g=>canLearnSig(d,g));
+    if(sig.length===1) add(1, "men", `${sig[0].name} could be taught a move of his own`, "a signature, from the doctore");
+    else if(sig.length>1) add(1, "men", `${sig.length} men could be taught a move of their own`, "signatures, from the doctore"); }
+  if(d.doctore && (d.doctore.drill||"none")==="none" && !d.flags.everDrill && activeG(d).length>=3)
+    add(1, "men", "The doctore is set to no drill", "put the whole yard on a week's emphasis");
+  if(merchLive(d) && d.brand && !d.brand.decided)
+    add(2, "villa", "The potters want your name", "license it wide, or keep it fine");
+  if(marryReady(d) && (d.flags.matchCool==null || d.week>=d.flags.matchCool))
+    add(1, "villa", "The matchmakers are calling", "a wife, and an heir of your own blood");
   return A.sort((a,b)=>b.urgency-a.urgency);
 }
 const URG = { 3:{c:"#d96f5d",w:"now"}, 2:{c:"#d8ac5f",w:"soon"}, 1:{c:"#b09b7d",w:"when you can"} };
@@ -5443,6 +5453,26 @@ const LESSONS = [
   { id:"wear", tab:"armory", title:"Steel Does Not Last",
     when:d=>d.gladiators.some(g=>SLOTS.some(s=>wears(GEAR[g.kit&&g.kit[s]]))),
     text:"House stock is maintained and lasts forever. Bought steel wears every bout and eventually breaks in the middle of one. Watch the condition, have it mended before it goes, and remember that a fine blade at nothing left is worse than the plain one on the rack." },
+
+  /* ---- the newer trades of the house — each unlocks when it becomes real ---- */
+  { id:"signature", tab:"men", title:"A Move Of His Own",
+    when:d=>d.doctore && activeG(d).some(g=>canLearnSig(d,g)),
+    text:"A man with six wins under him has earned more than the standard forms. Have the doctore drill him a move that is his alone — the Bulwark, the Widow, whatever his class is for — and it fires oftener, lands harder, and breaks the crowd with a named flourish when it does. Open his page in the familia, the training tab, and teach it." },
+  { id:"board", tab:"men", title:"The Doctore's Board",
+    when:d=>d.doctore && activeG(d).length>=3,
+    text:"The second face of the familia lays the whole yard out at once — every man's regimen and how worn he is, set in one place, with a tap to rest the strained or pair the whole block for sparring. And the doctore can put the entire yard on one drill for the week: conditioning to shed strain, bladework to sharpen the edge, the crowd, or hard sparring. A good doctore gets far more out of it than a poor one." },
+  { id:"acclaim", tab:"villa", title:"The House As A Name",
+    when:d=>acclaimOf(d)>=20,
+    text:"There is fame, which the editors and the good families keep — and there is your name in the street, which the wine-shops and the walls keep. Win famous men and spectacle and it climbs on its own: first talk, then your men's names scratched on walls, then clay figures of your best man on the potters' shelves, paying you a cut. When they come to license it, you choose — sell it wide for the coin, or keep it fine and few and worth the more." },
+  { id:"stagecraft", tab:"arena", title:"The Performance",
+    when:d=>d.games && d.games.offers && d.games.offers.some(o=>!o.pair&&!o.melee&&!o.venatio),
+    text:"A bout is a show before it is a fight. Choose how your man comes onto the sand — working the mob for the crowd, silent and grim to unsettle the other man, or saluting the boxes so the editor remembers him when he is down. And when it hangs in the balance and the crowd looks to your box, you can play them: work the moment for his life or his fame, or milk the other man's wound. Watch the CROWD reading — a loud house buys a beaten man his life." },
+  { id:"dynasty", tab:"villa", title:"Blood Of Your Own",
+    when:d=>marryReady(d),
+    text:"A man alone at the head of a ludus leaves nothing behind but a ledger. You are established enough now to take a wife — for a dowry, for the standing, or to fold up a rival's feud in a wedding. She bears the house children, and a son you raise yourself, in this yard, becomes an heir worth far more than whoever is left when you die. It lives on the Lanista's page." },
+  { id:"campania", tab:"ludus", title:"The Bay Is Alive",
+    when:d=>(d.rivals||[]).some(h=>h.star) || d.week>=24,
+    text:"The other houses of the bay are not standing still while you build. Each has good years and bad — a run of form that carries it up the fame table or drops it down, a rising man the whole bay starts to name. The Houses record shows each one's fortune and its best man, and the chronicle carries news of the bay that has nothing to do with you. A rival having a season is a rival to watch." },
 ];
 const lessonFor = (d, tab) => LESSONS.find(l => {
   if(l.tab!==tab || (d.flags.learned||{})[l.id]) return false;
@@ -11941,7 +11971,7 @@ export default function App(){
     [g,m].forEach(x=>{ if(x.sparWith){ const o=d.gladiators.find(y=>y.id===x.sparWith);
       if(o && o.id!==g.id && o.id!==m.id && o.sparWith===x.id){ o.regimen="palus"; o.sparWith=null; } } });
     g.regimen="spar"; g.sparWith=m.id; m.regimen="spar"; m.sparWith=g.id; });
-  const setDrill = key => mut(d=>{ if(d.doctore && DRILLS[key]) d.doctore.drill = key; });
+  const setDrill = key => mut(d=>{ if(d.doctore && DRILLS[key]){ d.doctore.drill = key; if(key!=="none") d.flags.everDrill = 1; } });
   const clearSparOf = (d,g)=>{ if(g.regimen==="spar" && g.sparWith){ const o=d.gladiators.find(x=>x.id===g.sparWith); if(o && o.sparWith===g.id){ o.regimen="palus"; o.sparWith=null; } } g.sparWith=null; };
   const boardMen = d => d.gladiators.filter(g=>g.status==="active" && !seasonOfMan(g));
   const restWorn = () => mut(d=>{ boardMen(d).forEach(g=>{ if(strainOf(g)>50 || g.fatigue>80){ clearSparOf(d,g); g.regimen="rest"; } }); });
@@ -13245,19 +13275,20 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
 
 
 
+          <Sect title="The house — records & annals" note={isFirstHouse(S) ? "✦ First House · lanista, houses, book…" : "lanista, the houses, the book, the roll…"}>
           <div className="grid grid-cols-2 gap-2">
-            {[["house","The House", `${BKEYS.filter(k=>bLevel(S,k)>0).length}/5 built`],
-              ["feats","Feats", `${FEAT_KEYS.filter(k=>hasFeat(S,k)).length}/${FEAT_KEYS.length}`],
-              ["repute","What Capua Says", repStyle(S)? REP_KINDS[repStyle(S)].name : "undecided"],
-              ["annals","The Annals", `${(S.annals||[]).length} served`],
-              ["roll","Roll of the House", `${((S.freed||[]).length)+((S.fallen||[]).length)+((S.retired||[]).length)} remembered`],
-              ["lanista","The Lanista", S.lanista? `${S.lanista.age}, ${healthWord(S.lanista.health)}` : "—"],
-              ["factions","The Stands", FACTIONS[facTop(S)].short + " " + facWord(facOf(S,facTop(S)))],
-              ["book","The Record Book", `${(S.book&&S.book.n)||0} bouts`],
-              ["carry","Carry It Out", "share this house"],
+            {[["lanista","The Lanista", S.lanista? `${S.lanista.age}, ${healthWord(S.lanista.health)}` : "—"],
               ["standings","The Houses", isFirstHouse(S) ? "✦ First House of Capua" : (()=>{ const t=leagueTable(S);
                 return `${ordN(t.findIndex(r=>r.you)+1)} of ${t.length} in Capua`; })()],
-              ["chron","The Chronicle", `${S.log.length} line${S.log.length===1?"":"s"}`]].map(([k,l,sub])=>(
+              ["house","The House", `${BKEYS.filter(k=>bLevel(S,k)>0).length}/5 built`],
+              ["factions","The Stands", FACTIONS[facTop(S)].short + " " + facWord(facOf(S,facTop(S)))],
+              ["repute","What Capua Says", repStyle(S)? REP_KINDS[repStyle(S)].name : "undecided"],
+              ["feats","Feats", `${FEAT_KEYS.filter(k=>hasFeat(S,k)).length}/${FEAT_KEYS.length}`],
+              ["book","The Record Book", `${(S.book&&S.book.n)||0} bouts`],
+              ["annals","The Annals", `${(S.annals||[]).length} served`],
+              ["roll","Roll of the House", `${((S.freed||[]).length)+((S.fallen||[]).length)+((S.retired||[]).length)} remembered`],
+              ["chron","The Chronicle", `${S.log.length} line${S.log.length===1?"":"s"}`],
+              ["carry","Carry It Out", "share this house"]].map(([k,l,sub])=>(
               <button key={k} className="optrow" style={{padding:11}}
                 onClick={()=>k==="annals"? setAnnals(true) : k==="carry"? carryOut() : k==="chron"? setShowChron(true) : setSheet(k)}>
                 <div className="disp" style={{fontSize:12.5,color:"#e8d092"}}>{l}</div>
@@ -13265,6 +13296,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               </button>
             ))}
           </div>
+          </Sect>
 
           {(()=>{ const now = festivalNow(S), soon = nextFestivals(S, 3);
             return (
@@ -14061,7 +14093,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         {tab==="villa" && (<div className="flex flex-col gap-3">
           <div className="flex gap-1" role="tablist" aria-label="Villa sections"
             style={{overflowX:"auto",borderBottom:"1px solid #33271a",paddingBottom:8}}>
-            {[["house","The House"],["standing","Standing"],["council","Coin & Council"],["familia","The Familia"]].map(([k,l])=>(
+            {[["house","The House"],["standing","Standing"],["council","Coin & Council"],["familia","The Cells"]].map(([k,l])=>(
               <button key={k} role="tab" aria-selected={vView===k} aria-label={l} onClick={()=>setVView(k)}
                 className={`chip ${vView===k?"on":""}`}
                 style={{whiteSpace:"nowrap",...(vView===k?{borderColor:"#c99a4b",color:"#e0bd72",background:"#2b2115"}:{})}}>
