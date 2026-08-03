@@ -13786,6 +13786,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
 
 
         {tab==="ludus" && (<div className="flex flex-col gap-3">
+          {/* The house's own name and standing lead the page — who you are first,
+              then what you are holding, then how that reads against your years. */}
           {(()=>{ const upkeepEst = Math.round(
               activeG(S).reduce((n,g)=> n + (10 + seasonUpkeep(S)) * pit(S,"upkeep") + (isAuctor(g)? g.auctor.wage : 0), 0)
               + bUpkeep(S) + collDues(S) + (S.doctore? docWage(S.doctore) : 0));
@@ -13796,11 +13798,32 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 <div className="disp" style={{fontSize:15,color:colour||"#e8d092",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{val}</div>
               </div>
             );
+            const REC = houseRecord(S);
+            const reg = activeG(S);
+            const avgReg = reg.length ? reg.reduce((n,g)=>n+regardOf(g),0)/reg.length : 0;
+            const rows = [
+              ["Fame", rnd(S.fame), standing("fame", S.fame, S.week)],
+              ["Coin", rnd(S.gold), standing("gold", S.gold, S.week)],
+              ["The cells", `${Math.round(S.unrest)} unrest`, standingLow("unrest", S.unrest)],
+              ["What they make of you", Math.round(avgReg), standing("regard", avgReg, S.week)],
+            ].filter(r=>r[2]);
             return (
-              <div className="panel" style={{padding:11}}>
-                <div className="flex items-center justify-between" style={{marginBottom:8}}>
-                  <span className="tag tag-gold">The house at a glance</span>
-                  <span className="rowval dim" style={{fontSize:12}}>{activeG(S).length} in the yard</span>
+              <div className="panel" style={{padding:13}}>
+                <div className="flex items-center gap-2" style={{marginBottom:9}}>
+                  {S.crest && <Crest crest={S.crest} size={34}/>}
+                  <div style={{minWidth:0,flex:"1 1 auto"}}>
+                    <div className="disp" style={{fontSize:17,fontWeight:900,letterSpacing:".1em",color:"#e8d092",lineHeight:1.15}}>
+                      {S.name.toUpperCase()}
+                      {(S.generation||1)>1 && <span style={{fontSize:12.5,color:"#b09b7d"}}> · {["","","II","III","IV","V","VI","VII"][S.generation]||S.generation}</span>}
+                    </div>
+                    <div className="dim" style={{fontSize:13,fontStyle:"italic",lineHeight:1.3}}>A ludus of Capua — {fameTitle(S.fame)}</div>
+                  </div>
+                </div>
+                <div className="flex gap-3" style={{fontSize:13.5,flexWrap:"wrap",paddingBottom:9,marginBottom:9,borderBottom:"1px dotted #33271a"}}>
+                  <span>Familia {roster.length}/8</span>
+                  <span className="blood">Fallen {S.fallen.length}</span>
+                  <span className="gold">Freed {S.freed.length}</span>
+                  <span className="dim" style={{marginLeft:"auto"}}>{activeG(S).length} in the yard</span>
                 </div>
                 <div className="grid grid-cols-3 gap-2" style={{marginBottom:9}}>
                   <Stat label="Coin" val={`${rnd(S.gold)}d`} colour={S.gold<0?"#d96f5d":"#e0bd72"}/>
@@ -13808,11 +13831,17 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   <Stat label={merch>0?"Potters":"Owed you"} val={merch>0?`+${merch}d/wk`:`${owedIn}d`} colour={merch>0?"#9aa86a":"#cfc0a0"}/>
                   <Stat label="Fame" val={rnd(S.fame)} colour="#d8c08a"/>
                   <Stat label="Standing" val={rnd(S.favor)} colour="#bfa8c8"/>
-                  <Stat label="The name" val={acclaimWord(acclaimOf(S))} colour="#e0bd72"/>
+                  <Stat label="Record" val={`${REC.w}\u2013${REC.l}`} colour="#cfc0a0"/>
                 </div>
-                <div className="flex items-center justify-between" style={{fontSize:12,marginBottom:3}}>
-                  <span className="dim" style={{textTransform:"uppercase",letterSpacing:".06em",fontSize:10.5}}>Unrest — the one number that ends a run</span>
-                  <span style={{color: S.unrest>=68?"#d96f5d":S.unrest>=45?"#d8ac5f":"#9aa86a"}}>{unrestWord(S.unrest)}</span>
+                {/* the two readings that do not fit a number: what the town calls you,
+                    and how close the cells are to ending the run */}
+                <div className="flex items-center justify-between gap-2" style={{fontSize:12,marginBottom:5}}>
+                  <span className="dim" style={{textTransform:"uppercase",letterSpacing:".06em",fontSize:10.5,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>The name</span>
+                  <span style={{color:"#e0bd72",flexShrink:0}}>{acclaimWord(acclaimOf(S))}</span>
+                </div>
+                <div className="flex items-center justify-between gap-2" style={{fontSize:12,marginBottom:3}}>
+                  <span className="dim" style={{textTransform:"uppercase",letterSpacing:".06em",fontSize:10.5,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>Unrest — ends a run</span>
+                  <span style={{color: S.unrest>=68?"#d96f5d":S.unrest>=45?"#d8ac5f":"#9aa86a",flexShrink:0}}>{unrestWord(S.unrest)}</span>
                 </div>
                 <div className="track" style={{height:6}}>
                   <div className="fill" style={{width:`${clamp(S.unrest,0,100)}%`, background: S.unrest>=68?"linear-gradient(90deg,#7c2a22,#d96f5d)":"linear-gradient(90deg,#5a4a2c,#d8ac5f)"}}/>
@@ -13822,6 +13851,25 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     <span className="dim" style={{textTransform:"uppercase",letterSpacing:".06em",fontSize:10.5}}>After you · {S.lanista.age}, {healthWord(S.lanista.health)}</span>
                     <span style={{color: S.heir?"#9aa86a":"#d96f5d"}}>{S.heir ? `heir: ${S.heir.name.split(" ")[0]}` : "no heir named"}</span>
                   </div>
+                )}
+                {rows.length>0 && (
+                  <details className="sect" style={{marginTop:9,background:"none",border:"none",boxShadow:"none",padding:0}}>
+                    <summary style={{padding:"7px 0 3px"}}>
+                      <span className="dim" style={{fontSize:11,textTransform:"uppercase",letterSpacing:".08em",minWidth:0,overflow:"hidden",textOverflow:"ellipsis"}}>Against a house {S.week} weeks old</span>
+                      <span className="chev" aria-hidden="true">⌄</span>
+                    </summary>
+                    <div style={{paddingTop:2}}>
+                      {rows.map(([label,v,st],i)=>(
+                        <div key={i} className="flex items-center justify-between gap-2" style={{padding:"3px 0"}}>
+                          <span className="rowname" style={{fontSize:13.5,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{label}</span>
+                          <span className="flex items-center gap-2" style={{flexShrink:0}}>
+                            <span style={{fontSize:13.5,color:"#e0bd72"}}>{v}</span>
+                            <span style={{fontSize:12,color:st.colour,whiteSpace:"nowrap"}}>{st.word}</span>
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </details>
                 )}
               </div>
             ); })()}
@@ -13986,39 +14034,6 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 )}
               </div>
             </>); })()}
-          <div className="panel" style={{padding:16,textAlign:"center"}}>
-            <div className="disp" style={{fontSize:21,fontWeight:900,letterSpacing:".15em",color:"#e8d092"}}>{S.name.toUpperCase()}</div>
-            <div className="dim" style={{fontStyle:"italic"}}>A ludus of Capua — {fameTitle(S.fame)}</div>
-            <div className="flex justify-center gap-4" style={{marginTop:8,fontSize:14.5}}>
-              <span>Familia {roster.length}/8</span>
-              <span className="blood">Fallen {S.fallen.length}</span>
-              <span className="gold">Freed {S.freed.length}</span>
-            </div>
-            {(()=>{ const reg = activeG(S);
-              const avgReg = reg.length ? reg.reduce((n,g)=>n+regardOf(g),0)/reg.length : 0;
-              const rows = [
-                ["Fame", rnd(S.fame), standing("fame", S.fame, S.week)],
-                ["Coin", rnd(S.gold), standing("gold", S.gold, S.week)],
-                ["The cells", `${Math.round(S.unrest)} unrest`, standingLow("unrest", S.unrest)],
-                ["What they make of you", Math.round(avgReg), standing("regard", avgReg, S.week)],
-              ].filter(r=>r[2]);
-              return (
-                <div style={{marginTop:10,borderTop:"1px dotted #33271a",paddingTop:7}}>
-                  <div className="dim" style={{fontSize:12,marginBottom:4,letterSpacing:".08em"}}>
-                    AGAINST A HOUSE {S.week} WEEKS OLD
-                  </div>
-                  {rows.map(([label,v,st],i)=>(
-                    <div key={i} className="flex items-center justify-between gap-2" style={{padding:"3px 0"}}>
-                      <span className="rowname" style={{fontSize:13.5}}>{label}</span>
-                      <span className="flex items-center gap-2">
-                        <span className="rowval" style={{fontSize:13.5,color:"#e0bd72"}}>{v}</span>
-                        <span style={{fontSize:12,color:st.colour,whiteSpace:"nowrap",minWidth:118,textAlign:"right"}}>{st.word}</span>
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              ); })()}
-          </div>
           {S.rome && (
             <div className="panel" style={{padding:14,borderColor:"#c99a4b",background:"linear-gradient(165deg,#2f2415,#1d1610)"}}>
               <div className="disp" style={{fontSize:15,fontWeight:900,letterSpacing:".14em",color:"#e8d092",marginBottom:5}}>ROME</div>
