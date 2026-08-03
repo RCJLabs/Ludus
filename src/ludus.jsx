@@ -1873,7 +1873,7 @@ function agenda(d){
     const n = x.due - d.week;
     if(n > 2) continue;
     const lbl = x.kind==="booking" ? `${x.name} is contracted for ${x.festName}`
-      : x.kind==="challenge" ? `${x.name} was named in public`
+      : x.kind==="challenge" ? (x.mine ? `${x.name} must answer for your word` : `${x.name} was named in public`)
       : `A levy of ${x.amount}d`;
     add(n<=0?3:2, x.kind==="levy"?"villa":"arena", lbl, n<=0?"due this week":n===1?"due next week":`${n} weeks`);
   }
@@ -3440,7 +3440,7 @@ function makeGames(d){
     const h = (d.rivals||[]).find(y=>y.name===ch.house);
     const f = h && h.fighters.find(y=>y.id===ch.fid);
     if(f){ const oc = clone(f); oc.house = h.name;
-      offers.push({ id:d.nextId++, tier:2, festival, challenge:ch.id, nemGrudge:!!ch.nem, sagaBout:!!ch.saga, huntBout:!!ch.hunt, bookedGid:ch.gid,
+      offers.push({ id:d.nextId++, tier:2, festival, challenge:ch.id, myChallenge:!!ch.mine, nemGrudge:!!ch.nem, sagaBout:!!ch.saga, huntBout:!!ch.hunt, bookedGid:ch.gid,
         opp:oc, oppRef:{house:h.name,fid:f.id}, rematch:true, grudgeM:true, stakes:"standard", purse:ch.purse }); }
   }
   const slots = (F.offers==null ? 2 : F.offers) + (st==="show" ? 1 : 0) + aedileOffers(d);
@@ -4766,6 +4766,8 @@ function deadlineWeek(d){
           ? `The day of the reckoning came, and ${x.name} did not stand on the sand for it. Whatever the crowd was building toward, it lets the breath out all at once. A story you do not finish is a story people stop telling.`
           : x.nem
           ? `The day came and went and ${x.name} did not stand. ${x.lan} does not have to say a word — House ${x.house} spent the season demanding the grudge match, and your house did not make it.`
+          : x.mine
+          ? `You named ${x.foe||"him"} in public and ${x.name} was not on the sand on the day. House ${x.house} did not have to do anything at all — the town worked out on its own whose word it was.`
           : `${x.name} did not answer ${x.lan}'s challenge. House ${x.house} says nothing about it publicly, which is how they say the most.`, "bad");
         if(x.nem && d.nemHouse){ d.nemHouse.stage = 2; d.nemHouse.heat = clamp(d.nemHouse.heat-20, 25, 100); d.flags.nemCool = d.week; }
         if(x.saga && d.saga){ d.saga.stage = 2; d.saga.renown = clamp(d.saga.renown-30, 30, 100); }
@@ -7181,6 +7183,57 @@ function scoutMan(d, hName, fid){
   f.seen = d.week;
   chron(d, `Somebody of yours spends three afternoons at House ${h.name}'s wall watching ${f.name} work, and ${c} denarii buys the rest of it from a man who sweeps their yard.`, "info");
   return { ok:true, cost:c };
+}
+
+/* ---- NAMING A MAN IN PUBLIC ----
+   For forty versions the challenges all ran the other way: a rival said a name and
+   your house had to answer it. This is the other direction. You pick the man out of
+   somebody else's yard, you say it where it will be repeated, and then it is your
+   house that has to stand on the day. He does not have to accept, and a house does
+   not answer for a man who has nothing to gain by it. */
+const challengeFee  = (d, h, f) => rnd(70 + gladValue(f)*0.07 + (f.pfame||0)*3 + (h.grudge||0)*2);
+const challengePurse = (d, f, g) => rnd(380 + (f.pfame||0)*9 + ((g&&g.pfame)||0)*7 + (d.fame||0)*0.22);
+const answerOdds = (d, h, f, g) => clamp(
+  0.62 + ((h.grudge||0) - 30)/180 + (((g&&g.pfame)||0) - (f.pfame||0))/110
+       - ((h.star && h.star.id===f.id) ? 0.14 : 0), 0.10, 0.95);
+const answerWord = o => o>=0.85 ? "he will not be able to refuse it"
+  : o>=0.65 ? "he will most likely answer"
+  : o>=0.45 ? "it could go either way"
+  : o>=0.25 ? "he may well laugh at it"
+  : "he has no reason on earth to answer";
+function nameBlocked(d){
+  if(d.over) return "This house is finished.";
+  if(d.rome) return "You are in Rome. Capua can wait.";
+  if(d.city || d.travel) return "You are not in Capua to say it where it counts.";
+  if((d.deadlines||[]).some(x=>x.kind==="challenge")) return "There is already a day named. One at a time.";
+  return null;
+}
+function nameHim(d, hName, fid, gid){
+  const why = nameBlocked(d); if(why) return { ok:false, why };
+  const h = houseOf(d, hName); if(!h) return { ok:false, why:"That house is not there any more." };
+  const f = (h.fighters||[]).find(x=>x.id===fid); if(!f) return { ok:false, why:"He is not on their card any more." };
+  if(f.injury) return { ok:false, why:`${f.name} is carrying an injury. Nobody will make a day of it while he is.` };
+  const g = d.gladiators.find(x=>x.id===gid && x.status==="active");
+  if(!g) return { ok:false, why:"That man of yours cannot stand." };
+  const fee = challengeFee(d, h, f);
+  if(d.gold < fee) return { ok:false, why:`Saying a thing publicly costs ${fee} denarii in the right ears, and you have not got it.` };
+  d.gold -= fee;
+  const L = lanistaOf(h.name).name;
+  if(R() > answerOdds(d, h, f, g)){
+    h.grudge = clamp(h.grudge + 5, 0, 100);
+    d.fame = Math.max(0, d.fame - 5);
+    chron(d, `You name ${f.name} of House ${h.name} and put ${g.name} against him, and ${L} does not answer. He does not refuse either — he simply lets it sit until the town stops repeating it, which takes about four days.`, "bad");
+    return { ok:false, refused:true, why:`${L} lets it sit. The ${fee} denarii are gone and the town has moved on.` };
+  }
+  const due = d.week + ri(3, 6);
+  const purse = challengePurse(d, f, g);
+  addDeadline(d, { kind:"challenge", mine:true, gid:g.id, name:g.name, house:h.name, lan:L,
+    fid:f.id, foe:f.name, star: !!(h.star && h.star.id===f.id), due, purse, met:false });
+  h.grudge = clamp(h.grudge + 14, 0, 100);
+  d.fame += 6;
+  addRep(d, "show", 4);
+  chron(d, `You say it where it will be repeated: ${g.name} of your house against ${f.name} of House ${h.name}, inside ${due-d.week} weeks. ${L} answers the same afternoon, which tells you he had been waiting to be asked.`, "event");
+  return { ok:true, due, purse, fee, foe:f.name, mine:g.name };
 }
 
 /* and the thing you can buy that is not a man */
@@ -12392,6 +12445,7 @@ export default function App(){
   const [dealH,setDealH] = useState(null);   /* the rival house you are treating with */
   const [dealMsg,setDealMsg] = useState(null);
   const [manCard,setManCard] = useState(null); /* {house, fid} — a rival's man, opened up */
+  const [nameFor,setNameFor] = useState(null);  /* the rival's man you are about to name in public */
   const [rack,setRack] = useState("weapon");
   const [seedIn,setSeedIn] = useState("");
   useEffect(()=>{ if(tab==="market" && S && !S.flags.sawFirstBuy) mut(d=>{ firstBuyWarn(d); }); }, [tab]);
@@ -12558,7 +12612,8 @@ export default function App(){
      run — is deliberately not in this list and still has to be answered. */
   const LAYERS = [
     [!!ask,          ()=>setAsk(null)],
-    [!!manCard,      ()=>setManCard(null)],
+    [!!nameFor,      ()=>setNameFor(null)],
+    [!!manCard,      ()=>{ setManCard(null); setNameFor(null); }],
     [!!dealH,        ()=>{ setDealH(null); setDealMsg(null); }],
     [!!xfer,         ()=>setXfer(null)],
     [!!gearPick,     ()=>setGearPick(null)],
@@ -12621,6 +12676,11 @@ export default function App(){
     setDealMsg(r && r.ok ? `${r.name} is yours for ${r.ask} denarii.` : (r && r.why) || "Nothing comes of it."); };
   const doCourtMan = (hName, fid) => { let r=null; mut(d=>{ r = startCourt(d, hName, fid); });
     setDealMsg(r && r.ok ? `Word is passed, and ${r.cost} denarii with it. You will know inside ${r.weeks} weeks — one way or the other.` : (r && r.why) || "Nothing comes of it."); };
+  const doNameHim = (hName, fid, gid) => { let r=null; mut(d=>{ r = nameHim(d, hName, fid, gid); });
+    setNameFor(null);
+    setDealMsg(r && r.ok
+      ? `The day is named — ${r.mine} against ${r.foe}, inside ${r.due - S.week} weeks, for ${r.purse} denarii. It goes on the card at the next games.`
+      : (r && r.why) || "Nothing comes of it."); };
   const doScoutMan = (hName, fid) => { let r=null; mut(d=>{ r = scoutMan(d, hName, fid); });
     setDealMsg(r && r.ok ? `Three afternoons and ${r.cost} denarii. You have his measure now — for a while.` : (r && r.why) || "Nothing comes of it."); };
   const doPeace = hName => { let r=null; mut(d=>{ r = makePeace(d, hName); });
@@ -16806,6 +16866,9 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         const busy = !!S.court;
         const tells = seen ? manTells(S, f) : [];
         const mine = matchAgainst(S, f).slice(0, 5);
+        const fee = challengeFee(S, h, f);
+        const blocked = nameBlocked(S);
+        const naming = !!(nameFor && nameFor.house===h.name && nameFor.fid===f.id);
         return (
           <div className="modalwrap" role="dialog" aria-modal="true" aria-label={f.name} style={{zIndex:66}} onClick={()=>setManCard(null)}>
             <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
@@ -16881,6 +16944,31 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               </div>
 
               <div className="tag tag-gold" style={{display:"inline-block",marginBottom:6}}>What you can do about him</div>
+              {naming ? (()=>{
+                /* whose name goes against his — every fit man of yours, with the reading */
+                const fit = mine.filter(m=>!m.g.injury);
+                return (
+                  <div className="panel" style={{padding:"10px 11px",borderColor:"#6d5426",background:"#1c1610"}}>
+                    <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:8,lineHeight:1.4}}>
+                      Whose name goes against his? Say it and the town holds you to it — if your man is not
+                      on the sand by the day, it is your house the story is about.
+                    </div>
+                    {fit.length===0
+                      ? <div className="blood" style={{fontSize:13.5,fontStyle:"italic"}}>You have nobody fit to name.</div>
+                      : fit.map(m=>(
+                          <button key={m.g.id} className="optrow" style={{padding:"9px 10px",marginBottom:6}}
+                            onClick={()=>doNameHim(h.name, f.id, m.g.id)}>
+                            <div className="flex items-center justify-between gap-2">
+                              <span style={{fontSize:14,color:"#e8d9b8",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                                {m.g.name}<span className="dim" style={{fontSize:12}}> · {m.g.cls}</span>
+                              </span>
+                              <span className="rowval" style={{fontSize:12,color:m.colour}}>{m.word}</span>
+                            </div>
+                          </button>
+                        ))}
+                    <button className="btn btn-ghost" style={{width:"100%",marginTop:2}} onClick={()=>setNameFor(null)}>Say nothing</button>
+                  </div>
+                ); })() : (<>
               <div className="grid grid-cols-2 gap-2">
                 <button className="btn btn-ghost" style={{fontSize:12.5}}
                   disabled={!sell || S.gold<ask || rosterFull(S)}
@@ -16893,6 +16981,22 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   {busy ? "A word already out" : `A word in his ear · ${cc}d`}
                 </button>
               </div>
+              <button className="btn btn-blood" style={{width:"100%",marginTop:7,fontSize:12.5}}
+                disabled={!!blocked || !!f.injury || S.gold<fee || mine.length===0}
+                onClick={()=>setNameFor({ house:h.name, fid:f.id })}>
+                {blocked ? blocked
+                  : f.injury ? "He is in no state to be named"
+                  : mine.length===0 ? "You have nobody to put against him"
+                  : S.gold<fee ? `Name him in public · ${fee}d — not enough`
+                  : `Name him in public · ${fee}d`}
+              </button>
+              {!blocked && !f.injury && mine.length>0 && (
+                <div className="dim" style={{fontSize:12.5,fontStyle:"italic",marginTop:4,lineHeight:1.35}}>
+                  If you named him today, {answerWord(answerOdds(S, h, f, mine[0].g))}.
+                  The purse would be about {challengePurse(S, f, mine[0].g)}d.
+                </div>
+              )}
+              </>)}
               {rosterFull(S) && <div className="blood" style={{fontSize:13,marginTop:7,fontStyle:"italic"}}>Your cells are full — nobody else can be taken in.</div>}
               <div className="dim" style={{fontSize:12.5,fontStyle:"italic",marginTop:7,lineHeight:1.35}}>
                 {L.name} is {grudgeWord(h.grudge).toLowerCase()} toward your house. Everything above is priced accordingly.
@@ -17329,7 +17433,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 {o.nemGrudge && <span className="tag tag-blood">✦ The Grudge</span>}
                 {o.sagaBout && <span className="tag tag-gold">✦ The Reckoning</span>}
                 {o.huntBout && <span className="tag tag-blood">✦ The Hunt</span>}
-                {o.challenge && !o.nemGrudge && !o.sagaBout && !o.huntBout && <span className="tag tag-blood">✦ Challenge</span>}
+                {o.challenge && !o.nemGrudge && !o.sagaBout && !o.huntBout && <span className="tag tag-blood">✦ {o.myChallenge?"Your word":"Challenge"}</span>}
                 {o.stakes==="sine" && <span className="tag tag-blood">Sine missione</span>}
                 {o.rematch && <span className="tag tag-blood">Rematch</span>}
                 {nemesisIn(S,o.opp) && <span className="tag tag-blood">✦ {nemesisIn(S,o.opp).title}</span>}
@@ -17474,7 +17578,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 {o.booking && <span className="tag tag-gold">✦ Contracted</span>}
                 {o.nemGrudge && <span className="tag tag-blood">✦ The Grudge</span>}
                 {o.sagaBout && <span className="tag tag-gold">✦ The Reckoning</span>}
-                {o.challenge && !o.nemGrudge && !o.sagaBout && <span className="tag tag-blood">✦ The challenge</span>}
+                {o.challenge && !o.nemGrudge && !o.sagaBout && <span className="tag tag-blood">✦ {o.myChallenge?"The day you named":"The challenge"}</span>}
                 {o.stakes==="sine" && <span className="tag tag-blood">Sine missione</span>}
                 {o.rematch && <span className="tag tag-blood">Rematch</span>}
                 {nemesisIn(S,o.opp) && <span className="tag tag-blood">✦ {nemesisIn(S,o.opp).title}</span>}
