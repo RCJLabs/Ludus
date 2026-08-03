@@ -2,6 +2,8 @@
 const fs = require("fs");
 const esbuild = require("esbuild");
 
+const VERSION = require("./package.json").version;
+
 esbuild.buildSync({
   entryPoints: ["src/main.jsx"],
   bundle: true,
@@ -27,6 +29,8 @@ const html = `<!doctype html>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="LVDVS"/>
+<meta name="app-version" content="${VERSION}"/>
+<script>window.__LVDVS_VERSION=${JSON.stringify(VERSION)};</script>
 <style>*,*::before,*::after{box-sizing:border-box}html,body{margin:0;padding:0;background:#171210;max-width:100%;overflow-x:clip}#root{min-height:100vh}html:has(.shell),body:has(.shell){overscroll-behavior:none}</style>
 <script>
 (function(){
@@ -71,7 +75,6 @@ const html = `<!doctype html>
 fs.writeFileSync("index.html", html);
 
 /* ---- the offline shell: manifest, worker, icons ---- */
-const VERSION = require("./package.json").version;
 const SHELL = ["./", "./index.html", "./manifest.webmanifest",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/icon-maskable-512.png"];
 

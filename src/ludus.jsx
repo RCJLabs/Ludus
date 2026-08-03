@@ -12190,6 +12190,9 @@ const OVER_TEXT = {
   ruin: ()=>({ title:"AN EMPTY HOUSE", text:"No men. No coin. A lanista with an empty ludus is only a man with a large, quiet building. The gates are shuttered, and the wind moves the sand where champions might have trained." }),
 };
 
+/* Stamped into the page head at build time. Empty when the source is run raw. */
+const APP_VERSION = (typeof window !== "undefined" && window.__LVDVS_VERSION) || "";
+
 const SLOTS_N = 3;
 const LEGACY_KEY = "ludus-save-v1";
 const slotKey = i => `ludus-slot-${i}`;
@@ -13006,10 +13009,100 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
     </div>
   );
 
+  /* One settings sheet, reachable from the records screen and from any week inside a
+     house. The preferences are device-wide; only "This house" needs a house open. */
+  const settingsSheet = ()=>{
+    const Row = ({label, desc, on, onToggle}) => (
+      <button className={`optrow${on?" on":""}`} onClick={onToggle} aria-pressed={on} style={{display:"block",marginBottom:7}}>
+        <div className="flex items-center justify-between gap-2">
+          <span className="disp" style={{fontSize:12.5,color:"#e8d092",minWidth:0}}>{label}</span>
+          <span className="chip" style={{flexShrink:0,pointerEvents:"none",...(on?{borderColor:"#c99a4b",color:"#e0bd72",background:"#2b2115"}:{})}}>{on?"On":"Off"}</span>
+        </div>
+        {desc && <div className="dim" style={{fontSize:12.5,marginTop:3,lineHeight:1.35}}>{desc}</div>}
+      </button>
+    );
+    const Group = ({title, note, children}) => (
+      <div className="panel" style={{padding:"10px 11px 5px",marginBottom:9}}>
+        <div className="tag tag-gold" style={{display:"inline-block",marginBottom:note?4:8}}>{title}</div>
+        {note && <div className="dim" style={{fontSize:12.5,fontStyle:"italic",marginBottom:8,lineHeight:1.35}}>{note}</div>}
+        {children}
+      </div>
+    );
+    const offline = typeof navigator!=="undefined" && "serviceWorker" in navigator && !!navigator.serviceWorker.controller;
+    const updateReady = typeof window!=="undefined" && !!window.__lvdvsUpdate;
+    return (
+      <div className="modalwrap" role="dialog" aria-modal="true" aria-label="Settings" style={{zIndex:64}} onClick={()=>setShowSettings(false)}>
+        <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
+          <div className="flex items-center justify-between gap-2" style={{marginBottom:10}}>
+            <div className="disp" style={{fontSize:15,fontWeight:900,letterSpacing:".12em",color:"#e8d092"}}>SETTINGS</div>
+            <button className="btn btn-ghost" style={{padding:"10px 10px",flexShrink:0}} aria-label="Close" onClick={()=>setShowSettings(false)}><X size={14}/></button>
+          </div>
+
+          <Group title="Sound">
+            <Row label="Sound effects" desc="The clash of arms and the roar of the crowd."
+              on={prefs.sound} onToggle={()=>setPref("sound", !prefs.sound)}/>
+          </Group>
+
+          <Group title="Reading">
+            <Row label="Larger text" desc="Enlarges the body text throughout the house."
+              on={prefs.largeText} onToggle={()=>setPref("largeText", !prefs.largeText)}/>
+            <Row label="Reduce motion" desc="Stills the shake, blood, and other movement in the arena."
+              on={prefs.reduceMotion} onToggle={()=>setPref("reduceMotion", !prefs.reduceMotion)}/>
+            <Row label="Colourblind-friendly" desc="Turns the 'good' greens on meters and status to a blue that reads clear against the reds."
+              on={prefs.colorblind} onToggle={()=>setPref("colorblind", !prefs.colorblind)}/>
+          </Group>
+
+          {S && (
+            <Group title="Guidance">
+              <Row label="Show tips" desc="The gatekeeper's notes on each part of the ludus."
+                on={!S.flags.noLessons}
+                onToggle={()=>mut(d=>{ const off = !S.flags.noLessons; d.flags.noLessons = off?1:0; if(!off) d.flags.learned = {}; })}/>
+              <button className="btn btn-ghost" style={{width:"100%",marginBottom:7}}
+                onClick={()=>{ setShowSettings(false); setGuideStep(0); setShowGuide(true); }}>Replay the opening guide</button>
+            </Group>
+          )}
+
+          {S && (
+            <Group title="This house"
+              note={`Kept automatically${saved? ` — last saved ${whenWord(saved)}`:""}. Slot ${slot||1} of ${SLOTS_N}.`}>
+              <div className="grid grid-cols-2 gap-2" style={{marginBottom:7}}>
+                <button className="btn btn-ghost" onClick={()=>{ setShowSettings(false); setXfer({mode:"export"}); }}>Copy transfer code</button>
+                <button className="btn btn-ghost" onClick={()=>{ setShowSettings(false); toTitle(); }}>Switch houses</button>
+              </div>
+            </Group>
+          )}
+
+          <Group title="About">
+            <div className="flex items-center justify-between gap-2" style={{marginBottom:4}}>
+              <span className="disp" style={{fontSize:12.5,color:"#e8d092",minWidth:0,overflow:"hidden",textOverflow:"ellipsis"}}>LVDVS — Blood &amp; Sand</span>
+              <span className="rowval" style={{fontSize:12.5,color:"#c9a961",fontFamily:"ui-monospace,Menlo,monospace"}}>
+                {APP_VERSION ? `v${APP_VERSION}` : "unversioned build"}
+              </span>
+            </div>
+            <div className="dim" style={{fontSize:12.5,marginBottom:8,lineHeight:1.35}}>
+              {offline
+                ? "Kept on this device. It runs with the connection off."
+                : "Running from the page. Add it to your home screen and it will keep working offline."}
+            </div>
+            {updateReady && (
+              <button className="btn" style={{width:"100%",marginBottom:8}} onClick={()=>{ try{ location.reload(); }catch(e){} }}>
+                A newer version is ready — take it up
+              </button>
+            )}
+          </Group>
+
+          <button className="btn" style={{width:"100%",marginTop:2}} onClick={()=>setShowSettings(false)}>Done</button>
+        </div>
+      </div>
+    );
+  };
+
   if(screen==="title") return (
-    <div className="lr" style={{display:"flex",alignItems:"safe center",justifyContent:"center",padding:20}}>
+    <div className={`lr${prefs.reduceMotion?" reduce-motion":""}${prefs.largeText?" large-text":""}${prefs.colorblind?" cb":""}`}
+      style={{display:"flex",alignItems:"safe center",justifyContent:"center",padding:20}}>
       <style>{CSS}</style>
       <CarrySheet/>
+      {showSettings && settingsSheet()}
       {fight && <FightModal fight={fight} startMuted={!prefs.sound} houseCol={S && S.crest}
         onClose={()=>{ SFX.stopCrowd(); setFight(null); }}
         onSpeak={null} onMute={v=>setPref("sound", !v)}/>}
@@ -13051,6 +13144,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           );
         })}
         <button className="btn btn-ghost" style={{width:"100%",marginTop:4}} onClick={()=>{ setXfer({mode:"import"}); setXferIn(""); }}>Restore a house from a transfer code</button>
+        <button className="btn btn-ghost" style={{width:"100%",marginTop:6}} onClick={()=>setShowSettings(true)}>Settings{APP_VERSION? ` · v${APP_VERSION}`:""}</button>
         <div className="dim" style={{textAlign:"center",fontSize:12.5,marginTop:10,fontStyle:"italic"}}>Three houses may run at once. Each keeps its own ledger between visits.</div>
       </div>
       {ask && (
@@ -16640,55 +16734,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         </div>
       )}
 
-      {showSettings && (()=>{
-        const Row = ({label, desc, on, onToggle}) => (
-          <button className={`optrow${on?" on":""}`} onClick={onToggle} aria-pressed={on} style={{display:"block",marginBottom:8}}>
-            <div className="flex items-center justify-between gap-2">
-              <span className="disp" style={{fontSize:12.5,color:"#e8d092"}}>{label}</span>
-              <span className="chip" style={{pointerEvents:"none",...(on?{borderColor:"#c99a4b",color:"#e0bd72",background:"#2b2115"}:{})}}>{on?"On":"Off"}</span>
-            </div>
-            {desc && <div className="dim" style={{fontSize:12.5,marginTop:3,lineHeight:1.35}}>{desc}</div>}
-          </button>
-        );
-        return (
-          <div className="modalwrap" role="dialog" aria-modal="true" aria-label="Settings" style={{zIndex:64}} onClick={()=>setShowSettings(false)}>
-            <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
-              <div className="flex items-center justify-between" style={{marginBottom:12}}>
-                <div className="disp" style={{fontSize:15,fontWeight:900,letterSpacing:".12em",color:"#e8d092"}}>SETTINGS</div>
-                <button className="btn btn-ghost" style={{padding:"10px 10px"}} aria-label="Close" onClick={()=>setShowSettings(false)}><X size={14}/></button>
-              </div>
-
-              <div className="tag" style={{marginBottom:8}}>Sound</div>
-              <Row label="Sound effects" desc="The clash of arms and the roar of the crowd."
-                on={prefs.sound} onToggle={()=>setPref("sound", !prefs.sound)}/>
-
-              <div className="tag" style={{display:"block",marginTop:12,marginBottom:8}}>Accessibility</div>
-              <Row label="Reduce motion" desc="Stills the shake, blood, and other movement in the arena."
-                on={prefs.reduceMotion} onToggle={()=>setPref("reduceMotion", !prefs.reduceMotion)}/>
-              <Row label="Larger text" desc="Enlarges the body text throughout the house."
-                on={prefs.largeText} onToggle={()=>setPref("largeText", !prefs.largeText)}/>
-              <Row label="Colourblind-friendly" desc="Turns the 'good' greens on meters and status to a blue that reads clear against the reds."
-                on={prefs.colorblind} onToggle={()=>setPref("colorblind", !prefs.colorblind)}/>
-              <Row label="Show tips" desc="The gatekeeper's notes on each part of the ludus."
-                on={!S.flags.noLessons} onToggle={()=>mut(d=>{ const off = !S.flags.noLessons; d.flags.noLessons = off?1:0; if(!off) d.flags.learned = {}; })}/>
-              <button className="btn btn-ghost" style={{width:"100%",marginTop:8}}
-                onClick={()=>{ setShowSettings(false); setGuideStep(0); setShowGuide(true); }}>Replay the opening guide</button>
-
-              <div className="tag" style={{display:"block",marginTop:12,marginBottom:8}}>This house</div>
-              <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:9,lineHeight:1.4}}>
-                Kept automatically{saved? ` — last saved ${whenWord(saved)}`:""}. Slot {slot||1} of {SLOTS_N}.
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <button className="btn btn-ghost" onClick={()=>{ setShowSettings(false); setXfer({mode:"export"}); }}>Copy transfer code</button>
-                <button className="btn btn-ghost" onClick={()=>{ setShowSettings(false); toTitle(); }}>Switch houses</button>
-              </div>
-
-              <div className="dim" style={{fontSize:12,textAlign:"center",marginTop:14,fontStyle:"italic"}}>LVDVS — Blood &amp; Sand</div>
-              <button className="btn" style={{width:"100%",marginTop:10}} onClick={()=>setShowSettings(false)}>Done</button>
-            </div>
-          </div>
-        );
-      })()}
+      {showSettings && settingsSheet()}
 
       {S.succession && (()=>{ const H = HEIRS[S.succession.kind];
         return (
