@@ -12322,6 +12322,47 @@ export default function App(){
   const [skipped,setSkipped] = useState(null);
   const runOn = () => mut(d=>{ const r = skipWeeks(d, weeksToSomething(d, 6)); setSkipped(r); });
 
+  /* ---- ONE WAY OUT ----
+     Twenty-five overlays had grown up with their own ideas about how to leave them:
+     some closed on the backdrop, some only on a corner cross, and the phone's own
+     back button closed the whole game rather than the thing on top of it. These are
+     the dismissible ones, topmost first. Escape and the system back both take one
+     layer off. Anything demanding a decision — an offer, a succession, the end of a
+     run — is deliberately not in this list and still has to be answered. */
+  const LAYERS = [
+    [!!ask,          ()=>setAsk(null)],
+    [!!dealH,        ()=>{ setDealH(null); setDealMsg(null); }],
+    [!!xfer,         ()=>setXfer(null)],
+    [!!gearPick,     ()=>setGearPick(null)],
+    [!!sparPick,     ()=>setSparPick(null)],
+    [!!showChron,    ()=>setShowChron(false)],
+    [!!annals,       ()=>setAnnals(false)],
+    [!!sheet,        ()=>setSheet(null)],
+    [!!showSettings, ()=>setShowSettings(false)],
+    [!!munusWiz,     ()=>setMunusWiz(false)],
+    [!!arenaWiz,     ()=>{ setArenaWiz(false); setArenaStep(0); setArenaPick(null); }],
+    [!!skipped,      ()=>setSkipped(null)],
+    [!!digest,       ()=>setDigest(null)],
+    [!!selId,        ()=>setSelId(null)],
+  ];
+  const openDepth = LAYERS.reduce((n,l)=>n+(l[0]?1:0), 0);
+  const closeTop = () => { const top = LAYERS.find(l=>l[0]); if(top){ top[1](); return true; } return false; };
+
+  useEffect(()=>{
+    const onKey = e => { if(e.key==="Escape" && closeTop()) e.preventDefault(); };
+    window.addEventListener("keydown", onKey);
+    return ()=>window.removeEventListener("keydown", onKey);
+  });
+
+  /* the phone's back button takes the top layer off instead of leaving the game */
+  useEffect(()=>{
+    if(!openDepth) return;
+    try { history.pushState({ ludusLayer:openDepth }, ""); } catch(e){}
+    const onPop = () => { closeTop(); };
+    window.addEventListener("popstate", onPop);
+    return ()=>window.removeEventListener("popstate", onPop);
+  }, [openDepth]);
+
   const chooseEv = i => {
     const d = clone(S);
     const ev = d.pendingEvent;
