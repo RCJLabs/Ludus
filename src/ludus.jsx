@@ -1899,6 +1899,7 @@ function agenda(d){
   if(d.games && d.games.offers && d.games.offers.length && activeG(d).some(g=>canFight(g) && g.lastFought<d.week))
     add(2, "arena", d.games.festival, `${d.games.offers.length} on the card`);
   if(d.poach) add(2, "men", `${(d.gladiators.find(x=>x.id===d.poach.gid)||{}).name} is being talked to`, `House ${d.poach.house}`);
+  if(d.court) add(1, "men", `${d.court.name} of House ${d.court.house} is being talked to`, `${d.court.weeks}w — your word, their wall`);
   if(d.loan && owes(d) > d.loan.principal*2) add(2, "villa", `${loanLender(d).name} is owed ${owes(d)}d`, "and it is getting away from you");
   if(d.reSignOffer) add(2, "men", "A contract is up", "he can re-sign or walk");
   { const worn = activeG(d).filter(g=>strainOf(g) > 62);
@@ -5050,6 +5051,7 @@ function migrate(S){
   if(!S.crest) S.crest = { c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" };
   if(S.rome===undefined) S.rome = null;
   if(S.poach===undefined) S.poach = null;
+  if(S.court===undefined) S.court = null;
   if(!S.defected) S.defected = [];
   if(!S.buildings) S.buildings = {};
   if(S.nemesis===undefined) S.nemesis = null;
@@ -5174,7 +5176,7 @@ function newGameState(name, scen, seed, pitch){
     gladiators:[], market:[], games:null, pendingEvent:null, log:[], fallen:[], freed:[],
     seed: null, rngState: 0,
     lastParty:-9, lastFeast:-9, over:null, milestone600:false, flags:{learned:{}}, escaped:[], rebellion:null, gear:{}, retired:[],
-    doctore:null, doctoreMarket:[], doctoreOffer:null, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, defected:[], nemesis:null, nemHouse:null, saga:null, arcs:[], crest:{ c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" }, primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], works:{}, slavers:{}, pact:null, gambits:{}, pendingLesson:null, law:null, doctrine:null, kits:[], deadSteel:[], bay:null, mark:null, after:null, metHouse:{}, owed:[], household:{}, yardSeen:0, yardMissed:0, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, domus:{ wife:null, children:[], nextKin:1 }, acclaim:0, brand:{ licensed:false, decided:false, tier:0, earned:0 }, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, departed:[], reSignOffer:null, annals:[], rise:{ rank:0, standing:0 }, munusLast:-99, league:{ first:null, since:1, held:0, best:99, year:1, snap:null }, piety:30, blessing:null, vow:null, lastOffering:-9, powLot:null };
+    doctore:null, doctoreMarket:[], doctoreOffer:null, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, court:null, defected:[], nemesis:null, nemHouse:null, saga:null, arcs:[], crest:{ c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" }, primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], works:{}, slavers:{}, pact:null, gambits:{}, pendingLesson:null, law:null, doctrine:null, kits:[], deadSteel:[], bay:null, mark:null, after:null, metHouse:{}, owed:[], household:{}, yardSeen:0, yardMissed:0, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, domus:{ wife:null, children:[], nextKin:1 }, acclaim:0, brand:{ licensed:false, decided:false, tier:0, earned:0 }, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, departed:[], reSignOffer:null, annals:[], rise:{ rank:0, standing:0 }, munusLast:-99, league:{ first:null, since:1, held:0, best:99, year:1, snap:null }, piety:30, blessing:null, vow:null, lastOffering:-9, powLot:null };
   d.rivals = makeRivals(d);
   const solo = S.men.length === 1;
   S.men.forEach((band,i)=>{
@@ -6883,6 +6885,123 @@ function poachWeek(d){
   }
   const eager = (d.rivals||[]).reduce((m,h)=>Math.max(m, h.grudge>=35 ? lanistaOf(h.name).poach : 0), 0);
   if(R() < 0.07*Math.max(1,eager)) startPoach(d);
+}
+
+/* ---- TREATING WITH THE OTHER HOUSES ----
+   For a long time the traffic ran one way: they took your men, they carried
+   grudges, and all you could do about any of it was fight them. A lanista is a
+   dealer as much as a trainer. You can put money on their table for a man, put a
+   word in that man's ear instead and pay a different price, or buy the quiet. */
+const rosterFull = d => activeG(d).length >= ((d.law && d.law.cap) || 8);
+/* what they will let a man go for — a house that hates you charges for the privilege */
+function houseAsk(d, h, f){
+  if(!h || !f) return 0;
+  const isStar = !!(h.star && h.star.id===f.id);
+  const mood = 1 + (h.grudge/100)*0.85;          // bad blood is expensive
+  const pride = isStar ? 1.9 : 1;                 // they know what he is worth to them
+  const form = 1 + Math.max(0, h.form||0)/260;    // a house having a season does not need your coin
+  return rnd(gladValue(f) * 1.35 * mood * pride * form * (lanistaOf(h.name).bid || 1));
+}
+/* whether they will deal at all */
+function houseWillSell(d, h, f){
+  if(!h || !f) return false;
+  if(f.injury) return false;
+  if(h.fighters.length <= 3) return false;                 // he cannot strip his own card
+  if(h.star && h.star.id===f.id && h.grudge >= 40) return false;
+  return h.grudge < 78;
+}
+function buyFromHouse(d, hName, fid){
+  const h = houseOf(d, hName); if(!h) return null;
+  const f = h.fighters.find(x=>x.id===fid); if(!f) return null;
+  if(!houseWillSell(d, h, f)) return { ok:false, why:`${lanistaOf(h.name).name} will not put a price on him.` };
+  const ask = houseAsk(d, h, f);
+  if(d.gold < ask) return { ok:false, why:`He wants ${ask} denarii and you do not have it.` };
+  if(rosterFull(d)) return { ok:false, why:`There is no room in the cells for another man.` };
+  d.gold -= ask;
+  h.fighters = h.fighters.filter(x=>x.id!==fid);
+  if(h.star && h.star.id===fid) h.star = null;
+  if(d.nemesis && d.nemesis.fid===fid) d.nemesis = null;
+  h.grudge = clamp(h.grudge - 6, 0, 100);            // coin cools a thing, a little
+  h.fame = Math.max(0, h.fame - 4);
+  const g = genGladiator(d, 40);
+  ["str","agi","end","tec","sho","dis","potential"].forEach(k=>{ g[k] = f[k]; });
+  g.name = f.name; g.nick = f.nick; g.cls = f.cls; g.origin = f.origin; g.sex = f.sex || "m";
+  g.age = f.age || 26; g.kit = f.kit || defaultKit(f.cls);
+  g.wins = f.wins||0; g.losses = f.losses||0; g.kills = f.kills||0; g.pfame = f.pfame||0;
+  g.heart = f.heart||50; g.status = "active"; g.lastFought = -9; g.price = 0;
+  g.regard = 44; g.morale = 58; g.boughtFrom = h.name;
+  d.gladiators.push(g);
+  chron(d, `${lanistaOf(h.name).name} takes ${ask} denarii for ${f.name} and the two of you shake on it in front of witnesses, which is how these things are done. ${PR(g).He} walks over from House ${h.name} with what ${PR(g).he} stands in.`, "good");
+  return { ok:true, ask, name:f.name, gid:g.id };
+}
+/* the other way to take a man: talk to him instead of his master */
+const courtCost = (d, h, f) => rnd(gladValue(f) * 0.45 * (1 + (h.grudge/100)*0.4));
+function startCourt(d, hName, fid){
+  const h = houseOf(d, hName); if(!h) return null;
+  const f = h.fighters.find(x=>x.id===fid); if(!f) return null;
+  if(d.court) return { ok:false, why:"You already have a word in one man's ear. One at a time." };
+  if(rosterFull(d)) return { ok:false, why:"There is no room in the cells for another man." };
+  const cost = courtCost(d, h, f);
+  if(d.gold < cost) return { ok:false, why:`It would take ${cost} denarii to make the offer worth hearing.` };
+  d.gold -= cost;
+  d.court = { house:h.name, fid, name:f.name, weeks:3, spent:cost };
+  chron(d, `Your man goes down to House ${h.name}'s wall after dark with a purse and a proposition for ${f.name}. Nothing is written down. Nothing ever is.`, "info");
+  return { ok:true, cost, weeks:3 };
+}
+function courtWeek(d){
+  const c = d.court; if(!c) return;
+  const h = houseOf(d, c.house);
+  const f = h && h.fighters.find(x=>x.id===c.fid);
+  if(!h || !f){ d.court = null; return; }                  // he died, retired or was sold on
+  /* they may catch you at it — a watchful lanista, a loud house */
+  const caught = R() < 0.10 + (h.grudge/100)*0.10 + (lanistaOf(h.name).poach>1 ? 0.06 : 0);
+  if(caught){
+    d.court = null;
+    h.grudge = clamp(h.grudge + 26, 0, 100);
+    d.fame = Math.max(0, d.fame - 8);
+    patronsOf(d).forEach(p=>{ p.favor = clamp(p.favor-5,0,100); }); recomputeFavor(d);
+    d.pendingCourt = { caught:true, house:h.name, name:f.name };
+    chron(d, `${lanistaOf(h.name).name} knows. He has known for a week, and he let you keep spending. There is no proving it and no denying it either, and House ${h.name} will be looking for you on a card now.`, "bad");
+    return;
+  }
+  c.weeks--;
+  if(c.weeks > 0) return;
+  /* he comes over the wall */
+  d.court = null;
+  h.fighters = h.fighters.filter(x=>x.id!==c.fid);
+  if(h.star && h.star.id===c.fid) h.star = null;
+  if(d.nemesis && d.nemesis.fid===c.fid) d.nemesis = null;
+  h.grudge = clamp(h.grudge + 18, 0, 100);
+  h.fame = Math.max(0, h.fame - 6);
+  const g = genGladiator(d, 40);
+  ["str","agi","end","tec","sho","dis","potential"].forEach(k=>{ g[k] = f[k]; });
+  g.name = f.name; g.nick = f.nick; g.cls = f.cls; g.origin = f.origin; g.sex = f.sex || "m";
+  g.age = f.age || 26; g.kit = f.kit || defaultKit(f.cls);
+  g.wins = f.wins||0; g.losses = f.losses||0; g.kills = f.kills||0; g.pfame = f.pfame||0;
+  g.heart = f.heart||50; g.status = "active"; g.lastFought = -9; g.price = 0;
+  g.regard = 62; g.morale = 70; g.defiance = clamp((g.defiance||30)+8, 0, 100); g.boughtFrom = h.name;
+  d.gladiators.push(g);
+  d.pendingCourt = { caught:false, house:h.name, name:f.name, fem:isF(g) };
+  chron(d, `${f.name} is over the wall and through your gate before it is properly light, carrying nothing. House ${h.name} will work out where he went by noon.`, "good");
+}
+/* and the thing you can buy that is not a man */
+const peacePrice = (d, h) => rnd(300 + h.grudge*26 + d.fame*0.35 + ((d.nemHouse && d.nemHouse.house===h.name) ? 700 : 0));
+function makePeace(d, hName){
+  const h = houseOf(d, hName); if(!h) return null;
+  if(h.grudge < 25) return { ok:false, why:`There is nothing between you and ${lanistaOf(h.name).name} worth buying off.` };
+  const price = peacePrice(d, h);
+  if(d.gold < price) return { ok:false, why:`It would take ${price} denarii to settle this, and you have not got it.` };
+  d.gold -= price;
+  const wasFeud = !!(d.nemHouse && d.nemHouse.house===h.name);
+  h.grudge = clamp(h.grudge - 55, 0, 100);
+  if(wasFeud){ d.nemHouse = null; d.flags.nemCool = d.week;
+    (d.deadlines||[]).forEach(x=>{ if(x.kind==="challenge" && x.house===h.name) x.met = true; }); }
+  addRep(d, "mercy", 5);
+  patronsOf(d).forEach(p=>{ p.favor = clamp(p.favor+3,0,100); }); recomputeFavor(d);
+  chron(d, wasFeud
+    ? `You and ${lanistaOf(h.name).name} eat at the same table for the first time in a long while, and ${price} denarii of yours pays for it. The feud is over. Neither of you pretends it was about anything but business.`
+    : `${price} denarii, quietly, to ${lanistaOf(h.name).name}. Whatever was building between the two houses stops building.`, "good");
+  return { ok:true, price, feud:wasFeud };
 }
 
 /* ---- ROME ----
@@ -10007,7 +10126,10 @@ const EVENTS = {
       return isAuctor(g) && key!=="quick"
         ? `${g.name} says it himself, which is the part nobody in the cells will forget: a man who was free this morning agreeing to be burned, bound, beaten and killed by the sword.`
         : SWEARING[key].line(d, g); } },
-  /* raised by defect() after the week's wipe — never drawn at random */
+  /* raised after the week's wipe — never drawn at random */
+  courted: {
+    make(){ return null; },
+    run(d,ev,i){ return `The block works out what happened before you tell them. Word travels between the walls of this town faster than any of the men who carry it.`; } },
   defected: {
     make(){ return null; },
     run(d,ev,i){
@@ -10709,6 +10831,7 @@ function endWeek(d){
   repWeek(d);
   patronWeek(d);
   if(!d.rome && !d.city && !d.travel) poachWeek(d);
+  if(!d.rome && !d.city && !d.travel) courtWeek(d);
   romeWeek(d);
   if(romeReady(d) && R()<0.3) offerRome(d);
   sparSocial(d);
@@ -10778,6 +10901,11 @@ function endWeek(d){
         ? ["Carry on — there is more to build", "Lay the house down here, at its height"]
         : ["Take up the work again"],
       data:{ won:pr.won, triumph:pr.triumph } };
+  }
+  if(d.pendingCourt && !d.pendingEvent){ const pc = d.pendingCourt; d.pendingCourt = null;
+    d.pendingEvent = pc.caught
+      ? { id:"courted", title:"He Knows", text:`${lanistaOf(pc.house).name} sends word, and the word is civil, which is worse. He knows what your man was doing at his wall. ${pc.name} stays where he is, your purse is lighter, and House ${pc.house} has a reason now that it did not have before.`, choices:["That is the risk"], data:{} }
+      : { id:"courted", title:"Over The Wall", text:`${pc.name} came over House ${pc.house}'s wall in the dark and is standing in your yard at first light with nothing but what ${pc.fem?"she":"he"} stands in. ${pc.fem?"She":"He"} chose you, which is not the same as being bought, and every man in the cells knows the difference.`, choices:["Take his oath"], data:{} };
   }
   if(d.pendingDefect && !d.pendingEvent){ const pd = d.pendingDefect; d.pendingDefect = null;
     const pr = pd.fem ? {he:"she",him:"her",his:"her"} : {he:"he",him:"him",his:"his"};
@@ -12003,6 +12131,8 @@ export default function App(){
   const [pairSel,setPairSel] = useState([]);
   const [annals,setAnnals] = useState(false);
   const [sheet,setSheet] = useState(null);
+  const [dealH,setDealH] = useState(null);   /* the rival house you are treating with */
+  const [dealMsg,setDealMsg] = useState(null);
   const [rack,setRack] = useState("weapon");
   const [seedIn,setSeedIn] = useState("");
   useEffect(()=>{ if(tab==="market" && S && !S.flags.sawFirstBuy) mut(d=>{ firstBuyWarn(d); }); }, [tab]);
@@ -12110,7 +12240,7 @@ export default function App(){
 
   const mut = fn => { const d = clone(S); fn(d); d.rngState = rngGet(); setS(d); };
 
-  const clearTransient = ()=>{ setFight(null); setSelId(null); setEvResult(null); setGearPick(null); setAsk(null); setFGid(null); setArenaWiz(false); setArenaStep(0); setArenaPick(null); };
+  const clearTransient = ()=>{ setFight(null); setSelId(null); setEvResult(null); setGearPick(null); setAsk(null); setFGid(null); setArenaWiz(false); setArenaStep(0); setArenaPick(null); setDealH(null); setDealMsg(null); };
   const begin = ()=>{ clearTransient();
     if(!slot){ let free=1; for(let i=1;i<=SLOTS_N;i++) if(!slots[i]){ free=i; break; } setSlot(free); }
     const d0 = newGameState(nameIn.trim()||"House of Aurelius", bonus, seedIn, pitchIn);
@@ -12183,6 +12313,13 @@ export default function App(){
     setS(d); setFight(res); setFGid(null); setStake(0); setAgainst(false); setPlan("none"); setEntrance("none");
   };
   const openMunus = () => { setMunusPlan({ occasion:"funeral", scale:"modest", hunt:false, sine:false, spectacle:null, headliner:null, sell:false }); setMunusWiz(true); };
+  /* treating with another house: buy a man, put a word in his ear, or buy the quiet */
+  const doBuyMan = (hName, fid) => { let r=null; mut(d=>{ r = buyFromHouse(d, hName, fid); });
+    setDealMsg(r && r.ok ? `${r.name} is yours for ${r.ask} denarii.` : (r && r.why) || "Nothing comes of it."); };
+  const doCourtMan = (hName, fid) => { let r=null; mut(d=>{ r = startCourt(d, hName, fid); });
+    setDealMsg(r && r.ok ? `Word is passed, and ${r.cost} denarii with it. You will know inside ${r.weeks} weeks — one way or the other.` : (r && r.why) || "Nothing comes of it."); };
+  const doPeace = hName => { let r=null; mut(d=>{ r = makePeace(d, hName); });
+    setDealMsg(r && r.ok ? (r.feud ? `The feud with House ${hName} is bought off for ${r.price} denarii.` : `${r.price} denarii, and the bad blood with House ${hName} cools.`) : (r && r.why) || "Nothing comes of it."); };
   const stageMunusNow = () => { let report = "";
     mut(d=>{ report = stageMunus(d, munusPlan); });
     setMunusWiz(false);
@@ -13037,6 +13174,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 <div className="flex items-center gap-2" style={{flexShrink:0}}>
                   {mv && <span style={{fontSize:12,color:mv.c}}>{mv.a}</span>}
                   <span className={`rowval ${h.you?"gold":"dim"}`} style={{fontSize:14}}>{rnd(h.fame)}</span>
+                  {riv && <button className="btn btn-ghost" style={{padding:"5px 8px",fontSize:11}}
+                    onClick={()=>{ setSheet(null); setDealMsg(null); setDealH(riv.name); }}>Treat</button>}
                 </div>
               </div>
             );
@@ -16103,6 +16242,66 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           </div>
         );
       })()}
+
+      {dealH && (()=>{ const h = (S.rivals||[]).find(x=>x.name===dealH);
+        if(!h) return null;
+        const L = lanistaOf(h.name);
+        const close = ()=>{ setDealH(null); setDealMsg(null); };
+        const feud = !!(S.nemHouse && S.nemHouse.house===h.name);
+        const pp = peacePrice(S, h);
+        const busy = !!S.court;
+        return (
+          <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:64}} onClick={close}>
+            <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
+              <div className="flex items-center justify-between" style={{marginBottom:6}}>
+                <div className="disp" style={{fontSize:15,fontWeight:900,letterSpacing:".08em",color:"#e8d092"}}>HOUSE {h.name.toUpperCase()}</div>
+                <button className="btn btn-ghost" style={{padding:"8px 10px"}} aria-label="Close" onClick={close}><X size={14}/></button>
+              </div>
+              <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:8}}>
+                {L.name}{L.trait?` — ${L.trait}`:""}. {grudgeWord(h.grudge)}{feud?" You are in a feud with this house.":""}
+              </div>
+              {dealMsg && <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",borderColor:"#6d5426",fontSize:14.5}}>{dealMsg}</div>}
+
+              <div className="tag tag-gold" style={{marginBottom:5}}>His men</div>
+              {(h.fighters||[]).map(f=>{ const ask=houseAsk(S,h,f), sell=houseWillSell(S,h,f), cc=courtCost(S,h,f);
+                const isStar = !!(h.star && h.star.id===f.id);
+                return (
+                  <div key={f.id} style={{borderTop:"1px dotted #33271a",paddingTop:7,marginTop:7}}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span style={{fontSize:14.5,color:isStar?"#e0bd72":"#cfc0a0",minWidth:0}}>
+                        {isStar?"★ ":""}{f.name}{f.nick?`, ${f.nick}`:""}
+                      </span>
+                      <span className="rowval dim" style={{fontSize:12}}>{f.cls} · {f.wins}–{f.losses}{f.age?` · ${f.age}`:""}</span>
+                    </div>
+                    {f.injury && <div className="blood" style={{fontSize:12.5,marginTop:2}}>carrying {f.injury.name.toLowerCase()}</div>}
+                    <div className="flex gap-2" style={{marginTop:5}}>
+                      <button className="btn btn-ghost" style={{flex:1,fontSize:12,padding:"7px 6px"}}
+                        disabled={!sell || S.gold<ask || rosterFull(S)}
+                        onClick={()=>doBuyMan(h.name, f.id)}>
+                        {!sell ? "Not for sale" : `Buy · ${ask}d`}
+                      </button>
+                      <button className="btn btn-ghost" style={{flex:1,fontSize:12,padding:"7px 6px"}}
+                        disabled={busy || !!f.injury || S.gold<cc || rosterFull(S)}
+                        onClick={()=>doCourtMan(h.name, f.id)}>
+                        {busy ? "A word already out" : `A word in his ear · ${cc}d`}
+                      </button>
+                    </div>
+                  </div>
+                ); })}
+              {rosterFull(S) && <div className="blood" style={{fontSize:13,marginTop:8,fontStyle:"italic"}}>Your cells are full — nobody else can be taken in.</div>}
+
+              <div className="tag tag-gold" style={{margin:"14px 0 5px"}}>The bad blood</div>
+              <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:6}}>
+                Coin settles most things between houses. It does not make him like you.
+              </div>
+              <button className="btn" style={{width:"100%"}} disabled={h.grudge<25 || S.gold<pp}
+                onClick={()=>doPeace(h.name)}>
+                {h.grudge<25 ? "Nothing worth buying off" : S.gold<pp ? `Settle it · ${pp}d — not enough` : `${feud?"Buy off the feud":"Settle it"} · ${pp}d`}
+              </button>
+              <button className="btn btn-ghost" style={{width:"100%",marginTop:8}} onClick={close}>Leave it</button>
+            </div>
+          </div>
+        ); })()}
 
       {sheet && SHEETS[sheet] && (
         <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:62}} onClick={()=>setSheet(null)}>
