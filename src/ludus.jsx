@@ -2270,10 +2270,12 @@ function patronWeek(d){
   // word of a rising house reaches further up the ladder
   for(const rk of rankKeys){
     if(ps.some(p=>p.rank===rk)) continue;
-    if(d.fame >= RANKS[rk].fameGate && (RANKS[rk].fameGate===0 || R()<0.14)){
+    /* a house whose name is on every wall in the lower town reaches the good families faster */
+    const arrive = 0.14 + (acclaimOf(d)>=62 ? 0.12 : acclaimOf(d)>=40 ? 0.06 : 0);
+    if(d.fame >= RANKS[rk].fameGate && (RANKS[rk].fameGate===0 || R()<arrive)){
       const p = makePatron(d, rk);
       ps.push(p);
-      chron(d, `${p.name} has begun asking about your house. ${RANKS[rk].blurb}`, "good");
+      chron(d, `${p.name} has begun asking about your house. ${acclaimOf(d)>=40?"Your name is hard to avoid in Capua these days. ":""}${RANKS[rk].blurb}`, "good");
       break;
     }
   }
@@ -3711,6 +3713,13 @@ const houseFortune = h => { const f=h.form||0; return f>=45?"having a season" : 
 const fortuneColour = h => { const f=h.form||0; return f>=18?"#9aa86a" : f<=-18?"#d96f5d" : "#b09b7d"; };
 const STAR_GATE = 52;
 const houseStar = h => { const s = (h.fighters||[]).filter(f=>!f.injury).sort((a,b)=>(b.pfame||0)-(a.pfame||0))[0]; return s && (s.pfame||0)>=STAR_GATE ? s : null; };
+/* who a rival sends to a grudge — its named star if it has one, so "you will meet him one day" comes true */
+const houseChampion = (h, exceptName) => {
+  const fit = (h.fighters||[]).filter(x=>!x.injury && x.name!==exceptName);
+  if(!fit.length) return null;
+  if(h.star){ const st = fit.find(x=>x.id===h.star.id); if(st) return st; }
+  return fit.sort((a,b)=>(b.pfame||0)-(a.pfame||0))[0];
+};
 const BAY_NEWS = [
   (d,h)=>`${lanistaOf(h.name).name} has spent a fortune on a fresh sword off the block — House ${h.name} means to win the year.`,
   (d,h)=>`A man of House ${h.name} died on the sand at Puteoli. The house fights on, a little quieter for it.`,
@@ -3747,6 +3756,12 @@ function campaniaWeek(d){
       h.star = { id:s.id, name:s.name, nick:s.nick||null, cls:s.cls };
       chron(d, `They are calling ${s.nick?`${s.name}, ${s.nick},`:s.name} of House ${h.name} the best young ${s.cls.toLowerCase()} in Campania. You will meet him one day.`, "info");
     } else if(h.star && !(h.fighters||[]).some(f=>f.id===h.star.id)){ h.star = null; }
+    /* a house in form, with the wind at its back, comes hunting the house at the top — you */
+    if(h.form>=45 && (isFirstHouse(d) || leagueRank(d)<=2)){
+      h.grudge = clamp((h.grudge||0) + 2.0, 0, 100);   // more than any house's weekly decay, so an in-form rival genuinely closes on you
+      if(h.star && h.grudge>=45 && R()<0.04)
+        chron(d, `${lanistaOf(h.name).name} is having a season and means to make ${h.star.name}'s name on yours. He has started asking the editors for the match.`, "bad");
+    }
   }
   if(!d.city && !d.travel && R()<0.09) bayNews(d);
 }
@@ -3758,9 +3773,11 @@ function campaniaWeek(d){
    little at the gate and a great deal to say — and at every year's turn the city reckons
    up who rose, who fell, and who stood first. */
 function leagueTable(d){
+  /* fame ranks the houses; where it is close, a big name in the street tips it your way */
+  const eff = r => r.fame + (r.you ? acclaimOf(d)*0.04 : 0);
   const rows = (d.rivals||[]).filter(h=>!h.retired).map(h=>({ name:`House ${h.name}`, raw:h.name, fame:h.fame, you:false }));
   rows.push({ name:d.name, fame:d.fame, you:true });
-  return rows.sort((a,b)=> b.fame - a.fame);
+  return rows.sort((a,b)=> eff(b) - eff(a));
 }
 const isFirstHouse = d => !!(d.league && d.league.first === "__you__");
 const leaguePurse  = d => isFirstHouse(d) ? 1.06 : 1;      // the first house of the city commands the better bill
@@ -4509,10 +4526,10 @@ function offerChallenge(d){
   const men = activeG(d).filter(g=>g.pfame>=20);
   if(!men.length) return null;
   const g = men.reduce((m,x)=>x.pfame>m.pfame?x:m, men[0]);
-  const f = h.fighters.filter(x=>!x.injury && x.name!==g.name).sort((a,b)=>b.pfame-a.pfame)[0];
+  const f = houseChampion(h, g.name);
   if(!f) return null;
   return { house:h.name, lan:lanistaOf(h.name).name, gid:g.id, name:g.name, fid:f.id, foe:f.name,
-    due: d.week + ri(3,5), purse: rnd(500 + R()*500) };
+    star: !!(h.star && h.star.id===f.id), due: d.week + ri(3,5), purse: rnd(500 + R()*500) };
 }
 /* the magistrate wants money by a date */
 function offerLevy(d){
@@ -5915,6 +5932,7 @@ function riseWeek(d){
     /* the town gets used to you faster the further past the gate you already are */
     const over = (d.fame - (nx.fame||0)) / 200 + (d.favor - (nx.favor||0)) / 60;
     s += 4 + clamp(over, 0, 5);
+    s += acclaimOf(d)>=62 ? 1.4 : acclaimOf(d)>=40 ? 0.7 : 0;   // the street's love speeds your reception above it
     if(d.unrest > 60) s -= 3;                 // a house in uproar is no advertisement
   } else {
     s -= 2;                                    // slip below the gate and the goodwill cools
@@ -6358,10 +6376,10 @@ function issueGrudgeMatch(d){
   const men = activeG(d).filter(g=>g.pfame>=18);
   if(!men.length) return false;
   const g = men.reduce((m,x)=>x.pfame>m.pfame?x:m, men[0]);
-  const f = h.fighters.filter(x=>!x.injury && x.name!==g.name).sort((a,b)=>b.pfame-a.pfame)[0];
+  const f = houseChampion(h, g.name);
   if(!f) return false;
   const L = lanistaOf(h.name).name;
-  addDeadline(d, { kind:"challenge", nem:true, gid:g.id, name:g.name, house:h.name, lan:L,
+  addDeadline(d, { kind:"challenge", nem:true, star: !!(h.star && h.star.id===f.id), gid:g.id, name:g.name, house:h.name, lan:L,
     fid:f.id, foe:f.name, due:d.week+ri(4,7), purse: rnd(700 + R()*600), met:false });
   n.stage = 3;
   chron(d, `${L} has named the day and the men: ${f.name} of his house against ${g.name} of yours, and made it a thing the whole of Capua will attend. This is the one the season has been walking toward.`, "bad");
@@ -6561,7 +6579,7 @@ function issueReckoning(d){
   const h = houseOf(d, s.foe.house);
   if(!h){ s.stage = 1; s.foe = null; return false; }   // the rival's house folded; his story finds another equal
   let f = h.fighters.find(x=>x.id===s.foe.fid && !x.injury);
-  if(!f) f = h.fighters.filter(x=>!x.injury).sort((a,b)=>b.pfame-a.pfame)[0];
+  if(!f) f = houseChampion(h, g.name);
   if(!f) return false;
   s.foe = { fid:f.id, house:h.name, name:f.name };
   addDeadline(d, { kind:"challenge", saga:true, gid:g.id, name:g.name, house:h.name, lan:lanistaOf(h.name).name,
@@ -6700,7 +6718,9 @@ function poachWeek(d){
 const ROME_BOUTS = 3;
 const ROME_FAME = 1000;      // the imperial games are the summit, not the next rung up
 const ROME_COOLDOWN = 45;    // weeks the city forgets you between campaigns
-const romeReady = d => !d.rome && !d.romeOffer && !d.over && d.fame >= ROME_FAME - (d.flags.romeEarly?150:0)
+/* your rank in Capua carries word to Rome — an Eques is heard of there before an unknown lanista is */
+const riseRomeCut = d => riseOf(d)>=5 ? 150 : riseOf(d)>=4 ? 90 : riseOf(d)>=3 ? 45 : 0;
+const romeReady = d => !d.rome && !d.romeOffer && !d.over && d.fame >= ROME_FAME - (d.flags.romeEarly?150:0) - riseRomeCut(d)
   && (d.flags.primusHeld||0) >= 1                                          // prove it in Capua first
   && (!d.flags.romeDeclined || d.week - d.flags.romeDeclined >= 30)
   && (!d.flags.romeReturned || d.week - d.flags.romeReturned >= ROME_COOLDOWN)
