@@ -1985,7 +1985,8 @@ const PRIME = [23, 28];
 const ageTrain = a => a<20 ? 1.3 : a<23 ? 1.15 : a<=PRIME[1] ? 1.0 : a<=31 ? 0.72 : 0.42;
 const agePrice = a => a<=21 ? 1.05 : a<=PRIME[1] ? 1.0 : a<=31 ? 0.74 : 0.5;
 const DECAY_RATE = { agi:1.4, end:1.2, str:1.0 };
-const ageWord = a => a<PRIME[0] ? "still filling out" : a<=PRIME[1] ? "in his prime" : a<=31 ? "past his peak" : a<=34 ? "an old lion" : "long past the sand";
+const ageWord = (a, g) => { const p = PR(g).his;
+  return a<PRIME[0] ? "still filling out" : a<=PRIME[1] ? `in ${p} prime` : a<=31 ? `past ${p} peak` : a<=34 ? (isF(g)?"an old lioness":"an old lion") : "long past the sand"; };
 const ageTag  = a => a<PRIME[0] ? "Young" : a<=PRIME[1] ? "Prime" : a<=31 ? "Past peak" : "Veteran";
 
 /* ---- SCARS ----
@@ -3087,7 +3088,7 @@ function offerDoctore(d, g, kind){
   if(R() < clamp(p, 0.05, 0.95)){ d.doctoreOffer = doctoreFromGladiator(d, g, kind); return true; }
   return false;
 }
-const potentialWord = p=> p<50?"a modest ceiling": p<70?"promise in him": p<85?"exceptional promise":"a fire the arena has not yet seen";
+const potentialWord = (p,g)=> p<50?"a modest ceiling": p<70?`promise in ${PR(g).him}`: p<85?"exceptional promise":"a fire the arena has not yet seen";
 const demeanor = dv=> dv<25?"Compliant": dv<45?"Watchful": dv<65?"Restless": dv<85?"Defiant":"A storm barely chained";
 const unrestWord = u=> u<25?"Docile": u<45?"Restless": u<65?"Simmering": u<80?"Mutinous":"On the edge of fire";
 const rudisEligible = g=> !isAuctor(g) && g.wins>=10 && g.pfame>=180;
@@ -3226,7 +3227,7 @@ function slaverPitch(d, g){
   const S = slaverOf(g.slaver);
   const honest = R() > S.lies;
   if(g.flaw && !honest) return pick([
-    `He says the man has never been beaten by anybody worth naming.`,
+    `He says the ${PR(g).man} has never been beaten by anybody worth naming.`,
     `He says there is nothing to look into and you are welcome to look.`,
     `He does not mention anything and moves on to the price.`,
   ]);
@@ -3234,7 +3235,7 @@ function slaverPitch(d, g){
     ? `He is very keen to talk about something else.`
     : `He says there is something you should have looked at, and does not say what.`;
   if(!g.flaw && honest) return pick([
-    `He says the man is sound and, for once, he is not selling you anything.`,
+    `He says the ${PR(g).man} is sound and, for once, he is not selling you anything.`,
     `He has nothing to add. That is usually the tell that there is nothing to add.`,
   ]);
   return `He is enthusiastic in a way that tells you nothing at all.`;
@@ -6799,7 +6800,11 @@ function defect(d, p){
   d.unrest = clamp(d.unrest + 8 + kin.length*3, 0, 100);
   d.gladiators.forEach(o=>{ if(o.status==="active") o.defiance = clamp(o.defiance+4,0,100); });
   d.fame = Math.max(0, d.fame - 10);
-  chron(d, `${fullName(g)} is gone. House ${p.house} paraded him at the market this morning in their colours, and your cells watched from the yard.`, "bad");
+  chron(d, `${fullName(g)} is gone. House ${p.house} paraded ${PR(g).him} at the market this morning in their colours, and your cells watched from the yard.`, "bad");
+  /* a man walking out of your house is not a line in the chronicle you might miss —
+     it is put in front of you, with the names of everyone who watched him go */
+  d.pendingDefect = { name:fullName(g), house:p.house, cls:g.cls, wins:g.wins||0,
+    kin:kin.map(o=>o.name), fem:isF(g) };
   d.poach = null;
 }
 function poachWeek(d){
@@ -9934,6 +9939,12 @@ const EVENTS = {
       return isAuctor(g) && key!=="quick"
         ? `${g.name} says it himself, which is the part nobody in the cells will forget: a man who was free this morning agreeing to be burned, bound, beaten and killed by the sword.`
         : SWEARING[key].line(d, g); } },
+  /* raised by defect() after the week's wipe — never drawn at random */
+  defected: {
+    make(){ return null; },
+    run(d,ev,i){
+      return `The block works the morning through without saying much. A house that loses a man to a rival's promise is a house the others are now doing arithmetic about.`;
+    } },
   romeReturn: {
     make(){ return null; },
     run(d,ev,i){
@@ -10698,6 +10709,12 @@ function endWeek(d){
         ? ["Carry on — there is more to build", "Lay the house down here, at its height"]
         : ["Take up the work again"],
       data:{ won:pr.won, triumph:pr.triumph } };
+  }
+  if(d.pendingDefect && !d.pendingEvent){ const pd = d.pendingDefect; d.pendingDefect = null;
+    const pr = pd.fem ? {he:"she",him:"her",his:"her"} : {he:"he",him:"him",his:"his"};
+    d.pendingEvent = { id:"defected", title: pd.fem ? "She Is Gone" : "He Is Gone", text:
+      `${pd.name} did not answer the roll this morning. House ${pd.house} has ${pr.him} — freedom in three years and a bed of ${pr.his} own, and ${pr.he} took it. ${pd.wins>0?`${pd.wins} win${pd.wins===1?"":"s"} in your colours, and they belong to another house now. `:""}${pd.kin.length? `${pd.kin.join(" and ")} watched the gate a long time after ${pr.he} was through it.` : `The yard watched the gate a long time after ${pr.he} was through it.`}`,
+      choices:["The house goes on"], data:{} };
   }
   if(!d.pendingEvent && !d.rome && R()<0.14){ const ev=EVENTS.ambition.make(d); if(ev) d.pendingEvent=ev; }
   freedWeek(d);
@@ -12250,8 +12267,8 @@ export default function App(){
     g.scouted = true;
     if(g.slaver){ dealt(d, g.slaver, "scouted"); if(g.flaw) dealt(d, g.slaver, "burned"); }
     chron(d, g.flaw
-      ? `You pay to have ${g.name} looked over properly. He ${FLAWS[g.flaw].tell}. ${g.slaver? slaverOf(g.slaver).name : "The seller"} does not meet your eye about it.`
-      : `You pay to have ${g.name} looked over properly. He is exactly what ${g.slaver? slaverOf(g.slaver).name : "the man"} said he was, which happens.`,
+      ? `You pay to have ${g.name} looked over properly. ${PR(g).He} ${FLAWS[g.flaw].tell}. ${g.slaver? slaverOf(g.slaver).name : "The seller"} does not meet your eye about it.`
+      : `You pay to have ${g.name} looked over properly. ${PR(g).He} is exactly what ${g.slaver? slaverOf(g.slaver).name : "the man"} said he was, which happens.`,
       g.flaw ? "bad" : "good"); });
   const takeHouseApart = () => mut(d=>{ sellTheHouse(d); });
   const sellOne = id => mut(d=>{ const paid = sellGear(d, id);
@@ -13311,14 +13328,16 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 </div>
               )}
               {ongoing.length>0 && (
-                <div className="flex gap-1" style={{flexWrap:"wrap",alignItems:"center"}}>
-                  <span className="dim" style={{fontSize:10.5,textTransform:"uppercase",letterSpacing:".07em",marginRight:2}}>Ongoing <span style={{opacity:.6,textTransform:"none",letterSpacing:0}}>· tap to read</span></span>
+                <div>
+                  <div className="dim" style={{fontSize:10.5,textTransform:"uppercase",letterSpacing:".07em",marginBottom:5}}>Ongoing <span style={{opacity:.6,textTransform:"none",letterSpacing:0}}>· tap to read</span></div>
+                  <div className="flex gap-1" style={{flexWrap:"wrap",alignItems:"center"}}>
                   {ongoing.map((b,i)=>(
                     <button key={i} className="chip" onClick={()=>explainBnr(b)}
                       style={{borderColor:b.c,fontSize:10,padding:"3px 9px",whiteSpace:"normal",maxWidth:"100%",textAlign:"left",lineHeight:1.35,cursor:"pointer"}}>
                       {b.title}{b.sub?<span className="dim" style={{marginLeft:5}}>{b.sub}</span>:null}
                     </button>
                   ))}
+                  </div>
                 </div>
               )}
               <div className="panel" style={{padding:9}}>
@@ -14273,7 +14292,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 {(g.scars||[]).length>0 && <span className="tag">{g.scars.length} scar{g.scars.length>1?"s":""}</span>}
               </div>
               {g.story && STORIES[g.story] && (
-                <div style={{fontSize:13.5,fontStyle:"italic",color:"#bfa8c8",marginBottom:3}}>They say he is {STORIES[g.story].line}.</div>
+                <div style={{fontSize:13.5,fontStyle:"italic",color:"#bfa8c8",marginBottom:3}}>They say {PR(g).he} is {STORIES[g.story].line}.</div>
               )}
               {(()=>{ const lvl = readLevel(S, g), src2 = lvl>=1 ? g : (g.shown || g);
                 return (<>
@@ -14282,9 +14301,9 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   )}
                   <div style={{fontSize:14.5,fontStyle:"italic",color:g.legend?"#e0bd72":"#cfc0a0"}}>
                     {g.legend ? "There is something in this one's eyes the arena has not yet seen."
-                     : lvl>=2 ? `Assessed: ${potentialWord(g.potential)}. At ${g.age}, ${ageWord(g.age)}.`
-                     : lvl>=1 ? `Your doctore walks round him once. ${potentialWord(g.potential)}, he thinks. At ${g.age}, ${ageWord(g.age)}.`
-                     : `The seller talks him up and up. At ${g.age}, ${ageWord(g.age)}.`}
+                     : lvl>=2 ? `Assessed: ${potentialWord(g.potential,g)}. At ${g.age}, ${ageWord(g.age,g)}.`
+                     : lvl>=1 ? `Your doctore walks round ${PR(g).him} once. ${potentialWord(g.potential,g)}, he thinks. At ${g.age}, ${ageWord(g.age,g)}.`
+                     : `The seller talks ${PR(g).him} up and up. At ${g.age}, ${ageWord(g.age,g)}.`}
                   </div>
                   <div className="grid grid-cols-3 gap-2" style={{margin:"6px 0"}}>
                     {STATS.map(k=>{ const [lo,hi] = bandOf(src2[k], lvl);
@@ -14301,7 +14320,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     <div className="dim" style={{fontSize:13.5,fontStyle:"italic"}}>
                       {lvl>=1
                         ? (g.flaw ? `${FLAWS[g.flaw].hint} Your doctore would want a closer look.` : "Your doctore finds nothing to object to, which is not the same as a guarantee.")
-                        : "Nobody here has looked at him properly. The numbers are the seller's."}
+                        : `Nobody here has looked at ${PR(g).him} properly. The numbers are the seller's.`}
                     </div>
                   )}
                   {lvl>=2 && (
@@ -14309,19 +14328,19 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                       borderColor: g.flaw ? "#7c2a22" : "#5a6a35"}}>
                       {g.flaw
                         ? <><span className="blood" style={{fontSize:14.5}}>{FLAWS[g.flaw].name}.</span>
-                            <span className="dim" style={{fontSize:14}}> He {FLAWS[g.flaw].tell}.</span></>
-                        : <span className="laurel" style={{fontSize:14.5}}>Nothing hidden. He is what he appears to be.</span>}
+                            <span className="dim" style={{fontSize:14}}> {PR(g).He} {FLAWS[g.flaw].tell}.</span></>
+                        : <span className="laurel" style={{fontSize:14.5}}>Nothing hidden. {PR(g).He} is what {PR(g).he} appears to be.</span>}
                     </div>
                   )}
                   {!g.scouted && !isAuctor(g) && (()=>{ const fee = SCOUT_FEE(S,g);
                     return <button className="btn btn-ghost" style={{width:"100%",marginTop:7}}
                       disabled={S.gold<fee} onClick={()=>scout(g.id)}>
-                      {S.gold<fee ? `Have him looked over · ${fee}d` : `Have him looked over · ${fee}d`}
+                      {`Have ${PR(g).him} looked over · ${fee}d`}
                     </button>; })()}
                 </>); })()}
               {isAuctor(g) && (
                 <div className="panel" style={{padding:9,marginTop:6,background:"#1c1610",borderColor:"#5a7a8a"}}>
-                  <div style={{fontSize:14}}>Not for sale — he is free, and offering. {g.auctor.fee}d in hand, {g.auctor.wage}d a week, {g.auctor.bouts} bouts, then he walks.</div>
+                  <div style={{fontSize:14}}>Not for sale — {PR(g).he} is free, and offering. {g.auctor.fee}d in hand, {g.auctor.wage}d a week, {g.auctor.bouts} bouts, then {PR(g).he} walks.</div>
                   <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:3}}>{g.auctor.why}</div>
                 </div>
               )}
@@ -14596,9 +14615,9 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   : "The imperial games are the summit. There is a way up to them, and it runs through Capua's crown, a senator's favour, and a name loud enough to be heard in the capital."}
               </div>
               {rungs.map((r,i)=>(
-                <div key={i} className="flex items-center justify-between gap-2" style={{fontSize:14,padding:"4px 0",borderTop:i?"1px dotted #26201a":undefined}}>
-                  <span style={{color:r.met?"#a9c98a":r.soft?"#cfc0a0":"#cfc0a0"}}>{r.met?"✓":r.soft?"◦":"·"} {r.label}</span>
-                  <span className="rowval dim" style={{fontSize:12.5,textAlign:"right",maxWidth:"52%"}}>{r.detail}</span>
+                <div key={i} style={{padding:"5px 0",borderTop:i?"1px dotted #26201a":undefined}}>
+                  <div style={{fontSize:14,color:r.met?"#a9c98a":"#cfc0a0"}}>{r.met?"✓":r.soft?"◦":"·"} {r.label}</div>
+                  <div className="dim" style={{fontSize:12.5,marginLeft:14,marginTop:1,overflowWrap:"anywhere"}}>{r.detail}</div>
                 </div>
               ))}
               <div className="panel" style={{padding:10,marginTop:9,background:"#1c1610",borderColor:ready?"#c99a4b":"#3e2f1f"}}>
@@ -15203,7 +15222,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               <span>Age <b>{selG.age}</b></span>
             </div>
             <div style={{fontSize:15,fontStyle:"italic",marginBottom:8,color:selG.legend?"#e0bd72":"#cfc0a0"}}>
-              The doctore's eye: {selG.read ? `potential ${rnd(selG.potential)}, heart ${rnd(selG.heart)}` : potentialWord(selG.potential)}. Bearing: {demeanor(selG.defiance).toLowerCase()}{selG.read? ` (${rnd(selG.defiance)})`:""}. At {selG.age} {PR(selG).he} is {ageWord(selG.age)}.
+              The doctore's eye: {selG.read ? `potential ${rnd(selG.potential)}, heart ${rnd(selG.heart)}` : potentialWord(selG.potential, selG)}. Bearing: {demeanor(selG.defiance).toLowerCase()}{selG.read? ` (${rnd(selG.defiance)})`:""}. At {selG.age} {PR(selG).he} is {ageWord(selG.age, selG)}.
             </div>
             {(()=>{ const hurt = !!selG.injury, worn = bodyWear(selG)>=0.44;
               const views = [["record","Record"],["body", hurt?"Body ·":"Body"],["train","Training"],["kit","Kit"],["standing","Standing"]];
