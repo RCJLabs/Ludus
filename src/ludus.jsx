@@ -4338,6 +4338,69 @@ const PLANS = {
   press:   { name:"Break him early", desc:"Everything in the first three exchanges.", tell:"green" },
 };
 const PLAN_KEYS = Object.keys(PLANS);
+
+/* ---- READING A FIELD ----
+   You can have one man watched and make a plan against him. A melee was the one
+   card you went into blind: eight men on the sand and nothing to know about any of
+   them. What a scout brings back off a field is not a man's habits — it is the
+   shape of the thing: who is dangerous, whether they are heavy or quick, and how
+   many of them have never done this before. */
+const FIELD_TELLS = {
+  green:   { plan:"edges",    when:f=>f.filter(x=>(x.wins||0)<=2).length >= Math.max(2, Math.ceil(f.length*0.4)),
+    say:f=>`Half that field has barely been on sand. They will crowd the middle and take each other apart doing it.` },
+  heavy:   { plan:"pace",     when:f=>f.filter(x=>(x.str||50)>=64 || (x.cls==="Murmillo"||x.cls==="Secutor")).length >= Math.ceil(f.length*0.5),
+    say:f=>`They are heavy — shields and weight, most of them. Nobody on that sand will still be quick in the eighth round.` },
+  quick:   { plan:"together", when:f=>f.filter(x=>(x.agi||50)>=64 || (x.cls==="Retiarius"||x.cls==="Dimachaerus")).length >= Math.ceil(f.length*0.45),
+    say:f=>`A quick field. They will work the outside and come at a man from behind while he is busy.` },
+  danger:  { plan:"hunt",     when:f=>f.some(x=>(x.wins||0)>=9 || (x.pfame||0)>=55),
+    say:f=>{ const m=f.slice().sort((a,b)=>((b.wins||0)+(b.pfame||0)/6)-((a.wins||0)+(a.pfame||0)/6))[0];
+      return `One of them is the reason for the card: ${m.name}${m.nick?`, ${m.nick}`:""}, ${m.wins||0} behind him. The rest are furniture.`; } },
+  killers: { plan:"hunt",     when:f=>f.filter(x=>(x.kills||0)>=2).length >= 2,
+    say:f=>`More than one man out there has killed before and did not mind it. Nobody is going to be waiting for the editor's hand.` },
+  rabble:  { plan:"edges",    when:f=>new Set(f.map(x=>x.house||"—")).size >= Math.max(3, Math.ceil(f.length*0.55)),
+    say:f=>`Every one of them is from a different yard. They owe each other nothing and it will show in the first two minutes.` },
+};
+const FTELL_KEYS = Object.keys(FIELD_TELLS);
+const MELEE_PLANS = {
+  none:     { name:"No plan", desc:"Send them out and see." },
+  edges:    { name:"Work the edges", desc:"Stay off the middle while it thins itself. Slower, and a great deal safer." },
+  pace:     { name:"Let them tire", desc:"Give ground early and be the ones still breathing at the end." },
+  together: { name:"Back to back", desc:"Your men stay within reach of one another and nobody gets taken from behind." },
+  hunt:     { name:"Put the best man down", desc:"Go straight at the one who matters and finish him while you can." },
+};
+const MPLAN_KEYS = Object.keys(MELEE_PLANS);
+const fieldWatchCost = (d, offer) => rnd(60 + (offer.field||[]).length*16 + (offer.purse||0)*0.03);
+function fieldTells(d, offer){
+  const f = offer.field || [];
+  const found = FTELL_KEYS.filter(k=>{ try { return FIELD_TELLS[k].when(f); } catch(e){ return false; } });
+  const n = d.doctore ? 3 : 2;
+  return shuffled(found).slice(0, n);
+}
+function watchField(d, offer){
+  if(!offer || offer.watched) return false;
+  const c = fieldWatchCost(d, offer);
+  if(d.gold < c) return false;
+  d.gold -= c;
+  const t = fieldTells(d, offer);
+  offer.watched = t.length ? t : ["nothing"];
+  chron(d, t.length
+    ? `Your man spends an afternoon at the other yards and comes back with the shape of the field for ${c} denarii.`
+    : `You pay ${c} denarii to have the field looked over and learn that it is eight men who will fight each other. Money well spent.`, "info");
+  return true;
+}
+/* a plan is worth something only if the field is what you read it to be */
+function meleePlanEffect(plan, offer){
+  if(!plan || plan==="none") return { pow:1, def:1, stam:1, hunt:false, right:null };
+  const f = offer.field || [];
+  const right = FTELL_KEYS.some(k=>FIELD_TELLS[k].plan===plan && (()=>{ try { return FIELD_TELLS[k].when(f); } catch(e){ return false; } })());
+  const base = { edges:    { pow:0.97, def:0.86, stam:0.95, hunt:false },
+                 pace:     { pow:0.96, def:0.93, stam:0.80, hunt:false },
+                 together: { pow:1.0,  def:0.88, stam:1.0,  hunt:false },
+                 hunt:     { pow:1.09, def:1.06, stam:1.06, hunt:true } }[plan] || { pow:1, def:1, stam:1, hunt:false };
+  const k = right ? 1 : -1;
+  return { pow: 1 + (base.pow-1)*(right?1.35:0.5), def: 1 + (base.def-1)*(right?1.35:0.5),
+           stam: 1 + (base.stam-1)*(right?1.35:0.5), hunt: base.hunt, right };
+}
 /* what a plan is worth depends entirely on whether you read him right */
 function planEffect(plan, opp){
   const P = PLANS[plan];
@@ -8459,6 +8522,7 @@ function simulateMelee(ents, ctx, opts){
   };
 
   const myTac = ctx.myTactic || "measured";
+  const MP = ctx.plan || { pow:1, def:1, stam:1, hunt:false };
   const startR = R0 ? R0.round : 0;
   for(let r=startR+1; r<=26; r++){
     round = r;
@@ -8507,6 +8571,16 @@ function simulateMelee(ents, ctx, opts){
     const order = shuffled(liv);
     const pairs = [];
     const pool = order.slice();
+    /* told to put the best man down, your men go and find him */
+    if(MP.hunt && mineLeft.length && foesLeft.length){
+      const worth = i => (ents[i].wins||0) + (ents[i].pfame||0)/6;
+      const target = foesLeft.slice().sort((a,b)=>worth(b)-worth(a))[0];
+      const hunter = mineLeft.slice().sort((a,b)=>ents[b].hpv-ents[a].hpv)[0];
+      if(target!=null && hunter!=null){
+        pool.splice(pool.indexOf(target),1); pool.splice(pool.indexOf(hunter),1);
+        pairs.push([hunter, target]);
+      }
+    }
     while(pool.length>1){
       const a = pool.shift();
       let k = pool.findIndex(b => mine(a)!==mine(b) || ents[a].house!==ents[b].house);
@@ -8518,16 +8592,18 @@ function simulateMelee(ents, ctx, opts){
     for(const [a,b] of pairs){
       if(ents[a].out || ents[b].out) continue;
       const A = ents[a], B = ents[b];
-      A.stam -= 6 * (A.mine && myTac==="aggressive" ? 1.3 : 1); B.stam -= 6 * (B.mine && myTac==="aggressive" ? 1.3 : 1);
+      A.stam -= 6 * (A.mine && myTac==="aggressive" ? 1.3 : 1) * (A.mine?MP.stam:1);
+      B.stam -= 6 * (B.mine && myTac==="aggressive" ? 1.3 : 1) * (B.mine?MP.stam:1);
       const tacOf = e => e.mine ? myTac : "measured";
-      const pa = power(A,tacOf(A),B.cls,0,0.97+R()*0.06)*(A.stam<22?0.78:1)*(0.74+R()*0.52);
-      const pb = power(B,tacOf(B),A.cls,0,0.97+R()*0.06)*(B.stam<22?0.78:1)*(0.74+R()*0.52);
+      const pa = power(A,tacOf(A),B.cls,0,0.97+R()*0.06)*(A.stam<22?0.78:1)*(0.74+R()*0.52)*(A.mine?MP.pow:1);
+      const pb = power(B,tacOf(B),A.cls,0,0.97+R()*0.06)*(B.stam<22?0.78:1)*(0.74+R()*0.52)*(B.mine?MP.pow:1);
       const aw = pa>pb, atk = aw?A:B, def = aw?B:A;
       const ai = aw?a:b, di = aw?b:a;
       const tgt = pick(TARGETS);
       /* your man can go for the thing his style is for, here as on the single sand */
       const sig = atk.mine && sigOf(atk.cls) && triesSignature(atk, 0, atk.stam, myTac) ? sigOf(atk.cls) : null;
       let dmg = clamp((8 + Math.abs(pa-pb)/6.5 + atk.str/10)*tgt[2]*(1+atk.mods.atk*0.7)*(1-def.mods.def), 4, 36);
+      if(def.mine) dmg *= MP.def;
       if(sig){ dmg = clamp(dmg * sig.win.dmg, 4, 44); }
       def.hpv -= dmg;
       crowd = clamp(crowd + dmg/5.5 + (sig?sig.win.crowd*0.5:0) + (atk.mine && myTac==="showboat" ? 2 : 0), 0, 100);
@@ -8773,8 +8849,9 @@ function doMelee(d, ids, offer, pending, choice, tactic){
   const patron = topPatron(d);
   const myTac = tactic || offer.myTactic || "measured";   // your word carries to all your men on the sand at once
   offer.myTactic = myTac;                                  // remembered so a coached resume keeps it
+  const MP = meleePlanEffect(offer.mplan || "none", offer);
   const mctx = { favor:d.favor, patron: patron?{name:patron.name,favor:patron.favor}:null,
-    myTactic: myTac, naumachia: offer.spectacle==="naumachia",
+    myTactic: myTac, naumachia: offer.spectacle==="naumachia", plan: MP,
     tie:(a,b)=> (a&&b) ? tieBetween(d,a,b) : null };
   const field = pending ? pending.ents : shuffled(ents);
   let res, withdrew = [];
@@ -12311,6 +12388,7 @@ export default function App(){
   const [arenaStep,setArenaStep] = useState(0);      /* 0 where · 1 who · 2 ready */
   const [arenaPick,setArenaPick] = useState(null);   /* the chosen occasion */
   const [munusWiz,setMunusWiz] = useState(false);    /* the give-the-city-games builder */
+  const [mplan,setMplan] = useState("none");         /* how your men go at a crowd */
   const [munusPlan,setMunusPlan] = useState({ occasion:"funeral", scale:"modest", hunt:false, sine:false, spectacle:null, headliner:null, sell:false });
 
   useEffect(()=>{ (async()=>{
@@ -12491,10 +12569,16 @@ export default function App(){
     if(res.crux){ setHeld({ base:d, res }); setFight(res); return; }
     setHeld(null); setS(d); setFight(res);
   };
+  const watchTheField = offer => mut(d=>{
+    const live = (d.games&&d.games.offers||[]).find(x=>x.id===offer.id) || offer;
+    watchField(d, live);
+  });
   const meleeGo = (offer)=>{
     if(pairSel.length<2) return;
     const d = clone(S);
-    const res = doMelee(d, pairSel, offer, null, null, tactic);
+    const live = (d.games&&d.games.offers||[]).find(x=>x.id===offer.id) || offer;
+    live.mplan = mplan;
+    const res = doMelee(d, pairSel, live, null, null, tactic);
     if(!res) return;
     if(res.crux){ setHeld({ base:d, res }); setFight(res); setPairSel([]); setFGid(null); return; }
     setS(d); setFight(res); setPairSel([]); setFGid(null);
@@ -16950,7 +17034,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         const me = fGid ? S.gladiators.find(g=>g.id===fGid) : null;
         const chosen = pairSel.map(id=>S.gladiators.find(g=>g.id===id)).filter(Boolean);
         const close = ()=>{ setArenaWiz(false); setArenaStep(0); setArenaPick(null); };
-        const goPick = occ => { setArenaPick(occ); setFGid(null); setPairSel([]); setPlan("none"); setArenaStep(1); };
+        const goPick = occ => { setArenaPick(occ); setFGid(null); setPairSel([]); setPlan("none"); setMplan("none"); setArenaStep(1); };
         const startFight = fn => { setArenaWiz(false); fn(); };
         const steps = [["Where",0],["Your man",1],["Ready",2]];
         const header = (
@@ -17206,6 +17290,37 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   ))}
                 </div>
               </div>
+
+              {/* the field can be read before you walk into it, the same as one man can */}
+              <div style={{marginTop:11}}>
+                {!o.watched ? (
+                  <button className="btn btn-ghost" style={{width:"100%"}} disabled={S.gold<fieldWatchCost(S,o)}
+                    onClick={()=>watchTheField(o)}>
+                    Have the field watched · {fieldWatchCost(S,o)}d
+                  </button>
+                ) : (
+                  <div className="panel" style={{padding:10,background:"#1c1610",borderColor:"#5a6a35"}}>
+                    <span className="tag" style={{borderColor:"#5a6a35",color:"#a9c98a"}}>What came back</span>
+                    {o.watched[0]==="nothing"
+                      ? <div className="dim" style={{fontSize:14,fontStyle:"italic",marginTop:3}}>Eight men who will fight each other. Nothing more to say about them.</div>
+                      : o.watched.map((k,i)=>(
+                          <div key={i} style={{fontSize:14.5,padding:"3px 0"}}>{FIELD_TELLS[k] ? FIELD_TELLS[k].say(o.field) : ""}</div>
+                        ))}
+                  </div>
+                )}
+                <div className="tag" style={{margin:"9px 0 6px"}}>How they go at a crowd</div>
+                <div className="flex gap-2" style={{flexWrap:"wrap"}}>
+                  {MPLAN_KEYS.map(k=>{ const hints = o.watched && o.watched[0]!=="nothing" && o.watched.some(t=>FIELD_TELLS[t] && FIELD_TELLS[t].plan===k);
+                    return (
+                      <button key={k} className={`chip ${mplan===k?"on":""}`} onClick={()=>setMplan(k)}
+                        style={mplan===k?{borderColor:"#c99a4b",color:"#e0bd72",background:"#2b2115"}:(hints?{borderColor:"#5a6a35",color:"#a9c98a"}:undefined)}>
+                        {MELEE_PLANS[k].name}{hints?" ✓":""}
+                      </button>
+                    ); })}
+                </div>
+                <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:5}}>{MELEE_PLANS[mplan].desc}</div>
+              </div>
+
               <button className="btn btn-blood" style={{width:"100%",marginTop:11}} disabled={pairSel.length<2} onClick={()=>startFight(()=>meleeGo(o))}>Enter {pairSel.length} men</button>
             </>);
           } else if(pick.kind==="hunt"){ const o=pick.o; const B=BEASTS[o.beast]; const reach=me?reachVsBeast(me.kit||defaultKit(me.cls)):1;
