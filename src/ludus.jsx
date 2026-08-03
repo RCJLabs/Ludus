@@ -3372,7 +3372,12 @@ function makeGames(d){
     d.games.offers.forEach(o=>{ if(!o.venue) o.venue = venueFor(d, o); if(!o.sky) o.sky = skyFor(d, o); });
     return;
   }
-  const F = d.munera
+  /* games you are giving yourself — the card is yours, and you fight it */
+  const MC = d.munusCard;
+  const F = MC
+    ? { key:"munus", name:MC.name, purse:MC.purse, fame:1.3, tier:MC.tier, offers:MC.offers,
+        allSine:!!MC.sine, noSine:!MC.sine, mine:true, forceHunt:!!MC.hunt, forceNaum:MC.spectacle==="naumachia" }
+    : d.munera
     ? { key:"munera", name:pick(MUNERA), purse:2.0, fame:1.2, tier:0, offers:2, allSine:true }
     : festivalNow(d);
   if(!F || F.rest){ d.games = null; return; }
@@ -3436,14 +3441,14 @@ function makeGames(d){
       purse: rnd((TIERS[tier].purse[0]+R()*TIERS[tier].purse[1]) * 4.0 * (F.purse||1) * seasonPurse(d)) });
   }
   /* the great games throw up things no lone house could ever stage — a mock sea-battle on flooded sand */
-  if((F.key==="romani" || (F.tier||0)>=1) && d.fame>=TIERS[2].fame && activeG(d).length>=2 && R()<0.4){
+  if(F.forceNaum || ((F.key==="romani" || (F.tier||0)>=1) && d.fame>=TIERS[2].fame && activeG(d).length>=2 && R()<0.4)){
     const size = ri(6,8);
     const field = [];
     for(let i=0;i<size;i++) field.push(pickRivalOpp(d, 1).opp);
     offers.push({ id:d.nextId++, tier:2, festival, melee:true, spectacle:"naumachia", field, stakes:"melee",
       purse: rnd((TIERS[2].purse[0]+R()*TIERS[2].purse[1]) * 6.0 * (F.purse||1) * seasonPurse(d)) });
   }
-  if(R()<0.5){
+  if(F.forceHunt || R()<0.5){
     const tier = d.fame>=TIERS[2].fame ? 2 : d.fame>=TIERS[1].fame ? 1 : 0;
     const opts = beastTier(tier);
     const [key, B] = pick(opts);
@@ -3459,7 +3464,16 @@ function makeGames(d){
       const keep = offers.slice(0, 1);
       offers.length = 0; offers.push(...keep);
     } }
-  d.games = { festival, offers, week:d.week, fest:F.key,
+  /* your own munus: the card is yours, and the best bout on it is your headliner's */
+  if(MC){
+    offers.forEach(o=>{ o.mine = true; });
+    if(MC.headliner){
+      const marquee = offers.filter(o=>!o.melee && !o.venatio && !o.pair)
+        .sort((a,b)=>b.tier-a.tier)[0];
+      if(marquee){ marquee.bookedGid = MC.headliner; marquee.headline = true; }
+    }
+  }
+  d.games = { festival, offers, week:d.week, fest:F.key, mine:!!MC,
     exclusive: !!(pactOf(d) && PACTS[pactOf(d).kind] && PACTS[pactOf(d).kind].exclusive) };
 }
 
@@ -3565,17 +3579,14 @@ function stageMunus(d, plan){
     parts.push(`A man was left on the sand at the close of it — the mob will remember which games gave them that.`); }
   const hg = plan.headliner ? d.gladiators.find(g=>g.id===plan.headliner && g.status==="active") : null;
   if(hg){
-    hg.pfame = clamp((hg.pfame||0) + Math.round((10 + S.mag*4) * (sell?0.8:1)), 0, 100);
-    hg.fans  = clamp((hg.fans||0)  + Math.round(8 + S.mag*3), 0, 100);
-    hg.favour= clamp((hg.favour||0)+ Math.round(6 + S.mag*2), 0, 100);
+    /* the billing itself is worth something — the fighting is still to come */
+    hg.pfame = clamp((hg.pfame||0) + Math.round((10 + S.mag*4) * (sell?0.8:1) * (sell?1:0.5)), 0, 100);
+    hg.fans  = clamp((hg.fans||0)  + Math.round((8 + S.mag*3) * (sell?1:0.5)), 0, 100);
+    hg.favour= clamp((hg.favour||0)+ Math.round((6 + S.mag*2) * (sell?1:0.5)), 0, 100);
     remember(d, hg, "munera", 1.4);
     d.fame += half(4);
-    /* the crowd will not vote to kill the host's own champion — but the sand can still hurt him */
-    if(R() < 0.12 + (plan.sine?0.14:0)){
-      const part = pick(TARGETS)[0], inj = injuryFor(part, plan.sine);
-      agonyWear(hg, inj); hg.injury = inj; hg.status = "injured";
-      parts.push(`${hg.name} headlined and carried it, but limped off with ${inj.name.toLowerCase()}.`);
-    } else parts.push(`${hg.name} headlined, and the crowd carried his name out into the streets.`);
+    if(sell) parts.push(`${hg.name} headlined, and the crowd carried ${PR(hg).his} name out into the streets.`);
+    else parts.push(`${hg.name}'s name is painted at the top of the bill.`);
   }
   const SP = plan.spectacle ? SPECTACLES[plan.spectacle] : null;
   if(SP){
@@ -3597,6 +3608,23 @@ function stageMunus(d, plan){
     }
   }
   d.munusLast = d.week;
+  /* if you are hosting it yourself, the card is not a summary — it is a card. It goes
+     up at the arena and your men fight it, bout by bout, the same as anybody's games. */
+  if(!sell){
+    const had = (d.games && d.games.offers) ? d.games.offers : [];   // an editor's card already up stays up
+    d.munusCard = { name:O.name, tier: S.mag>=2.2 ? 1 : 0,
+      offers: S.mag>=4 ? 4 : S.mag>=2.2 ? 3 : 2, purse:0.6,
+      sine:!!plan.sine, hunt:!!plan.hunt, spectacle:plan.spectacle, headliner:plan.headliner };
+    makeGames(d);
+    if(d.games){
+      const mineN = d.games.offers.length;
+      if(had.length) d.games.offers = d.games.offers.concat(had);
+      if(mineN){
+        parts.push(`The bill is posted: ${mineN} bout${mineN===1?"":"s"} on your own sand. Go to the arena and fight them.`);
+        chron(d, `The bill for ${O.name.toLowerCase()} goes up across Capua — ${mineN} bout${mineN===1?"":"s"} on your own sand this week. The card is at the arena and it is yours to fight.`, "good");
+      }
+    }
+  }
   const head = sell ? `You brokered ${O.name.toLowerCase()} for an editor.` : `Your house gave ${O.name.toLowerCase()}.`;
   chron(d, `${head} ${O.line}`, "good");
   return `${head} ${O.line} ${parts.join(" ")}`;
@@ -10690,6 +10718,7 @@ function endWeek(d){
     chron(d, `The invitation to Rome went unanswered long enough to be an answer. The place on the bill has gone to another house.`, "bad");
   }
   d.munera = (!d.rome && !d.city && !d.travel && !festivalNow(d) && R()<0.16) ? 1 : 0;
+  d.munusCard = null;      /* your own games are a single week; the card comes down after */
   d.games = null;
   if(d.travel){ /* on the road */ }
   else if(d.city){ if(R()<0.75) makeCityGames(d); }
@@ -14042,6 +14071,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             <div className="disp" style={{fontSize:15,fontWeight:700,letterSpacing:".04em",marginBottom:3}}>TO THE SAND</div>
             <div className="dim" style={{fontSize:14.5,marginBottom:11}}>
               {(()=>{ const n=((S.games&&S.games.offers)||[]).length;
+                if(n && S.games.mine) return `Your own games are on — ${S.games.festival.toLowerCase()}, ${n} ${n===1?"bout":"bouts"} on your sand, and the city is watching to see what you put on it.`;
                 return `The pits are always open.${n? ` ${n} ${n===1?"card":"cards"} at the games this week.` : S.fame<TIERS[1].fame ? " Win to 25 fame in the pits and the editors will start sending cards." : " No games this week."}`; })()}
             </div>
             <button className="btn btn-blood" style={{width:"100%"}}
@@ -16455,6 +16485,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               <div className="flex items-center gap-1" style={{flexWrap:"wrap",marginTop:3}}>
                 <span className="tag tag-gold">{TIERS[o.tier].name}</span>
                 {o.imperial && <span className="tag tag-gold">✦ Rome</span>}
+                {o.headline && <span className="tag tag-gold">✦ Your headliner</span>}
+                {o.mine && !o.headline && <span className="tag">Your games</span>}
                 {o.primus && <span className="tag tag-gold">✦ {o.defence?"Defend primacy":"For the primacy"}</span>}
                 {o.booking && <span className="tag tag-gold">✦ Contracted</span>}
                 {o.nemGrudge && <span className="tag tag-blood">✦ The Grudge</span>}
@@ -16800,7 +16832,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               <div className="tag" style={{marginBottom:6}}>Whose name goes on it</div>
               <div className="grid grid-cols-2 gap-2" style={{marginBottom:11}}>
                 <button className={`focusbtn ${!p.sell?"on":""}`} onClick={()=>set({sell:false})}>
-                  HOST IT<span className="sub">your coin · full glory</span>
+                  HOST IT<span className="sub">your coin · you fight the card</span>
                 </button>
                 <button className={`focusbtn ${p.sell?"on":""}`} onClick={()=>set({sell:true})}>
                   SELL THE CARD<span className="sub">an editor pays you</span>
@@ -16820,7 +16852,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 )}
                 <div className="dim" style={{fontSize:12.5,marginTop:4}}>
                   {p.sell ? "His name on the bill, so the house takes less of the fame and favour — but the coin is real and nobody of yours is at risk."
-                          : "Every denarius of it yours, and so is every scrap of the glory."}
+                          : "Every denarius of it yours, and so is every scrap of the glory. The card goes up at the arena and your men fight it, bout by bout."}
                 </div>
               </div>
 
