@@ -4306,6 +4306,11 @@ function succeed(d){
     health: ri(84,95), traits:(d.heir.traits||[]).slice(), since:d.week, wonBets:0, quietStanding:0, styleRun:0, styleWas:null };
   if(d.heir.kind==="doctore") d.doctore = null;
   if(d.heir.kind==="scion" && d.heir.palusRaised){ d.gladiators.forEach(g=>{ if(g.status==="active") g.morale = clamp(g.morale+8,0,100); }); d.unrest = clamp(d.unrest-6,0,100); }
+  /* the man who raised him in the yard now takes his orders — and gives them gladly */
+  { const mtr = d.heir.mentorId ? d.gladiators.find(g=>g.id===d.heir.mentorId && g.status==="active") : null;
+    if(mtr){ mtr.morale = clamp(mtr.morale+14, 0, 100); mtr.regard = clamp(regardOf(mtr)+12, 0, 100);
+      d.gladiators.forEach(g=>{ if(g.status==="active") g.morale = clamp(g.morale+4,0,100); }); d.unrest = clamp(d.unrest-5,0,100);
+      chron(d, `${mtr.name} stands at the new master's shoulder — the boy he kept back at the post, grown and giving the orders now. The cells follow a man one of their own raised without a word of complaint.`, "good"); } }
   if(d.heir.cid && d.domus && d.domus.children){ const c = d.domus.children.find(x=>x.id===d.heir.cid); if(c) c.tookHouse = d.week; }
   d.heir = null;
   d.forebears = [...(d.forebears||[]), { name:old.name, age:old.age, traits:old.traits.slice(),
@@ -4395,8 +4400,21 @@ function resolveRaise(d, ev, i){
   if(ev.data.stage===1) c.up1 = true; else c.up2 = true;
   const key = ["palus","rhetor","box"][i] || "palus";
   c.up[key] = (c.up[key]||0) + 1;
+  if(key==="palus"){
+    /* a boy left in the yard is not raised by the yard in general — one man takes to him */
+    const cur = c.mentorId ? d.gladiators.find(g=>g.id===c.mentorId && g.status==="active") : null;
+    if(!cur){
+      const vet = activeG(d).filter(g=>!isAuctor(g) && (g.wins||0)>=4 && regardOf(g)>=45).sort((a,b)=>(b.wins||0)-(a.wins||0))[0];
+      if(vet){ c.mentorId = vet.id; c.mentorName = vet.name;
+        vet.morale = clamp(vet.morale+7, 0, 100); vet.regard = clamp(regardOf(vet)+6, 0, 100);
+        return `${c.name} spends his days at the post with the men, and one of them takes to him: ${vet.name} has started keeping the boy back after the others go in, teaching him what the doctore will not. A man who raises the master's son stands a little taller for it — and the boy could not have a better hand on him.`; }
+    } else {
+      cur.morale = clamp(cur.morale+3, 0, 100);
+      return `${c.name} is still ${cur.name}'s shadow at the post, and the better for it. What that man knows is going into the boy a day at a time.`;
+    }
+    return `${c.name} spends his days at the post with the men. He comes in bruised and happy, and the cells have started to treat him as half theirs — worth more at your deathbed than at your dinner table.`;
+  }
   return ({
-    palus:`${c.name} spends his days at the post with the men. He comes in bruised and happy, and the cells have started to treat him as half theirs — worth more at your deathbed than at your dinner table.`,
     rhetor:`${c.name} goes down to Neapolis to a rhetor. He comes back at the holidays speaking better than you do and looking at the sand a little differently. Capua will remember he was educated.`,
     box:`${c.name} sits the cards at your elbow, learning which editor lies and how the book is really kept. He has a head for it — and it is the truth of the house, even if it is not a gentle thing to teach a boy.`,
   })[key];
@@ -4418,8 +4436,12 @@ function resolveToga(d, ev, i){
   if(i!==0){ c.togaTil = d.week + ri(8,14); return `${c.name} is a man now, but not yet named. There is time — you hope.`; }
   c.grown = true;
   const up = c.up || {}, p=up.palus||0, r=up.rhetor||0, b=up.box||0;
+  const mentor = c.mentorId ? d.gladiators.find(g=>g.id===c.mentorId && g.status==="active") : null;
   d.heir = { kind:"scion", name:c.name, named:d.week, raised:true, cid:c.id,
-    traits: heirTraitsFromUp(up), palusRaised: (p>=r && p>=b && p>0) };
+    traits: heirTraitsFromUp(up), palusRaised: (p>=r && p>=b && p>0),
+    mentorId: mentor ? mentor.id : null, mentorName: (mentor&&mentor.name) || c.mentorName || null };
+  if(mentor){ mentor.morale = clamp(mentor.morale+8, 0, 100); mentor.regard = clamp(regardOf(mentor)+6, 0, 100);
+    return `${c.name} takes the toga a man grown — and the whole yard turns to ${mentor.name}, who taught him to hold a sword before he could hold a cup. The boy he raised is the heir now. Name him, and the house passes not to a stranger but to one of your own, with your best man's hand already on him.`; }
   return `${c.name} is your named heir — a son you raised for this. When the day comes, the house will not skip a beat.`;
 }
 
@@ -4456,6 +4478,18 @@ function familyWeek(d){
   if(!dmm.wife){
     if(marryReady(d) && (d.flags.matchCool==null || d.week>=d.flags.matchCool) && R()<0.10) d.pendingEvent = matchEvent(d);
     return;
+  }
+  /* a house with a mistress in it runs a shade warmer every week — the domestic half, kept */
+  activeG(d).forEach(g=>{ g.morale = clamp(g.morale + 0.4, 0, 100); });
+  d.unrest = clamp(d.unrest - 0.3, 0, 100);
+  if(d.lanista) d.lanista.health = clamp(d.lanista.health + 0.15, 0, 100);
+  /* the boy shadowing a veteran keeps that man proud — and if the man is gone, the boy loses his hand */
+  for(const c of dmm.children){
+    if(c.wed || c.dead || !c.mentorId) continue;
+    const m = d.gladiators.find(g=>g.id===c.mentorId);
+    if(m && m.status==="active"){ if(R()<0.5) m.morale = clamp(m.morale + 0.6, 0, 100); }
+    else if(!m || isGone(m)){ const nm = c.mentorName || "the man who taught him"; c.mentorLost = c.mentorId; c.mentorId = null;
+      chron(d, `${c.name} has lost his hand at the post — ${nm} is gone from the yard, and the boy is at the wall on his own now.`, "bad"); }
   }
   const wifeAge = (dmm.wife.age||24) + Math.floor((d.week - dmm.wife.married)/YEAR_WEEKS);
   if(livingKids(d).length < 3 && wifeAge < 40 && (d.week - (dmm.lastBorn!=null?dmm.lastBorn:dmm.wife.married)) >= 6 && R()<0.06){
@@ -13071,6 +13105,12 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 <div className="track" style={{height:6}}>
                   <div className="fill" style={{width:`${clamp(S.unrest,0,100)}%`, background: S.unrest>=68?"linear-gradient(90deg,#7c2a22,#d96f5d)":"linear-gradient(90deg,#5a4a2c,#d8ac5f)"}}/>
                 </div>
+                {S.lanista && (S.lanista.age>=48 || S.lanista.health<55) && (
+                  <div className="flex items-center justify-between" style={{fontSize:12,marginTop:7,borderTop:"1px dotted #33271a",paddingTop:6}}>
+                    <span className="dim" style={{textTransform:"uppercase",letterSpacing:".06em",fontSize:10.5}}>After you · {S.lanista.age}, {healthWord(S.lanista.health)}</span>
+                    <span style={{color: S.heir?"#9aa86a":"#d96f5d"}}>{S.heir ? `heir: ${S.heir.name.split(" ")[0]}` : "no heir named"}</span>
+                  </div>
+                )}
               </div>
             ); })()}
           {(()=>{ const ALL = agenda(S), AG = allTodos ? ALL : ALL.slice(0, 7), rest = ALL.length - AG.length;
@@ -14232,6 +14272,39 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               </div>
             )}
           </Sect>
+
+          {(()=>{ const dm = domusOf(S), w = dm.wife, kids = dm.children.filter(c=>!c.dead);
+            const UP = c => { const u=c.up||{}, p=u.palus||0, r=u.rhetor||0, b=u.box||0; if(!(p+r+b)) return "still small";
+              return p>=r&&p>=b ? "raised in the yard" : r>=b ? "sent for letters" : "learning the trade"; };
+            return (
+            <Sect title="The blood of the house" note={w ? `${kids.filter(c=>!c.wed).length} at home` : marryReady(S) ? "a match awaits" : "no family yet"}>
+              {w ? (<>
+                <div className="flex items-center justify-between gap-2" style={{marginBottom:6}}>
+                  <span className="disp" style={{fontSize:14,color:"#d9c0e0"}}>{w.name}</span>
+                  <span className="rowval dim" style={{fontSize:12}}>of {w.family} · your wife</span>
+                </div>
+                {kids.length===0 && <div className="dim" style={{fontSize:14,fontStyle:"italic"}}>No children yet. The house waits.</div>}
+                {kids.map(c=>{ const age=childAge(S,c); const heir = S.heir && S.heir.cid===c.id;
+                  return (
+                    <div key={c.id} style={{borderTop:"1px dotted #33271a",padding:"5px 0"}}>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="rowname" style={{fontSize:14,color:heir?"#e8d092":undefined}}>{c.name}{heir?" · your heir":""}</span>
+                        <span className="rowval dim" style={{fontSize:12}}>{c.sex==="m"?"son":"daughter"} · {age} yr{c.wed?" · married out":""}</span>
+                      </div>
+                      {!c.wed && <div className="dim" style={{fontSize:12.5}}>{c.sex==="m"? UP(c) : age>=15?"of an age to be matched":"still at home"}{c.mentorId&&(()=>{ const m=S.gladiators.find(g=>g.id===c.mentorId); return m?` · at ${m.name}'s shoulder`:""; })()}</div>}
+                    </div>
+                  ); })}
+                <div className="dim" style={{fontSize:12.5,fontStyle:"italic",marginTop:7}}>A house with a wife in it runs a shade warmer, and a son raised in this yard becomes an heir worth more than whoever is left when you die.</div>
+              </>) : marryReady(S) ? (<>
+                <div className="dim" style={{fontSize:14,fontStyle:"italic",marginBottom:7}}>
+                  A man alone at the head of a ludus leaves nothing behind but a ledger. Take a wife, and the house can make an heir of its own blood.
+                </div>
+                <button className="btn" style={{width:"100%"}} onClick={seekMatch}>Let it be known you are looking for a match</button>
+              </>) : (
+                <div className="dim" style={{fontSize:14,fontStyle:"italic"}}>Climb a little higher — a name, or a heavier purse — and the matchmakers of Capua will come calling.</div>
+              )}
+            </Sect>
+          ); })()}
 
           </>)}
 
