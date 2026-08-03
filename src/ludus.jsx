@@ -12601,7 +12601,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             <div style={{fontSize:16}}>{ask.text}</div>
             <button className={`btn ${ask.danger?"btn-blood":""}`} style={{width:"100%",marginTop:14}}
               onClick={()=>{ const r=ask.run; setAsk(null); r(); }}>{ask.confirm}</button>
-            <button className="btn btn-ghost" style={{width:"100%",marginTop:8}} onClick={()=>setAsk(null)}>Think again</button>
+            {!ask.info && <button className="btn btn-ghost" style={{width:"100%",marginTop:8}} onClick={()=>setAsk(null)}>Think again</button>}
           </div>
         </div>
       )}
@@ -13268,39 +13268,56 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           {(()=>{ const ALL = agenda(S), AG = allTodos ? ALL : ALL.slice(0, 7), rest = ALL.length - AG.length;
             const TABN = { ludus:"Ludus", men:"Familia", arena:"Arena", armory:"Armory", market:"Market", villa:"Villa" };
             const banners = [];
-            const bnr = (c,title,sub,urgent)=>banners.push({c,title,sub,urgent:!!urgent});
-            /* urgent = something you can act on now; the rest are threads you are simply in */
-            if(S.war && !S.war.done) bnr("#7c2a22", warStage(S).name, "the war in the south");
-            if(isFirstHouse(S)) bnr("#e0bd72", "First House of Capua", `held ${leagueHeld(S)}w`);
-            if(S.primus) bnr(S.primus.mine?"#c99a4b":"#4e3c26", S.primus.mine?"Primus of Capua":`Primacy · ${S.primus.house}`, S.primus.mine?S.primus.name:"");
-            if(S.nemesis) bnr("#7c2a22", S.nemesis.name, "has your measure");
+            const bnr = (c,title,sub,urgent,explain)=>banners.push({c,title,sub,urgent:!!urgent,explain});
+            /* urgent = something you can act on now; the rest are threads you are simply in.
+               every banner carries an explain line so a tap says what it actually means. */
+            if(S.war && !S.war.done) bnr("#7c2a22", warStage(S).name, "the war in the south", false,
+              "A slave war burns in the south, and it moves through stages. It unsettles every cell in Campania and shapes how the arena and the law treat a house of fighting men. How you carry the ludus through it is remembered long after.");
+            if(isFirstHouse(S)) bnr("#e0bd72", "First House of Capua", `held ${leagueHeld(S)}w`, false,
+              `Your house sits at the top of Capua's fame table — the First House, held ${leagueHeld(S)} week${leagueHeld(S)===1?"":"s"} now. It brings the better bills and a richer purse, and every rival is measuring the gap. Lose the top spot and you lose the edge.`);
+            if(S.primus) bnr(S.primus.mine?"#c99a4b":"#4e3c26", S.primus.mine?"Primus of Capua":`Primacy · ${S.primus.house}`, S.primus.mine?S.primus.name:"", false,
+              S.primus.mine
+                ? `${S.primus.name} is the Primus of Capua — the town's crowned champion, and he wears your colours. When the primacy is challenged, defend it to keep the crown.`
+                : `House ${S.primus.house} holds the primacy of Capua — the town's crowned champion. Win a primus bout at a great games to take the crown for your own house.`);
+            if(S.nemesis) bnr("#7c2a22", S.nemesis.name, "has your measure", false,
+              `${S.nemesis.name} has beaten your house, and the crowd knows his name set against yours. He is a nemesis: until you put him down on the sand, he has your measure and the tiers will keep saying so.`);
             if(S.nemHouse){ const grudgeLive=(S.deadlines||[]).some(x=>x.kind==="challenge"&&x.nem);
-              bnr("#7c2a22", `The feud · House ${S.nemHouse.name}`, grudgeLive?"the day is named":(nemEdge(S)>0?"you hold the upper hand":nemEdge(S)<0?"he holds the upper hand":"even, for now"), grudgeLive); }
+              bnr("#7c2a22", `The feud · House ${S.nemHouse.name}`, grudgeLive?"the day is named":(nemEdge(S)>0?"you hold the upper hand":nemEdge(S)<0?"he holds the upper hand":"even, for now"), grudgeLive,
+                `A running feud with House ${S.nemHouse.name}. Bad blood builds between the two houses until it comes to a named grudge match — win those and the upper hand, and the crowd, are yours.`); }
             if(S.saga){ const sg = S.gladiators.find(x=>x.id===S.saga.gid);
-              if(sg) bnr("#c99a4b", sg.name, S.saga.stage>=3?"his reckoning is set":"the crowd's champion", S.saga.stage>=3); }
-            if(aedileOn(S)) bnr(S.aedile.friendly?"#5a6a35":S.aedile.hostile?"#7c2a22":"#3e2f1f", "The aedile", S.aedile.friendly?"owes you":S.aedile.hostile?"knows whose list":"neutral", S.aedile.hostile);
-            if(S.city) bnr("#6d5426", CITIES[S.city].name, "you are on the circuit");
-            if(S.travel) bnr("#6d5426", "On the road", `${S.travel.weeks}w`);
-            if(canClaimRise(S)) bnr("#c99a4b", `Received as ${riseNext(S).name}`, "your standing awaits", true);
+              if(sg) bnr("#c99a4b", sg.name, S.saga.stage>=3?"his reckoning is set":"the crowd's champion", S.saga.stage>=3,
+                `${sg.name} has caught the crowd. A saga is building around him bout by bout, toward a reckoning the whole town will come to see. Keep winning and the story — and his fame — grows.`); }
+            if(aedileOn(S)) bnr(S.aedile.friendly?"#5a6a35":S.aedile.hostile?"#7c2a22":"#3e2f1f", "The aedile", S.aedile.friendly?"owes you":S.aedile.hostile?"knows whose list":"neutral", S.aedile.hostile,
+              `The aedile is the magistrate who puts on Capua's games and enforces its law. ${S.aedile.friendly?"This one owes you — he bends the editor's box and the purse your way.":S.aedile.hostile?"This one has you on his list — expect the law to fall harder on your house.":"This one is neutral, watching which kind of house you turn out to be."} Win his election with your standing and games, or lose it to a rival.`);
+            if(S.city) bnr("#6d5426", CITIES[S.city].name, "you are on the circuit", false,
+              `You are fighting away from Capua, in ${CITIES[S.city].name}, down the bay. Win here and the town comes to know your name. A house known the length of the whole bay — Pompeii, Neapolis, Puteoli — carries word all the way to Rome, and shortens its road there.`);
+            if(S.travel) bnr("#6d5426", "On the road", `${S.travel.weeks}w`, false,
+              "The house is on the road between towns. Nothing happens on the sand until you arrive — the weeks are travel, tolls, and men who have never left Campania looking at the hills.");
+            if(canClaimRise(S)) bnr("#c99a4b", `Received as ${riseNext(S).name}`, "your standing awaits", true,
+              `Your standing has climbed enough to be received as ${riseNext(S).name}, the next rung of the lanista's own rise out of the slaver's trade. Go to the Villa's Standing to take your place.`);
             const urgent = banners.filter(b=>b.urgent), ongoing = banners.filter(b=>!b.urgent);
+            const explainBnr = b => setAsk({ title:b.title, info:true, confirm:"Understood",
+              text:(b.sub ? b.sub.charAt(0).toUpperCase()+b.sub.slice(1)+". " : "") + (b.explain||""), run:()=>{} });
             return (<>
               {urgent.length>0 && (
                 <div className="flex gap-2" style={{flexWrap:"wrap"}}>
                   {urgent.map((b,i)=>(
-                    <div key={i} className="panel" style={{padding:"10px 9px",borderColor:b.c,flex:"1 1 auto",minWidth:0}}>
+                    <button key={i} className="panel" onClick={()=>explainBnr(b)}
+                      style={{padding:"10px 9px",borderColor:b.c,flex:"1 1 auto",minWidth:0,textAlign:"left",cursor:"pointer",font:"inherit",color:"inherit",background:"#1c1610"}}>
                       <div className="disp" style={{fontSize:12,color:"#e8d092",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{b.title}</div>
                       {b.sub && <div className="dim" style={{fontSize:11.5,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{b.sub}</div>}
-                    </div>
+                    </button>
                   ))}
                 </div>
               )}
               {ongoing.length>0 && (
                 <div className="flex gap-1" style={{flexWrap:"wrap",alignItems:"center"}}>
-                  <span className="dim" style={{fontSize:10.5,textTransform:"uppercase",letterSpacing:".07em",marginRight:2}}>Ongoing</span>
+                  <span className="dim" style={{fontSize:10.5,textTransform:"uppercase",letterSpacing:".07em",marginRight:2}}>Ongoing <span style={{opacity:.6,textTransform:"none",letterSpacing:0}}>· tap to read</span></span>
                   {ongoing.map((b,i)=>(
-                    <span key={i} className="chip" style={{borderColor:b.c,fontSize:11.5,padding:"3px 8px",whiteSpace:"nowrap"}} title={b.sub||""}>
+                    <button key={i} className="chip" onClick={()=>explainBnr(b)}
+                      style={{borderColor:b.c,fontSize:11.5,padding:"3px 8px",whiteSpace:"nowrap",cursor:"pointer",font:"inherit",color:"inherit"}}>
                       {b.title}{b.sub?<span className="dim" style={{marginLeft:5}}>{b.sub}</span>:null}
-                    </span>
+                    </button>
                   ))}
                 </div>
               )}
@@ -16359,7 +16376,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             <div style={{fontSize:16}}>{ask.text}</div>
             <button className={`btn ${ask.danger?"btn-blood":""}`} style={{width:"100%",marginTop:14}}
               onClick={()=>{ const r=ask.run; setAsk(null); r(); }}>{ask.confirm}</button>
-            <button className="btn btn-ghost" style={{width:"100%",marginTop:8}} onClick={()=>setAsk(null)}>Think again</button>
+            {!ask.info && <button className="btn btn-ghost" style={{width:"100%",marginTop:8}} onClick={()=>setAsk(null)}>Think again</button>}
           </div>
         </div>
       )}
