@@ -12281,11 +12281,11 @@ function DoctoreBust({ name, size=56 }){
 /* A collapsible section. Uncontrolled <details> so the browser owns the
    open/closed state and it survives the game's frequent re-renders; the
    initial state is set once on mount. */
-function Sect({ title, note, open, children }){
+function Sect({ title, note, open, tone, children }){
   const ref = useRef(null);
   useEffect(()=>{ if(ref.current) ref.current.open = !!open; }, []);
   return (
-    <details className="sect" ref={ref}>
+    <details className="sect" ref={ref} style={tone? {borderColor:tone} : undefined}>
       <summary>
         <span style={{minWidth:0,overflow:"hidden",textOverflow:"ellipsis"}}>{title}</span>
         <span style={{display:"flex",alignItems:"center",gap:8,flex:"0 0 auto"}}>
@@ -13967,12 +13967,18 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     </div>
                   </div>
                 ); })()}
-              <div className="panel" style={{padding:13, borderColor: AG.some(a=>a.urgency===3)?"#7c2a22":AG.length?"#6d5426":"#3e2f1f"}}>
-                <div className="flex items-center justify-between" style={{marginBottom:6}}>
-                  <span className="tag tag-gold">This week</span>
-                  <span className="rowval dim" style={{fontSize:12.5}}>
-                    {seasonOf(S).name.toLowerCase()} · year {yearOf(S)}, week {yearWeek(S)}
-                  </span>
+              {(()=>{
+                /* shut, the header still has to say what is waiting — a count, and
+                   whether any of it will not keep. */
+                const press = ALL.filter(a=>a.urgency===3).length + MEN.filter(a=>a.urgency===3).length;
+                const total = ALL.length + (MEN.length?1:0);
+                const note = total===0 ? "nothing pressing"
+                  : `${total} thing${total===1?"":"s"}${press? ` · ${press} now` : ""}`;
+                return (
+              <Sect title="This week" note={note} open={press>0}
+                tone={press?"#7c2a22":total?"#6d5426":undefined}>
+                <div className="dim" style={{fontSize:12.5,textAlign:"right",marginBottom:6}}>
+                  {seasonOf(S).name.toLowerCase()} · year {yearOf(S)}, week {yearWeek(S)}
                 </div>
                 {AG.length===0 && MEN.length===0
                   ? <div className="dim" style={{fontSize:14.5,fontStyle:"italic"}}>
@@ -14032,7 +14038,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     Show fewer
                   </button>
                 )}
-              </div>
+              </Sect>
+                ); })()}
             </>); })()}
           {S.rome && (
             <div className="panel" style={{padding:14,borderColor:"#c99a4b",background:"linear-gradient(165deg,#2f2415,#1d1610)"}}>
@@ -14055,22 +14062,20 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               </div>
             </div>
           )}
-          {(S.rivalLog||[]).length>0 && (
-            <div className="panel" style={{padding:13}}>
-              <div className="flex items-center justify-between" style={{marginBottom:6}}>
-                <span className="tag">The other houses</span>
-                <span className="rowval dim" style={{fontSize:12.5}}>
-                  {(S.rivals||[]).filter(h=>h.away).length? `${(S.rivals||[]).filter(h=>h.away).length} away` : "all in Capua"}
-                </span>
-              </div>
-              {(S.rivalLog||[]).slice(0,5).map((r,i)=>(
-                <div key={i} style={{borderTop:"1px dotted #33271a",padding:"6px 0"}}>
-                  <div style={{fontSize:14.5}}>{r.text}</div>
-                  <div className="dim" style={{fontSize:12}}>week {r.week}</div>
-                </div>
-              ))}
-            </div>
-          )}
+          {(S.rivalLog||[]).length>0 && (()=>{
+            const away = (S.rivals||[]).filter(h=>h.away).length;
+            const fresh = (S.rivalLog||[]).filter(r=>S.week - r.week <= 4).length;
+            return (
+              <Sect title="The other houses"
+                note={`${fresh? `${fresh} this month · ` : ""}${away? `${away} away` : "all in Capua"}`}>
+                {(S.rivalLog||[]).slice(0,5).map((r,i)=>(
+                  <div key={i} style={{borderTop:i?"1px dotted #33271a":"none",padding:"6px 0"}}>
+                    <div style={{fontSize:14.5}}>{r.text}</div>
+                    <div className="dim" style={{fontSize:12}}>week {r.week}</div>
+                  </div>
+                ))}
+              </Sect>
+            ); })()}
 
 
           {(()=>{ const on = earOn(S), inside = earInside(S);
