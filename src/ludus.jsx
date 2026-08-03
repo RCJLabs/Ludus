@@ -6185,6 +6185,8 @@ function bayWeek(d){
     const v = d.known[k] || 0;
     if(v > 0) d.known[k] = Math.max(0, v - BAY_DECAY);
   }
+  if(bayWide(d) && !d.flags.bayWide){ d.flags.bayWide = d.week;
+    chron(d, `Word has gone round the whole bay now — Pompeii, Neapolis and Puteoli all know the house by name. A reputation that wide does not stay in Campania; it is already being spoken of in rooms in Rome, and the road there is shorter for it.`, "good"); }
   /* somebody else is down there taking the work */
   d.bay = d.bay || { holder:null, since:0, weeks:0 };
   const away = d.week - (d.flags.lastTravelled || 0);
@@ -6235,6 +6237,11 @@ const CITY_KEYS = Object.keys(CITIES);
 const awayIn = d => (d.city && CITIES[d.city]) ? CITIES[d.city] : null;
 const knownIn = (d,k) => (d.known && d.known[k]) || 0;
 const cityTier = (d,k) => knownIn(d,k) >= 60 ? 3 : knownIn(d,k) >= 30 ? 2 : 1;
+/* a house known the length of the bay carries further than Campania — word of it
+   reaches Rome, and shortens the road there. capped at 60 known per town. */
+const bayKnownTotal = d => CITY_KEYS.reduce((n,k)=>n+Math.min(knownIn(d,k),60),0);   // 0..180
+const bayWide  = d => bayKnownTotal(d) >= 150;
+const bayRomeCut = d => Math.round(bayKnownTotal(d)/180 * 150);                       // up to 150 fame off the Rome bar
 
 function setOut(d, key){
   const C = CITIES[key]; if(!C || d.rome || d.travel || d.city===key) return false;
@@ -6813,7 +6820,10 @@ const ROME_FAME = 1000;      // the imperial games are the summit, not the next 
 const ROME_COOLDOWN = 45;    // weeks the city forgets you between campaigns
 /* your rank in Capua carries word to Rome — an Eques is heard of there before an unknown lanista is */
 const riseRomeCut = d => riseOf(d)>=5 ? 150 : riseOf(d)>=4 ? 90 : riseOf(d)>=3 ? 45 : 0;
-const romeReady = d => !d.rome && !d.romeOffer && !d.over && d.fame >= ROME_FAME + romeRuns(d)*300 - (d.flags.romeEarly?150:0) - riseRomeCut(d)
+/* the fame a name must reach before Rome will call — rising each campaign, eased by
+   your rank in Capua and by how well the whole bay knows you */
+const romeBar = d => ROME_FAME + romeRuns(d)*300 - (d.flags.romeEarly?150:0) - riseRomeCut(d) - bayRomeCut(d);
+const romeReady = d => !d.rome && !d.romeOffer && !d.over && d.fame >= romeBar(d)
   && (d.flags.primusHeld||0) >= 1                                          // prove it in Capua first
   && (!d.flags.romeDeclined || d.week - d.flags.romeDeclined >= 30)
   && (!d.flags.romeReturned || d.week - d.flags.romeReturned >= ROME_COOLDOWN)
@@ -14526,6 +14536,40 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               )}
             </Sect>
           ); })()}
+
+          {(!S.over && (S.fame >= 250 || (S.flags.primusHeld||0) > 0 || riseOf(S) >= 2 || romeRuns(S) > 0)) && (()=>{
+            const sen = (S.patrons||[]).filter(p=>p.rank==="senator").sort((a,b)=>b.favor-a.favor)[0];
+            const bar = romeBar(S), ready = romeReady(S), been = romeRuns(S) > 0;
+            const rungs = [
+              { met:(S.flags.primusHeld||0) > 0, label:"Win a primus at Capua", detail:(S.flags.primusHeld||0)>0 ? "the town has crowned your man" : "top the bill at a great games and win it" },
+              { met:!!(sen && sen.favor>=70), label:"A senator in your debt", detail:sen ? `${sen.name} · favour ${rnd(sen.favor)} / 70` : "no senator has taken an interest yet" },
+              { met:bayWide(S), label:"Known the length of the bay", detail:`${Math.round(bayKnownTotal(S)/180*100)}% — Pompeii, Neapolis, Puteoli · shortens the road`, soft:true },
+              { met:S.fame >= bar, label:"A name that carries to Rome", detail:`${rnd(S.fame)} / ${rnd(bar)} renown${romeRuns(S)>0?` (higher each campaign)`:""}` },
+            ];
+            const doneCount = rungs.filter(r=>r.met || r.soft).length;
+            return (
+            <Sect title="The road to Rome" note={been ? `${romeTriumphs(S)?`${romeTriumphs(S)} taken`:`best ${romeBest(S)} of 3`}` : ready ? "Rome is calling" : `${rungs.filter(r=>r.met && !r.soft).length} of 3`} open={ready}>
+              <div className="dim" style={{fontSize:13.5,fontStyle:"italic",margin:"1px 0 9px"}}>
+                {been
+                  ? "You have stood on the imperial sand. The city keeps its own tablet on you now, and every return asks a greater name than the last."
+                  : "The imperial games are the summit. There is a way up to them, and it runs through Capua's crown, a senator's favour, and a name loud enough to be heard in the capital."}
+              </div>
+              {rungs.map((r,i)=>(
+                <div key={i} className="flex items-center justify-between gap-2" style={{fontSize:14,padding:"4px 0",borderTop:i?"1px dotted #26201a":undefined}}>
+                  <span style={{color:r.met?"#a9c98a":r.soft?"#cfc0a0":"#cfc0a0"}}>{r.met?"✓":r.soft?"◦":"·"} {r.label}</span>
+                  <span className="rowval dim" style={{fontSize:12.5,textAlign:"right",maxWidth:"52%"}}>{r.detail}</span>
+                </div>
+              ))}
+              <div className="panel" style={{padding:10,marginTop:9,background:"#1c1610",borderColor:ready?"#c99a4b":"#3e2f1f"}}>
+                <div style={{fontSize:14,color:ready?"#e8d092":"#cfc0a0"}}>
+                  {ready ? "The road is open — a letter under an imperial seal cannot be far behind."
+                    : been && S.rome ? "You are on the imperial sand now."
+                    : `Rome is watching. It will send for a house that has done all three${bayWide(S)?", and the bay has already carried your name north":""}.`}
+                </div>
+              </div>
+            </Sect>
+            ); })()}
+
           {(()=>{ const bg = blessOf(S), pi = pietyOf(S);
             return (
             <Sect title="The Temple" note={pietyWord(pi)} open={!!S.vow || pi<=20}>
