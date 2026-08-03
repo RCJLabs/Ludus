@@ -10630,7 +10630,35 @@ function updateRebellion(d){
   }
 }
 
+/* ---- WHAT HAPPENED WHILE YOU WERE DECIDING ----
+   Everything a week does is written to a chronicle forty lines deep, and a busy
+   week writes more than that. Things went past unread — a man taken by a rival,
+   a contract lapsing, the law turning — because nothing ever put them in front of
+   you. The week is now totted up as it ends: what it cost, what it changed, and
+   every line it wrote, kept together where they can be read at once. */
+function weekDigest(d, mark, before){
+  const log = d.log || [];
+  let cut = log.length;
+  if(mark){ const i = log.indexOf(mark); if(i >= 0) cut = i; }
+  const lines = log.slice(0, cut).map(l=>({ text:l.text, kind:l.kind }));
+  const dl = {
+    gold:  rnd(d.gold  - before.gold),
+    fame:  rnd(d.fame  - before.fame),
+    favor: rnd(d.favor - before.favor),
+    unrest:rnd(d.unrest- before.unrest),
+  };
+  const roster = activeG(d).length;
+  const lost = before.roster - roster;
+  /* a week is worth interrupting for if it took something, turned something, or hurt.
+     a purse you just watched being won is not news; coin going out unasked is. */
+  const notable = lines.some(l=>l.kind==="bad" || l.kind==="good")
+    || lost !== 0 || Math.abs(dl.unrest) >= 6 || Math.abs(dl.fame) >= 25 || dl.gold <= -400;
+  d.lastWeek = { week:d.week, season:seasonOf(d).name, year:yearOf(d), yw:yearWeek(d),
+    lines:lines.slice(0, 14), more:Math.max(0, lines.length-14), dl, lost, notable };
+}
 function endWeek(d){
+  const digestMark = (d.log && d.log[0]) || null;
+  const digestBefore = { gold:d.gold, fame:d.fame, favor:d.favor, unrest:d.unrest, roster:activeG(d).length };
   const fest = d.rome ? null : festivalNow(d);
   repairSpar(d);
   d.gladiators.forEach(g=>{ if(g.status==="away" && d.week+1>=g.returnWeek){ g.status="active"; chron(d, `${g.name} returns from ${PR(g).his} post at the noble's villa.`); } });
@@ -10940,6 +10968,7 @@ function endWeek(d){
   /* the game says mercy is the strongest long game; it should be able to end that way */
   else if(!alive && houseRecord(d).freed >= 5 && houseRecord(d).freed > houseRecord(d).lost)
     d.over = { kind:"closed", name:d.name, freed:houseRecord(d).freed, years:yearOf(d) };
+  weekDigest(d, digestMark, digestBefore);
 }
 
 function grantRudis(d, gid){
@@ -12284,7 +12313,8 @@ export default function App(){
       setSlots(v=>({ ...v, [i]:o })); setXfer(null); setXferIn("");
       setAsk({ title:"Ledger Restored", confirm:"Good", text:`${o.name} takes its place in the records — week ${o.week}, ${o.gladiators.filter(g=>!isGone(g)).length} men.`, run:()=>{} });
     })(); };
-  const advance = ()=> mut(d=>endWeek(d));
+  const [digest,setDigest] = useState(null);
+  const advance = ()=> mut(d=>{ endWeek(d); if(d.lastWeek && d.lastWeek.notable && !d.over) setDigest(d.lastWeek); });
   const [skipped,setSkipped] = useState(null);
   const runOn = () => mut(d=>{ const r = skipWeeks(d, weeksToSomething(d, 6)); setSkipped(r); });
 
@@ -13759,6 +13789,22 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
 
 
 
+
+          {S.lastWeek && (()=>{ const D=S.lastWeek; const dl=D.dl||{};
+            const bits=[]; if(dl.gold) bits.push(`${dl.gold>0?"+":""}${dl.gold}d`);
+            if(dl.fame) bits.push(`${dl.fame>0?"+":""}${dl.fame} fame`);
+            if(dl.unrest) bits.push(`${dl.unrest>0?"+":""}${dl.unrest} unrest`);
+            return (
+            <Sect title="Last week" note={bits.length? bits.join(" · ") : "a quiet one"}>
+              {(D.lines||[]).length===0
+                ? <div className="dim" style={{fontSize:14,fontStyle:"italic"}}>Nothing happened worth the ink.</div>
+                : D.lines.map((l,i)=>(
+                    <div key={i} style={{fontSize:14,padding:"3px 0",borderTop:i?"1px dotted #26201a":undefined,
+                      color: l.kind==="bad"?"#d9a89e" : l.kind==="good"?"#cfe0b0" : "#cfc0a0"}}>{l.text}</div>
+                  ))}
+              {D.more>0 && <div className="dim" style={{fontSize:12.5,marginTop:5,fontStyle:"italic"}}>…and {D.more} more in the chronicle.</div>}
+            </Sect>
+            ); })()}
 
           <Sect title="The house — records & annals" note={isFirstHouse(S) ? "✦ First House · lanista, houses, book…" : "lanista, the houses, the book, the roll…"}>
           <div className="grid grid-cols-2 gap-2">
@@ -16644,6 +16690,45 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           </div>
         </div>
       )}
+      {digest && !S.pendingEvent && !fight && !S.over && (()=>{
+        const D = digest, close=()=>setDigest(null);
+        const Delta = ({label, v, good, suffix}) => v===0 ? null : (
+          <div style={{minWidth:0}}>
+            <div className="dim" style={{fontSize:10.5,textTransform:"uppercase",letterSpacing:".06em"}}>{label}</div>
+            <div className="disp" style={{fontSize:15,color: (good? v>0 : v<0) ? "#9aa86a" : "#d96f5d"}}>
+              {v>0?"+":""}{v}{suffix||""}
+            </div>
+          </div>
+        );
+        return (
+        <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:58}} onClick={close}>
+          <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
+            <div className="flex items-center justify-between" style={{marginBottom:3}}>
+              <div className="disp" style={{fontSize:15,fontWeight:900,letterSpacing:".1em",color:"#e8d092"}}>THE WEEK THAT WAS</div>
+              <button className="btn btn-ghost" style={{padding:"8px 10px"}} aria-label="Close" onClick={close}><X size={14}/></button>
+            </div>
+            <div className="dim" style={{fontSize:12.5,marginBottom:9}}>{D.season} · year {D.year}, week {D.yw}</div>
+            <div className="grid grid-cols-4 gap-2" style={{marginBottom:10}}>
+              <Delta label="Coin" v={D.dl.gold} good={true} suffix="d"/>
+              <Delta label="Fame" v={D.dl.fame} good={true}/>
+              <Delta label="Standing" v={D.dl.favor} good={true}/>
+              <Delta label="Unrest" v={D.dl.unrest} good={false}/>
+            </div>
+            {D.lost>0 && <div className="blood" style={{fontSize:14.5,marginBottom:8}}>
+              {D.lost} {D.lost===1?"man is":"men are"} no longer in the yard.
+            </div>}
+            {D.lines.length===0
+              ? <div className="dim" style={{fontSize:14.5,fontStyle:"italic"}}>Nothing happened worth the ink.</div>
+              : D.lines.map((l,i)=>(
+                  <div key={i} style={{fontSize:14.5,padding:"4px 0",borderTop:i?"1px dotted #26201a":undefined,
+                    color: l.kind==="bad"?"#d9a89e" : l.kind==="good"?"#cfe0b0" : "#cfc0a0"}}>{l.text}</div>
+                ))}
+            {D.more>0 && <div className="dim" style={{fontSize:12.5,marginTop:6,fontStyle:"italic"}}>…and {D.more} more in the chronicle.</div>}
+            <button className="btn" style={{width:"100%",marginTop:12}} onClick={close}>Carry on</button>
+          </div>
+        </div>
+        ); })()}
+
       {skipped && skipped.ran>=2 && (
         <div className="modalwrap" role="dialog" aria-modal="true" onClick={()=>setSkipped(null)}>
           <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
