@@ -8157,6 +8157,9 @@ function simulateMelee(ents, ctx, opts){
   const beats = [];
   const n = ents.length;
   ents.forEach((e,i)=>{ e.mods = kitMods(e.kit, e.cls, e);
+    /* on a naumachia the sand is flooded and the fighting is done off pitching decks —
+       quick feet keep a man upright, a heavy man is forever half off balance */
+    e.footing = ctx.naumachia ? clamp(0.85 + (e.agi-50)/200, 0.78, 1.15) : 1;
     if(R0){ e.hpv = R0.hp[i]; e.stam = R0.stam[i]; e.out = R0.out[i]; e.dead = R0.dead[i]; e.withdrew = R0.withdrew[i]; }
     else { e.hpv = 100; e.stam = 55+e.end*0.6; e.out = false; e.dead = false; e.withdrew = false; } });
   let crowd = R0 ? R0.crowd : clamp(24 + ents.reduce((s,e)=>s+e.sho,0)/n/5, 0, 100);
@@ -8195,11 +8198,25 @@ function simulateMelee(ents, ctx, opts){
     else { e.dead = true; push("death", `${killer? killer.name+" finishes "+PR(e).him+" where "+PR(e).he+" lies." : PR(e).He+" does not get up, and the melee moves over "+PR(e).him+"."}`, { a:i }); }
   };
 
+  const myTac = ctx.myTactic || "measured";
   const startR = R0 ? R0.round : 0;
   for(let r=startR+1; r<=26; r++){
     round = r;
     let liv = alive();
     if(liv.length<=1) break;
+    /* the deck pitches — a man loses his feet and goes into the water. it takes the
+       heavy and the slow first, and the water spares more than the sand does. */
+    if(ctx.naumachia && liv.length>=3 && r>=2 && R()<0.18){
+      const wt = i => { const e = ents[i]; return Math.max(0.15, 1.4 - (e.agi-40)/60 + (e.mods.def||0)*2); };
+      const tot = liv.reduce((s,i)=>s+wt(i),0); let x = R()*tot, victim = liv[0];
+      for(const i of liv){ x -= wt(i); if(x<=0){ victim = i; break; } }
+      const e = ents[victim]; e.out = true;
+      crowd = clamp(crowd + 6, 0, 100);
+      if(R() < 0.72){ push("fall", `The deck pitches and ${e.name} goes over the side into the water — hauled out spluttering, but out of it.`, { a:victim, actor:"a" }); }
+      else { e.dead = true; push("death", `${e.name} goes into the water in his armour and does not come back up. The sea-battle is not all spectacle.`, { a:victim, actor:"a" }); }
+      liv = alive();
+      if(liv.length<=1) break;
+    }
     const mineLeft = liv.filter(mine), foesLeft = liv.filter(i=>!mine(i));
 
     /* nobody left but your own — the editor will not take two victors */
@@ -8213,8 +8230,8 @@ function simulateMelee(ents, ctx, opts){
       // they finish it, and neither of them wants to
       let guard = 0;
       while(!ents[x].out && !ents[y].out && guard++<12){
-        const px = power(ents[x],"measured",ents[y].cls,0,0.97+R()*0.06)*(0.74+R()*0.52);
-        const py = power(ents[y],"measured",ents[x].cls,0,0.97+R()*0.06)*(0.74+R()*0.52);
+        const px = power(ents[x],ents[x].mine?myTac:"measured",ents[y].cls,0,0.97+R()*0.06)*(0.74+R()*0.52);
+        const py = power(ents[y],ents[y].mine?myTac:"measured",ents[x].cls,0,0.97+R()*0.06)*(0.74+R()*0.52);
         const aw = px>py, atk = aw?ents[x]:ents[y], def = aw?ents[y]:ents[x];
         const dmg = clamp((5 + Math.abs(px-py)/9 + atk.str/13)*(1+atk.mods.atk*0.7)*(1-def.mods.def), 3, 30);
         def.hpv -= dmg;
@@ -8241,21 +8258,25 @@ function simulateMelee(ents, ctx, opts){
     for(const [a,b] of pairs){
       if(ents[a].out || ents[b].out) continue;
       const A = ents[a], B = ents[b];
-      A.stam -= 6; B.stam -= 6;
-      const pa = power(A,"measured",B.cls,0,0.97+R()*0.06)*(A.stam<22?0.78:1)*(0.74+R()*0.52);
-      const pb = power(B,"measured",A.cls,0,0.97+R()*0.06)*(B.stam<22?0.78:1)*(0.74+R()*0.52);
+      A.stam -= 6 * (A.mine && myTac==="aggressive" ? 1.3 : 1); B.stam -= 6 * (B.mine && myTac==="aggressive" ? 1.3 : 1);
+      const tacOf = e => e.mine ? myTac : "measured";
+      const pa = power(A,tacOf(A),B.cls,0,0.97+R()*0.06)*(A.stam<22?0.78:1)*(0.74+R()*0.52);
+      const pb = power(B,tacOf(B),A.cls,0,0.97+R()*0.06)*(B.stam<22?0.78:1)*(0.74+R()*0.52);
       const aw = pa>pb, atk = aw?A:B, def = aw?B:A;
       const ai = aw?a:b, di = aw?b:a;
       const tgt = pick(TARGETS);
-      const dmg = clamp((8 + Math.abs(pa-pb)/6.5 + atk.str/10)*tgt[2]*(1+atk.mods.atk*0.7)*(1-def.mods.def), 4, 36);
+      /* your man can go for the thing his style is for, here as on the single sand */
+      const sig = atk.mine && sigOf(atk.cls) && triesSignature(atk, 0, atk.stam, myTac) ? sigOf(atk.cls) : null;
+      let dmg = clamp((8 + Math.abs(pa-pb)/6.5 + atk.str/10)*tgt[2]*(1+atk.mods.atk*0.7)*(1-def.mods.def), 4, 36);
+      if(sig){ dmg = clamp(dmg * sig.win.dmg, 4, 44); }
       def.hpv -= dmg;
-      crowd = clamp(crowd + dmg/5.5, 0, 100);
+      crowd = clamp(crowd + dmg/5.5 + (sig?sig.win.crowd*0.5:0) + (atk.mine && myTac==="showboat" ? 2 : 0), 0, 100);
       const involved = A.mine || B.mine;
       if(involved){
         const move = pick(ATTACKS[atk.cls]);
-        push(dmg>=18?"crit":dmg>=10?"hit":"graze",
-          `${atk.name} ${move[1]} — ${def.name}'s ${tgt[0]} takes it.`,
-          { a:ai, b:di, actor:"a", dmg:rnd(dmg), target:tgt[0], tx:tgt[1][0], ty:tgt[1][1] });
+        push(sig?"crit":dmg>=18?"crit":dmg>=10?"hit":"graze",
+          sig ? sig.hit(atk.name, def.name) : `${atk.name} ${move[1]} — ${def.name}'s ${tgt[0]} takes it.`,
+          { a:ai, b:di, actor:"a", dmg:rnd(dmg), target:tgt[0], tx:tgt[1][0], ty:tgt[1][1], sig:sig?sig.move:undefined });
       } else offscreen++;
       if(def.hpv<=20) drop(di, atk);
     }
@@ -8483,14 +8504,17 @@ const MELEE_CRUX = {
   pullall: { label:"Pull them all out",
     desc:"Forfeit. Nobody wins and nobody dies, and Capua watches you call it." },
 };
-function doMelee(d, ids, offer, pending, choice){
+function doMelee(d, ids, offer, pending, choice, tactic){
   const gs = ids.map(i=>d.gladiators.find(x=>x.id===i)).filter(g=>g && g.status==="active");
   if(gs.length<2) return null;
   const t = TIERS[offer.tier];
   const ents = gs.map(g=>{ const c = clone(g); c.kit = g.kit||defaultKit(g.cls); c.mine = true; c.gid = g.id; c.house = null; return c; });
   offer.field.forEach(o=>{ const c = clone(o); c.kit = o.kit||defaultKit(o.cls); c.mine = false; c.gid = null; ents.push(c); });
   const patron = topPatron(d);
+  const myTac = tactic || offer.myTactic || "measured";   // your word carries to all your men on the sand at once
+  offer.myTactic = myTac;                                  // remembered so a coached resume keeps it
   const mctx = { favor:d.favor, patron: patron?{name:patron.name,favor:patron.favor}:null,
+    myTactic: myTac, naumachia: offer.spectacle==="naumachia",
     tie:(a,b)=> (a&&b) ? tieBetween(d,a,b) : null };
   const field = pending ? pending.ents : shuffled(ents);
   let res, withdrew = [];
@@ -12095,7 +12119,7 @@ export default function App(){
   const meleeGo = (offer)=>{
     if(pairSel.length<2) return;
     const d = clone(S);
-    const res = doMelee(d, pairSel, offer);
+    const res = doMelee(d, pairSel, offer, null, null, tactic);
     if(!res) return;
     if(res.crux){ setHeld({ base:d, res }); setFight(res); setPairSel([]); setFGid(null); return; }
     setS(d); setFight(res); setPairSel([]); setFGid(null);
@@ -16599,7 +16623,16 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               </div>
               {o.spectacle==="naumachia" && <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:4}}>They have flooded the arena. Ships, and a battle fought from them — the whole of Campania is in the seats.</div>}
               <div style={{fontSize:15}}>{o.field.length} men from the other houses. You enter {pairSel.length}.</div>
+              {o.spectacle==="naumachia" && <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:4}}>The decks pitch and a man can go over the side. Quick feet keep their footing on the water; a heavy man is half off balance the whole time.</div>}
               <div className="blood" style={{fontSize:14,margin:"6px 0"}}>The editor pays one man. If your two are the last upright, they will be made to finish it.</div>
+              <div style={{marginTop:9}}>
+                <div className="tag" style={{marginBottom:6}}>How your men fight</div>
+                <div className="flex gap-2" style={{flexWrap:"wrap"}}>
+                  {[["aggressive","Aggressive"],["measured","Measured"],["defensive","Defensive"],["showboat","Showboat"]].map(([k,l])=>(
+                    <button key={k} className={`chip ${tactic===k?"on":""}`} onClick={()=>setTactic(k)}>{l}</button>
+                  ))}
+                </div>
+              </div>
               <button className="btn btn-blood" style={{width:"100%",marginTop:11}} disabled={pairSel.length<2} onClick={()=>startFight(()=>meleeGo(o))}>Enter {pairSel.length} men</button>
             </>);
           } else if(pick.kind==="hunt"){ const o=pick.o; const B=BEASTS[o.beast]; const reach=me?reachVsBeast(me.kit||defaultKit(me.cls)):1;
