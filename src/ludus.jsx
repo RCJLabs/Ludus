@@ -6307,6 +6307,60 @@ const CITIES = {
     blurbx:"", crowd:"Sailors, factors and freedmen with money and nothing to spend it on until you arrived." },
 };
 const CITY_KEYS = Object.keys(CITIES);
+/* ---- THE POLITICS OF THE BAY ----
+   A town was a purse multiplier and a standing meter. But every one of them is a
+   place with somebody who runs the games, somebody whose house has always had them,
+   and a custom of its own that an outsider learns by breaking. */
+const CITY_CUSTOM = {
+  pompeii:  { name:"The Pompeian appetite", wants:"blood",
+    say:"They pay for blood here and they say so on the walls. A card without mercy fills the tiers; a careful afternoon empties them.",
+    keep:"Fight without mercy, or win hard enough that nobody minds.",
+    crowd:12, purse:1.10, missio:-7 },
+  neapolis: { name:"The Greek eye", wants:"craft",
+    say:"They know the styles better than you do and they are not impressed by noise. A man who fights well is forgiven anything; a man who plays to them is marked down for it.",
+    keep:"Send men who can actually fight. They can tell.",
+    crowd:-4, purse:1.0, missio:10 },
+  puteoli:  { name:"The port's taste", wants:"show",
+    say:"Every factor on the bay is drinking in those seats and they came to be entertained. Spectacle is the currency; craft is somebody else's business.",
+    keep:"Give them a show worth the crossing.",
+    crowd:14, purse:1.16, missio:2 },
+};
+const CITY_MAGISTRATES = {
+  pompeii:  ["Gnaeus Alleius Nigidius", "Numerius Popidius Rufus", "Marcus Holconius Celer"],
+  neapolis: ["Timarchos of the Boule", "Philodemos son of Nikias", "Aulus Cocceius Hellen"],
+  puteoli:  ["Publius Annius Plocamus", "Lucius Calpurnius Capito", "Gaius Vestorius Priscus"],
+};
+const CITY_HOUSES = {
+  pompeii:  "Ampliatus", neapolis: "Xanthos", puteoli: "Faustus",
+};
+function bayPol(d, key){
+  d.bayPol = d.bayPol || {};
+  if(!d.bayPol[key]){
+    d.bayPol[key] = {
+      mag: pick(CITY_MAGISTRATES[key] || ["The magistrate"]),
+      favor: 20 + ri(0,15),
+      house: CITY_HOUSES[key] || "the local house",
+      grudge: ri(4,14),
+      fought: 0,
+    };
+  }
+  return d.bayPol[key];
+}
+const cityCustom = key => CITY_CUSTOM[key] || null;
+/* how the town's own man leans on the editor when one of yours is down */
+const cityMissio = (d,key) => { if(!key) return 0; const P = bayPol(d,key), C = cityCustom(key);
+  return Math.round((P.favor-40)*0.22 + (C?C.missio:0)); };
+const cityPurse  = (d,key) => { if(!key) return 1; const P = bayPol(d,key), C = cityCustom(key);
+  return (C?C.purse:1) * (1 + (P.favor-40)/380); };
+const cityCrowd  = (d,key) => { if(!key) return 0; const C = cityCustom(key); return C?C.crowd:0; };
+const cityFavWord = v => v>=78?"the town is yours" : v>=58?"well thought of here" : v>=38?"tolerated" : v>=18?"an outsider" : "not wanted here";
+/* did the house give this town the kind of afternoon it came for? */
+function cityServed(d, key, offer, res, crowd){
+  const C = cityCustom(key); if(!C) return 0;
+  if(C.wants==="blood") return (offer.stakes==="sine" || res.bDies) ? 1 : (res.spared ? -1 : 0);
+  if(C.wants==="craft") return (res.winner==="A" && res.vA>=62) ? 1 : (res.winner!=="A" ? -1 : 0);
+  return crowd>=72 ? 1 : crowd<=40 ? -1 : 0;    /* show */
+}
 const awayIn = d => (d.city && CITIES[d.city]) ? CITIES[d.city] : null;
 const knownIn = (d,k) => (d.known && d.known[k]) || 0;
 const cityTier = (d,k) => knownIn(d,k) >= 60 ? 3 : knownIn(d,k) >= 30 ? 2 : 1;
@@ -6362,6 +6416,18 @@ function makeCityGames(d){
     offers.push({ id:d.nextId++, tier, festival:`the games at ${C.name}`, city:key,
       opp, oppRef:pr.ref, rematch:false, grudgeM:false, stakes: sine?"sine":"standard",
       purse: rnd((t.purse[0]+R()*t.purse[1]) * C.purse * (sine?1.6:1)) });
+  }
+  /* once the home house has had enough of you, they put their own man up */
+  { const P = bayPol(d, key);
+    if(P.grudge >= 45 && R() < 0.55){
+      const q = clamp(52 + P.grudge*0.35 + knownIn(d,key)*0.15, 45, 92);
+      const champ = makeRivalFighter(d, P.house, q);
+      champ.nick = champ.nick || pick(NICKS);
+      offers.push({ id:d.nextId++, tier:Math.max(tier,1), festival:`the games at ${C.name}`, city:key,
+        opp:champ, oppRef:null, rematch:false, grudgeM:true, localGrudge:true, homeHouse:P.house,
+        stakes: C.taste==="blood" && R()<0.4 ? "sine" : "standard",
+        purse: rnd((TIERS[Math.max(tier,1)].purse[0]+R()*TIERS[Math.max(tier,1)].purse[1]) * C.purse * 1.5) });
+    }
   }
   offers.forEach(o=>{ if(!o.venue) o.venue = venueFor(d, o); if(!o.sky) o.sky = skyFor(d, o); });
   d.games = { festival:`the games at ${C.name}`, offers, week:d.week, city:key };
@@ -9286,10 +9352,10 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   gc.lastLate = lastNum(g,"latePow");
   gc.formStam = formStam(g);
   if(offer.stakes==="sine" && lawSine(d) && !offer.sealed){ d.gold -= lawSine(d); offer.sealed = 1; }
-  const simCtx = { plan:PE, fav:favMissio(g) + veteranGuard(g) + (away ? 0 : riseFav(d)) + blessMercy(d) + pit(d,"mercy",0), doctrine:docMissio(d), footing:V.footing * W.footing, footingB:V.footing * Wb.footing, sky:W.stam, skyB:Wb.stam, venue:V.missio, aedile: away ? 0 : aedileMissio(d), strange: away ? Math.max(0, 19 - knownIn(d, offer.city)*0.19) * docStrange(d) : 0,
+  const simCtx = { plan:PE, fav:favMissio(g) + veteranGuard(g) + (away ? 0 : riseFav(d)) + blessMercy(d) + pit(d,"mercy",0), doctrine:docMissio(d), footing:V.footing * W.footing, footingB:V.footing * Wb.footing, sky:W.stam, skyB:Wb.stam, venue:V.missio, aedile: away ? cityMissio(d, offer.city) : aedileMissio(d), strange: away ? Math.max(0, 19 - knownIn(d, offer.city)*0.19) * docStrange(d) : 0,
       favor: imperial ? Math.min(d.favor, 20) : (away ? localStanding : d.favor), tier: Math.min(offer.tier,3),
       hostile:!!bribeHouse, patron: imperial ? null : (patron ? {name:patron.name, favor:patron.favor} : null),
-      repShow: workPerk(d,"crowd") + femCrowd(g) + favCrowd(g) + W.crowd + provCrowd(g) + ((g.mastery && g.mastery.cls===g.cls) ? masteryCrowd(g) : 0) + signatureCrowd(g) + (repStyle(d)==="show" ? 8 : 0) + (nem ? 10 : 0) + (offer.rematch ? 8 : 0) + (away ? 0 : facCrowd(d, g.cls)) + seasonCrowd(d) + V.crowd + (away ? 0 : acclaimCrowd(d)) + (g.graffiti ? 3 : 0),
+      repShow: workPerk(d,"crowd") + femCrowd(g) + favCrowd(g) + W.crowd + provCrowd(g) + ((g.mastery && g.mastery.cls===g.cls) ? masteryCrowd(g) : 0) + signatureCrowd(g) + (repStyle(d)==="show" ? 8 : 0) + (nem ? 10 : 0) + (offer.rematch ? 8 : 0) + (away ? cityCrowd(d, offer.city) : facCrowd(d, g.cls)) + seasonCrowd(d) + V.crowd + (away ? 0 : acclaimCrowd(d)) + (g.graffiti ? 3 : 0),
       guarded: choice==="cover" };
   /* the entrance — a bout-start effect only, never re-applied on a coached resume */
   const ENT = ENTRANCES[offer.entrance||"none"] || ENTRANCES.none;
@@ -9350,7 +9416,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   const sum = [`Appearance fee: ${t.app} denarii.`];
 
   if(win){
-    purse = rnd(offer.purse * (away?1:facPurse(d)) * (away?1:aedilePurse(d)) * docPurse(d) * W.purse * favPurse(g) * femPurse(g) * fanPurse(g) * risePurse(d) * (away?1:leaguePurse(d)) * (away?1:nemPurse(d)) * blessPurse(d) * pit(d,"purse"));
+    purse = rnd(offer.purse * (away?cityPurse(d,offer.city):facPurse(d)) * (away?1:aedilePurse(d)) * docPurse(d) * W.purse * favPurse(g) * femPurse(g) * fanPurse(g) * risePurse(d) * (away?1:leaguePurse(d)) * (away?1:nemPurse(d)) * blessPurse(d) * pit(d,"purse"));
     /* the pits pay out of a bag at the rope. an editor pays when his clerk gets to it. */
     const onCredit = offer.imperial ? "imperial" : offer.city ? "city" : offer.booking ? "booking" : offer.festival ? "games" : null;
     if(onCredit && purse >= 140){
@@ -9368,6 +9434,17 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
       const gained = rnd((7 + res.crowd/16 + (fit?5:0)) * docKnown(d));
       d.known[offer.city] = clamp(knownIn(d,offer.city) + gained, 0, 100);
       sum.push(`${away.name} is beginning to know the name — local standing ${Math.round(knownIn(d,offer.city))}.${fit? " They like the kind of house you are." : ""}`);
+      /* the town's own man, and the town's own house, both took a view of that */
+      { const P = bayPol(d, offer.city), C = cityCustom(offer.city);
+        const served = cityServed(d, offer.city, offer, res, res.crowd);
+        P.fought = (P.fought||0) + 1;
+        P.favor = clamp(P.favor + 4 + served*5, 0, 100);
+        P.grudge = clamp(P.grudge + 5, 0, 100);
+        if(served>0 && C) sum.push(`${C.name}: they got the afternoon they came for, and ${P.mag} noticed who gave it to them.`);
+        else if(served<0 && C) sum.push(`${C.name}: not what this town came for. ${P.mag} was polite about it, which is its own answer.`);
+        if(P.grudge>=55 && !P.warned){ P.warned = 1;
+          chron(d, `House ${P.house} of ${away.name} has had enough of a Capuan taking purses off their own sand. They are asking the magistrate for the match.`, "bad"); }
+      }
     }
     d.fame += fg;
     g.pfame += fg + rnd(res.crowd/14) + (g.traits.includes("Glory-Seeker")?3:0);
@@ -14458,6 +14535,26 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                         <span className="rowval dim" style={{fontSize:12.5}}>{c.travel}wk · purses ×{c.purse.toFixed(2)}</span>
                       </div>
                       <div className="dim" style={{fontSize:14,fontStyle:"italic",marginTop:2}}>{c.blurb}</div>
+                      {/* the town's own politics: who runs its games, what it wants, whose sand it is */}
+                      {(()=>{ const P = (S.bayPol||{})[k], CU = CITY_CUSTOM[k]; if(!CU) return null;
+                        return (
+                          <div className="panel" style={{padding:9,marginTop:6,background:"#1c1610",borderColor:"#3e2f1f"}}>
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="tag">{CU.name}</span>
+                              {P && <span className="rowval" style={{fontSize:12,color:P.favor>=58?"#9aa86a":P.favor>=38?"#cfc0a0":"#d8ac5f"}}>{cityFavWord(P.favor)}</span>}
+                            </div>
+                            <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:3}}>{CU.say}</div>
+                            <div style={{fontSize:13,marginTop:4,color:"#c0b492"}}>{CU.keep}</div>
+                            {P ? (<>
+                              <div className="dim" style={{fontSize:12.5,marginTop:4}}>{P.mag} puts on the games here.</div>
+                              <div style={{fontSize:12.5,color:P.grudge>=45?"#d96f5d":"#8d7e65"}}>
+                                House {P.house} has always had this sand{P.grudge>=45?" — and wants you off it":P.grudge>=20?", and has noticed you":""}.
+                              </div>
+                            </>) : (
+                              <div className="dim" style={{fontSize:12.5,marginTop:4}}>You have never set foot in it.</div>
+                            )}
+                          </div>
+                        ); })()}
                       {knownIn(S,k)>0 ? (<>
                         <div className="dim" style={{fontSize:13}}>They know you there: {Math.round(knownIn(S,k))}/100 — tier {cityTier(S,k)} cards.</div>
                         {!S.city && !S.travel && <div style={{fontSize:13,color:"#d8ac5f"}}>
@@ -16893,6 +16990,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 <span className="tag tag-gold">{TIERS[o.tier].name}</span>
                 {o.imperial && <span className="tag tag-gold">✦ Rome</span>}
                 {o.headline && <span className="tag tag-gold">✦ Your headliner</span>}
+                {o.localGrudge && <span className="tag tag-blood">✦ House {o.homeHouse} · their sand</span>}
                 {o.mine && !o.headline && <span className="tag">Your games</span>}
                 {o.primus && <span className="tag tag-gold">✦ {o.defence?"Defend primacy":"For the primacy"}</span>}
                 {o.booking && <span className="tag tag-gold">✦ Contracted</span>}
