@@ -7115,6 +7115,74 @@ function courtWeek(d){
   d.pendingCourt = { caught:false, house:h.name, name:f.name, fem:isF(g) };
   chron(d, `${f.name} is over the wall and through your gate before it is properly light, carrying nothing. House ${h.name} will work out where he went by noon.`, "good");
 }
+/* ---- HAVING A RIVAL'S MAN LOOKED OVER ----
+   What a man is — his class, his years, what the bill says he has done — is public.
+   What he is good at is not. An afternoon at somebody else's yard, and a coin in the
+   right hand, buys you the readings and whatever his own people say about him. */
+const READ_BANDS = [[80,"exceptional","#e0bd72"],[68,"strong","#cbc08e"],[56,"sound","#cfc0a0"],
+                    [44,"fair","#b09b7d"],[0,"poor","#cfa88a"]];
+const readWord   = v => (READ_BANDS.find(b=>v>=b[0]) || READ_BANDS[READ_BANDS.length-1]);
+const scoutCost  = (d, f) => rnd(60 + (f.pfame||0)*2.2 + (f.wins||0)*13 + (d.fame||0)*0.02);
+const SCOUT_KEEPS = 10;                                   /* how long a reading stays good */
+const scoutLive  = (d, f) => !!(f && f.seen != null && d.week - f.seen <= SCOUT_KEEPS);
+/* the crude rating behind every "who would be favoured" line — power() without a bout around it */
+function rateMan(x){
+  if(!x) return 0;
+  const pen = x.injury ? (x.injury.pen||0) : 0;
+  const e = k => Math.max(5, (x[k]==null?40:x[k]) - pen);
+  return e("tec")*1.25 + e("str") + e("agi")*0.85 + e("end")*0.45 + e("dis")*0.3;
+}
+/* what his own yard says about him, once you have paid to hear it */
+function manTells(d, f){
+  const out = [];
+  if((f.kills||0) >= 3) out.push("He has killed more than once and did not need to be told twice.");
+  else if((f.kills||0) >= 1) out.push("There is a death behind him. He does not talk about it.");
+  if((f.pfame||0) >= 55) out.push("The tiers know his name before the herald says it.");
+  if((f.dis||50) <= 42) out.push("He loses his head when it goes badly. Make it go badly.");
+  if((f.end||50) <= 44) out.push("He does not last. Whoever is still standing in the eighth round is not him.");
+  if((f.agi||50) >= 70) out.push("Quick — quicker than the class usually is. He will not be where the blow goes.");
+  if((f.str||50) >= 72) out.push("Strong enough that his shield does the work of two men.");
+  if((f.tec||50) >= 72) out.push("Schooled. Whatever you have seen him do, he has a second one behind it.");
+  if((f.age||26) >= 31) out.push(`${f.age} years old, and the yard has started saying so behind his back.`);
+  else if((f.age||26) <= 21) out.push(`Only ${f.age}. Everything he has, he will have more of next year.`);
+  if(f.injury) out.push(`Carrying ${f.injury.name.toLowerCase()} — he should not be on a card at all.`);
+  if((f.losses||0) > (f.wins||0)) out.push("More losses than wins, and the editors have noticed.");
+  if(!out.length) out.push("Nothing stands out either way. He does what the class does, and does it correctly, which is its own kind of problem.");
+  return out.slice(0, 4);
+}
+/* how your house reads against him — vaguer until you have had him watched */
+function matchAgainst(d, f){
+  const seen = scoutLive(d, f);
+  const rf = rateMan(f);
+  return activeG(d).filter(g=>canFight(g)).map(g=>{
+    const counter = COUNTERS[g.cls]===f.cls;
+    const against = COUNTERS[f.cls]===g.cls;
+    const rg = rateMan(g) * (counter?1.12:1) * (against?0.9:1);
+    const edge = (rg - rf) / Math.max(1, rf);
+    const word = !seen
+      ? (counter ? "has the shape for him" : against ? "gives him the match-up" : "no read")
+      : edge >  0.14 ? "would be favoured"
+      : edge >  0.04 ? "has a little the better of it"
+      : edge > -0.04 ? "even, near enough"
+      : edge > -0.14 ? "would be second best"
+      : "is overmatched";
+    const colour = !seen ? (counter?"#9aa86a":against?"#cfa88a":"#b09b7d")
+      : edge>0.04 ? "#9aa86a" : edge>-0.04 ? "#cbc08e" : "#d96f5d";
+    return { g, word, colour, edge, counter, against };
+  }).sort((a,b)=>b.edge-a.edge);
+}
+function scoutMan(d, hName, fid){
+  const h = houseOf(d, hName); if(!h) return { ok:false, why:"That house is not there any more." };
+  const f = (h.fighters||[]).find(x=>x.id===fid); if(!f) return { ok:false, why:"He is not on their card any more." };
+  if(scoutLive(d, f)) return { ok:false, why:"You already have his measure." };
+  const c = scoutCost(d, f);
+  if(d.gold < c) return { ok:false, why:`It would take ${c} denarii to have him watched, and you have not got it.` };
+  d.gold -= c;
+  f.seen = d.week;
+  chron(d, `Somebody of yours spends three afternoons at House ${h.name}'s wall watching ${f.name} work, and ${c} denarii buys the rest of it from a man who sweeps their yard.`, "info");
+  return { ok:true, cost:c };
+}
+
 /* and the thing you can buy that is not a man */
 const peacePrice = (d, h) => rnd(300 + h.grudge*26 + d.fame*0.35 + ((d.nemHouse && d.nemHouse.house===h.name) ? 700 : 0));
 function makePeace(d, hName){
@@ -12323,6 +12391,7 @@ export default function App(){
   const [sheet,setSheet] = useState(null);
   const [dealH,setDealH] = useState(null);   /* the rival house you are treating with */
   const [dealMsg,setDealMsg] = useState(null);
+  const [manCard,setManCard] = useState(null); /* {house, fid} — a rival's man, opened up */
   const [rack,setRack] = useState("weapon");
   const [seedIn,setSeedIn] = useState("");
   useEffect(()=>{ if(tab==="market" && S && !S.flags.sawFirstBuy) mut(d=>{ firstBuyWarn(d); }); }, [tab]);
@@ -12489,6 +12558,7 @@ export default function App(){
      run — is deliberately not in this list and still has to be answered. */
   const LAYERS = [
     [!!ask,          ()=>setAsk(null)],
+    [!!manCard,      ()=>setManCard(null)],
     [!!dealH,        ()=>{ setDealH(null); setDealMsg(null); }],
     [!!xfer,         ()=>setXfer(null)],
     [!!gearPick,     ()=>setGearPick(null)],
@@ -12551,6 +12621,8 @@ export default function App(){
     setDealMsg(r && r.ok ? `${r.name} is yours for ${r.ask} denarii.` : (r && r.why) || "Nothing comes of it."); };
   const doCourtMan = (hName, fid) => { let r=null; mut(d=>{ r = startCourt(d, hName, fid); });
     setDealMsg(r && r.ok ? `Word is passed, and ${r.cost} denarii with it. You will know inside ${r.weeks} weeks — one way or the other.` : (r && r.why) || "Nothing comes of it."); };
+  const doScoutMan = (hName, fid) => { let r=null; mut(d=>{ r = scoutMan(d, hName, fid); });
+    setDealMsg(r && r.ok ? `Three afternoons and ${r.cost} denarii. You have his measure now — for a while.` : (r && r.why) || "Nothing comes of it."); };
   const doPeace = hName => { let r=null; mut(d=>{ r = makePeace(d, hName); });
     setDealMsg(r && r.ok ? (r.feud ? `The feud with House ${hName} is bought off for ${r.price} denarii.` : `${r.price} denarii, and the bad blood with House ${hName} cools.`) : (r && r.why) || "Nothing comes of it."); };
   const stageMunusNow = () => { let report = "";
@@ -16681,31 +16753,30 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               </div>
               {dealMsg && <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",borderColor:"#6d5426",fontSize:14.5}}>{dealMsg}</div>}
 
-              <div className="tag tag-gold" style={{marginBottom:5}}>His men</div>
-              {(h.fighters||[]).map(f=>{ const ask=houseAsk(S,h,f), sell=houseWillSell(S,h,f), cc=courtCost(S,h,f);
+              <div className="flex items-center justify-between gap-2" style={{marginBottom:5}}>
+                <span className="tag tag-gold">His men</span>
+                <span className="rowval dim" style={{fontSize:12}}>tap a man to open him up</span>
+              </div>
+              {(h.fighters||[]).map(f=>{
                 const isStar = !!(h.star && h.star.id===f.id);
+                const seen = scoutLive(S, f);
                 return (
-                  <div key={f.id} style={{borderTop:"1px dotted #33271a",paddingTop:7,marginTop:7}}>
+                  <button key={f.id} className="optrow" style={{padding:"9px 10px",marginBottom:6}}
+                    onClick={()=>setManCard({ house:h.name, fid:f.id })}>
                     <div className="flex items-center justify-between gap-2">
-                      <span style={{fontSize:14.5,color:isStar?"#e0bd72":"#cfc0a0",minWidth:0}}>
+                      <span style={{fontSize:14.5,color:isStar?"#e0bd72":"#cfc0a0",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                         {isStar?"★ ":""}{f.name}{f.nick?`, ${f.nick}`:""}
                       </span>
                       <span className="rowval dim" style={{fontSize:12}}>{f.cls} · {f.wins}–{f.losses}{f.age?` · ${f.age}`:""}</span>
                     </div>
-                    {f.injury && <div className="blood" style={{fontSize:12.5,marginTop:2}}>carrying {f.injury.name.toLowerCase()}</div>}
-                    <div className="flex gap-2" style={{marginTop:5}}>
-                      <button className="btn btn-ghost" style={{flex:1,fontSize:12,padding:"7px 6px"}}
-                        disabled={!sell || S.gold<ask || rosterFull(S)}
-                        onClick={()=>doBuyMan(h.name, f.id)}>
-                        {!sell ? "Not for sale" : `Buy · ${ask}d`}
-                      </button>
-                      <button className="btn btn-ghost" style={{flex:1,fontSize:12,padding:"7px 6px"}}
-                        disabled={busy || !!f.injury || S.gold<cc || rosterFull(S)}
-                        onClick={()=>doCourtMan(h.name, f.id)}>
-                        {busy ? "A word already out" : `A word in his ear · ${cc}d`}
-                      </button>
+                    <div className="flex items-center justify-between gap-2" style={{marginTop:2}}>
+                      <span className="dim" style={{fontSize:12.5,fontStyle:"italic",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                        {f.injury ? <span className="blood">carrying {f.injury.name.toLowerCase()}</span>
+                          : seen ? "you have his measure" : "you have never had him watched"}
+                      </span>
+                      <span className="rowval dim" style={{fontSize:12,color:"#8a6a2c"}}>›</span>
                     </div>
-                  </div>
+                  </button>
                 ); })}
               {rosterFull(S) && <div className="blood" style={{fontSize:13,marginTop:8,fontStyle:"italic"}}>Your cells are full — nobody else can be taken in.</div>}
 
@@ -16721,6 +16792,117 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             </div>
           </div>
         ); })()}
+
+      {manCard && (()=>{
+        const h = (S.rivals||[]).find(x=>x.name===manCard.house);
+        const f = h && (h.fighters||[]).find(x=>x.id===manCard.fid);
+        if(!h || !f) return null;
+        const L = lanistaOf(h.name);
+        const isStar = !!(h.star && h.star.id===f.id);
+        const seen = scoutLive(S, f);
+        const keeps = seen ? SCOUT_KEEPS - (S.week - f.seen) : 0;
+        const cost = scoutCost(S, f);
+        const ask = houseAsk(S, h, f), sell = houseWillSell(S, h, f), cc = courtCost(S, h, f);
+        const busy = !!S.court;
+        const tells = seen ? manTells(S, f) : [];
+        const mine = matchAgainst(S, f).slice(0, 5);
+        return (
+          <div className="modalwrap" role="dialog" aria-modal="true" aria-label={f.name} style={{zIndex:66}} onClick={()=>setManCard(null)}>
+            <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
+              <div className="flex items-center justify-between gap-2" style={{marginBottom:3}}>
+                <div className="disp" style={{fontSize:16,fontWeight:900,letterSpacing:".06em",color:isStar?"#e0bd72":"#e8d092",minWidth:0,overflow:"hidden",textOverflow:"ellipsis"}}>
+                  {isStar?"★ ":""}{f.name}{f.nick?`, ${f.nick}`:""}
+                </div>
+                <button className="btn btn-ghost" style={{padding:"8px 10px",flexShrink:0}} aria-label="Close" onClick={()=>setManCard(null)}><X size={14}/></button>
+              </div>
+              <div className="dim" style={{fontSize:13.5,marginBottom:2}}>
+                {f.cls} · {f.origin} · {f.age||"—"} years · House {h.name}
+              </div>
+              <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:9}}>
+                {f.wins}–{f.losses}{(f.kills||0)?`, ${f.kills} killed`:""}
+                {(f.pfame||0)>=55 ? " — the tiers know him" : (f.pfame||0)>=28 ? " — a name in Capua" : " — nobody has written him down"}
+                {f.injury ? <span className="blood"> · carrying {f.injury.name.toLowerCase()}</span> : null}
+              </div>
+              {dealMsg && <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",borderColor:"#6d5426",fontSize:14.5}}>{dealMsg}</div>}
+
+              <div className="panel" style={{padding:"10px 11px",marginBottom:9}}>
+                <div className="flex items-center justify-between gap-2" style={{marginBottom:6}}>
+                  <span className="tag tag-gold">What he is</span>
+                  <span className="rowval dim" style={{fontSize:12}}>{seen? `good for ${keeps} more week${keeps===1?"":"s"}` : "never watched"}</span>
+                </div>
+                {seen ? (<>
+                  {STATS.map(k=>{ const v = Math.round(f[k]||0), w = readWord(v);
+                    return (
+                      <div key={k} style={{marginBottom:5}}>
+                        <div className="flex items-center justify-between gap-2" style={{fontSize:12.5}}>
+                          <span className="dim" style={{minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{STAT_NAMES[k]}</span>
+                          <span className="flex items-center gap-2" style={{flexShrink:0}}>
+                            <span style={{color:w[2]}}>{w[1]}</span>
+                            <span className="dim" style={{fontSize:12}}>{v}</span>
+                          </span>
+                        </div>
+                        <div className="track" style={{height:4,marginTop:2}}>
+                          <div className="fill" style={{width:`${clamp(v,0,100)}%`,background:"linear-gradient(90deg,#5a4a2c,#c99a4b)"}}/>
+                        </div>
+                      </div>
+                    ); })}
+                  {tells.length>0 && (
+                    <div style={{marginTop:8,borderTop:"1px dotted #33271a",paddingTop:7}}>
+                      {tells.map((t,i)=><div key={i} className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:3,lineHeight:1.35}}>{t}</div>)}
+                    </div>
+                  )}
+                </>) : (<>
+                  <div className="dim" style={{fontSize:14,fontStyle:"italic",marginBottom:8,lineHeight:1.4}}>
+                    Nobody of yours has stood at that wall and watched him work. What he is good at is guesswork,
+                    and guesswork is how houses end up burying men.
+                  </div>
+                  <button className="btn" style={{width:"100%"}} disabled={S.gold<cost}
+                    onClick={()=>doScoutMan(h.name, f.id)}>
+                    {S.gold<cost ? `Have him watched · ${cost}d — not enough` : `Have him watched · ${cost}d`}
+                  </button>
+                </>)}
+              </div>
+
+              <div className="panel" style={{padding:"10px 11px",marginBottom:9}}>
+                <div className="tag tag-gold" style={{display:"inline-block",marginBottom:6}}>Against your house</div>
+                {mine.length===0
+                  ? <div className="dim" style={{fontSize:13.5,fontStyle:"italic"}}>You have nobody fit to put in front of him.</div>
+                  : mine.map(m=>(
+                      <div key={m.g.id} className="flex items-center justify-between gap-2" style={{padding:"3px 0"}}>
+                        <span className="rowname" style={{fontSize:13.5,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                          {m.g.name}<span className="dim" style={{fontSize:12}}> · {m.g.cls}</span>
+                        </span>
+                        <span className="rowval" style={{fontSize:12.5,color:m.colour,flexShrink:0}}>{m.word}</span>
+                      </div>
+                    ))}
+                {!seen && <div className="dim" style={{fontSize:12.5,fontStyle:"italic",marginTop:6,lineHeight:1.35}}>
+                  Style is all you have to go on until he has been watched.
+                </div>}
+              </div>
+
+              <div className="tag tag-gold" style={{display:"inline-block",marginBottom:6}}>What you can do about him</div>
+              <div className="grid grid-cols-2 gap-2">
+                <button className="btn btn-ghost" style={{fontSize:12.5}}
+                  disabled={!sell || S.gold<ask || rosterFull(S)}
+                  onClick={()=>doBuyMan(h.name, f.id)}>
+                  {!sell ? "Not for sale" : `Buy · ${ask}d`}
+                </button>
+                <button className="btn btn-ghost" style={{fontSize:12.5}}
+                  disabled={busy || !!f.injury || S.gold<cc || rosterFull(S)}
+                  onClick={()=>doCourtMan(h.name, f.id)}>
+                  {busy ? "A word already out" : `A word in his ear · ${cc}d`}
+                </button>
+              </div>
+              {rosterFull(S) && <div className="blood" style={{fontSize:13,marginTop:7,fontStyle:"italic"}}>Your cells are full — nobody else can be taken in.</div>}
+              <div className="dim" style={{fontSize:12.5,fontStyle:"italic",marginTop:7,lineHeight:1.35}}>
+                {L.name} is {grudgeWord(h.grudge).toLowerCase()} toward your house. Everything above is priced accordingly.
+              </div>
+              <button className="btn btn-ghost" style={{width:"100%",marginTop:9}} onClick={()=>setManCard(null)}>Leave him be</button>
+            </div>
+          </div>
+        );
+      })()}
+
 
       {sheet && SHEETS[sheet] && (
         <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:62}} onClick={()=>setSheet(null)}>
@@ -17301,6 +17483,17 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               <div style={{fontSize:15.5}}>{me?me.name:"—"} <span className="dim">against</span> {o.opp.nick?`${o.opp.name}, ${o.opp.nick}`:o.opp.name}</div>
               <div className="dim" style={{fontSize:14}}>{o.opp.cls} · {o.opp.origin}{o.opp.wins!=null?` · ${o.opp.wins}–${o.opp.losses}${o.opp.kills?` · ${o.opp.kills} kills`:""}`:""} · looks {menace(o.opp).toLowerCase()}</div>
               {o.opp.house && <div className="dim" style={{fontSize:13}}>{o.opp.house.startsWith("the")||o.opp.house.startsWith("no")?o.opp.house:"House "+o.opp.house}</div>}
+              {(()=>{ /* if he is a real man in a real house, his file is one tap away */
+                const rf = o.oppRef && o.oppRef.house;
+                const hh = rf ? (S.rivals||[]).find(x=>x.name===o.oppRef.house) : null;
+                const ff = hh ? (hh.fighters||[]).find(x=>x.id===o.oppRef.fid) : null;
+                if(!ff) return null;
+                return (
+                  <button className="btn btn-ghost" style={{width:"100%",marginTop:7,fontSize:12.5}}
+                    onClick={()=>setManCard({ house:hh.name, fid:ff.id })}>
+                    {scoutLive(S, ff) ? `What you know of ${ff.name} ›` : `Open ${ff.name}'s file ›`}
+                  </button>
+                ); })()}
               {o.venue && <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:3}}>{VEN(o.venue).say}</div>}
               {o.sky && <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:2,color:"#9dc0d4"}}>{SKY(o.sky).say}{shelterOf(o.venue)>0.3?" There is a roof of a kind over most of it.":""}</div>}
               {me && (()=>{ const w=metWord(o.opp,me); return w?<div style={{fontSize:14,marginTop:2,color:"#d8ac5f"}}>{w}</div>:null; })()}
