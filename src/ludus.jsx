@@ -2413,6 +2413,33 @@ function kinReact(d, id, kind, moraleDelta, defianceDelta){
   return hit;
 }
 
+/* the freshest death a man is still carrying — unsettled, and recent enough to move him */
+const griefOf = (g, week, within) => (g.memory||[]).filter(m=>m.kind==="grief" && !m.settled && (week==null || week-m.week <= (within==null?12:within))).slice(-1)[0] || null;
+const griefStricken = (d, g) => !!griefOf(g, d.week, 8);
+
+/* A death is not a number in the ledger. The men who called him brother carry him:
+   the grief is named, it lasts on them, and it will surface — at the gate for a
+   card they will not take, or on the sand with the dead man's name in their mouth.
+   And a house that is well kept holds together on a night like this; a house that
+   is not comes apart. Returns the grievers (named) and the man who steadies them. */
+function mournKin(d, deadId, deadName, opts){
+  opts = opts || {};
+  const grieving = kinReact(d, deadId, "brother", opts.morale==null?-22:opts.morale, opts.defiance==null?12:opts.defiance);
+  const short = (deadName||"a man of the house").split(",")[0];
+  for(const o of grieving){
+    o.memory = o.memory || [];
+    o.memory.push({ kind:"grief", week:d.week, forName:short, sine:!!opts.sine });
+    if(o.memory.length > 8) o.memory = o.memory.slice(-8);
+  }
+  /* the kept men are the ones who hold the block off the walls */
+  let steadier = null;
+  if(grieving.length){
+    steadier = activeG(d).filter(x=>x.id!==deadId && regardOf(x)>=64).sort((a,b)=>regardOf(b)-regardOf(a))[0] || null;
+    if(steadier) d.unrest = clamp(d.unrest - 3, 0, 100);
+  }
+  return { grieving, short, steadier };
+}
+
 /* Ties form at the palus: same origin, same drills, or simply years in the same room. */
 /* Men who spar all week end up knowing each other, one way or the other. */
 function sparSocial(d){
@@ -3847,6 +3874,8 @@ const REFUSE_REASONS = {
     say:g=>`He asked you for one thing. He is not asking for anything now.` },
   blood:   { when:(d,g)=>g.memory && g.memory.some(m=>m.kind==="sine"),
     say:g=>`He has been put on too many cards with no mercy in them and he has done the arithmetic.` },
+  grief:   { when:(d,g)=>!!griefOf(g, d.week, 16),
+    say:g=>{ const m=griefOf(g); return `He has not put ${m?m.forName:"the dead man"} down. He will not go out onto the sand that took him — not yet.`; } },
   plain:   { when:()=>true,
     say:g=>`There is no particular reason he will give. He has simply had enough, and today is the day.` },
 };
@@ -3854,7 +3883,7 @@ const refusing = g => !!(g && g.refusing);
 const canFight = g => g && g.status==="active" && !refusing(g) && !g.learning && !(g.benched && g.benched.weeks>0);
 function refuseCandidate(d){
   return activeG(d).filter(g=>!isAuctor(g) && !refusing(g) &&
-    (regardRefuse(g) || (regardOf(g)<32 && g.defiance>62 && g.morale<32)))
+    (regardRefuse(g) || griefStricken(d,g) || (regardOf(g)<32 && g.defiance>62 && g.morale<32)))
     .sort((a,b)=>regardOf(a)-regardOf(b))[0] || null;
 }
 function refuseWeek(d){
@@ -3870,9 +3899,11 @@ function refuseWeek(d){
   if(d.pendingEvent) return;
   const g = refuseCandidate(d);
   if(!g) return;
-  const odds = 0.05 + Math.max(0, (24 - regardOf(g)))*0.011;
+  const odds = 0.05 + Math.max(0, (24 - regardOf(g)))*0.011 + (griefStricken(d,g)?0.11:0);
   if(R() > odds) return;
-  const key = shuffled(Object.keys(REFUSE_REASONS)).find(k=>{
+  /* if there is a reason with a name on it — a wound, a brother, a dead man he is still
+     carrying — he gives that one. "no particular reason" is only ever the fallback. */
+  const key = shuffled(Object.keys(REFUSE_REASONS).filter(k=>k!=="plain")).find(k=>{
     try { return REFUSE_REASONS[k].when(d,g); } catch(e){ return false; } }) || "plain";
   g.refusing = { since:d.week, weeks:0, reason:key };
   d.pendingEvent = { id:"refusal", title:"He Will Not Go Out",
@@ -4014,6 +4045,7 @@ const REGARD = {
   refused:   { n:-13, say:"He asked you for the one thing he wanted and you said no.", bad:true },
   duel:      { n:-26, say:"You left him on the sand until he had to finish a man from his own cells.", bad:true },
   lapsed:    { n:-12, say:"You stopped the burial dues after men had gone into the ground under them.", bad:true },
+  grief:     { n:  0, say:"A man he called brother died beside him.", bad:true },
 };
 const REGARD_KEYS = Object.keys(REGARD);
 const regardOf = g => clamp(g.regard==null ? 50 : g.regard, 0, 100);
@@ -8510,10 +8542,14 @@ function doMelee(d, ids, offer, pending, choice){
       collBury(d, g);
       markUnburied(d, g);
     if(d.lanista) d.lanista.health = clamp(d.lanista.health - 1.3, 0, 100);
-      const grieving = kinReact(d, g.id, "brother", -22, 12);
+      const { grieving, steadier } = mournKin(d, g.id, fullName(g));
       d.unrest = clamp(d.unrest + (5 + grieving.length*3) * collSoften(d), 0, 100);
       dropTies(d, g.id);
-      sum.push(`${g.name} is dead.`);
+      if(grieving.length){ const names = grieving.map(o=>o.name).join(" and ");
+        chron(d, `${names} came back from the melee without ${g.name}, and ${grieving.length>1?"neither":"he"} has said a word since.`, "bad");
+        sum.push(`${g.name} is dead. ${names} watched it happen.`); }
+      else sum.push(`${g.name} is dead.`);
+      if(steadier) chron(d, `${steadier.name} keeps the block together the night they carry ${g.name}'s kit back in.`, "info");
     } else if(e.out){
       g.losses++;
       const inj = injuryFor(pick(TARGETS)[0], true);
@@ -8617,11 +8653,14 @@ function doVenatio(d, gid, offer, tactic, pending, choice){
     retireSteel(d, g);
     collBury(d, g);
     markUnburied(d, g);
-    const grieving = kinReact(d, gid, "brother", -22, 12);
+    const { grieving, steadier } = mournKin(d, gid, fullName(g));
     d.unrest = clamp(d.unrest + (8 + grieving.length*3) * collSoften(d), 0, 100);
     d.gladiators.forEach(o=>{ if(o.status==="active"){ o.morale=clamp(o.morale-9*perkNerve(d),0,100); o.defiance=clamp(o.defiance+6,0,100); } });
     dropTies(d, gid);
     sum.push(`${g.name} is dead. There was not enough left to carry out whole.`);
+    if(grieving.length){ const names = grieving.map(o=>o.name).join(" and ");
+      chron(d, `${names} heard how ${g.name} went, and there is a particular kind of quiet in the cells now — the kind that does not forget being given to the beasts.`, "bad"); }
+    if(steadier) chron(d, `${steadier.name} holds the block off the walls the night they hear it.`, "info");
   } else if(res.vA < 62 || res.forfeit){
     const inj = injuryFor(res.lastTarget, res.vA<40);
     g.injury = inj; g.status = "injured"; weekMark(d, "hurt", 1, fullName(g));
@@ -8716,10 +8755,14 @@ function doPairFight(d, ids, offer, tactic, pending, choice){
       collBury(d, g);
       markUnburied(d, g);
     if(d.lanista) d.lanista.health = clamp(d.lanista.health - 1.3, 0, 100);
-      const grieving = kinReact(d, g.id, "brother", -22, 12);
+      const { grieving, steadier } = mournKin(d, g.id, fullName(g), { sine: offer.stakes==="sine" });
       d.unrest = clamp(d.unrest + ((offer.stakes==="sine"?7:4) + grieving.length*3) * collSoften(d), 0, 100);
       dropTies(d, g.id);
-      sum.push(`${g.name} is dead.`);
+      if(grieving.length){ const names = grieving.map(o=>o.name).join(" and ");
+        chron(d, `${names} lost ${g.name} in the great slaughter, and carried him back between them.`, "bad");
+        sum.push(`${g.name} is dead. ${names} will carry it.`); }
+      else sum.push(`${g.name} is dead.`);
+      if(steadier) chron(d, `${steadier.name} keeps the others together that night.`, "info");
     } else if(res.down.A[i]){
       const inj = injuryFor(pick(TARGETS)[0], true);
       g.injury = inj; g.status = "injured"; weekMark(d, "hurt", 1, fullName(g));
@@ -9060,6 +9103,11 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
     { const wasFav = isFavourite(g); g.fans = clamp(fansOf(g) + fanGain(res, g, tacticNow), 0, 100);
       if(!wasFav && isFavourite(g)) sum.push(`The crowd has taken ${g.name} for its own — he is a favourite of the sand now, and favourites fill seats.`); }
     g.morale = clamp(g.morale+10, 0, 100);
+    { const gm=(g.memory||[]).filter(m=>m.kind==="grief" && !m.settled);
+      if(gm.length){ const nm=gm[gm.length-1].forName; gm.forEach(m=>{ m.settled=d.week; });
+        g.defiance=clamp(g.defiance-6,0,100); g.morale=clamp(g.morale+6,0,100);
+        chron(d, `${g.name} fought today with ${nm}'s name on him, and when the other man was down he said it once, aloud, for the tiers to hear. Something he had been carrying went into the sand.`, "good");
+        sum.push(`He carried ${nm} onto the sand and left him there. The grief is not gone — but it has somewhere to be now.`); } }
     for(const k of CLASSES[g.cls].key) g[k] = clamp(g[k]+0.7, 5, statCap(g,k));
     sum.push(`Purse: ${purse} denarii. Fame of the house +${fg}.`);
     d.gladiators.forEach(o=>{ if(o.id!==gid && o.status==="active") o.morale = clamp(o.morale+2,0,100); });
@@ -9103,7 +9151,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
     collBury(d, g);
     markUnburied(d, g);
     d.gladiators.forEach(o=>{ if(o.status==="active"){ o.morale=clamp(o.morale-8,0,100); o.defiance=clamp(o.defiance+(offer.stakes==="sine"?5:3),0,100); } });
-    const grieving = kinReact(d, gid, "brother", -22, 12);
+    const { grieving, steadier } = mournKin(d, gid, fullName(g), { sine: offer.stakes==="sine" });
     kinReact(d, gid, "rival", 3, 0);
     const dc = (F && F.deathCost) ? F.deathCost : 1;
     d.unrest = clamp(d.unrest + ((offer.stakes==="sine"?7:4) + grieving.length*3) * dc * collSoften(d), 0, 100);
@@ -9115,6 +9163,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
       chron(d, `${names} ${grieving.length>1?"were":"was"} at the gate when they carried ${g.name} out. ${grieving.length>1?"Neither":"He"} said anything, which is worse.`, "bad");
       sum.push(`${names} watched him die. That will not be forgotten in the cells.`);
     }
+    if(steadier) chron(d, `${steadier.name}, who has never given you a hard word, sits with the block in the dark and keeps them off the walls. A house holds together on nights like this only because of men like him.`, "info");
     dropTies(d, gid);
     sum.push(`${g.name} is dead. ${PR(g).His} cell stands empty tonight.`);
   } else if(!win && res.fell){
@@ -15305,11 +15354,17 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                         Nothing has passed between you yet that he would count either way.
                       </div>
                     : <div style={{marginTop:5}}>
-                        {mem.slice(0,5).map((m,i)=>(
-                          <div key={i} style={{fontSize:14,padding:"2px 0",color:REGARD[m.kind].bad?"#d9a89e":"#cfc0a0"}}>
-                            {REGARD[m.kind].say}{m.again>1 && <span className="dim"> ({m.again} times)</span>}
+                        {mem.slice(0,5).map((m,i)=>{
+                          const isGrief = m.kind==="grief";
+                          const bad = isGrief ? !m.settled : REGARD[m.kind].bad;
+                          const txt = isGrief
+                            ? (m.settled ? `He carried ${m.forName} onto the sand, and left the grief there.` : `He is still carrying ${m.forName}, who died beside him.`)
+                            : REGARD[m.kind].say;
+                          return (
+                          <div key={i} style={{fontSize:14,padding:"2px 0",color:bad?"#d9a89e":"#cfc0a0"}}>
+                            {txt}{!isGrief && m.again>1 && <span className="dim"> ({m.again} times)</span>}
                           </div>
-                        ))}
+                          ); })}
                       </div>}
                   {regardLoyal(selG) && <div className="laurel" style={{fontSize:13.5,marginTop:5}}>No other house's coin will move him.</div>}
                   {regardRefuse(selG) && <div className="blood" style={{fontSize:13.5,marginTop:5}}>He does what he is told and not one thing more.</div>}
