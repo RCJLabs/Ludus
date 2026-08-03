@@ -13587,7 +13587,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   </div>
                 </div>
               )}
-              <div className="panel" style={{padding:9}}>
+              <Sect title="The yard" note={`${BKEYS.reduce((n,k)=>n+bLevel(S,k),0)} of 15 wings · ${activeG(S).length} in the yard`}>
             <LudusPlan S={S}/>
             <div className="flex items-center justify-between" style={{marginTop:6}}>
               <span className="dim" style={{fontSize:13,fontStyle:"italic"}}>
@@ -13598,7 +13598,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               </span>
               <span className="rowval dim" style={{fontSize:12.5}}>{activeG(S).length} in the yard</span>
             </div>
-          </div>
+          </Sect>
 
           {(()=>{ const C = charterAt(S); if(!C) return null;
                 const i = S.charter.i;
@@ -13744,12 +13744,9 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           {(()=>{ const on = earOn(S), inside = earInside(S);
             const ear = inside ? S.gladiators.find(g=>g.id===S.ear.gid) : null;
             return (
-              <div className="panel" style={{padding:13, borderColor: on? "#4e3c26":undefined}}>
-                <div className="flex items-center justify-between" style={{marginBottom:5}}>
-                  <span className="tag">The cells at night</span>
-                  {on && <span className="rowval dim" style={{fontSize:12.5}}>
-                    {inside ? `${ear? ear.name : "—"} is listening` : `the gatekeeper · ${EAR_FEE}d a week`}</span>}
-                </div>
+              <Sect title="The cells at night"
+                note={on ? (inside ? `${ear? ear.name : "—"} is listening` : `the gatekeeper · ${EAR_FEE}d a week`) : "nobody is listening"}
+                open={(S.yardMissed||0) > 0}>
                 {(S.yardMissed||0) > 0 && (
                   <div className="dim" style={{fontSize:13,fontStyle:"italic",marginBottom:6}}>
                     {S.yardMissed} thing{S.yardMissed===1?"":"s"} {S.yardMissed===1?"has":"have"} happened in that block that nobody told you about.
@@ -13787,7 +13784,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     {inside ? "Take him off it" : "Stop the retainer"}
                   </button>
                 </>)}
-              </div>
+              </Sect>
             ); })()}
 
 
@@ -13835,11 +13832,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
 
           {(()=>{ const now = festivalNow(S), soon = nextFestivals(S, 3);
             return (
-              <div className="panel" style={{padding:13, borderColor: now? "#8a6a2c":undefined}}>
-                <div className="flex items-center justify-between" style={{marginBottom:6}}>
-                  <span className="tag tag-gold">The Year</span>
-                  <span className="dim" style={{fontSize:13}}>year {yearOf(S)} · week {yearWeek(S)}</span>
-                </div>
+              <Sect title="The year" note={`${seasonOf(S).name} · year ${yearOf(S)}, week ${yearWeek(S)}${now?" · games":""}`} open={!!now}>
                 {(()=>{ const Sn = seasonOf(S);
                   return (
                     <div style={{marginBottom:8}}>
@@ -13883,16 +13876,12 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     <span className="rowval" style={{fontSize:13,color:"#c0b492"}}>{weeksUntil(S,f)} week{weeksUntil(S,f)===1?"":"s"}</span>
                   </div>
                 ))}
-              </div>
+              </Sect>
             ); })()}
 
 
 
-          <div className="panel" style={{padding:13}}>
-            <div className="flex items-center justify-between" style={{marginBottom:6}}>
-              <span className="tag tag-gold">The Training Square</span>
-              {S.doctore && <span className="dim" style={{fontSize:13}}>{S.doctore.wage}d / week</span>}
-            </div>
+          <Sect title="The training square" note={S.doctore ? `${S.doctore.name} · ${S.doctore.wage}d/wk` : "no doctore — you run it"}>
             {S.doctore ? (<div>
               <div className="flex gap-3" style={{alignItems:"center",marginBottom:6}}>
                 <div style={{flex:"0 0 auto",width:60,height:60,borderRadius:"50%",overflow:"hidden",border:"1px solid #6d5426"}}>
@@ -14005,12 +13994,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 </div>
               ))}
             </div>)}
-          </div>
-          <div className="panel" style={{padding:13}}>
-            <div className="flex items-center justify-between" style={{marginBottom:4}}>
-              <span className="tag tag-blood">Unrest in the cells</span>
-              <span className="blood" style={{fontSize:14}}>{unrestWord(S.unrest)}</span>
-            </div>
+          </Sect>
+          <Sect title="Unrest in the cells" note={unrestWord(S.unrest)} open={S.unrest>=50 || !!S.rebellion}>
             <Bar v={S.unrest} color="linear-gradient(90deg,#6a3a1a,#b8463a)"/>
             {S.rebellion && <div className="blood" style={{fontSize:14.5,marginTop:5,fontStyle:"italic"}}>
               {["","Whispers move between the cells after dark.","Conspiracy — steel is missing, and eyes follow the guards.","The spark is lit. Tonight decides everything."][S.rebellion.stage]}
@@ -14021,7 +14006,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               return <div className="dim" style={{fontSize:13.5,marginTop:5,fontStyle:"italic"}}>
                 In the cells: {bros} bond{bros===1?"":"s"}, {riv} feud{riv===1?"":"s"}. Fighters who trust each other are worth more on the sand and more dangerous in the dark.
               </div>; })()}
-          </div>
+          </Sect>
           {S.week<=2 && (
             <div className="panel" style={{padding:13}}>
               <div className="tag tag-gold" style={{marginBottom:6}}>The lanista's first lessons</div>
@@ -14399,11 +14384,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           {STAFF_KEYS.map(k=>{ const s = S[k], ST = STAFF[k], lvl = bLevel(S, ST.room);
             const mkt = (S.staffMarket||{})[k] || [];
             return (
-              <div key={k} className="panel" style={{padding:13, borderColor: s? "#4e3c26":undefined}}>
-                <div className="flex items-center justify-between" style={{marginBottom:5}}>
-                  <span className="tag tag-gold">The {ST.name}</span>
-                  {s && <span className="rowval dim" style={{fontSize:12.5}}>{s.wage}d / week</span>}
-                </div>
+              <Sect key={k} title={`The ${ST.name.toLowerCase()}`}
+                note={s ? `${s.name} · ${s.wage}d/wk` : !lvl ? "no room for one" : "the post is empty"}>
                 {!lvl ? (
                   <div className="dim" style={{fontSize:14.5,fontStyle:"italic"}}>
                     You have no {ST.room==="valetudinarium"?"infirmary":"armoury"} for him to work in. Build the room first.
@@ -14437,14 +14419,13 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                         </button>
                       ))}
                 </>)}
-              </div>
+              </Sect>
             ); })}
           <div className="dim" style={{fontSize:14,fontStyle:"italic"}}>The slaver's block. Fresh stock every third week. Roster holds 8 men.</div>
           {(()=>{ const here = [...new Set((S.market||[]).map(g=>g.slaver).filter(Boolean))];
             if(!here.length) return null;
             return (
-              <div className="panel" style={{padding:11}}>
-                <div className="tag tag-gold" style={{marginBottom:5}}>Who is standing at the block</div>
+              <Sect title="Who is standing at the block" note={`${here.length} slaver${here.length===1?"":"s"}`}>
                 {here.map(k=>{ const S2 = slaverOf(k), x = dealings(S,k);
                   return (
                     <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:6,marginTop:6}}>
@@ -14461,7 +14442,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                       )}
                     </div>
                   ); })}
-              </div>
+              </Sect>
             ); })()}
           {(()=>{ const p = paragonOf(S); if(!p) return null;
             const R2 = paragonReach(S, p), L = liquidate(S);
@@ -15415,16 +15396,15 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             const items = Object.entries(GEAR).filter(([,it])=>it.slot===slot);
             const arts = [...new Set(items.map(([,it])=>it.art))];
             return (
-            <div key={slot} className="panel" style={{padding:13}}>
-              <div className="flex items-center justify-between" style={{marginBottom:2}}>
-                <span className="disp" style={{fontSize:13,fontWeight:700}}>{SLOT_NAME[slot].toUpperCase()}</span>
-                <span className="rowval dim" style={{fontSize:12.5}}>{items.length} pieces</span>
-              </div>
+            <React.Fragment key={slot}>
               {arts.map(art=>{
                 const group = items.filter(([,it])=>it.art===art).sort((a,b)=>(a[1].price||0)-(b[1].price||0));
+                const own = group.reduce((n,[id])=>n+(S.gear[id]||0),0);
+                const idle = group.reduce((n,[id])=>n+gearFree(S,id),0);
+                const cheapest = group.filter(([,it])=>it.price>0).map(([,it])=>gearPrice(S,it.price,slot)).sort((a,b)=>a-b)[0];
                 return (
-                  <div key={art} style={{marginTop:14}}>
-                    <div className="tag tag-gold" style={{marginBottom:2}}>{artName(slot, art)}</div>
+                  <Sect key={art} title={artName(slot, art)}
+                    note={own ? `${own} owned${idle?` · ${idle} idle`:""}` : cheapest ? `from ${cheapest}d` : "house stock"}>
                     {group.map(([id,it])=>{
                       const owned = S.gear[id]||0, free = gearFree(S,id);
                       return (
@@ -15451,14 +15431,13 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                             </button>
                           )}
                           {it.price>0 && owned>0 && free===0 && <div className="dim" style={{fontSize:12.5,marginTop:3}}>Every one you own is on a man.</div>}
-                          {owned>0 && free===0 && <div className="dim" style={{fontSize:12.5,marginTop:3}}>All owned pieces are in use.</div>}
                         </div>
                       );
                     })}
-                  </div>
+                  </Sect>
                 );
               })}
-            </div>
+            </React.Fragment>
           );})}
         </div>)}
 
