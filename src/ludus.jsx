@@ -7297,6 +7297,68 @@ function scoutMan(d, hName, fid){
   return { ok:true, cost:c };
 }
 
+/* ---- DRILLING FOR ONE MAN ----
+   A regimen makes a fighter. It does not make a fighter for Thursday. Once you have
+   paid to learn how a man works, one of yours can spend his weeks on that man's
+   habits instead of his own — the shield that drops, the third exchange he always
+   takes. He comes to that bout knowing which plan fits and carrying an edge in it,
+   and to everything else flatter, because those weeks bought him nothing of his own.
+   The moment the reading goes stale it is all guesswork again and the drill lapses. */
+const PREP_MAX  = 6;                 /* weeks past which there is nothing left to learn */
+const PREP_DRAG = 0.62;              /* what his own training is worth while he does it */
+const prepOf = g => (g && g.prep) || null;
+function prepLive(d, g){
+  const p = prepOf(g); if(!p) return null;
+  const h = houseOf(d, p.house);
+  const f = h && (h.fighters||[]).find(x=>x.id===p.fid);
+  return (f && scoutLive(d, f)) ? f : null;
+}
+const prepEdge = g => { const p = prepOf(g); return p ? clamp((p.weeks||0)/PREP_MAX, 0, 1) : 0; };
+const prepWord = g => { const w = (prepOf(g)||{}).weeks || 0;
+  return w<=0 ? "he has only just started" : w===1 ? "one week of it"
+    : w>=PREP_MAX ? "there is nothing left to show him" : `${w} weeks of it`; };
+/* the edge he brings to the one bout he was drilled for */
+function prepFor(d, g, offer){
+  const p = prepOf(g);
+  if(!p || !offer || !offer.oppRef || offer.oppRef.fid !== p.fid) return 0;
+  return prepEdge(g);
+}
+/* which plans his weeks have already told him are the right ones */
+function prepPlans(d, offer){
+  if(!offer || !offer.opp) return [];
+  const out = [];
+  for(const k of TELL_KEYS){ try { if(TELLS[k].when(offer.opp)) out.push(TELLS[k].plan); } catch(e){} }
+  return [...new Set(out.filter(Boolean))];
+}
+function setPrep(d, gid, hName, fid){
+  const g = d.gladiators.find(x=>x.id===gid && x.status==="active");
+  if(!g) return { ok:false, why:"He cannot be set to anything." };
+  const h = houseOf(d, hName); if(!h) return { ok:false, why:"That house is not there any more." };
+  const f = (h.fighters||[]).find(x=>x.id===fid); if(!f) return { ok:false, why:"He is not on their card any more." };
+  if(!scoutLive(d, f)) return { ok:false, why:`Nobody has ${f.name}'s measure. There is nothing to drill against but a rumour.` };
+  g.prep = { fid:f.id, name:f.name, house:h.name, cls:f.cls, weeks:0, since:d.week };
+  chron(d, `${g.name} is taken off his own work and put on ${f.name} of House ${h.name} — the way he stands, the exchange he always takes, the shield he drops when he is tired. It is a week a man does not get back if the bout never comes.`, "info");
+  return { ok:true, foe:f.name };
+}
+function dropPrep(d, g, why){
+  const p = prepOf(g); if(!p) return;
+  g.prep = null;
+  if(why) chron(d, why, "info");
+}
+/* run each week with the rest of the yard's training */
+function prepWeek(d, g){
+  const p = prepOf(g); if(!p) return 1;
+  const live = prepLive(d, g);
+  if(!live){
+    dropPrep(d, g, `Whatever ${g.name} had learned of ${p.name} has gone off. Either the man is not there any more or nobody has watched him in too long, and drilling against a memory is worse than drilling against nothing.`);
+    return 1;
+  }
+  p.weeks = Math.min(PREP_MAX, (p.weeks||0) + 1);
+  if(p.weeks === PREP_MAX && !p.told){ p.told = true;
+    chron(d, `There is nothing further the yard can tell ${g.name} about ${p.name}. Either the day comes or the work goes to waste.`, "info"); }
+  return PREP_DRAG;
+}
+
 /* ---- THE YEAR AHEAD ----
    Nine or ten different systems each kept their own date and told you about it in
    their own corner: a festival on the wall calendar, a levy in the to-do list, a
@@ -9085,8 +9147,10 @@ function simulateVenatio(A, key, tA, ctx, opts){
    and bet against him. The coin is good. Being caught is not. */
 const VIG = 0.12;
 const STAKES_OPTS = [50, 150, 400];
-function winChance(g, opp){
+function winChance(g, opp, prep){
   const A = clone(g); A.kit = g.kit || defaultKit(g.cls); A.mods = kitMods(A.kit, A.cls, A);
+  /* the drill is a real edge in the bout, so the bookmakers had better know about it */
+  if(prep) A.regardMult = (A.regardMult || 1) * (1 + prep*0.14);
   const B = clone(opp); B.kit = opp.kit || defaultKit(opp.cls); B.mods = kitMods(B.kit, B.cls, B);
   const pa = power(A, "measured", B.cls, 0, 1), pb = power(B, "measured", A.cls, 0, 1);
   // a power edge compounds across twelve rounds, so the raw ratio badly understates
@@ -9730,8 +9794,9 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   const wasG = { fatigue:g.fatigue, wins:g.wins, pfame:g.pfame, cls:g.cls, agi:g.agi, str:g.str, end:g.end,
     kit:Object.assign({},g.kit), wear:Object.assign({},g.wear||{}), strain:strainOf(g), form:formOf(g),
     regard:regardOf(g), lasting:lastingOf(g).slice() };
-  gc.regardMult = regardPower(g) * formPower(g) * lastNum(g,"atk") * lastNum(g,"guard") * ((g.mastery && g.mastery.cls===g.cls) ? masteryPower(g) : 1);
-  gc.lastStam = lastNum(g,"stam");
+  const PREP = prepFor(d, g, offer);
+  gc.regardMult = regardPower(g) * formPower(g) * lastNum(g,"atk") * lastNum(g,"guard") * ((g.mastery && g.mastery.cls===g.cls) ? masteryPower(g) : 1) * (1 + PREP*0.14);
+  gc.lastStam = lastNum(g,"stam") * (1 - PREP*0.09);
   gc.lastLate = lastNum(g,"latePow");
   gc.formStam = formStam(g);
   if(offer.stakes==="sine" && lawSine(d) && !offer.sealed){ d.gold -= lawSine(d); offer.sealed = 1; }
@@ -9942,6 +10007,13 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
       }
       nemClash(d, h.name, win ? (res.bDies?16:8) : (res.aDies?22:12));
     }
+  }
+  if(PREP > 0){
+    const pw = (prepOf(g)||{}).weeks || 0;
+    sum.push(win
+      ? `${pw} week${pw===1?"":"s"} on that man's habits, and every one of them showed on the sand.`
+      : `${pw} week${pw===1?"":"s"} of drilling for him, and it was not enough. The work is spent either way.`);
+    dropPrep(d, g, null);            /* the day came; the drill is used up */
   }
 
   chron(d, win? `${g.name} ${res.bDies?"killed "+offer.opp.name:"took victory"} at ${where} (+${purse+t.app}d).` :
@@ -11204,7 +11276,8 @@ function endWeek(d){
           if(t && t.kind==="brother"){ mult *= 1.10; injChance *= 0.6; g.morale=clamp(g.morale+1,0,100); }
           else if(t && t.kind==="rival"){ mult *= 1.25; injChance *= 2; g.morale=clamp(g.morale-1,0,100); }
         }
-        const base = (0.5 + g.potential/100*1.3) * d.trainMult * ageTrain(g.age)
+        const prepDrag = prepWeek(d, g);   /* a week spent on one man's habits is not a week on his own */
+        const base = prepDrag * (0.5 + g.potential/100*1.3) * d.trainMult * ageTrain(g.age)
           * palusTrain(d) * perkTrain(d) * lanTrain(d) * seasonTrain(d) * docTrainMult(d,g) * docCreedNum(d,"train") * (fest && fest.train ? fest.train : 1)
           * mult * (g.traits.includes("Swift Learner")?1.3:1)
           * (g.fatigue>75?0.4:1) * strainDrag(g);
@@ -12637,6 +12710,7 @@ export default function App(){
   const [cal,setCal] = useState(false);      /* the year ahead, everything dated in one place */
   const [manCard,setManCard] = useState(null); /* {house, fid} — a rival's man, opened up */
   const [nameFor,setNameFor] = useState(null);  /* the rival's man you are about to name in public */
+  const [drillFor,setDrillFor] = useState(null); /* and the one you are about to set somebody against */
   const [rack,setRack] = useState("weapon");
   const [seedIn,setSeedIn] = useState("");
   useEffect(()=>{ if(tab==="market" && S && !S.flags.sawFirstBuy) mut(d=>{ firstBuyWarn(d); }); }, [tab]);
@@ -12806,8 +12880,9 @@ export default function App(){
      run — is deliberately not in this list and still has to be answered. */
   const LAYERS = [
     [!!ask,          ()=>setAsk(null)],
+    [!!drillFor,     ()=>setDrillFor(null)],
     [!!nameFor,      ()=>setNameFor(null)],
-    [!!manCard,      ()=>{ setManCard(null); setNameFor(null); }],
+    [!!manCard,      ()=>{ setManCard(null); setNameFor(null); setDrillFor(null); }],
     [!!dealH,        ()=>{ setDealH(null); setDealMsg(null); }],
     [!!xfer,         ()=>setXfer(null)],
     [!!gearPick,     ()=>setGearPick(null)],
@@ -12871,6 +12946,11 @@ export default function App(){
     setDealMsg(r && r.ok ? `${r.name} is yours for ${r.ask} denarii.` : (r && r.why) || "Nothing comes of it."); };
   const doCourtMan = (hName, fid) => { let r=null; mut(d=>{ r = startCourt(d, hName, fid); });
     setDealMsg(r && r.ok ? `Word is passed, and ${r.cost} denarii with it. You will know inside ${r.weeks} weeks — one way or the other.` : (r && r.why) || "Nothing comes of it."); };
+  const doDrill = (hName, fid, gid) => { let r=null; mut(d=>{ r = setPrep(d, gid, hName, fid); });
+    setDrillFor(null);
+    setDealMsg(r && r.ok ? `He comes off his own work and goes onto ${r.foe}'s. Every week from here is that man's habits and nothing of his own.` : (r && r.why) || "Nothing comes of it."); };
+  const doStopDrill = gid => { mut(d=>{ const g = d.gladiators.find(x=>x.id===gid);
+    if(g) dropPrep(d, g, `${g.name} goes back onto his own work. Whatever he had of the other man goes with the week.`); }); };
   const doNameHim = (hName, fid, gid) => { let r=null; mut(d=>{ r = nameHim(d, hName, fid, gid); });
     setNameFor(null);
     setDealMsg(r && r.ok
@@ -16911,6 +16991,28 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     ); })}
                 </div>
               ); })()}
+            {gView==="train" && (()=>{ const pr = prepOf(selG); if(!pr) return null;
+              const live = !!prepLive(S, selG);
+              return (
+                <div className="panel" style={{padding:11,marginBottom:9,borderColor:live?"#6d5426":"#7c2a22",background:"#1c1610"}}>
+                  <div className="flex items-center justify-between gap-2" style={{marginBottom:4}}>
+                    <span className="tag tag-gold">Drilling for one man</span>
+                    <span className="rowval dim" style={{fontSize:12}}>{prepWord(selG)}</span>
+                  </div>
+                  <div style={{fontSize:14.5,marginBottom:3}}>
+                    {pr.name}<span className="dim"> of House {pr.house}{pr.cls?` · ${pr.cls}`:""}</span>
+                  </div>
+                  <div className="track" style={{height:5,marginBottom:6}}>
+                    <div className="fill" style={{width:`${Math.round(prepEdge(selG)*100)}%`,background:"linear-gradient(90deg,#5a4a2c,#c99a4b)"}}/>
+                  </div>
+                  <div className="dim" style={{fontSize:13,marginBottom:7,lineHeight:1.35}}>
+                    {live
+                      ? "His own work pays about three-fifths while this runs. Put him in front of that man and he will know which plan fits, and carry the weeks into it."
+                      : <span className="blood">The reading has gone off. Have that man watched again or this is drilling against a memory.</span>}
+                  </div>
+                  <button className="btn btn-ghost" style={{width:"100%"}} onClick={()=>doStopDrill(selG.id)}>Back to his own work</button>
+                </div>
+              ); })()}
             {gView==="train" && (<>
             {!seasonOfMan(selG) && <div className="tag" style={{marginBottom:6}}>This week</div>}
             <div className="grid grid-cols-2 gap-2" style={{marginBottom:6, display: seasonOfMan(selG) ? "none" : undefined}}>
@@ -17104,6 +17206,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         const fee = challengeFee(S, h, f);
         const blocked = nameBlocked(S);
         const naming = !!(nameFor && nameFor.house===h.name && nameFor.fid===f.id);
+        const drilling = !!(drillFor && drillFor.house===h.name && drillFor.fid===f.id);
+        const onHim = activeG(S).filter(g=>{ const pp = prepOf(g); return pp && pp.fid===f.id; });
         return (
           <div className="modalwrap" role="dialog" aria-modal="true" aria-label={f.name} style={{zIndex:66}} onClick={()=>setManCard(null)}>
             <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
@@ -17239,6 +17343,42 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   {busy ? "A word already out" : `A word in his ear · ${cc}d`}
                 </button>
               </div>
+              {drilling ? (
+                <div className="panel" style={{padding:"10px 11px",marginTop:7,borderColor:"#6d5426",background:"#1c1610"}}>
+                  <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:8,lineHeight:1.4}}>
+                    Whose weeks go on him? Whoever it is comes off his own work — sharper for that
+                    one bout and flatter for everything else, and it is wasted if the day never comes.
+                  </div>
+                  {mine.filter(m=>!m.g.injury).length===0
+                    ? <div className="blood" style={{fontSize:13.5,fontStyle:"italic"}}>Nobody of yours is fit to be set on him.</div>
+                    : mine.filter(m=>!m.g.injury).map(m=>{
+                        const busy = prepOf(m.g);
+                        return (
+                          <button key={m.g.id} className="optrow" style={{padding:"9px 10px",marginBottom:6}}
+                            onClick={()=>doDrill(h.name, f.id, m.g.id)}>
+                            <div className="flex items-center justify-between gap-2">
+                              <span style={{fontSize:14,color:"#e8d9b8",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                                {m.g.name}<span className="dim" style={{fontSize:12}}> · {m.g.cls}</span>
+                              </span>
+                              <span className="rowval" style={{fontSize:12,color:m.colour}}>{m.word}</span>
+                            </div>
+                            {busy && <div className="dim" style={{fontSize:12.5,marginTop:2}}>
+                              {busy.fid===f.id ? `already on him · ${prepWord(m.g)}` : `would come off ${busy.name}`}
+                            </div>}
+                          </button>
+                        ); })}
+                  <button className="btn btn-ghost" style={{width:"100%",marginTop:2}} onClick={()=>setDrillFor(null)}>Leave the yard as it is</button>
+                </div>
+              ) : (
+                <button className="btn btn-ghost" style={{width:"100%",marginTop:7,fontSize:12.5}}
+                  disabled={!seen || mine.length===0}
+                  onClick={()=>setDrillFor({ house:h.name, fid:f.id })}>
+                  {!seen ? "Nothing to drill against until he is watched"
+                    : mine.length===0 ? "Nobody to set on him"
+                    : onHim.length ? `Drilling for him · ${onHim.map(g=>g.name).join(", ")}`
+                    : "Set a man to drill for him"}
+                </button>
+              )}
               <button className="btn btn-blood" style={{width:"100%",marginTop:7,fontSize:12.5}}
                 disabled={!!blocked || !!f.injury || S.gold<fee || mine.length===0}
                 onClick={()=>setNameFor({ house:h.name, fid:f.id })}>
@@ -17889,6 +18029,9 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     {read && <span className="rowval" style={{fontSize:12,color:read.colour,flexShrink:0}}>{read.word}</span>}
                   </div>
                   {booked && <div style={{fontSize:12.5,marginTop:3,color:"#e0bd72"}}>✦ His name is the one on the bill.</div>}
+                  {(()=>{ const pe = prepFor(S, g, o); return pe>0
+                    ? <div style={{fontSize:12.5,marginTop:3,color:"#9aa86a"}}>✦ He has drilled for this man — {prepWord(g)}.</div>
+                    : null; })()}
                   {pick.kind==="single" && (()=>{ const w=metWord(liveFoe(S,pick.o),g); return w?<div style={{fontSize:13,marginTop:2,color:"#d8ac5f"}}>{w}</div>:null; })()}
                 </button>
               );
@@ -17964,7 +18107,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 Send {me?me.name:"him"} to the pits{stake>0?` · ${stake}d ${against?"against":"on"} him`:""}
               </button>
             </>);
-          } else if(pick.kind==="single"){ const o=pick.o; const p=me?winChance(me,o.opp):0.5;
+          } else if(pick.kind==="single"){ const o=pick.o; const p=me?winChance(me,o.opp,prepFor(S,me,o)):0.5;
             body = (<>
               {backBtn}
               <div className="flex items-center gap-1" style={{flexWrap:"wrap",marginBottom:5}}>
@@ -17997,9 +18140,29 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               {o.venue && <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:3}}>{VEN(o.venue).say}</div>}
               {o.sky && <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:2,color:"#9dc0d4"}}>{SKY(o.sky).say}{shelterOf(o.venue)>0.3?" There is a roof of a kind over most of it.":""}</div>}
               {me && (()=>{ const w=metWord(liveFoe(S,o),me); return w?<div style={{fontSize:14,marginTop:2,color:"#d8ac5f"}}>{w}</div>:null; })()}
-              {!o.watched ? (
+              {(()=>{ const pe = me ? prepFor(S, me, o) : 0; if(pe<=0) return null;
+                const right = prepPlans(S, o);
+                return (
+                  <div className="panel" style={{padding:9,marginTop:8,background:"#1c1610",borderColor:"#5a6a35"}}>
+                    <div className="flex items-center justify-between gap-2" style={{marginBottom:4}}>
+                      <span className="tag tag-gold">He has drilled for this man</span>
+                      <span className="rowval dim" style={{fontSize:12}}>{prepWord(me)}</span>
+                    </div>
+                    <div className="dim" style={{fontSize:14,fontStyle:"italic",marginBottom:6,lineHeight:1.35}}>
+                      {right.length
+                        ? "Weeks of that man's habits. He does not need anybody to tell him what to do about them."
+                        : "Weeks of that man's habits, and there is no single hole in him. It still counts on the sand."}
+                    </div>
+                    <div className="tag" style={{margin:"2px 0 4px"}}>The plan</div>
+                    <div className="grid grid-cols-2 gap-2">
+                      {PLAN_KEYS.map(k=>{ const hints = right.includes(k);
+                        return <button key={k} className={`focusbtn ${plan===k?"on":""}`} onClick={()=>setPlan(k)} style={hints?{borderColor:"#c99a4b"}:undefined}>{PLANS[k].name}<span className="sub">{hints?"he has drilled for exactly this":PLANS[k].desc}</span></button>; })}
+                    </div>
+                  </div>
+                ); })()}
+              {(!o.watched && !(me && prepFor(S, me, o) > 0)) ? (
                 <button className="btn btn-ghost" style={{width:"100%",marginTop:8}} disabled={S.gold<watchCost(S,o)} onClick={()=>haveWatched(o.id)}>Have him watched · {watchCost(S,o)}d</button>
-              ) : (
+              ) : o.watched ? (
                 <div className="panel" style={{padding:9,marginTop:8,background:"#1c1610",borderColor:"#6d5426"}}>
                   <div className="tag tag-gold" style={{marginBottom:4}}>What they saw</div>
                   {o.watched[0]==="nothing" ? <div className="dim" style={{fontSize:14,fontStyle:"italic"}}>Nothing to report. He does everything correctly and nothing twice.</div>
@@ -18010,7 +18173,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                       return <button key={k} className={`focusbtn ${plan===k?"on":""}`} onClick={()=>setPlan(k)} style={hints?{borderColor:"#c99a4b"}:undefined}>{PLANS[k].name}<span className="sub">{hints?"fits what they saw":PLANS[k].desc}</span></button>; })}
                   </div>
                 </div>
-              )}
+              ) : null}
               {me && <div style={{fontSize:13.5,marginTop:6}}><span className="dim">Bookmakers: </span><span className="gold">{oddsWord(oddsFor(p))}</span><span className="dim"> on {me.name} · {oddsWord(oddsFor(1-p))} against</span></div>}
               {tacticRow}
               {entranceRow}
