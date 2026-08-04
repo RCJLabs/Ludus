@@ -11534,6 +11534,14 @@ function weekDigest(d, mark, before){
     lines:lines.slice(0, 14), more:Math.max(0, lines.length-14), dl, lost, notable };
 }
 function endWeek(d){
+  /* Last week's question is closed at the START of the week, not a hundred lines
+     into it. It used to be cleared just above the block that decides the week's
+     one decision — which meant every system that runs earlier and politely checks
+     "is a question already waiting?" raised its own, correctly, and had it thrown
+     away before anybody saw it. Seven of them: the pact, an edict read out, a feud
+     in the yard, the late beats, the inspector at the gate, a man who will not go
+     out, and a gladiator who wants a word. None had ever once reached the player. */
+  d.pendingEvent = null;
   const digestMark = (d.log && d.log[0]) || null;
   const digestBefore = { gold:d.gold, fame:d.fame, favor:d.favor, unrest:d.unrest, roster:activeG(d).length };
   const fest = d.rome ? null : festivalNow(d);
@@ -11799,7 +11807,6 @@ function endWeek(d){
     makeGames(d);
     if(d.games) chron(d, `Games are announced — ${d.games.festival}! Match offers await at the arena.`, "good");
   }
-  d.pendingEvent = null;
   updateRebellion(d);
   if(d.pendingRome){ const pr = d.pendingRome; d.pendingRome = null;
     d.pendingEvent = { id:"romeReturn", title: pr.triumph ? "Home in Triumph" : "The Long Road Home",
