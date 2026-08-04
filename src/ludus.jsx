@@ -5599,6 +5599,39 @@ function power(f, tactic, oppCls, mom, atkMod){
   return p;
 }
 
+/* ---- THE EDITOR'S HAND ----
+   A hundred and fifty bouts were played and not one man of the house died. The
+   appeal was a bar to clear — spare >= 42 — and the fixed part of the score sat at
+   62 to 65 before the dice were even thrown, because standing and fame alone were
+   worth more than the whole threshold. It cleared by twenty points every time. And
+   when it did fail it failed absolutely: strip the standing, make the town hostile,
+   put it in a backwater and the same formula killed 95 in the hundred. A cliff, not
+   a verdict.
+
+   So it is odds now, not a bar, and the order of what it weighs is the order the
+   editor would weigh it: the fight the man just gave, how long he made it last,
+   what the tiers want — and only then who his master is, which is capped, because
+   a great house should buy a man a hearing and not immunity. */
+const MISSIO_CAP   = 28;   /* the most that standing, fame and a patron can be worth */
+const MISSIO_MID   = 57;   /* the score at which the box is a coin */
+const MISSIO_SLOPE = 14;   /* how sharply it turns either side of that */
+/* account: 0–100, what he took off the man who beat him.
+   endured: 0–40, how long he made it last, scaled by the caller because a melee
+            runs to twenty-six rounds and a pairing to twelve.
+   own:     false for a man who is not yours — the town knows his house about this much. */
+function missioScore(A, ctx, crowd, account, endured, own){
+  const standing = own === false ? 18 : Math.min(MISSIO_CAP,
+    (A.pfame||0)*0.20 + (ctx.favor||0)*0.22 + (ctx.fav||0) + (ctx.patron ? ctx.patron.favor*0.10 : 0));
+  return clamp(account,0,100)*0.50 + clamp(endured,0,40) + clamp(crowd,0,100)*0.24
+    + (A.sho||0)*0.12 + (A.heart||50)*0.07 + standing
+    + (ctx.guarded?10:0) + (ctx.aedile||0) + (ctx.venue||0) + (ctx.doctrine||0)
+    - (ctx.tier===0?9:0) - ((ctx.hostile && own!==false)?16:0) - (ctx.strange||0);
+}
+const missioAccount = vB => clamp(100 - clamp(vB, 0, 100), 0, 100);
+const missioOdds = sc => clamp(1/(1 + Math.exp(-(sc - MISSIO_MID)/MISSIO_SLOPE)), 0.03, 0.97);
+const missioWord = p => p>=0.86 ? "he would be spared" : p>=0.66 ? "he would most likely be spared"
+  : p>=0.42 ? "it would be close" : p>=0.20 ? "the thumb would probably turn" : "the thumb would turn";
+
 function simulateFight(A, B, tA, stakes, ctx, opts){
   const O = opts || {};
   const R0 = O.from || null;
@@ -5630,12 +5663,11 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
   let round = R0 ? R0.round : 0;
   /* everything in the missio verdict except the live crowd, the opponent's blood, and luck —
      so the box can be read a beat at a time, and the player can see what the crowd is buying */
-  const spareFixed = A.pfame*0.3 + ctx.favor*0.5 + (ctx.fav||0) + A.sho*0.2 + (A.heart||50)*0.1
-    + (ctx.patron ? ctx.patron.favor*0.12 : 0) + (ctx.guarded?12:0)
-    - (ctx.tier===0?8:0) - (ctx.hostile?18:0) - (ctx.strange||0) + (ctx.aedile||0) + (ctx.venue||0) + (ctx.doctrine||0);
-  const spareRead = () => { if(stakes==="sine") return null;
-    const sc = spareFixed + clamp(crowd,0,100)*0.33 + (100-clamp(vB,0,100))*0.15 + 11;   // +11 = the average of R()*22
-    return sc>=46 ? 2 : sc>=36 ? 1 : 0; };
+  /* the same verdict the appeal will use, read a beat at a time, so the box is
+     never a surprise — you can watch the number move as he wins the crowd back */
+  const spareOdds = () => stakes==="sine" ? null
+    : Math.round(missioOdds(missioScore(A, ctx, crowd, missioAccount(vB), round*3.2)) * 100);
+  const spareRead = () => { const p = spareOdds(); return p==null ? null : p>=66 ? 2 : p>=42 ? 1 : 0; };
   /* a beat that names only one of them belongs to that one, and turns for her */
   const oneOf = t => { if(!t) return t;
     const inA = t.includes(A.name), inB = t.includes(B.name);
@@ -5644,7 +5676,7 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
     kind, text:oneOf(text), actor:null, round,
     vA:clamp(vA,0,100), vB:clamp(vB,0,100),
     sA:clamp(sA/smA*100,0,100), sB:clamp(sB/smB*100,0,100),
-    crowd:clamp(crowd,0,100), mom:clamp(mom,-3,3), sp:spareRead()
+    crowd:clamp(crowd,0,100), mom:clamp(mom,-3,3), sp:spareRead(), spp:spareOdds()
   }, extra||{}));
 
   if(!R0){
@@ -5797,12 +5829,11 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
       if(loserIsA){ aDies=true; push("death", `${B.name} finishes it without ceremony. ${A.name} of your house is dead.`, {actor:"A"}); }
       else { bDies=true; push("death", `${A.name} does what was agreed. ${B.name} will not rise.`, {actor:"B"}); }
     } else if(loserIsA){
-      push("appeal", `${A.name} raises two fingers — the appeal. The arena holds its breath...`, {actor:"A"});
       const pat = ctx.patron;
-      const lean = pat ? pat.favor*0.12 : 0;
-      const spare = crowd*0.33 + A.pfame*0.3 + ctx.favor*0.5 + (ctx.fav||0) + A.sho*0.2 + A.heart*0.1 + (100-vB)*0.15 + lean
-        + (ctx.guarded?12:0) + R()*22 - (ctx.tier===0?8:0) - (ctx.hostile?18:0) - (ctx.strange||0) + (ctx.aedile||0) + (ctx.venue||0) + (ctx.doctrine||0);
-      if(spare>=42){
+      const odds = missioOdds(missioScore(A, ctx, crowd, missioAccount(vB), round*3.2));
+      push("appeal", `${A.name} raises two fingers — the appeal. ${round} round${round===1?"":"s"}, and the arena holds its breath — ${missioWord(odds)}.`,
+        {actor:"A", odds:Math.round(odds*100)});
+      if(R() < odds){
         spared = true;
         push("spared", pat && pat.favor>=70
           ? `${pat.name} raises a hand from the editor's box before the crowd has finished deciding. MISSIO — ${prA.he} is spared, and every lanista in Capua saw who spoke for you.`
@@ -9150,9 +9181,10 @@ function simulateMelee(ents, ctx, opts){
     const e = ents[i];
     e.out = true;
     push("fall", `${e.name} goes down.`, { a:i, actor:"a" });
-    const spare = crowd*0.25 + (e.pfame||0)*0.25 + (e.mine ? ctx.favor*0.45 : 30) + e.sho*0.15
-      + (e.heart||50)*0.1 + (e.mine && ctx.patron ? ctx.patron.favor*0.11 : 0) + R()*22 - 16;
-    if(spare >= 44){ push("spared", `Hands drag ${e.name} clear of the sand before the rest trample ${PR(e).him}.`, { a:i }); }
+    /* the same verdict as a pairing. There is no reading of the account he gave —
+       in a melee nobody can tell — so it rests on how long he lasted and the tiers. */
+    const odds = missioOdds(missioScore(e, ctx, crowd, 30, round*1.5, !!e.mine));
+    if(R() < odds){ push("spared", `Hands drag ${e.name} clear of the sand before the rest trample ${PR(e).him}.`, { a:i }); }
     else { e.dead = true; push("death", `${killer? killer.name+" finishes "+PR(e).him+" where "+PR(e).he+" lies." : PR(e).He+" does not get up, and the melee moves over "+PR(e).him+"."}`, { a:i }); }
   };
 
@@ -9945,10 +9977,10 @@ function simulatePair(As, Bs, tA, stakes, ctx, opts){
           push("death", `No mercy was on offer. ${arr[i].name} does not rise.`, { actor:side, slot:i });
         } else {
           const f = arr[i];
-          const pat = ctx.patron;
-          const spare = crowd*0.33 + (f.pfame||0)*0.3 + (isYours?ctx.favor:35)*0.5 + f.sho*0.2 + (f.heart||50)*0.1
-            + (pat && isYours ? pat.favor*0.12 : 0) + R()*22 - (ctx.tier===0?8:0) - (ctx.hostile&&isYours?18:0);
-          if(spare>=42) push("spared", `${f.name} raises two fingers — and the editor's hand opens. He is dragged clear.`, { actor:side, slot:i });
+          const foes = side==="A" ? hp.B : hp.A;
+          const odds = missioOdds(missioScore(f, ctx, crowd,
+            missioAccount(Math.max(foes[0], foes[1])), r*2.4, !!isYours));
+          if(R() < odds) push("spared", `${f.name} raises two fingers — and the editor's hand opens. He is dragged clear.`, { actor:side, slot:i });
           else { dead[side][i] = true; push("death", `The thumb turns for ${f.name}. It is done quickly.`, { actor:side, slot:i }); }
         }
       }
@@ -12806,6 +12838,7 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
             {b.sp===2 ? "IF HE FALLS NOW — THE BOX WOULD SPARE HIM"
               : b.sp===1 ? "IF HE FALLS NOW — IT WOULD BE CLOSE"
               : "IF HE FALLS NOW — THE THUMB WOULD TURN"}
+            {b.spp!=null && <span style={{opacity:0.72}}> · {b.spp} IN THE HUNDRED</span>}
           </div>
         )}
 
