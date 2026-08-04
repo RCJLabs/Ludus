@@ -7368,7 +7368,7 @@ function prepWeek(d, g){
    rival's file. Nothing ever put them on one line together, which is the only way a
    man plans anything. This does. */
 const CAL_TONE = { fest:"#e0bd72", season:"#b09b7d", duty:"#d96f5d", coin:"#d8ac5f",
-                   town:"#bfa8c8", house:"#9aa86a", road:"#9dc0d4", quiet:"#8a7a5c" };
+                   town:"#bfa8c8", house:"#9aa86a", road:"#9dc0d4", quiet:"#8a7a5c", man:"#cbc08e" };
 function calendarRows(d, span){
   const N = span == null ? YEAR_WEEKS : span;
   const out = [];
@@ -7426,6 +7426,27 @@ function calendarRows(d, span){
       `House ${d.poach.house} has been talking to him`, "men"); }
   if(d.court) put(d.week + d.court.weeks, "house", `${d.court.name} makes up his mind`,
     `your word, House ${d.court.house}'s wall`, "men");
+  /* your own men — the weeks you would actually plan a card around */
+  for(const g of d.gladiators){
+    if(isGone(g)) continue;
+    if(g.injury && g.injury.weeks > 0)
+      put(d.week + Math.ceil(g.injury.weeks), "man", `${g.name} is fit again`,
+        `${g.injury.name.toLowerCase()} — he cannot be put on a card before then`, "men");
+    if(g.benched && g.benched.weeks > 0)
+      put(d.week + g.benched.weeks, "man", `${g.name} comes off the bench`,
+        g.benched.why || "kept out of the yard", "men");
+    if(g.learning && g.learning.weeks > 0)
+      put(d.week + g.learning.weeks, "man", `${g.name} takes up the ${g.learning.to.toLowerCase()}`,
+        `learning a second style — he does not fight while he does`, "men");
+    { const pl = seasonOfMan(g);
+      if(pl && planWeeksLeft(g) > 0)
+        put(d.week + planWeeksLeft(g), "man", `${g.name} finishes his season`,
+          `${PLANSEASON[pl.kind] ? PLANSEASON[pl.kind].name.toLowerCase() : "a season"} — worth nothing until it is done`, "men"); }
+    { const pr = prepOf(g);
+      if(pr && (pr.weeks||0) < PREP_MAX)
+        put(d.week + (PREP_MAX - (pr.weeks||0)), "quiet", `${g.name} has learned all he can of ${pr.name}`,
+          "after this the weeks buy nothing more", "men"); }
+  }
   /* the readings you paid for, going stale */
   for(const h of (d.rivals||[])) for(const f of (h.fighters||[])) if(f.seen != null)
     put(f.seen + SCOUT_KEEPS, "quiet", `What you know of ${f.name} goes stale`,
