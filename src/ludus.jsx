@@ -7182,26 +7182,51 @@ function manTells(d, f){
   if(!out.length) out.push("Nothing stands out either way. He does what the class does, and does it correctly, which is its own kind of problem.");
   return out.slice(0, 4);
 }
+/* One pairing, read the same way wherever it is asked: on his file, on the picker,
+   on the way to the sand. Without a reading it can only talk about style. */
+function readMatch(g, foe, seen){
+  if(!g || !foe) return null;
+  const counter = !!(COUNTERS[g.cls] && COUNTERS[g.cls]===foe.cls);
+  const against = !!(COUNTERS[foe.cls] && COUNTERS[foe.cls]===g.cls);
+  const rf = rateMan(foe);
+  const rg = rateMan(g) * (counter?1.12:1) * (against?0.9:1);
+  const edge = (rg - rf) / Math.max(1, rf);
+  const word = !seen
+    ? (counter ? "has the shape for him" : against ? "gives him the match-up" : "no read")
+    : edge >  0.14 ? "would be favoured"
+    : edge >  0.04 ? "has a little the better of it"
+    : edge > -0.04 ? "even, near enough"
+    : edge > -0.14 ? "would be second best"
+    : "is overmatched";
+  const colour = !seen ? (counter?"#9aa86a":against?"#cfa88a":"#b09b7d")
+    : edge>0.04 ? "#9aa86a" : edge>-0.04 ? "#cbc08e" : "#d96f5d";
+  return { word, colour, edge, counter, against };
+}
 /* how your house reads against him — vaguer until you have had him watched */
 function matchAgainst(d, f){
   const seen = scoutLive(d, f);
-  const rf = rateMan(f);
-  return activeG(d).filter(g=>canFight(g)).map(g=>{
-    const counter = COUNTERS[g.cls]===f.cls;
-    const against = COUNTERS[f.cls]===g.cls;
-    const rg = rateMan(g) * (counter?1.12:1) * (against?0.9:1);
-    const edge = (rg - rf) / Math.max(1, rf);
-    const word = !seen
-      ? (counter ? "has the shape for him" : against ? "gives him the match-up" : "no read")
-      : edge >  0.14 ? "would be favoured"
-      : edge >  0.04 ? "has a little the better of it"
-      : edge > -0.04 ? "even, near enough"
-      : edge > -0.14 ? "would be second best"
-      : "is overmatched";
-    const colour = !seen ? (counter?"#9aa86a":against?"#cfa88a":"#b09b7d")
-      : edge>0.04 ? "#9aa86a" : edge>-0.04 ? "#cbc08e" : "#d96f5d";
-    return { g, word, colour, edge, counter, against };
-  }).sort((a,b)=>b.edge-a.edge);
+  return activeG(d).filter(g=>canFight(g))
+    .map(g=>Object.assign({ g }, readMatch(g, f, seen)))
+    .sort((a,b)=>b.edge-a.edge);
+}
+/* whether you can read the man on the other side of this particular card: a paid
+   reading on his file counts, and so does an afternoon spent watching this bout. */
+function foeSeen(d, o){
+  if(!o) return false;
+  if(o.watched) return true;
+  if(o.oppRef && o.oppRef.house){
+    const h = houseOf(d, o.oppRef.house);
+    const f = h && (h.fighters||[]).find(x=>x.id===o.oppRef.fid);
+    if(f && scoutLive(d, f)) return true;
+  }
+  return false;
+}
+/* a field has no single style — read it as the man it averages out to */
+function fieldAverage(list){
+  const n = (list||[]).length; if(!n) return null;
+  const a = { cls:null, injury:null };
+  for(const k of STATS) a[k] = list.reduce((s,x)=>s + (x[k]==null?40:x[k]), 0) / n;
+  return a;
 }
 function scoutMan(d, hName, fid){
   const h = houseOf(d, hName); if(!h) return { ok:false, why:"That house is not there any more." };
@@ -17699,6 +17724,24 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               {multi ? (needTwo?"CHOOSE TWO MEN":"ENTER YOUR MEN") : "CHOOSE YOUR MAN"}
             </div>
             <div className="dim" style={{fontSize:13.5,marginBottom:10}}>{occTitle}</div>
+            {(()=>{ /* the one decision that had no reading on it — who is right for this card */
+              const o = pick.o;
+              const foe = pick.kind==="single" ? (o && o.opp)
+                : pick.kind==="melee" ? fieldAverage(o && o.field)
+                : pick.kind==="pair" ? fieldAverage(o && o.opps) : null;
+              if(!foe) return null;
+              const seen = pick.kind==="single" ? foeSeen(S, o) : !!(o && o.watched);
+              return (
+                <div className="dim" style={{fontSize:12.5,fontStyle:"italic",marginBottom:8,lineHeight:1.35}}>
+                  {seen
+                    ? (pick.kind==="single"
+                        ? "You have his measure, so these readings are real ones."
+                        : "You have had the field watched, so these readings are real ones.")
+                    : (pick.kind==="single"
+                        ? "Nobody has watched him. Style is all there is to go on until somebody does."
+                        : "Nobody has watched that field. Style is all there is to go on until somebody does.")}
+                </div>
+              ); })()}
             {!enough ? (
               <div className="dim" style={{fontStyle:"italic",fontSize:15}}>
                 {eligible.length===0 ? "No one is fit to fight this week — rested, healthy and unfought only."
@@ -17707,16 +17750,27 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             ) : eligible.map(g=>{
               const on = multi ? pairSel.includes(g.id) : fGid===g.id;
               const kit = g.kit || defaultKit(g.cls);
+              const o = pick.o;
+              const foe = pick.kind==="single" ? (o && o.opp)
+                : pick.kind==="melee" ? fieldAverage(o && o.field)
+                : pick.kind==="pair" ? fieldAverage(o && o.opps) : null;
+              const seen = pick.kind==="single" ? foeSeen(S, o) : !!(o && o.watched);
+              const read = foe ? readMatch(g, foe, seen) : null;
+              const booked = !!(o && o.bookedGid === g.id);
               return (
                 <button key={g.id} className={`optrow ${on?"on":""}`} style={{marginBottom:6,width:"100%"}}
                   onClick={()=> multi ? togglePair(g.id) : setFGid(on?null:g.id)}>
                   <div className="flex items-center justify-between gap-2">
-                    <span className="disp" style={{fontSize:13.5,color:on?"#e8d092":"#e8d9b8"}}>{fullName(g)}</span>
-                    {on ? <Check size={15} style={{color:"#c99a4b",flexShrink:0}}/> : <span className="dim" style={{fontSize:13}}>{g.wins}–{g.losses}</span>}
+                    <span className="disp" style={{fontSize:13.5,color:on?"#e8d092":"#e8d9b8",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{fullName(g)}</span>
+                    {on ? <Check size={15} style={{color:"#c99a4b",flexShrink:0}}/> : <span className="dim" style={{fontSize:13,flexShrink:0}}>{g.wins}–{g.losses}</span>}
                   </div>
-                  <div className="dim" style={{fontSize:13.5,marginTop:2}}>
-                    {g.cls} · {GEAR[kit.weapon]?GEAR[kit.weapon].name:"unarmed"}{GEAR[kit.offhand]&&GEAR[kit.offhand].art!=="none"?` & ${GEAR[kit.offhand].name}`:""}
+                  <div className="flex items-center justify-between gap-2" style={{marginTop:2}}>
+                    <span className="dim" style={{fontSize:13.5,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                      {g.cls} · {GEAR[kit.weapon]?GEAR[kit.weapon].name:"unarmed"}{GEAR[kit.offhand]&&GEAR[kit.offhand].art!=="none"?` & ${GEAR[kit.offhand].name}`:""}
+                    </span>
+                    {read && <span className="rowval" style={{fontSize:12,color:read.colour,flexShrink:0}}>{read.word}</span>}
                   </div>
+                  {booked && <div style={{fontSize:12.5,marginTop:3,color:"#e0bd72"}}>✦ His name is the one on the bill.</div>}
                   {pick.kind==="single" && (()=>{ const w=metWord(pick.o.opp,g); return w?<div style={{fontSize:13,marginTop:2,color:"#d8ac5f"}}>{w}</div>:null; })()}
                 </button>
               );
