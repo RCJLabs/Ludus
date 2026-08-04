@@ -7317,6 +7317,47 @@ function scoutMan(d, hName, fid){
   return { ok:true, cost:c };
 }
 
+/* ---- THE ACCOUNT OF A BOUT ----
+   A bout has rounds, a crowd, a turning point and an editor's hand, and when the
+   modal closed all of it went except one line in the chronicle — which the roll then
+   ate a hundred weeks later. A man could not be asked how he won the bout that made
+   him. Each of his last few bouts keeps a short account now: who, where, how it
+   turned, and how it ended. Six per man, a few hundred bytes each. */
+const BOUTS_KEPT = 6;
+function boutAccount(d, g, offer, res, opts){
+  const O = opts || {};
+  const beats = ((res && res.beats) || []).filter(bt=>bt && bt.text);
+  /* the end is simply the last thing said, whatever kind it came in as */
+  const last = beats.length ? beats[beats.length-1] : null;
+  /* the turn is the exchange the crowd came up for, and never the last line again */
+  let turn = null, best = -1;
+  for(let i=0;i<beats.length-1;i++){
+    const bt = beats[i];
+    if(bt.kind==="intro" || bt.kind==="salute") continue;
+    const c = bt.crowd == null ? 0 : bt.crowd;
+    if(c > best){ best = c; turn = bt.text; }
+  }
+  const a = {
+    week: d.week, foe: offer.opp ? offer.opp.name : "somebody",
+    foeHouse: (offer.opp && offer.opp.house) || (offer.oppRef && offer.oppRef.house) || null,
+    foeCls: offer.opp ? offer.opp.cls : null,
+    where: offer.festival || (offer.city ? (CITIES[offer.city] ? CITIES[offer.city].name : "away") : "the pits"),
+    venue: offer.venue || null, stakes: offer.stakes || "standard",
+    win: !!O.win, died: !!O.died, killed: !!O.killed, spared: !!(res && res.spared),
+    rounds: beats.reduce((m,bt)=>Math.max(m, bt.round||0), 0) || null,
+    crowd: res && res.crowd != null ? rnd(res.crowd) : null,
+    purse: O.purse == null ? null : rnd(O.purse),
+    turn: turn ? String(turn).slice(0, 260) : null,
+    end: last ? String(last.text).slice(0, 260) : null,
+  };
+  g.bouts = [a].concat(g.bouts || []).slice(0, BOUTS_KEPT);
+  return a;
+}
+const boutWord = a => a.died ? "he did not come back"
+  : a.win ? (a.killed ? "won, and killed him" : "won")
+  : a.spared ? "beaten, and spared" : "beaten";
+const boutColour = a => a.died ? "#d96f5d" : a.win ? "#9aa86a" : "#cfa88a";
+
 /* ---- AND THEY WATCH YOU BACK ----
    All the scouting ran one way. You could pay to have any man in Campania looked
    over and nobody ever stood at your wall. A house that hates you now sends somebody
@@ -10118,6 +10159,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
     dropPrep(d, g, null);            /* the day came; the drill is used up */
   }
 
+  boutAccount(d, g, offer, res, { win, died:!!res.aDies, killed:!!res.bDies, purse: win ? purse + t.app : t.app });
   chron(d, win? `${g.name} ${res.bDies?"killed "+offer.opp.name:"took victory"} at ${where} (+${purse+t.app}d).` :
     res.aDies? `${g.name} died on the sand at ${where}.` : `${g.name} was beaten at ${where}.`, win?"good":"bad");
   if(d.games) d.games.offers = d.games.offers.filter(o=>o.id!==offer.id);
@@ -16834,6 +16876,38 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               </div>
             </div>
             )}
+            {gView==="record" && (()=>{
+              const B = selG.bouts || [];
+              if(!B.length) return null;
+              return (
+                <div className="panel" style={{padding:10,marginBottom:10,background:"#1c1610"}}>
+                  <div className="flex items-center justify-between gap-2" style={{marginBottom:6}}>
+                    <span className="tag">How it went</span>
+                    <span className="rowval dim" style={{fontSize:12}}>his last {B.length} {B.length===1?"bout":"bouts"}</span>
+                  </div>
+                  {B.map((a,i)=>(
+                    <details key={i} style={{borderTop:i?"1px dotted #33271a":"none",padding:"5px 0"}}>
+                      <summary style={{listStyle:"none",cursor:"pointer"}}>
+                        <span className="flex items-center justify-between gap-2">
+                          <span style={{fontSize:14,color:"#cfc0a0",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                            {a.foe}{a.foeHouse? <span className="dim" style={{fontSize:12}}> · House {a.foeHouse}</span> : null}
+                          </span>
+                          <span className="rowval" style={{fontSize:12.5,color:boutColour(a),flexShrink:0}}>{boutWord(a)}</span>
+                        </span>
+                        <span className="dim" style={{fontSize:12.5,display:"block",marginTop:1}}>
+                          {a.where} · week {((a.week-1)%YEAR_WEEKS)+1} of year {Math.floor((a.week-1)/YEAR_WEEKS)+1}
+                          {a.rounds? ` · ${a.rounds} rounds`:""}{a.crowd!=null? ` · crowd ${a.crowd}`:""}
+                          {a.stakes==="sine"? " · sine missione":""}
+                        </span>
+                      </summary>
+                      {a.turn && <div className="dim" style={{fontSize:13.5,fontStyle:"italic",margin:"5px 0 3px",lineHeight:1.4}}>{a.turn}</div>}
+                      {a.end && <div style={{fontSize:13.5,lineHeight:1.4,color:"#cfc0a0"}}>{a.end}</div>}
+                      {!a.turn && !a.end && <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:4}}>Nothing of it was written down.</div>}
+                    </details>
+                  ))}
+                </div>
+              );
+            })()}
             {gView==="record" && (()=>{
               /* his wins and losses were two numbers. these are the men behind them. */
               const F = (selG.foes||[]).slice().sort((a,b)=>(b.last||0)-(a.last||0));
