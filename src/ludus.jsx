@@ -1905,6 +1905,9 @@ const CHARTER = [
   { id:"buy", tab:"market", title:"Buy a man",
     how:"Three is not a house. The block lies about what it is selling, so pay to have one looked over if the price is worth it.",
     done:d=>d.gladiators.filter(g=>!isGone(g)).length >= 4 },
+  { id:"doctore", tab:"ludus", title:"Find somebody who can teach",
+    how:"Nobody in this yard knows how. A doctore drills every man faster and breaks fewer of them doing it, puts the whole yard on one drill a week, and is the only road to a signature blow or a second. Two are asking at the square, and they have been there since the day you took the keys.",
+    done:d=>!!d.doctore || (d.flags.everDoctore||0) > 0 },
   { id:"arm", tab:"armory", title:"Arm somebody properly",
     how:"House issue keeps a man alive and does nothing else. Buy a real piece, then arm him off the rack.",
     done:d=>rackUsed(d) > 0 || d.gladiators.some(g=>SLOTS.some(s=>wears(GEAR[g.kit&&g.kit[s]]))) },
@@ -2024,6 +2027,15 @@ function agenda(d){
   for(const g of activeG(d)) if(canMaster(d,g)) add(1, "men", `${g.name} has earned his mastery`, "the doctore would say so out loud");
   { const f = ripeFeud(d); if(f) add(2, "men", `${f.a.name} and ${f.b.name} are close to it`, "the yard has noticed"); }
   if(d.doctoreOffer) add(2, "market", "A doctore is offering", "he will not wait long");
+  /* the largest thing in the game nobody was ever told about. Two men ask at the
+     square every week from the day you take the keys and nothing said so. */
+  if(!d.doctore && !d.doctoreOffer && (d.doctoreMarket||[]).length){
+    const can = (d.doctoreMarket||[]).filter(c=>c.fee<=d.gold).sort((a,b)=>b.skill-a.skill)[0];
+    const ask = Math.min(...d.doctoreMarket.map(c=>c.fee));
+    add(can ? 2 : 1, "ludus", "Nobody in this yard can teach",
+      can ? `${can.name} is asking ${can.fee}d — every man would train faster for it`
+          : `the square is asking ${ask}d and you have ${rnd(d.gold)}d`);
+  }
   if(d.unrest >= 70) add(2, "ludus", "The cells are close to fire", unrestWord(d.unrest));
   if(d.lanista && d.lanista.health < 30 && !d.heir) add(2, "ludus", "You are failing and have named nobody", "the house dies with you");
   { const br = inBreach(d);
@@ -3187,6 +3199,23 @@ function staffWeek(d){
     }
   }
 }
+
+/* What the square is worth, said plainly, because the numbers are large and were
+   nowhere on the screen. Every line is read off the code that uses it. */
+const DOC_WORTH = [
+  ["Every man in the yard", d=>"trains faster, all week, at no further cost"],
+  ["Or one man alone", d=>"set on a single pupil he is worth nearly three times as much to that man"],
+  ["The post", d=>"fewer men break themselves in training, and a pupil far fewer"],
+  ["One drill for the whole yard", d=>"conditioning, bladework, the crowd, or hard sparring — a week at a time"],
+  ["A signature blow", d=>"no man in this house can learn one without him"],
+  ["A second in the ring", d=>"and nobody can be given one without him"],
+  ["Watching a rival", d=>"one more tell from every man you pay to watch, and a reading of the ones you do not"],
+  ["The cells", d=>"quieter than you can keep them, and some weeks he finds something in a man nobody had looked for"],
+];
+/* and what this particular man would be worth, from his own skill */
+const docShare = c => Math.round((c.skill/100) * 0.32 * 100);
+const docPupilShare = c => Math.round((c.skill/100) * 0.85 * 100);
+const docGuardPc = c => Math.round(c.skill/200 * 100);
 
 function makeDoctoreMarket(d){
   if(d.doctore) { d.doctoreMarket = []; return; }
@@ -13649,7 +13678,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
     chron(d, `The retraining is called off. The fee is not coming back.`); });
   const hireDoc = did => mut(d=>{ const c=(d.doctoreMarket||[]).find(x=>x.id===did);
     if(!c || d.doctore || d.gold<c.fee) return;
-    d.gold -= c.fee; d.doctore = c; d.doctoreMarket = [];
+    d.gold -= c.fee; d.doctore = c; d.doctoreMarket = []; d.flags.everDoctore = 1;
     chron(d, `${c.name} takes the training square. His voice carries to the far wall before the first morning is out.`, "good"); });
   const dismissDoc = () => { const doc=S.doctore; if(!doc) return;
     setAsk({ title:"Dismiss the Doctore", danger:doc.fromHouse, confirm:"Send him away",
@@ -13694,7 +13723,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
   });
   const takeOffer = accept => mut(d=>{ const o=d.doctoreOffer; if(!o) return;
     d.doctoreOffer = null;
-    if(accept){ const old=d.doctore; d.doctore=o; d.doctoreMarket=[];
+    if(accept){ const old=d.doctore; d.doctore=o; d.doctoreMarket=[]; d.flags.everDoctore = 1;
       d.unrest=clamp(d.unrest-5,0,100);
       d.gladiators.forEach(g=>{ if(g.status==="active") g.morale=clamp(g.morale+5,0,100); });
       chron(d, old ? `${o.name} takes the square from ${old.name}. The men train harder for a man who wore their chains.` 
@@ -15177,6 +15206,21 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               <div className="dim" style={{fontSize:14.5,fontStyle:"italic",marginBottom:8}}>
                 No one runs the square but you. A doctore drills harder than a lanista can, and a man you freed will drill hardest of all.
               </div>
+              {/* the whole of what you are going without, because none of it was on the screen */}
+              <details className="sect" style={{marginBottom:9,background:"#1a1510",borderColor:"#4a3a22"}}>
+                <summary style={{padding:"8px 10px"}}>
+                  <span style={{fontSize:13.5,color:"#d8ac5f"}}>What you are doing without</span>
+                  <span className="chev" aria-hidden="true">⌄</span>
+                </summary>
+                <div style={{padding:"2px 10px 9px"}}>
+                  {DOC_WORTH.map(([label, say], i)=>(
+                    <div key={i} style={{padding:"4px 0",borderTop: i? "1px dotted #33271a" : "none"}}>
+                      <span style={{fontSize:13.5,color:"#cfc0a0"}}>{label}</span>
+                      <span className="dim" style={{fontSize:13.5}}> — {say(S)}</span>
+                    </div>
+                  ))}
+                </div>
+              </details>
               {(S.doctoreMarket||[]).length===0 && <div className="dim" style={{fontSize:14}}>No one worth the wage is looking for work. Ask again after the next market.</div>}
               {(S.doctoreMarket||[]).map(c=>(
                 <div key={c.id} style={{borderTop:"1px dotted #33271a",paddingTop:9,marginTop:9}}>
@@ -15189,6 +15233,12 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     <span className="tag tag-gold">{STAT_NAMES[c.spec]}</span>
                   </div>
                   <div className="dim" style={{fontSize:14,fontStyle:"italic"}}>{c.past}.</div>
+                  <div className="flex gap-1" style={{flexWrap:"wrap",marginTop:5}}>
+                    <span className="chip" style={{fontSize:10,padding:"2px 7px",borderColor:"#5a6a4a",color:"#9aa86a"}}>The yard +{docShare(c)}%</span>
+                    <span className="chip" style={{fontSize:10,padding:"2px 7px",borderColor:"#5a6a4a",color:"#9aa86a"}}>One pupil +{docPupilShare(c)}%</span>
+                    <span className="chip" style={{fontSize:10,padding:"2px 7px",borderColor:"#5a6a4a",color:"#9aa86a"}}>Hurt at the post −{docGuardPc(c)}%</span>
+                    <span className="chip" style={{fontSize:10,padding:"2px 7px",borderColor:"#6d5426",color:"#d8ac5f"}}>{STAT_NAMES[c.spec]} +28%</span>
+                  </div>
                   <button className="btn" style={{width:"100%",marginTop:7}} disabled={S.gold<c.fee} onClick={()=>hireDoc(c.id)}>
                     {S.gold<c.fee ? "Not enough coin" : `Take him on — ${c.fee}d`}
                   </button>
