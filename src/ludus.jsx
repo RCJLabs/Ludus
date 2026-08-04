@@ -5090,6 +5090,62 @@ const metWord = (f, g) => { const m = f && f.met && f.met[g.id]; if(!m) return n
     : m.l > m.w ? `${g.name} has put him down ${times(m.l)}.`
     : `They have met ${times(n)} and settled nothing.`;
 };
+/* ---- WHO HE HAS MET ----
+   A man's record was two numbers. Which men those wins and losses were against —
+   the thing that turns a bout into a rivalry — was thrown away the moment the sand
+   was raked. Both sides of every named meeting are written down now: the other
+   house's man remembers yours, and yours keeps his own book of who he has faced. */
+const FOES_KEPT = 20;
+function meetRecord(d, g, foe, ref, youWon, foeDied, yoursDied){
+  if(!g || !foe) return;
+  g.foes = g.foes || [];
+  const key = ref && ref.fid != null ? ref.fid : (foe.id != null ? foe.id : null);
+  let e = key != null ? g.foes.find(x=>x.fid===key)
+        : g.foes.find(x=>x.name===foe.name && x.house===(foe.house||null));
+  if(!e){
+    e = { fid:key, name:foe.name, nick:foe.nick||null, cls:foe.cls||null,
+          house: foe.house || (ref && ref.house) || null, w:0, l:0, killed:0, last:d.week };
+    g.foes.push(e);
+  }
+  e.last = d.week;
+  if(foe.nick) e.nick = foe.nick;
+  if(youWon) e.w++; else e.l++;
+  if(foeDied) e.killed = (e.killed||0) + 1;
+  if(yoursDied) e.ended = true;                 /* the meeting he did not come back from */
+  if(g.foes.length > FOES_KEPT){
+    g.foes.sort((a,b)=>(b.last||0)-(a.last||0));
+    g.foes.length = FOES_KEPT;
+  }
+}
+const foeTimes = k => k===1 ? "once" : k===2 ? "twice" : k+" times";
+const foeWord = e => {
+  const n = (e.w||0) + (e.l||0);
+  if(!n) return "";
+  return e.w > e.l ? `beaten ${foeTimes(e.w)}${e.l? `, lost ${e.l}`:""}`
+    : e.l > e.w ? `lost to ${foeTimes(e.l)}${e.w? `, beaten ${e.w}`:""}`
+    : `met ${foeTimes(n)}, nothing settled`;
+};
+const foeColour = e => (e.w||0) > (e.l||0) ? "#9aa86a" : (e.l||0) > (e.w||0) ? "#d96f5d" : "#cbc08e";
+/* the live man behind a card — the offer carries a copy, and a copy does not remember */
+function liveFoe(d, o){
+  if(!o) return null;
+  if(o.oppRef && o.oppRef.circuit){ const f = (d.circuit||[]).find(x=>x.id===o.oppRef.fid); if(f) return f; }
+  if(o.oppRef && o.oppRef.house){
+    const h = houseOf(d, o.oppRef.house);
+    const f = h && (h.fighters||[]).find(x=>x.id===o.oppRef.fid);
+    if(f) return f;
+  }
+  return o.opp || null;
+}
+/* every one of your men who has stood in front of him, and how it went */
+function metOf(d, foe){
+  if(!foe) return [];
+  return (d.gladiators||[]).map(g=>{
+    const e = (g.foes||[]).find(x=>(x.fid!=null && x.fid===foe.id) || (x.fid==null && x.name===foe.name));
+    return e ? { g, e } : null;
+  }).filter(Boolean).sort((a,b)=>(b.e.last||0)-(a.e.last||0));
+}
+
 function circuitRecord(d, f, g, youWon, died){
   if(!f || !f.id) return;
   const live = (d.circuit||[]).find(x=>x.id===f.id);
@@ -5099,6 +5155,7 @@ function circuitRecord(d, f, g, youWon, died){
   if(youWon){ live.losses++; live.lostToYou=(live.lostToYou||0)+1; m.l++; }
   else { live.wins++; live.beatYou=(live.beatYou||0)+1; m.w++; live.pfame=(live.pfame||0)+ri(3,7);
     if(!live.nick && live.wins>=6) live.nick = pick(NICKS); }
+  meetRecord(d, g, live, { fid:live.id, house:live.house }, youWon, !!died, false);
   if(died){ const i=(d.circuit||[]).indexOf(live); if(i>=0) d.circuit[i] = makeCircuitMan(d, CIRCUIT_MIX[i % CIRCUIT_MIX.length]); }
 }
 /* the whole card is drawn from men who exist */
@@ -9859,6 +9916,11 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
     const f = h ? h.fighters.find(x=>x.id===offer.oppRef.fid) : null;
     if(h && f){
       const wasNem = d.nemesis && d.nemesis.fid===f.id;
+      /* both books, before he is taken off the card or off the sand */
+      f.met = f.met || {};
+      const mm = f.met[g.id] = f.met[g.id] || { w:0, l:0 };
+      if(win) mm.l++; else mm.w++;
+      meetRecord(d, g, f, offer.oppRef, win, !!res.bDies, !!res.aDies);
       if(win){
         f.losses++; f.lostToYou = (f.lostToYou||0)+1;
         h.grudge = clamp(h.grudge+6, 0, 100);
@@ -16518,6 +16580,37 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               </div>
             </div>
             )}
+            {gView==="record" && (()=>{
+              /* his wins and losses were two numbers. these are the men behind them. */
+              const F = (selG.foes||[]).slice().sort((a,b)=>(b.last||0)-(a.last||0));
+              if(!F.length) return null;
+              return (
+                <div className="panel" style={{padding:10,marginBottom:10,background:"#1c1610"}}>
+                  <div className="flex items-center justify-between gap-2" style={{marginBottom:6}}>
+                    <span className="tag">Who he has met</span>
+                    <span className="rowval dim" style={{fontSize:12}}>{F.length} named {F.length===1?"man":"men"}</span>
+                  </div>
+                  {F.slice(0, 8).map((e,i)=>(
+                    <div key={i} style={{borderTop:i?"1px dotted #33271a":"none",padding:"5px 0"}}>
+                      <div className="flex items-center justify-between gap-2">
+                        <span style={{fontSize:14,color:"#cfc0a0",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                          {e.nick? `${e.name}, ${e.nick}` : e.name}
+                        </span>
+                        <span className="rowval" style={{fontSize:12.5,color:foeColour(e)}}>{foeWord(e)}</span>
+                      </div>
+                      <div className="dim" style={{fontSize:12.5,marginTop:1}}>
+                        {[e.cls, e.house? `House ${e.house}` : null].filter(Boolean).join(" · ")}
+                        {e.killed? <span className="blood"> · he put him in the ground</span> : null}
+                        {e.last!=null && <span> · last met week {((e.last-1)%YEAR_WEEKS)+1} of year {Math.floor((e.last-1)/YEAR_WEEKS)+1}</span>}
+                      </div>
+                    </div>
+                  ))}
+                  {F.length>8 && <div className="dim" style={{fontSize:12.5,marginTop:5,fontStyle:"italic"}}>
+                    …and {F.length-8} more he has stood in front of.
+                  </div>}
+                </div>
+              );
+            })()}
             {gView==="standing" && (tiesOf(S, selG.id).length>0 || selG.mentor || selG.protege) && (
               <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610"}}>
                 <div className="tag" style={{marginBottom:6}}>Bonds</div>
@@ -17006,6 +17099,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         const busy = !!S.court;
         const tells = seen ? manTells(S, f) : [];
         const mine = matchAgainst(S, f).slice(0, 5);
+        const met = metOf(S, f);
+        const metN = met.reduce((n,x)=>({ w:n.w + (x.e.w||0), l:n.l + (x.e.l||0) }), { w:0, l:0 });
         const fee = challengeFee(S, h, f);
         const blocked = nameBlocked(S);
         const naming = !!(nameFor && nameFor.house===h.name && nameFor.fid===f.id);
@@ -17082,6 +17177,29 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   Style is all you have to go on until he has been watched.
                 </div>}
               </div>
+
+              {met.length>0 && (
+                <div className="panel" style={{padding:"10px 11px",marginBottom:9}}>
+                  <div className="flex items-center justify-between gap-2" style={{marginBottom:6}}>
+                    <span className="tag tag-gold">What is already between you</span>
+                    <span className="rowval dim" style={{fontSize:12}}>{metN.w}–{metN.l} to your house</span>
+                  </div>
+                  {met.map(({g,e})=>(
+                    <div key={g.id} className="flex items-center justify-between gap-2" style={{padding:"3px 0"}}>
+                      <span className="rowname" style={{fontSize:13.5,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
+                        color: isGone(g) ? "#8f7e62" : "#cfc0a0"}}>
+                        {g.name}{isGone(g)? <span className="dim" style={{fontSize:12}}> · gone</span> : null}
+                      </span>
+                      <span className="rowval" style={{fontSize:12.5,color:foeColour(e),flexShrink:0}}>{foeWord(e)}</span>
+                    </div>
+                  ))}
+                  {met.some(x=>x.e.ended) && (
+                    <div className="blood" style={{fontSize:13,marginTop:5,fontStyle:"italic"}}>
+                      He has killed for that house on this sand. Your men know it.
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="tag tag-gold" style={{display:"inline-block",marginBottom:6}}>What you can do about him</div>
               {naming ? (()=>{
@@ -17771,7 +17889,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     {read && <span className="rowval" style={{fontSize:12,color:read.colour,flexShrink:0}}>{read.word}</span>}
                   </div>
                   {booked && <div style={{fontSize:12.5,marginTop:3,color:"#e0bd72"}}>✦ His name is the one on the bill.</div>}
-                  {pick.kind==="single" && (()=>{ const w=metWord(pick.o.opp,g); return w?<div style={{fontSize:13,marginTop:2,color:"#d8ac5f"}}>{w}</div>:null; })()}
+                  {pick.kind==="single" && (()=>{ const w=metWord(liveFoe(S,pick.o),g); return w?<div style={{fontSize:13,marginTop:2,color:"#d8ac5f"}}>{w}</div>:null; })()}
                 </button>
               );
             })}
@@ -17878,7 +17996,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 ); })()}
               {o.venue && <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:3}}>{VEN(o.venue).say}</div>}
               {o.sky && <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:2,color:"#9dc0d4"}}>{SKY(o.sky).say}{shelterOf(o.venue)>0.3?" There is a roof of a kind over most of it.":""}</div>}
-              {me && (()=>{ const w=metWord(o.opp,me); return w?<div style={{fontSize:14,marginTop:2,color:"#d8ac5f"}}>{w}</div>:null; })()}
+              {me && (()=>{ const w=metWord(liveFoe(S,o),me); return w?<div style={{fontSize:14,marginTop:2,color:"#d8ac5f"}}>{w}</div>:null; })()}
               {!o.watched ? (
                 <button className="btn btn-ghost" style={{width:"100%",marginTop:8}} disabled={S.gold<watchCost(S,o)} onClick={()=>haveWatched(o.id)}>Have him watched · {watchCost(S,o)}d</button>
               ) : (
