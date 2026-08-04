@@ -1963,6 +1963,18 @@ function agenda(d){
       : `A levy of ${x.amount}d`;
     add(n<=0?3:2, x.kind==="levy"?"villa":"arena", lbl, n<=0?"due this week":n===1?"due next week":`${n} weeks`);
   }
+  /* the infirmary held up against the calendar — a promise you are on course to break */
+  for(const x of deadlines(d)){
+    if(x.gid == null || x.met) continue;
+    const n = x.due - d.week; if(n < 0 || n > 8) continue;
+    const rd = promiseRead(d, x.gid, x.due);
+    if(rd && !rd.ok) add(n<=2 ? 3 : 2, "men",
+      `${x.name} will not be fit for ${x.kind==="booking" ? (x.festName||"the day") : "the day that was named"}`, rd.word);
+  }
+  { const fit = fitOn(d, d.week), all = activeG(d).length;
+    if(fit <= 1 && all > fit) add(fit<=0?3:2, "men",
+      fit<=0 ? "Nobody in this house can stand" : "One man is all you can send",
+      `${all-fit} of ${all} are hurt, kept in, or at the far post`); }
   { const waiting = patronsOf(d).filter(p=>p.want && p.want.due && p.want.due - d.week <= 2);
     if(waiting.length===1) add(waiting[0].want.due<=d.week?3:2, "villa", `${waiting[0].name} is still waiting`, WANTS[waiting[0].want.kind].label.toLowerCase());
     else if(waiting.length>1) add(waiting.some(p=>p.want.due<=d.week)?3:2, "villa",
@@ -4903,12 +4915,12 @@ function deadlineWeek(d){
   }
   /* new obligations arrive */
   if(!d.city && !d.travel && !d.rome && !d.over){
-    if(R()<0.10){ const o = offerBooking(d); if(o) d.pendingEvent = { id:"booking",
-      title:"A Name on the Bill", text:`${o.editor} is putting on ${o.festName} and wants ${o.name} specifically, by name, on the bill. ${o.advance} denarii now and ${o.balance} on the day. If ${o.name} is not standing on that sand in ${o.due-d.week} weeks, the advance comes back doubled and the story goes round Capua ahead of you.`,
-      choices:[`Sign for it — ${o.advance}d now`, "Do not promise a man five weeks out"], data:{ o } }; }
-    else if(R()<0.06){ const c = offerChallenge(d); if(c) d.pendingEvent = { id:"challenge",
-      title:"Named in Public", text:`${c.lan} has named ${c.name} in front of the editors and half of Capua — his ${c.foe} against your man, inside ${c.due-d.week} weeks, for a purse of ${c.purse}. He did it loudly and on purpose. Everyone is now waiting to see whether you answer.`,
-      choices:["Accept it", "Let it pass"], data:{ c } }; }
+    /* these two are rolled here but not raised here. This runs at the top of the week
+       and the week's question is not settled until a hundred lines further down, where
+       pendingEvent is reset — anything raised now is thrown away before anybody sees it.
+       So the offer is set aside and put into the queue at the place it is decided. */
+    if(R()<0.10){ const o = offerBooking(d); if(o) d.askBooking = o; }
+    else if(R()<0.06){ const c = offerChallenge(d); if(c) d.askChallenge = c; }
     else if(R()<0.07){ const l = offerLevy(d); if(l){ addDeadline(d, Object.assign({kind:"levy"}, l));
       chron(d, `A levy is laid on the schools of Capua toward ${l.what} — ${l.amount} denarii, due in ${l.due-d.week} weeks.`, "bad"); } }
   }
@@ -5422,7 +5434,7 @@ function newGameState(name, scen, seed, pitch){
     gladiators:[], market:[], games:null, pendingEvent:null, log:[], fallen:[], freed:[],
     seed: null, rngState: 0,
     lastParty:-9, lastFeast:-9, over:null, milestone600:false, flags:{learned:{}}, escaped:[], rebellion:null, gear:{}, retired:[],
-    doctore:null, doctoreMarket:[], doctoreOffer:null, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, court:null, defected:[], nemesis:null, nemHouse:null, saga:null, arcs:[], crest:{ c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" }, primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], works:{}, slavers:{}, pact:null, gambits:{}, pendingLesson:null, law:null, doctrine:null, kits:[], deadSteel:[], bay:null, mark:null, after:null, metHouse:{}, owed:[], household:{}, yardSeen:0, yardMissed:0, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, domus:{ wife:null, children:[], nextKin:1 }, acclaim:0, brand:{ licensed:false, decided:false, tier:0, earned:0 }, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, repName:null, departed:[], reSignOffer:null, annals:[], rise:{ rank:0, standing:0 }, munusLast:-99, league:{ first:null, since:1, held:0, best:99, year:1, snap:null }, piety:30, blessing:null, vow:null, lastOffering:-9, powLot:null };
+    doctore:null, doctoreMarket:[], doctoreOffer:null, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, court:null, defected:[], nemesis:null, nemHouse:null, saga:null, arcs:[], crest:{ c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" }, primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], works:{}, slavers:{}, pact:null, gambits:{}, pendingLesson:null, law:null, doctrine:null, kits:[], deadSteel:[], bay:null, mark:null, after:null, metHouse:{}, owed:[], household:{}, yardSeen:0, yardMissed:0, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, domus:{ wife:null, children:[], nextKin:1 }, acclaim:0, brand:{ licensed:false, decided:false, tier:0, earned:0 }, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, repName:null, askBooking:null, askChallenge:null, departed:[], reSignOffer:null, annals:[], rise:{ rank:0, standing:0 }, munusLast:-99, league:{ first:null, since:1, held:0, best:99, year:1, snap:null }, piety:30, blessing:null, vow:null, lastOffering:-9, powLot:null };
   d.rivals = makeRivals(d);
   const solo = S.men.length === 1;
   S.men.forEach((band,i)=>{
@@ -7540,6 +7552,55 @@ function prepWeek(d, g){
   return PREP_DRAG;
 }
 
+/* ---- WHETHER YOU WILL HAVE ANYBODY TO SEND ----
+   The infirmary is the real constraint on a small house and it was the one thing
+   never in front of you at the moment you needed it. You sign a name onto a bill
+   five weeks out, the man limps off the sand the following Saturday, and nothing
+   in the game told you the two facts were about to meet. The whole of this is one
+   idea: put a date on every man's fitness, add them up, and say the number out
+   loud before you promise anything. */
+const AWAY_LONG = 99;                 /* far enough out that it means "not by waiting" */
+function healWeeks(d, g){
+  if(!g || !g.injury || !(g.injury.weeks > 0)) return 0;
+  if(g.injury.care === "through") return 0;              /* he is standing already, wound and all */
+  const base = healSpeed(d, g);
+  const rate = (g.injury.care==="surgeon" ? base*1.6 : g.injury.care==="convalesce" ? base*0.72 : base) * seasonHeal(d);
+  return rate > 0 ? Math.ceil(g.injury.weeks / rate) : AWAY_LONG;
+}
+/* how many weeks before this man could be put on a card. 0 means today. */
+function fitInWeeks(d, g){
+  if(!g || isGone(g)) return AWAY_LONG;
+  if(refusing(g)) return AWAY_LONG;                      /* time mends bone, not a refusal */
+  let w = 0;
+  if(g.status === "injured") w = Math.max(w, healWeeks(d, g));
+  else if(g.status === "away") w = Math.max(w, Math.max(1, (g.returnWeek||d.week+1) - d.week));
+  else if(g.status !== "active") return AWAY_LONG;
+  if(g.benched && g.benched.weeks > 0)  w = Math.max(w, Math.ceil(g.benched.weeks));
+  if(g.learning && g.learning.weeks > 0) w = Math.max(w, Math.ceil(g.learning.weeks));
+  return w;
+}
+const fitOn = (d, week) => d.gladiators.filter(g=>fitInWeeks(d, g) <= week - d.week).length;
+function fitCurve(d, span){
+  const out = [];
+  for(let i=0;i<=span;i++) out.push({ week:d.week+i, fit:fitOn(d, d.week+i) });
+  return out;
+}
+const YARD_COLOUR = n => n<=0 ? "#d96f5d" : n<=1 ? "#d8ac5f" : n<=2 ? "#b09b7d" : "#9aa86a";
+const YARD_WORD = n => n<=0 ? "nobody can stand" : n===1 ? "one man, and no second" : n===2 ? "two — thin" : n<=4 ? "enough for a card" : "deep enough to choose";
+/* the sentence you want before you put a name on a bill */
+function promiseRead(d, gid, due){
+  const g = (d.gladiators||[]).find(x=>x.id===gid);
+  if(!g) return null;
+  const wait = fitInWeeks(d, g), need = Math.max(0, Math.round(due) - d.week), also = fitOn(d, due);
+  const rest = also<=1 ? ` On that week he is the only man of yours fit to stand.` : "";
+  if(wait >= AWAY_LONG) return { ok:false, word:`${g.name} is in no state to be promised to anybody, and waiting is not what fixes it.` };
+  if(wait === 0)   return { ok:true, tight:also<=1, word:`${g.name} is fit today, and ${also===0?"nobody":also===1?"he is the only man":`${also} of yours`} will be fit that week.` };
+  if(wait > need)  return { ok:false, word:`${g.name} is ${wait} week${wait===1?"":"s"} from being fit and the day is in ${need}. As things stand he does not make it.` };
+  if(wait === need) return { ok:true, tight:true, word:`${g.name} comes fit the very week of it. There is no room in that at all.${rest}` };
+  return { ok:true, tight:(need-wait)<=1,
+    word:`${g.name} is fit again in ${wait} week${wait===1?"":"s"} — ${need-wait} clear of the day.${rest}` };
+}
+
 /* ---- THE YEAR AHEAD ----
    Nine or ten different systems each kept their own date and told you about it in
    their own corner: a festival on the wall calendar, a levy in the to-do list, a
@@ -7608,8 +7669,8 @@ function calendarRows(d, span){
   /* your own men — the weeks you would actually plan a card around */
   for(const g of d.gladiators){
     if(isGone(g)) continue;
-    if(g.injury && g.injury.weeks > 0)
-      put(d.week + Math.ceil(g.injury.weeks), "man", `${g.name} is fit again`,
+    if(g.injury && g.injury.weeks > 0 && healWeeks(d, g) > 0)
+      put(d.week + healWeeks(d, g), "man", `${g.name} is fit again`,
         `${g.injury.name.toLowerCase()} — he cannot be put on a card before then`, "men");
     if(g.benched && g.benched.weeks > 0)
       put(d.week + g.benched.weeks, "man", `${g.name} comes off the bench`,
@@ -11700,6 +11761,19 @@ function endWeek(d){
       `${pd.name} did not answer the roll this morning. House ${pd.house} has ${pr.him} — freedom in three years and a bed of ${pr.his} own, and ${pr.he} took it. ${pd.wins>0?`${pd.wins} win${pd.wins===1?"":"s"} in your colours, and they belong to another house now. `:""}${pd.kin.length? `${pd.kin.join(" and ")} watched the gate a long time after ${pr.he} was through it.` : `The yard watched the gate a long time after ${pr.he} was through it.`}`,
       choices:["The house goes on"], data:{} };
   }
+  /* the two that ask for a named man on a named day. Rolled at the top of the week,
+     raised here — ahead of the week's random beat, because a date is worth more than one. */
+  if(!d.pendingEvent && d.askBooking){ const o = d.askBooking;
+    d.pendingEvent = { id:"booking",
+      title:"A Name on the Bill", text:`${o.editor} is putting on ${o.festName} and wants ${o.name} specifically, by name, on the bill. ${o.advance} denarii now and ${o.balance} on the day. If ${o.name} is not standing on that sand in ${o.due-d.week} weeks, the advance comes back doubled and the story goes round Capua ahead of you.`,
+      note: promiseRead(d, o.gid, o.due),
+      choices:[`Sign for it — ${o.advance}d now`, "Do not promise a man five weeks out"], data:{ o } }; }
+  if(!d.pendingEvent && d.askChallenge){ const c = d.askChallenge;
+    d.pendingEvent = { id:"challenge",
+      title:"Named in Public", text:`${c.lan} has named ${c.name} in front of the editors and half of Capua — his ${c.foe} against your man, inside ${c.due-d.week} weeks, for a purse of ${c.purse}. He did it loudly and on purpose. Everyone is now waiting to see whether you answer.`,
+      note: promiseRead(d, c.gid, c.due),
+      choices:["Accept it", "Let it pass"], data:{ c } }; }
+  d.askBooking = null; d.askChallenge = null;
   if(!d.pendingEvent && !d.rome && R()<0.14){ const ev=EVENTS.ambition.make(d); if(ev) d.pendingEvent=ev; }
   freedWeek(d);
   kinWeek(d);
@@ -14537,7 +14611,10 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   <span>Familia {roster.length}/8</span>
                   <span className="blood">Fallen {S.fallen.length}</span>
                   <span className="gold">Freed {S.freed.length}</span>
-                  <span className="dim" style={{marginLeft:"auto"}}>{activeG(S).length} in the yard</span>
+                  {(()=>{ const fit = fitOn(S, S.week), all = activeG(S).length;
+                    return <span style={{marginLeft:"auto",color:fit<=1?YARD_COLOUR(fit):"#8a7a5c"}}>
+                      {fit === all ? `${all} in the yard` : `${fit} fit of ${all}`}
+                    </span>; })()}
                 </div>
                 <div className="grid grid-cols-3 gap-2" style={{marginBottom:9}}>
                   <Stat label="Coin" val={`${rnd(S.gold)}d`} colour={S.gold<0?"#d96f5d":"#e0bd72"}/>
@@ -14560,6 +14637,25 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 <div className="track" style={{height:6}}>
                   <div className="fill" style={{width:`${clamp(S.unrest,0,100)}%`, background: S.unrest>=68?"linear-gradient(90deg,#7c2a22,#d96f5d)":"linear-gradient(90deg,#5a4a2c,#d8ac5f)"}}/>
                 </div>
+                {/* and the third, which is what actually stops a house: whether anybody can stand */}
+                {(()=>{ const fit = fitOn(S, S.week), curve = fitCurve(S, 6), thin = curve.find(c=>c.fit<=1);
+                  return (
+                    <>
+                      <div className="flex items-center justify-between gap-2" style={{fontSize:12,marginTop:7}}>
+                        <span className="dim" style={{textTransform:"uppercase",letterSpacing:".06em",fontSize:10.5,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>Fit to stand</span>
+                        <span style={{color:YARD_COLOUR(fit),flexShrink:0}}>{YARD_WORD(fit)}</span>
+                      </div>
+                      {thin && (
+                        <button className="dim" onClick={()=>setCal(true)}
+                          style={{display:"block",width:"100%",textAlign:"left",background:"none",border:"none",padding:"3px 0 0",fontSize:12.5,lineHeight:1.35,color:"#cfa88a",fontStyle:"italic",cursor:"pointer"}}>
+                          {thin.week===S.week
+                            ? (fit<=0 ? "Nobody can be put on a card this week." : "One man, and nobody behind him.")
+                            : `${thin.fit<=0 ? "Nobody is fit" : "Only one man is fit"} in ${thin.week-S.week} week${thin.week-S.week===1?"":"s"} — do not promise that week.`}
+                          {" "}<span style={{color:"#8a6a2c"}}>the year ahead ›</span>
+                        </button>
+                      )}
+                    </>
+                  ); })()}
                 {S.lanista && (S.lanista.age>=48 || S.lanista.health<55) && (
                   <div className="flex items-center justify-between" style={{fontSize:12,marginTop:7,borderTop:"1px dotted #33271a",paddingTop:6}}>
                     <span className="dim" style={{textTransform:"uppercase",letterSpacing:".06em",fontSize:10.5}}>After you · {S.lanista.age}, {healthWord(S.lanista.health)}</span>
@@ -17892,6 +17988,40 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 {seasonOf(S).name.toLowerCase()} · year {yearOf(S)}, week {yearWeek(S)} — everything the house has a date for,
                 {" "}from now to the same week next year.
               </div>
+              {/* before any of the dates, the one number they all depend on */}
+              {(()=>{ const SPAN = 10, curve = fitCurve(S, SPAN), most = Math.max(1, ...curve.map(c=>c.fit));
+                const thin = curve.filter(c=>c.fit<=1), first = thin[0];
+                const back = curve.find(c=>first && c.week>first.week && c.fit>=2);
+                return (
+                  <div className="panel" style={{padding:"10px 11px",marginBottom:11,borderColor:"#4a3a22",background:"#1a1510"}}>
+                    <div className="flex items-center justify-between gap-2" style={{marginBottom:7}}>
+                      <span className="tag" style={{borderColor:"#6d5426",color:"#d8ac5f"}}>Who can stand</span>
+                      <span className="rowval dim" style={{fontSize:12}}>{curve[0].fit} fit now · {activeG(S).length} in the yard</span>
+                    </div>
+                    <div className="flex" style={{gap:3,alignItems:"flex-end"}}>
+                      {curve.map(c=>{
+                        const h = Math.max(2, Math.round(c.fit / most * 34)), col = YARD_COLOUR(c.fit);
+                        return (
+                          <div key={c.week} style={{flex:"1 1 0",minWidth:0}}>
+                            <div style={{height:36,display:"flex",alignItems:"flex-end"}}>
+                              <div style={{width:"100%",height:h,background:col,borderRadius:2,opacity:c.week===S.week?1:0.82}}/>
+                            </div>
+                            <div style={{fontSize:10.5,lineHeight:1.4,textAlign:"center",color:col}}>{c.fit}</div>
+                            <div className="dim" style={{fontSize:9,lineHeight:1.2,textAlign:"center"}}>{c.week===S.week?"now":`+${c.week-S.week}`}</div>
+                          </div>
+                        ); })}
+                    </div>
+                    <div className="dim" style={{fontSize:13,marginTop:8,lineHeight:1.4,fontStyle:"italic"}}>
+                      {!first
+                        ? `Nothing in the next ${SPAN} weeks leaves you short. Whatever you put your name to, you can field it.`
+                        : first.week===S.week
+                        ? (curve[0].fit<=0
+                            ? `There is nobody fit this week. ${back ? `The yard has two men again in ${back.week-S.week} week${back.week-S.week===1?"":"s"}.` : `Nothing in the next ${SPAN} weeks changes that.`}`
+                            : `One man is all you have this week. ${back ? `A second stands again in ${back.week-S.week} week${back.week-S.week===1?"":"s"}.` : `And nobody joins him inside ${SPAN} weeks.`}`)
+                        : `${thin.length===1 ? "One week ahead is thin" : `${thin.length} weeks ahead are thin`} — the first in ${first.week-S.week}, with ${first.fit===0?"nobody":"one man"} fit. Do not promise a name for it.`}
+                    </div>
+                  </div>
+                ); })()}
               {byWeek.length===0 ? (
                 <div className="dim" style={{fontSize:14.5,fontStyle:"italic"}}>
                   Nothing is written down between here and next year. That will not last.
@@ -18856,6 +18986,15 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             </>) : (<>
               <div className="disp" style={{fontSize:15,fontWeight:700,marginBottom:8}}>{S.pendingEvent.title.toUpperCase()}</div>
               <div style={{fontSize:16,marginBottom:6}}>{S.pendingEvent.text}</div>
+              {/* when a date is being asked of a named man, the count before you answer */}
+              {S.pendingEvent.note && S.pendingEvent.note.word && (()=>{ const N = S.pendingEvent.note;
+                const col = !N.ok ? "#d96f5d" : N.tight ? "#d8ac5f" : "#9aa86a";
+                return (
+                  <div className="panel" style={{padding:"9px 11px",marginTop:8,marginBottom:2,borderColor:col,background:"#1a1510",borderLeft:`3px solid ${col}`}}>
+                    <div className="dim" style={{fontSize:10.5,textTransform:"uppercase",letterSpacing:".08em",marginBottom:2}}>The doctore counts it out</div>
+                    <div style={{fontSize:14.5,lineHeight:1.4,color:col}}>{N.word}</div>
+                  </div>
+                ); })()}
               {S.pendingEvent.choices.map((c,i)=>(
                 <button key={i} className="btn" style={{width:"100%",marginTop:8}} onClick={()=>chooseEv(i)}>{c}</button>
               ))}
