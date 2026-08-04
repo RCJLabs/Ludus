@@ -3549,6 +3549,21 @@ function buyLot(d){
   return { take, names:got };
 }
 
+/* ---- WHAT A NAME IS WORTH AT THE EDITOR'S TABLE ----
+   Measured across five houses at the same festival, changing nothing but the
+   standing: fame 300 and fame 3000 were offered the same card, to within noise.
+   Every gate in makeGames tops out at TIERS[3].fame — 300 — reached inside the
+   first year and a half; add() clamped the rung at 3, so TIERS[4], the Imperial
+   Games, could not appear on an ordinary card at all; and the purse formula had
+   no fame term in it anywhere. Ten times the name bought thirty per cent more
+   card, all of it from extra bouts rather than better ones.
+
+   Two things follow. The top rung is reachable now, at the great games, by a
+   house with the standing to be asked. And what the town thinks of you is worth
+   something at the table — up to half again, and no more. */
+const fameEdge = d => 1 + clamp((((d && d.fame) || 0) - TIERS[3].fame) / 2400, 0, 0.55);
+const topRungOpen = d => (d.fame||0) >= TIERS[4].fame && (d.favor||0) >= 55;
+
 function makeGames(d){
   if(d.rome && d.rome.travel<=0){
     if(d.rome.fought >= ROME_BOUTS){ d.games = null; return; }
@@ -3567,17 +3582,28 @@ function makeGames(d){
   if(!F || F.rest){ d.games = null; return; }
   const festival = F.name;
   const offers = [];
-  const add = (tier0)=>{
-    const tier = clamp(tier0 + (F.tier||0), 0, 3);
+  const add = (tier0, cap)=>{
+    const tier = clamp(tier0 + (F.tier||0), 0, cap == null ? 3 : cap);
+    /* the opponent generators only know four rungs — pickRivalOpp's bands and
+       genOpponent's quality table both stop at 3, and Rome's own imperial bout
+       already builds its man at 3 and merely bills the offer as 4. Same here. */
+    const ot = Math.min(tier, 3);
     const t = TIERS[tier];
     const sineOdds = 0.18 + (st==="blood" ? 0.22 : 0) - (st==="mercy" ? 0.13 : 0)
       + docNum(d,"sineOdds",0) - (docIs(d,"mercy") ? 0.12 : 0);
     const sine = F.allSine ? true : F.noSine ? false : (tier>=1 && R()<sineOdds);
-    const pr = pickRivalOpp(d, tier);
+    let pr = pickRivalOpp(d, ot);
+    if(tier >= 4){
+      /* the imperial bill pays two and a half times a Primus purse, so it had
+         better not be the same man. Take the hardest of several looks at the bay. */
+      const avg = f => STATS.reduce((n,k)=>n+(f[k]||0),0)/6;
+      for(let i=0;i<3;i++){ const alt = pickRivalOpp(d, ot); if(avg(alt.opp) > avg(pr.opp)) pr = alt; }
+      if(!pr.opp.nick) pr.opp.nick = pick(NICKS);              /* nobody unnamed is on that bill */
+    }
     offers.push({ id:d.nextId++, tier, festival, opp:pr.opp, oppRef:pr.ref, rematch:pr.rematch, grudgeM:pr.grudgeM,
       stakes:sine?"sine":"standard",
       purse: rnd((t.purse[0]+R()*t.purse[1]) * (sine?1.8:1) * (pr.rematch?1.25:1) * (F.purse||1) * seasonPurse(d)
-        * (st==="craft" ? 1.18 : 1)) });
+        * (st==="craft" ? 1.18 : 1) * fameEdge(d)) });
   };
   const addPair = (tier)=>{
     const t = TIERS[tier];
@@ -3588,7 +3614,7 @@ function makeGames(d){
     if(p2.ref && p1.ref && p2.ref.fid===p1.ref.fid){ p2 = { opp:genOpponent(ot), ref:null }; }
     offers.push({ id:d.nextId++, tier, festival, pair:true, opps:[p1.opp, p2.opp],
       oppRefs:[p1.ref, p2.ref], stakes:"standard",
-      purse: rnd((t.purse[0]+R()*t.purse[1]) * 1.7 * (F.purse||1) * seasonPurse(d)) });
+      purse: rnd((t.purse[0]+R()*t.purse[1]) * 1.7 * (F.purse||1) * seasonPurse(d) * fameEdge(d)) });
   };
   const st = repStyle(d);
   /* a name on the bill is a bout that is going to happen */
@@ -3611,6 +3637,9 @@ function makeGames(d){
   if(slots>=2 && d.fame>=60 && R()<0.8) add(1);
   if(slots>=3 && d.fame>=TIERS[2].fame) add(2);
   if(slots>=4 && d.fame>=TIERS[3].fame && d.favor>=40 && R()<0.6) add(3);
+  /* the top of the table. Only at the great games, only for a house the editors
+     would actually put on that bill, and never more than one on a card. */
+  if((F.tier||0)>=1 && topRungOpen(d) && R()<0.5) add(4, 4);
   if(d.fame>=TIERS[1].fame && activeG(d).length>=2 && R()<0.45) addPair(d.fame>=TIERS[2].fame ? 2 : 1);
   if(d.primus && d.primus.mine && R()<0.45){ const o = makeDefenceOffer(d); if(o) offers.push(o); }
   else if(d.primus && !d.primus.mine && activeG(d).some(primusEligible) && d.fame>=TIERS[2].fame && R()<0.6){
@@ -3622,7 +3651,7 @@ function makeGames(d){
     const field = [];
     for(let i=0;i<size;i++) field.push(pickRivalOpp(d, Math.max(0,tier-1)).opp);
     offers.push({ id:d.nextId++, tier, festival, melee:true, field, stakes:"melee",
-      purse: rnd((TIERS[tier].purse[0]+R()*TIERS[tier].purse[1]) * 4.0 * (F.purse||1) * seasonPurse(d)) });
+      purse: rnd((TIERS[tier].purse[0]+R()*TIERS[tier].purse[1]) * 4.0 * (F.purse||1) * seasonPurse(d) * fameEdge(d)) });
   }
   /* the great games throw up things no lone house could ever stage — a mock sea-battle on flooded sand */
   if(F.forceNaum || ((F.key==="romani" || (F.tier||0)>=1) && d.fame>=TIERS[2].fame && activeG(d).length>=2 && R()<0.4)){
@@ -3630,14 +3659,14 @@ function makeGames(d){
     const field = [];
     for(let i=0;i<size;i++) field.push(pickRivalOpp(d, 1).opp);
     offers.push({ id:d.nextId++, tier:2, festival, melee:true, spectacle:"naumachia", field, stakes:"melee",
-      purse: rnd((TIERS[2].purse[0]+R()*TIERS[2].purse[1]) * 6.0 * (F.purse||1) * seasonPurse(d)) });
+      purse: rnd((TIERS[2].purse[0]+R()*TIERS[2].purse[1]) * 6.0 * (F.purse||1) * seasonPurse(d) * fameEdge(d)) });
   }
   if(F.forceHunt || R()<0.5){
     const tier = d.fame>=TIERS[2].fame ? 2 : d.fame>=TIERS[1].fame ? 1 : 0;
     const opts = beastTier(tier);
     const [key, B] = pick(opts);
     offers.push({ id:d.nextId++, tier, festival, venatio:true, beast:key, stakes:"venatio",
-      purse: rnd((TIERS[tier].purse[0]+R()*TIERS[tier].purse[1]) * B.purse * (F.purse||1) * seasonPurse(d)) });
+      purse: rnd((TIERS[tier].purse[0]+R()*TIERS[tier].purse[1]) * B.purse * (F.purse||1) * seasonPurse(d) * fameEdge(d)) });
   }
   if(d.fame>=TIERS[2].fame) add(2);
   if(d.fame>=TIERS[2].fame && R()<0.5) add(2);
@@ -18625,7 +18654,29 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         if(step===0){
           body = (<>
             <div className="disp" style={{fontSize:15,fontWeight:700,marginBottom:2}}>WHERE WILL HE FIGHT?</div>
-            <div className="dim" style={{fontSize:14,marginBottom:10}}>Pick the card. You choose your man next.</div>
+            <div className="dim" style={{fontSize:14,marginBottom:8}}>Pick the card. You choose your man next.</div>
+            {/* what the name is worth at the table — it was worth nothing past 300 */}
+            {(()=>{ const edge = Math.round((fameEdge(S)-1)*100), open = topRungOpen(S);
+              const rung = open ? 4 : S.fame>=TIERS[3].fame ? 3 : S.fame>=TIERS[2].fame ? 2 : S.fame>=TIERS[1].fame ? 1 : 0;
+              const short = !open && S.fame>=TIERS[3].fame
+                ? (S.fame < TIERS[4].fame ? `${Math.ceil(TIERS[4].fame - S.fame)} more fame` : `${Math.ceil(55 - (S.favor||0))} more standing`)
+                : null;
+              return (
+                <div className="panel" style={{padding:"8px 10px",marginBottom:10,background:"#1a1510",borderColor:"#4a3a22"}}>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="dim" style={{fontSize:10.5,textTransform:"uppercase",letterSpacing:".07em"}}>What your name is worth here</span>
+                    <span className="rowval" style={{fontSize:12,color: edge>0?"#9aa86a":"#8a7a5c",flexShrink:0}}>
+                      {edge>0 ? `purses +${edge}%` : "purses at the standard"}
+                    </span>
+                  </div>
+                  <div className="dim" style={{fontSize:13,marginTop:3,lineHeight:1.35}}>
+                    {fameTitle(S.fame)} — the editors will put you as high as <span style={{color:"#e0bd72"}}>{TIERS[rung].name}</span>.
+                    {open ? " The top of the table is open to you at the great games."
+                          : short ? ` ${short.charAt(0).toUpperCase()+short.slice(1)} and the imperial bill opens at the great games.`
+                          : ""}
+                  </div>
+                </div>
+              ); })()}
             {occRow({kind:"pits"}, "The Pits", "Always open. Small purses, and the crowd rarely votes for mercy.",
               <span className="dim" style={{fontSize:12.5}}>your stakes</span>)}
             {gamesReady && singles.map(o=> occRow({kind:"single",o},
