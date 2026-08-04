@@ -7493,9 +7493,39 @@ function boutAccount(d, g, offer, res, opts){
     purse: O.purse == null ? null : rnd(O.purse),
     turn: turn ? String(turn).slice(0, 260) : null,
     end: last ? String(last.text).slice(0, 260) : null,
+    /* and why it went that way — named, so six of them can be counted */
+    why: (O.why || []).slice(0, 2).map(r=>({ k:r.k, s:String(r.s).slice(0, 200) })),
   };
   g.bouts = [a].concat(g.bouts || []).slice(0, BOUTS_KEPT);
   return a;
+}
+/* the reading was a paragraph you read once. Named, the same cause showing up in
+   three of his last five stops being an anecdote and becomes the thing to fix. */
+const WHY_NAMES = {
+  footing:"the ground", sky:"the weather", kit_style:"steel that is not his style",
+  kit_thin:"sent out under-armed", kit_good:"well armed", kit_worn:"steel close to gone",
+  tired:"sent out tired", strain:"deep strain from the yard", lasting:"an old wound past the sixth",
+  form:"his form", regard:"what he thinks of this house", overmatched:"matched above himself",
+  outclassed_him:"the harder man on the card", over_tier:"a card above his name",
+  counter:"the wrong style put against him", counter_his:"the style match his",
+  plan:"the plan you gave him", cold_room:"a cold room", crowd:"the crowd with him",
+  sine:"no mercy on the card", nothing:"nothing in the ledger",
+};
+/* the ones that are yours to fix, and the ones that are just the day */
+const WHY_YOURS = { kit_style:1, kit_thin:1, kit_worn:1, tired:1, strain:1, regard:1,
+                    overmatched:1, over_tier:1, counter:1, plan:1 };
+function boutPattern(g){
+  const B = (g && g.bouts) || [];
+  if(B.length < 3) return null;
+  const tally = {};
+  for(const a of B) for(const r of (a.why || [])){
+    if(!r || !r.k || r.k === "nothing") continue;
+    const t = tally[r.k] || (tally[r.k] = { k:r.k, n:0, lost:0 });
+    t.n++; if(!a.win) t.lost++;
+  }
+  const rows = Object.values(tally).filter(x=>x.n >= 2)
+    .sort((a,b)=> b.n - a.n || b.lost - a.lost).slice(0, 3);
+  return rows.length ? { rows, of:B.length } : null;
 }
 const boutWord = a => a.died ? "he did not come back"
   : a.win ? (a.killed ? "won, and killed him" : "won")
@@ -8673,60 +8703,60 @@ function standingLow(kind, v, marks){
 function readBout(d, g, offer, res, ctx){
   const R2 = [];
   const opp = offer.opp || {};
-  const push = (w, s) => R2.push({ w, s });
+  const push = (w, k, s) => R2.push({ w, k, s });
   const won = !!res.win;
 
   /* the ground and the sky */
   const V = VEN(offer.venue), W = SKY(offer.sky);
   const quick = (g.agi||50) - (g.str||50);
-  if(V.footing <= 0.92 && quick > 12) push(7, `The footing was against him — ${V.name.toLowerCase()} suits a heavy man and he is not one.`);
-  if(V.footing >= 1.04 && quick > 12 && won) push(5, `The footing suited him. He is quick and it was somewhere he could be quick.`);
-  if(offer.sky === "rain") push(5, `It rained, which took the sand away from anybody trying to move on it.`);
-  if(offer.sky === "hot" && (g.end||50) < 48) push(6, `It was blazing and he has never had much wind.`);
+  if(V.footing <= 0.92 && quick > 12) push(7, "footing", `The footing was against him — ${V.name.toLowerCase()} suits a heavy man and he is not one.`);
+  if(V.footing >= 1.04 && quick > 12 && won) push(5, "footing", `The footing suited him. He is quick and it was somewhere he could be quick.`);
+  if(offer.sky === "rain") push(5, "sky", `It rained, which took the sand away from anybody trying to move on it.`);
+  if(offer.sky === "hot" && (g.end||50) < 48) push(6, "sky", `It was blazing and he has never had much wind.`);
 
   /* what he was carrying */
   const m = kitMods(g.kit, g.cls, g);
-  if(m.clumsy && m.clumsy.length) push(9, m.clumsy.length===1
+  if(m.clumsy && m.clumsy.length) push(9, "kit_style", m.clumsy.length===1
     ? `He went out carrying a piece that is not his style, and it showed in his hands.`
     : `He went out carrying ${m.clumsy.length} pieces that are not his style, and it showed in his hands.`);
-  if(m.atk + m.def < -0.05) push(8, `He was under-armed for that card. The other man had the better of it before either of them moved.`);
-  else if(m.atk + m.def > 0.25 && won) push(4, `He was well armed and it did half the work.`);
+  if(m.atk + m.def < -0.05) push(8, "kit_thin", `He was under-armed for that card. The other man had the better of it before either of them moved.`);
+  else if(m.atk + m.def > 0.25 && won) push(4, "kit_good", `He was well armed and it did half the work.`);
   const worn = SLOTS.filter(s=>wears(GEAR[g.kit&&g.kit[s]]) && (g.wear&&g.wear[s]||100) < 30);
-  if(worn.length) push(6, `His ${GEAR[g.kit[worn[0]]].name.toLowerCase()} was close to gone before the first exchange.`);
+  if(worn.length) push(6, "kit_worn", `His ${GEAR[g.kit[worn[0]]].name.toLowerCase()} was close to gone before the first exchange.`);
 
   /* the state he was in */
-  if(g.fatigue >= 55) push(9, `He went out at ${Math.round(g.fatigue)} fatigue, which is most of a man's edge before anything else happens.`);
-  else if(g.fatigue >= 38) push(4, `He was not fresh.`);
-  if(strainOf(g) > 55) push(6, `He is carrying deep strain from the yard and it does not rest off in a week.`);
-  if(lastingOf(g).length) push(7, `${LASTING[lastingOf(g)[0]].name.replace(/^a /,"His ").replace(/^the /,"His ")} — past the sixth round he is not the same man.`);
-  if(formOf(g) <= -30) push(5, `He has been off his stride for weeks and it has not turned round on its own.`);
-  else if(formOf(g) >= 40 && won) push(3, `He has been in form and it carried.`);
-  if(regardOf(g) <= 22) push(6, `He thinks very little of this house, and a man who thinks little of you does not spend himself for you.`);
+  if(g.fatigue >= 55) push(9, "tired", `He went out at ${Math.round(g.fatigue)} fatigue, which is most of a man's edge before anything else happens.`);
+  else if(g.fatigue >= 38) push(4, "tired", `He was not fresh.`);
+  if(strainOf(g) > 55) push(6, "strain", `He is carrying deep strain from the yard and it does not rest off in a week.`);
+  if(lastingOf(g).length) push(7, "lasting", `${LASTING[lastingOf(g)[0]].name.replace(/^a /,"His ").replace(/^the /,"His ")} — past the sixth round he is not the same man.`);
+  if(formOf(g) <= -30) push(5, "form", `He has been off his stride for weeks and it has not turned round on its own.`);
+  else if(formOf(g) >= 40 && won) push(3, "form", `He has been in form and it carried.`);
+  if(regardOf(g) <= 22) push(6, "regard", `He thinks very little of this house, and a man who thinks little of you does not spend himself for you.`);
 
   /* the matching */
   const gap = (opp.wins||0) - (g.wins||0);
-  if(gap >= 6) push(8, `He was matched against a man with ${opp.wins} behind him and ${g.wins===0?"none":g.wins} of his own.`);
-  else if(gap <= -6 && won) push(3, `He was the harder man on that card and it went the way it should.`);
-  if(offer.tier >= 3 && (g.pfame||0) < 60) push(6, `That was a tier ${offer.tier} card and he is not a tier ${offer.tier} man yet.`);
+  if(gap >= 6) push(8, "overmatched", `He was matched against a man with ${opp.wins} behind him and ${g.wins===0?"none":g.wins} of his own.`);
+  else if(gap <= -6 && won) push(3, "outclassed_him", `He was the harder man on that card and it went the way it should.`);
+  if(offer.tier >= 3 && (g.pfame||0) < 60) push(6, "over_tier", `That was a tier ${offer.tier} card and he is not a tier ${offer.tier} man yet.`);
   const cnt = COUNTERS[opp.cls] === g.cls;
   const has2 = COUNTERS[g.cls] === opp.cls;
-  if(cnt) push(9.5, `The ${opp.cls.toLowerCase()} is the wrong match for a ${g.cls.toLowerCase()} and everyone at the editor's table knew it.`);
-  else if(has2 && won) push(4, `The style match was his, and against a ${opp.cls.toLowerCase()} that is worth a good deal.`);
+  if(cnt) push(9.5, "counter", `The ${opp.cls.toLowerCase()} is the wrong match for a ${g.cls.toLowerCase()} and everyone at the editor's table knew it.`);
+  else if(has2 && won) push(4, "counter_his", `The style match was his, and against a ${opp.cls.toLowerCase()} that is worth a good deal.`);
 
   /* what you told him to do */
-  if(ctx && ctx.plan && ctx.plan.right === false) push(7, `The plan was wrong for him. You had him ${ctx.plan.label || "fighting to a plan"} and that was not what the man in front of him needed.`);
-  else if(ctx && ctx.plan && ctx.plan.right === true) push(4, `You read him correctly beforehand and it was worth about seven bouts in a hundred.`);
+  if(ctx && ctx.plan && ctx.plan.right === false) push(7, "plan", `The plan was wrong for him. You had him ${ctx.plan.label || "fighting to a plan"} and that was not what the man in front of him needed.`);
+  else if(ctx && ctx.plan && ctx.plan.right === true) push(4, "plan", `You read him correctly beforehand and it was worth about seven bouts in a hundred.`);
 
   /* and the room */
-  if(!offer.city && facOf(d, "front") < 22 && res.crowd < 40) push(4, `The front rows have gone cold on this house, and a cold house gets no help when a decision is being made.`);
-  if(res.crowd >= 76) push(3, `The crowd was with him from the third exchange, which is worth more than it sounds.`);
-  if(offer.stakes === "sine") push(5, `There was no mercy on that card. There was never going to be a decision to lean on.`);
+  if(!offer.city && facOf(d, "front") < 22 && res.crowd < 40) push(4, "cold_room", `The front rows have gone cold on this house, and a cold house gets no help when a decision is being made.`);
+  if(res.crowd >= 76) push(3, "crowd", `The crowd was with him from the third exchange, which is worth more than it sounds.`);
+  if(offer.stakes === "sine") push(5, "sine", `There was no mercy on that card. There was never going to be a decision to lean on.`);
 
   R2.sort((a,b)=>b.w - a.w);
-  const top = R2.slice(0, 3).map(x=>x.s);
-  if(!top.length) top.push(won
+  const top = R2.slice(0, 3).map(x=>({ k:x.k, s:x.s }));
+  if(!top.length) top.push({ k:"nothing", s: won
     ? `Nothing decided it but the two of them. He was the better man on the day.`
-    : `Nothing was wrong with any of it. Some afternoons the other man is simply better and there is nothing in the ledger to blame.`);
+    : `Nothing was wrong with any of it. Some afternoons the other man is simply better and there is nothing in the ledger to blame.` });
   return top;
 }
 
@@ -10353,7 +10383,12 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
     dropPrep(d, g, null);            /* the day came; the drill is used up */
   }
 
-  boutAccount(d, g, offer, res, { win, died:!!res.aDies, killed:!!res.bDies, purse: win ? purse + t.app : t.app });
+  /* the reading used to be worked out two hundred lines below this, shown once on the
+     result panel and dropped on the floor with the rest of the fight object. It is
+     worked out here now so it can go into his book with everything else. */
+  const why = readBout(d, wasG, offer, { win, crowd:res.crowd },
+    { plan:{ right:PE.right, label: PLANS[planKey] && PLANS[planKey].name } });
+  boutAccount(d, g, offer, res, { win, died:!!res.aDies, killed:!!res.bDies, purse: win ? purse + t.app : t.app, why });
   chron(d, win? `${g.name} ${res.bDies?"killed "+offer.opp.name:"took victory"} at ${where} (+${purse+t.app}d).` :
     res.aDies? `${g.name} died on the sand at ${where}.` : `${g.name} was beaten at ${where}.`, win?"good":"bad");
   if(d.games) d.games.offers = d.games.offers.filter(o=>o.id!==offer.id);
@@ -10459,8 +10494,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
       const v = crowdVoice(d, b, g, offer);
       if(v){ b.stands = v; last = i; }
     } }
-  const reading = readBout(d, wasG, offer, { win, crowd:res.crowd }, { plan:{ right:PE.right, label: PLANS[planKey] && PLANS[planKey].name } });
-  return { beats:res.beats, sum:sum.map(x=>herOwn(d,x)), reading, win, dead:!!res.aDies, crowd:rnd(res.crowd), name:g.name, venue:offer.venue, factions:d.factions,
+  return { beats:res.beats, sum:sum.map(x=>herOwn(d,x)), reading:why, win, dead:!!res.aDies, crowd:rnd(res.crowd), name:g.name, venue:offer.venue, factions:d.factions,
     A:{ name:g.name, nick:g.nick, cls:g.cls, origin:g.origin, sub:"your house", kit:gc.kit, scars:gc.scars||[], fem:isF(g) },
     B:{ name:offer.opp.name, nick:offer.opp.nick, cls:offer.opp.cls, origin:offer.opp.origin, sub:offer.opp.house? `House ${offer.opp.house}`:"the pits", kit:oc.kit, scars:oc.scars||[], fem:isF(offer.opp) },
     tier:offer.tier, stakes:offer.stakes, festival:offer.festival };
@@ -12952,8 +12986,8 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
               <div className="panel" style={{padding:11,marginTop:9,background:"#1c1610",
                 borderColor: fight.win ? "#4e3c26" : "#7c2a22"}}>
                 <div className="tag" style={{marginBottom:4}}>What decided it</div>
-                {fight.reading.map((s,k)=>(
-                  <div key={k} style={{fontSize:14.5,borderTop:k?"1px dotted #33271a":"none",paddingTop:k?5:0,marginTop:k?5:0}}>{s}</div>
+                {fight.reading.map((r,k)=>(
+                  <div key={k} style={{fontSize:14.5,borderTop:k?"1px dotted #33271a":"none",paddingTop:k?5:0,marginTop:k?5:0}}>{r.s || r}</div>
                 ))}
               </div>
             )}
@@ -17176,6 +17210,28 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     <span className="tag">How it went</span>
                     <span className="rowval dim" style={{fontSize:12}}>his last {B.length} {B.length===1?"bout":"bouts"}</span>
                   </div>
+                  {(()=>{ const P = boutPattern(selG); if(!P) return null;
+                    const mine = P.rows.filter(r=>WHY_YOURS[r.k]);
+                    return (
+                      <div className="panel" style={{padding:"9px 10px",marginBottom:8,background:"#1a1510",
+                        borderColor: mine.length ? "#7c2a22" : "#4a3a22"}}>
+                        <div className="dim" style={{fontSize:10.5,textTransform:"uppercase",letterSpacing:".07em",marginBottom:4}}>
+                          What keeps deciding them
+                        </div>
+                        {P.rows.map((r,i)=>(
+                          <div key={i} className="flex items-center justify-between gap-2" style={{padding:"2px 0"}}>
+                            <span style={{fontSize:13.5,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
+                              color: WHY_YOURS[r.k] ? "#cfa88a" : "#b09b7d"}}>{WHY_NAMES[r.k] || r.k}</span>
+                            <span className="rowval dim" style={{fontSize:12,flexShrink:0}}>{r.n} of {P.of}</span>
+                          </div>
+                        ))}
+                        <div className="dim" style={{fontSize:12.5,fontStyle:"italic",marginTop:5,lineHeight:1.35}}>
+                          {mine.length
+                            ? `${mine.length===1 ? "That first one is" : "Those are"} yours to fix, not the day's.`
+                            : "None of that is anything you set. He has had the afternoons he has had."}
+                        </div>
+                      </div>
+                    ); })()}
                   {B.map((a,i)=>(
                     <details key={i} style={{borderTop:i?"1px dotted #33271a":"none",padding:"5px 0"}}>
                       <summary style={{listStyle:"none",cursor:"pointer"}}>
@@ -17194,6 +17250,15 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                       {a.turn && <div className="dim" style={{fontSize:13.5,fontStyle:"italic",margin:"5px 0 3px",lineHeight:1.4}}>{a.turn}</div>}
                       {a.end && <div style={{fontSize:13.5,lineHeight:1.4,color:"#cfc0a0"}}>{a.end}</div>}
                       {!a.turn && !a.end && <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:4}}>Nothing of it was written down.</div>}
+                      {(a.why||[]).length>0 && (
+                        <div style={{marginTop:6,paddingTop:5,borderTop:"1px dotted #33271a"}}>
+                          <span className="dim" style={{fontSize:10.5,textTransform:"uppercase",letterSpacing:".07em"}}>What decided it</span>
+                          {(a.why||[]).map((r,j)=>(
+                            <div key={j} style={{fontSize:13.5,lineHeight:1.4,marginTop:2,
+                              color: WHY_YOURS[r.k] ? "#cfa88a" : "#b09b7d"}}>{r.s}</div>
+                          ))}
+                        </div>
+                      )}
                     </details>
                   ))}
                 </div>
