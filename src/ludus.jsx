@@ -7299,6 +7299,54 @@ function scoutMan(d, hName, fid){
   return { ok:true, cost:c };
 }
 
+/* ---- AND THEY WATCH YOU BACK ----
+   All the scouting ran one way. You could pay to have any man in Campania looked
+   over and nobody ever stood at your wall. A house that hates you now sends somebody
+   to watch your best man work — the same three afternoons, the same coin in the same
+   sort of hand — and their man comes to the sand knowing what he does. You find out
+   if somebody of yours is listening, or if the doctore has his eye on the gate, or
+   else you find out the hard way. */
+const WATCH_KEEPS = 8;
+const watchedBy = (d, g) => {
+  const w = g && g.watchedBy;
+  if(!w || d.week - w.week > WATCH_KEEPS) return null;
+  return houseOf(d, w.house) ? w : null;
+};
+/* how much their man gains from having read yours */
+function theirRead(d, g, offer){
+  const w = watchedBy(d, g);
+  if(!w || !offer || !offer.oppRef || offer.oppRef.house !== w.house) return 0;
+  const age = d.week - w.week;
+  return clamp(1 - age/(WATCH_KEEPS+2), 0.25, 1);
+}
+function watchWeek(d){
+  if(!d.rivals || d.rome || d.city || d.travel || d.over) return;
+  const keen = d.rivals.filter(h=>!h.away && h.grudge >= 42);
+  if(!keen.length || R() > 0.16) return;
+  const h = keen.sort((a,b)=>b.grudge-a.grudge)[0];
+  const men = activeG(d).filter(g=>!watchedBy(d, g));
+  if(!men.length) return;
+  /* they watch whoever is worth watching */
+  const g = men.reduce((m,x)=>((x.pfame||0) + rateMan(x)/8) > ((m.pfame||0) + rateMan(m)/8) ? x : m, men[0]);
+  g.watchedBy = { house:h.name, week:d.week, known:false };
+  /* whether you hear about it at all */
+  const heard = earOn(d) ? 0.72 : d.doctore ? 0.38 : 0.12;
+  if(R() < heard){
+    g.watchedBy.known = true;
+    chron(d, earOn(d)
+      ? `Somebody has been at the wall three afternoons running while ${g.name} works, and whoever is listening for you got a name off him: House ${h.name}.`
+      : `${d.doctore ? d.doctore.name+" has" : "Somebody has"} noticed the same face at the gate three days in a row, watching ${g.name} and nobody else. He is not from around here.`, "bad");
+  }
+}
+function clearWatch(d, g){
+  if(!g || !g.watchedBy) return false;
+  const h = g.watchedBy.house;
+  g.watchedBy = null;
+  g.shiftWeeks = 1;                      /* a week spent showing them nothing is a week gone */
+  chron(d, `${g.name} spends the week doing everything differently and badly on purpose, in front of whoever House ${h} has at the wall. It costs him the week. It costs them more.`, "info");
+  return true;
+}
+
 /* ---- DRILLING FOR ONE MAN ----
    A regimen makes a fighter. It does not make a fighter for Thursday. Once you have
    paid to learn how a man works, one of yours can spend his weeks on that man's
@@ -7442,6 +7490,10 @@ function calendarRows(d, span){
       if(pl && planWeeksLeft(g) > 0)
         put(d.week + planWeeksLeft(g), "man", `${g.name} finishes his season`,
           `${PLANSEASON[pl.kind] ? PLANSEASON[pl.kind].name.toLowerCase() : "a season"} — worth nothing until it is done`, "men"); }
+    { const w = watchedBy(d, g);
+      if(w) put(w.week + WATCH_KEEPS, "quiet",
+        w.known ? `House ${w.house} stops watching ${g.name}` : `Whatever is at your wall gives up on ${g.name}`,
+        "whatever they took away of him goes stale with it", "men"); }
     { const pr = prepOf(g);
       if(pr && (pr.weeks||0) < PREP_MAX)
         put(d.week + (PREP_MAX - (pr.weeks||0)), "quiet", `${g.name} has learned all he can of ${pr.name}`,
@@ -9818,8 +9870,10 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
     kit:Object.assign({},g.kit), wear:Object.assign({},g.wear||{}), strain:strainOf(g), form:formOf(g),
     regard:regardOf(g), lasting:lastingOf(g).slice() };
   const PREP = prepFor(d, g, offer);
+  const THEIRS = theirRead(d, g, offer);      /* what they got from watching him */
   gc.regardMult = regardPower(g) * formPower(g) * lastNum(g,"atk") * lastNum(g,"guard") * ((g.mastery && g.mastery.cls===g.cls) ? masteryPower(g) : 1) * (1 + PREP*0.14);
   gc.lastStam = lastNum(g,"stam") * (1 - PREP*0.09);
+  oc.regardMult = (oc.regardMult || 1) * (1 + THEIRS*0.12);
   gc.lastLate = lastNum(g,"latePow");
   gc.formStam = formStam(g);
   if(offer.stakes==="sine" && lawSine(d) && !offer.sealed){ d.gold -= lawSine(d); offer.sealed = 1; }
@@ -10030,6 +10084,13 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
       }
       nemClash(d, h.name, win ? (res.bDies?16:8) : (res.aDies?22:12));
     }
+  }
+  if(THEIRS > 0){
+    const w = g.watchedBy;
+    sum.push(w && w.known
+      ? `He fought a man who had been watching him for weeks, and it showed in every exchange.`
+      : `Whoever they sent knew ${g.name}'s work before the herald finished. Somebody has been at your wall.`);
+    if(w) w.known = true;
   }
   if(PREP > 0){
     const pw = (prepOf(g)||{}).weeks || 0;
@@ -11300,7 +11361,9 @@ function endWeek(d){
           else if(t && t.kind==="rival"){ mult *= 1.25; injChance *= 2; g.morale=clamp(g.morale-1,0,100); }
         }
         const prepDrag = prepWeek(d, g);   /* a week spent on one man's habits is not a week on his own */
-        const base = prepDrag * (0.5 + g.potential/100*1.3) * d.trainMult * ageTrain(g.age)
+        let shiftDrag = 1;
+        if(g.shiftWeeks > 0){ g.shiftWeeks--; shiftDrag = 0.45; }   /* and so is a week spent lying to a watcher */
+        const base = prepDrag * shiftDrag * (0.5 + g.potential/100*1.3) * d.trainMult * ageTrain(g.age)
           * palusTrain(d) * perkTrain(d) * lanTrain(d) * seasonTrain(d) * docTrainMult(d,g) * docCreedNum(d,"train") * (fest && fest.train ? fest.train : 1)
           * mult * (g.traits.includes("Swift Learner")?1.3:1)
           * (g.fatigue>75?0.4:1) * strainDrag(g);
@@ -11462,6 +11525,7 @@ function endWeek(d){
   if((d.week-1)%3===0 && !d.rome && !d.city && !d.travel){ makeMarket(d); makeDoctoreMarket(d); makeStaffMarket(d); }
   marketWeek(d);
   rivalWeekly(d);
+  watchWeek(d);
   campaniaWeek(d);
   leagueWeek(d);
   if(d.romeOffer && d.romeOffer.due && d.week > d.romeOffer.due){
@@ -17059,6 +17123,30 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     ); })}
                 </div>
               ); })()}
+            {gView==="train" && (()=>{ const w = watchedBy(S, selG);
+              if(!w || !w.known) return null;
+              const left = WATCH_KEEPS - (S.week - w.week);
+              return (
+                <div className="panel" style={{padding:11,marginBottom:9,borderColor:"#7c2a22",background:"#1c1610"}}>
+                  <div className="flex items-center justify-between gap-2" style={{marginBottom:4}}>
+                    <span className="tag tag-blood">Somebody is watching him</span>
+                    <span className="rowval dim" style={{fontSize:12}}>{left>0? `${left} more week${left===1?"":"s"}` : "going cold"}</span>
+                  </div>
+                  <div className="dim" style={{fontSize:13.5,marginBottom:7,lineHeight:1.35}}>
+                    House {w.house} has had somebody at the wall while he works. Whoever they put across from him
+                    will already know what he does. It goes stale on its own, or he can spend a week showing them nothing.
+                  </div>
+                  <button className="btn btn-ghost" style={{width:"100%"}}
+                    onClick={()=>mut(d=>{ const g=d.gladiators.find(x=>x.id===selG.id); if(g) clearWatch(d, g); })}>
+                    Show them nothing for a week
+                  </button>
+                </div>
+              ); })()}
+            {gView==="train" && (selG.shiftWeeks>0) && (
+              <div className="dim" style={{fontSize:13,fontStyle:"italic",marginBottom:9,lineHeight:1.35}}>
+                He is working badly on purpose this week. It buys him almost nothing of his own.
+              </div>
+            )}
             {gView==="train" && (()=>{ const pr = prepOf(selG); if(!pr) return null;
               const live = !!prepLive(S, selG);
               return (
@@ -18223,7 +18311,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   return `Send ${me?me.name:"him"} ${f?`against ${f.name}`:"to the pits"}${stake>0?` · ${stake}d ${against?"against":"on"} him`:""}`; })()}
               </button>
             </>);
-          } else if(pick.kind==="single"){ const o=pick.o; const p=me?winChance(me,o.opp,prepFor(S,me,o)):0.5;
+          } else if(pick.kind==="single"){ const o=pick.o;
+            const p = me ? winChance(me, o.opp, prepFor(S,me,o) - ((me.watchedBy && me.watchedBy.known) ? theirRead(S,me,o)*0.86 : 0)) : 0.5;
             body = (<>
               {backBtn}
               <div className="flex items-center gap-1" style={{flexWrap:"wrap",marginBottom:5}}>
@@ -18256,6 +18345,18 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               {o.venue && <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:3}}>{VEN(o.venue).say}</div>}
               {o.sky && <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:2,color:"#9dc0d4"}}>{SKY(o.sky).say}{shelterOf(o.venue)>0.3?" There is a roof of a kind over most of it.":""}</div>}
               {me && (()=>{ const w=metWord(liveFoe(S,o),me); return w?<div style={{fontSize:14,marginTop:2,color:"#d8ac5f"}}>{w}</div>:null; })()}
+              {(()=>{ if(!me) return null;
+                const tr = theirRead(S, me, o);
+                if(tr<=0 || !(me.watchedBy && me.watchedBy.known)) return null;
+                return (
+                  <div className="panel" style={{padding:9,marginTop:8,background:"#1c1610",borderColor:"#7c2a22"}}>
+                    <div className="tag tag-blood" style={{marginBottom:4}}>They have had him watched</div>
+                    <div className="dim" style={{fontSize:14,fontStyle:"italic",lineHeight:1.35}}>
+                      House {me.watchedBy.house} has been at your wall. Whoever they send will know {me.name}'s work
+                      before he steps on the sand, and the bookmakers have already taken it into account.
+                    </div>
+                  </div>
+                ); })()}
               {(()=>{ const pe = me ? prepFor(S, me, o) : 0; if(pe<=0) return null;
                 const right = prepPlans(S, o);
                 return (
