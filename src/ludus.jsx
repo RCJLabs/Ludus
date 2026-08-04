@@ -5829,9 +5829,7 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
      in a long one. Defensive turns blows aside outright rather than merely
      softening them, and spends almost nothing — it loses more bouts and
      brings the man home. */
-  const dealMult = t => t==="aggressive"?1.28 : t==="defensive"?0.70 : 1;
-  const takeMult = t => t==="aggressive"?1.34 : t==="defensive"?0.60 : t==="showboat"?1.10 : 1;
-  const GUARD_TURN = 0.22;      /* how often a defensive man simply turns one aside */
+  const dealMult = TAC_DEAL, takeMult = TAC_TAKE;
   const oppName = B.nick? `${B.name}, ${B.nick}` : B.name;
   const prA = PR(A), prB = PR(B);
   let round = R0 ? R0.round : 0;
@@ -5940,7 +5938,7 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
     const pA = power(A,tA,B.cls,mom,modA) * PL.pow * (0.72+R()*0.56) * gasA * (A.sigOpen||1) * shoA * (round>=6 ? (A.lastLate||1) : 1) * mult(MARK_POW,"A");
     const pB = power(B,tB,A.cls,-mom,modB) * (0.72+R()*0.56) * gasB * (B.sigOpen||1) * shoB * mult(MARK_POW,"B");
     A.sigOpen = 1; B.sigOpen = 1;
-    const wind = t => t==="aggressive" ? 9.4 : t==="defensive" ? 5 : 7;
+    const wind = TAC_WIND;
     sA -= wind(tA) * (1 - A.mods.spd*0.5) * PL.stam * (A.formStam||1) * (ctx.sky||1) * (A.lastStam||1) * mult(MARK_WIND,"A");
     sB -= wind(tB) * (1 - B.mods.spd*0.5) * (ctx.skyB||1) * mult(MARK_WIND,"B") * (hounding ? 1.45 : 1);
     /* one of them may go for the thing his style is for — or you may have ordered it */
@@ -5983,10 +5981,7 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
     const diff = Math.abs(pA-pB);
     const defTac = pA>pB ? tB : tA;                    /* whoever is about to be hit */
     const atkTac = pA>pB ? tA : tB;                    /* and whoever is throwing it */
-    /* a man throwing everything into it is the easiest man in the world to turn
-       aside — which is the whole reason to put a shield up against one. */
-    const turned = diff >= 7 && defTac==="defensive"
-      && R() < GUARD_TURN * (atkTac==="aggressive" ? 1.9 : atkTac==="defensive" ? 0.7 : 1);
+    const turned = diff >= 7 && TAC_GUARD(atkTac, defTac);
     if(turned){
       const dName = pA>pB ? B.name : A.name, aName = pA>pB ? A.name : B.name;
       crowd = clamp(crowd+1,0,100);
@@ -9468,7 +9463,9 @@ function simulateMelee(ents, ctx, opts){
     push("fall", `${e.name} goes down.`, { a:i, actor:"a" });
     /* the same verdict as a pairing. There is no reading of the account he gave —
        in a melee nobody can tell — so it rests on how long he lasted and the tiers. */
-    const odds = missioOdds(missioScore(e, ctx, crowd, 30, round*1.5, !!e.mine));
+    /* how he was fighting when he went down, as on the single sand and in a pairing */
+    const stand = !e.mine ? 0 : myTac==="defensive" ? 10 : myTac==="aggressive" ? -6 : 0;
+    const odds = missioOdds(missioScore(e, ctx, crowd, 30, round*1.5 + stand, !!e.mine));
     if(R() < odds){ push("spared", `Hands drag ${e.name} clear of the sand before the rest trample ${PR(e).him}.`, { a:i }); }
     else { e.dead = true; push("death", `${killer? killer.name+" finishes "+PR(e).him+" where "+PR(e).he+" lies." : PR(e).He+" does not get up, and the melee moves over "+PR(e).him+"."}`, { a:i }); }
   };
@@ -9476,7 +9473,11 @@ function simulateMelee(ents, ctx, opts){
   const myTac = ctx.myTactic || "measured";
   const MP = ctx.plan || { pow:1, def:1, stam:1, hunt:false };
   const startR = R0 ? R0.round : 0;
-  for(let r=startR+1; r<=26; r++){
+  /* Twenty-six rounds made a melee an endurance test and nothing else — a man who
+     covered up simply outlived everybody, and won the purse for it. Eighteen is
+     long enough for the field to thin and short enough that outlasting alone will
+     not empty it for you. */
+  for(let r=startR+1; r<=18; r++){
     round = r;
     let liv = alive();
     if(liv.length<=1) break;
@@ -9506,10 +9507,12 @@ function simulateMelee(ents, ctx, opts){
       // they finish it, and neither of them wants to
       let guard = 0;
       while(!ents[x].out && !ents[y].out && guard++<12){
-        const px = power(ents[x],ents[x].mine?myTac:"measured",ents[y].cls,0,0.97+R()*0.06)*(0.74+R()*0.52);
-        const py = power(ents[y],ents[y].mine?myTac:"measured",ents[x].cls,0,0.97+R()*0.06)*(0.74+R()*0.52);
+        const tx = ents[x].mine?myTac:"measured", ty = ents[y].mine?myTac:"measured";
+        const px = power(ents[x],tx,ents[y].cls,0,0.97+R()*0.06)*(0.74+R()*0.52);
+        const py = power(ents[y],ty,ents[x].cls,0,0.97+R()*0.06)*(0.74+R()*0.52);
         const aw = px>py, atk = aw?ents[x]:ents[y], def = aw?ents[y]:ents[x];
-        const dmg = clamp((5 + Math.abs(px-py)/9 + atk.str/13)*(1+atk.mods.atk*0.7)*(1-def.mods.def), 3, 30);
+        const dmg = clamp((5 + Math.abs(px-py)/9 + atk.str/13)*(1+atk.mods.atk*0.7)*(1-def.mods.def)
+          * MULTI_DEAL(aw?tx:ty) * TAC_TAKE(aw?ty:tx), 3, 30);
         def.hpv -= dmg;
         crowd = clamp(crowd+dmg/3.5, 0, 100);
         push(dmg>=16?"crit":"hit", `${atk.name} strikes at ${def.name}. Neither of them is looking at the crowd.`,
@@ -9544,17 +9547,25 @@ function simulateMelee(ents, ctx, opts){
     for(const [a,b] of pairs){
       if(ents[a].out || ents[b].out) continue;
       const A = ents[a], B = ents[b];
-      A.stam -= 6 * (A.mine && myTac==="aggressive" ? 1.3 : 1) * (A.mine?MP.stam:1);
-      B.stam -= 6 * (B.mine && myTac==="aggressive" ? 1.3 : 1) * (B.mine?MP.stam:1);
       const tacOf = e => e.mine ? myTac : "measured";
+      /* the same wind the single sand burns, scaled to the melee's shorter exchange */
+      A.stam -= 6 * (TAC_WIND(tacOf(A))/7) * (A.mine?MP.stam:1);
+      B.stam -= 6 * (TAC_WIND(tacOf(B))/7) * (B.mine?MP.stam:1);
       const pa = power(A,tacOf(A),B.cls,0,0.97+R()*0.06)*(A.stam<22?0.78:1)*(0.74+R()*0.52)*(A.mine?MP.pow:1);
       const pb = power(B,tacOf(B),A.cls,0,0.97+R()*0.06)*(B.stam<22?0.78:1)*(0.74+R()*0.52)*(B.mine?MP.pow:1);
       const aw = pa>pb, atk = aw?A:B, def = aw?B:A;
       const ai = aw?a:b, di = aw?b:a;
+      /* no clean parries here. On a pairing a man sets his shield against the one
+         blow he can see coming; in a scrum of eight there is always another man on
+         the other side of him, and the shield shows up as blows that land badly
+         rather than blows that never land at all. It is only worth what TAC_TAKE
+         says it is worth, and giving the melee the pairing's parry on top of that
+         made covering up the best way to win a melee, which it is not. */
       const tgt = pick(TARGETS);
       /* your man can go for the thing his style is for, here as on the single sand */
       const sig = atk.mine && sigOf(atk.cls) && triesSignature(atk, 0, atk.stam, myTac) ? sigOf(atk.cls) : null;
-      let dmg = clamp((8 + Math.abs(pa-pb)/6.5 + atk.str/10)*tgt[2]*(1+atk.mods.atk*0.7)*(1-def.mods.def), 4, 36);
+      let dmg = clamp((8 + Math.abs(pa-pb)/6.5 + atk.str/10)*tgt[2]*(1+atk.mods.atk*0.7)*(1-def.mods.def)
+        * MULTI_DEAL(tacOf(atk)) * TAC_TAKE(tacOf(def)), 4, 36);
       if(def.mine) dmg *= MP.def;
       if(sig){ dmg = clamp(dmg * sig.win.dmg, 4, 44); }
       def.hpv -= dmg;
@@ -9585,11 +9596,16 @@ function simulateMelee(ents, ctx, opts){
   if(crux) return { beats, crux, unfinished:true };
 
   const left = alive();
-  const winner = left.length===1 ? left[0] : (left.length ? left.reduce((m,i)=>ents[i].hpv>ents[m].hpv?i:m, left[0]) : -1);
+  /* the card said the last one standing and nobody else, and it meant it. Handing
+     the purse to whoever had the most blood left at the horn quietly made a melee
+     winnable by hiding in it, which is the one thing a melee is not for. Men who
+     are still upright at the end are still paid their share — just not the purse. */
+  const winner = left.length===1 ? left[0] : -1;
   if(winner>=0) push("end", ents[winner].mine
     ? `${ents[winner].name} is the last one standing. The editor's purse is yours.`
     : `${ents[winner].name} of ${ents[winner].house} is the last one standing. Yours are not.`,
     { a:winner });
+  else if(left.length) push("end", `The horn goes with ${left.length} of them still upright, and the editor pays for a last man or he pays for nothing. They are walked off separately.`);
   else push("end", `There is no one left upright. The editor keeps his purse.`);
   return { beats, winner, ents, crowd };
 }
@@ -9597,21 +9613,59 @@ function simulateMelee(ents, ctx, opts){
 /* ---- VENATIO ----
    The morning hunt. Big purses, a roaring crowd, and no honour in it at all —
    a beast does not accept a raised finger, and the men know what that means. */
+/* Fitted against a middling man with a sword, once the morning was made a contest
+   rather than a threshold: the tier-0 beasts are a good morning's work, the tier-1
+   pair are a real risk, and the two at the top will bury roughly one man in five.
+   The purse multipliers were always priced for that. The engine was not. */
 const BEASTS = {
-  wolves:  { name:"a pack of wolves", art:"wolf",  tier:0, hp:72,  pow:60, hide:.02, spd:1.28, fear:1.15, purse:1.3,
+  wolves:  { name:"a pack of wolves", art:"wolf",  tier:0, hp:72,  pow:75, hide:.02, spd:1.28, fear:1.15, purse:1.3,
     desc:"Three of them, and they have never been taught to come one at a time." },
-  boar:    { name:"a great boar", art:"boar", tier:0, hp:98,  pow:66, hide:.12, spd:.95, fear:1.05, purse:1.4,
+  boar:    { name:"a great boar", art:"boar", tier:0, hp:98,  pow:84, hide:.12, spd:.95, fear:1.05, purse:1.4,
     desc:"Half a ton of bad temper on short legs. It goes low, and it goes through things." },
-  leopard: { name:"a leopard", art:"cat", tier:1, hp:88,  pow:64, hide:.05, spd:1.38, fear:1.35, purse:1.75,
+  leopard: { name:"a leopard", art:"cat", tier:1, hp:88,  pow:77, hide:.05, spd:1.38, fear:1.35, purse:1.75,
     desc:"It will be behind him before the crowd has finished sitting down." },
-  bear:    { name:"a bear of the north", art:"bear", tier:1, hp:134, pow:78, hide:.18, spd:.85, fear:1.3, purse:1.8,
+  bear:    { name:"a bear of the north", art:"bear", tier:1, hp:134, pow:88, hide:.18, spd:.85, fear:1.3, purse:1.8,
     desc:"It fights standing, like a man, and it does not tire like one." },
-  aurochs: { name:"an aurochs", art:"bull", tier:2, hp:165, pow:84, hide:.22, spd:.80, fear:1.4, purse:2.0,
+  aurochs: { name:"an aurochs", art:"bull", tier:2, hp:165, pow:90, hide:.22, spd:.80, fear:1.4, purse:2.0,
     desc:"Black, and taller at the shoulder than the man sent against it." },
-  lion:    { name:"a Numidian lion", art:"lion", tier:2, hp:124, pow:90, hide:.10, spd:1.15, fear:1.65, purse:2.2,
+  lion:    { name:"a Numidian lion", art:"lion", tier:2, hp:124, pow:88, hide:.10, spd:1.15, fear:1.65, purse:2.2,
     desc:"The crowd came for this. So did the lion." },
 };
-const BEAST_SCALE = 2.05;
+/* The hunt was not a hunt. At 2.05 a fit man's power ran near 240 against a bear's
+   155, and across two thousand runs every beast but the lion died 100% of the time
+   with the man untouched — the big purse was free money. Scaled so the beast is a
+   real contest and the morning is the gamble the purse says it is. */
+const BEAST_SCALE = 2.62;
+/* The morning compresses the shape the sand uses. On the sand a defensive man pays
+   for his caution in lost bouts and is repaid in mercy when it goes wrong; there is
+   no editor out here and no mercy to be repaid in, so the whole of the trade has to
+   sit in the beast. Standing off it turns most of what it throws — and gives up the
+   kill, which is the only thing the morning pays for. `close` is the third of it:
+   how much more of the beast a man sees by choosing to be that near it. */
+/* `maul` is the fourth and it is the important one. Piling damage onto an aggressive
+   hunter could not make him die more often, because the harder he hit the sooner the
+   beast was dead and the less of the morning there was left to kill him in — the
+   whole surface topped out a point above measured. What actually kills men who rush
+   a beast is not attrition. It is one moment where it gets past the point and is on
+   top of him, and that does not care how the hunt was going.
+
+   One thing the morning will not do, however it is tuned: it will not let a tactic
+   kill more AND die more. On the sand losing a bout is not dying, so aggressive can
+   buy wins with lives; out here killing it and being killed by it are the same hunt
+   coming out two ways, and every point of one is a point off the other. So the trade
+   the hunt offers is a different one, and the card says so. Against a bear, with a
+   sword, a middling man: rushing it kills 76% in five rounds and buries 12%; working
+   it properly kills 83% in nine and buries 8%; standing off it kills 62% in twelve
+   and buries 3%. Measured is the best killer out here, which makes the morning the
+   one place in the game where the middle option is the answer rather than the shrug. */
+const HUNT_TAC = {
+  aggressive: { deal:1.40, take:1.55, close:1.00, maul:0.22, edge:1.12 },
+  measured:   { deal:1,    take:1,    close:1,    maul:0,    edge:1    },
+  defensive:  { deal:0.78, take:0.42, close:0.96, maul:0,    edge:0.97 },
+};
+const HT = t => HUNT_TAC[t] || HUNT_TAC.measured;
+const HUNT_DEAL = t => HT(t).deal;
+const HUNT_TAKE = t => HT(t).take;
 const BEAST_MOVES = {
   wolf: [["dart","comes in low from the flank"],["snap","snaps at the back of a leg"],["swarm","two of them press in at once"]],
   boar: [["charge","drives forward with its head down"],["gore","hooks upward with a tusk"],["barrel","barrels in at shin height"]],
@@ -9641,6 +9695,7 @@ function simulateVenatio(A, key, tA, ctx, opts){
   let sA = R0 ? R0.sA : smA, crowd = R0 ? R0.crowd : clamp(20 + B.fear*12 + A.sho/9, 0, 100);
   let mom = R0 ? R0.mom : 0, round = R0 ? R0.round : 0;
   let ended = false, aDies = false, killed = false, lastTarget = "flank";
+  let toldGas = !!R0, toldBled = !!R0;
   const push = (kind, text, extra) => beats.push(Object.assign({
     kind, text, actor:null, round, vA:clamp(vA,0,100), vB:clamp(vB,0,100),
     sA:clamp(sA/smA*100,0,100), sB:100, crowd:clamp(crowd,0,100), mom:clamp(mom,-3,3), venatio:true
@@ -9659,11 +9714,55 @@ function simulateVenatio(A, key, tA, ctx, opts){
 
   for(let r=startR+1; r<=14 && !ended; r++){
     round = r;
+    /* The maul is checked before the exchange and not inside it, and that is the
+       whole of why it works. Inside the exchange it could only fire in a round the
+       beast had already won, and a man who rushes a beast wins nearly every round —
+       0.73 blows a hunt against a measured man's 1.67 — so the risk of rushing kept
+       vanishing into the speed of the kill. Out here it can take him in a round he
+       was winning, which is how it actually happens. */
+    if(r>=2 && vB>0 && R() < (HT(tA).maul||0)){
+      const mt = pick(TARGETS);
+      const mdmg = clamp((17 + B.pow/4) * (1 - A.mods.def*0.40) * (0.80+R()*0.62), 20, 62);
+      vA -= mdmg; mom = clamp(mom-1,-3,3);
+      crowd = clamp(crowd + mdmg/2.2 * B.fear, 0, 100);
+      push("crit", `It comes past the point before ${prA.he} can bring it back round, and then it is ON him — ${prA.his} ${mt[0]} and a good deal of ${prA.him} with it. The crowd is standing and none of them are cheering.`,
+        { actor:"B", dmg:rnd(mdmg), target:mt[0], tx:mt[1][0], ty:mt[1][1] });
+      lastTarget = mt[0];
+      if(vA<=20){
+        ended = true;
+        push("fall", `${A.name} is down, and it did not take long.`, {actor:"A"});
+        const pull = 0.26 + crowd*0.0022 + (ctx.patron? ctx.patron.favor*0.0018 : 0) + A.pfame*0.0012;
+        if(R() < pull) push("spared", `The handlers come in with irons and torches and drive it back off ${prA.him}. ${prA.He} is dragged out of the sand alive.`, {actor:"A"});
+        else { aDies = true; push("death", `No one comes. The beast is still on ${prA.him} when the crowd stops cheering, and that takes a while.`, {actor:"A"}); }
+        break;
+      }
+      /* and the round goes on. Letting the maul eat the exchange made it cost the
+         kill as well, which put the speed of the rush and the risk of it back on
+         the same lever — the exact thing that had to be prised apart. */
+    }
     const move = pick(ATTACKS[A.cls]);
     const bmove = pick(BEAST_MOVES[B.art]);
-    const pA = power(A, tA, null, mom, 0.97+R()*0.06) * reach * (sA<22?0.74:1) * (0.74+R()*0.52);
-    const pB = B.pow * BEAST_SCALE * (0.6 + B.spd*0.4) * (0.78+R()*0.5) * (1 + (100-vB)/100*0.12);   // a wounded beast is worse
-    sA -= (tA==="aggressive"?10:8) * (1 - A.mods.spd*0.5);
+    /* `edge` is how often he gets a turn at all, and it had to exist because `deal`
+       could not do the job: how hard he hits barely moves the kill rate, since a
+       round he loses is a round he does no damage in at all. Winning rounds is the
+       whole game out here, so the reward for going in close has to be paid in
+       rounds won and the risk of it in the maul — otherwise they are one lever. */
+    const pA = power(A, tA, null, mom, 0.97+R()*0.06) * reach * (sA<22?0.74:1) * (0.74+R()*0.52) * (HT(tA).edge||1);
+    /* The hunt used to be a threshold and not a contest. The beast's strength never
+       moved, the man's barely did, and the noise on both was too narrow to matter —
+       so twelve points of beast made the difference between certain kill and certain
+       death, and every beast sat on one side of that line or the other. It bleeds
+       down now: it is at its worst while it is whole and fresh out of the gate, and
+       a man who lands early buys himself the back half of the morning. That turns
+       the morning into a race he can be losing and still win. */
+    const whole = clamp(vB,0,100)/100;
+    /* and a man who goes at it hard is a man inside its reach, which is the one
+       place it wants him. Without this, rushing a lion killed it faster AND got
+       hit less often than standing off it, and there was nothing to decide. */
+    const closed = HT(tA).close;
+    const pB = B.pow * BEAST_SCALE * (0.6 + B.spd*0.4) * (0.66+R()*0.72)
+      * (0.52 + whole*0.58) * (r<=2 ? 1.12 : 1) * closed;
+    sA -= TAC_WIND(tA) * 1.14 * (1 - A.mods.spd*0.5);
     const diff = Math.abs(pA-pB);
     if(diff < 9){
       crowd = clamp(crowd+3,0,100);
@@ -9672,7 +9771,7 @@ function simulateVenatio(A, key, tA, ctx, opts){
         `A feint, a false rush — the sand between them stays empty.`,
         `${A.name} keeps the point between them. It is all that is keeping ${prA.him} alive.`]));
     } else if(pA>pB){
-      const dmg = clamp((6 + diff/8 + A.str/12) * (1 + A.mods.atk*0.7) * (1 - B.hide), 4, 34) * (100/B.hp);
+      const dmg = clamp((6 + diff/8 + A.str/12) * (1 + A.mods.atk*0.7) * (1 - B.hide) * HUNT_DEAL(tA), 4, 34) * (100/B.hp);
       vB -= dmg;
       mom = clamp(mom+1,-3,3);
       crowd = clamp(crowd + dmg/3 * B.fear + A.sho/24, 0, 100);
@@ -9683,7 +9782,10 @@ function simulateVenatio(A, key, tA, ctx, opts){
         { actor:"A", dmg:rnd(dmg) });
     } else {
       const tgt = pick(TARGETS);
-      let dmg = clamp((7 + diff/7 + B.pow/9) * tgt[2] * (1 - A.mods.def*0.55), 5, 38);
+      /* the ceiling is 44 rather than 38 because at 38 a man who rushed it was
+         already pinned against the cap and could not be made to pay any further
+         for it. A beast that gets inside a man's reach can take half of him. */
+      let dmg = clamp((7 + diff/7 + B.pow/9) * tgt[2] * (1 - A.mods.def*0.55) * HUNT_TAKE(tA), 5, 44);
       if(ctx.guarded) dmg *= 0.5;
       vA -= dmg;
       mom = clamp(mom-1,-3,3);
@@ -9695,7 +9797,11 @@ function simulateVenatio(A, key, tA, ctx, opts){
         : `It ${bmove[1]}; ${prA.he} turns most of it aside.`,
         { actor:"B", dmg:rnd(dmg), target:tgt[0], tx:tgt[1][0], ty:tgt[1][1] });
     }
-    if(sA<22 && !beats.some(x=>x.kind==="gas")) push("gas", `${A.name}'s arms are going. The beast has not slowed at all.`, {actor:"A"});
+    if(sA<22 && !toldGas){ toldGas = true;
+      push("gas", vB>60 ? `${A.name}'s arms are going, and the beast has barely been touched.`
+        : `${A.name}'s arms are going. So is the beast's blood. It is a question of which runs out first.`, {actor:"A"}); }
+    if(vB<=44 && !toldBled){ toldBled = true;
+      push("gas", `It is not coming in the way it was. It has left too much of itself on the sand, and ${A.name} can see it.`, {actor:"B"}); }
     if(crowd>=82 && !beats.some(x=>x.kind==="crowd")) push("crowd", `CAPUA IS ON ITS FEET!`);
     if(vB<=0){ ended = true; killed = true;
       push("end", `It goes down and stays down. ${A.name} stands over it with the crowd screaming ${prA.his} house's name — and no one's name at all.`); break; }
@@ -9736,6 +9842,27 @@ const STAKES_OPTS = [50, 150, 400];
    which power() can see, so these are fitted from measured outcomes: aggressive
    won 63.6% where measured won 46.3% at parity, defensive 39.8%. */
 const TACTIC_OR = { aggressive:2.2, measured:1, defensive:0.85, showboat:0.9 };
+/* ---- ONE SHAPE FOR ALL FOUR ENGINES ----
+   v1.87 gave the three tactics a domain in simulateFight, and the pair, the melee and
+   the hunt each kept their own copy of what it had cured. Measured with the classes
+   mirrored so nothing else was in the way: in the pair, aggressive won 93.2% against
+   defensive's 43.9% AND died least at 4.9% against 37.7% — the cautious call was again
+   the one that got men killed. The hunt had no tactic effect worth the name at all. */
+const TAC_DEAL = t => t==="aggressive"?1.28 : t==="defensive"?0.70 : 1;
+const TAC_TAKE = t => t==="aggressive"?1.34 : t==="defensive"?0.60 : t==="showboat"?1.10 : 1;
+const TAC_WIND = t => t==="aggressive"?9.4 : t==="defensive"?5 : 7;
+/* The pairing and the melee sharpen the offensive half of it, and only that half.
+   A single bout can be won on the editor's reading of who spilt more; a bout with
+   four or six men on the sand is won by men going down, and a man behind a shield
+   puts nobody down. Left on the single sand's 0.70, covering up won the pairing
+   MORE often than fighting it straight while burying a quarter as many — which is
+   not a trade, it is a right answer, and there should not be one. */
+const MULTI_DEAL = t => t==="aggressive"?1.34 : t==="defensive"?0.52 : 1;
+/* and the shield itself: a man throwing everything into it is the easiest man in
+   the world to turn aside, which is the whole reason to put a shield up against one */
+const GUARD_TURN = 0.22;
+const TAC_GUARD = (atkT, defT) => defT==="defensive"
+  && R() < GUARD_TURN * (atkT==="aggressive" ? 1.9 : atkT==="defensive" ? 0.7 : 1);
 function winChance(g, opp, prep, tac, foeTac){
   const A = clone(g); A.kit = g.kit || defaultKit(g.cls); A.mods = kitMods(A.kit, A.cls, A);
   /* the drill is a real edge in the bout, so the bookmakers had better know about it */
@@ -9755,6 +9882,15 @@ const TACTIC_SAY = {
   measured:   "Neither. He fights the bout in front of him and takes what it gives.",
   defensive:  "Turns blows aside instead of trading them, and spends almost nothing. He wins less and comes home about twice as often.",
   showboat:   "He fights for the tiers rather than the man. Worse odds, and a crowd that remembers the name.",
+};
+/* the morning is not the sand and the card should not pretend it is. A beast cannot
+   be out-pointed and will not accept a raised finger, so killing it and being killed
+   by it are the same hunt coming out two ways — there is no winning less and living. */
+const HUNT_SAY = {
+  aggressive: "Straight at it. Five rounds instead of nine — and being that near a beast is how a man gets taken, whatever the hunt was doing up to then. Half again the graves, and it kills the beast rather less often than doing it properly would.",
+  measured:   "The way he was taught, and out here that is not the shrug it is on the sand: worked properly is how the most beasts die.",
+  defensive:  "Point out, ground given, no more of himself spent than he must. He comes home from all but a few — and better than a third of the beasts walk off the sand alive, and an unkilled beast pays nothing.",
+  showboat:   "He plays it to the tiers with a thing that does not care about tiers. Fewer kills, and a name they keep.",
 };
 const oddsFor = p => Math.max(1.05, (1/clamp(p,0.02,0.98)) * (1-VIG));
 const oddsWord = o => `${o.toFixed(2)} to 1`;
@@ -9941,7 +10077,11 @@ function doMelee(d, ids, offer, pending, choice, tactic){
     }
   });
 
+  /* the horn can go with nobody last on the sand, and men of yours still upright —
+     that is not being beaten, it is just not being paid */
+  const stoodAtEnd = res.ents.filter(e=>e.mine && !e.out).length;
   chron(d, won ? `${res.ents[res.winner].name} was last one standing in the melee at ${offer.festival||"the games"} (+${offer.purse}d).`
+    : (res.winner<0 && stoodAtEnd) ? `The melee at ${offer.festival||"the games"} went to the horn with ${stoodAtEnd===1?"one of yours":`${stoodAtEnd} of yours`} still up and no last man. No purse.`
     : `Your men were beaten in the melee at ${offer.festival||"the games"}.`, won?"good":"bad");
   serveWants(d, { type:"fight", gid:ids[0], win:won, oppDied:res.ents.some(e=>!e.mine&&e.dead),
     spared:false, crowd:rnd(res.crowd), tier:offer.tier, stakes:"melee" });
@@ -10121,8 +10261,10 @@ function doPairFight(d, ids, offer, tactic, pending, choice){
   } else {
     gs.forEach((g,i)=>{ if(!res.dead.A[i]) g.losses++; });
     d.fame = Math.max(0, d.fame+1);
-    gs.forEach(g=>{ g.morale=clamp(g.morale-9,0,100); });
-    sum.push(`Beaten. The house takes only the fees.`);
+    gs.forEach(g=>{ g.morale=clamp(g.morale-(res.drawn?5:9),0,100); });
+    sum.push(res.drawn
+      ? `Sixteen rounds and all four walked off. There is nothing in that for the editor and nothing in it for you — the house takes only the fees.`
+      : `Beaten. The house takes only the fees.`);
   }
   // opponents killed
   const kills = res.dead.B.filter(Boolean).length;
@@ -10236,12 +10378,29 @@ function simulatePair(As, Bs, tA, stakes, ctx, opts){
       * (1 + asA) * (0.74+R()*0.52);
     const pB = (power(Bs[lb], tB, As[la].cls, -mom, 0.97+R()*0.06) * (st.B[lb]<22?0.78:1))
       * (1 + asB) * (0.74+R()*0.52);
-    st.A[la] -= (tA==="aggressive"?9:7) * (1 - As[la].mods.spd*0.5);
-    st.B[lb] -= 7 * (1 - Bs[lb].mods.spd*0.5);
+    st.A[la] -= TAC_WIND(tA) * (1 - As[la].mods.spd*0.5);
+    st.B[lb] -= TAC_WIND(tB) * (1 - Bs[lb].mods.spd*0.5);
     if(ma>=0) st.A[ma] -= 3;
     if(mb>=0) st.B[mb] -= 3;
     const diff = Math.abs(pA-pB);
-    if(diff < 8){
+    /* the same shield the single sand has. Two men behind two shields is the whole
+       point of calling a pair defensive, and until now it did nothing at all. */
+    const atkT = pA>pB ? tA : tB, defT = pA>pB ? tB : tA;
+    const turned = diff >= 8 && TAC_GUARD(atkT, defT);
+    if(turned){
+      const dName = pA>pB ? Bs[lb].name : As[la].name, aName = pA>pB ? As[la].name : Bs[lb].name;
+      crowd = clamp(crowd+1,0,100);
+      mom = mom>0? mom-1 : mom<0? mom+1 : 0;
+      if(atkT==="aggressive"){ if(pA>pB) st.A[la] -= 4; else st.B[lb] -= 4; }
+      push("clash", pick(atkT==="aggressive" ? [
+        `${aName} throws the whole of it and ${dName} takes it on the shield. His mate is already coming round the other side.`,
+        `${dName} gets behind the boss of it and lets ${aName} spend himself on the wood.`,
+      ] : [
+        `${dName} covers, gives a step, and the two of them close the gap again.`,
+        `${aName} finds only ${dName}'s guard where the opening was.`,
+      ]), { guardBy: pA>pB ? "B" : "A" });
+    }
+    else if(diff < 8){
       crowd = clamp(crowd+2,0,100);
       mom = mom>0? mom-1 : mom<0? mom+1 : 0;
       push("clash", pick(CLASH_L)(As[la].name, Bs[lb].name));
@@ -10249,7 +10408,8 @@ function simulatePair(As, Bs, tA, stakes, ctx, opts){
       const aWins = pA>pB;
       const atk = aWins ? As[la] : Bs[lb], def = aWins ? Bs[lb] : As[la];
       const tgt = pick(TARGETS);
-      let dmg = clamp((5 + diff/8 + atk.str/13) * 1.18 * tgt[2] * (1 + atk.mods.atk*0.7) * (1 - def.mods.def), 3, 32);
+      let dmg = clamp((5 + diff/8 + atk.str/13) * 1.18 * tgt[2] * (1 + atk.mods.atk*0.7) * (1 - def.mods.def)
+        * MULTI_DEAL(atkT) * TAC_TAKE(defT), 3, 32);
       if(ctx.guarded && !aWins) dmg *= 0.5;
       if(aWins) hp.B[lb] -= dmg; else hp.A[la] -= dmg;
       mom = clamp(mom + (aWins?1:-1), -3, 3);
@@ -10277,8 +10437,13 @@ function simulatePair(As, Bs, tA, stakes, ctx, opts){
         } else {
           const f = arr[i];
           const foes = side==="A" ? hp.B : hp.A;
+          /* how he went down is part of the verdict here as on the single sand: a man
+             who covered and made them work for it is spared oftener than one who
+             threw everything at them and had nothing left when it went wrong */
+          const fell = side==="A" ? tA : tB;
+          const stand = fell==="defensive" ? 10 : fell==="aggressive" ? -6 : 0;
           const odds = missioOdds(missioScore(f, ctx, crowd,
-            missioAccount(Math.max(foes[0], foes[1])), r*2.4, !!isYours));
+            missioAccount(Math.max(foes[0], foes[1])), r*2.4 + stand, !!isYours));
           if(R() < odds) push("spared", `${f.name} raises two fingers — and the editor's hand opens. He is dragged clear.`, { actor:side, slot:i });
           else { dead[side][i] = true; push("death", `The thumb turns for ${f.name}. It is done quickly.`, { actor:side, slot:i }); }
         }
@@ -10299,9 +10464,17 @@ function simulatePair(As, Bs, tA, stakes, ctx, opts){
   if(crux) return { beats, crux, unfinished:true };
   if(!ended){
     const aStand = down.A.filter(x=>!x).length, bStand = down.B.filter(x=>!x).length;
-    const win = aStand>=bStand;
-    push("end", `The horn sounds. ${win? "The editor raises his hand toward your house." : "The editor raises his hand toward the other house."}`);
-    return { beats, win, crowd, dead, down, hp };
+    /* the editor pays for men put down, not for men still upright. A pair that
+       spends sixteen rounds behind two shields and drops nobody has given him
+       nothing to buy, and a dead heat is not a win — which is the price of
+       fighting a pairing that way, and the reason not to always. */
+    const win = aStand > bStand;
+    push("end", aStand > bStand
+      ? `The horn sounds. The editor raises his hand toward your house.`
+      : aStand < bStand
+        ? `The horn sounds. The editor raises his hand toward the other house.`
+        : `The horn sounds with all of them still on their feet. The editor does not raise his hand at all — there is nothing here he came to buy.`);
+    return { beats, win, crowd, dead, down, hp, drawn: aStand===bStand };
   }
   return { beats, win: !(down.A[0] && down.A[1]), crowd, dead, down, hp };
 }
@@ -19058,7 +19231,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   <button key={k} className={`chip ${tactic===k?"on":""}`} onClick={()=>setTactic(k)}>{l}</button>
                 ))}
               </div>
-              <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:5,lineHeight:1.35}}>{TACTIC_SAY[tactic]}</div>
+              <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:5,lineHeight:1.35}}>
+                {(pick.kind==="hunt" ? HUNT_SAY : TACTIC_SAY)[tactic]}</div>
             </div>
           );
           const entranceRow = (
