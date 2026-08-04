@@ -5281,6 +5281,8 @@ function migrate(S){
   S.gladiators.forEach(g=>{ if(!g.wear){ g.wear = {}; SLOTS.forEach(s=>{ g.wear[s] = 100; }); } });
   if(!S.rep) S.rep = { blood:0, show:0, craft:0, mercy:0 };
   if(!S.kept) S.kept = [];        /* the long memory behind the roll */
+  if(!S.pit) S.pit = pick(PIT_HOUSES);
+  if(!S.pitCard || S.pitCard.week !== S.week) makePitCard(S);
   if(!S.departed) S.departed = [];
   if(S.reSignOffer===undefined) S.reSignOffer = null;
   if(!S.annals){
@@ -11501,6 +11503,7 @@ function endWeek(d){
     chron(d, SL[Math.min(d.flags.sparkCount-1, SL.length-1)], "event");
     if(d.flags.sparkCount===5) d.fame += 25;
   }
+  makePitCard(d);          /* who is down there this week */
   if(!d.milestone600 && d.fame>=600){ d.milestone600=true; chron(d, "Your name is spoken in Rome itself. The house has become legend.", "good"); }
   if(d.gold < (d.loan ? -420 : -250)) d.over = { kind:"debt" };
   const alive = d.gladiators.some(g=>!isGone(g));
@@ -11561,12 +11564,55 @@ function retireG(d, gid){
   offerDoctore(d, g, "retired");
 }
 
-function makePitOffer(d, g, stakes){
-  const q = clamp(rnd(STATS.reduce((s,k)=>s+g[k],0)/6) + ri(-8,8), 22, 90);
-  const sine = stakes==="sine";
+/* ---- THE PITS ----
+   For fifty versions the pits were a button and a man generated behind it: you sent
+   somebody down and found out who he was fighting afterwards. They are a place now.
+   Somebody owns them, three men off the circuit are down there on any given night,
+   and you can see which of them you are taking before anybody goes. What the night
+   pays follows the man you take — the pits do not care who you are, only who he is. */
+const PIT_HOUSES = [
+  { name:"the sand under the wool market", keeper:"Ancus",
+    line:"A cellar with a drain in it. Ancus takes a cut at the rope and does not ask questions at either end of the evening." },
+  { name:"the yard behind the Vinalia gate", keeper:"Pollia",
+    line:"Open air, a rope, and a woman who has been running it since before the war. Pollia pays in the same bag she collects in." },
+  { name:"the old grain floor at the river", keeper:"Rufio the Elder",
+    line:"Boards worn smooth by forty years of it. Rufio remembers every man who has bled on them and mentions it constantly." },
+  { name:"Sextus' cellar off the forum",  keeper:"Sextus",
+    line:"Two rooms under a wine shop, and the crowd stands close enough to be part of the bout. Sextus lets them." },
+];
+const PIT_NIGHT = 3;                          /* how many are down there on a night */
+const pitOf = d => d.pit || (d.pit = pick(PIT_HOUSES));
+/* what he is worth at the rope — the man, not your standing */
+function pitPurse(d, f, stakes){
+  const avg = STATS.reduce((s,k)=>s+(f[k]||40),0)/6;
+  const base = 34 + avg*1.5 + (f.wins||0)*5 + (f.pfame||0)*0.9;
+  const st = stakes==="sine" ? 1.8 : stakes==="blood" ? 0.7 : 1;
+  return rnd(base * st * seasonOf(d).pits);
+}
+/* who is down there this week */
+function makePitCard(d){
+  const pool = (d.circuit||[]).filter(f=>!f.injury);
+  if(!pool.length){ d.pitCard = null; return; }
+  const men = shuffled(pool).slice(0, Math.min(PIT_NIGHT, pool.length)).map(f=>f.id);
+  d.pitCard = { week:d.week, ids:men };
+}
+const pitMen = d => {
+  const card = d.pitCard;
+  if(!card || card.week !== d.week) return [];
+  return (card.ids||[]).map(id=>(d.circuit||[]).find(f=>f.id===id)).filter(f=>f && !f.injury);
+};
+function makePitOffer(d, g, stakes, fid){
+  const f = fid != null ? (d.circuit||[]).find(x=>x.id===fid && !x.injury) : null;
+  if(f){
+    const o = clone(f);
+    o.kit = f.kit || kitFor(f.cls, 0);
+    return { id:d.nextId++, tier:0, festival:null, opp:o, oppRef:{ circuit:true, fid:f.id }, stakes,
+      purse: pitPurse(d, f, stakes), venue:"pit" };
+  }
+  /* no card, or he has gone — whoever they put in front of him, as it always was */
   const pr = pickAnyOpp(d, 0);
   return { id:d.nextId++, tier:0, festival:null, opp:pr.opp, oppRef:pr.ref, stakes,
-    purse: rnd((50+R()*40)*(sine?1.8: stakes==="blood"?0.7:1) * seasonOf(d).pits), venue:"pit" };
+    purse: pitPurse(d, pr.opp, stakes), venue:"pit" };
 }
 
 /* ================= UI ================= */
@@ -12694,6 +12740,7 @@ export default function App(){
   const [fGid,setFGid] = useState(null);
   const [tactic,setTactic] = useState("measured");
   const [pitStakes,setPitStakes] = useState("standard");
+  const [pitPick,setPitPick] = useState(null);      /* which of tonight's men you are taking */
   const [gearPick,setGearPick] = useState(null);
   const [ask,setAsk] = useState(null);
   const [slots,setSlots] = useState({});
@@ -12893,7 +12940,7 @@ export default function App(){
     [!!showSettings, ()=>setShowSettings(false)],
     [!!cal,          ()=>setCal(false)],
     [!!munusWiz,     ()=>setMunusWiz(false)],
-    [!!arenaWiz,     ()=>{ setArenaWiz(false); setArenaStep(0); setArenaPick(null); }],
+    [!!arenaWiz,     ()=>{ setArenaWiz(false); setArenaStep(0); setArenaPick(null); setPitPick(null); }],
     [!!skipped,      ()=>setSkipped(null)],
     [!!digest,       ()=>setDigest(null)],
     [!!selId,        ()=>setSelId(null)],
@@ -12938,7 +12985,7 @@ export default function App(){
     offer.entrance = entrance;
     const res = doFight(d, fGid, offer, tactic, bet, null, null, offer.watched ? plan : "none");
     if(res.crux){ setHeld({ base:d, res }); setFight(res); setFGid(null); setStake(0); setAgainst(false); return; }
-    setS(d); setFight(res); setFGid(null); setStake(0); setAgainst(false); setPlan("none"); setEntrance("none");
+    setS(d); setFight(res); setFGid(null); setStake(0); setAgainst(false); setPitPick(null); setPlan("none"); setEntrance("none");
   };
   const openMunus = () => { setMunusPlan({ occasion:"funeral", scale:"modest", hunt:false, sine:false, spectacle:null, headliner:null, sell:false }); setMunusWiz(true); };
   /* treating with another house: buy a man, put a word in his ear, or buy the quiet */
@@ -13015,7 +13062,7 @@ export default function App(){
     const d = clone(S);
     const g = d.gladiators.find(x=>x.id===fGid);
     if(!g || !canFight(g) || g.lastFought>=d.week) return;
-    const offer = makePitOffer(d, g, pitStakes);
+    const offer = makePitOffer(d, g, pitStakes, pitPick);
     const bet = makeBet(g, offer.opp);
     if(bet) d.gold -= bet.amount;
     const res = doFight(d, fGid, offer, tactic, bet);
@@ -18089,7 +18136,54 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             body = (<>
               {backBtn}
               <div className="disp" style={{fontSize:15,fontWeight:700,marginBottom:2}}>THE PITS</div>
-              <div className="dim" style={{fontSize:14,marginBottom:9}}>{me?`${me.name} takes whoever the pits put in front of him.`:""}</div>
+              {(()=>{ const P = pitOf(S), tonight = pitMen(S);
+                return (<>
+                  <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:8,lineHeight:1.4}}>
+                    {P.name.charAt(0).toUpperCase()+P.name.slice(1)}. {P.line}
+                  </div>
+                  {tonight.length===0 ? (
+                    <div className="dim" style={{fontSize:14,marginBottom:9}}>
+                      {me?`Nobody worth naming is down there tonight. ${me.name} takes whoever ${P.keeper} puts in front of him.`:""}
+                    </div>
+                  ) : (<>
+                    <div className="flex items-center justify-between gap-2" style={{marginBottom:6}}>
+                      <span className="tag tag-gold">Down there tonight</span>
+                      <span className="rowval dim" style={{fontSize:12}}>{P.keeper} takes his cut at the rope</span>
+                    </div>
+                    {tonight.map(f=>{
+                      const on = pitPick===f.id;
+                      const read = me ? readMatch(me, f, true) : null;
+                      const mw = me ? metWord(f, me) : null;
+                      return (
+                        <button key={f.id} className={`optrow ${on?"on":""}`} style={{marginBottom:6,width:"100%"}}
+                          onClick={()=>setPitPick(on?null:f.id)}>
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="disp" style={{fontSize:13.5,color:on?"#e8d092":"#e8d9b8",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                              {f.nick? `${f.name}, ${f.nick}` : f.name}
+                            </span>
+                            <span className="gold" style={{fontSize:13.5,flexShrink:0}}>{pitPurse(S, f, pitStakes)}d</span>
+                          </div>
+                          <div className="flex items-center justify-between gap-2" style={{marginTop:2}}>
+                            <span className="dim" style={{fontSize:13,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                              {f.cls} · {f.house} · {f.wins}–{f.losses}{f.kills?`, ${f.kills} killed`:""}
+                            </span>
+                            <span className="rowval dim" style={{fontSize:12,flexShrink:0}}>{menace(f)}</span>
+                          </div>
+                          {read && <div className="flex items-center justify-between gap-2" style={{marginTop:2}}>
+                            <span className="dim" style={{fontSize:12.5}}>against {me.name}</span>
+                            <span className="rowval" style={{fontSize:12,color:read.colour}}>{read.word}</span>
+                          </div>}
+                          {mw && <div style={{fontSize:12.5,marginTop:2,color:"#d8ac5f",textAlign:"left"}}>{mw}</div>}
+                        </button>
+                      );
+                    })}
+                    <div className="dim" style={{fontSize:12.5,fontStyle:"italic",marginBottom:8,lineHeight:1.35}}>
+                      {pitPick==null
+                        ? "Take one of them, or send him down to whoever is left standing when he arrives."
+                        : "The purse is what that man is worth. The pits have never cared who you are."}
+                    </div>
+                  </>)}
+                </>); })()}
               <div className="tag" style={{marginBottom:6}}>Stakes</div>
               <div className="flex gap-2" style={{flexWrap:"wrap"}}>
                 {[["blood","First blood"],["standard","To surrender"],["sine","To the death"]].map(([k,l])=>(
@@ -18104,7 +18198,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               {tacticRow}
               {wagerRow}
               <button className="btn btn-blood" style={{width:"100%",marginTop:13}} disabled={!fGid} onClick={()=>startFight(fightPit)}>
-                Send {me?me.name:"him"} to the pits{stake>0?` · ${stake}d ${against?"against":"on"} him`:""}
+                {(()=>{ const f = pitPick!=null ? (S.circuit||[]).find(x=>x.id===pitPick) : null;
+                  return `Send ${me?me.name:"him"} ${f?`against ${f.name}`:"to the pits"}${stake>0?` · ${stake}d ${against?"against":"on"} him`:""}`; })()}
               </button>
             </>);
           } else if(pick.kind==="single"){ const o=pick.o; const p=me?winChance(me,o.opp,prepFor(S,me,o)):0.5;
