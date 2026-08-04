@@ -4500,6 +4500,48 @@ const regardRefuse = g => regardOf(g) <= 18;                 // and one day will
 /* ---- READING A MAN BEFORE YOU FIGHT HIM ----
    You have been picking a word and watching. There is a week between the card
    going up and the bout, and it is worth spending. */
+/* ---- HOW THE OTHER MAN FIGHTS ----
+   His tactic was pick(["aggressive","measured","defensive"]) at the horn — rolled
+   fresh, never shown, and after the tactics were given real teeth it swings the
+   bout about as far as your own choice does. A hidden coin worth twenty-four points
+   is not a fight, it is weather.
+   It is a fact about the man now, and the same man always fights the same way: how
+   he is built decides it, and what the years have taught him bends it. Big, quick
+   and undisciplined comes forward from the horn. Disciplined, enduring and hard to
+   move covers up and waits for the twelfth. Everyone else fights the bout in front
+   of him. You can pay to be told, or you can find out in the third exchange. */
+function foeTactic(o){
+  if(!o) return "measured";
+  /* generated men sit within a few points of each other on every stat, so how he is
+     built barely separates them — what he has survived does. A man with eight bouts
+     behind him has learned what the green ones have not, which also means the bay
+     gets cagier as it ages, and the men you meet in year four are not the men you
+     met in year one. */
+  const built = (o.str||50) + (o.agi||50) - (o.dis||50) - (o.end||50);
+  const learnt = (o.wins||0) >= 8 ? -17 : (o.wins||0) >= 5 ? -8 : (o.wins||0) <= 1 ? 9 : 0;
+  const T = o.traits || [];
+  const bent = (T.includes("Showman") ? 7 : 0) + (T.includes("Defiant") ? 6 : 0)
+             - (T.includes("Stoic") ? 9 : 0) - (T.includes("Iron Hide") ? 5 : 0);
+  const n = built + learnt + bent;
+  return n >= 10 ? "aggressive" : n <= -10 ? "defensive" : "measured";
+}
+const FOE_TACTIC_WORD = {
+  aggressive: "comes forward from the horn",
+  measured:   "fights the bout in front of him",
+  defensive:  "covers up and waits",
+};
+const FOE_TACTIC_SAY = {
+  aggressive: o=>`${o.name} comes forward from the horn and does not stop. Whatever he has goes into the first four exchanges — and there is nothing behind it if they do not land.`,
+  measured:   o=>`${o.name} fights the bout in front of him. No habit to punish and none to rely on.`,
+  defensive:  o=>`${o.name} fights from behind his shield and is content to still be standing at the twelfth. He usually is.`,
+};
+/* what to do about it — the counter to each, said plainly */
+const FOE_TACTIC_ANSWER = {
+  aggressive: "Everything he has is early. Cover, and he has spent it by the seventh.",
+  measured:   "Nothing to exploit. It comes down to the two of them.",
+  defensive:  "He will not come to you. Go and get him, or the horn decides it on blood spilt.",
+};
+
 const TELLS = {
   tires:   { plan:"outlast", when:o=>o.end<47,
     say:o=>`${o.name} is blowing hard by the sixth exchange. He has been for years and he knows it, which is why he goes early.` },
@@ -4616,6 +4658,8 @@ function watchHim(d, offer){
   d.gold -= c;
   offer.watched = tellsOf(d, offer);
   if(!offer.watched.length) offer.watched = ["nothing"];
+  /* the one thing worth more than any habit: how he intends to fight it */
+  offer.watchedTac = foeTactic(offer.opp);
   return true;
 }
 
@@ -5724,7 +5768,7 @@ function gasOf(f, st, sm){
 function simulateFight(A, B, tA, stakes, ctx, opts){
   const O = opts || {};
   const R0 = O.from || null;
-  const tB = R0 ? R0.tB : pick(["aggressive","measured","defensive"]);
+  const tB = R0 ? R0.tB : foeTactic(B);
   const beats = [];
   A.mods = kitMods(A.kit, A.cls, A); B.mods = kitMods(B.kit, B.cls, B);
   const smA = 55+A.end*0.6, smB = 55+B.end*0.6;
@@ -5814,8 +5858,15 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
   let crux = null;
   const startR = R0 ? R0.round : 0;
 
+  let tacTold = !!R0;
   for(let r=startR+1; r<=12 && !ended; r++){
     round = r;
+    /* what he is doing becomes plain whether you paid to know it or not */
+    if(!tacTold && r>=3){ tacTold = true;
+      if(tB !== "measured") push("intro", tB==="aggressive"
+        ? `Three exchanges in and it is clear: ${B.name} came forward from the horn and has no intention of stopping.`
+        : `Three exchanges in and it is clear: ${B.name} is fighting from behind his shield. He means to still be here at the twelfth.`);
+    }
     /* crowd milestones run at the head of the round so a signature exchange (which loops back)
        cannot skip them — a house worked to its feet always gets its moment */
     if(crowd>=50 && !c50){ c50=true; push("crowd", `The crowd begins to chant — the sound rolls around the walls.`); }
@@ -5881,12 +5932,22 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
     }
     const diff = Math.abs(pA-pB);
     const defTac = pA>pB ? tB : tA;                    /* whoever is about to be hit */
-    const turned = diff >= 7 && defTac==="defensive" && R() < GUARD_TURN;
+    const atkTac = pA>pB ? tA : tB;                    /* and whoever is throwing it */
+    /* a man throwing everything into it is the easiest man in the world to turn
+       aside — which is the whole reason to put a shield up against one. */
+    const turned = diff >= 7 && defTac==="defensive"
+      && R() < GUARD_TURN * (atkTac==="aggressive" ? 1.9 : atkTac==="defensive" ? 0.7 : 1);
     if(turned){
       const dName = pA>pB ? B.name : A.name, aName = pA>pB ? A.name : B.name;
       crowd = clamp(crowd+1,0,100);
       mom = mom>0? mom-1 : mom<0? mom+1 : 0;
-      push("clash", pick([
+      if(atkTac==="aggressive"){                       /* he spent it on a shield */
+        if(pA>pB) sA -= 4; else sB -= 4;
+      }
+      push("clash", pick(atkTac==="aggressive" ? [
+        `${aName} throws everything into it and ${dName} takes the whole of it on the shield. That cost him.`,
+        `${dName} gets behind the boss of it and lets ${aName} spend himself on the wood.`,
+      ] : [
         `${dName} takes it on the shield and gives a step. Nothing in that for anybody.`,
         `${aName} comes on and finds only ${dName}'s guard where the opening was.`,
         `${dName} turns it aside at the last, and the crowd makes a sound about it.`,
@@ -5928,11 +5989,13 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
     if(vA<=20 || vB<=20) break;
     if(cruxNow(r)){
       crux = { vA, vB, sA, sB, crowd, mom, round:r, tB, tiredA, tiredB, c50, c80, peak:cPeak, count:cruxCount+1, bLegged };
-      push("crux", vA<=58 && vA<vB
+      const his = tB==="aggressive" ? ` ${B.name} is still coming forward.`
+        : tB==="defensive" ? ` ${B.name} is still behind that shield.` : "";
+      push("crux", (vA<=58 && vA<vB
         ? `${A.name} is hurt and going backwards. The crowd is looking at your box.`
         : vB<=58 && vB<vA
         ? `${B.name} is badly used and giving ground. There is a bout here to be taken.`
-        : `Neither of them has an answer yet, and both are tiring. The crowd is looking at your box.`);
+        : `Neither of them has an answer yet, and both are tiring. The crowd is looking at your box.`) + his);
       break;
     }
   }
@@ -9620,7 +9683,7 @@ const STAKES_OPTS = [50, 150, 400];
    which power() can see, so these are fitted from measured outcomes: aggressive
    won 63.6% where measured won 46.3% at parity, defensive 39.8%. */
 const TACTIC_OR = { aggressive:2.2, measured:1, defensive:0.85, showboat:0.9 };
-function winChance(g, opp, prep, tac){
+function winChance(g, opp, prep, tac, foeTac){
   const A = clone(g); A.kit = g.kit || defaultKit(g.cls); A.mods = kitMods(A.kit, A.cls, A);
   /* the drill is a real edge in the bout, so the bookmakers had better know about it */
   if(prep) A.regardMult = (A.regardMult || 1) * (1 + prep*0.14);
@@ -9629,7 +9692,8 @@ function winChance(g, opp, prep, tac){
   // a power edge compounds across twelve rounds, so the raw ratio badly understates
   // the true chance; sharpen it on the odds scale to match measured outcomes
   const raw = clamp(pa/(pa+pb), 0.02, 0.98);
-  const or = Math.pow(raw/(1-raw), 12.0) * (TACTIC_OR[tac] || 1);
+  /* his tactic swings the bout as far as yours does, the other way */
+  const or = Math.pow(raw/(1-raw), 12.0) * (TACTIC_OR[tac] || 1) / (TACTIC_OR[foeTac] || 1);
   return clamp(or/(1+or), 0.05, 0.95);
 }
 /* and what each of them is, in one line, because none of it was on the screen */
@@ -10067,7 +10131,8 @@ function assistMult(d, a, b){
 function simulatePair(As, Bs, tA, stakes, ctx, opts){
   const O = opts || {}; const R0 = O.from || null;
   const beats = [];
-  const tB = R0 ? R0.tB : pick(["aggressive","measured","defensive"]);
+  /* the pair fights the way its lead man does */
+  const tB = R0 ? R0.tB : foeTactic(Bs[0]);
   As.forEach(f=>{ f.mods = kitMods(f.kit, f.cls, f); });
   Bs.forEach(f=>{ f.mods = kitMods(f.kit, f.cls, f); });
   const smA = As.map(f=>55+f.end*0.6), smB = Bs.map(f=>55+f.end*0.6);
@@ -18997,7 +19062,10 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               </button>
             </>);
           } else if(pick.kind==="single"){ const o=pick.o;
-            const p = me ? winChance(me, o.opp, prepFor(S,me,o) - ((me.watchedBy && me.watchedBy.known) ? theirRead(S,me,o)*0.86 : 0), tactic) : 0.5;
+            /* his tactic is priced in only once you actually know it — paid for, or
+               drilled against. Guessing does not move the bookmakers. */
+            const foeTac = (o.watchedTac || (foeSeen(S,o) ? foeTactic(o.opp) : null)) || null;
+            const p = me ? winChance(me, o.opp, prepFor(S,me,o) - ((me.watchedBy && me.watchedBy.known) ? theirRead(S,me,o)*0.86 : 0), tactic, foeTac) : 0.5;
             body = (<>
               {backBtn}
               <div className="flex items-center gap-1" style={{flexWrap:"wrap",marginBottom:5}}>
@@ -19067,7 +19135,18 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               ) : o.watched ? (
                 <div className="panel" style={{padding:9,marginTop:8,background:"#1c1610",borderColor:"#6d5426"}}>
                   <div className="tag tag-gold" style={{marginBottom:4}}>What they saw</div>
-                  {o.watched[0]==="nothing" ? <div className="dim" style={{fontSize:14,fontStyle:"italic"}}>Nothing to report. He does everything correctly and nothing twice.</div>
+                  {(()=>{ const ft = o.watchedTac || foeTactic(o.opp);
+                    return (
+                      <div className="panel" style={{padding:"8px 10px",marginBottom:7,background:"#1c1610",borderColor:"#5a6a35"}}>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="dim" style={{fontSize:10.5,textTransform:"uppercase",letterSpacing:".07em"}}>How he means to fight it</span>
+                          <span className="rowval" style={{fontSize:12,color:"#9aa86a",flexShrink:0}}>{FOE_TACTIC_WORD[ft]}</span>
+                        </div>
+                        <div style={{fontSize:14,marginTop:3,lineHeight:1.4}}>{her(FOE_TACTIC_SAY[ft](o.opp), o.opp)}</div>
+                        <div className="dim" style={{fontSize:13,marginTop:3,fontStyle:"italic"}}>{FOE_TACTIC_ANSWER[ft]}</div>
+                      </div>
+                    ); })()}
+                  {o.watched[0]==="nothing" ? <div className="dim" style={{fontSize:14,fontStyle:"italic"}}>Nothing else to report. He does everything correctly and nothing twice.</div>
                     : o.watched.map((k,i)=><div key={i} style={{fontSize:14.5,padding:"3px 0"}}>{her(TELLS[k].say(o.opp), o.opp)}</div>)}
                   <div className="tag" style={{margin:"7px 0 4px"}}>The plan</div>
                   <div className="grid grid-cols-2 gap-2">
