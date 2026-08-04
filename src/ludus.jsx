@@ -5994,7 +5994,7 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
         `${dName} takes it on the shield and gives a step. Nothing in that for anybody.`,
         `${aName} comes on and finds only ${dName}'s guard where the opening was.`,
         `${dName} turns it aside at the last, and the crowd makes a sound about it.`,
-      ]));
+      ]), { guardBy: pA>pB ? "B" : "A" });
     }
     else if(diff < 7){
       crowd = clamp(crowd+2,0,100);
@@ -12297,7 +12297,7 @@ const SKIN="#a8763e", SKIN_D="#7d5527", LEATHER="#4a3216", LEATHER_D="#33220f",
    Weapons hang off a real arm: shoulder -> forearm -> fist -> grip -> guard -> blade,
    so a sword reads as held rather than growing out of him.
    Drawn facing RIGHT (+x is toward the opponent); side B is mirrored by the parent. */
-const Fighter = React.memo(function Fighter({ kit, pose, wounds, scars, fallen, dead, foe, fem, col }){
+const Fighter = React.memo(function Fighter({ kit, pose, wounds, scars, fallen, dead, foe, fem, col, wear, aim }){
   const K = kit || {};
   const wArt = kitArt(K,"weapon") || "sword";
   const oArt = kitArt(K,"offhand") || "none";
@@ -12323,11 +12323,21 @@ const Fighter = React.memo(function Fighter({ kit, pose, wounds, scars, fallen, 
     gas:     { x:-4, y:4,  rot:8,  arm:-4,  armRot:20 },
     victor:  { x:6,  y:0,  rot:-2, arm:2,   armRot:-58 },
     fallen:  { x:6,  y:28, rot:76, arm:-6,  armRot:12 },
+    /* he got the shield across it — braced, weight back, nothing given */
+    guard:   { x:-6, y:0,  rot:6,  arm:-9,  armRot:22 },
+    /* the leg went from under him rather than the head snapping back */
+    buckle:  { x:-7, y:9,  rot:14, arm:-6,  armRot:10 },
+    /* the move that is his own, thrown with everything */
+    sig:     { x:34, y:2,  rot:-13, arm:23, armRot:-20 },
   };
   const P = POSES[pose] || POSES.idle;
-  const striking = pose==="lunge" || pose==="clash";
-  const armT = `translate(${P.arm},0) rotate(${P.armRot},58,48)`;
-  const offT = `translate(${P.arm*0.35},0)`;
+  const striking = pose==="lunge" || pose==="clash" || pose==="sig";
+  /* these were SVG transform attributes, which do not animate — so the body eased
+     into every pose and the sword arm teleported. As CSS transforms they move. */
+  const EASE = "transform .22s cubic-bezier(.34,1.45,.5,1)";
+  const armT = { transform:`translate(${P.arm}px,0px) rotate(${P.armRot}deg)`,
+                 transformOrigin:"58px 48px", transition:EASE };
+  const offT = { transform:`translate(${P.arm*0.35}px,0px)`, transition:EASE };
 
   const helm = ()=>{
     if(hArt==="bare") return (<g>
@@ -12379,20 +12389,20 @@ const Fighter = React.memo(function Fighter({ kit, pose, wounds, scars, fallen, 
   /* shield or net, held in front of the torso */
   const shieldOrNet = ()=>{
     if(dual) return null;
-    if(oArt==="scutum") return (<g transform={offT}>
+    if(oArt==="scutum") return (<g style={offT}>
       <rect x="64" y="38" width="21" height="56" rx="5" fill={FACE} stroke={MET_D} strokeWidth="2.2"/>
       <ellipse cx="74.5" cy="66" rx="5" ry="5.4" fill={MET}/>
       <path d="M68,45 L81,45 M68,87 L81,87" stroke={MET} strokeWidth="1.5"/>
     </g>);
-    if(oArt==="clipeus") return (<g transform={offT}>
+    if(oArt==="clipeus") return (<g style={offT}>
       <circle cx="73" cy="66" r="14" fill={FACE} stroke={MET_D} strokeWidth="2.2"/>
       <circle cx="73" cy="66" r="4.4" fill={MET}/>
     </g>);
-    if(oArt==="parmula") return (<g transform={offT}>
+    if(oArt==="parmula") return (<g style={offT}>
       <rect x="64" y="54" width="18" height="23" rx="3" fill={FACE} stroke={MET_D} strokeWidth="2"/>
       <circle cx="73" cy="65.5" r="3.6" fill={MET}/>
     </g>);
-    if(oArt==="net") return (<g transform={offT} opacity=".9">
+    if(oArt==="net") return (<g style={offT} opacity=".9">
       <path d="M50,54 L60,58 L64,66 L56,68Z" fill={SKIN}/>
       <circle cx="67" cy="66" r="4.4" fill={SKIN_D}/>
       <path d="M70,64 L92,72 L82,90 L66,81Z" fill="none" stroke="#9c8560" strokeWidth="1.4"/>
@@ -12445,7 +12455,7 @@ const Fighter = React.memo(function Fighter({ kit, pose, wounds, scars, fallen, 
       </g>);
     })();
     return (
-      <g transform={armT}>
+      <g style={armT}>
         <path d="M54,41 L63,43 L66,51 L57,53Z" fill={SKIN}/>
         <path d="M60,45 L72,47 L72,55 L60,54Z" fill={SKIN}/>
         {hasManica && <rect x="58" y="44.5" width="15" height="10.5" rx="3.5" fill={LEATHER}/>}
@@ -12459,11 +12469,16 @@ const Fighter = React.memo(function Fighter({ kit, pose, wounds, scars, fallen, 
   return (
     <svg width="118" height="146" viewBox="0 0 128 146" style={{ overflow:"visible",
       opacity: dead?0.85:1, filter: dead? "grayscale(.55) brightness(.68)":"none",
-      transform:`translate(${P.x}px,${P.y}px) rotate(${P.rot}deg)`,
+      /* a man on his last legs stands like it, all the way down rather than at one step */
+      transform:`translate(${P.x}px,${P.y + (fallen||dead ? 0 : (wear||0)*5)}px) rotate(${P.rot + (fallen||dead ? 0 : (wear||0)*4)}deg)`,
       transition:"transform .24s cubic-bezier(.34,1.45,.5,1), filter .5s, opacity .5s",
       transformOrigin:"56px 134px" }}>
       <ellipse cx="58" cy="135" rx={fallen||dead?30:17} ry="4" fill="rgba(28,16,8,.34)"/>
-      {striking && <path d="M78,32 Q114,52 82,84" stroke="rgba(255,240,208,.17)" strokeWidth={pose==="lunge"?4.5:2.5} strokeLinecap="round" fill="none"/>}
+      {striking && (()=>{ /* it used to sweep the same arc whatever he was going for */
+        const y = aim==null ? 54 : clamp(aim, 20, 104);
+        return <path d={`M78,${Math.round(30 + y*0.22)} Q116,${Math.round(y)} 80,${Math.round(y + 34)}`}
+          stroke="rgba(255,240,208,.17)" strokeWidth={pose==="sig"?5.5:pose==="lunge"?4.5:2.5}
+          strokeLinecap="round" fill="none"/>; })()}
       <path d="M44,84 L54,84 L57,130 L45,130Z" fill={SKIN_D}/>
       {hasGreaves && <rect x="43" y="112" width="14" height="12" rx="2.5" fill={MET_D}/>}
       <path d="M44,128 L58,128 L61,134 L43,134Z" fill={LEATHER_D}/>
@@ -12956,14 +12971,21 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
   const downSide = ["fall","appeal","spared","death"].includes(b.kind) ? b.actor : null;
   const poseFor = side => {
     if(downSide) return downSide===side ? "fallen" : "victor";
-    if(b.kind==="clash") return "clash";
+    /* a turned blow is not a mutual clash — one man braced and the other spent it */
+    if(b.kind==="clash") return b.guardBy ? (b.guardBy===side ? "guard" : "lunge") : "clash";
     if(b.kind==="gas" && b.actor===side) return "gas";
     if(b.kind==="crit"||b.kind==="hit"||b.kind==="graze"){
-      if(b.actor===side) return "lunge";
+      if(b.actor===side) return b.sig ? "sig" : "lunge";
+      /* and how he takes it depends on where it landed */
+      if(b.ty!=null && b.ty>=90) return "buckle";
       return b.kind==="crit" ? "stagger" : "recoil";
     }
     return "idle";
   };
+  /* how far gone each of them is, for the sag — and where the blow is going, for the arc */
+  const wearOf = side => { const st = side==="A" ? b.sA : b.sB;
+    return st==null ? 0 : clamp(1 - st/100, 0, 1); };
+  const aimOf = side => (b.actor===side && b.ty!=null) ? b.ty : null;
   const deadSide = (()=>{ const dth = beats.slice(0,i+1).find(x=>x.kind==="death"); return dth? dth.actor : null; })();
   const fallenSide = (()=>{ const f = beats.slice(0,i+1).find(x=>x.kind==="fall"); return f? f.actor : null; })();
 
@@ -12996,8 +13018,11 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
     if(isBeast) return side==="A" ? 138 : 160;
     const base = 130 + reachOff(side==="A" ? fight.A.kit : (fight.B && fight.B.kit));
     const p = poseFor(side);
+    if(p==="sig") return base - 11;
     if(p==="lunge") return base - 7;
     if(p==="clash") return base - 3;
+    if(p==="guard") return base + 6;
+    if(p==="buckle") return base + 12;
     if(p==="recoil"||p==="stagger"||p==="gas") return base + 9;
     if(p==="victor") return base - 2;
     if(p==="fallen") return base + 3;
@@ -13108,7 +13133,7 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
           </>) : (<>
           <div className="fig" style={{left:`calc(50% - ${closeA}px)`}}>
             <div className={poseFor("A")==="idle" && !downSide ? "bob":""}>
-              <Fighter col={houseCol} fem={fight.A.fem} kit={fight.A.kit} scars={fight.A.scars} pose={poseFor("A")} wounds={woundsFor("A")} fallen={fallenSide==="A"} dead={deadSide==="A"}/>
+              <Fighter col={houseCol} fem={fight.A.fem} kit={fight.A.kit} scars={fight.A.scars} pose={poseFor("A")} wounds={woundsFor("A")} fallen={fallenSide==="A"} dead={deadSide==="A"} wear={wearOf("A")} aim={aimOf("A")}/>
             </div>
           </div>
           {isBeast ? (
@@ -13124,7 +13149,7 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
           ) : (
           <div className="fig" style={{right:`calc(50% - ${closeB}px)`, transform:"scaleX(-1)"}}>
             <div className={poseFor("B")==="idle" && !downSide ? "bob":""}>
-              <Fighter foe fem={fight.B.fem} kit={fight.B.kit} scars={fight.B.scars} pose={poseFor("B")} wounds={woundsFor("B")} fallen={fallenSide==="B"} dead={deadSide==="B"}/>
+              <Fighter foe fem={fight.B.fem} kit={fight.B.kit} scars={fight.B.scars} pose={poseFor("B")} wounds={woundsFor("B")} fallen={fallenSide==="B"} dead={deadSide==="B"} wear={wearOf("B")} aim={aimOf("B")}/>
             </div>
           </div>
           )}
