@@ -3116,7 +3116,35 @@ const unrestWord = u=> u<25?"Docile": u<45?"Restless": u<65?"Simmering": u<80?"M
 const rudisEligible = g=> !isAuctor(g) && g.wins>=10 && g.pfame>=180;
 const fullName = g=> g.nick? `${g.name}, ${g.nick}` : g.name;
 
-function chron(d, text, kind){ d.log.unshift({ week:d.week, text:herOwn(d, text), kind:kind||"info" }); d.log = d.log.slice(0,40); }
+/* ---- WHAT THE HOUSE REMEMBERS ----
+   The chronicle used to keep forty lines, which is about thirty weeks. Everything
+   older than that — the men who died, the men freed, the week a feud got a name —
+   was thrown away while the run was still going. It keeps two tiers now: the recent
+   roll, every line of it, and behind that a long memory that holds only what was
+   worth remembering. Ordinary week-to-week notes still fall off the end. Deaths,
+   victories and turns do not. */
+const LOG_ROLL = 200;      /* the near past, complete */
+const LOG_KEPT = 400;      /* the long memory, only what mattered */
+function chron(d, text, kind){
+  d.log.unshift({ week:d.week, text:herOwn(d, text), kind:kind||"info" });
+  while(d.log.length > LOG_ROLL){
+    const fell = d.log.pop();
+    if(fell && fell.kind && fell.kind !== "info"){
+      d.kept = d.kept || [];
+      d.kept.unshift(fell);
+      if(d.kept.length > LOG_KEPT) d.kept.length = LOG_KEPT;
+    }
+  }
+}
+/* the whole history, newest first: the roll, then whatever survived behind it */
+const chronAll = d => (d.log || []).concat(d.kept || []);
+const CHRON_FILTERS = {
+  all:   { name:"Everything", when:()=>true },
+  bad:   { name:"What it cost", when:e=>e.kind==="bad" },
+  good:  { name:"What went well", when:e=>e.kind==="good" },
+  event: { name:"Turns", when:e=>e.kind==="event" },
+};
+const CHRON_KEYS = Object.keys(CHRON_FILTERS);
 
 /* two men in one house answering to the same name is nobody's idea of a roster */
 function freshName(d, pool, fem){
@@ -5195,6 +5223,7 @@ function migrate(S){
     if(!REGIMENS[g.regimen]) g.regimen = "palus"; });
   S.gladiators.forEach(g=>{ if(!g.wear){ g.wear = {}; SLOTS.forEach(s=>{ g.wear[s] = 100; }); } });
   if(!S.rep) S.rep = { blood:0, show:0, craft:0, mercy:0 };
+  if(!S.kept) S.kept = [];        /* the long memory behind the roll */
   if(!S.departed) S.departed = [];
   if(S.reSignOffer===undefined) S.reSignOffer = null;
   if(!S.annals){
@@ -12542,6 +12571,9 @@ export default function App(){
   const [showSettings,setShowSettings] = useState(false);
   const [allTodos,setAllTodos] = useState(false);
   const [showChron,setShowChron] = useState(false);
+  const [chronFilt,setChronFilt] = useState("all");   /* what the chronicle is showing */
+  const [chronQ,setChronQ] = useState("");            /* and who it is being searched for */
+  const [chronMore,setChronMore] = useState(false);
   useEffect(()=>{ (async ()=>{
     try { const r = await window.storage.get(PREFS_KEY);
       setPrefs({ ...DEFAULT_PREFS, ...(r && r.value ? JSON.parse(r.value) : {}) }); }
@@ -17104,24 +17136,83 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         </div>
       )}
 
-      {showChron && (
-        <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:62}} onClick={()=>setShowChron(false)}>
+      {showChron && (()=>{
+        const rollN = (S.log||[]).length;
+        const all = chronAll(S);
+        const q = chronQ.trim().toLowerCase();
+        const F = CHRON_FILTERS[chronFilt] || CHRON_FILTERS.all;
+        const hits = all.map((e,i)=>({ e, roll:i < rollN }))
+          .filter(x=>F.when(x.e) && (!q || x.e.text.toLowerCase().includes(q)));
+        const CAP = 120;
+        const shown = chronMore ? hits : hits.slice(0, CAP);
+        const close = ()=>{ setShowChron(false); setChronQ(""); setChronFilt("all"); setChronMore(false); };
+        let lastYear = null, edged = false;
+        return (
+        <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:62}} onClick={close}>
           <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
-            <div className="flex items-center justify-between" style={{marginBottom:10}}>
+            <div className="flex items-center justify-between gap-2" style={{marginBottom:3}}>
               <div className="disp" style={{fontSize:15,fontWeight:900,letterSpacing:".12em",color:"#e8d092"}}>THE CHRONICLE</div>
-              <button className="btn btn-ghost" style={{padding:"10px 10px"}} aria-label="Close" onClick={()=>setShowChron(false)}><X size={14}/></button>
+              <button className="btn btn-ghost" style={{padding:"10px 10px",flexShrink:0}} aria-label="Close" onClick={close}><X size={14}/></button>
             </div>
-            {S.log.length===0
-              ? <div className="dim" style={{fontSize:14.5,fontStyle:"italic"}}>Nothing written down yet. The house is new.</div>
-              : S.log.map((e,i)=>(
-                  <div key={i} style={{padding:"4px 0",borderBottom:"1px dotted #33271a",fontSize:15,color:e.kind==="bad"?"#d98476":e.kind==="good"?"#cbc08e":e.kind==="event"?"#b9a8c8":"#cfc0a0"}}>
-                    <span className="dim" style={{fontSize:12.5}}>W{e.week}</span> — {e.text}
+            <div className="dim" style={{fontSize:12.5,fontStyle:"italic",marginBottom:8,lineHeight:1.35}}>
+              {all.length===0 ? "Nothing written down yet. The house is new."
+                : `${all.length} line${all.length===1?"":"s"} kept${(S.kept||[]).length? ` — the last ${rollN} in full, and ${(S.kept||[]).length} older thing${(S.kept||[]).length===1?"":"s"} the house has not forgotten`:""}.`}
+            </div>
+            {all.length>0 && (<>
+              <div className="flex gap-1" style={{flexWrap:"wrap",marginBottom:7}}>
+                {CHRON_KEYS.map(k=>{
+                  const n = all.filter(CHRON_FILTERS[k].when).length;
+                  return (
+                    <button key={k} className={`chip ${chronFilt===k?"on":""}`} disabled={n===0}
+                      onClick={()=>{ setChronFilt(k); setChronMore(false); }}
+                      style={chronFilt===k?{borderColor:"#c99a4b",color:"#e0bd72",background:"#2b2115"}:undefined}>
+                      {CHRON_FILTERS[k].name} · {n}
+                    </button>
+                  ); })}
+              </div>
+              <input className="sel" value={chronQ} onChange={e=>{ setChronQ(e.target.value); setChronMore(false); }}
+                placeholder="A name, a house, a word…" aria-label="Search the chronicle"
+                style={{width:"100%",boxSizing:"border-box",background:"#100d0a",color:"#cfc0a0",
+                  border:"1px solid #4e3c26",borderRadius:8,padding:"8px 9px",fontSize:14,marginBottom:9,fontFamily:"inherit"}}/>
+            </>)}
+            {all.length>0 && hits.length===0 && (
+              <div className="dim" style={{fontSize:14.5,fontStyle:"italic"}}>
+                Nothing in the book answers to that.
+              </div>
+            )}
+            {shown.map((x,i)=>{
+              const e = x.e;
+              const yr = Math.floor((e.week-1)/YEAR_WEEKS)+1;
+              const head = yr !== lastYear ? (lastYear = yr, yr) : null;
+              const edge = !x.roll && !edged ? (edged = true) : false;
+              return (
+                <React.Fragment key={i}>
+                  {edge && (
+                    <div className="dim" style={{fontSize:11.5,textTransform:"uppercase",letterSpacing:".08em",
+                      margin:"10px 0 4px",borderTop:"1px solid #3e2f1f",paddingTop:7}}>
+                      Older than the roll — only what was remembered
+                    </div>
+                  )}
+                  {head!=null && (
+                    <div className="tag tag-gold" style={{display:"inline-block",margin:"9px 0 4px"}}>Year {head}</div>
+                  )}
+                  <div style={{padding:"4px 0",borderBottom:"1px dotted #33271a",fontSize:15,
+                    color:e.kind==="bad"?"#d98476":e.kind==="good"?"#cbc08e":e.kind==="event"?"#b9a8c8":"#cfc0a0"}}>
+                    <span className="dim" style={{fontSize:12.5}}>W{((e.week-1)%YEAR_WEEKS)+1}</span> — {e.text}
                   </div>
-                ))}
-            <button className="btn" style={{width:"100%",marginTop:12}} onClick={()=>setShowChron(false)}>Close</button>
+                </React.Fragment>
+              );
+            })}
+            {hits.length > CAP && !chronMore && (
+              <button className="btn btn-ghost" style={{width:"100%",marginTop:8,fontSize:12}} onClick={()=>setChronMore(true)}>
+                Read the other {hits.length - CAP}
+              </button>
+            )}
+            <button className="btn" style={{width:"100%",marginTop:12}} onClick={close}>Close</button>
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {cal && (()=>{
         const rows = calendarRows(S, YEAR_WEEKS);
