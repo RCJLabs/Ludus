@@ -5657,13 +5657,22 @@ function power(f, tactic, oppCls, mom, atkMod){
   const pen = f.injury ? f.injury.pen : 0;
   const e = k => Math.max(5, f[k]-pen);
   const ft = f.footing||1;
-  let p = e("tec")*1.25*(0.5+ft*0.5) + e("str") + e("agi")*0.85*ft*ft + e("end")*0.45 + e("dis")*0.3;
+  /* endurance carried 0.45 against strength's 1.0 and its only other job — the wind —
+     arrived too late to be worth anything, so a man built to last measured out fifteen
+     to twenty points of win rate BEHIND the same man built to hit. It is a fair trade
+     now rather than a trap: strength is still the better attacking stat, endurance is
+     no longer a way to lose on purpose. */
+  let p = e("tec")*1.25*(0.5+ft*0.5) + e("str") + e("agi")*0.85*ft*ft + e("end")*0.62 + e("dis")*0.3;
   p *= 0.85 + (f.morale/100)*0.3;
   { const ft = clamp(f.fatigue,0,100);
     p *= 1 - (ft<=45 ? ft/560 : (45/560 + (ft-45)/230)); }
   if(COUNTERS[f.cls]===oppCls) p *= 1.12;
-  if(tactic==="aggressive") p *= 1.13;
-  if(tactic==="defensive") p *= 0.9;
+  /* the tactic used to swing power 25% end to end, and power decides who lands
+     the blow — so aggressive simply took fewer blows and every discount written
+     for defensive was paid on a thing that had stopped happening. It moves the
+     exchange rate now, in simulateFight, and barely touches the odds of landing. */
+  if(tactic==="aggressive") p *= 1.10;
+  if(tactic==="defensive") p *= 0.94;
   if(tactic==="showboat") p *= 0.96;
   p *= 1 + clamp(mom||0,-3,3)*0.03;
   p *= 1 + (f.mods ? f.mods.atk*0.6 + f.mods.def*0.30 : 0);
@@ -5705,6 +5714,13 @@ const missioOdds = sc => clamp(1/(1 + Math.exp(-(sc - MISSIO_MID)/MISSIO_SLOPE))
 const missioWord = p => p>=0.86 ? "he would be spared" : p>=0.66 ? "he would most likely be spared"
   : p>=0.42 ? "it would be close" : p>=0.20 ? "the thumb would probably turn" : "the thumb would turn";
 
+const GAS_AT = 0.40;                 /* the share of his wind at which it starts to tell */
+function gasOf(f, st, sm){
+  const frac = clamp(sm>0 ? st/sm : 0, 0, 1);
+  if(frac >= GAS_AT) return 1;
+  const drop = (GAS_AT - frac) / GAS_AT;              /* 0 at the line, 1 on empty */
+  return 1 - drop * (0.50 - clamp(f.end||50,0,100)/100 * 0.28);
+}
 function simulateFight(A, B, tA, stakes, ctx, opts){
   const O = opts || {};
   const R0 = O.from || null;
@@ -5730,7 +5746,21 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
   if(order && order.rouse){ crowd = clamp(crowd + 20, 0, 100); }
   if(order && order.milk){ crowd = clamp(crowd + 14, 0, 100); vB = clamp(vB - 6, 0, 100); sB = Math.max(smB*0.15, sB - smB*0.10); }
   let aDies=false, bDies=false, fell=false, winner=null, ended=false, lastTarget="flank", spared=false;
-  const takeMult = t => t==="aggressive"?1.12 : t==="defensive"?0.82 : t==="showboat"?1.08 : 1;
+  /* ---- WHAT THE THREE TACTICS ARE FOR ----
+     Measured across every stat gap, aggressive won three times as often as
+     defensive and — because losing is what gets a man killed — the cautious
+     option killed him four times as often as the reckless one. The safe call
+     was the lethal one. power() decides who lands the blow, not merely how
+     hard, so defensive was paying twice for one discount.
+     Each of the three has a domain now. Aggressive still hits hardest and
+     still wins most at parity, but it takes a third more coming back and
+     burns half again the wind, so it wants the bout finished and falls apart
+     in a long one. Defensive turns blows aside outright rather than merely
+     softening them, and spends almost nothing — it loses more bouts and
+     brings the man home. */
+  const dealMult = t => t==="aggressive"?1.28 : t==="defensive"?0.70 : 1;
+  const takeMult = t => t==="aggressive"?1.34 : t==="defensive"?0.60 : t==="showboat"?1.10 : 1;
+  const GUARD_TURN = 0.22;      /* how often a defensive man simply turns one aside */
   const oppName = B.nick? `${B.name}, ${B.nick}` : B.name;
   const prA = PR(A), prB = PR(B);
   let round = R0 ? R0.round : 0;
@@ -5739,7 +5769,8 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
   /* the same verdict the appeal will use, read a beat at a time, so the box is
      never a surprise — you can watch the number move as he wins the crowd back */
   const spareOdds = () => stakes==="sine" ? null
-    : Math.round(missioOdds(missioScore(A, ctx, crowd, missioAccount(vB), round*3.2)) * 100);
+    : Math.round(missioOdds(missioScore(A, ctx, crowd, missioAccount(vB),
+        round*3.2 + (tA==="defensive" ? 10 : tA==="aggressive" ? -6 : 0))) * 100);
   const spareRead = () => { const p = spareOdds(); return p==null ? null : p>=66 ? 2 : p>=42 ? 1 : 0; };
   /* a beat that names only one of them belongs to that one, and turns for her */
   const oneOf = t => { if(!t) return t;
@@ -5799,14 +5830,19 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
     const cf = clamp(crowd,0,100)/100;
     const shoA = 1 + cf * (A.sho/100) * 0.14 * (cPeak?1.5:1);
     const shoB = 1 + cf * (B.sho/100) * 0.10;
-    /* a man bred to endure keeps his blows honest when the others are swinging on empty */
-    const gasA = sA<22 ? (0.72 + A.end/450) : 1;
-    const gasB = sB<22 ? (0.72 + B.end/450) : 1;
+    /* a man bred to endure keeps his blows honest when the others are swinging on empty.
+       This was a cliff at a fifth of his wind with a small penalty behind it, and most
+       bouts finished before it ever mattered — measured across two thousand fights,
+       +25 endurance for -25 strength was worth fifteen points of win rate the WRONG
+       way. It comes on at two fifths now and bites by how little he has left, and what
+       a man bred to endure keeps is most of it. */
+    const gasA = gasOf(A, sA, smA), gasB = gasOf(B, sB, smB);
     const pA = power(A,tA,B.cls,mom,modA) * PL.pow * (0.72+R()*0.56) * gasA * (A.sigOpen||1) * shoA * (round>=6 ? (A.lastLate||1) : 1);
     const pB = power(B,tB,A.cls,-mom,modB) * (0.72+R()*0.56) * gasB * (B.sigOpen||1) * shoB * (bLegged?0.9:1);
     A.sigOpen = 1; B.sigOpen = 1;
-    sA -= (tA==="aggressive"?9:7) * (1 - A.mods.spd*0.5) * PL.stam * (A.formStam||1) * (ctx.sky||1) * (A.lastStam||1);
-    sB -= (tB==="aggressive"?9:7) * (1 - B.mods.spd*0.5) * (bLegged?1.25:1) * (ctx.skyB||1);
+    const wind = t => t==="aggressive" ? 9.4 : t==="defensive" ? 5 : 7;
+    sA -= wind(tA) * (1 - A.mods.spd*0.5) * PL.stam * (A.formStam||1) * (ctx.sky||1) * (A.lastStam||1);
+    sB -= wind(tB) * (1 - B.mods.spd*0.5) * (bLegged?1.25:1) * (ctx.skyB||1);
     /* one of them may go for the thing his style is for — or you may have ordered it */
     const forcedSig = orderSigA; orderSigA = false;
     const sigTurn = (()=>{
@@ -5829,7 +5865,11 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
         if(isA){ vB = clamp(vB-dmg,0,100); sB -= S.win.stam; mom = clamp(mom+1,-3,3); lastTarget = tgt; }
         else   { vA = clamp(vA-dmg,0,100); sA -= S.win.stam; mom = clamp(mom-1,-3,3); lastTarget = tgt; }
         crowd = clamp(crowd + S.win.crowd * (T?T.crowd:1), 0, 100);
-        push("crit", T ? T.line(g.name, foe.name) : S.hit(g.name, foe.name), { sig:S.move, target:tgt, named: T? T.name : null });
+        /* every landed signature used to be filed as a crit whatever it did, which is
+           why a quarter of all beats were crits and the word had stopped meaning
+           anything. It is called what it did; the flourish rides on sig and named. */
+        push(dmg>=18?"crit":dmg>=10?"hit":"graze", T ? T.line(g.name, foe.name) : S.hit(g.name, foe.name),
+          { sig:S.move, target:tgt, named: T? T.name : null, dmg:rnd(dmg) });
       } else {
         if(isA){ sA -= S.fail.selfStam; A.sigOpen = S.fail.guard; mom = clamp(mom-1,-3,3); }
         else   { sB -= S.fail.selfStam; B.sigOpen = S.fail.guard; mom = clamp(mom+1,-3,3); }
@@ -5840,7 +5880,19 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
       continue;
     }
     const diff = Math.abs(pA-pB);
-    if(diff < 7){
+    const defTac = pA>pB ? tB : tA;                    /* whoever is about to be hit */
+    const turned = diff >= 7 && defTac==="defensive" && R() < GUARD_TURN;
+    if(turned){
+      const dName = pA>pB ? B.name : A.name, aName = pA>pB ? A.name : B.name;
+      crowd = clamp(crowd+1,0,100);
+      mom = mom>0? mom-1 : mom<0? mom+1 : 0;
+      push("clash", pick([
+        `${dName} takes it on the shield and gives a step. Nothing in that for anybody.`,
+        `${aName} comes on and finds only ${dName}'s guard where the opening was.`,
+        `${dName} turns it aside at the last, and the crowd makes a sound about it.`,
+      ]));
+    }
+    else if(diff < 7){
       crowd = clamp(crowd+2,0,100);
       mom = mom>0? mom-1 : mom<0? mom+1 : 0;
       push("clash", pick(CLASH_L)(A.name, B.name));
@@ -5850,7 +5902,7 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
       const move = atkIsA?moveA:moveB;
       const tgt = (atkIsA && orderTgt) ? (TARGETS.find(t=>t[0]===orderTgt) || pick(TARGETS)) : pick(TARGETS);
       let dmg = 5 + diff/9 + atk.str/14;
-      dmg *= takeMult(atkIsA?tB:tA) * tgt[2];
+      dmg *= dealMult(atkIsA?tA:tB) * takeMult(atkIsA?tB:tA) * tgt[2];
       if(ctx.guarded && atkIsA===false) dmg *= 0.44;
       if(!atkIsA) dmg *= PL.guard;
       dmg *= 1 + atk.mods.atk*0.7;
@@ -5871,8 +5923,8 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
         break;
       }
     }
-    if(sA<22 && !tiredA){ tiredA=true; push("gas", `${A.name}'s arms grow heavy; breath comes ragged.`, {actor:"A"}); }
-    if(sB<22 && !tiredB){ tiredB=true; push("gas", `${B.name} is flagging — sweat and blood in ${prB.his} eyes.`, {actor:"B"}); }
+    if(sA < smA*GAS_AT && !tiredA){ tiredA=true; push("gas", `${A.name}'s arms grow heavy; breath comes ragged.`, {actor:"A"}); }
+    if(sB < smB*GAS_AT && !tiredB){ tiredB=true; push("gas", `${B.name} is flagging — sweat and blood in ${prB.his} eyes.`, {actor:"B"}); }
     if(vA<=20 || vB<=20) break;
     if(cruxNow(r)){
       crux = { vA, vB, sA, sB, crowd, mom, round:r, tB, tiredA, tiredB, c50, c80, peak:cPeak, count:cruxCount+1, bLegged };
@@ -5903,7 +5955,12 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
       else { bDies=true; push("death", `${A.name} does what was agreed. ${B.name} will not rise.`, {actor:"B"}); }
     } else if(loserIsA){
       const pat = ctx.patron;
-      const odds = missioOdds(missioScore(A, ctx, crowd, missioAccount(vB), round*3.2));
+      /* how he went down is part of the verdict. A man who covered up and made
+         them work for every step is spared oftener than one who threw everything
+         at it and was flattened in six — the account he gave is not only the
+         blood he drew. This is what makes fighting to survive a real choice. */
+      const stand = tA==="defensive" ? 10 : tA==="aggressive" ? -6 : 0;
+      const odds = missioOdds(missioScore(A, ctx, crowd, missioAccount(vB), round*3.2 + stand));
       push("appeal", `${A.name} raises two fingers — the appeal. ${round} round${round===1?"":"s"}, and the arena holds its breath — ${missioWord(odds)}.`,
         {actor:"A", odds:Math.round(odds*100)});
       if(R() < odds){
@@ -9558,7 +9615,12 @@ function simulateVenatio(A, key, tA, ctx, opts){
    and bet against him. The coin is good. Being caught is not. */
 const VIG = 0.12;
 const STAKES_OPTS = [50, 150, 400];
-function winChance(g, opp, prep){
+/* what the tactic is worth on the odds scale. Most of what it does lives in the
+   exchange — how hard he hits, how much he takes, how fast he burns — none of
+   which power() can see, so these are fitted from measured outcomes: aggressive
+   won 63.6% where measured won 46.3% at parity, defensive 39.8%. */
+const TACTIC_OR = { aggressive:2.2, measured:1, defensive:0.85, showboat:0.9 };
+function winChance(g, opp, prep, tac){
   const A = clone(g); A.kit = g.kit || defaultKit(g.cls); A.mods = kitMods(A.kit, A.cls, A);
   /* the drill is a real edge in the bout, so the bookmakers had better know about it */
   if(prep) A.regardMult = (A.regardMult || 1) * (1 + prep*0.14);
@@ -9567,9 +9629,16 @@ function winChance(g, opp, prep){
   // a power edge compounds across twelve rounds, so the raw ratio badly understates
   // the true chance; sharpen it on the odds scale to match measured outcomes
   const raw = clamp(pa/(pa+pb), 0.02, 0.98);
-  const or = Math.pow(raw/(1-raw), 8.0);
+  const or = Math.pow(raw/(1-raw), 12.0) * (TACTIC_OR[tac] || 1);
   return clamp(or/(1+or), 0.05, 0.95);
 }
+/* and what each of them is, in one line, because none of it was on the screen */
+const TACTIC_SAY = {
+  aggressive: "Hits hardest and wins most — and takes a third more coming back, burns his wind fastest, and is the likeliest way to lose him.",
+  measured:   "Neither. He fights the bout in front of him and takes what it gives.",
+  defensive:  "Turns blows aside instead of trading them, and spends almost nothing. He wins less and comes home about twice as often.",
+  showboat:   "He fights for the tiers rather than the man. Worse odds, and a crowd that remembers the name.",
+};
 const oddsFor = p => Math.max(1.05, (1/clamp(p,0.02,0.98)) * (1-VIG));
 const oddsWord = o => `${o.toFixed(2)} to 1`;
 
@@ -13437,8 +13506,9 @@ export default function App(){
     setS(d); setEvResult(msg);
   };
 
+  /* the bookmaker prices what you actually told him to do, not a neutral bout */
   const makeBet = (g, opp)=> stake>0 && S.gold>=stake
-    ? { amount:stake, against, chance:winChance(g, opp) } : null;
+    ? { amount:stake, against, chance:winChance(g, opp, 0, tactic) } : null;
   const fightOffer = (offer)=>{
     if(!fGid) return;
     const d = clone(S);
@@ -18808,6 +18878,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   <button key={k} className={`chip ${tactic===k?"on":""}`} onClick={()=>setTactic(k)}>{l}</button>
                 ))}
               </div>
+              <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:5,lineHeight:1.35}}>{TACTIC_SAY[tactic]}</div>
             </div>
           );
           const entranceRow = (
@@ -18926,7 +18997,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               </button>
             </>);
           } else if(pick.kind==="single"){ const o=pick.o;
-            const p = me ? winChance(me, o.opp, prepFor(S,me,o) - ((me.watchedBy && me.watchedBy.known) ? theirRead(S,me,o)*0.86 : 0)) : 0.5;
+            const p = me ? winChance(me, o.opp, prepFor(S,me,o) - ((me.watchedBy && me.watchedBy.known) ? theirRead(S,me,o)*0.86 : 0), tactic) : 0.5;
             body = (<>
               {backBtn}
               <div className="flex items-center gap-1" style={{flexWrap:"wrap",marginBottom:5}}>
