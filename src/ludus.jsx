@@ -1561,6 +1561,17 @@ const REP_KINDS = {
     line:"Beaten men look to your box first. That is worth more than it sounds.", patron:"merchant" },
 };
 const REP_ORDER = ["blood","show","craft","mercy"];
+/* ---- A NAME IS NOT A THRESHOLD ----
+   Four tallies, all decaying together, all fed by ordinary weeks. Measured across a
+   played campaign the leader sat within a point or two of the old 36% gate for most
+   of a hundred weeks, crossing back and forth — and every crossing silently turned
+   purses, an extra bout a festival, the death-match odds, whether debts got collected
+   and whether the medicus stayed. A name is harder to earn than to keep, and when the
+   town changes its mind it says so. */
+const REP_SETTLE = 0.36;   /* what it takes to be given a name */
+const REP_KEEP   = 0.30;   /* and what it takes to keep the one you have */
+const REP_TAKE   = 0.06;   /* how far another must be clear to take it off you */
+const REP_FLOOR  = 14;     /* below this the town has not been paying attention */
 /* Twenty-one places read this and not one of them ever said so. What a settled
    reputation is actually buying, and costing, in the words the mechanics use. */
 const REP_EFFECTS = {
@@ -1590,11 +1601,40 @@ const REP_EFFECTS = {
 };
 const repOf = (d,k) => (d.rep && d.rep[k]) || 0;
 const repTotal = d => REP_ORDER.reduce((s,k)=>s+repOf(d,k), 0);
-function repStyle(d){
+/* who is loudest this moment, before any of the stickiness is applied */
+function repLeader(d){
   const tot = repTotal(d);
-  if(tot < 14) return null;
+  if(tot < REP_FLOOR) return { key:null, share:0, tot };
   const top = REP_ORDER.reduce((m,k)=> repOf(d,k)>repOf(d,m) ? k : m, REP_ORDER[0]);
-  return repOf(d,top)/tot >= 0.36 ? top : null;
+  return { key:top, share: tot ? repOf(d,top)/tot : 0, tot };
+}
+const repShareOf = (d, k) => { const t = repTotal(d); return t ? repOf(d,k)/t : 0; };
+/* the name the town has actually settled on. It only changes on the turn of a week. */
+function repStyle(d){ return (d && d.repName && d.repName.key) || null; }
+/* and this is the only thing that changes it */
+function repSettle(d){
+  const L = repLeader(d);
+  const held = d.repName && d.repName.key;
+  if(!held){
+    if(L.key && L.share >= REP_SETTLE){
+      d.repName = { key:L.key, since:d.week };
+      chron(d, `Capua has made up its mind about this house. ${REP_KINDS[L.key].name}: ${REP_KINDS[L.key].line}`, "event");
+    }
+    return;
+  }
+  const mine = repShareOf(d, held);
+  if(mine < REP_KEEP){
+    if(L.key && L.key !== held && L.share >= REP_SETTLE){
+      d.repName = { key:L.key, since:d.week };
+      chron(d, `They have stopped calling this house ${REP_KINDS[held].name.toLowerCase()} and started calling it ${REP_KINDS[L.key].name.toLowerCase()}. ${REP_KINDS[L.key].line}`, "event");
+    } else {
+      d.repName = null;
+      chron(d, `Whatever Capua had decided this house was, it has stopped saying so. Nobody is calling you anything in particular any more, and nothing comes with that.`, "event");
+    }
+  } else if(L.key && L.key !== held && L.share >= REP_SETTLE && L.share > mine + REP_TAKE){
+    d.repName = { key:L.key, since:d.week };
+    chron(d, `The name has changed. Not ${REP_KINDS[held].name.toLowerCase()} any more — ${REP_KINDS[L.key].name.toLowerCase()}. ${REP_KINDS[L.key].line}`, "event");
+  }
 }
 const repShare = (d,k) => { const t = repTotal(d); return t? repOf(d,k)/t : 0; };
 function addRep(d, k, n){
@@ -1604,6 +1644,7 @@ function addRep(d, k, n){
 function repWeek(d){
   if(!d.rep) d.rep = { blood:0, show:0, craft:0, mercy:0 };
   for(const k of REP_ORDER) d.rep[k] = Math.max(0, d.rep[k] * 0.985);
+  repSettle(d);                 /* the town makes up its mind once a week, not once a render */
   const st = repStyle(d);
   if(st){
     const p = patronsOf(d).find(x=>x.rank===REP_KINDS[st].patron);
@@ -5325,6 +5366,10 @@ function migrate(S){
     if(!REGIMENS[g.regimen]) g.regimen = "palus"; });
   S.gladiators.forEach(g=>{ if(!g.wear){ g.wear = {}; SLOTS.forEach(s=>{ g.wear[s] = 100; }); } });
   if(!S.rep) S.rep = { blood:0, show:0, craft:0, mercy:0 };
+  if(S.repName === undefined){
+    const L = repLeader(S);
+    S.repName = (L.key && L.share >= REP_SETTLE) ? { key:L.key, since:S.week } : null;
+  }
   if(!S.kept) S.kept = [];        /* the long memory behind the roll */
   if(!S.pit) S.pit = pick(PIT_HOUSES);
   if(!S.pitCard || S.pitCard.week !== S.week) makePitCard(S);
@@ -5377,7 +5422,7 @@ function newGameState(name, scen, seed, pitch){
     gladiators:[], market:[], games:null, pendingEvent:null, log:[], fallen:[], freed:[],
     seed: null, rngState: 0,
     lastParty:-9, lastFeast:-9, over:null, milestone600:false, flags:{learned:{}}, escaped:[], rebellion:null, gear:{}, retired:[],
-    doctore:null, doctoreMarket:[], doctoreOffer:null, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, court:null, defected:[], nemesis:null, nemHouse:null, saga:null, arcs:[], crest:{ c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" }, primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], works:{}, slavers:{}, pact:null, gambits:{}, pendingLesson:null, law:null, doctrine:null, kits:[], deadSteel:[], bay:null, mark:null, after:null, metHouse:{}, owed:[], household:{}, yardSeen:0, yardMissed:0, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, domus:{ wife:null, children:[], nextKin:1 }, acclaim:0, brand:{ licensed:false, decided:false, tier:0, earned:0 }, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, departed:[], reSignOffer:null, annals:[], rise:{ rank:0, standing:0 }, munusLast:-99, league:{ first:null, since:1, held:0, best:99, year:1, snap:null }, piety:30, blessing:null, vow:null, lastOffering:-9, powLot:null };
+    doctore:null, doctoreMarket:[], doctoreOffer:null, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, court:null, defected:[], nemesis:null, nemHouse:null, saga:null, arcs:[], crest:{ c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" }, primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], works:{}, slavers:{}, pact:null, gambits:{}, pendingLesson:null, law:null, doctrine:null, kits:[], deadSteel:[], bay:null, mark:null, after:null, metHouse:{}, owed:[], household:{}, yardSeen:0, yardMissed:0, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, domus:{ wife:null, children:[], nextKin:1 }, acclaim:0, brand:{ licensed:false, decided:false, tier:0, earned:0 }, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, repName:null, departed:[], reSignOffer:null, annals:[], rise:{ rank:0, standing:0 }, munusLast:-99, league:{ first:null, since:1, held:0, best:99, year:1, snap:null }, piety:30, blessing:null, vow:null, lastOffering:-9, powLot:null };
   d.rivals = makeRivals(d);
   const solo = S.men.length === 1;
   S.men.forEach((band,i)=>{
@@ -14356,15 +14401,25 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               <span className="rowval" style={{fontSize:12.5,color:good?"#9aa86a":"#d96f5d",flexShrink:0}}>{what}</span>
             </div>
           ))}
-          <div className="dim" style={{fontSize:12.5,fontStyle:"italic",marginTop:6,lineHeight:1.35}}>
-            A reputation settles when one of the four holds better than a third of the whole, and it
-            fades a little every week you do not feed it.
-          </div>
+          {(()=>{ const mine = repShareOf(S, st), held = S.repName ? S.week - S.repName.since : 0;
+            const room = Math.round((mine - REP_KEEP) * 100);
+            return (
+              <div className="dim" style={{fontSize:12.5,fontStyle:"italic",marginTop:7,lineHeight:1.4,borderTop:"1px dotted #33271a",paddingTop:6}}>
+                Held {held===0?"since this week":held===1?"a week":`${held} weeks`}, at {Math.round(mine*100)} in the hundred.
+                {" "}A name is given at {Math.round(REP_SETTLE*100)} and kept until it falls under {Math.round(REP_KEEP*100)} —
+                {room > 0
+                  ? ` there are ${room} points of room before Capua stops saying it.`
+                  : ` it is on the edge of slipping, and you will be told when it does.`}
+              </div>
+            ); })()}
         </div>
       ) : (
-        <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:8,lineHeight:1.35}}>
-          None of the four is above a third of the whole yet, so the town has decided nothing and
-          nothing is being bought or paid for. Keep doing one thing and it will settle.
+        <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:8,lineHeight:1.4}}>
+          {(()=>{ const L = repLeader(S);
+            if(!L.key) return "Too little has happened for the town to have formed a view. Nothing is being bought or paid for.";
+            const gap = Math.round((REP_SETTLE - L.share) * 100);
+            return `Nothing is being bought or paid for yet. ${REP_KINDS[L.key].name} leads at ${Math.round(L.share*100)} in the hundred and a name is given at ${Math.round(REP_SETTLE*100)} — ${gap>0?`${gap} points short`:"as good as there"}. Keep doing the one thing.`;
+          })()}
         </div>
       )}
     </div>
