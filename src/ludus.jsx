@@ -1561,6 +1561,33 @@ const REP_KINDS = {
     line:"Beaten men look to your box first. That is worth more than it sounds.", patron:"merchant" },
 };
 const REP_ORDER = ["blood","show","craft","mercy"];
+/* Twenty-one places read this and not one of them ever said so. What a settled
+   reputation is actually buying, and costing, in the words the mechanics use. */
+const REP_EFFECTS = {
+  blood: [
+    ["Death matches offered", "+22 in the hundred", false],
+    ["Editors who owe you pay up", "14 in the hundred less often", false],
+    ["The cells", "turn a little worse every week", false],
+    ["The medicus", "will not work for a butcher forever", false],
+    ["The magistrate", "is the sort of patron who courts you", true],
+  ],
+  show: [
+    ["Bouts on the card", "one more, every festival", true],
+    ["A noble", "is the sort of patron who courts you", true],
+  ],
+  craft: [
+    ["Purses", "+18 in the hundred", true],
+    ["Editors who owe you pay up", "14 in the hundred more often", true],
+    ["The block and the racks", "six in the hundred kinder", true],
+    ["A senator", "is the sort of patron who courts you", true],
+  ],
+  mercy: [
+    ["Death matches offered", "−13 in the hundred", true],
+    ["Editors who owe you pay up", "eight in the hundred more often", true],
+    ["The cells", "settle a little every week", true],
+    ["A merchant", "is the sort of patron who courts you", true],
+  ],
+};
 const repOf = (d,k) => (d.rep && d.rep[k]) || 0;
 const repTotal = d => REP_ORDER.reduce((s,k)=>s+repOf(d,k), 0);
 function repStyle(d){
@@ -14317,6 +14344,29 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
       <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:6}}>
         {st ? REP_KINDS[st].line : "Nobody has decided what kind of house this is yet."}
       </div>
+      {st ? (
+        <div className="panel" style={{padding:"10px 11px",marginTop:9,background:"#1c1610"}}>
+          <div className="flex items-center justify-between gap-2" style={{marginBottom:6}}>
+            <span className="tag tag-gold">What it is buying you</span>
+            <span className="rowval dim" style={{fontSize:12}}>and what it costs</span>
+          </div>
+          {(REP_EFFECTS[st]||[]).map(([label, what, good], i)=>(
+            <div key={i} className="flex items-center justify-between gap-2" style={{padding:"3px 0"}}>
+              <span className="rowname" style={{fontSize:13.5,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{label}</span>
+              <span className="rowval" style={{fontSize:12.5,color:good?"#9aa86a":"#d96f5d",flexShrink:0}}>{what}</span>
+            </div>
+          ))}
+          <div className="dim" style={{fontSize:12.5,fontStyle:"italic",marginTop:6,lineHeight:1.35}}>
+            A reputation settles when one of the four holds better than a third of the whole, and it
+            fades a little every week you do not feed it.
+          </div>
+        </div>
+      ) : (
+        <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:8,lineHeight:1.35}}>
+          None of the four is above a third of the whole yet, so the town has decided nothing and
+          nothing is being bought or paid for. Keep doing one thing and it will settle.
+        </div>
+      )}
     </div>
   ); })()}</>) },
   };
