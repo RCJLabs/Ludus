@@ -2026,6 +2026,13 @@ function agenda(d){
     else if(un.length > 1) add(1, "men", `${un.length} men have not been sworn in`, un.map(g=>g.name).join(", ")); }
   for(const g of activeG(d)) if(canMaster(d,g)) add(1, "men", `${g.name} has earned his mastery`, "the doctore would say so out loud");
   { const f = ripeFeud(d); if(f) add(2, "men", `${f.a.name} and ${f.b.name} are close to it`, "the yard has noticed"); }
+  /* open every week of the year, named as the early income in the charter itself,
+     and never once mentioned outside the arena tab */
+  { const men = pitMen(d), free = activeG(d).filter(g=>canFight(g) && g.lastFought < d.week);
+    if(men.length && free.length && !d.city && !d.travel && !d.rome)
+      add(d.week <= 12 ? 2 : 1, "arena",
+        `${men.length} at the rope in ${pitOf(d).name}`,
+        `${men.map(f=>f.name).join(", ")} — no festival needed, and ${free.length===1?"one man is":free.length+" men are"} free`); }
   if(d.doctoreOffer) add(2, "market", "A doctore is offering", "he will not wait long");
   /* the largest thing in the game nobody was ever told about. Two men ask at the
      square every week from the day you take the keys and nothing said so. */
@@ -5342,6 +5349,13 @@ function migrate(S){
   if(!S.feats) S.feats = {};
   if(!S.lanista) S.lanista = makeLanista(S);
   if(S.collegium===undefined) S.collegium = null;
+  /* a run in progress keeps the cellar it knows this week, and starts moving after */
+  if(S.pitSeat == null){
+    const i = S.pit ? PIT_HOUSES.findIndex(h=>h.name === S.pit.name) : -1;
+    const at = i < 0 ? 0 : i;
+    const n = PIT_HOUSES.length;
+    S.pitSeat = ((at - Math.floor((Math.max(1, S.week||1) - 1) / PIT_MOVE)) % n + n) % n;
+  }
   if(S.war===undefined) S.war = null;
   if(!S.circuit || !S.circuit.length) seedCircuit(S);
   if(!S.factions) S.factions = { parm:40, scut:40, mob:40, front:40 };
@@ -5463,7 +5477,7 @@ function newGameState(name, scen, seed, pitch){
     gladiators:[], market:[], games:null, pendingEvent:null, log:[], fallen:[], freed:[],
     seed: null, rngState: 0,
     lastParty:-9, lastFeast:-9, over:null, milestone600:false, flags:{learned:{}}, escaped:[], rebellion:null, gear:{}, retired:[],
-    doctore:null, doctoreMarket:[], doctoreOffer:null, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, court:null, defected:[], nemesis:null, nemHouse:null, saga:null, arcs:[], crest:{ c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" }, primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], works:{}, slavers:{}, pact:null, gambits:{}, pendingLesson:null, law:null, doctrine:null, kits:[], deadSteel:[], bay:null, mark:null, after:null, metHouse:{}, owed:[], household:{}, yardSeen:0, yardMissed:0, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, domus:{ wife:null, children:[], nextKin:1 }, acclaim:0, brand:{ licensed:false, decided:false, tier:0, earned:0 }, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, repName:null, askBooking:null, askChallenge:null, departed:[], reSignOffer:null, annals:[], rise:{ rank:0, standing:0 }, munusLast:-99, league:{ first:null, since:1, held:0, best:99, year:1, snap:null }, piety:30, blessing:null, vow:null, lastOffering:-9, powLot:null };
+    doctore:null, doctoreMarket:[], doctoreOffer:null, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, court:null, defected:[], nemesis:null, nemHouse:null, saga:null, arcs:[], crest:{ c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" }, primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], works:{}, slavers:{}, pact:null, gambits:{}, pendingLesson:null, law:null, doctrine:null, kits:[], deadSteel:[], bay:null, mark:null, after:null, metHouse:{}, owed:[], household:{}, yardSeen:0, yardMissed:0, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, domus:{ wife:null, children:[], nextKin:1 }, acclaim:0, brand:{ licensed:false, decided:false, tier:0, earned:0 }, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, repName:null, askBooking:null, askChallenge:null, pitSeat:0, departed:[], reSignOffer:null, annals:[], rise:{ rank:0, standing:0 }, munusLast:-99, league:{ first:null, since:1, held:0, best:99, year:1, snap:null }, piety:30, blessing:null, vow:null, lastOffering:-9, powLot:null };
   d.rivals = makeRivals(d);
   const solo = S.men.length === 1;
   S.men.forEach((band,i)=>{
@@ -5491,6 +5505,7 @@ function newGameState(name, scen, seed, pitch){
   d.gladiators.forEach(g=>{ g.sworn = { how:"proper", week:1, free:false }; });
   d.rngState = rngGet();
   d.lanista = makeLanista(d);
+  d.pitSeat = ri(0, PIT_HOUSES.length - 1);   /* which cellar the rope is in when you arrive */
   seedCircuit(d);
   makeMarket(d);
   makeDoctoreMarket(d);
@@ -7781,6 +7796,15 @@ function calendarRows(d, span){
         put(d.week + (PREP_MAX - (pr.weeks||0)), "quiet", `${g.name} has learned all he can of ${pr.name}`,
           "after this the weeks buy nothing more", "men"); }
   }
+  /* the pits — the one place that is open every week of the year, and the only
+     thing about them with a date on it: the week the rope picks itself up */
+  { const men = pitMen(d);
+    if(men.length) put(d.week, "quiet", `${men.length} at the rope in ${pitOf(d).name}`,
+      `${men.map(f=>f.name).join(", ")} — ${pitOf(d).keeper} is taking the cut`, "arena");
+    const nx = pitNext(d), mw = pitMoveWeek(d);
+    if(nx && nx.key !== pitOf(d).key)
+      put(mw, "quiet", `The rope moves to ${nx.name}`,
+        `${nx.keeper} keeps it — ${nx.pays.toLowerCase()}`, "arena"); }
   /* the readings you paid for, going stale */
   for(const h of (d.rivals||[])) for(const f of (h.fighters||[])) if(f.seen != null)
     put(f.seen + SCOUT_KEEPS, "quiet", `What you know of ${f.name} goes stale`,
@@ -11964,23 +11988,40 @@ function retireG(d, gid){
    and you can see which of them you are taking before anybody goes. What the night
    pays follows the man you take — the pits do not care who you are, only who he is. */
 const PIT_HOUSES = [
-  { name:"the sand under the wool market", keeper:"Ancus",
-    line:"A cellar with a drain in it. Ancus takes a cut at the rope and does not ask questions at either end of the evening." },
-  { name:"the yard behind the Vinalia gate", keeper:"Pollia",
-    line:"Open air, a rope, and a woman who has been running it since before the war. Pollia pays in the same bag she collects in." },
-  { name:"the old grain floor at the river", keeper:"Rufio the Elder",
-    line:"Boards worn smooth by forty years of it. Rufio remembers every man who has bled on them and mentions it constantly." },
-  { name:"Sextus' cellar off the forum",  keeper:"Sextus",
-    line:"Two rooms under a wine shop, and the crowd stands close enough to be part of the bout. Sextus lets them." },
+  { key:"wool", name:"the sand under the wool market", keeper:"Ancus", pay:0.92,
+    line:"A cellar with a drain in it. Ancus takes a cut at the rope and does not ask questions at either end of the evening.",
+    pays:"Ancus takes his cut first and the purse is thinner for it." },
+  { key:"gate", name:"the yard behind the Vinalia gate", keeper:"Pollia", pay:1.00,
+    line:"Open air, a rope, and a woman who has been running it since before the war. Pollia pays in the same bag she collects in.",
+    pays:"Pollia pays what the man is worth, to the as." },
+  { key:"grain", name:"the old grain floor at the river", keeper:"Rufio the Elder", pay:1.09,
+    line:"Boards worn smooth by forty years of it. Rufio remembers every man who has bled on them and mentions it constantly.",
+    pays:"Rufio pays over the odds because he wants the good ones coming back." },
+  { key:"forum", name:"Sextus' cellar off the forum",  keeper:"Sextus", pay:1.16,
+    line:"Two rooms under a wine shop, and the crowd stands close enough to be part of the bout. Sextus lets them.",
+    pays:"The room is packed and standing, and Sextus prices it accordingly." },
 ];
 const PIT_NIGHT = 3;                          /* how many are down there on a night */
-const pitOf = d => d.pit || (d.pit = pick(PIT_HOUSES));
+/* ---- WHERE THE ROPE IS THIS MONTH ----
+   Four cellars were written, with four keepers and four ways of paying. pitOf picked
+   one on the first call and cached it on the save, so a whole run only ever saw one
+   of them and three quarters of it was unreachable. The rope moves now, on a month
+   that can be read off in advance — which is the only thing about the pits that was
+   ever worth putting on a calendar, the card itself being reshuffled every week. */
+const PIT_MOVE = 4;                           /* weeks the rope stays in one place */
+const pitAt = (d, week) => PIT_HOUSES[
+  ((((d && d.pitSeat) || 0) + Math.floor((Math.max(1, week) - 1) / PIT_MOVE)) % PIT_HOUSES.length
+   + PIT_HOUSES.length) % PIT_HOUSES.length];
+const pitOf = d => pitAt(d, d.week);
+/* the week the rope next picks itself up, and where it lands */
+const pitMoveWeek = d => d.week + (PIT_MOVE - ((d.week - 1) % PIT_MOVE));
+const pitNext = d => pitAt(d, pitMoveWeek(d));
 /* what he is worth at the rope — the man, not your standing */
 function pitPurse(d, f, stakes){
   const avg = STATS.reduce((s,k)=>s+(f[k]||40),0)/6;
   const base = 34 + avg*1.5 + (f.wins||0)*5 + (f.pfame||0)*0.9;
   const st = stakes==="sine" ? 1.8 : stakes==="blood" ? 0.7 : 1;
-  return rnd(base * st * seasonOf(d).pits);
+  return rnd(base * st * seasonOf(d).pits * (pitOf(d).pay || 1));
 }
 /* who is down there this week */
 function makePitCard(d){
@@ -18753,9 +18794,25 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               <div className="disp" style={{fontSize:15,fontWeight:700,marginBottom:2}}>THE PITS</div>
               {(()=>{ const P = pitOf(S), tonight = pitMen(S);
                 return (<>
-                  <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:8,lineHeight:1.4}}>
+                  <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:6,lineHeight:1.4}}>
                     {P.name.charAt(0).toUpperCase()+P.name.slice(1)}. {P.line}
                   </div>
+                  {/* which cellar it is matters to the purse, and it does not stay put */}
+                  {(()=>{ const nx = pitNext(S), mw = pitMoveWeek(S), pc = Math.round(((P.pay||1)-1)*100);
+                    return (
+                      <div className="flex items-center justify-between gap-2" style={{marginBottom:8,flexWrap:"wrap"}}>
+                        <span className="chip" style={{fontSize:10,padding:"2px 7px",
+                          borderColor: pc>0?"#5a6a4a":pc<0?"#7c2a22":"#4e3c26",
+                          color: pc>0?"#9aa86a":pc<0?"#d96f5d":"#b09b7d"}}>
+                          Purses {pc>0?"+":""}{pc}%
+                        </span>
+                        <span className="rowval dim" style={{fontSize:12,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                          {nx && nx.key!==P.key
+                            ? `the rope moves in ${mw-S.week} week${mw-S.week===1?"":"s"}`
+                            : "the rope stays where it is"}
+                        </span>
+                      </div>
+                    ); })()}
                   {tonight.length===0 ? (
                     <div className="dim" style={{fontSize:14,marginBottom:9}}>
                       {me?`Nobody worth naming is down there tonight. ${me.name} takes whoever ${P.keeper} puts in front of him.`:""}
