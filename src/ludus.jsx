@@ -3330,8 +3330,8 @@ function genOpponent(tier, q){
   const fem = R() < 0.07;
   const o = { sex: fem?"f":"m", name: pick(fem ? FNAMES[origin] : ORIGINS[origin].names), house:pick(HOUSES), cls, origin, nick:null,
     morale:62, fatigue:0, injury:null, traits:[], heart:ri(30,90), pfame:0, kit:kitFor(cls, tier) };
-  for(const s of STATS) o[s] = clamp(24 + quality*0.52 + ri(-8,8) + (ORIGINS[origin].mod[s]||0)*2, 8, 94);
-  for(const k of CLASSES[cls].key) o[k] = clamp(o[k]+5, 8, 95);
+  for(const s of STATS) o[s] = clamp(qStat(quality) + ri(-8,8) + (ORIGINS[origin].mod[s]||0)*2, 8, 99);
+  for(const k of CLASSES[cls].key) o[k] = clamp(o[k]+5, 8, 99);
   if(tier>=2) o.nick = pick(NICKS);
   return o;
 }
@@ -3848,6 +3848,30 @@ function stageMunus(d, plan){
 const RIVAL_SEED = [["Solonius",60,[30,50]],["Vettius",150,[42,62]],["Tullius",330,[58,80]]];
 const grudgeWord = g => g<15?"Cordial": g<40?"Cool": g<70?"Bitter":"Blood feud";
 
+/* ---- THE CEILING NOBODY ELSE COULD REACH ----
+   Every man in Campania who is not yours was built by one line: 24 + quality*0.52,
+   clamped at 94. At the very top of the range — quality 99, the imperial bill, the
+   summit of the game — that yields a mean stat of 76.6 against the 99 a made man of
+   your own reaches, and the clamp was twenty-three points under his ceiling besides.
+   Measured across 900 bouts, a 99 man beat the imperial card 96.7% of the time and
+   walked off it with 86 of his hundred still in him. It was not that the top card
+   was tuned badly. There was no top.
+
+   The line is a curve now. Below quality 82 it is the same line to within a point,
+   so the men you meet on the way up are the men you always met; above it, it climbs,
+   and a quality-99 opponent is a 91 where he used to be a 76. The clamp is 99 — the
+   same ceiling yours has, because there is no reason another house's best man should
+   be forbidden the thing your best man is allowed. */
+const qStat = q => 24 + q*0.52 + Math.pow(Math.max(0, q-82), 1.6)*0.17;
+/* and the standard of the age: the best man on any sand in the bay, yours counted.
+   A house that has watched you win for six years does not go on buying boys. */
+function bayStandard(d){
+  let best = 0;
+  const mean = f => STATS.reduce((t,k)=>t+(f[k]||0),0)/6;
+  (d.gladiators||[]).forEach(g=>{ if(g.status==="active") best = Math.max(best, mean(g)); });
+  (d.rivals||[]).forEach(h=>(h.fighters||[]).forEach(f=>{ best = Math.max(best, mean(f)); }));
+  return clamp((best-24)/0.52, 25, 99);        // back onto the quality scale, conservatively
+}
 function makeRivalFighter(d, house, quality){
   const origin = pick(Object.keys(ORIGINS));
   const cls = pick(Object.keys(CLASSES));
@@ -3861,8 +3885,8 @@ function makeRivalFighter(d, house, quality){
     kit:kitFor(cls, quality>=58?2:quality>=42?1:0),
     wins:ri(0,6), losses:ri(0,3), kills:0, beatYou:0, lostToYou:0,
     potential: clamp(quality+ri(-10,15), 20, 95) };
-  for(const s of STATS) f[s] = clamp(24 + quality*0.52 + ri(-8,8) + (ORIGINS[origin].mod[s]||0)*2, 8, 94);
-  for(const k of CLASSES[cls].key) f[k] = clamp(f[k]+5, 8, 95);
+  for(const s of STATS) f[s] = clamp(qStat(quality) + ri(-8,8) + (ORIGINS[origin].mod[s]||0)*2, 8, 99);
+  for(const k of CLASSES[cls].key) f[k] = clamp(f[k]+5, 8, 99);
   if(f.wins>=5) f.nick = pick(NICKS);
   if(R()<0.10) f.kills = ri(1,2);
   return f;
@@ -3963,16 +3987,41 @@ function rivalTurn(d){
 
 function rivalWeekly(d){
   if(!d.rivals) return;
+  /* the standard of the age, read once — it is the same city for all three houses */
+  const now = bayStandard(d);
+  d.flags = d.flags || {};
+  d.flags.bayPeak = Math.max(d.flags.bayPeak||0, now);
+  const era = Math.max(now, d.flags.bayPeak*0.93);
   d.rivals.forEach(h=>{
     const L = lanistaOf(h.name);
     h.grudge = clamp(h.grudge - 1*L.grudgeDecay, 0, 100);
+    /* the one they are building. A house has one set of good years, one doctore and
+       one best pair of hands, and they go into a man — not spread evenly over four.
+       Letting the whole roster climb put every man in the bay at 99 inside three
+       years and turned every card into a mirror; a house makes a champion and a
+       supporting cast, and only the champion goes past ninety-two. */
+    const star = h.fighters.filter(x=>!x.injury).sort((a,b)=>(b.pfame||0)-(a.pfame||0))[0];
     h.fighters.forEach(f=>{
       if(f.age==null){ f.age = ri(21,29); f.weeks = 0; }        /* men from an older save */
       f.weeks = (f.weeks||0) + 1;
       if(f.weeks % WEEKS_PER_YEAR === 0) f.age++;
-      const young = f.age <= PRIME[1];
+      /* A HOUSE THAT NEVER GOT BETTER.
+         The old line trained two or three key stats and left the other four exactly
+         where the man was bought, stopped dead at twenty-eight, and capped at 97 —
+         while the aging term below took every stat down after thirty. Run the world
+         four hundred weeks and the rival rosters averaged 44.7: they did not merely
+         fail to keep pace with you, they went backwards. His whole frame comes on
+         now, the key stats fastest, and a house with a doctore keeps a man improving
+         to thirty-one, which is what a doctore is for. */
+      const young = f.age <= (PRIME[1] + (h.doctore?3:0));
+      const top = star && star.id===f.id;
+      const ceil = top ? 99 : 92;
       if(f.injury){ f.injury.weeks--; if(f.injury.weeks<=0) f.injury=null; }
-      else if(young){ for(const k of CLASSES[f.cls].key) f[k] = clamp(f[k] + (0.25 + f.potential/300)*L.train*(h.doctore?1.3:1), 5, 97); }
+      else if(young){
+        const rate = (0.25 + f.potential/300)*L.train*(h.doctore?1.3:1)
+          * (top ? 1 + 0.55*(1 + clamp((h.form||0)/120, -0.3, 0.4)) : 1);
+        for(const k of STATS) f[k] = clamp(f[k] + rate*(CLASSES[f.cls].key.includes(k)?1:0.45), 5, ceil);
+      }
       /* past the top of the hill a man goes the other way, the same as yours do */
       if(f.age > 30) for(const k of STATS) f[k] = Math.max(8, f[k] - 0.045*(1 + (f.age-30)*0.35));
       f.fatigue = 0;
@@ -3999,7 +4048,23 @@ function rivalWeekly(d){
       }
     }
     if(h.fame>60) h.fame -= 1;
-    while(h.fighters.length<4) h.fighters.push(makeRivalFighter(d, h.name, clamp(rnd(h.fame/4)+ri(15,35), 25, 85)));
+    /* and they recruit against the standard of the age rather than against 85 forever.
+       How far a house can reach depends on the house: Capua's first names buy near the
+       best man in the bay, the ones scraping by still take what they can get. That is
+       what keeps a few opponents worth the walk without making every card a war. */
+    { /* and the age has a memory. Recruiting against only who is alive right now, the
+         bay peaked around week 160 and then slid — every retirement replaced a trained
+         man with a fresh one, which dragged the standard down, which made the next
+         recruit worse again, and the whole bay fell from 78 to 51 while your own man
+         only got better. A city that has watched a great man fight does not forget
+         what one looks like; it goes on training for him, and lets go of it slowly. */
+      const reach = clamp(((h.fame||0)-30)/70, 0, 0.7);
+      while(h.fighters.length<4){
+        const own = rnd(h.fame/4)+ri(15,35);
+        /* a good house recruits well below the best man alive and trains the gap up;
+           reaching all the way to him made the whole bay a wall inside three years */
+        h.fighters.push(makeRivalFighter(d, h.name, clamp(Math.round(own*(1-reach) + Math.max(own, era-16)*reach), 25, 90)));
+      } }
   });
 }
 
@@ -4518,7 +4583,16 @@ function foeTactic(o){
      gets cagier as it ages, and the men you meet in year four are not the men you
      met in year one. */
   const built = (o.str||50) + (o.agi||50) - (o.dis||50) - (o.end||50);
-  const learnt = (o.wins||0) >= 8 ? -17 : (o.wins||0) >= 5 ? -8 : (o.wins||0) <= 1 ? 9 : 0;
+  /* — but `built` is a difference, so a man who is excellent at everything scores
+     zero on it and gets sorted on his record alone, straight into "defensive". That
+     made every elite opponent a turtle: giving Rome's champion the record he ought to
+     have measurably made him EASIER, because it flipped him behind his shield, and a
+     defensive man wins least. Caution is what a good fighter learns; a great one
+     learned something else. The better he is, the less his record cows him. */
+  const grade = ((o.str||50)+(o.agi||50)+(o.end||50)+(o.tec||50)+(o.dis||50)+(o.sho||50))/6;
+  const sure = clamp((grade - 70)/25, 0, 1);          // 70 → still cagey, 95 → afraid of nobody
+  const raw = (o.wins||0) >= 8 ? -17 : (o.wins||0) >= 5 ? -8 : (o.wins||0) <= 1 ? 9 : 0;
+  const learnt = raw < 0 ? raw * (1 - sure*0.8) : raw;
   const T = o.traits || [];
   const bent = (T.includes("Showman") ? 7 : 0) + (T.includes("Defiant") ? 6 : 0)
              - (T.includes("Stoic") ? 9 : 0) - (T.includes("Iron Hide") ? 5 : 0);
@@ -5391,7 +5465,12 @@ function pickRivalOpp(d, tier){
   if(!fitPool.length) fitPool = pool;
   if(!fitPool.length){ const a = pickAnyOpp(d, tier); return { opp:a.opp, ref:a.ref, rematch:false, grudgeM:false }; }
   const rem = fitPool.filter(p=>p.f.beatYou>0);
-  const chosen = (rem.length && R()<0.6) ? pick(rem) : pick(fitPool);
+  /* at the top of the card the city does not send whichever of its three best men
+     happens to be free — the one they want to see you meet is the best of them.
+     Weighted 3:2:1, so it is usually him and never only him. */
+  const topPick = () => { const bag=[]; fitPool.slice(0,3).forEach((x,i)=>{ for(let k=0;k<3-i;k++) bag.push(x); });
+    return bag.length ? pick(bag) : pick(fitPool); };
+  const chosen = (rem.length && R()<0.6) ? pick(rem) : (tier===3 ? topPick() : pick(fitPool));
   return { opp: clone(chosen.f), ref:{house:chosen.h.name, fid:chosen.f.id},
     rematch: chosen.f.beatYou>0, grudgeM: chosen.f.lostToYou>0 };
 }
@@ -6988,8 +7067,13 @@ const primusMine = d => !!(d.primus && d.primus.mine);
 function seedPrimus(d){
   const pool = (d.rivals||[]).flatMap(h=>h.fighters.map(f=>({h,f})));
   if(!pool.length) return;
-  /* the best three are all plausible; which of them holds it should not be fixed forever */
-  const ranked = pool.slice().sort((a,b)=>(b.f.wins*3+b.f.pfame)-(a.f.wins*3+a.f.pfame));
+  /* the best three are all plausible; which of them holds it should not be fixed forever.
+     The old ranking was record alone, so the crown of the city could sit on a man with
+     a tidy sheet and nothing in his arms — and the primus bout, which is meant to be
+     the hardest night in Capua, was often the easiest. What he is counts too now. */
+  const mean = f => STATS.reduce((t,k)=>t+(f[k]||0),0)/6;
+  const worth = f => f.wins*3 + (f.pfame||0) + mean(f)*1.6;
+  const ranked = pool.slice().sort((a,b)=>worth(b.f)-worth(a.f));
   const top = ranked.slice(0, Math.min(3, ranked.length));
   const bag = []; top.forEach((x,i)=>{ for(let k=0;k<3-i;k++) bag.push(x); });
   const best = pick(bag);
@@ -9372,8 +9456,24 @@ function offerRome(d){
 
 function makeImperialBout(d){
   const hard = !!(d.flags && d.flags.romeHardCard);
-  const floor = Math.min(96, 92 + romeRuns(d));    // Rome asks more of a house it already knows
-  const opp = genOpponent(3, hard ? ri(97, 99) : ri(floor, 99));
+  /* Quality runs past 99 here on purpose: the curve keeps climbing and the stat clamp
+     catches it, which is how you ask for a man who is simply finished — no weak side
+     to find, nothing to work. Capua's own best had grown into a 93 while the imperial
+     bill was still drawing 90, and the highest night in the game must not be the
+     softest. Rome asks more again of a house it has already had. */
+  const floor = Math.min(104, 100 + romeRuns(d));
+  const opp = genOpponent(3, hard ? 106 : ri(floor, floor + 3));
+  /* THE SUMMIT HAS TO BE THE SUMMIT.
+     With the ceiling raised, a top card in Capua drew a 92-mean man from the rival
+     pool while the imperial bill was still drawing 87 — so the highest night in the
+     game was measurably easier than a good Tuesday at home. Rome sends its best, and
+     its best has been on that sand a long time: he comes with the years in his arms
+     as well as the numbers, which is what a man who has survived the imperial games
+     actually looks like. */
+  for(const k of CLASSES[opp.cls].key) opp[k] = clamp(opp[k] + ri(1,4), 8, 99);
+  opp.heart = Math.max(opp.heart||50, ri(70, 95));
+  opp.wins = (opp.wins||0) + ri(6, 14);
+  opp.pfame = Math.max(opp.pfame||0, ri(70, 110));
   if(hard){ d.flags.romeHardCard = 0; opp.wins = (opp.wins||0) + ri(4,9); }
   opp.kit = kitFor(opp.cls, 3);
   opp.nick = opp.nick || pick(NICKS);
@@ -19805,3 +19905,4 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
     </div>
   );
 }
+
