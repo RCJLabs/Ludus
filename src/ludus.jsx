@@ -124,7 +124,7 @@ const ORIGINS = {
   Greek: { mod:{tec:2,dis:2,sho:1,str:-1,agi:0,end:0}, blurb:"schooled in the old arts",
     names:["Nikandros","Theron","Lykos","Demetrios","Kallias","Philon","Xanthos","Alexios","Oenomaus","Hektor","Aristion","Diophantos","Menandros","Timon","Kleon","Polydeukes","Herakleides","Sostratos","Kritias","Aineas","Melanthios","Pyrrhos","Isidoros","Nikias","Damon","Leonidas","Kastor","Straton","Zenon","Agathon"] },
   Syrian: { mod:{sho:2,agi:2,tec:1,end:-1,str:0,dis:0}, blurb:"a flair the crowd adores",
-    names:["Azizus","Malchus","Barates","Zabdas","Iarhai","Abgar","Sohaemus","Bassus","Odainath","Wahballat","Zenobios","Mocimu","Hairan","Antiochos","Seleukos","Zabbaios","Nasor","Themarsa","Ogelos","Taimarsu","Bariki","Zabdibol","Yedibel","Nebuzabad","Worod","Marinos","Zabdilah","Alaphata","Male","Simon"] },
+    names:["Azizus","Malchus","Barates","Zabdas","Iarhai","Abgar","Sohaemus","Bassus","Odainath","Wahballat","Zenobios","Mocimu","Hairan","Antiochos","Seleukos","Zabbaios","Nasor","Themarsa","Ogelos","Taimarsu","Bariki","Zabdibol","Yedibel","Nebuzabad","Worod","Marinos","Zabdilah","Alaphata","Malku","Simon"] },
   Iberian: { mod:{tec:2,agi:1,end:1,dis:1,str:0,sho:-1}, blurb:"born to the blade",
     names:["Indibilis","Mandonius","Audax","Ditalco","Minurus","Corocotta","Retogenes","Istolatius","Viriathus","Tautalus","Olyndicus","Caros","Megaravicus","Allucius","Culchas","Bilistages","Cerdubelus","Luxinius","Turrus","Colua","Besadines","Cordus","Attenes","Balarus","Tanginus","Elandus","Turaius","Sanga","Ambon","Docilico"] },
   Germanic: { mod:{str:2,end:3,sho:-1,dis:-1,agi:0,tec:0}, blurb:"relentless as winter",
@@ -5397,6 +5397,7 @@ function pickRivalOpp(d, tier){
 }
 
 function migrate(S){
+  if(!S.flags) S.flags = {};
   if(!S.rivals) S.rivals = makeRivals(S);
   if(!S.escaped) S.escaped = [];
   if(!S.gear) S.gear = {};
@@ -5416,6 +5417,20 @@ function migrate(S){
   if(!S.buildings) S.buildings = {};
   if(S.nemesis===undefined) S.nemesis = null;
   if(S.primus===undefined) S.primus = null;
+  /* and every save made before the count existed is owed what it already earned.
+     featWeek stamps everPrimus at the end of any week the title was in this house,
+     and the feat carries the same proof, so a house that took it is credited with
+     one — never less than it has, so a live run cannot be walked backwards. */
+  if(!S.flags.primusHeld && (S.flags.everPrimus || (S.primus && S.primus.mine) || (S.feats && S.feats.primus)))
+    S.flags.primusHeld = 1;
+  /* "Male" is a real Palmyrene name — the short form of Malku, and on the stones at
+     Palmyra — but on a character sheet in an English game it reads as a label for
+     the man's sex rather than his name, which is not what anyone wants to see above
+     a fighter. The pool carries the fuller form now; saves already holding one get
+     renamed so nobody has to fight it out with him. */
+  (S.gladiators||[]).forEach(g=>{ if(g && g.name==="Male") g.name = "Malku"; });
+  (S.rivals||[]).forEach(h=>(h.fighters||[]).forEach(f=>{ if(f && f.name==="Male") f.name = "Malku"; }));
+  if(S.primus && S.primus.name==="Male") S.primus.name = "Malku";
   if(S.city===undefined) S.city = null;
   if(S.travel===undefined) S.travel = null;
   if(!S.known) S.known = {};
@@ -6983,6 +6998,15 @@ function seedPrimus(d){
 }
 function primusTake(d, g, fromName){
   d.primus = { mine:true, gid:g.id, name:g.name, nick:g.nick, cls:g.cls, since:d.week, defences:0 };
+  /* THE COUNT NOBODY WAS KEEPING.
+     d.flags.primusHeld was read in four places and written in none. The road to
+     Rome gates on it, so romeReady() could never once return true and no save in
+     any version has ever been able to reach the imperial games — a man could top
+     the bill at Capua, take the primacy, hold it for years, and the checklist
+     still said he had not done it. The legacy tally counted it at zero for the
+     same reason. It is the number of times this house has taken the title. */
+  d.flags.primusHeld = (d.flags.primusHeld||0) + 1;
+  d.flags.everPrimus = 1;
   d.fame += 60;
   g.pfame += 30;
   g.morale = clamp(g.morale+20, 0, 100);
