@@ -5810,6 +5810,9 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
   const orderTgt = order && order.target || null;/* aim your blows at one place */
   if(order && order.breather){ sA = Math.min(smA, sA + smA*0.24); mom = clamp(mom-1,-3,3); crowd = clamp(crowd-6,0,100); }
   const legNow = legOrder || !!(order && order.debuff==="legs");
+  /* both carry across a crux the way the legs order does */
+  const hounding = !!(R0 && R0.hound) || !!(order && order.hound);
+  const exploiting = !!(R0 && R0.exploit) || !!(order && order.exploit);
   /* stagecraft — you spend the moment on the tiers instead of the man */
   if(order && order.rouse){ crowd = clamp(crowd + 20, 0, 100); }
   if(order && order.milk){ crowd = clamp(crowd + 14, 0, 100); vB = clamp(vB - 6, 0, 100); sB = Math.max(smB*0.15, sB - smB*0.10); }
@@ -5866,7 +5869,11 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
     }
   };
   const has = (side, k) => (marks[side][k] || 0) >= MARK_NEED[k];
-  if(legNow) marks.B.legs = Math.max(marks.B.legs || 0, MARK_NEED.legs);
+  /* the order used to put his legs out whole and instantly, which measured at +33
+     points of win rate against +9 and +14 for the others — one button that simply
+     won bouts. It takes him most of the way there now and the blows that follow
+     finish it, which is what "a piece at a time" was always supposed to mean. */
+  if(legNow) marks.B.legs = Math.max(marks.B.legs || 0, MARK_NEED.legs * 0.72);
   const mult = (tbl, side) => Object.keys(tbl).reduce((n,k)=> has(side,k) ? n*tbl[k] : n, 1);
 
   if(!R0){
@@ -5935,7 +5942,7 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
     A.sigOpen = 1; B.sigOpen = 1;
     const wind = t => t==="aggressive" ? 9.4 : t==="defensive" ? 5 : 7;
     sA -= wind(tA) * (1 - A.mods.spd*0.5) * PL.stam * (A.formStam||1) * (ctx.sky||1) * (A.lastStam||1) * mult(MARK_WIND,"A");
-    sB -= wind(tB) * (1 - B.mods.spd*0.5) * (ctx.skyB||1) * mult(MARK_WIND,"B");
+    sB -= wind(tB) * (1 - B.mods.spd*0.5) * (ctx.skyB||1) * mult(MARK_WIND,"B") * (hounding ? 1.45 : 1);
     /* one of them may go for the thing his style is for — or you may have ordered it */
     const forcedSig = orderSigA; orderSigA = false;
     const sigTurn = (()=>{
@@ -6011,7 +6018,8 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
       if(!atkIsA) dmg *= PL.guard;
       dmg *= 1 + atk.mods.atk*0.7;
       dmg *= 1 - def.mods.def;
-      dmg *= atkIsA ? mult(MARK_DEAL,"A") * mult(MARK_TAKE,"B") : mult(MARK_DEAL,"B") * mult(MARK_TAKE,"A");
+      dmg *= atkIsA ? mult(MARK_DEAL,"A") * mult(MARK_TAKE,"B") * (exploiting ? 1.18 : 1)
+                    : mult(MARK_DEAL,"B") * mult(MARK_TAKE,"A");
       dmg = clamp(dmg, 3, 32);
       if(atkIsA){ vB -= dmg; markOn("B", tgt[0], dmg); } else { vA -= dmg; markOn("A", tgt[0], dmg); }
       mom = clamp(mom + (atkIsA?1:-1), -3, 3);
@@ -6032,7 +6040,7 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
     if(sB < smB*GAS_AT && !tiredB){ tiredB=true; push("gas", `${B.name} is flagging — sweat and blood in ${prB.his} eyes.`, {actor:"B"}); }
     if(vA<=20 || vB<=20) break;
     if(cruxNow(r)){
-      crux = { vA, vB, sA, sB, crowd, mom, round:r, tB, tiredA, tiredB, c50, c80, peak:cPeak, count:cruxCount+1, bLegged:legNow,
+      crux = { vA, vB, sA, sB, crowd, mom, round:r, tB, tiredA, tiredB, c50, c80, peak:cPeak, count:cruxCount+1, bLegged:legNow, hound:hounding, exploit:exploiting,
                mkA:{...marks.A}, mkB:{...marks.B}, tlA:{...told.A}, tlB:{...told.B} };
       const his = tB==="aggressive" ? ` ${B.name} is still coming forward.`
         : tB==="defensive" ? ` ${B.name} is still behind that shield.` : "";
@@ -10329,7 +10337,10 @@ const CRUX = {
     tactic:"measured", line:g=>`${g.name} hears it and gets everything behind the guard.` },
   finish: { label:"Go for the finish", short:"FINISH", tactic:"aggressive", order:{ sig:true },
     desc:"His one move, now — whatever it costs. It ends the bout or leaves him wide open.",
-    when:cx=>cx.vA==null || cx.vB==null || cx.vA >= cx.vB-6 || (cx.sA==null||cx.sA>=45),
+    /* it was on the menu in nine cruxes out of ten, which makes it the default rather
+       than the moment. He needs the wind for it, and a reason: the other man hurt,
+       or the swing of it already his. */
+    when:cx=>cx.sA==null || (cx.sA>=42 && (cx.vB==null || cx.vB<=74 || (cx.mom||0)>=1)),
     line:g=>`${g.name} sets his feet for the one thing his style is for.` },
   legs: { label:"Work his legs", short:"LEGS", tactic:"measured", order:{ target:"thigh", debuff:"legs" },
     desc:"Take him apart a piece at a time. Slower, but he stops moving.",
@@ -10337,16 +10348,34 @@ const CRUX = {
     line:g=>`${g.name} stops hunting the kill and starts hunting the legs.` },
   breather: { label:"Wave him off", short:"BREATHE", tactic:"defensive", order:{ breather:true },
     desc:"Give ground and get your wind. You lose the crowd and the front foot, not the bout.",
-    when:cx=>cx.sA==null || cx.sA<=45 || cx.vA<=55,
+    /* it wanted him under 45 wind and the crux comes round while he is usually still
+       fresh, so it was on the menu once in ten — and it is the order that brings a man
+       home. Widened, but not to the point of being a second Cover Up: that one is the
+       standing defensive call, this one is specifically for a man who needs his wind
+       back or has had something taken off him. */
+    when:cx=>cx.sA==null || cx.sA<=58 || (cx.mkA||[]).length>0,
     line:g=>`${g.name} gives ground on purpose, hands high, dragging air back into his chest.` },
   rouse: { label:"Play the crowd", short:"ROUSE", tactic:"defensive", order:{ rouse:true },
     desc:"Work the moment, not the man — the stands come alive. You give up the front foot for it, and bank the noise for his life or his fame.",
-    when:cx=>cx.crowd==null || cx.crowd<84,
+    /* you play the tiers when there is something in it — his life, if he is going
+       badly, or the noise, if they are already warm. Not simply always. */
+    when:cx=>cx.crowd==null || (cx.crowd<84 && ((cx.vA!=null && cx.vA<=74) || cx.crowd>=48)),
     line:g=>`${g.name} throws his arms wide to the tiers and lets them roar before he turns back to the work.` },
   milk: { label:"Milk the wound", short:"MILK", tactic:"measured", order:{ milk:true },
     desc:"Turn the other man's hurt into theatre. The crowd feeds on it — and it gets into him.",
     when:cx=>cx.vB!=null && cx.vB<=58,
     line:g=>`${g.name} steps off and shows the tiers the blood on his blade before he goes back in.` },
+  /* the ledger of v1.89 gave the bout a memory of where it has been hurting somebody.
+     These two are the orders that memory makes possible — they are not on the menu
+     at all until the thing they are about has actually happened. */
+  hound: { label:"Keep him moving", short:"HOUND", tactic:"measured", order:{ hound:true },
+    desc:"He cannot set his feet on that leg. Give him nowhere to plant them.",
+    when:cx=>(cx.mkB||[]).includes("legs"),
+    line:g=>`${g.name} stops trading and starts walking him — left, and left again, never letting him set.` },
+  blind: { label:"Take the blind side", short:"BLIND", tactic:"aggressive", order:{ exploit:true },
+    desc:"There is blood in his eyes and he is guessing. Come from where he is guessing wrong.",
+    when:cx=>(cx.mkB||[]).includes("head") || (cx.mkB||[]).includes("arm"),
+    line:g=>`${g.name} comes round his blind side, where the man has been guessing for two exchanges.` },
   cloth: { label:"Throw in the cloth", short:"THE CLOTH",
     desc:"Forfeit. He loses and lives, and Capua watches you call it.",
     tactic:null, line:g=>`` },
