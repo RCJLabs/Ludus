@@ -1090,6 +1090,24 @@ const PITCHES = {
     purse:0.78, upkeep:1.35, unrest:1.55, market:1.3, grudge:1.7, heal:0.75, mercy:-14, start:-300 },
 };
 const PITCH_KEYS = Object.keys(PITCHES);
+/* what the hand you took is actually doing, forty weeks after you took it */
+const PITCH_LINES = [
+  ["Purses",      "purse",  false],
+  ["Upkeep",      "upkeep", true ],
+  ["The cells",   "unrest", true ],
+  ["The block",   "market", true ],
+  ["Bad blood",   "grudge", true ],
+  ["Mending",     "heal",   false],
+];
+function pitchEffects(d){
+  const P = PITCHES[(d && d.pitch) || "plain"] || PITCHES.plain;
+  return PITCH_LINES.map(([label, key, lowGood])=>{
+    const v = P[key] == null ? 1 : P[key];
+    const pc = Math.round((v - 1) * 100);
+    const good = lowGood ? pc < 0 : pc > 0;
+    return { label, pc, good, colour: pc===0 ? "#b09b7d" : good ? "#9aa86a" : "#d96f5d" };
+  }).filter(x=>x.pc !== 0);
+}
 const pitchOf = d => PITCHES[(d && d.pitch) || "plain"] || PITCHES.plain;
 const pit = (d, k, dflt) => { const P = pitchOf(d); return P[k]!=null ? P[k] : (dflt==null?1:dflt); };
 
@@ -13612,6 +13630,12 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           )}
 
           <Group title="About">
+            {S && (
+              <div className="flex items-center justify-between gap-2" style={{marginBottom:4}}>
+                <span className="dim" style={{fontSize:12.5,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>This house was founded</span>
+                <span className="rowval" style={{fontSize:12.5,color:"#e0bd72",flexShrink:0}}>{pitchOf(S).name.toLowerCase()}</span>
+              </div>
+            )}
             <div className="flex items-center justify-between gap-2" style={{marginBottom:4}}>
               <span className="disp" style={{fontSize:12.5,color:"#e8d092",minWidth:0,overflow:"hidden",textOverflow:"ellipsis"}}>LVDVS — Blood &amp; Sand</span>
               <span className="rowval" style={{fontSize:12.5,color:"#c9a961",fontFamily:"ui-monospace,Menlo,monospace"}}>
@@ -14402,6 +14426,24 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                       <span className="chev" aria-hidden="true">⌄</span>
                     </summary>
                     <div style={{paddingTop:2}}>
+                      {(()=>{ const P = pitchOf(S), eff = pitchEffects(S);
+                        return (
+                          <div style={{marginBottom:7,paddingBottom:6,borderBottom:"1px dotted #33271a"}}>
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="dim" style={{fontSize:12.5,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>The hand you took</span>
+                              <span className="rowval" style={{fontSize:12.5,color:"#e0bd72",flexShrink:0}}>{P.name}</span>
+                            </div>
+                            {eff.length>0 && (
+                              <div className="flex gap-1" style={{flexWrap:"wrap",marginTop:4}}>
+                                {eff.map((x,i)=>(
+                                  <span key={i} className="chip" style={{fontSize:10,padding:"2px 7px",borderColor:x.colour,color:x.colour}}>
+                                    {x.label} {x.pc>0?"+":""}{x.pc}%
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ); })()}
                       {rows.map(([label,v,st],i)=>(
                         <div key={i} className="flex items-center justify-between gap-2" style={{padding:"3px 0"}}>
                           <span className="rowname" style={{fontSize:13.5,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{label}</span>
