@@ -5683,6 +5683,30 @@ const ATTACKS = {
   Dimachaerus:[["cross","scissors both blades across the guard"],["flurry","comes on in a blur of two edges"],["offhand","feints high and buries the off-hand blade low"]],
 };
 const TARGETS = [["arm",[70,54],1],["shoulder",[56,42],1.05],["thigh",[54,96],1.1],["flank",[52,68],1.15],["brow",[56,26],1.25],["hand",[76,60],0.9]];
+/* ---- WHERE THE BLOWS LAND ----
+   Every blow already chose a place, drew it on the body and stored which one — and
+   the only thing the place ever did was decide which injury he limped away with
+   afterwards. Inside the bout a thigh and a brow were the same blow. They add up
+   now, and once enough has gone into one part it does what it would actually do to
+   a man still standing on it. */
+const MARK_PART = { thigh:"legs", arm:"arm", shoulder:"arm", hand:"arm", brow:"head", flank:"body" };
+/* three of the six places a blow can land feed the arm and only one feeds each of
+   the others, so a flat threshold meant the arm went in nearly every bout and the
+   rest were a coin flip. Each part asks for what its share of the blows adds up to. */
+const MARK_NEED = { legs:24, arm:58, head:26, body:26 };
+const MARK_SAY = {
+  legs: n=>`${n} is favouring that leg now, and everybody in the place can see it.`,
+  arm:  n=>`${n}'s arm is not answering the way it was. There is less on everything he throws.`,
+  head: n=>`There is blood in ${n}'s eyes. He is fighting what he can still see of it.`,
+  body: n=>`${n} is breathing through his teeth. Something in his side has gone.`,
+};
+const MARK_WORD = { legs:"leg gone", arm:"arm gone", head:"blinded", body:"ribs gone" };
+/* what each one costs the man carrying it */
+const MARK_POW  = { legs:0.88, head:0.93 };          /* he is slower, or cannot see it coming */
+const MARK_WIND = { legs:1.30, body:1.25 };          /* and pays more for every exchange */
+const MARK_DEAL = { arm:0.78 };                      /* there is less behind what he lands */
+const MARK_TAKE = { body:1.12 };                     /* and less holding the rest of him up */
+
 const CLASH_L = [
   (a,b)=>`Steel screams on steel — neither ${a} nor ${b} yields a hand's breadth.`,
   (a,b)=>`They circle, testing, sand grinding under their heels.`,
@@ -5779,13 +5803,13 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
   let sA = R0 ? R0.sA : smA, sB = R0 ? R0.sB : smB, mom = R0 ? R0.mom : 0;
   let tiredA = R0? R0.tiredA : false, tiredB = R0? R0.tiredB : false,
       c50 = R0? R0.c50 : false, c80 = R0? R0.c80 : false, cPeak = R0? !!R0.peak : false;
-  let bLegged = R0 ? !!R0.bLegged : false;      /* his legs have been worked — a lasting thing */
+  const legOrder = !!(R0 && R0.bLegged);        /* the order to work his legs, carried across a crux */
   const cruxCount = R0 ? (R0.count||0) : 0;      /* how many times you have spoken already */
   const order = O.order || null;                 /* the tactical order you gave at the last crux */
   let orderSigA = !!(order && order.sig);        /* force your man's signature on the first resumed round */
   const orderTgt = order && order.target || null;/* aim your blows at one place */
   if(order && order.breather){ sA = Math.min(smA, sA + smA*0.24); mom = clamp(mom-1,-3,3); crowd = clamp(crowd-6,0,100); }
-  if(order && order.debuff==="legs") bLegged = true;
+  const legNow = legOrder || !!(order && order.debuff==="legs");
   /* stagecraft — you spend the moment on the tiers instead of the man */
   if(order && order.rouse){ crowd = clamp(crowd + 20, 0, 100); }
   if(order && order.milk){ crowd = clamp(crowd + 14, 0, 100); vB = clamp(vB - 6, 0, 100); sB = Math.max(smB*0.15, sB - smB*0.10); }
@@ -5824,8 +5848,26 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
     kind, text:oneOf(text), actor:null, round,
     vA:clamp(vA,0,100), vB:clamp(vB,0,100),
     sA:clamp(sA/smA*100,0,100), sB:clamp(sB/smB*100,0,100),
-    crowd:clamp(crowd,0,100), mom:clamp(mom,-3,3), sp:spareRead(), spp:spareOdds()
+    crowd:clamp(crowd,0,100), mom:clamp(mom,-3,3), sp:spareRead(), spp:spareOdds(),
+    mkA:Object.keys(marks.A).filter(k=>marks.A[k]>=MARK_NEED[k]),
+    mkB:Object.keys(marks.B).filter(k=>marks.B[k]>=MARK_NEED[k])
   }, extra||{}));
+
+  /* what has gone into each part of each of them, carried across a crux */
+  const marks = { A: (R0 && R0.mkA) ? {...R0.mkA} : {}, B: (R0 && R0.mkB) ? {...R0.mkB} : {} };
+  const told  = { A: (R0 && R0.tlA) ? {...R0.tlA} : {}, B: (R0 && R0.tlB) ? {...R0.tlB} : {} };
+  const markOn = (side, place, dmg) => {
+    const k = MARK_PART[place]; if(!k) return;
+    const m = marks[side], was = m[k] || 0, need = MARK_NEED[k];
+    m[k] = was + dmg;
+    if(was < need && m[k] >= need && !told[side][k]){
+      told[side][k] = 1;
+      push("gas", MARK_SAY[k](side==="A" ? A.name : B.name), { actor:side, mark:k });
+    }
+  };
+  const has = (side, k) => (marks[side][k] || 0) >= MARK_NEED[k];
+  if(legNow) marks.B.legs = Math.max(marks.B.legs || 0, MARK_NEED.legs);
+  const mult = (tbl, side) => Object.keys(tbl).reduce((n,k)=> has(side,k) ? n*tbl[k] : n, 1);
 
   if(!R0){
     push("intro", `${A.name} steps onto the sand against ${oppName} of the House of ${B.house} — a ${B.cls.toLowerCase()} of ${B.origin} blood.`);
@@ -5888,17 +5930,17 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
        way. It comes on at two fifths now and bites by how little he has left, and what
        a man bred to endure keeps is most of it. */
     const gasA = gasOf(A, sA, smA), gasB = gasOf(B, sB, smB);
-    const pA = power(A,tA,B.cls,mom,modA) * PL.pow * (0.72+R()*0.56) * gasA * (A.sigOpen||1) * shoA * (round>=6 ? (A.lastLate||1) : 1);
-    const pB = power(B,tB,A.cls,-mom,modB) * (0.72+R()*0.56) * gasB * (B.sigOpen||1) * shoB * (bLegged?0.9:1);
+    const pA = power(A,tA,B.cls,mom,modA) * PL.pow * (0.72+R()*0.56) * gasA * (A.sigOpen||1) * shoA * (round>=6 ? (A.lastLate||1) : 1) * mult(MARK_POW,"A");
+    const pB = power(B,tB,A.cls,-mom,modB) * (0.72+R()*0.56) * gasB * (B.sigOpen||1) * shoB * mult(MARK_POW,"B");
     A.sigOpen = 1; B.sigOpen = 1;
     const wind = t => t==="aggressive" ? 9.4 : t==="defensive" ? 5 : 7;
-    sA -= wind(tA) * (1 - A.mods.spd*0.5) * PL.stam * (A.formStam||1) * (ctx.sky||1) * (A.lastStam||1);
-    sB -= wind(tB) * (1 - B.mods.spd*0.5) * (bLegged?1.25:1) * (ctx.skyB||1);
+    sA -= wind(tA) * (1 - A.mods.spd*0.5) * PL.stam * (A.formStam||1) * (ctx.sky||1) * (A.lastStam||1) * mult(MARK_WIND,"A");
+    sB -= wind(tB) * (1 - B.mods.spd*0.5) * (ctx.skyB||1) * mult(MARK_WIND,"B");
     /* one of them may go for the thing his style is for — or you may have ordered it */
     const forcedSig = orderSigA; orderSigA = false;
     const sigTurn = (()=>{
-      let aGo = triesSignature(A, mom, sA, tA);
-      const bGo = triesSignature(B, -mom, sB, tB);
+      let aGo = triesSignature(A, mom, sA, tA) && (!has("A","head") || R()<0.5);
+      const bGo = triesSignature(B, -mom, sB, tB) && (!has("B","head") || R()<0.5);
       if(forcedSig && sigOf(A.cls)) aGo = true;
       if(!aGo && !bGo) return null;
       const isA = aGo && (!bGo || forcedSig || pA >= pB);
@@ -5913,14 +5955,15 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
         const tgt = pick(TARGETS);
         let dmg = (5 + Math.abs(pA-pB)/9 + g.str/14) * S.win.dmg * (T?T.dmg:1) * tgt[2] * (1 + g.mods.atk*0.7) * (1 - foe.mods.def);
         dmg = Math.max(3, dmg);
-        if(isA){ vB = clamp(vB-dmg,0,100); sB -= S.win.stam; mom = clamp(mom+1,-3,3); lastTarget = tgt; }
-        else   { vA = clamp(vA-dmg,0,100); sA -= S.win.stam; mom = clamp(mom-1,-3,3); lastTarget = tgt; }
+        dmg *= (isA ? mult(MARK_DEAL,"A") * mult(MARK_TAKE,"B") : mult(MARK_DEAL,"B") * mult(MARK_TAKE,"A"));
+        if(isA){ vB = clamp(vB-dmg,0,100); sB -= S.win.stam; mom = clamp(mom+1,-3,3); lastTarget = tgt[0]; markOn("B", tgt[0], dmg); }
+        else   { vA = clamp(vA-dmg,0,100); sA -= S.win.stam; mom = clamp(mom-1,-3,3); lastTarget = tgt[0]; markOn("A", tgt[0], dmg); }
         crowd = clamp(crowd + S.win.crowd * (T?T.crowd:1), 0, 100);
         /* every landed signature used to be filed as a crit whatever it did, which is
            why a quarter of all beats were crits and the word had stopped meaning
            anything. It is called what it did; the flourish rides on sig and named. */
         push(dmg>=18?"crit":dmg>=10?"hit":"graze", T ? T.line(g.name, foe.name) : S.hit(g.name, foe.name),
-          { sig:S.move, target:tgt, named: T? T.name : null, dmg:rnd(dmg) });
+          { sig:S.move, target:tgt[0], tx:tgt[1][0], ty:tgt[1][1], named: T? T.name : null, dmg:rnd(dmg) });
       } else {
         if(isA){ sA -= S.fail.selfStam; A.sigOpen = S.fail.guard; mom = clamp(mom-1,-3,3); }
         else   { sB -= S.fail.selfStam; B.sigOpen = S.fail.guard; mom = clamp(mom+1,-3,3); }
@@ -5968,8 +6011,9 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
       if(!atkIsA) dmg *= PL.guard;
       dmg *= 1 + atk.mods.atk*0.7;
       dmg *= 1 - def.mods.def;
+      dmg *= atkIsA ? mult(MARK_DEAL,"A") * mult(MARK_TAKE,"B") : mult(MARK_DEAL,"B") * mult(MARK_TAKE,"A");
       dmg = clamp(dmg, 3, 32);
-      if(atkIsA) vB -= dmg; else vA -= dmg;
+      if(atkIsA){ vB -= dmg; markOn("B", tgt[0], dmg); } else { vA -= dmg; markOn("A", tgt[0], dmg); }
       mom = clamp(mom + (atkIsA?1:-1), -3, 3);
       crowd = clamp(crowd + dmg/2.6 + atk.sho/22 + atk.mods.sho*14 + (tA==="showboat"&&atkIsA?3:0), 0, 100);
       lastTarget = tgt[0];
@@ -5988,7 +6032,8 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
     if(sB < smB*GAS_AT && !tiredB){ tiredB=true; push("gas", `${B.name} is flagging — sweat and blood in ${prB.his} eyes.`, {actor:"B"}); }
     if(vA<=20 || vB<=20) break;
     if(cruxNow(r)){
-      crux = { vA, vB, sA, sB, crowd, mom, round:r, tB, tiredA, tiredB, c50, c80, peak:cPeak, count:cruxCount+1, bLegged };
+      crux = { vA, vB, sA, sB, crowd, mom, round:r, tB, tiredA, tiredB, c50, c80, peak:cPeak, count:cruxCount+1, bLegged:legNow,
+               mkA:{...marks.A}, mkB:{...marks.B}, tlA:{...told.A}, tlB:{...told.B} };
       const his = tB==="aggressive" ? ` ${B.name} is still coming forward.`
         : tB==="defensive" ? ` ${B.name} is still behind that shield.` : "";
       push("crux", (vA<=58 && vA<vB
@@ -13105,6 +13150,22 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
             </span>
           </div>
         </div>
+
+        {/* what has been taken out of each of them, and stays taken */}
+        {hasSolo && ((b.mkA&&b.mkA.length) || (b.mkB&&b.mkB.length)) && (
+          <div className="flex items-center justify-between gap-2" style={{marginTop:6}}>
+            <div className="flex gap-1" style={{flexWrap:"wrap",minWidth:0}}>
+              {(b.mkA||[]).map(k=>(
+                <span key={k} className="chip" style={{fontSize:9.5,padding:"1px 6px",borderColor:"#7c2a22",color:"#d98476"}}>{MARK_WORD[k]}</span>
+              ))}
+            </div>
+            <div className="flex gap-1" style={{flexWrap:"wrap",minWidth:0,justifyContent:"flex-end"}}>
+              {(b.mkB||[]).map(k=>(
+                <span key={k} className="chip" style={{fontSize:9.5,padding:"1px 6px",borderColor:"#5a6a35",color:"#b9c58a"}}>{MARK_WORD[k]}</span>
+              ))}
+            </div>
+          </div>
+        )}
 
         {!done && b.sp!=null && (
           <div className="disp" style={{textAlign:"center",fontSize:10.5,letterSpacing:".07em",marginTop:6,
