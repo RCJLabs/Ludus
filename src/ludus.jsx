@@ -3568,7 +3568,14 @@ function genOpponent(tier, q){
   const cls = pick(Object.keys(CLASSES));
   const fem = R() < 0.07;
   const o = { sex: fem?"f":"m", name: pick(fem ? FNAMES[origin] : ORIGINS[origin].names), house:pick(HOUSES), cls, origin, nick:null,
-    morale:oppMorale(quality), fatigue:0, injury:null, traits:rollTraits(quality), heart:ri(30,90), pfame:0, kit:kitFor(cls, tier) };
+    morale:oppMorale(quality), fatigue:0, injury:null, traits:rollTraits(quality), heart:ri(30,90),
+    /* ---- AND THE CROWD IS NOT AUTOMATICALLY YOURS ----
+       The mob goes to the better-known man, and v2.2.0 made the peak of the noise a
+       contest rather than a gift to whoever was on the left. But every opponent this
+       game generated carried pfame 0 against a made man of yours at eighty and up, so
+       the contest resolved your way every single time and the term may as well not
+       have existed. A man good enough to be on that bill has a name in this town. */
+    pfame: rnd(clamp((quality - 34) * 1.15, 0, 108) * (0.45 + R()*0.85)), kit:kitFor(cls, tier) };
   for(const s of STATS) o[s] = clamp(qStat(quality) + ri(-8,8) + (ORIGINS[origin].mod[s]||0)*2, 8, 99);
   for(const k of CLASSES[cls].key) o[k] = clamp(o[k]+5, 8, 99);
   if(tier>=2) o.nick = pick(NICKS);
@@ -4249,7 +4256,8 @@ function makeRivalFighter(d, house, quality){
   const age = clamp(ri(19, 24) + Math.round(quality/16), 18, 34);
   const f = { id:d.nextId++, sex: fem?"f":"m", name: pick(fem ? FNAMES[origin] : ORIGINS[origin].names), nick:null, house, cls, origin,
     age, weeks:0,
-    morale:oppMorale(quality), fatigue:0, injury:null, traits:rollTraits(quality), heart:ri(30,90), pfame:ri(0,30),
+    morale:oppMorale(quality), fatigue:0, injury:null, traits:rollTraits(quality), heart:ri(30,90),
+    pfame: rnd(clamp((quality - 30) * 0.62, 0, 62) * (0.4 + R()*0.9)),
     kit:kitFor(cls, quality>=58?2:quality>=42?1:0),
     wins:ri(0,6), losses:ri(0,3), kills:0, beatYou:0, lostToYou:0,
     potential: clamp(quality+ri(-10,15), 20, 95) };
@@ -5056,25 +5064,58 @@ const FOE_TACTIC_ANSWER = {
   defensive:  "He will not come to you. Go and get him, or the horn decides it on blood spilt.",
 };
 
+/* ---- THE SEAM ----
+   Every stat tell in this game fired on an absolute threshold — agility over 62,
+   strength over 68, showmanship over 62. A man who is ninety-nine in all six clears
+   every one of them by definition, so measured across five hundred generated men at
+   each rung, the BEST opponents in the game were the MOST readable: four tells
+   firing, pointing at three of the five plans, so a player who guessed at random was
+   right sixty per cent of the time. The worst were nearly as readable (the weakness
+   tells fire on them) and only the middling ones were hard — 33% at quality 62
+   against 60% at the top. The read was free exactly where it should have cost most,
+   which is the whole of why nothing above a 99 statline had any bite left.
+
+   A tell is not a strength. It is a SEAM: the one thing in a man that is furthest
+   from the rest of him. Every fighter has exactly one, a great one's is small, and
+   finding it is what the money you spend on a watcher buys. Guessing blind is a
+   one-in-five now at every level of the game instead of a coin you cannot lose. */
+const statMean = o => STATS.reduce((s,k)=>s+(o[k]||50),0)/6;
+function seamOf(o){
+  if(!o) return { stat:"agi", dev:0 };
+  const m = statMean(o);
+  let stat=null, dev=0, best=-1;
+  for(const k of STATS){ const d=(o[k]||50)-m, a=Math.abs(d);
+    if(a>best){ best=a; stat=k; dev=d; } }
+  /* a man with no shape at all still has a habit, and it is his, and it does not
+     move between the week you pay to watch him and the week you meet him */
+  if(best < 0.8){
+    const h = Math.abs(((o.name||"x").length*7) + ((o.cls||"").length*13) + ((o.origin||"").length*5)) % STATS.length;
+    return { stat: STATS[h], dev: 0 };
+  }
+  return { stat, dev };
+}
+const seamIs = (o, k, high) => { const s = seamOf(o); return s.stat===k && (high ? s.dev>=0 : s.dev<=0); };
 const TELLS = {
-  tires:   { plan:"outlast", when:o=>o.end<47,
-    say:o=>`${o.name} is blowing hard by the sixth exchange. He has been for years and he knows it, which is why he goes early.` },
-  reach:   { plan:"reach", when:o=>o.tec<47,
-    say:o=>`${o.name} does not know what to do about a man who will not let him close. He walks onto things.` },
-  open:    { plan:"wait", when:o=>o.dis<47,
-    say:o=>`${o.name} drops his shield-arm for a beat every time he lands one. Every time.` },
-  quick:   { plan:"crowd", when:o=>o.agi>=62,
-    say:o=>`${o.name} is a great deal quicker than he looks and he uses the whole square doing it.` },
-  strong:  { plan:"wait", when:o=>o.str>=68,
-    say:o=>`${o.name} hits hard enough that the third one puts a man down whatever he is wearing. Do not trade with him.` },
-  showman: { plan:"crowd", when:o=>o.sho>=62,
-    say:o=>`${o.name} plays to the tiers between exchanges. It is worth something to him and it costs him a breath each time.` },
+  tires:   { plan:"outlast", when:o=>seamIs(o,"end",false),
+    say:o=>`${o.name} is blowing before the others are. It is the one part of him that has not kept up, and he knows it, which is why he goes early.` },
+  reach:   { plan:"reach", when:o=>seamIs(o,"tec",false),
+    say:o=>`${o.name} does not know what to do about a man who will not let him close. Everything else about him is better than his hands.` },
+  open:    { plan:"wait", when:o=>seamIs(o,"dis",false),
+    say:o=>`${o.name} drops his shield-arm for a beat every time he lands one. Every time. Nothing else in him is that careless.` },
+  quick:   { plan:"crowd", when:o=>seamIs(o,"agi",true),
+    say:o=>`${o.name} is quicker than the rest of him has any right to be, and he uses the whole square doing it.` },
+  strong:  { plan:"wait", when:o=>seamIs(o,"str",true),
+    say:o=>`${o.name} carries more in the arm than anywhere else, and the third one puts a man down whatever he is wearing. Do not trade with him.` },
+  showman: { plan:"crowd", when:o=>seamIs(o,"sho",true),
+    say:o=>`${o.name} plays to the tiers between exchanges more than a man of his ability needs to. It costs him a breath each time.` },
   green:   { plan:"press", when:o=>(o.wins||0)<=2,
     say:o=>`${o.name} has almost no bouts behind him. Whatever he does under pressure, he has not done it often.` },
   cold:    { plan:"press", when:o=>formOf(o) <= -30,
     say:o=>`${o.name} has had a bad month and it is on him. He starts slowly now, and he did not used to.` },
-  veteran: { plan:"outlast", when:o=>(o.wins||0)>=9,
-    say:o=>`${o.name} has been doing this a long time and has a habit of letting the other man tire himself out first.` },
+  /* and a long career is only a tell when he is BUILT to spend it — nine bouts fired
+     on practically everyone the bay ever put up, which handed the plan away free */
+  veteran: { plan:"outlast", when:o=>(o.wins||0)>=14 && ((o.end||50) - statMean(o)) >= 1,
+    say:o=>`${o.name} has been doing this a long time, he is built to still be there at the end of it, and he has a habit of letting the other man tire himself out first.` },
 };
 const TELL_KEYS = Object.keys(TELLS);
 const PLANS = {
@@ -5990,7 +6031,21 @@ function pickRivalOpp(d, tier, elite){
      which ask for it — on an ordinary top-tier card it just rebuilt the wall */
   const chosen = (rem.length && R()<0.6) ? pick(rem)
     : elite ? topPick() : tier<=0 ? lowPick() : pick(fitPool);
-  return { opp: clone(chosen.f), ref:{house:chosen.h.name, fid:chosen.f.id},
+  const opp = clone(chosen.f);
+  /* ---- AND AT THE TOP OF THE CARD HE IS A NAME ----
+     The mob goes to the better-known man, and the peak of the noise is worth real
+     power to whoever holds it. A house that has been winning for six years has a
+     champion at a hundred and more, while the bay's best sat wherever his record had
+     carried him — so measured, the contest resolved the player's way essentially
+     every time and the term may as well not have been written. The man the city puts
+     up against a champion is the one they will pay to see, and they have heard of
+     him. He is not given YOUR renown — only brought within reach of it, so the tiers
+     are something to be won rather than something you were handed at the gate. */
+  if(tier >= 3){
+    const mine = activeG(d).reduce((m,g)=>Math.max(m, g.pfame||0), 0);
+    if(mine > 30) opp.pfame = Math.max(opp.pfame||0, rnd(mine * (0.72 + R()*0.42)));
+  }
+  return { opp, ref:{house:chosen.h.name, fid:chosen.f.id},
     rematch: chosen.f.beatYou>0, grudgeM: chosen.f.lostToYou>0 };
 }
 
