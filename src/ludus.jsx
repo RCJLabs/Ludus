@@ -244,6 +244,42 @@ const GEAR = {
   manica_f: {slot:"armor",art:"manica", name:"Scaled Manica",      price:180, atk:0,  def:.09, spd:-.01,sho:.02, styles:[], desc:"Iron scales down the sword arm over the linen. Turns a cut the padding would let through."},
   ocreae_f: {slot:"armor",art:"greaves",name:"Bronze Ocreae",      price:170, atk:0,  def:.10, spd:-.02,sho:.04, styles:[], desc:"Tall bronze greaves, chased and fitted. A man fights on his legs, so guard them well."},
   lorica:   {slot:"armor",art:"padded", name:"Lorica Squamata",    price:430, atk:0,  def:.17, spd:-.08,sho:.06, styles:[], desc:"A shirt of iron scales. Heavy as a bad conscience — but little gets through."},
+
+  /* ---- THE MASTER'S BENCH ----
+     Everything above this line comes to ten thousand nine hundred and eighty denarii.
+     That is the whole catalogue — every blade, every shield, every helm in Campania —
+     and a house in its third year has twenty times it sitting in the box with nothing
+     to do with it. The armoury had simply run out of things to sell.
+
+     What it did not carry was the top of the trade. These are not better weapons and
+     they are deliberately not: point for point of attack and defence, a master's
+     gladius is the same steel as a good cavalry sword, because the fight is tuned and
+     a rich house should not be able to buy its way past a tuned fight. What a
+     master's piece is, is FAMOUS. Twice the showmanship of anything on the rack —
+     which is the crowd, and the crowd is the purse, the name, and the raised finger
+     when he is down and asking. It is also heavier than the plain version in every
+     single case, and it wants a smith's hands on it every week for the rest of its
+     life. That is the trade. You are not buying a sharper edge. You are buying the
+     thing the mob shouts for, and paying rent on it forever. */
+  gladius_g:{slot:"weapon",art:"sword",  name:"The Fabrian Gladius", master:1, keep:14, price:3400, atk:.13,def:.02, spd:-.03,sho:.14, styles:["Murmillo","Secutor","Hoplomachus"], desc:"Ancus Fabrius signs the tang of the four blades a year he considers finished. Capua can read the signature from the third tier."},
+  sica_g:   {slot:"weapon",art:"curved", name:"The Long Hook",       master:1, keep:15, price:3600, atk:.16,def:-.05,spd:-.04,sho:.18, styles:["Thraex"], desc:"A sica drawn out past all sense and hooked like a billhook, chased down the spine in gold. Nobody sensible would carry it, and the tiers would riot if he did not."},
+  hasta_g:  {slot:"weapon",art:"spear",  name:"Vindex's Hasta",      master:1, keep:13, price:3200, atk:.12,def:.03, spd:-.01,sho:.13, styles:["Hoplomachus"], desc:"Noric steel on a shaft of black ash, made by a man in the mountains who has never seen an arena and does not intend to."},
+  fuscina_g:{slot:"weapon",art:"trident",name:"The Three Sisters",   master:1, keep:16, price:3800, atk:.12,def:.02, spd:.02, sho:.22, styles:["Retiarius"], desc:"Three tines, each barbed differently, each named. The mob learned the names in a fortnight and calls them out as they go in."},
+  twin_g:   {slot:"weapon",art:"dual",   name:"The Two Answers",     master:1, keep:23, price:5600, atk:.22,def:-.08,spd:.02, sho:.25, styles:["Dimachaerus"], desc:"A matched pair with a hand's difference in the balance, so the left goes where the right has just been. Vanity you can hear from the gate."},
+  securis_g:{slot:"weapon",art:"axe",    name:"The Long Afternoon",  master:1, keep:21, price:5000, atk:.18,def:-.06,spd:-.08,sho:.22, styles:["Murmillo","Secutor"], desc:"An axe so plainly made for one purpose that the tiers go quiet when it comes out of the gate, and stay quiet, and then do not."},
+  scutum_g: {slot:"offhand",art:"scutum", name:"The Door of Capua",  master:1, keep:19, price:4600, atk:0,  def:.20, spd:-.06,sho:.13, styles:["Murmillo","Secutor"], desc:"Oak, iron, and a full-face bronze of the city herself by the man who did the temple doors. Heavier than the temple doors."},
+  parmula_g:{slot:"offhand",art:"parmula",name:"The Bright Answer",  master:1, keep:13, price:3100, atk:.02,def:.10, spd:-.02,sho:.14, styles:["Thraex","Dimachaerus"], desc:"A parmula polished to a mirror and kept that way by a boy whose whole job it is. On a clear afternoon it puts the sun in a man's eyes from thirty feet."},
+  clipeus_g:{slot:"offhand",art:"clipeus",name:"The Argive Round",   master:1, keep:14, price:3400, atk:0,  def:.13, spd:-.04,sho:.14, styles:["Hoplomachus"], desc:"Beaten bronze with the old Greek device hammered out from behind. Four hundred years out of fashion, and unanswerable for it."},
+  rete_g:   {slot:"offhand",art:"net",    name:"The Wide Cast",      master:1, keep:12, price:2900, atk:.05,def:.03, spd:0,   sho:.20, styles:["Retiarius"], desc:"Silk through the weave and lead at the rim, twice the spread of a working net. When it opens, the whole arena sees it open."},
+  galea_mg: {slot:"helm",art:"crest",  name:"The Tall Crest",        master:1, keep:14, price:3500, atk:0,  def:.10, spd:-.03,sho:.16, styles:["Murmillo","Dimachaerus","Secutor"], desc:"Dyed horsehair the height of a man's forearm above the skull. It is absurd, it is heavy, and they can find him from the cheap seats."},
+  galea_sg: {slot:"helm",art:"smooth", name:"The Blind Face",        master:1, keep:14, price:3400, atk:0,  def:.13, spd:-.04,sho:.09, styles:["Secutor"], desc:"Smooth iron with no face at all — no brow, no mouth, two pinholes. The crowd finds it frightening, and so does the man across from it."},
+  galea_tg: {slot:"helm",art:"griffin",name:"The Silver Griffin",    master:1, keep:15, price:3600, atk:0,  def:.09, spd:-.03,sho:.20, styles:["Thraex"], desc:"The griffin done full in silver with garnet for the eye, and a second one worked small inside the brow where only he can see it."},
+  galea_hg: {slot:"helm",art:"brim",   name:"The Wide Brim",         master:1, keep:14, price:3400, atk:0,  def:.10, spd:-.03,sho:.17, styles:["Hoplomachus"], desc:"A brim you could shelter under and a plume of peacock over it. Greek to the point of insult, which is the point."},
+  galea_g:  {slot:"helm",art:"silver", name:"The Emperor's Head",    master:1, keep:27, price:6800, atk:0,  def:.10, spd:-.03,sho:.26, styles:[], desc:"Gold over silver over iron, with the divine Augustus in profile on both cheekpieces. Wearing it is very nearly a crime and absolutely a sensation."},
+  manica_g: {slot:"armor",art:"manica", name:"The Scaled Arm",       master:1, keep:12, price:3000, atk:0,  def:.09, spd:-.02,sho:.10, styles:[], desc:"Every scale tinned and set to catch the light, so the sword arm reads from the far side as a thing made out of fish."},
+  ocreae_g: {slot:"armor",art:"greaves",name:"The Chased Greaves",   master:1, keep:12, price:2900, atk:0,  def:.10, spd:-.03,sho:.11, styles:[], desc:"Bronze worked with the labours of Hercules, one to a leg, in enough detail that the front rows argue about which is which."},
+  lorica_g: {slot:"armor",art:"padded", name:"The Iron Shirt",       master:1, keep:23, price:5600, atk:0,  def:.17, spd:-.09,sho:.14, styles:[], desc:"Fifteen hundred scales, each riveted and each polished, weighing what a small woman weighs. It will stop most things, including him."},
+  gilded_g: {slot:"armor",art:"gilded", name:"The Gold Harness",     master:1, keep:38, price:9500, atk:0,  def:.12, spd:-.05,sho:.28, styles:[], desc:"Not gold leaf — gold, beaten thin over good iron by a man who does altar plate. The single most expensive object your house will ever own, worn by somebody who might die in it on Saturday."},
 };
 const SLOTS = ["weapon","offhand","helm","armor"];
 const SLOT_NAME = { weapon:"Weapon", offhand:"Off-hand", helm:"Helm", armor:"Armor" };
@@ -343,7 +379,9 @@ function kitArt(kit, slot){
 function kitFor(cls, tier){
   const k = defaultKit(cls);
   const cap = [0, 120, 400, 9999][clamp(tier,0,3)];
-  const suits = id => { const it=GEAR[id]; return (!it.styles.length || it.styles.includes(cls)) && it.price<=cap; };
+  /* a master's piece is a thing your house commissioned and pays a smith to keep;
+     it is not something the generator hands to a rival because the price cap allows it */
+  const suits = id => { const it=GEAR[id]; return !it.master && (!it.styles.length || it.styles.includes(cls)) && it.price<=cap; };
   const poolOf = slot => Object.keys(GEAR).filter(id=>GEAR[id].slot===slot && suits(id));
   const rough = tier===0;
   const swap = (slot, chance)=>{ if(R()<chance){ const p=poolOf(slot); if(p.length) k[slot]=pick(p); } };
@@ -489,6 +527,20 @@ function houseRecord(d){
    Fifty-four kinds of thing and nowhere to put them. A ludus armoury was a room,
    and a room has walls. House issue is unlimited — it is issue. Bought steel takes
    space, and steel kept in a crowded room is steel nobody is maintaining. */
+/* ---- WHO THE MASTERS WILL WORK FOR ----
+   A man who signs four blades a year does not set up his bench in a shed for a house
+   nobody in the tiers can name. Both halves have to be true: a real workshop to keep
+   the piece in, and a name in the street worth having his work associated with. In
+   practice that lands somewhere in the second year, which is exactly when the rack
+   stops having anything left to sell you. */
+const MASTER_ACCLAIM = 32;
+const masterOpen = d => bLevel(d,"armamentarium") >= 2 && acclaimOf(d) >= MASTER_ACCLAIM;
+const isMaster   = id => !!(GEAR[id] && GEAR[id].master);
+/* every master's piece in the house wants a smith on it every week, whether it is on
+   a man or on the wall. This is the real price of the bench — the ticket is once, the
+   keep is forever, and a house that arms eight men out of it feels it every Saturday. */
+const gearUpkeep = d => Object.entries(d.gear||{}).reduce((n,[id,c])=>
+  n + (GEAR[id] && GEAR[id].keep ? GEAR[id].keep * (c||0) : 0), 0);
 const rackCap   = d => 8 + bLevel(d,"armamentarium")*7;        // 8 / 15 / 22 / 29
 const rackUsed  = d => Object.entries(d.gear||{}).reduce((n,[id,c])=> n + (wears(GEAR[id])?(c||0):0), 0);
 const rackOver  = d => Math.max(0, rackUsed(d) - rackCap(d));
@@ -2199,6 +2251,11 @@ function agenda(d){
     add(2, "villa", "The potters want your name", "license it wide, or keep it fine");
   if(marryReady(d) && (d.flags.matchCool==null || d.week>=d.flags.matchCool))
     add(1, "villa", "The matchmakers are calling", "a wife, and an heir of your own blood");
+  /* the one time it is worth saying out loud — after that the tab speaks for itself */
+  /* until he owns one or tells the gatekeeper he knows his trade — then it stops asking */
+  if(masterOpen(d) && !(d.flags.learned && d.flags.learned.bench) && !d.flags.noLessons
+     && !Object.keys(d.gear||{}).some(id=>isMaster(id) && d.gear[id]>0))
+    add(2, "armory", "Capua's master smiths will take your commissions now", "famous steel, and a smith's wage on it forever");
   return A.sort((a,b)=>b.urgency-a.urgency);
 }
 const URG = { 3:{c:"#d96f5d",w:"now"}, 2:{c:"#d8ac5f",w:"soon"}, 1:{c:"#b09b7d",w:"when you can"} };
@@ -3088,6 +3145,23 @@ const favColour= v => v>=62?"#e8d092" : v>=40?"#c99a4b" : v>=18?"#b09b7d" : "#8d
 /* what the affection is worth */
 const favPurse  = g => 1 + favourOf(g)/100 * 0.22;
 const favMissio = g => favourOf(g)/100 * 15;          // they lean, they do not overrule
+/* ---- WHAT THE CROWD REMEMBERS ABOUT WHAT HE WAS WEARING ----
+   The showmanship column on every piece of gear in the game was doing almost nothing,
+   and it took the master's bench to find out. Kit showmanship fed exactly one thing:
+   the crowd number a bout STARTS at. But the crowd climbs two points a clash and a
+   fifth of every wound for twelve rounds, so it finishes at ninety-eight whatever it
+   started at — measured across three statlines, the loudest kit in the game bought
+   1.7 to 2.3 points of final crowd, which is nothing, which is why a gilded harness
+   was a worse buy than the plain iron under it. The channel was saturated.
+   So it is paid where it is not: in name. A man in famous steel is a famous man, and
+   what that is worth is fame, his own renown, the crowd's affection, and the finger
+   that goes up instead of down when he is on his knees asking. Never coin — the purse
+   is the editor's arithmetic and it does not care what he wore. */
+const kitShow   = m => 1 + clamp(m && m.sho ? m.sho : 0, 0, 1.3) * 0.55;
+/* when more than one of yours is out there, the tiers see all of them */
+const avgKitMods = gs => { const a = (gs||[]).filter(Boolean);
+  return a.length ? { sho: a.reduce((n,g)=>n + kitMods(g.kit, g.cls, g).sho, 0) / a.length } : { sho:0 }; };
+const kitMissio = m => clamp(m && m.sho ? m.sho : 0, 0, 1.3) * 8;
 const favCrowd  = g => rnd(favourOf(g)/100 * 9);
 /* and what it costs to lose him */
 const favGrief  = g => favourOf(g)/100;
@@ -3104,6 +3178,7 @@ function favourBout(d, g, res, offer){
   if(res.spared) n += 3.4;                        // a man let up is a man they asked for
   if(g.nick) n += 0.8;
   n += (g.sho - 50) * 0.045;
+  n += (res.kitSho || 0) * 3.4;                   // and what he was wearing while he did it
   if(offer && offer.tier >= 2) n += 1.4;
   if(offer && offer.imperial) n += 8;
   if(!won && crowd < 40) n -= 2.6;
@@ -6344,7 +6419,7 @@ function missioScore(A, ctx, crowd, account, endured, own){
      unknown; there is nothing in it for the crowd and a live novice fights again. */
   const green = own === false ? 0 : ((A.wins||0) + (A.losses||0) <= 3 ? 15 : (A.wins||0)+(A.losses||0) <= 6 ? 7 : 0);
   return clamp(account,0,100)*0.50 + clamp(endured,0,40) + clamp(crowd,0,100)*0.24 + green
-    + (A.sho||0)*0.12 + (A.heart||50)*0.07 + standing
+    + (A.sho||0)*0.12 + (own===false ? 0 : kitMissio(A.mods)) + (A.heart||50)*0.07 + standing
     + (ctx.guarded?10:0) + (ctx.aedile||0) + (ctx.venue||0) + (ctx.doctrine||0)
     - (ctx.tier===0?9:0) - ((ctx.hostile && own!==false)?16:0) - (ctx.strange||0);
 }
@@ -6798,6 +6873,9 @@ const LESSONS = [
   { id:"wear", tab:"armory", title:"Steel Does Not Last",
     when:d=>d.gladiators.some(g=>SLOTS.some(s=>wears(GEAR[g.kit&&g.kit[s]]))),
     text:"House stock is maintained and lasts forever. Bought steel wears every bout and eventually breaks in the middle of one. Watch the condition, have it mended before it goes, and remember that a fine blade at nothing left is worse than the plain one on the rack." },
+  { id:"bench", tab:"armory", title:"The Master's Bench",
+    when:d=>masterOpen(d),
+    text:"Every piece on the rack put together comes to about eleven thousand denarii, and by now you have more than that doing nothing. The masters are the answer to it — and understand what you are buying, because it is not a sharper edge. Point for point of attack and defence their work is the same as the best plain steel in the room. What it is, is famous: twice the showmanship of anything else, which is the crowd, and the crowd is the purse, the name your man is building, and the finger that goes up instead of down when he is on his knees. It is heavier than the plain version every time, and every piece wants a smith's wage every week for as long as you own it, whether it is on a man or on the wall." },
 
   /* ---- the newer trades of the house — each unlocks when it becomes real ---- */
   { id:"signature", tab:"men", title:"A Move Of His Own",
@@ -10831,7 +10909,7 @@ function doMelee(d, ids, offer, pending, choice, tactic){
   const winnerGid = won ? res.ents[res.winner].gid : null;
   if(won){
     d.gold += offer.purse;
-    const fg = rnd(t.fameGain*2 + res.crowd/12);
+    const fg = rnd((t.fameGain*2 + res.crowd/12) * kitShow(avgKitMods(gs)));
     d.fame += fg;
     const w = d.gladiators.find(g=>g.id===winnerGid);
     if(w){ w.wins++; w.pfame += rnd(fg*0.7); w.morale = clamp(w.morale+8,0,100);
@@ -10977,7 +11055,7 @@ function doVenatio(d, gid, offer, tactic, pending, choice){
     const purse = offer.purse;
     d.gold += purse;
     g.wins++;
-    const fg = rnd((t.fameGain*1.35 + res.crowd/14) * B.fear);
+    const fg = rnd((t.fameGain*1.35 + res.crowd/14) * B.fear * kitShow(kitMods(g.kit, g.cls, g)));
     d.fame += fg;
     g.pfame += rnd(fg*0.35);            // the crowd cheers the kill, not the man
     sum.push(`Purse: ${purse} denarii. Fame of the house +${fg}.`);
@@ -11082,7 +11160,7 @@ function doPairFight(d, ids, offer, tactic, pending, choice){
     bookBout(d, { win:true, purse, crowd:res.crowd, tier:offer.tier, cls:gs[0]&&gs[0].cls,
       stakes:offer.stakes, city:offer.city, kind:"pair", name:gs.map(x=>x.name).join(" and "),
       oppHouse: offer.opp && offer.opp.house, festival:offer.festival });
-    const fg = rnd(t.fameGain*1.6 + res.crowd/14);
+    const fg = rnd((t.fameGain*1.6 + res.crowd/14) * kitShow(avgKitMods(gs)));
     d.fame += fg;
     gs.forEach((g,i)=>{ if(!res.dead.A[i]){ g.wins++; g.pfame += rnd(fg*0.7); g.morale=clamp(g.morale+10,0,100);
       for(const k of CLASSES[g.cls].key) g[k] = clamp(g[k]+0.7, 5, statCap(g,k)); } });
@@ -11549,7 +11627,8 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
     weekMark(d,"purse",purse); g.wins++;
     const fineKit = F && F.fineBonus && GEAR[gc.kit.weapon] && GEAR[gc.kit.weapon].price>0;
     const fg = rnd((t.fameGain + res.crowd/18 + (offer.stakes==="sine"?6:0)) * (offer.stakes==="blood"?0.55:1)
-      * (isF(g)?1.2:1) * (F? F.fame : 1) * (fineKit?1.25:1) * (away?1:facFame(d, g.cls)) * V.fame * docFame(d) * blessFame(d));
+      * (isF(g)?1.2:1) * (F? F.fame : 1) * (fineKit?1.25:1) * kitShow(gc.mods)
+      * (away?1:facFame(d, g.cls)) * V.fame * docFame(d) * blessFame(d));
     if(fineKit) sum.push(`Vulcan's day, and the crowd saw whose steel he carried.`);
     if(away){
       const fit = repStyle(d)===away.taste;
@@ -11569,7 +11648,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
       }
     }
     d.fame += fg;
-    g.pfame += fg + rnd(res.crowd/14) + (g.traits.includes("Glory-Seeker")?3:0);
+    g.pfame += fg + rnd(res.crowd/14 * kitShow(gc.mods)) + (g.traits.includes("Glory-Seeker")?3:0);
     if(d.saga && d.saga.gid===g.id && d.saga.stage<3) d.saga.renown = clamp(d.saga.renown + (res.bDies?7:5) + (res.crowd>=80?3:0), 0, 100);
     { const wasFav = isFavourite(g); g.fans = clamp(fansOf(g) + fanGain(res, g, tacticNow), 0, 100);
       if(!wasFav && isFavourite(g)) sum.push(`The crowd has taken ${g.name} for its own — he is a favourite of the sand now, and favourites fill seats.`); }
@@ -11779,7 +11858,8 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   }
   if(offer.imperial && win) SLOTS.forEach(s=>{ if(wears(GEAR[g.kit[s]])) giveProv(d, g, s, "imperial"); });
   if(holdsPrimus(d,g)) SLOTS.forEach(s=>{ if(wears(GEAR[g.kit[s]]) && !provOf(g,s)) giveProv(d, g, s, "primacy"); });
-  favourBout(d, g, { crowd:res.crowd, beats:res.beats, win, spared:res.beats && res.beats.some(b=>b.kind==="spared" && b.actor==="A") }, offer);
+  favourBout(d, g, { crowd:res.crowd, beats:res.beats, win, kitSho:(gc.mods? gc.mods.sho : 0),
+    spared:res.beats && res.beats.some(b=>b.kind==="spared" && b.actor==="A") }, offer);
   weekMark(d, "bouts");
   pactBout(d, offer);
   femBout(d, g);
@@ -13119,6 +13199,7 @@ function endWeek(d){
   upkeep += injured*8*pit(d,"upkeep");
   upkeep += bUpkeep(d);
   upkeep += workUpkeep(d);
+  upkeep += gearUpkeep(d);
   /* The city's call is an obligation, not an execution. A house that cannot stand it
      this week does not fold — it sends the clerk away with a promise, and the promise
      is what costs, because standing is the one thing that cannot be bought back in an
@@ -16154,7 +16235,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               then what you are holding, then how that reads against your years. */}
           {(()=>{ const upkeepEst = Math.round(
               activeG(S).reduce((n,g)=> n + (10 + seasonUpkeep(S)) * pit(S,"upkeep") + (isAuctor(g)? g.auctor.wage : 0), 0)
-              + bUpkeep(S) + workUpkeep(S) + liturgy(S) + collDues(S) + (S.doctore? docWage(S.doctore) : 0));
+              + bUpkeep(S) + workUpkeep(S) + gearUpkeep(S) + liturgy(S) + collDues(S) + (S.doctore? docWage(S.doctore) : 0));
             const owedIn = owedTotal(S), merch = merchLive(S) ? merchWeekly(S) : 0;
             const Stat = ({label, val, colour})=>(
               <div style={{minWidth:0}}>
@@ -18248,6 +18329,29 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             </div>
           )}
 
+          {(()=>{ const open = masterOpen(S), keep = gearUpkeep(S);
+            const owned = Object.keys(S.gear||{}).filter(id=>isMaster(id)).reduce((n,id)=>n+(S.gear[id]||0),0);
+            const lvl = bLevel(S,"armamentarium"), acc = acclaimOf(S);
+            if(!open && lvl < 1 && acc < 12) return null;      /* a new house has enough to read */
+            return (
+              <div className="panel" style={{padding:12, borderColor: open? "#6d5426" : "#3e2f1f"}}>
+                <div className="flex items-center justify-between gap-2" style={{marginBottom:4}}>
+                  <span className={open?"tag tag-gold":"tag"}>The master's bench</span>
+                  {open
+                    ? <span className="rowval" style={{fontSize:13,color:keep?"#d8ac5f":"#9aa86a"}}>
+                        {owned ? `${owned} in the house · ${keep}d a week` : "open to you"}</span>
+                    : <span className="rowval dim" style={{fontSize:13}}>closed</span>}
+                </div>
+                <div className="dim" style={{fontSize:13.5,fontStyle:"italic"}}>
+                  {open
+                    ? `Capua's best smiths will take your commissions. Their work is no sharper than the good stuff on the rack — it is famous, which is the crowd, and the crowd is the purse, the name, and the raised finger when he is down and asking. Every piece wants a smith on it every week for as long as you own it.`
+                    : lvl < 2
+                      ? `A man who signs four blades a year does not set his bench up in a shed. Build the armoury to a second level and make a name worth his signature, and the top of the trade opens to you.`
+                      : `Your workshop would do. Your name in the street would not — not yet. ${MASTER_ACCLAIM - Math.round(acc)} more points of acclaim and the masters will take your commissions.`}
+                </div>
+              </div>
+            ); })()}
+
           <div className="dim" style={{fontSize:14.5,fontStyle:"italic"}}>The racks hold what you have bought and nothing else. Every piece arms one man at a time — equip it from his page. A free hand, a bare head and a bare chest cost nothing and always will.</div>
 
           <div className="grid grid-cols-4 gap-2">
@@ -18264,7 +18368,9 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           </div>
 
           {SLOTS.filter(s=>s===rack).map(slot=>{
-            const items = Object.entries(GEAR).filter(([,it])=>it.slot===slot);
+            const benchOpen = masterOpen(S);
+            const items = Object.entries(GEAR).filter(([id,it])=>it.slot===slot
+              && (!it.master || benchOpen || (S.gear[id]||0) > 0));
             const arts = [...new Set(items.map(([,it])=>it.art))];
             return (
             <React.Fragment key={slot}>
@@ -18281,13 +18387,15 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                       return (
                         <div key={id} style={{borderTop:"1px dotted #33271a",paddingTop:8,marginTop:8}}>
                           <div className="flex items-center justify-between gap-2">
-                            <div className="disp" style={{fontSize:13.5,color:it.price?"#e8d9b8":"#b9a37c"}}>{it.name}</div>
+                            <div className="disp" style={{fontSize:13.5,color:it.master?"#e8c98a":it.price?"#e8d9b8":"#b9a37c"}}>{it.name}</div>
                             {it.price>0
                               ? <span className="gold" style={{fontSize:14,whiteSpace:"nowrap"}}>{it.price}d{owned?` · ${owned} owned`:""}</span>
                               : <span className="tag">Costs nothing</span>}
                           </div>
+                          {it.master && <div style={{margin:"3px 0 1px"}}><span className="tag tag-gold">A master's piece · {it.keep}d a week to keep</span></div>}
                           <div className="dim" style={{fontSize:14,fontStyle:"italic",margin:"2px 0 3px"}}>{it.desc}</div>
                           <GearStats it={it}/>
+                          {it.master && <div className="dim" style={{fontSize:12.5,marginTop:2}}>No sharper than the best on the rack. Twice as loud — and the crowd is the purse, the name, and the finger that goes up when he is down.</div>}
                           {it.styles && it.styles.length>0 && <div className="dim" style={{fontSize:12.5,marginTop:2}}>Suits: {it.styles.join(", ")}</div>}
                           {it.price>0 && (
                             <button className={`btn ${it.stock?"btn-ghost":""}`} style={{width:"100%",marginTop:7}} disabled={S.gold<gearPrice(S,it.price,it.slot)} onClick={()=>buyGear(id)}>
