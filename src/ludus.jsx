@@ -2103,7 +2103,7 @@ function agenda(d){
      the whole file, in the Villa render, so a player with a hundred thousand denarii
      in the box was never once told there was anything left to spend it on. */
   { const pool = monuReady(d) ? ALL_WORK_KEYS : WORK_KEYS;   /* monuments only exist once the works are finished */
-    const buildable = pool.filter(k=>!workDone(d,k) && d.gold >= workDef(k).cost);
+    const buildable = pool.filter(k=>!workDone(d,k) && workOpen(d,k) && d.gold >= workDef(k).cost);
     const anyOn = pool.some(k=>workOn(d,k));
     if(!anyOn && buildable.length){
       const big = buildable.map(k=>workDef(k)).sort((a,b)=>b.cost-a.cost)[0];
@@ -2111,6 +2111,10 @@ function agenda(d){
       add(1, "villa", `${Math.round(d.gold)}d sitting in the box`,
         monu ? `${big.name.toLowerCase()} — ${big.cost}d, and it outlives you` : "there are things a house this old can build");
     } }
+  if((d.flags.litDue||0) > 0)
+    add((d.flags.litDue||0) >= 4 ? 3 : 2, "villa",
+      `The city is owed ${liturgy(d)}d a week and has not had it`,
+      `${d.flags.litDue} week${d.flags.litDue===1?"":"s"} behind — your standing is bleeding for it`);
   if(liquid(d) < 120 && owedTotal(d) >= 250)
     add(2, "villa", `${owedTotal(d)}d owed to you and ${Math.round(liquid(d))} in the box`, "rich on paper is not rich");
   { const bad = owedList(d).filter(x=>d.week - x.due >= 4);
@@ -2888,7 +2892,7 @@ const repairFee = (d, g) => {
   let n = 0;
   for(const s of SLOTS){ const it = GEAR[g.kit && g.kit[s]];
     if(wears(it)) n += (100 - wearOf(g,s)) * (it.price/900); }
-  return rnd(n * [1, .85, .72, .6][bLevel(d,"armamentarium")]);
+  return rnd(n * [1, .85, .72, .6, .48][bLevel(d,"armamentarium")]);
 };
 /* a piece made for one man and nobody else */
 const FORGE_FEE = 700;
@@ -6560,7 +6564,7 @@ const CARE = {
   surgeon: { name:"The surgeon",  desc:"Cut, cleaned and stitched properly. Halves the time and most of the scarring." },
   through: { name:"Work him through it", desc:"He fights and trains on it. The wound does not close, and it may set badly." },
 };
-const surgeonFee = (d, inj) => rnd((55 + inj.pen*14) * [1, 0.85, 0.75, 0.65][bLevel(d,"valetudinarium")]);
+const surgeonFee = (d, inj) => rnd((55 + inj.pen*14) * [1, 0.85, 0.75, 0.65, 0.52][bLevel(d,"valetudinarium")]);
 
 /* ---- THE LUDUS ITSELF ----
    Five things you can build, three levels each. Every one is a standing cost that
@@ -6568,28 +6572,37 @@ const surgeonFee = (d, inj) => rnd((55 + inj.pen*14) * [1, 0.85, 0.75, 0.65][bLe
 const BUILDINGS = {
   valetudinarium: { name:"Valetudinarium", short:"Medicus' room",
     desc:"A clean room, a table, and someone who has done this before.",
-    levels:["A corner of the store room and a bucket.","A proper table, boiled linen, a Greek who knows the trade.","Bright, aired, and better appointed than most physicians in Capua."],
-    cost:[420, 950, 1900], upkeep:[4, 9, 15] },
+    levels:["A corner of the store room and a bucket.","A proper table, boiled linen, a Greek who knows the trade.","Bright, aired, and better appointed than most physicians in Capua.","A surgeon of the Alexandrian school kept on retainer, a room built for cutting, and a cellar of drugs worth more than the men they save."],
+    cost:[420, 950, 1900, 15000], upkeep:[4, 9, 15, 38] },
   balneae: { name:"Balneae", short:"Bath house",
     desc:"Hot water at the end of a day at the post is worth more than a speech.",
-    levels:["A trough and a brazier.","Two rooms, hot and cold, and a slave to tend the fire.","Hypocaust, oil, and a masseur. The familia talks about it in the market."],
-    cost:[380, 880, 1750], upkeep:[4, 8, 14] },
+    levels:["A trough and a brazier.","Two rooms, hot and cold, and a slave to tend the fire.","Hypocaust, oil, and a masseur. The familia talks about it in the market.","Cold room, hot room, sweat room, two masseurs out of Baiae — and magistrates who ask, with some care, whether they might use it."],
+    cost:[380, 880, 1750, 13500], upkeep:[4, 8, 14, 34] },
   carceres: { name:"Carceres", short:"The cells",
     desc:"Men who sleep dry and separate wake up less certain about the wall.",
-    levels:["Straw, and a door that mostly shuts.","Boards off the floor, a window, a latrine that drains.","Individual cells, blankets, and a yard they may use unwatched."],
-    cost:[460, 1000, 2000], upkeep:[5, 10, 17] },
+    levels:["Straw, and a door that mostly shuts.","Boards off the floor, a window, a latrine that drains.","Individual cells, blankets, and a yard they may use unwatched.","Not cells any more — quarters, with a court of their own, a kitchen, and doors that lock from the inside."],
+    cost:[460, 1000, 2000, 16000], upkeep:[5, 10, 17, 40] },
   armamentarium: { name:"Armamentarium", short:"Armoury",
     desc:"A smith on the premises buys better and mends what would be thrown out.",
-    levels:["A rack and a whetstone.","A forge in the corner and a smith three days a week.","Your own armourer, and Capua's dealers quoting you their second price first."],
-    cost:[400, 900, 1800], upkeep:[4, 9, 15] },
+    levels:["A rack and a whetstone.","A forge in the corner and a smith three days a week.","Your own armourer, and Capua's dealers quoting you their second price first.","Three smiths, a standing contract for Noric steel, and pieces coming off your own benches that the dealers come here to buy."],
+    cost:[400, 900, 1800, 14000], upkeep:[4, 9, 15, 36] },
   palus: { name:"Palus", short:"Training ground",
     desc:"Posts, weights, sand raked daily. Where the work actually happens.",
-    levels:["Three posts in bare dirt.","Raked sand, weighted wasters, a covered colonnade for the rain.","A second yard, a sand pit, and every apparatus the schools of Capua use."],
-    cost:[440, 980, 1950], upkeep:[4, 9, 16] },
+    levels:["Three posts in bare dirt.","Raked sand, weighted wasters, a covered colonnade for the rain.","A second yard, a sand pit, and every apparatus the schools of Capua use.","A school inside the school: three yards, a hall roofed against the winter, and every apparatus in Italy, twice over."],
+    cost:[440, 980, 1950, 15500], upkeep:[4, 9, 16, 39] },
 };
 const BKEYS = Object.keys(BUILDINGS);
 const bLevel = (d, k) => (d.buildings && d.buildings[k]) || 0;
-const bUpkeep = d => BKEYS.reduce((s,k)=>{ const L=bLevel(d,k); return s + (L? BUILDINGS[k].upkeep[L-1] : 0); }, 0);
+/* ---- WHAT A GREAT HOUSE COSTS TO RUN ----
+   Upkeep was a flat table. A level-three bath house cost fourteen denarii a week
+   whether it served three men or fourteen, and whether the house was unknown or
+   the first in Capua — so the whole outgoing of a house went from 39d a week at
+   the founding to 258d at the very top, a six-fold rise against an income that
+   had gone up eighty-fold. Coin stopped being a constraint in about year four and
+   never became one again. What a wing costs to run follows what it is being asked
+   to do: how many men are in it, and how the house it stands in expects to live. */
+const houseLoad = d => (0.55 + activeG(d).length*0.075) * (1 + riseOf(d)*0.14);
+const bUpkeep = d => Math.round(BKEYS.reduce((s,k)=>{ const L=bLevel(d,k); return s + (L? BUILDINGS[k].upkeep[L-1] : 0); }, 0) * houseLoad(d));
 
 /* ---- THE GODS ----
    Rome did nothing without the gods, least of all put men on sand to die. A house
@@ -6678,16 +6691,16 @@ function templeWeek(d){
 }
 /* the rates each one moves */
 const healSpeed   = (d,g) => (1 + bLevel(d,"valetudinarium")*0.45) * medicusMult(d) * pit(d,"heal") * blessHeal(d) * (g? lastNum(g,"heal") : 1);
-const scarGuard   = d => [1, 0.85, 0.70, 0.55][bLevel(d,"valetudinarium")];
+const scarGuard   = d => [1, 0.85, 0.70, 0.55, 0.42][bLevel(d,"valetudinarium")];
 const surgeonOK   = d => bLevel(d,"valetudinarium") >= 1;
 const bathRest    = d => bLevel(d,"balneae")*3 + workPerk(d,"rest");                        // fatigue shed per week
 const bathMorale  = d => bLevel(d,"balneae")*0.5;
 const cellCalm    = d => bLevel(d,"carceres")*0.5;
 const gearPrice   = (d,p,slot) => { const F = festivalNow(d);
-  return rnd(p * [1, 0.9, 0.8, 0.7][bLevel(d,"armamentarium")] * (F && F.gear ? F.gear : 1)
+  return rnd(p * [1, 0.9, 0.8, 0.7, 0.58][bLevel(d,"armamentarium")] * (F && F.gear ? F.gear : 1)
     * perkGear(d) * armourerCut(d) * (slot ? docGearMult(d, slot) : 1)); };
 const palusTrain  = d => 1 + bLevel(d,"palus")*0.08;
-const palusGuard  = d => [1, 0.9, 0.8, 0.7][bLevel(d,"palus")];
+const palusGuard  = d => [1, 0.9, 0.8, 0.7, 0.58][bLevel(d,"palus")];
 
 /* ---- FEATS ----
    Things a house does once and is afterwards. Each pays on the day and most of
@@ -6916,7 +6929,7 @@ function lanistaWeek(d){
 
   /* a man who is old, well, and has somebody to hand it to simply stops */
   if(L.age >= 62 && L.health >= 45 && d.heir && yearOf(d) >= 6 && R() < 0.06){
-    d.over = { kind:"oldAge", name:d.name, lan:L.name, age:L.age, years:yearOf(d), heir:d.heir.name };
+    d.over = { kind:"oldAge", name:d.name, lan:L.name, age:L.age, upkeep:30, years:yearOf(d), heir:d.heir.name };
   } else if(L.health <= 0){
     if(d.heir && HEIRS[d.heir.kind]) d.succession = { lan:L.name, age:L.age, heir:d.heir.name, kind:d.heir.kind };
     else d.over = { kind:"lanistaDied", name:d.name, lan:L.name, age:L.age, years:yearOf(d) };
@@ -6974,7 +6987,28 @@ const riseFav     = d => riseOf(d)*3;          // your name carries weight in th
 /* rents and clients, from Friend upward — and the greater the house's name, the more
    its standing quietly pays. a famous, acclaimed house at the top of the ladder draws
    real weekly income, not a token. */
-const riseStipend = d => riseOf(d) >= 3 ? Math.round((riseOf(d)-2)*8 + d.fame*0.03*(riseOf(d)-2) + acclaimOf(d)*0.35) : 0;
+/* ---- WHAT STANDING PAYS ----
+   The clients-and-gifts income read `fame * 0.03 * (rank-2)`, with nothing above
+   it. That is 38 denarii a week at year three and 3,074 at the top of the game —
+   an eighty-fold climb against an upkeep that rose six-fold, which is the whole
+   reason the strongbox fills past anything the game has to sell. Standing pays
+   well and then it stops paying better: past a real name the gifts thicken by the
+   root of your fame, not by all of it. */
+const riseStipend = d => riseOf(d) >= 3
+  ? Math.round((riseOf(d)-2)*8
+      + Math.min(d.fame, 1500)*0.03*(riseOf(d)-2)
+      + Math.sqrt(Math.max(0, d.fame-1500))*0.95*(riseOf(d)-2)
+      + acclaimOf(d)*0.35)
+  : 0;
+/* ---- AND WHAT IT COSTS ----
+   In Rome the reward for being received was being asked to pay for things. A house
+   the city has taken up is expected to keep a street, stand a feast, put its name
+   on a portico and answer when the magistrates come round — none of which it may
+   decline and stay received. It is the counterweight to the stipend, and it grows
+   faster than the stipend does. */
+const liturgy = d => { const r = riseOf(d);
+  if(r < 4 || d.over) return 0;
+  return Math.round((r-3)*26 + Math.min(d.fame, 9000)*0.012*(r-3) + acclaimOf(d)*0.6); };
 /* how close you are to being received at the next rung */
 function riseWeek(d){
   if(d.over || d.succession) return;
@@ -9260,7 +9294,7 @@ const COUNSEL = [
     say:d=>`${(activeG(d).find(g=>canMaster(d,g))||{name:'A man'}).name} has earned his mastery and nobody has said so out loud. Do it — it costs nothing and it is worth ten bouts in a hundred.` },
   { w:60, when:d=>owedList(d).some(x=>d.week - x.due >= 4) && d.gold < 300,
     say:d=>`You are owed money and short of it at the same time. Sell the paper at a discount — a purse you cannot spend is not a purse.` },
-  { w:56, when:d=>d.gold > 2200 && BKEYS.some(k=>bLevel(d,k) < 3),
+  { w:56, when:d=>d.gold > 2200 && BKEYS.some(k=>bLevel(d,k) < 4),
     say:d=>`There is coin sitting still. A wing of the ludus pays every week for the rest of the run; coin in a box does not.` },
   { w:66, when:d=>activeG(d).some(g=>rudisEligible(g)),
     say:d=>`${(activeG(d).find(g=>rudisEligible(g))||{name:'A man'}).name} has earned the rudis. Freeing him costs you a fighter and buys you something the whole block is watching for.` },
@@ -9621,15 +9655,15 @@ function skipWeeks(d, want){
    than uses for it and nothing new arrives. These are things only a rich, old house
    can do, and each one costs more than everything else put together. */
 const WORKS = {
-  spina:   { name:"A spina for the yard", cost:7000, years:2,
+  spina:   { name:"A spina for the yard", cost:7000, upkeep:14, years:2,
     blurb:"A stone spine down the middle of the training square, the way the real ones have. They will fight around it every day for the rest of their lives.",
     done:"The men train around stone now, and the first time one of them goes out to a venue with a spina he does not have to think about it.",
     perk:"crowd", n:4, say:"+4 crowd on every bout, forever." },
-  baths:   { name:"Baths worth the name", cost:9500, years:2,
+  baths:   { name:"Baths worth the name", cost:9500, upkeep:22, years:2,
     blurb:"Not the plunge in the corner. Hot rooms, a masseur, and the kind of place a man will talk in.",
     done:"They come out of it different. Whatever the medicus does, this does the other half.",
     perk:"rest", n:6, say:"Six more fatigue shed every week, on top of everything else." },
-  chapel:  { name:"A proper shrine", cost:5500, years:1,
+  chapel:  { name:"A proper shrine", cost:5500, upkeep:9, years:1,
     blurb:"Nemesis in stone, with a priest who comes on the right days. The men built one themselves out of nothing; this is the answer to that.",
     done:"Somebody who is not you decided the house was worth a god, and then you agreed with him in stone.",
     perk:"calm", n:1.1, say:"Unrest falls 1.1 a week, forever." },
@@ -9637,7 +9671,7 @@ const WORKS = {
     blurb:"Boys sent to you to be trained and sent back. It is not a ludus, it is a reputation with a roof, and Capua has not had one in thirty years.",
     done:"There are men in three towns who learned it here, and they say so.",
     perk:"fame", n:3, say:"+3 fame a week, and the block hears about it." },
-  tomb:    { name:"A tomb for the house", cost:8500, years:2,
+  tomb:    { name:"A tomb for the house", cost:8500, upkeep:11, years:2,
     blurb:"Not a plot. A tomb, on the road out, with room for every man who ever wore your colours and space for the names to be cut.",
     done:"Every man in that block has now seen exactly where he is going, and it is not a ditch.",
     perk:"regard", n:0.4, say:"Every man's regard climbs 0.4 a week, and a death costs the cells far less." },
@@ -9649,22 +9683,40 @@ const WORK_KEYS = Object.keys(WORKS);
    once the men and the yard are as good as they will get. They cost a fortune and
    pay the house back in the coin the very top of the game runs on: name and acclaim. */
 const MONUMENTS = {
-  colossus: { name:"A colossus of your champion", cost:30000, years:2, tier:2,
+  colossus: { name:"A colossus of your champion", cost:30000, upkeep:48, years:2, tier:2,
     blurb:"A bronze the height of four men, of the best fighter your house ever raised, on the road where everyone coming into Capua must pass under it.",
     done:"He stands over the road now, and men who never saw him fight point him out to their sons.",
     perk:"fame", n:6, say:"+6 fame a week, forever — the thing is the size of a house." },
-  endow:    { name:"Games endowed in your name", cost:44000, years:3, tier:2,
+  endow:    { name:"Games endowed in your name", cost:44000, upkeep:34, years:3, tier:2,
     blurb:"Not games you hold — games that hold themselves, funded out of a sum so large the interest alone pays for blood every year after you are gone.",
     done:"There are games in your name now that will run when your grandsons are old, and the mob knows exactly whose coin buys the spectacle.",
     perk:"acclaim", n:1.1, say:"Your name climbs 1.1 acclaim a week, forever. The mob does not forget a house that feeds it." },
-  arena:    { name:"A stone arena of your own", cost:70000, years:3, tier:2,
+  arena:    { name:"A stone arena of your own", cost:70000, upkeep:130, years:3, tier:2,
     blurb:"Your own amphitheatre, in stone, on your own ground. No other lanista in Campania has ever owned the floor his men fight on. The largest sum a house can spend on anything.",
     done:"You fight in a house the city now calls by your name, and the tiers are full every time the gates open.",
     perk:"crowd", n:10, say:"+10 crowd on every bout — the floor itself is yours." },
+  /* ---- AND THE LAST THING COIN CAN BUY ----
+     A house that has raised every wing, finished every work and put up all three
+     monuments still had a strongbox nothing could empty — measured, 414,000 denarii
+     buys the entire game with change. There is one thing left in Campania big
+     enough, and it is not yours: it is the city's. A lanista, a dealer in other
+     men's bodies, pays to have Capua's own amphitheatre pulled down and raised
+     again in stone with his name cut over the gate. It takes four years and it is
+     the last sentence in the book. */
+  capua:    { name:"The amphitheatre of Capua, in your name", cost:150000, upkeep:190, years:4, tier:3,
+    blurb:"Not your floor — the city's. Pulled down and raised again in stone at your expense, with your name cut over the gate in letters a man can read from the road. Capua has never let a lanista do this. Capua has also never been offered this much money.",
+    done:"They cut the name over the gate on a Tuesday, with no ceremony, because the ceremony is the building. Every man who walks into those tiers for the next four hundred years walks in under you.",
+    perk:"fame", n:14, say:"+14 fame a week, forever, and the city itself carries your name. Nothing in Campania is above it." },
 };
 const MONU_KEYS = Object.keys(MONUMENTS);
 const workDef  = k => WORKS[k] || MONUMENTS[k];
 const ALL_WORK_KEYS = [...WORK_KEYS, ...MONU_KEYS];
+/* Stone does not look after itself. A spina wants raking and resetting, a shrine
+   wants its priest paid, and a bronze the height of four men on the Capuan road
+   wants two men with rags and a ladder for the rest of your life. The great works
+   were the only things in the game you could buy once and never think about again. */
+const workUpkeep = d => ALL_WORK_KEYS.reduce((n,k)=>{
+  const W = workDef(k); return n + (workDone(d,k) && W && W.upkeep ? W.upkeep : 0); }, 0);
 const worksOf = d => d.works || {};
 const workDone = (d,k) => { const w = worksOf(d)[k]; return !!(w && w.left <= 0); };
 const workOn   = (d,k) => { const w = worksOf(d)[k]; return w && w.left > 0 ? w : null; };
@@ -9672,12 +9724,20 @@ const workAny  = d => WORK_KEYS.filter(k=>workDone(d,k));
 const monuAny  = d => MONU_KEYS.filter(k=>workDone(d,k));
 /* the monuments are what a house that has already built everything spends its fortune on */
 const monuReady = d => WORK_KEYS.every(k=>workDone(d,k));
+/* the three monuments open once the works are done; the last one opens once the
+   three are standing, which is the only thing in the game gated on a fortune
+   already spent rather than a fortune held */
+const monuAllUp = d => MONU_KEYS.filter(k=>MONUMENTS[k].tier!==3).every(k=>workDone(d,k));
+const workOpen = (d,k) => { const W = workDef(k); if(!W) return false;
+  if(W.tier===3) return monuReady(d) && monuAllUp(d);
+  if(W.tier===2) return monuReady(d);
+  return true; };
 const workPerk = (d, kind) => ALL_WORK_KEYS.reduce((n,k)=>{ const W = workDef(k);
   return (workDone(d,k) && W && W.perk===kind) ? n + W.n : n; }, 0);
 function beginWork(d, k){
   const W = workDef(k);
   if(!W || worksOf(d)[k]) return false;
-  if(W.tier===2 && !monuReady(d)) return false;
+  if(!workOpen(d,k)) return false;
   if(d.gold < W.cost) return false;
   d.gold -= W.cost;
   d.works = Object.assign({}, worksOf(d), { [k]: { left: W.years * YEAR_WEEKS, began: d.week } });
@@ -9691,7 +9751,7 @@ function worksWeek(d){
     w[k].left--;
     if(w[k].left <= 0){
       const W = workDef(k); if(!W) continue;
-      const grand = W.tier===2;
+      const grand = W.tier>=2;
       d.fame += grand ? 90 : 30;
       if(grand) d.acclaim = clamp((d.acclaim||0) + 14, 0, 100);
       activeG(d).forEach(g=>{ g.morale = clamp(g.morale+(grand?14:8),0,100); });
@@ -12658,6 +12718,21 @@ function endWeek(d){
   });
   upkeep += injured*8*pit(d,"upkeep");
   upkeep += bUpkeep(d);
+  upkeep += workUpkeep(d);
+  /* The city's call is an obligation, not an execution. A house that cannot stand it
+     this week does not fold — it sends the clerk away with a promise, and the promise
+     is what costs, because standing is the one thing that cannot be bought back in an
+     afternoon. */
+  { const lit = liturgy(d);
+    if(lit > 0){
+      if(d.gold - upkeep >= lit){ upkeep += lit; d.flags.litDue = 0; }
+      else {
+        d.flags.litDue = (d.flags.litDue||0) + 1;
+        if(d.rise) d.rise.standing = Math.max(0, (d.rise.standing||0) - 4);
+        if(d.flags.litDue === 1 || d.flags.litDue % 5 === 0)
+          chron(d, `The magistrates' clerk came for what a house of your standing owes the city, and went away with a promise instead of a purse. That is a thing men say to each other afterwards.`, "bad");
+      }
+    } }
   upkeep += collDues(d);
   if(d.flags.underwritten > 0){ d.flags.underwritten--; upkeep = 0; }
   if(d.doctore){ upkeep += docWage(d.doctore); d.doctore.weeks = (d.doctore.weeks||0)+1; }
@@ -13448,7 +13523,7 @@ function LudusPlan({ S }){
   const spots = [[118,120],[150,112],[178,126],[132,142],[164,146],[106,138],[190,110],[146,130]];
   return (
     <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img"
-      aria-label={`A plan of the ludus. ${BKEYS.reduce((n,k)=>n+B(k),0)} of 15 wings built, ${men.length} men in the yard${hurt?`, ${hurt} in the infirmary`:""}.`}
+      aria-label={`A plan of the ludus. ${BKEYS.reduce((n,k)=>n+B(k),0)} of 20 wings built, ${men.length} men in the yard${hurt?`, ${hurt} in the infirmary`:""}.`}
       style={{display:"block",borderRadius:8,background:"#1a1510"}}>
       <defs>
         <linearGradient id="sand" x1="0" y1="0" x2="0" y2="1">
@@ -14585,7 +14660,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
     setAsk({ title:"Name the Day", confirm:"Call him out", danger:false,
       text:`You hold the upper hand over ${lanistaOf(S.nemHouse.house).name}. Call him out now and the reckoning is set on your terms — ${g?g.name:"your best man"} against his best, before all of Capua. Win it and you may not just beat House ${S.nemHouse.house}, but finish it.`,
       run:()=>mut(d=>{ nemCallOut(d); }) }); };
-  const build = k => mut(d=>{ const L = bLevel(d,k); if(L>=3) return;
+  const build = k => mut(d=>{ const L = bLevel(d,k); if(L>=4) return;
     const cost = BUILDINGS[k].cost[L];
     if(d.gold < cost) return;
     d.gold -= cost;
@@ -15467,8 +15542,17 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
     <span className="tag tag-gold">The House</span>
     <span className="dim" style={{fontSize:13}}>{bUpkeep(S)}d / week</span>
   </div>
+  {/* what the wings, the stone and the city are each taking, said out loud */}
+  {(()=>{ const w = workUpkeep(S), lit = liturgy(S);
+    if(!w && !lit) return null;
+    return (
+      <div className="dim" style={{fontSize:13,marginBottom:4,lineHeight:1.45}}>
+        {w>0 && <div>The works and monuments · <span style={{color:"#cfa88a"}}>{w}d a week</span> — stone wants keeping.</div>}
+        {lit>0 && <div>What the city asks of a house of your standing · <span style={{color:"#cfa88a"}}>{lit}d a week</span> — a street kept, a feast stood, your name on a portico. You may not decline it and stay received.</div>}
+      </div>
+    ); })()}
   {BKEYS.map(k=>{
-    const B = BUILDINGS[k], L = bLevel(S,k), next = L<3 ? B.cost[L] : null;
+    const B = BUILDINGS[k], L = bLevel(S,k), next = L<4 ? B.cost[L] : null;
     return (
       <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:9,marginTop:9}}>
         <div className="flex items-center justify-between gap-2">
@@ -15476,7 +15560,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           <span className="rowval dim" style={{fontSize:12.5}}>{B.short}</span>
         </div>
         <div className="flex gap-1" style={{margin:"5px 0"}}>
-          {[0,1,2].map(i=>(
+          {[0,1,2,3].map(i=>(
             <div key={i} style={{flex:1,height:5,borderRadius:99,background:i<L?"#c99a4b":"#33271a"}}/>
           ))}
         </div>
@@ -15651,7 +15735,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               then what you are holding, then how that reads against your years. */}
           {(()=>{ const upkeepEst = Math.round(
               activeG(S).reduce((n,g)=> n + (10 + seasonUpkeep(S)) * pit(S,"upkeep") + (isAuctor(g)? g.auctor.wage : 0), 0)
-              + bUpkeep(S) + collDues(S) + (S.doctore? docWage(S.doctore) : 0));
+              + bUpkeep(S) + workUpkeep(S) + liturgy(S) + collDues(S) + (S.doctore? docWage(S.doctore) : 0));
             const owedIn = owedTotal(S), merch = merchLive(S) ? merchWeekly(S) : 0;
             const Stat = ({label, val, colour})=>(
               <div style={{minWidth:0}}>
@@ -15692,7 +15776,13 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 <div className="grid grid-cols-3 gap-2" style={{marginBottom:9}}>
                   <Stat label="Coin" val={`${rnd(S.gold)}d`} colour={S.gold<0?"#d96f5d":"#e0bd72"}/>
                   <Stat label="Upkeep" val={`−${upkeepEst}d/wk`} colour="#cfa88a"/>
-                  <Stat label={merch>0?"Potters":"Owed you"} val={merch>0?`+${merch}d/wk`:`${owedIn}d`} colour={merch>0?"#9aa86a":"#cfc0a0"}/>
+                  {/* what arrives without a bout being fought. The stipend a received
+                      house draws was the largest number in the ledger and was written
+                      down nowhere — the box filled and nothing on the page said why. */}
+                  {(()=>{ const inWk = riseStipend(S) + merch;
+                    return inWk > 0
+                      ? <Stat label="Coming in" val={`+${inWk}d/wk`} colour="#9aa86a"/>
+                      : <Stat label="Owed you" val={`${owedIn}d`} colour="#cfc0a0"/>; })()}
                   <Stat label="Fame" val={rnd(S.fame)} colour="#d8c08a"/>
                   <Stat label="Standing" val={rnd(S.favor)} colour="#bfa8c8"/>
                   <Stat label="Record" val={`${REC.w}\u2013${REC.l}`} colour="#cfc0a0"/>
@@ -15836,14 +15926,14 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   </div>
                 </div>
               )}
-              <Sect title="The yard" note={`${BKEYS.reduce((n,k)=>n+bLevel(S,k),0)} of 15 wings · ${activeG(S).length} in the yard`}>
+              <Sect title="The yard" note={`${BKEYS.reduce((n,k)=>n+bLevel(S,k),0)} of 20 wings · ${activeG(S).length} in the yard`}>
             <LudusPlan S={S}/>
             <div className="flex items-center justify-between" style={{marginTop:6}}>
               <span className="dim" style={{fontSize:13,fontStyle:"italic"}}>
                 {(()=>{ const built = BKEYS.reduce((n,k)=>n+bLevel(S,k),0), works = workAny(S).length;
                   return built===0 ? "Four walls, a yard, and whatever you brought with you."
-                    : works>0 ? `${built} of 15 wings raised, and ${works} thing${works===1?"":"s"} that will outlast you.`
-                    : `${built} of 15 wings raised.`; })()}
+                    : works>0 ? `${built} of 20 wings raised, and ${works} thing${works===1?"":"s"} that will outlast you.`
+                    : `${built} of 20 wings raised.`; })()}
               </span>
               <span className="rowval dim" style={{fontSize:12.5}}>{activeG(S).length} in the yard</span>
             </div>
@@ -17338,12 +17428,14 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     <div className="dim" style={{fontSize:14,fontStyle:"italic",marginTop:2}}>{done ? W.done : W.blurb}</div>
                     {done && <div className="laurel" style={{fontSize:13.5,marginTop:3}}>{W.say}</div>}
                     {on && <Bar v={100 - on.left/(W.years*YEAR_WEEKS)*100} label="" color="linear-gradient(90deg,#4a3a24,#c99a4b)"/>}
-                    {!done && !on && (
-                      <button className="btn btn-ghost" style={{width:"100%",marginTop:6}}
-                        disabled={S.gold < W.cost} onClick={()=>mut(d=>{ beginWork(d, k); })}>
-                        {S.gold < W.cost ? `${W.cost}d — not yet` : `Begin it · ${W.cost}d`}
-                      </button>
-                    )}
+                    {!done && !on && (workOpen(S,k)
+                      ? <button className="btn btn-ghost" style={{width:"100%",marginTop:6}}
+                          disabled={S.gold < W.cost} onClick={()=>mut(d=>{ beginWork(d, k); })}>
+                          {S.gold < W.cost ? `${W.cost}d — not yet` : `Begin it · ${W.cost}d`}
+                        </button>
+                      : <div className="dim" style={{fontSize:13.5,marginTop:6,fontStyle:"italic"}}>
+                          The city will not hear this from a house that has not finished its own monuments first.
+                        </div>)}
                   </div>
                 ); })}
             </Sect>
