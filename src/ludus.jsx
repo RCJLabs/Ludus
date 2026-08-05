@@ -11006,7 +11006,37 @@ function simulateVenatio(A, key, tA, ctx, opts){
    Wager on your own man at the bookmakers' odds, or arrange for him to lose
    and bet against him. The coin is good. Being caught is not. */
 const VIG = 0.12;
-const STAKES_OPTS = [50, 150, 400];
+/* ---- WHAT A WAGER IS WORTH ----
+   Measured across ten thousand bouts: a lanista who knows nothing loses 12.7 denarii
+   on every hundred he stakes, which is the vig and is exactly as it should be. But
+   the bet settles on winChance with no drilling and no knowledge of what the other
+   man means to do — the book prices the SHEET — so a house that has drilled for him
+   returns +22.6 on the hundred, one that has had him watched +15.9, and one that has
+   done both +56.2. The edge was already there and working.
+   What was wrong was the size of it. Fifty, a hundred and fifty, four hundred: at the
+   best price in the game the largest wager on the board returned 225 denarii to a
+   house holding a quarter of a million. It was not a bad bet, it was a bet nobody had
+   any reason to place. The stakes are what the house can stand now. */
+const STAKES_MIN = [50, 150, 400];
+const stakesFor = d => {
+  const spare = Math.max(0, (d && d.gold) || 0);
+  const top = clamp(Math.round(spare * 0.12 / 100) * 100, 400, 14000);
+  const opts = [Math.round(top*0.08/50)*50, Math.round(top*0.25/50)*50, Math.round(top*0.55/50)*50, top];
+  /* never smaller than the old board, never four of the same number */
+  const out = [];
+  for(const v of opts.map((v,i)=>Math.max(v, STAKES_MIN[i] || 0)))
+    if(!out.includes(v)) out.push(v);
+  return out;
+};
+/* ---- AND THE MEN WITH THE BOOK ARE NOT FOOLS ----
+   A standing edge of half again on every wager is a printing press, so the book
+   learns. Every wager you win shortens what they will offer you next time, and it
+   comes back slowly if you leave them alone. It never goes past a third off. */
+const bookEye = d => 1 - clamp(((d && d.flags && d.flags.bookEye) || 0) * 0.055, 0, 0.34);
+const bookEyeWord = d => { const e = (d && d.flags && d.flags.bookEye) || 0;
+  return e < 1 ? null : e < 3 ? "They have started watching which of your men you drill."
+    : e < 6 ? "They know your habits now, and the board is shorter for it."
+    : "Nobody in Capua will give you a real price any more."; };
 /* what the tactic is worth on the odds scale. Most of what it does lives in the
    exchange — how hard he hits, how much he takes, how fast he burns — none of
    which power() can see, so these are fitted from measured outcomes: aggressive
@@ -11126,12 +11156,14 @@ function settleBet(d, g, offer, bet, won, res){
   const p = bet.chance;
   const backedHim = !bet.against;
   const hit = backedHim ? won : !won;
-  const odds = Math.max(1.05, (1/clamp(backedHim ? p : 1-p, 0.02, 0.98)) * (1-lanVig(d)));
+  const odds = Math.max(1.05, (1/clamp(backedHim ? p : 1-p, 0.02, 0.98)) * (1-lanVig(d)) * bookEye(d));
   if(hit){
     const pay = rnd(bet.amount * odds);
     d.gold += pay;
     if(d.lanista) d.lanista.wonBets = (d.lanista.wonBets||0)+1;
+    d.flags.bookEye = ((d.flags.bookEye||0) + 1);
     out.push(`The bookmakers pay ${pay} denarii at ${oddsWord(odds)}.`);
+    const w = bookEyeWord(d); if(w) out.push(w);
   } else {
     out.push(`Your ${bet.amount} denarii stays with the bookmakers.`);
   }
@@ -13480,6 +13512,9 @@ function endWeek(d){
   formWeek(d);
   electionWeek(d);
   rackWeek(d);
+  /* the book's eye cools if you stop taking money off them */
+  if((d.flags.bookEye||0) > 0 && d.week - (d.flags.lastBet||-99) >= 3 && R() < 0.34)
+    d.flags.bookEye = Math.max(0, (d.flags.bookEye||0) - 1);
   staffWeek(d);
   refuseWeek(d);
   facWeek(d);
@@ -15202,7 +15237,7 @@ export default function App(){
     const g = d.gladiators.find(x=>x.id===fGid);
     if(!g || !canFight(g) || g.lastFought>=d.week) return;
     const bet = makeBet(g, offer.opp);
-    if(bet) d.gold -= bet.amount;
+    if(bet){ d.gold -= bet.amount; d.flags.lastBet = d.week; }
     offer.entrance = entrance;
     const res = doFight(d, fGid, offer, tactic, bet, null, null, offer.watched ? plan : "none");
     if(res.crux){ setHeld({ base:d, res }); setFight(res); setFGid(null); setStake(0); setAgainst(false); return; }
@@ -15285,7 +15320,7 @@ export default function App(){
     if(!g || !canFight(g) || g.lastFought>=d.week) return;
     const offer = makePitOffer(d, g, pitStakes, pitPick);
     const bet = makeBet(g, offer.opp);
-    if(bet) d.gold -= bet.amount;
+    if(bet){ d.gold -= bet.amount; d.flags.lastBet = d.week; }
     const res = doFight(d, fGid, offer, tactic, bet);
     if(res.crux){ setHeld({ base:d, res }); setFight(res); setFGid(null); setStake(0); setAgainst(false); return; }
     setS(d); setFight(res); setFGid(null); setStake(0); setAgainst(false);
@@ -20806,13 +20841,28 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               </div>
               <div className="flex gap-2" style={{flexWrap:"wrap",marginBottom:7}}>
                 <button className={`chip ${stake===0?"on":""}`} onClick={()=>{setStake(0);setAgainst(false);}}>No wager</button>
-                {STAKES_OPTS.map(v=>(<button key={v} className={`chip ${stake===v?"on":""}`} disabled={S.gold<v} style={S.gold<v?{opacity:.4}:undefined} onClick={()=>setStake(v)}>{v}d</button>))}
+                {stakesFor(S).map(v=>(<button key={v} className={`chip ${stake===v?"on":""}`} disabled={S.gold<v} style={S.gold<v?{opacity:.4}:undefined} onClick={()=>setStake(v)}>{v}d</button>))}
               </div>
               {stake>0 && (<div className="grid grid-cols-2 gap-2">
                 <button className={`chip ${!against?"on":""}`} onClick={()=>setAgainst(false)}>Back your man</button>
                 <button className={`chip ${against?"on":""}`} style={against?{borderColor:"#7c2a22",color:"#d98476",background:"#2a1512"}:undefined} onClick={()=>setAgainst(true)}>Have him lose</button>
               </div>)}
               {stake>0 && against && <div className="blood" style={{fontSize:13,fontStyle:"italic",marginTop:6}}>He will be told to go down, and he will know you asked.</div>}
+              {(()=>{ /* the board is struck on the sheet. What is in your yard is not on it. */
+                const meB = fGid ? activeG(S).find(x=>x.id===fGid) : null;
+                if(!meB || pick.kind!=="single") return null;
+                const drilled = prepFor(S, meB, pick.o) > 0;
+                const watched = !!(pick.o && pick.o.watched);
+                const eye = bookEyeWord(S);
+                return (
+                  <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:6,lineHeight:1.4}}>
+                    The board is struck on the sheet — his record, his class, what Capua can see of him.
+                    {drilled || watched
+                      ? <span className="gold"> It does not know {drilled && watched ? "you have drilled for this man and had him watched" : drilled ? "your man has drilled for this one" : "you have had him watched"}, and that is the whole of what a wager is for.</span>
+                      : <span> It knows everything you know, which is why a blind wager is a slow way of giving money away.</span>}
+                    {eye && <span className="blood"> {eye}</span>}
+                  </div>
+                ); })()}
             </div>
           );
           if(pick.kind==="pits"){
