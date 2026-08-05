@@ -1061,6 +1061,16 @@ function damnCheck(d, g){
    until his term runs out and every slave in the yard watches him walk. */
 const isAuctor = g => !!(g && g.auctor);
 const auctorLeft = g => g.auctor ? Math.max(0, g.auctor.bouts - g.auctor.served) : 0;
+/* not every man who swears the oath came off the block — a freedman who asks to
+   come back signs at his own price, and old saves hold contracts written before
+   the fee was recorded. Price those off the wage he is already drawing and the
+   record he brings, so nothing downstream ever has to divide by a missing number. */
+function auctorFee(g){
+  const a = (g && g.auctor) || {};
+  if(Number.isFinite(a.fee) && a.fee > 0) return a.fee;
+  const wage = Number.isFinite(a.wage) && a.wage > 0 ? a.wage : 10;
+  return rnd(Math.max(120, 140 + Math.max(0, wage - 8) * 30 + ((g && g.wins) || 0) * 10));
+}
 const AUCTOR_WHY = [
   "Debts he will not name, and a creditor who will.",
   "A farm gone to a senator's surveyor and four mouths still at home.",
@@ -1082,8 +1092,10 @@ function makeAuctoratus(d, quality){
 }
 /* his term is up */
 function auctorReSign(d, g){
-  const fee = rnd(g.auctor.fee * 1.35 + g.wins*22);
-  return { fee, wage: rnd(g.auctor.wage*1.2), bouts: ri(5,10) };
+  const base = auctorFee(g);
+  const wage = Number.isFinite(g.auctor && g.auctor.wage) && g.auctor.wage > 0 ? g.auctor.wage : 10;
+  const fee = Math.max(1, rnd(base * 1.35 + (g.wins||0)*22));
+  return { fee, wage: Math.max(1, rnd(wage*1.2)), bouts: ri(5,10) };
 }
 function auctorDepart(d, g){
   g.status = "departed";
@@ -5084,9 +5096,20 @@ function planEffect(plan, opp){
   const P = PLANS[plan];
   if(!P || !P.tell) return { pow:1, stam:1, guard:1, right:null };
   const matches = TELL_KEYS.filter(k=>TELLS[k].plan===plan && TELLS[k].when(opp));
-  if(matches.length) return { pow:1.052, stam:0.93, guard:0.955, right:true };
-  return { pow:0.974, stam:1.04, guard:1.028, right:false };
+  /* ---- WHAT A READ IS ALLOWED TO BE WORTH ----
+     Power decides who gets a turn at all and then how hard it is, and it compounds
+     over twelve rounds — so a 5.2% edge on it was not a 5% edge on the bout, it was
+     measured at seventeen points of win rate off a single correct guess. Stacked on
+     the right tactic that made the best card in the game a 77% bout against a man
+     identical in all six stats, which is not a contest. The right read is worth
+     roughly half what it was now; the wrong one still costs the whole of what it
+     cost, because being wrong about him is meant to be the thing you feel. */
+  return Object.assign({}, matches.length ? PLAN_READ.right : PLAN_READ.wrong);
 }
+const PLAN_READ = {
+  right: { pow:1.027, stam:0.962, guard:0.977, right:true },
+  wrong: { pow:0.970, stam:1.048, guard:1.034, right:false },
+};
 const watchCost = (d, offer) => rnd(28 + offer.tier*22 + (offer.purse||0)*0.045);
 const tellsOf = (d, offer) => {
   const o = offer.opp;
@@ -5951,7 +5974,11 @@ function migrate(S){
   if(S.ear===undefined) S.ear = null;
   if(!S.heard) S.heard = [];
   S.gladiators.forEach(g=>{ if(g.regard==null) g.regard = ri(38,54); if(!g.memory) g.memory = [];
-    if(g.form==null) g.form = 0; if(!g.formLog) g.formLog = []; if(g.fans==null) g.fans = 0; });
+    if(g.form==null) g.form = 0; if(!g.formLog) g.formLog = []; if(g.fans==null) g.fans = 0;
+    /* a contract signed before the fee was written down */
+    if(g.auctor){ if(!Number.isFinite(g.auctor.fee) || g.auctor.fee <= 0) g.auctor.fee = auctorFee(g);
+      if(!Number.isFinite(g.auctor.wage) || g.auctor.wage <= 0) g.auctor.wage = rnd(10 + (g.wins||0)*1.2);
+      if(!g.auctor.why) g.auctor.why = pick(AUCTOR_WHY); } });
   if(!S.deadlines) S.deadlines = [];
   if(S.doctrine===undefined) S.doctrine = null;
   if(!S.kits) S.kits = [];
@@ -6236,6 +6263,16 @@ function injuryFor(target, severe){
   return { name:inj[0], weeks:inj[1], pen:inj[2], part:target };
 }
 
+/* ---- THE MAN ACROSS THE SAND IS NOT YOUR EQUAL ----
+   The editor does not build a card to be fair to you. He builds it so the crowd goes
+   home talking, and a house that wins everything is not that — so the man he puts up
+   is always a little better than the sheet says he is, and nobody writes it down.
+   Small: about two per cent of power. It compounds over twelve rounds into six or
+   seven points of win rate, which is what puts a dead-even mirror on the wrong side
+   of the coin and stops perfect play from ever being a certainty. Measured with a
+   99-stat man against his own double, the best card in the game — the read right and
+   the best answer to what he brings — comes out at 59%, against 77% before. */
+const FOE_EDGE = 1.021;
 function power(f, tactic, oppCls, mom, atkMod){
   const pen = f.injury ? f.injury.pen : 0;
   const e = k => Math.max(5, f[k]-pen);
@@ -6263,9 +6300,12 @@ function power(f, tactic, oppCls, mom, atkMod){
      the blow — so aggressive simply took fewer blows and every discount written
      for defensive was paid on a thing that had stopped happening. It moves the
      exchange rate now, in simulateFight, and barely touches the odds of landing. */
-  if(tactic==="aggressive") p *= 1.05;
-  if(tactic==="defensive") p *= 0.97;
-  if(tactic==="showboat") p *= 0.96;
+  /* and 1.05 was still worth ten points of win rate on its own, for the same reason:
+     twelve rounds of compounding. Forward buys a smaller share of the initiative and
+     is paid for harder in the exchange, so it is a gamble rather than a right answer. */
+  if(tactic==="aggressive") p *= 1.028;
+  if(tactic==="defensive") p *= 0.975;
+  if(tactic==="showboat") p *= 0.965;
   p *= 1 + clamp(mom||0,-3,3)*0.03;
   p *= 1 + (f.mods ? f.mods.atk*0.6 + f.mods.def*0.30 : 0);
   p *= f.regardMult || 1;
@@ -6495,7 +6535,7 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
        a man bred to endure keeps is most of it. */
     const gasA = gasOf(A, sA, smA), gasB = gasOf(B, sB, smB);
     const pA = power(A,tA,B.cls,mom,modA) * PL.pow * (0.72+R()*0.56) * gasA * (A.sigOpen||1) * shoA * (round>=6 ? (A.lastLate||1) : 1) * mult(MARK_POW,"A");
-    const pB = power(B,tB,A.cls,-mom,modB) * (0.72+R()*0.56) * gasB * (B.sigOpen||1) * shoB * mult(MARK_POW,"B");
+    const pB = power(B,tB,A.cls,-mom,modB) * FOE_EDGE * (0.72+R()*0.56) * gasB * (B.sigOpen||1) * shoB * mult(MARK_POW,"B");
     A.sigOpen = 1; B.sigOpen = 1;
     const wind = TAC_WIND;
     sA -= wind(tA) * (1 - A.mods.spd*0.5) * PL.stam * (A.formStam||1) * (ctx.sky||1) * (A.lastStam||1) * mult(MARK_WIND,"A");
@@ -9029,7 +9069,9 @@ const FREEDMEN = {
     say:(d,f)=>`${f.name} wants to fight again. Not sold, not bound — signed, for money, like any auctoratus. He has thought about it and he would rather do the thing he is good at.`,
     run:(d,f)=>{ const g = genGladiator(d, clamp(48 + f.wins*2, 48, 88));
       g.name = f.name.split(",")[0]; g.wins = f.wins; g.pfame = 60 + f.wins*4; g.regard = 82; g.sworn = "feast";
-      g.auctor = { bouts: ri(6,12), served:0, wage: rnd(14 + f.wins*1.4) };
+      g.auctor = { bouts: ri(6,12), served:0, wage: rnd(14 + f.wins*1.4),
+        fee: rnd(200 + f.wins*34 + ri(0,120)),
+        why: "He was freed in this yard and found the world outside smaller than the sand." };
       d.gladiators.push(g);
       return `He signs for ${g.auctor.bouts} bouts at ${g.auctor.wage} a week. Every man in that block watches a free man choose this on purpose.` } },
 };
@@ -10628,7 +10670,7 @@ const STAKES_OPTS = [50, 150, 400];
    exchange — how hard he hits, how much he takes, how fast he burns — none of
    which power() can see, so these are fitted from measured outcomes: aggressive
    won 63.6% where measured won 46.3% at parity, defensive 39.8%. */
-const TACTIC_OR = { aggressive:2.2, measured:1, defensive:0.85, showboat:0.9 };
+const TACTIC_OR = { aggressive:1.42, measured:1, defensive:0.90, showboat:0.88 };
 /* ---- ONE SHAPE FOR ALL FOUR ENGINES ----
    v1.87 gave the three tactics a domain in simulateFight, and the pair, the melee and
    the hunt each kept their own copy of what it had cured. Measured with the classes
@@ -10661,7 +10703,8 @@ function winChance(g, opp, prep, tac, foeTac){
   /* the drill is a real edge in the bout, so the bookmakers had better know about it */
   if(prep) A.regardMult = (A.regardMult || 1) * (1 + prep*0.14);
   const B = clone(opp); B.kit = opp.kit || defaultKit(opp.cls); B.mods = kitMods(B.kit, B.cls, B);
-  const pa = power(A, "measured", B.cls, 0, 1), pb = power(B, "measured", A.cls, 0, 1);
+  /* the bookmakers price the same fight the sand does, hidden edge and all */
+  const pa = power(A, "measured", B.cls, 0, 1), pb = power(B, "measured", A.cls, 0, 1) * FOE_EDGE;
   // a power edge compounds across twelve rounds, so the raw ratio badly understates
   // the true chance; sharpen it on the odds scale to match measured outcomes
   const raw = clamp(pa/(pa+pb), 0.02, 0.98);
@@ -11185,7 +11228,12 @@ function simulatePair(As, Bs, tA, stakes, ctx, opts){
        defensive pairs drew 57% of their bouts and a defensive pair beat an
        aggressive one ninety-one times in a hundred. The shield still turns things;
        it turns fewer of them when there is a second man coming round the side. */
-    const turned = diff >= 8 && TAC_GUARD(atkT, defT, 0.58);
+    /* 0.58 was set when forward bought 5% of power. Forward now buys 2.8%, and the
+       pair is where the guard turn compounds hardest — measured, standing off went
+       from beating an aggressive pair 71.8% to 80.2% on that change alone, and from
+       an even bout against a measured one to 57%. The turn is scaled back to hold the
+       shape the pairing was tuned to. */
+    const turned = diff >= 8 && TAC_GUARD(atkT, defT, 0.44);
     if(turned){
       const dName = pA>pB ? Bs[lb].name : As[la].name, aName = pA>pB ? As[la].name : Bs[lb].name;
       crowd = clamp(crowd+1,0,100);
@@ -15137,7 +15185,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
     if(!g) return;
     if(accept && d.gold>=o.fee){
       d.gold -= o.fee;
-      g.auctor = { bouts:o.bouts, served:0, fee:o.fee, wage:o.wage, why:g.auctor.why };
+      g.auctor = { bouts:o.bouts, served:0, fee:o.fee, wage:o.wage,
+        why:(g.auctor && g.auctor.why) || pick(AUCTOR_WHY) };
       g.morale = clamp(g.morale+12,0,100);
       chron(d, `${fullName(g)} signs again — ${o.fee} in hand, ${o.bouts} more bouts. He had somewhere to go and did not go.`, "good");
     } else auctorDepart(d, g);
