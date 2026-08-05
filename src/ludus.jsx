@@ -5542,16 +5542,40 @@ function pickAnyOpp(d, tier){
   return { opp:o, ref:{ circuit:true, fid:f.id }, known:(f.beatYou+f.lostToYou)>0 };
 }
 
-function pickRivalOpp(d, tier){
+function pickRivalOpp(d, tier, elite){
   if(!d.rivals){ const a = pickAnyOpp(d, tier); return { opp:a.opp, ref:a.ref, rematch:false, grudgeM:false }; }
   const bands = [[22,46],[38,60],[54,76],[66,99]];
   const avg = f => STATS.reduce((s,k)=>s+f[k],0)/6;
   const pool = [];
   d.rivals.forEach(h=>{ if(h.away) return; h.fighters.forEach(f=>{ if(!f.injury) pool.push({h,f}); }); });
   let fitPool;
-  if(tier===3) fitPool = pool.slice().sort((a,b)=>avg(b.f)-avg(a.f)).slice(0,3);
+  /* ---- THE WALL AT THE TOP OF THE STANDARD CARD ----
+     Tier 3 ignored its own band and always took the pool's three best. That was
+     harmless while the bay topped out in the sixties — the three best WERE the band.
+     Once the houses could build real champions it turned the week your fame crossed
+     300 into a cliff: measured at 28% wins and 19% deaths, against men ten points
+     above your own best, straight after a tier-2 card you were winning four in five.
+     And at the far end the same rule went soft, because Capua's best three were 92
+     when your man was 99 — 90% wins. It is pitched against your own best man now:
+     always a step up, never a wall, and it does not go quiet once you are finished.
+     The genuinely best men in the bay are what the primacy and the imperial bill are
+     for, and those ask for them explicitly. */
+  if(tier===3 && !elite){
+    const mine = activeG(d).reduce((m,g)=>Math.max(m, avg(g)), 0);
+    const floor = mine > 0 ? mine - 11 : bands[3][0];
+    fitPool = pool.filter(p=>avg(p.f) >= floor);
+    if(fitPool.length < 2) fitPool = pool.slice().sort((a,b)=>avg(b.f)-avg(a.f)).slice(0,3);
+  }
+  else if(tier===3) fitPool = pool.slice().sort((a,b)=>avg(b.f)-avg(a.f)).slice(0,3);
   else fitPool = pool.filter(p=>{ const a=avg(p.f); return a>=bands[tier][0] && a<=bands[tier][1]; });
-  if(!fitPool.length) fitPool = pool;
+  /* Nobody in the bay sits in this band. Falling back to the WHOLE pool meant a new
+     house's very first card could be drawn from Capua's best — measured at week one:
+     an opponent averaging 54 against a founding man of 47, a 30% win and a 27% chance
+     of burying him. Take the men nearest the band instead. */
+  if(!fitPool.length && pool.length){
+    const mid = (bands[Math.min(tier,3)][0] + bands[Math.min(tier,3)][1]) / 2;
+    fitPool = pool.slice().sort((a,b)=>Math.abs(avg(a.f)-mid) - Math.abs(avg(b.f)-mid)).slice(0,3);
+  }
   if(!fitPool.length){ const a = pickAnyOpp(d, tier); return { opp:a.opp, ref:a.ref, rematch:false, grudgeM:false }; }
   const rem = fitPool.filter(p=>p.f.beatYou>0);
   /* at the top of the card the city does not send whichever of its three best men
@@ -5559,7 +5583,9 @@ function pickRivalOpp(d, tier){
      Weighted 3:2:1, so it is usually him and never only him. */
   const topPick = () => { const bag=[]; fitPool.slice(0,3).forEach((x,i)=>{ for(let k=0;k<3-i;k++) bag.push(x); });
     return bag.length ? pick(bag) : pick(fitPool); };
-  const chosen = (rem.length && R()<0.6) ? pick(rem) : (tier===3 ? topPick() : pick(fitPool));
+  /* the 3:2:1 lean toward the best of them is for the crown and the imperial bill,
+     which ask for it — on an ordinary top-tier card it just rebuilt the wall */
+  const chosen = (rem.length && R()<0.6) ? pick(rem) : (elite ? topPick() : pick(fitPool));
   return { opp: clone(chosen.f), ref:{house:chosen.h.name, fid:chosen.f.id},
     rematch: chosen.f.beatYou>0, grudgeM: chosen.f.lostToYou>0 };
 }
@@ -7245,7 +7271,7 @@ function makePrimusOffer(d, tier){
 function makeDefenceOffer(d){
   const p = d.primus;
   if(!p || !p.mine) return null;
-  const pr = pickRivalOpp(d, 3);
+  const pr = pickRivalOpp(d, 3, true);   /* the crown is challenged by the best man in the bay */
   const opp = pr.opp;
   opp.wins = Math.max(opp.wins||0, ri(7,14));
   opp.pfame = Math.max(opp.pfame||0, ri(55,90));
@@ -12890,9 +12916,14 @@ const Fighter = React.memo(function Fighter({ kit, pose, wounds, scars, fallen, 
     return null;
   };
 
-  /* the off hand of a dual wielder: its own arm, fist and blade angled low */
+  /* the off hand of a dual wielder: its own arm, fist and blade angled low.
+     offT is a STYLE object — every other hand here uses style={offT}. This one was
+     still interpolating it into a transform ATTRIBUTE, so the browser read
+     "[object Object] rotate(20,56,56)", threw the whole transform away and complained
+     about it once a frame. A dimachaerus fought with his off-hand blade pinned where
+     the arm was not. Missed when the figures moved to CSS transforms in v1.90. */
   const offBlade = ()=> dual ? (
-    <g transform={`${offT} rotate(20,56,56)`}>
+    <g style={{ ...offT, transform:`${offT.transform} rotate(20deg)`, transformOrigin:"56px 56px" }}>
       <path d="M52,48 L61,52 L63,60 L54,58Z" fill={SKIN}/>
       <path d="M58,54 L69,58 L67,66 L56,62Z" fill={SKIN}/>
       {hasManica && <rect x="57" y="54" width="13" height="10" rx="3" fill={LEATHER} transform="rotate(16,63,59)"/>}
@@ -20105,4 +20136,5 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
     </div>
   );
 }
+
 
