@@ -368,6 +368,10 @@ function kitMods(kit, cls, g){
      any wider. Standing off a blade is a trade anyone can make; making it well is
      what the feet are for. */
   if(bare > 0 && g) m.def += clamp((0.075 + (((g.agi||50) - 30) / 100) * 0.06) * bare, 0, 0.15);
+  /* and the other side of that number: how much of him is behind a board. A scutum is
+     a door and a free hand is nothing, and it is what the exchange reads to know
+     whether the blow that would have finished him had anywhere else to land. */
+  m.cover = 1 - bare;
   m.atk = clamp(m.atk, -0.24, 0.26);
   m.def = clamp(m.def, -0.25, 0.34);
   return m;
@@ -6794,7 +6798,39 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
     const diff = Math.abs(pA-pB);
     const defTac = pA>pB ? tB : tA;                    /* whoever is about to be hit */
     const atkTac = pA>pB ? tA : tB;                    /* and whoever is throwing it */
-    const turned = diff >= 7 && TAC_GUARD(atkTac, defTac);
+    /* ---- AND THE BOARD TURNS BLOWS WHATEVER HE WAS TOLD TO DO ----
+       The guard turn was the whole of what a shield was for and it was gated on the
+       DEFENSIVE order, so a man carrying a door only ever used it when you told him
+       to stand off. Every other week he was paying a fifth of his speed for a number
+       in the same column as footwork, which is free, lighter, and leaves the hand
+       open — measured against one unchanging opponent at five statlines, a Murmillo
+       with a scutum beat the same man bare-armed by +2.4, +2.9, +0.3, -0.6 and +0.7
+       points. Nothing, and nothing that got better as he did.
+       A man does not stop having a shield because he was told to press.
+       The bare man was given the same turn in his own idiom for a while — stepping
+       off the line, scaled by his legs — and it cancelled the shield at every value
+       it was tried at, because footwork is already paid twice over: it buys defence
+       in the damage column AND leaves the hand free to hit with. He does not need a
+       third helping. What he does not get is the board, and the board is now the one
+       thing on the sand that stops the exchange happening at all. */
+    const defMan = pA>pB ? B : A;
+    const covD = (defMan.mods && defMan.mods.cover) || 0;
+    /* and it has to keep pace with him. Footwork is scaled by his legs and grows as
+       he does — a bare man's share goes from 0.087 to 0.116 across the statline —
+       while a board is the same board at every level, so a flat turn chance measured
+       out at +1.6 and +2.8 points of win rate at 50 and 65 and then +0.9 and +0.2 at
+       92 and 99. The shield came back everywhere except the place it had gone.
+       Standing behind one properly is a trained thing, so it is paid for in the stat
+       that trains it, and a made man uses his shield as much better than a novice as
+       a quick man uses his feet. */
+    const boardTurn = covD * (0.085 + clamp(((defMan.dis||50) - 30) / 100, 0, 0.7) * 0.10);
+    /* and the bare man is not standing still either — he does not turn it, he is not
+       there when it arrives, and that is worth what his legs are worth. Without this
+       the six classes spread 7.6 points from best to worst against a baseline of 2.4,
+       in exact order of how much board each of them carries, which is one piece of
+       kit deciding the whole field. */
+    const evade = (1 - covD) * (0.015 + clamp(((defMan.agi||50) - 30) / 100, 0, 0.7) * 0.095);
+    const turned = diff >= 7 && (TAC_GUARD(atkTac, defTac) || R() < boardTurn + evade);
     if(turned){
       const dName = pA>pB ? B.name : A.name, aName = pA>pB ? A.name : B.name;
       crowd = clamp(crowd+1,0,100);
@@ -6858,8 +6894,31 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
       if(hasT(def,"Iron Hide")) dmg *= 0.895;
       dmg *= atkIsA ? mult(MARK_DEAL,"A") * mult(MARK_TAKE,"B") * (exploiting ? 1.18 : 1)
                     : mult(MARK_DEAL,"B") * mult(MARK_TAKE,"A");
+      /* ---- WHAT A SHIELD IS ACTUALLY FOR ----
+         The scutum is the most defence in the game — a fifth of every blow — and
+         measured, a Murmillo carrying one beat the same man with a free hand by +1.0,
+         -0.7 and +0.7 points at 55, 75 and 99. Nothing, at every level of the game,
+         for the iconic piece two whole classes are built around. Worse: standing off
+         behind it at 88 he died 2.3% of the time against 2.2% bare-armed. The one
+         thing a shield is unarguably for, it did not do.
+         The reason is that it was paying into the same column as footwork, and
+         footwork is free, lighter, and comes with an attacking hand. A board is not a
+         better version of not being there. It is a different thing: you do not evade
+         with it, you put it in the way, and what that buys is the top of the range. A
+         blow big enough to end an afternoon finds oak instead of him. */
+      const cov = (def.mods && def.mods.cover) || 0;
+      const onTheBoard = cov > 0 && dmg >= 13 && R() < 0.30 * cov;
+      if(onTheBoard) dmg *= 0.42;
       dmg = clamp(dmg, 3, 32);
       if(atkIsA){ vB -= dmg; markOn("B", tgt[0], dmg); } else { vA -= dmg; markOn("A", tgt[0], dmg); }
+      if(onTheBoard){
+        const dN = atkIsA ? B.name : A.name, aN = atkIsA ? A.name : B.name;
+        push("guard", pick([
+          `${aN} puts everything behind it and ${dN} gets the board across in time. The sound of it goes round the whole bowl.`,
+          `That one was meant to end it. ${dN} takes it on the shield and it is oak that splits, not him.`,
+          `${aN} finds the boss of ${dN}'s shield instead of the man, and the crowd lets out the breath it was holding.`,
+        ]), { guardBy: atkIsA ? "B" : "A" });
+      }
       mom = clamp(mom + (atkIsA?1:-1), -3, 3);
       crowd = clamp(crowd + dmg/2.6 + atk.sho/22 + atk.mods.sho*14 + (tA==="showboat"&&atkIsA?3:0), 0, 100);
       lastTarget = tgt[0];
