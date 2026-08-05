@@ -2004,6 +2004,26 @@ function agenda(d){
     else if(fit <= 1 && all > fit) add(fit<=0?3:2, "men",
       fit<=0 ? "Nobody in this house can stand" : "One man is all you can send",
       `${all-fit} of ${all} are hurt, kept in, or at the far post`); }
+  /* ---- THE DOOR TO ROME, CLOSING QUIETLY ----
+     romeReady wants a senator at 70 and patron favour decays every week you do not
+     feed it. Measured over 120 weeks it slid from 70 to 2 — and the road simply shut,
+     with no line anywhere saying which of the three rungs had come undone or why. A
+     man's favour falling through the number that opens the capital is worth a word. */
+  if(!d.rome && !d.romeOffer && !d.over && (d.flags.primusHeld||0) >= 1){
+    const sen = patronsOf(d).filter(p=>p.rank==="senator").sort((a,b)=>b.favor-a.favor)[0];
+    const fameOk = d.fame >= romeBar(d);
+    if(sen && fameOk && sen.favor < 70)
+      add(2, "villa", `${sen.name.split(" ").pop()}'s favour has fallen below what Rome asks`,
+        `${rnd(sen.favor)} of 70 — the road is shut until he warms again`);
+    else if(sen && fameOk && sen.favor < 78)
+      add(1, "villa", `${sen.name.split(" ").pop()} is cooling, and Rome is watching him`,
+        `${rnd(sen.favor)} of 70 — feed it before it slips`);
+  }
+  { const made = activeG(d).filter(g=>isMade(g) && !(g.plan && g.plan.teach));
+    if(made.length===1) add(1, "men", `${made[0].name} has nothing left to learn`,
+      `every stat at his ceiling — his weeks at the post buy nothing now`);
+    else if(made.length>1) add(1, "men", `${made.length} men have nothing left to learn`,
+      `${made.slice(0,3).map(g=>g.name).join(", ")}${made.length>3?" and others":""} — the palus is finished with them`); }
   { const waiting = patronsOf(d).filter(p=>p.want && p.want.due && p.want.due - d.week <= 2);
     if(waiting.length===1) add(waiting[0].want.due<=d.week?3:2, "villa", `${waiting[0].name} is still waiting`, WANTS[waiting[0].want.kind].label.toLowerCase());
     else if(waiting.length>1) add(waiting.some(p=>p.want.due<=d.week)?3:2, "villa",
@@ -6763,7 +6783,19 @@ const RISE_RANKS = [
     blurb:"The census counts you among the knights. There is a ring on your hand that says so.",
     perk:"Every ledger tilts your way — purses, the box, and the weekly income all grow." },
   { name:"Known in Rome",           short:"a name in the capital", fame:600, favor:75, cost:15000,
-    blurb:"They speak of your house in the capital. A slaver climbed all the way, and the climb is the story." },
+    blurb:"They speak of your house in the capital. A slaver climbed all the way, and the climb is the story.",
+    perk:"The capital's editors know the name before the letter gets there." },
+  /* Two rungs above what used to be the top. The ladder ended here and the screen said
+     so — "There is no higher rung" — while the fame beside it went on climbing into the
+     thousands. Everything the rank pays is per-rank already (purse, the editor's box,
+     the weekly stipend, the road to Rome), so these carry their own weight without a
+     line of new plumbing. They are priced to be the work of years. */
+  { name:"Patron of the Games",     short:"a giver of games",      fame:1600, favor:82, cost:30000,
+    blurb:"You have stopped being a man the editors hire and become one of the men who decide. The bill at Capua has your hand in it whether your colours are on it or not.",
+    perk:"Purses, the box and the weekly stipend all climb again — and the card is partly yours." },
+  { name:"Amicus Caesaris",         short:"a friend of Caesar",    fame:3600, favor:90, cost:80000,
+    blurb:"A letter comes, and the seal on it is not a magistrate's. Nobody uses the word lanista in a room you are standing in any more. What you are now is a man the palace has found useful, which is as high as this road goes and higher than it should.",
+    perk:"The last rung a man off the sand can reach. Everything the climb pays, at its fullest." },
 ];
 const riseOf   = d => (d.rise ? d.rise.rank : 0);
 const riseRank = d => RISE_RANKS[riseOf(d)] || RISE_RANKS[0];
@@ -8059,6 +8091,15 @@ function fitInWeeks(d, g){
   return w;
 }
 const fitOn = (d, week) => d.gladiators.filter(g=>fitInWeeks(d, g) <= week - d.week).length;
+/* ---- A MAN WHO IS FINISHED ----
+   Every training path clamps at statCap and nothing anywhere said so, so a maxed
+   veteran quietly became a no-op: you went on spending his weeks at the post for
+   a number that could not move. He is not broken and he is not old — he is done,
+   which is a different thing and worth being told, because what he is for now is
+   the sand and the other men, not the palus. */
+const MADE_MARGIN = 1.5;      /* within this of his ceiling counts as made */
+const madeStats = g => STATS.filter(k=>g[k] >= statCap(g,k) - MADE_MARGIN).length;
+const isMade = g => g && !isGone(g) && madeStats(g) >= 5;
 /* anyone still yours at all — hurt, benched or learning, but not dead, freed or fled.
    A house with men in the infirmary is a house that gets better; a house with none is
    a building. The two cases end very differently and were being counted as one. */
@@ -17895,6 +17936,15 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 </div>
               );
             })()}
+            {gView==="record" && isMade(selG) && (
+              <div className="panel" style={{padding:9,marginBottom:9,background:"#1c1610",borderColor:"#c99a4b"}}>
+                <span className="tag" style={{color:"#e0bd72",borderColor:"#6a5a2c"}}>Made</span>
+                <div style={{fontSize:14,marginTop:3}}>
+                  He is finished. Every one of them is at his ceiling and the palus has nothing further to give him —
+                  what is left is the sand, and whatever he can put into the younger men.
+                </div>
+              </div>
+            )}
             {gView==="record" && (
             <div className="grid grid-cols-2 gap-x-4 gap-y-2" style={{marginBottom:10}}>
               {STATS.map(k=>(
