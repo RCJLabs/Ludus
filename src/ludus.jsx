@@ -173,6 +173,9 @@ const CLASSES = {
   Dimachaerus: { key:["agi","tec"], desc:"A blade in each hand and nothing to hide behind." },
 };
 const COUNTERS = { Murmillo:"Thraex", Thraex:"Hoplomachus", Hoplomachus:"Secutor", Secutor:"Retiarius", Retiarius:"Dimachaerus", Dimachaerus:"Murmillo" };
+/* what the pairing is worth once a blow is actually going in — an exchange rate,
+   not an initiative, so it does not compound into who gets to swing at all */
+const CLS_EDGE = (a, b) => COUNTERS[a]===b ? 1.15 : COUNTERS[b]===a ? 0.91 : 1;
 
 /* ================= EQUIPMENT =================
    atk raises power, def cuts incoming damage, spd eases stamina drain, sho works the crowd.
@@ -187,9 +190,9 @@ const GEAR = {
   hasta_f:  {slot:"weapon",art:"spear",  name:"Ash Hasta",        price:300, atk:.10,def:.04, spd:-.01,sho:.02, styles:["Hoplomachus"], desc:"Ash and iron, balanced to a hair."},
   fuscina:  {slot:"weapon",art:"trident",name:"Fuscina",          stock:1, price:36,   atk:.06,def:.02, spd:.02, sho:.04, styles:["Retiarius"], desc:"Three points, and the reach to use them."},
   fuscina_f:{slot:"weapon",art:"trident",name:"Barbed Fuscina",   price:290, atk:.10,def:.02, spd:.02, sho:.06, styles:["Retiarius"], desc:"Barbed points that do not come free clean."},
-  twin_b:   {slot:"weapon",art:"dual",   name:"Paired Blades",     stock:1, price:38,  atk:.06,def:-.07,spd:.03, sho:.05, styles:["Dimachaerus"], desc:"Two plain swords off the rack. Nothing to hide behind and nothing to boast of."},
-  twin:     {slot:"weapon",art:"dual",   name:"Twin Blades",      price:420, atk:.13,def:-.08,spd:.03, sho:.11, styles:["Dimachaerus"], desc:"Two swords, no shield. Every wound you take is one the crowd sees."},
-  twin_f:   {slot:"weapon",art:"dual",   name:"Dimachaerus Pair", price:700, atk:.16,def:-.07,spd:.03, sho:.16, styles:["Dimachaerus"], desc:"Matched blades, mirror-bright. Death in either hand."},
+  twin_b:   {slot:"weapon",art:"dual",   name:"Paired Blades",     stock:1, price:38,  atk:.11,def:-.07,spd:.03, sho:.05, styles:["Dimachaerus"], desc:"Two plain swords off the rack. Nothing to hide behind and nothing to boast of."},
+  twin:     {slot:"weapon",art:"dual",   name:"Twin Blades",      price:420, atk:.18,def:-.08,spd:.03, sho:.11, styles:["Dimachaerus"], desc:"Two swords, no shield. Every wound you take is one the crowd sees."},
+  twin_f:   {slot:"weapon",art:"dual",   name:"Dimachaerus Pair", price:700, atk:.22,def:-.07,spd:.03, sho:.16, styles:["Dimachaerus"], desc:"Matched blades, mirror-bright. Death in either hand."},
   securis:  {slot:"weapon",art:"axe",    name:"Securis",          price:350, atk:.15,def:-.04,spd:-.06,sho:.07, styles:["Murmillo","Secutor"], desc:"A headsman's axe. Slow, and final."},
   pugio:    {slot:"weapon",art:"dagger", name:"Pugio",            price:80,  atk:-.03,def:0,  spd:.09, sho:-.02,styles:[], desc:"A last resort — or a fast man's whole plan."},
   // --- OFFHAND ---
@@ -303,6 +306,32 @@ function kitMods(kit, cls, g){
   if(GEAR[kit.weapon] && GEAR[kit.weapon].art==="dual" && GEAR[kit.offhand] && GEAR[kit.offhand].art!=="none"){
     m.def -= 0.05; m.spd -= 0.03;
   }
+  /* ---- WHAT A MAN WITH NOTHING ON HIS ARM HAS INSTEAD ----
+     Measured, the whole of the class balance was one column. Default kit: Secutor
+     0.32 defence, Murmillo and Hoplomachus 0.29, Thraex 0.21 — and then Retiarius
+     0.06 and Dimachaerus 0.04. Defence cuts incoming damage one for one while attack
+     raises outgoing at seven-tenths, so the two classes with no shield were paying
+     twenty-eight points of armour for seven points of edge. Across the whole field
+     they came out at 47.8% and 44% against the Secutor's 58%, and died twice as
+     often doing it. A net-man does not stand and take it. He is not there — and that
+     is a thing he does with his feet, so it is worth exactly what his feet are worth,
+     and a slow one is still as doomed as he ought to be. */
+  /* How much of what is on his arm he is actually hiding behind. A net is not a
+     shield — it is a thing you throw, and the arm behind it is bare. A parmula is
+     a square of wood the size of a dinner tray; a man carrying one is still mostly
+     relying on where he stands. A scutum is a door. */
+  const offIt = GEAR[kit.offhand], wepIt = GEAR[kit.weapon];
+  const COVER = { scutum:0, clipeus:0.25, parmula:0.6, net:1, none:1 };
+  const bare = (wepIt && wepIt.art==="dual") ? 1
+    : (!offIt ? 1 : (COVER[offIt.art] != null ? COVER[offIt.art] : 0));
+  /* Mostly a flat thing and partly a fast thing. Purely proportional to agility it
+     came out worth 0.03 to a bought man and 0.17 to a made one, which quietly
+     steepened the whole difficulty curve — measured through the real card, week one
+     went to 90% wins and year eight fell to 32% with a fifth of the bouts fatal,
+     because the men across the sand get quick long before the player's shield gets
+     any wider. Standing off a blade is a trade anyone can make; making it well is
+     what the feet are for. */
+  if(bare > 0 && g) m.def += clamp((0.075 + (((g.agi||50) - 30) / 100) * 0.06) * bare, 0, 0.15);
   m.atk = clamp(m.atk, -0.24, 0.26);
   m.def = clamp(m.def, -0.25, 0.34);
   return m;
@@ -6134,7 +6163,16 @@ function power(f, tactic, oppCls, mom, atkMod){
   p *= 0.85 + (f.morale/100)*0.3;
   { const ft = clamp(f.fatigue,0,100);
     p *= 1 - (ft<=45 ? ft/560 : (45/560 + (ft-45)/230)); }
-  if(COUNTERS[f.cls]===oppCls) p *= 1.12;
+  /* ---- WHAT THE PAIRING IS ALLOWED TO DECIDE ----
+     This was 1.12, and power is not a 12% edge — power decides who gets a turn at
+     all (the exchange needs a gap of seven before anybody lands) and then how hard
+     the turn is (the gap is in the damage). Measured at a dead statline mirror, that
+     twelve per cent came out as seventy-seven to eighty-five per cent of the bouts:
+     five of the six counter pairings were worth more than ten points in every stat,
+     off a matchup the player usually cannot choose. It buys a smaller share of the
+     initiative now, and the rest of the counter has moved into the exchange rate,
+     where it cannot compound. */
+  if(COUNTERS[f.cls]===oppCls) p *= 1.045;
   /* the tactic used to swing power 25% end to end, and power decides who lands
      the blow — so aggressive simply took fewer blows and every discount written
      for defensive was paid on a thing that had stopped happening. It moves the
@@ -6214,8 +6252,18 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
   const cruxCount = R0 ? (R0.count||0) : 0;      /* how many times you have spoken already */
   const order = O.order || null;                 /* the tactical order you gave at the last crux */
   let orderSigA = !!(order && order.sig);        /* force your man's signature on the first resumed round */
-  /* whose name the tiers are actually shouting, decided before a blow is struck */
-  const mobHis = ((B.pfame||0) - (A.pfame||0)) > 12;
+  /* ---- WHOSE NAME THE TIERS ARE SHOUTING ----
+     A clear difference in renown settles it before a blow is struck. Where the two
+     men are level it was settled anyway — for the player, always, because the test
+     was "is HE better known" and a tie is not. The peak is worth 1.4x on the
+     showmanship term, so the classes that work a crowd fastest carried a standing
+     bonus nobody had granted them: measured at a dead mirror, identical stats and
+     kit, the retiarius won its own mirror 56.7% of the time and the dimachaerus
+     55.8%, four and three and a half sigma off fifty. Where neither man is the
+     better known it belongs to whoever the morning has actually gone to by the time
+     the noise peaks, and a dead-level bout is a coin. */
+  let mobHis = ((B.pfame||0) - (A.pfame||0)) > 12;
+  const mobClear = Math.abs((A.pfame||0) - (B.pfame||0)) > 12;
   const orderTgt = order && order.target || null;/* aim your blows at one place */
   if(order && order.breather){ sA = Math.min(smA, sA + smA*0.24); mom = clamp(mom-1,-3,3); crowd = clamp(crowd-6,0,100); }
   const legNow = legOrder || !!(order && order.debuff==="legs");
@@ -6328,6 +6376,7 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
     if(crowd>=50 && !c50){ c50=true; push("crowd", `The crowd begins to chant — the sound rolls around the walls.`); }
     if(crowd>=80 && !c80){ c80=true; push("crowd", `CAPUA IS ON ITS FEET!`); }
     if(crowd>=82 && !cPeak){ cPeak=true;
+      if(!mobClear) mobHis = mom < 0 ? true : mom > 0 ? false : R() < 0.5;
       if(mobHis){ B.sigOpen = Math.max(B.sigOpen||1, 1.12);
         push("crowd", `The whole city is chanting ${B.name}'s name. They did not come for your man, and he can hear that.`); }
       else { orderSigA = true; A.sigOpen = Math.max(A.sigOpen||1, 1.12);
@@ -6345,8 +6394,13 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
        card in the game could not be lost. The mob goes to the better-known man. Your
        man is only that when he is. */
     const cf = clamp(crowd,0,100)/100;
-    const shoA = 1 + cf * (A.sho/100) * 0.12 * (cPeak && !mobHis ? 1.4 : 1);
-    const shoB = 1 + cf * (B.sho/100) * 0.12 * (cPeak &&  mobHis ? 1.4 : 1);
+    /* 0.12 before the peak was made a contest rather than a gift to side A; raising
+       it to 0.21 to compensate measured out as an eight-point spread across the six
+       classes, because the two that build a crowd fastest are also the two that had
+       just been given their feet back. It stays at 0.16: showmanship's real payment
+       is the purse, the crowd and the raised finger, not the exchange. */
+    const shoA = 1 + cf * (A.sho/100) * 0.16 * (cPeak && !mobHis ? 1.4 : 1);
+    const shoB = 1 + cf * (B.sho/100) * 0.16 * (cPeak &&  mobHis ? 1.4 : 1);
     /* a man bred to endure keeps his blows honest when the others are swinging on empty.
        This was a cliff at a fifth of his wind with a small penalty behind it, and most
        bouts finished before it ever mattered — measured across two thousand fights,
@@ -6442,11 +6496,21 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
       const move = atkIsA?moveA:moveB;
       const tgt = (atkIsA && orderTgt) ? (TARGETS.find(t=>t[0]===orderTgt) || pick(TARGETS)) : pick(TARGETS);
       let dmg = 5 + diff/9 + atk.str/14;
-      dmg *= dealMult(atkIsA?tA:tB) * takeMult(atkIsA?tB:tA) * tgt[2];
+      dmg *= dealMult(atkIsA?tA:tB) * takeMult(atkIsA?tB:tA) * tgt[2] * CLS_EDGE(atk.cls, def.cls);
       if(ctx.guarded && atkIsA===false) dmg *= 0.44;
       if(!atkIsA) dmg *= PL.guard;
-      dmg *= 1 + atk.mods.atk*0.7;
-      dmg *= 1 - def.mods.def;
+      /* attack was worth seven-tenths of what defence was worth, point for point,
+         which is most of why every kit worth buying was a shield */
+      dmg *= 1 + atk.mods.atk*0.95;
+      /* ---- AND THE WORLD DOES NOT GET TOUGHER BY ACCIDENT ----
+         Giving the shieldless their feet added defence to every fighter in Campania
+         rather than moving it around: the mean across the six classes went from
+         0.202 to 0.257, and since a scutum-carrying player gains none of it while a
+         good share of the men across the sand do, the real card measured six to
+         eleven points harder at every stage and a fifth of the bouts fatal. The
+         column is scaled back to where the world was. What changed is who holds it,
+         which was the point. */
+      dmg *= 1 - def.mods.def*0.79;
       dmg *= atkIsA ? mult(MARK_DEAL,"A") * mult(MARK_TAKE,"B") * (exploiting ? 1.18 : 1)
                     : mult(MARK_DEAL,"B") * mult(MARK_TAKE,"A");
       dmg = clamp(dmg, 3, 32);
