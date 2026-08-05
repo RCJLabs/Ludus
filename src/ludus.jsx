@@ -3568,7 +3568,7 @@ function genOpponent(tier, q){
   const cls = pick(Object.keys(CLASSES));
   const fem = R() < 0.07;
   const o = { sex: fem?"f":"m", name: pick(fem ? FNAMES[origin] : ORIGINS[origin].names), house:pick(HOUSES), cls, origin, nick:null,
-    morale:oppMorale(quality), fatigue:0, injury:null, traits:[], heart:ri(30,90), pfame:0, kit:kitFor(cls, tier) };
+    morale:oppMorale(quality), fatigue:0, injury:null, traits:rollTraits(quality), heart:ri(30,90), pfame:0, kit:kitFor(cls, tier) };
   for(const s of STATS) o[s] = clamp(qStat(quality) + ri(-8,8) + (ORIGINS[origin].mod[s]||0)*2, 8, 99);
   for(const k of CLASSES[cls].key) o[k] = clamp(o[k]+5, 8, 99);
   if(tier>=2) o.nick = pick(NICKS);
@@ -4249,7 +4249,7 @@ function makeRivalFighter(d, house, quality){
   const age = clamp(ri(19, 24) + Math.round(quality/16), 18, 34);
   const f = { id:d.nextId++, sex: fem?"f":"m", name: pick(fem ? FNAMES[origin] : ORIGINS[origin].names), nick:null, house, cls, origin,
     age, weeks:0,
-    morale:oppMorale(quality), fatigue:0, injury:null, traits:[], heart:ri(30,90), pfame:ri(0,30),
+    morale:oppMorale(quality), fatigue:0, injury:null, traits:rollTraits(quality), heart:ri(30,90), pfame:ri(0,30),
     kit:kitFor(cls, quality>=58?2:quality>=42?1:0),
     wins:ri(0,6), losses:ri(0,3), kills:0, beatYou:0, lostToYou:0,
     potential: clamp(quality+ri(-10,15), 20, 95) };
@@ -6349,7 +6349,9 @@ function injuryFor(target, severe){
    the best answer to what he brings — comes out at 59%, against 77% before. */
 const FOE_EDGE = 1.021;
 function power(f, tactic, oppCls, mom, atkMod){
-  const pen = f.injury ? f.injury.pen : 0;
+  /* "Pain and fear find no purchase" — the pain half. He carries a wound onto the
+     sand and most of it does not come with him. */
+  const pen = f.injury ? f.injury.pen * (hasT(f,"Stoic") ? 0.45 : 1) : 0;
   const e = k => Math.max(5, f[k]-pen);
   const ft = f.footing||1;
   /* endurance carried 0.45 against strength's 1.0 and its only other job — the wind —
@@ -6358,7 +6360,9 @@ function power(f, tactic, oppCls, mom, atkMod){
      now rather than a trap: strength is still the better attacking stat, endurance is
      no longer a way to lose on purpose. */
   let p = e("tec")*1.25*(0.5+ft*0.5) + e("str") + e("agi")*0.85*ft*ft + e("end")*0.62 + e("dis")*0.3;
-  p *= 0.85 + (f.morale/100)*0.3;
+  /* "Pain and fear find no purchase" — the fear half. What is eating the rest of the
+     cells does not reach him, so a bad month in the yard does not follow him out. */
+  p *= 0.85 + (clamp(hasT(f,"Stoic") ? Math.max(f.morale, 76) : f.morale, 0, 100)/100)*0.3;
   { const ft = clamp(f.fatigue,0,100);
     p *= 1 - (ft<=45 ? ft/560 : (45/560 + (ft-45)/230)); }
   /* ---- WHAT THE PAIRING IS ALLOWED TO DECIDE ----
@@ -6428,6 +6432,76 @@ const missioOdds = sc => clamp(1/(1 + Math.exp(-(sc - MISSIO_MID)/MISSIO_SLOPE))
 const missioWord = p => p>=0.86 ? "he would be spared" : p>=0.66 ? "he would most likely be spared"
   : p>=0.42 ? "it would be close" : p>=0.20 ? "the thumb would probably turn" : "the thumb would turn";
 
+/* ---- EIGHT PROMISES, NONE OF THEM KEPT ----
+   Every man in this game carries up to two of these and each one says plainly what it
+   is for. Measured, trait on against trait off, same man, same opponent, twenty-four
+   hundred bouts an arm: Showman +0.0 points of win rate, Stoic +1.1, Brutal +0.6,
+   Defiant +0.9, Iron Hide +1.0, Glory-Seeker +1.3, Swift Learner -0.8, Broken -2.0.
+   Against a standard error of one point, that is eight labels and nothing behind any
+   of them. "Pain and fear find no purchase" did nothing when he was hurt or losing.
+   "Wounds close where others fester" guarded him against injuries in TRAINING and not
+   one arena wound. "Kills come easy" never once made a kill likelier. The only one
+   that touched the sand at all was Showman, worth eight points of starting crowd —
+   into a number that finishes at ninety-eight regardless.
+
+   Each of them now does the thing written on it, in the exchange, where it can be
+   felt. And because they are worth something, the men across the sand carry them
+   too — a trait is a fact about a fighter, not a decoration on yours. */
+const hasT = (f, t) => !!(f && f.traits && f.traits.includes(t));
+/* a trait that decides bouts and cannot be found out is not difficulty, it is a dice
+   roll with a name on it. This is what the man you paid comes back having noticed. */
+const TRAIT_SEEN = {
+  Showman:        "He works the tiers between exchanges and they work back. Do not expect the crowd to be yours.",
+  Stoic:          "He took a bad one in the fourth and his face did not change. Nothing you do to him is worth doing twice.",
+  Brutal:         "When the other man went down he did not slow up. He finishes what he starts and he is quick about it.",
+  Defiant:        "He was losing, and then he was not, and nobody could say what changed except him.",
+  "Swift Learner":"He is ordinary for three rounds and then he has your man's habits by heart. Do not let it run long.",
+  "Iron Hide":    "He has been opened up a dozen times and none of it slowed him. He mends like something not quite people.",
+  "Glory-Seeker": "He fights for the noise. In a full house he is twice the man; in a quiet one he is barely there.",
+  Broken:         "Something went out of him a while ago. He does it all correctly and there is nobody home.",
+};
+/* ---- AND THE MEN ACROSS THE SAND ARE MEN ----
+   Every opponent this game has ever generated was written with traits:[], and so was
+   every fighter in every rival house. Eight facts about a fighter, and only yours had
+   any. While they were worth nothing that was merely untidy; now that they decide
+   bouts it would be a straight gift to the player, so they are drawn for everybody.
+   A better man is likelier to have something, and likelier to have two; the ones the
+   trade has already used up are where Broken comes from. */
+const WORLD_TRAITS = ["Showman","Stoic","Brutal","Defiant","Swift Learner","Iron Hide","Glory-Seeker"];
+function rollTraits(quality){
+  const t = [], good = clamp(((quality==null?50:quality) - 30) / 70, 0, 1);
+  if(R() < 0.22 + good*0.44) t.push(pick(WORLD_TRAITS));
+  if(t.length && R() < good*0.30){ const b = pick(WORLD_TRAITS.filter(x=>x!==t[0])); if(b) t.push(b); }
+  if(!t.length && R() < 0.15 - good*0.11) t.push("Broken");
+  return t;
+}
+/* Fire in the eyes: he is at his best when he is losing, and he knows it */
+const behindOf = (mine, theirs) => clamp((theirs - mine) / 100, 0, 1);
+function traitPow(f, foe, vMine, vTheirs, crowdFrac, round){
+  let p = 1;
+  /* "Fire in the eyes. Great — and dangerous." */
+  if(hasT(f,"Defiant"))      p *= 1 + behindOf(vMine, vTheirs) * 0.13;
+  /* "The spirit left him long ago." — the same curve, pointing the other way */
+  if(hasT(f,"Broken"))       p *= 0.991 - behindOf(vMine, vTheirs) * 0.13;
+  /* "Fights for the roar, not the coin." — worth a great deal in a loud house and
+     nothing at all in a quiet one, which is the whole bargain */
+  if(hasT(f,"Glory-Seeker")) p *= 0.952 + crowdFrac * 0.112;
+  /* "Drinks in the doctore's lessons." — including the lesson standing in front of
+     him. He is worse than he looks early and better than he looks late. */
+  if(hasT(f,"Swift Learner")) p *= round <= 2 ? 0.986 : 1 + Math.min(round - 2, 10) * 0.0085;
+  /* "Men fear him." */
+  if(hasT(foe,"Brutal"))     p *= 0.9875;
+  return p;
+}
+/* ---- AND WHY ALL OF THESE NUMBERS ARE SMALL ----
+   Power decides who gets a turn at all and then how hard the turn is, and it compounds
+   over twelve rounds — a one per cent edge on it is worth about three points of win
+   rate, not one. Written at the sizes they FELT like they should be, the first cut
+   measured Brutal at +16 points and Showman at +14, which is not a trait, it is a
+   different man. A trait is worth three to six points here: enough that you build
+   around it and enough that it decides close bouts, and not enough to be the whole
+   of him. Stoic and Iron Hide read smaller than that in a straight mirror on purpose —
+   most of what they are worth is banked in the weeks between bouts. */
 const GAS_AT = 0.40;                 /* the share of his wind at which it starts to tell */
 function gasOf(f, st, sm){
   const frac = clamp(sm>0 ? st/sm : 0, 0, 1);
@@ -6442,7 +6516,7 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
   const beats = [];
   A.mods = kitMods(A.kit, A.cls, A); B.mods = kitMods(B.kit, B.cls, B);
   const smA = 55+A.end*0.6, smB = 55+B.end*0.6;
-  let crowd = R0 ? R0.crowd : clamp(12 + (A.sho+B.sho)/8 + (A.traits.includes("Showman")?8:0) + (A.mods.sho+B.mods.sho)*22
+  let crowd = R0 ? R0.crowd : clamp(12 + (A.sho+B.sho)/8 + (hasT(A,"Showman")?8:0) + (hasT(B,"Showman")?8:0) + (A.mods.sho+B.mods.sho)*22
     + ((A.scars?A.scars.length:0) + (B.scars?B.scars.length:0))*1.2
     + (isF(A)?9:0) + (isF(B)?6:0) + (ctx.repShow||0), 0, 100);
   let vA = R0 ? R0.vA : 100, vB = R0 ? R0.vB : 100;
@@ -6577,7 +6651,12 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
     if(crowd>=50 && !c50){ c50=true; push("crowd", `The crowd begins to chant — the sound rolls around the walls.`); }
     if(crowd>=80 && !c80){ c80=true; push("crowd", `CAPUA IS ON ITS FEET!`); }
     if(crowd>=82 && !cPeak){ cPeak=true;
-      if(!mobClear) mobHis = mom < 0 ? true : mom > 0 ? false : R() < 0.5;
+      if(!mobClear){
+        /* "The crowd is his second weapon" — when the tiers could go either way, the
+           showman is the reason they do not. Two showmen and it is a coin again. */
+        const sA = hasT(A,"Showman"), sB = hasT(B,"Showman");
+        mobHis = sA !== sB ? sB : mom < 0 ? true : mom > 0 ? false : R() < 0.5;
+      }
       if(mobHis){ B.sigOpen = Math.max(B.sigOpen||1, 1.12);
         push("crowd", `The whole city is chanting ${B.name}'s name. They did not come for your man, and he can hear that.`); }
       else { orderSigA = true; A.sigOpen = Math.max(A.sigOpen||1, 1.12);
@@ -6600,8 +6679,9 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
        classes, because the two that build a crowd fastest are also the two that had
        just been given their feet back. It stays at 0.16: showmanship's real payment
        is the purse, the crowd and the raised finger, not the exchange. */
-    const shoA = 1 + cf * (A.sho/100) * 0.16 * (cPeak && !mobHis ? 1.4 : 1);
-    const shoB = 1 + cf * (B.sho/100) * 0.16 * (cPeak &&  mobHis ? 1.4 : 1);
+    const shoK = f => hasT(f,"Showman") ? 0.192 : 0.16;   /* what a roar is worth to him */
+    const shoA = 1 + cf * (A.sho/100) * shoK(A) * (cPeak && !mobHis ? 1.4 : 1);
+    const shoB = 1 + cf * (B.sho/100) * shoK(B) * (cPeak &&  mobHis ? 1.4 : 1);
     /* a man bred to endure keeps his blows honest when the others are swinging on empty.
        This was a cliff at a fifth of his wind with a small penalty behind it, and most
        bouts finished before it ever mattered — measured across two thousand fights,
@@ -6609,8 +6689,12 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
        way. It comes on at two fifths now and bites by how little he has left, and what
        a man bred to endure keeps is most of it. */
     const gasA = gasOf(A, sA, smA), gasB = gasOf(B, sB, smB);
-    const pA = power(A,tA,B.cls,mom,modA) * PL.pow * (0.72+R()*0.56) * gasA * (A.sigOpen||1) * shoA * (round>=6 ? (A.lastLate||1) : 1) * mult(MARK_POW,"A");
-    const pB = power(B,tB,A.cls,-mom,modB) * FOE_EDGE * (0.72+R()*0.56) * gasB * (B.sigOpen||1) * shoB * mult(MARK_POW,"B");
+    const trA = traitPow(A, B, vA, vB, cf, round), trB = traitPow(B, A, vB, vA, cf, round);
+    /* "Pain and fear find no purchase" — a stoic does not ride the momentum down */
+    const momA = hasT(A,"Stoic") && mom < 0 ? mom * 0.4 : mom;
+    const momB = hasT(B,"Stoic") && mom > 0 ? -mom * 0.4 : -mom;
+    const pA = power(A,tA,B.cls,momA,modA) * PL.pow * trA * (0.72+R()*0.56) * gasA * (A.sigOpen||1) * shoA * (round>=6 ? (A.lastLate||1) : 1) * mult(MARK_POW,"A");
+    const pB = power(B,tB,A.cls,momB,modB) * FOE_EDGE * trB * (0.72+R()*0.56) * gasB * (B.sigOpen||1) * shoB * mult(MARK_POW,"B");
     A.sigOpen = 1; B.sigOpen = 1;
     const wind = TAC_WIND;
     sA -= wind(tA) * (1 - A.mods.spd*0.5) * PL.stam * (A.formStam||1) * (ctx.sky||1) * (A.lastStam||1) * mult(MARK_WIND,"A");
@@ -6712,6 +6796,11 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
          column is scaled back to where the world was. What changed is who holds it,
          which was the point. */
       dmg *= 1 - def.mods.def*0.79;
+      /* "Kills come easy." — he is at his worst for you when you are nearly done */
+      if(hasT(atk,"Brutal") && (atkIsA ? vB : vA) < 36) dmg *= 1.26;
+      /* "Wounds close where others fester." — and rather less of it opens in the
+         first place. The rest of that promise is kept after the bout, in the healing. */
+      if(hasT(def,"Iron Hide")) dmg *= 0.895;
       dmg *= atkIsA ? mult(MARK_DEAL,"A") * mult(MARK_TAKE,"B") * (exploiting ? 1.18 : 1)
                     : mult(MARK_DEAL,"B") * mult(MARK_TAKE,"A");
       dmg = clamp(dmg, 3, 32);
@@ -10338,8 +10427,10 @@ function simulateMelee(ents, ctx, opts){
       let guard = 0;
       while(!ents[x].out && !ents[y].out && guard++<12){
         const tx = ents[x].mine?myTac:"measured", ty = ents[y].mine?myTac:"measured";
-        const px = power(ents[x],tx,ents[y].cls,0,0.97+R()*0.06)*(0.74+R()*0.52);
-        const py = power(ents[y],ty,ents[x].cls,0,0.97+R()*0.06)*(0.74+R()*0.52);
+        const px = power(ents[x],tx,ents[y].cls,0,0.97+R()*0.06)*(0.74+R()*0.52)
+          * traitPow(ents[x], ents[y], ents[x].hpv, ents[y].hpv, crowd/100, round);
+        const py = power(ents[y],ty,ents[x].cls,0,0.97+R()*0.06)*(0.74+R()*0.52)
+          * traitPow(ents[y], ents[x], ents[y].hpv, ents[x].hpv, crowd/100, round);
         const aw = px>py, atk = aw?ents[x]:ents[y], def = aw?ents[y]:ents[x];
         const dmg = clamp((5 + Math.abs(px-py)/9 + atk.str/13)*(1+atk.mods.atk*0.7)*(1-def.mods.def)
           * MULTI_DEAL(aw?tx:ty) * TAC_TAKE(aw?ty:tx), 3, 30);
@@ -10381,8 +10472,14 @@ function simulateMelee(ents, ctx, opts){
       /* the same wind the single sand burns, scaled to the melee's shorter exchange */
       A.stam -= 6 * (TAC_WIND(tacOf(A))/7) * (A.mine?MP.stam:1);
       B.stam -= 6 * (TAC_WIND(tacOf(B))/7) * (B.mine?MP.stam:1);
-      const pa = power(A,tacOf(A),B.cls,0,0.97+R()*0.06)*(A.stam<22?0.78:1)*(0.74+R()*0.52)*(A.mine?MP.pow:1);
-      const pb = power(B,tacOf(B),A.cls,0,0.97+R()*0.06)*(B.stam<22?0.78:1)*(0.74+R()*0.52)*(B.mine?MP.pow:1);
+      /* the same eight facts carry out here. The crowd-peak contest, the finisher and
+         the hide are written into the single sand's exchange and stay there; what
+         travels is the part that lives in a man's power — the fire when he is losing,
+         the spirit that has gone, the roar, the learning, and the fear of a brutal one. */
+      const pa = power(A,tacOf(A),B.cls,0,0.97+R()*0.06)*(A.stam<22?0.78:1)*(0.74+R()*0.52)*(A.mine?MP.pow:1)
+        * traitPow(A, B, A.hpv, B.hpv, crowd/100, round);
+      const pb = power(B,tacOf(B),A.cls,0,0.97+R()*0.06)*(B.stam<22?0.78:1)*(0.74+R()*0.52)*(B.mine?MP.pow:1)
+        * traitPow(B, A, B.hpv, A.hpv, crowd/100, round);
       const aw = pa>pb, atk = aw?A:B, def = aw?B:A;
       const ai = aw?a:b, di = aw?b:a;
       /* no clean parries here. On a pairing a man sets his shield against the one
@@ -10649,7 +10746,8 @@ function simulateVenatio(A, key, tA, ctx, opts){
        round he loses is a round he does no damage in at all. Winning rounds is the
        whole game out here, so the reward for going in close has to be paid in
        rounds won and the risk of it in the maul — otherwise they are one lever. */
-    const pA = power(A, tA, null, mom, 0.97+R()*0.06) * reach * (sA<22?0.74:1) * (0.74+R()*0.52) * (HT(tA).edge||1);
+    const pA = power(A, tA, null, mom, 0.97+R()*0.06) * reach * (sA<22?0.74:1) * (0.74+R()*0.52) * (HT(tA).edge||1)
+      * traitPow(A, null, vA, vB, crowd/100, round);
     /* The hunt used to be a threshold and not a contest. The beast's strength never
        moved, the man's barely did, and the noise on both was too narrow to matter —
        so twelve points of beast made the difference between certain kill and certain
@@ -11290,9 +11388,9 @@ function simulatePair(As, Bs, tA, stakes, ctx, opts){
     const move = pick(ATTACKS[As[la].cls]);
     const moveB = pick(ATTACKS[Bs[lb].cls]);
     const pA = (power(As[la], tA, Bs[lb].cls, mom, 0.97+R()*0.06) * (st.A[la]<22?0.78:1))
-      * (1 + asA) * (0.74+R()*0.52);
+      * (1 + asA) * (0.74+R()*0.52) * traitPow(As[la], Bs[lb], hp.A[la], hp.B[lb], crowd/100, r);
     const pB = (power(Bs[lb], tB, As[la].cls, -mom, 0.97+R()*0.06) * (st.B[lb]<22?0.78:1))
-      * (1 + asB) * (0.74+R()*0.52);
+      * (1 + asB) * (0.74+R()*0.52) * traitPow(Bs[lb], As[la], hp.B[lb], hp.A[la], crowd/100, r);
     st.A[la] -= TAC_WIND(tA) * (1 - As[la].mods.spd*0.5);
     st.B[lb] -= TAC_WIND(tB) * (1 - Bs[lb].mods.spd*0.5);
     if(ma>=0) st.A[ma] -= 3;
@@ -12984,7 +13082,10 @@ function endWeek(d){
     if(g.weeksAged >= YEAR_WEEKS){ g.weeksAged -= YEAR_WEEKS; ageManOneYear(d, g); }
     if(g.status==="injured"){
       injured++;
-      const rate = g.injury.care==="surgeon" ? healSpeed(d,g)*1.6 : g.injury.care==="convalesce" ? healSpeed(d,g)*0.72 : healSpeed(d,g);
+      /* "Wounds close where others fester." — it guarded him in TRAINING and nowhere
+         else, which is not what it says. It is about how he mends, so it mends him. */
+      const rate = (g.injury.care==="surgeon" ? healSpeed(d,g)*1.6 : g.injury.care==="convalesce" ? healSpeed(d,g)*0.72 : healSpeed(d,g))
+        * (hasT(g,"Iron Hide") ? 1.45 : 1);
       g.injury.weeks -= rate * seasonHeal(d);
       if(g.injury.care==="convalesce") g.morale = clamp(g.morale+3, 0, 100);   // rest of the spirit as well as the body
       g.fatigue=clamp(g.fatigue-22,0,100);
@@ -12992,7 +13093,7 @@ function endWeek(d){
         const part = g.injury.part, care = g.injury.care, sev = (g.injury.pen>=8);
         g.injury=null; g.status="active";
         const careGuard = care==="surgeon" ? 0.6 : care==="convalesce" ? 0.4 : 1;
-        const guard = scarGuard(d) * careGuard;
+        const guard = scarGuard(d) * careGuard * (hasT(g,"Iron Hide") ? 0.55 : 1);
         if(part && R() < (sev ? 0.75 : 0.45) * guard){
           const repeat = addScar(g, part, sev);
           const lasted = checkLasting(d, g, part) || (sev ? graveLasting(d, g, part, care) : null);
@@ -20661,6 +20762,19 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                         </div>
                         <div style={{fontSize:14,marginTop:3,lineHeight:1.4}}>{her(FOE_TACTIC_SAY[ft](o.opp), o.opp)}</div>
                         <div className="dim" style={{fontSize:13,marginTop:3,fontStyle:"italic"}}>{FOE_TACTIC_ANSWER[ft]}</div>
+                      </div>
+                    ); })()}
+                  {(()=>{ const T = (o.opp && o.opp.traits || []).filter(t=>TRAIT_SEEN[t]);
+                    if(!T.length) return null;
+                    return (
+                      <div className="panel" style={{padding:"8px 10px",marginBottom:7,background:"#1c1610",borderColor:"#6d5426"}}>
+                        <div className="dim" style={{fontSize:10.5,textTransform:"uppercase",letterSpacing:".07em",marginBottom:3}}>What kind of man he is</div>
+                        {T.map(t=>(
+                          <div key={t} style={{padding:"3px 0"}}>
+                            <span className="tag tag-gold" style={{marginRight:6}}>{t}</span>
+                            <span style={{fontSize:14}}>{her(TRAIT_SEEN[t], o.opp)}</span>
+                          </div>
+                        ))}
                       </div>
                     ); })()}
                   {o.watched[0]==="nothing" ? <div className="dim" style={{fontSize:14,fontStyle:"italic"}}>Nothing else to report. He does everything correctly and nothing twice.</div>
