@@ -1807,7 +1807,26 @@ const TIERS = [
   { name:"The Primus", fame:300, purse:[850,300], app:150, fameGain:40 },
   { name:"The Imperial Games", fame:600, purse:[2200,900], app:400, fameGain:90 },
 ];
-const FAME_TIERS = [[0,"Unknown"],[40,"Noticed"],[120,"Respected"],[300,"Renowned"],[600,"Legend of Capua"]];
+/* ---- THE NUMBER THAT STOPPED MEANING ANYTHING ----
+   The ladder ended at 600. A house measured in a real save was carrying 9,114 — fifteen
+   times past the last rung — and every one of those weeks it was still "Legend of Capua",
+   the last milestone had fired six thousand fame ago, purses had been pinned at the
+   fameEdge cap since about 1,620, and nothing anywhere in the game read a number above
+   1,000. The single most-watched figure on the screen was decoration for the entire back
+   half of a long game. Four rungs above it, and each of them does something. */
+const FAME_TIERS = [
+  [0,"Unknown"],[40,"Noticed"],[120,"Respected"],[300,"Renowned"],[600,"Legend of Capua"],
+  [1400,"Spoken of in Rome"],[3000,"Known the length of Italy"],
+  [6000,"One of the Great Houses"],[11000,"A Name Out of the Books"],
+];
+/* what the city says the first time each is reached */
+const FAME_WORD = {
+  600:  "Your name is spoken in Rome itself. The house has become legend.",
+  1400: "A letter comes from a man in Rome you have never met, asking after a fighter by name. Word of this house does not travel any more — it is simply already there.",
+  3000: "A lanista in Ravenna, the length of Italy away, has taken to describing his own house as being run 'in the Capuan style', and means yours. You have become a way of doing the thing.",
+  6000: "There are four or five houses in the empire that men argue about when they argue about houses. As of this season yours is one of them, and the argument is no longer whether.",
+  11000:"A historian of no particular importance has begun a chapter on the games of this generation, and he opens it with your house. Not a bout, not a man — the house. That is what is left when the sand is swept.",
+};
 
 /* ================= HELPERS ================= */
 
@@ -1975,7 +1994,14 @@ function agenda(d){
       `${x.name} will not be fit for ${x.kind==="booking" ? (x.festName||"the day") : "the day that was named"}`, rd.word);
   }
   { const fit = fitOn(d, d.week), all = activeG(d).length;
-    if(fit <= 1 && all > fit) add(fit<=0?3:2, "men",
+    /* `all > fit` was there to keep this quiet when you simply have few men — but a
+       house with nobody on the books at all has all=0 and fit=0, so the one line that
+       should have shouted was silenced in exactly the case that needed it. Measured on
+       a real save: no active men, two in the infirmary, four over the wall, and the
+       week's to-do had nothing to say about any of it. */
+    if(all === 0) add(3, "men", "There is nobody left in this house",
+      onTheBooks(d) ? "every man you have is hurt, freed, fled or dead" : "the cells are empty — buy a man or the house is finished");
+    else if(fit <= 1 && all > fit) add(fit<=0?3:2, "men",
       fit<=0 ? "Nobody in this house can stand" : "One man is all you can send",
       `${all-fit} of ${all} are hurt, kept in, or at the far post`); }
   { const waiting = patronsOf(d).filter(p=>p.want && p.want.due && p.want.due - d.week <= 2);
@@ -2048,8 +2074,21 @@ function agenda(d){
   { const br = inBreach(d);
     if(br.length) add(lawOf(d).heat>=45?3:2, "villa",
       `The house is in breach of ${br.length===1?"an edict":br.length+" edicts"}`, lawWord(d)); }
-  if(d.gold >= 9000 && !WORK_KEYS.some(k=>workOn(d,k)) && WORK_KEYS.some(k=>!workDone(d,k)))
-    add(1, "villa", `${Math.round(d.gold)}d sitting in the box`, "there are things a house this old can build");
+  /* THE SINK NOBODY WAS TOLD ABOUT.
+     This line was gated on an unbuilt WORK, so it fell silent the moment the five
+     works were finished — which is exactly the point a house is richest and the three
+     monuments (30,000, 44,000 and 70,000) come into range. MONU_KEYS appeared once in
+     the whole file, in the Villa render, so a player with a hundred thousand denarii
+     in the box was never once told there was anything left to spend it on. */
+  { const pool = monuReady(d) ? ALL_WORK_KEYS : WORK_KEYS;   /* monuments only exist once the works are finished */
+    const buildable = pool.filter(k=>!workDone(d,k) && d.gold >= workDef(k).cost);
+    const anyOn = pool.some(k=>workOn(d,k));
+    if(!anyOn && buildable.length){
+      const big = buildable.map(k=>workDef(k)).sort((a,b)=>b.cost-a.cost)[0];
+      const monu = MONU_KEYS.some(k=>buildable.includes(k));
+      add(1, "villa", `${Math.round(d.gold)}d sitting in the box`,
+        monu ? `${big.name.toLowerCase()} — ${big.cost}d, and it outlives you` : "there are things a house this old can build");
+    } }
   if(liquid(d) < 120 && owedTotal(d) >= 250)
     add(2, "villa", `${owedTotal(d)}d owed to you and ${Math.round(liquid(d))} in the box`, "rich on paper is not rich");
   { const bad = owedList(d).filter(x=>d.week - x.due >= 4);
@@ -3509,6 +3548,28 @@ function makeMarket(d){
     d.powLot = { n, price: rnd((110 + d.fame*0.35) * n * 0.82) };
   }
 }
+/* ---- THE SLAVER AT THE GATE ----
+   The one mercy an empty house gets. Word travels that a Capuan ludus has cells and
+   no one in them, and the men who sell bodies do not need to be asked twice — they
+   turn up with what they have and they price it to move, because a lanista with an
+   empty yard is the only customer in Campania who cannot walk away. It is not
+   charity: they are cheap men. But it means a house is never stranded by bad luck,
+   only by having nothing left to pay with, which is a different and fairer ending. */
+const EMPTY_LIMIT = 14;               /* weeks of an empty yard before the house is done */
+function slaverAtTheGate(d){
+  if((d.market||[]).some(g=>g.fromGate)) return;         /* his stock is already standing there */
+  const n = ri(2,3);
+  const purse = Math.max(0, d.gold);
+  for(let i=0;i<n;i++){
+    const g = genGladiator(d, ri(28, 52));
+    /* priced against what is actually in your box, floored so it is never free */
+    g.price = rnd(clamp(Math.min(g.price*0.7, purse*0.28), 60, 900));
+    g.fromGate = true; g.scouted = false;
+    g.shown = `Cheap, and he knows it. The man selling him has already looked past you at your empty cells.`;
+    d.market = [g, ...(d.market||[])];
+  }
+  chron(d, `Word has got round that there is a ludus in Capua with cells and nobody in them. A slaver comes to the gate without being sent for, with ${n} men roped together and a price that says he knows exactly what your position is. Take them or do not; he will be back either way, until he isn't.`, "info");
+}
 /* each week a rival's patience for a contested man may run out — buy him now or lose him */
 function marketWeek(d){
   if(d.rome || d.city || d.travel) return;
@@ -3561,7 +3622,15 @@ function buyLot(d){
    Two things follow. The top rung is reachable now, at the great games, by a
    house with the standing to be asked. And what the town thinks of you is worth
    something at the table — up to half again, and no more. */
-const fameEdge = d => 1 + clamp((((d && d.fame) || 0) - TIERS[3].fame) / 2400, 0, 0.55);
+/* The first band is unchanged and still tops out at +55% around 1,620 fame — the whole
+   climb everybody actually plays. Past it a second, much flatter band keeps the number
+   worth something without ever running away: a house at 9,000 is paid about a sixth
+   more than one at 1,620, not four times more. Bounded at +80% and it takes 24,000
+   fame to get there, which nobody will. */
+const fameEdge = d => { const f = (d && d.fame) || 0;
+  return 1 + clamp((f - TIERS[3].fame)/2400, 0, 0.55) + clamp((f - 1620)/90000, 0, 0.25); };
+/* and at the very top the editors stop waiting to be asked — one more bout on the card */
+const fameOffers = d => ((d && d.fame) || 0) >= 3000 ? 1 : 0;
 const topRungOpen = d => (d.fame||0) >= TIERS[4].fame && (d.favor||0) >= 55;
 
 function makeGames(d){
@@ -3632,7 +3701,7 @@ function makeGames(d){
       offers.push({ id:d.nextId++, tier:2, festival, challenge:ch.id, myChallenge:!!ch.mine, nemGrudge:!!ch.nem, sagaBout:!!ch.saga, huntBout:!!ch.hunt, bookedGid:ch.gid,
         opp:oc, oppRef:{house:h.name,fid:f.id}, rematch:true, grudgeM:true, stakes:"standard", purse:ch.purse }); }
   }
-  const slots = (F.offers==null ? 2 : F.offers) + (st==="show" ? 1 : 0) + aedileOffers(d);
+  const slots = (F.offers==null ? 2 : F.offers) + (st==="show" ? 1 : 0) + aedileOffers(d) + fameOffers(d);
   add(1);
   if(slots>=2 && d.fame>=60 && R()<0.8) add(1);
   if(slots>=3 && d.fame>=TIERS[2].fame) add(2);
@@ -7990,6 +8059,10 @@ function fitInWeeks(d, g){
   return w;
 }
 const fitOn = (d, week) => d.gladiators.filter(g=>fitInWeeks(d, g) <= week - d.week).length;
+/* anyone still yours at all — hurt, benched or learning, but not dead, freed or fled.
+   A house with men in the infirmary is a house that gets better; a house with none is
+   a building. The two cases end very differently and were being counted as one. */
+const onTheBooks = d => d.gladiators.filter(g=>!isGone(g)).length;
 function fitCurve(d, span){
   const out = [];
   for(let i=0;i<=span;i++) out.push({ week:d.week+i, fit:fitOn(d, d.week+i) });
@@ -12455,10 +12528,34 @@ function endWeek(d){
     if(d.flags.sparkCount===5) d.fame += 25;
   }
   makePitCard(d);          /* who is down there this week */
-  if(!d.milestone600 && d.fame>=600){ d.milestone600=true; chron(d, "Your name is spoken in Rome itself. The house has become legend.", "good"); }
+  /* every rung says its piece once, not just the one at 600 */
+  { d.flags.fameSaid = d.flags.fameSaid || {};
+    if(d.milestone600) d.flags.fameSaid[600] = 1;                 /* saves that already heard it */
+    for(const [at] of FAME_TIERS){
+      if(at >= 600 && d.fame >= at && !d.flags.fameSaid[at]){
+        d.flags.fameSaid[at] = 1; if(at===600) d.milestone600 = true;
+        chron(d, FAME_WORD[at] || `The house is ${fameTitle(at).toLowerCase()} now.`, "good");
+      } } }
   if(d.gold < (d.loan ? -420 : -250)) d.over = { kind:"debt" };
+  /* ---- THE HOUSE THAT COULD NOT FIELD A MAN ----
+     `ruin` asked for no men AND no coin, and counted a man in the infirmary as a man.
+     A house measured at week 235 had nobody who could stand — two in the infirmary,
+     four over the wall — and forty-four thousand denarii in the box, so it tripped
+     neither clause. It was not ruined and it was not playable: the week could still
+     be ended, forever, on an empty yard. A house is finished when it cannot put a man
+     on the sand and cannot buy one either; if it can still buy one, it is not finished,
+     it is being neglected, and it should be told so and given the chance. */
+  const standing = fitOn(d, d.week);
+  d.flags.idleYard = standing > 0 ? 0 : (d.flags.idleYard||0) + 1;
+  if(d.flags.idleYard >= 3 && onTheBooks(d) === 0) slaverAtTheGate(d);
+  if(d.flags.idleYard === 1 && standing === 0)
+    chron(d, onTheBooks(d)
+      ? `There was no one to send this week. The yard is quiet in the way a yard should never be, and the men who are left are in no state to change that.`
+      : `The cells are empty. There is a ludus here and nobody in it, and every week that stays true is a week Capua stops expecting anything of you.`, "bad");
   const alive = d.gladiators.some(g=>!isGone(g));
   if(!alive && d.gold<150) d.over = { kind:"ruin" };
+  else if(d.flags.idleYard >= EMPTY_LIMIT && onTheBooks(d) === 0)
+    d.over = { kind:"emptied", name:d.name, weeks:d.flags.idleYard, years:yearOf(d), gold:Math.round(d.gold) };
   /* the game says mercy is the strongest long game; it should be able to end that way */
   else if(!alive && houseRecord(d).freed >= 5 && houseRecord(d).freed > houseRecord(d).lost)
     d.over = { kind:"closed", name:d.name, freed:houseRecord(d).freed, years:yearOf(d) };
@@ -13628,6 +13725,7 @@ const OVER_TEXT = {
   disgrace: o=>({ title:RUINS.disgrace.title, text:RUINS.disgrace.text(o) }),
   ruined: o=>({ title:RUINS.ruined.title, text:RUINS.ruined.text(o) }),
   ruin: ()=>({ title:"AN EMPTY HOUSE", text:"No men. No coin. A lanista with an empty ludus is only a man with a large, quiet building. The gates are shuttered, and the wind moves the sand where champions might have trained." }),
+  emptied: o=>({ title:"THE CELLS STAY EMPTY", text:`${o.weeks} weeks. Slavers came to the gate and went away again, and the cells of ${o.name} stayed as empty as the day the last man went over the wall. ${o.gold >= 400 ? `There was coin in the box the whole time — ${o.gold} denarii of it — which is the part the other lanistae will find funny for years. ` : `There was never quite enough in the box to put it right, and each week there was a little less. `}A ludus is not a building and it is not a ledger; it is men, and after ${o.years} year${o.years===1?"":"s"} yours has none. The editors stop sending. The doctore takes work at another house. Capua does not so much forget you as stop having anything to forget.` }),
 };
 
 /* Stamped into the page head at build time. Empty when the source is run raw. */
