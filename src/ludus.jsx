@@ -2397,6 +2397,40 @@ const LASTING = {
   arm2:   { name:"a shoulder that hangs", part:"shoulder",
     say:"It sits lower than the other one and he has stopped pretending otherwise. The medicus says it mended.",
     atk:0.985, guard:0.985, latePow:0.93, heal:0.85 },
+  /* ---- SIX PLACES TO BE CUT AND FIVE THAT REMEMBER ----
+     Measured across three thousand careers: a man who fights forty bouts without an
+     infirmary carries something lasting 62.9% of the time, and seventy bouts takes it
+     to 73.9%. The body remembers plenty. What it could not remember was the ARM — six
+     targets on a man and only five of them had a wound attached, so a fighter opened
+     on the sword arm three separate times walked away from it clean, which is the one
+     place on a gladiator you would expect the years to be written.
+     And five wounds is a short table. A veteran with two of them had seen most of what
+     there was to see. There are two for every part of him now, so a long career keeps
+     finding new ways to have been used up.
+     The six below are deliberately the lesser half of the table. Measured, these
+     multipliers compound hard — a man carrying two of the original five loses 21
+     points of win rate and three loses 27 — and doubling how many a veteran collects
+     would have doubled that, which is not what "remember more often" asks for. The
+     body remembers oftener and in more places; most of what it remembers is a
+     nuisance he works around rather than a thing that finishes him. */
+  grip:   { name:"an arm that does not answer", part:"arm",
+    say:"It is there and it works and there is a half-beat between asking it and it going, and in the twelfth round that is everything.",
+    atk:0.99, latePow:0.957 },
+  dead:   { name:"the dead patch on the forearm", part:"arm",
+    say:"He cannot feel anything from the elbow down on that side. He found out when he did not notice a cut going in.",
+    guard:0.99, read:0.95 },
+  hip:    { name:"a hip that grinds", part:"thigh",
+    say:"You can hear it across the yard on a cold morning. He turns off the other leg now and everybody has noticed which.",
+    stam:1.05, guard:0.993, fatigue:1.05 },
+  ribs:   { name:"ribs that never set true", part:"flank",
+    say:"He sleeps sitting up. Taking a breath all the way in is a thing he decided against some years ago.",
+    stam:1.06, latePow:0.972, heal:0.95 },
+  knuckle:{ name:"two fingers that stay bent", part:"hand",
+    say:"He has had the grip re-wrapped three times to suit them. It works. It is not the hand he was given.",
+    atk:0.993, guard:0.995 },
+  jaw:    { name:"the jaw that was rebuilt", part:"brow",
+    say:"It was put back by a good man in a hurry and it is not where it started. He eats on one side and does not smile with the mouth open.",
+    latePow:0.972, read:0.95, heal:0.95 },
 };
 const LAST_KEYS = Object.keys(LASTING);
 const lastingOf = g => (g && g.lasting) || [];
