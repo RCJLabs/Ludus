@@ -2246,7 +2246,7 @@ function agenda(d){
   if((d.market||[]).length && d.gold > 500 && activeG(d).length < 6)
     add(1, "market", "There are men on the block", `${d.market.length} standing`);
   /* the house's newer trades, surfaced so they introduce themselves */
-  if(d.doctore && d.gold>=SIG_FEE){ const sig = activeG(d).filter(g=>canLearnSig(d,g));
+  if(d.gold>=sigFee(d)){ const sig = activeG(d).filter(g=>canLearnSig(d,g));
     if(sig.length===1) add(1, "men", `${sig[0].name} could be taught a move of his own`, "a signature, from the doctore");
     else if(sig.length>1) add(1, "men", `${sig.length} men could be taught a move of their own`, "signatures, from the doctore"); }
   if(d.doctore && (d.doctore.drill||"none")==="none" && !d.flags.everDrill && activeG(d).length>=3)
@@ -6387,7 +6387,20 @@ const signatureCrowd = g => sigTech(g) ? 5 : 0;    // the crowd knows his move a
 const SIG_GATE = { wins:6 };
 const SIG_FEE = 260;
 const SIG_WEEKS = 4;
-const canLearnSig = (d,g) => !!(d.doctore && !g.signature && !g.teaching && !g.learning
+/* ---- TWELVE MOVES BEHIND ONE HIRE ----
+   There are twelve of these and every one of them was locked behind keeping a
+   doctore on the books. A doctore is three hundred to six hundred denarii down and
+   fifteen to twenty-six a week forever, and a house in its first two years runs on
+   a hundred either side of nothing — so the whole of this, the best thing the game
+   has to say about what a fighter becomes, was invisible to exactly the houses that
+   would most enjoy finding it.
+   A house without a doctore can bring a master in for the four weeks instead. He
+   costs three and a half times the drilling fee, he takes no wage, he teaches one
+   man one move and he goes home. It is plainly the worse bargain if you intend to
+   teach more than two men, which is the point: it is the door, not the shortcut. */
+const VISIT_FEE = rnd(SIG_FEE * 3.5);
+const sigFee = d => d.doctore ? SIG_FEE : VISIT_FEE;
+const canLearnSig = (d,g) => !!(!g.signature && !g.teaching && !g.learning
   && g.status==="active" && techsFor(g.cls).length && (g.wins||0) >= SIG_GATE.wins);
 /* a man goes for it when he is winning, or when he is desperate — and oftener if it is his own */
 function triesSignature(g, mom, stam, tac){
@@ -7133,7 +7146,7 @@ const LESSONS = [
 
   /* ---- the newer trades of the house — each unlocks when it becomes real ---- */
   { id:"signature", tab:"men", title:"A Move Of His Own",
-    when:d=>d.doctore && activeG(d).some(g=>canLearnSig(d,g)),
+    when:d=>activeG(d).some(g=>canLearnSig(d,g)),
     text:"A man with six wins under him has earned more than the standard forms. Have the doctore drill him a move that is his alone — the Bulwark, the Widow, whatever his class is for — and it fires oftener, lands harder, and breaks the crowd with a named flourish when it does. Open his page in the familia, the training tab, and teach it." },
   { id:"board", tab:"men", title:"The Doctore's Board",
     when:d=>d.doctore && activeG(d).length>=3,
@@ -15564,10 +15577,13 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
   const doMaster = gid => mut(d=>{ const g=d.gladiators.find(x=>x.id===gid); if(g) makeMaster(d,g); });
   const teachSecond = (gid,to) => mut(d=>{ startSecond(d,gid,to); });
   const teachSig = (gid, key) => mut(d=>{ const g=d.gladiators.find(x=>x.id===gid);
-    if(!g || !canLearnSig(d,g) || d.gold<SIG_FEE) return;
+    const fee = sigFee(d);
+    if(!g || !canLearnSig(d,g) || d.gold<fee) return;
     if(!TECHNIQUES[key] || TECHNIQUES[key].cls!==g.cls) return;
-    d.gold -= SIG_FEE; g.teaching = { key, weeks:SIG_WEEKS };
-    chron(d, `${fullName(g)} goes to the far post to drill ${TECHNIQUES[key].name} until it is his. ${SIG_WEEKS} weeks of one thing, over and over, ${SIG_FEE} denarii to the doctore for the hours.`); });
+    d.gold -= fee; g.teaching = { key, weeks:SIG_WEEKS };
+    chron(d, d.doctore
+      ? `${fullName(g)} goes to the far post to drill ${TECHNIQUES[key].name} until it is his. ${SIG_WEEKS} weeks of one thing, over and over, ${fee} denarii to the doctore for the hours.`
+      : `A master comes down from the school at Capua for a month and no longer, and he is not cheap. ${fullName(g)} drills ${TECHNIQUES[key].name} with him at the far post until it is his — ${SIG_WEEKS} weeks, ${fee} denarii, and then the man goes home.`); });
   const useStyle = (gid,to) => mut(d=>{ switchStyle(d,gid,to); });
   const chooseHeir = kind => mut(d=>{ nameHeir(d, kind); });
   const seekMatch = () => { mut(d=>{ if(marryReady(d) && !d.pendingEvent){ const ev = matchEvent(d); if(ev) d.pendingEvent = ev; } }); setSheet(null); };
@@ -19002,11 +19018,13 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     <div className="dim" style={{fontSize:14,fontStyle:"italic",marginTop:3}}>The same move, over and over, until it is his and no one else's.</div>
                   </>) : (<>
                     <div className="tag" style={{marginBottom:4}}>Teach him a move of his own</div>
-                    <div className="dim" style={{fontSize:13.5,marginBottom:6}}>The doctore can drill one technique into a proven man until Capua knows it by his name. {SIG_WEEKS} weeks, {SIG_FEE}d, and he still takes the card while he learns.</div>
+                    <div className="dim" style={{fontSize:13.5,marginBottom:6}}>{S.doctore
+                      ? <>Your doctore can drill one technique into a proven man until Capua knows it by his name. {SIG_WEEKS} weeks, {sigFee(S)}d, and he still takes the card while he learns.</>
+                      : <>You keep no doctore, so a master comes down from the school for the month and charges like it — {sigFee(S)}d, no wage, one man, one move, and then he goes home. {SIG_WEEKS} weeks, and your man still takes the card while he learns.</>}</div>
                     <div className="grid grid-cols-2 gap-2">
                       {techsFor(selG.cls).map(k=>{ const T = TECHNIQUES[k];
                         return (
-                          <button key={k} className="focusbtn" disabled={S.gold<SIG_FEE} onClick={()=>teachSig(selG.id,k)}>
+                          <button key={k} className="focusbtn" disabled={S.gold<sigFee(S)} onClick={()=>teachSig(selG.id,k)}>
                             {T.name}
                             <span className="sub">{T.kind==="show"?"for the crowd":"to end men"}</span>
                           </button>
