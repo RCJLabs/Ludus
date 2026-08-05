@@ -3609,7 +3609,7 @@ function marketWeek(d){
 /* a lot of war captives, bought in bulk and sight-unseen */
 function buyLot(d){
   const lot = d.powLot; if(!lot) return null;
-  const space = 8 - d.gladiators.filter(x=>!isGone(x)).length;
+  const space = cellsCap(d) - d.gladiators.filter(x=>!isGone(x)).length;
   if(space <= 0 || d.gold < lot.price) return null;
   d.gold -= lot.price;
   const take = Math.min(lot.n, space);
@@ -7697,7 +7697,19 @@ function poachWeek(d){
    grudges, and all you could do about any of it was fight them. A lanista is a
    dealer as much as a trainer. You can put money on their table for a man, put a
    word in that man's ear instead and pay a different price, or buy the quiet. */
-const rosterFull = d => activeG(d).length >= ((d.law && d.law.cap) || 8);
+/* ---- CELLS THAT GROW WITH THE HOUSE ----
+   Eight, forever, from the first week to the last — a house at the peak of its powers
+   held exactly as many men as one in its first season, while a melee wants four on the
+   sand at once and a pair takes two more. The cells follow your standing now: the same
+   eight while you are a lanista and a man of means, and room for six more by the time
+   Rome is calling you a friend of Caesar. The feed bill scales with the men, so a big
+   familia costs what a big familia should, and an edict can still cap you below it. */
+const CELLS_BY_RANK = [8, 8, 9, 10, 11, 12, 13, 14];
+const cellsCap = d => {
+  const byRank = CELLS_BY_RANK[Math.min(riseOf(d), CELLS_BY_RANK.length-1)] || 8;
+  return (d.law && d.law.cap) ? Math.min(d.law.cap, byRank) : byRank;
+};
+const rosterFull = d => activeG(d).length >= cellsCap(d);
 /* what they will let a man go for — a house that hates you charges for the privilege */
 function houseAsk(d, h, f){
   if(!h || !f) return 0;
@@ -9234,8 +9246,11 @@ const EDICTS = {
 };
 const EDICT_KEYS = Object.keys(EDICTS);
 const lawOf = d => d.law || (d.law = { cap:99, tax:0, women:false, sineFee:0, damnati:false, edicts:[], heat:0, fines:0 });
-const hasEdict = (d,k) => lawOf(d).edicts.includes(k);
-const inBreach = d => lawOf(d).edicts.filter(k=>{ try { return EDICTS[k].check(d); } catch(e){ return false; } });
+/* the edict list is guarded because everything else that touches the law reads through
+   lawOf, which only fills the shape when d.law is absent entirely — a law object that
+   exists but predates `edicts` would take the whole screen down on a .filter */
+const hasEdict = (d,k) => (lawOf(d).edicts||[]).includes(k);
+const inBreach = d => (lawOf(d).edicts||[]).filter(k=>{ try { return EDICTS[k].check(d); } catch(e){ return false; } });
 const lawWord = d => { const h = lawOf(d).heat;
   return h>=70?"the magistrate has your name on a list" : h>=40?"you are being watched" : h>=15?"noticed once or twice" : "nobody is looking at you"; };
 /* an edict arrives, and it is aimed at houses like yours */
@@ -11208,7 +11223,7 @@ const EVENTS = {
         return `${t.name} departs with the merchant's caravan.`; }
       return "You send the merchant on his way with polite words and no sword."; } },
   bargain: {
-    make(d){ if(d.gladiators.filter(g=>!isGone(g)).length>=8) return null;
+    make(d){ if(rosterFull(d)) return null;
       const g = genGladiator(d, ri(35,60)); g.price = rnd(g.price*0.6);
       if(d.gold < g.price) return null;
       return { id:"bargain", title:"A Slaver's Bargain", text:`A slaver passing through offers ${g.name}, a ${g.origin} ${g.cls.toLowerCase()}, at a price that smells of desperation — his, not yours.`,
@@ -15467,7 +15482,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   </div>
                 </div>
                 <div className="flex gap-3" style={{fontSize:13.5,flexWrap:"wrap",paddingBottom:9,marginBottom:9,borderBottom:"1px dotted #33271a"}}>
-                  <span>Familia {roster.length}/8</span>
+                  <span>Familia {roster.length}/{cellsCap(S)}</span>
                   <span className="blood">Fallen {S.fallen.length}</span>
                   <span className="gold">Freed {S.freed.length}</span>
                   {(()=>{ const fit = fitOn(S, S.week), all = activeG(S).length;
@@ -16592,7 +16607,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 )}
               </div>
             ); })()}
-          {S.powLot && (()=>{ const lot = S.powLot, space = 8 - roster.length, afford = S.gold>=lot.price;
+          {S.powLot && (()=>{ const lot = S.powLot, space = cellsCap(S) - roster.length, afford = S.gold>=lot.price;
             return (
               <div className="panel" style={{padding:12,borderColor:"#7c2a22",background:"#241511"}}>
                 <div className="flex items-center justify-between">
@@ -16698,8 +16713,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               {(()=>{ const cost = g.contested ? g.contested.ceiling : g.price;
                 return (
                   <button className="btn" style={{width:"100%",marginTop:8, ...(g.contested?{borderColor:"#c99a4b"}:{})}}
-                    disabled={S.gold<cost || roster.length>=8} onClick={()=>bidFor(g)}>
-                    {roster.length>=8? "The cells are full" : S.gold<cost ? "Not enough coin"
+                    disabled={S.gold<cost || rosterFull(S)} onClick={()=>bidFor(g)}>
+                    {rosterFull(S)? "The cells are full" : S.gold<cost ? "Not enough coin"
                       : g.contested ? `Outbid House ${g.contested.house} — ${cost} denarii`
                       : isAuctor(g) ? `Take his oath — ${g.price} denarii` : `Buy for ${g.price} denarii`}
                   </button>
@@ -16898,6 +16913,43 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               A patron kept warm leans on the editor when your man is in the sand. One left to go cold talks at the baths instead.
             </div>
           </Sect>
+
+          {/* ---- THE ACCOUNT, BEFORE IT IS CLOSED ----
+              closing() and verdictOf() existed and were beautiful and were rendered in
+              exactly one place: the screen you only ever see once, at the end. A house
+              that simply keeps going — which is what a long successful run does — never
+              saw a word of it. Same reckoning, same verdict, readable any week. */}
+          {S.week > 20 && (()=>{ const c = closing(S), R2 = c.R2, V = verdictOf(c); return (
+            <Sect title="The house so far" note={`${R2.years} year${R2.years===1?"":"s"}`}>
+              <div className="dim" style={{fontSize:13.5,marginBottom:6}}>
+                {R2.years} year{R2.years===1?"":"s"} · {S.week} weeks · fame {rnd(S.fame)}
+                {c.gen>1 && ` · ${c.gen} lanistae`}
+                {c.doctrine && ` · ${c.doctrine.name}`}
+              </div>
+              <div className="grid grid-cols-3 gap-2" style={{fontSize:14.5}}>
+                <div><div className="dim" style={{fontSize:12.5}}>Served</div>{R2.served}</div>
+                <div><div className="dim" style={{fontSize:12.5}}>Bouts</div>{c.bouts}{c.bouts>0 && <span className="dim" style={{fontSize:12}}> · {c.winPc}%</span>}</div>
+                <div><div className="dim" style={{fontSize:12.5}}>Buried</div><span className="blood">{R2.lost}</span></div>
+                <div><div className="dim" style={{fontSize:12.5}}>Freed</div><span className="gold">{R2.freed}</span></div>
+                <div><div className="dim" style={{fontSize:12.5}}>Walked out</div>{R2.out}</div>
+                <div><div className="dim" style={{fontSize:12.5}}>Killed</div>{R2.k}</div>
+              </div>
+              <div className="panel" style={{padding:11,marginTop:9,background:"#1c1610",borderColor:"#6d5426"}}>
+                <div className="disp" style={{fontSize:14.5,color:"#e8d092",marginBottom:3}}>{V.name}</div>
+                <div style={{fontSize:14.5}}>{V.say(c)}</div>
+              </div>
+              {c.best && c.best.wins>0 && (
+                <div style={{fontSize:14,borderTop:"1px dotted #33271a",paddingTop:6,marginTop:8}}>
+                  <span className="dim">The best of them so far is </span>
+                  {c.best.nick? `${c.best.name}, ${c.best.nick}` : c.best.name}
+                  <span className="dim"> — {c.best.wins} won.</span>
+                </div>
+              )}
+              <div className="dim" style={{fontSize:12.5,fontStyle:"italic",marginTop:7}}>
+                Nothing is settled while the gate still opens. This is only where it stands.
+              </div>
+            </Sect>
+          ); })()}
 
           {(()=>{ const rk = riseRank(S), nx = riseNext(S), need = riseNeed(S), can = canClaimRise(S);
             const stand = S.rise ? S.rise.standing : 0;
