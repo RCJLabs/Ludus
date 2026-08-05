@@ -11053,12 +11053,40 @@ function winChance(g, opp, prep, tac, foeTac){
   const or = Math.pow(raw/(1-raw), 12.0) * (TACTIC_OR[tac] || 1) / (TACTIC_OR[foeTac] || 1);
   return clamp(or/(1+or), 0.05, 0.95);
 }
-/* and what each of them is, in one line, because none of it was on the screen */
+/* ---- ONE LINE OF COPY FOR FOUR DIFFERENT GAMES ----
+   These four chips are shown on the single sand, on a pair bout and on a melee, and
+   until now they carried the same sentence in all three. Measured at 82 against 82,
+   nine hundred bouts a cell, three runs pooled:
+
+     single sand   aggressive 47.2% · measured 43.8% · defensive 42.0% · showboat 32.2%
+     pair bout     aggressive 57.4% · measured 53.0% · defensive 50.3% · showboat 32.4%
+     the melee     defensive 41.2% · aggressive 31.1% · measured 28.1% · showboat  8.9%
+
+   The line said of defensive that "he wins less and comes home about twice as often".
+   On a melee defensive takes the day TEN POINTS MORE OFTEN than going forward and
+   buries 2.8% of yours against 16.0% — the best answer out there by a distance, and
+   the copy was calling it the cautious one. And it said aggressive was "the likeliest
+   way to lose him", which it is not on any of the three: showboating is, everywhere.
+   Four games, four sets of words, and every number in them measured. */
 const TACTIC_SAY = {
-  aggressive: "Hits hardest and wins most — and takes a third more coming back, burns his wind fastest, and is the likeliest way to lose him.",
-  measured:   "Neither. He fights the bout in front of him and takes what it gives.",
-  defensive:  "Turns blows aside instead of trading them, and spends almost nothing. He wins less and comes home about twice as often.",
-  showboat:   "He fights for the tiers rather than the man. Worse odds, and a crowd that remembers the name.",
+  aggressive: "Wins most, by about three bouts in a hundred — he hits hardest, takes a third more coming back and burns his wind fastest. He does die a shade oftener for it.",
+  measured:   "Neither. He fights the bout in front of him and takes what it gives, and on a single sand that is three points behind going forward and a shade safer.",
+  defensive:  "Turns blows aside instead of trading them, and spends almost nothing. He wins a couple of points less often than a measured man and comes home twice as often.",
+  showboat:   "He fights the tiers rather than the man, and it is the worst of both — the poorest odds on the card by ten points and the likeliest of the four to get him killed. What it buys is the crowd, and the crowd is his name.",
+};
+/* two of yours on the sand at once, and the arithmetic inverts */
+const PAIR_SAY = {
+  aggressive: "Two men going forward together is the strongest thing out here — four points better than fighting it straight, and better than that against a cautious pair. It also buries three and a half times as many of yours as standing off does.",
+  measured:   "The middle of a pairing is the poorest bargain of the three: it takes the bout barely oftener than covering up and loses three times the men doing it.",
+  defensive:  "Two shields and no hurry. Within three points of fighting it straight and it brings back all but one man in thirty — the cheapest win on the card. It will not finish a stubborn pair, so expect the horn to go with both still standing.",
+  showboat:   "Playing to the tiers with somebody else's life beside his. The worst odds out here and the most graves.",
+};
+/* and in a scrum of eight it inverts again, the other way */
+const MELEE_SAY = {
+  aggressive: "Straight into a field of eight. It takes the day less often than standing off does and buries five times as many of yours — a melee is not a duel and there is always another man behind him.",
+  measured:   "The way he was taught, and in a scrum it is the worst of the three: fewer of them go down for him and more of yours go down for them.",
+  defensive:  "The answer out here, and by a distance — it takes the day oftener than anything else and brings back nineteen men in twenty. Nobody ever won a melee by being the busiest man in it.",
+  showboat:   "Working the tiers in a scrum of eight. It takes the day one time in ten and gets a good share of them killed doing it.",
 };
 /* the morning is not the sand and the card should not pretend it is. A beast cannot
    be out-pointed and will not accept a raised finger, so killing it and being killed
@@ -20734,7 +20762,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 ))}
               </div>
               <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:5,lineHeight:1.35}}>
-                {(pick.kind==="hunt" ? HUNT_SAY : TACTIC_SAY)[tactic]}</div>
+                {(pick.kind==="hunt" ? HUNT_SAY : pick.kind==="pair" ? PAIR_SAY
+                  : pick.kind==="melee" ? MELEE_SAY : TACTIC_SAY)[tactic]}</div>
             </div>
           );
           const entranceRow = (
