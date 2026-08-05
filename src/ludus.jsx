@@ -11011,7 +11011,16 @@ const STAKES_OPTS = [50, 150, 400];
    exchange — how hard he hits, how much he takes, how fast he burns — none of
    which power() can see, so these are fitted from measured outcomes: aggressive
    won 63.6% where measured won 46.3% at parity, defensive 39.8%. */
-const TACTIC_OR = { aggressive:1.42, measured:1, defensive:0.90, showboat:0.88 };
+/* ---- WHAT THE CARD KNOWS, RE-FITTED ----
+   Measured against the sand across ten thousand bouts: the mid-card was honest to
+   within three points, but the two ends were not — a hopeless bout was quoted at 5.4%
+   and won 3.0%, and a certainty was quoted at 94.6% and won 98.1%, because the quote
+   was clamped at a twentieth either side while the sand is not. And the tactics had
+   drifted since they were last fitted: normalised against a measured man, the card
+   over-credited going forward by 3.2 points and showboating by 3.9, and under-credited
+   standing off by 2.7 — which is the shield work of v2.9.0 arriving in the exchange
+   and never arriving at the bookmakers' table. */
+const TACTIC_OR = { aggressive:1.17, measured:1, defensive:1.02, showboat:0.75 };
 /* ---- ONE SHAPE FOR ALL FOUR ENGINES ----
    v1.87 gave the three tactics a domain in simulateFight, and the pair, the melee and
    the hunt each kept their own copy of what it had cured. Measured with the classes
@@ -11050,8 +11059,19 @@ function winChance(g, opp, prep, tac, foeTac){
   // the true chance; sharpen it on the odds scale to match measured outcomes
   const raw = clamp(pa/(pa+pb), 0.02, 0.98);
   /* his tactic swings the bout as far as yours does, the other way */
-  const or = Math.pow(raw/(1-raw), 12.0) * (TACTIC_OR[tac] || 1) / (TACTIC_OR[foeTac] || 1);
-  return clamp(or/(1+or), 0.05, 0.95);
+  /* ---- AND POWER() CANNOT SEE A BOARD ----
+     Standing off read four to five points cheap however the tactic was priced, and
+     raising its number twice barely moved the residual — because the error was never
+     in the tactic column. The shield turns blows outright, in the exchange, on a roll
+     power() knows nothing about, and it turns more of them when the man has been told
+     to stand off, because that is the one week both the order and the board are doing
+     the same job. The quote sees the board now. */
+  const cov = f => (f.mods && f.mods.cover) || 0;
+  const board = 1 + cov(A) * (tac==="defensive" ? 0.44 : 0.13)
+                  - cov(B) * (foeTac==="defensive" ? 0.44 : 0.13);
+  const or = Math.pow(raw/(1-raw), 12.5) * (TACTIC_OR[tac] || 1) / (TACTIC_OR[foeTac] || 1)
+    * clamp(board, 0.6, 1.5);
+  return clamp(or/(1+or), 0.025, 0.975);
 }
 /* ---- ONE LINE OF COPY FOR FOUR DIFFERENT GAMES ----
    These four chips are shown on the single sand, on a pair bout and on a melee, and
