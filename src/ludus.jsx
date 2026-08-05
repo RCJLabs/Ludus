@@ -1256,6 +1256,27 @@ const LANISTAE = {
   Tullius: { name:"Gaius Tullius Rufus", trait:"who is simply better at this",
     blurb:"No theatre and no grudges. His men are drilled harder than yours and he can outbid you whenever he likes.",
     grudgeDecay:1.0, poach:0.8, bribe:1.2, train:1.55, bid:1.6 },
+  /* the men who buy a yard when one comes up — see bayRefill. Each is written the
+     way the three founders are, because a house that arrives at year nine and is
+     called "House Glaber" by a fallback string is not a rival, it is a placeholder. */
+  Glaber: { name:"Publius Glaber", trait:"who bought it all at once",
+    blurb:"A magistrate's nephew with a great deal of money and no trade. He pays for what he cannot do, and he can pay for a very great deal.",
+    grudgeDecay:1.3, poach:1.6, bribe:2.0, train:0.75, bid:1.7 },
+  Cossutius: { name:"Numerius Cossutius", trait:"who was one of them",
+    blurb:"Bought his own freedom fifteen years ago and saved every denarius since. His men eat what he eats and they know it.",
+    grudgeDecay:0.7, poach:0.9, bribe:0.6, train:1.30, bid:0.8 },
+  Marcellus: { name:"Aulus Marcellus", trait:"the soldier",
+    blurb:"Twenty-six years in the legions and a pension put into a ludus. He has never trained a gladiator; he has trained a great many men, which he considers the same problem.",
+    grudgeDecay:1.1, poach:0.7, bribe:0.5, train:1.40, bid:0.9, sabotage:0.5 },
+  Rufinus: { name:"Sextus Rufinus", trait:"who says nothing at all",
+    blurb:"Opened without a feast and without a word. The first the bay heard of it was his men on a card, better drilled than they had any right to be.",
+    grudgeDecay:0.9, poach:1.0, bribe:1.0, train:1.50, bid:1.1, sabotage:1.4 },
+  Pollio: { name:"Vedius Pollio", trait:"who is not careful with them",
+    blurb:"Pays over the odds and never asks what is wrong with them. Nobody in the trade likes him. Everybody in the trade sells to him.",
+    grudgeDecay:1.5, poach:2.0, bribe:1.6, train:0.85, bid:1.8 },
+  Varro: { name:"Titus Varro", trait:"who knows what everyone is worth",
+    blurb:"Twenty years auctioning other men's fighters before he bought his own. He can price your best man to the denarius and he has.",
+    grudgeDecay:1.0, poach:1.5, bribe:1.3, train:1.05, bid:1.5 },
 };
 const lanistaOf = h => LANISTAE[h] || { name:"House "+h, trait:"", blurb:"",
   grudgeDecay:1, poach:1, bribe:1, train:1, bid:1 };
@@ -4289,6 +4310,61 @@ function campaniaWeek(d){
     }
   }
   if(!d.city && !d.travel && R()<0.09) bayNews(d);
+}
+
+/* ---- THE BAY DOES NOT STAY EMPTY ----
+   Three houses were seeded into Capua and nothing ever seeded a fourth. Houses fold:
+   a warm rival sells up and goes to a farm near Nola after eleven years, a nemesis is
+   broken and takes the same road, and the one path in the whole game that ever ADDED a
+   house — a freed man of yours setting up on the Neapolis road — was gated on
+   `d.rivals.length < 5`, which counts the folded ones as well as the living. So the bay
+   drained and stayed drained. Measured on a save at year eight: the league table of
+   Capua had one house in it, and it was the player's own.
+     A yard in Capua does not sit empty. Somebody always buys it — a magistrate's
+   nephew with more money than trade, a freedman who saved for fifteen years, a
+   centurion out of the legions who thinks he knows what hard is. They come in at the
+   bay's own standard rather than at week-one quality, because they bought a going
+   concern and its men. */
+const NEW_HOUSES = [
+  { key:"Glaber",
+    line:h=>`The yard on the Capua road has changed hands. Publius Glaber — a magistrate's nephew with a great deal of money and no trade at all — has bought it whole, men and all, and has been telling people at the baths how he means to run it.` },
+  { key:"Cossutius",
+    line:h=>`There is a new name on the bills. Numerius Cossutius bought his own freedom fifteen years ago and has been saving since; he has a yard now, ${h.fighters.length} men in it, and the particular hunger of somebody who used to sleep in a cell like theirs.` },
+  { key:"Marcellus",
+    line:h=>`Aulus Marcellus has come out of the legions and put his pension into a ludus. He has never trained a gladiator. He has trained rather a lot of men, which he considers the same problem.` },
+  { key:"Rufinus",
+    line:h=>`Sextus Rufinus has opened a school on the Neapolis road — quietly, without a feast, without a word to anyone. The first the bay hears of it is his men on a card, and they are better drilled than they have any right to be.` },
+  { key:"Pollio",
+    line:h=>`Vedius Pollio is buying in the bay. He pays over the odds and he does not ask what is wrong with them, which tells you what he expects them to be worth in a year. Nobody in the trade likes him. Everybody in the trade sells to him.` },
+  { key:"Varro",
+    line:h=>`Titus Varro has spent twenty years auctioning other men's fighters and has finally bought his own. He knows to the denarius what every man in Campania is worth, including yours.` },
+];
+const liveRivals = d => (d.rivals||[]).filter(h=>!h.retired);
+const BAY_FLOOR = 3;
+function bayRefill(d){
+  if(d.over || d.rome || d.succession) return;
+  if(!d.rivals) return;
+  const live = liveRivals(d);
+  if(live.length >= BAY_FLOOR){ d.flags.bayDue = 0; return; }
+  /* a yard takes a season to change hands — it does not happen the week he leaves.
+     The emptier Capua is, the faster the next one goes: a dark yard in a city with
+     no schools left in it is the cheapest thing in Campania. */
+  if(!d.flags.bayDue){
+    d.flags.bayDue = d.week + (live.length===0 ? ri(2,5) : live.length===1 ? ri(3,7) : ri(5,11));
+    return; }
+  if(d.week < d.flags.bayDue) return;
+  d.flags.bayDue = 0;
+  const taken = new Set((d.rivals||[]).map(h=>h.name));
+  const opts = NEW_HOUSES.filter(x=>!taken.has(x.key));
+  if(!opts.length) return;
+  const N = pick(opts);
+  const q = clamp(bayStandard(d) - ri(6, 18), 28, 96);
+  const fameRef = live.length ? live.reduce((s,h)=>s+h.fame,0)/live.length : Math.max(70, d.fame*0.30);
+  const h = { name:N.key, fame: Math.max(40, rnd(fameRef * (0.55 + R()*0.55))),
+    grudge: ri(0,12), form: ri(-10,10), formTier:0, star:null, opened:d.week,
+    fighters: Array.from({length: ri(3,4)}, ()=>makeRivalFighter(d, N.key, clamp(q + ri(-8,10), 25, 99))) };
+  d.rivals.push(h);
+  chron(d, N.line(h), "info");
 }
 
 /* ---- THE LEAGUE OF CAPUA ----
@@ -8768,7 +8844,7 @@ const FREEDMEN = {
       activeG(d).forEach(g=>{ g.morale = clamp(g.morale+9,0,100); g.regard = clamp(regardOf(g)+7,0,100); });
       return `He takes the doctore's place for nothing but keep. Every man in that block just watched what the wooden sword is actually worth.`; } },
   lanista: { w:8, name:"He sets up on his own",
-    need:(d,f)=>f.wins >= 10 && (d.rivals||[]).length < 5,
+    need:(d,f)=>f.wins >= 10 && liveRivals(d).length < 5,
     say:(d,f)=>`${f.name} has bought two men and a yard on the Neapolis road. He learned the trade somewhere and everybody knows where.`,
     run:(d,f)=>{
       const nm = (f.name||"He").split(",")[0].split(" ").slice(-1)[0];
@@ -12838,6 +12914,7 @@ function endWeek(d){
   rivalWeekly(d);
   watchWeek(d);
   campaniaWeek(d);
+  bayRefill(d);
   leagueWeek(d);
   if(d.romeOffer && d.romeOffer.due && d.week > d.romeOffer.due){
     d.romeOffer = null;
@@ -15491,6 +15568,23 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               </div>
             );
           })}
+          {/* houses fold, and the bay was never told. A table with one name in it and
+              no explanation reads as a bug even when it is a history. */}
+          {(()=>{ const gone = (S.rivals||[]).filter(h=>h.retired);
+            const live = liveRivals(S);
+            if(!gone.length && live.length >= BAY_FLOOR) return null;
+            return (
+              <div style={{borderTop:"1px dotted #33271a",marginTop:8,paddingTop:7}}>
+                {gone.length>0 && <div className="dim" style={{fontSize:13}}>
+                  <span style={{color:"#b09b7d"}}>Folded</span> · {gone.map(h=>`House ${h.name}`).join(", ")} — sold up and gone out of the trade.
+                </div>}
+                {live.length < BAY_FLOOR && <div style={{fontSize:13,marginTop:3,color:"#d8ac5f"}}>
+                  {live.length===0
+                    ? "There is no other house left in Capua. A yard does not sit empty long — somebody will buy one of them inside the season."
+                    : `Only ${live.length===1?"one house":`${live.length} houses`} still open against you. The empty yards are for sale and they will not stay that way.`}
+                </div>}
+              </div>
+            ); })()}
           <div className="dim" style={{fontSize:13.5,marginTop:8,fontStyle:"italic"}}>
             Their men fill the card at the games, and their fame drifts week to week whether you watch or not. Top the table and Capua calls yours the First House — a fatter purse, and a great deal to say. The city reckons it up at every year's turn.
           </div>
