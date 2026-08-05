@@ -1470,20 +1470,56 @@ function yardWeek(d){
    Eighty men have been fed, nursed, buried and washed by nobody at all. A ludus was
    a household before it was a business, and the people who kept it running were
    mostly women and mostly not on anybody's roster. */
+/* ---- AND WHO SHE IS MATTERS ----
+   Measured over twenty weeks with nothing else moving, every one of these did exactly
+   what it said: forty-four points of fatigue off the yard, eight weeks off the mending,
+   ten points of unrest, seven points of the lanista's life, three hundred and twenty
+   denarii. All correct, all cheap, and all strictly good — which is not a decision, it
+   is a checkbox you tick once in year one and never think about again.
+   Two things were missing. makeFolk has always rolled a skill between 38 and 78 and
+   NOTHING HAS EVER READ IT: the woman who runs your kitchen was the same woman whoever
+   she was. And the wage was five denarii whether she was feeding four men or fourteen.
+   Both are fixed below. A good one is worth seeking and a great one is worth keeping,
+   the bill grows with the house that made it necessary, and the whole thing is on the
+   upkeep line now instead of being taken out of the box quietly every week. */
+const hhSkill = f => clamp(((f && f.skill) || 55) / 55, 0.62, 1.55);
+/* a cook for fourteen is not a cook for four */
+const hhWage = (d, k) => Math.round((HOUSEHOLD[k].wage) * (1 + activeG(d).length * 0.11));
 const HOUSEHOLD = {
   cook:   { name:"Cook", wage:5, blurb:"Forty men eat twice a day and somebody has been doing that for nothing.",
-    good:d=>{ d.gladiators.forEach(g=>{ if(g.status==="active") g.fatigue = clamp(g.fatigue-2.2,0,100); }); },
+    good:(d,f)=>{ const q = 2.2 * hhSkill(f);
+      d.gladiators.forEach(g=>{ if(g.status==="active") g.fatigue = clamp(g.fatigue-q,0,100); }); },
     line:"The food is better and the men are less tired than the ledger says they should be." },
   nurse:  { name:"Nurse", wage:6, blurb:"The medicus sets bones. Somebody sits up with them afterward.",
-    good:d=>{ d.gladiators.forEach(g=>{ if(g.status==="injured" && g.injury && R()<0.22) g.injury.weeks = Math.max(0, g.injury.weeks-1); }); },
+    good:(d,f)=>{ const q = 0.22 * hhSkill(f);
+      d.gladiators.forEach(g=>{ if(g.status==="injured" && g.injury && R()<q) g.injury.weeks = Math.max(0, g.injury.weeks-1); }); },
     line:"Wounds close a week early about a fifth of the time, which over a year is a man." },
   keeper: { name:"Housekeeper", wage:5, blurb:"Somebody has to know where everything is and who is lying.",
-    good:d=>{ d.unrest = clamp(d.unrest-0.5, 0, 100); },
+    good:(d,f)=>{ d.unrest = clamp(d.unrest - 0.5*hhSkill(f), 0, 100); },
     line:"The cells are quieter by half a point a week and nobody can say exactly why." },
   wife:   { name:"The lanista's wife", wage:0, blurb:"She was here before the ludus was and has opinions about all of it.",
-    good:d=>{ if(d.lanista) d.lanista.health = clamp(d.lanista.health+0.35, 0, 100); },
+    good:(d,f)=>{ if(d.lanista) d.lanista.health = clamp(d.lanista.health + 0.35*hhSkill(f), 0, 100); },
     line:"You last longer at this than a man doing it alone, which is most of them." },
 };
+/* what it looks like from the yard when one of them is doing her job */
+const HH_SEEN = {
+  cook: [ f=>`${f.name} has started putting barley and old wine in front of the men on the mornings after a card, and the doctore has stopped arguing about it.`,
+          f=>`Somebody counted the kitchen out and it turns out ${f.name} has been feeding this house for less than it was costing before she came.`,
+          f=>`The men eat at a table now instead of standing. It was ${f.name}'s idea and nobody has said thank you.` ],
+  nurse:[ f=>`${f.name} sat up three nights with a man who would have gone bad without it. She has not mentioned it and he has not either.`,
+          f=>`The medicus does the cutting and ${f.name} does everything for the fortnight after, which is the part that decides it.`,
+          f=>`A man came off the table wrong and ${f.name} noticed before anybody else did. That is the whole of the job.` ],
+  keeper:[f=>`${f.name} knows which of them is stealing and has dealt with it herself, and the house is quieter and you were not told how.`,
+          f=>`Nothing has gone missing from this ludus in a long time. ${f.name} has never once explained why.`,
+          f=>`${f.name} moved two men to different cells this week without asking anybody, and something that was going to happen did not.` ],
+  wife: [ f=>`${f.name} told you what she thought of the card you took, at length, and she was right, which is worse.`,
+          f=>`You have been sleeping. ${f.name} arranged it and did not discuss it with you.`,
+          f=>`${f.name} has been at this as long as you have and from a chair nobody put her name on.` ],
+};
+const hhLine = (d, k, f) => pick(HH_SEEN[k] || [x=>`${x.name} keeps this house standing.`])(f);
+const hhWord = f => { const s = (f && f.skill) || 55;
+  return s >= 74 ? "the best in Capua at it" : s >= 62 ? "very good at it"
+    : s >= 48 ? "good enough" : "learning, and it shows"; };
 const HH_KEYS = Object.keys(HOUSEHOLD);
 const HH_NAMES = ["Vibia","Fulvia","Sallustia","Cornelia","Hostilia","Lollia","Pomponia","Statilia","Cispia","Naevia","Aebutia","Rubria"];
 /* a woman on the sand drew a crowd and cost you the respectable half of the town.
@@ -1509,7 +1545,7 @@ function makeFolk(d, kind){
 function hireFolk(d, kind){
   const H = HOUSEHOLD[kind];
   if(!H || hasFolk(d, kind)) return false;
-  const fee = rnd(H.wage * 18);
+  const fee = rnd(hhWage(d, kind) * 16);
   if(kind !== "wife" && d.gold < fee) return false;
   if(kind !== "wife") d.gold -= fee;
   d.household = Object.assign({}, houseFolk(d), { [kind]: makeFolk(d, kind) });
@@ -1523,8 +1559,11 @@ function householdWeek(d){
   for(const k of Object.keys(hh)){
     const f = hh[k]; if(!f) continue;
     f.weeks++;
-    d.gold -= HOUSEHOLD[k].wage;
-    try { HOUSEHOLD[k].good(d); } catch(e){}
+    d.gold -= hhWage(d, k);
+    try { HOUSEHOLD[k].good(d, f); } catch(e){}
+    /* and once in a while you see her do it, because a thing with no evidence of
+       itself is a thing the player has no reason to keep paying for */
+    if(f.weeks > 3 && R() < 0.018) chron(d, hhLine(d, k, f), "info");
     /* they leave a house that is coming apart */
     if(k!=="wife" && f.weeks>8 && (d.unrest>78 || d.gold< -80) && R()<0.05){
       delete d.household[k];
@@ -1534,6 +1573,8 @@ function householdWeek(d){
 }
 /* who is in the yard who is not fighting */
 function householdCount(d){ return Object.keys(houseFolk(d)).length; }
+/* what the domestic half of the house costs, which was never on the ledger */
+const hhUpkeep = d => Object.keys(houseFolk(d)).reduce((n,k)=> n + hhWage(d,k), 0);
 
 /* ---- COIN THAT BEHAVES LIKE COIN ----
    Gold has been one number since v0.1. A lanista's actual problem was almost never
@@ -16626,7 +16667,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               then what you are holding, then how that reads against your years. */}
           {(()=>{ const upkeepEst = Math.round(
               activeG(S).reduce((n,g)=> n + (10 + seasonUpkeep(S)) * pit(S,"upkeep") + (isAuctor(g)? g.auctor.wage : 0), 0)
-              + bUpkeep(S) + workUpkeep(S) + gearUpkeep(S) + liturgy(S) + collDues(S) + (S.doctore? docWage(S.doctore) : 0));
+              + bUpkeep(S) + workUpkeep(S) + gearUpkeep(S) + liturgy(S) + collDues(S) + hhUpkeep(S) + (S.doctore? docWage(S.doctore) : 0));
             const owedIn = owedTotal(S), merch = merchLive(S) ? merchWeekly(S) : 0;
             const Stat = ({label, val, colour})=>(
               <div style={{minWidth:0}}>
@@ -18375,16 +18416,18 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             <div className="dim" style={{fontSize:14.5,fontStyle:"italic",marginBottom:7}}>
               A ludus was a household before it was a business. None of these people will ever be on a card and the place does not run without them.
             </div>
-            {HH_KEYS.map(k=>{ const H = HOUSEHOLD[k], f = houseFolk(S)[k], fee = rnd(H.wage*18);
+            {HH_KEYS.map(k=>{ const H = HOUSEHOLD[k], f = houseFolk(S)[k], fee = rnd(hhWage(S,k)*16);
               return (
                 <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:8,marginTop:8}}>
                   <div className="flex items-center justify-between gap-2">
                     <span className="disp" style={{fontSize:13.5,color:f?"#e8d092":"#b09b7d"}}>
                       {f ? `${f.name} · ${H.name.toLowerCase()}` : H.name}
                     </span>
-                    <span className="rowval dim" style={{fontSize:12.5}}>{f ? `${f.weeks}w · ${H.wage}d/wk` : (k==="wife" ? "—" : `${fee}d · ${H.wage}d/wk`)}</span>
+                    <span className="rowval dim" style={{fontSize:12.5}}>{f ? `${f.weeks}w · ${hhWage(S,k)}d/wk` : (k==="wife" ? "—" : `${fee}d · ${hhWage(S,k)}d/wk`)}</span>
                   </div>
+                  {f && <div style={{marginTop:2}}><span className="tag tag-gold">{hhWord(f)}</span></div>}
                   <div className="dim" style={{fontSize:14,fontStyle:"italic",marginTop:2}}>{f ? H.line : H.blurb}</div>
+                  {!f && k!=="wife" && <div className="dim" style={{fontSize:12.5,marginTop:2}}>How good she turns out to be is not on the price. A great one is worth half again what a poor one is.</div>}
                   {!f && <button className="btn btn-ghost" style={{width:"100%",marginTop:6}}
                     disabled={k!=="wife" && S.gold<fee}
                     onClick={()=>mut(d=>{ hireFolk(d, k); })}>
