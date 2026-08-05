@@ -3447,8 +3447,10 @@ function genGladiator(d, quality){
     morale:60, fatigue:0, wins:0, losses:0, kills:0, pfame:0, fans:0, status:"active", injury:null,
     focus:CLASSES[cls].key[0], regimen:"palus", sparWith:null, age:ri(18,32), lastFought:-9, traits:[], legend:false, returnWeek:0,
     kit: defaultKit(cls), wear:{weapon:100,offhand:100,helm:100,armor:100}, strain:0, form:0, formLog:[], regard:ri(38,54), memory:[], scars:[], scarCap:{}, weeksAged:0 };
-  for(const s of STATS) g[s] = clamp(24 + quality*0.5 + ri(-9,9) + (ORIGINS[origin].mod[s]||0)*2.2, 8, 92);
-  for(const k of CLASSES[cls].key) g[k] = clamp(g[k]+6, 8, 95);
+  /* the ceilings were 92 and 95, which threw away everything above quality ninety
+     — and the block never saw quality ninety, so nobody noticed */
+  for(const s of STATS) g[s] = clamp(24 + quality*0.5 + ri(-9,9) + (ORIGINS[origin].mod[s]||0)*2.2, 8, 95);
+  for(const k of CLASSES[cls].key) g[k] = clamp(g[k]+6, 8, 97);
   g.potential = clamp(quality + ri(-12,22) - Math.max(0, g.age-PRIME[1])*3, 20, 99);
   if(g.age>PRIME[1]){ // veterans arrive already worn, and already schooled
     for(const k of ["tec","dis"]) g[k] = clamp(g[k] + (g.age-PRIME[1])*0.8, 8, 95);
@@ -3463,7 +3465,13 @@ function genGladiator(d, quality){
   if(g.traits.includes("Defiant")) g.defiance = clamp(g.defiance+22,0,100);
   if(g.traits.includes("Broken")){ g.defiance = Math.max(2,g.defiance-25); g.sho = Math.max(8,g.sho-8); }
   giveAmbition(d, g);
-  g.price = rnd(90 + quality*4.5 + g.potential*2 + (g.legend?150:0) + ri(0,40));
+  /* Price ran flat in quality — 4.5 denarii a point — so the best man the trade
+     could produce cost about twice the worst, and a great house could buy the whole
+     stall out of a week's purse. What a fighting man is worth climbs the way the
+     stat curve climbs. */
+  g.price = rnd((90 + quality*4.5 + g.potential*2)
+    * (1 + Math.pow(Math.max(0, quality - 62)/40, 1.8) * 1.9)
+    + (g.legend?150:0) + ri(0,40));
   return g;
 }
 
@@ -3606,6 +3614,48 @@ function assignContests(d){
     g.contested = { house:buyer.h.name, ceiling: rnd(g.price * (1.12 + (bid-1)*0.35)) };
   }
 }
+/* ---- WHAT A GREAT HOUSE ACTUALLY COMES TO THE BLOCK FOR ----
+   Even at quality ninety-nine the block's own arithmetic tops a man out around
+   seventy-four across the line, and it should: the block sells raw material. You
+   make champions; you do not buy them off a stall. Which left a house with
+   ninety-nines in the yard no reason to walk down there at all. What the trade can
+   sell such a house is somebody else's finished man — a school folds, a lanista is
+   short a quarter's rent, and a proven fighter with a record and a name comes up
+   the road. He is at the standard the bay is actually fighting at, he is the wrong
+   side of his prime, he has almost nothing left to learn, and he is priced like
+   what he is. */
+function soldOnMan(d){
+  /* measured in STATS, not on the quality scale — bayStandard inverts the old linear
+     curve and saturates at 99, which pinned this man at ninety across the line
+     whether your best was seventy-six or ninety-nine. He is cut a few points under
+     the better of what the bay is fighting at and what you have in the yard. */
+  const mine = (activeG(d)||[]).reduce((m,g)=>Math.max(m, STATS.reduce((t,k)=>t+(g[k]||0),0)/6), 0);
+  /* and never far above your own champion — the block is a shortcut, not a way to
+     buy the game. Cut against your best man, with the bay only pulling him up when
+     your yard is behind the trade. */
+  const std = clamp(Math.max(mine, qStat(bayStandard(d)) - 6) - ri(2, 10), 34, 95);
+  const g = genGladiator(d, qForStat(std));
+  g.age = ri(27, 33);
+  for(const s of STATS) g[s] = clamp(std + ri(-5, 4) + (ORIGINS[g.origin].mod[s]||0)*2, 12, 97);
+  for(const k of CLASSES[g.cls].key) g[k] = clamp(g[k]+3, 12, 97);
+  g.potential = clamp(rnd(std) - ri(6, 26), 20, 92);
+  g.wins = ri(11, 38); g.losses = ri(3, 14);
+  g.pfame = ri(28, 88); g.fans = ri(10, 60);
+  g.nick = g.nick || pick(NICKS);
+  g.heart = Math.max(g.heart||50, ri(52, 92));
+  for(let i=0, n=ri(1,4); i<n; i++) addScar(g, pick(TARGETS)[0], R()<0.35);
+  const gone = (d.rivals||[]).filter(h=>h.retired).map(h=>h.name);
+  g.soldOn = gone.length && R()<0.6 ? `House ${pick(gone)}` : pick(SOLD_ON_FROM);
+  /* a finished man out of a folding house is not a bargain. You are paying for the
+     years somebody else spent on him and for not having to spend them yourself. */
+  g.price = rnd(gladValue(g) * (1.6 + R()*0.7));
+  return g;
+}
+const SOLD_ON_FROM = ["a school at Puteoli that has closed its gates",
+  "a lanista in Neapolis who is short a quarter's rent",
+  "the Ravennate school, breaking up",
+  "a house at Praeneste whose owner has died",
+  "an estate near Nola, sold up entire"];
 function makeMarket(d){
   d.market = [];
   /* three of the four sellers are standing there on any given week */
@@ -3613,9 +3663,20 @@ function makeMarket(d){
   for(let i=0;i<4;i++){
     const sk = here[i % here.length];
     const S = SLAVERS[sk];
-    /* a famous house draws better men to its gate — the good ones want to fight for a name */
-    const fineChance = 0.12 + (acclaimOf(d) >= 62 ? 0.14 : acclaimOf(d) >= 40 ? 0.06 : 0);
-    const quality = clamp((R()<fineChance ? ri(75,92) : ri(30,68)) + S.quality, 18, 95);
+    /* ---- THE BLOCK FOLLOWS THE HOUSE ----
+       A famous house draws better men to its gate; this was three steps of it and
+       it barely moved the stall. Measured across 880 men a stage, the median man
+       on the block was stat 52.5 in week one and 53.9 at fame eleven thousand, and
+       the dearest thing standing there cost 1,150 denarii at both ends — every
+       slaver in Campania selling the same four men for eight years while the yards
+       around them built ninety-nines. The good ones go where the name is, and by
+       year eight the name is yours. At an unknown house the bands are exactly what
+       they were. */
+    const draw = clamp((acclaimOf(d) - 30) / 62, 0, 1);
+    const fineChance = 0.12 + draw * 0.30;
+    const quality = clamp((R() < fineChance
+      ? ri(Math.round(75 + draw*14), Math.round(92 + draw*7))
+      : ri(Math.round(30 + draw*26), Math.round(68 + draw*20))) + S.quality, 18, 99);
     const g = genGladiator(d, quality);
     g.slaver = sk;
     if(S.origins && S.origins.length) g.origin = pick(S.origins);
@@ -3641,6 +3702,14 @@ function makeMarket(d){
     g.price = rnd(g.price * pit(d,"market"));
     d.market.push(g);
   }
+  /* and once the house is worth selling to, somebody else's finished man */
+  { const draw = clamp((acclaimOf(d) - 40) / 55, 0, 1);
+    if(draw > 0 && R() < draw * 0.55){
+      const so = soldOnMan(d);
+      so.shown = sellerSays(so);
+      so.pitch = `Out of ${so.soldOn}. ${so.wins} wins on him and a name that came with him. He is not young and he is not cheap, and he can stand on that sand next Saturday.`;
+      d.market[ri(0,3)] = so;
+    } }
   /* a free man standing at the edge of the block, waiting to be spoken to */
   if(R()<0.3){ const a = makeAuctoratus(d, ri(44,72));
     a.shown = Object.assign({}, ...STATS.map(k=>({[k]:a[k]}))); a.scouted = true;
@@ -17237,6 +17306,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 {g.warCaptive && <span className="tag tag-blood">Taken in the south</span>}
                 {g.contested && <span className="tag tag-gold">✦ House {g.contested.house} is bidding</span>}
                 {g.soldBy && <span className="tag">Sold on by House {g.soldBy}</span>}
+                {g.soldOn && <span className="tag tag-gold">✦ A finished man · {g.wins}–{g.losses}</span>}
                 {g.slaver && <span className="tag" style={{borderColor:"#5a6a4a",color:"#9aa86a"}}>{slaverOf(g.slaver).name}</span>}
                 <span className="tag" style={{borderColor:g.age>31?"#7c2a22":g.age<=PRIME[1]?"#5a6a35":undefined,
                   color:g.age>31?"#d98476":g.age<=PRIME[1]?"#b9c58a":undefined}}>{ageTag(g.age)} · {g.age}</span>
@@ -17249,6 +17319,13 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 return (<>
                   {g.pitch && !g.scouted && (
                     <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:3}}>{g.pitch}</div>
+                  )}
+                  {/* what a great house comes down here for: somebody else's finished man */}
+                  {g.soldOn && (
+                    <div style={{fontSize:13.5,marginBottom:3,color:"#d8ac5f"}}>
+                      Out of {g.soldOn} — {g.wins} wins behind him and {rnd(g.pfame)} renown that came with him.
+                      <span className="dim"> There is very little left to teach a man of {g.age}; what you are buying is the years somebody else spent.</span>
+                    </div>
                   )}
                   <div style={{fontSize:14.5,fontStyle:"italic",color:g.legend?"#e0bd72":"#cfc0a0"}}>
                     {g.legend ? "There is something in this one's eyes the arena has not yet seen."
