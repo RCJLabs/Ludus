@@ -4989,9 +4989,26 @@ function meleePlanEffect(plan, offer){
                  pace:     { pow:0.96, def:0.93, stam:0.80, hunt:false },
                  together: { pow:1.0,  def:0.88, stam:1.0,  hunt:false },
                  hunt:     { pow:1.09, def:1.06, stam:1.06, hunt:true } }[plan] || { pow:1, def:1, stam:1, hunt:false };
-  const k = right ? 1 : -1;
-  return { pow: 1 + (base.pow-1)*(right?1.35:0.5), def: 1 + (base.def-1)*(right?1.35:0.5),
-           stam: 1 + (base.stam-1)*(right?1.35:0.5), hunt: base.hunt, right };
+  /* ---- READING THE FIELD RIGHT HAS TO HELP ----
+     Every field was scaled by the same 1.35 when you had read the crowd correctly,
+     and that amplifies a plan's COST as well as its benefit. Two of the four are
+     bought with power — "let them tire" gives up four points of it — and power is
+     the most convex thing on this sand: measured, a two per cent power penalty
+     halves your chance of being the last man standing and a four per cent bonus
+     nearly doubles it. So reading the field right turned "let them tire" from a
+     24% card into an 8% one, and "work the edges" from 28% into 24%. The dead
+     `const k = right ? 1 : -1` on the line above this was where somebody meant to
+     flip that sign. A good read buys more of what the plan is FOR and less of what
+     it costs you. */
+  const amp = (v, goodBelowOne) => {
+    const good = goodBelowOne ? v < 1 : v > 1;
+    /* a plan you have not read the field for is muted in BOTH directions — at 0.85
+       on the cost it made "work the edges" a worse card than sending them out with
+       no plan at all, which is the same trap the other way round. */
+    return 1 + (v - 1) * (right ? (good ? 1.35 : 0.35) : 0.5);
+  };
+  return { pow: amp(base.pow, false), def: amp(base.def, true),
+           stam: amp(base.stam, true), hunt: base.hunt, right };
 }
 /* what a plan is worth depends entirely on whether you read him right */
 function planEffect(plan, opp){
