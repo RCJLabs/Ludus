@@ -2333,7 +2333,8 @@ const ageTag  = a => a<PRIME[0] ? "Young" : a<=PRIME[1] ? "Prime" : a<=31 ? "Pas
    Wounds no longer heal clean. Where a man is cut twice, something never comes back. */
 const SCAR_STAT = { brow:"dis", shoulder:"str", arm:"str", hand:"tec", thigh:"agi", flank:"end" };
 const SCAR_WORD = { brow:"brow", shoulder:"shoulder", arm:"arm", hand:"hand", thigh:"thigh", flank:"flank" };
-const statCap = (g,k) => 99 - ((g.scarCap && g.scarCap[k]) || 0);
+const statCap = (g,k) => 99 - ((g.scarCap && g.scarCap[k]) || 0) - ((g.yearCap && g.yearCap[k]) || 0);
+const yearBurden = g => g.yearCap ? Object.values(g.yearCap).reduce((s,v)=>s+v,0) : 0;
 const scarBurden = g => g.scarCap ? Object.values(g.scarCap).reduce((s,v)=>s+v,0) : 0;
 /* ---- WHAT NEVER QUITE CLOSES ----
    Scars cost a stat and cap it. But a man carried off four times is not the same
@@ -2436,14 +2437,64 @@ function agonyWear(g, inj){
   inj.weeks = Math.ceil(inj.weeks * (1 + w*0.55));
   inj.pen   = Math.round(inj.pen  * (1 + w*0.38));
 }
+/* ---- WHAT THE YEARS TAKE THAT HE CANNOT TRAIN BACK ----
+   The slow bleed on strength, speed and wind is arithmetic and he can drill against
+   it. This is the other thing: once a year, past his peak, the sand takes one named
+   piece of him and does not give it back. A step. The wind. The move he was known
+   for. A habit that made him what he is. It is capped, so no amount of the post will
+   restore it, and it is written in the chronicle by name, because a great man going
+   is meant to be something you watch happen rather than something you notice later
+   in a column of numbers. */
+function yearsTake(d, g){
+  const past = g.age - PRIME[1];
+  if(past <= 1) return null;
+  /* it comes for him oftener the older he is, and never twice in the same year */
+  if(R() >= Math.min(0.14 + (past - 1) * 0.075, 0.62)) return null;
+  const capOf = k => (g.yearCap && g.yearCap[k]) || 0;
+  const takeCap = (k, n) => { g.yearCap = g.yearCap || {}; g.yearCap[k] = Math.min(26, capOf(k) + n);
+    g[k] = Math.min(g[k], statCap(g, k)); };
+  const bag = [];
+  if(capOf("agi") < 26) bag.push("step", "step");
+  if(capOf("end") < 26) bag.push("wind", "wind");
+  if(capOf("str") < 26) bag.push("arm");
+  if(capOf("tec") < 26) bag.push("hands");
+  if(sigTech(g)) bag.push("move");
+  if((g.traits||[]).some(t=>t!=="Broken")) bag.push("habit");
+  if(LAST_KEYS.some(k=>!hasLasting(g,k))) bag.push("body");
+  if(!bag.length) return null;
+  const pick1 = pick(bag);
+  const NM = fullName(g);
+  if(pick1==="step"){ takeCap("agi", ri(3,6));
+    chron(d, her(`${NM} is ${g.age}. He does not come off the line the way he did, and no amount of the post is going to give it back.`, g), "bad"); }
+  else if(pick1==="wind"){ takeCap("end", ri(3,6));
+    chron(d, her(`${NM} is ${g.age}. There is a point in a long one now past which there is simply nothing left in him, and it arrives earlier every year.`, g), "bad"); }
+  else if(pick1==="arm"){ takeCap("str", ri(3,5));
+    chron(d, her(`${NM} is ${g.age}. The arm is still there. What used to be behind it is not.`, g), "bad"); }
+  else if(pick1==="hands"){ takeCap("tec", ri(2,4));
+    chron(d, her(`${NM} is ${g.age}. The first thing to go was never the arm — it is the timing, and the doctore has seen it before and says nothing.`, g), "bad"); }
+  else if(pick1==="move"){ const was = sigTech(g); g.signature = null;
+    chron(d, her(`${NM} has stopped going for ${was.name}. He does not say why and nobody asks him. It stopped working somewhere in the last year and he was the last to know.`, g), "bad"); }
+  else if(pick1==="habit"){ const t = pick((g.traits||[]).filter(x=>x!=="Broken"));
+    g.traits = (g.traits||[]).filter(x=>x!==t);
+    chron(d, her(`Whatever it was that made ${NM} ${t.toLowerCase()} — he has stopped being it. Nobody can name the week it went.`, g), "bad"); }
+  else { const k = pick(LAST_KEYS.filter(x=>!hasLasting(g,x)));
+    g.lasting = [...lastingOf(g), k];
+    chron(d, her(`Nothing happened to ${NM}. He was not cut and he did not fall. He has ${LASTING[k].name} now all the same. ${LASTING[k].say}`, g), "bad"); }
+  g.morale = clamp(g.morale - 6, 0, 100);
+  return pick1;
+}
 /* one turn of the year on a man's body */
 function ageManOneYear(d, g){
   const before = g.age;
   g.age = (g.age||24) + 1;
+  if(g.age > PRIME[1]) yearsTake(d, g);
   const cross = (lo) => before <= lo && g.age > lo;
-  if(cross(PRIME[1]))      chron(d, her(`${g.name} is ${g.age} now. The doctore has started resting him a day the younger men do not get.`, g));
-  else if(cross(31))       chron(d, her(`${g.name} turns ${g.age}. He is a veteran of the sand, and the sand is beginning to ask for it back.`, g), "bad");
-  else if(cross(34))       chron(d, `${g.name} is ${g.age}. Old for this. Every card now, someone in the crowd wonders aloud if it is his last.`, "bad");
+  if(g.age===PRIME[0])          chron(d, `${g.name} turns ${g.age}. The doctore says ${PR(g).he} has finally grown into ${PR(g).his} frame.`);
+  else if(cross(PRIME[1]))      chron(d, her(`${g.name} is ${g.age} now. ${PR(g).He} is a step slower off the mark than ${PR(g).he} was, and ${PR(g).he} knows it — the doctore has started resting him a day the younger men do not get.`, g));
+  else if(cross(31))            chron(d, her(`${g.name} turns ${g.age}. He is a veteran of the sand, and the sand is beginning to ask for it back.`, g), "bad");
+  else if(g.age===33)           chron(d, her(`${g.name} turns ${g.age}. Old for the sand. The younger men have started calling him doctore, half in jest.`, g));
+  else if(cross(34))            chron(d, `${g.name} is ${g.age}. Old for this. Every card now, someone in the crowd wonders aloud if it is his last.`, "bad");
+  else if(g.age>=36)            chron(d, `${g.name} turns ${g.age}. Every year past this one is borrowed.`, "bad");
 }
 
 /* ---- PATRONS ----
@@ -13299,7 +13350,18 @@ function endWeek(d){
         }
       }
       if(g.age>PRIME[1]){
-        const rate = (g.age-PRIME[1])*0.05;
+        /* ---- THE YEARS WERE NOT A DECLINE, THEY WERE A CLIFF ----
+           0.05 a week compounding on (age - 28), eighteen weeks to the year, and no
+           floor but eight. Measured — the same champion at 99 in all six, run forward
+           and put against a 28-year-old at 99 — he won 41.5% at thirty, 32.2% at
+           thirty-two, 15.1% at thirty-four, 3.6% at thirty-six and 0.3% at thirty-
+           eight. A made man went from a fighter to a joke in four years and there was
+           nothing in between; run long enough he arrived at eight in every physical
+           stat and stood there, on the roster, still listed active at fifty-three.
+           It is a slope now, and it flattens rather than accelerating, so an old lion
+           is a diminished thing and never a farce. What the years take that he cannot
+           train back is below, and it has a name. */
+        const rate = Math.min(g.age-PRIME[1], 8) * 0.018;
         for(const k of Object.keys(DECAY_RATE)) g[k] = Math.max(8, g[k] - rate*DECAY_RATE[k]);
       }
       /* old wounds ache in the cold — a well-worn man moves stiff through the wet months */
@@ -13400,17 +13462,13 @@ function endWeek(d){
   sparSocial(d);
   weaveTies(d);
   mentorWeek(d);
-  d.gladiators.forEach(g=>{
-    if(isGone(g)) return;
-    g.weeksAged = (g.weeksAged||0) + 1;
-    if(g.weeksAged >= WEEKS_PER_YEAR){
-      g.weeksAged = 0; g.age = (g.age||24) + 1;
-      if(g.age===PRIME[0]) chron(d, `${g.name} turns ${g.age}. The doctore says ${PR(g).he} has finally grown into ${PR(g).his} frame.`);
-      else if(g.age===PRIME[1]+1) chron(d, `${g.name} turns ${g.age}. ${PR(g).He} is a step slower off the mark than ${PR(g).he} was, and ${PR(g).he} knows it.`);
-      else if(g.age===32) chron(d, her(`${g.name} turns ${g.age}. Old for the sand. The younger men have started calling him doctore, half in jest.`, g));
-      else if(g.age>=35) chron(d, `${g.name} turns ${g.age}. Every year past this one is borrowed.`, "bad");
-    }
-  });
+  /* ---- A MAN WAS AGEING TWICE ----
+     There were two of these loops in the same week, four hundred lines apart, and
+     both of them counted weeksAged up and both of them turned the year over. Every
+     man in this game has been ageing at double rate since — a birthday every nine
+     weeks against the eighteen the calendar says — which is most of why a champion
+     seemed to fall off a cliff at thirty-four. The turning of the year lives in
+     ageManOneYear now, once, and the lines this loop used to write live there too. */
   upkeep += injured*8*pit(d,"upkeep");
   upkeep += bUpkeep(d);
   upkeep += workUpkeep(d);
@@ -18659,7 +18717,9 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               <span>Age <b>{selG.age}</b></span>
             </div>
             <div style={{fontSize:15,fontStyle:"italic",marginBottom:8,color:selG.legend?"#e0bd72":"#cfc0a0"}}>
-              The doctore's eye: {selG.read ? `potential ${rnd(selG.potential)}, heart ${rnd(selG.heart)}` : potentialWord(selG.potential, selG)}. Bearing: {demeanor(selG.defiance).toLowerCase()}{selG.read? ` (${rnd(selG.defiance)})`:""}. At {selG.age} {PR(selG).he} is {ageWord(selG.age, selG)}.
+              The doctore's eye: {selG.read ? `potential ${rnd(selG.potential)}, heart ${rnd(selG.heart)}` : potentialWord(selG.potential, selG)}. Bearing: {demeanor(selG.defiance).toLowerCase()}{selG.read? ` (${rnd(selG.defiance)})`:""}. At {selG.age} {PR(selG).he} is {ageWord(selG.age, selG)}.{yearBurden(selG) > 0 && (()=>{ const y = selG.yearCap || {};
+                const worst = Object.entries(y).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${(STAT_NAMES[k]||k).toLowerCase()} ${v}`).join(", ");
+                return <span className="blood"> The years have taken {worst} off what he can ever be again, and no amount of the post gives it back.</span>; })()}
             </div>
             {(()=>{ const hurt = !!selG.injury, worn = bodyWear(selG)>=0.44;
               const views = [["record","Record"],["body", hurt?"Body ·":"Body"],["train","Training"],["kit","Kit"],["standing","Standing"]];
