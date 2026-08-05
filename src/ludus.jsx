@@ -6219,6 +6219,7 @@ function migrate(S){
   if(!S.slavers) S.slavers = {};
   if(S.pact===undefined) S.pact = null;
   if(!S.gambits) S.gambits = {};
+  if(!S.gamWhen) S.gamWhen = {};
   if(S.pendingLesson===undefined) S.pendingLesson = null;
   if(!S.law) S.law = { cap:99, tax:0, women:false, sineFee:0, damnati:false, edicts:[], heat:0, fines:0 };
   if(S.yardSeen==null) S.yardSeen = 0;
@@ -9396,6 +9397,19 @@ const GAMBITS = {
 };
 const GAM_KEYS = Object.keys(GAMBITS);
 const gambitDone = (d,k) => (d.gambits||{})[k] || 0;
+/* ---- AND THE TOWN FORGETS ----
+   Every throw of the same trick costs seven points of the odds and it never came
+   back. Measured over four years, rotating all four honestly, a house landed 3 of 27
+   — because by the eighth throw of anything the odds are on the floor and stay there
+   for the rest of the run. That is not a shopping list either; it is four buttons
+   that work for one season and are dead furniture afterwards.
+   Capua has a short memory for who did what to whom. A trick nobody has seen you use
+   in half a year is most of the way to being new again. */
+const GAM_FORGET = 26;
+const gambitStale = (d,k) => {
+  const since = d.week - (((d.gamWhen||{})[k]) != null ? d.gamWhen[k] : -9999);
+  return Math.max(0, gambitDone(d,k) - Math.floor(since / GAM_FORGET));
+};
 const gambitReady = d => !d.flags.gambitWeek || d.week - d.flags.gambitWeek >= 6;
 function runGambit(d, k, houseName){
   const G = GAMBITS[k]; if(!G || !gambitReady(d)) return null;
@@ -9404,9 +9418,12 @@ function runGambit(d, k, houseName){
   if(d.gold < cost) return null;
   d.gold -= cost;
   d.flags.gambitWeek = d.week;
-  d.gambits = Object.assign({}, d.gambits||{}, { [k]: gambitDone(d,k)+1 });
-  /* it gets harder each time you use the same trick */
-  const p = clamp(G.odds(d) - gambitDone(d,k)*0.07, 0.12, 0.86);
+  /* it gets harder each time you use the same trick, and easier the longer you leave
+     it alone — the count that matters is the one the town has not forgotten yet */
+  const worn = gambitStale(d, k);
+  d.gambits = Object.assign({}, d.gambits||{}, { [k]: worn + 1 });
+  d.gamWhen = Object.assign({}, d.gamWhen||{}, { [k]: d.week });
+  const p = clamp(G.odds(d) - worn*0.07, 0.12, 0.86);
   const won = R() < p;
   lawOf(d).heat = clamp(lawOf(d).heat + (won ? G.heat*0.4 : G.heat), 0, 100);
   addRep(d, "blood", won ? 2 : 5);
@@ -10151,12 +10168,26 @@ function lawWeek(d){
   const L = lawOf(d);
   if(d.over || d.rome || d.city || d.travel) return;
   const breach = inBreach(d);
-  L.heat = clamp(L.heat + (breach.length ? breach.length*1.6 : -0.9), 0, 100);
-  if(!breach.length || d.pendingEvent) return;
-  if(R() > 0.03 + L.heat*0.0012) return;
-  const fine = rnd((160 + d.fame*0.6) * breach.length);
+  /* ---- THE HEAT WAS A NUMBER THAT DID NOTHING ----
+     Every gambit says it puts heat on a house the magistrate is already watching, and
+     four of them raise it by five to sixteen points a throw. Measured — one trick
+     every six weeks for four years — the number climbs to 96 out of 100 and sits
+     there. And then: four hundred weeks at heat 100, breaking no written edict, and
+     the aedile's man came round ZERO times, because this function used to return
+     early unless an edict was being broken. A rich house could buy every trick on the
+     board forever and the only thing it ever cost was coin.
+     It cools slower the higher it is, and being known is enough on its own. */
+  const cool = 0.9 - Math.min(L.heat, 90) * 0.006;      /* 0.9 at nothing, 0.36 at ninety */
+  L.heat = clamp(L.heat + (breach.length ? breach.length*1.6 : -cool), 0, 100);
+  if(d.pendingEvent) return;
+  const known = breach.length ? 0.03 + L.heat*0.0012
+    : (L.heat >= 45 ? (L.heat - 45) * 0.0016 : 0);       /* about once in eleven weeks at 100 */
+  if(known <= 0 || R() > known) return;
+  const fine = rnd((160 + d.fame*0.6) * Math.max(1, breach.length));
   d.pendingEvent = { id:"inspector", title:"He Did Not Send Word",
-    text:`A man from the aedile's office is standing in your yard with a wax tablet, and he has been there long enough to have counted things. ${breach.map(k=>EDICTS[k].broke(d)).join(" ")} He can write down what he has seen, or he can be persuaded that he saw something else.`,
+    text: breach.length
+      ? `A man from the aedile's office is standing in your yard with a wax tablet, and he has been there long enough to have counted things. ${breach.map(k=>EDICTS[k].broke(d)).join(" ")} He can write down what he has seen, or he can be persuaded that he saw something else.`
+      : `A man from the aedile's office is standing in your yard with a wax tablet and nothing to count. He is not here about an edict. He is here because this house has come up three times this season in conversations it had no business coming up in, and somebody senior has decided that is worth a morning. He can write that down, or he can be persuaded he had a wasted journey.`,
     choices:[`Pay the fine · ${fine}d`, `Buy the tablet · ${rnd(fine*0.55)}d`, "Let him write it down"],
     data:{ fine, breach } };
 }
