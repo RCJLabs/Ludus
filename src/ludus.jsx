@@ -3812,8 +3812,12 @@ function makeGames(d){
     const tier = d.fame>=TIERS[2].fame ? 2 : d.fame>=TIERS[1].fame ? 1 : 0;
     const opts = beastTier(tier);
     const [key, B] = pick(opts);
-    offers.push({ id:d.nextId++, tier, festival, venatio:true, beast:key, stakes:"venatio",
-      purse: rnd((TIERS[tier].purse[0]+R()*TIERS[tier].purse[1]) * B.purse * (F.purse||1) * seasonPurse(d) * fameEdge(d)) });
+    /* the animal is graded to the best man in your yard, with a little either way —
+       an editor with your champion on the bill does not put out a yearling for him */
+    const grade = clamp(beastGrade(d) + (R()*0.30 - 0.13), 0, 1.25);
+    const G = beastGradeOf(grade);
+    offers.push({ id:d.nextId++, tier, festival, venatio:true, beast:key, grade, stakes:"venatio",
+      purse: rnd((TIERS[tier].purse[0]+R()*TIERS[tier].purse[1]) * B.purse * G.purse * (F.purse||1) * seasonPurse(d) * fameEdge(d)) });
   }
   if(d.fame>=TIERS[2].fame) add(2);
   if(d.fame>=TIERS[2].fame && R()<0.5) add(2);
@@ -10097,20 +10101,78 @@ function simulateMelee(ents, ctx, opts){
    rather than a threshold: the tier-0 beasts are a good morning's work, the tier-1
    pair are a real risk, and the two at the top will bury roughly one man in five.
    The purse multipliers were always priced for that. The engine was not. */
+/* ---- SIX BEASTS, SIX DIFFERENT MORNINGS ----
+   `tests` is the stat the animal is actually a question about, and it is the whole
+   reason to have six of them: measured before this, a man of ninety killed every
+   beast in the game a hundred times in a hundred and walked off with ninety-five of
+   his hundred — hide, speed and fear spanning 0.02 to 1.65 and none of it reaching
+   the outcome. What the wolves ask is whether he still has wind at the ninth; what
+   the boar asks is whether he can get out of the way once; the bear asks whether he
+   can hold something off him with his arms. A man built for one of them is not built
+   for another, and now the card is worth reading.
+     wind   — what it takes out of him every round beyond the ordinary
+     rush    — how much of it arrives in the first two rounds
+     pounce  — its own chance of getting on top of him, whatever he chose to do
+     reachy  — how much a short weapon costs against this one in particular */
 const BEASTS = {
   wolves:  { name:"a pack of wolves", art:"wolf",  tier:0, hp:72,  pow:75, hide:.02, spd:1.28, fear:1.15, purse:1.3,
+    tests:"end", wind:1.42, rush:1.0, pounce:0.02, reachy:0.5,
+    ask:"They come in relays and they do not stop. It is a question about his wind.",
     desc:"Three of them, and they have never been taught to come one at a time." },
   boar:    { name:"a great boar", art:"boar", tier:0, hp:98,  pow:84, hide:.12, spd:.95, fear:1.05, purse:1.4,
+    tests:"agi", wind:0.92, rush:1.34, pounce:0.03, reachy:1.4,
+    ask:"It commits everything to the charge. He steps out of it or he does not.",
     desc:"Half a ton of bad temper on short legs. It goes low, and it goes through things." },
   leopard: { name:"a leopard", art:"cat", tier:1, hp:88,  pow:77, hide:.05, spd:1.38, fear:1.35, purse:1.75,
+    tests:"agi", wind:1.10, rush:1.05, pounce:0.075, reachy:0.7,
+    ask:"It will get behind him at least once. Whether that is the end of it is up to his feet.",
     desc:"It will be behind him before the crowd has finished sitting down." },
   bear:    { name:"a bear of the north", art:"bear", tier:1, hp:134, pow:88, hide:.18, spd:.85, fear:1.3, purse:1.8,
+    tests:"str", wind:1.16, rush:0.95, pounce:0.055, reachy:1.1,
+    ask:"It closes and takes hold. Everything after that is his arms against its arms.",
     desc:"It fights standing, like a man, and it does not tire like one." },
   aurochs: { name:"an aurochs", art:"bull", tier:2, hp:165, pow:90, hide:.22, spd:.80, fear:1.4, purse:2.0,
+    tests:"str", wind:1.04, rush:1.28, pounce:0.03, reachy:1.6,
+    ask:"Nothing shorter than a spear reaches anything on it that matters.",
     desc:"Black, and taller at the shoulder than the man sent against it." },
   lion:    { name:"a Numidian lion", art:"lion", tier:2, hp:124, pow:88, hide:.10, spd:1.15, fear:1.65, purse:2.2,
+    tests:"tec", wind:1.18, rush:1.10, pounce:0.06, reachy:1.0,
+    ask:"It does all of it — the rush, the turn, the weight. There is no one thing to get right.",
     desc:"The crowd came for this. So did the lion." },
 };
+/* ---- AND WHAT THEY SEND YOU ----
+   The table above was fixed. The pack of wolves let out in front of a bought man in
+   week one was the same pack let out in front of a ninety-nine in year ten, so the
+   morning went from 43-53% dead to 100% killed with the man untouched, with nothing
+   in between — a cliff, and not a curve. The species still follows your fame. The
+   ANIMAL follows your best man: an editor who has your champion on his bill does not
+   send out a yearling for him, because nobody would pay to watch that either. */
+const BEAST_GRADES = [
+  { min:0.00, tag:"a young",       hp:0.76, pow:0.75, purse:0.80, say:"Young, underfed, and it has not done this before either." },
+  { min:0.26, tag:"a full-grown",  hp:0.94, pow:0.92, purse:1.00, say:"Full-grown and in condition. An ordinary morning's work, if any of this is ordinary." },
+  { min:0.52, tag:"a prime",       hp:1.16, pow:1.13, purse:1.28, say:"In its prime, and it has been fed for this and kept hungry for two days." },
+  { min:0.78, tag:"a scarred old", hp:1.40, pow:1.32, purse:1.62, say:"Scarred across the shoulders. Something tried this before you and the beast is still here." },
+  { min:1.02, tag:"a man-eating",  hp:1.64, pow:1.52, purse:2.05, say:"The handlers will not go near the cage. It has killed men, and not in an arena." },
+];
+const beastGradeOf = g => { let out = BEAST_GRADES[0];
+  for(const b of BEAST_GRADES) if(g >= b.min) out = b;
+  return out; };
+/* the standard of the best man you could put out there — the same idea the bay uses */
+const beastStandard = d => (activeG(d)||[]).reduce((m,g)=>
+  Math.max(m, STATS.reduce((s,k)=>s+(g[k]||0),0)/6), 0);
+const beastGrade = d => clamp((beastStandard(d) - 40) / 42, 0, 1.35);
+/* the animal actually let out of the gate. The size runs smoothly with the grade
+   rather than in five steps — the bands are what it is CALLED, not what it is, so
+   the man-eater sent out for a ninety-nine is a bigger animal than the one sent
+   out for a ninety. */
+function beastOf(key, grade){
+  const B = BEASTS[key]; if(!B) return null;
+  const g = clamp(grade==null ? 0.5 : grade, 0, 1.35);
+  const G = beastGradeOf(g);
+  return Object.assign({}, B, { hp: B.hp*(0.62 + g*1.00), pow: B.pow*(0.63 + g*0.90), grade:G,
+    name: `${G.tag} ${B.name.replace(/^an?\s+/, "").replace(/^pack of /, "pack of ")}`,
+    desc: `${B.desc} ${G.say}` });
+}
 /* The hunt was not a hunt. At 2.05 a fit man's power ran near 240 against a bear's
    155, and across two thousand runs every beast but the lion died 100% of the time
    with the man untouched — the big purse was free money. Scaled so the beast is a
@@ -10137,11 +10199,19 @@ const BEAST_SCALE = 2.62;
    sword, a middling man: rushing it kills 76% in five rounds and buries 12%; working
    it properly kills 83% in nine and buries 8%; standing off it kills 62% in twelve
    and buries 3%. Measured is the best killer out here, which makes the morning the
-   one place in the game where the middle option is the answer rather than the shrug. */
+   one place in the game where the middle option is the answer rather than the shrug.
+
+   Re-measured once the animal was graded to the man it is sent against (a bear sized
+   for a man of eighty-five, sword): rushing it kills 69% and buries 17%; working it
+   properly kills 86% and buries 7%; standing off it kills 82% and buries 5%. The maul
+   came down from 0.22 a round to 0.11 in the same pass — at the old figure, against a
+   beast that had grown teeth, rushing anything was strictly worse than not, which is
+   not a choice, it is a wrong answer with a button on it. And standing off it is a
+   real second answer now rather than a slower road to the same place. */
 const HUNT_TAC = {
-  aggressive: { deal:1.40, take:1.55, close:1.00, maul:0.22, edge:1.12 },
+  aggressive: { deal:1.48, take:1.55, close:1.00, maul:0.11, edge:1.12 },
   measured:   { deal:1,    take:1,    close:1,    maul:0,    edge:1    },
-  defensive:  { deal:0.78, take:0.42, close:0.96, maul:0,    edge:0.97 },
+  defensive:  { deal:0.66, take:0.29, close:0.85, maul:0,    edge:0.94 },
 };
 const HT = t => HUNT_TAC[t] || HUNT_TAC.measured;
 const HUNT_DEAL = t => HT(t).deal;
@@ -10163,13 +10233,16 @@ const reachVsBeast = kit => {
 const beastTier = t => Object.entries(BEASTS).filter(([,b])=>b.tier<=t);
 
 function simulateVenatio(A, key, tA, ctx, opts){
-  const B = BEASTS[key];
+  /* the animal, graded to the man they put in front of it */
+  const B = beastOf(key, ctx && ctx.grade != null ? ctx.grade : 0.5) || BEASTS[key];
   const O = opts || {};
   const R0 = O.from || null;
   const prA = PR(A);
   const beats = [];
   A.mods = kitMods(A.kit, A.cls, A);
-  const reach = reachVsBeast(A.kit);
+  /* a short weapon costs nothing against a wolf at your ankles and everything against
+     something taller than you at the shoulder */
+  const reach = 1 + (reachVsBeast(A.kit) - 1) * (B.reachy==null ? 1 : B.reachy);
   const smA = 55 + A.end*0.6;
   let vA = R0 ? R0.vA : 100, vB = R0 ? R0.vB : 100;
   let sA = R0 ? R0.sA : smA, crowd = R0 ? R0.crowd : clamp(20 + B.fear*12 + A.sho/9, 0, 100);
@@ -10188,6 +10261,9 @@ function simulateVenatio(A, key, tA, ctx, opts){
     else if(reach<0.9) push("intro", `${prA.He} has nothing longer than ${prA.his} arm. The crowd notices before ${prA.he} does.`);
   } else push("crux", O.resumeLine || `${A.name} hears you.`);
 
+  /* what this one in particular asks of him. A man with the stat for it meets a
+     smaller animal than the man without it, and that is the whole point of six of them. */
+  const answer = B.tests ? clamp(1 + (62 - (A[B.tests]||50))/100 * 0.62, 0.72, 1.30) : 1;
   const cruxNow = r => O.stopAtCrux && !ended && r>=3 && r<=7 && (vA<=58 || vB<=42);
   let crux = null;
   const startR = R0 ? R0.round : 0;
@@ -10200,7 +10276,7 @@ function simulateVenatio(A, key, tA, ctx, opts){
        0.73 blows a hunt against a measured man's 1.67 — so the risk of rushing kept
        vanishing into the speed of the kill. Out here it can take him in a round he
        was winning, which is how it actually happens. */
-    if(r>=2 && vB>0 && R() < (HT(tA).maul||0)){
+    if(r>=2 && vB>0 && R() < ((HT(tA).maul||0) + (B.pounce||0))){
       const mt = pick(TARGETS);
       const mdmg = clamp((17 + B.pow/4) * (1 - A.mods.def*0.40) * (0.80+R()*0.62), 20, 62);
       vA -= mdmg; mom = clamp(mom-1,-3,3);
@@ -10241,8 +10317,13 @@ function simulateVenatio(A, key, tA, ctx, opts){
        hit less often than standing off it, and there was nothing to decide. */
     const closed = HT(tA).close;
     const pB = B.pow * BEAST_SCALE * (0.6 + B.spd*0.4) * (0.66+R()*0.72)
-      * (0.52 + whole*0.58) * (r<=2 ? 1.12 : 1) * closed;
-    sA -= TAC_WIND(tA) * 1.14 * (1 - A.mods.spd*0.5);
+      * (0.52 + whole*0.58) * (r<=2 ? 1.12 * (B.rush||1) : 1) * closed * answer;
+    /* and what it takes out of him just to keep standing in front of it. Additive,
+       not a multiplier: a pack of wolves takes the same extra out of every man in
+       front of it, and folding it into the tactic instead made rushing anything
+       strictly worse than not — 58% killed against a measured man's 96%, which is
+       not a choice, it is a wrong answer with a button. */
+    sA -= (TAC_WIND(tA) + ((B.wind||1) - 1) * 7) * 1.14 * (1 - A.mods.spd*0.5);
     const diff = Math.abs(pA-pB);
     if(diff < 9){
       crowd = clamp(crowd+3,0,100);
@@ -10367,9 +10448,9 @@ const TACTIC_SAY = {
    be out-pointed and will not accept a raised finger, so killing it and being killed
    by it are the same hunt coming out two ways — there is no winning less and living. */
 const HUNT_SAY = {
-  aggressive: "Straight at it. Five rounds instead of nine — and being that near a beast is how a man gets taken, whatever the hunt was doing up to then. Half again the graves, and it kills the beast rather less often than doing it properly would.",
-  measured:   "The way he was taught, and out here that is not the shrug it is on the sand: worked properly is how the most beasts die.",
-  defensive:  "Point out, ground given, no more of himself spent than he must. He comes home from all but a few — and better than a third of the beasts walk off the sand alive, and an unkilled beast pays nothing.",
+  aggressive: "Straight at it, and a short morning either way. Being that near a beast is how a man gets taken, whatever the hunt was doing up to then — better than twice the graves, and it kills the beast least often of the three.",
+  measured:   "The way he was taught, and out here that is not the shrug it is on the sand: worked properly is how the most beasts die, and he comes home from most of them.",
+  defensive:  "Point out, ground given, no more of himself spent than he must. The safest morning on offer by some way, and it costs a few beasts that a bolder man would have finished.",
   showboat:   "He plays it to the tiers with a thing that does not care about tiers. Fewer kills, and a name they keep.",
 };
 const oddsFor = p => Math.max(1.05, (1/clamp(p,0.02,0.98)) * (1-VIG));
@@ -10575,13 +10656,14 @@ function doMelee(d, ids, offer, pending, choice, tactic){
 function doVenatio(d, gid, offer, tactic, pending, choice){
   const g = d.gladiators.find(x=>x.id===gid);
   if(!g || g.status!=="active") return null;
-  const B = BEASTS[offer.beast];
+  const B = beastOf(offer.beast, offer.grade != null ? offer.grade : beastGrade(d)) || BEASTS[offer.beast];
   const t = TIERS[offer.tier];
   const gc = clone(g); gc.kit = g.kit || defaultKit(g.cls);
   const patron = topPatron(d);
   const C = choice ? CRUX[choice] : null;
   const tacticNow = (C && C.tactic) ? C.tactic : tactic;
-  const vctx = { patron: patron?{name:patron.name,favor:patron.favor}:null, guarded: choice==="cover" };
+  const vctx = { patron: patron?{name:patron.name,favor:patron.favor}:null, guarded: choice==="cover",
+    grade: offer.grade != null ? offer.grade : beastGrade(d) };
   let res;
   if(choice==="cloth"){
     res = { beats:[Object.assign({}, pending.crux, { kind:"end", actor:null, venatio:true, sB:100, text:
@@ -19821,10 +19903,12 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               o.spectacle==="naumachia" ? `A mock sea-battle — ${o.field.length} men on flooded sand` : `${o.field.length} men on the sand at once`,
               <span className="gold" style={{fontSize:14}}>{o.purse}d</span>,
               <div style={{marginTop:3}}>{o.spectacle==="naumachia" && <span className="tag tag-gold">✦ Spectacle</span>} <span className="tag tag-blood">Last man standing</span></div>))}
-            {gamesReady && hunts.map(o=> occRow({kind:"hunt",o}, "The Morning Hunt",
-              BEASTS[o.beast].name,
+            {gamesReady && hunts.map(o=>{ const BB = beastOf(o.beast, o.grade!=null?o.grade:beastGrade(S)) || BEASTS[o.beast];
+              return occRow({kind:"hunt",o}, "The Morning Hunt",
+              BB.name,
               <span className="gold" style={{fontSize:14}}>{o.purse}d</span>,
-              <div style={{marginTop:3}}><span className="tag">Beast · no missio</span></div>))}
+              <div style={{marginTop:3}}><span className="tag">Beast · no missio</span>{" "}
+                <span className="tag tag-blood">{STAT_NAMES[BEASTS[o.beast].tests||"str"]}</span></div>); })}
             {!gamesReady && <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:4}}>
               No editor books an unknown house yet. Win in the pits to 25 fame and the games open.
             </div>}
@@ -20206,7 +20290,9 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
 
               <button className="btn btn-blood" style={{width:"100%",marginTop:11}} disabled={pairSel.length<2} onClick={()=>startFight(()=>meleeGo(o))}>Enter {pairSel.length} men</button>
             </>);
-          } else if(pick.kind==="hunt"){ const o=pick.o; const B=BEASTS[o.beast]; const reach=me?reachVsBeast(me.kit||defaultKit(me.cls)):1;
+          } else if(pick.kind==="hunt"){ const o=pick.o; const RAW=BEASTS[o.beast];
+            const B = beastOf(o.beast, o.grade!=null?o.grade:beastGrade(S)) || RAW;
+            const reach = me ? 1 + (reachVsBeast(me.kit||defaultKit(me.cls)) - 1) * (RAW.reachy==null?1:RAW.reachy) : 1;
             body = (<>
               {backBtn}
               <div className="flex items-center gap-1" style={{flexWrap:"wrap",marginBottom:5}}>
@@ -20215,6 +20301,16 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               </div>
               <div style={{fontSize:15.5,textTransform:"capitalize"}}>{B.name}</div>
               <div className="dim" style={{fontSize:14,fontStyle:"italic",margin:"2px 0 6px"}}>{B.desc}</div>
+              <div style={{fontSize:14,marginBottom:5}}>
+                <span style={{color:"#e8d092"}}>What it asks · {STAT_NAMES[RAW.tests||"str"]}</span>
+                <span className="dim"> — {RAW.ask}</span>
+              </div>
+              {me && (()=>{ const v = me[RAW.tests||"str"]||50;
+                return <div style={{fontSize:14,marginBottom:5}}>
+                  {v>=78 ? <span className="laurel">{me.name} has the {STAT_NAMES[RAW.tests||"str"].toLowerCase()} for it — {Math.round(v)}. It will meet a smaller animal than most men do.</span>
+                   : v>=58 ? <span className="dim">{me.name} is sound enough for it — {STAT_NAMES[RAW.tests||"str"].toLowerCase()} {Math.round(v)}.</span>
+                   : <span className="blood">{me.name} is short where this one is strongest — {STAT_NAMES[RAW.tests||"str"].toLowerCase()} {Math.round(v)}. It will be a long morning.</span>}
+                </div>; })()}
               <div className="blood" style={{fontSize:14,marginBottom:6}}>No missio. A beast does not see a raised finger.</div>
               {me && <div style={{fontSize:14,marginBottom:6}}>
                 {reach>=1.2?<span className="laurel">{me.name} carries the reach — a hunting spear is the whole trick.</span>:reach<0.9?<span className="blood">{me.name} has nothing longer than his arm. He will have to get close.</span>:<span className="dim">{me.name}'s weapon will serve, but a spear would serve better.</span>}
