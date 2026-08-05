@@ -10559,11 +10559,17 @@ const TAC_WIND = t => t==="aggressive"?9.4 : t==="defensive"?5 : 7;
    MORE often than fighting it straight while burying a quarter as many — which is
    not a trade, it is a right answer, and there should not be one. */
 const MULTI_DEAL = t => t==="aggressive"?1.34 : t==="defensive"?0.52 : 1;
+/* Two men behind two shields for sixteen rounds is the strongest thing on any sand
+   in the game, and it wanted a cost. Standing off in a pair still saves both of
+   them — measured, a defensive pair buries 9% of its own against an aggressive
+   pair's 31% — but it does not finish anybody, which is what leaves the middle
+   option a use out here rather than the worst of the three. */
+const PAIR_DEAL = t => t==="aggressive"?1.28 : t==="defensive"?0.55 : 1;
 /* and the shield itself: a man throwing everything into it is the easiest man in
    the world to turn aside, which is the whole reason to put a shield up against one */
 const GUARD_TURN = 0.22;
-const TAC_GUARD = (atkT, defT) => defT==="defensive"
-  && R() < GUARD_TURN * (atkT==="aggressive" ? 2.05 : atkT==="defensive" ? 0.7 : 1);
+const TAC_GUARD = (atkT, defT, k) => defT==="defensive"
+  && R() < GUARD_TURN * (k==null?1:k) * (atkT==="aggressive" ? 2.05 : atkT==="defensive" ? 0.7 : 1);
 function winChance(g, opp, prep, tac, foeTac){
   const A = clone(g); A.kit = g.kit || defaultKit(g.cls); A.mods = kitMods(A.kit, A.cls, A);
   /* the drill is a real edge in the bout, so the bookmakers had better know about it */
@@ -11088,16 +11094,38 @@ function simulatePair(As, Bs, tA, stakes, ctx, opts){
     /* the same shield the single sand has. Two men behind two shields is the whole
        point of calling a pair defensive, and until now it did nothing at all. */
     const atkT = pA>pB ? tA : tB, defT = pA>pB ? tB : tA;
-    const turned = diff >= 8 && TAC_GUARD(atkT, defT);
+    /* four men and sixteen rounds, against two men and twelve. The same turn rate
+       the single sand runs at compounds out here into a stalemate — measured, two
+       defensive pairs drew 57% of their bouts and a defensive pair beat an
+       aggressive one ninety-one times in a hundred. The shield still turns things;
+       it turns fewer of them when there is a second man coming round the side. */
+    const turned = diff >= 8 && TAC_GUARD(atkT, defT, 0.58);
     if(turned){
       const dName = pA>pB ? Bs[lb].name : As[la].name, aName = pA>pB ? As[la].name : Bs[lb].name;
       crowd = clamp(crowd+1,0,100);
       mom = mom>0? mom-1 : mom<0? mom+1 : 0;
-      if(atkT==="aggressive"){ if(pA>pB) st.A[la] -= 4; else st.B[lb] -= 4; }
-      push("clash", pick(atkT==="aggressive" ? [
-        `${aName} throws the whole of it and ${dName} takes it on the shield. His mate is already coming round the other side.`,
-        `${dName} gets behind the boss of it and lets ${aName} spend himself on the wood.`,
-      ] : [
+      let ripPair = null;
+      if(atkT==="aggressive"){
+        if(pA>pB) st.A[la] -= 4; else st.B[lb] -= 4;
+        /* ---- THE SHIELD ANSWERS HERE TOO ----
+           v1.99 gave the single sand a riposte off a turned blow, because without one
+           a shield converts a rush into nothing at all rather than into a chance. The
+           pair never got it, and the pair is where a shield is strongest: measured,
+           two defensive men drew 69% of their bouts against each other and won 0.2%,
+           and an aggressive pair beat a defensive one eleven times in a hundred. That
+           is not three answers, it is one answer and a stalemate button. */
+        const dIsA = !(pA>pB);
+        const dm = dIsA ? As[la] : Bs[lb], am = dIsA ? Bs[lb] : As[la];
+        const rip = (2.8 + dm.str/22) * (1 + (dm.mods?dm.mods.atk:0)*0.6) * (1 - (am.mods?am.mods.def:0)*0.79) * TAC_TAKE("aggressive");
+        if(dIsA) hp.B[lb] -= rip; else hp.A[la] -= rip;
+        mom = clamp(mom + (dIsA?1:-1), -3, 3);
+        crowd = clamp(crowd+2,0,100);
+        ripPair = [
+          `${aName} throws the whole of it, ${dName} takes it on the shield — and his mate puts the point in over the top while he is still coming off it.`,
+          `${dName} gets behind the boss of it, lets ${aName} spend himself on the wood, and opens him as he comes back.`,
+        ];
+      }
+      push("clash", pick(ripPair || [
         `${dName} covers, gives a step, and the two of them close the gap again.`,
         `${aName} finds only ${dName}'s guard where the opening was.`,
       ]), { guardBy: pA>pB ? "B" : "A" });
@@ -11108,12 +11136,28 @@ function simulatePair(As, Bs, tA, stakes, ctx, opts){
       push("clash", pick(CLASH_L)(As[la].name, Bs[lb].name));
     } else {
       const aWins = pA>pB;
-      const atk = aWins ? As[la] : Bs[lb], def = aWins ? Bs[lb] : As[la];
+      const atk = aWins ? As[la] : Bs[lb];
+      /* ---- AND THE MAN BESIDE HIM IS ON THE SAND TOO ----
+         Measured, the mate finished every cell of the tactic matrix with more of
+         himself left than the lead — 97 against 55 in the worst of them — because
+         nothing could reach him until the lead went down. He was a reserve with a
+         morale bonus, not a partner. A blow that gets through finds whichever of the
+         two was closer to it, which is also what the assist is supposed to cost. */
+      const dSide = aWins ? "B" : "A", dArr = aWins ? Bs : As;
+      const dLead = aWins ? lb : la, dMate = aWins ? mb : ma;
+      const di = (dMate >= 0 && R() < 0.30) ? dMate : dLead;
+      const def = dArr[di];
       const tgt = pick(TARGETS);
-      let dmg = clamp((5 + diff/8 + atk.str/13) * 1.18 * tgt[2] * (1 + atk.mods.atk*0.7) * (1 - def.mods.def)
-        * MULTI_DEAL(atkT) * TAC_TAKE(defT), 3, 32);
+      /* ---- AND THE TIERS WILL NOT SIT THROUGH FOUR MEN CIRCLING ----
+         Sixteen rounds is long enough for two shields to simply outlast the card:
+         measured, half of all defensive-against-defensive pairs ended with the horn
+         and nobody down. From the twelfth the editor's people start making it
+         uncomfortable to stand off, and every round after that bites harder. */
+      const late = r >= 10 ? 1 + (r - 9) * 0.21 : 1;
+      let dmg = clamp((5 + diff/8 + atk.str/13) * 1.18 * tgt[2] * (1 + atk.mods.atk*0.95) * (1 - def.mods.def*0.79)
+        * PAIR_DEAL(atkT) * TAC_TAKE(defT) * CLS_EDGE(atk.cls, def.cls) * late, 3, 38);
       if(ctx.guarded && !aWins) dmg *= 0.5;
-      if(aWins) hp.B[lb] -= dmg; else hp.A[la] -= dmg;
+      hp[dSide][di] -= dmg;
       mom = clamp(mom + (aWins?1:-1), -3, 3);
       crowd = clamp(crowd + dmg/4.2 + atk.sho/30 + atk.mods.sho*9, 0, 100);
       const kind = dmg>=18?"crit" : dmg>=10?"hit":"graze";
