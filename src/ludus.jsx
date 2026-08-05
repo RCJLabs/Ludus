@@ -2019,11 +2019,13 @@ function agenda(d){
       add(1, "villa", `${sen.name.split(" ").pop()} is cooling, and Rome is watching him`,
         `${rnd(sen.favor)} of 70 — feed it before it slips`);
   }
-  { const made = activeG(d).filter(g=>isMade(g) && !(g.plan && g.plan.teach));
+  { const made = activeG(d).filter(g=>isMade(g) && !isMentored(g));
+    const green = activeG(d).some(g=>canLearn(g));
+    const tail = green ? " — put him on one of the green ones" : " — the palus is finished with them";
     if(made.length===1) add(1, "men", `${made[0].name} has nothing left to learn`,
-      `every stat at his ceiling — his weeks at the post buy nothing now`);
+      `every stat at his ceiling${green ? " — he could be bringing a boy on instead" : ", and his weeks at the post buy nothing now"}`);
     else if(made.length>1) add(1, "men", `${made.length} men have nothing left to learn`,
-      `${made.slice(0,3).map(g=>g.name).join(", ")}${made.length>3?" and others":""} — the palus is finished with them`); }
+      `${made.slice(0,3).map(g=>g.name).join(", ")}${made.length>3?" and others":""}${tail}`); }
   { const waiting = patronsOf(d).filter(p=>p.want && p.want.due && p.want.due - d.week <= 2);
     if(waiting.length===1) add(waiting[0].want.due<=d.week?3:2, "villa", `${waiting[0].name} is still waiting`, WANTS[waiting[0].want.kind].label.toLowerCase());
     else if(waiting.length>1) add(waiting.some(p=>p.want.due<=d.week)?3:2, "villa",
@@ -2173,7 +2175,20 @@ const fameTitle = f=>{ let t=FAME_TIERS[0][1]; for(const p of FAME_TIERS) if(f>=
 const activeG = d=>d.gladiators.filter(g=>g.status==="active");
 const GONE = ["dead","freed","escaped","retired","departed"];
 const isGone = g => GONE.includes(g.status);
-const gladValue = g=>rnd((90 + STATS.reduce((s,k)=>s+g[k],0)*1.1 + g.potential*1.8 + g.wins*14) * agePrice(g.age));
+/* ---- WHAT A MAN IS WORTH ----
+   This counted his stats, his potential, his wins and his age, and nothing else — so
+   a darling of Capua with thirty-eight wins, the seats filling for his name and a
+   purse multiplier of 1.22 was priced as an anonymous body and then halved for being
+   thirty-two. He sold for 367 denarii, less than an unlooked-at man off the block.
+   A gladiator is two assets and they do not age together: the body, which does, and
+   the NAME, which is the thing the editors are actually buying and which a hard
+   season only makes larger. The name is discounted barely at all with the years —
+   a famous old fighter is exactly what a rival house wants for its own gate. */
+const gladName = g => (g.pfame||0)*9 + fansOf(g)*6 + (g.legend?350:0)
+  + ((g.scars||[]).length)*22 + ((g.traits||[]).length)*28 + (g.nick?120:0);
+const gladValue = g=>rnd(
+  (90 + STATS.reduce((s,k)=>s+g[k],0)*1.1 + g.potential*1.8 + g.wins*14) * agePrice(g.age)
+  + gladName(g) * Math.max(0.88, agePrice(g.age)));
 
 /* ---- AGE ----
    A man grows into his body, holds it a few years, then loses it a piece at a time.
@@ -2719,6 +2734,15 @@ function weaveTies(d){
    grief can still speak after the man is off the books). */
 const bestStatKey = g => STATS.reduce((b,k)=> (g[k]||0)>(g[b]||0)?k:b, STATS[0]);
 const isMentored = g => !!(g.mentor || g.protege);
+/* Who you may put to teaching, and who is green enough to be worth teaching.
+   The event picks its own pair when the affinity is there; these two let the
+   player make the arrangement himself, which is most of what a finished man
+   is for. A teacher must have something to pass on — a made man, a long
+   record, or grey enough hair that the record is beside the point. */
+const canTeach = g => g && g.status==="active" && !isMentored(g) && !seasonOfMan(g)
+  && (isMade(g) || (g.wins||0) >= 8 || (g.age >= 30 && (g.wins||0) >= 4));
+const canLearn = (g, from) => g && g.status==="active" && !isMentored(g) && !seasonOfMan(g)
+  && (!from || g.id !== from.id) && (g.wins||0) <= 2 && g.age <= 27;
 function mentorWeek(d){
   for(const g of d.gladiators){
     if(g.status!=="active") continue;
@@ -2732,9 +2756,16 @@ function mentorWeek(d){
         chron(d, `${g.name} lost the man who taught him. ${nm} is gone, and the boy works the palus alone now, harder and with something behind it.`, "bad");
       } else {
         if(g.regimen && g.regimen!=="rest"){
+          /* what he can pass on is the distance between them. A man at his ceiling
+             teaching a green one is worth several weeks at the post; two men of the
+             same standard trading a nod across the square is worth very little. */
           const bk = bestStatKey(m);
-          g[bk] = clamp((g[bk]||10) + 0.6, 5, statCap(g,bk));
+          const gap = clamp(((m[bk]||0) - (g[bk]||0)) * 0.024, 0, 1.25);
+          const t = tieBetween(d, g.id, m.id);
+          const heed = (t && t.kind==="rival") ? 0.4 : (t && t.kind==="brother") ? 1.15 : 1;
+          g[bk] = clamp((g[bk]||10) + (0.42 + gap) * heed, 5, statCap(g,bk));
           g.morale = clamp(g.morale+0.5,0,100);
+          m.morale = clamp(m.morale+0.35,0,100);   /* the old man has a use again */
         }
         if(g.wins>=5){   /* the teaching is done */
           m.protege = null; m.protegeName = null; g.mentor = null; g.mentorName = null;
@@ -3388,7 +3419,7 @@ function genOpponent(tier, q){
   const cls = pick(Object.keys(CLASSES));
   const fem = R() < 0.07;
   const o = { sex: fem?"f":"m", name: pick(fem ? FNAMES[origin] : ORIGINS[origin].names), house:pick(HOUSES), cls, origin, nick:null,
-    morale:62, fatigue:0, injury:null, traits:[], heart:ri(30,90), pfame:0, kit:kitFor(cls, tier) };
+    morale:oppMorale(quality), fatigue:0, injury:null, traits:[], heart:ri(30,90), pfame:0, kit:kitFor(cls, tier) };
   for(const s of STATS) o[s] = clamp(qStat(quality) + ri(-8,8) + (ORIGINS[origin].mod[s]||0)*2, 8, 99);
   for(const k of CLASSES[cls].key) o[k] = clamp(o[k]+5, 8, 99);
   if(tier>=2) o.nick = pick(NICKS);
@@ -3682,6 +3713,29 @@ function makeGames(d){
       + docNum(d,"sineOdds",0) - (docIs(d,"mercy") ? 0.12 : 0);
     const sine = F.allSine ? true : F.noSine ? false : (tier>=1 && R()<sineOdds);
     let pr = pickRivalOpp(d, ot);
+    /* ---- WHEN YOUR MAN HAS OUTGROWN CAMPANIA ----
+       Fixing the turtling opponent tightened the whole climb, but the last years
+       barely moved: at 99 against the bay's best of 89 it still measured 82% wins
+       and 3% deaths, because a ten-point edge decides a bout and Capua simply could
+       not field anyone nearer. So the editors stop trying to. When the best man in
+       the bay is well below yours, the bill is filled from outside it — Puteoli,
+       Ravenna, the imperial schools — by a man built to the standard your own has
+       set. It is not a rubber band on the world; it is one card, at the top tier
+       only, and only once nobody at home can give the crowd a contest. */
+    if(ot >= 3 && !d.rome){
+      const avg0 = f => STATS.reduce((n,k)=>n+(f[k]||0),0)/6;
+      const mine = activeG(d).reduce((m,g)=>Math.max(m, avg0(g)), 0);
+      if(mine - avg0(pr.opp) > 6){
+        const imp = genOpponent(3, qForStat(mine - 2));
+        imp.wins = (imp.wins||0) + ri(8, 18);
+        imp.pfame = Math.max(imp.pfame||0, ri(60, 100));
+        imp.heart = Math.max(imp.heart||50, ri(65, 92));
+        imp.nick = imp.nick || pick(NICKS);
+        imp.house = pick(["Puteoli","Neapolis","Ravenna","Praeneste","the imperial school at Capua"]);
+        imp.imported = true;
+        pr = { opp:imp, ref:null, rematch:false, grudgeM:false };
+      }
+    }
     if(tier >= 4){
       /* the imperial bill pays two and a half times a Primus purse, so it had
          better not be the same man. Take the hardest of several looks at the bay. */
@@ -3952,6 +4006,17 @@ const grudgeWord = g => g<15?"Cordial": g<40?"Cool": g<70?"Bitter":"Blood feud";
    same ceiling yours has, because there is no reason another house's best man should
    be forbidden the thing your best man is allowed. */
 const qStat = q => 24 + q*0.52 + Math.pow(Math.max(0, q-82), 1.6)*0.17;
+/* ---- AND WHAT HE BRINGS BESIDES THE NUMBERS ----
+   Every man the game generated stood on the sand at morale 62 whether he was a
+   frightened boy off a boat or the best fighter in Italy. Measured between two men
+   identical in all six stats, the difference between 62 and 82 is fourteen points of
+   win rate — so a house that kept its men happy was fighting champions who did not
+   want to be there. A man does not reach that standard without something behind it. */
+const oppMorale = q => clamp(Math.round(48 + (q||40)*0.31) + ri(-5,5), 42, 95);
+/* and the way back: what quality do I ask for to get a man of about this standard */
+const qForStat = s => { let lo=25, hi=118;
+  for(let i=0;i<26;i++){ const m=(lo+hi)/2; if(qStat(m) < s) lo=m; else hi=m; }
+  return Math.round(clamp(lo, 25, 118)); };
 /* and the standard of the age: the best man on any sand in the bay, yours counted.
    A house that has watched you win for six years does not go on buying boys. */
 function bayStandard(d){
@@ -3970,7 +4035,7 @@ function makeRivalFighter(d, house, quality){
   const age = clamp(ri(19, 24) + Math.round(quality/16), 18, 34);
   const f = { id:d.nextId++, sex: fem?"f":"m", name: pick(fem ? FNAMES[origin] : ORIGINS[origin].names), nick:null, house, cls, origin,
     age, weeks:0,
-    morale:62, fatigue:0, injury:null, traits:[], heart:ri(30,90), pfame:ri(0,30),
+    morale:oppMorale(quality), fatigue:0, injury:null, traits:[], heart:ri(30,90), pfame:ri(0,30),
     kit:kitFor(cls, quality>=58?2:quality>=42?1:0),
     wins:ri(0,6), losses:ri(0,3), kills:0, beatYou:0, lostToYou:0,
     potential: clamp(quality+ri(-10,15), 20, 95) };
@@ -4680,13 +4745,30 @@ function foeTactic(o){
      learned something else. The better he is, the less his record cows him. */
   const grade = ((o.str||50)+(o.agi||50)+(o.end||50)+(o.tec||50)+(o.dis||50)+(o.sho||50))/6;
   const sure = clamp((grade - 70)/25, 0, 1);          // 70 → still cagey, 95 → afraid of nobody
-  const raw = (o.wins||0) >= 8 ? -17 : (o.wins||0) >= 5 ? -8 : (o.wins||0) <= 1 ? 9 : 0;
+  /* AND THE RECORD WAS STILL DECIDING IT. Tempering -17 was not enough: an ordinary
+     80-stat veteran still came out at -11 and went behind his shield, and since every
+     rival accumulates wins, practically the whole bay was turtling by year three. A
+     dead mirror measured 65.8% to the player — a sixteen-point edge handed over for
+     nothing, in every bout, which is most of why the middle and late game never bit.
+     What a man has survived is a nudge now. How he is BUILT decides, which is also
+     the thing scouting him is supposed to reveal. */
+  const raw = (o.wins||0) >= 8 ? -7 : (o.wins||0) >= 5 ? -4 : (o.wins||0) <= 1 ? 7 : 0;
   const learnt = raw < 0 ? raw * (1 - sure*0.8) : raw;
   const T = o.traits || [];
   const bent = (T.includes("Showman") ? 7 : 0) + (T.includes("Defiant") ? 6 : 0)
              - (T.includes("Stoic") ? 9 : 0) - (T.includes("Iron Hide") ? 5 : 0);
-  const n = built + learnt + bent;
-  return n >= 10 ? "aggressive" : n <= -10 ? "defensive" : "measured";
+  /* and a man who is genuinely finished does not fight like a careful one. At the top
+     of the bay every stat clamps at 99, so `built` collapses to zero and every elite
+     opponent came out "measured" — the same answer every time, which makes the read
+     free on exactly the nights it is supposed to cost something. Standing pushes him
+     forward, and what separates two 99s is then how they are put together. */
+  const nerve = sure * 8;
+  const n = built + learnt + bent + nerve;
+  /* the band was +/-10 against a spread that rarely leaves +/-12, so three men in five
+     came out "measured" whatever they were — and at the top of the bay it was five in
+     six. A narrower band makes the man across the sand somebody you have to actually
+     read. */
+  return n >= 7 ? "aggressive" : n <= -7 ? "defensive" : "measured";
 }
 const FOE_TACTIC_WORD = {
   aggressive: "comes forward from the horn",
@@ -5562,12 +5644,28 @@ function pickRivalOpp(d, tier, elite){
      for, and those ask for them explicitly. */
   if(tier===3 && !elite){
     const mine = activeG(d).reduce((m,g)=>Math.max(m, avg(g)), 0);
+    /* a WINDOW, not a floor: with only a floor, a year-three house of 76 could be
+       matched against the bay's 90 and measured 37% wins with a one-in-five burial,
+       which is a wall by another name. He meets men around his own mark. */
     const floor = mine > 0 ? mine - 11 : bands[3][0];
-    fitPool = pool.filter(p=>avg(p.f) >= floor);
+    const roof  = mine > 0 ? mine + 9  : 99;
+    fitPool = pool.filter(p=>{ const a = avg(p.f); return a >= floor && a <= roof; });
     if(fitPool.length < 2) fitPool = pool.slice().sort((a,b)=>avg(b.f)-avg(a.f)).slice(0,3);
   }
   else if(tier===3) fitPool = pool.slice().sort((a,b)=>avg(b.f)-avg(a.f)).slice(0,3);
-  else fitPool = pool.filter(p=>{ const a=avg(p.f); return a>=bands[tier][0] && a<=bands[tier][1]; });
+  else {
+    fitPool = pool.filter(p=>{ const a=avg(p.f); return a>=bands[tier][0] && a<=bands[tier][1]; });
+    /* and the pits are the pits. With the stat curve as steep as it now is, a
+       near-mirror down at forty-seven swings on almost nothing — measured, a
+       1.5-point difference in the opponent moved a founding man's win rate 28
+       points. The bottom rung is where a new house is supposed to be able to win,
+       so it is capped just under your best man rather than left to the lottery. */
+    if(tier <= 0){
+      const mine = activeG(d).reduce((m,g)=>Math.max(m, avg(g)), 0);
+      if(mine > 0){ const under = fitPool.filter(p=>avg(p.f) <= mine - 3);
+        if(under.length) fitPool = under; }
+    }
+  }
   /* Nobody in the bay sits in this band. Falling back to the WHOLE pool meant a new
      house's very first card could be drawn from Capua's best — measured at week one:
      an opponent averaging 54 against a founding man of 47, a 30% win and a 27% chance
@@ -5583,9 +5681,18 @@ function pickRivalOpp(d, tier, elite){
      Weighted 3:2:1, so it is usually him and never only him. */
   const topPick = () => { const bag=[]; fitPool.slice(0,3).forEach((x,i)=>{ for(let k=0;k<3-i;k++) bag.push(x); });
     return bag.length ? pick(bag) : pick(fitPool); };
+  /* and the mirror of it at the bottom. The pits and the local games are where the
+     nobodies fight, and a man who has just taken the keys is one of them — with the
+     opponent no longer handicapping himself and a stat edge worth more than it was,
+     an even draw from the low band still measured 37% wins and better than one death
+     in five on a first bout. The bottom of the card leans easy the way the top leans
+     hard: weighted 3:2:1 toward the softest of the three. */
+  const lowPick = () => { const a = pick(fitPool), b = pick(fitPool);
+    return (avg(a.f) <= avg(b.f)) ? a : b; };     /* draw two, send him the softer */
   /* the 3:2:1 lean toward the best of them is for the crown and the imperial bill,
      which ask for it — on an ordinary top-tier card it just rebuilt the wall */
-  const chosen = (rem.length && R()<0.6) ? pick(rem) : (elite ? topPick() : pick(fitPool));
+  const chosen = (rem.length && R()<0.6) ? pick(rem)
+    : elite ? topPick() : tier<=0 ? lowPick() : pick(fitPool);
   return { opp: clone(chosen.f), ref:{house:chosen.h.name, fid:chosen.f.id},
     rematch: chosen.f.beatYou>0, grudgeM: chosen.f.lostToYou>0 };
 }
@@ -5948,8 +6055,8 @@ function power(f, tactic, oppCls, mom, atkMod){
      the blow — so aggressive simply took fewer blows and every discount written
      for defensive was paid on a thing that had stopped happening. It moves the
      exchange rate now, in simulateFight, and barely touches the odds of landing. */
-  if(tactic==="aggressive") p *= 1.10;
-  if(tactic==="defensive") p *= 0.94;
+  if(tactic==="aggressive") p *= 1.05;
+  if(tactic==="defensive") p *= 0.97;
   if(tactic==="showboat") p *= 0.96;
   p *= 1 + clamp(mom||0,-3,3)*0.03;
   p *= 1 + (f.mods ? f.mods.atk*0.6 + f.mods.def*0.30 : 0);
@@ -5981,7 +6088,14 @@ const MISSIO_SLOPE = 14;   /* how sharply it turns either side of that */
 function missioScore(A, ctx, crowd, account, endured, own){
   const standing = own === false ? 18 : Math.min(MISSIO_CAP,
     (A.pfame||0)*0.20 + (ctx.favor||0)*0.22 + (ctx.fav||0) + (ctx.patron ? ctx.patron.favor*0.10 : 0));
-  return clamp(account,0,100)*0.50 + clamp(endured,0,40) + clamp(crowd,0,100)*0.24
+  /* A man nobody has heard of yet is not worth killing. Standing is built almost
+     entirely from fame and favour, so a house in its first season had none of it and
+     a fallen man was condemned four times in five — a founding fighter was dying in
+     his first bout better than a quarter of the time, which is not a difficulty
+     curve, it is a coin toss for the whole run. The editor has no reason to spend an
+     unknown; there is nothing in it for the crowd and a live novice fights again. */
+  const green = own === false ? 0 : ((A.wins||0) + (A.losses||0) <= 3 ? 15 : (A.wins||0)+(A.losses||0) <= 6 ? 7 : 0);
+  return clamp(account,0,100)*0.50 + clamp(endured,0,40) + clamp(crowd,0,100)*0.24 + green
     + (A.sho||0)*0.12 + (A.heart||50)*0.07 + standing
     + (ctx.guarded?10:0) + (ctx.aedile||0) + (ctx.venue||0) + (ctx.doctrine||0)
     - (ctx.tier===0?9:0) - ((ctx.hostile && own!==false)?16:0) - (ctx.strange||0);
@@ -6016,6 +6130,8 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
   const cruxCount = R0 ? (R0.count||0) : 0;      /* how many times you have spoken already */
   const order = O.order || null;                 /* the tactical order you gave at the last crux */
   let orderSigA = !!(order && order.sig);        /* force your man's signature on the first resumed round */
+  /* whose name the tiers are actually shouting, decided before a blow is struck */
+  const mobHis = ((B.pfame||0) - (A.pfame||0)) > 12;
   const orderTgt = order && order.target || null;/* aim your blows at one place */
   if(order && order.breather){ sA = Math.min(smA, sA + smA*0.24); mom = clamp(mom-1,-3,3); crowd = clamp(crowd-6,0,100); }
   const legNow = legOrder || !!(order && order.debuff==="legs");
@@ -6127,16 +6243,26 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
        cannot skip them — a house worked to its feet always gets its moment */
     if(crowd>=50 && !c50){ c50=true; push("crowd", `The crowd begins to chant — the sound rolls around the walls.`); }
     if(crowd>=80 && !c80){ c80=true; push("crowd", `CAPUA IS ON ITS FEET!`); }
-    if(crowd>=82 && !cPeak){ cPeak=true; orderSigA = true; A.sigOpen = Math.max(A.sigOpen||1, 1.12);
-      push("crowd", `The whole city is chanting ${A.name}'s name, and he feeds on it — you can see him gather himself.`); }
+    if(crowd>=82 && !cPeak){ cPeak=true;
+      if(mobHis){ B.sigOpen = Math.max(B.sigOpen||1, 1.12);
+        push("crowd", `The whole city is chanting ${B.name}'s name. They did not come for your man, and he can hear that.`); }
+      else { orderSigA = true; A.sigOpen = Math.max(A.sigOpen||1, 1.12);
+        push("crowd", `The whole city is chanting ${A.name}'s name, and he feeds on it — you can see him gather himself.`); } }
     const moveA = pick(ATTACKS[A.cls]), moveB = pick(ATTACKS[B.cls]);
     const modA = 0.97+R()*0.06, modB = 0.97+R()*0.06;
     A.footing = ctx.footing || 1; B.footing = ctx.footingB || ctx.footing || 1;
     const PL = ctx.plan || { pow:1, stam:1, guard:1 };
-    /* showmanship is a weapon: a man the mob has taken up fights taller, and the peak is his alone */
+    /* ---- THE MOB IS NOT OWNED ----
+       Showmanship is a weapon: a man the crowd has taken up fights taller. But the
+       term was 0.14 for your man against 0.10 for his, and the peak of the noise was
+       always yours no matter who was standing across the sand. It is invisible at
+       forty and it is not invisible at ninety-nine — measured, two men identical in
+       all six stats went 60-40 your way on that alone, which is most of why the last
+       card in the game could not be lost. The mob goes to the better-known man. Your
+       man is only that when he is. */
     const cf = clamp(crowd,0,100)/100;
-    const shoA = 1 + cf * (A.sho/100) * 0.14 * (cPeak?1.5:1);
-    const shoB = 1 + cf * (B.sho/100) * 0.10;
+    const shoA = 1 + cf * (A.sho/100) * 0.12 * (cPeak && !mobHis ? 1.4 : 1);
+    const shoB = 1 + cf * (B.sho/100) * 0.12 * (cPeak &&  mobHis ? 1.4 : 1);
     /* a man bred to endure keeps his blows honest when the others are swinging on empty.
        This was a cliff at a fifth of his wind with a small penalty behind it, and most
        bouts finished before it ever mattered — measured across two thousand fights,
@@ -6195,13 +6321,28 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
       const dName = pA>pB ? B.name : A.name, aName = pA>pB ? A.name : B.name;
       crowd = clamp(crowd+1,0,100);
       mom = mom>0? mom-1 : mom<0? mom+1 : 0;
+      /* ---- AND THE SHIELD IS NOT THE END OF IT ----
+         A man behind his shield beat an aggressive one 23 times in a hundred. Power
+         decides who lands and aggression buys power, so every discount written for
+         defence was being paid out on blows that never arrived — and forward was the
+         right answer against all three tactics, which is not a choice. The turn is a
+         chance now, not only a wound saved, and it is the whole reason to stand behind
+         a shield while somebody spends himself on the front of it. */
+      let ripLine = null;
       if(atkTac==="aggressive"){                       /* he spent it on a shield */
         if(pA>pB) sA -= 4; else sB -= 4;
+        const dIsA = !(pA>pB), dm = dIsA?A:B, am = dIsA?B:A;
+        const rip = (4.3 + dm.str/13) * (1 + (dm.mods?dm.mods.atk:0)*0.6) * (1 - (am.mods?am.mods.def:0)) * TAC_TAKE("aggressive");
+        if(dIsA){ vB = clamp(vB-rip,0,100); mom = clamp(mom+1,-3,3); }
+        else    { vA = clamp(vA-rip,0,100); mom = clamp(mom-1,-3,3); }
+        crowd = clamp(crowd+2,0,100);
+        ripLine = [
+          `${aName} throws everything into it, ${dName} takes the whole of it on the shield — and puts the point in over the top on the way back.`,
+          `${dName} gets behind the boss of it, lets ${aName} spend himself on the wood, and opens him up as he comes off it.`,
+          `${aName} comes on too far. ${dName} turns it and answers before he is back behind his guard.`,
+        ];
       }
-      push("clash", pick(atkTac==="aggressive" ? [
-        `${aName} throws everything into it and ${dName} takes the whole of it on the shield. That cost him.`,
-        `${dName} gets behind the boss of it and lets ${aName} spend himself on the wood.`,
-      ] : [
+      push("clash", pick(ripLine || [
         `${dName} takes it on the shield and gives a step. Nothing in that for anybody.`,
         `${aName} comes on and finds only ${dName}'s guard where the opening was.`,
         `${dName} turns it aside at the last, and the crowd makes a sound about it.`,
@@ -10141,7 +10282,7 @@ const MULTI_DEAL = t => t==="aggressive"?1.34 : t==="defensive"?0.52 : 1;
    the world to turn aside, which is the whole reason to put a shield up against one */
 const GUARD_TURN = 0.22;
 const TAC_GUARD = (atkT, defT) => defT==="defensive"
-  && R() < GUARD_TURN * (atkT==="aggressive" ? 1.9 : atkT==="defensive" ? 0.7 : 1);
+  && R() < GUARD_TURN * (atkT==="aggressive" ? 2.05 : atkT==="defensive" ? 0.7 : 1);
 function winChance(g, opp, prep, tac, foeTac){
   const A = clone(g); A.kit = g.kit || defaultKit(g.cls); A.mods = kitMods(A.kit, A.cls, A);
   /* the drill is a real edge in the bout, so the bookmakers had better know about it */
@@ -12370,9 +12511,13 @@ function endWeek(d){
           else if(t && t.kind==="rival"){ mult *= 1.25; injChance *= 2; g.morale=clamp(g.morale-1,0,100); }
         }
         const prepDrag = prepWeek(d, g);   /* a week spent on one man's habits is not a week on his own */
+        /* and neither is a week spent watching somebody else's feet. A man bringing on
+           a boy gets less out of his own work — which costs a rising man plenty and a
+           finished one nothing at all, and that is the whole point of it. */
+        const teachDrag = g.protege ? 0.6 : 1;
         let shiftDrag = 1;
         if(g.shiftWeeks > 0){ g.shiftWeeks--; shiftDrag = 0.45; }   /* and so is a week spent lying to a watcher */
-        const base = prepDrag * shiftDrag * (0.5 + g.potential/100*1.3) * d.trainMult * ageTrain(g.age)
+        const base = prepDrag * shiftDrag * teachDrag * (0.5 + g.potential/100*1.3) * d.trainMult * ageTrain(g.age)
           * palusTrain(d) * perkTrain(d) * lanTrain(d) * seasonTrain(d) * docTrainMult(d,g) * docCreedNum(d,"train") * (fest && fest.train ? fest.train : 1)
           * mult * (g.traits.includes("Swift Learner")?1.3:1)
           * (g.fatigue>75?0.4:1) * strainDrag(g);
@@ -13944,6 +14089,7 @@ export default function App(){
   const [xfer,setXfer] = useState(null);
   const [xferIn,setXferIn] = useState("");
   const [sparPick,setSparPick] = useState(null);
+  const [teachPick,setTeachPick] = useState(null);
   const [pairSel,setPairSel] = useState([]);
   const [annals,setAnnals] = useState(false);
   const [sheet,setSheet] = useState(null);
@@ -14129,6 +14275,7 @@ export default function App(){
     [!!xfer,         ()=>setXfer(null)],
     [!!gearPick,     ()=>setGearPick(null)],
     [!!sparPick,     ()=>setSparPick(null)],
+    [!!teachPick,    ()=>setTeachPick(null)],
     [!!showChron,    ()=>setShowChron(false)],
     [!!annals,       ()=>setAnnals(false)],
     [!!sheet,        ()=>setSheet(null)],
@@ -14313,6 +14460,27 @@ export default function App(){
     [g,m].forEach(x=>{ if(x.sparWith){ const o=d.gladiators.find(y=>y.id===x.sparWith);
       if(o && o.id!==g.id && o.id!==m.id && o.sparWith===x.id){ o.regimen="palus"; o.sparWith=null; } } });
     g.regimen="spar"; g.sparWith=m.id; m.regimen="spar"; m.sparWith=g.id; });
+  /* Putting a man to teaching. The event version waits for the two of them to find
+     each other; this is you deciding it, which you may do the moment a man has more
+     to give than to gain. Everything after this — the weekly gain, the bond when the
+     boy takes his fifth, the grief if either is carried out — is the same machinery. */
+  const setTeach = (vetId, rookId) => mut(d=>{
+    const v = d.gladiators.find(x=>x.id===vetId), r = d.gladiators.find(x=>x.id===rookId);
+    if(!v || !r || !canTeach(v) || !canLearn(r, v)) return;
+    v.protege = r.id; v.protegeName = r.name; r.mentor = v.id; r.mentorName = v.name;
+    if(!tieBetween(d, v.id, r.id)) addTie(d, v.id, r.id, "brother", 22);
+    v.morale = clamp(v.morale+5,0,100); r.morale = clamp(r.morale+6,0,100);
+    r.defiance = clamp(r.defiance-4,0,100);
+    chron(d, `${v.name} has ${r.name} at the far post now, walking him through the things that cannot be taught quickly. The old man's own week will be the poorer for it.`, "good");
+  });
+  const stopTeach = id => mut(d=>{
+    const v = d.gladiators.find(x=>x.id===id); if(!v || !v.protege) return;
+    const r = d.gladiators.find(x=>x.id===v.protege);
+    const nm = v.protegeName || (r && r.name) || "the boy";
+    if(r){ r.mentor = null; r.mentorName = null; r.morale = clamp(r.morale-8,0,100); r.defiance = clamp(r.defiance+4,0,100); }
+    v.protege = null; v.protegeName = null; v.morale = clamp(v.morale-4,0,100);
+    chron(d, `${v.name} is back on his own work. ${nm} finishes the week at the post alone, and does not ask why.`, "bad");
+  });
   const setDrill = key => mut(d=>{ if(d.doctore && DRILLS[key]){ d.doctore.drill = key; if(key!=="none") d.flags.everDrill = 1; } });
   const clearSparOf = (d,g)=>{ if(g.regimen==="spar" && g.sparWith){ const o=d.gladiators.find(x=>x.id===g.sparWith); if(o && o.sparWith===g.id){ o.regimen="palus"; o.sparWith=null; } } g.sparWith=null; };
   const boardMen = d => d.gladiators.filter(g=>g.status==="active" && !seasonOfMan(g));
@@ -18545,6 +18713,37 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 ))}
               </div>
             </>)}
+            {/* The far post. What a man does once the palus has nothing left for him. */}
+            {(()=>{ const teaching = !!selG.protege, able = canTeach(selG);
+              if(!teaching && !able) return null;
+              const boy = teaching ? S.gladiators.find(g=>g.id===selG.protege) : null;
+              const pool = S.gladiators.filter(g=>canLearn(g, selG));
+              return (
+                <div className="panel" style={{padding:10,marginTop:2,marginBottom:8,background:"#1c1610",
+                  borderColor: teaching ? "#6d5426" : "#4e3c26"}}>
+                  <div className="tag" style={{marginBottom:6}}>The far post</div>
+                  {teaching ? (<>
+                    <div style={{fontSize:15,marginBottom:4}}>
+                      Bringing on <span style={{color:"#e0bd72"}}>{boy ? boy.name : (selG.protegeName||"a green one")}</span>
+                      {boy && <span className="dim"> · {Math.max(0, 5-(boy.wins||0))} more wins and the boy is made</span>}
+                    </div>
+                    <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:8,lineHeight:1.35}}>
+                      The boy gains on {STAT_NAMES[bestStatKey(selG)].toLowerCase()} every week he works — the more of it {PR(selG).he} has over him, the faster. {PR(selG).He} pays for it out of his own week, and neither of them would take the other's death well.
+                    </div>
+                    <button className="btn btn-ghost" style={{width:"100%"}} onClick={()=>stopTeach(selG.id)}>Back to his own work</button>
+                  </>) : (<>
+                    <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:8,lineHeight:1.35}}>
+                      {isMade(selG)
+                        ? `There is nothing at the post for ${PR(selG).him} any more. There is still something at the far end of the square, if you put a boy in front of ${PR(selG).him}.`
+                        : `${PR(selG).He} has enough behind ${PR(selG).him} to be worth watching. Six-tenths of ${PR(selG).his} own week goes on the boy instead — decide whether ${PR(selG).he} can afford that.`}
+                    </div>
+                    {pool.length===0
+                      ? <div className="dim" style={{fontSize:14}}>No one green enough to teach — a boy wants two wins or fewer, and to be young enough to change.</div>
+                      : <button className="btn" style={{width:"100%",borderColor:"#c99a4b",color:"#e8d092"}}
+                          onClick={()=>setTeachPick(selG.id)}>Put him to teaching</button>}
+                  </>)}
+                </div>
+              ); })()}
             </>)}
             <div className="grid grid-cols-2 gap-2">
               <button className="btn" disabled={S.gold<50} onClick={()=>rewardG(selG.id)}>Reward · 50d</button>
@@ -19240,6 +19439,49 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         );
       })()}
 
+      {teachPick!=null && (()=>{
+        const v = S.gladiators.find(g=>g.id===teachPick);
+        if(!v) return null;
+        const pool = S.gladiators.filter(g=>canLearn(g, v));
+        const bk = bestStatKey(v);
+        return (
+          <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:62}} onClick={()=>setTeachPick(null)}>
+            <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
+              <div className="flex items-center justify-between" style={{marginBottom:4}}>
+                <div className="disp" style={{fontSize:14,fontWeight:700,letterSpacing:".1em"}}>WHO DOES HE BRING ON</div>
+                <button className="btn btn-ghost" style={{padding:"10px 10px"}} aria-label="Close" onClick={()=>setTeachPick(null)}><X size={14}/></button>
+              </div>
+              <div className="dim" style={{fontSize:14,fontStyle:"italic",marginBottom:10,lineHeight:1.35}}>
+                {v.name} is best at {STAT_NAMES[bk].toLowerCase()} ({rnd(v[bk])}), and that is what the boy will get — faster the further below him the boy starts. It runs until the boy takes his fifth win, and it costs {PR(v).him} four-tenths of every week until then.
+              </div>
+              {pool.length===0 && <div className="dim" style={{fontSize:15}}>There is nobody green enough in the yard.</div>}
+              {pool.map(r=>{
+                const t = tieBetween(S, v.id, r.id);
+                const gap = (v[bk]||0) - (r[bk]||0);
+                const heed = (t && t.kind==="rival") ? 0.4 : 1.15;   /* setTeach makes brothers of the rest */
+                const wk = +((0.42 + clamp(gap*0.024, 0, 1.25)) * heed).toFixed(2);
+                return (
+                  <button key={r.id} className="optrow" onClick={()=>{ setTeach(v.id, r.id); setTeachPick(null); }}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="disp" style={{fontSize:13.5}}>{r.name}</span>
+                      <span className="dim" style={{fontSize:12.5,whiteSpace:"nowrap"}}>{r.cls} · {r.age}</span>
+                    </div>
+                    <div style={{fontSize:14,marginTop:3}}>
+                      <span className={gap>=25?"laurel":"dim"}>{STAT_NAMES[bk]} {rnd(r[bk])} → about +{wk} a week</span>
+                      <span className="dim"> · {5-(r.wins||0)} wins from made</span>
+                    </div>
+                    {v.origin===r.origin && <div className="dim" style={{fontSize:13.5,marginTop:2}}>Same country — they already speak to each other.</div>}
+                    {t && <div style={{fontSize:13.5,marginTop:2,color:t.kind==="brother"?"#b9c58a":"#d98476"}}>
+                      {t.kind==="brother" ? "Brothers already — the boy will take every word of it" : "Bad blood between them — he will not hear a thing the old man says"}
+                    </div>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
+
       {xfer && (
         <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:65}} onClick={()=>setXfer(null)}>
           <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
@@ -19464,6 +19706,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               <div className="flex items-center gap-1" style={{flexWrap:"wrap",marginTop:3}}>
                 <span className="tag tag-gold">{TIERS[o.tier].name}</span>
                 {o.imperial && <span className="tag tag-gold">✦ Rome</span>}
+                {o.opp && o.opp.imported && <span className="tag tag-blood">✦ Sent for</span>}
                 {o.headline && <span className="tag tag-gold">✦ Your headliner</span>}
                 {o.localGrudge && <span className="tag tag-blood">✦ House {o.homeHouse} · their sand</span>}
                 {o.mine && !o.headline && <span className="tag">Your games</span>}
@@ -19715,6 +19958,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               <div className="flex items-center gap-1" style={{flexWrap:"wrap",marginBottom:5}}>
                 <span className="tag tag-gold">{TIERS[o.tier].name}</span>
                 {o.imperial && <span className="tag tag-gold">✦ Rome</span>}
+                {o.opp && o.opp.imported && <span className="tag tag-blood">✦ Sent for</span>}
                 {o.primus && <span className="tag tag-gold">✦ {o.defence?"Defend the primacy":"For the primacy"}</span>}
                 {o.booking && <span className="tag tag-gold">✦ Contracted</span>}
                 {o.nemGrudge && <span className="tag tag-blood">✦ The Grudge</span>}
@@ -20136,5 +20380,3 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
     </div>
   );
 }
-
-
