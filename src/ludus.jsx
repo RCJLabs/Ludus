@@ -8512,7 +8512,19 @@ const cellsCap = d => {
   const byRank = CELLS_BY_RANK[Math.min(riseOf(d), CELLS_BY_RANK.length-1)] || 8;
   return (d.law && d.law.cap) ? Math.min(d.law.cap, byRank) : byRank;
 };
-const rosterFull = d => activeG(d).length >= cellsCap(d);
+/* ---- EIGHT, EVERYWHERE, WHATEVER THE CELLS SAID ----
+   The masthead reads "Familia 8/14" once the house has risen, and the market honours
+   it. Four other doors did not: the condemned men offered to a house, the free man at
+   the gate wanting to swear, a freedman asking to come back — all three simply never
+   fired above eight men, so a great house watched three of the game's sources of
+   fighters go quiet and had no way to know why. And poaching a rival's star did
+   something worse: it took the money, told you "he walks out of House X in the night
+   and into yours", and then dropped him on the floor.
+   There is one count now and it is the one on the masthead. An injured man is in a
+   cell — he was not being counted, which meant a full house could sometimes buy a man
+   it had nowhere to put. */
+const rosterCount = d => d.gladiators.filter(g=>!isGone(g)).length;
+const rosterFull = d => rosterCount(d) >= cellsCap(d);
 /* what they will let a man go for — a house that hates you charges for the privilege */
 function houseAsk(d, h, f){
   if(!h || !f) return 0;
@@ -9292,8 +9304,10 @@ const GAMBITS = {
       h.fighters = (h.fighters||[]).filter(x=>x!==r);
       const g = genGladiator(d, clamp(52 + (r.wins||0)*2.4, 52, 88));
       g.name = r.name; g.wins = r.wins||0; g.pfame = 40 + (r.wins||0)*5; g.regard = 44;
-      if(d.gladiators.filter(x=>!isGone(x)).length < 8) d.gladiators.push(g);
       h.grudge = clamp(h.grudge + 30, 0, 100);
+      if(rosterFull(d))
+        return `${r.name} walks out of House ${h.name} in the night — and finds your cells full, and keeps walking. House ${h.name} knows what you tried. You have the grudge and not the man.`;
+      d.gladiators.push(g);
       return `${r.name} walks out of House ${h.name} in the night and into yours. Everybody knows. Nobody can prove it.`; },
     lose:(d,h)=>{ h.grudge = clamp(h.grudge + 18, 0, 100);
       return `The man tells his lanista, who tells the town. The money is gone and so is any doubt about what kind of house you run.`; },
@@ -9397,7 +9411,7 @@ const FREEDMEN = {
       activeG(d).forEach(g=>{ g.morale = clamp(g.morale-4,0,100); });
       return `The cells hear it the same day and it takes something off the wooden sword for a while.` } },
   back:    { w:7, name:"He asks to come back",
-    need:(d,f)=>d.gladiators.filter(g=>!isGone(g)).length < 8,
+    need:(d,f)=>!rosterFull(d),
     say:(d,f)=>`${f.name} wants to fight again. Not sold, not bound — signed, for money, like any auctoratus. He has thought about it and he would rather do the thing he is good at.`,
     run:(d,f)=>{ const g = genGladiator(d, clamp(48 + f.wins*2, 48, 88));
       g.name = f.name.split(",")[0]; g.wins = f.wins; g.pfame = 60 + f.wins*4; g.regard = 82; g.sworn = "feast";
@@ -12942,7 +12956,7 @@ const EVENTS = {
       return `The advance comes up front and the wagons go out inside the week. ${C.name} has asked for one of your men by name, which has not happened before.`; } },
   damnatio: {
     make(d){ if(d.city || d.travel || d.rome) return null;
-      if(d.gladiators.filter(g=>!isGone(g)).length >= 8) return null;
+      if(rosterFull(d)) return null;
       const n = ri(1,2);
       const crimes = shuffled(CRIMES).slice(0,n);
       const fee = rnd(60 + n*45);
@@ -13098,7 +13112,7 @@ const EVENTS = {
         ? `You give him nothing at all, twice. He will not ask a third time.`
         : `You walk on. He stands there a moment longer than he needs to before going back to work.`; } },
   auctoratus: {
-    make(d){ if(d.gladiators.filter(g=>!isGone(g)).length>=8) return null;
+    make(d){ if(rosterFull(d)) return null;
       const q = clamp(ri(42,68) + Math.round(d.fame/40), 30, 84);
       const g = makeAuctoratus(d, q);
       if(d.gold < g.auctor.fee) return null;
@@ -15404,11 +15418,16 @@ export default function App(){
     const pool = men.slice().sort((a,b)=> STATS.reduce((s,k)=>s+b[k],0) - STATS.reduce((s,k)=>s+a[k],0));
     for(let i=0;i+1<pool.length;i+=2){ const a=pool[i], b=pool[i+1]; a.regimen="spar"; a.sparWith=b.id; b.regimen="spar"; b.sparWith=a.id; } });
   const buyG = (id, bidPrice) => mut(d=>{ const i=d.market.findIndex(m=>m.id===id); if(i<0) return;
-    const g=d.market[i]; const count=d.gladiators.filter(x=>!isGone(x)).length;
+    const g=d.market[i];
     const price = bidPrice!=null ? bidPrice : g.price;
     if(g.slaver){ dealt(d, g.slaver, "bought"); if(g.flaw && g.scouted) dealt(d, g.slaver, "burned"); }
     const tax = rnd(price * lawTax(d));
-    if(d.gold < price + tax || count>=8) return;
+    /* ---- AND THIS WAS THE LOCK ----
+       The button above it asks rosterFull, which honours the cells the house has
+       actually built. This did not: it counted to eight and returned, silently, with
+       no message, no coin taken and no man. A house at 8 of 14 with a hundred thousand
+       denarii could press Buy all afternoon and nothing whatever would happen. */
+    if(d.gold < price + tax || rosterFull(d)) return;
     d.gold -= price + tax; d.market.splice(i,1);
     if(g.contested){ const c = g.contested; delete g.contested;
       chron(d, `You outbid ${lanistaOf(c.house).name} for ${g.name} at the block, and were seen to do it. ${price} denarii, more than he was worth and worth it to have taken him from that house.`, "good"); }
