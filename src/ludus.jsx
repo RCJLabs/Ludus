@@ -11471,13 +11471,18 @@ function doMelee(d, ids, offer, pending, choice, tactic){
     const g = d.gladiators.find(x=>x.id===e.gid);
     if(!g) return;
     if(e.withdrew){ sum.push(`${g.name} was taken off the sand before it finished.`); return; }
+  /* ONE MAN, ONE TOLL.
+     The melee and the pair each took this twice: the mitigated hit below, and then
+     a second flat 1.3 that no collegium, medicus, great work or damnatus discount
+     ever touched. A man dying in a pair cost twice what the same man cost in a
+     single bout, and the burial society the house pays weekly dues for bought half
+     of what it promised. */
     if(e.dead){
-      g.status = "dead"; firstDeathWord(d, fullName(g)); firstDeathWord(d, fullName(g));
+      g.status = "dead"; firstDeathWord(d, fullName(g));
       d.fallen.push({ name:fullName(g), week:d.week });
       if(d.lanista) d.lanista.health = clamp(d.lanista.health - 1.3*collSoften(d)*(isDamn(g)?0.55:1)*(workPerk(d,"regard")?0.7:1)/docHealth(d), 0, 100);
       collBury(d, g);
       markUnburied(d, g);
-    if(d.lanista) d.lanista.health = clamp(d.lanista.health - 1.3, 0, 100);
       const { grieving, steadier } = mournKin(d, g.id, fullName(g));
       d.unrest = clamp(d.unrest + (5 + grieving.length*3) * collSoften(d), 0, 100);
       dropTies(d, g.id);
@@ -11705,12 +11710,11 @@ function doPairFight(d, ids, offer, tactic, pending, choice){
   // your dead and wounded
   gs.forEach((g,i)=>{
     if(res.dead.A[i]){
-      g.status = "dead"; firstDeathWord(d, fullName(g)); firstDeathWord(d, fullName(g));
+      g.status = "dead"; firstDeathWord(d, fullName(g));
       d.fallen.push({ name:fullName(g), week:d.week });
       if(d.lanista) d.lanista.health = clamp(d.lanista.health - 1.3*collSoften(d)*(isDamn(g)?0.55:1)*(workPerk(d,"regard")?0.7:1)/docHealth(d), 0, 100);
       collBury(d, g);
       markUnburied(d, g);
-    if(d.lanista) d.lanista.health = clamp(d.lanista.health - 1.3, 0, 100);
       const { grieving, steadier } = mournKin(d, g.id, fullName(g), { sine: offer.stakes==="sine" });
       d.unrest = clamp(d.unrest + ((offer.stakes==="sine"?7:4) + grieving.length*3) * collSoften(d), 0, 100);
       dropTies(d, g.id);
