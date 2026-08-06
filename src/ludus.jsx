@@ -10911,20 +10911,54 @@ const workOpen = (d,k) => { const W = workDef(k); if(!W) return false;
   return true; };
 const workPerk = (d, kind) => ALL_WORK_KEYS.reduce((n,k)=>{ const W = workDef(k);
   return (workDone(d,k) && W && W.perk===kind) ? n + W.n : n; }, 0);
+/* ---- STONE IS PAID FOR AS IT RISES ----
+   A work wanted its whole price in a morning: 7,000 for a spina, 30,000 for a
+   colossus, 150,000 for the amphitheatre of Capua — 336,500 denarii of building
+   in all. Measured across four ways of playing a careful twelve-year house, the
+   most any of them ever held at once was 8,485, and the best of them finished
+   the campaign having built two of the nine. The endgame was priced against an
+   economy that does not exist, and the earlier note in this file claiming a house
+   ends with 414,000 was measured on a probe being handed free coin every week.
+
+   Nothing is repriced and nothing pays out sooner. A work is commissioned with a
+   deposit and then draws on the purse every week it is rising, the way a building
+   is actually paid for — so a house that nets a few thousand a year can put up a
+   monument over three years instead of never. Fall behind and the site simply
+   stands idle until you are good for it again; the weeks it waits are weeks it is
+   not being built, which is its own penalty and needs no other. */
+const WORK_DEPOSIT = 0.25;
+const workWeekly = W => Math.ceil(W.cost * (1 - WORK_DEPOSIT) / (W.years * YEAR_WEEKS));
 function beginWork(d, k){
   const W = workDef(k);
   if(!W || worksOf(d)[k]) return false;
   if(!workOpen(d,k)) return false;
-  if(d.gold < W.cost) return false;
-  d.gold -= W.cost;
-  d.works = Object.assign({}, worksOf(d), { [k]: { left: W.years * YEAR_WEEKS, began: d.week } });
-  chron(d, `Work begins on ${W.name.toLowerCase()}. ${W.cost} denarii gone in a morning, and nothing to show for it for ${W.years} years.`, "info");
+  const down = Math.ceil(W.cost * WORK_DEPOSIT);
+  if(d.gold < down) return false;
+  d.gold -= down;
+  d.works = Object.assign({}, worksOf(d), {
+    [k]: { left: W.years * YEAR_WEEKS, began: d.week, paid: down, owed: W.cost - down, idle: 0 } });
+  chron(d, `Work begins on ${W.name.toLowerCase()}. ${down} denarii down and ${workWeekly(W)} a week for ${W.years} years, and nothing to show for it until the last of it.`, "info");
   return true;
 }
 function worksWeek(d){
   const w = worksOf(d);
   for(const k of Object.keys(w)){
     if(w[k].left <= 0) continue;
+    /* the masons want paying. An older save carries no owed figure — treat it as
+       bought outright, because it was. */
+    if(w[k].owed > 0){
+      const W = workDef(k); if(!W) continue;
+      const due = Math.min(w[k].owed, workWeekly(W));
+      if(d.gold < due){
+        w[k].idle = (w[k].idle||0) + 1;
+        if(w[k].idle === 3)
+          chron(d, `The masons have downed tools on ${W.name.toLowerCase()}. They will pick them up again when there is coin to pick them up for.`, "bad");
+        continue;                     /* no payment, no week's work */
+      }
+      d.gold -= due; w[k].owed -= due; w[k].paid = (w[k].paid||0) + due;
+      if(w[k].idle >= 3) chron(d, `The masons are back on ${W.name.toLowerCase()}.`, "info");
+      w[k].idle = 0;
+    }
     w[k].left--;
     if(w[k].left <= 0){
       const W = workDef(k); if(!W) continue;
@@ -19247,8 +19281,10 @@ export default function App(){
                     {on && <Bar v={100 - on.left/(W.years*YEAR_WEEKS)*100} label="" color="linear-gradient(90deg,#4a3a24,#c99a4b)"/>}
                     {!done && !on && (workOpen(S,k)
                       ? <button className="btn btn-ghost" style={{width:"100%",marginTop:6}}
-                          disabled={S.gold < W.cost} onClick={()=>mut(d=>{ beginWork(d, k); })}>
-                          {S.gold < W.cost ? `${W.cost}d — not yet` : `Begin it · ${W.cost}d`}
+                          disabled={S.gold < Math.ceil(W.cost*WORK_DEPOSIT)} onClick={()=>mut(d=>{ beginWork(d, k); })}>
+                          {S.gold < Math.ceil(W.cost*WORK_DEPOSIT)
+                            ? `${Math.ceil(W.cost*WORK_DEPOSIT)}d down — not yet`
+                            : `Begin it · ${Math.ceil(W.cost*WORK_DEPOSIT)}d down, ${workWeekly(W)}d a week`}
                         </button>
                       : <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:6,fontStyle:"italic"}}>
                           The city will not hear this from a house that has not finished its own monuments first.
@@ -19277,8 +19313,10 @@ export default function App(){
                     {on && <Bar v={100 - on.left/(W.years*YEAR_WEEKS)*100} label="" color="linear-gradient(90deg,#4a3a24,#c99a4b)"/>}
                     {!done && !on && (
                       <button className="btn btn-ghost" style={{width:"100%",marginTop:6}}
-                        disabled={S.gold < W.cost} onClick={()=>mut(d=>{ beginWork(d, k); })}>
-                        {S.gold < W.cost ? `${W.cost}d — not yet` : `Begin it · ${W.cost}d`}
+                        disabled={S.gold < Math.ceil(W.cost*WORK_DEPOSIT)} onClick={()=>mut(d=>{ beginWork(d, k); })}>
+                        {S.gold < Math.ceil(W.cost*WORK_DEPOSIT)
+                          ? `${Math.ceil(W.cost*WORK_DEPOSIT)}d down — not yet`
+                          : `Begin it · ${Math.ceil(W.cost*WORK_DEPOSIT)}d down, ${workWeekly(W)}d a week`}
                       </button>
                     )}
                   </div>
@@ -22427,6 +22465,9 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     makePitOffer, pitMen, makePitCard, buyFromBlock, rosterFull, cellsCap,
     /* the week's bill, so its composition can be counted without playing a campaign */
     makeGames, festivalNow, CALENDAR,
+    /* what a fortune can be spent on once the yard is finished */
+    beginWork, workOpen, workDone, workOn, workUpkeep, WORKS, MONUMENTS, ALL_WORK_KEYS,
+    workWeekly, WORK_DEPOSIT, worksWeek,
     /* the rope: what it pays, and who the bay puts up */
     pitPurse, pitDraw, makeCircuitMan, circuitQuality, bayStandard, seedCircuit,
     CIRCUIT_MIX, CIRCUIT_REACH, PIT_DRAW_TOP, PIT_NIGHT,
