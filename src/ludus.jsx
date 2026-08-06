@@ -6563,6 +6563,37 @@ function injuryFor(target, severe){
    of the coin and stops perfect play from ever being a certainty. Measured with a
    99-stat man against his own double, the best card in the game — the read right and
    the best answer to what he brings — comes out at 59%, against 77% before. */
+/* ---- ONE STACK ----
+   Twenty-eight overlays, twenty-three carrying a z-index written by hand somewhere
+   between 55 and 70, and five sitting on the implicit 50 in the stylesheet. Four
+   shared 62, three shared 55, three shared 70. Nobody could see the order because
+   the order was never in one place.
+
+   Then one pair disagreed. The week's digest sits at 58; the answer to the question
+   you had just been asked sat on the default 50. So the moment you chose, the
+   summary of the week threw itself over the top of your own decision, and you read
+   what it cost only after carrying on from a week you had not finished. That was
+   v2.18.1, and it was invisible in the source because the two numbers were eight
+   hundred lines apart.
+
+   Same numbers, named, in one table. Read top to bottom: what is further down
+   paints over what is above it. No overlay may write a bare number — `npm test
+   layers` fails if one does. */
+const Z = {
+  page:     50,   // the whole screen: a bout, a man, the end of a run
+  offer:    55,   // something being put to you — a doctore, a card, the city's games
+  contract: 57,   // a term ending, which cannot wait behind an ordinary offer
+  week:     58,   // the week's own reports, including the letter from Rome
+  decide:   59,   // a question waiting on an answer, and the answer to it
+  gear:     60,   // the kit drawer
+  pick:     62,   // choosing one thing from a list, over a sheet
+  calendar: 63,   // the year ahead
+  sheet:    64,   // a full page of the record — settings, the annals
+  ledger:   65,   // moving a house between slots
+  card:     66,   // a person, or the gatekeeper teaching
+  demand:   70,   // must be answered before anything else on screen
+};
+
 const FOE_EDGE = 1.021;
 function power(f, tactic, oppCls, mom, atkMod){
   /* "Pain and fear find no purchase" — the pain half. He carries a wound onto the
@@ -14780,7 +14811,7 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
   const momPct = ((b.mom||0)+3)/6*100;
 
   return (
-    <div className="modalwrap" role="dialog" aria-modal="true">
+    <div className="modalwrap" style={{zIndex:Z.page}} role="dialog" aria-modal="true">
       <div className="modal" tabIndex={-1}>
         <div className="flex items-center justify-between" style={{marginBottom:8}}>
           <div className="disp" style={{fontSize:"var(--fs-base)", fontWeight:700, letterSpacing:".12em"}}>
@@ -15888,7 +15919,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
   if(screen==="loading") return <div className="lr" style={{display:"flex",alignItems:"center",justifyContent:"center"}}><style>{CSS}</style><div className="disp dim">Lighting the torches...</div></div>;
 
   const CarrySheet = ()=> !carry ? null : (
-    <div className="modalwrap" role="dialog" aria-modal="true" onClick={()=>setCarry(null)}>
+    <div className="modalwrap" style={{zIndex:Z.page}} role="dialog" aria-modal="true" onClick={()=>setCarry(null)}>
       <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
         <div className="disp" style={{fontSize:"var(--fs-xxl)",color:"#e8d092",marginBottom:6}}>
           {carry.mode==="out" ? "CARRY THIS HOUSE OUT" : "BRING A HOUSE IN"}
@@ -15953,7 +15984,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
     const offline = typeof navigator!=="undefined" && "serviceWorker" in navigator && !!navigator.serviceWorker.controller;
     const updateReady = typeof window!=="undefined" && !!window.__lvdvsUpdate;
     return (
-      <div className="modalwrap" role="dialog" aria-modal="true" aria-label="Settings" style={{zIndex:64}} onClick={()=>setShowSettings(false)}>
+      <div className="modalwrap" role="dialog" aria-modal="true" aria-label="Settings" style={{zIndex:Z.sheet}} onClick={()=>setShowSettings(false)}>
         <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
           <div className="flex items-center justify-between gap-2" style={{marginBottom:10}}>
             <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".12em",color:"#e8d092"}}>SETTINGS</div>
@@ -16076,7 +16107,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         <div className="dim" style={{textAlign:"center",fontSize:"var(--fs-sm)",marginTop:10,fontStyle:"italic"}}>Three houses may run at once. Each keeps its own ledger between visits.</div>
       </div>
       {ask && (
-        <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:70}} onClick={()=>setAsk(null)}>
+        <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.demand}} onClick={()=>setAsk(null)}>
           <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()} style={{borderColor: ask.danger? "#7c2a22":"#4e3c26"}}>
             <div className={`disp ${ask.danger?"blood":""}`} style={{fontSize:"var(--fs-lg)",fontWeight:700,letterSpacing:".1em",marginBottom:8}}>{ask.title.toUpperCase()}</div>
             <div style={{fontSize:"var(--fs-xl)"}}>{ask.text}</div>
@@ -18987,7 +19018,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
       </nav>
 
       {selG && (
-        <div className="modalwrap" role="dialog" aria-modal="true" onClick={()=>setSelId(null)}>
+        <div className="modalwrap" style={{zIndex:Z.page}} role="dialog" aria-modal="true" onClick={()=>setSelId(null)}>
           <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
             <div className="flex items-center justify-between" style={{marginBottom:4}}>
               <div className="disp" style={{fontSize:"var(--fs-xl)",fontWeight:900}}>{selG.name}{selG.nick?<span style={{color:"#d8c08a"}}>, {selG.nick}</span>:null}</div>
@@ -19958,7 +19989,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         const opts = Object.entries(GEAR).filter(([id,it])=>it.slot===gearPick.slot && (isBasic(id) || gearFree(S,id)>0 || kit[gearPick.slot]===id));
         const dualLock = gearPick.slot==="offhand" && GEAR[kit.weapon] && GEAR[kit.weapon].art==="dual";
         return (
-          <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:60}} onClick={()=>setGearPick(null)}>
+          <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.gear}} onClick={()=>setGearPick(null)}>
             <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
               <div className="flex items-center justify-between" style={{marginBottom:4}}>
                 <div className="disp" style={{fontSize:"var(--fs-md)",fontWeight:700,letterSpacing:".1em"}}>{SLOT_NAME[gearPick.slot].toUpperCase()}</div>
@@ -20000,7 +20031,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         const pp = peacePrice(S, h);
         const busy = !!S.court;
         return (
-          <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:64}} onClick={close}>
+          <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.sheet}} onClick={close}>
             <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
               <div className="flex items-center justify-between" style={{marginBottom:6}}>
                 <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".08em",color:"#e8d092"}}>HOUSE {h.name.toUpperCase()}</div>
@@ -20072,7 +20103,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         const drilling = !!(drillFor && drillFor.house===h.name && drillFor.fid===f.id);
         const onHim = activeG(S).filter(g=>{ const pp = prepOf(g); return pp && pp.fid===f.id; });
         return (
-          <div className="modalwrap" role="dialog" aria-modal="true" aria-label={f.name} style={{zIndex:66}} onClick={()=>setManCard(null)}>
+          <div className="modalwrap" role="dialog" aria-modal="true" aria-label={f.name} style={{zIndex:Z.card}} onClick={()=>setManCard(null)}>
             <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
               <div className="flex items-center justify-between gap-2" style={{marginBottom:3}}>
                 <div className="disp" style={{fontSize:"var(--fs-xl)",fontWeight:900,letterSpacing:".06em",color:isStar?"#e0bd72":"#e8d092",minWidth:0,overflow:"hidden",textOverflow:"ellipsis"}}>
@@ -20270,7 +20301,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
 
 
       {sheet && SHEETS[sheet] && (
-        <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:62}} onClick={()=>setSheet(null)}>
+        <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.pick}} onClick={()=>setSheet(null)}>
           <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
             <div className="flex items-center justify-between" style={{marginBottom:10}}>
               <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".12em",color:"#e8d092"}}>{SHEETS[sheet].title}</div>
@@ -20294,7 +20325,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         const close = ()=>{ setShowChron(false); setChronQ(""); setChronFilt("all"); setChronMore(false); };
         let lastYear = null, edged = false;
         return (
-        <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:62}} onClick={close}>
+        <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.pick}} onClick={close}>
           <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
             <div className="flex items-center justify-between gap-2" style={{marginBottom:3}}>
               <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".12em",color:"#e8d092"}}>THE CHRONICLE</div>
@@ -20368,7 +20399,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           return n<=0 ? "this week" : n===1 ? "next week" : `in ${n} weeks`; };
         const go = tab => { setCal(false); if(tab) setTab(tab); };
         return (
-          <div className="modalwrap" role="dialog" aria-modal="true" aria-label="The year ahead" style={{zIndex:63}} onClick={()=>setCal(false)}>
+          <div className="modalwrap" role="dialog" aria-modal="true" aria-label="The year ahead" style={{zIndex:Z.calendar}} onClick={()=>setCal(false)}>
             <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
               <div className="flex items-center justify-between gap-2" style={{marginBottom:3}}>
                 <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".12em",color:"#e8d092"}}>THE YEAR AHEAD</div>
@@ -20448,7 +20479,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
 
       {S.succession && (()=>{ const H = HEIRS[S.succession.kind];
         return (
-          <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:70}}>
+          <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.demand}}>
             <div className="modal" tabIndex={-1}>
               <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".12em",color:"#e8d092",marginBottom:9}}>THE HOUSE GOES ON</div>
               <div style={{fontSize:"var(--fs-lg)",marginBottom:9}}>
@@ -20499,7 +20530,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           );
         };
         return (
-          <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:64}} onClick={()=>setAnnals(false)}>
+          <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.sheet}} onClick={()=>setAnnals(false)}>
             <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
               <div className="flex items-center justify-between" style={{marginBottom:4}}>
                 <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".12em",color:"#e8d092"}}>THE ANNALS</div>
@@ -20524,7 +20555,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
       })()}
 
       {S.reSignOffer && !fight && (
-        <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:57}}>
+        <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.contract}}>
           <div className="modal" tabIndex={-1} style={{borderColor:"#8a6a2c"}}>
             <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,letterSpacing:".1em",marginBottom:8,color:"#e8d092"}}>HIS TERM IS UP</div>
             <div style={{fontSize:"var(--fs-xl)"}}>
@@ -20543,7 +20574,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
       )}
 
       {S.romeOffer && !fight && (
-        <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:58}}>
+        <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.week}}>
           <div className="modal" tabIndex={-1} style={{borderColor:"#c99a4b"}}>
             <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,letterSpacing:".12em",marginBottom:8,color:"#e8d092"}}>A LETTER FROM ROME</div>
             <div style={{fontSize:"var(--fs-xl)"}}>
@@ -20561,7 +20592,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
       )}
 
       {S.doctoreOffer && !fight && (
-        <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:55}}>
+        <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.offer}}>
           <div className="modal" tabIndex={-1} style={{borderColor:"#8a6a2c"}}>
             <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,letterSpacing:".1em",marginBottom:8,color:"#e8d092"}}>HE ASKS TO STAY</div>
             <div style={{fontSize:"var(--fs-xl)"}}>
@@ -20589,7 +20620,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         if(!me) return null;
         const mates = S.gladiators.filter(g=>g.status==="active" && g.id!==me.id);
         return (
-          <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:62}} onClick={()=>setSparPick(null)}>
+          <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.pick}} onClick={()=>setSparPick(null)}>
             <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
               <div className="flex items-center justify-between" style={{marginBottom:4}}>
                 <div className="disp" style={{fontSize:"var(--fs-md)",fontWeight:700,letterSpacing:".1em"}}>PAIR HIM AT THE POST</div>
@@ -20633,7 +20664,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         const pool = S.gladiators.filter(g=>canLearn(g, v));
         const bk = bestStatKey(v);
         return (
-          <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:62}} onClick={()=>setTeachPick(null)}>
+          <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.pick}} onClick={()=>setTeachPick(null)}>
             <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
               <div className="flex items-center justify-between" style={{marginBottom:4}}>
                 <div className="disp" style={{fontSize:"var(--fs-md)",fontWeight:700,letterSpacing:".1em"}}>WHO DOES HE BRING ON</div>
@@ -20671,7 +20702,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
       })()}
 
       {xfer && (
-        <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:65}} onClick={()=>setXfer(null)}>
+        <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.ledger}} onClick={()=>setXfer(null)}>
           <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
             <div className="flex items-center justify-between" style={{marginBottom:6}}>
               <div className="disp" style={{fontSize:"var(--fs-md)",fontWeight:700,letterSpacing:".1em"}}>{xfer.mode==="export"? "LIFT THE LEDGER":"RESTORE A LEDGER"}</div>
@@ -20715,7 +20746,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         const S0 = STEPS[st], last = st===STEPS.length-1;
         const done = ()=>{ setShowGuide(false); setPref("guideDone", true); };
         return (
-          <div className="modalwrap" role="dialog" aria-modal="true" aria-label="Opening guide" style={{zIndex:66}}>
+          <div className="modalwrap" role="dialog" aria-modal="true" aria-label="Opening guide" style={{zIndex:Z.card}}>
             <div className="modal" tabIndex={-1} style={{maxWidth:440,borderColor:"#c99a4b"}}>
               <div className="flex items-center justify-between" style={{marginBottom:8}}>
                 <div className="disp" style={{fontSize:"var(--fs-sm)",letterSpacing:".12em",color:"#b09b7d"}}>A FEW WORDS BEFORE YOU START · {st+1}/{STEPS.length}</div>
@@ -20735,7 +20766,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         );
       })()}
       {S && S.pendingLesson && (
-        <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:65}}>
+        <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.ledger}}>
           <div className="modal" tabIndex={-1} style={{maxWidth:430,borderColor:"#c99a4b"}}>
             <div className="disp" style={{fontSize:"var(--fs-xxl)",color:"#e8d092",letterSpacing:".1em",marginBottom:8}}>
               {S.pendingLesson.title.toUpperCase()}
@@ -20765,7 +20796,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           </div>
         );
         return (
-        <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:58}} onClick={close}>
+        <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.week}} onClick={close}>
           <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
             <div className="flex items-center justify-between" style={{marginBottom:3}}>
               <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".1em",color:"#e8d092"}}>THE WEEK THAT WAS</div>
@@ -20794,7 +20825,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         ); })()}
 
       {skipped && skipped.ran>=2 && (
-        <div className="modalwrap" role="dialog" aria-modal="true" onClick={()=>setSkipped(null)}>
+        <div className="modalwrap" style={{zIndex:Z.page}} role="dialog" aria-modal="true" onClick={()=>setSkipped(null)}>
           <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
             <div className="disp" style={{fontSize:"var(--fs-xl)",color:"#e8d092",marginBottom:6}}>
               WEEKS {skipped.from}–{skipped.to-1}
@@ -20812,7 +20843,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         </div>
       )}
       {ask && (
-        <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:70}} onClick={()=>setAsk(null)}>
+        <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.demand}} onClick={()=>setAsk(null)}>
           <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()} style={{borderColor: ask.danger? "#7c2a22":"#4e3c26"}}>
             <div className={`disp ${ask.danger?"blood":""}`} style={{fontSize:"var(--fs-lg)",fontWeight:700,letterSpacing:".1em",marginBottom:8}}>{ask.title.toUpperCase()}</div>
             <div style={{fontSize:"var(--fs-xl)"}}>{ask.text}</div>
@@ -21371,7 +21402,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           }
         }
         return (
-          <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:55}} onClick={close}>
+          <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.offer}} onClick={close}>
             <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
               {header}
               {body}
@@ -21388,7 +21419,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         const canAfford = p.sell || S.gold >= cost;
         const close = ()=> setMunusWiz(false);
         return (
-          <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:55}} onClick={close}>
+          <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.offer}} onClick={close}>
             <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
               <div className="flex items-center justify-between" style={{marginBottom:9}}>
                 <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".1em",color:"#e8d092"}}>GIVE THE CITY GAMES</div>
@@ -21518,7 +21549,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         /* it sat on the default 50, under half the overlays in the game, though it is
            the one thing on screen that is waiting on an answer. Above the digest,
            below anything that must still be answered on top of it. */
-        <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:59}}>
+        <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.decide}}>
           <div className="modal" tabIndex={-1}>
             {evResult ? (<>
               <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,marginBottom:8}}>IT IS DECIDED</div>
@@ -21545,7 +21576,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
       )}
 
       {S.over && !fight && (
-        <div className="modalwrap" role="dialog" aria-modal="true">
+        <div className="modalwrap" style={{zIndex:Z.page}} role="dialog" aria-modal="true">
           <div className="modal" tabIndex={-1} style={{borderColor:"#7c2a22"}}>
             <div className="disp blood" style={{fontSize:"var(--fs-xxl)",fontWeight:900,marginBottom:8,letterSpacing:".12em"}}>{OVER_TEXT[S.over.kind](S.over).title}</div>
             <div style={{fontSize:"var(--fs-xl)"}}>{OVER_TEXT[S.over.kind](S.over).text}</div>
