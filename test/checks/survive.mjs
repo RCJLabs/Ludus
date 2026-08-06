@@ -75,7 +75,11 @@ async function playOne(p){
     /* keep the yard up if the purse allows — men die here, and a lanista who
        never goes to the block is not playing, he is waiting */
     const now = await slot(p);
-    if(now && inYard(now) < KEEP){
+    /* fit men, not men in the yard. The trigger counted the injured, so a house of
+       four with three of them mending never went to the block — while the twenty-house
+       calibration behind the bars below counted only the men who could fight. The two
+       were not the same policy, and the bars were set against the wrong one. */
+    if(now && (now.gladiators||[]).filter(g=>g.status==="active").length < KEEP){
       await tab(p, "market"); await p.waitForTimeout(300);
       /* and within his means. The first draft clicked whatever buy button it found
          first, which is the top of the block: three houses bought a man they could
