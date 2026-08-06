@@ -1925,11 +1925,26 @@ const ACCLAIM_TIERS = [
     once:"A potter by the forum has begun turning out little clay figures of your best man, and an oil-lamp with your crest on it is selling two streets over. Your name is a thing that can be bought now — and a cut of it comes home." },
   { at:82, name:"a name the whole city plays at", blurb:"Boys play at being your men; the stands chant the house.",
     once:"The boys in the street have split themselves into your house and a rival's and fight it out with sticks in the dust. Grown men wear your colours to the games. You are not a ludus any more — you are a name." },
+  { at:92, name:"the street's own house", blurb:"The cheap seats argue for your men before the box has decided.",
+    once:"Something has changed in the stands. When one of yours goes down now the shouting starts before the editor has looked up — not the polite appeal of the good seats but the top tiers, on their feet, telling him what they want. Capua has decided your house belongs to it, and it does not intend to watch you lose men." },
 ];
+/* ---- AND THE STREET HAS A VOICE OF ITS OWN ----
+   Standing in the missio is capped at MISSIO_CAP on purpose: a great house buys
+   a man a hearing and not immunity. But standing there means the editor and the
+   good families, and a late house saturates that cap on fame and favour alone —
+   which left acclaim, the thing the street thinks of you, with nothing left to
+   do above the tier where boys play at being your men. It fed a point of crowd
+   noise and a few denarii of pottery, and that was the whole of it.
+
+   The mob in the top tiers is not the editor's box and does not answer to it.
+   It gets its own small say, outside the cap, worth nothing until your name is
+   on the walls and never more than nine — a hearing, still, and not immunity. */
+const ACCLAIM_MISSIO = 9;
+const streetVoice = d => clamp((acclaimOf(d) - 40) / 58, 0, 1) * ACCLAIM_MISSIO;
 const acclaimOf  = d => clamp(d.acclaim||0, 0, 100);
 const acclaimIdx = d => { const a = acclaimOf(d); let i=0; for(let k=0;k<ACCLAIM_TIERS.length;k++) if(a>=ACCLAIM_TIERS[k].at) i=k; return i; };
 const acclaimTier = d => ACCLAIM_TIERS[acclaimIdx(d)];
-const acclaimWord = a => a>=82?"a name in itself" : a>=62?"widely known" : a>=40?"on the walls" : a>=20?"talked of" : "unknown to the street";
+const acclaimWord = a => a>=92?"the street's own house" : a>=82?"a name in itself" : a>=62?"widely known" : a>=40?"on the walls" : a>=20?"talked of" : "unknown to the street";
 const topPfame   = d => activeG(d).reduce((m,g)=>Math.max(m, g.pfame||0), 0);
 const acclaimCrowd = d => Math.round(acclaimOf(d)/14);               // louder stands for a famous house, up to ~7
 const merchLive  = d => acclaimOf(d) >= 62;
@@ -6881,8 +6896,11 @@ function missioScore(A, ctx, crowd, account, endured, own){
      curve, it is a coin toss for the whole run. The editor has no reason to spend an
      unknown; there is nothing in it for the crowd and a live novice fights again. */
   const green = own === false ? 0 : ((A.wins||0) + (A.losses||0) <= 3 ? 15 : (A.wins||0)+(A.losses||0) <= 6 ? 7 : 0);
+  /* the top tiers, who are nobody's client and shout anyway. Outside the cap
+     because the cap is the editor's box, and deliberately small. */
+  const street = own === false ? 0 : clamp(ctx.street||0, 0, ACCLAIM_MISSIO);
   return clamp(account,0,100)*0.50 + clamp(endured,0,40) + clamp(crowd,0,100)*0.24 + green
-    + (A.sho||0)*0.12 + (own===false ? 0 : kitMissio(A.mods)) + (A.heart||50)*0.07 + standing
+    + (A.sho||0)*0.12 + (own===false ? 0 : kitMissio(A.mods)) + (A.heart||50)*0.07 + standing + street
     + (ctx.guarded?10:0) + (ctx.aedile||0) + (ctx.venue||0) + (ctx.doctrine||0)
     - (ctx.tier===0?9:0) - ((ctx.hostile && own!==false)?16:0) - (ctx.strange||0);
 }
@@ -7382,8 +7400,13 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
         {actor:"A", odds:Math.round(odds*100)});
       if(R() < odds){
         spared = true;
+        /* who it was that spoke. The box, if a patron is in it — otherwise the top
+           tiers, when the house is theirs enough for them to shout for it. */
+        const street = clamp(ctx.street||0, 0, ACCLAIM_MISSIO);
         push("spared", pat && pat.favor>=70
           ? `${pat.name} raises a hand from the editor's box before the crowd has finished deciding. MISSIO — ${prA.he} is spared, and every lanista in Capua saw who spoke for you.`
+          : street >= ACCLAIM_MISSIO*0.7
+          ? `The top tiers are on their feet and will not sit down, and they are not asking. MISSIO — ${prA.he} is spared, because the city that plays at being your house did not intend to watch him die.`
           : `MISSIO. The editor's hand opens. ${prA.He} is spared — carried bleeding from the sand.`, {actor:"A"}); }
       else { aDies=true; push("death", `The thumb turns. The blow falls true. ${A.name} dies as gladiators die — on the sand, before the crowd.`, {actor:"A"}); }
     } else {
@@ -7523,7 +7546,7 @@ const LESSONS = [
   { id:"acclaim", tab:"villa", title:"The House As A Name",
     done:d=>acclaimOf(d)>=40,
     when:d=>acclaimOf(d)>=20,
-    text:"There is fame, which the editors and the good families keep — and there is your name in the street, which the wine-shops and the walls keep. Win famous men and spectacle and it climbs on its own: first talk, then your men's names scratched on walls, then clay figures of your best man on the potters' shelves, paying you a cut. When they come to license it, you choose — sell it wide for the coin, or keep it fine and few and worth the more." },
+    text:"There is fame, which the editors and the good families keep — and there is your name in the street, which the wine-shops and the walls keep. Win famous men and spectacle and it climbs on its own: first talk, then your men's names scratched on walls, then clay figures of your best man on the potters' shelves, paying you a cut. When they come to license it, you choose — sell it wide for the coin, or keep it fine and few and worth the more. And once your name is on the walls the top tiers begin speaking for your men when they go down — not the polite appeal of the good seats, and not a thing any patron can buy you." },
   { id:"stagecraft", tab:"arena", title:"The Performance",
     done:d=>(d.book&&d.book.n)>=12,
     when:d=>d.games && d.games.offers && d.games.offers.some(o=>!o.pair&&!o.melee&&!o.venatio),
@@ -11681,7 +11704,7 @@ function doMelee(d, ids, offer, pending, choice, tactic){
   const myTac = tactic || offer.myTactic || "measured";   // your word carries to all your men on the sand at once
   offer.myTactic = myTac;                                  // remembered so a coached resume keeps it
   const MP = meleePlanEffect(offer.mplan || "none", offer);
-  const mctx = { favor:d.favor, patron: patron?{name:patron.name,favor:patron.favor}:null,
+  const mctx = { favor:d.favor, street:streetVoice(d), patron: patron?{name:patron.name,favor:patron.favor}:null,
     myTactic: myTac, naumachia: offer.spectacle==="naumachia", plan: MP,
     tie:(a,b)=> (a&&b) ? tieBetween(d,a,b) : null };
   const field = pending ? pending.ents : shuffled(ents);
@@ -11845,7 +11868,7 @@ function doVenatio(d, gid, offer, tactic, pending, choice){
   const patron = topPatron(d);
   const C = choice ? CRUX[choice] : null;
   const tacticNow = (C && C.tactic) ? C.tactic : tactic;
-  const vctx = { patron: patron?{name:patron.name,favor:patron.favor}:null, guarded: choice==="cover",
+  const vctx = { street:streetVoice(d), patron: patron?{name:patron.name,favor:patron.favor}:null, guarded: choice==="cover",
     grade: offer.grade != null ? offer.grade : beastGrade(d) };
   let res;
   if(choice==="cloth"){
@@ -11959,7 +11982,7 @@ function doPairFight(d, ids, offer, tactic, pending, choice){
   const tie = tieBetween(d, gs[0].id, gs[1].id);
   const C = choice ? CRUX[choice] : null;
   const tacticNow = (C && C.tactic) ? C.tactic : tactic;
-  const pctx = { d, favor:d.favor, tier:offer.tier, tie, patron: patron?{name:patron.name,favor:patron.favor}:null,
+  const pctx = { d, favor:d.favor, street:streetVoice(d), tier:offer.tier, tie, patron: patron?{name:patron.name,favor:patron.favor}:null,
     guarded: choice==="cover" };
   let res;
   if(choice==="cloth"){
@@ -12402,7 +12425,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   gc.lastLate = lastNum(g,"latePow");
   gc.formStam = formStam(g);
   if(offer.stakes==="sine" && lawSine(d) && !offer.sealed){ d.gold -= lawSine(d); offer.sealed = 1; }
-  const simCtx = { plan:PE, fav:favMissio(g) + veteranGuard(g) + (away ? 0 : riseFav(d)) + blessMercy(d) + pit(d,"mercy",0), doctrine:docMissio(d), footing:V.footing * W.footing, footingB:V.footing * Wb.footing, sky:W.stam, skyB:Wb.stam, venue:V.missio, aedile: away ? cityMissio(d, offer.city) : aedileMissio(d), strange: away ? Math.max(0, 19 - knownIn(d, offer.city)*0.19) * docStrange(d) : 0,
+  const simCtx = { plan:PE, street: streetVoice(d) * (away ? 0.35 : 1), fav:favMissio(g) + veteranGuard(g) + (away ? 0 : riseFav(d)) + blessMercy(d) + pit(d,"mercy",0), doctrine:docMissio(d), footing:V.footing * W.footing, footingB:V.footing * Wb.footing, sky:W.stam, skyB:Wb.stam, venue:V.missio, aedile: away ? cityMissio(d, offer.city) : aedileMissio(d), strange: away ? Math.max(0, 19 - knownIn(d, offer.city)*0.19) * docStrange(d) : 0,
       favor: imperial ? Math.min(d.favor, 20) : (away ? localStanding : d.favor), tier: Math.min(offer.tier,3),
       hostile:!!bribeHouse, patron: imperial ? null : (patron ? {name:patron.name, favor:patron.favor} : null),
       repShow: workPerk(d,"crowd") + femCrowd(g) + favCrowd(g) + W.crowd + provCrowd(g) + ((g.mastery && g.mastery.cls===g.cls) ? masteryCrowd(g) : 0) + signatureCrowd(g) + (repStyle(d)==="show" ? 8 : 0) + (nem ? 10 : 0) + (offer.rematch ? 8 : 0) + (away ? cityCrowd(d, offer.city) : facCrowd(d, g.cls)) + seasonCrowd(d) + V.crowd + (away ? 0 : acclaimCrowd(d)) + (g.graffiti ? 3 : 0),
@@ -22274,6 +22297,9 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     TIERS, CLASSES, GEAR, EVENTS, LASTING, STATS,
     /* the odds the bookmakers quote, and the mitigations on a death */
     winChance, collSoften, docHealth, TACTIC, TACTIC_OR,
+    /* the street: what it thinks of you, and what it will say for your men */
+    acclaimOf, acclaimTarget, acclaimWeek, acclaimWord, streetVoice, merchWeekly,
+    missioScore, missioOdds, missioAccount, ACCLAIM_TIERS, ACCLAIM_MISSIO, MISSIO_CAP, MISSIO_MID,
     /* helpers */
     activeG, defaultKit, kitMods, statCap, fullName,
   };
