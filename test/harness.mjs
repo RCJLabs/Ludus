@@ -21,10 +21,15 @@ export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "
 const MIME = { ".html":"text/html", ".js":"text/javascript", ".json":"application/json",
   ".png":"image/png", ".webmanifest":"application/manifest+json", ".css":"text/css" };
 
-export function serve(){
+/* The test build is served AT THE ROOT, not from /dist/. It registers a service
+   worker with a relative path, and from /dist/test.html that resolves to a URL that
+   is not there — every check then drowned in the same two 404 console errors and
+   called them page errors. Serving it as "/" makes sw.js resolve the way it does in
+   a real install, and the noise goes away because the cause does. */
+export function serve({ page = "dist/test.html" } = {}){
   const server = http.createServer((req,res)=>{
     const rel = decodeURIComponent(req.url.split("?")[0]);
-    const file = path.join(ROOT, rel === "/" ? "/index.html" : rel);
+    const file = path.join(ROOT, rel === "/" ? page : rel);
     if(!file.startsWith(ROOT)) { res.writeHead(403).end(); return; }
     fs.readFile(file, (err, buf)=>{
       if(err){ res.writeHead(404).end("not found"); return; }
@@ -43,7 +48,7 @@ export async function chromium(){
   throw new Error("playwright not found — npm i -D playwright, or run where it is installed");
 }
 
-export async function open(port, { page = "/dist/test.html", width = 390, height = 844 } = {}){
+export async function open(port, { page = "/", width = 390, height = 844 } = {}){
   const ch = await chromium();
   const browser = await ch.launch();
   const ctx = await browser.newContext({ viewport:{ width, height }, isMobile:true, hasTouch:true });

@@ -16721,7 +16721,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                    buys a real hit area and the matching negative margin gives the layout
                    back, so the line sits exactly where it did and the thumb has somewhere
                    to land. */
-                style={{background:"none",border:"none",padding:"12px 0",margin:"-12px 0",font:"inherit",textAlign:"left",cursor:"pointer",
+                style={{background:"none",border:"none",padding:"13px 0",margin:"-13px 0",font:"inherit",textAlign:"left",cursor:"pointer",
                   width:"100%",fontSize:"var(--fs-sm)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",color:"inherit",position:"relative",zIndex:1}}>
                 {seasonOf(S).name} · year {yearOf(S)}, week {yearWeek(S)} · {S.travel? "on the road" : S.city? CITIES[S.city].name : fameTitle(S.fame)} <span style={{color:"#8a6a2c"}}>›</span>
               </button>
@@ -18097,9 +18097,9 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             <div className="flex gap-2" style={{flexWrap:"wrap",marginBottom:11}}>
               {HOUSE_COLOURS.map(([hex,nm])=>(
                 <button key={hex} aria-label={nm} title={nm} onClick={()=>setCrest({c1:hex})}
-                  /* a thirty-pixel swatch is a thirty-pixel miss. The grid still wraps
-                     the same way at forty. */
-                  style={{width:40,height:40,borderRadius:8,background:hex,cursor:"pointer",padding:0,
+                  /* a thirty-pixel swatch is a thirty-pixel miss. Seven still fit a row
+                     at the full forty-four, so there is no reason to be under it. */
+                  style={{width:44,height:44,borderRadius:8,background:hex,cursor:"pointer",padding:0,
                     border:(S.crest&&S.crest.c1===hex)?"2px solid #e8d092":"1px solid #3e2f1f"}}/>
               ))}
             </div>
@@ -18107,9 +18107,9 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             <div className="flex gap-2" style={{flexWrap:"wrap",marginBottom:11}}>
               {HOUSE_COLOURS.map(([hex,nm])=>(
                 <button key={hex} aria-label={nm} title={nm} onClick={()=>setCrest({c2:hex})}
-                  /* a thirty-pixel swatch is a thirty-pixel miss. The grid still wraps
-                     the same way at forty. */
-                  style={{width:40,height:40,borderRadius:8,background:hex,cursor:"pointer",padding:0,
+                  /* a thirty-pixel swatch is a thirty-pixel miss. Seven still fit a row
+                     at the full forty-four, so there is no reason to be under it. */
+                  style={{width:44,height:44,borderRadius:8,background:hex,cursor:"pointer",padding:0,
                     border:(S.crest&&S.crest.c2===hex)?"2px solid #e8d092":"1px solid #3e2f1f"}}/>
               ))}
             </div>
