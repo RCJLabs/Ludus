@@ -36,10 +36,34 @@ export const name = "survive";
 export const describe = "three new houses live twenty-six weeks and still have men";
 export const slow = true;   /* drives a real browser through the real screens */
 
-const HOUSES = 3;    /* free now that they run side by side; three is enough to see a pattern */
+/* ---- WHAT THE BAR IS, AND WHY IT IS THERE ----
+   Measured over twenty houses on exactly the policy below: seventy per cent come
+   through twenty-six weeks with a man still in the yard, and the ones that do keep
+   a median of three or four. That is the game, not a fault — the opening is meant
+   to be hard. But it means a bar of "two of three houses" would have failed one run
+   in five with nothing wrong, and a check nobody trusts is worse than no check.
+
+   So five houses, which cost nothing now they run side by side, and two bars taken
+   off the bootstrapped distribution rather than off a hope:
+
+     at least two still standing   passes 98.4% of healthy runs
+     at least six men between them passes 98.3%, median is sixteen
+
+   Neither is a precision instrument for difficulty and they are not meant to be.
+   They catch the thing this check has always caught — a change that quietly guts
+   every opening — and the per-house line is printed every run so drift is visible
+   long before either bar is touched. */
+const HOUSES = 5;    /* free now that they run side by side */
 const WEEKS  = 26;   /* past the first winter, the first deaths, the first hard week */
+const FLOOR  = 2;    /* houses that must still be able to field somebody */
+const MEN    = 6;    /* and men left between all of them; sixteen is the healthy median */
 const KEEP   = 4;    /* the yard a lanista tries to hold; below it, he goes to the block */
-const SPEND  = 0.4;  /* and never more than this share of the purse on one man */
+/* what he will not spend below. A lanista does not think in percentages, he thinks
+   about whether he can still feed the house next month — and a small house costs
+   seventy to ninety denarii a week. The first draft of this used forty per cent of
+   the purse, which sounds reasonable and bought nothing at all: a new house holds
+   800 denarii and the cheapest man on the block wants 333, which is forty-two. */
+const RESERVE = 260;
 
 const inYard = d => (d.gladiators||[])
   .filter(g => g.status!=="dead" && g.status!=="gone" && g.status!=="freed").length;
@@ -54,22 +78,22 @@ async function playOne(p){
     if(now && inYard(now) < KEEP){
       await tab(p, "market"); await p.waitForTimeout(300);
       /* and within his means. The first draft clicked whatever buy button it found
-         first, which is the top of the block, and three houses bought a man they
-         could just afford and then could not afford the month — they ended in debt
-         and ruin with men still in the yard. A lanista with eight hundred denarii
-         does not spend six hundred on one body. */
-      const took = await p.evaluate(SHARE=>{
+         first, which is the top of the block: three houses bought a man they could
+         just afford and then could not afford the month, and ended in debt and ruin
+         with men still in the yard. So: the cheapest man who fills the gap, and only
+         if there is still a month in the purse behind him. */
+      const took = await p.evaluate(RESERVE=>{
         const price = b => { const m=(b.innerText||"").match(/([\d,]+)\s*D\b/i); return m?+m[1].replace(/,/g,""):Infinity; };
         const purse = (()=>{ for(const k of Object.keys(localStorage)) if(/ludus-slot-\d/.test(k)){
           try{ const s=JSON.parse(localStorage.getItem(k)); if(s&&s.gladiators) return s.gold; }catch(e){} } return 0; })();
         const buys = [...document.querySelectorAll("button")]
           .filter(x=>/^(buy|take him|pay|meet it)/i.test((x.innerText||"").trim()) && !x.disabled)
           .map(b=>({ b, p:price(b) }))
-          .filter(x=>x.p <= purse*SHARE)
+          .filter(x=>Number.isFinite(x.p) && purse - x.p >= RESERVE)
           .sort((a,c)=>a.p-c.p);
         if(!buys.length) return false;
         buys[0].b.click(); return true;
-      }, SPEND);
+      }, RESERVE);
       if(took){ bought++; await p.waitForTimeout(500); await clearAll(p, 6); }
     }
     /* take a bout if one is going */
@@ -122,12 +146,13 @@ export async function run({ p, errors, port }){
   /* standing means it can still field somebody. The absence of an end-flag is not
      the same thing, and for a long time this check accepted it as if it were. */
   const standing = live.filter(x=>!x.over && x.yard > 0).length;
-  lines.push(`${standing} of ${live.length} houses still standing after ${WEEKS} weeks, with men in the yard`);
-  return {
-    pass: live.length === HOUSES && standing >= 2 && allErrors.length === 0,
-    why: live.length < HOUSES ? `${HOUSES - live.length} of ${HOUSES} houses produced no save at all`
-       : standing < 2 ? `only ${standing} of ${HOUSES} houses came through ${WEEKS} weeks with a man left in the yard`
-       : allErrors.length ? `${allErrors.length} page errors: ${allErrors.slice(0,2).join(" | ")}` : null,
-    lines,
-  };
+  const men = live.reduce((n,x)=>n+x.yard, 0);
+  lines.push(`${standing} of ${live.length} houses still standing after ${WEEKS} weeks, ${men} men between them (the healthy median is 16)`);
+
+  const fails = [];
+  if(live.length < HOUSES) fails.push(`${HOUSES - live.length} of ${HOUSES} houses produced no save at all`);
+  if(standing < FLOOR) fails.push(`only ${standing} of ${HOUSES} houses came through ${WEEKS} weeks with a man left in the yard`);
+  if(men < MEN) fails.push(`${men} men left across ${HOUSES} houses — under ${MEN}, and the opening has been gutted`);
+  if(allErrors.length) fails.push(`${allErrors.length} page errors: ${allErrors.slice(0,2).join(" | ")}`);
+  return { pass: fails.length === 0, why: fails.join("; ") || null, lines };
 }
