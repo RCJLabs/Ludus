@@ -83,7 +83,12 @@ async function playOne(p){
          with men still in the yard. So: the cheapest man who fills the gap, and only
          if there is still a month in the purse behind him. */
       const took = await p.evaluate(RESERVE=>{
-        const price = b => { const m=(b.innerText||"").match(/([\d,]+)\s*D\b/i); return m?+m[1].replace(/,/g,""):Infinity; };
+        /* the block writes "BUY FOR 234 DENARII"; elsewhere the game writes "· 333D".
+           The first draft matched only the second, so every price came back null,
+           every candidate was filtered out, and five houses ran twenty-six weeks
+           with `0 bought` while the check reported the opening as gutted. */
+        const price = b => { const m=(b.innerText||"").match(/([\d,]+)\s*(?:denarii|d)\b/i);
+          return m ? +m[1].replace(/,/g,"") : Infinity; };
         const purse = (()=>{ for(const k of Object.keys(localStorage)) if(/ludus-slot-\d/.test(k)){
           try{ const s=JSON.parse(localStorage.getItem(k)); if(s&&s.gladiators) return s.gold; }catch(e){} } return 0; })();
         const buys = [...document.querySelectorAll("button")]
