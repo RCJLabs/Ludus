@@ -7234,41 +7234,56 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
    what he knows, once, on the tab where it is any use, and then leaves you to it. */
 const LESSONS = [
   { id:"loop", tab:"ludus", title:"The Week",
+    done:d=>d.week>=4,
     text:"A week is all you get at a time. Set what each man does, take what fights you want, spend what you dare — then end it. Everything happens at once when you do: training, wounds mending, the rivals moving, the coin going out." },
   { id:"unrest", tab:"ludus", title:"The Fire in the Cells",
+    done:d=>d.week>=10,
     text:"Watch that red bar more closely than the gold. People who are worked, whipped and buried get to talking. Feasts, victories and freedom cool it. If it reaches its height, none of the rest of this matters." },
   { id:"men", tab:"men", title:"They Are Not Numbers",
+    done:d=>d.week>=6,
     text:"Everyone here has an origin, a temper and a ceiling you cannot see. Bearing tells you how much fire is in them — the best fighters carry the most, which is the whole problem with owning them." },
   { id:"regimen", tab:"men", title:"The Palus and the Pair",
+    done:d=>activeG(d).some(g=>g.regimen && g.regimen!=='palus'),
     text:"Post work is safe and slow. Sparring is far faster, and a man learns most from someone better than himself — but partners get hurt, and two men who hate each other will go too hard. Conditioning builds wind and sheds fatigue. Rest mends." },
   { id:"arena", tab:"arena", title:"Stakes",
+    done:d=>(d.book&&d.book.n)>0,
     text:"First blood ends at the first real wound and nobody dies. To surrender leaves it to the editor and the crowd. To the death is exactly that. The pits are always open and pay badly; the games come every third week once anyone has heard of you." },
   { id:"bets", tab:"arena", title:"The Bookmakers",
+    done:d=>d.flags && d.flags.lastBet!=null,
     text:"You may lay coin on your own fighter, or against them. Against means they are told to go down — and they will know you asked, whatever the crowd sees. The familia remembers that longer than the whip." },
   { id:"armory", tab:"armory", title:"Steel and Style",
+    done:d=>Object.keys(d.gear||{}).length>0,
     text:"Standard kit is always free on the racks. Bought pieces arm one man at a time. Gear outside a man's own style still works, but clumsily — a net-man in a legionary's shield is worse than useless." },
   { id:"market", tab:"market", title:"The Slaver's Block",
+    done:d=>(d.annals||[]).length>0 || d.gladiators.length>3,
     text:"Age is most of the price. A fighter is in their prime from 23 to 28; before that they are still growing, after it they start giving pieces back. Veterans come cheap, already scarred, and already schooled." },
   { id:"villa", tab:"villa", title:"Those Who Watch",
+    done:d=>(d.favor||0)>=45,
     text:"Favor is not a number you bank — it is what four particular Romans think of you. Keep one of them warm and he leans on the editor when your man is in the sand. Let them all go cold and you will notice at the worst moment." },
 
   /* ---- everything the house grew after the first nine lessons were written ---- */
   { id:"agenda", tab:"ludus", title:"What Wants Answering",
+    done:d=>d.week>=6,
     when:d=>d.week>=2,
     text:"That list at the top is the only part of this screen you have to read. It is everything with your name on it this week, worst first, and each line will put you where the answer is. When it says now, it means this week and not the next one." },
   { id:"season", tab:"ludus", title:"The Year Turns",
+    done:d=>d.week>=20,
     when:d=>d.week>=10,
     text:"Eighteen weeks to a year, and the weather in them is not decoration. Spring is when a man learns fastest. Summer is the season of games and the sand burns anyone who goes down on it. Autumn brings the harvest money and the best purses you will see. Winter shuts the sand, costs you four denarii a man extra, and mends wounds faster than any other season, because there is nothing else for anybody to do." },
   { id:"book", tab:"ludus", title:"What The House Has Done",
+    done:d=>(d.book&&d.book.n)>=60,
     when:d=>(d.book&&d.book.n)>=25,
     text:"The record book keeps everything: which style has actually served you, which stakes you should stop accepting, which of the three great houses is quietly taking you apart. Most lanistae have a feeling about these things. You can have the number." },
   { id:"heir", tab:"ludus", title:"After You",
+    done:d=>!!d.heir,
     when:d=>d.lanista && (d.lanista.age>=48 || d.lanista.health<55),
     text:"You are not a permanent fixture. Age, a house on the edge of fire, and every man you bury take something out of you, and when it runs out the school is sold off in pieces the morning after — unless you have put a name to it. A son, a nephew, or the doctore you freed. They inherit the men and the debts and none of your reputation." },
 
   { id:"drills", tab:"men", title:"The Week's Work",
+    done:d=>d.week>=8,
     text:"Eight things a man can do with his week, and none of them are free. The weights build strength half again as fast and take his speed. The hill works the tiredness out of him instead of in. Sparring teaches him whatever his partner is better at, which is not always what you picked. And watch the strain: it is the deep tiredness a night does not touch, it eats what he gains, and only rest takes it off." },
   { id:"regard", tab:"men", title:"What He Makes Of You",
+    done:d=>activeG(d).some(g=>(g.memory||[]).length>=4),
     when:d=>activeG(d).some(g=>(g.memory||[]).length>0),
     text:"He is keeping a list. The bout you stopped to save him, the promise you kept, the brother you freed — and the brother you sold, the wound you sent him out on, the night you left him on the sand until he had to finish one of his own. A man who would follow you anywhere fights measurably harder and cannot be bought at any price. One who hates you will one day sit down and not get up." },
   { id:"form", tab:"men", title:"Lately",
@@ -7279,66 +7294,100 @@ const LESSONS = [
     text:"Sooner or later one of them will not go out, and the reason will be something you did. Open his page in the familia and settle it there — any week, not just the day it starts. The whip works and costs you every other man in the room. Talking is free and unreliable and depends entirely on what you have been to him. Giving him the thing he wanted works outright. And leaving him where he is teaches the whole block that sitting down can be survived." },
 
   { id:"stands", tab:"arena", title:"Four Crowds, Not One",
+    done:d=>!!d.factions && Math.max(...Object.values(d.factions))>=60,
     when:d=>d.fame>=60,
     text:"Capua is not one crowd. The parmularii want the small shield, the scutarii want the big one, and they have hated each other since before you were born — you cannot please both. The mob in the upper tiers wants blood; the front rows want craft and can afford to. Whoever is warmest to you sets the purses you are offered." },
   { id:"venue", tab:"arena", title:"Where It Happens",
+    done:d=>(d.book&&d.book.n)>=6,
     when:d=>d.fame>=40,
     text:"The ground decides who you should send. A magistrate's courtyard is marble and favours a quick man; a field cut outside the walls is turf and favours a heavy one. It is on every offer before you commit, and it is worth reading." },
   { id:"watch", tab:"arena", title:"A Week To Look At Him",
+    done:d=>(d.book&&d.book.n)>=4,
     when:d=>d.games && d.games.offers && d.games.offers.length>0,
     text:"You can pay to have an opponent watched before the bout. What comes back is specific: that he is blowing by the sixth, that he drops his arm every time he lands one, that he has almost no bouts behind him. Then pick a plan against what you were told. Read him right and it is worth seven bouts in a hundred; read him wrong and it costs five." },
   { id:"circuit", tab:"arena", title:"Down The Bay",
+    done:d=>!!d.city || Object.keys(d.known||{}).length>0,
     when:d=>d.fame>=150,
     text:"Three towns will have you: Pompeii wants blood, Neapolis knows the styles, Puteoli has money and nothing to spend it on. Nothing you built here travels with you — the editor there weighs what he has seen himself, and a man of yours who falls in front of a town that has never heard of him is spared about half the time. Win there enough and they learn the name." },
 
   { id:"lenders", tab:"villa", title:"Three Men With Coin",
+    done:d=>!!d.loan || d.gold>=1200,
     when:d=>d.gold<400,
     text:"Novius Gratus is cheap because he does not need to argue and he collects in gladiators. Titus Murena is dear and unhurried and never touches your men. Scaeva lends to anybody at a price that explains why. It compounds every week, it is entirely survivable if you pay it down, and it is very hard to stop taking once you have started." },
   { id:"aedile", tab:"villa", title:"The Man Who Runs The Games",
+    done:d=>!!d.aedile,
     when:d=>!!d.election || !!d.aedile,
     text:"Once a year Capua elects the aedile, and the aedile decides whose men are on the card, what they are paid, and whether anyone leans forward when one of them is down. You can back a candidate quietly, or openly with your name on the list, or stay out of it. Back the winner and you have the games for a year. Back the loser and he knows exactly whose name was on the other list." },
   { id:"collegium", tab:"villa", title:"A Stone With His Name",
+    done:d=>!!d.collegium,
     when:d=>d.week>=14,
     text:"Three denarii a week per man puts the house into a burial society. It never wins you a bout. What it does is halve what a death costs the cells, because men who know what happens to them afterward take a burial differently. It is the easiest line to cut in a bad month, and stopping it after men have gone into the ground under it costs double what stopping it before does." },
   { id:"munera", tab:"villa", title:"Games For Your Own Dead",
+    done:d=>(d.honoured||0)>0,
     when:d=>(d.unburied||[]).some(m=>!m.done),
     text:"Funeral games are what a rich man's sons stage at his tomb. Nobody has ever staged them for a gladiator. You have six weeks to burn a fire at the gate with his name said aloud, or put on a full card at your own expense — or do nothing, which costs no money and which the men notice more than either of the others." },
 
   { id:"scout", tab:"market", title:"The Seller's Version",
+    done:d=>(d.annals||[]).length>=2,
     text:"Those numbers are what the man selling him says. He overstates a sound man by about two points a stat and a flawed one by twice that, and roughly a third of the block has something wrong with it — an old wound, a spirit already broken, a temper sold twice in a year. Your doctore narrows the range. Paying to have him looked over gives you the number and names the problem." },
   { id:"staff", tab:"market", title:"The Men In The Rooms",
+    done:d=>!!d.medicus || !!d.armourer || !!d.doctore,
     when:d=>BKEYS.some(k=>bLevel(d,k)>0),
     text:"The infirmary and the armoury are rooms. What matters is who is standing in them. A good medicus mends faster and keeps a wound from setting badly; a good armourer makes steel cheaper, longer-lasting and quicker to repair. Both will leave — one if you fill his table every week, the other if you pay him late twice — and a rival with a grudge can buy either out from under you." },
 
   { id:"wear", tab:"armory", title:"Steel Does Not Last",
+    done:d=>(d.forged||[]).length>0 || Object.keys(d.gearCond||{}).length>0,
     when:d=>d.gladiators.some(g=>SLOTS.some(s=>wears(GEAR[g.kit&&g.kit[s]]))),
     text:"House stock is maintained and lasts forever. Bought steel wears every bout and eventually breaks in the middle of one. Watch the condition, have it mended before it goes, and remember that a fine blade at nothing left is worse than the plain one on the rack." },
   { id:"bench", tab:"armory", title:"The Master's Bench",
+    done:d=>Object.keys(d.gear||{}).some(id=>isMaster(id)),
     when:d=>masterOpen(d),
     text:"Every piece on the rack put together comes to about eleven thousand denarii, and by now you have more than that doing nothing. The masters are the answer to it — and understand what you are buying, because it is not a sharper edge. Point for point of attack and defence their work is the same as the best plain steel in the room. What it is, is famous: twice the showmanship of anything else, which is the crowd, and the crowd is the purse, the name your man is building, and the finger that goes up instead of down when he is on his knees. It is heavier than the plain version every time, and every piece wants a smith's wage every week for as long as you own it, whether it is on a man or on the wall." },
 
   /* ---- the newer trades of the house — each unlocks when it becomes real ---- */
   { id:"signature", tab:"men", title:"A Move Of His Own",
+    done:d=>activeG(d).some(g=>!!g.signature),
     when:d=>activeG(d).some(g=>canLearnSig(d,g)),
     text:"A man with six wins under him has earned more than the standard forms. Have the doctore drill him a move that is his alone — the Bulwark, the Widow, whatever his class is for — and it fires oftener, lands harder, and breaks the crowd with a named flourish when it does. Open his page in the familia, the training tab, and teach it." },
   { id:"board", tab:"men", title:"The Doctore's Board",
+    done:d=>!!(d.doctore && d.doctore.drill && d.doctore.drill!=='none'),
     when:d=>d.doctore && activeG(d).length>=3,
     text:"The second face of the familia lays the whole yard out at once — every man's regimen and how worn he is, set in one place, with a tap to rest the strained or pair the whole block for sparring. And the doctore can put the entire yard on one drill for the week: conditioning to shed strain, bladework to sharpen the edge, the crowd, or hard sparring. A good doctore gets far more out of it than a poor one." },
   { id:"acclaim", tab:"villa", title:"The House As A Name",
+    done:d=>acclaimOf(d)>=40,
     when:d=>acclaimOf(d)>=20,
     text:"There is fame, which the editors and the good families keep — and there is your name in the street, which the wine-shops and the walls keep. Win famous men and spectacle and it climbs on its own: first talk, then your men's names scratched on walls, then clay figures of your best man on the potters' shelves, paying you a cut. When they come to license it, you choose — sell it wide for the coin, or keep it fine and few and worth the more." },
   { id:"stagecraft", tab:"arena", title:"The Performance",
+    done:d=>(d.book&&d.book.n)>=12,
     when:d=>d.games && d.games.offers && d.games.offers.some(o=>!o.pair&&!o.melee&&!o.venatio),
     text:"A bout is a show before it is a fight. Choose how your man comes onto the sand — working the mob for the crowd, silent and grim to unsettle the other man, or saluting the boxes so the editor remembers him when he is down. And when it hangs in the balance and the crowd looks to your box, you can play them: work the moment for his life or his fame, or milk the other man's wound. Watch the CROWD reading — a loud house buys a beaten man his life." },
   { id:"dynasty", tab:"villa", title:"Blood Of Your Own",
+    done:d=>!!(d.domus && d.domus.wife),
     when:d=>marryReady(d),
     text:"A man alone at the head of a ludus leaves nothing behind but a ledger. You are established enough now to take a wife — for a dowry, for the standing, or to fold up a rival's feud in a wedding. She bears the house children, and a son you raise yourself, in this yard, becomes an heir worth far more than whoever is left when you die. It lives on the Lanista's page." },
   { id:"campania", tab:"ludus", title:"The Bay Is Alive",
+    done:d=>!!d.city || Object.keys(d.known||{}).length>0,
     when:d=>(d.rivals||[]).some(h=>h.star) || d.week>=24,
     text:"The other houses of the bay are not standing still while you build. Each has good years and bad — a run of form that carries it up the fame table or drops it down, a rising man the whole bay starts to name. The Houses record shows each one's fortune and its best man, and the chronicle carries news of the bay that has nothing to do with you. A rival having a season is a rival to watch." },
 ];
+/* ---- WHEN THE GATEKEEPER STOPS TALKING ----
+   Thirty-five notes, one per tab visit, each taking between a quarter and a third
+   of a phone screen at the top of the tab it belongs to. Measured on a fresh house
+   playing twenty-four weeks: nineteen of them met and dismissed, the tallest 312px
+   of an 844px screen. None of them knew whether you had already done the thing they
+   were explaining, so the note about the bookmakers arrived whether or not you had
+   ever placed a bet, and the note about steel whether or not you had bought any.
+
+   Two answers. `done` retires a note the moment the house has demonstrably done the
+   thing — the note is never shown at all, rather than shown and dismissed. And once
+   you have read a few, the rest arrive folded: a line and a chevron instead of a
+   panel, because by then you know who he is and what he is for. */
+const LESSON_QUIET = 3;
+const lessonsRead = d => Object.keys((d.flags && d.flags.learned) || {}).length;
+const lessonFolds = d => lessonsRead(d) >= LESSON_QUIET;
 const lessonFor = (d, tab) => LESSONS.find(l => {
   if(l.tab!==tab || (d.flags.learned||{})[l.id]) return false;
+  try { if(l.done && l.done(d)) return false; } catch(e){}
   if(!l.when) return true;
   try { return !!l.when(d); } catch(e){ return false; }
 });
@@ -11782,7 +11831,15 @@ function doPairFight(d, ids, offer, tactic, pending, choice){
   bookBout(d, { win:pWin, drawn:pDrawn, purse:pPurse, crowd:res.crowd, tier:offer.tier,
     cls:gs[0]&&gs[0].cls, stakes:offer.stakes, city:offer.city, kind:"pair",
     died: res.dead.A.some(Boolean), killed: kills>0,
-    name:gs.map(x=>x.name).join(" and "), oppHouse: offer.opp && offer.opp.house,
+    /* A pair offer has no `.opp` — it carries opps[] and oppRefs[] — so this read
+       was undefined every time and no pair bout ever reached the book's table of
+       great houses. It is the table a player looks at before accepting a grudge
+       match, and it was answering for single bouts alone.
+       Two men, possibly from two houses: file it against the house only when the
+       pair came from the same one, because "who is taking me apart" has no answer
+       when the answer is two people. */
+    oppHouse: (()=>{ const hs = (offer.oppRefs||[]).map(r=>r && r.house).filter(Boolean);
+      return (hs.length===2 && hs[0]===hs[1]) ? hs[0] : null; })(),
     rounds: res.beats ? Math.max(...res.beats.map(b=>b.round||0)) : 0,
     opp: (offer.opps||[]).map(o=>o.name).join(" and "), festival:offer.festival });
   if(kills){ d.fame += 4*kills; sum.push(`${kills===2?"Both":"One"} of theirs will not leave the sand.`); }
@@ -16847,17 +16904,40 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
       <div className="scroll" style={{width:"100%"}}><div style={{width:"100%",maxWidth:640,margin:"0 auto",padding:"calc(var(--hdr-h,84px) + 14px) 14px calc(var(--nav-h,72px) + 14px)"}}>
 
         {(()=>{ const L = lessonFor(S, tab); if(!L || S.flags.noLessons) return null;
-          return (
+          const read = ()=>mut(d=>{ d.flags.learned = Object.assign({}, d.flags.learned, {[L.id]:1}); });
+          const enough = ()=>mut(d=>{ d.flags.noLessons = 1; });
+          const buttons = (
+            <div className="grid grid-cols-2 gap-2" style={{marginTop:10}}>
+              <button className="btn" onClick={read}>Understood</button>
+              <button className="btn btn-ghost" onClick={enough}>I know my trade</button>
+            </div>
+          );
+          /* the first few arrive open, because you do not yet know who is talking */
+          if(!lessonFolds(S)) return (
             <div className="panel" style={{padding:13,marginBottom:12,borderColor:"#6d5426",background:"linear-gradient(165deg,#2b2216,#1d1610)"}}>
               <div className="flex items-center justify-between gap-2" style={{marginBottom:5}}>
                 <span className="tag tag-gold">The gatekeeper — {L.title}</span>
               </div>
               <div style={{fontSize:"var(--fs-lg)"}}>{L.text}</div>
-              <div className="grid grid-cols-2 gap-2" style={{marginTop:10}}>
-                <button className="btn" onClick={()=>mut(d=>{ d.flags.learned = Object.assign({}, d.flags.learned, {[L.id]:1}); })}>Understood</button>
-                <button className="btn btn-ghost" onClick={()=>mut(d=>{ d.flags.noLessons = 1; })}>I know my trade</button>
-              </div>
+              {buttons}
             </div>
+          );
+          /* after that he waits to be asked. A line, not a third of the screen. */
+          return (
+            /* keyed by the note, or React reuses the element and the next one arrives
+               already open because you happened to read the last one */
+            <details key={L.id} className="sect" style={{marginBottom:12,borderColor:"#6d5426",background:"linear-gradient(165deg,#241c12,#1d1610)"}}>
+              <summary style={{padding:"10px 12px",minHeight:"var(--tap)"}}>
+                <span className="dim" style={{fontSize:"var(--fs-base)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis"}}>
+                  The gatekeeper has a word about <span style={{color:"#e0bd72"}}>{L.title.toLowerCase()}</span>
+                </span>
+                <span className="chev" aria-hidden="true">⌄</span>
+              </summary>
+              <div style={{padding:"0 12px 12px"}}>
+                <div style={{fontSize:"var(--fs-md)"}}>{L.text}</div>
+                {buttons}
+              </div>
+            </details>
           ); })()}
 
 

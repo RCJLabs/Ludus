@@ -12,7 +12,11 @@ const VERSION = require("./package.json").version;
    flag now: `node build.js --test` writes dist/test.html with the handle attached
    and never touches index.html, so what ships cannot carry it. */
 const TEST = process.argv.includes("--test");
-const OUT  = TEST ? "dist/test.html" : "index.html";
+/* Two suites running at once both wrote dist/test.html, and the second one caught the
+   first mid-write: a page with no test handle and a check that failed for a reason
+   that had nothing to do with the game. --out lets each run own its file. */
+const OUTARG = (process.argv.find(a => a.startsWith("--out=")) || "").slice(6);
+const OUT  = TEST ? (OUTARG || "dist/test.html") : "index.html";
 
 esbuild.buildSync({
   entryPoints: ["src/main.jsx"],

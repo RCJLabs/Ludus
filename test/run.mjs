@@ -36,10 +36,12 @@ if(!checks.length){
   process.exit(2);
 }
 
+/* its own file, so two runs at once cannot catch each other mid-write */
+const TESTPAGE = `dist/test-${process.pid}.html`;
 console.log("building the test bundle…");
-execFileSync(process.execPath, ["build.js", "--test"], { cwd: ROOT, stdio: "inherit" });
+execFileSync(process.execPath, ["build.js", "--test", `--out=${TESTPAGE}`], { cwd: ROOT, stdio: "inherit" });
 
-const { server, port } = await serve();
+const { server, port } = await serve({ page: TESTPAGE });
 let failed = 0;
 const started = Date.now();
 
@@ -63,7 +65,7 @@ for(const c of checks){
 }
 
 server.close();
-if(!KEEP) fs.rmSync(path.join(ROOT, "dist", "test.html"), { force: true });
+if(!KEEP) fs.rmSync(path.join(ROOT, TESTPAGE), { force: true });
 
 const mins = ((Date.now()-started)/1000/60).toFixed(1);
 console.log(`\n${checks.length - failed}/${checks.length} checks passed in ${mins} min`);
