@@ -14681,9 +14681,16 @@ const Fighter = React.memo(function Fighter({ kit, pose, wounds, scars, fallen, 
         <rect x="74.5" y="41.5" width="2.6" height="13" rx="1.1" fill={BLADE_D}/>
         <path d="M77,45 Q97,36 108,51 Q99,44 77,50Z" fill={BLADE} stroke={BLADE_D} strokeWidth=".9"/>
       </g>);
+      /* ---- THE AXE WAS ON BACKWARDS ----
+         The old head curved out to two horns and then bit inward in the middle of
+         its far edge — so the widest part was the corners and the cutting edge was
+         scalloped hollow. At fight scale, mirrored and swung up over a fallen man,
+         it read as a spearhead mounted the wrong way round, which is what it was.
+         A securis is narrow where it meets the haft and flares to a convex bit. */
       if(wArt==="axe") return (<g>
-        <rect x="58" y="46" width="42" height="4.2" rx="1.9" fill="#6b4a22" stroke="#4a3216" strokeWidth=".6"/>
-        <path d="M94,48 Q106,32 115,41 Q108,48 115,56 Q106,64 94,49Z" fill={BLADE} stroke={BLADE_D} strokeWidth="1"/>
+        <rect x="58" y="46" width="44" height="4.2" rx="1.9" fill="#6b4a22" stroke="#4a3216" strokeWidth=".6"/>
+        <path d="M99,44 L116,37 Q121,48 116,59 L99,52Z" fill={BLADE} stroke={BLADE_D} strokeWidth="1"/>
+        <rect x="96" y="42.5" width="4.5" height="11" rx="1.5" fill={BLADE_D}/>
       </g>);
       if(wArt==="dagger") return (<g>
         <rect x="74.5" y="43" width="2.4" height="10" rx="1" fill={BLADE_D}/>
