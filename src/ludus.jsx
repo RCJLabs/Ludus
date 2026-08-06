@@ -6761,7 +6761,10 @@ const Z = {
   demand:   70,   // must be answered before anything else on screen
 };
 
-const FOE_EDGE = 1.021;
+/* re-fitted when the tactics were: the ceiling is measured with the best tactic in
+   hand, so raising what going forward is worth raised the ceiling with it — 57.7 to
+   62.4, past the sixty this number exists to hold. */
+const FOE_EDGE = 1.029;
 function power(f, tactic, oppCls, mom, atkMod){
   /* "Pain and fear find no purchase" — the pain half. He carries a wound onto the
      sand and most of it does not come with him. */
@@ -6796,9 +6799,7 @@ function power(f, tactic, oppCls, mom, atkMod){
   /* and 1.05 was still worth ten points of win rate on its own, for the same reason:
      twelve rounds of compounding. Forward buys a smaller share of the initiative and
      is paid for harder in the exchange, so it is a gamble rather than a right answer. */
-  if(tactic==="aggressive") p *= 1.028;
-  if(tactic==="defensive") p *= 0.975;
-  if(tactic==="showboat") p *= 0.965;
+  p *= (TACTIC[tactic] || TACTIC.measured).pow;
   p *= 1 + clamp(mom||0,-3,3)*0.03;
   p *= 1 + (f.mods ? f.mods.atk*0.6 + f.mods.def*0.30 : 0);
   p *= f.regardMult || 1;
@@ -6926,7 +6927,11 @@ function gasOf(f, st, sm){
 function simulateFight(A, B, tA, stakes, ctx, opts){
   const O = opts || {};
   const R0 = O.from || null;
-  const tB = R0 ? R0.tB : foeTactic(B);
+  /* the other man's word is his own — read off how he is built. `opts.foeTac` is for
+     the checks, which cannot fit a trade they are not allowed to hold one side of:
+     every fighter the harness builds is identical, so foeTactic hands them all the
+     same answer and a whole matrix collapses to one column. Never set in play. */
+  const tB = R0 ? R0.tB : ((opts && opts.foeTac) || foeTactic(B));
   const beats = [];
   A.mods = kitMods(A.kit, A.cls, A); B.mods = kitMods(B.kit, B.cls, B);
   const smA = 55+A.end*0.6, smB = 55+B.end*0.6;
@@ -11447,16 +11452,37 @@ const bookEyeWord = d => { const e = (d && d.flags && d.flags.bookEye) || 0;
    over-credited going forward by 3.2 points and showboating by 3.9, and under-credited
    standing off by 2.7 — which is the shield work of v2.9.0 arriving in the exchange
    and never arriving at the bookmakers' table. */
-const TACTIC_OR = { aggressive:1.17, measured:1, defensive:1.02, showboat:0.75 };
+/* re-fitted with the tactics, from the odds each actually returns across all four
+   answers: measured 43.8 per cent, aggressive 47.8, defensive 45.1, showboat 36.3.
+   Only standing off moved — the men with the book had it close already. */
+const TACTIC_OR = { aggressive:1.18, measured:1, defensive:1.05, showboat:0.73 };
 /* ---- ONE SHAPE FOR ALL FOUR ENGINES ----
    v1.87 gave the three tactics a domain in simulateFight, and the pair, the melee and
    the hunt each kept their own copy of what it had cured. Measured with the classes
    mirrored so nothing else was in the way: in the pair, aggressive won 93.2% against
    defensive's 43.9% AND died least at 4.9% against 37.7% — the cautious call was again
    the one that got men killed. The hunt had no tactic effect worth the name at all. */
-const TAC_DEAL = t => t==="aggressive"?1.28 : t==="defensive"?0.70 : 1;
-const TAC_TAKE = t => t==="aggressive"?1.34 : t==="defensive"?0.60 : t==="showboat"?1.10 : 1;
-const TAC_WIND = t => t==="aggressive"?9.4 : t==="defensive"?5 : 7;
+/* ---- THE TRADE ----
+   Three parallel ternaries, edited one at a time over four versions, had drifted into
+   a choice with nothing in it. Measured over 2,000 sine missione bouts across four
+   classes: defensive won 45.4 per cent and buried 30.4; aggressive won 30.9 and buried
+   63.4. Defensive was better on BOTH axes and aggressive worse on both, so of the four
+   words the player is offered every bout, one was strictly right and one strictly
+   wrong and neither was a decision.
+
+   One table now, so the trade is visible in one place and can be fitted as a whole.
+   Read across a row: what he gives, what he takes back, and what it costs his wind.
+   The shape it is fitted to is the one the game tells the player in TACTIC_SAY —
+   forward wins most and buries most, standing off wins least and brings him home. */
+const TACTIC = {
+  aggressive: { pow:1.052, deal:1.46, take:1.55, wind:9.4 },
+  measured:   { pow:1.000, deal:1.00, take:1.00, wind:7   },
+  defensive:  { pow:0.952, deal:0.52, take:0.58, wind:5   },
+  showboat:   { pow:0.965, deal:0.94, take:1.10, wind:7   },
+};
+const TAC_DEAL = t => (TACTIC[t] || TACTIC.measured).deal;
+const TAC_TAKE = t => (TACTIC[t] || TACTIC.measured).take;
+const TAC_WIND = t => (TACTIC[t] || TACTIC.measured).wind;
 /* The pairing and the melee sharpen the offensive half of it, and only that half.
    A single bout can be won on the editor's reading of who spilt more; a bout with
    four or six men on the sand is won by men going down, and a man behind a shield
@@ -11515,11 +11541,15 @@ function winChance(g, opp, prep, tac, foeTac){
    the copy was calling it the cautious one. And it said aggressive was "the likeliest
    way to lose him", which it is not on any of the three: showboating is, everywhere.
    Four games, four sets of words, and every number in them measured. */
+/* Re-written to what the table actually does. Each of the three now answers one
+   other and is answered by a third, so the word is a read on him rather than a
+   right answer: forward takes apart a man fighting it straight, the shield takes
+   apart a charge, and patience takes apart a shield. Showing off answers nothing. */
 const TACTIC_SAY = {
-  aggressive: "Wins most, by about three bouts in a hundred — he hits hardest, takes a third more coming back and burns his wind fastest. He does die a shade oftener for it.",
-  measured:   "Neither. He fights the bout in front of him and takes what it gives, and on a single sand that is three points behind going forward and a shade safer.",
-  defensive:  "Turns blows aside instead of trading them, and spends almost nothing. He wins a couple of points less often than a measured man and comes home twice as often.",
-  showboat:   "He fights the tiers rather than the man, and it is the worst of both — the poorest odds on the card by ten points and the likeliest of the four to get him killed. What it buys is the crowd, and the crowd is his name.",
+  aggressive: "Takes a man fighting it straight to pieces — eight points better against him than meeting him in kind. A shield answers it, and against one he is the worst of the three. Wins most across a season and burns his wind fastest.",
+  measured:   "The answer to a man behind his shield: patience beats cover, by five points over standing off yourself. It is what to say when you do not know what he brings.",
+  defensive:  "The answer to a charge — nine points better than meeting one head on, and he comes home nine times in a hundred more often than any other word. He wins least against a man who is not coming forward.",
+  showboat:   "He fights the tiers rather than the man. It answers nothing — seven points behind the worst of the other three whatever he is up against, and much the likeliest to get him killed. What it buys is the crowd, and the crowd is his name.",
 };
 /* two of yours on the sand at once, and the arithmetic inverts */
 const PAIR_SAY = {
@@ -21904,7 +21934,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* the tables a check may need to reason about */
     TIERS, CLASSES, GEAR, EVENTS, LASTING, STATS,
     /* the odds the bookmakers quote, and the mitigations on a death */
-    winChance, collSoften, docHealth,
+    winChance, collSoften, docHealth, TACTIC, TACTIC_OR,
     /* helpers */
     activeG, defaultKit, kitMods, statCap, fullName,
   };

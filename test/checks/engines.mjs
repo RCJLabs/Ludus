@@ -53,8 +53,31 @@ export async function run({ p }){
       }
       return { pc:+(w/n*100).toFixed(1), n }; })();
 
+    /* ---- THE TRIANGLE ----
+       The point of four words is that none of them is the answer. Measured over a
+       full matrix — every tactic against every tactic — each of the three should
+       take one other apart and be taken apart by a third, and showing off should
+       answer nothing. Before this was fitted, defensive won most AND buried fewest:
+       strictly better on both axes, which is not a choice. */
+    const TACS = ["measured","aggressive","defensive","showboat"];
+    const grid = {}, dead = {};
+    for(const mine of TACS){ grid[mine] = {}; dead[mine] = {};
+      for(const foe of TACS){ let w=0,n=0,dd=0;
+        for(let i=0;i<Math.round(N/4);i++){
+          const a = man({name:"Yours"}), b = man({name:"Theirs"});
+          const r = A.simulateFight(a, b, mine, "sine", ctx(), { foeTac:foe });
+          if(r.unfinished) continue; n++; if(r.winner==="A") w++; if(r.aDies) dd++;
+        }
+        grid[mine][foe] = n ? +(w/n*100).toFixed(1) : 0;
+        dead[mine][foe] = n ? +(dd/n*100).toFixed(1) : 0;
+      } }
+    const avg = o => +(TACS.reduce((s,k)=>s+o[k],0)/4).toFixed(1);
     return { measured:even("measured"), aggressive:even("aggressive"),
-      defensive:even("defensive"), showboat:even("showboat"), ceiling, pair };
+      defensive:even("defensive"), showboat:even("showboat"), ceiling, pair,
+      grid, dead, win:{ measured:avg(grid.measured), aggressive:avg(grid.aggressive),
+        defensive:avg(grid.defensive), showboat:avg(grid.showboat) },
+      buried:{ measured:avg(dead.measured), aggressive:avg(dead.aggressive),
+        defensive:avg(dead.defensive), showboat:avg(dead.showboat) } };
   }, 1500);
 
   const lines = [
@@ -64,6 +87,11 @@ export async function run({ p }){
     `even bout, showboat    ${out.showboat.pc}%`,
     `maxed man, right read, best tactic, even foe: ${out.ceiling.pc}%`,
     `pair bout, even sides  ${out.pair.pc}%  (n=${out.pair.n})`,
+    `across the whole matrix — win%:  ` + Object.entries(out.win).map(([k,v])=>`${k} ${v}`).join("  "),
+    `                        buried%: ` + Object.entries(out.buried).map(([k,v])=>`${k} ${v}`).join("  "),
+    `the triangle: forward answers straight (${out.grid.aggressive.measured} v ${out.grid.measured.measured}) · ` +
+      `shield answers forward (${out.grid.defensive.aggressive} v ${out.grid.aggressive.aggressive}) · ` +
+      `patience answers shield (${out.grid.measured.defensive} v ${out.grid.defensive.defensive})`,
   ];
   const fails = [];
   /* THE EDITOR'S THUMB. A dead-even mirror is deliberately NOT a coin flip — FOE_EDGE
@@ -88,5 +116,23 @@ export async function run({ p }){
   /* the pair has no published target; catch it only when it has stopped being a fight */
   if(out.pair.pc <= 2 || out.pair.pc >= 98)
     fails.push(`the pair engine returns ${out.pair.pc}% — it has stopped deciding anything`);
+
+  /* ---- and the triangle ---- */
+  const g = out.grid;
+  if(!(g.aggressive.measured > g.measured.measured))
+    fails.push(`going forward does not answer a man fighting it straight (${g.aggressive.measured} vs his own ${g.measured.measured})`);
+  if(!(g.defensive.aggressive > g.aggressive.aggressive))
+    fails.push(`the shield does not answer a charge (${g.defensive.aggressive} vs ${g.aggressive.aggressive})`);
+  if(!(g.measured.defensive > g.defensive.defensive))
+    fails.push(`patience does not answer a shield (${g.measured.defensive} vs ${g.defensive.defensive})`);
+  /* nothing may be best on both axes at once — that is what made this a non-choice */
+  const W = out.win, D = out.buried;
+  for(const t of ["measured","aggressive","defensive","showboat"]){
+    const bestWin = Object.values(W).every(v => W[t] >= v);
+    const safest  = Object.values(D).every(v => D[t] <= v);
+    if(bestWin && safest) fails.push(`${t} wins most (${W[t]}%) AND buries fewest (${D[t]}%) — it is not a choice, it is the answer`);
+  }
+  if(W.showboat >= Math.min(W.measured, W.aggressive, W.defensive))
+    fails.push(`showboat (${W.showboat}%) is not behind all three of the others`);
   return { pass: fails.length === 0, why: fails.join("; ") || null, lines };
 }
