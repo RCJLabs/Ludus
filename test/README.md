@@ -25,6 +25,7 @@ reason the check exists usually has not.
 | `sweep` | the cheap net: does anything throw when you open it |
 | `layers` | 28 overlays with hand-written z-indices, and no way to see the order |
 | `saves` | 165 lines of unordered backfills, and fifteen core fields that never had one |
+| `block` | buying a man lived in a React closure, so nothing outside it could buy anybody |
 
 ## The test build
 

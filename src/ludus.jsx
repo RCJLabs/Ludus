@@ -6196,6 +6196,46 @@ function pickRivalOpp(d, tier, elite){
     rematch: chosen.f.beatYou>0, grudgeM: chosen.f.lostToYou>0 };
 }
 
+/* ---- BUYING A MAN ----
+   This lived inside a React closure, which meant nothing outside the component could
+   buy anybody — no harness could play a house that grows, and a headless run starved
+   by week thirty with its roster emptied and its coin untouched. It is a function on
+   the state now; buyG is the button that calls it. Returns whether a man was bought,
+   which the caller mostly ignores and a check very much does not. */
+function buyFromBlock(d, id, bidPrice){
+  const i=d.market.findIndex(m=>m.id===id); if(i<0) return false;
+    const g=d.market[i];
+    const price = bidPrice!=null ? bidPrice : g.price;
+    if(g.slaver){ dealt(d, g.slaver, "bought"); if(g.flaw && g.scouted) dealt(d, g.slaver, "burned"); }
+    const tax = rnd(price * lawTax(d));
+    /* ---- AND THIS WAS THE LOCK ----
+       The button above it asks rosterFull, which honours the cells the house has
+       actually built. This did not: it counted to eight and returned, silently, with
+       no message, no coin taken and no man. A house at 8 of 14 with a hundred thousand
+       denarii could press Buy all afternoon and nothing whatever would happen. */
+    if(d.gold < price + tax || rosterFull(d)) return false;
+    d.gold -= price + tax; d.market.splice(i,1);
+    if(g.contested){ const c = g.contested; delete g.contested;
+      chron(d, `You outbid ${lanistaOf(c.house).name} for ${g.name} at the block, and were seen to do it. ${price} denarii, more than he was worth and worth it to have taken him from that house.`, "good"); }
+    if(tax) chron(d, `${tax} denarii to the vectigal on top of the price, collected before the man is off the block.`, "info");
+    const w = defaultKit(g.cls).weapon;
+    if(gearFree(d,w)<=0) d.gear[w] = (d.gear[w]||0)+1;   // he comes with the blade he was sold with
+    g.kit = bareKit(g.cls);
+    d.gladiators.push(g);
+    if(g.paragon){
+      d.flags.paragonDone = 1; d.flags.paragonBought = d.week;
+      d.fame += 70; addRep(d, "show", 10);
+      FAC_KEYS.forEach(k=>facMove(d, k, 8));
+      d.gladiators.forEach(o=>{ if(o.status==="active" && o.id!==g.id){ o.morale = clamp(o.morale+10,0,100); o.defiance = clamp(o.defiance+4,0,100); } });
+      chron(d, `${fullName(g)} is yours. Capua watched you pay it and the men in your cells watched the wagon come in, and nobody in either place is going to forget which morning this was.`, "good");
+      return true;
+    }
+    chron(d, isAuctor(g)
+      ? `${g.name} of ${g.origin} signs for ${price} denarii and ${g.auctor.bouts} bouts. He swears the same sacramentum as every man in the cells — burned, bound, beaten, slain — and he chose it, which they find harder to watch than they expected.`
+      : `${g.name} of ${g.origin} joins the ludus for ${price} denarii. ${PR(g).He} swears the sacramentum: to be burned, bound, beaten, and slain by the sword.`);
+  return true;
+}
+
 /* ---- WHAT A SAVE MUST HAVE ----
    Fifty versions of "oh, and this field too" had left one hundred and sixty-five
    lines of unordered backfills, eighty-seven of them the same shape written out
@@ -15722,36 +15762,7 @@ export default function App(){
     men.forEach(g=>{ clearSparOf(d,g); if(g.regimen==="spar") g.regimen="palus"; });
     const pool = men.slice().sort((a,b)=> STATS.reduce((s,k)=>s+b[k],0) - STATS.reduce((s,k)=>s+a[k],0));
     for(let i=0;i+1<pool.length;i+=2){ const a=pool[i], b=pool[i+1]; a.regimen="spar"; a.sparWith=b.id; b.regimen="spar"; b.sparWith=a.id; } });
-  const buyG = (id, bidPrice) => mut(d=>{ const i=d.market.findIndex(m=>m.id===id); if(i<0) return;
-    const g=d.market[i];
-    const price = bidPrice!=null ? bidPrice : g.price;
-    if(g.slaver){ dealt(d, g.slaver, "bought"); if(g.flaw && g.scouted) dealt(d, g.slaver, "burned"); }
-    const tax = rnd(price * lawTax(d));
-    /* ---- AND THIS WAS THE LOCK ----
-       The button above it asks rosterFull, which honours the cells the house has
-       actually built. This did not: it counted to eight and returned, silently, with
-       no message, no coin taken and no man. A house at 8 of 14 with a hundred thousand
-       denarii could press Buy all afternoon and nothing whatever would happen. */
-    if(d.gold < price + tax || rosterFull(d)) return;
-    d.gold -= price + tax; d.market.splice(i,1);
-    if(g.contested){ const c = g.contested; delete g.contested;
-      chron(d, `You outbid ${lanistaOf(c.house).name} for ${g.name} at the block, and were seen to do it. ${price} denarii, more than he was worth and worth it to have taken him from that house.`, "good"); }
-    if(tax) chron(d, `${tax} denarii to the vectigal on top of the price, collected before the man is off the block.`, "info");
-    const w = defaultKit(g.cls).weapon;
-    if(gearFree(d,w)<=0) d.gear[w] = (d.gear[w]||0)+1;   // he comes with the blade he was sold with
-    g.kit = bareKit(g.cls);
-    d.gladiators.push(g);
-    if(g.paragon){
-      d.flags.paragonDone = 1; d.flags.paragonBought = d.week;
-      d.fame += 70; addRep(d, "show", 10);
-      FAC_KEYS.forEach(k=>facMove(d, k, 8));
-      d.gladiators.forEach(o=>{ if(o.status==="active" && o.id!==g.id){ o.morale = clamp(o.morale+10,0,100); o.defiance = clamp(o.defiance+4,0,100); } });
-      chron(d, `${fullName(g)} is yours. Capua watched you pay it and the men in your cells watched the wagon come in, and nobody in either place is going to forget which morning this was.`, "good");
-      return;
-    }
-    chron(d, isAuctor(g)
-      ? `${g.name} of ${g.origin} signs for ${price} denarii and ${g.auctor.bouts} bouts. He swears the same sacramentum as every man in the cells — burned, bound, beaten, slain — and he chose it, which they find harder to watch than they expected.`
-      : `${g.name} of ${g.origin} joins the ludus for ${price} denarii. ${PR(g).He} swears the sacramentum: to be burned, bound, beaten, and slain by the sword.`); });
+  const buyG = (id, bidPrice) => mut(d=>{ buyFromBlock(d, id, bidPrice); });
   const bidFor = g => { const c = g.contested;
     if(!c){ buyG(g.id); return; }
     const cost = c.ceiling;
@@ -21795,6 +21806,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     doFight, doPairFight, doMelee, doVenatio,
     /* the week, and what it writes down */
     endWeek, bookBout, bookOf, newBook, chron,
+    /* the always-open card and the block, for a headless player */
+    makePitOffer, pitMen, makePitCard, buyFromBlock, rosterFull, cellsCap,
     /* loading an old save */
     migrate, SAVE_FIELDS, SAVE_MAYBE, SAVE_NUMBERS, MAN_FIELDS, MAN_NUMBERS, REPAIRS, SAVE_VER,
     /* the tables a check may need to reason about */
