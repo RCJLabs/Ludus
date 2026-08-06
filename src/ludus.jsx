@@ -471,21 +471,28 @@ function annalsSync(d){
    The house has been accumulating history for fifty versions with no way to ask it
    anything. These are counters, not a log — a full campaign costs a few hundred bytes. */
 function newBook(){
-  return { n:0, w:0, dead:0, killed:0, purse:0, crowd:0, rounds:0,
+  return { n:0, w:0, drew:0, dead:0, killed:0, purse:0, crowd:0, rounds:0,
     tier:{}, cls:{}, stakes:{}, city:{}, house:{}, kind:{},
     best:null, longest:null, biggest:null, worst:null };
 }
-const bk = (o,k) => (o[k] = o[k] || { n:0, w:0 });
+const bk = (o,k) => (o[k] = o[k] || { n:0, w:0, d:0 });
+/* A bout has three ends, not two. Sixteen rounds with all four still up is not a
+   defeat and the book should not file it as one — but it is not a win either, and
+   the honest way to write that down is a third column. Old books have no drew
+   count at all, so every read of one is guarded. */
 function bookBout(d, o){
   d.book = d.book || newBook();
   const B = d.book;
-  B.n++; if(o.win) B.w++;
+  B.n++;
+  if(o.win) B.w++;
+  else if(o.drawn) B.drew = (B.drew||0) + 1;
   if(o.died) B.dead++;
   if(o.killed) B.killed++;
   B.purse += o.purse || 0;
   B.crowd += o.crowd || 0;
   B.rounds += o.rounds || 0;
-  const put = (grp,key) => { const e = bk(grp, key); e.n++; if(o.win) e.w++; };
+  const put = (grp,key) => { const e = bk(grp, key); e.n++;
+    if(o.win) e.w++; else if(o.drawn) e.d = (e.d||0) + 1; };
   put(B.tier, "T"+(o.tier==null?0:o.tier));
   if(o.cls) put(B.cls, o.cls);
   put(B.stakes, o.stakes || "standard");
@@ -503,7 +510,7 @@ function bookOf(d){
   const A = d.annals || [];
   const R2 = houseRecord(d);
   const rate = e => e.n ? Math.round(e.w/e.n*100) : 0;
-  const rank = grp => Object.entries(grp).map(([k,e])=>({ k, n:e.n, w:e.w, pc:rate(e) }))
+  const rank = grp => Object.entries(grp).map(([k,e])=>({ k, n:e.n, w:e.w, d:e.d||0, pc:rate(e) }))
     .filter(x=>x.n>=4).sort((a,b)=>b.pc-a.pc);
   const fates = {};
   A.forEach(a=>{ const f = a.fate || "serving"; fates[f] = (fates[f]||0)+1; });
@@ -11383,8 +11390,11 @@ function doMelee(d, ids, offer, pending, choice, tactic){
 
   const won = res.winner>=0 && res.ents[res.winner].mine;
   const winnerGid = won ? res.ents[res.winner].gid : null;
+  /* the melee had the same hole as the pair, mirrored: it booked itself only when
+     it did NOT win, so the book read nought per cent at melees forever */
+  let mPurse = 0;
   if(won){
-    d.gold += offer.purse;
+    d.gold += offer.purse; mPurse = offer.purse;
     const fg = rnd((t.fameGain*2 + res.crowd/12) * kitShow(avgKitMods(gs)));
     d.fame += fg;
     const w = d.gladiators.find(g=>g.id===winnerGid);
@@ -11404,17 +11414,25 @@ function doMelee(d, ids, offer, pending, choice, tactic){
     const stood = res.ents.filter(e=>e.mine && !e.out).length;
     res.ents.forEach(e=>{ if(!e.mine) return; const x = d.gladiators.find(y=>y.id===e.gid);
       if(x && !isGone(x)) formShift(d, x, e.out ? -14 : 20, e.out ? "went down in the melee" : "stood at the end of the melee"); });
-    bookBout(d, { win:!!res.ents[res.winner] && !!res.ents[res.winner].mine, purse:offer.purse,
-      crowd:res.crowd, tier:offer.tier, stakes:"melee", city:offer.city, kind:"melee",
-      name:gs.map(x=>x.name).join(", "), festival:offer.festival });
     if(stood){
       const share = rnd(offer.purse*0.22*stood);
-      d.gold += share;
+      d.gold += share; mPurse = share;
       d.fame += rnd(t.fameGain*0.5);
       res.ents.forEach(e=>{ if(e.mine && !e.out){ const g=d.gladiators.find(x=>x.id===e.gid); if(g) g.pfame += rnd(t.fameGain*0.4); } });
       sum.push(`${stood===1?"One of yours was still upright":"Your men were still upright"} at the end — a survivor's share of ${share} denarii.`);
     } else sum.push(`The purse goes to another house.`);
   }
+  /* a melee that reaches the horn with nobody last man standing is only a draw for
+     you if one of yours was still upright in it — that is the same man the editor
+     pays a survivor's share to. All of yours face down and three of theirs up is
+     not a draw whatever the sand says about a winner. */
+  const drewIt = !won && !res.forfeit && res.winner < 0
+    && res.ents.some(e=>e.mine && !e.out);
+  bookBout(d, { win:won, drawn:drewIt, purse:mPurse,
+    crowd:res.crowd, tier:offer.tier, stakes:"melee", city:offer.city, kind:"melee",
+    died: res.ents.some(e=>e.mine && e.dead), killed: res.ents.some(e=>!e.mine && e.dead),
+    rounds: res.beats ? Math.max(...res.beats.map(b=>b.round||0)) : 0,
+    name:gs.map(x=>x.name).join(", "), festival:offer.festival });
 
   /* two of yours left alone on the sand is a thing the ludus does not forget */
   const forced = res.beats.some(b=>b.kind==="appeal" && b.a!=null && b.b!=null
@@ -11522,7 +11540,9 @@ function doVenatio(d, gid, offer, tactic, pending, choice){
   addRep(d, "blood", 6);
   if(res.killed) formShift(d, g, 22, `took the ${offer.beast}`);
   else if(!res.dead) formShift(d, g, -18, `was driven off the ${offer.beast}`);
-  bookBout(d, { win:!!res.killed, died:!!res.dead, killed:!!res.killed, purse:offer.purse,
+  /* the hunt paid the book its purse whether the beast fell or not, so "purses taken"
+     counted money the house was never given. It is paid below, and only on a kill. */
+  bookBout(d, { win:!!res.killed, died:!!res.dead, killed:!!res.killed, purse: res.killed ? offer.purse : 0,
     crowd:res.crowd, rounds:res.beats ? Math.max(...res.beats.map(b=>b.round||0)) : 0,
     tier:offer.tier, cls:g.cls, stakes:"venatio", city:offer.city, kind:"venatio",
     name:fullName(g), opp:offer.beast, festival:offer.festival });
@@ -11630,12 +11650,16 @@ function doPairFight(d, ids, offer, tactic, pending, choice){
   d.gold += t.app*2;
   gs.forEach(g=>{ g.lastFought = d.week; g.fatigue = clamp(g.fatigue+24, 0, 100); wearKit(d, g, false); if(isAuctor(g)) g.auctor.served++; });
 
+  /* THE BOUTS THE BOOK NEVER SAW.
+     The pair booked itself only when it won, so the record book read a hundred
+     per cent at pair bouts for every house that ever fought one, and every pair
+     defeat, draw and cloth-throw simply was not there. Booked in all three ends
+     now, with the purse set to what the house actually took. */
+  let pPurse = 0, pWin = false, pDrawn = false;
   if(res.win){
     const purse = rnd(offer.purse * (d.city?1:facPurse(d))); d.gold += purse;
+    pPurse = purse; pWin = true;
     gs.forEach(x=>formShift(d, x, 16, "took a pair bout"));
-    bookBout(d, { win:true, purse, crowd:res.crowd, tier:offer.tier, cls:gs[0]&&gs[0].cls,
-      stakes:offer.stakes, city:offer.city, kind:"pair", name:gs.map(x=>x.name).join(" and "),
-      oppHouse: offer.opp && offer.opp.house, festival:offer.festival });
     const fg = rnd((t.fameGain*1.6 + res.crowd/14) * kitShow(avgKitMods(gs)));
     d.fame += fg;
     gs.forEach((g,i)=>{ if(!res.dead.A[i]){ g.wins++; g.pfame += rnd(fg*0.7); g.morale=clamp(g.morale+10,0,100);
@@ -11653,12 +11677,19 @@ function doPairFight(d, ids, offer, tactic, pending, choice){
     gs.forEach((g,i)=>{ if(!res.dead.A[i]) g.losses++; });
     d.fame = Math.max(0, d.fame+1);
     gs.forEach(g=>{ g.morale=clamp(g.morale-(res.drawn?5:9),0,100); });
+    pDrawn = !!res.drawn;
     sum.push(res.drawn
       ? `Sixteen rounds and all four walked off. There is nothing in that for the editor and nothing in it for you — the house takes only the fees.`
       : `Beaten. The house takes only the fees.`);
   }
   // opponents killed
   const kills = res.dead.B.filter(Boolean).length;
+  bookBout(d, { win:pWin, drawn:pDrawn, purse:pPurse, crowd:res.crowd, tier:offer.tier,
+    cls:gs[0]&&gs[0].cls, stakes:offer.stakes, city:offer.city, kind:"pair",
+    died: res.dead.A.some(Boolean), killed: kills>0,
+    name:gs.map(x=>x.name).join(" and "), oppHouse: offer.opp && offer.opp.house,
+    rounds: res.beats ? Math.max(...res.beats.map(b=>b.round||0)) : 0,
+    opp: (offer.opps||[]).map(o=>o.name).join(" and "), festival:offer.festival });
   if(kills){ d.fame += 4*kills; sum.push(`${kills===2?"Both":"One"} of theirs will not leave the sand.`); }
 
   // your dead and wounded
@@ -16425,7 +16456,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               <span className="rowname" style={{fontSize:14.5}}>{fmt? fmt(r.k) : r.k}</span>
               <span className="rowval" style={{fontSize:13.5}}>
                 <span style={{color:r.pc>=55?"#9aa86a":r.pc>=45?"#b09b7d":"#d96f5d"}}>{r.pc}%</span>
-                <span className="dim"> · {r.w}–{r.n-r.w}</span>
+                <span className="dim"> · {r.w}–{r.n-r.w-r.d}{r.d? `–${r.d}` : ""}</span>
               </span>
             </div>
           ))}
@@ -16439,7 +16470,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           sub={`${romeRuns(S)} visit${romeRuns(S)===1?"":"s"}${romeTriumphs(S)?`, ${romeTriumphs(S)} taken`:""}, best ${romeBest(S)} of 3`}/>}
         <Row l="Seed" v={S.seed || "—"} sub="the same one builds the same Capua"/>
         <Row l="Years standing" v={K.R2.years} sub={(S.generation||1)>1 ? `${S.generation} lanistae` : null}/>
-        <Row l="Bouts fought" v={B.n} sub={B.n? `${K.winPc}% won` : null}/>
+        <Row l="Bouts fought" v={B.n}
+          sub={B.n? `${B.w}–${B.n-B.w-(B.drew||0)}${(B.drew||0)? `–${B.drew}` : ""} · ${K.winPc}% won${(B.drew||0)? `, ${B.drew} drawn` : ""}` : null}/>
         <Row l="Men and women served" v={K.R2.served}/>
         <Row l="Victories" v={K.R2.w}/>
         <Row l="Killed by your men" v={B.killed}/>
