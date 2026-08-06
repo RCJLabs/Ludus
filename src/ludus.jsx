@@ -3238,8 +3238,26 @@ const repairFee = (d, g) => {
     if(wears(it)) n += (100 - wearOf(g,s)) * (it.price/900); }
   return rnd(n * [1, .85, .72, .6, .48][bLevel(d,"armamentarium")]);
 };
-/* meat and honeyed wine — the one lever a lanista has against unrest */
-const FEAST_COST = 120;
+/* ---- MEAT AND HONEYED WINE ----
+   Unrest is the only number that ends a run outright, and this is the one lever
+   against it. It cost 120 denarii flat, at every week of a twelve-year campaign.
+   Measured over five houses kept full at eight men: feasting whenever the
+   cooldown allowed held median unrest between nought and six for twelve years
+   and cost 8,640 denarii a house across the whole of it — about forty a week,
+   against a card that pays nineteen hundred. Five houses that never feasted
+   produced twenty-three rebellions and a hundred and twenty-one dead lanistas.
+   The most dangerous number in the game was being bought off for two per cent
+   of income by pressing one button every third week.
+
+   So the table is priced against the house that sets it — the mouths at it and
+   the standing of the man who owns them — and one night of meat goes only so
+   far. Three men in a shed remember it for a month. Eight in a villa who have
+   been to the Ludi Romani have had better, and will again. A house of three in
+   its first spring pays the same 120 it always did. */
+const FEAST_BASE = 60, FEAST_HEAD = 20, FEAST_STANDING = 2200;
+const feastCost = d => rnd((FEAST_BASE + activeG(d).length*FEAST_HEAD)
+  * (1 + clamp((d.fame||0)/FEAST_STANDING, 0, 1) * 2.2));
+const feastReach = d => clamp(5 / Math.max(4, activeG(d).length), 0.65, 1);
 /* a piece made for one man and nobody else */
 const FORGE_FEE = 700;
 const FORGE_NAMES = ["Vulcan's Tooth","the Grey Wife","Long Answer","Nightwork","the Quiet Argument","Second Thoughts","the Last Word","Winter"];
@@ -15939,13 +15957,17 @@ function hostParty(d, kind){ const p=PARTY[kind];
   serveWants(d, { type:"party", kind });
   return true; }
 
-function throwFeast(d){ if(d.gold<FEAST_COST || d.week-d.lastFeast<3) return false;
-  d.gold-=FEAST_COST; d.lastFeast=d.week; d.flags.everFeast=(d.flags.everFeast||0)+1;
+function throwFeast(d){ const cost = feastCost(d);
+  if(d.gold<cost || d.week-d.lastFeast<3) return false;
+  const reach = feastReach(d);
+  d.gold-=cost; d.lastFeast=d.week; d.flags.everFeast=(d.flags.everFeast||0)+1;
   if(d.lanista) d.lanista.health = clamp(d.lanista.health + 3, 0, 100);
   rememberAll(d, "feast");
-  d.gladiators.forEach(g=>{ if(!isGone(g)){ g.morale=clamp(g.morale+9,0,100); g.defiance=clamp(g.defiance-4,0,100); } });
-  d.unrest=clamp(d.unrest-7,0,100);
-  chron(d, "Meat and honeyed wine for the familia. Songs in the cells past midnight.");
+  d.gladiators.forEach(g=>{ if(!isGone(g)){ g.morale=clamp(g.morale+9*reach,0,100); g.defiance=clamp(g.defiance-4*reach,0,100); } });
+  d.unrest=clamp(d.unrest-7*reach,0,100);
+  chron(d, reach < 0.8
+    ? "Meat and honeyed wine for the familia. It is a good night, and there are enough of them now that it is only a good night."
+    : "Meat and honeyed wine for the familia. Songs in the cells past midnight.");
   return true; }
 
 function walkTheCells(d){
@@ -19364,12 +19386,21 @@ export default function App(){
           </>)}
 
           {vView==="familia" && (<>
-          <Sect title="A feast for the familia" note={`${FEAST_COST}d`}>
+          {(()=>{ const cost = feastCost(S), reach = feastReach(S);
+            return (
+          <Sect title="A feast for the familia" note={`${cost}d`}>
             <div className="dim" style={{fontSize:"var(--fs-md)",margin:"4px 0 8px"}}>Meat, honeyed wine, and a night without the whip. Loyalty is cheaper than rebellion.</div>
-            <button className="btn" style={{width:"100%"}} disabled={S.gold<FEAST_COST || S.week-S.lastFeast<3} onClick={feast}>
-              {S.week-S.lastFeast<3? `The men feasted recently — ${3-(S.week-S.lastFeast)} week${3-(S.week-S.lastFeast)>1?"s":""}` : S.gold<FEAST_COST? "Not enough coin" : "Set the tables"}
+            {reach < 0.95 && (
+              <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",margin:"0 0 8px"}}>
+                {activeG(S).length} at the tables, and a house of this standing cannot set them the way it once did.
+                One night goes {Math.round(reach*100)}% as far as it did when there were four of them.
+              </div>
+            )}
+            <button className="btn" style={{width:"100%"}} disabled={S.gold<cost || S.week-S.lastFeast<3} onClick={feast}>
+              {S.week-S.lastFeast<3? `The men feasted recently — ${3-(S.week-S.lastFeast)} week${3-(S.week-S.lastFeast)>1?"s":""}` : S.gold<cost? "Not enough coin" : "Set the tables"}
             </button>
           </Sect>
+            ); })()}
 
           <Sect title="A tournament in the yard" note="settles the block">
             <div className="dim" style={{fontSize:"var(--fs-md)",margin:"4px 0 8px"}}>
@@ -22236,7 +22267,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     answerReSignWith, answerRomeWith,
     hostParty, throwFeast, walkTheCells, holdTourney, stageMunus,
     seekMatchNow, openLicenceNow, takeUpTheHouse, claimRise, succeed,
-    FEAST_COST, RETRAIN_FEE, FORGE_FEE, BUILDINGS, PARTY, STAFF,
+    feastCost, feastReach, FEAST_BASE, FEAST_HEAD, FEAST_STANDING, RETRAIN_FEE, FORGE_FEE, BUILDINGS, PARTY, STAFF,
     /* loading an old save */
     migrate, SAVE_FIELDS, SAVE_MAYBE, SAVE_NUMBERS, MAN_FIELDS, MAN_NUMBERS, REPAIRS, SAVE_VER,
     /* the tables a check may need to reason about */

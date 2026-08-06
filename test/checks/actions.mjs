@@ -94,8 +94,8 @@ export async function run({ p, errors }){
     /* the evenings */
     go("host",    ()=> { const g = d.gold; return A.hostParty(d, "modest") && d.gold < g; });
     d.lastFeast = -9; d.unrest = 40;
-    go("feast",   ()=> { const u = d.unrest, g = d.gold;
-                         return A.throwFeast(d) && d.unrest < u && d.gold === g - A.FEAST_COST; });
+    go("feast",   ()=> { const u = d.unrest, g = d.gold, cost = A.feastCost(d);
+                         return A.throwFeast(d) && d.unrest < u && d.gold === g - cost; });
     d.flags.walkWk = -9;
     go("walk",    ()=> A.walkTheCells(d) && d.flags.walkWk === d.week);
 
