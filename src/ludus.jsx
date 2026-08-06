@@ -6196,171 +6196,220 @@ function pickRivalOpp(d, tier, elite){
     rematch: chosen.f.beatYou>0, grudgeM: chosen.f.lostToYou>0 };
 }
 
-function migrate(S){
-  if(!S.flags) S.flags = {};
-  if(!S.rivals) S.rivals = makeRivals(S);
-  if(!S.escaped) S.escaped = [];
-  if(!S.gear) S.gear = {};
-  if(!S.retired) S.retired = [];
-  if(S.doctore===undefined) S.doctore = null;
-  if(!S.doctoreMarket) S.doctoreMarket = [];
-  if(S.doctoreOffer===undefined) S.doctoreOffer = null;
-  if(!S.ties) S.ties = [];
-  if(!S.arcs) S.arcs = [];
-  if(S.nemHouse===undefined) S.nemHouse = null;
-  if(S.saga===undefined) S.saga = null;
-  if(!S.crest) S.crest = { c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" };
-  if(S.rome===undefined) S.rome = null;
-  if(S.poach===undefined) S.poach = null;
-  if(S.court===undefined) S.court = null;
-  if(!S.defected) S.defected = [];
-  if(!S.buildings) S.buildings = {};
-  if(S.nemesis===undefined) S.nemesis = null;
-  if(S.primus===undefined) S.primus = null;
-  /* and every save made before the count existed is owed what it already earned.
-     featWeek stamps everPrimus at the end of any week the title was in this house,
-     and the feat carries the same proof, so a house that took it is credited with
-     one — never less than it has, so a live run cannot be walked backwards. */
-  if(!S.flags.primusHeld && (S.flags.everPrimus || (S.primus && S.primus.mine) || (S.feats && S.feats.primus)))
-    S.flags.primusHeld = 1;
-  /* "Male" is a real Palmyrene name — the short form of Malku, and on the stones at
-     Palmyra — but on a character sheet in an English game it reads as a label for
-     the man's sex rather than his name, which is not what anyone wants to see above
-     a fighter. The pool carries the fuller form now; saves already holding one get
-     renamed so nobody has to fight it out with him. */
-  (S.gladiators||[]).forEach(g=>{ if(g && g.name==="Male") g.name = "Malku"; });
-  (S.rivals||[]).forEach(h=>(h.fighters||[]).forEach(f=>{ if(f && f.name==="Male") f.name = "Malku"; }));
-  if(S.primus && S.primus.name==="Male") S.primus.name = "Malku";
-  if(S.city===undefined) S.city = null;
-  if(S.travel===undefined) S.travel = null;
-  if(!S.known) S.known = {};
-  if(!S.feats) S.feats = {};
-  if(!S.lanista) S.lanista = makeLanista(S);
-  if(S.collegium===undefined) S.collegium = null;
-  /* a run in progress keeps the cellar it knows this week, and starts moving after */
-  if(S.pitSeat == null){
-    const i = S.pit ? PIT_HOUSES.findIndex(h=>h.name === S.pit.name) : -1;
-    const at = i < 0 ? 0 : i;
-    const n = PIT_HOUSES.length;
-    S.pitSeat = ((at - Math.floor((Math.max(1, S.week||1) - 1) / PIT_MOVE)) % n + n) % n;
-  }
-  if(S.war===undefined) S.war = null;
-  if(!S.circuit || !S.circuit.length) seedCircuit(S);
-  if(!S.factions) S.factions = { parm:40, scut:40, mob:40, front:40 };
-  if(S.loan===undefined) S.loan = null;
-  if(S.ear===undefined) S.ear = null;
-  if(!S.heard) S.heard = [];
-  S.gladiators.forEach(g=>{ if(g.regard==null) g.regard = ri(38,54); if(!g.memory) g.memory = [];
-    if(g.form==null) g.form = 0; if(!g.formLog) g.formLog = []; if(g.fans==null) g.fans = 0;
-    /* a contract signed before the fee was written down */
-    if(g.auctor){ if(!Number.isFinite(g.auctor.fee) || g.auctor.fee <= 0) g.auctor.fee = auctorFee(g);
+/* ---- WHAT A SAVE MUST HAVE ----
+   Fifty versions of "oh, and this field too" had left one hundred and sixty-five
+   lines of unordered backfills, eighty-seven of them the same shape written out
+   longhand, and eight separate passes over the same list of men. `ver` was written
+   at the end and read by nothing. Nobody could tell which lines were still doing
+   work, and a forgotten one is a NaN in a stranger's year-twelve save.
+
+   Three tables and a list of repairs. The tables are the shape a save must have;
+   they run on every load and are idempotent by construction. The repairs are the
+   things that change data rather than supply it, and from ver 17 each runs once
+   and is remembered.
+
+   The guards differ on purpose and the difference matters:
+     FIELDS  — rebuilt if absent OR empty. Collections and records.
+     MAYBE   — filled only if the key has never existed. null is a real answer here:
+               `doctore: null` means "you have none", not "nobody has asked yet".
+     NUMBERS — filled if absent or null. A number that must always hold one. */
+const SAVE_FIELDS = {
+  flags:         ()=>({}),
+  rivals:        S=>makeRivals(S),
+  escaped:       ()=>[],
+  gear:          ()=>({}),
+  retired:       ()=>[],
+  doctoreMarket: ()=>[],
+  ties:          ()=>[],
+  arcs:          ()=>[],
+  crest:         ()=>({ c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" }),
+  defected:      ()=>[],
+  buildings:     ()=>({}),
+  known:         ()=>({}),
+  feats:         ()=>({}),
+  lanista:       S=>makeLanista(S),
+  factions:      ()=>({ parm:40, scut:40, mob:40, front:40 }),
+  heard:         ()=>[],
+  deadlines:     ()=>[],
+  kits:          ()=>[],
+  deadSteel:     ()=>[],
+  bay:           ()=>({ holder:null, since:0, weeks:0 }),
+  metHouse:      ()=>({}),
+  owed:          ()=>[],
+  household:     ()=>({}),
+  works:         ()=>({}),
+  slavers:       ()=>({}),
+  gambits:       ()=>({}),
+  gamWhen:       ()=>({}),
+  law:           ()=>({ cap:99, tax:0, women:false, sineFee:0, damnati:false, edicts:[], heat:0, fines:0 }),
+  pitch:         ()=>"plain",
+  charter:       ()=>({ i:0, done:true, skipped:true }),   // a house already underway is past this
+  rivalLog:      ()=>[],
+  unburied:      ()=>[],
+  book:          ()=>newBook(),
+  staffMarket:   ()=>({}),
+  rise:          ()=>({ rank:0, standing:0 }),
+  league:        S=>({ first:null, since:S.week||1, held:0, best:99, year:yearOf(S), snap:null }),
+  seed:          ()=>newSeedWord(),
+  domus:         ()=>({ wife:null, children:[], nextKin:1 }),
+  brand:         ()=>({ licensed:false, decided:false, tier:0, earned:0 }),
+  generation:    ()=>1,
+  forebears:     ()=>[],
+  gearCond:      ()=>({}),
+  forged:        ()=>[],
+  rep:           ()=>({ blood:0, show:0, craft:0, mercy:0 }),
+  kept:          ()=>[],        /* the long memory behind the roll */
+  pit:           ()=>pick(PIT_HOUSES),
+  departed:      ()=>[],
+  /* the oldest fields in the game, and never once backfilled — no save has been
+     seen without them, but a save that arrives without one is a crash rather than
+     a shrug, and the whole point of a table is that nothing is forgotten twice. */
+  market:        ()=>[],
+  fallen:        ()=>[],
+  freed:         ()=>[],
+  scenario:      ()=>"clean",
+  trainMult:     ()=>1,
+};
+const SAVE_MAYBE = ["doctore","doctoreOffer","nemHouse","saga","rome","poach","court",
+  "nemesis","primus","city","travel","collegium","war","loan","ear","doctrine","mark",
+  "after","pact","pendingLesson","medicus","armourer","election","aedile","blessing",
+  "vow","powLot","heir","succession","reSignOffer","romeOffer","rebellion","repName",
+  "games","pendingEvent","over","askBooking","askChallenge"];
+const SAVE_NUMBERS = { yardSeen:0, yardMissed:0, piety:30, lastOffering:-9,
+  honoured:0, acclaim:0, munusLast:-99,
+  favor:0, unrest:0, lastParty:-9, lastFeast:-9 };
+/* booleans, where null would read as "not yet decided" and false is the truth */
+const SAVE_FLAGS = { milestone600:false };
+/* the same, for each man in the yard. Eight separate passes over the roster, now one. */
+const MAN_FIELDS  = { memory:()=>[], formLog:()=>[], scars:()=>[], scarCap:()=>({}),
+  sex:()=>"m", kit:g=>defaultKit(g.cls), traits:()=>[], lasting:()=>[],
+  focus:g=>(CLASSES[g.cls] ? CLASSES[g.cls].key[0] : "str") };
+const MAN_NUMBERS = { regard:()=>ri(38,54), form:()=>0, fans:()=>0, strain:()=>0,
+  weeksAged:()=>0, age:()=>ri(20,28) };
+
+/* ---- THE REPAIRS ----
+   These change what is already there, so they are not defaults and cannot be a
+   table. Everything at or below ver 16 was written to be idempotent and runs on
+   every load, because that is how it has always behaved and a live run must not
+   notice this refactor. From 17 on, `at` is the version the repair belongs to and
+   it runs once — S.ver is the record of what a save has already been through. */
+const SAVE_VER = 17;
+const REPAIRS = [
+  { at:16, why:"the count nobody was keeping — credit a house that held the primacy",
+    run(S){ if(!S.flags.primusHeld && (S.flags.everPrimus || (S.primus && S.primus.mine) || (S.feats && S.feats.primus)))
+      S.flags.primusHeld = 1; } },
+
+  { at:16, why:`"Male" is a real Palmyrene name — the short form of Malku, on the stones at
+     Palmyra — but on a character sheet in an English game it reads as a label for the
+     man's sex rather than his name. The pool carries the fuller form; saves holding
+     one get renamed so nobody has to fight it out with him.`,
+    run(S){ (S.gladiators||[]).forEach(g=>{ if(g && g.name==="Male") g.name = "Malku"; });
+      (S.rivals||[]).forEach(h=>(h.fighters||[]).forEach(f=>{ if(f && f.name==="Male") f.name = "Malku"; }));
+      if(S.primus && S.primus.name==="Male") S.primus.name = "Malku"; } },
+
+  { at:16, why:"a run in progress keeps the cellar it knows this week, and starts moving after",
+    run(S){ if(S.pitSeat == null){
+      const i = S.pit ? PIT_HOUSES.findIndex(h=>h.name === S.pit.name) : -1;
+      const at = i < 0 ? 0 : i;
+      const n = PIT_HOUSES.length;
+      S.pitSeat = ((at - Math.floor((Math.max(1, S.week||1) - 1) / PIT_MOVE)) % n + n) % n;
+    } } },
+
+  { at:16, why:"a circuit that was never seeded, or emptied by an older bug",
+    run(S){ if(!S.circuit || !S.circuit.length) seedCircuit(S); } },
+
+  { at:16, why:"a contract signed before the fee was written down",
+    run(S){ S.gladiators.forEach(g=>{ if(!g.auctor) return;
+      if(!Number.isFinite(g.auctor.fee)  || g.auctor.fee  <= 0) g.auctor.fee  = auctorFee(g);
       if(!Number.isFinite(g.auctor.wage) || g.auctor.wage <= 0) g.auctor.wage = rnd(10 + (g.wins||0)*1.2);
-      if(!g.auctor.why) g.auctor.why = pick(AUCTOR_WHY); } });
-  if(!S.deadlines) S.deadlines = [];
-  if(S.doctrine===undefined) S.doctrine = null;
-  if(!S.kits) S.kits = [];
-  if(!S.deadSteel) S.deadSteel = [];
-  if(!S.bay) S.bay = { holder:null, since:0, weeks:0 };
-  if(S.mark===undefined) S.mark = null;
-  if(S.after===undefined) S.after = null;
-  if(!S.metHouse) S.metHouse = {};
-  if(!S.owed) S.owed = [];
-  if(!S.household) S.household = {};
-  if(!S.works) S.works = {};
-  if(!S.slavers) S.slavers = {};
-  if(S.pact===undefined) S.pact = null;
-  if(!S.gambits) S.gambits = {};
-  if(!S.gamWhen) S.gamWhen = {};
-  if(S.pendingLesson===undefined) S.pendingLesson = null;
-  if(!S.law) S.law = { cap:99, tax:0, women:false, sineFee:0, damnati:false, edicts:[], heat:0, fines:0 };
-  if(S.yardSeen==null) S.yardSeen = 0;
-  if(S.yardMissed==null) S.yardMissed = 0;
-  if(!S.pitch) S.pitch = "plain";
-  (S.rivals||[]).forEach(h=>{ if(h.warm==null) h.warm = 0; });
-  if(!S.charter) S.charter = { i:0, done:true, skipped:true };   // a house already underway is past this
-  if(!S.rivalLog) S.rivalLog = [];
-  if(!S.unburied) S.unburied = [];
-  if(!S.book) S.book = newBook();
-  if(S.medicus===undefined) S.medicus = null;
-  if(S.armourer===undefined) S.armourer = null;
-  if(!S.staffMarket) S.staffMarket = {};
-  if(S.election===undefined) S.election = null;
-  if(S.aedile===undefined) S.aedile = null;
-  if(!S.rise) S.rise = { rank:0, standing:0 };
-  if(S.munusLast===undefined) S.munusLast = -99;
-  if(!S.league) S.league = { first:null, since:S.week||1, held:0, best:99, year:yearOf(S), snap:null };
-  if(S.piety==null) S.piety = 30;
-  if(S.blessing===undefined) S.blessing = null;
-  if(S.vow===undefined) S.vow = null;
-  if(S.lastOffering==null) S.lastOffering = -9;
-  if(S.powLot===undefined) S.powLot = null;
-  S.gladiators.forEach(g=>{ if(g.sworn===undefined) g.sworn = { how:"proper", week:1, free:isAuctor(g) }; });
-  if(!S.seed) S.seed = newSeedWord();
-  if(S.rngState==null) S.rngState = rngGet();
-  if(S.honoured==null) S.honoured = 0;
-  if(S.heir===undefined) S.heir = null;
-  if(S.succession===undefined) S.succession = null;
-  if(!S.domus) S.domus = { wife:null, children:[], nextKin:1 };
-  if(S.acclaim==null) S.acclaim = 0;
-  if(!S.brand) S.brand = { licensed:false, decided:false, tier:0, earned:0 };
-  if(S.doctore && S.doctore.drill===undefined) S.doctore.drill = "none";
-  (S.rivals||[]).forEach(h=>{ if(h.form==null){ h.form=0; h.formTier=0; h.star=null; } });
-  if(!S.generation) S.generation = 1;
-  if(!S.forebears) S.forebears = [];
-  if(!S.gearCond) S.gearCond = {};
-  if(!S.forged) S.forged = [];
-  S.gladiators.forEach(g=>{ if(g.strain==null) g.strain = 0;
-    if(g.regimen==="cond") g.regimen = "hill";
-    if(!REGIMENS[g.regimen]) g.regimen = "palus"; });
-  S.gladiators.forEach(g=>{ if(!g.wear){ g.wear = {}; SLOTS.forEach(s=>{ g.wear[s] = 100; }); } });
-  if(!S.rep) S.rep = { blood:0, show:0, craft:0, mercy:0 };
-  if(S.repName === undefined){
-    const L = repLeader(S);
-    S.repName = (L.key && L.share >= REP_SETTLE) ? { key:L.key, since:S.week } : null;
+      if(!g.auctor.why) g.auctor.why = pick(AUCTOR_WHY); }); } },
+
+  { at:16, why:"how a man came to be here, for saves made before anyone asked",
+    run(S){ S.gladiators.forEach(g=>{ if(g.sworn===undefined) g.sworn = { how:"proper", week:1, free:isAuctor(g) }; }); } },
+
+  { at:16, why:"a regimen that was renamed, or one that no longer exists",
+    run(S){ S.gladiators.forEach(g=>{
+      if(g.regimen==="cond") g.regimen = "hill";
+      if(!g.regimen) g.regimen = g.focus==="rest" ? "rest" : "palus";
+      if(!REGIMENS[g.regimen]) g.regimen = "palus";
+      if(g.focus==="rest") g.focus = CLASSES[g.cls] ? CLASSES[g.cls].key[0] : "str";
+      if(g.sparWith===undefined) g.sparWith = null; }); } },
+
+  { at:16, why:"kit that had no condition until the armourer arrived",
+    run(S){ S.gladiators.forEach(g=>{ if(!g.wear){ g.wear = {}; SLOTS.forEach(s=>{ g.wear[s] = 100; }); } }); } },
+
+  { at:16, why:"every man wants something; the ones made before that was true get one now",
+    run(S){ S.gladiators.forEach(g=>{ if(!g.ambition) giveAmbition(S, g); });
+      (S.market||[]).forEach(g=>{ if(!g.ambition) giveAmbition(S, g); }); } },
+
+  { at:16, why:"the rivals grew a form and a warmth toward you",
+    run(S){ (S.rivals||[]).forEach(h=>{ if(h.warm==null) h.warm = 0;
+      if(h.form==null){ h.form=0; h.formTier=0; h.star=null; } });
+      (S.rivals||[]).forEach(h=>h.fighters.forEach(f=>{ if(!f.kit) f.kit = defaultKit(f.cls); }));
+      (S.market||[]).forEach(g=>{ if(!g.kit) g.kit = defaultKit(g.cls); }); } },
+
+  { at:16, why:"the doctore had no drill to set",
+    run(S){ if(S.doctore && S.doctore.drill===undefined) S.doctore.drill = "none"; } },
+
+  { at:16, why:"what Capua says, settled from what the house has already done",
+    run(S){ if(S.repName === undefined){
+      const L = repLeader(S);
+      S.repName = (L.key && L.share >= REP_SETTLE) ? { key:L.key, since:S.week } : null;
+    } } },
+
+  { at:16, why:"the pits put up a fresh card every week",
+    run(S){ if(!S.pitCard || S.pitCard.week !== S.week) makePitCard(S); } },
+
+  { at:16, why:`the annals came late. Every house that had already buried, freed or lost
+     men kept those lists separately, so the roll is rebuilt out of them — negative ids
+     because these are reconstructions, not records anyone actually wrote at the time.`,
+    run(S){ if(S.annals) return;
+      S.annals = [];
+      let nid = -1;
+      const back = (list, fate) => (list||[]).forEach(f=>{
+        S.annals.push({ id:nid--, name:f.name, nick:null, origin:"", cls:"", sex:"m", auctor:fate==="departed",
+          joined:1, left:f.week, fate, age:f.age||0, wins:f.wins||0, losses:0, kills:0, pfame:0,
+          scars:f.scars||0, amb:null, ambMet:false });
+      });
+      back(S.fallen,"dead"); back(S.freed,"freed"); back(S.escaped,"escaped");
+      back(S.retired,"retired"); back(S.departed,"departed"); back(S.defected,"defected"); } },
+
+  { at:16, why:"which of the gatekeeper's notes this house has already read",
+    run(S){ if(!S.flags.learned) S.flags.learned = {}; } },
+
+  { at:16, why:"an existing house keeps the standing it earned when the patrons arrived",
+    run(S){ if(S.patrons && S.patrons.length) return;
+      S.patrons = [makePatron(S,"magistrate"), makePatron(S,"merchant")];
+      const seed = clamp(S.favor||30, 10, 90);
+      S.patrons.forEach(p=>{ p.favor = clamp(seed + ri(-8,8), 0, 100); }); } },
+
+  { at:16, why:"the seed the world was built from, and where its dice had got to",
+    run(S){ if(S.rngState==null) S.rngState = rngGet(); } },
+];
+
+function migrate(S){
+  for(const k in SAVE_FIELDS)  if(!S[k])                 S[k] = SAVE_FIELDS[k](S);
+  for(const k of SAVE_MAYBE)   if(S[k] === undefined)    S[k] = null;
+  for(const k in SAVE_NUMBERS) if(S[k] == null)          S[k] = SAVE_NUMBERS[k];
+  for(const k in SAVE_FLAGS)   if(S[k] === undefined)    S[k] = SAVE_FLAGS[k];
+  /* the counter every new thing takes its name from. Rebuilt from what is already
+     here rather than reset, or two men would end up sharing an id. */
+  if(!Number.isFinite(S.nextId)){
+    let top = 0;
+    const scan = list => (list||[]).forEach(x=>{ if(x && Number.isFinite(x.id)) top = Math.max(top, x.id); });
+    scan(S.gladiators); scan(S.market); scan(S.annals); scan(S.deadlines); scan(S.patrons);
+    S.nextId = top + 1;
   }
-  if(!S.kept) S.kept = [];        /* the long memory behind the roll */
-  if(!S.pit) S.pit = pick(PIT_HOUSES);
-  if(!S.pitCard || S.pitCard.week !== S.week) makePitCard(S);
-  if(!S.departed) S.departed = [];
-  if(S.reSignOffer===undefined) S.reSignOffer = null;
-  if(!S.annals){
-    S.annals = [];
-    let nid = -1;
-    const back = (list, fate) => (list||[]).forEach(f=>{
-      S.annals.push({ id:nid--, name:f.name, nick:null, origin:"", cls:"", sex:"m", auctor:fate==="departed",
-        joined:1, left:f.week, fate, age:f.age||0, wins:f.wins||0, losses:0, kills:0, pfame:0,
-        scars:f.scars||0, amb:null, ambMet:false });
-    });
-    back(S.fallen,"dead"); back(S.freed,"freed"); back(S.escaped,"escaped");
-    back(S.retired,"retired"); back(S.departed,"departed"); back(S.defected,"defected");
-  }
-  if(!S.flags.learned) S.flags.learned = {};
-  S.gladiators.forEach(g=>{ if(!g.sex) g.sex = "m"; if(!g.ambition) giveAmbition(S, g); });
-  (S.market||[]).forEach(g=>{ if(!g.ambition) giveAmbition(S, g); });
-  if(S.romeOffer===undefined) S.romeOffer = null;
-  if(!S.patrons || !S.patrons.length){
-    S.patrons = [makePatron(S,"magistrate"), makePatron(S,"merchant")];
-    const seed = clamp(S.favor||30, 10, 90);          // an existing house keeps the standing it earned
-    S.patrons.forEach(p=>{ p.favor = clamp(seed + ri(-8,8), 0, 100); });
-  }
-  S.gladiators.forEach(g=>{
-    if(!g.regimen){ g.regimen = g.focus==="rest" ? "rest" : "palus"; }
-    if(g.focus==="rest") g.focus = CLASSES[g.cls] ? CLASSES[g.cls].key[0] : "str";
-    if(g.sparWith===undefined) g.sparWith = null;
+  (S.gladiators||[]).forEach(g=>{
+    for(const k in MAN_FIELDS)  if(!g[k])       g[k] = MAN_FIELDS[k](g);
+    for(const k in MAN_NUMBERS) if(g[k] == null) g[k] = MAN_NUMBERS[k]();
   });
-  S.gladiators.forEach(g=>{
-    if(!g.scars) g.scars = [];
-    if(!g.scarCap) g.scarCap = {};
-    if(g.weeksAged==null) g.weeksAged = 0;
-    if(g.age==null) g.age = ri(20,28);
-  });
-  S.gladiators.forEach(g=>{ if(!g.kit) g.kit = defaultKit(g.cls); });
-  (S.market||[]).forEach(g=>{ if(!g.kit) g.kit = defaultKit(g.cls); });
-  (S.rivals||[]).forEach(h=>h.fighters.forEach(f=>{ if(!f.kit) f.kit = defaultKit(f.cls); }));
-  if(S.rebellion===undefined) S.rebellion = null;
-  if(!S.ver || S.ver<16) S.ver = 16;
+  const was = S.ver || 0;
+  for(const r of REPAIRS) if(r.at <= 16 || r.at > was) r.run(S);
+  S.ver = SAVE_VER;
   return S;
 }
+
 
 function newGameState(name, scen, seed, pitch){
   const sw = (seed && String(seed).trim()) ? String(seed).trim().toUpperCase() : newSeedWord();
@@ -21666,6 +21715,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     doFight, doPairFight, doMelee, doVenatio,
     /* the week, and what it writes down */
     endWeek, bookBout, bookOf, newBook, chron,
+    /* loading an old save */
+    migrate, SAVE_FIELDS, SAVE_MAYBE, SAVE_NUMBERS, MAN_FIELDS, MAN_NUMBERS, REPAIRS, SAVE_VER,
     /* the tables a check may need to reason about */
     TIERS, CLASSES, GEAR, EVENTS, LASTING, STATS,
     /* the odds the bookmakers quote, and the mitigations on a death */

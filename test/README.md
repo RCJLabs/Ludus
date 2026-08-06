@@ -23,6 +23,8 @@ reason the check exists usually has not.
 | `modals` | the week's digest threw itself over the answer to the question you were just asked |
 | `surface` | the tab bar was set in 9px and END WEEK was 37px tall |
 | `sweep` | the cheap net: does anything throw when you open it |
+| `layers` | 28 overlays with hand-written z-indices, and no way to see the order |
+| `saves` | 165 lines of unordered backfills, and fifteen core fields that never had one |
 
 ## The test build
 
@@ -72,6 +74,19 @@ export async function run({ p, errors }){
 - **Overlays do not stack in DOM order.** The one in front is the one with the
   highest computed z-index. `top(p)` sorts before it looks — the digest-over-answer
   bug was invisible until it did.
+
+## Two that read the source, not the screen
+
+`layers` and part of `saves` never open a browser tab in anger — they read
+`src/ludus.jsx` and the migration tables directly. That is deliberate: both guard
+against bugs that are invisible on screen until two things happen to coincide. An
+overlay ordering only goes wrong when both overlays are open at once; a forgotten
+backfill only bites the one player whose save is old enough to be missing it.
+
+`saves` builds a save, strips it back to what older versions actually carried —
+seven vintages, down to a ver-1 save holding seven keys and men holding ten — and
+checks that each comes out with nothing missing, nothing NaN, plays a week, and
+does not change again if migrated twice.
 
 ## On the numbers in `engines`
 
