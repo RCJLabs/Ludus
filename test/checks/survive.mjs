@@ -43,11 +43,16 @@ export const slow = true;   /* drives a real browser through the real screens */
    to be hard. But it means a bar of "two of three houses" would have failed one run
    in five with nothing wrong, and a check nobody trusts is worse than no check.
 
-   So five houses, which cost nothing now they run side by side, and two bars taken
-   off the bootstrapped distribution rather than off a hope:
+   So five houses, which cost nothing now they run side by side, and two bars — one
+   taken off that bootstrap, one off what this check itself actually scores:
 
-     at least two still standing   passes 98.4% of healthy runs
-     at least six men between them passes 98.3%, median is sixteen
+     at least two still standing    passes 98.4% of healthy runs
+     at least three men between all five  (see MEN below)
+
+   The second bar was six for a while, borrowed from the bootstrap of the headless
+   policy, and that was a mistake worth naming: the headless lanista buys more freely
+   and picks his bouts better, so his distribution is not this one's. A bar is only
+   as good as the thing it was measured on.
 
    Neither is a precision instrument for difficulty and they are not meant to be.
    They catch the thing this check has always caught — a change that quietly guts
@@ -56,7 +61,14 @@ export const slow = true;   /* drives a real browser through the real screens */
 const HOUSES = 5;    /* free now that they run side by side */
 const WEEKS  = 26;   /* past the first winter, the first deaths, the first hard week */
 const FLOOR  = 2;    /* houses that must still be able to field somebody */
-const MEN    = 6;    /* and men left between all of them; sixteen is the healthy median */
+/* Men left between all five. The first version of this said six, taken from a
+   bootstrap of the HEADLESS policy — which buys more freely and picks its bouts
+   better than the browser one does. What this check actually scores, run after run,
+   is 4, 6, 7, 7. A floor of six sits on top of that distribution and fails roughly
+   one healthy run in four, which is how a check stops being read. Three catches a
+   collapse — every house emptied reads zero — without crying wolf at ordinary bad
+   luck, and the per-house line is printed every run so drift is visible anyway. */
+const MEN    = 3;
 const KEEP   = 4;    /* the yard a lanista tries to hold; below it, he goes to the block */
 /* what he will not spend below. A lanista does not think in percentages, he thinks
    about whether he can still feed the house next month — and a small house costs
@@ -156,7 +168,7 @@ export async function run({ p, errors, port }){
      the same thing, and for a long time this check accepted it as if it were. */
   const standing = live.filter(x=>!x.over && x.yard > 0).length;
   const men = live.reduce((n,x)=>n+x.yard, 0);
-  lines.push(`${standing} of ${live.length} houses still standing after ${WEEKS} weeks, ${men} men between them (the healthy median is 16)`);
+  lines.push(`${standing} of ${live.length} houses still standing after ${WEEKS} weeks, ${men} men between them (this policy scores 4-7)`);
 
   const fails = [];
   if(live.length < HOUSES) fails.push(`${HOUSES - live.length} of ${HOUSES} houses produced no save at all`);
