@@ -52,6 +52,7 @@ reason the check exists usually has not.
 | `table` | fast | the only lever against the only number that ends a run cost 120 denarii flat, forever |
 | `street` | fast | acclaim climbed past the top of its ladder into nothing, and the missio never read it |
 | `chronicle` | fast | one in five lines the chronicle ever wrote was the same weekly receipt |
+| `marks` | fast | a man bought with an old wound carried a scar drawn at NaN,NaN for as long as you owned him |
 
 ## The test build
 

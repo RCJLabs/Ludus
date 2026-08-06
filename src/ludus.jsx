@@ -2569,13 +2569,26 @@ function checkLasting(d, g, part){
   return k;
 }
 
+/* ---- A MARK NEEDS SOMEWHERE TO BE ----
+   Every scar the sand leaves came through addScar, which looks the place up in
+   TARGETS and stores where it sits on the body. One did not: the old wound a
+   seller does not mention pushed { part:"flank" } and no coordinates at all, so
+   a man bought off the block with that flaw carried a mark drawn at NaN,NaN —
+   an SVG error on every screen that drew him, for as long as you owned him.
+
+   It went unseen for a long time because the check that would have caught it
+   never bought anybody, and because its own failure message reported only the
+   first thing wrong. Both sources come through here now. */
+function scarMark(part, big){
+  const t = TARGETS.find(x=>x[0]===part) || TARGETS[3];
+  return { part, x:t[1][0], y:t[1][1], big:!!big };
+}
 function addScar(g, target, severe){
-  const t = TARGETS.find(x=>x[0]===target) || TARGETS[3];
   g.scars = g.scars || [];
   g.scarCap = g.scarCap || {};
   const prior = g.scars.filter(s=>s.part===target).length;
   const deep = !!severe || prior>0;
-  g.scars.push({ part:target, x:t[1][0], y:t[1][1], big:deep });
+  g.scars.push(scarMark(target, deep));
   const k = SCAR_STAT[target] || "end";
   g[k] = Math.max(6, g[k] - (prior>0 ? 3 : 1));
   g.scarCap[k] = Math.min(34, (g.scarCap[k]||0) + (prior>0 ? 7 : 2));
@@ -3854,7 +3867,7 @@ const FLAWS = {
   wound:   { name:"An old wound", tell:"favours one side when he thinks nobody is watching",
     hint:"There is something in how he stands.", apply(g){ const k = pick(["str","agi","end"]);
       g[k] = Math.max(10, g[k]-9); g.scarCap = g.scarCap||{}; g.scarCap[k] = (g.scarCap[k]||0)+8;
-      (g.scars = g.scars||[]).push({ part:"flank", big:false }); } },
+      (g.scars = g.scars||[]).push(scarMark("flank", false)); } },
   broken:  { name:"Broken already", tell:"does what he is told the instant he is told it",
     hint:"He is very quiet, and quiet in the wrong way.", apply(g){ if(!g.traits.includes("Broken")) g.traits.push("Broken");
       g.defiance = Math.max(2, g.defiance-25); g.sho = Math.max(8, g.sho-10); g.heart = Math.max(15, (g.heart||50)-20); } },
@@ -6520,8 +6533,14 @@ const MAN_NUMBERS = { regard:()=>ri(38,54), form:()=>0, fans:()=>0, strain:()=>0
    every load, because that is how it has always behaved and a live run must not
    notice this refactor. From 17 on, `at` is the version the repair belongs to and
    it runs once — S.ver is the record of what a save has already been through. */
-const SAVE_VER = 17;
+const SAVE_VER = 18;
 const REPAIRS = [
+  { at:18, why:"a mark with nowhere to be — the old-wound flaw stored no coordinates",
+    run(S){ const fix = g => { if(!g || !Array.isArray(g.scars)) return;
+      g.scars = g.scars.map(sc => (sc && Number.isFinite(sc.x) && Number.isFinite(sc.y))
+        ? sc : scarMark((sc && sc.part) || "flank", !!(sc && sc.big))); };
+      (S.gladiators||[]).forEach(fix);
+      (S.market||[]).forEach(fix); } },
   { at:16, why:"the count nobody was keeping — credit a house that held the primacy",
     run(S){ if(!S.flags.primusHeld && (S.flags.everPrimus || (S.primus && S.primus.mine) || (S.feats && S.feats.primus)))
       S.flags.primusHeld = 1; } },
@@ -22382,6 +22401,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* the street: what it thinks of you, and what it will say for your men */
     acclaimOf, acclaimTarget, acclaimWeek, acclaimWord, streetVoice, merchWeekly,
     missioScore, missioOdds, missioAccount, ACCLAIM_TIERS, ACCLAIM_MISSIO, MISSIO_CAP, MISSIO_MID,
+    /* where a mark sits on a body, and the seller's undisclosed one */
+    addScar, scarMark, TARGETS, FLAWS,
     /* helpers */
     activeG, defaultKit, kitMods, statCap, fullName,
   };
