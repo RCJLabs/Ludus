@@ -15361,6 +15361,10 @@ export default function App(){
     [!!munusWiz,     ()=>setMunusWiz(false)],
     [!!arenaWiz,     ()=>{ setArenaWiz(false); setArenaStep(0); setArenaPick(null); setPitPick(null); }],
     [!!skipped,      ()=>setSkipped(null)],
+    /* the answer to an event sits above the digest and now defers it, so back has to
+       take the answer off first — otherwise it would quietly discard a week summary
+       that was still waiting to be read. The question itself is never in this list. */
+    [!!evResult,     ()=>setEvResult(null)],
     [!!digest,       ()=>setDigest(null)],
     [!!selId,        ()=>setSelId(null)],
   ];
@@ -20722,7 +20726,13 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           </div>
         </div>
       )}
-      {digest && !S.pendingEvent && !fight && !S.over && (()=>{
+      {/* THE ANSWER TO THE QUESTION YOU WERE JUST ASKED.
+          This waited on pendingEvent but not on the reply to it, and it outranks the
+          event modal by eight z-layers — so the instant you chose, the digest threw
+          itself over the top of your own decision and you read what it cost only
+          after carrying on from a summary of a week you had not finished. A question
+          and its answer are one thing. The week that was comes after both. */}
+      {digest && !S.pendingEvent && !evResult && !fight && !S.over && (()=>{
         const D = digest, close=()=>setDigest(null);
         const Delta = ({label, v, good, suffix}) => v===0 ? null : (
           <div style={{minWidth:0}}>
@@ -21483,7 +21493,10 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
       })()}
 
       {(S.pendingEvent || evResult) && !fight && (
-        <div className="modalwrap" role="dialog" aria-modal="true">
+        /* it sat on the default 50, under half the overlays in the game, though it is
+           the one thing on screen that is waiting on an answer. Above the digest,
+           below anything that must still be answered on top of it. */
+        <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:59}}>
           <div className="modal" tabIndex={-1}>
             {evResult ? (<>
               <div className="disp" style={{fontSize:15,fontWeight:700,marginBottom:8}}>IT IS DECIDED</div>
