@@ -27,6 +27,7 @@ reason the check exists usually has not.
 | `saves` | 165 lines of unordered backfills, and fifteen core fields that never had one |
 | `block` | buying a man lived in a React closure, so nothing outside it could buy anybody |
 | `counsel` | the book had every figure and no way to say what they came to |
+| `actions` | fifty-eight more actions lived in that same closure, and one probe measured its own copy of the feast |
 
 ## The test build
 
@@ -45,6 +46,24 @@ tree is clean whether the checks passed or not.
 
 To expose something new, add it to the `__LVDVS` block at the foot of `src/ludus.jsx`.
 Nothing there reaches a player.
+
+## What a check can reach
+
+Every action a lanista can take is a function of the save — `sellMan(d, id, price)`,
+`throwFeast(d)`, `setCareOf(d, id, "convalesce")` — living at module scope and
+exported on the handle. The closures inside `App` are the React half only: read the
+form, call one of these, set the panel that follows.
+
+That split is the point. It used to be the other way round, and the cost was not
+tidiness: nothing outside a mounted component could sell a man or throw a feast, so
+no check could drive a house through a year. The one probe that needed the feast
+copied it in by hand and then measured its own copy — which cannot catch a bug in
+the original, and goes stale the moment the original moves, silently, because
+nothing compares them.
+
+If you add an action, add it at module scope and put it on the handle. `actions`
+holds a list of names and fails when one goes missing, so a lift that forgets a
+function is loud rather than quietly narrowing what the checks can see.
 
 ## Writing one
 

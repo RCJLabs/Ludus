@@ -3238,6 +3238,8 @@ const repairFee = (d, g) => {
     if(wears(it)) n += (100 - wearOf(g,s)) * (it.price/900); }
   return rnd(n * [1, .85, .72, .6, .48][bLevel(d,"armamentarium")]);
 };
+/* meat and honeyed wine — the one lever a lanista has against unrest */
+const FEAST_COST = 120;
 /* a piece made for one man and nobody else */
 const FORGE_FEE = 700;
 const FORGE_NAMES = ["Vulcan's Tooth","the Grey Wife","Long Answer","Nightwork","the Quiet Argument","Second Thoughts","the Last Word","Winter"];
@@ -15507,6 +15509,419 @@ function Sect({ title, note, open, tone, children }){
   );
 }
 
+/* ────────────────────────────────────────────────────────────────────────────
+   THE PLAYER'S ACTIONS
+
+   Everything a lanista can do to his house, written as a function of the house.
+   Each takes the save and mutates it; none of them knows a browser exists.
+
+   They used to live inside App, closed over React state, which meant nothing
+   outside a rendered component could sell a man, equip him, choose his care,
+   or throw a feast. The cost was not tidiness — it was that no check could
+   drive a house through a year, and a probe that wanted the feast had to copy
+   it by hand and then measure its own copy.
+
+   The closures below still exist. They are now the React half only: read the
+   form, call one of these, set the panel that follows.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+/* --- the men: reward, punish, sell, train --- */
+function rewardMan(d, id){ const g=d.gladiators.find(x=>x.id===id); if(!g||d.gold<50) return false;
+  d.gold-=50; g.morale=clamp(g.morale+12,0,100); g.defiance=clamp(g.defiance-6,0,100); d.unrest=clamp(d.unrest-1,0,100);
+  chron(d, `Wine and comfort sent to ${g.name}'s cell. Small coin, long memory.`); return true; }
+
+function whipMan(d, id){ const g=d.gladiators.find(x=>x.id===id); if(!g) return false;
+  remember(d, g, "whipped");
+  g.dis=clamp(g.dis+2,5,99); g.defiance=clamp(g.defiance+6,0,100); g.morale=clamp(g.morale-12,0,100); d.unrest=clamp(d.unrest+2,0,100);
+  chron(d, `The whip speaks to ${g.name}. The yard is silent after.`); return true; }
+
+/* what a buyer will actually offer — a little over half what he is worth, which
+   is the whole reason selling a man feels like the wrong end of a bargain */
+const sellPrice = g => rnd(gladValue(g)*0.55);
+
+function sellMan(d, id, price){
+  const g = d.gladiators.find(x=>x.id===id); if(!g || isDamn(g)) return false;
+  const v = price==null ? sellPrice(g) : price;
+  const name = g.name, him = PR(g).him;
+  d.gold += v;
+  favourLost(d, g, "sold"); loseFavourite(d, g, "sold");
+  tieList(d).filter(t=>(t.a===id||t.b===id) && t.kind==="brother").forEach(t=>{
+    const o = d.gladiators.find(x=>x.id===(t.a===id?t.b:t.a));
+    if(o && o.status==="active") remember(d, o, "soldKin"); });
+  const sore = kinReact(d, id, "brother", -16, 9);
+  annalsClose(d, g, "sold");
+  d.gladiators = d.gladiators.filter(x=>x.id!==id);
+  dropTies(d, id);
+  d.gladiators.forEach(o=>{ if(o.status==="active") o.defiance=clamp(o.defiance+3,0,100); });
+  d.unrest = clamp(d.unrest+2+sore.length*3,0,100);
+  serveWants(d, { type:"sell", gid:id });
+  chron(d, sore.length
+    ? `${name} sold for ${v} denarii. ${sore.map(o=>o.name).join(" and ")} watched the gate close behind him and looked at you a moment too long.`
+    : `${name} sold for ${v} denarii. The familia watches the gate close behind ${him}.`);
+  return true;
+}
+
+function setFocusOf(d, id, f){ const g=d.gladiators.find(x=>x.id===id); if(!g) return false; g.focus=f; return true; }
+
+function setRegimenOf(d, id, r){ const g=d.gladiators.find(x=>x.id===id); if(!g) return false;
+  d.flags.everTrained = (d.flags.everTrained||0) + 1;
+  if(g.regimen==="spar" && g.sparWith){ const old=d.gladiators.find(x=>x.id===g.sparWith);
+    if(old && old.sparWith===g.id){ old.regimen="palus"; old.sparWith=null; } }
+  g.regimen = r; g.sparWith = null; return true; }
+
+function setSparOf(d, id, mateId){
+  const g=d.gladiators.find(x=>x.id===id), m=d.gladiators.find(x=>x.id===mateId);
+  if(!g || !m || m.status!=="active") return false;
+  [g,m].forEach(x=>{ if(x.sparWith){ const o=d.gladiators.find(y=>y.id===x.sparWith);
+    if(o && o.id!==g.id && o.id!==m.id && o.sparWith===x.id){ o.regimen="palus"; o.sparWith=null; } } });
+  g.regimen="spar"; g.sparWith=m.id; m.regimen="spar"; m.sparWith=g.id; return true; }
+
+/* Putting a man to teaching. The event version waits for the two of them to find
+   each other; this is you deciding it, which you may do the moment a man has more
+   to give than to gain. Everything after this — the weekly gain, the bond when the
+   boy takes his fifth, the grief if either is carried out — is the same machinery. */
+function setTeachOf(d, vetId, rookId){
+  const v = d.gladiators.find(x=>x.id===vetId), r = d.gladiators.find(x=>x.id===rookId);
+  if(!v || !r || !canTeach(v) || !canLearn(r, v)) return false;
+  v.protege = r.id; v.protegeName = r.name; r.mentor = v.id; r.mentorName = v.name;
+  if(!tieBetween(d, v.id, r.id)) addTie(d, v.id, r.id, "brother", 22);
+  v.morale = clamp(v.morale+5,0,100); r.morale = clamp(r.morale+6,0,100);
+  r.defiance = clamp(r.defiance-4,0,100);
+  chron(d, `${v.name} has ${r.name} at the far post now, walking him through the things that cannot be taught quickly. The old man's own week will be the poorer for it.`, "good");
+  return true;
+}
+
+function stopTeachOf(d, id){
+  const v = d.gladiators.find(x=>x.id===id); if(!v || !v.protege) return false;
+  const r = d.gladiators.find(x=>x.id===v.protege);
+  const nm = v.protegeName || (r && r.name) || "the boy";
+  if(r){ r.mentor = null; r.mentorName = null; r.morale = clamp(r.morale-8,0,100); r.defiance = clamp(r.defiance+4,0,100); }
+  v.protege = null; v.protegeName = null; v.morale = clamp(v.morale-4,0,100);
+  chron(d, `${v.name} is back on his own work. ${nm} finishes the week at the post alone, and does not ask why.`, "bad");
+  return true;
+}
+
+function setDrillTo(d, key){ if(!d.doctore || !DRILLS[key]) return false;
+  d.doctore.drill = key; if(key!=="none") d.flags.everDrill = 1; return true; }
+
+/* --- the training board, and the three buttons that set all of it at once --- */
+function clearSparOf(d, g){
+  if(g.regimen==="spar" && g.sparWith){ const o=d.gladiators.find(x=>x.id===g.sparWith);
+    if(o && o.sparWith===g.id){ o.regimen="palus"; o.sparWith=null; } }
+  g.sparWith=null; }
+
+const boardMen = d => d.gladiators.filter(g=>g.status==="active" && !seasonOfMan(g));
+
+function restWornMen(d){ let n=0;
+  boardMen(d).forEach(g=>{ if(strainOf(g)>50 || g.fatigue>80){ clearSparOf(d,g); g.regimen="rest"; n++; } });
+  return n; }
+
+function allToPalus(d){ boardMen(d).forEach(g=>{ clearSparOf(d,g); g.regimen="palus"; }); }
+
+function pairTheYard(d){ const men = boardMen(d);
+  men.forEach(g=>{ clearSparOf(d,g); if(g.regimen==="spar") g.regimen="palus"; });
+  const pool = men.slice().sort((a,b)=> STATS.reduce((s,k)=>s+b[k],0) - STATS.reduce((s,k)=>s+a[k],0));
+  let pairs = 0;
+  for(let i=0;i+1<pool.length;i+=2){ const a=pool[i], b=pool[i+1]; a.regimen="spar"; a.sparWith=b.id; b.regimen="spar"; b.sparWith=a.id; pairs++; }
+  return pairs; }
+
+/* --- the block --- */
+function scoutBlockMan(d, gid){ const g = d.market.find(x=>x.id===gid); if(!g || g.scouted) return false;
+  const fee = SCOUT_FEE(d,g);
+  if(d.gold < fee) return false;
+  d.gold -= fee;
+  g.scouted = true;
+  if(g.slaver){ dealt(d, g.slaver, "scouted"); if(g.flaw) dealt(d, g.slaver, "burned"); }
+  chron(d, g.flaw
+    ? `You pay to have ${g.name} looked over properly. ${PR(g).He} ${FLAWS[g.flaw].tell}. ${g.slaver? slaverOf(g.slaver).name : "The seller"} does not meet your eye about it.`
+    : `You pay to have ${g.name} looked over properly. ${PR(g).He} is exactly what ${g.slaver? slaverOf(g.slaver).name : "the man"} said he was, which happens.`,
+    g.flaw ? "bad" : "good");
+  return true; }
+
+/* --- the armoury --- */
+function buyGearItem(d, id){ const it=GEAR[id]; if(!it || d.gold<it.price) return false;
+  d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
+  d.gearCond = d.gearCond || {}; (d.gearCond[id] = d.gearCond[id] || []).push(100);
+  chron(d, `The armourer delivers: ${it.name} (${it.price}d).`); return true; }
+
+function sellGearOne(d, id){ const paid = sellGear(d, id);
+  if(paid) chron(d, `${GEAR[id].name} goes back out the door for ${paid} denarii. The armoury is a room, not a warehouse.`, "info");
+  return paid; }
+
+function equipOne(d, gid, slot, id){ const g=d.gladiators.find(x=>x.id===gid); if(!g) return false;
+  if(!g.kit) g.kit = defaultKit(g.cls);
+  if(g.kit[slot]===id) return false;
+  if(!isBasic(id) && gearFree(d,id)<=0) return false;
+  if(g.named && g.named.slot===slot) return false;
+  g.wear = g.wear || {}; d.gearCond = d.gearCond || {};
+  const old = GEAR[g.kit[slot]];
+  if(wears(old)){ (d.gearCond[g.kit[slot]] = d.gearCond[g.kit[slot]] || []).push(wearOf(g, slot)); }
+  g.kit[slot] = id;
+  const now = GEAR[id];
+  if(wears(now)){
+    const pool = d.gearCond[id] || [];
+    g.wear[slot] = pool.length ? pool.splice(pool.indexOf(Math.max(...pool)),1)[0] : 100;
+  } else g.wear[slot] = 100;
+  return true;
+}
+
+/* strip every man back to house issue, returning bought steel to the rack — for
+   starting a loadout over from scratch. Nothing is sold; named weapons stay. */
+function stripAll(d){
+  d.gearCond = d.gearCond || {}; let n = 0;
+  d.gladiators.forEach(g=>{
+    if(isGone(g)) return;
+    if(!g.kit){ g.kit = defaultKit(g.cls); return; }
+    g.wear = g.wear || {};
+    const def = defaultKit(g.cls);
+    SLOTS.forEach(s=>{
+      if(g.named && g.named.slot===s) return;   // a forged, named piece stays with him
+      const cur = g.kit[s];
+      if(cur === def[s]) return;
+      const old = GEAR[cur];
+      if(wears(old)){ (d.gearCond[cur] = d.gearCond[cur] || []).push(wearOf(g, s)); n++; }
+      g.kit[s] = def[s]; g.wear[s] = 100;
+    });
+  });
+  chron(d, n
+    ? `Every man is stripped back to house issue. ${n} piece${n>1?"s go":" goes"} back on the rack, and the yard's loadout starts over from nothing but the standard kit.`
+    : "There was nothing but house issue to strip. The rack stands as it was.", "info");
+  return n;
+}
+
+function mendKitOf(d, gid){ const g=d.gladiators.find(x=>x.id===gid); if(!g) return false;
+  const fee = repairFee(d, g);
+  if(fee<=0 || d.gold<fee) return false;
+  d.gold -= fee;
+  g.wear = g.wear || {};
+  for(const s of SLOTS) if(wears(GEAR[g.kit[s]])) g.wear[s] = 100;
+  chron(d, `${g.name}'s kit goes to the armoury and comes back straightened, edged and oiled. ${fee} denarii.`);
+  return true; }
+
+function forgeForMan(d, gid, slot){ const g=d.gladiators.find(x=>x.id===gid); if(!g) return false;
+  if(!forgeReady(d,g) || d.gold<FORGE_FEE) return false;
+  if(!wears(GEAR[g.kit[slot]])) return false;
+  d.gold -= FORGE_FEE;
+  const title = pick(FORGE_NAMES.filter(t=>!(d.forged||[]).includes(t))) || pick(FORGE_NAMES);
+  d.forged = [...(d.forged||[]), title];
+  g.named = { slot, title, made:d.week };
+  giveProv(d, g, slot, "forged");
+  g.wear = g.wear || {}; g.wear[slot] = 100;
+  g.morale = clamp(g.morale+16, 0, 100);
+  g.defiance = clamp(g.defiance-6, 0, 100);
+  chron(d, `The smith works six weeks of nights on one piece for ${g.name} and hands it over without a word. ${title}. It is his, and it is not going back on the rack.`, "good");
+  return true; }
+
+function armHimOff(d, gid){ const r = armFromRack(d, gid);
+  if(r && r.changed.length) chron(d, `${(d.gladiators.find(x=>x.id===gid)||{}).name} is re-armed off the rack — ${r.changed.length} piece${r.changed.length===1?"":"s"} changed.`, "info");
+  return r ? r.changed.length : 0; }
+
+function armAllOff(d){ let n=0;
+  for(const g of activeG(d)){ const r = armFromRack(d, g.id); if(r && r.changed.length) n++; }
+  chron(d, n ? `The armourer goes down the line and re-arms ${n} man${n===1?"":"men"} out of the racks.` : `Everyone is already carrying the best of what the house owns.`, "info");
+  return n; }
+
+/* --- the villa --- */
+function buildUp(d, k){ const L = bLevel(d,k); if(L>=4) return false;
+  const cost = BUILDINGS[k].cost[L];
+  if(d.gold < cost) return false;
+  d.gold -= cost;
+  d.buildings = Object.assign({}, d.buildings, {[k]: L+1});
+  chron(d, `${BUILDINGS[k].name} ${L? "improved":"built"}. ${BUILDINGS[k].levels[L]}`, "good");
+  return true; }
+
+function setCrestTo(d, patch){ d.crest = Object.assign({ c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" }, d.crest||{}, patch); }
+
+/* --- the infirmary --- */
+function setCareOf(d, id, care){ const g=d.gladiators.find(x=>x.id===id); if(!g || !g.injury) return false;
+  if(care==="surgeon"){
+    const fee = surgeonFee(d, g.injury);
+    if(d.gold < fee || !surgeonOK(d)) return false;
+    d.gold -= fee;
+    g.injury.care = "surgeon"; remember(d, g, "surgeon");
+    if(g.status!=="injured") g.status = "injured";
+    chron(d, `The surgeon works on ${g.name} by lamplight. ${fee} denarii, and worth it if ${PR(g).he} fights again.`);
+    return true;
+  }
+  g.injury.care = care;
+  if(care==="through"){ g.status = "active";
+    g.morale = clamp(g.morale-6,0,100); g.defiance = clamp(g.defiance+4,0,100);
+    chron(d, `${g.name} is sent back to the post on an open wound.`, "bad"); }
+  else if(care==="convalesce"){ g.status = "injured";
+    g.morale = clamp(g.morale+4,0,100);
+    chron(d, `${g.name} is given the long bed. No sand, no post, no hurry — he rises when he rises.`); }
+  else g.status = "injured";
+  return true; }
+
+/* --- techniques --- */
+function teachSigTo(d, gid, key){ const g=d.gladiators.find(x=>x.id===gid);
+  const fee = sigFee(d);
+  if(!g || !canLearnSig(d,g) || d.gold<fee) return false;
+  if(!TECHNIQUES[key] || TECHNIQUES[key].cls!==g.cls) return false;
+  d.gold -= fee; g.teaching = { key, weeks:SIG_WEEKS };
+  chron(d, d.doctore
+    ? `${fullName(g)} goes to the far post to drill ${TECHNIQUES[key].name} until it is his. ${SIG_WEEKS} weeks of one thing, over and over, ${fee} denarii to the doctore for the hours.`
+    : `A master comes down from the school at Capua for a month and no longer, and he is not cheap. ${fullName(g)} drills ${TECHNIQUES[key].name} with him at the far post until it is his — ${SIG_WEEKS} weeks, ${fee} denarii, and then the man goes home.`);
+  return true; }
+
+function makeMasterOf(d, gid){ const g=d.gladiators.find(x=>x.id===gid); if(!g) return false; makeMaster(d,g); return true; }
+
+/* --- the doctore --- */
+function setPupilTo(d, gid){ if(!d.doctore || d.doctore.retrainTo) return false;
+  d.doctore.pupil = (d.doctore.pupil===gid) ? null : gid; return true; }
+
+function beginRetrain(d, gid, cls){ const doc=d.doctore; if(!doc || d.gold<RETRAIN_FEE) return false;
+  const g = d.gladiators.find(x=>x.id===gid); if(!g || g.status!=="active" || g.cls===cls) return false;
+  d.gold -= RETRAIN_FEE;
+  doc.pupil = gid; doc.retrainTo = cls; doc.retrainLeft = RETRAIN_WEEKS;
+  chron(d, `${doc.name} takes ${g.name} off the roster for ${RETRAIN_WEEKS} weeks. He intends to make a ${cls.toLowerCase()} of him.`);
+  return true; }
+
+function endRetrain(d){ if(!d.doctore) return false;
+  d.doctore.pupil = null; d.doctore.retrainTo = null; d.doctore.retrainLeft = 0;
+  chron(d, `The retraining is called off. The fee is not coming back.`); return true; }
+
+function hireDoctore(d, did){ const c=(d.doctoreMarket||[]).find(x=>x.id===did);
+  if(!c || d.doctore || d.gold<c.fee) return false;
+  d.gold -= c.fee; d.doctore = c; d.doctoreMarket = []; d.flags.everDoctore = 1;
+  chron(d, `${c.name} takes the training square. His voice carries to the far wall before the first morning is out.`, "good");
+  return true; }
+
+function dismissDoctore(d){ const was=d.doctore; if(!was) return false;
+  d.doctore=null; makeDoctoreMarket(d);
+  if(was.fromHouse){ d.unrest=clamp(d.unrest+8,0,100);
+    d.gladiators.forEach(o=>{ if(o.status==="active"){ o.morale=clamp(o.morale-8,0,100); o.defiance=clamp(o.defiance+5,0,100); } });
+    chron(d, `${was.name} is turned out of the ludus he chose to stay in. They watch him go, and say nothing at all.`, "bad");
+  } else chron(d, `${was.name} collects his wages and leaves the square empty.`);
+  return true; }
+
+function takeDoctoreOffer(d, accept){ const o=d.doctoreOffer; if(!o) return false;
+  d.doctoreOffer = null;
+  if(accept){ const old=d.doctore; d.doctore=o; d.doctoreMarket=[]; d.flags.everDoctore = 1;
+    d.unrest=clamp(d.unrest-5,0,100);
+    d.gladiators.forEach(g=>{ if(g.status==="active") g.morale=clamp(g.morale+5,0,100); });
+    chron(d, old ? `${o.name} takes the square from ${old.name}. The men train harder for a man who wore their chains.`
+                 : `${o.name} stays, and takes the training square. The men train harder for a man who wore their chains.`, "good");
+  } else chron(d, `${o.name} takes his freedom and the road with it. You will not see him again.`);
+  return true; }
+
+/* --- the household --- */
+function hireStaffMember(d, kind, id){
+  const list = (d.staffMarket||{})[kind] || [];
+  const s = list.find(x=>x.id===id);
+  if(!s || d.gold < s.fee || d[kind]) return false;
+  d.gold -= s.fee; d[kind] = s; d.staffMarket = Object.assign({}, d.staffMarket, {[kind]:[]});
+  chron(d, `${s.name} takes the ${STAFF[kind].name.toLowerCase()}'s place at ${s.wage} denarii a week.`, "good");
+  return true; }
+
+function letStaffGoOf(d, kind){ const s = d[kind]; if(!s) return false;
+  d[kind] = null;
+  chron(d, `${s.name} is let go. He packs without comment.`, "info"); return true; }
+
+function setEarTo(d, who, gid){
+  if(!who){ d.ear = null; d.heard = []; return true; }
+  d.ear = who==="gate" ? { who:"gate", since:d.week } : { who:"man", gid, since:d.week, risk:0 };
+  chron(d, who==="gate"
+    ? `The old man on the gate is given a small retainer and no instructions beyond keeping his ears open.`
+    : `You put one of your own inside the thing you want to hear. He does not ask why and that is worse.`, "info");
+  return true; }
+
+/* --- the card, before it is fought --- */
+function haveWatchedOffer(d, oid){
+  const o = (d.games ? d.games.offers : []).find(x=>x.id===oid);
+  if(!o) return false; watchHim(d, o); return true; }
+
+function stopPrepFor(d, gid){ const g = d.gladiators.find(x=>x.id===gid); if(!g) return false;
+  dropPrep(d, g, `${g.name} goes back onto his own work. Whatever he had of the other man goes with the week.`);
+  return true; }
+
+/* --- the two contracts that arrive as a question --- */
+function answerReSignWith(d, accept){
+  const o = d.reSignOffer; if(!o) return false;
+  const g = d.gladiators.find(x=>x.id===o.gid);
+  d.reSignOffer = null;
+  if(!g) return false;
+  if(accept && d.gold>=o.fee){
+    d.gold -= o.fee;
+    g.auctor = { bouts:o.bouts, served:0, fee:o.fee, wage:o.wage,
+      why:(g.auctor && g.auctor.why) || pick(AUCTOR_WHY) };
+    g.morale = clamp(g.morale+12,0,100);
+    chron(d, `${fullName(g)} signs again — ${o.fee} in hand, ${o.bouts} more bouts. He had somewhere to go and did not go.`, "good");
+  } else auctorDepart(d, g);
+  return true;
+}
+
+function answerRomeWith(d, accept){
+  const o = d.romeOffer; if(!o) return false;
+  d.romeOffer = null;
+  if(accept){
+    d.rome = { travel:2, fought:0, won:0, turned:false, run:romeRuns(d)+1 };
+    d.games = null;
+    d.gladiators.forEach(g=>{ if(g.status==="active"){ g.morale=clamp(g.morale+8,0,100); g.defiance=clamp(g.defiance+4,0,100); } });
+    chron(d, `You accept. The wagons are loaded within the week, and everyone in the cells knows where they are going.`, "good");
+  } else {
+    d.flags.declinedRome = (d.flags.declinedRome||0)+1;
+    d.flags.romeDeclined = d.week;
+    d.fame = Math.max(0, d.fame-25);
+    patronsOf(d).forEach(p=>{ if(p.rank==="senator") p.favor = clamp(p.favor-30,0,100); });
+    recomputeFavor(d);
+    d.gladiators.forEach(g=>{ if(g.status==="active") g.morale=clamp(g.morale+4,0,100); });
+    chron(d, `You decline Rome. The senator's letters stop coming, and Capua remains the whole of the world.`, "info");
+  }
+  return true;
+}
+
+/* --- what a lanista does with his evenings --- */
+function hostParty(d, kind){ const p=PARTY[kind];
+  if(!p || d.gold<p.cost || d.week-d.lastParty<2) return false;
+  d.gold-=p.cost; d.favor+=p.favor; d.fame+=p.fame; d.lastParty=d.week;
+  let extra="";
+  const show = activeG(d).sort((a,b)=>b.sho-a.sho)[0];
+  if(show){ const bf=rnd(show.sho/12); d.fame+=bf; extra+=` ${show.name} spars for the guests to gasps and applause (+${bf} fame).`;
+    if(R()<0.08){ const inj=INJURIES[0]; show.injury={name:inj[0],weeks:inj[1],pen:inj[2]}; show.status="injured"; extra+=" A careless blade — he takes a small wound."; } }
+  if(kind!=="modest" && R()<0.25){ d.favor+=8; d.gold+=100; extra+=" A magistrate lingers past the last cup — you have found a patron (+8 favor, a gift of 100 denarii)."; }
+  if(kind==="decadent" && R()<0.2){ d.fame=Math.max(0,d.fame-8); extra+=" Word of certain excesses escapes the villa walls (-8 fame)."; }
+  chron(d, `You host ${p.label.toLowerCase()}. Capua's better sort attend.${extra}`, "good");
+  const bump = kind==="modest"?5:kind==="lavish"?9:15;
+  patronsOf(d).forEach(pt=>{ pt.favor = clamp(pt.favor+bump, 0, 100); });
+  serveWants(d, { type:"party", kind });
+  return true; }
+
+function throwFeast(d){ if(d.gold<FEAST_COST || d.week-d.lastFeast<3) return false;
+  d.gold-=FEAST_COST; d.lastFeast=d.week; d.flags.everFeast=(d.flags.everFeast||0)+1;
+  if(d.lanista) d.lanista.health = clamp(d.lanista.health + 3, 0, 100);
+  rememberAll(d, "feast");
+  d.gladiators.forEach(g=>{ if(!isGone(g)){ g.morale=clamp(g.morale+9,0,100); g.defiance=clamp(g.defiance-4,0,100); } });
+  d.unrest=clamp(d.unrest-7,0,100);
+  chron(d, "Meat and honeyed wine for the familia. Songs in the cells past midnight.");
+  return true; }
+
+function walkTheCells(d){
+  if(!walkReady(d)) return false;
+  d.flags.walkWk = d.week;
+  activeG(d).forEach(g=>{ g.morale=clamp(g.morale+3,0,100); g.defiance=clamp(g.defiance-1.5,0,100); });
+  d.unrest=clamp(d.unrest-2,0,100);
+  const low = activeG(d).filter(g=>g.morale<48).sort((a,b)=>a.morale-b.morale)[0];
+  if(low) remember(d, low, "heard", 0.4);
+  chron(d, `You go down among the cells after the lamps are lit, and stay a while. It is not much — but a house whose master walks its floor is a different house from one whose master does not.`, "good");
+  const rivals = tieList(d).filter(t=>t.kind==="rival" && t.strength>=45 && bothActive(d,t.a,t.b));
+  const bros   = tieList(d).filter(t=>t.kind==="brother" && t.strength>=60 && bothActive(d,t.a,t.b));
+  const near   = activeG(d).filter(g=>g.morale<32);
+  if(rivals.length){ const t=pick(rivals); const A=gById(d,t.a), B=gById(d,t.b); chron(d, `You see it plainly now: ${A.name} and ${B.name} carry something you had not marked. It will not stay in the cells forever.`, "info"); }
+  if(bros.length){ const t=pick(bros); const A=gById(d,t.a), B=gById(d,t.b); chron(d, `${A.name} and ${B.name} would go into the ground for one another. It is the best thing you own, and the most dangerous.`, "info"); }
+  if(near.length){ const g=pick(near); chron(d, `${g.name} is closer to the edge than the ledger shows. You would not have seen it from the gallery.`, "bad"); }
+  if(R()<0.5){ const ev = nightEvent(d, pickNight(d)); if(ev) d.pendingEvent = ev; }
+  return true;
+}
+
+function seekMatchNow(d){ if(!marryReady(d) || d.pendingEvent) return false;
+  const ev = matchEvent(d); if(!ev) return false; d.pendingEvent = ev; return true; }
+
+function openLicenceNow(d){ if(!merchLive(d) || d.brand.decided || d.pendingEvent) return false;
+  d.pendingEvent = licenceEvent(d); return true; }
+
+function takeUpTheHouse(d){ succeed(d); d.succession = null; return true; }
+
 export default function App(){
   const [screen,setScreen] = useState("loading");
   const [S,setS] = useState(null);
@@ -15782,8 +16197,7 @@ export default function App(){
   const doDrill = (hName, fid, gid) => { let r=null; mut(d=>{ r = setPrep(d, gid, hName, fid); });
     setDrillFor(null);
     setDealMsg(r && r.ok ? `He comes off his own work and goes onto ${r.foe}'s. Every week from here is that man's habits and nothing of his own.` : (r && r.why) || "Nothing comes of it."); };
-  const doStopDrill = gid => { mut(d=>{ const g = d.gladiators.find(x=>x.id===gid);
-    if(g) dropPrep(d, g, `${g.name} goes back onto his own work. Whatever he had of the other man goes with the week.`); }); };
+  const doStopDrill = gid => { mut(d=>{ stopPrepFor(d, gid); }); };
   const doNameHim = (hName, fid, gid) => { let r=null; mut(d=>{ r = nameHim(d, hName, fid, gid); });
     setNameFor(null);
     setDealMsg(r && r.ok
@@ -15856,34 +16270,13 @@ export default function App(){
     setS(d); setFight(res); setFGid(null); setStake(0); setAgainst(false);
   };
 
-  const rewardG = id => mut(d=>{ const g=d.gladiators.find(x=>x.id===id); if(!g||d.gold<50) return;
-    d.gold-=50; g.morale=clamp(g.morale+12,0,100); g.defiance=clamp(g.defiance-6,0,100); d.unrest=clamp(d.unrest-1,0,100);
-    chron(d, `Wine and comfort sent to ${g.name}'s cell. Small coin, long memory.`); });
-  const whipG = id => mut(d=>{ const g=d.gladiators.find(x=>x.id===id); if(!g) return;
-    remember(d, g, "whipped");
-    g.dis=clamp(g.dis+2,5,99); g.defiance=clamp(g.defiance+6,0,100); g.morale=clamp(g.morale-12,0,100); d.unrest=clamp(d.unrest+2,0,100);
-    chron(d, `The whip speaks to ${g.name}. The yard is silent after.`); });
+  const rewardG = id => mut(d=>{ rewardMan(d, id); });
+  const whipG = id => mut(d=>{ whipMan(d, id); });
   const sellG = id => { const g=S.gladiators.find(x=>x.id===id); if(!g || isDamn(g)) return;
-    const v = rnd(gladValue(g)*0.55);
+    const v = sellPrice(g);
     setAsk({ title:"Sell Him On", danger:true, confirm:`Take ${v} denarii`,
       text:`A buyer offers ${v} denarii for ${fullName(g)}. The other men will see him led out through the gate, and draw their own conclusions.`,
-      run:()=>{ mut(d=>{ d.gold+=v;
-        { const gg = d.gladiators.find(x=>x.id===id); if(gg){ favourLost(d, gg, "sold"); loseFavourite(d, gg, "sold"); } }
-        tieList(d).filter(t=>(t.a===id||t.b===id) && t.kind==="brother").forEach(t=>{
-          const o = d.gladiators.find(x=>x.id===(t.a===id?t.b:t.a));
-          if(o && o.status==="active") remember(d, o, "soldKin"); });
-        const sore = kinReact(d, id, "brother", -16, 9);
-        const gone = d.gladiators.find(x=>x.id===id);
-        if(gone) annalsClose(d, gone, "sold");
-        d.gladiators=d.gladiators.filter(x=>x.id!==id);
-        dropTies(d, id);
-        d.gladiators.forEach(o=>{ if(o.status==="active") o.defiance=clamp(o.defiance+3,0,100); });
-        d.unrest=clamp(d.unrest+2+sore.length*3,0,100);
-        serveWants(d, { type:"sell", gid:id });
-        chron(d, sore.length
-          ? `${g.name} sold for ${v} denarii. ${sore.map(o=>o.name).join(" and ")} watched the gate close behind him and looked at you a moment too long.`
-          : `${g.name} sold for ${v} denarii. The familia watches the gate close behind ${PR(g).him}.`); });
-        setSelId(null); } }); };
+      run:()=>{ mut(d=>{ sellMan(d, id, v); }); setSelId(null); } }); };
   const retire = id => { const g=S.gladiators.find(x=>x.id===id); if(!g) return;
     setAsk({ title:"Release Him", confirm:"Let him go",
       text:`${fullName(g)} is ${g.age}, with ${g.wins} victories and ${(g.scars||[]).length} scars on him. Release him from the sacramentum now and he leaves on his own feet. Keep him on the sand and the crowd will watch him find out he is slow.`,
@@ -15892,47 +16285,15 @@ export default function App(){
     setAsk({ title:"Grant the Rudis", confirm:"Give him the wooden sword",
       text:`${fullName(g)} has earned his freedom in blood. Hand him the rudis before the crowd and he walks out a free man — and every man still in your cells will watch him go.`,
       run:()=>{ mut(d=>grantRudis(d,id)); setSelId(null); } }); };
-  const setFocus = (id,f)=> mut(d=>{ const g=d.gladiators.find(x=>x.id===id); if(g) g.focus=f; });
-  const setRegimen = (id,r)=> mut(d=>{ const g=d.gladiators.find(x=>x.id===id); if(!g) return;
-    d.flags.everTrained = (d.flags.everTrained||0) + 1;
-    if(g.regimen==="spar" && g.sparWith){ const old=d.gladiators.find(x=>x.id===g.sparWith);
-      if(old && old.sparWith===g.id){ old.regimen="palus"; old.sparWith=null; } }
-    g.regimen = r; g.sparWith = null; });
-  const setSpar = (id, mateId)=> mut(d=>{ const g=d.gladiators.find(x=>x.id===id), m=d.gladiators.find(x=>x.id===mateId);
-    if(!g || !m || m.status!=="active") return;
-    [g,m].forEach(x=>{ if(x.sparWith){ const o=d.gladiators.find(y=>y.id===x.sparWith);
-      if(o && o.id!==g.id && o.id!==m.id && o.sparWith===x.id){ o.regimen="palus"; o.sparWith=null; } } });
-    g.regimen="spar"; g.sparWith=m.id; m.regimen="spar"; m.sparWith=g.id; });
-  /* Putting a man to teaching. The event version waits for the two of them to find
-     each other; this is you deciding it, which you may do the moment a man has more
-     to give than to gain. Everything after this — the weekly gain, the bond when the
-     boy takes his fifth, the grief if either is carried out — is the same machinery. */
-  const setTeach = (vetId, rookId) => mut(d=>{
-    const v = d.gladiators.find(x=>x.id===vetId), r = d.gladiators.find(x=>x.id===rookId);
-    if(!v || !r || !canTeach(v) || !canLearn(r, v)) return;
-    v.protege = r.id; v.protegeName = r.name; r.mentor = v.id; r.mentorName = v.name;
-    if(!tieBetween(d, v.id, r.id)) addTie(d, v.id, r.id, "brother", 22);
-    v.morale = clamp(v.morale+5,0,100); r.morale = clamp(r.morale+6,0,100);
-    r.defiance = clamp(r.defiance-4,0,100);
-    chron(d, `${v.name} has ${r.name} at the far post now, walking him through the things that cannot be taught quickly. The old man's own week will be the poorer for it.`, "good");
-  });
-  const stopTeach = id => mut(d=>{
-    const v = d.gladiators.find(x=>x.id===id); if(!v || !v.protege) return;
-    const r = d.gladiators.find(x=>x.id===v.protege);
-    const nm = v.protegeName || (r && r.name) || "the boy";
-    if(r){ r.mentor = null; r.mentorName = null; r.morale = clamp(r.morale-8,0,100); r.defiance = clamp(r.defiance+4,0,100); }
-    v.protege = null; v.protegeName = null; v.morale = clamp(v.morale-4,0,100);
-    chron(d, `${v.name} is back on his own work. ${nm} finishes the week at the post alone, and does not ask why.`, "bad");
-  });
-  const setDrill = key => mut(d=>{ if(d.doctore && DRILLS[key]){ d.doctore.drill = key; if(key!=="none") d.flags.everDrill = 1; } });
-  const clearSparOf = (d,g)=>{ if(g.regimen==="spar" && g.sparWith){ const o=d.gladiators.find(x=>x.id===g.sparWith); if(o && o.sparWith===g.id){ o.regimen="palus"; o.sparWith=null; } } g.sparWith=null; };
-  const boardMen = d => d.gladiators.filter(g=>g.status==="active" && !seasonOfMan(g));
-  const restWorn = () => mut(d=>{ boardMen(d).forEach(g=>{ if(strainOf(g)>50 || g.fatigue>80){ clearSparOf(d,g); g.regimen="rest"; } }); });
-  const allPalus = () => mut(d=>{ boardMen(d).forEach(g=>{ clearSparOf(d,g); g.regimen="palus"; }); });
-  const autoPair = () => mut(d=>{ const men = boardMen(d);
-    men.forEach(g=>{ clearSparOf(d,g); if(g.regimen==="spar") g.regimen="palus"; });
-    const pool = men.slice().sort((a,b)=> STATS.reduce((s,k)=>s+b[k],0) - STATS.reduce((s,k)=>s+a[k],0));
-    for(let i=0;i+1<pool.length;i+=2){ const a=pool[i], b=pool[i+1]; a.regimen="spar"; a.sparWith=b.id; b.regimen="spar"; b.sparWith=a.id; } });
+  const setFocus = (id,f)=> mut(d=>{ setFocusOf(d, id, f); });
+  const setRegimen = (id,r)=> mut(d=>{ setRegimenOf(d, id, r); });
+  const setSpar = (id, mateId)=> mut(d=>{ setSparOf(d, id, mateId); });
+  const setTeach = (vetId, rookId) => mut(d=>{ setTeachOf(d, vetId, rookId); });
+  const stopTeach = id => mut(d=>{ stopTeachOf(d, id); });
+  const setDrill = key => mut(d=>{ setDrillTo(d, key); });
+  const restWorn = () => mut(d=>{ restWornMen(d); });
+  const allPalus = () => mut(d=>{ allToPalus(d); });
+  const autoPair = () => mut(d=>{ pairTheYard(d); });
   const buyG = (id, bidPrice) => mut(d=>{ buyFromBlock(d, id, bidPrice); });
   const bidFor = g => { const c = g.contested;
     if(!c){ buyG(g.id); return; }
@@ -15942,61 +16303,13 @@ export default function App(){
       run:()=>buyG(g.id, cost) });
   };
   const takeLot = () => mut(d=>{ buyLot(d); });
-  const scout = gid => mut(d=>{ const g = d.market.find(x=>x.id===gid); if(!g || g.scouted) return;
-    const fee = SCOUT_FEE(d,g);
-    if(d.gold < fee) return;
-    d.gold -= fee;
-    g.scouted = true;
-    if(g.slaver){ dealt(d, g.slaver, "scouted"); if(g.flaw) dealt(d, g.slaver, "burned"); }
-    chron(d, g.flaw
-      ? `You pay to have ${g.name} looked over properly. ${PR(g).He} ${FLAWS[g.flaw].tell}. ${g.slaver? slaverOf(g.slaver).name : "The seller"} does not meet your eye about it.`
-      : `You pay to have ${g.name} looked over properly. ${PR(g).He} is exactly what ${g.slaver? slaverOf(g.slaver).name : "the man"} said he was, which happens.`,
-      g.flaw ? "bad" : "good"); });
+  const scout = gid => mut(d=>{ scoutBlockMan(d, gid); });
   const takeHouseApart = () => mut(d=>{ sellTheHouse(d); });
-  const sellOne = id => mut(d=>{ const paid = sellGear(d, id);
-    if(paid) chron(d, `${GEAR[id].name} goes back out the door for ${paid} denarii. The armoury is a room, not a warehouse.`, "info"); });
-  const buyGear = id => mut(d=>{ const it=GEAR[id]; if(!it || d.gold<it.price) return;
-d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
-    d.gearCond = d.gearCond || {}; (d.gearCond[id] = d.gearCond[id] || []).push(100);
-    chron(d, `The armourer delivers: ${it.name} (${it.price}d).`); });
-  const equip = (gid, slot, id) => mut(d=>{ const g=d.gladiators.find(x=>x.id===gid); if(!g) return;
-    if(!g.kit) g.kit = defaultKit(g.cls);
-    if(g.kit[slot]===id) return;
-    if(!isBasic(id) && gearFree(d,id)<=0) return;
-    if(g.named && g.named.slot===slot) return;
-    g.wear = g.wear || {}; d.gearCond = d.gearCond || {};
-    const old = GEAR[g.kit[slot]];
-    if(wears(old)){ (d.gearCond[g.kit[slot]] = d.gearCond[g.kit[slot]] || []).push(wearOf(g, slot)); }
-    g.kit[slot] = id;
-    const now = GEAR[id];
-    if(wears(now)){
-      const pool = d.gearCond[id] || [];
-      g.wear[slot] = pool.length ? pool.splice(pool.indexOf(Math.max(...pool)),1)[0] : 100;
-    } else g.wear[slot] = 100;
-  });
-  /* strip every man back to house issue, returning bought steel to the rack — for
-     starting a loadout over from scratch. Nothing is sold; named weapons stay. */
-  const unequipAll = () => mut(d=>{
-    d.gearCond = d.gearCond || {}; let n = 0;
-    d.gladiators.forEach(g=>{
-      if(isGone(g)) return;
-      if(!g.kit){ g.kit = defaultKit(g.cls); return; }
-      g.wear = g.wear || {};
-      const def = defaultKit(g.cls);
-      SLOTS.forEach(s=>{
-        if(g.named && g.named.slot===s) return;   // a forged, named piece stays with him
-        const cur = g.kit[s];
-        if(cur === def[s]) return;
-        const old = GEAR[cur];
-        if(wears(old)){ (d.gearCond[cur] = d.gearCond[cur] || []).push(wearOf(g, s)); n++; }
-        g.kit[s] = def[s]; g.wear[s] = 100;
-      });
-    });
-    chron(d, n
-      ? `Every man is stripped back to house issue. ${n} piece${n>1?"s go":" goes"} back on the rack, and the yard's loadout starts over from nothing but the standard kit.`
-      : "There was nothing but house issue to strip. The rack stands as it was.", "info");
-  });
-  const setCrest = patch => mut(d=>{ d.crest = Object.assign({ c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" }, d.crest||{}, patch); });
+  const sellOne = id => mut(d=>{ sellGearOne(d, id); });
+  const buyGear = id => mut(d=>{ buyGearItem(d, id); });
+  const equip = (gid, slot, id) => mut(d=>{ equipOne(d, gid, slot, id); });
+  const unequipAll = () => mut(d=>{ stripAll(d); });
+  const setCrest = patch => mut(d=>{ setCrestTo(d, patch); });
   const takeRise = () => mut(d=>{ claimRise(d); });
   const nemAnswer = () => mut(d=>{ answerNem(d); });
   const nemCall = () => { const g = S.nemHouse && activeG(S).filter(x=>x.pfame>=18).sort((a,b)=>b.pfame-a.pfame)[0];
@@ -16004,90 +16317,27 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
     setAsk({ title:"Name the Day", confirm:"Call him out", danger:false,
       text:`You hold the upper hand over ${lanistaOf(S.nemHouse.house).name}. Call him out now and the reckoning is set on your terms — ${g?g.name:"your best man"} against his best, before all of Capua. Win it and you may not just beat House ${S.nemHouse.house}, but finish it.`,
       run:()=>mut(d=>{ nemCallOut(d); }) }); };
-  const build = k => mut(d=>{ const L = bLevel(d,k); if(L>=4) return;
-    const cost = BUILDINGS[k].cost[L];
-    if(d.gold < cost) return;
-    d.gold -= cost;
-    d.buildings = Object.assign({}, d.buildings, {[k]: L+1});
-    chron(d, `${BUILDINGS[k].name} ${L? "improved":"built"}. ${BUILDINGS[k].levels[L]}`, "good"); });
-  const setCare = (id, care) => mut(d=>{ const g=d.gladiators.find(x=>x.id===id); if(!g || !g.injury) return;
-    if(care==="surgeon"){
-      const fee = surgeonFee(d, g.injury);
-      if(d.gold < fee || !surgeonOK(d)) return;
-      d.gold -= fee;
-      g.injury.care = "surgeon"; remember(d, g, "surgeon");
-      if(g.status!=="injured") g.status = "injured";
-      chron(d, `The surgeon works on ${g.name} by lamplight. ${fee} denarii, and worth it if ${PR(g).he} fights again.`);
-      return;
-    }
-    g.injury.care = care;
-    if(care==="through"){ g.status = "active";
-      g.morale = clamp(g.morale-6,0,100); g.defiance = clamp(g.defiance+4,0,100);
-      chron(d, `${g.name} is sent back to the post on an open wound.`, "bad"); }
-    else if(care==="convalesce"){ g.status = "injured";
-      g.morale = clamp(g.morale+4,0,100);
-      chron(d, `${g.name} is given the long bed. No sand, no post, no hurry — he rises when he rises.`); }
-    else g.status = "injured"; });
-  const mendKit = gid => mut(d=>{ const g=d.gladiators.find(x=>x.id===gid); if(!g) return;
-    const fee = repairFee(d, g);
-    if(fee<=0 || d.gold<fee) return;
-    d.gold -= fee;
-    g.wear = g.wear || {};
-    for(const s of SLOTS) if(wears(GEAR[g.kit[s]])) g.wear[s] = 100;
-    chron(d, `${g.name}'s kit goes to the armoury and comes back straightened, edged and oiled. ${fee} denarii.`); });
-  const forgeFor = (gid, slot) => mut(d=>{ const g=d.gladiators.find(x=>x.id===gid); if(!g) return;
-    if(!forgeReady(d,g) || d.gold<FORGE_FEE) return;
-    if(!wears(GEAR[g.kit[slot]])) return;
-    d.gold -= FORGE_FEE;
-    const title = pick(FORGE_NAMES.filter(t=>!(d.forged||[]).includes(t))) || pick(FORGE_NAMES);
-    d.forged = [...(d.forged||[]), title];
-    g.named = { slot, title, made:d.week };
-    giveProv(d, g, slot, "forged");
-    g.wear = g.wear || {}; g.wear[slot] = 100;
-    g.morale = clamp(g.morale+16, 0, 100);
-    g.defiance = clamp(g.defiance-6, 0, 100);
-    chron(d, `The smith works six weeks of nights on one piece for ${g.name} and hands it over without a word. ${title}. It is his, and it is not going back on the rack.`, "good"); });
+  const build = k => mut(d=>{ buildUp(d, k); });
+  const setCare = (id, care) => mut(d=>{ setCareOf(d, id, care); });
+  const mendKit = gid => mut(d=>{ mendKitOf(d, gid); });
+  const forgeFor = (gid, slot) => mut(d=>{ forgeForMan(d, gid, slot); });
   const askFavour = pid => mut(d=>{ callFavour(d, pid); });
-  const doMaster = gid => mut(d=>{ const g=d.gladiators.find(x=>x.id===gid); if(g) makeMaster(d,g); });
+  const doMaster = gid => mut(d=>{ makeMasterOf(d, gid); });
   const teachSecond = (gid,to) => mut(d=>{ startSecond(d,gid,to); });
-  const teachSig = (gid, key) => mut(d=>{ const g=d.gladiators.find(x=>x.id===gid);
-    const fee = sigFee(d);
-    if(!g || !canLearnSig(d,g) || d.gold<fee) return;
-    if(!TECHNIQUES[key] || TECHNIQUES[key].cls!==g.cls) return;
-    d.gold -= fee; g.teaching = { key, weeks:SIG_WEEKS };
-    chron(d, d.doctore
-      ? `${fullName(g)} goes to the far post to drill ${TECHNIQUES[key].name} until it is his. ${SIG_WEEKS} weeks of one thing, over and over, ${fee} denarii to the doctore for the hours.`
-      : `A master comes down from the school at Capua for a month and no longer, and he is not cheap. ${fullName(g)} drills ${TECHNIQUES[key].name} with him at the far post until it is his — ${SIG_WEEKS} weeks, ${fee} denarii, and then the man goes home.`); });
+  const teachSig = (gid, key) => mut(d=>{ teachSigTo(d, gid, key); });
   const useStyle = (gid,to) => mut(d=>{ switchStyle(d,gid,to); });
   const chooseHeir = kind => mut(d=>{ nameHeir(d, kind); });
-  const seekMatch = () => { mut(d=>{ if(marryReady(d) && !d.pendingEvent){ const ev = matchEvent(d); if(ev) d.pendingEvent = ev; } }); setSheet(null); };
-  const openLicence = () => mut(d=>{ if(merchLive(d) && !d.brand.decided && !d.pendingEvent) d.pendingEvent = licenceEvent(d); });
-  const takeUpHouse = () => mut(d=>{ succeed(d); d.succession = null; });
-  const setEar = (who, gid) => mut(d=>{
-    if(!who){ d.ear = null; d.heard = []; return; }
-    d.ear = who==="gate" ? { who:"gate", since:d.week } : { who:"man", gid, since:d.week, risk:0 };
-    chron(d, who==="gate"
-      ? `The old man on the gate is given a small retainer and no instructions beyond keeping his ears open.`
-      : `You put one of your own inside the thing you want to hear. He does not ask why and that is worse.`, "info"); });
-  const haveWatched = oid => mut(d=>{
-    const o = (d.games ? d.games.offers : []).find(x=>x.id===oid);
-    if(o) watchHim(d, o); });
+  const seekMatch = () => { mut(d=>{ seekMatchNow(d); }); setSheet(null); };
+  const openLicence = () => mut(d=>{ openLicenceNow(d); });
+  const takeUpHouse = () => mut(d=>{ takeUpTheHouse(d); });
+  const setEar = (who, gid) => mut(d=>{ setEarTo(d, who, gid); });
+  const haveWatched = oid => mut(d=>{ haveWatchedOffer(d, oid); });
   const takeLoan = (who, amt) => mut(d=>{ borrow(d, who, amt); });
   const payLoan = amt => mut(d=>{ repay(d, amt); });
-  const hireStaff = (kind, id) => mut(d=>{
-    const list = (d.staffMarket||{})[kind] || [];
-    const s = list.find(x=>x.id===id);
-    if(!s || d.gold < s.fee || d[kind]) return;
-    d.gold -= s.fee; d[kind] = s; d.staffMarket = Object.assign({}, d.staffMarket, {[kind]:[]});
-    chron(d, `${s.name} takes the ${STAFF[kind].name.toLowerCase()}'s place at ${s.wage} denarii a week.`, "good"); });
-  const letStaffGo = kind => mut(d=>{ const s = d[kind]; if(!s) return;
-    d[kind] = null;
-    chron(d, `${s.name} is let go. He packs without comment.`, "info"); });
-  const armHim = gid => mut(d=>{ const r = armFromRack(d, gid);
-    if(r && r.changed.length) chron(d, `${(d.gladiators.find(x=>x.id===gid)||{}).name} is re-armed off the rack — ${r.changed.length} piece${r.changed.length===1?"":"s"} changed.`, "info"); });
-  const armAll = () => mut(d=>{ let n=0;
-    for(const g of activeG(d)){ const r = armFromRack(d, g.id); if(r && r.changed.length) n++; }
-    chron(d, n ? `The armourer goes down the line and re-arms ${n} man${n===1?"":"men"} out of the racks.` : `Everyone is already carrying the best of what the house owns.`, "info"); });
+  const hireStaff = (kind, id) => mut(d=>{ hireStaffMember(d, kind, id); });
+  const letStaffGo = kind => mut(d=>{ letStaffGoOf(d, kind); });
+  const armHim = gid => mut(d=>{ armHimOff(d, gid); });
+  const armAll = () => mut(d=>{ armAllOff(d); });
   const keepKit = gid => mut(d=>{ saveKit(d, gid); });
   const useKit = (gid,kid) => mut(d=>{ applyKit(d, gid, kid); });
   const forgetKit = kid => mut(d=>{ dropKit(d, kid); });
@@ -16098,111 +16348,25 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
   const stopCollegium = () => mut(d=>{ lapseCollegium(d, true); });
   const takeRoad = key => mut(d=>{ setOut(d, key); });
   const goHome = () => mut(d=>{ comeHome(d); });
-  const setPupil = gid => mut(d=>{ if(!d.doctore) return;
-    if(d.doctore.retrainTo) return;
-    d.doctore.pupil = (d.doctore.pupil===gid) ? null : gid; });
-  const startRetrain = (gid, cls) => mut(d=>{ const doc=d.doctore; if(!doc || d.gold<RETRAIN_FEE) return;
-    const g = d.gladiators.find(x=>x.id===gid); if(!g || g.status!=="active" || g.cls===cls) return;
-    d.gold -= RETRAIN_FEE;
-    doc.pupil = gid; doc.retrainTo = cls; doc.retrainLeft = RETRAIN_WEEKS;
-    chron(d, `${doc.name} takes ${g.name} off the roster for ${RETRAIN_WEEKS} weeks. He intends to make a ${cls.toLowerCase()} of him.`); });
-  const stopRetrain = () => mut(d=>{ if(!d.doctore) return;
-    d.doctore.pupil = null; d.doctore.retrainTo = null; d.doctore.retrainLeft = 0;
-    chron(d, `The retraining is called off. The fee is not coming back.`); });
-  const hireDoc = did => mut(d=>{ const c=(d.doctoreMarket||[]).find(x=>x.id===did);
-    if(!c || d.doctore || d.gold<c.fee) return;
-    d.gold -= c.fee; d.doctore = c; d.doctoreMarket = []; d.flags.everDoctore = 1;
-    chron(d, `${c.name} takes the training square. His voice carries to the far wall before the first morning is out.`, "good"); });
+  const setPupil = gid => mut(d=>{ setPupilTo(d, gid); });
+  const startRetrain = (gid, cls) => mut(d=>{ beginRetrain(d, gid, cls); });
+  const stopRetrain = () => mut(d=>{ endRetrain(d); });
+  const hireDoc = did => mut(d=>{ hireDoctore(d, did); });
   const dismissDoc = () => { const doc=S.doctore; if(!doc) return;
     setAsk({ title:"Dismiss the Doctore", danger:doc.fromHouse, confirm:"Send him away",
       text: doc.fromHouse
         ? `${doc.name} stayed when he could have walked. Turn him out now and the familia will hear about it before the gate shuts behind him.`
         : `${doc.name} has drilled your men for ${doc.weeks} week${doc.weeks===1?"":"s"} at ${doc.wage} denarii a week. Dismiss him and the square is yours to run.`,
-      run:()=>mut(d=>{ const was=d.doctore; d.doctore=null; makeDoctoreMarket(d);
-        if(was.fromHouse){ d.unrest=clamp(d.unrest+8,0,100);
-          d.gladiators.forEach(o=>{ if(o.status==="active"){ o.morale=clamp(o.morale-8,0,100); o.defiance=clamp(o.defiance+5,0,100); } });
-          chron(d, `${was.name} is turned out of the ludus he chose to stay in. They watch him go, and say nothing at all.`, "bad");
-        } else chron(d, `${was.name} collects his wages and leaves the square empty.`);
-      }) }); };
-  const answerReSign = accept => mut(d=>{
-    const o = d.reSignOffer; if(!o) return;
-    const g = d.gladiators.find(x=>x.id===o.gid);
-    d.reSignOffer = null;
-    if(!g) return;
-    if(accept && d.gold>=o.fee){
-      d.gold -= o.fee;
-      g.auctor = { bouts:o.bouts, served:0, fee:o.fee, wage:o.wage,
-        why:(g.auctor && g.auctor.why) || pick(AUCTOR_WHY) };
-      g.morale = clamp(g.morale+12,0,100);
-      chron(d, `${fullName(g)} signs again — ${o.fee} in hand, ${o.bouts} more bouts. He had somewhere to go and did not go.`, "good");
-    } else auctorDepart(d, g);
-  });
-  const answerRome = accept => mut(d=>{
-    const o = d.romeOffer; if(!o) return;
-    d.romeOffer = null;
-    if(accept){
-      d.rome = { travel:2, fought:0, won:0, turned:false, run:romeRuns(d)+1 };
-      d.games = null;
-      d.gladiators.forEach(g=>{ if(g.status==="active"){ g.morale=clamp(g.morale+8,0,100); g.defiance=clamp(g.defiance+4,0,100); } });
-      chron(d, `You accept. The wagons are loaded within the week, and everyone in the cells knows where they are going.`, "good");
-    } else {
-      d.flags.declinedRome = (d.flags.declinedRome||0)+1;
-      d.flags.romeDeclined = d.week;
-      d.fame = Math.max(0, d.fame-25);
-      patronsOf(d).forEach(p=>{ if(p.rank==="senator") p.favor = clamp(p.favor-30,0,100); });
-      recomputeFavor(d);
-      d.gladiators.forEach(g=>{ if(g.status==="active") g.morale=clamp(g.morale+4,0,100); });
-      chron(d, `You decline Rome. The senator's letters stop coming, and Capua remains the whole of the world.`, "info");
-    }
-  });
-  const takeOffer = accept => mut(d=>{ const o=d.doctoreOffer; if(!o) return;
-    d.doctoreOffer = null;
-    if(accept){ const old=d.doctore; d.doctore=o; d.doctoreMarket=[]; d.flags.everDoctore = 1;
-      d.unrest=clamp(d.unrest-5,0,100);
-      d.gladiators.forEach(g=>{ if(g.status==="active") g.morale=clamp(g.morale+5,0,100); });
-      chron(d, old ? `${o.name} takes the square from ${old.name}. The men train harder for a man who wore their chains.` 
-                   : `${o.name} stays, and takes the training square. The men train harder for a man who wore their chains.`, "good");
-    } else chron(d, `${o.name} takes his freedom and the road with it. You will not see him again.`);
-  });
-  const host = kind => mut(d=>{ const p=PARTY[kind];
-    if(d.gold<p.cost || d.week-d.lastParty<2) return;
-    d.gold-=p.cost; d.favor+=p.favor; d.fame+=p.fame; d.lastParty=d.week;
-    let extra="";
-    const show = activeG(d).sort((a,b)=>b.sho-a.sho)[0];
-    if(show){ const bf=rnd(show.sho/12); d.fame+=bf; extra+=` ${show.name} spars for the guests to gasps and applause (+${bf} fame).`;
-      if(R()<0.08){ const inj=INJURIES[0]; show.injury={name:inj[0],weeks:inj[1],pen:inj[2]}; show.status="injured"; extra+=" A careless blade — he takes a small wound."; } }
-    if(kind!=="modest" && R()<0.25){ d.favor+=8; d.gold+=100; extra+=" A magistrate lingers past the last cup — you have found a patron (+8 favor, a gift of 100 denarii)."; }
-    if(kind==="decadent" && R()<0.2){ d.fame=Math.max(0,d.fame-8); extra+=" Word of certain excesses escapes the villa walls (-8 fame)."; }
-    chron(d, `You host ${p.label.toLowerCase()}. Capua's better sort attend.${extra}`, "good");
-    const bump = kind==="modest"?5:kind==="lavish"?9:15;
-    patronsOf(d).forEach(pt=>{ pt.favor = clamp(pt.favor+bump, 0, 100); });
-    serveWants(d, { type:"party", kind }); });
-  const feast = ()=> mut(d=>{ if(d.gold<120 || d.week-d.lastFeast<3) return;
-    d.gold-=120; d.lastFeast=d.week; d.flags.everFeast=(d.flags.everFeast||0)+1;
-    if(d.lanista) d.lanista.health = clamp(d.lanista.health + 3, 0, 100);
-    rememberAll(d, "feast");
-    d.gladiators.forEach(g=>{ if(!isGone(g)){ g.morale=clamp(g.morale+9,0,100); g.defiance=clamp(g.defiance-4,0,100); } });
-    d.unrest=clamp(d.unrest-7,0,100);
-    chron(d, "Meat and honeyed wine for the familia. Songs in the cells past midnight."); });
+      run:()=>mut(d=>{ dismissDoctore(d); }) }); };
+  const answerReSign = accept => mut(d=>{ answerReSignWith(d, accept); });
+  const answerRome = accept => mut(d=>{ answerRomeWith(d, accept); });
+  const takeOffer = accept => mut(d=>{ takeDoctoreOffer(d, accept); });
+  const host = kind => mut(d=>{ hostParty(d, kind); });
+  const feast = ()=> mut(d=>{ throwFeast(d); });
   const offerTo = god => mut(d=>{ makeOffering(d, god); });
   const vowTo = god => mut(d=>{ swearVow(d, god); });
   const doTourney = () => mut(d=>{ holdTourney(d); });
-  const walkCells = () => mut(d=>{
-    if(!walkReady(d)) return;
-    d.flags.walkWk = d.week;
-    activeG(d).forEach(g=>{ g.morale=clamp(g.morale+3,0,100); g.defiance=clamp(g.defiance-1.5,0,100); });
-    d.unrest=clamp(d.unrest-2,0,100);
-    const low = activeG(d).filter(g=>g.morale<48).sort((a,b)=>a.morale-b.morale)[0];
-    if(low) remember(d, low, "heard", 0.4);
-    chron(d, `You go down among the cells after the lamps are lit, and stay a while. It is not much — but a house whose master walks its floor is a different house from one whose master does not.`, "good");
-    const rivals = tieList(d).filter(t=>t.kind==="rival" && t.strength>=45 && bothActive(d,t.a,t.b));
-    const bros   = tieList(d).filter(t=>t.kind==="brother" && t.strength>=60 && bothActive(d,t.a,t.b));
-    const near   = activeG(d).filter(g=>g.morale<32);
-    if(rivals.length){ const t=pick(rivals); const A=gById(d,t.a), B=gById(d,t.b); chron(d, `You see it plainly now: ${A.name} and ${B.name} carry something you had not marked. It will not stay in the cells forever.`, "info"); }
-    if(bros.length){ const t=pick(bros); const A=gById(d,t.a), B=gById(d,t.b); chron(d, `${A.name} and ${B.name} would go into the ground for one another. It is the best thing you own, and the most dangerous.`, "info"); }
-    if(near.length){ const g=pick(near); chron(d, `${g.name} is closer to the edge than the ledger shows. You would not have seen it from the gallery.`, "bad"); }
-    if(R()<0.5){ const ev = nightEvent(d, pickNight(d)); if(ev) d.pendingEvent = ev; }
-  });
+  const walkCells = () => mut(d=>{ walkTheCells(d); });
 
   if(screen==="loading") return <div className="lr" style={{display:"flex",alignItems:"center",justifyContent:"center"}}><style>{CSS}</style><div className="disp dim">Lighting the torches...</div></div>;
 
@@ -19148,10 +19312,10 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           </>)}
 
           {vView==="familia" && (<>
-          <Sect title="A feast for the familia" note="120d">
+          <Sect title="A feast for the familia" note={`${FEAST_COST}d`}>
             <div className="dim" style={{fontSize:"var(--fs-md)",margin:"4px 0 8px"}}>Meat, honeyed wine, and a night without the whip. Loyalty is cheaper than rebellion.</div>
-            <button className="btn" style={{width:"100%"}} disabled={S.gold<120 || S.week-S.lastFeast<3} onClick={feast}>
-              {S.week-S.lastFeast<3? `The men feasted recently — ${3-(S.week-S.lastFeast)} week${3-(S.week-S.lastFeast)>1?"s":""}` : S.gold<120? "Not enough coin" : "Set the tables"}
+            <button className="btn" style={{width:"100%"}} disabled={S.gold<FEAST_COST || S.week-S.lastFeast<3} onClick={feast}>
+              {S.week-S.lastFeast<3? `The men feasted recently — ${3-(S.week-S.lastFeast)} week${3-(S.week-S.lastFeast)>1?"s":""}` : S.gold<FEAST_COST? "Not enough coin" : "Set the tables"}
             </button>
           </Sect>
 
@@ -21992,6 +22156,21 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     endWeek, bookBout, bookOf, newBook, chron, bookSays,
     /* the always-open card and the block, for a headless player */
     makePitOffer, pitMen, makePitCard, buyFromBlock, rosterFull, cellsCap,
+    /* every action a lanista can take, none of them needing a rendered screen */
+    rewardMan, whipMan, sellMan, sellPrice, retireG, grantRudis,
+    setFocusOf, setRegimenOf, setSparOf, setTeachOf, stopTeachOf, setDrillTo,
+    boardMen, restWornMen, allToPalus, pairTheYard,
+    scoutBlockMan, buyLot, sellTheHouse,
+    buyGearItem, sellGearOne, equipOne, stripAll, mendKitOf, forgeForMan, armHimOff, armAllOff,
+    buildUp, setCrestTo, setCareOf,
+    teachSigTo, makeMasterOf, startSecond, switchStyle,
+    setPupilTo, beginRetrain, endRetrain, hireDoctore, dismissDoctore, takeDoctoreOffer,
+    hireStaffMember, letStaffGoOf, setEarTo,
+    haveWatchedOffer, stopPrepFor, buyFromHouse, startCourt, setPrep, nameHim, scoutMan, makePeace,
+    answerReSignWith, answerRomeWith,
+    hostParty, throwFeast, walkTheCells, holdTourney, stageMunus,
+    seekMatchNow, openLicenceNow, takeUpTheHouse, claimRise, succeed,
+    FEAST_COST, RETRAIN_FEE, FORGE_FEE, BUILDINGS, PARTY, STAFF,
     /* loading an old save */
     migrate, SAVE_FIELDS, SAVE_MAYBE, SAVE_NUMBERS, MAN_FIELDS, MAN_NUMBERS, REPAIRS, SAVE_VER,
     /* the tables a check may need to reason about */
