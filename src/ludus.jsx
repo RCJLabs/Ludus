@@ -21643,7 +21643,7 @@ export default function App(){
                 {o.sagaBout && <span className="tag tag-gold">✦ The Reckoning</span>}
                 {o.huntBout && <span className="tag tag-blood">✦ The Hunt</span>}
                 {o.challenge && !o.nemGrudge && !o.sagaBout && !o.huntBout && <span className="tag tag-blood">✦ {o.myChallenge?"Your word":"Challenge"}</span>}
-                {o.stakes==="sine" && <span className="tag tag-blood">Sine missione</span>}
+                {o.stakes==="sine" && <span className="tag tag-blood">Sine missione · the loser dies</span>}
                 {o.rematch && <span className="tag tag-blood">Rematch</span>}
                 {nemesisIn(S,o.opp) && <span className="tag tag-blood">✦ {nemesisIn(S,o.opp).title}</span>}
               </div>
@@ -21737,6 +21737,20 @@ export default function App(){
                     ? <div style={{fontSize:"var(--fs-sm)",marginTop:3,color:"#9aa86a"}}>✦ He has drilled for this man — {prepWord(g)}.</div>
                     : null; })()}
                   {pick.kind==="single" && (()=>{ const w=metWord(liveFoe(S,pick.o),g); return w?<div style={{fontSize:"var(--fs-base)",marginTop:2,color:"#d8ac5f"}}>{w}</div>:null; })()}
+                  {/* ---- WHAT THE PURSE IS FOR ----
+                       Sine missione pays 1.8x and carried a two-word tag. Measured
+                       across five hundred bouts a side at matched statlines: an even
+                       match kills 5.8 men in a hundred at the ordinary stakes and
+                       57.6 sine, and a loss goes from one-in-ten fatal to nine-in-ten.
+                       Every other bout in this game shows the player his odds — this
+                       one showed nothing, because there is no appeal to quote odds on,
+                       which is exactly why it needed saying. It is still his to take. */}
+                  {o && o.stakes==="sine" && foe && (()=>{
+                    const lose = Math.round((1 - winChance(g, foe, prepFor(S,g,o), tactic||"measured")) * 100);
+                    return (<div style={{fontSize:"var(--fs-sm)",marginTop:3,color:"#d96f5d"}}>
+                      ✦ No appeal is asked and none is given. He loses about {lose} in a hundred, and a loss here is his life.
+                    </div>);
+                  })()}
                 </button>
               );
             })}
@@ -21920,7 +21934,7 @@ export default function App(){
                 {o.nemGrudge && <span className="tag tag-blood">✦ The Grudge</span>}
                 {o.sagaBout && <span className="tag tag-gold">✦ The Reckoning</span>}
                 {o.challenge && !o.nemGrudge && !o.sagaBout && <span className="tag tag-blood">✦ {o.myChallenge?"The day you named":"The challenge"}</span>}
-                {o.stakes==="sine" && <span className="tag tag-blood">Sine missione</span>}
+                {o.stakes==="sine" && <span className="tag tag-blood">Sine missione · the loser dies</span>}
                 {o.rematch && <span className="tag tag-blood">Rematch</span>}
                 {nemesisIn(S,o.opp) && <span className="tag tag-blood">✦ {nemesisIn(S,o.opp).title}</span>}
                 <span className="gold" style={{marginLeft:"auto",fontSize:"var(--fs-md)"}}>{o.purse}d purse</span>
