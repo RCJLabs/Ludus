@@ -14355,6 +14355,19 @@ const Fighter = React.memo(function Fighter({ kit, pose, wounds, scars, fallen, 
     buckle:  { x:-7, y:9,  rot:14, arm:-6,  armRot:10 },
     /* the move that is his own, thrown with everything */
     sig:     { x:34, y:2,  rot:-13, arm:23, armRot:-20 },
+    /* ---- THE CEREMONY ----
+       Eleven poses and not one of them was anything but fighting, so the two
+       hundred and twenty-six appeals and the hundred and eighty-four missios
+       measured across four hundred bouts all played with both men standing
+       perfectly still — the charged moment of a gladiator game, and nothing moved.
+       Down on the knee with the arm up: two fingers, and the arena decides. */
+    appeal:  { x:-4, y:22, rot:4,  arm:-2,  armRot:-96, kneel:true, plead:true },
+    /* the hand opens. He is still down, but he is not asking any more */
+    spared:  { x:-4, y:24, rot:6,  arm:-3,  armRot:-24, kneel:true },
+    /* over him, point down, waiting on the box rather than the man */
+    over:    { x:14, y:0,  rot:-3, arm:6,   armRot:52 },
+    /* the salute before it starts — blade up, nothing decided yet */
+    salute:  { x:0,  y:0,  rot:0,  arm:1,   armRot:-72 },
   };
   const P = POSES[pose] || POSES.idle;
   const striking = pose==="lunge" || pose==="clash" || pose==="sig";
@@ -14491,8 +14504,15 @@ const Fighter = React.memo(function Fighter({ kit, pose, wounds, scars, fallen, 
         <path d="M60,45 L72,47 L72,55 L60,54Z" fill={SKIN}/>
         {hasManica && <rect x="58" y="44.5" width="15" height="10.5" rx="3.5" fill={LEATHER}/>}
         <circle cx="74" cy="49.5" r="4.8" fill={SKIN_D}/>
-        <rect x="71.5" y="46" width="5" height="7" rx="2" fill={GRIP}/>
-        {grip}
+        {/* the appeal is made with the hand, not the sword — two fingers up, and
+            whatever he was holding is on the sand beside him */}
+        {P.plead ? (<g>
+          <rect x="72.6" y="40" width="2.2" height="9.5" rx="1.1" fill={SKIN} transform="rotate(-7 73.7 49)"/>
+          <rect x="75.4" y="40.6" width="2.2" height="9" rx="1.1" fill={SKIN} transform="rotate(6 76.5 49)"/>
+        </g>) : (<>
+          <rect x="71.5" y="46" width="5" height="7" rx="2" fill={GRIP}/>
+          {grip}
+        </>)}
       </g>
     );
   };
@@ -14501,7 +14521,10 @@ const Fighter = React.memo(function Fighter({ kit, pose, wounds, scars, fallen, 
     <svg width="118" height="146" viewBox="0 0 128 146" style={{ overflow:"visible",
       opacity: dead?0.85:1, filter: dead? "grayscale(.55) brightness(.68)":"none",
       /* a man on his last legs stands like it, all the way down rather than at one step */
-      transform:`translate(${P.x}px,${P.y + (fallen||dead ? 0 : (wear||0)*5)}px) rotate(${P.rot + (fallen||dead ? 0 : (wear||0)*4)}deg)`,
+      /* and a man on his knee is shorter. The origin is already at his feet, so a
+         squash reads as the leg folding under him rather than the figure shrinking —
+         which is the whole of a kneel without redrawing a limb. */
+      transform:`translate(${P.x}px,${P.y + (fallen||dead ? 0 : (wear||0)*5)}px) rotate(${P.rot + (fallen||dead ? 0 : (wear||0)*4)}deg)${P.kneel ? " scale(1.02,0.74)" : ""}`,
       transition:"transform .24s cubic-bezier(.34,1.45,.5,1), filter .5s, opacity .5s",
       transformOrigin:"56px 134px" }}>
       <ellipse cx="58" cy="135" rx={fallen||dead?30:17} ry="4" fill="rgba(28,16,8,.34)"/>
@@ -14598,13 +14621,32 @@ function Beast({ art, pose, wounds, dead }){
     bull: { len:96, ht:50, leg:34, coat:"#2f2822", dark:"#1d1815", head:"blunt", tail:"long",  ear:"small", horns:true, hump:true },
     lion: { len:88, ht:38, leg:32, coat:"#b98a44", dark:"#8a6224", head:"round", tail:"long",  ear:"round", mane:true },
   }[art] || {};
-  const P = { idle:{x:0,rot:0}, lunge:{x:22,rot:-5}, recoil:{x:-12,rot:6}, dead:{x:0,rot:0} }[pose] || {x:0,rot:0};
+  /* ---- WHAT A BEAST CAN DO ----
+     Six animals were drawn with a coat, a head, ears, a tail, tusks, a mane, a hump
+     and a bulk apiece — and then animated with four poses against the fighter's
+     eleven, so whatever it was and however the hunt was going it did one of four
+     things. These are the ones the hunt's own beats already describe. */
+  const P = {
+    idle:   { x:0,   rot:0,  y:0,  sy:1    },
+    /* wary, low, working round him rather than at him */
+    circle: { x:-6,  rot:2,  y:2,  sy:0.95 },
+    lunge:  { x:22,  rot:-5, y:0,  sy:1    },
+    /* up on the back legs, or gathered to come — either way, front off the sand */
+    rear:   { x:8,   rot:-16,y:-6, sy:1.06 },
+    recoil: { x:-12, rot:6,  y:0,  sy:1    },
+    /* it felt that one. Turning, head down, not finished */
+    hurt:   { x:-16, rot:9,  y:4,  sy:0.9  },
+    /* it has had enough of him and wants the gate */
+    driven: { x:-30, rot:4,  y:3,  sy:0.92 },
+    dead:   { x:0,   rot:0,  y:0,  sy:1    },
+  }[pose] || { x:0, rot:0, y:0, sy:1 };
   const bodyY = 96 - A.ht;
   const noseX = 34 + A.len;
   return (
     <svg width="150" height="146" viewBox="0 0 160 146" style={{ overflow:"visible",
       opacity: dead?0.85:1, filter: dead? "grayscale(.5) brightness(.65)":"none",
-      transform: dead ? "translate(6px,26px) rotate(14deg)" : `translate(${P.x}px,0) rotate(${P.rot}deg)`,
+      transform: dead ? "translate(6px,26px) rotate(14deg)"
+        : `translate(${P.x}px,${P.y||0}px) rotate(${P.rot}deg) scale(1,${P.sy||1})`,
       transition:"transform .24s cubic-bezier(.34,1.4,.5,1), filter .5s", transformOrigin:"80px 130px" }}>
       <ellipse cx="80" cy="132" rx={dead?46:34} ry="4.5" fill="rgba(28,16,8,.34)"/>
       {/* rear legs */}
@@ -15004,7 +15046,22 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
     if(downSide) return downSide===side ? "fallen" : "victor";
     /* a turned blow is not a mutual clash — one man braced and the other spent it */
     if(b.kind==="clash") return b.guardBy ? (b.guardBy===side ? "guard" : "lunge") : "clash";
+    /* ---- THE BEAT THAT MOVED NOBODY ----
+       The shield block is its own kind and there was no case for it here, so the one
+       hundred and fifty times a bout-set it happens — and it carries the best line in
+       the fight, that it is oak that splits and not him — both men stood perfectly
+       still through it. The brace pose already existed and only a clash could reach
+       it. Now the beat that is about the shield uses it. */
+    if(b.kind==="guard") return b.guardBy===side ? "guard" : "lunge";
     if(b.kind==="gas" && b.actor===side) return "gas";
+    /* ---- AND THE CEREMONY ----
+       Two fingers from the sand, and the hand that opens or turns. Measured at four
+       hundred and ten beats across four hundred bouts, every one of them played with
+       two men standing about as though nothing were being decided. */
+    if(b.kind==="appeal") return b.actor===side ? "appeal" : "over";
+    if(b.kind==="spared") return b.actor===side ? "spared" : "over";
+    if(b.kind==="death")  return b.actor===side ? "fallen" : "over";
+    if(b.kind==="salute") return "salute";
     if(b.kind==="crit"||b.kind==="hit"||b.kind==="graze"){
       if(b.actor===side) return b.sig ? "sig" : "lunge";
       /* and how he takes it depends on where it landed */
@@ -15172,8 +15229,14 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
               <div className={poseFor("B")==="idle" && !downSide ? "bob":""}>
                 <Beast art={BEASTS[fight.beast].art} pose={
                   b.kind==="end" && fight.win ? "dead"
-                  : b.actor==="B" && (b.kind==="hit"||b.kind==="crit"||b.kind==="graze") ? "lunge"
-                  : b.actor==="A" && (b.kind==="hit"||b.kind==="crit") ? "recoil" : "idle"}
+                  /* it lived and he did not take it — that is an animal leaving, not one standing about */
+                  : b.kind==="end" ? "driven"
+                  : b.actor==="B" && b.kind==="crit" ? "rear"
+                  : b.actor==="B" && (b.kind==="hit"||b.kind==="graze") ? "lunge"
+                  : b.actor==="A" && b.kind==="crit" ? "hurt"
+                  : b.actor==="A" && (b.kind==="hit"||b.kind==="graze") ? "recoil"
+                  /* between the blows it does not stand still. It works round him. */
+                  : (b.round||0) > 0 ? "circle" : "idle"}
                   wounds={woundsFor("B")} dead={fight.win && (b.kind==="end")}/>
               </div>
             </div>
