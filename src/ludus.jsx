@@ -514,6 +514,84 @@ function bookBout(d, o){
   if(o.rounds && (!B.longest || o.rounds > B.longest.rounds))
     B.longest = { rounds:o.rounds, name:o.name, opp:o.opp, week:d.week };
 }
+/* ---- WHAT THE BOOK WOULD TELL YOU ----
+   The guide promises exactly this, in as many words: "Most lanistae have a feeling
+   about these things. You can have the number." The tables below have been the
+   number since v2.18.0 made them honest — every bout, all four engines, three
+   outcomes. They were still only a number. Nobody reads twelve rows of percentages
+   and works out that the sine missione cards are the reason.
+
+   So: one or two sentences off the house's own figures, each carrying the figure it
+   came from, ordered by how much it costs. Three rules keep it from being a liar.
+   Say nothing where the sample is too thin to mean anything. Quote the number, so
+   the player can disagree with it. And never claim a cause — the book knows what
+   happened, not why, and a sentence that pretends otherwise is worse than silence. */
+const COUNSEL_MIN = 6;    /* bouts in a slice before it is worth a sentence */
+const COUNSEL_GAP = 12;   /* points off the house's own rate before it is worth saying */
+
+const STAKES_SAID = { standard:"the standard cards", sine:"sine missione", melee:"the melees",
+  venatio:"the hunts", blood:"the blood cards" };
+const KIND_SAID = { single:"single bouts", pair:"pair bouts", melee:"melees", venatio:"hunts",
+  rome:"the imperial bill", primacy:"the primacy", contracted:"contracted bouts" };
+
+function bookSays(d){
+  const B = d.book || newBook();
+  if(B.n < COUNSEL_MIN * 2) return [];
+  const mine = Math.round(B.w / B.n * 100);
+  const out = [];
+  const pc = e => Math.round(e.w / e.n * 100);
+
+  /* the worst slice of a group, if it is bad enough and seen often enough */
+  const worst = (grp, min) => Object.entries(grp||{})
+    .filter(([,e]) => e.n >= (min || COUNSEL_MIN))
+    .map(([k,e]) => ({ k, e, pc:pc(e) }))
+    .sort((a,b) => a.pc - b.pc)[0];
+  const best = (grp, min) => Object.entries(grp||{})
+    .filter(([,e]) => e.n >= (min || COUNSEL_MIN))
+    .map(([k,e]) => ({ k, e, pc:pc(e) }))
+    .sort((a,b) => b.pc - a.pc)[0];
+
+  /* the stakes that are costing you. The most actionable thing the book knows. */
+  const st = worst(B.stakes);
+  if(st && mine - st.pc >= COUNSEL_GAP)
+    out.push({ tone:"bad", text:`You have taken ${STAKES_SAID[st.k] || st.k} ${st.e.n} times and won ${st.pc} of every hundred. Everything else this house fights, it wins ${mine}. Whatever the purse on those looks like, that is the price of it.` });
+
+  /* a house that is quietly beating you */
+  const h = worst(B.house, 4);
+  if(h && h.pc <= 34 && LANISTAE[h.k])
+    out.push({ tone:"bad", text:`House ${h.k} has had you ${h.e.n - h.e.w} times in ${h.e.n}. ${LANISTAE[h.k].name} is not lucky — he is matching somebody against your men and getting it right.` });
+
+  /* a style that is not working, and one that is */
+  const cw = worst(B.cls), cb = best(B.cls);
+  if(cw && cb && cw.k !== cb.k && cb.pc - cw.pc >= COUNSEL_GAP + 6)
+    out.push({ tone:"info", text:`Your ${cw.k}s win ${cw.pc} in a hundred and your ${cb.k}s win ${cb.pc}, over ${cw.e.n} bouts and ${cb.e.n}. That is a wide enough gap to be about the style rather than the men in it.` });
+
+  /* a kind of bout that does not suit the house */
+  const kw = worst(B.kind);
+  if(kw && mine - kw.pc >= COUNSEL_GAP && (!st || kw.k !== st.k))
+    out.push({ tone:"bad", text:`${(KIND_SAID[kw.k] || kw.k).replace(/^./, c=>c.toUpperCase())} have gone ${kw.e.w}–${kw.e.n - kw.e.w - (kw.e.d||0)}${kw.e.d?`–${kw.e.d}`:""} for this house. You take them anyway, which is a choice — it should be one you are making on purpose.` });
+
+  /* reaching too high, or not high enough */
+  const tiers = Object.entries(B.tier||{}).filter(([,e])=>e.n >= COUNSEL_MIN)
+    .map(([k,e])=>({ n:+k.slice(1), e, pc:pc(e) })).sort((a,b)=>a.n-b.n);
+  if(tiers.length >= 2){
+    const top = tiers[tiers.length-1], low = tiers[0];
+    if(low.pc - top.pc >= COUNSEL_GAP + 8)
+      out.push({ tone:"info", text:`At ${TIERS[low.n] ? TIERS[low.n].name.toLowerCase() : "the low cards"} you win ${low.pc} in a hundred; at ${TIERS[top.n] ? TIERS[top.n].name.toLowerCase() : "the top"} you win ${top.pc}. The house is being put on bills it is not ready for, and the difference is ${low.pc - top.pc} points.` });
+    /* "you are being asked for less than you can do" has to mean it. `>= mine` was
+       true whenever the top tier was merely average, so a house winning fifty
+       everywhere was congratulated on winning fifty at the top. */
+    else if(top.pc - mine >= COUNSEL_GAP && top.e.n >= COUNSEL_MIN)
+      out.push({ tone:"good", text:`You win ${top.pc} in a hundred at ${TIERS[top.n] ? TIERS[top.n].name.toLowerCase() : "the top of the table"}, against ${mine} across everything. This house is being asked for less than it can do.` });
+  }
+
+  /* nothing worth saying is itself worth saying, once */
+  if(!out.length)
+    out.push({ tone:"info", text:`Nothing in the book stands out. Across ${B.n} bouts the house wins ${mine} in a hundred whatever it is put in front of, which is either steadiness or a run that has not been tested yet.` });
+
+  return out.slice(0, 3);
+}
+
 /* everything else the book knows, it derives */
 function bookOf(d){
   const B = d.book || newBook();
@@ -7313,7 +7391,7 @@ const LESSONS = [
   { id:"book", tab:"ludus", title:"What The House Has Done",
     done:d=>(d.book&&d.book.n)>=60,
     when:d=>(d.book&&d.book.n)>=25,
-    text:"The record book keeps everything: which style has actually served you, which stakes you should stop accepting, which of the three great houses is quietly taking you apart. Most lanistae have a feeling about these things. You can have the number." },
+    text:"The record book keeps everything: which style has actually served you, which stakes you should stop accepting, which of the three great houses is quietly taking you apart. Most lanistae have a feeling about these things. You can have the number — and the top of that page will tell you, in words, what the numbers under it come to." },
   { id:"heir", tab:"ludus", title:"After You",
     done:d=>!!d.heir,
     when:d=>d.lanista && (d.lanista.age>=48 || d.lanista.health<55),
@@ -16631,6 +16709,19 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>
           Everything this house has done, since the day you were given the keys to it.
         </div>
+        {/* the number is under here. This is the feeling, and it is read off the number. */}
+        {(()=>{ const said = bookSays(S); if(!said.length) return null;
+          return (
+            <div className="panel" style={{padding:12,marginBottom:12,borderColor:"#6d5426",
+              background:"linear-gradient(165deg,#2b2216,#1d1610)"}}>
+              <div className="tag tag-gold" style={{marginBottom:6}}>What it comes to</div>
+              {said.map((x,i)=>(
+                <div key={i} style={{fontSize:"var(--fs-md)",lineHeight:1.4,
+                  marginTop:i?8:0,
+                  color: x.tone==="bad" ? "#d9a89e" : x.tone==="good" ? "#cfe0b0" : "#cfc0a0"}}>{x.text}</div>
+              ))}
+            </div>
+          ); })()}
         <div className="tag tag-gold" style={{marginBottom:3}}>The house</div>
         {romeRuns(S)>0 && <Row l="Rome" v={romeWord(S)}
           sub={`${romeRuns(S)} visit${romeRuns(S)===1?"":"s"}${romeTriumphs(S)?`, ${romeTriumphs(S)} taken`:""}, best ${romeBest(S)} of 3`}/>}
@@ -21805,7 +21896,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     simulateFight, simulatePair, simulateMelee, simulateVenatio,
     doFight, doPairFight, doMelee, doVenatio,
     /* the week, and what it writes down */
-    endWeek, bookBout, bookOf, newBook, chron,
+    endWeek, bookBout, bookOf, newBook, chron, bookSays,
     /* the always-open card and the block, for a headless player */
     makePitOffer, pitMen, makePitCard, buyFromBlock, rosterFull, cellsCap,
     /* loading an old save */
