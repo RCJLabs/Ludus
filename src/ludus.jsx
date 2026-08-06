@@ -6810,6 +6810,28 @@ const ATTACKS = {
   Retiarius:[["cast","flicks the net out like a striking snake"],["trident","drives the three points forward"],["dart","darts inside the reach and away again"]],
   Dimachaerus:[["cross","scissors both blades across the guard"],["flurry","comes on in a blur of two edges"],["offhand","feints high and buries the off-hand blade low"]],
 };
+/* ---- WHERE A RIVAL'S ANGER ACTUALLY LIVES ----
+   Three written events wait on a rival house's grudge: a man in your armoury at
+   night, a bribed editor, and cudgels at your gate. They were gated at 30, 50 and
+   65, and two of the three had never happened to anybody.
+
+   The first measurement of this said all three were unreachable — the angriest
+   house in Capua peaked at 27. That measurement was wrong, and wrong in an
+   instructive way: it took the richest bout on the card every week, which spreads
+   your fighting across five houses and feeds no rivalry at all. Grudge is not a
+   number you accumulate, it is a number one house holds about you.
+
+   Measured again against a lanista who takes the rival bout when there is one:
+   median 0, ninetieth 22.9, ninety-seventh 34, ninety-ninth 49.2, highest 50.6.
+   Houses still forget — the median is nought, and it should be — but a feud you
+   pursue climbs. So sabotage stays where it was at 30, and the two above it come
+   down to where the number goes: a bribed editor near the ninety-eighth, cudgels
+   near the ninety-ninth. Rare, in order, and possible. */
+const GRUDGE_SABOTAGE = 30, GRUDGE_BRIBE = 40, GRUDGE_THUGS = 48;
+/* thugs sat at the ninety-ninth for one pass and still never landed: pickEvent
+   shuffles every event and takes the first that returns, so a state present in one
+   week in a hundred has to win that shuffle against thirty others as well. Twenty-two
+   keeps it the rarest of the three and rare in absolute terms, and lets it happen. */
 const TARGETS = [["arm",[70,54],1],["shoulder",[56,42],1.05],["thigh",[54,96],1.1],["flank",[52,68],1.15],["brow",[56,26],1.25],["hand",[76,60],0.9]];
 /* ---- WHERE THE BLOWS LAND ----
    Every blow already chose a place, drew it on the body and stored which one — and
@@ -13720,7 +13742,7 @@ const EVENTS = {
       return `You send him back down the road. There will be another one; there always is.`; } },
   sabotage: {
     make(d){ if(!d.rivals || !activeG(d).length) return null;
-      const h = d.rivals.filter(x=>x.grudge>=30).sort((a,b)=>(b.grudge*(lanistaOf(b.name).sabotage||1))-(a.grudge*(lanistaOf(a.name).sabotage||1)))[0];
+      const h = d.rivals.filter(x=>x.grudge>=GRUDGE_SABOTAGE).sort((a,b)=>(b.grudge*(lanistaOf(b.name).sabotage||1))-(a.grudge*(lanistaOf(a.name).sabotage||1)))[0];
       if(!h) return null;
       return { id:"sabotage", title:"A Rat in the Granary", text:`Your cook swears the grain was tampered with — and that he saw a man in House ${h.name}'s colors near the stores after dark.`,
         choices:["Post paid watchmen — 80 denarii","Let it lie"], data:{house:h.name} }; },
@@ -13733,7 +13755,7 @@ const EVENTS = {
       return "Days pass. Nothing comes of it. This time."; } },
   bribedEditor: {
     make(d){ if(!d.rivals || d.fame<TIERS[1].fame) return null;
-      const h = d.rivals.filter(x=>x.grudge>=50).sort((a,b)=>(b.grudge*lanistaOf(b.name).bribe)-(a.grudge*lanistaOf(a.name).bribe))[0];
+      const h = d.rivals.filter(x=>x.grudge>=GRUDGE_BRIBE).sort((a,b)=>(b.grudge*lanistaOf(b.name).bribe)-(a.grudge*lanistaOf(a.name).bribe))[0];
       if(!h) return null;
       return { id:"bribedEditor", title:"The Editor's New Rings", text:`Word from the baths: House ${h.name} has been generous with the editor of the coming games. If one of your men falls, the thumb may already be turned.`,
         choices:["Outbid them — 150 denarii","Let them waste their coin"], data:{house:h.name} }; },
@@ -13742,7 +13764,7 @@ const EVENTS = {
       return "You keep your purse shut. Pray your men keep their feet."; } },
   thugs: {
     make(d){ if(!d.rivals) return null;
-      const h = d.rivals.find(x=>x.grudge>=65); const c=activeG(d);
+      const h = d.rivals.find(x=>x.grudge>=GRUDGE_THUGS); const c=activeG(d);
       if(!h || !c.length) return null; const t=pick(c);
       return { id:"thugs", title:"Blood in the Street", text:`${t.name} returns from an errand bloodied — three men with clubs, professional about it. The tavern keeper says they drank on House ${h.name}'s coin.`,
         choices:["Answer in kind — send your own men","Bind his wounds and bide your time"], data:{house:h.name, tid:t.id} }; },
@@ -22417,6 +22439,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     migrate, SAVE_FIELDS, SAVE_MAYBE, SAVE_NUMBERS, MAN_FIELDS, MAN_NUMBERS, REPAIRS, SAVE_VER,
     /* the tables a check may need to reason about */
     TIERS, CLASSES, GEAR, EVENTS, LASTING, STATS,
+    /* what a rival house's anger has to reach before it does anything */
+    GRUDGE_SABOTAGE, GRUDGE_BRIBE, GRUDGE_THUGS,
     /* the odds the bookmakers quote, and the mitigations on a death */
     winChance, collSoften, docHealth, TACTIC, TACTIC_OR,
     /* the street: what it thinks of you, and what it will say for your men */

@@ -53,6 +53,7 @@ reason the check exists usually has not.
 | `street` | fast | acclaim climbed past the top of its ladder into nothing, and the missio never read it |
 | `chronicle` | fast | one in five lines the chronicle ever wrote was the same weekly receipt |
 | `marks` | fast | a man bought with an old wound carried a scar drawn at NaN,NaN for as long as you owned him |
+| `grudge` | fast | two rival-vengeance events waited above the ceiling of the number they read |
 
 ## The test build
 
