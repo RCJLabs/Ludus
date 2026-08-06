@@ -7,6 +7,7 @@ import { found, endWeek, clearAll, tab, click, top } from "../harness.mjs";
 
 export const name = "sweep";
 export const describe = "every tab, section and sheet renders without throwing";
+export const slow = true;   /* drives a real browser through the real screens */
 
 export async function run({ p, errors }){
   await found(p);

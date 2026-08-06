@@ -6,7 +6,9 @@
   "scripts": {
     "build": "node build.js",
     "build:test": "node build.js --test",
-    "test": "node test/run.mjs"
+    "test": "node test/run.mjs",
+    "test:all": "node test/run.mjs --all",
+    "test:slow": "node test/run.mjs --slow"
   },
   "dependencies": {
     "react": "^18.3.1",

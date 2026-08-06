@@ -1,13 +1,33 @@
 # The checks
 
 ```
-npm test                  every check
-npm test book modals      only those
-npm test -- --keep        leave dist/test.html behind to poke at
+npm test                  the fast tier — about half a minute
+npm run test:all          every check, fast and slow
+npm run test:slow         only the ones that drive a browser
+npm test book modals      only those, whatever tier they are in
+npm test -- --keep        leave the test bundle behind to poke at
 ```
 
-Each check drives a real browser against a real build and reports what it found.
-They take a few minutes; they are meant to be run before a release, not on every save.
+Every check runs against a real build. Most reach into the game through the test
+handle, play a house for a hundred weeks in memory, and answer in a second or two.
+Four drive a real browser through the real screens, and those cost minutes.
+
+## Why there are two tiers
+
+They used to be one command, so the honest choice before a release was seventeen
+minutes or nothing — and the answer was too often nothing. Two releases shipped on
+the fast checks alone, and a fault in `survive` sat undetected across several more
+because nobody had run it.
+
+So `npm test` is the one you can afford on every save, and it prints in yellow
+exactly which checks it did not run. `npm run test:all` before a release. The slow
+checks run concurrently — each gets its own browser and its own storage, so there
+was never a reason for them to queue — and `survive` plays its three houses side by
+side rather than end to end.
+
+A check declares itself with `export const slow = true`. Everything else is fast by
+default, which is the right default: if a new check needs a browser, its author
+knows it.
 
 ## Why these exist
 
@@ -15,23 +35,23 @@ Every one of them is a bug that shipped. The comment at the top of each file say
 which. That comment is the durable part — when the numbers inside go stale, the
 reason the check exists usually has not.
 
-| check | it exists because |
-|---|---|
-| `survive` | economy changes have twice bankrupted every opening without anyone noticing |
-| `engines` | tactic and trait constants are 3–5× more powerful than they look, every time |
-| `book` | the pair booked only its wins and the melee only its losses, for fifty versions |
-| `modals` | the week's digest threw itself over the answer to the question you were just asked |
-| `surface` | the tab bar was set in 9px and END WEEK was 37px tall |
-| `sweep` | the cheap net: does anything throw when you open it |
-| `layers` | 28 overlays with hand-written z-indices, and no way to see the order |
-| `saves` | 165 lines of unordered backfills, and fifteen core fields that never had one |
-| `block` | buying a man lived in a React closure, so nothing outside it could buy anybody |
-| `counsel` | the book had every figure and no way to say what they came to |
-| `actions` | fifty-eight more actions lived in that same closure, and one probe measured its own copy of the feast |
-| `rope` | the pit filled half the weeks and paid the same in year twelve as in year one |
-| `table` | the only lever against the only number that ends a run cost 120 denarii flat, forever |
-| `street` | acclaim climbed past the top of its ladder into nothing, and the missio never read it |
-| `chronicle` | one in five lines the chronicle ever wrote was the same weekly receipt |
+| check | tier | it exists because |
+|---|---|---|
+| `survive` | slow | economy changes have twice bankrupted every opening without anyone noticing |
+| `engines` | fast | tactic and trait constants are 3–5× more powerful than they look, every time |
+| `book` | fast | the pair booked only its wins and the melee only its losses, for fifty versions |
+| `modals` | slow | the week's digest threw itself over the answer to the question you were just asked |
+| `surface` | slow | the tab bar was set in 9px and END WEEK was 37px tall |
+| `sweep` | slow | the cheap net: does anything throw when you open it |
+| `layers` | fast | 28 overlays with hand-written z-indices, and no way to see the order |
+| `saves` | fast | 165 lines of unordered backfills, and fifteen core fields that never had one |
+| `block` | fast | buying a man lived in a React closure, so nothing outside it could buy anybody |
+| `counsel` | fast | the book had every figure and no way to say what they came to |
+| `actions` | fast | fifty-eight more actions lived in that same closure, and one probe measured its own copy of the feast |
+| `rope` | fast | the pit filled half the weeks and paid the same in year twelve as in year one |
+| `table` | fast | the only lever against the only number that ends a run cost 120 denarii flat, forever |
+| `street` | fast | acclaim climbed past the top of its ladder into nothing, and the missio never read it |
+| `chronicle` | fast | one in five lines the chronicle ever wrote was the same weekly receipt |
 
 ## The test build
 
@@ -78,8 +98,9 @@ import { found, endWeek, clearAll, slot } from "../harness.mjs";
 
 export const name = "cells";
 export const describe = "the cells cap grows when you build";
+export const slow = true;        // only if it drives the screens; omit otherwise
 
-export async function run({ p, errors }){
+export async function run({ p, errors, port }){
   await found(p);
   // ...
   return { pass: true, why: null, lines: ["what it saw"] };
@@ -88,6 +109,10 @@ export async function run({ p, errors }){
 
 `run` gets a live page, the errors it has thrown so far, and the port. Return
 `{ pass, why, lines }` — `why` is printed only on failure, `lines` always.
+
+`port` is there so a check can open more browsers of its own with `open(port)` —
+that is how `survive` plays three houses at once instead of one after another.
+Close what you open, and gather the extra sessions' `errors` alongside your own.
 
 ## Three things the harness knows that cost a day each to learn
 

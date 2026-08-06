@@ -10,6 +10,7 @@ import { found, endWeek, clearAll, tab } from "../harness.mjs";
 
 export const name = "surface";
 export const describe = "no type under the scale, no primary control under a thumb";
+export const slow = true;   /* drives a real browser through the real screens */
 
 const FLOOR_TEXT = 11.4;   /* --fs-micro is 11.5; allow for rounding */
 const FLOOR_TAP  = 44;     /* buttons, rows, selects, the tab bar */

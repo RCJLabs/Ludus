@@ -8,6 +8,7 @@ import { found, endWeek, clearAll, top } from "../harness.mjs";
 
 export const name = "modals";
 export const describe = "answering a question shows the answer, not the week's summary";
+export const slow = true;   /* drives a real browser through the real screens */
 
 export async function run({ p, errors }){
   await found(p);
