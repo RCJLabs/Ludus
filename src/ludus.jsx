@@ -6,39 +6,49 @@ import { Coins, Star, Crown, Flame, Swords, Shield, Wine, Users, Landmark, Shopp
 const CSS = `
 *,*::before,*::after{box-sizing:border-box}
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap');
-.lr{overflow-x:clip;max-width:100%;background:#171210;background-image:radial-gradient(1100px 560px at 50% -8%, #2b2115 0%, #171210 62%);color:#e8d9b8;font-family:'Cormorant Garamond',Georgia,serif;min-height:100vh;font-size:17px;line-height:1.45}
+/* ---- THE TYPE SCALE ----
+   Nine hundred and sixty-seven inline font sizes had grown up here one element at
+   a time, across twenty distinct values between 9px and 19px — six of them sitting
+   inside a single point of each other, indistinguishable on the page and impossible
+   to keep straight in the source. Eight steps now, and nothing under 11.5px: the
+   tab bar was set in 9px and the tags in 10px, which is smaller than any phone
+   should ask a reader to work at. Change a step here and it moves everywhere. */
+.lr{--fs-micro:11.5px;--fs-sm:12.5px;--fs-base:13.5px;--fs-md:14.5px;
+    --fs-lg:15.5px;--fs-xl:17px;--fs-xxl:19px;--fs-display:46px;
+    --tap:44px;
+    overflow-x:clip;max-width:100%;background:#171210;background-image:radial-gradient(1100px 560px at 50% -8%, #2b2115 0%, #171210 62%);color:#e8d9b8;font-family:'Cormorant Garamond',Georgia,serif;min-height:100vh;font-size:17px;line-height:1.45}
 .shell{position:relative;min-height:100vh}
 .scroll{width:100%}
 .bar{flex:0 0 auto}
 .disp{font-family:'Cinzel',serif;letter-spacing:.1em}
 .panel{background:linear-gradient(165deg,#261d15,#1d1610);border:1px solid #3e2f1f;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.35)}
-.btn{font-family:'Cinzel',serif;letter-spacing:.07em;font-size:12px;text-transform:uppercase;padding:10px 14px;border-radius:8px;border:1px solid #6d5426;background:linear-gradient(180deg,#3a2c18,#2a1f10);color:#dfc389;cursor:pointer;transition:filter .15s}
+.btn{font-family:'Cinzel',serif;letter-spacing:.07em;font-size:var(--fs-sm);text-transform:uppercase;padding:11px 14px;min-height:var(--tap);display:inline-flex;align-items:center;justify-content:center;border-radius:8px;border:1px solid #6d5426;background:linear-gradient(180deg,#3a2c18,#2a1f10);color:#dfc389;cursor:pointer;transition:filter .15s}
 .btn:hover{filter:brightness(1.18)}
 .btn:disabled{opacity:.38;cursor:not-allowed}
 .btn-blood{border-color:#7c2a22;background:linear-gradient(180deg,#5c221b,#411713);color:#eab6a8}
 .btn-ghost{background:transparent;border-color:#4a3a26;color:#b9a37c}
 .gold{color:#d8ac5f}.blood{color:#d96f5d}.laurel{color:#9aa86a}.dim{color:#b09b7d}
-.tag{display:inline-block;font-family:'Cinzel',serif;font-size:10px;letter-spacing:.09em;text-transform:uppercase;padding:2px 7px;border:1px solid #4a3a26;border-radius:99px;color:#b9a37c}
+.tag{display:inline-block;font-family:'Cinzel',serif;font-size:var(--fs-micro);letter-spacing:.09em;text-transform:uppercase;padding:2px 7px;border:1px solid #4a3a26;border-radius:99px;color:#b9a37c}
 .tag-blood{border-color:#7c2a22;color:#d98476}
 .tag-gold{border-color:#8a6a2c;color:#e0bd72}
 .track{height:7px;border-radius:99px;background:#120d09;border:1px solid #33271a;overflow:hidden}
 .fill{height:100%;border-radius:99px;transition:width .4s}
-.tabbtn{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 2px 7px;color:#a08d6b;font-family:'Cinzel',serif;font-size:9px;letter-spacing:.04em;text-transform:uppercase;background:none;border:none;cursor:pointer;border-top:2px solid transparent;overflow:hidden;white-space:nowrap}
+.tabbtn{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 2px;min-height:56px;color:#a08d6b;font-family:'Cinzel',serif;font-size:var(--fs-micro);letter-spacing:.04em;text-transform:uppercase;background:none;border:none;cursor:pointer;border-top:2px solid transparent;overflow:hidden;white-space:nowrap}
 .tabbtn.on{color:#e0bd72;border-top-color:#c99a4b}
 .modalwrap{position:fixed;inset:0;background:rgba(10,7,5,.84);display:flex;align-items:flex-end;justify-content:center;z-index:50}
 .modal{width:100%;max-width:560px;box-sizing:border-box;max-height:92vh;overflow-y:auto;background:linear-gradient(170deg,#292017,#1a1410);border:1px solid #4e3c26;border-radius:14px 14px 0 0;padding:18px}
 @media(min-width:640px){.modalwrap{align-items:center}.modal{border-radius:14px}}
 .tickline{padding:4px 0;border-bottom:1px dotted #33271a;animation:tick .35s ease-out}
 @keyframes tick{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
-.sel{background:#1a1410;border:1px solid #4a3a26;color:#e8d9b8;border-radius:7px;padding:8px 10px;font-family:'Cormorant Garamond',Georgia,serif;font-size:15px}
-.chip{font-family:'Cinzel',serif;font-size:10px;letter-spacing:.07em;text-transform:uppercase;padding:6px 10px;border-radius:99px;border:1px solid #4a3a26;background:none;color:#b9a37c;cursor:pointer}
+.sel{background:#1a1410;border:1px solid #4a3a26;color:#e8d9b8;border-radius:7px;padding:9px 10px;min-height:var(--tap);font-family:'Cormorant Garamond',Georgia,serif;font-size:var(--fs-lg)}
+.chip{font-family:'Cinzel',serif;font-size:var(--fs-micro);letter-spacing:.07em;text-transform:uppercase;padding:7px 11px;min-height:38px;display:inline-flex;align-items:center;justify-content:center;border-radius:99px;border:1px solid #4a3a26;background:none;color:#b9a37c;cursor:pointer}
 .chip.on{border-color:#c99a4b;color:#e0bd72;background:#2b2115}
-.focusbtn{font-family:'Cinzel',serif;font-size:12px;letter-spacing:.04em;min-height:46px;padding:8px 4px;
+.focusbtn{font-family:'Cinzel',serif;font-size:var(--fs-sm);letter-spacing:.04em;min-height:46px;padding:8px 4px;
   border-radius:8px;border:1px solid #4a3a26;background:#1a1410;color:#b9a37c;cursor:pointer;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;line-height:1.15;transition:border-color .15s}
 .focusbtn:hover{border-color:#6d5426}
 .focusbtn.on{border-color:#c99a4b;color:#e8d092;background:linear-gradient(180deg,#3a2c18,#2a1f10)}
-.focusbtn .sub{font-family:'Cormorant Garamond',Georgia,serif;font-size:10.5px;letter-spacing:0;opacity:.75}
+.focusbtn .sub{font-family:'Cormorant Garamond',Georgia,serif;font-size:var(--fs-micro);letter-spacing:0;opacity:.75}
 .arena{position:relative;overflow:hidden;border-radius:10px;border:1px solid #4e3c26;height:232px;
   background:linear-gradient(#0d0a07 0%,#14100b 26%,#2a2013 29%,#3f2f1a 33%,#6d5531 58%,#9a7844 100%)}
 .v-pit{background:linear-gradient(#0a0806 0%,#100d09 30%,#241c12 34%,#4a3a22 62%,#6b5433 100%)!important;border-color:#3e2f1f!important}
@@ -65,7 +75,7 @@ const CSS = `
 @keyframes flash{to{opacity:0}}
 .momtrack{height:5px;border-radius:99px;background:#120d09;border:1px solid #33271a;position:relative;overflow:hidden}
 .momfill{position:absolute;top:0;bottom:0;background:linear-gradient(90deg,#8a6a2c,#d8ac5f);transition:all .3s}
-.caption{min-height:52px;font-size:16.5px;line-height:1.34}
+.caption{min-height:52px;font-size:var(--fs-xl);line-height:1.34}
 :focus-visible{outline:2px solid #e0bd72;outline-offset:2px;border-radius:6px}
 .sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 .rowname{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -85,7 +95,7 @@ const CSS = `
   background:#1a1410;border:1px solid #4a3a26;color:#e8d9b8;border-radius:7px;padding:9px 11px;
   font-family:'Cormorant Garamond',Georgia,serif;font-size:15px;text-align:left;cursor:pointer;transition:border-color .15s}
 .selbtn:hover{border-color:#6d5426}
-.optrow{width:100%;text-align:left;padding:11px;margin-bottom:7px;cursor:pointer;color:inherit;font:inherit;
+.optrow{width:100%;text-align:left;padding:12px;min-height:var(--tap);margin-bottom:7px;cursor:pointer;color:inherit;font:inherit;
   background:linear-gradient(165deg,#261d15,#1d1610);border:1px solid #3e2f1f;border-radius:10px}
 .optrow.on{border-color:#c99a4b;background:linear-gradient(165deg,#332816,#241b11)}
 .reduce-motion *,.reduce-motion *::before,.reduce-motion *::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
@@ -14000,12 +14010,12 @@ function GearStats({ it, cls }){
   const rows = [["atk","Attack",it.atk],["def","Guard",it.def],["spd","Speed",it.spd],["sho","Crowd",it.sho]].filter(r=>r[2]);
   return (
     <div>
-      <div className="flex gap-2" style={{flexWrap:"wrap",fontSize:13}}>
+      <div className="flex gap-2" style={{flexWrap:"wrap",fontSize:"var(--fs-base)"}}>
         {rows.map(r=>(
           <span key={r[0]} style={{color: r[2]>0 ? "#9aa86a" : "#cf5a49"}}>{r[1]} {pct(r[2])}</span>
         ))}
       </div>
-      {alien && <div className="blood" style={{fontSize:13,fontStyle:"italic",marginTop:2}}>Not of his style — clumsy in his hands.</div>}
+      {alien && <div className="blood" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:2}}>Not of his style — clumsy in his hands.</div>}
     </div>
   );
 }
@@ -14640,8 +14650,8 @@ const CrowdRow = React.memo(function CrowdRow({ level, factions, venue }){
 function HPBar({ label, v, s, cls, flip }){
   return (
     <div style={{flex:1, textAlign: flip?"right":"left", minWidth:0}}>
-      <div className="disp" style={{fontSize:11, letterSpacing:".07em", color:"#e0bd72", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{label}</div>
-      <div className="dim" style={{fontSize:11, marginBottom:3}}>{cls}</div>
+      <div className="disp" style={{fontSize:"var(--fs-micro)", letterSpacing:".07em", color:"#e0bd72", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{label}</div>
+      <div className="dim" style={{fontSize:"var(--fs-micro)", marginBottom:3}}>{cls}</div>
       <div className="track" style={{height:6}} role="progressbar" aria-label={`${label} health`}
         aria-valuenow={Math.round(clamp((v-20)/80*100,0,100))} aria-valuemin={0} aria-valuemax={100}>
         <div className="fill" style={{width:`${clamp((v-20)/80*100,0,100)}%`, marginLeft: flip? "auto":0,
@@ -14769,7 +14779,7 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
     <div className="modalwrap" role="dialog" aria-modal="true">
       <div className="modal" tabIndex={-1}>
         <div className="flex items-center justify-between" style={{marginBottom:8}}>
-          <div className="disp" style={{fontSize:13, fontWeight:700, letterSpacing:".12em"}}>
+          <div className="disp" style={{fontSize:"var(--fs-base)", fontWeight:700, letterSpacing:".12em"}}>
             {fight.stakes==="sine" ? <span className="blood">SINE MISSIONE</span> : fight.festival ? fight.festival.toUpperCase() : "THE PITS"}
           </div>
           <div className="flex items-center gap-2">
@@ -14788,7 +14798,7 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
           <div style={{marginBottom:6}}>
             <div className="flex items-end gap-2">
               <HPBar label={fight.A[0].name} v={b.hA[0]} s={b.sA} cls={fight.A[0].cls}/>
-              <div className="disp dim" style={{fontSize:11,padding:"0 2px",whiteSpace:"nowrap"}}>{b.round>0? `RND ${b.round}`:"—"}</div>
+              <div className="disp dim" style={{fontSize:"var(--fs-micro)",padding:"0 2px",whiteSpace:"nowrap"}}>{b.round>0? `RND ${b.round}`:"—"}</div>
               <HPBar label={fight.B[0].name} v={b.hB[0]} s={b.sB} cls={fight.B[0].cls} flip/>
             </div>
             <div className="flex items-end gap-2" style={{marginTop:4}}>
@@ -14802,7 +14812,7 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
           <HPBar label={isMelee ? (meleeA? meleeA.name : "—") : nameA}
             v={isMelee ? (b.a!=null? b.hp[b.a]:100) : b.vA} s={b.sA}
             cls={isMelee ? (meleeA? (meleeA.mine? meleeA.cls+" · yours" : meleeA.cls+" · "+meleeA.house) : "") : `${fight.A.cls} · ${fight.A.sub}`}/>
-          <div className="disp dim" style={{fontSize:11, padding:"0 2px", whiteSpace:"nowrap"}}>{b.round>0? `RND ${b.round}`:"—"}</div>
+          <div className="disp dim" style={{fontSize:"var(--fs-micro)", padding:"0 2px", whiteSpace:"nowrap"}}>{b.round>0? `RND ${b.round}`:"—"}</div>
           <HPBar label={isMelee ? (meleeB? meleeB.name : "—") : (isBeast ? fight.B.name : nameB)}
             v={isMelee ? (b.b!=null? b.hp[b.b]:100) : b.vB} s={b.sB}
             cls={isMelee ? (meleeB? (meleeB.mine? meleeB.cls+" · yours" : meleeB.cls+" · "+meleeB.house) : "") : (isBeast ? "the hunt" : `${fight.B.cls} · ${fight.B.sub}`)} flip/>
@@ -14815,7 +14825,7 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
               <span key={i} className="tag" style={{
                 borderColor: b.dead[i] ? "#5a1a14" : b.out[i] ? "#3e2f1f" : e.mine ? "#8a3a2b" : "#3d5a6b",
                 color: b.dead[i] ? "#6b4038" : b.out[i] ? "#8f7e62" : e.mine ? "#e8a08c" : "#9dc0d4",
-                textDecoration: b.out[i] ? "line-through" : "none", fontSize:11 }}>
+                textDecoration: b.out[i] ? "line-through" : "none", fontSize:"var(--fs-micro)" }}>
                 {e.name}{b.dead[i] ? " ✝" : ""}
               </span>
             ))}
@@ -14898,11 +14908,11 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
           ))}
           {(b.kind==="crit"||b.kind==="death") && <div className="hitflash" key={`f${i}`}/>}
           <div style={{position:"absolute",bottom:4,left:8,right:8,display:"flex",alignItems:"center",gap:6}}>
-            <span className="disp dim" style={{fontSize:11,letterSpacing:".08em"}}>MOMENTUM</span>
+            <span className="disp dim" style={{fontSize:"var(--fs-micro)",letterSpacing:".08em"}}>MOMENTUM</span>
             <div className="momtrack" style={{flex:1}}>
               <div className="momfill" style={{ left: momPct<50? `${momPct}%`:"50%", right: momPct<50? "50%":`${100-momPct}%` }}/>
             </div>
-            <span className="disp" style={{fontSize:10.5,letterSpacing:".06em",color: b.crowd>=78?"#e0bd72":b.crowd>=45?"#d8ac5f":"#8d7e65",whiteSpace:"nowrap"}}>
+            <span className="disp" style={{fontSize:"var(--fs-micro)",letterSpacing:".06em",color: b.crowd>=78?"#e0bd72":b.crowd>=45?"#d8ac5f":"#8d7e65",whiteSpace:"nowrap"}}>
               CROWD {Math.round(b.crowd||0)}
             </span>
           </div>
@@ -14913,19 +14923,19 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
           <div className="flex items-center justify-between gap-2" style={{marginTop:6}}>
             <div className="flex gap-1" style={{flexWrap:"wrap",minWidth:0}}>
               {(b.mkA||[]).map(k=>(
-                <span key={k} className="chip" style={{fontSize:9.5,padding:"1px 6px",borderColor:"#7c2a22",color:"#d98476"}}>{MARK_WORD[k]}</span>
+                <span key={k} className="chip" style={{fontSize:"var(--fs-micro)",padding:"1px 6px",borderColor:"#7c2a22",color:"#d98476"}}>{MARK_WORD[k]}</span>
               ))}
             </div>
             <div className="flex gap-1" style={{flexWrap:"wrap",minWidth:0,justifyContent:"flex-end"}}>
               {(b.mkB||[]).map(k=>(
-                <span key={k} className="chip" style={{fontSize:9.5,padding:"1px 6px",borderColor:"#5a6a35",color:"#b9c58a"}}>{MARK_WORD[k]}</span>
+                <span key={k} className="chip" style={{fontSize:"var(--fs-micro)",padding:"1px 6px",borderColor:"#5a6a35",color:"#b9c58a"}}>{MARK_WORD[k]}</span>
               ))}
             </div>
           </div>
         )}
 
         {!done && b.sp!=null && (
-          <div className="disp" style={{textAlign:"center",fontSize:10.5,letterSpacing:".07em",marginTop:6,
+          <div className="disp" style={{textAlign:"center",fontSize:"var(--fs-micro)",letterSpacing:".07em",marginTop:6,
             color: b.sp===2?"#9aa86a":b.sp===1?"#d8ac5f":"#d96f5d"}}>
             {b.sp===2 ? "IF HE FALLS NOW — THE BOX WOULD SPARE HIM"
               : b.sp===1 ? "IF HE FALLS NOW — IT WOULD BE CLOSE"
@@ -14935,18 +14945,18 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
         )}
 
         {b.named && (
-          <div className="disp" style={{marginTop:8,textAlign:"center",fontSize:13,letterSpacing:".1em",color:"#e0bd72"}}>✦ {b.named.toUpperCase()} ✦</div>
+          <div className="disp" style={{marginTop:8,textAlign:"center",fontSize:"var(--fs-base)",letterSpacing:".1em",color:"#e0bd72"}}>✦ {b.named.toUpperCase()} ✦</div>
         )}
         <div className="caption" role="log" aria-live="polite" aria-atomic="true"
           style={{marginTop:b.named?4:10, color: b.named? "#e0bd72" : b.kind==="crit"||b.kind==="death"? "#eab6a8" : b.kind==="crowd"? "#e0bd72":"#e8d9b8"}}>
           {b.text}
         </div>
         {b.stands && (
-          <div style={{marginTop:5,fontSize:14.5,fontStyle:"italic",
+          <div style={{marginTop:5,fontSize:"var(--fs-md)",fontStyle:"italic",
             color: b.stands.silent ? "#8d7e65" : (FAC_TINT[b.stands.fac] ? "#cfc0a0" : "#cfc0a0")}}>
             {b.stands.silent ? b.stands.line : <>
               <span style={{color:FAC_TINT[b.stands.fac]||"#9aa86a"}}>“{b.stands.line}”</span>
-              <span className="dim" style={{fontSize:13}}> — {b.stands.who}</span>
+              <span className="dim" style={{fontSize:"var(--fs-base)"}}> — {b.stands.who}</span>
             </>}
           </div>
         )}
@@ -14965,10 +14975,10 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
           const sig = solo && fight.A ? SIGNATURES[fight.A.cls] : null;
           return (
           <div className="panel" style={{marginTop:8,padding:12,borderColor:"#c99a4b"}}>
-            <div className="disp" style={{fontSize:13,fontWeight:700,letterSpacing:".1em",marginBottom:4,color:"#e8d092"}}>
+            <div className="disp" style={{fontSize:"var(--fs-base)",fontWeight:700,letterSpacing:".1em",marginBottom:4,color:"#e8d092"}}>
               {solo ? "FROM THE BOX" : "ONE WORD FROM THE BOX"}
             </div>
-            <div className="dim" style={{fontSize:14,fontStyle:"italic",marginBottom:9}}>
+            <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:9}}>
               {solo ? "He can hear you between the exchanges. Say the word and watch it land."
                 : "He can hear you from here, and he will only hear you once."}
             </div>
@@ -14981,11 +14991,11 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
                 <button key={k} className={`btn ${(k==="cloth"||k==="pullall")?"btn-blood":""}`}
                   style={{width:"100%",marginBottom: solo?4:7, textAlign: solo?"left":"center"}} onClick={()=>onSpeak(k)}>
                   <span>{label}</span>
-                  {solo && c.desc && <span className="dim" style={{display:"block",fontSize:12,fontStyle:"italic",fontWeight:400,marginTop:1,whiteSpace:"normal"}}>{c.desc}</span>}
+                  {solo && c.desc && <span className="dim" style={{display:"block",fontSize:"var(--fs-sm)",fontStyle:"italic",fontWeight:400,marginTop:1,whiteSpace:"normal"}}>{c.desc}</span>}
                 </button>
               );
             })}
-            <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:solo?4:0}}>
+            <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:solo?4:0}}>
               {fight.melee
                 ? "Pulling a man off the sand costs you his share and nothing else — and if he was your second, the editor has nobody left to make him fight."
                 : fight.venatio
@@ -15000,16 +15010,16 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
 
         {done && !fight.crux && (
           <div className="panel" style={{marginTop:8, padding:12, borderColor: fight.dead? "#7c2a22" : fight.win? "#5a6a35":"#4e3c26"}}>
-            <div className="disp" style={{fontSize:13, fontWeight:700, marginBottom:6, color: fight.dead? "#d98476": fight.win? "#b9c58a":"#e0bd72"}}>
+            <div className="disp" style={{fontSize:"var(--fs-base)", fontWeight:700, marginBottom:6, color: fight.dead? "#d98476": fight.win? "#b9c58a":"#e0bd72"}}>
               {fight.dead? "A DEATH IN THE HOUSE" : fight.win? "VICTORY" : "DEFEAT"}
             </div>
-            {fight.sum.map((s,k)=><div key={k} style={{fontSize:15.5, padding:"2px 0"}}>{s}</div>)}
+            {fight.sum.map((s,k)=><div key={k} style={{fontSize:"var(--fs-lg)", padding:"2px 0"}}>{s}</div>)}
             {fight.reading && fight.reading.length>0 && (
               <div className="panel" style={{padding:11,marginTop:9,background:"#1c1610",
                 borderColor: fight.win ? "#4e3c26" : "#7c2a22"}}>
                 <div className="tag" style={{marginBottom:4}}>What decided it</div>
                 {fight.reading.map((r,k)=>(
-                  <div key={k} style={{fontSize:14.5,borderTop:k?"1px dotted #33271a":"none",paddingTop:k?5:0,marginTop:k?5:0}}>{r.s || r}</div>
+                  <div key={k} style={{fontSize:"var(--fs-md)",borderTop:k?"1px dotted #33271a":"none",paddingTop:k?5:0,marginTop:k?5:0}}>{r.s || r}</div>
                 ))}
               </div>
             )}
@@ -15136,7 +15146,7 @@ function Sect({ title, note, open, tone, children }){
       <summary>
         <span style={{minWidth:0,overflow:"hidden",textOverflow:"ellipsis"}}>{title}</span>
         <span style={{display:"flex",alignItems:"center",gap:8,flex:"0 0 auto"}}>
-          {note!=null && note!=="" && <span className="dim" style={{fontSize:12,letterSpacing:0,textTransform:"none",fontFamily:"'Cormorant Garamond',Georgia,serif"}}>{note}</span>}
+          {note!=null && note!=="" && <span className="dim" style={{fontSize:"var(--fs-sm)",letterSpacing:0,textTransform:"none",fontFamily:"'Cormorant Garamond',Georgia,serif"}}>{note}</span>}
           <span className="chev" aria-hidden="true">⌄</span>
         </span>
       </summary>
@@ -15876,34 +15886,34 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
   const CarrySheet = ()=> !carry ? null : (
     <div className="modalwrap" role="dialog" aria-modal="true" onClick={()=>setCarry(null)}>
       <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
-        <div className="disp" style={{fontSize:18,color:"#e8d092",marginBottom:6}}>
+        <div className="disp" style={{fontSize:"var(--fs-xxl)",color:"#e8d092",marginBottom:6}}>
           {carry.mode==="out" ? "CARRY THIS HOUSE OUT" : "BRING A HOUSE IN"}
         </div>
         {carry.mode==="out" ? (<>
-          <div className="dim" style={{fontSize:14.5,fontStyle:"italic",marginBottom:8}}>
+          <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>
             Everything about this house, in one string. Copy it into a message and somebody else can pick it up exactly where you left it.
           </div>
           <textarea readOnly value={carry.text} onFocus={e=>e.target.select()}
             style={{width:"100%",height:120,boxSizing:"border-box",background:"#100d0a",color:"#b09b7d",
-              border:"1px solid #4e3c26",borderRadius:8,padding:9,fontSize:11,fontFamily:"monospace",resize:"none"}}/>
-          <div className="dim" style={{fontSize:13,marginTop:5}}>
+              border:"1px solid #4e3c26",borderRadius:8,padding:9,fontSize:"var(--fs-micro)",fontFamily:"monospace",resize:"none"}}/>
+          <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:5}}>
             {carry.text ? `${carry.text.length} characters` : "packing it up…"} · week {S?S.week:0} · {S?S.gladiators.filter(g=>!isGone(g)).length:0} men
           </div>
           <button className="btn" style={{width:"100%",marginTop:8}}
             onClick={()=>{ try{ navigator.clipboard.writeText(carry.text); }catch(e){} }}>Copy it</button>
         </>) : (<>
-          <div className="dim" style={{fontSize:14.5,fontStyle:"italic",marginBottom:8}}>
+          <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>
             Paste a house here. It goes into an empty record and does not touch the ones you have.
           </div>
           <textarea value={carry.text} onChange={e=>readHouse(e.target.value)} placeholder="LVDVS1...."
             style={{width:"100%",height:120,boxSizing:"border-box",background:"#100d0a",color:"#b09b7d",
               border:"1px solid "+(carry.err?"#7c2a22":carry.found?"#5a6a35":"#4e3c26"),borderRadius:8,padding:9,
-              fontSize:11,fontFamily:"monospace",resize:"none"}}/>
-          {carry.err && <div className="blood" style={{fontSize:14,marginTop:6}}>{carry.err}</div>}
+              fontSize:"var(--fs-micro)",fontFamily:"monospace",resize:"none"}}/>
+          {carry.err && <div className="blood" style={{fontSize:"var(--fs-md)",marginTop:6}}>{carry.err}</div>}
           {carry.found && (
             <div className="panel" style={{padding:10,marginTop:7,borderColor:"#5a6a35"}}>
-              <div className="disp" style={{fontSize:15,color:"#e8d092"}}>{carry.found.name}</div>
-              <div className="dim" style={{fontSize:14}}>
+              <div className="disp" style={{fontSize:"var(--fs-lg)",color:"#e8d092"}}>{carry.found.name}</div>
+              <div className="dim" style={{fontSize:"var(--fs-md)"}}>
                 week {carry.found.week} · {carry.found.men} men · {carry.found.fame} fame
               </div>
             </div>
@@ -15923,16 +15933,16 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
     const Row = ({label, desc, on, onToggle}) => (
       <button className={`optrow${on?" on":""}`} onClick={onToggle} aria-pressed={on} style={{display:"block",marginBottom:7}}>
         <div className="flex items-center justify-between gap-2">
-          <span className="disp" style={{fontSize:12.5,color:"#e8d092",minWidth:0}}>{label}</span>
+          <span className="disp" style={{fontSize:"var(--fs-sm)",color:"#e8d092",minWidth:0}}>{label}</span>
           <span className="chip" style={{flexShrink:0,pointerEvents:"none",...(on?{borderColor:"#c99a4b",color:"#e0bd72",background:"#2b2115"}:{})}}>{on?"On":"Off"}</span>
         </div>
-        {desc && <div className="dim" style={{fontSize:12.5,marginTop:3,lineHeight:1.35}}>{desc}</div>}
+        {desc && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:3,lineHeight:1.35}}>{desc}</div>}
       </button>
     );
     const Group = ({title, note, children}) => (
       <div className="panel" style={{padding:"10px 11px 5px",marginBottom:9}}>
         <div className="tag tag-gold" style={{display:"inline-block",marginBottom:note?4:8}}>{title}</div>
-        {note && <div className="dim" style={{fontSize:12.5,fontStyle:"italic",marginBottom:8,lineHeight:1.35}}>{note}</div>}
+        {note && <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",marginBottom:8,lineHeight:1.35}}>{note}</div>}
         {children}
       </div>
     );
@@ -15942,7 +15952,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
       <div className="modalwrap" role="dialog" aria-modal="true" aria-label="Settings" style={{zIndex:64}} onClick={()=>setShowSettings(false)}>
         <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
           <div className="flex items-center justify-between gap-2" style={{marginBottom:10}}>
-            <div className="disp" style={{fontSize:15,fontWeight:900,letterSpacing:".12em",color:"#e8d092"}}>SETTINGS</div>
+            <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".12em",color:"#e8d092"}}>SETTINGS</div>
             <button className="btn btn-ghost" style={{padding:"10px 10px",flexShrink:0}} aria-label="Close" onClick={()=>setShowSettings(false)}><X size={14}/></button>
           </div>
 
@@ -15983,17 +15993,17 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           <Group title="About">
             {S && (
               <div className="flex items-center justify-between gap-2" style={{marginBottom:4}}>
-                <span className="dim" style={{fontSize:12.5,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>This house was founded</span>
-                <span className="rowval" style={{fontSize:12.5,color:"#e0bd72",flexShrink:0}}>{pitchOf(S).name.toLowerCase()}</span>
+                <span className="dim" style={{fontSize:"var(--fs-sm)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>This house was founded</span>
+                <span className="rowval" style={{fontSize:"var(--fs-sm)",color:"#e0bd72",flexShrink:0}}>{pitchOf(S).name.toLowerCase()}</span>
               </div>
             )}
             <div className="flex items-center justify-between gap-2" style={{marginBottom:4}}>
-              <span className="disp" style={{fontSize:12.5,color:"#e8d092",minWidth:0,overflow:"hidden",textOverflow:"ellipsis"}}>LVDVS — Blood &amp; Sand</span>
-              <span className="rowval" style={{fontSize:12.5,color:"#c9a961",fontFamily:"ui-monospace,Menlo,monospace"}}>
+              <span className="disp" style={{fontSize:"var(--fs-sm)",color:"#e8d092",minWidth:0,overflow:"hidden",textOverflow:"ellipsis"}}>LVDVS — Blood &amp; Sand</span>
+              <span className="rowval" style={{fontSize:"var(--fs-sm)",color:"#c9a961",fontFamily:"ui-monospace,Menlo,monospace"}}>
                 {APP_VERSION ? `v${APP_VERSION}` : "unversioned build"}
               </span>
             </div>
-            <div className="dim" style={{fontSize:12.5,marginBottom:8,lineHeight:1.35}}>
+            <div className="dim" style={{fontSize:"var(--fs-sm)",marginBottom:8,lineHeight:1.35}}>
               {offline
                 ? "Kept on this device. It runs with the connection off."
                 : "Running from the page. Add it to your home screen and it will keep working offline."}
@@ -16021,13 +16031,13 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         onClose={()=>{ SFX.stopCrowd(); setFight(null); }}
         onSpeak={null} onMute={v=>setPref("sound", !v)}/>}
       <div style={{maxWidth:460,width:"100%"}}>
-        <div className="disp" style={{fontSize:46,fontWeight:900,textAlign:"center",letterSpacing:".22em",color:"#e8d092"}}>LVDVS</div>
+        <div className="disp" style={{fontSize:"var(--fs-display)",fontWeight:900,textAlign:"center",letterSpacing:".22em",color:"#e8d092"}}>LVDVS</div>
         <div className="dim" style={{textAlign:"center",fontStyle:"italic",marginTop:2,marginBottom:18}}>Blood, sand, and the fortunes of a Roman house.</div>
         <div className="flex items-center justify-between" style={{marginBottom:8}}>
           <span className="tag tag-gold">The Records</span>
           <span className="flex gap-2">
-            <button className="btn btn-ghost" style={{padding:"10px 10px",fontSize:12}} onClick={watchOne}>Watch a bout</button>
-            <button className="btn btn-ghost" style={{padding:"10px 10px",fontSize:12}} onClick={carryIn}>Bring one in</button>
+            <button className="btn btn-ghost" style={{padding:"10px 10px",fontSize:"var(--fs-sm)"}} onClick={watchOne}>Watch a bout</button>
+            <button className="btn btn-ghost" style={{padding:"10px 10px",fontSize:"var(--fs-sm)"}} onClick={carryIn}>Bring one in</button>
           </span>
         </div>
         {[1,2,3].map(i=>{
@@ -16036,22 +16046,22 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             <div key={i} className="panel" style={{padding:13,marginBottom:9,borderColor: sum? (sum.over?"#7c2a22":"#5a4a2c") : undefined}}>
               {sum ? (<div>
                 <div className="flex items-center justify-between gap-2">
-                  <div className="disp" style={{fontSize:15,fontWeight:700,color:"#e8d092",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{sum.name}</div>
-                  <span className="dim" style={{fontSize:12,whiteSpace:"nowrap"}}>{whenWord(sum.savedAt)}</span>
+                  <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,color:"#e8d092",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{sum.name}</div>
+                  <span className="dim" style={{fontSize:"var(--fs-sm)",whiteSpace:"nowrap"}}>{whenWord(sum.savedAt)}</span>
                 </div>
-                <div className="dim" style={{fontSize:14,margin:"3px 0 5px"}}>Week {sum.week} · {sum.title} · {sum.fame} fame</div>
-                <div className="flex gap-3" style={{fontSize:14}}>
+                <div className="dim" style={{fontSize:"var(--fs-md)",margin:"3px 0 5px"}}>Week {sum.week} · {sum.title} · {sum.fame} fame</div>
+                <div className="flex gap-3" style={{fontSize:"var(--fs-md)"}}>
                   <span>{sum.men} men</span>
                   <span className="blood">{sum.fallen} fallen</span>
                   <span className="gold">{sum.freed} freed</span>
                 </div>
-                {sum.over && <div className="blood" style={{fontSize:14,fontStyle:"italic",marginTop:4}}>This house has fallen. Its ledger is closed.</div>}
+                {sum.over && <div className="blood" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:4}}>This house has fallen. Its ledger is closed.</div>}
                 <div className="grid grid-cols-2 gap-2" style={{marginTop:9}}>
                   <button className="btn" onClick={()=>openSlot(i)}>{sum.over? "View the end":"Take up the keys"}</button>
                   <button className="btn btn-ghost" onClick={()=>wipeSlot(i)}>Strike it out</button>
                 </div>
               </div>) : (<div>
-                <div className="dim" style={{fontSize:15,fontStyle:"italic",marginBottom:8}}>An empty slot. Some ludus in Capua stands shuttered, waiting for a lanista.</div>
+                <div className="dim" style={{fontSize:"var(--fs-lg)",fontStyle:"italic",marginBottom:8}}>An empty slot. Some ludus in Capua stands shuttered, waiting for a lanista.</div>
                 <button className="btn" style={{width:"100%"}} onClick={()=>openSlot(i)}>Found a house here</button>
               </div>)}
             </div>
@@ -16059,13 +16069,13 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         })}
         <button className="btn btn-ghost" style={{width:"100%",marginTop:4}} onClick={()=>{ setXfer({mode:"import"}); setXferIn(""); }}>Restore a house from a transfer code</button>
         <button className="btn btn-ghost" style={{width:"100%",marginTop:6}} onClick={()=>setShowSettings(true)}>Settings{APP_VERSION? ` · v${APP_VERSION}`:""}</button>
-        <div className="dim" style={{textAlign:"center",fontSize:12.5,marginTop:10,fontStyle:"italic"}}>Three houses may run at once. Each keeps its own ledger between visits.</div>
+        <div className="dim" style={{textAlign:"center",fontSize:"var(--fs-sm)",marginTop:10,fontStyle:"italic"}}>Three houses may run at once. Each keeps its own ledger between visits.</div>
       </div>
       {ask && (
         <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:70}} onClick={()=>setAsk(null)}>
           <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()} style={{borderColor: ask.danger? "#7c2a22":"#4e3c26"}}>
-            <div className={`disp ${ask.danger?"blood":""}`} style={{fontSize:15,fontWeight:700,letterSpacing:".1em",marginBottom:8}}>{ask.title.toUpperCase()}</div>
-            <div style={{fontSize:16}}>{ask.text}</div>
+            <div className={`disp ${ask.danger?"blood":""}`} style={{fontSize:"var(--fs-lg)",fontWeight:700,letterSpacing:".1em",marginBottom:8}}>{ask.title.toUpperCase()}</div>
+            <div style={{fontSize:"var(--fs-xl)"}}>{ask.text}</div>
             <button className={`btn ${ask.danger?"btn-blood":""}`} style={{width:"100%",marginTop:14}}
               onClick={()=>{ const r=ask.run; setAsk(null); r(); }}>{ask.confirm}</button>
             {!ask.info && <button className="btn btn-ghost" style={{width:"100%",marginTop:8}} onClick={()=>setAsk(null)}>Think again</button>}
@@ -16079,7 +16089,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
     <div className="lr" style={{display:"flex",alignItems:"safe center",justifyContent:"center",padding:20}}>
       <style>{CSS}</style>
       <div style={{maxWidth:460,width:"100%"}}>
-        <div className="disp" style={{fontSize:46,fontWeight:900,textAlign:"center",letterSpacing:".22em",color:"#e8d092"}}>LVDVS</div>
+        <div className="disp" style={{fontSize:"var(--fs-display)",fontWeight:900,textAlign:"center",letterSpacing:".22em",color:"#e8d092"}}>LVDVS</div>
         <div className="dim" style={{textAlign:"center",fontStyle:"italic",marginTop:2,marginBottom:18}}>Blood, sand, and the fortunes of a Roman house.</div>
         <div className="panel" style={{padding:14, marginBottom:12}}>
           <div className="tag" style={{marginBottom:8}}>Name your house</div>
@@ -16088,9 +16098,9 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             <div className="panel" style={{padding:11,margin:"14px 0 4px",background:"#1c1610",borderColor:"#4e3c26"}}>
               <div className="flex items-center justify-between" style={{marginBottom:4}}>
                 <span className="tag tag-gold">What Capua remembers of you</span>
-                <span className="rowval dim" style={{fontSize:12.5}}>{legacy.houses} house{legacy.houses===1?"":"s"}</span>
+                <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{legacy.houses} house{legacy.houses===1?"":"s"}</span>
               </div>
-              <div className="dim" style={{fontSize:13.5,marginBottom:6}}>
+              <div className="dim" style={{fontSize:"var(--fs-base)",marginBottom:6}}>
                 {legacy.bouts} bouts · {legacy.freed} freed · {legacy.buried} buried · {legacy.years} years
                 {legacy.best && ` · the best of them was ${legacy.best.name}, ${legacy.best.wins}–`}
               </div>
@@ -16098,16 +16108,16 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 return (
                   <div key={k} style={{borderTop:"1px dotted #33271a",padding:"5px 0"}}>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="rowname disp" style={{fontSize:12.5,color:got?"#e8d092":"#8d7e65"}}>{L2.name}</span>
-                      <span className="rowval dim" style={{fontSize:12}}>{Math.min(have,L2.need)}/{L2.need} {L2.unit}</span>
+                      <span className="rowname disp" style={{fontSize:"var(--fs-sm)",color:got?"#e8d092":"#8d7e65"}}>{L2.name}</span>
+                      <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{Math.min(have,L2.need)}/{L2.need} {L2.unit}</span>
                     </div>
-                    {got && <div className="dim" style={{fontSize:13,fontStyle:"italic"}}>{L2.say} <span className="laurel">{L2.boon}</span></div>}
+                    {got && <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>{L2.say} <span className="laurel">{L2.boon}</span></div>}
                   </div>
                 ); })}
             </div>
           )}
           <div className="tag" style={{margin:"16px 0 5px"}}>How hard Capua is</div>
-          <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:6}}>
+          <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:6}}>
             The opening decides where you start. This decides what the town asks of you every week after.
           </div>
           {PITCH_KEYS.map(k=>{ const P = PITCHES[k];
@@ -16115,12 +16125,12 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               <button key={k} className={`optrow ${pitchIn===k?"on":""}`} style={{marginBottom:6,padding:10,
                 borderColor: pitchIn===k ? "#c99a4b" : undefined}} onClick={()=>setPitchIn(k)}>
                 <div className="flex items-center justify-between gap-2">
-                  <span className="disp" style={{fontSize:13,color:pitchIn===k?"#e8d092":"#b09b7d"}}>{P.name}</span>
-                  <span className="rowval dim" style={{fontSize:12}}>{P.tag}</span>
+                  <span className="disp" style={{fontSize:"var(--fs-base)",color:pitchIn===k?"#e8d092":"#b09b7d"}}>{P.name}</span>
+                  <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{P.tag}</span>
                 </div>
-                <div className="dim" style={{fontSize:13.5,marginTop:2,textAlign:"left"}}>{P.blurb}</div>
+                <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2,textAlign:"left"}}>{P.blurb}</div>
                 {pitchIn===k && k!=="plain" && (
-                  <div style={{fontSize:12.5,marginTop:4,textAlign:"left",color:k==="patron"?"#9aa86a":"#d8ac5f"}}>
+                  <div style={{fontSize:"var(--fs-sm)",marginTop:4,textAlign:"left",color:k==="patron"?"#9aa86a":"#d8ac5f"}}>
                     purses ×{P.purse.toFixed(2)} · upkeep ×{P.upkeep.toFixed(2)} · unrest ×{P.unrest.toFixed(2)} · the block ×{P.market.toFixed(2)} · mending ×{P.heal.toFixed(2)} · missio {P.mercy>0?"+":""}{P.mercy}
                   </div>
                 )}
@@ -16130,7 +16140,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           <input className="sel" aria-label="Seed — leave empty for a house nobody has run" style={{width:"100%",boxSizing:"border-box",letterSpacing:".12em"}}
             value={seedIn} onChange={e=>setSeedIn(e.target.value.toUpperCase())} maxLength={16}
             placeholder="leave empty for a house nobody has run"/>
-          <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:4}}>
+          <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:4}}>
             The same seed builds the same Capua — the same men on the block, the same rivals, the same opening. What you do with it is still yours.
           </div>
         </div>
@@ -16140,11 +16150,11 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             return (
               <button key={k} className={`optrow ${on?"on":""}`} style={{marginBottom:7}} onClick={()=>setBonus(k)}>
                 <div className="flex items-center justify-between gap-2">
-                  <span className="disp" style={{fontSize:13.5,color:on?"#e8d092":"#e8d9b8"}}>{S2.name}</span>
+                  <span className="disp" style={{fontSize:"var(--fs-base)",color:on?"#e8d092":"#e8d9b8"}}>{S2.name}</span>
                   <span className="rowval tag">{S2.tag}</span>
                 </div>
-                <div className="dim" style={{fontSize:14,marginTop:3}}>{S2.blurb}</div>
-                <div className="flex gap-3" style={{fontSize:13,marginTop:5}}>
+                <div className="dim" style={{fontSize:"var(--fs-md)",marginTop:3}}>{S2.blurb}</div>
+                <div className="flex gap-3" style={{fontSize:"var(--fs-base)",marginTop:5}}>
                   <span className="gold">{S2.gold}d</span>
                   <span style={{color:"#d8c08a"}}>{S2.fame} fame</span>
                   <span>{S2.men.length} {S2.men.length===1?"man":"men"}</span>
@@ -16153,9 +16163,9 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               </button>
             ); })}
         </div>
-        <button className="btn" style={{width:"100%",padding:"13px",fontSize:14}} onClick={begin}>Take the Keys</button>
+        <button className="btn" style={{width:"100%",padding:"13px",fontSize:"var(--fs-md)"}} onClick={begin}>Take the Keys</button>
         <button className="btn btn-ghost" style={{width:"100%",marginTop:8}} onClick={toTitle}>Back to the records</button>
-        <div className="dim" style={{textAlign:"center",fontSize:12.5,marginTop:10,fontStyle:"italic"}}>Slot {slot||1} of {SLOTS_N}. Your ledger keeps itself between visits.</div>
+        <div className="dim" style={{textAlign:"center",fontSize:"var(--fs-sm)",marginTop:10,fontStyle:"italic"}}>Slot {slot||1} of {SLOTS_N}. Your ledger keeps itself between visits.</div>
       </div>
     </div>
   );
@@ -16185,49 +16195,49 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
     lanista: { title:"THE LANISTA", body:()=>{ const L = S.lanista; if(!L) return null;
       const got = LAN_KEYS.filter(k=>hasLT(S,k));
       return (<>
-        <div className="disp" style={{fontSize:17,fontWeight:700,color:"#e8d092"}}>{L.name}</div>
-        <div className="dim" style={{fontSize:14.5,fontStyle:"italic",marginBottom:9}}>
+        <div className="disp" style={{fontSize:"var(--fs-xl)",fontWeight:700,color:"#e8d092"}}>{L.name}</div>
+        <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:9}}>
           {L.age} years old · {yearOf(S)} year{yearOf(S)===1?"":"s"} at the head of this house
         </div>
-        <div className="flex items-center justify-between" style={{fontSize:14,marginBottom:9}}>
+        <div className="flex items-center justify-between" style={{fontSize:"var(--fs-md)",marginBottom:9}}>
           <span>Rank</span><span style={{color:riseOf(S)>0?"#e8d092":"#cfc0a0"}}>{riseName(S)}{riseNext(S)?"":" · the top rung"}</span>
         </div>
-        <div className="flex items-center justify-between" style={{fontSize:14}}>
+        <div className="flex items-center justify-between" style={{fontSize:"var(--fs-md)"}}>
           <span>Health</span><span style={{color:healthColour(L.health)}}>{healthWord(L.health)}</span>
         </div>
         <Bar v={L.health} label="health" color={`linear-gradient(90deg,#4a3a24,${healthColour(L.health)})`}/>
-        <div className="dim" style={{fontSize:14,fontStyle:"italic",margin:"7px 0 12px"}}>
+        <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",margin:"7px 0 12px"}}>
           {L.health>=80 ? "You are as well as a man in this trade gets."
            : L.health>=60 ? "The years are on you but not heavily."
            : L.health>=40 ? "You sleep badly and have stopped pretending otherwise."
            : L.health>=22 ? "The medicus has started giving you the look he gives the men."
            : "You should put your affairs in order. You will not, but you should."}
         </div>
-        <div className="dim" style={{fontSize:13.5,marginBottom:8}}>
+        <div className="dim" style={{fontSize:"var(--fs-base)",marginBottom:8}}>
           Age, a house on the edge of fire, and every man you bury take something out of you. Feasts, a bath house and an ordinary quiet week put a little back.
         </div>
         <div className="tag tag-gold" style={{margin:"0 0 4px"}}>After you</div>
         {S.heir ? (
           <div className="panel" style={{padding:9,marginBottom:10,background:"#1c1610",borderColor:"#5a6a35"}}>
             <div className="flex items-center justify-between gap-2">
-              <span className="disp" style={{fontSize:13.5,color:"#e8d092"}}>{S.heir.name}</span>
-              <span className="rowval dim" style={{fontSize:12.5}}>{HEIRS[S.heir.kind].name}</span>
+              <span className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d092"}}>{S.heir.name}</span>
+              <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{HEIRS[S.heir.kind].name}</span>
             </div>
-            <div className="dim" style={{fontSize:14,marginTop:3}}>{HEIRS[S.heir.kind].line}</div>
+            <div className="dim" style={{fontSize:"var(--fs-md)",marginTop:3}}>{HEIRS[S.heir.kind].line}</div>
           </div>
         ) : (<>
-          <div className="dim" style={{fontSize:14,fontStyle:"italic",marginBottom:7}}>
+          <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:7}}>
             Name nobody and this house is sold off in pieces the morning after you die. Name somebody and it goes on without you, carrying its men, its debts and none of your reputation.
           </div>
           {heirEligible(S).map(k=>(
             <button key={k} className="optrow" style={{marginBottom:6,padding:10}} onClick={()=>chooseHeir(k)}>
               <div className="flex items-center justify-between gap-2">
-                <span className="disp" style={{fontSize:13,color:"#e8d092"}}>{HEIRS[k].name}</span>
-                <span className="rowval dim" style={{fontSize:12}}>
+                <span className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d092"}}>{HEIRS[k].name}</span>
+                <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>
                   keeps {Math.round(HEIRS[k].fameKeep*100)}% fame · {Math.round(HEIRS[k].favorKeep*100)}% standing
                 </span>
               </div>
-              <div className="dim" style={{fontSize:13.5,marginTop:2}}>{HEIRS[k].line}</div>
+              <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2}}>{HEIRS[k].line}</div>
             </button>
           ))}
         </>)}
@@ -16240,31 +16250,31 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           {w ? (<>
             <div className="panel" style={{padding:9,marginBottom:8,background:"#1c1610",borderColor:"#5a4a6a"}}>
               <div className="flex items-center justify-between gap-2">
-                <span className="disp" style={{fontSize:13.5,color:"#d9c0e0"}}>{w.name}</span>
-                <span className="rowval dim" style={{fontSize:12}}>of {w.family} · your wife</span>
+                <span className="disp" style={{fontSize:"var(--fs-base)",color:"#d9c0e0"}}>{w.name}</span>
+                <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>of {w.family} · your wife</span>
               </div>
-              <div className="dim" style={{fontSize:13.5,marginTop:3}}>
+              <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:3}}>
                 {w.from==="rival"?"A marriage that folded up a feud." : w.from==="magistrate"?"Her people open doors coin does not." : "Her dowry settled the house."} Married since week {w.married}.
               </div>
             </div>
-            {kids.length===0 && <div className="dim" style={{fontSize:14,fontStyle:"italic",marginBottom:6}}>No children yet. The house waits.</div>}
+            {kids.length===0 && <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:6}}>No children yet. The house waits.</div>}
             {kids.map(c=>{ const age=childAge(S,c); const heir = S.heir && S.heir.cid===c.id;
               return (
                 <div key={c.id} style={{borderTop:"1px dotted #33271a",padding:"6px 0"}}>
                   <div className="flex items-center justify-between gap-2">
-                    <span className="rowname" style={{fontSize:14,color:heir?"#e8d092":undefined}}>{c.name}{heir?" · heir":""}</span>
-                    <span className="rowval dim" style={{fontSize:12}}>{c.sex==="m"?"son":"daughter"} · {age} yr{c.wed?" · married out":""}</span>
+                    <span className="rowname" style={{fontSize:"var(--fs-md)",color:heir?"#e8d092":undefined}}>{c.name}{heir?" · heir":""}</span>
+                    <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{c.sex==="m"?"son":"daughter"} · {age} yr{c.wed?" · married out":""}</span>
                   </div>
-                  {!c.wed && <div className="dim" style={{fontSize:13}}>{c.sex==="m"? UPWORD(c) : age>=15?"of an age to be matched":"still at home"}</div>}
+                  {!c.wed && <div className="dim" style={{fontSize:"var(--fs-base)"}}>{c.sex==="m"? UPWORD(c) : age>=15?"of an age to be matched":"still at home"}</div>}
                 </div>
               ); })}
           </>) : marryReady(S) ? (<>
-            <div className="dim" style={{fontSize:14,fontStyle:"italic",marginBottom:7}}>
+            <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:7}}>
               A man alone at the head of a ludus leaves nothing behind but a ledger. Take a wife, and the house can make its own heir — one you raise for it — rather than settling on whoever is left when you are gone.
             </div>
             <button className="btn" style={{width:"100%"}} onClick={seekMatch}>Let it be known you are looking for a match</button>
           </>) : (
-            <div className="dim" style={{fontSize:14,fontStyle:"italic"}}>
+            <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
               Climb a little higher — a name, or a heavier purse — and the matchmakers of Capua will come calling with daughters of the good families.
             </div>
           )}
@@ -16274,43 +16284,43 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           {(S.forebears||[]).map((f,i)=>(
             <div key={i} style={{borderTop:"1px dotted #33271a",padding:"6px 0"}}>
               <div className="flex items-center justify-between gap-2">
-                <span className="rowname" style={{fontSize:14}}>{f.name}</span>
-                <span className="rowval dim" style={{fontSize:12}}>died at {f.age} · week {f.to}</span>
+                <span className="rowname" style={{fontSize:"var(--fs-md)"}}>{f.name}</span>
+                <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>died at {f.age} · week {f.to}</span>
               </div>
-              {f.traits.length>0 && <div className="dim" style={{fontSize:13}}>{f.traits.map(t=>LAN_TRAITS[t].name).join(", ")}</div>}
+              {f.traits.length>0 && <div className="dim" style={{fontSize:"var(--fs-base)"}}>{f.traits.map(t=>LAN_TRAITS[t].name).join(", ")}</div>}
             </div>
           ))}
         </>)}
         <div className="tag tag-gold" style={{margin:"12px 0 4px"}}>What Capua makes of you</div>
-        {got.length===0 && <div className="dim" style={{fontSize:14,fontStyle:"italic"}}>Nothing yet. You have not been at it long enough to be a type.</div>}
+        {got.length===0 && <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>Nothing yet. You have not been at it long enough to be a type.</div>}
         {LAN_KEYS.map(k=>{ const T = LAN_TRAITS[k], has = hasLT(S,k);
           return (
             <div key={k} style={{borderTop:"1px dotted #33271a",padding:"6px 0",opacity:has?1:0.45}}>
               <div className="flex items-center justify-between gap-2">
-                <span className="rowname disp" style={{fontSize:13,color:has?(T.bad?"#d96f5d":"#e8d092"):"#8d7e65"}}>{T.name}</span>
-                <span className="rowval dim" style={{fontSize:12}}>{has? "yours" : T.earn}</span>
+                <span className="rowname disp" style={{fontSize:"var(--fs-base)",color:has?(T.bad?"#d96f5d":"#e8d092"):"#8d7e65"}}>{T.name}</span>
+                <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{has? "yours" : T.earn}</span>
               </div>
-              <div className="dim" style={{fontSize:14}}>{T.line}</div>
+              <div className="dim" style={{fontSize:"var(--fs-md)"}}>{T.line}</div>
             </div>
           ); })}
       </>); } },
     factions: { title:"THE STANDS", body:()=>(<>
-      <div className="dim" style={{fontSize:14.5,fontStyle:"italic",marginBottom:10}}>
+      <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:10}}>
         Capua is not one crowd. It is four, and two of them have hated each other since before you were born.
       </div>
       {FAC_KEYS.map(k=>{ const v = facOf(S,k), F = FACTIONS[k];
         return (
           <div key={k} style={{borderTop:"1px dotted #33271a",padding:"9px 0"}}>
             <div className="flex items-center justify-between gap-2">
-              <span className="rowname disp" style={{fontSize:13.5,color:facColour(v)}}>{F.name}</span>
-              <span className="rowval" style={{fontSize:12.5,color:facColour(v)}}>{facWord(v)} · {Math.round(v)}</span>
+              <span className="rowname disp" style={{fontSize:"var(--fs-base)",color:facColour(v)}}>{F.name}</span>
+              <span className="rowval" style={{fontSize:"var(--fs-sm)",color:facColour(v)}}>{facWord(v)} · {Math.round(v)}</span>
             </div>
             <Bar v={v} label={F.name} color={`linear-gradient(90deg,#4a3a24,${facColour(v)})`}/>
-            <div className="dim" style={{fontSize:14,marginTop:4}}>{F.want}</div>
-            <div className="dim" style={{fontSize:13,fontStyle:"italic"}}>They sit at {F.seat}. Courting them cools {FACTIONS[F.opposed].name.toLowerCase()}.</div>
+            <div className="dim" style={{fontSize:"var(--fs-md)",marginTop:4}}>{F.want}</div>
+            <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>They sit at {F.seat}. Courting them cools {FACTIONS[F.opposed].name.toLowerCase()}.</div>
           </div>
         ); })}
-      <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:10}}>
+      <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:10}}>
         Whoever is warmest to you sets the purses you are offered; the shield factions set how loud the stands are when a man of that style walks out, and what a win is worth in fame. They all drift back toward indifference if you stop giving them reasons.
       </div>
     </>) },
@@ -16328,18 +16338,18 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
       const Row = ({name, right, sub, colour}) => (
         <div style={{padding:"5px 0",borderBottom:"1px dotted #33271a"}}>
           <div className="flex items-center justify-between gap-2">
-            <span className="rowname" style={{fontSize:14.5,color:colour||undefined}}>{name}</span>
-            {right && <span className="rowval dim" style={{fontSize:12.5,whiteSpace:"nowrap"}}>{right}</span>}
+            <span className="rowname" style={{fontSize:"var(--fs-md)",color:colour||undefined}}>{name}</span>
+            {right && <span className="rowval dim" style={{fontSize:"var(--fs-sm)",whiteSpace:"nowrap"}}>{right}</span>}
           </div>
-          {sub && <div className="dim" style={{fontSize:12.5,fontStyle:"italic",marginTop:1}}>{sub}</div>}
+          {sub && <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",marginTop:1}}>{sub}</div>}
         </div>
       );
       const nothing = !freed.length && !fallen.length && !retired.length && !fore.length;
       return (<>
-        <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:9}}>
+        <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:9}}>
           Everyone who has passed through these gates and out the other side. The house remembers them, whatever Capua does.
         </div>
-        {nothing && <div className="dim" style={{fontSize:14.5,fontStyle:"italic"}}>No one has left yet — freed, fallen, or otherwise. Give it time.</div>}
+        {nothing && <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>No one has left yet — freed, fallen, or otherwise. Give it time.</div>}
         {fore.length>0 && (
           <div className="panel" style={{padding:12,marginBottom:9}}>
             <div className="tag tag-gold" style={{marginBottom:6}}>Those who held the keys before you</div>
@@ -16387,7 +16397,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         <div className="panel" style={{padding:13}}>
           <div className="flex items-center justify-between" style={{marginBottom:9}}>
             <span className="tag tag-gold">The League of Capua</span>
-            <span className="rowval" style={{fontSize:12.5, color: isFirstHouse(S)?"#e0bd72":"#cfc0a0"}}>
+            <span className="rowval" style={{fontSize:"var(--fs-sm)", color: isFirstHouse(S)?"#e0bd72":"#cfc0a0"}}>
               {isFirstHouse(S) ? `First House · held ${leagueHeld(S)}w` : `you stand ${ordN(rank)} of ${table.length}`}
             </span>
           </div>
@@ -16396,29 +16406,29 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             return (
               <div key={h.name+i} className="flex items-center justify-between" style={{padding:"6px 0",borderBottom:"1px dotted #33271a",
                 ...(h.you?{background:"#1c1610",borderRadius:6,padding:"6px 8px"}:{})}}>
-                <div className="rowname" style={{fontSize:15, color:h.you?"#e8d092":undefined, minWidth:0}}>
-                  <span className="dim" style={{marginRight:7,fontSize:13}}>{i+1}</span>
+                <div className="rowname" style={{fontSize:"var(--fs-lg)", color:h.you?"#e8d092":undefined, minWidth:0}}>
+                  <span className="dim" style={{marginRight:7,fontSize:"var(--fs-base)"}}>{i+1}</span>
                   {i===0 && <span style={{color:"#e0bd72",marginRight:4}}>✦</span>}
-                  {riv && riv.away>0 && <span className="dim" style={{fontSize:12}}>away · </span>}
-                  {riv && riv.doctore && <span className="laurel" style={{fontSize:12}}>doctore · </span>}
+                  {riv && riv.away>0 && <span className="dim" style={{fontSize:"var(--fs-sm)"}}>away · </span>}
+                  {riv && riv.doctore && <span className="laurel" style={{fontSize:"var(--fs-sm)"}}>doctore · </span>}
                   {h.name}
                   {riv && (warmth(S,h.raw)>=25
-                    ? <span style={{fontSize:12.5,marginLeft:7,fontStyle:"italic",color:warmth(S,h.raw)>=50?"#9aa86a":"#b09b7d"}}>{houseWord(warmth(S,h.raw))}</span>
-                    : <span className="dim" style={{fontSize:12.5,marginLeft:7,fontStyle:"italic"}}>{grudgeWord(riv.grudge)}</span>)}
-                  {riv && lanistaOf(h.raw).trait && <div className="dim" style={{fontSize:12.5,marginTop:1}}>{lanistaOf(h.raw).name} — {lanistaOf(h.raw).trait}</div>}
-                  {riv && <div style={{fontSize:12.5,marginTop:1,color:fortuneColour(riv)}}>{houseFortune(riv)}
+                    ? <span style={{fontSize:"var(--fs-sm)",marginLeft:7,fontStyle:"italic",color:warmth(S,h.raw)>=50?"#9aa86a":"#b09b7d"}}>{houseWord(warmth(S,h.raw))}</span>
+                    : <span className="dim" style={{fontSize:"var(--fs-sm)",marginLeft:7,fontStyle:"italic"}}>{grudgeWord(riv.grudge)}</span>)}
+                  {riv && lanistaOf(h.raw).trait && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:1}}>{lanistaOf(h.raw).name} — {lanistaOf(h.raw).trait}</div>}
+                  {riv && <div style={{fontSize:"var(--fs-sm)",marginTop:1,color:fortuneColour(riv)}}>{houseFortune(riv)}
                     {riv.star?` · ★ ${riv.star.name}`:""}
                     {(()=>{ if(!riv.star) return ""; const sf=(riv.fighters||[]).find(f=>f.id===riv.star.id);
                       return sf && sf.age ? ` (${sf.age}${sf.age>=32?", old for it":sf.age>30?", past his peak":""})` : ""; })()}</div>}
-                  {riv && bookH && bookH.n>=1 && <div className="dim" style={{fontSize:12,marginTop:1,fontStyle:"italic"}}>
+                  {riv && bookH && bookH.n>=1 && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:1,fontStyle:"italic"}}>
                     {bookH.n} card{bookH.n>1?"s":""} against him — you {bookH.w}–{bookH.n-bookH.w}
                   </div>}
-                  {h.you && i===0 && <div className="laurel" style={{fontSize:12,marginTop:1,fontStyle:"italic"}}>the first house of the city</div>}
+                  {h.you && i===0 && <div className="laurel" style={{fontSize:"var(--fs-sm)",marginTop:1,fontStyle:"italic"}}>the first house of the city</div>}
                 </div>
                 <div className="flex items-center gap-2" style={{flexShrink:0}}>
-                  {mv && <span style={{fontSize:12,color:mv.c}}>{mv.a}</span>}
-                  <span className={`rowval ${h.you?"gold":"dim"}`} style={{fontSize:14}}>{rnd(h.fame)}</span>
-                  {riv && <button className="btn btn-ghost" style={{padding:"5px 8px",fontSize:11}}
+                  {mv && <span style={{fontSize:"var(--fs-sm)",color:mv.c}}>{mv.a}</span>}
+                  <span className={`rowval ${h.you?"gold":"dim"}`} style={{fontSize:"var(--fs-md)"}}>{rnd(h.fame)}</span>
+                  {riv && <button className="btn btn-ghost" style={{padding:"5px 8px",fontSize:"var(--fs-micro)"}}
                     onClick={()=>{ setSheet(null); setDealMsg(null); setDealH(riv.name); }}>Treat</button>}
                 </div>
               </div>
@@ -16431,17 +16441,17 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             if(!gone.length && live.length >= BAY_FLOOR) return null;
             return (
               <div style={{borderTop:"1px dotted #33271a",marginTop:8,paddingTop:7}}>
-                {gone.length>0 && <div className="dim" style={{fontSize:13}}>
+                {gone.length>0 && <div className="dim" style={{fontSize:"var(--fs-base)"}}>
                   <span style={{color:"#b09b7d"}}>Folded</span> · {gone.map(h=>`House ${h.name}`).join(", ")} — sold up and gone out of the trade.
                 </div>}
-                {live.length < BAY_FLOOR && <div style={{fontSize:13,marginTop:3,color:"#d8ac5f"}}>
+                {live.length < BAY_FLOOR && <div style={{fontSize:"var(--fs-base)",marginTop:3,color:"#d8ac5f"}}>
                   {live.length===0
                     ? "There is no other house left in Capua. A yard does not sit empty long — somebody will buy one of them inside the season."
                     : `Only ${live.length===1?"one house":`${live.length} houses`} still open against you. The empty yards are for sale and they will not stay that way.`}
                 </div>}
               </div>
             ); })()}
-          <div className="dim" style={{fontSize:13.5,marginTop:8,fontStyle:"italic"}}>
+          <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:8,fontStyle:"italic"}}>
             Their men fill the card at the games, and their fame drifts week to week whether you watch or not. Top the table and Capua calls yours the First House — a fatter purse, and a great deal to say. The city reckons it up at every year's turn.
           </div>
         </div>
@@ -16449,16 +16459,16 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
     book: { title:"THE RECORD BOOK", body:()=>{ const K = bookOf(S), B = K.B;
       const Row = ({l,v,sub}) => (
         <div className="flex items-center justify-between gap-2" style={{borderTop:"1px dotted #33271a",padding:"5px 0"}}>
-          <span className="rowname" style={{fontSize:14.5}}>{l}{sub && <span className="dim" style={{fontSize:12.5}}> · {sub}</span>}</span>
-          <span className="rowval" style={{fontSize:14,color:"#e0bd72"}}>{v}</span>
+          <span className="rowname" style={{fontSize:"var(--fs-md)"}}>{l}{sub && <span className="dim" style={{fontSize:"var(--fs-sm)"}}> · {sub}</span>}</span>
+          <span className="rowval" style={{fontSize:"var(--fs-md)",color:"#e0bd72"}}>{v}</span>
         </div>);
       const Table = ({title, rows, fmt}) => rows.length ? (
         <>
           <div className="tag tag-gold" style={{margin:"12px 0 3px"}}>{title}</div>
           {rows.map(r=>(
             <div key={r.k} className="flex items-center justify-between gap-2" style={{borderTop:"1px dotted #33271a",padding:"5px 0"}}>
-              <span className="rowname" style={{fontSize:14.5}}>{fmt? fmt(r.k) : r.k}</span>
-              <span className="rowval" style={{fontSize:13.5}}>
+              <span className="rowname" style={{fontSize:"var(--fs-md)"}}>{fmt? fmt(r.k) : r.k}</span>
+              <span className="rowval" style={{fontSize:"var(--fs-base)"}}>
                 <span style={{color:r.pc>=55?"#9aa86a":r.pc>=45?"#b09b7d":"#d96f5d"}}>{r.pc}%</span>
                 <span className="dim"> · {r.w}–{r.n-r.w-r.d}{r.d? `–${r.d}` : ""}</span>
               </span>
@@ -16466,7 +16476,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           ))}
         </>) : null;
       return (<>
-        <div className="dim" style={{fontSize:14.5,fontStyle:"italic",marginBottom:8}}>
+        <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>
           Everything this house has done, since the day you were given the keys to it.
         </div>
         <div className="tag tag-gold" style={{marginBottom:3}}>The house</div>
@@ -16494,8 +16504,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         {K.best && (<>
           <div className="tag tag-gold" style={{margin:"12px 0 3px"}}>The best man it ever had</div>
           <div style={{borderTop:"1px dotted #33271a",padding:"6px 0"}}>
-            <div className="disp" style={{fontSize:14.5,color:"#e8d092"}}>{K.best.nick? `${K.best.name}, ${K.best.nick}` : K.best.name}</div>
-            <div className="dim" style={{fontSize:14}}>
+            <div className="disp" style={{fontSize:"var(--fs-md)",color:"#e8d092"}}>{K.best.nick? `${K.best.name}, ${K.best.nick}` : K.best.name}</div>
+            <div className="dim" style={{fontSize:"var(--fs-md)"}}>
               {K.best.wins}–{K.best.losses}{K.best.kills? `, ${K.best.kills} killed`:""} · {FATES[K.best.fate] ? FATES[K.best.fate].label.toLowerCase() : "still serving"}
             </div>
           </div>
@@ -16503,35 +16513,35 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         <div className="tag tag-gold" style={{margin:"12px 0 3px"}}>How they ended</div>
         {Object.entries(K.fates).sort((a,b)=>b[1]-a[1]).map(([f,c])=>(
           <div key={f} className="flex items-center justify-between gap-2" style={{borderTop:"1px dotted #33271a",padding:"5px 0"}}>
-            <span className="rowname" style={{fontSize:14.5,color:FATES[f]? FATES[f].colour : "#b09b7d"}}>
+            <span className="rowname" style={{fontSize:"var(--fs-md)",color:FATES[f]? FATES[f].colour : "#b09b7d"}}>
               {FATES[f] ? FATES[f].label : "Still serving"}
             </span>
-            <span className="rowval dim" style={{fontSize:13.5}}>{c}</span>
+            <span className="rowval dim" style={{fontSize:"var(--fs-base)"}}>{c}</span>
           </div>
         ))}
         {(S.forebears||[]).length>0 && (<>
           <div className="tag tag-gold" style={{margin:"12px 0 3px"}}>The line</div>
           {[...(S.forebears||[]), { name:S.lanista.name, age:S.lanista.age, to:null, traits:S.lanista.traits }].map((f,i)=>(
             <div key={i} className="flex items-center justify-between gap-2" style={{borderTop:"1px dotted #33271a",padding:"5px 0"}}>
-              <span className="rowname" style={{fontSize:14.5}}>{f.name}</span>
-              <span className="rowval dim" style={{fontSize:13}}>{f.to? `died at ${f.age}, week ${f.to}` : `holds it now, ${f.age}`}</span>
+              <span className="rowname" style={{fontSize:"var(--fs-md)"}}>{f.name}</span>
+              <span className="rowval dim" style={{fontSize:"var(--fs-base)"}}>{f.to? `died at ${f.age}, week ${f.to}` : `holds it now, ${f.age}`}</span>
             </div>
           ))}
         </>)}
       </>); } },
     glossary: { title:"WHAT THE MARKS MEAN", body:()=>(<>
-      <div className="dim" style={{fontSize:14.5,fontStyle:"italic",marginBottom:10}}>
+      <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:10}}>
         Every tag on a man says something the ledger does not.
       </div>
       <div className="tag tag-gold" style={{marginBottom:4}}>The styles</div>
       {Object.entries(CLASSES).map(([c,C])=>(
         <div key={c} style={{borderTop:"1px dotted #33271a",padding:"7px 0"}}>
           <div className="flex items-center justify-between gap-2">
-            <span className="rowname disp" style={{fontSize:13,color:"#e8d092"}}>{c}</span>
-            <span className="rowval dim" style={{fontSize:12}}>{C.key.map(k=>STAT_NAMES[k]).join(" · ")}</span>
+            <span className="rowname disp" style={{fontSize:"var(--fs-base)",color:"#e8d092"}}>{c}</span>
+            <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{C.key.map(k=>STAT_NAMES[k]).join(" · ")}</span>
           </div>
-          <div className="dim" style={{fontSize:14}}>{C.desc}</div>
-          <div style={{fontSize:13,color:"#9aa86a"}}>Beats {COUNTERS[c]} · beaten by {Object.keys(COUNTERS).find(k=>COUNTERS[k]===c)}</div>
+          <div className="dim" style={{fontSize:"var(--fs-md)"}}>{C.desc}</div>
+          <div style={{fontSize:"var(--fs-base)",color:"#9aa86a"}}>Beats {COUNTERS[c]} · beaten by {Object.keys(COUNTERS).find(k=>COUNTERS[k]===c)}</div>
         </div>
       ))}
       <div className="tag tag-gold" style={{margin:"12px 0 4px"}}>Where they came from</div>
@@ -16541,10 +16551,10 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         return (
           <div key={o} style={{borderTop:"1px dotted #33271a",padding:"6px 0"}}>
             <div className="flex items-center justify-between gap-2">
-              <span className="rowname disp" style={{fontSize:13}}>{o}</span>
-              <span className="rowval" style={{fontSize:12,color:"#9aa86a"}}>{up.join(", ")||"—"}{dn.length?<span className="blood"> · {dn.join(", ")} short</span>:null}</span>
+              <span className="rowname disp" style={{fontSize:"var(--fs-base)"}}>{o}</span>
+              <span className="rowval" style={{fontSize:"var(--fs-sm)",color:"#9aa86a"}}>{up.join(", ")||"—"}{dn.length?<span className="blood"> · {dn.join(", ")} short</span>:null}</span>
             </div>
-            <div className="dim" style={{fontSize:14}}>The {O.blurb}.</div>
+            <div className="dim" style={{fontSize:"var(--fs-md)"}}>The {O.blurb}.</div>
           </div>
         );
       })}
@@ -16552,34 +16562,34 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
       {MARKS.map(([t,col,txt])=>(
         <div key={t} style={{borderTop:"1px dotted #33271a",padding:"7px 0"}}>
           <span className="tag" style={{borderColor:col,color:col,marginBottom:3,display:"inline-block"}}>{t}</span>
-          <div className="dim" style={{fontSize:14}}>{txt}</div>
+          <div className="dim" style={{fontSize:"var(--fs-md)"}}>{txt}</div>
         </div>
       ))}
       <div className="tag tag-gold" style={{margin:"12px 0 4px"}}>Bearing</div>
-      <div className="dim" style={{fontSize:14,marginBottom:6}}>
+      <div className="dim" style={{fontSize:"var(--fs-md)",marginBottom:6}}>
         How much fire is in him. The best fighters carry the most, which is the whole problem with owning them.
       </div>
       {[[10,"Compliant"],[35,"Watchful"],[55,"Restless"],[75,"Defiant"],[92,"A storm barely chained"]].map(([v,l])=>(
-        <div key={l} className="flex items-center justify-between gap-2" style={{fontSize:14,padding:"2px 0"}}>
+        <div key={l} className="flex items-center justify-between gap-2" style={{fontSize:"var(--fs-md)",padding:"2px 0"}}>
           <span className="rowname">{l}</span>
-          <span className="rowval dim" style={{fontSize:12.5}}>{v<25?"no trouble in him":v<45?"watching you":v<65?"talking to others":v<85?"one reason away":"the yard follows him"}</span>
+          <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{v<25?"no trouble in him":v<45?"watching you":v<65?"talking to others":v<85?"one reason away":"the yard follows him"}</span>
         </div>
       ))}
       <div className="tag tag-gold" style={{margin:"12px 0 4px"}}>The weapon on his card</div>
-      <div className="dim" style={{fontSize:14}}>
+      <div className="dim" style={{fontSize:"var(--fs-md)"}}>
         The gold tag is whatever he is actually carrying. Gear outside his own style still works, but clumsily — a net-man behind a legionary's shield is worse than useless.
       </div>
     </>) },
     house:  { title:"THE HOUSE",          body:()=>(<><div className="panel" style={{padding:13}}>
   <div className="flex items-center justify-between" style={{marginBottom:7}}>
     <span className="tag tag-gold">The House</span>
-    <span className="dim" style={{fontSize:13}}>{bUpkeep(S)}d / week</span>
+    <span className="dim" style={{fontSize:"var(--fs-base)"}}>{bUpkeep(S)}d / week</span>
   </div>
   {/* what the wings, the stone and the city are each taking, said out loud */}
   {(()=>{ const w = workUpkeep(S), lit = liturgy(S);
     if(!w && !lit) return null;
     return (
-      <div className="dim" style={{fontSize:13,marginBottom:4,lineHeight:1.45}}>
+      <div className="dim" style={{fontSize:"var(--fs-base)",marginBottom:4,lineHeight:1.45}}>
         {w>0 && <div>The works and monuments · <span style={{color:"#cfa88a"}}>{w}d a week</span> — stone wants keeping.</div>}
         {lit>0 && <div>What the city asks of a house of your standing · <span style={{color:"#cfa88a"}}>{lit}d a week</span> — a street kept, a feast stood, your name on a portico. You may not decline it and stay received.</div>}
       </div>
@@ -16589,15 +16599,15 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
     return (
       <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:9,marginTop:9}}>
         <div className="flex items-center justify-between gap-2">
-          <span className="disp" style={{fontSize:13.5,color:L?"#e8d092":"#b09b7d"}}>{B.name}</span>
-          <span className="rowval dim" style={{fontSize:12.5}}>{B.short}</span>
+          <span className="disp" style={{fontSize:"var(--fs-base)",color:L?"#e8d092":"#b09b7d"}}>{B.name}</span>
+          <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{B.short}</span>
         </div>
         <div className="flex gap-1" style={{margin:"5px 0"}}>
           {[0,1,2,3].map(i=>(
             <div key={i} style={{flex:1,height:5,borderRadius:99,background:i<L?"#c99a4b":"#33271a"}}/>
           ))}
         </div>
-        <div className="dim" style={{fontSize:14,fontStyle:"italic"}}>
+        <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
           {L ? B.levels[L-1] : B.desc}
         </div>
         {next!=null ? (
@@ -16614,20 +16624,20 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
     <div className="panel" style={{padding:13}}>
       <div className="flex items-center justify-between" style={{marginBottom:7}}>
         <span className="tag tag-gold">Feats of the House</span>
-        <span className="dim" style={{fontSize:13}}>{got.length}/{FEAT_KEYS.length}</span>
+        <span className="dim" style={{fontSize:"var(--fs-base)"}}>{got.length}/{FEAT_KEYS.length}</span>
       </div>
-      {got.length===0 && <div className="dim" style={{fontSize:14.5,fontStyle:"italic",marginBottom:7}}>Nothing yet that anyone would write down.</div>}
+      {got.length===0 && <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:7}}>Nothing yet that anyone would write down.</div>}
       {FEAT_KEYS.map(k=>{ const F = FEATS[k], done = hasFeat(S,k);
         return (
           <div key={k} style={{borderTop:"1px dotted #33271a",padding:"6px 0"}}>
             <div className="flex items-center justify-between gap-2">
-              <span className="rowname disp" style={{fontSize:13,color:done?"#e8d092":"#8d7e65"}}>{F.name}</span>
+              <span className="rowname disp" style={{fontSize:"var(--fs-base)",color:done?"#e8d092":"#8d7e65"}}>{F.name}</span>
               {done
-                ? <span className="rowval laurel" style={{fontSize:12}}>year {Math.floor((S.feats[k]-1)/YEAR_WEEKS)+1}</span>
-                : <span className="rowval dim" style={{fontSize:12}}>—</span>}
+                ? <span className="rowval laurel" style={{fontSize:"var(--fs-sm)"}}>year {Math.floor((S.feats[k]-1)/YEAR_WEEKS)+1}</span>
+                : <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>—</span>}
             </div>
-            <div className="dim" style={{fontSize:13.5,opacity:done?1:0.6}}>{F.desc}</div>
-            {F.perk && <div style={{fontSize:13,color:done?"#9aa86a":"#5a5240"}}>{PERKS[F.perk]}</div>}
+            <div className="dim" style={{fontSize:"var(--fs-base)",opacity:done?1:0.6}}>{F.desc}</div>
+            {F.perk && <div style={{fontSize:"var(--fs-base)",color:done?"#9aa86a":"#5a5240"}}>{PERKS[F.perk]}</div>}
           </div>
         ); })}
     </div>
@@ -16638,37 +16648,37 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
     <div className="panel" style={{padding:13}}>
       <div className="flex items-center justify-between" style={{marginBottom:6}}>
         <span className="tag tag-gold">What Capua Says</span>
-        {st && <span className="disp" style={{fontSize:13,color:"#e8d092"}}>{REP_KINDS[st].name.toUpperCase()}</span>}
+        {st && <span className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d092"}}>{REP_KINDS[st].name.toUpperCase()}</span>}
       </div>
       {REP_ORDER.map(k=>(
         <div key={k} style={{marginBottom:5}}>
-          <div className="flex items-center justify-between" style={{fontSize:13.5}}>
+          <div className="flex items-center justify-between" style={{fontSize:"var(--fs-base)"}}>
             <span className={st===k?"gold":"dim"}>{REP_KINDS[k].name}</span>
-            <span className="rowval dim" style={{fontSize:12.5}}>{Math.round(repShare(S,k)*100)}%</span>
+            <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{Math.round(repShare(S,k)*100)}%</span>
           </div>
           <Bar v={repShare(S,k)*100} label={REP_KINDS[k].name}
             color={st===k? "linear-gradient(90deg,#8a6a2c,#d8ac5f)" : "#5a4a34"}/>
         </div>
       ))}
-      <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:6}}>
+      <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:6}}>
         {st ? REP_KINDS[st].line : "Nobody has decided what kind of house this is yet."}
       </div>
       {st ? (
         <div className="panel" style={{padding:"10px 11px",marginTop:9,background:"#1c1610"}}>
           <div className="flex items-center justify-between gap-2" style={{marginBottom:6}}>
             <span className="tag tag-gold">What it is buying you</span>
-            <span className="rowval dim" style={{fontSize:12}}>and what it costs</span>
+            <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>and what it costs</span>
           </div>
           {(REP_EFFECTS[st]||[]).map(([label, what, good], i)=>(
             <div key={i} className="flex items-center justify-between gap-2" style={{padding:"3px 0"}}>
-              <span className="rowname" style={{fontSize:13.5,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{label}</span>
-              <span className="rowval" style={{fontSize:12.5,color:good?"#9aa86a":"#d96f5d",flexShrink:0}}>{what}</span>
+              <span className="rowname" style={{fontSize:"var(--fs-base)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{label}</span>
+              <span className="rowval" style={{fontSize:"var(--fs-sm)",color:good?"#9aa86a":"#d96f5d",flexShrink:0}}>{what}</span>
             </div>
           ))}
           {(()=>{ const mine = repShareOf(S, st), held = S.repName ? S.week - S.repName.since : 0;
             const room = Math.round((mine - REP_KEEP) * 100);
             return (
-              <div className="dim" style={{fontSize:12.5,fontStyle:"italic",marginTop:7,lineHeight:1.4,borderTop:"1px dotted #33271a",paddingTop:6}}>
+              <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",marginTop:7,lineHeight:1.4,borderTop:"1px dotted #33271a",paddingTop:6}}>
                 Held {held===0?"since this week":held===1?"a week":`${held} weeks`}, at {Math.round(mine*100)} in the hundred.
                 {" "}A name is given at {Math.round(REP_SETTLE*100)} and kept until it falls under {Math.round(REP_KEEP*100)} —
                 {room > 0
@@ -16678,7 +16688,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             ); })()}
         </div>
       ) : (
-        <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:8,lineHeight:1.4}}>
+        <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:8,lineHeight:1.4}}>
           {(()=>{ const L = repLeader(S);
             if(!L.key) return "Too little has happened for the town to have formed a view. Nothing is being bought or paid for.";
             const gap = Math.round((REP_SETTLE - L.share) * 100);
@@ -16701,10 +16711,14 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           <div className="flex items-center gap-2" style={{minWidth:150,flex:"1 1 auto"}}>
             {S.crest && <Crest crest={S.crest} size={26}/>}
             <div style={{minWidth:0,flex:"1 1 auto"}}>
-              <div className="disp" style={{fontSize:15,fontWeight:900,color:"#e8d092",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{S.name.toUpperCase()}{(S.generation||1)>1 && <span style={{fontSize:12,color:"#b09b7d"}}> · {["","","II","III","IV","V","VI","VII"][S.generation]||S.generation}</span>}</div>
+              <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,color:"#e8d092",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{S.name.toUpperCase()}{(S.generation||1)>1 && <span style={{fontSize:"var(--fs-sm)",color:"#b09b7d"}}> · {["","","II","III","IV","V","VI","VII"][S.generation]||S.generation}</span>}</div>
               <button className="dim" onClick={()=>setCal(true)} aria-label="The year ahead"
-                style={{background:"none",border:"none",padding:0,margin:0,font:"inherit",textAlign:"left",cursor:"pointer",
-                  width:"100%",fontSize:12.5,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",color:"inherit"}}>
+                /* an eighteen-pixel-tall control in a masthead that cannot grow. The padding
+                   buys a real hit area and the matching negative margin gives the layout
+                   back, so the line sits exactly where it did and the thumb has somewhere
+                   to land. */
+                style={{background:"none",border:"none",padding:"12px 0",margin:"-12px 0",font:"inherit",textAlign:"left",cursor:"pointer",
+                  width:"100%",fontSize:"var(--fs-sm)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",color:"inherit",position:"relative",zIndex:1}}>
                 {seasonOf(S).name} · year {yearOf(S)}, week {yearWeek(S)} · {S.travel? "on the road" : S.city? CITIES[S.city].name : fameTitle(S.fame)} <span style={{color:"#8a6a2c"}}>›</span>
               </button>
             </div>
@@ -16728,7 +16742,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             })()}
           </div>
         </div>
-        <div className="flex items-center gap-3" style={{marginTop:7,fontSize:13.5,flexWrap:"wrap"}}>
+        <div className="flex items-center gap-3" style={{marginTop:7,fontSize:"var(--fs-base)",flexWrap:"wrap"}}>
           <span className="flex items-center gap-1 gold"><Coins size={13} aria-hidden="true"/>{rnd(S.gold)}</span>
           <span className="flex items-center gap-1" style={{color:"#d8c08a"}}><Star size={13} aria-hidden="true"/>{rnd(S.fame)}</span>
           <span className="flex items-center gap-1" style={{color:"#bfa8c8"}}><Crown size={13} aria-hidden="true"/>{rnd(S.favor)}</span>
@@ -16754,7 +16768,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               <div className="flex items-center justify-between gap-2" style={{marginBottom:5}}>
                 <span className="tag tag-gold">The gatekeeper — {L.title}</span>
               </div>
-              <div style={{fontSize:15.5}}>{L.text}</div>
+              <div style={{fontSize:"var(--fs-lg)"}}>{L.text}</div>
               <div className="grid grid-cols-2 gap-2" style={{marginTop:10}}>
                 <button className="btn" onClick={()=>mut(d=>{ d.flags.learned = Object.assign({}, d.flags.learned, {[L.id]:1}); })}>Understood</button>
                 <button className="btn btn-ghost" onClick={()=>mut(d=>{ d.flags.noLessons = 1; })}>I know my trade</button>
@@ -16772,8 +16786,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             const owedIn = owedTotal(S), merch = merchLive(S) ? merchWeekly(S) : 0;
             const Stat = ({label, val, colour})=>(
               <div style={{minWidth:0}}>
-                <div className="dim" style={{fontSize:10.5,textTransform:"uppercase",letterSpacing:".06em"}}>{label}</div>
-                <div className="disp" style={{fontSize:15,color:colour||"#e8d092",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{val}</div>
+                <div className="dim" style={{fontSize:"var(--fs-micro)",textTransform:"uppercase",letterSpacing:".06em"}}>{label}</div>
+                <div className="disp" style={{fontSize:"var(--fs-lg)",color:colour||"#e8d092",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{val}</div>
               </div>
             );
             const REC = houseRecord(S);
@@ -16790,14 +16804,14 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 <div className="flex items-center gap-2" style={{marginBottom:9}}>
                   {S.crest && <Crest crest={S.crest} size={34}/>}
                   <div style={{minWidth:0,flex:"1 1 auto"}}>
-                    <div className="disp" style={{fontSize:17,fontWeight:900,letterSpacing:".1em",color:"#e8d092",lineHeight:1.15}}>
+                    <div className="disp" style={{fontSize:"var(--fs-xl)",fontWeight:900,letterSpacing:".1em",color:"#e8d092",lineHeight:1.15}}>
                       {S.name.toUpperCase()}
-                      {(S.generation||1)>1 && <span style={{fontSize:12.5,color:"#b09b7d"}}> · {["","","II","III","IV","V","VI","VII"][S.generation]||S.generation}</span>}
+                      {(S.generation||1)>1 && <span style={{fontSize:"var(--fs-sm)",color:"#b09b7d"}}> · {["","","II","III","IV","V","VI","VII"][S.generation]||S.generation}</span>}
                     </div>
-                    <div className="dim" style={{fontSize:13,fontStyle:"italic",lineHeight:1.3}}>A ludus of Capua — {fameTitle(S.fame)}</div>
+                    <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",lineHeight:1.3}}>A ludus of Capua — {fameTitle(S.fame)}</div>
                   </div>
                 </div>
-                <div className="flex gap-3" style={{fontSize:13.5,flexWrap:"wrap",paddingBottom:9,marginBottom:9,borderBottom:"1px dotted #33271a"}}>
+                <div className="flex gap-3" style={{fontSize:"var(--fs-base)",flexWrap:"wrap",paddingBottom:9,marginBottom:9,borderBottom:"1px dotted #33271a"}}>
                   <span>Familia {roster.length}/{cellsCap(S)}</span>
                   <span className="blood">Fallen {S.fallen.length}</span>
                   <span className="gold">Freed {S.freed.length}</span>
@@ -16822,12 +16836,12 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 </div>
                 {/* the two readings that do not fit a number: what the town calls you,
                     and how close the cells are to ending the run */}
-                <div className="flex items-center justify-between gap-2" style={{fontSize:12,marginBottom:5}}>
-                  <span className="dim" style={{textTransform:"uppercase",letterSpacing:".06em",fontSize:10.5,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>The name</span>
+                <div className="flex items-center justify-between gap-2" style={{fontSize:"var(--fs-sm)",marginBottom:5}}>
+                  <span className="dim" style={{textTransform:"uppercase",letterSpacing:".06em",fontSize:"var(--fs-micro)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>The name</span>
                   <span style={{color:"#e0bd72",flexShrink:0}}>{acclaimWord(acclaimOf(S))}</span>
                 </div>
-                <div className="flex items-center justify-between gap-2" style={{fontSize:12,marginBottom:3}}>
-                  <span className="dim" style={{textTransform:"uppercase",letterSpacing:".06em",fontSize:10.5,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>Unrest — ends a run</span>
+                <div className="flex items-center justify-between gap-2" style={{fontSize:"var(--fs-sm)",marginBottom:3}}>
+                  <span className="dim" style={{textTransform:"uppercase",letterSpacing:".06em",fontSize:"var(--fs-micro)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>Unrest — ends a run</span>
                   <span style={{color: S.unrest>=68?"#d96f5d":S.unrest>=45?"#d8ac5f":"#9aa86a",flexShrink:0}}>{unrestWord(S.unrest)}</span>
                 </div>
                 <div className="track" style={{height:6}}>
@@ -16837,13 +16851,13 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 {(()=>{ const fit = fitOn(S, S.week), curve = fitCurve(S, 6), thin = curve.find(c=>c.fit<=1);
                   return (
                     <>
-                      <div className="flex items-center justify-between gap-2" style={{fontSize:12,marginTop:7}}>
-                        <span className="dim" style={{textTransform:"uppercase",letterSpacing:".06em",fontSize:10.5,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>Fit to stand</span>
+                      <div className="flex items-center justify-between gap-2" style={{fontSize:"var(--fs-sm)",marginTop:7}}>
+                        <span className="dim" style={{textTransform:"uppercase",letterSpacing:".06em",fontSize:"var(--fs-micro)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>Fit to stand</span>
                         <span style={{color:YARD_COLOUR(fit),flexShrink:0}}>{YARD_WORD(fit)}</span>
                       </div>
                       {thin && (
                         <button className="dim" onClick={()=>setCal(true)}
-                          style={{display:"block",width:"100%",textAlign:"left",background:"none",border:"none",padding:"3px 0 0",fontSize:12.5,lineHeight:1.35,color:"#cfa88a",fontStyle:"italic",cursor:"pointer"}}>
+                          style={{display:"block",width:"100%",textAlign:"left",background:"none",border:"none",padding:"3px 0 0",fontSize:"var(--fs-sm)",lineHeight:1.35,color:"#cfa88a",fontStyle:"italic",cursor:"pointer"}}>
                           {thin.week===S.week
                             ? (fit<=0 ? "Nobody can be put on a card this week." : "One man, and nobody behind him.")
                             : `${thin.fit<=0 ? "Nobody is fit" : "Only one man is fit"} in ${thin.week-S.week} week${thin.week-S.week===1?"":"s"} — do not promise that week.`}
@@ -16853,15 +16867,15 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     </>
                   ); })()}
                 {S.lanista && (S.lanista.age>=48 || S.lanista.health<55) && (
-                  <div className="flex items-center justify-between" style={{fontSize:12,marginTop:7,borderTop:"1px dotted #33271a",paddingTop:6}}>
-                    <span className="dim" style={{textTransform:"uppercase",letterSpacing:".06em",fontSize:10.5}}>After you · {S.lanista.age}, {healthWord(S.lanista.health)}</span>
+                  <div className="flex items-center justify-between" style={{fontSize:"var(--fs-sm)",marginTop:7,borderTop:"1px dotted #33271a",paddingTop:6}}>
+                    <span className="dim" style={{textTransform:"uppercase",letterSpacing:".06em",fontSize:"var(--fs-micro)"}}>After you · {S.lanista.age}, {healthWord(S.lanista.health)}</span>
                     <span style={{color: S.heir?"#9aa86a":"#d96f5d"}}>{S.heir ? `heir: ${S.heir.name.split(" ")[0]}` : "no heir named"}</span>
                   </div>
                 )}
                 {rows.length>0 && (
                   <details className="sect" style={{marginTop:9,background:"none",border:"none",boxShadow:"none",padding:0}}>
                     <summary style={{padding:"7px 0 3px"}}>
-                      <span className="dim" style={{fontSize:11,textTransform:"uppercase",letterSpacing:".08em",minWidth:0,overflow:"hidden",textOverflow:"ellipsis"}}>Against a house {S.week} weeks old</span>
+                      <span className="dim" style={{fontSize:"var(--fs-micro)",textTransform:"uppercase",letterSpacing:".08em",minWidth:0,overflow:"hidden",textOverflow:"ellipsis"}}>Against a house {S.week} weeks old</span>
                       <span className="chev" aria-hidden="true">⌄</span>
                     </summary>
                     <div style={{paddingTop:2}}>
@@ -16869,13 +16883,13 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                         return (
                           <div style={{marginBottom:7,paddingBottom:6,borderBottom:"1px dotted #33271a"}}>
                             <div className="flex items-center justify-between gap-2">
-                              <span className="dim" style={{fontSize:12.5,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>The hand you took</span>
-                              <span className="rowval" style={{fontSize:12.5,color:"#e0bd72",flexShrink:0}}>{P.name}</span>
+                              <span className="dim" style={{fontSize:"var(--fs-sm)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>The hand you took</span>
+                              <span className="rowval" style={{fontSize:"var(--fs-sm)",color:"#e0bd72",flexShrink:0}}>{P.name}</span>
                             </div>
                             {eff.length>0 && (
                               <div className="flex gap-1" style={{flexWrap:"wrap",marginTop:4}}>
                                 {eff.map((x,i)=>(
-                                  <span key={i} className="chip" style={{fontSize:10,padding:"2px 7px",borderColor:x.colour,color:x.colour}}>
+                                  <span key={i} className="chip" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",borderColor:x.colour,color:x.colour}}>
                                     {x.label} {x.pc>0?"+":""}{x.pc}%
                                   </span>
                                 ))}
@@ -16885,10 +16899,10 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                         ); })()}
                       {rows.map(([label,v,st],i)=>(
                         <div key={i} className="flex items-center justify-between gap-2" style={{padding:"3px 0"}}>
-                          <span className="rowname" style={{fontSize:13.5,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{label}</span>
+                          <span className="rowname" style={{fontSize:"var(--fs-base)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{label}</span>
                           <span className="flex items-center gap-2" style={{flexShrink:0}}>
-                            <span style={{fontSize:13.5,color:"#e0bd72"}}>{v}</span>
-                            <span style={{fontSize:12,color:st.colour,whiteSpace:"nowrap"}}>{st.word}</span>
+                            <span style={{fontSize:"var(--fs-base)",color:"#e0bd72"}}>{v}</span>
+                            <span style={{fontSize:"var(--fs-sm)",color:st.colour,whiteSpace:"nowrap"}}>{st.word}</span>
                           </span>
                         </div>
                       ))}
@@ -16940,19 +16954,19 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   {urgent.map((b,i)=>(
                     <button key={i} className="panel" onClick={()=>explainBnr(b)}
                       style={{padding:"10px 9px",borderColor:b.c,flex:"1 1 auto",minWidth:0,textAlign:"left",cursor:"pointer"}}>
-                      <div className="disp" style={{fontSize:12,color:"#e8d092",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{b.title}</div>
-                      {b.sub && <div className="dim" style={{fontSize:11.5,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{b.sub}</div>}
+                      <div className="disp" style={{fontSize:"var(--fs-sm)",color:"#e8d092",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{b.title}</div>
+                      {b.sub && <div className="dim" style={{fontSize:"var(--fs-micro)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{b.sub}</div>}
                     </button>
                   ))}
                 </div>
               )}
               {ongoing.length>0 && (
                 <div>
-                  <div className="dim" style={{fontSize:10.5,textTransform:"uppercase",letterSpacing:".07em",marginBottom:5}}>Ongoing <span style={{opacity:.6,textTransform:"none",letterSpacing:0}}>· tap to read</span></div>
+                  <div className="dim" style={{fontSize:"var(--fs-micro)",textTransform:"uppercase",letterSpacing:".07em",marginBottom:5}}>Ongoing <span style={{opacity:.6,textTransform:"none",letterSpacing:0}}>· tap to read</span></div>
                   <div className="flex gap-1" style={{flexWrap:"wrap",alignItems:"center"}}>
                   {ongoing.map((b,i)=>(
                     <button key={i} className="chip" onClick={()=>explainBnr(b)}
-                      style={{borderColor:b.c,fontSize:10,padding:"3px 9px",whiteSpace:"normal",maxWidth:"100%",textAlign:"left",lineHeight:1.35,cursor:"pointer"}}>
+                      style={{borderColor:b.c,fontSize:"var(--fs-micro)",padding:"3px 9px",whiteSpace:"normal",maxWidth:"100%",textAlign:"left",lineHeight:1.35,cursor:"pointer"}}>
                       {b.title}{b.sub?<span className="dim" style={{marginLeft:5}}>{b.sub}</span>:null}
                     </button>
                   ))}
@@ -16962,13 +16976,13 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               <Sect title="The yard" note={`${BKEYS.reduce((n,k)=>n+bLevel(S,k),0)} of 20 wings · ${activeG(S).length} in the yard`}>
             <LudusPlan S={S}/>
             <div className="flex items-center justify-between" style={{marginTop:6}}>
-              <span className="dim" style={{fontSize:13,fontStyle:"italic"}}>
+              <span className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>
                 {(()=>{ const built = BKEYS.reduce((n,k)=>n+bLevel(S,k),0), works = workAny(S).length;
                   return built===0 ? "Four walls, a yard, and whatever you brought with you."
                     : works>0 ? `${built} of 20 wings raised, and ${works} thing${works===1?"":"s"} that will outlast you.`
                     : `${built} of 20 wings raised.`; })()}
               </span>
-              <span className="rowval dim" style={{fontSize:12.5}}>{activeG(S).length} in the yard</span>
+              <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{activeG(S).length} in the yard</span>
             </div>
           </Sect>
 
@@ -16978,10 +16992,10 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   <div className="panel" style={{padding:13,borderColor:"#6d5426",background:"#1c1610"}}>
                     <div className="flex items-center justify-between" style={{marginBottom:5}}>
                       <span className="tag tag-gold">The first year</span>
-                      <span className="rowval dim" style={{fontSize:12.5}}>{i+1} of {CHARTER.length}</span>
+                      <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{i+1} of {CHARTER.length}</span>
                     </div>
-                    <div className="disp" style={{fontSize:15.5,color:"#e8d092"}}>{C.title}</div>
-                    <div style={{fontSize:15,marginTop:3}}>{C.how}</div>
+                    <div className="disp" style={{fontSize:"var(--fs-lg)",color:"#e8d092"}}>{C.title}</div>
+                    <div style={{fontSize:"var(--fs-lg)",marginTop:3}}>{C.how}</div>
                     <div className="flex gap-2" style={{marginTop:8}}>
                       <button className="btn" style={{flex:1}} onClick={()=>setTab(C.tab)}>Take me there</button>
                       <button className="btn btn-ghost" style={{whiteSpace:"nowrap"}}
@@ -17001,23 +17015,23 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 return (
               <Sect title="This week" note={note} open={press>0}
                 tone={press?"#7c2a22":total?"#6d5426":undefined}>
-                <div className="dim" style={{fontSize:12.5,textAlign:"right",marginBottom:6}}>
+                <div className="dim" style={{fontSize:"var(--fs-sm)",textAlign:"right",marginBottom:6}}>
                   {seasonOf(S).name.toLowerCase()} · year {yearOf(S)}, week {yearWeek(S)}
                 </div>
                 {AG.length===0 && MEN.length===0
-                  ? <div className="dim" style={{fontSize:14.5,fontStyle:"italic"}}>
+                  ? <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
                       Nothing is asking anything of you. Train them, or find them something to do.
                     </div>
                   : AG.map((a,i)=>(
                       <button key={i} className="optrow" style={{padding:"10px 9px",marginBottom:5,borderColor:URG[a.urgency].c}}
                         onClick={()=>setTab(a.tab)}>
                         <div className="flex items-center justify-between gap-2">
-                          <span style={{fontSize:14.5,color:a.urgency===3?"#e8d9b8":"#cfc0a0",textAlign:"left"}}>{a.label}</span>
-                          <span className="rowval" style={{fontSize:12,color:URG[a.urgency].c,whiteSpace:"nowrap"}}>{URG[a.urgency].w}</span>
+                          <span style={{fontSize:"var(--fs-md)",color:a.urgency===3?"#e8d9b8":"#cfc0a0",textAlign:"left"}}>{a.label}</span>
+                          <span className="rowval" style={{fontSize:"var(--fs-sm)",color:URG[a.urgency].c,whiteSpace:"nowrap"}}>{URG[a.urgency].w}</span>
                         </div>
                         <div className="flex items-center justify-between gap-2">
-                          <span className="dim" style={{fontSize:13,textAlign:"left"}}>{a.sub}</span>
-                          <span className="rowval" style={{fontSize:11.5,color:"#8e7e5c",whiteSpace:"nowrap"}}>{TABN[a.tab]||""} ›</span>
+                          <span className="dim" style={{fontSize:"var(--fs-base)",textAlign:"left"}}>{a.sub}</span>
+                          <span className="rowval" style={{fontSize:"var(--fs-micro)",color:"#8e7e5c",whiteSpace:"nowrap"}}>{TABN[a.tab]||""} ›</span>
                         </div>
                       </button>
                     ))}
@@ -17025,16 +17039,16 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   <button className="optrow" style={{padding:"10px 9px",marginBottom:5,borderColor:URG[Math.max(...MEN.map(a=>a.urgency))].c}}
                     onClick={()=>setTab("men")}>
                     <div className="flex items-center justify-between gap-2">
-                      <span style={{fontSize:14.5,color:"#cfc0a0",textAlign:"left"}}>
+                      <span style={{fontSize:"var(--fs-md)",color:"#cfc0a0",textAlign:"left"}}>
                         {MEN.length} thing{MEN.length===1?"":"s"} in the familia
                       </span>
-                      <span className="rowval" style={{fontSize:12,color:URG[Math.max(...MEN.map(a=>a.urgency))].c,whiteSpace:"nowrap"}}>
+                      <span className="rowval" style={{fontSize:"var(--fs-sm)",color:URG[Math.max(...MEN.map(a=>a.urgency))].c,whiteSpace:"nowrap"}}>
                         {URG[Math.max(...MEN.map(a=>a.urgency))].w}
                       </span>
                     </div>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="dim" style={{fontSize:13,textAlign:"left"}}>{MEN[0].label}{MEN.length>1?` · and ${MEN.length-1} more`:""}</span>
-                      <span className="rowval" style={{fontSize:11.5,color:"#8e7e5c",whiteSpace:"nowrap"}}>Familia ›</span>
+                      <span className="dim" style={{fontSize:"var(--fs-base)",textAlign:"left"}}>{MEN[0].label}{MEN.length>1?` · and ${MEN.length-1} more`:""}</span>
+                      <span className="rowval" style={{fontSize:"var(--fs-micro)",color:"#8e7e5c",whiteSpace:"nowrap"}}>Familia ›</span>
                     </div>
                   </button>
                 )}
@@ -17047,22 +17061,22 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                         </div>}
                         <div style={{minWidth:0}}>
                           <span className="tag" style={{borderColor:"#5a6a4a",color:"#9aa86a"}}>The doctore</span>
-                          <div style={{fontSize:14.5,fontStyle:"italic",color:"#cfc0a0",marginTop:3}}>{C.say(S)}</div>
+                          <div style={{fontSize:"var(--fs-md)",fontStyle:"italic",color:"#cfc0a0",marginTop:3}}>{C.say(S)}</div>
                         </div>
                       </div>
                     </div>
                   ); })()}
                 {rest > 0 && (
-                  <button className="btn btn-ghost" style={{width:"100%",marginTop:3,padding:"10px 9px",fontSize:11}} onClick={()=>setAllTodos(true)}>
+                  <button className="btn btn-ghost" style={{width:"100%",marginTop:3,padding:"10px 9px",fontSize:"var(--fs-micro)"}} onClick={()=>setAllTodos(true)}>
                     Show {rest} more
                   </button>
                 )}
                 {allTodos && ALL.length > 7 && (
-                  <button className="btn btn-ghost" style={{width:"100%",marginTop:3,padding:"10px 9px",fontSize:11}} onClick={()=>setAllTodos(false)}>
+                  <button className="btn btn-ghost" style={{width:"100%",marginTop:3,padding:"10px 9px",fontSize:"var(--fs-micro)"}} onClick={()=>setAllTodos(false)}>
                     Show fewer
                   </button>
                 )}
-                <button className="btn btn-ghost" style={{width:"100%",marginTop:6,fontSize:12}} onClick={()=>setCal(true)}>
+                <button className="btn btn-ghost" style={{width:"100%",marginTop:6,fontSize:"var(--fs-sm)"}} onClick={()=>setCal(true)}>
                   The year ahead ›
                 </button>
               </Sect>
@@ -17070,13 +17084,13 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             </>); })()}
           {S.rome && (
             <div className="panel" style={{padding:14,borderColor:"#c99a4b",background:"linear-gradient(165deg,#2f2415,#1d1610)"}}>
-              <div className="disp" style={{fontSize:15,fontWeight:900,letterSpacing:".14em",color:"#e8d092",marginBottom:5}}>ROME</div>
+              <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".14em",color:"#e8d092",marginBottom:5}}>ROME</div>
               {S.rome.travel>0 ? (
-                <div style={{fontSize:15.5}}>On the road north — {S.rome.travel} week{S.rome.travel>1?"s":""} of wagons and tolls. Nothing happens in Capua now.</div>
+                <div style={{fontSize:"var(--fs-lg)"}}>On the road north — {S.rome.travel} week{S.rome.travel>1?"s":""} of wagons and tolls. Nothing happens in Capua now.</div>
               ) : (
                 <div>
-                  <div style={{fontSize:15.5}}>Bout {Math.min(S.rome.fought+1, ROME_BOUTS)} of {ROME_BOUTS} on the imperial sand. <span className="gold">{S.rome.won} won.</span></div>
-                  <div className="dim" style={{fontSize:14,fontStyle:"italic",marginTop:4}}>
+                  <div style={{fontSize:"var(--fs-lg)"}}>Bout {Math.min(S.rome.fought+1, ROME_BOUTS)} of {ROME_BOUTS} on the imperial sand. <span className="gold">{S.rome.won} won.</span></div>
+                  <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:4}}>
                     Two of three carries the house home made. One or none and it does not come home at all.
                   </div>
                 </div>
@@ -17097,8 +17111,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 note={`${fresh? `${fresh} this month · ` : ""}${away? `${away} away` : "all in Capua"}`}>
                 {(S.rivalLog||[]).slice(0,5).map((r,i)=>(
                   <div key={i} style={{borderTop:i?"1px dotted #33271a":"none",padding:"6px 0"}}>
-                    <div style={{fontSize:14.5}}>{r.text}</div>
-                    <div className="dim" style={{fontSize:12}}>week {r.week}</div>
+                    <div style={{fontSize:"var(--fs-md)"}}>{r.text}</div>
+                    <div className="dim" style={{fontSize:"var(--fs-sm)"}}>week {r.week}</div>
                   </div>
                 ))}
               </Sect>
@@ -17112,33 +17126,33 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 note={on ? (inside ? `${ear? ear.name : "—"} is listening` : `the gatekeeper · ${EAR_FEE}d a week`) : "nobody is listening"}
                 open={(S.yardMissed||0) > 0}>
                 {(S.yardMissed||0) > 0 && (
-                  <div className="dim" style={{fontSize:13,fontStyle:"italic",marginBottom:6}}>
+                  <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:6}}>
                     {S.yardMissed} thing{S.yardMissed===1?"":"s"} {S.yardMissed===1?"has":"have"} happened in that block that nobody told you about.
                   </div>
                 )}
                 {!on ? (<>
-                  <div className="dim" style={{fontSize:14.5,fontStyle:"italic",marginBottom:8}}>
+                  <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>
                     Everything about these men reaches you as a word like "restless". Somebody has to be listening, and there are only two kinds of somebody.
                   </div>
                   <button className="btn btn-ghost" style={{width:"100%",marginBottom:6}} disabled={S.gold<EAR_FEE*4}
                     onClick={()=>setEar("gate")}>Pay the gatekeeper · {EAR_FEE}d a week</button>
-                  <div className="dim" style={{fontSize:13.5,marginBottom:5}}>Or put one of your own inside it. He hears far more, and if they work out who he is, it costs the whole yard.</div>
+                  <div className="dim" style={{fontSize:"var(--fs-base)",marginBottom:5}}>Or put one of your own inside it. He hears far more, and if they work out who he is, it costs the whole yard.</div>
                   {activeG(S).filter(g=>!isAuctor(g)).map(g=>(
                     <button key={g.id} className="optrow" style={{marginBottom:5,padding:9}} onClick={()=>setEar("man", g.id)}>
                       <div className="flex items-center justify-between gap-2">
-                        <span className="disp" style={{fontSize:13}}>{g.name}</span>
-                        <span className="rowval dim" style={{fontSize:12.5}}>{demeanor(g.defiance).toLowerCase()}</span>
+                        <span className="disp" style={{fontSize:"var(--fs-base)"}}>{g.name}</span>
+                        <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{demeanor(g.defiance).toLowerCase()}</span>
                       </div>
                     </button>
                   ))}
                 </>) : (<>
                   {(S.heard||[]).length===0
-                    ? <div className="dim" style={{fontSize:14.5,fontStyle:"italic"}}>Nothing worth carrying up this week.</div>
+                    ? <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>Nothing worth carrying up this week.</div>
                     : (S.heard||[]).map((h,i)=>(
-                        <div key={i} style={{borderTop:"1px dotted #33271a",padding:"7px 0",fontSize:15}}>{h}</div>
+                        <div key={i} style={{borderTop:"1px dotted #33271a",padding:"7px 0",fontSize:"var(--fs-lg)"}}>{h}</div>
                       ))}
                   {inside && (
-                    <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:7}}>
+                    <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:7}}>
                       {(S.ear.risk||0) > 90 ? "He is going to be found out. It is a question of which week."
                        : (S.ear.risk||0) > 45 ? "He has been at this a while now. Men notice a man who is always nearby."
                        : "Nobody suspects him yet."}
@@ -17162,12 +17176,12 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             return (
             <Sect title="Last week" note={bits.length? bits.join(" · ") : "a quiet one"}>
               {(D.lines||[]).length===0
-                ? <div className="dim" style={{fontSize:14,fontStyle:"italic"}}>Nothing happened worth the ink.</div>
+                ? <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>Nothing happened worth the ink.</div>
                 : D.lines.map((l,i)=>(
-                    <div key={i} style={{fontSize:14,padding:"3px 0",borderTop:i?"1px dotted #26201a":undefined,
+                    <div key={i} style={{fontSize:"var(--fs-md)",padding:"3px 0",borderTop:i?"1px dotted #26201a":undefined,
                       color: l.kind==="bad"?"#d9a89e" : l.kind==="good"?"#cfe0b0" : "#cfc0a0"}}>{l.text}</div>
                   ))}
-              {D.more>0 && <div className="dim" style={{fontSize:12.5,marginTop:5,fontStyle:"italic"}}>…and {D.more} more in the chronicle.</div>}
+              {D.more>0 && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:5,fontStyle:"italic"}}>…and {D.more} more in the chronicle.</div>}
             </Sect>
             ); })()}
 
@@ -17187,8 +17201,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               ["carry","Carry It Out", "share this house"]].map(([k,l,sub])=>(
               <button key={k} className="optrow" style={{padding:11}}
                 onClick={()=>k==="annals"? setAnnals(true) : k==="carry"? carryOut() : k==="chron"? setShowChron(true) : setSheet(k)}>
-                <div className="disp" style={{fontSize:12.5,color:"#e8d092"}}>{l}</div>
-                <div className="dim" style={{fontSize:13.5,marginTop:2}}>{sub}</div>
+                <div className="disp" style={{fontSize:"var(--fs-sm)",color:"#e8d092"}}>{l}</div>
+                <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2}}>{sub}</div>
               </button>
             ))}
           </div>
@@ -17201,14 +17215,14 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   return (
                     <div style={{marginBottom:8}}>
                       <div className="flex items-center justify-between gap-2">
-                        <span className="disp" style={{fontSize:14,fontWeight:700,
+                        <span className="disp" style={{fontSize:"var(--fs-md)",fontWeight:700,
                           color: Sn.key==="winter"?"#9dc0d4" : Sn.key==="summer"?"#d8ac5f" : Sn.key==="autumn"?"#c99a4b":"#9aa86a"}}>
                           {Sn.name.toUpperCase()}
                         </span>
-                        <span className="rowval dim" style={{fontSize:12.5}}>{Sn.months}</span>
+                        <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{Sn.months}</span>
                       </div>
-                      <div className="dim" style={{fontSize:14,fontStyle:"italic",marginTop:2}}>{Sn.line}</div>
-                      <div className="flex gap-3" style={{fontSize:12.5,marginTop:4,flexWrap:"wrap"}}>
+                      <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:2}}>{Sn.line}</div>
+                      <div className="flex gap-3" style={{fontSize:"var(--fs-sm)",marginTop:4,flexWrap:"wrap"}}>
                         {Sn.purse!==1 && <span style={{color:Sn.purse>1?"#9aa86a":"#d96f5d"}}>purses ×{Sn.purse.toFixed(2)}</span>}
                         {Sn.train!==1 && <span style={{color:Sn.train>1?"#9aa86a":"#d96f5d"}}>training ×{Sn.train.toFixed(2)}</span>}
                         {Sn.fat!==1 && <span style={{color:Sn.fat<1?"#9aa86a":"#d96f5d"}}>fatigue ×{Sn.fat.toFixed(2)}</span>}
@@ -17219,12 +17233,12 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     </div>
                   ); })()}
                 {now ? (<div style={{marginBottom:8}}>
-                  <div className="disp" style={{fontSize:15,fontWeight:700,color:"#e8d092"}}>{now.name.replace(/^the /,"").toUpperCase()}</div>
-                  <div style={{fontSize:15,marginTop:3}}>{now.blurb}</div>
+                  <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,color:"#e8d092"}}>{now.name.replace(/^the /,"").toUpperCase()}</div>
+                  <div style={{fontSize:"var(--fs-lg)",marginTop:3}}>{now.blurb}</div>
                 </div>) : (S.munera ? (<div style={{marginBottom:8}}>
-                  <div className="disp" style={{fontSize:14,fontWeight:700,color:"#d96f5d"}}>FUNERAL GAMES</div>
-                  <div style={{fontSize:15,marginTop:3}}>A death in a noble house, and the old kind of games to mark it. Double purses, and every bout sine missione — that is what these were for.</div>
-                </div>) : <div className="dim" style={{fontSize:14.5,fontStyle:"italic",marginBottom:8}}>No festival this week. The pits are always open.</div>)}
+                  <div className="disp" style={{fontSize:"var(--fs-md)",fontWeight:700,color:"#d96f5d"}}>FUNERAL GAMES</div>
+                  <div style={{fontSize:"var(--fs-lg)",marginTop:3}}>A death in a noble house, and the old kind of games to mark it. Double purses, and every bout sine missione — that is what these were for.</div>
+                </div>) : <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>No festival this week. The pits are always open.</div>)}
                 <div className="flex gap-1" style={{marginBottom:6}}>
                   {Array.from({length:YEAR_WEEKS}).map((_,i)=>{ const w=i+1;
                     const f=CALENDAR.find(x=>x.w===w), cur=w===yearWeek(S);
@@ -17235,9 +17249,9 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   })}
                 </div>
                 {soon.filter(f=>weeksUntil(S,f)>0).slice(0,2).map(f=>(
-                  <div key={f.key} className="flex items-center justify-between gap-2" style={{fontSize:14,padding:"2px 0"}}>
-                    <span className="rowname dim">{f.name} <span style={{fontSize:12.5}}>· {f.month}</span></span>
-                    <span className="rowval" style={{fontSize:13,color:"#c0b492"}}>{weeksUntil(S,f)} week{weeksUntil(S,f)===1?"":"s"}</span>
+                  <div key={f.key} className="flex items-center justify-between gap-2" style={{fontSize:"var(--fs-md)",padding:"2px 0"}}>
+                    <span className="rowname dim">{f.name} <span style={{fontSize:"var(--fs-sm)"}}>· {f.month}</span></span>
+                    <span className="rowval" style={{fontSize:"var(--fs-base)",color:"#c0b492"}}>{weeksUntil(S,f)} week{weeksUntil(S,f)===1?"":"s"}</span>
                   </div>
                 ))}
               </Sect>
@@ -17252,7 +17266,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   <DoctoreBust name={S.doctore.name} size={60}/>
                 </div>
                 <div style={{minWidth:0}}>
-                  <div className="disp" style={{fontSize:15,fontWeight:700,color:"#e8d092"}}>
+                  <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,color:"#e8d092"}}>
                     {S.doctore.name}{S.doctore.nick? <span style={{color:"#d8c08a"}}>, {S.doctore.nick}</span>:null}
                   </div>
                   <div className="flex items-center gap-1" style={{flexWrap:"wrap",marginTop:5}}>
@@ -17262,16 +17276,16 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   </div>
                 </div>
               </div>
-              <div className="dim" style={{fontSize:14,fontStyle:"italic"}}>{S.doctore.past}.</div>
+              <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>{S.doctore.past}.</div>
               {S.doctore.tag && (<>
-                <div style={{fontSize:14.5,marginTop:5,color:"#cfc0a0"}}>
+                <div style={{fontSize:"var(--fs-md)",marginTop:5,color:"#cfc0a0"}}>
                   <span className="laurel">{S.doctore.name}, {S.doctore.tag}.</span> {S.doctore.pastLine}
                 </div>
                 {docCreed(S) && (
                   <div className="panel" style={{padding:9,marginTop:7,background:"#1c1610"}}>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="disp" style={{fontSize:13,color:"#e8d092"}}>He {docCreed(S).name}</span>
-                      <span className="rowval dim" style={{fontSize:12}}>
+                      <span className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d092"}}>He {docCreed(S).name}</span>
+                      <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>
                         {(()=>{ const C=docCreed(S), b=[];
                           if(C.train!==1 && C.train!=null) b.push(`training ×${C.train.toFixed(2)}`);
                           if(C.strain!=null) b.push(`strain ×${C.strain.toFixed(2)}`);
@@ -17281,12 +17295,12 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                           return b.join(" · "); })()}
                       </span>
                     </div>
-                    <div className="dim" style={{fontSize:14,fontStyle:"italic",marginTop:2}}>{docCreed(S).line}</div>
-                    {docSays(S) && <div style={{fontSize:14,marginTop:5,borderTop:"1px dotted #33271a",paddingTop:5}}>{docSays(S)}</div>}
+                    <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:2}}>{docCreed(S).line}</div>
+                    {docSays(S) && <div style={{fontSize:"var(--fs-md)",marginTop:5,borderTop:"1px dotted #33271a",paddingTop:5}}>{docSays(S)}</div>}
                   </div>
                 )}
               </>)}
-              <div style={{fontSize:14.5,marginTop:6}}>
+              <div style={{fontSize:"var(--fs-md)",marginTop:6}}>
                 Training <span className="laurel">+{Math.round((docTrain(S,"__none")-1)*100)}%</span> to all,
                 <span className="laurel"> +{Math.round((docTrain(S,S.doctore.spec)-1)*100)}%</span> to {STAT_NAMES[S.doctore.spec].toLowerCase()}.
                 Fewer men torn in training{S.doctore.fromHouse? ", and the cells quieter for it":""}.
@@ -17297,12 +17311,12 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     <div className="tag tag-gold" style={{marginBottom:5}}>His week</div>
                     {p ? (
                       <div>
-                        <div style={{fontSize:15}}>
+                        <div style={{fontSize:"var(--fs-lg)"}}>
                           {S.doctore.retrainTo
                             ? <>Remaking <span className="gold">{p.name}</span> as a {S.doctore.retrainTo.toLowerCase()} — {S.doctore.retrainLeft} week{S.doctore.retrainLeft===1?"":"s"} left.</>
                             : <>Working only on <span className="gold">{p.name}</span>.</>}
                         </div>
-                        <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:3}}>
+                        <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>
                           {S.doctore.retrainTo
                             ? "He trains at nothing else until it is finished."
                             : "Far more for him, far less for everyone else — and some weeks the doctore turns something up."}
@@ -17313,7 +17327,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                         </button>
                       </div>
                     ) : (
-                      <div className="dim" style={{fontSize:14.5,fontStyle:"italic"}}>
+                      <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
                         Drilling the whole familia. Send him to one man from that man's page and the rest of the yard will feel it.
                       </div>
                     )}
@@ -17329,49 +17343,49 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                           style={k===dk?{borderColor:"#c99a4b",color:"#e0bd72",background:"#2b2115"}:{}}>{DRILLS[dk].short}</button>
                       ))}
                     </div>
-                    <div className="dim" style={{fontSize:13.5,fontStyle:"italic"}}>{D.blurb}</div>
-                    {k!=="none" && <div className="laurel" style={{fontSize:12.5,marginTop:4}}>
+                    <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>{D.blurb}</div>
+                    {k!=="none" && <div className="laurel" style={{fontSize:"var(--fs-sm)",marginTop:4}}>
                       {S.doctore.skill<50 ? "A modest hand — the drill only half takes." : S.doctore.skill<72 ? "He gets a good week's work out of it." : "The finest in Capua — the whole yard moves as one."}
                     </div>}
                   </div>
                 ); })()}
               <button className="btn btn-ghost" style={{width:"100%",marginTop:8}} onClick={dismissDoc}>Dismiss him</button>
             </div>) : (<div>
-              <div className="dim" style={{fontSize:14.5,fontStyle:"italic",marginBottom:8}}>
+              <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>
                 No one runs the square but you. A doctore drills harder than a lanista can, and a man you freed will drill hardest of all.
               </div>
               {/* the whole of what you are going without, because none of it was on the screen */}
               <details className="sect" style={{marginBottom:9,background:"#1a1510",borderColor:"#4a3a22"}}>
                 <summary style={{padding:"8px 10px"}}>
-                  <span style={{fontSize:13.5,color:"#d8ac5f"}}>What you are doing without</span>
+                  <span style={{fontSize:"var(--fs-base)",color:"#d8ac5f"}}>What you are doing without</span>
                   <span className="chev" aria-hidden="true">⌄</span>
                 </summary>
                 <div style={{padding:"2px 10px 9px"}}>
                   {DOC_WORTH.map(([label, say], i)=>(
                     <div key={i} style={{padding:"4px 0",borderTop: i? "1px dotted #33271a" : "none"}}>
-                      <span style={{fontSize:13.5,color:"#cfc0a0"}}>{label}</span>
-                      <span className="dim" style={{fontSize:13.5}}> — {say(S)}</span>
+                      <span style={{fontSize:"var(--fs-base)",color:"#cfc0a0"}}>{label}</span>
+                      <span className="dim" style={{fontSize:"var(--fs-base)"}}> — {say(S)}</span>
                     </div>
                   ))}
                 </div>
               </details>
-              {(S.doctoreMarket||[]).length===0 && <div className="dim" style={{fontSize:14}}>No one worth the wage is looking for work. Ask again after the next market.</div>}
+              {(S.doctoreMarket||[]).length===0 && <div className="dim" style={{fontSize:"var(--fs-md)"}}>No one worth the wage is looking for work. Ask again after the next market.</div>}
               {(S.doctoreMarket||[]).map(c=>(
                 <div key={c.id} style={{borderTop:"1px dotted #33271a",paddingTop:9,marginTop:9}}>
                   <div className="flex items-center justify-between gap-2">
-                    <span className="disp" style={{fontSize:14}}>{c.name} of {c.origin}</span>
-                    <span className="gold" style={{fontSize:14,whiteSpace:"nowrap"}}>{c.fee}d + {c.wage}/wk</span>
+                    <span className="disp" style={{fontSize:"var(--fs-md)"}}>{c.name} of {c.origin}</span>
+                    <span className="gold" style={{fontSize:"var(--fs-md)",whiteSpace:"nowrap"}}>{c.fee}d + {c.wage}/wk</span>
                   </div>
                   <div className="flex items-center gap-1" style={{flexWrap:"wrap",margin:"4px 0"}}>
                     <span className="tag">{docWord(c.skill)}</span>
                     <span className="tag tag-gold">{STAT_NAMES[c.spec]}</span>
                   </div>
-                  <div className="dim" style={{fontSize:14,fontStyle:"italic"}}>{c.past}.</div>
+                  <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>{c.past}.</div>
                   <div className="flex gap-1" style={{flexWrap:"wrap",marginTop:5}}>
-                    <span className="chip" style={{fontSize:10,padding:"2px 7px",borderColor:"#5a6a4a",color:"#9aa86a"}}>The yard +{docShare(c)}%</span>
-                    <span className="chip" style={{fontSize:10,padding:"2px 7px",borderColor:"#5a6a4a",color:"#9aa86a"}}>One pupil +{docPupilShare(c)}%</span>
-                    <span className="chip" style={{fontSize:10,padding:"2px 7px",borderColor:"#5a6a4a",color:"#9aa86a"}}>Hurt at the post −{docGuardPc(c)}%</span>
-                    <span className="chip" style={{fontSize:10,padding:"2px 7px",borderColor:"#6d5426",color:"#d8ac5f"}}>{STAT_NAMES[c.spec]} +28%</span>
+                    <span className="chip" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",borderColor:"#5a6a4a",color:"#9aa86a"}}>The yard +{docShare(c)}%</span>
+                    <span className="chip" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",borderColor:"#5a6a4a",color:"#9aa86a"}}>One pupil +{docPupilShare(c)}%</span>
+                    <span className="chip" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",borderColor:"#5a6a4a",color:"#9aa86a"}}>Hurt at the post −{docGuardPc(c)}%</span>
+                    <span className="chip" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",borderColor:"#6d5426",color:"#d8ac5f"}}>{STAT_NAMES[c.spec]} +28%</span>
                   </div>
                   <button className="btn" style={{width:"100%",marginTop:7}} disabled={S.gold<c.fee} onClick={()=>hireDoc(c.id)}>
                     {S.gold<c.fee ? "Not enough coin" : `Take him on — ${c.fee}d`}
@@ -17382,20 +17396,20 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           </Sect>
           <Sect title="Unrest in the cells" note={unrestWord(S.unrest)} open={S.unrest>=50 || !!S.rebellion}>
             <Bar v={S.unrest} color="linear-gradient(90deg,#6a3a1a,#b8463a)"/>
-            {S.rebellion && <div className="blood" style={{fontSize:14.5,marginTop:5,fontStyle:"italic"}}>
+            {S.rebellion && <div className="blood" style={{fontSize:"var(--fs-md)",marginTop:5,fontStyle:"italic"}}>
               {["","Whispers move between the cells after dark.","Conspiracy — steel is missing, and eyes follow the guards.","The spark is lit. Tonight decides everything."][S.rebellion.stage]}
             </div>}
-            <div className="dim" style={{fontSize:13.5,marginTop:6}}>Cruelty, wasted deaths, and denied freedom feed it. Victories, feasts, and the rudis cool it. At its height, the house burns.</div>
+            <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:6}}>Cruelty, wasted deaths, and denied freedom feed it. Victories, feasts, and the rudis cool it. At its height, the house burns.</div>
             {(()=>{ const bros=(S.ties||[]).filter(t=>t.kind==="brother").length, riv=(S.ties||[]).filter(t=>t.kind==="rival").length;
               if(!bros && !riv) return null;
-              return <div className="dim" style={{fontSize:13.5,marginTop:5,fontStyle:"italic"}}>
+              return <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:5,fontStyle:"italic"}}>
                 In the cells: {bros} bond{bros===1?"":"s"}, {riv} feud{riv===1?"":"s"}. Fighters who trust each other are worth more on the sand and more dangerous in the dark.
               </div>; })()}
           </Sect>
           {S.week<=2 && (
             <div className="panel" style={{padding:13}}>
               <div className="tag tag-gold" style={{marginBottom:6}}>The lanista's first lessons</div>
-              <div style={{fontSize:15}}>Fight in the pits to earn coin and fame — first blood keeps your men alive; anything bloodier down there is a coin flip with a blade. At 25 fame the editors take notice and the games open, where famed men are far more likely to be spared. Train between bouts, watch fatigue, and mind the fire in your men — the best fighters are often the most dangerous to own.</div>
+              <div style={{fontSize:"var(--fs-lg)"}}>Fight in the pits to earn coin and fame — first blood keeps your men alive; anything bloodier down there is a coin flip with a blade. At 25 fame the editors take notice and the games open, where famed men are far more likely to be spared. Train between bouts, watch fatigue, and mind the fire in your men — the best fighters are often the most dangerous to own.</div>
             </div>
           )}
           <div className="panel" style={{padding:13}}>
@@ -17406,10 +17420,10 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             <div className="tag" style={{marginBottom:6}}>The Ledger</div>
             {S.flags.underwritten > 0 && (
               <div className="panel" style={{padding:9,marginBottom:9,background:"#1c1610",borderColor:"#5a6a35"}}>
-                <span className="laurel" style={{fontSize:14.5}}>The merchant is carrying your upkeep — {S.flags.underwritten} week{S.flags.underwritten===1?"":"s"} left.</span>
+                <span className="laurel" style={{fontSize:"var(--fs-md)"}}>The merchant is carrying your upkeep — {S.flags.underwritten} week{S.flags.underwritten===1?"":"s"} left.</span>
               </div>
             )}
-            <div className="dim" style={{fontSize:14,fontStyle:"italic",marginBottom:8}}>
+            <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>
               This house is written down after every change{saved? ` — last kept ${whenWord(saved)}`:""}. Lift it out as a transfer code to carry it elsewhere, or keep it safe against a bad week.
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -17426,15 +17440,15 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               <div className="panel" style={{padding:12, borderColor: MEN.some(a=>a.urgency===3)?"#7c2a22":"#6d5426"}}>
                 <div className="flex items-center justify-between" style={{marginBottom:6}}>
                   <span className="tag tag-gold">What the men need</span>
-                  <span className="rowval dim" style={{fontSize:12.5}}>{MEN.length} thing{MEN.length===1?"":"s"}</span>
+                  <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{MEN.length} thing{MEN.length===1?"":"s"}</span>
                 </div>
                 {MEN.map((a,i)=>(
                   <div key={i} className="optrow" style={{padding:"9px 9px",marginBottom:5,borderColor:URG[a.urgency].c,cursor:"default"}}>
                     <div className="flex items-center justify-between gap-2">
-                      <span style={{fontSize:14.5,color:a.urgency===3?"#e8d9b8":"#cfc0a0",textAlign:"left"}}>{a.label}</span>
-                      <span className="rowval" style={{fontSize:12,color:URG[a.urgency].c,whiteSpace:"nowrap"}}>{URG[a.urgency].w}</span>
+                      <span style={{fontSize:"var(--fs-md)",color:a.urgency===3?"#e8d9b8":"#cfc0a0",textAlign:"left"}}>{a.label}</span>
+                      <span className="rowval" style={{fontSize:"var(--fs-sm)",color:URG[a.urgency].c,whiteSpace:"nowrap"}}>{URG[a.urgency].w}</span>
                     </div>
-                    {a.sub && <div className="dim" style={{fontSize:13,textAlign:"left"}}>{a.sub}</div>}
+                    {a.sub && <div className="dim" style={{fontSize:"var(--fs-base)",textAlign:"left"}}>{a.sub}</div>}
                   </div>
                 ))}
               </div>
@@ -17442,8 +17456,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
 
           <button className="optrow" style={{padding:10}} onClick={()=>setSheet("glossary")}>
             <div className="flex items-center justify-between gap-2">
-              <span className="disp" style={{fontSize:12.5,color:"#e8d092"}}>What the marks mean</span>
-              <span className="rowval dim" style={{fontSize:12.5}}>styles · origins · tags</span>
+              <span className="disp" style={{fontSize:"var(--fs-sm)",color:"#e8d092"}}>What the marks mean</span>
+              <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>styles · origins · tags</span>
             </div>
           </button>
 
@@ -17463,8 +17477,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           {roster.map(g=>(
             <button key={g.id} className="panel" style={{width:"100%",textAlign:"left",padding:12,cursor:"pointer",color:"inherit",font:"inherit",borderColor:g.legend?"#8a6a2c":undefined}} onClick={()=>setSelId(g.id)}>
               <div className="flex items-center justify-between gap-2">
-                <div className="disp" style={{fontSize:15,fontWeight:700}}>{g.name}{g.nick?<span style={{color:"#d8c08a"}}>, {g.nick}</span>:null}</div>
-                <span className="dim" style={{fontSize:13.5,whiteSpace:"nowrap"}}>{g.wins}–{g.losses}{g.kills?` · ${g.kills} kills`:""}</span>
+                <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700}}>{g.name}{g.nick?<span style={{color:"#d8c08a"}}>, {g.nick}</span>:null}</div>
+                <span className="dim" style={{fontSize:"var(--fs-base)",whiteSpace:"nowrap"}}>{g.wins}–{g.losses}{g.kills?` · ${g.kills} kills`:""}</span>
               </div>
               <div className="flex items-center gap-1" style={{flexWrap:"wrap",margin:"6px 0"}}>
                 <span className="tag">{g.cls}</span><span className="tag">{g.origin}</span>
@@ -17492,11 +17506,11 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 {kinOf(S,g.id,"rival").length>0 && <span className="tag tag-blood">bad blood</span>}
                 {isFavourite(g) && <span className="tag tag-gold">♦ crowd favourite</span>}
               </div>
-              {g.status==="active" && <div className="dim" style={{fontSize:13.5,marginBottom:5}}>{regimenWord(S,g)}</div>}
-              <div className="flex gap-3" style={{fontSize:12.5}}>
+              {g.status==="active" && <div className="dim" style={{fontSize:"var(--fs-base)",marginBottom:5}}>{regimenWord(S,g)}</div>}
+              <div className="flex gap-3" style={{fontSize:"var(--fs-sm)"}}>
                 <div style={{flex:1}}><span className="dim">Morale</span><Bar v={g.morale} color={LAUREL}/></div>
                 <div style={{flex:1}}><span className="dim">Fatigue</span><Bar v={g.fatigue} color={BRONZE}/></div>
-                <div style={{flex:1}}><span className="dim">Bearing</span><div style={{fontSize:13,color:g.defiance>60?"#cf5a49":"#cfc0a0"}}>{demeanor(g.defiance)}</div></div>
+                <div style={{flex:1}}><span className="dim">Bearing</span><div style={{fontSize:"var(--fs-base)",color:g.defiance>60?"#cf5a49":"#cfc0a0"}}>{demeanor(g.defiance)}</div></div>
               </div>
             </button>
           ))}
@@ -17511,7 +17525,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 <div className="panel" style={{padding:10,borderColor:(S.doctore.drill||"none")!=="none"?"#5a6a35":"#3e2f1f"}}>
                   <div className="flex items-center justify-between" style={{marginBottom:6}}>
                     <span className="tag tag-gold">The week's drill — the whole yard</span>
-                    <span className="rowval dim" style={{fontSize:12}}>{S.doctore.name} · {docWord(S.doctore.skill)}</span>
+                    <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{S.doctore.name} · {docWord(S.doctore.skill)}</span>
                   </div>
                   <div className="flex gap-1" style={{flexWrap:"wrap",marginBottom:6}}>
                     {DRILL_KEYS.map(dk=>(
@@ -17519,19 +17533,19 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                         style={(S.doctore.drill||"none")===dk?{borderColor:"#c99a4b",color:"#e0bd72",background:"#2b2115"}:{}}>{DRILLS[dk].short}</button>
                     ))}
                   </div>
-                  <div className="dim" style={{fontSize:13.5,fontStyle:"italic"}}>{drillOf(S).blurb}</div>
+                  <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>{drillOf(S).blurb}</div>
                 </div>
               ) : (
-                <div className="panel dim" style={{padding:12,fontSize:14,fontStyle:"italic"}}>
+                <div className="panel dim" style={{padding:12,fontSize:"var(--fs-md)",fontStyle:"italic"}}>
                   No doctore. Hire one from the Ludus and he can put the whole yard on a week's drill — conditioning, bladework, the crowd, hard sparring.
                 </div>
               )}
 
               {men.length>1 && (
                 <div className="flex gap-2" style={{flexWrap:"wrap"}}>
-                  <button className="btn btn-ghost" style={{flex:1,fontSize:12.5,padding:"9px 6px"}} onClick={restWorn}>Rest the worn</button>
-                  <button className="btn btn-ghost" style={{flex:1,fontSize:12.5,padding:"9px 6px"}} onClick={allPalus}>All to the palus</button>
-                  <button className="btn btn-ghost" style={{flex:1,fontSize:12.5,padding:"9px 6px"}} onClick={autoPair}>Pair for sparring</button>
+                  <button className="btn btn-ghost" style={{flex:1,fontSize:"var(--fs-sm)",padding:"9px 6px"}} onClick={restWorn}>Rest the worn</button>
+                  <button className="btn btn-ghost" style={{flex:1,fontSize:"var(--fs-sm)",padding:"9px 6px"}} onClick={allPalus}>All to the palus</button>
+                  <button className="btn btn-ghost" style={{flex:1,fontSize:"var(--fs-sm)",padding:"9px 6px"}} onClick={autoPair}>Pair for sparring</button>
                 </div>
               )}
 
@@ -17541,16 +17555,16 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   <div key={g.id} className="panel" style={{padding:9}}>
                     <div className="flex items-center justify-between gap-2" style={{marginBottom:3}}>
                       <button onClick={()=>setSelId(g.id)} style={{background:"none",border:0,padding:0,font:"inherit",color:"#e8d092",cursor:"pointer",minWidth:0,textAlign:"left"}}>
-                        <span className="disp" style={{fontSize:14,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{g.name}</span>
-                        <span className="dim" style={{fontSize:12}}> · {g.cls}</span>
+                        <span className="disp" style={{fontSize:"var(--fs-md)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{g.name}</span>
+                        <span className="dim" style={{fontSize:"var(--fs-sm)"}}> · {g.cls}</span>
                       </button>
-                      <span style={{fontSize:11.5,whiteSpace:"nowrap"}}>
+                      <span style={{fontSize:"var(--fs-micro)",whiteSpace:"nowrap"}}>
                         <span style={{color:fatCol(g)}}>{fatWord(g)}</span>
                         {strainOf(g)>32 && <span style={{color:strCol(g)}}> · {strainWord(strainOf(g))}</span>}
                       </span>
                     </div>
                     {/* the same four readings for every man, so the yard can be compared at a glance */}
-                    <div className="flex items-center gap-2" style={{flexWrap:"wrap",marginBottom:5,fontSize:11}}>
+                    <div className="flex items-center gap-2" style={{flexWrap:"wrap",marginBottom:5,fontSize:"var(--fs-micro)"}}>
                       <span style={{color: canFight(g) && g.lastFought < S.week ? "#9aa86a" : "#8d7e65"}}>
                         {!canFight(g) ? (g.injury ? "hurt" : "not fit") : g.lastFought >= S.week ? "fought this week" : "ready"}
                       </span>
@@ -17563,24 +17577,24 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                       )}
                     </div>
                     {season ? (
-                      <div className="dim" style={{fontSize:13,fontStyle:"italic"}}>On a season — {PLANSEASON[season.kind]?PLANSEASON[season.kind].name:"in training"}, {planWeeksLeft(g)}w left. He drills at nothing else.</div>
+                      <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>On a season — {PLANSEASON[season.kind]?PLANSEASON[season.kind].name:"in training"}, {planWeeksLeft(g)}w left. He drills at nothing else.</div>
                     ) : (<>
                       <div className="flex gap-1" style={{flexWrap:"wrap"}}>
                         {REG_KEYS.map(k=>(
-                          <button key={k} className={`chip ${reg===k?"on":""}`} style={{fontSize:11,padding:"3px 7px",...(reg===k?{borderColor:"#c99a4b",color:"#e0bd72",background:"#2b2115"}:{})}}
+                          <button key={k} className={`chip ${reg===k?"on":""}`} style={{fontSize:"var(--fs-micro)",padding:"3px 7px",...(reg===k?{borderColor:"#c99a4b",color:"#e0bd72",background:"#2b2115"}:{})}}
                             onClick={()=>{ if(k==="spar") setSparPick(g.id); else setRegimen(g.id,k); }}>{REGIMENS[k].short}</button>
                         ))}
                       </div>
                       {reg==="palus" && (
                         <div className="flex gap-1" style={{flexWrap:"wrap",marginTop:5}}>
                           {STATS.map(s=>(
-                            <button key={s} className={`chip ${g.focus===s?"on":""}`} style={{fontSize:10.5,padding:"2px 6px",...(g.focus===s?{borderColor:"#8a6a2c",color:"#e0bd72"}:{})}}
+                            <button key={s} className={`chip ${g.focus===s?"on":""}`} style={{fontSize:"var(--fs-micro)",padding:"2px 6px",...(g.focus===s?{borderColor:"#8a6a2c",color:"#e0bd72"}:{})}}
                               onClick={()=>setFocus(g.id,s)}>{STAT_NAMES[s].slice(0,3)}</button>
                           ))}
                         </div>
                       )}
                       {reg==="spar" && (
-                        <div className="dim" style={{fontSize:12.5,marginTop:4,color:sparPartner(S,g)?"#b9c58a":"#d8ac5f"}}>
+                        <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:4,color:sparPartner(S,g)?"#b9c58a":"#d8ac5f"}}>
                           {sparPartner(S,g) ? `Paired with ${sparPartner(S,g).name}` : "Tap SPAR again to pick a partner"}
                         </div>
                       )}
@@ -17601,23 +17615,23 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               <div className="panel" style={{padding:13, borderColor:"#7c2a22", background:"#2a1512"}}>
                 <div className="flex items-center justify-between" style={{marginBottom:4}}>
                   <span className="tag tag-blood">The Feud · House {n.house}</span>
-                  <span className="rowval" style={{fontSize:12.5, color:"#d98476"}}>{L}</span>
+                  <span className="rowval" style={{fontSize:"var(--fs-sm)", color:"#d98476"}}>{L}</span>
                 </div>
-                <div className="dim" style={{fontSize:14, fontStyle:"italic", marginBottom:6}}>{stageWord}.</div>
+                <div className="dim" style={{fontSize:"var(--fs-md)", fontStyle:"italic", marginBottom:6}}>{stageWord}.</div>
                 <Bar v={n.heat} label="bad blood" color="linear-gradient(90deg,#5a1a14,#d96f5d)"/>
                 {(()=>{ const edge = nemEdge(S), hits=(n.hits||0), ans=(n.answered||0);
                   return (hits||ans) ? (
-                    <div className="flex items-center justify-between gap-2" style={{marginTop:7,fontSize:13}}>
+                    <div className="flex items-center justify-between gap-2" style={{marginTop:7,fontSize:"var(--fs-base)"}}>
                       <span className="dim">His blows landed: <span style={{color:"#d98476"}}>{hits}</span> · yours answered: <span style={{color:"#9aa86a"}}>{ans}</span></span>
-                      <span className="rowval" style={{fontSize:12.5,color:edge>0?"#9aa86a":edge<0?"#d96f5d":"#b09b7d",whiteSpace:"nowrap"}}>
+                      <span className="rowval" style={{fontSize:"var(--fs-sm)",color:edge>0?"#9aa86a":edge<0?"#d96f5d":"#b09b7d",whiteSpace:"nowrap"}}>
                         {edge>0?"upper hand: yours":edge<0?"upper hand: his":"dead even"}
                       </span>
                     </div>
                   ) : null; })()}
-                {n.lastScheme && !grudgeLive && <div style={{fontSize:13.5, marginTop:6, color:"#cdb89a", fontStyle:"italic"}}>Last: {n.lastScheme}</div>}
-                {!n.lastScheme && beat && <div style={{fontSize:13.5, marginTop:6, color:"#cdb89a"}}>{beat.text}</div>}
+                {n.lastScheme && !grudgeLive && <div style={{fontSize:"var(--fs-base)", marginTop:6, color:"#cdb89a", fontStyle:"italic"}}>Last: {n.lastScheme}</div>}
+                {!n.lastScheme && beat && <div style={{fontSize:"var(--fs-base)", marginTop:6, color:"#cdb89a"}}>{beat.text}</div>}
                 {grudgeLive ? (
-                  <div className="blood" style={{fontSize:13.5, marginTop:6, fontWeight:600}}>
+                  <div className="blood" style={{fontSize:"var(--fs-base)", marginTop:6, fontWeight:600}}>
                     The grudge match is on the card below — it will not wait past its day.
                   </div>
                 ) : (<>
@@ -17632,7 +17646,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                       {nemCanCallOut(S) ? "Name the day" : "Name the day"}
                     </button>
                   </div>
-                  <div className="dim" style={{fontSize:12.5, marginTop:5, fontStyle:"italic"}}>
+                  <div className="dim" style={{fontSize:"var(--fs-sm)", marginTop:5, fontStyle:"italic"}}>
                     {nemCanCallOut(S) ? "You hold the upper hand. Call him out and take the reckoning on your terms."
                       : nemEdge(S) < 0 ? "He is ahead of you in this. Answer his blows, or the reckoning will be staked his way."
                       : "Land more blows than he does with your own quiet tricks below, and you can name the day yourself."}
@@ -17647,11 +17661,11 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               <div className="panel" style={{padding:12}}>
                 <div className="flex items-center justify-between" style={{marginBottom:4}}>
                   <span className="tag tag-blood">What can be done quietly</span>
-                  <span className="rowval dim" style={{fontSize:12}}>
+                  <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>
                     {ready ? lawWord(S) : `not for ${6 - (S.week - (S.flags.gambitWeek||0))} weeks`}
                   </span>
                 </div>
-                <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:6}}>
+                <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:6}}>
                   They have been doing all of this to you since the day you opened. None of it is legal and all of it is ordinary.
                 </div>
                 {GAM_KEYS.map(k=>{ const G = GAMBITS[k], cost = G.cost(S);
@@ -17659,17 +17673,17 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   return (
                     <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:7,marginTop:7}}>
                       <div className="flex items-center justify-between gap-2">
-                        <span className="rowname" style={{fontSize:14.5}}>{G.name}</span>
-                        <span className="rowval gold" style={{fontSize:13}}>{cost}d</span>
+                        <span className="rowname" style={{fontSize:"var(--fs-md)"}}>{G.name}</span>
+                        <span className="rowval gold" style={{fontSize:"var(--fs-base)"}}>{cost}d</span>
                       </div>
-                      <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:1}}>{G.blurb}</div>
-                      <div style={{fontSize:12.5,marginTop:2,color:p>=0.55?"#9aa86a":p>=0.35?"#d8ac5f":"#d96f5d"}}>
+                      <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:1}}>{G.blurb}</div>
+                      <div style={{fontSize:"var(--fs-sm)",marginTop:2,color:p>=0.55?"#9aa86a":p>=0.35?"#d8ac5f":"#d96f5d"}}>
                         about {Math.round(p*100)} in a hundred{gambitDone(S,k)>0 ? ` · you have tried this ${gambitDone(S,k)} time${gambitDone(S,k)>1?"s":""}` : ""}
                       </div>
                       {ready && S.gold >= cost && (
                         <div className="flex gap-2" style={{marginTop:5}}>
                           {rivals.map(h=>(
-                            <button key={h.name} className="btn btn-ghost" style={{flex:1,padding:"10px 6px",fontSize:11}}
+                            <button key={h.name} className="btn btn-ghost" style={{flex:1,padding:"10px 6px",fontSize:"var(--fs-micro)"}}
                               onClick={()=>setAsk({ title:G.name, danger:true, confirm:`Against ${h.name} · ${cost}d`,
                                 text:`${G.blurb} About ${Math.round(p*100)} in a hundred it works. If it does not, it will be known that you tried, and the magistrate is ${lawWord(S)}.`,
                                 run:()=>mut(d=>{ runGambit(d, k, h.name); }) })}>
@@ -17689,24 +17703,24 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               <div className="panel" style={{padding:12,borderColor:col}}>
                 <div className="flex items-center justify-between" style={{marginBottom:3}}>
                   <span className="tag tag-gold">Your word is given</span>
-                  <span className="rowval" style={{fontSize:12.5,color:col}}>
+                  <span className="rowval" style={{fontSize:"var(--fs-sm)",color:col}}>
                     {pactOwed(S)} owed · {pactLeft(S)} weeks
                   </span>
                 </div>
-                <div className="disp" style={{fontSize:14.5,color:"#e8d092"}}>{P.name}</div>
+                <div className="disp" style={{fontSize:"var(--fs-md)",color:"#e8d092"}}>{P.name}</div>
                 <Bar v={p.done/p.need*100} label="" color={`linear-gradient(90deg,#4a3a24,${col})`}/>
-                <div className="dim" style={{fontSize:13.5,marginTop:3}}>
+                <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:3}}>
                   {p.done} of {p.need} given{p.rate ? `, ${p.rate}d a card` : ""}{p.bonus ? `, ${p.bonus}d at the end of it` : ""}.
                   {P.exclusive ? " Nobody else's games in Capua until it is done." : ""}
                 </div>
-                {pace==="impossible" && <div className="blood" style={{fontSize:13.5,marginTop:3}}>
+                {pace==="impossible" && <div className="blood" style={{fontSize:"var(--fs-base)",marginTop:3}}>
                   There are not enough weeks left. Whatever happens now, it will be remembered as broken.
                 </div>}
               </div>
             ); })()}
           <div className="panel" style={{padding:14}}>
-            <div className="disp" style={{fontSize:15,fontWeight:700,letterSpacing:".04em",marginBottom:3}}>TO THE SAND</div>
-            <div className="dim" style={{fontSize:14.5,marginBottom:11}}>
+            <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,letterSpacing:".04em",marginBottom:3}}>TO THE SAND</div>
+            <div className="dim" style={{fontSize:"var(--fs-md)",marginBottom:11}}>
               {(()=>{ const n=((S.games&&S.games.offers)||[]).length;
                 if(n && S.games.mine) return `Your own games are on — ${S.games.festival.toLowerCase()}, ${n} ${n===1?"bout":"bouts"} on your sand, and the city is watching to see what you put on it.`;
                 return `The pits are always open.${n? ` ${n} ${n===1?"card":"cards"} at the games this week.` : S.fame<TIERS[1].fame ? " Win to 25 fame in the pits and the editors will start sending cards." : " No games this week."}`; })()}
@@ -17715,13 +17729,13 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               onClick={()=>{ setArenaPick(null); setArenaStep(0); setFGid(null); setPairSel([]); setArenaWiz(true); }}>
               Choose a bout ›
             </button>
-            {eligible.length===0 && <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:8}}>No one is fit to fight this week — rest and heal, then come back.</div>}
+            {eligible.length===0 && <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:8}}>No one is fit to fight this week — rest and heal, then come back.</div>}
           </div>
 
           {S.fame>=MUNUS_SCALES.modest.gate && !S.travel && !S.city && (
             <div className="panel" style={{padding:14,borderColor:"#6d5426"}}>
-              <div className="disp" style={{fontSize:15,fontWeight:700,letterSpacing:".04em",marginBottom:3}}>GIVE THE CITY GAMES</div>
-              <div className="dim" style={{fontSize:14.5,marginBottom:11}}>
+              <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,letterSpacing:".04em",marginBottom:3}}>GIVE THE CITY GAMES</div>
+              <div className="dim" style={{fontSize:"var(--fs-md)",marginBottom:11}}>
                 {munusReady(S)
                   ? "You need not wait for an editor. Commission your own munus — set the occasion and the card, then host it for the glory or sell the bill to an editor."
                   : `Capua has had its fill of your generosity for now. ${munusWait(S)} week${munusWait(S)===1?"":"s"} before you can put on games again.`}
@@ -17736,21 +17750,21 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             if(S.travel) return (
               <div className="panel" style={{padding:13,borderColor:"#6d5426"}}>
                 <div className="tag tag-gold" style={{marginBottom:5}}>On the road</div>
-                <div style={{fontSize:15.5}}>
+                <div style={{fontSize:"var(--fs-lg)"}}>
                   {S.travel.home ? "Back up the road to Capua" : `South for ${CITIES[S.travel.to].name}`} — {S.travel.weeks} week{S.travel.weeks===1?"":"s"}.
                 </div>
-                <div className="dim" style={{fontSize:14,fontStyle:"italic",marginTop:3}}>Wagons, tolls, and nothing to fight for until you arrive.</div>
+                <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:3}}>Wagons, tolls, and nothing to fight for until you arrive.</div>
               </div>
             );
             if(C) return (
               <div className="panel" style={{padding:13,borderColor:"#6d5426"}}>
                 <div className="flex items-center justify-between" style={{marginBottom:5}}>
                   <span className="tag tag-gold">{C.name}</span>
-                  <span className="rowval dim" style={{fontSize:12.5}}>known here {Math.round(knownIn(S,S.city))}/100</span>
+                  <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>known here {Math.round(knownIn(S,S.city))}/100</span>
                 </div>
-                <div className="dim" style={{fontSize:14.5,fontStyle:"italic"}}>{C.crowd}</div>
+                <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>{C.crowd}</div>
                 <Bar v={knownIn(S,S.city)} label="local standing" color="linear-gradient(90deg,#6d5426,#d8ac5f)"/>
-                <div className="dim" style={{fontSize:13.5,marginTop:5}}>
+                <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:5}}>
                   Capua counts for nothing on this sand — the editor here weighs what he has seen with his own eyes. Purses ×{C.purse.toFixed(2)}.
                 </div>
                 <button className="btn btn-ghost" style={{width:"100%",marginTop:8}} onClick={goHome}>Break camp and go home</button>
@@ -17758,17 +17772,17 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             );
             return (
               <div className="panel" style={{padding:13}}>
-                <div className="disp" style={{fontSize:14,fontWeight:700,marginBottom:3}}>THE CIRCUIT</div>
-                <div className="dim" style={{fontSize:14.5,fontStyle:"italic",marginBottom:8}}>
+                <div className="disp" style={{fontSize:"var(--fs-md)",fontWeight:700,marginBottom:3}}>THE CIRCUIT</div>
+                <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>
                   Three towns down the bay who have never heard of you. Nothing you have built in Capua travels — but neither do your grudges.
                 </div>
                 {bayHolder(S) && (
                   <div className="panel" style={{padding:10,marginBottom:8,background:"#2a1512",borderColor:"#7c2a22"}}>
                     <div className="tag tag-blood" style={{marginBottom:3}}>House {bayHolder(S)} has the bay</div>
-                    <div style={{fontSize:14.5}}>
+                    <div style={{fontSize:"var(--fs-md)"}}>
                       {baySince(S)} weeks of taking every card down the coast while your wagons stood in the yard.
                     </div>
-                    <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:3}}>
+                    <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>
                       Turn up anywhere down there and it stops being theirs. Stay home and Capua keeps noticing.
                     </div>
                   </div>
@@ -17777,37 +17791,37 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   return (
                     <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:9,marginTop:9}}>
                       <div className="flex items-center justify-between gap-2">
-                        <span className="disp" style={{fontSize:13.5,color:knownIn(S,k)?"#e8d092":"#b09b7d"}}>{c.name}</span>
-                        <span className="rowval dim" style={{fontSize:12.5}}>{c.travel}wk · purses ×{c.purse.toFixed(2)}</span>
+                        <span className="disp" style={{fontSize:"var(--fs-base)",color:knownIn(S,k)?"#e8d092":"#b09b7d"}}>{c.name}</span>
+                        <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{c.travel}wk · purses ×{c.purse.toFixed(2)}</span>
                       </div>
-                      <div className="dim" style={{fontSize:14,fontStyle:"italic",marginTop:2}}>{c.blurb}</div>
+                      <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:2}}>{c.blurb}</div>
                       {/* the town's own politics: who runs its games, what it wants, whose sand it is */}
                       {(()=>{ const P = (S.bayPol||{})[k], CU = CITY_CUSTOM[k]; if(!CU) return null;
                         return (
                           <div className="panel" style={{padding:9,marginTop:6,background:"#1c1610",borderColor:"#3e2f1f"}}>
                             <div className="flex items-center justify-between gap-2">
                               <span className="tag">{CU.name}</span>
-                              {P && <span className="rowval" style={{fontSize:12,color:P.favor>=58?"#9aa86a":P.favor>=38?"#cfc0a0":"#d8ac5f"}}>{cityFavWord(P.favor)}</span>}
+                              {P && <span className="rowval" style={{fontSize:"var(--fs-sm)",color:P.favor>=58?"#9aa86a":P.favor>=38?"#cfc0a0":"#d8ac5f"}}>{cityFavWord(P.favor)}</span>}
                             </div>
-                            <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:3}}>{CU.say}</div>
-                            <div style={{fontSize:13,marginTop:4,color:"#c0b492"}}>{CU.keep}</div>
+                            <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>{CU.say}</div>
+                            <div style={{fontSize:"var(--fs-base)",marginTop:4,color:"#c0b492"}}>{CU.keep}</div>
                             {P ? (<>
-                              <div className="dim" style={{fontSize:12.5,marginTop:4}}>{P.mag} puts on the games here.</div>
-                              <div style={{fontSize:12.5,color:P.grudge>=45?"#d96f5d":"#8d7e65"}}>
+                              <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:4}}>{P.mag} puts on the games here.</div>
+                              <div style={{fontSize:"var(--fs-sm)",color:P.grudge>=45?"#d96f5d":"#8d7e65"}}>
                                 House {P.house} has always had this sand{P.grudge>=45?" — and wants you off it":P.grudge>=20?", and has noticed you":""}.
                               </div>
                             </>) : (
-                              <div className="dim" style={{fontSize:12.5,marginTop:4}}>You have never set foot in it.</div>
+                              <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:4}}>You have never set foot in it.</div>
                             )}
                           </div>
                         ); })()}
                       {knownIn(S,k)>0 ? (<>
-                        <div className="dim" style={{fontSize:13}}>They know you there: {Math.round(knownIn(S,k))}/100 — tier {cityTier(S,k)} cards.</div>
-                        {!S.city && !S.travel && <div style={{fontSize:13,color:"#d8ac5f"}}>
+                        <div className="dim" style={{fontSize:"var(--fs-base)"}}>They know you there: {Math.round(knownIn(S,k))}/100 — tier {cityTier(S,k)} cards.</div>
+                        {!S.city && !S.travel && <div style={{fontSize:"var(--fs-base)",color:"#d8ac5f"}}>
                           Bleeding away at {BAY_DECAY.toFixed(2)} a week while you are not in it.
                         </div>}
                       </>) : (
-                        <div className="dim" style={{fontSize:13}}>
+                        <div className="dim" style={{fontSize:"var(--fs-base)"}}>
                           A stranger there. A man of yours who goes down is spared about {bayWorth(S,k).strangerMercy}% of the time, against every time at home.
                         </div>
                       )}
@@ -17825,33 +17839,33 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               <Sect key={k} title={`The ${ST.name.toLowerCase()}`}
                 note={s ? `${s.name} · ${s.wage}d/wk` : !lvl ? "no room for one" : "the post is empty"}>
                 {!lvl ? (
-                  <div className="dim" style={{fontSize:14.5,fontStyle:"italic"}}>
+                  <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
                     You have no {ST.room==="valetudinarium"?"infirmary":"armoury"} for him to work in. Build the room first.
                   </div>
                 ) : s ? (<>
-                  <div className="disp" style={{fontSize:15,color:"#e8d092"}}>{s.name} <span className="dim" style={{fontSize:13}}>of {s.origin}</span></div>
+                  <div className="disp" style={{fontSize:"var(--fs-lg)",color:"#e8d092"}}>{s.name} <span className="dim" style={{fontSize:"var(--fs-base)"}}>of {s.origin}</span></div>
                   <Bar v={s.skill} label="skill" color="linear-gradient(90deg,#4a3a24,#c99a4b)"/>
-                  <div className="dim" style={{fontSize:14,marginTop:4}}>
+                  <div className="dim" style={{fontSize:"var(--fs-md)",marginTop:4}}>
                     {k==="medicus"
                       ? `Wounds close ${Math.round((medicusMult(S)-1)*100)}% faster than the room alone, and a wound is ${Math.round(medicusGuard(S)*100)}% less likely to set badly.`
                       : `Steel costs ${Math.round((1-armourerCut(S))*100)}% less, wears ${Math.round((1-armourerWear(S))*100)}% slower, and mends ${Math.round((armourerMend(S)-1)*100)}% faster.`}
                   </div>
-                  <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:3}}>
+                  <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>
                     {s.weeks} weeks in the house. He wants {ST.wants}.
                   </div>
                   <button className="btn btn-ghost" style={{width:"100%",marginTop:7}} onClick={()=>letStaffGo(k)}>Let him go</button>
                 </>) : (<>
-                  <div className="dim" style={{fontSize:14.5,fontStyle:"italic",marginBottom:7}}>{ST.blurb}</div>
+                  <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:7}}>{ST.blurb}</div>
                   {mkt.length===0
-                    ? <div className="dim" style={{fontSize:14}}>Nobody is looking for a place this week.</div>
+                    ? <div className="dim" style={{fontSize:"var(--fs-md)"}}>Nobody is looking for a place this week.</div>
                     : mkt.map(c=>(
                         <button key={c.id} className="optrow" style={{marginBottom:6,padding:10}}
                           disabled={S.gold<c.fee} onClick={()=>hireStaff(k,c.id)}>
                           <div className="flex items-center justify-between gap-2">
-                            <span className="disp" style={{fontSize:13,color:"#e8d092"}}>{c.name} <span className="dim">of {c.origin}</span></span>
-                            <span className="rowval gold" style={{fontSize:12.5}}>{c.fee}d · {c.wage}d/wk</span>
+                            <span className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d092"}}>{c.name} <span className="dim">of {c.origin}</span></span>
+                            <span className="rowval gold" style={{fontSize:"var(--fs-sm)"}}>{c.fee}d · {c.wage}d/wk</span>
                           </div>
-                          <div className="dim" style={{fontSize:13.5,marginTop:2}}>
+                          <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2}}>
                             {c.skill>=68?"Very good, and knows it." : c.skill>=50?"Sound enough." : "Cheap, and it will show."} · skill {c.skill}
                           </div>
                         </button>
@@ -17859,7 +17873,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 </>)}
               </Sect>
             ); })}
-          <div className="dim" style={{fontSize:14,fontStyle:"italic"}}>The slaver's block. Fresh stock every third week. Roster holds 8 men.</div>
+          <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>The slaver's block. Fresh stock every third week. Roster holds 8 men.</div>
           {(()=>{ const here = [...new Set((S.market||[]).map(g=>g.slaver).filter(Boolean))];
             if(!here.length) return null;
             return (
@@ -17868,12 +17882,12 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   return (
                     <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:6,marginTop:6}}>
                       <div className="flex items-center justify-between gap-2">
-                        <span className="rowname" style={{fontSize:14.5}}>{S2.full}</span>
-                        <span className="rowval dim" style={{fontSize:12,whiteSpace:"nowrap"}}>{slaverWord(S,k)}</span>
+                        <span className="rowname" style={{fontSize:"var(--fs-md)"}}>{S2.full}</span>
+                        <span className="rowval dim" style={{fontSize:"var(--fs-sm)",whiteSpace:"nowrap"}}>{slaverWord(S,k)}</span>
                       </div>
-                      <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:1}}>{S2.line}</div>
+                      <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:1}}>{S2.line}</div>
                       {(x.bought>0 || x.burned>0) && (
-                        <div style={{fontSize:12.5,marginTop:2,color:x.burned>=2?"#d96f5d":"#8f7e62"}}>
+                        <div style={{fontSize:"var(--fs-sm)",marginTop:2,color:x.burned>=2?"#d96f5d":"#8f7e62"}}>
                           {x.bought} bought from him{x.burned>0 ? `, ${x.burned} not what he said` : ""}
                           {slaverPrice(S,k)<1 ? ` · prices you ${Math.round((1-slaverPrice(S,k))*100)}% keener` : slaverPrice(S,k)>1 ? ` · ${Math.round((slaverPrice(S,k)-1)*100)}% dearer for you` : ""}
                         </div>
@@ -17890,18 +17904,18 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               <div className="panel" style={{padding:13,borderColor:"#c99a4b",background:"#1c1610"}}>
                 <div className="flex items-center justify-between" style={{marginBottom:4}}>
                   <span className="tag tag-gold">✦ The whole town has come to look</span>
-                  <span className="rowval dim" style={{fontSize:12.5}}>{left>0?`${left} week${left===1?"":"s"} to decide`:"today or not at all"}</span>
+                  <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{left>0?`${left} week${left===1?"":"s"} to decide`:"today or not at all"}</span>
                 </div>
-                <div className="disp" style={{fontSize:17,color:"#e8d092"}}>{fullName(p)}</div>
-                <div className="dim" style={{fontSize:13.5,marginTop:1}}>
+                <div className="disp" style={{fontSize:"var(--fs-xl)",color:"#e8d092"}}>{fullName(p)}</div>
+                <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:1}}>
                   {p.origin} · {p.cls} · {p.wins}–{p.losses}{p.kills?`, ${p.kills} killed`:""} · {rnd(p.pfame)} renown · {p.age}
                 </div>
-                <div style={{fontSize:15,fontStyle:"italic",marginTop:5}}>{p.paragon.tale}</div>
+                <div style={{fontSize:"var(--fs-lg)",fontStyle:"italic",marginTop:5}}>{p.paragon.tale}</div>
                 <div className="flex items-center justify-between gap-2" style={{marginTop:8}}>
-                  <span className="rowname" style={{fontSize:15}}>They want</span>
-                  <span className="rowval gold" style={{fontSize:16}}>{p.price}d</span>
+                  <span className="rowname" style={{fontSize:"var(--fs-lg)"}}>They want</span>
+                  <span className="rowval gold" style={{fontSize:"var(--fs-xl)"}}>{p.price}d</span>
                 </div>
-                <div className="dim" style={{fontSize:13.5}}>
+                <div className="dim" style={{fontSize:"var(--fs-base)"}}>
                   You have {Math.round(S.gold)} in the box{R2.short>0 && ` — ${R2.short} short`}.
                 </div>
                 {canNow ? (
@@ -17912,10 +17926,10 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   <>
                     <div className="panel" style={{padding:10,marginTop:8,background:"#2a1512",borderColor:"#7c2a22"}}>
                       <div className="tag tag-blood" style={{marginBottom:3}}>Or take the house apart</div>
-                      <div className="dim" style={{fontSize:13.5}}>
+                      <div className="dim" style={{fontSize:"var(--fs-base)"}}>
                         {L.steelN} pieces of steel off the racks, {L.debtN} debt{L.debtN===1?"":"s"} sold at a discount, and {L.menN} men led out through the gate — about <span className="gold">{L.total}d</span>.
                       </div>
-                      <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:3}}>
+                      <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>
                         {canAfter ? "It would be enough. Every man left will remember the morning it happened." : `It would still leave you ${p.price - S.gold - L.total} short, which settles it.`}
                       </div>
                     </div>
@@ -17934,10 +17948,10 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               <div className="panel" style={{padding:12,borderColor:"#7c2a22",background:"#241511"}}>
                 <div className="flex items-center justify-between">
                   <span className="tag tag-blood">A lot of captives</span>
-                  <span className="gold" style={{fontSize:14.5}}>{lot.price}d the lot</span>
+                  <span className="gold" style={{fontSize:"var(--fs-md)"}}>{lot.price}d the lot</span>
                 </div>
-                <div style={{fontSize:14.5,marginTop:4}}>{lot.n} men off the legions' chains, sold in a string while the war in the south drags on.</div>
-                <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:3}}>
+                <div style={{fontSize:"var(--fs-md)",marginTop:4}}>{lot.n} men off the legions' chains, sold in a string while the war in the south drags on.</div>
+                <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>
                   Rough, unlooked-at, and cheap by the head — buy them sight-unseen and see what the string is worth once they are yours. Some will carry hidden hurts.
                 </div>
                 <button className="btn" style={{width:"100%",marginTop:8}} disabled={!afford || space<=0}
@@ -17950,8 +17964,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           {S.market.filter(g=>!g.paragon).map(g=>(
             <div key={g.id} className="panel" style={{padding:12,borderColor:g.contested?"#8a6a2c":isAuctor(g)?"#5a7a8a":g.legend?"#8a6a2c":undefined}}>
               <div className="flex items-center justify-between">
-                <div className="disp" style={{fontSize:15,fontWeight:700}}>{g.name}</div>
-                <span className="gold" style={{fontSize:15}}>{g.price}d</span>
+                <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700}}>{g.name}</div>
+                <span className="gold" style={{fontSize:"var(--fs-lg)"}}>{g.price}d</span>
               </div>
               <div className="flex items-center gap-1" style={{flexWrap:"wrap",margin:"5px 0"}}>
                 <span className="tag">{g.cls}</span><span className="tag">{g.origin}</span>
@@ -17976,21 +17990,21 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 {(g.scars||[]).length>0 && <span className="tag">{g.scars.length} scar{g.scars.length>1?"s":""}</span>}
               </div>
               {g.story && STORIES[g.story] && (
-                <div style={{fontSize:13.5,fontStyle:"italic",color:"#bfa8c8",marginBottom:3}}>They say {PR(g).he} is {STORIES[g.story].line}.</div>
+                <div style={{fontSize:"var(--fs-base)",fontStyle:"italic",color:"#bfa8c8",marginBottom:3}}>They say {PR(g).he} is {STORIES[g.story].line}.</div>
               )}
               {(()=>{ const lvl = readLevel(S, g), src2 = lvl>=1 ? g : (g.shown || g);
                 return (<>
                   {g.pitch && !g.scouted && (
-                    <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:3}}>{g.pitch}</div>
+                    <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:3}}>{g.pitch}</div>
                   )}
                   {/* what a great house comes down here for: somebody else's finished man */}
                   {g.soldOn && (
-                    <div style={{fontSize:13.5,marginBottom:3,color:"#d8ac5f"}}>
+                    <div style={{fontSize:"var(--fs-base)",marginBottom:3,color:"#d8ac5f"}}>
                       Out of {g.soldOn} — {g.wins} wins behind him and {rnd(g.pfame)} renown that came with him.
                       <span className="dim"> There is very little left to teach a man of {g.age}; what you are buying is the years somebody else spent.</span>
                     </div>
                   )}
-                  <div style={{fontSize:14.5,fontStyle:"italic",color:g.legend?"#e0bd72":"#cfc0a0"}}>
+                  <div style={{fontSize:"var(--fs-md)",fontStyle:"italic",color:g.legend?"#e0bd72":"#cfc0a0"}}>
                     {g.legend ? "There is something in this one's eyes the arena has not yet seen."
                      : lvl>=2 ? `Assessed: ${potentialWord(g.potential,g)}. At ${g.age}, ${ageWord(g.age,g)}.`
                      : lvl>=1 ? `Your doctore walks round ${PR(g).him} once. ${potentialWord(g.potential,g)}, he thinks. At ${g.age}, ${ageWord(g.age,g)}.`
@@ -18000,15 +18014,15 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     {STATS.map(k=>{ const [lo,hi] = bandOf(src2[k], lvl);
                       return (
                         <div key={k}>
-                          <div className="dim" style={{fontSize:12}}>{STAT_NAMES[k].slice(0,4)}</div>
-                          <div style={{fontSize:14, color: lvl>=2 ? "#e8d9b8" : "#c0b492"}}>
+                          <div className="dim" style={{fontSize:"var(--fs-sm)"}}>{STAT_NAMES[k].slice(0,4)}</div>
+                          <div style={{fontSize:"var(--fs-md)", color: lvl>=2 ? "#e8d9b8" : "#c0b492"}}>
                             {lvl>=2 ? rnd(g[k]) : `${lo}–${hi}`}
                           </div>
                         </div>
                       ); })}
                   </div>
                   {lvl<2 && (
-                    <div className="dim" style={{fontSize:13.5,fontStyle:"italic"}}>
+                    <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>
                       {lvl>=1
                         ? (g.flaw ? `${FLAWS[g.flaw].hint} Your doctore would want a closer look.` : "Your doctore finds nothing to object to, which is not the same as a guarantee.")
                         : `Nobody here has looked at ${PR(g).him} properly. The numbers are the seller's.`}
@@ -18018,9 +18032,9 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     <div className="panel" style={{padding:9,marginTop:6,background:"#1c1610",
                       borderColor: g.flaw ? "#7c2a22" : "#5a6a35"}}>
                       {g.flaw
-                        ? <><span className="blood" style={{fontSize:14.5}}>{FLAWS[g.flaw].name}.</span>
-                            <span className="dim" style={{fontSize:14}}> {PR(g).He} {FLAWS[g.flaw].tell}.</span></>
-                        : <span className="laurel" style={{fontSize:14.5}}>Nothing hidden. {PR(g).He} is what {PR(g).he} appears to be.</span>}
+                        ? <><span className="blood" style={{fontSize:"var(--fs-md)"}}>{FLAWS[g.flaw].name}.</span>
+                            <span className="dim" style={{fontSize:"var(--fs-md)"}}> {PR(g).He} {FLAWS[g.flaw].tell}.</span></>
+                        : <span className="laurel" style={{fontSize:"var(--fs-md)"}}>Nothing hidden. {PR(g).He} is what {PR(g).he} appears to be.</span>}
                     </div>
                   )}
                   {!g.scouted && !isAuctor(g) && (()=>{ const fee = SCOUT_FEE(S,g);
@@ -18031,11 +18045,11 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 </>); })()}
               {isAuctor(g) && (
                 <div className="panel" style={{padding:9,marginTop:6,background:"#1c1610",borderColor:"#5a7a8a"}}>
-                  <div style={{fontSize:14}}>Not for sale — {PR(g).he} is free, and offering. {g.auctor.fee}d in hand, {g.auctor.wage}d a week, {g.auctor.bouts} bouts, then {PR(g).he} walks.</div>
-                  <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:3}}>{g.auctor.why}</div>
+                  <div style={{fontSize:"var(--fs-md)"}}>Not for sale — {PR(g).he} is free, and offering. {g.auctor.fee}d in hand, {g.auctor.wage}d a week, {g.auctor.bouts} bouts, then {PR(g).he} walks.</div>
+                  <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>{g.auctor.why}</div>
                 </div>
               )}
-              <div className="grid grid-cols-3 gap-2" style={{margin:"8px 0 2px",fontSize:12}}>
+              <div className="grid grid-cols-3 gap-2" style={{margin:"8px 0 2px",fontSize:"var(--fs-sm)"}}>
                 {STATS.map(k=>(
                   <div key={k}><span className="dim">{STAT_NAMES[k].slice(0,4)}</span><Bar v={g[k]} color={CLASSES[g.cls].key.includes(k)?BRONZE:"#6a5a40"}/></div>
                 ))}
@@ -18070,16 +18084,18 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             <div className="flex items-center gap-3" style={{marginBottom:11}}>
               <Crest crest={S.crest} size={54}/>
               <div>
-                <div className="disp" style={{fontSize:15,color:"#e8d092"}}>{S.name}</div>
-                {S.crest && S.crest.motto && <div style={{fontSize:14.5,fontStyle:"italic",color:"#cfc0a0"}}>“{S.crest.motto}”</div>}
-                <div className="dim" style={{fontSize:12.5,marginTop:2}}>Your men fight in these colours — the plume they wear and the face of their shields.</div>
+                <div className="disp" style={{fontSize:"var(--fs-lg)",color:"#e8d092"}}>{S.name}</div>
+                {S.crest && S.crest.motto && <div style={{fontSize:"var(--fs-md)",fontStyle:"italic",color:"#cfc0a0"}}>“{S.crest.motto}”</div>}
+                <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>Your men fight in these colours — the plume they wear and the face of their shields.</div>
               </div>
             </div>
             <div className="tag" style={{marginBottom:6}}>The field</div>
             <div className="flex gap-2" style={{flexWrap:"wrap",marginBottom:11}}>
               {HOUSE_COLOURS.map(([hex,nm])=>(
                 <button key={hex} aria-label={nm} title={nm} onClick={()=>setCrest({c1:hex})}
-                  style={{width:30,height:30,borderRadius:8,background:hex,cursor:"pointer",padding:0,
+                  /* a thirty-pixel swatch is a thirty-pixel miss. The grid still wraps
+                     the same way at forty. */
+                  style={{width:40,height:40,borderRadius:8,background:hex,cursor:"pointer",padding:0,
                     border:(S.crest&&S.crest.c1===hex)?"2px solid #e8d092":"1px solid #3e2f1f"}}/>
               ))}
             </div>
@@ -18087,7 +18103,9 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             <div className="flex gap-2" style={{flexWrap:"wrap",marginBottom:11}}>
               {HOUSE_COLOURS.map(([hex,nm])=>(
                 <button key={hex} aria-label={nm} title={nm} onClick={()=>setCrest({c2:hex})}
-                  style={{width:30,height:30,borderRadius:8,background:hex,cursor:"pointer",padding:0,
+                  /* a thirty-pixel swatch is a thirty-pixel miss. The grid still wraps
+                     the same way at forty. */
+                  style={{width:40,height:40,borderRadius:8,background:hex,cursor:"pointer",padding:0,
                     border:(S.crest&&S.crest.c2===hex)?"2px solid #e8d092":"1px solid #3e2f1f"}}/>
               ))}
             </div>
@@ -18111,34 +18129,34 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           </Sect>
 
           <Sect title="The house as a name" note={acclaimWord(acclaimOf(S))}>
-            <div className="dim" style={{fontSize:14.5,fontStyle:"italic",marginBottom:8}}>
+            <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>
               What the street makes of you — not the editors, not the good families. The wine-shops, the walls by the gate, the potters' stalls. Won by famous men, spectacle, and the primus; it cools if you go quiet.
             </div>
             <Bar v={acclaimOf(S)} label="the name" color="linear-gradient(90deg,#4a3a24,#e0bd72)"/>
-            <div className="flex items-center justify-between" style={{fontSize:13.5,marginTop:4}}>
+            <div className="flex items-center justify-between" style={{fontSize:"var(--fs-base)",marginTop:4}}>
               <span className="disp" style={{color:"#e8d092"}}>{acclaimTier(S).name}</span>
               <span className="rowval dim">{Math.round(acclaimOf(S))}/100</span>
             </div>
-            <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:3}}>{acclaimTier(S).blurb}</div>
+            <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>{acclaimTier(S).blurb}</div>
 
             {(()=>{ const walls = activeG(S).filter(g=>g.graffiti);
               return walls.length>0 && (<>
                 <div className="tag tag-gold" style={{margin:"11px 0 4px"}}>Names on the walls</div>
                 {walls.map(g=>(
                   <div key={g.id} style={{borderTop:"1px dotted #33271a",padding:"5px 0"}}>
-                    <div className="rowname" style={{fontSize:14,color:"#e8d092"}}>{g.name}</div>
-                    <div className="dim" style={{fontSize:13,fontStyle:"italic"}}>“{g.graffiti.line}”</div>
+                    <div className="rowname" style={{fontSize:"var(--fs-md)",color:"#e8d092"}}>{g.name}</div>
+                    <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>“{g.graffiti.line}”</div>
                   </div>
                 ))}
               </>); })()}
 
             {merchLive(S) ? (<>
               <div className="tag tag-gold" style={{margin:"11px 0 4px"}}>Figures on the shelves</div>
-              <div className="flex items-center justify-between" style={{fontSize:14}}>
+              <div className="flex items-center justify-between" style={{fontSize:"var(--fs-md)"}}>
                 <span>The potters' cut</span>
                 <span className="rowval gold">{merchWeekly(S)}d a week</span>
               </div>
-              <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:2}}>
+              <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:2}}>
                 {S.brand&&S.brand.licensed ? "Licensed wide — lamps and figures in half the houses of Capua." : "Made only at the good workshop by the forum."}
                 {S.brand&&S.brand.earned>0 ? ` ${S.brand.earned}d earned so far.` : ""}
               </div>
@@ -18146,7 +18164,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 <button className="btn" style={{width:"100%",marginTop:8}} onClick={openLicence}>Hear the potter's offer</button>
               )}
             </>) : (
-              <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:9}}>
+              <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:9}}>
                 Make a bigger name — a famous man or two, a run of good spectacle — and the potters will come wanting to sell it.
               </div>
             )}
@@ -18159,28 +18177,28 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             <Sect title="The blood of the house" note={w ? `${kids.filter(c=>!c.wed).length} at home` : marryReady(S) ? "a match awaits" : "no family yet"}>
               {w ? (<>
                 <div className="flex items-center justify-between gap-2" style={{marginBottom:6}}>
-                  <span className="disp" style={{fontSize:14,color:"#d9c0e0"}}>{w.name}</span>
-                  <span className="rowval dim" style={{fontSize:12}}>of {w.family} · your wife</span>
+                  <span className="disp" style={{fontSize:"var(--fs-md)",color:"#d9c0e0"}}>{w.name}</span>
+                  <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>of {w.family} · your wife</span>
                 </div>
-                {kids.length===0 && <div className="dim" style={{fontSize:14,fontStyle:"italic"}}>No children yet. The house waits.</div>}
+                {kids.length===0 && <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>No children yet. The house waits.</div>}
                 {kids.map(c=>{ const age=childAge(S,c); const heir = S.heir && S.heir.cid===c.id;
                   return (
                     <div key={c.id} style={{borderTop:"1px dotted #33271a",padding:"5px 0"}}>
                       <div className="flex items-center justify-between gap-2">
-                        <span className="rowname" style={{fontSize:14,color:heir?"#e8d092":undefined}}>{c.name}{heir?" · your heir":""}</span>
-                        <span className="rowval dim" style={{fontSize:12}}>{c.sex==="m"?"son":"daughter"} · {age} yr{c.wed?" · married out":""}</span>
+                        <span className="rowname" style={{fontSize:"var(--fs-md)",color:heir?"#e8d092":undefined}}>{c.name}{heir?" · your heir":""}</span>
+                        <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{c.sex==="m"?"son":"daughter"} · {age} yr{c.wed?" · married out":""}</span>
                       </div>
-                      {!c.wed && <div className="dim" style={{fontSize:12.5}}>{c.sex==="m"? UP(c) : age>=15?"of an age to be matched":"still at home"}{c.mentorId&&(()=>{ const m=S.gladiators.find(g=>g.id===c.mentorId); return m?` · at ${m.name}'s shoulder`:""; })()}</div>}
+                      {!c.wed && <div className="dim" style={{fontSize:"var(--fs-sm)"}}>{c.sex==="m"? UP(c) : age>=15?"of an age to be matched":"still at home"}{c.mentorId&&(()=>{ const m=S.gladiators.find(g=>g.id===c.mentorId); return m?` · at ${m.name}'s shoulder`:""; })()}</div>}
                     </div>
                   ); })}
-                <div className="dim" style={{fontSize:12.5,fontStyle:"italic",marginTop:7}}>A house with a wife in it runs a shade warmer, and a son raised in this yard becomes an heir worth more than whoever is left when you die.</div>
+                <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",marginTop:7}}>A house with a wife in it runs a shade warmer, and a son raised in this yard becomes an heir worth more than whoever is left when you die.</div>
               </>) : marryReady(S) ? (<>
-                <div className="dim" style={{fontSize:14,fontStyle:"italic",marginBottom:7}}>
+                <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:7}}>
                   A man alone at the head of a ludus leaves nothing behind but a ledger. Take a wife, and the house can make an heir of its own blood.
                 </div>
                 <button className="btn" style={{width:"100%"}} onClick={seekMatch}>Let it be known you are looking for a match</button>
               </>) : (
-                <div className="dim" style={{fontSize:14,fontStyle:"italic"}}>Climb a little higher — a name, or a heavier purse — and the matchmakers of Capua will come calling.</div>
+                <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>Climb a little higher — a name, or a heavier purse — and the matchmakers of Capua will come calling.</div>
               )}
             </Sect>
           ); })()}
@@ -18189,19 +18207,19 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
 
           {vView==="standing" && (<>
           <Sect title="Those Who Watch" note={`standing ${rnd(S.favor)}`} open>
-            {(S.patrons||[]).length===0 && <div className="dim" style={{fontSize:14.5,fontStyle:"italic"}}>No one of consequence has heard of you yet.</div>}
+            {(S.patrons||[]).length===0 && <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>No one of consequence has heard of you yet.</div>}
             {(S.patrons||[]).map(p=>{
               const w = p.want, item = w ? WANTS[w.kind] : null;
               const sub = w && w.gid ? S.gladiators.find(g=>g.id===w.gid) : null;
               return (
                 <div key={p.id} style={{borderTop:"1px dotted #33271a",paddingTop:9,marginTop:9}}>
                   <div className="flex items-center justify-between gap-2">
-                    <span className="disp" style={{fontSize:14,color:patronColor(p.favor)}}>{p.name}</span>
+                    <span className="disp" style={{fontSize:"var(--fs-md)",color:patronColor(p.favor)}}>{p.name}</span>
                     <span className="tag">{RANKS[p.rank].name}</span>
                   </div>
                   <div className="flex items-center justify-between gap-2" style={{margin:"4px 0 3px"}}>
-                    <span style={{fontSize:14,color:patronColor(p.favor)}}>{patronWord(p.favor)}</span>
-                    <span className="dim" style={{fontSize:12.5}}>
+                    <span style={{fontSize:"var(--fs-md)",color:patronColor(p.favor)}}>{patronWord(p.favor)}</span>
+                    <span className="dim" style={{fontSize:"var(--fs-sm)"}}>
                       {p.served>0 && `${p.served} favour${p.served>1?"s":""} kept`}{p.served>0&&p.slighted>0 && " · "}{p.slighted>0 && `${p.slighted} slighted`}
                     </span>
                   </div>
@@ -18212,11 +18230,11 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     <div className="panel" style={{padding:9,marginTop:7,background:"#1c1610",borderColor:"#5a4a2c"}}>
                       <div className="flex items-center justify-between gap-2" style={{marginBottom:3}}>
                         <span className="tag tag-gold">He asks</span>
-                        <span className="dim" style={{fontSize:12.5,whiteSpace:"nowrap"}}>{w.weeks} week{w.weeks===1?"":"s"} left</span>
+                        <span className="dim" style={{fontSize:"var(--fs-sm)",whiteSpace:"nowrap"}}>{w.weeks} week{w.weeks===1?"":"s"} left</span>
                       </div>
-                      <div style={{fontSize:14.5}}>{item.ask(S, p, sub)}</div>
+                      <div style={{fontSize:"var(--fs-md)"}}>{item.ask(S, p, sub)}</div>
                     </div>
-                  ) : <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:4}}>{RANKS[p.rank].blurb}</div>}
+                  ) : <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:4}}>{RANKS[p.rank].blurb}</div>}
                   {(()=>{ const F = FAVOURS[p.rank]; if(!F) return null;
                     const ready = favourReady(S, p), wait = favourWait(S, p);
                     return (
@@ -18224,9 +18242,9 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                         borderColor: ready ? "#c99a4b" : "#3e2f1f"}}>
                         <div className="flex items-center justify-between gap-2" style={{marginBottom:3}}>
                           <span className="tag" style={ready?{borderColor:"#c99a4b",color:"#e8d092"}:undefined}>{F.title}</span>
-                          <span className="rowval dim" style={{fontSize:12.5}}>{F.cost} standing</span>
+                          <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{F.cost} standing</span>
                         </div>
-                        <div className="dim" style={{fontSize:13.5,fontStyle:"italic"}}>{F.ask}</div>
+                        <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>{F.ask}</div>
                         <button className={`btn ${ready?"":"btn-ghost"}`} style={{width:"100%",marginTop:6}}
                           disabled={!ready} onClick={()=>askFavour(p.id)}>
                           {wait ? `He has done enough for now · ${wait} week${wait===1?"":"s"}`
@@ -18239,7 +18257,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 </div>
               );
             })}
-            <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:9}}>
+            <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:9}}>
               A patron kept warm leans on the editor when your man is in the sand. One left to go cold talks at the baths instead.
             </div>
           </Sect>
@@ -18251,31 +18269,31 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               saw a word of it. Same reckoning, same verdict, readable any week. */}
           {S.week > 20 && (()=>{ const c = closing(S), R2 = c.R2, V = verdictOf(c); return (
             <Sect title="The house so far" note={`${R2.years} year${R2.years===1?"":"s"}`}>
-              <div className="dim" style={{fontSize:13.5,marginBottom:6}}>
+              <div className="dim" style={{fontSize:"var(--fs-base)",marginBottom:6}}>
                 {R2.years} year{R2.years===1?"":"s"} · {S.week} weeks · fame {rnd(S.fame)}
                 {c.gen>1 && ` · ${c.gen} lanistae`}
                 {c.doctrine && ` · ${c.doctrine.name}`}
               </div>
-              <div className="grid grid-cols-3 gap-2" style={{fontSize:14.5}}>
-                <div><div className="dim" style={{fontSize:12.5}}>Served</div>{R2.served}</div>
-                <div><div className="dim" style={{fontSize:12.5}}>Bouts</div>{c.bouts}{c.bouts>0 && <span className="dim" style={{fontSize:12}}> · {c.winPc}%</span>}</div>
-                <div><div className="dim" style={{fontSize:12.5}}>Buried</div><span className="blood">{R2.lost}</span></div>
-                <div><div className="dim" style={{fontSize:12.5}}>Freed</div><span className="gold">{R2.freed}</span></div>
-                <div><div className="dim" style={{fontSize:12.5}}>Walked out</div>{R2.out}</div>
-                <div><div className="dim" style={{fontSize:12.5}}>Killed</div>{R2.k}</div>
+              <div className="grid grid-cols-3 gap-2" style={{fontSize:"var(--fs-md)"}}>
+                <div><div className="dim" style={{fontSize:"var(--fs-sm)"}}>Served</div>{R2.served}</div>
+                <div><div className="dim" style={{fontSize:"var(--fs-sm)"}}>Bouts</div>{c.bouts}{c.bouts>0 && <span className="dim" style={{fontSize:"var(--fs-sm)"}}> · {c.winPc}%</span>}</div>
+                <div><div className="dim" style={{fontSize:"var(--fs-sm)"}}>Buried</div><span className="blood">{R2.lost}</span></div>
+                <div><div className="dim" style={{fontSize:"var(--fs-sm)"}}>Freed</div><span className="gold">{R2.freed}</span></div>
+                <div><div className="dim" style={{fontSize:"var(--fs-sm)"}}>Walked out</div>{R2.out}</div>
+                <div><div className="dim" style={{fontSize:"var(--fs-sm)"}}>Killed</div>{R2.k}</div>
               </div>
               <div className="panel" style={{padding:11,marginTop:9,background:"#1c1610",borderColor:"#6d5426"}}>
-                <div className="disp" style={{fontSize:14.5,color:"#e8d092",marginBottom:3}}>{V.name}</div>
-                <div style={{fontSize:14.5}}>{V.say(c)}</div>
+                <div className="disp" style={{fontSize:"var(--fs-md)",color:"#e8d092",marginBottom:3}}>{V.name}</div>
+                <div style={{fontSize:"var(--fs-md)"}}>{V.say(c)}</div>
               </div>
               {c.best && c.best.wins>0 && (
-                <div style={{fontSize:14,borderTop:"1px dotted #33271a",paddingTop:6,marginTop:8}}>
+                <div style={{fontSize:"var(--fs-md)",borderTop:"1px dotted #33271a",paddingTop:6,marginTop:8}}>
                   <span className="dim">The best of them so far is </span>
                   {c.best.nick? `${c.best.name}, ${c.best.nick}` : c.best.name}
                   <span className="dim"> — {c.best.wins} won.</span>
                 </div>
               )}
-              <div className="dim" style={{fontSize:12.5,fontStyle:"italic",marginTop:7}}>
+              <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",marginTop:7}}>
                 Nothing is settled while the gate still opens. This is only where it stands.
               </div>
             </Sect>
@@ -18285,18 +18303,18 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             const stand = S.rise ? S.rise.standing : 0;
             return (
             <Sect title="Your Standing" note={rk.name} open={can}>
-              <div className="disp" style={{fontSize:15,color:"#e8d092"}}>{rk.name}</div>
-              <div className="dim" style={{fontSize:13.5,fontStyle:"italic",margin:"3px 0 9px"}}>{rk.blurb}</div>
+              <div className="disp" style={{fontSize:"var(--fs-lg)",color:"#e8d092"}}>{rk.name}</div>
+              <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",margin:"3px 0 9px"}}>{rk.blurb}</div>
               {riseOf(S)>0 && rk.perk && (
                 <div className="panel" style={{padding:9,marginBottom:10,background:"#171712",borderColor:"#3e4a30"}}>
                   <span className="tag" style={{color:"#a9c98a",borderColor:"#3e4a30"}}>What it buys</span>
-                  <div style={{fontSize:14,marginTop:3}}>{rk.perk}</div>
+                  <div style={{fontSize:"var(--fs-md)",marginTop:3}}>{rk.perk}</div>
                 </div>
               )}
               {nx ? (
                 <div className="panel" style={{padding:11,background:"#1c1610",borderColor:can?"#c99a4b":"#3e2f1f"}}>
                   <div className="flex items-center justify-between gap-2" style={{marginBottom:5}}>
-                    <span className="disp" style={{fontSize:13.5,color:can?"#e8d092":"#cfc0a0"}}>Next: {nx.name}</span>
+                    <span className="disp" style={{fontSize:"var(--fs-base)",color:can?"#e8d092":"#cfc0a0"}}>Next: {nx.name}</span>
                     <span className="tag">{nx.short}</span>
                   </div>
                   <div className="tag" style={{marginBottom:5}}>The town must grow used to you</div>
@@ -18306,7 +18324,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   {[["Renown", need.fame, rnd(S.fame), need.fameOk],
                     ["Patrons' favour", need.favor, rnd(S.favor), need.favorOk],
                     ["The price of the name", need.cost, rnd(S.gold), need.goldOk]].filter(r=>r[1]>0).map(([lbl,req,have,ok])=>(
-                    <div key={lbl} className="flex items-center justify-between gap-2" style={{fontSize:13.5,padding:"2px 0"}}>
+                    <div key={lbl} className="flex items-center justify-between gap-2" style={{fontSize:"var(--fs-base)",padding:"2px 0"}}>
                       <span style={{color:ok?"#a9c98a":"#cfc0a0"}}>{ok?"✓":"·"} {lbl}</span>
                       <span className="rowval dim" style={{color:ok?"#a9c98a":undefined}}>{have} / {req}</span>
                     </div>
@@ -18319,7 +18337,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 </div>
               ) : (
                 <div className="panel" style={{padding:11,background:"#1c1610",borderColor:"#c99a4b"}}>
-                  <div className="dim" style={{fontSize:14,fontStyle:"italic"}}>There is no higher rung. A slaver climbed all the way to Rome, and men will tell the story long after the sand forgets your name.</div>
+                  <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>There is no higher rung. A slaver climbed all the way to Rome, and men will tell the story long after the sand forgets your name.</div>
                 </div>
               )}
             </Sect>
@@ -18337,19 +18355,19 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             const doneCount = rungs.filter(r=>r.met || r.soft).length;
             return (
             <Sect title="The road to Rome" note={been ? `${romeTriumphs(S)?`${romeTriumphs(S)} taken`:`best ${romeBest(S)} of 3`}` : ready ? "Rome is calling" : `${rungs.filter(r=>r.met && !r.soft).length} of 3`} open={ready}>
-              <div className="dim" style={{fontSize:13.5,fontStyle:"italic",margin:"1px 0 9px"}}>
+              <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",margin:"1px 0 9px"}}>
                 {been
                   ? "You have stood on the imperial sand. The city keeps its own tablet on you now, and every return asks a greater name than the last."
                   : "The imperial games are the summit. There is a way up to them, and it runs through Capua's crown, a senator's favour, and a name loud enough to be heard in the capital."}
               </div>
               {rungs.map((r,i)=>(
                 <div key={i} style={{padding:"5px 0",borderTop:i?"1px dotted #26201a":undefined}}>
-                  <div style={{fontSize:14,color:r.met?"#a9c98a":"#cfc0a0"}}>{r.met?"✓":r.soft?"◦":"·"} {r.label}</div>
-                  <div className="dim" style={{fontSize:12.5,marginLeft:14,marginTop:1,overflowWrap:"anywhere"}}>{r.detail}</div>
+                  <div style={{fontSize:"var(--fs-md)",color:r.met?"#a9c98a":"#cfc0a0"}}>{r.met?"✓":r.soft?"◦":"·"} {r.label}</div>
+                  <div className="dim" style={{fontSize:"var(--fs-sm)",marginLeft:14,marginTop:1,overflowWrap:"anywhere"}}>{r.detail}</div>
                 </div>
               ))}
               <div className="panel" style={{padding:10,marginTop:9,background:"#1c1610",borderColor:ready?"#c99a4b":"#3e2f1f"}}>
-                <div style={{fontSize:14,color:ready?"#e8d092":"#cfc0a0"}}>
+                <div style={{fontSize:"var(--fs-md)",color:ready?"#e8d092":"#cfc0a0"}}>
                   {ready ? "The road is open — a letter under an imperial seal cannot be far behind."
                     : been && S.rome ? "You are on the imperial sand now."
                     : `Rome is watching. It will send for a house that has done all three${bayWide(S)?", and the bay has already carried your name north":""}.`}
@@ -18361,44 +18379,44 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           {(()=>{ const bg = blessOf(S), pi = pietyOf(S);
             return (
             <Sect title="The Temple" note={pietyWord(pi)} open={!!S.vow || pi<=20}>
-              <div className="flex items-center justify-between" style={{marginBottom:3,fontSize:14}}>
+              <div className="flex items-center justify-between" style={{marginBottom:3,fontSize:"var(--fs-md)"}}>
                 <span>Piety of the house</span>
                 <span style={{color: pi>=60?"#e0bd72":pi>=38?"#cfc0a0":pi>=18?"#d8ac5f":"#d96f5d"}}>{pietyWord(pi)}</span>
               </div>
               <div className="track" style={{height:6}}>
                 <div className="fill" style={{width:`${pi}%`, background: pi<20? "linear-gradient(90deg,#7c2a22,#cf5a49)" : "linear-gradient(90deg,#6a5a2c,#e0bd72)"}}/>
               </div>
-              <div className="dim" style={{fontSize:13,fontStyle:"italic",margin:"5px 0 9px"}}>
+              <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",margin:"5px 0 9px"}}>
                 Rome did nothing without the gods. A pious house keeps the patrons and the crowd warm; a godless one, the streets restless — and the omens turn against it.
               </div>
               {bg && (
                 <div className="panel" style={{padding:9,marginBottom:9,background:"#1c1610",borderColor:"#c99a4b"}}>
                   <div className="flex items-center justify-between">
                     <span className="tag tag-gold">Blessed · {GODS[bg].name}</span>
-                    <span className="rowval dim" style={{fontSize:12.5}}>{blessLeft(S)}w left</span>
+                    <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{blessLeft(S)}w left</span>
                   </div>
-                  <div className="dim" style={{fontSize:13.5,marginTop:3}}>{GODS[bg].boon}</div>
+                  <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:3}}>{GODS[bg].boon}</div>
                 </div>
               )}
-              {illLuck(S) && !bg && <div className="blood" style={{fontSize:13,fontStyle:"italic",marginBottom:8}}>
+              {illLuck(S) && !bg && <div className="blood" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:8}}>
                 The house is under an ill turn — an omen defied, or a vow let go. It will pass.
               </div>}
               {S.vow ? (
                 <div className="panel" style={{padding:9,marginBottom:9,background:"#241b11",borderColor:"#6d5426"}}>
                   <span className="tag" style={{borderColor:"#6d5426",color:"#d8ac5f"}}>A vow stands · {GODS[S.vow.god]?GODS[S.vow.god].name:"a god"}</span>
-                  <div style={{fontSize:14,marginTop:4}}>Not a man to fall before it is out — <span className="dim">{Math.max(1,S.vow.until-S.week)} week{S.vow.until-S.week===1?"":"s"} left</span>. {S.vow.stake}d pledged on it.</div>
+                  <div style={{fontSize:"var(--fs-md)",marginTop:4}}>Not a man to fall before it is out — <span className="dim">{Math.max(1,S.vow.until-S.week)} week{S.vow.until-S.week===1?"":"s"} left</span>. {S.vow.stake}d pledged on it.</div>
                 </div>
               ) : (
-                <div className="dim" style={{fontSize:12.5,textTransform:"uppercase",letterSpacing:".06em",marginBottom:6}}>An offering, or a vow</div>
+                <div className="dim" style={{fontSize:"var(--fs-sm)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:6}}>An offering, or a vow</div>
               )}
               {GOD_KEYS.map(k=>{ const G = GODS[k], cost = G.cost(S), ready = offeringReady(S), afford = S.gold>=cost;
                 return (
                   <div key={k} className="panel" style={{padding:9,marginBottom:6,background:"#1c1610"}}>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="disp" style={{fontSize:13.5,color:"#e8d092"}}>{G.name} <span className="dim" style={{fontWeight:400}}>· {G.of}</span></span>
-                      <span className="rowval gold" style={{fontSize:12.5}}>{cost}d</span>
+                      <span className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d092"}}>{G.name} <span className="dim" style={{fontWeight:400}}>· {G.of}</span></span>
+                      <span className="rowval gold" style={{fontSize:"var(--fs-sm)"}}>{cost}d</span>
                     </div>
-                    <div className="dim" style={{fontSize:13,marginTop:2}}>{G.boon}</div>
+                    <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2}}>{G.boon}</div>
                     <div className="flex gap-2" style={{marginTop:6}}>
                       <button className="btn" style={{flex:1}} disabled={!ready || !afford} onClick={()=>offerTo(k)}>
                         {!ready ? `Altar rests · ${OFFERING_COOL-(S.week-S.lastOffering)}w` : !afford ? "Not enough coin" : `Offer · ${G.weeks}w blessing`}
@@ -18411,7 +18429,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   </div>
                 );
               })}
-              <div className="dim" style={{fontSize:12.5,fontStyle:"italic",marginTop:4}}>
+              <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",marginTop:4}}>
                 One blessing rides with the house at a time; a fresh offering takes the last one's place. The gods keep their own counsel about which houses they favour.
               </div>
             </Sect>
@@ -18420,10 +18438,10 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           {Object.entries(PARTY).map(([k,p])=>(
             <div key={k} className="panel" style={{padding:13}}>
               <div className="flex items-center justify-between">
-                <div className="disp" style={{fontSize:14,fontWeight:700}}>{p.label.toUpperCase()}</div>
+                <div className="disp" style={{fontSize:"var(--fs-md)",fontWeight:700}}>{p.label.toUpperCase()}</div>
                 <span className="gold">{p.cost}d</span>
               </div>
-              <div className="dim" style={{fontSize:14.5,margin:"4px 0 8px"}}>{p.desc} <span style={{color:"#bfa8c8"}}>+{k==="modest"?5:k==="lavish"?9:15} with every patron</span> · <span style={{color:"#d8c08a"}}>+{p.fame} fame</span></div>
+              <div className="dim" style={{fontSize:"var(--fs-md)",margin:"4px 0 8px"}}>{p.desc} <span style={{color:"#bfa8c8"}}>+{k==="modest"?5:k==="lavish"?9:15} with every patron</span> · <span style={{color:"#d8c08a"}}>+{p.fame} fame</span></div>
               <button className="btn" style={{width:"100%"}} disabled={S.gold<p.cost || S.week-S.lastParty<2} onClick={()=>host(k)}>
                 {S.week-S.lastParty<2? `The villa recovers — ${2-(S.week-S.lastParty)} week${2-(S.week-S.lastParty)>1?"s":""}` : S.gold<p.cost? "Not enough coin" : "Send invitations"}
               </button>
@@ -18436,10 +18454,10 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 return (
                   <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:7,marginTop:7}}>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="rowname" style={{fontSize:14.5,color:bad?"#d98476":"#cfc0a0"}}>{E.name}</span>
+                      <span className="rowname" style={{fontSize:"var(--fs-md)",color:bad?"#d98476":"#cfc0a0"}}>{E.name}</span>
                       {bad && <span className="tag tag-blood">in breach</span>}
                     </div>
-                    <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:1}}>
+                    <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:1}}>
                       {bad ? E.broke(S)
                         : k==="numbers" ? `The edict allows ${lawCap(S)}. You keep ${S.gladiators.filter(g=>!isGone(g)).length}.`
                         : k==="vectigal" ? `${Math.round(lawTax(S)*100)}% on every man you buy.`
@@ -18448,33 +18466,33 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     </div>
                   </div>
                 ); })}
-              {lawOf(S).fines>0 && <div className="dim" style={{fontSize:13,marginTop:6}}>Paid in fines: {lawOf(S).fines}d</div>}
+              {lawOf(S).fines>0 && <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:6}}>Paid in fines: {lawOf(S).fines}d</div>}
             </Sect>
           )}
 
           {(S.gold >= 4000 || Object.keys(S.works||{}).length>0) && (
             <Sect title="Great works" note={`${workAny(S).length} of ${WORK_KEYS.length}`}>
-              <div className="dim" style={{fontSize:14.5,fontStyle:"italic",marginBottom:7}}>
+              <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:7}}>
                 Things a house builds when it has outgrown buying men. They cost more than everything else put together and take years to finish.
               </div>
               {WORK_KEYS.map(k=>{ const W = WORKS[k], on = workOn(S,k), done = workDone(S,k);
                 return (
                   <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:8,marginTop:8}}>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="disp" style={{fontSize:13.5,color:done?"#e8d092":on?"#d8ac5f":"#b09b7d"}}>{W.name}</span>
-                      <span className="rowval dim" style={{fontSize:12.5}}>
+                      <span className="disp" style={{fontSize:"var(--fs-base)",color:done?"#e8d092":on?"#d8ac5f":"#b09b7d"}}>{W.name}</span>
+                      <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>
                         {done ? "standing" : on ? `${on.left} weeks` : `${W.cost}d · ${W.years} years`}
                       </span>
                     </div>
-                    <div className="dim" style={{fontSize:14,fontStyle:"italic",marginTop:2}}>{done ? W.done : W.blurb}</div>
-                    {done && <div className="laurel" style={{fontSize:13.5,marginTop:3}}>{W.say}</div>}
+                    <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:2}}>{done ? W.done : W.blurb}</div>
+                    {done && <div className="laurel" style={{fontSize:"var(--fs-base)",marginTop:3}}>{W.say}</div>}
                     {on && <Bar v={100 - on.left/(W.years*YEAR_WEEKS)*100} label="" color="linear-gradient(90deg,#4a3a24,#c99a4b)"/>}
                     {!done && !on && (workOpen(S,k)
                       ? <button className="btn btn-ghost" style={{width:"100%",marginTop:6}}
                           disabled={S.gold < W.cost} onClick={()=>mut(d=>{ beginWork(d, k); })}>
                           {S.gold < W.cost ? `${W.cost}d — not yet` : `Begin it · ${W.cost}d`}
                         </button>
-                      : <div className="dim" style={{fontSize:13.5,marginTop:6,fontStyle:"italic"}}>
+                      : <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:6,fontStyle:"italic"}}>
                           The city will not hear this from a house that has not finished its own monuments first.
                         </div>)}
                   </div>
@@ -18484,20 +18502,20 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
 
           {monuReady(S) && (
             <Sect title="Monuments" note={`${monuAny(S).length} of ${MONU_KEYS.length}`} open={monuAny(S).length<MONU_KEYS.length}>
-              <div className="dim" style={{fontSize:14.5,fontStyle:"italic",marginBottom:7}}>
+              <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:7}}>
                 The great works are finished and the strongbox is still heavy. This is what is left to spend a fortune on — not blood or a better yard, but a name that outlives the man who made it.
               </div>
               {MONU_KEYS.map(k=>{ const W = MONUMENTS[k], on = workOn(S,k), done = workDone(S,k);
                 return (
                   <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:8,marginTop:8}}>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="disp" style={{fontSize:13.5,color:done?"#e8d092":on?"#d8ac5f":"#b09b7d"}}>{W.name}</span>
-                      <span className="rowval dim" style={{fontSize:12.5}}>
+                      <span className="disp" style={{fontSize:"var(--fs-base)",color:done?"#e8d092":on?"#d8ac5f":"#b09b7d"}}>{W.name}</span>
+                      <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>
                         {done ? "standing" : on ? `${on.left} weeks` : `${W.cost}d · ${W.years} years`}
                       </span>
                     </div>
-                    <div className="dim" style={{fontSize:14,fontStyle:"italic",marginTop:2}}>{done ? W.done : W.blurb}</div>
-                    {done && <div className="laurel" style={{fontSize:13.5,marginTop:3}}>{W.say}</div>}
+                    <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:2}}>{done ? W.done : W.blurb}</div>
+                    {done && <div className="laurel" style={{fontSize:"var(--fs-base)",marginTop:3}}>{W.say}</div>}
                     {on && <Bar v={100 - on.left/(W.years*YEAR_WEEKS)*100} label="" color="linear-gradient(90deg,#4a3a24,#c99a4b)"/>}
                     {!done && !on && (
                       <button className="btn btn-ghost" style={{width:"100%",marginTop:6}}
@@ -18514,21 +18532,21 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
 
           {vView==="council" && (<>
           <Sect title="The household" note={`${householdCount(S)} of ${HH_KEYS.length}`}>
-            <div className="dim" style={{fontSize:14.5,fontStyle:"italic",marginBottom:7}}>
+            <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:7}}>
               A ludus was a household before it was a business. None of these people will ever be on a card and the place does not run without them.
             </div>
             {HH_KEYS.map(k=>{ const H = HOUSEHOLD[k], f = houseFolk(S)[k], fee = rnd(hhWage(S,k)*16);
               return (
                 <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:8,marginTop:8}}>
                   <div className="flex items-center justify-between gap-2">
-                    <span className="disp" style={{fontSize:13.5,color:f?"#e8d092":"#b09b7d"}}>
+                    <span className="disp" style={{fontSize:"var(--fs-base)",color:f?"#e8d092":"#b09b7d"}}>
                       {f ? `${f.name} · ${H.name.toLowerCase()}` : H.name}
                     </span>
-                    <span className="rowval dim" style={{fontSize:12.5}}>{f ? `${f.weeks}w · ${hhWage(S,k)}d/wk` : (k==="wife" ? "—" : `${fee}d · ${hhWage(S,k)}d/wk`)}</span>
+                    <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{f ? `${f.weeks}w · ${hhWage(S,k)}d/wk` : (k==="wife" ? "—" : `${fee}d · ${hhWage(S,k)}d/wk`)}</span>
                   </div>
                   {f && <div style={{marginTop:2}}><span className="tag tag-gold">{hhWord(f)}</span></div>}
-                  <div className="dim" style={{fontSize:14,fontStyle:"italic",marginTop:2}}>{f ? H.line : H.blurb}</div>
-                  {!f && k!=="wife" && <div className="dim" style={{fontSize:12.5,marginTop:2}}>How good she turns out to be is not on the price. A great one is worth half again what a poor one is.</div>}
+                  <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:2}}>{f ? H.line : H.blurb}</div>
+                  {!f && k!=="wife" && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>How good she turns out to be is not on the price. A great one is worth half again what a poor one is.</div>}
                   {!f && <button className="btn btn-ghost" style={{width:"100%",marginTop:6}}
                     disabled={k!=="wife" && S.gold<fee}
                     onClick={()=>mut(d=>{ hireFolk(d, k); })}>
@@ -18540,21 +18558,21 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
 
           {owedList(S).length>0 && (
             <Sect title="Owed to the house" note={`${owedTotal(S)}d · ${cashWord(S)}`}>
-              <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:6}}>
+              <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:6}}>
                 An editor who pays in sixty days is not the same as an editor who pays. You can wait, or sell the paper at {Math.round(discountRate(S)*100)}% to a man who does nothing else.
               </div>
               {owedList(S).map(x=>{ const late = S.week - x.due;
                 return (
                   <div key={x.id} style={{borderTop:"1px dotted #33271a",paddingTop:7,marginTop:7}}>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="rowname" style={{fontSize:14.5}}>{x.from}</span>
-                      <span className="rowval gold" style={{fontSize:13.5}}>{x.amount}d</span>
+                      <span className="rowname" style={{fontSize:"var(--fs-md)"}}>{x.from}</span>
+                      <span className="rowval gold" style={{fontSize:"var(--fs-base)"}}>{x.amount}d</span>
                     </div>
                     <div className="flex items-center justify-between gap-2" style={{marginTop:2}}>
-                      <span style={{fontSize:13,color: late>=4?"#d96f5d" : late>0?"#d8ac5f" : "#8d7e65"}}>
+                      <span style={{fontSize:"var(--fs-base)",color: late>=4?"#d96f5d" : late>0?"#d8ac5f" : "#8d7e65"}}>
                         {late >= 4 ? `${late} weeks late and not at home` : late > 0 ? `${late} week${late===1?"":"s"} late` : `due in ${x.due - S.week}`}
                       </span>
-                      <button className="btn btn-ghost" style={{padding:"10px 9px",fontSize:12}}
+                      <button className="btn btn-ghost" style={{padding:"10px 9px",fontSize:"var(--fs-sm)"}}
                         onClick={()=>mut(d=>{ sellDebt(d, x.id); })}>
                         Sell it for {rnd(x.amount*discountRate(S))}d
                       </button>
@@ -18568,12 +18586,12 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             return (
               <Sect title="The doctrine of the house" note={D? D.name : "none set"}>
                 {D ? (<>
-                  <div className="disp" style={{fontSize:16,color:"#e8d092"}}>{D.name}</div>
-                  <div style={{fontSize:15,fontStyle:"italic",marginTop:3}}>{D.creed}</div>
-                  <div className="dim" style={{fontSize:14,marginTop:5}}>{D.body}</div>
-                  <div className="laurel" style={{fontSize:13.5,marginTop:5}}>{D.note}</div>
+                  <div className="disp" style={{fontSize:"var(--fs-xl)",color:"#e8d092"}}>{D.name}</div>
+                  <div style={{fontSize:"var(--fs-lg)",fontStyle:"italic",marginTop:3}}>{D.creed}</div>
+                  <div className="dim" style={{fontSize:"var(--fs-md)",marginTop:5}}>{D.body}</div>
+                  <div className="laurel" style={{fontSize:"var(--fs-base)",marginTop:5}}>{D.note}</div>
                 </>) : (
-                  <div className="dim" style={{fontSize:14.5,fontStyle:"italic"}}>
+                  <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
                     This house has no school. It does what the week asks and Capua forms its own opinion, which is the opinion you deserve.
                   </div>
                 )}
@@ -18584,14 +18602,14 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                       <button key={k} className="optrow" style={{marginBottom:6,padding:10}}
                         disabled={S.gold<fee} onClick={()=>declare(k)}>
                         <div className="flex items-center justify-between gap-2">
-                          <span className="disp" style={{fontSize:13,color:"#e8d092"}}>{X.name}</span>
-                          <span className="rowval gold" style={{fontSize:12.5}}>{fee}d</span>
+                          <span className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d092"}}>{X.name}</span>
+                          <span className="rowval gold" style={{fontSize:"var(--fs-sm)"}}>{fee}d</span>
                         </div>
-                        <div className="dim" style={{fontSize:13.5,marginTop:2,textAlign:"left"}}>{X.note}</div>
+                        <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2,textAlign:"left"}}>{X.note}</div>
                       </button>
                     ); })}
                 </div>
-                {D && <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:4}}>
+                {D && <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:4}}>
                   Turning the house over costs nearly twice as much, twenty fame, and a week of every man wondering what the last year was for.
                 </div>}
               </Sect>
@@ -18599,7 +18617,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
 
           {S.election && !S.election.done && (
             <Sect title="The aedileship" note={`${Math.max(0, 3-(S.week-S.election.week))}w to the vote`} open>
-              <div className="dim" style={{fontSize:14.5,fontStyle:"italic",marginBottom:8}}>
+              <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>
                 The names are on the walls. The aedile is the man who decides whose gladiators are on the card, what they are paid, and — when one of them is down and looking up — whether he leans forward.
               </div>
               {S.election.cands.map(c=>{
@@ -18607,12 +18625,12 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 return (
                   <div key={c.id} style={{borderTop:"1px dotted #33271a",paddingTop:9,marginTop:9}}>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="disp" style={{fontSize:13.5,color:mine?"#e8d092":undefined}}>{c.name}</span>
+                      <span className="disp" style={{fontSize:"var(--fs-base)",color:mine?"#e8d092":undefined}}>{c.name}</span>
                       {c.rival && <span className="tag tag-blood">House {c.rival} is behind him</span>}
                     </div>
-                    <div className="dim" style={{fontSize:14,fontStyle:"italic",marginTop:2}}>He {c.say}.</div>
+                    <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:2}}>He {c.say}.</div>
                     {mine ? (
-                      <div className="laurel" style={{fontSize:13.5,marginTop:5}}>Your money is on him — {S.election.spent}d.</div>
+                      <div className="laurel" style={{fontSize:"var(--fs-base)",marginTop:5}}>Your money is on him — {S.election.spent}d.</div>
                     ) : S.election.backed ? null : (
                       <div className="grid grid-cols-3 gap-2" style={{marginTop:6}}>
                         {[1,2,3].map(l=>(
@@ -18633,8 +18651,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
 
           {aedileOn(S) && (
             <Sect title="The aedile" note={`${S.aedile.until - S.week}w left`}>
-              <div className="disp" style={{fontSize:14.5,color:"#e8d092"}}>{S.aedile.name}</div>
-              <div className="dim" style={{fontSize:14,fontStyle:"italic",marginTop:3}}>
+              <div className="disp" style={{fontSize:"var(--fs-md)",color:"#e8d092"}}>{S.aedile.name}</div>
+              <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:3}}>
                 {S.aedile.friendly
                   ? "He took the office with your money and has not forgotten it. One extra bout on every card, purses a seventh higher, and he leans forward when one of yours is down."
                   : S.aedile.hostile
@@ -18646,19 +18664,19 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
 
           {unhonoured(S).filter(m=>!m.done).length > 0 && (
             <Sect title="Not yet buried properly" note={`${RITE_WINDOW}w to decide`} open>
-              <div className="dim" style={{fontSize:14.5,fontStyle:"italic",marginBottom:8}}>
+              <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>
                 Funeral games are what a rich man's sons stage at his tomb. Nobody has ever staged them for a gladiator, which is exactly what makes it worth doing.
               </div>
               {unhonoured(S).filter(m=>!m.done).map(m=>(
                 <div key={m.gid} style={{borderTop:"1px dotted #33271a",paddingTop:9,marginTop:9}}>
                   <div className="flex items-center justify-between gap-2">
-                    <span className="disp" style={{fontSize:14}}>{m.name}</span>
-                    <span className="rowval dim" style={{fontSize:12.5}}>
+                    <span className="disp" style={{fontSize:"var(--fs-md)"}}>{m.name}</span>
+                    <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>
                       {m.wins} victories · {RITE_WINDOW - (S.week - m.week)} week{RITE_WINDOW-(S.week-m.week)===1?"":"s"} left
                     </span>
                   </div>
                   {(m.kin||[]).length>0 && (
-                    <div className="dim" style={{fontSize:13.5,marginTop:2}}>
+                    <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2}}>
                       {(m.kin||[]).map(k=>{ const b=S.gladiators.find(x=>x.id===k); return b?b.name:null; }).filter(Boolean).join(" and ")} called him brother, and {(m.kin||[]).length>1?"they are":"he is"} watching what you do about it.
                     </div>
                   )}
@@ -18667,10 +18685,10 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                       <button key={k} className={`optrow ${k==="none"?"":""}`} style={{marginTop:6,padding:9}}
                         disabled={S.gold<c} onClick={()=>doRite(m.gid,k)}>
                         <div className="flex items-center justify-between gap-2">
-                          <span className="disp" style={{fontSize:13,color:k==="none"?"#a08e70":"#e8d092"}}>{R2.name}</span>
-                          <span className="rowval" style={{fontSize:12.5,color:c>S.gold?"#d96f5d":c?"#d8ac5f":"#8d7e65"}}>{c? c+"d" : "costs nothing"}</span>
+                          <span className="disp" style={{fontSize:"var(--fs-base)",color:k==="none"?"#a08e70":"#e8d092"}}>{R2.name}</span>
+                          <span className="rowval" style={{fontSize:"var(--fs-sm)",color:c>S.gold?"#d96f5d":c?"#d8ac5f":"#8d7e65"}}>{c? c+"d" : "costs nothing"}</span>
                         </div>
-                        <div className="dim" style={{fontSize:13.5,marginTop:2}}>{R2.desc}</div>
+                        <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2}}>{R2.desc}</div>
                       </button>
                     ); })}
                 </div>
@@ -18681,21 +18699,21 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           {(()=>{ const L = loanLender(S);
             if(!L) return (
               <div className="panel" style={{padding:13}}>
-                <div className="disp" style={{fontSize:14,fontWeight:700,marginBottom:3}}>THE MONEYLENDERS</div>
-                <div className="dim" style={{fontSize:14.5,fontStyle:"italic",marginBottom:8}}>
+                <div className="disp" style={{fontSize:"var(--fs-md)",fontWeight:700,marginBottom:3}}>THE MONEYLENDERS</div>
+                <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>
                   Three men in Capua will put coin on your table this afternoon. Every one of them is a worse idea than he looks and a better one than a bad month.
                 </div>
                 {LEND_KEYS.map(k=>{ const M = LENDERS[k];
                   return (
                     <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:9,marginTop:9}}>
                       <div className="flex items-center justify-between gap-2">
-                        <span className="disp" style={{fontSize:13.5}}>{M.name}</span>
-                        <span className="rowval" style={{fontSize:12.5,color:M.rate>0.07?"#d96f5d":M.rate>0.05?"#d8ac5f":"#9aa86a"}}>
+                        <span className="disp" style={{fontSize:"var(--fs-base)"}}>{M.name}</span>
+                        <span className="rowval" style={{fontSize:"var(--fs-sm)",color:M.rate>0.07?"#d96f5d":M.rate>0.05?"#d8ac5f":"#9aa86a"}}>
                           {Math.round(M.rate*1000)/10}% a week
                         </span>
                       </div>
-                      <div className="dim" style={{fontSize:14,fontStyle:"italic",marginTop:2}}>{M.blurb}</div>
-                      <div className="dim" style={{fontSize:13,marginTop:2}}>
+                      <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:2}}>{M.blurb}</div>
+                      <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2}}>
                         Up to {M.cap}d · quiet for {M.patience} weeks{M.hard? " · he collects in men" : " · he does not take men"}
                       </div>
                       <div className="grid grid-cols-3 gap-2" style={{marginTop:6}}>
@@ -18711,15 +18729,15 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             return (
               <div className="panel" style={{padding:13, borderColor: late?"#7c2a22":"#6d5426"}}>
                 <div className="flex items-center justify-between" style={{marginBottom:4}}>
-                  <div className="disp" style={{fontSize:14,fontWeight:700}}>OWED TO {L.name.toUpperCase()}</div>
-                  <span className="rowval" style={{fontSize:14,color:late?"#d96f5d":"#d8ac5f"}}>{o}d</span>
+                  <div className="disp" style={{fontSize:"var(--fs-md)",fontWeight:700}}>OWED TO {L.name.toUpperCase()}</div>
+                  <span className="rowval" style={{fontSize:"var(--fs-md)",color:late?"#d96f5d":"#d8ac5f"}}>{o}d</span>
                 </div>
-                <div className="dim" style={{fontSize:14}}>
+                <div className="dim" style={{fontSize:"var(--fs-md)"}}>
                   Borrowed {S.loan.principal}d, {w} week{w===1?"":"s"} ago, at {Math.round(L.rate*1000)/10}% a week. It grows whether you look at it or not.
                 </div>
                 <Bar v={Math.min(100, o/(S.loan.principal*4.0)*100)} label="debt"
                   color={late?"linear-gradient(90deg,#5a1a14,#d96f5d)":"linear-gradient(90deg,#4a3a24,#d8ac5f)"}/>
-                <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:4}}>
+                <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:4}}>
                   {o > S.loan.principal*2.4 ? "This is very near the number at which he stops discussing it."
                    : late && L.hard ? "He has been patient and he has stopped. He collects in men when there is no coin."
                    : late ? "He has been patient longer than he said. He will not say anything about that."
@@ -18737,10 +18755,10 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
 
           <Sect title="The collegium" note={collOn(S)? `${collDues(S)}d/wk` : "burial society"}>
             {!S.collegium ? (<>
-              <div style={{fontSize:15}}>
+              <div style={{fontSize:"var(--fs-lg)"}}>
                 A burial society. The house pays {COLL_DUES} denarii a week for every man on the roster, and when one of them dies there is a stone with his name on it, his style and the number of his victories — instead of a pit outside the wall.
               </div>
-              <div className="dim" style={{fontSize:14,fontStyle:"italic",marginTop:5}}>
+              <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:5}}>
                 It will never win you a bout. But men who know what happens to them afterward take a death in the house differently.
               </div>
               <button className="btn" style={{width:"100%",marginTop:8}} disabled={S.gold<COLL_FEE} onClick={joinCollegium}>
@@ -18748,8 +18766,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               </button>
             </>) : S.collegium.lapsed ? (
               <div>
-                <div className="blood" style={{fontSize:15}}>The dues stopped in week {S.collegium.lapsed}.</div>
-                <div className="dim" style={{fontSize:14,fontStyle:"italic",marginTop:4}}>
+                <div className="blood" style={{fontSize:"var(--fs-lg)"}}>The dues stopped in week {S.collegium.lapsed}.</div>
+                <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:4}}>
                   {S.collegium.buried
                     ? `${S.collegium.buried} went into the ground under it before you cut it. That is not a thing the cells forget.`
                     : "Nobody had needed it yet. They counted it anyway."}
@@ -18757,10 +18775,10 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               </div>
             ) : (
               <div>
-                <div style={{fontSize:15}}>Paid up. {S.collegium.buried
+                <div style={{fontSize:"var(--fs-lg)"}}>Paid up. {S.collegium.buried
                   ? `${S.collegium.buried} ${S.collegium.buried===1?"man has":"men have"} gone into the ground under it with ${S.collegium.buried===1?"his":"their"} own name${S.collegium.buried===1?"":"s"} on the stone.`
                   : "Nobody has needed it yet."}</div>
-                <div className="dim" style={{fontSize:14,fontStyle:"italic",marginTop:4}}>
+                <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:4}}>
                   A death here costs half the unrest it otherwise would, and the yard is quieter for knowing why.
                 </div>
                 <button className="btn btn-ghost" style={{width:"100%",marginTop:8}} onClick={stopCollegium}>Stop the dues</button>
@@ -18772,14 +18790,14 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
 
           {vView==="familia" && (<>
           <Sect title="A feast for the familia" note="120d">
-            <div className="dim" style={{fontSize:14.5,margin:"4px 0 8px"}}>Meat, honeyed wine, and a night without the whip. Loyalty is cheaper than rebellion.</div>
+            <div className="dim" style={{fontSize:"var(--fs-md)",margin:"4px 0 8px"}}>Meat, honeyed wine, and a night without the whip. Loyalty is cheaper than rebellion.</div>
             <button className="btn" style={{width:"100%"}} disabled={S.gold<120 || S.week-S.lastFeast<3} onClick={feast}>
               {S.week-S.lastFeast<3? `The men feasted recently — ${3-(S.week-S.lastFeast)} week${3-(S.week-S.lastFeast)>1?"s":""}` : S.gold<120? "Not enough coin" : "Set the tables"}
             </button>
           </Sect>
 
           <Sect title="A tournament in the yard" note="settles the block">
-            <div className="dim" style={{fontSize:14.5,margin:"4px 0 8px"}}>
+            <div className="dim" style={{fontSize:"var(--fs-md)",margin:"4px 0 8px"}}>
               Set the whole familia against itself for an afternoon — wooden swords, no editor, every man with something to prove. The winner walks tall for weeks; who meets him in the final may come out of it a brother or a rival.
             </div>
             <button className="btn" style={{width:"100%"}} disabled={!tourneyReady(S)} onClick={doTourney}>
@@ -18791,7 +18809,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           </Sect>
 
           <Sect title="Walk the cells tonight" note="among the men">
-            <div className="dim" style={{fontSize:14.5,margin:"4px 0 8px"}}>
+            <div className="dim" style={{fontSize:"var(--fs-md)",margin:"4px 0 8px"}}>
               Go down among the familia after the lamps are lit. It costs nothing but an evening — a little warmth to the block, and the truth of what passes between the men, which you will not learn from the gallery. Some nights, the block asks something of you.
             </div>
             <button className="btn" style={{width:"100%"}} disabled={!walkReady(S)} onClick={walkCells}>
@@ -18809,13 +18827,13 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               <div className="panel" style={{padding:12, borderColor: over? "#7c2a22" : u>=c-1 ? "#6d5426" : "#3e2f1f"}}>
                 <div className="flex items-center justify-between" style={{marginBottom:4}}>
                   <span className="tag tag-gold">The racks</span>
-                  <span className="rowval" style={{fontSize:13,color:over?"#d96f5d":u>=c-1?"#d8ac5f":"#9aa86a"}}>
+                  <span className="rowval" style={{fontSize:"var(--fs-base)",color:over?"#d96f5d":u>=c-1?"#d8ac5f":"#9aa86a"}}>
                     {u} of {c} · {rackWord(S)}
                   </span>
                 </div>
                 <Bar v={Math.min(100, u/c*100)} label="" color={over
                   ? "linear-gradient(90deg,#5a1a14,#d96f5d)" : "linear-gradient(90deg,#4a3a24,#c99a4b)"}/>
-                <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:4}}>
+                <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:4}}>
                   {over
                     ? `Past what the room holds. Everything wears ${Math.round((rackStrain(S)-1)*100)}% faster and it costs ${rackRent(S)} denarii a week to keep it stacked against the wall.`
                     : `House issue does not count — it is issue. A bigger armoury holds seven more.`}
@@ -18836,13 +18854,13 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           {(S.deadSteel||[]).length>0 && (
             <div className="panel" style={{padding:11,borderColor:"#7c2a22"}}>
               <div className="tag tag-blood" style={{marginBottom:4}}>Off the dead</div>
-              <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:5}}>
+              <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:5}}>
                 Pieces that came back off a body. Somebody will end up carrying them, and he will know it.
               </div>
               {S.deadSteel.map((x,i)=>(
                 <div key={i} className="flex items-center justify-between gap-2" style={{borderTop:"1px dotted #33271a",padding:"4px 0"}}>
-                  <span className="rowname" style={{fontSize:14}}>{GEAR[x.id] ? GEAR[x.id].name : x.id}</span>
-                  <span className="rowval dim" style={{fontSize:12.5}}>{x.from}, week {x.week}</span>
+                  <span className="rowname" style={{fontSize:"var(--fs-md)"}}>{GEAR[x.id] ? GEAR[x.id].name : x.id}</span>
+                  <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{x.from}, week {x.week}</span>
                 </div>
               ))}
             </div>
@@ -18852,8 +18870,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             <div className="panel" style={{padding:11}}>
               <div className="flex items-center justify-between gap-2">
                 <div style={{minWidth:0}}>
-                  <div className="disp" style={{fontSize:13,color:"#e8d092"}}>Arm the whole line</div>
-                  <div className="dim" style={{fontSize:13.5}}>
+                  <div className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d092"}}>Arm the whole line</div>
+                  <div className="dim" style={{fontSize:"var(--fs-base)"}}>
                     {(()=>{ const n = activeG(S).filter(g=>kitFaults(S,g).length).length;
                       return n ? `${n} man${n===1?" is":"men are"} carrying less than the racks can give ${n===1?"him":"them"}.`
                         : "Everyone is carrying the best of what the house owns."; })()}
@@ -18873,11 +18891,11 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 <div className="flex items-center justify-between gap-2" style={{marginBottom:4}}>
                   <span className={open?"tag tag-gold":"tag"}>The master's bench</span>
                   {open
-                    ? <span className="rowval" style={{fontSize:13,color:keep?"#d8ac5f":"#9aa86a"}}>
+                    ? <span className="rowval" style={{fontSize:"var(--fs-base)",color:keep?"#d8ac5f":"#9aa86a"}}>
                         {owned ? `${owned} in the house · ${keep}d a week` : "open to you"}</span>
-                    : <span className="rowval dim" style={{fontSize:13}}>closed</span>}
+                    : <span className="rowval dim" style={{fontSize:"var(--fs-base)"}}>closed</span>}
                 </div>
-                <div className="dim" style={{fontSize:13.5,fontStyle:"italic"}}>
+                <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>
                   {open
                     ? `Capua's best smiths will take your commissions. Their work is no sharper than the good stuff on the rack — it is famous, which is the crowd, and the crowd is the purse, the name, and the raised finger when he is down and asking. Every piece wants a smith on it every week for as long as you own it.`
                     : lvl < 2
@@ -18887,7 +18905,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               </div>
             ); })()}
 
-          <div className="dim" style={{fontSize:14.5,fontStyle:"italic"}}>The racks hold what you have bought and nothing else. Every piece arms one man at a time — equip it from his page. A free hand, a bare head and a bare chest cost nothing and always will.</div>
+          <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>The racks hold what you have bought and nothing else. Every piece arms one man at a time — equip it from his page. A free hand, a bare head and a bare chest cost nothing and always will.</div>
 
           <div className="grid grid-cols-4 gap-2">
             {SLOTS.map(slot=>{
@@ -18922,16 +18940,16 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                       return (
                         <div key={id} style={{borderTop:"1px dotted #33271a",paddingTop:8,marginTop:8}}>
                           <div className="flex items-center justify-between gap-2">
-                            <div className="disp" style={{fontSize:13.5,color:it.master?"#e8c98a":it.price?"#e8d9b8":"#b9a37c"}}>{it.name}</div>
+                            <div className="disp" style={{fontSize:"var(--fs-base)",color:it.master?"#e8c98a":it.price?"#e8d9b8":"#b9a37c"}}>{it.name}</div>
                             {it.price>0
-                              ? <span className="gold" style={{fontSize:14,whiteSpace:"nowrap"}}>{it.price}d{owned?` · ${owned} owned`:""}</span>
+                              ? <span className="gold" style={{fontSize:"var(--fs-md)",whiteSpace:"nowrap"}}>{it.price}d{owned?` · ${owned} owned`:""}</span>
                               : <span className="tag">Costs nothing</span>}
                           </div>
                           {it.master && <div style={{margin:"3px 0 1px"}}><span className="tag tag-gold">A master's piece · {it.keep}d a week to keep</span></div>}
-                          <div className="dim" style={{fontSize:14,fontStyle:"italic",margin:"2px 0 3px"}}>{it.desc}</div>
+                          <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",margin:"2px 0 3px"}}>{it.desc}</div>
                           <GearStats it={it}/>
-                          {it.master && <div className="dim" style={{fontSize:12.5,marginTop:2}}>No sharper than the best on the rack. Twice as loud — and the crowd is the purse, the name, and the finger that goes up when he is down.</div>}
-                          {it.styles && it.styles.length>0 && <div className="dim" style={{fontSize:12.5,marginTop:2}}>Suits: {it.styles.join(", ")}</div>}
+                          {it.master && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>No sharper than the best on the rack. Twice as loud — and the crowd is the purse, the name, and the finger that goes up when he is down.</div>}
+                          {it.styles && it.styles.length>0 && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>Suits: {it.styles.join(", ")}</div>}
                           {it.price>0 && (
                             <button className={`btn ${it.stock?"btn-ghost":""}`} style={{width:"100%",marginTop:7}} disabled={S.gold<gearPrice(S,it.price,it.slot)} onClick={()=>buyGear(id)}>
                               {S.gold<gearPrice(S,it.price,it.slot) ? "Not enough coin"
@@ -18939,12 +18957,12 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                             </button>
                           )}
                           {!it.stock && it.price>0 && free>0 && (
-                            <button className="btn btn-ghost" style={{width:"100%",marginTop:5,fontSize:12.5,padding:"10px 10px"}}
+                            <button className="btn btn-ghost" style={{width:"100%",marginTop:5,fontSize:"var(--fs-sm)",padding:"10px 10px"}}
                               onClick={()=>sellOne(id)}>
                               Sell one back · about {rnd(it.price*resaleRate(S)*0.85)}d
                             </button>
                           )}
-                          {it.price>0 && owned>0 && free===0 && <div className="dim" style={{fontSize:12.5,marginTop:3}}>Every one you own is on a man.</div>}
+                          {it.price>0 && owned>0 && free===0 && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:3}}>Every one you own is on a man.</div>}
                         </div>
                       );
                     })}
@@ -18968,17 +18986,17 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         <div className="modalwrap" role="dialog" aria-modal="true" onClick={()=>setSelId(null)}>
           <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
             <div className="flex items-center justify-between" style={{marginBottom:4}}>
-              <div className="disp" style={{fontSize:17,fontWeight:900}}>{selG.name}{selG.nick?<span style={{color:"#d8c08a"}}>, {selG.nick}</span>:null}</div>
+              <div className="disp" style={{fontSize:"var(--fs-xl)",fontWeight:900}}>{selG.name}{selG.nick?<span style={{color:"#d8c08a"}}>, {selG.nick}</span>:null}</div>
               <button className="btn btn-ghost" style={{padding:"10px 10px"}} aria-label="Close" onClick={()=>setSelId(null)}><X size={14}/></button>
             </div>
-            <div className="dim" style={{fontSize:14.5,marginBottom:8}}>{selG.cls} — {CLASSES[selG.cls].desc} {ORIGINS[selG.origin].blurb.charAt(0).toUpperCase()+ORIGINS[selG.origin].blurb.slice(1)}.</div>
-            <div className="flex gap-3" style={{fontSize:14.5,flexWrap:"wrap",marginBottom:8}}>
+            <div className="dim" style={{fontSize:"var(--fs-md)",marginBottom:8}}>{selG.cls} — {CLASSES[selG.cls].desc} {ORIGINS[selG.origin].blurb.charAt(0).toUpperCase()+ORIGINS[selG.origin].blurb.slice(1)}.</div>
+            <div className="flex gap-3" style={{fontSize:"var(--fs-md)",flexWrap:"wrap",marginBottom:8}}>
               <span>Record <b>{selG.wins}–{selG.losses}</b></span>
               <span>Kills <b>{selG.kills}</b></span>
               <span>Renown <b>{rnd(selG.pfame)}</b></span>
               <span>Age <b>{selG.age}</b></span>
             </div>
-            <div style={{fontSize:15,fontStyle:"italic",marginBottom:8,color:selG.legend?"#e0bd72":"#cfc0a0"}}>
+            <div style={{fontSize:"var(--fs-lg)",fontStyle:"italic",marginBottom:8,color:selG.legend?"#e0bd72":"#cfc0a0"}}>
               The doctore's eye: {selG.read ? `potential ${rnd(selG.potential)}, heart ${rnd(selG.heart)}` : potentialWord(selG.potential, selG)}. Bearing: {demeanor(selG.defiance).toLowerCase()}{selG.read? ` (${rnd(selG.defiance)})`:""}. At {selG.age} {PR(selG).he} is {ageWord(selG.age, selG)}.{yearBurden(selG) > 0 && (()=>{ const y = selG.yearCap || {};
                 const worst = Object.entries(y).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${(STAT_NAMES[k]||k).toLowerCase()} ${v}`).join(", ");
                 return <span className="blood"> The years have taken {worst} off what he can ever be again, and no amount of the post gives it back.</span>; })()}
@@ -19003,10 +19021,10 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",borderColor:isFavourite(selG)?"#8a6a2c":"#3e2f1f"}}>
                 <div className="flex items-center justify-between" style={{marginBottom:6}}>
                   <span className={`tag ${isFavourite(selG)?"tag-gold":""}`}>{isFavourite(selG)?"♦ Crowd Favourite":"The crowd"}</span>
-                  <span className="rowval dim" style={{fontSize:12.5}}>{fanWord(fansOf(selG))}</span>
+                  <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{fanWord(fansOf(selG))}</span>
                 </div>
                 <Bar v={fansOf(selG)} label="following" color="linear-gradient(90deg,#6d5426,#e0bd72)"/>
-                {isFavourite(selG) && <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:5}}>
+                {isFavourite(selG) && <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:5}}>
                   The seats fill for his name — a fatter purse when he fights, and a mob that will not forgive you for benching, selling, or burying him.
                 </div>}
               </div>
@@ -19016,12 +19034,12 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",borderColor:wornColour(w)}}>
                   <div className="flex items-center justify-between" style={{marginBottom:6}}>
                     <span className="tag" style={{color:wornColour(w),borderColor:wornColour(w)}}>The body</span>
-                    <span className="rowval" style={{fontSize:13,color:wornColour(w)}}>{wornWord(w)}</span>
+                    <span className="rowval" style={{fontSize:"var(--fs-base)",color:wornColour(w)}}>{wornWord(w)}</span>
                   </div>
                   <div className="track" style={{height:6}}>
                     <div className="fill" style={{width:`${Math.round(w/0.85*100)}%`, background:`linear-gradient(90deg,#4a3a24,${wornColour(w)})`}}/>
                   </div>
-                  <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:6}}>
+                  <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:6}}>
                     {w<0.26 ? `${PR(selG).He} has taken his knocks and carries them well.`
                      : w<0.44 ? `The years and the wounds are on him. He goes down harder to mend when he goes down, and the cold finds his old hurts.`
                      : w<0.64 ? `A worn body. Send him out knowing a felling costs him more than it once did, and that some of it may not come back.`
@@ -19037,13 +19055,13 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               return (
                 <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",borderColor:"#5a3a2c"}}>
                   <div className="tag tag-blood" style={{marginBottom:5}}>Old wounds</div>
-                  <div style={{fontSize:14.5}}>
+                  <div style={{fontSize:"var(--fs-md)"}}>
                     {Object.entries(byPart).map(([p,n])=>(
                       <span key={p} style={{marginRight:10}}>{n>1? `Twice-cut ${SCAR_WORD[p]}` : `Scarred ${SCAR_WORD[p]}`}</span>
                     ))}
                   </div>
                   {Object.keys(cap).length>0 && (
-                    <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:4}}>
+                    <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:4}}>
                       {PR(selG).He} will never train past {Object.entries(cap).map(([k,v])=>`${STAT_NAMES[k]} ${99-v}`).join(", ")}.
                     </div>
                   )}
@@ -19055,20 +19073,20 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 <div className="panel" style={{padding:10,marginTop:8,marginBottom:9,background:"#1c1610",borderColor:"#3e2f1f"}}>
                   <div className="flex items-center justify-between" style={{marginBottom:4}}>
                     <span className="tag">Kits you keep</span>
-                    <button className="btn btn-ghost" style={{padding:"10px 9px",fontSize:12}} onClick={()=>keepKit(selG.id)}>
+                    <button className="btn btn-ghost" style={{padding:"10px 9px",fontSize:"var(--fs-sm)"}} onClick={()=>keepKit(selG.id)}>
                       Keep this one
                     </button>
                   </div>
                   {mine.length===0
-                    ? <div className="dim" style={{fontSize:13.5,fontStyle:"italic"}}>
+                    ? <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>
                         Nothing kept for a {selG.cls.toLowerCase()} yet. Keep a kit and you can put it on the next one in a tap.
                       </div>
                     : mine.map(k=>(
                         <div key={k.id} className="flex items-center justify-between gap-2" style={{borderTop:"1px dotted #33271a",padding:"5px 0"}}>
-                          <span className="rowname" style={{fontSize:14}}>{k.name}</span>
+                          <span className="rowname" style={{fontSize:"var(--fs-md)"}}>{k.name}</span>
                           <span className="flex gap-1">
-                            <button className="btn btn-ghost" style={{padding:"10px 9px",fontSize:12}} onClick={()=>useKit(selG.id,k.id)}>Put it on him</button>
-                            <button className="btn btn-ghost" style={{padding:"10px 8px",fontSize:12}} onClick={()=>forgetKit(k.id)}>×</button>
+                            <button className="btn btn-ghost" style={{padding:"10px 9px",fontSize:"var(--fs-sm)"}} onClick={()=>useKit(selG.id,k.id)}>Put it on him</button>
+                            <button className="btn btn-ghost" style={{padding:"10px 8px",fontSize:"var(--fs-sm)"}} onClick={()=>forgetKit(k.id)}>×</button>
                           </span>
                         </div>
                       ))}
@@ -19078,11 +19096,11 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",borderColor:"#5a7a8a"}}>
                 <div className="flex items-center justify-between gap-2" style={{marginBottom:4}}>
                   <span className="tag" style={{borderColor:"#5a7a8a",color:"#9dc0d4"}}>Under contract</span>
-                  <span className="rowval dim" style={{fontSize:13}}>{selG.auctor.wage}d / week</span>
+                  <span className="rowval dim" style={{fontSize:"var(--fs-base)"}}>{selG.auctor.wage}d / week</span>
                 </div>
-                <div style={{fontSize:15}}>{auctorLeft(selG)} of {selG.auctor.bouts} bouts still owed.</div>
-                <div className="dim" style={{fontSize:14,fontStyle:"italic",marginTop:3}}>{selG.auctor.why}</div>
-                <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:4}}>
+                <div style={{fontSize:"var(--fs-lg)"}}>{auctorLeft(selG)} of {selG.auctor.bouts} bouts still owed.</div>
+                <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:3}}>{selG.auctor.why}</div>
+                <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:4}}>
                   A free man. He cannot be sold, the rudis means nothing to him, and he will not be in the yard when the cells rise.
                 </div>
               </div>
@@ -19092,14 +19110,14 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",borderColor:formColour(v)}}>
                   <div className="flex items-center justify-between">
                     <span className="tag">Form</span>
-                    <span className="rowval" style={{fontSize:13,color:formColour(v)}}>{formWord(v)}</span>
+                    <span className="rowval" style={{fontSize:"var(--fs-base)",color:formColour(v)}}>{formWord(v)}</span>
                   </div>
                   {(selG.formLog||[]).length>0 && (
-                    <div className="dim" style={{fontSize:13.5,marginTop:3}}>
+                    <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:3}}>
                       Lately: {(selG.formLog||[]).slice(0,3).join(", ")}.
                     </div>
                   )}
-                  <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:2}}>
+                  <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:2}}>
                     {v>=24 ? "He is walking out expecting to win, and it is worth something."
                      : "He has not been right since. A few quiet weeks will settle it."}
                   </div>
@@ -19111,23 +19129,23 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               return (
                 <div className="panel" style={{padding:11,marginBottom:9,background:"#241b11",borderColor:"#6d5426"}}>
                   <div className="tag" style={{marginBottom:4,borderColor:"#6d5426",color:"#d8ac5f"}}>Not yet sworn</div>
-                  <div className="dim" style={{fontSize:14,fontStyle:"italic"}}>
+                  <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
                     {free
                       ? `The oath is his to say — ${OATH}, and he says it knowing what it signs away.`
                       : cond
                       ? `He is condemned, so the words are said over him rather than by him.`
                       : `${OATH} — ${OATH_EN}. Said over him, as the house has always done it.`}
                   </div>
-                  <div className="dim" style={{fontSize:13,marginTop:9,marginBottom:6,textTransform:"uppercase",letterSpacing:".06em"}}>Have the oath said</div>
+                  <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:9,marginBottom:6,textTransform:"uppercase",letterSpacing:".06em"}}>Have the oath said</div>
                   {SW_KEYS.map(k=>{ const S2 = SWEARING[k], afford = S.gold >= S2.cost;
                     return (
                       <button key={k} className="optrow" disabled={!afford} style={{display:"block",marginBottom:6,opacity:afford?1:0.5}}
                         onClick={()=>{ if(afford) swear(k); }}>
                         <div className="flex items-center justify-between gap-2">
-                          <span className="disp" style={{fontSize:12.5,color:"#e8d092"}}>{S2.name}</span>
-                          <span className="rowval gold" style={{fontSize:12.5}}>{S2.cost? `${S2.cost}d` : "free"}</span>
+                          <span className="disp" style={{fontSize:"var(--fs-sm)",color:"#e8d092"}}>{S2.name}</span>
+                          <span className="rowval gold" style={{fontSize:"var(--fs-sm)"}}>{S2.cost? `${S2.cost}d` : "free"}</span>
                         </div>
-                        <div className="dim" style={{fontSize:12.5,marginTop:2,lineHeight:1.35}}>{S2.desc}</div>
+                        <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2,lineHeight:1.35}}>{S2.desc}</div>
                       </button>
                     );
                   })}
@@ -19137,7 +19155,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             {gView==="standing" && selG.sworn && selG.sworn.how!=="quick" && (
               <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",borderColor:"#4e3c26"}}>
                 <div className="tag" style={{marginBottom:3}}>Sworn in</div>
-                <div className="dim" style={{fontSize:14,fontStyle:"italic"}}>
+                <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
                   {selG.sworn.free
                     ? `He said it himself: ${OATH}. A free man agreeing ${OATH_EN}.`
                     : `${OATH} — ${OATH_EN}. Said over him in week ${selG.sworn.week}, ${SWEARING[selG.sworn.how].name.toLowerCase()}.`}
@@ -19152,17 +19170,17 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   {has ? (<>
                     <div className="flex items-center justify-between" style={{marginBottom:3}}>
                       <span className="tag tag-gold">{has.name}</span>
-                      <span className="rowval dim" style={{fontSize:12.5}}>his own move</span>
+                      <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>his own move</span>
                     </div>
-                    <div className="dim" style={{fontSize:14,fontStyle:"italic"}}>They call it his — {has.say}. It comes oftener than the plain move, lands harder, and the crowd knows to wait for it.</div>
-                    {selG.signature.cls!==selG.cls && <div className="blood" style={{fontSize:13.5,marginTop:3}}>He fights another style now, so it is idle in his hands.</div>}
+                    <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>They call it his — {has.say}. It comes oftener than the plain move, lands harder, and the crowd knows to wait for it.</div>
+                    {selG.signature.cls!==selG.cls && <div className="blood" style={{fontSize:"var(--fs-base)",marginTop:3}}>He fights another style now, so it is idle in his hands.</div>}
                   </>) : selG.teaching ? (<>
                     <div className="tag tag-gold" style={{marginBottom:3}}>At the far post</div>
-                    <div style={{fontSize:15}}>Drilling {TECHNIQUES[selG.teaching.key]?TECHNIQUES[selG.teaching.key].name:"a move"} — {selG.teaching.weeks} week{selG.teaching.weeks===1?"":"s"} left.</div>
-                    <div className="dim" style={{fontSize:14,fontStyle:"italic",marginTop:3}}>The same move, over and over, until it is his and no one else's.</div>
+                    <div style={{fontSize:"var(--fs-lg)"}}>Drilling {TECHNIQUES[selG.teaching.key]?TECHNIQUES[selG.teaching.key].name:"a move"} — {selG.teaching.weeks} week{selG.teaching.weeks===1?"":"s"} left.</div>
+                    <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:3}}>The same move, over and over, until it is his and no one else's.</div>
                   </>) : (<>
                     <div className="tag" style={{marginBottom:4}}>Teach him a move of his own</div>
-                    <div className="dim" style={{fontSize:13.5,marginBottom:6}}>{S.doctore
+                    <div className="dim" style={{fontSize:"var(--fs-base)",marginBottom:6}}>{S.doctore
                       ? <>Your doctore can drill one technique into a proven man until Capua knows it by his name. {SIG_WEEKS} weeks, {sigFee(S)}d, and he still takes the card while he learns.</>
                       : <>You keep no doctore, so a master comes down from the school for the month and charges like it — {sigFee(S)}d, no wage, one man, one move, and then he goes home. {SIG_WEEKS} weeks, and your man still takes the card while he learns.</>}</div>
                     <div className="grid grid-cols-2 gap-2">
@@ -19184,16 +19202,16 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 borderColor: selG.learning ? "#6d5426" : masterOf(selG) ? "#c99a4b" : "#4e3c26"}}>
                 {selG.learning ? (<>
                   <div className="tag tag-gold" style={{marginBottom:3}}>At the far post</div>
-                  <div style={{fontSize:15}}>Being taught the {selG.learning.to.toLowerCase()}'s trade — {selG.learning.weeks} week{selG.learning.weeks===1?"":"s"} left.</div>
-                  <div className="dim" style={{fontSize:14,fontStyle:"italic",marginTop:3}}>He is on no card until it is finished, and he is a beginner again while it lasts.</div>
+                  <div style={{fontSize:"var(--fs-lg)"}}>Being taught the {selG.learning.to.toLowerCase()}'s trade — {selG.learning.weeks} week{selG.learning.weeks===1?"":"s"} left.</div>
+                  <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:3}}>He is on no card until it is finished, and he is a beginner again while it lasts.</div>
                 </>) : (<>
                   {masterOf(selG) && (<>
                     <div className="flex items-center justify-between" style={{marginBottom:3}}>
                       <span className="tag tag-gold">{MASTERY[selG.mastery.cls].name}</span>
-                      <span className="rowval dim" style={{fontSize:12.5}}>master of the {selG.mastery.cls.toLowerCase()}</span>
+                      <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>master of the {selG.mastery.cls.toLowerCase()}</span>
                     </div>
-                    <div className="dim" style={{fontSize:14,fontStyle:"italic"}}>{MASTERY[selG.mastery.cls].say}</div>
-                    {selG.mastery.cls!==selG.cls && <div className="blood" style={{fontSize:13.5,marginTop:3}}>He is fighting as a {selG.cls.toLowerCase()} at present, so none of it counts.</div>}
+                    <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>{MASTERY[selG.mastery.cls].say}</div>
+                    {selG.mastery.cls!==selG.cls && <div className="blood" style={{fontSize:"var(--fs-base)",marginTop:3}}>He is fighting as a {selG.cls.toLowerCase()} at present, so none of it counts.</div>}
                   </>)}
                   {canMaster(S,selG) && (
                     <button className="btn" style={{width:"100%",marginTop:6}} onClick={()=>doMaster(selG.id)}>
@@ -19217,7 +19235,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   {canSecond(S,selG) && (
                     <div style={{marginTop:8}}>
                       <div className="tag" style={{marginBottom:3}}>A second trade · {secondFee(S,selG)}d · {SECOND_WEEKS} weeks off every card</div>
-                      <div className="dim" style={{fontSize:13.5,marginBottom:5}}>
+                      <div className="dim" style={{fontSize:"var(--fs-base)",marginBottom:5}}>
                         There are not five men in Campania who can fight two styles. It costs him two months as a beginner.
                       </div>
                       <div className="grid grid-cols-2 gap-2">
@@ -19229,7 +19247,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     </div>
                   )}
                   {!masterOf(selG) && !canMaster(S,selG) && !selG.second && (
-                    <div className="dim" style={{fontSize:14,fontStyle:"italic"}}>
+                    <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
                       A master is made at {MASTERY_GATE.wins} victories and {MASTERY_GATE.pfame} renown. He has {selG.wins} and {rnd(selG.pfame)}.
                     </div>
                   )}
@@ -19240,12 +19258,12 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               <div className="panel" style={{padding:11,marginBottom:9,background:"#2a1512",borderColor:"#7c2a22"}}>
                 <div className="flex items-center justify-between" style={{marginBottom:3}}>
                   <span className="tag tag-blood">Condemned to the school</span>
-                  <span className="rowval" style={{fontSize:13,color:"#d98476"}}>{damnLeft(selG)} of {selG.damnatus.bouts} left</span>
+                  <span className="rowval" style={{fontSize:"var(--fs-base)",color:"#d98476"}}>{damnLeft(selG)} of {selG.damnatus.bouts} left</span>
                 </div>
-                <div style={{fontSize:15}}>Sentenced for {selG.damnatus.what}.</div>
-                <div className="dim" style={{fontSize:14,fontStyle:"italic",marginTop:3}}>{selG.damnatus.note}</div>
+                <div style={{fontSize:"var(--fs-lg)"}}>Sentenced for {selG.damnatus.what}.</div>
+                <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:3}}>{selG.damnatus.note}</div>
                 <Bar v={100 - damnLeft(selG)/selG.damnatus.bouts*100} label="sentence" color="linear-gradient(90deg,#5a1a14,#d98476)"/>
-                <div className="dim" style={{fontSize:13.5,marginTop:4}}>
+                <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:4}}>
                   He cannot be sold — he belongs to the sentence until it is served. Fight it out and he becomes a gladiator of this house like any other.
                 </div>
               </div>
@@ -19258,26 +19276,26 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               return (
                 <div className="panel" style={{padding:11,marginBottom:9,background:"#2a1512",borderColor:"#7c2a22"}}>
                   <div className="tag tag-blood" style={{marginBottom:4}}>He will not go out</div>
-                  <div style={{fontSize:15}}>{REFUSE_REASONS[selG.refusing.reason].say(selG)}</div>
-                  <div className="dim" style={{fontSize:14,fontStyle:"italic",marginTop:4}}>
+                  <div style={{fontSize:"var(--fs-lg)"}}>{REFUSE_REASONS[selG.refusing.reason].say(selG)}</div>
+                  <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:4}}>
                     {selG.refusing.weeks===0
                       ? "It began this week. He cannot be put on any card until it is settled — do it here."
                       : `${selG.refusing.weeks} week${selG.refusing.weeks===1?"":"s"} now, and he still cannot be carded. Settle it here. Every week he sits, the rest of the block adds it up.`}
                   </div>
-                  <div className="dim" style={{fontSize:13,marginTop:9,marginBottom:6,textTransform:"uppercase",letterSpacing:".06em"}}>Get him on his feet</div>
+                  <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:9,marginBottom:6,textTransform:"uppercase",letterSpacing:".06em"}}>Get him on his feet</div>
                   <button className="optrow" style={{display:"block",marginBottom:6}} onClick={()=>bring("talk","You Talk to Him")}>
-                    <div className="disp" style={{fontSize:12.5,color:"#e8d092"}}>Talk to him</div>
-                    <div className="dim" style={{fontSize:12.5,marginTop:2,lineHeight:1.35}}>Costs nothing and may fail — it turns on what you have been to him. The better he regards you, the likelier he rises.</div>
+                    <div className="disp" style={{fontSize:"var(--fs-sm)",color:"#e8d092"}}>Talk to him</div>
+                    <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2,lineHeight:1.35}}>Costs nothing and may fail — it turns on what you have been to him. The better he regards you, the likelier he rises.</div>
                   </button>
                   {canGive && (
                     <button className="optrow" style={{display:"block",marginBottom:6}} onClick={()=>bring("give","You Give Him What He Wants")}>
-                      <div className="disp" style={{fontSize:12.5,color:"#e8d092"}}>Give him what he wants</div>
-                      <div className="dim" style={{fontSize:12.5,marginTop:2,lineHeight:1.35}}>Grant the thing he stopped asking for. He is on his feet at once — and the whole block sees it.</div>
+                      <div className="disp" style={{fontSize:"var(--fs-sm)",color:"#e8d092"}}>Give him what he wants</div>
+                      <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2,lineHeight:1.35}}>Grant the thing he stopped asking for. He is on his feet at once — and the whole block sees it.</div>
                     </button>
                   )}
                   <button className="optrow" style={{display:"block",borderColor:"#7c2a22"}} onClick={()=>bring("whip","The Whip")}>
-                    <div className="blood" style={{fontSize:12.5,fontWeight:700}}>The whip</div>
-                    <div className="dim" style={{fontSize:12.5,marginTop:2,lineHeight:1.35}}>He goes out for certain, but breaks something in him — and every other man loses heart and hardens against you.</div>
+                    <div className="blood" style={{fontSize:"var(--fs-sm)",fontWeight:700}}>The whip</div>
+                    <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2,lineHeight:1.35}}>He goes out for certain, but breaks something in him — and every other man loses heart and hardens against you.</div>
                   </button>
                 </div>
               );
@@ -19287,7 +19305,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 <Sect title="What he makes of you" note={regardWord(v)}>
                   <Bar v={v} label="regard" color={`linear-gradient(90deg,#4a3a24,${regardColour(v)})`}/>
                   {mem.length===0
-                    ? <div className="dim" style={{fontSize:14,fontStyle:"italic",marginTop:4}}>
+                    ? <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:4}}>
                         Nothing has passed between you yet that he would count either way.
                       </div>
                     : <div style={{marginTop:5}}>
@@ -19298,18 +19316,18 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                             ? (m.settled ? `He carried ${m.forName} onto the sand, and left the grief there.` : `He is still carrying ${m.forName}, who died beside him.`)
                             : her(REGARD[m.kind].say, selG);
                           return (
-                          <div key={i} style={{fontSize:14,padding:"2px 0",color:bad?"#d9a89e":"#cfc0a0"}}>
+                          <div key={i} style={{fontSize:"var(--fs-md)",padding:"2px 0",color:bad?"#d9a89e":"#cfc0a0"}}>
                             {txt}{!isGrief && m.again>1 && <span className="dim"> ({m.again} times)</span>}
                           </div>
                           ); })}
                       </div>}
-                  {regardLoyal(selG) && <div className="laurel" style={{fontSize:13.5,marginTop:5}}>No other house's coin will move him.</div>}
-                  {regardRefuse(selG) && <div className="blood" style={{fontSize:13.5,marginTop:5}}>He does what he is told and not one thing more.</div>}
+                  {regardLoyal(selG) && <div className="laurel" style={{fontSize:"var(--fs-base)",marginTop:5}}>No other house's coin will move him.</div>}
+                  {regardRefuse(selG) && <div className="blood" style={{fontSize:"var(--fs-base)",marginTop:5}}>He does what he is told and not one thing more.</div>}
                 </Sect>
               ); })()}
             {gView==="standing" && selG.ambition && (
               <Sect title="What he wants" note={selG.ambition.met?"granted":selG.ambition.broken?"broken":selG.ambition.promised?"your word given":""}>
-                <div style={{fontSize:15}}>{ambWord(selG)}</div>
+                <div style={{fontSize:"var(--fs-lg)"}}>{ambWord(selG)}</div>
                 {(()=>{ const st = ambState(selG);
                   const line = {
                     silent:  ["dim","He has not mentioned it. He would not."],
@@ -19319,19 +19337,19 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     met:     ["laurel","He has it. He will not forget who gave it to him."],
                     broken:  ["blood","You did the one thing. He has stopped expecting anything."],
                   }[st] || ["dim",""];
-                  return <div className={line[0]} style={{fontSize:13.5,fontStyle:"italic",marginTop:3}}>{line[1]}</div>;
+                  return <div className={line[0]} style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>{line[1]}</div>;
                 })()}
               </Sect>
             )}
             {gView==="record" && selG.traits.length>0 && <div style={{marginBottom:8}}>
-              {selG.traits.map(t=><div key={t} style={{fontSize:14.5}}><span className="tag tag-gold" style={{marginRight:6}}>{t}</span><span className="dim">{TRAITS[t]}</span></div>)}
+              {selG.traits.map(t=><div key={t} style={{fontSize:"var(--fs-md)"}}><span className="tag tag-gold" style={{marginRight:6}}>{t}</span><span className="dim">{TRAITS[t]}</span></div>)}
             </div>}
             {gView==="body" && selG.injury && (()=>{ const care = selG.injury.care || "rest"; const fee = surgeonFee(S, selG.injury);
               return (
                 <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",borderColor:"#7c2a22"}}>
                   <div className="flex items-center justify-between gap-2" style={{marginBottom:5}}>
                     <span className="tag tag-blood">{selG.injury.name}</span>
-                    <span className="rowval dim" style={{fontSize:13}}>{Math.max(1,Math.ceil(selG.injury.weeks))} week{Math.ceil(selG.injury.weeks)>1?"s":""}</span>
+                    <span className="rowval dim" style={{fontSize:"var(--fs-base)"}}>{Math.max(1,Math.ceil(selG.injury.weeks))} week{Math.ceil(selG.injury.weeks)>1?"s":""}</span>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     {["rest","convalesce","surgeon","through"].map(c=>{
@@ -19346,8 +19364,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                       );
                     })}
                   </div>
-                  <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:6}}>{CARE[care].desc}</div>
-                  {care==="through" && <div className="blood" style={{fontSize:13.5,marginTop:3}}>
+                  <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:6}}>{CARE[care].desc}</div>
+                  {care==="through" && <div className="blood" style={{fontSize:"var(--fs-base)",marginTop:3}}>
                     He fights at a penalty and the wound will not close. It may set badly and leave something permanent.
                   </div>}
                 </div>
@@ -19356,7 +19374,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             {gView==="record" && isMade(selG) && (
               <div className="panel" style={{padding:9,marginBottom:9,background:"#1c1610",borderColor:"#c99a4b"}}>
                 <span className="tag" style={{color:"#e0bd72",borderColor:"#6a5a2c"}}>Made</span>
-                <div style={{fontSize:14,marginTop:3}}>
+                <div style={{fontSize:"var(--fs-md)",marginTop:3}}>
                   He is finished. Every one of them is at his ceiling and the palus has nothing further to give him —
                   what is left is the sand, and whatever he can put into the younger men.
                 </div>
@@ -19366,19 +19384,19 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             <div className="grid grid-cols-2 gap-x-4 gap-y-2" style={{marginBottom:10}}>
               {STATS.map(k=>(
                 <div key={k}>
-                  <div className="flex justify-between" style={{fontSize:13}}>
+                  <div className="flex justify-between" style={{fontSize:"var(--fs-base)"}}>
                     <span className="dim">{STAT_NAMES[k]}</span>
-                    <span>{rnd(selG[k])}{statCap(selG,k)<99 && <span className="blood" style={{fontSize:11.5}}> /{statCap(selG,k)}</span>}</span>
+                    <span>{rnd(selG[k])}{statCap(selG,k)<99 && <span className="blood" style={{fontSize:"var(--fs-micro)"}}> /{statCap(selG,k)}</span>}</span>
                   </div>
                   <Bar v={selG[k]} color={CLASSES[selG.cls].key.includes(k)?BRONZE:"#6a5a40"}/>
                 </div>
               ))}
               <div>
-                <div className="flex justify-between" style={{fontSize:13}}><span className="dim">Morale</span><span>{rnd(selG.morale)}</span></div>
+                <div className="flex justify-between" style={{fontSize:"var(--fs-base)"}}><span className="dim">Morale</span><span>{rnd(selG.morale)}</span></div>
                 <Bar v={selG.morale} color={LAUREL}/>
               </div>
               <div>
-                <div className="flex justify-between" style={{fontSize:13}}><span className="dim">Fatigue</span><span>{rnd(selG.fatigue)}</span></div>
+                <div className="flex justify-between" style={{fontSize:"var(--fs-base)"}}><span className="dim">Fatigue</span><span>{rnd(selG.fatigue)}</span></div>
                 <Bar v={selG.fatigue} color={BRONZE}/>
               </div>
             </div>
@@ -19390,24 +19408,24 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 <div className="panel" style={{padding:10,marginBottom:10,background:"#1c1610"}}>
                   <div className="flex items-center justify-between gap-2" style={{marginBottom:6}}>
                     <span className="tag">How it went</span>
-                    <span className="rowval dim" style={{fontSize:12}}>his last {B.length} {B.length===1?"bout":"bouts"}</span>
+                    <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>his last {B.length} {B.length===1?"bout":"bouts"}</span>
                   </div>
                   {(()=>{ const P = boutPattern(selG); if(!P) return null;
                     const mine = P.rows.filter(r=>WHY_YOURS[r.k]);
                     return (
                       <div className="panel" style={{padding:"9px 10px",marginBottom:8,background:"#1a1510",
                         borderColor: mine.length ? "#7c2a22" : "#4a3a22"}}>
-                        <div className="dim" style={{fontSize:10.5,textTransform:"uppercase",letterSpacing:".07em",marginBottom:4}}>
+                        <div className="dim" style={{fontSize:"var(--fs-micro)",textTransform:"uppercase",letterSpacing:".07em",marginBottom:4}}>
                           What keeps deciding them
                         </div>
                         {P.rows.map((r,i)=>(
                           <div key={i} className="flex items-center justify-between gap-2" style={{padding:"2px 0"}}>
-                            <span style={{fontSize:13.5,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
+                            <span style={{fontSize:"var(--fs-base)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
                               color: WHY_YOURS[r.k] ? "#cfa88a" : "#b09b7d"}}>{WHY_NAMES[r.k] || r.k}</span>
-                            <span className="rowval dim" style={{fontSize:12,flexShrink:0}}>{r.n} of {P.of}</span>
+                            <span className="rowval dim" style={{fontSize:"var(--fs-sm)",flexShrink:0}}>{r.n} of {P.of}</span>
                           </div>
                         ))}
-                        <div className="dim" style={{fontSize:12.5,fontStyle:"italic",marginTop:5,lineHeight:1.35}}>
+                        <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",marginTop:5,lineHeight:1.35}}>
                           {mine.length
                             ? `${mine.length===1 ? "That first one is" : "Those are"} yours to fix, not the day's.`
                             : "None of that is anything you set. He has had the afternoons he has had."}
@@ -19418,25 +19436,25 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     <details key={i} style={{borderTop:i?"1px dotted #33271a":"none",padding:"5px 0"}}>
                       <summary style={{listStyle:"none",cursor:"pointer"}}>
                         <span className="flex items-center justify-between gap-2">
-                          <span style={{fontSize:14,color:"#cfc0a0",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-                            {a.foe}{a.foeHouse? <span className="dim" style={{fontSize:12}}> · House {a.foeHouse}</span> : null}
+                          <span style={{fontSize:"var(--fs-md)",color:"#cfc0a0",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                            {a.foe}{a.foeHouse? <span className="dim" style={{fontSize:"var(--fs-sm)"}}> · House {a.foeHouse}</span> : null}
                           </span>
-                          <span className="rowval" style={{fontSize:12.5,color:boutColour(a),flexShrink:0}}>{boutWord(a)}</span>
+                          <span className="rowval" style={{fontSize:"var(--fs-sm)",color:boutColour(a),flexShrink:0}}>{boutWord(a)}</span>
                         </span>
-                        <span className="dim" style={{fontSize:12.5,display:"block",marginTop:1}}>
+                        <span className="dim" style={{fontSize:"var(--fs-sm)",display:"block",marginTop:1}}>
                           {a.where} · week {((a.week-1)%YEAR_WEEKS)+1} of year {Math.floor((a.week-1)/YEAR_WEEKS)+1}
                           {a.rounds? ` · ${a.rounds} rounds`:""}{a.crowd!=null? ` · crowd ${a.crowd}`:""}
                           {a.stakes==="sine"? " · sine missione":""}
                         </span>
                       </summary>
-                      {a.turn && <div className="dim" style={{fontSize:13.5,fontStyle:"italic",margin:"5px 0 3px",lineHeight:1.4}}>{a.turn}</div>}
-                      {a.end && <div style={{fontSize:13.5,lineHeight:1.4,color:"#cfc0a0"}}>{a.end}</div>}
-                      {!a.turn && !a.end && <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:4}}>Nothing of it was written down.</div>}
+                      {a.turn && <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",margin:"5px 0 3px",lineHeight:1.4}}>{a.turn}</div>}
+                      {a.end && <div style={{fontSize:"var(--fs-base)",lineHeight:1.4,color:"#cfc0a0"}}>{a.end}</div>}
+                      {!a.turn && !a.end && <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:4}}>Nothing of it was written down.</div>}
                       {(a.why||[]).length>0 && (
                         <div style={{marginTop:6,paddingTop:5,borderTop:"1px dotted #33271a"}}>
-                          <span className="dim" style={{fontSize:10.5,textTransform:"uppercase",letterSpacing:".07em"}}>What decided it</span>
+                          <span className="dim" style={{fontSize:"var(--fs-micro)",textTransform:"uppercase",letterSpacing:".07em"}}>What decided it</span>
                           {(a.why||[]).map((r,j)=>(
-                            <div key={j} style={{fontSize:13.5,lineHeight:1.4,marginTop:2,
+                            <div key={j} style={{fontSize:"var(--fs-base)",lineHeight:1.4,marginTop:2,
                               color: WHY_YOURS[r.k] ? "#cfa88a" : "#b09b7d"}}>{r.s}</div>
                           ))}
                         </div>
@@ -19454,24 +19472,24 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 <div className="panel" style={{padding:10,marginBottom:10,background:"#1c1610"}}>
                   <div className="flex items-center justify-between gap-2" style={{marginBottom:6}}>
                     <span className="tag">Who he has met</span>
-                    <span className="rowval dim" style={{fontSize:12}}>{F.length} named {F.length===1?"man":"men"}</span>
+                    <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{F.length} named {F.length===1?"man":"men"}</span>
                   </div>
                   {F.slice(0, 8).map((e,i)=>(
                     <div key={i} style={{borderTop:i?"1px dotted #33271a":"none",padding:"5px 0"}}>
                       <div className="flex items-center justify-between gap-2">
-                        <span style={{fontSize:14,color:"#cfc0a0",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                        <span style={{fontSize:"var(--fs-md)",color:"#cfc0a0",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                           {e.nick? `${e.name}, ${e.nick}` : e.name}
                         </span>
-                        <span className="rowval" style={{fontSize:12.5,color:foeColour(e)}}>{foeWord(e)}</span>
+                        <span className="rowval" style={{fontSize:"var(--fs-sm)",color:foeColour(e)}}>{foeWord(e)}</span>
                       </div>
-                      <div className="dim" style={{fontSize:12.5,marginTop:1}}>
+                      <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:1}}>
                         {[e.cls, e.house? `House ${e.house}` : null].filter(Boolean).join(" · ")}
                         {e.killed? <span className="blood"> · he put him in the ground</span> : null}
                         {e.last!=null && <span> · last met week {((e.last-1)%YEAR_WEEKS)+1} of year {Math.floor((e.last-1)/YEAR_WEEKS)+1}</span>}
                       </div>
                     </div>
                   ))}
-                  {F.length>8 && <div className="dim" style={{fontSize:12.5,marginTop:5,fontStyle:"italic"}}>
+                  {F.length>8 && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:5,fontStyle:"italic"}}>
                     …and {F.length-8} more he has stood in front of.
                   </div>}
                 </div>
@@ -19483,18 +19501,18 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 {selG.mentor && (()=>{ const m=S.gladiators.find(x=>x.id===selG.mentor);
                   return (
                     <button className="optrow" style={{width:"100%",marginBottom:5,padding:8}} disabled={!m} onClick={()=>m&&setSelId(m.id)}>
-                      <div className="flex items-center justify-between gap-2" style={{fontSize:14.5}}>
+                      <div className="flex items-center justify-between gap-2" style={{fontSize:"var(--fs-md)"}}>
                         <span><span style={{color:"#e8d092"}}>Taught by</span><span className="dim"> · </span>{m?m.name:(selG.mentorName||"—")}</span>
-                        <span className="dim" style={{fontSize:13,whiteSpace:"nowrap"}}>the old hand</span>
+                        <span className="dim" style={{fontSize:"var(--fs-base)",whiteSpace:"nowrap"}}>the old hand</span>
                       </div>
                     </button>
                   ); })()}
                 {selG.protege && (()=>{ const r=S.gladiators.find(x=>x.id===selG.protege);
                   return (
                     <button className="optrow" style={{width:"100%",marginBottom:5,padding:8}} disabled={!r} onClick={()=>r&&setSelId(r.id)}>
-                      <div className="flex items-center justify-between gap-2" style={{fontSize:14.5}}>
+                      <div className="flex items-center justify-between gap-2" style={{fontSize:"var(--fs-md)"}}>
                         <span><span style={{color:"#e8d092"}}>Bringing on</span><span className="dim"> · </span>{r?r.name:(selG.protegeName||"—")}</span>
-                        <span className="dim" style={{fontSize:13,whiteSpace:"nowrap"}}>{r?`toward his fifth · ${clamp(r.wins,0,5)}/5`:"his protégé"}</span>
+                        <span className="dim" style={{fontSize:"var(--fs-base)",whiteSpace:"nowrap"}}>{r?`toward his fifth · ${clamp(r.wins,0,5)}/5`:"his protégé"}</span>
                       </div>
                     </button>
                   ); })()}
@@ -19504,17 +19522,17 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   const bro = t.kind==="brother";
                   return (
                     <button key={i} className="optrow" style={{width:"100%",marginBottom:5,padding:8}} onClick={()=>setSelId(o.id)}>
-                      <div className="flex items-center justify-between gap-2" style={{fontSize:14.5}}>
+                      <div className="flex items-center justify-between gap-2" style={{fontSize:"var(--fs-md)"}}>
                         <span>
                           <span style={{color: bro?"#b9c58a":"#d98476"}}>{bro? "Brother":"Bad blood"}</span>
                           <span className="dim"> · </span>{o.name}
                         </span>
-                        <span className="dim" style={{fontSize:13,whiteSpace:"nowrap"}}>{tieWord(t)}</span>
+                        <span className="dim" style={{fontSize:"var(--fs-base)",whiteSpace:"nowrap"}}>{tieWord(t)}</span>
                       </div>
                     </button>
                   );
                 })}
-                <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:4}}>
+                <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:4}}>
                   {selG.protege
                     ? `He is teaching ${selG.protegeName||"a green one"} what he knows — lose either of them and the other feels it.`
                     : selG.mentor
@@ -19534,9 +19552,9 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",borderColor:"#8a6a2c"}}>
                   <div className="flex items-center justify-between" style={{marginBottom:6}}>
                     <span className="tag tag-gold">The Champion's Road</span>
-                    <span className="rowval" style={{fontSize:12,color:"#e0bd72"}}>Act {Math.min(s.stage,4)} of 4</span>
+                    <span className="rowval" style={{fontSize:"var(--fs-sm)",color:"#e0bd72"}}>Act {Math.min(s.stage,4)} of 4</span>
                   </div>
-                  <div className="dim" style={{fontSize:14,fontStyle:"italic",marginBottom:6}}>{word}.</div>
+                  <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:6}}>{word}.</div>
                   <Bar v={s.renown} label="renown" color="linear-gradient(90deg,#6d5426,#e0bd72)"/>
                 </div>
               ); })()}
@@ -19547,11 +19565,11 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               <div style={{position:"absolute",left:"50%",bottom:10,transform:"translateX(-50%)"}}>
                 <Fighter col={S.crest} fem={isF(selG)} kit={selG.kit || defaultKit(selG.cls)} scars={selG.scars} pose="idle" wounds={[]}/>
               </div>
-              <div className="dim" style={{position:"absolute",bottom:5,left:9,fontSize:11,fontStyle:"italic"}}>as he takes the sand</div>
+              <div className="dim" style={{position:"absolute",bottom:5,left:9,fontSize:"var(--fs-micro)",fontStyle:"italic"}}>as he takes the sand</div>
             </div>
             <div className="flex items-center justify-between" style={{marginBottom:6}}>
               <span className="tag tag-gold">Kit</span>
-              <button className="btn btn-ghost" style={{padding:"10px 10px",fontSize:12}} onClick={()=>armHim(selG.id)}>
+              <button className="btn btn-ghost" style={{padding:"10px 10px",fontSize:"var(--fs-sm)"}} onClick={()=>armHim(selG.id)}>
                 Arm him from the rack
               </button>
             </div>
@@ -19561,24 +19579,24 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 <div className="tag tag-blood" style={{marginBottom:4}}>What never closed</div>
                 {lastingOf(selG).map(k=>(
                   <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:5,marginTop:5}}>
-                    <div style={{fontSize:14.5,color:"#d98476"}}>{LASTING[k].name}</div>
-                    <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:1}}>{LASTING[k].say}</div>
+                    <div style={{fontSize:"var(--fs-md)",color:"#d98476"}}>{LASTING[k].name}</div>
+                    <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:1}}>{LASTING[k].say}</div>
                   </div>
                 ))}
-                <div className="dim" style={{fontSize:13,marginTop:5}}>
+                <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:5}}>
                   Past the sixth round he is at ×{lastNum(selG,"latePow").toFixed(2)}, and he spends wind {Math.round((lastNum(selG,"stam")-1)*100)}% faster all the way through.
                 </div>
               </div>
             )}
             {gView==="body" && !selG.injury && (selG.scars||[]).length===0 && bodyWear(selG)<0.12 && lastingOf(selG).length===0 && (
-              <div className="dim" style={{fontSize:14,fontStyle:"italic",padding:"6px 2px 12px"}}>
+              <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",padding:"6px 2px 12px"}}>
                 Sound and unmarked. Nothing has been taken out of {PR(selG).him} yet — no wound to mend, no scar, no old hurt. Long may it last.
               </div>
             )}
             {gView==="standing" && isF(selG) && (
               <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",borderColor:"#8a6a9c"}}>
                 <div className="tag" style={{marginBottom:3,borderColor:"#8a6a9c",color:"#bfa8c8"}}>A woman on the sand</div>
-                <div className="dim" style={{fontSize:14}}>
+                <div className="dim" style={{fontSize:"var(--fs-md)"}}>
                   The upper tiers will not shut up about her and the front rows think it is vulgar. Crowd +{femCrowd(selG)}, purses ×{femPurse(selG).toFixed(2)}, and the two halves of the amphitheatre move in opposite directions every time she goes out.
                 </div>
               </div>
@@ -19588,23 +19606,23 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 <div className="panel" style={{padding:11,marginBottom:9,background:"#1c1610",borderColor:favColour(v)}}>
                   <div className="flex items-center justify-between" style={{marginBottom:3}}>
                     <span className="tag">What Capua makes of him</span>
-                    <span className="rowval" style={{fontSize:13,color:favColour(v)}}>{favWord(v)}</span>
+                    <span className="rowval" style={{fontSize:"var(--fs-base)",color:favColour(v)}}>{favWord(v)}</span>
                   </div>
                   <Bar v={v} label="" color="linear-gradient(90deg,#4a3a24,#e8d092)"/>
-                  <div className="dim" style={{fontSize:13.5,marginTop:4}}>
+                  <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:4}}>
                     Purses ×{favPurse(selG).toFixed(2)} when he is on the card{v>=25 ? `, and they are ${Math.round(favMissio(selG))} less willing to watch him die.` : "."}
                   </div>
-                  {v>=40 && <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:3}}>
+                  {v>=40 && <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>
                     Selling him or burying him is not a private arrangement any more.
                   </div>}
                 </div>
               ); })()}
             {gView==="kit" && provCrowd(selG)>0 && (
               <div className="panel" style={{padding:9,marginBottom:7,background:"#1c1610",borderColor:"#6d5426"}}>
-                <div className="laurel" style={{fontSize:13.5}}>
+                <div className="laurel" style={{fontSize:"var(--fs-base)"}}>
                   The crowd knows his steel when he walks out — {provCrowd(selG)} to them.
                 </div>
-                {provDread(selG) && <div className="blood" style={{fontSize:13.5,marginTop:2}}>
+                {provDread(selG) && <div className="blood" style={{fontSize:"var(--fs-base)",marginTop:2}}>
                   And the cells know which piece he is wearing.
                 </div>}
               </div>
@@ -19615,7 +19633,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 <div className="panel" style={{padding:9,marginBottom:7,background:"#1c1610",
                   borderColor: faults.some(f=>f.why!=="better on the rack") ? "#7c2a22" : "#6d5426"}}>
                   {faults.map((f,i)=>(
-                    <div key={i} style={{fontSize:13.5,color:f.why==="unfamiliar"?"#d98476":f.why==="failing"?"#d96f5d":"#d8ac5f"}}>
+                    <div key={i} style={{fontSize:"var(--fs-base)",color:f.why==="unfamiliar"?"#d98476":f.why==="failing"?"#d96f5d":"#d8ac5f"}}>
                       {f.why==="unfamiliar" ? `${f.name} is not his style — he carries it clumsily.`
                         : f.why==="failing" ? `${f.name} is close to going.`
                         : `There is better on the rack for him.`}
@@ -19630,11 +19648,11 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   return (
                     <div key={slot} style={{marginBottom:7}}>
                       <div className="flex items-center justify-between gap-2" style={{marginBottom:3}}>
-                        <span className="dim" style={{fontSize:13}}>{SLOT_NAME[slot]}</span>
-                        {cur && <span style={{fontSize:12.5}}><GearStats it={cur} cls={selG.cls}/></span>}
+                        <span className="dim" style={{fontSize:"var(--fs-base)"}}>{SLOT_NAME[slot]}</span>
+                        {cur && <span style={{fontSize:"var(--fs-sm)"}}><GearStats it={cur} cls={selG.cls}/></span>}
                       </div>
                       {provOf(selG,slot) && (
-                        <div style={{fontSize:12.5,fontStyle:"italic",marginBottom:3,
+                        <div style={{fontSize:"var(--fs-sm)",fontStyle:"italic",marginBottom:3,
                           color:PROV[provOf(selG,slot).kind].colour}}>
                           {PROV[provOf(selG,slot).kind].line(provOf(selG,slot))}
                         </div>
@@ -19643,8 +19661,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                         <span style={{minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                           {isNamed(selG,slot) ? <span className="gold">{selG.named.title}</span> : (cur ? cur.name : "—")}
                           {cur && cur.styles && cur.styles.length && !cur.styles.includes(selG.cls)
-                            ? <span className="blood" style={{fontSize:13}}> · unfamiliar</span> : null}
-                          {wears(cur) && <span style={{fontSize:12.5, color:wearColour(wearOf(selG,slot))}}> · {wearWord(wearOf(selG,slot))}</span>}
+                            ? <span className="blood" style={{fontSize:"var(--fs-base)"}}> · unfamiliar</span> : null}
+                          {wears(cur) && <span style={{fontSize:"var(--fs-sm)", color:wearColour(wearOf(selG,slot))}}> · {wearWord(wearOf(selG,slot))}</span>}
                         </span>
                         <ChevronRight size={15} style={{color:"#9c8a6f",flexShrink:0}}/>
                       </button>
@@ -19657,14 +19675,14 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   );
                 })}
                 <div className="panel" style={{padding:9,marginTop:8,background:"#1c1610"}}>
-                  <div className="flex gap-3" style={{flexWrap:"wrap",fontSize:14}}>
+                  <div className="flex gap-3" style={{flexWrap:"wrap",fontSize:"var(--fs-md)"}}>
                     <span className="dim">Kit total:</span>
                     <span style={{color:m.atk>=0?"#9aa86a":"#cf5a49"}}>Attack {pct(m.atk)}</span>
                     <span style={{color:m.def>=0?"#9aa86a":"#cf5a49"}}>Guard {pct(m.def)}</span>
                     <span style={{color:m.spd>=0?"#9aa86a":"#cf5a49"}}>Speed {pct(m.spd)}</span>
                     <span style={{color:m.sho>=0?"#9aa86a":"#cf5a49"}}>Crowd {pct(m.sho)}</span>
                   </div>
-                  {m.clumsy.length>0 && <div className="blood" style={{fontSize:13,fontStyle:"italic",marginTop:4}}>Ill-suited to his style: {m.clumsy.join(", ")}.</div>}
+                  {m.clumsy.length>0 && <div className="blood" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:4}}>Ill-suited to his style: {m.clumsy.join(", ")}.</div>}
                 </div>
                 {(()=>{ const fee = repairFee(S, selG);
                   if(fee<=0) return null;
@@ -19673,7 +19691,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   </button>; })()}
                 {forgeReady(S, selG) && (
                   <div style={{marginTop:7}}>
-                    <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:5}}>
+                    <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:5}}>
                       Your armourer can make one piece for one man, and it will never be anybody else's.
                     </div>
                     <div className="grid grid-cols-2 gap-2">
@@ -19687,8 +19705,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 )}
                 {selG.named && (
                   <div className="panel" style={{padding:9,marginTop:7,background:"#1c1610",borderColor:"#c99a4b"}}>
-                    <div className="disp gold" style={{fontSize:14}}>{selG.named.title}</div>
-                    <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:2}}>
+                    <div className="disp gold" style={{fontSize:"var(--fs-md)"}}>{selG.named.title}</div>
+                    <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:2}}>
                       Made for him in year {Math.floor((selG.named.made-1)/YEAR_WEEKS)+1}. It wears half as fast, it cannot be taken off him, and it will not break — only bend.
                     </div>
                   </div>
@@ -19700,12 +19718,12 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 borderColor: docPupil(S)===selG.id ? "#c99a4b" : "#4e3c26"}}>
                 <div className="flex items-center justify-between gap-2" style={{marginBottom:5}}>
                   <span className="tag tag-gold">The doctore</span>
-                  <span className="rowval dim" style={{fontSize:12.5}}>{STAT_NAMES[S.doctore.spec]} · {docWord(S.doctore.skill)}</span>
+                  <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{STAT_NAMES[S.doctore.spec]} · {docWord(S.doctore.skill)}</span>
                 </div>
                 {S.doctore.retrainTo && docPupil(S)===selG.id ? (
-                  <div style={{fontSize:15}}>Being remade as a {S.doctore.retrainTo.toLowerCase()} — {S.doctore.retrainLeft} week{S.doctore.retrainLeft===1?"":"s"} left.</div>
+                  <div style={{fontSize:"var(--fs-lg)"}}>Being remade as a {S.doctore.retrainTo.toLowerCase()} — {S.doctore.retrainLeft} week{S.doctore.retrainLeft===1?"":"s"} left.</div>
                 ) : S.doctore.retrainTo ? (
-                  <div className="dim" style={{fontSize:14.5,fontStyle:"italic"}}>He is busy remaking someone else.</div>
+                  <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>He is busy remaking someone else.</div>
                 ) : (<>
                   <button className={`btn ${docPupil(S)===selG.id?"":"btn-ghost"}`} style={{width:"100%"}} onClick={()=>setPupil(selG.id)}>
                     {docPupil(S)===selG.id ? "He has him this week" : "Put the doctore on him"}
@@ -19716,7 +19734,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   </button>
                   {retrainFor===selG.id && (
                     <div style={{marginTop:7}}>
-                      <div className="dim" style={{fontSize:13.5,marginBottom:5}}>{RETRAIN_WEEKS} weeks off the sand. He keeps everything he is and learns to carry it differently.</div>
+                      <div className="dim" style={{fontSize:"var(--fs-base)",marginBottom:5}}>{RETRAIN_WEEKS} weeks off the sand. He keeps everything he is and learns to carry it differently.</div>
                       <div className="grid grid-cols-2 gap-2">
                         {Object.keys(CLASSES).filter(c=>c!==selG.cls).map(c=>(
                           <button key={c} className="focusbtn" onClick={()=>{ startRetrain(selG.id,c); setRetrainFor(null); }}>
@@ -19736,11 +19754,11 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   <div className="panel" style={{padding:11,marginBottom:9,background:"#1c1610",borderColor:"#c99a4b"}}>
                     <div className="flex items-center justify-between" style={{marginBottom:3}}>
                       <span className="tag tag-gold">On a season</span>
-                      <span className="rowval" style={{fontSize:12.5,color:"#e0bd72"}}>{planWeeksLeft(selG)} weeks left</span>
+                      <span className="rowval" style={{fontSize:"var(--fs-sm)",color:"#e0bd72"}}>{planWeeksLeft(selG)} weeks left</span>
                     </div>
-                    <div className="disp" style={{fontSize:14.5,color:"#e8d092"}}>{P.name}</div>
+                    <div className="disp" style={{fontSize:"var(--fs-md)",color:"#e8d092"}}>{P.name}</div>
                     <Bar v={planPct(selG)} label="" color="linear-gradient(90deg,#4a3a24,#c99a4b)"/>
-                    <div className="dim" style={{fontSize:13.5,marginTop:3}}>
+                    <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:3}}>
                       This week: {REGIMENS[planDrill(selG)] ? REGIMENS[planDrill(selG)].name : "the post"}. It pays{" "}
                       {Object.entries(P.pays).map(([k,v])=>`+${v} ${STAT_NAMES[k].toLowerCase()}`).join(", ")}
                       {P.trait ? ` and makes him ${P.trait}` : ""}, and only when it is finished.
@@ -19757,7 +19775,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               return (
                 <div className="panel" style={{padding:11,marginBottom:9}}>
                   <div className="tag tag-gold" style={{marginBottom:4}}>Put him on a season</div>
-                  <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:6}}>
+                  <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:6}}>
                     Months of one thing, drilled in order, worth nothing until it is done and a great deal more than a week of picking when it is.
                   </div>
                   {PS_KEYS.map(k=>{ const P = PLANSEASON[k];
@@ -19765,11 +19783,11 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                       <button key={k} className="optrow" style={{padding:10,marginBottom:6}}
                         onClick={()=>mut(d=>{ const g=d.gladiators.find(x=>x.id===selG.id); if(g) startPlan(d, g, k); })}>
                         <div className="flex items-center justify-between gap-2">
-                          <span className="disp" style={{fontSize:13,color:"#e8d092"}}>{P.name}</span>
-                          <span className="rowval dim" style={{fontSize:12}}>{P.weeks} weeks</span>
+                          <span className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d092"}}>{P.name}</span>
+                          <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{P.weeks} weeks</span>
                         </div>
-                        <div className="dim" style={{fontSize:13.5,textAlign:"left",marginTop:2}}>{P.blurb}</div>
-                        <div style={{fontSize:12.5,textAlign:"left",marginTop:2,color:"#9aa86a"}}>
+                        <div className="dim" style={{fontSize:"var(--fs-base)",textAlign:"left",marginTop:2}}>{P.blurb}</div>
+                        <div style={{fontSize:"var(--fs-sm)",textAlign:"left",marginTop:2,color:"#9aa86a"}}>
                           {Object.entries(P.pays).map(([s,v])=>`+${v} ${STAT_NAMES[s].toLowerCase()}`).join(" · ")}
                           {P.trait ? ` · ${P.trait}` : ""}
                         </div>
@@ -19784,9 +19802,9 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 <div className="panel" style={{padding:11,marginBottom:9,borderColor:"#7c2a22",background:"#1c1610"}}>
                   <div className="flex items-center justify-between gap-2" style={{marginBottom:4}}>
                     <span className="tag tag-blood">Somebody is watching him</span>
-                    <span className="rowval dim" style={{fontSize:12}}>{left>0? `${left} more week${left===1?"":"s"}` : "going cold"}</span>
+                    <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{left>0? `${left} more week${left===1?"":"s"}` : "going cold"}</span>
                   </div>
-                  <div className="dim" style={{fontSize:13.5,marginBottom:7,lineHeight:1.35}}>
+                  <div className="dim" style={{fontSize:"var(--fs-base)",marginBottom:7,lineHeight:1.35}}>
                     House {w.house} has had somebody at the wall while he works. Whoever they put across from him
                     will already know what he does. It goes stale on its own, or he can spend a week showing them nothing.
                   </div>
@@ -19797,7 +19815,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 </div>
               ); })()}
             {gView==="train" && (selG.shiftWeeks>0) && (
-              <div className="dim" style={{fontSize:13,fontStyle:"italic",marginBottom:9,lineHeight:1.35}}>
+              <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:9,lineHeight:1.35}}>
                 He is working badly on purpose this week. It buys him almost nothing of his own.
               </div>
             )}
@@ -19807,15 +19825,15 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 <div className="panel" style={{padding:11,marginBottom:9,borderColor:live?"#6d5426":"#7c2a22",background:"#1c1610"}}>
                   <div className="flex items-center justify-between gap-2" style={{marginBottom:4}}>
                     <span className="tag tag-gold">Drilling for one man</span>
-                    <span className="rowval dim" style={{fontSize:12}}>{prepWord(selG)}</span>
+                    <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{prepWord(selG)}</span>
                   </div>
-                  <div style={{fontSize:14.5,marginBottom:3}}>
+                  <div style={{fontSize:"var(--fs-md)",marginBottom:3}}>
                     {pr.name}<span className="dim"> of House {pr.house}{pr.cls?` · ${pr.cls}`:""}</span>
                   </div>
                   <div className="track" style={{height:5,marginBottom:6}}>
                     <div className="fill" style={{width:`${Math.round(prepEdge(selG)*100)}%`,background:"linear-gradient(90deg,#5a4a2c,#c99a4b)"}}/>
                   </div>
-                  <div className="dim" style={{fontSize:13,marginBottom:7,lineHeight:1.35}}>
+                  <div className="dim" style={{fontSize:"var(--fs-base)",marginBottom:7,lineHeight:1.35}}>
                     {live
                       ? "His own work pays about three-fifths while this runs. Put him in front of that man and he will know which plan fits, and carry the weeks into it."
                       : <span className="blood">The reading has gone off. Have that man watched again or this is drilling against a memory.</span>}
@@ -19838,24 +19856,24 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   </button>
                 ); })}
             </div>
-            <div className="dim" style={{fontSize:14,fontStyle:"italic",marginBottom:8}}>
+            <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>
               {REGIMENS[selG.regimen||"palus"].desc}
             </div>
             {(()=>{ const s = strainOf(selG); if(s<8) return null;
               return (
                 <div className="panel" style={{padding:9,marginBottom:8,background:"#1c1610",
                   borderColor: s>55?"#7c2a22" : s>30?"#6d5426" : "#4e3c26"}}>
-                  <div className="flex items-center justify-between" style={{fontSize:14}}>
+                  <div className="flex items-center justify-between" style={{fontSize:"var(--fs-md)"}}>
                     <span>Strain</span>
                     <span style={{color: s>55?"#d96f5d" : s>30?"#d8ac5f" : "#b09b7d"}}>{strainWord(s)}</span>
                   </div>
                   <Bar v={s} label="strain" color={s>55?"#d96f5d":s>30?"#d8ac5f":"#5a4a34"}/>
-                  <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:3}}>
+                  <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>
                     Deep tiredness that a night does not touch. It eats what he gains and it is how men tear things. Only rest takes it off.
                   </div>
                 </div>
               ); })()}
-            <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:8}}>
+            <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:8}}>
               {REGIMENS[selG.regimen||"palus"].desc}
               {(()=>{ const p = sparPartner(S, selG); if(!p) return null;
                 const t = tieBetween(S, selG.id, p.id);
@@ -19889,22 +19907,22 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   borderColor: teaching ? "#6d5426" : "#4e3c26"}}>
                   <div className="tag" style={{marginBottom:6}}>The far post</div>
                   {teaching ? (<>
-                    <div style={{fontSize:15,marginBottom:4}}>
+                    <div style={{fontSize:"var(--fs-lg)",marginBottom:4}}>
                       Bringing on <span style={{color:"#e0bd72"}}>{boy ? boy.name : (selG.protegeName||"a green one")}</span>
                       {boy && <span className="dim"> · {Math.max(0, 5-(boy.wins||0))} more wins and the boy is made</span>}
                     </div>
-                    <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:8,lineHeight:1.35}}>
+                    <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:8,lineHeight:1.35}}>
                       The boy gains on {STAT_NAMES[bestStatKey(selG)].toLowerCase()} every week he works — the more of it {PR(selG).he} has over him, the faster. {PR(selG).He} pays for it out of his own week, and neither of them would take the other's death well.
                     </div>
                     <button className="btn btn-ghost" style={{width:"100%"}} onClick={()=>stopTeach(selG.id)}>Back to his own work</button>
                   </>) : (<>
-                    <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:8,lineHeight:1.35}}>
+                    <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:8,lineHeight:1.35}}>
                       {isMade(selG)
                         ? `There is nothing at the post for ${PR(selG).him} any more. There is still something at the far end of the square, if you put a boy in front of ${PR(selG).him}.`
                         : `${PR(selG).He} has enough behind ${PR(selG).him} to be worth watching. Six-tenths of ${PR(selG).his} own week goes on the boy instead — decide whether ${PR(selG).he} can afford that.`}
                     </div>
                     {pool.length===0
-                      ? <div className="dim" style={{fontSize:14}}>No one green enough to teach — a boy wants two wins or fewer, and to be young enough to change.</div>
+                      ? <div className="dim" style={{fontSize:"var(--fs-md)"}}>No one green enough to teach — a boy wants two wins or fewer, and to be young enough to change.</div>
                       : <button className="btn" style={{width:"100%",borderColor:"#c99a4b",color:"#e8d092"}}
                           onClick={()=>setTeachPick(selG.id)}>Put him to teaching</button>}
                   </>)}
@@ -19939,10 +19957,10 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:60}} onClick={()=>setGearPick(null)}>
             <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
               <div className="flex items-center justify-between" style={{marginBottom:4}}>
-                <div className="disp" style={{fontSize:14,fontWeight:700,letterSpacing:".1em"}}>{SLOT_NAME[gearPick.slot].toUpperCase()}</div>
+                <div className="disp" style={{fontSize:"var(--fs-md)",fontWeight:700,letterSpacing:".1em"}}>{SLOT_NAME[gearPick.slot].toUpperCase()}</div>
                 <button className="btn btn-ghost" style={{padding:"10px 10px"}} aria-label="Close" onClick={()=>setGearPick(null)}><X size={14}/></button>
               </div>
-              <div className="dim" style={{fontSize:14,fontStyle:"italic",marginBottom:10}}>
+              <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:10}}>
                 For {g.name} — {g.cls}.{dualLock ? " Both his hands are full; a shield would only hinder him." : ""}
               </div>
               {opts.map(([id,it])=>{
@@ -19953,14 +19971,14 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   <button key={id} className={`optrow ${on?"on":""}`}
                     onClick={()=>{ equip(g.id, gearPick.slot, id); setGearPick(null); }}>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="disp" style={{fontSize:13.5,color:on?"#e8d092":"#e8d9b8"}}>{it.name}</span>
+                      <span className="disp" style={{fontSize:"var(--fs-base)",color:on?"#e8d092":"#e8d9b8"}}>{it.name}</span>
                       {on ? <span className="tag tag-gold">Worn</span>
-                          : spare!=null ? <span className="dim" style={{fontSize:12.5,whiteSpace:"nowrap"}}>{spare} owned</span>
+                          : spare!=null ? <span className="dim" style={{fontSize:"var(--fs-sm)",whiteSpace:"nowrap"}}>{spare} owned</span>
                           : <span className="tag">Standard</span>}
                     </div>
-                    <div className="dim" style={{fontSize:13.5,fontStyle:"italic",margin:"3px 0 4px"}}>{it.desc}</div>
+                    <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",margin:"3px 0 4px"}}>{it.desc}</div>
                     <GearStats it={it} cls={g.cls}/>
-                    {alien && !on && <div className="dim" style={{fontSize:12.5,marginTop:2}}>Suits: {it.styles.join(", ")}</div>}
+                    {alien && !on && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>Suits: {it.styles.join(", ")}</div>}
                   </button>
                 );
               })}
@@ -19981,17 +19999,17 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:64}} onClick={close}>
             <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
               <div className="flex items-center justify-between" style={{marginBottom:6}}>
-                <div className="disp" style={{fontSize:15,fontWeight:900,letterSpacing:".08em",color:"#e8d092"}}>HOUSE {h.name.toUpperCase()}</div>
+                <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".08em",color:"#e8d092"}}>HOUSE {h.name.toUpperCase()}</div>
                 <button className="btn btn-ghost" style={{padding:"8px 10px"}} aria-label="Close" onClick={close}><X size={14}/></button>
               </div>
-              <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:8}}>
+              <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:8}}>
                 {L.name}{L.trait?` — ${L.trait}`:""}. {grudgeWord(h.grudge)}{feud?" You are in a feud with this house.":""}
               </div>
-              {dealMsg && <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",borderColor:"#6d5426",fontSize:14.5}}>{dealMsg}</div>}
+              {dealMsg && <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",borderColor:"#6d5426",fontSize:"var(--fs-md)"}}>{dealMsg}</div>}
 
               <div className="flex items-center justify-between gap-2" style={{marginBottom:5}}>
                 <span className="tag tag-gold">His men</span>
-                <span className="rowval dim" style={{fontSize:12}}>tap a man to open him up</span>
+                <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>tap a man to open him up</span>
               </div>
               {(h.fighters||[]).map(f=>{
                 const isStar = !!(h.star && h.star.id===f.id);
@@ -20000,24 +20018,24 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   <button key={f.id} className="optrow" style={{padding:"9px 10px",marginBottom:6}}
                     onClick={()=>setManCard({ house:h.name, fid:f.id })}>
                     <div className="flex items-center justify-between gap-2">
-                      <span style={{fontSize:14.5,color:isStar?"#e0bd72":"#cfc0a0",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                      <span style={{fontSize:"var(--fs-md)",color:isStar?"#e0bd72":"#cfc0a0",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                         {isStar?"★ ":""}{f.name}{f.nick?`, ${f.nick}`:""}
                       </span>
-                      <span className="rowval dim" style={{fontSize:12}}>{f.cls} · {f.wins}–{f.losses}{f.age?` · ${f.age}`:""}</span>
+                      <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{f.cls} · {f.wins}–{f.losses}{f.age?` · ${f.age}`:""}</span>
                     </div>
                     <div className="flex items-center justify-between gap-2" style={{marginTop:2}}>
-                      <span className="dim" style={{fontSize:12.5,fontStyle:"italic",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                      <span className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                         {f.injury ? <span className="blood">carrying {f.injury.name.toLowerCase()}</span>
                           : seen ? "you have his measure" : "you have never had him watched"}
                       </span>
-                      <span className="rowval dim" style={{fontSize:12,color:"#8a6a2c"}}>›</span>
+                      <span className="rowval dim" style={{fontSize:"var(--fs-sm)",color:"#8a6a2c"}}>›</span>
                     </div>
                   </button>
                 ); })}
-              {rosterFull(S) && <div className="blood" style={{fontSize:13,marginTop:8,fontStyle:"italic"}}>Your cells are full — nobody else can be taken in.</div>}
+              {rosterFull(S) && <div className="blood" style={{fontSize:"var(--fs-base)",marginTop:8,fontStyle:"italic"}}>Your cells are full — nobody else can be taken in.</div>}
 
               <div className="tag tag-gold" style={{margin:"14px 0 5px"}}>The bad blood</div>
-              <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:6}}>
+              <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:6}}>
                 Coin settles most things between houses. It does not make him like you.
               </div>
               <button className="btn" style={{width:"100%"}} disabled={h.grudge<25 || S.gold<pp}
@@ -20053,35 +20071,35 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           <div className="modalwrap" role="dialog" aria-modal="true" aria-label={f.name} style={{zIndex:66}} onClick={()=>setManCard(null)}>
             <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
               <div className="flex items-center justify-between gap-2" style={{marginBottom:3}}>
-                <div className="disp" style={{fontSize:16,fontWeight:900,letterSpacing:".06em",color:isStar?"#e0bd72":"#e8d092",minWidth:0,overflow:"hidden",textOverflow:"ellipsis"}}>
+                <div className="disp" style={{fontSize:"var(--fs-xl)",fontWeight:900,letterSpacing:".06em",color:isStar?"#e0bd72":"#e8d092",minWidth:0,overflow:"hidden",textOverflow:"ellipsis"}}>
                   {isStar?"★ ":""}{f.name}{f.nick?`, ${f.nick}`:""}
                 </div>
                 <button className="btn btn-ghost" style={{padding:"8px 10px",flexShrink:0}} aria-label="Close" onClick={()=>setManCard(null)}><X size={14}/></button>
               </div>
-              <div className="dim" style={{fontSize:13.5,marginBottom:2}}>
+              <div className="dim" style={{fontSize:"var(--fs-base)",marginBottom:2}}>
                 {f.cls} · {f.origin} · {f.age||"—"} years · House {h.name}
               </div>
-              <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:9}}>
+              <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:9}}>
                 {f.wins}–{f.losses}{(f.kills||0)?`, ${f.kills} killed`:""}
                 {(f.pfame||0)>=55 ? " — the tiers know him" : (f.pfame||0)>=28 ? " — a name in Capua" : " — nobody has written him down"}
                 {f.injury ? <span className="blood"> · carrying {f.injury.name.toLowerCase()}</span> : null}
               </div>
-              {dealMsg && <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",borderColor:"#6d5426",fontSize:14.5}}>{dealMsg}</div>}
+              {dealMsg && <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",borderColor:"#6d5426",fontSize:"var(--fs-md)"}}>{dealMsg}</div>}
 
               <div className="panel" style={{padding:"10px 11px",marginBottom:9}}>
                 <div className="flex items-center justify-between gap-2" style={{marginBottom:6}}>
                   <span className="tag tag-gold">What he is</span>
-                  <span className="rowval dim" style={{fontSize:12}}>{seen? `good for ${keeps} more week${keeps===1?"":"s"}` : "never watched"}</span>
+                  <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{seen? `good for ${keeps} more week${keeps===1?"":"s"}` : "never watched"}</span>
                 </div>
                 {seen ? (<>
                   {STATS.map(k=>{ const v = Math.round(f[k]||0), w = readWord(v);
                     return (
                       <div key={k} style={{marginBottom:5}}>
-                        <div className="flex items-center justify-between gap-2" style={{fontSize:12.5}}>
+                        <div className="flex items-center justify-between gap-2" style={{fontSize:"var(--fs-sm)"}}>
                           <span className="dim" style={{minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{STAT_NAMES[k]}</span>
                           <span className="flex items-center gap-2" style={{flexShrink:0}}>
                             <span style={{color:w[2]}}>{w[1]}</span>
-                            <span className="dim" style={{fontSize:12}}>{v}</span>
+                            <span className="dim" style={{fontSize:"var(--fs-sm)"}}>{v}</span>
                           </span>
                         </div>
                         <div className="track" style={{height:4,marginTop:2}}>
@@ -20091,11 +20109,11 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     ); })}
                   {tells.length>0 && (
                     <div style={{marginTop:8,borderTop:"1px dotted #33271a",paddingTop:7}}>
-                      {tells.map((t,i)=><div key={i} className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:3,lineHeight:1.35}}>{t}</div>)}
+                      {tells.map((t,i)=><div key={i} className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:3,lineHeight:1.35}}>{t}</div>)}
                     </div>
                   )}
                 </>) : (<>
-                  <div className="dim" style={{fontSize:14,fontStyle:"italic",marginBottom:8,lineHeight:1.4}}>
+                  <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8,lineHeight:1.4}}>
                     Nobody of yours has stood at that wall and watched him work. What he is good at is guesswork,
                     and guesswork is how houses end up burying men.
                   </div>
@@ -20109,16 +20127,16 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               <div className="panel" style={{padding:"10px 11px",marginBottom:9}}>
                 <div className="tag tag-gold" style={{display:"inline-block",marginBottom:6}}>Against your house</div>
                 {mine.length===0
-                  ? <div className="dim" style={{fontSize:13.5,fontStyle:"italic"}}>You have nobody fit to put in front of him.</div>
+                  ? <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>You have nobody fit to put in front of him.</div>
                   : mine.map(m=>(
                       <div key={m.g.id} className="flex items-center justify-between gap-2" style={{padding:"3px 0"}}>
-                        <span className="rowname" style={{fontSize:13.5,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-                          {m.g.name}<span className="dim" style={{fontSize:12}}> · {m.g.cls}</span>
+                        <span className="rowname" style={{fontSize:"var(--fs-base)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                          {m.g.name}<span className="dim" style={{fontSize:"var(--fs-sm)"}}> · {m.g.cls}</span>
                         </span>
-                        <span className="rowval" style={{fontSize:12.5,color:m.colour,flexShrink:0}}>{m.word}</span>
+                        <span className="rowval" style={{fontSize:"var(--fs-sm)",color:m.colour,flexShrink:0}}>{m.word}</span>
                       </div>
                     ))}
-                {!seen && <div className="dim" style={{fontSize:12.5,fontStyle:"italic",marginTop:6,lineHeight:1.35}}>
+                {!seen && <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",marginTop:6,lineHeight:1.35}}>
                   Style is all you have to go on until he has been watched.
                 </div>}
               </div>
@@ -20127,19 +20145,19 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 <div className="panel" style={{padding:"10px 11px",marginBottom:9}}>
                   <div className="flex items-center justify-between gap-2" style={{marginBottom:6}}>
                     <span className="tag tag-gold">What is already between you</span>
-                    <span className="rowval dim" style={{fontSize:12}}>{metN.w}–{metN.l} to your house</span>
+                    <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{metN.w}–{metN.l} to your house</span>
                   </div>
                   {met.map(({g,e})=>(
                     <div key={g.id} className="flex items-center justify-between gap-2" style={{padding:"3px 0"}}>
-                      <span className="rowname" style={{fontSize:13.5,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
+                      <span className="rowname" style={{fontSize:"var(--fs-base)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
                         color: isGone(g) ? "#8f7e62" : "#cfc0a0"}}>
-                        {g.name}{isGone(g)? <span className="dim" style={{fontSize:12}}> · gone</span> : null}
+                        {g.name}{isGone(g)? <span className="dim" style={{fontSize:"var(--fs-sm)"}}> · gone</span> : null}
                       </span>
-                      <span className="rowval" style={{fontSize:12.5,color:foeColour(e),flexShrink:0}}>{foeWord(e)}</span>
+                      <span className="rowval" style={{fontSize:"var(--fs-sm)",color:foeColour(e),flexShrink:0}}>{foeWord(e)}</span>
                     </div>
                   ))}
                   {met.some(x=>x.e.ended) && (
-                    <div className="blood" style={{fontSize:13,marginTop:5,fontStyle:"italic"}}>
+                    <div className="blood" style={{fontSize:"var(--fs-base)",marginTop:5,fontStyle:"italic"}}>
                       He has killed for that house on this sand. Your men know it.
                     </div>
                   )}
@@ -20152,20 +20170,20 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 const fit = mine.filter(m=>!m.g.injury);
                 return (
                   <div className="panel" style={{padding:"10px 11px",borderColor:"#6d5426",background:"#1c1610"}}>
-                    <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:8,lineHeight:1.4}}>
+                    <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:8,lineHeight:1.4}}>
                       Whose name goes against his? Say it and the town holds you to it — if your man is not
                       on the sand by the day, it is your house the story is about.
                     </div>
                     {fit.length===0
-                      ? <div className="blood" style={{fontSize:13.5,fontStyle:"italic"}}>You have nobody fit to name.</div>
+                      ? <div className="blood" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>You have nobody fit to name.</div>
                       : fit.map(m=>(
                           <button key={m.g.id} className="optrow" style={{padding:"9px 10px",marginBottom:6}}
                             onClick={()=>doNameHim(h.name, f.id, m.g.id)}>
                             <div className="flex items-center justify-between gap-2">
-                              <span style={{fontSize:14,color:"#e8d9b8",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-                                {m.g.name}<span className="dim" style={{fontSize:12}}> · {m.g.cls}</span>
+                              <span style={{fontSize:"var(--fs-md)",color:"#e8d9b8",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                                {m.g.name}<span className="dim" style={{fontSize:"var(--fs-sm)"}}> · {m.g.cls}</span>
                               </span>
-                              <span className="rowval" style={{fontSize:12,color:m.colour}}>{m.word}</span>
+                              <span className="rowval" style={{fontSize:"var(--fs-sm)",color:m.colour}}>{m.word}</span>
                             </div>
                           </button>
                         ))}
@@ -20173,12 +20191,12 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   </div>
                 ); })() : (<>
               <div className="grid grid-cols-2 gap-2">
-                <button className="btn btn-ghost" style={{fontSize:12.5}}
+                <button className="btn btn-ghost" style={{fontSize:"var(--fs-sm)"}}
                   disabled={!sell || S.gold<ask || rosterFull(S)}
                   onClick={()=>doBuyMan(h.name, f.id)}>
                   {!sell ? "Not for sale" : `Buy · ${ask}d`}
                 </button>
-                <button className="btn btn-ghost" style={{fontSize:12.5}}
+                <button className="btn btn-ghost" style={{fontSize:"var(--fs-sm)"}}
                   disabled={busy || !!f.injury || S.gold<cc || rosterFull(S)}
                   onClick={()=>doCourtMan(h.name, f.id)}>
                   {busy ? "A word already out" : `A word in his ear · ${cc}d`}
@@ -20186,24 +20204,24 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               </div>
               {drilling ? (
                 <div className="panel" style={{padding:"10px 11px",marginTop:7,borderColor:"#6d5426",background:"#1c1610"}}>
-                  <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:8,lineHeight:1.4}}>
+                  <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:8,lineHeight:1.4}}>
                     Whose weeks go on him? Whoever it is comes off his own work — sharper for that
                     one bout and flatter for everything else, and it is wasted if the day never comes.
                   </div>
                   {mine.filter(m=>!m.g.injury).length===0
-                    ? <div className="blood" style={{fontSize:13.5,fontStyle:"italic"}}>Nobody of yours is fit to be set on him.</div>
+                    ? <div className="blood" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>Nobody of yours is fit to be set on him.</div>
                     : mine.filter(m=>!m.g.injury).map(m=>{
                         const busy = prepOf(m.g);
                         return (
                           <button key={m.g.id} className="optrow" style={{padding:"9px 10px",marginBottom:6}}
                             onClick={()=>doDrill(h.name, f.id, m.g.id)}>
                             <div className="flex items-center justify-between gap-2">
-                              <span style={{fontSize:14,color:"#e8d9b8",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-                                {m.g.name}<span className="dim" style={{fontSize:12}}> · {m.g.cls}</span>
+                              <span style={{fontSize:"var(--fs-md)",color:"#e8d9b8",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                                {m.g.name}<span className="dim" style={{fontSize:"var(--fs-sm)"}}> · {m.g.cls}</span>
                               </span>
-                              <span className="rowval" style={{fontSize:12,color:m.colour}}>{m.word}</span>
+                              <span className="rowval" style={{fontSize:"var(--fs-sm)",color:m.colour}}>{m.word}</span>
                             </div>
-                            {busy && <div className="dim" style={{fontSize:12.5,marginTop:2}}>
+                            {busy && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>
                               {busy.fid===f.id ? `already on him · ${prepWord(m.g)}` : `would come off ${busy.name}`}
                             </div>}
                           </button>
@@ -20211,7 +20229,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   <button className="btn btn-ghost" style={{width:"100%",marginTop:2}} onClick={()=>setDrillFor(null)}>Leave the yard as it is</button>
                 </div>
               ) : (
-                <button className="btn btn-ghost" style={{width:"100%",marginTop:7,fontSize:12.5}}
+                <button className="btn btn-ghost" style={{width:"100%",marginTop:7,fontSize:"var(--fs-sm)"}}
                   disabled={!seen || mine.length===0}
                   onClick={()=>setDrillFor({ house:h.name, fid:f.id })}>
                   {!seen ? "Nothing to drill against until he is watched"
@@ -20220,7 +20238,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     : "Set a man to drill for him"}
                 </button>
               )}
-              <button className="btn btn-blood" style={{width:"100%",marginTop:7,fontSize:12.5}}
+              <button className="btn btn-blood" style={{width:"100%",marginTop:7,fontSize:"var(--fs-sm)"}}
                 disabled={!!blocked || !!f.injury || S.gold<fee || mine.length===0}
                 onClick={()=>setNameFor({ house:h.name, fid:f.id })}>
                 {blocked ? blocked
@@ -20230,14 +20248,14 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   : `Name him in public · ${fee}d`}
               </button>
               {!blocked && !f.injury && mine.length>0 && (
-                <div className="dim" style={{fontSize:12.5,fontStyle:"italic",marginTop:4,lineHeight:1.35}}>
+                <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",marginTop:4,lineHeight:1.35}}>
                   If you named him today, {answerWord(answerOdds(S, h, f, mine[0].g))}.
                   The purse would be about {challengePurse(S, f, mine[0].g)}d.
                 </div>
               )}
               </>)}
-              {rosterFull(S) && <div className="blood" style={{fontSize:13,marginTop:7,fontStyle:"italic"}}>Your cells are full — nobody else can be taken in.</div>}
-              <div className="dim" style={{fontSize:12.5,fontStyle:"italic",marginTop:7,lineHeight:1.35}}>
+              {rosterFull(S) && <div className="blood" style={{fontSize:"var(--fs-base)",marginTop:7,fontStyle:"italic"}}>Your cells are full — nobody else can be taken in.</div>}
+              <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",marginTop:7,lineHeight:1.35}}>
                 {L.name} is {grudgeWord(h.grudge).toLowerCase()} toward your house. Everything above is priced accordingly.
               </div>
               <button className="btn btn-ghost" style={{width:"100%",marginTop:9}} onClick={()=>setManCard(null)}>Leave him be</button>
@@ -20251,7 +20269,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:62}} onClick={()=>setSheet(null)}>
           <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
             <div className="flex items-center justify-between" style={{marginBottom:10}}>
-              <div className="disp" style={{fontSize:15,fontWeight:900,letterSpacing:".12em",color:"#e8d092"}}>{SHEETS[sheet].title}</div>
+              <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".12em",color:"#e8d092"}}>{SHEETS[sheet].title}</div>
               <button className="btn btn-ghost" style={{padding:"10px 10px"}} aria-label="Close" onClick={()=>setSheet(null)}><X size={14}/></button>
             </div>
             {SHEETS[sheet].body()}
@@ -20275,10 +20293,10 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:62}} onClick={close}>
           <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
             <div className="flex items-center justify-between gap-2" style={{marginBottom:3}}>
-              <div className="disp" style={{fontSize:15,fontWeight:900,letterSpacing:".12em",color:"#e8d092"}}>THE CHRONICLE</div>
+              <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".12em",color:"#e8d092"}}>THE CHRONICLE</div>
               <button className="btn btn-ghost" style={{padding:"10px 10px",flexShrink:0}} aria-label="Close" onClick={close}><X size={14}/></button>
             </div>
-            <div className="dim" style={{fontSize:12.5,fontStyle:"italic",marginBottom:8,lineHeight:1.35}}>
+            <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",marginBottom:8,lineHeight:1.35}}>
               {all.length===0 ? "Nothing written down yet. The house is new."
                 : `${all.length} line${all.length===1?"":"s"} kept${(S.kept||[]).length? ` — the last ${rollN} in full, and ${(S.kept||[]).length} older thing${(S.kept||[]).length===1?"":"s"} the house has not forgotten`:""}.`}
             </div>
@@ -20297,10 +20315,10 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               <input className="sel" value={chronQ} onChange={e=>{ setChronQ(e.target.value); setChronMore(false); }}
                 placeholder="A name, a house, a word…" aria-label="Search the chronicle"
                 style={{width:"100%",boxSizing:"border-box",background:"#100d0a",color:"#cfc0a0",
-                  border:"1px solid #4e3c26",borderRadius:8,padding:"8px 9px",fontSize:14,marginBottom:9,fontFamily:"inherit"}}/>
+                  border:"1px solid #4e3c26",borderRadius:8,padding:"8px 9px",fontSize:"var(--fs-md)",marginBottom:9,fontFamily:"inherit"}}/>
             </>)}
             {all.length>0 && hits.length===0 && (
-              <div className="dim" style={{fontSize:14.5,fontStyle:"italic"}}>
+              <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
                 Nothing in the book answers to that.
               </div>
             )}
@@ -20312,7 +20330,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               return (
                 <React.Fragment key={i}>
                   {edge && (
-                    <div className="dim" style={{fontSize:11.5,textTransform:"uppercase",letterSpacing:".08em",
+                    <div className="dim" style={{fontSize:"var(--fs-micro)",textTransform:"uppercase",letterSpacing:".08em",
                       margin:"10px 0 4px",borderTop:"1px solid #3e2f1f",paddingTop:7}}>
                       Older than the roll — only what was remembered
                     </div>
@@ -20320,15 +20338,15 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   {head!=null && (
                     <div className="tag tag-gold" style={{display:"inline-block",margin:"9px 0 4px"}}>Year {head}</div>
                   )}
-                  <div style={{padding:"4px 0",borderBottom:"1px dotted #33271a",fontSize:15,
+                  <div style={{padding:"4px 0",borderBottom:"1px dotted #33271a",fontSize:"var(--fs-lg)",
                     color:e.kind==="bad"?"#d98476":e.kind==="good"?"#cbc08e":e.kind==="event"?"#b9a8c8":"#cfc0a0"}}>
-                    <span className="dim" style={{fontSize:12.5}}>W{((e.week-1)%YEAR_WEEKS)+1}</span> — {e.text}
+                    <span className="dim" style={{fontSize:"var(--fs-sm)"}}>W{((e.week-1)%YEAR_WEEKS)+1}</span> — {e.text}
                   </div>
                 </React.Fragment>
               );
             })}
             {hits.length > CAP && !chronMore && (
-              <button className="btn btn-ghost" style={{width:"100%",marginTop:8,fontSize:12}} onClick={()=>setChronMore(true)}>
+              <button className="btn btn-ghost" style={{width:"100%",marginTop:8,fontSize:"var(--fs-sm)"}} onClick={()=>setChronMore(true)}>
                 Read the other {hits.length - CAP}
               </button>
             )}
@@ -20349,10 +20367,10 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           <div className="modalwrap" role="dialog" aria-modal="true" aria-label="The year ahead" style={{zIndex:63}} onClick={()=>setCal(false)}>
             <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
               <div className="flex items-center justify-between gap-2" style={{marginBottom:3}}>
-                <div className="disp" style={{fontSize:15,fontWeight:900,letterSpacing:".12em",color:"#e8d092"}}>THE YEAR AHEAD</div>
+                <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".12em",color:"#e8d092"}}>THE YEAR AHEAD</div>
                 <button className="btn btn-ghost" style={{padding:"10px 10px",flexShrink:0}} aria-label="Close" onClick={()=>setCal(false)}><X size={14}/></button>
               </div>
-              <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:10,lineHeight:1.4}}>
+              <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:10,lineHeight:1.4}}>
                 {seasonOf(S).name.toLowerCase()} · year {yearOf(S)}, week {yearWeek(S)} — everything the house has a date for,
                 {" "}from now to the same week next year.
               </div>
@@ -20364,7 +20382,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   <div className="panel" style={{padding:"10px 11px",marginBottom:11,borderColor:"#4a3a22",background:"#1a1510"}}>
                     <div className="flex items-center justify-between gap-2" style={{marginBottom:7}}>
                       <span className="tag" style={{borderColor:"#6d5426",color:"#d8ac5f"}}>Who can stand</span>
-                      <span className="rowval dim" style={{fontSize:12}}>{curve[0].fit} fit now · {activeG(S).length} in the yard</span>
+                      <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{curve[0].fit} fit now · {activeG(S).length} in the yard</span>
                     </div>
                     <div className="flex" style={{gap:3,alignItems:"flex-end"}}>
                       {curve.map(c=>{
@@ -20374,12 +20392,12 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                             <div style={{height:36,display:"flex",alignItems:"flex-end"}}>
                               <div style={{width:"100%",height:h,background:col,borderRadius:2,opacity:c.week===S.week?1:0.82}}/>
                             </div>
-                            <div style={{fontSize:10.5,lineHeight:1.4,textAlign:"center",color:col}}>{c.fit}</div>
-                            <div className="dim" style={{fontSize:9,lineHeight:1.2,textAlign:"center"}}>{c.week===S.week?"now":`+${c.week-S.week}`}</div>
+                            <div style={{fontSize:"var(--fs-micro)",lineHeight:1.4,textAlign:"center",color:col}}>{c.fit}</div>
+                            <div className="dim" style={{fontSize:"var(--fs-micro)",lineHeight:1.2,textAlign:"center"}}>{c.week===S.week?"now":`+${c.week-S.week}`}</div>
                           </div>
                         ); })}
                     </div>
-                    <div className="dim" style={{fontSize:13,marginTop:8,lineHeight:1.4,fontStyle:"italic"}}>
+                    <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:8,lineHeight:1.4,fontStyle:"italic"}}>
                       {!first
                         ? `Nothing in the next ${SPAN} weeks leaves you short. Whatever you put your name to, you can field it.`
                         : first.week===S.week
@@ -20391,24 +20409,24 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   </div>
                 ); })()}
               {byWeek.length===0 ? (
-                <div className="dim" style={{fontSize:14.5,fontStyle:"italic"}}>
+                <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
                   Nothing is written down between here and next year. That will not last.
                 </div>
               ) : byWeek.map(g=>(
                 <div key={g.week} style={{marginBottom:10}}>
                   <div className="flex items-center justify-between gap-2" style={{marginBottom:4}}>
                     <span className="tag tag-gold">{away(g.week)}</span>
-                    <span className="rowval dim" style={{fontSize:12}}>
+                    <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>
                       week {((g.week-1) % YEAR_WEEKS)+1} of year {Math.floor((g.week-1)/YEAR_WEEKS)+1}
                     </span>
                   </div>
                   {g.rows.map((r,i)=>{
                     const inner = (<>
                       <div className="flex items-center justify-between gap-2">
-                        <span style={{fontSize:14.5,color:r.tone,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.title}</span>
-                        {r.tab && <span className="rowval dim" style={{fontSize:12,color:"#8a6a2c"}}>{TAB_NAMES[r.tab]||r.tab} ›</span>}
+                        <span style={{fontSize:"var(--fs-md)",color:r.tone,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.title}</span>
+                        {r.tab && <span className="rowval dim" style={{fontSize:"var(--fs-sm)",color:"#8a6a2c"}}>{TAB_NAMES[r.tab]||r.tab} ›</span>}
                       </div>
-                      {r.sub && <div className="dim" style={{fontSize:13,marginTop:2,lineHeight:1.35}}>{r.sub}</div>}
+                      {r.sub && <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2,lineHeight:1.35}}>{r.sub}</div>}
                     </>);
                     return r.tab
                       ? <button key={i} className="optrow" style={{padding:"9px 10px",marginBottom:5,borderLeft:`3px solid ${r.tone}`}} onClick={()=>go(r.tab)}>{inner}</button>
@@ -20428,15 +20446,15 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         return (
           <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:70}}>
             <div className="modal" tabIndex={-1}>
-              <div className="disp" style={{fontSize:15,fontWeight:900,letterSpacing:".12em",color:"#e8d092",marginBottom:9}}>THE HOUSE GOES ON</div>
-              <div style={{fontSize:15.5,marginBottom:9}}>
+              <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".12em",color:"#e8d092",marginBottom:9}}>THE HOUSE GOES ON</div>
+              <div style={{fontSize:"var(--fs-lg)",marginBottom:9}}>
                 {S.succession.lan} is dead at {S.succession.age}. The sand is still there, the men are still in the cells, and the debts have not noticed.
               </div>
               <div className="panel" style={{padding:11,marginBottom:10,background:"#1c1610",borderColor:"#c99a4b"}}>
-                <div className="disp" style={{fontSize:14.5,color:"#e8d092",marginBottom:3}}>{S.succession.heir}</div>
-                <div className="dim" style={{fontSize:14.5,fontStyle:"italic"}}>{H.line}</div>
+                <div className="disp" style={{fontSize:"var(--fs-md)",color:"#e8d092",marginBottom:3}}>{S.succession.heir}</div>
+                <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>{H.line}</div>
               </div>
-              <div className="dim" style={{fontSize:14,marginBottom:10}}>
+              <div className="dim" style={{fontSize:"var(--fs-md)",marginBottom:10}}>
                 The familia, the buildings, the racks and every obligation carry over. Fame falls to {Math.round(H.fameKeep*100)}% and standing with every patron to {Math.round(H.favorKeep*100)}% — they knew the father, not the son.
                 {H.unrest<0 ? " The cells will be calmer for it." : H.unrest>8 ? " The cells will need convincing." : ""}
               </div>
@@ -20454,17 +20472,17 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           return (
             <div key={a.id} style={{borderTop:"1px dotted #33271a",padding:"7px 0"}}>
               <div className="flex items-center justify-between gap-2">
-                <span className="rowname disp" style={{fontSize:13.5,color:a.left?"#c0b492":"#e8d092"}}>
+                <span className="rowname disp" style={{fontSize:"var(--fs-base)",color:a.left?"#c0b492":"#e8d092"}}>
                   {a.nick? `${a.name}, ${a.nick}` : a.name}
                 </span>
-                <span className="rowval" style={{fontSize:12.5,color:f.colour}}>{f.label}</span>
+                <span className="rowval" style={{fontSize:"var(--fs-sm)",color:f.colour}}>{f.label}</span>
               </div>
-              <div className="dim" style={{fontSize:13.5,marginTop:2}}>
+              <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2}}>
                 {[a.cls, a.origin].filter(Boolean).join(" · ")}{a.auctor? " · auctoratus":""}
                 {a.cls||a.origin? " — ":""}{a.wins}–{a.losses}
                 {a.kills? `, ${a.kills} killed`:""}{a.scars? `, ${a.scars} scar${a.scars>1?"s":""}`:""}
               </div>
-              <div className="dim" style={{fontSize:13}}>
+              <div className="dim" style={{fontSize:"var(--fs-base)"}}>
                 {a.left
                   ? `Year ${Math.floor((a.joined-1)/YEAR_WEEKS)+1} to year ${Math.floor((a.left-1)/YEAR_WEEKS)+1}${a.age? `, ${a.age} years old`:""}.`
                   : `Since year ${Math.floor((a.joined-1)/YEAR_WEEKS)+1}. Still standing.`}
@@ -20480,10 +20498,10 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:64}} onClick={()=>setAnnals(false)}>
             <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
               <div className="flex items-center justify-between" style={{marginBottom:4}}>
-                <div className="disp" style={{fontSize:15,fontWeight:900,letterSpacing:".12em",color:"#e8d092"}}>THE ANNALS</div>
+                <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".12em",color:"#e8d092"}}>THE ANNALS</div>
                 <button className="btn btn-ghost" style={{padding:"10px 10px"}} aria-label="Close" onClick={()=>setAnnals(false)}><X size={14}/></button>
               </div>
-              <div className="dim" style={{fontSize:14,fontStyle:"italic",marginBottom:10}}>
+              <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:10}}>
                 {S.name} — {R2.years} year{R2.years===1?"":"s"}, {R2.served} men and women through these gates,
                 {" "}{R2.w} victories, {R2.lost} buried, {R2.freed} freed.
               </div>
@@ -20504,11 +20522,11 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
       {S.reSignOffer && !fight && (
         <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:57}}>
           <div className="modal" tabIndex={-1} style={{borderColor:"#8a6a2c"}}>
-            <div className="disp" style={{fontSize:15,fontWeight:700,letterSpacing:".1em",marginBottom:8,color:"#e8d092"}}>HIS TERM IS UP</div>
-            <div style={{fontSize:16}}>
+            <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,letterSpacing:".1em",marginBottom:8,color:"#e8d092"}}>HIS TERM IS UP</div>
+            <div style={{fontSize:"var(--fs-xl)"}}>
               {S.reSignOffer.name} has served every bout he contracted for and is owed nothing further. He is standing in the yard in his own clothes with the gate open behind him, and he has not walked through it. He will sign again for {S.reSignOffer.fee} denarii and {S.reSignOffer.wage} a week, for {S.reSignOffer.bouts} more bouts.
             </div>
-            <div className="dim" style={{fontSize:14,fontStyle:"italic",marginTop:8}}>
+            <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:8}}>
               Let him go and the familia watches a man leave through the front gate, which is the one thing you cannot afford them to think about.
             </div>
             <button className="btn" style={{width:"100%",marginTop:12,borderColor:"#c99a4b",color:"#e8d092"}}
@@ -20523,12 +20541,12 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
       {S.romeOffer && !fight && (
         <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:58}}>
           <div className="modal" tabIndex={-1} style={{borderColor:"#c99a4b"}}>
-            <div className="disp" style={{fontSize:15,fontWeight:700,letterSpacing:".12em",marginBottom:8,color:"#e8d092"}}>A LETTER FROM ROME</div>
-            <div style={{fontSize:16}}>
+            <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,letterSpacing:".12em",marginBottom:8,color:"#e8d092"}}>A LETTER FROM ROME</div>
+            <div style={{fontSize:"var(--fs-xl)"}}>
               {S.romeOffer.senator} has put your house forward for the imperial games. Three bouts on the greatest sand in the world, in front of the only crowd that has ever mattered — and purses that would buy Capua twice over.
             </div>
             <div className="panel" style={{padding:11,marginTop:10,background:"#1c1610",borderColor:"#7c2a22"}}>
-              <div className="blood" style={{fontSize:14.5}}>
+              <div className="blood" style={{fontSize:"var(--fs-md)"}}>
                 Understand what is being offered. Half the imperial bouts are fought sine missione. Your patrons have no reach in that city — nobody up in that box owes you anything. Whatever happens there ends this house, one way or the other.
               </div>
             </div>
@@ -20541,8 +20559,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
       {S.doctoreOffer && !fight && (
         <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:55}}>
           <div className="modal" tabIndex={-1} style={{borderColor:"#8a6a2c"}}>
-            <div className="disp" style={{fontSize:15,fontWeight:700,letterSpacing:".1em",marginBottom:8,color:"#e8d092"}}>HE ASKS TO STAY</div>
-            <div style={{fontSize:16}}>
+            <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,letterSpacing:".1em",marginBottom:8,color:"#e8d092"}}>HE ASKS TO STAY</div>
+            <div style={{fontSize:"var(--fs-xl)"}}>
               {S.doctoreOffer.kind==="rudis"
                 ? `${S.doctoreOffer.name} does not leave with the crowd. He finds you after, the rudis still in his hand, and says he has nowhere to be — and that the young ones in your cells hold a blade like farmers.`
                 : `${S.doctoreOffer.name} takes his release, then stops at the gate. He is too old for the sand and he knows it. He asks whether the square needs a voice.`}
@@ -20553,8 +20571,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 <span className="tag tag-gold">{STAT_NAMES[S.doctoreOffer.spec]}</span>
                 <span className="tag tag-gold">✦ of this house</span>
               </div>
-              <div className="dim" style={{fontSize:14}}>{S.doctoreOffer.wage} denarii a week — half what a hired man would ask.</div>
-              {S.doctore && <div className="blood" style={{fontSize:14,marginTop:4}}>{S.doctore.name} would give up the square.</div>}
+              <div className="dim" style={{fontSize:"var(--fs-md)"}}>{S.doctoreOffer.wage} denarii a week — half what a hired man would ask.</div>
+              {S.doctore && <div className="blood" style={{fontSize:"var(--fs-md)",marginTop:4}}>{S.doctore.name} would give up the square.</div>}
             </div>
             <button className="btn" style={{width:"100%",marginTop:12,borderColor:"#c99a4b",color:"#e8d092"}} onClick={()=>takeOffer(true)}>Give him the square</button>
             <button className="btn btn-ghost" style={{width:"100%",marginTop:8}} onClick={()=>takeOffer(false)}>Let him go free</button>
@@ -20570,13 +20588,13 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:62}} onClick={()=>setSparPick(null)}>
             <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
               <div className="flex items-center justify-between" style={{marginBottom:4}}>
-                <div className="disp" style={{fontSize:14,fontWeight:700,letterSpacing:".1em"}}>PAIR HIM AT THE POST</div>
+                <div className="disp" style={{fontSize:"var(--fs-md)",fontWeight:700,letterSpacing:".1em"}}>PAIR HIM AT THE POST</div>
                 <button className="btn btn-ghost" style={{padding:"10px 10px"}} aria-label="Close" onClick={()=>setSparPick(null)}><X size={14}/></button>
               </div>
-              <div className="dim" style={{fontSize:14,fontStyle:"italic",marginBottom:10}}>
+              <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:10}}>
                 Both men improve faster than they would alone, and a man learns most from someone better than him. Both can also be hurt.
               </div>
-              {mates.length===0 && <div className="dim" style={{fontSize:15}}>There is no one else fit to stand against him.</div>}
+              {mates.length===0 && <div className="dim" style={{fontSize:"var(--fs-lg)"}}>There is no one else fit to stand against him.</div>}
               {mates.map(m=>{
                 const t = tieBetween(S, me.id, m.id);
                 const edge = m[me.focus] - me[me.focus];
@@ -20584,18 +20602,18 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 return (
                   <button key={m.id} className={`optrow ${me.sparWith===m.id?"on":""}`} onClick={()=>{ setSpar(me.id, m.id); setSparPick(null); }}>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="disp" style={{fontSize:13.5}}>{m.name}</span>
-                      <span className="dim" style={{fontSize:12.5,whiteSpace:"nowrap"}}>{m.cls}</span>
+                      <span className="disp" style={{fontSize:"var(--fs-base)"}}>{m.name}</span>
+                      <span className="dim" style={{fontSize:"var(--fs-sm)",whiteSpace:"nowrap"}}>{m.cls}</span>
                     </div>
-                    <div style={{fontSize:14,marginTop:3}}>
+                    <div style={{fontSize:"var(--fs-md)",marginTop:3}}>
                       {edge>=6 ? <span className="laurel">Better than him at {STAT_NAMES[me.focus].toLowerCase()} — much to learn</span>
                        : edge<=-6 ? <span className="dim">Weaker at {STAT_NAMES[me.focus].toLowerCase()} — little to learn</span>
                        : <span className="dim">Evenly matched at {STAT_NAMES[me.focus].toLowerCase()}</span>}
                     </div>
-                    {t && <div style={{fontSize:13.5,marginTop:2,color:t.kind==="brother"?"#b9c58a":"#d98476"}}>
+                    {t && <div style={{fontSize:"var(--fs-base)",marginTop:2,color:t.kind==="brother"?"#b9c58a":"#d98476"}}>
                       {t.kind==="brother" ? "Brothers — they will look after each other" : "Bad blood — they will go too hard, and one may not walk away"}
                     </div>}
-                    {busy && <div className="dim" style={{fontSize:13,marginTop:2}}>Currently paired with someone else; that pairing breaks.</div>}
+                    {busy && <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2}}>Currently paired with someone else; that pairing breaks.</div>}
                   </button>
                 );
               })}
@@ -20614,13 +20632,13 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:62}} onClick={()=>setTeachPick(null)}>
             <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
               <div className="flex items-center justify-between" style={{marginBottom:4}}>
-                <div className="disp" style={{fontSize:14,fontWeight:700,letterSpacing:".1em"}}>WHO DOES HE BRING ON</div>
+                <div className="disp" style={{fontSize:"var(--fs-md)",fontWeight:700,letterSpacing:".1em"}}>WHO DOES HE BRING ON</div>
                 <button className="btn btn-ghost" style={{padding:"10px 10px"}} aria-label="Close" onClick={()=>setTeachPick(null)}><X size={14}/></button>
               </div>
-              <div className="dim" style={{fontSize:14,fontStyle:"italic",marginBottom:10,lineHeight:1.35}}>
+              <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:10,lineHeight:1.35}}>
                 {v.name} is best at {STAT_NAMES[bk].toLowerCase()} ({rnd(v[bk])}), and that is what the boy will get — faster the further below him the boy starts. It runs until the boy takes his fifth win, and it costs {PR(v).him} four-tenths of every week until then.
               </div>
-              {pool.length===0 && <div className="dim" style={{fontSize:15}}>There is nobody green enough in the yard.</div>}
+              {pool.length===0 && <div className="dim" style={{fontSize:"var(--fs-lg)"}}>There is nobody green enough in the yard.</div>}
               {pool.map(r=>{
                 const t = tieBetween(S, v.id, r.id);
                 const gap = (v[bk]||0) - (r[bk]||0);
@@ -20629,15 +20647,15 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 return (
                   <button key={r.id} className="optrow" onClick={()=>{ setTeach(v.id, r.id); setTeachPick(null); }}>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="disp" style={{fontSize:13.5}}>{r.name}</span>
-                      <span className="dim" style={{fontSize:12.5,whiteSpace:"nowrap"}}>{r.cls} · {r.age}</span>
+                      <span className="disp" style={{fontSize:"var(--fs-base)"}}>{r.name}</span>
+                      <span className="dim" style={{fontSize:"var(--fs-sm)",whiteSpace:"nowrap"}}>{r.cls} · {r.age}</span>
                     </div>
-                    <div style={{fontSize:14,marginTop:3}}>
+                    <div style={{fontSize:"var(--fs-md)",marginTop:3}}>
                       <span className={gap>=25?"laurel":"dim"}>{STAT_NAMES[bk]} {rnd(r[bk])} → about +{wk} a week</span>
                       <span className="dim"> · {5-(r.wins||0)} wins from made</span>
                     </div>
-                    {v.origin===r.origin && <div className="dim" style={{fontSize:13.5,marginTop:2}}>Same country — they already speak to each other.</div>}
-                    {t && <div style={{fontSize:13.5,marginTop:2,color:t.kind==="brother"?"#b9c58a":"#d98476"}}>
+                    {v.origin===r.origin && <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2}}>Same country — they already speak to each other.</div>}
+                    {t && <div style={{fontSize:"var(--fs-base)",marginTop:2,color:t.kind==="brother"?"#b9c58a":"#d98476"}}>
                       {t.kind==="brother" ? "Brothers already — the boy will take every word of it" : "Bad blood between them — he will not hear a thing the old man says"}
                     </div>}
                   </button>
@@ -20652,23 +20670,23 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:65}} onClick={()=>setXfer(null)}>
           <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
             <div className="flex items-center justify-between" style={{marginBottom:6}}>
-              <div className="disp" style={{fontSize:14,fontWeight:700,letterSpacing:".1em"}}>{xfer.mode==="export"? "LIFT THE LEDGER":"RESTORE A LEDGER"}</div>
+              <div className="disp" style={{fontSize:"var(--fs-md)",fontWeight:700,letterSpacing:".1em"}}>{xfer.mode==="export"? "LIFT THE LEDGER":"RESTORE A LEDGER"}</div>
               <button className="btn btn-ghost" style={{padding:"10px 10px"}} aria-label="Close" onClick={()=>setXfer(null)}><X size={14}/></button>
             </div>
             {xfer.mode==="export" ? (<div>
-              <div className="dim" style={{fontSize:14,fontStyle:"italic",marginBottom:8}}>Every man, every denarius, every line of the chronicle, written small. Keep it somewhere safe.</div>
+              <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>Every man, every denarius, every line of the chronicle, written small. Keep it somewhere safe.</div>
               <textarea className="sel" readOnly value={encodeSave(S)} onFocus={e=>e.target.select()}
-                style={{width:"100%",boxSizing:"border-box",height:120,fontSize:11,fontFamily:"monospace",resize:"none"}}/>
+                style={{width:"100%",boxSizing:"border-box",height:120,fontSize:"var(--fs-micro)",fontFamily:"monospace",resize:"none"}}/>
               <button className="btn" style={{width:"100%",marginTop:8}} onClick={()=>{
                 const t = encodeSave(S);
                 if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).catch(()=>{});
                 setXfer({mode:"export", copied:true});
               }}>{xfer.copied? "Copied to hand":"Copy it"}</button>
             </div>) : (<div>
-              <div className="dim" style={{fontSize:14,fontStyle:"italic",marginBottom:8}}>Paste a transfer code below, then choose which slot it takes.</div>
+              <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>Paste a transfer code below, then choose which slot it takes.</div>
               <textarea className="sel" value={xferIn} onChange={e=>setXferIn(e.target.value)} placeholder="Paste the ledger here"
-                style={{width:"100%",boxSizing:"border-box",height:110,fontSize:11,fontFamily:"monospace",resize:"none"}}/>
-              <div className="dim" style={{fontSize:13,margin:"8px 0 5px"}}>Restore into which slot? Anything there is struck out.</div>
+                style={{width:"100%",boxSizing:"border-box",height:110,fontSize:"var(--fs-micro)",fontFamily:"monospace",resize:"none"}}/>
+              <div className="dim" style={{fontSize:"var(--fs-base)",margin:"8px 0 5px"}}>Restore into which slot? Anything there is struck out.</div>
               <div className="grid grid-cols-3 gap-2">
                 {[1,2,3].map(i=>{ const sum=saveSummary(slots[i]);
                   return <button key={i} className="btn" disabled={!xferIn.trim()} onClick={()=>importSave(i)}>
@@ -20696,11 +20714,11 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           <div className="modalwrap" role="dialog" aria-modal="true" aria-label="Opening guide" style={{zIndex:66}}>
             <div className="modal" tabIndex={-1} style={{maxWidth:440,borderColor:"#c99a4b"}}>
               <div className="flex items-center justify-between" style={{marginBottom:8}}>
-                <div className="disp" style={{fontSize:12,letterSpacing:".12em",color:"#b09b7d"}}>A FEW WORDS BEFORE YOU START · {st+1}/{STEPS.length}</div>
-                <button className="btn btn-ghost" style={{padding:"6px 10px",fontSize:11}} onClick={done}>Skip</button>
+                <div className="disp" style={{fontSize:"var(--fs-sm)",letterSpacing:".12em",color:"#b09b7d"}}>A FEW WORDS BEFORE YOU START · {st+1}/{STEPS.length}</div>
+                <button className="btn btn-ghost" style={{padding:"6px 10px",fontSize:"var(--fs-micro)"}} onClick={done}>Skip</button>
               </div>
-              <div className="disp" style={{fontSize:19,color:"#e8d092",letterSpacing:".08em",marginBottom:8}}>{S0.t}</div>
-              <div style={{fontSize:16,lineHeight:1.5,marginBottom:14}}>{S0.b}</div>
+              <div className="disp" style={{fontSize:"var(--fs-xxl)",color:"#e8d092",letterSpacing:".08em",marginBottom:8}}>{S0.t}</div>
+              <div style={{fontSize:"var(--fs-xl)",lineHeight:1.5,marginBottom:14}}>{S0.b}</div>
               <div className="flex items-center gap-1" style={{marginBottom:12,justifyContent:"center"}}>
                 {STEPS.map((_,i)=>(<span key={i} style={{width:7,height:7,borderRadius:99,background:i===st?"#c99a4b":"#4a3a26"}}/>))}
               </div>
@@ -20715,11 +20733,11 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
       {S && S.pendingLesson && (
         <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:65}}>
           <div className="modal" tabIndex={-1} style={{maxWidth:430,borderColor:"#c99a4b"}}>
-            <div className="disp" style={{fontSize:18,color:"#e8d092",letterSpacing:".1em",marginBottom:8}}>
+            <div className="disp" style={{fontSize:"var(--fs-xxl)",color:"#e8d092",letterSpacing:".1em",marginBottom:8}}>
               {S.pendingLesson.title.toUpperCase()}
             </div>
             {S.pendingLesson.text.split(SPLIT2).map((p,i)=>(
-              <div key={i} style={{fontSize:15.5,marginBottom:9}}>{p}</div>
+              <div key={i} style={{fontSize:"var(--fs-lg)",marginBottom:9}}>{p}</div>
             ))}
             <button className="btn" style={{width:"100%",marginTop:4}}
               onClick={()=>mut(d=>{ d.pendingLesson = null; })}>The doctore nods</button>
@@ -20736,8 +20754,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         const D = digest, close=()=>setDigest(null);
         const Delta = ({label, v, good, suffix}) => v===0 ? null : (
           <div style={{minWidth:0}}>
-            <div className="dim" style={{fontSize:10.5,textTransform:"uppercase",letterSpacing:".06em"}}>{label}</div>
-            <div className="disp" style={{fontSize:15,color: (good? v>0 : v<0) ? "#9aa86a" : "#d96f5d"}}>
+            <div className="dim" style={{fontSize:"var(--fs-micro)",textTransform:"uppercase",letterSpacing:".06em"}}>{label}</div>
+            <div className="disp" style={{fontSize:"var(--fs-lg)",color: (good? v>0 : v<0) ? "#9aa86a" : "#d96f5d"}}>
               {v>0?"+":""}{v}{suffix||""}
             </div>
           </div>
@@ -20746,26 +20764,26 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:58}} onClick={close}>
           <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
             <div className="flex items-center justify-between" style={{marginBottom:3}}>
-              <div className="disp" style={{fontSize:15,fontWeight:900,letterSpacing:".1em",color:"#e8d092"}}>THE WEEK THAT WAS</div>
+              <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".1em",color:"#e8d092"}}>THE WEEK THAT WAS</div>
               <button className="btn btn-ghost" style={{padding:"8px 10px"}} aria-label="Close" onClick={close}><X size={14}/></button>
             </div>
-            <div className="dim" style={{fontSize:12.5,marginBottom:9}}>{D.season} · year {D.year}, week {D.yw}</div>
+            <div className="dim" style={{fontSize:"var(--fs-sm)",marginBottom:9}}>{D.season} · year {D.year}, week {D.yw}</div>
             <div className="grid grid-cols-4 gap-2" style={{marginBottom:10}}>
               <Delta label="Coin" v={D.dl.gold} good={true} suffix="d"/>
               <Delta label="Fame" v={D.dl.fame} good={true}/>
               <Delta label="Standing" v={D.dl.favor} good={true}/>
               <Delta label="Unrest" v={D.dl.unrest} good={false}/>
             </div>
-            {D.lost>0 && <div className="blood" style={{fontSize:14.5,marginBottom:8}}>
+            {D.lost>0 && <div className="blood" style={{fontSize:"var(--fs-md)",marginBottom:8}}>
               {D.lost} {D.lost===1?"man is":"men are"} no longer in the yard.
             </div>}
             {D.lines.length===0
-              ? <div className="dim" style={{fontSize:14.5,fontStyle:"italic"}}>Nothing happened worth the ink.</div>
+              ? <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>Nothing happened worth the ink.</div>
               : D.lines.map((l,i)=>(
-                  <div key={i} style={{fontSize:14.5,padding:"4px 0",borderTop:i?"1px dotted #26201a":undefined,
+                  <div key={i} style={{fontSize:"var(--fs-md)",padding:"4px 0",borderTop:i?"1px dotted #26201a":undefined,
                     color: l.kind==="bad"?"#d9a89e" : l.kind==="good"?"#cfe0b0" : "#cfc0a0"}}>{l.text}</div>
                 ))}
-            {D.more>0 && <div className="dim" style={{fontSize:12.5,marginTop:6,fontStyle:"italic"}}>…and {D.more} more in the chronicle.</div>}
+            {D.more>0 && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:6,fontStyle:"italic"}}>…and {D.more} more in the chronicle.</div>}
             <button className="btn" style={{width:"100%",marginTop:12}} onClick={close}>Carry on</button>
           </div>
         </div>
@@ -20774,15 +20792,15 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
       {skipped && skipped.ran>=2 && (
         <div className="modalwrap" role="dialog" aria-modal="true" onClick={()=>setSkipped(null)}>
           <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
-            <div className="disp" style={{fontSize:17,color:"#e8d092",marginBottom:6}}>
+            <div className="disp" style={{fontSize:"var(--fs-xl)",color:"#e8d092",marginBottom:6}}>
               WEEKS {skipped.from}–{skipped.to-1}
             </div>
-            <div className="dim" style={{fontSize:14.5,fontStyle:"italic",marginBottom:9}}>
+            <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:9}}>
               {skipped.ran} weeks went by without asking anything of you.
             </div>
             {(S.log||[]).filter(l=>l.week>=skipped.from).slice(0,8).map((l,i)=>(
-              <div key={i} style={{borderTop:"1px dotted #33271a",padding:"6px 0",fontSize:14.5}}>
-                <span className="dim" style={{fontSize:12.5}}>wk {l.week} · </span>{l.text}
+              <div key={i} style={{borderTop:"1px dotted #33271a",padding:"6px 0",fontSize:"var(--fs-md)"}}>
+                <span className="dim" style={{fontSize:"var(--fs-sm)"}}>wk {l.week} · </span>{l.text}
               </div>
             ))}
             <button className="btn" style={{width:"100%",marginTop:9}} onClick={()=>setSkipped(null)}>Carry on</button>
@@ -20792,8 +20810,8 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
       {ask && (
         <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:70}} onClick={()=>setAsk(null)}>
           <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()} style={{borderColor: ask.danger? "#7c2a22":"#4e3c26"}}>
-            <div className={`disp ${ask.danger?"blood":""}`} style={{fontSize:15,fontWeight:700,letterSpacing:".1em",marginBottom:8}}>{ask.title.toUpperCase()}</div>
-            <div style={{fontSize:16}}>{ask.text}</div>
+            <div className={`disp ${ask.danger?"blood":""}`} style={{fontSize:"var(--fs-lg)",fontWeight:700,letterSpacing:".1em",marginBottom:8}}>{ask.title.toUpperCase()}</div>
+            <div style={{fontSize:"var(--fs-xl)"}}>{ask.text}</div>
             <button className={`btn ${ask.danger?"btn-blood":""}`} style={{width:"100%",marginTop:14}}
               onClick={()=>{ const r=ask.run; setAsk(null); r(); }}>{ask.confirm}</button>
             {!ask.info && <button className="btn btn-ghost" style={{width:"100%",marginTop:8}} onClick={()=>setAsk(null)}>Think again</button>}
@@ -20824,7 +20842,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           <div className="flex items-center justify-between" style={{marginBottom:11}}>
             <div className="flex items-center gap-2" style={{flexWrap:"wrap"}}>
               {steps.map(([l,n])=>(
-                <span key={n} className="disp" style={{fontSize:11,letterSpacing:".05em",
+                <span key={n} className="disp" style={{fontSize:"var(--fs-micro)",letterSpacing:".05em",
                   color: step===n?"#e8d092":step>n?"#9aa86a":"#6d5d47"}}>{n>0?"› ":""}{n+1}. {l}</span>
               ))}
             </div>
@@ -20834,19 +20852,19 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         const occRow = (occ, title, sub, right, tags)=>(
           <button className="optrow" style={{marginBottom:7,width:"100%"}} onClick={()=>goPick(occ)}>
             <div className="flex items-center justify-between gap-2">
-              <span className="disp" style={{fontSize:14,color:"#e8d9b8"}}>{title}</span>
+              <span className="disp" style={{fontSize:"var(--fs-md)",color:"#e8d9b8"}}>{title}</span>
               {right}
             </div>
             {tags}
-            {sub && <div className="dim" style={{fontSize:13.5,marginTop:2}}>{sub}</div>}
+            {sub && <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2}}>{sub}</div>}
           </button>
         );
 
         let body;
         if(step===0){
           body = (<>
-            <div className="disp" style={{fontSize:15,fontWeight:700,marginBottom:2}}>WHERE WILL HE FIGHT?</div>
-            <div className="dim" style={{fontSize:14,marginBottom:8}}>Pick the card. You choose your man next.</div>
+            <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,marginBottom:2}}>WHERE WILL HE FIGHT?</div>
+            <div className="dim" style={{fontSize:"var(--fs-md)",marginBottom:8}}>Pick the card. You choose your man next.</div>
             {/* what the name is worth at the table — it was worth nothing past 300 */}
             {(()=>{ const edge = Math.round((fameEdge(S)-1)*100), open = topRungOpen(S);
               const rung = open ? 4 : S.fame>=TIERS[3].fame ? 3 : S.fame>=TIERS[2].fame ? 2 : S.fame>=TIERS[1].fame ? 1 : 0;
@@ -20856,12 +20874,12 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               return (
                 <div className="panel" style={{padding:"8px 10px",marginBottom:10,background:"#1a1510",borderColor:"#4a3a22"}}>
                   <div className="flex items-center justify-between gap-2">
-                    <span className="dim" style={{fontSize:10.5,textTransform:"uppercase",letterSpacing:".07em"}}>What your name is worth here</span>
-                    <span className="rowval" style={{fontSize:12,color: edge>0?"#9aa86a":"#8a7a5c",flexShrink:0}}>
+                    <span className="dim" style={{fontSize:"var(--fs-micro)",textTransform:"uppercase",letterSpacing:".07em"}}>What your name is worth here</span>
+                    <span className="rowval" style={{fontSize:"var(--fs-sm)",color: edge>0?"#9aa86a":"#8a7a5c",flexShrink:0}}>
                       {edge>0 ? `purses +${edge}%` : "purses at the standard"}
                     </span>
                   </div>
-                  <div className="dim" style={{fontSize:13,marginTop:3,lineHeight:1.35}}>
+                  <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:3,lineHeight:1.35}}>
                     {fameTitle(S.fame)} — the editors will put you as high as <span style={{color:"#e0bd72"}}>{TIERS[rung].name}</span>.
                     {open ? " The top of the table is open to you at the great games."
                           : short ? ` ${short.charAt(0).toUpperCase()+short.slice(1)} and the imperial bill opens at the great games.`
@@ -20870,11 +20888,11 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 </div>
               ); })()}
             {occRow({kind:"pits"}, "The Pits", "Always open. Small purses, and the crowd rarely votes for mercy.",
-              <span className="dim" style={{fontSize:12.5}}>your stakes</span>)}
+              <span className="dim" style={{fontSize:"var(--fs-sm)"}}>your stakes</span>)}
             {gamesReady && singles.map(o=> occRow({kind:"single",o},
               (o.imperial?"✦ ":"")+(o.opp.nick?`${o.opp.name}, ${o.opp.nick}`:o.opp.name),
               `${o.opp.cls} · ${o.opp.house? (o.opp.house.startsWith("the")||o.opp.house.startsWith("no")?o.opp.house:"House "+o.opp.house) : o.opp.origin}`,
-              <span className="gold" style={{fontSize:14}}>{o.purse}d</span>,
+              <span className="gold" style={{fontSize:"var(--fs-md)"}}>{o.purse}d</span>,
               <div className="flex items-center gap-1" style={{flexWrap:"wrap",marginTop:3}}>
                 <span className="tag tag-gold">{TIERS[o.tier].name}</span>
                 {o.imperial && <span className="tag tag-gold">✦ Rome</span>}
@@ -20895,23 +20913,23 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             ))}
             {gamesReady && pairs.map(o=> occRow({kind:"pair",o}, "Pair Bout",
               o.opps.map(x=>x.name).join(" & "),
-              <span className="gold" style={{fontSize:14}}>{o.purse}d</span>,
+              <span className="gold" style={{fontSize:"var(--fs-md)"}}>{o.purse}d</span>,
               <div style={{marginTop:3}}><span className="tag tag-gold">{TIERS[o.tier].name}</span> <span className="tag tag-blood">Two men</span></div>))}
             {gamesReady && melees.map(o=> occRow({kind:"melee",o}, o.spectacle==="naumachia"?"The Naumachia":"The Melee",
               o.spectacle==="naumachia" ? `A mock sea-battle — ${o.field.length} men on flooded sand` : `${o.field.length} men on the sand at once`,
-              <span className="gold" style={{fontSize:14}}>{o.purse}d</span>,
+              <span className="gold" style={{fontSize:"var(--fs-md)"}}>{o.purse}d</span>,
               <div style={{marginTop:3}}>{o.spectacle==="naumachia" && <span className="tag tag-gold">✦ Spectacle</span>} <span className="tag tag-blood">Last man standing</span></div>))}
             {gamesReady && hunts.map(o=>{ const BB = beastOf(o.beast, o.grade!=null?o.grade:beastGrade(S)) || BEASTS[o.beast];
               return occRow({kind:"hunt",o}, "The Morning Hunt",
               BB.name,
-              <span className="gold" style={{fontSize:14}}>{o.purse}d</span>,
+              <span className="gold" style={{fontSize:"var(--fs-md)"}}>{o.purse}d</span>,
               <div style={{marginTop:3}}><span className="tag">Beast · no missio</span>{" "}
                 <span className="tag tag-blood">{STAT_NAMES[BEASTS[o.beast].tests||"str"]}</span></div>); })}
-            {!gamesReady && <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:4}}>
+            {!gamesReady && <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:4}}>
               No editor books an unknown house yet. Win in the pits to 25 fame and the games open.
             </div>}
             {gamesReady && !singles.length && !pairs.length && !melees.length && !hunts.length &&
-              <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:4}}>
+              <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:4}}>
                 {(()=>{ const nxt=nextFestivals(S,1)[0]; const away=nxt?weeksUntil(S,nxt):0;
                   return S.games? "The festival's matches are done — the pits remain." : away? `${nxt.name} in ${away} week${away===1?"":"s"}. The pits are open until then.` : "The editors are quiet this week. The pits remain."; })()}
               </div>}
@@ -20926,11 +20944,11 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             : pick.kind==="pair" ? "Pair bout" : pick.kind==="melee" ? "The melee"
             : `The hunt · ${BEASTS[pick.o.beast].name}`;
           body = (<>
-            <button className="btn btn-ghost" style={{fontSize:12,padding:"6px 10px",marginBottom:9}} onClick={()=>{ setArenaStep(0); setArenaPick(null); }}>‹ Back</button>
-            <div className="disp" style={{fontSize:15,fontWeight:700,marginBottom:2}}>
+            <button className="btn btn-ghost" style={{fontSize:"var(--fs-sm)",padding:"6px 10px",marginBottom:9}} onClick={()=>{ setArenaStep(0); setArenaPick(null); }}>‹ Back</button>
+            <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,marginBottom:2}}>
               {multi ? (needTwo?"CHOOSE TWO MEN":"ENTER YOUR MEN") : "CHOOSE YOUR MAN"}
             </div>
-            <div className="dim" style={{fontSize:13.5,marginBottom:10}}>{occTitle}</div>
+            <div className="dim" style={{fontSize:"var(--fs-base)",marginBottom:10}}>{occTitle}</div>
             {(()=>{ /* the one decision that had no reading on it — who is right for this card */
               const o = pick.o;
               const foe = pick.kind==="single" ? (o && o.opp)
@@ -20939,7 +20957,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               if(!foe) return null;
               const seen = pick.kind==="single" ? foeSeen(S, o) : !!(o && o.watched);
               return (
-                <div className="dim" style={{fontSize:12.5,fontStyle:"italic",marginBottom:8,lineHeight:1.35}}>
+                <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",marginBottom:8,lineHeight:1.35}}>
                   {seen
                     ? (pick.kind==="single"
                         ? "You have his measure, so these readings are real ones."
@@ -20950,7 +20968,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 </div>
               ); })()}
             {!enough ? (
-              <div className="dim" style={{fontStyle:"italic",fontSize:15}}>
+              <div className="dim" style={{fontStyle:"italic",fontSize:"var(--fs-lg)"}}>
                 {eligible.length===0 ? "No one is fit to fight this week — rested, healthy and unfought only."
                   : "This needs at least two fit men, and only one is ready."}
               </div>
@@ -20968,25 +20986,25 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 <button key={g.id} className={`optrow ${on?"on":""}`} style={{marginBottom:6,width:"100%"}}
                   onClick={()=> multi ? togglePair(g.id) : setFGid(on?null:g.id)}>
                   <div className="flex items-center justify-between gap-2">
-                    <span className="disp" style={{fontSize:13.5,color:on?"#e8d092":"#e8d9b8",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{fullName(g)}</span>
-                    {on ? <Check size={15} style={{color:"#c99a4b",flexShrink:0}}/> : <span className="dim" style={{fontSize:13,flexShrink:0}}>{g.wins}–{g.losses}</span>}
+                    <span className="disp" style={{fontSize:"var(--fs-base)",color:on?"#e8d092":"#e8d9b8",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{fullName(g)}</span>
+                    {on ? <Check size={15} style={{color:"#c99a4b",flexShrink:0}}/> : <span className="dim" style={{fontSize:"var(--fs-base)",flexShrink:0}}>{g.wins}–{g.losses}</span>}
                   </div>
                   <div className="flex items-center justify-between gap-2" style={{marginTop:2}}>
-                    <span className="dim" style={{fontSize:13.5,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                    <span className="dim" style={{fontSize:"var(--fs-base)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                       {g.cls} · {GEAR[kit.weapon]?GEAR[kit.weapon].name:"unarmed"}{GEAR[kit.offhand]&&GEAR[kit.offhand].art!=="none"?` & ${GEAR[kit.offhand].name}`:""}
                     </span>
-                    {read && <span className="rowval" style={{fontSize:12,color:read.colour,flexShrink:0}}>{read.word}</span>}
+                    {read && <span className="rowval" style={{fontSize:"var(--fs-sm)",color:read.colour,flexShrink:0}}>{read.word}</span>}
                   </div>
-                  {booked && <div style={{fontSize:12.5,marginTop:3,color:"#e0bd72"}}>✦ His name is the one on the bill.</div>}
+                  {booked && <div style={{fontSize:"var(--fs-sm)",marginTop:3,color:"#e0bd72"}}>✦ His name is the one on the bill.</div>}
                   {(()=>{ const pe = prepFor(S, g, o); return pe>0
-                    ? <div style={{fontSize:12.5,marginTop:3,color:"#9aa86a"}}>✦ He has drilled for this man — {prepWord(g)}.</div>
+                    ? <div style={{fontSize:"var(--fs-sm)",marginTop:3,color:"#9aa86a"}}>✦ He has drilled for this man — {prepWord(g)}.</div>
                     : null; })()}
-                  {pick.kind==="single" && (()=>{ const w=metWord(liveFoe(S,pick.o),g); return w?<div style={{fontSize:13,marginTop:2,color:"#d8ac5f"}}>{w}</div>:null; })()}
+                  {pick.kind==="single" && (()=>{ const w=metWord(liveFoe(S,pick.o),g); return w?<div style={{fontSize:"var(--fs-base)",marginTop:2,color:"#d8ac5f"}}>{w}</div>:null; })()}
                 </button>
               );
             })}
             {needTwo && chosen.length===2 && (()=>{ const t=tieBetween(S,chosen[0].id,chosen[1].id);
-              return <div style={{fontSize:14,marginTop:2,color:t&&t.kind==="brother"?"#b9c58a":t?"#d98476":"#8f7e62"}}>
+              return <div style={{fontSize:"var(--fs-md)",marginTop:2,color:t&&t.kind==="brother"?"#b9c58a":t?"#d98476":"#8f7e62"}}>
                 {t? (t.kind==="brother"?"Brothers — each fights harder for the other at his shoulder.":"Bad blood — neither will cover the other."):"They barely know each other."}
               </div>; })()}
             {enough && <button className="btn" style={{width:"100%",marginTop:10}} disabled={!valid} onClick={()=>setArenaStep(2)}>
@@ -20994,7 +21012,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             </button>}
           </>);
         } else {
-          const backBtn = <button className="btn btn-ghost" style={{fontSize:12,padding:"6px 10px",marginBottom:9}} onClick={()=>setArenaStep(1)}>‹ Back</button>;
+          const backBtn = <button className="btn btn-ghost" style={{fontSize:"var(--fs-sm)",padding:"6px 10px",marginBottom:9}} onClick={()=>setArenaStep(1)}>‹ Back</button>;
           const tacticRow = (
             <div style={{marginTop:11}}>
               <div className="tag" style={{marginBottom:6}}>How he fights</div>
@@ -21003,7 +21021,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   <button key={k} className={`chip ${tactic===k?"on":""}`} onClick={()=>setTactic(k)}>{l}</button>
                 ))}
               </div>
-              <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:5,lineHeight:1.35}}>
+              <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:5,lineHeight:1.35}}>
                 {(pick.kind==="hunt" ? HUNT_SAY : pick.kind==="pair" ? PAIR_SAY
                   : pick.kind==="melee" ? MELEE_SAY : TACTIC_SAY)[tactic]}</div>
             </div>
@@ -21017,14 +21035,14 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     style={entrance===k?{borderColor:"#c99a4b",color:"#e0bd72",background:"#2b2115"}:undefined}>{ENTRANCES[k].name}</button>
                 ))}
               </div>
-              <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:5}}>{ENTRANCES[entrance].blurb}</div>
+              <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:5}}>{ENTRANCES[entrance].blurb}</div>
             </div>
           );
           const wagerRow = (
             <div style={{borderTop:"1px dotted #33271a",marginTop:12,paddingTop:10}}>
               <div className="flex items-center justify-between" style={{marginBottom:6}}>
                 <span className="tag">The bookmakers</span>
-                {stake>0 && <span className="gold" style={{fontSize:13.5}}>{stake}d at risk</span>}
+                {stake>0 && <span className="gold" style={{fontSize:"var(--fs-base)"}}>{stake}d at risk</span>}
               </div>
               <div className="flex gap-2" style={{flexWrap:"wrap",marginBottom:7}}>
                 <button className={`chip ${stake===0?"on":""}`} onClick={()=>{setStake(0);setAgainst(false);}}>No wager</button>
@@ -21034,7 +21052,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 <button className={`chip ${!against?"on":""}`} onClick={()=>setAgainst(false)}>Back your man</button>
                 <button className={`chip ${against?"on":""}`} style={against?{borderColor:"#7c2a22",color:"#d98476",background:"#2a1512"}:undefined} onClick={()=>setAgainst(true)}>Have him lose</button>
               </div>)}
-              {stake>0 && against && <div className="blood" style={{fontSize:13,fontStyle:"italic",marginTop:6}}>He will be told to go down, and he will know you asked.</div>}
+              {stake>0 && against && <div className="blood" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:6}}>He will be told to go down, and he will know you asked.</div>}
               {(()=>{ /* the board is struck on the sheet. What is in your yard is not on it. */
                 const meB = fGid ? activeG(S).find(x=>x.id===fGid) : null;
                 if(!meB || pick.kind!=="single") return null;
@@ -21042,7 +21060,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 const watched = !!(pick.o && pick.o.watched);
                 const eye = bookEyeWord(S);
                 return (
-                  <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:6,lineHeight:1.4}}>
+                  <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:6,lineHeight:1.4}}>
                     The board is struck on the sheet — his record, his class, what Capua can see of him.
                     {drilled || watched
                       ? <span className="gold"> It does not know {drilled && watched ? "you have drilled for this man and had him watched" : drilled ? "your man has drilled for this one" : "you have had him watched"}, and that is the whole of what a wager is for.</span>
@@ -21055,22 +21073,22 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           if(pick.kind==="pits"){
             body = (<>
               {backBtn}
-              <div className="disp" style={{fontSize:15,fontWeight:700,marginBottom:2}}>THE PITS</div>
+              <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,marginBottom:2}}>THE PITS</div>
               {(()=>{ const P = pitOf(S), tonight = pitMen(S);
                 return (<>
-                  <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:6,lineHeight:1.4}}>
+                  <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:6,lineHeight:1.4}}>
                     {P.name.charAt(0).toUpperCase()+P.name.slice(1)}. {P.line}
                   </div>
                   {/* which cellar it is matters to the purse, and it does not stay put */}
                   {(()=>{ const nx = pitNext(S), mw = pitMoveWeek(S), pc = Math.round(((P.pay||1)-1)*100);
                     return (
                       <div className="flex items-center justify-between gap-2" style={{marginBottom:8,flexWrap:"wrap"}}>
-                        <span className="chip" style={{fontSize:10,padding:"2px 7px",
+                        <span className="chip" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",
                           borderColor: pc>0?"#5a6a4a":pc<0?"#7c2a22":"#4e3c26",
                           color: pc>0?"#9aa86a":pc<0?"#d96f5d":"#b09b7d"}}>
                           Purses {pc>0?"+":""}{pc}%
                         </span>
-                        <span className="rowval dim" style={{fontSize:12,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                        <span className="rowval dim" style={{fontSize:"var(--fs-sm)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                           {nx && nx.key!==P.key
                             ? `the rope moves in ${mw-S.week} week${mw-S.week===1?"":"s"}`
                             : "the rope stays where it is"}
@@ -21078,13 +21096,13 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                       </div>
                     ); })()}
                   {tonight.length===0 ? (
-                    <div className="dim" style={{fontSize:14,marginBottom:9}}>
+                    <div className="dim" style={{fontSize:"var(--fs-md)",marginBottom:9}}>
                       {me?`Nobody worth naming is down there tonight. ${me.name} takes whoever ${P.keeper} puts in front of him.`:""}
                     </div>
                   ) : (<>
                     <div className="flex items-center justify-between gap-2" style={{marginBottom:6}}>
                       <span className="tag tag-gold">Down there tonight</span>
-                      <span className="rowval dim" style={{fontSize:12}}>{P.keeper} takes his cut at the rope</span>
+                      <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{P.keeper} takes his cut at the rope</span>
                     </div>
                     {tonight.map(f=>{
                       const on = pitPick===f.id;
@@ -21094,26 +21112,26 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                         <button key={f.id} className={`optrow ${on?"on":""}`} style={{marginBottom:6,width:"100%"}}
                           onClick={()=>setPitPick(on?null:f.id)}>
                           <div className="flex items-center justify-between gap-2">
-                            <span className="disp" style={{fontSize:13.5,color:on?"#e8d092":"#e8d9b8",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                            <span className="disp" style={{fontSize:"var(--fs-base)",color:on?"#e8d092":"#e8d9b8",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                               {f.nick? `${f.name}, ${f.nick}` : f.name}
                             </span>
-                            <span className="gold" style={{fontSize:13.5,flexShrink:0}}>{pitPurse(S, f, pitStakes)}d</span>
+                            <span className="gold" style={{fontSize:"var(--fs-base)",flexShrink:0}}>{pitPurse(S, f, pitStakes)}d</span>
                           </div>
                           <div className="flex items-center justify-between gap-2" style={{marginTop:2}}>
-                            <span className="dim" style={{fontSize:13,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                            <span className="dim" style={{fontSize:"var(--fs-base)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                               {f.cls} · {f.house} · {f.wins}–{f.losses}{f.kills?`, ${f.kills} killed`:""}
                             </span>
-                            <span className="rowval dim" style={{fontSize:12,flexShrink:0}}>{menace(f)}</span>
+                            <span className="rowval dim" style={{fontSize:"var(--fs-sm)",flexShrink:0}}>{menace(f)}</span>
                           </div>
                           {read && <div className="flex items-center justify-between gap-2" style={{marginTop:2}}>
-                            <span className="dim" style={{fontSize:12.5}}>against {me.name}</span>
-                            <span className="rowval" style={{fontSize:12,color:read.colour}}>{read.word}</span>
+                            <span className="dim" style={{fontSize:"var(--fs-sm)"}}>against {me.name}</span>
+                            <span className="rowval" style={{fontSize:"var(--fs-sm)",color:read.colour}}>{read.word}</span>
                           </div>}
-                          {mw && <div style={{fontSize:12.5,marginTop:2,color:"#d8ac5f",textAlign:"left"}}>{mw}</div>}
+                          {mw && <div style={{fontSize:"var(--fs-sm)",marginTop:2,color:"#d8ac5f",textAlign:"left"}}>{mw}</div>}
                         </button>
                       );
                     })}
-                    <div className="dim" style={{fontSize:12.5,fontStyle:"italic",marginBottom:8,lineHeight:1.35}}>
+                    <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",marginBottom:8,lineHeight:1.35}}>
                       {pitPick==null
                         ? "Take one of them, or send him down to whoever is left standing when he arrives."
                         : "The purse is what that man is worth. The pits have never cared who you are."}
@@ -21126,7 +21144,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   <button key={k} className={`chip ${pitStakes===k?"on":""}`} onClick={()=>setPitStakes(k)}>{l}</button>
                 ))}
               </div>
-              <div className="dim" style={{fontSize:12.5,fontStyle:"italic",marginTop:5}}>
+              <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",marginTop:5}}>
                 {pitStakes==="blood"?"Ends at the first real wound — nobody dies."
                   :pitStakes==="standard"?"A beaten man is left to the editor and the crowd."
                   :"No mercy asked or given."}
@@ -21157,32 +21175,32 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 {o.stakes==="sine" && <span className="tag tag-blood">Sine missione</span>}
                 {o.rematch && <span className="tag tag-blood">Rematch</span>}
                 {nemesisIn(S,o.opp) && <span className="tag tag-blood">✦ {nemesisIn(S,o.opp).title}</span>}
-                <span className="gold" style={{marginLeft:"auto",fontSize:14.5}}>{o.purse}d purse</span>
+                <span className="gold" style={{marginLeft:"auto",fontSize:"var(--fs-md)"}}>{o.purse}d purse</span>
               </div>
-              <div style={{fontSize:15.5}}>{me?me.name:"—"} <span className="dim">against</span> {o.opp.nick?`${o.opp.name}, ${o.opp.nick}`:o.opp.name}</div>
-              <div className="dim" style={{fontSize:14}}>{o.opp.cls} · {o.opp.origin}{o.opp.wins!=null?` · ${o.opp.wins}–${o.opp.losses}${o.opp.kills?` · ${o.opp.kills} kills`:""}`:""} · looks {menace(o.opp).toLowerCase()}</div>
-              {o.opp.house && <div className="dim" style={{fontSize:13}}>{o.opp.house.startsWith("the")||o.opp.house.startsWith("no")?o.opp.house:"House "+o.opp.house}</div>}
+              <div style={{fontSize:"var(--fs-lg)"}}>{me?me.name:"—"} <span className="dim">against</span> {o.opp.nick?`${o.opp.name}, ${o.opp.nick}`:o.opp.name}</div>
+              <div className="dim" style={{fontSize:"var(--fs-md)"}}>{o.opp.cls} · {o.opp.origin}{o.opp.wins!=null?` · ${o.opp.wins}–${o.opp.losses}${o.opp.kills?` · ${o.opp.kills} kills`:""}`:""} · looks {menace(o.opp).toLowerCase()}</div>
+              {o.opp.house && <div className="dim" style={{fontSize:"var(--fs-base)"}}>{o.opp.house.startsWith("the")||o.opp.house.startsWith("no")?o.opp.house:"House "+o.opp.house}</div>}
               {(()=>{ /* if he is a real man in a real house, his file is one tap away */
                 const rf = o.oppRef && o.oppRef.house;
                 const hh = rf ? (S.rivals||[]).find(x=>x.name===o.oppRef.house) : null;
                 const ff = hh ? (hh.fighters||[]).find(x=>x.id===o.oppRef.fid) : null;
                 if(!ff) return null;
                 return (
-                  <button className="btn btn-ghost" style={{width:"100%",marginTop:7,fontSize:12.5}}
+                  <button className="btn btn-ghost" style={{width:"100%",marginTop:7,fontSize:"var(--fs-sm)"}}
                     onClick={()=>setManCard({ house:hh.name, fid:ff.id })}>
                     {scoutLive(S, ff) ? `What you know of ${ff.name} ›` : `Open ${ff.name}'s file ›`}
                   </button>
                 ); })()}
-              {o.venue && <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:3}}>{VEN(o.venue).say}</div>}
-              {o.sky && <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:2,color:"#9dc0d4"}}>{SKY(o.sky).say}{shelterOf(o.venue)>0.3?" There is a roof of a kind over most of it.":""}</div>}
-              {me && (()=>{ const w=metWord(liveFoe(S,o),me); return w?<div style={{fontSize:14,marginTop:2,color:"#d8ac5f"}}>{w}</div>:null; })()}
+              {o.venue && <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>{VEN(o.venue).say}</div>}
+              {o.sky && <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:2,color:"#9dc0d4"}}>{SKY(o.sky).say}{shelterOf(o.venue)>0.3?" There is a roof of a kind over most of it.":""}</div>}
+              {me && (()=>{ const w=metWord(liveFoe(S,o),me); return w?<div style={{fontSize:"var(--fs-md)",marginTop:2,color:"#d8ac5f"}}>{w}</div>:null; })()}
               {(()=>{ if(!me) return null;
                 const tr = theirRead(S, me, o);
                 if(tr<=0 || !(me.watchedBy && me.watchedBy.known)) return null;
                 return (
                   <div className="panel" style={{padding:9,marginTop:8,background:"#1c1610",borderColor:"#7c2a22"}}>
                     <div className="tag tag-blood" style={{marginBottom:4}}>They have had him watched</div>
-                    <div className="dim" style={{fontSize:14,fontStyle:"italic",lineHeight:1.35}}>
+                    <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",lineHeight:1.35}}>
                       House {me.watchedBy.house} has been at your wall. Whoever they send will know {me.name}'s work
                       before he steps on the sand, and the bookmakers have already taken it into account.
                     </div>
@@ -21194,9 +21212,9 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   <div className="panel" style={{padding:9,marginTop:8,background:"#1c1610",borderColor:"#5a6a35"}}>
                     <div className="flex items-center justify-between gap-2" style={{marginBottom:4}}>
                       <span className="tag tag-gold">He has drilled for this man</span>
-                      <span className="rowval dim" style={{fontSize:12}}>{prepWord(me)}</span>
+                      <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{prepWord(me)}</span>
                     </div>
-                    <div className="dim" style={{fontSize:14,fontStyle:"italic",marginBottom:6,lineHeight:1.35}}>
+                    <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:6,lineHeight:1.35}}>
                       {right.length
                         ? "Weeks of that man's habits. He does not need anybody to tell him what to do about them."
                         : "Weeks of that man's habits, and there is no single hole in him. It still counts on the sand."}
@@ -21217,28 +21235,28 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     return (
                       <div className="panel" style={{padding:"8px 10px",marginBottom:7,background:"#1c1610",borderColor:"#5a6a35"}}>
                         <div className="flex items-center justify-between gap-2">
-                          <span className="dim" style={{fontSize:10.5,textTransform:"uppercase",letterSpacing:".07em"}}>How he means to fight it</span>
-                          <span className="rowval" style={{fontSize:12,color:"#9aa86a",flexShrink:0}}>{FOE_TACTIC_WORD[ft]}</span>
+                          <span className="dim" style={{fontSize:"var(--fs-micro)",textTransform:"uppercase",letterSpacing:".07em"}}>How he means to fight it</span>
+                          <span className="rowval" style={{fontSize:"var(--fs-sm)",color:"#9aa86a",flexShrink:0}}>{FOE_TACTIC_WORD[ft]}</span>
                         </div>
-                        <div style={{fontSize:14,marginTop:3,lineHeight:1.4}}>{her(FOE_TACTIC_SAY[ft](o.opp), o.opp)}</div>
-                        <div className="dim" style={{fontSize:13,marginTop:3,fontStyle:"italic"}}>{FOE_TACTIC_ANSWER[ft]}</div>
+                        <div style={{fontSize:"var(--fs-md)",marginTop:3,lineHeight:1.4}}>{her(FOE_TACTIC_SAY[ft](o.opp), o.opp)}</div>
+                        <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:3,fontStyle:"italic"}}>{FOE_TACTIC_ANSWER[ft]}</div>
                       </div>
                     ); })()}
                   {(()=>{ const T = (o.opp && o.opp.traits || []).filter(t=>TRAIT_SEEN[t]);
                     if(!T.length) return null;
                     return (
                       <div className="panel" style={{padding:"8px 10px",marginBottom:7,background:"#1c1610",borderColor:"#6d5426"}}>
-                        <div className="dim" style={{fontSize:10.5,textTransform:"uppercase",letterSpacing:".07em",marginBottom:3}}>What kind of man he is</div>
+                        <div className="dim" style={{fontSize:"var(--fs-micro)",textTransform:"uppercase",letterSpacing:".07em",marginBottom:3}}>What kind of man he is</div>
                         {T.map(t=>(
                           <div key={t} style={{padding:"3px 0"}}>
                             <span className="tag tag-gold" style={{marginRight:6}}>{t}</span>
-                            <span style={{fontSize:14}}>{her(TRAIT_SEEN[t], o.opp)}</span>
+                            <span style={{fontSize:"var(--fs-md)"}}>{her(TRAIT_SEEN[t], o.opp)}</span>
                           </div>
                         ))}
                       </div>
                     ); })()}
-                  {o.watched[0]==="nothing" ? <div className="dim" style={{fontSize:14,fontStyle:"italic"}}>Nothing else to report. He does everything correctly and nothing twice.</div>
-                    : o.watched.map((k,i)=><div key={i} style={{fontSize:14.5,padding:"3px 0"}}>{her(TELLS[k].say(o.opp), o.opp)}</div>)}
+                  {o.watched[0]==="nothing" ? <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>Nothing else to report. He does everything correctly and nothing twice.</div>
+                    : o.watched.map((k,i)=><div key={i} style={{fontSize:"var(--fs-md)",padding:"3px 0"}}>{her(TELLS[k].say(o.opp), o.opp)}</div>)}
                   <div className="tag" style={{margin:"7px 0 4px"}}>The plan</div>
                   <div className="grid grid-cols-2 gap-2">
                     {PLAN_KEYS.map(k=>{ const hints=o.watched[0]!=="nothing"&&o.watched.some(t=>TELLS[t].plan===k);
@@ -21246,7 +21264,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   </div>
                 </div>
               ) : null}
-              {me && <div style={{fontSize:13.5,marginTop:6}}><span className="dim">Bookmakers: </span><span className="gold">{oddsWord(oddsFor(p))}</span><span className="dim"> on {me.name} · {oddsWord(oddsFor(1-p))} against</span></div>}
+              {me && <div style={{fontSize:"var(--fs-base)",marginTop:6}}><span className="dim">Bookmakers: </span><span className="gold">{oddsWord(oddsFor(p))}</span><span className="dim"> on {me.name} · {oddsWord(oddsFor(1-p))} against</span></div>}
               {tacticRow}
               {entranceRow}
               {wagerRow}
@@ -21257,10 +21275,10 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
               {backBtn}
               <div className="flex items-center gap-1" style={{flexWrap:"wrap",marginBottom:5}}>
                 <span className="tag tag-gold">{TIERS[o.tier].name}</span><span className="tag tag-blood">Pair bout</span>
-                <span className="gold" style={{marginLeft:"auto",fontSize:14.5}}>{o.purse}d purse</span>
+                <span className="gold" style={{marginLeft:"auto",fontSize:"var(--fs-md)"}}>{o.purse}d purse</span>
               </div>
-              <div style={{fontSize:15.5}}>{chosen.map(g=>g.name).join(" & ")} <span className="dim">against</span> {o.opps.map(x=>x.name).join(" & ")}</div>
-              <div className="dim" style={{fontSize:14}}>{o.opps.map(x=>x.cls).join(" · ")} — they have fought together before.</div>
+              <div style={{fontSize:"var(--fs-lg)"}}>{chosen.map(g=>g.name).join(" & ")} <span className="dim">against</span> {o.opps.map(x=>x.name).join(" & ")}</div>
+              <div className="dim" style={{fontSize:"var(--fs-md)"}}>{o.opps.map(x=>x.cls).join(" · ")} — they have fought together before.</div>
               {tacticRow}
               <button className="btn btn-blood" style={{width:"100%",marginTop:13}} disabled={pairSel.length!==2} onClick={()=>startFight(()=>fightPair(o))}>Send them out together</button>
             </>);
@@ -21268,14 +21286,14 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             body = (<>
               {backBtn}
               <div className="flex items-center gap-1" style={{flexWrap:"wrap",marginBottom:5}}>
-                <div className="disp" style={{fontSize:14,fontWeight:700}}>{o.spectacle==="naumachia"?"THE NAUMACHIA":"THE MELEE"}</div>
+                <div className="disp" style={{fontSize:"var(--fs-md)",fontWeight:700}}>{o.spectacle==="naumachia"?"THE NAUMACHIA":"THE MELEE"}</div>
                 {o.spectacle==="naumachia" && <span className="tag tag-gold">✦ Spectacle</span>}<span className="tag tag-blood">Last man standing</span>
-                <span className="gold" style={{marginLeft:"auto",fontSize:14.5}}>{o.purse}d purse</span>
+                <span className="gold" style={{marginLeft:"auto",fontSize:"var(--fs-md)"}}>{o.purse}d purse</span>
               </div>
-              {o.spectacle==="naumachia" && <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginBottom:4}}>They have flooded the arena. Ships, and a battle fought from them — the whole of Campania is in the seats.</div>}
-              <div style={{fontSize:15}}>{o.field.length} men from the other houses. You enter {pairSel.length}.</div>
-              {o.spectacle==="naumachia" && <div className="dim" style={{fontSize:13,fontStyle:"italic",marginTop:4}}>The decks pitch and a man can go over the side. Quick feet keep their footing on the water; a heavy man is half off balance the whole time.</div>}
-              <div className="blood" style={{fontSize:14,margin:"6px 0"}}>The editor pays one man. If your two are the last upright, they will be made to finish it.</div>
+              {o.spectacle==="naumachia" && <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:4}}>They have flooded the arena. Ships, and a battle fought from them — the whole of Campania is in the seats.</div>}
+              <div style={{fontSize:"var(--fs-lg)"}}>{o.field.length} men from the other houses. You enter {pairSel.length}.</div>
+              {o.spectacle==="naumachia" && <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:4}}>The decks pitch and a man can go over the side. Quick feet keep their footing on the water; a heavy man is half off balance the whole time.</div>}
+              <div className="blood" style={{fontSize:"var(--fs-md)",margin:"6px 0"}}>The editor pays one man. If your two are the last upright, they will be made to finish it.</div>
               <div style={{marginTop:9}}>
                 <div className="tag" style={{marginBottom:6}}>How your men fight</div>
                 <div className="flex gap-2" style={{flexWrap:"wrap"}}>
@@ -21296,9 +21314,9 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   <div className="panel" style={{padding:10,background:"#1c1610",borderColor:"#5a6a35"}}>
                     <span className="tag" style={{borderColor:"#5a6a35",color:"#a9c98a"}}>What came back</span>
                     {o.watched[0]==="nothing"
-                      ? <div className="dim" style={{fontSize:14,fontStyle:"italic",marginTop:3}}>Eight men who will fight each other. Nothing more to say about them.</div>
+                      ? <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:3}}>Eight men who will fight each other. Nothing more to say about them.</div>
                       : o.watched.map((k,i)=>(
-                          <div key={i} style={{fontSize:14.5,padding:"3px 0"}}>{FIELD_TELLS[k] ? FIELD_TELLS[k].say(o.field) : ""}</div>
+                          <div key={i} style={{fontSize:"var(--fs-md)",padding:"3px 0"}}>{FIELD_TELLS[k] ? FIELD_TELLS[k].say(o.field) : ""}</div>
                         ))}
                   </div>
                 )}
@@ -21312,7 +21330,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                       </button>
                     ); })}
                 </div>
-                <div className="dim" style={{fontSize:13.5,fontStyle:"italic",marginTop:5}}>{MELEE_PLANS[mplan].desc}</div>
+                <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:5}}>{MELEE_PLANS[mplan].desc}</div>
               </div>
 
               <button className="btn btn-blood" style={{width:"100%",marginTop:11}} disabled={pairSel.length<2} onClick={()=>startFight(()=>meleeGo(o))}>Enter {pairSel.length} men</button>
@@ -21323,23 +21341,23 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
             body = (<>
               {backBtn}
               <div className="flex items-center gap-1" style={{flexWrap:"wrap",marginBottom:5}}>
-                <div className="disp" style={{fontSize:14,fontWeight:700}}>THE MORNING HUNT</div>
-                <span className="gold" style={{marginLeft:"auto",fontSize:14.5}}>{o.purse}d purse</span>
+                <div className="disp" style={{fontSize:"var(--fs-md)",fontWeight:700}}>THE MORNING HUNT</div>
+                <span className="gold" style={{marginLeft:"auto",fontSize:"var(--fs-md)"}}>{o.purse}d purse</span>
               </div>
-              <div style={{fontSize:15.5,textTransform:"capitalize"}}>{B.name}</div>
-              <div className="dim" style={{fontSize:14,fontStyle:"italic",margin:"2px 0 6px"}}>{B.desc}</div>
-              <div style={{fontSize:14,marginBottom:5}}>
+              <div style={{fontSize:"var(--fs-lg)",textTransform:"capitalize"}}>{B.name}</div>
+              <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",margin:"2px 0 6px"}}>{B.desc}</div>
+              <div style={{fontSize:"var(--fs-md)",marginBottom:5}}>
                 <span style={{color:"#e8d092"}}>What it asks · {STAT_NAMES[RAW.tests||"str"]}</span>
                 <span className="dim"> — {RAW.ask}</span>
               </div>
               {me && (()=>{ const v = me[RAW.tests||"str"]||50;
-                return <div style={{fontSize:14,marginBottom:5}}>
+                return <div style={{fontSize:"var(--fs-md)",marginBottom:5}}>
                   {v>=78 ? <span className="laurel">{me.name} has the {STAT_NAMES[RAW.tests||"str"].toLowerCase()} for it — {Math.round(v)}. It will meet a smaller animal than most men do.</span>
                    : v>=58 ? <span className="dim">{me.name} is sound enough for it — {STAT_NAMES[RAW.tests||"str"].toLowerCase()} {Math.round(v)}.</span>
                    : <span className="blood">{me.name} is short where this one is strongest — {STAT_NAMES[RAW.tests||"str"].toLowerCase()} {Math.round(v)}. It will be a long morning.</span>}
                 </div>; })()}
-              <div className="blood" style={{fontSize:14,marginBottom:6}}>No missio. A beast does not see a raised finger.</div>
-              {me && <div style={{fontSize:14,marginBottom:6}}>
+              <div className="blood" style={{fontSize:"var(--fs-md)",marginBottom:6}}>No missio. A beast does not see a raised finger.</div>
+              {me && <div style={{fontSize:"var(--fs-md)",marginBottom:6}}>
                 {reach>=1.2?<span className="laurel">{me.name} carries the reach — a hunting spear is the whole trick.</span>:reach<0.9?<span className="blood">{me.name} has nothing longer than his arm. He will have to get close.</span>:<span className="dim">{me.name}'s weapon will serve, but a spear would serve better.</span>}
                 {me.pfame>=60 && <div className="blood" style={{marginTop:3}}>{PR(me).He} is too well known for this — the cells will take it as an insult.</div>}
               </div>}
@@ -21369,7 +21387,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
           <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:55}} onClick={close}>
             <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
               <div className="flex items-center justify-between" style={{marginBottom:9}}>
-                <div className="disp" style={{fontSize:15,fontWeight:900,letterSpacing:".1em",color:"#e8d092"}}>GIVE THE CITY GAMES</div>
+                <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".1em",color:"#e8d092"}}>GIVE THE CITY GAMES</div>
                 <button className="btn btn-ghost" style={{padding:"8px 10px"}} aria-label="Close" onClick={close}><X size={14}/></button>
               </div>
 
@@ -21378,10 +21396,10 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                 return (
                   <button key={k} className={`optrow ${on?"on":""}`} style={{marginBottom:6,width:"100%"}} onClick={()=>set({occasion:k})}>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="disp" style={{fontSize:13.5,color:on?"#e8d092":"#e8d9b8"}}>{oc.name}</span>
-                      <span className="dim" style={{fontSize:12.5,whiteSpace:"nowrap"}}>{oc.tag}</span>
+                      <span className="disp" style={{fontSize:"var(--fs-base)",color:on?"#e8d092":"#e8d9b8"}}>{oc.name}</span>
+                      <span className="dim" style={{fontSize:"var(--fs-sm)",whiteSpace:"nowrap"}}>{oc.tag}</span>
                     </div>
-                    <div className="dim" style={{fontSize:13,marginTop:2}}>{oc.blurb}</div>
+                    <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2}}>{oc.blurb}</div>
                   </button>
                 ); })}
 
@@ -21394,28 +21412,28 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                       onClick={()=>set({scale:k})}>{sc.name}{locked?` · ${sc.gate} fame`:""}</button>
                   ); })}
               </div>
-              <div className="dim" style={{fontSize:13,fontStyle:"italic",marginBottom:11}}>{Sc.blurb}</div>
+              <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:11}}>{Sc.blurb}</div>
 
               <div className="tag" style={{marginBottom:6}}>The card</div>
               <button className={`optrow ${p.hunt?"on":""}`} style={{marginBottom:6,width:"100%"}} onClick={()=>set({hunt:!p.hunt})}>
                 <div className="flex items-center justify-between gap-2">
-                  <span className="disp" style={{fontSize:13,color:p.hunt?"#e8d092":"#e8d9b8"}}>A morning hunt</span>
-                  <span className="rowval dim" style={{fontSize:12.5}}>{p.hunt?"✓ ":""}the mob's delight</span>
+                  <span className="disp" style={{fontSize:"var(--fs-base)",color:p.hunt?"#e8d092":"#e8d9b8"}}>A morning hunt</span>
+                  <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{p.hunt?"✓ ":""}the mob's delight</span>
                 </div>
-                <div className="dim" style={{fontSize:12.5,marginTop:2}}>Beasts to open the day. The cheap seats love it; it costs more and reads as blood.</div>
+                <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>Beasts to open the day. The cheap seats love it; it costs more and reads as blood.</div>
               </button>
               <button className={`optrow ${p.sine?"on":""}`} style={{marginBottom:6,width:"100%"}} onClick={()=>set({sine:!p.sine})}>
                 <div className="flex items-center justify-between gap-2">
-                  <span className="disp" style={{fontSize:13,color:p.sine?"#d98476":"#e8d9b8"}}>To the death</span>
-                  <span className="rowval" style={{fontSize:12.5,color:p.sine?"#d98476":"#9c8a6f"}}>{p.sine?"✓ ":""}sine missione</span>
+                  <span className="disp" style={{fontSize:"var(--fs-base)",color:p.sine?"#d98476":"#e8d9b8"}}>To the death</span>
+                  <span className="rowval" style={{fontSize:"var(--fs-sm)",color:p.sine?"#d98476":"#9c8a6f"}}>{p.sine?"✓ ":""}sine missione</span>
                 </div>
-                <div className="dim" style={{fontSize:12.5,marginTop:2}}>No mercy on the card. The mob roars for it; the good seats look away, and their favour cools.</div>
+                <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>No mercy on the card. The mob roars for it; the good seats look away, and their favour cools.</div>
               </button>
 
               <div className="tag" style={{margin:"11px 0 6px"}}>The centrepiece</div>
               <button className={`optrow ${!p.spectacle?"on":""}`} style={{marginBottom:6,width:"100%"}} onClick={()=>set({spectacle:null})}>
-                <div className="disp" style={{fontSize:13,color:!p.spectacle?"#e8d092":"#e8d9b8"}}>No centrepiece</div>
-                <div className="dim" style={{fontSize:12.5,marginTop:2}}>An honest card of bouts. Nothing grand, nothing to go wrong.</div>
+                <div className="disp" style={{fontSize:"var(--fs-base)",color:!p.spectacle?"#e8d092":"#e8d9b8"}}>No centrepiece</div>
+                <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>An honest card of bouts. Nothing grand, nothing to go wrong.</div>
               </button>
               {SPEC_KEYS.map(k=>{ const SP = SPECTACLES[k];
                 const lockedScale = SP.lavishOnly && p.scale!=="lavish";
@@ -21426,13 +21444,13 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                   <button key={k} className={`optrow ${on?"on":""}`} style={{marginBottom:6,width:"100%",opacity:locked?0.5:1}}
                     disabled={locked} onClick={()=>set({spectacle:on?null:k})}>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="disp" style={{fontSize:13,color:on?"#e8d092":"#e8d9b8"}}>{SP.name}</span>
-                      <span className="rowval gold" style={{fontSize:12}}>+{SP.cost}d</span>
+                      <span className="disp" style={{fontSize:"var(--fs-base)",color:on?"#e8d092":"#e8d9b8"}}>{SP.name}</span>
+                      <span className="rowval gold" style={{fontSize:"var(--fs-sm)"}}>+{SP.cost}d</span>
                     </div>
-                    <div className="dim" style={{fontSize:12.5,marginTop:2}}>{SP.blurb}</div>
+                    <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>{SP.blurb}</div>
                     {locked
-                      ? <div className="blood" style={{fontSize:12,marginTop:2}}>{lockedScale?"Needs a Lavish munus":`Needs ${SP.fameGate} fame`}</div>
-                      : <div style={{fontSize:12,marginTop:2,color: k==="execution"?"#d96f5d" : "#b09b7d"}}>
+                      ? <div className="blood" style={{fontSize:"var(--fs-sm)",marginTop:2}}>{lockedScale?"Needs a Lavish munus":`Needs ${SP.fameGate} fame`}</div>
+                      : <div style={{fontSize:"var(--fs-sm)",marginTop:2,color: k==="execution"?"#d96f5d" : "#b09b7d"}}>
                           {k==="execution" ? "The mob feasts; the front rows and the senator go cold."
                             : `A bet on the production — grander scale, likelier to land. ${on?"":""}`}
                         </div>}
@@ -21449,7 +21467,7 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
                     onClick={()=>set({headliner:p.headliner===g.id?null:g.id})}>{g.name}</button>
                 ))}
               </div>
-              <div className="dim" style={{fontSize:13,fontStyle:"italic",marginBottom:11}}>
+              <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:11}}>
                 {hg ? `${hg.name} headlines — renown, a following and the crowd's favour, for the risk of a hard afternoon. No editor lets the host's own man be killed, whatever the stakes.`
                     : eligible.length ? "Put one of your own men at the top of the card, or let an anonymous star headline for you."
                     : "No one is fit to headline this week — an anonymous star will carry the top of the card."}
@@ -21467,16 +21485,16 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
 
               <div className="panel" style={{padding:11,marginBottom:11,background:"#1c1610",borderColor:canAfford?"#6d5426":"#7c2a22"}}>
                 {p.sell ? (
-                  <div className="flex items-center justify-between" style={{fontSize:14.5}}>
+                  <div className="flex items-center justify-between" style={{fontSize:"var(--fs-md)"}}>
                     <span className="dim">The editor pays you</span><span className="gold">+{fee}d</span>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-between" style={{fontSize:14.5}}>
+                  <div className="flex items-center justify-between" style={{fontSize:"var(--fs-md)"}}>
                     <span className="dim">Out of your own coin</span>
                     <span style={{color:canAfford?"#e0bd72":"#d96f5d"}}>−{cost}d</span>
                   </div>
                 )}
-                <div className="dim" style={{fontSize:12.5,marginTop:4}}>
+                <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:4}}>
                   {p.sell ? "His name on the bill, so the house takes less of the fame and favour — but the coin is real and nobody of yours is at risk."
                           : "Every denarius of it yours, and so is every scrap of the glory. The card goes up at the arena and your men fight it, bout by bout."}
                 </div>
@@ -21499,19 +21517,19 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
         <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:59}}>
           <div className="modal" tabIndex={-1}>
             {evResult ? (<>
-              <div className="disp" style={{fontSize:15,fontWeight:700,marginBottom:8}}>IT IS DECIDED</div>
-              <div style={{fontSize:16}}>{evResult}</div>
+              <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,marginBottom:8}}>IT IS DECIDED</div>
+              <div style={{fontSize:"var(--fs-xl)"}}>{evResult}</div>
               <button className="btn" style={{width:"100%",marginTop:12}} onClick={()=>setEvResult(null)}>So be it</button>
             </>) : (<>
-              <div className="disp" style={{fontSize:15,fontWeight:700,marginBottom:8}}>{S.pendingEvent.title.toUpperCase()}</div>
-              <div style={{fontSize:16,marginBottom:6}}>{S.pendingEvent.text}</div>
+              <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,marginBottom:8}}>{S.pendingEvent.title.toUpperCase()}</div>
+              <div style={{fontSize:"var(--fs-xl)",marginBottom:6}}>{S.pendingEvent.text}</div>
               {/* when a date is being asked of a named man, the count before you answer */}
               {S.pendingEvent.note && S.pendingEvent.note.word && (()=>{ const N = S.pendingEvent.note;
                 const col = !N.ok ? "#d96f5d" : N.tight ? "#d8ac5f" : "#9aa86a";
                 return (
                   <div className="panel" style={{padding:"9px 11px",marginTop:8,marginBottom:2,borderColor:col,background:"#1a1510",borderLeft:`3px solid ${col}`}}>
-                    <div className="dim" style={{fontSize:10.5,textTransform:"uppercase",letterSpacing:".08em",marginBottom:2}}>The doctore counts it out</div>
-                    <div style={{fontSize:14.5,lineHeight:1.4,color:col}}>{N.word}</div>
+                    <div className="dim" style={{fontSize:"var(--fs-micro)",textTransform:"uppercase",letterSpacing:".08em",marginBottom:2}}>The doctore counts it out</div>
+                    <div style={{fontSize:"var(--fs-md)",lineHeight:1.4,color:col}}>{N.word}</div>
                   </div>
                 ); })()}
               {S.pendingEvent.choices.map((c,i)=>(
@@ -21525,67 +21543,67 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
       {S.over && !fight && (
         <div className="modalwrap" role="dialog" aria-modal="true">
           <div className="modal" tabIndex={-1} style={{borderColor:"#7c2a22"}}>
-            <div className="disp blood" style={{fontSize:19,fontWeight:900,marginBottom:8,letterSpacing:".12em"}}>{OVER_TEXT[S.over.kind](S.over).title}</div>
-            <div style={{fontSize:16.5}}>{OVER_TEXT[S.over.kind](S.over).text}</div>
+            <div className="disp blood" style={{fontSize:"var(--fs-xxl)",fontWeight:900,marginBottom:8,letterSpacing:".12em"}}>{OVER_TEXT[S.over.kind](S.over).title}</div>
+            <div style={{fontSize:"var(--fs-xl)"}}>{OVER_TEXT[S.over.kind](S.over).text}</div>
             {(()=>{ const c = closing(S), R2 = c.R2, V = verdictOf(c); return (<>
               <div className="panel" style={{padding:11,marginTop:12,background:"#1c1610"}}>
-                <div className="dim" style={{fontSize:13.5,marginBottom:5}}>
+                <div className="dim" style={{fontSize:"var(--fs-base)",marginBottom:5}}>
                   {R2.years} year{R2.years===1?"":"s"} · {S.week} weeks · fame {rnd(S.fame)}
                   {c.gen>1 && ` · ${c.gen} lanistae`}
                   {c.doctrine && ` · ${c.doctrine.name}`}
                 </div>
-                <div className="grid grid-cols-3 gap-2" style={{fontSize:14.5}}>
-                  <div><div className="dim" style={{fontSize:12.5}}>Served</div>{R2.served}</div>
-                  <div><div className="dim" style={{fontSize:12.5}}>Bouts</div>{c.bouts}{c.bouts>0 && <span className="dim" style={{fontSize:12}}> · {c.winPc}%</span>}</div>
-                  <div><div className="dim" style={{fontSize:12.5}}>Buried</div><span className="blood">{R2.lost}</span></div>
-                  <div><div className="dim" style={{fontSize:12.5}}>Freed</div><span className="gold">{R2.freed}</span></div>
-                  <div><div className="dim" style={{fontSize:12.5}}>Walked out</div>{R2.out}</div>
-                  <div><div className="dim" style={{fontSize:12.5}}>Killed</div>{R2.k}</div>
+                <div className="grid grid-cols-3 gap-2" style={{fontSize:"var(--fs-md)"}}>
+                  <div><div className="dim" style={{fontSize:"var(--fs-sm)"}}>Served</div>{R2.served}</div>
+                  <div><div className="dim" style={{fontSize:"var(--fs-sm)"}}>Bouts</div>{c.bouts}{c.bouts>0 && <span className="dim" style={{fontSize:"var(--fs-sm)"}}> · {c.winPc}%</span>}</div>
+                  <div><div className="dim" style={{fontSize:"var(--fs-sm)"}}>Buried</div><span className="blood">{R2.lost}</span></div>
+                  <div><div className="dim" style={{fontSize:"var(--fs-sm)"}}>Freed</div><span className="gold">{R2.freed}</span></div>
+                  <div><div className="dim" style={{fontSize:"var(--fs-sm)"}}>Walked out</div>{R2.out}</div>
+                  <div><div className="dim" style={{fontSize:"var(--fs-sm)"}}>Killed</div>{R2.k}</div>
                 </div>
               </div>
 
               <div className="panel" style={{padding:12,marginTop:9,background:"#1c1610",borderColor:"#6d5426"}}>
-                <div className="disp" style={{fontSize:15,color:"#e8d092",marginBottom:4}}>{V.name}</div>
-                <div style={{fontSize:15}}>{V.say(c)}</div>
+                <div className="disp" style={{fontSize:"var(--fs-lg)",color:"#e8d092",marginBottom:4}}>{V.name}</div>
+                <div style={{fontSize:"var(--fs-lg)"}}>{V.say(c)}</div>
               </div>
 
               <div className="panel" style={{padding:11,marginTop:9,background:"#1c1610"}}>
                 <div className="tag tag-gold" style={{marginBottom:5}}>The account</div>
                 {c.best && c.best.wins>0 && (
-                  <div style={{fontSize:14.5,borderTop:"1px dotted #33271a",paddingTop:5}}>
+                  <div style={{fontSize:"var(--fs-md)",borderTop:"1px dotted #33271a",paddingTop:5}}>
                     <span className="dim">The best of them was </span>
                     {c.best.nick? `${c.best.name}, ${c.best.nick}` : c.best.name}
                     <span className="dim"> — {c.best.wins} won, and {fateOf(c.best).verb(c.best)}.</span>
                   </div>
                 )}
                 {c.styles.length>0 && (
-                  <div style={{fontSize:14.5,borderTop:"1px dotted #33271a",paddingTop:5,marginTop:5}}>
+                  <div style={{fontSize:"var(--fs-md)",borderTop:"1px dotted #33271a",paddingTop:5,marginTop:5}}>
                     <span className="dim">Your best style was the </span>{c.styles[0].k.toLowerCase()}
                     <span className="dim"> at {c.styles[0].pc}%{c.styles.length>1 ? `, your worst the ${c.styles[c.styles.length-1].k.toLowerCase()} at ${c.styles[c.styles.length-1].pc}%.` : "."}</span>
                   </div>
                 )}
                 {c.nemesisHouse && (
-                  <div style={{fontSize:14.5,borderTop:"1px dotted #33271a",paddingTop:5,marginTop:5}}>
+                  <div style={{fontSize:"var(--fs-md)",borderTop:"1px dotted #33271a",paddingTop:5,marginTop:5}}>
                     <span className="dim">House {c.nemesisHouse.h} took you apart — </span>{c.nemesisHouse.w} of {c.nemesisHouse.n}
                     <span className="dim">, and they will remember it longer than you will.</span>
                   </div>
                 )}
                 {c.worstYear && (
-                  <div style={{fontSize:14.5,borderTop:"1px dotted #33271a",paddingTop:5,marginTop:5}}>
+                  <div style={{fontSize:"var(--fs-md)",borderTop:"1px dotted #33271a",paddingTop:5,marginTop:5}}>
                     <span className="dim">Year {c.worstYear[0]} was the worst of it — </span>{c.worstYear[1]} buried
                     <span className="dim">.</span>
                   </div>
                 )}
                 {c.purse>0 && (
-                  <div style={{fontSize:14.5,borderTop:"1px dotted #33271a",paddingTop:5,marginTop:5}}>
+                  <div style={{fontSize:"var(--fs-md)",borderTop:"1px dotted #33271a",paddingTop:5,marginTop:5}}>
                     <span className="dim">Purses taken: </span>{c.purse}d
                     <span className="dim">{c.feats? ` · ${c.feats} feat${c.feats===1?"":"s"} to the house.` : "."}</span>
                   </div>
                 )}
                 {c.freedMen.length>0 && (
-                  <div style={{fontSize:14.5,borderTop:"1px dotted #33271a",paddingTop:6,marginTop:6}}>
-                    <div className="dim" style={{fontSize:13}}>Walked out on their own legs</div>
-                    <div className="gold" style={{fontSize:14.5,marginTop:2}}>{c.freedMen.join(" · ")}</div>
+                  <div style={{fontSize:"var(--fs-md)",borderTop:"1px dotted #33271a",paddingTop:6,marginTop:6}}>
+                    <div className="dim" style={{fontSize:"var(--fs-base)"}}>Walked out on their own legs</div>
+                    <div className="gold" style={{fontSize:"var(--fs-md)",marginTop:2}}>{c.freedMen.join(" · ")}</div>
                   </div>
                 )}
               </div>
