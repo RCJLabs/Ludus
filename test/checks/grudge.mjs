@@ -68,11 +68,15 @@ export async function run({ p, errors }){
   lines.push(`the angriest house in Capua, over ${out.weeks} weeks: median ${out.p50} · 90th ${out.p90} · 97th ${out.p97} · 99th ${out.p99} · highest ${out.top}`);
   lines.push(`the gates: sabotage ${out.gates.sabotage} · a bribed editor ${out.gates.bribedEditor} · thugs ${out.gates.thugs}`);
 
+  /* against the ninety-ninth, not against the highest single reading. The maximum
+     of a noisy distribution moves with any balance change anywhere in the game —
+     the card's bout mix shifted it by four points — and a check that cries wolf
+     every time something unrelated moves is a check nobody reads. */
   const g = out.gates;
   for(const [name, at] of Object.entries(g)){
     if(at == null) { fails.push(`${name}'s gate is not exposed`); continue; }
-    if(at > out.top)
-      fails.push(`${name} waits at ${at} and the angriest rival ever measured reached ${out.top} — it cannot happen to anybody`);
+    if(at > out.p99)
+      fails.push(`${name} waits at ${at}, above the ninety-ninth percentile of ${out.p99} — it is all but unreachable`);
   }
   /* the three are an escalation and want to stay one */
   if(!(g.sabotage < g.bribedEditor && g.bribedEditor < g.thugs))
@@ -82,6 +86,8 @@ export async function run({ p, errors }){
   /* and the top one must sit high enough to stay rare */
   if(g.thugs < out.p90)
     fails.push(`thugs waits at ${g.thugs}, below the ninetieth percentile of ${out.p90} — cudgels at the gate should be rare`);
+  if(g.sabotage > out.p97)
+    fails.push(`even sabotage waits at ${g.sabotage}, above the ninety-seventh of ${out.p97} — the mildest of the three should not be the rarest thing in the game`);
 
   if(errors.length) fails.push(`${errors.length} page errors`);
   return { pass: fails.length === 0, why: fails.join("; ") || null, lines };

@@ -4284,12 +4284,12 @@ function makeGames(d){
   /* the top of the table. Only at the great games, only for a house the editors
      would actually put on that bill, and never more than one on a card. */
   if((F.tier||0)>=1 && topRungOpen(d) && R()<0.5) add(4, 4);
-  if(d.fame>=TIERS[1].fame && activeG(d).length>=2 && R()<0.45) addPair(d.fame>=TIERS[2].fame ? 2 : 1);
+  if(d.fame>=TIERS[1].fame && activeG(d).length>=2 && R()<0.60) addPair(d.fame>=TIERS[2].fame ? 2 : 1);
   if(d.primus && d.primus.mine && R()<0.45){ const o = makeDefenceOffer(d); if(o) offers.push(o); }
   else if(d.primus && !d.primus.mine && activeG(d).some(primusEligible) && d.fame>=TIERS[2].fame && R()<0.6){
     const o = makePrimusOffer(d, 3); if(o) offers.push(o);
   }
-  if(d.fame>=TIERS[1].fame && activeG(d).length>=2 && R()<0.3){
+  if(d.fame>=TIERS[1].fame && activeG(d).length>=2 && R()<0.46){
     const tier = d.fame>=TIERS[2].fame ? 2 : 1;
     const size = ri(4,5);
     const field = [];
@@ -4298,14 +4298,14 @@ function makeGames(d){
       purse: rnd((TIERS[tier].purse[0]+R()*TIERS[tier].purse[1]) * 4.0 * (F.purse||1) * seasonPurse(d) * fameEdge(d)) });
   }
   /* the great games throw up things no lone house could ever stage — a mock sea-battle on flooded sand */
-  if(F.forceNaum || ((F.key==="romani" || (F.tier||0)>=1) && d.fame>=TIERS[2].fame && activeG(d).length>=2 && R()<0.4)){
+  if(F.forceNaum || ((F.key==="romani" || (F.tier||0)>=1) && d.fame>=TIERS[2].fame && activeG(d).length>=2 && R()<0.52)){
     const size = ri(6,8);
     const field = [];
     for(let i=0;i<size;i++) field.push(pickRivalOpp(d, 1).opp);
     offers.push({ id:d.nextId++, tier:2, festival, melee:true, spectacle:"naumachia", field, stakes:"melee",
       purse: rnd((TIERS[2].purse[0]+R()*TIERS[2].purse[1]) * 6.0 * (F.purse||1) * seasonPurse(d) * fameEdge(d)) });
   }
-  if(F.forceHunt || R()<0.5){
+  if(F.forceHunt || R()<0.62){
     const tier = d.fame>=TIERS[2].fame ? 2 : d.fame>=TIERS[1].fame ? 1 : 0;
     const opts = beastTier(tier);
     const [key, B] = pick(opts);
@@ -4316,9 +4316,17 @@ function makeGames(d){
     offers.push({ id:d.nextId++, tier, festival, venatio:true, beast:key, grade, stakes:"venatio",
       purse: rnd((TIERS[tier].purse[0]+R()*TIERS[tier].purse[1]) * B.purse * G.purse * (F.purse||1) * seasonPurse(d) * fameEdge(d)) });
   }
-  if(d.fame>=TIERS[2].fame) add(2);
-  if(d.fame>=TIERS[2].fame && R()<0.5) add(2);
-  if(d.fame>=TIERS[3].fame && d.favor>=40 && R()<0.45) add(3);
+  /* ---- A CARD IS NOT ONE BOUT EIGHT TIMES ----
+     add() was called up to eight times per card and each of the other three
+     engines got one roll at thirty to fifty per cent, so a card of four bouts was
+     three and a half singles and a maybe. Measured over 495 cards: 89% single,
+     venatio 4%, pair 3%, melee 2%, a mock sea-battle 0%. Three of the four fight
+     engines in this game shared a tenth of the bill between them.
+
+     These last three were a second helping of the tier-2 and tier-3 bouts already
+     put on above, which is where most of the duplication came from. One is enough;
+     the rolls on the other engines come up to meet it. */
+  if(d.fame>=TIERS[2].fame && R()<0.55) add(2);
   offers.forEach(o=>{ if(!o.venue) o.venue = venueFor(d, o); if(!o.sky) o.sky = skyFor(d, o); });
   { const p = pactOf(d);
     if(p && PACTS[p.kind] && PACTS[p.kind].exclusive && offers.length > 1){
@@ -6827,7 +6835,7 @@ const ATTACKS = {
    pursue climbs. So sabotage stays where it was at 30, and the two above it come
    down to where the number goes: a bribed editor near the ninety-eighth, cudgels
    near the ninety-ninth. Rare, in order, and possible. */
-const GRUDGE_SABOTAGE = 30, GRUDGE_BRIBE = 40, GRUDGE_THUGS = 48;
+const GRUDGE_SABOTAGE = 26, GRUDGE_BRIBE = 38, GRUDGE_THUGS = 44;
 /* thugs sat at the ninety-ninth for one pass and still never landed: pickEvent
    shuffles every event and takes the first that returns, so a state present in one
    week in a hundred has to win that shuffle against thirty others as well. Twenty-two
@@ -22417,6 +22425,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     endWeek, bookBout, bookOf, newBook, chron, chronAll, bookSays,
     /* the always-open card and the block, for a headless player */
     makePitOffer, pitMen, makePitCard, buyFromBlock, rosterFull, cellsCap,
+    /* the week's bill, so its composition can be counted without playing a campaign */
+    makeGames, festivalNow, CALENDAR,
     /* the rope: what it pays, and who the bay puts up */
     pitPurse, pitDraw, makeCircuitMan, circuitQuality, bayStandard, seedCircuit,
     CIRCUIT_MIX, CIRCUIT_REACH, PIT_DRAW_TOP, PIT_NIGHT,

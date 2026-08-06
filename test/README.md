@@ -54,6 +54,7 @@ reason the check exists usually has not.
 | `chronicle` | fast | one in five lines the chronicle ever wrote was the same weekly receipt |
 | `marks` | fast | a man bought with an old wound carried a scar drawn at NaN,NaN for as long as you owned him |
 | `grudge` | fast | two rival-vengeance events waited above the ceiling of the number they read |
+| `card` | fast | three of the four fight engines shared a quarter of the bill, and the audit that found it was counting Rome |
 
 ## The test build
 
