@@ -6065,8 +6065,32 @@ function facAfterBout(d, g, res, offer, tactic, choice){
 const SMALL_HOUSES = ["the Ludus Pompeianus","the school at Atella","Rufio's yard","the Praenestine school",
   "the Nolan ludus","Bassus' stable","no house at all","the Suessan school"];
 const CIRCUIT_SIZE = 16;
+/* ---- THE BAY CLIMBS BEHIND YOU ----
+   The circuit was sixteen men on a fixed pyramid — rungs at quality 34, 50, 66
+   and 82 — and it stayed there for twelve years while the man you sent down to
+   fight it went from sixty to ninety. Measured across a full campaign: the best
+   man on the whole circuit rose from 74 to 80, yours from 60 to 86, and the
+   rope's purse did not move at all — 165 denarii in year one, 163 in year
+   twelve, against a card that went from 399 to 1917. Half the weeks in this game
+   have no card on offer. They all had that.
+
+   So the towns get better as you do. Only the upper rungs reach for your
+   standard — the bottom of the pyramid is still a farm boy with a borrowed
+   sword — and the old fixed rung is the floor, so nothing about the opening
+   moves. It is the top of the bay that learns you are down there. */
+const CIRCUIT_REACH = [0, 0.30, 0.62, 0.92];
+function circuitQuality(d, tier){
+  const floor = [34,50,66,82][tier];
+  const reach = CIRCUIT_REACH[tier] || 0;
+  if(!reach) return floor;
+  /* bayStandard already reads the best man on any sand in the bay and returns
+     him on the quality scale, so the rungs are set against the same yardstick
+     the rival houses buy to. The floor keeps the opening exactly as it was. */
+  return Math.max(floor, Math.round(34 + (bayStandard(d) - 34) * reach));
+}
 function makeCircuitMan(d, tier){
-  const o = genOpponent(tier==null ? ri(0,2) : tier);
+  const t = tier==null ? ri(0,2) : tier;
+  const o = genOpponent(t, circuitQuality(d, t) + ri(-6,10));
   o.id = d.nextId++;
   o.house = pick(SMALL_HOUSES);
   o.wins = ri(0,6); o.losses = ri(0,5); o.kills = ri(0,2);
@@ -14252,19 +14276,47 @@ const pitOf = d => pitAt(d, d.week);
 /* the week the rope next picks itself up, and where it lands */
 const pitMoveWeek = d => d.week + (PIT_MOVE - ((d.week - 1) % PIT_MOVE));
 const pitNext = d => pitAt(d, pitMoveWeek(d));
-/* what he is worth at the rope — the man, not your standing */
+/* ---- WHAT THE ROPE PAYS ----
+   It used to be the man in front of you and nothing else, which read well and
+   meant the pit was worth the same in year twelve as in year one while every
+   other door in the game paid five times more. So the towns pay for the house
+   you bring them as well. A rope behind a wine shop pays the local rate for a
+   local fight; it pays a good deal over that when the lanista whose men win at
+   the Ludi Romani sends somebody down for the evening, because that is the
+   largest thing to happen in that town all season.
+
+   The draw is the house's standing, not the man's — a champion's own name is
+   too erratic across a campaign to price anything by, and it is the crest on
+   the wagon the town has heard of. It flattens out: there is a ceiling on what
+   a back-street rope can raise, however famous you get. */
+const PIT_DRAW_TOP = 2400;
+const pitDraw = d => 1 + clamp(((d.fame||0) - 120) / PIT_DRAW_TOP, 0, 1) * 1.6;
 function pitPurse(d, f, stakes){
   const avg = STATS.reduce((s,k)=>s+(f[k]||40),0)/6;
   const base = 34 + avg*1.5 + (f.wins||0)*5 + (f.pfame||0)*0.9;
   const st = stakes==="sine" ? 1.8 : stakes==="blood" ? 0.7 : 1;
-  return rnd(base * st * seasonOf(d).pits * (pitOf(d).pay || 1));
+  return rnd(base * st * pitDraw(d) * seasonOf(d).pits * (pitOf(d).pay || 1));
 }
 /* who is down there this week */
 function makePitCard(d){
   const pool = (d.circuit||[]).filter(f=>!f.injury);
   if(!pool.length){ d.pitCard = null; return; }
-  const men = shuffled(pool).slice(0, Math.min(PIT_NIGHT, pool.length)).map(f=>f.id);
-  d.pitCard = { week:d.week, ids:men };
+  /* Who turns out depends on who is coming. The circuit is a pyramid and the
+     draw used to be a flat shuffle of it, so the two men at the top of the bay
+     showed up on a third of nights whether you were nobody or the house whose
+     men win at the Ludi Romani. A rope that can promise the town your champion
+     can call on better company for him. At no fame this is the old shuffle.
+
+     Only the top of the bill is drawn that way. The rest of the night is
+     whoever else is about, so the card stays a choice of three rather than one
+     man three times — the point of the rope is that you pick. */
+  const pull = clamp(((d.fame||0) - 120) / PIT_DRAW_TOP, 0, 1);
+  const avg = f => STATS.reduce((s,k)=>s+(f[k]||0),0)/6;
+  const ranked = pool.slice().sort((a,b)=>avg(b)-avg(a));
+  const head = ranked[Math.floor(Math.pow(R(), 1 + pull*1.9) * ranked.length)];
+  const rest = shuffled(ranked.filter(f=>f !== head));
+  d.pitCard = { week:d.week,
+    ids: [head, ...rest].slice(0, Math.min(PIT_NIGHT, ranked.length)).map(f=>f.id) };
 }
 const pitMen = d => {
   const card = d.pitCard;
@@ -21604,12 +21656,23 @@ export default function App(){
                   </div>
                   {/* which cellar it is matters to the purse, and it does not stay put */}
                   {(()=>{ const nx = pitNext(S), mw = pitMoveWeek(S), pc = Math.round(((P.pay||1)-1)*100);
+                    /* what your own name adds on top of the cellar's rate */
+                    const dr = Math.round((pitDraw(S)-1)*100);
                     return (
                       <div className="flex items-center justify-between gap-2" style={{marginBottom:8,flexWrap:"wrap"}}>
-                        <span className="chip" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",
-                          borderColor: pc>0?"#5a6a4a":pc<0?"#7c2a22":"#4e3c26",
-                          color: pc>0?"#9aa86a":pc<0?"#d96f5d":"#b09b7d"}}>
-                          Purses {pc>0?"+":""}{pc}%
+                        <span className="flex items-center gap-1" style={{flexWrap:"wrap"}}>
+                          <span className="chip" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",
+                            borderColor: pc>0?"#5a6a4a":pc<0?"#7c2a22":"#4e3c26",
+                            color: pc>0?"#9aa86a":pc<0?"#d96f5d":"#b09b7d"}}>
+                            Purses {pc>0?"+":""}{pc}%
+                          </span>
+                          {dr>0 && (
+                            <span className="chip" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",
+                              borderColor:"#5a6a4a",color:"#9aa86a"}}
+                              title="The town pays over the odds to say your house was here">
+                              Your name +{dr}%
+                            </span>
+                          )}
                         </span>
                         <span className="rowval dim" style={{fontSize:"var(--fs-sm)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                           {nx && nx.key!==P.key
@@ -22156,6 +22219,9 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     endWeek, bookBout, bookOf, newBook, chron, bookSays,
     /* the always-open card and the block, for a headless player */
     makePitOffer, pitMen, makePitCard, buyFromBlock, rosterFull, cellsCap,
+    /* the rope: what it pays, and who the bay puts up */
+    pitPurse, pitDraw, makeCircuitMan, circuitQuality, bayStandard, seedCircuit,
+    CIRCUIT_MIX, CIRCUIT_REACH, PIT_DRAW_TOP, PIT_NIGHT,
     /* every action a lanista can take, none of them needing a rendered screen */
     rewardMan, whipMan, sellMan, sellPrice, retireG, grantRudis,
     setFocusOf, setRegimenOf, setSparOf, setTeachOf, stopTeachOf, setDrillTo,
