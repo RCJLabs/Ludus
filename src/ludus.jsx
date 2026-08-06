@@ -21620,3 +21620,26 @@ d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
     </div>
   );
 }
+
+/* ---- THE TEST HANDLE ----
+   A door into the game's internals for the checks in test/. `process.env.LVDVS_TEST`
+   is defined at build time, so esbuild folds this whole block away in a shipping
+   build — index.html cannot carry it even by accident. Only `node build.js --test`
+   leaves it standing. Add to it freely; nothing here reaches a player. */
+if (process.env.LVDVS_TEST && typeof window !== "undefined") {
+  window.__LVDVS = {
+    /* build a house and its people */
+    newGameState, genGladiator, genOpponent, pickRivalOpp, makeRivals, clone,
+    /* the four engines and the four ways into them */
+    simulateFight, simulatePair, simulateMelee, simulateVenatio,
+    doFight, doPairFight, doMelee, doVenatio,
+    /* the week, and what it writes down */
+    endWeek, bookBout, bookOf, newBook, chron,
+    /* the tables a check may need to reason about */
+    TIERS, CLASSES, GEAR, EVENTS, LASTING, STATS,
+    /* the odds the bookmakers quote, and the mitigations on a death */
+    winChance, collSoften, docHealth,
+    /* helpers */
+    activeG, defaultKit, kitMods, statCap, fullName,
+  };
+}

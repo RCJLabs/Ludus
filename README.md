@@ -37,9 +37,24 @@ npm run build
 `src/ludus.jsx` is the whole game (single React component, default export). It also
 runs as-is as a Claude artifact, where saves use the artifact storage API instead.
 
+## Check it before you ship it
+
+```
+npm test              every check
+npm test book         just that one
+```
+
+Each check drives a real browser against a real build: five houses live thirty weeks,
+the fight engines keep their shape, the record book sees every bout, a question and its
+answer are never split, no type falls under the scale, nothing throws when opened.
+Takes a few minutes. See `test/README.md` — every check is a bug that shipped once,
+and the comment at the top of each file says which.
+
 ## Structure
 
 - `index.html` — the playable, self-contained build
 - `src/ludus.jsx` — game data, engine, and UI
 - `src/main.jsx` — mount point
-- `build.js` — bundles and inlines everything into index.html
+- `build.js` — bundles and inlines everything into index.html; `--test` writes an
+  instrumented `dist/test.html` instead, which never ships
+- `test/` — the checks, and a harness that knows where the game hides things

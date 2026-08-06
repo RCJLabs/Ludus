@@ -4,12 +4,23 @@ const esbuild = require("esbuild");
 
 const VERSION = require("./package.json").version;
 
+/* ---- THE TEST BUILD ----
+   Checks that have to reach inside the game — the fight engines, the record book,
+   the death toll — need a handle on functions the bundle keeps to itself. That
+   handle was appended to the source by hand and stripped again before every one of
+   the last fifteen releases, and once it was not stripped cleanly. It is a build
+   flag now: `node build.js --test` writes dist/test.html with the handle attached
+   and never touches index.html, so what ships cannot carry it. */
+const TEST = process.argv.includes("--test");
+const OUT  = TEST ? "dist/test.html" : "index.html";
+
 esbuild.buildSync({
   entryPoints: ["src/main.jsx"],
   bundle: true,
-  minify: true,
+  minify: !TEST,
   jsx: "automatic",
-  define: { "process.env.NODE_ENV": '"production"' },
+  define: { "process.env.NODE_ENV": TEST ? '"development"' : '"production"',
+            "process.env.LVDVS_TEST": TEST ? "true" : "false" },
   outfile: "dist/bundle.js",
 });
 
@@ -72,7 +83,11 @@ const html = `<!doctype html>
 </body>
 </html>
 `;
-fs.writeFileSync("index.html", html);
+fs.writeFileSync(OUT, html);
+if(TEST){
+  console.log("test build written:", OUT, "(" + (html.length/1024).toFixed(0) + " KB) — not for shipping");
+  process.exit(0);
+}
 
 /* ---- the offline shell: manifest, worker, icons ---- */
 const SHELL = ["./", "./index.html", "./manifest.webmanifest",
