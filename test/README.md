@@ -28,6 +28,10 @@ reason the check exists usually has not.
 | `block` | buying a man lived in a React closure, so nothing outside it could buy anybody |
 | `counsel` | the book had every figure and no way to say what they came to |
 | `actions` | fifty-eight more actions lived in that same closure, and one probe measured its own copy of the feast |
+| `rope` | the pit filled half the weeks and paid the same in year twelve as in year one |
+| `table` | the only lever against the only number that ends a run cost 120 denarii flat, forever |
+| `street` | acclaim climbed past the top of its ladder into nothing, and the missio never read it |
+| `chronicle` | one in five lines the chronicle ever wrote was the same weekly receipt |
 
 ## The test build
 

@@ -2870,7 +2870,12 @@ function patronWeek(d){
     if(p.favor>=85 && R()<0.10){
       const gift = rnd(120 + p.favor*3);
       d.gold += gift;
-      chron(d, `A gift arrives from ${p.name} — ${gift} denarii and no explanation. That is how it is done.`, "good");
+      chron(d, pick([
+        `A gift arrives from ${p.name} — ${gift} denarii and no explanation. That is how it is done.`,
+        `${p.name} sends ${gift} denarii to the villa with a slave who has been told to wait for nothing.`,
+        `${gift} denarii from ${p.name}, and a note about the weather. The coin is the note.`,
+        `A purse comes up from town with ${p.name}'s seal on it. ${gift} denarii, no message, no answer expected.`,
+      ]), "good");
     }
     if(p.favor<=10 && R()<0.09){
       d.fame = Math.max(0, d.fame-6);
@@ -4109,7 +4114,13 @@ function marketWeek(d){
       if(h && !h.retired){ const f = makeRivalFighter(d, h.name, 55);
         ["str","agi","end","tec","sho","dis","potential"].forEach(k=>{ f[k]=g[k]; });
         f.name=g.name; f.origin=g.origin; f.cls=g.cls; f.kit=g.kit; h.fighters.push(f); }
-      chron(d, `You waited too long. ${lanistaOf(c.house).name} paid over the odds for ${g.name} and took him off the block — no haggling, no second look. He wanted him too.`, "bad");
+      { const L = lanistaOf(c.house).name;
+        chron(d, pick([
+          `You waited too long. ${L} paid over the odds for ${g.name} and took him off the block — no haggling, no second look. He wanted him too.`,
+          `${g.name} is gone. ${L} did not ask the price twice and did not look round to see who was watching.`,
+          `The man you were thinking about is bought. ${L} bought him, and the seller looks pleased about the figure.`,
+          `${L} takes ${g.name} off the block while you are still deciding. Thinking about it is a decision as well.`,
+        ]), "bad"); }
       break;   // at most one taken a week
     }
   }
@@ -4546,7 +4557,13 @@ const RIVAL_MOVES = {
       ["str","agi","end","tec","sho","dis","potential"].forEach(k=>{ f[k]=best[k]; });
       f.name = best.name; f.origin = best.origin; f.cls = best.cls; f.sex = best.sex;
       h.fighters.push(f);
-      return `${L.name} buys ${best.name} off the block. He was standing where you could see him this morning.`; } },
+      return pick([
+        `${L.name} buys ${best.name} off the block. He was standing where you could see him this morning.`,
+        `${best.name} goes to House ${h.name}. You had looked at him twice and thought about it once.`,
+        `${L.name}'s man was at the block before the awning was up. ${best.name} is his.`,
+        `Word comes up from the market: ${best.name} is bought, and it is ${L.name} who bought him.`,
+        `${L.name} pays over the odds for ${best.name} without appearing to think about it, which is the point of paying over the odds.`,
+      ]); } },
   sell: { weight:()=>1, when:(d,h)=>h.fighters.length>3 && d.market.length<7,
     run(d,h){ const L=lanistaOf(h.name);
       const worst = h.fighters.slice().sort((a,b)=>gladValue(a)-gladValue(b))[0];
@@ -4558,7 +4575,12 @@ const RIVAL_MOVES = {
       g.price = rnd(gladValue(g)*0.85);
       g.shown = sellerSays(g); g.scouted = false; g.soldBy = h.name;
       d.market.push(g);
-      return `${L.name} puts ${worst.name} on the block. Whatever the reason, it is on the block now and you can look at it.`; } },
+      return pick([
+        `${L.name} puts ${worst.name} on the block. Whatever the reason, it is on the block now and you can look at it.`,
+        `${worst.name} is out of House ${h.name} and standing in the market with a price on him. Nobody says why.`,
+        `${L.name} has decided about ${worst.name}. He is at the block by noon.`,
+        `There is a man of ${L.name}'s in the market this week — ${worst.name}, and the seller is doing the talking.`,
+      ]); } },
   retrain: { weight:h=>lanistaOf(h.name).train, when:(d,h)=>h.fighters.length>0,
     run(d,h){ const L=lanistaOf(h.name);
       const f = pick(h.fighters); const was = f.cls;
@@ -4572,7 +4594,12 @@ const RIVAL_MOVES = {
       h.fighters = h.fighters.filter(x=>x.id!==f.id);
       h.fame += 22;
       if(d.nemesis && d.nemesis.fid===f.id) d.nemesis = null;
-      return `${L.name} gives ${f.name} the rudis in front of the whole of Capua. ${f.wins} victories, and he walks out of the gate a free man. Your own cells heard about it before you did.`; } },
+      return pick([
+        `${L.name} gives ${f.name} the rudis in front of the whole of Capua. ${f.wins} victories, and he walks out of the gate a free man. Your own cells heard about it before you did.`,
+        `The wooden sword goes to ${f.name} at the close of the games — ${f.wins} wins, and ${L.name} standing where everyone can see him give it.`,
+        `${f.name} is free. ${L.name} timed it for the last afternoon of the games and the noise went on a long while.`,
+        `House ${h.name} frees ${f.name} after ${f.wins} victories. Every man in your cells knows the number by supper.`,
+      ]); } },
   doctore: { weight:h=>lanistaOf(h.name).train, when:(d,h)=>!h.doctore,
     run(d,h){ const L=lanistaOf(h.name); h.doctore = true;
       return `${L.name} has hired a doctore out of Ravenna at a price people are talking about. His men will be better in a month.`; } },
@@ -4583,14 +4610,28 @@ const RIVAL_MOVES = {
     run(d,h){ const L=lanistaOf(h.name); const f = pick(h.fighters);
       f.wins++; f.pfame += ri(4,9); h.fame += ri(5,11);
       if(!f.nick && f.wins>=5) f.nick = pick(NICKS);
-      return `${f.name} of House ${h.name} took a card at ${pick(["Nola","Cales","Suessa","Atella","Teanum"])} and came back with it. ${L.name} has made sure Capua knows.`; } },
+      { const town = pick(["Nola","Cales","Suessa","Atella","Teanum"]);
+        return pick([
+          `${f.name} of House ${h.name} took a card at ${town} and came back with it. ${L.name} has made sure Capua knows.`,
+          `They are talking about ${f.name} in ${town}. ${L.name} has seen to it that they are talking about him here too.`,
+          `House ${h.name} sent one man to ${town} and got a win back. It is ${f.name}, and it is the third thing you have heard about him.`,
+          `${L.name} was not at ${town} and does not need to have been. ${f.name} won it for him.`,
+        ]); } } },
   boast: { weight:()=>0.9, when:(d,h)=>h.fighters.length>0,
     run(d,h){ const L=lanistaOf(h.name); const f = h.fighters.slice().sort((a,b)=>b.pfame-a.pfame)[0];
       const yours = activeG(d).sort((a,b)=>b.pfame-a.pfame)[0];
       if(!f) return null;
       return yours
-        ? `${L.name} was heard at the baths putting ${f.name} above ${yours.name}, and putting it in a way that would carry.`
-        : `${L.name} was heard at the baths listing his own men in order, at length.`; } },
+        ? pick([
+            `${L.name} was heard at the baths putting ${f.name} above ${yours.name}, and putting it in a way that would carry.`,
+            `Somebody repeats what ${L.name} said about ${f.name} and ${yours.name}, and then repeats who was standing there when he said it.`,
+            `${L.name} will not say ${yours.name} is the lesser man. He says ${f.name} is the better one, which is the same sentence turned round.`,
+            `It gets back to you that ${L.name} named ${f.name} first and ${yours.name} second, and made a small pause between them.`,
+          ])
+        : pick([
+            `${L.name} was heard at the baths listing his own men in order, at length.`,
+            `${L.name} held the warm room for an hour on the subject of his own familia. Nobody left.`,
+          ]); } },
   lost: { weight:()=>1.1, when:(d,h)=>h.fighters.length>2,
     run(d,h){ const f = pick(h.fighters);
       h.fighters = h.fighters.filter(x=>x.id!==f.id);
@@ -6353,8 +6394,17 @@ function buyFromBlock(d, id, bidPrice){
     if(d.gold < price + tax || rosterFull(d)) return false;
     d.gold -= price + tax; d.market.splice(i,1);
     if(g.contested){ const c = g.contested; delete g.contested;
-      chron(d, `You outbid ${lanistaOf(c.house).name} for ${g.name} at the block, and were seen to do it. ${price} denarii, more than he was worth and worth it to have taken him from that house.`, "good"); }
-    if(tax) chron(d, `${tax} denarii to the vectigal on top of the price, collected before the man is off the block.`, "info");
+      chron(d, pick([
+        `You outbid ${lanistaOf(c.house).name} for ${g.name} at the block, and were seen to do it. ${price} denarii, more than he was worth and worth it to have taken him from that house.`,
+        `${price} denarii for ${g.name}, and ${lanistaOf(c.house).name} standing four feet away while you said the number.`,
+        `${lanistaOf(c.house).name} wanted ${g.name} and does not have him. It cost ${price} denarii to arrange that, and the market watched it happen.`,
+      ]), "good"); }
+    if(tax) chron(d, pick([
+      `${tax} denarii to the vectigal on top of the price, collected before the man is off the block.`,
+      `The tax farmer has his ${tax} denarii before you have the man's name written down.`,
+      `${tax} to the vectigal. There is a man at the block whose whole trade is standing next to the seller.`,
+      `Rome takes ${tax} denarii of it, as Rome does, at the table and in cash.`,
+    ]), "info");
     const w = defaultKit(g.cls).weapon;
     if(gearFree(d,w)<=0) d.gear[w] = (d.gear[w]||0)+1;   // he comes with the blade he was sold with
     g.kit = bareKit(g.cls);
@@ -8153,7 +8203,12 @@ const AFTERS = {
     say:(d,m)=>`Somebody from the other house came to the gate to ask after the body. He was not let in and he did not expect to be.`,
     hit:(d,m)=>{ (d.rivals||[]).forEach(h=>{ if(R()<0.4) h.grudge = clamp(h.grudge+2,0,100); }); } },
   triumph:{ w:8, when:(d,m)=>m.crowdBest >= 62,
-    say:(d,m)=>`Half of Capua is still talking about ${m.star}. Two men who have never fought at the games asked the doctore what he does differently.`,
+    say:(d,m)=>pick([
+      `Half of Capua is still talking about ${m.star}. Two men who have never fought at the games asked the doctore what he does differently.`,
+      `${m.star}'s name is in every wine-shop between the gate and the forum, and the version they tell is better than what happened.`,
+      `A man came up to the villa to ask whether ${m.star} would be on the next card. He was not anybody. That is the point.`,
+      `They are still going over ${m.star}'s last round in the baths, round by round, wrongly.`,
+    ]),
     hit:(d,m)=>{ d.fame += 5; activeG(d).forEach(g=>{ g.morale = clamp(g.morale+4,0,100); }); } },
   flat:   { w:1, when:(d,m)=>m.bouts>=2 && m.crowdBest < 30 && d.fame >= 120 && R()<0.25,
     say:(d,m)=>`Nobody has said anything about last week's card, which is its own kind of review.`,
@@ -14116,7 +14171,34 @@ function endWeek(d){
     if([50,60,70].includes(d.lanista.age))
       chron(d, `${d.lanista.name} turns ${d.lanista.age}. The stairs up to the gallery are further than they were.`, "event");
   }
-  chron(d, `Week ${d.week}. Upkeep paid: ${upkeep} denarii.`);
+  /* ---- A RECEIPT IS NOT A CHRONICLE LINE ----
+     "Week 41. Upkeep paid: 70 denarii." went in every single week. Measured
+     across three twelve-year campaigns it was 648 of the 3,054 lines the
+     chronicle wrote — twenty-one per cent of the whole thing, one sentence, sat
+     among the deaths and the graffiti and the men sold at the gate. And it was
+     already redundant: the week's digest totals the coin as the week ends.
+
+     So the ledger speaks when the number moves, which is when it is news — a man
+     bought, a wing built, a doctore hired, a wage begun — and holds its tongue
+     when the week cost what last week cost. */
+  { const was = d.flags.lastUpkeep;
+    if(was == null){
+      chron(d, `The ludus costs ${upkeep} denarii a week to keep standing, before anybody fights for it.`);
+      d.flags.lastUpkeep = upkeep; d.flags.lastUpkeepWk = d.week;
+    } else if(d.week - (d.flags.lastUpkeepWk||-99) >= 6
+              && Math.abs(upkeep - was) >= Math.max(12, was*0.25)){
+      chron(d, upkeep > was
+        ? pick([
+            `The week's bill comes to ${upkeep} denarii, up from ${was}. A house costs what it costs.`,
+            `Upkeep has crept to ${upkeep} denarii a week. It was ${was} not long ago and nobody decided to change it.`,
+            `${upkeep} denarii to keep the gate shut this week, against ${was} before. The ludus is bigger than it was.`,
+          ])
+        : pick([
+            `The week's bill comes to ${upkeep} denarii, down from ${was}. Fewer mouths, or fewer wages.`,
+            `The ludus costs ${upkeep} denarii a week now, where it cost ${was}. There is a reason and you know it.`,
+          ]));
+      d.flags.lastUpkeep = upkeep; d.flags.lastUpkeepWk = d.week;
+    } }
   afterWeek(d);
   if((d.week-1)%3===0 && !d.rome && !d.city && !d.travel){ makeMarket(d); makeDoctoreMarket(d); makeStaffMarket(d); }
   marketWeek(d);
@@ -22270,7 +22352,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     simulateFight, simulatePair, simulateMelee, simulateVenatio,
     doFight, doPairFight, doMelee, doVenatio,
     /* the week, and what it writes down */
-    endWeek, bookBout, bookOf, newBook, chron, bookSays,
+    endWeek, bookBout, bookOf, newBook, chron, chronAll, bookSays,
     /* the always-open card and the block, for a headless player */
     makePitOffer, pitMen, makePitCard, buyFromBlock, rosterFull, cellsCap,
     /* the rope: what it pays, and who the bay puts up */
