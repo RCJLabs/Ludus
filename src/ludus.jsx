@@ -3339,8 +3339,24 @@ const repairFee = (d, g) => {
    been to the Ludi Romani have had better, and will again. A house of three in
    its first spring pays the same 120 it always did. */
 const FEAST_BASE = 60, FEAST_HEAD = 20, FEAST_STANDING = 2200;
+/* the price kept climbing to fame 2,200 and then stopped — a ceiling set before
+   the census era, when 2,200 was the whole of a great name rather than a fifth
+   of one. It follows the house twice as far now; the opening price is untouched. */
 const feastCost = d => rnd((FEAST_BASE + activeG(d).length*FEAST_HEAD)
-  * (1 + clamp((d.fame||0)/FEAST_STANDING, 0, 1) * 2.2));
+  * (1 + clamp((d.fame||0)/FEAST_STANDING, 0, 2) * 2.2));
+/* ---- THE MEN CAN COUNT ----
+   Measured (v2.46 audit): across ~4,900 weeks of merciful play the rebellion arc
+   reached stage one once and stage two never, because a feast every third week
+   — two per cent of a mid house's turnover — pinned unrest at nought for whole
+   decades. The night is not the lever it was the fifth time this season: its
+   whole effect now scales with the gap since the last one, ×0.4 on the cooldown
+   floor rising to full at six weeks. A house that feasts as an event keeps the
+   old feast; a house that feasts as plumbing gets Tuesday dinner. Real mercy —
+   the rudis, regard, the collegium — is untouched, and is now the only thing
+   that holds a hard house quiet. */
+const FEAST_FRESH = 6;   // weeks of gap at which a feast means everything again
+const feastFresh = d => { const gap = d.week - (d.lastFeast==null ? -9 : d.lastFeast);
+  return clamp(0.4 + Math.max(0, gap - 3) * 0.2, 0.4, 1); };
 const feastReach = d => clamp(5 / Math.max(4, activeG(d).length), 0.65, 1);
 /* a piece made for one man and nobody else */
 const FORGE_FEE = 700;
@@ -16603,13 +16619,16 @@ function hostParty(d, kind){ const p=PARTY[kind];
 
 function throwFeast(d){ const cost = feastCost(d);
   if(d.gold<cost || d.week-d.lastFeast<3) return false;
-  const reach = feastReach(d);
+  const reach = feastReach(d) * feastFresh(d);
+  const stale = feastFresh(d) <= 0.6;
   d.gold-=cost; d.lastFeast=d.week; d.flags.everFeast=(d.flags.everFeast||0)+1;
   if(d.lanista) d.lanista.health = clamp(d.lanista.health + 3, 0, 100);
   rememberAll(d, "feast");
   d.gladiators.forEach(g=>{ if(!isGone(g)){ g.morale=clamp(g.morale+9*reach,0,100); g.defiance=clamp(g.defiance-4*reach,0,100); } });
   d.unrest=clamp(d.unrest-7*reach,0,100);
-  chron(d, reach < 0.8
+  chron(d, stale
+    ? "Meat and honeyed wine for the familia, again. They eat well and say the right things, and it moves nobody the way it did — a feast every few weeks is not a feast, it is catering."
+    : feastReach(d) < 0.8
     ? "Meat and honeyed wine for the familia. It is a good night, and there are enough of them now that it is only a good night."
     : "Meat and honeyed wine for the familia. Songs in the cells past midnight.");
   return true; }

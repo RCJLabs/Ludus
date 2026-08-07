@@ -1327,6 +1327,8 @@ Tuning dials, in the order you'd reach for them:
 | A decreed season | `leagueReckoning` | 28%/yr, form 82–100 floored at 60 for the year, crest +0.9 × stature |
 | A worn welcome | `STAY_FRESH` / `welcomeOf` | past 6 weeks resident, purses fade to ×0.6 and the card thins |
 | Patrons while away | `patronWeek` | wants neither asked nor credited; decay ×2.5 |
+| Feast fatigue | `FEAST_FRESH` / `feastFresh` | ×0.4 effect on the cooldown floor, full at a 6-week gap |
+| Feast price ceiling | `feastCost` | fame clamp extended to ×2 (≈×5.4 base at fame 4,400+) |
 | What it leaks | `warWeek` | standing, unrest, and a defiance floor |
 | The block | `warMarket` | ×1.25 at its height, ×0.55 after |
 
@@ -1345,6 +1347,29 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.47.0 — The men can count
+
+Audit item #82 — and the audit's premise half-died under its own follow-up
+measurement, which is worth recording loudly. The item claimed the feast pinned
+unrest at nought for merciful houses at two per cent of turnover. Deeper probes
+say otherwise: a genuinely merciful house (the rudis given when earned, clean
+cards) sits at unrest ~0 for decades **without feasting at all** — that quiet is
+mercy working, which is the design — and a hard house burns on the old build and
+the new alike, because a death-cluster surge outruns a three-week cooldown
+either way. What survived of the finding: the feast's effect was flat at any
+cadence and its price stopped scaling at fame 2,200, an era five repricings
+gone.
+
+So two small dials, verified harmless to merciful play (A/B: unchanged at ~0):
+**feast fatigue** — the night's whole effect scales with the gap since the last
+one, ×0.4 on the cooldown floor rising to full at six weeks (`FEAST_FRESH`),
+with its own line when the men notice the catering — and **the price follows
+the era**, the fame clamp extended from ×1 to ×2 (up to ~×5.4 base) so a great
+house pays for its table like everything else it does. The `table` check's
+guards (opening price unmoved, ≥4× spread, a fresh feast still a lever) all
+hold. Unit-verified: unrest drops 2.8 / 4.2 / 5.6 / 7 / 7 at gaps of 3 / 4 /
+5 / 6 / 9 weeks.
 
 ### v2.46.0 — A guest, not a resident
 
@@ -2820,4 +2845,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.46.0*
+*Last updated: v2.47.0*
