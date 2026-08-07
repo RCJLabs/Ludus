@@ -87,7 +87,7 @@ npm run test:all      every check, fast and slow — about nine minutes
 npm run coverage      not what passes, but what no check ever touches
 ```
 
-**29 checks.** Twenty-five read into the game through a test handle and answer in seconds;
+**30 checks.** Twenty-six read into the game through a test handle and answer in seconds;
 four drive a real browser through the real screens. Every one of them exists because
 of a bug that shipped, and the comment at the top of each says which — that comment
 is the durable part, not the numbers inside it. See `test/README.md` for the table.
@@ -1328,6 +1328,7 @@ Tuning dials, in the order you'd reach for them:
 | A worn welcome | `STAY_FRESH` / `welcomeOf` | past 6 weeks resident, purses fade to ×0.6 and the card thins |
 | Proving it for Rome | `romeProved` | the primacy held, or received as Known in Rome (rank 5) |
 | Rome's patience | `ROME_WEEKS_PER_BOUT` | 4 weeks a bout, then the place is given away |
+| Who may be named | `heirEligible` | a son at 40, a nephew always, your own freed doctore, a scion you raised |
 | Patrons while away | `patronWeek` | wants neither asked nor credited; decay ×2.5 |
 | Feast fatigue | `FEAST_FRESH` / `feastFresh` | ×0.4 effect on the cooldown floor, full at a 6-week gap |
 | Feast price ceiling | `feastCost` | fame clamp extended to ×2 (≈×5.4 base at fame 4,400+) |
@@ -1352,6 +1353,40 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.54.0 — The line of the house
+
+Audit item #90, and the item was wrong in a way worth recording. It claimed the
+heir was a system no house had ever used, on a measurement of eight houses with
+an heir in none of them. That measurement was taken on houses that died between
+weeks 25 and 239. Re-run after v2.53.0 let three of them live past week 360 and
+**all three had an heir — a scion, raised through the family arc, named by the
+game without the player doing anything.** A child needs about fifteen game years
+to reach the toga, so the heir does not arrive late because it is broken; it
+arrives late because it grows up.
+
+What was genuinely unreachable is narrower and still true: `nameHeir` and
+`heirEligible` were not on the handle, so the three heirs a player *chooses* — a
+son, a nephew, the freed doctore — could not be named by anything outside a
+rendered screen, and `succeed` has run in play precisely never, because the
+old-and-well ending intercepts a lanista before his health reaches nothing. Both
+are exported now, and `line` is the thirtieth check: who may be named and when,
+then each of the four kinds carried through a death and asserted against its own
+row in `HEIRS` — the fame kept, the standing kept, what he brings, what the cells
+make of it — plus the things a handover must not cost, which are every man, every
+wing, the generation count and the forebear's name. A house with nobody named
+still simply ends.
+
+**And it found a real fault on its first honest run.** Unrest came out of a
+handover as NaN. Not from the succession — from the week before it: `ludusLedger`
+averages the cells' defiance, six checks stock the player's roster with
+`genOpponent`, which builds the other side of a card and carries no defiance, and
+`undefined` in that average turns unrest into NaN — which is then clamped, stored,
+and read by the rebellion, the ledger and the agenda without one of them
+noticing. In-game the field is always there, so nothing shipped broken; but the
+most-watched number in the game had no floor under it. The average reads
+`g.defiance || 0` now, `phases` asserts a roster of strangers still leaves a
+number, and `test/README.md` says which generator makes a man of the house.
 
 ### v2.53.0 — Rome always ends
 
@@ -3083,4 +3118,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.53.0*
+*Last updated: v2.54.0*

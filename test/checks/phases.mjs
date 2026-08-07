@@ -55,7 +55,19 @@ export async function run({ p, errors }){
       d.gold = line - 10; A.weekReckoning(d);
       res.reckoning = { line, aliveJustAbove: alive, over: d.over && d.over.kind }; }
 
-    /* 5. the hard rule: every class is at home in its own default kit */
+    /* 5. a roster stocked the way checks stock one still comes out with a number.
+          Six checks fill the player's cells with genOpponent, which builds the other
+          side of a card and carries no defiance — and the ledger averaged it into the
+          week's unrest, so unrest came out NaN and was clamped, stored and read by
+          the rebellion and the agenda without a word. Found by `line`. */
+    { const d = A.newGameState("Ph5","clean","PHASE5",null);
+      for(let i=0;i<3;i++){ const m = A.genOpponent(2, 70); m.id=d.nextId++; m.status="active";
+        m.mine=true; m.kit=A.defaultKit(m.cls); d.gladiators.push(m); }
+      const men = A.menWeek(d, null);
+      A.ludusLedger(d, men);
+      res.strangers = { unrest: d.unrest, finite: Number.isFinite(d.unrest) }; }
+
+    /* 6. the hard rule: every class is at home in its own default kit */
     { const clumsy = [];
       for(const cls of Object.keys(A.CLASSES)){
         const g = A.genOpponent(1, 60); g.cls = cls;
@@ -72,6 +84,7 @@ export async function run({ p, errors }){
   lines.push(`ludusLedger took ${out.ledger.paid}d against a bill of ${out.ledger.billed}d and turned the week`);
   lines.push(`a seeded booking came up as "${out.held.id}" ahead of the random beat`);
   lines.push(`the creditors' line sits at ${out.reckoning.line}d — alive ten over it, "${out.reckoning.over}" ten under`);
+  lines.push(`a roster of strangers leaves unrest at ${Number.isFinite(out.strangers.unrest) ? out.strangers.unrest.toFixed(2) : String(out.strangers.unrest)}`);
   lines.push(`${out.kits.classes} classes, ${out.kits.clumsy.length} clumsy in their own kit`);
 
   if(!(out.menWeek.upkeep > 0)) fails.push("menWeek accrued no upkeep");
@@ -82,6 +95,8 @@ export async function run({ p, errors }){
   if(!out.held.cleared) fails.push("the ask was not consumed once raised");
   if(!out.reckoning.aliveJustAbove) fails.push("a house ten denarii above the creditors' line was ended");
   if(out.reckoning.over !== "debt") fails.push(`a house ten under the line ended as "${out.reckoning.over}" instead of debt`);
+  if(!out.strangers.finite)
+    fails.push(`the ledger left unrest at ${out.strangers.unrest} for a roster of men carrying no defiance — one missing field turns the most-watched number in the game into NaN and nothing downstream notices`);
   if(out.kits.clumsy.length) fails.push(`${out.kits.clumsy.join(", ")} — clumsy in their own default kit, the silent tax the hard rule forbids`);
 
   if(errors.length) fails.push(`${errors.length} page errors`);

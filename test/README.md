@@ -67,6 +67,7 @@ reason the check exists usually has not.
 | `roads` | fast | `setOut` and `comeHome` were never on the handle, so no check could take a tour and come back — and two 12-house audit batches emigrated by accident and reported half the game dead |
 | `ledger` | fast | a payout read fame uncapped while its counterweight capped, and the ruin line still asked the figure it asked when a week cost fifty denarii; nothing was watching either |
 | `summit` | fast | Rome is the only real ending and nothing had ever driven it — the gate took one proof and no other, and the trip had no clock, so a house that accepted and then declined its card sat there for ever with Capua frozen behind it |
+| `line` | fast | `nameHeir` was never on the handle, so the half that arms a succession could not be reached by the half that fires it, and no check had walked a handover — four heir kinds with four different bargains, resting on nothing |
 
 ## What no check has ever touched
 
@@ -158,6 +159,20 @@ export async function run({ p, errors, port }){
 `port` is there so a check can open more browsers of its own with `open(port)` —
 that is how `survive` plays three houses at once instead of one after another.
 Close what you open, and gather the extra sessions' `errors` alongside your own.
+
+## Stock a roster with `genGladiator`, never `genOpponent`
+
+`genOpponent` builds the other side of a card. It carries no `defiance`, no
+`regard` and no record, because an opponent does not need them — and a roster
+stocked with it averaged `undefined` into the week's unrest, so unrest came out
+**NaN and was then clamped, stored, and read by the rebellion, the ledger and the
+agenda without one of them noticing.** Six checks stock the player's cells this
+way. `genGladiator(d, quality)` is the one that makes a man of the house.
+
+The engine now reads `g.defiance || 0` so the field cannot NaN the number again,
+and `phases` asserts it for a roster of strangers. But the habit is still wrong:
+a man built by `genOpponent` has no memory, no ties and no ambition either, and a
+check that measures any of those on him is measuring nothing.
 
 ## Three things the harness knows that cost a day each to learn
 

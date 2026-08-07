@@ -14690,7 +14690,13 @@ function ludusLedger(d, men){
   d.gold -= upkeep;
   const act = activeG(d);
   const bound = act.filter(g=>!isAuctor(g));
-  const avgDef = bound.length ? bound.reduce((s,g)=>s+g.defiance,0)/bound.length : 10;
+  /* `|| 0` because one missing field here turns the most-watched number in the game
+     into NaN and nothing downstream notices: unrest is clamped, stored, and read by
+     the rebellion, the ledger and the agenda, all of which pass NaN along silently.
+     A man of the house always has a defiance — but the checks stock rosters with
+     genOpponent, which builds the other side of a card and carries none, and six of
+     them do it. Found by the `line` check reading NaN out of a handover. */
+  const avgDef = bound.length ? bound.reduce((s,g)=>s+(g.defiance||0),0)/bound.length : 10;
   const auctors = act.filter(isAuctor).length;
   d.unrest = clamp(d.unrest + (avgDef-34)/9 - 0.6 - docCalm(d) - cellCalm(d) - auctors*0.35 - perkCalm(d) - lanCalm(d) - (collOn(d)?0.4:0) + (seasonOf(d).unrest + docUnrest(d)) * pit(d,"unrest"), 0, 100);
   if(d.fame>60) d.fame -= 1;
@@ -23084,6 +23090,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
   window.__LVDVS = {
     /* build a house and its people */
     newGameState, genGladiator, genOpponent, pickRivalOpp, makeRivals, clone,
+    /* the line of the house: who may be named, naming him, and taking it up */
+    nameHeir, heirEligible, HEIRS, houseRecord,
     /* the summit: the gate, the letter, the bar, and the trip's own clock */
     romeReady, romeProved, offerRome, romeBar, ROME_BOUTS, ROME_WEEKS_PER_BOUT,
     /* the four engines and the four ways into them */
