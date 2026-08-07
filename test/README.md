@@ -66,6 +66,7 @@ reason the check exists usually has not.
 | `careers` | fast | the signature, mastery, the second trade, the switch, the rudis and retirement were all dark, and two audit probes "found" them unreachable when the fault was the probe |
 | `roads` | fast | `setOut` and `comeHome` were never on the handle, so no check could take a tour and come back — and two 12-house audit batches emigrated by accident and reported half the game dead |
 | `ledger` | fast | a payout read fame uncapped while its counterweight capped, and the ruin line still asked the figure it asked when a week cost fifty denarii; nothing was watching either |
+| `summit` | fast | Rome is the only real ending and nothing had ever driven it — the gate took one proof and no other, and the trip had no clock, so a house that accepted and then declined its card sat there for ever with Capua frozen behind it |
 
 ## What no check has ever touched
 

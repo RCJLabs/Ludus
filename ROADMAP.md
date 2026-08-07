@@ -87,7 +87,7 @@ npm run test:all      every check, fast and slow — about nine minutes
 npm run coverage      not what passes, but what no check ever touches
 ```
 
-**28 checks.** Twenty-four read into the game through a test handle and answer in seconds;
+**29 checks.** Twenty-five read into the game through a test handle and answer in seconds;
 four drive a real browser through the real screens. Every one of them exists because
 of a bug that shipped, and the comment at the top of each says which — that comment
 is the durable part, not the numbers inside it. See `test/README.md` for the table.
@@ -1326,6 +1326,8 @@ Tuning dials, in the order you'd reach for them:
 | A rival's name | `stature` in `LANISTAE` | pulled toward stature × the leading house's fame |
 | A decreed season | `leagueReckoning` | 28%/yr, form 82–100 floored at 60 for the year, crest +0.9 × stature |
 | A worn welcome | `STAY_FRESH` / `welcomeOf` | past 6 weeks resident, purses fade to ×0.6 and the card thins |
+| Proving it for Rome | `romeProved` | the primacy held, or received as Known in Rome (rank 5) |
+| Rome's patience | `ROME_WEEKS_PER_BOUT` | 4 weeks a bout, then the place is given away |
 | Patrons while away | `patronWeek` | wants neither asked nor credited; decay ×2.5 |
 | Feast fatigue | `FEAST_FRESH` / `feastFresh` | ×0.4 effect on the cooldown floor, full at a 6-week gap |
 | Feast price ceiling | `feastCost` | fame clamp extended to ×2 (≈×5.4 base at fame 4,400+) |
@@ -1350,6 +1352,43 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.53.0 — Rome always ends
+
+Audit items #88 and #89. The only real ending the game has could not be driven by
+any check — `romeReady`, `offerRome` and the trip's mechanics were all off the
+handle — and behind that silence sat a fault that was quietly ending runs.
+
+**The trip had no clock.** The invitation expired in four weeks; what followed it
+never expired at all. A house that accepted and then declined the card it was
+given — half of imperial bouts are sine missione against men built at quality 92
+to 99 — sat at Rome indefinitely, aging and paying upkeep, with Capua frozen
+behind it: no market, no festivals, no events, no way back. Rome now holds a place
+for about a month a bout (`ROME_WEEKS_PER_BOUT`), and then the editors fill it from
+a queue that is never short: the house comes home with what it took, 14 fame plus
+9 a missed place, 16 off the senator, and a homecoming line of its own — coming
+back from a decision rather than from a defeat.
+
+**Measured, and it was worse than the item claimed.** On the same eight houses and
+the same policy, the three that accepted an invitation before this went 152 / 239 /
+401 weeks with one invitation each; after, they run 388 / 369 / 401 with **three
+and four invitations each, and two of them now die of old age instead of debt.**
+The strand was not a curiosity — it was silently ending careers, because a house
+frozen at Rome cannot earn and the creditors do not stop.
+
+**And a second road to the summit**, which the measurement is less kind about.
+Rome asked that a house had held the primacy and would take nothing else, so a
+house at fame 4,301 with ten feats never saw a letter. The fifth rung of the
+standing ladder is called Known in Rome and now means it (`romeProved`). Both
+roads verified open — but on this sample **they land on the same three houses**:
+everyone who reached rank 5 had also held the title. So the second road is a real
+alternative for a standing-led house and *not* a widening, and #88 stays open with
+that figure on it. Whether the summit should also admit an eques at rank 4, or a
+tier-4 winner, is a design call about how rare Rome ought to be.
+
+`summit` is the twenty-ninth check, and it holds the thing that must never be true
+again: both roads open, the letter still expires, and a trip ends whether it is
+fought or not — a run must never enter a state it cannot leave.
 
 ### v2.52.0 — The consolidation pass
 
@@ -3044,4 +3083,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.52.0*
+*Last updated: v2.53.0*

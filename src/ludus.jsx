@@ -10043,6 +10043,7 @@ function makePeace(d, hName){
    The invitation is the end of the run whichever way it falls. Three bouts on the
    imperial sand, where a lanista's Capuan standing buys him precisely nothing. */
 const ROME_BOUTS = 3;
+const ROME_WEEKS_PER_BOUT = 4;   // how long Rome holds a place open before giving it away
 const ROME_FAME = 1000;      // the imperial games are the summit, not the next rung up
 const ROME_COOLDOWN = 45;    // weeks the city forgets you between campaigns
 /* your rank in Capua carries word to Rome — an Eques is heard of there before an unknown lanista is */
@@ -10050,8 +10051,20 @@ const riseRomeCut = d => riseOf(d)>=5 ? 150 : riseOf(d)>=4 ? 90 : riseOf(d)>=3 ?
 /* the fame a name must reach before Rome will call — rising each campaign, eased by
    your rank in Capua and by how well the whole bay knows you */
 const romeBar = d => ROME_FAME + romeRuns(d)*300 - (d.flags.romeEarly?150:0) - riseRomeCut(d) - bayRomeCut(d);
+/* ---- TWO ROADS TO THE SUMMIT ----
+   Rome asked that you had held the primacy, and nothing else would do. Measured
+   over eight houses run four hundred weeks on a policy that reaches for the title:
+   the three houses that held it were the three offered Rome, and the other five
+   never saw a letter — one of them at fame 4,301, acclaim 84 and ten feats, which
+   is plainly a house Rome would have heard of. The primacy is a single tier-3 bout
+   against a holder who measures 62–86 average stat, so the only ending the game
+   has sat behind one afternoon that most houses rightly decline.
+   There are two ways a lanista becomes somebody: on the sand, or in the census.
+   The fifth rung of the standing ladder is called Known in Rome, and it now means
+   what it says. */
+const romeProved = d => (d.flags.primusHeld||0) >= 1 || riseOf(d) >= 5;
 const romeReady = d => !d.rome && !d.romeOffer && !d.over && d.fame >= romeBar(d)
-  && (d.flags.primusHeld||0) >= 1                                          // prove it in Capua first
+  && romeProved(d)                                                         // the sand, or the census
   && (!d.flags.romeDeclined || d.week - d.flags.romeDeclined >= 30)
   && (!d.flags.romeReturned || d.week - d.flags.romeReturned >= ROME_COOLDOWN)
   && patronsOf(d).some(p=>p.rank==="senator" && p.favor>=70)
@@ -11454,6 +11467,25 @@ function romeWeek(d){
     chron(d, r.travel>0
       ? `The road north. Wagons, tolls, and men who have never been out of Campania looking at the hills.`
       : `Rome. The imperial sand is bigger than the whole of your ludus, and it is already stained. ${romeGreeting(d)}`, "event");
+    return;
+  }
+  /* the place is given away if it is not taken. An older save carries no due date —
+     treat it as open-ended, because it was. */
+  if(r.due != null && d.week > r.due && r.fought < ROME_BOUTS){
+    const missed = ROME_BOUTS - r.fought;
+    d.fame = Math.max(0, d.fame - (14 + missed*9));
+    patronsOf(d).forEach(p=>{ if(p.rank==="senator") p.favor = clamp(p.favor - 16, 0, 100); });
+    recomputeFavor(d);
+    activeG(d).forEach(g=>{ g.morale = clamp(g.morale - 7, 0, 100); });
+    d.flags.romeRuns = (d.flags.romeRuns||0) + 1;
+    d.flags.romeBest = Math.max(d.flags.romeBest||0, r.won);
+    d.flags.romeReturned = d.week;
+    chron(d, missed === ROME_BOUTS
+      ? `The house came all the way to Rome and did not put a man on the sand. The editors filled the places from a queue that is never short, nobody was rude about it, and the wagons go back down the Appian Way carrying exactly what they carried up.`
+      : `Rome does not hold a place open for a house that is choosing. ${missed} of the three go to other men, and ${r.won>0?`the ${r.won} you took`:"what you took"} is what the city will remember of this trip.`, "bad");
+    const won = r.won;
+    d.rome = null;
+    d.pendingRome = { won, triumph:false, purse:0, prize:null, lapsed:true };
     return;
   }
   /* the city has its own business with you */
@@ -14703,7 +14735,13 @@ function ludusLedger(d, men){
    named day is asked about before the week's random beat gets the slot */
 function heldQuestions(d){
   if(d.pendingRome){ const pr = d.pendingRome; d.pendingRome = null;
-    d.pendingEvent = { id:"romeReturn", title: pr.triumph ? "Home in Triumph" : "The Long Road Home",
+    /* a house that gave its places away is not coming home from a defeat — it is
+       coming home from a decision, and the line has to say which */
+    d.pendingEvent = pr.lapsed
+      ? { id:"romeReturn", title:"The Long Road Home", lapsed:true,
+          text:`The wagons come back down the Appian Way with ${pr.won>0?`${pr.won} of the three behind them and the rest given away`:"nothing behind them at all"}. Nobody in Rome was unkind about it and nobody in Rome will think about it again. In Capua they will ask how it went, and there is no answer that does not sound like the truth.`,
+          choices:["Take up the work again"], data:{ won:pr.won, triumph:false, lapsed:true } }
+      : { id:"romeReturn", title: pr.triumph ? "Home in Triumph" : "The Long Road Home",
       text: pr.triumph
         ? `${pr.won} of ${ROME_BOUTS} won on the imperial sand, and the house comes home to Capua carrying ${pr.prize||"the laurel"} — ${pr.purse}d in the strongbox and your name spoken in rooms you will never stand in. The games at Capua will look small for a while. What you make of it now is yours to decide.`
         : `${pr.won} of ${ROME_BOUTS} on the imperial sand. Not the triumph the letter promised — but the house walked off Rome's floor on its own feet, which more than one great name has not. You come home lighter than you went. Capua is still Capua, and there is work in the morning.`,
@@ -16643,7 +16681,16 @@ function answerRomeWith(d, accept){
   const o = d.romeOffer; if(!o) return false;
   d.romeOffer = null;
   if(accept){
-    d.rome = { travel:2, fought:0, won:0, turned:false, run:romeRuns(d)+1 };
+    /* ---- AND THE PLACE ON THE BILL IS NOT HELD FOREVER ----
+       The invitation expired in four weeks; the trip that followed it never expired
+       at all. A house that accepted and then did not care for the card it was given
+       — half of imperial bouts are sine missione against men built at quality 92 to
+       99 — sat at Rome indefinitely with Capua frozen behind it: no market, no
+       festivals, no events, no way back. An audit probe found this by accident,
+       accepting three invitations and never once coming home. Rome gives a house
+       about a month a bout, and then the editors fill the place from the queue. */
+    d.rome = { travel:2, fought:0, won:0, turned:false, run:romeRuns(d)+1,
+      due: d.week + 2 + ROME_WEEKS_PER_BOUT * ROME_BOUTS };
     d.games = null;
     d.gladiators.forEach(g=>{ if(g.status==="active"){ g.morale=clamp(g.morale+8,0,100); g.defiance=clamp(g.defiance+4,0,100); } });
     chron(d, `You accept. The wagons are loaded within the week, and everyone in the cells knows where they are going.`, "good");
@@ -23037,6 +23084,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
   window.__LVDVS = {
     /* build a house and its people */
     newGameState, genGladiator, genOpponent, pickRivalOpp, makeRivals, clone,
+    /* the summit: the gate, the letter, the bar, and the trip's own clock */
+    romeReady, romeProved, offerRome, romeBar, ROME_BOUTS, ROME_WEEKS_PER_BOUT,
     /* the four engines and the four ways into them */
     simulateFight, simulatePair, simulateMelee, simulateVenatio,
     doFight, doPairFight, doMelee, doVenatio,
