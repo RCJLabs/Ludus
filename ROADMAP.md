@@ -1331,7 +1331,7 @@ Tuning dials, in the order you'd reach for them:
 | Feast price ceiling | `feastCost` | fame clamp extended to ×2 (≈×5.4 base at fame 4,400+) |
 | The creditors' patience | `CREDIT_WEEKS` / `creditLine` | ruin at −max(250, 2.5 × `weeklyBill`), ×1.68 with a loan |
 | The asking drumbeat | `AMB_COOL` | ten weeks of yard-wide quiet after any man's ambition beat |
-| The street's memory | `acclaimTarget` | freed legends cap +12, walls +9, spill +14; the rest is this week's card |
+| The street's memory | `acclaimTarget` | men cap +46, freed legends +12, walls +9, spill +14; the primacy only if it is yours |
 | What it leaks | `warWeek` | standing, unrest, and a defiance floor |
 | The block | `warMarket` | ×1.25 at its height, ×0.55 after |
 
@@ -1350,6 +1350,61 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.52.0 — The consolidation pass
+
+Nine releases shipped in one session, each verified in isolation, none against the
+others — and all nine inside one interacting complex: income, standing, rivals,
+the street, the ruin line. v0.90.0 did this once before over thirty-one features
+and found four faults. This read v2.43.0–v2.51.0 as a composite. **Two things were
+wrong, two fears were disproved, and one of the two faults was my own verification
+rather than the game.**
+
+**Wrong: v2.50.0 did not work.** Eight measured houses past week 250 still sat at
+acclaim 98–100. Two causes. The men's term in `acclaimTarget` was left unbounded,
+and I had checked the fix against a house I invented whose best man held renown 90
+— a mature house's best man reaches 100 to 400, at which point that term alone
+clears the whole scale and every bound below it is decoration. It caps at 46 now.
+And the primacy term read `d.primus`, which is set whoever in Capua holds the
+title, so **a house was collecting fourteen points of the street's love for a
+title a rival was holding** — a fault older than this session, present in v2.42.0.
+It reads `primusMine` now. Measured after both: median acclaim past week 150 runs
+**82–93 with the top rung occupied 6–51% of weeks**, against 98–100 permanently.
+
+**Disproved: the mortality fear.** A weaker street thumb (v2.50) and a weaker
+feast (v2.47) both push deaths up, and were measured apart. Composite deaths per
+bout came in at **2.83%, against 3.20% before the audit** — and careers grew
+sharply (men reaching twelve wins 42 → 101, masters 37 → 91). The acclaim→missio
+sensitivity is real but small and bounded: on 1,500 losing bouts a cell, death
+runs 15.3% at acclaim 95 and 16.5% at 72, and the curve is flat above 82. Longer
+careers raise a man's own standing faster than the street's voice falls.
+
+**Disproved: v2.45.0's rival fame rescale.** Rival fame now reaching five figures
+feeds the recruit formula, but the bay's best man measures 99 at player fame 300,
+3,000, 12,000 and 25,000 alike — `clamp(…, 25, 90)` absorbs it exactly as hoped,
+and the median man drifts *down* 90 → 80 rather than up.
+
+**Measured and recorded rather than fixed:** the block follows acclaim steeply —
+mean stat 55.2 at acclaim 40, 63.2 at 72, 67.3 at 95, with fine men 7.3% → 25.3%
+→ 40% — so v2.50 does make the men you can buy worse. Prices move with it
+(525 → 918 → 1,268), so it is close to value-neutral, and it is what "the good
+ones go where the name is" is supposed to mean.
+
+**And the shape of a campaign changed more than any one release implied.** Under
+one policy held fixed, median house life went **43 → 167 weeks** and median bouts
+26 → 184, almost entirely from v2.48.0's credit line; the same 19 of 24 houses
+still end in debt, but they get years to fix it instead of a fortnight. Wealth is
+capped as intended (gold p90 19,070 → 9,436) and houses now live long enough to
+build (works finished, median 0 → 4). The v2.48.0 "slow slide" flag is real and
+now has a figure on it.
+
+`grudge` cried wolf twice inside this session in opposite directions, on builds
+whose only relevant changes were upstream of it. Its policy took one bout a week
+where a real house takes the whole card, which under-produced rival contact by
+several times; that is corrected. And it no longer pins a gate to a tail
+percentile of a heavy-tailed level — it asserts the property, as `test/README.md`
+advises: each gate must stand open sometimes and not always (measured: 37.5% /
+24.6% / 21.2% of weeks), and the worst of the three must stay the rarest.
 
 ### v2.51.0 — Four checks, and two actions that were never on the handle
 
@@ -2955,4 +3010,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.51.0*
+*Last updated: v2.52.0*

@@ -1998,16 +1998,31 @@ function acclaimTarget(d){
      target sat past 100 for any mature house whatever it was currently doing.
      The remembered terms are bounded now — the street keeps its legends and its
      walls, but what it chants about is the men on this week's card, the primacy,
-     and the show. A calm great house settles in the mid-eighties; the last rung
-     (92) has to be taken with heat and lapses when the heat goes. */
+     and the show.
+
+     AND THE CONSOLIDATION PASS FOUND THAT INSUFFICIENT. Bounding the remembered
+     terms changed nothing in real play: eight measured houses past week 250 still
+     sat at acclaim 98–100. Two reasons, and the first is a fault in how the fix
+     was verified. `top3` was left unbounded, and it was checked against a house I
+     invented whose best man held pfame 90 — a mature house's best man reaches 100
+     to 400, at which point that term alone clears the whole scale and every bound
+     below it is decoration. The men are the biggest thing the street cares about
+     and should be; they are not the only thing, so the term is capped at 46.
+
+     The second reason was a fault of the game's own, and it predates all of this:
+     the primacy term read `d.primus`, which is set whoever in Capua holds the
+     title — so a house was collecting fourteen points of the street's love for a
+     title a RIVAL was holding. It reads `primusMine` now. Measured after both:
+     a calm great house lands in the seventies, a house holding the primacy in a
+     show streak still clears 92, and the last rung lapses when the heat goes. */
   const men = activeG(d).map(g=>g.pfame||0).sort((a,b)=>b-a);
   const top3 = (men[0]||0)*0.5 + (men[1]||0)*0.28 + (men[2]||0)*0.16;   // your famous few
   const spectacle = repShare(d,"show")*22 + repShare(d,"blood")*10;      // the popular styles
   const freedLegends = Math.min(12, (d.freed||[]).filter(f=>(f.wins||0)>=10).length * 4);
-  const primus = d.primus ? 14 : 0;
+  const primus = primusMine(d) ? 14 : 0;                                 // yours, not merely somebody's
   const spill = Math.min(14, (d.fame||0)*0.06);                          // your standing spills into the street
   const graff = Math.min(9, activeG(d).filter(g=>g.graffiti).length * 3);
-  return clamp(top3*0.5 + spectacle + freedLegends + primus + spill + graff, 0, 100);
+  return clamp(Math.min(46, top3*0.5) + spectacle + freedLegends + primus + spill + graff, 0, 100);
 }
 function acclaimWeek(d){
   if(d.over) return;

@@ -57,6 +57,31 @@ export async function run({ p, errors }){
     }
 
     /* a man who is not yours gets nothing out of your name */
+    /* ---- WHAT THE STREET'S LOVE IS MADE OF ----
+       The v2.51 consolidation pass found the ladder's top rung permanent again in
+       real play, for two reasons this now guards. The men's term was unbounded, so
+       a mature house's best man cleared the whole scale by himself and every other
+       bound was decoration. And the primacy term read `d.primus`, which is set
+       whoever in Capua holds the title — a house collected fourteen points for a
+       title a rival was holding. */
+    const targetOf = (over)=>{
+      const e = A.newGameState("Tgt","clean","STREET_T",null);
+      e.gladiators = [];
+      for(const pf of (over.pfames||[])){ const m = A.genOpponent(2, 70); m.id=e.nextId++;
+        m.status="active"; m.mine=true; m.pfame=pf; e.gladiators.push(m); }
+      e.fame = over.fame||0; e.rep = over.rep || { blood:0, show:0, craft:30, mercy:60 };
+      e.freed = Array.from({length:over.legends||0},(_,i)=>({name:"L"+i,week:1,wins:12,cls:"Thraex"}));
+      if(over.primusMine) e.primus = { mine:true, gid:e.gladiators[0]&&e.gladiators[0].id, name:"X", since:1, defences:0 };
+      if(over.primusTheirs) e.primus = { mine:false, house:"Vettius", fid:1, name:"X", since:1, defences:0 };
+      return Math.round(A.acclaimTarget(e));
+    };
+    /* one enormous man, nothing else going on: the term must not clear the scale */
+    const oneGiant = targetOf({ pfames:[400,40,30], fame:12000, legends:20 });
+    /* the same house, with and without the primacy in its own cells */
+    const withMine   = targetOf({ pfames:[120,80,60], fame:12000, legends:20, primusMine:true });
+    const withTheirs = targetOf({ pfames:[120,80,60], fame:12000, legends:20, primusTheirs:true });
+    const withNone   = targetOf({ pfames:[120,80,60], fame:12000, legends:20 });
+
     d.acclaim = 100;
     const notMine = Object.assign({}, man, { pfame:60, wins:12, losses:5, sho:60, heart:60, mods:{} });
     const ctx = { favor:55, street:A.streetVoice(d), tier:2 };
@@ -67,7 +92,8 @@ export async function run({ p, errors }){
     return { rows, steps, foreign, foreignQuiet,
       tiers: A.ACCLAIM_TIERS.map(t=>({ at:t.at, name:t.name })),
       cap: A.MISSIO_CAP, top: A.ACCLAIM_MISSIO,
-      word: [0,20,40,62,82,92,100].map(a=>`${a} ${A.acclaimWord(a)}`) };
+      word: [0,20,40,62,82,92,100].map(a=>`${a} ${A.acclaimWord(a)}`),
+      oneGiant, withMine, withTheirs, withNone };
   });
 
   if(out.fatal) return { pass:false, why:out.fatal, lines:[] };
@@ -111,6 +137,14 @@ export async function run({ p, errors }){
   /* the ladder needs a rung above the one a long campaign reaches */
   if(out.tiers[out.tiers.length-1].at <= 82)
     fails.push("nothing on the ladder above 82 — acclaim tops out where a long campaign lands");
+  lines.push(`one 400-renown man and little else targets ${out.oneGiant}; the primacy is worth ` +
+    `${out.withMine - out.withNone} held and ${out.withTheirs - out.withNone} when a rival holds it`);
+  if(out.oneGiant >= 100)
+    fails.push(`a house with one famous man and little else targets acclaim ${out.oneGiant} — the men's term clears the whole scale on its own and every other bound is decoration`);
+  if(out.withTheirs !== out.withNone)
+    fails.push(`a rival holding the primacy is worth ${out.withTheirs - out.withNone} points of YOUR acclaim — the term is reading d.primus rather than whose it is`);
+  if(!(out.withMine > out.withNone))
+    fails.push("holding the primacy yourself is worth nothing to the street");
 
   if(errors.length) fails.push(`${errors.length} page errors`);
   return { pass: fails.length === 0, why: fails.join("; ") || null, lines };
