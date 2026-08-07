@@ -60,6 +60,7 @@ reason the check exists usually has not.
 | `coast` | fast | a tour down the coast was single combats and nothing else, and a defeat away was invisible to the town that watched it |
 | `census` | fast | the ladder's top rungs asked 110,000 denarii in cash from a house that had to spend the same coin on stone, so nobody ever stood on them |
 | `bulk` | fast | four functions held every balance change in a 22,700-line file, and nothing ever said stop |
+| `worst` | fast | the record book had a slot for the house's worst night that nothing ever wrote and nothing ever read; filling it found two more things nobody was writing |
 
 ## What no check has ever touched
 

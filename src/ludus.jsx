@@ -513,6 +513,31 @@ function bookBout(d, o){
     B.biggest = { purse:o.purse, name:o.name, week:d.week, festival:o.festival || "the pits" };
   if(o.rounds && (!B.longest || o.rounds > B.longest.rounds))
     B.longest = { rounds:o.rounds, name:o.name, opp:o.opp, week:d.week };
+  /* ---- AND THE NIGHT THE HOUSE WOULD RATHER FORGET ----
+     `worst` was initialised alongside these two in newBook and then never written
+     and never read — an empty slot in every save this game has ever produced, sitting
+     there looking deliberate. It is filled now, from what the book already knows.
+
+     Cost, not humiliation, and a man outranks a purse: any night that buried one of
+     yours beats any night that did not, however much was on the table, and within
+     each of those the bigger stake wins. That means a victory can be the worst night
+     in the book, which is right — a card taken at the price of your best man is
+     exactly the one a house does not talk about afterwards.
+
+     Note it reads o.stake, which is what the editor was offering, not o.purse, which
+     is what the house actually took. A defeat pays nothing, so ranking defeats by
+     purse would have ranked every one of them at zero — which is most of why this
+     slot was easier to leave empty than to fill. */
+  /* a night you WON and walked away from whole is not a night to forget, however
+     large the purse was — that is the row two lines above this one. What can qualify
+     is a defeat or a draw with something on the table, or any night that cost a man. */
+  if(o.died || (!o.win && o.stake)){
+    const rank = x => (x && x.died ? 1e9 : 0) + (x ? x.stake||0 : -1);
+    const now = { stake:o.stake||0, died:!!o.died, name:o.name, opp:o.opp, fell:o.fell || null,
+      week:d.week, festival:o.festival || "the pits", kind:o.kind || "single",
+      won:!!o.win, drawn:!!o.drawn };
+    if(!B.worst || rank(now) > rank(B.worst)) B.worst = now;
+  }
 }
 /* ---- WHAT THE BOOK WOULD TELL YOU ----
    The guide promises exactly this, in as many words: "Most lanistae have a feeling
@@ -12085,7 +12110,9 @@ function doMelee(d, ids, offer, pending, choice, tactic){
     spared: res.ents.some(e=>e.mine && e.out && !e.dead),
     vigour: 100 * res.ents.filter(e=>e.mine && !e.out).length / Math.max(1, res.ents.filter(e=>e.mine).length),
     crowd: res.crowd }, sum);
-  bookBout(d, { win:won, drawn:drewIt, purse:mPurse,
+  bookBout(d, { win:won, drawn:drewIt, purse:mPurse, stake:offer.purse,
+    fell: (()=>{ const e = res.ents.find(x=>x.mine && x.dead);
+      const x = e && d.gladiators.find(y=>y.id===e.gid); return x ? fullName(x) : null; })(),
     crowd:res.crowd, tier:offer.tier, stakes:"melee", city:offer.city, kind:"melee",
     died: res.ents.some(e=>e.mine && e.dead), killed: res.ents.some(e=>!e.mine && e.dead),
     rounds: res.beats ? Math.max(...res.beats.map(b=>b.round||0)) : 0,
@@ -12204,7 +12231,15 @@ function doVenatio(d, gid, offer, tactic, pending, choice){
   else if(!res.dead) formShift(d, g, -18, `was driven off the ${offer.beast}`);
   /* the hunt paid the book its purse whether the beast fell or not, so "purses taken"
      counted money the house was never given. It is paid below, and only on a kill. */
-  bookBout(d, { win:!!res.killed, died:!!res.dead, killed:!!res.killed, purse: res.killed ? offer.purse : 0,
+  /* ---- A MAN KILLED BY A BEAST WAS NOT A DEATH IN THE BOOK ----
+     This read `res.dead`. simulateVenatio has never returned a field of that name —
+     its verdict is `aDies`, the same word the single sand uses — so `died` was
+     false for every hunt this game has ever booked, and the record book's buried
+     column has been short by every man an animal ever killed. Found by the check
+     that fills the book's worst-night slot, which noticed a house that had buried
+     somebody and had no bad night on record to show for it. */
+  bookBout(d, { win:!!res.killed, died:!!res.aDies, killed:!!res.killed, purse: res.killed ? offer.purse : 0, stake:offer.purse,
+    fell: res.aDies ? fullName(g) : null,
     crowd:res.crowd, rounds:res.beats ? Math.max(...res.beats.map(b=>b.round||0)) : 0,
     tier:offer.tier, cls:g.cls, stakes:"venatio", city:offer.city, kind:"venatio",
     name:fullName(g), opp:offer.beast, festival:offer.festival });
@@ -12356,7 +12391,11 @@ function doPairFight(d, ids, offer, tactic, pending, choice){
     spared: (res.down.A||[]).some((x,i)=>x && !res.dead.A[i]),
     vigour: ((res.hp.A[0]||0) + (res.hp.A[1]||0))/2,
     crowd:res.crowd }, sum);
-  bookBout(d, { win:pWin, drawn:pDrawn, purse:pPurse, crowd:res.crowd, tier:offer.tier,
+  bookBout(d, { win:pWin, drawn:pDrawn, purse:pPurse, stake:offer.purse, crowd:res.crowd, tier:offer.tier,
+    fell: (()=>{ const i = res.dead.A.findIndex(Boolean); return i>=0 && gs[i] ? fullName(gs[i]) : null; })(),
+    /* and no name on it, for as long as pair bouts have been booked — so a pair
+       that took the largest purse in the house's history filed it under nobody. */
+    name: gs.map(x=>x.name).join(" and "),
     cls:gs[0]&&gs[0].cls, stakes:offer.stakes, city:offer.city, kind:"pair",
     died: res.dead.A.some(Boolean), killed: kills>0,
     /* A pair offer has no `.opp` — it carries opps[] and oppRefs[] — so this read
@@ -13030,7 +13069,8 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   else formShift(d, g, res.aDies ? 0 : -22, `lost to ${offer.opp.name}`);
   if(res.bDies) formShift(d, g, 7, `killed ${offer.opp.name}`);
   if(g.status==="injured") formShift(d, g, -13, `carried off against ${offer.opp.name}`);
-  bookBout(d, { win, died:!!res.aDies, killed:!!res.bDies, purse, crowd:res.crowd,
+  bookBout(d, { win, died:!!res.aDies, killed:!!res.bDies, purse, stake:offer.purse, crowd:res.crowd,
+    fell: res.aDies ? fullName(g) : null,
     rounds:res.beats ? Math.max(...res.beats.map(b=>b.round||0)) : 0,
     tier:offer.tier, cls:g.cls, stakes:offer.stakes, city:offer.city,
     kind: offer.imperial?"rome" : offer.primus?"primacy" : offer.booking?"contracted" : "single",
@@ -17488,8 +17528,24 @@ export default function App(){
         <Row l="Freed" v={K.R2.freed} sub={S.honoured? `${S.honoured} given games` : null}/>
         <Row l="Purses taken" v={`${Math.round(B.purse)}d`} sub={B.n? `${K.perBout}d a bout` : null}/>
         <Row l="Average crowd" v={K.avgCrowd}/>
-        {B.biggest && <Row l="Largest single purse" v={`${B.biggest.purse}d`} sub={`${B.biggest.name}, week ${B.biggest.week}`}/>}
-        {B.longest && <Row l="Longest bout" v={`${B.longest.rounds} rounds`} sub={`${B.longest.name} against ${B.longest.opp}`}/>}
+        {/* a save written before the pair engine carried a name has neither of these
+            filled in for a pair bout, and printed the word "undefined" at the player */}
+        {B.biggest && <Row l="Largest single purse" v={`${B.biggest.purse}d`}
+          sub={B.biggest.name ? `${B.biggest.name}, week ${B.biggest.week}` : `week ${B.biggest.week}`}/>}
+        {B.longest && <Row l="Longest bout" v={`${B.longest.rounds} rounds`}
+          sub={B.longest.name ? `${B.longest.name}${B.longest.opp?` against ${B.longest.opp}`:""}` : `week ${B.longest.week}`}/>}
+        {/* the counterweight to the two above: what the house paid, at its worst */}
+        {B.worst && (()=>{ const w = B.worst;
+          const at = `${w.festival}, week ${w.week}`;
+          const him = w.fell || "one of yours";
+          return <Row l="The night it cost most"
+            v={w.died ? (w.fell ? w.fell.split(" ")[0] : "a man") : `${w.stake}d`}
+            sub={w.died
+              ? (w.won ? `${at}. The card was taken and ${him} did not leave the sand for it.`
+                       : `${at}. Beaten, and ${him} stayed there.`)
+              : (w.drawn ? `${w.name} at ${at} — nothing settled and nothing paid`
+                         : `${w.name} at ${at}. The largest purse this house has been beaten out of.`)}/>;
+        })()}
         <Table title="By tier" rows={K.rank(B.tier)}/>
         <Table title="By style" rows={K.rank(B.cls)}/>
         <Table title="By stakes" rows={K.rank(B.stakes)}/>
