@@ -2993,13 +2993,47 @@ to surface: `setOut` and `comeHome` were never on the handle, so no probe could
 take a tour and come home, and the standing economy had no check watching it at
 all.
 
-**What the next audit should be looking for.** The same two seams, since they
-keep paying: a number set against an economy that no longer exists, and a system
-with machinery the player never meets. Sixty-one functions on the handle are
-still dark — `npm run coverage` names them every run, and the ones worth a check
-next are the ladder's read-side (`riseNeed`, `riseNext`, `riseRank`), the heir
-(`succeed`), and the fire-sale path (`sellTheHouse`, `buyLot`), which is real
-content one measured house in twenty ever sees.
+**The v2.52.0 audit — ten items, #88–#97, open in the task list.** Run against
+the consolidated build over 3,200 censused house-weeks on a full policy (the
+primacy taken, the bay toured, hunts and melees fielded, Rome answered, the rope
+worked on empty weeks). The seams it found, in one line each:
+
+- **The summit is behind one afternoon.** Rome asks that you have held the
+  primacy; the 3 houses of 8 that held it were the 3 offered Rome, and a house at
+  fame 4,301 with ten feats never saw a letter. *(#88)*
+- **And the trip has no clock.** Accept, decline the imperial card, and the house
+  sits at Rome forever with Capua frozen. Nothing has ever driven the round trip
+  — `romeReady` and `offerRome` are not on the handle. *(#89)*
+- **Two whole systems nobody meets.** The heir: null in 8 of 8 houses, zero
+  successions, because `nameHeir` is not exposed. The temple: piety 30–35 in
+  every house across 400 weeks, no vow, no blessing, and both its actions
+  unexposed. *(#90, #91)*
+- **The best-written event in the mid-game is starved, not broken.** The man four
+  doors down never asked once in 3,200 weeks including 188 weeks of holding the
+  title — and `make()` returns an event 400 times in 400 when handed the state.
+  A conditional event competing with a dozen always-eligible ones in `pickEvent`
+  loses for years. *(#92)*
+- **A knock-on we shipped without pricing it.** Bounding acclaim moved every late
+  house down a band of slave market (fine men 40% → 30%) and cost 1.2 points of
+  mortality. Possibly correct; never a decision. *(#93)*
+- **The long slide is silent.** 43 → 167 weeks to die of debt, on the same single
+  warning. *(#94)*
+- **Five feats of nineteen and three lanista traits of six are never earned**,
+  four of the five carrying a permanent perk. *(#95)*
+- **And two harness gaps that explain why the rest went unseen:** the four market
+  generators are unexposed, so no check can ask what the block offers under a
+  given state *(#96)*; and the fire sale — the answer to a paragon 2 houses in 19
+  can afford — is reachable but untouched, with `liquidate` unexposed *(#97)*.
+
+Sixty-one functions on the handle are still dark; `npm run coverage` names them
+every run.
+
+**What the audit after that should look for.** The same two seams, which have now
+paid three times: a number set against an economy that no longer exists, and a
+system with machinery the player never meets. And a third, learned the hard way
+in v2.52.0: **a fix verified against a state you invented rather than one the game
+produces is not verified.** Check where the game actually sits before deciding
+what a change did.
 
 **What the next audit should be looking for.** The five that produced the best
 releases in this stretch were all of one kind — a system with real machinery behind
