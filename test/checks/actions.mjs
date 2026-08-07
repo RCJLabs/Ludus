@@ -28,6 +28,7 @@ const REACHABLE = [
   "hireDoctore","dismissDoctore","takeDoctoreOffer","hireStaffMember","letStaffGoOf",
   "setEarTo","haveWatchedOffer","stopPrepFor","answerReSignWith","answerRomeWith",
   "hostParty","throwFeast","walkTheCells","seekMatchNow","openLicenceNow","takeUpTheHouse",
+  "setOut","comeHome",
 ];
 
 export async function run({ p, errors }){

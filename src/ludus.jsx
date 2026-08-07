@@ -16534,7 +16534,10 @@ function teachSigTo(d, gid, key){ const g=d.gladiators.find(x=>x.id===gid);
     : `A master comes down from the school at Capua for a month and no longer, and he is not cheap. ${fullName(g)} drills ${TECHNIQUES[key].name} with him at the far post until it is his — ${SIG_WEEKS} weeks, ${fee} denarii, and then the man goes home.`);
   return true; }
 
-function makeMasterOf(d, gid){ const g=d.gladiators.find(x=>x.id===gid); if(!g) return false; makeMaster(d,g); return true; }
+/* returns what actually happened: makeMaster holds the 12-win/55-renown gate,
+   and this used to answer true whenever the man merely existed — caught by the
+   careers check on its first run */
+function makeMasterOf(d, gid){ const g=d.gladiators.find(x=>x.id===gid); return !!(g && makeMaster(d, g)); }
 
 /* --- the doctore --- */
 function setPupilTo(d, gid){ if(!d.doctore || d.doctore.retrainTo) return false;
@@ -23030,6 +23033,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     makeGames, makeCityGames, festivalNow, CALENDAR,
     /* the coast: what each town puts on, and what it takes from an afternoon */
     CITIES, CITY_CUSTOM, cityCustom, cityServed, cityAfter, knownIn, cityTier, bayPol,
+    setOut, comeHome, stayWeeks, welcomeOf,
     /* what a fortune can be spent on once the yard is finished */
     beginWork, workOpen, workDone, workOn, workUpkeep, WORKS, MONUMENTS, ALL_WORK_KEYS,
     workWeekly, WORK_DEPOSIT, worksWeek,
@@ -23057,6 +23061,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     menWeek, ludusLedger, heldQuestions, weekReckoning, boutAftermath,
     RISE_RANKS, riseOf, riseRank, riseNext, riseNeed, canClaimRise, riseWeek,
     riseStipend, riseFav, risePurse, liturgy, riseFee, RISE_ADMIT, weeklyBill, creditLine,
+    CENSUS_TOP, CREDIT_WEEKS, FAME_TIERS, FAME_WARM_AT, fameWarm, acclaimIdx, feastFresh, AMB_COOL,
     /* and the patrons the climb rests on */
     patronWeek, serveWants, recomputeFavor, patronsOf, WANTS, RANKS,
     feastCost, feastReach, FEAST_BASE, FEAST_HEAD, FEAST_STANDING, RETRAIN_FEE, FORGE_FEE, BUILDINGS, PARTY, STAFF,

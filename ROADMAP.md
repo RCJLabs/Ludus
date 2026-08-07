@@ -87,7 +87,7 @@ npm run test:all      every check, fast and slow — about nine minutes
 npm run coverage      not what passes, but what no check ever touches
 ```
 
-**24 checks.** Twenty read into the game through a test handle and answer in seconds;
+**28 checks.** Twenty-four read into the game through a test handle and answer in seconds;
 four drive a real browser through the real screens. Every one of them exists because
 of a bug that shipped, and the comment at the top of each says which — that comment
 is the durable part, not the numbers inside it. See `test/README.md` for the table.
@@ -1350,6 +1350,39 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.51.0 — Four checks, and two actions that were never on the handle
+
+Audit items #86 and #87, and the release that guards the six before it.
+
+**#87 first, because it cost the most.** `setOut` and `comeHome` are functions of
+the save at module scope — exactly what the file's first rule demands — but
+neither was on the handle, and the actions check's name-list did not miss them.
+So no check or probe could take a tour and come home: two entire 12-house audit
+batches accepted a town's invitation, had no way back, spent three hundred weeks
+stranded, and reported half the game dark. Three confident wrong findings came
+out of that before the instrument was caught. Both are exported now and both are
+in the list that fails loudly.
+
+**Four new checks**, all fast, taking the suite from 24 to 28:
+
+| | |
+|---|---|
+| `phases` | runs each of the week's four phases alone — the split v2.40.0 made *for* checks, which no check had ever used — and asserts the hard rule from INSTRUCTIONS.md that had none: no class clumsy in its own default kit |
+| `careers` | walks one man up the whole ladder — signature, mastery, second trade, the switch, the rudis, retirement — and tests every gate from both sides |
+| `roads` | drives the round trip the audit could not, and holds v2.46.0's residency costs: a fresh visitor's card against a stale resident's |
+| `ledger` | holds the shape of the standing economy: the stipend and the liturgy must read the same censual fame, a finished idle house must be under water, and the creditors' line must follow the house's own bill while still folding a shed at −250 |
+
+`careers` earned its keep on its first run by failing: `makeMasterOf` answered
+true whenever the man merely existed, so the UI's own mastery button reported
+success on an ineligible fighter. It returns what `makeMaster` actually did now.
+
+**Coverage: 104 of 165 reached, 61 dark, down from 72** — and nine functions were
+*added* to the handle in the same pass, so twenty previously-dark ones are now
+covered. `ledger` in particular means the two faults this session found in the
+standing economy cannot drift back silently: it prints the live figures every
+run (stipend 710 / liturgy 593 flat from fame 9,000 up; a finished idle house at
+−195 a week; a shed folding at −250 and a palace at −2,998).
 
 ### v2.50.0 — The street loves what is in front of it
 
@@ -2905,4 +2938,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.50.0*
+*Last updated: v2.51.0*
