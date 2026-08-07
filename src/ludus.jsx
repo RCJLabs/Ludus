@@ -4929,7 +4929,7 @@ function leagueReckoning(d, table){
   const you = table.find(r=>r.you), rank = table.indexOf(you)+1, first = table[0];
   let reward = "";
   if(first && first.you){
-    const fameBonus = ri(18,30), gold = rnd(280 + d.fame*0.5);
+    const fameBonus = ri(18,30), gold = rnd(280 + Math.min(d.fame, CENSUS_TOP)*0.5);
     d.fame += fameBonus; d.gold += gold;
     patronsOf(d).forEach(p=>{ p.favor = clamp(p.favor+6,0,100); }); recomputeFavor(d);
     addRep(d, "craft", 8);
@@ -8204,11 +8204,23 @@ const riseFav     = d => riseOf(d)*3;          // your name carries weight in th
    an eighty-fold climb against an upkeep that rose six-fold, which is the whole
    reason the strongbox fills past anything the game has to sell. Standing pays
    well and then it stops paying better: past a real name the gifts thicken by the
-   root of your fame, not by all of it. */
+   root of your fame, not by all of it.
+
+   And past the census, not at all. The liturgy has always read fame capped at
+   9,000 — the figure the censors stopped counting at — while the stipend's root
+   term and the league's yearly purse read it uncapped. Measured on a finished
+   house (all nine works standing, nobody fighting): the idle ledger runs −281 a
+   week at fame 1,500, breaks even near 12,000, and pays +750 a week at 27,000 —
+   and the stone itself pushes fame up 24 a week, so every completed house rode
+   that curve into a strongbox nothing could empty. Both payouts now read the
+   same censual fame the liturgy does. Below 9,000 nothing anywhere changes; at
+   the top a finished house settles about 130 a week under water, which is one
+   small purse a month — the sand still has to pay for the stone. */
+const CENSUS_TOP = 9000;   // the figure the censors stop counting at; liturgy, stipend and league all read it
 const riseStipend = d => riseOf(d) >= 3
   ? Math.round((riseOf(d)-2)*8
       + Math.min(d.fame, 1500)*0.03*(riseOf(d)-2)
-      + Math.sqrt(Math.max(0, d.fame-1500))*0.95*(riseOf(d)-2)
+      + Math.sqrt(Math.max(0, Math.min(d.fame, CENSUS_TOP)-1500))*0.95*(riseOf(d)-2)
       + acclaimOf(d)*0.35)
   : 0;
 /* ---- AND WHAT IT COSTS ----
@@ -8219,7 +8231,7 @@ const riseStipend = d => riseOf(d) >= 3
    faster than the stipend does. */
 const liturgy = d => { const r = riseOf(d);
   if(r < 4 || d.over) return 0;
-  return Math.round((r-3)*26 + Math.min(d.fame, 9000)*0.012*(r-3) + acclaimOf(d)*0.6); };
+  return Math.round((r-3)*26 + Math.min(d.fame, CENSUS_TOP)*0.012*(r-3) + acclaimOf(d)*0.6); };
 /* how close you are to being received at the next rung */
 function riseWeek(d){
   if(d.over || d.succession) return;

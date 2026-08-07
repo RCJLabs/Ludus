@@ -1321,6 +1321,7 @@ Tuning dials, in the order you'd reach for them:
 | A burial under it | `collSoften` | half the unrest, half the health |
 | Cutting it | `lapseCollegium` | +7 unrest, or +14 once it has been used |
 | The war | `WAR` | 4 stages at weeks 1, 11, 27, 44; over at 58 |
+| What standing pays on | `CENSUS_TOP` | fame capped at 9,000 for the stipend, the liturgy and the league's purse |
 | What it leaks | `warWeek` | standing, unrest, and a defiance floor |
 | The block | `warMarket` | ×1.25 at its height, ×0.55 after |
 
@@ -1339,6 +1340,29 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.43.0 — Standing pays on the census, not the legend
+
+The audit's headline finding, fixed at its root. The liturgy has always read fame
+capped at 9,000 — the figure the censors stop counting at — while the stipend's
+root term and the league's yearly purse read fame uncapped. Measured on a finished
+house (all nine works standing, nobody fighting), the idle ledger ran **−281 a week
+at fame 1,500, broke even near 12,000, and paid +750 a week at 27,000** — and the
+finished stone itself prints +24 fame a week, so every completed house rode that
+curve into a strongbox nothing could empty (measured end-golds 19k–528k with
+everything built by year 12–14).
+
+One shared constant now, `CENSUS_TOP = 9000`, read by all three: the stipend's
+root term, the liturgy, and the league reckoning's purse. **Below fame 9,000
+nothing anywhere changes** — verified by re-running 24 recorded campaigns on the
+same seeds: every house that died below the census produced byte-identical
+outcomes. At the top, a finished house now settles **≈150–400 a week under water,
+flat in fame** (36-week idle probes at fame 9k, 12k and 27k are indistinguishable),
+which is one small purse a month: the sand still has to pay for the stone.
+Campaign effect on the same seeds: end-gold 116,317 → 35,918 and 19,070 → 1,143;
+the amphitheatre of Capua is commissioned at week 280–316 instead of 183–223 and
+is still rising at year twenty-two for the second-best house, which is what
+"priced to be the work of years" was always supposed to mean.
 
 Every release since v1.12.0 has a full write-up in its commit message; `git log` is
 the changelog of record for that stretch, and the comments in the source carry the
@@ -2690,11 +2714,12 @@ Every item raised by the last audit has shipped or been disproved, and the two t
 remain are decisions rather than work:
 
 - **#47 — one tap to the obvious bout.** Declined; the multi-tap arena is intended.
-- **The monuments.** Priced at 30k / 44k / 70k / 150k against a house that used to
-  peak at 8,485 denarii. That was the finding behind the instalment change in
-  v2.36.0 — but the census in v2.39.0 moved the ground again: a house that reaches
-  Patron of the Games now keeps 133,485 where it used to keep 27,169. Worth
-  re-measuring before repricing anything. It may already be affordable.
+- **The monuments.** ✅ Re-measured (v2.43.0 audit) and resolved from the other
+  side: they had become affordable — ten measured houses finished all nine works
+  and monuments by year 12–14 and still ended on 19k–528k, because the stipend and
+  the league's purse read fame uncapped while the liturgy stopped at 9,000. Both
+  now read `CENSUS_TOP`; the prices themselves were never wrong. Audit items
+  #79–#87 remain open in the task list.
 
 **What the next audit should be looking for.** The five that produced the best
 releases in this stretch were all of one kind — a system with real machinery behind
@@ -2705,4 +2730,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.42.0*
+*Last updated: v2.43.0*
