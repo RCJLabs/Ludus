@@ -57,6 +57,7 @@ reason the check exists usually has not.
 | `grudge` | fast | two rival-vengeance events waited above the ceiling of the number they read |
 | `card` | fast | three of the four fight engines shared a quarter of the bill, and the audit that found it was counting Rome |
 | `stone` | fast | 336,500 denarii of works and monuments, and the richest careful house ever measured held 8,485 |
+| `coast` | fast | a tour down the coast was single combats and nothing else, and a defeat away was invisible to the town that watched it |
 
 ## What no check has ever touched
 

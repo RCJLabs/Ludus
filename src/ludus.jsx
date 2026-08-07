@@ -8409,12 +8409,42 @@ const cityPurse  = (d,key) => { if(!key) return 1; const P = bayPol(d,key), C = 
   return (C?C.purse:1) * (1 + (P.favor-40)/380); };
 const cityCrowd  = (d,key) => { if(!key) return 0; const C = cityCustom(key); return C?C.crowd:0; };
 const cityFavWord = v => v>=78?"the town is yours" : v>=58?"well thought of here" : v>=38?"tolerated" : v>=18?"an outsider" : "not wanted here";
-/* did the house give this town the kind of afternoon it came for? */
-function cityServed(d, key, offer, res, crowd){
+/* ---- DID THE HOUSE GIVE THIS TOWN THE AFTERNOON IT CAME FOR? ----
+   This read `res.bDies`, `res.winner==="A"` and `res.vA` straight off a single
+   bout's result, so it could only ever be asked about a single bout — which was
+   fine while a tour was nothing else. Now that a town has a bout of its own it
+   takes a verdict instead: won, did any of theirs die, was one of yours spared,
+   how well the winning was done, and what the tiers made of it. Four engines can
+   all answer those five questions; only one of them could answer the old ones. */
+function cityServed(d, key, offer, v){
   const C = cityCustom(key); if(!C) return 0;
-  if(C.wants==="blood") return (offer.stakes==="sine" || res.bDies) ? 1 : (res.spared ? -1 : 0);
-  if(C.wants==="craft") return (res.winner==="A" && res.vA>=62) ? 1 : (res.winner!=="A" ? -1 : 0);
-  return crowd>=72 ? 1 : crowd<=40 ? -1 : 0;    /* show */
+  if(C.wants==="blood") return (offer.stakes==="sine" || v.theirDead) ? 1 : (v.spared ? -1 : 0);
+  if(C.wants==="craft")  return (v.won && v.vigour>=62) ? 1 : (!v.won ? -1 : 0);
+  return v.crowd>=72 ? 1 : v.crowd<=40 ? -1 : 0;    /* show */
+}
+/* ---- AND WHAT THE TOWN TAKES FROM IT ----
+   Local standing, the magistrate's favour and the home house's temper all lived
+   inline in doFight, which meant a melee or a hunt fought at Pompeii earned the
+   house nothing at all in Pompeii — the whole point of having gone. One function,
+   four callers. */
+function cityAfter(d, offer, v, sum){
+  const key = offer && offer.city; if(!key) return;
+  const away = CITIES[key]; if(!away) return;
+  d.known = d.known || {};
+  const fit = repStyle(d)===away.taste;
+  const gained = rnd((7 + v.crowd/16 + (fit?5:0)) * docKnown(d));
+  d.known[key] = clamp(knownIn(d,key) + gained, 0, 100);
+  sum.push(`${away.name} is beginning to know the name — local standing ${Math.round(knownIn(d,key))}.${fit? " They like the kind of house you are." : ""}`);
+  /* the town's own man, and the town's own house, both took a view of that */
+  const P = bayPol(d, key), C = cityCustom(key);
+  const served = cityServed(d, key, offer, v);
+  P.fought = (P.fought||0) + 1;
+  P.favor = clamp(P.favor + 4 + served*5, 0, 100);
+  P.grudge = clamp(P.grudge + 5, 0, 100);
+  if(served>0 && C) sum.push(`${C.name}: they got the afternoon they came for, and ${P.mag} noticed who gave it to them.`);
+  else if(served<0 && C) sum.push(`${C.name}: not what this town came for. ${P.mag} was polite about it, which is its own answer.`);
+  if(P.grudge>=55 && !P.warned){ P.warned = 1;
+    chron(d, `House ${P.house} of ${away.name} has had enough of a Capuan taking purses off their own sand. They are asking the magistrate for the match.`, "bad"); }
 }
 const awayIn = d => (d.city && CITIES[d.city]) ? CITIES[d.city] : null;
 const knownIn = (d,k) => (d.known && d.known[k]) || 0;
@@ -8462,16 +8492,86 @@ function makeCityGames(d){
   const tier = cityTier(d, key);
   const offers = [];
   const n = 2 + (knownIn(d,key)>=45 ? 1 : 0);
-  for(let i=0;i<n;i++){
-    const t = TIERS[tier];
+  const fest = `the games at ${C.name}`;
+  const t = TIERS[tier], town = TIERS[Math.max(tier,1)];
+  const townPurse = mult => rnd((town.purse[0]+R()*town.purse[1]) * C.purse * mult);
+  const addSingle = ()=>{
     const pr = pickAnyOpp(d, tier);
     const opp = pr.opp;
     opp.kit = opp.kit || kitFor(opp.cls, tier);
     const sine = C.taste==="blood" ? R()<0.3 : R()<0.12;
-    offers.push({ id:d.nextId++, tier, festival:`the games at ${C.name}`, city:key,
+    offers.push({ id:d.nextId++, tier, festival:fest, city:key,
       opp, oppRef:pr.ref, rematch:false, grudgeM:false, stakes: sine?"sine":"standard",
       purse: rnd((t.purse[0]+R()*t.purse[1]) * C.purse * (sine?1.6:1)) });
+  };
+
+  /* ---- WHAT EACH TOWN PUTS ON THAT CAPUA WOULD NOT ----
+     A tour was three single combats and then three more single combats, for as
+     many weeks as you stayed. Every other engine in the game — the pair, the
+     melee, the hunt, the flooded sand — existed only on the Capuan bill, so
+     going away made the game smaller rather than different, and a campaign
+     spends a great many weeks away.
+
+     The fix is not to copy the Capuan mix down the coast. Each of these towns
+     already has a taste written into CITY_CUSTOM and nothing was ever built on
+     it. So: Pompeii, which pays for blood and says so on its own walls, puts men
+     in a scrum in that old stone bowl. Neapolis, which can tell a feint from a
+     flinch, wants two of yours working as one and will watch how they do it.
+     Puteoli is a port — the animals come off the ships there, and for a house
+     the town has heard of, the harbour itself goes onto the sand.
+
+     THE TOWN BOUT TAKES A SLOT; IT IS NOT BOLTED ON. Adding it as a fourth offer
+     left the card 82% single combats, which is worse than Capua's 57 — a card
+     that has everything is not a card with a character. Filling a slot with it
+     makes the bill genuinely different down here, and caps it at two so Pompeii
+     is a town that likes a scrum rather than a town that only holds them. */
+  const TOWN_SLOT = 0.42, TOWN_MAX = 2;
+  let townCount = 0;
+  const townBout = ()=>{
+    const enough = activeG(d).length >= 2;
+    if(key==="pompeii"){
+      if(!enough) return null;
+      const size = ri(4,5), field = [];
+      for(let i=0;i<size;i++) field.push(pickAnyOpp(d, Math.max(0,tier-1)).opp);
+      return { id:d.nextId++, tier, festival:fest, city:key, melee:true, field,
+        stakes:"melee", townBout:"scrum", purse: townPurse(3.6) };
+    }
+    if(key==="neapolis"){
+      if(!enough) return null;
+      const ot = Math.max(0, tier-1);
+      const p1 = pickAnyOpp(d, ot);
+      let p2 = pickAnyOpp(d, ot), guard = 0;
+      while(guard++<6 && p2.ref && p1.ref && p2.ref.fid===p1.ref.fid) p2 = pickAnyOpp(d, ot);
+      return { id:d.nextId++, tier, festival:fest, city:key, pair:true,
+        opps:[p1.opp, p2.opp], oppRefs:[p1.ref, p2.ref], stakes:"standard",
+        townBout:"pair", purse: townPurse(1.7) };
+    }
+    if(key==="puteoli"){
+      if(enough && knownIn(d,key)>=45 && R()<0.34){
+        const size = ri(6,8), field = [];
+        for(let i=0;i<size;i++) field.push(pickAnyOpp(d, 1).opp);
+        return { id:d.nextId++, tier:Math.max(tier,2), festival:fest, city:key, melee:true,
+          spectacle:"naumachia", field, stakes:"melee", townBout:"naumachia", purse: townPurse(5.2) };
+      }
+      const [bk, B] = pick(beastTier(tier));
+      const grade = clamp(beastGrade(d) + (R()*0.30 - 0.13), 0, 1.25);
+      return { id:d.nextId++, tier, festival:fest, city:key, venatio:true, beast:bk, grade,
+        stakes:"venatio", townBout:"hunt",
+        purse: rnd((town.purse[0]+R()*town.purse[1]) * B.purse * beastGradeOf(grade).purse * C.purse) };
+    }
+    return null;
+  };
+
+  for(let i=0;i<n;i++){
+    if(townCount < TOWN_MAX && R() < TOWN_SLOT){
+      const o = townBout();
+      if(o){ offers.push(o); townCount++; continue; }
+    }
+    addSingle();
   }
+  /* a card of nothing but beasts and scrums is not a card either */
+  if(!offers.some(o=>!o.pair && !o.melee && !o.venatio)) addSingle();
+
   /* once the home house has had enough of you, they put their own man up */
   { const P = bayPol(d, key);
     if(P.grudge >= 45 && R() < 0.55){
@@ -8485,7 +8585,8 @@ function makeCityGames(d){
     }
   }
   offers.forEach(o=>{ if(!o.venue) o.venue = venueFor(d, o); if(!o.sky) o.sky = skyFor(d, o); });
-  d.games = { festival:`the games at ${C.name}`, offers, week:d.week, city:key };
+  d.games = { festival:fest, offers, week:d.week, city:key,
+    custom: (cityCustom(key)||{}).name || null };
 }
 
 /* ---- THE PRIMUS OF CAPUA ----
@@ -11928,6 +12029,13 @@ function doMelee(d, ids, offer, pending, choice, tactic){
      not a draw whatever the sand says about a winner. */
   const drewIt = !won && !res.forfeit && res.winner < 0
     && res.ents.some(e=>e.mine && !e.out);
+  /* a melee is somebody's afternoon too. Vigour here is what share of yours were
+     still on their feet at the horn — the nearest thing a scrum has to "well done". */
+  if(offer.city) cityAfter(d, offer, { won,
+    theirDead: res.ents.some(e=>!e.mine && e.dead),
+    spared: res.ents.some(e=>e.mine && e.out && !e.dead),
+    vigour: 100 * res.ents.filter(e=>e.mine && !e.out).length / Math.max(1, res.ents.filter(e=>e.mine).length),
+    crowd: res.crowd }, sum);
   bookBout(d, { win:won, drawn:drewIt, purse:mPurse,
     crowd:res.crowd, tier:offer.tier, stakes:"melee", city:offer.city, kind:"melee",
     died: res.ents.some(e=>e.mine && e.dead), killed: res.ents.some(e=>!e.mine && e.dead),
@@ -12071,6 +12179,10 @@ function doVenatio(d, gid, offer, tactic, pending, choice){
   } else if(!res.aDies){
     sum.push(`No kill. The house takes only the fee.`);
   }
+  /* a town that came for a hunt has had one. The beast dying is the blood a blood
+     town wanted; the man walking off it unhurt is the craft a Greek town wanted. */
+  if(offer.city) cityAfter(d, offer, { won:!!res.killed, theirDead:!!res.killed,
+    spared:false, vigour:res.vA != null ? res.vA : (res.killed ? 70 : 40), crowd:res.crowd }, sum);
 
   /* the men do not think of this as fighting */
   const highborn = g.pfame >= 60;
@@ -12189,6 +12301,12 @@ function doPairFight(d, ids, offer, tactic, pending, choice){
   }
   // opponents killed
   const kills = res.dead.B.filter(Boolean).length;
+  /* the pair returns hp per man, not a vA — a Greek town's "well done" is both of
+     yours still carrying something when the sixteen rounds ran out */
+  if(offer.city) cityAfter(d, offer, { won:!!res.win, theirDead:kills>0,
+    spared: (res.down.A||[]).some((x,i)=>x && !res.dead.A[i]),
+    vigour: ((res.hp.A[0]||0) + (res.hp.A[1]||0))/2,
+    crowd:res.crowd }, sum);
   bookBout(d, { win:pWin, drawn:pDrawn, purse:pPurse, crowd:res.crowd, tier:offer.tier,
     cls:gs[0]&&gs[0].cls, stakes:offer.stakes, city:offer.city, kind:"pair",
     died: res.dead.A.some(Boolean), killed: kills>0,
@@ -12649,23 +12767,6 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
       * (isF(g)?1.2:1) * (F? F.fame : 1) * (fineKit?1.25:1) * kitShow(gc.mods)
       * (away?1:facFame(d, g.cls)) * V.fame * docFame(d) * blessFame(d));
     if(fineKit) sum.push(`Vulcan's day, and the crowd saw whose steel he carried.`);
-    if(away){
-      const fit = repStyle(d)===away.taste;
-      const gained = rnd((7 + res.crowd/16 + (fit?5:0)) * docKnown(d));
-      d.known[offer.city] = clamp(knownIn(d,offer.city) + gained, 0, 100);
-      sum.push(`${away.name} is beginning to know the name — local standing ${Math.round(knownIn(d,offer.city))}.${fit? " They like the kind of house you are." : ""}`);
-      /* the town's own man, and the town's own house, both took a view of that */
-      { const P = bayPol(d, offer.city), C = cityCustom(offer.city);
-        const served = cityServed(d, offer.city, offer, res, res.crowd);
-        P.fought = (P.fought||0) + 1;
-        P.favor = clamp(P.favor + 4 + served*5, 0, 100);
-        P.grudge = clamp(P.grudge + 5, 0, 100);
-        if(served>0 && C) sum.push(`${C.name}: they got the afternoon they came for, and ${P.mag} noticed who gave it to them.`);
-        else if(served<0 && C) sum.push(`${C.name}: not what this town came for. ${P.mag} was polite about it, which is its own answer.`);
-        if(P.grudge>=55 && !P.warned){ P.warned = 1;
-          chron(d, `House ${P.house} of ${away.name} has had enough of a Capuan taking purses off their own sand. They are asking the magistrate for the match.`, "bad"); }
-      }
-    }
     d.fame += fg;
     g.pfame += fg + rnd(res.crowd/14 * kitShow(gc.mods)) + (g.traits.includes("Glory-Seeker")?3:0);
     if(d.saga && d.saga.gid===g.id && d.saga.stage<3) d.saga.renown = clamp(d.saga.renown + (res.bDies?7:5) + (res.crowd>=80?3:0), 0, 100);
@@ -12702,6 +12803,17 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
     g.morale = clamp(g.morale-9, 0, 100);
     sum.push(`Defeat. The house takes only the appearance fee.`);
   }
+
+  /* ---- A TOWN SAW WHAT IT SAW, WHETHER YOU WON OR NOT ----
+     This lived inside `if(win)`, which meant a house could be beaten the length of
+     the bay without a single town noticing it had been there — no standing, no
+     magistrate, no home house getting angrier. The give-away is in cityServed
+     itself: its craft branch tests for a LOSS and returns −1, a line that could
+     never once have run. Losing at Neapolis is supposed to cost you something.
+     Turning up at all is still worth the +4; what you did when you got there is
+     the ±5 on top. */
+  if(away) cityAfter(d, offer, { won:win, theirDead:!!res.bDies, spared:!!res.spared,
+    vigour:res.vA, crowd:res.crowd }, sum);
 
   if(res.bDies){
     g.kills++; g.pfame += 6; d.fame += 4;
@@ -21639,6 +21751,9 @@ export default function App(){
 
       {arenaWiz && !fight && (()=>{
         const OFF = (S.games && S.games.offers) || [];
+        /* a bout that is on this card because of where you are, not what you are */
+        const townTag = o => o.townBout
+          ? <span className="tag tag-gold">✦ {(CITY_CUSTOM[o.city]||{}).name || "The town's own"}</span> : null;
         const singles = OFF.filter(o=>!o.pair && !o.venatio && !o.melee);
         const pairs = OFF.filter(o=>o.pair), melees = OFF.filter(o=>o.melee), hunts = OFF.filter(o=>o.venatio);
         const gamesReady = S.fame >= TIERS[1].fame;
@@ -21727,17 +21842,17 @@ export default function App(){
             {gamesReady && pairs.map(o=> occRow({kind:"pair",o}, "Pair Bout",
               o.opps.map(x=>x.name).join(" & "),
               <span className="gold" style={{fontSize:"var(--fs-md)"}}>{o.purse}d</span>,
-              <div style={{marginTop:3}}><span className="tag tag-gold">{TIERS[o.tier].name}</span> <span className="tag tag-blood">Two men</span></div>))}
+              <div style={{marginTop:3}}><span className="tag tag-gold">{TIERS[o.tier].name}</span> <span className="tag tag-blood">Two men</span> {townTag(o)}</div>))}
             {gamesReady && melees.map(o=> occRow({kind:"melee",o}, o.spectacle==="naumachia"?"The Naumachia":"The Melee",
               o.spectacle==="naumachia" ? `A mock sea-battle — ${o.field.length} men on flooded sand` : `${o.field.length} men on the sand at once`,
               <span className="gold" style={{fontSize:"var(--fs-md)"}}>{o.purse}d</span>,
-              <div style={{marginTop:3}}>{o.spectacle==="naumachia" && <span className="tag tag-gold">✦ Spectacle</span>} <span className="tag tag-blood">Last man standing</span></div>))}
+              <div style={{marginTop:3}}>{o.spectacle==="naumachia" && <span className="tag tag-gold">✦ Spectacle</span>} <span className="tag tag-blood">Last man standing</span> {townTag(o)}</div>))}
             {gamesReady && hunts.map(o=>{ const BB = beastOf(o.beast, o.grade!=null?o.grade:beastGrade(S)) || BEASTS[o.beast];
               return occRow({kind:"hunt",o}, "The Morning Hunt",
               BB.name,
               <span className="gold" style={{fontSize:"var(--fs-md)"}}>{o.purse}d</span>,
               <div style={{marginTop:3}}><span className="tag">Beast · no missio</span>{" "}
-                <span className="tag tag-blood">{STAT_NAMES[BEASTS[o.beast].tests||"str"]}</span></div>); })}
+                <span className="tag tag-blood">{STAT_NAMES[BEASTS[o.beast].tests||"str"]}</span> {townTag(o)}</div>); })}
             {!gamesReady && <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:4}}>
               No editor books an unknown house yet. Win in the pits to 25 fame and the games open.
             </div>}
@@ -22472,7 +22587,9 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* the always-open card and the block, for a headless player */
     makePitOffer, pitMen, makePitCard, buyFromBlock, rosterFull, cellsCap,
     /* the week's bill, so its composition can be counted without playing a campaign */
-    makeGames, festivalNow, CALENDAR,
+    makeGames, makeCityGames, festivalNow, CALENDAR,
+    /* the coast: what each town puts on, and what it takes from an afternoon */
+    CITIES, CITY_CUSTOM, cityCustom, cityServed, cityAfter, knownIn, cityTier, bayPol,
     /* what a fortune can be spent on once the yard is finished */
     beginWork, workOpen, workDone, workOn, workUpkeep, WORKS, MONUMENTS, ALL_WORK_KEYS,
     workWeekly, WORK_DEPOSIT, worksWeek,
