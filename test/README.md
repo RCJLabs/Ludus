@@ -61,6 +61,7 @@ reason the check exists usually has not.
 | `census` | fast | the ladder's top rungs asked 110,000 denarii in cash from a house that had to spend the same coin on stone, so nobody ever stood on them |
 | `bulk` | fast | four functions held every balance change in a 22,700-line file, and nothing ever said stop |
 | `worst` | fast | the record book had a slot for the house's worst night that nothing ever wrote and nothing ever read; filling it found two more things nobody was writing |
+| `nights` | fast | a man's page had everything about his condition and nothing about any afternoon of his life |
 
 ## What no check has ever touched
 

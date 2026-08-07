@@ -3836,7 +3836,7 @@ function genGladiator(d, quality){
     name: freshName(d, fem ? FNAMES[origin] : ORIGINS[origin].names, fem), nick:null, origin, cls,
     morale:60, fatigue:0, wins:0, losses:0, kills:0, pfame:0, fans:0, status:"active", injury:null,
     focus:CLASSES[cls].key[0], regimen:"palus", sparWith:null, age:ri(18,32), lastFought:-9, traits:[], legend:false, returnWeek:0,
-    kit: defaultKit(cls), wear:{weapon:100,offhand:100,helm:100,armor:100}, strain:0, form:0, formLog:[], regard:ri(38,54), memory:[], scars:[], scarCap:{}, weeksAged:0 };
+    kit: defaultKit(cls), wear:{weapon:100,offhand:100,helm:100,armor:100}, strain:0, form:0, formLog:[], regard:ri(38,54), memory:[], nights:{}, scars:[], scarCap:{}, weeksAged:0 };
   /* the ceilings were 92 and 95, which threw away everything above quality ninety
      — and the block never saw quality ninety, so nobody noticed */
   for(const s of STATS) g[s] = clamp(24 + quality*0.5 + ri(-9,9) + (ORIGINS[origin].mod[s]||0)*2.2, 8, 95);
@@ -5165,6 +5165,44 @@ function remember(d, g, kind, mult){
   if(g.memory.length > 8) g.memory = g.memory.slice(-8);
 }
 const rememberAll = (d, kind, mult) => activeG(d).forEach(g=>remember(d, g, kind, mult));
+
+/* ---- AND WHAT HE IS KNOWN FOR ----
+   Everything above is what he remembers about YOU. A man knew his wins, his losses,
+   his kills, his scars, what the years had taken and what the body would not forget
+   — a great deal about his condition and nothing whatever about any particular
+   afternoon. So a fighter carried for sixty weeks had no answer to the only question
+   a player actually asks about him: what was he famous for.
+
+   Four nights, written when they happen rather than derived afterwards, because the
+   figures that make them are on the table at the time and gone a line later. They
+   cost four small objects on a man and they are the difference between a stat block
+   and somebody you are reluctant to sell.
+
+   Each keeps one night, by its own rule. The roar and the brink keep the most
+   extreme; the upset keeps the longest odds he ever beat; the sparing keeps the
+   FIRST, because the night the crowd let a man live is the one that marks him and
+   the third time is not news. */
+/* what the book has to have been quoting for a win to be a story, and what a man
+   has to have left at the horn for it to have been close. */
+const UPSET_ODDS = 42, BRINK_LEFT = 30;
+const NIGHTS = {
+  roar:   { keep:(was,now)=> now.crowd > was.crowd },
+  upset:  { keep:(was,now)=> now.odds < was.odds },
+  spared: { keep:()=> false },
+  brink:  { keep:(was,now)=> now.left < was.left },
+};
+function markNight(g, kind, rec){
+  if(!g || !NIGHTS[kind] || !rec) return false;
+  g.nights = g.nights || {};
+  const was = g.nights[kind];
+  if(was && !NIGHTS[kind].keep(was, rec)) return false;
+  g.nights[kind] = rec;
+  return true;
+}
+/* the shared part of every one of them: where, when, and against whom */
+const nightWhere = (d, offer, opp) => ({ week:d.week,
+  festival: offer.festival || (offer.beast ? "the morning hunt" : "the pits"),
+  opp: opp || null });
 
 /* ---- LIFE IN THE LUDUS ----
    Most of a man's life here is the week between fights: the bench, the dice, the
@@ -6554,7 +6592,7 @@ const SAVE_NUMBERS = { yardSeen:0, yardMissed:0, piety:30, lastOffering:-9,
 /* booleans, where null would read as "not yet decided" and false is the truth */
 const SAVE_FLAGS = { milestone600:false };
 /* the same, for each man in the yard. Eight separate passes over the roster, now one. */
-const MAN_FIELDS  = { memory:()=>[], formLog:()=>[], scars:()=>[], scarCap:()=>({}),
+const MAN_FIELDS  = { memory:()=>[], formLog:()=>[], scars:()=>[], scarCap:()=>({}), nights:()=>({}),
   sex:()=>"m", kit:g=>defaultKit(g.cls), traits:()=>[], lasting:()=>[],
   focus:g=>(CLASSES[g.cls] ? CLASSES[g.cls].key[0] : "str") };
 const MAN_NUMBERS = { regard:()=>ri(38,54), form:()=>0, fans:()=>0, strain:()=>0,
@@ -12103,6 +12141,13 @@ function doMelee(d, ids, offer, pending, choice, tactic){
      not a draw whatever the sand says about a winner. */
   const drewIt = !won && !res.forfeit && res.winner < 0
     && res.ents.some(e=>e.mine && !e.out);
+  { const where = nightWhere(d, offer, offer.spectacle==="naumachia" ? "the flooded sand" : `${(offer.field||[]).length} others`);
+    for(const e of (res.ents||[])){
+      if(!e.mine) continue;
+      const x = d.gladiators.find(y=>y.id===e.gid); if(!x) continue;
+      markNight(x, "roar", Object.assign({ crowd:rnd(res.crowd) }, where));
+      if(e.out && !e.dead) markNight(x, "spared", Object.assign({}, where));
+    } }
   /* a melee is somebody's afternoon too. Vigour here is what share of yours were
      still on their feet at the horn — the nearest thing a scrum has to "well done". */
   if(offer.city) cityAfter(d, offer, { won,
@@ -12238,6 +12283,12 @@ function doVenatio(d, gid, offer, tactic, pending, choice){
      column has been short by every man an animal ever killed. Found by the check
      that fills the book's worst-night slot, which noticed a house that had buried
      somebody and had no bad night on record to show for it. */
+  { const where = nightWhere(d, offer, B.name);
+    markNight(g, "roar", Object.assign({ crowd:rnd(res.crowd) }, where));
+    if(!res.aDies && res.vA <= BRINK_LEFT) markNight(g, "brink", Object.assign({ left:Math.max(0, rnd(res.vA)) }, where));
+    if(res.killed && (offer.beast==="lion" || offer.beast==="aurochs"))
+      markNight(g, "upset", Object.assign({ odds:34, beast:true }, where));
+  }
   bookBout(d, { win:!!res.killed, died:!!res.aDies, killed:!!res.killed, purse: res.killed ? offer.purse : 0, stake:offer.purse,
     fell: res.aDies ? fullName(g) : null,
     crowd:res.crowd, rounds:res.beats ? Math.max(...res.beats.map(b=>b.round||0)) : 0,
@@ -12383,6 +12434,12 @@ function doPairFight(d, ids, offer, tactic, pending, choice){
       ? `Sixteen rounds and all four walked off. There is nothing in that for the editor and nothing in it for you — the house takes only the fees.`
       : `Beaten. The house takes only the fees.`);
   }
+  { const foe = (offer.opps||[]).map(o=>o.name).join(" and ");
+    gs.forEach((x,i)=>{
+      const where = nightWhere(d, offer, foe);
+      markNight(x, "roar", Object.assign({ crowd:rnd(res.crowd), beside: gs[1-i] && gs[1-i].name }, where));
+      if(res.down.A[i] && !res.dead.A[i]) markNight(x, "spared", Object.assign({ beside: gs[1-i] && gs[1-i].name }, where));
+    }); }
   // opponents killed
   const kills = res.dead.B.filter(Boolean).length;
   /* the pair returns hp per man, not a vA — a Greek town's "well done" is both of
@@ -12947,6 +13004,24 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
     d.fame = Math.max(0, d.fame+1);
     g.morale = clamp(g.morale-9, 0, 100);
     sum.push(`Defeat. The house takes only the appearance fee.`);
+  }
+
+  /* ---- AND WHAT HE WILL BE KNOWN FOR ----
+     Written here, where the figures still exist. The odds are the ones the
+     bookmakers were quoting before the horn, not a number worked out afterwards
+     from the result — a man who was given one chance in five and took it is the
+     story, and by the next line res is gone and so is the price. */
+  { const where = nightWhere(d, offer, offer.opp.nick ? `${offer.opp.name}, ${offer.opp.nick}` : offer.opp.name);
+    markNight(g, "roar", Object.assign({ crowd:rnd(res.crowd) }, where));
+    if(win){
+      const odds = Math.round(winChance(g, offer.opp, PREP, tacticNow) * 100);
+      if(odds <= UPSET_ODDS) markNight(g, "upset", Object.assign({ odds }, where));
+    }
+    if(res.spared) markNight(g, "spared", Object.assign({}, where));
+    /* clamped, because vA is allowed to finish below zero — the last blow takes what
+       it takes and nothing floors it — and "he finished with -32 left in him" is not
+       a sentence to put on a man's page. */
+    if(!res.aDies && res.vA <= BRINK_LEFT) markNight(g, "brink", Object.assign({ left:Math.max(0, rnd(res.vA)) }, where));
   }
 
   /* ---- A TOWN SAW WHAT IT SAW, WHETHER YOU WON OR NOT ----
@@ -20695,6 +20770,37 @@ export default function App(){
                 </div>
               </div>
             )}
+            {/* ---- WHAT HE IS KNOWN FOR ----
+                Four nights, each written the afternoon it happened. A man had a
+                great deal on this page about his condition and nothing at all about
+                any particular day of his life. */}
+            {gView==="standing" && (()=>{
+              const N = selG.nights || {};
+              const at = n => `${n.festival}, week ${n.week}`;
+              const rows = [];
+              if(N.roar && N.roar.crowd >= 62) rows.push(["The night they were on their feet",
+                `${at(N.roar)}${N.roar.opp?` — against ${N.roar.opp}`:""}${N.roar.beside?`, beside ${N.roar.beside}`:""}. The tiers went to ${N.roar.crowd}, and it has not been that loud for ${PR(selG).him} since.`]);
+              if(N.upset) rows.push([N.upset.beast ? "The morning he killed the thing" : "The one nobody gave him",
+                N.upset.beast
+                  ? `${at(N.upset)}. Capua came to watch it kill ${PR(selG).him} and went home having watched the other thing.`
+                  : `${at(N.upset)}. The book had ${PR(selG).him} at ${N.upset.odds} in a hundred against ${N.upset.opp}, and ${PR(selG).he} took it anyway.`]);
+              if(N.spared) rows.push(["The night the thumb went up",
+                `${at(N.spared)}${N.spared.opp?` — ${N.spared.opp} had ${PR(selG).him}`:""}${N.spared.beside?`, with ${N.spared.beside} beside ${PR(selG).him}`:""}. ${PR(selG).He} went down and the crowd let ${PR(selG).him} get up again.`]);
+              if(N.brink) rows.push(["The one he nearly did not walk off",
+                `${at(N.brink)}${N.brink.opp?` — ${N.brink.opp}`:""}. ${PR(selG).He} finished it with ${N.brink.left} left in ${PR(selG).him} and walked out on ${PR(selG).his} own feet, which was more than anybody in the seats expected.`]);
+              if(!rows.length) return null;
+              return (
+                <div className="panel" style={{padding:11,marginBottom:9,background:"#171712",borderColor:"#5c4a2a"}}>
+                  <div className="tag tag-gold" style={{marginBottom:4}}>What he is known for</div>
+                  {rows.map(([t,say],i)=>(
+                    <div key={t} style={{borderTop:i?"1px dotted #33271a":"none",paddingTop:i?6:0,marginTop:i?6:0}}>
+                      <div className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d092"}}>{t}</div>
+                      <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:1,lineHeight:1.4}}>{her(say, selG)}</div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
             {gView==="standing" && (()=>{ const v = favourOf(selG); if(v < 8) return null;
               return (
                 <div className="panel" style={{padding:11,marginBottom:9,background:"#1c1610",borderColor:favColour(v)}}>
@@ -22780,6 +22886,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     hostParty, throwFeast, walkTheCells, holdTourney, stageMunus,
     seekMatchNow, openLicenceNow, takeUpTheHouse, claimRise, succeed,
     /* the lanista's climb: the rungs, the gates, and what standing pays and costs */
+    /* the four nights a man is known for */
+    markNight, NIGHTS, nightWhere,
     /* the week in phases, so a check can run one without running all of them */
     menWeek, ludusLedger, heldQuestions, weekReckoning, boutAftermath,
     RISE_RANKS, riseOf, riseRank, riseNext, riseNeed, canClaimRise, riseWeek,
