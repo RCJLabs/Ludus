@@ -2107,12 +2107,25 @@ const TIERS = [
    the last milestone had fired six thousand fame ago, purses had been pinned at the
    fameEdge cap since about 1,620, and nothing anywhere in the game read a number above
    1,000. The single most-watched figure on the screen was decoration for the entire back
-   half of a long game. Four rungs above it, and each of them does something. */
+   half of a long game. Rungs were added above it — words at each, an extra card at
+   3,000, a slow purse edge to about 24,000 — and then the game outgrew those too:
+   measured houses cross 11,000 around year twelve and the finished stone prints
+   +24 fame a week forever, so the ladder trailed off into silence a second time.
+   Two more rungs now, placed where measured houses actually go, and the last one
+   is a last rung on purpose: the ladder ends by saying so rather than by running
+   out of lines. The rung at 14,000 has teeth in men rather than coin — a man
+   bought off the block arrives already knowing what house he is joining (+6
+   regard, +6 morale at purchase), because the one thing a name that size should
+   buy in this game is how the men take you, and it is the one currency v2.43.0
+   deliberately did not cap. */
 const FAME_TIERS = [
   [0,"Unknown"],[40,"Noticed"],[120,"Respected"],[300,"Renowned"],[600,"Legend of Capua"],
   [1400,"Spoken of in Rome"],[3000,"Known the length of Italy"],
   [6000,"One of the Great Houses"],[11000,"A Name Out of the Books"],
+  [14000,"The House Men Ask For"],[20000,"The Measure of the Trade"],
 ];
+const FAME_WARM_AT = 14000;   // from here, bought men arrive half-way to trusting you
+const fameWarm = d => (d && (d.fame||0) >= FAME_WARM_AT) ? 6 : 0;
 /* what the city says the first time each is reached */
 const FAME_WORD = {
   600:  "Your name is spoken in Rome itself. The house has become legend.",
@@ -2120,6 +2133,8 @@ const FAME_WORD = {
   3000: "A lanista in Ravenna, the length of Italy away, has taken to describing his own house as being run 'in the Capuan style', and means yours. You have become a way of doing the thing.",
   6000: "There are four or five houses in the empire that men argue about when they argue about houses. As of this season yours is one of them, and the argument is no longer whether.",
   11000:"A historian of no particular importance has begun a chapter on the games of this generation, and he opens it with your house. Not a bout, not a man — the house. That is what is left when the sand is swept.",
+  14000:"Something has changed at the block. The last three men you bought had heard the name before the seller said it, and stood differently for hearing it. Men sold to this house stay alive and are known, and every yard in Campania knows it — they arrive half-way to trusting you, which no amount of coin has ever bought.",
+  20000:"There is no higher rung, and this time that is the truth rather than an oversight. Lanistae you will never meet describe their good years by yours. The figure in the ledger has stopped being a number anybody counts; it is the unit the rest of them are counted in.",
 };
 
 /* ================= HELPERS ================= */
@@ -6492,6 +6507,9 @@ function buyFromBlock(d, id, bidPrice){
     const w = defaultKit(g.cls).weapon;
     if(gearFree(d,w)<=0) d.gear[w] = (d.gear[w]||0)+1;   // he comes with the blade he was sold with
     g.kit = bareKit(g.cls);
+    /* a name past the census buys the one thing coin never has: how the men take you */
+    if(fameWarm(d)){ g.regard = clamp((g.regard!=null?g.regard:50) + fameWarm(d), 0, 100);
+      g.morale = clamp((g.morale!=null?g.morale:50) + fameWarm(d), 0, 100); }
     d.gladiators.push(g);
     if(g.paragon){
       d.flags.paragonDone = 1; d.flags.paragonBought = d.week;

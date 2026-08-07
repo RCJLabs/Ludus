@@ -1322,6 +1322,7 @@ Tuning dials, in the order you'd reach for them:
 | Cutting it | `lapseCollegium` | +7 unrest, or +14 once it has been used |
 | The war | `WAR` | 4 stages at weeks 1, 11, 27, 44; over at 58 |
 | What standing pays on | `CENSUS_TOP` | fame capped at 9,000 for the stipend, the liturgy and the league's purse |
+| A name at the block | `FAME_WARM_AT` | from fame 14,000, bought men arrive +6 regard, +6 morale |
 | What it leaks | `warWeek` | standing, unrest, and a defiance floor |
 | The block | `warMarket` | ×1.25 at its height, ×0.55 after |
 
@@ -1340,6 +1341,30 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.44.0 — The ladder gets its last rung, on purpose
+
+Audit item #79. The fame ladder was rebuilt once already (v2.37-era) and the game
+outgrew it again: measured houses cross 11,000 — the last rung — around year
+twelve, the finished stone prints +24 fame a week forever, and above 11,000 the
+only things still reading fame were an imperceptible purse slope (about +1% per
+900 fame, dying quietly at 24,120) and the levy, which is a bill. The most-watched
+figure on the screen was decoration for the back half of a long game, for the
+second time.
+
+Two rungs, placed where measured houses actually go (post-v2.43 survivors crossed
+14,000 three of three and 20,000 one of three). **The House Men Ask For (14,000)
+has teeth in men rather than coin**: a man bought off the block arrives +6 regard
+and +6 morale — the name does half the sacramentum's work before the oath is said
+— because how the men take you is the one currency v2.43.0 deliberately did not
+cap. **The Measure of the Trade (20,000) is a last rung on purpose**: the ladder
+ends by saying so, rather than by running out of lines.
+
+Verified: same seed, same man — regard 40 → 40 and morale 60 → 60 buying at fame
+13,999; 40 → 46 and 60 → 66 at 14,000. Each word fires exactly once, in order,
+and nothing fires above 20,000. The change consumes no RNG draws, so every
+trajectory below the rung is untouched by construction. Tuning dial:
+`FAME_WARM_AT` beside `FAME_TIERS`.
 
 ### v2.43.0 — Standing pays on the census, not the legend
 
@@ -2730,4 +2755,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.43.0*
+*Last updated: v2.44.0*
