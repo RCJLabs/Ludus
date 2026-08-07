@@ -1466,37 +1466,37 @@ const ambWord = g => g && g.ambition ? her(AMBITIONS[g.ambition.kind].line(g), g
 const LANISTAE = {
   Solonius: { name:"Marcus Solonius", trait:"the schemer",
     blurb:"Smiles first, pays second, and has never once been in the room when it happened.",
-    grudgeDecay:1.6, poach:2.2, bribe:1.8, train:1.0, bid:1.0 },
+    grudgeDecay:1.6, poach:2.2, bribe:1.8, train:1.0, bid:1.0, stature:0.42 },
   Vettius: { name:"Quintus Vettius Bassus", trait:"who forgets nothing",
     blurb:"Keeps a ledger of slights and settles it a year late, when you have stopped watching.",
-    grudgeDecay:0.35, poach:1.0, bribe:1.0, train:1.0, bid:1.1, sabotage:1.9 },
+    grudgeDecay:0.35, poach:1.0, bribe:1.0, train:1.0, bid:1.1, sabotage:1.9, stature:0.5 },
   Tullius: { name:"Gaius Tullius Rufus", trait:"who is simply better at this",
     blurb:"No theatre and no grudges. His men are drilled harder than yours and he can outbid you whenever he likes.",
-    grudgeDecay:1.0, poach:0.8, bribe:1.2, train:1.55, bid:1.6 },
+    grudgeDecay:1.0, poach:0.8, bribe:1.2, train:1.55, bid:1.6, stature:0.62 },
   /* the men who buy a yard when one comes up — see bayRefill. Each is written the
      way the three founders are, because a house that arrives at year nine and is
      called "House Glaber" by a fallback string is not a rival, it is a placeholder. */
   Glaber: { name:"Publius Glaber", trait:"who bought it all at once",
     blurb:"A magistrate's nephew with a great deal of money and no trade. He pays for what he cannot do, and he can pay for a very great deal.",
-    grudgeDecay:1.3, poach:1.6, bribe:2.0, train:0.75, bid:1.7 },
+    grudgeDecay:1.3, poach:1.6, bribe:2.0, train:0.75, bid:1.7, stature:0.46 },
   Cossutius: { name:"Numerius Cossutius", trait:"who was one of them",
     blurb:"Bought his own freedom fifteen years ago and saved every denarius since. His men eat what he eats and they know it.",
-    grudgeDecay:0.7, poach:0.9, bribe:0.6, train:1.30, bid:0.8 },
+    grudgeDecay:0.7, poach:0.9, bribe:0.6, train:1.30, bid:0.8, stature:0.38 },
   Marcellus: { name:"Aulus Marcellus", trait:"the soldier",
     blurb:"Twenty-six years in the legions and a pension put into a ludus. He has never trained a gladiator; he has trained a great many men, which he considers the same problem.",
-    grudgeDecay:1.1, poach:0.7, bribe:0.5, train:1.40, bid:0.9, sabotage:0.5 },
+    grudgeDecay:1.1, poach:0.7, bribe:0.5, train:1.40, bid:0.9, sabotage:0.5, stature:0.44 },
   Rufinus: { name:"Sextus Rufinus", trait:"who says nothing at all",
     blurb:"Opened without a feast and without a word. The first the bay heard of it was his men on a card, better drilled than they had any right to be.",
-    grudgeDecay:0.9, poach:1.0, bribe:1.0, train:1.50, bid:1.1, sabotage:1.4 },
+    grudgeDecay:0.9, poach:1.0, bribe:1.0, train:1.50, bid:1.1, sabotage:1.4, stature:0.52 },
   Pollio: { name:"Vedius Pollio", trait:"who is not careful with them",
     blurb:"Pays over the odds and never asks what is wrong with them. Nobody in the trade likes him. Everybody in the trade sells to him.",
-    grudgeDecay:1.5, poach:2.0, bribe:1.6, train:0.85, bid:1.8 },
+    grudgeDecay:1.5, poach:2.0, bribe:1.6, train:0.85, bid:1.8, stature:0.48 },
   Varro: { name:"Titus Varro", trait:"who knows what everyone is worth",
     blurb:"Twenty years auctioning other men's fighters before he bought his own. He can price your best man to the denarius and he has.",
-    grudgeDecay:1.0, poach:1.5, bribe:1.3, train:1.05, bid:1.5 },
+    grudgeDecay:1.0, poach:1.5, bribe:1.3, train:1.05, bid:1.5, stature:0.45 },
 };
 const lanistaOf = h => LANISTAE[h] || { name:"House "+h, trait:"", blurb:"",
-  grudgeDecay:1, poach:1, bribe:1, train:1, bid:1 };
+  grudgeDecay:1, poach:1, bribe:1, train:1, bid:1, stature:0.4 };
 
 /* ---- WHAT THEY DO UNWATCHED ----
    The cells whisper and the ear reports. But nothing actually happens down there
@@ -2866,7 +2866,9 @@ const FAVOURS = {
     can:d=>(d.rivals||[]).some(h=>h.fame>20),
     run(d,p){
       const h = (d.rivals||[]).sort((a,b)=>b.fame-a.fame)[0];
-      const lost = Math.min(h.fame, rnd(60+R()*40));
+      /* tuned at 60–100 when the biggest house in the bay held ~300 — a quarter of a
+         name. Now that names scale with the era, the story takes the same share. */
+      const lost = Math.min(h.fame, rnd(Math.max(60+R()*40, h.fame*(0.18+R()*0.12))));
       h.fame -= lost;
       h.grudge = clamp(h.grudge+18, 0, 100);
       addRep(d, "show", 6);
@@ -4785,7 +4787,25 @@ function rivalWeekly(d){
         else if(R()<0.4){ const inj=pick(INJURIES); f.injury={name:inj[0],weeks:inj[1],pen:inj[2]}; }
       }
     }
-    if(h.fame>60) h.fame -= 1;
+    /* ---- THE CITY RISES WITH ITS FIRST HOUSE ----
+       Rival fame was pinned here at sixty — a recruiting dial from before the league
+       existed, mean-reverted weekly. Measured over 400-week runs the three houses sat
+       at 143–485 while any surviving player house ran to five figures: the fame table
+       that names the First House of Capua was decided for good around year four, and
+       the standings read as scenery. The rosters already scale with the era; the
+       names do now too. Each house is pulled toward its lanista's stature — his share
+       of the leading house's name — and a house having a season crests higher, which
+       is the one time the top of the table can genuinely change hands late. Below a
+       player fame of ~100 the target floors at 60 and this line is exactly the old
+       one, so the opening is untouched. */
+    { const crest = clamp(h.form||0, 0, 100)/100 * 0.9;
+      const target = Math.max(60, (d.fame||0) * ((L.stature||0.4) + crest));
+      const pull = (h.form||0) >= 40 ? 0.06 : 0.02;
+      if(h.fame < target) h.fame += (target - h.fame) * pull;
+      /* proportional fall only once the era anchor is live — at the opening the
+         target floors at 60 and this is exactly the old one-a-week erosion */
+      else if(h.fame > Math.max(60, target))
+        h.fame -= (target <= 60 ? 1 : Math.max(1, (h.fame - target) * 0.03)); }
     /* and they recruit against the standard of the age rather than against 85 forever.
        How far a house can reach depends on the house: Capua's first names buy near the
        best man in the bay, the ones scraping by still take what they can get. That is
@@ -4843,6 +4863,9 @@ function campaniaWeek(d){
     let dv = ri(-4,4);
     if(R()<0.06) dv += ri(-18,18);
     h.form = clamp(h.form*0.94 + dv, -100, 100);
+    /* a decreed season does not blow out in a fortnight — the intent holds for its year */
+    if(h.seasonTil && d.week < h.seasonTil) h.form = Math.max(h.form, 60);
+    else if(h.seasonTil) h.seasonTil = 0;
     h.fame = Math.max(0, h.fame + (h.form||0)*0.03);
     /* a house crosses into a season, or out of one, and the bay talks */
     const tier = h.form>=55?2 : h.form<=-55?-2 : h.form>=25?1 : h.form<=-25?-1 : 0;
@@ -4951,6 +4974,20 @@ function leagueReckoning(d, table){
     reward = `You close the year the First House of Capua. The magistracy marks it — ${fameBonus} fame, ${gold} denarii, and every patron a shade warmer.`;
   } else {
     reward = `${first ? first.name : "Another house"} closes the year first in Capua; yours stands ${ordN(rank)} of ${table.length}. There is next year, and the year after.`;
+  }
+  /* about one year in four, somebody in the bay opens the year with money and
+     intent — a decreed great season, which the form machinery then spends down
+     naturally. This is the only way the top of the table changes hands late, and
+     it is answerable: the noblewoman's story now cuts a share of a name rather
+     than sixty denarii's worth of one. */
+  if(R() < 0.28 && !(d.rivals||[]).some(h=>h.seasonTil && d.week < h.seasonTil)){
+    const cand = (d.rivals||[]).filter(h=>!h.retired && h.fame < (d.fame||0));
+    if(cand.length){
+      const h = cand[Math.floor(R()*cand.length)];
+      h.form = clamp(Math.max(h.form||0, 82 + R()*18), -100, 100);
+      h.seasonTil = d.week + WEEKS_PER_YEAR;
+      chron(d, `${lanistaOf(h.name).name} opens the year with money and intent — the bay says House ${h.name} means to be first in Capua before it is out.`, "info");
+    }
   }
   const snap = {}; table.forEach(r=>{ snap[r.you?"__you__":r.name] = r.fame; });
   d.league.snap = snap;

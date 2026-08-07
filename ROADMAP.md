@@ -1323,6 +1323,8 @@ Tuning dials, in the order you'd reach for them:
 | The war | `WAR` | 4 stages at weeks 1, 11, 27, 44; over at 58 |
 | What standing pays on | `CENSUS_TOP` | fame capped at 9,000 for the stipend, the liturgy and the league's purse |
 | A name at the block | `FAME_WARM_AT` | from fame 14,000, bought men arrive +6 regard, +6 morale |
+| A rival's name | `stature` in `LANISTAE` | pulled toward stature × the leading house's fame |
+| A decreed season | `leagueReckoning` | 28%/yr, form 82–100 floored at 60 for the year, crest +0.9 × stature |
 | What it leaks | `warWeek` | standing, unrest, and a defiance floor |
 | The block | `warMarket` | ×1.25 at its height, ×0.55 after |
 
@@ -1341,6 +1343,41 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.45.0 — The city rises with its First House
+
+Audit item #80. Rival fame was pinned by a weekly mean-reversion at sixty — a
+recruiting dial from before the league existed. Measured over 400-week runs the
+three houses sat at **143–485 fame while any surviving player house ran to five
+figures**: the fame table that names the First House of Capua was decided for
+good around year four, and the standings screen read as scenery.
+
+Three changes, all in the rival machinery. **Every lanista carries a `stature`**
+— his share of the leading house's name (Tullius 0.62 down to Cossutius 0.38) —
+and rival fame is pulled toward `stature × your fame` instead of toward sixty,
+so the standings read as a living city (calm-state: 0.4–0.8× of the leader).
+**About one year in four the reckoning decrees somebody a season** — form set to
+82–100 and floored at 60 for that year, a crest worth up to +0.9 stature while
+it lasts, with a faster pull — which is the one time the top of the table can
+genuinely change hands late. **And the noblewoman's story now cuts a share of a
+name (18–30%) rather than sixty denarii's worth of one**, so the counterplay
+survived the rescale.
+
+Measured at a held era of 12,000 fame over 400 weeks: the top spot changed hands
+4 times for 43 total weeks in one seed and stayed held in another — a threat
+every few years, not churn — and at the opening (player fame under ~100) the
+anchor floors at sixty and the erosion is exactly the old line, verified
+unchanged. Dials: `stature` per lanista in `LANISTAE`, the decree odds (0.28/yr)
+in `leagueReckoning`, crest/pull/fall (0.9 / 0.06 / 0.03) in `rivalWeekly`.
+Untested for feel at the margin: how often a real, fighting player actually
+loses the title — the probes' inert player overstates the rivals.
+
+One check recalibrated on the way: `grudge` measured its ninety-ninth percentile
+off three fixed seeds, and the RNG reordering swapped its one angry streak away —
+the same build read p99 34 on the old seeds and 63 across nine fresh ones (A/B
+v2.44.0 vs v2.45.0: 61.9 vs 63.2 — the distribution had not narrowed; the median
+actually rose 4.5 → 14.8 with the hunting line warmer). It samples nine houses
+now, ~1,350 weeks, still three seconds.
 
 ### v2.44.0 — The ladder gets its last rung, on purpose
 
@@ -2755,4 +2792,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.44.0*
+*Last updated: v2.45.0*

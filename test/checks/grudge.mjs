@@ -11,14 +11,24 @@
 
    This check runs campaigns, watches where the number actually goes, and fails if
    a gate has drifted above it. It also fails if the gates collapse together or
-   invert, because the three are an escalation and want to stay one. */
+   invert, because the three are an escalation and want to stay one.
+
+   Nine houses, not three. With three fixed seeds the ninety-ninth percentile is
+   set by the single angriest streak in the sample, and any change that reorders
+   the RNG stream anywhere upstream swaps that streak for a different one — at
+   v2.45.0 the same build measured p99 34 on the three old seeds and 63 across
+   nine fresh ones, and the check cried wolf on a distribution that had not
+   narrowed (A/B against v2.44.0: p99 61.9 old, 63.2 new; the median actually
+   rose 4.5 → 14.8, because a decreed season keeps the in-form hunting line
+   warm). Nine houses puts ~1,350 samples under the percentile instead of ~450,
+   which is the difference between measuring the tail and measuring one story. */
 
 import { hasHandle } from "../harness.mjs";
 
 export const name = "grudge";
 export const describe = "a rival's anger reaches the events that wait on it";
 
-const WEEKS = 150, HOUSES = 3;
+const WEEKS = 150, HOUSES = 9;
 
 export async function run({ p, errors }){
   if(!await hasHandle(p))
