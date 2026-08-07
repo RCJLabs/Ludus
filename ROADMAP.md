@@ -1330,6 +1330,7 @@ Tuning dials, in the order you'd reach for them:
 | Feast fatigue | `FEAST_FRESH` / `feastFresh` | ×0.4 effect on the cooldown floor, full at a 6-week gap |
 | Feast price ceiling | `feastCost` | fame clamp extended to ×2 (≈×5.4 base at fame 4,400+) |
 | The creditors' patience | `CREDIT_WEEKS` / `creditLine` | ruin at −max(250, 2.5 × `weeklyBill`), ×1.68 with a loan |
+| The asking drumbeat | `AMB_COOL` | ten weeks of yard-wide quiet after any man's ambition beat |
 | What it leaks | `warWeek` | standing, unrest, and a defiance floor |
 | The block | `warMarket` | ×1.25 at its height, ×0.55 after |
 
@@ -1348,6 +1349,26 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.49.0 — One man's asking buys the yard a month
+
+Audit item #84. Across four independent 12-house batches, the ambition event was
+17.4–21.3% of everything the player was ever asked — two to two and a half times
+the next most common event. The per-man cadence (five weeks to ask, nine to
+press) was always right; the drumbeat came from a full roster keeping somebody
+eligible every week for both the dedicated channel and the random table.
+
+One dial: a house-wide cooldown of ten weeks between ambition events
+(`AMB_COOL`). A four-week cooldown was tried first and measured nearly useless
+(17.0% → 16.4%) — different men's asks already arrive four to six weeks apart —
+so the gap was sized from the arithmetic of the event rate instead. Measured
+result: **17.0% → 10.7%**, still the single most common voice in the house
+(right — it is the men speaking) but now at parity-plus with the next event
+rather than double it, and the freed slots diversify the week (total events
+rose 810 → 873 across the same census). The despair clock is untouched — it
+runs on weeks since HIS asking, not on the drumbeat — though a man's full
+asked-pressed-despair arc stretches with the quieter cadence, flagged untested
+for feel.
 
 ### v2.48.0 — What the creditors will carry
 
@@ -2863,4 +2884,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.48.0*
+*Last updated: v2.49.0*

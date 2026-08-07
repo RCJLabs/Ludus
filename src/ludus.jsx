@@ -14151,6 +14151,16 @@ const EVENTS = {
       return `You keep the gate shut and the yard working. The sound of Capua going north to look carries over the wall for most of the day.`; } },
   ambition: {
     make(d){
+      /* ---- ONE QUESTION IN FIVE WAS A MAN ASKING ----
+         Measured across four 12-house batches (737–979 events each): the ambition
+         event was 17.4–21.3% of everything the player was ever asked — two to two
+         and a half times the next most common event — because a full roster keeps
+         somebody eligible every week for both the dedicated channel and the random
+         table. The per-man cadence (five weeks to ask, nine to press) was always
+         right; the house-wide drumbeat was the drift. One man's asking now buys
+         the yard four weeks of quiet on that front. The despair clock is untouched
+         — it runs on weeks since HIS asking, not on the drumbeat. */
+      if(d.flags.ambLast!=null && d.week - d.flags.ambLast < AMB_COOL) return null;
       const act = activeG(d).filter(g=>{ const a=g.ambition;
         return a && !a.met && !a.broken && !a.despair
           && (a.voiced===0 ? d.week-(a.since||0) >= 5 : a.voiced===1 && d.week-a.since >= 9); });
@@ -14169,6 +14179,7 @@ const EVENTS = {
       const g = pick(bag);
       const a = g.ambition;
       const second = a.voiced>=1;
+      d.flags.ambLast = d.week;
       return { id:"ambition", title: second ? "He Asks Again" : "A Man Asks",
         text: her(second ? AMBITIONS[a.kind].press(g) : AMBITIONS[a.kind].ask(g), g),
         choices: second
@@ -14337,6 +14348,7 @@ function pickEvent(d){
   return null;
 }
 
+const AMB_COOL = 10;   // weeks of yard-wide quiet bought by one man's asking
 /* ---- EVENT ARCS ----
    A choice now can plant a beat that arrives weeks later. A scheduled beat names
    an EVENTS entry that has build(d,data) instead of a random make() — so the
