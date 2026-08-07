@@ -10,29 +10,50 @@ Gladiator-school management sim. You are a lanista in Capua: buy men, train them
 
 ```
 ludus/
-  src/ludus.jsx      the entire game (~2,000 lines, default export <App/>)
+  src/ludus.jsx      the entire game (~22,900 lines, default export <App/>)
   src/main.jsx       mount point, 4 lines
   build.js           esbuild bundle + window.storage shim → index.html
-  index.html         built artifact, ~252 KB, fully self-contained
-  package.json       version lives here
+                       --test writes an instrumented dist/ build instead
+  index.html         built artifact, ~1.16 MB, fully self-contained
+  manifest.webmanifest, sw.js, icons/   the PWA shell, version-stamped at build
+  package.json       version lives here — bump it, the service worker reads it
+  test/              the checks, the harness, and the coverage sweep
   ROADMAP.md         this file
   INSTRUCTIONS.md    how to work on it
 ```
 
-`src/ludus.jsx` is divided by banner comments, in order:
+`src/ludus.jsx` is one file in rough dependency order — constants and tables, then
+the systems that read them, then the four fight engines, then week resolution, then
+the UI. It is not sectioned by banner any more; it is navigated by grep. The pieces
+worth knowing where to find:
 
-| Section | Contains |
+| What | Where to look |
 |---|---|
-| *(top)* | `CSS` template string — all styling, including keyframes |
-| `EQUIPMENT` | `GEAR`, `SLOTS`, `DEFAULT_KIT`, `FINE_OF`, `kitMods`, `kitArt`, `kitFor` |
-| `HELPERS` | RNG shims, `chron`, generators, `migrate`, `newGameState` |
-| `RIVAL HOUSES` | `RIVAL_SEED`, `makeRivalFighter`, `rivalWeekly`, `pickRivalOpp` |
-| `FIGHT ENGINE` | `ATTACKS`, `TARGETS`, `power`, `simulateFight`, `doFight` |
-| `EVENTS` | `EVENTS` table (14 entries), `pickEvent`, `updateRebellion` |
-| `WEEK RESOLUTION` | `endWeek`, `grantRudis`, `makePitOffer` |
-| `UI` | `Fighter`, `CrowdRow`, `HPBar`, `FightModal`, `GearStats`, `App` |
+| Styling | the `CSS` template string at the top, keyframes included |
+| Equipment | `GEAR`, `SLOTS`, `kitMods`, `kitFor`, `wearKit` |
+| Saves | `newGameState`, `migrate`, `SAVE_FIELDS`, `MAN_FIELDS`, `REPAIRS`, `SAVE_VER` |
+| Rival houses | `RIVAL_SEED`, `makeRivalFighter`, `rivalWeekly`, `pickRivalOpp` |
+| The four engines | `simulateFight` (12 rounds), `simulatePair` (16), `simulateMelee` (18), `simulateVenatio` (14) |
+| What a bout does to the house | `doFight`, `doPairFight`, `doMelee`, `doVenatio`, `boutAftermath` |
+| Events | the `EVENTS` table (57 entries), `pickEvent`, `updateRebellion` |
+| The week | `endWeek`, and its phases `menWeek`, `ludusLedger`, `heldQuestions`, `weekReckoning` |
+| The player's actions | module scope, all of them — `sellMan(d,id,price)`, `throwFeast(d)`, and fifty-odd more |
+| UI | `Fighter`, `FightModal`, and the App component (`takeUpTheHouse`) |
 
-The headless test harness slices the file at the `/* ================= UI` marker, so **everything above that line must stay importable without React**.
+**Two rules the file lives by.**
+
+Every action a lanista can take is a **function of the save**, at module scope, and
+exposed on the test handle. The closures inside the App are the React half only:
+read the form, call one of these, set the panel that follows. It used to be the
+other way round, and the cost was not tidiness — nothing outside a mounted component
+could sell a man or throw a feast, so no check could drive a house through a year.
+
+And **no function grows past 200 lines** without being written down. The `bulk`
+check measures every top-level definition and fails on a new one over the line; the
+exceptions each carry a ceiling and a reason. `simulateFight` is the interesting
+one — it stays whole because a bout is a state machine whose state is the closure,
+twenty mutable bindings all written by the round loop, and the comment above it says
+where to cut it if anyone ever does.
 
 ---
 
@@ -40,17 +61,62 @@ The headless test harness slices the file at the `/* ================= UI` marke
 
 One turn = one week.
 
-1. Set each man's **training focus** (one of six stats, or rest).
-2. Take **fights** — the pits are always open; the games run every 3rd week once fame ≥ 25.
-3. Spend on **gear** (Armory), **favor** (parties), or **loyalty** (feasts).
-4. Resolve a random **event** (~45%/week), then **End Week**: training gain, fatigue, morale drift, injury ticks, upkeep, rival simulation, unrest.
+1. Set each man's **regimen** — one of eight drills, a sparring partner, or rest.
+2. Take a bout. The pits are always open; the Capuan bill runs on the festival year
+   once fame ≥ 25, and a tour down the coast has a card of its own.
+3. Spend — gear, the block, the works, a feast, a patron's want, a rung of the ladder.
+4. Answer the week's one question, then **End Week**.
+
+`endWeek` runs in four phases, in this order, and the order is load-bearing:
+
+| Phase | What it does |
+|---|---|
+| `menWeek` | upkeep accrued, the years turned, wounds mended, the week's work done, what age takes |
+| *(the subsystems)* | fifty-odd `xWeek(d)` calls — feuds, patrons, rivals, the coast, the ladder, Rome |
+| `ludusLedger` | every wage and bill, the city's liturgy, and what the week does to the temper of the cells |
+| `heldQuestions` | questions raised earlier and held, so a named man on a named day beats a random beat |
+| `weekReckoning` | the fame rungs, and whether this is still a house |
+
+---
+
+## Testing
+
+```
+npm test              the fast tier — about half a minute
+npm run test:all      every check, fast and slow — about nine minutes
+npm run coverage      not what passes, but what no check ever touches
+```
+
+**24 checks.** Twenty read into the game through a test handle and answer in seconds;
+four drive a real browser through the real screens. Every one of them exists because
+of a bug that shipped, and the comment at the top of each says which — that comment
+is the durable part, not the numbers inside it. See `test/README.md` for the table.
+
+`node build.js --test` writes `dist/test.html` with `window.__LVDVS` attached. The
+handle sits behind `process.env.LVDVS_TEST`, which esbuild folds away in a shipping
+build, so what ships cannot carry it even by accident. `dist/` is gitignored and the
+runner rebuilds the shipping `index.html` on its way out.
+
+Three things worth knowing before adding one:
+
+- **`survive` runs alone.** It opens five browsers and plays five houses at once.
+  Sharing a lane put seven Chromiums on four cores and it started inventing failures
+  — twice. A check may declare `exclusive`.
+- **The seeded RNG correlates draws within a page load.** A win rate at n=1500 swings
+  about two and a half points between identical runs. Bands are wide on purpose;
+  assert direction, not targets. A check nobody trusts is worse than no check.
+- **Check the instrument before you believe the finding.** More findings in this
+  project have turned out to be faults in the probe than faults in the game: probes
+  that force-fed gold, took the richest bout every week, never courted a patron,
+  counted Rome as a Capuan card, or wrote `guard` where the engine reads `def`.
+  Every one of them produced a confident, wrong conclusion first.
 
 ---
 
 ## Systems
 
 ### Gladiators
-Six visible stats (`str agi end tec sho dis`), plus hidden `potential`, `heart` (missio only), and `defiance`. Seven origins with stat modifiers and name pools. Eight traits. Status: `active | injured | away | dead | freed | escaped | retired` — use `isGone(g)`, never a hand-rolled list. Roster cap **8**. Nickname awarded at **5 wins**.
+Six visible stats (`str agi end tec sho dis`), plus hidden `potential`, `heart` (missio only), and `defiance`. Seven origins with stat modifiers and name pools. Eight traits. Status: `active | injured | away | dead | freed | escaped | retired` — use `isGone(g)`, never a hand-rolled list. Roster cap grows with the lanista's standing — `CELLS_BY_RANK = [8,8,9,10,11,12,13,14]`, read through `cellsCap(d)` and `rosterFull(d)`; never count the roster by hand, and never forget an injured man is still in a cell. Nickname awarded at **5 wins**.
 
 ### Aging (`WEEKS_PER_YEAR = 18`)
 Generated 18–32. Prime is **23–28**. Training gain scales `ageTrain()` — ×1.3 at 18, ×1.0 in prime, ×0.72 to 31, ×0.42 after. Past 28 the *body* decays weekly at `(age−28) × 0.05`, weighted `agi 1.4 / end 1.2 / str 1.0`; **`tec`, `sho` and `dis` never decay** — a veteran loses the engine and keeps the craft. Market price and sale value scale `agePrice()` (×0.5 for a 33-year-old). Veterans generate with bonus `tec`/`dis`, reduced potential, and 0–3 scars already on them.
@@ -1061,6 +1127,12 @@ State `ver: 6`. `migrate()` is additive and idempotent — it backfills `rivals`
 
 ## Balance reference (measured, N ≥ 800)
 
+**Read this against the source, not instead of it.** These figures were measured when they
+were written and several have been retuned since; where a number matters, the comment above
+it in `src/ludus.jsx` carries the measurement it was actually set on, and `npm test engines`
+prints the live ones every run. What is durable here is which dial does what, and roughly
+how hard each one pulls.
+
 Tuning dials, in the order you'd reach for them:
 
 | Dial | Location | Current |
@@ -1267,6 +1339,52 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+Every release since v1.12.0 has a full write-up in its commit message; `git log` is
+the changelog of record for that stretch, and the comments in the source carry the
+measurements each change was made on. What follows is the shape of it, so somebody
+picking the project up knows what happened without reading seventy commits.
+
+### v1.12.0 → v2.42.0 — the long middle
+
+Seventy-one releases. They divide into five things.
+
+**The bout stopped being a slot machine.** The tactic triangle was fitted so none of
+the four words is the answer — forward answers straight, the shield answers forward,
+patience answers the shield, and showing off costs you the bout you are showing off
+in. The class counter was narrowed until picking a style was a real choice and every
+class was symmetrical against itself. Traits reached the sand. The read stopped being
+free and the crowd stopped being automatically yours. The shield came back at the top
+of the game. A ceiling was chosen out loud — sixty per cent for a maxed man with a
+perfect read — and it has held since. *(v1.87–v1.92, v2.2–v2.12, v2.24, v2.31–v2.35)*
+
+**Four engines instead of one.** The pair, the melee and the hunt were given the
+single sand's shape: the crux, the missio, the record, the deaths, the purse. The
+Capuan bill went from 75% ordinary single combats to 57%, and a tour down the coast
+— which had been single combats and nothing else — got a card with each town's own
+character on it. *(v1.92, v2.1, v2.3, v2.25, v2.35, v2.38)*
+
+**A house that is somebody's.** Patrons became named people with wants and a hand on
+the thumb. The lanista got an age, a body the job wears down, and an heir. The cells
+got bonds, feuds, nights, and seventeen things a man remembers about you. The
+collegium, the auctoratus, the sacramentum, mastery, ambitions that speak and are
+given up on. The street learned to shout for a man the editors have written off.
+*(v1.13–v1.80, v2.13–v2.29, v2.42)*
+
+**A campaign with a shape after year three.** The standing ladder above its sixth
+rung, and then a census rather than a bill so its top rungs could actually be stood
+on. The works and monuments paid for as they rise. The pit, the feast and the card
+repriced against the house that is playing them rather than a house nobody has.
+Acclaim given somewhere to go after it saturates. *(v2.27–v2.29, v2.35–v2.39)*
+
+**And the part that made the rest possible.** A regression harness in the repo, then
+a save format with a version that means something, then the player's actions lifted
+out of React closures so anything could drive a house, then two test tiers, then a
+coverage sweep that asks what nothing has ever touched, then a size guard so the four
+functions holding every balance change could not quietly grow back. Twenty-four
+checks now. Roughly half the findings in this stretch were disproved by measurement
+before they shipped, and the ones that survived carry their figures in the source.
+*(v2.18–v2.23, v2.26, v2.36–v2.42)*
 
 ### v1.11.0 — What they ask you for
 They remember, refuse, form ties and carry ambitions, and in ninety versions not one of them has ever asked you for anything directly. **A man who has fought for you and thinks well enough of you now comes and stands in front of your table.** Once each, about 2.4 a campaign.
@@ -2556,11 +2674,35 @@ Weekly loop, roster, training, fight sim with missio, market, parties, feasts, e
 - ✅ Six house doctrines you declare and then live inside
 - ✅ Self-contained layout CSS — no Tailwind dependency in the standalone build
 
-**Next up — the queue**
-- **A second city to live in.** The circuit is visiting. A second house elsewhere is the natural next scale.
+- ✅ Four fight engines that all hold the same shape
+- ✅ A regression harness in the repo, in two tiers, with a coverage sweep
+- ✅ Saves with a version that means something and one ordered migration
+- ✅ Every player action a function of the save, not a React closure
+- ✅ The tactic triangle — four words and none of them the answer
+- ✅ A tour down the coast with a card of its own in every town
+- ✅ Stone paid for as it rises; a rank held as a census rather than handed over
+- ✅ The record book's worst night, and the four nights a man is known for
+- ✅ A size guard, so no function grows past the line unremarked
 
-**Later**
+**The queue is clear.**
+
+Every item raised by the last audit has shipped or been disproved, and the two that
+remain are decisions rather than work:
+
+- **#47 — one tap to the obvious bout.** Declined; the multi-tap arena is intended.
+- **The monuments.** Priced at 30k / 44k / 70k / 150k against a house that used to
+  peak at 8,485 denarii. That was the finding behind the instalment change in
+  v2.36.0 — but the census in v2.39.0 moved the ground again: a house that reaches
+  Patron of the Games now keeps 133,485 where it used to keep 27,169. Worth
+  re-measuring before repricing anything. It may already be affordable.
+
+**What the next audit should be looking for.** The five that produced the best
+releases in this stretch were all of one kind — a system with real machinery behind
+it that the player never meets, or a number that was chosen against an economy that
+no longer exists. The seams to check: content that never fires, ladders whose top
+rungs nobody reaches, prices set before three repricings, screens that show a figure
+nobody can act on, and anything the coverage sweep says no check has ever touched.
 
 ---
 
-*Last updated: v1.11.0*
+*Last updated: v2.42.0*
