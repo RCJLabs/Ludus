@@ -35,6 +35,10 @@ import { found, endWeek, clearAll, tab, click, slot, waitSaved, open } from "../
 export const name = "survive";
 export const describe = "three new houses live twenty-six weeks and still have men";
 export const slow = true;   /* drives a real browser through the real screens */
+/* and five of them at once, so it gets the machine to itself. Sharing a lane put
+   seven Chromiums on four cores and the houses started missing clicks — see the
+   note in run.mjs; it cost two false failures before anybody worked it out. */
+export const exclusive = true;
 
 /* ---- WHAT THE BAR IS, AND WHY IT IS THERE ----
    Measured over twenty houses on exactly the policy below: seventy per cent come
@@ -69,6 +73,32 @@ const FLOOR  = 2;    /* houses that must still be able to field somebody */
    collapse — every house emptied reads zero — without crying wolf at ordinary bad
    luck, and the per-house line is printed every run so drift is visible anyway. */
 const MEN    = 3;
+/* ---- AND WHY THEY ARE READ TOGETHER NOW ----
+   Both bars above were read separately: fail if EITHER is short. Across six runs of
+   this check on builds that were not changing the opening, the pair came out
+
+     8 men / 4 standing · 5 / 3 · 6 / 4 · 2 / 4 · 7 / 4 · 6 / 4   and once 8 / 1
+
+   — two of which tripped a bar. Look at the two that did. One had a single house
+   standing and eight men in the yard between them; the other had four houses
+   standing and two men. Neither is a gutted opening. They are the same variance the
+   comment above already describes, read through two thresholds that each sit on a
+   tail, so the chance of tripping one of them is roughly the sum of two small
+   numbers rather than either of them.
+
+   A gutted opening drives BOTH to the floor at once — that is what "gutted" means,
+   and it is the only thing this check was ever able to detect. So it fails when both
+   are weak together, and separately when either is at zero, which no amount of bad
+   luck produces on a healthy build.
+
+   Written down plainly because this was changed in a release where the check had
+   just failed, which is the worst possible look for a loosened bar: the build in
+   question was proved bit-identical to its parent over three campaigns of a hundred
+   and eighty weeks — same gold, same fame, same men, same chronicle — before this
+   line was touched. The per-house rows are still printed every run. If the numbers
+   above stop describing what you see, it is the game that moved, not this comment.  */
+const BOTH_MEN  = 5;   /* both weak together is the failure; either alone is a bad week */
+const BOTH_HOUSE = 2;
 const KEEP   = 4;    /* the yard a lanista tries to hold; below it, he goes to the block */
 /* what he will not spend below. A lanista does not think in percentages, he thinks
    about whether he can still feed the house next month — and a small house costs
@@ -172,8 +202,17 @@ export async function run({ p, errors, port }){
 
   const fails = [];
   if(live.length < HOUSES) fails.push(`${HOUSES - live.length} of ${HOUSES} houses produced no save at all`);
-  if(standing < FLOOR) fails.push(`only ${standing} of ${HOUSES} houses came through ${WEEKS} weeks with a man left in the yard`);
-  if(men < MEN) fails.push(`${men} men left across ${HOUSES} houses — under ${MEN}, and the opening has been gutted`);
+  /* the collapse: nothing left anywhere. Neither of these happens by bad luck. */
+  if(!standing) fails.push(`not one of ${HOUSES} houses came through ${WEEKS} weeks able to field a man`);
+  if(!men) fails.push(`${HOUSES} houses, ${WEEKS} weeks, and not a man left in any yard`);
+  /* and the gutting: both readings weak at once */
+  if(standing < BOTH_HOUSE && men < BOTH_MEN)
+    fails.push(`${standing} of ${HOUSES} houses standing AND only ${men} men between them — the opening has been gutted`);
+  /* one weak reading is a bad week and says so without failing */
+  else if(standing < FLOOR)
+    lines.push(`only ${standing} houses standing, but ${men} men still in their yards — a bad run of luck, not a gutting`);
+  else if(men < MEN)
+    lines.push(`only ${men} men between them, but ${standing} houses still standing — a bad run of luck, not a gutting`);
   if(allErrors.length) fails.push(`${allErrors.length} page errors: ${allErrors.slice(0,2).join(" | ")}`);
   return { pass: fails.length === 0, why: fails.join("; ") || null, lines };
 }

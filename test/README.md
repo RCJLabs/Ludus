@@ -59,6 +59,7 @@ reason the check exists usually has not.
 | `stone` | fast | 336,500 denarii of works and monuments, and the richest careful house ever measured held 8,485 |
 | `coast` | fast | a tour down the coast was single combats and nothing else, and a defeat away was invisible to the town that watched it |
 | `census` | fast | the ladder's top rungs asked 110,000 denarii in cash from a house that had to spend the same coin on stone, so nobody ever stood on them |
+| `bulk` | fast | four functions held every balance change in a 22,700-line file, and nothing ever said stop |
 
 ## What no check has ever touched
 
@@ -162,9 +163,9 @@ Close what you open, and gather the extra sessions' `errors` alongside your own.
   highest computed z-index. `top(p)` sorts before it looks — the digest-over-answer
   bug was invisible until it did.
 
-## Two that read the source, not the screen
+## Three that read the source, not the screen
 
-`layers` and part of `saves` never open a browser tab in anger — they read
+`layers`, `bulk` and part of `saves` never open a browser tab in anger — they read
 `src/ludus.jsx` and the migration tables directly. That is deliberate: both guard
 against bugs that are invisible on screen until two things happen to coincide. An
 overlay ordering only goes wrong when both overlays are open at once; a forgotten

@@ -7085,6 +7085,28 @@ function gasOf(f, st, sm){
   const drop = (GAS_AT - frac) / GAS_AT;              /* 0 at the line, 1 on empty */
   return 1 - drop * (0.50 - clamp(f.end||50,0,100)/100 * 0.28);
 }
+/* ---- WHY THIS ONE IS STILL FOUR HUNDRED LINES ----
+   endWeek was four hundred and twenty-five and came apart into four named phases
+   without a single number moving, because a week is a sequence: the men are worked,
+   the ledger is drawn, the questions are asked, the reckoning is taken. Each phase
+   hands the next a small parcel.
+
+   A bout is not a sequence, it is a state machine, and the state is the closure.
+   The setup declares twenty mutable bindings — crowd, vA, vB, sA, sB, mom, tiredA,
+   tiredB, c50, c80, cPeak, orderSigA, mobHis, aDies, bDies, fell, winner, ended,
+   lastTarget, spared — and the round loop writes to every single one of them.
+   Lifting the loop out means passing all twenty through a mutable parcel and
+   rewriting several hundred references to go through it, in a file with no type
+   checker, to arrive at a function with a twenty-field argument. That is not a
+   smaller function; it is the same function with a worse door and one more place
+   for a typo to hide, in the exact code where a typo is most expensive.
+
+   So the size stands, deliberately, and the `bulk` check knows it is allowed to.
+   What makes this function safe to change is not its length — it is that `engines`
+   drives it three thousand times a run and holds its shape from six directions.
+   If it is ever split, split it where the state genuinely narrows: the opening
+   (everything above the loop is derivation) and the verdict (everything below it
+   reads a handful of finished facts). The middle is one thing. */
 function simulateFight(A, B, tA, stakes, ctx, opts){
   const O = opts || {};
   const R0 = O.from || null;
@@ -12676,6 +12698,63 @@ const CRUX = {
     tactic:null, line:g=>`` },
 };
 
+
+/* ---- WHAT THE SAND TOOK ----
+   A kill recorded, a man buried, or a man carried to the medicus — the part of a
+   bout that happens to your own house rather than to the ledger. Lifted out of
+   doFight because it is the one stretch of that function with a narrow enough
+   edge to lift: everything it touches arrives in its arguments.
+
+   The rest of doFight stays where it is on purpose. The purse branch alone reads
+   eleven of the enclosing function's locals and assigns a twelfth, and pulling it
+   out would mean a signature longer than the code in it — which is not a smaller
+   function, it is the same function with a worse door. */
+function boutAftermath(d, g, gid, offer, res, win, F, sum){
+  if(res.bDies){
+    g.kills++; g.pfame += 6; d.fame += 4;
+    if(!g.traits.includes("Brutal")) d.gladiators.forEach(o=>{ if(o.status==="active") o.defiance = clamp(o.defiance+1.5,0,100); });
+    sum.push(`A kill recorded. The cells are quieter tonight.`);
+  }
+  if(res.aDies){
+    g.status = "dead"; firstDeathWord(d, fullName(g));
+    recordFallen(d, g, offer.stakes==="sine" ? "sine" : "bout",
+      offer.oppRef ? { name:offer.opp.name, house:offer.oppRef.house, cls:offer.opp.cls, fid:offer.oppRef.fid } : null);
+    if(d.lanista) d.lanista.health = clamp(d.lanista.health - 1.3*collSoften(d)*(isDamn(g)?0.55:1)*(workPerk(d,"regard")?0.7:1)/docHealth(d), 0, 100);
+    favourLost(d, g, "dead");
+    loseFavourite(d, g, "dead");
+    weekMark(d, "deaths");
+    retireSteel(d, g);
+    collBury(d, g);
+    markUnburied(d, g);
+    d.gladiators.forEach(o=>{ if(o.status==="active"){ o.morale=clamp(o.morale-8,0,100); o.defiance=clamp(o.defiance+(offer.stakes==="sine"?5:3),0,100); } });
+    const { grieving, steadier } = mournKin(d, gid, fullName(g), { sine: offer.stakes==="sine" });
+    kinReact(d, gid, "rival", 3, 0);
+    const dc = (F && F.deathCost) ? F.deathCost : 1;
+    d.unrest = clamp(d.unrest + ((offer.stakes==="sine"?7:4) + grieving.length*3) * dc * collSoften(d), 0, 100);
+    if(dc>1){ d.fame = Math.max(0, d.fame-8);
+      patronsOf(d).forEach(p=>{ p.favor = clamp(p.favor-6,0,100); }); recomputeFavor(d);
+      sum.push(`A death at the Floralia. The mob came for flowers and got a funeral, and they will remember which house gave it to them.`); }
+    if(grieving.length){
+      const names = grieving.map(o=>o.name).join(" and ");
+      chron(d, `${names} ${grieving.length>1?"were":"was"} at the gate when they carried ${g.name} out. ${grieving.length>1?"Neither":"He"} said anything, which is worse.`, "bad");
+      sum.push(`${names} watched him die. That will not be forgotten in the cells.`);
+    }
+    if(steadier) chron(d, `${steadier.name}, who has never given you a hard word, sits with the block in the dark and keeps them off the walls. A house holds together on nights like this only because of men like him.`, "info");
+    dropTies(d, gid);
+    sum.push(`${g.name} is dead. ${PR(g).His} cell stands empty tonight.`);
+  } else if(!win && res.fell){
+    const inj = injuryFor(res.lastTarget, true);
+    agonyWear(g, inj);
+    g.injury = inj; g.status = "injured"; weekMark(d, "hurt", 1, fullName(g));
+    sum.push(`${PR(g).He} is carried to the medicus: ${inj.name.toLowerCase()}, ${inj.weeks} week${inj.weeks>1?"s":""} to mend.${bodyWear(g)>0.4?" An old body does not shrug these off the way it used to.":""}`);
+  } else if(win && res.vA<45 && R()<0.4){
+    const inj = injuryFor(res.lastTarget, false);
+    agonyWear(g, inj);
+    g.injury = inj; g.status = "injured"; weekMark(d, "hurt", 1, fullName(g));
+    sum.push(`Victory, but not unmarked: ${inj.name.toLowerCase()}, ${inj.weeks} week${inj.weeks>1?"s":""} to mend.`);
+  }
+}
+
 function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   const g = d.gladiators.find(x=>x.id===gid);
   const t = TIERS[offer.tier];
@@ -12842,49 +12921,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   if(away) cityAfter(d, offer, { won:win, theirDead:!!res.bDies, spared:!!res.spared,
     vigour:res.vA, crowd:res.crowd }, sum);
 
-  if(res.bDies){
-    g.kills++; g.pfame += 6; d.fame += 4;
-    if(!g.traits.includes("Brutal")) d.gladiators.forEach(o=>{ if(o.status==="active") o.defiance = clamp(o.defiance+1.5,0,100); });
-    sum.push(`A kill recorded. The cells are quieter tonight.`);
-  }
-  if(res.aDies){
-    g.status = "dead"; firstDeathWord(d, fullName(g));
-    recordFallen(d, g, offer.stakes==="sine" ? "sine" : "bout",
-      offer.oppRef ? { name:offer.opp.name, house:offer.oppRef.house, cls:offer.opp.cls, fid:offer.oppRef.fid } : null);
-    if(d.lanista) d.lanista.health = clamp(d.lanista.health - 1.3*collSoften(d)*(isDamn(g)?0.55:1)*(workPerk(d,"regard")?0.7:1)/docHealth(d), 0, 100);
-    favourLost(d, g, "dead");
-    loseFavourite(d, g, "dead");
-    weekMark(d, "deaths");
-    retireSteel(d, g);
-    collBury(d, g);
-    markUnburied(d, g);
-    d.gladiators.forEach(o=>{ if(o.status==="active"){ o.morale=clamp(o.morale-8,0,100); o.defiance=clamp(o.defiance+(offer.stakes==="sine"?5:3),0,100); } });
-    const { grieving, steadier } = mournKin(d, gid, fullName(g), { sine: offer.stakes==="sine" });
-    kinReact(d, gid, "rival", 3, 0);
-    const dc = (F && F.deathCost) ? F.deathCost : 1;
-    d.unrest = clamp(d.unrest + ((offer.stakes==="sine"?7:4) + grieving.length*3) * dc * collSoften(d), 0, 100);
-    if(dc>1){ d.fame = Math.max(0, d.fame-8);
-      patronsOf(d).forEach(p=>{ p.favor = clamp(p.favor-6,0,100); }); recomputeFavor(d);
-      sum.push(`A death at the Floralia. The mob came for flowers and got a funeral, and they will remember which house gave it to them.`); }
-    if(grieving.length){
-      const names = grieving.map(o=>o.name).join(" and ");
-      chron(d, `${names} ${grieving.length>1?"were":"was"} at the gate when they carried ${g.name} out. ${grieving.length>1?"Neither":"He"} said anything, which is worse.`, "bad");
-      sum.push(`${names} watched him die. That will not be forgotten in the cells.`);
-    }
-    if(steadier) chron(d, `${steadier.name}, who has never given you a hard word, sits with the block in the dark and keeps them off the walls. A house holds together on nights like this only because of men like him.`, "info");
-    dropTies(d, gid);
-    sum.push(`${g.name} is dead. ${PR(g).His} cell stands empty tonight.`);
-  } else if(!win && res.fell){
-    const inj = injuryFor(res.lastTarget, true);
-    agonyWear(g, inj);
-    g.injury = inj; g.status = "injured"; weekMark(d, "hurt", 1, fullName(g));
-    sum.push(`${PR(g).He} is carried to the medicus: ${inj.name.toLowerCase()}, ${inj.weeks} week${inj.weeks>1?"s":""} to mend.${bodyWear(g)>0.4?" An old body does not shrug these off the way it used to.":""}`);
-  } else if(win && res.vA<45 && R()<0.4){
-    const inj = injuryFor(res.lastTarget, false);
-    agonyWear(g, inj);
-    g.injury = inj; g.status = "injured"; weekMark(d, "hurt", 1, fullName(g));
-    sum.push(`Victory, but not unmarked: ${inj.name.toLowerCase()}, ${inj.weeks} week${inj.weeks>1?"s":""} to mend.`);
-  }
+  boutAftermath(d, g, gid, offer, res, win, F, sum);
   if(offer.stakes==="sine") d.gladiators.forEach(o=>{ if(o.status==="active") o.defiance=clamp(o.defiance+1,0,100); });
 
   if(offer.oppRef && d.rivals){
@@ -14119,20 +14156,25 @@ function weekDigest(d, mark, before){
   d.lastWeek = { week:d.week, season:seasonOf(d).name, year:yearOf(d), yw:yearWeek(d),
     lines:lines.slice(0, 14), more:Math.max(0, lines.length-14), dl, lost, notable };
 }
-function endWeek(d){
-  /* Last week's question is closed at the START of the week, not a hundred lines
-     into it. It used to be cleared just above the block that decides the week's
-     one decision — which meant every system that runs earlier and politely checks
-     "is a question already waiting?" raised its own, correctly, and had it thrown
-     away before anybody saw it. Seven of them: the pact, an edict read out, a feud
-     in the yard, the late beats, the inspector at the gate, a man who will not go
-     out, and a gladiator who wants a word. None had ever once reached the player. */
-  d.pendingEvent = null;
-  const digestMark = (d.log && d.log[0]) || null;
-  const digestBefore = { gold:d.gold, fame:d.fame, favor:d.favor, unrest:d.unrest, roster:activeG(d).length };
-  const fest = d.rome ? null : festivalNow(d);
-  repairSpar(d);
-  d.gladiators.forEach(g=>{ if(g.status==="away" && d.week+1>=g.returnWeek){ g.status="active"; chron(d, `${g.name} returns from ${PR(g).his} post at the noble's villa.`); } });
+
+/* ---- THE WEEK, IN PHASES ----
+   endWeek ran to four hundred and twenty-five lines, and it is where every balance
+   change in this game lands. Four of its phases are lifted out here — not to make
+   it shorter for its own sake, but because a phase that is its own function can be
+   called on its own by a check, and a phase buried a hundred and eighty lines into
+   a loop cannot be. The ORDER is still endWeek's, and the order is load-bearing:
+   the men are worked before the ledger is drawn because the ledger counts the
+   injured, and the week's held questions are raised before its random beat because
+   a question with a date on it is worth more than one without.
+
+   What is deliberately NOT lifted is the fifty-odd xWeek(d) calls in the middle.
+   They are one line each, they are already named, and the sequence they run in has
+   been the cause of at least one bug worth a comment of its own. Wrapping them in
+   a function would hide exactly the thing worth being able to see. */
+
+/* the men's week: what they cost, what mends, what they learn, and what the years
+   take. Returns the two running totals the ledger needs. */
+function menWeek(d, fest){
   let upkeep=0, injured=0;
   d.gladiators.forEach(g=>{
     if(isGone(g)) return;
@@ -14291,6 +14333,168 @@ function endWeek(d){
     d.unrest = clamp(d.unrest-11, 0, 100);
     chron(d, `The Saturnalia. The kitchen serves the familia at your own table and takes their orders, the cells stand unlocked, and for a week nobody in this house is anybody's property. It costs a week's takings and it is the cheapest peace you will ever buy.`, "good");
   }
+  return { upkeep, injured };
+}
+
+/* the ludus's week in coin: every wage and bill, the city's call, and what all of
+   it does to the temper of the cells. Takes what the men's week came to. */
+function ludusLedger(d, men){
+  let upkeep = men.upkeep; const injured = men.injured;
+  upkeep += injured*8*pit(d,"upkeep");
+  upkeep += bUpkeep(d);
+  upkeep += workUpkeep(d);
+  upkeep += gearUpkeep(d);
+  /* The city's call is an obligation, not an execution. A house that cannot stand it
+     this week does not fold — it sends the clerk away with a promise, and the promise
+     is what costs, because standing is the one thing that cannot be bought back in an
+     afternoon. */
+  { const lit = liturgy(d);
+    if(lit > 0){
+      if(d.gold - upkeep >= lit){ upkeep += lit; d.flags.litDue = 0; }
+      else {
+        d.flags.litDue = (d.flags.litDue||0) + 1;
+        if(d.rise) d.rise.standing = Math.max(0, (d.rise.standing||0) - 4);
+        if(d.flags.litDue === 1 || d.flags.litDue % 5 === 0)
+          chron(d, `The magistrates' clerk came for what a house of your standing owes the city, and went away with a promise instead of a purse. That is a thing men say to each other afterwards.`, "bad");
+      }
+    } }
+  upkeep += collDues(d);
+  if(d.flags.underwritten > 0){ d.flags.underwritten--; upkeep = 0; }
+  if(d.doctore){ upkeep += docWage(d.doctore); d.doctore.weeks = (d.doctore.weeks||0)+1; }
+  d.gold -= upkeep;
+  const act = activeG(d);
+  const bound = act.filter(g=>!isAuctor(g));
+  const avgDef = bound.length ? bound.reduce((s,g)=>s+g.defiance,0)/bound.length : 10;
+  const auctors = act.filter(isAuctor).length;
+  d.unrest = clamp(d.unrest + (avgDef-34)/9 - 0.6 - docCalm(d) - cellCalm(d) - auctors*0.35 - perkCalm(d) - lanCalm(d) - (collOn(d)?0.4:0) + (seasonOf(d).unrest + docUnrest(d)) * pit(d,"unrest"), 0, 100);
+  if(d.fame>60) d.fame -= 1;
+  d.week++;
+  if(d.lanista && (d.week-1) % WEEKS_PER_YEAR === 0){
+    d.lanista.age++;
+    if([50,60,70].includes(d.lanista.age))
+      chron(d, `${d.lanista.name} turns ${d.lanista.age}. The stairs up to the gallery are further than they were.`, "event");
+  }
+  /* ---- A RECEIPT IS NOT A CHRONICLE LINE ----
+     "Week 41. Upkeep paid: 70 denarii." went in every single week. Measured
+     across three twelve-year campaigns it was 648 of the 3,054 lines the
+     chronicle wrote — twenty-one per cent of the whole thing, one sentence, sat
+     among the deaths and the graffiti and the men sold at the gate. And it was
+     already redundant: the week's digest totals the coin as the week ends.
+
+     So the ledger speaks when the number moves, which is when it is news — a man
+     bought, a wing built, a doctore hired, a wage begun — and holds its tongue
+     when the week cost what last week cost. */
+  { const was = d.flags.lastUpkeep;
+    if(was == null){
+      chron(d, `The ludus costs ${upkeep} denarii a week to keep standing, before anybody fights for it.`);
+      d.flags.lastUpkeep = upkeep; d.flags.lastUpkeepWk = d.week;
+    } else if(d.week - (d.flags.lastUpkeepWk||-99) >= 6
+              && Math.abs(upkeep - was) >= Math.max(12, was*0.25)){
+      chron(d, upkeep > was
+        ? pick([
+            `The week's bill comes to ${upkeep} denarii, up from ${was}. A house costs what it costs.`,
+            `Upkeep has crept to ${upkeep} denarii a week. It was ${was} not long ago and nobody decided to change it.`,
+            `${upkeep} denarii to keep the gate shut this week, against ${was} before. The ludus is bigger than it was.`,
+          ])
+        : pick([
+            `The week's bill comes to ${upkeep} denarii, down from ${was}. Fewer mouths, or fewer wages.`,
+            `The ludus costs ${upkeep} denarii a week now, where it cost ${was}. There is a reason and you know it.`,
+          ]));
+      d.flags.lastUpkeep = upkeep; d.flags.lastUpkeepWk = d.week;
+    } }
+  return upkeep;
+}
+
+/* questions raised earlier in the week and held until now, so a named man on a
+   named day is asked about before the week's random beat gets the slot */
+function heldQuestions(d){
+  if(d.pendingRome){ const pr = d.pendingRome; d.pendingRome = null;
+    d.pendingEvent = { id:"romeReturn", title: pr.triumph ? "Home in Triumph" : "The Long Road Home",
+      text: pr.triumph
+        ? `${pr.won} of ${ROME_BOUTS} won on the imperial sand, and the house comes home to Capua carrying ${pr.prize||"the laurel"} — ${pr.purse}d in the strongbox and your name spoken in rooms you will never stand in. The games at Capua will look small for a while. What you make of it now is yours to decide.`
+        : `${pr.won} of ${ROME_BOUTS} on the imperial sand. Not the triumph the letter promised — but the house walked off Rome's floor on its own feet, which more than one great name has not. You come home lighter than you went. Capua is still Capua, and there is work in the morning.`,
+      choices: pr.triumph
+        ? ["Carry on — there is more to build", "Lay the house down here, at its height"]
+        : ["Take up the work again"],
+      data:{ won:pr.won, triumph:pr.triumph } };
+  }
+  if(d.pendingCourt && !d.pendingEvent){ const pc = d.pendingCourt; d.pendingCourt = null;
+    d.pendingEvent = pc.caught
+      ? { id:"courted", title:"He Knows", text:`${lanistaOf(pc.house).name} sends word, and the word is civil, which is worse. He knows what your man was doing at his wall. ${pc.name} stays where he is, your purse is lighter, and House ${pc.house} has a reason now that it did not have before.`, choices:["That is the risk"], data:{} }
+      : { id:"courted", title:"Over The Wall", text:`${pc.name} came over House ${pc.house}'s wall in the dark and is standing in your yard at first light with nothing but what ${pc.fem?"she":"he"} stands in. ${pc.fem?"She":"He"} chose you, which is not the same as being bought, and every man in the cells knows the difference.`, choices:["Take his oath"], data:{} };
+  }
+  if(d.pendingDefect && !d.pendingEvent){ const pd = d.pendingDefect; d.pendingDefect = null;
+    const pr = pd.fem ? {he:"she",him:"her",his:"her"} : {he:"he",him:"him",his:"his"};
+    d.pendingEvent = { id:"defected", title: pd.fem ? "She Is Gone" : "He Is Gone", text:
+      `${pd.name} did not answer the roll this morning. House ${pd.house} has ${pr.him} — freedom in three years and a bed of ${pr.his} own, and ${pr.he} took it. ${pd.wins>0?`${pd.wins} win${pd.wins===1?"":"s"} in your colours, and they belong to another house now. `:""}${pd.kin.length? `${pd.kin.join(" and ")} watched the gate a long time after ${pr.he} was through it.` : `The yard watched the gate a long time after ${pr.he} was through it.`}`,
+      choices:["The house goes on"], data:{} };
+  }
+  /* the two that ask for a named man on a named day. Rolled at the top of the week,
+     raised here — ahead of the week's random beat, because a date is worth more than one. */
+  if(!d.pendingEvent && d.askBooking){ const o = d.askBooking;
+    d.pendingEvent = { id:"booking",
+      title:"A Name on the Bill", text:`${o.editor} is putting on ${o.festName} and wants ${o.name} specifically, by name, on the bill. ${o.advance} denarii now and ${o.balance} on the day. If ${o.name} is not standing on that sand in ${o.due-d.week} weeks, the advance comes back doubled and the story goes round Capua ahead of you.`,
+      note: promiseRead(d, o.gid, o.due),
+      choices:[`Sign for it — ${o.advance}d now`, "Do not promise a man five weeks out"], data:{ o } }; }
+  if(!d.pendingEvent && d.askChallenge){ const c = d.askChallenge;
+    d.pendingEvent = { id:"challenge",
+      title:"Named in Public", text:`${c.lan} has named ${c.name} in front of the editors and half of Capua — his ${c.foe} against your man, inside ${c.due-d.week} weeks, for a purse of ${c.purse}. He did it loudly and on purpose. Everyone is now waiting to see whether you answer.`,
+      note: promiseRead(d, c.gid, c.due),
+      choices:["Accept it", "Let it pass"], data:{ c } }; }
+  d.askBooking = null; d.askChallenge = null;
+  if(!d.pendingEvent && !d.rome && R()<0.14){ const ev=EVENTS.ambition.make(d); if(ev) d.pendingEvent=ev; }
+}
+
+/* and the reckoning: what the house has become, and whether it is still a house */
+function weekReckoning(d){
+  /* every rung says its piece once, not just the one at 600 */
+  { d.flags.fameSaid = d.flags.fameSaid || {};
+    if(d.milestone600) d.flags.fameSaid[600] = 1;                 /* saves that already heard it */
+    for(const [at] of FAME_TIERS){
+      if(at >= 600 && d.fame >= at && !d.flags.fameSaid[at]){
+        d.flags.fameSaid[at] = 1; if(at===600) d.milestone600 = true;
+        chron(d, FAME_WORD[at] || `The house is ${fameTitle(at).toLowerCase()} now.`, "good");
+      } } }
+  if(d.gold < (d.loan ? -420 : -250)) d.over = { kind:"debt" };
+  /* ---- THE HOUSE THAT COULD NOT FIELD A MAN ----
+     `ruin` asked for no men AND no coin, and counted a man in the infirmary as a man.
+     A house measured at week 235 had nobody who could stand — two in the infirmary,
+     four over the wall — and forty-four thousand denarii in the box, so it tripped
+     neither clause. It was not ruined and it was not playable: the week could still
+     be ended, forever, on an empty yard. A house is finished when it cannot put a man
+     on the sand and cannot buy one either; if it can still buy one, it is not finished,
+     it is being neglected, and it should be told so and given the chance. */
+  const standing = fitOn(d, d.week);
+  d.flags.idleYard = standing > 0 ? 0 : (d.flags.idleYard||0) + 1;
+  if(d.flags.idleYard >= 3 && onTheBooks(d) === 0) slaverAtTheGate(d);
+  if(d.flags.idleYard === 1 && standing === 0)
+    chron(d, onTheBooks(d)
+      ? `There was no one to send this week. The yard is quiet in the way a yard should never be, and the men who are left are in no state to change that.`
+      : `The cells are empty. There is a ludus here and nobody in it, and every week that stays true is a week Capua stops expecting anything of you.`, "bad");
+  const alive = d.gladiators.some(g=>!isGone(g));
+  if(!alive && d.gold<150) d.over = { kind:"ruin" };
+  else if(d.flags.idleYard >= EMPTY_LIMIT && onTheBooks(d) === 0)
+    d.over = { kind:"emptied", name:d.name, weeks:d.flags.idleYard, years:yearOf(d), gold:Math.round(d.gold) };
+  /* the game says mercy is the strongest long game; it should be able to end that way */
+  else if(!alive && houseRecord(d).freed >= 5 && houseRecord(d).freed > houseRecord(d).lost)
+    d.over = { kind:"closed", name:d.name, freed:houseRecord(d).freed, years:yearOf(d) };
+}
+
+function endWeek(d){
+  /* Last week's question is closed at the START of the week, not a hundred lines
+     into it. It used to be cleared just above the block that decides the week's
+     one decision — which meant every system that runs earlier and politely checks
+     "is a question already waiting?" raised its own, correctly, and had it thrown
+     away before anybody saw it. Seven of them: the pact, an edict read out, a feud
+     in the yard, the late beats, the inspector at the gate, a man who will not go
+     out, and a gladiator who wants a word. None had ever once reached the player. */
+  d.pendingEvent = null;
+  const digestMark = (d.log && d.log[0]) || null;
+  const digestBefore = { gold:d.gold, fame:d.fame, favor:d.favor, unrest:d.unrest, roster:activeG(d).length };
+  const fest = d.rome ? null : festivalNow(d);
+  repairSpar(d);
+  d.gladiators.forEach(g=>{ if(g.status==="away" && d.week+1>=g.returnWeek){ g.status="active"; chron(d, `${g.name} returns from ${PR(g).his} post at the noble's villa.`); } });
+  const men = menWeek(d, fest);
   d.gladiators.forEach(g=>{
     if(g.status!=="active" || !isAuctor(g) || auctorLeft(g)>0) return;
     if(!d.reSignOffer && g.morale>=58 && R()<0.6){
@@ -14367,68 +14571,7 @@ function endWeek(d){
      weeks against the eighteen the calendar says — which is most of why a champion
      seemed to fall off a cliff at thirty-four. The turning of the year lives in
      ageManOneYear now, once, and the lines this loop used to write live there too. */
-  upkeep += injured*8*pit(d,"upkeep");
-  upkeep += bUpkeep(d);
-  upkeep += workUpkeep(d);
-  upkeep += gearUpkeep(d);
-  /* The city's call is an obligation, not an execution. A house that cannot stand it
-     this week does not fold — it sends the clerk away with a promise, and the promise
-     is what costs, because standing is the one thing that cannot be bought back in an
-     afternoon. */
-  { const lit = liturgy(d);
-    if(lit > 0){
-      if(d.gold - upkeep >= lit){ upkeep += lit; d.flags.litDue = 0; }
-      else {
-        d.flags.litDue = (d.flags.litDue||0) + 1;
-        if(d.rise) d.rise.standing = Math.max(0, (d.rise.standing||0) - 4);
-        if(d.flags.litDue === 1 || d.flags.litDue % 5 === 0)
-          chron(d, `The magistrates' clerk came for what a house of your standing owes the city, and went away with a promise instead of a purse. That is a thing men say to each other afterwards.`, "bad");
-      }
-    } }
-  upkeep += collDues(d);
-  if(d.flags.underwritten > 0){ d.flags.underwritten--; upkeep = 0; }
-  if(d.doctore){ upkeep += docWage(d.doctore); d.doctore.weeks = (d.doctore.weeks||0)+1; }
-  d.gold -= upkeep;
-  const act = activeG(d);
-  const bound = act.filter(g=>!isAuctor(g));
-  const avgDef = bound.length ? bound.reduce((s,g)=>s+g.defiance,0)/bound.length : 10;
-  const auctors = act.filter(isAuctor).length;
-  d.unrest = clamp(d.unrest + (avgDef-34)/9 - 0.6 - docCalm(d) - cellCalm(d) - auctors*0.35 - perkCalm(d) - lanCalm(d) - (collOn(d)?0.4:0) + (seasonOf(d).unrest + docUnrest(d)) * pit(d,"unrest"), 0, 100);
-  if(d.fame>60) d.fame -= 1;
-  d.week++;
-  if(d.lanista && (d.week-1) % WEEKS_PER_YEAR === 0){
-    d.lanista.age++;
-    if([50,60,70].includes(d.lanista.age))
-      chron(d, `${d.lanista.name} turns ${d.lanista.age}. The stairs up to the gallery are further than they were.`, "event");
-  }
-  /* ---- A RECEIPT IS NOT A CHRONICLE LINE ----
-     "Week 41. Upkeep paid: 70 denarii." went in every single week. Measured
-     across three twelve-year campaigns it was 648 of the 3,054 lines the
-     chronicle wrote — twenty-one per cent of the whole thing, one sentence, sat
-     among the deaths and the graffiti and the men sold at the gate. And it was
-     already redundant: the week's digest totals the coin as the week ends.
-
-     So the ledger speaks when the number moves, which is when it is news — a man
-     bought, a wing built, a doctore hired, a wage begun — and holds its tongue
-     when the week cost what last week cost. */
-  { const was = d.flags.lastUpkeep;
-    if(was == null){
-      chron(d, `The ludus costs ${upkeep} denarii a week to keep standing, before anybody fights for it.`);
-      d.flags.lastUpkeep = upkeep; d.flags.lastUpkeepWk = d.week;
-    } else if(d.week - (d.flags.lastUpkeepWk||-99) >= 6
-              && Math.abs(upkeep - was) >= Math.max(12, was*0.25)){
-      chron(d, upkeep > was
-        ? pick([
-            `The week's bill comes to ${upkeep} denarii, up from ${was}. A house costs what it costs.`,
-            `Upkeep has crept to ${upkeep} denarii a week. It was ${was} not long ago and nobody decided to change it.`,
-            `${upkeep} denarii to keep the gate shut this week, against ${was} before. The ludus is bigger than it was.`,
-          ])
-        : pick([
-            `The week's bill comes to ${upkeep} denarii, down from ${was}. Fewer mouths, or fewer wages.`,
-            `The ludus costs ${upkeep} denarii a week now, where it cost ${was}. There is a reason and you know it.`,
-          ]));
-      d.flags.lastUpkeep = upkeep; d.flags.lastUpkeepWk = d.week;
-    } }
+  ludusLedger(d, men);
   afterWeek(d);
   if((d.week-1)%3===0 && !d.rome && !d.city && !d.travel){ makeMarket(d); makeDoctoreMarket(d); makeStaffMarket(d); }
   marketWeek(d);
@@ -14455,41 +14598,7 @@ function endWeek(d){
     if(d.games) chron(d, `Games are announced — ${d.games.festival}! Match offers await at the arena.`, "good");
   }
   updateRebellion(d);
-  if(d.pendingRome){ const pr = d.pendingRome; d.pendingRome = null;
-    d.pendingEvent = { id:"romeReturn", title: pr.triumph ? "Home in Triumph" : "The Long Road Home",
-      text: pr.triumph
-        ? `${pr.won} of ${ROME_BOUTS} won on the imperial sand, and the house comes home to Capua carrying ${pr.prize||"the laurel"} — ${pr.purse}d in the strongbox and your name spoken in rooms you will never stand in. The games at Capua will look small for a while. What you make of it now is yours to decide.`
-        : `${pr.won} of ${ROME_BOUTS} on the imperial sand. Not the triumph the letter promised — but the house walked off Rome's floor on its own feet, which more than one great name has not. You come home lighter than you went. Capua is still Capua, and there is work in the morning.`,
-      choices: pr.triumph
-        ? ["Carry on — there is more to build", "Lay the house down here, at its height"]
-        : ["Take up the work again"],
-      data:{ won:pr.won, triumph:pr.triumph } };
-  }
-  if(d.pendingCourt && !d.pendingEvent){ const pc = d.pendingCourt; d.pendingCourt = null;
-    d.pendingEvent = pc.caught
-      ? { id:"courted", title:"He Knows", text:`${lanistaOf(pc.house).name} sends word, and the word is civil, which is worse. He knows what your man was doing at his wall. ${pc.name} stays where he is, your purse is lighter, and House ${pc.house} has a reason now that it did not have before.`, choices:["That is the risk"], data:{} }
-      : { id:"courted", title:"Over The Wall", text:`${pc.name} came over House ${pc.house}'s wall in the dark and is standing in your yard at first light with nothing but what ${pc.fem?"she":"he"} stands in. ${pc.fem?"She":"He"} chose you, which is not the same as being bought, and every man in the cells knows the difference.`, choices:["Take his oath"], data:{} };
-  }
-  if(d.pendingDefect && !d.pendingEvent){ const pd = d.pendingDefect; d.pendingDefect = null;
-    const pr = pd.fem ? {he:"she",him:"her",his:"her"} : {he:"he",him:"him",his:"his"};
-    d.pendingEvent = { id:"defected", title: pd.fem ? "She Is Gone" : "He Is Gone", text:
-      `${pd.name} did not answer the roll this morning. House ${pd.house} has ${pr.him} — freedom in three years and a bed of ${pr.his} own, and ${pr.he} took it. ${pd.wins>0?`${pd.wins} win${pd.wins===1?"":"s"} in your colours, and they belong to another house now. `:""}${pd.kin.length? `${pd.kin.join(" and ")} watched the gate a long time after ${pr.he} was through it.` : `The yard watched the gate a long time after ${pr.he} was through it.`}`,
-      choices:["The house goes on"], data:{} };
-  }
-  /* the two that ask for a named man on a named day. Rolled at the top of the week,
-     raised here — ahead of the week's random beat, because a date is worth more than one. */
-  if(!d.pendingEvent && d.askBooking){ const o = d.askBooking;
-    d.pendingEvent = { id:"booking",
-      title:"A Name on the Bill", text:`${o.editor} is putting on ${o.festName} and wants ${o.name} specifically, by name, on the bill. ${o.advance} denarii now and ${o.balance} on the day. If ${o.name} is not standing on that sand in ${o.due-d.week} weeks, the advance comes back doubled and the story goes round Capua ahead of you.`,
-      note: promiseRead(d, o.gid, o.due),
-      choices:[`Sign for it — ${o.advance}d now`, "Do not promise a man five weeks out"], data:{ o } }; }
-  if(!d.pendingEvent && d.askChallenge){ const c = d.askChallenge;
-    d.pendingEvent = { id:"challenge",
-      title:"Named in Public", text:`${c.lan} has named ${c.name} in front of the editors and half of Capua — his ${c.foe} against your man, inside ${c.due-d.week} weeks, for a purse of ${c.purse}. He did it loudly and on purpose. Everyone is now waiting to see whether you answer.`,
-      note: promiseRead(d, c.gid, c.due),
-      choices:["Accept it", "Let it pass"], data:{ c } }; }
-  d.askBooking = null; d.askChallenge = null;
-  if(!d.pendingEvent && !d.rome && R()<0.14){ const ev=EVENTS.ambition.make(d); if(ev) d.pendingEvent=ev; }
+  heldQuestions(d);
   freedWeek(d);
   kinWeek(d);
   familyWeek(d);
@@ -14510,37 +14619,7 @@ function endWeek(d){
     if(d.flags.sparkCount===5) d.fame += 25;
   }
   makePitCard(d);          /* who is down there this week */
-  /* every rung says its piece once, not just the one at 600 */
-  { d.flags.fameSaid = d.flags.fameSaid || {};
-    if(d.milestone600) d.flags.fameSaid[600] = 1;                 /* saves that already heard it */
-    for(const [at] of FAME_TIERS){
-      if(at >= 600 && d.fame >= at && !d.flags.fameSaid[at]){
-        d.flags.fameSaid[at] = 1; if(at===600) d.milestone600 = true;
-        chron(d, FAME_WORD[at] || `The house is ${fameTitle(at).toLowerCase()} now.`, "good");
-      } } }
-  if(d.gold < (d.loan ? -420 : -250)) d.over = { kind:"debt" };
-  /* ---- THE HOUSE THAT COULD NOT FIELD A MAN ----
-     `ruin` asked for no men AND no coin, and counted a man in the infirmary as a man.
-     A house measured at week 235 had nobody who could stand — two in the infirmary,
-     four over the wall — and forty-four thousand denarii in the box, so it tripped
-     neither clause. It was not ruined and it was not playable: the week could still
-     be ended, forever, on an empty yard. A house is finished when it cannot put a man
-     on the sand and cannot buy one either; if it can still buy one, it is not finished,
-     it is being neglected, and it should be told so and given the chance. */
-  const standing = fitOn(d, d.week);
-  d.flags.idleYard = standing > 0 ? 0 : (d.flags.idleYard||0) + 1;
-  if(d.flags.idleYard >= 3 && onTheBooks(d) === 0) slaverAtTheGate(d);
-  if(d.flags.idleYard === 1 && standing === 0)
-    chron(d, onTheBooks(d)
-      ? `There was no one to send this week. The yard is quiet in the way a yard should never be, and the men who are left are in no state to change that.`
-      : `The cells are empty. There is a ludus here and nobody in it, and every week that stays true is a week Capua stops expecting anything of you.`, "bad");
-  const alive = d.gladiators.some(g=>!isGone(g));
-  if(!alive && d.gold<150) d.over = { kind:"ruin" };
-  else if(d.flags.idleYard >= EMPTY_LIMIT && onTheBooks(d) === 0)
-    d.over = { kind:"emptied", name:d.name, weeks:d.flags.idleYard, years:yearOf(d), gold:Math.round(d.gold) };
-  /* the game says mercy is the strongest long game; it should be able to end that way */
-  else if(!alive && houseRecord(d).freed >= 5 && houseRecord(d).freed > houseRecord(d).lost)
-    d.over = { kind:"closed", name:d.name, freed:houseRecord(d).freed, years:yearOf(d) };
+  weekReckoning(d);
   weekDigest(d, digestMark, digestBefore);
 }
 
@@ -22645,6 +22724,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     hostParty, throwFeast, walkTheCells, holdTourney, stageMunus,
     seekMatchNow, openLicenceNow, takeUpTheHouse, claimRise, succeed,
     /* the lanista's climb: the rungs, the gates, and what standing pays and costs */
+    /* the week in phases, so a check can run one without running all of them */
+    menWeek, ludusLedger, heldQuestions, weekReckoning, boutAftermath,
     RISE_RANKS, riseOf, riseRank, riseNext, riseNeed, canClaimRise, riseWeek,
     riseStipend, riseFav, risePurse, liturgy, riseFee, RISE_ADMIT,
     /* and the patrons the climb rests on */

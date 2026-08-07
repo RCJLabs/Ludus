@@ -108,11 +108,31 @@ const done = [];
 for(const c of quick){ const r = await runOne(c); report(r); done.push(r); }
 
 if(heavy.length){
-  if(heavy.length > 1) console.log(`\n— ${heavy.length} browser checks, ${Math.min(LANES, heavy.length)} at a time —`);
-  const queue = heavy.slice(), out = [];
-  await Promise.all(Array.from({ length: Math.min(LANES, heavy.length) }, async ()=>{
-    while(queue.length){ const c = queue.shift(); out.push(await runOne(c)); }
-  }));
+  /* ---- ONE CHECK GETS THE MACHINE TO ITSELF ----
+     survive opens five browsers of its own and plays five houses through the real
+     screens at once. Sharing a lane with another browser check put seven Chromiums
+     on four cores, and the policy it runs is full of waits and clicks: under that
+     load houses missed the block, missed bouts, and came out of twenty-six weeks
+     empty. It failed twice in four suite runs while passing every time it was run
+     on its own — including on a build proved bit-identical to its parent.
+
+     That is a measurement artefact and it was very nearly mistaken for a balance
+     regression, twice. A check that declares `exclusive` runs alone, before the
+     lanes open. */
+  const alone = heavy.filter(c => c.exclusive);
+  const shared = heavy.filter(c => !c.exclusive);
+  const out = [];
+  for(const c of alone){
+    if(shared.length) console.log(`\n— ${c.name} runs alone; it opens browsers of its own —`);
+    out.push(await runOne(c));
+  }
+  if(shared.length){
+    if(shared.length > 1) console.log(`\n— ${shared.length} browser checks, ${Math.min(LANES, shared.length)} at a time —`);
+    const queue = shared.slice();
+    await Promise.all(Array.from({ length: Math.min(LANES, shared.length) }, async ()=>{
+      while(queue.length){ const c = queue.shift(); out.push(await runOne(c)); }
+    }));
+  }
   /* report in the order they were declared, not the order they happened to finish */
   for(const c of heavy){ const r = out.find(x => x.c === c); if(r){ report(r); done.push(r); } }
 }
