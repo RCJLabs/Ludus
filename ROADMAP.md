@@ -2918,16 +2918,33 @@ Weekly loop, roster, training, fight sim with missio, market, parties, feasts, e
 
 **The queue is clear.**
 
-Every item raised by the last audit has shipped or been disproved, and the two that
-remain are decisions rather than work:
+The v2.42.0 audit raised ten items (#78–#87) and all ten have shipped, in
+v2.43.0 through v2.51.0. Two of them half-disproved themselves on the way and
+the releases say so: the feast was not what kept merciful houses quiet (mercy
+was, which is the design), and the fame ladder above 11,000 was not read by
+literally nothing (a slow purse slope and the levy read it). The one item still
+outstanding is a decision rather than work:
 
 - **#47 — one tap to the obvious bout.** Declined; the multi-tap arena is intended.
-- **The monuments.** ✅ Re-measured (v2.43.0 audit) and resolved from the other
-  side: they had become affordable — ten measured houses finished all nine works
-  and monuments by year 12–14 and still ended on 19k–528k, because the stipend and
-  the league's purse read fame uncapped while the liturgy stopped at 9,000. Both
-  now read `CENSUS_TOP`; the prices themselves were never wrong. Audit items
-  #79–#87 remain open in the task list.
+
+**What the ten came to.** Six were numbers chosen against an economy that had
+moved underneath them — the stipend against the census, the fame ladder's last
+rung, rival fame against the league, the creditors' −250, the feast's flat
+effect, the street's unbounded memory. Two were systems with real machinery the
+player could reach but nothing answered — the emigrant house Capua never
+objected to, the asking that outdrew every other voice two to one. Two were the
+harness itself, and those two are why the other eight took as long as they did
+to surface: `setOut` and `comeHome` were never on the handle, so no probe could
+take a tour and come home, and the standing economy had no check watching it at
+all.
+
+**What the next audit should be looking for.** The same two seams, since they
+keep paying: a number set against an economy that no longer exists, and a system
+with machinery the player never meets. Sixty-one functions on the handle are
+still dark — `npm run coverage` names them every run, and the ones worth a check
+next are the ladder's read-side (`riseNeed`, `riseNext`, `riseRank`), the heir
+(`succeed`), and the fire-sale path (`sellTheHouse`, `buyLot`), which is real
+content one measured house in twenty ever sees.
 
 **What the next audit should be looking for.** The five that produced the best
 releases in this stretch were all of one kind — a system with real machinery behind
