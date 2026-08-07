@@ -8312,6 +8312,23 @@ const riseStipend = d => riseOf(d) >= 3
 const liturgy = d => { const r = riseOf(d);
   if(r < 4 || d.over) return 0;
   return Math.round((r-3)*26 + Math.min(d.fame, CENSUS_TOP)*0.012*(r-3) + acclaimOf(d)*0.6); };
+/* what a week reliably costs this house, the same sum the ledger takes and the
+   home page estimates — men and their season, the buildings, the stone, the racks,
+   the city's call, the society, the household, and the doctore's wage */
+const weeklyBill = d => Math.round(
+  activeG(d).reduce((n,g)=> n + (10 + seasonUpkeep(d)) * pit(d,"upkeep") + (isAuctor(g)? g.auctor.wage : 0), 0)
+  + bUpkeep(d) + workUpkeep(d) + gearUpkeep(d) + liturgy(d) + collDues(d) + hhUpkeep(d) + (d.doctore? docWage(d.doctore) : 0));
+/* ---- WHAT THE CREDITORS WILL CARRY ----
+   The run ended at gold below −250 (−420 with a loan open) — constants from the
+   v0.1 economy, when a house's whole week cost about fifty denarii and the line
+   meant five weeks of grace. A built house now runs fixed costs of a thousand a
+   week, and the same line was less than two days: sixteen of twenty-four measured
+   mid-transition houses died on it inside one bad festival. The men who extend a
+   lanista credit extend it against what he visibly spends — a house of three in a
+   shed still folds at the old figure, and a great house is carried for about two
+   and a half weeks of its own ledger, which is the same patience it always had. */
+const CREDIT_WEEKS = 2.5;
+const creditLine = d => -Math.round(Math.max(250, weeklyBill(d) * CREDIT_WEEKS) * (d.loan ? 1.68 : 1));
 /* how close you are to being received at the next rung */
 function riseWeek(d){
   if(d.over || d.succession) return;
@@ -14694,7 +14711,7 @@ function weekReckoning(d){
         d.flags.fameSaid[at] = 1; if(at===600) d.milestone600 = true;
         chron(d, FAME_WORD[at] || `The house is ${fameTitle(at).toLowerCase()} now.`, "good");
       } } }
-  if(d.gold < (d.loan ? -420 : -250)) d.over = { kind:"debt" };
+  if(d.gold < creditLine(d)) d.over = { kind:"debt" };
   /* ---- THE HOUSE THAT COULD NOT FIELD A MAN ----
      `ruin` asked for no men AND no coin, and counted a man in the infirmary as a man.
      A house measured at week 235 had nobody who could stand — two in the infirmary,
@@ -18056,9 +18073,7 @@ export default function App(){
         {tab==="ludus" && (<div className="flex flex-col gap-3">
           {/* The house's own name and standing lead the page — who you are first,
               then what you are holding, then how that reads against your years. */}
-          {(()=>{ const upkeepEst = Math.round(
-              activeG(S).reduce((n,g)=> n + (10 + seasonUpkeep(S)) * pit(S,"upkeep") + (isAuctor(g)? g.auctor.wage : 0), 0)
-              + bUpkeep(S) + workUpkeep(S) + gearUpkeep(S) + liturgy(S) + collDues(S) + hhUpkeep(S) + (S.doctore? docWage(S.doctore) : 0));
+          {(()=>{ const upkeepEst = weeklyBill(S);
             const owedIn = owedTotal(S), merch = merchLive(S) ? merchWeekly(S) : 0;
             const Stat = ({label, val, colour})=>(
               <div style={{minWidth:0}}>
@@ -23018,7 +23033,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* the week in phases, so a check can run one without running all of them */
     menWeek, ludusLedger, heldQuestions, weekReckoning, boutAftermath,
     RISE_RANKS, riseOf, riseRank, riseNext, riseNeed, canClaimRise, riseWeek,
-    riseStipend, riseFav, risePurse, liturgy, riseFee, RISE_ADMIT,
+    riseStipend, riseFav, risePurse, liturgy, riseFee, RISE_ADMIT, weeklyBill, creditLine,
     /* and the patrons the climb rests on */
     patronWeek, serveWants, recomputeFavor, patronsOf, WANTS, RANKS,
     feastCost, feastReach, FEAST_BASE, FEAST_HEAD, FEAST_STANDING, RETRAIN_FEE, FORGE_FEE, BUILDINGS, PARTY, STAFF,

@@ -1112,7 +1112,7 @@ Unrest rises from cruelty, deaths, sine missione, sales, and thin rations; falls
 Opening the gates sets `flags.spartacusAtLarge` and runs a 5-beat chronicle of his growing revolt. Granting the rudis to a known Firebrand **defuses the whole conspiracy**.
 
 ### Economy
-Upkeep 10d/man/week, +8d per injured man. Purses and appearance fees by tier. Parties (150/400/900d) buy favor; feasts (120d) buy loyalty. Losing more than −250d ends the run.
+Upkeep 10d/man/week, +8d per injured man. Purses and appearance fees by tier. Parties (150/400/900d) buy favor; feasts (priced against the house, see `feastCost`) buy loyalty. The creditors close at −max(250, 2.5 weeks of the house's own bill) — see `creditLine`.
 
 ### Save files
 **Three independent slots** at `window.storage` keys `ludus-slot-1..3`, each autosaved 500ms after any state change with a `savedAt` stamp. Boot reads all three and shows the **Records** title screen — house name, week, fame title, men/fallen/freed, and how long ago it was kept. A single pre-slot save at the legacy key `ludus-save-v1` is adopted into slot 1 on first boot, so no one loses a house.
@@ -1329,6 +1329,7 @@ Tuning dials, in the order you'd reach for them:
 | Patrons while away | `patronWeek` | wants neither asked nor credited; decay ×2.5 |
 | Feast fatigue | `FEAST_FRESH` / `feastFresh` | ×0.4 effect on the cooldown floor, full at a 6-week gap |
 | Feast price ceiling | `feastCost` | fame clamp extended to ×2 (≈×5.4 base at fame 4,400+) |
+| The creditors' patience | `CREDIT_WEEKS` / `creditLine` | ruin at −max(250, 2.5 × `weeklyBill`), ×1.68 with a loan |
 | What it leaks | `warWeek` | standing, unrest, and a defiance floor |
 | The block | `warMarket` | ×1.25 at its height, ×0.55 after |
 
@@ -1347,6 +1348,23 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.48.0 — What the creditors will carry
+
+Audit item #83. The run ended at gold below −250 (−420 with a loan open) —
+constants from the v0.1 economy, when a house's whole week cost about fifty
+denarii and the line meant five weeks of grace. A built house now runs fixed
+costs of a thousand a week; the same line was less than two days, and sixteen of
+twenty-four measured mid-transition houses died on it inside one bad festival.
+
+The men who extend a lanista credit extend it against what he visibly spends.
+`weeklyBill(d)` — the same sum the ledger takes and the home page estimates,
+lifted into one shared helper — and `creditLine(d)`: the run ends at
+−max(250, 2.5 weeks of the bill), ×1.68 with a loan open. Verified: a young
+house folds at exactly the old figures (−250 / −420 to the denarius); a
+mid-house at rank 4 is carried to −603; a finished house to −3,373 — the same
+two-and-a-half weeks of patience at every size. Dials: `CREDIT_WEEKS` beside
+`creditLine`.
 
 ### v2.47.0 — The men can count
 
@@ -2845,4 +2863,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.47.0*
+*Last updated: v2.48.0*
