@@ -6,6 +6,7 @@ npm run test:all          every check, fast and slow
 npm run test:slow         only the ones that drive a browser
 npm test book modals      only those, whatever tier they are in
 npm test -- --keep        leave the test bundle behind to poke at
+npm run coverage          not what passes — what no check ever touches
 ```
 
 Every check runs against a real build. Most reach into the game through the test
@@ -38,7 +39,7 @@ reason the check exists usually has not.
 | check | tier | it exists because |
 |---|---|---|
 | `survive` | slow | economy changes have twice bankrupted every opening without anyone noticing |
-| `engines` | fast | tactic and trait constants are 3–5× more powerful than they look, every time |
+| `engines` | fast | tactic and trait constants are 3–5× more powerful than they look, every time — and for fifty versions it tested two of the four engines under a comment claiming all of them |
 | `book` | fast | the pair booked only its wins and the melee only its losses, for fifty versions |
 | `modals` | slow | the week's digest threw itself over the answer to the question you were just asked |
 | `surface` | slow | the tab bar was set in 9px and END WEEK was 37px tall |
@@ -56,6 +57,36 @@ reason the check exists usually has not.
 | `grudge` | fast | two rival-vengeance events waited above the ceiling of the number they read |
 | `card` | fast | three of the four fight engines shared a quarter of the bill, and the audit that found it was counting Rome |
 | `stone` | fast | 336,500 denarii of works and monuments, and the richest careful house ever measured held 8,485 |
+
+## What no check has ever touched
+
+`npm run coverage` answers the question the pass column cannot. It builds the test
+bundle — which wraps every function on `__LVDVS` in a counter — runs each check
+against a fresh page, and reads the counters back. The output is three lists: how
+much of the game each check reaches, everything nothing reaches at all, and which
+functions rest on exactly one check, so it is known what goes dark if that check
+does.
+
+It exists because "passing" and "looking" are not the same thing, and this repo has
+the receipts. `survive` ran for weeks without ever buying a man. Two checks asserted
+against distributions borrowed from a different way of playing. `card` counted Rome
+and a tour down the coast as though they were a Capuan bill and read 84% single
+combats where the real figure was 57. None of that was visible from a green column.
+
+The first sweep found `engines` — the check named for the fight engines, under a
+comment that said "the other three engines" — calling `simulateFight` and
+`simulatePair` and nothing else. The melee's eighteen rounds and the venatio's
+fourteen had never been run by anything, and neither had `winChance`, which is the
+number the player is shown before every bout and the one the wager is priced from.
+Those are covered now; sixty functions still are not, and the list is printed every
+time so it stays a fact rather than a feeling.
+
+**One caveat, because an unqualified coverage number is worse than none.** The
+counter only sees calls made *through the handle*. A check that drives the real UI
+runs plenty of game code — when the app calls `simulateMelee` from inside `doMelee`
+it uses the module binding and never touches the wrapper — which is why the four
+browser checks show zero. Read "never called" as "no check can assert anything about
+this directly", not "this never runs". That is the useful reading regardless.
 
 ## The test build
 

@@ -11162,7 +11162,15 @@ function simulateMelee(ents, ctx, opts){
   };
 
   const myTac = ctx.myTactic || "measured";
-  const MP = ctx.plan || { pow:1, def:1, stam:1, hunt:false };
+  /* FILL THE PLAN IN RATHER THAN TRUSTING IT. A plan missing one of its four keys
+     used to reach `dmg *= MP.def` as undefined, which makes the damage NaN, which
+     makes `hpv <= 20` false forever: your men become unkillable and the melee ends
+     with every foe dead and nobody of yours even scratched. Nothing in the game
+     passes a short plan — meleePlanEffect always returns all four — so this was
+     never seen on the sand, only by a harness that wrote `guard` where the engine
+     reads `def`. It is the same silent NaN that ate a man's scars in v2.31.0, and
+     it costs one line to make impossible. */
+  const MP = Object.assign({ pow:1, def:1, stam:1, hunt:false }, ctx.plan || {});
   const startR = R0 ? R0.round : 0;
   /* Twenty-six rounds made a melee an endurance test and nothing else — a man who
      covered up simply outlived everybody, and won the purse for it. Eighteen is
@@ -22493,7 +22501,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* what a rival house's anger has to reach before it does anything */
     GRUDGE_SABOTAGE, GRUDGE_BRIBE, GRUDGE_THUGS,
     /* the odds the bookmakers quote, and the mitigations on a death */
-    winChance, collSoften, docHealth, TACTIC, TACTIC_OR,
+    winChance, collSoften, docHealth, TACTIC, TACTIC_OR, BEASTS,
     /* the street: what it thinks of you, and what it will say for your men */
     acclaimOf, acclaimTarget, acclaimWeek, acclaimWord, streetVoice, merchWeekly,
     missioScore, missioOdds, missioAccount, ACCLAIM_TIERS, ACCLAIM_MISSIO, MISSIO_CAP, MISSIO_MID,
@@ -22502,4 +22510,22 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* helpers */
     activeG, defaultKit, kitMods, statCap, fullName,
   };
+  /* ---- WHAT THE CHECKS NEVER REACH ----
+     Every function on the handle is wrapped in a counter. It costs a shipping build
+     nothing — this whole block is folded away by esbuild — and it lets the suite be
+     asked the one question it could not answer about itself: which parts of the game
+     has no check ever called.
+
+     That question is not academic here. survive ran for months never buying a man;
+     two checks asserted against distributions borrowed from a different policy; and
+     the card check counted Rome and a tour as though they were a Capuan bill. Each
+     was a blind spot nobody could see, because a check that never reaches a state
+     looks exactly like a check that reaches it and finds nothing wrong. */
+  window.__LVDVS.__calls = {};
+  for(const k of Object.keys(window.__LVDVS)){
+    const v = window.__LVDVS[k];
+    if(typeof v !== "function" || k === "__calls") continue;
+    window.__LVDVS.__calls[k] = 0;
+    window.__LVDVS[k] = function(...a){ window.__LVDVS.__calls[k]++; return v.apply(this, a); };
+  }
 }

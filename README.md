@@ -42,6 +42,7 @@ runs as-is as a Claude artifact, where saves use the artifact storage API instea
 ```
 npm test              every check
 npm test book         just that one
+npm run coverage      what no check ever touches
 ```
 
 Each check drives a real browser against a real build: five houses live thirty weeks,

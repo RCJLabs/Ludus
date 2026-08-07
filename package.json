@@ -1,6 +1,6 @@
 {
   "name": "lvdvs",
-  "version": "2.36.0",
+  "version": "2.37.0",
   "private": true,
   "description": "LVDVS - a gladiator ludus management sim. Blood, sand, and the fortunes of a Roman house.",
   "scripts": {
@@ -8,7 +8,8 @@
     "build:test": "node build.js --test",
     "test": "node test/run.mjs",
     "test:all": "node test/run.mjs --all",
-    "test:slow": "node test/run.mjs --slow"
+    "test:slow": "node test/run.mjs --slow",
+    "coverage": "node test/coverage.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",

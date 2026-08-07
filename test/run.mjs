@@ -6,6 +6,7 @@
      npm test:slow            only the ones that drive a browser
      npm test book modals     only those, whatever tier they are in
      npm test -- --keep       leave the test bundle behind to poke at
+     npm run coverage         not what passes — what no check ever touches
 
    A check is a module in checks/ exporting { name, describe, run(ctx) }, where
    run returns { pass, why, lines }. ctx carries a live page, the errors it has
