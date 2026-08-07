@@ -58,6 +58,7 @@ reason the check exists usually has not.
 | `card` | fast | three of the four fight engines shared a quarter of the bill, and the audit that found it was counting Rome |
 | `stone` | fast | 336,500 denarii of works and monuments, and the richest careful house ever measured held 8,485 |
 | `coast` | fast | a tour down the coast was single combats and nothing else, and a defeat away was invisible to the town that watched it |
+| `census` | fast | the ladder's top rungs asked 110,000 denarii in cash from a house that had to spend the same coin on stone, so nobody ever stood on them |
 
 ## What no check has ever touched
 

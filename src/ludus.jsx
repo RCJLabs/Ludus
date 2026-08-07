@@ -8155,9 +8155,36 @@ function riseWeek(d){
   }
   d.rise.standing = clamp(s, 0, 100);
 }
+/* ---- THE CENSUS, NOT THE BILL ----
+   Every rung asked its whole price in coin, handed over and gone: 30,000 to be
+   received as Patron of the Games, 80,000 for the last rung. Measured over
+   twenty-four houses run twenty years apiece with no free coin, the gates split
+   cleanly in two — favour holds the bottom of the ladder (93% of the wait below
+   Friend of the Magistracy) and coin holds the top (100% of the wait below Eques
+   and Known in Rome). One house in twenty-four reached Patron of the Games, in
+   year 11. None reached Amicus Caesaris. A different house sat on 99,182 denarii
+   and was stuck at rung 2 for want of a patron who liked it.
+
+   The trouble is not the rate. Standing was never once the thing holding — the
+   meter fills in fifteen weeks once fame and favour are met — and a house that
+   tends its patrons reaches favour 90 by year four and a half. The trouble is
+   that the coin gate and everything else the late game sells are the same coin.
+   Nine works and monuments want 336,500 denarii; the ladder wants 138,600 more;
+   a house that survives twenty years holds thirty to a hundred thousand. They
+   were never all going to fit, and the ladder lost, because stone at least stays
+   built.
+
+   So a rank is a census, which is what it was. Nobody took 400,000 sesterces off
+   an eques — he had to BE worth it, and the reception itself cost a fraction of
+   that in sportula, clerks and a feast the town remembered. The figures below are
+   unchanged; what changes is that you must HOLD them rather than spend them, and
+   pay a quarter to be received. What standing then costs you is the liturgy,
+   every week, for as long as you are somebody — and that was already built. */
+const RISE_ADMIT = 0.25;
+const riseFee = nx => Math.ceil((nx.cost||0) * RISE_ADMIT);
 const riseNeed = d => {
   const nx = riseNext(d); if(!nx) return null;
-  return { fame: nx.fame||0, favor: nx.favor||0, cost: nx.cost||0,
+  return { fame: nx.fame||0, favor: nx.favor||0, cost: nx.cost||0, fee: riseFee(nx),
     fameOk: d.fame >= (nx.fame||0), favorOk: d.favor >= (nx.favor||0),
     goldOk: d.gold >= (nx.cost||0), full: d.rise && d.rise.standing >= 100 };
 };
@@ -8167,13 +8194,13 @@ const canClaimRise = d => {
 function claimRise(d){
   if(!canClaimRise(d)) return false;
   const nx = riseNext(d);
-  d.gold -= nx.cost;
+  d.gold -= riseFee(nx);
   d.rise.rank++;
   d.rise.standing = 0;
   d.fame += ri(10, 18);                        // the elevation is itself talked about
   patronsOf(d).forEach(p => p.favor = clamp(p.favor + ri(3,6), 0, 100));
   recomputeFavor(d);
-  chron(d, `${d.name} is received as ${nx.name} — ${nx.short}.`, "good");
+  chron(d, `${d.name} is received as ${nx.name} — ${nx.short}. The census had to find you worth ${nx.cost} denarii; being received cost ${riseFee(nx)} of it.`, "good");
   return true;
 }
 
@@ -19235,16 +19262,23 @@ export default function App(){
                   </div>
                   {[["Renown", need.fame, rnd(S.fame), need.fameOk],
                     ["Patrons' favour", need.favor, rnd(S.favor), need.favorOk],
-                    ["The price of the name", need.cost, rnd(S.gold), need.goldOk]].filter(r=>r[1]>0).map(([lbl,req,have,ok])=>(
+                    ["What the census must find you worth", need.cost, rnd(S.gold), need.goldOk]].filter(r=>r[1]>0).map(([lbl,req,have,ok])=>(
                     <div key={lbl} className="flex items-center justify-between gap-2" style={{fontSize:"var(--fs-base)",padding:"2px 0"}}>
                       <span style={{color:ok?"#a9c98a":"#cfc0a0"}}>{ok?"✓":"·"} {lbl}</span>
                       <span className="rowval dim" style={{color:ok?"#a9c98a":undefined}}>{have} / {req}</span>
                     </div>
                   ))}
+                  {need.cost>0 && (
+                    <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:5}}>
+                      The census counts what you have; it does not take it. Being received costs {need.fee} denarii
+                      in sportula, clerks and a night the town remembers{riseOf(S)>=3 || (nx.cost||0)>=8000 ? ", and the city's charges rise with the rank thereafter" : ""}.
+                    </div>
+                  )}
                   <button className={`btn ${can?"":"btn-ghost"}`} style={{width:"100%",marginTop:8}} disabled={!can} onClick={takeRise}>
-                    {can ? `Take your place as ${nx.name}`
+                    {can ? `Take your place as ${nx.name} — ${need.fee}d`
                       : !need.full ? "The town is not yet used to you"
-                      : `Pay ${nx.cost}d to be received`}
+                      : !need.goldOk ? `The census wants you worth ${nx.cost}d`
+                      : `Pay ${need.fee}d to be received`}
                   </button>
                 </div>
               ) : (
@@ -22610,6 +22644,11 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     answerReSignWith, answerRomeWith,
     hostParty, throwFeast, walkTheCells, holdTourney, stageMunus,
     seekMatchNow, openLicenceNow, takeUpTheHouse, claimRise, succeed,
+    /* the lanista's climb: the rungs, the gates, and what standing pays and costs */
+    RISE_RANKS, riseOf, riseRank, riseNext, riseNeed, canClaimRise, riseWeek,
+    riseStipend, riseFav, risePurse, liturgy, riseFee, RISE_ADMIT,
+    /* and the patrons the climb rests on */
+    patronWeek, serveWants, recomputeFavor, patronsOf, WANTS, RANKS,
     feastCost, feastReach, FEAST_BASE, FEAST_HEAD, FEAST_STANDING, RETRAIN_FEE, FORGE_FEE, BUILDINGS, PARTY, STAFF,
     /* loading an old save */
     migrate, SAVE_FIELDS, SAVE_MAYBE, SAVE_NUMBERS, MAN_FIELDS, MAN_NUMBERS, REPAIRS, SAVE_VER,
