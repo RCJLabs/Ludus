@@ -1331,6 +1331,7 @@ Tuning dials, in the order you'd reach for them:
 | Feast price ceiling | `feastCost` | fame clamp extended to ×2 (≈×5.4 base at fame 4,400+) |
 | The creditors' patience | `CREDIT_WEEKS` / `creditLine` | ruin at −max(250, 2.5 × `weeklyBill`), ×1.68 with a loan |
 | The asking drumbeat | `AMB_COOL` | ten weeks of yard-wide quiet after any man's ambition beat |
+| The street's memory | `acclaimTarget` | freed legends cap +12, walls +9, spill +14; the rest is this week's card |
 | What it leaks | `warWeek` | standing, unrest, and a defiance floor |
 | The block | `warMarket` | ×1.25 at its height, ×0.55 after |
 
@@ -1349,6 +1350,26 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.50.0 — The street loves what is in front of it
+
+Audit item #85. Every measured house alive past week 150 sat at acclaim 90–100:
+the six-tier street ladder was a first-third-of-the-game experience and "the
+street's own house" (92) a permanent state entered around year eight. The cause
+sat in `acclaimTarget`: history that never stopped counting — six points per
+freed legend, uncapped, banked +120 on a twenty-year merciful house by itself —
+so every mature house's target was past 100 whatever it was currently doing.
+
+The remembered terms are bounded now: freed legends cap at +12 (4 a head), the
+walls at +9, the fame-spill at +14. What the street chants about is the men on
+this week's card, the primacy, and the show. Verified on fixed states: a calm
+great house (three names, twenty legends freed, fame 12,000, no primacy)
+targets **72 where it used to target 100**; the same house holding the primacy
+in a show streak still reaches 100 — the last rung is taken with heat and
+lapses in nine to twelve weeks when the heat goes; a young house is unchanged
+to the point (23 → 23). The tier announcements only ever fire on the way up
+(`brand.tier` keeps its high-water mark), so nothing re-congratulates.
+Untested for feel: where real campaigns settle between 72 and 92.
 
 ### v2.49.0 — One man's asking buys the yard a month
 
@@ -2884,4 +2905,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.49.0*
+*Last updated: v2.50.0*

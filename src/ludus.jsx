@@ -1989,13 +1989,24 @@ const GRAFFITI = [
   g => `${g.name} — the doctor's despair`,
 ];
 function acclaimTarget(d){
+  /* ---- THE STREET LOVES WHAT IS IN FRONT OF IT ----
+     Measured (v2.46 audit): every house alive past week 150 sat at acclaim
+     90–100 — the six-tier ladder was a first-third-of-the-game experience and
+     "the street's own house" a permanent state entered around year eight. The
+     cause was history that never stopped counting: six points per freed legend,
+     uncapped, banked +120 on a twenty-year merciful house all by itself, and the
+     target sat past 100 for any mature house whatever it was currently doing.
+     The remembered terms are bounded now — the street keeps its legends and its
+     walls, but what it chants about is the men on this week's card, the primacy,
+     and the show. A calm great house settles in the mid-eighties; the last rung
+     (92) has to be taken with heat and lapses when the heat goes. */
   const men = activeG(d).map(g=>g.pfame||0).sort((a,b)=>b-a);
   const top3 = (men[0]||0)*0.5 + (men[1]||0)*0.28 + (men[2]||0)*0.16;   // your famous few
   const spectacle = repShare(d,"show")*22 + repShare(d,"blood")*10;      // the popular styles
-  const freedLegends = (d.freed||[]).filter(f=>(f.wins||0)>=10).length * 6;
+  const freedLegends = Math.min(12, (d.freed||[]).filter(f=>(f.wins||0)>=10).length * 4);
   const primus = d.primus ? 14 : 0;
-  const spill = Math.min(20, (d.fame||0)*0.06);                          // your standing spills into the street
-  const graff = activeG(d).filter(g=>g.graffiti).length * 3;
+  const spill = Math.min(14, (d.fame||0)*0.06);                          // your standing spills into the street
+  const graff = Math.min(9, activeG(d).filter(g=>g.graffiti).length * 3);
   return clamp(top3*0.5 + spectacle + freedLegends + primus + spill + graff, 0, 100);
 }
 function acclaimWeek(d){
