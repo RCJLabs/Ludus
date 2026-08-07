@@ -2432,6 +2432,9 @@ function agenda(d){
   else { const rust = Object.keys(CITIES).filter(k=>k!==d.city && (d.known&&d.known[k]||0) >= 12);
     if(rust.length && !d.city && !d.travel)
       add(1, "arena", `They are forgetting you in ${CITIES[rust[0]].name}`, "standing built down there is bleeding away"); }
+  if(d.city && stayWeeks(d) >= 10)
+    add(2, "arena", `${stayWeeks(d)} weeks at ${CITIES[d.city].name}`,
+      "Capua is forgetting the house — patrons cool, wants go unasked, and the town has seen the bill");
   if(rackOver(d)) add(2, "armory", `The armoury is ${rackOver(d)} past what it holds`, `${rackRent(d)}d a week and everything wearing faster`);
   if((d.deadSteel||[]).length) add(1, "armory", `${d.deadSteel.length} piece${d.deadSteel.length===1?"":"s"} came back off a body`, "somebody will have to carry it");
   if((d.market||[]).length && d.gold > 500 && activeG(d).length < 6)
@@ -2822,6 +2825,7 @@ function askWant(d, p){
 
 /* Something happened in the ludus; see which patron cares. */
 function serveWants(d, ev){
+  if(d.city || d.travel) return;   // what Capua's patrons did not see, they do not credit
   for(const p of patronsOf(d)){
     const w = p.want; if(!w) continue;
     let hit = false;
@@ -2920,8 +2924,13 @@ function patronWeek(d){
         chron(d, `${p.name} asked, and you did not answer. He has stopped asking.`, "bad");
         p.want = null;
       }
-    } else if(R()<0.09) askWant(d, p);
-    p.favor = clamp(p.favor - 0.35*lanPatronDecay(d), 0, 100);   // standing decays without attention
+    } else if(!d.city && !d.travel && R()<0.09) askWant(d, p);
+    /* standing decays without attention — and attention cannot be paid from Puteoli.
+       Measured before this multiplier: a house sixty weeks resident down the bay
+       ended with MORE favour than it left with, because the drips (the league, a
+       rank claimed) outran a decay tuned for a lanista who is merely busy, not
+       gone. Out of sight is out of mind at two and a half times the rate. */
+    p.favor = clamp(p.favor - 0.35*lanPatronDecay(d)*((d.city||d.travel)?2.5:1), 0, 100);
     if(p.favor>=85 && R()<0.10){
       const gift = rnd(120 + p.favor*3);
       d.gold += gift;
@@ -8626,6 +8635,20 @@ function cityAfter(d, offer, v, sum){
     chron(d, `House ${P.house} of ${away.name} has had enough of a Capuan taking purses off their own sand. They are asking the magistrate for the match.`, "bad"); }
 }
 const awayIn = d => (d.city && CITIES[d.city]) ? CITIES[d.city] : null;
+/* ---- A GUEST, NOT A RESIDENT ----
+   Measured (v2.45 audit): a house that accepted one town's invitation and simply
+   never went home prospered for three hundred straight weeks — favour 97–100,
+   the works rising, the amphitheatre of Capua commissioned from a tent in
+   Puteoli — because patron wants arose and were served from the road, and no
+   town ever tired of the same bill. Two costs now, both of residence rather
+   than travel: past six weeks in one town the crowd has seen the whole
+   repertoire (purses fade to ×0.6, one fewer offer once it is stale), and
+   Capua's patrons neither ask nor credit wants while you are down the bay —
+   their standing decays as it always has, which over a long stay is the whole
+   ladder quietly letting go of you. A tour is untouched; an emigration bleeds. */
+const STAY_FRESH = 6;      // weeks in one town before the welcome starts to wear
+const stayWeeks = d => (d.city && d.flags && d.flags.cityArrived!=null) ? Math.max(0, d.week - d.flags.cityArrived) : 0;
+const welcomeOf = d => clamp(1 - Math.max(0, stayWeeks(d) - STAY_FRESH) * 0.045, 0.6, 1);
 const knownIn = (d,k) => (d.known && d.known[k]) || 0;
 const cityTier = (d,k) => knownIn(d,k) >= 60 ? 3 : knownIn(d,k) >= 30 ? 2 : 1;
 /* a house known the length of the bay carries further than Campania — word of it
@@ -8654,9 +8677,11 @@ function travelWeek(d){
     d.travel.weeks--;
     d.gold -= 25;
     if(d.travel.weeks<=0){
-      if(d.travel.home){ d.city = null; chron(d, `Capua again. The gate needs oiling and somebody has been sleeping in your chair.`, "event"); }
+      if(d.travel.home){ d.city = null; delete d.flags.cityArrived; d.flags.staleSaid = 0;
+        chron(d, `Capua again. The gate needs oiling and somebody has been sleeping in your chair.`, "event"); }
       else { d.city = d.travel.to;
         const C = CITIES[d.city];
+        d.flags.cityArrived = d.week; d.flags.staleSaid = 0;
         d.known = d.known || {};
         if(!d.known[d.city]) d.known[d.city] = 0;
         chron(d, `${C.name}. ${C.crowd} Nobody here has heard of your house, which is the point.`, "event"); }
@@ -8763,6 +8788,22 @@ function makeCityGames(d){
         purse: rnd((TIERS[Math.max(tier,1)].purse[0]+R()*TIERS[Math.max(tier,1)].purse[1]) * C.purse * 1.5) });
     }
   }
+  { const wel = welcomeOf(d);
+    if(wel < 1){
+      if(wel <= 0.8 && offers.length > 2){
+        /* the card thins from the middle: a plain single goes, never the home
+           house's champion or the town's own specialty — a stale resident sees
+           MORE of the local grudge, not less */
+        const singles = offers.filter(o=>!o.pair && !o.melee && !o.venatio && !o.localGrudge && !o.townBout);
+        if(singles.length >= 2) offers.splice(offers.indexOf(singles[0]), 1);
+        else if(!offers[offers.length-1].localGrudge) offers.length = offers.length - 1;
+      }
+      offers.forEach(o=>{ o.purse = Math.max(20, rnd(o.purse * wel)); });
+      if(wel < 0.95 && !(d.flags.staleSaid >= 1)){ d.flags.staleSaid = 1;
+        chron(d, `${C.name} has had the same bill for a month and a half now. The editors are friendly and the purses are thinner, and neither of those is an accident.`, "info"); }
+      if(wel <= 0.7 && !(d.flags.staleSaid >= 2)){ d.flags.staleSaid = 2;
+        chron(d, `They know the whole repertoire in ${C.name} — who wins, who showboats, who bleeds. A visiting house is a festival; a resident one is furniture. The good money has gone back to waiting for something new.`, "info"); }
+    } }
   offers.forEach(o=>{ if(!o.venue) o.venue = venueFor(d, o); if(!o.sky) o.sky = skyFor(d, o); });
   d.games = { festival:fest, offers, week:d.week, city:key,
     custom: (cityCustom(key)||{}).name || null };

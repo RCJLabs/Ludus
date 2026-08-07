@@ -1325,6 +1325,8 @@ Tuning dials, in the order you'd reach for them:
 | A name at the block | `FAME_WARM_AT` | from fame 14,000, bought men arrive +6 regard, +6 morale |
 | A rival's name | `stature` in `LANISTAE` | pulled toward stature × the leading house's fame |
 | A decreed season | `leagueReckoning` | 28%/yr, form 82–100 floored at 60 for the year, crest +0.9 × stature |
+| A worn welcome | `STAY_FRESH` / `welcomeOf` | past 6 weeks resident, purses fade to ×0.6 and the card thins |
+| Patrons while away | `patronWeek` | wants neither asked nor credited; decay ×2.5 |
 | What it leaks | `warWeek` | standing, unrest, and a defiance floor |
 | The block | `warMarket` | ×1.25 at its height, ×0.55 after |
 
@@ -1343,6 +1345,32 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.46.0 — A guest, not a resident
+
+Audit item #81. A house that accepted one town's invitation and simply never went
+home prospered for three hundred straight weeks — favour 97–100, the works
+rising, the amphitheatre of Capua commissioned from a tent in Puteoli — because
+patron wants arose and were served from the road, and no town ever tired of the
+same bill. Nothing anywhere objected to emigration.
+
+Two costs now, both of **residence rather than travel**. Past six weeks in one
+town the crowd has seen the whole repertoire: purses fade toward ×0.6 and the
+card thins by a plain single — never the home house's champion bout, of which a
+stale resident sees more, not less. And Capua's patrons neither ask nor credit
+wants while you are down the bay, and cool at two and a half times the rate —
+out of sight is out of mind — so a long stay is the whole ladder quietly letting
+go of you. The agenda says it plainly from week ten, and the town says it twice
+in its own voice.
+
+Measured (5-man fame-900 houses, 60 resident weeks): favour 70 → 47 and 68 → 43
+where it used to hold flat; the stale weekly take falls to 69–80d against the
+old squatter's escalating 464–966d; a proper six-week tour's purses are
+untouched (welcome is fresh) and its favour cost is a few points of extra decay
+plus the lapse risk the deadline panel already shows — flagged untested for
+feel. Home play on the same seed is byte-identical, verified. Dials:
+`STAY_FRESH` (6 weeks) and the welcome slope beside it; the away-decay
+multiplier (×2.5) in `patronWeek`.
 
 ### v2.45.0 — The city rises with its First House
 
@@ -2792,4 +2820,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.45.0*
+*Last updated: v2.46.0*
