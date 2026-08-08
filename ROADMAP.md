@@ -87,7 +87,7 @@ npm run test:all      every check, fast and slow — about nine minutes
 npm run coverage      not what passes, but what no check ever touches
 ```
 
-**34 checks.** Thirty read into the game through a test handle and answer in seconds;
+**35 checks.** Thirty-one read into the game through a test handle and answer in seconds;
 four drive a real browser through the real screens. Every one of them exists because
 of a bug that shipped, and the comment at the top of each says which — that comment
 is the durable part, not the numbers inside it. See `test/README.md` for the table.
@@ -1330,6 +1330,7 @@ Tuning dials, in the order you'd reach for them:
 | Proving it for Rome | `romeProved` / `ROME_RANK` | the primacy held, or received as Eques (rank 4); rank 5 admitted nobody the sand had not |
 | Who is shown a paragon | `PARAGON_ODDS` / `PARAGON_REACH` / `PARAGON_GAP` | 5.5% a week, only within 88% of his price by a full fire sale, 90 weeks between; 23–30% of houses reaching week 120 see one |
 | What counts as new, and where | `TAB_SIG` / `tabSig` / `tabMarks` | a signature per tab over its discrete state; arrivals move it, drift never does |
+| How the war reaches you | `WAR_AWAY_AT` / `WAR_AWAY_ODDS` | your own gate, or a rising elsewhere from week 60 at 0.35% a week — 45% of houses that get there see it |
 | What earns a badge | `MARK_URG` / `TAB_QUIET` | urgency 2 and above only (3.64 items a week, not 7.86); an empty tab cannot be fresh |
 | What a kept vow is worth | `VOW_BOUTS_FULL` / `VOW_EARNT_AT` | par at nothing risked, 1.6× at six cards fought under it — and never a blessing |
 | Which panel inside a tab | `SECT_MARK` / `sectMark` | eight panels, each a function of the save so a check can ask what it would wear |
@@ -1365,6 +1366,60 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.63.0 — The war does not have to be your gate
+
+Audit items #98 and #103, and both of them turned out to be about the door rather than the
+room — which is what their falsification clauses were written to find out.
+
+**#98. The Spartacus war works perfectly and had exactly one way in.** Four named stages
+across fifty-eight weeks, standing decay, a rising defiance floor because the men watched it
+done, a block that swings from ×1.25 to ×0.55, and four events of its own. Driven four times
+by forcing the Night of Fire and opening the gates: **all four runs reached all four stages,
+ran the full fifty-eight weeks and resolved**, and carried standing from 70 down to between
+9 and 23. There was never anything wrong with the arc.
+
+What was wrong: `spartacusAtLarge` — the only flag `warWeek` reads — was written in exactly
+one place in twenty-three thousand lines, the "Open the gates" branch of `uprising`. So the
+whole subsystem sat behind driving a rebellion to its last night and then choosing the branch
+that costs you the house: measured, **nine men to three, plus thirty fame**. Across 48 houses
+run four hundred weeks on a good policy the four war events fired **not once**, and rebellion
+was the ending for two.
+
+A lanista in Capua in 73 BC did not need it to be his gate. It was Batiatus's gate and every
+other house on that hill lived through the same three years. So the war can arrive as news:
+a rising somewhere else that got away, once in a run, after week 60, naming the house it
+broke out of and putting three points of defiance into your own cells because the men hear
+about it too. Your own gate is still the worse road — it costs the men, the thirty fame, and
+the line at stage three about nobody having forgotten which gate he walked out of.
+
+Measured after: **45% of houses that live past the gate see the war, and 4 of the 7 that
+reach week 250**, breaking out between weeks 101 and 190, every one running its fifty-eight
+weeks and resolving. Dials: `WAR_AWAY_AT`, `WAR_AWAY_ODDS`.
+
+**#103. Courting a rival's man works and nothing ever mentioned it.** `courted` fired 0 times
+in 4,908 house-weeks and six of the arc's functions were dark. Its falsification came back
+the way #95's did: a policy that deliberately courts lands the man — over 2,000 weeks, **26
+approaches, 14 landed**, none caught, nine let go. A 54% arc at about 500 denarii a try,
+finished and invisible.
+
+So the agenda names it, gated on having somewhere to put him — a full house hears nothing,
+which is self-limiting in exactly the way #101's permanent badge was not. Measured at
+**+0.08 items a week**, which is the difference between a prompt and wallpaper, and at
+urgency 1 because a rival's man is an opportunity rather than a problem.
+
+`war` (new, 35th check): both roads into it; that the news road refuses a house in its first
+year, refuses one whose own cells are already rising, and never starts a second war; the four
+stages arriving in order on their own clock with the block swinging across them; the defiance
+floor; and the one thing that must never be true of a fifty-eight week arc — that it can fail
+to end, which is the v2.53.0 fault where a house sat at Rome for ever, nine times longer.
+
+**And #105 was refuted by its own clause.** The feast reaching 10 houses in 24 was a fact
+about the probe managing its yard well, not about the feast: driven with a deliberately
+inattentive policy over 2,000 weeks, unrest sits past the feast's gate in **57% of weeks** and
+a feast is both wanted and affordable in **59%**. Nothing to build. Worth keeping: an
+attentive house genuinely avoids unrest 35 almost entirely, so the feast is a lever for a
+house in trouble rather than a routine expense — which is good design, now measured.
 
 ### v2.62.0 — A vow is a gamble, not a way to buy a blessing
 
@@ -3560,4 +3615,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.62.0*
+*Last updated: v2.63.0*

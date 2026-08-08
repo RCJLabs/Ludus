@@ -2341,6 +2341,33 @@ function agendaCan(d, add){
   if(d.unrest >= 35 && d.gold >= feastCost(d) + weeklyBill(d) && feastFresh(d) >= 0.6)
     add(d.unrest >= 55 ? 2 : 1, "ludus", "The cells would take a feast",
       `${unrestWord(d.unrest).toLowerCase()} · ${feastCost(d)}d, and it would reach ${Math.round(feastReach(d))} of them`);
+  /* ---- AND A MAN AT ANOTHER HOUSE, WHICH NOTHING HAS EVER MENTIONED ----
+     `courted` fired 0 times across 4,908 house-weeks and six of the arc's functions were
+     dark. Its falsification came back the same way #95's did: a policy that deliberately
+     courts lands the man. Measured over 2,000 weeks, 26 approaches, **14 landed**, none
+     caught, nine let go — a 54% arc at about 500 denarii a try, working perfectly and never
+     once suggested.
+
+     Gated on having somewhere to put him, because a full house should hear nothing: that is
+     self-limiting in exactly the way #101's permanent badge was not. Urgency 1, because a
+     rival's man is an opportunity and not a problem. */
+  if(!rosterFull(d) && !d.court && !d.poach){
+    let best = null, from = null;
+    for(const h of (d.rivals||[])){
+      if(h.retired) continue;
+      for(const f of (h.fighters||[])){
+        if(rateMan(f) <= (best ? rateMan(best) : 0)) continue;
+        best = f; from = h;
+      }
+    }
+    const mine = activeG(d).reduce((m,g)=>Math.max(m, rateMan(g)), 0);
+    if(best && from && rateMan(best) > mine){
+      const cost = courtCost(d, from, best);
+      if(d.gold >= cost + weeklyBill(d) * 3)
+        add(1, "market", `${best.name} of House ${from.name} is better than anybody you own`,
+          `${cost}d to put a word in his ear · ${activeG(d).length} of ${cellsCap(d)} cells filled`);
+    }
+  }
   /* a rung you have already paid for in fame and favour, and are not drawing on */
   if(canClaimRise(d)){
     const nx = riseNext(d);
@@ -8482,6 +8509,41 @@ const WAR = [
 const warStage = d => { if(!d.war) return null;
   let s = WAR[0]; for(const w of WAR) if(d.war.weeks >= w.at) s = w; return s; };
 const warIdx = d => d.war ? WAR.indexOf(warStage(d)) : -1;
+
+/* ---- AND IT DOES NOT HAVE TO BE YOUR GATE ----
+   Everything below this works. Driven four times by forcing the Night of Fire and opening
+   the gates: all four reached all four stages, ran the full fifty-eight weeks, resolved,
+   carried the block from ×1.25 to ×0.55 and took standing from 70 to between 9 and 23. The
+   arc is finished and it is good.
+
+   What it had was one door. `spartacusAtLarge` was written in exactly one place — the "Open
+   the gates" branch of `uprising` — so seeing any of it required driving a rebellion to its
+   final night and then choosing the branch that costs you the house: measured, **nine men
+   to three**, and thirty fame. Across 48 houses run four hundred weeks the four war events
+   fired **not once**, and rebellion was the ending for two.
+
+   A lanista in Capua in 73 BC did not need it to be his gate. It was Batiatus's gate and
+   every other house on that hill lived through the same three years. So the war can also
+   arrive as news: a rising somewhere else that got away, once in a run, after the game has
+   had time to become a world. Your own gate is still the worse road — it costs the men, the
+   thirty fame, and the line at stage three about nobody having forgotten which gate he
+   walked out of. */
+const WAR_AWAY_AT = 60;              /* not in a house's first year; it has enough to do */
+const WAR_AWAY_ODDS = 0.0035;
+function warElsewhere(d){
+  if(d.over || d.war || d.flags.spartacusAtLarge || d.flags.warAway) return;
+  if(d.week < WAR_AWAY_AT || d.rebellion) return;             /* your own is already brewing */
+  if(R() > WAR_AWAY_ODDS) return;
+  const h = pick((d.rivals||[]).filter(x=>!x.retired)) || null;
+  const who = `${pick(PRAENOMINA)} ${pick(COGNOMINA)}`;
+  d.flags.warAway = d.week;
+  d.flags.spartacusAtLarge = who;
+  d.fame = Math.max(0, d.fame - 4);      /* the whole trade is looked at differently */
+  d.gladiators.forEach(g=>{ if(g.status==="active") g.defiance = clamp(g.defiance+3,0,100); });
+  chron(d, h
+    ? `Word up from the south before the market is open: the cells at House ${h.name} went over the wall in the night, killed two of ${lanistaOf(h.name).name}'s men on the way out, and are not in Campania any more. They are calling the one who led them ${who}. Every lanista in Capua spends the morning counting his own men and looking at his own gate, including you.`
+    : `A ludus somewhere down the coast lost its cells in the night and the men are loose in open country under somebody called ${who}. Nobody in Capua is calling it a war yet. Everybody in Capua is thinking about their own gate.`, "bad");
+}
 
 function warWeek(d){
   if(!d.flags.spartacusAtLarge) return;
@@ -15352,6 +15414,7 @@ function endWeek(d){
   facWeek(d);
   rivalTurn(d);
   circuitWeek(d);
+  warElsewhere(d);
   warWeek(d);
   lanistaWeek(d);
   riseWeek(d);
@@ -23695,6 +23758,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     setPupilTo, beginRetrain, endRetrain, hireDoctore, dismissDoctore, takeDoctoreOffer,
     hireStaffMember, letStaffGoOf, setEarTo,
     haveWatchedOffer, stopPrepFor, buyFromHouse, startCourt, setPrep, nameHim, scoutMan, makePeace,
+    courtCost, courtWeek, rateMan, houseOf,
     answerReSignWith, answerRomeWith,
     hostParty, throwFeast, walkTheCells, holdTourney, stageMunus,
     /* the gods: five of them, four real boons, and nothing had ever called either action */
@@ -23731,6 +23795,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     TIERS, CLASSES, GEAR, EVENTS, LASTING, STATS,
     /* what a rival house's anger has to reach before it does anything */
     GRUDGE_SABOTAGE, GRUDGE_BRIBE, GRUDGE_THUGS,
+    /* the war: its stages, its clock and what it does to the block */
+    WAR, warWeek, warIdx, warStage, warMarket, warElsewhere, WAR_AWAY_AT, WAR_AWAY_ODDS,
     /* the odds the bookmakers quote, and the mitigations on a death */
     winChance, collSoften, docHealth, TACTIC, TACTIC_OR, BEASTS,
     /* the street: what it thinks of you, and what it will say for your men */

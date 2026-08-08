@@ -207,7 +207,19 @@ export async function run({ p, errors }){
          four things and a probe setting two of them measures nothing */
       rung.rise = { rank:0, standing:100 };
       for(let i=0;i<200 && !A.canClaimRise(rung); i++){ rung.gold += 2000; rung.fame += 200; }
+      /* a rival's man: `courted` fired 0 times in 4,908 house-weeks and the arc works
+         perfectly when driven — 14 of 26 approaches landed. Gated on having somewhere to put
+         him, so a full house hears nothing; measured at +0.08 items a week, which is the
+         difference between a prompt and wallpaper. */
+      const room = house("GL_ROOM"); room.gold = 40000;
+      const full = house("GL_FULL"); full.gold = 40000;
+      while(!A.rosterFull(full)){ const m = A.genGladiator(full, 90); m.id=full.nextId++;
+        m.status="active"; m.mine=true; m.kit=A.defaultKit(m.cls);
+        for(const k of A.STATS) m[k] = Math.min(A.statCap(m,k), 96);
+        full.gladiators.push(m); }
       R.can = {
+        court: say(room).filter(x=>/better than anybody you own/i.test(x.l)),
+        courtWhenFull: say(full).filter(x=>/better than anybody you own/i.test(x.l)).length,
         feast: say(cells).filter(x=>/feast/i.test(x.l)),
         calm:  say(calm).filter(x=>/feast/i.test(x.l)).length,
         broke: say(broke).filter(x=>/feast/i.test(x.l)).length,
@@ -268,6 +280,7 @@ export async function run({ p, errors }){
   lines.push(`the feast: ${out.can.feast.map(x=>`[${x.u}] ${x.l} — ${x.s}`).join("; ") || "NOT MENTIONED"}`);
   lines.push(`   quiet cells ${out.can.calm ? "STILL NAGGED" : "silent"} · a house that cannot pay for one ${out.can.broke ? "STILL OFFERED IT" : "silent"}`);
   lines.push(`the rung: ${out.can.rung.map(x=>`[${x.u}] ${x.l} — ${x.s}`).join("; ") || (out.can.canClaim ? "NOT MENTIONED" : "none claimable")}`);
+  lines.push(`a rival's man: ${out.can.court.map(x=>`[${x.u}] ${x.l} — ${x.s}`).join("; ") || "not mentioned"} · a full house of better men ${out.can.courtWhenFull ? "IS STILL TOLD" : "hears nothing"}`);
 
   /* ---- a signature each, and no two alike ---- */
   if(out.sigs.empty.length)
@@ -334,6 +347,12 @@ export async function run({ p, errors }){
   }
   if(out.can.calm) fails.push("a house with quiet cells is told to throw a feast");
   if(out.can.broke) fails.push("a house that cannot afford a feast is told to throw one");
+  if(!out.can.court.length)
+    fails.push("a house with room in its cells, coin in the box and a rival fielding a better man than anybody it owns is told nothing — `courted` fired 0 times in 4,908 house-weeks and the arc lands 14 of 26 when driven");
+  else if(out.can.court[0].u >= 2)
+    fails.push("the rival's man is raised as something demanding an answer — it is an opportunity, not a problem");
+  if(out.can.courtWhenFull)
+    fails.push("a house with no room in its cells is told to court somebody — the gate on this line is what keeps it from becoming wallpaper");
   if(out.can.canClaim && !out.can.rung.length)
     fails.push("a rung is there to be taken and the agenda says nothing — the stipend runs from the week you claim it");
 
