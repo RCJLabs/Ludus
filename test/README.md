@@ -69,6 +69,7 @@ reason the check exists usually has not.
 | `summit` | fast | Rome is the only real ending and nothing had ever driven it — the gate took one proof and no other, and the trip had no clock, so a house that accepted and then declined its card sat there for ever with Capua frozen behind it |
 | `line` | fast | `nameHeir` was never on the handle, so the half that arms a succession could not be reached by the half that fires it, and no check had walked a handover — four heir kinds with four different bargains, resting on nothing |
 | `stall` | fast | `makeMarket` was not on the handle, so nothing could ask the block what it offered under a given state — a whole block battery was discarded for silently measuring the founding stall five times, and the block's steep dependence on acclaim went unnoticed through the release that changed acclaim |
+| `feats` | fast | five of the nineteen feats read as never earned across 3,200 house-weeks and every one of them was reachable — two of the five were the probe declining Rome's card and never founding the burial society; what was real was the cloth recording nothing outside a singles bout, and a sheet showing a dash to a house standing on the gate |
 
 ## What no check has ever touched
 
@@ -174,6 +175,28 @@ The engine now reads `g.defiance || 0` so the field cannot NaN the number again,
 and `phases` asserts it for a roster of strangers. But the habit is still wrong:
 a man built by `genOpponent` has no memory, no ties and no ambition either, and a
 check that measures any of those on him is measuring nothing.
+
+## "The probe never did it" and "the game will not let you" look identical
+
+This is the commonest fault in an audit and the most expensive, because it produces a
+finding that reads like a discovery. Five feats of nineteen were never earned across
+eight houses run four hundred weeks. Every one of them was reachable, and three needed
+one line of probe policy: the burial society was never founded, so the stone was never
+cut; and Rome's card is flagged **`imperial`**, not `rome`, comes up *sine* about a
+third of the time and builds its man at quality 100+, so a probe with a 0.42
+win-chance gate crossed Italy, was offered three bouts and declined all three.
+
+Before filing a system as dead, write the policy that deliberately uses it and see
+whether the system answers. If it does, the item is about prompting, not reachability,
+and the fix is somewhere the player looks rather than somewhere the engine runs.
+
+The same day taught the corollary: **a hint is a claim about the state, and a wrong one
+is worse than saying nothing.** Two of the first proximity lines written for the feats
+sheet were false — the forge wants *bought* steel, not house issue, so a house of six
+men in stock kit was told the fee was the whole of it; and Rome's letter has five
+conditions, so a house with no senator warm enough to send it read `0 fame short` and
+would have gone off to win fame it did not need. Neither was caught by reading. Both
+were caught by a check that drove the real gate.
 
 ## Three things the harness knows that cost a day each to learn
 

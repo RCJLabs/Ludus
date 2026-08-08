@@ -87,7 +87,7 @@ npm run test:all      every check, fast and slow — about nine minutes
 npm run coverage      not what passes, but what no check ever touches
 ```
 
-**31 checks.** Twenty-seven read into the game through a test handle and answer in seconds;
+**32 checks.** Twenty-eight read into the game through a test handle and answer in seconds;
 four drive a real browser through the real screens. Every one of them exists because
 of a bug that shipped, and the comment at the top of each says which — that comment
 is the durable part, not the numbers inside it. See `test/README.md` for the table.
@@ -1336,6 +1336,8 @@ Tuning dials, in the order you'd reach for them:
 | The creditors' patience | `CREDIT_WEEKS` / `creditLine` | ruin at −max(250, 2.5 × `weeklyBill`), ×1.68 with a loan |
 | Hearing the slide | `DEBT_STAGE` | the trades notice at 35% of the line, talk at 65%, stop being polite at 85% |
 | The asking drumbeat | `AMB_COOL` | ten weeks of yard-wide quiet after any man's ambition beat |
+| The cloth, wherever it is thrown | `recordCloth` | singles, pairs and hunts all record it; before v2.58.0 only singles did |
+| How close an unearned feat is | `FEATS[k].near` / `featNear` | all nineteen carry one, read off the house's own state; the sheet must name the thing in the way, not the easiest thing to count |
 | The street's memory | `acclaimTarget` | men cap +46, freed legends +12, walls +9, spill +14; the primacy only if it is yours |
 | What the street buys at the block | `makeMarket` | acclaim 40 / 72 / 95 → mean stat 54.7 / 61.4 / 63.6, fine men 6.9% / 17.5% / 23.1%, price 545 / 926 / 1,208d — accepted deliberately in v2.55.0; `stall` prints it every run |
 | What it leaks | `warWeek` | standing, unrest, and a defiance floor |
@@ -1356,6 +1358,65 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.58.0 — How close, which the sheet never said
+
+Audit item #95, and mostly a disproof. The item said five of the nineteen feats are
+never earned — the cloth, named steel, the stone, your own games, the imperial sand —
+and wrote its own falsification: *if a policy that deliberately goes after them earns
+all five, this is a prompting item rather than a reachability one.* It does. The same
+eight seeds, run four hundred weeks with a policy that founds the burial society,
+throws the cloth at the first crux, forges a piece, holds funeral games and fights at
+Rome, earned **every one of the nineteen**, four of them inside fifty weeks.
+
+**Two of the five were the probe's own doing, and one of them badly.** The imperial
+bout is flagged `imperial`, not `rome`; it comes up *sine* about a third of the time;
+and it builds its man at quality 100+, so a Capuan best draws a win chance under the
+0.42 gate the audit policy uses. The careful probe therefore crossed Italy, was
+offered three bouts, declined all three and came home with `rome.won` at nought —
+which would have shipped as "the summit is unwinnable" if it had not been checked.
+Corrected, three of eight houses win at Rome. The stone was simpler: the probe had
+never founded the society at all. Founding it, five of eight houses bury ten men.
+
+**The one real fault: the cloth outside a singles bout left no trace.**
+`d.flags.threwCloth` was set inside `doFight` and nowhere else, so the pair bout's
+"Throw in the cloth for both" and the hunt's "Call the handlers in" — the two most
+expensive mercies on any card, a whole purse forfeited each — recorded nothing.
+Measured, driving each engine to its own crux and answering with the cloth every
+time: **42 pair bouts stopped and 37 hunts called off, and after all 79 the flag was
+false, the count 0, the front rows unmoved off 40 and not one man in the cells
+remembering it.** The same probe throwing 178 singles recorded every one. There is a
+`recordCloth` now and all three engines call it.
+
+**And the sheet says how close.** Every unearned feat showed a dash. A house held the
+armoury at its third level for 24 weeks with the fee in the strongbox and forged
+nothing; the city would have taken its own games in 131 weeks, with its own dead to
+name in 97 of them, and it staged none. Each of the nineteen carries a `near` now that
+reads the house's own numbers — `9 of 10 under the stone`, `the armoury is at 1 of the
+3 levels a forge needs`, `no burial society — 180d founds one`.
+
+Writing those lines is where the interesting part was, because **a proximity line that
+is wrong is worse than the dash it replaced**, and the new check caught two of mine
+being wrong. The forge wants *bought* steel — `forgeReady` tests `wears`, which stock
+issue fails — so the first draft told a house of six men in house kit that 700 denarii
+was the whole of it. And the letter from Rome has five conditions, so a house past the
+fame bar with no senator warm enough to send it read `0 fame short of the letter` and
+would have gone off to win fame it did not need. Both now name the thing actually in
+the way.
+
+**What the traits half found:** `hard` is earned in ordinary play (two of eight houses),
+and `shrewd` and `marked` are not unreachable either — they are wagers. The audit probe
+had never placed one. A probe that has a flutter earns `shrewd` in seven houses of
+eight inside a few weeks. `marked` needs betting *against* your own man and being
+caught at it, which is a thing a player chooses and no probe has ever chosen.
+
+`feats` (new): all nineteen driven through their own actions — the cloth in each of the
+three engines that offers it, the armoury built and a bought piece cut, the society
+founded and ten men under the stone, three funeral cards for the game's own dead, and
+the road to Rome walked until an imperial bout is won. Then the sheet held to the truth
+against a state forty weeks of play produced: every unearned feat says how close, no
+earned one nags, the countable ones quote the house's real numbers, and **no feat may
+be added in future without a line to go under it.**
 
 ### v2.57.0 — The slide, which used to happen in silence
 
@@ -3199,7 +3260,12 @@ worked on empty weeks). The seams it found, in one line each:
 - **The long slide is silent.** 43 → 167 weeks to die of debt, on the same single
   warning. *(#94)*
 - **Five feats of nineteen and three lanista traits of six are never earned**,
-  four of the five carrying a permanent perk. *(#95)*
+  four of the five carrying a permanent perk. Settled in v2.58.0, and mostly the
+  other way: all nineteen are earned by a policy that goes after them, and two of
+  the five were the probe — Rome's card is flagged `imperial` and was being
+  declined on a win-chance gate, and the society was never founded. What was real
+  was a cloth outside a singles bout recording nothing, and a sheet that showed a
+  dash to a house standing on the gate. *(#95)*
 - **And two harness gaps that explain why the rest went unseen:** the four market
   generators are unexposed, so no check can ask what the block offers under a
   given state *(#96)*; and the fire sale — the answer to a paragon 2 houses in 19
@@ -3215,6 +3281,15 @@ in v2.52.0: **a fix verified against a state you invented rather than one the ga
 produces is not verified.** Check where the game actually sits before deciding
 what a change did.
 
+And a fourth, from v2.58.0: **"the probe never did it" and "the game will not let
+you" look identical in a census, and the first is far commoner.** Five feats read as
+unreachable across 3,200 house-weeks and every one of them was reachable; the fix for
+three of them was one line of probe policy. Before filing a system as dead, write the
+policy that deliberately uses it and see whether the system answers. The corollary,
+learned the same day: a proximity line, a hint or a nudge is a claim about the state,
+and a wrong one is worse than saying nothing — both of the first two written here were
+wrong, and only a check that drove the real gate caught them.
+
 **What the next audit should be looking for.** The five that produced the best
 releases in this stretch were all of one kind — a system with real machinery behind
 it that the player never meets, or a number that was chosen against an economy that
@@ -3224,4 +3299,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.57.0*
+*Last updated: v2.58.0*

@@ -6325,7 +6325,7 @@ function facAfterBout(d, g, res, offer, tactic, choice){
   if(res.crowd >= 82) facMove(d, "mob", 2.0);
   if(win && res.vA >= 72) facMove(d, "front", 3.6);
   if(res.spared && !res.bDies) facMove(d, "front", 2.4);
-  if(choice === "cloth"){ facMove(d, "front", 3.0); d.flags.everCloth = (d.flags.everCloth||0)+1; }
+  if(choice === "cloth") facMove(d, "front", 3.0);   /* the count itself is recordCloth's */
   if(tactic === "showboat") facMove(d, "mob", 1.8);
   if(win && isFavourite(g)) facMove(d, "mob", 2.6);   /* the mob loves to watch its own win */
 }
@@ -8041,48 +8041,112 @@ const PERKS = {
   standing:"Editors take your calls. Every patron warms a shade faster.",
   nerve:   "The familia has seen worse. Morale drifts up, not down, after a death.",
 };
+/* ---- THE NINETEEN, AND HOW CLOSE ----
+   Every unearned feat was a name, a sentence and a dash, and the dash is the whole of
+   the problem. Measured across eight houses run four hundred weeks on the v2.53.0
+   audit policy: five of the nineteen were never earned by any of them — the cloth, the
+   named steel, the stone, your own games and the imperial sand — and the same eight
+   seeds under a policy that deliberately went after all five earned every one of the
+   nineteen, four of them inside fifty weeks. So none of it is out of reach.
+
+   What the measurement found instead is that the house is standing on the gate and
+   nothing says so. A careful house was offered the cloth at 70 cruxes and threw it at
+   none of them. It held the armoury at the third level for 24 weeks with a forge fee
+   in the strongbox and forged nothing. The city would have taken its own games in 131
+   weeks, with its own dead to name in 97 of them, and it staged none. Each `near`
+   below is the sentence that was missing: what the house has, against what the feat
+   asks, in the house's own numbers. */
 const FEATS = {
   firstblood: { name:"First Blood", desc:"Win a bout.", gold:60,
-    test:d=>houseRecord(d).w >= 1 },
+    test:d=>houseRecord(d).w >= 1,
+    near:d=>{ const R = houseRecord(d);
+      return R.l ? `${R.l} bout${R.l===1?"":"s"} fought and none of them won` : "no man of yours has been on the sand"; } },
   fivewins:   { name:"A Working House", desc:"Twenty victories.", gold:250, fame:15,
-    test:d=>houseRecord(d).w >= 20 },
+    test:d=>houseRecord(d).w >= 20,
+    near:d=>`${houseRecord(d).w} of 20 won` },
   hundred:    { name:"A Hundred on the Sand", desc:"A hundred victories.", gold:900, fame:60, perk:"name",
-    test:d=>houseRecord(d).w >= 100 },
+    test:d=>houseRecord(d).w >= 100,
+    near:d=>`${houseRecord(d).w} of 100 won` },
   rudis:      { name:"The Wooden Sword", desc:"Give a man the rudis.", gold:200, fame:25, perk:"order",
-    test:d=>houseRecord(d).freed >= 1 },
+    test:d=>houseRecord(d).freed >= 1,
+    near:d=>{ const m = activeG(d).filter(g=>rudisEligible(g)).length;
+      return m ? `${m===1?"one man has":`${m} men have`} earned it and not been given it` : "nobody has earned it yet"; } },
   threefree:  { name:"A Merciful House", desc:"Free three men.", gold:500, fame:40, perk:"nerve",
-    test:d=>houseRecord(d).freed >= 3 },
+    test:d=>houseRecord(d).freed >= 3,
+    near:d=>`${houseRecord(d).freed} of 3 freed` },
   primus:     { name:"Primus of Capua", desc:"Hold the primacy of the city.", gold:600, fame:50, perk:"standing",
-    test:d=>!!(d.primus && d.primus.mine) || !!d.flags.everPrimus },
+    test:d=>!!(d.primus && d.primus.mine) || !!d.flags.everPrimus,
+    near:d=>d.primus && !d.primus.mine ? `${d.primus.name} holds it for another house`
+      : "the primacy is there to be taken" },
   lion:       { name:"The Numidian", desc:"Kill a lion in the arena.", gold:400, fame:35,
-    test:d=>!!d.flags.killedLion },
+    test:d=>!!d.flags.killedLion,
+    near:d=>"no lion has gone down to one of yours" },
   cloth:      { name:"The White Cloth", desc:"Stop a bout to save a man's life.", gold:0, fame:0, perk:"nerve",
-    test:d=>!!d.flags.threwCloth },
+    test:d=>!!d.flags.threwCloth,
+    near:d=>"the cloth is on the menu at every crux and has never gone over the rail" },
   word:       { name:"A Word Kept", desc:"Promise a man his one wish and deliver it.", gold:300, fame:20, perk:"order",
-    test:d=>!!d.flags.keptWord },
+    test:d=>!!d.flags.keptWord,
+    near:d=>"no man has been promised his one thing" },
   forge:      { name:"Named Steel", desc:"Have a piece forged for one man.", gold:0, fame:30, perk:"steel",
-    test:d=>(d.forged||[]).length >= 1 },
+    test:d=>(d.forged||[]).length >= 1,
+    /* the forge wants bought steel, not house issue — which the first draft of this
+       line did not say, so it told a house of six men in stock kit that 700d was the
+       whole of it. A proximity line that is wrong is worse than the dash it replaced. */
+    near:d=>{ const L = bLevel(d,"armamentarium");
+      if(L < 3) return `the armoury is at ${L} of the 3 levels a forge needs`;
+      if(!activeG(d).some(g=>forgeReady(d,g))) return "the armoury is built, and nobody is carrying a piece of his own to cut a name into";
+      if(d.gold < FORGE_FEE) return `${FORGE_FEE - Math.round(d.gold)}d short of the fee`;
+      return `a man is carrying the piece and ${FORGE_FEE}d is the whole of it`; } },
   school:     { name:"A Proper School", desc:"Build every part of the ludus to its second level.", gold:0, fame:45, perk:"drill",
-    test:d=>BKEYS.every(k=>bLevel(d,k)>=2) },
+    test:d=>BKEYS.every(k=>bLevel(d,k)>=2),
+    near:d=>`${BKEYS.filter(k=>bLevel(d,k)>=2).length} of ${BKEYS.length} wings at the second level` },
   circuit:    { name:"The Circuit", desc:"Win on the sand of all three towns down the bay.", gold:700, fame:55, perk:"name",
-    test:d=>CITY_KEYS.every(k=>knownIn(d,k) >= 10) },
+    test:d=>CITY_KEYS.every(k=>knownIn(d,k) >= 10),
+    near:d=>`known in ${CITY_KEYS.filter(k=>knownIn(d,k)>=10).length} of the ${CITY_KEYS.length} towns down the bay` },
   wealth:     { name:"Coin Enough", desc:"Hold ten thousand denarii.", gold:0, fame:40, perk:"steel",
-    test:d=>d.gold >= 10000 },
+    test:d=>d.gold >= 10000,
+    near:d=>`${Math.max(0, Math.round(10000 - d.gold)).toLocaleString()}d short` },
   full:       { name:"A Full Block", desc:"Keep eight fighters at once.", gold:150, fame:15,
-    test:d=>d.gladiators.filter(g=>!isGone(g)).length >= 8 },
+    test:d=>d.gladiators.filter(g=>!isGone(g)).length >= 8,
+    near:d=>{ const n = d.gladiators.filter(g=>!isGone(g)).length, cap = cellsCap(d);
+      return cap < 8 ? `${n} in the cells, and the carceres only hold ${cap}` : `${n} of 8 in the cells`; } },
   quiet:      { name:"A Quiet House", desc:"Thirty weeks without the unrest passing twenty.", gold:400, fame:30, perk:"order",
-    test:d=>(d.flags.quietRun||0) >= 30 },
+    test:d=>(d.flags.quietRun||0) >= 30,
+    near:d=>`${d.flags.quietRun||0} of 30 quiet weeks` },
   stone:      { name:"The Stone", desc:"Bury ten men under the society's own name.", gold:0, fame:35, perk:"nerve",
-    test:d=>!!(d.collegium && d.collegium.buried >= 10) },
+    test:d=>!!(d.collegium && d.collegium.buried >= 10),
+    near:d=>!d.collegium ? `no burial society — ${COLL_FEE}d founds one`
+      : d.collegium.lapsed ? `${d.collegium.buried} of 10 under the stone, and the dues have stopped`
+      : `${d.collegium.buried} of 10 under the stone` },
   munera:     { name:"Munera", desc:"Hold full games in the name of three of your own dead.", gold:0, fame:45, perk:"order",
-    test:d=>(d.honoured||0) >= 3 },
+    test:d=>(d.honoured||0) >= 3,
+    near:d=>{ const n = d.honoured||0;
+      if(!(d.fallen||[]).length) return `${n} of 3 held, and you have no dead of your own to name`;
+      if(d.fame < MUNUS_SCALES.modest.gate) return `${n} of 3 held — the city wants ${MUNUS_SCALES.modest.gate} fame before it takes your card`;
+      return `${n} of 3 held, and a funeral card is ${MUNUS_SCALES.modest.cost}d`; } },
   decade:     { name:"Ten Years a Lanista", desc:"Run the house for ten years.", gold:800, fame:70, perk:"standing",
-    test:d=>yearOf(d) >= 10 },
+    test:d=>yearOf(d) >= 10,
+    near:d=>`year ${yearOf(d)} of 10` },
   rome:       { name:"The Sand at Rome", desc:"Win on the imperial sand.", gold:0, fame:100, perk:"standing",
-    test:d=>!!(d.rome && d.rome.won >= 1) },
+    test:d=>!!(d.rome && d.rome.won >= 1),
+    /* four states, and the last two were one line that told a house it was "0 fame
+       short" while the thing actually missing was a senator who would put its name
+       forward. The letter has five conditions and the sheet should name the one in
+       the way rather than the one it is easiest to count. */
+    near:d=>d.rome ? `${d.rome.won} of ${ROME_BOUTS} won on the imperial sand`
+      : d.romeOffer ? "the letter is on the table"
+      : !romeProved(d) ? "Rome has not heard of you — the primacy, or the fourth rung, and it will"
+      : d.fame < romeBar(d) ? `${Math.round(romeBar(d) - d.fame).toLocaleString()} fame short of the letter`
+      : !patronsOf(d).some(p=>p.rank==="senator" && p.favor>=70) ? "past the bar, and no senator warm enough to put your name forward"
+      : "past the bar, proved, and spoken for — the letter comes when Rome is minded" },
 };
 const FEAT_KEYS = Object.keys(FEATS);
 const hasFeat = (d,k) => !!(d.feats && d.feats[k]);
+/* what the sheet says under an unearned feat. Guarded like `test` is: the feats sheet
+   is not allowed to be the thing that takes the screen down. */
+const featNear = (d, k) => { const F = FEATS[k];
+  if(!F || !F.near || hasFeat(d,k)) return null;
+  try { return F.near(d) || null; } catch(e){ return null; } };
 const perkOn = (d,p) => FEAT_KEYS.some(k=>hasFeat(d,k) && FEATS[k].perk===p);
 /* the small permanent things a feat leaves behind */
 const perkTrain = d => perkOn(d,"drill") ? 1.06 : 1;
@@ -12481,6 +12545,8 @@ function doVenatio(d, gid, offer, tactic, pending, choice){
     grade: offer.grade != null ? offer.grade : beastGrade(d) };
   let res;
   if(choice==="cloth"){
+    recordCloth(d, g);          /* calling the handlers in is the same act, and counts */
+    facMove(d, "front", 3.0);
     res = { beats:[Object.assign({}, pending.crux, { kind:"end", actor:null, venatio:true, sB:100, text:
       `You are on your feet before you decide to be. The handlers come over the rail with irons and burning straw and get between them, and the crowd makes a sound you will hear for a week. ${g.name} is dragged out under it, alive.`,
       })], killed:false, aDies:false, crowd:pending.crux.crowd, vA:pending.crux.vA, vB:pending.crux.vB,
@@ -12614,6 +12680,8 @@ function doPairFight(d, ids, offer, tactic, pending, choice){
   let res;
   if(choice==="cloth"){
     const cx = pending.crux;
+    recordCloth(d, gs);         /* both of them were let up, and both of them know it */
+    facMove(d, "front", 3.0);
     res = { beats:[Object.assign({}, cx, { kind:"end", actor:null, slot:null, pair:true,
       hA:cx.hpA, hB:cx.hpB, dA:cx.dnA, dB:cx.dnB, xA:cx.ddA, xB:cx.ddB,
       vA:cx.hpA[0], vB:cx.hpB[0], sA:100, sB:100,
@@ -13029,6 +13097,23 @@ const CRUX = {
 };
 
 
+/* ---- THE CLOTH, WHEREVER IT GOES OVER THE RAIL ----
+   Three of the four engines will stop a bout on your word, and only one of them ever
+   wrote it down. `d.flags.threwCloth` was set inside doFight and nowhere else, so the
+   pair bout's cloth for both men and the hunt's call for the handlers — the two most
+   expensive mercies on any card, a whole purse forfeited each — left no trace at all.
+
+   Measured, driving each engine to its own crux and answering with the cloth every
+   time: 42 pair bouts stopped and 37 hunts called off, and after all 79 of them
+   threwCloth was false, everCloth was 0, the front rows had not moved off 40 and not
+   one man in the cells remembered it. The same probe throwing 178 singles recorded
+   every one, took the feat, and carried the front rows to 96. */
+function recordCloth(d, men){
+  d.flags.threwCloth = 1;
+  d.flags.everCloth = (d.flags.everCloth||0) + 1;
+  for(const g of [].concat(men||[])) if(g) remember(d, g, "cloth");
+}
+
 /* ---- WHAT THE SAND TOOK ----
    A kill recorded, a man buried, or a man carried to the medicus — the part of a
    bout that happens to your own house rather than to the ledger. Lifted out of
@@ -13143,8 +13228,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   let res;
   if(choice==="cloth"){
     /* you stop it yourself; there is no appeal to lose because nobody asked for one */
-    d.flags.threwCloth = 1;
-    remember(d, g, "cloth");
+    recordCloth(d, g);
     res = { beats:[Object.assign({}, pending.crux, { kind:"end", actor:null, text:
       `A white cloth goes over the rail from your box. The editor's man steps between them and the crowd finds out what it thinks about that in one long noise. ${g.name} is walked off the sand on his own feet.`,
       vA:pending.crux.vA, vB:pending.crux.vB, sA:100, sB:100, crowd:pending.crux.crowd, mom:0 })],
@@ -18052,7 +18136,7 @@ export default function App(){
         <span className="dim" style={{fontSize:"var(--fs-base)"}}>{got.length}/{FEAT_KEYS.length}</span>
       </div>
       {got.length===0 && <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:7}}>Nothing yet that anyone would write down.</div>}
-      {FEAT_KEYS.map(k=>{ const F = FEATS[k], done = hasFeat(S,k);
+      {FEAT_KEYS.map(k=>{ const F = FEATS[k], done = hasFeat(S,k), near = done ? null : featNear(S,k);
         return (
           <div key={k} style={{borderTop:"1px dotted #33271a",padding:"6px 0"}}>
             <div className="flex items-center justify-between gap-2">
@@ -18062,6 +18146,9 @@ export default function App(){
                 : <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>—</span>}
             </div>
             <div className="dim" style={{fontSize:"var(--fs-base)",opacity:done?1:0.6}}>{F.desc}</div>
+            {/* how close, which the sheet never said. A house was standing on five of
+                these gates for a hundred weeks at a time and read the same dash. */}
+            {near && <div style={{fontSize:"var(--fs-base)",color:"#c99a4b",fontStyle:"italic"}}>{near}</div>}
             {F.perk && <div style={{fontSize:"var(--fs-base)",color:done?"#9aa86a":"#5a5240"}}>{PERKS[F.perk]}</div>}
           </div>
         ); })}
@@ -23194,6 +23281,16 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     answerReSignWith, answerRomeWith,
     hostParty, throwFeast, walkTheCells, holdTourney, stageMunus,
     seekMatchNow, openLicenceNow, takeUpTheHouse, claimRise, succeed,
+    /* the nineteen things a house is remembered for, and the gates on each of them */
+    FEATS, FEAT_KEYS, hasFeat, featWeek, featNear, recordCloth,
+    /* the burial society: founding it, the stone, and what cutting it costs */
+    foundCollegium, lapseCollegium, collBury, collOn, COLL_FEE, COLL_DUES,
+    /* your own games: whether the city will take one, and what the card costs */
+    munusReady, munusWait, munusCost, munusSellFee, MUNUS_OCCASIONS, MUNUS_SCALES, SPECTACLES,
+    /* the word from the box — the three or four things a crux will take */
+    CRUX, forgeReady,
+    /* the man in the chair: what the job does to him, and what it makes of him */
+    lanistaWeek, LAN_TRAITS, hasLT, repStyle, addRep,
     /* the lanista's climb: the rungs, the gates, and what standing pays and costs */
     /* the four nights a man is known for */
     markNight, NIGHTS, nightWhere,
@@ -23219,7 +23316,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* where a mark sits on a body, and the seller's undisclosed one */
     addScar, scarMark, TARGETS, FLAWS,
     /* helpers */
-    activeG, defaultKit, kitMods, statCap, fullName,
+    activeG, defaultKit, kitMods, statCap, fullName, yearOf, YEAR_WEEKS, rudisEligible,
   };
   /* ---- WHAT THE CHECKS NEVER REACH ----
      Every function on the handle is wrapped in a counter. It costs a shipping build
