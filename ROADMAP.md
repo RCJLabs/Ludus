@@ -1242,6 +1242,7 @@ Tuning dials, in the order you'd reach for them:
 | The trade's memory | `TRADE_KEY` | outside the save slots, survives a loss |
 | The stands | `FAC_TINT` | 4 blocks, lit by faction standing |
 | The ground | `.v-*` | 6 venue floors, crowd thinned to match |
+| The man four doors down | `PRIMUS_ASK` / `PRIMUS_ASK_GAP` | 14% a week from six weeks into a reign, then 30 weeks' silence |
 | A feud arriving | `feudWeek` | 20% a week once bitter |
 | Settling it | `EVENTS.feud` | 15% hurt supervised, 42% not |
 | Doctrines | `DOCTRINES` | 6, 300–500d, 1.8× to change |
@@ -1335,6 +1336,7 @@ Tuning dials, in the order you'd reach for them:
 | The creditors' patience | `CREDIT_WEEKS` / `creditLine` | ruin at −max(250, 2.5 × `weeklyBill`), ×1.68 with a loan |
 | The asking drumbeat | `AMB_COOL` | ten weeks of yard-wide quiet after any man's ambition beat |
 | The street's memory | `acclaimTarget` | men cap +46, freed legends +12, walls +9, spill +14; the primacy only if it is yours |
+| What the street buys at the block | `makeMarket` | acclaim 40 / 72 / 95 → mean stat 54.7 / 61.4 / 63.6, fine men 6.9% / 17.5% / 23.1%, price 545 / 926 / 1,208d — accepted deliberately in v2.55.0; `stall` prints it every run |
 | What it leaks | `warWeek` | standing, unrest, and a defiance floor |
 | The block | `warMarket` | ×1.25 at its height, ×0.55 after |
 
@@ -1353,6 +1355,41 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.56.0 — The man four doors down asks
+
+Audit items #92 and #93, the second of them settled rather than built.
+
+**#92, measured before it was touched.** The bout against your own second-best —
+the one against the man who sleeps four doors down, 42% he takes it, and whichever
+way it goes the loser lives in the same building as the answer — is the best thing
+the mid-game has to say, and it had never once fired in 3,200 censused house-weeks.
+It was not broken: handed a qualifying state, `make()` returned an event 400 times
+out of 400. It was starved. Over **1,320 weeks of a house that actually held the
+title with a genuine challenger in its cells, the state qualified in 1,284 of them
+— 97% — and the event fired eight times, 0.62 per hundred eligible weeks.** What
+took the slot instead was mostly systems holding channels of their own, which set
+the week's question before the random draw ever runs: a feud in the yard 257 times,
+the potter's licence 230, the aedile's inspector 100.
+
+So it gets a channel too, the way ambitions did, and in the place that already
+watches the title: `primusWeek` raises it at `PRIMUS_ASK` 14% a week once a reign
+is six weeks old, then leaves it `PRIMUS_ASK_GAP` 30 weeks. Measured after: **45
+firings against 8** on the same 1,320 weeks, and on a single reign the shape is
+right — asked twice in eighty weeks, first in week 31. A new holder starts the
+clock over, because `d.primus` is replaced when the title changes cells. `careers`
+holds both ends now: that a holder is asked inside a reasonable stretch, and that
+he is not asked in the first week of a reign, which the event was always written to
+refuse.
+
+**#93 is accepted rather than changed.** `stall` measures the block's dependence on
+the house's name at acclaim 40 / 72 / 95 as mean stat 54.7 / 61.4 / 63.6, fine men
+6.9% / 17.5% / 23.1%, price 545 / 926 / 1,208d. That is 2.2 points of mean stat and
+5.6 of fine men across the range v2.50.0 moved a mature house through — a third of
+what the audit item claimed on a noisier probe — and prices move with it, so per
+denarius it is close to neutral. It is also what "the good ones go where the name
+is" is supposed to mean. Recorded in the balance reference, printed every run, and
+closed.
 
 ### v2.55.0 — The block, which no check could refresh
 
@@ -3158,4 +3195,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.55.0*
+*Last updated: v2.56.0*

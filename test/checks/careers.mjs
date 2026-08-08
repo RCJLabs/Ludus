@@ -77,8 +77,43 @@ export async function run({ p, errors }){
     A.retireG(d, elder.id);
     const retired = elder.status === "retired";
 
+    /* ---- 7. and the man four doors down asks ----
+       The bout against your own second-best is the best thing the mid-game has to
+       say and it waited in the weekly lottery for a slot it could not win: measured
+       over 1,320 weeks of a house that held the title with a real challenger in its
+       cells, the state qualified in 97% of them and the event fired in 0.62%. It has
+       its own channel now. This holds both ends — that a holder is asked inside a
+       reasonable stretch, and that he is not asked every fortnight. */
+    const ask = (()=>{
+      const e = A.newGameState("Ask","clean","CAREER_ASK",null);
+      e.fame = 900; e.gold = 9000;
+      const mk = (wins, pf) => { const m = A.genGladiator(e, 80); m.id=e.nextId++; m.status="active";
+        m.mine=true; m.kit=A.defaultKit(m.cls); m.wins=wins; m.pfame=pf; m.fatigue=0; m.lastFought=-9;
+        e.gladiators.push(m); return m; };
+      const holder = mk(10, 80), challenger = mk(7, 55); mk(3, 20);
+      /* the title has been his for seven weeks: the event deliberately waits six
+         before the man four doors down will say anything, and testing it on the
+         first morning of a reign measured that wait rather than the channel */
+      e.primus = { mine:true, gid:holder.id, name:holder.name, nick:null, cls:holder.cls,
+        since: e.week - 7, defences:0 };
+      const eligibleAtOnce = !!A.EVENTS.primacy.make(e);
+      const mutePlease = !A.EVENTS.primacy.make(Object.assign(A.clone(e),
+        { primus: Object.assign({}, e.primus, { since: e.week }) }));
+      let fired = 0, firstAt = null;
+      for(let w=0; w<80; w++){
+        e.primus = e.primus || { mine:true, gid:holder.id, name:holder.name, nick:null, cls:holder.cls, since:1, defences:0, asked:e.primus&&e.primus.asked };
+        for(const g of [holder, challenger]){ g.status="active"; g.injury=null; g.fatigue=0;
+          g.wins=Math.max(g.wins, g===holder?10:7); g.pfame=Math.max(g.pfame, g===holder?80:55); }
+        e.pendingEvent = null; e.gold = Math.max(e.gold, 4000);
+        try { A.endWeek(e); } catch(err){ break; }
+        if(e.pendingEvent && e.pendingEvent.id === "primacy"){ fired++; if(firstAt==null) firstAt = w+1; }
+        if(e.over){ e.over = null; e.unrest = Math.min(e.unrest, 30); }
+      }
+      return { eligibleAtOnce, mutePlease, fired, firstAt, weeks:80 };
+    })();
+
     return { sigGreen, sigOk, sigFeePaid, signature, masGreen, mastery,
-      secOk, second, swOk, switched, rudisGreen, rudisOk, retVet, retired,
+      secOk, second, swOk, switched, rudisGreen, rudisOk, retVet, retired, ask,
       vetLine: `${vet.name}: ${from} master, ${to} in his hands` };
   }, TECH1);
 
@@ -86,6 +121,7 @@ export async function run({ p, errors }){
   lines.push(`the signature cost ${out.sigFeePaid}d and took: ${out.signature}`);
   lines.push(out.vetLine);
   lines.push(`gates refused the green man: signature ${!out.sigGreen}, mastery ${!out.masGreen}, rudis ${!out.rudisGreen}`);
+  lines.push(`the man four doors down asked ${out.ask.fired} time${out.ask.fired===1?"":"s"} in ${out.ask.weeks} weeks of holding${out.ask.firstAt!=null?`, first in week ${out.ask.firstAt}`:""}`);
 
   if(out.sigGreen) fails.push("a two-win man was taught a signature — the six-win gate is open");
   if(!out.sigOk || !(out.sigFeePaid > 0)) fails.push("the veteran could not be taught his signature, or it cost nothing");
@@ -99,6 +135,17 @@ export async function run({ p, errors }){
   if(!out.rudisOk) fails.push("a twelve-win, two-hundred-renown man was refused the rudis");
   if(out.retVet === "retired") fails.push("a man in his prime was retired");
   if(!out.retired) fails.push("a thirty-four-year-old could not be retired");
+
+  if(!out.ask.eligibleAtOnce)
+    fails.push("a house seven weeks into holding the title, with a second eligible man, does not qualify for the challenge at all");
+  if(!out.ask.mutePlease)
+    fails.push("the challenge is raised in the first week of a reign — it is supposed to wait six");
+  if(out.ask.fired === 0)
+    fails.push(`the man four doors down never asked across ${out.ask.weeks} weeks of holding the title — the channel is not reaching him`);
+  if(out.ask.firstAt != null && out.ask.firstAt > 40)
+    fails.push(`he first asked in week ${out.ask.firstAt} of holding — a reign of a few months should raise it`);
+  if(out.ask.fired > 5)
+    fails.push(`he asked ${out.ask.fired} times in ${out.ask.weeks} weeks — the gap between askings has gone`);
 
   if(errors.length) fails.push(`${errors.length} page errors`);
   return { pass: fails.length === 0, why: fails.slice(0,3).join("; ") || null, lines };

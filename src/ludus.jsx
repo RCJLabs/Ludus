@@ -8873,6 +8873,8 @@ function makeCityGames(d){
    than winning it — because the whole of Campania now wants the bout, and so
    does the second-best man in your own cells. */
 const PRIMUS_GATE = { wins:5, pfame:35 };
+const PRIMUS_ASK = 0.14;        // his own channel, ahead of the weekly lottery he could not win
+const PRIMUS_ASK_GAP = 30;      // and then he leaves it, so a long reign is asked two or three times
 const primusEligible = g => g && g.status==="active" && g.wins>=PRIMUS_GATE.wins && g.pfame>=PRIMUS_GATE.pfame;
 const holdsPrimus = (d,g) => !!(d.primus && d.primus.mine && g && d.primus.gid===g.id);
 const primusMine = d => !!(d.primus && d.primus.mine);
@@ -8933,6 +8935,26 @@ function primusWeek(d){
     const rival = activeG(d).filter(x=>x.id!==g.id && primusEligible(x))
       .sort((a,b)=>b.pfame-a.pfame)[0];
     if(rival){ rival.defiance = clamp(rival.defiance+0.8, 0, 100); }
+    /* ---- AND HE ASKS, WHICH HE NEVER USED TO ----
+       The bout against the man four doors down is the best thing the mid-game has
+       to say, and it waited in the weekly lottery for a slot it could not win.
+       Measured over 1,320 weeks of a house that actually held the title with a
+       genuine challenger in its cells: the state qualified in 1,284 of them — 97%
+       — and the event fired eight times, 0.62 per hundred eligible weeks. What
+       took the slot instead was mostly systems with channels of their own, which
+       set the week's question before the random draw ever runs: a feud in the
+       yard 257 times, the potter's licence 230, the aedile's inspector 100.
+       So this gets one too, the way ambitions did. It asks once and then leaves
+       it a good while — thirty weeks — so a long reign raises it two or three
+       times rather than every fortnight, and a new holder starts the clock over
+       because `d.primus` is replaced when the title changes cells. */
+    if(!d.pendingEvent && !d.over && !d.city && !d.travel && !d.rome
+       && d.week - d.primus.since >= 6
+       && (!d.primus.asked || d.week - d.primus.asked >= PRIMUS_ASK_GAP)
+       && R() < PRIMUS_ASK){
+      const ev = EVENTS.primacy.make(d);
+      if(ev){ d.pendingEvent = ev; d.primus.asked = d.week; }
+    }
     return;
   }
   const h = (d.rivals||[]).find(x=>x.name===d.primus.house);
