@@ -193,6 +193,14 @@ Before filing a system as dead, write the policy that deliberately uses it and s
 whether the system answers. If it does, the item is about prompting, not reachability,
 and the fix is somewhere the player looks rather than somewhere the engine runs.
 
+A fourth, from the v2.61.0 audit: **your own probe's competence.** Two items dissolved on it.
+The feast looked unreachable — 10 houses in 24, first at week 138 — because the probe walked
+its cells every seventh week and rested anybody past 55 fatigue; a deliberately inattentive
+house sits past the feast's gate in 57% of weeks. And "debt is 85% of every ending" was true
+only of playing well: a careless policy over 120 houses dies of rebellion or closure 37% of
+the time. If a finding is about content nobody meets, run the policy that would meet it AND
+the policy that plays badly, because both of them are players.
+
 A third wears it too, and it is the one that cost most here: **your own probe's safety
 margin.** The temple measurement reported a blessing riding 2.45% of weeks and "the altar
 is unaffordable", and the guard producing that was mine — cost plus the ruin line plus

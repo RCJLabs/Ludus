@@ -1330,6 +1330,10 @@ Tuning dials, in the order you'd reach for them:
 | Proving it for Rome | `romeProved` / `ROME_RANK` | the primacy held, or received as Eques (rank 4); rank 5 admitted nobody the sand had not |
 | Who is shown a paragon | `PARAGON_ODDS` / `PARAGON_REACH` / `PARAGON_GAP` | 5.5% a week, only within 88% of his price by a full fire sale, 90 weeks between; 23–30% of houses reaching week 120 see one |
 | What counts as new, and where | `TAB_SIG` / `tabSig` / `tabMarks` | a signature per tab over its discrete state; arrivals move it, drift never does |
+| What the box can say, and when | `CRUX[k].when` | over 1,381 cruxes resumed to the end: press/cover/cloth 100%, legs 86%, breather 74%, rouse 53%, milk 26%, finish 23%, blind 9%, hound 5% — and **0.80 cruxes a bout**, at most 3 |
+| When a limb goes | `MARK_NEED` | legs 24, head 26, body 26, **arm 58** — a leg is marked in 28% of bouts, a head 22%, an arm 4%. The 58 is the outlier and wants an A/B on mortality before anyone moves it |
+| When the yard gets built | `BUILDINGS[k].cost` | levels 1–3 all bought inside a five-week band (weeks 118/122/123, 3,270d the lot); level 4 by 5 of 50, at week 258 — the fourth level is the late sink and it works |
+| What actually ends a run | — | good policy, 48 houses: debt 85% of endings, nothing else above 5%. Careless policy, 120 houses: debt 49%, rebellion 22%, closed 15%, ruin 3%. Every ruin is reachable; the ledger is the competent player's only enemy |
 | How the war reaches you | `WAR_AWAY_AT` / `WAR_AWAY_ODDS` | your own gate, or a rising elsewhere from week 60 at 0.35% a week — 45% of houses that get there see it |
 | What earns a badge | `MARK_URG` / `TAB_QUIET` | urgency 2 and above only (3.64 items a week, not 7.86); an empty tab cannot be fresh |
 | What a kept vow is worth | `VOW_BOUTS_FULL` / `VOW_EARNT_AT` | par at nothing risked, 1.6× at six cards fought under it — and never a blessing |
@@ -3580,7 +3584,34 @@ worked on empty weeks). The seams it found, in one line each:
   destroying the paragon in the week he arrived, four times in five, and the
   "take the house apart" branch of that screen had never once been true. *(#97)*
 
-**All ten are closed as of v2.60.0.** Four of the ten were not what they looked like:
+**The v2.61.0 audit — ten items, #98–#107 — closed as of v2.63.0, and this is the ratio
+worth remembering: four shipped, six refuted or judged not worth the risk.**
+
+Shipped: the war given a second door (#98), the vow made a gamble again rather than a way to
+buy a blessing (#100), the tab marks stopped being decoration (#101), courting a rival's man
+prompted (#103). Two of those four were faults this project had shipped in the previous two
+releases, which is what made measuring its own recent work the audit's first job.
+
+Refuted by their own falsification clauses: the feast being unreachable was the probe being a
+good manager (#105); "nine agenda items a week" was 3.64 once urgency was counted (#107); the
+opening's bimodality was noise at 24 houses (#99); debt at 85% of endings is a property of
+competence, since a careless policy dies of rebellion and closure a third of the time (#99);
+and `hard` and `marked` are earned by 8 of 8 and 7 of 8 cruel houses, so both traits work and
+a merciful house correctly never wears them (#106).
+
+Measured, understood and left alone: `hound` is seen a median 3 times a house and `blind`
+twice, with a fifth to a third of houses never meeting either — the fix is inside `MARK_NEED`
+and `engines` exists because bout constants are 3–5× stronger than they look (#102). The
+fourth level of each wing is reached by 5 of 50 upgrades at year five, which is the late sink
+working as priced (#104).
+
+**The lesson for the next one.** After twenty releases of this the cheap findings are gone,
+and more than half of a well-measured list now dissolves under its own falsification clause.
+That is the clause earning its keep, not the audit failing — but it means the next pass should
+budget more time for disproving its own items than for building them, and should write the
+falsification before the finding rather than after.
+
+**The v2.52.0 audit's ten were closed as of v2.60.0.** Four of the ten were not what they looked like:
 #95's five unearned feats were all reachable and three were the probe's own policy;
 #97's rare content was a market refresh deleting it; #88's own recommended fix was
 measured and refuted; and #91 was a system nobody was ever told about, with a probe
@@ -3615,4 +3646,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.63.0*
+*Last updated: v2.63.1*
