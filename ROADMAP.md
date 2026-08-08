@@ -87,7 +87,7 @@ npm run test:all      every check, fast and slow — about nine minutes
 npm run coverage      not what passes, but what no check ever touches
 ```
 
-**33 checks.** Twenty-nine read into the game through a test handle and answer in seconds;
+**34 checks.** Thirty read into the game through a test handle and answer in seconds;
 four drive a real browser through the real screens. Every one of them exists because
 of a bug that shipped, and the comment at the top of each says which — that comment
 is the durable part, not the numbers inside it. See `test/README.md` for the table.
@@ -1329,6 +1329,8 @@ Tuning dials, in the order you'd reach for them:
 | A worn welcome | `STAY_FRESH` / `welcomeOf` | past 6 weeks resident, purses fade to ×0.6 and the card thins |
 | Proving it for Rome | `romeProved` / `ROME_RANK` | the primacy held, or received as Eques (rank 4); rank 5 admitted nobody the sand had not |
 | Who is shown a paragon | `PARAGON_ODDS` / `PARAGON_REACH` / `PARAGON_GAP` | 5.5% a week, only within 88% of his price by a full fire sale, 90 weeks between; 23–30% of houses reaching week 120 see one |
+| What counts as new, and where | `TAB_SIG` / `tabSig` / `tabMarks` | a signature per tab over its discrete state; arrivals move it, drift never does |
+| Which panel inside a tab | `SECT_MARK` / `sectMark` | eight panels, each a function of the save so a check can ask what it would wear |
 | What the priests count | `PIETY_TOP` / `pietyFame` | fame read up to 1,600 and no further — the dearest altar asks 1,900d, not 20,300d at fame 20,000 |
 | A blessing worth keeping | `GODS` / `OFFERING_COOL` | 4–6 weeks a gift, a 3-week rest; a house that keeps the rites rides one 31.6% of weeks for 19.6% of income |
 | Rome's patience | `ROME_WEEKS_PER_BOUT` | 4 weeks a bout, then the place is given away |
@@ -1361,6 +1363,55 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.61.0 — You can see what is new without opening all six tabs
+
+Not an audit item — a thing the game plainly needed. The agenda has known what wants an
+answer and which of the six tabs the answer is on since v2.57.0, and the only way to find
+out was to open all six, every week. So there are marks now: a count on the tab bar in the
+agenda's own urgency colours, a quieter gold dot when something has merely **arrived**, and
+the same pair on the folded panels one level down so you can see which of eleven it is. The
+tab you are on never wears one — you are looking at it.
+
+**The interesting part is how freshness is decided.** The obvious build is a
+`touch(d, "arena")` call wherever something arrives: twenty-odd call sites, every one a
+chance to forget, and a forgotten one is *invisible*, because a dot that never lights looks
+exactly like a tab with nothing in it. That is the shape of the v2.59.0 paragon fault — one
+part of the week writing and another quietly undoing it — and it is not a mistake worth
+making twice.
+
+So freshness is **derived**. Each tab has a signature over its discrete, player-facing
+state: the week the card was drawn and the ids of the bouts on it, the ids on the block,
+which men are fit, which patrons are asking, whether the altar is off its rest. The save
+stores the signature that was current when the tab was last looked at, and the tab is fresh
+when the signature has moved. Nothing has to remember to announce itself.
+
+The discipline that makes it work is in what the signatures **do not** read. Fatigue
+creeping up, unrest wandering, coin arriving and fame climbing are all deliberately absent:
+a signature that reads anything continuous marks its tab new every week for four hundred
+weeks, and dots that are always on are worse than no dots at all. `glance` asserts both
+halves — twelve arrivals that must light their tab, five kinds of drift that must leave
+every tab dark.
+
+**And two things you could simply do.** Sixty lines on the agenda and every one of them was
+a problem, a deadline or somebody asking — nothing was ever "here is a thing that would
+help". So the cells would take a feast now says so, with the cost and how many men it
+reaches, at urgency 2 past simmering and 1 below it, and silent for a house with quiet
+cells or one that cannot pay. And a rung you have already earned in fame and favour but
+have not been received into says so, because the stipend runs from the week you claim it
+and not before. Both resolve the moment you act, so neither becomes wallpaper.
+
+The section conditions live in a `SECT_MARK` table of functions of the save rather than
+inline in the JSX, for the reason everything else here does: a condition inside a render is
+a condition no check can reach. `surface` caught the first draft of the badges setting type
+at 9px against the 11.4px floor, and `bulk` caught the agenda passing 200 lines — both
+fixed rather than exempted.
+
+`glance` (new, 34th check): six tabs with six distinct signatures; twelve arrivals against
+five kinds of drift; that looking clears a mark and looking elsewhere does not; that the
+bar's counts and urgencies equal what the agenda actually holds for that tab; every entry
+in `SECT_MARK` driven from both sides; the feast and the rung said and not over-said; and
+that the last-looked signatures survive a save, so a loaded house does not light all six.
 
 ### v2.60.0 — Nobody ever asked the gods for anything
 
@@ -3440,4 +3491,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.60.0*
+*Last updated: v2.61.0*

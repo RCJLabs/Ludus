@@ -2315,6 +2315,27 @@ const charterSkip = d => { if(d.charter) d.charter.skipped = true; };
    because #84 was about an agenda that talks too much. Lifted out of `agenda` rather
    than added to it: that function was 208 lines with these in place and `bulk` said so,
    which is the check doing its job. */
+/* ---- AND THE THINGS YOU COULD SIMPLY DO ----
+   Sixty lines on the agenda and every one of them was a problem, a deadline or somebody
+   asking. Nothing on it was ever "here is a thing you could do this week that would help",
+   so the two levers a house has against its own worst numbers went unmentioned: the feast,
+   which is the answer to the cells, and the next rung, which pays a stipend every week you
+   have not claimed it. Both are conditional and both resolve the moment you act on them,
+   so neither becomes wallpaper. */
+function agendaCan(d, add){
+  if(d.over || d.city || d.travel || d.rome) return;
+  /* the cells would take a feast — and it is worth throwing, which is not the same thing */
+  if(d.unrest >= 35 && d.gold >= feastCost(d) + weeklyBill(d) && feastFresh(d) >= 0.6)
+    add(d.unrest >= 55 ? 2 : 1, "ludus", "The cells would take a feast",
+      `${unrestWord(d.unrest).toLowerCase()} · ${feastCost(d)}d, and it would reach ${Math.round(feastReach(d))} of them`);
+  /* a rung you have already paid for in fame and favour, and are not drawing on */
+  if(canClaimRise(d)){
+    const nx = riseNext(d);
+    add(2, "villa", `${nx ? nx.name : "The next rung"} is there to be taken`,
+      `${riseFee(nx)}d to be received — the stipend runs from the week you are`);
+  }
+}
+
 function agendaGods(d, add){
   if(d.city || d.travel || d.rome) return;
   const pi = pietyOf(d);
@@ -2331,6 +2352,142 @@ function agendaGods(d, add){
   add(1, "villa", `The altar would take a gift to ${G.name}`,
     hurt >= 2 ? `${hurt} men laid up · ${G.cost(d)}d for ${G.weeks} weeks of clean mending`
       : `the cells are ${unrestWord(d.unrest).toLowerCase()} · ${G.cost(d)}d for ${G.weeks} weeks of a soldier's steadiness`);
+}
+
+/* ---- WHAT IS NEW, AND WHERE ----
+   The agenda knows what wants an answer and which tab the answer is on, and it has known
+   since v2.57.0 — but you have to go and read it. Nothing on the screen you are always
+   looking at says "there is a fresh card in the arena" or "the block has changed" or "the
+   cells would take a feast". Six tabs, and a player's only way to find out whether any of
+   them had anything in it was to open all six, every week, for four hundred weeks.
+
+   The obvious way to build this is a `touch(d, "arena")` call wherever something arrives.
+   That is twenty-odd call sites and every one of them is a chance to forget — and a
+   forgotten one is invisible, because a dot that never lights looks exactly like a tab
+   with nothing in it. (That is the same shape as the paragon being swept off the block in
+   v2.59.0: one part of the week writing and another part quietly undoing it.)
+
+   So freshness is *derived* instead. Each tab has a signature over the discrete,
+   player-facing things on it — the week the card was drawn, the ids on the block, which
+   men are fit, which wants are outstanding. Store the signature the player last saw; the
+   tab is fresh when the signature has moved. Nothing has to remember to announce itself,
+   and a new system shows up in the signature or it does not, which is a thing a check can
+   ask about.
+
+   Signatures name only arrivals, never drift. Fatigue creeping up and unrest wandering are
+   not news; they would light every tab every week and the dots would stop meaning
+   anything, which is worse than not having them. */
+const TAB_KEYS = ["ludus","men","arena","armory","market","villa"];
+const joinSig = parts => parts.filter(x=>x!=null && x!=="").join("|");
+const TAB_SIG = {
+  /* the house itself: the stone, the ladder, the society, the standing */
+  ludus: d => joinSig([
+    ALL_WORK_KEYS.filter(k=>workOn(d,k)).join(","),
+    ALL_WORK_KEYS.filter(k=>workDone(d,k)).length,
+    BKEYS.map(k=>bLevel(d,k)).join(""),
+    canClaimRise(d) ? "rise" : "",
+    d.collegium ? "coll" : "",
+    d.rebellion ? `reb${d.rebellion.stage}` : "",
+  ]),
+  /* the men: who is here, who is fit, and who is asking something */
+  men: d => joinSig([
+    activeG(d).map(g=>g.id).join(","),
+    activeG(d).filter(g=>canFight(g) && !g.injury).map(g=>g.id).join(","),
+    activeG(d).filter(g=>g.plan).map(g=>g.id).join(","),
+    d.reSignOffer ? `res${d.reSignOffer.id||d.reSignOffer.name}` : "",
+    d.poach ? `poach${d.poach.gid}` : "",
+    d.court ? `court${d.court.name}` : "",
+    d.pendingLesson ? "lesson" : "",
+  ]),
+  /* the arena. The card is stamped with the week it was drawn, but the week and the count
+     together are not enough: a card redrawn inside the same week with the same number of
+     bouts on it read as the card you had already seen, so `glance` caught the mark never
+     lighting for a fresh bill. The offer ids come off `nextId` and are unique to the bout,
+     which is the only thing here that actually identifies a card. */
+  arena: d => joinSig([
+    d.games ? `${d.games.week}:${(d.games.offers||[]).map(o=>o.id).join(",")}` : "none",
+    d.askBooking ? "ask" : "",
+    d.askChallenge ? "chal" : "",
+    d.primus && d.primus.mine ? "hold" : d.primus ? "held" : "",
+    d.rome ? `rome${d.rome.fought}` : "",
+    munusReady(d) ? "munus" : "",
+  ]),
+  /* the racks: steel that wants mending, a kit that is wrong, a piece that could be cut */
+  armory: d => joinSig([
+    activeG(d).filter(g=>kitFaults(d,g).length).map(g=>g.id).join(","),
+    activeG(d).some(g=>forgeReady(d,g)) ? "forge" : "",
+    Object.keys(d.gear||{}).length,
+    (d.deadSteel||[]).length,
+  ]),
+  /* the block, and the other three stalls */
+  market: d => joinSig([
+    (d.market||[]).map(m=>m.id).join(","),
+    (d.doctoreMarket||[]).map(m=>m.id).join(","),
+    Object.values(d.staffMarket||{}).reduce((n,v)=>n+((v&&v.length)||0),0),
+    d.powLot ? `lot${d.powLot.n}` : "",
+    d.doctoreOffer ? "docoffer" : "",
+  ]),
+  /* the household, the patrons, the town and the gods */
+  villa: d => joinSig([
+    patronsOf(d).map(p=>`${p.id}${p.want?":"+p.want.kind:""}`).join(","),
+    d.romeOffer ? "letter" : "",
+    d.election && !d.election.done ? "vote" : "",
+    d.heir ? "heir" : (heirEligible(d)||[]).join(""),
+    blessOf(d) || (offeringReady(d) ? "altar" : ""),
+    d.vow ? "vow" : "",
+    (d.domus && d.domus.children || []).length,
+    unhonoured(d).filter(m=>!m.done).length,
+  ]),
+};
+const tabSig = (d, tab) => { const f = TAB_SIG[tab]; if(!f) return "";
+  try { return f(d); } catch(e){ return ""; } };
+/* the player has looked at this tab, and this is what was on it when he did */
+function markSeen(d, tab){
+  if(!TAB_SIG[tab]) return;
+  d.seen = d.seen || {};
+  d.seen[tab] = tabSig(d, tab);
+}
+const tabFresh = (d, tab) => !!TAB_SIG[tab] && ((d.seen||{})[tab] !== tabSig(d, tab));
+
+/* ---- AND ONE LEVEL DOWN ----
+   A tab's mark says the answer is in that tab; these say which of its folded panels. Kept
+   as a table of functions of the save rather than conditions written inline in the JSX,
+   for the reason everything else in this file is: a condition inside a render is a
+   condition no check can ask about, and the marks are exactly the kind of thing that goes
+   quietly wrong — a panel that stops lighting looks the same as a panel with nothing in
+   it. `null` for nothing, `true` for a plain dot, `{urg,n}` for a count. */
+const SECT_MARK = {
+  cells:    d => d.rebellion ? { urg:3, n:1 } : d.unrest >= 70 ? { urg:2, n:1 }
+    : d.unrest >= 50 ? { urg:1, n:1 } : null,
+  feast:    d => (d.unrest >= 55 && d.gold >= feastCost(d)) ? { urg:2, n:1 }
+    : (d.unrest >= 35 && d.gold >= feastCost(d)) ? { urg:1, n:1 } : null,
+  temple:   d => pietyOf(d) <= 20 ? { urg:2, n:1 }
+    : (offeringReady(d) && !blessOf(d) && d.gold >= Math.min(...GOD_KEYS.map(k=>GODS[k].cost(d)))) ? true : null,
+  standing: d => canClaimRise(d) ? { urg:2, n:1 } : null,
+  rome:     d => d.romeOffer ? { urg:3, n:1 } : romeReady(d) ? { urg:2, n:1 } : null,
+  block:    d => paragonOf(d) ? { urg:2, n:1 } : tabFresh(d, "market") ? true : null,
+  collegium:d => (d.collegium && d.collegium.lapsed) ? { urg:1, n:1 }
+    : (!d.collegium && d.gold >= COLL_FEE) ? true : null,
+  rites:    d => { const n = unhonoured(d).filter(m=>!m.done).length;
+    return n ? { urg:2, n } : null; },
+};
+const sectMark = (d, key) => { const f = SECT_MARK[key]; if(!f) return null;
+  try { return f(d) || null; } catch(e){ return null; } };
+
+/* ---- AND WHAT THE TAB BAR SHOWS ----
+   One mark per tab: the loudest urgency the agenda has for it, how many items, and whether
+   anything on it has moved since you looked. A pure function of the save, so the bar can
+   be asked what it would show without rendering anything. */
+function tabMarks(d){
+  const A = (()=>{ try { return agenda(d); } catch(e){ return []; } })();
+  const out = {};
+  for(const k of TAB_KEYS){
+    const mine = A.filter(x=>x.tab === k);
+    out[k] = { n: mine.length,
+      urg: mine.reduce((m,x)=>Math.max(m, x.urgency||0), 0),
+      fresh: tabFresh(d, k) };
+  }
+  return out;
 }
 
 /* ---- THE AGENDA ----
@@ -2411,6 +2568,7 @@ function agenda(d){
   for(const m of unhonoured(d)) if(!m.done)
     add(2, "villa", `${m.name} is not buried properly`, `${RITE_WINDOW-(d.week-m.week)} weeks to decide`);
   agendaGods(d, add);
+  agendaCan(d, add);
   /* the town */
   if(d.election && !d.election.done) add(2, "villa", "The aedileship is open", `${Math.max(0,3-(d.week-d.election.week))} weeks to the vote`);
   if(d.games && d.games.offers && d.games.offers.length && activeG(d).some(g=>canFight(g) && g.lastFought<d.week))
@@ -6687,6 +6845,7 @@ function buyFromBlock(d, id, bidPrice){
      NUMBERS — filled if absent or null. A number that must always hold one. */
 const SAVE_FIELDS = {
   flags:         ()=>({}),
+  seen:          ()=>({}),        /* what was on each tab when it was last looked at */
   rivals:        S=>makeRivals(S),
   escaped:       ()=>[],
   gear:          ()=>({}),
@@ -6897,7 +7056,7 @@ function newGameState(name, scen, seed, pitch){
     gladiators:[], market:[], games:null, pendingEvent:null, log:[], fallen:[], freed:[],
     seed: null, rngState: 0,
     lastParty:-9, lastFeast:-9, over:null, milestone600:false, flags:{learned:{}}, escaped:[], rebellion:null, gear:{}, retired:[],
-    doctore:null, doctoreMarket:[], doctoreOffer:null, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, court:null, defected:[], nemesis:null, nemHouse:null, saga:null, arcs:[], crest:{ c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" }, primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], works:{}, slavers:{}, pact:null, gambits:{}, pendingLesson:null, law:null, doctrine:null, kits:[], deadSteel:[], bay:null, mark:null, after:null, metHouse:{}, owed:[], household:{}, yardSeen:0, yardMissed:0, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, domus:{ wife:null, children:[], nextKin:1 }, acclaim:0, brand:{ licensed:false, decided:false, tier:0, earned:0 }, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, repName:null, askBooking:null, askChallenge:null, pitSeat:0, departed:[], reSignOffer:null, annals:[], rise:{ rank:0, standing:0 }, munusLast:-99, league:{ first:null, since:1, held:0, best:99, year:1, snap:null }, piety:30, blessing:null, vow:null, lastOffering:-9, powLot:null };
+    doctore:null, doctoreMarket:[], doctoreOffer:null, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, court:null, defected:[], nemesis:null, nemHouse:null, saga:null, arcs:[], crest:{ c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" }, primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], works:{}, slavers:{}, pact:null, gambits:{}, pendingLesson:null, law:null, doctrine:null, kits:[], deadSteel:[], bay:null, mark:null, after:null, metHouse:{}, owed:[], household:{}, yardSeen:0, yardMissed:0, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, domus:{ wife:null, children:[], nextKin:1 }, acclaim:0, brand:{ licensed:false, decided:false, tier:0, earned:0 }, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, repName:null, askBooking:null, askChallenge:null, pitSeat:0, departed:[], reSignOffer:null, annals:[], rise:{ rank:0, standing:0 }, munusLast:-99, league:{ first:null, since:1, held:0, best:99, year:1, snap:null }, piety:30, blessing:null, vow:null, lastOffering:-9, powLot:null, seen:{} };
   d.rivals = makeRivals(d);
   const solo = S.men.length === 1;
   S.men.forEach((band,i)=>{
@@ -16574,13 +16733,26 @@ function DoctoreBust({ name, size=56 }){
 /* A collapsible section. Uncontrolled <details> so the browser owns the
    open/closed state and it survives the game's frequent re-renders; the
    initial state is set once on mount. */
-function Sect({ title, note, open, tone, children }){
+/* `mark` is the same idea as the tab bar's, one level down: a tab's dot says the answer is
+   in here somewhere, and this says which of the eight folded panels it is. A number when
+   the agenda is asking (`mark={{urg,n}}`), a plain dot when something merely arrived
+   (`mark={true}`), nothing when there is nothing. A closed section that is hiding news is
+   the same fault as a tab that is. */
+function Sect({ title, note, open, tone, mark, children }){
   const ref = useRef(null);
   useEffect(()=>{ if(ref.current) ref.current.open = !!open; }, []);
+  const m = mark === true ? { urg:0, n:0 } : (mark || null);
   return (
     <details className="sect" ref={ref} style={tone? {borderColor:tone} : undefined}>
       <summary>
-        <span style={{minWidth:0,overflow:"hidden",textOverflow:"ellipsis"}}>{title}</span>
+        <span style={{minWidth:0,overflow:"hidden",textOverflow:"ellipsis",display:"flex",alignItems:"center",gap:6}}>
+          {m && (m.urg
+            ? <span role="img" aria-label={`${m.n} wanting an answer — `} style={{flex:"0 0 auto",minWidth:18,height:18,borderRadius:9,
+                padding:"0 4px",background:URG[m.urg].c,color:"#14100c",fontFamily:"'Cinzel',serif",
+                fontSize:"var(--fs-micro)",fontWeight:900,lineHeight:"18px",textAlign:"center"}}>{m.n > 9 ? "9+" : m.n}</span>
+            : <span role="img" aria-label="something new — " style={{flex:"0 0 auto",width:7,height:7,borderRadius:4,background:"#c99a4b"}}/>)}
+          <span style={{minWidth:0,overflow:"hidden",textOverflow:"ellipsis"}}>{title}</span>
+        </span>
         <span style={{display:"flex",alignItems:"center",gap:8,flex:"0 0 auto"}}>
           {note!=null && note!=="" && <span className="dim" style={{fontSize:"var(--fs-sm)",letterSpacing:0,textTransform:"none",fontFamily:"'Cormorant Garamond',Georgia,serif"}}>{note}</span>}
           <span className="chev" aria-hidden="true">⌄</span>
@@ -17057,6 +17229,14 @@ export default function App(){
   const [rack,setRack] = useState("weapon");
   const [seedIn,setSeedIn] = useState("");
   useEffect(()=>{ if(tab==="market" && S && !S.flags.sawFirstBuy) mut(d=>{ firstBuyWarn(d); }); }, [tab]);
+  /* ---- THE TAB YOU ARE LOOKING AT IS NOT NEW ----
+     Runs on a tab change and on a turned week, which are the only two ways the answer
+     moves: switch to a tab and its mark clears; end the week while sitting on one and it
+     does not light for the thing you are already looking at. Only writes when the
+     signature has actually changed, so it does not churn the save on every render. */
+  useEffect(()=>{ if(!S || S.over) return;
+    if(tabFresh(S, tab)) mut(d=>{ markSeen(d, tab); });
+  }, [tab, S && S.week, S && tabSig(S, tab)]);
   const [pitchIn,setPitchIn] = useState("plain");
   const [legacy,setLegacy] = useState(null);
   const [carry,setCarry] = useState(null);      // {mode:"out"|"in", text, err, found}
@@ -17759,6 +17939,7 @@ export default function App(){
   );
 
   const roster = S.gladiators.filter(g=>!isGone(g));
+  const marks = tabMarks(S);
   const eligible = roster.filter(g=>canFight(g) && g.lastFought < S.week);
   const selG = selId!=null ? S.gladiators.find(g=>g.id===selId) : null;
   const gamesWeeksAway = (3 - (S.week % 3)) % 3;
@@ -19035,7 +19216,8 @@ export default function App(){
               ))}
             </div>)}
           </Sect>
-          <Sect title="Unrest in the cells" note={unrestWord(S.unrest)} open={S.unrest>=50 || !!S.rebellion}>
+          <Sect title="Unrest in the cells" note={unrestWord(S.unrest)} open={S.unrest>=50 || !!S.rebellion}
+            mark={sectMark(S,"cells")}>
             <Bar v={S.unrest} color="linear-gradient(90deg,#6a3a1a,#b8463a)"/>
             {S.rebellion && <div className="blood" style={{fontSize:"var(--fs-md)",marginTop:5,fontStyle:"italic"}}>
               {["","Whispers move between the cells after dark.","Conspiracy — steel is missing, and eyes follow the guards.","The spark is lit. Tonight decides everything."][S.rebellion.stage]}
@@ -19518,7 +19700,8 @@ export default function App(){
           {(()=>{ const here = [...new Set((S.market||[]).map(g=>g.slaver).filter(Boolean))];
             if(!here.length) return null;
             return (
-              <Sect title="Who is standing at the block" note={`${here.length} slaver${here.length===1?"":"s"}`}>
+              <Sect title="Who is standing at the block" note={`${here.length} slaver${here.length===1?"":"s"}`}
+                mark={sectMark(S,"block")}>
                 {here.map(k=>{ const S2 = slaverOf(k), x = dealings(S,k);
                   return (
                     <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:6,marginTop:6}}>
@@ -19943,7 +20126,7 @@ export default function App(){
           {(()=>{ const rk = riseRank(S), nx = riseNext(S), need = riseNeed(S), can = canClaimRise(S);
             const stand = S.rise ? S.rise.standing : 0;
             return (
-            <Sect title="Your Standing" note={rk.name} open={can}>
+            <Sect title="Your Standing" note={rk.name} open={can} mark={sectMark(S,"standing")}>
               <div className="disp" style={{fontSize:"var(--fs-lg)",color:"#e8d092"}}>{rk.name}</div>
               <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",margin:"3px 0 9px"}}>{rk.blurb}</div>
               {riseOf(S)>0 && rk.perk && (
@@ -20008,7 +20191,8 @@ export default function App(){
             ];
             const doneCount = rungs.filter(r=>r.met || r.soft).length;
             return (
-            <Sect title="The road to Rome" note={been ? `${romeTriumphs(S)?`${romeTriumphs(S)} taken`:`best ${romeBest(S)} of 3`}` : ready ? "Rome is calling" : `${rungs.filter(r=>r.met && !r.soft).length} of 3`} open={ready}>
+            <Sect title="The road to Rome" note={been ? `${romeTriumphs(S)?`${romeTriumphs(S)} taken`:`best ${romeBest(S)} of 3`}` : ready ? "Rome is calling" : `${rungs.filter(r=>r.met && !r.soft).length} of 3`} open={ready}
+              mark={sectMark(S,"rome")}>
               <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",margin:"1px 0 9px"}}>
                 {been
                   ? "You have stood on the imperial sand. The city keeps its own tablet on you now, and every return asks a greater name than the last."
@@ -20040,6 +20224,7 @@ export default function App(){
             const canAct = offeringReady(S) && S.gold >= cheapest;
             return (
             <Sect title="The Temple" note={bg ? `blessed · ${GODS[bg].name}` : pietyWord(pi)}
+              mark={sectMark(S,"temple")}
               open={!!S.vow || !!bg || pi<=20 || illLuck(S) || canAct}>
               <div className="flex items-center justify-between" style={{marginBottom:3,fontSize:"var(--fs-md)"}}>
                 <span>Piety of the house</span>
@@ -20332,7 +20517,7 @@ export default function App(){
           )}
 
           {unhonoured(S).filter(m=>!m.done).length > 0 && (
-            <Sect title="Not yet buried properly" note={`${RITE_WINDOW}w to decide`} open>
+            <Sect title="Not yet buried properly" note={`${RITE_WINDOW}w to decide`} open mark={sectMark(S,"rites")}>
               <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>
                 Funeral games are what a rich man's sons stage at his tomb. Nobody has ever staged them for a gladiator, which is exactly what makes it worth doing.
               </div>
@@ -20422,7 +20607,8 @@ export default function App(){
               </div>
             ); })()}
 
-          <Sect title="The collegium" note={collOn(S)? `${collDues(S)}d/wk` : "burial society"}>
+          <Sect title="The collegium" note={collOn(S)? `${collDues(S)}d/wk` : "burial society"}
+            mark={sectMark(S,"collegium")}>
             {!S.collegium ? (<>
               <div style={{fontSize:"var(--fs-lg)"}}>
                 A burial society. The house pays {COLL_DUES} denarii a week for every man on the roster, and when one of them dies there is a stone with his name on it, his style and the number of his victories — instead of a pit outside the wall.
@@ -20460,7 +20646,8 @@ export default function App(){
           {vView==="familia" && (<>
           {(()=>{ const cost = feastCost(S), reach = feastReach(S);
             return (
-          <Sect title="A feast for the familia" note={`${cost}d`}>
+          <Sect title="A feast for the familia" note={`${cost}d`}
+            mark={sectMark(S,"feast")}>
             <div className="dim" style={{fontSize:"var(--fs-md)",margin:"4px 0 8px"}}>Meat, honeyed wine, and a night without the whip. Loyalty is cheaper than rebellion.</div>
             {reach < 0.95 && (
               <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",margin:"0 0 8px"}}>
@@ -20654,10 +20841,34 @@ export default function App(){
       </div></div>
 
       <nav className="bar" role="tablist" aria-label="Sections" style={{position:"fixed",left:0,right:0,bottom:0,zIndex:20,background:"#14100c",borderTop:"1px solid #3e2f1f",display:"flex",paddingBottom:"env(safe-area-inset-bottom)"}}>
-        {[["ludus","Ludus",Landmark],["men","Familia",Users],["arena","Arena",Swords],["armory","Armory",Shield],["market","Market",ShoppingBag],["villa","Villa",Wine]].map(([k,l,I])=>(
-          <button key={k} role="tab" aria-selected={tab===k} aria-label={l}
-            className={`tabbtn ${tab===k?"on":""}`} onClick={()=>setTab(k)}><I size={17} aria-hidden="true"/>{l}</button>
-        ))}
+        {[["ludus","Ludus",Landmark],["men","Familia",Users],["arena","Arena",Swords],["armory","Armory",Shield],["market","Market",ShoppingBag],["villa","Villa",Wine]].map(([k,l,I])=>{
+          /* the mark: the loudest thing the agenda has for this tab, and whether anything
+             on it has moved since it was last looked at. The tab you are on never wears
+             one — you are looking at it. */
+          const m = (marks && marks[k]) || { n:0, urg:0, fresh:false };
+          const show = tab !== k && (m.urg > 0 || m.fresh);
+          const col = m.urg ? URG[m.urg].c : "#c99a4b";
+          const label = m.urg
+            ? `${l}, ${m.n} ${m.n===1?"thing":"things"} wanting an answer${m.fresh?", and something new":""}`
+            : `${l}, something new`;
+          return (
+          <button key={k} role="tab" aria-selected={tab===k} aria-label={show ? label : l}
+            className={`tabbtn ${tab===k?"on":""}`} onClick={()=>setTab(k)}
+            style={{position:"relative"}}>
+            <span style={{position:"relative",display:"inline-flex"}}>
+              <I size={17} aria-hidden="true"/>
+              {show && (m.urg
+                ? <span aria-hidden="true" style={{position:"absolute",top:-7,right:-11,minWidth:17,height:17,
+                    borderRadius:9,padding:"0 3px",background:col,color:"#14100c",fontFamily:"'Cinzel',serif",
+                    fontSize:"var(--fs-micro)",fontWeight:900,lineHeight:"17px",textAlign:"center",
+                    boxShadow:"0 0 0 1.5px #14100c"}}>{m.n > 9 ? "9+" : m.n}</span>
+                /* nothing is asking, but something arrived — a quieter mark */
+                : <span aria-hidden="true" style={{position:"absolute",top:-3,right:-6,width:7,height:7,
+                    borderRadius:4,background:col,boxShadow:"0 0 0 1.5px #14100c"}}/>)}
+            </span>
+            {l}
+          </button>
+        );})}
       </nav>
 
       {selG && (
@@ -23364,7 +23575,9 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* build a house and its people */
     newGameState, genGladiator, genOpponent, pickRivalOpp, makeRivals, clone,
     /* the most-read screen in the game, which only a browser could reach until now */
-    agenda, URG,
+    agenda, URG, agendaGods, agendaCan,
+    /* what is new, and where — the marks the tab bar and the folded panels wear */
+    tabMarks, tabSig, tabFresh, markSeen, TAB_KEYS, TAB_SIG, TAB_NAMES, sectMark, SECT_MARK,
     /* the generators behind the four markets — a check that cannot refresh a stall
        cannot ask what the stall offers, which is how the block's pricing drifted
        through a release that changed the number it reads */
