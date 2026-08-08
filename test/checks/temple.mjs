@@ -124,9 +124,19 @@ export async function run({ p, errors }){
         pietyMove:+(A.pietyOf(d)-p0).toFixed(1), unrestUp:+(d.unrest-u0).toFixed(1),
         ill:A.illLuck(d), riding:A.blessOf(d) };
     };
-    R.vowKept = vowRun("TM_VOWK", false, 5);      /* a month of hard cards, kept clean */
-    R.vowIdle = vowRun("TM_VOWI", false, 0);      /* and a month of promising nothing */
-    R.vowBroken = vowRun("TM_VOWB", true, 5);
+    /* THE CARD COUNTS COME OFF THE CONSTANT, NOT OUT OF THE AIR.
+       These were 5, chosen when the bar was VOW_EARNT_AT = 2. The bar moved to 6 — measured
+       over 31 vows settled in real play, where the FEWEST cards under any vow was three and
+       the median was eight, so 2 could never once fail — and a hardcoded 5 silently stopped
+       being "a month of hard cards" and became a month just under the bar. A check that
+       carries its own copy of a dial goes stale the week the dial moves, and reports the
+       game as broken rather than itself. So: the bar, one under it, and nothing at all. */
+    const BAR = A.VOW_EARNT_AT;
+    R.vowKept  = vowRun("TM_VOWK", false, BAR);       /* a month that carried it in full */
+    R.vowShort = vowRun("TM_VOWS", false, BAR - 1);   /* and one card short of it */
+    R.vowIdle  = vowRun("TM_VOWI", false, 0);         /* and a month of promising nothing */
+    R.vowBroken = vowRun("TM_VOWB", true, BAR);
+    R.bar = BAR;
     /* and it does come due on its own, played out week by week */
     { const d = house("TM_VOWDUE");
       A.swearVow(d, "fortuna");
@@ -185,6 +195,7 @@ export async function run({ p, errors }){
   lines.push(`the altar rests ${out.cool.wait} weeks: a second gift at once ${out.cool.secondNow}, after the wait ${out.cool.swapped} (now ${out.cool.riding})`);
   lines.push(`piety drifts home: from 90 → ${out.drift.from90}, from 4 → ${out.drift.from4}`);
   lines.push(`a vow kept through ${out.vowKept.cardsUnder} cards: ${out.vowKept.stake}d staked, ${out.vowKept.back}d back, piety +${out.vowKept.pietyMove} — riding: ${out.vowKept.riding || "nothing, which is the point"}`);
+  lines.push(`one card short of the bar (${out.vowShort.cardsUnder} of ${out.bar}): ${out.vowShort.back}d back on ${out.vowShort.stake}d, piety +${out.vowShort.pietyMove} — the bar bites`);
   lines.push(`a vow kept through ${out.vowIdle.cardsUnder}: ${out.vowIdle.back}d back on ${out.vowIdle.stake}d, piety +${out.vowIdle.pietyMove} — the gods are not moved by a quiet month`);
   lines.push(`a vow broken: ${out.vowBroken.stake}d staked, ${out.vowBroken.back}d back, piety ${out.vowBroken.pietyMove}, unrest +${out.vowBroken.unrestUp}, ill turn ${out.vowBroken.ill}`);
   lines.push(`and it comes due on its own after ${out.vowDue.weeks} weeks (sworn for ${out.vowDue.until})`);
@@ -240,6 +251,12 @@ export async function run({ p, errors }){
     fails.push(`a vow kept through no cards at all returned ${out.vowIdle.back}d on ${out.vowIdle.stake}d — a house that sends nobody anywhere has promised the gods nothing, and this is the v2.62.0 fault returning`);
   if(!(out.vowIdle.pietyMove < out.vowKept.pietyMove))
     fails.push(`promising nothing moved piety ${out.vowIdle.pietyMove} against ${out.vowKept.pietyMove} for a month of hard cards — the reward does not follow the risk`);
+  /* and the bar has to be a bar: one card short of it must not pay what carrying it pays.
+     At VOW_EARNT_AT = 2 this could not be written, because nothing in play was ever under 2. */
+  if(!(out.vowShort.pietyMove < out.vowKept.pietyMove))
+    fails.push(`${out.vowShort.cardsUnder} cards paid piety ${out.vowShort.pietyMove}, the same as ${out.vowKept.cardsUnder} — VOW_EARNT_AT is ${out.bar} and nothing is below it, which is how it sat inert for a release`);
+  if(!(out.vowShort.back < out.vowKept.back))
+    fails.push(`a vow one card short returned ${out.vowShort.back}d against ${out.vowKept.back}d — the purse is supposed to scale with what was risked`);
   /* ---- and a blessing is bought, never won ---- */
   if(out.vowKept.riding)
     fails.push(`a kept vow put "${out.vowKept.riding}" on the house — measured over 200 vows, a house past fame 1,600 kept 36 of 44 and collected 36 free blessings, so it never needed the altar the previous release spent itself pricing. The vow pays coin and piety; the altar sells blessings.`);

@@ -43,7 +43,7 @@ reason the check exists usually has not.
 | `book` | fast | the pair booked only its wins and the melee only its losses, for fifty versions |
 | `modals` | slow | the week's digest threw itself over the answer to the question you were just asked |
 | `surface` | slow | the tab bar was set in 9px and END WEEK was 37px tall |
-| `sweep` | slow | the cheap net: does anything throw when you open it |
+| `sweep` | slow | the cheap net: does anything throw when you open it — every *face* of every tab, not just the one mounted when you arrive, because it reported `villa (+4 sections)` for a tab with 23 and a ReferenceError lived in the ones it never rendered |
 | `layers` | fast | 28 overlays with hand-written z-indices, and no way to see the order |
 | `saves` | fast | 165 lines of unordered backfills, and fifteen core fields that never had one |
 | `block` | fast | buying a man lived in a React closure, so nothing outside it could buy anybody |
@@ -53,7 +53,7 @@ reason the check exists usually has not.
 | `table` | fast | the only lever against the only number that ends a run cost 120 denarii flat, forever |
 | `street` | fast | acclaim climbed past the top of its ladder into nothing, and the missio never read it |
 | `chronicle` | fast | one in five lines the chronicle ever wrote was the same weekly receipt |
-| `marks` | fast | a man bought with an old wound carried a scar drawn at NaN,NaN for as long as you owned him |
+| `marks` | fast | a man bought with an old wound carried a scar drawn at NaN,NaN for as long as you owned him — and the four parts a bout wears down, held to the balance their split thresholds exist for |
 | `grudge` | fast | two rival-vengeance events waited above the ceiling of the number they read |
 | `card` | fast | three of the four fight engines shared a quarter of the bill, and the audit that found it was counting Rome |
 | `stone` | fast | 336,500 denarii of works and monuments, and the richest careful house ever measured held 8,485 |
@@ -226,6 +226,77 @@ men in stock kit was told the fee was the whole of it; and Rome's letter has fiv
 conditions, so a house with no senator warm enough to send it read `0 fame short` and
 would have gone off to win fame it did not need. Neither was caught by reading. Both
 were caught by a check that drove the real gate.
+
+## The one that was wrong in every probe for twenty releases: set the focus
+
+`REGIMENS.palus` is `focus:true`. It trains **whatever you point him at and nothing
+else** — `targets[g.focus] = D.rate`, one stat, once a week. Every probe in this
+project's history called `setRegimenOf(d, id, "palus")` and never called
+`setFocusOf`, so every man in every long-run measurement ground the same one of six
+stats for his entire career. Exactly one check has ever pointed anybody: `actions`,
+and only to prove the action exists.
+
+What that did to the answers, same seeds, same policy, one line added:
+
+| | never pointed | pointed at his weakest stat |
+|---|---|---|
+| best man's mean stat | 79 | 84.9 |
+| weeks the player holds the Primus | 0.00% | 2.98% |
+| reigns past the challenge's 6-week wait | 0 | 16 |
+| the primacy challenge asked | **0** | **2** |
+| best win chance on a title card, max | 14.6% | 56.8% |
+
+The finding this produced — *v2.56.0 shipped a channel for a state the player cannot
+reach* — was **refuted by the probe that produced it**. And the diagnosis one step
+before that was worse: measuring a man's ceiling with an unpointed focus gave 58.3
+against the city's best at 99, a "1.7× structural gap" in the rival growth model that
+would have justified retuning the hardest bout in the game. Pointed at his weakest
+stat each week, a young man with a doctore and a full yard reaches mean **99 by week
+149 aged 28** — the same ceiling, gap **0.0**.
+
+So: **a probe that trains men must set the focus, and a probe that does not is
+measuring a house nobody plays.** More generally — when a subsystem takes a target as
+well as a mode, the mode is the half you will remember to set and the target is the
+half that decides whether anything happens.
+
+## A check that reports what it opened is not reporting what it missed
+
+`sweep` opens every tab and every collapsible on it and asks only whether rendering
+threw. Three tabs are split into **faces** by their own switchers — `vView` on the
+villa (four), `mView` on the familia (two), `gView` on a man's page — and only one
+face is mounted at a time. `sweep` clicked the tab, opened what was in the DOM, and
+reported `villa (+4 sections)`. The villa has **23**. That line reads like coverage
+and was 17% of one tab, and it passed for many releases.
+
+What came through the hole: `VOW_BLESS_AT`, read to colour the vow panel and declared
+nowhere — one occurrence in the source, one in the built bundle, no binding in front
+of either. Any house with a vow standing that opened the temple got
+`ReferenceError: VOW_BLESS_AT is not defined` inside the render and no screen at all.
+The temple is in the villa's *Standing* face.
+
+And the reason no other check caught it is worth having by heart: **`temple` had the
+vow and no screen; `sweep` had the screen and no vow.** Both passed. A crash lives
+very comfortably in the gap between a logic check that never renders and a render
+check that never sets up the state. When you split a subsystem across two checks, ask
+which state only the renderer can see and which screen only the logic check can
+construct — that intersection is where things ship broken.
+
+Two habits out of it. Walk every face, not every tab. And **say what you did not
+reach**: a count per face, so a collapse from nineteen sections back to four is a
+visible regression instead of a still-passing check.
+
+The same day, the same fault in the small: after the courting line's copy was
+relabelled, the census matching on `/better than anybody you own/` reported **0.0%**
+where the real rate was 13.0%. **A census that matches on copy breaks the week the
+copy changes, and it breaks silently, downward, into a number that looks like a
+success.** Match on something the copy cannot move — an id, a key, an urgency — or
+assert that the match found anything at all.
+
+And its cousin: **a check that carries its own copy of a dial goes stale the week the
+dial moves.** `temple` built "a month of hard cards" as a literal 5, chosen when
+`VOW_EARNT_AT` was 2. The bar moved to 6 and the literal silently became *one card
+short of the bar* — so the check failed and reported the game as broken rather than
+itself. It reads `A.VOW_EARNT_AT` now, and tests the bar, one under it, and nothing.
 
 ## Three things the harness knows that cost a day each to learn
 

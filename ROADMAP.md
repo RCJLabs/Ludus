@@ -1331,12 +1331,13 @@ Tuning dials, in the order you'd reach for them:
 | Who is shown a paragon | `PARAGON_ODDS` / `PARAGON_REACH` / `PARAGON_GAP` | 5.5% a week, only within 88% of his price by a full fire sale, 90 weeks between; 23–30% of houses reaching week 120 see one |
 | What counts as new, and where | `TAB_SIG` / `tabSig` / `tabMarks` | a signature per tab over its discrete state; arrivals move it, drift never does |
 | What the box can say, and when | `CRUX[k].when` | over 1,381 cruxes resumed to the end: press/cover/cloth 100%, legs 86%, breather 74%, rouse 53%, milk 26%, finish 23%, blind 9%, hound 5% — and **0.80 cruxes a bout**, at most 3 |
-| When a limb goes | `MARK_NEED` | legs 24, head 26, body 26, **arm 58** — a leg is marked in 28% of bouts, a head 22%, an arm 4%. The 58 is the outlier and wants an A/B on mortality before anyone moves it |
+| When a limb goes | `MARK_NEED` | legs 24, head 26, body 26, arm 58 — three of the six places a blow can land feed the arm, hence the split. Measured over 700 bouts with each man matched to the tier he is billed at: legs **40.3%**, arm **37.9%**, head **40.6%**, body **35.1%**, one mark or more in 91%. Flatten the arm to 26 and it lands in **81.9%** — the fault the split is for. Mortality does not move with it (15.4 / 16.7 / 13.6 / 17.6% at arm 58/42/34/26; s.e. 1.4pt). The A/B this row used to ask for has been run; the number is right. *(The old figures here — arm 4% — came from a probe pairing raw men against proper arena opponents, which produced a 0.4% win rate.)* |
 | When the yard gets built | `BUILDINGS[k].cost` | levels 1–3 all bought inside a five-week band (weeks 118/122/123, 3,270d the lot); level 4 by 5 of 50, at week 258 — the fourth level is the late sink and it works |
 | What actually ends a run | — | good policy, 48 houses: debt 85% of endings, nothing else above 5%. Careless policy, 120 houses: debt 49%, rebellion 22%, closed 15%, ruin 3%. Every ruin is reachable; the ledger is the competent player's only enemy |
 | How the war reaches you | `WAR_AWAY_AT` / `WAR_AWAY_ODDS` | your own gate, or a rising elsewhere from week 60 at 0.35% a week — 45% of houses that get there see it |
 | What earns a badge | `MARK_URG` / `TAB_QUIET` | urgency 2 and above only (3.64 items a week, not 7.86); an empty tab cannot be fresh |
-| What a kept vow is worth | `VOW_BOUTS_FULL` / `VOW_EARNT_AT` | par at nothing risked, 1.6× at six cards fought under it — and never a blessing |
+| What a kept vow is worth | `VOW_BOUTS_FULL` / `VOW_EARNT_AT` | par at nothing risked, 1.6× at six cards fought under it — and never a blessing. Both are six: `VOW_EARNT_AT` was 2, and over 31 vows settled in 1,611 house-weeks the fewest cards under any vow was three and the median eight, so the piety split could never resolve the lean way. At six it bites 26% of vows |
+| What a man can be trained to | `PRIME` / `REGIMENS.palus` | a young man with a doctore and a full yard, pointed at his weakest stat each week, reaches mean stat **99 by week 149 aged 28** — the same ceiling the city's best reaches, gap **0.0**. `palus` is `focus:true`: it trains what you point him at and nothing else, so a house that never sets a focus tops out near **58** and the whole top of the arena reads as unwinnable. This is a dial in the sense that it decides what "a good house" means, and every measurement of the late game depends on the focus being set |
 | Which panel inside a tab | `SECT_MARK` / `sectMark` | eight panels, each a function of the save so a check can ask what it would wear |
 | What the priests count | `PIETY_TOP` / `pietyFame` | fame read up to 1,600 and no further — the dearest altar asks 1,900d, not 20,300d at fame 20,000 |
 | A blessing worth keeping | `GODS` / `OFFERING_COOL` | 4–6 weeks a gift, a 3-week rest; a house that keeps the rites rides one 31.6% of weeks for 19.6% of income |
@@ -1370,6 +1371,96 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.64.0 — A screen nobody could look at, and the reason nobody looked
+
+A consolidation pass over the eleven releases since v2.52.0, asking one question of each:
+*does this fire in real play, and how often?* Every one of them has a check and every check
+passes, but a check proves a mechanism in a state I built — which is how v2.55.0's street fix
+shipped inert, verified against a house whose best man had renown 90 when real ones carry
+100–400. Anything at zero here is inert whatever its check says.
+
+The pass found one crash, one dead constant, one line firing far too often — and, underneath
+all three, an instrument fault big enough that it had been quietly producing wrong answers
+for the whole audit series.
+
+**The temple had no screen for a house with a vow standing.** `VOW_BLESS_AT` was read at
+one line to colour the vow panel and declared nowhere: one occurrence in the file, one in
+the built bundle, no binding in front of either. Any house that had sworn a vow and opened
+the temple hit `ReferenceError: VOW_BLESS_AT is not defined` inside the render and got
+nothing. It shipped in v2.62.0, the release that added that very panel. Confirmed by putting
+the fault back: **nine page errors and a blank tab.**
+
+Why neither check saw it is the more useful half. `temple` knows all about vows and settles
+them by calling `resolveVow` directly — it renders nothing. `sweep` renders everything and
+never had a vow. One check had the screen and no vow, the other had the vow and no screen,
+and the crash sat in the gap between them for a release.
+
+And `sweep` was not rendering everything. Three tabs are split into faces by their own
+switchers — the villa has four, the familia two, a man's page several — and only one face is
+mounted at a time. `sweep` clicked the tab and opened whatever collapsibles were in the DOM,
+which on the villa is **4 of the 23 sections written for it**, then reported `villa (+4
+sections)` and passed. That reads like coverage and was 17% of one tab. The temple is in the
+villa's *Standing* face, so the check whose entire job is "does any screen throw" had never
+once rendered it. It now walks every face, reports the count per face so a collapse back to
+four is visible, and takes a second pass over the villa with a vow actually standing at three
+cards and at eight — the two sides of the branch.
+
+**`VOW_EARNT_AT` was a threshold nothing was ever below.** It was 2. `bookBout` counts every
+card fought while a vow stands and a vow stands a month, so any house that fights at all
+clears it in a fortnight. Measured over **31 vows settled in 1,611 house-weeks**: the fewest
+cards under any vow was **three**, the median **eight**, and not one came in under the bar —
+so `earnt ? 16 : 5`, the patron warmth behind it, and a paragraph of chronicle written for
+the shrugging case could never once resolve the second way. It is now `VOW_BOUTS_FULL`, the
+same six the purse is capped at, which is the only line in this system that ever meant
+anything: the vow was carried in full, or it was not. At six it bites **8 of those 31 (26%)**
+and the panel's countdown can finally count. `temple` now takes its card counts off the
+constant rather than a hardcoded 5 — the number that silently stopped meaning "a month of
+hard cards" the moment the dial moved — and asserts that one card short pays less.
+
+**The rival's man stood in 36.7% of weeks.** v2.63.0's courting line was gated on a roster
+with a free cell and a rival who had somebody better, which is nearly always true, and it was
+approved on "+0.08 items a week" — a figure from comparing two *different* twelve-seed
+batches, the invalid method this project's own notes warn about. Counted directly in one
+batch it stood in **36.7% of weeks**, the most of any of the eleven releases' six lines. It
+now also asks that the house be short-handed — fewer than three men fit to fight — which is
+when another house's man is actually the answer: **13.0%**, and at urgency 1, which the badge
+ignores. The best rival man is a median **1.43×** the player's best, so no amount of raising
+the quality margin would have fixed it.
+
+**And the thing that had been wrong all along: no probe in this project had ever pointed a
+man at a stat.** `palus` is `focus:true` — it trains whatever you point him at and nothing
+else. Every audit probe set the regimen and never set the focus, so every man in every
+long-run measurement trained one of six stats for his entire career. What that did to the
+answers, same seeds, same policy, one line added:
+
+| | never pointed | pointed at his weakest |
+|---|---|---|
+| best man's mean stat | 79 | 84.9 |
+| weeks the player holds the Primus | 0.00% | 2.98% |
+| reigns past the challenge's 6-week wait | 0 | 16 |
+| **v2.56.0's primacy challenge asked** | **0** | **2** |
+| best win chance on a title card, max | 14.6% | 56.8% |
+
+So the consolidation's own first finding — *v2.56.0 shipped a channel for a state the player
+cannot reach* — was **refuted by the probe that produced it.** Isolated further: a young man
+with a doctore and a full yard, pointed at his weakest stat each week, reaches mean **99 by
+week 149 aged 28**, exactly the ceiling the city's best reaches. Gap at the peak: **0.0**.
+The growth model is fair; the probe was starving its own men.
+
+**Also measured and left alone.** `MARK_NEED.arm = 58`, the suspect #102 named and never
+tested: the arm lands in **37.9%** of bouts against legs 40.3, head 40.6, body 35.1 — the
+balance the split thresholds exist for — and flattening it to 26 puts it back to **81.9%**,
+the original fault. Mortality does not move with it at all (15.4 / 16.7 / 13.6 / 17.6% across
+four thresholds; the standard error on a 15% rate at n=700 is 1.4 points). `marks` pins it
+now, by swinging the threshold inside one page load. And `succeed` — reported dark by the
+consolidation probe — is reachable: **2 of 14 houses reached generation 2**. That probe had
+simply never named an heir, and succession is gated on `d.heir`.
+
+Confirmed load-bearing in real play, for the record: `recordCloth` (39 pair cloths and 9 hunt
+cloths, all of which recorded nothing before v2.58.0), `ROME_RANK` (5 rank-4 letters against
+5 primacy letters — v2.59.0's second road carries half the traffic), `PIETY_TOP` (55 offerings
+past the cap against 46 under it), `DEBT_STAGE` (19 / 11 / 16), `warElsewhere` (7).
 
 ### v2.63.0 — The war does not have to be your gate
 
@@ -3600,8 +3691,11 @@ and `hard` and `marked` are earned by 8 of 8 and 7 of 8 cruel houses, so both tr
 a merciful house correctly never wears them (#106).
 
 Measured, understood and left alone: `hound` is seen a median 3 times a house and `blind`
-twice, with a fifth to a third of houses never meeting either — the fix is inside `MARK_NEED`
-and `engines` exists because bout constants are 3–5× stronger than they look (#102). The
+twice, with a fifth to a third of houses never meeting either — this named `MARK_NEED.arm = 58`
+as the suspect, and v2.64.0 ran the A/B it asked for and **refuted it**: the arm lands in 37.9%
+of bouts against 40.3 / 40.6 / 35.1 for the other three, and flattening it restores the fault
+the split was written to fix. `engines` exists because bout constants are 3–5× stronger than
+they look (#102). The
 fourth level of each wing is reached by 5 of 50 upgrades at year five, which is the late sink
 working as priced (#104).
 
@@ -3646,4 +3740,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.63.1*
+*Last updated: v2.64.0*

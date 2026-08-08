@@ -2351,23 +2351,36 @@ function agendaCan(d, add){
      Gated on having somewhere to put him, because a full house should hear nothing: that is
      self-limiting in exactly the way #101's permanent badge was not. Urgency 1, because a
      rival's man is an opportunity and not a problem. */
-  if(!rosterFull(d) && !d.court && !d.poach){
-    let best = null, from = null;
-    for(const h of (d.rivals||[])){
-      if(h.retired) continue;
-      for(const f of (h.fighters||[])){
-        if(rateMan(f) <= (best ? rateMan(best) : 0)) continue;
-        best = f; from = h;
+  /* THE GATE THIS LINE SHIPPED WITH WAS NOT A GATE.
+     v2.63.0 hung it on "room in the cells and a rival man better than anybody you own", and
+     approved it at +0.08 items a week — a figure taken by comparing two DIFFERENT twelve-seed
+     batches, which is the invalid method this file's own notes keep warning about. Counted
+     directly in the v2.63.1 consolidation it stood in **36% of weeks**, which is the #101
+     fault one release later and by the same hand.
+
+     Measured properly: 68% of weeks have room in the cells, and the best man in Capua is a
+     median **1.43×** your own best, so "better than anybody you own" is true almost always
+     and no margin rescues it — at ×1.50 it still fires in 11% of weeks. The condition that
+     is actually rare and actually actionable is a GAP: cells with room and not enough fit men
+     to put a card together. Then a rival's man is an answer to something rather than an
+     observation about the world. */
+  { const fit = activeG(d).filter(g=>canFight(g) && !g.injury).length;
+    if(!rosterFull(d) && !d.court && !d.poach && fit < 3){
+      let best = null, from = null;
+      for(const h of (d.rivals||[])){
+        if(h.retired) continue;
+        for(const f of (h.fighters||[])){
+          if(rateMan(f) <= (best ? rateMan(best) : 0)) continue;
+          best = f; from = h;
+        }
       }
-    }
-    const mine = activeG(d).reduce((m,g)=>Math.max(m, rateMan(g)), 0);
-    if(best && from && rateMan(best) > mine){
-      const cost = courtCost(d, from, best);
-      if(d.gold >= cost + weeklyBill(d) * 3)
-        add(1, "market", `${best.name} of House ${from.name} is better than anybody you own`,
-          `${cost}d to put a word in his ear · ${activeG(d).length} of ${cellsCap(d)} cells filled`);
-    }
-  }
+      if(best && from){
+        const cost = courtCost(d, from, best);
+        if(d.gold >= cost + weeklyBill(d) * 3)
+          add(1, "market", `${fit === 0 ? "Nobody" : fit === 1 ? "One man" : `${fit} men`} fit to fight, and ${best.name} of House ${from.name} could be got at`,
+            `${cost}d to put a word in his ear · ${activeG(d).length} of ${cellsCap(d)} cells filled`);
+      }
+    } }
   /* a rung you have already paid for in fame and favour, and are not drawing on */
   if(canClaimRise(d)){
     const nx = riseNext(d);
@@ -8291,7 +8304,18 @@ function swearVow(d, god){
 const VOW_BOUTS_FULL = 6;
 const vowRisked = v => Math.min((v && v.bouts) || 0, VOW_BOUTS_FULL);
 const vowReturn = v => 1 + 0.10 * vowRisked(v);            /* par at nothing, 1.6× at six */
-const VOW_EARNT_AT = 2;                                    /* below this the gods shrug */
+/* ---- A THRESHOLD NOTHING WAS EVER BELOW ----
+   This was 2, and 2 is not a threshold. `bookBout` counts every card the house fights
+   while a vow stands, and a vow stands a month, so a house that fights at all clears it
+   in a fortnight. Measured over 31 vows settled in 1,611 house-weeks of a house that
+   trained and took cards: the FEWEST cards under any vow was three, the median was eight,
+   and not one vow in the sample came in under the bar. So the whole `earnt ? 16 : 5` split
+   — the piety, the patrons, and two paragraphs of chronicle written for the shrugging
+   case — could never once resolve the second way.
+   It is the same number the return is capped at now, which is the only line in this system
+   that ever meant anything: the vow paid in full, or it did not. At six it bites 8 of those
+   31 vows (26%), and the panel's "two more cards" countdown can finally count. */
+const VOW_EARNT_AT = VOW_BOUTS_FULL;
 /* what the house has actually been losing, so the ask can say it */
 const buried20 = d => (d.fallen||[]).filter(f=>d.week - f.week <= 20).length;
 function resolveVow(d){
@@ -20380,7 +20404,16 @@ export default function App(){
                   <div style={{fontSize:"var(--fs-md)",marginTop:4}}>Not a man to fall before it is out — <span className="dim">{Math.max(1,S.vow.until-S.week)} week{S.vow.until-S.week===1?"":"s"} left</span>. {S.vow.stake}d pledged on it.</div>
                   {/* what it is worth is what it has stood through, and the panel says so
                       rather than leaving a player to find out at the settlement */}
-                  <div style={{fontSize:"var(--fs-base)",marginTop:3,color:vowRisked(S.vow)>=VOW_BLESS_AT?"#a9c98a":"#cfc0a0"}}>
+                  {/* VOW_BLESS_AT was read here and declared nowhere — the identifier
+                      appeared exactly once in the file and once in the built bundle, with
+                      no binding in front of it, so this line threw ReferenceError inside
+                      the render. Which means: any house with a vow standing that opened
+                      the temple got no screen at all. It shipped in the release that added
+                      this very panel, and neither check could see it — `temple` settles vows
+                      by calling resolveVow and never renders, `sweep` renders and never has
+                      a vow. The name was left over from before the vow stopped handing out
+                      blessings; there is one threshold in this system now and this is it. */}
+                  <div style={{fontSize:"var(--fs-base)",marginTop:3,color:vowRisked(S.vow)>=VOW_EARNT_AT?"#a9c98a":"#cfc0a0"}}>
                     {S.vow.bouts||0} card{(S.vow.bouts||0)===1?"":"s"} fought under it · comes back at {rnd(S.vow.stake*vowReturn(S.vow))}d
                     {vowRisked(S.vow) >= VOW_EARNT_AT
                       ? ` and the piety of a house that risked something`
@@ -23717,11 +23750,13 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* what is new, and where — the marks the tab bar and the folded panels wear */
     tabMarks, tabSig, tabFresh, tabQuiet, markSeen, TAB_KEYS, TAB_SIG, TAB_QUIET, TAB_NAMES,
     sectMark, SECT_MARK, MARK_URG,
+    MARK_NEED, MARK_PART, MARK_POW, MARK_WIND, MARK_DEAL, MARK_TAKE,
     /* the generators behind the four markets — a check that cannot refresh a stall
        cannot ask what the stall offers, which is how the block's pricing drifted
        through a release that changed the number it reads */
     makeMarket, makeDoctoreMarket, makeStaffMarket, liquidate, SLAVERS, bandOf, gladValue,
-    makePrimusOffer, makeDefenceOffer,
+    makePrimusOffer, makeDefenceOffer, PRIMUS_ASK, PRIMUS_ASK_GAP,
+    primusMine, primusEligible, primusWeek, PRIMUS_GATE, seedPrimus,
     /* the line of the house: who may be named, naming him, and taking it up */
     nameHeir, heirEligible, HEIRS, houseRecord,
     /* the summit: the gate, the letter, the bar, and the trip's own clock */

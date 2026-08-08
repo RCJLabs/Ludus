@@ -211,15 +211,22 @@ export async function run({ p, errors }){
          perfectly when driven — 14 of 26 approaches landed. Gated on having somewhere to put
          him, so a full house hears nothing; measured at +0.08 items a week, which is the
          difference between a prompt and wallpaper. */
+      /* short-handed, which is the gate: v2.63.0 hung this on room-in-the-cells alone and it
+         stood in 36.7% of weeks — the #101 fault one release later. On a real gap it is 13%. */
       const room = house("GL_ROOM"); room.gold = 40000;
+      for(const g of A.activeG(room).slice(2)) g.injury = { kind:"gash", weeks:3, sev:2 };
+      /* and one with room but plenty of fit men, which must hear nothing */
+      const manned = house("GL_MANNED"); manned.gold = 40000;
       const full = house("GL_FULL"); full.gold = 40000;
       while(!A.rosterFull(full)){ const m = A.genGladiator(full, 90); m.id=full.nextId++;
         m.status="active"; m.mine=true; m.kit=A.defaultKit(m.cls);
         for(const k of A.STATS) m[k] = Math.min(A.statCap(m,k), 96);
         full.gladiators.push(m); }
       R.can = {
-        court: say(room).filter(x=>/better than anybody you own/i.test(x.l)),
-        courtWhenFull: say(full).filter(x=>/better than anybody you own/i.test(x.l)).length,
+        court: say(room).filter(x=>/could be got at/i.test(x.l)),
+        courtWhenFull: say(full).filter(x=>/could be got at/i.test(x.l)).length,
+        courtWhenManned: say(manned).filter(x=>/could be got at/i.test(x.l)).length,
+        mannedFit: A.activeG(manned).filter(g=>!g.injury).length,
         feast: say(cells).filter(x=>/feast/i.test(x.l)),
         calm:  say(calm).filter(x=>/feast/i.test(x.l)).length,
         broke: say(broke).filter(x=>/feast/i.test(x.l)).length,
@@ -348,11 +355,16 @@ export async function run({ p, errors }){
   if(out.can.calm) fails.push("a house with quiet cells is told to throw a feast");
   if(out.can.broke) fails.push("a house that cannot afford a feast is told to throw one");
   if(!out.can.court.length)
-    fails.push("a house with room in its cells, coin in the box and a rival fielding a better man than anybody it owns is told nothing — `courted` fired 0 times in 4,908 house-weeks and the arc lands 14 of 26 when driven");
+    fails.push("a house short of fit men, with room in its cells and coin in the box, is told nothing about the man it could get at — `courted` fired 0 times in 4,908 house-weeks and the arc lands 14 of 26 when driven");
   else if(out.can.court[0].u >= 2)
     fails.push("the rival's man is raised as something demanding an answer — it is an opportunity, not a problem");
   if(out.can.courtWhenFull)
     fails.push("a house with no room in its cells is told to court somebody — the gate on this line is what keeps it from becoming wallpaper");
+  /* and a house that is NOT short-handed hears nothing, which is the whole of the v2.63.1 fix:
+     the best man in Capua is a median 1.43× your own best, so "better than anybody you own"
+     was true almost always and stood in 36.7% of weeks */
+  if(out.can.courtWhenManned)
+    fails.push(`a house with ${out.can.mannedFit} fit men is told where to get another — the gate must be a gap, not a comparison, because the best rival man is a median 1.43× your own best and no margin fixes that`);
   if(out.can.canClaim && !out.can.rung.length)
     fails.push("a rung is there to be taken and the agenda says nothing — the stipend runs from the week you claim it");
 
