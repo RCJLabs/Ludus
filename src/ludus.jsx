@@ -2452,6 +2452,17 @@ function agenda(d){
       `${d.flags.litDue} week${d.flags.litDue===1?"":"s"} behind — your standing is bleeding for it`);
   if(liquid(d) < 120 && owedTotal(d) >= 250)
     add(2, "villa", `${owedTotal(d)}d owed to you and ${Math.round(liquid(d))} in the box`, "rich on paper is not rich");
+  /* the slide toward the creditors' line, which is the one number that ends a run
+     without anybody deciding anything */
+  if(d.gold < 0){
+    const line = creditLine(d), depth = clamp(d.gold / line, 0, 1);
+    if(depth >= DEBT_STAGE[0])
+      add(depth >= DEBT_STAGE[2] ? 3 : 2, "villa",
+        `${rnd(-d.gold)}d under, and ${rnd(-line)}d ends it`,
+        depth >= DEBT_STAGE[2] ? "a week or two, no more"
+          : depth >= DEBT_STAGE[1] ? "the trades have started asking first"
+          : "take a purse, sell the paper, or sell a man");
+  }
   { const bad = owedList(d).filter(x=>d.week - x.due >= 4);
     if(bad.length) add(1, "villa", `${bad[0].from} has stopped paying`, `${bad[0].amount}d, ${d.week - bad[0].due} weeks late`); }
   if(bayHolder(d)) add(2, "arena", `House ${bayHolder(d)} has the bay`, `${baySince(d)} weeks and Capua has noticed`);
@@ -8354,6 +8365,8 @@ const weeklyBill = d => Math.round(
    shed still folds at the old figure, and a great house is carried for about two
    and a half weeks of its own ledger, which is the same patience it always had. */
 const CREDIT_WEEKS = 2.5;
+/* how far down the line the trades begin to notice, to talk, and to stop being polite */
+const DEBT_STAGE = [0.35, 0.65, 0.85];
 const creditLine = d => -Math.round(Math.max(250, weeklyBill(d) * CREDIT_WEEKS) * (d.loan ? 1.68 : 1));
 /* how close you are to being received at the next rung */
 function riseWeek(d){
@@ -14815,6 +14828,32 @@ function weekReckoning(d){
         d.flags.fameSaid[at] = 1; if(at===600) d.milestone600 = true;
         chron(d, FAME_WORD[at] || `The house is ${fameTitle(at).toLowerCase()} now.`, "good");
       } } }
+  /* ---- THE SLIDE, WHICH USED TO HAPPEN IN SILENCE ----
+     v2.48.0 gave the creditors a patience measured in the house's own weekly bill,
+     and the house took a great deal longer to die of it: median life 43 weeks to
+     167 under one fixed policy. What did not grow with it was anything to hear. The
+     three ruins of v1.10.0 each warn six weeks out and lapse if the pressure comes
+     off; debt had no warning at all unless you happened to be carrying a lender's
+     paper, so a hundred weeks of sliding read exactly like a hundred quiet weeks.
+     Three beats now, against the same line the end reads, each said once and all of
+     them forgotten if the ledger comes back — the shape `ruinWeek` already uses. */
+  { const line = creditLine(d);
+    const depth = d.gold < 0 ? clamp(d.gold / line, 0, 1) : 0;
+    const stage = depth >= DEBT_STAGE[2] ? 3 : depth >= DEBT_STAGE[1] ? 2 : depth >= DEBT_STAGE[0] ? 1 : 0;
+    const was = d.flags.debtStage || 0;
+    if(stage > was){
+      d.flags.debtStage = stage;
+      chron(d, stage === 1
+        ? `The butcher wants cash this week and says so pleasantly. The smith says nothing and writes it down. A house that is behind is a house people start handling differently.`
+        : stage === 2
+        ? `Word is round the trades that this house pays late. Nobody refuses you and everybody asks first, which is the same thing arriving by a longer road — you are ${rnd(-d.gold)} denarii under, against ${rnd(-line)} that would finish it.`
+        : `The men who are owed have stopped being pleasant about it. ${rnd(-d.gold)} denarii under and the line is ${rnd(-line)}: whatever is going to save this house has to happen in the next week or two, and everybody involved can do the arithmetic.`,
+        "bad");
+    } else if(stage === 0 && was > 0){
+      d.flags.debtStage = 0;
+      chron(d, `The ledger has stopped tipping. Whatever the trades were saying about this house, they have gone back to saying nothing.`, "good");
+    }
+  }
   if(d.gold < creditLine(d)) d.over = { kind:"debt" };
   /* ---- THE HOUSE THAT COULD NOT FIELD A MAN ----
      `ruin` asked for no men AND no coin, and counted a man in the infirmary as a man.
@@ -23112,6 +23151,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
   window.__LVDVS = {
     /* build a house and its people */
     newGameState, genGladiator, genOpponent, pickRivalOpp, makeRivals, clone,
+    /* the most-read screen in the game, which only a browser could reach until now */
+    agenda, URG,
     /* the generators behind the four markets — a check that cannot refresh a stall
        cannot ask what the stall offers, which is how the block's pricing drifted
        through a release that changed the number it reads */

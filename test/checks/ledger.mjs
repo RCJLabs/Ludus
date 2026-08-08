@@ -72,11 +72,36 @@ export async function run({ p, errors }){
     /* 4. all nine works are still worth more than everything else put together */
     const stoneTotal = A.ALL_WORK_KEYS.reduce((n,k)=>n + (A.WORKS[k]||A.MONUMENTS[k]).cost, 0);
 
-    /* 5. the rungs */
+    /* 5. the slide toward the line — heard, staged, and forgotten if it comes off.
+          v2.48.0 took a house from a median 43 weeks to die of debt to 167, and
+          nothing grew with it to hear: the three ruins of v1.10.0 each warn six
+          weeks out, and debt warned not at all unless you held a lender's paper. */
+    const slide = (label, mk)=>{
+      const d = mk();
+      const line = A.creditLine(d);
+      const steps = [];
+      for(const frac of [0.1, 0.4, 0.7, 0.9]){
+        d.gold = Math.round(line * frac);
+        A.weekReckoning(d);
+        const item = A.agenda(d).find(x=>/under, and/.test(x.label||""));
+        steps.push({ frac, gold:d.gold, stage:d.flags.debtStage||0,
+          urgency: item ? item.urgency : null });
+        if(d.over) d.over = null;
+      }
+      d.gold = 500; A.weekReckoning(d);
+      return { label, line, steps, lapsed:(d.flags.debtStage||0) === 0,
+        quietAgenda: !A.agenda(d).some(x=>/under, and/.test(x.label||"")) };
+    };
+    const slides = [
+      slide("a house of three", ()=>A.newGameState("Sl1","clean","LED_S1",null)),
+      slide("a finished house", ()=>finished(20000)),
+    ];
+
+    /* 6. the rungs */
     const rungs = A.RISE_RANKS.map((r,i)=>({ i, name:r.name, fame:r.fame||0,
       favor:r.favor||0, cost:r.cost||0, fee:i? A.riseFee(r) : 0 }));
 
-    return { curve, idle, lines, stoneTotal, rungs, censusTop: A.CENSUS_TOP || null };
+    return { curve, idle, lines, stoneTotal, rungs, slides, censusTop: A.CENSUS_TOP || null };
   });
 
   const lines = [], fails = [];
@@ -86,6 +111,10 @@ export async function run({ p, errors }){
   lines.push(`a finished house with nobody on the sand: ${out.idle.perWeek}d a week over ${out.idle.weeks} weeks`);
   lines.push(`the creditors carry a shed to ${out.lines.shed}d (bill ${out.lines.shedBill}d), ${out.lines.loan}d with paper out, a palace to ${out.lines.palace}d (bill ${out.lines.palaceBill}d)`);
   lines.push(`${out.rungs.length-1} rungs above lanista · ${out.stoneTotal.toLocaleString()} denarii of stone in all`);
+  for(const s of out.slides)
+    lines.push(`the slide, ${s.label} (line ${s.line}d): ` +
+      s.steps.map(t=>`${t.gold}d→stage ${t.stage}${t.urgency?` (agenda ${t.urgency})`:""}`).join(" · ") +
+      ` · ${s.lapsed ? "forgotten when it came off" : "STILL WARNING IN THE BLACK"}`);
 
   /* ---- the two sides read the same fame ---- */
   const top = out.curve[out.curve.length-1], mid = out.curve[1];   // 27,000 and 9,000
@@ -106,6 +135,21 @@ export async function run({ p, errors }){
   /* ---- and the stone stays the largest thing in the game ---- */
   if(out.stoneTotal < 300000)
     fails.push(`the works and monuments come to ${out.stoneTotal} denarii — the late-game sink has been repriced downward without a word`);
+  /* ---- the slide is heard, at every size of house ---- */
+  for(const s of out.slides){
+    const st = s.steps.map(t=>t.stage);
+    if(st[0] !== 0) fails.push(`${s.label}: a house a tenth of the way down its line is already being warned`);
+    if(!(st[1] >= 1 && st[2] >= 2 && st[3] >= 3))
+      fails.push(`${s.label}: the slide does not escalate — stages ${st.join(",")} at a tenth, four tenths, seven tenths and nine tenths of the line`);
+    const last = s.steps[s.steps.length-1];
+    if(last.urgency !== 3)
+      fails.push(`${s.label}: nine tenths of the way to ruin and the agenda calls it urgency ${last.urgency}`);
+    if(s.steps[1].urgency == null)
+      fails.push(`${s.label}: four tenths down and the agenda says nothing at all`);
+    if(!s.lapsed) fails.push(`${s.label}: the warning did not lapse when the ledger came back`);
+    if(!s.quietAgenda) fails.push(`${s.label}: the agenda still warns about debt for a house in the black`);
+  }
+
   /* ---- the ladder is a ladder ---- */
   for(let i=2;i<out.rungs.length;i++){
     const a = out.rungs[i-1], b = out.rungs[i];

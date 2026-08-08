@@ -1334,6 +1334,7 @@ Tuning dials, in the order you'd reach for them:
 | Feast fatigue | `FEAST_FRESH` / `feastFresh` | ×0.4 effect on the cooldown floor, full at a 6-week gap |
 | Feast price ceiling | `feastCost` | fame clamp extended to ×2 (≈×5.4 base at fame 4,400+) |
 | The creditors' patience | `CREDIT_WEEKS` / `creditLine` | ruin at −max(250, 2.5 × `weeklyBill`), ×1.68 with a loan |
+| Hearing the slide | `DEBT_STAGE` | the trades notice at 35% of the line, talk at 65%, stop being polite at 85% |
 | The asking drumbeat | `AMB_COOL` | ten weeks of yard-wide quiet after any man's ambition beat |
 | The street's memory | `acclaimTarget` | men cap +46, freed legends +12, walls +9, spill +14; the primacy only if it is yours |
 | What the street buys at the block | `makeMarket` | acclaim 40 / 72 / 95 → mean stat 54.7 / 61.4 / 63.6, fine men 6.9% / 17.5% / 23.1%, price 545 / 926 / 1,208d — accepted deliberately in v2.55.0; `stall` prints it every run |
@@ -1355,6 +1356,34 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.57.0 — The slide, which used to happen in silence
+
+Audit item #94. v2.48.0 gave the creditors a patience measured in the house's own
+weekly bill, and a house took a great deal longer to die of it — median life 43
+weeks to 167 under one fixed policy, which was the point. What did not grow with
+it was anything to hear. The three ruins of v1.10.0 each warn six weeks out and
+lapse if the pressure comes off; **debt warned not at all** unless you happened to
+be carrying a lender's paper, so a hundred weeks of sliding read exactly like a
+hundred quiet weeks.
+
+Three beats now, against the same line the end reads, each said once and all of
+them forgotten if the ledger comes back — the shape `ruinWeek` already uses. At
+35% of the way down, the butcher wants cash and says so pleasantly and the smith
+writes it down. At 65%, word is round the trades, with the two figures named. At
+85%, the men who are owed have stopped being pleasant, and the line says plainly
+that whatever is going to save the house has a week or two to do it. The agenda
+carries it at urgency 2, then 3.
+
+Measured at both ends of the game, which is the point of hanging it on
+`creditLine`: a house of three is warned at −100, −175 and −225 against its line
+of −250, and a finished house at −1,199, −2,099 and −2,698 against −2,998. Both
+forget it when the ledger comes back. Dials: `DEBT_STAGE` beside `creditLine`.
+
+**And the agenda went on the handle.** Twenty sources, three urgencies, the
+most-read screen in the game — and until now only a browser could reach it, so no
+check could ask what it says about a given house. `ledger` now asserts the slide
+through it.
 
 ### v2.56.0 — The man four doors down asks
 
@@ -3195,4 +3224,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.56.0*
+*Last updated: v2.57.0*
