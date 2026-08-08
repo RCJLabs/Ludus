@@ -23090,6 +23090,11 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
   window.__LVDVS = {
     /* build a house and its people */
     newGameState, genGladiator, genOpponent, pickRivalOpp, makeRivals, clone,
+    /* the generators behind the four markets — a check that cannot refresh a stall
+       cannot ask what the stall offers, which is how the block's pricing drifted
+       through a release that changed the number it reads */
+    makeMarket, makeDoctoreMarket, makeStaffMarket, liquidate, SLAVERS, bandOf, gladValue,
+    makePrimusOffer, makeDefenceOffer,
     /* the line of the house: who may be named, naming him, and taking it up */
     nameHeir, heirEligible, HEIRS, houseRecord,
     /* the summit: the gate, the letter, the bar, and the trip's own clock */

@@ -87,7 +87,7 @@ npm run test:all      every check, fast and slow — about nine minutes
 npm run coverage      not what passes, but what no check ever touches
 ```
 
-**30 checks.** Twenty-six read into the game through a test handle and answer in seconds;
+**31 checks.** Twenty-seven read into the game through a test handle and answer in seconds;
 four drive a real browser through the real screens. Every one of them exists because
 of a bug that shipped, and the comment at the top of each says which — that comment
 is the durable part, not the numbers inside it. See `test/README.md` for the table.
@@ -1353,6 +1353,46 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.55.0 — The block, which no check could refresh
+
+Audit item #96, plus the harness half of #97. `makeMarket` was not on the handle,
+nor were the doctore's market, the staff market, or `liquidate` — so the only way
+to see a second stall was to drive three whole weeks, and nothing ever asked the
+block what it was offering under a given state. The cost is on the record twice:
+the v2.52.0 consolidation pass discarded a whole block battery that called
+`A.makeMarket`, found it undefined, and silently measured the founding stall five
+times over — reading flat where the truth is steep — and the steepness itself went
+unnoticed through v2.50.0, a release whose entire content was changing the number
+the block reads.
+
+All of them are exported, and `stall` is the thirty-first check. It holds the
+shape rather than the values, because the values are what a repricing is allowed
+to move: the stall must improve with the house's name, cost more as it improves,
+keep about a third of itself hiding something, and the four sellers must remain
+four different places to shop. Measured live every run:
+
+| acclaim | mean stat | fine men | flawed | price |
+|---|---|---|---|---|
+| 10 | 53.7 | 6.9% | 29.4% | 544d |
+| 40 | 54.7 | 6.9% | 33.1% | 545d |
+| 72 | 61.4 | 17.5% | 30.0% | 926d |
+| 95 | 63.6 | 23.1% | 25.0% | 1,208d |
+
+and the sellers come back as their own table — Bones at 238d with 77% carrying
+something, through Batiatus and the Syrian, to the honest man at 1,048d and 11%.
+It also pins the one thing the block may never do: **every band the seller quotes
+must contain the real man.** 11,520 bands checked, all of them holding, widths ±14
+seller / ±7 doctore / exact when scouted.
+
+That table is also the honest correction to #93, which claimed the acclaim
+dependence was worth 4.1 points of mean stat and 15 points of fine men between 72
+and 95. Measured properly, with a single variable and a refreshing stall, it is
+**2.2 and 5.6** — real, and about a third of what the item asserted.
+
+And `liquidate` being exposed closes the harness half of #97: the fire sale now
+quotes and then does the same thing, verified — 1,826 denarii quoted, 1,826 raised,
+and exactly the one man left standing.
 
 ### v2.54.0 — The line of the house
 
@@ -3118,4 +3158,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.54.0*
+*Last updated: v2.55.0*

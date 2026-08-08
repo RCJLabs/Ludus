@@ -68,6 +68,7 @@ reason the check exists usually has not.
 | `ledger` | fast | a payout read fame uncapped while its counterweight capped, and the ruin line still asked the figure it asked when a week cost fifty denarii; nothing was watching either |
 | `summit` | fast | Rome is the only real ending and nothing had ever driven it — the gate took one proof and no other, and the trip had no clock, so a house that accepted and then declined its card sat there for ever with Capua frozen behind it |
 | `line` | fast | `nameHeir` was never on the handle, so the half that arms a succession could not be reached by the half that fires it, and no check had walked a handover — four heir kinds with four different bargains, resting on nothing |
+| `stall` | fast | `makeMarket` was not on the handle, so nothing could ask the block what it offered under a given state — a whole block battery was discarded for silently measuring the founding stall five times, and the block's steep dependence on acclaim went unnoticed through the release that changed acclaim |
 
 ## What no check has ever touched
 
