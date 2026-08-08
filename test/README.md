@@ -11,7 +11,7 @@ npm run coverage          not what passes — what no check ever touches
 
 Every check runs against a real build. Most reach into the game through the test
 handle, play a house for a hundred weeks in memory, and answer in a second or two.
-Four drive a real browser through the real screens, and those cost minutes.
+Five drive a real browser through the real screens, and those cost minutes.
 
 ## Why there are two tiers
 
@@ -72,6 +72,7 @@ reason the check exists usually has not.
 | `glance` | fast | the agenda knew what wanted an answer and which tab it was on, and a player's only way to find out was to open all six every week — and the marks that fix it are the kind of thing that fails silently, because a dot that never lights looks exactly like a tab with nothing in it |
 | `temple` | fast | five gods with four boons plumbed into the engine, and across 3,200 house-weeks no vow was ever sworn and no blessing ever rode with a house — the agenda had never named the gods, the Temple panel opened only for a house already using it, and a probe guard reserving four weeks' cushion produced the figure that made it all look unaffordable |
 | `surface` | slow | the tab bar was 9px and END WEEK was 37px tall — and it measured a house twelve WEEKS old on one face of each tab with no record sheet ever opened, so it would have passed the whole way through a release where a house's name read "House Glaber…" and a fame of 23,703 rendered "237…" |
+| `sand` | slow | thirteen checks called `doFight` and every one drove the engines in memory; four drove a browser and none reached the sand, so the most-looked-at screen in the game had no test — which is why a React key fault living on the bout wizard was found by a scratch probe photographing an axe |
 | `lessons` | fast | thirty-five lessons, one per tab per week, each with an expiry window — so a queue, and sixteen of them could not be reached by any player: "Steel and Style" was `done` in week 1 of all five openings because every one hands you a rack, "Steel Does Not Last" closed on an event that had to happen before it could open, and between them the armory tab offered a new house nothing at all |
 | `feats` | fast | five of the nineteen feats read as never earned across 3,200 house-weeks and every one of them was reachable — two of the five were the probe declining Rome's card and never founding the burial society; what was real was the cloth recording nothing outside a singles bout, and a sheet showing a dash to a house standing on the gate |
 
@@ -227,6 +228,41 @@ men in stock kit was told the fee was the whole of it; and Rome's letter has fiv
 conditions, so a house with no senator warm enough to send it read `0 fame short` and
 would have gone off to win fame it did not need. Neither was caught by reading. Both
 were caught by a check that drove the real gate.
+
+## Driving a screen is a skill, and four faults in five will be yours
+
+`sand` was the first check to render a bout. Getting there took six failed attempts and
+then five more faults inside the check itself — and only one of the five was the game's.
+Every one is a shape that will recur:
+
+- **A class is not a role.** The arena tab's own CHOOSE A BOUT is a `btn-blood`, exactly
+  like the wizard's SEND HIM TO THE SAND. A driver reaching for "the blood button"
+  closes the wizard it just opened. Act inside the topmost `.modalwrap`, and make every
+  helper *return what it pressed* so the log says `→ SEND MALCHUS TO THE BEAST` instead
+  of `clicked something`.
+- **Two lists can wear the same clothes.** The pits offer the men at the rope as
+  `.optrow`, the same element as your own roster, so "pick one row" spends itself on the
+  wrong list and the send button never comes alive. Don't encode which list is which —
+  **ask the screen**: press the send if it's live, else advance, else choose one more.
+  That loop drove all five paths and knows nothing about any of them.
+- **The picture is not the same in every mode.** The melee cannot draw two fighters;
+  there are up to six, so it names them as tags and strikes them through. A flat
+  "somebody is drawn" assertion failed on the one engine where the picture is a list.
+- **Compressing time breaks the rules time was enforcing.** Five bouts through one
+  week's screens is five bouts a house would spread over five weeks; the roster was
+  spent by the fourth and the wizard offered an empty list. Stand the state back up
+  between passes, and say in a comment that that is what the weeks between them do.
+- **"Nothing happened" is a shrug, not a finding.** Three of these hid behind the same
+  useless message. When a driver gets stuck it must print what was on the screen —
+  every button, its class, and whether it was disabled. That one change turned two
+  guessing rounds into one look.
+
+And the fixture's *shape* was chance: the bill is drawn every third week and one run
+offered three singles and a hunt where the next offered a pair and a melee, so coverage
+moved run to run while the report said nothing about it. Draw until the bill holds the
+most kinds it can, deal the roster on purpose so each engine has somebody eligible, then
+**demand every kind you drew**. A check that asks for "at least two" quietly becomes
+"the pits, once" the week something breaks, and reports a pass.
 
 ## A clipped element renders perfectly happily
 

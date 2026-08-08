@@ -1374,6 +1374,64 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v2.67.0 — Nothing had ever rendered a round
+
+Thirty-six checks. Thirteen of them call `doFight` and every one drives the engines in memory
+through the test handle, reading the beats as data. Four drive a browser, and not one reached
+the sand: `sweep` opens the wizard's first step and stops, `survive` clicks into a bout as a
+side effect of its economy policy and never looks at what comes up. The most-looked-at screen
+in the game had no test at all, which is why last release's React key fault was found by a
+scratch probe taking a photograph of an axe.
+
+**`sand` drives the whole arc in a real browser**: pick a card → pick the men → NEXT → SEND
+HIM TO THE SAND → the rounds run → a crux offers its answers → answer it → the verdict →
+RETURN TO THE LUDUS. One bout of **every kind the bill actually drew**, plus the pits:
+
+| | rounds | cruxes |
+|---|---|---|
+| a single | 12 | 2 answered, 5 ways |
+| a pair | 9 | 1, 3 ways |
+| a melee | 11 | 1, 3 ways |
+| a hunt | 6 | 1, 3 ways |
+| the pits | 8 | 2, 7 ways |
+
+And the record book has to go from 0 to 5 afterwards, because a screen that runs beautifully
+and books nothing is a fault this project has shipped twice — the pair booked only its wins
+and the melee only its losses, for fifty versions. The check also applies `surface`'s floors to
+every overlay it passes through: the wizard's three steps, the sand, each crux, the night. Put
+last release's missing `key` back and it fails with five page errors.
+
+**It found a truncation on its first full run.** `HPBar`'s label was `nowrap` with an ellipsis,
+which is right for "Gulussa" and wrong for "a full-grown bear of the north" — the hunt puts the
+whole phrase in that slot, so the one bout whose label needs two lines was the one bout that
+could not have them. Cut on the crux and on the night both. Also fixed: an inline
+nowrap-and-ellipsis on the pits panel, which was overriding v2.66.0's fix to `.rowval`.
+
+**Four of this check's five faults were the driver's, not the game's**, and they are the part
+worth keeping:
+
+- The arena tab's own CHOOSE A BOUT is a `btn-blood` — the same class as the wizard's SEND HIM
+  TO THE SAND — so a driver reaching for "the blood button" closes the wizard it just opened.
+  Six earlier attempts died on that. Everything acts inside the topmost overlay now.
+- The melee does not draw two fighters. It cannot; there are up to six. It names its entrants
+  as tags and strikes them through as they go out, and a flat "somebody is drawn" assertion
+  failed on the one engine where the picture is a list.
+- The pits offer the men at the rope in the same `.optrow` shape as your own roster, so a
+  driver that picks "one row" spends it on the wrong list. It asks the wizard now — press the
+  send if it is live, else advance, else choose one more — which needs to know nothing about
+  which list is which.
+- **Five bouts through one week's screens is five bouts a real house would spread over five
+  weeks.** The roster was spent by the fourth and the wizard offered an empty list; the driver
+  reported "nothing would send them out", which is a shrug and not a finding. It stands the
+  yard back up between bouts, and it now prints what was on screen when it gets stuck.
+
+And the bill's shape is chance — one run offered three singles and a hunt, the next a pair and
+a melee — so what the check covered moved run to run while the report said nothing about it. It
+draws until the bill holds the most kinds it can find (four, over about 25 weeks), deals the
+roster on purpose so the beast card has somebody eligible for it, and then demands every kind
+it drew. A check that asks for "at least two" quietly becomes "the pits, once" the week
+something breaks, and reports a pass.
+
 ### v2.66.0 — Four things off a phone screen
 
 All four reported from a real save in year twelve, which is most of the point: none of them
@@ -3868,4 +3926,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.66.0*
+*Last updated: v2.67.0*

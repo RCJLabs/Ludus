@@ -16520,7 +16520,13 @@ const CrowdRow = React.memo(function CrowdRow({ level, factions, venue }){
 function HPBar({ label, v, s, cls, flip }){
   return (
     <div style={{flex:1, textAlign: flip?"right":"left", minWidth:0}}>
-      <div className="disp" style={{fontSize:"var(--fs-micro)", letterSpacing:".07em", color:"#e0bd72", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{label}</div>
+      {/* A GLADIATOR HAS A NAME; A BEAST HAS A DESCRIPTION.
+          This was nowrap with an ellipsis, which is fine for "Gulussa" and cuts "a full-grown
+          bear of the north" — the hunt puts the whole phrase in here, so the one bout where
+          the label needs two lines was the one bout that could not have them. Found by the
+          `sand` check on its first full run, on the crux and the night both. */}
+      <div className="disp" style={{fontSize:"var(--fs-micro)", letterSpacing:".07em", color:"#e0bd72",
+        overflowWrap:"anywhere", lineHeight:1.25}}>{label}</div>
       <div className="dim" style={{fontSize:"var(--fs-micro)", marginBottom:3}}>{cls}</div>
       <div className="track" style={{height:6}} role="progressbar" aria-label={`${label} health`}
         aria-valuenow={Math.round(clamp((v-20)/80*100,0,100))} aria-valuemin={0} aria-valuemax={100}>
@@ -23412,7 +23418,9 @@ export default function App(){
                             </span>
                           )}
                         </span>
-                        <span className="rowval dim" style={{fontSize:"var(--fs-sm)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                        {/* an inline nowrap-and-ellipsis, which overrode the fix to `.rowval`
+                            — the same fault one level down, on the pits panel of the wizard */}
+                        <span className="rowval dim" style={{fontSize:"var(--fs-sm)",minWidth:0,whiteSpace:"normal",overflowWrap:"anywhere"}}>
                           {nx && nx.key!==P.key
                             ? `the rope moves in ${mw-S.week} week${mw-S.week===1?"":"s"}`
                             : "the rope stays where it is"}
