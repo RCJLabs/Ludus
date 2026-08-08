@@ -2303,6 +2303,36 @@ function charterWeek(d){
 }
 const charterSkip = d => { if(d.charter) d.charter.skipped = true; };
 
+/* ---- THE GODS, WHO WERE NEVER ON THE AGENDA ----
+   Twenty sources on that list and not one of them was the temple, while the villa's own
+   Temple panel stayed collapsed unless you already had a vow standing. So a finished
+   system with five gods and four boons plumbed into the engine had no way in at all:
+   piety sat at 30 in three thousand house-weeks, no vow was ever sworn, no blessing ever
+   rode with a house. Measured while observing and not acting, a house had no blessing,
+   a rested altar and the coin in the box in **86% of weeks.**
+
+   Two lines only, and both of them about something that is actually wrong this week,
+   because #84 was about an agenda that talks too much. Lifted out of `agenda` rather
+   than added to it: that function was 208 lines with these in place and `bulk` said so,
+   which is the check doing its job. */
+function agendaGods(d, add){
+  if(d.city || d.travel || d.rome) return;
+  const pi = pietyOf(d);
+  if(pi <= 20){
+    add(2, "villa", "This house is keeping no rites at all",
+      illLuck(d) ? "godless, and under an ill turn for it"
+        : `${pietyWord(pi)} — the streets feel it, and the omens run against you`);
+    return;
+  }
+  if(!offeringReady(d) || blessOf(d)) return;
+  const hurt = activeG(d).filter(g=>g.injury).length;
+  const G = hurt >= 2 ? GODS.aesculapius : d.unrest >= 45 ? GODS.mars : null;
+  if(!G || d.gold < G.cost(d)) return;
+  add(1, "villa", `The altar would take a gift to ${G.name}`,
+    hurt >= 2 ? `${hurt} men laid up · ${G.cost(d)}d for ${G.weeks} weeks of clean mending`
+      : `the cells are ${unrestWord(d.unrest).toLowerCase()} · ${G.cost(d)}d for ${G.weeks} weeks of a soldier's steadiness`);
+}
+
 /* ---- THE AGENDA ----
    Thirty versions of bolting panels onto columns. This is the one list that says
    what actually wants an answer this week, and where the answer is. */
@@ -2380,6 +2410,7 @@ function agenda(d){
     else if(wrong.length > 1) add(1, "armory", `${wrong.length} men are carrying the wrong thing`, "none of it is their style"); }
   for(const m of unhonoured(d)) if(!m.done)
     add(2, "villa", `${m.name} is not buried properly`, `${RITE_WINDOW-(d.week-m.week)} weeks to decide`);
+  agendaGods(d, add);
   /* the town */
   if(d.election && !d.election.done) add(2, "villa", "The aedileship is open", `${Math.max(0,3-(d.week-d.election.week))} weeks to the vote`);
   if(d.games && d.games.offers && d.games.offers.length && activeG(d).some(g=>canFight(g) && g.lastFought<d.week))
@@ -7949,21 +7980,41 @@ const bUpkeep = d => Math.round(BKEYS.reduce((s,k)=>{ const L=bLevel(d,k); retur
    Rome did nothing without the gods, least of all put men on sand to die. A house
    keeps its piety with offerings and vows; in return a god's blessing rides with it
    a while — steadier nerve, a kinder wheel, a faster mending, a richer purse, a
-   warmer city. Break a vow and the wheel turns the other way. */
+   warmer city. Break a vow and the wheel turns the other way.
+
+   ---- AND THE PRIEST STOPS COUNTING SOMEWHERE ----
+   The same fault as v2.43.0's stipend and v2.47.0's feast, a third time. Every one of
+   these prices was a flat term plus a share of fame, uncapped, written when the ladder
+   of renown ended at 600. It does not end at 600 any more. At the old ceiling Jupiter
+   asked 900 denarii for five weeks; at the twenty thousand a great house actually
+   carries he asked **20,300**, and Aesculapius 10,160 for six weeks of wounds closing
+   half again as fast. Measured across twelve houses run four hundred weeks with a policy
+   that deliberately kept a blessing riding whenever the altar would take a gift and the
+   strongbox would stand it: **a blessing rode with the house 2.45% of weeks.** That is
+   the whole of why piety sat at 30 in three thousand house-weeks — not that nobody
+   thought to pray, but that praying cost more than a monument.
+
+   A blessing is worth a few hundred denarii of effect: a tenth on four weeks of purses,
+   two and a half points of a patron's warmth, six weeks of faster mending. So the fame
+   the priests read is capped where the arena stops paying for it — `fameEdge` gives up
+   at about 1,620 — and past that a famous house pays what a well-known one pays, which
+   is what a temple with a fixed altar and a fixed number of doves would charge anyway. */
+const PIETY_TOP = 1600;
+const pietyFame = d => Math.min((d && d.fame) || 0, PIETY_TOP);
 const GODS = {
-  mars:     { name:"Mars", of:"the soldier's god", weeks:5, cost:d=>rnd(180 + d.fame*0.6),
+  mars:     { name:"Mars", of:"the soldier's god", weeks:5, cost:d=>rnd(180 + pietyFame(d)*0.6),
     boon:"Your men fight with a soldier's steadiness — heart in the cold weeks, and no flinching at the post.",
     ask:"To Mars, that the house keep its nerve." },
-  fortuna:  { name:"Fortuna", of:"who turns the wheel", weeks:4, cost:d=>rnd(220 + d.fame*0.8),
+  fortuna:  { name:"Fortuna", of:"who turns the wheel", weeks:4, cost:d=>rnd(220 + pietyFame(d)*0.8),
     boon:"The wheel turns your man's way in the box. When the finger goes up, it goes up for him.",
     ask:"To Fortuna, that the wheel run kind." },
-  aesculapius:{ name:"Aesculapius", of:"the healer", weeks:6, cost:d=>rnd(160 + d.fame*0.5),
+  aesculapius:{ name:"Aesculapius", of:"the healer", weeks:6, cost:d=>rnd(160 + pietyFame(d)*0.5),
     boon:"Wounds close faster than they have any right to. The medicus takes the credit; you know better.",
     ask:"To Aesculapius, that the hurt mend clean." },
-  victoria: { name:"Victoria", of:"victory herself", weeks:4, cost:d=>rnd(260 + d.fame*0.9),
+  victoria: { name:"Victoria", of:"victory herself", weeks:4, cost:d=>rnd(260 + pietyFame(d)*0.9),
     boon:"A win under her eye is a richer, louder thing — the purse fatter, the name carried further.",
     ask:"To Victoria, that the wins be great ones." },
-  jupiter:  { name:"Jupiter", of:"Best and Greatest", weeks:5, cost:d=>rnd(300 + d.fame*1.0),
+  jupiter:  { name:"Jupiter", of:"Best and Greatest", weeks:5, cost:d=>rnd(300 + pietyFame(d)*1.0),
     boon:"The house stands in the light of the greatest god, and Capua's better sort feel it — patrons warm, crowds kind.",
     ask:"To Jupiter, that the house be seen to be favoured." },
 };
@@ -7987,9 +8038,10 @@ function makeOffering(d, god){
   chron(d, `${cost} denarii to the altar of ${G.name}, ${G.of}. The smoke goes up straight, which the priest takes for a good sign, as priests do.`, "good");
   return { cost, god };
 }
+const vowStake = d => rnd(150 + pietyFame(d)*0.6);   /* the same altar, the same cap */
 function swearVow(d, god){
   const G = GODS[god]; if(!G || d.vow) return null;
-  const stake = rnd(150 + d.fame*0.6); if(d.gold < stake) return null;
+  const stake = vowStake(d); if(d.gold < stake) return null;
   d.gold -= stake;
   const until = d.week + ri(4, 6);
   d.vow = { god, until, stake, deaths0:(d.fallen||[]).length };
@@ -19978,9 +20030,17 @@ export default function App(){
             </Sect>
             ); })()}
 
-          {(()=>{ const bg = blessOf(S), pi = pietyOf(S);
+          {(()=>{ const bg = blessOf(S), pi = pietyOf(S), stake = vowStake(S);
+            /* It opened only for a house that already had a vow standing or was nearly
+               godless — so the one screen that could start any of this was shut to every
+               house that had never touched it, which was all of them. It opens when there
+               is something to do: a blessing riding, an ill turn to sit out, or an altar
+               that will take a gift the box can stand. */
+            const cheapest = Math.min(...GOD_KEYS.map(k=>GODS[k].cost(S)));
+            const canAct = offeringReady(S) && S.gold >= cheapest;
             return (
-            <Sect title="The Temple" note={pietyWord(pi)} open={!!S.vow || pi<=20}>
+            <Sect title="The Temple" note={bg ? `blessed · ${GODS[bg].name}` : pietyWord(pi)}
+              open={!!S.vow || !!bg || pi<=20 || illLuck(S) || canAct}>
               <div className="flex items-center justify-between" style={{marginBottom:3,fontSize:"var(--fs-md)"}}>
                 <span>Piety of the house</span>
                 <span style={{color: pi>=60?"#e0bd72":pi>=38?"#cfc0a0":pi>=18?"#d8ac5f":"#d96f5d"}}>{pietyWord(pi)}</span>
@@ -20023,10 +20083,13 @@ export default function App(){
                       <button className="btn" style={{flex:1}} disabled={!ready || !afford} onClick={()=>offerTo(k)}>
                         {!ready ? `Altar rests · ${OFFERING_COOL-(S.week-S.lastOffering)}w` : !afford ? "Not enough coin" : `Offer · ${G.weeks}w blessing`}
                       </button>
-                      {!S.vow && <button className="btn btn-ghost" style={{flex:1}} disabled={S.gold < rnd(150+S.fame*0.6)}
-                        onClick={()=>setAsk({ title:`A Vow to ${G.name}`, confirm:`Swear it · ${rnd(150+S.fame*0.6)}d`,
-                          text:`You pledge ${rnd(150+S.fame*0.6)} denarii to ${G.name} and swear that not a man of this house will fall in the month to come. Keep it and the coin returns doubled in goodwill, with the god's blessing on the house. Break it — bury a man before it is out — and the coin is forfeit and the gods turn cold.`,
-                          run:()=>vowTo(k) })}>Vow ·  stake</button>}
+                      {/* the label read "Vow ·  stake" — a figure that was never
+                          interpolated, so the one button in the game that asks a player to
+                          pledge coin never said how much */}
+                      {!S.vow && <button className="btn btn-ghost" style={{flex:1}} disabled={S.gold < stake}
+                        onClick={()=>setAsk({ title:`A Vow to ${G.name}`, confirm:`Swear it · ${stake}d`,
+                          text:`You pledge ${stake} denarii to ${G.name} and swear that not a man of this house will fall in the month to come. Keep it and the coin returns doubled in goodwill, with the god's blessing on the house. Break it — bury a man before it is out — and the coin is forfeit and the gods turn cold.`,
+                          run:()=>vowTo(k) })}>{S.gold < stake ? "Not enough to pledge" : `Vow · ${stake}d`}</button>}
                     </div>
                   </div>
                 );
@@ -23345,6 +23408,11 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     haveWatchedOffer, stopPrepFor, buyFromHouse, startCourt, setPrep, nameHim, scoutMan, makePeace,
     answerReSignWith, answerRomeWith,
     hostParty, throwFeast, walkTheCells, holdTourney, stageMunus,
+    /* the gods: five of them, four real boons, and nothing had ever called either action */
+    GODS, GOD_KEYS, makeOffering, swearVow, resolveVow, templeWeek,
+    pietyOf, pietyWord, blessOf, blessLeft, offeringReady, OFFERING_COOL, illLuck,
+    PIETY_TOP, pietyFame, vowStake, healSpeed,
+    blessMercy, blessHeal, blessPurse, blessFame,
     seekMatchNow, openLicenceNow, takeUpTheHouse, claimRise, succeed,
     /* the nineteen things a house is remembered for, and the gates on each of them */
     FEATS, FEAT_KEYS, hasFeat, featWeek, featNear, recordCloth,

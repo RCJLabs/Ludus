@@ -1,5 +1,5 @@
-/* LVDVS offline shell — v2.59.0 */
-const CACHE = "lvdvs-v2.59.0";
+/* LVDVS offline shell — v2.60.0 */
+const CACHE = "lvdvs-v2.60.0";
 const SHELL = ["./","./index.html","./manifest.webmanifest","./icons/icon-192.png","./icons/icon-512.png","./icons/icon-maskable-512.png"];
 
 self.addEventListener("install", e => {

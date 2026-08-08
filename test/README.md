@@ -69,6 +69,7 @@ reason the check exists usually has not.
 | `summit` | fast | Rome is the only real ending and nothing had ever driven it — the gate took one proof and no other, and the trip had no clock, so a house that accepted and then declined its card sat there for ever with Capua frozen behind it |
 | `line` | fast | `nameHeir` was never on the handle, so the half that arms a succession could not be reached by the half that fires it, and no check had walked a handover — four heir kinds with four different bargains, resting on nothing |
 | `stall` | fast | `makeMarket` was not on the handle, so nothing could ask the block what it offered under a given state — a whole block battery was discarded for silently measuring the founding stall five times, the block's steep dependence on acclaim went unnoticed through the release that changed acclaim, and the market refresh was quietly destroying the paragon in the week he arrived, four times in five |
+| `temple` | fast | five gods with four boons plumbed into the engine, and across 3,200 house-weeks no vow was ever sworn and no blessing ever rode with a house — the agenda had never named the gods, the Temple panel opened only for a house already using it, and a probe guard reserving four weeks' cushion produced the figure that made it all look unaffordable |
 | `feats` | fast | five of the nineteen feats read as never earned across 3,200 house-weeks and every one of them was reachable — two of the five were the probe declining Rome's card and never founding the burial society; what was real was the cloth recording nothing outside a singles bout, and a sheet showing a dash to a house standing on the gate |
 
 ## What no check has ever touched
@@ -189,6 +190,14 @@ win-chance gate crossed Italy, was offered three bouts and declined all three.
 Before filing a system as dead, write the policy that deliberately uses it and see
 whether the system answers. If it does, the item is about prompting, not reachability,
 and the fix is somewhere the player looks rather than somewhere the engine runs.
+
+A third wears it too, and it is the one that cost most here: **your own probe's safety
+margin.** The temple measurement reported a blessing riding 2.45% of weeks and "the altar
+is unaffordable", and the guard producing that was mine — cost plus the ruin line plus
+1,200 in hand, against a median 808 in the box and a cheapest altar of 203. An observing
+probe that acted on nothing found the truth in one run: a house had a rested altar and the
+coin for it in 86% of weeks. When a policy probe says a system is out of reach, run an
+observer that only watches and see whether the game agrees.
 
 Two other things wear this disguise. **A gate can be set one rung too high**, which looks
 exactly like a gate that works: Rome's census road opened at the fifth rung of the

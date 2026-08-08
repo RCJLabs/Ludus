@@ -87,7 +87,7 @@ npm run test:all      every check, fast and slow — about nine minutes
 npm run coverage      not what passes, but what no check ever touches
 ```
 
-**32 checks.** Twenty-eight read into the game through a test handle and answer in seconds;
+**33 checks.** Twenty-nine read into the game through a test handle and answer in seconds;
 four drive a real browser through the real screens. Every one of them exists because
 of a bug that shipped, and the comment at the top of each says which — that comment
 is the durable part, not the numbers inside it. See `test/README.md` for the table.
@@ -1329,6 +1329,8 @@ Tuning dials, in the order you'd reach for them:
 | A worn welcome | `STAY_FRESH` / `welcomeOf` | past 6 weeks resident, purses fade to ×0.6 and the card thins |
 | Proving it for Rome | `romeProved` / `ROME_RANK` | the primacy held, or received as Eques (rank 4); rank 5 admitted nobody the sand had not |
 | Who is shown a paragon | `PARAGON_ODDS` / `PARAGON_REACH` / `PARAGON_GAP` | 5.5% a week, only within 88% of his price by a full fire sale, 90 weeks between; 23–30% of houses reaching week 120 see one |
+| What the priests count | `PIETY_TOP` / `pietyFame` | fame read up to 1,600 and no further — the dearest altar asks 1,900d, not 20,300d at fame 20,000 |
+| A blessing worth keeping | `GODS` / `OFFERING_COOL` | 4–6 weeks a gift, a 3-week rest; a house that keeps the rites rides one 31.6% of weeks for 19.6% of income |
 | Rome's patience | `ROME_WEEKS_PER_BOUT` | 4 weeks a bout, then the place is given away |
 | Who may be named | `heirEligible` | a son at 40, a nephew always, your own freed doctore, a scion you raised |
 | Patrons while away | `patronWeek` | wants neither asked nor credited; decay ×2.5 |
@@ -1359,6 +1361,63 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.60.0 — Nobody ever asked the gods for anything
+
+Audit item #91, the last of the ten. The temple is a finished system: five gods, four
+boons plumbed into four separate places in the engine — the missio score, the healing
+rate, the purse and the fame off a win — plus a weekly hand on morale and on a patron's
+warmth, a piety scale with two tiers of consequence, and vows with a real stake, a real
+reward and a real punishment. And across 3,200 house-weeks: **piety 30 to 35 in every
+house, no vow ever sworn, no blessing ever riding.**
+
+**The diagnosis took two wrong turns and both are worth the record.** Mine first: every
+price is a flat term plus an uncapped share of fame, written when the ladder of renown
+ended at 600. At the old ceiling Jupiter asked 900 denarii for five weeks; at the twenty
+thousand a great house actually carries he asked **20,300**, and Aesculapius 10,160 for
+six weeks of faster mending. That is the v2.43.0 stipend and the v2.47.0 feast a third
+time, and it is capped now at `PIETY_TOP` — where `fameEdge` gives up paying for renown —
+so the dearest altar asks 1,900 instead of 20,300. But it was not what was binding, and
+capping it changed the measurement not by one denarius, because the probe's houses died
+long before that fame.
+
+The second wrong turn was the probe's, and it had produced the whole finding: its
+affordability guard demanded the cost **plus the ruin line plus 1,200** in hand, against a
+median 808 denarii in the box and a cheapest altar of 203. It refused in nearly every week
+the game would have allowed, and the run read "a blessing rides 2.45% of weeks — the
+temple is unaffordable."
+
+**Corrected, it is the #95 answer again.** Observing without acting: a house had no
+blessing, a rested altar and the coin in the box in **86% of weeks.** Acting: a policy
+that keeps the rites reaches **31.6% blessing uptime** (max 77%) for 19.6% of its income
+and carries piety to a median peak of 55; swearing as well, it keeps **64 vows of 79** —
+so the vow is a slightly favourable bet in coin before the piety and the blessing that
+come with keeping it — and finishes devout. Nothing was out of reach. Nothing ever said
+the temple was there.
+
+So the fix is the two ways in. **The agenda now names the gods**, which it never did in
+twenty sources: one line at urgency 2 for a house keeping no rites at all, and one at
+urgency 1 for the week the altar could fix something actually wrong — two men laid up, or
+cells past restless — naming the god, the price and the weeks. Nothing for a house with
+nothing wrong, and nothing for a house that already has a blessing riding, because #84 was
+about an agenda that talks too much. Lifted into `agendaGods` rather than added inline:
+`agenda` came to 208 lines with it in place and `bulk` said so, which is that check doing
+its job. **And the villa's Temple panel opens** when there is something to do — a blessing
+riding, an ill turn to sit out, or an altar that will take a gift the box can stand —
+instead of only for a house that already had a vow standing, which was the one state you
+could not reach without having used the system already.
+
+**One plain bug on the way past.** The vow button's label read `Vow ·  stake` — a figure
+that was never interpolated — so the only button in the game that asks a player to pledge
+coin never said how much, and the screen recomputed the stake inline three times from a
+formula that `swearVow` no longer used. It reads `Vow · 690d` now, from `vowStake`.
+
+`temple` (new, 33rd check): each god's own blessing and its own boon, and that no god
+quietly carries another's; the altar's three-week rest and one-blessing-at-a-time;
+piety's drift home from 90 and from 4; a vow kept and a vow broken settled through
+`resolveVow` itself, and coming due on its own by play; the price flat past the cap and
+still climbing below it; both agenda lines firing when they should and silent when they
+should not; and a house that keeps the rites reaching real uptime. Dials: `PIETY_TOP`.
 
 ### v2.59.0 — The man the whole town came to look at, swept off the block by the block
 
@@ -3315,7 +3374,12 @@ worked on empty weeks). The seams it found, in one line each:
 - **Two whole systems nobody meets.** The heir: null in 8 of 8 houses, zero
   successions, because `nameHeir` is not exposed. The temple: piety 30–35 in
   every house across 400 weeks, no vow, no blessing, and both its actions
-  unexposed. *(#90, #91)*
+  unexposed. *(#90, #91)* Both settled. #91 was unprompted, not unreachable: a
+  house had a rested altar and the coin for it in **86% of weeks**, and a policy
+  that keeps the rites rides a blessing a third of the time. The agenda had never
+  named the gods and the Temple panel opened only for a house already using it.
+  A price uncapped in fame was fixed on the way past, but it was not what was
+  binding — and a probe guard reserving four weeks' cushion was.
 - **The best-written event in the mid-game is starved, not broken.** The man four
   doors down never asked once in 3,200 weeks including 188 weeks of holding the
   title — and `make()` returns an event 400 times in 400 when handed the state.
@@ -3341,8 +3405,15 @@ worked on empty weeks). The seams it found, in one line each:
   destroying the paragon in the week he arrived, four times in five, and the
   "take the house apart" branch of that screen had never once been true. *(#97)*
 
-Sixty-one functions on the handle are still dark; `npm run coverage` names them
-every run.
+**All ten are closed as of v2.60.0.** Four of the ten were not what they looked like:
+#95's five unearned feats were all reachable and three were the probe's own policy;
+#97's rare content was a market refresh deleting it; #88's own recommended fix was
+measured and refuted; and #91 was a system nobody was ever told about, with a probe
+guard producing the number that made it look unaffordable. That is a hit rate worth
+remembering when reading the next audit's list.
+
+`npm run coverage` names the functions on the handle no check has ever called, every
+run.
 
 **What the audit after that should look for.** The same two seams, which have now
 paid three times: a number set against an economy that no longer exists, and a
@@ -3369,4 +3440,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.59.0*
+*Last updated: v2.60.0*
