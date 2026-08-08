@@ -1327,7 +1327,8 @@ Tuning dials, in the order you'd reach for them:
 | A rival's name | `stature` in `LANISTAE` | pulled toward stature × the leading house's fame |
 | A decreed season | `leagueReckoning` | 28%/yr, form 82–100 floored at 60 for the year, crest +0.9 × stature |
 | A worn welcome | `STAY_FRESH` / `welcomeOf` | past 6 weeks resident, purses fade to ×0.6 and the card thins |
-| Proving it for Rome | `romeProved` | the primacy held, or received as Known in Rome (rank 5) |
+| Proving it for Rome | `romeProved` / `ROME_RANK` | the primacy held, or received as Eques (rank 4); rank 5 admitted nobody the sand had not |
+| Who is shown a paragon | `PARAGON_ODDS` / `PARAGON_REACH` / `PARAGON_GAP` | 5.5% a week, only within 88% of his price by a full fire sale, 90 weeks between; 23–30% of houses reaching week 120 see one |
 | Rome's patience | `ROME_WEEKS_PER_BOUT` | 4 weeks a bout, then the place is given away |
 | Who may be named | `heirEligible` | a son at 40, a nephew always, your own freed doctore, a scion you raised |
 | Patrons while away | `patronWeek` | wants neither asked nor credited; decay ×2.5 |
@@ -1358,6 +1359,68 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.59.0 — The man the whole town came to look at, swept off the block by the block
+
+Audit items #88 and #97, and the second of them turned out to be a bug rather than a
+balance question.
+
+**#97. The paragon was being destroyed by the market refresh.** `paragonWeek` puts him
+at the head of `d.market` and writes his name into `paragonSeen`, of which a house gets
+two in its whole life. The three-weekly refresh runs fifty-six lines later **in the same
+`endWeek`** and begins with `d.market = []`. Measured over twenty houses run four hundred
+weeks: five paragons generated, and **one** ever standing there when the player looked.
+The other four were wiped in the week they arrived, each spending one of the two, with
+nothing on screen. `marketWeek` had always been careful to leave him out of its sweep;
+`makeMarket` was not. He is now carried across a refresh, and 4 of 4 survive.
+
+**And the answer to him had never once been available.** The screen has three: pay it,
+take the house apart and it is enough, or it would still leave you short, which settles
+it. Only the third could fire. He arrived in years three to seven — the poorest stretch a
+surviving house has — asking a median **9,936 denarii of a house holding 1,774**, and
+stripping that house to the walls raised **3,153**. The fire sale closed a third of the
+gap and never bridged it.
+
+The lever is the sighting, not the price: he is the best man you will ever own and he
+ought to hurt. A crowd gathers where there is a plausible buyer, so a house that could
+not get within `PARAGON_REACH` of him by selling every spare thing it has is not shown
+him at all — and does not spend one of its two on a morning it can do nothing with.
+Two further faults surfaced doing it: `paragonDone` was a wall rather than a gap, checked
+*before* the `paragonSeen.length >= 2` cap, so the cap was dead code and no house was
+ever shown a second; and with three rolls in four now refused, the old 1.8% weekly rate
+came to four sightings in sixty houses, which is not content but a rumour.
+
+Measured after, two batches of sixty houses: **23% and 30%** of the houses that reached
+week 120 are shown a paragon (from about 5%), one house in each batch was shown a second,
+and across the 19 sightings all three answers fired — pay it 5, **take the house apart 6**,
+not even then 8. Dials: `PARAGON_REACH`, `PARAGON_GAP`, `PARAGON_ODDS`.
+
+**#88. Rome's census road was set one rung too high to admit anybody.** v2.53.0 opened a
+second way to the summit at the fifth rung, Known in Rome — which is very nearly a
+tautology as a gate. Measured across twenty-four houses run four hundred weeks: **every
+house that reached rank 5 had already taken the primacy, all of them years earlier.** The
+census route never admitted one house the sand had not.
+
+Two candidates were measured before choosing. A top-rung win at home is not a wider gate
+but a narrower one: **40 tier-4 cards were offered across twelve houses, 7 were taken,
+and none of the 7 was won** — so my own recommendation from the audit was wrong, and
+adding it would have widened access to nobody. The fourth rung is the one that works.
+Eques is where the censors count you among the knights, and a senator can put a knight's
+name forward; he cannot really put a slaver's.
+
+Measured across two batches of twelve: letters went from 10 of 24 houses to 12 of 24, the
+two new ones being houses that never took the title at all — one of them previously died
+of its debts at week 173 and now runs the full four hundred weeks with five Rome
+campaigns behind it. For houses that were getting in anyway the letter arrives about four
+years earlier (median week 184 → 133, and 161 → 134 in the second batch). Honest limit:
+in the second batch it widened access to nobody, because every house there that reached
+rank 4 also took the primacy. Two houses in twenty-four is the size of this.
+
+**And the road-to-Rome screen had never mentioned the census at all** — it listed the
+primacy as the only first rung, so a house climbing the ladder was being told the only way
+up was an afternoon it had already decided against. It names both now, with the rung you
+are on and the rung you need. `summit` asserts the gate from both sides, and that it is
+never again set at the top of the ladder.
 
 ### v2.58.0 — How close, which the sheet never said
 
@@ -3241,7 +3304,11 @@ worked on empty weeks). The seams it found, in one line each:
 
 - **The summit is behind one afternoon.** Rome asks that you have held the
   primacy; the 3 houses of 8 that held it were the 3 offered Rome, and a house at
-  fame 4,301 with ten feats never saw a letter. *(#88)*
+  fame 4,301 with ten feats never saw a letter. Settled in v2.59.0: v2.53.0's census
+  road was set at the fifth rung, which admitted nobody the sand had not, and my own
+  recommendation for a third proof — a top-rung win at home — was measured and
+  refuted (40 offered, 7 taken, 0 won). The fourth rung admits two houses in
+  twenty-four, and the screen names the road now. *(#88)*
 - **And the trip has no clock.** Accept, decline the imperial card, and the house
   sits at Rome forever with Capua frozen. Nothing has ever driven the round trip
   — `romeReady` and `offerRome` are not on the handle. *(#89)*
@@ -3270,6 +3337,9 @@ worked on empty weeks). The seams it found, in one line each:
   generators are unexposed, so no check can ask what the block offers under a
   given state *(#96)*; and the fire sale — the answer to a paragon 2 houses in 19
   can afford — is reachable but untouched, with `liquidate` unexposed *(#97)*.
+  Both closed. #97 was not a balance question at all: the market refresh was
+  destroying the paragon in the week he arrived, four times in five, and the
+  "take the house apart" branch of that screen had never once been true. *(#97)*
 
 Sixty-one functions on the handle are still dark; `npm run coverage` names them
 every run.
@@ -3299,4 +3369,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.58.0*
+*Last updated: v2.59.0*

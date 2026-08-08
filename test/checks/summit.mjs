@@ -14,7 +14,15 @@
    So this check walks the whole road. Both gates open it. The letter expires. The
    trip pays out when it is fought and lapses when it is not, and either way the
    house comes home — because the one thing that must never be true again is that
-   a run can enter a state it cannot leave. */
+   a run can enter a state it cannot leave.
+
+   v2.59.0 moved the census gate down a rung, because the fifth one had not admitted
+   anybody: measured across twenty-four houses run four hundred weeks, every house that
+   reached Known in Rome had already taken the primacy years earlier, so the second road
+   led nowhere new. The fourth rung, Eques, does admit houses the sand never did. So the
+   rung itself is asserted here from both sides — the rung above the gate opens it and
+   the rung below does not — because a gate set one rung too high looks exactly like a
+   gate that works. */
 
 import { hasHandle } from "../harness.mjs";
 
@@ -46,10 +54,17 @@ export async function run({ p, errors }){
     /* ---- 1. the gate: neither proof, then each of the two ---- */
     const bare    = contender();
     const byTitle = contender({ flags: Object.assign({}, contender().flags, { primusHeld:1 }) });
-    const byRank  = contender({ rise: { rank:5, standing:100 } });
-    R.gate = { bar: A.romeBar(bare),
+    const byRank  = contender({ rise: { rank:A.ROME_RANK, standing:100 } });
+    const oneShort= contender({ rise: { rank:A.ROME_RANK-1, standing:100 } });
+    R.gate = { bar: A.romeBar(bare), rungAt:A.ROME_RANK,
+      rungName: A.RISE_RANKS[A.ROME_RANK].name, belowName: A.RISE_RANKS[A.ROME_RANK-1].name,
+      topRung: A.RISE_RANKS.length-1,
       unproved: A.romeReady(bare), byTitle: A.romeReady(byTitle), byRank: A.romeReady(byRank),
-      provedTitle: A.romeProved(byTitle), provedRank: A.romeProved(byRank), provedBare: A.romeProved(bare) };
+      provedTitle: A.romeProved(byTitle), provedRank: A.romeProved(byRank),
+      provedBare: A.romeProved(bare), provedOneShort: A.romeProved(oneShort),
+      /* and the census road must not be the last rung — a gate at the top of the ladder
+         is reached only by houses that got there another way, which is what v2.53.0 did */
+      belowTheTop: A.ROME_RANK < A.RISE_RANKS.length-1 };
 
     /* ---- 2. a trip fought through to the end pays and comes home ---- */
     {
@@ -113,7 +128,8 @@ export async function run({ p, errors }){
 
   const lines = [], fails = [];
   const g = out.gate;
-  lines.push(`the bar stands at ${g.bar} fame · unproved ${g.unproved} · by the primacy ${g.byTitle} · by Known in Rome ${g.byRank}`);
+  lines.push(`the bar stands at ${g.bar} fame · unproved ${g.unproved} · by the primacy ${g.byTitle} · by the census ${g.byRank}`);
+  lines.push(`the census road opens at rung ${g.rungAt} of ${g.topRung}, ${g.rungName} — and ${g.belowName} below it is refused: ${!g.provedOneShort}`);
   lines.push(`fought through: ${out.fought.bouts} bouts over ${out.fought.weeks} weeks, home with ${out.fought.pending ? out.fought.pending.won+" won" : "NOTHING PENDING"}`);
   lines.push(`never fought: the place lapsed after ${out.lapsed.weeks} weeks, ${out.lapsed.fameLostOnTheWeek} fame gone on the week it went, Capua ${out.lapsed.capuaBack ? "reached again" : "STILL OUT OF REACH"}`);
   lines.push(`the letter went unanswered for ${out.letter.weeks} weeks and ${out.letter.gone ? "expired" : "IS STILL WAITING"}`);
@@ -121,8 +137,12 @@ export async function run({ p, errors }){
   /* ---- both roads, and neither free ---- */
   if(g.unproved) fails.push("a house that has proved nothing is offered Rome — the gate does nothing");
   if(!g.byTitle) fails.push("a house that held the primacy is not offered Rome — the fighter's road is shut");
-  if(!g.byRank) fails.push("a house received as Known in Rome is not offered Rome — the census road is shut");
+  if(!g.byRank) fails.push(`a house received as ${g.rungName} is not offered Rome — the census road is shut`);
   if(g.provedBare) fails.push("romeProved is true for a house with neither the title nor the rank");
+  if(g.provedOneShort)
+    fails.push(`${g.belowName} is enough to prove a house to Rome — the census road has slid a rung and the climb no longer costs anything`);
+  if(!g.belowTheTop)
+    fails.push(`the census road opens at the last rung of the ladder (${g.rungAt} of ${g.topRung}) — measured over 24 houses, every house that got there had taken the primacy years earlier, so a gate set there admits nobody new`);
 
   /* ---- a trip that is fought pays and ends ---- */
   if(!out.fought.offered) fails.push("offerRome did not produce a letter");

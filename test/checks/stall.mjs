@@ -15,12 +15,22 @@
    more as it improves, roughly a third of it must be carrying something hidden,
    and the four sellers must remain four different places to shop. And the seller's
    account must contain the truth: every band he quotes has to hold the real man,
-   because the one thing the block may never do is lie about the band. */
+   because the one thing the block may never do is lie about the band.
+
+
+   And the block is also where the rarest thing in the game stands. `paragonWeek` puts
+   the man the whole town came to look at at the head of `d.market` and writes his name
+   into `paragonSeen`, of which a house gets two in its life — and the three-weekly
+   refresh ran fifty-six lines later in the same `endWeek` and began by throwing the
+   stall away. Measured over twenty houses run four hundred weeks: five paragons
+   generated, **one** ever standing there when the player looked. So the fire sale, which
+   is the answer to him, was content almost nobody could reach, and the "it would be
+   enough" branch of that screen had never once been true. */
 
 import { hasHandle } from "../harness.mjs";
 
 export const name = "stall";
-export const describe = "the block follows the house, and every band holds the truth";
+export const describe = "the block follows the house, every band holds the truth, and the paragon survives it";
 
 export async function run({ p, errors }){
   if(!await hasHandle(p))
@@ -119,6 +129,76 @@ export async function run({ p, errors }){
       R.fire = { quotedMen:q.menN, quotedTotal:q.total, raised:Math.round(d.gold-before),
         menBefore, menAfter:A.activeG(d).length, ranTotal:done ? done.total : null }; }
 
+    /* ---- 6. THE PARAGON, WHO MUST SURVIVE THE BLOCK HE STANDS ON ---- */
+    R.par = {};
+    { /* a house that could plausibly get there: coin, steel on the racks, spare men */
+      const rich = (seed, gold)=>{
+        const d = A.newGameState("Pg","clean",seed,null);
+        d.gold = gold; d.fame = 3000; d.week = 60;
+        for(let i=0;i<5;i++){ const m = A.genGladiator(d, 74); m.id=d.nextId++; m.status="active";
+          m.mine=true; m.kit=A.defaultKit(m.cls); m.wins=5; d.gladiators.push(m); }
+        return d;
+      };
+
+      /* he is put on the block, then the block is refreshed under him */
+      const d = rich("PGSURV", 9000);
+      const g = A.makeParagon(d);
+      d.market = [g, ...(d.market||[])];
+      d.flags.paragonWeek = d.week;
+      const there = !!A.paragonOf(d);
+      A.makeMarket(d);                          /* the three-weekly sweep */
+      const survivedRefresh = !!A.paragonOf(d) && A.paragonOf(d).id === g.id;
+      A.marketWeek(d);
+      const survivedWeek = !!A.paragonOf(d);
+      /* and the whole of the week, which is where it actually went wrong */
+      let survivedWeeks = 0;
+      for(let w=0; w<3 && A.paragonOf(d); w++){ d.pendingEvent = null;
+        try { A.endWeek(d); } catch(e){ break; }
+        if(A.paragonOf(d)) survivedWeeks++; }
+      R.par.stands = { there, survivedRefresh, survivedWeek, survivedWeeks,
+        price:g.price, quality:+av(g).toFixed(1) };
+
+      /* the three answers the screen has, driven against three houses */
+      const answers = [];
+      for(const [label, gold] of [["a house that can pay", 20000], ["a house that must strip itself", 7000], ["a house that cannot", 400]]){
+        const e = rich("PGANS"+gold, gold);
+        const p2 = A.makeParagon(e); p2.price = 9000;
+        e.market = [p2, ...(e.market||[])];
+        const L = A.liquidate(e, p2), reach = A.paragonReach(e, p2);
+        answers.push({ label, gold, price:p2.price, fire:L.total, short:reach.short,
+          canNow: e.gold >= p2.price, canAfter: e.gold + L.total >= p2.price });
+      }
+      R.par.answers = answers;
+
+      /* the sighting gate: a house nowhere near him is not shown him, and does not
+         spend one of the two he will ever be offered on a morning it can do nothing with */
+      const gate = (gold)=>{
+        const e = rich("PGGATE"+gold, gold);
+        let rolls = 0, shown = 0;
+        for(let w=0; w<400 && !A.paragonOf(e); w++){ rolls++;
+          e.flags.paragonDone = 0; A.paragonWeek(e); if(A.paragonOf(e)) shown++; }
+        return { gold, shown, names:(e.flags.paragonSeen||[]).length, rolls };
+      };
+      R.par.gate = { rich: gate(20000), poor: gate(150), reach:A.PARAGON_REACH };
+
+      /* and he does not stay: three weeks, then somebody else has him */
+      { const e = rich("PGGO", 400);
+        const p3 = A.makeParagon(e); e.market = [p3, ...(e.market||[])]; e.flags.paragonWeek = e.week;
+        let weeks = 0;
+        for(let w=0; w<10 && A.paragonOf(e); w++){ weeks++; e.week++; A.paragonExpire(e); }
+        R.par.gone = { weeks, left:!A.paragonOf(e), done:e.flags.paragonDone||0 }; }
+
+      /* a wall, or a gap? `paragonDone` was checked before the cap of two, so the cap
+         was dead code and no house was ever shown a second */
+      { const e = rich("PGTWO", 20000);
+        e.flags.paragonDone = e.week;                        /* one has already come and gone */
+        let atOnce = 0, afterGap = 0;
+        for(let i=0;i<80;i++){ A.paragonWeek(e); if(A.paragonOf(e)){ atOnce++; break; } }
+        e.week += A.PARAGON_GAP + 1;
+        for(let i=0;i<400 && !afterGap;i++){ A.paragonWeek(e); if(A.paragonOf(e)) afterGap++; }
+        R.par.second = { atOnce, afterGap, gap:A.PARAGON_GAP, cap:A.PARAGONS.length }; }
+    }
+
     return R;
   });
 
@@ -133,6 +213,12 @@ export async function run({ p, errors }){
     `(widths: seller ±${(out.bands.meanWidth.seller/2).toFixed(0)}, doctore ±${(out.bands.meanWidth.doctore/2).toFixed(0)}, scouted ±${(out.bands.meanWidth.scouted/2).toFixed(0)})`);
   lines.push(`${out.others.doctores} doctores, ${out.others.staffMen} staff across ${out.others.staffKinds} trades`);
   lines.push(`the fire sale quoted ${out.fire.quotedTotal}d and raised ${out.fire.raised}d, leaving ${out.fire.menAfter} of ${out.fire.menBefore} men`);
+  const P = out.par;
+  lines.push(`the paragon (${P.stands.price}d, mean ${P.stands.quality}): survived the refresh ${P.stands.survivedRefresh}, the market week ${P.stands.survivedWeek}, ${P.stands.survivedWeeks} whole weeks`);
+  for(const a of P.answers)
+    lines.push(`   ${a.label.padEnd(30)} ${String(a.gold).padStart(5)}d + ${String(a.fire).padStart(5)}d of house → ${a.canNow ? "pay it" : a.canAfter ? "TAKE THE HOUSE APART" : "not even then"}`);
+  lines.push(`   shown to a house within ${Math.round(P.gate.reach*100)}% of him: ${P.gate.rich.shown} · to one nowhere near: ${P.gate.poor.shown} (and ${P.gate.poor.names} names spent)`);
+  lines.push(`   he leaves after ${P.gone.weeks} weeks · a second one after the ${P.second.gap}-week gap: ${!!P.second.afterGap}, before it: ${!P.second.atOnce}`);
 
   /* ---- the stall follows the name ---- */
   const lo = out.byName[0], hi = out.byName[out.byName.length-1];
@@ -173,6 +259,30 @@ export async function run({ p, errors }){
     fails.push(`the fire sale left ${out.fire.menAfter} men — it is supposed to leave exactly the one you keep`);
   if(Math.abs(out.fire.raised - out.fire.quotedTotal) > Math.max(60, out.fire.quotedTotal*0.2))
     fails.push(`liquidate quoted ${out.fire.quotedTotal}d and the sale raised ${out.fire.raised}d — the figure the player decides on is not the figure he gets`);
+
+  /* ---- and the man the whole town came to look at is still there when it does ---- */
+  if(!P.stands.there) fails.push("a paragon put on the block is not on the block");
+  if(!P.stands.survivedRefresh)
+    fails.push("the three-weekly refresh swept the paragon off the block — this is the v2.59.0 fault, and it costs the house one of the two it will ever be offered without a word on screen");
+  if(!P.stands.survivedWeek) fails.push("marketWeek took the paragon off the block");
+  if(P.stands.survivedWeeks < 2)
+    fails.push(`the paragon lasted ${P.stands.survivedWeeks} whole weeks of play — he is advertised as three weeks to decide`);
+  /* all three answers the screen has must be answers something can reach */
+  const A3 = P.answers;
+  if(!A3[0].canNow) fails.push(`a house with ${A3[0].gold}d cannot pay ${A3[0].price}d for him`);
+  if(A3[1].canNow || !A3[1].canAfter)
+    fails.push(`the middle answer is dead: a house with ${A3[1].gold}d and ${A3[1].fire}d of house to sell reads "${A3[1].canNow?"pay it":"not even then"}" — that branch of the screen has text written for it and no state that reaches it`);
+  if(A3[2].canAfter) fails.push("a house with nothing can strip itself into a paragon — the refusal never fires");
+  /* the sighting gate */
+  if(!P.gate.rich.shown) fails.push("a house well within reach of a paragon is never shown one");
+  if(P.gate.poor.shown) fails.push("a house nowhere near the price is shown a paragon it can do nothing about");
+  if(P.gate.poor.names) fails.push(`${P.gate.poor.names} of the two paragons a house is ever offered were spent on a morning it could not act on`);
+  /* he goes, and a house that lives long enough may see one more */
+  if(!P.gone.left) fails.push(`the paragon is still on the block after ${P.gone.weeks} weeks — he is supposed to be bought by somebody else`);
+  if(!P.gone.done) fails.push("a paragon left without recording that he had come and gone");
+  if(P.second.atOnce) fails.push(`a second paragon appeared inside the ${P.second.gap}-week gap`);
+  if(!P.second.afterGap)
+    fails.push(`no second paragon after ${P.second.gap} weeks — paragonDone is a wall again and the cap of two is dead code, so no house is ever shown more than one`);
 
   if(errors.length) fails.push(`${errors.length} page errors`);
   return { pass: fails.length === 0, why: fails.slice(0,3).join("; ") || null, lines };

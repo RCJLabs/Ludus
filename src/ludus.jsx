@@ -2344,7 +2344,7 @@ function agenda(d){
      feed it. Measured over 120 weeks it slid from 70 to 2 — and the road simply shut,
      with no line anywhere saying which of the three rungs had come undone or why. A
      man's favour falling through the number that opens the capital is worth a word. */
-  if(!d.rome && !d.romeOffer && !d.over && (d.flags.primusHeld||0) >= 1){
+  if(!d.rome && !d.romeOffer && !d.over && romeProved(d)){   /* either proof, not only the sand */
     const sen = patronsOf(d).filter(p=>p.rank==="senator").sort((a,b)=>b.favor-a.favor)[0];
     const fameOk = d.fame >= romeBar(d);
     if(sen && fameOk && sen.favor < 70)
@@ -4133,6 +4133,18 @@ const SOLD_ON_FROM = ["a school at Puteoli that has closed its gates",
   "a house at Praeneste whose owner has died",
   "an estate near Nola, sold up entire"];
 function makeMarket(d){
+  /* ---- THE MAN THE WHOLE TOWN CAME TO LOOK AT, SWEPT OFF THE BLOCK BY THE BLOCK ----
+     `paragonWeek` puts him at the head of `d.market` and writes his name into
+     `paragonSeen`, of which a house gets exactly two in its life. The three-weekly
+     refresh runs fifty-six lines later in the same `endWeek` and begins by throwing
+     the whole stall away. Measured over twenty houses run four hundred weeks: five
+     paragons were generated and **one** was ever standing on the block when the
+     player looked. The other four were destroyed in the week they arrived, each of
+     them spending one of the two — which is the whole reason the fire sale, the
+     answer to him, was content nobody had ever seen. `marketWeek` was already
+     careful to leave him out of its sweep; this was not. He stands until
+     `paragonExpire` takes him, and nothing else may touch him. */
+  const par = (d.market||[]).find(g=>g.paragon) || null;
   d.market = [];
   /* three of the four sellers are standing there on any given week */
   const here = shuffled(SLAVER_KEYS).slice(0, 3);
@@ -4197,6 +4209,7 @@ function makeMarket(d){
     const n = ri(2,3);
     d.powLot = { n, price: rnd((110 + d.fame*0.35) * n * 0.82) };
   }
+  if(par) d.market = [par, ...d.market];        /* he was here before the stall was */
 }
 /* ---- THE SLAVER AT THE GATE ----
    The one mercy an empty house gets. Word travels that a Capuan ludus has cells and
@@ -6611,7 +6624,7 @@ function buyFromBlock(d, id, bidPrice){
       g.morale = clamp((g.morale!=null?g.morale:50) + fameWarm(d), 0, 100); }
     d.gladiators.push(g);
     if(g.paragon){
-      d.flags.paragonDone = 1; d.flags.paragonBought = d.week;
+      d.flags.paragonDone = d.week; d.flags.paragonBought = d.week;   /* a gap, not a wall */
       d.fame += 70; addRep(d, "show", 10);
       FAC_KEYS.forEach(k=>facMove(d, k, 8));
       d.gladiators.forEach(o=>{ if(o.status==="active" && o.id!==g.id){ o.morale = clamp(o.morale+10,0,100); o.defiance = clamp(o.defiance+4,0,100); } });
@@ -10159,9 +10172,23 @@ const romeBar = d => ROME_FAME + romeRuns(d)*300 - (d.flags.romeEarly?150:0) - r
    against a holder who measures 62–86 average stat, so the only ending the game
    has sat behind one afternoon that most houses rightly decline.
    There are two ways a lanista becomes somebody: on the sand, or in the census.
-   The fifth rung of the standing ladder is called Known in Rome, and it now means
-   what it says. */
-const romeProved = d => (d.flags.primusHeld||0) >= 1 || riseOf(d) >= 5;
+
+   v2.53.0 set the census proof at the fifth rung, Known in Rome, which is very nearly
+   a tautology as a gate — and measured across twelve houses run four hundred weeks it
+   widened access to nobody: the five houses that reached rank 5 were the same five that
+   had already taken the primacy, all of them years earlier. The census route never
+   admitted a single house the sand had not.
+
+   Two candidates were measured before this one. A top-rung win at home is not a wider
+   gate but a narrower one: 40 tier-4 cards were offered across those twelve houses, 7
+   were taken, and **none of the 7 was won.** The fourth rung is the one that widens it.
+   Eques is where the censors count you among the knights, and a senator can put a
+   knight's name forward; he cannot really put a slaver's. Two houses died shut out at
+   exactly that rung — one banned at week 144 holding fame 4,301 and favour 100, one
+   under its debts at 173 with fame 5,134 and the same favour — and rank 4 is a rung
+   they had both actually reached. */
+const ROME_RANK = 4;
+const romeProved = d => (d.flags.primusHeld||0) >= 1 || riseOf(d) >= ROME_RANK;
 const romeReady = d => !d.rome && !d.romeOffer && !d.over && d.fame >= romeBar(d)
   && romeProved(d)                                                         // the sand, or the census
   && (!d.flags.romeDeclined || d.week - d.flags.romeDeclined >= 30)
@@ -11192,7 +11219,6 @@ function makeParagon(d){
   g.regard = ri(24, 40);                                  // and he owes you nothing yet
   g.sworn = null;
   g.price = rnd(gladValue(g) * 2.4);
-  d.flags.paragonSeen = [...(d.flags.paragonSeen||[]), P.name];
   return g;
 }
 /* what he is worth against what you have */
@@ -11236,13 +11262,43 @@ function sellTheHouse(d){
   return L;
 }
 
+/* ---- AND HE IS ONLY DANGLED IN FRONT OF A HOUSE THAT COULD GET THERE ----
+   The screen has two answers written for a man you cannot pay for: strip the house and
+   it is enough, or it would still leave you short, which settles it. Measured over
+   twenty houses, only the second could ever fire. He arrived in years three to seven —
+   the poorest stretch a surviving house has — asking a median 9,936 denarii of a house
+   holding 1,774, and taking that house apart raised 3,153. The fire sale closed a third
+   of the gap and never once bridged it, so the answer to the paragon was a button that
+   was always dead and a sentence that was always the same one.
+
+   The lever is the sighting rather than the price, because the price is the point: he is
+   the best man you will ever own and he ought to hurt. A crowd gathers where there is a
+   plausible buyer. If a house could not get within this much of him by selling every
+   spare thing it has, he is bought quietly somewhere else and it never hears about it —
+   and, importantly, does not spend one of the two he will ever be offered on a morning
+   it could do nothing with. */
+const PARAGON_REACH = 0.88;
+/* And `paragonDone` was a wall rather than a gap. It is set both when he is bought and
+   when he is given away, and it was checked before the `paragonSeen.length >= 2` cap —
+   so the cap was dead code and every house got exactly one paragon in its life, at week
+   48 to 124 whether it could do anything about him or not. A house that runs twenty
+   years may be shown a second, after a long silence.
+
+   The weekly roll is up from 0.018 because the reach gate now rejects about three
+   rolls in four: at the old rate that came to four sightings in sixty houses, which is
+   not content, it is a rumour. */
+const PARAGON_GAP = 90;
+const PARAGON_ODDS = 0.055;
 function paragonWeek(d){
   if(d.over || d.rome || d.city || d.travel) return;
-  if(d.flags.paragonDone || paragonOf(d)) return;
+  if(paragonOf(d)) return;
+  if(d.flags.paragonDone && d.week - d.flags.paragonDone < PARAGON_GAP) return;
   if(d.week < 30 || d.fame < 120) return;
   if((d.flags.paragonSeen||[]).length >= 2) return;
-  if(R() > 0.018) return;
+  if(R() > PARAGON_ODDS) return;
   const g = makeParagon(d);
+  if(d.gold + liquidate(d).total < g.price * PARAGON_REACH) return;   /* no name spent */
+  d.flags.paragonSeen = [...(d.flags.paragonSeen||[]), g.name];
   d.market = [g, ...(d.market||[])];
   d.flags.paragonWeek = d.week;
   chron(d, `There is a man on the block this morning that the whole of Capua has come out to look at. ${fullName(g)}. ${g.paragon.tale} They want ${g.price} denarii and they are not going to have to wait long for it.`, "event");
@@ -11253,7 +11309,7 @@ function paragonExpire(d){
   if(!g) return;
   if(d.week - (d.flags.paragonWeek||d.week) < 3) return;
   d.market = (d.market||[]).filter(x=>x.id!==g.id);
-  d.flags.paragonDone = 1;
+  d.flags.paragonDone = d.week;
   const h = pick(d.rivals||[]);
   if(h){ h.fame += 60; h.grudge = clamp(h.grudge - 5, 0, 100);
     chron(d, `${fullName(g)} goes to House ${h.name}. ${lanistaOf(h.name).name} paid it without haggling, in front of people, which was most of the point.`, "bad"); }
@@ -19887,7 +19943,13 @@ export default function App(){
             const sen = (S.patrons||[]).filter(p=>p.rank==="senator").sort((a,b)=>b.favor-a.favor)[0];
             const bar = romeBar(S), ready = romeReady(S), been = romeRuns(S) > 0;
             const rungs = [
-              { met:(S.flags.primusHeld||0) > 0, label:"Win a primus at Capua", detail:(S.flags.primusHeld||0)>0 ? "the town has crowned your man" : "top the bill at a great games and win it" },
+              /* v2.53.0 opened a second road — the census — and this screen went on
+                 naming only the first, so a house climbing the ladder was being told
+                 the only way up was an afternoon it had already decided against. */
+              { met:romeProved(S), label:"A primus at Capua, or the fourth rung",
+                detail:(S.flags.primusHeld||0)>0 ? "the town has crowned your man"
+                  : riseOf(S) >= ROME_RANK ? `the census counts you ${RISE_RANKS[riseOf(S)].short}`
+                  : `top the bill at a great games and win it — or climb to ${RISE_RANKS[ROME_RANK].name} (rung ${ROME_RANK} of ${RISE_RANKS.length-1}, you are ${riseOf(S)})` },
               { met:!!(sen && sen.favor>=70), label:"A senator in your debt", detail:sen ? `${sen.name} · favour ${rnd(sen.favor)} / 70` : "no senator has taken an interest yet" },
               { met:bayWide(S), label:"Known the length of the bay", detail:`${Math.round(bayKnownTotal(S)/180*100)}% — Pompeii, Neapolis, Puteoli · shortens the road`, soft:true },
               { met:S.fame >= bar, label:"A name that carries to Rome", detail:`${rnd(S.fame)} / ${rnd(bar)} renown${romeRuns(S)>0?` (higher each campaign)`:""}` },
@@ -23248,7 +23310,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* the line of the house: who may be named, naming him, and taking it up */
     nameHeir, heirEligible, HEIRS, houseRecord,
     /* the summit: the gate, the letter, the bar, and the trip's own clock */
-    romeReady, romeProved, offerRome, romeBar, ROME_BOUTS, ROME_WEEKS_PER_BOUT,
+    romeReady, romeProved, offerRome, romeBar, ROME_BOUTS, ROME_WEEKS_PER_BOUT, ROME_RANK,
     /* the four engines and the four ways into them */
     simulateFight, simulatePair, simulateMelee, simulateVenatio,
     doFight, doPairFight, doMelee, doVenatio,
@@ -23272,6 +23334,9 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     setFocusOf, setRegimenOf, setSparOf, setTeachOf, stopTeachOf, setDrillTo,
     boardMen, restWornMen, allToPalus, pairTheYard,
     scoutBlockMan, buyLot, sellTheHouse,
+    /* the best man you will ever be offered, and what taking the house apart raises */
+    paragonOf, paragonReach, makeParagon, paragonWeek, paragonExpire, PARAGONS,
+    PARAGON_REACH, PARAGON_GAP, PARAGON_ODDS, marketWeek,
     buyGearItem, sellGearOne, equipOne, stripAll, mendKitOf, forgeForMan, armHimOff, armAllOff,
     buildUp, setCrestTo, setCareOf,
     teachSigTo, makeMasterOf, startSecond, switchStyle,
