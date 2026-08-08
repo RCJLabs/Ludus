@@ -71,7 +71,7 @@ export async function run({ p, errors }){
       act(d);
       const others = A.TAB_KEYS.filter(k=>k!==tab && A.tabFresh(d,k));
       return { label, tab, fresh: A.tabFresh(d, tab), others,
-        seen: ((d.seen||{})[tab]||"").slice(0,28), now: A.tabSig(d, tab).slice(0,28) };
+        seen: (A.seenOf(d, tab).s||"").slice(0,28), now: A.tabSig(d, tab).slice(0,28) };
     };
     R.news = [
       /* the bill is drawn every third week, so a probe that calls makeGames on whatever
@@ -143,7 +143,7 @@ export async function run({ p, errors }){
         /* and the NEXT card still lights it, because nothing overwrote what was seen */
         litAgain: (()=>{ for(let i=0;i<8 && !d.games; i++){ d.week++; A.makeGames(d); }
           return { got:!!d.games, fresh:A.tabFresh(d, "arena"),
-            seen:((d.seen||{}).arena||"").slice(0,24), now:A.tabSig(d,"arena").slice(0,24) }; })() }; }
+            seen:(A.seenOf(d,"arena").s||"").slice(0,24), now:A.tabSig(d,"arena").slice(0,24) }; })() }; }
 
     /* ---- 3c. AND THE BADGE COUNTS WHAT IS ASKING ----
        It counted every agenda item including urgency 1 — "when you can" — and `1|men` runs
@@ -315,6 +315,41 @@ export async function run({ p, errors }){
       R.hour = { weeks, perWeek:+(urgSum/weeks).toFixed(2),
         crowded:+(crowded/weeks*100).toFixed(1), perma:+(perma/weeks*100).toFixed(1) }; }
 
+    /* ---- 10. LOOKING PUTS THE BADGE OUT, EVEN WHEN THE THING IS STILL ASKING ----
+       The badge showed whenever the agenda had a loud item for the tab, so it did not go out
+       when you went and looked — the Armory sat on a "1" through the armoury and back out
+       again. Looking at a thing does not answer it, but a mark you cannot clear is a mark you
+       stop believing. So what is ASKING is part of what "seen" means, and only additions
+       count: a new item lights it, an answered one going away does not. */
+    { const d = house("GL_ASK");
+      d.pendingEvent = { id:"x", title:"A NOBLE'S REQUEST" };
+      const lit = A.tabFresh(d, "ludus");
+      A.markSeen(d, "ludus");
+      const afterLook = A.tabFresh(d, "ludus");
+      const stillLoud = (A.agendaAsk(d).ludus || []).length;
+      d.pendingEvent = { id:"y", title:"FEVER IN THE CELLS" };
+      const relit = A.tabFresh(d, "ludus");
+      A.markSeen(d, "ludus");
+      d.pendingEvent = null;
+      const afterAnswer = A.tabFresh(d, "ludus");
+      R.ask = { lit, afterLook, stillLoud, relit, afterAnswer }; }
+
+    /* ---- 11. AND A MARK POINTS AT A SCREEN, NOT AT FOUR OF THEM ----
+       The villa has four faces behind its own switcher and twenty-three sections across them,
+       so a mark on the Villa tab dropped the player on The House to go hunting. Each face
+       carries the loudest mark of the sections that live on it. */
+    { const faceOf = (seed, act)=>{ const d = house(seed); act(d);
+        const out = {}; for(const f of ["house","standing","council","familia"]) out[f] = A.faceMark(d,"villa",f);
+        return out; };
+      R.faces = {
+        "a letter from Rome": faceOf("GL_FR", d=>{ d.flags.primusHeld = 1; d.fame = A.romeBar(d) + 500;
+          d.patrons = [{ id:1, name:"A senator", rank:"senator", favor:85, want:null, since:0, served:0, slighted:0 }];
+          A.recomputeFavor(d); A.offerRome(d); }),
+        "the cells simmering": faceOf("GL_FC", d=>{ d.unrest = 62; d.gold = 9000; }),
+        "a quiet house": faceOf("GL_FQ", d=>{ d.unrest = 4; d.piety = 40; d.lastOffering = d.week; }),
+      };
+      R.faceKeys = A.FACE_SECTS.villa; }
+
     return R;
   });
 
@@ -336,6 +371,36 @@ export async function run({ p, errors }){
   lines.push(`   quiet cells ${out.can.calm ? "STILL NAGGED" : "silent"} · a house that cannot pay for one ${out.can.broke ? "STILL OFFERED IT" : "silent"}`);
   lines.push(`the rung: ${out.can.rung.map(x=>`[${x.u}] ${x.l} — ${x.s}`).join("; ") || (out.can.canClaim ? "NOT MENTIONED" : "none claimable")}`);
   lines.push(`a rival's man: ${out.can.court.map(x=>`[${x.u}] ${x.l} — ${x.s}`).join("; ") || "not mentioned"} · a full house of better men ${out.can.courtWhenFull ? "IS STILL TOLD" : "hears nothing"}`);
+
+  const K = out.ask;
+  lines.push(`a thing asking: lit ${K.lit} → looked at it → ${K.afterLook}`
+    + ` (it is still asking: ${K.stillLoud} loud item${K.stillLoud===1?"":"s"})`
+    + ` · a NEW one lights it again ${K.relit} · answering one does not ${K.afterAnswer}`);
+  if(!K.lit) fails.push("a thing asking on a tab did not mark it at all");
+  if(K.afterLook) fails.push("the mark survived being looked at — this is the fault the Armory badge had, where a standing item kept it lit for ever");
+  if(!K.stillLoud) fails.push("the test is hollow: nothing was still asking after the look, so clearing it proves nothing");
+  if(!K.relit) fails.push("a NEW thing asking did not re-light a tab already looked at — the badge can now never come back");
+  if(K.afterAnswer) fails.push("answering the thing re-lit the tab — an item going away is not news, which is the v2.62.0 arena fault returning");
+
+  lines.push("which face of the villa a mark points at:");
+  for(const [k,v] of Object.entries(out.faces))
+    lines.push(`   ${k.padEnd(21)} ${Object.entries(v).map(([f,m])=>`${f} ${m===true?"·":m?`[${m.urg}] ${m.n}`:"—"}`).join("  ")}`);
+  if(!out.faces["a letter from Rome"].standing)
+    fails.push("a letter from Rome left the villa's Standing face unmarked, which is the face the road to Rome is on");
+  if(out.faces["a letter from Rome"].familia)
+    fails.push("a letter from Rome marked The Cells, which has nothing to do with it");
+  if(!out.faces["the cells simmering"].familia)
+    fails.push("simmering cells left The Cells unmarked, and the feast is on that face");
+  if(out.faces["the cells simmering"].standing)
+    fails.push("simmering cells marked Standing, which is not where the answer is");
+  if(Object.values(out.faces["a quiet house"]).some(Boolean))
+    fails.push("a quiet house wears a mark on some face of the villa");
+  /* and a face only ever carries a count. A plain dot means "there is something you could do
+     here", which is true of a solvent house for ever — carried up to the chips it put a
+     permanent dot on two of the four faces, the same fault as a badge that will not go out. */
+  for(const [k,v] of Object.entries(out.faces))
+    for(const [f,m] of Object.entries(v))
+      if(m === true) fails.push(`with ${k}, the villa's ${f} face wears a bare dot — a face may only carry something that is asking`);
 
   lines.push(`the first hour (${out.hour.weeks} house-weeks of the opening thirty): ${out.hour.perWeek} loud items a week · `
     + `more than two in ${out.hour.crowded}% of weeks · the teacher line loud in ${out.hour.perma}%`);

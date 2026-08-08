@@ -78,10 +78,22 @@ const CSS = `
 .caption{min-height:52px;font-size:var(--fs-xl);line-height:1.34}
 :focus-visible{outline:2px solid #e0bd72;outline-offset:2px;border-radius:6px}
 .sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
-.rowname{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.rowval{flex-shrink:0;white-space:nowrap;max-width:64%;overflow:hidden;text-overflow:ellipsis}
-/* for a right-hand value that is prose rather than a number — it wraps instead of being cut */
-.rowval.long{white-space:normal;overflow:visible;max-width:60%;overflow-wrap:anywhere}
+/* ---- NOTHING IN HERE IS ALLOWED TO CUT A WORD IN HALF ----
+   These two carried white-space:nowrap with text-overflow:ellipsis, and between them they were
+   most of the truncation in the game: a house called "House Glaber" read "House Glaber…",
+   a lanista's line stopped at "who bought i", and a fame of 24,700 came out as "247…".
+   That last one was max-width:64% doing it — a percentage cap inside a flex row whose
+   width comes from its own content resolves against a box that has not been sized yet, so
+   the number was clipped to about forty pixels with empty space beside it.
+
+   A cut-off word is worse than a longer row: the row costs a line, the cut costs the
+   information. So a name WRAPS, and a value keeps nowrap — because a number that breaks
+   across two lines is its own kind of unreadable — but is never capped and never elided.
+   surface fails the build now if any element on any tab is clipping its own text. */
+.rowname{min-width:0;overflow-wrap:anywhere}
+.rowval{flex-shrink:0;white-space:nowrap;overflow-wrap:normal}
+/* for a right-hand value that is prose rather than a number — it wraps at any point */
+.rowval.long{white-space:normal;overflow-wrap:anywhere}
 .flex{display:flex}.flex-col{flex-direction:column}
 .items-center{align-items:center}.items-end{align-items:flex-end}
 .justify-between{justify-content:space-between}.justify-center{justify-content:center}
@@ -2545,13 +2557,46 @@ const tabQuiet = (d, tab) => { const f = TAB_QUIET[tab]; if(!f) return false;
   try { return !!f(d); } catch(e){ return false; } };
 const tabSig = (d, tab) => { const f = TAB_SIG[tab]; if(!f) return "";
   try { return f(d); } catch(e){ return ""; } };
+
+/* ---- AND WHAT IS ASKING, WHICH IS NOT THE SAME AS WHAT HAS CHANGED ----
+   The badge on a tab counted the agenda's loud items for it and showed whenever that count
+   was above zero, so it did not go out when you went and looked: the Armory sat on a "1"
+   through the armoury and back out again, because looking at a thing does not answer it.
+   That reads as a broken "new" mark, and a mark you cannot clear is one you stop believing.
+
+   So the loud items are part of what "seen" means now. Only ADDITIONS count — an item going
+   away is not news, which is the lesson the Arena taught in v2.62.0, where 42% of that tab's
+   changes were the card being consumed rather than a new one arriving. Urgency is part of
+   the key, so a levy going from "next week" to "due this week" is a new thing asking. */
+const agendaAsk = d => {
+  const out = {}; for(const k of TAB_KEYS) out[k] = [];
+  let A = []; try { A = agenda(d) || []; } catch(e){ A = []; }
+  for(const x of A) if((x.urgency||0) >= MARK_URG && out[x.tab]) out[x.tab].push(`${x.urgency}:${x.label}`);
+  for(const k of TAB_KEYS) out[k].sort();
+  return out;
+};
+/* an old save stored a bare signature string. `a:null` means "we do not know what was
+   asking when he looked", which suppresses the additions test rather than lighting every
+   tab once on upgrade — it corrects itself the first time each tab is opened. */
+const seenOf = (d, tab) => { const v = (d.seen||{})[tab];
+  if(typeof v === "string") return { s:v, a:null };
+  return (v && typeof v === "object") ? { s:v.s==null?null:v.s, a:v.a||null } : { s:null, a:null };
+};
 /* the player has looked at this tab, and this is what was on it when he did */
-function markSeen(d, tab){
+function markSeen(d, tab, ask){
   if(!TAB_SIG[tab]) return;
   d.seen = d.seen || {};
-  d.seen[tab] = tabSig(d, tab);
+  const A = ask || agendaAsk(d);
+  d.seen[tab] = { s: tabSig(d, tab), a: A[tab] || [] };
 }
-const tabFresh = (d, tab) => !!TAB_SIG[tab] && !tabQuiet(d, tab) && ((d.seen||{})[tab] !== tabSig(d, tab));
+const tabFresh = (d, tab, ask) => {
+  if(!TAB_SIG[tab] || tabQuiet(d, tab)) return false;
+  const was = seenOf(d, tab);
+  if(was.s !== tabSig(d, tab)) return true;
+  if(!was.a) return false;
+  const now = (ask || agendaAsk(d))[tab] || [];
+  return now.some(k => was.a.indexOf(k) < 0);
+};
 
 /* ---- AND ONE LEVEL DOWN ----
    A tab's mark says the answer is in that tab; these say which of its folded panels. Kept
@@ -2578,6 +2623,36 @@ const SECT_MARK = {
 const sectMark = (d, key) => { const f = SECT_MARK[key]; if(!f) return null;
   try { return f(d) || null; } catch(e){ return null; } };
 
+/* ---- AND THE LEVEL BETWEEN THEM, WHICH DID NOT EXIST ----
+   The villa is not one screen. It has four faces behind its own switcher and only one of
+   them is mounted at a time — twenty-three sections across the four — so a mark on the Villa
+   tab said "something here" and then the player arrived on The House and found nothing,
+   because the thing was on Coin & Council two chips away. A mark that points at a container
+   the size of four screens is not pointing.
+   So each face carries the loudest mark of the sections that live on it. The names are the
+   `vView` keys and the values are SECT_MARK keys; a face with nothing worth a mark gets
+   none, which is also information. */
+const FACE_SECTS = {
+  villa: { house:[], standing:["standing","rome","temple"], council:["rites"],
+    familia:["feast","cells","collegium"] },
+};
+/* A face carries only what is ASKING — the counted marks. The plain dots one level down are
+   availability, not news: "you could found the burial society", "the altar is rested". Both
+   are true of a solvent house for ever, and carried up to the chips they put a permanent dot
+   on two of the four faces, which is the same fault as the tab badge that would not go out.
+   The dot stays on the section itself, where it means "there is something here". */
+const faceMark = (d, tab, face) => {
+  const keys = (FACE_SECTS[tab] || {})[face] || [];
+  let best = null;
+  for(const k of keys){
+    const m = sectMark(d, k);
+    if(!m || m === true) continue;
+    if(best === null || (m.urg||0) > (best.urg||0)) best = { urg:m.urg, n:m.n };
+    else if((m.urg||0) === (best.urg||0)) best = { urg:best.urg, n:(best.n||0) + (m.n||0) };
+  }
+  return best;
+};
+
 /* ---- AND WHAT THE TAB BAR SHOWS ----
    One mark per tab: the loudest urgency the agenda has for it, how many items, and whether
    anything on it has moved since you looked. A pure function of the save, so the bar can
@@ -2594,12 +2669,17 @@ const sectMark = (d, key) => { const f = SECT_MARK[key]; if(!f) return null;
 const MARK_URG = 2;
 function tabMarks(d){
   const A = (()=>{ try { return agenda(d); } catch(e){ return []; } })();
+  /* the ask map is built from this one agenda call and handed to tabFresh, so the whole bar
+     costs a single pass rather than one per tab per render */
+  const ask = {}; for(const k of TAB_KEYS) ask[k] = [];
+  for(const x of A) if((x.urgency||0) >= MARK_URG && ask[x.tab]) ask[x.tab].push(`${x.urgency}:${x.label}`);
+  for(const k of TAB_KEYS) ask[k].sort();
   const out = {};
   for(const k of TAB_KEYS){
     const mine = A.filter(x=>x.tab === k), loud = mine.filter(x=>(x.urgency||0) >= MARK_URG);
     out[k] = { n: loud.length, quiet: mine.length - loud.length,
       urg: loud.reduce((m,x)=>Math.max(m, x.urgency||0), 0),
-      fresh: tabFresh(d, k) };
+      fresh: tabFresh(d, k, ask), ask };
   }
   return out;
 }
@@ -15921,16 +16001,32 @@ const Fighter = React.memo(function Fighter({ kit, pose, wounds, scars, fallen, 
         <rect x="74.5" y="41.5" width="2.6" height="13" rx="1.1" fill={BLADE_D}/>
         <path d="M77,45 Q97,36 108,51 Q99,44 77,50Z" fill={BLADE} stroke={BLADE_D} strokeWidth=".9"/>
       </g>);
-      /* ---- THE AXE WAS ON BACKWARDS ----
-         The old head curved out to two horns and then bit inward in the middle of
-         its far edge — so the widest part was the corners and the cutting edge was
-         scalloped hollow. At fight scale, mirrored and swung up over a fallen man,
-         it read as a spearhead mounted the wrong way round, which is what it was.
-         A securis is narrow where it meets the haft and flares to a convex bit. */
+      /* ---- THE AXE WAS ON BACKWARDS, AND THEN IT WAS TWO-HEADED ----
+         The first head curved out to two horns and bit inward in the middle of its far
+         edge, so the widest part was the corners and the cutting edge was scalloped
+         hollow — at fight scale it read as a spearhead mounted the wrong way round.
+         The fix flared it to a convex bit, but symmetrically about the haft, which at
+         this size is the silhouette of a labrys: a pale wedge with no telling which
+         way it cuts.
+
+         A securis is one-sided. It is narrow at the eye where the haft passes through,
+         the poll behind it is a blunt stub, and the whole of the steel hangs to ONE
+         side and sweeps out to a crescent edge. That is what makes it legible in
+         profile: the haft is a line, and the weight is all under it. */
       if(wArt==="axe") return (<g>
-        <rect x="58" y="46" width="44" height="4.2" rx="1.9" fill="#6b4a22" stroke="#4a3216" strokeWidth=".6"/>
-        <path d="M99,44 L116,37 Q121,48 116,59 L99,52Z" fill={BLADE} stroke={BLADE_D} strokeWidth="1"/>
-        <rect x="96" y="42.5" width="4.5" height="11" rx="1.5" fill={BLADE_D}/>
+        <rect x="58" y="46" width="45" height="4.2" rx="1.9" fill="#6b4a22" stroke="#4a3216" strokeWidth=".6"/>
+        {/* the poll — the blunt back of the head, inside the haft's own height so it does
+            not read as a lump sitting on top of the shaft */}
+        <rect x="93" y="46.4" width="4.5" height="3.6" rx="1" fill={BLADE_D}/>
+        {/* the bit. A straight top edge out from the eye, then the whole of the steel
+            flaring down and forward to a convex edge, and a short beard tucked back under
+            the haft. Four rounder candidates were drawn first and every one of them read
+            as a frying pan at the size a man actually carries it; the straight top edge is
+            what makes it an axe rather than a blob on a stick. */}
+        <path d="M100,44.4 L114,44.4 Q119.5,53.5 121,64 Q109.5,67.5 102.8,58.5 Q100.4,55 100,53Z"
+          fill={BLADE} stroke={BLADE_D} strokeWidth="1" strokeLinejoin="round"/>
+        {/* and the eye, the collar the haft passes through */}
+        <rect x="97" y="45.4" width="5" height="5.6" rx="1.3" fill={BLADE_D}/>
       </g>);
       if(wArt==="dagger") return (<g>
         <rect x="74.5" y="43" width="2.4" height="10" rx="1" fill={BLADE_D}/>
@@ -16945,16 +17041,19 @@ function Sect({ title, note, open, tone, mark, children }){
   return (
     <details className="sect" ref={ref} style={tone? {borderColor:tone} : undefined}>
       <summary>
-        <span style={{minWidth:0,overflow:"hidden",textOverflow:"ellipsis",display:"flex",alignItems:"center",gap:6}}>
+        {/* the title wraps rather than being cut — "The house — Records & Annals" came out
+            as "…" plus a note that stopped mid-word, and the note is the part that says
+            what is inside */}
+        <span style={{minWidth:0,display:"flex",alignItems:"center",gap:6}}>
           {m && (m.urg
             ? <span role="img" aria-label={`${m.n} wanting an answer — `} style={{flex:"0 0 auto",minWidth:18,height:18,borderRadius:9,
                 padding:"0 4px",background:URG[m.urg].c,color:"#14100c",fontFamily:"'Cinzel',serif",
                 fontSize:"var(--fs-micro)",fontWeight:900,lineHeight:"18px",textAlign:"center"}}>{m.n > 9 ? "9+" : m.n}</span>
             : <span role="img" aria-label="something new — " style={{flex:"0 0 auto",width:7,height:7,borderRadius:4,background:"#c99a4b"}}/>)}
-          <span style={{minWidth:0,overflow:"hidden",textOverflow:"ellipsis"}}>{title}</span>
+          <span style={{minWidth:0,overflowWrap:"anywhere"}}>{title}</span>
         </span>
-        <span style={{display:"flex",alignItems:"center",gap:8,flex:"0 0 auto"}}>
-          {note!=null && note!=="" && <span className="dim" style={{fontSize:"var(--fs-sm)",letterSpacing:0,textTransform:"none",fontFamily:"'Cormorant Garamond',Georgia,serif"}}>{note}</span>}
+        <span style={{display:"flex",alignItems:"center",gap:8,flex:"0 1 auto",minWidth:0,justifyContent:"flex-end"}}>
+          {note!=null && note!=="" && <span className="dim" style={{fontSize:"var(--fs-sm)",letterSpacing:0,textTransform:"none",fontFamily:"'Cormorant Garamond',Georgia,serif",overflowWrap:"anywhere"}}>{note}</span>}
           <span className="chev" aria-hidden="true">⌄</span>
         </span>
       </summary>
@@ -17438,9 +17537,15 @@ export default function App(){
      moves: switch to a tab and its mark clears; end the week while sitting on one and it
      does not light for the thing you are already looking at. Only writes when the
      signature has actually changed, so it does not churn the save on every render. */
-  useEffect(()=>{ if(!S || S.over) return;
-    if(tabFresh(S, tab)) mut(d=>{ markSeen(d, tab); });
-  }, [tab, S && S.week, S && tabSig(S, tab)]);
+  /* the bar's marks, computed once per render from one agenda pass — the effect below and
+     the tab bar both read this, so switching tabs cannot disagree with what the bar showed */
+  const marks = (S && !S.over) ? tabMarks(S) : null;
+  useEffect(()=>{ if(!S || S.over || !marks) return;
+    /* the ask list is part of "seen" now, so the third dep is what is asking as well as
+       what has changed — otherwise a new urgent item on the tab you are already looking at
+       is recorded a week late and lights the tab once when you come back to it */
+    if(marks[tab] && marks[tab].fresh) mut(d=>{ markSeen(d, tab, marks[tab].ask); });
+  }, [tab, S && S.week, S && tabSig(S, tab), marks && marks[tab] && marks[tab].fresh]);
   const [pitchIn,setPitchIn] = useState("plain");
   const [legacy,setLegacy] = useState(null);
   const [carry,setCarry] = useState(null);      // {mode:"out"|"in", text, err, found}
@@ -18143,7 +18248,6 @@ export default function App(){
   );
 
   const roster = S.gladiators.filter(g=>!isGone(g));
-  const marks = tabMarks(S);
   const eligible = roster.filter(g=>canFight(g) && g.lastFought < S.week);
   const selG = selId!=null ? S.gladiators.find(g=>g.id===selId) : null;
   const gamesWeeksAway = (3 - (S.week % 3)) % 3;
@@ -18377,9 +18481,18 @@ export default function App(){
           {table.map((h,i)=>{ const riv = h.you ? null : houseOf(S, h.raw); const mv = move(h);
             const bookH = (S.book && S.book.house && S.book.house[h.raw]) || null;
             return (
-              <div key={h.name+i} className="flex items-center justify-between" style={{padding:"6px 0",borderBottom:"1px dotted #33271a",
+              /* ---- THE TABLE THAT COULD NOT SHOW A HOUSE'S NAME ----
+                 One flex row, the name on the left and rank-move / fame / Treat on the
+                 right, and on a phone there was not room: "House Glaber…", a lanista
+                 truncated to "who bought i", and a fame of 24,700 rendered "247…". The
+                 figures are the whole point of a league table and the names are how you
+                 tell the houses apart, so neither can be the one that gets cut.
+                 The figures move ABOVE the detail now — rank, name and fame on one line
+                 that is allowed to wrap, everything the house is doing underneath it. */
+              <div key={h.name+i} style={{padding:"6px 0",borderBottom:"1px dotted #33271a",
                 ...(h.you?{background:"#1c1610",borderRadius:6,padding:"6px 8px"}:{})}}>
-                <div className="rowname" style={{fontSize:"var(--fs-lg)", color:h.you?"#e8d092":undefined, minWidth:0}}>
+                <div className="flex items-start justify-between gap-2" style={{flexWrap:"wrap"}}>
+                <div className="rowname" style={{fontSize:"var(--fs-lg)", color:h.you?"#e8d092":undefined, minWidth:0, flex:"1 1 60%"}}>
                   <span className="dim" style={{marginRight:7,fontSize:"var(--fs-base)"}}>{i+1}</span>
                   {i===0 && <span style={{color:"#e0bd72",marginRight:4}}>✦</span>}
                   {riv && riv.away>0 && <span className="dim" style={{fontSize:"var(--fs-sm)"}}>away · </span>}
@@ -18388,22 +18501,25 @@ export default function App(){
                   {riv && (warmth(S,h.raw)>=25
                     ? <span style={{fontSize:"var(--fs-sm)",marginLeft:7,fontStyle:"italic",color:warmth(S,h.raw)>=50?"#9aa86a":"#b09b7d"}}>{houseWord(warmth(S,h.raw))}</span>
                     : <span className="dim" style={{fontSize:"var(--fs-sm)",marginLeft:7,fontStyle:"italic"}}>{grudgeWord(riv.grudge)}</span>)}
-                  {riv && lanistaOf(h.raw).trait && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:1}}>{lanistaOf(h.raw).name} — {lanistaOf(h.raw).trait}</div>}
-                  {riv && <div style={{fontSize:"var(--fs-sm)",marginTop:1,color:fortuneColour(riv)}}>{houseFortune(riv)}
-                    {riv.star?` · ★ ${riv.star.name}`:""}
-                    {(()=>{ if(!riv.star) return ""; const sf=(riv.fighters||[]).find(f=>f.id===riv.star.id);
-                      return sf && sf.age ? ` (${sf.age}${sf.age>=32?", old for it":sf.age>30?", past his peak":""})` : ""; })()}</div>}
-                  {riv && bookH && bookH.n>=1 && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:1,fontStyle:"italic"}}>
-                    {bookH.n} card{bookH.n>1?"s":""} against him — you {bookH.w}–{bookH.n-bookH.w}
-                  </div>}
-                  {h.you && i===0 && <div className="laurel" style={{fontSize:"var(--fs-sm)",marginTop:1,fontStyle:"italic"}}>the first house of the city</div>}
                 </div>
-                <div className="flex items-center gap-2" style={{flexShrink:0}}>
+                <div className="flex items-center gap-2" style={{flexShrink:0,marginLeft:"auto"}}>
                   {mv && <span style={{fontSize:"var(--fs-sm)",color:mv.c}}>{mv.a}</span>}
                   <span className={`rowval ${h.you?"gold":"dim"}`} style={{fontSize:"var(--fs-md)"}}>{rnd(h.fame)}</span>
                   {riv && <button className="btn btn-ghost" style={{padding:"5px 8px",fontSize:"var(--fs-micro)"}}
                     onClick={()=>{ setSheet(null); setDealMsg(null); setDealH(riv.name); }}>Treat</button>}
                 </div>
+                </div>
+                {/* everything the house is doing sits under that line at full width, where
+                    a lanista's name and his one distinguishing trait both fit */}
+                {riv && lanistaOf(h.raw).trait && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2,overflowWrap:"anywhere"}}>{lanistaOf(h.raw).name} — {lanistaOf(h.raw).trait}</div>}
+                {riv && <div style={{fontSize:"var(--fs-sm)",marginTop:1,color:fortuneColour(riv),overflowWrap:"anywhere"}}>{houseFortune(riv)}
+                  {riv.star?` · ★ ${riv.star.name}`:""}
+                  {(()=>{ if(!riv.star) return ""; const sf=(riv.fighters||[]).find(f=>f.id===riv.star.id);
+                    return sf && sf.age ? ` (${sf.age}${sf.age>=32?", old for it":sf.age>30?", past his peak":""})` : ""; })()}</div>}
+                {riv && bookH && bookH.n>=1 && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:1,fontStyle:"italic"}}>
+                  {bookH.n} card{bookH.n>1?"s":""} against him — you {bookH.w}–{bookH.n-bookH.w}
+                </div>}
+                {h.you && i===0 && <div className="laurel" style={{fontSize:"var(--fs-sm)",marginTop:1,fontStyle:"italic"}}>the first house of the city</div>}
               </div>
             );
           })}
@@ -18722,9 +18838,14 @@ export default function App(){
                    buys a real hit area and the matching negative margin gives the layout
                    back, so the line sits exactly where it did and the thumb has somewhere
                    to land. */
-                style={{background:"none",border:"none",padding:"13px 0",margin:"-13px 0",font:"inherit",textAlign:"left",cursor:"pointer",
-                  width:"100%",fontSize:"var(--fs-sm)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",color:"inherit",position:"relative",zIndex:1}}>
-                {seasonOf(S).name} · year {yearOf(S)}, week {yearWeek(S)} · {S.travel? "on the road" : S.city? CITIES[S.city].name : fameTitle(S.fame)} <span style={{color:"#8a6a2c"}}>›</span>
+                /* and the title of the house was the part that got cut: "Winter · year 12,
+                   week 17 · The Measure of the Tr…". The date is fixed-width and the title
+                   is the thing that changes, so the title goes on its own line when there
+                   is not room for both rather than being clipped. */
+                style={{background:"none",border:"none",padding:"15px 0",margin:"-15px 0",font:"inherit",textAlign:"left",cursor:"pointer",
+                  width:"100%",fontSize:"var(--fs-sm)",color:"inherit",position:"relative",zIndex:1,lineHeight:1.25}}>
+                <span style={{whiteSpace:"nowrap"}}>{seasonOf(S).name} · year {yearOf(S)}, week {yearWeek(S)}</span>
+                <span style={{whiteSpace:"nowrap"}}> · {S.travel? "on the road" : S.city? CITIES[S.city].name : fameTitle(S.fame)} <span style={{color:"#8a6a2c"}}>›</span></span>
               </button>
             </div>
           </div>
@@ -19581,8 +19702,15 @@ export default function App(){
                 return (
                   <div key={g.id} className="panel" style={{padding:9}}>
                     <div className="flex items-center justify-between gap-2" style={{marginBottom:3}}>
-                      <button onClick={()=>setSelId(g.id)} style={{background:"none",border:0,padding:0,font:"inherit",color:"#e8d092",cursor:"pointer",minWidth:0,textAlign:"left"}}>
-                        <span className="disp" style={{fontSize:"var(--fs-md)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{g.name}</span>
+                      {/* twenty-five pixels tall against a forty-four pixel floor, on the one
+                          control that opens a man's page — found the week `surface` was first
+                          pointed at the tab's other face. The padding buys the hit area and the
+                          matching negative margin gives the layout back. And the name wraps:
+                          it was nowrap with an ellipsis, which on a long name cut it. */}
+                      <button onClick={()=>setSelId(g.id)} style={{background:"none",border:0,
+                        padding:"11px 0",margin:"-11px 0",font:"inherit",color:"#e8d092",cursor:"pointer",
+                        minWidth:0,textAlign:"left",position:"relative",zIndex:1}}>
+                        <span className="disp" style={{fontSize:"var(--fs-md)",overflowWrap:"anywhere"}}>{g.name}</span>
                         <span className="dim" style={{fontSize:"var(--fs-sm)"}}> · {g.cls}</span>
                       </button>
                       <span style={{fontSize:"var(--fs-micro)",whiteSpace:"nowrap"}}>
@@ -20097,14 +20225,25 @@ export default function App(){
 
         {tab==="villa" && (<div className="flex flex-col gap-3">
           <div className="flex gap-1" role="tablist" aria-label="Villa sections"
-            style={{overflowX:"auto",borderBottom:"1px solid #33271a",paddingBottom:8}}>
-            {[["house","The House"],["standing","Standing"],["council","Coin & Council"],["familia","The Cells"]].map(([k,l])=>(
-              <button key={k} role="tab" aria-selected={vView===k} aria-label={l} onClick={()=>setVView(k)}
+            style={{flexWrap:"wrap",borderBottom:"1px solid #33271a",paddingBottom:8}}>
+            {[["house","The House"],["standing","Standing"],["council","Coin & Council"],["familia","The Cells"]].map(([k,l])=>{
+              /* the face carries the mark of whatever is on it, so a mark on the Villa tab
+                 leads somewhere instead of dropping the player on The House to hunt */
+              const fm = faceMark(S, "villa", k);
+              return (
+              <button key={k} role="tab" aria-selected={vView===k} onClick={()=>setVView(k)}
+                aria-label={fm ? `${l}, ${fm===true?"something new":`${fm.n} wanting an answer`}` : l}
                 className={`chip ${vView===k?"on":""}`}
-                style={{whiteSpace:"nowrap",...(vView===k?{borderColor:"#c99a4b",color:"#e0bd72",background:"#2b2115"}:{})}}>
+                style={{whiteSpace:"nowrap",display:"inline-flex",alignItems:"center",gap:5,
+                  ...(vView===k?{borderColor:"#c99a4b",color:"#e0bd72",background:"#2b2115"}:{})}}>
+                {fm && (fm===true
+                  ? <span aria-hidden="true" style={{flex:"0 0 auto",width:6,height:6,borderRadius:3,background:"#c99a4b"}}/>
+                  : <span aria-hidden="true" style={{flex:"0 0 auto",minWidth:15,height:15,borderRadius:8,padding:"0 3px",
+                      background:URG[fm.urg].c,color:"#14100c",fontFamily:"'Cinzel',serif",fontSize:"var(--fs-micro)",
+                      fontWeight:900,lineHeight:"15px",textAlign:"center"}}>{fm.n > 9 ? "9+" : fm.n}</span>)}
                 {l}
               </button>
-            ))}
+            );})}
           </div>
 
           {vView==="house" && (<>
@@ -21071,7 +21210,10 @@ export default function App(){
              on it has moved since it was last looked at. The tab you are on never wears
              one — you are looking at it. */
           const m = (marks && marks[k]) || { n:0, urg:0, fresh:false };
-          const show = tab !== k && (m.urg > 0 || m.fresh);
+          /* fresh is the whole test now. It used to be `m.urg > 0 || m.fresh`, and the first
+             half never went out — a standing item kept the badge lit through every visit,
+             so the mark stopped meaning "look here" and started meaning "this tab exists". */
+          const show = tab !== k && m.fresh;
           const col = m.urg ? URG[m.urg].c : "#c99a4b";
           const label = m.urg
             ? `${l}, ${m.n} ${m.n===1?"thing":"things"} wanting an answer${m.fresh?", and something new":""}`
@@ -21119,7 +21261,8 @@ export default function App(){
               const views = [["record","Record"],["body", hurt?"Body ·":"Body"],["train","Training"],["kit","Kit"],["standing","Standing"]];
               return (
                 <div className="flex gap-1" role="tablist" aria-label="Record sections"
-                  style={{marginBottom:10,overflowX:"auto",borderBottom:"1px solid #33271a",paddingBottom:8}}>
+                  /* wrapping, not scrolling: a chip row that runs off the edge looks like a cut-off word */
+                  style={{marginBottom:10,flexWrap:"wrap",borderBottom:"1px solid #33271a",paddingBottom:8}}>
                   {views.map(([k,l])=>(
                     <button key={k} role="tab" aria-selected={gView===k} onClick={()=>setGView(k)}
                       className={`chip ${gView===k?"on":""}`}
@@ -22997,8 +23140,16 @@ export default function App(){
             <button className="btn btn-ghost" style={{padding:"8px 10px"}} aria-label="Close" onClick={close}><X size={14}/></button>
           </div>
         );
+        /* ---- A LIST OF BUTTONS WITH NOTHING TO TELL THEM APART ----
+           This is called from four `.map`s — singles, pairs, melees, hunts — and returned a
+           <button> with no key, so React warned on every render of the bout wizard and kept
+           reusing the wrong DOM node when the bill changed under it. Nothing caught it
+           because no check has ever rendered a bout in a browser: `card` and `engines` drive
+           the engines in memory, `sweep` opens the wizard's first step and stops. The offer
+           id comes off `nextId` and is unique to the bout, which is what a key wants. */
         const occRow = (occ, title, sub, right, tags)=>(
-          <button className="optrow" style={{marginBottom:7,width:"100%"}} onClick={()=>goPick(occ)}>
+          <button key={`${occ.kind}-${(occ.o && occ.o.id) != null ? occ.o.id : title}`}
+            className="optrow" style={{marginBottom:7,width:"100%"}} onClick={()=>goPick(occ)}>
             <div className="flex items-center justify-between gap-2">
               <span className="disp" style={{fontSize:"var(--fs-md)",color:"#e8d9b8"}}>{title}</span>
               {right}
@@ -23805,7 +23956,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     LESSONS, lessonFor, lessonsRead, LESSON_QUIET,
     /* what is new, and where — the marks the tab bar and the folded panels wear */
     tabMarks, tabSig, tabFresh, tabQuiet, markSeen, TAB_KEYS, TAB_SIG, TAB_QUIET, TAB_NAMES,
-    sectMark, SECT_MARK, MARK_URG,
+    sectMark, SECT_MARK, MARK_URG, faceMark, FACE_SECTS, agendaAsk, seenOf,
     MARK_NEED, MARK_PART, MARK_POW, MARK_WIND, MARK_DEAL, MARK_TAKE,
     /* the generators behind the four markets — a check that cannot refresh a stall
        cannot ask what the stall offers, which is how the block's pricing drifted

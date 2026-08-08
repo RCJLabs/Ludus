@@ -42,7 +42,6 @@ reason the check exists usually has not.
 | `engines` | fast | tactic and trait constants are 3–5× more powerful than they look, every time — and for fifty versions it tested two of the four engines under a comment claiming all of them |
 | `book` | fast | the pair booked only its wins and the melee only its losses, for fifty versions |
 | `modals` | slow | the week's digest threw itself over the answer to the question you were just asked |
-| `surface` | slow | the tab bar was set in 9px and END WEEK was 37px tall |
 | `sweep` | slow | the cheap net: does anything throw when you open it — every *face* of every tab, not just the one mounted when you arrive, because it reported `villa (+4 sections)` for a tab with 23 and a ReferenceError lived in the ones it never rendered |
 | `layers` | fast | 28 overlays with hand-written z-indices, and no way to see the order |
 | `saves` | fast | 165 lines of unordered backfills, and fifteen core fields that never had one |
@@ -72,6 +71,7 @@ reason the check exists usually has not.
 | `war` | fast | a fifty-eight week four-stage arc with its own tax, levy, market swing and defiance floor worked perfectly and had one door — the "open the gates" branch of one event, which costs nine men and thirty fame — so across 48 houses its four events fired not once |
 | `glance` | fast | the agenda knew what wanted an answer and which tab it was on, and a player's only way to find out was to open all six every week — and the marks that fix it are the kind of thing that fails silently, because a dot that never lights looks exactly like a tab with nothing in it |
 | `temple` | fast | five gods with four boons plumbed into the engine, and across 3,200 house-weeks no vow was ever sworn and no blessing ever rode with a house — the agenda had never named the gods, the Temple panel opened only for a house already using it, and a probe guard reserving four weeks' cushion produced the figure that made it all look unaffordable |
+| `surface` | slow | the tab bar was 9px and END WEEK was 37px tall — and it measured a house twelve WEEKS old on one face of each tab with no record sheet ever opened, so it would have passed the whole way through a release where a house's name read "House Glaber…" and a fame of 23,703 rendered "237…" |
 | `lessons` | fast | thirty-five lessons, one per tab per week, each with an expiry window — so a queue, and sixteen of them could not be reached by any player: "Steel and Style" was `done` in week 1 of all five openings because every one hands you a rack, "Steel Does Not Last" closed on an event that had to happen before it could open, and between them the armory tab offered a new house nothing at all |
 | `feats` | fast | five of the nineteen feats read as never earned across 3,200 house-weeks and every one of them was reachable — two of the five were the probe declining Rome's card and never founding the burial society; what was real was the cloth recording nothing outside a singles bout, and a sheet showing a dash to a house standing on the gate |
 
@@ -227,6 +227,43 @@ men in stock kit was told the fee was the whole of it; and Rome's letter has fiv
 conditions, so a house with no senator warm enough to send it read `0 fame short` and
 would have gone off to win fame it did not need. Neither was caught by reading. Both
 were caught by a check that drove the real gate.
+
+## A clipped element renders perfectly happily
+
+Four truncations were reported off one phone screen: a house called "House Glaber" as
+"House Glaber…", a lanista's line stopping at "who bought i", a fame of 23,703 as
+"237…", and the masthead's house title as "The Measure of the Tr…". Every one came
+from two CSS classes carrying `white-space:nowrap` with `text-overflow:ellipsis`, and
+one of them from a `max-width:64%` inside a flex row sized by its own content — a
+percentage cap resolving against a box that has not been sized yet, which clipped the
+number to about forty pixels with empty space beside it.
+
+None of it was visible to a check, because **there is no error in a cut-off word.**
+The layout is valid, nothing throws, the pass column is green. But the browser knows:
+an element whose `scrollWidth` exceeds its `clientWidth` is hiding part of itself. That
+is the whole test, it costs one pass per screen, and it applies to every screen at
+once. Deliberately scrollable strips opt out with `data-scrolls`.
+
+The harder half was **coverage**, and it is the more useful lesson. `surface` measured
+six tabs of a house twelve WEEKS old: short names, three-digit numbers, one face per
+tab, and not one record sheet ever opened. The new test found nothing there — and put
+the old CSS back and it still found nothing, because a young house clips nothing. So:
+
+- **grow the state to the size a long game reaches before measuring it.** The report
+  came from year twelve with fame 23,703. A check whose fixture is always a new house
+  can only ever find bugs that a new house has.
+- **walk every face.** Three tabs mount one of several at a time; the villa keeps
+  nineteen of its twenty-three sections behind chips. Six screens became ten.
+- **open the sheets.** The league table is a modal behind a section, and no check had
+  ever opened one — which is exactly where two of the four truncations were.
+
+With all three, putting the old CSS back names both reported symptoms exactly. And the
+extension immediately found two faults nobody had reported: a 25px control on the tab
+face `surface` had never visited, and — from the one screen still uncovered — a
+`<button>` returned without a `key` from four `.map`s on the bout wizard, warned about
+by React on every render and caught only because a scratch probe drove a bout. **No
+check renders a bout in a browser**: `card` and `engines` drive the engines in memory,
+`sweep` opens the wizard's first step and stops. That is the next gap.
 
 ## Every check drives the engine. None of them read the screen.
 

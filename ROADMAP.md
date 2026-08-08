@@ -1374,6 +1374,67 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v2.66.0 — Four things off a phone screen
+
+All four reported from a real save in year twelve, which is most of the point: none of them
+were reachable by a check, and two of them were not reachable by any state a check had ever
+constructed.
+
+**The axe was a labrys.** It had been fixed once already — the original head curved out to two
+horns and bit inward, so the cutting edge was scalloped hollow — and the fix flared it to a
+convex bit **symmetrically about the haft**, which at the size a man actually carries it is
+the silhouette of a double-headed axe with no telling which way it cuts. A securis is
+one-sided: narrow at the eye, a blunt poll behind, and the whole of the steel hanging to one
+side. Four candidates were drawn and rendered at true size (the Fighter's box is 128 units
+wide at 118px, so one unit is 0.92px) and mirrored, because side B is flipped by the parent.
+Three of the four read as a frying pan; the straight top edge is what makes it an axe rather
+than a blob on a stick. Two versions of this weapon have now shipped wrong for the same
+reason — drawn in coordinates and never looked at.
+
+**The tab badge would not go out.** It counted the agenda's loud items for a tab and showed
+whenever that count was above zero, so walking into the armoury and back out again left the
+"1" exactly where it was. Looking at a thing does not answer it — but a mark you cannot clear
+is a mark you stop believing, which is the whole of what it is for. What is ASKING is part of
+what "seen" means now, and only **additions** count: a new item lights the tab, an answered one
+going away does not, which is the lesson the Arena taught in v2.62.0 where 42% of that tab's
+changes were the card being consumed rather than a new one arriving. Urgency is part of the
+key, so a levy moving from "next week" to "due this week" is a new thing asking.
+
+**And a mark on the Villa pointed at four screens.** The villa has four faces behind its own
+switcher — twenty-three sections across them — so a badge on the tab dropped the player on The
+House to go hunting while the thing sat on Coin & Council. Each face carries the loudest mark
+of the sections that live on it. Faces carry only what is asking: carrying the plain
+availability dots up as well ("you could found the burial society", "the altar is rested") put
+a permanent dot on two of the four, which is the same fault one level up.
+
+**And nothing is allowed to cut a word in half.** `.rowname` and `.rowval` carried
+`white-space:nowrap` with `text-overflow:ellipsis`, and between them they were most of the
+truncation in the game: "House Glaber…", a lanista's line stopping at "who bought i", and a
+fame of 23,703 rendering "237…" — that last one from a `max-width:64%` inside a flex row whose
+width comes from its own content, which resolves against a box that has not been sized yet and
+clipped the number to about forty pixels with empty space beside it. A name wraps now; a value
+keeps `nowrap`, because a number broken across two lines is its own kind of unreadable, but is
+never capped and never elided. The league table's rows were restructured so the figures and
+the names stop competing for one line, the masthead puts the house's title on its own line
+rather than clipping it, and three chip rows wrap instead of scrolling off the edge.
+
+**What made all four invisible, and what now finds them.** `surface` measured six tabs of a
+house **twelve weeks old** — short names, three-digit numbers, one face per tab, and no record
+sheet ever opened. It would have passed the whole way through this. It now grows the house to
+the size a long game reaches before it measures anything, walks every face of every tab
+(10 screens instead of 6), opens all nine record sheets, and fails if any element is clipping
+its own text — `scrollWidth > clientWidth` on anything that is actually hiding overflow. Put
+the old CSS back and it names both reported symptoms exactly: a `.rowname` cut on a lanista's
+line, and `.rowval` hiding 13px of `23703`.
+
+Extending that coverage immediately found two things nobody had reported. A **25px** control on
+the doctore's board — the one button that opens a man's page, against a 44px thumb floor — on
+the tab face `surface` had never visited. And on the bout wizard, `occRow` returned a
+`<button>` with no `key` and is called from four `.map`s, so React warned on every render and
+reused the wrong DOM node when the bill changed: no check has ever rendered a bout in a
+browser, because `card` and `engines` drive the engines in memory and `sweep` opens the
+wizard's first step and stops. That gap is now written down rather than fixed.
+
 ### v2.65.0 — The gatekeeper could not say a third of what he knows
 
 Thirty-six checks, and every one of them drives the engine. Not one had ever asked what the
@@ -3807,4 +3868,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.65.0*
+*Last updated: v2.66.0*
