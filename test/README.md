@@ -72,6 +72,7 @@ reason the check exists usually has not.
 | `war` | fast | a fifty-eight week four-stage arc with its own tax, levy, market swing and defiance floor worked perfectly and had one door — the "open the gates" branch of one event, which costs nine men and thirty fame — so across 48 houses its four events fired not once |
 | `glance` | fast | the agenda knew what wanted an answer and which tab it was on, and a player's only way to find out was to open all six every week — and the marks that fix it are the kind of thing that fails silently, because a dot that never lights looks exactly like a tab with nothing in it |
 | `temple` | fast | five gods with four boons plumbed into the engine, and across 3,200 house-weeks no vow was ever sworn and no blessing ever rode with a house — the agenda had never named the gods, the Temple panel opened only for a house already using it, and a probe guard reserving four weeks' cushion produced the figure that made it all look unaffordable |
+| `lessons` | fast | thirty-five lessons, one per tab per week, each with an expiry window — so a queue, and sixteen of them could not be reached by any player: "Steel and Style" was `done` in week 1 of all five openings because every one hands you a rack, "Steel Does Not Last" closed on an event that had to happen before it could open, and between them the armory tab offered a new house nothing at all |
 | `feats` | fast | five of the nineteen feats read as never earned across 3,200 house-weeks and every one of them was reachable — two of the five were the probe declining Rome's card and never founding the burial society; what was real was the cloth recording nothing outside a singles bout, and a sheet showing a dash to a house standing on the gate |
 
 ## What no check has ever touched
@@ -226,6 +227,51 @@ men in stock kit was told the fee was the whole of it; and Rome's letter has fiv
 conditions, so a house with no senator warm enough to send it read `0 fame short` and
 would have gone off to win fame it did not need. Neither was caught by reading. Both
 were caught by a check that drove the real gate.
+
+## Every check drives the engine. None of them read the screen.
+
+Thirty-five lessons, six tabs, one lesson shown per tab per week, each with a `done`
+window that closes it. That is a QUEUE with expiry, and a queue with expiry loses
+things three ways — all three of which had happened and none of which any pass
+column could show:
+
+- **Dead on arrival.** `armory` ("Steel and Style") tested `Object.keys(d.gear).length
+  > 0`, and all five openings hand you a rack of two or three weapons. Done in week 1,
+  in every scenario the game has.
+- **Door behind exit.** `wear` opened on a man *wearing* bought steel and closed on
+  `gearCond` having an entry — which buying writes instantly. Driven through fresh →
+  bought → equipped, `when` was never true while `done` was false.
+- **Queue-starved.** `scout` was eligible in 12 weeks across twelve houses and offered
+  in **0**, because it was only open while the lesson in front of it was open, and the
+  week after you read that one it was already done.
+
+The general lesson: **a lesson's exit must be the thing the lesson is about, and it
+must be reachable strictly after its door.** Owning bought steel, having seen a piece
+come back worn, having paid to have a man looked over. Anything else and the starting
+state or the queue closes it for you.
+
+Two instrument notes worth keeping, because both nearly produced a wrong finding:
+
+- **A reader who never reads pins the queue.** `lessonFor` returns the first *unlearned*
+  lesson, so a probe that never sets `flags.learned` holds every tab at its head for
+  ever and reports 26 of 35 as unreachable. Model the most attentive player possible —
+  reads every lesson on every tab every week — because a lesson that player cannot
+  reach genuinely cannot be reached.
+- **A zero can mean the house was dead.** The first run of this reported eighteen
+  lessons never offered; the house had died at week 21. Aggregate over houses, count a
+  lesson reached if *any* of them saw it, and print the longest life next to the zero so
+  it can never silently mean "no weeks" again.
+
+And one about the agenda, which nothing had ever read as a beginner meets it: the four
+things `survive`'s policy must do are all named early — buy a man at median week 1, set
+the week's work at 1, take a bout at 2, watch the cells at 3 — so the game does teach
+itself, and that premise was worth disproving before touching anything. What was wrong
+was rank: "Nobody in this yard can teach" stood in **354 of 354** first-hour weeks at
+urgency 2, and **a permanent item ranked "answer this" is furniture, not a priority.**
+Gating it on affordability moved 100.0% to 98.9% — the wrong hypothesis, measured and
+dropped — because the house *can* afford one nearly every week. Lowering its rank after
+the first half-year moved loud items from 3.57 a week to 2.94, and crowded weeks from
+81.1% to 58.8%.
 
 ## The one that was wrong in every probe for twenty releases: set the focus
 

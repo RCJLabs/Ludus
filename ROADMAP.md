@@ -1337,6 +1337,8 @@ Tuning dials, in the order you'd reach for them:
 | How the war reaches you | `WAR_AWAY_AT` / `WAR_AWAY_ODDS` | your own gate, or a rising elsewhere from week 60 at 0.35% a week — 45% of houses that get there see it |
 | What earns a badge | `MARK_URG` / `TAB_QUIET` | urgency 2 and above only (3.64 items a week, not 7.86); an empty tab cannot be fresh |
 | What a kept vow is worth | `VOW_BOUTS_FULL` / `VOW_EARNT_AT` | par at nothing risked, 1.6× at six cards fought under it — and never a blessing. Both are six: `VOW_EARNT_AT` was 2, and over 31 vows settled in 1,611 house-weeks the fewest cards under any vow was three and the median eight, so the piety split could never resolve the lean way. At six it bites 26% of vows |
+| What the gatekeeper can say | `LESSONS` / `lessonFor` | 35 lessons, one per tab per week, each with a `done` window — so it is a queue, and a window can expire while something ahead of it holds the slot. A reader who reads everything reaches **26 of 35** in 47 weeks; all 11 with no state gate are offered, first at weeks 1–7. Three ways to lose one, all of which had happened: done in week 1, `done` firing before `when` can, and starved by the queue in front |
+| How loud the first hour is | `agenda` / `URG` | over the opening thirty weeks, **2.94** items a week at urgency 2 or more, more than two of them in **58.8%** of weeks (was 3.57 and 81.1% while the teacher line outranked the week's news). 93.2% of weeks carry more than three items in total, and no week in 420 was silent |
 | What a man can be trained to | `PRIME` / `REGIMENS.palus` | a young man with a doctore and a full yard, pointed at his weakest stat each week, reaches mean stat **99 by week 149 aged 28** — the same ceiling the city's best reaches, gap **0.0**. `palus` is `focus:true`: it trains what you point him at and nothing else, so a house that never sets a focus tops out near **58** and the whole top of the arena reads as unwinnable. This is a dial in the sense that it decides what "a good house" means, and every measurement of the late game depends on the focus being set |
 | Which panel inside a tab | `SECT_MARK` / `sectMark` | eight panels, each a function of the save so a check can ask what it would wear |
 | What the priests count | `PIETY_TOP` / `pietyFame` | fame read up to 1,600 and no further — the dearest altar asks 1,900d, not 20,300d at fame 20,000 |
@@ -1371,6 +1373,71 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.65.0 — The gatekeeper could not say a third of what he knows
+
+Thirty-six checks, and every one of them drives the engine. Not one had ever asked what the
+game *says*. So this release reads the first hour the way a person who has never seen it reads
+it: a week is a minute or two of play, so the first hour is about the first thirty weeks, and
+the questions are what the list names, what the gatekeeper offers, and whether a beginner is
+ever told the things a house must do to still be standing.
+
+**First, the disproved premise, which is the good news.** All four of the things `survive`'s
+policy must do to keep a house alive are named by the agenda, early: buy a man (median week
+**1**), set the week's work (**1**), take a bout (**2**), watch the cells (**3**), across 14
+houses. No week in 420 was silent. The game does teach itself. *(And the first version of this
+measurement said "take a bout" was never named until week 29 — because my pattern missed "3 at
+the rope in Sextus' cellar", which is the pit, and the most frequent thing the list ever says.)*
+
+**Sixteen of the thirty-five lessons could not be reached by any player.** The gatekeeper shows
+ONE lesson per tab — the first that is unlearned, whose `done` test is false and whose `when`
+gate passes — so thirty-five lessons across six tabs is a queue with expiry windows, and that
+shape loses lessons three distinct ways. All three had happened:
+
+- **Dead on arrival.** `armory` — "Steel and Style", which is how kit works and why a net-man
+  in a legionary's shield is worse than useless — tested `Object.keys(d.gear).length > 0`. All
+  five openings hand you a rack: clean `{gladius 2, hasta 1}`, even, uncle, one good man, old
+  guard. So it was `done` in week 1 in **every scenario the game has**.
+- **Door behind exit.** `wear` opened on a man *wearing* bought steel and closed on `gearCond`
+  having an entry — which buying writes instantly. Driven through fresh → bought → equipped,
+  `when` was never once true while `done` was false. It closed before it could open.
+- Between those two, **the armory tab offered a new house no lesson at all**: three written for
+  it, none reachable. Confirmed by putting the fault back — the check now prints `armory —
+  NOTHING`.
+- **Queue-starved.** `scout` — how much the seller is overstating, which is the single most
+  useful thing a beginner can be told at the block — was **eligible in 12 weeks across twelve
+  houses and offered in 0**. It was only ever open while `market` was open in front of it, and
+  the week after you read `market` it was already done (`annals >= 2`).
+
+All three are fixed by making each lesson's exit the thing the lesson is *about*: owning bought
+steel, having seen a piece come back worn, having paid to have a man looked over. That last one
+needed a flag, because three of the five openings hand you an already-scouted man and
+`some(m => m.scouted)` was true in week 1 of those three — a fault the new check caught in my
+own fix. A reader who reads everything now reaches **26 of 35** in 47 weeks, and every one of
+the eleven lessons with no state gate is offered, first at weeks 1–7.
+
+**And the list outranked itself.** "Nobody in this yard can teach" stood in **354 of 354**
+first-hour weeks — 100.0%, the most frequent line in the game — at urgency 2 in nearly all of
+them. The first guess was that it nagged about a man nobody could afford; gating it on
+affordability moved 100.0% to 98.9%, because a young house *can* afford the cheaper of the two
+almost every week and simply has not hired one. So the frequency was never the fault: the line
+is true and actionable every week. The urgency was. A permanent item ranked "answer this" sits
+above the week's actual news for as long as the player declines it, and 93.2% of first-hour
+weeks already carried more than three items. It is news for a season and a standing note after.
+Measured, same seeds, same policy, one expression changed — and `add` consumes no randomness,
+so this is one of the few genuinely paired comparisons this project's RNG allows:
+
+| | before | after |
+|---|---|---|
+| loud items a week, first 30 weeks | 3.57 | **2.94** |
+| weeks carrying more than two | 81.1% | **58.8%** |
+
+New check `lessons` — the first in this project that reads the gatekeeper instead of driving
+the engine. It asserts that nothing is finished before week 1 in any opening, that every tab has
+something to say to a new house, that a lesson's door is not behind its exit (driven, by buying
+and equipping a real piece of steel), and that every ungated lesson is actually offered to the
+most attentive reader possible. `glance` now measures the first hour's crowding and fails if
+the ranking stops ranking. `agenda` passed 200 lines again and `agendaSquare` was lifted out.
 
 ### v2.64.0 — A screen nobody could look at, and the reason nobody looked
 
@@ -3740,4 +3807,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.64.0*
+*Last updated: v2.65.0*

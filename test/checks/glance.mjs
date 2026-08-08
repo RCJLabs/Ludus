@@ -267,6 +267,54 @@ export async function run({ p, errors }){
       R.save = { lit, keptSeen: !!round.seen && Object.keys(round.seen).length > 0,
         sameAfter: A.tabFresh(round, "arena") === lit }; }
 
+    /* ---- 9. AND THE FIRST HOUR, WHICH IS WHERE A LIST IS EITHER USEFUL OR NOISE ----
+       Nothing had ever read the agenda as a beginner meets it. Over fourteen houses through
+       their first thirty weeks, the list carried 3.57 items at urgency 2 or more every week
+       and more than two of them in 81.1% of weeks — because "Nobody in this yard can teach"
+       sat at urgency 2 in 100.0% of those weeks, being both true and affordable and simply
+       not yet acted on. A permanent item that outranks the week's news is not a priority.
+       Dropping it to a standing note after the first half-year: 2.94 a week and 58.8%.
+       (`add` consumes no randomness, so this is one of the few paired comparisons this
+       project's RNG allows — same seeds, same policy, one expression changed.) */
+    { const S6 = ["str","agi","end","tec","sho","dis"];
+      let weeks = 0, urgSum = 0, crowded = 0, perma = 0;
+      for(let h=0; h<6; h++){
+        const d = A.newGameState("GL_HOUR","clean","GL-HOUR"+h,null);
+        for(let w=0; w<30; w++){
+          let items = []; try { items = A.agenda(d) || []; } catch(e){}
+          weeks++;
+          const loud = items.filter(x=>x.urgency >= A.MARK_URG);
+          urgSum += loud.length;
+          if(loud.length > 2) crowded++;
+          if(loud.some(x=>/can teach/.test(x.label||""))) perma++;
+          /* played, because what the list says to a house doing nothing is not the question */
+          while(A.activeG(d).length<6 && !A.rosterFull(d) && d.gold > A.weeklyBill(d)*6 + 900){
+            let got=false;
+            for(const m of (d.market||[]).slice().sort((a,b)=>
+              (b.str+b.agi+b.end+b.tec+b.sho+b.dis)-(a.str+a.agi+a.end+a.tec+a.sho+a.dis))){
+              if(m.paragon || m.price > d.gold-800) continue;
+              if(A.buyFromBlock(d,m.id,null)){ got=true; break; } }
+            if(!got) break; }
+          for(const g of A.activeG(d)){
+            if((g.fatigue||0)>=55) A.setRegimenOf(d,g.id,"rest");
+            else { A.setRegimenOf(d,g.id,"palus");
+              A.setFocusOf(d,g.id,S6.reduce((m,k)=>g[k]<g[m]?k:m,S6[0])); } }
+          if(d.unrest>=35 && d.gold>A.feastCost(d)+A.weeklyBill(d)) A.throwFeast(d);
+          let pool = A.activeG(d).filter(g=>!g.injury&&(g.lastFought==null||g.lastFought<d.week));
+          for(const o of ((d.games&&d.games.offers)||[])){
+            if(o.pair||o.melee||o.venatio||(!o.imperial&&o.stakes==="sine")) continue;
+            const g = pool.find(x=>x.status==="active"&&!x.injury); if(!g) break;
+            let x=A.doFight(d,g.id,o,"measured",null,null,null,"none");
+            if(x&&x.crux){ const pd=x.pending; pd.beats=x.beats;
+              A.doFight(d,g.id,o,"measured",null,pd,"press","none"); } }
+          d.pendingEvent = null;
+          try { A.endWeek(d); } catch(e){ break; }
+          if(d.over) break;
+        }
+      }
+      R.hour = { weeks, perWeek:+(urgSum/weeks).toFixed(2),
+        crowded:+(crowded/weeks*100).toFixed(1), perma:+(perma/weeks*100).toFixed(1) }; }
+
     return R;
   });
 
@@ -288,6 +336,17 @@ export async function run({ p, errors }){
   lines.push(`   quiet cells ${out.can.calm ? "STILL NAGGED" : "silent"} · a house that cannot pay for one ${out.can.broke ? "STILL OFFERED IT" : "silent"}`);
   lines.push(`the rung: ${out.can.rung.map(x=>`[${x.u}] ${x.l} — ${x.s}`).join("; ") || (out.can.canClaim ? "NOT MENTIONED" : "none claimable")}`);
   lines.push(`a rival's man: ${out.can.court.map(x=>`[${x.u}] ${x.l} — ${x.s}`).join("; ") || "not mentioned"} · a full house of better men ${out.can.courtWhenFull ? "IS STILL TOLD" : "hears nothing"}`);
+
+  lines.push(`the first hour (${out.hour.weeks} house-weeks of the opening thirty): ${out.hour.perWeek} loud items a week · `
+    + `more than two in ${out.hour.crowded}% of weeks · the teacher line loud in ${out.hour.perma}%`);
+  /* a list where most weeks carry three or more things ranked "answer this" has no ranking
+     left. Measured before the doctore line stopped outranking the week's news: 3.57 and 81.1% */
+  if(out.hour.perWeek > 3.3)
+    fails.push(`${out.hour.perWeek} items a week at urgency ${2}+ through the first thirty weeks — the ranking has stopped ranking`);
+  if(out.hour.crowded > 70)
+    fails.push(`more than two loud items in ${out.hour.crowded}% of a beginner's first thirty weeks`);
+  if(out.hour.perma > 60)
+    fails.push(`the teacher line is loud in ${out.hour.perma}% of the first hour — a permanent item at that rank is furniture, not a priority`);
 
   /* ---- a signature each, and no two alike ---- */
   if(out.sigs.empty.length)

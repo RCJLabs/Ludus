@@ -2389,6 +2389,36 @@ function agendaCan(d, add){
   }
 }
 
+/* ---- WHO IS AT THE SQUARE ----
+   The largest thing in the game nobody was ever told about: two men ask at the square every
+   week from the day you take the keys, and nothing said so.
+
+   AND THEN IT WAS THERE EVERY SINGLE WEEK. The gate was only "you have no doctore", and a
+   house has no doctore for a long time — so across fourteen houses read through their first
+   thirty weeks this line stood in **354 of 354 weeks**, 100.0%, the most frequent thing the
+   list ever said, at urgency 2 in nearly all of them.
+
+   The first guess was that it nagged about a man nobody could afford. Measured: wrong.
+   Gating it on affordability moved 100.0% to 98.9%, because a young house CAN afford the
+   cheaper of the two almost every week — it simply has not hired one. So the frequency is not
+   the fault. The line is true and actionable every week, and a list whose promise is
+   "everything with your name on it this week" is right to carry it.
+
+   The urgency is the fault. 93.2% of first-hour weeks carried more than three items and 74.6%
+   something urgent, and a permanent item at urgency 2 sits above the week's actual news for
+   as long as the player declines it. It is news for a season; after that it is a standing
+   note, and a standing note should not outrank a levy coming due. Measured after: loud items
+   3.57 a week → 2.94, and weeks carrying more than two of them 81.1% → 58.8%. */
+function agendaSquare(d, add){
+  if(d.doctoreOffer){ add(2, "market", "A doctore is offering", "he will not wait long"); return; }
+  if(d.doctore || !(d.doctoreMarket||[]).length) return;
+  const can = (d.doctoreMarket||[]).filter(c=>c.fee<=d.gold).sort((a,b)=>b.skill-a.skill)[0];
+  const ask = Math.min(...d.doctoreMarket.map(c=>c.fee));
+  const fresh = d.week <= YEAR_WEEKS / 2;        /* the first half-year, while it is still news */
+  add(can && fresh ? 2 : 1, "ludus", "Nobody in this yard can teach",
+    can ? `${can.name} is asking ${can.fee}d — every man would train faster for it`
+        : `the square is asking ${ask}d and you have ${rnd(d.gold)}d`);
+}
 function agendaGods(d, add){
   if(d.city || d.travel || d.rome) return;
   const pi = pietyOf(d);
@@ -2689,16 +2719,7 @@ function agenda(d){
       add(d.week <= 12 ? 2 : 1, "arena",
         `${men.length} at the rope in ${pitOf(d).name}`,
         `${men.map(f=>f.name).join(", ")} — no festival needed, and ${free.length===1?"one man is":free.length+" men are"} free`); }
-  if(d.doctoreOffer) add(2, "market", "A doctore is offering", "he will not wait long");
-  /* the largest thing in the game nobody was ever told about. Two men ask at the
-     square every week from the day you take the keys and nothing said so. */
-  if(!d.doctore && !d.doctoreOffer && (d.doctoreMarket||[]).length){
-    const can = (d.doctoreMarket||[]).filter(c=>c.fee<=d.gold).sort((a,b)=>b.skill-a.skill)[0];
-    const ask = Math.min(...d.doctoreMarket.map(c=>c.fee));
-    add(can ? 2 : 1, "ludus", "Nobody in this yard can teach",
-      can ? `${can.name} is asking ${can.fee}d — every man would train faster for it`
-          : `the square is asking ${ask}d and you have ${rnd(d.gold)}d`);
-  }
+  agendaSquare(d, add);
   if(d.unrest >= 70) add(2, "ludus", "The cells are close to fire", unrestWord(d.unrest));
   if(d.lanista && d.lanista.health < 30 && !d.heir) add(2, "ludus", "You are failing and have named nobody", "the house dies with you");
   { const br = inBreach(d);
@@ -8029,8 +8050,17 @@ const LESSONS = [
   { id:"bets", tab:"arena", title:"The Bookmakers",
     done:d=>d.flags && d.flags.lastBet!=null,
     text:"You may lay coin on your own fighter, or against them. Against means they are told to go down — and they will know you asked, whatever the crowd sees. The familia remembers that longer than the whip." },
+  /* ---- A LESSON FINISHED BEFORE IT WAS OFFERED ----
+     This was `Object.keys(d.gear||{}).length>0` — anything at all on the rack. Every one of
+     the five openings hands you a rack: clean {gladius 2, hasta 1}, even {gladius, fuscina,
+     twin_b}, uncle, one good man, old guard — all of them. So the test was true in week 1 in
+     every scenario the game has and the lesson explaining how kit works was `done` before it
+     could ever be shown. With `wear` closed behind it as well (see below), the armory tab
+     offered NO LESSON AT ALL to a new house: three written for that tab, none reachable.
+     What was meant was "he has bought steel of his own", and `gearCond` is exactly that —
+     it gets an entry the moment a bought piece enters the rack, and never for house issue. */
   { id:"armory", tab:"armory", title:"Steel and Style",
-    done:d=>Object.keys(d.gear||{}).length>0,
+    done:d=>Object.keys(d.gearCond||{}).length>0 || d.week>=10,
     text:"Standard kit is always free on the racks. Bought pieces arm one man at a time. Gear outside a man's own style still works, but clumsily — a net-man in a legionary's shield is worse than useless." },
   { id:"market", tab:"market", title:"The Slaver's Block",
     done:d=>(d.annals||[]).length>0 || d.gladiators.length>3,
@@ -8105,17 +8135,37 @@ const LESSONS = [
     when:d=>(d.unburied||[]).some(m=>!m.done),
     text:"Funeral games are what a rich man's sons stage at his tomb. Nobody has ever staged them for a gladiator. You have six weeks to burn a fire at the gate with his name said aloud, or put on a full card at your own expense — or do nothing, which costs no money and which the men notice more than either of the others." },
 
+  /* ---- AND ONE STARVED BY THE QUEUE IN FRONT OF IT ----
+     `lessonFor` shows ONE lesson per tab, the first unlearned one whose window is open, so
+     thirty-five lessons across six tabs is a queue — and a window can expire while something
+     ahead of it holds the slot. `market` closes at "annals > 0 or a fourth man"; this closed
+     at "annals >= 2". Measured over twelve houses read by a player who reads every lesson on
+     every tab every week: eligible in 12 weeks, offered in **0**. It was only ever open while
+     the lesson ahead of it was open too, and the week after that one is read this one is
+     already done. Its exit is now the thing it is about — having PAID to have a man looked
+     over, which `scoutBlockMan` records, because three of the five openings hand you a
+     scouted man and `some(m=>m.scouted)` was true in week 1 of those three — with a week
+     backstop so it does not nag a house that never scouts anybody. */
   { id:"scout", tab:"market", title:"The Seller's Version",
-    done:d=>(d.annals||[]).length>=2,
+    done:d=>!!(d.flags && d.flags.everScouted) || d.week>=18,
     text:"Those numbers are what the man selling him says. He overstates a sound man by about two points a stat and a flawed one by twice that, and roughly a third of the block has something wrong with it — an old wound, a spirit already broken, a temper sold twice in a year. Your doctore narrows the range. Paying to have him looked over gives you the number and names the problem." },
   { id:"staff", tab:"market", title:"The Men In The Rooms",
     done:d=>!!d.medicus || !!d.armourer || !!d.doctore,
     when:d=>BKEYS.some(k=>bLevel(d,k)>0),
     text:"The infirmary and the armoury are rooms. What matters is who is standing in them. A good medicus mends faster and keeps a wound from setting badly; a good armourer makes steel cheaper, longer-lasting and quicker to repair. Both will leave — one if you fill his table every week, the other if you pay him late twice — and a rival with a grudge can buy either out from under you." },
 
+  /* ---- AND ONE WHOSE DOOR WAS BEHIND ITS EXIT ----
+     It opened when a man was WEARING bought steel and closed when `gearCond` had an entry.
+     Driven with `buyGearItem`: buying a single gladius writes gearCond that instant, so
+     `done` went true at the moment of purchase, while `when` still needed the piece to be
+     equipped — which can only happen afterwards. Measured across the whole sequence (fresh /
+     bought / equipped / week ended), `when` never once came true while `done` was false.
+     A lesson cannot open after it has closed. Its door is now owning the steel, and its exit
+     is having seen a piece come back off the sand worn — which is the thing it is about, and
+     which is strictly later than both. Bought pieces enter the pool at 100. */
   { id:"wear", tab:"armory", title:"Steel Does Not Last",
-    done:d=>(d.forged||[]).length>0 || Object.keys(d.gearCond||{}).length>0,
-    when:d=>d.gladiators.some(g=>SLOTS.some(s=>wears(GEAR[g.kit&&g.kit[s]]))),
+    done:d=>Object.values(d.gearCond||{}).some(pool=>(pool||[]).some(c=>c<80)),
+    when:d=>Object.keys(d.gearCond||{}).length>0 || (d.forged||[]).length>0,
     text:"House stock is maintained and lasts forever. Bought steel wears every bout and eventually breaks in the middle of one. Watch the condition, have it mended before it goes, and remember that a fine blade at nothing left is worse than the plain one on the rack." },
   { id:"bench", tab:"armory", title:"The Master's Bench",
     done:d=>Object.keys(d.gear||{}).some(id=>isMaster(id)),
@@ -17035,6 +17085,10 @@ function scoutBlockMan(d, gid){ const g = d.market.find(x=>x.id===gid); if(!g ||
   if(d.gold < fee) return false;
   d.gold -= fee;
   g.scouted = true;
+  /* that he has paid for this once, which is not the same as there being a scouted man on
+     the block: three of the five openings hand you one already looked over, so the lesson
+     that keyed off `some(m=>m.scouted)` was finished in week 1 of those three */
+  d.flags.everScouted = 1;
   if(g.slaver){ dealt(d, g.slaver, "scouted"); if(g.flaw) dealt(d, g.slaver, "burned"); }
   chron(d, g.flaw
     ? `You pay to have ${g.name} looked over properly. ${PR(g).He} ${FLAWS[g.flaw].tell}. ${g.slaver? slaverOf(g.slaver).name : "The seller"} does not meet your eye about it.`
@@ -23746,7 +23800,9 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* build a house and its people */
     newGameState, genGladiator, genOpponent, pickRivalOpp, makeRivals, clone,
     /* the most-read screen in the game, which only a browser could reach until now */
-    agenda, URG, agendaGods, agendaCan,
+    agenda, URG, agendaGods, agendaCan, agendaSquare,
+    /* what the game says to a player who has never seen it before */
+    LESSONS, lessonFor, lessonsRead, LESSON_QUIET,
     /* what is new, and where — the marks the tab bar and the folded panels wear */
     tabMarks, tabSig, tabFresh, tabQuiet, markSeen, TAB_KEYS, TAB_SIG, TAB_QUIET, TAB_NAMES,
     sectMark, SECT_MARK, MARK_URG,
