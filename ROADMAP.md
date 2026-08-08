@@ -1330,6 +1330,8 @@ Tuning dials, in the order you'd reach for them:
 | Proving it for Rome | `romeProved` / `ROME_RANK` | the primacy held, or received as Eques (rank 4); rank 5 admitted nobody the sand had not |
 | Who is shown a paragon | `PARAGON_ODDS` / `PARAGON_REACH` / `PARAGON_GAP` | 5.5% a week, only within 88% of his price by a full fire sale, 90 weeks between; 23–30% of houses reaching week 120 see one |
 | What counts as new, and where | `TAB_SIG` / `tabSig` / `tabMarks` | a signature per tab over its discrete state; arrivals move it, drift never does |
+| What earns a badge | `MARK_URG` / `TAB_QUIET` | urgency 2 and above only (3.64 items a week, not 7.86); an empty tab cannot be fresh |
+| What a kept vow is worth | `VOW_BOUTS_FULL` / `VOW_EARNT_AT` | par at nothing risked, 1.6× at six cards fought under it — and never a blessing |
 | Which panel inside a tab | `SECT_MARK` / `sectMark` | eight panels, each a function of the save so a check can ask what it would wear |
 | What the priests count | `PIETY_TOP` / `pietyFame` | fame read up to 1,600 and no further — the dearest altar asks 1,900d, not 20,300d at fame 20,000 |
 | A blessing worth keeping | `GODS` / `OFFERING_COOL` | 4–6 weeks a gift, a 3-week rest; a house that keeps the rites rides one 31.6% of weeks for 19.6% of income |
@@ -1363,6 +1365,73 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.62.0 — A vow is a gamble, not a way to buy a blessing
+
+Audit items #100 and #101, both of them faults this project shipped in the two releases
+before it. The v2.61.0 audit's first job was measuring its own recent work, and it found
+two things wrong with it.
+
+**#100. The vow's odds run steeply with house quality and v2.60.0 removed the
+counterweight.** Measured over 200 vows across ten houses fighting a real card, with the
+settlement read off `resolveVow` rather than across the weeks it takes to come due:
+
+| fame | sworn | kept | staked | back | net |
+|---|---|---|---|---|---|
+| under 300 | 74 | 34 (46%) | 17,141 | 11,516 | −33% |
+| 300–1,600 | 82 | 52 (63%) | 51,144 | 47,027 | −8% |
+| past 1,600 | 44 | 36 (**82%**) | 48,840 | 55,944 | **+15%** |
+
+The falsification clause asked whether that was the probe's card policy rather than house
+quality — a great house fights MORE, so it ought to lose a man MORE often. Settled: deaths
+per bout falls **4.7×** as a house improves (0.168 under fame 300 against 0.036 past 1,600)
+and a great house also fights *fewer* bouts a week (0.37 against 0.74), because it is away
+at Rome or holding the title. Predicted keep rates from those two figures alone: 54%, 80%,
+94%. It is structural.
+
+Before v2.60.0 the stake climbed with fame without limit, which partly offset the improving
+odds. Capping it at `PIETY_TOP` took that away and nothing was watching.
+
+So a kept vow now pays **what the month actually risked**. Every engine records through
+`bookBout` and nowhere else, so that is where a standing vow counts the cards fought under
+it: par at nothing ventured, 1.6× at six cards. **And the blessing comes out of it
+entirely** — that was the real prize and the real fault. A house past the cap collected 36
+free four-to-six-week blessings across 44 vows, so it never once needed the altar the
+previous release spent itself repricing. Two systems and one of them free. Now the vow is a
+gamble on your own men and the altar sells blessings, and they have stopped being
+substitutes. Measured after: the great house's edge is **+4%** and the free blessings are
+gone. Dials: `VOW_BOUTS_FULL`, `VOW_EARNT_AT`.
+
+The small house's −33% is left alone deliberately, and disclosed instead. A house burying a
+man a month cannot honestly promise that none will fall, and the screen said "the coin
+returns doubled in goodwill" — which is a rosy way to describe a bet you lose 54% of the
+time. Both the ask and the standing-vow panel now name what the house has been risking, in
+its own recent dead and its own cards fought.
+
+**#101. The marks from v2.61.0 were lit most weeks.** Arena fresh in 72% of weeks, Familia
+68%, Market 51%, and the Familia tab carried a mean 2.98 items. Two separate causes, both
+measured before either was touched.
+
+The badge counted **every** agenda item, urgency 1 included — and `1|men` alone runs at 2.28
+items a week: four standing lines about men not sworn in and moves not taught, which persist
+until you act and never clear if you have decided against them. The agenda holds 7.86 items
+a week but only **3.64 at urgency 2 or 3**, so the badge counts the loud ones now, which is
+about six tenths of an item per tab. The quieter ones are still on the agenda, which is where
+a list of what you could get round to belongs.
+
+And the Arena reported the card's **disappearance** as news, at exactly the rate of its
+arrival: 352 arrivals against 352 disappearances over 1,200 weeks of a fighting house, so
+42% of its freshness was the absence of news. A tab with nothing on it cannot be fresh now
+(`TAB_QUIET`), and the next card still lights it because quieting does not overwrite what
+was last seen.
+
+Measured after: Arena 72% → 43%, and the badges from 2.98 / 2.07 / 1.44 to 0.34 / 0.76 /
+1.21. Familia freshness is 63% and **left there on purpose**: driven per-part in a house
+that fights, it is the roster that moves — men dying, men bought, men freed, in 75% of
+weeks. Pulling the fit list out on suspicion moved the figure four points and cost two real
+signals (a man carried off, a man coming good), so it went back in and `glance` holds it.
+A house that gains or loses a man most weeks has news most weeks; #99 says 44% of houses die
+inside a year, so that is the game's texture rather than a leak.
 
 ### v2.61.0 — You can see what is new without opening all six tabs
 
@@ -3491,4 +3560,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.61.0*
+*Last updated: v2.62.0*

@@ -491,6 +491,19 @@ const bk = (o,k) => (o[k] = o[k] || { n:0, w:0, d:0 });
    the honest way to write that down is a third column. Old books have no drew
    count at all, so every read of one is guarded. */
 function bookBout(d, o){
+  /* ---- WHAT A VOW WAS ACTUALLY PROMISING ----
+     A vow swears that not a man of the house will fall before the month is out, and it
+     used to pay 1.4× and a free blessing whether the house fought four cards in that month
+     or none. Measured: deaths per bout falls 4.7× as a house improves — 0.168 under fame
+     300, 0.036 past 1,600 — and a great house also fights FEWER bouts a week (0.37 against
+     0.74), because it is away at Rome or holding the title. So the odds run from 46% kept
+     to 82%, and v2.60.0 capping the stake at PIETY_TOP took away the one thing that had
+     been rising with them. A house past the cap made 15% on its stake, 371 points of piety
+     and 36 free blessings across 44 vows, which is why it never needed the altar at all.
+
+     The promise is the risk. Every engine records its bouts here and nowhere else, so this
+     is the one place that can count what a standing vow actually stood through. */
+  if(d.vow) d.vow.bouts = (d.vow.bouts||0) + 1;
   d.book = d.book || newBook();
   const B = d.book;
   B.n++;
@@ -2389,7 +2402,15 @@ const TAB_SIG = {
     d.collegium ? "coll" : "",
     d.rebellion ? `reb${d.rebellion.stage}` : "",
   ]),
-  /* the men: who is here, who is fit, and who is asking something */
+  /* the men: who is here, who is fit, and who is asking something.
+     The fit list was pulled out of this on suspicion of being the churn behind a tab marked
+     in 64% of weeks, and putting it back is the measurement's own doing: removing it moved
+     that figure to 60% and cost two real signals — a man carried off the sand and a man
+     coming good again. Driven per-part in a house that fights, it is the ROSTER that moves,
+     in 75% of weeks: men dying, men bought, men freed. Those are the news. A house with
+     that much turnover has something on this tab most weeks and the dot is telling the
+     truth; #99 says 44% of houses die inside a year, so turnover is the game's texture and
+     not a leak in the signature. */
   men: d => joinSig([
     activeG(d).map(g=>g.id).join(","),
     activeG(d).filter(g=>canFight(g) && !g.injury).map(g=>g.id).join(","),
@@ -2439,6 +2460,19 @@ const TAB_SIG = {
     unhonoured(d).filter(m=>!m.done).length,
   ]),
 };
+/* ---- AND AN EMPTY TAB IS NOT NEWS ----
+   The Arena was marked fresh in 68% of weeks and **42% of those changes were the card being
+   consumed rather than a new one arriving** — 352 arrivals against 352 disappearances over
+   1,200 weeks of a fighting house. A signature that moves when the thing it describes goes
+   away reports the absence of news as news, and it does it exactly as often as the real
+   thing. So a tab that has nothing on it cannot be fresh; the next arrival still is,
+   because what was last seen has not been overwritten in the meantime. */
+const TAB_QUIET = {
+  arena: d => !d.games && !d.askBooking && !d.askChallenge && !d.rome,
+  market: d => !(d.market||[]).length && !(d.doctoreMarket||[]).length && !d.powLot,
+};
+const tabQuiet = (d, tab) => { const f = TAB_QUIET[tab]; if(!f) return false;
+  try { return !!f(d); } catch(e){ return false; } };
 const tabSig = (d, tab) => { const f = TAB_SIG[tab]; if(!f) return "";
   try { return f(d); } catch(e){ return ""; } };
 /* the player has looked at this tab, and this is what was on it when he did */
@@ -2447,7 +2481,7 @@ function markSeen(d, tab){
   d.seen = d.seen || {};
   d.seen[tab] = tabSig(d, tab);
 }
-const tabFresh = (d, tab) => !!TAB_SIG[tab] && ((d.seen||{})[tab] !== tabSig(d, tab));
+const tabFresh = (d, tab) => !!TAB_SIG[tab] && !tabQuiet(d, tab) && ((d.seen||{})[tab] !== tabSig(d, tab));
 
 /* ---- AND ONE LEVEL DOWN ----
    A tab's mark says the answer is in that tab; these say which of its folded panels. Kept
@@ -2478,13 +2512,23 @@ const sectMark = (d, key) => { const f = SECT_MARK[key]; if(!f) return null;
    One mark per tab: the loudest urgency the agenda has for it, how many items, and whether
    anything on it has moved since you looked. A pure function of the save, so the bar can
    be asked what it would show without rendering anything. */
+/* THE BADGE COUNTS WHAT IS ASKING, NOT WHAT IS MERELY AVAILABLE.
+   It counted every agenda item including urgency 1 — "when you can" — and `1|men` alone
+   runs at 2.28 items a week, four standing lines about men not sworn in and moves not
+   taught which persist until you act and never clear if you have decided not to. That put
+   a permanent "2" on the Familia tab. Measured across 3,847 house-weeks the agenda holds
+   7.86 items a week but only **3.64 at urgency 2 or 3** and 0.34 at urgency 3, so counting
+   the loud ones gives about six tenths of an item per tab and a badge means something
+   again. The quiet ones are still on the agenda, which is where a list of what you could
+   get round to belongs. */
+const MARK_URG = 2;
 function tabMarks(d){
   const A = (()=>{ try { return agenda(d); } catch(e){ return []; } })();
   const out = {};
   for(const k of TAB_KEYS){
-    const mine = A.filter(x=>x.tab === k);
-    out[k] = { n: mine.length,
-      urg: mine.reduce((m,x)=>Math.max(m, x.urgency||0), 0),
+    const mine = A.filter(x=>x.tab === k), loud = mine.filter(x=>(x.urgency||0) >= MARK_URG);
+    out[k] = { n: loud.length, quiet: mine.length - loud.length,
+      urg: loud.reduce((m,x)=>Math.max(m, x.urgency||0), 0),
       fresh: tabFresh(d, k) };
   }
   return out;
@@ -8203,21 +8247,40 @@ function swearVow(d, god){
   const stake = vowStake(d); if(d.gold < stake) return null;
   d.gold -= stake;
   const until = d.week + ri(4, 6);
-  d.vow = { god, until, stake, deaths0:(d.fallen||[]).length };
+  d.vow = { god, until, stake, deaths0:(d.fallen||[]).length, bouts:0 };
   chron(d, `A vow to ${G.name}: ${stake} denarii pledged, and not a man of this house to fall before the month is out. The words are said over the altar and cannot be unsaid.`, "info");
   return { stake, god };
 }
+/* ---- WHAT A KEPT VOW IS WORTH, AND WHAT IT IS NOT ----
+   Scaling the coin by the risk taken was the first attempt and it moved the needle from
+   +15% to +11% on the stake, because the coin was never the prize. The prize was the
+   blessing: a house past fame 1,600 kept 36 vows of 44 and collected 36 free four-to-six
+   week blessings, so it never once needed the altar — and the altar is the thing v2.60.0
+   spent a release pricing. Two systems, one of them free.
+
+   So a kept vow pays in coin and in piety, scaled by what the month actually risked, and
+   the blessing stays where it is sold. The vow is a gamble on your own men; the offering is
+   a purchase. They are no longer substitutes, and `PIETY_TOP` means something again. */
+const VOW_BOUTS_FULL = 6;
+const vowRisked = v => Math.min((v && v.bouts) || 0, VOW_BOUTS_FULL);
+const vowReturn = v => 1 + 0.10 * vowRisked(v);            /* par at nothing, 1.6× at six */
+const VOW_EARNT_AT = 2;                                    /* below this the gods shrug */
+/* what the house has actually been losing, so the ask can say it */
+const buried20 = d => (d.fallen||[]).filter(f=>d.week - f.week <= 20).length;
 function resolveVow(d){
   const v = d.vow; if(!v || d.week < v.until) return;
   const G = GODS[v.god] || { name:"the god" };
   const kept = (d.fallen||[]).length === v.deaths0;
   d.vow = null;
   if(kept){
-    d.gold += v.stake + rnd(v.stake*0.4);
-    d.piety = clamp(pietyOf(d) + 16, 0, 100);
-    d.blessing = { god:v.god, until:d.week + (GODS[v.god]?GODS[v.god].weeks:4) };
-    patronsOf(d).forEach(p=>{ p.favor = clamp(p.favor+4,0,100); }); recomputeFavor(d);
-    chron(d, `The vow to ${G.name} is kept — the month is out and every man still stands. The pledge comes back to you doubled in goodwill, and the god's blessing rides with the house.`, "good");
+    const risked = vowRisked(v), earnt = risked >= VOW_EARNT_AT;
+    d.gold += rnd(v.stake * vowReturn(v));
+    d.piety = clamp(pietyOf(d) + (earnt ? 16 : 5), 0, 100);
+    patronsOf(d).forEach(p=>{ p.favor = clamp(p.favor+(earnt?4:1),0,100); }); recomputeFavor(d);
+    chron(d, earnt
+      ? `The vow to ${G.name} is kept — ${risked === 1 ? "a card" : `${risked} cards`} fought inside the month and every man still standing at the end of it. The pledge comes back with interest and the house is the more pious for it. What the god does not do is owe you a favour; that is what the altar is for.`
+      : `The vow to ${G.name} is kept, technically. The month is out and nobody fell, because nobody was sent anywhere to fall. The priest returns your pledge and says the correct words over it, and the god is not noticeably moved.`,
+      earnt ? "good" : "info");
   } else {
     d.piety = clamp(pietyOf(d) - 22, 0, 100);
     d.unrest = clamp(d.unrest + 8, 0, 100);
@@ -20252,6 +20315,14 @@ export default function App(){
                 <div className="panel" style={{padding:9,marginBottom:9,background:"#241b11",borderColor:"#6d5426"}}>
                   <span className="tag" style={{borderColor:"#6d5426",color:"#d8ac5f"}}>A vow stands · {GODS[S.vow.god]?GODS[S.vow.god].name:"a god"}</span>
                   <div style={{fontSize:"var(--fs-md)",marginTop:4}}>Not a man to fall before it is out — <span className="dim">{Math.max(1,S.vow.until-S.week)} week{S.vow.until-S.week===1?"":"s"} left</span>. {S.vow.stake}d pledged on it.</div>
+                  {/* what it is worth is what it has stood through, and the panel says so
+                      rather than leaving a player to find out at the settlement */}
+                  <div style={{fontSize:"var(--fs-base)",marginTop:3,color:vowRisked(S.vow)>=VOW_BLESS_AT?"#a9c98a":"#cfc0a0"}}>
+                    {S.vow.bouts||0} card{(S.vow.bouts||0)===1?"":"s"} fought under it · comes back at {rnd(S.vow.stake*vowReturn(S.vow))}d
+                    {vowRisked(S.vow) >= VOW_EARNT_AT
+                      ? ` and the piety of a house that risked something`
+                      : `, and ${VOW_EARNT_AT - vowRisked(S.vow)} more card${VOW_EARNT_AT-vowRisked(S.vow)===1?"":"s"} before the gods count it as risked`}
+                  </div>
                 </div>
               ) : (
                 <div className="dim" style={{fontSize:"var(--fs-sm)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:6}}>An offering, or a vow</div>
@@ -20273,7 +20344,11 @@ export default function App(){
                           pledge coin never said how much */}
                       {!S.vow && <button className="btn btn-ghost" style={{flex:1}} disabled={S.gold < stake}
                         onClick={()=>setAsk({ title:`A Vow to ${G.name}`, confirm:`Swear it · ${stake}d`,
-                          text:`You pledge ${stake} denarii to ${G.name} and swear that not a man of this house will fall in the month to come. Keep it and the coin returns doubled in goodwill, with the god's blessing on the house. Break it — bury a man before it is out — and the coin is forfeit and the gods turn cold.`,
+                          /* "the coin returns doubled in goodwill" was a rosy description of
+                             a bet a young house loses more often than it wins: measured over
+                             200 vows, a house under fame 300 keeps 46% of them. It says what
+                             it is betting on now, in the house's own recent dead. */
+                          text:`You pledge ${stake} denarii to ${G.name} and swear that not a man of this house will fall in the month to come. What comes back depends on what you risked in it — nothing ventured, your pledge and a polite word; a month of hard cards kept clean, the coin with interest and a markedly more pious house. A blessing is bought at the altar, not won here. Break it — bury a man before it is out — and the coin is forfeit and the gods turn cold.${buried20(S) ? ` You have buried ${buried20(S)} in the last twenty weeks.` : ` You have buried nobody in twenty weeks.`}`,
                           run:()=>vowTo(k) })}>{S.gold < stake ? "Not enough to pledge" : `Vow · ${stake}d`}</button>}
                     </div>
                   </div>
@@ -23577,7 +23652,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* the most-read screen in the game, which only a browser could reach until now */
     agenda, URG, agendaGods, agendaCan,
     /* what is new, and where — the marks the tab bar and the folded panels wear */
-    tabMarks, tabSig, tabFresh, markSeen, TAB_KEYS, TAB_SIG, TAB_NAMES, sectMark, SECT_MARK,
+    tabMarks, tabSig, tabFresh, tabQuiet, markSeen, TAB_KEYS, TAB_SIG, TAB_QUIET, TAB_NAMES,
+    sectMark, SECT_MARK, MARK_URG,
     /* the generators behind the four markets — a check that cannot refresh a stall
        cannot ask what the stall offers, which is how the block's pricing drifted
        through a release that changed the number it reads */
@@ -23624,7 +23700,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* the gods: five of them, four real boons, and nothing had ever called either action */
     GODS, GOD_KEYS, makeOffering, swearVow, resolveVow, templeWeek,
     pietyOf, pietyWord, blessOf, blessLeft, offeringReady, OFFERING_COOL, illLuck,
-    PIETY_TOP, pietyFame, vowStake, healSpeed,
+    PIETY_TOP, pietyFame, vowStake, healSpeed, vowReturn, vowRisked, buried20,
+    VOW_BOUTS_FULL, VOW_EARNT_AT,
     blessMercy, blessHeal, blessPurse, blessFame,
     seekMatchNow, openLicenceNow, takeUpTheHouse, claimRise, succeed,
     /* the nineteen things a house is remembered for, and the gates on each of them */

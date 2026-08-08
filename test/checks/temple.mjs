@@ -105,24 +105,28 @@ export async function run({ p, errors }){
        takes to come due. Measured over ten quiet weeks, a broken vow appeared to hand
        back 640 denarii — which was the stipend and the upkeep of those weeks, not a
        refund. That the vow comes due at all is asserted separately, by playing it. */
-    const vowRun = (seed, bury)=>{
+    const vowRun = (seed, bury, cards)=>{
       const d = house(seed);
       const p0 = A.pietyOf(d), u0 = d.unrest, g0 = d.gold;
       const sworn = A.swearVow(d, "fortuna");
       const twice = !!A.swearVow(d, "mars");                   /* one at a time */
       const took = Math.round(g0 - d.gold);
+      /* what the month risked. Every engine records through bookBout, so this is the same
+         count a real card would produce. */
+      for(let i=0;i<(cards||0);i++) A.bookBout(d, { win:true, purse:100, tier:1, kind:"single" });
       if(bury) d.fallen = (d.fallen||[]).concat([{ name:"Somebody", week:d.week }]);
       /* stand it out to the due week without letting the week's trade in */
       d.week = d.vow.until;
-      const g1 = d.gold;
+      const g1 = d.gold, cardsUnder = d.vow.bouts||0;
       A.resolveVow(d);
-      return { stake: sworn ? sworn.stake : 0, took, twice,
+      return { stake: sworn ? sworn.stake : 0, took, twice, cardsUnder,
         back: Math.round(d.gold - g1), gone: !d.vow,
         pietyMove:+(A.pietyOf(d)-p0).toFixed(1), unrestUp:+(d.unrest-u0).toFixed(1),
         ill:A.illLuck(d), riding:A.blessOf(d) };
     };
-    R.vowKept = vowRun("TM_VOWK", false);
-    R.vowBroken = vowRun("TM_VOWB", true);
+    R.vowKept = vowRun("TM_VOWK", false, 5);      /* a month of hard cards, kept clean */
+    R.vowIdle = vowRun("TM_VOWI", false, 0);      /* and a month of promising nothing */
+    R.vowBroken = vowRun("TM_VOWB", true, 5);
     /* and it does come due on its own, played out week by week */
     { const d = house("TM_VOWDUE");
       A.swearVow(d, "fortuna");
@@ -180,7 +184,8 @@ export async function run({ p, errors }){
       `missio +${g.mercy} · heal ×${g.heal} · purse ×${g.purse} · fame ×${g.fame} · morale ${g.moraleWk>=0?"+":""}${g.moraleWk}/wk · standing ${g.favorWk>=0?"+":""}${g.favorWk}/wk`);
   lines.push(`the altar rests ${out.cool.wait} weeks: a second gift at once ${out.cool.secondNow}, after the wait ${out.cool.swapped} (now ${out.cool.riding})`);
   lines.push(`piety drifts home: from 90 → ${out.drift.from90}, from 4 → ${out.drift.from4}`);
-  lines.push(`a vow kept: ${out.vowKept.stake}d staked, ${out.vowKept.back}d back at the altar, piety ${out.vowKept.pietyMove>=0?"+":""}${out.vowKept.pietyMove}, ${out.vowKept.riding || "nothing"} rides with the house`);
+  lines.push(`a vow kept through ${out.vowKept.cardsUnder} cards: ${out.vowKept.stake}d staked, ${out.vowKept.back}d back, piety +${out.vowKept.pietyMove} — riding: ${out.vowKept.riding || "nothing, which is the point"}`);
+  lines.push(`a vow kept through ${out.vowIdle.cardsUnder}: ${out.vowIdle.back}d back on ${out.vowIdle.stake}d, piety +${out.vowIdle.pietyMove} — the gods are not moved by a quiet month`);
   lines.push(`a vow broken: ${out.vowBroken.stake}d staked, ${out.vowBroken.back}d back, piety ${out.vowBroken.pietyMove}, unrest +${out.vowBroken.unrestUp}, ill turn ${out.vowBroken.ill}`);
   lines.push(`and it comes due on its own after ${out.vowDue.weeks} weeks (sworn for ${out.vowDue.until})`);
   lines.push(`what the priests ask (they stop counting fame at ${out.price.top}):`);
@@ -227,9 +232,18 @@ export async function run({ p, errors }){
   if(!(out.vowDue.weeks >= 4 && out.vowDue.weeks <= 8))
     fails.push(`a vow came due after ${out.vowDue.weeks} weeks — it is sworn on the month to come`);
   if(!(out.vowKept.back > out.vowKept.stake))
-    fails.push(`a vow kept returned ${out.vowKept.back}d on a ${out.vowKept.stake}d stake — it is supposed to come back with interest`);
+    fails.push(`a vow kept through ${out.vowKept.cardsUnder} cards returned ${out.vowKept.back}d on a ${out.vowKept.stake}d stake — a month genuinely risked is supposed to come back with interest`);
   if(!(out.vowKept.pietyMove >= 10)) fails.push(`a vow kept moved piety ${out.vowKept.pietyMove}`);
-  if(!out.vowKept.riding) fails.push("a vow kept did not put a blessing on the house");
+  /* ---- and the promise is the risk, not the month ---- */
+  if(out.vowIdle.cardsUnder !== 0) fails.push("the idle vow was credited with cards it never fought");
+  if(out.vowIdle.back > out.vowIdle.stake)
+    fails.push(`a vow kept through no cards at all returned ${out.vowIdle.back}d on ${out.vowIdle.stake}d — a house that sends nobody anywhere has promised the gods nothing, and this is the v2.62.0 fault returning`);
+  if(!(out.vowIdle.pietyMove < out.vowKept.pietyMove))
+    fails.push(`promising nothing moved piety ${out.vowIdle.pietyMove} against ${out.vowKept.pietyMove} for a month of hard cards — the reward does not follow the risk`);
+  /* ---- and a blessing is bought, never won ---- */
+  if(out.vowKept.riding)
+    fails.push(`a kept vow put "${out.vowKept.riding}" on the house — measured over 200 vows, a house past fame 1,600 kept 36 of 44 and collected 36 free blessings, so it never needed the altar the previous release spent itself pricing. The vow pays coin and piety; the altar sells blessings.`);
+  if(out.vowIdle.riding) fails.push("a vow kept through nothing put a blessing on the house");
   if(out.vowBroken.back !== 0) fails.push(`a vow broken returned ${out.vowBroken.back}d — the stake is forfeit`);
   if(!(out.vowBroken.pietyMove <= -15)) fails.push(`a vow broken moved piety ${out.vowBroken.pietyMove} — the gods are not mocked`);
   if(!(out.vowBroken.unrestUp > 0)) fails.push("a vow broken left the cells untroubled");

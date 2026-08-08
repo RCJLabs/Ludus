@@ -127,6 +127,43 @@ export async function run({ p, errors }){
         try { A.endWeek(d); } catch(e){} }),
     ];
 
+    /* ---- 3b. AN EMPTY TAB IS NOT NEWS ----
+       The Arena was marked fresh in 68% of weeks and 42% of those changes were the card
+       being CONSUMED rather than a new one arriving — 352 arrivals against 352
+       disappearances over 1,200 weeks. A signature that moves when its subject goes away
+       reports the absence of news as news, at exactly the same rate as the real thing. */
+    { const d = house("GL_QUIET");
+      d.games = null; A.markSeen(d, "arena");
+      for(let i=0;i<4 && !d.games; i++){ d.week++; A.makeGames(d); }
+      const litOnArrival = A.tabFresh(d, "arena");
+      /* the player never looked, and the card is fought off the board */
+      d.games = null;
+      R.quietTab = { litOnArrival, quiet: A.tabQuiet(d, "arena"),
+        litOnEmpty: A.tabFresh(d, "arena"),
+        /* and the NEXT card still lights it, because nothing overwrote what was seen */
+        litAgain: (()=>{ for(let i=0;i<8 && !d.games; i++){ d.week++; A.makeGames(d); }
+          return { got:!!d.games, fresh:A.tabFresh(d, "arena"),
+            seen:((d.seen||{}).arena||"").slice(0,24), now:A.tabSig(d,"arena").slice(0,24) }; })() }; }
+
+    /* ---- 3c. AND THE BADGE COUNTS WHAT IS ASKING ----
+       It counted every agenda item including urgency 1 — "when you can" — and `1|men` runs
+       at 2.28 items a week (men not sworn in, moves not taught: standing options that never
+       clear if you have decided against them). That was a permanent "2" on the Familia tab.
+       The agenda holds 7.86 items a week and only 3.64 at urgency 2 or 3. */
+    { const d = house("GL_BADGE");
+      /* a house whose only business is a pile of urgency-1 options */
+      const items = A.agenda(d), m = A.tabMarks(d);
+      const quietOnly = A.TAB_KEYS.filter(k=>{
+        const mine = items.filter(x=>x.tab===k);
+        return mine.length && mine.every(x=>(x.urgency||0) < A.MARK_URG); });
+      R.badge = { threshold:A.MARK_URG,
+        quietOnlyTabs: quietOnly,
+        badgedAnyway: quietOnly.filter(k=>m[k].n > 0),
+        /* and the quiet ones are still counted, just not badged */
+        carried: A.TAB_KEYS.filter(k=>m[k].quiet > 0),
+        loudCounted: A.TAB_KEYS.every(k=>
+          m[k].n === items.filter(x=>x.tab===k && (x.urgency||0) >= A.MARK_URG).length) }; }
+
     /* ---- 4. looking clears it, and only looking ---- */
     { const d = house("GL_SEEN");
       d.games = null; A.markSeen(d, "arena");
@@ -148,9 +185,14 @@ export async function run({ p, errors }){
       d.piety = 8;
       const items = A.agenda(d), m = A.tabMarks(d);
       const byTab = {};
-      for(const it of items) byTab[it.tab] = (byTab[it.tab]||[]).concat([it.urgency]);
-      R.marks = { tabs:Object.keys(m).length,
+      /* against the LOUD items only — the badge counts urgency MARK_URG and above, so
+         comparing it to every item on the tab was comparing two different things and made
+         the villa row read 1 against 3 */
+      for(const it of items) if((it.urgency||0) >= A.MARK_URG)
+        byTab[it.tab] = (byTab[it.tab]||[]).concat([it.urgency]);
+      R.marks = { tabs:Object.keys(m).length, threshold:A.MARK_URG,
         rows: A.TAB_KEYS.map(k=>({ tab:k, n:m[k].n, urg:m[k].urg, fresh:m[k].fresh,
+          quiet:m[k].quiet,
           realN:(byTab[k]||[]).length, realUrg:Math.max(0, ...(byTab[k]||[0])) })) }; }
 
     /* ---- 6. the feast and the rung, which the agenda never mentioned ---- */
@@ -217,10 +259,12 @@ export async function run({ p, errors }){
   lines.push("and what does not:");
   for(const q of out.quiet)
     lines.push(`   ${q.lit.length ? "✗" : "✓"} ${q.label.padEnd(28)} ${q.lit.length ? `lit ${q.lit.join(",")}` : "left every tab dark"}`);
+  lines.push(`an empty arena: a fresh card lit it ${out.quietTab.litOnArrival}, the card gone → quiet ${out.quietTab.quiet}, lit ${out.quietTab.litOnEmpty}, and the next card lit it again ${out.quietTab.litAgain.fresh}`);
+  lines.push(`the badge counts urgency ${out.badge.threshold}+: tabs holding only quieter items ${out.badge.quietOnlyTabs.join(",")||"none"} · badged anyway ${out.badge.badgedAnyway.join(",")||"none"} · still carried as quiet ${out.badge.carried.join(",")||"none"}`);
   lines.push(`looking clears it: lit ${out.seen.litBefore} → ${out.seen.litAfter}; looking at the arena left the market ${out.seen.marketAfterLookingElsewhere ? "still lit" : "CLEARED TOO"}`);
   lines.push("the marks against the agenda:");
   for(const r of out.marks.rows)
-    lines.push(`   ${r.tab.padEnd(7)} shows ${r.n} at urgency ${r.urg}${r.fresh?" · new":""}  (agenda has ${r.realN} at ${r.realUrg})`);
+    lines.push(`   ${r.tab.padEnd(7)} badge ${r.n} at urgency ${r.urg}${r.fresh?" · new":""}  (agenda has ${r.realN} loud, ${r.quiet} quieter)`);
   lines.push(`the feast: ${out.can.feast.map(x=>`[${x.u}] ${x.l} — ${x.s}`).join("; ") || "NOT MENTIONED"}`);
   lines.push(`   quiet cells ${out.can.calm ? "STILL NAGGED" : "silent"} · a house that cannot pay for one ${out.can.broke ? "STILL OFFERED IT" : "silent"}`);
   lines.push(`the rung: ${out.can.rung.map(x=>`[${x.u}] ${x.l} — ${x.s}`).join("; ") || (out.can.canClaim ? "NOT MENTIONED" : "none claimable")}`);
@@ -248,6 +292,21 @@ export async function run({ p, errors }){
       fails.push(`${q.label} lit ${q.lit.join(", ")} — a signature reading something continuous marks its tab new every week for ever, and dots that are always on are worse than none`);
   }
 
+  /* ---- an empty tab is not news ---- */
+  if(!out.quietTab.litOnArrival) fails.push("a fresh card did not light the arena at all");
+  if(!out.quietTab.quiet) fails.push("an arena with no card, no ask and no trip does not read as quiet");
+  if(out.quietTab.litOnEmpty)
+    fails.push("the card being fought off the board marked the arena new — that is the absence of news reported as news, and it happens exactly as often as a real card");
+  if(!out.quietTab.litAgain.got)
+    fails.push("no second card could be drawn in eight weeks — the quiet-tab case could not be tested");
+  else if(!out.quietTab.litAgain.fresh)
+    fails.push(`after a card was consumed the NEXT card did not light the tab (seen "${out.quietTab.litAgain.seen}", now "${out.quietTab.litAgain.now}") — quieting a tab must not overwrite what was last seen`);
+  /* ---- and the badge counts what is asking ---- */
+  if(!out.badge.loudCounted)
+    fails.push(`a tab's badge does not equal its count of urgency-${out.badge.threshold}+ items`);
+  if(out.badge.badgedAnyway.length)
+    fails.push(`${out.badge.badgedAnyway.join(", ")} wear a badge for items at urgency 1 alone — "when you can" belongs on the agenda, not on a permanent count, and \`1|men\` alone runs at 2.28 items a week`);
+
   /* ---- looking is what clears it ---- */
   if(!out.seen.litBefore) fails.push("a fresh card did not mark the arena new");
   if(out.seen.litAfter) fails.push("looking at the arena did not clear its mark");
@@ -263,6 +322,8 @@ export async function run({ p, errors }){
   }
   if(!out.marks.rows.some(r=>r.n > 0))
     fails.push("a house with the cells near fire, two men laid up and no rites kept has nothing on any tab — the marks are not reading the agenda");
+  if(!out.marks.rows.some(r=>r.quiet > 0))
+    fails.push("no tab carries any quieter item — the urgency-1 tier has stopped being counted at all, and the agenda still needs it");
 
   /* ---- the two things you could simply do ---- */
   if(!out.can.feast.length)
