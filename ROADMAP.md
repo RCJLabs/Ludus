@@ -1340,6 +1340,7 @@ Tuning dials, in the order you'd reach for them:
 | What earns a badge | `MARK_URG` / `TAB_QUIET` | urgency 2 and above only (3.64 items a week, not 7.86); an empty tab cannot be fresh |
 | What a kept vow is worth | `VOW_BOUTS_FULL` / `VOW_EARNT_AT` | par at nothing risked, 1.6× at six cards fought under it — and never a blessing. Both are six: `VOW_EARNT_AT` was 2, and over 31 vows settled in 1,611 house-weeks the fewest cards under any vow was three and the median eight, so the piety split could never resolve the lean way. At six it bites 26% of vows |
 | What the gatekeeper can say | `LESSONS` / `lessonFor` | 35 lessons, one per tab per week, each with a `done` window — so it is a queue, and a window can expire while something ahead of it holds the slot. **All 35 windows are non-empty**: built into its own state, every lesson opens and every one is then said. From inside its window with nothing read in front of it, **29 of 35 are said, median week 3**; the other 6 are windows that close and reopen rather than expire. A reader playing from week 1 reaches 27 of 35 in 47 weeks; all 11 with no state gate are offered, first at weeks 1–3. Four ways to lose one, all of which had happened: done in week 1 (in an opening nobody was checking), `done` firing before `when` can, starved by the queue in front, and a gate with no satisfiable state at all |
+| What a man's last month is worth | `formWord` / `FORM_TELL` / `formWeek` | five words, and two were never said. `formWeek` decays `f*0.78 - 3` weekly against +24 for a win at the great games, so three straight wins — the lesson's own example — reaches **37.6**, and the bands were 58 and 24. Over 4,862 man-weeks form ran **-50.5 to +42.4**, "in form" and "shaken" **0 times each**, "level" **97%**. Bands are 34 and 14 now; the fixed point of winning every single week is 71.5. What form DOES is unchanged at ±3.6% of power |
 | What you are told before you commit | `menace` / `readMatch` | two readings, and only one is free. `readMatch` — the per-man word on the pick screen — is real only when you have paid to have the man watched, which a house holds on **15.3%** of the men it is offered; the other 84.7% read "no read". Free is `menace`, six words now: Green/Seasoned/Dangerous under mean 66 where a strong man is quoted 97% throughout, then **Lethal 66–77, Murderous 78–89, Peerless 90+**, which against a mean-92 man is 11, 29 and 24 points of quoted chance per band. It ended at 66 for fifty releases, so one word covered mean 66 to 99 — a quote of 96% down to 13%, and every hard decision in the game sits inside it |
 | What a new player is told to do | `CHARTER` / `charterWeek` | eleven steps, and a PREFIX — `charterWeek` stops at the first step not done, so one step a house cannot finish hides every step behind it and the year-end 250d + 12 fame. Walked end to end it finishes; played, it finishes for 10 of 40 houses in 40 weeks and 26 of the 40 died first, which is the opening's mortality and not the guide's doing (a reserve arm that spends less scores **−5.0 points against it, s.e. 9.1**). The crux — the word from the box — comes in **0.0%** of first-blood bouts, **53.2%** at surrender, **67.8%** sine, which is why step two's advice and step ten's requirement had to be reconciled |
 | Which opening a check is looking at | `SC_KEYS` / `SCENARIOS` | five: clean 3 men/800d, inherited 6/260 **with a room already up**, champion 1/520 **whose man starts on 6–10 wins**, veterans 4/700, castoffs 5/640. `newGameState` ends `SCENARIOS[scen] \|\| SCENARIOS.clean`, so a wrong key returns A Clean Start **without a word** — which is how one check spent two releases testing one opening five times, and why the keys are now on the handle. Those two starting states are the only ones that open the doors on `staff` and `signature` in week one |
@@ -1379,6 +1380,47 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.72.0 — Two of form's five words had never been said
+
+v2.71.0's `menace` fault was the third of one shape: #79 fame ran past the last thing that read
+it, #85 the street finished loving you by year eight, and `menace`'s top band began at mean 66
+while the game's men run to 99. Three of a shape is a pattern, so rather than wait for the fourth,
+this sweeps **all seventeen word-scales in the game** — every bucketed word a player reads and
+acts on — against the range its quantity actually takes in play.
+
+**The fault it found is the mirror image of `menace`'s.** Where `menace` had one word swallowing
+the top, `formWord` had two words that were never said at all. Its bands were 58 and 24, and
+`formWeek` decays every man every week by `f*0.78 - 3` against the +24 a win at the great games
+gives. So three straight wins — which is the example the lesson about form gives, *in those words*
+— comes to 15.7, then 28.0, then **37.6**: one band short of "in form" at 58. The only road to 58
+is a win EVERY week, whose fixed point is 71.5, and fatigue, the card and the infirmary see to it
+that almost nobody does. Measured over **4,862 man-weeks** of a house that fought whenever it
+could: form ran from **-50.5 to +42.4**, "in form" was said **0 times**, "shaken" **0 times**, and
+"level" covered **97% of every man-week**. Five words, three of them ever used, and the promise in
+the lesson landed a band above anything the engine produces. The bands are 34 and 14 now, where the
+quantity lives. Nothing about what form DOES has changed — still ±3.6% of power at the extremes.
+
+The 24 also lived, bare, in two other places: the lesson's own `when` gate and the tag on a man's
+row. Both read `FORM_TELL` now, so the tag cannot light on a man the game has nothing to say about.
+
+**And four things the sweep did NOT find, which took as long to establish.** `houseWord`'s top two
+bands were unseen in 2,310 samples at a maximum warmth of 43.4 — but warmth rises 1.1 per *meeting*
+with a house whose grudge is under 30, plus 6 to 16 from rival-relationship beats whose `need` gates
+six houses had not met in 160 weeks; not reached in that sample is not unreachable, and it is not
+claimed. `pietyWord` sat at 30 for all 960 weeks because the probe never made an offering, which is
+#91's finding and not the scale's fault. `cityFavWord` took no samples: nothing toured the coast.
+And `fanWord` and `wearWord` hold most of their mass in one word because most men are unknown and
+most steel is serviceable — the game being steady, not the word being wrong. Which is why the 41st
+check, `scales`, asserts on **reachability** and on the share of the **range**, and only reports the
+mass.
+
+**One note on the check's own bar, because the first version of it was too weak to catch the bug it
+was written for.** It began by asserting only that three straight wins should not read the same word
+as a man who had never fought — and the old bands passed that, because 37.5 was "sharp". The bar is
+now the game's own promise: the lesson says "three straight wins and he walks out expecting to win",
+so three straight wins must read as the top of the scale. Reverting the bands fails it with that
+sentence.
 
 ### v2.71.0 — One word covered the whole top of the game
 
@@ -4205,4 +4247,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.71.0*
+*Last updated: v2.72.0*

@@ -3885,9 +3885,24 @@ function makeDoctore(d, quality){
    Morale is how he lives. Momentum is inside one bout. This is the four weeks
    between them: how the last few afternoons went, carried out to the next one.
    Deliberately small — it is felt at the edges, not in the middle. */
+/* ---- AND TWO OF ITS FIVE WORDS WERE NEVER SAID ----
+   The bands were 58 and 24, and `formWeek` decays a man every week: `f*0.78 - 3`. A win at the
+   great games is the biggest thing that moves it, +24. So three straight wins — which is the
+   example the lesson about form gives, in those words — comes to 15.7, then 28.0, then **37.6**:
+   one band short of "in form" at 58. The only way to 58 is a win EVERY week, whose fixed point
+   is 71.5, and fatigue, the card and the infirmary see to it that almost nobody does.
+   Measured over 4,862 man-weeks of a house that fought whenever it could: form ran from **-50.5
+   to +42.4**, "in form" was said **0 times**, "shaken" **0 times**, and "level" covered **97%**
+   of every man-week in the game. Five words, three of them ever used, and the promise in the
+   lesson landed a band above anything the engine produces.
+   The bands now sit where the quantity lives. Nothing about what form DOES has changed — it is
+   still ±3.6% of power at the extremes, felt at the edges and not in the middle. */
 const formOf = g => clamp(g.form || 0, -100, 100);
-const formWord = v => v>=58?"in form" : v>=24?"sharp" : v>-24?"level" : v>-58?"off his stride" : "shaken";
-const formColour = v => cbc(v>=24?"#9aa86a" : v>-24?"#b09b7d" : "#d96f5d");
+/* the edge at which the game starts SAYING anything about a man's form — the lesson that
+   explains form and the tag on his row both read it, and both used to carry a bare 24 */
+const FORM_TELL = 14;
+const formWord = v => v>=34?"in form" : v>=FORM_TELL?"sharp" : v>-FORM_TELL?"level" : v>-34?"off his stride" : "shaken";
+const formColour = v => cbc(v>=FORM_TELL?"#9aa86a" : v>-FORM_TELL?"#b09b7d" : "#d96f5d");
 const formPower = g => 1 + formOf(g)/100 * 0.036;      // ±3.6% at the extremes
 const formStam  = g => 1 - formOf(g)/100 * 0.04;       // and he tires a shade slower on a run
 function formShift(d, g, n, note){
@@ -8210,7 +8225,7 @@ const LESSONS = [
     when:d=>activeG(d).some(g=>(g.memory||[]).length>0),
     text:"He is keeping a list. The bout you stopped to save him, the promise you kept, the brother you freed — and the brother you sold, the wound you sent him out on, the night you left him on the sand until he had to finish one of his own. A man who would follow you anywhere fights measurably harder and cannot be bought at any price. One who hates you will one day sit down and not get up." },
   { id:"form", tab:"men", title:"Lately",
-    when:d=>activeG(d).some(g=>Math.abs(formOf(g))>=24),
+    when:d=>activeG(d).some(g=>Math.abs(formOf(g))>=FORM_TELL),
     text:"Form is the four weeks between his last bout and his next. Three straight wins and he walks out expecting to win; carried off twice and he has not been right since. It is a small thing and it fades inside a month, but it is the difference between sending him out now and sending him out later." },
   { id:"refusal", tab:"men", title:"A Man Who Sits Down",
     when:d=>activeG(d).some(g=>refusing(g)) || activeG(d).some(g=>regardOf(g)<=26),
@@ -19718,7 +19733,7 @@ export default function App(){
                 {isAuctor(g) && <span className="tag" style={{borderColor:"#5a7a8a",color:"#9dc0d4"}}>Auctoratus · {auctorLeft(g)} left</span>}
                 {(()=>{ const bad = SLOTS.filter(s=>wears(GEAR[g.kit&&g.kit[s]]) && wearOf(g,s)<35).length;
                   return bad ? <span className="tag tag-blood">Kit failing</span> : null; })()}
-                {Math.abs(formOf(g))>=24 && <span className="tag" style={{borderColor:formColour(formOf(g)),color:formColour(formOf(g))}}>{formWord(formOf(g))}</span>}
+                {Math.abs(formOf(g))>=FORM_TELL && <span className="tag" style={{borderColor:formColour(formOf(g)),color:formColour(formOf(g))}}>{formWord(formOf(g))}</span>}
                 {refusing(g) && <span className="tag tag-blood">Will not go out · {g.refusing.weeks}w</span>}
                 {holdsPrimus(S,g) && <span className="tag tag-gold">✦ Primus of Capua</span>}
                 {g.named && <span className="tag tag-gold">{g.named.title}</span>}
@@ -24072,6 +24087,10 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     primusMine, primusEligible, primusWeek, PRIMUS_GATE, seedPrimus,
     /* the top rung's own reading, and the word a player is given for nothing */
     menace, MENACE_WORDS, readMatch, foeSeen, primusTake, primusLose,
+    /* the word-scales a player reads and acts on, so a check can walk each one */
+    formWord, formOf, FORM_TELL, formShift, formPower, wearWord, houseWord, warmth,
+    patronWord, strainWord, favWord, favourOf, fanWord, fansOf, demeanor,
+    unrestWord, grudgeWord, healthWord, regardWord, regardOf, facWord, bandWord, cityFavWord,
     /* the line of the house: who may be named, naming him, and taking it up */
     nameHeir, heirEligible, HEIRS, houseRecord,
     /* the summit: the gate, the letter, the bar, and the trip's own clock */
