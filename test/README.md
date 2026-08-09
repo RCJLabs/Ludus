@@ -74,6 +74,7 @@ reason the check exists usually has not.
 | `surface` | slow | the tab bar was 9px and END WEEK was 37px tall — and it measured a house twelve WEEKS old on one face of each tab with no record sheet ever opened, so it would have passed the whole way through a release where a house's name read "House Glaber…" and a fame of 23,703 rendered "237…" |
 | `sand` | slow | thirteen checks called `doFight` and every one drove the engines in memory; four drove a browser and none reached the sand, so the most-looked-at screen in the game had no test — which is why a React key fault living on the bout wizard was found by a scratch probe photographing an axe |
 | `draw` | fast | the week asks one question, chosen by the first event whose `make` fires from a shuffled key list — and the shuffle was `sort(()=>R()-0.5)`, the classic broken one, in a file that already contained a correct Fisher–Yates used in nine other places. What the game asked you depended on where in the file the event was written. Holds the shuffle uniform AND the statistic that actually decides it, the first *eligible* key, because the first-position figure overstates the fault four-fold |
+| `ends` | fast | three answers to "what ends a house" were on record and disagreed, each measured on a different policy. Five policies over 400 weeks settled it: the mix belongs to the POLICY — 100% ledger for a house that does nothing, 40% empty yard for one that fights to the death every week, 69%/67% overall against a published 85%. This holds the cheap, stable half in 3 seconds: the opening is lethal, the ledger is what does it (11 of 13, median 272d UNDER), and a house doing nothing dies of the ledger too. The long table is in the roadmap and deliberately not asserted — the lifespan medians swung 36w to 20w between two runs |
 | `near` | fast | ten lines telling the player how close they are to something, none of them ever driven — and this project had already shipped two of the shape wrong. Four were: the feast quoted a fraction through `Math.round` and read "reach **1** of them" at every house size; the paragon's shortfall was measured against the box plus debts at face plus steel at half, beside a button reading the box alone; the munus quoted **0 weeks** of cooldown to a house at Rome; the monuments' closed line blamed the monuments when the gate is the works. Five were right and are pinned so they stay right |
 | `room` | slow | `sand` caught the pit row's second line cut off with 24px hidden — and then passed five runs in a row, because whether the fault shows depends on whether the night deals a long class name to a long house name. So this one does not wait to be dealt the bad case: it composes the widest line the content space allows out of `ORIGINS`, `NICKS`, `SMALL_HOUSES` and `CLASSES`, forces the widest menace word beside it, and measures the row. 263px of room for 300px of line before the fix, on all three men at the rope, every run |
 | `scales` | fast | seventeen bucketed words the player reads and acts on, and the same fault had shipped three times — #79, #85 and `menace`. Walks every scale across the range its quantity can take, so a band that swallows the range or a word that can never be said both show up. It found the mirror of `menace`: `formWord`'s two outer words were never said in 4,862 man-weeks, because the decay of `f*0.78 - 3` against +24 for a win puts three straight wins at 37.6 and the band was 58 |
@@ -750,3 +751,55 @@ same injection at 169 of 181. The lesson is not about unrest. It is that an inva
 read, or the test is a spot check wearing a proof's clothing. Always inject the fault you are
 guarding against and watch the check go red; a green on a broken build is the only way to find out
 the states were too narrow.
+
+## A probe that never fights is not a policy, it is the idle arm wearing a name
+
+The sweep behind #110 ran four policies — careful, middling, careless, idle — and measured **zero bouts
+in every arm over every house.** It only looked at `d.games.offers`, and the arena's bill is not there
+every week; the rope is what fills the rest, and the arms never touched it. So four policies were the
+idle arm under four names, and the ending table they produced was about nothing at all.
+
+The tell was in the report and I nearly walked past it: `median bouts 0`. Every arm summary should carry
+the thing that makes the arm an arm. If a policy's defining action has a count, print the count, because
+a policy that silently does nothing looks exactly like a policy that works.
+
+Two more of the same family followed. A wrong building key threw inside `try/catch` every week the
+careful arm had coin — aborting the rest of its week, bout included — and four arms then died inside a
+year while the table said it was the economy: **a probe that swallows its own throws reports them as the
+game's behaviour**, so count them and print them. And the invented "careful" policy turned out to be no
+better than doing nothing (median 26 weeks against idle's 31) because it bought `market[0]`, the top of
+the block — which `survive` already has written down as the mistake that ended three houses in debt with
+men still in the yard. **Before inventing a policy, read the one the suite already tuned.**
+
+## Which half of a measurement is stable is itself a measurement
+
+Two runs of 100 houses each gave the ending MIX to within two points — debt 69% and 67%, the careless
+arm's ruin 40% and 40%, the opening's ledger share 80% and 78%. The same two runs gave LIFESPAN medians
+of 36 weeks and 20 weeks for the identical policy.
+
+So one half of that sweep is a fact and the other half is noise at n=20, and a check that pinned both
+would fail roughly every other run for no reason. `ends` asserts the mix and merely prints the gradient.
+Run every measurement twice before deciding which numbers are allowed to be bars — not to confirm them,
+but to find out which ones move.
+
+## "No amount of bad luck produces this" is a claim, and it can be falsified by a diff
+
+`survive` fails when both its bars are weak at once — few houses standing AND few men between them —
+and its comment says that is the only thing it can detect, because "a gutted opening drives BOTH to
+the floor at once" and no amount of bad luck produces it on a healthy build.
+
+In v2.76.0 it produced exactly that: **1 of 5 standing, 3 men.** And `src/ludus.jsx` in that build was
+byte-identical to the parent that had just passed it — `git diff <parent> -- src/ludus.jsx` was empty,
+because the release added a check file and three documents. Three more runs of that same build: 4/5
+with 7 men, 2/5 with 10, 4/5 with 7. So the bar trips on luck at something like one run in four.
+
+Two things worth keeping. The first is the diagnostic: **when a stochastic check fails, diff the game
+code before anything else.** An empty diff against a green parent is the strongest possible evidence
+that the check moved rather than the game, and it costs one command — far cheaper than the four
+browser runs it took to confirm the same thing by sampling.
+
+The second is what NOT to do next. The bar was left alone. Loosening a threshold in the same breath as
+its failure is how a check stops being trusted, and four samples is how the bad bar got set the first
+time; the measurement that would justify a new threshold is ten or more runs of an unchanged build, and
+that is a job rather than a nudge. Record the failure, prove it was not the game, and leave the number
+for a release whose whole subject is the number.

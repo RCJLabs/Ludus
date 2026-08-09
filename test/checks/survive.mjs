@@ -136,7 +136,28 @@ const MEN    = 3;
    question was proved bit-identical to its parent over three campaigns of a hundred
    and eighty weeks — same gold, same fame, same men, same chronicle — before this
    line was touched. The per-house rows are still printed every run. If the numbers
-   above stop describing what you see, it is the game that moved, not this comment.  */
+   above stop describing what you see, it is the game that moved, not this comment.
+
+   ---- AND IN v2.76.0 IT WAS NOT THE GAME THAT MOVED ----
+
+   This check failed the v2.76.0 suite at **1 of 5 standing and 3 men between them** — both bars at
+   once, which the paragraph above calls the only thing it was ever able to detect and says "no
+   amount of bad luck produces on a healthy build". `src/ludus.jsx` in that build was **byte-
+   identical** to v2.75.0's, which passed: `git diff 753714a -- src/ludus.jsx` was empty. The
+   release added a check file and three documents and touched no game code at all.
+
+   Re-run three more times on that same identical build:
+
+     1 / 5 with 3 men  (the suite run, FAIL) · 4 / 5 with 7 · 2 / 5 with 10 · 4 / 5 with 7
+
+   So both-weak-together does happen on luck, at something like one run in four, and the claim in
+   the paragraph above is falsified by a build that could not have changed the opening.
+
+   THE BAR WAS DELIBERATELY NOT TOUCHED. The comment above is right that loosening a threshold in
+   the same breath as its failure is the worst possible look, and it is right again that the fix is
+   evidence rather than a nudge — four samples is how the last bad bar got set. What is needed is
+   the actual distribution of (houses standing, men) over ten or more runs of an unchanged build,
+   and then a threshold set against it. That is a job of its own and it is written down as one.  */
 const BOTH_MEN  = 5;   /* both weak together is the failure; either alone is a bad week */
 const BOTH_HOUSE = 2;
 const KEEP   = 4;    /* the yard a lanista tries to hold; below it, he goes to the block */

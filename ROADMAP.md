@@ -1333,9 +1333,10 @@ Tuning dials, in the order you'd reach for them:
 | What the box can say, and when | `CRUX[k].when` | over 1,381 cruxes resumed to the end: press/cover/cloth 100%, legs 86%, breather 74%, rouse 53%, milk 26%, finish 23%, blind 9%, hound 5% — and **0.80 cruxes a bout**, at most 3 |
 | When a limb goes | `MARK_NEED` | legs 24, head 26, body 26, arm 58 — three of the six places a blow can land feed the arm, hence the split. Measured over 700 bouts with each man matched to the tier he is billed at: legs **40.3%**, arm **37.9%**, head **40.6%**, body **35.1%**, one mark or more in 91%. Flatten the arm to 26 and it lands in **81.9%** — the fault the split is for. Mortality does not move with it (15.4 / 16.7 / 13.6 / 17.6% at arm 58/42/34/26; s.e. 1.4pt). The A/B this row used to ask for has been run; the number is right. *(The old figures here — arm 4% — came from a probe pairing raw men against proper arena opponents, which produced a 0.4% win rate.)* |
 | When the yard gets built | `BUILDINGS[k].cost` | levels 1–3 all bought inside a five-week band (weeks 118/122/123, 3,270d the lot); level 4 by 5 of 50, at week 258 — the fourth level is the late sink and it works |
+| What ends a run BY ERA | — | debt dominates **years 1–3 in every one of the five policies** — it is what an unfinished house dies of, whatever it is doing. The later eras are the other systems arriving: **years 4–7** rebellion and ruin, **8–12** rebellion and `banned`, **13+** `lanistaDied`, `emptied` and a last of debt. And competence does not buy the first year: over 40 weeks the proven policy went out **13 of 24** against **12 of 24** for a house doing nothing at all. What it buys is the ceiling — the careful arm was the only one of five with houses still standing at year 22 (**3 of 20**, and 2 of 20 on the second run); every other arm ended 0 of 20. Lifespan medians at n=20 are NOT a bar: the same policy came out 36 weeks and 20 weeks on two runs |
 | What ends a run IN THE OPENING | — | not the same thing at all. Pooling four runs of `survive` on its own policy — 20 new houses, 26 weeks: **13 standing (65%, s.e. 10.7)**, and of the seven failures **five were the yard emptying against two for the ledger**, with three of those five still holding coin when the last man went (248, 360 and 96 denarii). Early you die of attrition with money in hand; later you die of the ledger. Carrying the row below into the first twenty-six weeks tunes the wrong dial |
 | Whether the opening has drifted | — | a fixed handle policy over 200 houses returns **72 standing, 36.0%**, with identical endings to one decimal on four builds spanning v2.5x to v2.68.0 — the same to the house, so none of those releases touches a code path a new house executes. That probe is the two-minute answer to "did I just break the opening", and it is unambiguous precisely because the streams match when nothing relevant changed |
-| What actually ends a run | — | good policy, 48 houses: debt 85% of endings, nothing else above 5%. Careless policy, 120 houses: debt 49%, rebellion 22%, closed 15%, ruin 3%. Every ruin is reachable; the ledger is the competent player's only enemy |
+| What actually ends a run | — | **the mix belongs to the policy, not to the game** (#110). Five policies, every opening, 400 weeks, 20 houses each, twice: debt is **69% / 67%** of all endings — inside the 45–80% band v2.68.0 measured, so the published 85% was the top of a wide range and not its centre. It runs from **idle 100% debt** to **careless 40% ruin, 25% rebellion, 15–25% debt**, with middling 80–90% and careful 45–60%. Earlier figures: good policy 48 houses debt 85%; careless 120 houses debt 49% / rebellion 22% / closed 15% / ruin 3%. Quote a policy with the number or the number means nothing |
 | How the war reaches you | `WAR_AWAY_AT` / `WAR_AWAY_ODDS` | your own gate, or a rising elsewhere from week 60 at 0.35% a week — 45% of houses that get there see it |
 | What earns a badge | `MARK_URG` / `TAB_QUIET` | urgency 2 and above only (3.64 items a week, not 7.86); an empty tab cannot be fresh |
 | What a kept vow is worth | `VOW_BOUTS_FULL` / `VOW_EARNT_AT` | par at nothing risked, 1.6× at six cards fought under it — and never a blessing. Both are six: `VOW_EARNT_AT` was 2, and over 31 vows settled in 1,611 house-weeks the fewest cards under any vow was three and the median eight, so the piety split could never resolve the lean way. At six it bites 26% of vows |
@@ -1383,6 +1384,80 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.76.0 — What ends a house is decided by how it is played, not by what year it is
+
+Audit item #110. Three answers to one question were on record. The balance reference said **debt is
+85% of endings** and "the ledger is the competent player's only enemy". v2.68.1 found the first 26
+weeks kill by the yard emptying with coin still in the box. The v2.72.0 careless sweep put all 24
+houses out — 16 emptied, 8 in debt. Each was measured on a different policy over a different span.
+
+**Measured: five policies, every opening, 400 weeks, 20 houses each, twice, and no arm ever handed a
+denarius.** The week's one question is answered identically in every arm, so the arms differ by how
+the yard is run and not by which questions luck asked.
+
+| policy | debt | the rest | alive at year 22 |
+|---|---|---|---|
+| idle — ends the week, nothing else | **100% / 100%** | — | 0 of 20 |
+| middling — takes the card, no reserve | 90% / 80% | rebellion, ruin | 0 of 20 |
+| proven — `survive`'s own discipline | 70% / 80% | ruin 25% / 10% | 0 of 20 |
+| careful — reserve, blood stakes, stone late | 60% / 45% | rebellion 10% / 40% | **3 of 20 / 2 of 20** |
+| careless — fattest purse, to the death, weekly | 15% / 25% | **ruin 40% / 40%**, rebellion, emptied | 0 of 20 |
+
+**So the mix is not a property of the game. It is a property of the policy** — which is what #110's
+falsification clause asked, answered in the negative. It runs from 100% ledger for a house that does
+nothing to 40% empty yard for one that fights every bout to the death. Across all five arms debt is
+**69% and 67%** on the two runs, which sits inside the 45–80% band v2.68.0 already measured: the
+published 85% was the top of a wide range, not its centre, and the row now says so.
+
+**And the disagreement with `survive` dissolves the same way.** That check records five of seven
+early failures as the yard emptying with coin in hand; this measures 78–80% of early failures as the
+ledger, at a median **270 denarii under**. Both are right about their own policy: a house that
+replaces its losses dies of the ledger, a house that does not dies of the empty yard. Which one you
+meet is the buying, not the era.
+
+**By era, the part the reference never carried.** Debt dominates **years 1–3 in every one of the five
+policies** — it is what an unfinished house dies of whatever it is doing. The later eras are the other
+systems arriving: years 4–7 rebellion and ruin, 8–12 rebellion and `banned`, 13+ `lanistaDied`,
+`emptied` and a last of debt.
+
+**And competence does not buy the first year.** Over 40 weeks the proven policy went out 13 of 24
+against 12 of 24 for a house doing nothing at all. What it buys is the ceiling.
+
+**AND THE SUITE CAME BACK 44 OF 45, on a build that could not have caused it.** `survive` failed at
+**1 of 5 standing and 3 men** — both its bars at once, which its own comment calls the only thing it
+can detect and says "no amount of bad luck produces on a healthy build". `src/ludus.jsx` in this
+release is **byte-identical** to v2.75.0's, which passed it: `git diff 753714a -- src/ludus.jsx` is
+empty, because this release adds a check file and three documents and touches no game code. Three
+more runs of that identical build: **4/5 with 7 men · 2/5 with 10 · 4/5 with 7**. So both-weak-
+together trips on luck at roughly one run in four, and that claim is falsified.
+
+**The bar was deliberately not touched.** That comment is right that loosening a threshold in the
+same breath as its failure is the worst possible look, and right again that four samples is how the
+last bad bar got set. The measurements are written into `survive`'s own comment, and getting the real
+distribution of (houses standing, men) over ten or more runs of an unchanged build is now its own
+item rather than a nudge made in passing.
+
+`ends` is the 45th check and it holds the cheap, stable half — the opening, in 3 seconds. The long
+table above is deliberately NOT asserted: at twenty houses per arm the lifespan medians swung from 36
+weeks to 20 between two runs of the same policy. The mix was stable run to run; the medians were not,
+so only the stable thing is pinned. Making the creditors 200× more patient fails it on both bars.
+
+**FOUR PROBE FAULTS, and the first one invalidated everything.** The sweep's first version measured
+**zero bouts in every arm over every house** — it only looked at `d.games.offers`, and a house that
+never fights never gets a card, so all four policies were the idle arm wearing different names. Then a
+wrong building key threw inside a `try/catch` every week the careful arm had coin, aborting the rest of
+its week including the bout; four arms died inside a year and the table said it was the economy. Then
+the invented "careful" policy turned out to be **no better than doing nothing** (median 26 weeks
+against idle's 31) because it bought `market[0]`, the top of the block — the exact mistake `survive`
+already has written down as having ended three houses in debt with men still in the yard. And a
+diagnostic that "proved" four policies survive 161 weeks was **n=1 per variant**.
+
+**ONE THING LEFT UNRESOLVED, on purpose.** Two hundred played houses produced seven of the twelve
+endings the source can set; `oldAge`, `foreclosed`, `ruined`, `closed` and `triumph` did not appear. A
+probe built to reach each one by constructing the state **failed its own control** — it could not reach
+`debt`, `ruin` or `rebellion` either, which the played sweep produces constantly. So whether those five
+are rare content or dead content is unresolved, and it is recorded as unresolved rather than guessed at.
 
 ### v2.75.0 — Four of the ten lines that tell you how close you are were wrong
 
@@ -4397,7 +4472,19 @@ it, and Rome's letter read `0 fame short` to a house with no senator warm enough
 were caught only by a check that drove the real gate. Ten more are unchecked. *Falsifies if:* all
 ten agree with the gate they describe, in which case the release is the check.
 
-**#110 — What actually ends a house, by era and by competence, in one table.** The balance
+**#110 — CLOSED in v2.76.0. The mix belongs to the policy, not to the game, so the three figures on
+record were never in conflict.** Five policies, every opening, 400 weeks, 20 houses each, twice: debt
+runs from **100%** (a house that does nothing) to **15–25%** (one that fights every bout to the death,
+where 40% is the yard emptying instead), and is **69% / 67%** across all five — inside the 45–80% band
+v2.68.0 measured, so the published 85% was the top of a wide range. By era, debt dominates years 1–3 in
+every policy and the later years bring rebellion, `banned`, `lanistaDied` and `emptied`. Competence does
+not buy the first year (13 of 24 out against 12 of 24 doing nothing); it buys the ceiling. `ends` is the
+45th check and pins the opening, which was the stable half — the lifespan medians swung 36w to 20w
+between runs and are not a bar. Left unresolved: five of the twelve endings never appeared in 200 played
+houses, and the probe built to reach them failed its own control.
+
+**#110 as it was written, for the record — What actually ends a house, by era and by competence, in one
+table.** The balance
 reference says debt is 85% of endings; v2.68.1 found the first 26 weeks kill by the yard emptying
 with coin still in the box; and the careless sweep above put all 24 houses out — 16 emptied, 8 in
 debt. Three different answers to one question, each measured on a different policy over a
@@ -4509,4 +4596,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.75.0*
+*Last updated: v2.76.0*
