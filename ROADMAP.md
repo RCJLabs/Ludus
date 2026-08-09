@@ -1339,7 +1339,8 @@ Tuning dials, in the order you'd reach for them:
 | How the war reaches you | `WAR_AWAY_AT` / `WAR_AWAY_ODDS` | your own gate, or a rising elsewhere from week 60 at 0.35% a week — 45% of houses that get there see it |
 | What earns a badge | `MARK_URG` / `TAB_QUIET` | urgency 2 and above only (3.64 items a week, not 7.86); an empty tab cannot be fresh |
 | What a kept vow is worth | `VOW_BOUTS_FULL` / `VOW_EARNT_AT` | par at nothing risked, 1.6× at six cards fought under it — and never a blessing. Both are six: `VOW_EARNT_AT` was 2, and over 31 vows settled in 1,611 house-weeks the fewest cards under any vow was three and the median eight, so the piety split could never resolve the lean way. At six it bites 26% of vows |
-| What the gatekeeper can say | `LESSONS` / `lessonFor` | 35 lessons, one per tab per week, each with a `done` window — so it is a queue, and a window can expire while something ahead of it holds the slot. A reader who reads everything reaches **26 of 35** in 47 weeks; all 11 with no state gate are offered, first at weeks 1–7. Three ways to lose one, all of which had happened: done in week 1, `done` firing before `when` can, and starved by the queue in front |
+| What the gatekeeper can say | `LESSONS` / `lessonFor` | 35 lessons, one per tab per week, each with a `done` window — so it is a queue, and a window can expire while something ahead of it holds the slot. **All 35 windows are non-empty**: built into its own state, every lesson opens and every one is then said. From inside its window with nothing read in front of it, **29 of 35 are said, median week 3**; the other 6 are windows that close and reopen rather than expire. A reader playing from week 1 reaches 27 of 35 in 47 weeks; all 11 with no state gate are offered, first at weeks 1–3. Four ways to lose one, all of which had happened: done in week 1 (in an opening nobody was checking), `done` firing before `when` can, starved by the queue in front, and a gate with no satisfiable state at all |
+| Which opening a check is looking at | `SC_KEYS` / `SCENARIOS` | five: clean 3 men/800d, inherited 6/260 **with a room already up**, champion 1/520 **whose man starts on 6–10 wins**, veterans 4/700, castoffs 5/640. `newGameState` ends `SCENARIOS[scen] \|\| SCENARIOS.clean`, so a wrong key returns A Clean Start **without a word** — which is how one check spent two releases testing one opening five times, and why the keys are now on the handle. Those two starting states are the only ones that open the doors on `staff` and `signature` in week one |
 | How loud the first hour is | `agenda` / `URG` | over the opening thirty weeks, **2.94** items a week at urgency 2 or more, more than two of them in **58.8%** of weeks (was 3.57 and 81.1% while the teacher line outranked the week's news). 93.2% of weeks carry more than three items in total, and no week in 420 was silent |
 | Which stat to point him at | `CLASSES[c].key` / `setFocusOf` | `power()` and `winChance` weight a class's own two stats, so the drilling grid's six buttons are **not equivalent** — that is a fact about the engine, not a measurement. What was measured says only what it can: weakest-stat pointing reliably lifts a man's MEAN (91.5 and 99 across two batches), which is what it optimises by construction; pointing at his class's own stats does not reliably lift the mean (94.4 and 88.4 against 86.7 and 88.6 for never pointing him), because that is not what it is for; and no policy separated on house-level outcomes at 20 houses × 2 batches. So the grid marks which two stats are his trade and claims nothing beyond that |
 | What a man can be trained to | `PRIME` / `REGIMENS.palus` | a young man with a doctore and a full yard, pointed at his weakest stat each week, reaches mean stat **99 by week 149 aged 28** — the same ceiling the city's best reaches, gap **0.0**. `palus` is `focus:true`: it trains what you point him at and nothing else, so a house that never sets a focus tops out near **58** and the whole top of the arena reads as unwinnable. This is a dial in the sense that it decides what "a good house" means, and every measurement of the late game depends on the focus being set |
@@ -1376,6 +1377,67 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.69.0 — Four of five openings were never tested, and the note about the medicus was retired by hiring the trainer
+
+`lessons` ended its report with a line reading *"9 state-gated ones were not reached by these
+houses (their states may want a longer life)"*. That is not a verdict, and it could not become
+one by playing from week one: the check's own houses reach week 47, and `book` wants 25 bouts,
+`bench` an acclaimed house with a built armoury. Closing that gap found three shipped faults —
+and one of them was sitting under the check's first section, which is the part written to prove
+no lesson dies on arrival **in any opening the game has**.
+
+**It had only ever seen one opening.** The section passes `["clean","even","uncle","onegood",
+"oldguard"]`. The scenario keys are `clean, inherited, champion, veterans, castoffs`, and
+`newGameState` ends `SCENARIOS[scen] || SCENARIOS.clean` — so four of its five houses were
+A Clean Start with a different name in the log. Two releases of "no lesson is dead on arrival in
+five openings" rested on one. Give it the real keys and it fails immediately: **"The Slaver's
+Block"** — age is most of the price, a fighter is in his prime from 23 to 28 — was `done` at
+*"the annals have an entry, or the house holds more than three men"*, and Your Uncle's Debts hands
+you six men, The Old Guard four, Another House's Leavings five. Dead on arrival in **three
+openings out of five**, exactly the `armory` fault of v2.65.0. Its other half was never a signal
+either: `annalsSync` runs inside `endWeek` and writes an entry per man, so the annals are
+non-empty from week two of every game ever played. The exit is now `flags.everBought`, written
+where the buying happens, with a week-ten backstop.
+
+**And "The Men In The Rooms" was retired by a man it is not about.** Its exit was *"a medicus, or
+an armourer, or a doctore"*. The doctore is the trainer — a different person, off a different
+market, on a different screen — and the charter's fifth step tells you to go and hire him. Its
+door needed a built room. Measured over 30 houses following the charter, in all five openings:
+the doctore arrives at **median week 4–8**, the earliest median for a first room in any opening is
+**week 17**, and **not one of the thirty** got a room before it had staff of some kind. The note
+stood open in 141 house-weeks of Your Uncle's Debts — the only opening that starts with a room already up — and in **zero
+weeks of the other four**. **24 of 30 houses were never told**, and three of them hired the very
+medicus the note describes. Exit is now the two men it is about; the door opens on a room or on
+week eight, because the post is on the market screen from week one saying plainly that there is
+nowhere to put him. Re-measured after the fix: **0 of 30**.
+
+**A third, smaller.** "A Stone With His Name" opened at week 14 and the burial society costs 180
+denarii, which every opening can afford in week one — so the door opened thirteen weeks after the
+button. 2 of the 7 houses that founded it were never told what they had bought. The door is now
+the price. And `hireStaffMember` now refuses a house with no room for him: the condition lived
+only in the render, so nothing a player can reach was broken, but every lanista action in this
+file is supposed to be a function of the save, and a probe that hired a medicus into a roomless
+house reported a fault no game can have.
+
+**REFUTED, at some length.** A sweep of one-action-per-house said "The Palus and the Pair" was
+shut in week one by the charter's own first step — the two have literally the same test — and a
+five-week trace confirmed it: the familia tab went `men` → `drills` and never said it. Over 20
+played houses, **20 of 20 were told, at median week 4**. The trace was the thing that was wrong:
+it took no bouts. Sparring hurts men, an injured man goes back to the post and his partner with
+him, and the window reopens within a few weeks of any house that actually fights. The lesson is
+delayed, not lost.
+
+**What the check can now say instead of "I don't know".** Three new sections, none of which needs
+a house to live long enough: every lesson is **constructed into its own window** and asked
+(35 of 35 open, 35 of 35 then said with the tab to themselves — this is the section that catches
+`wear`, whose two halves could not both hold in any state); **no ordinary week-one action may
+shut a lesson while its own door is still closed** (the fatal case, which caught `staff`, with
+every flip played eight weeks forward because a `done` on a threshold un-fires); and **from
+inside its window with nothing read in front of it, the gatekeeper must reach it** — 29 of 35
+said, median week 3, the other 6 being windows that close and reopen rather than expire. The
+report's last line now reads that the eight state-gated lessons want a state these houses never
+reached and that **each has been proved answerable** above it.
 
 ### v2.68.1 — The check was right and the alarm was mine
 
@@ -3885,6 +3947,7 @@ Weekly loop, roster, training, fight sim with missio, market, parties, feasts, e
 - ✅ Stone paid for as it rises; a rank held as a census rather than handed over
 - ✅ The record book's worst night, and the four nights a man is known for
 - ✅ A size guard, so no function grows past the line unremarked
+- ✅ Every one of the thirty-five lessons proved answerable — window, trap, and queue
 
 **The queue is clear.**
 

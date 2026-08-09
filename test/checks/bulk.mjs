@@ -42,6 +42,7 @@ const ALLOWED = {
   doFight:        { max: 360, why: "a long sequential ledger, but its purse branch alone reads eleven enclosing locals — the seams are not narrow" },
   FightModal:     { max: 400, why: "one React render; splitting it moves JSX around without making anything measurable" },
   EVENTS:         { max: 1000, why: "a table of fifty-seven events, not a function — length here is content" },
+  LESSONS:        { max: 320, why: "a table of thirty-five notes, not a function — and half its length is now the four ways a lesson can be lost, written above the entries they happened to" },
   takeUpTheHouse: { max: 7000, why: "the App component and everything under it; a different task entirely" },
   Fighter:        { max: 300, why: "the man on the sand, drawn — one SVG in one function" },
 };

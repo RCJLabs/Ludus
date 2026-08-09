@@ -73,7 +73,7 @@ reason the check exists usually has not.
 | `temple` | fast | five gods with four boons plumbed into the engine, and across 3,200 house-weeks no vow was ever sworn and no blessing ever rode with a house — the agenda had never named the gods, the Temple panel opened only for a house already using it, and a probe guard reserving four weeks' cushion produced the figure that made it all look unaffordable |
 | `surface` | slow | the tab bar was 9px and END WEEK was 37px tall — and it measured a house twelve WEEKS old on one face of each tab with no record sheet ever opened, so it would have passed the whole way through a release where a house's name read "House Glaber…" and a fame of 23,703 rendered "237…" |
 | `sand` | slow | thirteen checks called `doFight` and every one drove the engines in memory; four drove a browser and none reached the sand, so the most-looked-at screen in the game had no test — which is why a React key fault living on the bout wizard was found by a scratch probe photographing an axe |
-| `lessons` | fast | thirty-five lessons, one per tab per week, each with an expiry window — so a queue, and sixteen of them could not be reached by any player: "Steel and Style" was `done` in week 1 of all five openings because every one hands you a rack, "Steel Does Not Last" closed on an event that had to happen before it could open, and between them the armory tab offered a new house nothing at all |
+| `lessons` | fast | thirty-five lessons, one per tab per week, each with an expiry window — so a queue, and sixteen of them could not be reached by any player: "Steel and Style" was `done` in week 1 of all five openings because every one hands you a rack, "Steel Does Not Last" closed on an event that had to happen before it could open, and between them the armory tab offered a new house nothing at all. Six sections now, three of which need no house to live long enough: every lesson **constructed into its own window** and asked (a gate whose halves cannot both hold is dead table); **no week-one action may shut one while its door is still closed** (which caught the note about the medicus being retired by hiring the trainer); and **from inside the window with a cold queue, he must reach it**. Its opening scan reads the five scenario keys off the handle, having spent two releases inventing four of them |
 | `feats` | fast | five of the nineteen feats read as never earned across 3,200 house-weeks and every one of them was reachable — two of the five were the probe declining Rome's card and never founding the burial society; what was real was the cloth recording nothing outside a singles bout, and a sheet showing a dash to a house standing on the gate |
 
 ## What no check has ever touched
@@ -228,6 +228,57 @@ men in stock kit was told the fee was the whole of it; and Rome's letter has fiv
 conditions, so a house with no senator warm enough to send it read `0 fame short` and
 would have gone off to win fame it did not need. Neither was caught by reading. Both
 were caught by a check that drove the real gate.
+
+## A key the game does not have is a key the game silently forgives
+
+`newGameState(name, scen, seed, pitch)` ends `const S = SCENARIOS[scen] || SCENARIOS.clean`.
+Nothing throws, nothing warns, and the log says whatever `name` you passed — so a check
+sweeping the five openings with `["clean","even","uncle","onegood","oldguard"]` builds
+A Clean Start five times and reports five openings. The real keys are `clean, inherited,
+champion, veterans, castoffs`. `lessons` shipped that way and spent two releases asserting
+"no lesson is dead on arrival in any opening" over one opening; give it the true keys and it
+fails on the first house, because three of the five hand you more than three men and the note
+about the slaver's block was `done` at exactly that.
+
+The general shape: **a permissive fallback turns a typo into a silent loss of coverage, and
+the check goes green either way.** Two defences, both cheap. Take the domain off the handle
+rather than writing it out — `SC_KEYS` is there now for this reason — and where a check
+enumerates something, print what it enumerated *with a distinguishing figure per case*. This
+one would have been visible for two releases if it had printed each opening's men and coin:
+five identical rows of `3 men / 800d` is not something you read past.
+
+And it is worth knowing what those four unseen openings contain, because two of them are the
+only states in the game that open certain doors: `inherited` starts with `buildings:{carceres:1}`,
+which is the only week-one state that opens `staff`'s door, and `champion` starts its one man on
+6–10 wins, which is the only one that opens `signature`'s.
+
+## Four faults in five will be the probe's, and this is what that looks like over one session
+
+The rule at the top of this file is that more findings turn out to be faults in the probe than
+faults in the game. The `lessons` work is a clean record of it: five rounds of probe, and the
+first four each died of a fault of mine.
+
+- **Round one** wrote `d.book.n = 30` to open a lesson gated on the record book. `d.book` is
+  **null** on a fresh house — the book is built by the first bout — so the builder threw and
+  three windows were reported "shut" that are not. Its reader also topped out at week 84 with
+  3–22 bouts against a gate wanting 25.
+- **Round two** set `g.form` to an array of week records. `formOf(g)` reads a **number**.
+- **Round two** also called `makeGames(d)` on week 1. The card is `CALENDAR.find(f => f.w ===
+  yearWeek(d))`, so it only exists on a festival week; two lessons gated on a live card looked
+  unreachable.
+- **Round four** gave each action its own `d.gold = 60000` so it could be afforded, and then
+  reported that eleven unrelated actions had retired the lesson about the lenders — whose exit
+  is 1,200 denarii in the box. It also counted the queue in front of a lesson in a **fresh**
+  house, which is the wrong state for a lesson whose door opens in week 14.
+- **Round five's** eight-week hold test set every man to the post each week, which is precisely
+  what un-does the action it was testing — so a real finding disappeared and I nearly took the
+  disappearance as a refutation.
+
+Only round six was measuring the game. Two habits shortened each cycle: **print the state you
+built, not just the verdict** (`when=false done=false` next to the builder's own error string is
+what caught `d.book` being null), and when a result looks extreme, **check the probe's own numbers
+first** — "3 to 22 bouts" was on the screen for two rounds before I read it as the reason `book`
+was unreachable rather than evidence about the game.
 
 ## When a check cries wolf, price the bar before you hunt the bug
 

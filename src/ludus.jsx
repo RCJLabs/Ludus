@@ -6997,6 +6997,7 @@ function buyFromBlock(d, id, bidPrice){
     if(fameWarm(d)){ g.regard = clamp((g.regard!=null?g.regard:50) + fameWarm(d), 0, 100);
       g.morale = clamp((g.morale!=null?g.morale:50) + fameWarm(d), 0, 100); }
     d.gladiators.push(g);
+    d.flags.everBought = 1;
     if(g.paragon){
       d.flags.paragonDone = d.week; d.flags.paragonBought = d.week;   /* a gap, not a wall */
       d.fame += 70; addRep(d, "show", 10);
@@ -8142,8 +8143,22 @@ const LESSONS = [
   { id:"armory", tab:"armory", title:"Steel and Style",
     done:d=>Object.keys(d.gearCond||{}).length>0 || d.week>=10,
     text:"Standard kit is always free on the racks. Bought pieces arm one man at a time. Gear outside a man's own style still works, but clumsily — a net-man in a legionary's shield is worse than useless." },
+  /* ---- AND THE SAME FAULT AS `armory`, IN THREE OPENINGS OUT OF FIVE ----
+     This was "the annals have an entry, or the house holds more than three men". Three of the
+     five openings hand you more than three men — Your Uncle's Debts six, The Old Guard four,
+     Another House's Leavings five — so the note explaining that age is most of the price, and
+     that a man is in his prime from 23 to 28, was finished before it could be offered in three
+     openings out of five. It went unseen for the same reason `armory` did: the check written to
+     prove exactly this passed ["clean","even","uncle","onegood","oldguard"], and the scenario
+     keys are clean, inherited, champion, veterans, castoffs. `newGameState` ends
+     `SCENARIOS[scen] || SCENARIOS.clean`, so four of its five houses were the same house.
+     What was meant is "he has been to the block and bought somebody", which is now recorded
+     where it happens, with a week's backstop so it does not nag a house that never buys.
+     The other half of the old test was `(d.annals||[]).length > 0`, which was never a signal
+     at all: `annalsSync` runs every week inside endWeek and writes an entry for every man in
+     the house, so the annals are non-empty from week two in every game ever played. */
   { id:"market", tab:"market", title:"The Slaver's Block",
-    done:d=>(d.annals||[]).length>0 || d.gladiators.length>3,
+    done:d=>!!(d.flags && d.flags.everBought) || d.week>=10,
     text:"Age is most of the price. A fighter is in their prime from 23 to 28; before that they are still growing, after it they start giving pieces back. Veterans come cheap, already scarred, and already schooled." },
   { id:"villa", tab:"villa", title:"Those Who Watch",
     done:d=>(d.favor||0)>=45,
@@ -8206,9 +8221,14 @@ const LESSONS = [
     done:d=>!!d.aedile,
     when:d=>!!d.election || !!d.aedile,
     text:"Once a year Capua elects the aedile, and the aedile decides whose men are on the card, what they are paid, and whether anyone leans forward when one of them is down. You can back a candidate quietly, or openly with your name on the list, or stay out of it. Back the winner and you have the games for a year. Back the loser and he knows exactly whose name was on the other list." },
+  /* The door was `week >= 14` and the society costs 180 denarii, which every opening can find
+     in its first week. So the note explaining what the burial club buys — half of what a death
+     costs the cells — opened thirteen weeks after the button did, and a house that founded it
+     early was never told what it had bought. Measured over thirty houses following the charter:
+     seven founded it and two of those seven were never told. The door is now the price. */
   { id:"collegium", tab:"villa", title:"A Stone With His Name",
     done:d=>!!d.collegium,
-    when:d=>d.week>=14,
+    when:d=>d.gold>=COLL_FEE || d.week>=14,
     text:"Three denarii a week per man puts the house into a burial society. It never wins you a bout. What it does is halve what a death costs the cells, because men who know what happens to them afterward take a burial differently. It is the easiest line to cut in a bad month, and stopping it after men have gone into the ground under it costs double what stopping it before does." },
   { id:"munera", tab:"villa", title:"Games For Your Own Dead",
     done:d=>(d.honoured||0)>0,
@@ -8229,9 +8249,23 @@ const LESSONS = [
   { id:"scout", tab:"market", title:"The Seller's Version",
     done:d=>!!(d.flags && d.flags.everScouted) || d.week>=18,
     text:"Those numbers are what the man selling him says. He overstates a sound man by about two points a stat and a flawed one by twice that, and roughly a third of the block has something wrong with it — an old wound, a spirit already broken, a temper sold twice in a year. Your doctore narrows the range. Paying to have him looked over gives you the number and names the problem." },
+  /* ---- AND ONE SHUT BY A DIFFERENT MAN ENTIRELY ----
+     `done` was "a medicus, or an armourer, OR A DOCTORE". The doctore is neither of the men in
+     the rooms: he is the trainer, he is hired off another market on another screen, and the
+     charter's fifth step tells you to go and get him. So the note about the medicus and the
+     armourer was retired by hiring the trainer — and its own door needed a built room, which
+     comes much later. Measured over thirty houses following the charter, in all five openings:
+     the doctore arrives at median week 4 to 8, the earliest median for a first room in any
+     opening is week 17, and NOT ONE of the thirty got a room before it had staff of some kind. The lesson stood open in 141 house-weeks of one opening —
+     Your Uncle's Debts, the only one that starts with a room already up — and in zero weeks of
+     the other four. Twenty-four of the thirty were never told. Three of them hired the medicus
+     the note is about and were never told what he does.
+     Its exit is now the two men it is actually about, and its door opens on the room or on the
+     eighth week, because the post is on the market screen from the first week, saying plainly
+     that there is no room for him yet. */
   { id:"staff", tab:"market", title:"The Men In The Rooms",
-    done:d=>!!d.medicus || !!d.armourer || !!d.doctore,
-    when:d=>BKEYS.some(k=>bLevel(d,k)>0),
+    done:d=>!!d.medicus || !!d.armourer,
+    when:d=>BKEYS.some(k=>bLevel(d,k)>0) || d.week>=8,
     text:"The infirmary and the armoury are rooms. What matters is who is standing in them. A good medicus mends faster and keeps a wound from setting badly; a good armourer makes steel cheaper, longer-lasting and quicker to repair. Both will leave — one if you fill his table every week, the other if you pay him late twice — and a rival with a grudge can buy either out from under you." },
 
   /* ---- AND ONE WHOSE DOOR WAS BEHIND ITS EXIT ----
@@ -17372,10 +17406,17 @@ function takeDoctoreOffer(d, accept){ const o=d.doctoreOffer; if(!o) return fals
   return true; }
 
 /* --- the household --- */
+/* The room is the condition, and it lived only in the render — the panel drew "You have no
+   infirmary for him to work in. Build the room first." and this function would hire him
+   anyway. Nothing reachable by a player could call it that way, so nothing was broken; but
+   every lanista action in this file is supposed to be a function of the save, and a probe
+   sweeping the actions for lessons shut too early hired a medicus into a house with no rooms
+   and reported a fault that no game can have. The condition belongs here. */
 function hireStaffMember(d, kind, id){
   const list = (d.staffMarket||{})[kind] || [];
   const s = list.find(x=>x.id===id);
   if(!s || d.gold < s.fee || d[kind]) return false;
+  if(bLevel(d, STAFF[kind].room) < 1) return false;
   d.gold -= s.fee; d[kind] = s; d.staffMarket = Object.assign({}, d.staffMarket, {[kind]:[]});
   chron(d, `${s.name} takes the ${STAFF[kind].name.toLowerCase()}'s place at ${s.wage} denarii a week.`, "good");
   return true; }
@@ -23979,7 +24020,10 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* the most-read screen in the game, which only a browser could reach until now */
     agenda, URG, agendaGods, agendaCan, agendaSquare,
     /* what the game says to a player who has never seen it before */
-    LESSONS, lessonFor, lessonsRead, LESSON_QUIET,
+    LESSONS, lessonFor, lessonsRead, LESSON_QUIET, CHARTER, charterAt,
+    /* the five openings BY NAME — a check that invents a scenario key gets `clean` back
+       without a word, which is how four fifths of one check's coverage went missing */
+    SCENARIOS, SC_KEYS, BKEYS, bLevel, masterOpen, canLearnSig,
     /* what is new, and where — the marks the tab bar and the folded panels wear */
     tabMarks, tabSig, tabFresh, tabQuiet, markSeen, TAB_KEYS, TAB_SIG, TAB_QUIET, TAB_NAMES,
     sectMark, SECT_MARK, MARK_URG, faceMark, FACE_SECTS, agendaAsk, seenOf,
