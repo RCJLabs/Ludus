@@ -1340,6 +1340,7 @@ Tuning dials, in the order you'd reach for them:
 | What earns a badge | `MARK_URG` / `TAB_QUIET` | urgency 2 and above only (3.64 items a week, not 7.86); an empty tab cannot be fresh |
 | What a kept vow is worth | `VOW_BOUTS_FULL` / `VOW_EARNT_AT` | par at nothing risked, 1.6× at six cards fought under it — and never a blessing. Both are six: `VOW_EARNT_AT` was 2, and over 31 vows settled in 1,611 house-weeks the fewest cards under any vow was three and the median eight, so the piety split could never resolve the lean way. At six it bites 26% of vows |
 | What the gatekeeper can say | `LESSONS` / `lessonFor` | 35 lessons, one per tab per week, each with a `done` window — so it is a queue, and a window can expire while something ahead of it holds the slot. **All 35 windows are non-empty**: built into its own state, every lesson opens and every one is then said. From inside its window with nothing read in front of it, **29 of 35 are said, median week 3**; the other 6 are windows that close and reopen rather than expire. A reader playing from week 1 reaches 27 of 35 in 47 weeks; all 11 with no state gate are offered, first at weeks 1–3. Four ways to lose one, all of which had happened: done in week 1 (in an opening nobody was checking), `done` firing before `when` can, starved by the queue in front, and a gate with no satisfiable state at all |
+| Which question the week asks | `pickEvent` / `shuffled` | one slot, filled by the first event whose `make` returns something from a shuffled key list — so the draw has to BE a shuffle. It was `sort(()=>R()-0.5)`, which is not one: measured on the first-eligible key, the statistic that decides what is asked, it skewed **1.3 to 1.4×** toward events written earlier in the file (1.03× for two adjacent, 1.39× for the seven a real house had) against 1.01–1.06× for Fisher–Yates. The 5.1× figure that first turned up is first-POSITION of the permutation and is not the statistic that matters. Systems with channels of their own — the feud, the licence, the inspector, the primacy — set `pendingEvent` before the draw runs at all and take the week outright |
 | What a man's last month is worth | `formWord` / `FORM_TELL` / `formWeek` | five words, and two were never said. `formWeek` decays `f*0.78 - 3` weekly against +24 for a win at the great games, so three straight wins — the lesson's own example — reaches **37.6**, and the bands were 58 and 24. Over 4,862 man-weeks form ran **-50.5 to +42.4**, "in form" and "shaken" **0 times each**, "level" **97%**. Bands are 34 and 14 now; the fixed point of winning every single week is 71.5. What form DOES is unchanged at ±3.6% of power |
 | What you are told before you commit | `menace` / `readMatch` | two readings, and only one is free. `readMatch` — the per-man word on the pick screen — is real only when you have paid to have the man watched, which a house holds on **15.3%** of the men it is offered; the other 84.7% read "no read". Free is `menace`, six words now: Green/Seasoned/Dangerous under mean 66 where a strong man is quoted 97% throughout, then **Lethal 66–77, Murderous 78–89, Peerless 90+**, which against a mean-92 man is 11, 29 and 24 points of quoted chance per band. It ended at 66 for fifty releases, so one word covered mean 66 to 99 — a quote of 96% down to 13%, and every hard decision in the game sits inside it |
 | What a new player is told to do | `CHARTER` / `charterWeek` | eleven steps, and a PREFIX — `charterWeek` stops at the first step not done, so one step a house cannot finish hides every step behind it and the year-end 250d + 12 fame. Walked end to end it finishes; played, it finishes for 10 of 40 houses in 40 weeks and 26 of the 40 died first, which is the opening's mortality and not the guide's doing (a reserve arm that spends less scores **−5.0 points against it, s.e. 9.1**). The crux — the word from the box — comes in **0.0%** of first-blood bouts, **53.2%** at surrender, **67.8%** sine, which is why step two's advice and step ten's requirement had to be reconciled |
@@ -1380,6 +1381,49 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.73.0 — The week's one question was never drawn fairly
+
+First item of the v2.72.0 audit, and it turned into something the item had not predicted. #108
+asked why the careless and idle arms met wholly different content — `plea` 0/0/11, `feud` 0/0/8
+against `kinReturn` 14/12/0 — at a nearly flat rate. Most of that is **by design** and the item's
+own falsification clause says so: measuring how often each event was *eligible* rather than how
+often it fired, the states genuinely differ (`ludusNight` eligible 5% / 5% / 51% of weeks, `affair`
+43% / 41% / 100%, `auctoratus` 100% / 100% / 29%). An idle house has fevers and affairs because its
+men are idle; a busy one has contracts and kin at the gate. That half is refuted.
+
+**But reading `pickEvent` to write the measurement found the chooser itself was broken.**
+
+    const keys = Object.keys(EVENTS).sort(()=>R()-0.5);
+
+That is the classic broken shuffle. A comparator must be consistent; one that ignores its arguments
+and returns a random sign leaves the outcome to the sort's internal access pattern, and V8's TimSort
+walks an array in a fixed order, so keys stay near where they started. The list is the declaration
+order of `EVENTS` — so **what the game asked you depended on where in the file the event was
+written.** And the file already contained the correct shuffle: `shuffled()` is a Fisher–Yates,
+written for the melee, used in nine other places — the feud's cause, the refusal's reason, the
+slavers at the block, the platforms at an election. The one draw that decides what the game says to
+you this week was the one that did not call it.
+
+**How big, stated carefully, because the first figure measured was four times too large and nearly
+got reported as the finding.** Over 20,000 draws of the real 57-key list the old line put a key
+*first* between 1.05% and 5.38% of the time — a 5.1× spread. But `pickEvent` takes the first
+*eligible* key, not position zero, and that washes most of it out. Taking the first eligible key,
+40,000 draws each: two adjacent events **1.03×**, a contiguous block of six **1.14×**, two at
+opposite ends **1.27×**, six scattered evenly **1.35×**, and the seven a real house actually had
+**1.39×** — against 1.01× to 1.06× for a real shuffle. So the fault is a **1.3 to 1.4× skew toward
+events written earlier in the file**, and it is worth fixing at that size rather than oversold above
+it. After the fix, on a real house at week 11: 14 events eligible and all 14 drawn in 2,000 draws.
+
+The 42nd check, `draw`, holds the shuffle uniform and holds the statistic that actually decides what
+is asked — the first eligible key, in the three eligible-set shapes that separated the broken sort
+from a real one. Reverting the comparator fails it at 5.8× with all three shapes named.
+
+**And one thing the check deliberately does not claim.** The sweep that opened the item found
+`bodyguard` eligible in 43% and 41% of two arms' weeks and asked **zero times in 272 house-weeks**.
+That is not explained by this fault — `bodyguard` sits early in the list, where the broken sort
+*favoured* it — so it is either small-sample noise or something else, and it is recorded as an open
+question rather than dressed up as evidence for a fix it does not support.
 
 ### v2.72.0 — Two of form's five words had never been said
 
@@ -4192,7 +4236,18 @@ dissolve. That is the clause earning its keep.
 Four sweeps produced it: the careless-player arms, the scales walk, the static enumeration of
 every line that makes a claim about the state, and the coverage list.
 
-**#108 — The week asks one question, and which one depends on whether you are doing anything.**
+**#108 — CLOSED in v2.73.0, half refuted and half a fault nobody was looking for.** The
+composition half is refuted: measuring ELIGIBILITY rather than firings, the states genuinely differ
+(`ludusNight` eligible 5% / 5% / 51% of weeks, `affair` 43% / 41% / 100%, `auctoratus` 100% / 100% /
+29%), so an idle house meeting fevers and affairs while a busy one meets contracts and kin is the
+game working. But reading `pickEvent` to write that measurement found the draw itself was
+`sort(()=>R()-0.5)` — the classic broken shuffle, in a file that already held a correct Fisher-Yates
+used in nine other places. Measured on the statistic that decides what is asked, the first ELIGIBLE
+key: a **1.3 to 1.4x skew toward events written earlier in the file**. The 5.1x first-position
+figure is the wrong statistic and is recorded as such. Fixed, and the 42nd check holds it.
+
+**#108 as it was written, for the record — The week asks one question, and which one depends on
+whether you are doing anything.**
 `d.pendingEvent` is a single slot, and systems with channels of their own set it before the
 weekly lottery runs. Measured over 24 houses in three arms — careful, careless and idle — 120
 weeks each: the RATE is nearly flat (0.48, 0.47, 0.55 questions a week), but the MIX is not.
@@ -4324,4 +4379,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.72.0*
+*Last updated: v2.73.0*

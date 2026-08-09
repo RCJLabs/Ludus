@@ -88,16 +88,27 @@ export async function run({ p, errors }){
         const off = ((d.games&&d.games.offers)||[]).filter(o=>!o.pair&&!o.melee&&!o.venatio);
         if(off.length && A.haveWatchedOffer(d, off[0].id)) break; } },
       quiet: () => { if(d.unrest >= 12) A.throwFeast(d); },
-      cloth: () => { for(let i=0;i<40;i++){
-        const g = A.activeG(d).find(x=>!x.injury); if(!g) break;
-        g.lastFought = null; g.fatigue = 0;
+      /* A CRUX IS NOT GUARANTEED, so this must not depend on one seed's luck. Surrender stakes
+         reach a crux in 53% of bouts and sine missione in 68% — but a yard that has been emptied
+         cannot fight at all, and the first version of this builder took 40 bouts on whoever was
+         left and then reported step ten unfinishable when the RNG stream moved under it in an
+         unrelated release. It stands the yard back up and it will take the harder stakes. */
+      cloth: () => { for(let i=0;i<120 && !(d.flags.everCloth>0); i++){
+        let g = A.activeG(d).find(x=>!x.injury);
+        if(!g){ d.gladiators.forEach(x=>{ if(x.status==="injured"){ x.status="active"; x.injury=null; } });
+          d.gold = 200000;
+          while(A.activeG(d).length < 4 && !A.rosterFull(d)){
+            if(!(d.market||[]).length) A.makeMarket(d);
+            const m = (d.market||[])[0]; if(!m) break;
+            if(!A.buyFromBlock(d, m.id, null)) break; }
+          g = A.activeG(d).find(x=>!x.injury); if(!g) break; }
+        g.lastFought = null; g.fatigue = 0; g.strain = 0;
         A.makePitCard(d); const men = A.pitMen(d) || [];
-        const o = A.makePitOffer(d, g, "standard", men.length ? men[0].id : null);
+        const o = A.makePitOffer(d, g, i % 3 === 2 ? "sine" : "standard", men.length ? men[0].id : null);
         if(!o) break;
         const x = A.doFight(d, g.id, o, "measured", null, null, null, "none");
         if(x && x.crux){ const pd = x.pending; pd.beats = x.beats;
-          A.doFight(d, g.id, o, "measured", null, pd, "cloth", "none"); }
-        if((d.flags.everCloth||0) > 0) break; } },
+          A.doFight(d, g.id, o, "measured", null, pd, "cloth", "none"); } } },
       year:  () => { while(d.week < A.YEAR_WEEKS + 1){ d.pendingEvent = null;
         d.gold = 200000; try { A.endWeek(d); } catch(e){ break; } if(d.over) break; } },
     };

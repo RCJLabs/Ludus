@@ -41,7 +41,7 @@ const ALLOWED = {
   simulatePair:   { max: 240, why: "and the same again over sixteen; the four engines share this and it is the shape, not neglect" },
   doFight:        { max: 360, why: "a long sequential ledger, but its purse branch alone reads eleven enclosing locals — the seams are not narrow" },
   FightModal:     { max: 400, why: "one React render; splitting it moves JSX around without making anything measurable" },
-  EVENTS:         { max: 1000, why: "a table of fifty-seven events, not a function — length here is content" },
+  EVENTS:         { max: 1080, why: "a table of fifty-seven events, not a function — length here is content, and the note on how the week's one question is drawn sits between the table and pickEvent, which is where this check attributes it" },
   LESSONS:        { max: 320, why: "a table of thirty-five notes, not a function — and half its length is now the four ways a lesson can be lost, written above the entries they happened to" },
   takeUpTheHouse: { max: 7000, why: "the App component and everything under it; a different task entirely" },
   Fighter:        { max: 300, why: "the man on the sand, drawn — one SVG in one function" },

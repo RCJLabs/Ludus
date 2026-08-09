@@ -73,6 +73,7 @@ reason the check exists usually has not.
 | `temple` | fast | five gods with four boons plumbed into the engine, and across 3,200 house-weeks no vow was ever sworn and no blessing ever rode with a house — the agenda had never named the gods, the Temple panel opened only for a house already using it, and a probe guard reserving four weeks' cushion produced the figure that made it all look unaffordable |
 | `surface` | slow | the tab bar was 9px and END WEEK was 37px tall — and it measured a house twelve WEEKS old on one face of each tab with no record sheet ever opened, so it would have passed the whole way through a release where a house's name read "House Glaber…" and a fame of 23,703 rendered "237…" |
 | `sand` | slow | thirteen checks called `doFight` and every one drove the engines in memory; four drove a browser and none reached the sand, so the most-looked-at screen in the game had no test — which is why a React key fault living on the bout wizard was found by a scratch probe photographing an axe |
+| `draw` | fast | the week asks one question, chosen by the first event whose `make` fires from a shuffled key list — and the shuffle was `sort(()=>R()-0.5)`, the classic broken one, in a file that already contained a correct Fisher–Yates used in nine other places. What the game asked you depended on where in the file the event was written. Holds the shuffle uniform AND the statistic that actually decides it, the first *eligible* key, because the first-position figure overstates the fault four-fold |
 | `scales` | fast | seventeen bucketed words the player reads and acts on, and the same fault had shipped three times — #79, #85 and `menace`. Walks every scale across the range its quantity can take, so a band that swallows the range or a word that can never be said both show up. It found the mirror of `menace`: `formWord`'s two outer words were never said in 4,862 man-weeks, because the decay of `f*0.78 - 3` against +24 for a win puts three straight wins at 37.6 and the band was 58 |
 | `crown` | fast | the primacy — the top of the Capuan ladder and one of the two roads to Rome — was seven handle functions put there in v2.64.0 to be checked and never called once. Drives it end to end: the gate, the city seeding its own holder, the offer, the bout, the reign, the flag `romeReady` reads, a defence, losing it, and the second-best man in your own cells asking for it. And it holds the free reading: `menace`'s top bucket used to run from mean 66 to 99, which against one man is a quoted chance of 96% down to 13% — one word for every hard decision in the game |
 | `wall` | fast | everything you do with another house's men — watch, drill against, court, buy, call out, settle — was eleven functions no check had ever called, in a system that supplies **98.6% of the single offers on a Capuan card**. Holds the shape of the bargain rather than a bug: what a reading costs and that it goes off, that a drill refuses a man nobody has watched, that it climbs to `PREP_MAX` and pays against **that one man and nobody else**, and what it takes off his own training (+6.3 stat points drilling against +9.5 at the post over six weeks) |
@@ -241,6 +242,21 @@ men in stock kit was told the fee was the whole of it; and Rome's letter has fiv
 conditions, so a house with no senator warm enough to send it read `0 fame short` and
 would have gone off to win fame it did not need. Neither was caught by reading. Both
 were caught by a check that drove the real gate.
+
+## Measure the statistic the code uses, not the one that is easy to measure
+
+`pickEvent` shuffles the event keys and returns the first ELIGIBLE one. When the shuffle turned
+out to be broken, the obvious measurement was which key comes out FIRST — and that showed a 5.1×
+spread across the list, which is a dramatic number and nearly went into the changelog as the
+finding. It is the wrong statistic. Position zero only decides the outcome when the key at
+position zero is eligible, and on a real house seven of fifty-seven were. Measured properly — the
+first eligible key, over the eligible-set shapes a real house actually presents — the skew is
+**1.3 to 1.4×**. Still a fault, still worth fixing, four times smaller than advertised.
+
+The habit that catches this: before believing a figure, write down the line of code that consumes
+it. If the number you measured is not the number that line reads, you have measured something
+adjacent to the bug. And when the honest figure turns out smaller, say so at its real size — a
+finding oversold once makes every figure in the same document worth less.
 
 ## The same scale fault has two directions, and a check for one will not catch the other
 

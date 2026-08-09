@@ -15131,9 +15131,39 @@ const EVENTS = {
     } },
 };
 
+/* ---- AND THE WEEK'S QUESTION WAS NEVER DRAWN FAIRLY ----
+   This was `Object.keys(EVENTS).sort(()=>R()-0.5)`, the classic broken shuffle. A comparator has
+   to be consistent; one that ignores its arguments and returns a random sign makes the result
+   depend on the sort's internal access pattern, and V8's TimSort walks an array in a fixed order,
+   so keys tend to stay near where they started. The list is the declaration order of EVENTS —
+   so what the game asked you depended on where in this file the event happened to be written.
+
+   THE SIZE OF IT, because the first number measured was four times too big and nearly got
+   reported. Over 20,000 draws of the real 57-key list the old line put a key FIRST anywhere from
+   1.05% to 5.38% of the time, a 5.1x spread against a uniform 1.79%. But `pickEvent` does not
+   take position zero — it takes the first ELIGIBLE key, and that is a different statistic. Taking
+   the first eligible key from the real list, 40,000 draws each:
+
+     two adjacent events         1.03x   (no bias at all)
+     a contiguous block of six   1.14x
+     two at opposite ends        1.27x   (56% / 44%)
+     six scattered evenly        1.35x
+     the seven a real house had  1.39x   (15.0% against 12.7%)
+
+   against 1.01x to 1.06x for a real shuffle, which is the noise floor at that count. So the
+   fault is a **1.3 to 1.4x skew toward events written earlier in this file**, not a five-fold
+   one, and it is worth fixing at that size and not oversold above it.
+
+   AND THE FILE ALREADY HAD A CORRECT SHUFFLE. `shuffled()` is a Fisher-Yates, written for the
+   melee and used in nine other places — the feud's cause, the refusal's reason, the slavers at
+   the block, the platforms at an election. The one draw that decides what the game says to you
+   this week was the one that did not call it.
+
+   Note for anyone comparing runs across this change: the old line consumed an unpredictable
+   number of R() calls per week and this one consumes exactly n-1, so the stream diverges.
+   Same-seed comparison across it is meaningless; rates over many houses are not. */
 function pickEvent(d){
-  const keys = Object.keys(EVENTS).sort(()=>R()-0.5);
-  for(const k of keys){
+  for(const k of shuffled(Object.keys(EVENTS))){
     const ev = EVENTS[k].make(d);
     if(ev) return ev;
   }
@@ -24100,6 +24130,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     doFight, doPairFight, doMelee, doVenatio,
     /* the week, and what it writes down */
     endWeek, bookBout, bookOf, newBook, chron, chronAll, bookSays,
+    /* the week's one question, and the draw that chooses it */
+    pickEvent, shuffled,
     /* the always-open card and the block, for a headless player */
     makePitOffer, pitMen, makePitCard, buyFromBlock, rosterFull, cellsCap,
     /* the week's bill, so its composition can be counted without playing a campaign */
