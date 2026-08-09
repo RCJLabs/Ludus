@@ -1340,6 +1340,7 @@ Tuning dials, in the order you'd reach for them:
 | What earns a badge | `MARK_URG` / `TAB_QUIET` | urgency 2 and above only (3.64 items a week, not 7.86); an empty tab cannot be fresh |
 | What a kept vow is worth | `VOW_BOUTS_FULL` / `VOW_EARNT_AT` | par at nothing risked, 1.6× at six cards fought under it — and never a blessing. Both are six: `VOW_EARNT_AT` was 2, and over 31 vows settled in 1,611 house-weeks the fewest cards under any vow was three and the median eight, so the piety split could never resolve the lean way. At six it bites 26% of vows |
 | What the gatekeeper can say | `LESSONS` / `lessonFor` | 35 lessons, one per tab per week, each with a `done` window — so it is a queue, and a window can expire while something ahead of it holds the slot. **All 35 windows are non-empty**: built into its own state, every lesson opens and every one is then said. From inside its window with nothing read in front of it, **29 of 35 are said, median week 3**; the other 6 are windows that close and reopen rather than expire. A reader playing from week 1 reaches 27 of 35 in 47 weeks; all 11 with no state gate are offered, first at weeks 1–3. Four ways to lose one, all of which had happened: done in week 1 (in an opening nobody was checking), `done` firing before `when` can, starved by the queue in front, and a gate with no satisfiable state at all |
+| What a new player is told to do | `CHARTER` / `charterWeek` | eleven steps, and a PREFIX — `charterWeek` stops at the first step not done, so one step a house cannot finish hides every step behind it and the year-end 250d + 12 fame. Walked end to end it finishes; played, it finishes for 10 of 40 houses in 40 weeks and 26 of the 40 died first, which is the opening's mortality and not the guide's doing (a reserve arm that spends less scores **−5.0 points against it, s.e. 9.1**). The crux — the word from the box — comes in **0.0%** of first-blood bouts, **53.2%** at surrender, **67.8%** sine, which is why step two's advice and step ten's requirement had to be reconciled |
 | Which opening a check is looking at | `SC_KEYS` / `SCENARIOS` | five: clean 3 men/800d, inherited 6/260 **with a room already up**, champion 1/520 **whose man starts on 6–10 wins**, veterans 4/700, castoffs 5/640. `newGameState` ends `SCENARIOS[scen] \|\| SCENARIOS.clean`, so a wrong key returns A Clean Start **without a word** — which is how one check spent two releases testing one opening five times, and why the keys are now on the handle. Those two starting states are the only ones that open the doors on `staff` and `signature` in week one |
 | How loud the first hour is | `agenda` / `URG` | over the opening thirty weeks, **2.94** items a week at urgency 2 or more, more than two of them in **58.8%** of weeks (was 3.57 and 81.1% while the teacher line outranked the week's news). 93.2% of weeks carry more than three items in total, and no week in 420 was silent |
 | Which stat to point him at | `CLASSES[c].key` / `setFocusOf` | `power()` and `winChance` weight a class's own two stats, so the drilling grid's six buttons are **not equivalent** — that is a fact about the engine, not a measurement. What was measured says only what it can: weakest-stat pointing reliably lifts a man's MEAN (91.5 and 99 across two batches), which is what it optimises by construction; pointing at his class's own stats does not reliably lift the mean (94.4 and 88.4 against 86.7 and 88.6 for never pointing him), because that is not what it is for; and no policy separated on house-level outcomes at 20 houses × 2 batches. So the grid marks which two stats are his trade and claims nothing beyond that |
@@ -1377,6 +1378,55 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.70.0 — The guide's second step and its tenth were arguing, and nothing had ever driven the guide
+
+The CHARTER is the only thing in the game that tells a new lanista what to do next, it is eleven
+steps long, and until this release nothing had driven it — it was not on the test handle, and
+`haveWatchedOffer`, which is the whole of step eight, had never been called by any check at all.
+The coverage sweep had been saying so for twenty releases.
+
+Its shape is much less forgiving than the lessons' queue, and that is the point of this release.
+`charterWeek` walks forward from `i` and stops at the first step that is not done, so **step k+1
+is never shown until step k is**. A lesson that cannot be reached costs one note. A charter step
+that cannot be finished costs every step behind it, plus the year-end 250 denarii and 12 fame.
+
+**Two steps were arguing with each other.** Step two says *"take a bout at first blood — nobody
+dies at those stakes"*, which is the right first advice to give anybody. A first-blood bout ends
+**at** the first real wound, so nobody is ever on their knees waiting for the word from the box,
+so it never reaches a crux. Measured at 250 pit bouts a stake: a crux in **0.0% at first blood,
+53.2% at surrender, 67.8% sine missione**. And step ten is *"Let a beaten man up"*, which needs
+exactly that moment and said nothing about where to find it. Over 40 houses following the guide
+across all five openings: of the 10 that got past step ten, **not one did it by stopping a bout**.
+All ten cleared it on its other clause — `activeG(d).some(g => (g.memory||[]).length > 0)`, a man
+remembering anything at all, which `remember(d, g, "hurt")` writes when one of your own is carried
+off. The step about sparing a beaten man was being retired by having a man wounded. And all **5**
+houses still standing at week 40 without finishing the guide were sitting on it.
+
+Step ten now says where the moment comes from, and its exit is the cloth itself with the year as
+a backstop, so it can be neither retired by something unrelated nor left holding the last step.
+
+**REFUTED, and the falsification was written first.** The reading that produced this item was that
+the guide hides step nine — *"unrest is the only number that ends a run outright"* — from the
+houses that need it: 21 of 26 dead houses were never shown it. The game's own code says no. `ruin`
+is no men **and** no coin, `rebellion` is the unrest ending, and not one of the forty houses ended
+in rebellion; they went debt 15, ruin 7, emptied 4. So the follow-up asked whether the guide's four
+spending instructions teach a beginner to lose, with a stated bar of 13 points on 60 houses a side:
+a reserve arm that would not spend below four weeks of the bill came in at **43.3% against the
+charter arm's 48.3%, a difference of −5.0 points against one standard error of 9.1**. The guide is
+not teaching anybody to lose. And the honest limit of that measurement is that **both arms spent an
+identical median 490 denarii** — a four-week floor almost never binds in a first year — so the
+hypothesis is untested rather than disproved, and it is written that way in the check.
+
+**And a probe fault worth keeping, because it is the shape of most of them.** The first run reported
+17 of 30 houses stalled on step six, *"Arm somebody properly"*. The step's own words are "buy a real
+piece, **then** arm him off the rack"; `wears(it)` is `!it.stock && it.price > 0`; and the probe was
+arming men off a rack of free house stock. The cheapest buyable piece is a pugio at 80 denarii
+against an opening purse of 260 to 800. The step was never the problem.
+
+The 38th check, `charter`, walks the prefix end to end, holds every step to being finishable by a
+house doing exactly what it asks, keeps the stake sweep as a measurement, and asserts that no step
+is retired by something it is not about.
 
 ### v2.69.0 — Four of five openings were never tested, and the note about the medicus was retired by hiring the trainer
 
@@ -4085,4 +4135,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.68.1*
+*Last updated: v2.70.0*

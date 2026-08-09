@@ -73,6 +73,7 @@ reason the check exists usually has not.
 | `temple` | fast | five gods with four boons plumbed into the engine, and across 3,200 house-weeks no vow was ever sworn and no blessing ever rode with a house — the agenda had never named the gods, the Temple panel opened only for a house already using it, and a probe guard reserving four weeks' cushion produced the figure that made it all look unaffordable |
 | `surface` | slow | the tab bar was 9px and END WEEK was 37px tall — and it measured a house twelve WEEKS old on one face of each tab with no record sheet ever opened, so it would have passed the whole way through a release where a house's name read "House Glaber…" and a fame of 23,703 rendered "237…" |
 | `sand` | slow | thirteen checks called `doFight` and every one drove the engines in memory; four drove a browser and none reached the sand, so the most-looked-at screen in the game had no test — which is why a React key fault living on the bout wizard was found by a scratch probe photographing an axe |
+| `charter` | fast | the first-year guide — eleven steps, and a **prefix**: `charterWeek` stops at the first step not done, so one unfinishable step hides every step behind it and the year's 250d. Nothing had ever driven it. Walks the prefix end to end, holds each step to being finishable by a house doing exactly what it asks, keeps the stake sweep that found step two and step ten arguing (a crux in 0% of first-blood bouts, 53% at surrender), and asserts no step is retired by something it is not about — step ten used to clear on any man having a memory, which is written by one of your own being wounded |
 | `lessons` | fast | thirty-five lessons, one per tab per week, each with an expiry window — so a queue, and sixteen of them could not be reached by any player: "Steel and Style" was `done` in week 1 of all five openings because every one hands you a rack, "Steel Does Not Last" closed on an event that had to happen before it could open, and between them the armory tab offered a new house nothing at all. Six sections now, three of which need no house to live long enough: every lesson **constructed into its own window** and asked (a gate whose halves cannot both hold is dead table); **no week-one action may shut one while its door is still closed** (which caught the note about the medicus being retired by hiring the trainer); and **from inside the window with a cold queue, he must reach it**. Its opening scan reads the five scenario keys off the handle, having spent two releases inventing four of them |
 | `feats` | fast | five of the nineteen feats read as never earned across 3,200 house-weeks and every one of them was reachable — two of the five were the probe declining Rome's card and never founding the burial society; what was real was the cloth recording nothing outside a singles bout, and a sheet showing a dash to a house standing on the gate |
 
@@ -228,6 +229,28 @@ men in stock kit was told the fee was the whole of it; and Rome's letter has fiv
 conditions, so a house with no senator warm enough to send it read `0 fame short` and
 would have gone off to win fame it did not need. Neither was caught by reading. Both
 were caught by a check that drove the real gate.
+
+## A prefix hides everything behind it, and a queue only loses one thing
+
+Two systems in this game hand the player instructions, and they fail in different ways. `LESSONS`
+is a QUEUE: one note per tab per week, and a note whose window shuts is one note lost. `CHARTER`
+is a PREFIX: `charterWeek` walks forward and stops at the first step that is not done, so a step
+a house cannot finish costs every step behind it AND the year-end reward. When auditing a system
+that dispenses guidance, find out which shape it is first — it decides what a single fault costs,
+and therefore how hard to look.
+
+The charter's version was two steps arguing. Step two recommends first blood, which is right;
+first blood ends AT the wound, so it never reaches a crux; step ten needs a crux. Measured at 250
+pit bouts a stake: 0.0% / 53.2% / 67.8% across blood, surrender and sine. Neither step is wrong
+on its own, and no amount of reading either one finds it — only fighting 250 bouts at each stake
+and counting does.
+
+And the corollary for `done` clauses generally: **an escape clause is a second definition of the
+thing, and it will do most of the work.** Step ten's was `activeG(d).some(g => (g.memory||[]).length
+> 0)`, which sounds like "he has been through something with you" and is in fact written by
+`remember(d, g, "hurt")` the first time one of your own is carried off. Ten houses out of ten
+passed the step about sparing a beaten man by having a man wounded. When a gate has an OR in it,
+measure which side actually fires.
 
 ## A key the game does not have is a key the game silently forgives
 

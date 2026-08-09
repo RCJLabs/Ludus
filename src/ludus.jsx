@@ -2270,7 +2270,27 @@ async function importHouse(text){
 /* ---- THE FIRST YEAR ----
    Twenty-eight lessons explain the machinery as it arrives. None of them tells a
    new lanista what to actually do on a Tuesday. This is ten things, in the order
-   a man would learn them, each finished by doing it rather than by reading it. */
+   a man would learn them, each finished by doing it rather than by reading it.
+
+   ---- AND IT IS A PREFIX, WHICH IS A HARDER SHAPE THAN IT LOOKS ----
+   `charterWeek` walks forward from `i` and stops at the first step that is not done, so
+   step k+1 is never shown until step k is. The lessons are a queue and lose one note at a
+   time; this loses its whole tail, plus the year-end 250 denarii and 12 fame, to any single
+   step a house cannot finish. Nothing had ever driven it — it was not on the test handle
+   until v2.69.0 — and the first thing that did found step ten holding the door.
+
+   Measured over 40 houses following the guide in all five openings: of the 10 that got past
+   "Let a beaten man up", NOT ONE did it by stopping a bout. All ten cleared it on its other
+   clause, a man remembering anything at all, which has nothing to do with the cloth; and all
+   5 houses that were still standing at week 40 without finishing the guide were sitting on it.
+   The cause is two steps arguing with each other. Step two says take a bout at first blood,
+   which is the right first advice — and a first-blood bout ENDS at the first real wound, so
+   nobody is ever on their knees waiting for the box. Measured at 250 pit bouts a stake:
+   a crux in **0.0%** at first blood, **53.2%** at surrender, **67.8%** sine missione. The step
+   asked for a moment the stake the guide had just recommended cannot produce, and said nothing
+   about where to find it. So it now says where, and its exit is the cloth itself with the year
+   as a backstop — it can no longer be retired by something unrelated, and it can no longer
+   hold the last step hostage either. */
 const CHARTER = [
   { id:"train", tab:"men", title:"Put them to work",
     how:"Everyone in the yard has a week and none of it spends itself. Open a man and set what he works on.",
@@ -2300,8 +2320,8 @@ const CHARTER = [
     how:"Unrest is the only number that ends a run outright. A feast costs 120 denarii and buys more than it looks like it does.",
     done:d=>(d.flags.everFeast||0) > 0 || d.unrest < 12 },
   { id:"cloth", tab:"arena", title:"Let a beaten man up",
-    how:"A bout can be stopped partway. Throw the cloth when one of them is done and you have spent a purse to buy a man's life — his, or the other house's. Every man in your cells keeps a list, and this goes on it.",
-    done:d=>(d.flags.everCloth||0) > 0 || activeG(d).some(g=>(g.memory||[]).length > 0) },
+    how:"A bout can be stopped partway — but only where there is something to stop. At first blood it ends at the wound and nobody is ever on their knees, so the word comes on a card fought to surrender or worse. Throw the cloth when one of them is done and you have spent a purse to buy a man's life — his, or the other house's. Every man in your cells keeps a list, and this goes on it.",
+    done:d=>(d.flags.everCloth||0) > 0 || d.week >= YEAR_WEEKS },
   { id:"year", tab:"ludus", title:"Stand for a year",
     how:"Eighteen weeks is a year. Get there with a house still standing and you have done the difficult part.",
     done:d=>d.week >= YEAR_WEEKS + 1 },
