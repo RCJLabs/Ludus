@@ -1342,6 +1342,7 @@ Tuning dials, in the order you'd reach for them:
 | What the gatekeeper can say | `LESSONS` / `lessonFor` | 35 lessons, one per tab per week, each with a `done` window — so it is a queue, and a window can expire while something ahead of it holds the slot. **All 35 windows are non-empty**: built into its own state, every lesson opens and every one is then said. From inside its window with nothing read in front of it, **29 of 35 are said, median week 3**; the other 6 are windows that close and reopen rather than expire. A reader playing from week 1 reaches 27 of 35 in 47 weeks; all 11 with no state gate are offered, first at weeks 1–3. Four ways to lose one, all of which had happened: done in week 1 (in an opening nobody was checking), `done` firing before `when` can, starved by the queue in front, and a gate with no satisfiable state at all |
 | Which question the week asks | `pickEvent` / `shuffled` | one slot, filled by the first event whose `make` returns something from a shuffled key list — so the draw has to BE a shuffle. It was `sort(()=>R()-0.5)`, which is not one: measured on the first-eligible key, the statistic that decides what is asked, it skewed **1.3 to 1.4×** toward events written earlier in the file (1.03× for two adjacent, 1.39× for the seven a real house had) against 1.01–1.06× for Fisher–Yates. The 5.1× figure that first turned up is first-POSITION of the permutation and is not the statistic that matters. Systems with channels of their own — the feud, the licence, the inspector, the primacy — set `pendingEvent` before the draw runs at all and take the week outright |
 | What a man's last month is worth | `formWord` / `FORM_TELL` / `formWeek` | five words, and two were never said. `formWeek` decays `f*0.78 - 3` weekly against +24 for a win at the great games, so three straight wins — the lesson's own example — reaches **37.6**, and the bands were 58 and 24. Over 4,862 man-weeks form ran **-50.5 to +42.4**, "in form" and "shaken" **0 times each**, "level" **97%**. Bands are 34 and 14 now; the fixed point of winning every single week is 71.5. What form DOES is unchanged at ±3.6% of power |
+| Whether a line has room for what can go in it | `SMALL_HOUSES` / `NICKS` / `ORIGINS` vs the row it fills | the pit row's second line — `class · house · record` — has **263px** of room and the widest the content space allows renders at **300px**: 110 of 1,800 men dealt across 600 nights (**6.1%**) lost some of it behind an ellipsis. The coupling is the point: the menace word sits on the right at `flexShrink:0`, so v2.71.0's new words (**Murderous 53px, Peerless 40px** against the old top word **Lethal 31px**) took 22px out of the span beside it — with the narrowest word on the right, **0 of the 1,800** are cut off. A scale that gets a longer word narrows every row it shares. `room` forces the widest content AND the widest word together |
 | What you are told before you commit | `menace` / `readMatch` | two readings, and only one is free. `readMatch` — the per-man word on the pick screen — is real only when you have paid to have the man watched, which a house holds on **15.3%** of the men it is offered; the other 84.7% read "no read". Free is `menace`, six words now: Green/Seasoned/Dangerous under mean 66 where a strong man is quoted 97% throughout, then **Lethal 66–77, Murderous 78–89, Peerless 90+**, which against a mean-92 man is 11, 29 and 24 points of quoted chance per band. It ended at 66 for fifty releases, so one word covered mean 66 to 99 — a quote of 96% down to 13%, and every hard decision in the game sits inside it |
 | What a new player is told to do | `CHARTER` / `charterWeek` | eleven steps, and a PREFIX — `charterWeek` stops at the first step not done, so one step a house cannot finish hides every step behind it and the year-end 250d + 12 fame. Walked end to end it finishes; played, it finishes for 10 of 40 houses in 40 weeks and 26 of the 40 died first, which is the opening's mortality and not the guide's doing (a reserve arm that spends less scores **−5.0 points against it, s.e. 9.1**). The crux — the word from the box — comes in **0.0%** of first-blood bouts, **53.2%** at surrender, **67.8%** sine, which is why step two's advice and step ten's requirement had to be reconciled |
 | Which opening a check is looking at | `SC_KEYS` / `SCENARIOS` | five: clean 3 men/800d, inherited 6/260 **with a room already up**, champion 1/520 **whose man starts on 6–10 wins**, veterans 4/700, castoffs 5/640. `newGameState` ends `SCENARIOS[scen] \|\| SCENARIOS.clean`, so a wrong key returns A Clean Start **without a word** — which is how one check spent two releases testing one opening five times, and why the keys are now on the handle. Those two starting states are the only ones that open the doors on `staff` and `signature` in week one |
@@ -1381,6 +1382,55 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.74.0 — A word got longer and the line beside it got shorter
+
+Not an audit item. The v2.73.0 suite came back 41 of 42, and the one failure was `sand`:
+
+    the pits, choosing: "Hoplomachus · the Ludus Pomp" is cut off, 24px hidden
+
+**The instrument first, because that is the rule here.** Five solo runs of `sand` afterwards all
+passed, and a probe that drove the pits leg on its own six times never reproduced it. So the check
+finds this about one run in six — it depends on whether chance deals a long class name to a long
+house name that night. A check with that hit rate is not holding anything, and the anecdote it
+produced is not a measurement.
+
+**So the content space was measured instead of waited for.** 1,800 men dealt across 600 pit nights,
+each man's two lines composed and measured at the row's own font, against a column read off the
+live panel rather than estimated from the viewport. The second line — `class · house · record` — has
+**263px of room, and the widest line the content space allows renders at 300px**. 110 of the 1,800
+(**6.1%**) lost some of it. Both lines wrap now, which is what a fix on this same panel already did
+one level up; the note there says so.
+
+**And the cause is a release we shipped two weeks ago.** The menace word sits on the right of that
+line with `flexShrink:0`, so it takes its own width out of the span beside it. v2.71.0 gave the
+menace scale two more bands, and the words it added are **Murderous at 53px** and **Peerless at
+40px** where the top word had been **Lethal at 31px**. With the narrowest word on the right, **0 of
+the 1,800 are cut off**; with the widest, 110 are. A release spent giving a scale more resolution
+took 22px out of the line next to it, and nothing in the suite connected the two.
+
+**One figure retracted.** The first draft of this said the name line was cut off for 6.6% of men
+too. That came from a ruler estimating its column at 175px; driven with the longest name against
+the longest nick, the name fits, and the revert run clips three spans, all of them the second line.
+The 6.6% was the probe's. A width estimated by arithmetic is a guess; a width read off the element
+is a measurement.
+
+**The 43rd check, `room`,** composes the widest line the content space allows — longest class,
+longest house, a record in double figures, a kill count, longest name against longest nick — and
+forces the widest menace word beside it, so the next time a scale gets a longer word the row it
+shares is measured with it. It reads `ORIGINS`, `NICKS`, `SMALL_HOUSES` and `CLASSES` off the handle
+rather than sampling 300 generated men, which is how its first draft set its own bar by chance and
+got a different longest name every run. Reverting the wrap fails it every time, on all three men at
+the rope. Because the wrap leaves nothing bounded to measure, it also asserts the whole of both
+lines is *on* the panel — a clip count of zero must not be able to pass by absence.
+
+**And one thing left open rather than dressed up.** `sand` has a second failure mode, seen once in
+six solo runs: `the pits: nothing would send them out after choosing 0 and 0 steps — on screen:
+btn: · btn:‹ BACK`. An overlay with the wizard's chrome and an empty body. The obvious theory —
+that the wizard's kind chain has a path that renders nothing — is **refuted**: the step dispatch is
+total (`step===0`, `step===1`, `else`) and the else covers all five kinds `goPick` can be handed
+(`pits`, `single`, `pair`, `melee`, `hunt`), so `body` is always assigned. The cause is unknown and
+is written down as unknown.
 
 ### v2.73.0 — The week's one question was never drawn fairly
 
@@ -4379,4 +4429,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.73.0*
+*Last updated: v2.74.0*

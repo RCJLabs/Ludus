@@ -74,6 +74,7 @@ reason the check exists usually has not.
 | `surface` | slow | the tab bar was 9px and END WEEK was 37px tall — and it measured a house twelve WEEKS old on one face of each tab with no record sheet ever opened, so it would have passed the whole way through a release where a house's name read "House Glaber…" and a fame of 23,703 rendered "237…" |
 | `sand` | slow | thirteen checks called `doFight` and every one drove the engines in memory; four drove a browser and none reached the sand, so the most-looked-at screen in the game had no test — which is why a React key fault living on the bout wizard was found by a scratch probe photographing an axe |
 | `draw` | fast | the week asks one question, chosen by the first event whose `make` fires from a shuffled key list — and the shuffle was `sort(()=>R()-0.5)`, the classic broken one, in a file that already contained a correct Fisher–Yates used in nine other places. What the game asked you depended on where in the file the event was written. Holds the shuffle uniform AND the statistic that actually decides it, the first *eligible* key, because the first-position figure overstates the fault four-fold |
+| `room` | slow | `sand` caught the pit row's second line cut off with 24px hidden — and then passed five runs in a row, because whether the fault shows depends on whether the night deals a long class name to a long house name. So this one does not wait to be dealt the bad case: it composes the widest line the content space allows out of `ORIGINS`, `NICKS`, `SMALL_HOUSES` and `CLASSES`, forces the widest menace word beside it, and measures the row. 263px of room for 300px of line before the fix, on all three men at the rope, every run |
 | `scales` | fast | seventeen bucketed words the player reads and acts on, and the same fault had shipped three times — #79, #85 and `menace`. Walks every scale across the range its quantity can take, so a band that swallows the range or a word that can never be said both show up. It found the mirror of `menace`: `formWord`'s two outer words were never said in 4,862 man-weeks, because the decay of `f*0.78 - 3` against +24 for a win puts three straight wins at 37.6 and the band was 58 |
 | `crown` | fast | the primacy — the top of the Capuan ladder and one of the two roads to Rome — was seven handle functions put there in v2.64.0 to be checked and never called once. Drives it end to end: the gate, the city seeding its own holder, the offer, the bout, the reign, the flag `romeReady` reads, a defence, losing it, and the second-best man in your own cells asking for it. And it holds the free reading: `menace`'s top bucket used to run from mean 66 to 99, which against one man is a quoted chance of 96% down to 13% — one word for every hard decision in the game |
 | `wall` | fast | everything you do with another house's men — watch, drill against, court, buy, call out, settle — was eleven functions no check had ever called, in a system that supplies **98.6% of the single offers on a Capuan card**. Holds the shape of the bargain rather than a bug: what a reading costs and that it goes off, that a drill refuses a man nobody has watched, that it climbs to `PREP_MAX` and pays against **that one man and nobody else**, and what it takes off his own training (+6.3 stat points drilling against +9.5 at the post over six weeks) |
@@ -672,3 +673,39 @@ ceiling, because that one was chosen out loud: 60% for a maxed man with a perfec
 
 If a band starts crying wolf, widen it or assert the property instead of the number.
 A check nobody trusts is worse than no check.
+
+## A check that finds a fault one run in six is not holding it
+
+`sand` reported the pit row's second line cut off with 24px hidden. Then five solo runs passed, and
+a probe that drove the pits leg on its own six times never reproduced it. The check was real and the
+fault was real, but the check only sees the fault when chance deals a long class name to a long house
+name — so it would have gone green through any release that made this worse.
+
+The fix is not a better driver, it is a different kind of assertion. Stop driving the game and hoping
+the bad case turns up; **compose the widest content the space allows and force it in.** The longest
+class, the longest house name, a record in double figures, a kill count, the longest name against the
+longest nick — all read off the game's own tables, because a name the check invents proves nothing
+about the game. Then the assertion is deterministic and the bar is the content space rather than the
+draw. `room`'s first draft sampled 300 generated men for the longest name and got a different answer
+every run, which is the same fault one level in: a probe deciding its own bar by chance.
+
+Two figures to keep from this. A width estimated by arithmetic on the viewport is a guess — 175px
+turned into a 6.6% claim about the name line that driving it refuted. A width read off the element is
+a measurement. And a clip count of zero must not be able to pass by absence: once the fix removed the
+bounded spans there was nothing left to measure, so the check also asserts the whole of both lines is
+*on* the panel.
+
+## A scale that gets a longer word narrows every row it shares
+
+v2.71.0 gave the menace scale two more bands, because one word had covered mean 66 to 99 — a quote of
+96% down to 13%. That was right. What nothing priced is that the word it added is **Murderous at
+53px** where the old top word was **Lethal at 31px**, and that word sits at the right of a row with
+`flexShrink:0` — so it takes its width out of the span beside it. With the narrowest word on the
+right, 0 of 1,800 pit rows are cut off. With the widest, 110 are.
+
+So a release spent on a scale's *resolution* silently spent 22px of a *layout*, two releases apart,
+and no check connected them because the scale checks measure words and the layout checks measure
+pixels. `room` forces the widest content and the widest word together for exactly this reason. The
+general shape: when a bounded span shares a row with text that comes from a word table, the table's
+longest word is part of that span's budget — and the next release to lengthen the table will not
+think of the row.

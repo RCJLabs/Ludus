@@ -23583,14 +23583,39 @@ export default function App(){
                       return (
                         <button key={f.id} className={`optrow ${on?"on":""}`} style={{marginBottom:6,width:"100%"}}
                           onClick={()=>setPitPick(on?null:f.id)}>
+                          {/* ---- A NOWRAP-AND-ELLIPSIS ON A LINE THAT DOES NOT FIT ----
+                              The note above says this fault was fixed once already on this panel,
+                              one level up, and these two rows are where it survived. Measured on
+                              the live panel at 390px with the widest line the content space allows
+                              — longest class, longest house, a record in double figures, a kill
+                              count: the second line has 263px of room for 300px of line, so 37px
+                              of the man went behind the ellipsis. Over 1,800 men dealt across 600
+                              nights, 110 of them (6.1%) lost some of it.
+
+                              AND HALF OF IT WAS DONE BY v2.71.0. The menace word on the right is
+                              flexShrink:0, so it takes its width out of this span: the words that
+                              release added are Murderous at 53px and Peerless at 40px where the
+                              top word had been Lethal at 31px. With the narrowest word on the
+                              right, 0 of the 1,800 are cut off. Giving a scale more resolution
+                              took 22px out of the line beside it and nothing priced that.
+
+                              THE NAME LINE WAS NOT GUILTY and the first draft of this note said
+                              it was. A ruler that estimated its column at 175px made it 6.6% too;
+                              driven with the longest name against the longest nick it fits, so
+                              that figure was the probe's and is struck. It wraps anyway, because
+                              the row beside it does and the pair should not disagree.
+
+                              `room` holds both, on forced worst-case content rather than whatever
+                              the night deals — which is why `sand` caught this once in six runs
+                              and `room` catches it every time. */}
                           <div className="flex items-center justify-between gap-2">
-                            <span className="disp" style={{fontSize:"var(--fs-base)",color:on?"#e8d092":"#e8d9b8",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                            <span className="disp" style={{fontSize:"var(--fs-base)",color:on?"#e8d092":"#e8d9b8",minWidth:0,whiteSpace:"normal",overflowWrap:"anywhere"}}>
                               {f.nick? `${f.name}, ${f.nick}` : f.name}
                             </span>
                             <span className="gold" style={{fontSize:"var(--fs-base)",flexShrink:0}}>{pitPurse(S, f, pitStakes)}d</span>
                           </div>
                           <div className="flex items-center justify-between gap-2" style={{marginTop:2}}>
-                            <span className="dim" style={{fontSize:"var(--fs-base)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                            <span className="dim" style={{fontSize:"var(--fs-base)",minWidth:0,whiteSpace:"normal",overflowWrap:"anywhere"}}>
                               {f.cls} · {f.house} · {f.wins}–{f.losses}{f.kills?`, ${f.kills} killed`:""}
                             </span>
                             <span className="rowval dim" style={{fontSize:"var(--fs-sm)",flexShrink:0}}>{menace(f)}</span>
@@ -24197,6 +24222,10 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     migrate, SAVE_FIELDS, SAVE_MAYBE, SAVE_NUMBERS, MAN_FIELDS, MAN_NUMBERS, REPAIRS, SAVE_VER,
     /* the tables a check may need to reason about */
     TIERS, CLASSES, GEAR, EVENTS, LASTING, STATS,
+    /* every name and nick a man can be given. A check that wants the longest line the game
+       can draw has to read the tables — `room` first sampled 300 generated men for it and got
+       a different longest name each run, which is a probe deciding its own bar by chance. */
+    ORIGINS, NICKS, SMALL_HOUSES,
     /* what a rival house's anger has to reach before it does anything */
     GRUDGE_SABOTAGE, GRUDGE_BRIBE, GRUDGE_THUGS,
     /* the war: its stages, its clock and what it does to the block */
