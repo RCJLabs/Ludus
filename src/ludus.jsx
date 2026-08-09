@@ -2372,7 +2372,11 @@ function agendaCan(d, add){
   /* the cells would take a feast — and it is worth throwing, which is not the same thing */
   if(d.unrest >= 35 && d.gold >= feastCost(d) + weeklyBill(d) && feastFresh(d) >= 0.6)
     add(d.unrest >= 55 ? 2 : 1, "ludus", "The cells would take a feast",
-      `${unrestWord(d.unrest).toLowerCase()} · ${feastCost(d)}d, and it would reach ${Math.round(feastReach(d))} of them`);
+      /* `feastReach` is a FRACTION — 5 / the number of men, clamped 0.65 to 1 — so
+         Math.round of it is 1 for every house that can exist, and this line read
+         "it would reach 1 of them" to a house of eight. The panel on the villa tab
+         has always quoted it correctly, as a percentage; this now says the same thing. */
+      `${unrestWord(d.unrest).toLowerCase()} · ${feastCost(d)}d, and on ${activeG(d).length} men it lands ${Math.round(feastReach(d)*100)}% as hard as on four`);
   /* ---- AND A MAN AT ANOTHER HOUSE, WHICH NOTHING HAS EVER MENTIONED ----
      `courted` fired 0 times across 4,908 house-weeks and six of the arc's functions were
      dark. Its falsification came back the same way #95's did: a policy that deliberately
@@ -11780,11 +11784,25 @@ function makeParagon(d){
   g.price = rnd(gladValue(g) * 2.4);
   return g;
 }
-/* what he is worth against what you have */
+/* ---- WHAT HE IS WORTH AGAINST WHAT YOU HAVE, AND WHICH "HAVE" ----
+   `short` was the gap against WORTH — the box plus every debt owed to you at face plus the
+   steel on the racks at half price. The line beside it reads "You have N in the box", and the
+   button beside THAT reads the box alone. So on a house with steel on the racks the sentence
+   named no shortfall at all and the button stayed dead: measured over 187 house-weeks of played
+   houses past week 20, a median 24.6% of what this counted as worth was not in the box, 54.5% of
+   house-weeks held something outside it, and 12.8% fell in the window where the line says
+   nothing is missing and the purchase is refused. The worst had 2,488d in the box and 16,200d of
+   steel on the racks against a man priced at 8,273.
+
+   Both numbers are here now and each says which question it answers. `short` is the one the
+   button reads, because that is the one the sentence is about. */
 const paragonReach = (d,g) => {
   const worth = d.gold + owedTotal(d) + Object.entries(d.gear||{})
     .reduce((n,[id,c])=>n + (GEAR[id]&&wears(GEAR[id]) ? GEAR[id].price*0.5*c : 0), 0);
-  return { worth:Math.round(worth), price:g.price, short:Math.max(0, g.price - Math.round(worth)) };
+  const box = Math.round(d.gold);
+  return { worth:Math.round(worth), price:g.price, box,
+    short:Math.max(0, g.price - box),                              // against the box — what the button reads
+    shortOfWorth:Math.max(0, g.price - Math.round(worth)) };        // against everything, which is a different question
 };
 /* everything you could turn into coin by Thursday */
 function liquidate(d, g){
@@ -20019,9 +20037,17 @@ export default function App(){
             <div className="panel" style={{padding:14,borderColor:"#6d5426"}}>
               <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,letterSpacing:".04em",marginBottom:3}}>GIVE THE CITY GAMES</div>
               <div className="dim" style={{fontSize:"var(--fs-md)",marginBottom:11}}>
+                {/* THE COOLDOWN IS NOT THE ONLY THING THAT REFUSES THIS. `munusReady` also
+                    refuses a house standing on the imperial sand, and this panel is not hidden
+                    there — the guard above is only travel and the coast. Driven for real (letter
+                    offered, accepted, wagons walked north), a house at Rome that had never held
+                    games read "Capua has had its fill of your generosity for now. 0 weeks before
+                    you can put on games again." Name the thing that is actually in the way. */}
                 {munusReady(S)
                   ? "You need not wait for an editor. Commission your own munus — set the occasion and the card, then host it for the glory or sell the bill to an editor."
-                  : `Capua has had its fill of your generosity for now. ${munusWait(S)} week${munusWait(S)===1?"":"s"} before you can put on games again.`}
+                  : munusWait(S) > 0
+                  ? `Capua has had its fill of your generosity for now. ${munusWait(S)} week${munusWait(S)===1?"":"s"} before you can put on games again.`
+                  : "You are not in Capua to give Capua anything. Games wait until the house is home."}
               </div>
               <button className="btn" style={{width:"100%"}} disabled={!munusReady(S)} onClick={openMunus}>
                 Plan a munus ›
@@ -20837,7 +20863,13 @@ export default function App(){
                             : `Begin it · ${Math.ceil(W.cost*WORK_DEPOSIT)}d down, ${workWeekly(W)}d a week`}
                         </button>
                       : <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:6,fontStyle:"italic"}}>
-                          The city will not hear this from a house that has not finished its own monuments first.
+                          {/* ONE SENTENCE FOR TWO DIFFERENT GATES. The three tier-2 monuments are
+                              gated on the five plain WORKS — a spina, baths, a shrine, a school and
+                              a tomb — and this told you to finish your monuments, which is the tier
+                              above. Only the amphitheatre wants the monuments. */}
+                          {workDef(k).tier === 3
+                            ? "The city will not hear this from a house that has not put up its own monuments first."
+                            : "The city will not hear this from a house that has not finished the works in its own yard first."}
                         </div>)}
                   </div>
                 ); })}
@@ -24166,7 +24198,10 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     setOut, comeHome, stayWeeks, welcomeOf,
     /* what a fortune can be spent on once the yard is finished */
     beginWork, workOpen, workDone, workOn, workUpkeep, WORKS, MONUMENTS, ALL_WORK_KEYS,
-    workWeekly, WORK_DEPOSIT, worksWeek,
+    workWeekly, WORK_DEPOSIT, worksWeek, workDef, WORK_KEYS, MONU_KEYS, monuReady,
+    /* what other people owe you, which is the quantity two proximity lines quote and a
+       third one does not — see `near` */
+    owedTotal, owedList,
     /* the rope: what it pays, and who the bay puts up */
     pitPurse, pitDraw, makeCircuitMan, circuitQuality, bayStandard, seedCircuit,
     CIRCUIT_MIX, CIRCUIT_REACH, PIT_DRAW_TOP, PIT_NIGHT,

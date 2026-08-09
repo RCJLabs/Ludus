@@ -74,6 +74,7 @@ reason the check exists usually has not.
 | `surface` | slow | the tab bar was 9px and END WEEK was 37px tall — and it measured a house twelve WEEKS old on one face of each tab with no record sheet ever opened, so it would have passed the whole way through a release where a house's name read "House Glaber…" and a fame of 23,703 rendered "237…" |
 | `sand` | slow | thirteen checks called `doFight` and every one drove the engines in memory; four drove a browser and none reached the sand, so the most-looked-at screen in the game had no test — which is why a React key fault living on the bout wizard was found by a scratch probe photographing an axe |
 | `draw` | fast | the week asks one question, chosen by the first event whose `make` fires from a shuffled key list — and the shuffle was `sort(()=>R()-0.5)`, the classic broken one, in a file that already contained a correct Fisher–Yates used in nine other places. What the game asked you depended on where in the file the event was written. Holds the shuffle uniform AND the statistic that actually decides it, the first *eligible* key, because the first-position figure overstates the fault four-fold |
+| `near` | fast | ten lines telling the player how close they are to something, none of them ever driven — and this project had already shipped two of the shape wrong. Four were: the feast quoted a fraction through `Math.round` and read "reach **1** of them" at every house size; the paragon's shortfall was measured against the box plus debts at face plus steel at half, beside a button reading the box alone; the munus quoted **0 weeks** of cooldown to a house at Rome; the monuments' closed line blamed the monuments when the gate is the works. Five were right and are pinned so they stay right |
 | `room` | slow | `sand` caught the pit row's second line cut off with 24px hidden — and then passed five runs in a row, because whether the fault shows depends on whether the night deals a long class name to a long house name. So this one does not wait to be dealt the bad case: it composes the widest line the content space allows out of `ORIGINS`, `NICKS`, `SMALL_HOUSES` and `CLASSES`, forces the widest menace word beside it, and measures the row. 263px of room for 300px of line before the fix, on all three men at the rope, every run |
 | `scales` | fast | seventeen bucketed words the player reads and acts on, and the same fault had shipped three times — #79, #85 and `menace`. Walks every scale across the range its quantity can take, so a band that swallows the range or a word that can never be said both show up. It found the mirror of `menace`: `formWord`'s two outer words were never said in 4,862 man-weeks, because the decay of `f*0.78 - 3` against +24 for a win puts three straight wins at 37.6 and the band was 58 |
 | `crown` | fast | the primacy — the top of the Capuan ladder and one of the two roads to Rome — was seven handle functions put there in v2.64.0 to be checked and never called once. Drives it end to end: the gate, the city seeding its own holder, the offer, the bout, the reign, the flag `romeReady` reads, a defence, losing it, and the second-best man in your own cells asking for it. And it holds the free reading: `menace`'s top bucket used to run from mean 66 to 99, which against one man is a quoted chance of 96% down to 13% — one word for every hard decision in the game |
@@ -709,3 +710,43 @@ pixels. `room` forces the widest content and the widest word together for exactl
 general shape: when a bounded span shares a row with text that comes from a word table, the table's
 longest word is part of that span's budget — and the next release to lengthen the table will not
 think of the row.
+
+## A line that quotes a number must quote the number the button reads
+
+Four of the ten proximity lines in #109 were wrong, and three of the four failed the same way: the
+sentence and the control beside it were measuring different quantities.
+
+- The paragon panel said *"You have 2,488 in the box"* and then computed its shortfall against the
+  box **plus** every debt owed to you at face **plus** the steel on the racks at half price. With
+  16,200d of steel on the racks the shortfall came out zero, so the sentence named nothing missing
+  and the button underneath stayed dead. 12.8% of played house-weeks past week 20 sat in that window.
+- The munus panel had one sentence for a refusal with four causes. Three of them the panel could
+  see; the fourth — standing on the imperial sand — fell through to the cooldown wording and read
+  *"0 weeks before you can put on games again."*
+- The monuments' closed line had one sentence for two gates, and named the tier above its own.
+
+The habit: when you write a line that quotes a proximity, find the branch that actually decides and
+read the same expression. If you cannot, the line is describing something else and should say what.
+And the assertion that holds it is not "the number is right" — it is **the number the line quotes
+and the number the gate reads are the same expression**. That is checkable without a browser, which
+is why `near` is a fast check.
+
+The fourth fault was different and worth its own note: `feastReach` returns a fraction clamped 0.65
+to 1, and `Math.round` of it is 1 for every house that can exist. A fraction rendered as a count is
+not a wrong number, it is a number that cannot vary — so the tell is not "is it right" but **does it
+ever change**. The check asks the feast line at three house sizes and fails if all three agree.
+
+## A decomposition is only pinned over a space wide enough for a new term to bite
+
+`near` asserts that the munus is refused for exactly the four reasons its panel has words for — so
+that a fifth condition added later fails the check instead of silently landing in the wrong sentence.
+The first draft asserted it over seven hand-listed states. Every one of them had a quiet yard, so a
+condition injected on unrest to prove the check could fail slipped through **7 of 7**: the check
+passed on the broken build.
+
+It runs the cross product now — away-state × cooldown × unrest × coin, 181 states — and catches the
+same injection at 169 of 181. The lesson is not about unrest. It is that an invariant of the form
+"X is exactly these N things" needs its test states to vary everything an N+1th thing might plausibly
+read, or the test is a spot check wearing a proof's clothing. Always inject the fault you are
+guarding against and watch the check go red; a green on a broken build is the only way to find out
+the states were too narrow.

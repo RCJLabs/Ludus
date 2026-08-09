@@ -1342,6 +1342,7 @@ Tuning dials, in the order you'd reach for them:
 | What the gatekeeper can say | `LESSONS` / `lessonFor` | 35 lessons, one per tab per week, each with a `done` window — so it is a queue, and a window can expire while something ahead of it holds the slot. **All 35 windows are non-empty**: built into its own state, every lesson opens and every one is then said. From inside its window with nothing read in front of it, **29 of 35 are said, median week 3**; the other 6 are windows that close and reopen rather than expire. A reader playing from week 1 reaches 27 of 35 in 47 weeks; all 11 with no state gate are offered, first at weeks 1–3. Four ways to lose one, all of which had happened: done in week 1 (in an opening nobody was checking), `done` firing before `when` can, starved by the queue in front, and a gate with no satisfiable state at all |
 | Which question the week asks | `pickEvent` / `shuffled` | one slot, filled by the first event whose `make` returns something from a shuffled key list — so the draw has to BE a shuffle. It was `sort(()=>R()-0.5)`, which is not one: measured on the first-eligible key, the statistic that decides what is asked, it skewed **1.3 to 1.4×** toward events written earlier in the file (1.03× for two adjacent, 1.39× for the seven a real house had) against 1.01–1.06× for Fisher–Yates. The 5.1× figure that first turned up is first-POSITION of the permutation and is not the statistic that matters. Systems with channels of their own — the feud, the licence, the inspector, the primacy — set `pendingEvent` before the draw runs at all and take the week outright |
 | What a man's last month is worth | `formWord` / `FORM_TELL` / `formWeek` | five words, and two were never said. `formWeek` decays `f*0.78 - 3` weekly against +24 for a win at the great games, so three straight wins — the lesson's own example — reaches **37.6**, and the bands were 58 and 24. Over 4,862 man-weeks form ran **-50.5 to +42.4**, "in form" and "shaken" **0 times each**, "level" **97%**. Bands are 34 and 14 now; the fixed point of winning every single week is 71.5. What form DOES is unchanged at ±3.6% of power |
+| How close you are to a thing | ten proximity lines vs the gates they describe | driven for the first time in #109: four wrong, five right, one not a line. `feastReach` is a fraction 0.65–1 and the agenda put it through `Math.round`, so the feast read "reach **1** of them" at every house size; `paragonReach.short` measured the gap against the box **plus** debts at face **plus** steel at half, beside a button reading the box alone — **12.8%** of 187 played house-weeks past week 20 fell in the window where the line says nothing is missing and the purchase is refused, median **24.6%** of "worth" being outside the box; `munusWait` read **0 weeks** of cooldown to a house standing on the imperial sand, because `munusReady` refuses for a reason the panel had no words for; `workOpen`'s closed line blamed the monuments when the tier-2 gate is the five plain works. Right: `blessLeft`, `creditLine` (median 0d drift), `riseNeed`, `romeBar`, `featNear`. `acclaimTarget` is read by `acclaimWeek` and shown to nobody |
 | Whether a line has room for what can go in it | `SMALL_HOUSES` / `NICKS` / `ORIGINS` vs the row it fills | the pit row's second line — `class · house · record` — has **263px** of room and the widest the content space allows renders at **300px**: 110 of 1,800 men dealt across 600 nights (**6.1%**) lost some of it behind an ellipsis. The coupling is the point: the menace word sits on the right at `flexShrink:0`, so v2.71.0's new words (**Murderous 53px, Peerless 40px** against the old top word **Lethal 31px**) took 22px out of the span beside it — with the narrowest word on the right, **0 of the 1,800** are cut off. A scale that gets a longer word narrows every row it shares. `room` forces the widest content AND the widest word together |
 | What you are told before you commit | `menace` / `readMatch` | two readings, and only one is free. `readMatch` — the per-man word on the pick screen — is real only when you have paid to have the man watched, which a house holds on **15.3%** of the men it is offered; the other 84.7% read "no read". Free is `menace`, six words now: Green/Seasoned/Dangerous under mean 66 where a strong man is quoted 97% throughout, then **Lethal 66–77, Murderous 78–89, Peerless 90+**, which against a mean-92 man is 11, 29 and 24 points of quoted chance per band. It ended at 66 for fifty releases, so one word covered mean 66 to 99 — a quote of 96% down to 13%, and every hard decision in the game sits inside it |
 | What a new player is told to do | `CHARTER` / `charterWeek` | eleven steps, and a PREFIX — `charterWeek` stops at the first step not done, so one step a house cannot finish hides every step behind it and the year-end 250d + 12 fame. Walked end to end it finishes; played, it finishes for 10 of 40 houses in 40 weeks and 26 of the 40 died first, which is the opening's mortality and not the guide's doing (a reserve arm that spends less scores **−5.0 points against it, s.e. 9.1**). The crux — the word from the box — comes in **0.0%** of first-blood bouts, **53.2%** at surrender, **67.8%** sine, which is why step two's advice and step ten's requirement had to be reconciled |
@@ -1382,6 +1383,72 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.75.0 — Four of the ten lines that tell you how close you are were wrong
+
+Audit item #109. Every proximity line is a claim about the state, and ten had never been driven.
+This project has shipped two of them wrong already and the notes on both say the same thing: the
+forge line told a house of six men in stock kit that the fee was the whole of it, and Rome's letter
+read `0 fame short` to a house with no senator warm enough to send it. Neither was found by reading.
+Both were found by driving the gate and comparing what the line **claimed** to what the gate
+**decided**. So: all ten, driven.
+
+**Four were wrong.**
+
+`feastReach` returns a fraction — `5 / the number of men`, clamped 0.65 to 1 — and the agenda put it
+through `Math.round`, which is **1 for every house that can exist**. So the one line in the game
+that tells you what a feast would do read *"it would reach 1 of them"* to a house of eight, at every
+size, forever. The villa panel has always quoted it correctly as a percentage. The agenda says the
+same thing now: *"on 8 men it lands 65% as hard as on four"*.
+
+`paragonReach.short` was the gap against **worth** — the box, plus every debt owed to you at face,
+plus the steel on the racks at half price — sitting in a sentence that reads *"You have N in the
+box"* next to a button that compares the **box** to the price. So a house with steel on the racks
+was told nothing was missing and then refused. Measured over 187 house-weeks of played houses past
+week 20: a median **24.6%** of what this counted as worth was not in the box, **54.5%** of
+house-weeks held something outside it, and **12.8%** fell in the window where the line names no
+shortfall and the purchase is refused. The worst had 2,488d in the box and 16,200d of steel against
+a man priced at 8,273. Both numbers exist now and each says which question it answers; the sentence
+quotes the one the button reads.
+
+`munusWait` — the panel is guarded on travel and the coast, but `munusReady` **also** refuses a
+house standing on the imperial sand. Driven for real (letter offered, accepted, wagons walked
+north), a house at Rome that had never held games was told *"Capua has had its fill of your
+generosity for now. **0 weeks** before you can put on games again."* It now names what is actually
+in the way.
+
+`workOpen` — one sentence for two different gates. The three tier-2 monuments are gated on the five
+plain **works** (a spina, baths, a shrine, a school, a tomb) and the closed line told you to finish
+your **monuments**, which is the tier above. Only the amphitheatre wants the monuments.
+
+**Five were right, and that is worth as much.** `blessLeft` cannot contradict the panel that shows
+it — `blessOf` and `blessLeft` share one guard. `creditLine` **is** the gate, both sides call it, and
+it does not drift over the week it is quoted in (median 0d of 60, worst 0d). `riseNeed`: 0
+disagreements between the three rows and the button over 60 states, each with one requirement
+deliberately one short. `romeBar`: 0 letters arrived with the renown rung unmet over 40 houses across
+both roads and both senator states. `featNear`: 19 of 19 near lines over three states, 0 threw, 0
+empty, 0 claiming a shortfall of nothing.
+
+**And the tenth is not a proximity line.** `acclaimTarget` is on the item's list and is read by
+`acclaimWeek` and by nothing the player ever sees — a rate, not a claim about how close anything is.
+Reported rather than quietly dropped, because a list of ten that is really nine is worth knowing
+about the list.
+
+**FOUR OF THE SIX VERDICTS THE FIRST DRAFT PRODUCED WERE THE PROBE'S**, which is the ordinary rate
+here and is written into the check so the next one budgets for it. `makeParagon` **returns** the man
+and does not put him on the block, so the paragon arm tested nothing and reported "agrees" on a
+sample of zero. The credit arm ran a whole week before reading the gate, and `endWeek` draws the
+ledger first, so all 60 came back wrong on gold that was already spent. The feat arm flagged any
+line beginning with a zero and caught *"0 of 20 won"*, a correct line on a house that has won none —
+23 of its 23 hits were that. And the 12.8% above was first measured at **0%** by a policy that never
+fought a bout: purses paid on credit are the only source of money owed to you, so the probe measured
+its own idleness.
+
+`near` is the 44th check. Its first draft had one more fault worth recording: it pinned the munus
+decomposition over seven hand-listed states, every one of them with a quiet yard, so a condition
+injected on unrest to prove the check could fail slipped through **7 of 7**. It runs the cross
+product now — 181 states over away-state, cooldown, unrest and coin — and catches it at 169 of 181.
+Reverting all four fixes fails it on all four.
 
 ### v2.74.0 — A word got longer and the line beside it got shorter
 
@@ -4309,7 +4376,20 @@ meet the yard's written life at all. *Falsifies if:* each of those events' `need
 satisfiable by an active house at a comparable rate, in which case this is composition by design.
 *How verified:* three arms off one seed set, interleaved, counting `pendingEvent.key` per week.
 
-**#109 — Every proximity line is a claim about the state, and ten of them have never been driven.**
+**#109 — CLOSED in v2.75.0. Four of the ten were wrong, five were right, and the tenth is not a
+proximity line.** Wrong: `feastReach` (a fraction 0.65–1 put through `Math.round`, so the feast read
+"reach **1** of them" at every house size), `paragonReach` (the shortfall measured against the box
+plus debts at face plus steel at half, beside a button reading the box alone — **12.8%** of 187
+played house-weeks past week 20 in the window where the line names nothing missing and the purchase
+is refused), `munusWait` (**0 weeks** of cooldown quoted to a house standing on the imperial sand),
+`workOpen` (the closed line blamed the monuments; the tier-2 gate is the five plain works). Right:
+`blessLeft`, `creditLine`, `riseNeed`, `romeBar`, `featNear`. And `acclaimTarget` is read by
+`acclaimWeek` and shown to nobody — a rate, not a claim about how close anything is, so the list of
+ten was really nine. Four of the first draft's six verdicts were the probe's; all four are written
+into `near`, the 44th check.
+
+**#109 as it was written, for the record — Every proximity line is a claim about the state, and ten
+of them have never been driven.**
 `featNear`, `riseNeed`, `romeBar`, `paragonReach`, `munusWait`, `workOpen`, `acclaimTarget`,
 `blessLeft`, `creditLine`, `feastReach`. This project has already shipped two wrong ones and the
 notes say so: the forge line told a house of six men in stock kit that the fee was the whole of
@@ -4429,4 +4509,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.74.0*
+*Last updated: v2.75.0*
