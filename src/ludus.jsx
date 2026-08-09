@@ -15856,7 +15856,23 @@ function makePitOffer(d, g, stakes, fid){
 /* ================= UI ================= */
 
 const BRONZE="#c99a4b", BLOOD="#b8463a", LAUREL="#8a9a5b";
-const menace = o => { const a = STATS.reduce((s,k)=>s+o[k],0)/6; return a<38?"Green": a<52?"Seasoned": a<66?"Dangerous":"Lethal"; };
+/* ---- THE ONE WORD YOU GET FOR FREE, AND IT USED TO STOP AT SIXTY-SIX ----
+   `readMatch` gives a real reading only when you have PAID to have the man watched, and only
+   15.3% of the offers a house is shown are against a man whose measure it holds. For the other
+   84.7% the pick screen says "no read", and the single thing the player is told without paying
+   is this word, on the offer: "looks lethal".
+   The table ended at 66 and the game's men run to 99. Measured against one man at mean 92,
+   walking an opponent from 60 to 99: "Lethal" covered mean 66 to 99, which is a quoted chance
+   of 88% down to 4% — one word for the whole top of the game, while the three words below it
+   split 40 to 66, a range where the same man is quoted 86 to 98 and nothing is at stake. Every
+   hard decision in the game lives inside the top bucket: the primacy, the fourth rung of the
+   bill, the imperial games, and every man the elite pool draws.
+   Two more words, pitched where the quote actually turns: 78 is about even money and 90 is
+   about one in four. (The quote is not perfectly monotone across that walk — kit and traits
+   vary between generated men — but the trend is 20 points of chance per band.) */
+const menace = o => { const a = STATS.reduce((s,k)=>s+o[k],0)/6;
+  return a<38?"Green": a<52?"Seasoned": a<66?"Dangerous": a<78?"Lethal": a<90?"Murderous":"Peerless"; };
+const MENACE_WORDS = ["Green","Seasoned","Dangerous","Lethal","Murderous","Peerless"];
 const PARTY = {
   modest:{ cost:150, favor:6, fame:3, label:"A Modest Gathering", desc:"Decent wine, a careful guest list, one exhibition bout." },
   lavish:{ cost:400, favor:14, fame:8, label:"A Lavish Banquet", desc:"Falernian wine, musicians, magistrates on the couches." },
@@ -24054,6 +24070,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     makeMarket, makeDoctoreMarket, makeStaffMarket, liquidate, SLAVERS, bandOf, gladValue,
     makePrimusOffer, makeDefenceOffer, PRIMUS_ASK, PRIMUS_ASK_GAP,
     primusMine, primusEligible, primusWeek, PRIMUS_GATE, seedPrimus,
+    /* the top rung's own reading, and the word a player is given for nothing */
+    menace, MENACE_WORDS, readMatch, foeSeen, primusTake, primusLose,
     /* the line of the house: who may be named, naming him, and taking it up */
     nameHeir, heirEligible, HEIRS, houseRecord,
     /* the summit: the gate, the letter, the bar, and the trip's own clock */

@@ -1340,6 +1340,7 @@ Tuning dials, in the order you'd reach for them:
 | What earns a badge | `MARK_URG` / `TAB_QUIET` | urgency 2 and above only (3.64 items a week, not 7.86); an empty tab cannot be fresh |
 | What a kept vow is worth | `VOW_BOUTS_FULL` / `VOW_EARNT_AT` | par at nothing risked, 1.6× at six cards fought under it — and never a blessing. Both are six: `VOW_EARNT_AT` was 2, and over 31 vows settled in 1,611 house-weeks the fewest cards under any vow was three and the median eight, so the piety split could never resolve the lean way. At six it bites 26% of vows |
 | What the gatekeeper can say | `LESSONS` / `lessonFor` | 35 lessons, one per tab per week, each with a `done` window — so it is a queue, and a window can expire while something ahead of it holds the slot. **All 35 windows are non-empty**: built into its own state, every lesson opens and every one is then said. From inside its window with nothing read in front of it, **29 of 35 are said, median week 3**; the other 6 are windows that close and reopen rather than expire. A reader playing from week 1 reaches 27 of 35 in 47 weeks; all 11 with no state gate are offered, first at weeks 1–3. Four ways to lose one, all of which had happened: done in week 1 (in an opening nobody was checking), `done` firing before `when` can, starved by the queue in front, and a gate with no satisfiable state at all |
+| What you are told before you commit | `menace` / `readMatch` | two readings, and only one is free. `readMatch` — the per-man word on the pick screen — is real only when you have paid to have the man watched, which a house holds on **15.3%** of the men it is offered; the other 84.7% read "no read". Free is `menace`, six words now: Green/Seasoned/Dangerous under mean 66 where a strong man is quoted 97% throughout, then **Lethal 66–77, Murderous 78–89, Peerless 90+**, which against a mean-92 man is 11, 29 and 24 points of quoted chance per band. It ended at 66 for fifty releases, so one word covered mean 66 to 99 — a quote of 96% down to 13%, and every hard decision in the game sits inside it |
 | What a new player is told to do | `CHARTER` / `charterWeek` | eleven steps, and a PREFIX — `charterWeek` stops at the first step not done, so one step a house cannot finish hides every step behind it and the year-end 250d + 12 fame. Walked end to end it finishes; played, it finishes for 10 of 40 houses in 40 weeks and 26 of the 40 died first, which is the opening's mortality and not the guide's doing (a reserve arm that spends less scores **−5.0 points against it, s.e. 9.1**). The crux — the word from the box — comes in **0.0%** of first-blood bouts, **53.2%** at surrender, **67.8%** sine, which is why step two's advice and step ten's requirement had to be reconciled |
 | Which opening a check is looking at | `SC_KEYS` / `SCENARIOS` | five: clean 3 men/800d, inherited 6/260 **with a room already up**, champion 1/520 **whose man starts on 6–10 wins**, veterans 4/700, castoffs 5/640. `newGameState` ends `SCENARIOS[scen] \|\| SCENARIOS.clean`, so a wrong key returns A Clean Start **without a word** — which is how one check spent two releases testing one opening five times, and why the keys are now on the handle. Those two starting states are the only ones that open the doors on `staff` and `signature` in week one |
 | How loud the first hour is | `agenda` / `URG` | over the opening thirty weeks, **2.94** items a week at urgency 2 or more, more than two of them in **58.8%** of weeks (was 3.57 and 81.1% while the teacher line outranked the week's news). 93.2% of weeks carry more than three items in total, and no week in 420 was silent |
@@ -1378,6 +1379,42 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.71.0 — One word covered the whole top of the game
+
+`primusMine`, `primusEligible`, `primusWeek`, `PRIMUS_GATE`, `seedPrimus`, `makePrimusOffer` and
+`makeDefenceOffer` went onto the test handle in v2.64.0 for the express purpose of being checked.
+Six releases later the coverage sweep still listed every one of them as never called. The primacy
+is the top of the Capuan ladder and one of the two roads to Rome, and #88 found `flags.primusHeld`
+read in four places and written in none, so no save in any version could reach the imperial games.
+
+**Four rounds of measurement, three of them about my own probe, which is the normal ratio here.**
+Over 490 house-weeks the whole gate stood open in 22.2% of weeks, 23 primacy offers came, and the
+title was taken **0 times** — with our man dying in 6 of the 20 bouts fought, and eighteen of those
+twenty quoted at **3 or 4 per cent**. That is evidence about the probe first. Side by side, my man
+was mean 65 and thirty-four years old while the primus climbed 67 → 78 in twelve weeks: the policy
+was buying the best mean on the block, which on a veterans opening buys men already past PRIME.
+**REFUTED** by construction at the ceiling v2.68.0 proved reachable — a yard at mean 99 is quoted
+**98%** and takes the crown in **91.7% of 120 bouts** with no deaths; even a mean-65 yard is quoted
+53% and wins 57.5%. The primacy is not a wall. It is arithmetic, and the arithmetic was mine.
+
+**And the thing that was actually wrong, which none of that was looking for.** `readMatch` — the
+per-man reading on the pick screen — returns a real word only when you have PAID to have the man
+watched, and the `wall` measurement says a house holds a fresh reading on **15.3%** of the men it
+is offered. For the other 84.7% the screen says "no read". The one thing given free is
+`menace(o.opp)` on the offer — "looks lethal" — and its table ended at mean 66 while the game's men
+run to 99. Measured against one man at mean 92, walking an opponent from 36 to 99: **"Lethal"
+covered mean 66 to 99, a quoted chance of 96% down to 13% — 83 points of difference inside one
+word.** Every hard decision in the game lives in that bucket: the primacy, the fourth rung of the
+bill, the imperial games, the whole elite pool. Meanwhile three words split 40 to 66, where the same
+man is quoted 97% throughout and nothing is at stake.
+
+Two more words, pitched where the quote actually turns — **Murderous** at 78 and **Peerless** at 90.
+The bands now read 11, 29 and 24 points of quoted chance instead of 83 in one. The 40th check,
+`crown`, drives the primacy end to end — the gate, the city seeding its own holder, the offer, the
+bout, the reign, the flag Rome reads, a defence, losing it, and the second-best man in your own
+cells asking for it (52 weeks in 400, the channel #92 gave him) — and holds every word of the free
+reading to covering a band where the quote actually differs.
 
 ### v2.70.1 — Eleven functions were everything you do with another house's men, and nothing watched any of them
 
@@ -4168,4 +4205,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.70.1*
+*Last updated: v2.71.0*

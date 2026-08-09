@@ -73,6 +73,7 @@ reason the check exists usually has not.
 | `temple` | fast | five gods with four boons plumbed into the engine, and across 3,200 house-weeks no vow was ever sworn and no blessing ever rode with a house — the agenda had never named the gods, the Temple panel opened only for a house already using it, and a probe guard reserving four weeks' cushion produced the figure that made it all look unaffordable |
 | `surface` | slow | the tab bar was 9px and END WEEK was 37px tall — and it measured a house twelve WEEKS old on one face of each tab with no record sheet ever opened, so it would have passed the whole way through a release where a house's name read "House Glaber…" and a fame of 23,703 rendered "237…" |
 | `sand` | slow | thirteen checks called `doFight` and every one drove the engines in memory; four drove a browser and none reached the sand, so the most-looked-at screen in the game had no test — which is why a React key fault living on the bout wizard was found by a scratch probe photographing an axe |
+| `crown` | fast | the primacy — the top of the Capuan ladder and one of the two roads to Rome — was seven handle functions put there in v2.64.0 to be checked and never called once. Drives it end to end: the gate, the city seeding its own holder, the offer, the bout, the reign, the flag `romeReady` reads, a defence, losing it, and the second-best man in your own cells asking for it. And it holds the free reading: `menace`'s top bucket used to run from mean 66 to 99, which against one man is a quoted chance of 96% down to 13% — one word for every hard decision in the game |
 | `wall` | fast | everything you do with another house's men — watch, drill against, court, buy, call out, settle — was eleven functions no check had ever called, in a system that supplies **98.6% of the single offers on a Capuan card**. Holds the shape of the bargain rather than a bug: what a reading costs and that it goes off, that a drill refuses a man nobody has watched, that it climbs to `PREP_MAX` and pays against **that one man and nobody else**, and what it takes off his own training (+6.3 stat points drilling against +9.5 at the post over six weeks) |
 | `charter` | fast | the first-year guide — eleven steps, and a **prefix**: `charterWeek` stops at the first step not done, so one unfinishable step hides every step behind it and the year's 250d. Nothing had ever driven it. Walks the prefix end to end, holds each step to being finishable by a house doing exactly what it asks, keeps the stake sweep that found step two and step ten arguing (a crux in 0% of first-blood bouts, 53% at surrender), and asserts no step is retired by something it is not about — step ten used to clear on any man having a memory, which is written by one of your own being wounded |
 | `lessons` | fast | thirty-five lessons, one per tab per week, each with an expiry window — so a queue, and sixteen of them could not be reached by any player: "Steel and Style" was `done` in week 1 of all five openings because every one hands you a rack, "Steel Does Not Last" closed on an event that had to happen before it could open, and between them the armory tab offered a new house nothing at all. Six sections now, three of which need no house to live long enough: every lesson **constructed into its own window** and asked (a gate whose halves cannot both hold is dead table); **no week-one action may shut one while its door is still closed** (which caught the note about the medicus being retired by hiring the trainer); and **from inside the window with a cold queue, he must reach it**. Its opening scan reads the five scenario keys off the handle, having spent two releases inventing four of them |
@@ -239,6 +240,26 @@ men in stock kit was told the fee was the whole of it; and Rome's letter has fiv
 conditions, so a house with no senator warm enough to send it read `0 fame short` and
 would have gone off to win fame it did not need. Neither was caught by reading. Both
 were caught by a check that drove the real gate.
+
+## A bucket that ends below the top of the range says nothing where it matters most
+
+Three audit items have now been the same shape. #79: fame ran past the last thing that read it.
+#85: the street finished loving you by year eight and had nothing left to say. And now `menace`,
+the one opponent reading a player gets without paying — its top word began at mean 66 while men
+run to 99, so it covered a quoted chance of 96% down to 13% in a single word, and every hard
+decision in the game lives in exactly that range.
+
+The test is mechanical and worth running on any scale in the file: **take the top bucket, walk the
+underlying quantity to its real maximum, and measure the spread of the thing the player actually
+cares about inside it.** If the spread inside one bucket is comparable to the spread across all
+the others, the scale is upside down — it is spending its resolution where nothing is at stake.
+Here the three words below 66 covered 0 points between them and the one above covered 83.
+
+Two cautions from doing it. Average the walk: `genOpponent` varies kit and traits, so a single
+opponent per step had the quote at mean 78 reading 86% in one run and 50% in another, and the
+first version of the check tripped its own bar on that noise. And do not read a 0-point span in
+the low buckets as a fault — those words describe the man, not the match-up, and against a weaker
+house they separate properly.
 
 ## A prefix hides everything behind it, and a queue only loses one thing
 
