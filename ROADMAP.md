@@ -4182,6 +4182,83 @@ worked on empty weeks). The seams it found, in one line each:
   destroying the paragon in the week he arrived, four times in five, and the
   "take the house apart" branch of that screen had never once been true. *(#97)*
 
+**The v2.72.0 audit — nine items, #108–#116, opened.** The last numbered batch closed at
+v2.63.0; everything since was picked one item at a time, so this is a proper pass again. Its
+scoping is deliberately shaped by what the last four releases taught: three of those four items
+came back **refuted**, with a check as the deliverable rather than a fix. So every item below
+carries its falsification clause written BEFORE the finding, and roughly half are expected to
+dissolve. That is the clause earning its keep.
+
+Four sweeps produced it: the careless-player arms, the scales walk, the static enumeration of
+every line that makes a claim about the state, and the coverage list.
+
+**#108 — The week asks one question, and which one depends on whether you are doing anything.**
+`d.pendingEvent` is a single slot, and systems with channels of their own set it before the
+weekly lottery runs. Measured over 24 houses in three arms — careful, careless and idle — 120
+weeks each: the RATE is nearly flat (0.48, 0.47, 0.55 questions a week), but the MIX is not.
+`plea` fired 0 / 0 / **11**, `feud` 0 / 0 / **8**, `ludusNight` 2 / 0 / **11**, `affair` 2 / 0 /
+**7** — the human events of the yard, effectively exclusive to a house doing nothing. Against
+them `kinReturn` **14 / 12 / 0**, `booking` **5 / 0 / 0**, `match` 4 / 4 / 0, `pact` 5 / 1 / 0 —
+the transactional ones, exclusive to a house that plays. A player who plays actively may never
+meet the yard's written life at all. *Falsifies if:* each of those events' `need` gates is
+satisfiable by an active house at a comparable rate, in which case this is composition by design.
+*How verified:* three arms off one seed set, interleaved, counting `pendingEvent.key` per week.
+
+**#109 — Every proximity line is a claim about the state, and ten of them have never been driven.**
+`featNear`, `riseNeed`, `romeBar`, `paragonReach`, `munusWait`, `workOpen`, `acclaimTarget`,
+`blessLeft`, `creditLine`, `feastReach`. This project has already shipped two wrong ones and the
+notes say so: the forge line told a house of six men in stock kit that the fee was the whole of
+it, and Rome's letter read `0 fame short` to a house with no senator warm enough to send it. Both
+were caught only by a check that drove the real gate. Ten more are unchecked. *Falsifies if:* all
+ten agree with the gate they describe, in which case the release is the check.
+
+**#110 — What actually ends a house, by era and by competence, in one table.** The balance
+reference says debt is 85% of endings; v2.68.1 found the first 26 weeks kill by the yard emptying
+with coin still in the box; and the careless sweep above put all 24 houses out — 16 emptied, 8 in
+debt. Three different answers to one question, each measured on a different policy over a
+different span, and the table carries only the first. *Falsifies if:* the ending mix is stable
+across competence and era once lifespan is normalised. *How verified:* the proven long-life
+policy, the careless arms and the idle floor, binned by year.
+
+**#111 — Sixty-six functions on the handle are still dark, in four groups.** The man in the chair
+(`lanistaWeek`, `hasLT`, `repStyle`, `addRep`); what the ladder tells you about the next rung
+(`riseNext`, `riseNeed`, `riseFav`, `risePurse`, `riseRank`); the two contracts that arrive as
+questions (`answerReSignWith`, `takeDoctoreOffer`); and `boutAftermath`, the one phase `phases`
+does not run. Group before picking: eleven names turned into one `wall` check that way, and a
+lone name is usually a reader somebody will call next week anyway.
+
+**#112 — `repStyle` decides whether your medicus walks out, and nothing has ever read it.**
+`STAFF.medicus.quitOn` is `d.unrest > 72 || repStyle(d) === "blood"`, so a house Capua thinks of
+as butchers loses its surgeon — a rule with real teeth that no check touches and no measurement
+has ever priced. *Falsifies if:* `repStyle` reaches "blood" so rarely that the clause is inert,
+which would make it the opposite fault and still worth the release.
+
+**#113 — Two of the four words for a rival house have never been seen.** Measured over 2,310
+samples across 6 houses and 160 weeks: warmth topped out at **43.4**, so "on good terms" (50) and
+"thick as thieves" (75) were never said. Warmth rises 1.1 per *meeting* with a house whose grudge
+is under 30, plus 6 to 16 from the rival-relationship beats — whose `need` gates gate on `met>=6`
+and `met>=10`, which six houses had not reached. *Falsifies if:* a house that fights one rival
+repeatedly for 200 weeks passes 50, which would make this the `houseWord` version of the primacy:
+reachable, and my sample too short. Explicitly NOT claimed as a fault yet.
+
+**#114 — Bought steel never read "keen" and never fell below 56.** 583 samples of `gearCond`:
+the range seen was 56 to 74 and neither the top band nor the bottom two were ever occupied, while
+the lesson about wear promises steel that "eventually breaks in the middle of one". *Falsifies
+if:* a piece carried through forty bouts without mending does fall through the floor, in which
+case the probe simply did not own steel for long enough.
+
+**#115 — Nothing has toured the coast in anything that samples it.** `cityFavWord` took zero
+samples in the scales sweep. `roads` and `coast` drive the machinery; no measurement has ever
+established what a town actually thinks of a house that visits it, so the scale has no known
+range and its bands rest on nothing.
+
+**#116 — The audit's own instrument: three of four items last cycle were refuted, and the probes
+were wrong more often than the game.** Five rounds on the primacy, four of them my own policy;
+the charter's step six blamed for a probe arming men off free stock; `d.book` null on a fresh
+house; `formShift` fed an array. The next pass should budget for that ratio openly — and the two
+general tests written into `test/README.md` this cycle (the bucket walk, and the prefix-versus-
+queue distinction) are the first audit instruments here that are reusable rather than one-offs.
+
 **The v2.61.0 audit — ten items, #98–#107 — closed as of v2.63.0, and this is the ratio
 worth remembering: four shipped, six refuted or judged not worth the risk.**
 
