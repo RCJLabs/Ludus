@@ -1333,6 +1333,8 @@ Tuning dials, in the order you'd reach for them:
 | What the box can say, and when | `CRUX[k].when` | over 1,381 cruxes resumed to the end: press/cover/cloth 100%, legs 86%, breather 74%, rouse 53%, milk 26%, finish 23%, blind 9%, hound 5% — and **0.80 cruxes a bout**, at most 3 |
 | When a limb goes | `MARK_NEED` | legs 24, head 26, body 26, arm 58 — three of the six places a blow can land feed the arm, hence the split. Measured over 700 bouts with each man matched to the tier he is billed at: legs **40.3%**, arm **37.9%**, head **40.6%**, body **35.1%**, one mark or more in 91%. Flatten the arm to 26 and it lands in **81.9%** — the fault the split is for. Mortality does not move with it (15.4 / 16.7 / 13.6 / 17.6% at arm 58/42/34/26; s.e. 1.4pt). The A/B this row used to ask for has been run; the number is right. *(The old figures here — arm 4% — came from a probe pairing raw men against proper arena opponents, which produced a 0.4% win rate.)* |
 | When the yard gets built | `BUILDINGS[k].cost` | levels 1–3 all bought inside a five-week band (weeks 118/122/123, 3,270d the lot); level 4 by 5 of 50, at week 258 — the fourth level is the late sink and it works |
+| What ends a run IN THE OPENING | — | not the same thing at all. Pooling four runs of `survive` on its own policy — 20 new houses, 26 weeks: **13 standing (65%, s.e. 10.7)**, and of the seven failures **five were the yard emptying against two for the ledger**, with three of those five still holding coin when the last man went (248, 360 and 96 denarii). Early you die of attrition with money in hand; later you die of the ledger. Carrying the row below into the first twenty-six weeks tunes the wrong dial |
+| Whether the opening has drifted | — | a fixed handle policy over 200 houses returns **72 standing, 36.0%**, with identical endings to one decimal on four builds spanning v2.5x to v2.68.0 — the same to the house, so none of those releases touches a code path a new house executes. That probe is the two-minute answer to "did I just break the opening", and it is unambiguous precisely because the streams match when nothing relevant changed |
 | What actually ends a run | — | good policy, 48 houses: debt 85% of endings, nothing else above 5%. Careless policy, 120 houses: debt 49%, rebellion 22%, closed 15%, ruin 3%. Every ruin is reachable; the ledger is the competent player's only enemy |
 | How the war reaches you | `WAR_AWAY_AT` / `WAR_AWAY_ODDS` | your own gate, or a rising elsewhere from week 60 at 0.35% a week — 45% of houses that get there see it |
 | What earns a badge | `MARK_URG` / `TAB_QUIET` | urgency 2 and above only (3.64 items a week, not 7.86); an empty tab cannot be fresh |
@@ -1374,6 +1376,38 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.68.1 — The check was right and the alarm was mine
+
+v2.68.0 closed by flagging that `survive` was scoring 2–3 of 5 houses where its own comment
+predicted 3.5. Across a session's runs it went 3, 3, 4, 2, 1 — and the 1 failed. Thirteen of
+twenty-five is 52% against a bootstrapped 70%, which has a 4.4% chance of happening if 70% is
+true. Worth looking at. Nothing was wrong.
+
+**The opening has not moved.** A fixed handle policy over 200 houses returns 72 standing, 36.0%,
+with identical endings to one decimal on **four builds spanning v2.5x to v2.68.0** — the same to
+the house. Identical means the RNG stream never diverged, which means none of those releases
+touches a single code path a new house executes, `endWeek` included. That probe is now the
+two-minute answer to "did I just break the opening".
+
+**The bar is calibrated.** Re-bootstrapped by pooling four runs of the check itself on the
+current build — its own browser policy, not a handle imitation: 5 + 2 + 3 + 3 = **13 of 20
+standing, 65%, one standard error 10.7 points**. The original 70% sits inside that interval. The
+1-of-5 was the false failure a five-house bar is designed to tolerate; at a true 65% it cries
+wolf about one run in eighteen, and buying power with more houses would cost accuracy elsewhere
+on a machine whose own notes record seven Chromiums on four cores making houses miss clicks.
+
+**And one thing worth carrying forward, which is the opposite of what the table's headline says.**
+Of the seven failures in those twenty houses, **five were the yard emptying and two were the
+ledger** — and three of the five still had coin in the box when the last man went, holding 248,
+360 and 96 denarii. The balance reference's "debt 85% of endings, the ledger is the competent
+player's only enemy" was measured over long runs of a good policy and it is not true of the first
+twenty-six weeks. Early, a house dies of attrition with money in hand. Both rows are in the table
+now, in that order, because a reader who takes the second into the opening will tune the wrong
+dial.
+
+No behaviour changed. The measurements are in `survive`'s own comment, where the next person to
+see a 1-of-5 will find them before going hunting.
 
 ### v2.68.0 — The balance table stands, and twenty houses cannot tell you anything about the late game
 
@@ -3988,4 +4022,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.68.0*
+*Last updated: v2.68.1*

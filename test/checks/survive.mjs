@@ -61,7 +61,47 @@ export const exclusive = true;
    Neither is a precision instrument for difficulty and they are not meant to be.
    They catch the thing this check has always caught — a change that quietly guts
    every opening — and the per-house line is printed every run so drift is visible
-   long before either bar is touched. */
+   long before either bar is touched.
+
+   ---- AND THEN IT SCORED 1 OF 5, AND THE ALARM WAS MINE ----
+
+   v2.68.0 saw 3, 3, 4, 2 and then 1 standing across a session's runs. Thirteen of
+   twenty-five is 52% against the 70% above, which has a 4.4% chance of happening if
+   70% is true — enough to go looking. Two measurements, both worth keeping:
+
+   THE OPENING HAS NOT MOVED. A fixed handle policy over 200 houses returned 72
+   standing, 36.0%, with identical endings to one decimal on FOUR builds spanning
+   v2.5x to v2.68.0 — the same to the house, which means those releases do not touch
+   a single code path a new house executes, `endWeek` included. If you ever need to
+   ask "did I just break the opening", that probe answers it in two minutes and its
+   answer is unambiguous because the streams are identical when nothing relevant
+   changed.
+
+   THE BAR IS CALIBRATED. Re-bootstrapped by pooling four runs of THIS check on the
+   current build — its own policy, not a handle imitation: 5 + 2 + 3 + 3 = **13 of 20
+   standing, 65%, one standard error 10.7 points**. The original 70% sits inside that.
+   So the 1-of-5 was the false failure the bar is designed to tolerate, and what it
+   costs is worth writing down, because it depends entirely on a rate nobody can
+   measure precisely at this sample size:
+
+     true rate        70%    65%    55%    50%
+     runs that fail   3.1%   5.7%  13.1%  18.8%    (5 houses, floor of 2)
+
+   At 65% it cries wolf about one run in eighteen. That is the price of five houses
+   and it is the right price on this machine — its own note above records that seven
+   Chromiums on four cores made houses miss clicks, so buying power with more houses
+   would cost accuracy somewhere worse. Raise WEEKS if you want more signal.
+
+   ---- HOW A NEW HOUSE ACTUALLY DIES, WHICH IS NOT WHAT THE LEDGER ROW SAYS ----
+
+   Of the seven failures in those twenty houses: **five were the yard emptying and two
+   were the ledger** — and three of the five still had coin in the box when the last
+   man went, holding 248, 360 and 96 denarii. The balance reference says debt is 85%
+   of endings and "the ledger is the competent player's only enemy", and that was
+   measured over long runs of a good policy. It is not true of the opening. Early, you
+   die of attrition with money in hand; later, you die of the ledger. A reader who
+   carries the table's headline into the first twenty-six weeks will tune the wrong
+   dial. */
 const HOUSES = 5;    /* free now that they run side by side */
 const WEEKS  = 26;   /* past the first winter, the first deaths, the first hard week */
 const FLOOR  = 2;    /* houses that must still be able to field somebody */

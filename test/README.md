@@ -229,6 +229,37 @@ conditions, so a house with no senator warm enough to send it read `0 fame short
 would have gone off to win fame it did not need. Neither was caught by reading. Both
 were caught by a check that drove the real gate.
 
+## When a check cries wolf, price the bar before you hunt the bug
+
+`survive` scored 3, 3, 4, 2 and then 1 of 5 standing houses across one session, and the
+1 failed. Its comment predicted 3.5. Thirteen of twenty-five is 52% against 70%, a 4.4%
+event if 70% is true, so the honest reading was "go and look". Two hours of looking found
+nothing wrong with the game and two things worth keeping.
+
+**Ask "has it moved" with a fixed policy across builds, not with the check.** 200 houses
+on one handle policy returned 72 standing, 36.0%, with identical endings on four builds
+from v2.5x to v2.68.0. *Identical* is the useful part: when nothing relevant changes the
+RNG stream doesn't diverge either, so the answer is not "within noise", it is "no path a
+new house executes differs". That is a two-minute, unambiguous regression test, and it is
+strictly stronger than re-running the noisy check and squinting.
+
+**Then re-bootstrap the bar with the check's OWN policy.** Pooling four runs gave 13 of 20
+= 65%, s.e. 10.7 — the original 70% inside the interval, measured the same way (n=20) and
+therefore just as imprecise. The failure was the false failure the bar exists to tolerate:
+
+    true rate        70%    65%    55%    50%
+    runs that fail   3.1%   5.7%  13.1%  18.8%     (5 houses, floor of 2)
+
+A bar you cannot state the false-failure rate of is a bar you will eventually go bug-hunting
+behind. Write the table into the check.
+
+And a caution about the imitation: my handle policy reported 57.5% of houses running out of
+MEN against 6.5% running out of coin, median six buried in 26 weeks. It took every offer
+including sine missione. That is a mortality measurement wearing an economy measurement's
+name, and it is why four builds agreed to the house — mortality had not changed. It could
+answer "did anything move" and could not answer "is the opening too hard". **When you
+imitate a check's policy in memory, say which question the imitation can still answer.**
+
 ## A median over twenty houses is not a measurement
 
 The balance reference was re-measured because v2.64.0 had found that no probe here ever
