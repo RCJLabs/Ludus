@@ -22183,12 +22183,30 @@ export default function App(){
                 {selG.regimen==="spar" ? "Drilling — his fallback if no partner is set" : "Drilling"}
               </div>
               <div className="grid grid-cols-2 gap-2" style={{marginBottom:12}}>
-                {STATS.map(k=>(
-                  <button key={k} className={`focusbtn ${selG.focus===k?"on":""}`} onClick={()=>setFocus(selG.id,k)}>
+                {/* ---- SIX IDENTICAL BUTTONS AND NOTHING TO CHOOSE BETWEEN THEM ----
+                    The palus trains whatever you point him at and nothing else, and `power()`
+                    and `winChance` weight a class's OWN two stats — so which of these six you
+                    press is the difference between a man who fights better and a man whose
+                    average goes up. The game already knows which two: `CLASSES[cls].key`, and
+                    it prints them on the class picker two panels down, where you are choosing
+                    a style rather than a week's work. It never printed them here, where the
+                    choice is actually made, thirty-odd times a game.
+                    This marks them and claims nothing more. Two batches of twenty houses each
+                    put the class-key policy's peak mean at 94.4 and 88.4 against 86.7 and 88.6
+                    for never pointing anybody — no reliable gap — and no training policy
+                    separated on house-level outcomes at all. The justification here is the
+                    engine reading those two stats, not a win rate. */}
+                {STATS.map(k=>{ const trade = (CLASSES[selG.cls] && CLASSES[selG.cls].key || []).includes(k);
+                  return (
+                  <button key={k} className={`focusbtn ${selG.focus===k?"on":""}`} onClick={()=>setFocus(selG.id,k)}
+                    style={trade && selG.focus!==k ? { borderColor:"#6d5426" } : undefined}>
                     {STAT_NAMES[k].toUpperCase()}
-                    <span className="sub">{rnd(selG[k])}{statCap(selG,k)<99 && <span className="blood"> / {statCap(selG,k)}</span>}</span>
+                    <span className="sub">
+                      {rnd(selG[k])}{statCap(selG,k)<99 && <span className="blood"> / {statCap(selG,k)}</span>}
+                      {trade && <span className="laurel"> · his trade</span>}
+                    </span>
                   </button>
-                ))}
+                );})}
               </div>
             </>)}
             {/* The far post. What a man does once the palus has nothing left for him. */}

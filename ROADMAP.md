@@ -1339,6 +1339,7 @@ Tuning dials, in the order you'd reach for them:
 | What a kept vow is worth | `VOW_BOUTS_FULL` / `VOW_EARNT_AT` | par at nothing risked, 1.6× at six cards fought under it — and never a blessing. Both are six: `VOW_EARNT_AT` was 2, and over 31 vows settled in 1,611 house-weeks the fewest cards under any vow was three and the median eight, so the piety split could never resolve the lean way. At six it bites 26% of vows |
 | What the gatekeeper can say | `LESSONS` / `lessonFor` | 35 lessons, one per tab per week, each with a `done` window — so it is a queue, and a window can expire while something ahead of it holds the slot. A reader who reads everything reaches **26 of 35** in 47 weeks; all 11 with no state gate are offered, first at weeks 1–7. Three ways to lose one, all of which had happened: done in week 1, `done` firing before `when` can, and starved by the queue in front |
 | How loud the first hour is | `agenda` / `URG` | over the opening thirty weeks, **2.94** items a week at urgency 2 or more, more than two of them in **58.8%** of weeks (was 3.57 and 81.1% while the teacher line outranked the week's news). 93.2% of weeks carry more than three items in total, and no week in 420 was silent |
+| Which stat to point him at | `CLASSES[c].key` / `setFocusOf` | `power()` and `winChance` weight a class's own two stats, so the drilling grid's six buttons are **not equivalent** — that is a fact about the engine, not a measurement. What was measured says only what it can: weakest-stat pointing reliably lifts a man's MEAN (91.5 and 99 across two batches), which is what it optimises by construction; pointing at his class's own stats does not reliably lift the mean (94.4 and 88.4 against 86.7 and 88.6 for never pointing him), because that is not what it is for; and no policy separated on house-level outcomes at 20 houses × 2 batches. So the grid marks which two stats are his trade and claims nothing beyond that |
 | What a man can be trained to | `PRIME` / `REGIMENS.palus` | a young man with a doctore and a full yard, pointed at his weakest stat each week, reaches mean stat **99 by week 149 aged 28** — the same ceiling the city's best reaches, gap **0.0**. `palus` is `focus:true`: it trains what you point him at and nothing else, so a house that never sets a focus tops out near **58** and the whole top of the arena reads as unwinnable. This is a dial in the sense that it decides what "a good house" means, and every measurement of the late game depends on the focus being set |
 | Which panel inside a tab | `SECT_MARK` / `sectMark` | eight panels, each a function of the save so a check can ask what it would wear |
 | What the priests count | `PIETY_TOP` / `pietyFame` | fame read up to 1,600 and no further — the dearest altar asks 1,900d, not 20,300d at fame 20,000 |
@@ -1373,6 +1374,67 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.68.0 — The balance table stands, and twenty houses cannot tell you anything about the late game
+
+v2.64.0 found that no probe in this project had ever called `setFocusOf`: `palus` trains
+whatever you point a man at and nothing else, so every man in every long-run measurement ground
+one of six stats for his career. The probes were fixed. **The balance reference was not** — and
+it is the table every tuning decision here is made against. Two of its rows had been used to
+refute audit items: the fourth wing *"by 5 of 50, at week 258 — the late sink works"* (#104) and
+*"debt 85% of endings, nothing else above 5%"* (#99). A house whose men train properly wins and
+earns more, so both looked suspect in the same direction.
+
+**The premise is refuted. The table stands.** Three training policies — never pointed, pointed
+at his weakest stat, pointed at the weakest stat his class actually fights with — over 20 houses
+each, twice, on different seeds. The fourth wing came out at **1 to 5 of 20 houses (5–25%)**
+across the six arm-batches, straddling the published 10%; debt was **45–80% of endings** in every
+arm, with the published 85% at the top of that range. Nothing here shows either row wrong.
+
+**And the reason nobody should re-open it at this sample size is the real finding.** Within a
+*single* arm, between two batches of twenty:
+
+| the same policy, two batches | first | second |
+|---|---|---|
+| Rome letters (weakest stat) | 4 | **28** |
+| primacy weeks held (weakest stat) | 0 | **159** |
+| titles taken (weakest stat) | 0 | **11** |
+| Rome letters (class's own stats) | 1 | **20** |
+| the fourth wing, of 20 houses | 1 | 3 |
+
+The between-batch spread for one policy dwarfs the between-policy spread inside either batch. The
+lifespan distribution is why, and it is not a bell curve — it is a spike of houses dying inside
+ninety weeks plus a handful that run to the four-hundred-week cap:
+
+```
+10 16 23 25 27 52 59 62 63 65 70 72 89 137 156 189 401 401 401 401
+```
+
+Of twenty houses, **4 to 7 ever reach week 150 and 4 to 7 reach week 258** — the week the table's
+own row names. So every figure about the fourth wing, Rome and the primacy is generated by four
+to seven houses whatever the header claims the sample is. A median over twenty is not a
+measurement here; the effective n for anything late is single digits. Re-opening this wants
+hundreds of houses, not twenty.
+
+**A correction owed on v2.64.0.** That release reported that pointing the men moved v2.56.0's
+primacy challenge from 0 asks to 2, and read it as the fix landing. Across these batches the same
+policy gave **0 primacy weeks in one and 159 in the other**. The mechanism claim holds — a
+pointed man's mean does reach the high nineties where an unpointed one sits in the eighties, and
+that ordering was stable in every arm that lived long enough to show it. The *outcome* claims
+attached to it were one batch each and were stated more firmly than one batch supports.
+
+**One thing was worth fixing, and it is not a balance change.** The drilling grid is six
+identical buttons. `power()` and `winChance` weight a class's own two stats, so which one you
+press is the difference between a man who fights better and a man whose average goes up — and the
+game already knows which two, prints them on the class picker two panels down, and never printed
+them on the screen where the choice is actually made thirty-odd times a game. They are marked
+`· his trade` now, and the justification is deliberately narrow: it is a fact about `power()`
+and `winChance`, not a measured win rate. The figures do not support more. Across the two batches
+the class-key arm's peak mean was 94.4 and **88.4**, against 86.7 and **88.6** for never pointing
+anybody — no reliable gap. The arm that did reliably lift the mean was weakest-stat pointing
+(91.5 and 99), which is what that policy optimises by construction and which the same batches
+show buys nothing at the house level. Citing the 94.4 alone would have been the single-batch
+overclaim this very release is about, and the first draft of this entry did exactly that.
 
 ### v2.67.0 — Nothing had ever rendered a round
 
@@ -3926,4 +3988,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.67.0*
+*Last updated: v2.68.0*
