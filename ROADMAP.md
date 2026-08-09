@@ -1379,6 +1379,39 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v2.70.1 — Eleven functions were everything you do with another house's men, and nothing watched any of them
+
+The coverage sweep names the handle functions no check has ever called — 84 of 257 after v2.69.0.
+Eleven of them were one system: `scoutMan` to watch a rival's fighter over his own wall, `setPrep`
+and `stopPrepFor` to drill one of yours against him, `startCourt`/`courtCost`/`courtWeek` to put a
+word in his ear, `buyFromHouse` to buy him outright, `nameHim` to call him out, `makePeace` to pay
+his lanista off, with `houseOf`, `rateMan` and `gladValue` underneath. That is not a corner of the
+game: measured over 780 house-weeks, **98.6% of the single offers on a Capuan card are against one
+of these named men**. It is who you fight.
+
+**Two hypotheses, both refuted, and the numbers are the point.**
+
+*The drill is a trap.* `prepFor` pays only when the offer's `oppRef.fid` is the man drilled
+against, and the source says so out loud — "it is a week a man does not get back if the bout never
+comes". Measured over 147 drills: the bout came for **21.1% at a median of 3 weeks**, and 19.7%
+lapsed. One drill in five paying inside a month is a bet, not a trap.
+
+*The top of the scale is unreachable.* The first sweep watched a drill lapse at five weeks of six
+because the rival's man left his house's card in the sixth, and `prepLive` drops a drill when he
+does. Over 60 drills: **30 reached PREP_MAX, 50%**, median weeks reached **6**, and the chron line
+that fires only at the top was written 15 times. A rival's man stays on his card a median of **21
+weeks**. The anecdote was an anecdote.
+
+**And the bargain, now measured rather than asserted.** A reading costs about 147 denarii and keeps
+ten weeks. A full six-week drill takes a man from **+9.5 stat points at the post to +6.3 while he
+is on somebody else's habits** — a third of his own progress, which is `PREP_DRAG` 0.62 doing
+exactly what it says — and buys him up to +14% power and −9% stamina drain in one bout against one
+man. Against anybody else it is worth nothing at all, which the 39th check now holds.
+
+`prepOf`, `prepFor`, `prepEdge`, `prepPlans`, `PREP_MAX`, `PREP_DRAG`, `scoutLive`, `SCOUT_KEEPS`
+and `scoutCost` go on the handle, because a check could reach `setPrep` and then had to infer what
+it had bought. No behaviour changed; the shipping page differs only in its version stamp.
+
 ### v2.70.0 — The guide's second step and its tenth were arguing, and nothing had ever driven the guide
 
 The CHARTER is the only thing in the game that tells a new lanista what to do next, it is eleven
@@ -4135,4 +4168,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.70.0*
+*Last updated: v2.70.1*

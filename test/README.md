@@ -73,6 +73,7 @@ reason the check exists usually has not.
 | `temple` | fast | five gods with four boons plumbed into the engine, and across 3,200 house-weeks no vow was ever sworn and no blessing ever rode with a house — the agenda had never named the gods, the Temple panel opened only for a house already using it, and a probe guard reserving four weeks' cushion produced the figure that made it all look unaffordable |
 | `surface` | slow | the tab bar was 9px and END WEEK was 37px tall — and it measured a house twelve WEEKS old on one face of each tab with no record sheet ever opened, so it would have passed the whole way through a release where a house's name read "House Glaber…" and a fame of 23,703 rendered "237…" |
 | `sand` | slow | thirteen checks called `doFight` and every one drove the engines in memory; four drove a browser and none reached the sand, so the most-looked-at screen in the game had no test — which is why a React key fault living on the bout wizard was found by a scratch probe photographing an axe |
+| `wall` | fast | everything you do with another house's men — watch, drill against, court, buy, call out, settle — was eleven functions no check had ever called, in a system that supplies **98.6% of the single offers on a Capuan card**. Holds the shape of the bargain rather than a bug: what a reading costs and that it goes off, that a drill refuses a man nobody has watched, that it climbs to `PREP_MAX` and pays against **that one man and nobody else**, and what it takes off his own training (+6.3 stat points drilling against +9.5 at the post over six weeks) |
 | `charter` | fast | the first-year guide — eleven steps, and a **prefix**: `charterWeek` stops at the first step not done, so one unfinishable step hides every step behind it and the year's 250d. Nothing had ever driven it. Walks the prefix end to end, holds each step to being finishable by a house doing exactly what it asks, keeps the stake sweep that found step two and step ten arguing (a crux in 0% of first-blood bouts, 53% at surrender), and asserts no step is retired by something it is not about — step ten used to clear on any man having a memory, which is written by one of your own being wounded |
 | `lessons` | fast | thirty-five lessons, one per tab per week, each with an expiry window — so a queue, and sixteen of them could not be reached by any player: "Steel and Style" was `done` in week 1 of all five openings because every one hands you a rack, "Steel Does Not Last" closed on an event that had to happen before it could open, and between them the armory tab offered a new house nothing at all. Six sections now, three of which need no house to live long enough: every lesson **constructed into its own window** and asked (a gate whose halves cannot both hold is dead table); **no week-one action may shut one while its door is still closed** (which caught the note about the medicus being retired by hiring the trainer); and **from inside the window with a cold queue, he must reach it**. Its opening scan reads the five scenario keys off the handle, having spent two releases inventing four of them |
 | `feats` | fast | five of the nineteen feats read as never earned across 3,200 house-weeks and every one of them was reachable — two of the five were the probe declining Rome's card and never founding the burial society; what was real was the cloth recording nothing outside a singles bout, and a sheet showing a dash to a house standing on the gate |
@@ -97,8 +98,17 @@ comment that said "the other three engines" — calling `simulateFight` and
 `simulatePair` and nothing else. The melee's eighteen rounds and the venatio's
 fourteen had never been run by anything, and neither had `winChance`, which is the
 number the player is shown before every bout and the one the wager is priced from.
-Those are covered now; sixty functions still are not, and the list is printed every
+Those are covered now; **84 of 257 still are not**, and the list is printed every
 time so it stays a fact rather than a feeling.
+
+That list is also where to go for the next item, and it is worth saying how to read it.
+Eleven of the 84 turned out to be a single system — everything you do with another house's
+men — supplying 98.6% of the opponents on a Capuan card, and the `wall` check came out of
+noticing that they belonged together rather than out of picking one name off the list. Group
+the dark functions before choosing; a cluster is a system nobody is watching, and a lone
+name is usually a reader somebody will call next week anyway. Note too that a dark cluster
+does not imply a bug: `wall` drove all eleven, found both of its hypotheses refuted, and
+exists for the coverage. That is still worth a release.
 
 **One caveat, because an unqualified coverage number is worse than none.** The
 counter only sees calls made *through the handle*. A check that drives the real UI

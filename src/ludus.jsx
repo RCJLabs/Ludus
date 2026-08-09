@@ -24090,6 +24090,9 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     setPupilTo, beginRetrain, endRetrain, hireDoctore, dismissDoctore, takeDoctoreOffer,
     hireStaffMember, letStaffGoOf, setEarTo,
     haveWatchedOffer, stopPrepFor, buyFromHouse, startCourt, setPrep, nameHim, scoutMan, makePeace,
+    /* the drill against one named man: its two constants, the edge it yields, and the reading
+       it rests on. A check could reach `setPrep` and then had to INFER what it had bought */
+    prepOf, prepFor, prepEdge, prepPlans, PREP_MAX, PREP_DRAG, scoutLive, SCOUT_KEEPS, scoutCost,
     courtCost, courtWeek, rateMan, houseOf,
     answerReSignWith, answerRomeWith,
     hostParty, throwFeast, walkTheCells, holdTourney, stageMunus,
