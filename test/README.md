@@ -1115,3 +1115,18 @@ rather than to discount.
 
 Not one of the four came back unchanged. If a claim in the reference rests on two arms with different
 seeds, treat it as unmeasured until it has been paired.
+
+## A rate quoted off four samples is not a rate
+
+`survive` failed once on a byte-identical build and the note went in as "trips on luck about one run in
+four". It sat that way for eleven releases. Thirty-five runs later the real figure is **1 of 35, and 0
+of the 27 since the last game change** — about where the bar was designed to sit.
+
+Two habits fall out of it. First: when a check fails and nothing changed, write down the OBSERVATION and
+the sample size, never the implied rate. "One failure in four runs" and "a 25% failure rate" are not the
+same sentence, and only the first is true.
+
+Second: the samples were free. Every full-suite run logs one `survive` result, and this session had
+thirty-five of them sitting in scratch logs. A variance question about a slow check almost never needs a
+dedicated sweep — it needs somebody to read what is already on disk. Fifty minutes of runtime was
+budgeted for this and none of it was necessary.

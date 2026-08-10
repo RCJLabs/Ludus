@@ -1392,6 +1392,39 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v2.87.0 — The survive bar is fine, and the one-in-four figure was mine off four samples
+
+Task #50, closed by measurement, and it refutes my own alarm.
+
+v2.76.0 saw `survive` fail on a byte-identical build, and the note written then recorded that its
+both-weak-together conjunction "trips on luck about one run in four". Four samples is not a rate, and
+the item has sat open since with an explicit instruction not to touch the bar on fewer than ten.
+
+**Thirty-five real runs of the check were collected across this session's releases and tallied:**
+
+| houses standing | 1 | 2 | 3 | 4 | 5 |
+|---|---|---|---|---|---|
+| runs | 3 | 10 | 17 | 4 | 1 |
+
+Men between the yards: **min 2, median 6, max 12.**
+
+**Hard failures — `standing < 2` AND `men < 5` — 1 of 35, or 2.9%. And 0 of the 27 runs since
+v2.79.0.** The check's own design note budgets for about 1.6% of healthy runs failing, and one failure
+in thirty-five is consistent with that at this n.
+
+**The conjunction is doing precisely what it was built for.** Three runs came in with only one house
+standing. Two of those still had five or more men between the yards, and the check called them a bad
+week and passed. Only the third was weak on both readings at once. A bar on either reading alone would
+have failed three runs in thirty-five instead of one.
+
+Nothing was changed. The one-in-four figure is retracted, and the measured distribution is written into
+the check's head so the next person to see a red `survive` can tell a bad week from a gutting without
+re-deriving it.
+
+**And the method note, which is the third time this session it has mattered:** the samples cost nothing
+to collect because every full-suite run logs one. A variance question about a slow check does not need a
+dedicated fifty-minute sweep; it needs somebody to read the logs that already exist.
+
 ### v2.86.0 — Four claims re-run paired: one reversed, one understated, two held
 
 Audit item **#120**. No game behaviour changed. v2.85.0 established that an unpaired design cannot
@@ -5198,4 +5231,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.86.0*
+*Last updated: v2.87.0*

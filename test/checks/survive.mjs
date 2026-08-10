@@ -58,6 +58,25 @@ export const exclusive = true;
    and picks his bouts better, so his distribution is not this one's. A bar is only
    as good as the thing it was measured on.
 
+   ---- AND THE BAR WAS MEASURED PROPERLY IN v2.87.0, AFTER A FALSE ALARM OF MINE ----
+   v2.76.0 saw this check fail on a byte-identical build, and the note written then said the
+   conjunction "trips on luck about one run in four". That was one failure in the first handful of
+   runs, which is not a rate. **Thirty-five real runs of this check were collected across the
+   session's releases and tallied:**
+
+     houses standing   1 in 3 runs · 2 in 10 · 3 in 17 · 4 in 4 · 5 in 1
+     men between them  min 2 · median 6 · max 12
+     HARD FAILS (standing < 2 AND men < 5)   **1 of 35 = 2.9%**
+     and 0 of the 27 runs since v2.79.0
+
+   So the bar is calibrated about where it was designed to be — the note above budgets for 1.6% of
+   healthy runs failing, and 1 failure in 35 is consistent with that at this n. **The conjunction is
+   doing exactly its job**: three runs came in with only one house standing, and because two of them
+   still had five or more men between their yards, the check called those a bad week and passed. Only
+   the third was weak on both readings at once, which is the thing the bar is for.
+
+   NOTHING WAS CHANGED. The one-in-four figure is retracted; it was a rate quoted off four samples.
+
    Neither is a precision instrument for difficulty and they are not meant to be.
    They catch the thing this check has always caught — a change that quietly guts
    every opening — and the per-house line is printed every run so drift is visible
