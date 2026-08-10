@@ -1343,6 +1343,7 @@ Tuning dials, in the order you'd reach for them:
 | What the gatekeeper can say | `LESSONS` / `lessonFor` | 35 lessons, one per tab per week, each with a `done` window — so it is a queue, and a window can expire while something ahead of it holds the slot. **All 35 windows are non-empty**: built into its own state, every lesson opens and every one is then said. From inside its window with nothing read in front of it, **29 of 35 are said, median week 3**; the other 6 are windows that close and reopen rather than expire. A reader playing from week 1 reaches 27 of 35 in 47 weeks; all 11 with no state gate are offered, first at weeks 1–3. Four ways to lose one, all of which had happened: done in week 1 (in an opening nobody was checking), `done` firing before `when` can, starved by the queue in front, and a gate with no satisfiable state at all |
 | Which question the week asks | `pickEvent` / `shuffled` | one slot, filled by the first event whose `make` returns something from a shuffled key list — so the draw has to BE a shuffle. It was `sort(()=>R()-0.5)`, which is not one: measured on the first-eligible key, the statistic that decides what is asked, it skewed **1.3 to 1.4×** toward events written earlier in the file (1.03× for two adjacent, 1.39× for the seven a real house had) against 1.01–1.06× for Fisher–Yates. The 5.1× figure that first turned up is first-POSITION of the permutation and is not the statistic that matters. Systems with channels of their own — the feud, the licence, the inspector, the primacy — set `pendingEvent` before the draw runs at all and take the week outright |
 | What a man's last month is worth | `formWord` / `FORM_TELL` / `formWeek` | five words, and two were never said. `formWeek` decays `f*0.78 - 3` weekly against +24 for a win at the great games, so three straight wins — the lesson's own example — reaches **37.6**, and the bands were 58 and 24. Over 4,862 man-weeks form ran **-50.5 to +42.4**, "in form" and "shaken" **0 times each**, "level" **97%**. Bands are 34 and 14 now; the fixed point of winning every single week is 71.5. What form DOES is unchanged at ±3.6% of power |
+| What warms between two lanistae | `warmth` / `houseWord` / `RIVAL_BEATS` | four words at **25 / 50 / 75**, fed by **1.1 a meeting** while that house's grudge is under 30, plus **4 to 16** from each of eight once-only beats gated on `met>=6` through `met>=26`. A house that works ONE rivalry for 300 weeks peaks at a **median 76.8 and a max of 100**, and says all four words; a probe using `pickRivalOpp` meets six houses a little and tops out near 43, which is what #113 measured. `rivalArc` will not run while a question is waiting — worth about **15%** of the arc and a delay to `end` (3 of 20 against 5), not a word. `loan` needs the purse under 200 at the moment it runs |
 | The name Capua settles on | `repStyle` / `repSettle` / `addRep` | four names, a share of **0.36** of a total of **14** to be given one, **0.30** to keep it and **0.06** clear to take it off you. All four are earnable and all four are HELD once a house goes after them — blood 100% of weeks from week 2 with the doctrine and *sine* stakes, show 824 of 917 weeks on the **showboat tactic**, craft 412 of 427, mercy 1,277 of 1,296 on **fighting to surrender and then throwing the cloth**. Fighting at first blood is caution, not mercy: 0 cloths in 2,345 house-weeks and the town calls you a craftsman. It settles on something 87–100% of all house-weeks. `repStyle(d)==="blood"` is half of `STAFF.medicus.quitOn`, and the butcher loses his surgeon 9 of 10 times at median week 12 against the showman's 0 of 10 |
 | How close you are to a thing | ten proximity lines vs the gates they describe | driven for the first time in #109: four wrong, five right, one not a line. `feastReach` is a fraction 0.65–1 and the agenda put it through `Math.round`, so the feast read "reach **1** of them" at every house size; `paragonReach.short` measured the gap against the box **plus** debts at face **plus** steel at half, beside a button reading the box alone — **12.8%** of 187 played house-weeks past week 20 fell in the window where the line says nothing is missing and the purchase is refused, median **24.6%** of "worth" being outside the box; `munusWait` read **0 weeks** of cooldown to a house standing on the imperial sand, because `munusReady` refuses for a reason the panel had no words for; `workOpen`'s closed line blamed the monuments when the tier-2 gate is the five plain works. Right: `blessLeft`, `creditLine` (median 0d drift), `riseNeed`, `romeBar`, `featNear`. `acclaimTarget` is read by `acclaimWeek` and shown to nobody |
 | Whether a line has room for what can go in it | `SMALL_HOUSES` / `NICKS` / `ORIGINS` vs the row it fills | the pit row's second line — `class · house · record` — has **263px** of room and the widest the content space allows renders at **300px**: 110 of 1,800 men dealt across 600 nights (**6.1%**) lost some of it behind an ellipsis. The coupling is the point: the menace word sits on the right at `flexShrink:0`, so v2.71.0's new words (**Murderous 53px, Peerless 40px** against the old top word **Lethal 31px**) took 22px out of the span beside it — with the narrowest word on the right, **0 of the 1,800** are cut off. A scale that gets a longer word narrows every row it shares. `room` forces the widest content AND the widest word together |
@@ -1385,6 +1386,49 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.78.0 — The two words nobody had seen are said by a house that works one rivalry
+
+Audit item **#113**, refuted on its own falsification clause, and no game behaviour changed.
+
+The item measured warmth topping out at **43.4** over 2,310 samples across 6 houses and 160 weeks,
+so "on good terms" (50) and "thick as thieves" (75) were never said — and it refused to call that a
+fault, writing the test itself: *a house that fights one rival repeatedly for 200 weeks might pass
+50, which would make my sample too short rather than the game short of content.*
+
+**It does.** Twenty houses, each picking one rival at the start and fighting that house every week it
+could for 300 weeks: **median peak warmth 76.8, max 100 — the cap — and every one of the four words
+said.** The old ceiling was an artefact of how the opponent is chosen: `pickRivalOpp` draws from every
+rival by band, so a probe that uses it meets six houses a little instead of one house often. Warmth is
+1.1 a *meeting* plus 4 to 16 from each of eight once-only beats, and the beats gate on `met>=6`,
+`met>=10`, `met>=14`, `met>=22`, `met>=26` — the numbers a concentrated rivalry reaches and a spread
+one does not.
+
+**Two more findings of mine went the same way at higher n, and both are worth the space.**
+
+`loan` fired 0 times in every 300-week sweep and looked dead. Its gate is `c.warm>=34 && c.poor`, and
+`poor` is `d.gold < 200` — the sweep floors the purse at 4,000 so the house is never broke at the
+moment the arc runs. Isolated on a broke house it fires **9 times in 12**. Reachable; the probe was
+solvent.
+
+`rivalArc` refuses to run while a question is waiting: `d.pendingEvent` sits in the same guard as
+`d.over`, `d.rome`, `d.city` and `d.travel`, and unlike those four it is not a fact about where the
+lanista is. The function only writes a chronicle line — it never sets a question of its own, so
+nothing is being protected from being clobbered. **At n=8, removing it moved median peak warmth from
+39.7 to 55.9** and I had a finding about the median house being pushed across a word boundary. **At
+n=20 the same comparison reads 76.8 against 100, 57 beats against 67, and `end` at 3 of 20 against 5
+of 20.** So the guard costs about **15%** of the arc and delays its last beat, and blocks no word at
+all. The guard was left alone, the n=8 version is recorded as what it was, and `bitter` firing *less*
+in the warmer arm is noted as a trade rather than a loss — it needs `warm<25` and a warmer arc leaves
+it behind.
+
+`houses` is the 47th check and runs in 2 seconds. It holds the refutation, because that is the thing
+that would be a real fault if it stopped being true: a house working one rivalry reaches the top of
+the scale, every one of the four words is said, at least one beat fires, and — underneath all of it —
+a bout against a rival's man registers as a meeting at all. That last one is two fields lining up:
+`metHouse` reads `offer.opp.house` against the rival's name, and if they ever come apart the whole arc
+goes quiet with nothing else to show for it. Breaking the meeting registration, the per-meeting
+warmth, or the arc itself fails it on the matching bar each time.
 
 ### v2.77.0 — Four suspicions about the name Capua gives your house, four refutations, all mine
 
@@ -4576,7 +4620,17 @@ as butchers loses its surgeon — a rule with real teeth that no check touches a
 has ever priced. *Falsifies if:* `repStyle` reaches "blood" so rarely that the clause is inert,
 which would make it the opposite fault and still worth the release.
 
-**#113 — Two of the four words for a rival house have never been seen.** Measured over 2,310
+**#113 — CLOSED in v2.78.0, REFUTED on its own falsification clause.** Twenty houses each working
+one rivalry for 300 weeks: **median peak warmth 76.8, max 100**, and all four words said. The 43.4
+ceiling came from `pickRivalOpp` spreading meetings across six rivals, and the beats gate on `met`
+counts a concentrated rivalry reaches and a spread one does not. Two of my own follow-ups also
+refuted: `loan` looked dead only because the sweep floored the purse at 4,000 (`poor` is gold under
+200; isolated it fires 9 of 12), and the `d.pendingEvent` guard on `rivalArc` costs ~15% of the arc
+rather than the word boundary an n=8 comparison suggested. No behaviour changed; `houses` is the 47th
+check.
+
+**#113 as it was written, for the record — Two of the four words for a rival house have never been
+seen.** Measured over 2,310
 samples across 6 houses and 160 weeks: warmth topped out at **43.4**, so "on good terms" (50) and
 "thick as thieves" (75) were never said. Warmth rises 1.1 per *meeting* with a house whose grudge
 is under 30, plus 6 to 16 from the rival-relationship beats — whose `need` gates gate on `met>=6`
@@ -4667,4 +4721,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.77.0*
+*Last updated: v2.78.0*

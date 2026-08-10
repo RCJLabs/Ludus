@@ -74,6 +74,7 @@ reason the check exists usually has not.
 | `surface` | slow | the tab bar was 9px and END WEEK was 37px tall — and it measured a house twelve WEEKS old on one face of each tab with no record sheet ever opened, so it would have passed the whole way through a release where a house's name read "House Glaber…" and a fame of 23,703 rendered "237…" |
 | `sand` | slow | thirteen checks called `doFight` and every one drove the engines in memory; four drove a browser and none reached the sand, so the most-looked-at screen in the game had no test — which is why a React key fault living on the bout wizard was found by a scratch probe photographing an axe |
 | `draw` | fast | the week asks one question, chosen by the first event whose `make` fires from a shuffled key list — and the shuffle was `sort(()=>R()-0.5)`, the classic broken one, in a file that already contained a correct Fisher–Yates used in nine other places. What the game asked you depended on where in the file the event was written. Holds the shuffle uniform AND the statistic that actually decides it, the first *eligible* key, because the first-position figure overstates the fault four-fold |
+| `houses` | fast | the four words for a rival house, two of which #113 measured as never said. Refuted on the item's own falsification clause: a house that works ONE rivalry for 300 weeks peaks at a median warmth of 76.8 and says all four, where a probe using `pickRivalOpp` meets six houses a little and tops out near 43. Holds the refutation plus the thing underneath it — that a bout against a rival's man registers as a meeting at all, which is `offer.opp.house` lining up with the rival's name |
 | `chair` | fast | the name Capua settles on — `repStyle` — which earns two of the lanista's traits and is half of what makes a medicus walk out, and which nothing had ever measured. Sends one house after each of the four names the way a player would (the blood doctrine and *sine* stakes, the showboat tactic, the craft doctrine, the mercy doctrine plus the cloth at every crux) and holds three things: the town settles on something at all, each of the four names is not just reached but HELD for most of a house's named weeks, and the butcher loses his surgeon while the showman does not. Every one of the four faults it was written to catch turned out to be the probe |
 | `ends` | fast | three answers to "what ends a house" were on record and disagreed, each measured on a different policy. Five policies over 400 weeks settled it: the mix belongs to the POLICY — 100% ledger for a house that does nothing, 40% empty yard for one that fights to the death every week, 69%/67% overall against a published 85%. This holds the cheap, stable half in 3 seconds: the opening is lethal, the ledger is what does it (11 of 13, median 272d UNDER), and a house doing nothing dies of the ledger too. The long table is in the roadmap and deliberately not asserted — the lifespan medians swung 36w to 20w between two runs |
 | `near` | fast | ten lines telling the player how close they are to something, none of them ever driven — and this project had already shipped two of the shape wrong. Four were: the feast quoted a fraction through `Math.round` and read "reach **1** of them" at every house size; the paragon's shortfall was measured against the box plus debts at face plus steel at half, beside a button reading the box alone; the munus quoted **0 weeks** of cooldown to a house at Rome; the monuments' closed line blamed the monuments when the gate is the works. Five were right and are pinned so they stay right |
@@ -833,3 +834,35 @@ Held share caught it immediately: 184 weeks of 426 against craft's 181, which is
 name, where every intact arm holds its own name for 91% to 100% of its named weeks. For anything the
 player is meant to *be* rather than to have momentarily touched, assert the share of time, and get the
 headroom from the intact build before choosing the threshold.
+
+## Concentration is a variable, and a sweep that spreads its samples measures the wrong ceiling
+
+#113 sampled warmth toward rival houses 2,310 times over 6 houses and 160 weeks and found it capped at
+43.4, so two of the four words looked like dead content. Every one of those samples came from a probe
+using the game's own opponent picker, which chooses from **all** the rivals by band. So the probe met
+six houses a little each.
+
+The scale is not fed by samples, it is fed by *meetings with one house* — 1.1 each, and eight once-only
+beats gated at `met>=6`, `10`, `14`, `22`, `26`. Spread across six rivals nobody reaches those numbers;
+concentrated on one, warmth hits the 100 cap and the median peak is 76.8.
+
+So before reporting a ceiling, ask what the quantity actually accumulates against, and whether the probe
+is accumulating it or dividing it six ways. A large sample of the wrong shape is not evidence — and the
+tell was available in the source the whole time, in the gate values themselves. **`met>=26` is a design
+telling you the arc expects a rivalry, not an acquaintance.** When a gate names a big count, the question
+is not "did my sample reach it" but "was my sample even the kind of thing that could".
+
+## n=8 is enough to see a difference and not enough to name it
+
+Removing the `d.pendingEvent` guard from `rivalArc` — a guard that protects nothing, since the function
+only writes a chronicle line — moved median peak warmth from **39.7 to 55.9** across eight houses. That
+is a word boundary: "civil" to "on good terms". It was very nearly written up as one.
+
+At twenty houses the same comparison reads **76.8 against 100**: both arms are already deep into the top
+two words, the guard is worth about 15% of the beats and a delay to the last one, and the boundary claim
+evaporates. The medians at n=8 were not wrong about the *direction* — they were wrong about where both
+arms sat, which is the only thing that made the claim interesting.
+
+The habit: when a comparison is about to become a finding, raise n before writing it, not after. And
+remember that a code change reorders the RNG stream, so the two arms are never a paired comparison
+however identical the seeds look — which is exactly why the small-n medians moved so far.

@@ -24276,6 +24276,12 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     ORIGINS, NICKS, SMALL_HOUSES,
     /* what a rival house's anger has to reach before it does anything */
     GRUDGE_SABOTAGE, GRUDGE_BRIBE, GRUDGE_THUGS,
+    /* ---- AND WHAT WARMS BETWEEN TWO LANISTAE, which is the other half of a rival ----
+       `warmth` has four words and #113 measured the top two as never said. The eight beats
+       are the only large moves it has, and every one of them is gated on `met`, on years, or
+       on the warmth it is supposed to produce — see `houses`. */
+    warmth, houseWord, houseOf, warmMove, metHouse, rivalArc, RIVAL_BEATS, RB_KEYS,
+    makeRivalFighter, HOUSES,
     /* the war: its stages, its clock and what it does to the block */
     WAR, warWeek, warIdx, warStage, warMarket, warElsewhere, WAR_AWAY_AT, WAR_AWAY_ODDS,
     /* the odds the bookmakers quote, and the mitigations on a death */
