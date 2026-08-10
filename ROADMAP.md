@@ -1336,7 +1336,7 @@ Tuning dials, in the order you'd reach for them:
 | What ends a run BY ERA | — | debt dominates **years 1–3 in every one of the five policies** — it is what an unfinished house dies of, whatever it is doing. The later eras are the other systems arriving: **years 4–7** rebellion and ruin, **8–12** rebellion and `banned`, **13+** `lanistaDied`, `emptied` and a last of debt. And competence does not buy the first year: over 40 weeks the proven policy went out **13 of 24** against **12 of 24** for a house doing nothing at all. What it buys is the ceiling — the careful arm was the only one of five with houses still standing at year 22 (**3 of 20**, and 2 of 20 on the second run); every other arm ended 0 of 20. Lifespan medians at n=20 are NOT a bar: the same policy came out 36 weeks and 20 weeks on two runs |
 | What ends a run IN THE OPENING | — | not the same thing at all. Pooling four runs of `survive` on its own policy — 20 new houses, 26 weeks: **13 standing (65%, s.e. 10.7)**, and of the seven failures **five were the yard emptying against two for the ledger**, with three of those five still holding coin when the last man went (248, 360 and 96 denarii). Early you die of attrition with money in hand; later you die of the ledger. Carrying the row below into the first twenty-six weeks tunes the wrong dial |
 | Whether the opening has drifted | — | a fixed handle policy over 200 houses returns **72 standing, 36.0%**, with identical endings to one decimal on four builds spanning v2.5x to v2.68.0 — the same to the house, so none of those releases touches a code path a new house executes. That probe is the two-minute answer to "did I just break the opening", and it is unambiguous precisely because the streams match when nothing relevant changed |
-| What actually ends a run | `ends` / `survive` / the endings table | RE-MEASURED in v2.81.0, and the old figures were the crux trap. `ends` called `doFight` without answering the balance, so ~60% of its bouts returned at `res.unfinished`, mutated nothing and paid no purse — an arm that fought hard and was paid for two afternoons in five. It read **13 of 24 houses out inside 40 weeks with a median 272 denarii UNDER**, and the conclusion drawn was that the ledger is the competent player's only enemy. On the harness rope, with every bout resolved: **6 of 24 out, median +506d in the box, endings debt 3 / rebellion 3**. So playing well HALVES the chance of going out in the opening, and what ends a house that plays is as much the CELLS as the ledger. A house that does nothing is unchanged at **12 of 24 out, 11 by debt, median -286d**. The mix still belongs to the policy — that half of #110 stands |
+| What actually ends a run | `ends` / `survive` / the endings table | RE-MEASURED TWICE, in v2.81.0 for the crux and v2.82.0 for the night. The old figures had two faults: ~60% of every arm's bouts returned at `res.unfinished` unpaid, and every question was answered with choice 0 — which on `uprising` is the one branch that can end the run. Corrected, over 400 weeks and two seed sets: **debt is 24% / 27% across six policies against a published 69% / 67%, and 95-100% of it is the idle arm's**. A resolved bout is a PAID bout, so a house that fights does not die of the ledger. **`lanistaDied` is the plurality ending for a well-run house** — it lives long enough for the man in the chair to grow old. Working the cells (feast over 30, walk over 22) is the largest single lever measured: **5 of 20 houses alive at year 22 against 0**, median life 308w/270w against 183w/116w, median fame 1,316-1,919 against 225-380. Answering the uprising with steel rather than the guards takes `proven` from 183 weeks to 54 and its rebellion share from 40% to 70% |
 | How the war reaches you | `WAR_AWAY_AT` / `WAR_AWAY_ODDS` | your own gate, or a rising elsewhere from week 60 at 0.35% a week — 45% of houses that get there see it |
 | What earns a badge | `MARK_URG` / `TAB_QUIET` | urgency 2 and above only (3.64 items a week, not 7.86); an empty tab cannot be fresh |
 | What a kept vow is worth | `VOW_BOUTS_FULL` / `VOW_EARNT_AT` | par at nothing risked, 1.6× at six cards fought under it — and never a blessing. Both are six: `VOW_EARNT_AT` was 2, and over 31 vows settled in 1,611 house-weeks the fewest cards under any vow was three and the median eight, so the piety split could never resolve the lean way. At six it bites 26% of vows |
@@ -1389,6 +1389,57 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.82.0 — A resolved bout is a paid bout, and the night is a policy too
+
+Audit item **#117**. No game behaviour changed. The reference table that said the ledger is the
+competent player's only enemy is replaced, and the second fault in it is the more interesting one.
+
+v2.81.0 corrected the 40-week opening and left the five-policy 400-week table alone, flagged as known
+stale. Re-run here: same five policies verbatim, plus a sixth, 400 weeks, 20 houses an arm, two seed
+sets, no arm handed a denarius, and every bout resolved through the harness rope.
+
+**THE FIRST FAULT WAS THE CRUX, and the correction is a full inversion.** Debt across the arms is
+**24% and 27%** against a published **69% and 67%**, and essentially all of it belongs to the idle
+arm, which is unchanged at 95-100%. `careless` reads **0% debt on every run**. A bout that is resolved
+is a bout that is **paid**, so a house that fights does not run out of money — it runs out of quiet, of
+men, or of lanista. The ledger is the enemy of a house that does nothing and of nobody else.
+
+**What ends a well-run house is old age.** `lanistaDied` is the plurality ending for both `proven` and
+`proven + the cells worked`, at 50%/20% and 53%/40%. No previous sweep had ever seen it, because no
+previous sweep kept a house alive long enough.
+
+**THE SECOND FAULT WAS MINE AGAIN, and I nearly published the finding it manufactured.** The first
+re-run put rebellion at **55-84%** of every playing policy's endings and I had a headline about the
+cells being the real killer. Both the old sweep and mine answered the week's question with choice 0
+and called that a control because it was identical in every arm. It is not a control. On `uprising` —
+the one event that can end a run — choice 0 is *"Meet them with steel"*, the only branch that sets
+`d.over = rebellion`; choice 1 is the magistrate's guards for 300 denarii, worth +80 on the house's
+side of the roll; choice 2 opens the gates and cannot end the run at all.
+
+Answering it the way a solvent player would takes `proven` from a median life of **54 weeks to 183**
+and its rebellion share from **70% to 40%**. One 300-denarii decision, tripling the arm's lifespan and
+distorting every other figure in the table on the way. Answering every question identically is not a
+control when the choices differ in how lethal they are.
+
+**AND THE LARGEST LEVER MEASURED IN THIS PROJECT SO FAR.** `proven + the cells worked` differs from
+`proven` by two lines — feast when unrest passes 30, walk the cells when it passes 22 — and it is the
+only arm with houses standing at year 22 on **both** seed sets: **5 of 20 against 0 of 20**, median
+life **308w and 270w** against 183w and 116w, median fame **1,316-1,919** against 225-380, median peak
+unrest **59** against 84. At n=14 with the wrong answer policy this looked unstable (74w → 41w on one
+run) and was reported and not pinned; with the night answered properly it is stable on both sets, and
+it is now the strongest argument on record for the charter's "keep the cells quiet" step moving ahead
+of its four spend-money steps.
+
+`ends` carries the long arc now — four arms over 120 weeks, where the inversion is already plain — and
+it answers the night the way a player would and prints which word it spoke. Reverting its rope to
+crux-blind reproduces the OLD published numbers exactly: 13 of 24 out, 58% debt for `proven`, debt
+above rebellion. Three of its bars fire on that one edit, which is as direct a demonstration as the
+audit has produced that the old table was the trap and not the game.
+
+One thing measured and NOT the cause: silencing every unrest point a death in the familia costs — four
+call sites — did not stop the rebellions. Grief is not what drives the cells; fighting is, and a house
+that never fights peaks at a median unrest of 17 against a fighting house's 85.
 
 ### v2.81.0 — The suite was measuring bouts that never happened
 
@@ -1692,23 +1743,53 @@ Audit item #110. Three answers to one question were on record. The balance refer
 weeks kill by the yard emptying with coin still in the box. The v2.72.0 careless sweep put all 24
 houses out — 16 emptied, 8 in debt. Each was measured on a different policy over a different span.
 
-**Measured: five policies, every opening, 400 weeks, 20 houses each, twice, and no arm ever handed a
-denarius.** The week's one question is answered identically in every arm, so the arms differ by how
-the yard is run and not by which questions luck asked.
+**RE-MEASURED IN v2.82.0 ON THE ROPE, AND THE OLD TABLE IS BELOW IT FOR THE RECORD.** The original
+sweep called `doFight` and never answered the balance, so ~60% of every arm's bouts returned at
+`res.unfinished`, mutated nothing and paid no purse — five policies that fought hard and were paid for
+two afternoons in five. It also answered every question with choice 0 and called that a control. On
+`uprising`, the one event that can end a run, choice 0 is *"Meet them with steel"* — the only branch
+that sets `d.over = rebellion`. So the sweep was also manufacturing rebellions.
 
-| policy | debt | the rest | alive at year 22 |
-|---|---|---|---|
-| idle — ends the week, nothing else | **100% / 100%** | — | 0 of 20 |
-| middling — takes the card, no reserve | 90% / 80% | rebellion, ruin | 0 of 20 |
-| proven — `survive`'s own discipline | 70% / 80% | ruin 25% / 10% | 0 of 20 |
-| careful — reserve, blood stakes, stone late | 60% / 45% | rebellion 10% / 40% | **3 of 20 / 2 of 20** |
-| careless — fattest purse, to the death, weekly | 15% / 25% | **ruin 40% / 40%**, rebellion, emptied | 0 of 20 |
+**Six policies, 400 weeks, 20 houses each, two seed sets, every bout resolved, and the night answered
+the way a solvent player would — the magistrate's guards for 300 denarii.**
+
+| policy | out | debt | the rest | alive at year 22 | median life |
+|---|---|---|---|---|---|
+| idle — ends the week, nothing else | 20/20 | **100% / 95%** | — | 0 of 20 | 21w / 24w |
+| middling — takes the card, no reserve | 20/20 | 10% / 10% | rebellion 35% / 70% | 0 of 20 | 41w / 101w |
+| proven — `survive`'s own discipline | 20/20 | 0% / 15% | rebellion 40% / 40%, **lanistaDied 50% / 20%** | 0 of 20 | 183w / 116w |
+| proven + the cells worked | 15/20 | 7% / 20% | **lanistaDied 53% / 40%**, rebellion 33% / 7% | **5 of 20 / 5 of 20** | **308w / 270w** |
+| careful — reserve, blood stakes, stone late | 17/20, 18/20 | 24% / 22% | rebellion 59% / 67% | 3 of 20 / 2 of 20 | 86w / 166w |
+| careless — fattest purse, to the death, weekly | 20/20 | **0% / 0%** | lanistaDied 35% / 40%, emptied 40% / 35% | 0 of 20 | 175w / 142w |
+
+**Debt across all six arms is 24% and 27%, against a published 69% and 67%** — and essentially all of
+it is the idle arm's. **A bout that is resolved is a bout that is PAID**, so a house that fights does
+not run out of money; it runs out of quiet, or of men, or of lanista. The ledger is the enemy of a
+house that does nothing, and of nobody else.
+
+**What ends a well-run house is old age.** `lanistaDied` is the plurality ending for both `proven` and
+`proven + the cells worked` — the run finishes because the man in the chair grows old, which is the
+game working exactly as designed and something no previous sweep had ever seen.
+
+**And working the cells is worth more than anything else measured here.** `proven + the cells` differs
+from `proven` by two lines — feast over unrest 30, walk the cells over 22 — and it is the only arm with
+houses standing at year 22 on both seed sets (**5 of 20 against 0 of 20**), at a median life of 308 and
+270 weeks against 183 and 116, a median fame of 1,316-1,919 against 225-380, and a median peak unrest
+of 59 against 84.
+
+**HOW THE NIGHT IS ANSWERED IS ITSELF A POLICY, and treating it as a control was the second fault in
+the old table.** Answering `uprising` with steel every time instead of the guards takes `proven` from a
+median 183 weeks to **54**, its rebellion share from 40% to **70%**, and pushes the pooled rebellion
+share across the fighting arms to 55-84%. Both numbers are real; neither is "the game".
+
+*The original crux-blind table, kept because the correction is the point:* idle 100%/100% debt,
+middling 90%/80%, proven 70%/80%, careful 60%/45%, careless 15%/25% with ruin 40%, and 69%/67% debt
+across the five.
 
 **So the mix is not a property of the game. It is a property of the policy** — which is what #110's
-falsification clause asked, answered in the negative. It runs from 100% ledger for a house that does
-nothing to 40% empty yard for one that fights every bout to the death. Across all five arms debt is
-**69% and 67%** on the two runs, which sits inside the 45–80% band v2.68.0 already measured: the
-published 85% was the top of a wide range, not its centre, and the row now says so.
+falsification clause asked, answered in the negative, and it survives the correction. What changed is
+which end of the range is which: the ledger belongs to the house that does nothing, and everything
+else belongs to the cells, the yard and the years.
 
 **And the disagreement with `survive` dissolves the same way.** That check records five of seven
 early failures as the yard emptying with coin in hand; this measures 78–80% of early failures as the
@@ -4884,6 +4965,15 @@ lethality and the cells matter as much as the ledger; and #113's warmth peak fro
 refuting that item more decisively. One of `probe`'s own rules was taken back out for flagging seven
 right answers against one wrong one, and its detector was rebuilt twice.
 
+**#117 — CLOSED in v2.82.0. The reference table had two faults, and the second was a control that
+was not one.** Re-run on the rope: debt across six policies is 24% / 27%, not 69% / 67%, and 95-100%
+of it is the idle arm's — a resolved bout is a paid bout. `lanistaDied` is the plurality ending for a
+well-run house. The second fault: answering every question with choice 0 is not a control, because on
+`uprising` choice 0 is the only branch that can end the run — answering it as a solvent player would
+takes `proven` from 54 weeks to 183 and its rebellion share from 70% to 40%, and the 55-84% rebellion
+figure my first re-run produced was substantially my own answer policy. Working the cells is the
+largest lever on record: 5 of 20 houses alive at year 22 against 0, on both seed sets.
+
 **The v2.61.0 audit — ten items, #98–#107 — closed as of v2.63.0, and this is the ratio
 worth remembering: four shipped, six refuted or judged not worth the risk.**
 
@@ -4949,4 +5039,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.81.0*
+*Last updated: v2.82.0*

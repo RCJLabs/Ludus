@@ -1000,3 +1000,34 @@ files whose one-shot was a cloth that ends the bout.
 Both were the same mistake the tool exists to catch: measuring the shape you expected instead of the
 shape that is there. Before trusting a source-level detector, print what it found and read the list
 against the thing itself — 7 against 19 was visible in one `grep`.
+
+## Answering every question the same way is not a control
+
+Two sweeps — the published five-policy table and my re-run of it — answered the week's one question
+with choice 0 every time, and both called that a control on the grounds that it was identical in every
+arm. Identical is not neutral.
+
+On `uprising`, the one event that can end a run, choice 0 is *"Meet them with steel"* — the only branch
+that sets `d.over = rebellion`. Choice 1 sends for the magistrate's guards for 300 denarii and adds 80
+to the house's side of the roll. Choice 2 opens the gates and cannot end the run at all. So "answer 0
+always" is not holding a variable fixed; it is choosing the lethal option a hundred and twenty times
+and then measuring how often houses die.
+
+Answering it the way a solvent player would took the `proven` arm from a median life of **54 weeks to
+183** and its rebellion share from **70% to 40%**, and turned `lanistaDied` into the plurality ending.
+I had a headline about the cells being the real killer of a competent house, at 55-84% of endings,
+before running that arm.
+
+The habit: before treating an answer policy as a control, read what the choices actually DO. If any of
+them can end the run, or costs money, or changes a roll, then the answer policy is one of your
+variables and has to be varied like one — and reported like one.
+
+## The ledger stops mattering the moment the bouts get paid
+
+Worth writing down as a fact about this game and not just about probes. Across six policies and 400
+weeks, debt is 24-27% of endings and 95-100% of that belongs to the arm that does nothing at all. Every
+arm that fights reads 0-24%, and the arm that fights every week to the death reads **0% on every run**.
+
+A resolved bout pays a purse. The old table's "debt is 60-90% of every playing policy" was measuring
+arms that fought hard and were paid for two afternoons in five. When a sweep reports that a system is
+starving, check first whether the sweep is feeding it.

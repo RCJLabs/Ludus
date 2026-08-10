@@ -84,7 +84,50 @@ export async function run({ p }){
         takeBout(d, fit, os => os.sort((a,b)=>(b.purse||0)-(a.purse||0))[0], "standard");
       },
       idle: d => {},
+      /* ---- #117's ARMS: the long arc, and the one-variable lever comparison ----
+         `careless` is here because it is the other end of the range — the fattest purse every week,
+         to the death — and `proven+cells` is `proven` with the two unrest levers and NOTHING else
+         changed, which is the comparison the published table never had (its only feasting arm also
+         built stone, kept a bigger reserve and fought at blood). */
+      careless: d => {
+        for(const g of A.activeG(d)) A.setRegimenOf(d, g.id, "palus");
+        const fit = A.activeG(d).filter(g=>!g.injury);
+        takeBout(d, fit, os => os.sort((a,b)=>(b.purse||0)-(a.purse||0))[0], "sine");
+      },
+      "proven+cells": d => {
+        if(d.unrest >= 30) A.throwFeast(d);
+        if(d.unrest >= 22) fin(A.walkTheCells, [d]);
+        ARMS.proven(d);
+      },
     };
+
+    /* ---- HOW THE WEEK'S QUESTION IS ANSWERED IS A VARIABLE, AND IT WAS NOT TREATED AS ONE ----
+       Both this check and the published 400-week table answered every question with choice 0, and
+       called that a control because it was "identical in every arm". It is not a control. On
+       `uprising` — the one event that can end a run — choice 0 is "Meet them with steel", the only
+       branch that sets `d.over = rebellion`; choice 1 is the magistrate's guards for 300 denarii,
+       worth +80 on the house's side of the roll; choice 2 opens the gates and cannot end the run at
+       all. Answering 0 every time both manufactures rebellions and truncates every arm's life, which
+       distorts every other figure in the table.
+
+       MEASURED, over 20 houses and 400 weeks: sending for the guards instead moved `proven` from a
+       median life of 54 weeks to 183 and its rebellion share from 70% to 40%, and made `lanistaDied`
+       the plurality ending — the house now lives long enough for the lanista to grow old. So this
+       check answers the night the way a solvent player would, and says so. */
+    const answerWeek = (d) => {
+      const ev = d.pendingEvent;
+      if(!ev) return;
+      let i = 0;
+      if(ev.id === "uprising"){
+        const keys = (ev.data && ev.data.keys) || ["fight"];
+        const g = keys.indexOf("guards");
+        if(g >= 0) i = g;
+        upr[keys[i]] = (upr[keys[i]]||0) + 1;
+      }
+      try { A.EVENTS[ev.id].run(d, ev, i); } catch(e){}
+      d.pendingEvent = null;
+    };
+    const upr = {};
 
     const HOUSES = 24, WEEKS = 40;
     const rows = [];
@@ -95,7 +138,7 @@ export async function run({ p }){
         for(let w=0; w<WEEKS; w++){
           if(d.over) break;
           try { ARMS[arm](d); } catch(e){ threw++; if(!firstThrow) firstThrow = `${arm}: ${e.message}`; }
-          if(d.pendingEvent){ try { A.EVENTS[d.pendingEvent.id].run(d, d.pendingEvent, 0); } catch(e){} d.pendingEvent = null; }
+          answerWeek(d);
           try { A.endWeek(d); } catch(e){ break; }
         }
         rows.push({ arm, kind: d.over ? d.over.kind : "alive", week:d.week,
@@ -182,6 +225,95 @@ export async function run({ p }){
           + `${outI} of ${pv.length}) — with every bout resolved it goes out half as often, so this `
           + `reads as the arm no longer being paid, or no longer fighting`);
     }
+
+    /* ================= 4. THE LONG ARC, AND THE TABLE IT REPLACES =================
+       #117. The roadmap carried a five-policy 400-week table saying debt ends 60-90% of every
+       playing policy and 100% of an idle one, and that "the ledger is the competent player's only
+       enemy". It was produced by the crux-blind sweep: every arm fought hard and was paid for two
+       afternoons in five. Re-run on the rope over 400 weeks and 20 houses, twice, plus 160 and 120
+       week runs, the shape INVERTS for anybody who fights:
+
+         pooled debt across all arms   26% / 27% / 28%      against a published 69% / 67%
+         idle                          100% / 95% / 100% debt — unchanged, and the only ledger death
+         proven                        8-10% debt, rebellion 60-75%
+         careful                       16-22% debt, rebellion 78-84%
+         middling                      10-33% debt, rebellion 58-80%
+         careless                      0% debt in every run, the yard emptying 35-58%
+
+       Purses paid mean no debt; bouts fought mean unrest, and unrest is the one number that ends a
+       run outright. WHAT IS NOT ASSERTED, because it is not stable: working the cells moved median
+       life 54w->159w and 58w->118w on two runs and 74w->41w on a third, so the lever's value is
+       reported and not pinned. Its effect on FAME was large in every run and is printed. */
+    {
+      const LONG = 120, LH = 12;
+      const arc = [];
+      for(const arm of ["idle","proven","proven+cells","careless"]){
+        for(let h=0; h<LH; h++){
+          const d = A.newGameState("Ar"+h, SC[h % SC.length], `ARC-${arm}-${h}`, null);
+          for(let w=0; w<LONG; w++){
+            if(d.over) break;
+            try { ARMS[arm](d); } catch(e){ threw++; if(!firstThrow) firstThrow = `${arm}: ${e.message}`; }
+            answerWeek(d);
+            try { A.endWeek(d); } catch(e){ break; }
+          }
+          arc.push({ arm, kind:d.over?d.over.kind:"alive", week:d.week, fame:Math.round(d.fame),
+            unrest:Math.round(d.unrest) });
+        }
+      }
+      const med = a => { const b=a.slice().sort((x,y)=>x-y); return b.length?b[Math.floor(b.length/2)]:0; };
+      const of = arm => {
+        const A2 = arc.filter(r=>r.arm===arm), dead = A2.filter(r=>r.kind!=="alive");
+        const t = {}; for(const r of dead) t[r.kind]=(t[r.kind]||0)+1;
+        return { A2, dead, t, debt:t.debt||0, reb:t.rebellion||0,
+          life:med(A2.map(r=>r.week)), fame:med(A2.map(r=>r.fame)) };
+      };
+      for(const arm of ["idle","proven","proven+cells","careless"]){
+        const o = of(arm);
+        lines.push(`${arm.padEnd(13)} over ${LONG}w: ${o.dead.length} of ${o.A2.length} out · `
+          + (o.dead.length ? Object.entries(o.t).sort((x,y)=>y[1]-x[1]).map(([k,n])=>`${k} ${n}`).join(" · ") : "none")
+          + ` · median life ${o.life}w · median fame ${o.fame}`);
+      }
+
+      /* ---- the idle end of the range: the ledger, and nothing else ---- */
+      { const o = of("idle");
+        if(o.dead.length >= 6 && o.debt < o.dead.length * 0.8)
+          bad.push(`only ${o.debt} of ${o.dead.length} idle houses ended by debt over ${LONG} weeks — `
+            + `measured at 100%, 95% and 100% on three runs, and it is the one policy the ledger `
+            + `really does kill`);
+      }
+      /* ---- and the playing end: NOT the ledger, which is the correction #117 made ---- */
+      for(const arm of ["proven","careless"]){
+        const o = of(arm);
+        if(o.dead.length < 4) continue;
+        if(o.debt > o.dead.length * 0.45)
+          bad.push(`${o.debt} of ${o.dead.length} \`${arm}\` houses ended by debt over ${LONG} weeks `
+            + `(${Math.round(o.debt/o.dead.length*100)}%) — measured at 0-10%, because a bout that is `
+            + `resolved is a bout that is PAID. A debt share this high is the signature of the arm no `
+            + `longer being paid, which is what the old table was`);
+      }
+      { const o = of("proven");
+        if(o.dead.length >= 4 && o.reb < o.debt)
+          bad.push(`\`proven\` ended by debt more often than by the cells (${o.debt} against ${o.reb} `
+            + `of ${o.dead.length}) — rebellion is 60-75% of that arm's endings on every run, and it `
+            + `is the finding the reference table now carries`);
+      }
+      { const p = of("proven"), c = of("proven+cells");
+        lines.push(`   the levers, one variable: median life ${p.life}w -> ${c.life}w, `
+          + `median fame ${p.fame} -> ${c.fame} (life swung 54->159, 58->118 and 74->41 across three `
+          + `runs, so it is printed and not pinned; fame rose in all of them)`);
+      }
+      /* the pooled share depends on the ARM MIX — idle contributes almost all the debt, so four arms
+         with one idle read higher than six arms with one. The six-arm sweep read 26% / 27% / 28%;
+         this line is that arithmetic on these four and is not the same number. */
+      lines.push(`   pooled debt across these four arms: `
+        + `${arc.filter(r=>r.kind==="debt").length} of ${arc.filter(r=>r.kind!=="alive").length}, `
+        + `nearly all of it idle's — the six-arm sweep read 26% / 27% / 28% against a published 69% / 67%`);
+    }
+
+    lines.push(`the night answered the way a solvent player would: `
+      + (Object.entries(upr).map(([k,n])=>`${k} ${n}`).join(" · ") || "no uprising faced")
+      + ` — answering "meet them with steel" every time, which is what the published table did, `
+      + `takes \`proven\` from a median 183 weeks to 54 and its rebellion share from 40% to 70%`);
 
     return { bad, lines };
   });
