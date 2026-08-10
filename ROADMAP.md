@@ -1338,7 +1338,7 @@ Tuning dials, in the order you'd reach for them:
 | Whether the opening has drifted | — | a fixed handle policy over 200 houses returns **72 standing, 36.0%**, with identical endings to one decimal on four builds spanning v2.5x to v2.68.0 — the same to the house, so none of those releases touches a code path a new house executes. That probe is the two-minute answer to "did I just break the opening", and it is unambiguous precisely because the streams match when nothing relevant changed |
 | Whether the week's nudge points at the biggest lever | `agendaCan` / `walkTheCells` / `LESSONS.unrest` | #119. The gatekeeper's lesson teaches the cells ("watch that red bar more closely than the gold"), and the agenda offers the feast — but at `unrest >= 35`, gated on `gold >= feastCost + weeklyBill` and `feastFresh >= 0.6`. Measured over one policy's 400-week houses: **1,432 weeks with unrest at 22 or more, and 648 of them (45.3%) sit below the agenda's threshold with nothing offered at all**. Of the weeks past 35, the item was offered 179 times and **suppressed 372** — 361 of those by the freshness gate, 11 by coin. And **walking the cells is never suggested anywhere**: `walkTheCells` appears outside its own definition in exactly one place, a button on the villa tab, and nowhere in `agendaCan`, across **1,029 weeks where the cells were loud and the walk was available** |
 | Which endings a house can actually reach | the twelve `d.over.kind` values / `ends` | #118, with a control that works this time (an ordinary house: ruin 4, lanistaDied 1, rebellion 1 of 6). Eight of the twelve are reached in play. **`foreclosed` is reachable and was simply never tried** — borrow 2,000, never repay, and `owes(d)` passes four times the principal at **week 44, 6 of 6 houses**. **`oldAge` cannot happen**: it wants `age>=62 && health>=45 && d.heir`, and over **3,070 lanista-weeks the man was 62 or over in 907 and healthy enough in NONE** — health decays with the years, and with an heir named a lanista at nought health hands over instead (1,135 weeks of succession). **`closed` cannot happen either**: it needs five men freed, `rudisEligible` is `wins>=10 && pfame>=180`, and the best man in a 500-week house reached **8 wins** — which #114 explains, since a man fights 3 bouts at the median. `triumph` is a choice on the road back from Rome and is untested. The two dead gates carry TRIPWIRES rather than locks: if the rudis bar drops, `ends` asks for the re-measurement |
-| What actually ends a run | `ends` / `survive` / the endings table | RE-MEASURED TWICE, in v2.81.0 for the crux and v2.82.0 for the night. The old figures had two faults: ~60% of every arm's bouts returned at `res.unfinished` unpaid, and every question was answered with choice 0 — which on `uprising` is the one branch that can end the run. Corrected, over 400 weeks and two seed sets: **debt is 24% / 27% across six policies against a published 69% / 67%, and 95-100% of it is the idle arm's**. A resolved bout is a PAID bout, so a house that fights does not die of the ledger. **`lanistaDied` is the plurality ending for a well-run house** — it lives long enough for the man in the chair to grow old. Working the cells (feast over 30, walk over 22) is the largest single lever measured: **5 of 20 houses alive at year 22 against 0**, median life 308w/270w against 183w/116w, median fame 1,316-1,919 against 225-380. Answering the uprising with steel rather than the guards takes `proven` from 183 weeks to 54 and its rebellion share from 40% to 70% |
+| What actually ends a run | `ends` / `survive` / the endings table | RE-MEASURED TWICE, in v2.81.0 for the crux and v2.82.0 for the night. The old figures had two faults: ~60% of every arm's bouts returned at `res.unfinished` unpaid, and every question was answered with choice 0 — which on `uprising` is the one branch that can end the run. Corrected, over 400 weeks and two seed sets: **debt is 24% / 27% across six policies against a published 69% / 67%, and 95-100% of it is the idle arm's**. A resolved bout is a PAID bout, so a house that fights does not die of the ledger. **`lanistaDied` is the plurality ending for a well-run house** — it lives long enough for the man in the chair to grow old. Working the cells (feast over 30, walk over 22) is the largest single lever measured, and its size was settled in v2.85.0 by a PAIRED run — the same seed to both arms, 110 houses: the cells arm **outlived its own twin 70 times against 31, with 9 ties**, median life **105w against 64w**, and **11 of 110 alive at year 22 against 0 of 110**. The unpaired 3.6x figures first published (308w/270w against 183w/116w, 5 of 20 against 0) came from one kind seed family; the direction held, the magnitude did not. Answering the uprising with steel rather than the guards takes `proven` from 183 weeks to 54 and its rebellion share from 40% to 70% |
 | How the war reaches you | `WAR_AWAY_AT` / `WAR_AWAY_ODDS` | your own gate, or a rising elsewhere from week 60 at 0.35% a week — 45% of houses that get there see it |
 | What earns a badge | `MARK_URG` / `TAB_QUIET` | urgency 2 and above only (3.64 items a week, not 7.86); an empty tab cannot be fresh |
 | What a kept vow is worth | `VOW_BOUTS_FULL` / `VOW_EARNT_AT` | par at nothing risked, 1.6× at six cards fought under it — and never a blessing. Both are six: `VOW_EARNT_AT` was 2, and over 31 vows settled in 1,611 house-weeks the fewest cards under any vow was three and the median eight, so the piety split could never resolve the lean way. At six it bites 26% of vows |
@@ -1391,6 +1391,45 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.85.0 — Two probes, one policy, and the seed set was the whole of the difference
+
+Resolves the open item from v2.84.0, and corrects a magnitude I published in v2.82.0.
+
+Two sweeps drove what was meant to be the same unrest policy — feast over unrest 30, walk the cells
+over 22 — and disagreed by six times: 259 weeks median life and 6 of 30 houses alive at year 22 against
+45 weeks and 1 of 30. Both at n=30.
+
+**The two implementations are identical.** `RNG` is a single module-level global and `newGameState`
+resets it from the seed, so same build plus same seed plus two policy functions is a valid paired
+comparison. Run that way, the two shapes produced **byte-identical week-by-week trails on 30 of 30
+houses** and never diverged once. There was no code difference to find. The gap was the seed set and
+nothing else — and on a third, neutral seed scheme the policy read 69 weeks and 1 of 30, agreeing with
+the lower pair.
+
+**Which put v2.82.0's headline in doubt, so it was re-measured properly.** The comparison that matters
+is the same body with and without the cells, paired on one seed, at an n large enough to see past the
+families. 110 houses:
+
+| | median life | alive at year 22 | median fame |
+|---|---|---|---|
+| with the cells | **105w** | **11 of 110** | 605 |
+| without them | 64w | 0 of 110 | 151 |
+
+**And the paired statistic, which is the one the design buys: the cells arm outlived its own twin 70
+times, was outlived 31 times, and tied 9.** So the direction v2.82.0 claimed is real and now properly
+established — working the cells is the largest single lever measured in this project. **The magnitude
+was not**: 1.6× on median life rather than 3.6×, and 10% of houses reaching year 22 rather than 20%.
+The 3.6× came from one kind seed family, and the dial row now says so.
+
+The first divergences are the mechanism in two numbers: around weeks 14 to 24 the cells arm is holding
+slightly less coin and slightly lower unrest than its twin. The feast costs money and buys quiet, and
+over four hundred weeks the quiet is worth more than the money.
+
+**THE METHOD IS THE LASTING PART.** Unpaired arms at n=30 could not separate a 1.6× effect from seed
+noise, which is exactly how a 3.6× figure and a "makes it worse" figure both came out of the same code.
+Pairing removes the seed family entirely: every house is compared against itself. It should be the
+default for any two policies that differ in one line.
 
 ### v2.84.0 — Half the biggest lever is never suggested, and two of my probes disagree about the other half
 
@@ -5119,4 +5158,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.84.0*
+*Last updated: v2.85.0*

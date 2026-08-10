@@ -1073,3 +1073,30 @@ livelier finding about advice being wrong.
 Neither is a measurement. Two instruments disagreeing about the same quantity means at least one is
 broken, and the honest output is the disagreement itself plus an open item to find the cause — not a
 number. The counts that do not depend on the comparison can still ship; the comparison cannot.
+
+**RESOLVED, and it was neither instrument.** `RNG` is a module-level global that `newGameState` resets
+from the seed, so the same build with the same seed and two policy functions is a valid paired
+comparison. Run that way the two shapes produced byte-identical trails on 30 of 30 houses. The whole
+6x gap was the seed set — and the lesson is in the next section.
+
+## Pair on the seed, or you cannot see a 1.6x effect at all
+
+The same one-line policy change measured 3.6x better on one seed family, slightly worse on another, and
+6x apart between two probes, all at n=20 to 30. Paired — every house run twice from the identical seed,
+once with the change and once without — the answer came out clean at n=110: the changed arm outlived its
+own twin **70 times against 31, with 9 ties**, median life 105 weeks against 64, and 11 of 110 houses
+reaching year 22 against none.
+
+`newGameState` calls `rngSet(seedToNum(seed))`, so the stream restarts at the same place for both runs.
+Same build, same seed, two policies is therefore legitimate pairing — the warning against same-seed
+comparison applies to comparing across BUILDS, where a code change reorders the stream, and it has been
+over-applied here for several releases.
+
+The cost of not pairing is not just noise, it is *confident noise*: two of my own writeups drew opposite
+conclusions from identical code. When two arms differ in one line, run them on the same seeds and count
+how often one beats its own twin. The sign test on 101 decided pairs is worth more than a median on 30
+independent houses.
+
+And one trap in the seeds themselves: `seedToNum` uppercases and strips everything but A-Z and 0-9, so
+`"the 30/22 policy"` and `"THE3022POLICY"` are the SAME seed. Deriving seeds from arm names invites
+silent collisions.
