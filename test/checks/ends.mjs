@@ -218,8 +218,9 @@ export async function run({ p }){
     {
       const pv = rows.filter(r=>r.arm==="proven"), id = rows.filter(r=>r.arm==="idle");
       const outP = pv.filter(r=>r.kind!=="alive").length, outI = id.filter(r=>r.kind!=="alive").length;
-      lines.push(`over the opening, playing well halves it: ${outP} of ${pv.length} out `
-        + `against ${outI} of ${id.length} doing nothing (crux-blind, this read 13 against 12)`);
+      lines.push(`over the opening, playing well roughly a third fewer: ${outP} of ${pv.length} out `
+        + `against ${outI} of ${id.length} doing nothing (crux-blind this read 13 against 12; PAIRED `
+        + `on one seed at n=60 it is 17 against 28, so "halves" was the unpaired version of it)`);
       if(outP >= outI)
         bad.push(`the proven policy is dying at least as fast as doing nothing (${outP} against `
           + `${outI} of ${pv.length}) — with every bout resolved it goes out half as often, so this `

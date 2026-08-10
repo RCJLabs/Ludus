@@ -44,10 +44,15 @@
      home + unrest levers   rebellion 6/10, median life 117w
      tour + unrest levers   rebellion 6/10, median life 126w
 
-   Pulling the feast and walking the cells roughly doubles the median life in BOTH, touring makes no
-   difference to the rebellion at all, and a touring house lives LONGER than a homebound one in both
-   pairs. The rebellion was a probe that never touched the cells. That table is in the roadmap and is
-   not a bar anything is held to. */
+   Pulling the feast and walking the cells roughly doubles the median life in BOTH, and a touring house
+   lives LONGER than a homebound one in both pairs. The rebellion was a probe that never touched the
+   cells. That table is in the roadmap and is not a bar anything is held to.
+
+   AND ONE LINE OF IT WAS WRONG, corrected by #120. This used to say touring makes no difference to the
+   rebellion at all — 6 of 10 either way, on ten houses with unpaired seeds. PAIRED on one seed at n=60,
+   the touring arm takes **5 rebellions against the homebound arm's 14**. Touring nearly thirds it. The
+   likely mechanism is that much of the week returns early while `d.travel` or `d.city` is set,
+   `agendaCan` included. Four unpaired claims were re-run in #120 and not one came back unchanged. */
 
 import { hasHandle } from "../harness.mjs";
 

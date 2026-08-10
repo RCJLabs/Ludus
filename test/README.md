@@ -1100,3 +1100,18 @@ independent houses.
 And one trap in the seeds themselves: `seedToNum` uppercases and strips everything but A-Z and 0-9, so
 `"the 30/22 policy"` and `"THE3022POLICY"` are the SAME seed. Deriving seeds from arm names invites
 silent collisions.
+
+## Unpaired noise cuts both ways
+
+Four live claims were re-run paired. One reversed outright — "touring makes no difference to the
+rebellion" became 5 rebellions against 14. One was **understated by a wide margin**: the armamentarium's
+effect on steel read 83.3% against 94.8% unpaired, and 68.1% against 99.8% paired, with 60 of 60 pairs
+favouring the room. One softened from "halves" to "about a third fewer". One held and got sharper.
+
+The instinct after a few of these is that unpaired sweeps flatter their findings. They do not. They add
+variance, and variance is symmetric: it inflated one claim by 2.2x, deflated another almost to nothing,
+and reversed a third. There is no direction to correct for, which is exactly why the answer is to pair
+rather than to discount.
+
+Not one of the four came back unchanged. If a claim in the reference rests on two arms with different
+seeds, treat it as unmeasured until it has been paired.

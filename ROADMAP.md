@@ -1392,6 +1392,44 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v2.86.0 — Four claims re-run paired: one reversed, one understated, two held
+
+Audit item **#120**. No game behaviour changed. v2.85.0 established that an unpaired design cannot
+separate a 1.6× effect from seed noise at the n this project had been using, so every live cross-arm
+claim was re-run **paired on one seed** — each house played twice, once per arm — with the sign test
+over decided pairs as the statistic. n=60 pairs each.
+
+**REVERSED — #115's "touring makes no difference to the rebellion".** Unpaired at n=10 it read 6 of 10
+either way. Paired at n=60 it reads **rebellion 5 for the touring arm against 14 for the homebound
+one**, with 11 of 60 out against 14. Touring nearly **thirds** the rebellion count. The rest of that
+item stands — the levers matter more than travel does, and touring houses do live longer — but the
+specific claim that travel is neutral on the cells was an artefact of ten houses on unpaired seeds. The
+likely mechanism is that much of the week, `agendaCan` included, returns early while `d.travel` or
+`d.city` is set.
+
+**UNDERSTATED — #114's mend race.** Unpaired at n=6 per level it read a keen share of 83.3% with no
+armamentarium against 94.8-96.3% above it. Paired at n=60, with the same house played twice and the room
+built in one copy: **keen 99.8% against 68.1%, breaks 0 against 135, and 60 of 60 pairs favour the
+room.** A cleaner sign test is not available. The effect is far larger than the unpaired figures showed,
+which is the opposite error from #117's — and worth noting, because it means unpaired noise cuts both
+ways rather than always flattering the finding.
+
+**HELD, with a softer magnitude — `ends`'s "playing well halves the opening".** Published as 6 of 24
+out against idle's 12. Paired at n=60: **17 of 60 against 28**, so playing well cuts the chance of going
+out by about a third rather than half. The direction is solid and the suite's bar — which fails if the
+played arm dies at least as often as the idle one — is comfortably safe. The check's line now carries
+both figures.
+
+**HELD — #117's policy range.** `careless`, the fattest purse every week to the death, **outlives
+`proven` 42 pairs to 18**, median 157 weeks against 71. And the mechanism is in the endings: rebellion
+22 for `proven` against **1** for `careless`. A house that fights everything to the death loses its men
+before its cells ever get loud enough to rise.
+
+**THE SCORE ON THE METHOD.** Four claims, four different outcomes: one reversed, one understated by a
+wide margin, one softened, one confirmed and sharpened. Not one of the four came back unchanged. Pairing
+is now the default for any two arms differing in one line, and the four unpaired figures are kept in the
+reference beside their paired replacements, because which way each one moved is the useful part.
+
 ### v2.85.0 — Two probes, one policy, and the seed set was the whole of the difference
 
 Resolves the open item from v2.84.0, and corrects a magnitude I published in v2.82.0.
@@ -1675,9 +1713,11 @@ one policy apart from the named variable:
 | home + feast and walking the cells | 6/10 | 117w |
 | tour + feast and walking the cells | 6/10 | 126w |
 
-Pulling the levers roughly **doubles** the median life in both. Touring makes **no difference** to the
-rebellion — 6 of 10 either way — and a touring house lives **longer** than a homebound one in both
-pairs, which is the opposite of the finding I nearly had. The rebellion was a probe that never touched
+Pulling the levers roughly **doubles** the median life in both. A touring house lives **longer** than a homebound one in both pairs, which is the opposite of the
+finding I nearly had. **The "no difference to the rebellion" half of this was WRONG, and #120 found
+it**: unpaired at n=10 it read 6 of 10 either way; PAIRED on one seed at n=60 it reads **rebellion 5
+for the touring arm against 14 for the homebound one**. Touring nearly thirds it. The likely mechanism
+is that `agendaCan` and much of the week return early while `d.travel` or `d.city` is set. The rebellion was a probe that never touched
 the cells. (A second, smaller one: the "stay home and watch it decay" arm had towns pegged at 100
 because an invitation event put the house back in a city. Staying home has to be enforced against the
 game's own invitations.)
@@ -5158,4 +5198,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.85.0*
+*Last updated: v2.86.0*
