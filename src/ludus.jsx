@@ -24292,6 +24292,12 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        ever toured. Two scales live here: `bayPol[key].favor`, which only a bout in that town moves,
        and `knownIn`, which bleeds BAY_DECAY every week you are somewhere else. See `bay`. */
     CITY_KEYS, BAY_DECAY, bayKnownTotal, bayWide, bayHolder, bayWorth, baySince,
+    /* ---- AND THE FOUR ENDINGS NOTHING HAS EVER REACHED ----
+       200 played houses produced seven of the twelve endings the source can set. `oldAge` needs an
+       HEIR, `foreclosed` a LOAN grown to four times its principal, `closed` five men FREED, and
+       `triumph` a choice made on the road back from Rome — four systems no sweep policy has ever
+       used. The probe that went looking for them failed its own control; see `ends`. */
+    borrow, LENDERS, LEND_KEYS, owes, loanLender, EMPTY_LIMIT,
     /* the war: its stages, its clock and what it does to the block */
     WAR, warWeek, warIdx, warStage, warMarket, warElsewhere, WAR_AWAY_AT, WAR_AWAY_ODDS,
     /* the odds the bookmakers quote, and the mitigations on a death */

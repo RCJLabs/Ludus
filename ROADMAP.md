@@ -1336,6 +1336,7 @@ Tuning dials, in the order you'd reach for them:
 | What ends a run BY ERA | — | debt dominates **years 1–3 in every one of the five policies** — it is what an unfinished house dies of, whatever it is doing. The later eras are the other systems arriving: **years 4–7** rebellion and ruin, **8–12** rebellion and `banned`, **13+** `lanistaDied`, `emptied` and a last of debt. And competence does not buy the first year: over 40 weeks the proven policy went out **13 of 24** against **12 of 24** for a house doing nothing at all. What it buys is the ceiling — the careful arm was the only one of five with houses still standing at year 22 (**3 of 20**, and 2 of 20 on the second run); every other arm ended 0 of 20. Lifespan medians at n=20 are NOT a bar: the same policy came out 36 weeks and 20 weeks on two runs |
 | What ends a run IN THE OPENING | — | not the same thing at all. Pooling four runs of `survive` on its own policy — 20 new houses, 26 weeks: **13 standing (65%, s.e. 10.7)**, and of the seven failures **five were the yard emptying against two for the ledger**, with three of those five still holding coin when the last man went (248, 360 and 96 denarii). Early you die of attrition with money in hand; later you die of the ledger. Carrying the row below into the first twenty-six weeks tunes the wrong dial |
 | Whether the opening has drifted | — | a fixed handle policy over 200 houses returns **72 standing, 36.0%**, with identical endings to one decimal on four builds spanning v2.5x to v2.68.0 — the same to the house, so none of those releases touches a code path a new house executes. That probe is the two-minute answer to "did I just break the opening", and it is unambiguous precisely because the streams match when nothing relevant changed |
+| Which endings a house can actually reach | the twelve `d.over.kind` values / `ends` | #118, with a control that works this time (an ordinary house: ruin 4, lanistaDied 1, rebellion 1 of 6). Eight of the twelve are reached in play. **`foreclosed` is reachable and was simply never tried** — borrow 2,000, never repay, and `owes(d)` passes four times the principal at **week 44, 6 of 6 houses**. **`oldAge` cannot happen**: it wants `age>=62 && health>=45 && d.heir`, and over **3,070 lanista-weeks the man was 62 or over in 907 and healthy enough in NONE** — health decays with the years, and with an heir named a lanista at nought health hands over instead (1,135 weeks of succession). **`closed` cannot happen either**: it needs five men freed, `rudisEligible` is `wins>=10 && pfame>=180`, and the best man in a 500-week house reached **8 wins** — which #114 explains, since a man fights 3 bouts at the median. `triumph` is a choice on the road back from Rome and is untested. The two dead gates carry TRIPWIRES rather than locks: if the rudis bar drops, `ends` asks for the re-measurement |
 | What actually ends a run | `ends` / `survive` / the endings table | RE-MEASURED TWICE, in v2.81.0 for the crux and v2.82.0 for the night. The old figures had two faults: ~60% of every arm's bouts returned at `res.unfinished` unpaid, and every question was answered with choice 0 — which on `uprising` is the one branch that can end the run. Corrected, over 400 weeks and two seed sets: **debt is 24% / 27% across six policies against a published 69% / 67%, and 95-100% of it is the idle arm's**. A resolved bout is a PAID bout, so a house that fights does not die of the ledger. **`lanistaDied` is the plurality ending for a well-run house** — it lives long enough for the man in the chair to grow old. Working the cells (feast over 30, walk over 22) is the largest single lever measured: **5 of 20 houses alive at year 22 against 0**, median life 308w/270w against 183w/116w, median fame 1,316-1,919 against 225-380. Answering the uprising with steel rather than the guards takes `proven` from 183 weeks to 54 and its rebellion share from 40% to 70% |
 | How the war reaches you | `WAR_AWAY_AT` / `WAR_AWAY_ODDS` | your own gate, or a rising elsewhere from week 60 at 0.35% a week — 45% of houses that get there see it |
 | What earns a badge | `MARK_URG` / `TAB_QUIET` | urgency 2 and above only (3.64 items a week, not 7.86); an empty tab cannot be fresh |
@@ -1389,6 +1390,47 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.83.0 — Two of the endings are written for houses the game does not produce
+
+Audit item **#118**. No game behaviour changed. Two hundred played houses had produced seven of the
+twelve endings the source can set, and the probe sent after the rest failed its own control, so its
+verdicts were worth nothing and the gap was recorded as unresolved. Answered now, with a control that
+works: an ordinary house, played the way #117 recommends, ends in ruin 4, lanistaDied 1 and rebellion 1
+of 6 — the record's own endings — so what follows counts.
+
+**`foreclosed` was reachable all along and nobody had tried.** Borrow 2,000 (the lender books 1,400 of
+it as principal), never repay, and `owes(d)` passes four times the principal at **week 44 in 6 of 6
+houses**. It sits behind `borrow`, and no sweep policy in this project has ever taken a loan.
+
+**`oldAge` cannot happen.** The gate is `age >= 62 && health >= 45 && d.heir && year >= 6`. Over
+**3,070 lanista-weeks** the man in the chair was 62 or over in **907 of them** and his health was 45 or
+better in **none**. Health decays with the years, so the two conditions never hold together — and with
+an heir named, a lanista whose health reaches nought hands the house over rather than ending the run
+(1,135 weeks of `d.succession` in the same sample). The ending is written for a man the game does not
+produce: old, well, and with somebody to hand it to.
+
+**`closed` cannot happen either, and the bar is arithmetic.** It needs five men freed —
+`houseRecord(d).freed >= 5` and `freed > lost` — and `rudisEligible` is `wins >= 10 && pfame >= 180`.
+Across 500-week houses the best man ever reached **8 wins**. #114 already explained why: a man fights
+**3 bouts at the median and 8 at p90**, because the piece outlives its owner. Five men at ten wins each
+is a bar the game's own career lengths do not reach — beside a source comment that says *"the game says
+mercy is the strongest long game; it should be able to end that way"*.
+
+`triumph` is a choice on the road back from Rome, offered only to a house that got there and won, and
+no arm here reaches fame 1,000. It stays untested rather than answered.
+
+**AND TWO MORE FAULTS OF MINE, both of them a call signature.** The first pass reported the heir as
+unreachable after calling `nameHeir` 396 times: `heirEligible(d)` returns an array of KIND STRINGS and I
+read `opts[0].kind`, then passed three arguments to a two-argument function. Corrected, an heir is named
+in **week 1 of 6 of 6 houses** — the heir system is perfectly usable, and #90's "unused" is about
+players and not about reach. The second: `rudisEligible(g)` takes the MAN, and I passed `(d, g)`, so it
+was handed the state as its gladiator and returned false every week of every run. The arm freed nobody
+and I nearly wrote that the rudis was broken.
+
+`ends` carries the section, and the two dead gates carry **tripwires rather than locks**: it asserts the
+reachable ending and asserts that `rudisEligible` still refuses a man with nine wins, so if the bar
+drops or careers lengthen the check asks for a re-measurement instead of pinning a fault in place.
 
 ### v2.82.0 — A resolved bout is a paid bout, and the night is a policy too
 
@@ -5039,4 +5081,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.82.0*
+*Last updated: v2.83.0*

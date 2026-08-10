@@ -310,6 +310,78 @@ export async function run({ p }){
         + `nearly all of it idle's — the six-arm sweep read 26% / 27% / 28% against a published 69% / 67%`);
     }
 
+    /* ================= 5. THE ENDINGS NOTHING REACHES, AND WHY =================
+       #118. Two hundred played houses produced seven of the twelve endings the source can set, and
+       the probe sent after the rest failed its own control. Re-run with a control that works — an
+       ordinary house that must end in a way the record already knows, and it does: ruin 4,
+       lanistaDied 1, rebellion 1 of 6 — the four are answered:
+
+         foreclosed  REACHABLE, 6 of 6 houses, week 44. Borrow 2,000 (the lender books 1,400 of it as
+                     principal), never repay, and `owes(d)` passes four times the principal in about
+                     forty-three weeks. Nothing was wrong with it; no sweep policy borrows.
+         oldAge      NOT REACHABLE IN PLAY, and the reason is arithmetic. The gate wants
+                     `age >= 62 && health >= 45 && d.heir`. Over 3,070 lanista-weeks the man in the
+                     chair was 62 or over in 907 of them, and his health was 45 or better in
+                     **NONE**. The two conditions do not co-occur, because health decays with the
+                     years — and with an heir named, a lanista whose health reaches nought hands over
+                     (`d.succession`, 1,135 weeks of it) rather than ending the run. So the ending is
+                     written for a man the game does not produce.
+         closed      NOT REACHABLE IN PLAY, and the bar is quantified. It needs five men FREED with
+                     `houseRecord(d).freed >= 5`, and `rudisEligible` is `wins >= 10 && pfame >= 180`.
+                     Across 500-week houses the best man ever reached **8 wins** — which #114 already
+                     explains: a man fights 3 bouts at the median and 8 at p90, because the piece
+                     outlives its owner. Five men at ten wins each is a bar the game's own career
+                     lengths do not reach. The source comment above it says "the game says mercy is
+                     the strongest long game; it should be able to end that way".
+         triumph     UNTESTED HERE. It is a choice on the road back from Rome, offered only to a
+                     house that got there and won, and no arm in this check reaches fame 1,000.
+
+       WHAT IS ASSERTED is the reachable one, plus TRIPWIRES on the two constants that make the other
+       two unreachable. A dead gate must not be locked in place by its own check — if the rudis bar
+       drops or careers lengthen, this says so and asks for the re-measurement rather than failing. */
+    {
+      /* the reachable one, driven */
+      let foreclosedAt = null, borrowed = false;
+      { const d = A.newGameState("Fc", "clean", "ENDS-FORECLOSE", null);
+        for(let w=0; w<200 && !d.over; w++){
+          if(!d.loan && A.LEND_KEYS && A.LEND_KEYS.length){
+            if(A.borrow(d, A.LEND_KEYS[0], 2000) !== false) borrowed = true;
+          }
+          for(const g of A.activeG(d)) A.setRegimenOf(d, g.id, "palus");
+          const fit = A.activeG(d).filter(g=>!g.injury && (g.fatigue||0) < 55);
+          window.__ROPE.takeBout(d, { men:fit, stakes:"standard" });
+          answerWeek(d);
+          try { A.endWeek(d); } catch(e){ break; }
+        }
+        if(d.over && d.over.kind === "foreclosed") foreclosedAt = d.week;
+        lines.push(`foreclosed: borrowed ${borrowed} · ended "${d.over?d.over.kind:"alive"}" at w${d.week}`
+          + ` (measured reachable in 6 of 6 houses at week 44)`);
+      }
+      if(!borrowed)
+        bad.push(`the foreclosure arm could not borrow at all — \`borrow(d, who, amount)\` is the `
+          + `only door to \`foreclosed\`, and without it that ending is untested rather than reached`);
+      else if(!foreclosedAt)
+        bad.push(`a house that borrowed 2,000 and never repaid did not reach \`foreclosed\` in 200 `
+          + `weeks — the gate is \`owes(d) > principal * 4\` and it took 44 weeks when measured, so `
+          + `either the interest or the gate has moved`);
+
+      /* the tripwires: the two numbers that make the other two endings unreachable */
+      { const mock = { wins:9, pfame:500, auctor:null, status:"active" };
+        const at9 = A.rudisEligible(mock) === true;
+        mock.wins = 10;
+        const at10 = A.rudisEligible(mock) === true;
+        lines.push(`closed: the rudis wants 10 wins (at 9: ${at9}, at 10: ${at10}) — the best man in a `
+          + `500-week house reached 8, so five freed men is out of reach and \`closed\` with it`);
+        if(at9)
+          bad.push(`\`rudisEligible\` now passes a man with 9 wins — the bar has moved, and \`closed\` `
+            + `may have become reachable. Re-measure how many men a long house can free before `
+            + `trusting the note above, which was written when the bar was 10 and the best man got 8`);
+      }
+      lines.push(`oldAge: needs age>=62 AND health>=45 AND an heir — 907 lanista-weeks at 62 or over `
+        + `and health>=45 in NONE of them, with 1,135 weeks of succession instead. Written for a man `
+        + `the game does not produce`);
+    }
+
     lines.push(`the night answered the way a solvent player would: `
       + (Object.entries(upr).map(([k,n])=>`${k} ${n}`).join(" · ") || "no uprising faced")
       + ` — answering "meet them with steel" every time, which is what the published table did, `

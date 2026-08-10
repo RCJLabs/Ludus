@@ -1031,3 +1031,28 @@ arm that fights reads 0-24%, and the arm that fights every week to the death rea
 A resolved bout pays a purse. The old table's "debt is 60-90% of every playing policy" was measuring
 arms that fought hard and were paid for two afternoons in five. When a sweep reports that a system is
 starving, check first whether the sweep is feeding it.
+
+## A dead gate needs a tripwire, not a lock
+
+`oldAge` and `closed` cannot be reached in play, and both reasons are arithmetic: a lanista is never
+both 62 and well, and the rudis wants ten wins from men who fight three bouts. The tempting thing is to
+assert that — to write `oldAge never fires` and have the suite hold it.
+
+That pins the fault in place. The day somebody widens the health band or drops the rudis bar, a check
+asserting the old behaviour fails for doing the right thing, and whoever is holding it will delete the
+assertion rather than re-measure.
+
+So `ends` asserts the ending that IS reachable, and for the two that are not it asserts the CONSTANT:
+`rudisEligible` must still refuse a man with nine wins. If that changes, the check says the bar has
+moved and asks for the measurement again. Hold the reason, not the symptom.
+
+## Two call signatures, two systems declared broken
+
+`heirEligible(d)` returns an array of kind strings; I read `.kind` off them and passed an extra
+argument, so `nameHeir` was called 396 times and named nobody, and I had the heir down as unreachable.
+`rudisEligible(g)` takes the gladiator; I passed `(d, g)`, so it tested the game state for ten wins and
+said no every week of every run, and I had the rudis down as broken.
+
+Both looked exactly like dead content: a function called constantly, returning nothing, forever. Before
+writing that a system cannot be driven, print what the function actually returned once — `firstOpts`
+came back as `"/"`, which is two undefined values joined, and that single string was the whole answer.
