@@ -1343,6 +1343,7 @@ Tuning dials, in the order you'd reach for them:
 | What the gatekeeper can say | `LESSONS` / `lessonFor` | 35 lessons, one per tab per week, each with a `done` window — so it is a queue, and a window can expire while something ahead of it holds the slot. **All 35 windows are non-empty**: built into its own state, every lesson opens and every one is then said. From inside its window with nothing read in front of it, **29 of 35 are said, median week 3**; the other 6 are windows that close and reopen rather than expire. A reader playing from week 1 reaches 27 of 35 in 47 weeks; all 11 with no state gate are offered, first at weeks 1–3. Four ways to lose one, all of which had happened: done in week 1 (in an opening nobody was checking), `done` firing before `when` can, starved by the queue in front, and a gate with no satisfiable state at all |
 | Which question the week asks | `pickEvent` / `shuffled` | one slot, filled by the first event whose `make` returns something from a shuffled key list — so the draw has to BE a shuffle. It was `sort(()=>R()-0.5)`, which is not one: measured on the first-eligible key, the statistic that decides what is asked, it skewed **1.3 to 1.4×** toward events written earlier in the file (1.03× for two adjacent, 1.39× for the seven a real house had) against 1.01–1.06× for Fisher–Yates. The 5.1× figure that first turned up is first-POSITION of the permutation and is not the statistic that matters. Systems with channels of their own — the feud, the licence, the inspector, the primacy — set `pendingEvent` before the draw runs at all and take the week outright |
 | What a man's last month is worth | `formWord` / `FORM_TELL` / `formWeek` | five words, and two were never said. `formWeek` decays `f*0.78 - 3` weekly against +24 for a win at the great games, so three straight wins — the lesson's own example — reaches **37.6**, and the bands were 58 and 24. Over 4,862 man-weeks form ran **-50.5 to +42.4**, "in form" and "shaken" **0 times each**, "level" **97%**. Bands are 34 and 14 now; the fixed point of winning every single week is 71.5. What form DOES is unchanged at ±3.6% of power |
+| The name Capua settles on | `repStyle` / `repSettle` / `addRep` | four names, a share of **0.36** of a total of **14** to be given one, **0.30** to keep it and **0.06** clear to take it off you. All four are earnable and all four are HELD once a house goes after them — blood 100% of weeks from week 2 with the doctrine and *sine* stakes, show 824 of 917 weeks on the **showboat tactic**, craft 412 of 427, mercy 1,277 of 1,296 on **fighting to surrender and then throwing the cloth**. Fighting at first blood is caution, not mercy: 0 cloths in 2,345 house-weeks and the town calls you a craftsman. It settles on something 87–100% of all house-weeks. `repStyle(d)==="blood"` is half of `STAFF.medicus.quitOn`, and the butcher loses his surgeon 9 of 10 times at median week 12 against the showman's 0 of 10 |
 | How close you are to a thing | ten proximity lines vs the gates they describe | driven for the first time in #109: four wrong, five right, one not a line. `feastReach` is a fraction 0.65–1 and the agenda put it through `Math.round`, so the feast read "reach **1** of them" at every house size; `paragonReach.short` measured the gap against the box **plus** debts at face **plus** steel at half, beside a button reading the box alone — **12.8%** of 187 played house-weeks past week 20 fell in the window where the line says nothing is missing and the purchase is refused, median **24.6%** of "worth" being outside the box; `munusWait` read **0 weeks** of cooldown to a house standing on the imperial sand, because `munusReady` refuses for a reason the panel had no words for; `workOpen`'s closed line blamed the monuments when the tier-2 gate is the five plain works. Right: `blessLeft`, `creditLine` (median 0d drift), `riseNeed`, `romeBar`, `featNear`. `acclaimTarget` is read by `acclaimWeek` and shown to nobody |
 | Whether a line has room for what can go in it | `SMALL_HOUSES` / `NICKS` / `ORIGINS` vs the row it fills | the pit row's second line — `class · house · record` — has **263px** of room and the widest the content space allows renders at **300px**: 110 of 1,800 men dealt across 600 nights (**6.1%**) lost some of it behind an ellipsis. The coupling is the point: the menace word sits on the right at `flexShrink:0`, so v2.71.0's new words (**Murderous 53px, Peerless 40px** against the old top word **Lethal 31px**) took 22px out of the span beside it — with the narrowest word on the right, **0 of the 1,800** are cut off. A scale that gets a longer word narrows every row it shares. `room` forces the widest content AND the widest word together |
 | What you are told before you commit | `menace` / `readMatch` | two readings, and only one is free. `readMatch` — the per-man word on the pick screen — is real only when you have paid to have the man watched, which a house holds on **15.3%** of the men it is offered; the other 84.7% read "no read". Free is `menace`, six words now: Green/Seasoned/Dangerous under mean 66 where a strong man is quoted 97% throughout, then **Lethal 66–77, Murderous 78–89, Peerless 90+**, which against a mean-92 man is 11, 29 and 24 points of quoted chance per band. It ended at 66 for fifty releases, so one word covered mean 66 to 99 — a quote of 96% down to 13%, and every hard decision in the game sits inside it |
@@ -1384,6 +1385,59 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.77.0 — Four suspicions about the name Capua gives your house, four refutations, all mine
+
+Audit items **#111 and #112**, and between them one line of shipped source changed — a comment.
+
+#111 named the man in the chair as a dark group: `lanistaWeek`, `hasLT`, `repStyle`, `addRep`. #95
+had already settled the traits themselves. What nothing had measured is the thing upstream of them:
+**`repStyle`, the name the town settles on.** It earns `hard` and `merciful` at fifteen straight
+weeks, and `repStyle(d) === "blood"` is one of the two things that makes a medicus walk out, which is
+the whole of #112.
+
+**Four suspicions went in. Four came out refuted, and every one of them was the probe.**
+
+**1. "The town may never settle on a name."** It settles in **87% to 100% of house-weeks** in every
+arm, first name at median week 2 to 11, in 10 of 10 houses each time.
+
+**2. "`show` is never the name."** The first sweep made it the name for **1 week out of 3,001** —
+which looked like a fifth of the reputation system being dead content. The cause was that every arm
+passed `"measured"` as the tactic, and `showboat` is the one thing that awards `show` per bout. A
+house that showboats holds the name **824 of 917 weeks**. The lever was the one the probe had its
+hand on the whole time.
+
+**3. "`mercy` cannot be earned on purpose."** The arm built to test it fought at **first blood** —
+the naive reading, and the exact thing the charter's tenth step warns about: *"at first blood it ends
+at the wound and nobody is ever on their knees."* So it reached no crux, threw **0 cloths in 2,345
+house-weeks**, and was called `craft` for 2,208 of them. The policy the charter actually teaches —
+fight to surrender, then let the man up — threw **727 cloths** and held the mercy name **1,277 of
+1,296 weeks**, with all ten houses earning the `merciful` trait. The game was right and the probe was
+reading "merciful" as "cautious".
+
+**4. "`recordCloth` awards no mercy rep."** It does not, and it should not. The eight points are paid
+where the cloth is **resolved**, once per engine — the singles forfeit branch, the hunt's handlers,
+the pair let up together — plus three more for a man spared without dying. A duplicate award was
+written on top of the real one, tested, and found to change **nothing**: 1,277 of 1,296 either way,
+because mercy was already saturating. **That identical figure is what caught it.** A fix that changes
+no measurement is either unnecessary or being measured wrong, and it is worth finding out which
+before it ships.
+
+**WHAT IS REAL IS #112, AND THE CLAUSE HAS TEETH.** `STAFF.medicus.quitOn` is
+`d.unrest > 72 || repStyle(d) === "blood"`. The butcher loses his surgeon in **9 of 10 houses at
+median week 12**; the showman, playing just as hard for just as long, loses him in **0 of 10**. The
+item's falsification clause was that `repStyle` might reach "blood" so rarely the clause was inert —
+the butcher holds that name **100% of his weeks from week 2**. Not inert.
+
+`chair` is the 46th check and runs in 4 seconds. It sends one house after each of the four names the
+way a player would — the blood doctrine and every bout *sine*, the showboat tactic, the craft
+doctrine, and the mercy doctrine with the cloth at every crux — and holds three things: the town
+settles on a name at all, **each of the four names is not only reached but HELD** for the majority of
+a house's named weeks, and the butcher loses his surgeon while the showman does not. Reverting the
+showboat award, the cloth award, or the blood clause in `quitOn` fails it on the matching bar each
+time. "Ever reached" was too weak to be worth asserting and is written down as such: with the cloth's
+eight points removed the mercy arm still touched the name in 6 of 6 houses on the three points a
+spared man pays, but held it 184 weeks of 426 against craft's 181 — a coin-flip rather than a name.
 
 ### v2.76.0 — What ends a house is decided by how it is played, not by what year it is
 
@@ -4492,14 +4546,31 @@ different span, and the table carries only the first. *Falsifies if:* the ending
 across competence and era once lifespan is normalised. *How verified:* the proven long-life
 policy, the careless arms and the idle floor, binned by year.
 
-**#111 — Sixty-six functions on the handle are still dark, in four groups.** The man in the chair
+**#111 — CLOSED in v2.77.0, and the group was worth grouping.** The man in the chair turned out to
+hang off one thing nothing had measured — `repStyle`, the name Capua settles on. Four suspicions, four
+refutations, all the probe's: the town settles 87–100% of house-weeks; `show` looked dead at 1 week in
+3,001 because every arm passed `"measured"` as the tactic, and a showboating house holds it 824 of 917
+weeks; `mercy` looked unearnable because the arm testing it fought at first blood and so never reached
+a crux, while the policy the charter teaches held it 1,277 of 1,296 weeks on 727 cloths; and
+`recordCloth` awards no mercy rep because the award is where the cloth is resolved, one engine at a
+time. `chair` is the 46th check. The ladder's readers and `boutAftermath` are still ungrouped.
+
+**#111 as it was written, for the record — Sixty-six functions on the handle are still dark, in four
+groups.** The man in the chair
 (`lanistaWeek`, `hasLT`, `repStyle`, `addRep`); what the ladder tells you about the next rung
 (`riseNext`, `riseNeed`, `riseFav`, `risePurse`, `riseRank`); the two contracts that arrive as
 questions (`answerReSignWith`, `takeDoctoreOffer`); and `boutAftermath`, the one phase `phases`
 does not run. Group before picking: eleven names turned into one `wall` check that way, and a
 lone name is usually a reader somebody will call next week anyway.
 
-**#112 — `repStyle` decides whether your medicus walks out, and nothing has ever read it.**
+**#112 — CLOSED in v2.77.0 with the clause upheld.** Its falsification clause was that `repStyle`
+might reach "blood" so rarely that `STAFF.medicus.quitOn` was inert. A house that fights every bout to
+the death holds the name **100% of its weeks from week 2** and loses its surgeon in **9 of 10 houses at
+median week 12**, while a showman playing just as hard for just as long loses him in **0 of 10**. The
+clause has real teeth and `chair` now holds that contrast.
+
+**#112 as it was written, for the record — `repStyle` decides whether your medicus walks out, and
+nothing has ever read it.**
 `STAFF.medicus.quitOn` is `d.unrest > 72 || repStyle(d) === "blood"`, so a house Capua thinks of
 as butchers loses its surgeon — a rule with real teeth that no check touches and no measurement
 has ever priced. *Falsifies if:* `repStyle` reaches "blood" so rarely that the clause is inert,
@@ -4596,4 +4667,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.76.0*
+*Last updated: v2.77.0*

@@ -74,6 +74,7 @@ reason the check exists usually has not.
 | `surface` | slow | the tab bar was 9px and END WEEK was 37px tall — and it measured a house twelve WEEKS old on one face of each tab with no record sheet ever opened, so it would have passed the whole way through a release where a house's name read "House Glaber…" and a fame of 23,703 rendered "237…" |
 | `sand` | slow | thirteen checks called `doFight` and every one drove the engines in memory; four drove a browser and none reached the sand, so the most-looked-at screen in the game had no test — which is why a React key fault living on the bout wizard was found by a scratch probe photographing an axe |
 | `draw` | fast | the week asks one question, chosen by the first event whose `make` fires from a shuffled key list — and the shuffle was `sort(()=>R()-0.5)`, the classic broken one, in a file that already contained a correct Fisher–Yates used in nine other places. What the game asked you depended on where in the file the event was written. Holds the shuffle uniform AND the statistic that actually decides it, the first *eligible* key, because the first-position figure overstates the fault four-fold |
+| `chair` | fast | the name Capua settles on — `repStyle` — which earns two of the lanista's traits and is half of what makes a medicus walk out, and which nothing had ever measured. Sends one house after each of the four names the way a player would (the blood doctrine and *sine* stakes, the showboat tactic, the craft doctrine, the mercy doctrine plus the cloth at every crux) and holds three things: the town settles on something at all, each of the four names is not just reached but HELD for most of a house's named weeks, and the butcher loses his surgeon while the showman does not. Every one of the four faults it was written to catch turned out to be the probe |
 | `ends` | fast | three answers to "what ends a house" were on record and disagreed, each measured on a different policy. Five policies over 400 weeks settled it: the mix belongs to the POLICY — 100% ledger for a house that does nothing, 40% empty yard for one that fights to the death every week, 69%/67% overall against a published 85%. This holds the cheap, stable half in 3 seconds: the opening is lethal, the ledger is what does it (11 of 13, median 272d UNDER), and a house doing nothing dies of the ledger too. The long table is in the roadmap and deliberately not asserted — the lifespan medians swung 36w to 20w between two runs |
 | `near` | fast | ten lines telling the player how close they are to something, none of them ever driven — and this project had already shipped two of the shape wrong. Four were: the feast quoted a fraction through `Math.round` and read "reach **1** of them" at every house size; the paragon's shortfall was measured against the box plus debts at face plus steel at half, beside a button reading the box alone; the munus quoted **0 weeks** of cooldown to a house at Rome; the monuments' closed line blamed the monuments when the gate is the works. Five were right and are pinned so they stay right |
 | `room` | slow | `sand` caught the pit row's second line cut off with 24px hidden — and then passed five runs in a row, because whether the fault shows depends on whether the night deals a long class name to a long house name. So this one does not wait to be dealt the bad case: it composes the widest line the content space allows out of `ORIGINS`, `NICKS`, `SMALL_HOUSES` and `CLASSES`, forces the widest menace word beside it, and measures the row. 263px of room for 300px of line before the fix, on all three men at the rope, every run |
@@ -803,3 +804,32 @@ its failure is how a check stops being trusted, and four samples is how the bad 
 time; the measurement that would justify a new threshold is ten or more runs of an unchanged build, and
 that is a job rather than a nudge. Record the failure, prove it was not the game, and leave the number
 for a release whose whole subject is the number.
+
+## A fix that changes no measurement is telling you something
+
+#111 read `recordCloth`, found no `addRep` in it, and concluded that the game's central act of mercy —
+throwing the cloth, calling the handlers off a hunt, letting both men of a pair up — paid nothing
+toward the name Capua gives the house. The fix was one line. It was written, built, and measured
+against the run before it.
+
+**The numbers were identical: 1,277 of 1,296 weeks either way.** Because the award already existed,
+one layer down, at the point the cloth is *resolved* rather than *recorded* — and because mercy was
+already saturating, so a duplicate award changed nothing observable. Had the arm been weaker, the
+duplicate would have shipped and looked like it worked.
+
+So: **when a fix moves no measurement, do not conclude that it is harmless.** Two possibilities, and
+they are opposites. Either the thing was not broken — go and find the code that already does it — or
+the measurement cannot see the thing you changed, in which case you have no evidence either way and
+should not ship. The one conclusion never available is "it does no harm, leave it in".
+
+## "Ever reached" is a much weaker bar than "held", and usually the wrong one
+
+`chair` asserts that each of the four reputation names is earnable. The first version asked whether a
+house going after a name was *ever* called it. Removing the eight points a cloth pays still passed
+that bar in 6 of 6 houses — the three points a spared man pays, plus the doctrine's one-off eighteen,
+were enough to touch the name once.
+
+Held share caught it immediately: 184 weeks of 426 against craft's 181, which is a coin-flip and not a
+name, where every intact arm holds its own name for 91% to 100% of its named weeks. For anything the
+player is meant to *be* rather than to have momentarily touched, assert the share of time, and get the
+headroom from the intact build before choosing the threshold.

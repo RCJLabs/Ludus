@@ -13741,6 +13741,11 @@ const CRUX = {
    threwCloth was false, everCloth was 0, the front rows had not moved off 40 and not
    one man in the cells remembered it. The same probe throwing 178 singles recorded
    every one, took the feat, and carried the front rows to 96. */
+/* ---- WHERE THE MERCY REP IS, since a probe went looking for it here and did not find it ----
+   This function does not award it, and it should not: the eight points are paid at the point the
+   cloth is RESOLVED, once per engine — the singles forfeit branch, the hunt's handlers, the pair
+   let up together — plus three more for a man spared without dying. #111 read this function,
+   found no `addRep`, and nearly shipped a duplicate award on top of the real one. */
 function recordCloth(d, men){
   d.flags.threwCloth = 1;
   d.flags.everCloth = (d.flags.everCloth||0) + 1;
@@ -24241,7 +24246,15 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* the word from the box — the three or four things a crux will take */
     CRUX, forgeReady,
     /* the man in the chair: what the job does to him, and what it makes of him */
-    lanistaWeek, LAN_TRAITS, hasLT, repStyle, addRep,
+    lanistaWeek, LAN_TRAITS, LAN_KEYS, hasLT, repStyle, addRep, makeLanista,
+    /* ---- AND THE NAME CAPUA SETTLES ON, which is the input to all of the above ----
+       `repStyle` is what earns `hard` and `merciful`, and it is one of the two things that
+       makes a medicus walk out. Nothing could measure whether the town ever settles at all
+       without the leader, the totals and the four thresholds — see `chair`. */
+    repLeader, repTotal, repOf, repShare, repSettle, repWeek, staffWeek, STAFF_KEYS,
+    declareDoctrine, DOCTRINES, makeStaffMarket,
+    REP_ORDER, REP_KINDS,
+    REP_SETTLE, REP_KEEP, REP_TAKE, REP_FLOOR,
     /* the lanista's climb: the rungs, the gates, and what standing pays and costs */
     /* the four nights a man is known for */
     markNight, NIGHTS, nightWhere,
