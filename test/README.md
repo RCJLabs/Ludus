@@ -74,6 +74,7 @@ reason the check exists usually has not.
 | `surface` | slow | the tab bar was 9px and END WEEK was 37px tall — and it measured a house twelve WEEKS old on one face of each tab with no record sheet ever opened, so it would have passed the whole way through a release where a house's name read "House Glaber…" and a fame of 23,703 rendered "237…" |
 | `sand` | slow | thirteen checks called `doFight` and every one drove the engines in memory; four drove a browser and none reached the sand, so the most-looked-at screen in the game had no test — which is why a React key fault living on the bout wizard was found by a scratch probe photographing an axe |
 | `draw` | fast | the week asks one question, chosen by the first event whose `make` fires from a shuffled key list — and the shuffle was `sort(()=>R()-0.5)`, the classic broken one, in a file that already contained a correct Fisher–Yates used in nine other places. What the game asked you depended on where in the file the event was written. Holds the shuffle uniform AND the statistic that actually decides it, the first *eligible* key, because the first-position figure overstates the fault four-fold |
+| `steel` | fast | wear — the one system where the probe was wrong FOUR separate ways. #114 read `d.gearCond`, which is the pool of pieces on the SHELF, and concluded steel never wears; read off the man in `g.wear[slot]` a bout takes 3-6 off a weapon, all five words are said and pieces break. Holds the rate against `WEAR_RATE`, the five words off a piece driven to nothing, the break on the game's own chronicle line, the bands a played house sees, a man's career against his weapon's life, and — the trap that cost the most — that a bout held at the balance has changed nothing while the same bout answered changes the kit |
 | `houses` | fast | the four words for a rival house, two of which #113 measured as never said. Refuted on the item's own falsification clause: a house that works ONE rivalry for 300 weeks peaks at a median warmth of 76.8 and says all four, where a probe using `pickRivalOpp` meets six houses a little and tops out near 43. Holds the refutation plus the thing underneath it — that a bout against a rival's man registers as a meeting at all, which is `offer.opp.house` lining up with the rival's name |
 | `chair` | fast | the name Capua settles on — `repStyle` — which earns two of the lanista's traits and is half of what makes a medicus walk out, and which nothing had ever measured. Sends one house after each of the four names the way a player would (the blood doctrine and *sine* stakes, the showboat tactic, the craft doctrine, the mercy doctrine plus the cloth at every crux) and holds three things: the town settles on something at all, each of the four names is not just reached but HELD for most of a house's named weeks, and the butcher loses his surgeon while the showman does not. Every one of the four faults it was written to catch turned out to be the probe |
 | `ends` | fast | three answers to "what ends a house" were on record and disagreed, each measured on a different policy. Five policies over 400 weeks settled it: the mix belongs to the POLICY — 100% ledger for a house that does nothing, 40% empty yard for one that fights to the death every week, 69%/67% overall against a published 85%. This holds the cheap, stable half in 3 seconds: the opening is lethal, the ledger is what does it (11 of 13, median 272d UNDER), and a house doing nothing dies of the ledger too. The long table is in the roadmap and deliberately not asserted — the lifespan medians swung 36w to 20w between two runs |
@@ -866,3 +867,49 @@ arms sat, which is the only thing that made the claim interesting.
 The habit: when a comparison is about to become a finding, raise n before writing it, not after. And
 remember that a code change reorders the RNG stream, so the two arms are never a paired comparison
 however identical the seeds look — which is exactly why the small-n medians moved so far.
+
+## `gearCond` is the shelf, and four ways to get wear wrong
+
+Wear was the single worst instrument in the audit so far: four separate faults, each of which changed
+a headline number, and every one of them looked like a finding about the game first.
+
+**Read the field the thing actually lives in.** `d.gearCond[id]` is a POOL OF PIECES ON THE SHELF.
+`buyGearItem` pushes 100 into it and `equipOne` splices that number straight back out when the piece
+goes on a man, so a pool sampled during play is dominated by spoils off dead opponents, which enter at
+`ri(55,85)`. The reported range of "56 to 74, never keen" was that distribution and nothing else. A
+worn piece's condition lives in `g.wear[slot]`. Before sampling a quantity, find the write that
+produces the number you want and check you are reading its destination.
+
+**A function that returns early mutates nothing.** `doFight` returns at `res.unfinished` — the crux —
+BEFORE it calls `wearKit`, because the bout is being held for the box to speak. 41% to 82% of bouts
+reach the balance. A probe that does not answer measures a bout that never happened: no wear, no
+purse, no fatigue. Worse, the crux rate is highest at sine missione, so the arm meant to wear steel
+FASTEST wore it least and that read as a finding about hard wear running backwards. Any check that
+calls `doFight` and does not loop on `r.crux` is measuring a fraction of what it thinks.
+
+**Identity of an id is not identity of a thing.** My break detector watched for a slot that was under
+30 and is now a different piece. It undercounted by 60% — 11 against 28 — because a break re-arms the
+man from the rack with ANOTHER COPY OF THE SAME GEAR ID. When the game writes a line for an event,
+count the line.
+
+**An arm that cannot afford its own setup is another arm wearing its name.** The armamentarium
+comparison ran `buildUp` on a fresh house's purse, so only level 1 was ever affordable and the L2 and
+L4 arms were the L1 arm. The tell was three runs printing the same 1,036 bouts and the same two
+breaks. Assert the state you set up — `steel` now reads `bLevel` back and fails if it is not what was
+asked for.
+
+## Forcing a man fit is a bench; forcing him alive is fiction
+
+The first bench for the wear rate fought real bouts back to back with the week never turned, and got 3
+bouts before every man was dead. An earlier scratch version of the same setup got 25 — but only
+because it never checked `g.status` and was cheerfully fighting a corpse, which is where a confident
+"a weapon breaks at 25 bouts" figure came from.
+
+Zeroing fatigue between bouts is a bench: it removes a rate limiter and says so. Ignoring death is
+not a bench, it is a state the game cannot reach, and any number taken from it is about nothing.
+
+The fix was to drive the unit instead of the scene: `wearKit` is what a bout calls, and it holds the
+`WEAR_RATE` draw, the named-piece halving, the perks and the break branch. Called directly, the rate,
+the five words and the break are all exact and the check runs in a fraction of the time. Then prove
+SEPARATELY, in a played house, that real bouts reach the unit at all — which is the half a bench
+cannot do and the half that catches a rope that never gets to the sand.

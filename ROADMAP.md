@@ -1344,6 +1344,7 @@ Tuning dials, in the order you'd reach for them:
 | Which question the week asks | `pickEvent` / `shuffled` | one slot, filled by the first event whose `make` returns something from a shuffled key list — so the draw has to BE a shuffle. It was `sort(()=>R()-0.5)`, which is not one: measured on the first-eligible key, the statistic that decides what is asked, it skewed **1.3 to 1.4×** toward events written earlier in the file (1.03× for two adjacent, 1.39× for the seven a real house had) against 1.01–1.06× for Fisher–Yates. The 5.1× figure that first turned up is first-POSITION of the permutation and is not the statistic that matters. Systems with channels of their own — the feud, the licence, the inspector, the primacy — set `pendingEvent` before the draw runs at all and take the week outright |
 | What a man's last month is worth | `formWord` / `FORM_TELL` / `formWeek` | five words, and two were never said. `formWeek` decays `f*0.78 - 3` weekly against +24 for a win at the great games, so three straight wins — the lesson's own example — reaches **37.6**, and the bands were 58 and 24. Over 4,862 man-weeks form ran **-50.5 to +42.4**, "in form" and "shaken" **0 times each**, "level" **97%**. Bands are 34 and 14 now; the fixed point of winning every single week is 71.5. What form DOES is unchanged at ±3.6% of power |
 | What warms between two lanistae | `warmth` / `houseWord` / `RIVAL_BEATS` | four words at **25 / 50 / 75**, fed by **1.1 a meeting** while that house's grudge is under 30, plus **4 to 16** from each of eight once-only beats gated on `met>=6` through `met>=26`. A house that works ONE rivalry for 300 weeks peaks at a **median 76.8 and a max of 100**, and says all four words; a probe using `pickRivalOpp` meets six houses a little and tops out near 43, which is what #113 measured. `rivalArc` will not run while a question is waiting — worth about **15%** of the arc and a delay to `end` (3 of 20 against 5), not a word. `loan` needs the purse under 200 at the moment it runs |
+| What a bout takes out of what he carries | `WEAR_RATE` / `wearKit` / `wearWord` / `repairWeek` | five words at **85 / 60 / 35 / 15**, fed by **3-6 a weapon** a bout (offhand 2-5, helm 1-3, armour 2-4), **1.5x** at sine missione, halved on a named piece, and a piece at nought **breaks** and puts him on house stock. All five words are said and the rate measures at a median of **4** over 87 calls. In a played house with no armoury, **76.6%** of man-slot-weeks read "keen" and **8.5%** read "worn" or worse; over 6 houses and 130 weeks it is 83.3% and 4.3%. Wear is a system of the FIRST YEARS: breaks per ~1,050 bouts run **28 at L0, 2 at L1, 0 at L2 and L4** as `repairWeek` adds level*2.2 a week. And the piece outlives its owner — a man fights **3 bouts at the median and 8 at p90** against the ~25 a weapon needs, **2 of 241** ever reached 25, and **207 of 263** left the yard dead. `gearCond` is the SHELF and measures none of this |
 | The name Capua settles on | `repStyle` / `repSettle` / `addRep` | four names, a share of **0.36** of a total of **14** to be given one, **0.30** to keep it and **0.06** clear to take it off you. All four are earnable and all four are HELD once a house goes after them — blood 100% of weeks from week 2 with the doctrine and *sine* stakes, show 824 of 917 weeks on the **showboat tactic**, craft 412 of 427, mercy 1,277 of 1,296 on **fighting to surrender and then throwing the cloth**. Fighting at first blood is caution, not mercy: 0 cloths in 2,345 house-weeks and the town calls you a craftsman. It settles on something 87–100% of all house-weeks. `repStyle(d)==="blood"` is half of `STAFF.medicus.quitOn`, and the butcher loses his surgeon 9 of 10 times at median week 12 against the showman's 0 of 10 |
 | How close you are to a thing | ten proximity lines vs the gates they describe | driven for the first time in #109: four wrong, five right, one not a line. `feastReach` is a fraction 0.65–1 and the agenda put it through `Math.round`, so the feast read "reach **1** of them" at every house size; `paragonReach.short` measured the gap against the box **plus** debts at face **plus** steel at half, beside a button reading the box alone — **12.8%** of 187 played house-weeks past week 20 fell in the window where the line says nothing is missing and the purchase is refused, median **24.6%** of "worth" being outside the box; `munusWait` read **0 weeks** of cooldown to a house standing on the imperial sand, because `munusReady` refuses for a reason the panel had no words for; `workOpen`'s closed line blamed the monuments when the tier-2 gate is the five plain works. Right: `blessLeft`, `creditLine` (median 0d drift), `riseNeed`, `romeBar`, `featNear`. `acclaimTarget` is read by `acclaimWeek` and shown to nobody |
 | Whether a line has room for what can go in it | `SMALL_HOUSES` / `NICKS` / `ORIGINS` vs the row it fills | the pit row's second line — `class · house · record` — has **263px** of room and the widest the content space allows renders at **300px**: 110 of 1,800 men dealt across 600 nights (**6.1%**) lost some of it behind an ellipsis. The coupling is the point: the menace word sits on the right at `flexShrink:0`, so v2.71.0's new words (**Murderous 53px, Peerless 40px** against the old top word **Lethal 31px**) took 22px out of the span beside it — with the narrowest word on the right, **0 of the 1,800** are cut off. A scale that gets a longer word narrows every row it shares. `room` forces the widest content AND the widest word together |
@@ -1386,6 +1387,75 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.79.0 — Steel does wear, and the probe that said otherwise was reading the shelf
+
+Audit item **#114**, refuted on its own falsification clause, and no game behaviour changed.
+
+The item measured `gearCond` 583 times: the range seen was 56 to 74, so "keen" was never read and
+neither of the bottom two bands was ever occupied, beside a lesson promising steel that "wears every
+bout and eventually breaks in the middle of one". Its own falsification clause asked whether a piece
+carried through forty bouts without mending falls through the floor.
+
+**It does, and both halves of the item were the instrument.** `d.gearCond[id]` is the pool of pieces
+ON THE SHELF. `buyGearItem` pushes 100 and `equipOne` splices that number straight back out when the
+piece goes on a man, so what is left in the pool is dominated by spoils taken off a dead opponent,
+which enter at `ri(55,85)` — which is exactly a floor near 56 and a ceiling under 85. While a piece
+is worn, its condition lives in `g.wear[slot]`, which is what `wearWord`, the armoury bar,
+`kitFaults` and `gearScore` all read.
+
+Read off the man, the whole system works: **a bout takes 3-6 off a weapon at a measured median of 4
+over 87 calls**, a piece walking from 100 down to nothing **says every one of the five words**, and
+it breaks. In a played house with no armoury, **76.6% of man-slot-weeks read "keen", 8.5% read "worn"
+or worse, and three pieces broke in sixty bouts**.
+
+**Two things are true about wear that are not faults, and are written down so nobody re-opens them.**
+
+It is a system of the first years. Counted on the game's own chronicle line, breaks per ~1,050 bouts
+run **28 with no armamentarium, 2 at level 1, and 0 at levels 2 and 4**, while the keen share runs
+83.3% at L0 against 94.8-96.3% above it. `repairWeek` adds level*2.2 a week against 3-6 a bout on a
+man who fights every second or third week, so the room does exactly what it says it does.
+
+And underneath that, the piece outlives its owner. A man fights **3 bouts at the median and 8 at
+p90**; a weapon needs about 25 to break. **Only 2 of 241 men ever reached 25 of their own bouts, and
+207 of 263 left the yard dead.** The break line is written for a fight that a careful house rarely
+has, and that is a property of how short a gladiator's career is rather than of the wear rate.
+
+**FOUR INSTRUMENT FAULTS OF MINE, every one of which changed a headline number.**
+
+The rope. The first draft read only `d.games.offers` — the arena bill, shut until fame 25 — and
+fought **2 to 5 bouts in 91 weeks**, so every arm was the idle one wearing a name. `ends` already
+carries that lesson on its face and I repeated it.
+
+The crux, which is the expensive one. `doFight` returns at its `res.unfinished` branch **before** it
+calls `wearKit`, and mutates nothing at all, because the bout is being held for the box to speak.
+Between **41% and 82%** of bouts reach the balance. A silent probe measures a bout that never
+happened — and because the crux rate is highest at sine missione, the arm fighting to the death wore
+its steel LEAST, which looked like a finding about hard wear running backwards.
+
+The break counter. My own detector — a slot that was under 30 and is now a different piece —
+**undercounted by 60%, 11 against 28**, because a break re-arms the man from the rack with another
+copy of the SAME GEAR ID, so the slot looks untouched. Identity of the gear id is not identity of the
+piece, and the game's own chronicle line is the only honest counter.
+
+The room. The arms comparing armamentarium levels ran `buildUp` on a fresh house's purse, so only
+level 1 was ever affordable and the L2 and L4 arms were the L1 arm under another name. Three runs
+printing the same 1,036 bouts and the same two breaks is what gave it away.
+
+**And two more suspicions of my own, both refuted.** The n=2 version of the mend race read "lows of
+90 with the room against 26 without" and looked like the first level switching a whole system off; at
+n=6 it is a keen share of 95.4% against 83.3%, which is the same direction and a much smaller claim.
+And `LESSONS.wear` — whose exit is `some gearCond entry < 80` — looked like it would be satisfied in
+the first month by spoils and never say the thing it is about. **12 of 12 houses were offered it in
+week 1**, the exit fired later or never, and **0 of the 4 that fired it did so on a number that looks
+like spoils**.
+
+`steel` is the 48th check and runs in 3 seconds. It holds the rate against `WEAR_RATE`, all five
+words off a piece driven to nothing, the break on the game's own line, the bands a played house
+actually sees, the career against the weapon's life, and — because this is the trap that cost the
+most — that a bout held at the balance has changed **nothing** and the same bout answered changes the
+kit. Zeroing `WEAR_RATE.weapon`, killing the break branch, and moving `wearKit` above the
+`res.unfinished` return each fail it on the matching bar.
 
 ### v2.78.0 — The two words nobody had seen are said by a house that works one rivalry
 
@@ -4638,11 +4708,22 @@ and `met>=10`, which six houses had not reached. *Falsifies if:* a house that fi
 repeatedly for 200 weeks passes 50, which would make this the `houseWord` version of the primacy:
 reachable, and my sample too short. Explicitly NOT claimed as a fault yet.
 
-**#114 — Bought steel never read "keen" and never fell below 56.** 583 samples of `gearCond`:
-the range seen was 56 to 74 and neither the top band nor the bottom two were ever occupied, while
-the lesson about wear promises steel that "eventually breaks in the middle of one". *Falsifies
-if:* a piece carried through forty bouts without mending does fall through the floor, in which
-case the probe simply did not own steel for long enough.
+**#114 — CLOSED in v2.79.0, REFUTED on its own falsification clause.** `gearCond` is the pool of
+pieces on the SHELF, not what a man carries: `buyGearItem` pushes 100 and `equipOne` splices it back
+out on equipping, so the pool is dominated by spoils entering at `ri(55,85)` — a floor near 56 and a
+ceiling under 85, which is the whole of the reported range. Read off the man in `g.wear[slot]`, a
+bout takes **3-6** off a weapon at a measured median of **4**, all five words are said, and pieces
+break. Two true things recorded rather than fixed: wear is a first-years system (breaks per ~1,050
+bouts run 28 at L0, 2 at L1, 0 above), and the piece outlives its owner (a career is 3 bouts at the
+median against the ~25 a weapon needs). Four instrument faults of mine are written into `steel`,
+including that `doFight` returns before `wearKit` on an unanswered crux. No behaviour changed;
+`steel` is the 48th check.
+
+**#114 as it was written, for the record — Bought steel never read "keen" and never fell below 56.**
+583 samples of `gearCond`: the range seen was 56 to 74 and neither the top band nor the bottom two
+were ever occupied, while the lesson about wear promises steel that "eventually breaks in the middle
+of one". *Falsifies if:* a piece carried through forty bouts without mending does fall through the
+floor, in which case the probe simply did not own steel for long enough.
 
 **#115 — Nothing has toured the coast in anything that samples it.** `cityFavWord` took zero
 samples in the scales sweep. `roads` and `coast` drive the machinery; no measurement has ever
@@ -4721,4 +4802,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.78.0*
+*Last updated: v2.79.0*

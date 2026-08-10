@@ -24280,8 +24280,13 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        `warmth` has four words and #113 measured the top two as never said. The eight beats
        are the only large moves it has, and every one of them is gated on `met`, on years, or
        on the warmth it is supposed to produce — see `houses`. */
-    warmth, houseWord, houseOf, warmMove, metHouse, rivalArc, RIVAL_BEATS, RB_KEYS,
+    warmMove, metHouse, rivalArc, RIVAL_BEATS, RB_KEYS,
     makeRivalFighter, HOUSES,
+    /* ---- WHAT A BOUT TAKES OUT OF WHAT HE CARRIES ----
+       #114 measured `gearCond` and found steel that never wore, but `gearCond` is the pool of
+       pieces ON THE SHELF — worn condition lives in `g.wear[slot]`, which is what `wearOf` reads
+       and what `wearWord` puts a word to. See `steel`. */
+    wears, wearOf, WEAR_RATE, SLOTS, wearKit, repairWeek,
     /* the war: its stages, its clock and what it does to the block */
     WAR, warWeek, warIdx, warStage, warMarket, warElsewhere, WAR_AWAY_AT, WAR_AWAY_ODDS,
     /* the odds the bookmakers quote, and the mitigations on a death */
