@@ -305,8 +305,10 @@ export async function run({ p, errors }){
             if(o.pair||o.melee||o.venatio||(!o.imperial&&o.stakes==="sine")) continue;
             const g = pool.find(x=>x.status==="active"&&!x.injury); if(!g) break;
             let x=A.doFight(d,g.id,o,"measured",null,null,null,"none");
-            if(x&&x.crux){ const pd=x.pending; pd.beats=x.beats;
-              A.doFight(d,g.id,o,"measured",null,pd,"press","none"); } }
+            /* #116: to exhaustion, and the result captured — this threw the resumed bout away, so
+               a second word was never spoken and the bout stayed pending */
+            { let n=0; while(x&&x.crux&&n++<4){ const pd=x.pending; pd.beats=x.beats;
+              x=A.doFight(d,g.id,o,"measured",null,pd,"press","none"); } } }
           d.pendingEvent = null;
           try { A.endWeek(d); } catch(e){ break; }
           if(d.over) break;

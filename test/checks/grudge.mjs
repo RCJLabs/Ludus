@@ -52,7 +52,12 @@ export async function run({ p, errors }){
     const dist = [], fired = {};
     for(let r=0;r<HOUSES;r++){
       const d = A.newGameState("Gr"+r, "clean", "GRUDGE_"+r, null);
-      const fin=(fn,a,re)=>{ let x=fn(...a); if(x&&x.crux){const pd=x.pending;pd.beats=x.beats;x=fn(...re(pd));} return (x&&!x.crux)?x:null; };
+      /* #116: this resolved ONE word and threw away any bout that came back to the balance a second
+       time — 26.8% of all standard bouts, 44.2% of the held ones. `simulateFight` asks for up to
+       three. It answers to exhaustion now. */
+    const fin=(fn,a,re)=>{ let x=fn(...a); let n=0;
+      while(x&&x.crux&&n++<4){const pd=x.pending;pd.beats=x.beats;x=fn(...re(pd));}
+      return (x&&!x.crux)?x:null; };
       for(let w=0;w<WEEKS;w++){
         d.gold = Math.max(d.gold, 30000);
         while(A.activeG(d).length<8 && !A.rosterFull(d)){

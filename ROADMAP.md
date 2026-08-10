@@ -1336,7 +1336,7 @@ Tuning dials, in the order you'd reach for them:
 | What ends a run BY ERA | — | debt dominates **years 1–3 in every one of the five policies** — it is what an unfinished house dies of, whatever it is doing. The later eras are the other systems arriving: **years 4–7** rebellion and ruin, **8–12** rebellion and `banned`, **13+** `lanistaDied`, `emptied` and a last of debt. And competence does not buy the first year: over 40 weeks the proven policy went out **13 of 24** against **12 of 24** for a house doing nothing at all. What it buys is the ceiling — the careful arm was the only one of five with houses still standing at year 22 (**3 of 20**, and 2 of 20 on the second run); every other arm ended 0 of 20. Lifespan medians at n=20 are NOT a bar: the same policy came out 36 weeks and 20 weeks on two runs |
 | What ends a run IN THE OPENING | — | not the same thing at all. Pooling four runs of `survive` on its own policy — 20 new houses, 26 weeks: **13 standing (65%, s.e. 10.7)**, and of the seven failures **five were the yard emptying against two for the ledger**, with three of those five still holding coin when the last man went (248, 360 and 96 denarii). Early you die of attrition with money in hand; later you die of the ledger. Carrying the row below into the first twenty-six weeks tunes the wrong dial |
 | Whether the opening has drifted | — | a fixed handle policy over 200 houses returns **72 standing, 36.0%**, with identical endings to one decimal on four builds spanning v2.5x to v2.68.0 — the same to the house, so none of those releases touches a code path a new house executes. That probe is the two-minute answer to "did I just break the opening", and it is unambiguous precisely because the streams match when nothing relevant changed |
-| What actually ends a run | — | **the mix belongs to the policy, not to the game** (#110). Five policies, every opening, 400 weeks, 20 houses each, twice: debt is **69% / 67%** of all endings — inside the 45–80% band v2.68.0 measured, so the published 85% was the top of a wide range and not its centre. It runs from **idle 100% debt** to **careless 40% ruin, 25% rebellion, 15–25% debt**, with middling 80–90% and careful 45–60%. Earlier figures: good policy 48 houses debt 85%; careless 120 houses debt 49% / rebellion 22% / closed 15% / ruin 3%. Quote a policy with the number or the number means nothing |
+| What actually ends a run | `ends` / `survive` / the endings table | RE-MEASURED in v2.81.0, and the old figures were the crux trap. `ends` called `doFight` without answering the balance, so ~60% of its bouts returned at `res.unfinished`, mutated nothing and paid no purse — an arm that fought hard and was paid for two afternoons in five. It read **13 of 24 houses out inside 40 weeks with a median 272 denarii UNDER**, and the conclusion drawn was that the ledger is the competent player's only enemy. On the harness rope, with every bout resolved: **6 of 24 out, median +506d in the box, endings debt 3 / rebellion 3**. So playing well HALVES the chance of going out in the opening, and what ends a house that plays is as much the CELLS as the ledger. A house that does nothing is unchanged at **12 of 24 out, 11 by debt, median -286d**. The mix still belongs to the policy — that half of #110 stands |
 | How the war reaches you | `WAR_AWAY_AT` / `WAR_AWAY_ODDS` | your own gate, or a rising elsewhere from week 60 at 0.35% a week — 45% of houses that get there see it |
 | What earns a badge | `MARK_URG` / `TAB_QUIET` | urgency 2 and above only (3.64 items a week, not 7.86); an empty tab cannot be fresh |
 | What a kept vow is worth | `VOW_BOUTS_FULL` / `VOW_EARNT_AT` | par at nothing risked, 1.6× at six cards fought under it — and never a blessing. Both are six: `VOW_EARNT_AT` was 2, and over 31 vows settled in 1,611 house-weeks the fewest cards under any vow was three and the median eight, so the piety split could never resolve the lean way. At six it bites 26% of vows |
@@ -1344,6 +1344,7 @@ Tuning dials, in the order you'd reach for them:
 | Which question the week asks | `pickEvent` / `shuffled` | one slot, filled by the first event whose `make` returns something from a shuffled key list — so the draw has to BE a shuffle. It was `sort(()=>R()-0.5)`, which is not one: measured on the first-eligible key, the statistic that decides what is asked, it skewed **1.3 to 1.4×** toward events written earlier in the file (1.03× for two adjacent, 1.39× for the seven a real house had) against 1.01–1.06× for Fisher–Yates. The 5.1× figure that first turned up is first-POSITION of the permutation and is not the statistic that matters. Systems with channels of their own — the feud, the licence, the inspector, the primacy — set `pendingEvent` before the draw runs at all and take the week outright |
 | What a man's last month is worth | `formWord` / `FORM_TELL` / `formWeek` | five words, and two were never said. `formWeek` decays `f*0.78 - 3` weekly against +24 for a win at the great games, so three straight wins — the lesson's own example — reaches **37.6**, and the bands were 58 and 24. Over 4,862 man-weeks form ran **-50.5 to +42.4**, "in form" and "shaken" **0 times each**, "level" **97%**. Bands are 34 and 14 now; the fixed point of winning every single week is 71.5. What form DOES is unchanged at ±3.6% of power |
 | What warms between two lanistae | `warmth` / `houseWord` / `RIVAL_BEATS` | four words at **25 / 50 / 75**, fed by **1.1 a meeting** while that house's grudge is under 30, plus **4 to 16** from each of eight once-only beats gated on `met>=6` through `met>=26`. A house that works ONE rivalry for 300 weeks peaks at a **median 76.8 and a max of 100**, and says all four words; a probe using `pickRivalOpp` meets six houses a little and tops out near 43, which is what #113 measured. `rivalArc` will not run while a question is waiting — worth about **15%** of the arc and a delay to `end` (3 of 20 against 5), not a word. `loan` needs the purse under 200 at the moment it runs |
+| Whether the suite is measuring what it says | `probe` / `harness.mjs`'s rope | the audit's own instrument, #116. `doFight` and its three sisters return at `res.unfinished` — the balance — BEFORE crediting anything, and mutate NOTHING while a bout is held: **0.0% of first-blood bouts reach it, 60.5% of standard, 59.3% sine**, and in **721 of 721** held bouts the purse, the fatigue and the steel had all not moved. THREE checks answered nothing (`ends`, `houses`, `chair`) and lost ~60% of their bouts; FIVE more answered one word and dropped anything that came back, another **26.8% of all standard bouts, 44.2% of the held ones**. The rope is in the harness now, installed by `open()` on every page, and `probe` fails any check that reaches for an engine without resolving to exhaustion — reading each `if(… .crux …)` site rather than the file, because answering with the CLOTH ends the bout and is correct |
 | What a town down the bay thinks of you | `bayPol.favor` / `cityFavWord` / `knownIn` / `BAY_DECAY` | TWO scales that behave oppositely, and nothing had toured either. Favour has five words at **78 / 58 / 38 / 18**, opens at `20 + ri(0,15)` so every town starts on "an outsider", moves ONLY on a bout fought there by `4 + served*5` (**+9 / +4 / -1**) and never decays: toured properly it runs **10 to 100** over 24 town-houses at a median peak of **93**, and **all five words are said**. The bottom word is reached only by LOSING — Neapolis wants craft and `cityServed` scores a defeat -1 — which a reading of the source misses. `knownIn` is fed by every bout and bleeds **0.55 a week** for every town you are not in: a five-week-a-town round robin pegs all three at **100 by about week 20** and never feels it, while a house that tours once to 70-90 and stays home bleeds to nothing over **~130 weeks** and loses `known>=10 everywhere` about week 130. The bay itself goes to a rival after **30 idle weeks** at 2.8% a week — **8 of 10** homebound houses, **0 of 8** touring ones — at -4 fame every eight weeks, and is given back ONLY by turning up: **12 of 12**, two weeks out, for **+10 to +12** grudge |
 | What a bout takes out of what he carries | `WEAR_RATE` / `wearKit` / `wearWord` / `repairWeek` | five words at **85 / 60 / 35 / 15**, fed by **3-6 a weapon** a bout (offhand 2-5, helm 1-3, armour 2-4), **1.5x** at sine missione, halved on a named piece, and a piece at nought **breaks** and puts him on house stock. All five words are said and the rate measures at a median of **4** over 87 calls. In a played house with no armoury, **76.6%** of man-slot-weeks read "keen" and **8.5%** read "worn" or worse; over 6 houses and 130 weeks it is 83.3% and 4.3%. Wear is a system of the FIRST YEARS: breaks per ~1,050 bouts run **28 at L0, 2 at L1, 0 at L2 and L4** as `repairWeek` adds level*2.2 a week. And the piece outlives its owner — a man fights **3 bouts at the median and 8 at p90** against the ~25 a weapon needs, **2 of 241** ever reached 25, and **207 of 263** left the yard dead. `gearCond` is the SHELF and measures none of this |
 | The name Capua settles on | `repStyle` / `repSettle` / `addRep` | four names, a share of **0.36** of a total of **14** to be given one, **0.30** to keep it and **0.06** clear to take it off you. All four are earnable and all four are HELD once a house goes after them — blood 100% of weeks from week 2 with the doctrine and *sine* stakes, show 824 of 917 weeks on the **showboat tactic**, craft 412 of 427, mercy 1,277 of 1,296 on **fighting to surrender and then throwing the cloth**. Fighting at first blood is caution, not mercy: 0 cloths in 2,345 house-weeks and the town calls you a craftsman. It settles on something 87–100% of all house-weeks. `repStyle(d)==="blood"` is half of `STAFF.medicus.quitOn`, and the butcher loses his surgeon 9 of 10 times at median week 12 against the showman's 0 of 10 |
@@ -1388,6 +1389,75 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.81.0 — The suite was measuring bouts that never happened
+
+Audit item **#116**, the audit's own instrument. No game code changed; the whole release is the test
+suite and two published figures being corrected.
+
+#116 was written because the probe had been wrong more often than the game. Counted off the record
+for #108–#115: **eight items, six of them closed as refuted or answered rather than as faults**,
+against **roughly twenty-two instrument faults of mine**. Prose in a README does not stop that
+happening again, so this release turns the two mechanically detectable ones into a rope and a lint.
+
+**THE FAULT, MEASURED.** `doFight` and its three sister engines return at their `res.unfinished`
+branch — the balance, where the box is asked for a word — BEFORE they credit anything, and they
+mutate **nothing at all** while a bout is held. Over 400 bouts a row: **0.0% of first-blood bouts
+reach the balance, 60.5% of standard, 59.3% sine missione**, and in **721 of 721** held bouts the
+purse, the fatigue and the steel had all not moved. (The 0.0% reproduces a figure already on record,
+which is what says the instrument is right — the first version of this probe passed `"first"` as the
+stakes, which is not a key the game uses, and read 61%.)
+
+Three checks — `ends`, `houses` and `chair` — called the engines and never looked at `r.crux`, so
+about **60% of their bouts never happened**. Five more shared a wrapper that answered exactly ONE
+word and discarded any bout that came back to the balance a second time; `simulateFight` allows
+three, so that is another **26.8% of all standard bouts, 44.2% of the held ones**. In total nine of
+the nineteen checks that drive a bout were losing a quarter to two thirds of their evidence.
+
+**TWO PUBLISHED FIGURES WERE WRONG BECAUSE OF IT, and they moved in opposite directions.**
+
+`ends` read **13 of 24 houses out inside 40 weeks with a median 272 denarii UNDER**, and #110's
+conclusion was that the ledger is what ends a competent opening. It was an arm that fought hard and
+was paid for two afternoons in five. With every bout resolved: **6 of 24 out, median +506d in the
+box, and the endings split debt 3 / rebellion 3.** Playing well *halves* the chance of going out in
+the opening rather than barely changing it, and what ends a house that plays is as much the **cells**
+as the ledger — which lines up with #115's control arms, where the levers doubled a house's life.
+
+`houses` moved the other way, and its own header had predicted exactly how: resolved bouts raise the
+rival's **grudge**, and warmth's familiarity term only pays while the grudge is under 30. Two of five
+houses stopped warming at all and rebelled at weeks 89 and 104. Given the rope AND the unrest levers,
+#113's median peak warmth of **76.8 re-measures at 100** over twenty houses and 300 weeks, with `end`
+firing in 12 of 20 against 3. So #113 is refuted more decisively than before, not less.
+
+`chair` came out unchanged in verdict and better in figures — the four names are now held 100%, 95%,
+100% and 97% of their named weeks.
+
+**THE ROPE** lives in `test/harness.mjs` and `open()` installs it on every page, so no check
+hand-rolls it again: `__ROPE.takeBout` picks men, prefers the bill, falls through to the pit or a
+town's card, dispatches the right engine and answers to exhaustion, keeping counters a check can
+print. `ends`, `houses` and `chair` are on it; the other fourteen resolve in loops of their own.
+
+**`probe` IS THE 50th CHECK** and reads the suite's own source. It fails any check that names a fight
+engine without resolving to exhaustion, reading **each `if(… .crux …)` site** rather than the whole
+file — because answering with the **cloth** ends the bout as a forfeit and is correct, which
+`chair`'s mercy arm and the whole of `feats` rely on. A file-wide rule flagged both.
+
+**AND ONE OF ITS OWN RULES WAS TAKEN BACK OUT.** A second rule flagged any check reading
+`d.games.offers` without a pit fallback — the fault that held two of my probes to 2-5 bouts in 90
+weeks. It flagged eight checks and **seven were right to**: `card` measures what a bill is made of,
+`nights` and `worst` read a record built from festival cards, `grudge` waits for a match that only
+appears on a bill, `glance` and `summit` build houses famous enough to have one, and `bay` falls
+through to the town's card because a house down the coast does not fight Capua's pit. One real fault
+against seven false positives is not a rule — it is a rule that teaches whoever reads it to add an
+exception without thinking. It is a reported line now.
+
+Its own detector needed the same treatment twice: the first version required a `(` after the engine
+name and found 7 of the 19 checks that drive one, because the dominant style here passes the engine as
+a reference — `fin(A.doFight, [d, …])` — and the second version read the file rather than the site.
+A detector that only sees one calling convention is the same class of fault it exists to catch.
+
+Also removes a duplicate `makeStaffMarket` key on the test handle that had been warning on every build
+since v2.77.0.
 
 ### v2.80.0 — The coast has two scales, and a probe blamed touring for what its own policy did
 
@@ -4801,12 +4871,18 @@ it.** `cityFavWord` took zero samples in the scales sweep. `roads` and `coast` d
 measurement has ever established what a town actually thinks of a house that visits it, so the scale
 has no known range and its bands rest on nothing.
 
-**#116 — The audit's own instrument: three of four items last cycle were refuted, and the probes
-were wrong more often than the game.** Five rounds on the primacy, four of them my own policy;
-the charter's step six blamed for a probe arming men off free stock; `d.book` null on a fresh
-house; `formShift` fed an array. The next pass should budget for that ratio openly — and the two
-general tests written into `test/README.md` this cycle (the bucket walk, and the prefix-versus-
-queue distinction) are the first audit instruments here that are reusable rather than one-offs.
+**#116 — CLOSED in v2.81.0. The suite was measuring bouts that never happened.** Counted off the
+record for #108-#115: eight items, six closed as refuted or answered rather than as faults, against
+roughly twenty-two instrument faults of mine. The two mechanically detectable ones are now a rope in
+`harness.mjs` and a lint in `probe`, the 50th check. The fault measured: the fight engines return at
+`res.unfinished` before crediting anything and mutate nothing, which is 60.5% of standard bouts and
+59.3% sine (0.0% at first blood), confirmed by 721 of 721 held bouts having moved nothing. Three
+checks answered no cruxes and five answered one, so nine of nineteen were losing a quarter to two
+thirds of their evidence. TWO PUBLISHED FIGURES CORRECTED: `ends` from 13 of 24 out at a median 272d
+under to **6 of 24 out at +506d, debt 3 / rebellion 3**, so playing well halves the opening's
+lethality and the cells matter as much as the ledger; and #113's warmth peak from 76.8 to **100**,
+refuting that item more decisively. One of `probe`'s own rules was taken back out for flagging seven
+right answers against one wrong one, and its detector was rebuilt twice.
 
 **The v2.61.0 audit — ten items, #98–#107 — closed as of v2.63.0, and this is the ratio
 worth remembering: four shipped, six refuted or judged not worth the risk.**
@@ -4873,4 +4949,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.80.0*
+*Last updated: v2.81.0*

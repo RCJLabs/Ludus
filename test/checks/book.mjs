@@ -21,7 +21,10 @@ export async function run({ p }){
     const reset = ()=>{ const S=JSON.parse(snap);
       S.forEach((s,i)=>{ Object.keys(s).forEach(k=>gs[i][k]=s[k]); gs[i].status="active"; }); };
     const finish = (fn, args, resume) => { let r = fn(...args);
-      if(r && r.crux){ const pd=r.pending; pd.beats=r.beats; r = fn(...resume(pd)); }
+      /* #116: to exhaustion. The sim comes back to the balance up to three times, and answering
+         one word dropped 26.8% of all standard bouts — `bookBout` runs at the verdict, so a bout
+         left pending never reaches the record book at all. */
+      { let n=0; while(r && r.crux && n++<4){ const pd=r.pending; pd.beats=r.beats; r = fn(...resume(pd)); } }
       return (r && !r.crux) ? r : null; };
 
     const tally = { pair:0, melee:0, hunt:0, single:0 };

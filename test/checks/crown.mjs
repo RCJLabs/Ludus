@@ -104,8 +104,9 @@ export async function run({ p, errors }){
         const o = A.clone(offer); o.stakes = "standard";
         tries++;
         let x = A.doFight(s, g.id, o, "measured", null, null, null, "none");
-        if(x && x.crux){ const pd = x.pending; pd.beats = x.beats;
-          x = A.doFight(s, g.id, o, "measured", null, pd, "press", "none"); }
+        /* #116: to exhaustion — a bout still at the balance never awarded the primacy */
+        { let n=0; while(x && x.crux && n++<4){ const pd = x.pending; pd.beats = x.beats;
+          x = A.doFight(s, g.id, o, "measured", null, pd, "press", "none"); } }
         if(A.primusMine(s)) took++;
         if(x && x.dead) deaths++;
       }

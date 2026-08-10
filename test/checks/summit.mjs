@@ -81,7 +81,9 @@ export async function run({ p, errors }){
           const g = A.activeG(d).find(x=>!x.injury && (x.lastFought==null || x.lastFought < d.week));
           if(!g) break;
           let r = A.doFight(d, g.id, o, "measured", null, null, null, "none");
-          if(r && r.crux){ const pd = r.pending; pd.beats = r.beats; r = A.doFight(d, g.id, o, "measured", null, pd, null, "none"); }
+          /* #116: to exhaustion, not one word */
+          { let n=0; while(r && r.crux && n++<4){ const pd = r.pending; pd.beats = r.beats;
+            r = A.doFight(d, g.id, o, "measured", null, pd, null, "none"); } }
           fought++;
         }
         d.pendingEvent = null;

@@ -58,9 +58,12 @@ export async function run({ p, errors }){
         /* AND THE CRUX MUST BE ANSWERED. A bout left pending is not a bout: `bookBout` runs at
            the verdict, so the record book stays empty and step two reads as impossible. The
            first version of this section reported exactly that. */
-        const x = A.doFight(d, g.id, o, "measured", null, null, null, "none");
-        if(x && x.crux){ const pd = x.pending; pd.beats = x.beats;
-          A.doFight(d, g.id, o, "measured", null, pd, "cover", "none"); } },
+        let x = A.doFight(d, g.id, o, "measured", null, null, null, "none");
+        /* #116: and to EXHAUSTION. The note above was right that a pending bout is not a bout, and
+           then answered one word and threw the answer away, so a bout that came back to the balance
+           was still pending — 26.8% of all standard bouts. */
+        { let n=0; while(x && x.crux && n++<4){ const pd = x.pending; pd.beats = x.beats;
+          x = A.doFight(d, g.id, o, "measured", null, pd, "cover", "none"); } } },
       week:  () => { d.pendingEvent = null; A.endWeek(d); d.gold = 200000; },
       buy:   () => { while(A.activeG(d).length < 4 && !A.rosterFull(d)){
         const m = (d.market||[])[0]; if(!m) break; if(!A.buyFromBlock(d, m.id, null)) break; } },
@@ -79,9 +82,9 @@ export async function run({ p, errors }){
           if(!off.length) continue;
           const g = A.activeG(d).find(x=>!x.injury); if(!g) break;
           g.lastFought = null; g.fatigue = 0;
-          const x = A.doFight(d, g.id, off[0], "measured", null, null, null, "none");
-          if(x && x.crux){ const pd = x.pending; pd.beats = x.beats;
-            A.doFight(d, g.id, off[0], "measured", null, pd, "press", "none"); }
+          let x = A.doFight(d, g.id, off[0], "measured", null, null, null, "none");
+          { let n=0; while(x && x.crux && n++<4){ const pd = x.pending; pd.beats = x.beats;
+            x = A.doFight(d, g.id, off[0], "measured", null, pd, "press", "none"); } }
           if(done(C.find(s=>s.id==="games"), d)) break; } },
       /* step eight, and the function behind it that no check had ever called */
       watch: () => { for(let w=1; w<=A.YEAR_WEEKS*2; w++){ d.week = w; try { A.makeGames(d); } catch(e){}

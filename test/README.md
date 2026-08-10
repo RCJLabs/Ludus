@@ -74,6 +74,7 @@ reason the check exists usually has not.
 | `surface` | slow | the tab bar was 9px and END WEEK was 37px tall — and it measured a house twelve WEEKS old on one face of each tab with no record sheet ever opened, so it would have passed the whole way through a release where a house's name read "House Glaber…" and a fame of 23,703 rendered "237…" |
 | `sand` | slow | thirteen checks called `doFight` and every one drove the engines in memory; four drove a browser and none reached the sand, so the most-looked-at screen in the game had no test — which is why a React key fault living on the bout wizard was found by a scratch probe photographing an axe |
 | `draw` | fast | the week asks one question, chosen by the first event whose `make` fires from a shuffled key list — and the shuffle was `sort(()=>R()-0.5)`, the classic broken one, in a file that already contained a correct Fisher–Yates used in nine other places. What the game asked you depended on where in the file the event was written. Holds the shuffle uniform AND the statistic that actually decides it, the first *eligible* key, because the first-position figure overstates the fault four-fold |
+| `probe` | fast | the audit's own instrument — a check that reads the other checks. The fight engines return at `res.unfinished` before crediting anything and mutate nothing, and nine of the nineteen checks that drive a bout were losing between a quarter and two thirds of their evidence to it. Fails any check that names an engine without resolving to exhaustion, reading each `if(… .crux …)` site rather than the file, because answering with the cloth ends the bout and is correct. One of its rules was taken back out for flagging seven right answers against one wrong one |
 | `bay` | fast | the two coastal scales, neither of which had ever been toured — #115. Favour is a ratchet that opens every town on "an outsider" and climbs only on bouts fought there, and its bottom word is reachable ONLY through `cityServed`'s defeat branch at Neapolis; `knownIn` bleeds 0.55 a week and is pegged at 100 by a round robin. Also holds the branch neither of my arms could reach: the bay taken by a rival after 30 idle weeks, and given back only by turning up |
 | `steel` | fast | wear — the one system where the probe was wrong FOUR separate ways. #114 read `d.gearCond`, which is the pool of pieces on the SHELF, and concluded steel never wears; read off the man in `g.wear[slot]` a bout takes 3-6 off a weapon, all five words are said and pieces break. Holds the rate against `WEAR_RATE`, the five words off a piece driven to nothing, the break on the game's own chronicle line, the bands a played house sees, a man's career against his weapon's life, and — the trap that cost the most — that a bout held at the balance has changed nothing while the same bout answered changes the kit |
 | `houses` | fast | the four words for a rival house, two of which #113 measured as never said. Refuted on the item's own falsification clause: a house that works ONE rivalry for 300 weeks peaks at a median warmth of 76.8 and says all four, where a probe using `pickRivalOpp` meets six houses a little and tops out near 43. Holds the refutation plus the thing underneath it — that a bout against a rival's man registers as a meeting at all, which is `offer.opp.house` lining up with the rival's name |
@@ -951,3 +952,51 @@ sweep produces a dramatic ending, the first arm to write is the same policy with
 removed — and if you cannot remove it, the same policy with the levers a real player would pull. This
 is the third time in this audit that a probe's own neglect has been mistaken for a cost the game
 imposes, so it belongs in the standing checklist and not just in one release note.
+
+## Fix the instrument, then expect the findings to move
+
+#116 put a rope in the harness — one that answers the balance to exhaustion — and routed the three
+checks that had never answered it through that. Both of the numbers those checks had published then
+changed, and they changed in **opposite directions**, which is the part worth keeping.
+
+`ends` had read 13 of 24 houses out in the opening at a median 272 denarii UNDER, and the conclusion
+drawn from it was that the ledger is the competent player's only enemy. It was an arm that fought hard
+and was paid for two afternoons in five. Resolved, it reads **6 of 24 out at +506d, debt 3 / rebellion
+3**: playing well halves the opening's lethality, and the cells kill a played house as often as the
+ledger does.
+
+`houses` moved the other way, and its own header had predicted the mechanism: real bouts raise the
+rival's grudge, and warmth only accumulates while the grudge is under 30. Two of five houses stopped
+warming and rebelled. With the rope *and* the unrest levers, the figure went from 76.8 to **100** —
+the item it was written to refute is refuted harder.
+
+The habit: when you fix an instrument, re-read every number that instrument produced, and expect some
+of them to get *better* and some to get *worse*. A correction that moves everything the same way is
+usually a second fault, not a fix.
+
+## A lint that flags mostly-correct code is worse than no lint
+
+`probe` shipped with one rule and nearly shipped with two. The second flagged any check that looked
+for bouts in `d.games.offers` without a pit fallback — the exact fault that had held two probes to
+2-5 bouts in 90 weeks. It flagged eight checks and seven of them were right: their subject IS the
+bill, or they build houses famous enough to have one, or they fall through to a town's card instead.
+
+One true positive against seven false ones does not teach care, it teaches the reflex of adding an
+exception. The rule became a reported line, and the fault it was aimed at is caught instead by making
+the rope the only sanctioned way to take a bout — a rule with no false positives at all.
+
+The corollary for the ALLOWED table: every entry has to carry the reason it is not the fault being
+hunted, in words specific to that check. `feats` answers every crux with the cloth, which ends the
+bout, so there is no second word to speak — that is an exception. "This one is fine" is not.
+
+## A detector that knows one calling convention is the fault it is hunting
+
+`probe`'s first version required a `(` after the engine name and reported that 7 of the suite's checks
+drive a bout. The real figure was 19: the dominant style here passes the engine as a REFERENCE —
+`fin(A.doFight, [d, …])` — so the paren belongs to the wrapper. Its second version read the whole file
+for a `while`, which cleared files holding a rope in one place and a one-shot in another, and flagged
+files whose one-shot was a cloth that ends the bout.
+
+Both were the same mistake the tool exists to catch: measuring the shape you expected instead of the
+shape that is there. Before trusting a source-level detector, print what it found and read the list
+against the thing itself — 7 against 19 was visible in one `grep`.

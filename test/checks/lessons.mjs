@@ -268,14 +268,18 @@ export async function run({ p, errors }){
           for(const x of pool){ let wc=0; try{wc=A.winChance(x,o.opp);}catch(e){} if(wc>pw){pw=wc;pg=x;} }
           if(!pg||pw<0.42) continue;
           let r=A.doFight(d,pg.id,o,"measured",null,null,null,"none");
-          if(r&&r.crux){ const pd=r.pending; pd.beats=r.beats; A.doFight(d,pg.id,o,"measured",null,pd,"press","none"); }
+          /* #116: to exhaustion, and the answer captured. This spoke one word and dropped the
+             result, so a bout that came back to the balance stayed pending and earned nothing —
+             26.8% of all standard bouts. */
+          { let n=0; while(r&&r.crux&&n++<4){ const pd=r.pending; pd.beats=r.beats;
+            r=A.doFight(d,pg.id,o,"measured",null,pd,"press","none"); } }
           sent = true; break; }
         if(!sent){ try{ A.makePitCard(d); const men=A.pitMen(d)||[];
           const x=pool[0];
           if(x&&men.length){ const o=A.makePitOffer(d,x,"standard",men[0].id);
             if(o){ let r=A.doFight(d,x.id,o,"measured",null,null,null,"none");
-              if(r&&r.crux){ const pd=r.pending; pd.beats=r.beats;
-                A.doFight(d,x.id,o,"measured",null,pd,"press","none"); } } } }catch(e){} }
+              let n=0; while(r&&r.crux&&n++<4){ const pd=r.pending; pd.beats=r.beats;
+                r=A.doFight(d,x.id,o,"measured",null,pd,"press","none"); } } } }catch(e){} }
         d.pendingEvent = null;
         try { A.endWeek(d); } catch(e){ verdict = "the week would not run"; break; }
         if(d.over) verdict = gate(l,d).done ? "starved" : "the house died";
@@ -335,14 +339,15 @@ export async function run({ p, errors }){
           for(const g of pool){ let wc=0; try{wc=A.winChance(g,o.opp);}catch(e){} if(wc>pw){pw=wc;pg=g;} }
           if(!pg||pw<0.42) continue;
           let x=A.doFight(d,pg.id,o,"measured",null,null,null,"none");
-          if(x&&x.crux){ const pd=x.pending; pd.beats=x.beats; A.doFight(d,pg.id,o,"measured",null,pd,"press","none"); } }
+          { let n=0; while(x&&x.crux&&n++<4){ const pd=x.pending; pd.beats=x.beats;
+            x=A.doFight(d,pg.id,o,"measured",null,pd,"press","none"); } } }
         if(!((d.games&&d.games.offers)||[]).length){
           try{ A.makePitCard(d); const men=A.pitMen(d)||[];
             const g=A.activeG(d).find(x=>!x.injury&&(x.lastFought==null||x.lastFought<d.week));
             if(g&&men.length){ const o=A.makePitOffer(d,g,"standard",men[0].id);
               if(o){ let x=A.doFight(d,g.id,o,"measured",null,null,null,"none");
-                if(x&&x.crux){ const pd=x.pending; pd.beats=x.beats;
-                  A.doFight(d,g.id,o,"measured",null,pd,"press","none"); } } } }catch(e){} }
+                let n=0; while(x&&x.crux&&n++<4){ const pd=x.pending; pd.beats=x.beats;
+                  x=A.doFight(d,g.id,o,"measured",null,pd,"press","none"); } } } }catch(e){} }
         d.pendingEvent = null;
         try { A.endWeek(d); } catch(e){ break; }
         if(d.over) break;

@@ -61,25 +61,13 @@ export async function run({ p }){
     };
     const fitMen = (d, cap) => A.activeG(d).filter(g=>!g.injury && (g.fatigue||0) < cap)
       .sort((x,z)=>av(z)-av(x));
-    /* the card if there is one, the rope if there is not — a house that only reads
-       `d.games.offers` never fights, which is how #110's first sweep measured nothing */
+    /* THE ROPE: the card if there is one, the pit if there is not — a house that only reads
+       `d.games.offers` never fights, which is how #110's first sweep measured nothing. And #116
+       found the other half of it here: this arm answered no cruxes, so ~60% of the bouts it did
+       find returned at `res.unfinished` and awarded no reputation at all. It is the harness rope
+       now, which answers to exhaustion. */
     const bout = (d, fit, pick, stakes, tac) => {
-      const os = ((d.games && d.games.offers) || []).filter(o=>(!(o.pair||o.melee) || fit.length>=2));
-      if(fit.length && os.length){
-        const o = pick(os);
-        if(o){
-          if(o.pair) fin(A.doPairFight, [d,[fit[0].id,fit[1].id],o,tac,null,null]);
-          else if(o.melee) fin(A.doMelee, [d,fit.slice(0,3).map(g=>g.id),o,null,null,tac]);
-          else if(o.venatio) fin(A.doVenatio, [d,fit[0].id,o,tac,null,null]);
-          else fin(A.doFight, [d,fit[0].id,o,tac,null,null,null,"none"]);
-          return;
-        }
-      }
-      if(!fit.length) return;
-      if(!d.pitCard || d.pitCard.week !== d.week) A.makePitCard(d);
-      const men = A.pitMen(d) || [];
-      const o = A.makePitOffer(d, fit[0], stakes, men.length ? men[0].id : null);
-      if(o) fin(A.doFight, [d, fit[0].id, o, tac, null, null, null, "none"]);
+      window.__ROPE.takeBout(d, { men:fit, pick, stakes, tactic:tac });
     };
 
     /* one arm per name, each going after that name the way a player would */

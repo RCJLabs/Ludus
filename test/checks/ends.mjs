@@ -58,29 +58,15 @@ export async function run({ p }){
     const av = g => A.STATS.reduce((s,k)=>s+(g[k]||0),0)/6;
     const fin = (fn, args) => { try { return fn(...args); } catch(e){ return null; } };
 
-    /* the rope is not optional: the first draft of the sweep behind this only looked at
-       `d.games.offers` and measured ZERO bouts in every arm, so all its policies were the idle
-       one wearing different names */
-    const takeBout = (d, fit, pick, stakes) => {
-      const os = ((d.games && d.games.offers) || []).filter(o=>(!(o.pair||o.melee) || fit.length>=2));
-      if(fit.length && os.length){
-        const o = pick(os);
-        if(o){
-          if(o.pair) fin(A.doPairFight, [d,[fit[0].id,fit[1].id],o,"measured",null,null]);
-          else if(o.melee) fin(A.doMelee, [d,fit.slice(0,3).map(g=>g.id),o,null,null,"measured"]);
-          else if(o.venatio) fin(A.doVenatio, [d,fit[0].id,o,"measured",null,null]);
-          else fin(A.doFight, [d,fit[0].id,o,"measured",null,null,null,"none"]);
-          return true;
-        }
-      }
-      if(!fit.length) return false;
-      if(!d.pitCard || d.pitCard.week !== d.week) A.makePitCard(d);
-      const men = A.pitMen(d) || [];
-      const o = A.makePitOffer(d, fit[0], stakes, men.length ? men[0].id : null);
-      if(!o) return false;
-      fin(A.doFight, [d, fit[0].id, o, "measured", null, null, null, "none"]);
-      return true;
-    };
+    /* THE ROPE IS NOT OPTIONAL, AND IT IS NO LONGER LOCAL. The first draft of the sweep behind
+       this only looked at `d.games.offers` and measured ZERO bouts in every arm, so all its
+       policies were the idle one wearing different names. The version that replaced it had the
+       pit but never answered the crux, so **60% of the bouts it did find never happened** —
+       `doFight` returns at `res.unfinished` before it credits anything and mutates nothing. That
+       is #116's finding about this check, among others, and the rope now lives in the harness
+       where `probe` can see that every check uses it. */
+    const takeBout = (d, fit, pick, stakes) =>
+      window.__ROPE.takeBout(d, { men:fit, pick, stakes }).ran;
 
     /* survive's own discipline and survive's own constants, with its own reason written down
        there: the CHEAPEST man who fills the gap, and only with a month's purse behind him. A
@@ -132,25 +118,31 @@ export async function run({ p }){
         + (dead.length ? ` · median coin in the box at the end ${g[Math.floor(g.length/2)]}d` : ""));
     }
 
-    /* ---- 1. THE OPENING IS LETHAL AND IT IS THE LEDGER THAT DOES IT ---- */
+    /* ---- 1. THE OPENING IS SURVIVABLE IF YOU PLAY, AND IT IS NOT ONLY THE LEDGER ----
+       RE-MEASURED IN v2.81.0, AND THE OLD FIGURES WERE THE CRUX TRAP. This arm used to report 13
+       of 24 out with a median 272 denarii UNDER, and it asserted both. It was calling `doFight`
+       without ever answering the balance, so ~60% of its bouts returned at `res.unfinished`,
+       mutated nothing, and paid no purse — an arm that fought hard and was paid for two afternoons
+       in five. On the harness rope, with every bout resolved, the same 24 houses read **6 out, and
+       the survivors and the dead alike have coin: median +506d in the box.** The endings split
+       debt 3 / rebellion 3, so what ends a competent opening is as much the CELLS as the ledger. */
     {
       const A2 = rows.filter(r=>r.arm==="proven");
       const dead = A2.filter(r=>r.kind!=="alive");
-      if(dead.length < A2.length * 0.25)
-        bad.push(`only ${dead.length} of ${A2.length} houses went out in 40 weeks on the proven policy — `
-          + `the opening has stopped being lethal, and every figure in the note above was measured `
-          + `against an opening that was`);
+      if(!dead.length)
+        bad.push(`not one of ${A2.length} houses went out in 40 weeks on the proven policy — the `
+          + `opening has stopped costing anything at all, which no measurement of it has ever said`);
+      if(dead.length > A2.length * 0.6)
+        bad.push(`${dead.length} of ${A2.length} houses went out in 40 weeks on the proven policy, `
+          + `where the rope-corrected figure is 6 — a jump that large usually means the arm has `
+          + `stopped being paid, so check that every bout is resolved before believing it`);
       const debt = dead.filter(r=>r.kind==="debt").length;
-      const share = dead.length ? debt/dead.length : 0;
-      if(dead.length >= 6 && share < 0.5)
-        bad.push(`the ledger is no longer what ends the opening: ${debt} of ${dead.length} `
-          + `(${Math.round(share*100)}%) went out by debt, against 78-80% measured. If the opening `
-          + `now kills by the yard emptying, the table in the roadmap is stale`);
-      const g = dead.map(r=>r.gold).sort((x,y)=>x-y);
-      const med = g.length ? g[Math.floor(g.length/2)] : 0;
-      if(dead.length >= 6 && med > 0)
-        bad.push(`houses are going out with ${med}d still in the box — measured, the median was `
-          + `270 denarii UNDER, which is what makes this the ledger and not attrition`);
+      const unrest = dead.filter(r=>r.kind==="rebellion").length;
+      lines.push(`   what ends a house that plays: ledger ${debt}, cells ${unrest}, of ${dead.length} `
+        + `— an even split, where the crux-blind version of this arm read 78-80% ledger`);
+      if(dead.length >= 4 && !debt && !unrest)
+        bad.push(`${dead.length} houses went out on the proven policy and not one by debt or by the `
+          + `cells — those are the two that a played opening dies of, 3 and 3 of 6 measured`);
     }
 
     /* ---- 2. AND THE CONTROL: A HOUSE THAT DOES NOTHING DIES OF THE LEDGER, EVERY TIME ----
@@ -172,21 +164,23 @@ export async function run({ p }){
           + `and 11 of 12 over 40`);
     }
 
-    /* ---- 3. AND THE THIN GRADIENT, which is the other half of the answer ----
-       Over the OPENING the proven policy barely changes whether the house survives at all — 13 of
-       24 out against idle's 12 of 24. What competence buys is not the first year; it is the
-       ceiling. In the 400-week sweep the careful arm was the only one with houses still standing
+    /* ---- 3. AND THE GRADIENT, which the rope turned from thin into real ----
+       This used to read 13 of 24 out against idle's 12 and the conclusion was that competence buys
+       the ceiling and not the first year. With every bout resolved and paid it is **6 against 12**:
+       playing well halves the chance of going out in the opening. The old figure was not a fact
+       about the game, it was a policy that fought and was paid for two afternoons in five. In the 400-week sweep the careful arm was the only one with houses still standing
        at year 22 (3 of 20, and 2 of 20 on the second run) while every other arm ended 0 of 20.
        So this is recorded, not asserted: if it ever inverts — if doing nothing outlives playing
        well by a wide margin — that is worth knowing and the line below will show it. */
     {
       const pv = rows.filter(r=>r.arm==="proven"), id = rows.filter(r=>r.arm==="idle");
       const outP = pv.filter(r=>r.kind!=="alive").length, outI = id.filter(r=>r.kind!=="alive").length;
-      lines.push(`over the opening, playing well barely changes survival: ${outP} of ${pv.length} out `
-        + `against ${outI} of ${id.length} doing nothing. What competence buys is the ceiling, not the first year`);
-      if(outP > outI + pv.length * 0.3)
-        bad.push(`the proven policy is now dying faster than doing nothing (${outP} against ${outI} `
-          + `of ${pv.length}) — either the policy has stopped being one or the opening has changed shape`);
+      lines.push(`over the opening, playing well halves it: ${outP} of ${pv.length} out `
+        + `against ${outI} of ${id.length} doing nothing (crux-blind, this read 13 against 12)`);
+      if(outP >= outI)
+        bad.push(`the proven policy is dying at least as fast as doing nothing (${outP} against `
+          + `${outI} of ${pv.length}) — with every bout resolved it goes out half as often, so this `
+          + `reads as the arm no longer being paid, or no longer fighting`);
     }
 
     return { bad, lines };

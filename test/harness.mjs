@@ -59,7 +59,110 @@ export async function open(port, { page = "/", width = 390, height = 844 } = {})
   p.on("console", m => { if(m.type()==="error") errors.push("console: " + m.text().slice(0,160)); });
   await p.goto(`http://127.0.0.1:${port}${page}`, { waitUntil:"load" });
   await p.waitForTimeout(900);
+  await installRope(p);
   return { browser, p, errors };
+}
+
+/* ---- THE ROPE, ONCE, FOR EVERY CHECK ----
+   #116 measured what the suite was losing by hand-rolling this. `doFight` and its three sister
+   engines return at their `res.unfinished` branch — the balance, where the box is asked for a word
+   — BEFORE they credit anything, and they mutate NOTHING while a bout is held. Measured over 400
+   bouts a row: **0.0% of first-blood bouts reach the balance, 60.5% of standard and 59.3% sine**,
+   and in 721 of 721 held bouts the purse, the fatigue and the steel had all not moved.
+
+   Three checks called the engines and never looked at `r.crux` at all, so ~60% of their bouts never
+   happened. Thirteen more resolved exactly ONE word and then discarded anything that came back to
+   the balance a second time — `simulateFight` allows three — which is another **26.8% of all
+   standard bouts, 44.2% of the held ones**.
+
+   So it is installed on the page instead of copied into each check, and `probe` fails any check
+   that reaches for an engine without it. Keep the counters: a check that prints its own crux rate
+   is a check whose rope can be seen to be working. */
+export async function installRope(p){
+  await p.evaluate(()=>{
+    if(!window.__LVDVS || window.__ROPE) return;
+    const A = window.__LVDVS;
+    const R = { bouts:0, held:0, rounds:0, unresolved:0, threw:0 };
+    const fin = (fn, args) => { try { return fn(...args); } catch(e){ R.threw++; return { __err:e.message }; } };
+
+    /* answer until the sand is quiet, up to the three words the sim can ask for and one spare */
+    const answer = (d, res, choice) => {
+      let r = res, n = 0;
+      while(r && r.crux && n < 4){
+        const pd = r.pending; pd.beats = r.beats; n++; R.rounds++;
+        r = pd.melee    ? fin(A.doMelee,     [d, pd.ids, pd.offer, pd, choice || null])
+          : pd.venatio  ? fin(A.doVenatio,   [d, pd.gid, pd.offer, pd.tactic, pd, choice || null])
+          : pd.pair     ? fin(A.doPairFight, [d, pd.ids, pd.offer, pd.tactic, pd, choice || null])
+          :               fin(A.doFight,     [d, pd.gid, pd.offer, pd.tactic, pd.bet, pd, choice || null]);
+        if(r && r.__err) break;
+      }
+      if(r && r.crux) R.unresolved++;
+      return { res:r, rounds:n };
+    };
+
+    /* run one offer with whichever engine it belongs to, and answer it */
+    const run = (d, offer, ids, opts) => {
+      const o = opts || {};
+      const list = [].concat(ids || []);
+      if(!offer || !list.length) return { ran:false };
+      let r = offer.melee   ? fin(A.doMelee,     [d, list.slice(0,3), offer, null, null, o.tactic || "measured"])
+            : offer.pair    ? fin(A.doPairFight, [d, list.slice(0,2), offer, o.tactic || "measured", null, null])
+            : offer.venatio ? fin(A.doVenatio,   [d, list[0], offer, o.tactic || "measured", null, null])
+            :                 fin(A.doFight,     [d, list[0], offer, o.tactic || "measured", null, null, null, o.plan || "none"]);
+      if(r && r.__err) return { ran:false, err:r.__err };
+      R.bouts++;
+      const held = !!(r && r.crux);
+      if(held) R.held++;
+      if(o.silent) return { ran:true, crux:held, rounds:0, res:r };   /* only for checks measuring the trap itself */
+      const a = answer(d, r, o.choice);
+      return { ran:true, crux:held, rounds:a.rounds, res:a.res };
+    };
+
+    /* THE OTHER HALF OF THE ROPE: the bill is shut until fame 25, so a probe that reads only
+       `d.games.offers` fights almost nothing. The pit fills every other week. */
+    const av = g => A.STATS.reduce((s,k)=>s+(g[k]||0),0)/6;
+    const fit = (d, o) => A.activeG(d)
+      .filter(g=>!g.injury && (g.fatigue||0) < ((o && o.spent) || 62))
+      .sort((x,z)=>av(z)-av(x));
+
+    const takeBout = (d, opts) => {
+      const o = opts || {};
+      const men = o.men ? [].concat(o.men) : fit(d, o);
+      if(!men.length) return { ran:false, why:"nobody fit" };
+      const bill = ((d.games && d.games.offers) || []).filter(x=>{
+        if(x.melee && men.length < 3) return false;
+        if(x.pair && men.length < 2) return false;
+        return o.singlesOnly ? !(x.melee || x.pair || x.venatio) : true;
+      });
+      let offer = bill.length ? (o.pick ? o.pick(bill) : bill[0]) : null;
+      if(!offer && !d.city){
+        if(!d.pitCard || d.pitCard.week !== d.week) A.makePitCard(d);
+        const pm = A.pitMen(d) || [];
+        offer = A.makePitOffer(d, men[0], o.stakes || "standard", pm.length ? pm[0].id : null);
+      }
+      if(!offer && d.city){
+        A.makeCityGames(d);
+        const town = ((d.games && d.games.offers) || []).filter(x=>
+          !(x.melee && men.length < 3) && !(x.pair && men.length < 2));
+        offer = town.length ? town[0] : null;
+      }
+      if(!offer) return { ran:false, why:"no offer" };
+      const ids = offer.melee ? men.slice(0,3).map(g=>g.id)
+                : offer.pair  ? men.slice(0,2).map(g=>g.id)
+                :               [men[0].id];
+      return Object.assign({ offer, ids }, run(d, offer, ids, o));
+    };
+
+    window.__ROPE = { answer, run, takeBout, fit,
+      stats: ()=>Object.assign({}, R),
+      reset: ()=>{ R.bouts = R.held = R.rounds = R.unresolved = R.threw = 0; },
+      /* one line a check can print so its own rope is visible in the log */
+      say: ()=>`${R.bouts} bouts · ${R.held} reached the balance`
+        + (R.bouts ? ` (${Math.round(R.held/R.bouts*100)}%)` : "")
+        + ` · ${R.rounds} words spoken`
+        + (R.unresolved ? ` · ${R.unresolved} STILL UNRESOLVED` : "")
+        + (R.threw ? ` · ${R.threw} threw` : "") };
+  });
 }
 
 export const click = (p, re) => p.evaluate(s=>{

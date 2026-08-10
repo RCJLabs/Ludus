@@ -24252,7 +24252,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        makes a medicus walk out. Nothing could measure whether the town ever settles at all
        without the leader, the totals and the four thresholds — see `chair`. */
     repLeader, repTotal, repOf, repShare, repSettle, repWeek, staffWeek, STAFF_KEYS,
-    declareDoctrine, DOCTRINES, makeStaffMarket,
+    declareDoctrine, DOCTRINES,
     REP_ORDER, REP_KINDS,
     REP_SETTLE, REP_KEEP, REP_TAKE, REP_FLOOR,
     /* the lanista's climb: the rungs, the gates, and what standing pays and costs */

@@ -46,7 +46,12 @@ export async function run({ p, errors }){
 
     /* 2. and they fill from the sand */
     const av = f => (f.str+f.agi+f.end+f.tec+f.sho+f.dis)/6;
-    const fin=(fn,a,re)=>{ let x=fn(...a); if(x&&x.crux){const pd=x.pending;pd.beats=x.beats;x=fn(...re(pd));} return (x&&!x.crux)?x:null; };
+    /* #116: this resolved ONE word and threw away any bout that came back to the balance a second
+       time — 26.8% of all standard bouts, 44.2% of the held ones. `simulateFight` asks for up to
+       three. It answers to exhaustion now. */
+    const fin=(fn,a,re)=>{ let x=fn(...a); let n=0;
+      while(x&&x.crux&&n++<4){const pd=x.pending;pd.beats=x.beats;x=fn(...re(pd));}
+      return (x&&!x.crux)?x:null; };
     const kinds = { roar:0, upset:0, spared:0, brink:0 };
     const engines = new Set();
     let men = 0, withAny = 0, bad = [];

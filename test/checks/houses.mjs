@@ -68,6 +68,13 @@ export async function run({ p }){
            have a decade-long rivalry. This is not an economy measurement and must not be read as
            one — `ends` owns that, on houses that are handed nothing. */
         d.gold = Math.max(d.gold, 4000);
+        /* AND THE LEVERS. #115: a probe that never walks the cells measures the rebellion instead
+           of the thing it came for — and once #116 put the rope on this check the bouts started
+           actually resolving, which is a great deal more unrest to answer for. Two of five houses
+           rebelled at week 89 and 104 before the levers went in, which truncates a rivalry that
+           only warms once the grudge comes down. */
+        if(d.unrest >= 30) A.throwFeast(d);
+        if(d.unrest >= 22) fin(A.walkTheCells, [d]);
         for(const g of A.activeG(d)) A.setRegimenOf(d, g.id, (g.fatigue||0) > 55 ? "rest" : "palus");
         while(A.activeG(d).filter(g=>!g.injury).length < 4 && !A.rosterFull(d)){
           const m = (d.market||[]).slice().sort((a,b)=>a.price-b.price)[0];
@@ -80,11 +87,13 @@ export async function run({ p }){
         if(fit.length && foes.length && !target.away && !target.retired){
           const f = foes[w % foes.length];
           const before = ((d.metHouse||{})[name]||{}).met || 0;
-          fin(A.doFight, [d, fit[0].id,
-            { id:d.nextId++, tier:1, festival:null, opp:A.clone(f),
+          /* THE ROPE, AND IT USED NOT TO BE ONE. This check called `doFight` and never answered the
+             balance, so ~60% of its bouts returned at `res.unfinished` and mutated nothing — no
+             meeting, no warmth, no purse. #116 found it; every figure in this head was re-measured
+             on the harness rope, which answers to exhaustion. */
+          window.__ROPE.run(d, { id:d.nextId++, tier:1, festival:null, opp:A.clone(f),
               oppRef:{ house:name, fid:f.id }, rematch:false, grudgeM:false,
-              stakes:"standard", purse:400 },
-            "measured", null, null, null, "none"]);
+              stakes:"standard", purse:400 }, [fit[0].id], { tactic:"measured" });
           const after = ((d.metHouse||{})[name]||{}).met || 0;
           if(after > before) boutsCounted++;
         }

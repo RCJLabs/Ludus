@@ -42,7 +42,8 @@ export async function run({ p, errors }){
     for(let r=0;r<HOUSES;r++){
       const d = A.newGameState("Chron"+r, "clean", "CHRON_"+r, null);
       const fin = (fn,a,re)=>{ let s=fn(...a);
-        if(s&&s.crux){ const pd=s.pending; pd.beats=s.beats; s=fn(...re(pd)); }
+        /* #116: to exhaustion; one word left 26.8% of standard bouts unresolved and unwritten */
+        { let n=0; while(s&&s.crux&&n++<4){ const pd=s.pending; pd.beats=s.beats; s=fn(...re(pd)); } }
         return (s&&!s.crux)?s:null; };
       const mine = new Set();
       for(let w=0;w<WEEKS;w++){
