@@ -1056,3 +1056,20 @@ said no every week of every run, and I had the rudis down as broken.
 Both looked exactly like dead content: a function called constantly, returning nothing, forever. Before
 writing that a system cannot be driven, print what the function actually returned once — `firstOpts`
 came back as `"/"`, which is two undefined values joined, and that single string was the whole answer.
+
+## When two of your own probes disagree, that is the result
+
+Two sweeps in this project drive what is meant to be the same unrest policy — feast when unrest passes
+30, walk the cells when it passes 22, on top of survive's discipline. At n=30 one reads a median life
+of **259 weeks** and 6 of 30 houses alive at year 22; the other reads **45 weeks** and 1 of 30, coming
+last of four arms. The buy rule, the regimen, the fit filter, the offer pick, the stakes and the event
+answering all read equivalent line by line. Only the seeds differ, and no seed set moves a median six
+times at that n.
+
+The temptation is to pick the one that agrees with what you already published, or the one that makes
+the better story. Both are available: the first defends a claim already shipped, the second is a
+livelier finding about advice being wrong.
+
+Neither is a measurement. Two instruments disagreeing about the same quantity means at least one is
+broken, and the honest output is the disagreement itself plus an open item to find the cause — not a
+number. The counts that do not depend on the comparison can still ship; the comparison cannot.

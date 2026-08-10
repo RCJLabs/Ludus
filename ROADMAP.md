@@ -1336,6 +1336,7 @@ Tuning dials, in the order you'd reach for them:
 | What ends a run BY ERA | — | debt dominates **years 1–3 in every one of the five policies** — it is what an unfinished house dies of, whatever it is doing. The later eras are the other systems arriving: **years 4–7** rebellion and ruin, **8–12** rebellion and `banned`, **13+** `lanistaDied`, `emptied` and a last of debt. And competence does not buy the first year: over 40 weeks the proven policy went out **13 of 24** against **12 of 24** for a house doing nothing at all. What it buys is the ceiling — the careful arm was the only one of five with houses still standing at year 22 (**3 of 20**, and 2 of 20 on the second run); every other arm ended 0 of 20. Lifespan medians at n=20 are NOT a bar: the same policy came out 36 weeks and 20 weeks on two runs |
 | What ends a run IN THE OPENING | — | not the same thing at all. Pooling four runs of `survive` on its own policy — 20 new houses, 26 weeks: **13 standing (65%, s.e. 10.7)**, and of the seven failures **five were the yard emptying against two for the ledger**, with three of those five still holding coin when the last man went (248, 360 and 96 denarii). Early you die of attrition with money in hand; later you die of the ledger. Carrying the row below into the first twenty-six weeks tunes the wrong dial |
 | Whether the opening has drifted | — | a fixed handle policy over 200 houses returns **72 standing, 36.0%**, with identical endings to one decimal on four builds spanning v2.5x to v2.68.0 — the same to the house, so none of those releases touches a code path a new house executes. That probe is the two-minute answer to "did I just break the opening", and it is unambiguous precisely because the streams match when nothing relevant changed |
+| Whether the week's nudge points at the biggest lever | `agendaCan` / `walkTheCells` / `LESSONS.unrest` | #119. The gatekeeper's lesson teaches the cells ("watch that red bar more closely than the gold"), and the agenda offers the feast — but at `unrest >= 35`, gated on `gold >= feastCost + weeklyBill` and `feastFresh >= 0.6`. Measured over one policy's 400-week houses: **1,432 weeks with unrest at 22 or more, and 648 of them (45.3%) sit below the agenda's threshold with nothing offered at all**. Of the weeks past 35, the item was offered 179 times and **suppressed 372** — 361 of those by the freshness gate, 11 by coin. And **walking the cells is never suggested anywhere**: `walkTheCells` appears outside its own definition in exactly one place, a button on the villa tab, and nowhere in `agendaCan`, across **1,029 weeks where the cells were loud and the walk was available** |
 | Which endings a house can actually reach | the twelve `d.over.kind` values / `ends` | #118, with a control that works this time (an ordinary house: ruin 4, lanistaDied 1, rebellion 1 of 6). Eight of the twelve are reached in play. **`foreclosed` is reachable and was simply never tried** — borrow 2,000, never repay, and `owes(d)` passes four times the principal at **week 44, 6 of 6 houses**. **`oldAge` cannot happen**: it wants `age>=62 && health>=45 && d.heir`, and over **3,070 lanista-weeks the man was 62 or over in 907 and healthy enough in NONE** — health decays with the years, and with an heir named a lanista at nought health hands over instead (1,135 weeks of succession). **`closed` cannot happen either**: it needs five men freed, `rudisEligible` is `wins>=10 && pfame>=180`, and the best man in a 500-week house reached **8 wins** — which #114 explains, since a man fights 3 bouts at the median. `triumph` is a choice on the road back from Rome and is untested. The two dead gates carry TRIPWIRES rather than locks: if the rudis bar drops, `ends` asks for the re-measurement |
 | What actually ends a run | `ends` / `survive` / the endings table | RE-MEASURED TWICE, in v2.81.0 for the crux and v2.82.0 for the night. The old figures had two faults: ~60% of every arm's bouts returned at `res.unfinished` unpaid, and every question was answered with choice 0 — which on `uprising` is the one branch that can end the run. Corrected, over 400 weeks and two seed sets: **debt is 24% / 27% across six policies against a published 69% / 67%, and 95-100% of it is the idle arm's**. A resolved bout is a PAID bout, so a house that fights does not die of the ledger. **`lanistaDied` is the plurality ending for a well-run house** — it lives long enough for the man in the chair to grow old. Working the cells (feast over 30, walk over 22) is the largest single lever measured: **5 of 20 houses alive at year 22 against 0**, median life 308w/270w against 183w/116w, median fame 1,316-1,919 against 225-380. Answering the uprising with steel rather than the guards takes `proven` from 183 weeks to 54 and its rebellion share from 40% to 70% |
 | How the war reaches you | `WAR_AWAY_AT` / `WAR_AWAY_ODDS` | your own gate, or a rising elsewhere from week 60 at 0.35% a week — 45% of houses that get there see it |
@@ -1390,6 +1391,43 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.84.0 — Half the biggest lever is never suggested, and two of my probes disagree about the other half
+
+Audit item **#119**, shipped as two counts and one refusal. No game behaviour changed.
+
+#117 measured working the cells as the largest lever on record. #119 asks whether the game points at
+it. The gatekeeper does: `LESSONS.unrest` — "The Fire in the Cells" — says to watch that red bar more
+closely than the gold, and names feasts as what cools it. The weekly agenda is the other half of the
+answer, and it is a partial one.
+
+**The feast is offered late, and goes quiet when the house is poor.** `agendaCan` gates it on
+`unrest >= 35` plus `gold >= feastCost(d) + weeklyBill(d)` and `feastFresh(d) >= 0.6`. Over one
+policy's 400-week houses: **1,432 weeks with unrest at 22 or more, of which 648 (45.3%) are below 35
+and get nothing at all.** Of the weeks past 35, the item appeared **179** times and was suppressed
+**372** — 361 by the freshness gate and 11 by the coin gate.
+
+**And walking the cells is never suggested at all.** Outside its own definition, `walkTheCells` appears
+in exactly one place in the source: a button on the villa tab. It is absent from `agendaCan`. Measured:
+**1,029 weeks where the cells were loud and `walkReady` was true**, and nothing anywhere in the game
+pointed at it.
+
+**WHAT IS NOT CLAIMED, AND WHY.** The obvious third measurement was an obedient arm — feast only when
+the agenda offers it, never walk the cells because nothing suggests it — against the 30/22 policy #117
+found best. It read **obedient 170 weeks against 30/22's 45**, with the 30/22 arm coming last of four,
+below doing nothing about the cells at all, and 17 of its 29 deaths from money.
+
+That contradicts #117, so #117's comparison was re-run at n=30: it replicates strongly — `proven+cells`
+259 weeks against `proven`'s 71, **6 of 30 houses alive at year 22 against 0**, median fame 3,183
+against 458. **So two probes of what is meant to be the same policy disagree by six times, both at
+n=30, and I have not found why.** The buy rule, the regimen, the fit filter, the offer pick, the stakes
+and the event answering all read equivalent; only the seeds differ, and a 6× gap is far too large for
+seeds at that n. Until it is resolved, no ordering claim from the second probe is trustworthy, and
+v2.82.0's claim rests on the first — which did replicate. The disagreement is on the board as an open
+item, not written up as a finding in either direction.
+
+The two counts above do not depend on any cross-arm comparison: they are tallies from a single arm's
+weeks, and they stand on their own.
 
 ### v2.83.0 — Two of the endings are written for houses the game does not produce
 
@@ -5081,4 +5119,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.83.0*
+*Last updated: v2.84.0*
