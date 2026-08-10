@@ -1344,6 +1344,7 @@ Tuning dials, in the order you'd reach for them:
 | Which question the week asks | `pickEvent` / `shuffled` | one slot, filled by the first event whose `make` returns something from a shuffled key list — so the draw has to BE a shuffle. It was `sort(()=>R()-0.5)`, which is not one: measured on the first-eligible key, the statistic that decides what is asked, it skewed **1.3 to 1.4×** toward events written earlier in the file (1.03× for two adjacent, 1.39× for the seven a real house had) against 1.01–1.06× for Fisher–Yates. The 5.1× figure that first turned up is first-POSITION of the permutation and is not the statistic that matters. Systems with channels of their own — the feud, the licence, the inspector, the primacy — set `pendingEvent` before the draw runs at all and take the week outright |
 | What a man's last month is worth | `formWord` / `FORM_TELL` / `formWeek` | five words, and two were never said. `formWeek` decays `f*0.78 - 3` weekly against +24 for a win at the great games, so three straight wins — the lesson's own example — reaches **37.6**, and the bands were 58 and 24. Over 4,862 man-weeks form ran **-50.5 to +42.4**, "in form" and "shaken" **0 times each**, "level" **97%**. Bands are 34 and 14 now; the fixed point of winning every single week is 71.5. What form DOES is unchanged at ±3.6% of power |
 | What warms between two lanistae | `warmth` / `houseWord` / `RIVAL_BEATS` | four words at **25 / 50 / 75**, fed by **1.1 a meeting** while that house's grudge is under 30, plus **4 to 16** from each of eight once-only beats gated on `met>=6` through `met>=26`. A house that works ONE rivalry for 300 weeks peaks at a **median 76.8 and a max of 100**, and says all four words; a probe using `pickRivalOpp` meets six houses a little and tops out near 43, which is what #113 measured. `rivalArc` will not run while a question is waiting — worth about **15%** of the arc and a delay to `end` (3 of 20 against 5), not a word. `loan` needs the purse under 200 at the moment it runs |
+| What a town down the bay thinks of you | `bayPol.favor` / `cityFavWord` / `knownIn` / `BAY_DECAY` | TWO scales that behave oppositely, and nothing had toured either. Favour has five words at **78 / 58 / 38 / 18**, opens at `20 + ri(0,15)` so every town starts on "an outsider", moves ONLY on a bout fought there by `4 + served*5` (**+9 / +4 / -1**) and never decays: toured properly it runs **10 to 100** over 24 town-houses at a median peak of **93**, and **all five words are said**. The bottom word is reached only by LOSING — Neapolis wants craft and `cityServed` scores a defeat -1 — which a reading of the source misses. `knownIn` is fed by every bout and bleeds **0.55 a week** for every town you are not in: a five-week-a-town round robin pegs all three at **100 by about week 20** and never feels it, while a house that tours once to 70-90 and stays home bleeds to nothing over **~130 weeks** and loses `known>=10 everywhere` about week 130. The bay itself goes to a rival after **30 idle weeks** at 2.8% a week — **8 of 10** homebound houses, **0 of 8** touring ones — at -4 fame every eight weeks, and is given back ONLY by turning up: **12 of 12**, two weeks out, for **+10 to +12** grudge |
 | What a bout takes out of what he carries | `WEAR_RATE` / `wearKit` / `wearWord` / `repairWeek` | five words at **85 / 60 / 35 / 15**, fed by **3-6 a weapon** a bout (offhand 2-5, helm 1-3, armour 2-4), **1.5x** at sine missione, halved on a named piece, and a piece at nought **breaks** and puts him on house stock. All five words are said and the rate measures at a median of **4** over 87 calls. In a played house with no armoury, **76.6%** of man-slot-weeks read "keen" and **8.5%** read "worn" or worse; over 6 houses and 130 weeks it is 83.3% and 4.3%. Wear is a system of the FIRST YEARS: breaks per ~1,050 bouts run **28 at L0, 2 at L1, 0 at L2 and L4** as `repairWeek` adds level*2.2 a week. And the piece outlives its owner — a man fights **3 bouts at the median and 8 at p90** against the ~25 a weapon needs, **2 of 241** ever reached 25, and **207 of 263** left the yard dead. `gearCond` is the SHELF and measures none of this |
 | The name Capua settles on | `repStyle` / `repSettle` / `addRep` | four names, a share of **0.36** of a total of **14** to be given one, **0.30** to keep it and **0.06** clear to take it off you. All four are earnable and all four are HELD once a house goes after them — blood 100% of weeks from week 2 with the doctrine and *sine* stakes, show 824 of 917 weeks on the **showboat tactic**, craft 412 of 427, mercy 1,277 of 1,296 on **fighting to surrender and then throwing the cloth**. Fighting at first blood is caution, not mercy: 0 cloths in 2,345 house-weeks and the town calls you a craftsman. It settles on something 87–100% of all house-weeks. `repStyle(d)==="blood"` is half of `STAFF.medicus.quitOn`, and the butcher loses his surgeon 9 of 10 times at median week 12 against the showman's 0 of 10 |
 | How close you are to a thing | ten proximity lines vs the gates they describe | driven for the first time in #109: four wrong, five right, one not a line. `feastReach` is a fraction 0.65–1 and the agenda put it through `Math.round`, so the feast read "reach **1** of them" at every house size; `paragonReach.short` measured the gap against the box **plus** debts at face **plus** steel at half, beside a button reading the box alone — **12.8%** of 187 played house-weeks past week 20 fell in the window where the line says nothing is missing and the purchase is refused, median **24.6%** of "worth" being outside the box; `munusWait` read **0 weeks** of cooldown to a house standing on the imperial sand, because `munusReady` refuses for a reason the panel had no words for; `workOpen`'s closed line blamed the monuments when the tier-2 gate is the five plain works. Right: `blessLeft`, `creditLine` (median 0d drift), `riseNeed`, `romeBar`, `featNear`. `acclaimTarget` is read by `acclaimWeek` and shown to nobody |
@@ -1387,6 +1388,67 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.80.0 — The coast has two scales, and a probe blamed touring for what its own policy did
+
+Audit item **#115**, answered rather than refuted, and no game behaviour changed.
+
+`cityFavWord` took **zero samples** in the whole scales sweep. `coast` drives a town's card and asks
+whether its favour moved after one constructed bout, but nothing had ever toured, so the RANGE of
+either coastal scale was unmeasured and their bands rested on nothing. Driven, both work — and they
+work in opposite directions, which is the part worth having written down.
+
+**Favour is a ratchet.** `d.bayPol[key].favor` opens at `20 + ri(0,15)`, so every town starts you on
+"an outsider". It moves only on a bout fought in that town, by `4 + served*5` — **+9** for the
+afternoon the town came for, **+4** for one it did not mind, **-1** for one it did not want — and it
+never decays. Eight houses touring the bay five weeks a town ran it from **10 to 100**, median peak
+**93**, and said **all five words**.
+
+**And the bottom word is reached only by losing,** which reading the source would have missed. Favour
+opens above 18 and mostly climbs, so "not wanted here" looks unreachable — but Neapolis wants craft
+and `cityServed` scores a defeat **-1**, and a house beaten again and again on Greek sand fell to
+**10**. That one branch is the whole of the bottom band.
+
+**Local standing is the opposite: it bleeds.** `knownIn` is fed by every bout down there and loses
+`BAY_DECAY` **0.55 a week** for every town you are not standing in. A five-week-a-town round robin
+pegs all three towns at **100 by about week 20** and never feels the decay at all. Neglect it and it
+does exactly what it says: a house that tours once to 70-90 and then stays in Capua bleeds to
+**nothing over about 130 weeks**, and loses `knownIn >= 10 everywhere` around week 130.
+
+**One branch neither of my arms could reach.** `bayWeek` hands the bay to a rival on `!d.city && 30
+idle weeks && R() < 0.028`. The touring arm reset that clock every few weeks and measured it **0
+times in 8 houses**; the homebound arm had it taken in **8 of 10** — median week 55, median 28 weeks
+held, up to 167 — and, never travelling, never got it back, because it is cleared only by `if(d.city)`:
+turning up. Driven on purpose that is **12 of 12**, two weeks after setting out, for **+10 to +12**
+grudge with the house you took it from. Two arms drove every part of the mechanic except the reward at
+the end of it, which is what happens when both arms are policies instead of one policy and one
+variable.
+
+**THE BIG INSTRUMENT FAULT: my tour probe put 7 of 8 houses out by REBELLION between weeks 17 and
+100,** which read as a savage price on being away from Capua. Four arms of 10 houses over 200 weeks,
+one policy apart from the named variable:
+
+| arm | rebellion | median life |
+|---|---|---|
+| home, no unrest levers | 7/10 | 55w |
+| tour, no unrest levers | 10/10 | 68w |
+| home + feast and walking the cells | 6/10 | 117w |
+| tour + feast and walking the cells | 6/10 | 126w |
+
+Pulling the levers roughly **doubles** the median life in both. Touring makes **no difference** to the
+rebellion — 6 of 10 either way — and a touring house lives **longer** than a homebound one in both
+pairs, which is the opposite of the finding I nearly had. The rebellion was a probe that never touched
+the cells. (A second, smaller one: the "stay home and watch it decay" arm had towns pegged at 100
+because an invitation event put the house back in a city. Staying home has to be enforced against the
+game's own invitations.)
+
+`bay` is the 49th check and runs in 2 seconds: a real tour raising both scales and saying the middle
+words, the losing branch that keeps the bottom word alive, the decay against `BAY_DECAY`, and the bay
+being taken and given back. **And one of its own sections was caught holding nothing** — the decay
+arm compared the observed fall against `BAY_DECAY * weeks`, which is a constant validated against
+itself, so setting `BAY_DECAY` to 0 made both sides nought and the check PASSED a build in which no
+town ever forgets anybody. It now holds the rate against the constant *and* the constant against zero.
+Killing the `cityServed` defeat branch and the holder's clear branch each fail it on the matching bar.
 
 ### v2.79.0 — Steel does wear, and the probe that said otherwise was reading the shelf
 
@@ -4725,10 +4787,19 @@ were ever occupied, while the lesson about wear promises steel that "eventually 
 of one". *Falsifies if:* a piece carried through forty bouts without mending does fall through the
 floor, in which case the probe simply did not own steel for long enough.
 
-**#115 — Nothing has toured the coast in anything that samples it.** `cityFavWord` took zero
-samples in the scales sweep. `roads` and `coast` drive the machinery; no measurement has ever
-established what a town actually thinks of a house that visits it, so the scale has no known
-range and its bands rest on nothing.
+**#115 — CLOSED in v2.80.0, ANSWERED: both coastal scales work, and they work oppositely.** Favour
+is a ratchet — opens at `20 + ri(0,15)`, moves only on a bout in that town by `4 + served*5`, never
+decays — and runs 10 to 100 with all five words said, the bottom one reachable only through the
+`cityServed` defeat branch at Neapolis. `knownIn` bleeds 0.55 a week: pegged at 100 by a round robin,
+bled to nothing over ~130 weeks by neglect. The bay goes to a rival after 30 idle weeks (8 of 10
+homebound houses, 0 of 8 touring) and comes back only by turning up (12 of 12). My tour probe's 7-of-8
+REBELLION was its own policy: with the unrest levers pulled it is 6 of 10 whether the house tours or
+not, and touring houses live longer. No behaviour changed; `bay` is the 49th check.
+
+**#115 as it was written, for the record — Nothing has toured the coast in anything that samples
+it.** `cityFavWord` took zero samples in the scales sweep. `roads` and `coast` drive the machinery; no
+measurement has ever established what a town actually thinks of a house that visits it, so the scale
+has no known range and its bands rest on nothing.
 
 **#116 — The audit's own instrument: three of four items last cycle were refuted, and the probes
 were wrong more often than the game.** Five rounds on the primacy, four of them my own policy;
@@ -4802,4 +4873,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.79.0*
+*Last updated: v2.80.0*

@@ -24287,6 +24287,11 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        pieces ON THE SHELF — worn condition lives in `g.wear[slot]`, which is what `wearOf` reads
        and what `wearWord` puts a word to. See `steel`. */
     wears, wearOf, WEAR_RATE, SLOTS, wearKit, repairWeek,
+    /* ---- AND WHAT A TOWN DOWN THE BAY THINKS OF YOU ----
+       `cityFavWord` took zero samples in the scales sweep and #115 was written because nothing had
+       ever toured. Two scales live here: `bayPol[key].favor`, which only a bout in that town moves,
+       and `knownIn`, which bleeds BAY_DECAY every week you are somewhere else. See `bay`. */
+    CITY_KEYS, BAY_DECAY, bayKnownTotal, bayWide, bayHolder, bayWorth, baySince,
     /* the war: its stages, its clock and what it does to the block */
     WAR, warWeek, warIdx, warStage, warMarket, warElsewhere, WAR_AWAY_AT, WAR_AWAY_ODDS,
     /* the odds the bookmakers quote, and the mitigations on a death */

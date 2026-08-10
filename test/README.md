@@ -74,6 +74,7 @@ reason the check exists usually has not.
 | `surface` | slow | the tab bar was 9px and END WEEK was 37px tall — and it measured a house twelve WEEKS old on one face of each tab with no record sheet ever opened, so it would have passed the whole way through a release where a house's name read "House Glaber…" and a fame of 23,703 rendered "237…" |
 | `sand` | slow | thirteen checks called `doFight` and every one drove the engines in memory; four drove a browser and none reached the sand, so the most-looked-at screen in the game had no test — which is why a React key fault living on the bout wizard was found by a scratch probe photographing an axe |
 | `draw` | fast | the week asks one question, chosen by the first event whose `make` fires from a shuffled key list — and the shuffle was `sort(()=>R()-0.5)`, the classic broken one, in a file that already contained a correct Fisher–Yates used in nine other places. What the game asked you depended on where in the file the event was written. Holds the shuffle uniform AND the statistic that actually decides it, the first *eligible* key, because the first-position figure overstates the fault four-fold |
+| `bay` | fast | the two coastal scales, neither of which had ever been toured — #115. Favour is a ratchet that opens every town on "an outsider" and climbs only on bouts fought there, and its bottom word is reachable ONLY through `cityServed`'s defeat branch at Neapolis; `knownIn` bleeds 0.55 a week and is pegged at 100 by a round robin. Also holds the branch neither of my arms could reach: the bay taken by a rival after 30 idle weeks, and given back only by turning up |
 | `steel` | fast | wear — the one system where the probe was wrong FOUR separate ways. #114 read `d.gearCond`, which is the pool of pieces on the SHELF, and concluded steel never wears; read off the man in `g.wear[slot]` a bout takes 3-6 off a weapon, all five words are said and pieces break. Holds the rate against `WEAR_RATE`, the five words off a piece driven to nothing, the break on the game's own chronicle line, the bands a played house sees, a man's career against his weapon's life, and — the trap that cost the most — that a bout held at the balance has changed nothing while the same bout answered changes the kit |
 | `houses` | fast | the four words for a rival house, two of which #113 measured as never said. Refuted on the item's own falsification clause: a house that works ONE rivalry for 300 weeks peaks at a median warmth of 76.8 and says all four, where a probe using `pickRivalOpp` meets six houses a little and tops out near 43. Holds the refutation plus the thing underneath it — that a bout against a rival's man registers as a meeting at all, which is `offer.opp.house` lining up with the rival's name |
 | `chair` | fast | the name Capua settles on — `repStyle` — which earns two of the lanista's traits and is half of what makes a medicus walk out, and which nothing had ever measured. Sends one house after each of the four names the way a player would (the blood doctrine and *sine* stakes, the showboat tactic, the craft doctrine, the mercy doctrine plus the cloth at every crux) and holds three things: the town settles on something at all, each of the four names is not just reached but HELD for most of a house's named weeks, and the butcher loses his surgeon while the showman does not. Every one of the four faults it was written to catch turned out to be the probe |
@@ -913,3 +914,40 @@ The fix was to drive the unit instead of the scene: `wearKit` is what a bout cal
 the five words and the break are all exact and the check runs in a fraction of the time. Then prove
 SEPARATELY, in a played house, that real bouts reach the unit at all — which is the half a bench
 cannot do and the half that catches a rope that never gets to the sand.
+
+## A constant validated against itself holds nothing
+
+The decay section of `bay` measured how far a town's memory of a house fell over 40 idle weeks and
+compared it against `BAY_DECAY * 40`. It passed. It also passed a build with `BAY_DECAY` set to **0**,
+where no town ever forgets anybody, because both sides of the comparison were nought and agreed
+perfectly.
+
+A rate needs TWO bars: the observed movement against the constant, *and* the constant against zero.
+The first says the arithmetic is wired up; only the second says the system exists. Any assertion of the
+form `observed ≈ CONST * n` inherits whatever `CONST` happens to be, including nothing — so ask, before
+writing it, what this line does if the constant is deleted.
+
+## Two policies are not one policy and one variable
+
+Two arms drove the bay mechanic: a touring house and a homebound one. Between them they covered
+everything except the one branch that matters most — the reward. The tourist never idled the 30 weeks
+needed for a rival to take the bay, so it measured that 0 times in 8 houses; the homebody had it taken
+in 8 of 10 and never travelled, so it never saw it given back. Neither arm was wrong. They simply
+differed in more than one way at once, and the uncovered branch sat in the gap.
+
+When arms are whole policies, the space between them is invisible. Name the variable, hold the rest
+fixed, and then ask which combination of settings no arm actually visits — that is where the untested
+branch is.
+
+## Before blaming the thing you are measuring, run your own policy without it
+
+The tour probe put 7 of 8 houses out by rebellion between weeks 17 and 100 and it looked like a savage
+price on leaving Capua. The same policy that never left Capua rebelled 7 of 10. The same policy WITH
+the feast and walking the cells rebelled 6 of 10 whether it toured or not, and lived twice as long
+either way — and the touring houses outlived the homebound ones in both pairs.
+
+The probe was not measuring travel. It was measuring a manager who never went down to the cells. When a
+sweep produces a dramatic ending, the first arm to write is the same policy with the suspect feature
+removed — and if you cannot remove it, the same policy with the levers a real player would pull. This
+is the third time in this audit that a probe's own neglect has been mistaken for a cost the game
+imposes, so it belongs in the standing checklist and not just in one release note.

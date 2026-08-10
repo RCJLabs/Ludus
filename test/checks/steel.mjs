@@ -16,7 +16,7 @@
    armoury, 76.6% of man-slot-weeks read "keen", 8.5% read "worn" or worse, and three pieces broke
    in sixty bouts.
 
-   THREE INSTRUMENT FAULTS OF MINE ARE PINNED HERE, because each one changed a headline number and
+   FOUR INSTRUMENT FAULTS OF MINE ARE PINNED HERE, because each one changed a headline number and
    any of them can come back:
 
      1. THE ROPE. The first draft read only `d.games.offers` — the arena bill, which does not open
@@ -33,15 +33,15 @@
         MORE total wear than an answering one, since answering resolves the bout, the men die, and
         the silent arm simply got more turns.
 
-     4. THE ROOM HAS TO BE PAID FOR. The arms comparing armamentarium levels ran `buildUp` on a
-        fresh house's purse, so only level 1 was ever affordable and the L2 and L4 arms were the L1
-        arm under another name — three runs printing the same 1,036 bouts is what gave it away.
-        Section 6 asserts the level it actually built.
-
      3. THE BREAK COUNTER. My own detector — a slot that was under 30 and is now a different piece
         — undercounted by 60% (11 against 28) because a break re-arms the man from the rack with
         ANOTHER COPY OF THE SAME GEAR ID, so the slot looks untouched. The game's own chronicle
         line is the only honest counter, and it is what this check reads.
+
+     4. THE ROOM HAS TO BE PAID FOR. The arms comparing armamentarium levels ran `buildUp` on a
+        fresh house's purse, so only level 1 was ever affordable and the L2 and L4 arms were the L1
+        arm under another name — three runs printing the same 1,036 bouts is what gave it away.
+        Section 6 asserts the level it actually built.
 
    WHAT IS TRUE AND IS NOT A FAULT, and is recorded so nobody re-opens it: wear is a system of the
    first years. On the chronicle line, breaks per ~1,050 bouts run 28 with no armamentarium, 2 at
