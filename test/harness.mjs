@@ -191,7 +191,7 @@ export async function installRope(p){
 
        `lanista(d, opts)` plays one week and RETURNS WHAT IT DID, so a caller can assert on behaviour
        rather than intent. Every part can be switched off through `opts` for a control arm:
-         cells, buy, doctore, build, rites, census, staff, school, rome, bout  (all default true)
+         cells, buy, doctore, build, rites, census, staff, school, heir, rome, bout  (all default true)
        `play(d, weeks, opts)` runs many and pools the counters. */
     const LAN = {
       reserve: d => Math.max(700, A.weeklyBill(d) * 12),
@@ -247,6 +247,20 @@ export async function installRope(p){
         const want = A.DOCTRINES.craft ? "craft" : Object.keys(A.DOCTRINES)[0];
         if(fin(A.declareDoctrine,[d, want])) bump("school");
       }
+      /* ---- THE LINE OF THE HOUSE, added in v2.96.0 ----
+         `lanistaWeek` at `L.health <= 0` does one of two things and the ONLY thing that decides which
+         is whether an heir has been named: with `d.heir` set it writes `d.succession` and the house
+         goes on, and without it the run ends `lanistaDied`. So every `lanistaDied` in every sweep this
+         audit has run was a lanista who died with nobody named — because no policy of mine ever named
+         anybody. The game does warn: `agenda` raises "You are failing and have named nobody" at health
+         under 30, and "The house has no head" at urgency 3 once the succession is open. The reference
+         player now takes both, which is what a player following his own advice would do, and it is the
+         only route to a second generation. */
+      if(on("heir") && !d.heir && !d.succession){
+        const opts = fin(A.heirEligible,[d]) || [];
+        if(Array.isArray(opts) && opts.length && fin(A.nameHeir,[d, opts[0]])) bump("namedHeir");
+      }
+      if(on("heir") && d.succession && fin(A.takeUpTheHouse,[d])) bump("tookUpHouse");
       if(on("rome") && d.romeOffer && fin(A.answerRomeWith,[d,true])) bump("toRome");
 
       if(on("bout")){
