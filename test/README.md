@@ -75,8 +75,10 @@ reason the check exists usually has not.
 | `sand` | slow | thirteen checks called `doFight` and every one drove the engines in memory; four drove a browser and none reached the sand, so the most-looked-at screen in the game had no test — which is why a React key fault living on the bout wizard was found by a scratch probe photographing an axe |
 | `draw` | fast | the week asks one question, chosen by the first event whose `make` fires from a shuffled key list — and the shuffle was `sort(()=>R()-0.5)`, the classic broken one, in a file that already contained a correct Fisher–Yates used in nine other places. What the game asked you depended on where in the file the event was written. Holds the shuffle uniform AND the statistic that actually decides it, the first *eligible* key, because the first-position figure overstates the fault four-fold |
 | `probe` | fast | the audit's own instrument — a check that reads the other checks. The fight engines return at `res.unfinished` before crediting anything and mutate nothing, and nine of the nineteen checks that drive a bout were losing between a quarter and two thirds of their evidence to it. Fails any check that names an engine without resolving to exhaustion, reading each `if(… .crux …)` site rather than the file, because answering with the cloth ends the bout and is correct. One of its rules was taken back out for flagging seven right answers against one wrong one. Since v2.90.0 it also fails any check that reads `.unfinished` off a `do*` result, which is the wrong layer's field and scores every held bout a loss |
-| `domus` | fast | the family arc — a match, a birth, `raising` at a child's seventh and twelfth year, `toga` at sixteen, `daughter` at fifteen. Holds every gate at every age WITH A WIFE AND WITHOUT, because one early return (`if(!dmm.wife){ …; return; }`) skipped the child loop and made the whole arc contingent on the wife surviving: a sixteen-year-old son raised `toga` with her alive and nothing once the lanista was widowed. Plus the already-dealt-with cases and the clock arithmetic |
-| `policy` | fast | the reference player, and the bar under him. `survive` asks whether a NEW house can get off the ground; this asks whether one played WELL still gets anywhere — 8 houses × 320 weeks through `__ROPE.play`, in about 3 seconds. Measured median life 226w, fame 2,981, 45 of 57 events, all five rooms, 7 of 8 houses claiming a census rung, a school declared by every survivor; every bar sits near half of that, because the job is to catch a collapse rather than police variance |
+| `domus` | fast | the family arc — a match, a birth, `raising` at a child's seventh and twelfth year, `toga` at sixteen, `daughter` at fifteen. Holds every gate at every age WITH A WIFE AND WITHOUT, because one early return (`if(!dmm.wife){ …; return; }`) skipped the child loop and made the whole arc contingent on the wife surviving: a sixteen-year-old son raised `toga` with her alive and nothing once the lanista was widowed. Plus the already-dealt-with cases, the clock arithmetic, and that a succession does not hand the next man somebody else's wife — 8 of 8 new lanistae used to inherit the widow, and `marryReady` needs that slot empty, so 0 of 8 could ever marry |
+| `policy` | fast | the reference player, and the bar under him. `survive` asks whether a NEW house can get off the ground; this asks whether one played WELL still gets anywhere — 8 houses × 320 weeks through `__ROPE.play`, in about 3 seconds. The bars are on the BEST house in the run, not the median: measured over 48 houses, 38% die before week 100 and 29% are still standing at the wall, so the median of eight spans 54 to 321 weeks and would fail a bar of 70 in one run of three with no change to the game. Best-of-run life spans 291 to 321 and fame 6,808 to 17,487; the bars are 150 and 2,000 |
+| `folk` | fast | the domestic half of the house — cook, nurse, housekeeper, and telling your wife she runs the place. Each hires once, charges its fee, draws a wage that grows with the roster (6d at one man, 13d at fourteen), sits on `weeklyBill`, and moves the number its own entry names: 141 points of fatigue off the yard, 3 weeks off the mending, unrest down 13.5, the lanista's life up 6.9. Three of the four walk out of a house at unrest 90 and the wife does not. It was dark in every sweep for two reasons at once — nothing on screen mentioned it, and not one of its nine functions was on the handle |
+| `munus` | fast | your own games. Twelve combinations of scale and stakes: the card goes up the week it is bought, `mine` and `fest` are set, the headliner is pinned to the marquee bout, the hunt is forced, purses carry the 0.6 of a card you paid for yourself, the cost matches `munusCost` to the denarius, selling pays `munusSellFee` and puts nothing up, and it comes down at `endWeek`. And a card bought SINE MISSIONE is sine all the way down — `addPair` hardcoded standard stakes, so 17 of 24 cards carried a standard pair and `simulatePair`'s whole death branch was unreachable in every bout in the game |
 | `school` | fast | the six doctrines of the house. Each declares, charges its listed price, changes for 1.8x the new school's price, reads every numeric field back through `docNum`, answers `docIs` on its KEY, and moves the factions its table names — with the field list DERIVED from each entry rather than written into the check. Plus the reason it exists: `d.doctrine` was non-null in 0 of ~5,000 measured house-weeks, so the week's agenda must raise it for a solvent house and leave a poor one alone |
 | `odds` | fast | the arena panel's own number against the sand. Holds three things: a MIRROR — two men identical in all six stats, class, kit, traits, heart, morale, record and fame — landing a shade under half, which is what `FOE_EDGE` 1.029 predicts and which is this check's instrument before it is a bar; the shape of a held bout's return, so `crux`-versus-`unfinished` cannot be confused again; and the ranking `winChance` recommends for all six classes, asserted on the pure function with no sampling in it, because the realised version of that bar flipped between runs at n=150 |
 | `bay` | fast | the two coastal scales, neither of which had ever been toured — #115. Favour is a ratchet that opens every town on "an outsider" and climbs only on bouts fought there, and its bottom word is reachable ONLY through `cityServed`'s defeat branch at Neapolis; `knownIn` bleeds 0.55 a week and is pegged at 100 by a round robin. Also holds the branch neither of my arms could reach: the bay taken by a rival after 30 idle weeks, and given back only by turning up |
@@ -1494,3 +1496,58 @@ unreachable in v2.53.0, a policy that went after them earned all nineteen, and t
 A sweep tells you what one policy did. A check tells you what has already been established. When the two
 disagree, the check is usually right and the sweep is usually a policy artefact — so read it first, and
 save the item for something the check does not already cover.
+
+## A subsystem that is not on the handle is not dark, it is unreachable
+
+`d.household` was listed as a dark subsystem in three separate sweeps. Nine functions behind it —
+`hireFolk`, `householdWeek`, `householdCount`, `houseFolk`, `hasFolk`, `hhWage`, `hhUpkeep`, `HOUSEHOLD`,
+`HH_KEYS` — and not one was on the test handle. So the reference player could not have hired anybody even
+if his policy had said to, and "never fired in 5,000 house-weeks" was a measurement of the handle.
+
+Before writing down that a system never fires, check that the probe can reach it. The tell is a subsystem
+with no owning check AND no handle exports: those two absences together usually mean the same thing twice.
+
+## The median of a bimodal sample is not a statistic
+
+`policy` asserted "median house life >= 70 weeks" and failed twice running after a change that adds one
+112-denarius hire around week twenty. Measured over 48 houses on the check's own seeds: 38% die before week
+100 and 29% are still standing at the 320-week wall. The median of a block of eight from that distribution
+came out 54, 60, 99, 121, 311 and 321 — it would have failed the bar in 2 blocks of 6, with no change to
+the game at all.
+
+There is no middle in a distribution shaped like a cliff, so the median lands wherever the fifth draw
+happens to fall. The claim the check wanted was "a house played well can still get somewhere", and the
+statistic for that is the BEST house in the run: 291 to 321 weeks across the same six blocks. When a bar
+keeps moving, ask whether the statistic has a stable value at your sample size before you adjust the
+number.
+
+## Any change to the RNG stream reshuffles every draw after it
+
+The same eight fixed seeds gave median life 106 on one build and 60 on the next, and 42 event kinds against
+34. The only difference was one `hireFolk` call consuming two rolls. Seeding a probe fixes the initial
+conditions; it does not pair the trajectories. A paired A/B on the same seed is still worth running — it
+controls the opening — but past the first divergence the two arms are two different games, which is why a
+6-6 split at n=12 was the honest answer for the household and a per-seed delta of −380 weeks was not
+evidence of anything.
+
+## "Cheap" is a claim about a house of a particular size
+
+The note over `HOUSEHOLD` said the hires were "all cheap, and all strictly good — a checkbox you tick once
+in year one". Measured: 22 denarii a week against a NEW house's entire weekly bill of 30, which is a 73%
+rise in the standing cost of a ludus that is one bad card from the creditors. Against a made house's bill
+of 200 the note is right.
+
+The bench that produced "cheap" held everything else still. Prices are relative to the ledger they land on,
+so a cost measured on one house is not a cost measured on the game — and an effect that is good late and
+dangerous early is a decision, which is the opposite of what the note claimed.
+
+## A branch no card can reach is content, not a safety net
+
+`simulatePair` reads `stakes==="sine"` twice: an intro line and a death path with its own beat. Both places
+in the program that build a pair offer hardcoded `"standard"`, so neither could ever run. The way it
+surfaced was oblique — a player who commissioned a munus *sine missione* and paid the surcharge got a
+standard pair on 17 of 24 cards — and the real finding was upstream of that.
+
+When one engine on a card honours a flag and the others do not, check every producer, not the one you
+found the bug through. And drive the newly-reachable branch before shipping the fix: a death path that has
+never once executed is exactly where a stale field reference waits.

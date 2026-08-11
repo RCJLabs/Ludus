@@ -1621,6 +1621,13 @@ function yardWeek(d){
    ten points of unrest, seven points of the lanista's life, three hundred and twenty
    denarii. All correct, all cheap, and all strictly good — which is not a decision, it
    is a checkbox you tick once in year one and never think about again.
+   THE WORD "CHEAP" WAS WRONG, and v2.98.0 corrects it off a measurement rather than a
+   bench. Three hires cost 112 to 128 denarii each up front and 22 a week between them,
+   against a NEW house's entire weekly bill of thirty — a 73% rise in the standing cost
+   of a ludus that is one bad card from the creditors. Against a made house's bill of two
+   hundred it is exactly what the paragraph above says. So it is cheap late and dear
+   early, which makes it a decision after all, and `agendaFolk` waits for a house that
+   can carry three more wages for a season before it mentions them.
    Two things were missing. makeFolk has always rolled a skill between 38 and 78 and
    NOTHING HAS EVER READ IT: the woman who runs your kitchen was the same woman whoever
    she was. And the wage was five denarii whether she was feeding four men or fourteen.
@@ -2485,6 +2492,35 @@ function agendaSchool(d, add){
   add(1, "villa", "This house teaches no particular thing",
     `six schools, ${cheapest}d and up — one of them is the way you already fight`);
 }
+/* ---- AND THE SAME FAULT ONE LAYER DOWN: THE DOMESTIC HALF OF THE HOUSE ----
+   Four hires — cook, nurse, housekeeper, and telling your wife out loud that she runs the place —
+   each with a skill roll, a wage that grows with the roster, an effect measured over twenty weeks
+   (fatigue 141 off the yard, three weeks off the mending, unrest down 13.5, seven points of the
+   lanista's life), a line on the upkeep, and a branch where they walk out of a house at unrest 78.
+   MEASURED: `d.household` was an empty object in every house of every sweep, and it could not have
+   been otherwise — not one of the nine functions was on the test handle, so nothing could reach it,
+   and nothing on the screen mentioned it either. It is the doctrine of v2.93.0 exactly: a system
+   that works, costs little, and is never found. One line, not four, and it goes quiet once the
+   house is staffed — two standing items on the villa tab is the #101 fault. */
+function agendaFolk(d, add){
+  if(d.city || d.travel || d.rome) return;
+  /* ---- AND NOT IN THE OPENING, BECAUSE "CHEAP" IS NOT TRUE THERE ----
+     The note over HOUSEHOLD called these hires cheap and strictly good. Cheap is a fact about a made
+     house: 22 denarii a week against a new house's ENTIRE weekly bill of 30, which is a 73% rise in
+     the standing cost of a ludus that is one bad card from the creditors. Against a grown bill of 200
+     it is what the note says it is. So this waits for a house that can carry three more wages for a
+     season, not one that can merely pay the fee this week. */
+  if(d.week < YEAR_WEEKS) return;
+  const missing = HH_KEYS.filter(k => k !== "wife" && !hasFolk(d, k));
+  if(!missing.length) return;
+  const ask = Math.min(...missing.map(k => rnd(hhWage(d, k) * 16)));
+  if(d.gold < ask + weeklyBill(d) * 12) return;
+  const H = HOUSEHOLD[missing[0]];
+  add(1, "villa", missing.length === HH_KEYS.length - 1
+      ? "Nobody feeds this house, or nurses it, or keeps it"
+      : `${missing.length} of the household have never been hired`,
+    `${H.name.toLowerCase()} from ${ask}d — ${H.line.replace(/\.$/, "").toLowerCase()}`);
+}
 function agendaGods(d, add){
   if(d.city || d.travel || d.rome) return;
   const pi = pietyOf(d);
@@ -2816,6 +2852,7 @@ function agenda(d){
   for(const m of unhonoured(d)) if(!m.done)
     add(2, "villa", `${m.name} is not buried properly`, `${RITE_WINDOW-(d.week-m.week)} weeks to decide`);
   agendaSchool(d, add);
+  agendaFolk(d, add);
   agendaGods(d, add);
   agendaCan(d, add);
   /* the town */
@@ -4831,9 +4868,21 @@ function makeGames(d){
     let p2 = pickRivalOpp(d, ot), guard = 0;
     while(guard++<6 && p2.ref && p1.ref && p2.ref.fid===p1.ref.fid) p2 = pickRivalOpp(d, ot);
     if(p2.ref && p1.ref && p2.ref.fid===p1.ref.fid){ p2 = { opp:genOpponent(ot), ref:null }; }
+    /* ---- A PAIR COULD NEVER BE SINE MISSIONE, AND simulatePair HAS THE WHOLE BRANCH ----
+       It reads `stakes==="sine"` twice — the intro ("No appeals will be heard from anyone on this
+       sand") and a death path that kills the man where a standard bout would put the question to the
+       editor — and the aftermath reads it again for the kin and the unrest tax. Both places a pair
+       offer is built hardcoded "standard", so none of it could ever run. It surfaced as a smaller
+       thing: commission your own munus SINE MISSIONE, pay the 15% surcharge for it, and on 17 of 24
+       cards one bout on your own bill was a standard pair. `add()` honoured `F.allSine`; nothing
+       else did. Driven 18 times before this shipped: no throw, 4 of 36 men dead, every one of them
+       in the fallen, none left standing at zero health, unrest +7 apiece.
+       ONLY THE FORCED CASE. An editor's card does not roll a sine pair — `add()` does that at
+       18% and two of your men in a death match is a different bout from one, so it stays the
+       player's own decision until it has been priced on a career rather than a bench. */
     offers.push({ id:d.nextId++, tier, festival, pair:true, opps:[p1.opp, p2.opp],
-      oppRefs:[p1.ref, p2.ref], stakes:"standard",
-      purse: rnd((t.purse[0]+R()*t.purse[1]) * 1.7 * (F.purse||1) * seasonPurse(d) * fameEdge(d)) });
+      oppRefs:[p1.ref, p2.ref], stakes: F.allSine ? "sine" : "standard",
+      purse: rnd((t.purse[0]+R()*t.purse[1]) * 1.7 * (F.allSine?1.8:1) * (F.purse||1) * seasonPurse(d) * fameEdge(d)) });
   };
   const st = repStyle(d);
   /* a name on the bill is a bout that is going to happen */
@@ -6276,8 +6325,27 @@ function succeed(d){
       chron(d, `${mtr.name} stands at the new master's shoulder — the boy he kept back at the post, grown and giving the orders now. The cells follow a man one of their own raised without a word of complaint.`, "good"); } }
   if(d.heir.cid && d.domus && d.domus.children){ const c = d.domus.children.find(x=>x.id===d.heir.cid); if(c) c.tookHouse = d.week; }
   d.heir = null;
+  /* ---- AND THE DEAD MAN'S WIFE IS NOT THE NEW MAN'S WIFE ----
+     `d.domus` was left alone here on purpose — the note below says it lives on the state so the
+     blood of the house survives a succession. MEASURED, what that produced was the opposite of
+     continuity: 8 of 8 houses driven through a succession handed the new lanista his predecessor's
+     widow in the wife slot, and `marryReady` needs that slot EMPTY, so 0 of 8 could ever marry.
+     A doctore who takes the house inherits the dead man's wife; a son of twenty-one inherits his
+     mother, and three children older than himself. The whole family arc — the match, a birth,
+     `raising`, `toga`, `daughter`, and the scion heir that comes out of it — belonged to the first
+     lanista and to nobody after him. So the family goes with the man on the forebear record where
+     the annals can still show it, and the new man starts his own. */
+  const fam = d.domus && (d.domus.wife || (d.domus.children||[]).length)
+    ? { wife:d.domus.wife, children:(d.domus.children||[]).slice() } : null;
+  if(fam){
+    d.domus = { wife:null, children:[], nextKin:1 };
+    chron(d, fam.wife
+      ? `${fam.wife.name} keeps her rooms and her authority and is nobody's wife now. The household knows the difference before ${nm} does.`
+      : `The old master's people keep their rooms. The house is ${nm}'s and the family in it is not.`, "info");
+  }
   d.forebears = [...(d.forebears||[]), { name:old.name, age:old.age, traits:old.traits.slice(),
-    from:old.since||1, to:d.week, gen:d.generation-1 }];
+    from:old.since||1, to:d.week, gen:d.generation-1,
+    wife: fam && fam.wife ? fam.wife.name : null, children: fam ? fam.children.length : 0 }];
   chron(d, `${H.took(nm)} ${old.name} is carried out of a gate he came in through forty years ago, and the week's training goes ahead because it was always going to.`, "event");
   d.over = null;
   return true;
@@ -6288,7 +6356,9 @@ function succeed(d){
    A lanista who has climbed far enough takes a wife into the house; she bears it
    children; a son raised in the yard becomes an heir you shaped rather than one you
    settled for, and a daughter is a thread you tie to a patron or a rival. It lives
-   at d.domus so the blood of the house survives a succession. */
+   at d.domus rather than on the lanista, and `succeed` hands the old man's family to
+   his forebear record so that each generation courts, marries and raises its own —
+   see the note there for what leaving it in place actually measured. */
 const domusOf = d => d.domus || (d.domus = { wife:null, children:[], nextKin:1 });
 const childAge = (d,c) => Math.floor((d.week - c.born) / YEAR_WEEKS);
 const livingKids = d => domusOf(d).children.filter(c=>!c.wed && !c.dead);
@@ -18625,6 +18695,9 @@ export default function App(){
                 <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>died at {f.age} · week {f.to}</span>
               </div>
               {f.traits.length>0 && <div className="dim" style={{fontSize:"var(--fs-base)"}}>{f.traits.map(t=>LAN_TRAITS[t].name).join(", ")}</div>}
+              {/* the family goes with the man now, so it is here or it is nowhere */}
+              {(f.wife || f.children) && <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>
+                {f.wife ? `${f.wife} was his wife` : "no wife"}{f.children ? ` · ${f.children} child${f.children===1?"":"ren"} of his blood` : ""}</div>}
             </div>
           ))}
         </>)}
@@ -24390,6 +24463,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     foundCollegium, lapseCollegium, collBury, collOn, COLL_FEE, COLL_DUES,
     /* your own games: whether the city will take one, and what the card costs */
     munusReady, munusWait, munusCost, munusSellFee, MUNUS_OCCASIONS, MUNUS_SCALES, SPECTACLES,
+    /* the domestic half of the house: who she is, what she costs, and what she does */
+    HOUSEHOLD, HH_KEYS, hireFolk, householdWeek, householdCount, houseFolk, hasFolk, hhWage, hhUpkeep,
     /* the word from the box — the three or four things a crux will take */
     CRUX, forgeReady,
     /* the man in the chair: what the job does to him, and what it makes of him */

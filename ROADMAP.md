@@ -83,12 +83,12 @@ One turn = one week.
 
 ```
 npm test              the fast tier — about half a minute
-npm run test:all      every check, fast and slow — about nine minutes
+npm run test:all      every check, fast and slow — about eleven minutes
 npm run coverage      not what passes, but what no check ever touches
 ```
 
-**35 checks.** Thirty-one read into the game through a test handle and answer in seconds;
-four drive a real browser through the real screens. Every one of them exists because
+**56 checks.** Most read into the game through a test handle and answer in seconds; a
+handful drive a real browser through the real screens. Every one of them exists because
 of a bug that shipped, and the comment at the top of each says which — that comment
 is the durable part, not the numbers inside it. See `test/README.md` for the table.
 
@@ -1391,6 +1391,99 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.98.0 — Five dark subsystems, and the two nobody could have reached
+
+Item 6 of the v2.93.0 audit was "five subsystems never went non-null on the reference player": `loan`,
+`court`, `munusCard`, `household`, `ear`. Following v2.97.0's lesson, the first move was to read the
+check that owns each area rather than measure anything.
+
+**THREE OF THE FIVE ARE ALREADY OWNED, AND ARE DARK ONLY BECAUSE HE DOES NOT DO THEM.** `loan` — `houses`
+documents the gate as `warm>=34 && poor` where `poor` is `gold<200`, and fires it 9 times in 12 on a broke
+house; the reference player is solvent, so he never borrows. `court` — `wall` drives the whole arc to a
+man coming over, and `glance` asserts the nudge that points at it. `ear` — `actions` drives `setEarTo`,
+`wall` drives the courting side. Nothing to fix; the sweep was reporting a policy, not a game.
+
+**`munusCard` HAD NO CHECK, AND THE CARD IS CORRECT IN ALL TWELVE COMBINATIONS.** `near` holds the four
+reasons the panel refuses a munus and `feats` stages three of them to earn `munera`; neither ever looked
+at `d.games` afterwards. Measured across every scale and both stakes: the bill goes up the same week,
+`mine` and `fest` are set, the headliner is pinned to the marquee bout, the hunt is forced, purses carry
+the 0.6 of a card you paid for yourself, the cost matches `munusCost` to the denarius, selling pays
+`munusSellFee` exactly and puts no card up, and the card comes down at `endWeek`. One thing was wrong.
+
+**A PAIR BOUT COULD NEVER BE SINE MISSIONE, IN ANY BOUT IN THE GAME.** `add()` reads `F.allSine`;
+`addPair` hardcoded `"standard"`, and so did the coastal pair at Neapolis. So `simulatePair`'s entire
+sine branch — its intro line, a death where a standard bout puts the question to the editor, the kin and
+the unrest tax at 7 against 4 — was unreachable. It surfaced as something smaller: commission your own
+munus **sine missione**, pay the 15% surcharge for it, and **17 of 24 modest cards** put a standard pair
+on your own bill. Driven 18 times before the fix shipped: no throw, 4 of 36 men dead, every one of them in
+the fallen, none left standing at zero health. `addPair` honours the forced case now, and only the forced
+case — an editor's card does not roll a sine pair, because two of your men in a death match is a different
+bout from one and it stays the player's own decision.
+
+**`household` WAS DARK BY CONSTRUCTION: NOT ONE OF ITS NINE FUNCTIONS WAS ON THE TEST HANDLE.** Four
+hires, a skill roll, a wage that scales with the roster, an upkeep line and a branch where they walk out
+of a failing house — and `hireFolk`, `householdWeek`, `householdCount`, `houseFolk`, `hasFolk`, `hhWage`,
+`hhUpkeep`, `HOUSEHOLD`, `HH_KEYS` were all internal. "Never fired in 5,000 house-weeks" was a fact about
+the handle. Driven for the first time, 20 weeks each with nothing else moving:
+
+| | what she does | measured | costs |
+|---|---|---|---|
+| Cook | fatigue off the yard | 141 points | 112d down, 7d a week |
+| Nurse | weeks off the mending | 3 weeks | 144d down, 9d a week |
+| Housekeeper | unrest in the cells | −13.5 | 112d down, 7d a week |
+| The lanista's wife | his own life | +6.9 | free |
+
+All correct. The wage tracks the roster as advertised (6d at one man, 8d at five, 13d at fourteen), it is
+on `weeklyBill`, and three of the four walk out of a house held at unrest 90 while the wife stays. So it
+is the doctrine of v2.93.0 one layer down: a system that works and is never found. `agendaFolk` mentions
+it once, and goes quiet once the house is staffed.
+
+**AND THE SOURCE'S OWN WORD "CHEAP" WAS WRONG, WHICH IS CORRECTED OFF A MEASUREMENT.** The note over
+`HOUSEHOLD` called these hires "all cheap, and all strictly good — a checkbox you tick once in year one".
+Three of them cost 22 denarii a week against a **new** house's entire weekly bill of 30 — a 73% rise in
+the standing cost of a ludus one bad card from the creditors. Against a made house's bill of 200 it is
+what the note says. So it is dear early and cheap late, which makes it a decision after all, and the
+nudge waits a full year and twelve weeks of the bill before it mentions them.
+
+**THE FAMILY BELONGED TO ONE MAN.** `d.domus` sits on the state rather than the lanista and `succeed` left
+it alone on purpose — "so the blood of the house survives a succession". Driven, that produced the
+opposite: **8 of 8** houses handed the new lanista his predecessor's widow in the wife slot, and
+`marryReady` needs that slot empty, so **0 of 8** could ever marry. A doctore who took the house inherited
+the dead man's wife; a son of twenty-one inherited his mother and three children older than himself. The
+match, a birth, `raising`, `toga`, `daughter` and the scion heir that comes out of them belonged to the
+first lanista and to nobody after him. The family goes to the forebear record now, where the annals panel
+shows it, and the new man starts his own — the same eight successions read 8 of 8 able to marry.
+
+**AND ONE CORRECTION TO v2.95.0: WIVES DO NOT DIE.** That release moved the child loop out of the wife
+branch and the note said "wives die". The only write to `d.domus.wife` in the program is `resolveMatch`
+setting her. `domus` keeps the widowed arm anyway and now says why — reachable by construction, not
+measured in play.
+
+**AND ONE CORRECTION TO `policy`, WHICH IS MINE AND IS THE MOST USEFUL THING HERE.** Adding one household
+hire around week twenty took the check under its own bars twice running: median life 106, then 60, against
+a bar of 70. A 112-denarius hire cannot do that; consuming two extra rolls of the RNG and reshuffling every
+draw after it can. So the distribution behind the bar was measured instead of the bar being nudged — 48
+houses of the reference player on the check's own seeds, at 320 weeks:
+
+| | |
+|---|---|
+| dead before week 100 | **18 of 48 (38%)** |
+| alive at the 320-week wall | 14 of 48 |
+| life | p10 27 · median 170 · p90 321 |
+| the median of a block of eight | **54 · 60 · 99 · 121 · 311 · 321** |
+| the best house in the same blocks | 291 · 321 · 321 · 321 · 321 · 321 |
+
+The median of eight draws spans 54 to 321 and would fail the old life bar in 2 blocks of 6 and the old
+fame bar in 3 of 6 — **one run in three, with no change to the game at all.** The shape is why: 38% of
+even well-played houses die in the opening and 29% are still standing at the wall, so there is no stable
+middle for a median to sit in. The claim was never about the middle anyway — it is *a house played well
+can still get somewhere* — so `policy` asserts on the best house in the run, which spans 291 to 321 weeks
+and 6,808 to 17,487 fame across the same six blocks, at bars of 150 and 2,000. The event tally rides on
+the same reshuffle (42 kinds on one build, 34 on the next, same seeds) and its bar drops to 22.
+
+Two new checks: `folk` for the household, `munus` for your own games. `domus` gains the succession
+section. Fifty-six checks.
 
 ### v2.97.0 — Two audit items withdrawn, one as a duplicate and one as refuted
 
@@ -5793,4 +5886,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.97.0*
+*Last updated: v2.98.0*

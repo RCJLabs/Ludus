@@ -240,6 +240,17 @@ export async function installRope(p){
         const c = (((d.staffMarket||{})[kind])||[]).filter(x=>x.fee <= spare()*0.4).sort((a,b)=>b.fee-a.fee)[0];
         if(c && fin(A.hireStaffMember,[d, kind, c.id])) bump("hired:"+kind);
       }
+      /* the domestic half of the house, which nothing pointed at until v2.98.0 and no check could
+         reach before it — none of the nine functions were on the handle. Cheap, strictly good, and
+         the reference player takes them in the order the villa tab lists them once he can pay. */
+      /* NOT in the opening. Measured: 22d a week against a new house's whole bill of 30d is a 73%
+         rise, and the first version of this step hired three women in year one and took `policy`
+         under its own fame bar. A house carries the domestic half once it can carry it. */
+      if(on("folk") && typeof A.hireFolk === "function" && d.week >= 18)
+        for(const k of (A.HH_KEYS || [])){
+          if(A.hasFolk(d, k) || (k !== "wife" && spare() < 2500)) continue;
+          if(fin(A.hireFolk,[d, k])) bump("folk");
+        }
       /* the school of the house, which v2.93.0 put in front of the player for the first time. The
          reference player takes the one that matches how he already fights — the yard is bought on
          price rather than class, so `craft` is the honest default for a house that keeps its men. */

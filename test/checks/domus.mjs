@@ -21,13 +21,31 @@
    THE ACTUAL FAULT was one early return. `if(!dmm.wife){ …match…; return; }` skipped the child loop at
    the bottom of the function, so the entire arc was contingent on the wife being ALIVE. Hand-built: a
    sixteen-year-old son raised `toga` with a wife in the house and **NOTHING** once the lanista was
-   widowed; a seventeen-year-old daughter the same. Wives die. v2.95.0 moves the child loop out of the
-   wife branch — the household's warmth and bearing a child stay wife-dependent, because those need her;
-   a boy who is seven is seven either way.
+   widowed; a seventeen-year-old daughter the same. v2.95.0 moves the child loop out of the wife branch
+   — the household's warmth and bearing a child stay wife-dependent, because those need her; a boy who
+   is seven is seven either way.
 
-   WHAT THIS HOLDS: every gate, at each age, with a wife and without. It is a bench rather than a
-   campaign because that is what the claim is — one function, six branches, and one of them was
-   unreachable for the life of the feature without any check being able to see it. */
+   ONE CORRECTION TO THAT, MADE IN v2.98.0. The v2.95.0 note said "wives die", and they do not: the
+   only write to `d.domus.wife` in the whole program is `resolveMatch` setting her, and nothing anywhere
+   clears her. So the widowed arm below is a case the game does not currently produce, and it is held
+   anyway — the state is one event away from being reachable, `domusOf` hands out `wife:null` to every
+   pre-domus save, and a branch that only works while a field is non-null is exactly the shape of fault
+   this check exists for. Recorded here as reachable-by-construction rather than measured in play.
+
+   AND THE FAMILY BELONGED TO ONE MAN. `d.domus` sits on the state rather than the lanista, and
+   `succeed` used to leave it alone — the note said so, "the blood of the house survives a succession".
+   Driven: **8 of 8** houses through a succession handed the new lanista his predecessor's widow in the
+   wife slot, and `marryReady` requires that slot EMPTY, so **0 of 8** could ever marry. A doctore who
+   took the house inherited the dead man's wife; a son of twenty-one inherited his mother and three
+   children older than himself. The whole arc above — the match, a birth, `raising`, `toga`, `daughter`,
+   and the scion heir that comes out of it — was available to the first lanista and to nobody after him.
+   v2.98.0 hands the family to the forebear record, where the annals still show it, and the new man
+   starts his own; the same eight successions now read 8 of 8 able to marry.
+
+   WHAT THIS HOLDS: every gate, at each age, with a wife and without; and that a succession does not
+   hand the next man somebody else's wife. It is a bench rather than a campaign because that is what
+   the claim is — one function, six branches, and one of them was unreachable for the life of the
+   feature without any check being able to see it. */
 
 import { hasHandle } from "../harness.mjs";
 
@@ -107,6 +125,54 @@ export async function run({ p }){
         + `year length has moved and every gate above it with it`);
       /* children never die: c.dead is never written for a child, so the arc has no mortality tax */
       lines.push(`a child is never marked dead by the game (checked in v2.95.0) — the arc has no mortality`);
+    }
+
+    /* ---- 4. AND THE NEXT MAN DOES NOT INHERIT SOMEBODY ELSE'S WIFE ---- */
+    {
+      const mk = (tag) => {
+        const d = A.newGameState("Ds", "clean", tag, null);
+        d.week = 300; d.gold = 30000; d.fame = 900;
+        if(!d.lanista) d.lanista = A.makeLanista(d);
+        d.lanista.age = 52;
+        d.domus = { wife:{ name:"Tullia", family:"Sergia", married: 300 - YW*20, age:24, from:"merchant" },
+          children:[], nextKin:1 };
+        for(const [age, sex] of [[22,"m"],[17,"m"],[19,"f"]])
+          d.domus.children.push({ id:d.domus.nextKin++, name:"Kin"+age, sex, born: 300 - YW*age,
+            up:{palus:6,rhetor:2,box:1}, grown:true });
+        return d;
+      };
+      let handed = 0, canMarry = 0, kept = 0, runs = 0, onRecord = 0;
+      for(let i=0;i<6;i++){
+        const d = mk("DOMUS-SUCC-"+i);
+        const opts = A.heirEligible(d) || [];
+        if(!opts.length || !A.nameHeir(d, opts[0])) continue;
+        d.lanista.health = 0;
+        try { A.lanistaWeek(d); } catch(e){ bad.push(`\`lanistaWeek\` threw on a failing lanista: ${e.message}`); break; }
+        if(!d.succession) continue;
+        try { A.takeUpTheHouse(d); } catch(e){ bad.push(`\`takeUpTheHouse\` threw: ${e.message}`); break; }
+        runs++; handed++;
+        if(d.domus && d.domus.wife) kept++;
+        if(A.marryReady(d)) canMarry++;
+        const fb = (d.forebears||[]).slice(-1)[0];
+        if(fb && fb.wife === "Tullia") onRecord++;
+      }
+      lines.push(`${runs} houses driven through a succession: the new man kept his predecessor's wife in `
+        + `${kept}, could take one of his own in ${canMarry}, and she is on the forebear's record in ${onRecord}`);
+      if(!runs) bad.push(`no house could be driven through a succession at all — \`nameHeir\`, `
+        + `\`lanistaWeek\` or \`takeUpTheHouse\` has changed, and the second generation is untestable`);
+      else {
+        if(kept)
+          bad.push(`${kept} of ${runs} new lanistae inherited the dead man's wife. \`marryReady\` needs `
+            + `the slot empty, so that man never marries, never has a child, and never raises a scion — `
+            + `the whole family arc becomes the first lanista's alone`);
+        if(canMarry !== runs)
+          bad.push(`only ${canMarry} of ${runs} new lanistae could take a wife. The generation after the `
+            + `first has to be able to start a family or the domus is a one-generation feature`);
+        if(onRecord !== runs)
+          bad.push(`the old man's wife reached his forebear record in ${onRecord} of ${runs} — the family `
+            + `is cleared off \`d.domus\` at a succession, so the record is the only place left that she `
+            + `was ever in this house`);
+      }
     }
 
     return { bad, lines };
