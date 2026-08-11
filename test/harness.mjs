@@ -134,7 +134,18 @@ export async function installRope(p){
         if(x.pair && men.length < 2) return false;
         return o.singlesOnly ? !(x.melee || x.pair || x.venatio) : true;
       });
-      let offer = bill.length ? (o.pick ? o.pick(bill) : bill[0]) : null;
+      /* ---- `stakes` WAS A PIT-ONLY OPTION AND READ LIKE A POLICY, fixed in v2.91.0 ----
+         `o.stakes` was passed to `makePitOffer` and nowhere else, so a probe asking for `blood`
+         got first blood only while the house was too poor for the arena bill, and whatever the
+         bill happened to offer after that. A mercy measurement built on it fought first blood for
+         its opening and `standard` for the rest of its life without a word of complaint.
+         `wantStakes` filters the bill as well and falls through to the pit, which honours it. And
+         either way the stakes ACTUALLY fought come back in the result, so a caller can assert on
+         what happened instead of on what it asked for. */
+      const want = o.wantStakes || null;
+      const wanted = want ? bill.filter(x=>x.stakes === want) : bill;
+      const pool = (want && wanted.length) ? wanted : (want ? [] : bill);
+      let offer = pool.length ? (o.pick ? o.pick(pool) : pool[0]) : null;
       /* ---- ROME IS NOT CAPUA, AND THIS ROPE USED TO FORGET IT ----
          The pit fallback below was guarded on `!d.city`, and a house at Rome has `d.rome` set with
          `d.city` still null — so a probe driving the imperial trip fell through to the CAPUAN PIT
@@ -146,7 +157,7 @@ export async function installRope(p){
       if(!offer && !d.city && !d.rome){
         if(!d.pitCard || d.pitCard.week !== d.week) A.makePitCard(d);
         const pm = A.pitMen(d) || [];
-        offer = A.makePitOffer(d, men[0], o.stakes || "standard", pm.length ? pm[0].id : null);
+        offer = A.makePitOffer(d, men[0], want || o.stakes || "standard", pm.length ? pm[0].id : null);
       }
       if(!offer && d.rome) return { ran:false, why:"at Rome with no card up this week", rome:true };
       if(!offer && d.city){
@@ -159,7 +170,8 @@ export async function installRope(p){
       const ids = offer.melee ? men.slice(0,3).map(g=>g.id)
                 : offer.pair  ? men.slice(0,2).map(g=>g.id)
                 :               [men[0].id];
-      return Object.assign({ offer, ids }, run(d, offer, ids, o));
+      return Object.assign({ offer, ids, stakes: offer.stakes,
+        gotWanted: want ? offer.stakes === want : null }, run(d, offer, ids, o));
     };
 
     window.__ROPE = { answer, run, takeBout, fit,

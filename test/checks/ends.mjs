@@ -335,11 +335,27 @@ export async function run({ p }){
                      buried. Counted over EVERY man who ever served, 8 houses of 400 weeks: best
                      career **43 wins**, best fame **2,414**, and **21 men clear `wins >= 10 &&
                      pfame >= 180` — 2.6 a house.** The rudis is reachable and always was.
-                     What actually blocks `closed` is the OTHER half of its gate: `freed > lost`.
-                     A house frees about 2.6 men a career and buries 68 to 154 of them. No house that
-                     fights can free more men than it buries, so the mercy ending cannot fire however
-                     many are freed — which is a different dial from the one I first named, and it is
-                     the roadmap's to settle.
+                     What blocked `closed` was the OTHER half of its gate, `freed > lost` — AND
+                     v2.91.0 TOOK THAT HALF OUT, on a measurement made with the policy the gate is
+                     written for rather than the butcher's policy that produced the figures above.
+                     20 houses of 600 weeks, fighting properly and freeing every man the moment he
+                     earns the rudis: `freed >= 5` came up 2 times in 20, at a median week 359, and
+                     `freed > lost` came up NONE. The two clauses are opposed — the rudis wants
+                     `wins >= 10 && pfame >= 180`, so a free-able man has fought a great deal, and a
+                     house that fights that much buries a median of 28. The only two houses that
+                     ever qualified freed 7 of 69 buried (10%) and 5 of 30 (17%), so the best mercy
+                     share real play produces is about a sixth and the clause asked for all of it.
+                     No ratio replaced it: anything between `freed*5` (admits neither) and `freed*10`
+                     (admits both, one by a single man) would be fitted to two data points, which is
+                     how `survive` got `MEN = 6`. The count is the mercy test.
+                     AND ONE BLOCKER REMAINS, newly measured and NOT fixed: `!alive` needs an
+                     emptied yard, and there are only four ways a man leaves — dead, freed (needs the
+                     rudis), retired (needs age 31 or a heavy burden of scars), or departed at the end
+                     of an auctor contract. **13 of 23 men standing in six real yards could be let go
+                     by none of them.** A lanista who wants to shut his house cannot; he can free the
+                     earners and retire the old, and the rest he keeps until they die. Giving him a
+                     way to release a man is a feature with its own balance questions — unrest, dodged
+                     deaths, dumping a bad buy — and it is the roadmap's to decide, not this check's.
          triumph     UNTESTED HERE. It is a choice on the road back from Rome, offered only to a
                      house that got there and won, and no arm in this check reaches fame 1,000.
 
@@ -377,13 +393,41 @@ export async function run({ p }){
         const at9 = A.rudisEligible(mock) === true;
         mock.wins = 10;
         const at10 = A.rudisEligible(mock) === true;
-        lines.push(`closed: the rudis wants 10 wins (at 9: ${at9}, at 10: ${at10}) and 2.6 men a house `
-          + `clear it — REACHABLE. What blocks \`closed\` is \`freed > lost\`: a house frees ~2.6 and `
-          + `buries 68 to 154, so it cannot free more than it buries however low the count goes`);
+        lines.push(`closed: the rudis wants 10 wins (at 9: ${at9}, at 10: ${at10})`);
         if(!at10)
           bad.push(`\`rudisEligible\` no longer passes a man with 10 wins — the bar has moved UP, and `
             + `the 2.6 freeable men a house measured in v2.89.0 is stale. Re-measure before trusting `
             + `the note above`);
+
+        /* ---- AND THE GATE ITSELF, ON A HAND-BUILT LEDGER, from v2.91.0 ----
+           `freed > lost` came out of the gate on the measurement in this check's header. That is a
+           claim about one `else if`, so it is held on a bench rather than a campaign: a house with
+           nobody alive and a ledger of N freed against M buried must end `closed` at five and must
+           NOT end it at four, whatever M is. The 5-against-30 and 7-against-69 rows are the exact
+           numbers of the only two houses in twenty that ever qualified. */
+        const gate = (freed, lost) => {
+          const g2 = A.newGameState("Cg", "clean", `ENDS-GATE-${freed}-${lost}`, null);
+          g2.gold = 3000; g2.week = 400;
+          g2.gladiators.forEach(x=>{ x.status = "dead"; });
+          g2.annals = [];
+          const row = (i, fate, extra) => Object.assign({ id:i, name:"x", nick:null, origin:"", cls:"Murmillo",
+            sex:"m", auctor:false, joined:1, left:300, fate, age:30, wins:12, losses:3, kills:1,
+            pfame:200, scars:2, amb:null, ambMet:false }, extra||{});
+          for(let i=0;i<freed;i++) g2.annals.push(row(9000+i, "freed"));
+          for(let i=0;i<lost;i++)  g2.annals.push(row(8000+i, "dead"));
+          try { A.weekReckoning(g2); } catch(e){ return "threw: " + e.message; }
+          return g2.over ? g2.over.kind : "no ending";
+        };
+        const G = { "5/30":gate(5,30), "7/69":gate(7,69), "5/0":gate(5,0), "4/0":gate(4,0), "0/40":gate(0,40) };
+        lines.push(`closed, on a hand-built ledger (freed/buried → ending): `
+          + Object.entries(G).map(([k,v])=>`${k} → ${v}`).join(" · "));
+        for(const k of ["5/30","7/69","5/0"]) if(G[k] !== "closed")
+          bad.push(`a house with nobody alive and ${k.split("/")[0]} men freed ended \`${G[k]}\` rather `
+            + `than \`closed\`. Five frees IS the whole gate since v2.91.0 — if a second clause has come `
+            + `back, the mercy ending is unreachable again and the header's measurement says why`);
+        for(const k of ["4/0","0/40"]) if(G[k] === "closed")
+          bad.push(`a house with ${k.split("/")[0]} men freed ended \`closed\` — the count of five is `
+            + `the bar and it has stopped biting`);
       }
       lines.push(`oldAge: needs age>=62 AND health>=45 AND an heir — 907 lanista-weeks at 62 or over `
         + `and health>=45 in NONE of them, with 1,135 weeks of succession instead. Written for a man `

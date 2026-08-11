@@ -1257,3 +1257,64 @@ sand's side of the comparison was already published in the source off 2,700 bout
 an effect, check whether either side of the comparison is deterministic.** And when a bar must rest on
 samples, compute what the samples can resolve first, and if the effect is inside the error say so in the
 line instead of asserting it.
+
+
+## Measure a gate with the policy the gate is written for
+
+`closed` fires on `freed >= 5 && freed > lost`, and I reported the second clause unreachable on figures
+of "frees 2.6, buries 68 to 154" — taken from the standard audit policy, which fights `standard` stakes
+and **never frees anybody**. That is a butcher's numbers used to judge a mercy gate.
+
+Re-run with a policy that actually tries — fight properly, free every man the moment he earns the rudis —
+the shape changed completely: buries dropped to a median 28, and the two houses in twenty that reached
+five frees managed mercy shares of 10% and 17%. The clause needs 100%. Same conclusion, different reason,
+and the *reason* is what tells you which dial to move: the rudis wants `wins >= 10 && pfame >= 180`, so
+the only way to earn a free-able man is to fight enough to bury others. The two clauses were opposed by
+construction, which no amount of measuring the wrong policy would ever have shown.
+
+Before reporting a gate unreachable, write down what the player would have to be DOING to open it, and
+then do that.
+
+## Do not fit a threshold to the two data points that survived
+
+`freed > lost` had to go. The obvious repair was a ratio, and the candidates priced out as: `freed*5 >
+lost` admits neither qualifying house, `freed*10 > lost` admits both — one of them by a single man. With
+exactly two houses in twenty ever reaching the count, choosing between 5 and 10 is choosing a constant
+from n=2. That is how `survive` came to carry `MEN = 6`, which then failed one healthy run in four.
+
+So the ratio was dropped rather than tuned. When a threshold can only be calibrated against a handful of
+survivors, prefer removing the coupled condition over inventing a number for it — and say in the source
+that you declined to tune it, or the next person will assume the absence was an oversight.
+
+## Read the man, not the ledger — the ledger is written later
+
+The mercy probe counted its own frees by comparing `houseRecord(d).freed` before and after each
+`grantRudis` call. It read **0 every single time**, across arms that freed twenty-four men. `grantRudis`
+sets `g.status = "freed"`; the `freed` tally counts *closed annals*, and `annalsSync` does not run until
+`endWeek`. The state was right and the counter was reading a field that had not been written yet.
+
+When you verify an action took effect, assert on what the action itself writes, not on a derived tally
+that some later pass will compute.
+
+## A cost is not a kindness
+
+The first hybrid arm answered every crux with `"cloth"`, on the reasoning that mercy is merciful. Throwing
+the cloth **spends the purse you just won** — the game's own charter says so — so the arm was not merciful,
+it was giving away every win it had. It died at week 48 of debt in 10 of 14 houses, with nobody alive long
+enough to earn a rudis, which then read as "the rudis is unreachable on a mercy policy".
+
+And it was answering the wrong question anyway: the cloth spares the OTHER house's man, and the gate being
+measured counts your own men freed. Before wiring an action into a policy, check both what it costs and
+whose outcome it changes.
+
+## An option that only reaches one code path is a lie about your policy
+
+`__ROPE.takeBout({ stakes: "blood" })` passed `stakes` to `makePitOffer` and nowhere else. When the arena
+bill had a card, the bout was fought at whatever stakes the bill set. So a "first blood" arm fought first
+blood while it was too poor for the bill and `standard` for the rest of its life — 1,739 blood bouts
+against 835 standard — and reported itself as a mercy policy throughout.
+
+The rope now honours `wantStakes` against the bill too, and every `takeBout` result reports the stakes
+ACTUALLY fought plus whether the request was met. **A harness option should either do what its name says
+everywhere, or hand back what really happened so the caller can check.** Asking is not getting, and a
+probe that cannot tell the difference will publish the request as the result.

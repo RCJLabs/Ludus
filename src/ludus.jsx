@@ -13914,6 +13914,15 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   if(imperial){
     res.beats.splice(1, 0, Object.assign({}, res.beats[0], { kind:"intro", actor:null,
       text:`The box above the sand is not a magistrate's. Whatever your patrons are worth in Capua, they are worth nothing here.` }));
+    /* ---- AND NEITHER IS YOUR VOICE, said out loud from v2.91.0 ----
+       `simulateFight` is called with `stopAtCrux: !offer.imperial`, so the imperial bout is the ONLY
+       bout in the game that never stops for an order. Measured: a crux comes up in 58.0%, 42.7% and
+       43.3% of ordinary cards by grade and 0.0% of imperial ones. A player who has learned across a
+       whole campaign that he can press, cover or wave a man off loses that lever at the exact moment
+       it is worth most, and nothing anywhere told him. The behaviour is left alone — it reads as the
+       intent, and it is of a piece with the line above — but it is no longer silent. */
+    res.beats.splice(2, 0, Object.assign({}, res.beats[0], { kind:"intro", actor:null,
+      text:`The crowd is too big and too far up to shout over. Whatever happens down there, ${g.name} will have to read it himself — no word of yours is going to reach him once it starts.` }));
   }
   const intro = [];
   if(offer.rematch) intro.push(`The crowd remembers their last meeting — this one has beaten your house before. Capua wants redemption, or blood.`);
@@ -15652,8 +15661,26 @@ function weekReckoning(d){
   if(!alive && d.gold<150) d.over = { kind:"ruin" };
   else if(d.flags.idleYard >= EMPTY_LIMIT && onTheBooks(d) === 0)
     d.over = { kind:"emptied", name:d.name, weeks:d.flags.idleYard, years:yearOf(d), gold:Math.round(d.gold) };
-  /* the game says mercy is the strongest long game; it should be able to end that way */
-  else if(!alive && houseRecord(d).freed >= 5 && houseRecord(d).freed > houseRecord(d).lost)
+  /* ---- THE GAME SAYS MERCY IS THE STRONGEST LONG GAME; IT SHOULD BE ABLE TO END THAT WAY ----
+     And until v2.91.0 it could not, because of the clause this one replaces: `freed > lost`.
+     MEASURED, 20 houses of 600 weeks on a policy written for this gate — fight properly, and free
+     every man the moment he earns the rudis instead of working him to death:
+       · `freed >= 5` is reachable but rare and late: 2 of 20 houses, at a median week 359.
+       · `freed > lost` was cleared by NONE of them, and cannot be. The rudis wants `wins >= 10 &&
+         pfame >= 180`, so a free-able man is by definition one who has fought a great deal — and a
+         house that fights that much buries a median of 28. The two clauses are in direct opposition:
+         the only way to earn the first is to fail the second.
+       · The only two houses that ever qualified freed 7 of 69 buried (10%) and 5 of 30 (17%). So the
+         best mercy share real play produces is about a sixth, and `freed > lost` asks for all of it.
+     A ratio was the obvious repair and it is not taken, because anything between `freed*5 > lost`
+     (which admits neither house) and `freed*10 > lost` (which admits both, one of them by a single
+     man) would be a threshold fitted to two data points — the exact mistake that put `MEN = 6` into
+     `survive` and cost a healthy run in four. The COUNT is already the mercy test: five men who each
+     reached ten wins and a name in the town, and who walked out instead of being kept. That is the
+     achievement, and a second clause no house in twenty can satisfy adds nothing but unreachability.
+     What is NOT claimed: that this makes the ending common. It still needs `!alive` — an emptied
+     yard — which means freeing the earners and retiring the rest as they pass 31. */
+  else if(!alive && houseRecord(d).freed >= 5)
     d.over = { kind:"closed", name:d.name, freed:houseRecord(d).freed, years:yearOf(d) };
 }
 
@@ -23768,6 +23795,28 @@ export default function App(){
                     <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",lineHeight:1.35}}>
                       House {me.watchedBy.house} has been at your wall. Whoever they send will know {me.name}'s work
                       before he steps on the sand, and the bookmakers have already taken it into account.
+                    </div>
+                  </div>
+                ); })()}
+              {/* ---- AND ROME TAKES THE DRILL AND SAYS NOTHING, until v2.91.0 ----
+                   `prepFor` returns 0 unless `offer.oppRef.fid` matches the man drilled against, and
+                   `makeImperialBout` sets `oppRef: null` — so a fighter carrying all six weeks of work
+                   has `prepEdge` 1.0 and is worth exactly 0.0 on the imperial sand. Measured. The block
+                   below hides itself when the edge is nought, so the player saw no line at all: he had
+                   spent six weeks at PREP_DRAG 0.62 of the man's own training and the game let him walk
+                   onto the highest card in the game believing it counted. It is not being made to count
+                   — the imperial man belongs to no house and there is nobody to have watched him — but
+                   the player is told, on the card, before he chooses. */}
+              {(()=>{ if(!me || !o.imperial) return null;
+                const pr = prepOf(me); if(!pr) return null;
+                return (
+                  <div className="panel" style={{padding:9,marginTop:8,background:"#1c1610",borderColor:"#7c2a22"}}>
+                    <div className="tag tag-blood" style={{marginBottom:4}}>The drill does not travel</div>
+                    <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",lineHeight:1.35}}>
+                      {me.name} has {prepWord(me)} of {pr.name} in him and it is worth nothing here. Rome's man
+                      belongs to no house in the bay, nobody has ever watched him, and there is no habit of his
+                      that anyone in Capua could have taught {PR(me).him} to answer. Whatever he does on this sand
+                      he does off his own numbers.
                     </div>
                   </div>
                 ); })()}

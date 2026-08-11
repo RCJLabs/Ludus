@@ -1392,6 +1392,76 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v2.91.0 — The mercy ending's second clause could not be satisfied, and Rome stops taking two things silently
+
+Three recommendations from v2.90.0, carried out. Two of the three turned out to need measuring before
+implementing, and one of them changed shape entirely once measured.
+
+**THE `closed` GATE HAD TWO CLAUSES IN DIRECT OPPOSITION.** `closed` fired on `!alive && freed >= 5 &&
+freed > lost`, under a source comment saying "the game says mercy is the strongest long game; it should
+be able to end that way". My earlier figures for it — frees ~2.6, buries 68 to 154 — came from the
+standard audit policy, which fights `standard` stakes and **never frees anybody**. Measuring a mercy gate
+with a butcher's policy is the same fault as measuring the rebellion with a probe that never touched the
+cells, and it is on the list of things this project keeps doing.
+
+Re-measured with the policy the gate is written for — fight properly, and free every man the moment he
+earns the rudis instead of working him to death — 20 houses of 600 weeks:
+
+| | result |
+|---|---|
+| `freed >= 5` | **2 of 20 houses**, at a median week **359** |
+| `freed > lost` | **0 of 20**, and it cannot be |
+| the only two qualifying houses | freed 7 of 69 buried (**10%**) · freed 5 of 30 (**17%**) |
+
+The clauses are opposed by construction: the rudis wants `wins >= 10 && pfame >= 180`, so a free-able man
+has fought a great deal, and a house that fights that much buries a median of 28. **`freed > lost` asks
+for a mercy share of 100% when the best real play produces is about a sixth.**
+
+**`freed > lost` is removed and no ratio replaces it.** Anything between `freed*5 > lost` (admits neither
+qualifying house) and `freed*10 > lost` (admits both, one of them by a single man) would be a threshold
+fitted to two data points — which is exactly how `survive` came to carry `MEN = 6` and fail one healthy
+run in four. The count is already the mercy test: five men who each reached ten wins and a name in the
+town, and who walked out instead of being kept. `ends` now holds the gate on a hand-built ledger — five
+freed against thirty buried must end `closed`, four must not — so it cannot silently close again.
+
+**AND A SECOND BLOCKER, FOUND WHILE MEASURING AND DELIBERATELY NOT FIXED.** `!alive` needs an emptied
+yard, and there are only four ways a man leaves a house: dead, freed (needs the rudis), retired (needs age
+31 or a heavy burden of scars), or departed at the end of an auctor contract. Counted across six real
+yards, **13 of 23 men could be let go by none of them.** A lanista who wants to shut his house cannot: he
+frees the earners, retires the old, and keeps the rest until they die — which is the opposite of the
+ending's own text, "You free the last of them on a Tuesday". Giving him a way to release any man is a
+feature with real balance questions attached (dumping unrest, dodging deaths, discarding a bad buy), so it
+is written down rather than added. `closed` is now reachable-in-principle and still undemonstrated in play.
+
+**ROME TAKES TWO THINGS AND NOW SAYS SO.** Both were measured in v2.90.0 and recorded; neither behaviour
+is changed, because both read as the intent. What is changed is that the player is told.
+
+- **The drill does not travel.** `prepFor` returns 0 unless `offer.oppRef.fid` matches the man drilled
+  against, and `makeImperialBout` sets `oppRef: null` — so a fighter carrying all six weeks of work has
+  `prepEdge` 1.0 and is worth **exactly 0.0** on the imperial sand. The panel that shows the drill hides
+  itself when the edge is nought, so the player saw *no line at all* after spending six weeks at
+  `PREP_DRAG` 0.62 of the man's own training. The imperial card now carries a panel saying the work does
+  not transfer, before he chooses.
+- **No word of yours reaches him.** `simulateFight` is called with `stopAtCrux: !offer.imperial`, making
+  the imperial bout the only bout in the game that never stops for an order — a crux comes up in 58.0%,
+  42.7% and 43.3% of ordinary cards by grade and **0.0%** of imperial ones. A second intro beat says so.
+
+**A HARNESS FAULT THAT HAD BEEN QUIETLY MISREPORTING POLICY.** `__ROPE.takeBout`'s `stakes` option was
+passed to `makePitOffer` and **nowhere else**, so a probe asking for `blood` got first blood only while
+the house was too poor for the arena bill, and whatever the bill happened to offer for the rest of its
+life. The first mercy measurement was built on it and read 1,739 blood bouts against 835 standard without
+complaining. `wantStakes` now filters the bill as well, and the result reports the stakes **actually
+fought** plus a `gotWanted` flag, so a caller can assert on what happened rather than on what it asked
+for. `stakes` is left alone so no existing check changes meaning.
+
+**Two more instrument faults of mine, both in the same measurement.** The mercy probe counted frees by
+reading `houseRecord().freed` before and after `grantRudis` — but that tally comes off closed annals and
+`annalsSync` does not run until `endWeek`, so it read 0 every time however many men actually walked out.
+Read the man (`g.status === "freed"`), not the ledger. And its first hybrid arm answered every crux with
+`"cloth"`, which **spends the purse you just won** — that is not a mercy policy, it is a policy of giving
+away every win, and it died at week 48 of debt in 10 of 14 houses with nobody alive long enough to earn a
+rudis. The cloth spares the *other* house's man and has nothing to do with the gate being measured.
+
 ### v2.90.0 — The odds panel was recommending the worst order, and the imperial sand was never unwinnable
 
 #121. One real fault in the game, seven in my own instruments, and the answer to the last measurable
@@ -5398,4 +5468,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.90.0*
+*Last updated: v2.91.0*
