@@ -1392,6 +1392,45 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v2.97.0 — Two audit items withdrawn, one as a duplicate and one as refuted
+
+Two of the ten items from the v2.93.0 audit come off the list without a fix, and both withdrawals are
+worth recording because they are failures of the audit rather than findings about the game.
+
+**ITEM 5, "six feats never earned", WAS A DUPLICATE OF WORK THE SUITE ALREADY HELD.** The v2.93.0 sweep
+reported `threefree`, `cloth`, `forge`, `circuit`, `munera` and `rome` unearned. Reading their tests, five
+are things the reference player does not do — free three men, throw the cloth, forge a piece, tour every
+coastal town, hold games for three of your own dead. And the `feats` check already says so on its face,
+from v2.53.0: *"The obvious reading was that they are out of reach. They are not. The same eight seeds
+under a policy that deliberately went after all five earned every one of the nineteen, four inside the
+first fifty weeks."* Its `describe` is literally "all nineteen are reachable, and the sheet says how
+close". I listed as new an item the suite had closed long ago, because I read a sweep's output instead of
+the check that owns the area. **Before adding an audit item about coverage, read the check whose subject
+it is.**
+
+**ITEM 9, "Rome demands a mean-92 man and never says so", IS REFUTED — it says so plainly.** The single
+bout panel prints the bookmakers' price off `winChance` at line 23932. Measured, for a house standing on
+the imperial sand:
+
+| the house brings | its best man | the bill's man | quoted | what the panel prints |
+|---|---|---|---|---|
+| five men off the block | 72.8 | 98.6 | 2.5% | **"35.20 to 1 on him"** |
+| the same, +22 a stat | 79.8 | 98.6 | 2.5% | "35.20 to 1 on him" |
+| a best man at mean 92 | 92 | 97.8 | 9.2% | "9.60 to 1 on him" |
+| a best man at the ceiling | 99 | 98 | 13.3% | "6.60 to 1 on him" |
+
+Thirty-five to one is not a game withholding information. The item is withdrawn.
+
+**AND THE LAST ROW IS THE USEFUL PART.** A man at mean 99 against the bill's mean 98 quotes **13.3%**, not
+the ~46% that v2.90.0 measured for a MIRROR at the same venue. The difference is everything that is not a
+stat: that man came off the block, so he carries a block man's fame, morale and kit against an imperial
+man at pfame ~91. It is exactly #121's decomposition — fame worth +11.6 points of win rate through
+`mobHis`, morale +10 to +12 — and it means **six stats at the ceiling are not an imperial contender.** The
+quote is telling the truth about that, and the truth is harsher than the stat line looks.
+
+`oddsFor` and `oddsWord` go on the handle, since the bookmakers' line is how the game actually tells a
+player what he is walking into and no check could read it.
+
 ### v2.96.0 — Three answers, and two of them correct something I had already written down
 
 No game code changed. Three measurements: one closes a suspected regression, one revives an ending this
@@ -5754,4 +5793,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.96.0*
+*Last updated: v2.97.0*

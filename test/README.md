@@ -1483,3 +1483,14 @@ houses.
 Neither defect alone would have looked like much. Together they made a reachable ending look impossible,
 and the write-up that followed reasoned confidently about health decay curves that were never the issue.
 When a conclusion rests on a probe doing several things right, list them and check each one.
+
+## Read the check that owns the area before filing a coverage item
+
+A sweep reported six feats never earned, and I put it on the audit list as a new item. `feats` — the check
+whose entire subject is those nineteen feats — already opens with the answer: five of them were reported
+unreachable in v2.53.0, a policy that went after them earned all nineteen, and two of the original
+"findings" were the probe's own doing. Its `describe` reads "all nineteen are reachable".
+
+A sweep tells you what one policy did. A check tells you what has already been established. When the two
+disagree, the check is usually right and the sweep is usually a policy artefact — so read it first, and
+save the item for something the check does not already cover.

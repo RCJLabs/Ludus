@@ -24412,6 +24412,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        this one function, and none of them had ever fired in any measured house. It was not on the
        handle, so no check could ask it directly whether its gates open. */
     familyWeek, childAge, livingKids, marryReady,
+    /* the bookmakers' price, which is how the panel actually tells a player what he is walking into */
+    oddsFor, oddsWord,
     REP_ORDER, REP_KINDS,
     REP_SETTLE, REP_KEEP, REP_TAKE, REP_FLOOR,
     /* the lanista's climb: the rungs, the gates, and what standing pays and costs */
