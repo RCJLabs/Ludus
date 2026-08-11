@@ -75,6 +75,7 @@ reason the check exists usually has not.
 | `sand` | slow | thirteen checks called `doFight` and every one drove the engines in memory; four drove a browser and none reached the sand, so the most-looked-at screen in the game had no test — which is why a React key fault living on the bout wizard was found by a scratch probe photographing an axe |
 | `draw` | fast | the week asks one question, chosen by the first event whose `make` fires from a shuffled key list — and the shuffle was `sort(()=>R()-0.5)`, the classic broken one, in a file that already contained a correct Fisher–Yates used in nine other places. What the game asked you depended on where in the file the event was written. Holds the shuffle uniform AND the statistic that actually decides it, the first *eligible* key, because the first-position figure overstates the fault four-fold |
 | `probe` | fast | the audit's own instrument — a check that reads the other checks. The fight engines return at `res.unfinished` before crediting anything and mutate nothing, and nine of the nineteen checks that drive a bout were losing between a quarter and two thirds of their evidence to it. Fails any check that names an engine without resolving to exhaustion, reading each `if(… .crux …)` site rather than the file, because answering with the cloth ends the bout and is correct. One of its rules was taken back out for flagging seven right answers against one wrong one. Since v2.90.0 it also fails any check that reads `.unfinished` off a `do*` result, which is the wrong layer's field and scores every held bout a loss |
+| `school` | fast | the six doctrines of the house. Each declares, charges its listed price, changes for 1.8x the new school's price, reads every numeric field back through `docNum`, answers `docIs` on its KEY, and moves the factions its table names — with the field list DERIVED from each entry rather than written into the check. Plus the reason it exists: `d.doctrine` was non-null in 0 of ~5,000 measured house-weeks, so the week's agenda must raise it for a solvent house and leave a poor one alone |
 | `odds` | fast | the arena panel's own number against the sand. Holds three things: a MIRROR — two men identical in all six stats, class, kit, traits, heart, morale, record and fame — landing a shade under half, which is what `FOE_EDGE` 1.029 predicts and which is this check's instrument before it is a bar; the shape of a held bout's return, so `crux`-versus-`unfinished` cannot be confused again; and the ranking `winChance` recommends for all six classes, asserted on the pure function with no sampling in it, because the realised version of that bar flipped between runs at n=150 |
 | `bay` | fast | the two coastal scales, neither of which had ever been toured — #115. Favour is a ratchet that opens every town on "an outsider" and climbs only on bouts fought there, and its bottom word is reachable ONLY through `cityServed`'s defeat branch at Neapolis; `knownIn` bleeds 0.55 a week and is pegged at 100 by a round robin. Also holds the branch neither of my arms could reach: the bay taken by a rival after 30 idle weeks, and given back only by turning up |
 | `steel` | fast | wear — the one system where the probe was wrong FOUR separate ways. #114 read `d.gearCond`, which is the pool of pieces on the SHELF, and concluded steel never wears; read off the man in `g.wear[slot]` a bout takes 3-6 off a weapon, all five words are said and pieces break. Holds the rate against `WEAR_RATE`, the five words off a piece driven to nothing, the break on the game's own chronicle line, the bands a played house sees, a man's career against his weapon's life, and — the trap that cost the most — that a bout held at the balance has changed nothing while the same bout answered changes the kit |
@@ -1368,3 +1369,52 @@ house except the one that had never looked at the books afterwards.
 
 Fault density is not uniform. When a system has a path that fires once per campaign at most, assume its
 invariants have never been tested and go and read them.
+
+
+## Write the competent policy once, or every sweep measures the probe
+
+Asked to audit for new items, I wrote a reachability sweep and it reported 13 events, 9 feats and 14
+subsystems dark. Then I read its own header: median life **108 weeks**, 6 of 16 houses in `ruin`, median
+fame 974. Almost every "never" was the probe declining to act.
+
+It took three attempts to write a policy that plays: no `wantStakes` (so purse-maximising steered into
+*sine missione*), buying the cheapest man every time, spending on nothing, never chasing the primacy —
+then an overcorrection that bought the priciest affordable man behind a flat 400d reserve and died at
+week 27 with 7 of 16 in debt. A flat reserve is not a reserve; the weekly bill grows with the roster.
+Scaled to twelve weeks of the bill: median 157 weeks, fame 1286, 48 of 57 events, all five rooms at
+level 4, the census to rung 7, 22 imperial campaigns.
+
+**A reachability claim is a claim about a policy.** Before reporting anything as unreachable, print what
+the policy DID — actions taken, coin spent, stakes actually fought — and check the house survived long
+enough to reach the thing you say it cannot reach.
+
+## `agendaCan` is not the agenda
+
+The week's advice is assembled by `agenda(d)`, which calls four contributors: `agendaCan`,
+`agendaSquare`, `agendaSchool`, `agendaGods`. A check that drives `agendaCan` alone sees a fragment and
+reports everything else as missing — which is exactly what happened after the doctrine nudge shipped:
+the nudge was live, the panel rendered it, and the check said it was absent.
+
+Find the function the UI actually calls, and drive that. Grepping the source of one contributor for a
+word is two mistakes stacked: the wrong function, and text instead of behaviour.
+
+## Derive the field list from the data, not from your memory of it
+
+I checked a hardcoded list of doctrine multipliers and reported "The Travelling School names no
+multipliers." It names four. I listed five building names from memory and reported two rooms as never
+built; `BUILDINGS` has five keys and mine were invented Latin. I tested a predicate through `.tag` when
+it compares `.key`, and got three passes and three false failures out of one wrong field.
+
+Three faults, one shape: **the check knew the schema better than the schema did.** Enumerate
+`Object.keys` of the thing under test and let it tell you what it has. A check that repeats a list is a
+list that can fall behind.
+
+## An extreme result is evidence about the probe, and 3.2% is not 40%
+
+The sweep found 26 imperial campaigns and 62 bouts with none won, which would have overturned the
+previous release's "the summit is fair and reachable". Before writing that up: the probe's men were mean
+stat 65–80 against an imperial bill of 94.7, and the game's own `winChance` quoted its best man at
+**3.2%** going forward. Nought in 62 at that rate has a 13% chance — ordinary luck.
+
+The quote was available the whole time and costs one call. **When an outcome looks impossible, ask the
+game what it expected before deciding the game is wrong.**

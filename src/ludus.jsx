@@ -2466,6 +2466,25 @@ function agendaSquare(d, add){
     can ? `${can.name} is asking ${can.fee}d — every man would train faster for it`
         : `the square is asking ${ask}d and you have ${rnd(d.gold)}d`);
 }
+/* ---- THE SCHOOL OF THE HOUSE, WHICH NOTHING EVER MENTIONED, added in v2.93.0 ----
+   Six doctrines, each with a price and a table of multipliers the fight engine and the week read
+   through `docNum` and `docIs` — training rates, purses, the odds of sine missione, unrest, injuries,
+   missio, how fast local standing builds. MEASURED: `d.doctrine` was non-null in 0 of roughly 5,000
+   house-weeks, across three sweeps, including a policy that hired the doctore, built all five rooms
+   to level 4, hired the medicus and the armourer, swore 249 vows, claimed the census to rung 7 and
+   made 22 imperial campaigns. The system is sound — `school` holds all six — and it was simply never
+   found, because no line in the game pointed at it.
+   It is raised once the house is past its first scramble and can pay for one: a doctrine costs 300 to
+   500 denarii, and asking a house that cannot feed itself to pick a philosophy is the `agendaCan`
+   fault this project has already priced once, where advice goes quiet exactly when it is needed. */
+function agendaSchool(d, add){
+  if(d.doctrine || d.city || d.travel || d.rome) return;
+  if(d.week < 12) return;                       /* the opening has louder problems */
+  const cheapest = Math.min(...DOC_KEYS.map(k=>DOCTRINES[k].cost));
+  if(d.gold < cheapest + weeklyBill(d) * 6) return;
+  add(1, "villa", "This house teaches no particular thing",
+    `six schools, ${cheapest}d and up — one of them is the way you already fight`);
+}
 function agendaGods(d, add){
   if(d.city || d.travel || d.rome) return;
   const pi = pietyOf(d);
@@ -2796,6 +2815,7 @@ function agenda(d){
     else if(wrong.length > 1) add(1, "armory", `${wrong.length} men are carrying the wrong thing`, "none of it is their style"); }
   for(const m of unhonoured(d)) if(!m.done)
     add(2, "villa", `${m.name} is not buried properly`, `${RITE_WINDOW-(d.week-m.week)} weeks to decide`);
+  agendaSchool(d, add);
   agendaGods(d, add);
   agendaCan(d, add);
   /* the town */
@@ -24366,6 +24386,12 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        without the leader, the totals and the four thresholds — see `chair`. */
     repLeader, repTotal, repOf, repShare, repSettle, repWeek, staffWeek, STAFF_KEYS,
     declareDoctrine, DOCTRINES,
+    /* ---- AND THE TWO READERS, added in v2.93.0 ----
+       Six doctrines carry a table of multipliers the fight engine and the week both read through
+       `docNum` and `docIs`. Neither was on the handle, so no check could ask whether a declared
+       doctrine is actually seen by the things it claims to change. `d.doctrine` was non-null in 0 of
+       ~5,000 measured house-weeks, so nothing had ever been declared either. */
+    docNum, docIs,
     REP_ORDER, REP_KINDS,
     REP_SETTLE, REP_KEEP, REP_TAKE, REP_FLOOR,
     /* the lanista's climb: the rungs, the gates, and what standing pays and costs */

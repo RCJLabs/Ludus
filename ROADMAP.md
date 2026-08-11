@@ -1392,6 +1392,75 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v2.93.0 — Six schools of the house, every one of them live, and no house had ever declared one
+
+A fresh audit sweep, the first item off it built, and four instrument faults of mine on the way.
+
+**A COMPETENT POLICY TOOK THREE ATTEMPTS TO WRITE, and that is a finding about this audit.** Asked for
+ten new items, the first sweep reported 13 events, 9 feats and 14 subsystems dark — then its own header
+line read median life **108 weeks**, 6 of 16 houses in `ruin`, median fame 974. A house dead at week 108
+cannot reach Rome, cannot afford a building and will never see a second generation, so almost every
+"never" was the probe declining to act. Four things were wrong with it: no `wantStakes` (so a
+purse-maximising pick steered into *sine missione* cards), it bought the CHEAPEST man every time, it never
+spent on anything, and it never chased the primacy. Version two overcorrected — a flat 400d reserve behind
+the priciest affordable man — and died at **week 27** with 7 of 16 in debt. Version three, with the reserve
+scaled to twelve weeks of the bill, reaches **median 157 weeks, fame 1286, 48 of 57 events, all five rooms
+at level 4, the census to rung 7 and 22 imperial campaigns.**
+
+| sweep | median life | median fame | events firing | buildings |
+|---|---|---|---|---|
+| passive | 108w | 974 | 44 of 57 | none built |
+| reckless | 27w | 90 | 43 of 57 | all five |
+| a lanista | **157w** | **1286** | **48 of 57** | all five at level 4 |
+
+**AND THE ITEM IT FOUND: `DOCTRINES`.** Six schools of the house — The Heavy Shield, The Small Shield, The
+Red School, The Long Apprenticeship, The Open Hand, The Travelling School — each with a price of 300 to
+500 denarii, a creed, faction moves, and a table of multipliers that the fight engine and the week read
+through `docNum` and `docIs`: training rates, purses, the odds of sine missione, unrest, injuries, missio,
+regard, fame, and how fast local standing builds down the bay.
+
+**`d.doctrine` was non-null in 0 of roughly 5,000 measured house-weeks** — across all three sweeps,
+including the one that hired the doctore, built every room to level 4, hired the medicus and the armourer,
+swore 249 vows, claimed the census to rung 7 and went to Rome twenty-two times. Nothing in the game
+pointed at it, so a competent player never found it.
+
+**The system is sound, which had to be proved BEFORE pointing anyone at it** — a signpost to a broken
+feature is worse than no signpost. All six declare, all six charge their listed price, changing costs the
+new school's price × 1.8, every numeric field reads back through `docNum` exactly, `docIs` answers on the
+key, and every faction moves the way its table says. So the fix is a nudge, not a repair:
+`agendaSchool` raises it once past week 12 and once the house can pay for one without eating its reserve
+— never in the opening, and never to a house that cannot afford the cheapest.
+
+**A new 52nd check, `school`,** holds all of that, and derives its field list from each doctrine's own
+entry rather than a list in the check.
+
+**FOUR INSTRUMENT FAULTS, and the last one corrects a standing misconception.**
+
+1. **`docIs` compares the KEY, not the tag.** I tested `docIs(d, D.tag)` and got false for scutum, parma
+   and road — while blood, craft and mercy passed because their key happens to equal their tag. Three
+   passes and three "failures" out of one wrong field.
+2. **A hardcoded field list reported "The Travelling School names no multipliers."** It names four —
+   `knownMult`, `strangeCut`, `travelCut`, `capuaDecay` — none of which were in my list.
+3. **`balneae` and `carceres` "never built"** was five invented room names in my own build order.
+   `BUILDINGS` has exactly five keys and I had guessed at Latin.
+4. **`agendaCan` IS NOT THE AGENDA.** It is one of four contributors — `agendaCan`, `agendaSquare`,
+   `agendaSchool`, `agendaGods` — and `agenda(d)` is the aggregator the panel renders. The check drove
+   `agendaCan`, saw no school item, and reported the nudge missing after it had shipped. Worth knowing
+   for **#119**, which measured the feast's offer through `agendaCan` alone.
+
+**AND ONE REFUTATION WORTH MORE THAN A FINDING.** The sweep showed 26 imperial campaigns and **62 bouts
+with none won**, which would have overturned v2.90.0's "the summit is fair and reachable". It does not: the
+probe's men were mean stat **65–80** against a bill of **94.7**, and the game's own quote for its best man
+going forward was **3.2%**. At that rate, nought wins in 62 has a 13% chance — luck, not a fault. `d.mark`
+"never set" was the same kind of artefact: it is a within-week scratch ledger that `afterWeek` moves to
+`d.after` and nulls, so reading it after `endWeek` always shows null.
+
+**Nine remaining items are recorded and not built,** ranked, in the audit list: the eight other sweep
+findings plus the per-bout measurement `blood` needs. `blood` promises purses ×1.18 and produced 374d a
+bout against 530d with no school — not an inversion but a confound, since it also adds 0.16 to the odds of
+sine missione, so the house fights deadlier cards and earns less at a lower tier. Pricing it properly
+needs one identical bout fought with and without.
+
 ### v2.92.0 — A sold man was never gone, and `closed` fires after all
 
 Two corrections and one live fault, all from one question I should have asked a release earlier: can you
@@ -5544,4 +5613,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.92.0*
+*Last updated: v2.93.0*
