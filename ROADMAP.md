@@ -1392,6 +1392,36 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v2.88.0 — The rope thought Rome was Capua
+
+A fault in the test harness, found while driving the last unreached ending. No game code changed.
+
+The shared rope added in v2.81.0 falls through to the Capuan pit when the arena bill is empty, because
+#116 measured that a probe reading only the bill fights almost nothing. That fallback was guarded on
+`!d.city` — and **a house at Rome has `d.rome` set with `d.city` still null.**
+
+So a probe driving the imperial trip fought pit bouts in Capua on every week the imperial card was not
+up, then read `d.rome.won` and found nought. It came within one run of being written up as *the
+imperial sand is unwinnable*: six houses of quality-92 men, 0 of 18 bouts won, a clean-looking figure
+taken from the wrong venue.
+
+Fixed: there is no fallback at Rome. `romeWeek` puts the card up, and if it is not there this week the
+answer is that there is no bout — the rope returns `{ ran:false, why:"at Rome with no card up this
+week" }`. Driven again, a trip is **three imperial bouts fought and two weeks honestly reported as
+empty**, where before those two weeks were bouts somewhere else.
+
+**AND THE ENDING ITSELF IS PROVED, WITH THE MATCHUP LEFT OPEN.** `triumph` needs `won >= 2` of the
+three, and then choice 1 on the homecoming. Forcing the win count and taking the laurel ends the run in
+triumph **6 of 6**; the same houses answering with choice 0 end **0 of 6** and play on. So the twelfth
+ending exists and the choice is what fires it. Whether a house can actually take two of three on the
+imperial sand is a separate question — **0 of 18 with the venue bug fixed** — and it is NOT claimed
+here, because the men were hand-built and nothing has yet read what is across from them. That is the
+next item, not this one.
+
+The general lesson is in `test/README.md`: every fallback encodes an assumption about which venue the
+house is standing in, and it fails by producing plausible numbers from the wrong place rather than by
+erroring.
+
 ### v2.87.0 — The survive bar is fine, and the one-in-four figure was mine off four samples
 
 Task #50, closed by measurement, and it refutes my own alarm.
@@ -5231,4 +5261,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.87.0*
+*Last updated: v2.88.0*

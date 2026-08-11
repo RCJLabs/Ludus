@@ -1130,3 +1130,19 @@ Second: the samples were free. Every full-suite run logs one `survive` result, a
 thirty-five of them sitting in scratch logs. A variance question about a slow check almost never needs a
 dedicated sweep — it needs somebody to read what is already on disk. Fifty minutes of runtime was
 budgeted for this and none of it was necessary.
+
+## A fallback is a claim about where you are
+
+The shared rope falls through to the Capuan pit when the arena bill is empty, because #116 measured
+that a probe reading only the bill fights almost nothing. That fallback was guarded on `!d.city` — and
+a house at Rome has `d.rome` set with `d.city` still null.
+
+So a probe driving the imperial trip fought CAPUAN PIT BOUTS on any week the imperial card was not up,
+and then read `d.rome.won` and reported nought. It very nearly became "the imperial sand is unwinnable".
+The rope now refuses to substitute at Rome and returns `{ran:false, why:"at Rome with no card up this
+week"}` instead: three bouts fought per trip, two weeks honestly reported as empty.
+
+The general form: every fallback encodes an assumption about which venue the house is standing in. When
+a new venue arrives — a town, Rome, anywhere with its own card — the fallbacks written before it are
+silently wrong, and they fail by producing plausible numbers from the wrong place rather than by
+erroring. Enumerate the venues, not just the two you were thinking about.

@@ -135,11 +135,20 @@ export async function installRope(p){
         return o.singlesOnly ? !(x.melee || x.pair || x.venatio) : true;
       });
       let offer = bill.length ? (o.pick ? o.pick(bill) : bill[0]) : null;
-      if(!offer && !d.city){
+      /* ---- ROME IS NOT CAPUA, AND THIS ROPE USED TO FORGET IT ----
+         The pit fallback below was guarded on `!d.city`, and a house at Rome has `d.rome` set with
+         `d.city` still null — so a probe driving the imperial trip fell through to the CAPUAN PIT
+         whenever the imperial card was momentarily empty, and then reported what it found there as
+         what happened at Rome. It cost a `triumph` probe its headline: `d.rome.won` sat at nought and
+         read as "the imperial sand is unwinnable" when the house had been fighting at home.
+         There is no fallback at Rome. `romeWeek` puts the card up; if it is not there this week,
+         the answer is that there is no bout, not that there is one somewhere else. */
+      if(!offer && !d.city && !d.rome){
         if(!d.pitCard || d.pitCard.week !== d.week) A.makePitCard(d);
         const pm = A.pitMen(d) || [];
         offer = A.makePitOffer(d, men[0], o.stakes || "standard", pm.length ? pm[0].id : null);
       }
+      if(!offer && d.rome) return { ran:false, why:"at Rome with no card up this week", rome:true };
       if(!offer && d.city){
         A.makeCityGames(d);
         const town = ((d.games && d.games.offers) || []).filter(x=>
