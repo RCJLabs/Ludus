@@ -13914,13 +13914,9 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   if(imperial){
     res.beats.splice(1, 0, Object.assign({}, res.beats[0], { kind:"intro", actor:null,
       text:`The box above the sand is not a magistrate's. Whatever your patrons are worth in Capua, they are worth nothing here.` }));
-    /* ---- AND NEITHER IS YOUR VOICE, said out loud from v2.91.0 ----
-       `simulateFight` is called with `stopAtCrux: !offer.imperial`, so the imperial bout is the ONLY
-       bout in the game that never stops for an order. Measured: a crux comes up in 58.0%, 42.7% and
-       43.3% of ordinary cards by grade and 0.0% of imperial ones. A player who has learned across a
-       whole campaign that he can press, cover or wave a man off loses that lever at the exact moment
-       it is worth most, and nothing anywhere told him. The behaviour is left alone — it reads as the
-       intent, and it is of a piece with the line above — but it is no longer silent. */
+    /* AND NEITHER IS YOUR VOICE: `stopAtCrux: !offer.imperial` above makes this the only bout in the
+       game that never stops for an order — 0.0% of imperial cards against 33-58% of ordinary ones.
+       Unchanged, but no longer silent. Measured in v2.91.0; see `odds` and the roadmap. */
     res.beats.splice(2, 0, Object.assign({}, res.beats[0], { kind:"intro", actor:null,
       text:`The crowd is too big and too far up to shout over. Whatever happens down there, ${g.name} will have to read it himself — no word of yours is going to reach him once it starts.` }));
   }
