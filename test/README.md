@@ -1327,3 +1327,44 @@ The rope now honours `wantStakes` against the bill too, and every `takeBout` res
 ACTUALLY fought plus whether the request was met. **A harness option should either do what its name says
 everywhere, or hand back what really happened so the caller can check.** Asking is not getting, and a
 probe that cannot tell the difference will publish the request as the result.
+
+
+## "There is no way to do X" needs a search, not two failed candidates
+
+I reported that a lanista cannot let go of a man who has not earned the rudis, and put the missing action
+up as a design decision. It exists. `sellMan` — the roster's "Sell Him On" — takes any man who is not
+damnatus and deletes him from the roster outright.
+
+How the claim got made: I grepped `rudisEligible` and `retireEligible`, found both narrow, and stopped.
+Then I grepped `function sellG` and got nothing, because `sellG` is a closure inside the component, not a
+top-level function. Two negative results on names I had guessed, and I wrote "by no means the game offers".
+
+A claim that something is IMPOSSIBLE is the strongest kind you can make about a codebase and it needs the
+widest search, not the narrowest. Grep the domain word (`sell`, not `sellG`), grep the UI for the button
+a player would press, and enumerate the possible values of the field that records the outcome — here
+`GONE` and the annals `fate` list would each have handed me the answer in one line.
+
+## Enumerate the states, and check the predicate knows all of them
+
+`GONE = ["dead","freed","escaped","retired","departed"]` — five ways out of a house. There are six. A man
+sold by `sellTheHouse` gets `status = "sold"` and was `!isGone` for ever, so `onTheBooks` went on counting
+him: a stripped seven-man house read **active 1, on the books 7**.
+
+It never showed for the other sale path, because `sellMan` deletes the row and a deleted man needs no
+status. One producer of a state was consistent with the predicate and one was not, and the inconsistent
+one was the rarer path — the liquidation a house does once, if ever.
+
+When a predicate is a list of enum values, get the list of everything that WRITES that field and diff the
+two. The two sale paths here disposed of a man differently and neither was wrong on its own; the fault was
+only visible by comparing them.
+
+## The rarest path is where the stale assumption survives
+
+`onTheBooks` gates two things — the slaver who refills an empty yard, and the `emptied` ending. Both need
+it to reach zero. The only houses affected were the ones that had stripped themselves to the walls, which
+is content roughly one house in twenty ever sees. So the bug hit only players in the worst position, took
+away both their recovery and their ending, and could not be reached by any check because no check strips a
+house except the one that had never looked at the books afterwards.
+
+Fault density is not uniform. When a system has a path that fires once per campaign at most, assume its
+invariants have never been tested and go and read them.

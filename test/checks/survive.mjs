@@ -203,7 +203,33 @@ const MEN    = 3;
    put it, not when a run it caught looks survivable in hindsight.
    What IS on record now is the distribution, so the next person has the sample rather than an
    argument. If a build fails this check, look at the pair before believing it: (1, 4) and (2, 3)
-   are inside measured ordinary variance, and a real gutting drives both to nothing.  */
+   are inside measured ordinary variance, and a real gutting drives both to nothing.
+
+   ---- AND v2.92.0 DREW THE WORST HAND YET, WHICH SHARPENED THE DIAGNOSIS ----
+
+   The v2.92.0 suite failed here at **(1 standing, 1 man)** — worse than anything in the twelve above,
+   and low enough to trip the `men < MEN` bar on its own. Three runs immediately after, same build:
+
+     (3, 8) PASS · (5, 6) PASS
+
+   so the tally on this build family is **2 failures in 15 runs, about one in eight**.
+
+   THE CHANGE IN THAT RELEASE WAS PROVED INERT BEFORE LUCK WAS BLAMED, which is the only honest order
+   to do this in. v2.92.0 added "sold" to `GONE`, and `isGone` is read in forty places — so the
+   question is whether a 26-week clean house can ever hold a man at `status === "sold"`. It cannot:
+   the whole file has exactly ONE producer of that status, `sellTheHouse`, and this check never strips
+   a house. Every other sale either deletes the row or writes `status = "departed"`. So `isGone`
+   returns the same answer for every man this check will ever see.
+
+   AND THE BAR IS STILL RIGHT — the SAMPLE is what is small. (1, 1) is not a threshold being too
+   strict; five houses holding one man between them IS a gutted opening on any reading. The check is
+   correctly describing the sample it was given, and the sample is drawn from a distribution wide
+   enough to produce that about one run in eight. The cure is therefore more houses, not a looser bar
+   — and that is the one thing this check cannot cheaply have: HOUSES is already 5 browsers, and the
+   note above records that 7 Chromiums on 4 cores started missing clicks and cost two false failures
+   of a different kind. Raising HOUSES trades a known false-failure mode for a worse one.
+   So: unchanged, again, and deliberately. A failure here is worth exactly one re-run before it is
+   worth investigating.  */
 const BOTH_MEN  = 5;   /* both weak together is the failure; either alone is a bad week */
 const BOTH_HOUSE = 2;
 const KEEP   = 4;    /* the yard a lanista tries to hold; below it, he goes to the block */

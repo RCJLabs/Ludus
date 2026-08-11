@@ -1392,6 +1392,60 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v2.92.0 — A sold man was never gone, and `closed` fires after all
+
+Two corrections and one live fault, all from one question I should have asked a release earlier: can you
+not simply sell a gladiator?
+
+**YOU CAN, AND MY "SECOND BLOCKER" DID NOT EXIST.** v2.91.0 recorded that `closed` was still unreachable
+in practice because 13 of 23 men in six real yards "could be let go by no means the game offers" — I had
+checked `rudisEligible` and `retireEligible`, found both narrow, and stopped looking. `sellMan`, reached
+from the roster as **"Sell Him On"**, takes any man who is not damnatus and deletes him from the roster
+outright. The release action I put up as a design decision has been in the game the whole time.
+
+**AND `closed` IS NOW DEMONSTRATED IN PLAY, not merely un-blocked.** Played the act the ending's own text
+describes — free every man who earns the rudis, then sell whoever is left — **it fired in 1 of 12 houses,
+at week 283, on five freed against thirty-one buried, having sold three men off from week 277.** Together
+with v2.91.0 dropping the unsatisfiable `freed > lost`, the mercy ending works end to end.
+
+**THE LIVE FAULT: "sold" WAS MISSING FROM `GONE`.** A man leaves a house six ways and only five were in
+the list. It never showed for `sellMan`, which deletes the row — but `sellTheHouse`, the liquidation, sets
+`m.status = "sold"` and leaves the row in place exactly as death and retirement do. So those men were
+`!isGone` for ever. Measured on a seven-man house stripped to the walls: roster 7, **active 1**, weekly
+bill correctly down to 10d — and **`onTheBooks` still reading 7**.
+
+That number gates exactly two things, and a house that has just sold everything it owns to stay alive is
+precisely the house that needs both:
+
+| gate | condition | what a stripped house lost |
+|---|---|---|
+| `slaverAtTheGate` | `idleYard >= 3 && onTheBooks(d) === 0` | the game's own way BACK from an empty yard |
+| the `emptied` ending | `idleYard >= EMPTY_LIMIT && onTheBooks(d) === 0` | the way OUT — it could not even finish |
+
+So the one house in twenty that takes itself apart could neither recover nor end. `"sold"` added to
+`GONE`; `onTheBooks` now reads 1 where it read 7. `activeG` reads `status === "active"` and is untouched,
+and the wage bill was already correct — this was the "has he left?" predicate alone.
+
+`stall` is the only check that strips a house, so the tripwire lives there: after `sellTheHouse`, active
+and on-the-books must agree, and it fails loudly if `"sold"` drops out of `GONE` again.
+
+**Also on the handle:** `GONE`, `isGone` and `onTheBooks`. All three were dark, which is why nobody
+noticed that a predicate deciding whether a man has left the house was missing one of the six ways out.
+
+**AND `survive` DREW ITS WORST HAND YET IN THIS RELEASE'S SUITE — 50 of 51.** It failed at **(1 standing,
+1 man)**, below anything in the twelve-run distribution measured a release earlier. Before blaming luck the
+change was proved inert: v2.92.0's only game edit is `"sold"` added to `GONE`, and the whole file has
+**exactly one producer of `status === "sold"`** (`sellTheHouse`), which this check never calls — so
+`isGone` returns the same answer for every man it will ever see. Re-run three times on the same build:
+(3, 8) pass, (5, 6) pass. That puts the tally at **2 failures in 15 runs, about one in eight**.
+
+The bar was not touched for a third time, and the diagnosis is now sharper than "it is noisy": (1, 1) is
+not a threshold being too strict — five houses holding one man between them IS a gutted opening on any
+reading. The check is describing its sample correctly, and the SAMPLE is what is too small. The cure is
+more houses, which is the one thing this check cannot cheaply buy: `HOUSES` is already five browsers, and
+its own notes record that seven Chromiums on four cores started missing clicks and cost two false failures
+of a different kind. A failure here is worth exactly one re-run before it is worth investigating.
+
 ### v2.91.0 — The mercy ending's second clause could not be satisfied, and Rome stops taking two things silently
 
 Three recommendations from v2.90.0, carried out. Two of the three turned out to need measuring before
@@ -1427,11 +1481,12 @@ freed against thirty buried must end `closed`, four must not — so it cannot si
 **AND A SECOND BLOCKER, FOUND WHILE MEASURING AND DELIBERATELY NOT FIXED.** `!alive` needs an emptied
 yard, and there are only four ways a man leaves a house: dead, freed (needs the rudis), retired (needs age
 31 or a heavy burden of scars), or departed at the end of an auctor contract. Counted across six real
-yards, **13 of 23 men could be let go by none of them.** A lanista who wants to shut his house cannot: he
-frees the earners, retires the old, and keeps the rest until they die — which is the opposite of the
-ending's own text, "You free the last of them on a Tuesday". Giving him a way to release any man is a
-feature with real balance questions attached (dumping unrest, dodging deaths, discarding a bad buy), so it
-is written down rather than added. `closed` is now reachable-in-principle and still undemonstrated in play.
+yards, 13 of 23 men could be let go by none of them.
+
+**THIS PARAGRAPH IS WRONG AND v2.92.0 CORRECTS IT.** There is a fifth door and I missed it: `sellMan`,
+the roster's "Sell Him On", takes any man who is not damnatus and removes him outright. A lanista can
+empty his yard whenever he likes, the "feature with balance questions" I wrote up as a design decision
+already exists, and `closed` has since been demonstrated firing in play. See v2.92.0.
 
 **ROME TAKES TWO THINGS AND NOW SAYS SO.** Both were measured in v2.90.0 and recorded; neither behaviour
 is changed, because both read as the intent. What is changed is that the player is told.
@@ -5489,4 +5544,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.91.0*
+*Last updated: v2.92.0*

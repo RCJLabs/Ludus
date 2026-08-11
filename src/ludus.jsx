@@ -2940,7 +2940,21 @@ const clone = s=>JSON.parse(JSON.stringify(s));
 const rnd = v=>Math.round(v);
 const fameTitle = f=>{ let t=FAME_TIERS[0][1]; for(const p of FAME_TIERS) if(f>=p[0]) t=p[1]; return t; };
 const activeG = d=>d.gladiators.filter(g=>g.status==="active");
-const GONE = ["dead","freed","escaped","retired","departed"];
+/* ---- "sold" WAS MISSING FROM THIS LIST, and it cost a stripped house two systems ----
+   A man leaves the house six ways. Five were here; the sixth is being sold, and there are two paths
+   that do it. `sellMan` — the roster's "Sell Him On" — deletes the row outright, so the omission
+   never showed. `sellTheHouse`, the liquidation, sets `m.status = "sold"` and LEAVES the row, exactly
+   as death and retirement do. With "sold" absent, those men were `!isGone` for ever.
+   MEASURED, a seven-man house stripped by `sellTheHouse`: roster 7, active 1, weekly bill correctly
+   down to 10d — and `onTheBooks` still reading **7**. That number gates exactly two things, and a
+   house that had just sold everything to raise money lost both of them:
+     · `slaverAtTheGate`, at `idleYard >= 3 && onTheBooks(d) === 0` — the game's own way BACK from an
+       empty yard, so the one house most in need of it could never be offered it;
+     · the `emptied` ending, at `idleYard >= EMPTY_LIMIT && onTheBooks(d) === 0` — so the way OUT was
+       shut too, and a stripped house could neither recover nor finish.
+   Adding "sold" makes it behave the way "dead" and "retired" already do. `activeG` reads
+   `status === "active"` and is untouched; the weekly bill was already right. */
+const GONE = ["dead","freed","escaped","retired","departed","sold"];
 const isGone = g => GONE.includes(g.status);
 /* ---- WHAT A MAN IS WORTH ----
    This counted his stats, his potential, his wins and his age, and nothing else — so
@@ -15675,7 +15689,14 @@ function weekReckoning(d){
      reached ten wins and a name in the town, and who walked out instead of being kept. That is the
      achievement, and a second clause no house in twenty can satisfy adds nothing but unreachability.
      What is NOT claimed: that this makes the ending common. It still needs `!alive` — an emptied
-     yard — which means freeing the earners and retiring the rest as they pass 31. */
+     yard — which means freeing the earners and then getting rid of the rest.
+     AND v2.92.0 CORRECTS THIS COMMENT, which said a lanista could only free or retire and therefore
+     could not deliberately shut his house. That was wrong: `sellMan`, the roster's "Sell Him On",
+     takes ANY man who is not damnatus and deletes him from the roster outright. I had checked
+     `rudisEligible` and `retireEligible`, found them narrow, and stopped looking. Played out — free
+     every man who earns the rudis, then sell whoever is left — **`closed` fires**: 1 house in 12,
+     at week 283, on five freed against thirty-one buried. The ending is reachable and demonstrated,
+     not merely un-blocked. */
   else if(!alive && houseRecord(d).freed >= 5)
     d.over = { kind:"closed", name:d.name, freed:houseRecord(d).freed, years:yearOf(d) };
 }
@@ -24302,6 +24323,11 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     setFocusOf, setRegimenOf, setSparOf, setTeachOf, stopTeachOf, setDrillTo,
     boardMen, restWornMen, allToPalus, pairTheYard,
     scoutBlockMan, buyLot, sellTheHouse,
+    /* ---- AND WHETHER A MAN IS STILL ON THE BOOKS, added in v2.92.0 ----
+       `GONE` and `onTheBooks` were both dark, which is why nobody noticed that "sold" is not in the
+       one and therefore still counts in the other. A predicate that decides whether a man has left
+       the house is exactly the kind of thing a check should be able to read. */
+    GONE, isGone, onTheBooks,
     /* the best man you will ever be offered, and what taking the house apart raises */
     paragonOf, paragonReach, makeParagon, paragonWeek, paragonExpire, PARAGONS,
     PARAGON_REACH, PARAGON_GAP, PARAGON_ODDS, marketWeek,

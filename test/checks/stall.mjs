@@ -126,8 +126,18 @@ export async function run({ p, errors }){
       const q = A.liquidate(d);
       const before = d.gold, menBefore = A.activeG(d).length;
       const done = A.sellTheHouse(d);
+      /* ---- AND WHETHER THE MEN IT SOLD HAVE ACTUALLY LEFT, from v2.92.0 ----
+         `sellTheHouse` sets `m.status = "sold"` and leaves the row in the roster, the way death and
+         retirement do. "sold" was missing from `GONE`, so those men stayed `!isGone` for ever and
+         `onTheBooks` went on counting them — measured at 7 for a stripped seven-man house with one
+         man left. That number gates the only two things that matter to a house in exactly this
+         position: `slaverAtTheGate` (the way back from an empty yard) and the `emptied` ending (the
+         way out). Both are `onTheBooks(d) === 0`, so a stripped house could neither recover nor
+         finish. Held here because this is the only check that strips a house. */
       R.fire = { quotedMen:q.menN, quotedTotal:q.total, raised:Math.round(d.gold-before),
-        menBefore, menAfter:A.activeG(d).length, ranTotal:done ? done.total : null }; }
+        menBefore, menAfter:A.activeG(d).length, ranTotal:done ? done.total : null,
+        onBooks:A.onTheBooks(d), sold:d.gladiators.filter(g=>g.status==="sold").length,
+        soldIsGone:(A.GONE||[]).includes("sold") }; }
 
     /* ---- 6. THE PARAGON, WHO MUST SURVIVE THE BLOCK HE STANDS ON ---- */
     R.par = {};
@@ -281,6 +291,19 @@ export async function run({ p, errors }){
   if(!P.gone.left) fails.push(`the paragon is still on the block after ${P.gone.weeks} weeks — he is supposed to be bought by somebody else`);
   if(!P.gone.done) fails.push("a paragon left without recording that he had come and gone");
   if(P.second.atOnce) fails.push(`a second paragon appeared inside the ${P.second.gap}-week gap`);
+  /* the stripped house's books */
+  lines.push(`stripped: ${out.fire.menBefore} men → ${out.fire.menAfter} active, ${out.fire.sold} sold, `
+    + `ON THE BOOKS ${out.fire.onBooks} — "sold" counts as gone: ${out.fire.soldIsGone}`);
+  if(!out.fire.soldIsGone)
+    fails.push(`"sold" is not in \`GONE\`, so a man sold by \`sellTheHouse\` is never \`isGone\` and `
+      + `\`onTheBooks\` keeps counting him. That gates \`slaverAtTheGate\` and the \`emptied\` ending, `
+      + `both on \`onTheBooks(d) === 0\` — so a house that has just sold everything to stay alive can `
+      + `neither be offered the slaver nor ever finish`);
+  else if(out.fire.onBooks !== out.fire.menAfter)
+    fails.push(`a stripped house has ${out.fire.menAfter} men active but ${out.fire.onBooks} on the books — `
+      + `the two should agree once every sold man is gone, and the gap is what blocked the slaver and `
+      + `the \`emptied\` ending before v2.92.0`);
+
   if(!P.second.afterGap)
     fails.push(`no second paragon after ${P.second.gap} weeks — paragonDone is a wall again and the cap of two is dead code, so no house is ever shown more than one`);
 
