@@ -1458,3 +1458,28 @@ the state by hand, with the wife and without, and call the one function. Two cal
 **A plausible explanation that accounts for the observation is not the same as the cause.** When a whole
 feature is dark, hand-build the minimal state it wants and call its function directly before reasoning
 about clocks, rates or queues — those explain why something is RARE, and dark is not rare.
+
+## A rerun you did because something failed is not a sample
+
+`survive` failed in the v2.96.0-era suite, so I re-ran it. It failed again, so I re-ran it again. Then I
+pooled every run across seven releases and got 4 failures in 20 — a rate twice what I had measured — and
+wrote it up as a possible drift in the game's opening.
+
+Every extra run in that pool existed **because a failure had just happened.** The pool was conditioned on
+the outcome it was measuring. Twelve controlled runs decided in advance gave **zero** failures, and
+pooled with an earlier twelve that is 1 in 24, about 4% — the original figure all along.
+
+If a rate matters, fix the number of runs BEFORE you start and count all of them. Opportunistic re-runs
+are for deciding whether to investigate; they are never evidence about a rate.
+
+## Two probe defects can hide one ending
+
+v2.89.0 retired `oldAge` as "written for a man the game does not produce", on 907 lanista-weeks at 62 or
+over with health at 45 or better in none of them. Both halves of that were the probe. It never built the
+**baths**, which mend the lanista at 0.09 a level a week — the build order named five rooms that do not
+exist — and it never **named an heir**, which the ending requires. Fix both and it fires in 4 of 12
+houses.
+
+Neither defect alone would have looked like much. Together they made a reachable ending look impossible,
+and the write-up that followed reasoned confidently about health decay curves that were never the issue.
+When a conclusion rests on a probe doing several things right, list them and check each one.

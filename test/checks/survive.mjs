@@ -229,7 +229,31 @@ const MEN    = 3;
    note above records that 7 Chromiums on 4 cores started missing clicks and cost two false failures
    of a different kind. Raising HOUSES trades a known false-failure mode for a worse one.
    So: unchanged, again, and deliberately. A failure here is worth exactly one re-run before it is
-   worth investigating.  */
+   worth investigating.
+
+   ---- AND THE "RATE HAS DOUBLED" READING WAS SELECTION BIAS OF MY OWN MAKING, v2.96.0 ----
+
+   After the v2.95.0 suite failed here at (1, 1), I pooled every run on the v2.89-v2.95 family and got
+   4 failures in 20 — about one in five, against the one in twelve measured above — and wrote it up as a
+   possible drift in the opening. It is not. THE POOL WAS ENRICHED FOR FAILURES BECAUSE I ONLY EVER
+   RE-RAN AFTER A FAILURE. Every extra run in that tally was conditioned on a failure having just
+   happened, which is the opposite of a random sample.
+
+   The controlled answer, twelve runs back to back on v2.95.0 (c311b7b), machine to itself:
+
+     standing  3 · 5 · 4 · 4 · 2 · 3 · 3 · 1 · 2 · 4 · 3 · —      median 3
+     men       8 · 8 · 6 · 9 · 8 · 4 · 3 · 10 · 2 · 6 · 9 · —     median 8
+     FAILURES: **NONE**
+
+   Pooled with the twelve at 96ebc0c (one failure), that is **1 failure in 24 controlled runs, about
+   4%** — consistent with the original measurement and nowhere near one in five. The (1, 1) and (1, 4)
+   draws were the tail, and v2.95.0 was independently proved inert by an A/B of HEAD~1 against HEAD
+   over six fixed seeds that produced a byte-identical 26-week trail.
+
+   THE RULE THAT COMES OUT OF IT: never pool opportunistic re-runs with scheduled ones. A rerun you
+   did BECAUSE something failed is not a sample from the same distribution, and mixing the two will
+   always make a flaky check look worse than it is. If a rate matters, run a fixed number of runs
+   decided in advance and count all of them.  */
 const BOTH_MEN  = 5;   /* both weak together is the failure; either alone is a bad week */
 const BOTH_HOUSE = 2;
 const KEEP   = 4;    /* the yard a lanista tries to hold; below it, he goes to the block */

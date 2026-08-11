@@ -69,7 +69,7 @@ export async function run({ p }){
       rows.push({ h, week:tot.week, kind:tot.kind, fame:Math.round(d.fame), served:rec.served,
         bouts:tot.bout||0, won:tot.won||0, noBout:tot.noBout||0, threw:tot.threw||0,
         rise:(d.rise&&d.rise.rank)||0, rooms:Object.keys(d.buildings||{}).length,
-        did:["feast","walk","bought","doctore","built","offering","vow","school","claimedRank","toRome","primusBout"]
+        did:["feast","walk","bought","doctore","built","offering","vow","school","namedHeir","tookUpHouse","claimedRank","toRome","primusBout"]
           .filter(k=>tot[k]).map(k=>`${k} ${tot[k]}`).join(" ") });
     }
 
@@ -115,6 +115,23 @@ export async function run({ p }){
       bad.push(`no house ever declared a school, though the reference player tries to once it can pay `
         + `[measured: every surviving house]. Either \`declareDoctrine\` stopped taking or the six `
         + `doctrines have gone — \`school\` holds the system itself`);
+    /* ---- THE LINE OF THE HOUSE, from v2.96.0 ----
+       `lanistaWeek` at `L.health <= 0` writes `d.succession` if an heir is named and ends the run
+       `lanistaDied` if not, and that is the whole difference. Paired on 12 seeds of 900 weeks: naming
+       an heir took `lanistaDied` from 4 of 12 to NONE, median life from 104 weeks to 297, and opened
+       `oldAge` — which needs `d.heir` — from 0 to 4 of 12. The reference player names one now, so a
+       run of his that ends `lanistaDied` means the naming stopped working. */
+    const died = rows.filter(r=>r.kind === "lanistaDied").length;
+    const named = rows.filter(r=>(r.did||"").includes("namedHeir")).length;
+    lines.push(`heirs named in ${named}/${HOUSES} houses · ended lanistaDied ${died}`);
+    if(!named)
+      bad.push(`no house named an heir, though the reference player tries whenever \`heirEligible\` `
+        + `offers one [measured 13 namings across 12 houses]. Without it every failing lanista ends the `
+        + `run instead of passing the house on, and \`oldAge\` is unreachable too`);
+    else if(died > HOUSES / 3)
+      bad.push(`${died} of ${HOUSES} houses ended \`lanistaDied\` with an heir named in ${named} of them `
+        + `[measured 0 of 12 once the heir step was on]. \`lanistaWeek\` should write \`d.succession\` `
+        + `rather than ending the run whenever \`d.heir\` is set`);
     if(!gotDoctore)
       bad.push(`no house hired a doctore [measured 15 of 16] — either the staff market stopped offering `
         + `or \`hireDoctore\` stopped taking`);

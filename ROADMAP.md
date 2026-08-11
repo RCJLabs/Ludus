@@ -1392,6 +1392,60 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v2.96.0 — Three answers, and two of them correct something I had already written down
+
+No game code changed. Three measurements: one closes a suspected regression, one revives an ending this
+project retired two releases ago, and one refutes a fault I had suspected in my own reference player.
+
+**1. `survive` DID NOT DRIFT, AND MY "RATE HAS DOUBLED" READING WAS SELECTION BIAS I CREATED.** After the
+v2.95.0 suite failed at (1 standing, 1 man) I pooled every run across v2.89–v2.95 and got **4 failures in
+20**, against the 1-in-12 measured earlier, and wrote it up as a possible drift in the opening. The pool
+was enriched for failures **because I only ever re-ran after a failure** — every extra run in it was
+conditioned on a failure having just happened. Twelve controlled runs on v2.95.0, machine to itself:
+
+| | | | | | | | | | | | | median |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| standing | 3 | 5 | 4 | 4 | 2 | 3 | 3 | 1 | 2 | 4 | 3 | **3** |
+| men | 8 | 8 | 6 | 9 | 8 | 4 | 3 | 10 | 2 | 6 | 9 | **8** |
+
+**Zero failures.** Pooled with the twelve at `96ebc0c` (one failure) that is **1 in 24 controlled runs,
+about 4%** — consistent with the original figure. The bar is untouched for a fourth time, now on twice
+the evidence. The rule written into the check: **never pool opportunistic re-runs with scheduled ones.**
+
+**2. `oldAge` IS REACHABLE, AND v2.89.0's CONCLUSION WAS A PROBE ARTEFACT.** That release recorded the
+ending as retired rather than fixed, on 907 lanista-weeks at 62 or over with health at 45 or better in
+**none** of them — "written for a man the game does not produce". Two defects in the probe produced that,
+and the reference player now fixes both: it never built the **baths** (`lanistaWeek` mends the lanista by
+`bLevel(d,"balneae") * 0.09` a week, and the old build order named five rooms that do not exist), and it
+never **named an heir**, which `oldAge` requires. Paired on 12 seeds of 900 weeks:
+
+| | heir named | heir not named |
+|---|---|---|
+| median life | **297w** | 104w |
+| `lanistaDied` | **0 of 12** | 4 of 12 |
+| `oldAge` | **4 of 12** | 0 of 12 |
+| reached generation 2 | 1 of 12 | 0 of 12 |
+
+`lanistaWeek` at `L.health <= 0` writes `d.succession` if an heir is named and ends the run
+`lanistaDied` if not — that one field is the whole difference, and it nearly triples the life of a house.
+Both `ends` and `policy` are corrected; `policy` now fails if the naming stops working.
+
+**And the two endings compete**, which is why a second generation is still 1 in 12 even with an heir: the
+healthy old lanista **retires** (`oldAge`, the run ends) rather than dying (`succession`, the house goes
+on). Recorded, not changed — it reads as the intent.
+
+**3. THE CELL-WALK ORDER IS NOT A DEFECT, and I had convinced myself it was.** `walkReady` allows a walk
+every three weeks at no coin cost, and the reference player took only 55 in 961 available weeks — because
+it feasts at unrest 30 first and the feast drops unrest below the walk's threshold. Paired on 14 seeds,
+walk-first (walking from unrest 14) against feast-first:
+
+    walks 134 against 55 · feasts 182 against 281 · median life 159w against 318w
+
+...and **paired, walk-first was outlived 6 times and outlived 4** — no difference at this n. The medians
+over independent houses are misleading exactly as #120 warned, and the sign test is the statistic. So
+nothing is changed. What the numbers DO show is the mechanism: walking eagerly holds unrest just under the
+feast's trigger, so the cheap tool crowds out the strong one. The low walk count is correct behaviour.
+
 ### v2.95.0 — A widower's children stopped growing up
 
 Item three off the v2.93.0 audit: the nine events that never fire. Chasing them found a real fault, and
@@ -5700,4 +5754,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.95.0*
+*Last updated: v2.96.0*

@@ -429,9 +429,23 @@ export async function run({ p }){
           bad.push(`a house with ${k.split("/")[0]} men freed ended \`closed\` — the count of five is `
             + `the bar and it has stopped biting`);
       }
-      lines.push(`oldAge: needs age>=62 AND health>=45 AND an heir — 907 lanista-weeks at 62 or over `
-        + `and health>=45 in NONE of them, with 1,135 weeks of succession instead. Written for a man `
-        + `the game does not produce`);
+      /* ---- AND THAT CONCLUSION WAS A POLICY ARTEFACT. CORRECTED v2.96.0. ----
+         v2.89.0 recorded `oldAge` as retired rather than fixed, on 907 lanista-weeks at 62 or over
+         with health at 45 or better in NONE of them — "written for a man the game does not produce".
+         Two defects in the PROBE produced that, and both are fixed in the reference player:
+           · it never built the BATHS. `lanistaWeek` mends the lanista by `bLevel(d,"balneae")*0.09`
+             a week, and the old policy's build order named five rooms that do not exist, so `balneae`
+             was never built and the man never recovered.
+           · it never NAMED AN HEIR, and `oldAge` requires `d.heir`.
+         With both — 12 houses of 900 weeks through `__ROPE.play` — `oldAge` fires in **4 of 12**, and
+         `lanistaDied` in **none**. Against the same seeds with the heir step off: `lanistaDied` 4 of
+         12 and `oldAge` 0. The ending is reachable and always was. */
+      lines.push(`oldAge: needs age>=62 AND health>=45 AND an heir. REACHABLE — 4 of 12 houses end this `
+        + `way once the reference player names an heir and builds the baths (which mend the lanista at `
+        + `0.09 a level a week). v2.89.0 called it unreachable off a probe that did neither`);
+      lines.push(`and it COMPETES WITH the succession: the healthy old lanista retires and the run `
+        + `ends, while only the one whose health reaches zero passes the house on — which is why a `
+        + `second generation is still 1 in 12 even with an heir named`);
     }
 
     lines.push(`the night answered the way a solvent player would: `
