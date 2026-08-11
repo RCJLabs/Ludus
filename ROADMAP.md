@@ -87,7 +87,7 @@ npm run test:all      every check, fast and slow — about eleven minutes
 npm run coverage      not what passes, but what no check ever touches
 ```
 
-**56 checks.** Most read into the game through a test handle and answer in seconds; a
+**57 checks.** Most read into the game through a test handle and answer in seconds; a
 handful drive a real browser through the real screens. Every one of them exists because
 of a bug that shipped, and the comment at the top of each says which — that comment
 is the durable part, not the numbers inside it. See `test/README.md` for the table.
@@ -1391,6 +1391,71 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v2.99.0 — The classes are not 1.8x apart, and the odds panel could not see a stat
+
+Item 7 of the v2.93.0 audit was a 1.8x spread in wins per man-week — Dimachaerus 0.167 and Thraex 0.160
+against Murmillo 0.094 and Hoplomachus 0.113. That figure is not normalised by bouts fought, so it mixes
+who gets picked for a card, who comes back fit enough to be picked again, and who wins the bout he is in.
+Only the last is a balance claim.
+
+**THE MATCHUP TABLE IS EXACTLY NEUTRAL, BY CONSTRUCTION.** `COUNTERS` is a six-cycle and `CLS_EDGE` pays
+1.15 for the counter and 0.91 against it, so over a uniform mix every class meets one it counters and one
+that counters it: the mean edge is **1.010 for all six**, and with one identical kit `winChance` gives
+every class the same row average to the second decimal — **spread 0.00 points.** In their own default
+kits the priced spread is 4.67 points and the fought spread 7.8 points at 3.0 SE over 360 bouts a class,
+with five of the six inside 4 points of each other. **The item is refuted as a class fault.**
+
+**AND THREE OF THE MEASUREMENTS ALONG THE WAY WERE MINE RATHER THAN THE GAME'S.**
+
+`kitFor(cls, tier)` is a random draw by design: it swaps the weapon 40% of the time for anything suitable
+under the tier's price cap, upgrades to a fine piece at 40%/30%, drops the helm and armour at tier 0 — and
+`pugio` carries `styles:[]`, so a dagger suits everybody and a Retiarius came out holding a Fine Pugio
+instead of his trident. It is not monotone in tier either: one Hoplomachus draw was 96d and shield-less at
+tier 2 against 130d with a clipeus at tier 1. So a class comparison built on `kitFor` randomises the thing
+being compared, which is why the priced ranking (Hoplomachus best, 47.6%) and the fought ranking
+(Hoplomachus worst, 37.9%) had nothing to do with each other.
+
+`newGameState` reseeds the global RNG, so a helper that built a fighter AFTER the arena had been seeded
+made all forty iterations the same bout. It showed as win rates of exactly 100.0%, 0.0%, 83.3% and 33.3%
+over 240 bouts — sixths, which is six outcomes repeated forty times.
+
+And **"Retiarius has a dead key stat" was measured with the one function that cannot see it.** `power`
+weights str 3.55 · tec 4.44 · agi 3.02 · end 2.20 · dis 1.07 and **sho 0.00** per ten points, so priced
+through `power` the Retiarius key pair (agi+sho) came out worth +41 at birth against +49 to +53 for every
+other class. That is the instrument, not the man.
+
+**THE REAL FINDING IS THE QUOTE.** Showmanship is not a dead stat. It enters the exchange at
+`1 + crowd/100 * sho/100 * 0.16` — a few per cent of damage, compounding across twelve rounds the way a
+power edge does — and the note above that line says its "real payment is the purse, the crowd and the
+raised finger, not the exchange". Measured on the same man twice with nothing but `sho` moved, 250 bouts a
+point against a uniform mix of the six classes:
+
+| sho | 40 | 58 | 76 | 94 | |
+|---|---|---|---|---|---|
+| Retiarius, fought | 31.2% | 34.0% | 39.6% | 47.6% | **+16.4 points** |
+| Murmillo, fought | 36.0% | 39.2% | 44.8% | 51.2% | **+15.2 points** |
+| the power edge that implies | — | 1.03% | 2.99% | 5.72% | (Murmillo: 1.10 / 2.98 / 5.11) |
+| **what the panel quoted** | 38.9% | 38.9% | 38.9% | 38.9% | **it moved 0.00** |
+
+Two unrelated classes, monotone, and the implied edge agreeing to a tenth of a point at every step, so it
+is the engine rather than the sample. `power` cannot take the term — the exchange calls `power` too and
+would pay for it twice — so it goes in `winChance` beside the board, for exactly the reason the board is
+there. The coefficient is the engine's own 0.16 times the crowd a bout averages over its rounds, which
+fits at 0.54: exact at sho 76 (1.44 against a measured 1.443 and 1.446) and understating the ends by
+about 8% of the odds ratio, which is the safer direction since the quote already runs about four points
+rich. The panel now reads 32.1 / 36.3 / 40.7 / 45.1 across that range, and the term cancels exactly in a
+mirror so the 46% instrument everything else is calibrated against is untouched. No gameplay number
+changed: the same 250-bout curves came back identical after the fix.
+
+**AND `probe` CAUGHT THE FIRST DRAFT OF THE NEW CHECK.** `styles` answered the crux once and dropped any
+bout that came back to the balance — the exact fault #116 shipped that lint for, in a check written after
+it. Routed through `__ROPE.run` the six fought rates came back identical, which says the one-shot guard
+was dropping only bouts still held after four words, but the lint was right to fail it and the scratch
+probes behind this release were re-run through the rope to confirm the curve.
+
+`power`, `COUNTERS` and `CLS_EDGE` go on the handle. New check `styles` holds the cycle, the identical-kit
+identity and the default-kit closeness; `odds` gains the showmanship section. Fifty-seven checks.
 
 ### v2.98.0 — Five dark subsystems, and the two nobody could have reached
 
@@ -5886,4 +5951,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.98.0*
+*Last updated: v2.99.0*

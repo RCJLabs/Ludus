@@ -80,6 +80,7 @@ reason the check exists usually has not.
 | `folk` | fast | the domestic half of the house — cook, nurse, housekeeper, and telling your wife she runs the place. Each hires once, charges its fee, draws a wage that grows with the roster (6d at one man, 13d at fourteen), sits on `weeklyBill`, and moves the number its own entry names: 141 points of fatigue off the yard, 3 weeks off the mending, unrest down 13.5, the lanista's life up 6.9. Three of the four walk out of a house at unrest 90 and the wife does not. It was dark in every sweep for two reasons at once — nothing on screen mentioned it, and not one of its nine functions was on the handle |
 | `munus` | fast | your own games. Twelve combinations of scale and stakes: the card goes up the week it is bought, `mine` and `fest` are set, the headliner is pinned to the marquee bout, the hunt is forced, purses carry the 0.6 of a card you paid for yourself, the cost matches `munusCost` to the denarius, selling pays `munusSellFee` and puts nothing up, and it comes down at `endWeek`. And a card bought SINE MISSIONE is sine all the way down — `addPair` hardcoded standard stakes, so 17 of 24 cards carried a standard pair and `simulatePair`'s whole death branch was unreachable in every bout in the game |
 | `school` | fast | the six doctrines of the house. Each declares, charges its listed price, changes for 1.8x the new school's price, reads every numeric field back through `docNum`, answers `docIs` on its KEY, and moves the factions its table names — with the field list DERIVED from each entry rather than written into the check. Plus the reason it exists: `d.doctrine` was non-null in 0 of ~5,000 measured house-weeks, so the week's agenda must raise it for a solvent house and leave a poor one alone |
+| `styles` | fast | the six classes. `COUNTERS` is a six-cycle and `CLS_EDGE` pays 1.15 for the counter and 0.91 against it, so over a uniform mix the mean edge is 1.010 for all six and one identical kit makes them identical to the second decimal — spread 0.00 points. In their own default kits the priced spread is 4.67 and the fought spread 7.8 at 3.0 SE, five of six inside 4 points. It exists because a reported 1.8x spread in wins per man-week was three of my own instrument faults in a row: `kitFor` is a random draw that randomises the thing being compared, `newGameState` reseeds the global RNG so a helper built after it pins every bout, and "Retiarius has a dead key stat" was priced through `power`, the one function that cannot see `sho` |
 | `odds` | fast | the arena panel's own number against the sand. Holds three things: a MIRROR — two men identical in all six stats, class, kit, traits, heart, morale, record and fame — landing a shade under half, which is what `FOE_EDGE` 1.029 predicts and which is this check's instrument before it is a bar; the shape of a held bout's return, so `crux`-versus-`unfinished` cannot be confused again; and the ranking `winChance` recommends for all six classes, asserted on the pure function with no sampling in it, because the realised version of that bar flipped between runs at n=150 |
 | `bay` | fast | the two coastal scales, neither of which had ever been toured — #115. Favour is a ratchet that opens every town on "an outsider" and climbs only on bouts fought there, and its bottom word is reachable ONLY through `cityServed`'s defeat branch at Neapolis; `knownIn` bleeds 0.55 a week and is pegged at 100 by a round robin. Also holds the branch neither of my arms could reach: the bay taken by a rival after 30 idle weeks, and given back only by turning up |
 | `steel` | fast | wear — the one system where the probe was wrong FOUR separate ways. #114 read `d.gearCond`, which is the pool of pieces on the SHELF, and concluded steel never wears; read off the man in `g.wear[slot]` a bout takes 3-6 off a weapon, all five words are said and pieces break. Holds the rate against `WEAR_RATE`, the five words off a piece driven to nothing, the break on the game's own chronicle line, the bands a played house sees, a man's career against his weapon's life, and — the trap that cost the most — that a bout held at the balance has changed nothing while the same bout answered changes the kit |
@@ -1551,3 +1552,40 @@ standard pair on 17 of 24 cards — and the real finding was upstream of that.
 When one engine on a card honours a flag and the others do not, check every producer, not the one you
 found the bug through. And drive the newly-reachable branch before shipping the fix: a death path that has
 never once executed is exactly where a stale field reference waits.
+
+## Price a stat through the function that can see it
+
+`power` weights the six stats str 3.55 · tec 4.44 · agi 3.02 · end 2.20 · dis 1.07 and **sho 0.00** per
+ten points. Priced through `power`, the Retiarius key pair (agi+sho) was worth +41 power at birth against
++49 to +53 for every other class, and I had a finding: one class spends half its allocation on a dead
+stat.
+
+Fought, 54 points of `sho` is worth 15 to 16 points of win rate — it enters the exchange as a damage
+multiplier that compounds over twelve rounds. The stat was never dead. The instrument was blind to it, and
+the instrument was the thing the finding was about.
+
+Whenever a measurement says a game element is worthless, check that the function you measured with is one
+that reads it. The same trap in the other direction: `winChance` was blind to the same stat, which is a
+real fault in the panel — a player was quoted the same number for a man worth sixteen points more.
+
+## A random generator is not a bench
+
+`kitFor(cls, tier)` swaps the weapon 40% of the time for anything suitable under the tier's price cap,
+upgrades to a fine piece at 40%/30%, drops the helm and armour at tier 0, and lets a `styles:[]` dagger
+suit everybody. That is good variety and a useless comparison: the priced ranking of the six classes off
+`kitFor` put Hoplomachus first at 47.6% and the fought ranking put him last at 37.9%, because the two runs
+were comparing different gear.
+
+If a comparison needs one variable held still, use the deterministic path (`defaultKit`) or pin the value
+by hand. Two arms that disagree about the ORDER are the tell — a real effect changes the size of a gap, not
+its sign.
+
+## `newGameState` reseeds the global RNG
+
+A helper that built a fighter called `newGameState` internally. Called after the arena had been seeded, it
+reseeded the stream to a constant, so all forty iterations of a loop were the same bout. It showed up as
+win rates of exactly 100.0%, 0.0%, 83.3% and 33.3% over 240 bouts — sixths, which is six distinct outcomes
+repeated forty times.
+
+Rates that land on exact simple fractions are almost never a finding. Make the state first, once, and make
+nothing that reseeds after it.

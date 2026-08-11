@@ -248,6 +248,64 @@ export async function run({ p }){
       }
     }
 
+    /* ============ 5. AND THE QUOTE CAN SEE A CROWD, from v2.99.0 ============
+       `power` weights the stats str 3.55 · tec 4.44 · agi 3.02 · end 2.20 · dis 1.07 and **sho 0.00**
+       per ten points, so `winChance` was blind to showmanship. It is not a dead stat: it enters the
+       exchange at `1 + crowd/100 * sho/100 * 0.16`, a few per cent of damage compounding over twelve
+       rounds. Measured on the same man twice with nothing but `sho` moved, 250 bouts a point against a
+       uniform mix of the six classes:
+
+         sho          40      58      76      94
+         Retiarius  31.2%   34.0%   39.6%   47.6%    +16.4 points, and the quote moved 0.00
+         Murmillo   36.0%   39.2%   44.8%   51.2%    +15.2 points, and the quote moved 0.00
+
+       Two unrelated classes, monotone, the implied power edge agreeing to a tenth of a point at every
+       step. The term lives in `winChance` rather than in `power` because the exchange calls `power` too
+       and would pay for it twice — the same reason the board lives there. Asserted with no sampling:
+       the quote must rise with showmanship, must move most of the measured range, and must CANCEL in a
+       mirror, because a term that does not cancel when both men are equal has broken the 46% instrument
+       that everything else here is measured against. */
+    {
+      const SHO = [40, 58, 76, 94];
+      const at = v => {
+        const d = A.newGameState("Oq","clean","ODDS-SHO",null);
+        const opp = mkOpp(78);
+        const g = twin(d, opp); g.sho = v;
+        return A.winChance(g, opp, 0, "measured", "measured") * 100;
+      };
+      const q = SHO.map(at);
+      lines.push(`the quote against showmanship: ` + SHO.map((v,i)=>`sho ${v} → ${q[i].toFixed(1)}%`).join(" · ")
+        + `  (the sand: 31.2 · 34.0 · 39.6 · 47.6 for a Retiarius, 36.0 · 39.2 · 44.8 · 51.2 for a Murmillo)`);
+      for(let i=1;i<q.length;i++) if(!(q[i] > q[i-1]))
+        bad.push(`the quote at showmanship ${SHO[i]} is ${q[i].toFixed(1)}% and at ${SHO[i-1]} it is `
+          + `${q[i-1].toFixed(1)}% — a stat worth 15 to 16 points of win rate on the sand has to move `
+          + `the number the player is shown, in the right direction`);
+      const range = q[q.length-1] - q[0];
+      if(range < 8)
+        bad.push(`54 points of showmanship moves the quote ${range.toFixed(1)} points and moves the sand `
+          + `15 to 16. Before v2.99.0 it moved 0.00, because \`power\` pays nothing for \`sho\` — if this `
+          + `has gone back to zero then \`winChance\` has lost the show term`);
+      if(range > 20)
+        bad.push(`54 points of showmanship moves the quote ${range.toFixed(1)} points against 15 to 16 on `
+          + `the sand — the show term is now overpaying, and an odds panel that overstates a stat sends `
+          + `a player after the wrong man`);
+
+      /* and it must vanish in a mirror */
+      const d = A.newGameState("Om","clean","ODDS-SHO-MIRROR",null);
+      const opp = mkOpp(78); opp.sho = 94;
+      const g = twin(d, opp);
+      const m = A.winChance(g, opp, 0, "measured", "measured") * 100;
+      const base = (()=>{ const e = A.newGameState("Om2","clean","ODDS-SHO-MIRROR-2",null);
+        const o2 = mkOpp(78); o2.sho = 40; const g2 = twin(e, o2);
+        return A.winChance(g2, o2, 0, "measured", "measured") * 100; })();
+      lines.push(`and it cancels in a mirror: two men at sho 94 quote ${m.toFixed(1)}%, two at sho 40 `
+        + `quote ${base.toFixed(1)}%`);
+      if(Math.abs(m - base) > 0.5)
+        bad.push(`a mirror at showmanship 94 quotes ${m.toFixed(1)}% and a mirror at 40 quotes `
+          + `${base.toFixed(1)}% — the show term does not cancel between equals, so it is not a ratio, `
+          + `and the 46% mirror this whole check is calibrated on now depends on a stat`);
+    }
+
     return { bad, lines };
   });
 

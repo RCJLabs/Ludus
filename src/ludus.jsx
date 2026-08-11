@@ -12993,7 +12993,32 @@ function winChance(g, opp, prep, tac, foeTac){
   if(prep) A.regardMult = (A.regardMult || 1) * (1 + prep*0.14);
   const B = clone(opp); B.kit = opp.kit || defaultKit(opp.cls); B.mods = kitMods(B.kit, B.cls, B);
   /* the bookmakers price the same fight the sand does, hidden edge and all */
-  const pa = power(A, "measured", B.cls, 0, 1), pb = power(B, "measured", A.cls, 0, 1) * FOE_EDGE;
+  /* ---- AND power() CANNOT SEE A CROWD EITHER ----
+     `power` weights the six stats str 3.55 · tec 4.44 · agi 3.02 · end 2.20 · dis 1.07 and **sho 0.00**
+     per ten points, so the quote was blind to showmanship. It is not a dead stat: it enters the exchange
+     at `shoA = 1 + crowd/100 * sho/100 * 0.16`, a damage multiplier of a few per cent that compounds
+     across twelve rounds exactly the way a power edge does. The note over that line says showmanship's
+     real payment is "the purse, the crowd and the raised finger, not the exchange". Measured, on the
+     same man twice with nothing but `sho` moved, 250 bouts a point against a uniform mix of the six:
+
+       sho          40      58      76      94        and the quote said the same number at all four
+       Retiarius  31.2%   34.0%   39.6%   47.6%       (+16.4 points over the range)
+       Murmillo   36.0%   39.2%   44.8%   51.2%       (+15.2)
+       the power edge that would give it   —  1.03%  2.99%  5.72%   /  — 1.10% 2.98% 5.11%
+
+     Two unrelated classes, monotone, and the implied edge agrees to a tenth of a point at every step, so
+     it is the engine rather than the sample. `power` itself cannot take the term — the exchange calls
+     `power` too and would pay for it twice — so it goes here, alongside the board, for the same reason:
+     these are the two things the fight does that the raw power ratio has no way to express.
+     THE COEFFICIENT IS THE ENGINE'S OWN 0.16 times the crowd a bout averages over its rounds, which fits
+     the measured curve at 0.54. That is exact at sho 76 (1.44 against a measured 1.443 and 1.446) and
+     understates the ends by about 8% of the odds ratio — the safer direction, since the quote already
+     runs about four points rich. */
+  const SHOW_CF = 0.54;
+  /* and a Showman is paid 0.192 for the same roar, which the quote had better know too */
+  const show = f => 1 + SHOW_CF * (hasT(f, "Showman") ? 0.192 : 0.16) * clamp((f.sho || 50)/100, 0, 1);
+  const pa = power(A, "measured", B.cls, 0, 1) * show(A),
+        pb = power(B, "measured", A.cls, 0, 1) * FOE_EDGE * show(B);
   // a power edge compounds across twelve rounds, so the raw ratio badly understates
   // the true chance; sharpen it on the odds scale to match measured outcomes
   const raw = clamp(pa/(pa+pb), 0.02, 0.98);
@@ -24542,6 +24567,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     WAR, warWeek, warIdx, warStage, warMarket, warElsewhere, WAR_AWAY_AT, WAR_AWAY_ODDS,
     /* the odds the bookmakers quote, and the mitigations on a death */
     winChance, collSoften, docHealth, TACTIC, TACTIC_OR, BEASTS,
+    /* what the engine pays for a point of each stat, and what a pairing is worth */
+    power, COUNTERS, CLS_EDGE,
     /* the street: what it thinks of you, and what it will say for your men */
     acclaimOf, acclaimTarget, acclaimWeek, acclaimWord, streetVoice, merchWeekly,
     missioScore, missioOdds, missioAccount, ACCLAIM_TIERS, ACCLAIM_MISSIO, MISSIO_CAP, MISSIO_MID,
