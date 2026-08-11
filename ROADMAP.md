@@ -1392,6 +1392,48 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v2.94.0 — The reference player moves into the harness, with a bar under him
+
+Item two off the v2.93.0 audit. No game code changed; this is the instrument the last twenty releases
+kept getting wrong.
+
+**EVERY REACHABILITY CLAIM THIS AUDIT HAS PUBLISHED WAS A CLAIM ABOUT A POLICY.** Each check that needed
+a house to get somewhere wrote its own player, and in v2.93.0 three attempts at a competent one produced
+median lives of **108, 27 and 157 weeks on the same build** — the first reporting thirteen events and
+fourteen subsystems dark, almost none of which was the game.
+
+So the policy now lives in `test/harness.mjs` as **`__ROPE.lanista(d, opts)`** — one canonical competent
+week — and **`__ROPE.play(d, weeks, opts)`**. It works the cells, trains, buys the best man it can afford
+behind **twelve weeks of the weekly bill** (a flat reserve is not a reserve; the bill grows with the
+roster), hires the doctore, builds the five rooms, hires the medicus and armourer, keeps the rites,
+declares a school, claims the census, takes the primacy when it is up, accepts Rome, and at Rome takes
+**whatever card is there** — the imperial bill is sine missione 54% of the time and refusing it lapses the
+trip. Every part switches off through `opts` for a control arm, and it **returns what it did**, so a check
+asserts on behaviour rather than intent.
+
+**AND A NEW 53rd CHECK, `policy`, PUTS A BAR UNDER HIM.** `survive` asks whether a new house can get off
+the ground; nothing asked whether a house played *well* still gets anywhere. Measured at 8 houses × 320
+weeks, headless, in 3 seconds:
+
+| | measured | bar |
+|---|---|---|
+| median life | **226w** | 70w |
+| median fame | **2,981** | 300 |
+| events fired | **45 of 57** | 30 |
+| rooms held by the best house | **5 of 5** | 3 |
+| houses claiming a census rung | **7 of 8** (up to rung 4) | at least one |
+| a school declared | **every surviving house** | at least one |
+
+Three of the eight houses reach week 321 still standing, at fame 3,813 to 8,333, with all five rooms, the
+census claimed and three imperial campaigns. The bars sit near half of each measurement on purpose: this
+suite has now paid three times for a threshold fitted close to its sample, and the point of these is to
+catch a build where the reference player *collapses*, not to police ordinary variance. The event tally,
+the subsystem census and the ending mix are printed and asserted on nothing — they are the audit's raw
+material, not a contract.
+
+**The reference player also exercises v2.93.0's doctrine**, so `doctrine` is a live subsystem in the
+census now rather than a dark one, and `policy` fails if `declareDoctrine` ever stops taking.
+
 ### v2.93.0 — Six schools of the house, every one of them live, and no house had ever declared one
 
 A fresh audit sweep, the first item off it built, and four instrument faults of mine on the way.
@@ -5613,4 +5655,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.93.0*
+*Last updated: v2.94.0*

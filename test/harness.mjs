@@ -174,7 +174,129 @@ export async function installRope(p){
         gotWanted: want ? offer.stakes === want : null }, run(d, offer, ids, o));
     };
 
-    window.__ROPE = { answer, run, takeBout, fit,
+    /* ================= THE LANISTA: ONE CANONICAL COMPETENT WEEK =================
+
+       Every check that needs a house to get anywhere has written its own player, and in v2.93.0 three
+       attempts at one produced median lives of 108, 27 and 157 weeks on the same build. The first
+       reported thirteen events and fourteen subsystems dark; almost all of it was the policy declining
+       to act. A reachability claim is a claim about a policy, so the policy belongs here, once, with a
+       check under it — `policy` holds the benchmarks below.
+
+       THE FOUR THINGS THAT MADE THE EARLIER ATTEMPTS WRONG, all fixed here:
+         · no `wantStakes`, so a purse-maximising pick walked into sine missione cards;
+         · it bought the CHEAPEST man on the block rather than the best it could afford;
+         · it never spent on anything, so doctore, rooms, staff, rites and the census read as dark;
+         · and a FLAT reserve, which is not a reserve — the weekly bill grows with the roster, so the
+           reserve is twelve weeks of the bill and every discretionary spend clears it with room.
+
+       `lanista(d, opts)` plays one week and RETURNS WHAT IT DID, so a caller can assert on behaviour
+       rather than intent. Every part can be switched off through `opts` for a control arm:
+         cells, buy, doctore, build, rites, census, staff, school, rome, bout  (all default true)
+       `play(d, weeks, opts)` runs many and pools the counters. */
+    const LAN = {
+      reserve: d => Math.max(700, A.weeklyBill(d) * 12),
+      rooms: ["valetudinarium","armamentarium","palus","carceres","balneae"],
+    };
+    const lanista = (d, opts) => {
+      const o = opts || {};
+      const on = k => o[k] !== false;
+      const did = {};
+      const bump = k => { did[k] = (did[k]||0)+1; };
+      const fin = (f, args) => { try { return f(...args); } catch(e){ bump("threw"); return null; } };
+      if(d.over) return did;
+      const spare = () => d.gold - LAN.reserve(d);
+
+      /* the cells first — the largest single lever measured in this project */
+      if(on("cells")){
+        if(d.unrest >= 30 && fin(A.throwFeast,[d])) bump("feast");
+        if(d.unrest >= 22 && fin(A.walkTheCells,[d]) === true) bump("walk");
+      }
+      for(const g of A.activeG(d)) fin(A.setRegimenOf,[d, g.id, (g.fatigue||0) > 55 ? "rest" : "palus"]);
+
+      if(on("doctore") && !d.doctore){
+        if(!(d.doctoreMarket||[]).length) fin(A.makeStaffMarket,[d]);
+        const c = (d.doctoreMarket||[]).filter(x=>x.fee <= spare()*0.5).sort((a,b)=>b.fee-a.fee)[0];
+        if(c && fin(A.hireDoctore,[d, c.id])) bump("doctore");
+      }
+      if(on("buy") && A.activeG(d).filter(g=>!g.injury).length < 5 && !A.rosterFull(d)){
+        const m = (d.market||[]).filter(x=>x.price <= spare()*0.5).sort((a,b)=>b.price-a.price)[0];
+        if(m && fin(A.buyFromBlock,[d, m.id, null])) bump("bought");
+      }
+      if(on("build") && spare() > 6000)
+        for(const k of LAN.rooms) if(fin(A.buildUp,[d,k])){ bump("built"); break; }
+      if(on("rites")){
+        if(!d.blessing && spare() > 3500)
+          for(const gd of Object.keys(A.GODS||{})) if(fin(A.makeOffering,[d,gd])){ bump("offering"); break; }
+        if(!d.vow && spare() > 9000)
+          for(const gd of Object.keys(A.GODS||{})) if(fin(A.swearVow,[d,gd])){ bump("vow"); break; }
+      }
+      /* the census must be CLAIMED — `riseWeek` only fills the meter, and this is one of the two
+         gates on Rome. No policy of mine called it until v2.93.0, which is why every earlier sweep
+         read census rung 0 in every house. */
+      if(on("census") && A.canClaimRise(d) && fin(A.claimRise,[d])) bump("claimedRank");
+      if(on("staff")) for(const kind of ["medicus","armourer"]){
+        if(d[kind]) continue;
+        if(!((d.staffMarket||{})[kind]||[]).length) fin(A.makeStaffMarket,[d]);
+        const c = (((d.staffMarket||{})[kind])||[]).filter(x=>x.fee <= spare()*0.4).sort((a,b)=>b.fee-a.fee)[0];
+        if(c && fin(A.hireStaffMember,[d, kind, c.id])) bump("hired:"+kind);
+      }
+      /* the school of the house, which v2.93.0 put in front of the player for the first time. The
+         reference player takes the one that matches how he already fights — the yard is bought on
+         price rather than class, so `craft` is the honest default for a house that keeps its men. */
+      if(on("school") && !d.doctrine && A.DOCTRINES && spare() > 2500){
+        const want = A.DOCTRINES.craft ? "craft" : Object.keys(A.DOCTRINES)[0];
+        if(fin(A.declareDoctrine,[d, want])) bump("school");
+      }
+      if(on("rome") && d.romeOffer && fin(A.answerRomeWith,[d,true])) bump("toRome");
+
+      if(on("bout")){
+        const av = g => A.STATS.reduce((s,k)=>s+(g[k]||0),0)/6;
+        const men = A.activeG(d).filter(g=>!g.injury && (g.fatigue||0) < 55).sort((x,z)=>av(z)-av(x));
+        /* the primacy first when it is up — a purse-maximising pick passes it over, and it is the
+           other gate on Rome. At Rome, take whatever card is there: the imperial bill is sine
+           missione 54% of the time and refusing it lapses the trip. */
+        const t = takeBout(d, { men, wantStakes: d.rome ? null : (o.stakes || "standard"),
+          choice: o.choice || "press",
+          pick: us => { const pr = us.filter(x=>x.primus); return (pr.length ? pr : us)
+            .sort((a,b)=>(b.purse||0)-(a.purse||0))[0]; } });
+        if(t && t.ran !== false){
+          bump("bout");
+          if(t.offer && t.offer.primus) bump("primusBout");
+          if(t.offer && t.offer.imperial) bump("imperialBout");
+          if(t.res && t.res.win) bump("won");
+        } else bump("noBout");
+      }
+
+      /* the week's question, answered the way a solvent player would — NOT always choice 0, which on
+         `uprising` is the only lethal branch and cost an earlier probe 129 weeks of median life */
+      const ev = d.pendingEvent;
+      if(ev){
+        did.events = did.events || {};
+        did.events[ev.id] = (did.events[ev.id]||0)+1;
+        let i = 0;
+        if(ev.id === "uprising"){ const k=(ev.data&&ev.data.keys)||["fight"]; const gi=k.indexOf("guards"); if(gi>=0) i=gi; }
+        fin(()=>A.EVENTS[ev.id].run(d, ev, i), []);
+        d.pendingEvent = null;
+      }
+      fin(A.endWeek,[d]);
+      return did;
+    };
+
+    const play = (d, weeks, opts) => {
+      const tot = { events:{} };
+      for(let w=0; w<(weeks||100); w++){
+        if(d.over) break;
+        const did = lanista(d, opts);
+        for(const [k,v] of Object.entries(did)){
+          if(k === "events"){ for(const [e,n] of Object.entries(v)) tot.events[e] = (tot.events[e]||0)+n; }
+          else tot[k] = (tot[k]||0) + v;
+        }
+      }
+      tot.week = d.week; tot.kind = d.over ? d.over.kind : "alive";
+      return tot;
+    };
+
+    window.__ROPE = { answer, run, takeBout, fit, lanista, play,
       stats: ()=>Object.assign({}, R),
       reset: ()=>{ R.bouts = R.held = R.rounds = R.unresolved = R.threw = 0; },
       /* one line a check can print so its own rope is visible in the log */

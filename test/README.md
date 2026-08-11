@@ -75,6 +75,7 @@ reason the check exists usually has not.
 | `sand` | slow | thirteen checks called `doFight` and every one drove the engines in memory; four drove a browser and none reached the sand, so the most-looked-at screen in the game had no test — which is why a React key fault living on the bout wizard was found by a scratch probe photographing an axe |
 | `draw` | fast | the week asks one question, chosen by the first event whose `make` fires from a shuffled key list — and the shuffle was `sort(()=>R()-0.5)`, the classic broken one, in a file that already contained a correct Fisher–Yates used in nine other places. What the game asked you depended on where in the file the event was written. Holds the shuffle uniform AND the statistic that actually decides it, the first *eligible* key, because the first-position figure overstates the fault four-fold |
 | `probe` | fast | the audit's own instrument — a check that reads the other checks. The fight engines return at `res.unfinished` before crediting anything and mutate nothing, and nine of the nineteen checks that drive a bout were losing between a quarter and two thirds of their evidence to it. Fails any check that names an engine without resolving to exhaustion, reading each `if(… .crux …)` site rather than the file, because answering with the cloth ends the bout and is correct. One of its rules was taken back out for flagging seven right answers against one wrong one. Since v2.90.0 it also fails any check that reads `.unfinished` off a `do*` result, which is the wrong layer's field and scores every held bout a loss |
+| `policy` | fast | the reference player, and the bar under him. `survive` asks whether a NEW house can get off the ground; this asks whether one played WELL still gets anywhere — 8 houses × 320 weeks through `__ROPE.play`, in about 3 seconds. Measured median life 226w, fame 2,981, 45 of 57 events, all five rooms, 7 of 8 houses claiming a census rung, a school declared by every survivor; every bar sits near half of that, because the job is to catch a collapse rather than police variance |
 | `school` | fast | the six doctrines of the house. Each declares, charges its listed price, changes for 1.8x the new school's price, reads every numeric field back through `docNum`, answers `docIs` on its KEY, and moves the factions its table names — with the field list DERIVED from each entry rather than written into the check. Plus the reason it exists: `d.doctrine` was non-null in 0 of ~5,000 measured house-weeks, so the week's agenda must raise it for a solvent house and leave a poor one alone |
 | `odds` | fast | the arena panel's own number against the sand. Holds three things: a MIRROR — two men identical in all six stats, class, kit, traits, heart, morale, record and fame — landing a shade under half, which is what `FOE_EDGE` 1.029 predicts and which is this check's instrument before it is a bar; the shape of a held bout's return, so `crux`-versus-`unfinished` cannot be confused again; and the ranking `winChance` recommends for all six classes, asserted on the pure function with no sampling in it, because the realised version of that bar flipped between runs at n=150 |
 | `bay` | fast | the two coastal scales, neither of which had ever been toured — #115. Favour is a ratchet that opens every town on "an outsider" and climbs only on bouts fought there, and its bottom word is reachable ONLY through `cityServed`'s defeat branch at Neapolis; `knownIn` bleeds 0.55 a week and is pegged at 100 by a round robin. Also holds the branch neither of my arms could reach: the bay taken by a rival after 30 idle weeks, and given back only by turning up |
@@ -1418,3 +1419,25 @@ stat 65–80 against an imperial bill of 94.7, and the game's own `winChance` qu
 
 The quote was available the whole time and costs one call. **When an outcome looks impossible, ask the
 game what it expected before deciding the game is wrong.**
+
+
+## Put the reference player in the harness, not in every check
+
+Three attempts at a competent policy in one release produced median lives of 108, 27 and 157 weeks on
+the same build. The first reported thirteen events and fourteen subsystems dark and almost none of it was
+the game. That is not a one-off: every check needing a house to reach something had been writing its own
+player, so every reachability claim in this suite was a claim about whichever policy the probe happened
+to have.
+
+`__ROPE.lanista` / `__ROPE.play` is that player, once. Three properties make it usable rather than just
+shared:
+
+- **It returns what it did.** Action counters, per-event tallies, stakes actually fought. A check can
+  assert the house DID the thing, which is how the `wantStakes` and `claimRise` faults would have been
+  caught the first time instead of the third.
+- **Every part switches off** through `opts`, so a control arm is `{cells:false}` rather than a second
+  hand-written policy that differs in ways nobody enumerated.
+- **It has a check of its own.** `policy` fails if the reference player collapses — which means every
+  other check leaning on him inherits the warning instead of quietly measuring a dying house.
+
+If a shared fixture has no bar under it, it will rot silently and take every check that uses it along.
