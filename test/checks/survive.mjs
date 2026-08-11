@@ -176,7 +176,34 @@ const MEN    = 3;
    the same breath as its failure is the worst possible look, and it is right again that the fix is
    evidence rather than a nudge — four samples is how the last bad bar got set. What is needed is
    the actual distribution of (houses standing, men) over ten or more runs of an unchanged build,
-   and then a threshold set against it. That is a job of its own and it is written down as one.  */
+   and then a threshold set against it. That is a job of its own and it is written down as one.
+
+   ---- AND IN v2.91.0 THAT JOB WAS DONE. TWELVE RUNS, ONE BUILD ----
+
+   Run twelve times back to back on 96ebc0c, nothing else on the machine (this check takes five
+   browsers and its own notes blame CPU contention for two false failures, so it got the box):
+
+     standing  1 · 2 · 2 · 3 · 3 · 3 · 3 · 3 · 4 · 4 · 4 · 5      median 3
+     men       4 · 3 · 5 · 4 · 6 · 6 · 6 · 6 · 6 · 6 · 11 · 6     median 6
+
+   ONE FAILURE IN TWELVE — the run at 1 standing with 4 men, which trips `standing < BOTH_HOUSE &&
+   men < BOTH_MEN`. Pooled with the 35 runs counted in task #50, which found one failure, that is
+   **2 failures in 47 runs, about one in twenty-four**. (Pooling across builds is the thing this
+   project keeps warning about; it is defensible only for the FAILURE RATE of a check on builds that
+   did not touch the opening, and the twelve above stand on their own regardless.)
+
+   SO THE "ONE RUN IN FOUR" ABOVE IS RETRACTED. It came from four samples and it is not what the
+   check does: 1 of 12 here, 2 of 47 pooled.
+
+   AND THE BAR IS STILL NOT TOUCHED, on purpose. Twelve runs put a 95% interval on 1-in-12 of
+   roughly 1.5% to 35% — enough to rule out one-in-four, nowhere near enough to pin the rate. The
+   one obvious tightening (BOTH_MEN 5 → 4) would have passed the single failing run and cost nothing
+   visible, and that is exactly the objection: it would be a constant fitted to ONE event, which is
+   the same mistake as MEN = 6 with the sign flipped. A bar is moved when the evidence says where to
+   put it, not when a run it caught looks survivable in hindsight.
+   What IS on record now is the distribution, so the next person has the sample rather than an
+   argument. If a build fails this check, look at the pair before believing it: (1, 4) and (2, 3)
+   are inside measured ordinary variance, and a real gutting drives both to nothing.  */
 const BOTH_MEN  = 5;   /* both weak together is the failure; either alone is a bad week */
 const BOTH_HOUSE = 2;
 const KEEP   = 4;    /* the yard a lanista tries to hold; below it, he goes to the block */

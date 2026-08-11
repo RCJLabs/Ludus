@@ -1462,6 +1462,27 @@ Read the man (`g.status === "freed"`), not the ledger. And its first hybrid arm 
 away every win, and it died at week 48 of debt in 10 of 14 houses with nobody alive long enough to earn a
 rudis. The cloth spares the *other* house's man and has nothing to do with the gate being measured.
 
+**AND `survive`'S DISTRIBUTION, THE JOB ITS OWN NOTE ASKED FOR.** That check has carried a written-down
+task since v2.76.0: "what is needed is the actual distribution of (houses standing, men) over ten or more
+runs of an unchanged build, and then a threshold set against it." Twelve runs back to back on 96ebc0c,
+with the machine to itself:
+
+| | | | | | | | | | | | | median |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| standing | 1 | 2 | 2 | 3 | 3 | 3 | 3 | 3 | 4 | 4 | 4 · 5 | **3** |
+| men | 4 | 3 | 5 | 4 | 6 | 6 | 6 | 6 | 6 | 6 | 11 · 6 | **6** |
+
+**One failure in twelve** — the run at 1 standing with 4 men — and **two in forty-seven** pooled with the
+35 counted in task #50. So the standing claim that both-weak-together "trips on luck at something like one
+run in four" is **retracted**: it came from four samples, which is the same fault this project has now made
+three times with three different constants.
+
+**The bar was still not moved, deliberately.** Twelve runs put a 95% interval on 1-in-12 of roughly 1.5% to
+35% — enough to rule out one-in-four, nowhere near enough to place a new threshold. The obvious tightening
+(`BOTH_MEN` 5 → 4) would have passed the one failing run at no visible cost, and that is precisely the
+objection: a constant fitted to a single event is `MEN = 6` again with the sign reversed. What is on record
+now is the sample, so the next person inherits evidence instead of an argument.
+
 ### v2.90.0 — The odds panel was recommending the worst order, and the imperial sand was never unwinnable
 
 #121. One real fault in the game, seven in my own instruments, and the answer to the last measurable

@@ -799,6 +799,15 @@ byte-identical to the parent that had just passed it — `git diff <parent> -- s
 because the release added a check file and three documents. Three more runs of that same build: 4/5
 with 7 men, 2/5 with 10, 4/5 with 7. So the bar trips on luck at something like one run in four.
 
+**And that figure is retracted too, measured in v2.91.0.** Twelve runs back to back on one build,
+with the machine to itself: standing 1·2·2·3·3·3·3·3·4·4·4·5 and men 4·3·5·4·6·6·6·6·6·6·11·6 —
+**one failure in twelve**, and two in forty-seven pooled with task #50's runs. One in four came from
+four samples, which is the same fault twice over. The bar was still not moved: 1-in-12 carries a 95%
+interval of roughly 1.5% to 35%, so the evidence rules out one-in-four and does not say where to put a
+new threshold. Tightening `BOTH_MEN` from 5 to 4 would have passed the single failing run — which is
+the objection to it, not the argument for it. A constant fitted to one event is `MEN = 6` again with
+the sign reversed.
+
 Two things worth keeping. The first is the diagnostic: **when a stochastic check fails, diff the game
 code before anything else.** An empty diff against a green parent is the strongest possible evidence
 that the check moved rather than the game, and it costs one command — far cheaper than the four
