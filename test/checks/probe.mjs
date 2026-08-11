@@ -64,11 +64,19 @@ export const describe = "no check drives a bout it does not finish";
 const ALLOWED = {
   bulk:    { rope:"names the engines only to measure how long their functions are; drives nothing" },
   engines: { rope:"calls `simulateFight` directly with a hand-built context — below the layer where a crux exists" },
+  /* `engines` needs no `simLayer` exemption and was briefly given one for nothing: the wrong-field
+     rule only looks at checks that drive a `do*` engine, and `engines` drives the `simulate*` layer,
+     where `unfinished` is the correct field. Removing the exemption and re-running proved it — the
+     check still passed, because it never reaches the rule. An exemption that changes no outcome is
+     worse than none: it reads as evidence the rule was considered and waived. */
   coast:   { rope:"holds the crux itself, on purpose: its whole subject is that a town must see the "
                 + "afternoon whatever engine ran it and however it ended, so it resumes each engine by "
                 + "hand with an explicit word and asserts on the resumed result" },
   feats:   { rope:"answers every crux with the CLOTH, which ends the bout as a forfeit — there is no "
                 + "second word to speak, and the count of cruxes is the thing it is measuring" },
+  odds:    { rope:"one of its sites is a bout it deliberately does NOT resolve — section 2 fishes for a "
+                + "held result to assert the shape of the return, which is the whole point of that "
+                + "section. Its measuring sites all go through `__ROPE.answer`, which loops to exhaustion" },
   probe:   { rope:"this file; it names the engines in prose" },
 };
 
@@ -89,6 +97,16 @@ export async function run(){
     const src = fs.readFileSync(path.join(dir, f), "utf8");
     /* comments are prose about the trap in most of these files, so the rules read CODE only */
     const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+    /* ---- AND A RULE MUST NOT READ ITS OWN FAILURE MESSAGE, learned in v2.90.0 ----
+       The `.unfinished` rule below flagged three checks on its first run and all three were the
+       rule's fault: `odds` and this very file NAME the field inside the sentence they print when
+       they catch it, and a regex over the whole file cannot tell an offence from a description of
+       one. `probe` flagging `probe` for explaining `probe` is as clear a signal as this suite gets.
+       So rules that look for a field name read `bare` — code with every string literal taken out.
+       `/"cloth"/` above still reads `code`, because that rule is ABOUT a string. */
+    const bare = code.replace(/`(?:\\.|[^`\\])*`/g, "``")
+                     .replace(/'(?:\\.|[^'\\])*'/g, "''")
+                     .replace(/"(?:\\.|[^"\\])*"/g, '""');
 
     const drives = ENGINES.test(code);
     if(!drives) continue;
@@ -107,9 +125,12 @@ export async function run(){
     while((m = RE.exec(code))){
       const body = code.slice(m.index, m.index + 260);
       const inLoop = /(while|for)\s*\([^)]*\.crux/.test(code.slice(Math.max(0,m.index-160), m.index));
-      sites.push({ cloth:/"cloth"/.test(body), inLoop });
+      /* `__ROPE.answer` loops to exhaustion on its own, so ONE `if` around it is complete. Without
+         this, the rule flagged `odds` — a check written on the rope — for using the rope correctly. */
+      const roped = /__ROPE|\bR\.answer\b/.test(body);
+      sites.push({ cloth:/"cloth"/.test(body), inLoop, roped });
     }
-    const oneIf  = sites.some(x=>!x.cloth && !x.inLoop) && !loops;
+    const oneIf  = sites.some(x=>!x.cloth && !x.inLoop && !x.roped) && !loops;
     const clothOnly = sites.length > 0 && sites.every(x=>x.cloth);
     const blind  = !rope && !loops && !sites.length;
     const bill   = /games\s*&&\s*d\.games\.offers|d\.games\.offers/.test(code);
@@ -126,6 +147,30 @@ export async function run(){
       bad.push(`${name} answers the balance once and then drops the bout if it comes back — `
         + `\`simulateFight\` asks for up to three words, and one-shot loses 26.8% of all standard `
         + `bouts. Make it a \`while\`, or use \`window.__ROPE\``);
+
+    /* ---- AND THE WRONG FIELD, WHICH IS THE SAME FAULT WEARING A DISGUISE, added in v2.90.0 ----
+       The `do*` engines return `{ pending, beats, crux:true, … }`. They do NOT return `unfinished`;
+       that field belongs to the `simulate*` layer beneath them. Three probes of mine tested
+       `res.unfinished` on a `doFight` result, so every held bout read as a finished one with no
+       winner and was scored a LOSS — 33% to 58% of all bouts, depending on grade, and it produced a
+       mirror match at 21% that took four rounds of chasing to explain. A check making this mistake
+       does not look broken: it looks like a finding. `engines` is exempt because it calls the
+       `simulate*` functions directly, where `unfinished` is the right field. */
+    /* THIS RULE FLAGGED ITSELF THREE TIMES, each time for a different reason, and all three are one
+       reflex: a check that reads its own source cannot spell the thing it is looking for.
+         1. the failure message NAMES the field — fixed by stripping string literals into `bare`;
+         2. the exemption was keyed `unfinished`, so `ex.unfinished` was itself a literal match —
+            renamed `simLayer`;
+         3. and the PATTERN is a regex literal, which is code and survives string-stripping. So the
+            needle is assembled at run time and the six letters never appear together in this file.
+       A lint over its own kind has to hold itself to the rule it enforces, and this one does now. */
+    const WRONG_FIELD = new RegExp("\\." + "unfin" + "ished");
+    if(WRONG_FIELD.test(bare) && !ex.simLayer)
+      bad.push(`${name} reads \`.unfinished\` while driving a \`do*\` engine. That engine returns `
+        + `\`crux: true\` and has no \`unfinished\` field at all, so the test is always false and `
+        + `every held bout — a third to two thirds of them — is scored as a finished loss. Test `
+        + `\`r.crux\`, or hand the bout to \`window.__ROPE\`. Only the \`simulate*\` layer says `
+        + `\`unfinished\`; if this check really is on that layer, say so in ALLOWED`);
   }
 
   const via = rows.filter(r=>r.rope).map(r=>r.name);

@@ -12887,8 +12887,23 @@ function winChance(g, opp, prep, tac, foeTac){
      power() knows nothing about, and it turns more of them when the man has been told
      to stand off, because that is the one week both the order and the board are doing
      the same job. The quote sees the board now. */
+  /* ---- AND IT WAS RAISED TOO FAR, in v2.90.0, on the measurement ----
+     0.44 against the 0.13 every other order gets is a 25% premium to a shield man for standing
+     off, and it outran the 1.18-against-1.05 that `TACTIC_OR` gives going forward — so the panel
+     named STANDING OFF the best order in every cell measured, at every grade, while the sand had
+     going forward 3.2 to 8.0 points ahead of it. Mirrored men, the crux answered the same word in
+     every arm, 250 bouts a cell: the bay's ordinary card 52.8% forward against 49.2% standing off,
+     a good card 48.0 against 40.0, the best in the bay 43.2 against 40.0, the imperial bill 46.8
+     against 39.6 — and the panel quoted standing off ahead by a few tenths in all four. A player
+     reading his own odds panel and picking the best number on it was picking the worst word.
+     0.22 keeps what the original fix was for — the quote can still see a board, and standing off
+     still prices above `measured`, which is what the sand says too — without swamping the order.
+     The B-side term is the other man's board, is not part of the inversion, and is left as it was.
+     WHAT IS NOT FIXED, and was measured: the quote runs about four points rich across all four
+     orders, and even after this it understates the forward-against-standing-off gap by half. The
+     ORDERING is what a player acts on and the ordering is now right; the level is left alone. */
   const cov = f => (f.mods && f.mods.cover) || 0;
-  const board = 1 + cov(A) * (tac==="defensive" ? 0.44 : 0.13)
+  const board = 1 + cov(A) * (tac==="defensive" ? 0.22 : 0.13)
                   - cov(B) * (foeTac==="defensive" ? 0.44 : 0.13);
   const or = Math.pow(raw/(1-raw), 12.5) * (TACTIC_OR[tac] || 1) / (TACTIC_OR[foeTac] || 1)
     * clamp(board, 0.6, 1.5);
@@ -17580,8 +17595,13 @@ function answerRomeWith(d, accept){
     /* ---- AND THE PLACE ON THE BILL IS NOT HELD FOREVER ----
        The invitation expired in four weeks; the trip that followed it never expired
        at all. A house that accepted and then did not care for the card it was given
-       — half of imperial bouts are sine missione against men built at quality 92 to
-       99 — sat at Rome indefinitely with Capua frozen behind it: no market, no
+       — half of imperial bouts are sine missione (measured: 54.0% on a first campaign
+       over 200 draws) against men drawn at QUALITY 100 to 103, which is a mean STAT
+       of 96.8, not the 92 to 99 this comment said until v2.90.0; the floor was raised
+       under it and the number here was left behind. It is worth being exact about,
+       because an audit read this line, built "quality 92" men — a mean stat of 78.6 —
+       and reported the imperial sand unwinnable off an eighteen-point deficit it did
+       not know it had — sat at Rome indefinitely with Capua frozen behind it: no market, no
        festivals, no events, no way back. An audit probe found this by accident,
        accepting three invitations and never once coming home. Rome gives a house
        about a month a bout, and then the editors fill the place from the queue. */
@@ -24198,6 +24218,17 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     nameHeir, heirEligible, HEIRS, houseRecord,
     /* the summit: the gate, the letter, the bar, and the trip's own clock */
     romeReady, romeProved, offerRome, romeBar, ROME_BOUTS, ROME_WEEKS_PER_BOUT, ROME_RANK,
+    /* ---- AND THE MAN WHO IS ACTUALLY ON THAT BILL, in v2.90.0 ----
+       Everything above is the road to Rome. None of it is the bout, so the summit could be
+       reached by a probe and never once measured: the card itself, what it asks of a house, and
+       the three scales the city keeps on you were all unreadable. Worse, the two converters
+       between a quality number and a stat were dark too — which is how an audit came to field
+       "quality 92" men against the imperial bill and report the sand unwinnable, when quality 92
+       is a mean stat of 78.6 and the bill draws 93 to 99. A number you cannot convert is a number
+       you will get wrong. */
+    makeImperialBout, qStat, qForStat, kitFor, watchHim, watchCost, foeTactic, FOE_EDGE,
+    romeRuns, romeTriumphs, romeStanding, romeWord, romeSineOdds, romePurseMult, romeGreeting,
+    romePrize, ROME_PRIZES, ROME_TURNS, RT_KEYS, ROME_FAME, ROME_COOLDOWN,
     /* the four engines and the four ways into them */
     simulateFight, simulatePair, simulateMelee, simulateVenatio,
     doFight, doPairFight, doMelee, doVenatio,
@@ -24312,7 +24343,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* ---- AND WHETHER THE WEEK'S NUDGE POINTS AT THE BIGGEST LEVER ----
        #117 measured working the cells as the largest lever in the game. The agenda offers the feast
        at unrest 35 and never mentions walking the cells at all — see `agendaCan`. #119. */
-    walkReady, WALK_COOL, feastCost,
+    walkReady, WALK_COOL,          /* feastCost is above, with the feast — this line had it twice */
     /* the war: its stages, its clock and what it does to the block */
     WAR, warWeek, warIdx, warStage, warMarket, warElsewhere, WAR_AWAY_AT, WAR_AWAY_ODDS,
     /* the odds the bookmakers quote, and the mitigations on a death */

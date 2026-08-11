@@ -74,7 +74,8 @@ reason the check exists usually has not.
 | `surface` | slow | the tab bar was 9px and END WEEK was 37px tall — and it measured a house twelve WEEKS old on one face of each tab with no record sheet ever opened, so it would have passed the whole way through a release where a house's name read "House Glaber…" and a fame of 23,703 rendered "237…" |
 | `sand` | slow | thirteen checks called `doFight` and every one drove the engines in memory; four drove a browser and none reached the sand, so the most-looked-at screen in the game had no test — which is why a React key fault living on the bout wizard was found by a scratch probe photographing an axe |
 | `draw` | fast | the week asks one question, chosen by the first event whose `make` fires from a shuffled key list — and the shuffle was `sort(()=>R()-0.5)`, the classic broken one, in a file that already contained a correct Fisher–Yates used in nine other places. What the game asked you depended on where in the file the event was written. Holds the shuffle uniform AND the statistic that actually decides it, the first *eligible* key, because the first-position figure overstates the fault four-fold |
-| `probe` | fast | the audit's own instrument — a check that reads the other checks. The fight engines return at `res.unfinished` before crediting anything and mutate nothing, and nine of the nineteen checks that drive a bout were losing between a quarter and two thirds of their evidence to it. Fails any check that names an engine without resolving to exhaustion, reading each `if(… .crux …)` site rather than the file, because answering with the cloth ends the bout and is correct. One of its rules was taken back out for flagging seven right answers against one wrong one |
+| `probe` | fast | the audit's own instrument — a check that reads the other checks. The fight engines return at `res.unfinished` before crediting anything and mutate nothing, and nine of the nineteen checks that drive a bout were losing between a quarter and two thirds of their evidence to it. Fails any check that names an engine without resolving to exhaustion, reading each `if(… .crux …)` site rather than the file, because answering with the cloth ends the bout and is correct. One of its rules was taken back out for flagging seven right answers against one wrong one. Since v2.90.0 it also fails any check that reads `.unfinished` off a `do*` result, which is the wrong layer's field and scores every held bout a loss |
+| `odds` | fast | the arena panel's own number against the sand. Holds three things: a MIRROR — two men identical in all six stats, class, kit, traits, heart, morale, record and fame — landing a shade under half, which is what `FOE_EDGE` 1.029 predicts and which is this check's instrument before it is a bar; the shape of a held bout's return, so `crux`-versus-`unfinished` cannot be confused again; and the ranking `winChance` recommends for all six classes, asserted on the pure function with no sampling in it, because the realised version of that bar flipped between runs at n=150 |
 | `bay` | fast | the two coastal scales, neither of which had ever been toured — #115. Favour is a ratchet that opens every town on "an outsider" and climbs only on bouts fought there, and its bottom word is reachable ONLY through `cityServed`'s defeat branch at Neapolis; `knownIn` bleeds 0.55 a week and is pegged at 100 by a round robin. Also holds the branch neither of my arms could reach: the bay taken by a rival after 30 idle weeks, and given back only by turning up |
 | `steel` | fast | wear — the one system where the probe was wrong FOUR separate ways. #114 read `d.gearCond`, which is the pool of pieces on the SHELF, and concluded steel never wears; read off the man in `g.wear[slot]` a bout takes 3-6 off a weapon, all five words are said and pieces break. Holds the rate against `WEAR_RATE`, the five words off a piece driven to nothing, the break on the game's own chronicle line, the bands a played house sees, a man's career against his weapon's life, and — the trap that cost the most — that a bout held at the balance has changed nothing while the same bout answered changes the kit |
 | `houses` | fast | the four words for a rival house, two of which #113 measured as never said. Refuted on the item's own falsification clause: a house that works ONE rivalry for 300 weeks peaks at a median warmth of 76.8 and says all four, where a probe using `pickRivalOpp` meets six houses a little and tops out near 43. Holds the refutation plus the thing underneath it — that a bout against a rival's man registers as a meeting at all, which is `offer.opp.house` lining up with the rival's name |
@@ -882,8 +883,10 @@ goes on a man, so a pool sampled during play is dominated by spoils off dead opp
 worn piece's condition lives in `g.wear[slot]`. Before sampling a quantity, find the write that
 produces the number you want and check you are reading its destination.
 
-**A function that returns early mutates nothing.** `doFight` returns at `res.unfinished` — the crux —
-BEFORE it calls `wearKit`, because the bout is being held for the box to speak. 41% to 82% of bouts
+**A function that returns early mutates nothing.** `doFight` returns at the crux BEFORE it calls
+`wearKit`, because the bout is being held for the box to speak. (This paragraph said `res.unfinished`
+until v2.90.0 and that was wrong in a way that cost three probes — see "Two layers, two field names",
+below. `doFight` comes back with `crux: true`; `unfinished` belongs to `simulateFight` underneath it.) 41% to 82% of bouts
 reach the balance. A probe that does not answer measures a bout that never happened: no wear, no
 purse, no fatigue. Worse, the crux rate is highest at sine missione, so the arm meant to wear steel
 FASTEST wore it least and that read as a finding about hard wear running backwards. Any check that
@@ -1164,3 +1167,93 @@ were in the yard to be measured.
 Whenever a question is about careers, lifetimes, or anything with an end, sample the ROSTER — `d.gladiators`
 — and not the active list. And when a recommendation you are about to implement rests on one figure,
 re-measure that figure first: this one reversed, and the change it justified would have done nothing.
+
+
+## Two layers, two field names, and three probes that read the wrong one
+
+`simulateFight` and its three sisters return `{ unfinished, crux, … }`. `doFight` and ITS three sisters
+wrap them and return `{ pending, beats, crux: true, … }` — **with no `unfinished` field at all.**
+
+Three probes in one sitting tested `res.unfinished` on a `doFight` result. The test is always false, so
+every held bout read as a finished bout, and a finished bout with no `win` field scored as a loss. A
+crux comes up in 58.0% of ordinary cards at the bottom of the ladder and 32.8% at the top, so between a
+third and two thirds of every measurement was a silent loss.
+
+What it looked like was a finding. A mirror match — a man given his opponent's six stats, class, kit,
+traits, heart, morale, record and fame — read **21% to 28%** instead of the ~46% that `FOE_EDGE` = 1.029
+implies, and that looked like a large undocumented house edge in the engine. Four rounds went into
+hypotheses about the engine: `PL` defaulting to a penalty when no plan is chosen (it does not — it
+defaults to `{pow:1}`), gear wear defaulting to zero on an unset slot (it does not — `wearOf` returns
+100), the venue and the sky missing from a hand-built offer (`doFight` fills both in itself).
+
+Two things would have caught it in a minute each. **The mirror is the cheapest instrument check there
+is** — put a man against himself, and if the answer is not ~50% then the probe is wrong before anything
+else is. And **the rope already knew**: `__ROPE.answer` has always looped on `r.crux`. The prose in this
+file said `res.unfinished`, three checks' headers said it, and the harness's own comment said it, so the
+wrong name was well documented and consistently wrong. A field name repeated in six places is not
+thereby verified.
+
+`probe` now fails any check reading `.unfinished` while driving a `do*` engine, and `odds` asserts the
+shape of a held return outright.
+
+## The seventh argument was a word and I passed a number
+
+`doFight(d, gid, offer, tactic, bet, pending, choice, plan)` resolves `choice` as `CRUX[choice]` — a key
+into an object of ten words: `press`, `cover`, `finish`, `legs`, `breather`, `rouse`, `milk`, `hound`,
+`blind`, `cloth`. I passed `0`. It is falsy, so `C` came out `null` and the bout resumed with no order.
+No error, no warning, a plausible number out the other end. When an argument is a key rather than an
+index, an index is silently the absence of an answer.
+
+## A lint that reads source cannot spell what it hunts
+
+`probe`'s new rule flagged three checks on its first run. All three were the rule, not the checks:
+
+1. the failure message NAMES the field it looks for — so any check that explains the trap trips it;
+2. the exemption was keyed `unfinished`, making `ex.unfinished` a literal match in `probe`'s own code;
+3. and the pattern was a regex literal, which is code and survives string-stripping.
+
+`probe` flagging `probe` for documenting `probe` is as clear a signal as this suite produces. Rules that
+hunt a field name now read a strings-stripped copy of the source, and the needle is assembled at run
+time from pieces. A lint over its own kind has to pass its own rule.
+
+## An exemption that changes no outcome is worse than none
+
+`engines` was given an exemption from the new rule, on the reasoning that it reads `.unfinished`
+legitimately — it drives the `simulate*` layer, where that IS the field. Removing the exemption and
+re-running showed the check still passed: the rule only looks at checks that drive a `do*` engine, and
+`engines` never reaches it. The exemption was doing nothing, and a waiver that changes no outcome reads
+to the next person as evidence the rule was considered and consciously waived. It was deleted.
+
+## Quality is not a stat, and the source will tell you the wrong number
+
+`qStat(q) = 24 + q*0.52 + max(0, q-82)^1.6 * 0.17`. Quality 92 is a mean stat of **78.6**; quality 100 is
+**93.3**; quality 103 is 99.7 and clamps. A probe fielding "quality 92" men against the imperial bill,
+which draws quality 100 to 103, was eighteen points of mean stat light and read the summit as unwinnable.
+
+The number came from a source comment that had been left behind by a balance change — it still said the
+bill drew "quality 92 to 99" after the floor was raised to 100. **Prose in the source is evidence about
+what someone once measured, not about what the code does now.** Read the generator, not the comment; and
+when a comment turns out to be stale, fix it in the same pass, because the next reader will believe it
+too.
+
+## Answering every bout the same way is not a control, and neither is fighting on one order
+
+`foeTactic` gives a high-grade opponent `aggressive` — `TACTIC.aggressive` is pow 1.052 and deal 1.46 —
+while three probes fought every single arm on `measured`, pow 1.000. That is 10.8 points of win rate at
+mean 92 and 15.2 at mean 99, handed over in every bout of every arm, in the same shape as the earlier
+lesson about answering every event with choice 0. **Ask what the other side is choosing, and make sure
+your side is allowed the same choice.** A sweep that holds your own best lever constant measures a floor.
+
+## Know what your n can resolve before you assert a ranking
+
+The first `odds` check held the realised ordering of four tactics off 150 bouts a cell. The standard
+error on a difference of two proportions at that n is about 5.8 points; the effect is 3 to 8. The
+ranking flipped between two runs of the same build, and a 250-bout version that had looked stable across
+four cells was four cells of noise agreeing by luck.
+
+The fix was not more samples — it was noticing that the claim did not need any. `winChance` is a pure
+function of two men and a word, so what it RECOMMENDS is arithmetic and can be asserted exactly; the
+sand's side of the comparison was already published in the source off 2,700 bouts. **Before sampling for
+an effect, check whether either side of the comparison is deterministic.** And when a bar must rest on
+samples, compute what the samples can resolve first, and if the effect is inside the error say so in the
+line instead of asserting it.

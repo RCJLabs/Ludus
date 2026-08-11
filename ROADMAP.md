@@ -1392,6 +1392,104 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v2.90.0 — The odds panel was recommending the worst order, and the imperial sand was never unwinnable
+
+#121. One real fault in the game, seven in my own instruments, and the answer to the last measurable
+question on the list. `board`'s defensive multiple is the only game constant changed.
+
+**THE ARENA PANEL WAS RECOMMENDING THE WORST OF THE FOUR ORDERS.** The panel quotes the player his
+chance and recomputes it from whichever tactic chip is selected, so those four numbers are a
+recommendation whether or not they mean to be. `winChance` prices the order twice: once through
+`TACTIC_OR` (aggressive 1.18, defensive 1.05 — correctly ordered) and again through `board`, which gave
+a shield man **0.44 of his cover for standing off against the 0.13 every other order gets**. For a man
+with cover 1.00 that is 1.440 against 1.130 — a ratio of **1.274**, against `TACTIC_OR`'s 1.18/1.05 =
+**1.124**. The second term swamped the first, so the panel put **standing off at the top for every class
+that carries a board** — Murmillo 1.00, Secutor 1.00, Hoplomachus 0.75, Thraex 0.40 — four of six. The
+game's own reference table, measured off 2,700 bouts, has going forward the best word by **5.2 points
+over standing off**. A player reading his own odds and picking the best number was picking to lose.
+
+**0.44 → 0.22.** The quote can still see a board and standing off still prices above patience, which is
+what the sand says too; it no longer outruns the order. Measured and left alone: the quote runs about
+four points rich across all four words, and even fixed it understates the forward-against-standing-off
+gap by roughly half. The ordering is what a player acts on, and the ordering is now right.
+
+**WHAT IS ACTUALLY ACROSS THE IMPERIAL SAND, at last.** The standing claim was 0 of 18 imperial bouts
+won. `makeImperialBout` draws `genOpponent(3, ri(floor, floor+3))` with `floor = min(104, 100 + romeRuns)`,
+then adds `ri(1,4)` again to the class keys. Over 200 draws a campaign:
+
+| | mean stat | class keys | stats pinned at 99 | heart | to the death |
+|---|---|---|---|---|---|
+| first campaign | **96.8** (93.4–99.0) | 98.5 | 3.4 of 6 | 83.6 | 54.0% |
+| fourth campaign | **98.6** (96.7–99.0) | 99.0 | 5.2 of 6 | 83.1 | 49.5% |
+| the `matched` hard card | **99.0** | 99.0 | 5.8 of 6 | 83.8 | 53.0% |
+
+The escalation saturates by design — the floor caps at 104 and `qStat` clamps past 99 anyway — so from
+the fourth campaign the man is simply at the ceiling and gets no harder.
+
+**And 0 of 18 was my instrument, twice over.** Quality is not a stat: `qStat(92) = 78.6`, so the
+"quality 92" men that probe fielded were **eighteen points of mean stat below the man on the bill**, in a
+game whose own source says a ten-point edge decides a bout. And every bout it ever ran was fought on
+`measured` while the imperial man grades out **aggressive in half of all draws** — worth 10.8 points at
+mean 92 and **15.2 at mean 99**, the largest in-bout lever there is, and the one the probe never pulled.
+
+**The summit is fair and it is reachable.** Two men identical in all six stats, class, kit, traits, heart,
+morale, record and fame: **45.2%** at the imperial bill over 250 bouts, which is exactly what `FOE_EDGE`
+= 1.029 predicts. And a played house's best man, counted over **every man who ever served** — not
+`activeG`, which is #118's fault — reaches a **median mean stat of 92.3**, high 95.8, with 6 of 10 houses
+fielding a 90 or better. At mean 92 with morale high and fame past his, the imperial bout runs 40–52%.
+
+**What the levers are worth at the summit, decomposed one at a time and paired on the seed:**
+
+| lever | worth |
+|---|---|
+| the order given (`measured` → `aggressive`) | **+10.8 at mean 92, +15.2 at mean 99** |
+| his fame past the other man's (`pfame` 80 → 200) | **+11.6** — via `mobHis`, and the quote never moves for it |
+| morale 79 → 95 | **+10 to +12** |
+| a plan his habits answer | +2 to +4, available in 108 of 200 draws |
+| morale 70 → 79 | +3.4 to +5.3 |
+| paying to have him watched | **0** on its own — it buys information, nothing else |
+| his career record (`wins` 8 → 14) | **0.0** |
+| his heart (60 → 84) | **0.0** — heart is not a win-rate lever in a bout |
+
+**Two things the summit takes away and never mentions.** `prepFor` needs `offer.oppRef.fid` to match the
+man drilled against, and `makeImperialBout` sets `oppRef: null` — so a fighter with all six weeks of
+drill carries **prepEdge 1.0 and is worth 0.0** at Rome. And `simulateFight` is called with
+`stopAtCrux: !offer.imperial`: a crux comes up in **58.0%, 42.7% and 43.3%** of ordinary cards by grade
+and **0.0%** of imperial ones, so the imperial bout is the only bout in the game you cannot coach.
+Nothing in the source says why either is so. Both are recorded, neither changed — they may well be the
+intent, since Rome is meant to give a lanista no say, but the player is told neither.
+
+**SEVEN FAULTS IN MY OWN INSTRUMENTS, and the third one is the expensive one.**
+
+1. **Quality read as a stat.** And the source told me to: the comment in `answerRomeWith` still said the
+   imperial bill drew "quality 92 to 99" after the floor was raised to 100–103 under it. Corrected, with
+   the mean stat spelled out beside it so the next reader cannot repeat it.
+2. **`measured` hardcoded** in every arm of three probes, against a foe who chooses his own word.
+3. **`doFight`'s crux return says `crux`, not `unfinished`.** There is no `unfinished` field on it at all
+   — that belongs to the `simulate*` layer underneath. Three probes tested `res.unfinished`, read every
+   held bout as a finished one with no winner, and **scored a third to two thirds of all bouts as
+   losses** — which produced a mirror match at 21% and four rounds of chasing a fault in the engine that
+   was never there. `probe` now fails any check that reads `.unfinished` while driving a `do*` engine.
+4. **The crux takes a WORD, not an index.** `doFight`'s seventh argument is a key into `CRUX`; I passed
+   `0`, which is falsy, so those bouts were resumed with no order at all.
+5. **The resume protocol sets `pd.beats` on the pending object**, not `g.beats` on the man.
+6. **The first version of the new `odds` check asserted a realised ranking off 150 bouts a cell**, where
+   the standard error on a difference of two proportions is 5.8 points and the effect is 3 to 8. It
+   flipped between two runs of the same build. A 250-bout version had looked stable and was not — four
+   cells of noise agreeing by luck. What the check holds now needs no sampling at all: `winChance` is a
+   pure function and the misprice is arithmetic.
+7. **`probe`'s new rule flagged itself three times**, each for a different reason and all one reflex — a
+   lint that reads source cannot spell what it hunts. Its message named the field (fixed by stripping
+   string literals), its exemption was keyed `unfinished` so `ex.unfinished` matched, and its pattern was
+   a regex literal, which is code. The needle is assembled at run time now.
+
+**Also:** a new 51st check, `odds`. A duplicate `feastCost` key removed from the test handle — it had
+warned on every build since v2.84.0, the same class of thing as the `makeStaffMarket` duplicate v2.81.0
+took out. And the whole Rome surface put on the handle (`makeImperialBout`, `romeStanding`, `romeWord`,
+`romeSineOdds`, `romePurseMult`, `romeGreeting`, `romePrize`, `ROME_TURNS`), with the two converters
+between a quality and a stat (`qStat`, `qForStat`) and `foeTactic`, `kitFor`, `watchHim`, `FOE_EDGE`.
+Everything on the handle before this was the ROAD to Rome; none of it was the bout.
+
 ### v2.89.0 — The cells step moves to fourth, and the mercy ending's blocker was not the one I named
 
 The first game-behaviour change in fourteen releases, plus a correction to v2.83.0 that came out of
@@ -5300,4 +5398,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.89.0*
+*Last updated: v2.90.0*
