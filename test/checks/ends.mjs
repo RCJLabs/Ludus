@@ -327,13 +327,19 @@ export async function run({ p }){
                      years — and with an heir named, a lanista whose health reaches nought hands over
                      (`d.succession`, 1,135 weeks of it) rather than ending the run. So the ending is
                      written for a man the game does not produce.
-         closed      NOT REACHABLE IN PLAY, and the bar is quantified. It needs five men FREED with
-                     `houseRecord(d).freed >= 5`, and `rudisEligible` is `wins >= 10 && pfame >= 180`.
-                     Across 500-week houses the best man ever reached **8 wins** — which #114 already
-                     explains: a man fights 3 bouts at the median and 8 at p90, because the piece
-                     outlives its owner. Five men at ten wins each is a bar the game's own career
-                     lengths do not reach. The source comment above it says "the game says mercy is
-                     the strongest long game; it should be able to end that way".
+         closed      NOT REACHABLE, AND v2.89.0 CORRECTED WHY — the first answer here was a
+                     sampling fault of mine. It said the best man in a 500-week house reached **8
+                     wins** against a bar of ten, so nothing qualified. That figure was taken over
+                     `activeG(d)` — the men standing in the yard at the moment of sampling — and a
+                     long-career man is exactly the one most likely to have already left it, freed or
+                     buried. Counted over EVERY man who ever served, 8 houses of 400 weeks: best
+                     career **43 wins**, best fame **2,414**, and **21 men clear `wins >= 10 &&
+                     pfame >= 180` — 2.6 a house.** The rudis is reachable and always was.
+                     What actually blocks `closed` is the OTHER half of its gate: `freed > lost`.
+                     A house frees about 2.6 men a career and buries 68 to 154 of them. No house that
+                     fights can free more men than it buries, so the mercy ending cannot fire however
+                     many are freed — which is a different dial from the one I first named, and it is
+                     the roadmap's to settle.
          triumph     UNTESTED HERE. It is a choice on the road back from Rome, offered only to a
                      house that got there and won, and no arm in this check reaches fame 1,000.
 
@@ -371,12 +377,13 @@ export async function run({ p }){
         const at9 = A.rudisEligible(mock) === true;
         mock.wins = 10;
         const at10 = A.rudisEligible(mock) === true;
-        lines.push(`closed: the rudis wants 10 wins (at 9: ${at9}, at 10: ${at10}) — the best man in a `
-          + `500-week house reached 8, so five freed men is out of reach and \`closed\` with it`);
-        if(at9)
-          bad.push(`\`rudisEligible\` now passes a man with 9 wins — the bar has moved, and \`closed\` `
-            + `may have become reachable. Re-measure how many men a long house can free before `
-            + `trusting the note above, which was written when the bar was 10 and the best man got 8`);
+        lines.push(`closed: the rudis wants 10 wins (at 9: ${at9}, at 10: ${at10}) and 2.6 men a house `
+          + `clear it — REACHABLE. What blocks \`closed\` is \`freed > lost\`: a house frees ~2.6 and `
+          + `buries 68 to 154, so it cannot free more than it buries however low the count goes`);
+        if(!at10)
+          bad.push(`\`rudisEligible\` no longer passes a man with 10 wins — the bar has moved UP, and `
+            + `the 2.6 freeable men a house measured in v2.89.0 is stale. Re-measure before trusting `
+            + `the note above`);
       }
       lines.push(`oldAge: needs age>=62 AND health>=45 AND an heir — 907 lanista-weeks at 62 or over `
         + `and health>=45 in NONE of them, with 1,135 weeks of succession instead. Written for a man `

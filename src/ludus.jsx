@@ -2301,6 +2301,20 @@ const CHARTER = [
   { id:"week", tab:"ludus", title:"End the week",
     how:"Nothing resolves until you do. Training, wounds, the rivals moving, the coin going out — all of it happens at once when the week ends.",
     done:d=>d.week >= 2 },
+  /* ---- MOVED AHEAD OF THE FOUR THINGS THAT COST MONEY, in v2.89.0, on the measurement ----
+     This sat at step nine, behind buying a man, hiring the doctore, arming somebody and paying to
+     have an opponent watched. Working the cells is the largest single lever measured in this
+     project: paired on one seed over 110 houses, the arm that feasts over unrest 30 and walks the
+     cells over 22 outlived its own twin 70 times to 31, at a median 105 weeks against 64, with 11
+     of 110 houses reaching year 22 against NONE at all. Four steps of spending came first and the
+     one that keeps the house alive came ninth.
+     It is safe this early: `done` is `everFeast || unrest < 12`, and every one of the five openings
+     starts at 12 or above — clean 12, champion 14, veterans 18, inherited 26, castoffs 38 — so the
+     step is live from week one in all of them rather than auto-satisfied, which is the trap the
+     LESSONS work already paid for once. */
+  { id:"quiet", tab:"villa", title:"Keep the cells quiet",
+    how:"Unrest is the only number that ends a run outright. A feast costs 120 denarii and buys more than it looks like it does.",
+    done:d=>(d.flags.everFeast||0) > 0 || d.unrest < 12 },
   { id:"buy", tab:"market", title:"Buy a man",
     how:"Three is not a house. The block lies about what it is selling, so pay to have one looked over if the price is worth it.",
     done:d=>d.gladiators.filter(g=>!isGone(g)).length >= 4 },
@@ -2316,9 +2330,6 @@ const CHARTER = [
   { id:"watch", tab:"arena", title:"Look at a man before you fight him",
     how:"Pay to have an opponent watched. What comes back is specific — that he tires, that he drops his arm — and you pick a plan against it.",
     done:d=>(d.flags.everWatched||0) > 0 },
-  { id:"quiet", tab:"villa", title:"Keep the cells quiet",
-    how:"Unrest is the only number that ends a run outright. A feast costs 120 denarii and buys more than it looks like it does.",
-    done:d=>(d.flags.everFeast||0) > 0 || d.unrest < 12 },
   { id:"cloth", tab:"arena", title:"Let a beaten man up",
     how:"A bout can be stopped partway — but only where there is something to stop. At first blood it ends at the wound and nobody is ever on their knees, so the word comes on a card fought to surrender or worse. Throw the cloth when one of them is done and you have spent a purse to buy a man's life — his, or the other house's. Every man in your cells keeps a list, and this goes on it.",
     done:d=>(d.flags.everCloth||0) > 0 || d.week >= YEAR_WEEKS },

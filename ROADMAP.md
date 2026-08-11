@@ -1392,6 +1392,45 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v2.89.0 — The cells step moves to fourth, and the mercy ending's blocker was not the one I named
+
+The first game-behaviour change in fourteen releases, plus a correction to v2.83.0 that came out of
+checking my own recommendation before implementing it.
+
+**THE CHARTER PUTS THE CELLS FOURTH NOW, ahead of the four things that cost money.** "Keep the cells
+quiet" sat at step nine, behind buying a man, hiring the doctore, arming somebody and paying to have an
+opponent watched. Working the cells is the largest single lever measured in this project: paired on one
+seed across 110 houses, the arm that feasts over unrest 30 and walks the cells over 22 **outlived its
+own twin 70 times to 31**, median **105 weeks against 64**, with **11 of 110 reaching year 22 against
+none at all**. Four steps of spending came before the one that keeps the house alive.
+
+It is safe this early because `done` is `everFeast || unrest < 12` and **every one of the five openings
+starts at 12 or above** — clean 12, champion 14, veterans 18, inherited 26, castoffs 38 — so the step is
+live from week one rather than auto-satisfied, which is the trap the `LESSONS` work already paid for.
+
+**AND A CORRECTION TO v2.83.0, FOUND BY CHECKING MY OWN RECOMMENDATION.** I had proposed dropping
+`closed`'s requirement from five men freed to three, on the strength of #118's measurement that the best
+man in a 500-week house reached **8 wins** against a rudis bar of ten. Before changing it I re-measured,
+and the 8 was **a sampling fault of mine**: it was taken over `activeG(d)`, the men standing in the yard
+at the moment of sampling, and a long-career man is precisely the one most likely to have already left
+it — freed, sold or buried.
+
+Counted over every man who ever served, 8 houses of 400 weeks: **best career 43 wins, best fame 2,414,
+and 21 men clear `wins >= 10 && pfame >= 180` — 2.6 a house.** The rudis is reachable and always was,
+and dropping five to three would have changed nothing.
+
+**What actually blocks `closed` is the other half of its gate: `freed > lost`.** A house frees about 2.6
+men across a career and buries 68 to 154 of them. No house that fights can free more men than it buries,
+so the mercy ending cannot fire however low the count goes. That is a different dial from the one I
+named, and it is left for a decision rather than changed on my own initiative — the honest options are
+relaxing the comparison (`freed >= 3` alone, or `freed * 3 > lost`) or retracting the source comment that
+says mercy "should be able to end that way".
+
+**`oldAge` is left exactly as it is**, and recorded as retired rather than fixed: 907 lanista-weeks at 62
+or over with health at 45 or better in **none** of them. Widening the health band would open the ending
+but would also make a seventy-year-old lanista hale, and health decay is load-bearing elsewhere. A
+twelfth ending nobody reaches costs less than that. The prose stays in the file; nothing was deleted.
+
 ### v2.88.0 — The rope thought Rome was Capua
 
 A fault in the test harness, found while driving the last unreached ending. No game code changed.
@@ -5261,4 +5300,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.88.0*
+*Last updated: v2.89.0*

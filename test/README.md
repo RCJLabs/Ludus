@@ -1146,3 +1146,21 @@ The general form: every fallback encodes an assumption about which venue the hou
 a new venue arrives — a town, Rome, anywhere with its own card — the fallbacks written before it are
 silently wrong, and they fail by producing plausible numbers from the wrong place rather than by
 erroring. Enumerate the venues, not just the two you were thinking about.
+
+## Sample the men who left, not the men still standing
+
+#118 reported that the best gladiator in a 500-week house reached 8 wins, and concluded the rudis — which
+wants ten — was out of reach of the game's own career lengths. The figure was taken over `activeG(d)`,
+each week, over the men currently in the yard.
+
+A man with a long career is the man most likely to have already gone: freed, sold, or buried. Sampling
+the survivors systematically excludes exactly the population the question is about. Counted over every
+man who ever served, the best career is **43 wins**, not 8, and 2.6 men a house clear the bar.
+
+The tell was available: the same probe printed `freed 0 / lost 121` in the same line as `bestWins 5`. A
+house that has buried a hundred and twenty men has had a hundred and twenty careers, and none of them
+were in the yard to be measured.
+
+Whenever a question is about careers, lifetimes, or anything with an end, sample the ROSTER — `d.gladiators`
+— and not the active list. And when a recommendation you are about to implement rests on one figure,
+re-measure that figure first: this one reversed, and the change it justified would have done nothing.
