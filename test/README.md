@@ -75,6 +75,7 @@ reason the check exists usually has not.
 | `sand` | slow | thirteen checks called `doFight` and every one drove the engines in memory; four drove a browser and none reached the sand, so the most-looked-at screen in the game had no test — which is why a React key fault living on the bout wizard was found by a scratch probe photographing an axe |
 | `draw` | fast | the week asks one question, chosen by the first event whose `make` fires from a shuffled key list — and the shuffle was `sort(()=>R()-0.5)`, the classic broken one, in a file that already contained a correct Fisher–Yates used in nine other places. What the game asked you depended on where in the file the event was written. Holds the shuffle uniform AND the statistic that actually decides it, the first *eligible* key, because the first-position figure overstates the fault four-fold |
 | `probe` | fast | the audit's own instrument — a check that reads the other checks. The fight engines return at `res.unfinished` before crediting anything and mutate nothing, and nine of the nineteen checks that drive a bout were losing between a quarter and two thirds of their evidence to it. Fails any check that names an engine without resolving to exhaustion, reading each `if(… .crux …)` site rather than the file, because answering with the cloth ends the bout and is correct. One of its rules was taken back out for flagging seven right answers against one wrong one. Since v2.90.0 it also fails any check that reads `.unfinished` off a `do*` result, which is the wrong layer's field and scores every held bout a loss |
+| `domus` | fast | the family arc — a match, a birth, `raising` at a child's seventh and twelfth year, `toga` at sixteen, `daughter` at fifteen. Holds every gate at every age WITH A WIFE AND WITHOUT, because one early return (`if(!dmm.wife){ …; return; }`) skipped the child loop and made the whole arc contingent on the wife surviving: a sixteen-year-old son raised `toga` with her alive and nothing once the lanista was widowed. Plus the already-dealt-with cases and the clock arithmetic |
 | `policy` | fast | the reference player, and the bar under him. `survive` asks whether a NEW house can get off the ground; this asks whether one played WELL still gets anywhere — 8 houses × 320 weeks through `__ROPE.play`, in about 3 seconds. Measured median life 226w, fame 2,981, 45 of 57 events, all five rooms, 7 of 8 houses claiming a census rung, a school declared by every survivor; every bar sits near half of that, because the job is to catch a collapse rather than police variance |
 | `school` | fast | the six doctrines of the house. Each declares, charges its listed price, changes for 1.8x the new school's price, reads every numeric field back through `docNum`, answers `docIs` on its KEY, and moves the factions its table names — with the field list DERIVED from each entry rather than written into the check. Plus the reason it exists: `d.doctrine` was non-null in 0 of ~5,000 measured house-weeks, so the week's agenda must raise it for a solvent house and leave a poor one alone |
 | `odds` | fast | the arena panel's own number against the sand. Holds three things: a MIRROR — two men identical in all six stats, class, kit, traits, heart, morale, record and fame — landing a shade under half, which is what `FOE_EDGE` 1.029 predicts and which is this check's instrument before it is a bar; the shape of a held bout's return, so `crux`-versus-`unfinished` cannot be confused again; and the ranking `winChance` recommends for all six classes, asserted on the pure function with no sampling in it, because the realised version of that bar flipped between runs at n=150 |
@@ -1441,3 +1442,19 @@ shared:
   other check leaning on him inherits the warning instead of quietly measuring a dying house.
 
 If a shared fixture has no bar under it, it will rot silently and take every check that uses it along.
+
+## Kill the convincing explanation before you believe it
+
+Four events never fired, and three explanations arrived in order of plausibility. The clock: `YEAR_WEEKS
+= 18` puts `toga` 288 weeks after a birth, against a median house life of 226 — decisive-looking, and
+wrong, because one house lived 561 weeks with a child who reached 29 and still saw nothing. Child
+mortality: there is none; `c.dead` is never written for a child. The queue: `familyWeek` yields to any
+question already up and 54.4% of weeks have one — real, and not the answer, because 45% were clear.
+
+The actual fault was an early return four lines from the top that skipped the child loop at the bottom,
+so the arc was contingent on the wife being ALIVE. What found it was the cheapest possible test: build
+the state by hand, with the wife and without, and call the one function. Two calls.
+
+**A plausible explanation that accounts for the observation is not the same as the cause.** When a whole
+feature is dark, hand-build the minimal state it wants and call its function directly before reasoning
+about clocks, rates or queues — those explain why something is RARE, and dark is not rare.

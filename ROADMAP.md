@@ -1392,6 +1392,51 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v2.95.0 — A widower's children stopped growing up
+
+Item three off the v2.93.0 audit: the nine events that never fire. Chasing them found a real fault, and
+three plausible explanations died on the way.
+
+**THE NINE ARE THREE DIFFERENT THINGS**, read rather than guessed. Six — `raising`, `toga`, `daughter`,
+`licence`, `courted`, `freedman` — carry `make(){ return null; }` and can never be surfaced by
+`pickEvent`; they are raised directly by the system that owns them. Two — `owedBack`, `sagaFreedom` —
+have `build` and no `make`, so only `fireArc` raises them weeks after a choice plants the beat. Three —
+`mentor`, `owedLife`, `poached` — roll properly and their gates simply never opened. And `primacy` is not
+an EVENTS key at all; the sweep listed it from a different table, and that one is **withdrawn**.
+
+**THE FAULT: one early return made the whole family arc contingent on the wife being alive.**
+`familyWeek` began `if(!dmm.wife){ …match…; return; }`, and the child loop is at the BOTTOM of the
+function. So a lanista who was widowed stopped raising his children. Hand-built and measured:
+
+| | wife alive | widowed |
+|---|---|---|
+| a son of sixteen | **`toga`** | **nothing** |
+| a daughter of seventeen | **`daughter`** | **nothing** |
+
+Behind that gate sat four events — `raising` at a child's seventh and twelfth year, `toga`, `daughter` —
+plus `resolveRaise`, `resolveToga`, `resolveDaughter`, and the heir traits a boy's upbringing decides.
+The child loop moves out of the wife branch. The household's warmth and bearing a child stay
+wife-dependent, because those need her; a boy who is seven is seven either way.
+
+**THREE EXPLANATIONS MEASURED AND KILLED FIRST**, and each looked convincing:
+
+1. **The clock.** `YEAR_WEEKS = 18`, so `raising` wants 126 weeks after the birth, stage two 216,
+   `daughter` 270 and `toga` 288 — on top of marrying (10% a week once fame 60) and conceiving (6% a
+   week). Against a median house life of 226 weeks that looked decisive. It is not: one house in
+   fourteen lived **561 weeks** with a child born at week 29 who reached **age 29**, past every gate,
+   and saw nothing.
+2. **Child mortality.** There is none. `c.dead` is read in three places and never written for a child.
+3. **The queue.** `familyWeek` yields to any question already up and sits fifth in `endWeek` behind
+   `updateRebellion`, `heldQuestions`, `freedWeek` and `kinWeek`. Measured at **54.4% of weeks blocked**
+   across 10 houses — real, and not the answer, because 45% of weeks were clear.
+
+Only 5 of 14 houses ever have a child at all (median week 32, having married at median week 25), so the
+arc is thin even now — that is a separate question and it is written down as one.
+
+**A new 54th check, `domus`,** holds every gate at every age, with a wife and without, plus the
+"already dealt with" cases and the clock arithmetic. `familyWeek`, `childAge`, `livingKids` and
+`marryReady` go on the handle — none of them were there, which is why no check could see any of this.
+
 ### v2.94.0 — The reference player moves into the harness, with a bar under him
 
 Item two off the v2.93.0 audit. No game code changed; this is the instrument the last twenty releases
@@ -5655,4 +5700,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.94.0*
+*Last updated: v2.95.0*

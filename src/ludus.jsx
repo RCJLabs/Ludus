@@ -6438,10 +6438,21 @@ function resolveDaughter(d, ev, i){
 function familyWeek(d){
   if(d.over || d.rome || d.city || d.travel || d.pendingEvent) return;
   const dmm = domusOf(d);
+  /* ---- A WIDOWER'S CHILDREN USED TO STOP GROWING UP, fixed in v2.95.0 ----
+     This was `if(!dmm.wife){ …match…; return; }` — an early return that skipped the child loop at
+     the bottom of the function entirely. So the whole family arc was contingent on the wife being
+     alive: measured on a hand-built house, a sixteen-year-old son raised `toga` with a wife in the
+     house and NOTHING at all once the lanista was widowed, and a seventeen-year-old daughter the
+     same. Four events — `raising` twice, `toga`, `daughter` — plus `resolveRaise`, `resolveToga`,
+     `resolveDaughter` and the heir traits a boy's upbringing decides, all behind a woman's survival.
+     The wife-dependent parts stay wife-dependent: the household's warmth, and bearing a child. The
+     children themselves are raised either way, because they are already born. */
   if(!dmm.wife){
-    if(marryReady(d) && (d.flags.matchCool==null || d.week>=d.flags.matchCool) && R()<0.10) d.pendingEvent = matchEvent(d);
-    return;
-  }
+    if(marryReady(d) && (d.flags.matchCool==null || d.week>=d.flags.matchCool) && R()<0.10){
+      d.pendingEvent = matchEvent(d);
+      if(d.pendingEvent) return;          /* a question is up; the children can wait a week */
+    }
+  } else {
   /* a house with a mistress in it runs a shade warmer every week — the domestic half, kept */
   activeG(d).forEach(g=>{ g.morale = clamp(g.morale + 0.4, 0, 100); });
   d.unrest = clamp(d.unrest - 0.3, 0, 100);
@@ -6458,6 +6469,9 @@ function familyWeek(d){
   if(livingKids(d).length < 3 && wifeAge < 40 && (d.week - (dmm.lastBorn!=null?dmm.lastBorn:dmm.wife.married)) >= 6 && R()<0.06){
     dmm.lastBorn = d.week; bearChild(d); return;
   }
+  }
+  /* ---- AND THE CHILDREN ARE RAISED EITHER WAY, from v2.95.0 ----
+     Outside the wife branch now. A boy who is seven is seven whether his mother is alive or not. */
   for(const c of dmm.children){
     if(c.wed || c.dead) continue;
     const age = childAge(d, c);
@@ -24392,6 +24406,12 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        doctrine is actually seen by the things it claims to change. `d.doctrine` was non-null in 0 of
        ~5,000 measured house-weeks, so nothing had ever been declared either. */
     docNum, docIs,
+    /* ---- THE FAMILY WEEK, added in v2.95.0 ----
+       Four events — `raising` twice, `toga`, `daughter` — plus `resolveRaise`, `resolveToga`,
+       `resolveDaughter` and the heir traits that come out of how a boy is brought up, all hang off
+       this one function, and none of them had ever fired in any measured house. It was not on the
+       handle, so no check could ask it directly whether its gates open. */
+    familyWeek, childAge, livingKids, marryReady,
     REP_ORDER, REP_KINDS,
     REP_SETTLE, REP_KEEP, REP_TAKE, REP_FLOOR,
     /* the lanista's climb: the rungs, the gates, and what standing pays and costs */
