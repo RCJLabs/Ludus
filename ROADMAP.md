@@ -1392,6 +1392,59 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v3.7.0 — The ladder blamed the meter for everything, in 98.7% of all weeks
+
+The middle-game measurement said favour is the first failing gate on the next rung in 60–83% of weeks past
+year three, while the house sits on tens of thousands of denarii. Before that became a design claim it had
+to survive the standing rule that an extreme number is evidence about the probe first — and this time the
+probe was fine and the panel was not.
+
+**The paired arm.** `hostParty` costs 900 for a decadent affair and warms every patron. The reference
+lanista had never thrown one. Same eight seeds, 300 weeks, the only difference being a man who entertains:
+
+| | reference | + parties |
+|---|---|---|
+| mean census rung | 1.50 | **2.70** |
+| highest rung reached | 5 | **7** |
+| patrons' favour | 40 | **79** |
+| weeks at Rome | 31 | **218** |
+| what holds the rung | favour 60% of weeks | favour **0%**, coin 53% |
+
+**And the falsifier half-fired, which changed the copy.** One party alone IS a treadmill: measured, the
+per-patron bump is repaid by decay in about fifteen weeks. Kept up it is nothing of the kind — a party
+whenever the two-week guard allows reaches favour 91 by week 10 and pins at 100 from week 30, for about 457
+denarii a week against a middle-game bill of 249. So the panel does not say "throw a party"; it says favour
+is bought at your table and at the games, and that leaving it alone cools it every week.
+
+**The button.** `!need.full` was tested before every substantive gate, and `riseWeek` drains standing by 2 a
+week in exactly the case where fame or favour is short — so the two conditions are not independent. Measured
+over 1,256 weeks of the reference player, the button read *"The town is not yet used to you"* in **98.7% of
+all weeks**, and in **84.7% of those** the thing actually short was fame, favour or coin. It named the one
+term that is a *consequence* of the others and never named a cause. The substantive gates are tested first
+now and each says its own figure against the one the rung wants.
+
+**The meter said "growing" while it drained.** Its label read *"The town must grow used to you"* whether the
+bar was filling or emptying, and it is emptying in **77.1%** of weeks. It now says which, and turns red when
+the answer is cooling.
+
+**And the party table advertised a number that never survived being read.** `hostParty` did
+`d.favor += PARTY[kind].favor` — 6 / 14 / 28 — and then, four lines down, called `serveWants`, which ends in
+`recomputeFavor`: the rank-weighted mean of the patrons. The line wrote a figure and the same function
+overwrote it. Measured on a house at favour 6, the table's figure would have left it at 34 and it came out at
+21, which is the patrons' mean to the point. The field is gone; `warm` (5 / 9 / 15) is the per-patron bump —
+what the villa's menu has always advertised — and is now one field rather than the same ladder hardcoded in
+`hostParty` and again in the menu, which is how those two could have drifted apart unnoticed.
+
+**One thing measured and NOT built.** The obvious companion was an agenda line: when favour holds your next
+rung and a party is affordable, the week's work says so. Counted before writing it, that gate stands in
+**45.6%** of weeks — which is precisely the #101 wallpaper fault, by the same hand, for the fourth time. The
+panel copy is the fix; the week's work says nothing new.
+
+`words` grew the three ladder states and the party's arithmetic. Two arms of that failed first and both were
+the probe: the favour arm stood on rung 0, whose next rung asks for `favor: 0`, so favour was met by
+definition; and it asserted the meter reads "cooling" in all three arms, when `riseWeek` knows nothing about
+coin and is genuinely filling in the coin arm.
+
 ### v3.6.0 — A warning that arrives after the wagons are loaded, and two boxes that opened onto one sentence
 
 Three lines of copy, all found the same way: by asking what a panel says in the state a player is most

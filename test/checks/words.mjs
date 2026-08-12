@@ -161,6 +161,100 @@ export async function run({ p, errors }){
         + `the whole of what the section says, so the box is one that must be opened to learn one word`);
   }
 
+  /* ---- 4 · THE LADDER NAMES THE TERM THAT FAILED, AND THE METER SAYS WHICH WAY IT IS GOING ----
+     `!need.full` was tested before every substantive gate, and `riseWeek` drains standing in exactly
+     the case where fame or favour is short — so the button read "The town is not yet used to you" in
+     98.7% of 1,256 measured weeks and in 84.7% of those the thing actually short was fame, favour or
+     coin. It named a consequence and never a cause. Each gate is driven here from a state where it
+     alone is the one missing, and the favour state must also name the lever, because favour is the
+     first failing gate in 60-83% of weeks past year three and the panel never said where it comes
+     from. `rise.standing` is set to 40 in all three so the meter is genuinely part-filled: a full
+     meter would let the old ordering pass by accident.
+
+     TWO THINGS THE FIRST DRAFT OF THIS GOT WRONG, both of them the probe and not the game:
+       · the favour arm sat at rung 0, and rung 1 (Man of Means) wants `favor: 0` — so favour was met
+         by definition and the arm was measuring nothing. It has to stand on a rung whose next one
+         actually asks for favour, which is rung 1 upward.
+       · it asserted the meter reads "cooling" in all three arms. `riseWeek` climbs whenever fame AND
+         favour are met and knows nothing about coin, so with coin the only thing short the meter is
+         genuinely filling and saying so is correct. `cool` is expected per-arm now. */
+  const rungs = [
+    ["fame is the one thing short", `s.rise = { rank:0, standing:40 };
+      s.fame = 5; s.favor = 99; s.gold = 90000;
+      (s.patrons||[]).forEach(x=>{ x.favor = 99; });`, /renown/i, null, true],
+    ["favour is the one thing short", `s.rise = { rank:1, standing:40 };
+      s.fame = 900; s.favor = 3; s.gold = 90000;
+      (s.patrons||[]).forEach(x=>{ x.favor = 3; });`, /patrons hold you/i, /party|table/i, true],
+    ["coin is the one thing short", `s.rise = { rank:2, standing:40 };
+      s.fame = 4000; s.favor = 99; s.gold = 40;
+      (s.patrons||[]).forEach(x=>{ x.favor = 99; });`, /census wants you worth/i, null, false],
+  ];
+  for(const [why, mut, wantBtn, wantLever, wantCool] of rungs){
+    await reload(p, mut);
+    await tab(p, "villa");
+    await p.waitForTimeout(320);
+    await face(p, "Standing");
+    await p.waitForTimeout(320);
+    const s = await sect(p, "your standing");
+    if(!s){ fails.push(`Your Standing is not on the villa's Standing face when ${why}`); continue; }
+    const btn = await p.evaluate(()=>{
+      const d = [...document.querySelectorAll("details.sect")].find(x=>{
+        const q = x.querySelector("summary"); return q && /your standing/i.test((q.innerText||"").split("\n")[0]); });
+      if(!d) return null;
+      const b = [...d.querySelectorAll("button")].pop();
+      return b ? (b.innerText||"").replace(/\s+/g," ").trim() : null;
+    });
+    const cool = /cooling, not growing/i.test(s.body);
+    lines.push(`THE LADDER (${why}): button "${btn}" · meter says ${cool ? "cooling" : "growing"}`);
+    if(!btn || !wantBtn.test(btn))
+      fails.push(`with ${why}, the ladder's button reads "${btn}" — it does not name the term that failed. `
+        + `The old ordering tested !need.full first and blamed the meter in 98.7% of all weeks, 84.7% of `
+        + `them wrongly`);
+    if(wantCool && !cool)
+      fails.push(`with ${why}, the standing meter still says the town is growing used to you — riseWeek `
+        + `takes 2 off every week fame or favour is short, so it is draining, and the label read the same `
+        + `either way in 77.1% of measured weeks`);
+    if(!wantCool && cool)
+      fails.push(`with ${why}, the standing meter says the town is cooling — but riseWeek reads only fame `
+        + `and favour, both of which are met here, so the meter is filling and the label is now wrong in `
+        + `the other direction`);
+    if(wantLever && !wantLever.test(s.body))
+      fails.push(`favour is what is holding the rung and the panel does not say where favour comes from. `
+        + `Paired on the same seeds, a lanista who entertains reaches rung 2.70 against 1.50 and 218 weeks `
+        + `at Rome against 31, and nothing in the game points at the lever`);
+  }
+
+  /* ---- 5 · AND THE PARTY'S ADVERTISED FIGURE IS THE ONE IT PAYS ----
+     `hostParty` added PARTY[kind].favor to d.favor and then overwrote d.favor from the patrons in the
+     same call. The table field is gone; `warm` is the per-patron bump, which is what the menu has
+     always advertised, and one field rather than the same ladder written out in two places. */
+  const party = await p.evaluate(()=>{
+    const A = window.__LVDVS;
+    const d = A.newGameState("Party","clean","WORDS-P",null);
+    d.fame = 900; d.gold = 60000;
+    for(let w=0; w<40; w++){ d.week++; A.patronWeek(d); }
+    const before = A.patronsOf(d).map(x=>x.favor), houseBefore = d.favor;
+    A.hostParty(d, "decadent");
+    const after = A.patronsOf(d).map(x=>x.favor);
+    const gained = before.map((v,i)=>+(after[i]-v).toFixed(1));
+    return { warm:A.PARTY.decadent.warm, hasOldField:"favor" in A.PARTY.decadent,
+      gained, houseBefore, houseAfter:d.favor,
+      mean:+(after.reduce((s,x)=>s+x,0)/Math.max(1,after.length)).toFixed(1) };
+  });
+  lines.push(`A DECADENT AFFAIR: table says +${party.warm} with every patron, patrons gained `
+    + `${party.gained.join(", ")} · the house figure went ${party.houseBefore} -> ${party.houseAfter}, `
+    + `which is the patrons' mean ${party.mean}`);
+  if(party.hasOldField)
+    fails.push("PARTY still carries a `favor` field — it was added to d.favor and overwritten by "
+      + "recomputeFavor inside the same call, so it never once survived being read");
+  if(!party.gained.every(g=>Math.abs(g - party.warm) < 0.01))
+    fails.push(`a decadent affair advertises +${party.warm} with every patron and delivered `
+      + `${party.gained.join(", ")} — the menu and hostParty read the same field now, so this can only `
+      + `fail if the bump has been rewired`);
+  if(Math.abs(party.houseAfter - party.mean) > 1)
+    fails.push(`the house's favour figure (${party.houseAfter}) is not the patrons' mean (${party.mean}) `
+      + `after a party — something is writing d.favor and surviving recomputeFavor`);
+
   if(errors.length) fails.push(`${errors.length} page errors`);
   return { pass: fails.length === 0, why: fails.slice(0,3).join("; ") || null, lines };
 }

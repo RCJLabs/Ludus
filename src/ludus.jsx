@@ -16272,9 +16272,13 @@ const menace = o => { const a = STATS.reduce((s,k)=>s+o[k],0)/6;
   return a<38?"Green": a<52?"Seasoned": a<66?"Dangerous": a<78?"Lethal": a<90?"Murderous":"Peerless"; };
 const MENACE_WORDS = ["Green","Seasoned","Dangerous","Lethal","Murderous","Peerless"];
 const PARTY = {
-  modest:{ cost:150, favor:6, fame:3, label:"A Modest Gathering", desc:"Decent wine, a careful guest list, one exhibition bout." },
-  lavish:{ cost:400, favor:14, fame:8, label:"A Lavish Banquet", desc:"Falernian wine, musicians, magistrates on the couches." },
-  decadent:{ cost:900, favor:28, fame:18, label:"A Decadent Affair", desc:"Capua will speak of it for a season — one way or another." },
+  /* `warm` is what every patron gains, which is the ONLY standing a party buys — see the note over
+     hostParty. It replaces a `favor` field that was written to d.favor and overwritten by the same
+     function, and it is one field rather than the same ladder hardcoded in hostParty and again in the
+     villa's menu, which is how the two could have drifted apart without anybody noticing. */
+  modest:{ cost:150, warm:5, fame:3, label:"A Modest Gathering", desc:"Decent wine, a careful guest list, one exhibition bout." },
+  lavish:{ cost:400, warm:9, fame:8, label:"A Lavish Banquet", desc:"Falernian wine, musicians, magistrates on the couches." },
+  decadent:{ cost:900, warm:15, fame:18, label:"A Decadent Affair", desc:"Capua will speak of it for a season — one way or another." },
 };
 
 const pct = v => `${v>0?"+":""}${Math.round(v*100)}%`;
@@ -17944,9 +17948,19 @@ function answerRomeWith(d, accept){
 }
 
 /* --- what a lanista does with his evenings --- */
+/* ---- WHAT A PARTY IS ACTUALLY WORTH, AND THE FIGURE THAT WAS NEVER WORTH ANYTHING ----
+   This used to do `d.favor += p.favor` — the 6 / 14 / 28 in the PARTY table — and then, four lines
+   down, call `serveWants`, which ends in `recomputeFavor`: the rank-weighted MEAN of the patrons.
+   The line wrote a number and the same function overwrote it. Measured on a house at favour 6: the
+   table's figure would have put it at 34 and it came out at 21, which is the patrons' own mean to
+   the point. `patronWeek` recomputes it again at the end of every week regardless, so there was no
+   state in which the figure survived being read.
+   What a party is worth is the per-patron bump below — 5 / 9 / 15, which is what the villa's menu
+   has always advertised. Measured: one party alone IS a treadmill, repaid by decay in about fifteen
+   weeks; one every other week pins favour at 100 by the thirtieth week for about 457 a week. */
 function hostParty(d, kind){ const p=PARTY[kind];
   if(!p || d.gold<p.cost || d.week-d.lastParty<2) return false;
-  d.gold-=p.cost; d.favor+=p.favor; d.fame+=p.fame; d.lastParty=d.week;
+  d.gold-=p.cost; d.fame+=p.fame; d.lastParty=d.week;
   let extra="";
   const show = activeG(d).sort((a,b)=>b.sho-a.sho)[0];
   if(show){ const bf=rnd(show.sho/12); d.fame+=bf; extra+=` ${show.name} spars for the guests to gasps and applause (+${bf} fame).`;
@@ -17954,7 +17968,7 @@ function hostParty(d, kind){ const p=PARTY[kind];
   if(kind!=="modest" && R()<0.25){ d.favor+=8; d.gold+=100; extra+=" A magistrate lingers past the last cup — you have found a patron (+8 favor, a gift of 100 denarii)."; }
   if(kind==="decadent" && R()<0.2){ d.fame=Math.max(0,d.fame-8); extra+=" Word of certain excesses escapes the villa walls (-8 fame)."; }
   chron(d, `You host ${p.label.toLowerCase()}. Capua's better sort attend.${extra}`, "good");
-  const bump = kind==="modest"?5:kind==="lavish"?9:15;
+  const bump = p.warm;
   patronsOf(d).forEach(pt=>{ pt.favor = clamp(pt.favor+bump, 0, 100); });
   serveWants(d, { type:"party", kind });
   return true; }
@@ -21091,6 +21105,11 @@ export default function App(){
 
           {(()=>{ const rk = riseRank(S), nx = riseNext(S), need = riseNeed(S), can = canClaimRise(S);
             const stand = S.rise ? S.rise.standing : 0;
+            /* the same condition `riseWeek` uses to decide whether the meter climbs or drains */
+            const rising = !!(need && need.fameOk && need.favorOk);
+            /* the first SUBSTANTIVE thing short, which is what the button is supposed to say */
+            const short = !need ? null : !need.fameOk ? "fame" : !need.favorOk ? "favour"
+              : !need.goldOk ? "coin" : null;
             return (
             <Sect title="Your Standing" note={rk.name} open={can} mark={sectMark(S,"standing")}>
               <div className="disp" style={{fontSize:"var(--fs-lg)",color:"#e8d092"}}>{rk.name}</div>
@@ -21107,9 +21126,21 @@ export default function App(){
                     <span className="disp" style={{fontSize:"var(--fs-base)",color:can?"#e8d092":"#cfc0a0"}}>Next: {nx.name}</span>
                     <span className="tag">{nx.short}</span>
                   </div>
-                  <div className="tag" style={{marginBottom:5}}>The town must grow used to you</div>
+                  {/* ---- A METER THAT SAYS "GROWING" WHILE IT DRAINS ----
+                       `riseWeek` adds 4 or more to standing only when fame AND favour are both met,
+                       and takes 2 OFF every week either is short. Measured over 1,256 weeks of the
+                       reference player, the meter is slipping rather than filling in 77.1% of them —
+                       and this label said "the town must grow used to you" in all of them. A bar that
+                       reads the same going up as coming down is not reporting a direction. */}
+                  <div className="tag" style={{marginBottom:5,
+                    color: need.full ? "#a9c98a" : rising ? undefined : "#d98476",
+                    borderColor: need.full ? "#3e4a30" : rising ? undefined : "#5a2a22"}}>
+                    {need.full ? "The town is used to you" : rising
+                      ? "The town is growing used to you" : "Their interest is cooling, not growing"}
+                  </div>
                   <div className="track" style={{height:6,marginBottom:9}}>
-                    <div className="fill" style={{width:`${stand}%`, background: stand>=100? "linear-gradient(90deg,#6a5a2c,#e8d092)" : "linear-gradient(90deg,#4a4030,#c99a4b)"}}/>
+                    <div className="fill" style={{width:`${stand}%`, background: stand>=100? "linear-gradient(90deg,#6a5a2c,#e8d092)"
+                      : rising ? "linear-gradient(90deg,#4a4030,#c99a4b)" : "linear-gradient(90deg,#3a2622,#8a4438)"}}/>
                   </div>
                   {[["Renown", need.fame, rnd(S.fame), need.fameOk],
                     ["Patrons' favour", need.favor, rnd(S.favor), need.favorOk],
@@ -21125,10 +21156,34 @@ export default function App(){
                       in sportula, clerks and a night the town remembers{riseOf(S)>=3 || (nx.cost||0)>=8000 ? ", and the city's charges rise with the rank thereafter" : ""}.
                     </div>
                   )}
+                  {/* ---- AND THE LEVER, WHICH THE PANEL NEVER NAMED ----
+                       Favour is the first failing gate on the next rung in 60-83% of weeks past year
+                       three, and it is bought at your own table: measured on the same eight seeds, a
+                       lanista who entertains reaches mean rung 2.70 against 1.50, favour 79 against
+                       40, and 218 weeks at Rome against 31. One party alone IS a treadmill — the
+                       per-patron bump is repaid by decay in about fifteen weeks — but kept up it pins
+                       favour at 100 by the thirtieth week for about 457 denarii a week. The panel
+                       named the number and never once said where the number comes from. */}
+                  {short === "favour" && (
+                    <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:5}}>
+                      Favour is bought at your own table and at the games. Throw a party — the block below
+                      this one — and every patron warms to you; answer what they ask for and they warm
+                      further. Leave them alone and it cools every week, which is what is happening now.
+                    </div>
+                  )}
+                  {/* ---- A BUTTON THAT BLAMED THE METER FOR EVERYTHING ----
+                       `!need.full` was tested FIRST, and the meter is never full while fame or favour
+                       is short because `riseWeek` drains it in exactly that case. Measured over 1,256
+                       weeks of the reference player: this button read "The town is not yet used to
+                       you" in 98.7% of all weeks, and in 84.7% of those the thing actually short was
+                       fame, favour or coin. It named the one term that was a CONSEQUENCE of the others
+                       and never named a cause. The substantive gates are tested first now. */}
                   <button className={`btn ${can?"":"btn-ghost"}`} style={{width:"100%",marginTop:8}} disabled={!can} onClick={takeRise}>
                     {can ? `Take your place as ${nx.name} — ${need.fee}d`
-                      : !need.full ? "The town is not yet used to you"
-                      : !need.goldOk ? `The census wants you worth ${nx.cost}d`
+                      : short === "fame" ? `Rome counts your renown at ${rnd(S.fame)} — the rung wants ${need.fame}`
+                      : short === "favour" ? `Your patrons hold you at ${rnd(S.favor)} — the rung wants ${need.favor}`
+                      : short === "coin" ? `The census wants you worth ${nx.cost}d — you hold ${rnd(S.gold)}`
+                      : !need.full ? `The town is not yet used to you — ${rnd(stand)} of 100`
                       : `Pay ${need.fee}d to be received`}
                   </button>
                 </div>
@@ -21278,7 +21333,7 @@ export default function App(){
                 <div className="disp" style={{fontSize:"var(--fs-md)",fontWeight:700}}>{p.label.toUpperCase()}</div>
                 <span className="gold">{p.cost}d</span>
               </div>
-              <div className="dim" style={{fontSize:"var(--fs-md)",margin:"4px 0 8px"}}>{p.desc} <span style={{color:"#bfa8c8"}}>+{k==="modest"?5:k==="lavish"?9:15} with every patron</span> · <span style={{color:"#d8c08a"}}>+{p.fame} fame</span></div>
+              <div className="dim" style={{fontSize:"var(--fs-md)",margin:"4px 0 8px"}}>{p.desc} <span style={{color:"#bfa8c8"}}>+{p.warm} with every patron</span> · <span style={{color:"#d8c08a"}}>+{p.fame} fame</span></div>
               <button className="btn" style={{width:"100%"}} disabled={S.gold<p.cost || S.week-S.lastParty<2} onClick={()=>host(k)}>
                 {S.week-S.lastParty<2? `The villa recovers — ${2-(S.week-S.lastParty)} week${2-(S.week-S.lastParty)>1?"s":""}` : S.gold<p.cost? "Not enough coin" : "Send invitations"}
               </button>

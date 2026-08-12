@@ -60,7 +60,7 @@ reason the check exists usually has not.
 | `census` | fast | the ladder's top rungs asked 110,000 denarii in cash from a house that had to spend the same coin on stone, so nobody ever stood on them |
 | `bulk` | fast | four functions held every balance change in a 22,700-line file, and nothing ever said stop |
 | `week` | fast | the week's work, and where it says so. `agenda(d)` rendered two screens down (y=1565 measured) in a section that opened itself only on an urgency-3 week. Measured over 289 weeks of the reference player first: the list is NEVER empty, 54% of weeks carry seven items or more, its items span 4.11 tabs — and five labels were lit on 41 to 62% of every week a house lives, two of them added by this audit in the three releases before anybody counted. So an item carries its AGE now and only what is urgent or new is shown: the shown block fell from 5.6 items to 2.3, and the worst standing item from 62% of weeks to 16%. This holds the age arithmetic, the ranking, and both bars. From v3.5.0 it holds the same question for the tabs' SECTIONS: ten of eleven are live on 35% of weeks or more and three on over 90%, so "open what is actionable" opens almost everything — what opens a section is live AND young, which lands at 9.2% of weeks against 64.7% for availability alone |
-| `words` | slow | what a panel says in the state a player is most likely to be standing in, rather than the state it was written for. Three lines found the same way. The letter from Rome warned that half the imperial bouts are sine missione and that your patrons have no reach in that city, and did not say that `stopAtCrux: !offer.imperial` makes it the only bout in the game you cannot coach — the bout's own beats do say it, two lines in, which is after the wagons are loaded. `The blood of the house` told a lanista of sixty to "climb a little higher" when `marryReady` is false above 55 whatever the house is worth. `The aedile` was a box whose whole content is his stance, with only the weeks remaining on its summary line. All three are read off a real save loaded into a real browser, because a copy assertion written against the source file asserts that a string exists somewhere, which is not the claim |
+| `words` | slow | what a panel says in the state a player is most likely to be standing in, rather than the state it was written for. From v3.7.0 it also holds the census ladder in each of the three states where one gate alone is short, and the party's arithmetic: the button tested `!need.full` before every substantive gate and `riseWeek` drains standing in exactly that case, so it read "The town is not yet used to you" in 98.7% of 1,256 measured weeks and named the wrong thing in 84.7% of them. Four lines found the same way. The letter from Rome warned that half the imperial bouts are sine missione and that your patrons have no reach in that city, and did not say that `stopAtCrux: !offer.imperial` makes it the only bout in the game you cannot coach — the bout's own beats do say it, two lines in, which is after the wagons are loaded. `The blood of the house` told a lanista of sixty to "climb a little higher" when `marryReady` is false above 55 whatever the house is worth. `The aedile` was a box whose whole content is his stance, with only the weeks remaining on its summary line. All three are read off a real save loaded into a real browser, because a copy assertion written against the source file asserts that a string exists somewhere, which is not the claim |
 | `worst` | fast | the record book had a slot for the house's worst night that nothing ever wrote and nothing ever read; filling it found two more things nobody was writing |
 | `nights` | fast | a man's page had everything about his condition and nothing about any afternoon of his life |
 | `phases` | fast | the week was split into four phases so a check could run one alone, and no check ever called any of them — nor asserted the hard rule that no class may be clumsy in its own kit |
@@ -1769,3 +1769,27 @@ Under the bar and under 56, climbing is exactly the right advice. Over 55 it is 
 name will ever open it, and the panel was asking for work that could not possibly pay. The two states
 share a branch in the code and share nothing else. When a predicate is a conjunction, the copy under its
 false branch owes the player the term that actually failed.
+
+## When two conditions are not independent, testing the wrong one first hides the other
+
+The census ladder's button read `!need.full ? "The town is not yet used to you" : !need.goldOk ? ... : ...`.
+That looks like an ordinary priority list, and it is not: `riseWeek` DRAINS standing by 2 a week in exactly
+the case where fame or favour is short, so `!need.full` is *implied* by the other gates rather than
+independent of them. The first branch therefore swallowed almost every case — 98.7% of 1,256 measured weeks
+— and in 84.7% of those the thing actually short was something the player could act on.
+
+The general form: when one term of a conjunction is downstream of the others, put it LAST in any code that
+explains the failure to a player. Otherwise the explanation reports a symptom every time and a cause never.
+`riseNeed` already returned all four flags separately; nothing had to be measured to build this, only
+noticed — which is why it took a frequency count to find.
+
+## Count the gate before writing the line
+
+The obvious companion to that fix was an agenda item: when favour holds your next rung and a party is
+affordable, say so in the week's work. Counted first, over 1,256 weeks: the loose gate stands in 50.2% of
+weeks, and tightening it to "fame already met, and the villa has recovered" only moves it to 45.6%. That is
+the #101 fault — five labels lit on 41–62% of every week a house lives — and it would have been the fourth
+time this project shipped it. The line was not written.
+
+A gate's frequency is cheap to measure and is the whole question for anything that appears every week. Ask
+it before the copy exists, because once the copy is good it is much harder to throw away.
