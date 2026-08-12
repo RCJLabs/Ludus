@@ -899,7 +899,10 @@ const DOCTRINES = {
     creed:"Anyone can teach a man to swing. We are teaching him to still be here in ten years.",
     body:"Slow, expensive, and it makes fighters who last. The front rows will talk about your house at dinner.",
     train:1.12, injure:0.7, purse:0.9, fac:{front:20,mob:-14}, rep:"craft",
-    note:"Training +12%, injuries −30%, purses ×0.90." },
+    /* the note used to stop at "purses x0.90" and that reads as the net figure. Measured on a card
+       held identical between the arms it is 0.968: `facPurse` reads the factions, and the front rows
+       this school wins you hand back three quarters of the discount it charges. */
+    note:"Training +12%, injuries −30%, purses ×0.90 — though the front rows you win give most of that back." },
   mercy:   { name:"The Open Hand", cost:350, tag:"mercy",
     creed:"A man who knows he will be let up fights better than a man who knows he will not.",
     body:"Cloth thrown early, wounds properly treated, the rudis given rather than earned twice over. Capua thinks it is soft and the cells know exactly what it is.",

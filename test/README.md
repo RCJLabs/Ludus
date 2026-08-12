@@ -79,14 +79,14 @@ reason the check exists usually has not.
 | `policy` | fast | the reference player, and the bar under him. `survive` asks whether a NEW house can get off the ground; this asks whether one played WELL still gets anywhere — 8 houses × 320 weeks through `__ROPE.play`, in about 3 seconds. The bars are on the BEST house in the run, not the median: measured over 48 houses, 38% die before week 100 and 29% are still standing at the wall, so the median of eight spans 54 to 321 weeks and would fail a bar of 70 in one run of three with no change to the game. Best-of-run life spans 291 to 321 and fame 6,808 to 17,487; the bars are 150 and 2,000 |
 | `folk` | fast | the domestic half of the house — cook, nurse, housekeeper, and telling your wife she runs the place. Each hires once, charges its fee, draws a wage that grows with the roster (6d at one man, 13d at fourteen), sits on `weeklyBill`, and moves the number its own entry names: 141 points of fatigue off the yard, 3 weeks off the mending, unrest down 13.5, the lanista's life up 6.9. Three of the four walk out of a house at unrest 90 and the wife does not. It was dark in every sweep for two reasons at once — nothing on screen mentioned it, and not one of its nine functions was on the handle |
 | `munus` | fast | your own games. Twelve combinations of scale and stakes: the card goes up the week it is bought, `mine` and `fest` are set, the headliner is pinned to the marquee bout, the hunt is forced, purses carry the 0.6 of a card you paid for yourself, the cost matches `munusCost` to the denarius, selling pays `munusSellFee` and puts nothing up, and it comes down at `endWeek`. And a card bought SINE MISSIONE is sine all the way down — `addPair` hardcoded standard stakes, so 17 of 24 cards carried a standard pair and `simulatePair`'s whole death branch was unreachable in every bout in the game |
-| `school` | fast | the six doctrines of the house. Each declares, charges its listed price, changes for 1.8x the new school's price, reads every numeric field back through `docNum`, answers `docIs` on its KEY, and moves the factions its table names — with the field list DERIVED from each entry rather than written into the check. Plus the reason it exists: `d.doctrine` was non-null in 0 of ~5,000 measured house-weeks, so the week's agenda must raise it for a solvent house and leave a poor one alone |
+| `school` | fast | the six doctrines of the house. Each declares, charges its listed price, changes for 1.8x the new school's price, reads every numeric field back through `docNum`, answers `docIs` on its KEY, and moves the factions its table names — with the field list DERIVED from each entry rather than written into the check. Plus the reason it exists: `d.doctrine` was non-null in 0 of ~5,000 measured house-weeks, so the week's agenda must raise it for a solvent house and leave a poor one alone. And from v3.0.0 each field is priced AT ITS OWN CALL SITE with everything else held still — blood's purse 1.18 measured 1.179 on a held card, its `health:0.7` divisor 1.429, craft's train 1.12 measured 1.1194 |
 | `styles` | fast | the six classes. `COUNTERS` is a six-cycle and `CLS_EDGE` pays 1.15 for the counter and 0.91 against it, so over a uniform mix the mean edge is 1.010 for all six and one identical kit makes them identical to the second decimal — spread 0.00 points. In their own default kits the priced spread is 4.67 and the fought spread 7.8 at 3.0 SE, five of six inside 4 points. It exists because a reported 1.8x spread in wins per man-week was three of my own instrument faults in a row: `kitFor` is a random draw that randomises the thing being compared, `newGameState` reseeds the global RNG so a helper built after it pins every bout, and "Retiarius has a dead key stat" was priced through `power`, the one function that cannot see `sho` |
 | `odds` | fast | the arena panel's own number against the sand. Holds three things: a MIRROR — two men identical in all six stats, class, kit, traits, heart, morale, record and fame — landing a shade under half, which is what `FOE_EDGE` 1.029 predicts and which is this check's instrument before it is a bar; the shape of a held bout's return, so `crux`-versus-`unfinished` cannot be confused again; and the ranking `winChance` recommends for all six classes, asserted on the pure function with no sampling in it, because the realised version of that bar flipped between runs at n=150 |
 | `bay` | fast | the two coastal scales, neither of which had ever been toured — #115. Favour is a ratchet that opens every town on "an outsider" and climbs only on bouts fought there, and its bottom word is reachable ONLY through `cityServed`'s defeat branch at Neapolis; `knownIn` bleeds 0.55 a week and is pegged at 100 by a round robin. Also holds the branch neither of my arms could reach: the bay taken by a rival after 30 idle weeks, and given back only by turning up |
 | `steel` | fast | wear — the one system where the probe was wrong FOUR separate ways. #114 read `d.gearCond`, which is the pool of pieces on the SHELF, and concluded steel never wears; read off the man in `g.wear[slot]` a bout takes 3-6 off a weapon, all five words are said and pieces break. Holds the rate against `WEAR_RATE`, the five words off a piece driven to nothing, the break on the game's own chronicle line, the bands a played house sees, a man's career against his weapon's life, and — the trap that cost the most — that a bout held at the balance has changed nothing while the same bout answered changes the kit |
 | `houses` | fast | the four words for a rival house, two of which #113 measured as never said. Refuted on the item's own falsification clause: a house that works ONE rivalry for 300 weeks peaks at a median warmth of 76.8 and says all four, where a probe using `pickRivalOpp` meets six houses a little and tops out near 43. Holds the refutation plus the thing underneath it — that a bout against a rival's man registers as a meeting at all, which is `offer.opp.house` lining up with the rival's name |
 | `chair` | fast | the name Capua settles on — `repStyle` — which earns two of the lanista's traits and is half of what makes a medicus walk out, and which nothing had ever measured. Sends one house after each of the four names the way a player would (the blood doctrine and *sine* stakes, the showboat tactic, the craft doctrine, the mercy doctrine plus the cloth at every crux) and holds three things: the town settles on something at all, each of the four names is not just reached but HELD for most of a house's named weeks, and the butcher loses his surgeon while the showman does not. Every one of the four faults it was written to catch turned out to be the probe |
-| `ends` | fast | three answers to "what ends a house" were on record and disagreed, each measured on a different policy. Five policies over 400 weeks settled it: the mix belongs to the POLICY — 100% ledger for a house that does nothing, 40% empty yard for one that fights to the death every week, 69%/67% overall against a published 85%. This holds the cheap, stable half in 3 seconds: the opening is lethal, the ledger is what does it (11 of 13, median 272d UNDER), and a house doing nothing dies of the ledger too. The long table is in the roadmap and deliberately not asserted — the lifespan medians swung 36w to 20w between two runs |
+| `ends` | fast | three answers to "what ends a house" were on record and disagreed, each measured on a different policy. Five policies over 400 weeks settled it: the mix belongs to the POLICY — 100% ledger for a house that does nothing, 40% empty yard for one that fights to the death every week, 69%/67% overall against a published 85%. This holds the cheap, stable half in 3 seconds: the opening is lethal, the ledger is what does it (11 of 13, median 272d UNDER), and a house doing nothing dies of the ledger too. The long table is in the roadmap and deliberately not asserted — the lifespan medians swung 36w to 20w between two runs. Its arms were also not the stakes they said they were until v3.0.0: `stakes:` reached only the pit, so the sine arm fought 76% sine and the standard arm 76% standard and the two overlapped by a quarter of their bouts |
 | `near` | fast | ten lines telling the player how close they are to something, none of them ever driven — and this project had already shipped two of the shape wrong. Four were: the feast quoted a fraction through `Math.round` and read "reach **1** of them" at every house size; the paragon's shortfall was measured against the box plus debts at face plus steel at half, beside a button reading the box alone; the munus quoted **0 weeks** of cooldown to a house at Rome; the monuments' closed line blamed the monuments when the gate is the works. Five were right and are pinned so they stay right |
 | `room` | slow | `sand` caught the pit row's second line cut off with 24px hidden — and then passed five runs in a row, because whether the fault shows depends on whether the night deals a long class name to a long house name. So this one does not wait to be dealt the bad case: it composes the widest line the content space allows out of `ORIGINS`, `NICKS`, `SMALL_HOUSES` and `CLASSES`, forces the widest menace word beside it, and measures the row. 263px of room for 300px of line before the fix, on all three men at the rope, every run |
 | `scales` | fast | seventeen bucketed words the player reads and acts on, and the same fault had shipped three times — #79, #85 and `menace`. Walks every scale across the range its quantity can take, so a band that swallows the range or a word that can never be said both show up. It found the mirror of `menace`: `formWord`'s two outer words were never said in 4,862 man-weeks, because the decay of `f*0.78 - 3` against +24 for a win puts three straight wins at 37.6 and the band was 58 |
@@ -1589,3 +1589,48 @@ repeated forty times.
 
 Rates that land on exact simple fractions are almost never a finding. Make the state first, once, and make
 nothing that reseeds after it.
+
+## A fix nobody was wired to is not a fix
+
+`wantStakes` shipped in v2.91.0 with the fault it fixed written down in the harness: `o.stakes` reached
+`makePitOffer` and nowhere else, so an arm asking for a kind of bout got it in the pit and whatever the
+arena bill offered everywhere else. Nine releases later every caller was still passing `stakes:` — the
+sine arm of `ends` fought 76% sine and its standard arm 76% standard, so the two halves of a published
+comparison overlapped by a quarter of their bouts.
+
+Adding a correct option beside a broken one leaves the broken one in the code, and a note explaining the
+difference is not a migration. Either change what the old name does, or delete it. When you add the
+better spelling, grep for the old one in the same commit.
+
+## Two honest readings of an option are two options
+
+The obvious fix was to alias `stakes` to `wantStakes`, and it took `ends`'s competent arm from 0–10% debt
+endings to 4 of 5 — because refusing every week the bill has no standard card on it means fighting far
+less and being paid far less. That is not what the arm meant. A competent player does not sit out a week;
+he fights what is there or walks to the pit.
+
+So there are two behaviours and they needed two names: strict (refuse the week) and preference (take it if
+it is there). When a fix breaks a check badly and instantly, the check is often telling you the option had
+a second meaning you hadn't separated.
+
+## Count the refusals, not just the work
+
+`takeBout` returned `{ran:false, why}` and nothing forced a caller to look, so a check that asked for 300
+bouts and was refused 200 reported the 300 it asked for. The rope counts refusals by reason and bouts
+fought at the wrong stakes now, and `say()` prints both: `ends` turns out to fight 4,998 bouts, be refused
+1,307 weeks, and take 594 at stakes it did not ask for.
+
+Any harness call that can decline needs its declines counted somewhere the check will print, or the
+sample size in a published figure is the sample size you asked for rather than the one you got.
+
+## Check the ceiling before believing a flat result
+
+`craft`'s +12% training measured 1.002 — no effect — because the arm started four men at 66 and ran forty
+weeks, so both arms had capped out. One man, one stat, from 30, for twelve weeks: 1.1194 against a listed
+1.12.
+
+The same shape twice more in one hour: `injure` measured 1.00× because the arm counted bout injuries and
+`docInjure` is read in the training week; and the arm before that measured 0.0000 in both arms because it
+set `regimen:"spar"` without pairing anybody, so `repairSpar` quietly turned every week into post work. A
+flat result is a claim about your arm before it is a claim about the game — find the line that reads the
+field, and make sure the number you are watching still has room to move.

@@ -65,6 +65,21 @@ export async function run({ p }){
        `doFight` returns at `res.unfinished` before it credits anything and mutates nothing. That
        is #116's finding about this check, among others, and the rope now lives in the harness
        where `probe` can see that every check uses it. */
+    /* ---- AND THE ARMS WERE NOT THE STAKES THEY SAID THEY WERE, until v3.0.0 ----
+       `stakes:` was passed to `makePitOffer` and NOWHERE ELSE, so an arm asking for `standard` fought
+       76% standard, 9% sine, 8% melee and 7% venatio, and the `sine` arm fought 76% sine — the two
+       arms of this check overlapped by about a quarter of their bouts. `wantStakes` shipped in v2.91.0
+       to fix exactly that and nothing was ever wired to it. `stakes:` now means "prefer these and take
+       the bill anyway", which is what this arm wants (a competent player does not sit a week out), and
+       it reads 92% standard. THE STRICT READING WAS TRIED FIRST AND IT KILLED THIS CHECK: refusing every
+       week without a standard card took `proven` to 4 of 5 houses out by debt against a measured 0-10%,
+       because a house that will not fight is a house that is not paid.
+       WHAT THE FIX MOVED HERE, and how much of it is the fix: `proven` over 120 weeks went from 6 of 12
+       out (rebellion 4, ruin 2, median fame 560) to 4 of 12 out (rebellion 4, median fame 1,845). The
+       direction is what you would expect from an arm that has stopped walking into death matches it
+       never asked for. The SIZE is not attributable — filtering the bill changes which offer is picked
+       and so reshuffles every RNG draw after it, and `policy` measured fame block-medians spanning 84 to
+       4,206 on eight houses of the same build. Direction: the fix. Magnitude: unknown. */
     const takeBout = (d, fit, pick, stakes) =>
       window.__ROPE.takeBout(d, { men:fit, pick, stakes }).ran;
 
@@ -452,6 +467,10 @@ export async function run({ p }){
       + (Object.entries(upr).map(([k,n])=>`${k} ${n}`).join(" · ") || "no uprising faced")
       + ` — answering "meet them with steel" every time, which is what the published table did, `
       + `takes \`proven\` from a median 183 weeks to 54 and its rebellion share from 40% to 70%`);
+
+    /* the rope's own tally, so this check's bouts and its REFUSALS are both on the record. A check
+       that asked for 300 bouts and was refused 200 of them used to report the 300 it asked for. */
+    lines.push(`the rope across every arm above: ${window.__ROPE.say()}`);
 
     return { bad, lines };
   });

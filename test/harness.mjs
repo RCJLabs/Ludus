@@ -82,7 +82,10 @@ export async function installRope(p){
   await p.evaluate(()=>{
     if(!window.__LVDVS || window.__ROPE) return;
     const A = window.__LVDVS;
-    const R = { bouts:0, held:0, rounds:0, unresolved:0, threw:0 };
+    /* `refused` is keyed by the reason `takeBout` gave, and `wrongStakes` counts bouts fought at
+       stakes other than the ones asked for. Both exist because a refusal was legible in the return
+       and nothing forced a caller to look — see the note over `takeBout`. */
+    const R = { bouts:0, held:0, rounds:0, unresolved:0, threw:0, refused:{}, wrongStakes:0 };
     const fin = (fn, args) => { try { return fn(...args); } catch(e){ R.threw++; return { __err:e.message }; } };
 
     /* answer until the sand is quiet, up to the three words the sim can ask for and one spare */
@@ -125,10 +128,13 @@ export async function installRope(p){
       .filter(g=>!g.injury && (g.fatigue||0) < ((o && o.spent) || 62))
       .sort((x,z)=>av(z)-av(x));
 
+    const no = (why, extra) => { R.refused[why] = (R.refused[why]||0)+1;
+      return Object.assign({ ran:false, why }, extra||{}); };
+
     const takeBout = (d, opts) => {
       const o = opts || {};
       const men = o.men ? [].concat(o.men) : fit(d, o);
-      if(!men.length) return { ran:false, why:"nobody fit" };
+      if(!men.length) return no("nobody fit");
       const bill = ((d.games && d.games.offers) || []).filter(x=>{
         if(x.melee && men.length < 3) return false;
         if(x.pair && men.length < 2) return false;
@@ -142,9 +148,30 @@ export async function installRope(p){
          `wantStakes` filters the bill as well and falls through to the pit, which honours it. And
          either way the stakes ACTUALLY fought come back in the result, so a caller can assert on
          what happened instead of on what it asked for. */
+      /* ---- AND THEN NOTHING WAS EVER WIRED TO IT, found in v3.0.0 ----
+         `wantStakes` shipped in v2.91.0 and every caller in the suite went on passing `stakes:` —
+         `chair`, both of `ends`'s arms and `steel`'s wrapper. Measured over 10 houses of 120 weeks,
+         asking one way and then the other:
+            asked for `sine`      `stakes:` fought 76% sine, 10% standard, 9% melee, 5% venatio
+            asked for `standard`  `stakes:` fought 76% standard, 9% sine, 8% melee, 7% venatio
+            asked for `blood`     `stakes:` fought 83% blood, 9% sine, 5% standard, 4% venatio
+            all three            `wantStakes:` fought 100% of what it asked for
+         So `ends`'s sine arm and its standard arm overlapped by about a quarter of their bouts.
+
+         THE FIRST FIX WAS TO ALIAS THE TWO NAMES TOGETHER, AND IT BROKE `ends` — 4 of 5 `proven`
+         houses ended in debt against a measured 0-10%, because a house that REFUSES every week the
+         bill has no standard card on it fights far less and is paid far less. That is the point: a
+         competent player does not sit out a week, he fights what is there or walks to the pit. So
+         there are two honest readings and they are two options, not one:
+            wantStakes   STRICT — only these stakes, and refuse the week otherwise
+            preferStakes take these if the bill has them, else take the bill anyway; the pit honours it
+         `stakes:` is the old name and means `preferStakes`, which is what its four callers meant and
+         is still a fix on what they got: a preference now filters the bill instead of being dropped
+         on the floor everywhere except the pit. */
       const want = o.wantStakes || null;
-      const wanted = want ? bill.filter(x=>x.stakes === want) : bill;
-      const pool = (want && wanted.length) ? wanted : (want ? [] : bill);
+      const pref = want || o.preferStakes || o.stakes || null;
+      const matching = pref ? bill.filter(x=>x.stakes === pref) : bill;
+      const pool = matching.length ? matching : (want ? [] : bill);
       let offer = pool.length ? (o.pick ? o.pick(pool) : pool[0]) : null;
       /* ---- ROME IS NOT CAPUA, AND THIS ROPE USED TO FORGET IT ----
          The pit fallback below was guarded on `!d.city`, and a house at Rome has `d.rome` set with
@@ -157,21 +184,25 @@ export async function installRope(p){
       if(!offer && !d.city && !d.rome){
         if(!d.pitCard || d.pitCard.week !== d.week) A.makePitCard(d);
         const pm = A.pitMen(d) || [];
-        offer = A.makePitOffer(d, men[0], want || o.stakes || "standard", pm.length ? pm[0].id : null);
+        offer = A.makePitOffer(d, men[0], pref || "standard", pm.length ? pm[0].id : null);
       }
-      if(!offer && d.rome) return { ran:false, why:"at Rome with no card up this week", rome:true };
+      if(!offer && d.rome) return no("at Rome with no card up this week", { rome:true });
       if(!offer && d.city){
         A.makeCityGames(d);
         const town = ((d.games && d.games.offers) || []).filter(x=>
           !(x.melee && men.length < 3) && !(x.pair && men.length < 2));
+        /* the town's card is the town's card; it does not take an order for stakes, so a caller that
+           asked for one gets `gotWanted:false` rather than a bout quietly billed as what it wanted */
         offer = town.length ? town[0] : null;
       }
-      if(!offer) return { ran:false, why:"no offer" };
+      if(!offer) return no(want ? `no ${want} bout to be had` : "no offer");
       const ids = offer.melee ? men.slice(0,3).map(g=>g.id)
                 : offer.pair  ? men.slice(0,2).map(g=>g.id)
                 :               [men[0].id];
-      return Object.assign({ offer, ids, stakes: offer.stakes,
-        gotWanted: want ? offer.stakes === want : null }, run(d, offer, ids, o));
+      const got = pref ? offer.stakes === pref : null;
+      if(got === false) R.wrongStakes++;
+      return Object.assign({ offer, ids, stakes: offer.stakes, gotWanted: got,
+        strict: !!want, asked: pref }, run(d, offer, ids, o));
     };
 
     /* ================= THE LANISTA: ONE CANONICAL COMPETENT WEEK =================
@@ -322,14 +353,23 @@ export async function installRope(p){
     };
 
     window.__ROPE = { answer, run, takeBout, fit, lanista, play,
-      stats: ()=>Object.assign({}, R),
-      reset: ()=>{ R.bouts = R.held = R.rounds = R.unresolved = R.threw = 0; },
-      /* one line a check can print so its own rope is visible in the log */
-      say: ()=>`${R.bouts} bouts · ${R.held} reached the balance`
-        + (R.bouts ? ` (${Math.round(R.held/R.bouts*100)}%)` : "")
-        + ` · ${R.rounds} words spoken`
-        + (R.unresolved ? ` · ${R.unresolved} STILL UNRESOLVED` : "")
-        + (R.threw ? ` · ${R.threw} threw` : "") };
+      stats: ()=>Object.assign({}, R, { refused:Object.assign({}, R.refused) }),
+      reset: ()=>{ R.bouts = R.held = R.rounds = R.unresolved = R.threw = R.wrongStakes = 0;
+        R.refused = {}; },
+      /* one line a check can print so its own rope is visible in the log. The refusals are on it
+         because they were legible in the return and nothing forced a caller to look: a check that
+         asked for 300 bouts and was refused 200 of them reported the 100 and said nothing. */
+      say: ()=>{
+        const ref = Object.entries(R.refused).sort((a,b)=>b[1]-a[1]);
+        const n = ref.reduce((s,x)=>s+x[1],0);
+        return `${R.bouts} bouts · ${R.held} reached the balance`
+          + (R.bouts ? ` (${Math.round(R.held/R.bouts*100)}%)` : "")
+          + ` · ${R.rounds} words spoken`
+          + (n ? ` · ${n} weeks refused (${ref.map(x=>`${x[0]} ${x[1]}`).join(", ")})` : "")
+          + (R.wrongStakes ? ` · ${R.wrongStakes} at the WRONG STAKES` : "")
+          + (R.unresolved ? ` · ${R.unresolved} STILL UNRESOLVED` : "")
+          + (R.threw ? ` · ${R.threw} threw` : "");
+      } };
   });
 }
 

@@ -1392,6 +1392,76 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v3.0.0 — A fix shipped nine releases ago that nothing was ever wired to
+
+The last two items on the v2.93.0 audit list were both about the suite's own instruments, and they turned
+out to be one item.
+
+**`wantStakes` SHIPPED IN v2.91.0 AND EVERY CALLER WENT ON PASSING THE BROKEN OPTION.** `takeBout` used
+to hand `o.stakes` to `makePitOffer` and nowhere else, so an arm asking for a kind of bout got it in the
+pit and whatever the arena bill happened to offer everywhere else. v2.91.0 added `wantStakes`, which
+filters the bill too, and wrote the fault down in the harness. Then `chair`, both of `ends`'s arms and
+`steel`'s wrapper all kept passing `stakes:`. Measured over 10 houses of 120 weeks:
+
+| asked for | with `stakes:` | with `wantStakes:` |
+|---|---|---|
+| `sine` | 76% sine, 10% standard, 9% melee, 5% venatio | 100% |
+| `standard` | 76% standard, 9% sine, 8% melee, 7% venatio | 100% |
+| `blood` | 83% blood, 9% sine, 5% standard, 4% venatio | 100% |
+
+So `ends`'s sine arm and its standard arm — the two halves of a published comparison — overlapped by
+about a quarter of their bouts.
+
+**THE FIRST FIX WAS TO ALIAS THE TWO NAMES AND IT BROKE `ends` IMMEDIATELY**, which is the useful part.
+Strict filtering took `proven` to 4 of 5 houses out by debt against a measured 0–10%, because a house
+that refuses every week the bill has no standard card on it fights far less and is paid far less. There
+are two honest readings, so there are two options: `wantStakes` is strict and refuses the week, and
+`stakes` / `preferStakes` takes the preferred card if the bill has one and the bill anyway if not. That
+is what the four callers meant, and it still fixes what they got — 92% standard against 76%.
+
+**AND THE REFUSALS ARE NOW COUNTED, which was the other half of the item.** A refusal was legible in
+`takeBout`'s return and nothing forced a caller to look, so a check that asked for 300 bouts and was
+refused 200 reported the 300. The rope keeps `refused` by reason and `wrongStakes`, and `__ROPE.say()`
+prints them. `ends` now says out loud: *4,998 bouts · 3,249 reached the balance · 1,307 weeks refused ·
+594 at the WRONG STAKES.* None of those three numbers existed before.
+
+**WHAT IT MOVED, and how much of that is attributable.** `ends`'s `proven` arm over 120 weeks went from
+6 of 12 out (rebellion 4, ruin 2, median fame 560) to 4 of 12 out (rebellion 4, median fame 1,845) — the
+direction you would expect from an arm that has stopped walking into death matches it never asked for.
+The magnitude is not attributable: filtering the bill changes which offer is picked and reshuffles every
+RNG draw after it, and v2.99.0 measured fame block-medians spanning 84 to 4,206 on eight houses of one
+build. Direction: the fix. Size: unknown, and said so.
+
+**AND THE OTHER ITEM WAS ANSWERED IN THE SAME PASS.** `school` shipped in v2.93.0 with a promise: that
+`blood`'s "purses ×1.18 delivering 374d against 530d" needed one identical bout fought with and without.
+Each doctrine field is read in exactly one or four places, so each can be priced at its own site:
+
+| | listed | measured |
+|---|---|---|
+| `blood` purse, on a held card | 1.18 | **1.179** |
+| `blood` health, a DIVISOR — the lanista per death | 0.7 → 1.4286 | **1.429** |
+| `craft` train, one man on one stat | 1.12 | **1.1194** |
+| `craft` injure, spar injuries over 1,800 weeks | 0.7 | 0.55 ± 0.14 — consistent, n too small to separate |
+| `craft` purse | 0.90 | **0.968** |
+
+The v2.93.0 inversion was entirely the career. The `craft` residual is real and is a note rather than a
+bug: `facPurse` reads the factions, and the front rows craft wins you hand back three quarters of the
+discount it charges — so its player-facing note says so now.
+
+**THREE MEASUREMENTS OF MINE FAILED BEFORE THOSE FIVE WORKED,** all the same shape. `injure` first read
+1.00× because I counted BOUT injuries and `docInjure` is read in the training week. The arm before that
+read 0.0000 in both arms because it set `regimen:"spar"` without pairing anybody, so `repairSpar` turned
+every week into post work and nothing was ever at risk. And `train` first read 1.002 because four men
+starting at 66 had capped out in both arms. **Check the ceiling before believing a flat result, and check
+which line reads the field before believing a dead one.**
+
+**AND THERE ARE TWO `blood`s.** The doctrine (The Red School, purse 1.18) and the stakes (first blood).
+Priced on one bout each at the same seeds, first blood pays 129d against a standard bout's 192d, kills
+nobody at all against 6.5%, and leaves a man hurt 1.0% of the time against 17.5%. The audit item was
+about the school; the name is a trap and `school` names it now.
+
+The audit list from v2.93.0 is closed. Fifty-seven checks.
+
 ### v2.99.0 — The classes are not 1.8x apart, and the odds panel could not see a stat
 
 Item 7 of the v2.93.0 audit was a 1.8x spread in wins per man-week — Dimachaerus 0.167 and Thraex 0.160
@@ -5951,4 +6021,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v2.99.0*
+*Last updated: v3.0.0*
