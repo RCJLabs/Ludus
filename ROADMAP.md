@@ -1392,6 +1392,51 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v3.3.0 — The arena opened with a bribery menu, and the card was below the fold
+
+Option 5 of the five: give every tab a one-line answer before its detail. Its falsifier was "if a strip's
+numbers are already visible in the header, it is duplication" — and the header is FIXED on every tab and
+already carries the coin, the fame, the favour, the loan, the lanista's health when it is low, and the
+unrest word. So a new probe read every element whose top sits inside the first 844 pixels of each tab and
+face, at a phone width, and the option shrank from five strips to three real faults.
+
+**THREE TABS ALREADY ANSWERED THEIR OWN QUESTION.** `familia` opens with *What the men need · 1 thing* at
+y=234, `armory` with *The racks · 0 of 8* at y=174, and `ludus` with the week's work at y=247 as of v3.2.0.
+Nothing needed adding to any of them, which is the falsifier doing its job.
+
+**AND THE ARENA OPENED WITH A BRIBERY MENU.** The first thing on the arena tab was *What can be done
+quietly* and its three bribe options with their quoted odds, filling the entire first screen: a player who
+opened the Arena to see what bouts were on offer got a menu of ways to get at a rival's steel, and TO THE
+SAND was below the fold. The quiet business is below the card now. Measured after: TO THE SAND at y=249,
+CHOOSE A BOUT at y=328, the bribery at y=412.
+
+**THE MARKET ANSWERED IN FLAVOUR TEXT** at y=361, under two staff sections — *"The slaver's block. Fresh
+stock every third week. Roster holds 8 men."* It has a real answer now: how many are standing, how long
+until new stock, how much room is in the cells, how many are within your coin, and the cheapest price.
+
+**AND THE VILLA'S COIN & COUNCIL FACE SAID NOTHING ABOUT COIN.** It opened with three closed sections and
+then the moneylenders. It leads with the week's cost now — the bill, how many weeks the box would carry the
+house at it, and who is holding money in either direction.
+
+**PLUS A COPY ERROR OF MY OWN FROM v3.1.0.** The market's merged staff panel said "build either on the
+villa's House page". The villa's House face is the crest, the motto, the name and the family; the WINGS are
+in the House sheet behind Records & Annals on the Ludus tab — three taps away, and not where I sent
+anybody. Only the fold probe caught it.
+
+`sweep` asserts the fold now: each tab must say what it is for inside its first 844 pixels, with the
+keyword per tab named in the check. It reads *every tab says what it is for in its first 844px*.
+
+**AND OPTION 3'S FALSIFIER WAS MEASURED AND PARTLY FIRES.** The plan was to replace the armory's seven
+weapon-family sections with one list filtered to "his style", and the falsifier was "if a typical house
+holds men of five or six classes, that filter keeps almost everything". Over 343 house-weeks of the
+reference player: the yard holds a mean of **2.41 distinct classes** and 86% of weeks hold three or fewer —
+narrow, which favours a filter — but a "his style" filter keeps **4.09 of 7 weapon families, 58% of the
+racks**, because `pugio` carries `styles:[]` and suits everybody and each class's own weapon adds a family
+of its own. So the filter cuts 42%, not 80%. The seven sections also all fit on one screen closed
+(y=578 to y=803), so they are costing CLICKS rather than scroll — comparing a sica to a gladius means
+opening two boxes. That reframes the change from "filter the catalogue" to "one list, one scroll, sorted",
+and it is the next release rather than a rushed half of this one.
+
 ### v3.2.0 — The week's work comes first, and five lines of it were wallpaper
 
 First of the five UI options. `agenda(d)` has known what wants an answer and which tab the answer is on
@@ -6133,4 +6178,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v3.2.0*
+*Last updated: v3.3.0*

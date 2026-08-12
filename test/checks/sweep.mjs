@@ -119,6 +119,45 @@ export async function run({ p, errors }){
     shape.push({ where, rows:a });
   }
 
+  /* ---- AND WHAT THE TAB SAYS BEFORE A PLAYER SCROLLS, from v3.3.0 ----
+     The header is fixed on every tab and already carries the coin, the fame, the favour and the unrest
+     word, so no tab needs to repeat those. What each tab owes is the answer to its OWN question, above
+     the fold, at a phone width — and measured with a fold probe, three did not give it:
+
+       arena   led with "What can be done quietly" and its three bribe options with their odds, filling
+               the whole first screen. A player who opened the Arena to see what bouts were on offer got
+               a bribery menu, and TO THE SAND was below the fold.
+       market  answered in a line of flavour text at y=361, under two staff sections.
+       villa · Coin & Council  opened with three CLOSED sections and then the moneylenders, and said
+               nothing about coin on the face named for it.
+
+     `ludus` (the week's work, v3.2.0), `familia` ("What the men need") and `armory` ("The racks") already
+     answered. So this asserts the answer is in the first screen and names the fault if it is not. */
+  const FOLD = 844;
+  const ANSWERS = {
+    arena:  { re:/to the sand|choose a bout|on the imperial sand|on the road/i, what:"the card, or why there is none" },
+    market: { re:/the block|room for|the cells are full/i,                      what:"what room is in the cells and what is on the block" },
+    ludus:  { re:/this week|nothing new is asking/i,                            what:"what the week is asking for" },
+    familia:{ re:/what the men need|the roster/i,                              what:"what the men need" },
+    armory: { re:/the racks/i,                                                  what:"what the racks are holding" },
+  };
+  const foldMiss = [];
+  async function readFold(tabKey, where){
+    const A = ANSWERS[tabKey]; if(!A) return;
+    const seen = await p.evaluate(cut=>{
+      const out = [];
+      const walk = el => { for(const c of el.children){
+        const y = c.getBoundingClientRect().top + window.scrollY;
+        if(y > cut) continue;
+        const t = (c.innerText||"").trim();
+        if(!t) continue;
+        if(t.length <= 160 || !c.children.length) out.push(t); else walk(c); } };
+      const sc = document.querySelector(".scroll > div"); if(sc) walk(sc);
+      return out.join(" \n ");
+    }, FOLD);
+    if(!A.re.test(seen)) foldMiss.push({ where, what:A.what });
+  }
+
   /* the whole tab, face by face, and the count for each so a silent collapse shows */
   async function sweepTab(t){
     await tab(p, t); await p.waitForTimeout(260);
@@ -126,7 +165,8 @@ export async function run({ p, errors }){
     await tab(p, t); await p.waitForTimeout(200);
     const fs = await faces(p);
     if(!fs.length){ const n = await openAll(p); await p.waitForTimeout(340);
-      visited.push(`${t} (+${n} sections)`); await readScreen(t); await readShape(t); return; }
+      visited.push(`${t} (+${n} sections)`); await readScreen(t); await readShape(t);
+      await readFold(t, t); return; }
     const per = [];
     for(const f of fs){
       await showFace(p, f); await p.waitForTimeout(300);
@@ -134,6 +174,7 @@ export async function run({ p, errors }){
       per.push(`${f} ${n}`);
       await readScreen(`${t} · ${f}`);
       await readShape(`${t} · ${f}`);
+      if(f === fs[0]) await readFold(t, `${t} · ${f}`);
     }
     visited.push(`${t} [${per.join(" · ")}]`);
   }
@@ -275,6 +316,13 @@ export async function run({ p, errors }){
     if(r.chars < 120 && r.buttons <= 1) thin.push(`${f.where}: "${r.title}" ${r.chars}c ${r.buttons}b`);
   }
   lines.push(`sections by face: ${shape.filter(f=>f.rows.length).map(f=>`${f.where} ${f.rows.length}`).join(" · ")}`);
+  lines.push(foldMiss.length
+    ? `ABOVE THE FOLD: ${foldMiss.map(x=>`${x.where} does not say ${x.what}`).join(" | ")}`
+    : `every tab says what it is for in its first ${FOLD}px`);
+  for(const x of foldMiss)
+    errors.push(`${x.where} does not say ${x.what} above the fold at a phone width. The header already `
+      + `carries the coin, the fame, the favour and the unrest on every tab — what a tab owes is the `
+      + `answer to its own question, and the arena led with a bribery menu until v3.3.0`);
   lines.push(thin.length
     ? `thin sections (under 120 characters, one button or none) — printed, not asserted: ${thin.join(" | ")}`
     : `no section on any face is under 120 characters`);

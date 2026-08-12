@@ -1686,3 +1686,26 @@ releases before anybody counted them — the doctrine nudge in v2.93.0 and the h
 Adding an advisory line is cheap and feels like an improvement. The cost lands on every other line in the
 list, and it does not show up until someone counts how often each one is lit. If you add a nudge, add the
 count with it — `week`'s bar is that no single label may be in the shown block on more than 34% of weeks.
+
+## Read the first screen, not the whole page
+
+The tab anatomy counted sections and measured the fully-expanded height of every face. Both were useful and
+neither answered the question a player asks, which is "does this tab tell me what I came for before I
+scroll". A fold probe — every element whose top sits inside the first 844 pixels — answered it in one run,
+and what it found was not a missing summary strip: the ARENA opened with a menu of bribes and their odds,
+and the card was below the fold.
+
+The measurement you can build a strip from and the measurement that tells you a tab is wrong are different
+measurements. `sweep` asserts the fold now, with the keyword each tab owes named in the check.
+
+## A falsifier that partly fires still changes the design
+
+Option 3 was "replace the armory's seven weapon-family sections with one list filtered to his style". The
+falsifier: if a house holds men of five or six classes, that filter keeps everything. Measured over 343
+house-weeks the yard holds a mean of 2.41 classes — narrow, so the filter looked right — but a style filter
+keeps 4.09 of 7 weapon families, because one weapon has `styles:[]` and suits anybody and each class brings
+its own family. It cuts 42%, not 80%.
+
+Half-fired is the most useful outcome: the seven sections all fit on one screen closed, so they cost CLICKS
+not scroll, and the change is "one list, one scroll" rather than "filter the catalogue". Neither the
+original plan nor a flat rejection would have got there.

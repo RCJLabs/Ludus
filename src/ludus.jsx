@@ -20261,6 +20261,49 @@ export default function App(){
                 </>)}
               </div>
             ); })()}
+          {/* ---- THE CARD COMES BEFORE THE BRIBERY, from v3.3.0 ----
+               MEASURED with the fold probe: the first thing on the arena tab was "What can be done
+               quietly" and its three bribe options with their odds, filling the whole first screen at a
+               phone width — a player who opened the Arena to see what bouts were on offer got a bribery
+               menu instead, and TO THE SAND was below the fold. The quiet business is still here; it is
+               below the card now, which is what a player came for. */}
+          {(()=>{ const p = pactOf(S); if(!p) return null;
+            const P = PACTS[p.kind], pace = pactPace(S);
+            const col = pace==="impossible" ? "#d96f5d" : pace==="behind" ? "#d8ac5f" : "#9aa86a";
+            return (
+              <div className="panel" style={{padding:12,borderColor:col}}>
+                <div className="flex items-center justify-between" style={{marginBottom:3}}>
+                  <span className="tag tag-gold">Your word is given</span>
+                  <span className="rowval" style={{fontSize:"var(--fs-sm)",color:col}}>
+                    {pactOwed(S)} owed · {pactLeft(S)} weeks
+                  </span>
+                </div>
+                <div className="disp" style={{fontSize:"var(--fs-md)",color:"#e8d092"}}>{P.name}</div>
+                <Bar v={p.done/p.need*100} label="" color={`linear-gradient(90deg,#4a3a24,${col})`}/>
+                <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:3}}>
+                  {p.done} of {p.need} given{p.rate ? `, ${p.rate}d a card` : ""}{p.bonus ? `, ${p.bonus}d at the end of it` : ""}.
+                  {P.exclusive ? " Nobody else's games in Capua until it is done." : ""}
+                </div>
+                {pace==="impossible" && <div className="blood" style={{fontSize:"var(--fs-base)",marginTop:3}}>
+                  There are not enough weeks left. Whatever happens now, it will be remembered as broken.
+                </div>}
+              </div>
+            ); })()}
+          <div className="panel" style={{padding:14}}>
+            <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,letterSpacing:".04em",marginBottom:3}}>TO THE SAND</div>
+            <div className="dim" style={{fontSize:"var(--fs-md)",marginBottom:11}}>
+              {(()=>{ const n=((S.games&&S.games.offers)||[]).length;
+                if(n && S.games.mine) return `Your own games are on — ${S.games.festival.toLowerCase()}, ${n} ${n===1?"bout":"bouts"} on your sand, and the city is watching to see what you put on it.`;
+                return `The pits are always open.${n? ` ${n} ${n===1?"card":"cards"} at the games this week.` : S.fame<TIERS[1].fame ? " Win to 25 fame in the pits and the editors will start sending cards." : " No games this week."}`; })()}
+            </div>
+            <button className="btn btn-blood" style={{width:"100%"}}
+              onClick={()=>{ setArenaPick(null); setArenaStep(0); setFGid(null); setPairSel([]); setArenaWiz(true); }}>
+              Choose a bout ›
+            </button>
+            {eligible.length===0 && <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:8}}>No one is fit to fight this week — rest and heal, then come back.</div>}
+          </div>
+
+          {/* the quiet business, moved here in v3.3.0 so the card leads the tab */}
           {(()=>{ const rivals = (S.rivals||[]).filter(h=>!h.retired);
             if(!rivals.length || S.week < 16) return null;
             const ready = gambitReady(S);
@@ -20303,42 +20346,6 @@ export default function App(){
                   ); })}
               </div>
             ); })()}
-          {(()=>{ const p = pactOf(S); if(!p) return null;
-            const P = PACTS[p.kind], pace = pactPace(S);
-            const col = pace==="impossible" ? "#d96f5d" : pace==="behind" ? "#d8ac5f" : "#9aa86a";
-            return (
-              <div className="panel" style={{padding:12,borderColor:col}}>
-                <div className="flex items-center justify-between" style={{marginBottom:3}}>
-                  <span className="tag tag-gold">Your word is given</span>
-                  <span className="rowval" style={{fontSize:"var(--fs-sm)",color:col}}>
-                    {pactOwed(S)} owed · {pactLeft(S)} weeks
-                  </span>
-                </div>
-                <div className="disp" style={{fontSize:"var(--fs-md)",color:"#e8d092"}}>{P.name}</div>
-                <Bar v={p.done/p.need*100} label="" color={`linear-gradient(90deg,#4a3a24,${col})`}/>
-                <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:3}}>
-                  {p.done} of {p.need} given{p.rate ? `, ${p.rate}d a card` : ""}{p.bonus ? `, ${p.bonus}d at the end of it` : ""}.
-                  {P.exclusive ? " Nobody else's games in Capua until it is done." : ""}
-                </div>
-                {pace==="impossible" && <div className="blood" style={{fontSize:"var(--fs-base)",marginTop:3}}>
-                  There are not enough weeks left. Whatever happens now, it will be remembered as broken.
-                </div>}
-              </div>
-            ); })()}
-          <div className="panel" style={{padding:14}}>
-            <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,letterSpacing:".04em",marginBottom:3}}>TO THE SAND</div>
-            <div className="dim" style={{fontSize:"var(--fs-md)",marginBottom:11}}>
-              {(()=>{ const n=((S.games&&S.games.offers)||[]).length;
-                if(n && S.games.mine) return `Your own games are on — ${S.games.festival.toLowerCase()}, ${n} ${n===1?"bout":"bouts"} on your sand, and the city is watching to see what you put on it.`;
-                return `The pits are always open.${n? ` ${n} ${n===1?"card":"cards"} at the games this week.` : S.fame<TIERS[1].fame ? " Win to 25 fame in the pits and the editors will start sending cards." : " No games this week."}`; })()}
-            </div>
-            <button className="btn btn-blood" style={{width:"100%"}}
-              onClick={()=>{ setArenaPick(null); setArenaStep(0); setFGid(null); setPairSel([]); setArenaWiz(true); }}>
-              Choose a bout ›
-            </button>
-            {eligible.length===0 && <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:8}}>No one is fit to fight this week — rest and heal, then come back.</div>}
-          </div>
-
           {S.fame>=MUNUS_SCALES.modest.gate && !S.travel && !S.city && (
             <div className="panel" style={{padding:14,borderColor:"#6d5426"}}>
               <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,letterSpacing:".04em",marginBottom:3}}>GIVE THE CITY GAMES</div>
@@ -20460,9 +20467,14 @@ export default function App(){
                 <span className="tag">The staff</span>
                 <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>no rooms for them yet</span>
               </div>
+              {/* ---- AND THE COPY THIS PANEL SHIPPED WITH IN v3.1.0 WAS WRONG ----
+                   It said "build either on the villa's House page". The villa's House face is the crest,
+                   the motto, the name and the family — the WINGS are in the House sheet, behind Records
+                   & Annals on the Ludus tab, which is three taps from here and not where I sent anybody.
+                   Measured with the fold probe in v3.3.0, which is the only reason it was caught. */}
               <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
-                A medicus wants an infirmary and an armourer wants an armoury. Build either on the villa's
-                House page and whoever is looking for a place will be here.
+                A medicus wants an infirmary and an armourer wants an armoury. Raise either in the Ludus
+                tab's House sheet — under Records &amp; Annals — and whoever is looking for a place will be here.
               </div>
             </div>
           ) : STAFF_KEYS.map(k=>{ const s = S[k], ST = STAFF[k], lvl = bLevel(S, ST.room);
@@ -20505,7 +20517,34 @@ export default function App(){
                 </>)}
               </Sect>
             ); })}
-          <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>The slaver's block. Fresh stock every third week. Roster holds 8 men.</div>
+          {/* ---- WHAT THIS TAB IS FOR, BEFORE THE DETAIL OF IT, from v3.3.0 ----
+               The market's answer — how much room is in the cells and how fresh the stock is — was this
+               line of flavour text, measured at y=361 under two staff sections. The header already
+               carries the coin on every tab, so this says only what the market itself knows. */}
+          {(()=>{ const n = rosterCount(S), cap = cellsCap(S), room = cap - n;
+            const fresh = 3 - ((S.week-1) % 3);
+            const cheapest = (S.market||[]).length ? Math.min(...(S.market||[]).map(m=>m.price)) : null;
+            const canBuy = (S.market||[]).filter(m=>m.price <= S.gold).length;
+            return (
+              <div className="panel" style={{padding:12,borderColor: room<=0 ? "#6d5426" : "#3e2f1f"}}>
+                <div className="flex items-center justify-between" style={{marginBottom:3}}>
+                  <span className="tag tag-gold">The block</span>
+                  <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>
+                    {(S.market||[]).length} standing · {fresh===3?"fresh this week":`${fresh}w to new stock`}
+                  </span>
+                </div>
+                <div style={{fontSize:"var(--fs-md)"}}>
+                  {room <= 0
+                    ? `The cells are full at ${cap}. Nothing can be bought until a man leaves them.`
+                    : cheapest == null
+                    ? `Room for ${room} more, and nobody is selling this week.`
+                    : `Room for ${room} more · ${canBuy} of ${(S.market||[]).length} within your coin · cheapest ${cheapest}d.`}
+                </div>
+                <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:3}}>
+                  Fresh stock every third week. What the seller tells you about a man is what the seller wants.
+                </div>
+              </div>
+            ); })()}
           {(()=>{ const here = [...new Set((S.market||[]).map(g=>g.slaver).filter(Boolean))];
             if(!here.length) return null;
             return (
@@ -21232,6 +21271,35 @@ export default function App(){
           </>)}
 
           {vView==="council" && (<>
+          {/* ---- THE ANSWER THE FACE IS NAMED FOR, from v3.3.0 ----
+               MEASURED with the fold probe: the Coin & Council face opened with three CLOSED sections and
+               then the moneylenders, and said nothing about coin above the fold on a phone. The header
+               carries the coin in hand on every tab; what only this face knows is what the week costs and
+               who is holding money either way. */}
+          {(()=>{ const bill = weeklyBill(S), owed = owedTotal(S), debt = S.loan ? owes(S) : 0;
+            const weeks = bill > 0 ? Math.floor((S.gold + owed) / bill) : null;
+            const tight = weeks != null && weeks < 6;
+            return (
+              <div className="panel" style={{padding:12,borderColor: debt ? "#6d5426" : tight ? "#7c2a22" : "#3e2f1f"}}>
+                <div className="flex items-center justify-between" style={{marginBottom:3}}>
+                  <span className="tag tag-gold">The week's cost</span>
+                  <span className="rowval" style={{fontSize:"var(--fs-sm)",color:tight?"#d96f5d":"#b09b7d"}}>
+                    −{bill}d a week
+                  </span>
+                </div>
+                <div style={{fontSize:"var(--fs-md)"}}>
+                  {weeks == null ? "Nothing is going out this week."
+                    : weeks >= 40 ? `The box would carry this house for years at what it costs now.`
+                    : `The box would carry this house ${weeks} more week${weeks===1?"":"s"} if nothing came in.`}
+                </div>
+                {(owed>0 || debt>0) && (
+                  <div className="dim" style={{fontSize:"var(--fs-md)",marginTop:3}}>
+                    {owed>0 ? `${owed}d owed TO you by editors` : ""}{owed>0&&debt>0 ? " · " : ""}
+                    {debt>0 ? <span style={{color:"#d96f5d"}}>{debt}d owed BY you to {loanLender(S).name}</span> : ""}
+                  </div>
+                )}
+              </div>
+            ); })()}
           <Sect title="The household" note={`${householdCount(S)} of ${HH_KEYS.length}`}>
             <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:7}}>
               A ludus was a household before it was a business. None of these people will ever be on a card and the place does not run without them.
