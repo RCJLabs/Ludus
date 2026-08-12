@@ -1709,3 +1709,13 @@ its own family. It cuts 42%, not 80%.
 Half-fired is the most useful outcome: the seven sections all fit on one screen closed, so they cost CLICKS
 not scroll, and the change is "one list, one scroll" rather than "filter the catalogue". Neither the
 original plan nor a flat rejection would have got there.
+
+## A filter that hides silently is worse than the headings it replaced
+
+Seven weapon-family sections became one flat list, and the risk in that trade is a player who cannot tell
+what is missing. So each filter chip carries its own count — *In our styles 14 · Everything 26 · On the
+racks 2* — and the line under it says which one is showing and why. Anything outside the styles the house
+actually fields wears a "clumsy for this yard" tag rather than being dropped.
+
+The seven headings were information as well as navigation. Flattening a grouped list means the grouping has
+to survive somewhere on the row, or you have removed clicks by removing what the clicks were for.

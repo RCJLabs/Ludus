@@ -316,6 +316,22 @@ export async function run({ p, errors }){
     if(r.chars < 120 && r.buttons <= 1) thin.push(`${f.where}: "${r.title}" ${r.chars}c ${r.buttons}b`);
   }
   lines.push(`sections by face: ${shape.filter(f=>f.rows.length).map(f=>`${f.where} ${f.rows.length}`).join(" · ")}`);
+  /* ---- AND THE ONE FACE WITH A MEASURED CEILING, from v3.4.0 ----
+     The armory was a `Sect` per weapon FAMILY: seven of them for the weapon slot, each 24 to 37 lines,
+     and all seven fitted on one screen closed (y=578 to 803) — so they cost CLICKS, not scroll, and
+     comparing a sica to a gladius meant opening two boxes. It is one open list now, cheapest first, with
+     the family on each row as a tag and a filter that says what it is hiding: over 343 house-weeks the
+     yard holds a mean of 2.41 of six classes, and "in our styles" keeps 58% of the racks. */
+  { const arm = shape.find(f=>f.where === "armory");
+    if(arm){
+      lines.push(`the armory carries ${arm.rows.length} section${arm.rows.length===1?"":"s"} `
+        + `(${arm.rows.map(r=>r.title).join(", ")}) — it was seven, one per weapon family`);
+      if(arm.rows.length > 2)
+        errors.push(`the armory is back to ${arm.rows.length} sections (${arm.rows.map(r=>r.title).join(", ")}). `
+          + `It was one per weapon family until v3.4.0 and all seven fitted on one screen closed, so the `
+          + `seven headings were costing clicks rather than scroll — one flat list, cheapest first, with `
+          + `the family as a tag on the row`);
+    } }
   lines.push(foldMiss.length
     ? `ABOVE THE FOLD: ${foldMiss.map(x=>`${x.where} does not say ${x.what}`).join(" | ")}`
     : `every tab says what it is for in its first ${FOLD}px`);

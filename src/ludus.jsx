@@ -17953,6 +17953,16 @@ export default function App(){
   const [nameFor,setNameFor] = useState(null);  /* the rival's man you are about to name in public */
   const [drillFor,setDrillFor] = useState(null); /* and the one you are about to set somebody against */
   const [rack,setRack] = useState("weapon");
+  /* ---- ONE LIST INSTEAD OF SEVEN CATALOGUES, from v3.4.0 ----
+     The racks were a `Sect` per weapon FAMILY — seven of them for the weapon slot, each 24 to 37 lines.
+     MEASURED: all seven fitted on one screen closed (y=578 to y=803 at a phone width), so they were not
+     costing scroll, they were costing CLICKS: comparing a sica to a gladius meant opening two boxes.
+     And the yard is narrow enough for a filter to earn its place — over 343 house-weeks of the reference
+     player it holds a mean of 2.41 distinct classes and 86% of weeks hold three or fewer. A style filter
+     keeps 4.09 of 7 weapon families (58%), because `pugio` carries `styles:[]` and suits anybody, so it
+     cuts 42% rather than the 80% I first assumed. Both figures pointed the same way: flatten the list,
+     keep the filter, and put the family on the row as a tag so nothing the headings said is lost. */
+  const [rackFilt,setRackFilt] = useState("style");
   const [seedIn,setSeedIn] = useState("");
   useEffect(()=>{ if(tab==="market" && S && !S.flags.sawFirstBuy) mut(d=>{ firstBuyWarn(d); }); }, [tab]);
   /* ---- THE TAB YOU ARE LOOKING AT IS NOT NEW ----
@@ -21721,20 +21731,55 @@ export default function App(){
 
           {SLOTS.filter(s=>s===rack).map(slot=>{
             const benchOpen = masterOpen(S);
-            const items = Object.entries(GEAR).filter(([id,it])=>it.slot===slot
+            const all = Object.entries(GEAR).filter(([id,it])=>it.slot===slot
               && (!it.master || benchOpen || (S.gear[id]||0) > 0));
-            const arts = [...new Set(items.map(([,it])=>it.art))];
+            /* whose styles are actually in this yard — 2.41 of six classes on a measured week */
+            const mine = [...new Set(activeG(S).map(g=>g.cls))];
+            const inStyle = it => !it.styles || !it.styles.length || it.styles.some(c=>mine.includes(c));
+            const FILTS = [
+              ["style", "In our styles", it=>inStyle(it)],
+              ["all",   "Everything",    ()=>true],
+              ["owned", "On the racks",  (it,id)=>(S.gear[id]||0) > 0],
+            ];
+            const F = FILTS.find(x=>x[0]===rackFilt) || FILTS[0];
+            const items = all.filter(([id,it])=>F[2](it,id))
+              .sort((a,b)=>(a[1].price||0)-(b[1].price||0));
+            const own = all.reduce((n,[id])=>n+(S.gear[id]||0),0);
+            const idle = all.reduce((n,[id])=>n+gearFree(S,id),0);
+            const cheapest = items.filter(([,it])=>it.price>0).map(([,it])=>gearPrice(S,it.price,slot)).sort((a,b)=>a-b)[0];
             return (
             <React.Fragment key={slot}>
-              {arts.map(art=>{
-                const group = items.filter(([,it])=>it.art===art).sort((a,b)=>(a[1].price||0)-(b[1].price||0));
-                const own = group.reduce((n,[id])=>n+(S.gear[id]||0),0);
-                const idle = group.reduce((n,[id])=>n+gearFree(S,id),0);
-                const cheapest = group.filter(([,it])=>it.price>0).map(([,it])=>gearPrice(S,it.price,slot)).sort((a,b)=>a-b)[0];
-                return (
-                  <Sect key={art} title={artName(slot, art)}
-                    note={own ? `${own} owned${idle?` · ${idle} idle`:""}` : cheapest ? `from ${cheapest}d` : "house stock"}>
-                    {group.map(([id,it])=>{
+              <Sect open title={`The ${SLOT_NAME[slot].toLowerCase()} rack`}
+                note={own ? `${own} owned${idle?` · ${idle} idle`:""}` : cheapest ? `from ${cheapest}d` : "house stock"}>
+                {/* the filter, and it says what it is hiding rather than hiding it silently */}
+                <div className="flex gap-1" style={{flexWrap:"wrap",marginBottom:3}}>
+                  {FILTS.map(([k,label,fn])=>{
+                    const n = all.filter(([id,it])=>fn(it,id)).length;
+                    return (
+                      <button key={k} className={`chip ${rackFilt===k?"on":""}`} onClick={()=>setRackFilt(k)}
+                        style={{fontSize:"var(--fs-micro)",padding:"4px 10px",
+                          borderColor: rackFilt===k ? "#c99a4b" : "#3e2f1f",
+                          color: rackFilt===k ? "#e8d092" : "#b09b7d"}}>
+                        {label} <span className="dim">{n}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",marginBottom:2}}>
+                  {rackFilt==="style"
+                    ? (mine.length
+                        ? `${items.length} of ${all.length}, cheapest first — what ${mine.length===1?"the man":"the men"} in this yard can carry without it being clumsy.`
+                        : `Nobody is in the yard, so nothing is out of style. All ${all.length}, cheapest first.`)
+                    : rackFilt==="owned"
+                    ? (items.length ? `The ${items.length} you have bought.` : "You have bought none of these. The house issue is free and always will be.")
+                    : `All ${all.length}, cheapest first. Gear outside a man's own style still works, but clumsily.`}
+                </div>
+                {items.length===0 && (
+                  <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:6}}>
+                    Nothing here under that filter. Try Everything.
+                  </div>
+                )}
+                {items.map(([id,it])=>{
                       const owned = S.gear[id]||0, free = gearFree(S,id);
                       return (
                         <div key={id} style={{borderTop:"1px dotted #33271a",paddingTop:8,marginTop:8}}>
@@ -21744,7 +21789,12 @@ export default function App(){
                               ? <span className="gold" style={{fontSize:"var(--fs-md)",whiteSpace:"nowrap"}}>{it.price}d{owned?` · ${owned} owned`:""}</span>
                               : <span className="tag">Costs nothing</span>}
                           </div>
-                          {it.master && <div style={{margin:"3px 0 1px"}}><span className="tag tag-gold">A master's piece · {it.keep}d a week to keep</span></div>}
+                          {/* the family the seven headings used to carry, now on the row it belongs to */}
+                          <div className="flex items-center gap-1" style={{flexWrap:"wrap",margin:"3px 0 1px"}}>
+                            <span className="tag" style={{fontSize:"var(--fs-micro)",padding:"2px 7px"}}>{artName(slot, it.art)}</span>
+                            {it.master && <span className="tag tag-gold" style={{fontSize:"var(--fs-micro)",padding:"2px 7px"}}>A master's piece · {it.keep}d a week to keep</span>}
+                            {!inStyle(it) && <span className="tag" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",borderColor:"#7c5a22",color:"#cfa060"}}>clumsy for this yard</span>}
+                          </div>
                           <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",margin:"2px 0 3px"}}>{it.desc}</div>
                           <GearStats it={it}/>
                           {it.master && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>No sharper than the best on the rack. Twice as loud — and the crowd is the purse, the name, and the finger that goes up when he is down.</div>}
@@ -21765,9 +21815,7 @@ export default function App(){
                         </div>
                       );
                     })}
-                  </Sect>
-                );
-              })}
+              </Sect>
             </React.Fragment>
           );})}
         </div>)}

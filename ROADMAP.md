@@ -1392,6 +1392,32 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v3.4.0 — Seven catalogues become one rack, and the filter says what it is hiding
+
+Option 3 of the five, reshaped by its own falsifier. The armory was a `Sect` per weapon FAMILY — seven of
+them for the weapon slot (Straight Blades, Curved Blades, Spears & Reach, Tridents, Paired Blades, Heavy
+Arms, Sidearms), each 24 to 37 lines. The plan was one list filtered to "his style". Two measurements
+changed the shape of it:
+
+| | |
+|---|---|
+| distinct classes in the yard, over 343 house-weeks | **mean 2.41 of six**, and 86% of weeks hold three or fewer |
+| what a "his style" filter keeps | **4.09 of 7 weapon families — 58% of the racks** |
+| where the seven headings sat, closed, at a phone width | **y=578 to y=803 — all on one screen** |
+
+So the filter earns its place (the yard is narrow) but cuts 42% rather than the 80% I first assumed — and
+the seven sections were never costing scroll, they were costing CLICKS. Comparing a sica to a gladius meant
+opening two boxes.
+
+**WHAT SHIPPED** is one open list per slot, cheapest first, with three filter chips that carry their own
+counts — *In our styles 14 · Everything 26 · On the racks 2* — so the filter says what it is hiding instead
+of hiding it. Every piece the seven headings carried is still on the row: the family as a tag, the master's
+piece line, and a *clumsy for this yard* tag on anything outside the styles you actually field. A house at
+week 17 reads "14 of 26, cheapest first — what the men in this yard can carry without it being clumsy."
+
+`sweep` holds the ceiling: the armory face may carry at most two sections, and the check names the seven it
+used to have and why they went.
+
 ### v3.3.0 — The arena opened with a bribery menu, and the card was below the fold
 
 Option 5 of the five: give every tab a one-line answer before its detail. Its falsifier was "if a strip's
@@ -6178,4 +6204,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v3.3.0*
+*Last updated: v3.4.0*
