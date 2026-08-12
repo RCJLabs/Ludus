@@ -20946,8 +20946,15 @@ export default function App(){
           {(()=>{ const dm = domusOf(S), w = dm.wife, kids = dm.children.filter(c=>!c.dead);
             const UP = c => { const u=c.up||{}, p=u.palus||0, r=u.rhetor||0, b=u.box||0; if(!(p+r+b)) return "still small";
               return p>=r&&p>=b ? "raised in the yard" : r>=b ? "sent for letters" : "learning the trade"; };
+            /* the closed note used to read "no family yet" in BOTH of the two ways a house can have
+               no family, and they are not the same thing: one is a bar you can clear this year and
+               the other is a door that has shut. `marryReady` wants fame 60 or any rung of the
+               census AND a lanista under 56, so the summary names whichever of the two is holding. */
             return (
-            <Sect live={sectFresh(S,"blood")} sid="blood" title="The blood of the house" note={w ? `${kids.filter(c=>!c.wed).length} at home` : marryReady(S) ? "a match awaits" : "no family yet"}>
+            <Sect live={sectFresh(S,"blood")} sid="blood" title="The blood of the house"
+              note={w ? `${kids.filter(c=>!c.wed).length} at home` : marryReady(S) ? "a match awaits"
+                : (S.lanista && S.lanista.age >= 56) ? "too late for a match"
+                : `a match wants fame 60 — you have ${rnd(S.fame)}`}>
               {w ? (<>
                 <div className="flex items-center justify-between gap-2" style={{marginBottom:6}}>
                   <span className="disp" style={{fontSize:"var(--fs-md)",color:"#d9c0e0"}}>{w.name}</span>
@@ -20970,8 +20977,18 @@ export default function App(){
                   A man alone at the head of a ludus leaves nothing behind but a ledger. Take a wife, and the house can make an heir of its own blood.
                 </div>
                 <button className="btn" style={{width:"100%"}} onClick={seekMatch}>Let it be known you are looking for a match</button>
-              </>) : (
-                <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>Climb a little higher — a name, or a heavier purse — and the matchmakers of Capua will come calling.</div>
+              </>) : (S.lanista && S.lanista.age >= 56) ? (
+                /* AND THIS BRANCH USED TO SAY "climb a little higher", WHICH WAS A LIE.
+                   `marryReady` is false above 55 whatever the house is worth, so an old lanista was
+                   told to work at a thing no amount of work would ever open. The blood is shut; the
+                   line is not, because `heirEligible` always offers a nephew. */
+                <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
+                  No family in Capua will match a daughter to a lanista of {S.lanista.age}, and no purse changes that. Whatever this house leaves behind will not be your own blood — name an heir from outside it, on the House sheet, before the choice is made for you.
+                </div>
+              ) : (
+                <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
+                  Climb a little higher and the matchmakers of Capua will come calling. They want fame 60, or any rung of the census; you have fame {rnd(S.fame)} and stand {riseRank(S).short}.
+                </div>
               )}
             </Sect>
           ); })()}
@@ -21508,8 +21525,11 @@ export default function App(){
             </Sect>
           )}
 
+          {/* the stance is the whole of what this section says, so it is said on the summary line and
+              the box is not a box you open to learn one word — see the note over SECT_LIVE */}
           {aedileOn(S) && (
-            <Sect live={sectFresh(S,"aedile")} sid="aedile" title="The aedile" note={`${S.aedile.until - S.week}w left`}>
+            <Sect live={sectFresh(S,"aedile")} sid="aedile" title="The aedile"
+              note={`${S.aedile.friendly ? "he owes you" : S.aedile.hostile ? "he is against you" : "no view of you"} · ${S.aedile.until - S.week}w left`}>
               <div className="disp" style={{fontSize:"var(--fs-md)",color:"#e8d092"}}>{S.aedile.name}</div>
               <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:3}}>
                 {S.aedile.friendly
@@ -23551,7 +23571,7 @@ export default function App(){
             </div>
             <div className="panel" style={{padding:11,marginTop:10,background:"#1c1610",borderColor:"#7c2a22"}}>
               <div className="blood" style={{fontSize:"var(--fs-md)"}}>
-                Understand what is being offered. Half the imperial bouts are fought sine missione. Your patrons have no reach in that city — nobody up in that box owes you anything. Whatever happens there ends this house, one way or the other.
+                Understand what is being offered. Half the imperial bouts are fought sine missione. Your patrons have no reach in that city — nobody up in that box owes you anything. And the crowd is too big to shout over: not one order of yours will reach the sand once a bout starts, which is not true of any other card you have ever taken. Whatever happens there ends this house, one way or the other.
               </div>
             </div>
             <button className="btn" style={{width:"100%",marginTop:12,borderColor:"#c99a4b",color:"#e8d092"}} onClick={()=>answerRome(true)}>Load the wagons</button>

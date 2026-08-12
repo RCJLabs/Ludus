@@ -1392,6 +1392,47 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v3.6.0 — A warning that arrives after the wagons are loaded, and two boxes that opened onto one sentence
+
+Three lines of copy, all found the same way: by asking what a panel says in the state a player is most
+likely to be standing in, rather than the state it was written for.
+
+**The letter from Rome warned about two of the three things and not the third.** It said half the imperial
+bouts are fought sine missione and that your patrons have no reach in that city. It did not say that
+`stopAtCrux: !offer.imperial` makes the imperial card the only bout in the game that never stops for an
+order — 0.0% of imperial bouts reach the balance against 33–58% of ordinary ones. The bout's own beats DO
+say it, two lines in: *"no word of yours is going to reach him once it starts."* That is after the letter is
+answered, the wagons are loaded and three men are on the road to a city the house cannot leave for a month.
+A warning that arrives once the decision is unmakeable is not a warning. The letter carries it now, and
+says plainly that it is not true of any other card the house has ever taken.
+
+**`The blood of the house` told a lanista of sixty to climb a little higher.** `marryReady` is
+`age < 56 && (rung >= 1 || fame >= 60)`. Below 56 and under the bar, "climb" is exactly right — so the
+panel now names the bar and the figure: *they want fame 60, or any rung of the census; you have fame 12 and
+stand a keeper of slaves.* Above 55 no purse and no name will ever open it, and the panel was asking for
+work that could not possibly pay. That branch now says the blood is shut and points at the thing that is
+not: `heirEligible` always offers a nephew, so the line can still be carried by somebody from outside it.
+The summary line used to read "no family yet" in both states, which is the same word for a bar you can
+clear this year and a door that has closed.
+
+**`The aedile` was a box whose entire content is one sentence about his stance,** with only the weeks
+remaining on its summary line — so the box had to be opened to learn the one word it was worth opening for.
+The summary carries the stance now (*he owes you*, *he is against you*, *no view of you*) and the body keeps
+what the stance is worth in numbers, which is the only part that deserves a fold.
+
+**And `sweep`'s thin list carried a confident false positive for three releases.** `THE YARD` on the ludus
+tab read 118 characters and no buttons; its content is `LudusPlan`, a drawing of the whole compound in svg,
+which `innerText` cannot see. The thin count now excludes sections with an `svg` or `canvas` in them and
+prints those separately as short on words because the content is a picture. A list with one obvious false
+positive on it is a list you stop reading, which is a fair guess at why the two real thin sections beside
+it went three releases without being fixed.
+
+New check `words` (59), which reads all three off a real save loaded into a real browser — a copy assertion
+written against the source file asserts that a string exists somewhere, which is not the claim. Its first
+draft reported that the letter from Rome could not be raised at all: `clearAll` clicks the last live button
+of the topmost overlay, and on that letter the last button is "Capua is enough". The probe declined the
+invitation and then measured its absence.
+
 ### v3.5.0 — Both remaining UI options are refuted, and what survives is novelty again
 
 Options 2 and 4 of the five, and the measurement they were both waiting on killed both of them as stated.

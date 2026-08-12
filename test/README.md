@@ -60,6 +60,7 @@ reason the check exists usually has not.
 | `census` | fast | the ladder's top rungs asked 110,000 denarii in cash from a house that had to spend the same coin on stone, so nobody ever stood on them |
 | `bulk` | fast | four functions held every balance change in a 22,700-line file, and nothing ever said stop |
 | `week` | fast | the week's work, and where it says so. `agenda(d)` rendered two screens down (y=1565 measured) in a section that opened itself only on an urgency-3 week. Measured over 289 weeks of the reference player first: the list is NEVER empty, 54% of weeks carry seven items or more, its items span 4.11 tabs — and five labels were lit on 41 to 62% of every week a house lives, two of them added by this audit in the three releases before anybody counted. So an item carries its AGE now and only what is urgent or new is shown: the shown block fell from 5.6 items to 2.3, and the worst standing item from 62% of weeks to 16%. This holds the age arithmetic, the ranking, and both bars. From v3.5.0 it holds the same question for the tabs' SECTIONS: ten of eleven are live on 35% of weeks or more and three on over 90%, so "open what is actionable" opens almost everything — what opens a section is live AND young, which lands at 9.2% of weeks against 64.7% for availability alone |
+| `words` | slow | what a panel says in the state a player is most likely to be standing in, rather than the state it was written for. Three lines found the same way. The letter from Rome warned that half the imperial bouts are sine missione and that your patrons have no reach in that city, and did not say that `stopAtCrux: !offer.imperial` makes it the only bout in the game you cannot coach — the bout's own beats do say it, two lines in, which is after the wagons are loaded. `The blood of the house` told a lanista of sixty to "climb a little higher" when `marryReady` is false above 55 whatever the house is worth. `The aedile` was a box whose whole content is his stance, with only the weeks remaining on its summary line. All three are read off a real save loaded into a real browser, because a copy assertion written against the source file asserts that a string exists somewhere, which is not the claim |
 | `worst` | fast | the record book had a slot for the house's worst night that nothing ever wrote and nothing ever read; filling it found two more things nobody was writing |
 | `nights` | fast | a man's page had everything about his condition and nothing about any afternoon of his life |
 | `phases` | fast | the week was split into four phases so a check could run one alone, and no check ever called any of them — nor asserted the hard rule that no class may be clumsy in its own kit |
@@ -1738,3 +1739,33 @@ indicator, measure what share of weeks it is lit BEFORE you believe it is an ind
 Options 2 and 4 cost one predicate table and one 660-week run to kill, and the table they were killed by is
 the same table that now drives what survived of them. The alternative was building two features on a guessed
 number, in the biggest render block in the file, and finding out from a player.
+
+## A section can be full and still have no text
+
+`sweep` prints a thin list — sections under 120 characters with one button or none — and `THE YARD` on the
+ludus tab sat on it for three releases at 118 characters and no buttons. Its content is `LudusPlan`: a
+drawing of the whole compound, every wing that has been raised, in svg. `innerText` cannot see a single
+pixel of it. The heuristic was reporting the richest section on the tab as an empty box, and a list that
+carries one confident false positive is a list you stop reading — which is exactly why the two REAL thin
+sections beside it went three releases without being fixed.
+
+The count now excludes sections with an `svg` or `canvas` in them and prints those separately, as short
+on words because the content is a picture. The general form: a text metric over a screen is blind to
+everything that is not text, so it must say which of the two it found.
+
+## The probe answered the question it came to read
+
+`words` set `d.romeOffer`, reloaded, and reported that the letter from Rome had never been raised. The
+harness's `clearAll` clicks the LAST live button of the topmost overlay to get teaching panels out of the
+way, and on the letter from Rome that button is "Capua is enough". The probe declined the invitation and
+then measured its absence. Any check that wants to READ an overlay rather than get past one must not run
+the thing whose job is to dismiss overlays first — `reload(..., keep)` skips it.
+
+## Two ways of having nothing are not one way
+
+`The blood of the house` read "no family yet" on its summary line and "Climb a little higher" inside, in
+both of the two states where a house has no family. `marryReady` is `age < 56 && (rung >= 1 || fame >= 60)`.
+Under the bar and under 56, climbing is exactly the right advice. Over 55 it is a lie — no purse and no
+name will ever open it, and the panel was asking for work that could not possibly pay. The two states
+share a branch in the code and share nothing else. When a predicate is a conjunction, the copy under its
+false branch owes the player the term that actually failed.

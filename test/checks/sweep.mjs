@@ -111,7 +111,13 @@ export async function run({ p, errors }){
         const sum = d.querySelector("summary");
         const title = ((sum && sum.innerText) || "").split("\n")[0].trim();
         const body = (d.innerText||"").replace(sum ? sum.innerText : "", "").trim();
-        return { title, depth:depth(d), chars:body.length, buttons:d.querySelectorAll("button").length };
+        /* ---- A SECTION CAN BE FULL AND STILL HAVE NO TEXT ----
+           `THE YARD` on the ludus tab read 118 characters and no buttons and was carried on the
+           thin list for three releases. Its content is `LudusPlan` — a DRAWING of the whole
+           compound, every wing that has been raised, in svg. innerText cannot see any of it. A
+           heuristic that reports a picture as an empty box teaches you to stop reading the list. */
+        return { title, depth:depth(d), chars:body.length, buttons:d.querySelectorAll("button").length,
+          drawn: d.querySelectorAll("svg, canvas").length };
       });
       all.forEach((d,i)=>{ d.open = was[i]; });
       return rows;
@@ -310,10 +316,11 @@ export async function run({ p, errors }){
     errors.push(`"${x.what}" is on the screen on ${x.where} — ${x.why}. The line reads: "${x.line}"`);
 
   /* the shape of every face: sections counted, nesting held, thin ones printed */
-  const nested = [], thin = [];
+  const nested = [], thin = [], drawn = [];
   for(const f of shape) for(const r of f.rows){
     if(r.depth > 0) nested.push(`"${r.title}" inside a section on ${f.where}`);
-    if(r.chars < 120 && r.buttons <= 1) thin.push(`${f.where}: "${r.title}" ${r.chars}c ${r.buttons}b`);
+    if(r.chars < 120 && r.buttons <= 1 && !r.drawn) thin.push(`${f.where}: "${r.title}" ${r.chars}c ${r.buttons}b`);
+    else if(r.chars < 120 && r.buttons <= 1) drawn.push(`${f.where}: "${r.title}" ${r.chars}c but ${r.drawn} drawing${r.drawn===1?"":"s"}`);
   }
   lines.push(`sections by face: ${shape.filter(f=>f.rows.length).map(f=>`${f.where} ${f.rows.length}`).join(" · ")}`);
   /* ---- AND THE ONE FACE WITH A MEASURED CEILING, from v3.4.0 ----
@@ -340,8 +347,9 @@ export async function run({ p, errors }){
       + `carries the coin, the fame, the favour and the unrest on every tab — what a tab owes is the `
       + `answer to its own question, and the arena led with a bribery menu until v3.3.0`);
   lines.push(thin.length
-    ? `thin sections (under 120 characters, one button or none) — printed, not asserted: ${thin.join(" | ")}`
-    : `no section on any face is under 120 characters`);
+    ? `thin sections (under 120 characters, one button or none, nothing drawn) — printed, not asserted: ${thin.join(" | ")}`
+    : `no section on any face is under 120 characters without a drawing in it`);
+  if(drawn.length) lines.push(`short on words because the content is a picture, not because it is empty: ${drawn.join(" | ")}`);
   for(const n of nested)
     errors.push(`a section inside a section: ${n}. Two levels of disclosure puts a thing two clicks down `
       + `on a tab a player already scrolls — the six things a doctore is worth sat there until v3.1.0`);
