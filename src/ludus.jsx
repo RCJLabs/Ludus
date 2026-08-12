@@ -15895,6 +15895,68 @@ function weekReckoning(d){
     d.over = { kind:"closed", name:d.name, freed:houseRecord(d).freed, years:yearOf(d) };
 }
 
+/* ────────────────────────────────────────────────────────────────────────────
+   IS THERE ANYTHING NEW IN THIS SECTION? — AND "ACTIONABLE" WAS THE WRONG QUESTION.
+
+   Every collapsible on every tab shipped CLOSED, and a player re-opens the same three every week to
+   find out what is in them. Two of the five UI options wanted the same missing fact: option 2 was
+   "open by default what is actionable this week", option 4 was "fold the ones with nothing in them into
+   one "not yet" block". Both are bets on the same unknown number, so the number was measured first over
+   8 houses of 300 weeks — 660 weeks — of the reference player:
+
+     party      96.8%     cells      68.6%     watch      51.1%
+     temple     93.9%     blood      67.0%     collegium  48.9%
+     aedile     91.5%     school     61.8%     block      47.0%
+                          household  58.5%     square     26.8%
+
+   **BOTH OPTIONS ARE REFUTED BY THAT TABLE.** Ten of the eleven are live on 35% of weeks or more and
+   three are live on over 90%, so "open what is actionable" opens almost everything and collapses the
+   tab into the one long scroll the option was meant to prevent. And NOTHING is live on under 15% of
+   weeks, so option 4 has nothing to fold away.
+
+   THE FAULT IS IN THE PREDICATE, AND IT IS #101 FOR THE THIRD TIME. "Can this be acted on" is nearly
+   always yes: the altar is off cooldown, a party is affordable, an aedile is seated. A signal lit 90%
+   of weeks is not a signal. The predicate that works is the one v3.2.0 already found for the week's
+   agenda — NOVELTY. A section opens itself for the first few weeks after its opportunity appears and
+   then stops asking, exactly as an agenda item stops being news.
+
+   So `SECT_LIVE` stays as the opportunity test, `secAge` counts how long it has been true, and what
+   opens a section is `sectFresh` — live AND young. `live === false` still marks a section asleep in its
+   own summary, because a FALSE predicate is honest and does happen: `square` is false on 73% of weeks. */
+const SECT_LIVE = {
+  block:     d => !rosterFull(d) && (d.market||[]).some(m=>m.price <= d.gold),
+  cells:     d => d.unrest >= 30 || tourneyReady(d) || walkReady(d),
+  square:    d => !d.doctore && (d.doctoreMarket||[]).length > 0,
+  household: d => HH_KEYS.some(k=>!hasFolk(d,k) && (k==="wife" || d.gold >= rnd(hhWage(d,k)*16))),
+  temple:    d => pietyOf(d) <= 20 || (offeringReady(d) && !blessOf(d) && d.gold >= 200),
+  school:    d => !d.doctrine && d.gold >= Math.min(...DOC_KEYS.map(k=>DOCTRINES[k].cost)),
+  collegium: d => !collOn(d) && d.gold >= COLL_FEE,
+  blood:     d => marryReady(d) || livingKids(d).length > 0,
+  aedile:    d => !!(d.election && !d.election.done) || !!aedileOn(d),
+  watch:     d => patronsOf(d).some(x=>x.want),
+  party:     d => Object.values(PARTY).some(x=>d.gold >= x.cost),
+};
+const SECT_KEYS = Object.keys(SECT_LIVE);
+const sectLive = (d, key) => { const f = SECT_LIVE[key]; if(!f) return undefined;
+  try { return !!f(d); } catch(e){ return undefined; } };
+/* how many consecutive weeks this section's opportunity has been standing there, unanswered */
+const secAge = (d, key) => { const m = (d.flags && d.flags.secSeen) || null;
+  const w = m ? m[key] : null;
+  return w == null ? 0 : Math.max(0, d.week - w); };
+const SEC_FRESH = 3;                 /* the same three weeks the agenda calls news */
+/* what actually opens a section: an opportunity that is BOTH live and young. Availability alone is
+   lit on 47 to 97% of weeks, which is wallpaper — see the note above. */
+const sectFresh = (d, key) => { const v = sectLive(d, key);
+  if(v === undefined) return undefined;
+  return v && secAge(d, key) <= SEC_FRESH; };
+/* run once a week beside `agendaTick`: a standing opportunity keeps its first week, a taken one forgets */
+function sectTick(d){
+  if(!d.flags) d.flags = {};
+  const was = d.flags.secSeen || {}, now = {};
+  for(const k of SECT_KEYS) if(sectLive(d, k)) now[k] = was[k] != null ? was[k] : d.week;
+  d.flags.secSeen = now;
+}
+
 function endWeek(d){
   /* Last week's question is closed at the START of the week, not a hundred lines
      into it. It used to be cleared just above the block that decides the week's
@@ -16040,6 +16102,7 @@ function endWeek(d){
   /* LAST, because it reads the finished week: which of the things being asked for are new, and which
      have been sitting there since the spring. See the note over `agAge` for what that is worth. */
   agendaTick(d);
+  sectTick(d);
 }
 
 function grantRudis(d, gid){
@@ -17445,12 +17508,28 @@ function DoctoreBust({ name, size=56 }){
    the agenda is asking (`mark={{urg,n}}`), a plain dot when something merely arrived
    (`mark={true}`), nothing when there is nothing. A closed section that is hiding news is
    the same fault as a tab that is. */
-function Sect({ title, note, open, tone, mark, children }){
+/* ---- AND WHETHER IT OPENS ITSELF, from v3.5.0 ----
+   `live` comes out of `SECT_LIVE` — see the note over that table for the measured frequencies. TRUE
+   opens the section, because a thing live on 45 to 63% of weeks is a thing a player should not have to
+   open. FALSE marks it asleep in its own summary, because a thing live on 4 to 12% of weeks should say
+   so rather than making somebody look inside. UNDEFINED leaves the section exactly as it was.
+   `sid` is a stable key: once a player opens or shuts a section by hand, that is what it does for the
+   rest of the session, over the top of `live` — the game's guess loses to the player's decision. It is
+   held in memory rather than in the save, so it does not survive a reload, and that is deliberate: it
+   is a preference about one sitting, not a fact about the house. */
+const SECT_MEM = {};
+function Sect({ title, note, open, tone, mark, live, sid, children }){
   const ref = useRef(null);
-  useEffect(()=>{ if(ref.current) ref.current.open = !!open; }, []);
+  useEffect(()=>{ if(!ref.current) return;
+    const remembered = sid != null ? SECT_MEM[sid] : undefined;
+    ref.current.open = remembered != null ? remembered : (!!open || live === true);
+  }, []);
   const m = mark === true ? { urg:0, n:0 } : (mark || null);
+  const asleep = live === false;
   return (
-    <details className="sect" ref={ref} style={tone? {borderColor:tone} : undefined}>
+    <details className="sect" ref={ref}
+      onToggle={sid != null ? (e)=>{ SECT_MEM[sid] = e.currentTarget.open; } : undefined}
+      style={Object.assign({}, tone? {borderColor:tone} : null, asleep? {opacity:.72} : null)}>
       <summary>
         {/* the title wraps rather than being cut — "The house — Records & Annals" came out
             as "…" plus a note that stopped mid-word, and the note is the part that says
@@ -17465,6 +17544,7 @@ function Sect({ title, note, open, tone, mark, children }){
         </span>
         <span style={{display:"flex",alignItems:"center",gap:8,flex:"0 1 auto",minWidth:0,justifyContent:"flex-end"}}>
           {note!=null && note!=="" && <span className="dim" style={{fontSize:"var(--fs-sm)",letterSpacing:0,textTransform:"none",fontFamily:"'Cormorant Garamond',Georgia,serif",overflowWrap:"anywhere"}}>{note}</span>}
+          {asleep && <span className="dim" style={{fontSize:"var(--fs-micro)",letterSpacing:0,textTransform:"none",fontFamily:"'Cormorant Garamond',Georgia,serif",whiteSpace:"nowrap",opacity:.85}}>nothing yet</span>}
           <span className="chev" aria-hidden="true">⌄</span>
         </span>
       </summary>
@@ -19867,7 +19947,7 @@ export default function App(){
 
 
 
-          <Sect title="The training square" note={S.doctore ? `${S.doctore.name} · ${S.doctore.wage}d/wk` : "no doctore — you run it"}>
+          <Sect live={sectFresh(S,"square")} sid="square" title="The training square" note={S.doctore ? `${S.doctore.name} · ${S.doctore.wage}d/wk` : "no doctore — you run it"}>
             {S.doctore ? (<div>
               <div className="flex gap-3" style={{alignItems:"center",marginBottom:6}}>
                 <div style={{flex:"0 0 auto",width:60,height:60,borderRadius:"50%",overflow:"hidden",border:"1px solid #6d5426"}}>
@@ -20558,7 +20638,7 @@ export default function App(){
           {(()=>{ const here = [...new Set((S.market||[]).map(g=>g.slaver).filter(Boolean))];
             if(!here.length) return null;
             return (
-              <Sect title="Who is standing at the block" note={`${here.length} slaver${here.length===1?"":"s"}`}
+              <Sect live={sectFresh(S,"block")} sid="block" title="Who is standing at the block" note={`${here.length} slaver${here.length===1?"":"s"}`}
                 mark={sectMark(S,"block")}>
                 {here.map(k=>{ const S2 = slaverOf(k), x = dealings(S,k);
                   return (
@@ -20867,7 +20947,7 @@ export default function App(){
             const UP = c => { const u=c.up||{}, p=u.palus||0, r=u.rhetor||0, b=u.box||0; if(!(p+r+b)) return "still small";
               return p>=r&&p>=b ? "raised in the yard" : r>=b ? "sent for letters" : "learning the trade"; };
             return (
-            <Sect title="The blood of the house" note={w ? `${kids.filter(c=>!c.wed).length} at home` : marryReady(S) ? "a match awaits" : "no family yet"}>
+            <Sect live={sectFresh(S,"blood")} sid="blood" title="The blood of the house" note={w ? `${kids.filter(c=>!c.wed).length} at home` : marryReady(S) ? "a match awaits" : "no family yet"}>
               {w ? (<>
                 <div className="flex items-center justify-between gap-2" style={{marginBottom:6}}>
                   <span className="disp" style={{fontSize:"var(--fs-md)",color:"#d9c0e0"}}>{w.name}</span>
@@ -21092,7 +21172,7 @@ export default function App(){
             const cheapest = Math.min(...GOD_KEYS.map(k=>GODS[k].cost(S)));
             const canAct = offeringReady(S) && S.gold >= cheapest;
             return (
-            <Sect title="The Temple" note={bg ? `blessed · ${GODS[bg].name}` : pietyWord(pi)}
+            <Sect live={sectFresh(S,"temple")} sid="temple" title="The Temple" note={bg ? `blessed · ${GODS[bg].name}` : pietyWord(pi)}
               mark={sectMark(S,"temple")}
               open={!!S.vow || !!bg || pi<=20 || illLuck(S) || canAct}>
               <div className="flex items-center justify-between" style={{marginBottom:3,fontSize:"var(--fs-md)"}}>
@@ -21174,7 +21254,7 @@ export default function App(){
               </div>
             </Sect>
           ); })()}
-          <Sect title="Throw a party" note="favor & fame">
+          <Sect live={sectFresh(S,"party")} sid="party" title="Throw a party" note="favor & fame">
           {Object.entries(PARTY).map(([k,p])=>(
             <div key={k} className="panel" style={{padding:13}}>
               <div className="flex items-center justify-between">
@@ -21310,7 +21390,7 @@ export default function App(){
                 )}
               </div>
             ); })()}
-          <Sect title="The household" note={`${householdCount(S)} of ${HH_KEYS.length}`}>
+          <Sect live={sectFresh(S,"household")} sid="household" title="The household" note={`${householdCount(S)} of ${HH_KEYS.length}`}>
             <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:7}}>
               A ludus was a household before it was a business. None of these people will ever be on a card and the place does not run without them.
             </div>
@@ -21363,7 +21443,7 @@ export default function App(){
 
           {(()=>{ const D = doctrineOf(S);
             return (
-              <Sect title="The doctrine of the house" note={D? D.name : "none set"}>
+              <Sect live={sectFresh(S,"school")} sid="school" title="The doctrine of the house" note={D? D.name : "none set"}>
                 {D ? (<>
                   <div className="disp" style={{fontSize:"var(--fs-xl)",color:"#e8d092"}}>{D.name}</div>
                   <div style={{fontSize:"var(--fs-lg)",fontStyle:"italic",marginTop:3}}>{D.creed}</div>
@@ -21429,7 +21509,7 @@ export default function App(){
           )}
 
           {aedileOn(S) && (
-            <Sect title="The aedile" note={`${S.aedile.until - S.week}w left`}>
+            <Sect live={sectFresh(S,"aedile")} sid="aedile" title="The aedile" note={`${S.aedile.until - S.week}w left`}>
               <div className="disp" style={{fontSize:"var(--fs-md)",color:"#e8d092"}}>{S.aedile.name}</div>
               <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:3}}>
                 {S.aedile.friendly
@@ -21532,7 +21612,7 @@ export default function App(){
               </div>
             ); })()}
 
-          <Sect title="The collegium" note={collOn(S)? `${collDues(S)}d/wk` : "burial society"}
+          <Sect live={sectFresh(S,"collegium")} sid="collegium" title="The collegium" note={collOn(S)? `${collDues(S)}d/wk` : "burial society"}
             mark={sectMark(S,"collegium")}>
             {!S.collegium ? (<>
               <div style={{fontSize:"var(--fs-lg)"}}>
@@ -21576,7 +21656,7 @@ export default function App(){
                They are one section now, because they are one decision — what this house spends on the
                men who are not on a card this week. The feast keeps the freshness mark; it is the one
                the week's agenda points at. */}
-          <Sect title="What you can do for the block" note={`${activeG(S).length} in the cells · ${unrestWord(S.unrest).toLowerCase()}`}
+          <Sect live={sectFresh(S,"cells")} sid="cells" title="What you can do for the block" note={`${activeG(S).length} in the cells · ${unrestWord(S.unrest).toLowerCase()}`}
             mark={sectMark(S,"feast")}>
             {(()=>{ const cost = feastCost(S), reach = feastReach(S);
               return (<div style={{paddingBottom:9,marginBottom:9,borderBottom:"1px dotted #33271a"}}>
@@ -24645,6 +24725,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     agenda, URG, agendaGods, agendaCan, agendaSquare,
     /* the week's work as the panel ranks it: newest first, and what is shown before you ask */
     agendaRanked, agendaTop, agendaTick, agAge, agKey, agWord, AG_FRESH,
+    /* which sections have something in them this week — see the note over SECT_LIVE */
+    SECT_LIVE, SECT_KEYS, sectLive, sectFresh, secAge, sectTick, SEC_FRESH,
     /* what the game says to a player who has never seen it before */
     LESSONS, lessonFor, lessonsRead, LESSON_QUIET, CHARTER, charterAt,
     /* the five openings BY NAME — a check that invents a scenario key gets `clean` back

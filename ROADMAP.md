@@ -1392,6 +1392,48 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v3.5.0 — Both remaining UI options are refuted, and what survives is novelty again
+
+Options 2 and 4 of the five, and the measurement they were both waiting on killed both of them as stated.
+Option 2 was "open by default what is actionable this week"; option 4 was "fold the sections with nothing
+in them into one *not yet* block". Both are bets on the same unknown number, so a predicate was written for
+each of eleven sections and the number was measured over 8 houses of 300 weeks — 660 weeks — of the
+reference player:
+
+| | | | | | |
+|---|---|---|---|---|---|
+| party | **96.8%** | cells | 68.6% | watch | 51.1% |
+| temple | **93.9%** | blood | 67.0% | collegium | 48.9% |
+| aedile | **91.5%** | school | 61.8% | block | 47.0% |
+| | | household | 58.5% | square | 26.8% |
+
+**Ten of the eleven are live on 35% of weeks or more and three on over 90%**, so opening what is actionable
+opens almost everything and collapses the tab into the one long scroll option 2 existed to prevent. And
+**nothing is live on under 15%**, so option 4 has nothing to fold away.
+
+**THE FAULT IS IN THE PREDICATE, AND IT IS #101 FOR THE THIRD TIME.** "Can this be acted on" is nearly
+always yes: the altar is off cooldown, a party is affordable, an aedile is seated. A signal lit on 90% of
+weeks is not a signal. The predicate that works is the one v3.2.0 already found for the week's agenda —
+NOVELTY. A section opens itself for the first three weeks after its opportunity appears and then stops
+asking, exactly as an agenda item stops being news.
+
+**RE-MEASURED WITH THE FRESHNESS LAYER:** a section opens itself on **9.2% of weeks** against 64.7% if
+availability alone decided it, and no section exceeds 35% (worst: `watch` at 30.8%, patrons who want
+something, which churns). The eleven predicates live in one exported `SECT_LIVE` table so the two options
+can never drift apart the way a hand-kept list of "important sections" would, and `secAge` is ticked beside
+`agendaTick` at the end of `endWeek`.
+
+**AND ONE THING FROM OPTION 2 SURVIVED UNTOUCHED BY ANY OF THAT.** `Sect` takes a `sid` now: once a player
+opens or shuts a section by hand, that is what it does for the rest of the session, over the top of
+whatever the game guessed. It is held in memory rather than in the save, so it does not survive a reload —
+deliberately, because it is a preference about one sitting and not a fact about the house. A `live={false}`
+section also says *nothing yet* on its own summary, which is honest and does happen: `square` is false on
+73% of weeks.
+
+`week` gains the section table: the clock, the bar that a section may not open itself on more than 40% of
+weeks, the bar that the mean must stay under 25%, and the reverse bar that the predicates must still SEE
+their opportunities (live under 25% on average would mean they had stopped working).
+
 ### v3.4.0 — Seven catalogues become one rack, and the filter says what it is hiding
 
 Option 3 of the five, reshaped by its own falsifier. The armory was a `Sect` per weapon FAMILY — seven of
@@ -6204,4 +6246,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v3.4.0*
+*Last updated: v3.5.0*

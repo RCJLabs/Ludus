@@ -59,7 +59,7 @@ reason the check exists usually has not.
 | `coast` | fast | a tour down the coast was single combats and nothing else, and a defeat away was invisible to the town that watched it |
 | `census` | fast | the ladder's top rungs asked 110,000 denarii in cash from a house that had to spend the same coin on stone, so nobody ever stood on them |
 | `bulk` | fast | four functions held every balance change in a 22,700-line file, and nothing ever said stop |
-| `week` | fast | the week's work, and where it says so. `agenda(d)` rendered two screens down (y=1565 measured) in a section that opened itself only on an urgency-3 week. Measured over 289 weeks of the reference player first: the list is NEVER empty, 54% of weeks carry seven items or more, its items span 4.11 tabs — and five labels were lit on 41 to 62% of every week a house lives, two of them added by this audit in the three releases before anybody counted. So an item carries its AGE now and only what is urgent or new is shown: the shown block fell from 5.6 items to 2.3, and the worst standing item from 62% of weeks to 16%. This holds the age arithmetic, the ranking, and both bars |
+| `week` | fast | the week's work, and where it says so. `agenda(d)` rendered two screens down (y=1565 measured) in a section that opened itself only on an urgency-3 week. Measured over 289 weeks of the reference player first: the list is NEVER empty, 54% of weeks carry seven items or more, its items span 4.11 tabs — and five labels were lit on 41 to 62% of every week a house lives, two of them added by this audit in the three releases before anybody counted. So an item carries its AGE now and only what is urgent or new is shown: the shown block fell from 5.6 items to 2.3, and the worst standing item from 62% of weeks to 16%. This holds the age arithmetic, the ranking, and both bars. From v3.5.0 it holds the same question for the tabs' SECTIONS: ten of eleven are live on 35% of weeks or more and three on over 90%, so "open what is actionable" opens almost everything — what opens a section is live AND young, which lands at 9.2% of weeks against 64.7% for availability alone |
 | `worst` | fast | the record book had a slot for the house's worst night that nothing ever wrote and nothing ever read; filling it found two more things nobody was writing |
 | `nights` | fast | a man's page had everything about his condition and nothing about any afternoon of his life |
 | `phases` | fast | the week was split into four phases so a check could run one alone, and no check ever called any of them — nor asserted the hard rule that no class may be clumsy in its own kit |
@@ -1719,3 +1719,22 @@ actually fields wears a "clumsy for this yard" tag rather than being dropped.
 
 The seven headings were information as well as navigation. Flattening a grouped list means the grouping has
 to survive somewhere on the row, or you have removed clicks by removing what the clicks were for.
+
+## "Can this be acted on" is not a signal — almost everything always can
+
+Two UI options wanted the same fact: which sections have something in them this week. Eleven predicates were
+written and measured over 660 weeks, and ten of the eleven came back live on 35% of weeks or more, three of
+them on over 90%. The altar is off cooldown, a party is affordable, an aedile is seated. Opening what is
+actionable opens almost everything; folding away what is not folds away nothing.
+
+Both options were refuted by their own measurement, and what survived is the test that worked one release
+earlier: NOVELTY. Live AND young opens a section on 9.2% of weeks against 64.7% for availability alone. This
+is the third time in this project that a signal turned out to be lit most of the time — the freshness marks
+(#101), the week's agenda (v3.2.0), and now the sections. Whenever you add a "there is something here"
+indicator, measure what share of weeks it is lit BEFORE you believe it is an indicator.
+
+## Refuting your own plan is the cheap outcome
+
+Options 2 and 4 cost one predicate table and one 660-week run to kill, and the table they were killed by is
+the same table that now drives what survived of them. The alternative was building two features on a guessed
+number, in the biggest render block in the file, and finding out from a player.

@@ -37,7 +37,7 @@
 import { hasHandle } from "../harness.mjs";
 
 export const name = "week";
-export const describe = "the week's work is ranked by what is new, and the standing items are not the list";
+export const describe = "the week's work and the tabs' sections both open on what is NEW, not on what is merely available";
 
 /* the bars sit a long way from the measured values, because this is a shape and not a threshold */
 const MAX_SHOWN   = 5.0;   // mean items in the shown block; measured 7+ on 54% of weeks BEFORE the change
@@ -133,6 +133,68 @@ export async function run({ p }){
       lines.push(`(and in the WHOLE list, which is a count and a tap: `
         + long.map(([k,n])=>`"${k}" ${(n/weeks*100).toFixed(0)}%`).join(" · ") + ")");
       if(!weeks) bad.push(`no week could be played at all — the reference player is not running`);
+    }
+
+    /* ---- 4. AND THE SAME QUESTION FOR THE SECTIONS, from v3.5.0 ----
+       Two of the five UI options wanted "open by default what is actionable" and "fold away what is not".
+       Measured over 660 weeks of the reference player, BOTH ARE REFUTED BY THE SAME TABLE: ten of the
+       eleven sections that carry a predicate are live on 35% of weeks or more, three of them on over 90%,
+       and NOTHING is live on under 15%. So opening what is actionable opens almost everything and there
+       is nothing to fold away.
+
+         party 96.8% · temple 93.9% · aedile 91.5% · cells 68.6% · blood 67.0% · school 61.8%
+         household 58.5% · watch 51.1% · collegium 48.9% · block 47.0% · square 26.8%
+
+       "Can this be acted on" is nearly always yes — the altar is off cooldown, a party is affordable, an
+       aedile is seated. That is #101 for the third time. What opens a section is `sectFresh`: live AND
+       young, the same novelty test the agenda uses. Re-measured, a section opens itself on 9.2% of weeks
+       against 64.7% if availability alone decided it, and no section exceeds 35%. */
+    {
+      const K = A.SECT_KEYS || [];
+      if(!K.length || typeof A.sectFresh !== "function")
+        bad.push(`\`SECT_KEYS\`/\`sectFresh\` are not on the handle — what opens a section cannot be driven`);
+      else {
+        /* the clock, hand-built */
+        const d0 = A.newGameState("Wc","clean","WEEK-SEC",null);
+        d0.week = 40; d0.flags = d0.flags || {}; d0.flags.secSeen = { temple: 34 };
+        const age = A.secAge(d0, "temple"), none = A.secAge(d0, "block");
+        lines.push(`a section's clock: first live in week 34, now 40 → ${age} weeks; never live → ${none}`);
+        if(age !== 6) bad.push(`a section first live in week 34 reads ${age} weeks old in week 40`);
+        if(none !== 0) bad.push(`a section never live reads ${none} weeks old and should read 0`);
+
+        const HOUSES = 5, WEEKS = 160;
+        let weeks = 0;
+        const live = {}, fresh = {};
+        for(const k of K){ live[k] = 0; fresh[k] = 0; }
+        for(let h=0; h<HOUSES; h++){
+          const d = A.newGameState("Wq"+h, "clean", `WEEK-SEC-${h}`, null);
+          for(let w=0; w<WEEKS; w++){
+            if(d.over) break;
+            weeks++;
+            for(const k of K){ if(A.sectLive(d,k)) live[k]++; if(A.sectFresh(d,k)) fresh[k]++; }
+            R.lanista(d); d.pendingEvent = null;
+            try { A.endWeek(d); } catch(e){ break; }
+          }
+        }
+        const pcL = K.map(k=>live[k]/weeks*100), pcF = K.map(k=>fresh[k]/weeks*100);
+        const meanL = pcL.reduce((a,b)=>a+b,0)/K.length, meanF = pcF.reduce((a,b)=>a+b,0)/K.length;
+        const worst = K.map((k,i)=>[k, pcF[i]]).sort((a,b)=>b[1]-a[1])[0];
+        lines.push(`${weeks} weeks: a section is LIVE on ${meanL.toFixed(1)}% of weeks on average and `
+          + `OPENS ITSELF on ${meanF.toFixed(1)}% · the most eager is "${worst[0]}" at ${worst[1].toFixed(1)}%`);
+        if(meanF > 25)
+          bad.push(`a section opens itself on ${meanF.toFixed(1)}% of weeks on average [measured 9.2, bar 25] `
+            + `against ${meanL.toFixed(1)}% if mere availability decided it. If the two numbers have `
+            + `converged then \`sectFresh\` has stopped being a novelty test and every tab is opening `
+            + `itself into one long scroll, which is what option 2 was refuted for proposing`);
+        if(worst[1] > 40)
+          bad.push(`"${worst[0]}" opens itself on ${worst[1].toFixed(1)}% of weeks [measured 30.8 at worst, `
+            + `bar 40] — a section that opens itself most weeks is a section a player stops reading, `
+            + `which is the #101 fault this whole mechanism exists to avoid`);
+        if(meanL < 25)
+          bad.push(`sections are live on only ${meanL.toFixed(1)}% of weeks on average [measured 64.7] — `
+            + `the predicates have stopped seeing the opportunities they are meant to describe, and `
+            + `nothing would ever open itself`);
+      }
     }
 
     return { bad, lines };
