@@ -59,6 +59,7 @@ reason the check exists usually has not.
 | `coast` | fast | a tour down the coast was single combats and nothing else, and a defeat away was invisible to the town that watched it |
 | `census` | fast | the ladder's top rungs asked 110,000 denarii in cash from a house that had to spend the same coin on stone, so nobody ever stood on them |
 | `bulk` | fast | four functions held every balance change in a 22,700-line file, and nothing ever said stop |
+| `week` | fast | the week's work, and where it says so. `agenda(d)` rendered two screens down (y=1565 measured) in a section that opened itself only on an urgency-3 week. Measured over 289 weeks of the reference player first: the list is NEVER empty, 54% of weeks carry seven items or more, its items span 4.11 tabs — and five labels were lit on 41 to 62% of every week a house lives, two of them added by this audit in the three releases before anybody counted. So an item carries its AGE now and only what is urgent or new is shown: the shown block fell from 5.6 items to 2.3, and the worst standing item from 62% of weeks to 16%. This holds the age arithmetic, the ranking, and both bars |
 | `worst` | fast | the record book had a slot for the house's worst night that nothing ever wrote and nothing ever read; filling it found two more things nobody was writing |
 | `nights` | fast | a man's page had everything about his condition and nothing about any afternoon of his life |
 | `phases` | fast | the week was split into four phases so a check could run one alone, and no check ever called any of them — nor asserted the hard rule that no class may be clumsy in its own kit |
@@ -1664,3 +1665,24 @@ NESTED inside another `details`, and `innerText` returns "" for anything whose a
 
 Open parents before children — sort by nesting depth — or read `textContent`, which does not care about
 layout. And the phantom was worth chasing: the thing that made it look empty was the real fault.
+
+## Measure the falsifier before you move the furniture
+
+The plan was "promote the week's to-do list to the top of the tab, because it sits 1,565 pixels down". The
+falsifier was "the list is empty or wallpaper most weeks, in which case promoting it makes the tab worse".
+Measured over 289 weeks of the reference player, both halves came back and they pointed different ways: the
+list is NEVER empty — so promote it — and 54% of weeks carry seven items or more, so a flat promoted list
+is the wrong shape.
+
+The measurement did not just approve the change, it changed the design: what shipped was a ranked block of
+what is urgent or new, with the rest behind a count. Neither half of that was in the original plan.
+
+## An item lit most weeks is a line nobody reads
+
+#101 priced this once for the freshness marks. It came back for the week's agenda: five labels were on the
+list 41 to 62% of every week a house lives, and TWO OF THE FIVE were added by this audit in the three
+releases before anybody counted them — the doctrine nudge in v2.93.0 and the household nudge in v2.98.0.
+
+Adding an advisory line is cheap and feels like an improvement. The cost lands on every other line in the
+list, and it does not show up until someone counts how often each one is lit. If you add a nudge, add the
+count with it — `week`'s bar is that no single label may be in the shown block on more than 34% of weeks.

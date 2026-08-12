@@ -87,7 +87,7 @@ npm run test:all      every check, fast and slow — about eleven minutes
 npm run coverage      not what passes, but what no check ever touches
 ```
 
-**57 checks.** Most read into the game through a test handle and answer in seconds; a
+**58 checks.** Most read into the game through a test handle and answer in seconds; a
 handful drive a real browser through the real screens. Every one of them exists because
 of a bug that shipped, and the comment at the top of each says which — that comment
 is the durable part, not the numbers inside it. See `test/README.md` for the table.
@@ -1391,6 +1391,62 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ---
 
 ## Changelog (shipped)
+
+### v3.2.0 — The week's work comes first, and five lines of it were wallpaper
+
+First of the five UI options. `agenda(d)` has known what wants an answer and which tab the answer is on
+since v2.57.0, and it rendered inside a `Sect` called `This week` which the v3.1.0 tab anatomy measured at
+**y=1565** on a founded house at a phone width — two screens down, after the gatekeeper's panel, the
+rivalry line, the banners and The Yard. It opened itself only when something was urgency 3, so an ordinary
+week with five things on it was shut and read "5 things".
+
+**THE FALSIFIER WAS MEASURED FIRST.** 289 weeks of the reference player, `agenda(d)` read before he acted:
+
+| | |
+|---|---|
+| weeks with nothing on the list | **0 of 289** — so a promoted block is never empty |
+| weeks with seven items or more | **156 (54.0%)** — so a flat list of seven is the wrong shape |
+| weeks with five or more | 246 (85.1%) |
+| distinct tabs a week's items point at | **4.11 mean** — so a jump to the tab is worth having |
+| weeks the section opened itself | 218 (75.4%), and it stayed shut on 71 weeks that had work on them |
+
+So promotion was right and a flat list was wrong, which is the shape the measurement bought.
+
+**AND THE LIST WAS WALLPAPER — #101's FAULT AGAIN, WITH TWO OF MINE IN IT.** Five labels were lit on 41 to
+62% of every week a house lives:
+
+| label | weeks | share | |
+|---|---|---|---|
+| There are men on the block | 180 of 289 | 62% | |
+| Nobody in this yard can teach | 177 | 61% | |
+| This house teaches no particular thing | 151 | 52% | **added in v2.93.0** |
+| Nobody feeds this house, or nurses it, or keeps it | 118 | 41% | **added in v2.98.0** |
+| N men have not been sworn in | 118 | 41% | |
+
+#101 was "the marks shipped last week are lit most weeks, which makes them decoration". Two of these five
+were added by this audit in the three releases before anybody counted them. A list where the same five
+lines sit every week teaches a player to stop reading it, and then the one line that matters is invisible
+among them.
+
+**WHAT SHIPPED.** An item carries its AGE — the consecutive weeks its label has been raised without being
+dealt with, tracked in `d.flags.agSeen` and ticked at the end of `endWeek` with the label's numbers
+normalised out. The panel is the FIRST thing on the ludus tab, it always shows what is urgent or new
+(three weeks or less), each row is a button that switches to the item's tab, and the standing furniture is
+a count and a tap — *"And 6 things that have been waiting"*. The doctore's word and the year-ahead button
+came with it; the old section is gone rather than duplicated.
+
+**RE-MEASURED ON THE SAME CAMPAIGN:**
+
+| | before | after |
+|---|---|---|
+| the whole list, mean items | 5.6 | 5.6 (unchanged — it is all still there) |
+| **what a player is shown without asking** | 5.6 | **2.3** |
+| seven or more shown | 54% of weeks | **1.2%** |
+| the worst standing item, in the shown block | 62% of weeks | **16%** |
+| the same item, in the whole list behind the tap | 62% | 69% — not hidden |
+
+New check `week` holds the age arithmetic, the ranking, and the shape: the shown block may average at most
+5 items and no single label may be in it on more than 34% of weeks. Fifty-eight checks.
 
 ### v3.1.0 — "He loses about NaN in a hundred", and the first count of every section on every tab
 
@@ -6077,4 +6133,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v3.1.0*
+*Last updated: v3.2.0*

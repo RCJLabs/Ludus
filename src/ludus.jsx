@@ -2780,6 +2780,56 @@ function tabMarks(d){
 /* ---- THE AGENDA ----
    Thirty versions of bolting panels onto columns. This is the one list that says
    what actually wants an answer this week, and where the answer is. */
+/* ---- HOW OLD IS A THING THE WEEK IS ASKING FOR ----
+   MEASURED over 289 weeks of the reference player, reading `agenda(d)` before he acted on it: the list
+   is NEVER empty — 0 weeks with nothing on it — and **54% of weeks carry seven items or more**, 85% five
+   or more. Its items span 4.11 distinct tabs on a mean week. And five labels are lit on 41 to 62% of
+   ALL weeks:
+
+     There are men on the block            180 of 289 weeks   62%
+     Nobody in this yard can teach         177                61%
+     This house teaches no particular thing 151               52%   ← added in v2.93.0
+     Nobody feeds this house, or nurses it  118               41%   ← added in v2.98.0
+     N men have not been sworn in          118                41%
+
+   That is #101's fault again — "lit most weeks, which makes it decoration" — and two of the five are
+   mine, added in the last three releases. A list where the same five lines sit every week teaches a
+   player to stop reading it, and then the one line that matters is invisible in the middle of them.
+
+   So an item now carries its AGE: the number of consecutive weeks its label has been raised without
+   being dealt with. The list sorts by urgency first and by novelty second, so a thing that turned up
+   this morning is above a thing that has been there since the spring, and only what is urgent or new
+   is shown without asking. The standing items are not hidden — they are still there, under a count,
+   and they are still the reason a player eventually goes and buys a doctore.
+   The label is normalised because half of them carry a number that changes week to week. */
+const agKey = s => String(s||"").replace(/\d+/g, "#").slice(0, 48);
+const agAge = (d, label) => { const m = (d.flags && d.flags.agSeen) || null;
+  const w = m ? m[agKey(label)] : null;
+  return w == null ? 0 : Math.max(0, d.week - w); };
+/* run once a week: anything still being asked for keeps its first-seen week, anything answered forgets */
+function agendaTick(d){
+  if(!d.flags) d.flags = {};
+  const was = d.flags.agSeen || {};
+  const now = {};
+  let items = [];
+  try { items = agenda(d) || []; } catch(e){ items = []; }
+  for(const a of items){ const k = agKey(a.label);
+    now[k] = was[k] != null ? was[k] : d.week; }
+  d.flags.agSeen = now;
+}
+/* the week's work, ranked the way the panel shows it */
+function agendaRanked(d){
+  let items = [];
+  try { items = agenda(d) || []; } catch(e){ items = []; }
+  return items.map(a=>Object.assign({}, a, { age: agAge(d, a.label) }))
+    .sort((x,y)=> (y.urgency - x.urgency) || (x.age - y.age));
+}
+/* what a player is shown before he asks for the rest: everything urgent, and everything new */
+const AG_FRESH = 3;                 /* three weeks is new; past that it is furniture */
+const agendaTop = list => list.filter(a=>a.urgency >= 3 || a.age <= AG_FRESH);
+const agWord = age => age <= 0 ? "new this week" : age <= AG_FRESH ? `${age} week${age===1?"":"s"} now`
+  : age < 12 ? `${age} weeks now` : "standing";
+
 function agenda(d){
   const A = [];
   const add = (urgency, tab, label, sub) => A.push({ urgency, tab, label:herOwn(d,label), sub:herOwn(d,sub) });
@@ -15987,6 +16037,9 @@ function endWeek(d){
   makePitCard(d);          /* who is down there this week */
   weekReckoning(d);
   weekDigest(d, digestMark, digestBefore);
+  /* LAST, because it reads the finished week: which of the things being asked for are new, and which
+     have been sitting there since the spring. See the note over `agAge` for what that is worth. */
+  agendaTick(d);
 }
 
 function grantRudis(d, gid){
@@ -19300,6 +19353,103 @@ export default function App(){
 
 
         {tab==="ludus" && (<div className="flex flex-col gap-3">
+          {/* ---- WHAT THE WEEK IS ASKING FOR, FIRST, from v3.2.0 ----
+               `agenda(d)` has known what wants an answer and which tab the answer is on since v2.57.0,
+               and it rendered inside `This week` — a section MEASURED at y=1565 on a founded house at a
+               phone width. Two screens down, after the gatekeeper's panel, the rivalry line, the banners
+               and The Yard. And it opened itself only when something was urgency 3, so an ordinary week
+               with five things on it was shut and read "5 things".
+
+               MEASURED over 289 weeks of the reference player before it moved: the list is never empty,
+               54% of weeks carry seven items or more, and its items point at 4.11 distinct tabs on a mean
+               week. So there is always something to show, a jump is worth having — and a flat list of
+               seven is the wrong shape, because five labels are lit on 41 to 62% of every week a house
+               lives. What is urgent or NEW is here; the standing furniture is a count and a tap. */}
+          {(()=>{
+            const EV = agendaRanked(S);
+            if(!EV.length) return null;
+            /* the men's business stays one row pointing at the men's tab — that split is deliberate and
+               predates this panel, and 460 of 2,194 measured items were the familia's */
+            const MEN = EV.filter(a=>a.tab==="men");
+            const RANK = EV.filter(a=>a.tab!=="men");
+            const TOP = agendaTop(RANK), rest = RANK.length - TOP.length;
+            const press = EV.filter(a=>a.urgency>=3).length;
+            const TN = TAB_NAMES;
+            const shown = allTodos ? RANK : TOP;
+            return (
+              <div className="panel" style={{padding:12,
+                borderColor: press ? "#7c2a22" : TOP.length ? "#6d5426" : "#3e2f1f",
+                background: press ? "#1d1310" : "#1a1510"}}>
+                <div className="flex items-center justify-between" style={{marginBottom:6}}>
+                  <span className={press?"tag tag-blood":"tag tag-gold"}>This week</span>
+                  <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>
+                    {seasonOf(S).name.toLowerCase()} · year {yearOf(S)}, week {yearWeek(S)}
+                  </span>
+                </div>
+                {shown.length===0 ? (
+                  <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
+                    Nothing new is asking anything of you. {rest} thing{rest===1?"":"s"} still standing —
+                    train them, or find them something to do.
+                  </div>
+                ) : shown.map((a,i)=>(
+                  <button key={i} className="optrow" style={{width:"100%",marginBottom:5,padding:"8px 10px",textAlign:"left"}}
+                    onClick={()=>setTab(a.tab)}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="disp" style={{fontSize:"var(--fs-base)",minWidth:0,
+                        color: a.urgency>=3 ? "#e8b0a0" : a.age<=0 ? "#e8d092" : "#e8d9b8"}}>{a.label}</span>
+                      <span className="rowval dim" style={{fontSize:"var(--fs-sm)",flexShrink:0,whiteSpace:"nowrap"}}>
+                        {TN[a.tab] || a.tab} ›
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2" style={{marginTop:1}}>
+                      <span className="dim" style={{fontSize:"var(--fs-sm)",minWidth:0}}>{a.sub}</span>
+                      <span style={{fontSize:"var(--fs-micro)",flexShrink:0,whiteSpace:"nowrap",
+                        color: a.urgency>=3 ? "#d96f5d" : a.age<=0 ? "#9aa86a" : "#8a7a5e"}}>
+                        {a.urgency>=3 ? "now" : agWord(a.age)}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+                {MEN.length>0 && (
+                  <button className="optrow" style={{width:"100%",marginBottom:5,padding:"8px 10px",textAlign:"left"}}
+                    onClick={()=>setTab("men")}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d9b8",minWidth:0}}>
+                        {MEN.length} thing{MEN.length===1?"":"s"} in the familia
+                      </span>
+                      <span className="rowval dim" style={{fontSize:"var(--fs-sm)",flexShrink:0}}>Familia ›</span>
+                    </div>
+                    <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:1}}>
+                      {MEN[0].label}{MEN.length>1?` · and ${MEN.length-1} more`:""}
+                    </div>
+                  </button>
+                )}
+                {(rest>0 || allTodos) && (
+                  <button className="btn btn-ghost" style={{width:"100%",marginTop:2}}
+                    onClick={()=>setAllTodos(!allTodos)}>
+                    {allTodos ? "Just what is new" : `And ${rest} thing${rest===1?"":"s"} that have been waiting`}
+                  </button>
+                )}
+                {/* the doctore's word on the week, which lived at the bottom of the old section */}
+                {(()=>{ const C = counsel(S); if(!C) return null;
+                  return (
+                    <div style={{borderTop:"1px dotted #4e3c26",marginTop:8,paddingTop:8}}>
+                      <div className="flex gap-2" style={{alignItems:"flex-start"}}>
+                        {S.doctore && <div style={{flex:"0 0 auto",width:46,height:46,borderRadius:"50%",overflow:"hidden",border:"1px solid #5a6a4a"}}>
+                          <DoctoreBust name={S.doctore.name} size={46}/>
+                        </div>}
+                        <div style={{minWidth:0}}>
+                          <span className="tag" style={{borderColor:"#5a6a4a",color:"#9aa86a"}}>The doctore</span>
+                          <div style={{fontSize:"var(--fs-md)",fontStyle:"italic",color:"#cfc0a0",marginTop:3}}>{C.say(S)}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ); })()}
+                <button className="btn btn-ghost" style={{width:"100%",marginTop:6,fontSize:"var(--fs-sm)"}} onClick={()=>setCal(true)}>
+                  The year ahead ›
+                </button>
+              </div>
+            ); })()}
           {/* The house's own name and standing lead the page — who you are first,
               then what you are holding, then how that reads against your years. */}
           {(()=>{ const upkeepEst = weeklyBill(S);
@@ -19525,82 +19675,10 @@ export default function App(){
                     </div>
                   </div>
                 ); })()}
-              {(()=>{
-                /* shut, the header still has to say what is waiting — a count, and
-                   whether any of it will not keep. */
-                const press = ALL.filter(a=>a.urgency===3).length + MEN.filter(a=>a.urgency===3).length;
-                const total = ALL.length + (MEN.length?1:0);
-                const note = total===0 ? "nothing pressing"
-                  : `${total} thing${total===1?"":"s"}${press? ` · ${press} now` : ""}`;
-                return (
-              <Sect title="This week" note={note} open={press>0}
-                tone={press?"#7c2a22":total?"#6d5426":undefined}>
-                <div className="dim" style={{fontSize:"var(--fs-sm)",textAlign:"right",marginBottom:6}}>
-                  {seasonOf(S).name.toLowerCase()} · year {yearOf(S)}, week {yearWeek(S)}
-                </div>
-                {AG.length===0 && MEN.length===0
-                  ? <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
-                      Nothing is asking anything of you. Train them, or find them something to do.
-                    </div>
-                  : AG.map((a,i)=>(
-                      <button key={i} className="optrow" style={{padding:"10px 9px",marginBottom:5,borderColor:URG[a.urgency].c}}
-                        onClick={()=>setTab(a.tab)}>
-                        <div className="flex items-center justify-between gap-2">
-                          <span style={{fontSize:"var(--fs-md)",color:a.urgency===3?"#e8d9b8":"#cfc0a0",textAlign:"left"}}>{a.label}</span>
-                          <span className="rowval" style={{fontSize:"var(--fs-sm)",color:URG[a.urgency].c,whiteSpace:"nowrap"}}>{URG[a.urgency].w}</span>
-                        </div>
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="dim" style={{fontSize:"var(--fs-base)",textAlign:"left"}}>{a.sub}</span>
-                          <span className="rowval" style={{fontSize:"var(--fs-micro)",color:"#8e7e5c",whiteSpace:"nowrap"}}>{TABN[a.tab]||""} ›</span>
-                        </div>
-                      </button>
-                    ))}
-                {MEN.length>0 && (
-                  <button className="optrow" style={{padding:"10px 9px",marginBottom:5,borderColor:URG[Math.max(...MEN.map(a=>a.urgency))].c}}
-                    onClick={()=>setTab("men")}>
-                    <div className="flex items-center justify-between gap-2">
-                      <span style={{fontSize:"var(--fs-md)",color:"#cfc0a0",textAlign:"left"}}>
-                        {MEN.length} thing{MEN.length===1?"":"s"} in the familia
-                      </span>
-                      <span className="rowval" style={{fontSize:"var(--fs-sm)",color:URG[Math.max(...MEN.map(a=>a.urgency))].c,whiteSpace:"nowrap"}}>
-                        {URG[Math.max(...MEN.map(a=>a.urgency))].w}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="dim" style={{fontSize:"var(--fs-base)",textAlign:"left"}}>{MEN[0].label}{MEN.length>1?` · and ${MEN.length-1} more`:""}</span>
-                      <span className="rowval" style={{fontSize:"var(--fs-micro)",color:"#8e7e5c",whiteSpace:"nowrap"}}>Familia ›</span>
-                    </div>
-                  </button>
-                )}
-                {(()=>{ const C = counsel(S); if(!C) return null;
-                  return (
-                    <div style={{borderTop:"1px dotted #4e3c26",marginTop:8,paddingTop:8}}>
-                      <div className="flex gap-2" style={{alignItems:"flex-start"}}>
-                        {S.doctore && <div style={{flex:"0 0 auto",width:46,height:46,borderRadius:"50%",overflow:"hidden",border:"1px solid #5a6a4a"}}>
-                          <DoctoreBust name={S.doctore.name} size={46}/>
-                        </div>}
-                        <div style={{minWidth:0}}>
-                          <span className="tag" style={{borderColor:"#5a6a4a",color:"#9aa86a"}}>The doctore</span>
-                          <div style={{fontSize:"var(--fs-md)",fontStyle:"italic",color:"#cfc0a0",marginTop:3}}>{C.say(S)}</div>
-                        </div>
-                      </div>
-                    </div>
-                  ); })()}
-                {rest > 0 && (
-                  <button className="btn btn-ghost" style={{width:"100%",marginTop:3,padding:"10px 9px",fontSize:"var(--fs-micro)"}} onClick={()=>setAllTodos(true)}>
-                    Show {rest} more
-                  </button>
-                )}
-                {allTodos && ALL.length > 7 && (
-                  <button className="btn btn-ghost" style={{width:"100%",marginTop:3,padding:"10px 9px",fontSize:"var(--fs-micro)"}} onClick={()=>setAllTodos(false)}>
-                    Show fewer
-                  </button>
-                )}
-                <button className="btn btn-ghost" style={{width:"100%",marginTop:6,fontSize:"var(--fs-sm)"}} onClick={()=>setCal(true)}>
-                  The year ahead ›
-                </button>
-              </Sect>
-                ); })()}
+              {/* ---- THE WEEK'S WORK MOVED TO THE TOP OF THE TAB IN v3.2.0 ----
+                   A second copy of `agenda(d)` lived here, in a `Sect` measured at y=1565 — two phone
+                   screens down, and shut unless something was urgency 3. It is the panel above now, with
+                   the doctore's word and the year-ahead button that used to close it. */}
             </>); })()}
           {S.rome && (
             <div className="panel" style={{padding:14,borderColor:"#c99a4b",background:"linear-gradient(165deg,#2f2415,#1d1610)"}}>
@@ -24449,6 +24527,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     newGameState, genGladiator, genOpponent, pickRivalOpp, makeRivals, clone,
     /* the most-read screen in the game, which only a browser could reach until now */
     agenda, URG, agendaGods, agendaCan, agendaSquare,
+    /* the week's work as the panel ranks it: newest first, and what is shown before you ask */
+    agendaRanked, agendaTop, agendaTick, agAge, agKey, agWord, AG_FRESH,
     /* what the game says to a player who has never seen it before */
     LESSONS, lessonFor, lessonsRead, LESSON_QUIET, CHARTER, charterAt,
     /* the five openings BY NAME — a check that invents a scenario key gets `clean` back
