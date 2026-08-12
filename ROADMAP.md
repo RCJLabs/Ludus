@@ -1392,6 +1392,62 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v3.1.0 — "He loses about NaN in a hundred", and the first count of every section on every tab
+
+**A PLAYER SENT A SCREENSHOT OF A PAIR CHOOSER WITH `NaN` UNDER EVERY MAN ON IT.** The line reads
+*"✦ No appeal is asked and none is given. He loses about NaN in a hundred, and a loss here is his life."*
+The chooser prices that warning with `winChance(g, foe, …)`, and `foe` for a pair or a melee is
+`fieldAverage(o.opps)` — the average man in the field. `fieldAverage` returned the six stats, `cls:null`,
+`injury:null` and nothing else. `power` reads `morale` and `fatigue`; `clamp(undefined, 0, 100)` is NaN;
+NaN survives every multiplication after it and lands in the template. **Nothing threw and nothing was
+ever going to.**
+
+**IT COULD NOT HAPPEN UNTIL v2.98.0, WHICH IS THE PART WORTH KEEPING.** The warning is gated on
+`stakes === "sine"`, and a pair offer hardcoded `"standard"` until that release let a munus bought sine
+missione carry its pair. Making dead content reachable is a change to every path that reads it — the fix
+for one unreachable branch made a second one reachable, and the second one was broken.
+
+`fieldAverage` carries everything `power` reads now, and averages the soft numbers the same way it
+averages the stats. `cls` stays null on purpose: a field of four men has no one style, and `readMatch` is
+right to answer "no read" rather than invent one. The warning also stands on its own when there is no
+figure to put in it. Priced against all five foes the chooser can build, every one comes back finite.
+
+**AND NOTHING IN THE SUITE HAD EVER READ THE SCREEN.** `sweep` opens every tab, face, section and sheet
+and asks whether rendering threw — which a NaN never does. It scans the text of every face now for the
+four things a template says when a value went missing under it: `NaN`, `undefined`, `[object Object]`,
+`Infinity`. `odds` holds the headless half: `winChance` must price a real opponent, a melee field, a pair
+field, a field of one and the barest object to a finite number.
+
+**THE UI AUDIT: THE FIRST COUNT OF EVERY SECTION ON EVERY FACE.** Measured on a founded house at week 17,
+at a phone width:
+
+| face | sections | what the count found |
+|---|---|---|
+| ludus | 12 | one of them a section **inside** a section |
+| armory | 7 | every weapon family 24–37 lines long |
+| villa · The Cells | 4 | three holding one paragraph and one button each |
+| market | 4 | two saying "build the room first" in 61 and 63 characters |
+| villa · The House | 4 | the last of them 100 characters |
+
+Three fixes came out of it. **"What you are doing without"** — the six things a doctore is worth — was a
+`details.sect` nested inside the Training Square's `details.sect`, so it sat two clicks down on the tab a
+player opens every week; it is a plain block now, and the section it lives in only renders when there is
+no doctore, so it was never hiding anything. **The villa's Cells face** had three collapsed disclosures of
+two lines apiece, each holding one button, on a face with nothing else on it — they are one section, *What
+you can do for the block*, because they are one decision. **The market's two staff sections** both said
+"build the room first" to a house with neither room; when no post is open it is one line and no
+disclosure, and the sections come back the moment there is a room to work in.
+
+Nesting is asserted now. The thin sections are counted and printed and NOT asserted — three remain
+(`THE YARD` 118c, `THE BLOOD OF THE HOUSE` 100c, `THE AEDILE` 92c) and all three are states that fill in
+as the house grows, so "too short" is a judgement rather than a fault, and `probe` already paid for the
+lesson that a rule which flags false positives teaches people to add exemptions without thinking.
+
+**AND ONE FINDING OF MINE WAS WITHDRAWN ON THE WAY.** The first anatomy probe reported an EMPTY section on
+the ludus tab — 0 lines, 0 characters. It opened each `details` in isolation and read `innerText`, and
+`innerText` is empty for anything inside a CLOSED parent. Nothing was empty; the "empty section" was the
+nested one, and finding that out is what turned a phantom into the real fault.
+
 ### v3.0.0 — A fix shipped nine releases ago that nothing was ever wired to
 
 The last two items on the v2.93.0 audit list were both about the suite's own instruments, and they turned
@@ -6021,4 +6077,4 @@ nobody can act on, and anything the coverage sweep says no check has ever touche
 
 ---
 
-*Last updated: v3.0.0*
+*Last updated: v3.1.0*

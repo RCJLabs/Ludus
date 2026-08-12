@@ -10407,10 +10407,22 @@ function foeSeen(d, o){
   return false;
 }
 /* a field has no single style — read it as the man it averages out to */
+/* ---- THE AVERAGE MAN IN A FIELD, AND HE HAS TO BE A MAN power() CAN PRICE ----
+   This returned the six stats and nothing else, which was enough for `readMatch` and not enough for
+   `winChance`: `power` reads `morale` and `fatigue`, `clamp(undefined,0,100)` is NaN, and NaN carries
+   all the way to the screen. It surfaced the moment v2.98.0 let a PAIR carry sine missione stakes,
+   because the sine warning quotes a percentage against the field and a pair's field is one of these:
+   the chooser read "He loses about NaN in a hundred" under every man on the card.
+   `cls` stays null on purpose — a field of four men has no one style, and `readMatch` is right to
+   answer "no read" on the match-up rather than invent one. Everything `power` needs is here now. */
 function fieldAverage(list){
   const n = (list||[]).length; if(!n) return null;
-  const a = { cls:null, injury:null };
+  const a = { cls:null, injury:null, traits:[], kit:null, mods:null,
+    fatigue:0, footing:1, regardMult:1, wins:0, losses:0 };
   for(const k of STATS) a[k] = list.reduce((s,x)=>s + (x[k]==null?40:x[k]), 0) / n;
+  /* the soft numbers the engine reads, averaged the same way and defaulted the same way */
+  for(const [k, dflt] of [["morale",70], ["heart",50], ["pfame",0], ["regard",50]])
+    a[k] = list.reduce((s,x)=>s + (x[k]==null?dflt:x[k]), 0) / n;
   return a;
 }
 function scoutMan(d, hName, fid){
@@ -19862,21 +19874,22 @@ export default function App(){
               <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>
                 No one runs the square but you. A doctore drills harder than a lanista can, and a man you freed will drill hardest of all.
               </div>
-              {/* the whole of what you are going without, because none of it was on the screen */}
-              <details className="sect" style={{marginBottom:9,background:"#1a1510",borderColor:"#4a3a22"}}>
-                <summary style={{padding:"8px 10px"}}>
-                  <span style={{fontSize:"var(--fs-base)",color:"#d8ac5f"}}>What you are doing without</span>
-                  <span className="chev" aria-hidden="true">⌄</span>
-                </summary>
-                <div style={{padding:"2px 10px 9px"}}>
-                  {DOC_WORTH.map(([label, say], i)=>(
-                    <div key={i} style={{padding:"4px 0",borderTop: i? "1px dotted #33271a" : "none"}}>
-                      <span style={{fontSize:"var(--fs-base)",color:"#cfc0a0"}}>{label}</span>
-                      <span className="dim" style={{fontSize:"var(--fs-base)"}}> — {say(S)}</span>
-                    </div>
-                  ))}
-                </div>
-              </details>
+              {/* ---- THE WHOLE OF WHAT YOU ARE GOING WITHOUT ----
+                   This was a `details.sect` INSIDE the Training Square's `details.sect` — a section
+                   inside a section, so the six things a doctore is worth were two clicks down on a tab
+                   a player already has to scroll. Measured on a founded house at week 17 it was the only
+                   nested disclosure in the game. It is a plain block now: the section it lives in only
+                   renders when there is no doctore, so this list is the reason the section exists and
+                   there is nothing to hide it behind. */}
+              <div style={{marginBottom:9,background:"#1a1510",border:"1px solid #4a3a22",borderRadius:6,padding:"7px 10px"}}>
+                <div style={{fontSize:"var(--fs-base)",color:"#d8ac5f",marginBottom:3}}>What you are doing without</div>
+                {DOC_WORTH.map(([label, say], i)=>(
+                  <div key={i} style={{padding:"4px 0",borderTop: i? "1px dotted #33271a" : "none"}}>
+                    <span style={{fontSize:"var(--fs-base)",color:"#cfc0a0"}}>{label}</span>
+                    <span className="dim" style={{fontSize:"var(--fs-base)"}}> — {say(S)}</span>
+                  </div>
+                ))}
+              </div>
               {(S.doctoreMarket||[]).length===0 && <div className="dim" style={{fontSize:"var(--fs-md)"}}>No one worth the wage is looking for work. Ask again after the next market.</div>}
               {(S.doctoreMarket||[]).map(c=>(
                 <div key={c.id} style={{borderTop:"1px dotted #33271a",paddingTop:9,marginTop:9}}>
@@ -20357,7 +20370,24 @@ export default function App(){
         </div>)}
 
         {tab==="market" && (<div className="flex flex-col gap-3">
-          {STAFF_KEYS.map(k=>{ const s = S[k], ST = STAFF[k], lvl = bLevel(S, ST.room);
+          {/* ---- TWO SECTIONS THAT SAID THE SAME SENTENCE ----
+               A house with neither the infirmary nor the armoury built got two `details` on the market
+               tab — measured at 63 and 61 characters — and both said "build the room first". A player
+               opened two boxes to be told the same thing twice about a decision that is not on this tab
+               at all. When no post is open, it is one line and no disclosure; the moment there is a room
+               to work in or a man in it, the sections come back. */}
+          {STAFF_KEYS.every(k=>!S[k] && bLevel(S, STAFF[k].room) < 1) ? (
+            <div className="panel" style={{padding:12}}>
+              <div className="flex items-center justify-between" style={{marginBottom:3}}>
+                <span className="tag">The staff</span>
+                <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>no rooms for them yet</span>
+              </div>
+              <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
+                A medicus wants an infirmary and an armourer wants an armoury. Build either on the villa's
+                House page and whoever is looking for a place will be here.
+              </div>
+            </div>
+          ) : STAFF_KEYS.map(k=>{ const s = S[k], ST = STAFF[k], lvl = bLevel(S, ST.room);
             const mkt = (S.staffMarket||{})[k] || [];
             return (
               <Sect key={k} title={`The ${ST.name.toLowerCase()}`}
@@ -21383,44 +21413,63 @@ export default function App(){
           </>)}
 
           {vView==="familia" && (<>
-          {(()=>{ const cost = feastCost(S), reach = feastReach(S);
-            return (
-          <Sect title="A feast for the familia" note={`${cost}d`}
+          {/* ---- THREE THINGS YOU CAN DO FOR THE BLOCK, IN ONE PLACE ----
+               These were three separate `Sect`s, each holding one paragraph and one button, on a face
+               that had nothing else on it. Measured on a founded house: three collapsed disclosures of
+               two lines apiece, and a player had to open all three to find out what any of them cost.
+               They are one section now, because they are one decision — what this house spends on the
+               men who are not on a card this week. The feast keeps the freshness mark; it is the one
+               the week's agenda points at. */}
+          <Sect title="What you can do for the block" note={`${activeG(S).length} in the cells · ${unrestWord(S.unrest).toLowerCase()}`}
             mark={sectMark(S,"feast")}>
-            <div className="dim" style={{fontSize:"var(--fs-md)",margin:"4px 0 8px"}}>Meat, honeyed wine, and a night without the whip. Loyalty is cheaper than rebellion.</div>
-            {reach < 0.95 && (
-              <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",margin:"0 0 8px"}}>
-                {activeG(S).length} at the tables, and a house of this standing cannot set them the way it once did.
-                One night goes {Math.round(reach*100)}% as far as it did when there were four of them.
+            {(()=>{ const cost = feastCost(S), reach = feastReach(S);
+              return (<div style={{paddingBottom:9,marginBottom:9,borderBottom:"1px dotted #33271a"}}>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d9b8"}}>A feast for the familia</span>
+                  <span className="gold" style={{fontSize:"var(--fs-base)",whiteSpace:"nowrap"}}>{cost}d</span>
+                </div>
+                <div className="dim" style={{fontSize:"var(--fs-md)",margin:"3px 0 7px"}}>Meat, honeyed wine, and a night without the whip. Loyalty is cheaper than rebellion.</div>
+                {reach < 0.95 && (
+                  <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",margin:"0 0 7px"}}>
+                    {activeG(S).length} at the tables, and a house of this standing cannot set them the way it once did.
+                    One night goes {Math.round(reach*100)}% as far as it did when there were four of them.
+                  </div>
+                )}
+                <button className="btn" style={{width:"100%"}} disabled={S.gold<cost || S.week-S.lastFeast<3} onClick={feast}>
+                  {S.week-S.lastFeast<3? `The men feasted recently — ${3-(S.week-S.lastFeast)} week${3-(S.week-S.lastFeast)>1?"s":""}` : S.gold<cost? "Not enough coin" : "Set the tables"}
+                </button>
+              </div>); })()}
+
+            <div style={{paddingBottom:9,marginBottom:9,borderBottom:"1px dotted #33271a"}}>
+              <div className="flex items-center justify-between gap-2">
+                <span className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d9b8"}}>A tournament in the yard</span>
+                <span className="dim" style={{fontSize:"var(--fs-base)",whiteSpace:"nowrap"}}>settles the block</span>
               </div>
-            )}
-            <button className="btn" style={{width:"100%"}} disabled={S.gold<cost || S.week-S.lastFeast<3} onClick={feast}>
-              {S.week-S.lastFeast<3? `The men feasted recently — ${3-(S.week-S.lastFeast)} week${3-(S.week-S.lastFeast)>1?"s":""}` : S.gold<cost? "Not enough coin" : "Set the tables"}
-            </button>
-          </Sect>
-            ); })()}
-
-          <Sect title="A tournament in the yard" note="settles the block">
-            <div className="dim" style={{fontSize:"var(--fs-md)",margin:"4px 0 8px"}}>
-              Set the whole familia against itself for an afternoon — wooden swords, no editor, every man with something to prove. The winner walks tall for weeks; who meets him in the final may come out of it a brother or a rival.
+              <div className="dim" style={{fontSize:"var(--fs-md)",margin:"3px 0 7px"}}>
+                Set the whole familia against itself for an afternoon — wooden swords, no editor, every man with something to prove. The winner walks tall for weeks; who meets him in the final may come out of it a brother or a rival.
+              </div>
+              <button className="btn" style={{width:"100%"}} disabled={!tourneyReady(S)} onClick={doTourney}>
+                {activeG(S).filter(g=>canFight(g)).length<4 ? "Not enough fit men — you need four"
+                  : (S.week - (S.flags.tourneyWk!=null?S.flags.tourneyWk:-99)) < TOURNEY_COOL
+                  ? `The yard is still sore — ${TOURNEY_COOL-(S.week-S.flags.tourneyWk)}w`
+                  : "Hold the tournament"}
+              </button>
             </div>
-            <button className="btn" style={{width:"100%"}} disabled={!tourneyReady(S)} onClick={doTourney}>
-              {activeG(S).filter(g=>canFight(g)).length<4 ? "Not enough fit men — you need four"
-                : (S.week - (S.flags.tourneyWk!=null?S.flags.tourneyWk:-99)) < TOURNEY_COOL
-                ? `The yard is still sore — ${TOURNEY_COOL-(S.week-S.flags.tourneyWk)}w`
-                : "Hold the tournament"}
-            </button>
-          </Sect>
 
-          <Sect title="Walk the cells tonight" note="among the men">
-            <div className="dim" style={{fontSize:"var(--fs-md)",margin:"4px 0 8px"}}>
-              Go down among the familia after the lamps are lit. It costs nothing but an evening — a little warmth to the block, and the truth of what passes between the men, which you will not learn from the gallery. Some nights, the block asks something of you.
+            <div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d9b8"}}>Walk the cells tonight</span>
+                <span className="dim" style={{fontSize:"var(--fs-base)",whiteSpace:"nowrap"}}>costs nothing</span>
+              </div>
+              <div className="dim" style={{fontSize:"var(--fs-md)",margin:"3px 0 7px"}}>
+                Go down among the familia after the lamps are lit. It costs nothing but an evening — a little warmth to the block, and the truth of what passes between the men, which you will not learn from the gallery. Some nights, the block asks something of you.
+              </div>
+              <button className="btn" style={{width:"100%"}} disabled={!walkReady(S)} onClick={walkCells}>
+                {(S.rome||S.city||S.travel) ? "Not while the house is on the road"
+                  : !walkReady(S) ? `You were down there recently — ${WALK_COOL-(S.week-(S.flags.walkWk!=null?S.flags.walkWk:-99))}w`
+                  : "Go down to the block"}
+              </button>
             </div>
-            <button className="btn" style={{width:"100%"}} disabled={!walkReady(S)} onClick={walkCells}>
-              {(S.rome||S.city||S.travel) ? "Not while the house is on the road"
-                : !walkReady(S) ? `You were down there recently — ${WALK_COOL-(S.week-(S.flags.walkWk!=null?S.flags.walkWk:-99))}w`
-                : "Go down to the block"}
-            </button>
           </Sect>
           </>)}
         </div>)}
@@ -23701,9 +23750,15 @@ export default function App(){
                        one showed nothing, because there is no appeal to quote odds on,
                        which is exactly why it needed saying. It is still his to take. */}
                   {o && o.stakes==="sine" && foe && (()=>{
+                    /* and the number has to be a number. A field's average man is priced from
+                       averages, and one missing field used to make the whole quote NaN — so the
+                       warning stands on its own when there is no figure to put in it. */
                     const lose = Math.round((1 - winChance(g, foe, prepFor(S,g,o), tactic||"measured")) * 100);
+                    const ok = Number.isFinite(lose);
                     return (<div style={{fontSize:"var(--fs-sm)",marginTop:3,color:"#d96f5d"}}>
-                      ✦ No appeal is asked and none is given. He loses about {lose} in a hundred, and a loss here is his life.
+                      {ok
+                        ? `✦ No appeal is asked and none is given. He loses about ${lose} in a hundred, and a loss here is his life.`
+                        : `✦ No appeal is asked and none is given. A loss here is his life.`}
                     </div>);
                   })()}
                 </button>
@@ -24410,7 +24465,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     makePrimusOffer, makeDefenceOffer, PRIMUS_ASK, PRIMUS_ASK_GAP,
     primusMine, primusEligible, primusWeek, PRIMUS_GATE, seedPrimus,
     /* the top rung's own reading, and the word a player is given for nothing */
-    menace, MENACE_WORDS, readMatch, foeSeen, primusTake, primusLose,
+    menace, MENACE_WORDS, readMatch, fieldAverage, foeSeen, primusTake, primusLose,
     /* the word-scales a player reads and acts on, so a check can walk each one */
     formWord, formOf, FORM_TELL, formShift, formPower, wearWord, houseWord, warmth,
     patronWord, strainWord, favWord, favourOf, fanWord, fansOf, demeanor,

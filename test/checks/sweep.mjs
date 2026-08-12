@@ -59,6 +59,66 @@ export async function run({ p, errors }){
       .find(x => (x.getAttribute("aria-label")||"") === l);
     if(b){ b.click(); return true; } return false; }, label);
 
+  /* ---- WHAT THE SCREEN SAYS, NOT JUST WHETHER IT THREW ----
+     This check has always asked whether a panel renders. A player reported "He loses about NaN in a
+     hundred, and a loss here is his life" on every man in a pair chooser — `fieldAverage` returns the
+     average man in a field and carried the six stats and nothing else, so `power`'s read of `morale`
+     was `clamp(undefined,0,100)`, which is NaN, and NaN went straight to the screen. Nothing threw.
+     Nothing was going to throw. A number that has become the word NaN is a rendering fault the only
+     way to catch is to READ THE SCREEN, so from v3.1.0 every face this check opens is scanned for the
+     four things a template says when a value went missing under it. */
+  const BAD_TEXT = [
+    { re:/\bNaN\b/,             what:"NaN",              why:"a number that arithmetic lost — a missing field on an object somebody priced" },
+    { re:/\bundefined\b/,       what:"undefined",         why:"a field read off an object that has not got it" },
+    { re:/\[object Object\]/,   what:"[object Object]",   why:"an object interpolated where a string was wanted" },
+    { re:/\bInfinity\b/,        what:"Infinity",          why:"a division by nought that reached the screen" },
+  ];
+  const spoiled = [];
+  async function readScreen(where){
+    const t = await p.evaluate(()=>document.body.innerText || "");
+    for(const B of BAD_TEXT){
+      if(!B.re.test(t)) continue;
+      /* the line it is on, so the fault can be found rather than hunted */
+      const line = (t.split("\n").find(l=>B.re.test(l)) || "").trim().slice(0, 110);
+      spoiled.push({ where, what:B.what, why:B.why, line });
+    }
+  }
+
+  /* ---- AND THE SHAPE OF THE FACE, NOT JUST ITS CONTENTS ----
+     v3.1.0 counted every section on every face for the first time, on a founded house at week 17:
+
+       ludus                12 sections, and one of them a section INSIDE a section
+       armory                7, every weapon family 24 to 37 lines long
+       villa · The Cells     4, three of which held one paragraph and one button each
+       market                4, two of which said "build the room first" in 61 and 63 characters
+       villa · The House     4, the last of which was 100 characters
+
+     Nesting is a hard fault and is asserted: a `details` inside a `details` puts a thing two clicks
+     down, and "What you are doing without" — the six things a doctore is worth — was two clicks down on
+     the tab a player opens every week. THE THIN ONES ARE COUNTED AND PRINTED, NOT ASSERTED, because
+     "this section is too short" is a judgement and `probe` already paid for the lesson that a rule
+     which flags seven false positives teaches people to add exemptions without thinking. */
+  const shape = [];
+  async function readShape(where){
+    const a = await p.evaluate(()=>{
+      const all = [...document.querySelectorAll("details.sect")];
+      const was = all.map(d=>d.open);
+      const depth = d => { let n = 0, x = d.parentElement;
+        while(x){ if(x.tagName === "DETAILS") n++; x = x.parentElement; } return n; };
+      /* shallowest first, or a nested section is still hidden when it is read */
+      all.slice().sort((x,y)=>depth(x)-depth(y)).forEach(d=>{ d.open = true; });
+      const rows = all.map(d=>{
+        const sum = d.querySelector("summary");
+        const title = ((sum && sum.innerText) || "").split("\n")[0].trim();
+        const body = (d.innerText||"").replace(sum ? sum.innerText : "", "").trim();
+        return { title, depth:depth(d), chars:body.length, buttons:d.querySelectorAll("button").length };
+      });
+      all.forEach((d,i)=>{ d.open = was[i]; });
+      return rows;
+    });
+    shape.push({ where, rows:a });
+  }
+
   /* the whole tab, face by face, and the count for each so a silent collapse shows */
   async function sweepTab(t){
     await tab(p, t); await p.waitForTimeout(260);
@@ -66,12 +126,14 @@ export async function run({ p, errors }){
     await tab(p, t); await p.waitForTimeout(200);
     const fs = await faces(p);
     if(!fs.length){ const n = await openAll(p); await p.waitForTimeout(340);
-      visited.push(`${t} (+${n} sections)`); return; }
+      visited.push(`${t} (+${n} sections)`); await readScreen(t); await readShape(t); return; }
     const per = [];
     for(const f of fs){
       await showFace(p, f); await p.waitForTimeout(300);
       const n = await openAll(p); await p.waitForTimeout(340);
       per.push(`${f} ${n}`);
+      await readScreen(`${t} · ${f}`);
+      await readShape(`${t} · ${f}`);
     }
     visited.push(`${t} [${per.join(" · ")}]`);
   }
@@ -106,11 +168,22 @@ export async function run({ p, errors }){
   await tab(p, "familia"); await p.waitForTimeout(260);
   const man = await p.evaluate(()=>{ const b=[...document.querySelectorAll("button.panel")][0];
     if(b){ b.click(); return true; } return false; });
-  if(man){ await p.waitForTimeout(420); visited.push("a man's page"); await clearAll(p, 8); }
+  if(man){ await p.waitForTimeout(420); visited.push("a man's page"); await readScreen("a man's page"); await clearAll(p, 8); }
 
   await tab(p, "arena"); await p.waitForTimeout(260);
   if(await click(p, /choose a bout/i)){
     await p.waitForTimeout(320); visited.push("the arena wizard");
+    await readScreen("the arena wizard");
+    /* and the CHOOSER behind it, which is where the NaN was: pick each card in turn and read the
+       list of your own men under it, because the sine warning is per man and per card */
+    const cards = await p.evaluate(()=>[...document.querySelectorAll("button.optrow")].length);
+    for(let i=0; i<Math.min(cards, 6); i++){
+      const took = await p.evaluate(n=>{ const b=[...document.querySelectorAll("button.optrow")][n];
+        if(b){ b.click(); return true; } return false; }, i);
+      if(!took) break;
+      await p.waitForTimeout(300);
+      await readScreen(`the chooser, card ${i+1}`);
+    }
     await clearAll(p, 8);
   }
 
@@ -184,6 +257,31 @@ export async function run({ p, errors }){
 
   lines.push(`opened: ${visited.join(", ")}`);
   lines.push(vowLine);
+
+  /* what the screen said, which is a separate question from whether it threw */
+  const seen = new Set();
+  const uniq = spoiled.filter(x=>{ const k = x.what + "|" + x.line; if(seen.has(k)) return false;
+    seen.add(k); return true; });
+  lines.push(uniq.length
+    ? `THE SCREEN SAID: ${uniq.map(x=>`${x.what} on ${x.where} — "${x.line}"`).join(" | ")}`
+    : `nothing on any face read NaN, undefined, [object Object] or Infinity`);
+  for(const x of uniq)
+    errors.push(`"${x.what}" is on the screen on ${x.where} — ${x.why}. The line reads: "${x.line}"`);
+
+  /* the shape of every face: sections counted, nesting held, thin ones printed */
+  const nested = [], thin = [];
+  for(const f of shape) for(const r of f.rows){
+    if(r.depth > 0) nested.push(`"${r.title}" inside a section on ${f.where}`);
+    if(r.chars < 120 && r.buttons <= 1) thin.push(`${f.where}: "${r.title}" ${r.chars}c ${r.buttons}b`);
+  }
+  lines.push(`sections by face: ${shape.filter(f=>f.rows.length).map(f=>`${f.where} ${f.rows.length}`).join(" · ")}`);
+  lines.push(thin.length
+    ? `thin sections (under 120 characters, one button or none) — printed, not asserted: ${thin.join(" | ")}`
+    : `no section on any face is under 120 characters`);
+  for(const n of nested)
+    errors.push(`a section inside a section: ${n}. Two levels of disclosure puts a thing two clicks down `
+      + `on a tab a player already scrolls — the six things a doctore is worth sat there until v3.1.0`);
+
   lines.push(errors.length ? `errors: ${errors.slice(0,4).join(" | ")}` : "errors: none");
   return { pass: errors.length === 0, why: errors.length ? `${errors.length} page errors` : null, lines };
 }

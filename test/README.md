@@ -1634,3 +1634,33 @@ The same shape twice more in one hour: `injure` measured 1.00× because the arm 
 set `regimen:"spar"` without pairing anybody, so `repairSpar` quietly turned every week into post work. A
 flat result is a claim about your arm before it is a claim about the game — find the line that reads the
 field, and make sure the number you are watching still has room to move.
+
+## A NaN never throws, so something has to read the screen
+
+A player sent a screenshot of a pair chooser reading "He loses about NaN in a hundred, and a loss here is
+his life" under every man on the card. `fieldAverage` — the average man in a field — carried the six stats
+and nothing else, `power` reads `morale`, `clamp(undefined,0,100)` is NaN, and NaN survives every
+multiplication after it. The suite had 57 checks and a browser sweep over every tab, face, section and
+sheet, and not one of them would ever have caught it, because rendering NaN is not an error.
+
+`sweep` reads the text of every face now for `NaN`, `undefined`, `[object Object]` and `Infinity`. Any
+check that renders a screen should ask what the screen SAYS, not only whether drawing it succeeded.
+
+## Making dead content reachable is a change to every path that reads it
+
+The NaN was unreachable until v2.98.0. The warning is gated on `stakes === "sine"` and a pair offer
+hardcoded `"standard"`, so the release that let a munus bought sine missione carry its pair also switched
+on a display path that had never run. One fix for an unreachable branch made a second unreachable branch
+reachable, and the second one was broken.
+
+When you make dead content live — and this project has done it four times now — grep for every read of the
+flag you just started setting, not only the engine that consumes it.
+
+## innerText is empty inside a closed parent
+
+An anatomy probe opened every `details.sect` on a tab and measured each one's `innerText`, and reported an
+EMPTY section on the ludus tab: 0 lines, 0 characters. There was no empty section. There was a `details`
+NESTED inside another `details`, and `innerText` returns "" for anything whose ancestor is closed.
+
+Open parents before children — sort by nesting depth — or read `textContent`, which does not care about
+layout. And the phantom was worth chasing: the thing that made it look empty was the real fault.

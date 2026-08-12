@@ -306,6 +306,56 @@ export async function run({ p }){
           + `and the 46% mirror this whole check is calibrated on now depends on a stat`);
     }
 
+    /* ============ 6. AND IT MUST PRICE EVERY FOE THE CHOOSER CAN HAND IT ============
+       A player reported "He loses about NaN in a hundred, and a loss here is his life" under every man
+       in a pair chooser. The sine warning is `winChance(g, foe, …)` and `foe` for a pair or a melee is
+       `fieldAverage(o.opps)` — the average man in the field — which returned the six stats, `cls:null`
+       and nothing else. `power` reads `morale` and `fatigue`; `clamp(undefined,0,100)` is NaN; NaN
+       survives every multiplication after it and reaches the screen. Nothing threw and nothing was
+       ever going to.
+
+       IT COULD NOT HAPPEN UNTIL v2.98.0, which is the part worth keeping: the warning is gated on
+       `stakes === "sine"` and a pair offer hardcoded `"standard"` until that release let a munus bought
+       sine missione carry its pair. Making dead content reachable is a change to every path that reads
+       it. `cls` stays null on purpose — a field of four men has no one style, and `readMatch` is right
+       to answer "no read" rather than invent one. */
+    {
+      const mine = (()=>{ const d = A.newGameState("Oz","clean","ODDS-NAN",null);
+        const g = A.genGladiator(d, A.qForStat(74)); g.id = 1; g.status = "active";
+        g.kit = A.defaultKit(g.cls); g.injury = null; g.fatigue = 0; return g; })();
+      const field = [0,1,2,3].map(()=>{ const o = A.clone(A.genOpponent(2, A.qForStat(74)));
+        o.kit = A.defaultKit(o.cls); return o; });
+      const CASES = [
+        ["a real opponent",         field[0]],
+        ["a melee field of four",   A.fieldAverage(field)],
+        ["a pair field of two",     A.fieldAverage(field.slice(0,2))],
+        ["a field of one",          A.fieldAverage([field[0]])],
+        ["the barest object",       A.fieldAverage([{ str:60 }])],
+      ];
+      const said = [];
+      for(const [nm, foe] of CASES){
+        if(!foe){ bad.push(`\`fieldAverage\` gave nothing back for "${nm}" — the chooser reads it to `
+          + `draw a pair and a melee, and a null there means no reading at all`); continue; }
+        let q = null, threw = null;
+        try { q = A.winChance(mine, foe, 0, "measured", "measured"); } catch(e){ threw = e.message; }
+        said.push(`${nm} ${threw ? "THREW" : Number.isFinite(q) ? (q*100).toFixed(1)+"%" : String(q)}`);
+        if(threw)
+          bad.push(`\`winChance\` threw on ${nm}: ${threw}. The chooser prices its sine missione warning `
+            + `with it and cannot catch that`);
+        else if(!Number.isFinite(q))
+          bad.push(`\`winChance\` priced ${nm} at ${q} — the chooser puts that straight on the screen as `
+            + `"He loses about ${Math.round((1-q)*100)} in a hundred", which is what a player was shown `
+            + `under every man in a pair chooser. \`fieldAverage\` has to carry everything \`power\` reads`);
+      }
+      lines.push(`priced against every foe the chooser can build: ${said.join(" · ")}`);
+      /* and the field's style must stay unclaimed */
+      const fa = A.fieldAverage(field);
+      if(fa && fa.cls != null)
+        bad.push(`\`fieldAverage\` now claims a class ("${fa.cls}") for a field of four men. \`readMatch\` `
+          + `reads \`foe.cls\` for the counter cycle, so a field would start reporting a match-up that `
+          + `belongs to one man in it`);
+    }
+
     return { bad, lines };
   });
 
