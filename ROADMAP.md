@@ -1392,6 +1392,49 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v3.9.0 — Two figures the suite had been quoting from its own comments
+
+No game change. Both audit items turned out to be about what the checks BELIEVE, which is the category
+this audit keeps finding things in.
+
+**#125 — the quote is not four points rich. It is honest in the middle and compressed at both ends.**
+`odds`'s head has carried "the quote runs about four points rich across all four orders" for three
+releases, and `cell` has always computed both the quote and the realised rate while printing only the
+realised one — so the figure came from nowhere the file could point at. Both are printed now, per grade
+and pooled, so the claim is re-derived every run. On the two instruments that are sound for it:
+
+| | quoted | on the sand | |
+|---|---|---|---|
+| this check's mirror, 600 bouts | 45.2% | 44.7% | rich by 0.55, se 2.04 — indistinguishable from honest |
+| `engines`, even | 41% | 43.5% | 2.5 thin |
+| `engines`, yours the better | 94% | 96.8% | 2.8 thin |
+| `engines`, yours outmatched | 3% | 0.7% | 2.3 rich |
+
+So it is honest where the fight is even and compressed toward the centre at both ends — what a model
+that under-weights an edge does, and the opposite of a flat richness. Left alone: two points is inside
+what a bookmaker's number owes anybody. The second half of #125 was wrong by more: the panel quotes
+forward 45.2% against standing off 44.5%, a gap of 0.7 where the source's own 2,700-bout table has 5.2.
+That is understated about sevenfold, not by half. The bar stays on the ORDER, which is the part a player
+acts on.
+
+**And five probes of mine failed before any of that was readable — four of them with one fault.** Each
+built ONE fighter and reused him across hundreds of bouts, resetting the six stats, fatigue, injury,
+morale and record between them and not `lasting`, `strain`, `form`, `wear`, `scars`, `regard` or
+`defiance`, which accumulate. He decayed in ways `winChance` cannot see: 9.6 points "thin" pooled over
+4,800 bouts, and a mirror at 35.6% where `odds`'s own mirror sits at 44.7%. The fifth blamed coaching and
+killed its own explanation — pressing at every balance against saying nothing at all is worth **0.58
+points** over 9,600 bouts. `odds`'s `cell` takes a fresh state per bout, and that is not incidental to it.
+
+**#127 — a bar that did not match the paragraph above it.** `ends` says of the playing-well-against-idle
+comparison: *"this is recorded, not asserted: if it ever inverts — if doing nothing outlives playing well
+BY A WIDE MARGIN"* — and then asserted `outP >= outI`, a bare inequality with no margin in it. At this n
+that is not stable: 6 of 24 against 12 of 24 is p 0.25 against 0.50, the counts have SD 2.12 and 2.45,
+their difference has SD 3.24 against a mean of 6, and the inequality flips by chance in about **3% of
+runs** with nothing changed in the game. Three percent is a check that fails once a month for no reason,
+which is how a suite is taught to be ignored — `policy`'s median-life bar was retired for the same
+arithmetic two releases ago. The bar now carries the four-house margin the paragraph asks for: P(diff >= 4)
+is about 0.1%, and a genuine inversion moves it by far more than four.
+
 ### v3.8.0 — Generation two was reached zero times in twenty-four houses
 
 The open question was whether a named heir should always continue the line. The measurement answered it,

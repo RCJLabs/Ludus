@@ -236,10 +236,25 @@ export async function run({ p }){
       lines.push(`over the opening, playing well roughly a third fewer: ${outP} of ${pv.length} out `
         + `against ${outI} of ${id.length} doing nothing (crux-blind this read 13 against 12; PAIRED `
         + `on one seed at n=60 it is 17 against 28, so "halves" was the unpaired version of it)`);
-      if(outP >= outI)
-        bad.push(`the proven policy is dying at least as fast as doing nothing (${outP} against `
-          + `${outI} of ${pv.length}) — with every bout resolved it goes out half as often, so this `
-          + `reads as the arm no longer being paid, or no longer fighting`);
+      /* ---- AND THE BAR DID NOT MATCH THE PARAGRAPH ABOVE IT, until v3.9.0 ----
+         The comment says this is "recorded, not asserted: if it ever inverts — if doing nothing
+         outlives playing well BY A WIDE MARGIN". The bar underneath was `outP >= outI`, a bare
+         inequality with no margin in it at all, which is not the same claim and is not stable at this
+         n. Measured: 6 of 24 against 12 of 24, so p is 0.25 against 0.50 — the two counts have SD
+         2.12 and 2.45, their difference has SD 3.24 against a mean of 6, and `outP >= outI` comes up
+         by chance in about 3% of runs with nothing whatever changed in the game. Three percent is a
+         check that fails roughly once a month for no reason, which is how a suite is taught to be
+         ignored; `policy`'s median-life bar was retired for the same arithmetic.
+
+         The margin the paragraph asks for is four houses of twenty-four: P(diff >= 4) is about 0.1%,
+         and a real inversion — playing well actually costing more than idleness — moves this by far
+         more than four. */
+      const MARGIN = 4;
+      if(outP >= outI + MARGIN)
+        bad.push(`the proven policy is dying FASTER than doing nothing by ${outP - outI} houses `
+          + `(${outP} against ${outI} of ${pv.length}) — with every bout resolved it goes out about a `
+          + `third as often, so this reads as the arm no longer being paid, or no longer fighting. The `
+          + `bar carries a ${MARGIN}-house margin because a bare inequality flips in 3% of runs at this n`);
     }
 
     /* ================= 4. THE LONG ARC, AND THE TABLE IT REPLACES =================

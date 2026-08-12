@@ -56,9 +56,40 @@
         the bout's own opening line says about his patrons — but a player who has learned to coach a
         bout loses the lever at the exact moment it is worth most, and is never told.
 
-   WHAT IS MEASURED AND LEFT ALONE: the quote runs about four points rich across all four orders, and
-   even after the fix it understates the forward-against-standing-off gap by roughly half (1.3 to 6.1
-   points). The level is not held here. Only the ranking is, because only the ranking is advice. */
+   WHAT IS MEASURED AND LEFT ALONE, CORRECTED IN v3.9.0. This head used to say "the quote runs about
+   four points rich across all four orders". Both halves of that were wrong and neither was sourced:
+   `cell` has always computed the quote AND the realised rate and only ever PRINTED the realised one,
+   so the figure came from nowhere this file can point at. Both are printed now, per grade and pooled,
+   so the claim is re-derived on every run instead of being quoted from a comment.
+
+   And the shape is not a bias in one direction at all. On the two instruments in this suite that are
+   sound for the level:
+     this check's mirror  quote 45.2% against a realised 44.7% pooled over 600 bouts — rich by 0.55,
+                          se 2.04, which is indistinguishable from honest, at the one pairing whose
+                          answer is known in advance
+     `engines`            even 41% quoted against 43.5% on the sand (2.5 thin) · yours the better 94%
+                          against 96.8% (2.8 thin) · yours outmatched 3% against 0.7% (2.3 rich)
+   So the quote is HONEST where the fight is even and COMPRESSED TOWARD THE CENTRE at both ends: about
+   two and a half points thin when the man is the favourite and about two and a half rich when he is
+   outmatched. That is what a model which under-weights an edge does, and it is the opposite of a flat
+   four-point richness. Nothing is changed for it — a two-point hedge is within what a bookmaker's
+   number owes anybody, and it errs toward caution in the only direction that costs a life: a man who
+   is outmatched is quoted slightly better than he is, which is a real cost, but 2.3 points of it, and
+   the panel's word for that range is already "he is outmatched" rather than a number alone.
+
+   The forward-against-standing-off figure was also wrong, and by more. The panel quotes forward 45.2%
+   against standing off 44.5% — 0.7 points — where the source's own 2,700-bout table has aggressive
+   47.2% against defensive 42.0%, or 5.2. That is understated about sevenfold, not by half. The bar is
+   still the ORDER and not the gap, because the order is what a player does something with.
+
+   AND FOUR PROBES OF MINE FAILED BEFORE ANY OF THAT WAS READABLE, all with the same fault. Each built
+   ONE fighter and reused him across hundreds of bouts, resetting the six stats, fatigue, injury,
+   morale and record between them — and not `lasting`, `strain`, `form`, `wear`, `scars`, `regard` or
+   `defiance`, which accumulate. The man decayed in ways `winChance` cannot see, and the readings came
+   out 9.6 points "thin" pooled, with a mirror at 35.6% where this check's own mirror sits at 44.7%.
+   A fifth probe blamed coaching and killed its own explanation: pressing at every balance against
+   saying nothing at all is worth 0.58 points over 9,600 bouts. `cell` below takes a FRESH STATE per
+   bout for exactly this reason, and that is not incidental to it. */
 
 import { hasHandle } from "../harness.mjs";
 
@@ -132,8 +163,18 @@ export async function run({ p }){
       const rows = [];
       for(const G of GRADES) rows.push([G.name, cell(`M-${G.key}`, G.m, "aggressive", false)]);
       rows.push(["the imperial bill", cell("M-rome", 97, "aggressive", true)]);
+      /* ---- AND THE QUOTE BESIDE IT, WHICH IS THE ONLY PAIRED READING OF THE LEVEL ----
+         Both numbers were already computed here and only the realised one was printed, so the head's
+         claim about the LEVEL — "about four points rich across all four orders" — was never sourced
+         from anything and turned out to have the wrong sign. See the head. `winChance` is a pure
+         function of the pairing, so it carries no sampling error and the whole error on the gap is the
+         realised rate's, 0.5/sqrt(n), which is 4.1 points at n=150. Printed, not asserted: the level
+         wants an n this check does not spend, and the mirror bar above is what holds the instrument. */
+      let pq = 0, pr = 0, pn = 0;
       for(const [nm, c] of rows){
+        if(c.pct != null){ pq += c.quoted*c.n; pr += c.pct*c.n; pn += c.n; }
         lines.push(`the mirror at ${nm}: ${c.pct==null?"—":c.pct.toFixed(1)}% of ${c.n}`
+          + ` against a quote of ${c.quoted.toFixed(1)}% (${c.pct==null?"—":((c.pct-c.quoted)>=0?"+":"")+(c.pct-c.quoted).toFixed(1)} points)`
           + ` · a crux came up in ${c.cruxRate.toFixed(1)}% of bouts`);
         if(c.n < N*0.8)
           bad.push(`the mirror at ${nm} only resolved ${c.n} of ${N} bouts — the crux is not being answered`);
@@ -143,6 +184,10 @@ export async function run({ p }){
             + `this must sit a shade under half. Off that, either the engine has grown an asymmetry `
             + `or this check is scoring held bouts as losses again`);
       }
+      if(pn){ const gap = pr/pn - pq/pn;
+        lines.push(`pooled over ${pn} mirrored bouts the quote is ${(pq/pn).toFixed(1)}% against a realised `
+          + `${(pr/pn).toFixed(1)}% — ${gap >= 0 ? "thin" : "rich"} by ${Math.abs(gap).toFixed(2)} points, `
+          + `se ${(0.5/Math.sqrt(pn)*100).toFixed(2)}`); }
       lines.push(`FOE_EDGE ${A.FOE_EDGE != null ? A.FOE_EDGE : "(not on the handle)"} — the other side's standing premium, by design`);
     }
 

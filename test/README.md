@@ -1807,3 +1807,31 @@ generation 2? Over 24 houses of up to 900 weeks, all of which named an heir, the
 counted it, and the figure came from reasoning about the two branches rather than from running them.
 
 Count the outcome. A flag read in two places is a place where two comments can each be locally right.
+
+## A figure in a comment is not a measurement
+
+Two of this audit's items were figures the suite had been quoting from its own head comments. `odds` said
+the quote runs "about four points rich across all four orders"; re-derived, it is honest at the mirror
+(0.55 +/- 2.04 over 600 bouts) and compressed at both ends — 2.5 thin as the favourite, 2.3 rich when
+outmatched. `ends` said its playing-well comparison was "recorded, not asserted" and then asserted it.
+
+Both had the same shape: a number was computed once, written into prose, and thereafter cited instead of
+recomputed. `odds` had even been computing both halves of its own claim on every run and printing only
+one of them. The fix in both cases is to make the check PRINT the figure it is claiming, so the claim is
+re-derived every run and a drift shows up as a changed line rather than as a comment that quietly stops
+being true.
+
+If a head comment states a figure, the check under it should produce that figure. Otherwise the comment
+is documentation of a measurement nobody can repeat.
+
+## A bar with no margin is a bar that flakes
+
+`ends` asserted `outP >= outI` on two counts of 24 whose true rates are 0.25 and 0.50. Their difference
+has SD 3.24 against a mean of 6, so the bare inequality comes up about 3% of the time with nothing
+changed. That is the third bar in this project retired for the same arithmetic — `survive`'s, `policy`'s
+median life, and now this one.
+
+The arithmetic to do before writing any count-comparison bar: SD of a count is sqrt(n*p*(1-p)); SD of a
+difference of two independent counts is the root of the sum of squares; then ask how many SDs the bar
+sits from the expected difference. Under two is a flake. The margin belongs in the bar, and the
+arithmetic belongs in the comment beside it.
