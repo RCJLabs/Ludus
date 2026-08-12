@@ -255,6 +255,38 @@ export async function run({ p, errors }){
     fails.push(`the house's favour figure (${party.houseAfter}) is not the patrons' mean (${party.mean}) `
       + `after a party — something is writing d.favor and surviving recomputeFavor`);
 
+  /* ---- 6 · AND THE SUCCESSION SCREEN DOES NOT TELL A LIVING MAN HE IS DEAD ----
+     Retirement raises the same `d.succession` a death does, so the one screen serves both. Before
+     v3.8.0 it only ever served a death and opened "THE HOUSE GOES ON — X is dead at 66", which would
+     have been said over a man who had just walked down to the square. It also has to offer the second
+     door, because declining is the only route left to the `oldAge` ending. */
+  for(const [why, mut, wantHead, wantWords, doors] of [
+    ["he retired", `s.succession = { lan:"Aulus Vettius", age:66, heir:"Marcus Vettius",
+      kind:"nephew", retire:true, years:9 };`, /THE LONG TENURE/i, /has been doing this for 9 years/i, 2],
+    ["he died", `s.succession = { lan:"Aulus Vettius", age:51, heir:"Marcus Vettius",
+      kind:"nephew" };`, /THE HOUSE GOES ON/i, /is dead at 51/i, 1],
+  ]){
+    await reload(p, mut, null, true);
+    const m = await p.evaluate(()=>{
+      const w = [...document.querySelectorAll(".modalwrap")]
+        .find(x=>/THE HOUSE GOES ON|THE LONG TENURE/i.test(x.innerText||""));
+      if(!w) return null;
+      return { text:(w.innerText||"").replace(/\s+/g," ").trim(),
+        buttons:[...w.querySelectorAll("button")].map(b=>(b.innerText||"").trim()).filter(Boolean) };
+    });
+    if(!m){ fails.push(`the succession screen was not raised when ${why}`); continue; }
+    lines.push(`SUCCESSION (${why}): "${m.text.slice(0,90)}" · ${m.buttons.length} door${m.buttons.length===1?"":"s"}: ${m.buttons.join(" / ")}`);
+    if(!wantHead.test(m.text))
+      fails.push(`the succession screen headline is wrong when ${why}: "${m.text.slice(0,60)}"`);
+    if(!wantWords.test(m.text))
+      fails.push(`the succession screen does not say the right thing when ${why} — a handover from a `
+        + `living man and one from a dead one are not the same event and this screen serves both`);
+    if(m.buttons.length !== doors)
+      fails.push(`the succession screen offers ${m.buttons.length} doors when ${why} and should offer `
+        + `${doors}. A retirement is a choice — taking the chair or letting the line end with him, which `
+        + `is the only route to \`oldAge\` — and a death is not`);
+  }
+
   if(errors.length) fails.push(`${errors.length} page errors`);
   return { pass: fails.length === 0, why: fails.slice(0,3).join("; ") || null, lines };
 }

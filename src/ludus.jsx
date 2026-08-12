@@ -6358,6 +6358,9 @@ function succeed(d){
   if(!H) return false;
   const old = d.lanista;
   const nm = d.heir.name;
+  /* a handover from a living man is not a handover from a dead one, and the two say different
+     things — see the note on the retirement branch of `lanistaWeek` */
+  const retire = !!(d.succession && d.succession.retire);
   d.generation = (d.generation||1) + 1;
   d.fame = Math.max(0, rnd(d.fame * H.fameKeep));
   patronsOf(d).forEach(p=>{ p.favor = clamp(p.favor * H.favorKeep, 0, 100); });
@@ -6397,9 +6400,11 @@ function succeed(d){
       : `The old master's people keep their rooms. The house is ${nm}'s and the family in it is not.`, "info");
   }
   d.forebears = [...(d.forebears||[]), { name:old.name, age:old.age, traits:old.traits.slice(),
-    from:old.since||1, to:d.week, gen:d.generation-1,
+    from:old.since||1, to:d.week, gen:d.generation-1, retired:retire,
     wife: fam && fam.wife ? fam.wife.name : null, children: fam ? fam.children.length : 0 }];
-  chron(d, `${H.took(nm)} ${old.name} is carried out of a gate he came in through forty years ago, and the week's training goes ahead because it was always going to.`, "event");
+  chron(d, `${H.took(nm)} ${retire
+    ? `${old.name} keeps his rooms and the ledger, and comes down to the square when the mood takes him, which is less often than he tells himself.`
+    : `${old.name} is carried out of a gate he came in through forty years ago, and the week's training goes ahead because it was always going to.`}`, "event");
   d.over = null;
   return true;
 }
@@ -9077,9 +9082,27 @@ function lanistaWeek(d){
   if(d.flags.caughtFixing) add("marked");
   if(L.health < 30) add("ailing");
 
-  /* a man who is old, well, and has somebody to hand it to simply stops */
+  /* ---- A MAN WHO IS OLD, WELL, AND HAS SOMEBODY TO HAND IT TO ----
+     This branch used to END THE RUN, and the two readings of `d.heir` in this function disagreed
+     about what naming one meant: here it was required and then discarded, and at `health <= 0` it
+     was the one thing that carried the house on. `oldAge`'s own prose says "the house is being run
+     by the heir and everybody has agreed not to say so" — which is the continuation, described, and
+     then not delivered.
+
+     The two branches also raced, and the ending won. Past 62 health falls (62-42)*0.045 = 0.90 a
+     week against 0.06 of mending, so from about 85 it takes roughly 48 weeks to reach the health-45
+     floor, and 6% a week across 48 weeks fires with probability 0.95. MEASURED over 24 houses of up
+     to 900 weeks, all of which named an heir: **generation 2 was reached 0 times**, `d.succession`
+     was raised 0 times, 24 of 24 ended with an heir standing there unused and 11 of 24 ended at
+     `oldAge` itself. `succeed`, `takeUpTheHouse`, the forebear record and the whole second
+     generation were unreachable in ordinary play, by arithmetic rather than by bad luck.
+
+     So retirement raises the SAME succession that death does, and the choice is the player's: take
+     up the house, or let it end here — which is where `oldAge` still lives, as an ending you choose
+     rather than one that is chosen for you. */
   if(L.age >= 62 && L.health >= 45 && d.heir && yearOf(d) >= 6 && R() < 0.06){
-    d.over = { kind:"oldAge", name:d.name, lan:L.name, age:L.age, upkeep:30, years:yearOf(d), heir:d.heir.name };
+    d.succession = { lan:L.name, age:L.age, heir:d.heir.name, kind:d.heir.kind, retire:true,
+      years:yearOf(d) };
   } else if(L.health <= 0){
     if(d.heir && HEIRS[d.heir.kind]) d.succession = { lan:L.name, age:L.age, heir:d.heir.name, kind:d.heir.kind };
     else d.over = { kind:"lanistaDied", name:d.name, lan:L.name, age:L.age, years:yearOf(d) };
@@ -18014,6 +18037,16 @@ function openLicenceNow(d){ if(!merchLive(d) || d.brand.decided || d.pendingEven
   d.pendingEvent = licenceEvent(d); return true; }
 
 function takeUpTheHouse(d){ succeed(d); d.succession = null; return true; }
+/* the other door off a retirement: the run ends at `oldAge`, which is where that ending has always
+   lived. Only a RETIREMENT offers it — a house whose master has been carried out does not get to
+   choose whether it goes on, it simply does. */
+function endTheLine(d){
+  const s = d.succession; if(!s || !s.retire) return false;
+  d.succession = null;
+  d.over = { kind:"oldAge", name:d.name, lan:s.lan, age:s.age, upkeep:30,
+    years:s.years || yearOf(d), heir:s.heir };
+  return true;
+}
 
 export default function App(){
   const [screen,setScreen] = useState("loading");
@@ -18447,6 +18480,7 @@ export default function App(){
   const seekMatch = () => { mut(d=>{ seekMatchNow(d); }); setSheet(null); };
   const openLicence = () => mut(d=>{ openLicenceNow(d); });
   const takeUpHouse = () => mut(d=>{ takeUpTheHouse(d); });
+  const endItHere   = () => mut(d=>{ endTheLine(d); });
   const setEar = (who, gid) => mut(d=>{ setEarTo(d, who, gid); });
   const haveWatched = oid => mut(d=>{ haveWatchedOffer(d, oid); });
   const takeLoan = (who, amt) => mut(d=>{ borrow(d, who, amt); });
@@ -18889,7 +18923,10 @@ export default function App(){
             <div key={i} style={{borderTop:"1px dotted #33271a",padding:"6px 0"}}>
               <div className="flex items-center justify-between gap-2">
                 <span className="rowname" style={{fontSize:"var(--fs-md)"}}>{f.name}</span>
-                <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>died at {f.age} · week {f.to}</span>
+                {/* a man can leave the chair on his feet since v3.8.0 — the retirement branch of
+                    `lanistaWeek` hands the house over instead of ending the run, so `retired` is on
+                    the forebear record and both sheets that read it have to know the difference */}
+                <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{f.retired ? "stepped back at" : "died at"} {f.age} · week {f.to}</span>
               </div>
               {f.traits.length>0 && <div className="dim" style={{fontSize:"var(--fs-base)"}}>{f.traits.map(t=>LAN_TRAITS[t].name).join(", ")}</div>}
               {/* the family goes with the man now, so it is here or it is nowhere */}
@@ -19172,7 +19209,7 @@ export default function App(){
           {[...(S.forebears||[]), { name:S.lanista.name, age:S.lanista.age, to:null, traits:S.lanista.traits }].map((f,i)=>(
             <div key={i} className="flex items-center justify-between gap-2" style={{borderTop:"1px dotted #33271a",padding:"5px 0"}}>
               <span className="rowname" style={{fontSize:"var(--fs-md)"}}>{f.name}</span>
-              <span className="rowval dim" style={{fontSize:"var(--fs-base)"}}>{f.to? `died at ${f.age}, week ${f.to}` : `holds it now, ${f.age}`}</span>
+              <span className="rowval dim" style={{fontSize:"var(--fs-base)"}}>{f.to? `${f.retired ? "stepped back at" : "died at"} ${f.age}, week ${f.to}` : `holds it now, ${f.age}`}</span>
             </div>
           ))}
         </>)}
@@ -23522,12 +23559,18 @@ export default function App(){
       {showSettings && settingsSheet()}
 
       {S.succession && (()=>{ const H = HEIRS[S.succession.kind];
+        /* retirement raises the same succession death does — see the note on that branch of
+           `lanistaWeek`. The difference is that a living man's handover is a CHOICE, so this screen
+           has two doors when he has stepped back and one when he has been carried out. */
+        const ret = !!S.succession.retire;
         return (
           <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.demand}}>
             <div className="modal" tabIndex={-1}>
-              <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".12em",color:"#e8d092",marginBottom:9}}>THE HOUSE GOES ON</div>
+              <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".12em",color:"#e8d092",marginBottom:9}}>{ret ? "THE LONG TENURE" : "THE HOUSE GOES ON"}</div>
               <div style={{fontSize:"var(--fs-lg)",marginBottom:9}}>
-                {S.succession.lan} is dead at {S.succession.age}. The sand is still there, the men are still in the cells, and the debts have not noticed.
+                {ret
+                  ? `${S.succession.lan} is ${S.succession.age} and has been doing this for ${S.succession.years} year${S.succession.years===1?"":"s"}. There is no single morning it ends. There is a winter where the walk down to the square gets long, and a spring where somebody else has already set the drills before he arrives. He is not going to say the word, so you say it.`
+                  : `${S.succession.lan} is dead at ${S.succession.age}. The sand is still there, the men are still in the cells, and the debts have not noticed.`}
               </div>
               <div className="panel" style={{padding:11,marginBottom:10,background:"#1c1610",borderColor:"#c99a4b"}}>
                 <div className="disp" style={{fontSize:"var(--fs-md)",color:"#e8d092",marginBottom:3}}>{S.succession.heir}</div>
@@ -23537,7 +23580,17 @@ export default function App(){
                 The familia, the buildings, the racks and every obligation carry over. Fame falls to {Math.round(H.fameKeep*100)}% and standing with every patron to {Math.round(H.favorKeep*100)}% — they knew the father, not the son.
                 {H.unrest<0 ? " The cells will be calmer for it." : H.unrest>8 ? " The cells will need convincing." : ""}
               </div>
-              <button className="btn" style={{width:"100%"}} onClick={takeUpHouse}>Take up the house</button>
+              <button className="btn" style={{width:"100%"}} onClick={takeUpHouse}>
+                {ret ? `${S.succession.heir} takes the chair` : "Take up the house"}
+              </button>
+              {/* `oldAge` is still an ending — it is this button. It was the only thing the old branch
+                  did, and it did it without asking; now it is the door you choose when you would
+                  rather the story stopped with the man who built the place. */}
+              {ret && (
+                <button className="btn btn-ghost" style={{width:"100%",marginTop:8}} onClick={endItHere}>
+                  Let it end with him
+                </button>
+              )}
             </div>
           </div>
         ); })()}
@@ -24892,7 +24945,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     PIETY_TOP, pietyFame, vowStake, healSpeed, vowReturn, vowRisked, buried20,
     VOW_BOUTS_FULL, VOW_EARNT_AT,
     blessMercy, blessHeal, blessPurse, blessFame,
-    seekMatchNow, openLicenceNow, takeUpTheHouse, claimRise, succeed,
+    seekMatchNow, openLicenceNow, takeUpTheHouse, endTheLine, claimRise, succeed,
     /* the nineteen things a house is remembered for, and the gates on each of them */
     FEATS, FEAT_KEYS, hasFeat, featWeek, featNear, recordCloth,
     /* the burial society: founding it, the stone, and what cutting it costs */

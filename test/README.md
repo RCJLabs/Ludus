@@ -1793,3 +1793,17 @@ time this project shipped it. The line was not written.
 
 A gate's frequency is cheap to measure and is the whole question for anything that appears every week. Ask
 it before the copy exists, because once the copy is good it is much harder to throw away.
+
+## One function, two readings of the same flag, disagreeing
+
+`lanistaWeek` read `d.heir` twice. At `health <= 0` it was the one thing that carried the house into a second
+generation; at `age >= 62 && health >= 45` it was a REQUIREMENT of an ending that then ignored it. Both
+branches were correct in isolation and the pair was incoherent, and the incoherence was invisible because
+each had its own comment explaining why it was right.
+
+What made it measurable was asking a question about the OUTCOME rather than the code: how many houses reach
+generation 2? Over 24 houses of up to 900 weeks, all of which named an heir, the answer was zero, and
+`d.succession` was raised zero times. `ends` had a note saying generation 2 was "1 in 12"; nobody had
+counted it, and the figure came from reasoning about the two branches rather than from running them.
+
+Count the outcome. A flag read in two places is a place where two comments can each be locally right.

@@ -175,6 +175,84 @@ export async function run({ p }){
       }
     }
 
+    /* ---- 5. AND A MAN WHO GROWS OLD HANDS IT OVER, WHICH USED TO END THE RUN ----
+       `lanistaWeek` read `d.heir` in two branches that disagreed about what naming one meant. At
+       `health <= 0` it was the one thing that carried the house on; at `age >= 62 && health >= 45` it
+       was REQUIRED and then discarded, and the run ended `oldAge` — whose own prose says the house is
+       already being run by the heir. The two raced and the ending won: past 62 health falls 0.90 a
+       week against 0.06 of mending, so from ~85 it takes about 48 weeks to reach the health-45 floor,
+       and 6% a week across 48 weeks fires with probability 0.95.
+
+       MEASURED over 24 houses of up to 900 weeks, every one of which named an heir: `d.succession`
+       raised **0** times, generation 2 reached **0** times, 24 of 24 ended with the heir unused and
+       11 of 24 ended at `oldAge`. `succeed`, `takeUpTheHouse`, the forebear record and the whole
+       second generation were unreachable in ordinary play by arithmetic, not by bad luck. The same 24
+       seeds afterwards: 11 successions, generation 2 in 11 of 24, and 7 houses still standing at week
+       900 against none before.
+
+       Retirement raises the same succession a death does, and the choice is the player's. Both doors
+       are driven here, because an ending that is now reached ONLY by declining is an ending nothing
+       else in the suite can see. */
+    {
+      const mk = (tag) => {
+        const d = A.newGameState("Rt", "clean", tag, null);
+        d.week = 52*8; d.gold = 30000; d.fame = 900;
+        if(!d.lanista) d.lanista = A.makeLanista(d);
+        d.lanista.age = 66; d.lanista.health = 80;
+        const opts = A.heirEligible(d) || [];
+        return (opts.length && A.nameHeir(d, opts[0])) ? d : null;
+      };
+      /* the 6% is per week, so drive weeks until it fires rather than asserting on one roll */
+      const retire = (tag) => { const d = mk(tag); if(!d) return null;
+        for(let w=0; w<400 && !d.succession && !d.over; w++){
+          d.lanista.health = 80;               /* hold him well, or health<=0 answers instead */
+          A.lanistaWeek(d);
+        }
+        return d; };
+
+      let raised = 0, flagged = 0, ended = 0, gen2 = 0, chose = 0, retiredOnRecord = 0;
+      for(let i=0;i<6;i++){
+        const d = retire("DOMUS-RET-"+i);
+        if(!d || !d.succession) continue;
+        raised++;
+        if(d.succession.retire) flagged++;
+        if(d.over) ended++;                    /* it must NOT have ended the run by itself */
+        if(i % 2 === 0){
+          if(A.takeUpTheHouse(d) && (d.generation||1) >= 2 && !d.over) gen2++;
+          const fb = (d.forebears||[]).slice(-1)[0];
+          if(fb && fb.retired) retiredOnRecord++;
+        } else {
+          if(A.endTheLine(d) && d.over && d.over.kind === "oldAge") chose++;
+        }
+      }
+      lines.push(`a lanista of 66 with an heir: ${raised} of 6 raised a succession rather than ending the `
+        + `run (${flagged} marked as a retirement), ${gen2} took the chair into generation 2 `
+        + `(${retiredOnRecord} recorded as retired on the forebear), ${chose} declined into \`oldAge\``);
+      if(!raised)
+        bad.push(`a healthy lanista of 66 with an heir named never raised a succession in 400 weeks — `
+          + `either the retirement branch is ending the run again, in which case generation 2 is `
+          + `unreachable in play (measured: 0 of 24 houses before v3.8.0), or the 6% roll has gone`);
+      else {
+        if(ended)
+          bad.push(`${ended} of ${raised} retirements ended the run on their own. Retirement is a `
+            + `handover offered to the player, not an ending taken on his behalf — that is the whole `
+            + `fault: \`oldAge\` required an heir and then never used him`);
+        if(flagged !== raised)
+          bad.push(`${flagged} of ${raised} successions carry \`retire\`, so the screen cannot tell a `
+            + `handover from a death and will say the old man is dead while he is standing there`);
+        if(!gen2)
+          bad.push(`taking the chair after a retirement did not reach generation 2 — \`succeed\` is not `
+            + `being driven by \`takeUpTheHouse\` on this path`);
+        if(retiredOnRecord < gen2)
+          bad.push(`the forebear record does not mark him as retired, so the annals will say a living `
+            + `man was carried out`);
+        if(!chose)
+          bad.push(`declining a retirement did not end the run \`oldAge\`. Since v3.8.0 that is the ONLY `
+            + `route to that ending, so if \`endTheLine\` has stopped working the ending is unreachable `
+            + `again — which is what \`ends\` said about it for three releases`);
+      }
+    }
+
     return { bad, lines };
   });
 

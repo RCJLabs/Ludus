@@ -455,12 +455,20 @@ export async function run({ p }){
          With both — 12 houses of 900 weeks through `__ROPE.play` — `oldAge` fires in **4 of 12**, and
          `lanistaDied` in **none**. Against the same seeds with the heir step off: `lanistaDied` 4 of
          12 and `oldAge` 0. The ending is reachable and always was. */
-      lines.push(`oldAge: needs age>=62 AND health>=45 AND an heir. REACHABLE — 4 of 12 houses end this `
-        + `way once the reference player names an heir and builds the baths (which mend the lanista at `
-        + `0.09 a level a week). v2.89.0 called it unreachable off a probe that did neither`);
-      lines.push(`and it COMPETES WITH the succession: the healthy old lanista retires and the run `
-        + `ends, while only the one whose health reaches zero passes the house on — which is why a `
-        + `second generation is still 1 in 12 even with an heir named`);
+      /* ---- AND IN v3.8.0 IT STOPPED BEING AN ENDING THAT HAPPENS TO YOU ----
+         The line below used to read that `oldAge` competes with the succession and wins, "which is
+         why a second generation is still 1 in 12 even with an heir named". Counted properly it was
+         not 1 in 12, it was NONE: over 24 houses of up to 900 weeks, all of which named an heir,
+         `d.succession` was raised 0 times, generation 2 was reached 0 times, 24 of 24 ended with an
+         heir standing there unused and 11 of 24 ended at `oldAge` itself. The arithmetic: past 62
+         health falls 0.90 a week against 0.06 of mending, so from ~85 it takes about 48 weeks to
+         reach the health-45 floor and 6% a week across 48 weeks fires with probability 0.95.
+         Retirement now raises the same succession death does and the player chooses. Same 24 seeds
+         after: successions 11, generation 2 in 11 of 24, `oldAge` 0 — because this player always
+         takes the chair. `oldAge` is now reached only by DECLINING, which `domus` drives. */
+      lines.push(`oldAge: needs age>=62 AND health>=45 AND an heir, and since v3.8.0 it is a CHOICE — `
+        + `retirement raises the same succession a death does, and this ending is the door you take by `
+        + `letting the line end with him. A player who takes the chair sees it 0 times, by design`);
     }
 
     lines.push(`the night answered the way a solvent player would: `

@@ -152,12 +152,17 @@ export async function run({ p }){
       bad.push(`no house ever declared a school, though the reference player tries to once it can pay `
         + `[measured: every surviving house]. Either \`declareDoctrine\` stopped taking or the six `
         + `doctrines have gone — \`school\` holds the system itself`);
-    /* ---- THE LINE OF THE HOUSE, from v2.96.0 ----
+    /* ---- THE LINE OF THE HOUSE, from v2.96.0, CORRECTED IN v3.8.0 ----
        `lanistaWeek` at `L.health <= 0` writes `d.succession` if an heir is named and ends the run
        `lanistaDied` if not, and that is the whole difference. Paired on 12 seeds of 900 weeks: naming
-       an heir took `lanistaDied` from 4 of 12 to NONE, median life from 104 weeks to 297, and opened
-       `oldAge` — which needs `d.heir` — from 0 to 4 of 12. The reference player names one now, so a
-       run of his that ends `lanistaDied` means the naming stopped working. */
+       an heir took `lanistaDied` from 4 of 12 to NONE and median life from 104 weeks to 297.
+
+       It also "opened `oldAge` from 0 to 4 of 12", and that was the fault rather than the fix. The
+       retirement branch REQUIRED an heir and then ended the run without using him, so the two
+       readings of `d.heir` in one function disagreed — and the ending won the race almost every
+       time. Over 24 houses of up to 900 weeks, all of which named an heir: `d.succession` raised 0
+       times, generation 2 reached 0 times. Retirement raises the succession now and the player
+       chooses; the same 24 seeds give 11 successions and generation 2 in 11 of 24. */
     const died = rows.filter(r=>r.kind === "lanistaDied").length;
     const named = rows.filter(r=>(r.did||"").includes("namedHeir")).length;
     lines.push(`heirs named in ${named}/${HOUSES} houses · ended lanistaDied ${died}`);

@@ -1392,6 +1392,53 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v3.8.0 — Generation two was reached zero times in twenty-four houses
+
+The open question was whether a named heir should always continue the line. The measurement answered it,
+and the figure was worse than the question assumed.
+
+`lanistaWeek` read `d.heir` in two branches that disagreed about what naming one meant:
+
+    L.age >= 62 && L.health >= 45 && d.heir && yearOf(d) >= 6 && R() < 0.06
+       -> d.over = { kind:"oldAge" }          the run ENDS
+    L.health <= 0
+       -> d.heir ? d.succession = {...}       the run CONTINUES into generation 2
+                 : d.over = { kind:"lanistaDied" }
+
+The retirement branch REQUIRED an heir and then discarded him — and `oldAge`'s own prose says *"by summer
+the house is being run by the heir and everybody has agreed not to say so"*, which is the continuation,
+described, and then not delivered.
+
+The two branches raced and the ending won almost every time. Past 62 health falls `(62-42)*0.045` = 0.90 a
+week against 0.06 of mending, so from about 85 it takes roughly 48 weeks to reach the health-45 floor, and
+6% a week across 48 weeks fires with probability 0.95.
+
+**Measured over 24 houses of up to 900 weeks, every one of which named an heir:**
+
+| | before | after |
+|---|---|---|
+| successions raised | **0** | 11 |
+| houses reaching generation 2 | **0** | 11 of 24 |
+| ended with an heir standing there unused | 24 of 24 | 17 |
+| ended at `oldAge` | 11 of 24 | 0 (this player takes the chair) |
+| still standing at week 900 | 0 | 7 |
+
+Not "1 in 12" as the earlier note in `ends` had it — **none**. `succeed`, `takeUpTheHouse`, the forebear
+record and the whole second generation, including the v2.98.0 fix that stops the next lanista inheriting his
+predecessor's widow, were unreachable in ordinary play by arithmetic rather than by bad luck.
+
+**What changed.** Retirement raises the same `d.succession` a death does, and the choice is the player's.
+The screen serves both and says which: a death opens *THE HOUSE GOES ON* with one door, a retirement opens
+*THE LONG TENURE* with two — take the chair, or let it end with him. `oldAge` is still an ending; it is now
+the door you choose rather than one chosen for you, which is also the only reason it is still reachable at
+all. `succeed` and the forebear record know the difference, so the annals no longer say a living man was
+carried out, and both record sheets read `retired` instead of printing "died at 66" under a man who walked
+down to the square that morning.
+
+`domus` drives both doors — 6 of 6 retirements raise a succession, 3 take the chair into generation 2 with
+the forebear marked retired, 3 decline into `oldAge` — and `words` holds the screen's copy in both states.
+`ends` and `policy` both carried notes claiming the old behaviour was the fix; both are corrected in place.
+
 ### v3.7.0 — The ladder blamed the meter for everything, in 98.7% of all weeks
 
 The middle-game measurement said favour is the first failing gate on the next rung in 60–83% of weeks past
