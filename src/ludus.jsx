@@ -2451,6 +2451,23 @@ function agendaCan(d, add){
             `${cost}d to put a word in his ear · ${activeG(d).length} of ${cellsCap(d)} cells filled`);
       }
     } }
+  /* ---- A MAN WHO HAS EARNED HIS FREEDOM, WHICH THE WEEK NEVER MENTIONED ----
+     `rudisEligible` is crossed by 14.1% of every man who ever draws breath in a house — about four a
+     house over four hundred weeks, against the five that the `closed` ending wants — and the only thing
+     in the game that ever said so was one line of the doctore's counsel, weighted 66 among all the
+     others. So the ending nobody reaches was gated on noticing, and 146 of those 227 men died first.
+     Urgency 1: a man who has earned it has earned it whenever you get round to it, and the line goes
+     quiet the moment you act. Priced, because since v3.15.0 it is a decision and not a gift. */
+  { const earned = activeG(d).filter(g=>rudisEligible(g));
+    if(earned.length){
+      const g = earned.sort((a,b)=>(b.pfame||0)-(a.pfame||0))[0];
+      const fee = rudisCost(d, g);
+      if(d.gold >= fee + weeklyBill(d))
+        add(1, "men", earned.length === 1
+          ? `${g.name} has earned the rudis`
+          : `${earned.length} men have earned the rudis`,
+          `${fee}d to free ${earned.length === 1 ? "him" : g.name}, and you lose a fighter for it`);
+    } }
   /* a rung you have already paid for in fame and favour, and are not drawing on */
   if(canClaimRise(d)){
     const nx = riseNext(d);
@@ -16183,7 +16200,38 @@ function endWeek(d){
   sectTick(d);
 }
 
+/* ---- WHAT FREEING A MAN COSTS, WHICH UNTIL v3.15.0 WAS NOTHING ----
+   `grantRudis` took no coin. It cost you the fighter and it PAID fame +60, four points with every
+   patron, twelve off the unrest, sixteen of mercy standing, and the fire out of a rebellion if the man
+   was the one they would have followed. MEASURED, a player who frees every man who has earned it
+   against the same eight seeds who keeps them: gold 9,064 -> 10,567 (up 17%), fame 2,232 -> 2,360,
+   acclaim 36 -> 44. Freeing your veterans made you richer, more famous and better loved, at no price.
+   There was no decision in it — a button that hands you things, gated on a man being good.
+
+   And it is the one act in this game that buys NEGATIVE capability: you lose the fighter outright, so
+   unlike the steel in v3.14.0 it cannot refund itself out of winnings. That is exactly what the middle
+   game's 87,000-denarii surplus needs, and it was the only lever in the game pointed backwards.
+
+   So it costs what it cost in Rome, which was two things. The state took the *vicesima libertatis*, a
+   twentieth of the freedman's assessed value — here a fifth of what the man himself is worth, because
+   a lanista's assessment was never charitable. And a freedman of a house that thinks well of itself is
+   not turned out of the gate with nothing: the peculium scales with the house's standing, because what
+   the street expects of you rises with what you are. Both halves scale with the house rather than
+   sitting at a fixed sum, which is the v3.14.0 rule — a fixed price is a tax on a young house and a
+   rounding error to an old one. */
+const RUDIS_TAX = 0.20;
+const rudisCost = (d, g) => !g ? 0 : Math.max(40, Math.round(
+  gladValue(g) * RUDIS_TAX
+  + 90 * (1 + riseOf(d) * 0.6)
+  + acclaimOf(d) * 3));
+const canAffordRudis = (d, gid) => { const g = d.gladiators.find(x=>x.id===gid);
+  return !!g && d.gold >= rudisCost(d, g); };
 function grantRudis(d, gid){
+  { const gc = d.gladiators.find(x=>x.id===gid);
+    if(gc){ const fee = rudisCost(d, gc);
+      if(d.gold < fee) return;                 /* you cannot free a man you cannot settle on */
+      d.gold -= fee;
+      chron(d, `The manumission is written and paid for — ${fee} denarii to the treasury and into ${PR(gc).his} own hand. Freedom has a price and it is not paid by the man receiving it.`, "info"); } }
   { const gp = d.gladiators.find(x=>x.id===gid); if(gp && gp.plan) gp.plan = null; }
   { const gf = d.gladiators.find(x=>x.id===gid); if(gf) favourLost(d, gf, "freed"); }
   { const g0 = d.gladiators.find(x=>x.id===gid);
@@ -25112,6 +25160,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     addScar, scarMark, TARGETS, FLAWS,
     /* helpers */
     activeG, defaultKit, kitMods, statCap, fullName, yearOf, YEAR_WEEKS, rudisEligible,
+    /* the price of freedom, and whether the house can meet it — see the note over grantRudis */
+    rudisCost, canAffordRudis, RUDIS_TAX, gladValue,
   };
   /* ---- WHAT THE CHECKS NEVER REACH ----
      Every function on the handle is wrapped in a counter. It costs a shipping build

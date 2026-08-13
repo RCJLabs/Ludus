@@ -1392,6 +1392,73 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v3.15.0 — Freedom was a button that handed you things
+
+v3.14.0 established the rule: a sink that buys CAPABILITY refunds most of its own cost, so closing the
+middle game's 87,000-denarii surplus needs something that does not make the house stronger. There is
+exactly one act in this game that buys negative capability — you lose the fighter outright — and it was
+the only lever pointed backwards.
+
+**The falsifier first: can a man ever earn his freedom?** `rudisEligible` wants `wins >= 10 && pfame >=
+180`, and `steel` had already measured the median man fighting three bouts. If almost nobody crosses it,
+`closed` — five men freed — is gated on career length and pricing freedom would be decorating a locked
+door. Measured over 8 houses and **227 men who ever drew breath**:
+
+| | |
+|---|---|
+| reached 10 wins | 36 of 227 (15.9%) |
+| reached 180 own fame | 69 of 227 (30.4%) |
+| crossed both, ever | **32 of 227 (14.1%)** |
+| what removed them | **dead 146** · active 36 · injured 23 · away 11 · departed 11 |
+
+About four men a house against the five that ending wants. The door is nearly wide enough, 146 of the 227
+died before reaching it, and **the reference player freed 0 men in 3,200 house-weeks** — for the same
+reason he had never bought a piece of steel: there was no step in the rope for it. So it survived, with
+the premise corrected: freedom is earnable and nobody was ever choosing it.
+
+**And when a policy finally did choose it, freeing men made you RICHER.** `grantRudis` took no coin at
+all. It cost the fighter and PAID fame +60, four points with every patron, twelve off the unrest, sixteen
+of mercy standing, and the fire out of a rebellion if the freed man was the one they would have followed.
+Paired on the same eight seeds:
+
+| | keeps them | frees them |
+|---|---|---|
+| gold | 9,064 | **10,567 (+17%)** |
+| fame | 2,232 | 2,360 |
+| acclaim | 36 | **44** |
+
+Richer, more famous and better loved, at no price. There was no decision in it — a button that hands you
+things, gated on a man being good.
+
+**So it costs what it cost in Rome, and both halves scale with the house.** The state took the *vicesima
+libertatis*, a twentieth of the freedman's assessed value — here a fifth of what the man is worth, because
+a lanista's assessment was never charitable — and a freedman of a house that thinks well of itself is not
+turned out of the gate with nothing, so the peculium scales with the census rung and what the street
+expects of you. Scaling rather than a fixed sum is the v3.14.0 rule: a flat price is a tax on a young
+house and a rounding error to an old one.
+
+| | keeps them | frees them, priced |
+|---|---|---|
+| gold | 9,064 | **3,915 (−57%)** |
+| fame | 2,232 | 1,270 |
+| men freed | 0 | 20 |
+| houses ending `closed` | 0 of 8 | **2 of 8** |
+| median life | 136w | 146w |
+
+That is the most expensive thing in the game, and the arm above is the most extreme possible player — he
+frees every man the week he qualifies. A player choosing two or three over a career pays a fraction of it.
+The 57% is the ceiling of what mercy costs, not its expected price.
+
+**And the week's work now names the man.** `rudisEligible` was crossed by 14.1% of every man who ever
+lived and the only thing in the game that ever mentioned it was one line of the doctore's counsel,
+weighted 66 among all the others — so the ending nobody reaches was gated on noticing. The agenda carries
+it at urgency 1 with the fee and the plain warning that you lose a fighter, and it goes quiet the moment
+you act. Gated on being able to afford it, so a house that cannot is not taunted with it.
+
+`rudisCost`, `canAffordRudis`, `RUDIS_TAX` and `gladValue` reached the handle. The rope gained a `free`
+step, opt-in for the same reason `gear` is: a player who frees his veterans is a measurably different
+player, and flipping either default is a suite-wide re-baselining.
+
 ### v3.14.0 — Arming your men triples the bill and dents the surplus by a fifth
 
 v3.13.0 made steel wear again. The question left over was whether that closes the middle game's coin

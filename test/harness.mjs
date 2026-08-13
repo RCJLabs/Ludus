@@ -363,6 +363,24 @@ export async function installRope(p){
           }
         }
       }
+      /* ---- AND THE RUDIS, WHICH NOTHING HAS EVER GRANTED ----
+         `closed` — five men freed — is an ending `ends` measured at 2 houses in 20. Measured here over
+         8 houses and 227 men who ever drew breath: 14.1% of them cross `rudisEligible` at some point
+         (wins >= 10 AND pfame >= 180), which is about four men a house against the five that ending
+         wants, and 146 of the 227 DIED. So the door is nearly wide enough and nobody has ever walked
+         through it — the reference player freed 0 men in 3,200 house-weeks, for the same reason he
+         never bought a piece of steel: there was no step here for it.
+
+         Opt-in for the same reason `gear` is: freeing a man costs you a fighter, and a player who
+         frees everyone eligible is a measurably different player. */
+      if(o.free === true && typeof A.grantRudis === "function"){
+        for(const g of A.activeG(d)){
+          if(!fin(A.rudisEligible,[g])) continue;
+          const before = A.activeG(d).length;
+          fin(A.grantRudis,[d, g.id]);
+          if(A.activeG(d).length < before) bump("freed");
+        }
+      }
       if(on("rome") && d.romeOffer && fin(A.answerRomeWith,[d,true])) bump("toRome");
 
       if(on("bout")){
