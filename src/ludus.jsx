@@ -16447,6 +16447,30 @@ function Bar({v, max=100, color, label}){
     <div className="fill" style={{width:`${clamp(v/max*100,0,100)}%`, background:cbc(color)}}/></div>;
 }
 
+/* WHAT YOU KNOW ABOUT A MAN YOU HAVE NOT BOUGHT, drawn as what you actually know it to be.
+   The block used to print the seller's range in words and then, six pixels lower, a plain Bar
+   drawn straight off the true stat — so the number the panel was charging you to learn was on
+   screen for nothing, exactly, in the fill width and in aria-valuenow both. Measured over 198
+   stats on 33 unscouted men the bar sat a mean 3.17 points under the printed band's centre,
+   which is sellerSays' own ri(0,5) — ri(0,9) on a flawed man — never negative and never once
+   outside the band. So it was the true stat rather than a redraw of the claim.
+   This draws the BAND instead: a window floating from lo to hi, which is the honest picture of
+   not knowing, and which collapses to an ordinary filled bar the moment somebody has looked at
+   him. Uncertainty is the block's whole subject, so the row that used to give it away is now
+   the one place you can see it. */
+function Band({lo, hi, exact, color, label}){
+  const known = exact != null;
+  return <div className="track" role="progressbar"
+    aria-valuenow={known ? Math.round(clamp(exact,0,100)) : undefined}
+    aria-valuetext={known ? undefined : `somewhere between ${lo} and ${hi}`}
+    aria-valuemin={0} aria-valuemax={100} aria-label={label||undefined}>
+    {known
+      ? <div className="fill" style={{width:`${clamp(exact,0,100)}%`, background:cbc(color)}}/>
+      : <div className="fill" style={{marginLeft:`${clamp(lo,0,100)}%`,
+          width:`${clamp(hi-lo,3,100)}%`, background:cbc(color), opacity:.62}}/>}
+  </div>;
+}
+
 const SKIN="#a8763e", SKIN_D="#7d5527", LEATHER="#4a3216", LEATHER_D="#33220f",
       STEEL="#c3c9d0", STEEL_D="#6d747d", BRASS="#c08e3a", BRASS_D="#8a6425", CLOTH="#8d3b2c",
       BLADE="#dfe5ec", BLADE_D="#565d67", GRIP="#2c1d0e";
@@ -20951,14 +20975,20 @@ export default function App(){
                      : lvl>=1 ? `Your doctore walks round ${PR(g).him} once. ${potentialWord(g.potential,g)}, he thinks. At ${g.age}, ${ageWord(g.age,g)}.`
                      : `The seller talks ${PR(g).him} up and up. At ${g.age}, ${ageWord(g.age,g)}.`}
                   </div>
+                  {/* ONE grid, not two. The panel used to carry this row of numbers and then a
+                      second row of bars lower down, six stats drawn twice for 144 pixels a man on
+                      the tab that is nothing but these panels — and the lower row was the leak. */}
                   <div className="grid grid-cols-3 gap-2" style={{margin:"6px 0"}}>
                     {STATS.map(k=>{ const [lo,hi] = bandOf(src2[k], lvl);
+                      const key = CLASSES[g.cls].key.includes(k);
                       return (
                         <div key={k}>
                           <div className="dim" style={{fontSize:"var(--fs-sm)"}}>{STAT_NAMES[k].slice(0,4)}</div>
                           <div style={{fontSize:"var(--fs-md)", color: lvl>=2 ? "#e8d9b8" : "#c0b492"}}>
                             {lvl>=2 ? rnd(g[k]) : `${lo}–${hi}`}
                           </div>
+                          <Band lo={lo} hi={hi} exact={lvl>=2 ? g[k] : null}
+                            label={STAT_NAMES[k]} color={key?BRONZE:"#6a5a40"}/>
                         </div>
                       ); })}
                   </div>
@@ -20990,11 +21020,6 @@ export default function App(){
                   <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>{g.auctor.why}</div>
                 </div>
               )}
-              <div className="grid grid-cols-3 gap-2" style={{margin:"8px 0 2px",fontSize:"var(--fs-sm)"}}>
-                {STATS.map(k=>(
-                  <div key={k}><span className="dim">{STAT_NAMES[k].slice(0,4)}</span><Bar v={g[k]} color={CLASSES[g.cls].key.includes(k)?BRONZE:"#6a5a40"}/></div>
-                ))}
-              </div>
               {(()=>{ const cost = g.contested ? g.contested.ceiling : g.price;
                 return (
                   <button className="btn" style={{width:"100%",marginTop:8, ...(g.contested?{borderColor:"#c99a4b"}:{})}}
@@ -25010,7 +25035,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* the generators behind the four markets — a check that cannot refresh a stall
        cannot ask what the stall offers, which is how the block's pricing drifted
        through a release that changed the number it reads */
-    makeMarket, makeDoctoreMarket, makeStaffMarket, liquidate, SLAVERS, bandOf, gladValue,
+    makeMarket, makeDoctoreMarket, makeStaffMarket, liquidate, SLAVERS, bandOf, readLevel, gladValue,
     makePrimusOffer, makeDefenceOffer, PRIMUS_ASK, PRIMUS_ASK_GAP,
     primusMine, primusEligible, primusWeek, PRIMUS_GATE, seedPrimus,
     /* the top rung's own reading, and the word a player is given for nothing */

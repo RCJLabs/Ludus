@@ -1392,6 +1392,83 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v3.20.0 — The block charged you to learn a number it was already showing you
+
+Chasing the 80% scroll, the market was the place to look: the tab is nothing but the men standing at the
+block, at **502px of panel each**. Reading one panel line by line to find what could be condensed, the six
+stats turned out to be drawn **twice** — a numeric row, and a row of bars under it. The numeric row is the
+careful one, `bandOf(src2[k], lvl)` over `src2 = lvl>=1 ? g : (g.shown || g)`. The bar row was
+`<Bar v={g[k]}/>`, with no read level within twenty lines of it.
+
+`g[k]` is the true stat. So the entire economy of the block — `sellerSays` inflating every number, the
+doctore narrowing the band from ±14 to ±7, `scout` charging 35d plus a tenth of the price, and a teaching
+panel that spends a paragraph explaining *the numbers are the seller's* — was being given away six pixels
+lower, for nothing, on every man.
+
+**Measured off the screen rather than off the source,** because reading the JSX is how you convince
+yourself and not how you find out. Over **198 stats on 33 unscouted men**, sampled across 26 weeks of a
+real house, the bar's `aria-valuenow` sat a mean **3.17 points below the printed band's centre**:
+
+    gap between the band's centre and the bar's number
+    0: 25   +1: 34   +2: 31   +3: 32   +4: 20   +5: 23   +6: 10   +7: 9   +8: 9   +9: 5
+
+which is `sellerSays`'s own `ri(0,5)`, and `ri(0,9)` on a flawed man, exactly. Never negative, never once
+outside the printed band. That rules out the innocent reading — a bar merely redrawing the seller's claim
+would agree at 0.00 every time. And it was not a matter of squinting at a bar: `Bar` renders
+`role="progressbar" aria-valuenow={Math.round(v)}`, so the true integer was in the accessibility tree, and
+the fill width equalled it to the percent.
+
+**The fix is the condensation.** The two rows are now one. A new `Band` draws what you actually know: a
+window floating from lo to hi, which is the honest picture of not knowing, collapsing to an ordinary filled
+bar the moment somebody has looked at him. Uncertainty is the block's whole subject, so the row that used
+to give it away is now the only place you can see it.
+
+    a man on the block   502px  ->  448px      54px, about 11% of the panel
+    market as it arrives 3,257px -> 2,564px    (the block's population is the RNG's, so the panel is the honest figure)
+    all six tabs        19,491px -> 18,392px
+
+**And the instrument was wrong before any of this.** `reach` prints "79% of the things that change the
+house sit below the first 844 pixels" — measured with **every fold thrown open**, because a closed
+`details` lays out no content and a button inside one has no y at all. That page is **40% taller** than the
+one a player arrives at (27,260px against 19,491px; 242% taller on `villa · The House`). Restated against
+the page that exists — a closed section costing the scroll to its *summary*, which is where the thumb
+actually stops — the figure is **74%, not 79%**, median y 1,312 rather than 1,561. The problem survives the
+correction; the number did not. A second fault with it: `arrive`'s per-place figures deduplicated actions
+across places, so "the market's first action is at y=1,426" was an action belonging to another tab. Per
+place, honestly, it is y=932.
+
+`seller` is the 61st check. It holds the invariant without any access to the true value — which is the
+point, since a player has none either: on a man still offering to be looked over, no bar may carry
+`aria-valuenow` and every window must run from exactly the printed lo to exactly the printed hi; on a man
+paid for, the bar carries the number and it equals the one printed above it. Run against v3.19.0 it fails
+19 of 19 men and 114 of 114 windows, which is how a new bar earns its place.
+
+It is called `seller` because it was called `block` first, and `block` was already the name of the
+end-to-end buy check — so the file was written straight over a live guard on `buyFromBlock`, the path that
+was lifted out of a React closure precisely because nothing outside the component could spend a player's
+money. The suite reported 60 and I read that as the new total; it was the old total with one check
+replaced. **A suite that auto-discovers `test/checks/*.mjs` by filename will let you delete a check by
+adding one, and the count will not tell you** — it went 60 to 60. Before writing a new check, `ls` the
+directory. The count is now genuinely 61.
+
+**One red run, and why it shipped anyway.** The verifying suite came back 60/61: `survive` returned 1
+house standing of 5. Re-run alone three times it passed — (2,5) (2,4) (3,8) — but all at the low end, and
+v3.20.0's five observations had a median of 2 houses standing against a prior median of 4 over 12
+observations. The comfortable reading is that a change to how a panel draws six stats cannot reach a
+simulation, so it must be noise. That is an inference, and this project's record is that inferences of
+that shape are usually wrong. So the v3.19.0 game code was put back and run four times on the same
+machine, minutes later:
+
+    v3.19.0 game code   (3,5) (2,3) (2,3) (5,7)         standing median 2.5
+    v3.20.0 game code   (3,3) (1,4) (2,5) (2,4) (3,8)   standing median 2
+
+Same distribution, so the low run is the machine and the hour, not the release. Worth keeping as a fact
+about the instrument: **`survive`'s spread is wide enough that five consecutive low draws prove nothing
+about a build, and the only thing that settles it is running the previous build beside it.** The four
+paired runs are deliberately NOT in `survive-tally.json` — `package.json` was already at 3.20.0, so they
+would have been stamped with the wrong version, and a hand-corrected stamp is exactly what #130 caught in
+that file's own head note.
+
 ### v3.19.0 — The panel said "the block below this one" and it was three screens away
 
 v3.7.0 gave the census ladder's Standing panel a line naming the lever that moves it: *"Throw a party —

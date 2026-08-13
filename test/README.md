@@ -86,6 +86,7 @@ reason the check exists usually has not.
 | `styles` | fast | the six classes. `COUNTERS` is a six-cycle and `CLS_EDGE` pays 1.15 for the counter and 0.91 against it, so over a uniform mix the mean edge is 1.010 for all six and one identical kit makes them identical to the second decimal — spread 0.00 points. In their own default kits the priced spread is 4.67 and the fought spread 7.8 at 3.0 SE, five of six inside 4 points. It exists because a reported 1.8x spread in wins per man-week was three of my own instrument faults in a row: `kitFor` is a random draw that randomises the thing being compared, `newGameState` reseeds the global RNG so a helper built after it pins every bout, and "Retiarius has a dead key stat" was priced through `power`, the one function that cannot see `sho` |
 | `odds` | fast | the arena panel's own number against the sand. Holds three things: a MIRROR — two men identical in all six stats, class, kit, traits, heart, morale, record and fame — landing a shade under half, which is what `FOE_EDGE` 1.029 predicts and which is this check's instrument before it is a bar; the shape of a held bout's return, so `crux`-versus-`unfinished` cannot be confused again; and the ranking `winChance` recommends for all six classes, asserted on the pure function with no sampling in it, because the realised version of that bar flipped between runs at n=150 |
 | `bay` | fast | the two coastal scales, neither of which had ever been toured — #115. Favour is a ratchet that opens every town on "an outsider" and climbs only on bouts fought there, and its bottom word is reachable ONLY through `cityServed`'s defeat branch at Neapolis; `knownIn` bleeds 0.55 a week and is pegged at 100 by a round robin. Also holds the branch neither of my arms could reach: the bay taken by a rival after 30 idle weeks, and given back only by turning up |
+| `seller` | slow | the block never shows a stat the player has not paid for. Every build to v3.19.0 drew the six stats twice — once through `bandOf` and the read level, once as plain bars off `g[k]`, the true value — so `sellerSays`, the doctore's narrowed band and `scout`'s fee were all given away six pixels lower, at the integer, in `aria-valuenow`. Measured off the screen over 198 stats on 33 unscouted men the gap to the printed band's centre came back as `ri(0,5)`/`ri(0,9)` exactly, 0 through +9, never negative — which is what rules out a bar merely redrawing the seller's claim. Holds it without any access to the true value, since a player has none either: on a man still offering to be looked over no bar may carry `aria-valuenow` and every window must run from exactly the printed lo to exactly the printed hi; on a man paid for, the bar carries the number and it matches. Fails 19 of 19 men against v3.19.0. Named `seller` because `block` was already taken, by the end-to-end buy check — which I overwrote before noticing, and which is why the suite still read 60 |
 | `steel` | fast | wear — the one system where the probe was wrong FOUR separate ways. #114 read `d.gearCond`, which is the pool of pieces on the SHELF, and concluded steel never wears; read off the man in `g.wear[slot]` a bout takes 3-6 off a weapon, all five words are said and pieces break. Holds the rate against `WEAR_RATE`, the five words off a piece driven to nothing, the break on the game's own chronicle line, the bands a played house sees, a man's career against his weapon's life, and — the trap that cost the most — that a bout held at the balance has changed nothing while the same bout answered changes the kit |
 | `houses` | fast | the four words for a rival house, two of which #113 measured as never said. Refuted on the item's own falsification clause: a house that works ONE rivalry for 300 weeks peaks at a median warmth of 76.8 and says all four, where a probe using `pickRivalOpp` meets six houses a little and tops out near 43. Holds the refutation plus the thing underneath it — that a bout against a rival's man registers as a meeting at all, which is `offer.opp.house` lining up with the rival's name |
 | `chair` | fast | the name Capua settles on — `repStyle` — which earns two of the lanista's traits and is half of what makes a medicus walk out, and which nothing had ever measured. Sends one house after each of the four names the way a player would (the blood doctrine and *sine* stakes, the showboat tactic, the craft doctrine, the mercy doctrine plus the cloth at every crux) and holds three things: the town settles on something at all, each of the four names is not just reached but HELD for most of a house's named weeks, and the butcher loses his surgeon while the showman does not. Every one of the four faults it was written to catch turned out to be the probe |
@@ -2041,3 +2042,76 @@ That is worth knowing before anybody spends a release on ordering: the scroll to
 permutation. Ordering fixes WHICH things are close, which matters when a panel names a lever and the lever
 is three screens away, but the aggregate only moves when content is removed, condensed, or folded — and
 folding trades scroll for taps, which `reach` measures on both sides so the trade can be seen.
+
+## Measure the page a player arrives at, not the page you opened to measure
+
+`reach` has to throw every fold open before it can read a y, because a closed `details` lays out no content
+and a button inside one has no position at all. That is unavoidable — and it means every scroll figure the
+suite has printed was taken on a page **40% taller** than the one a player faces: 27,260px against
+19,491px across the six tabs, and 242% taller on `villa · The House`, which arrives at 581px and opens to
+1,985.
+
+Restated against the page that exists — a closed section costs the scroll to its **summary**, which is
+where the thumb actually stops before the finger taps — the headline figure is **74%, not 79%**, and the
+median action sits at y=1,312 rather than 1,561. The problem was real; the number was the probe's.
+
+The companion fault is smaller and more embarrassing: an early version deduplicated actions by label
+across every place, keeping the shallowest, and then reported per-place figures off the survivors. So
+"nothing on the market is reachable for 1,426 pixels" was about a button on another tab entirely. Per
+place, the market's first action is at y=932. **Deduplicate for a global count; never for a per-place one.**
+
+## The interesting thing was six pixels below the thing I was measuring
+
+The 80% scroll work sent me to the market, because that tab is nothing but the men at the block at 502px
+of panel each, and condensing a panel means reading it line by line. Which is how the real find turned
+up — not a scroll fault at all, but the six stats being drawn twice: once carefully, through `bandOf` and
+the read level, and once as plain bars off `g[k]`, the true value, with no read level anywhere near it.
+The whole economy of the block was being given away for nothing under the panel that charged for it.
+
+Two things worth keeping from it. **Reading the source is how you convince yourself; measuring is how you
+find out** — the leak was proven by asking the screen, over 198 stats on 33 men, and the gap distribution
+came back as `sellerSays`'s own `ri(0,5)`/`ri(0,9)`, 0 through +9, never negative. That distribution is
+what rules out the innocent reading, which no amount of staring at the JSX would have settled: a bar
+merely redrawing the seller's claim would have agreed exactly, every time.
+
+And **a duplicated display is a place to look for a disagreement.** Two renderings of one quantity, written
+at different times, will eventually be fed from different sources; the one written later usually reaches
+for the raw field because it is nearer to hand. Wherever the suite finds the same number drawn twice, the
+question is not "which is prettier" but "do they agree, and which one is lying".
+
+## A suite that discovers checks by filename will let you delete one by adding one
+
+`test/run.mjs` auto-discovers `test/checks/*.mjs`, which is what makes adding a check cheap. It also means
+writing a new check over an existing filename silently removes the old one, and **the total does not
+move** — v3.20.0's new check was written as `block.mjs`, straight over the end-to-end buy guard on
+`buyFromBlock`, and the suite reported 60/60 exactly as it had the release before. Sixty was the old
+total with one check replaced, and I read it as the new total including mine.
+
+What caught it was not the count and not the run: it was `git status` printing ` M test/checks/block.mjs`
+where `??` was expected. The count cannot catch this by construction, and a green suite will not either —
+the replacement passes, and so does everything else.
+
+So: **`ls test/checks/` before naming a new check**, and treat an ` M` on a file you believe you created
+as a stop-the-line signal. The general form is worth keeping beyond this suite — any registry keyed on a
+name will accept a collision as an update, and the thing you destroy is the thing nobody is now testing.
+
+## `survive`'s spread is wide enough that five low draws prove nothing
+
+v3.20.0's verifying suite failed `survive` at 1 house standing of 5, and three re-runs passed but stayed
+low: (3,3) (1,4) (2,5) (2,4) (3,8), a median of 2 against a prior median of 4 over 12 observations. That
+looks like a regression, and the release under test was a change to how one panel draws six stats — which
+cannot reach a simulation, so it "must" be noise.
+
+Putting the previous build back and running it beside the new one settled it in twelve minutes:
+
+    v3.19.0 game code   (3,5) (2,3) (2,3) (5,7)         standing median 2.5
+    v3.20.0 game code   (3,3) (1,4) (2,5) (2,4) (3,8)   standing median 2
+
+Same distribution. The machine and the hour move this check further than most changes do.
+
+Two things to keep. **A run of low draws is not evidence about a build until the previous build has been
+run beside it** — the tally's pooled history is across builds AND across machines and hours, so comparing
+today's five against a pooled median compares conditions as much as code. And **do not let a paired
+A/B into the tally**: `package.json` is already bumped by then, so the old build's runs get stamped with
+the new version. Record the pairing in prose where the conditions can be stated, which is what the file's
+own head note learned the hard way in #130.
