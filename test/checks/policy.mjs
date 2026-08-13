@@ -45,6 +45,26 @@
 
 import { hasHandle } from "../harness.mjs";
 
+/* ---- THE REFERENCE PLAYER CHANGED UNDER THIS CHECK IN v3.17.0 ----
+   He arms his men and he entertains now. Every bracketed "[measured …]" figure below was taken on the
+   man who did neither — they are history rather than error, because every bar here is a FLOOR and he
+   clears all of them by more than he used to. What he reaches, before and after, same eight seeds:
+
+     median life            60w  ->  211w
+     median fame            147  ->  5,497
+     best house's fame   11,051  ->  17,840
+     stood past week 180  4 of 8 ->  5 of 8
+     events fired       36 of 57 ->  41 of 57
+     claimed a rank        7 of 8 ->  8 of 8
+     the census         19 of 20, `rome` DARK  ->  20 of 20, none dark
+     `rome` reached       0 houses ->  6 of 8 · `city` 4 -> 6 · medicus and armourer 4 -> 7 · war 1 -> 2
+
+   The old player was not modelling competence. He was modelling somebody who never found the game, and
+   he could not reach Rome at all — which is why `rome` sat at 1 of 8 or 0 of 8 in every census this
+   check has ever printed, and why the v3.10.0 floor had to be set low enough to tolerate it. Freeing
+   men is still opt-in and the harness note says why: it halves the house's fame, and fame is the
+   quantity most of this reachability leans on. */
+
 export const name = "policy";
 export const describe = "the reference player still gets a house somewhere — the bar under `__ROPE.lanista`";
 

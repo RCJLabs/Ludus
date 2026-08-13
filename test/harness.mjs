@@ -223,9 +223,10 @@ export async function installRope(p){
        `lanista(d, opts)` plays one week and RETURNS WHAT IT DID, so a caller can assert on behaviour
        rather than intent. Every part can be switched off through `opts` for a control arm:
          cells, buy, doctore, build, rites, census, staff, school, heir, rome, bout  (all default true)
-         gear                                                                          (default FALSE —
-           the one opt-in step, because turning it on changes this player more than anything since the
-           rope itself; the note over the step carries the paired figures)
+         gear, party                                                        (default TRUE from v3.17.0)
+         free                                                                          (default FALSE —
+           the one opt-in step: freeing everyone eligible takes the house's fame from 2,232 to 1,270,
+           and fame is the quantity most of this suite's reachability leans on. See the step's note)
        `play(d, weeks, opts)` runs many and pools the counters. */
     const LAN = {
       reserve: d => Math.max(700, A.weeklyBill(d) * 12),
@@ -333,8 +334,16 @@ export async function installRope(p){
          the figures quoted in the heads of `policy`, `ends`, `careers` and `survive` were measured on a
          player who fought in house issue. Flipping this default is a deliberate re-baselining of the
          whole suite and belongs in its own release with every affected figure re-measured — not as a
-         side effect of adding the step. `gear:true` is how a check asks for it meanwhile. */
-      if(o.gear === true && typeof A.buyGearItem === "function"){
+         side effect of adding the step.
+
+         AND v3.17.0 TURNS IT ON. The direction was never in doubt: arming your men improves SURVIVAL —
+         six houses of eight came through four hundred weeks against three — and v3.16.0 settled that a
+         player who uses the levers runs 19 denarii a week at year 12+ against 769 for one who does not.
+         A reference player sitting on 88,555 denarii he has no use for is not modelling competence; he
+         is modelling somebody who never found the game. Only three checks drive this player at all —
+         `ends`, `policy` and `week` — and their figures are re-measured with it. `gear:false` is how a
+         control arm asks for the old man. */
+      if(o.gear !== false && typeof A.buyGearItem === "function"){
         const spareNow = () => d.gold - LAN.reserve(d);
         for(const g of A.activeG(d)){
           if(!g.kit) continue;
@@ -371,13 +380,21 @@ export async function installRope(p){
          through it — the reference player freed 0 men in 3,200 house-weeks, for the same reason he
          never bought a piece of steel: there was no step here for it.
 
-         Opt-in for the same reason `gear` is: freeing a man costs you a fighter, and a player who
-         frees everyone eligible is a measurably different player. */
+         AND THIS ONE STAYS OPT-IN WHERE `gear` AND `party` DID NOT, on a measurement rather than a shrug.
+         Freeing every man the week he qualifies takes the house's fame from 2,232 to 1,270 — it is your
+         BEST men you are letting go and their fame was the house's. Fame is the quantity most of this
+         suite's reachability leans on: `policy` asserts a best house past 2,000 of it, and the primacy,
+         Rome and half the census gates read it. So a reference player who frees everyone reaches LESS of
+         the game, which is the opposite of what he is for. It is also a style rather than a competence —
+         mercy-maximising is a way to play, not the way — and nothing measured says it is optimal.
+         `free:true` is how a check asks for it. */
       /* ---- AND THE TABLE, which v3.7.0 measured as the largest lever on the census ladder ----
          Paired then: a lanista who entertains reaches mean rung 2.70 against 1.50 and 218 weeks at Rome
          against 31, for about 457 denarii a week. It is also a sink, and a "does everything" arm without
-         it is not one. Opt-in with the other two, for the same reason. */
-      if(o.party === true && typeof A.hostParty === "function"){
+         it is not one. ON from v3.17.0 with `gear`: entertaining is how the census ladder moves at all —
+         rung 2.70 against 1.50 — and a reference player who never does it cannot reach the rungs this
+         suite asserts he reaches. */
+      if(o.party !== false && typeof A.hostParty === "function"){
         const sp = d.gold - LAN.reserve(d);
         const kind = sp > 4000 ? "decadent" : sp > 1600 ? "lavish" : sp > 700 ? "modest" : null;
         if(kind && fin(A.hostParty,[d, kind])) bump("party");

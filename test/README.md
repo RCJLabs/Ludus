@@ -1988,3 +1988,21 @@ for the parties, and a house that freed its best fighter earns less thereafter t
 
 So a set of sinks measured one at a time will systematically read weaker than it is, and a designer adding
 them one at a time will overshoot. Measure the combined arm before pricing the next one.
+
+## A reference player who cannot reach the game measures the wrong game
+
+The rope's lanista is how three checks see the whole of LVDVS, and for four releases he was drifting: each
+new sink — steel, the table, freedom — went in as an opt-in step so as not to disturb existing figures.
+Turning steel and the table on took his median life from 60 weeks to 211, his median fame from 147 to
+5,497, and the subsystem census from 19 of 20 to 20 of 20.
+
+**He could not reach Rome.** `rome` sat at 0 or 1 of 8 houses in every census this project ever printed,
+and the v3.10.0 census floor was set at 18 of 20 partly to tolerate that. It was never a fact about Rome's
+gates: a house that never buys steel and never entertains does not get a senator to 70 favour or a man
+good enough to hold the primacy. Four releases of measurements described a game with the imperial road
+shut, for a reason that had nothing to do with the road.
+
+Two lessons. Deferring a re-baselining is not free — the model player decays and every figure taken
+through him decays with him. And a bar that is a FLOOR survives its player getting better, which is why
+none of the dozen bars here needed moving: floors are the right shape for reachability, and this is the
+argument for writing them that way.

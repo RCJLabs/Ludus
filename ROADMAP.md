@@ -1392,6 +1392,49 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v3.17.0 — The reference player could not reach Rome
+
+No game change. The reference player arms his men and entertains now, which the last four releases had
+made overdue: three sinks were built and each was added to him as an OPT-IN step, so the man every check
+measures the game through was drifting further from a competent player with each release.
+
+v3.16.0 is what forced it. A player who uses the levers runs 19 denarii a week at year 12+; one who does
+not runs 769 and holds 88,555 he has no use for. That is not a model of competence — it is a model of
+somebody who never found the game, and the whole suite was certifying the economy through him.
+
+**What he now reaches, same eight seeds, before and after:**
+
+| | house issue, no parties | arms and entertains |
+|---|---|---|
+| median life | 60w | **211w** |
+| median fame | 147 | **5,497** |
+| best house's fame | 11,051 | 17,840 |
+| stood past week 180 | 4 of 8 | 5 of 8 |
+| events fired | 36 of 57 | 41 of 57 |
+| houses that claimed a rank | 7 of 8 | 8 of 8 |
+| the subsystem census | **19 of 20, `rome` DARK** | **20 of 20, none dark** |
+| `rome` reached | **0 houses** | **6 of 8** |
+| `city` · medicus · armourer · war | 4 · 4 · 4 · 1 | 6 · 7 · 7 · 2 |
+
+**He could not reach Rome.** That is the finding, and it had been sitting in plain sight in every census
+this project has printed: `rome` at 1 of 8 or 0 of 8, release after release, and the v3.10.0 floor set at
+18 of 20 partly to tolerate it. It was never a fact about Rome's gates. A house that never buys steel and
+never entertains does not get a senator to 70 favour or a man good enough to hold the primacy, so the
+imperial road was shut for a reason that had nothing to do with the road.
+
+**No bar had to move**, which is the part worth keeping. Every bar in `policy` is a FLOOR, and a better
+player clears floors by more than a worse one — so the re-baselining that looked like it would need a
+dozen recalibrations needed none. The bracketed `[measured …]` figures in those messages are now history
+rather than error, and the head says so with the new numbers beside them. Only three checks drive this
+player at all — `ends`, `policy`, `week` — and all three pass unchanged.
+
+**`free` stays opt-in, on a measurement rather than a shrug.** Freeing every man the week he qualifies
+takes the house's fame from 2,232 to 1,270: it is your best men you are letting go and their fame was the
+house's. Fame is the quantity most of this suite's reachability leans on — `policy` asserts a best house
+past 2,000 of it, and the primacy, Rome and half the census gates read it — so a reference player who
+frees everyone reaches LESS of the game, which is the opposite of what he is for. It is also a style
+rather than a competence, and nothing measured says it is optimal.
+
 ### v3.16.0 — The surplus was a missing sink after all, and I had the reason backwards
 
 No game change. One measurement, which decides whether to build a fourth sink and says not to.
