@@ -409,6 +409,27 @@ export async function installRope(p){
       }
       if(on("rome") && d.romeOffer && fin(A.answerRomeWith,[d,true])) bump("toRome");
 
+      /* ---- THE QUESTION THIS LANISTA NEVER ANSWERED ----
+         `d.reSignOffer` is an auctor whose contract has run out, standing in the yard with the gate
+         open. On screen it is a blocking modal with two doors and the week cannot proceed past it.
+         Headless, nothing here touched it, so it was set once and stood for the rest of the run — and
+         the offer that raises it is guarded `if(!d.reSignOffer && ...)`, so ONE stuck question shut the
+         whole system for every long probe this project has ever run.
+         It surfaced sideways: a label census found "A contract is up" available on 779 of 779 late
+         weeks and shown on none of them, which is not a game that never surfaces its content but a
+         reference player standing in a doorway for eight years.
+         MEASURED BEFORE AND AFTER, because the first version of this note overstated it. The question
+         needs an auctor to finish a contract, which needs one to have been bought, so it is not
+         universal: over 10 houses x 420 weeks, 3 houses ever raised it — and those 3 then spent 387 of
+         1,009 house-weeks, 38%, frozen on it, because the offer that raises it is guarded on its own
+         absence. Rare to start and permanent once started.
+         Signed when affordable, let go when not, because that is the choice the panel offers and a
+         house that cannot pay does not get to keep him. */
+      if(on("contract") && d.reSignOffer){
+        const fee = d.reSignOffer.fee || 0;
+        if(fin(A.answerReSignWith,[d, d.gold >= fee])) bump(d.gold >= fee ? "reSigned" : "letWalk");
+      }
+
       if(on("bout")){
         const av = g => A.STATS.reduce((s,k)=>s+(g[k]||0),0)/6;
         const men = A.activeG(d).filter(g=>!g.injury && (g.fatigue||0) < 55).sort((x,z)=>av(z)-av(x));

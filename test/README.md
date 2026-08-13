@@ -2188,3 +2188,31 @@ The habit that caught two of them: **print the commonest labels seen while an un
 A regex written by the person who already expects the answer fails toward that answer, and the printout is
 what makes the miss visible — the household read 0% while "Nobody feeds this house, or nurses it, or keeps
 it" sat in its own list at 33%.
+
+## The reference lanista was standing in a doorway
+
+Chasing #131 — what a great house is never asked for — a label census turned up "A contract is up"
+available on 779 of 779 late weeks and shown on none of them. That reads like content the game owns and
+never surfaces, which is exactly the item's thesis. It was not.
+
+`d.reSignOffer` is an auctor whose contract has run out, standing in the yard with the gate open. On
+screen it is a blocking modal with two doors and the week cannot proceed past it. Headless, the rope
+answered `romeOffer` and `pendingEvent` and never touched this one — and the code that raises a new offer
+is guarded `if(!d.reSignOffer && ...)`, so once one stuck, the contract system was shut for the rest of
+that house's run.
+
+**Measured before and after, because the first draft of this lesson overstated it.** The question needs an
+auctor to finish a contract, which needs one to have been bought, so it is not universal: over 10 houses x
+420 weeks, **3 houses ever raised it, and those 3 spent 387 of 1,009 house-weeks — 38% — frozen on it.**
+Rare to start, permanent once started. The rope has a `contract` step now; after it, 0 weeks in 387 carry
+an unanswered contract, and #131's headline is unchanged at 96.5% perennial against 97.1% before.
+
+Two things worth keeping. **A reference player that declines to answer a blocking question is not playing
+the game**, and the symptom does not look like a broken probe — it looks like a finding, phrased in the
+vocabulary of whatever you were investigating. Any state the UI treats as modal is a state the rope must
+have a step for; `pendingEvent`, `romeOffer`, `doctoreOffer`, `succession` and now `reSignOffer` are the
+list, and `line 12244` in the game is the authority on it because it enumerates exactly what halts a week.
+
+And **check the trigger rate before writing "every run"**. The 779-of-779 was one house's whole late
+career, not the fleet's. A denominator drawn from the houses where a thing happened will always say it
+happens always.

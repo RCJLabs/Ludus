@@ -81,9 +81,10 @@ const out = await p.evaluate(([H,W])=>{
       for(const a of rank){
         const k = KEY(a.label);
         let r = lab.get(k);
-        if(!r){ r = { k, avail:{}, shown:{}, urg:0, urgSum:0, urgN:0 }; lab.set(k, r); }
+        if(!r){ r = { k, avail:{}, shown:{}, urg:0, urgSum:0, urgN:0, eraUrg:{} }; lab.set(k, r); }
         r.avail[E] = (r.avail[E]||0) + 1;
         r.urg = Math.max(r.urg, a.urgency||0);
+        r.eraUrg[E] = Math.max(r.eraUrg[E]||0, a.urgency||0);
         r.urgSum += (a.urgency||0); r.urgN++;
         if(topKeys.has(k)){
           r.shown[E] = (r.shown[E]||0) + 1;
@@ -148,3 +149,21 @@ for(const r of lo.slice(0,20))
 console.log(`\n  urgent items per week, by era: `
   + N.map(n=>`${n} ${(out.urgentBy[n]/Math.max(1,out.weeks[n])).toFixed(2)}`).join(" · "));
 console.log(`  rope: ${out.rope}`);
+
+/* ---- AVAILABLE IN THE LAST ERA AND NEVER SHOWN THERE ----
+   agendaTop's rule is `urgency >= 3 || age <= AG_FRESH`, so a label sitting at urgency 3 CANNOT be
+   withheld. A late-only label that is available in year 12+ and never shown there is therefore either
+   never urgent in that era (whatever its lifetime maximum was) or never fresh — it has been on the list
+   so long that its age has run past AG_FRESH and it simply never rises again. That second case is
+   content the house owns, that the game knows about, and that the player is never pointed at. */
+const stale = out.labs.filter(r => (r.avail[LAST]||0) > 0 && !(r.shown[LAST]||0))
+  .sort((a,b)=>(b.avail[LAST]||0)-(a.avail[LAST]||0));
+console.log(`\n  AVAILABLE IN ${LAST.toUpperCase()} AND NEVER ONCE SHOWN THERE — ${stale.length} labels:`);
+console.log(`    weeks   best urgency in that era   lifetime best   label`);
+for(const r of stale.slice(0, 18))
+  console.log(`    ${String(r.avail[LAST]).padStart(5)}   ${String(r.eraUrg[LAST]||0).padStart(24)}   `
+    + `${String(r.urg).padStart(13)}   ${cls(r).padEnd(10)} ${r.k.slice(0,50)}`);
+const urgentStale = stale.filter(r => (r.eraUrg[LAST]||0) >= 3);
+console.log(`\n  of those, ${urgentStale.length} reached urgency 3 IN THAT ERA and were still never shown,`);
+console.log(`  which agendaTop's own rule says is impossible — if any appear, the rule is not what ranks the block.`);
+for(const r of urgentStale.slice(0,8)) console.log(`    ${r.k.slice(0,60)}`);
