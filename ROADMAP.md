@@ -1392,6 +1392,37 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v3.15.1 — Three faults in the ten minutes after pricing freedom
+
+v3.15.0 gave `grantRudis` a fee and an early return when the house cannot pay it. That introduced three
+defects, two of them the exact fault this audit has spent a dozen releases finding, and the third one
+worse. All three were found by looking for them rather than by the suite.
+
+**The action silently did nothing while the screen said otherwise.** `grantRudis` returned bare, and two
+callers go straight on to tell the player it happened. The `year` ambition's second choice runs it and
+returns *"You free him anyway, over his own objection"* — so a house that could not pay would read that
+line over a man still standing in the yard. It returns a boolean now, both callers read it, and the
+refusal has its own line: the fee, what the strongbox actually holds, and that he stays.
+
+**The confirm did not name the price.** The card's Grant the Rudis dialog described the crowd and the
+walk to the gate and never said what it cost — which is the fault #100 was written about, on the one
+button in the game that asks a player to pledge coin. It carries the fee, says what the fee is FOR, and
+when the house cannot meet it the button says so instead of pretending.
+
+**And the fix for that nearly shipped a crash.** Passing `run: null` for the unaffordable case looked
+tidy; `ask.run()` is called unconditionally at both of its two sites, so tapping a button that exists
+only to state a price would have thrown. It is a no-op function.
+
+**`survive` failed at (1 standing, 2 men)** on the v3.15.0 suite — the worst pair on record. Its own head
+insists the change is proved inert before luck is blamed, so: `survive` drives its own `playOne` and never
+touches the rope's lanista, so the new `free` step cannot fire in it; `grantRudis` needs `wins >= 10` and
+`pfame >= 180`, which a 26-week house does not produce; `gladValue` reads `rnd`, which in this file is
+`Math.round` and consumes no RNG, so the new `rudisCost` call inside `agendaCan` cannot reshuffle the
+stream; and the agenda line adds a display row and mutates nothing. Re-run on the same build: **(3, 5),
+pass.** The tally now reads **1 failure in 7 runs across 5 builds**, against the ~1 in 8 the head has
+documented since v2.92.0. Luck, and on the record as a pair rather than as an argument — which is what
+the tally was built for two releases ago.
+
 ### v3.15.0 — Freedom was a button that handed you things
 
 v3.14.0 established the rule: a sink that buys CAPABILITY refunds most of its own cost, so closing the

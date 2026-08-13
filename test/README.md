@@ -1938,3 +1938,30 @@ ending mix, and invalidates figures in the heads of `policy`, `ends`, `careers` 
 which were measured on a man who fought in house issue. Adding a capability to the reference player and
 switching it on are two different changes; the second one is a release of its own, with every affected
 figure re-measured. Otherwise the suite quietly starts describing a different player than its comments do.
+
+## An early return is a silent no-op unless the caller is made to read it
+
+Pricing manumission took about ten minutes and introduced three defects. Two were the fault this suite
+exists to catch: `grantRudis` returned bare when the house could not pay, and both of its callers went on
+to announce that it had happened — the `year` ambition literally returns "You free him anyway" over a man
+still standing in the yard, and the card's confirm never named the price at all.
+
+The rule: when you add a failure path to a function that had none, every caller becomes a bug until you
+check it. `grep` for the callers before writing the early return, not after. A boolean return that nobody
+reads is the same defect with extra steps.
+
+The third defect was the fix: `run: null` for the unaffordable branch of a confirm dialog, where
+`ask.run()` is called unconditionally at both of its sites. A tidy-looking guard that turns a button into
+a crash.
+
+## Prove the change inert before blaming luck — then blame luck
+
+`survive` failed at (1, 2), its worst pair ever, on the release that priced freedom. The order its head
+prescribes is investigation first: the check drives its own `playOne` and never touches the rope, so the
+new step could not fire; the fee needs 10 wins and 180 own fame, which 26 weeks does not produce;
+`gladValue` reads `rnd`, which is `Math.round` here and consumes no RNG, so the new call inside
+`agendaCan` cannot reshuffle the stream; and the agenda line mutates nothing. Only then a re-run: (3, 5),
+pass. Tally 1 failure in 7 runs across 5 builds against a documented ~1 in 8.
+
+Both halves matter. Re-running first and shrugging would have been wrong even though the answer was luck,
+because the reasoning is what distinguishes this from the two occasions the same conclusion was wrong.

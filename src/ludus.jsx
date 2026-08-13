@@ -11085,7 +11085,9 @@ const ASKS = {
       d.flags.oneMoreYear = { gid:g.id, until:d.week + YEAR_WEEKS };
       activeG(d).forEach(x=>{ x.morale = clamp(x.morale+5,0,100); });
       return `He stays. Every man in that block watched somebody choose another year of this and could not tell you why it made them feel better.`; },
-    no:(d,g)=>{ grantRudis(d, g.id);
+    no:(d,g)=>{ const fee = rudisCost(d, g);
+      if(!grantRudis(d, g.id))
+        return `You mean to free him and cannot — the manumission wants ${fee} denarii this house does not have. He gets his extra year by default, and neither of you says what that means.`;
       return `You free him anyway, over his own objection, which is a strange way to be generous and is generous.`; } },
   burial:  { w:7, need:(d,g)=>!d.collegium && (d.fallen||[]).length >= 2,
     say:(d,g)=>({ text:`${fullName(g)} asks about the burial society, on behalf of men who did not want to ask. Three denarii a week each, and a name cut in stone instead of a ditch.`,
@@ -16229,7 +16231,16 @@ const canAffordRudis = (d, gid) => { const g = d.gladiators.find(x=>x.id===gid);
 function grantRudis(d, gid){
   { const gc = d.gladiators.find(x=>x.id===gid);
     if(gc){ const fee = rudisCost(d, gc);
-      if(d.gold < fee) return;                 /* you cannot free a man you cannot settle on */
+      /* ---- AND IT HAS TO SAY WHEN IT DID NOT HAPPEN ----
+         The first draft of the fee returned bare here, and there are two callers that go on to tell the
+         player he did it: the `year` ambition's "Free him now" branch, whose text reads "You free him
+         anyway", and the man's own card. A priced action that silently does nothing while the screen
+         says otherwise is the exact fault this audit has spent a dozen releases finding, and it took
+         about ten minutes to introduce one. It returns false now and both callers read it. */
+      if(d.gold < fee){
+        chron(d, `${fullName(gc)} has earned the rudis and this house cannot pay for it — ${fee} denarii for the manumission, and the strongbox holds ${rnd(d.gold)}. He stays, which he will understand and not forgive.`, "bad");
+        return false;
+      }
       d.gold -= fee;
       chron(d, `The manumission is written and paid for — ${fee} denarii to the treasury and into ${PR(gc).his} own hand. Freedom has a price and it is not paid by the man receiving it.`, "info"); } }
   { const gp = d.gladiators.find(x=>x.id===gid); if(gp && gp.plan) gp.plan = null; }
@@ -16239,7 +16250,7 @@ function grantRudis(d, gid){
       const o = d.gladiators.find(x=>x.id===(t.a===gid?t.b:t.a));
       if(o && o.status==="active") remember(d, o, "freedKin"); }); }
   const g = d.gladiators.find(x=>x.id===gid);
-  if(!g || !rudisEligible(g)) return;
+  if(!g || !rudisEligible(g)) return false;
   g.status = "freed";
   d.freed.push({ name:fullName(g), week:d.week, wins:g.wins||0, cls:g.cls, regardAt:rnd(regardOf(g)) });
   d.fame += 60;
@@ -16259,6 +16270,7 @@ function grantRudis(d, gid){
   chron(d, `${fullName(g)} receives the rudis before a roaring crowd — a free man. Every man in your ludus watches him take it.`, "good");
   if(!offerDoctore(d, g, "rudis"))
     chron(d, `${PR(g).He} walks out the gate into legend, and does not look back.`);
+  return true;
 }
 
 function retireG(d, gid){
@@ -18534,10 +18546,17 @@ export default function App(){
     setAsk({ title:"Release Him", confirm:"Let him go",
       text:`${fullName(g)} is ${g.age}, with ${g.wins} victories and ${(g.scars||[]).length} scars on him. Release him from the sacramentum now and he leaves on his own feet. Keep him on the sand and the crowd will watch him find out he is slow.`,
       run:()=>{ mut(d=>retireG(d,id)); setSelId(null); } }); };
+  /* the price is on the button, because a confirm that does not name what it costs is the one thing
+     the vow's own note in this file warns about — see #100 */
   const freeG = id => { const g=S.gladiators.find(x=>x.id===id); if(!g) return;
-    setAsk({ title:"Grant the Rudis", confirm:"Give him the wooden sword",
-      text:`${fullName(g)} has earned his freedom in blood. Hand him the rudis before the crowd and he walks out a free man — and every man still in your cells will watch him go.`,
-      run:()=>{ mut(d=>grantRudis(d,id)); setSelId(null); } }); };
+    const fee = rudisCost(S, g), can = S.gold >= fee;
+    setAsk({ title:"Grant the Rudis", confirm: can ? `Give him the wooden sword · ${fee}d` : `${fee}d — you do not have it`,
+      text:`${fullName(g)} has earned his freedom in blood. Hand him the rudis before the crowd and he walks out a free man — and every man still in your cells will watch him go.`
+        + ` The manumission costs ${fee} denarii: the state's cut on what he is assessed at, and what you settle on him so he does not walk out of the gate with nothing.`
+        + (can ? "" : ` The strongbox holds ${rnd(S.gold)}.`),
+      /* NOT null — the confirm button calls `ask.run()` unconditionally at both of its sites, so a
+         null here throws when the player taps a button that is only there to tell him the price */
+      run: can ? ()=>{ mut(d=>grantRudis(d,id)); setSelId(null); } : ()=>{} }); };
   const setFocus = (id,f)=> mut(d=>{ setFocusOf(d, id, f); });
   const setRegimen = (id,r)=> mut(d=>{ setRegimenOf(d, id, r); });
   const setSpar = (id, mateId)=> mut(d=>{ setSparOf(d, id, mateId); });
