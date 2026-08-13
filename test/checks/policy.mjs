@@ -68,6 +68,25 @@ export async function run({ p }){
     /* the reference player declares a school and staffs the household now, so those are live
        subsystems rather than dark ones — `household` was dark by construction until v2.98.0, when
        the nine functions behind it reached the handle at all */
+    /* ---- AND THREE OF THE TWENTY WERE FREE PASSES, found in v3.10.0 ----
+       "switched on" was `d[k] != null` and not an empty object, which is right for the seventeen
+       things that start as `null`. `newGameState` builds three of them as populated objects on the
+       first morning — measured on a brand new house, before the player does anything:
+           rise    {"rank":0,"standing":0}
+           brand   {"licensed":false,"decided":false,"tier":0,"earned":0}
+           league  {"first":null,"since":1,"held":0,"best":99,"year":1,"snap":null}
+       so all three counted 8 of 8 houses in every run this check has ever done, and could not have
+       counted anything else. A census with three entries that cannot fail is a census reading 20 of 20
+       while telling you about 17. Each of the three now has to have actually HAPPENED. */
+    const SUB_ON = {
+      rise:   d => ((d.rise||{}).rank||0) > 0,
+      brand:  d => { const b = d.brand||{}; return !!(b.licensed || b.decided || (b.tier||0) > 0 || (b.earned||0) > 0); },
+      league: d => { const l = d.league||{}; return !!(l.first || (l.held||0) > 0 || (l.best != null && l.best < 99)); },
+    };
+    const subOn = (d, k) => { const f = SUB_ON[k];
+      if(f){ try { return !!f(d); } catch(e){ return false; } }
+      const v = d[k];
+      return v != null && !(typeof v === "object" && !Array.isArray(v) && !Object.keys(v).length); };
 
     for(let h=0; h<HOUSES; h++){
       const d = A.newGameState("Po"+h, "clean", `POLICY-${h}`, null);
@@ -80,8 +99,7 @@ export async function run({ p }){
         else { for(const [k,v] of Object.entries(bit)){
           if(k === "events"){ for(const [e,n] of Object.entries(v)) tot.events[e] = (tot.events[e]||0)+n; }
           else if(k !== "week" && k !== "kind") tot[k] = (tot[k]||0)+v; } tot.week = bit.week; tot.kind = bit.kind; }
-        for(const k of SUBS){ const v = d[k];
-          if(v != null && !(typeof v === "object" && !Array.isArray(v) && !Object.keys(v).length)) seen[k] = 1; }
+        for(const k of SUBS) if(subOn(d, k)) seen[k] = 1;
         if(d.over) break;
       }
       for(const [e,n] of Object.entries(tot.events||{})) events[e] = (events[e]||0)+n;
@@ -115,7 +133,25 @@ export async function run({ p }){
     lines.push(`median life ${medLife}w · median fame ${medFame} · ${evN} of ${allEv} events fired`
       + ` · best rooms held ${roomsBest} of 5 · houses that claimed a rank ${anyRank}/${HOUSES}`
       + ` · hired a doctore ${gotDoctore}/${HOUSES}`);
-    lines.push(`subsystems switched on in at least one house: ${Object.keys(subs).sort().join(", ")}`);
+    /* ---- #128: A LIST OF NAMES IS NOT A MEASUREMENT ----
+       This printed the KEYS and nothing else, so "aedile, armourer, bay, ..." looked like twenty
+       systems in good health when it is equally consistent with nineteen of them firing in every house
+       and the twentieth firing once. `subs[k]` is the number of HOUSES the system switched on in and
+       has always been computed here; it was simply never shown. Printed with its count, a system on
+       its way dark shows up as a falling number instead of vanishing from a list in one go. */
+    const census = SUBS.map(k=>({ k, n:subs[k]||0 })).sort((a,b)=>b.n-a.n);
+    lines.push(`the subsystem census, houses each switched on in (of ${HOUSES}): `
+      + census.map(x=>`${x.k} ${x.n}`).join(" · "));
+    const dark = census.filter(x=>!x.n);
+    lines.push(`switched on somewhere: ${SUBS.length - dark.length} of ${SUBS.length}`
+      + (dark.length ? ` · DARK: ${dark.map(x=>x.k).join(", ")}` : " · none dark"));
+    /* the ending mix, printed. There is no bar on it and the arithmetic below says why. */
+    const mix = {}; for(const r of rows) mix[r.kind] = (mix[r.kind]||0)+1;
+    const deadRows = rows.filter(r=>r.kind !== "alive");
+    lines.push(`how the ${HOUSES} houses ended: `
+      + Object.entries(mix).sort((a,b)=>b[1]-a[1]).map(([k,n])=>`${k} ${n}`).join(" · ")
+      + ` — ${new Set(deadRows.map(r=>r.kind)).size} distinct kinds among the ${deadRows.length} that died`
+      + ` [printed, not asserted: see the note on the census bar]`);
     const never = Object.keys(A.EVENTS||{}).filter(k=>!events[k]);
     lines.push(`events not seen in this run (${never.length}): ${never.join(", ") || "none"}`);
 
@@ -148,6 +184,32 @@ export async function run({ p }){
     if(!anyRank)
       bad.push(`no house claimed a single census rung [measured rungs up to 7; bar at least one house] — `
         + `\`claimRise\` is one of the two gates on Rome and the ladder has stopped moving`);
+    /* ---- #128: THE CENSUS NOW HAS A FLOOR, AND IT SITS WHERE THE ARITHMETIC PUTS IT ----
+       The census was printed and never asserted, so a subsystem going dark changed a line nobody
+       compared against anything. The floor cannot be "all twenty", because two of them are coin flips
+       on eight houses: measured, `war` switched on in 1 house of 8 and `rome` in 1 of 8, so p-hat is
+       0.125 and P(0 of 8) is 0.875^8 = 34% for each — a bar requiring both would fail more than half
+       of all runs with nothing changed. The next-rarest group sits at 4 of 8, where P(0 of 8) is 0.4%.
+       So 18 of 20 is the only floor that is under both fragile systems and above every stable one, and
+       it fails by chance in roughly 0.5% of runs.
+
+       WHAT IS DELIBERATELY NOT BARRED, and why. Per-system floors are not set: eight houses is one
+       observation of each system's rate, and a system seen 8 of 8 has a 95% lower bound near p=0.63,
+       where P(2 or fewer of 8) is about 4%. Barring those individually off one run of eight is the
+       mistake #127 was about. They are PRINTED with their counts instead, so a system on its way dark
+       shows as a falling number across releases and can be barred once there is a series to bar it on.
+
+       The ENDING MIX is not barred either. The only collapse worth failing on is every dead house
+       dying of the ledger — the #117 signature of an arm that has stopped being paid — and at 6 dead
+       of 8 with the measured mix (debt 3, rebellion 2, ruin 1) that comes up by chance about 1.6% of
+       the time, which is above what this suite tolerates since #127. It wants more houses, and HOUSES
+       is 8 because this check already takes minutes. Printed, with the count of distinct kinds. */
+    const litSubs = SUBS.length - dark.length;
+    if(litSubs < 18)
+      bad.push(`only ${litSubs} of ${SUBS.length} subsystems switched on in any of ${HOUSES} houses `
+        + `(dark: ${dark.map(x=>x.k).join(", ")}) [measured 20 of 20; bar 18, which is under the two `
+        + `that are coin flips at this n — war 1 of 8 and rome 1 of 8 — and above the 4-of-8 group]. `
+        + `Three or more dark at once is a system that has stopped being reachable, not a reshuffle`);
     if(!subs.doctrine)
       bad.push(`no house ever declared a school, though the reference player tries to once it can pay `
         + `[measured: every surviving house]. Either \`declareDoctrine\` stopped taking or the six `

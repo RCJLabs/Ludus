@@ -43,7 +43,15 @@ const ALLOWED = {
   FightModal:     { max: 400, why: "one React render; splitting it moves JSX around without making anything measurable" },
   EVENTS:         { max: 1080, why: "a table of fifty-seven events, not a function — length here is content, and the note on how the week's one question is drawn sits between the table and pickEvent, which is where this check attributes it" },
   LESSONS:        { max: 320, why: "a table of thirty-five notes, not a function — and half its length is now the four ways a lesson can be lost, written above the entries they happened to" },
-  takeUpTheHouse: { max: 7000, why: "the App component and everything under it; a different task entirely" },
+  /* ---- AND THIS ALLOWANCE USED TO BE ON THE WRONG NAME ----
+     It read `takeUpTheHouse: 7000` with the reason "the App component and everything under it". That
+     was never a fact about `takeUpTheHouse`, which is one line — it was a fact about POSITION. The
+     regex below did not match `export default function App`, because of the `default`, so App was not
+     a definition and whatever happened to be the last real one before it absorbed the entire
+     component. v3.8.0 added `endTheLine` beside `takeUpTheHouse` and the 7,000 lines moved to the new
+     function, which is how this was found: the check failed naming a two-line function as 7,021 lines.
+     `default` is in the regex now, App is measured as itself, and the allowance says what it is. */
+  App:            { max: 7200, why: "the whole screen — every tab, every face, every panel. It is one React component by design and splitting it is a different task entirely" },
   Fighter:        { max: 300, why: "the man on the sand, drawn — one SVG in one function" },
 };
 
@@ -55,7 +63,7 @@ export async function run(){
   const defs = [];
   let cur = null;
   for(let i=0;i<src.length;i++){
-    const m = src[i].match(/^(?:export\s+)?(?:async\s+)?(?:function|const|let)\s+([A-Za-z_$][\w$]*)/);
+    const m = src[i].match(/^(?:export\s+)?(?:default\s+)?(?:async\s+)?(?:function|const|let)\s+([A-Za-z_$][\w$]*)/);
     if(m){ if(cur) defs.push({ name:cur.name, at:cur.at, lines:i - cur.at }); cur = { name:m[1], at:i }; }
   }
   if(cur) defs.push({ name:cur.name, at:cur.at, lines:src.length - cur.at });

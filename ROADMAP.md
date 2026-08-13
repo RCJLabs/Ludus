@@ -1392,6 +1392,55 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v3.10.0 — A census with three entries that could not fail, reading twenty of twenty
+
+**#128 — `policy`'s subsystem census had no floor, and three of its twenty were free passes.** Both
+halves were worth fixing and the second was not in the item.
+
+The census printed the KEYS of the systems that switched on and nothing else, so "aedile, armourer, bay,
+..." looked like twenty systems in health when it is equally consistent with nineteen firing everywhere
+and the twentieth firing once. `subs[k]` — the number of houses each system switched on in — has always
+been computed here and was never shown. It is printed now, so a system on its way dark shows as a falling
+number rather than vanishing from a list in one step:
+
+    doctore 8 · primus 8 · bay 8 · election 8 · aedile 8 · league 8 · book 8 · heir 8 · household 8
+    rise 7 · blessing 6 · medicus 4 · armourer 4 · vow 4 · nemesis 4 · brand 4 · city 4 · doctrine 4
+    war 1 · rome 1
+
+And "switched on" was `d[k] != null` and not an empty object, which is right for the seventeen that start
+as `null`. Measured on a brand new house before the player does anything, three of them are populated
+objects on the first morning:
+
+    rise    {"rank":0,"standing":0}
+    brand   {"licensed":false,"decided":false,"tier":0,"earned":0}
+    league  {"first":null,"since":1,"held":0,"best":99,"year":1,"snap":null}
+
+so all three counted 8 of 8 in every run this check has ever done and could not have counted anything
+else. Each now has to have actually happened — a rung claimed, the brand touched, the league recording a
+placing — and the corrected counts move `rise` from 8 to 7 and `brand` from 8 to 4.
+
+**The floor sits where the arithmetic puts it: 18 of 20.** It cannot be twenty, because two of them are
+coin flips at this n — `war` 1 of 8 and `rome` 1 of 8, so p-hat 0.125 and P(0 of 8) = 0.875^8 = 34% each,
+and a bar requiring both would fail more than half of all runs with nothing changed. The next-rarest group
+sits at 4 of 8, where P(0 of 8) is 0.4%. So 18 is the only floor under both fragile systems and above
+every stable one, and it fails by chance in about 0.5% of runs.
+
+**Two things deliberately left unbarred, with the arithmetic for each.** Per-system floors: eight houses
+is one observation of each system's rate, and a system seen 8 of 8 has a 95% lower bound near p = 0.63,
+where P(2 or fewer of 8) is about 4% — barring those individually off one run is the mistake #127 was
+about. The ending mix: the only collapse worth failing on is every dead house dying of the ledger, the
+#117 signature of an arm that has stopped being paid, and at 6 dead of 8 with the measured mix that comes
+up by chance about 1.6% of the time, which is above what this suite tolerates. Both are printed with
+counts so they can be barred once there is a series to bar them on.
+
+**And `bulk` caught v3.8.0 in a way worth keeping.** It failed with *"endTheLine is 7021 lines"* — a
+two-line function. `bulk` measures a definition by the distance to the next one, and its regex did not
+match `export default function App` because of the `default`, so App was not a definition and whatever
+happened to be the last real one before it absorbed the whole component. The 7,000-line allowance was
+written against `takeUpTheHouse`, which is one line; it was never a fact about that function, only about
+its position, and adding a function beside it moved the allowance to the new name. `default` is in the
+regex now, App is measured as itself at 7,013 lines, and the allowance says what it is for.
+
 ### v3.9.0 — Two figures the suite had been quoting from its own comments
 
 No game change. Both audit items turned out to be about what the checks BELIEVE, which is the category

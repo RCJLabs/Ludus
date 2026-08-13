@@ -1835,3 +1835,31 @@ The arithmetic to do before writing any count-comparison bar: SD of a count is s
 difference of two independent counts is the root of the sum of squares; then ask how many SDs the bar
 sits from the expected difference. Under two is a flake. The margin belongs in the bar, and the
 arithmetic belongs in the comment beside it.
+
+## A census entry that cannot be dark is not a census entry
+
+`policy` counted a subsystem as reached when `d[k]` was not null and not an empty object. Seventeen of its
+twenty start as `null`, so that is right for them. Three — `rise`, `brand`, `league` — are populated
+objects from the first morning of a new house, so they counted every house in every run this check has
+ever done and could not have counted anything else. The census read "20 of 20" while telling you about 17.
+
+The general form: a reachability test needs a predicate that the UNREACHED state actually fails. When the
+state is an object the game initialises eagerly, "exists" is not that predicate — "has changed from what
+it was born as" is. Read the newborn state and check which of your predicates it already satisfies; that
+takes one probe and it is the difference between a census and a list.
+
+## Where to put a floor, and when to refuse to
+
+Three floors were asked for and one was set. The arithmetic decided each:
+
+- **The census, barred at 18 of 20.** Two systems fire in 1 house of 8, so P(0 of 8) is 34% each and a
+  bar at twenty fails half the time. The next group sits at 4 of 8, P(0 of 8) = 0.4%. 18 is the only
+  number under the fragile pair and above the stable rest.
+- **Per-system floors, refused.** Eight houses is ONE observation of each rate. A system seen 8 of 8 has
+  a 95% lower bound near p = 0.63, where P(2 or fewer of 8) is about 4%.
+- **The ending mix, refused.** The collapse worth failing on — every dead house dying of the ledger —
+  comes up by chance about 1.6% of the time at 6 dead of 8.
+
+Refusing to set a bar is a result, not a gap, as long as the refusal carries the number that justifies it
+and the quantity is printed so it can be barred later. A bar that flakes teaches people to ignore the
+suite, which costs more than the bar was ever going to catch.
