@@ -1392,6 +1392,40 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v3.12.0 — Two items raised off a check's own honesty, and one of them still paid
+
+The last two items of this audit round were both raised off a check's "what is not asserted" clause
+without reading the reason printed beside it. Neither was the fault it claimed. Both were worth something.
+
+**#129 — the doctrine career comparison is held to nothing. REFUTED: there is no career comparison.**
+`school`'s head opens with "THE CAREER COMPARISON IS NOT ASSERTED, and why", and the item was raised off
+that line and not the twenty after it. v3.0.0 removed the career arm entirely and replaced it with pricing
+each doctrine field at the one or four places it is actually read — `purse` at 14088, `injure` in the
+training week at 15565, and so on — all of which IS asserted. The note now says the arm is GONE rather
+than merely unasserted, and says why the distinction matters, because the first line of a paragraph is
+what gets quoted.
+
+**#130 — `survive`'s distribution is twelve runs of one build. TRUE, ALREADY DOCUMENTED, AND NOW FIXED
+DIFFERENTLY.** The head says it in more detail than the item did: twelve runs put a 95% interval on a
+1-in-12 failure rate of roughly 1.5% to 35%, the cure is more houses, and more houses is the one thing
+that check cannot have — seven Chromiums on four cores started missing clicks and cost two false failures
+of a different kind. So the bar stayed where it was, correctly, for four releases.
+
+What nobody had tried is making the sample accumulate ACROSS runs instead of within one. Every
+observation `survive` ever made was written into its head comment by hand, one paragraph per release —
+which is exactly the practice #125 caught in `odds`, where a figure copied into prose became a figure
+nobody could recompute. It now appends `(version, standing, men, pass)` to `test/survive-tally.json` and
+prints the pooled distribution, with the count of distinct builds and a line saying how many more runs
+are needed before the bar is worth setting on evidence. The file is in the repo deliberately: the
+container is ephemeral, and a tally that does not outlive the session that wrote it is worth nothing.
+Writing it is best-effort — a run that cannot write says so and carries on, because a tally is evidence
+for the next person rather than something the suite depends on.
+
+First entry: v3.11.0, (4 standing, 6 men), pass.
+
+**And the standing lesson from both.** A check that documents its own limits honestly will generate false
+audit items. The answer is to read to the end of the paragraph, not to document less.
+
 ### v3.11.0 — Nobody had ever counted the taps
 
 **#126 — nothing measured how deep an action is.** Five releases of UI work were argued from screen text,

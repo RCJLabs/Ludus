@@ -30,7 +30,34 @@
    So it buys when the yard is thin and it can afford to, the way a lanista does,
    and standing now means it can still field somebody. */
 
-import { found, endWeek, clearAll, tab, click, slot, waitSaved, open } from "../harness.mjs";
+import { found, endWeek, clearAll, tab, click, slot, waitSaved, open, ROOT } from "../harness.mjs";
+import fs from "node:fs";
+import path from "node:path";
+
+/* ---- #130: THE SAMPLE NOW ACCUMULATES, BECAUSE IT COULD NOT BE MADE BIGGER ----
+   Everything above is the record of trying to calibrate a bar against a distribution nobody could
+   afford to sample. The head says it plainly: twelve runs put a 95% interval on 1-in-12 of roughly
+   1.5% to 35%, the cure is more houses, and more houses is the one thing this check cannot cheaply
+   have — 7 Chromiums on 4 cores started missing clicks and cost two false failures of a different
+   kind. So HOUSES stays at 5 and the sample stays small WITHIN a run.
+
+   What nobody tried is making it accumulate ACROSS runs. Every observation this check has ever made
+   was written into the head comment by hand, one paragraph at a time, and #125 is what that practice
+   costs: a figure copied into prose is a figure nobody can recompute. The pair (standing, men) and
+   the version that produced it go into a file now, and the check prints the pooled distribution it
+   has collected. In ten releases the bar can be set on evidence instead of on an argument, and the
+   evidence will carry which build each observation came from — which is the whole of #130, because
+   "twelve runs of one build" is a sample that cannot see a reshuffle.
+
+   The file is in the repo ON PURPOSE. This container is ephemeral and anything outside the tree is
+   gone with it, and the tally is only worth having if it survives the session that wrote it. It is
+   append-only, one line per run, and a run that cannot write it says so and carries on rather than
+   failing — a tally is evidence for the next person, not a thing the suite depends on. */
+const TALLY = path.join(ROOT, "test", "survive-tally.json");
+const readTally = () => { try { const j = JSON.parse(fs.readFileSync(TALLY, "utf8"));
+  return Array.isArray(j) ? j : []; } catch(e){ return []; } };
+const version = () => { try { return JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8")).version || "?"; }
+  catch(e){ return "?"; } };
 
 export const name = "survive";
 export const describe = "three new houses live twenty-six weeks and still have men";
@@ -371,5 +398,33 @@ export async function run({ p, errors, port }){
   else if(men < MEN)
     lines.push(`only ${men} men between them, but ${standing} houses still standing — a bad run of luck, not a gutting`);
   if(allErrors.length) fails.push(`${allErrors.length} page errors: ${allErrors.slice(0,2).join(" | ")}`);
+
+  /* ---- and the observation goes on the pile, whatever it was ---- */
+  const was = readTally();
+  const mine = { v: version(), standing, men, houses: live.length, weeks: WEEKS, pass: fails.length === 0 };
+  let wrote = true;
+  try { fs.writeFileSync(TALLY, JSON.stringify([...was, mine], null, 0).replace(/\},\{/g, "},\n{") + "\n"); }
+  catch(e){ wrote = false; lines.push(`could not write the tally: ${e.message}`); }
+  const all = [...was, mine];
+  if(all.length > 1){
+    const failed = all.filter(x=>!x.pass).length;
+    const builds = new Set(all.map(x=>x.v)).size;
+    const st = all.map(x=>x.standing).sort((a,b)=>a-b), mn = all.map(x=>x.men).sort((a,b)=>a-b);
+    const q = (a,f) => a[Math.min(a.length-1, Math.floor(a.length*f))];
+    lines.push(`THE POOLED TALLY, ${all.length} run${all.length===1?"":"s"} across ${builds} build${builds===1?"":"s"}`
+      + ` [#130 — the head's own figures were 1 of 12 and 2 of 47, all hand-copied from one build family]:`);
+    lines.push(`   failures ${failed} of ${all.length} (${(failed/all.length*100).toFixed(0)}%)`
+      + ` · standing min ${st[0]} / median ${q(st,0.5)} / max ${st[st.length-1]}`
+      + ` · men min ${mn[0]} / median ${q(mn,0.5)} / max ${mn[mn.length-1]}`);
+    lines.push(`   every pair so far: ${all.map(x=>`${x.v} (${x.standing},${x.men})${x.pass?"":" FAIL"}`).join(" · ")}`);
+    if(all.length < 20)
+      lines.push(`   ${20 - all.length} more run${20-all.length===1?"":"s"} before this is worth setting a bar on`
+        + ` — at ${all.length} the 95% interval on the failure rate is still most of the range`);
+  } else if(wrote){
+    lines.push(`THE POOLED TALLY starts here: 1 run recorded at v${mine.v}. #130 — the sample this bar `
+      + `is calibrated on was twelve runs of one build family, all of it hand-copied into the comment `
+      + `above. It accumulates in test/survive-tally.json from now on, and must be committed with the `
+      + `release that produced it or it is worth nothing`);
+  }
   return { pass: fails.length === 0, why: fails.join("; ") || null, lines };
 }

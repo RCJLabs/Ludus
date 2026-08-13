@@ -25,9 +25,15 @@
         which were in my list. So this check DERIVES the field list from each doctrine's own entry,
         and cannot fall behind the data the way I did.
 
-   THE CAREER COMPARISON IS NOT ASSERTED, and why. Twelve seeds run with no doctrine and then with
-   craft, blood and mercy is printed and held to nothing, because a doctrine changes the trajectory of
-   the house and so confounds any outcome measured over a career. `blood` promises purses ×1.18 and
+   THE CAREER COMPARISON IS GONE, NOT MERELY UNASSERTED — and saying so is the point of this
+   paragraph, because in v3.12.0 an audit item was raised reading "the doctrine career comparison is
+   still held to nothing", off the first line of this note and not the rest of it. There is no career
+   arm in this check to hold to anything: v3.0.0 replaced it with the per-field pricing below, which IS
+   asserted, at the one or four places each field is read. What follows is the history of why.
+
+   It was twelve seeds run with no doctrine and then with craft, blood and mercy, printed and held to
+   nothing, because a doctrine changes the trajectory of the house and so confounds any outcome
+   measured over a career. `blood` promises purses ×1.18 and
    delivered 374d a bout against 530d with no doctrine, which reads like an inversion and is not one:
    it also adds 0.16 to the odds of sine missione, so the house fights deadlier cards, loses more men,
    and earns smaller purses at a lower tier.

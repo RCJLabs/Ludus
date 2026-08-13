@@ -1881,3 +1881,36 @@ bar needs no margin — unlike every count-comparison bar in this suite. And the
 per-place bar was impossible to pass: it asked every TAB for a one-tap action when two tabs put all their
 actions behind a face chip by construction. A bar has to be stated against the best the thing being
 measured could possibly do, which for a face is two taps and not one.
+
+## When a sample cannot be made bigger, make it accumulate
+
+`survive`'s head is the longest in the suite and most of it is one problem: a bar calibrated against a
+distribution nobody could afford to sample. Twelve runs put a 95% interval on a 1-in-12 failure rate of
+roughly 1.5% to 35%. The cure is more houses, and more houses is the one thing that check cannot have —
+seven Chromiums on four cores started missing clicks and cost two false failures of a different kind.
+
+Every observation it ever made was written into that comment by hand, one paragraph per release. That is
+the same practice #125 caught in `odds`: a figure copied into prose is a figure nobody can recompute, and
+a sample described in prose cannot be pooled by the next person.
+
+So it appends `(version, standing, men, pass)` to `test/survive-tally.json` and prints the pooled
+distribution. The file is in the repo deliberately — the container is ephemeral, and a tally is only
+worth having if it outlives the session that wrote it. It carries the version with each observation,
+which is the actual content of the complaint: "twelve runs of one build" is a sample that cannot see a
+reshuffle. Writing it is best-effort; a run that cannot write says so and carries on, because a tally is
+evidence for the next person and not something the suite depends on.
+
+Commit it with the release that produced it, or it is worth nothing.
+
+## Read the whole paragraph before raising the item
+
+Two of the eight items in this audit round were raised off a check's own "what is not asserted" clause
+without reading the reason beside it. `#129` said the doctrine career comparison was "still held to
+nothing"; the career arm had been REMOVED two releases earlier and replaced by per-field assertions at
+each read site. `#130` said `survive`'s distribution was twelve runs of one build; the head already said
+so, in more detail, along with the reason the obvious fix is unavailable.
+
+Both were worth something in the end — #129 became a correction to the note that misled it, #130 became
+the accumulating tally — but neither was the fault it claimed. A check that documents its own limits
+honestly will generate false audit items, and the answer is to read to the end of the paragraph, not to
+document less.
