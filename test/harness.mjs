@@ -223,6 +223,9 @@ export async function installRope(p){
        `lanista(d, opts)` plays one week and RETURNS WHAT IT DID, so a caller can assert on behaviour
        rather than intent. Every part can be switched off through `opts` for a control arm:
          cells, buy, doctore, build, rites, census, staff, school, heir, rome, bout  (all default true)
+         gear                                                                          (default FALSE —
+           the one opt-in step, because turning it on changes this player more than anything since the
+           rope itself; the note over the step carries the paired figures)
        `play(d, weeks, opts)` runs many and pools the counters. */
     const LAN = {
       reserve: d => Math.max(700, A.weeklyBill(d) * 12),
@@ -303,6 +306,63 @@ export async function installRope(p){
         if(Array.isArray(opts) && opts.length && fin(A.nameHeir,[d, opts[0]])) bump("namedHeir");
       }
       if(on("heir") && d.succession && fin(A.takeUpTheHouse,[d])) bump("tookUpHouse");
+      /* ---- THE STEEL, WHICH NO POLICY OF MINE HAS EVER BOUGHT ----
+         `gearUpkeep` measured 0.0 denarii in every era of a 2,555-week sweep, and the reason was here:
+         the reference player fought with whatever the house issued him and never bought a piece, never
+         mended a kit and never went near the master's bench. So the whole steel economy — 70
+         purchasable pieces, 19 of them master's work at 2,900 to 9,500 denarii with a weekly keep —
+         was invisible to every measurement this audit has run, and "60 of 70 pieces affordable and
+         unbought" was a fact about the probe as much as about the game.
+
+         A competent player arms his men. This one keeps every slot filled with the best he can afford
+         behind the reserve, replaces a piece once it is worn past a third, and pays the armoury to
+         straighten a kit when that is cheaper than replacing it. The master's bench is deliberately
+         CAUTIOUS: one piece at a time and only at three times its price in spare coin, because the
+         ticket is once and the keep is forever — a policy that buys the bench out the week it opens
+         would be measuring bankruptcy rather than the sink. */
+      /* ---- AND IT IS OFF BY DEFAULT, WHICH IS A DECISION AND NOT AN OVERSIGHT ----
+         Every other step here defaults ON, because `on(k)` is `o[k] !== false`. This one is opt-in,
+         because turning it on changes the reference player more than anything since the rope itself.
+         MEASURED, paired on the same eight seeds over 400 weeks, off against on:
+
+           year 12+   gear keep 3.7d/wk -> 382d/wk · weekly bill 291d -> 923d · gold 107,246d -> 87,054d
+           over the run  0 pieces bought -> 387, 0 master's -> 179, 0 kits mended -> 54
+           mean condition 56.5% -> 82.7% · houses alive at week 400: 3 of 8 -> 6 of 8
+
+         Those are not small. The bill more than triples, the ending mix loses its rebellions, and half
+         the figures quoted in the heads of `policy`, `ends`, `careers` and `survive` were measured on a
+         player who fought in house issue. Flipping this default is a deliberate re-baselining of the
+         whole suite and belongs in its own release with every affected figure re-measured — not as a
+         side effect of adding the step. `gear:true` is how a check asks for it meanwhile. */
+      if(o.gear === true && typeof A.buyGearItem === "function"){
+        const spareNow = () => d.gold - LAN.reserve(d);
+        for(const g of A.activeG(d)){
+          if(!g.kit) continue;
+          for(const s of A.SLOTS){
+            const cur = A.GEAR[g.kit[s]];
+            const worn = A.wears(cur) && A.wearOf(g, s) < 34;
+            const bare = !cur || !cur.price;
+            if(!worn && !bare) continue;
+            /* mending is the cheaper answer while there is anything left to mend */
+            if(worn && !bare){
+              const fee = fin(A.repairFee,[d, g]) || 0;
+              if(fee > 0 && fee <= spareNow() * 0.25 && fin(A.mendKitOf,[d, g.id])){ bump("mended"); continue; }
+            }
+            const master = A.masterOpen && A.masterOpen(d);
+            const want = Object.entries(A.GEAR)
+              .filter(([id,it])=> it.slot === s && it.price > 0
+                && (!it.styles || !it.styles.length || it.styles.includes(g.cls))
+                && (!it.master || master)
+                && it.price <= (it.master ? spareNow()/3 : spareNow()*0.4))
+              .sort((a,b)=> b[1].price - a[1].price)[0];
+            if(!want) continue;
+            if(fin(A.buyGearItem,[d, want[0]])){
+              bump(want[1].master ? "master" : "bought:gear");
+              fin(A.equipOne,[d, g.id, s, want[0]]);
+            }
+          }
+        }
+      }
       if(on("rome") && d.romeOffer && fin(A.answerRomeWith,[d,true])) bump("toRome");
 
       if(on("bout")){

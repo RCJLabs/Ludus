@@ -1392,6 +1392,54 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v3.14.0 — Arming your men triples the bill and dents the surplus by a fifth
+
+v3.13.0 made steel wear again. The question left over was whether that closes the middle game's coin
+surplus, and it could not be asked, because the reference player has never bought a piece of gear in his
+life. `gearUpkeep` read 0.0 denarii in every era of a 2,555-week sweep for that reason — so "60 of 70
+purchasable pieces affordable and unbought" was a fact about the probe as much as about the game, and the
+master's bench, 19 pieces at 2,900 to 9,500 denarii apiece, had never been driven at all.
+
+The rope has a `gear` step now: it keeps every slot filled with the best affordable piece behind the
+reserve, replaces anything worn past a third, pays the armoury to straighten a kit when that is cheaper,
+and goes to the master's bench once it opens — one piece at a time and only at three times its price in
+spare coin, because the ticket is once and the keep is for ever.
+
+**Paired on the same eight seeds over 400 weeks:**
+
+| | house issue only | arms his men |
+|---|---|---|
+| pieces bought over the run | 0 | **387** |
+| master's pieces | 0 | **179** |
+| kits mended | 0 | 54 |
+| gear keep, year 12+ | 3.7d/wk | **382d/wk** |
+| weekly bill, year 12+ | 291d | **923d** |
+| mean condition | 56.5% | 82.7% |
+| gold, year 12+ | 107,246d | **87,054d** |
+| houses alive at week 400 | 3 of 8 | **6 of 8** |
+
+**So the answer is: it helps, and it does not close it.** The bill more than triples and gear becomes a
+382-a-week line where it was 3.7, which is a real and continuous sink — but the strongbox only falls 19%,
+because a house that arms its men properly also wins more and is paid more. The sink is partly
+self-funding, which is worth knowing before designing the next one: **anything that makes the house
+stronger will refund a fraction of its own cost.** The surplus at year 12+ is still 87,000 denarii.
+
+The other half of the result is that arming your men is straightforwardly good — six houses of eight
+survive four hundred weeks against three, and the ending mix loses its rebellions entirely. That is a
+reasonable thing for good equipment to do, and it means the gear economy is not a tax on competence.
+
+**The step is OPT-IN, and that is a decision rather than an oversight.** Every other step in the
+reference player defaults on. This one does not, because turning it on changes that player more than
+anything since the rope itself: the bill triples, the ending mix changes shape, and half the figures
+quoted in the heads of `policy`, `ends`, `careers` and `survive` were measured on a man who fought in
+house issue. Flipping the default is a deliberate re-baselining of the whole suite and belongs in its own
+release with every affected figure re-measured — not as a side effect of adding the step. `gear:true` is
+how a check asks for it meanwhile.
+
+**And the census floor from v3.10.0 earned itself this release.** `policy` came in at 19 of 20 with `rome`
+dark, against 20 of 20 last time — exactly the 1-in-3 coin flip the 18-of-20 floor was set to tolerate,
+correctly not failing. The v3.13.0 constants reshuffled the RNG stream and the bar absorbed it.
+
 ### v3.13.0 — The armoury was not maintaining steel, it was switching wear off
 
 The ask was more wear, more maintenance, more breakage, so that arms and armour have to be bought again

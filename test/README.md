@@ -1914,3 +1914,27 @@ Both were worth something in the end — #129 became a correction to the note th
 the accumulating tally — but neither was the fault it claimed. A check that documents its own limits
 honestly will generate false audit items, and the answer is to read to the end of the paragraph, not to
 document less.
+
+## A sink that makes you stronger refunds part of its own cost
+
+The middle game holds about 102,000 denarii it has nothing to spend on, and the obvious answer was to
+make steel wear out so arms and armour must be bought again. Measured, arming men properly moves the
+weekly bill from 291 to 923 denarii and the gear line from 3.7 to 382 — a real, continuous sink — and the
+strongbox falls only **19%**, from 107,246 to 87,054. A house in good steel wins more and is paid more, so
+it earns back most of what it spends.
+
+That generalises: any sink that buys CAPABILITY is partly self-funding, and its net drain is much smaller
+than its gross cost. A sink that closes a surplus has to buy something that does not make the house
+stronger — standing, obligation, other people's futures — or it has to be priced against income rather
+than as a fixed sum.
+
+The same measurement also settled that good equipment is not a tax on competence: six houses of eight
+survived four hundred weeks against three, and the ending mix lost its rebellions.
+
+## Changing the reference player is a suite-wide re-baselining
+
+The `gear` step is the first in the rope to default OFF. Turning it on triples the late bill, changes the
+ending mix, and invalidates figures in the heads of `policy`, `ends`, `careers` and `survive`, all of
+which were measured on a man who fought in house issue. Adding a capability to the reference player and
+switching it on are two different changes; the second one is a release of its own, with every affected
+figure re-measured. Otherwise the suite quietly starts describing a different player than its comments do.
