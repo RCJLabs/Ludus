@@ -2152,3 +2152,39 @@ silently reports churn as variety, and it will do it in whichever direction has 
 here is the late game, the exact place being measured. The fix was to strip names gathered from the
 house's own people rather than pattern-matched for capitals, which would have eaten Rome, Capua and
 Pompeii.
+
+## A system can be silent in one channel and loud in another, and there are at least four
+
+The next step on #131 was to find the late systems with no voice and give them one. A grep of the agenda
+function named seven: the primacy, Rome, the bay, the collegium, the household, the master's bench and the
+lanista's retirement. Driven instead of grepped, six of the seven speak, and the item narrowed to one
+system — but only after five corrections, every one of them the instrument.
+
+The channels, which is the part worth carrying forward:
+
+    the agenda      the week's ranked list, agendaRanked / agendaTop
+    SECT_MARK       a separate vocabulary of eight marks that light a section and are carried up to the
+                    villa's face chips — cells, feast, temple, standing, rome, block, collegium, rites
+    the man's ask   PRIMUS_ASK and the ambition channel put a whole event in front of the player
+    the arena card  d.games.offers, where an offer titled "the primacy of Capua" simply appears
+
+Two of those I did not know existed when I wrote the grep. The collegium is the clean example: it is live
+for 430 weeks, the agenda never mentions it, and a mark fires on 100% of them. "Silent" is a claim about
+every channel, so it cannot be settled by reading one function.
+
+And the corrections, kept because each is a way of measuring nothing:
+- `unhonoured` is not on the handle, so a guarded call reported the rites as never live — for a system
+  #131 had measured at 21% of the year-12 block one probe earlier. Contradicting your own recent
+  measurement is the cheapest available signal that the new probe is broken; check it before believing it.
+- `primusEligible(g)` takes a gladiator. Called on the state it is falsy forever, so the system read as
+  never live rather than as never spoken about — two very different findings with the same 0 in the table.
+- `bayHolder(d)` returns null when there is no bay, so "the holder is not me" was true every week of every
+  house; and the bay's 75% agenda match was catching "the games at Pompeii".
+- the bench regex matched "X has earned his mastery" — a man's mastery, not the smiths' bench.
+- and the live predicate left out the fame gate the game itself applies, so the denominator counted weeks
+  the system was not available at all.
+
+The habit that caught two of them: **print the commonest labels seen while an unmatched system was live.**
+A regex written by the person who already expects the answer fails toward that answer, and the printout is
+what makes the miss visible — the household read 0% while "Nobody feeds this house, or nurses it, or keeps
+it" sat in its own list at 33%.
