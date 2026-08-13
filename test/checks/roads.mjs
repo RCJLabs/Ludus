@@ -9,7 +9,29 @@
 
    This check drives the round trip the audit could not: out, arrive, fight the
    town's card, wear out the welcome, and come home. It also holds the residency
-   costs from v2.46.0 — a fresh visitor's card against a stale resident's. */
+   costs from v2.46.0 — a fresh visitor's card against a stale resident's.
+
+   ---- AND THEN IT HAPPENED AGAIN, ONE LAYER UP, ever since v2.93.0 ----
+   Everything above passed the whole time. The plumbing worked, the round trip
+   was driven every run, and NOBODY WAS DRIVING IT: `__ROPE.lanista` had no
+   travel step, and `comeHome` has exactly one caller in the game — the UI
+   button at ludus.jsx:18653. No weekly phase brings a house back. So the
+   reference player every long probe in this project leans on took the `bayCall`
+   invitation at its default answer, went south, and stood in that town for the
+   rest of its life. The identical stranding this check was written for, in the
+   one player it never thought to point at.
+   MEASURED before the fix, 10 houses x 420 weeks (`test/probes/road.mjs`):
+     5 of 10 houses ever left, and 5 of 5 of those made ONE departure and ZERO
+     returns — 246, 363, 175, 264 and 150 weeks in a single town. 54% of all
+     house-weeks were spent on the coast; 71% of every card was a town's.
+   After: departures 11, returns 11, never more than 7 weeks in one town, 4%.
+   That 54% is where #132's "91% of a late house's cards are somewhere else"
+   came from — a number published as the reference player's POLICY when it was
+   the shape of its cage.
+   So the last section holds the thing the first four cannot: that the player
+   this suite measures with actually comes home. A tour is a round trip or it is
+   an emigration, and an emigration silently re-bases every late-game figure the
+   project publishes. */
 
 import { hasHandle } from "../harness.mjs";
 
@@ -21,7 +43,7 @@ export async function run({ p, errors }){
     return { pass:false, why:"no test handle — build with `node build.js --test`", lines:[] };
 
   const out = await p.evaluate(()=>{
-    const A = window.__LVDVS;
+    const A = window.__LVDVS, R = window.__ROPE;
     const d = A.newGameState("Rd","clean","ROADS1",null);
     d.gold = 9000; d.fame = 300;
     const week = () => { d.pendingEvent = null; A.endWeek(d); };
@@ -54,10 +76,58 @@ export async function run({ p, errors }){
     const home = d.city == null && !d.travel;
     const wiped = d.flags.cityArrived == null && A.stayWeeks(d) === 0;
 
+    /* ---- DOES THE REFERENCE PLAYER COME HOME? ----
+       FORCED, not observed. The obvious version plays houses and waits for `bayCall` to send one
+       south, and that version can pass while saying nothing: the invitation needs fame 90 and a man
+       at pfame 22, and over 6 houses of 220 weeks it may not fire at all. A bar that is vacuous
+       whenever the RNG is quiet is the free-pass shape #128 was about. So the house is PUT on the
+       coast with `setOut` and the only question asked is whether the reference player gets it back.
+       The bound is the game's own arithmetic: `travel` weeks out, the welcome wears once `stayWeeks`
+       passes STAY_FRESH=6, `travel` weeks back — nine for Pompeii. The bar is 25, which is loose
+       enough to survive a change to either constant and still catch the fault, since the thing it is
+       catching does not take 25 weeks or 250: it never happens at all. */
+    const HOUSES = 6, WEEKS = 220, PATIENCE = 25;
+    const stranded = [];
+    for(let h=0; h<HOUSES; h++){
+      const g = A.newGameState("Rf"+h, "clean", `ROADF-${h}`, null);
+      for(let w=0; w<25; w++){ if(g.over) break; R.lanista(g); }   /* a house on its feet first */
+      if(g.over || g.city || g.rome) continue;
+      if(!A.setOut(g, "pompeii")) continue;
+      let took = null;
+      for(let w=0; w<PATIENCE; w++){
+        R.lanista(g);
+        if(g.over) break;
+        if(!g.city && !g.travel){ took = w+1; break; }
+      }
+      stranded.push({ h, took, dead: !!g.over, where: g.city || null });
+    }
+    const cameBack = stranded.filter(x=>x.took != null).length;
+    const sent = stranded.length;
+    const slowest = Math.max(0, ...stranded.map(x=>x.took||0));
+
+    /* and the same thing observed over natural play, PRINTED rather than barred — it is the figure
+       that moved (54% -> 4%) but it rides on whether `bayCall` fired, which is not a contract */
+    let outs = 0, backs = 0, roadW = 0, allW = 0, worstStay = 0;
+    for(let h=0; h<HOUSES; h++){
+      const g = A.newGameState("Rp"+h, "clean", `ROADP-${h}`, null);
+      let prev = null, run = 0;
+      for(let w=0; w<WEEKS; w++){
+        if(g.over) break;
+        allW++;
+        if(g.city){ roadW++; run++; if(run > worstStay) worstStay = run; } else run = 0;
+        if(g.city !== prev){
+          if(g.city) outs++; else if(prev) backs++;
+          prev = g.city;
+        }
+        R.lanista(g);
+      }
+    }
     return { outOk, outTwice, arrived, clocked, cardOk, cardN: card.length,
+      sent, cameBack, slowest, stranded, PATIENCE,
       freshMed: med(freshP), staleMed: med(staleP),
       welFresh: +welFresh.toFixed(2), welStale: +welStale.toFixed(2),
-      homeOk, home, wiped };
+      homeOk, home, wiped,
+      outs, backs, roadW, allW, worstStay, HOUSES, WEEKS };
   });
 
   const lines = [], fails = [];
@@ -75,6 +145,33 @@ export async function run({ p, errors }){
     fails.push(`a stale resident's median purse is ${out.staleMed}d against a fresh visitor's ${out.freshMed}d — residence is supposed to cost`);
   if(!out.homeOk || !out.home) fails.push("comeHome did not bring the house home");
   if(!out.wiped) fails.push("coming home did not wipe the stay clock");
+
+  const pc = (n,dn) => dn ? `${Math.round(n/dn*100)}%` : "-";
+  lines.push(`put on the coast and left to the reference player: ${out.cameBack} of ${out.sent} came home`
+    + `, slowest ${out.slowest}w of ${out.PATIENCE} allowed`
+    + (out.cameBack < out.sent
+        ? ` · STRANDED: ${out.stranded.filter(x=>x.took==null).map(x=>`house ${x.h} ${x.dead?"died in":"still in"} ${x.where||"?"}`).join(", ")}`
+        : ""));
+  lines.push(`over natural play, ${out.HOUSES} houses x ${out.WEEKS}w: ${out.outs} departures · ${out.backs} returns`
+    + ` · ${out.roadW} of ${out.allW} weeks on the coast (${pc(out.roadW,out.allW)})`
+    + ` · longest unbroken spell away ${out.worstStay}w  [printed, not barred — it rides on whether \`bayCall\` fired.`
+    + ` A spell can span TWO towns: \`setOut\` refuses only a departure to the town you are standing in,`
+    + ` so an invitation arriving on the coast hops the house sideways without it ever seeing Capua]`);
+
+  /* ---- THE BAR THE FIRST FOUR SECTIONS COULD NOT CARRY ----
+     Not "did a house come home" — `comeHome` was always fine, and the section above proves it every
+     run. This is whether the REFERENCE PLAYER uses it, which is the thing that was false ever since
+     `__ROPE.lanista` was written in v2.93.0, while every other assertion here passed. */
+  if(!out.sent)
+    fails.push(`no house could be put on the coast at all — this section proves nothing when it sends `
+      + `nobody, and a bar that quietly measures an empty set is the fault it was written to prevent`);
+  else if(!out.cameBack)
+    fails.push(`${out.sent} houses were put in Pompeii and NOT ONE came home inside ${out.PATIENCE} weeks `
+      + `— the reference player has no way back from the coast, which is the v2.46 stranding again: `
+      + `every late-game figure this project publishes is then measured on an emigrated house`);
+  else if(out.cameBack < out.sent)
+    fails.push(`only ${out.cameBack} of ${out.sent} houses came home inside ${out.PATIENCE} weeks `
+      + `[measured: all of them, slowest 8] — coming home is conditional on something it should not be`);
 
   if(errors.length) fails.push(`${errors.length} page errors`);
   return { pass: fails.length === 0, why: fails.slice(0,3).join("; ") || null, lines };

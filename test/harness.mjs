@@ -224,6 +224,10 @@ export async function installRope(p){
        rather than intent. Every part can be switched off through `opts` for a control arm:
          cells, buy, doctore, build, rites, census, staff, school, heir, rome, bout  (all default true)
          gear, party                                                        (default TRUE from v3.17.0)
+         contract                                                           (default TRUE from v3.20.0)
+         road          (default TRUE — accept a town's invitation and COME HOME once the welcome
+                        wears. `road:false` is the stay-at-home arm: it declines the invitation too,
+                        because a house that leaves once and cannot return is not a house that stays)
          free                                                                          (default FALSE —
            the one opt-in step: freeing everyone eligible takes the house's fame from 2,232 to 1,270,
            and fame is the quantity most of this suite's reachability leans on. See the step's note)
@@ -448,6 +452,31 @@ export async function installRope(p){
         } else bump("noBout");
       }
 
+      /* ---- THE HOUSE THAT WENT SOUTH AND NEVER CAME BACK ----
+         `comeHome` has exactly ONE caller in the whole game — the UI button at ludus.jsx:18653.
+         No weekly phase ever returns a house to Capua, and this lanista had no travel step, so the
+         first time an editor asked for one of its men by name (`bayCall`, answered at the default
+         i=0, "Take the road to <town>") the house left and stood in that town for the rest of its
+         life. That is not a player who tours. It is the `reSignOffer` shape again: a reference
+         player standing in a doorway for years.
+         MEASURED over 10 houses x 420 weeks before the step, by `test/probes/road.mjs`: 5 of 10
+         houses ever left, and every one of the 5 made exactly ONE departure and ZERO returns —
+         246, 363, 175, 264 and 150 weeks in a single town. 54% of all house-weeks were spent on
+         the coast and 71% of every games week's card was a town's rather than Capua's.
+         That is the whole of #132's "91% of a late house's cards are somewhere else", and it was
+         written up as a fact about the reference player's POLICY. It was a fact about its cage.
+         The game had already named this exact failure at ludus.jsx:9632 — "a house that accepted
+         one town's invitation and simply never went home prospered for three hundred straight
+         weeks" — and priced it: past `STAY_FRESH` the purses fade and Capua's patrons stop asking.
+         So the policy is the game's own: a guest, not a resident. Stay while the town is fresh,
+         break camp the week the welcome starts to wear. Read off `welcomeOf` rather than a number
+         of my own, so it tracks the constant instead of drifting from it.
+         AFTER the bout, because `comeHome` nulls `d.games` — deciding to leave before fighting
+         throws away the card that was the reason to be there. */
+      if(on("road") && d.city && !d.travel && !d.rome && A.welcomeOf(d) < 1){
+        if(fin(A.comeHome,[d])) bump("cameHome");
+      }
+
       /* the week's question, answered the way a solvent player would — NOT always choice 0, which on
          `uprising` is the only lethal branch and cost an earlier probe 129 weeks of median life */
       const ev = d.pendingEvent;
@@ -456,6 +485,11 @@ export async function installRope(p){
         did.events[ev.id] = (did.events[ev.id]||0)+1;
         let i = 0;
         if(ev.id === "uprising"){ const k=(ev.data&&ev.data.keys)||["fight"]; const gi=k.indexOf("guards"); if(gi>=0) i=gi; }
+        /* `road:false` is the STAY-AT-HOME control arm, and it has to decline the invitation as
+           well as skip the return — otherwise "does not tour" means "leaves once and is stuck",
+           which is the thing being controlled for. `bayCall`'s second door is "Write back that you
+           are needed here", and it is the only road out of Capua a player is ever offered. */
+        if(ev.id === "bayCall" && !on("road")) i = 1;
         fin(()=>A.EVENTS[ev.id].run(d, ev, i), []);
         d.pendingEvent = null;
       }

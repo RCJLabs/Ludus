@@ -38,7 +38,14 @@ import { serve, open } from "../harness.mjs";
 const H = +(process.argv[2] || 8), W = +(process.argv[3] || 420);
 const { server, port } = await serve({ page:"dist/test.html" });
 const { browser, p } = await open(port);
-const out = await p.evaluate(([H,W])=>{
+/* ---- AND THE HOUSE WAS NOT IN CAPUA WHILE THIS WAS MEASURED ----
+   The rope had no travel step and `comeHome` has one caller in the game, a UI button, so a house
+   that answered `bayCall` emigrated for good — 54% of all measured house-weeks were spent in a
+   coastal town (`road.mjs`). Every era census this file ever printed was taken partly from Puteoli.
+   `road` now comes home when the welcome wears; `road:false` never leaves. */
+const ARM = process.argv[4] || "on";     /* on | off */
+const out = await p.evaluate(([H,W,ARM])=>{
+  const OPTS = ARM === "off" ? { road:false } : {};
   const A = window.__LVDVS, R = window.__ROPE;
   const ERAS = [[1,52,"year 1-3"],[53,120,"year 3-7"],[121,220,"year 7-12"],[221,9999,"year 12+"]];
   const era = w => (ERAS.find(e=>w>=e[0]&&w<=e[1])||ERAS[3])[2];
@@ -92,12 +99,12 @@ const out = await p.evaluate(([H,W])=>{
           if((a.urgency||0) >= 3) urgentBy[E]++;
         }
       }
-      R.lanista(d);   /* ends the week itself */
+      R.lanista(d, OPTS);   /* ends the week itself */
     }
     if(far) reached++;
   }
   return { labs:[...lab.values()], names:eraNames, nNames:known.size, reached, shownBy, urgentBy, weeks, died, H, W, rope:R.say() };
-}, [H,W]);
+}, [H,W,ARM]);
 await browser.close(); server.close();
 
 const N = out.names, FIRST = N[0], LAST = N[N.length-1];

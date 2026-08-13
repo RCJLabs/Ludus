@@ -66,7 +66,7 @@ reason the check exists usually has not.
 | `nights` | fast | a man's page had everything about his condition and nothing about any afternoon of his life |
 | `phases` | fast | the week was split into four phases so a check could run one alone, and no check ever called any of them — nor asserted the hard rule that no class may be clumsy in its own kit |
 | `careers` | fast | the signature, mastery, the second trade, the switch, the rudis and retirement were all dark, and two audit probes "found" them unreachable when the fault was the probe |
-| `roads` | fast | `setOut` and `comeHome` were never on the handle, so no check could take a tour and come back — and two 12-house audit batches emigrated by accident and reported half the game dead |
+| `roads` | fast | `setOut` and `comeHome` were never on the handle, so no check could take a tour and come back — and two 12-house audit batches emigrated by accident and reported half the game dead. **Then it happened again, one layer up, and this check passed the whole time.** The plumbing worked and nobody was driving it: `__ROPE.lanista` had no travel step, and `comeHome` has exactly one caller in the game — the UI button at ludus.jsx:18653, with no weekly phase behind it. So the reference player took the `bayCall` invitation at the question step's default `i=0`, went south, and stood there for the rest of its life: over 10 houses × 420 weeks, 5 ever left and 5 of 5 made ONE departure and ZERO returns, 246 to 363 weeks in a single town, 54% of all house-weeks away and 71% of every card a town's rather than Capua's. That 54% is where #132's "91% of a late house's cards are somewhere else" came from — published as the reference player's policy when it was the shape of its cage. The last section is the bar the first four could not carry: houses are PUT on the coast with `setOut` and the reference player must get them back, forced rather than observed because waiting for `bayCall` to fire gives a bar that passes while measuring an empty set |
 | `ledger` | fast | a payout read fame uncapped while its counterweight capped, and the ruin line still asked the figure it asked when a week cost fifty denarii; nothing was watching either |
 | `summit` | fast | Rome is the only real ending and nothing had ever driven it — the gate took one proof and no other, and the trip had no clock, so a house that accepted and then declined its card sat there for ever with Capua frozen behind it |
 | `line` | fast | `nameHeir` was never on the handle, so the half that arms a succession could not be reached by the half that fires it, and no check had walked a handover — four heir kinds with four different bargains, resting on nothing |
@@ -2007,6 +2007,25 @@ Two lessons. Deferring a re-baselining is not free — the model player decays a
 through him decays with him. And a bar that is a FLOOR survives its player getting better, which is why
 none of the dozen bars here needed moving: floors are the right shape for reachability, and this is the
 argument for writing them that way.
+
+### And twice now he has walked into a room with no door out
+
+The drift above is the slow version. The fast version is a STATE the reference player enters and has no
+step to leave, and it has been found twice in two releases:
+
+| v3.20.0 | `d.reSignOffer` — an auctor whose contract ended, on screen a blocking modal. 3 of 10 houses ever raise it; those 3 spent **387 of 1,009 weeks frozen on it**, because the offer that raises it is guarded on its own absence. Rare to start, permanent once started. |
+| v3.21.0 | the coast. `comeHome` has one caller in the game — a UI button — and the lanista had no travel step, so a house that answered `bayCall` emigrated. 5 of 10 houses left; **5 of 5 made one departure and zero returns**, 246-363 weeks in one town, 54% of all house-weeks away. |
+
+Both were found from the outside, by a figure that looked strange, not by reading the harness. And both
+had already been published as findings about the GAME before anyone checked the player: the contract one
+as "a label available on 779 of 779 late weeks and shown on none of them", the road one as "the reference
+lanista tours, and by year twelve 91% of its cards are somewhere else."
+
+The tell is the same both times and is worth carrying: **38% and 91% are not rates anybody chooses.**
+A policy the player cannot execute is not a policy. When a long-run figure surprises you, ask what state
+the player might be stuck in before asking what the game is doing — and prefer a probe that counts
+TRANSITIONS over one that counts weeks, because a house three hundred weeks into an emigration and a
+house on the fourth week of a tour look identical in any single week.
 
 ## "Nothing points at this" is a grep, not a measurement
 

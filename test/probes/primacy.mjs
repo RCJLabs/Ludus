@@ -27,8 +27,17 @@ import { serve, open } from "../harness.mjs";
 const H = +(process.argv[2] || 10), W = +(process.argv[3] || 420);
 const { server, port } = await serve({ page:"dist/test.html" });
 const { browser, p } = await open(port);
-const out = await p.evaluate(([H,W])=>{
+/* ---- AND THE ANSWER WAS THE ROPE, AGAIN ----
+   The road explanation above is right about WHERE the cards were and wrong about why. The reference
+   player was not touring: `comeHome` has one caller in the game and it is a UI button, and this
+   lanista had no travel step, so a house that answered `bayCall` emigrated permanently. Measured by
+   `road.mjs`: 5 of 10 houses left, 5 of 5 made one departure and no return, 246-363 weeks in one
+   town. The 91% was a cage, not a policy. `road` (default true) now comes home when the welcome
+   wears; `road:false` declines the invitation and is the stay-at-home arm this file asked for. */
+const ARM = process.argv[4] || "on";     /* on | off — `off` never leaves Capua */
+const out = await p.evaluate(([H,W,ARM])=>{
   const A = window.__LVDVS, R = window.__ROPE;
+  const OPTS = ARM === "off" ? { road:false } : {};
   const T2 = A.TIERS[2].fame;
   let weeks=0, gate=0, card=0, cardWeek=0, cityCard=0, agenda=0, mark=0, held=0, everHeld=0, eligNoFame=0, took=0;
   const seenTitles = {};
@@ -67,15 +76,15 @@ const out = await p.evaluate(([H,W])=>{
           let m=null; try{ m=A.sectMark(d,k);}catch(e){}
           if(m && /prim/i.test(k)){ mark++; break; } }
       }
-      R.lanista(d);
+      R.lanista(d, OPTS);
     }
   }
   return { weeks, gate, card, cardWeek, cityCard, agenda, mark, held, everHeld, eligNoFame, seenTitles, T2, H,
     markKeys:Object.keys(A.SECT_MARK||{}), rope:R.say() };
-}, [H,W]);
+}, [H,W,ARM]);
 await browser.close(); server.close();
 const pc = (n,d) => d ? `${(n/d*100).toFixed(0)}%` : "-";
-console.log(`=== IS THE PRIMACY SILENT? ===`);
+console.log(`=== IS THE PRIMACY SILENT? ===  [road ${ARM}]`);
 console.log(`  ${out.weeks} house-weeks over ${out.H} houses · the fame gate for a primus offer is ${out.T2}`);
 console.log(`  the house HELD the primacy on ${out.held} weeks, taking it at least once in ${out.everHeld} of ${out.H} houses\n`);
 console.log(`  weeks the game's own gate was open           ${out.gate}  (${pc(out.gate,out.weeks)} of all play)`);

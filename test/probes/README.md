@@ -9,7 +9,12 @@ Run them straight:
     node test/probes/late.mjs 10 420       # houses, weeks
     node test/probes/silent.mjs 10 420
     node test/probes/primacy.mjs 10 420
+    node test/probes/road.mjs 10 420       # where the reference house is standing
     node test/probes/scroll.mjs 16         # week to measure the screens at
+
+`late`, `primacy` and `road` take a third argument, `on` or `off`, which is the reference player's
+`road` option: `on` tours and comes home, `off` never leaves Capua. Everything measured before
+v3.21.0 was taken on a player that could do neither — see below.
 
 A probe prints; it does not pass or fail. When a probe's finding is worth defending against future
 changes, that is what a check in `test/checks/` is for — `seller` is the one this batch produced.
@@ -33,8 +38,57 @@ expected.
 **`primacy.mjs`** — the one system `silent.mjs` could not clear, measured against the game's own gate
 including the `fame >= TIERS[2].fame` term that the survey omitted.
 
+**`road.mjs`** — where the reference house is physically standing, week by week, and whether a
+departure was ever matched by a return. Written to test a code-read, and the code-read held: the
+rope had no travel step and `comeHome` has one caller in the whole game, a UI button, so the
+reference player emigrated. It counts TRANSITIONS rather than weeks-away, because a house three
+hundred weeks into an emigration and a house on its fourth week of a tour both read "on the coast".
+
 **`scroll.mjs`** — where the vertical pixels go, per place, as the page ARRIVES versus with every fold
 thrown open. The second is what `reach` necessarily measures and it is 40% taller than the first.
+
+## The reference player could not come home, and it re-based everything
+
+`primacy.mjs` (below) closed by blaming the reference player's touring. That explanation was right
+about where the cards were and wrong about why, and the difference matters more than the item did.
+
+**The rope never toured.** It emigrated. `R.lanista` had no travel step at all, and the only road out
+of Capua a player is offered is the `bayCall` event — which the question step answered at its default
+`i=0`, *"Take the road to <town>"*. Nothing brings a house back: `comeHome` has exactly one caller in
+`src/ludus.jsx`, the UI button at line 18653, and no weekly phase touches it.
+
+Measured, 10 houses × 420 weeks, before and after the step:
+
+                                    before        after
+    houses that ever left            5 of 10       5 of 10
+    departures / returns             5 / 0         11 / 11
+    longest single stay in one town  363w          7w
+    all house-weeks spent away       54%           4%
+    games weeks whose card was away  71%           8%
+
+Five departures and zero returns. **Not one house in the project's history had ever come back.** This
+is the `reSignOffer` shape from v3.20.0 exactly — a reference player standing in a doorway for years
+— and it is the second time this specific stranding has been found: `roads` exists because the v2.46
+audit lost two 12-house batches to it and published three confident wrong findings. That check has
+passed every run since. It proved the round trip *could* be driven and never asked whether anyone was
+driving it, which is now its last section.
+
+**What this invalidates, and what it does not.** Any figure about where content appears, taken on a
+long-running house, was taken partly from Puteoli. Re-measured on the corrected instrument:
+
+- **#132 is refuted and closes.** Against a house that never leaves Capua, the primacy is offered on
+  **49% of the weeks a card is up and 20% of every open week** (78 offers, 159 card weeks, 388 open
+  weeks, 10 × 420). That is the file's own falsification clause — "the card carrying the offer on a
+  decent share of open weeks … the item is refuted rather than built" — met. What survives is the
+  narrow true part: no agenda line and no `SECT_MARK` key, on any horizon.
+- **#131 survives, and is stronger for it.** Year 12+ reads **97.7% perennial / 2.3% late-only** on a
+  stay-at-home house, against 96.5% / 3.5% on the emigrated one. The house being away was not the
+  cause, which was the last cheap explanation available.
+
+The habit this adds to the three below: **a reference player is an instrument, and a policy it cannot
+execute is not a policy.** The tell was that a *state* persisted — 91% is not a rate a player chooses,
+it is a rate something is stuck at. Ask of any policy step not just "would a good player do this" but
+"can this player ever stop doing it".
 
 ## The `primacy.mjs` question, settled — and what it cost
 
@@ -59,4 +113,6 @@ DENOMINATOR mixed two populations — weeks where the thing could happen and wee
 could not. When a rate moves with the length of a run and the code that produces it does not, the
 denominator is the first place to look.
 
-Before anything is built on this, run it against a reference player that does not tour.
+**And the denominator had a cause, which this write-up got wrong.** "The reference lanista tours" was
+itself a finding about the instrument, not about a policy — it could not come home. Run with
+`road off`, the primacy is offered on 49% of card weeks and the item closes. See the section above.

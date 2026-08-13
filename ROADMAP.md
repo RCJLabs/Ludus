@@ -83,11 +83,11 @@ One turn = one week.
 
 ```
 npm test              the fast tier — about half a minute
-npm run test:all      every check, fast and slow — about eleven minutes
+npm run test:all      every check, fast and slow — about thirteen minutes
 npm run coverage      not what passes, but what no check ever touches
 ```
 
-**58 checks.** Most read into the game through a test handle and answer in seconds; a
+**61 checks.** Most read into the game through a test handle and answer in seconds; a
 handful drive a real browser through the real screens. Every one of them exists because
 of a bug that shipped, and the comment at the top of each says which — that comment
 is the durable part, not the numbers inside it. See `test/README.md` for the table.
@@ -1392,43 +1392,59 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.20.0 at `2f5a8c7`. Suite green, **61/61 in 12.7 min**. `main`, the item
-branch `claude/ludus-item-audit-1vbdct` and the upload mirror are all at that commit; the tree is clean.
+**Shipped and verified:** v3.21.0. Suite green, **61/61**. `main`, the item branch and the upload mirror
+are all at that commit; the tree is clean.
 
-**Two items are measured and NOT built,** #131 and #132. Neither is blocked on measurement any more —
-both are blocked on a design decision, which is the honest reason nothing was written. The probes are kept
-in `test/probes/` with their faults commented at the lines that carry them; they are not part of the
-suite (`test/run.mjs` discovers `test/checks/*.mjs` only).
+**ONE item is measured and not built, #131** — and it is blocked on a design decision, which is the
+honest reason nothing was written for it in two sessions. **#132 closed this session,** refuted on its
+own falsification clause once the instrument was fixed. **#133 opened** and is a number rather than a
+decision, if that is what you want next. The probes are kept in `test/probes/` with their faults
+commented at the lines that carry them; they are not part of the suite (`test/run.mjs` discovers
+`test/checks/*.mjs` only).
 
-**One harness fix shipped with them.** The rope's lanista never answered `d.reSignOffer` — an auctor whose
-contract has ended, which on screen is a blocking modal the week cannot proceed past. The offer that
-raises it is guarded on its own absence, so once one stuck the contract system was shut for the rest of
-that house's run. Measured before and after: 3 of 10 houses ever raise it, and those 3 spent 387 of 1,009
-house-weeks — 38% — frozen on it. Rare to start, permanent once started. There is now a `contract` step,
-on by default. **Any state the UI treats as modal needs a rope step; game line 12244 enumerates exactly
-what halts a week and is the authority on that list.**
+**The reference player could not come home, and it had re-based every long-run figure since v2.93.0.** The rope had
+no travel step, and `comeHome` has exactly one caller in the game — the UI button at line 18653, with no
+weekly phase behind it. So the reference house answered `bayCall` at the question step's default `i=0`
+("Take the road"), went south, and stood in that town until it died: 5 of 10 houses ever left, **5 of 5
+made one departure and zero returns**, 246 to 363 weeks in one town, 54% of all house-weeks away. There
+is now a `road` step, on by default, which breaks camp when `welcomeOf` drops below 1. Full write-up in
+the v3.21.0 changelog.
+
+**That is the second harness fix of this shape in two releases** — v3.20.0's was `d.reSignOffer`, an
+auctor standing in a blocking modal for eight years. Both are the same failure: **a state the reference
+player enters and has no step to leave.** Game line 12244 enumerates what halts a week and is the
+authority for the modal half; the road half has no such list, and the general rule is the one to carry
+forward — *a policy the player cannot execute is not a policy.* When a rate looks like 91% or 38%, ask
+whether it is a rate anybody chose or a rate something is stuck at.
 
 ### #131 — the late game reads what week one reads
 
-Every agenda label stamped with the eras it is ever SHOWN in. Re-measured after the harness fix, and the
-headline held:
+Every agenda label stamped with the eras it is ever SHOWN in. Re-measured after each of the two harness
+fixes, and the headline has now held through both:
 
-                         before the fix    after
-    PERENNIAL in year 12+     97.1%        96.5%
-    LATE-ONLY in year 12+      2.9%         3.5%
+                         first pass    after the contract fix    on a house that stays in Capua
+    PERENNIAL in year 12+   97.1%              96.5%                        97.7%
+    LATE-ONLY in year 12+    2.9%               3.5%                         2.3%
 
-Twenty late-only labels against a hundred perennial, only three or four ever urgent. The game does retire
-its early content — early-only items are gone by year 7 — and puts nothing in its place. Re-run with
-`node test/probes/late.mjs 10 420`.
+Twenty-eight late-only labels against a hundred and eighteen perennial, half of them able to reach
+urgency 3 and almost none of them ever shown. The game does retire its early content — early-only items
+are 0.0% of the shown block from year 7 on — and puts nothing in its place. Re-run with
+`node test/probes/late.mjs 10 420 off`.
+
+**Three cheap explanations have now been checked and none of them yields a fix.** Late content that
+exists but never surfaces is 4 labels, no bug, `agendaTop`'s rule holds. Late systems with no voice is
+#132, closed and refuted. And the house having quietly emigrated — the one that looked most promising,
+because a house standing in Puteoli for eight years genuinely cannot be shown Capua's late content — is
+worth **1.2 points** and moves the finding the wrong way.
 
 **Quote only the year-12 figures.** The early-era percentages swing hard between runs (early-only in year
-1-3 read 7.0% and then 45.6%) because they depend on how many houses survive long enough to be classified
-at all.
+1-3 read 7.0%, then 45.6%, then 11.9%) because they depend on how many houses survive long enough to be
+classified at all.
 
-**Two cheap explanations have been checked and neither yields a fix.** Late content that exists but never
-surfaces is 3 labels, all perennial, none urgent, no bug — `agendaTop`'s rule holds. And late systems with
-no voice is #132, largely refuted. **What is left is writing new late-game content, which is a design
-decision about what a great house should be urgently asked for, not something measurement can settle.**
+**What is left is writing new late-game content, which is a design decision about what a great house
+should be urgently asked for, not something measurement can settle.** The measuring is finished. Three
+explanations that would have made this a bug have each been checked and failed, and the third of them was
+a real instrument fault that still did not move the number.
 
 ### #132 — and the one system with almost no voice
 
@@ -1446,38 +1462,66 @@ live 430 weeks, never on the agenda, and a mark fires on 100% of them.
 The primacy is the survivor. Its gate is open on about half of all play and neither the agenda nor any
 mark ever names it — the card is its only voice.
 
-**THE OPEN QUESTION IS NOW SETTLED, AND IT DISSOLVED THE ITEM.** The 3%-versus-29% gap was real and it
-was neither noise nor a stale card. Only Capua's own card builder carries the primus branch, and it rolls
-a flat `R()<0.6`. Split by where the card was:
+**#132 IS CLOSED — REFUTED ON ITS OWN FALSIFICATION CLAUSE.** The clause was: *"the card carrying the
+offer on a decent share of open weeks … would make the primacy surfaced where bouts are surfaced, and the
+item is refuted rather than built."* Run against a reference player that never leaves Capua, 10 × 420:
 
-    2 houses x 60w      20 card weeks,   0 on the road (0%),  15 offers  ->  15/20 = 75% of Capua cards
-    10 houses x 420w   779 card weeks, 711 on the road (91%), 37 offers  ->  37/68 = 54% of Capua cards
+    388 weeks the gate was open · 159 of them with a card up (41%) · 0 of those cards on the road
+    78 primus offers  ->  49% of every week a card is up, 20% of every open week
 
-So the primacy is offered on most of the Capua cards a qualifying house sees, exactly as written. What
-collapses over a long run is not the offer rate — it is how often the house is *in Capua* on a games week.
-The reference lanista tours, and by year twelve 91% of its cards are somewhere else.
+Half the cards a qualifying house sees carry it. The item is refuted.
 
-**That makes the finding a fact about the reference player's policy, not a demonstrated fault in the
-game.** A house that stayed in Capua would meet the primacy constantly. Two hypotheses were killed on the
-way to this — the stale-card one (a card is genuinely up on 70% of open weeks) and an `activeG`-versus-
-`d.gladiators` denominator (identical numbers) — and both were mine.
+**The last explanation was wrong too, and it was mine.** The previous pass blamed the reference player's
+touring — "by year twelve 91% of its cards are somewhere else" — and wrote it up as a fact about its
+policy. It was not a policy. The rope had no travel step and could not come home, so 5 of 5 houses that
+ever left simply emigrated. The 91% was the shape of a cage. Three hypotheses were killed reaching this
+and all three were mine: the stale card (a card is genuinely up on 41-70% of open weeks), the
+`activeG`-versus-`d.gladiators` denominator (identical numbers), and the touring.
 
-What survives, and is still worth someone's time:
-- the primacy has **no agenda line and no `SECT_MARK` key**, on any horizon. That part held.
-- whether touring should crowd out the crown of the city is a **design question about the road**, not
-  about the primacy, and it reaches #88: Rome is gated behind the primacy.
-- before building anything, re-run `test/probes/primacy.mjs` with a reference player that does NOT tour.
-  If the primacy is plentiful for a stay-at-home house, there is nothing here to fix and the item closes.
+What survives, narrowly and truly: the primacy has **no agenda line and no `SECT_MARK` key**, on any
+horizon. It is not silent — `d.games.offers` is a channel and it uses it — but it is unnamed in the two
+places the player is taught to look. That is a small, cheap, optional item, not the one #132 was.
+
+**And the design question that hung off it is void.** "Whether touring should crowd out the crown of the
+city" was asking about behaviour no player exhibits: a house that comes home spends 4% of its weeks away,
+not 91%. There is nothing to weigh.
+
+### #133 — the coast may be a losing proposition for any house that comes back
+
+**Opened by this session, not measured properly, do not build on it yet.** Measured on the way past, three
+arms of 10 houses × 420 weeks — a house stuck on the coast, one that tours and returns, one that never
+leaves — the shuttling house is the shortest-lived of the three:
+
+    median life   stuck 261w  ·  tour-and-return 175w  ·  never leaves 259w
+
+Which is backwards from what `src/ludus.jsx:9632` says it built: *"a tour is untouched; an emigration
+bleeds."* The mechanism is plausible on inspection — 25d a week while travelling, `d.games` nulled on both
+`setOut` and `comeHome` so a round trip costs two card weeks, and purses fading past `STAY_FRESH` — but
+plausible mechanisms are exactly what this project keeps getting wrong.
+
+**Do not quote those medians.** n=10, censored at the 420-week wall, and lifespan medians in this game
+have swung 36w to 20w between two runs of the same build (`ends`). They are a reason to look, not a
+finding. What would settle it is a paired measurement on the same seeds with the same RNG draw count —
+gold and fame trajectories rather than lifespans, since lifespan is the noisiest statistic available here.
+The falsification is clean: if a tour pays for itself, a returning house should end richer than one that
+never went, and it does not have to live longer to show it.
 
 ### The standing hazard, and it got worse
 
-Across this session's two items, **instrument faults outran game faults by roughly eight to two.** The
+Across the last two sessions' items, **instrument faults outran game faults by roughly nine to two.** The
 list, because the pattern is more useful than any one of them: a grep that read one of four signalling
 channels; `agKey` normalising digits but not names, which reported the opposite conclusion on #131;
 `unhonoured` not being on the handle; `primusEligible` taking a gladiator rather than a state;
 `bayHolder` returning null so "not mine" was true every week; a regex matching a man's mastery instead of
 the smiths' bench; a denominator mixing weeks where a thing could happen with weeks where it structurally
-could not; and a reference player standing in a modal doorway for eight years.
+could not; a reference player standing in a modal doorway for eight years; and that same player living in
+Puteoli for the whole of every long run this project has ever done.
+
+**The last two are the same fault and are worth naming as one.** A reference player is an instrument, and
+*a policy it cannot execute is not a policy.* Both times the tell was in the number rather than the code:
+38% and 91% are not rates anybody chooses, they are rates something is stuck at. Both times the fix was
+one step in `__ROPE.lanista` and the write-up it invalidated was already published. Before trusting any
+figure taken over a long run, ask what STATE the reference player might have entered and never left.
 
 Three habits earned their keep and should survive into the next session:
 
@@ -1487,13 +1531,75 @@ Three habits earned their keep and should survive into the next session:
 - **when a new probe contradicts a measurement you took an hour ago, suspect the probe.** The rites
   reading "never live" came one probe after they were measured at 21% of the year-12 block.
 - **when a rate moves with the length of a run and the code producing it does not, look at the
-  denominator.** That is the whole of #132.
+  denominator.** That is the whole of #132. And when the denominator turns out to be a fact about where
+  the reference player was standing, keep going — that was the whole of #132 twice over.
+- **prove a code-read with a probe before building on it, even when it is obviously right.** The road
+  fault was found by grep in about ten minutes and was correct. It still got a probe first, and the probe
+  is what produced the 5-departures-0-returns line that made the write-up worth anything.
 
 And the judgement call to weigh before picking the next item: at eight-to-two, the probes are getting into
 territory where the measuring is harder than the thing measured. That is a reason to prefer items whose
 answer is a decision over items whose answer is another number.
 
 ## Changelog (shipped)
+
+### v3.21.0 — The reference player could not come home, and every long run was measured from Puteoli
+
+No game code changed. What changed is the instrument every long measurement in this project is taken
+with, and one of the two open items closed as a result.
+
+**The rope did not tour. It emigrated.** `__ROPE.lanista` had no travel step at all. The only road out
+of Capua a player is ever offered is the `bayCall` event — *"Asked For By Name"* — and the question
+step answers at its default `i=0`, which is *"Take the road to <town>"*. Nothing brings a house back:
+**`comeHome` has exactly one caller in `src/ludus.jsx`, the UI button at line 18653**, and no weekly
+phase touches it. So the reference house accepted an editor's invitation, went south, and stood in
+that town until it died.
+
+Measured over 10 houses × 420 weeks by the new `test/probes/road.mjs`, before and after:
+
+                                        before      after
+    houses that ever left                5 of 10     5 of 10
+    departures / returns                 5 / 0       11 / 11
+    longest single stay in one town      363w        7w
+    all house-weeks spent away           54%         4%
+    games weeks whose card was a town's  71%         8%
+
+Five departures and no returns. Not one house in this project's history had ever come back. The step
+is the game's own policy rather than a number of mine — a guest, not a resident: it breaks camp the
+week `welcomeOf` drops below 1, which is `STAY_FRESH` and tracks the constant instead of drifting from
+it. `road:false` is the stay-at-home arm, and it declines the invitation too, because a house that
+leaves once and cannot return is not a house that stays.
+
+**#132 closes, refuted on its own falsification clause.** Re-run against a house that never leaves
+Capua, the primacy is offered on **49% of the weeks a card is up and 20% of every open week** — 78
+offers over 159 card weeks and 388 open weeks. The file's own bar was "the card carrying the offer on
+a decent share of open weeks … the item is refuted rather than built". It is met. The primacy is
+surfaced where every bout is surfaced. What survives is only the narrow true part, unchanged: it has
+no agenda line and no `SECT_MARK` key.
+
+**#131 survives the correction and is stronger for it.** Year 12+ reads **97.7% perennial / 2.3%
+late-only** on a stay-at-home house against 96.5% / 3.5% on the emigrated one. Standing in Puteoli for
+eight years was the last cheap explanation on the table, and it was not the cause either.
+
+**This is the second time this exact stranding has been found, and `roads` passed through all of it.**
+That check exists because the v2.46 audit lost two 12-house batches to it and published three
+confident wrong findings. It proved the round trip *could* be driven, every run, ever since —
+and never asked whether anyone was driving it. Its new last section is forced rather than observed:
+houses are put on the coast with `setOut` and the reference player has 25 weeks to get them back
+(measured: 5 of 5, slowest 8). Waiting for `bayCall` to fire naturally would give a bar that passes
+while measuring an empty set, which is the free-pass shape #128 was about.
+
+**The habit worth keeping.** A reference player is an instrument, and *a policy it cannot execute is
+not a policy*. The tell was there in the number: 91% is not a rate anybody chooses, it is a rate
+something is stuck at. Ask of any policy step not only "would a good player do this" but "can this
+player ever stop doing it".
+
+**One thing measured on the way past and deliberately not acted on.** Across the three arms — stuck,
+tour-and-return, never-leave — the house that shuttles is the shortest-lived of the three (median life
+175w against 261w stuck and 259w staying home, n=10 per arm). The game's note at `src/ludus.jsx:9632`
+intends the opposite: *"a tour is untouched; an emigration bleeds."* That is a game finding, not an
+instrument one, but n=10 lifespans are censored and wide and it is nowhere near settled. See the open
+items.
 
 ### v3.20.0 — The block charged you to learn a number it was already showing you
 
