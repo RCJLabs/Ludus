@@ -2024,7 +2024,11 @@ the two is how you spend an afternoon rebuilding what is already there.
 
 Worth recording as a standing fact about LVDVS, measured through two different reference players over 8
 houses of 400 weeks: urgent agenda items fall from about 0.95 a week in year 1-3 to about 0.62 in year 12+,
-new items from 4.85 to 2.7, and the count of DISTINCT labels a player sees from ~260 to ~150. The number of
+new items from 4.85 to 2.7, and the count of DISTINCT labels a player sees from ~260 to ~150.
+
+**The distinct-label half of that is wrong and is corrected below** — `agKey` normalises digits and not
+names, so every per-man line counted as a fresh label each time the yard turned over. With names
+normalised out there are 174 distinct labels in all. The urgency and newness figures stand. The number of
 available items grows over the same span, from 7.5 to 12.2.
 
 So the late game is not short of things on the list. It is short of things that are urgent, things that are
@@ -2115,3 +2119,36 @@ today's five against a pooled median compares conditions as much as code. And **
 A/B into the tally**: `package.json` is already bumped by then, so the old build's runs get stamped with
 the new version. Record the pairing in prose where the conditions can be stated, which is what the file's
 own head note learned the hard way in #130.
+
+
+## Ninety-seven per cent of what a great house reads, it could have read in week one
+
+The quietness figures above say the late list is not short — available items GROW from 7.5 a week to 12.2 —
+only that less of it is urgent or new. What they do not say is whether the late list is long because late
+systems fill it or because early ones never stop. Stamping every label with the eras it is ever SHOWN in
+(agendaTop's own rule: urgency >= 3 or age <= AG_FRESH), over 10 houses of 420 weeks with 4 reaching year
+12+ and 779 house-weeks there:
+
+                     year 1-3   year 3-7   year 7-12   year 12+
+    EARLY-ONLY          7.0%       5.3%        0.0%       0.0%
+    PERENNIAL          93.0%      94.7%       98.1%      97.1%
+    LATE-ONLY           0.0%       0.0%        1.9%       2.9%
+
+The game does retire its early content — early-only items are gone by year 7 — and puts nothing in its
+place. Twenty late-only labels exist against a hundred perennial ones, only four of the twenty can reach
+urgency 3, and several are never shown in the last era at all. The top of a year-12 house's list is the
+games at Neapolis, the games at Pompeii, a man not buried properly, a man who has earned his mastery, and
+men on the block: every one of them available in week one.
+
+**And the first run of it concluded the opposite,** which is the part worth keeping. It reported 171
+late-only labels carrying 29% of the shown block — plenty of late content, merely under-urgent. The list
+gave it away on reading: "Dromas has earned his mastery", "Boudica could be taught a move of his own".
+Those are late-only because DROMAS did not exist in year one. `agKey` normalises digits to `#` and stops,
+so a per-man line is a new label every time the yard turns over.
+
+The general lesson is about identity, not about agendas: **when a key is built to collapse instances onto
+a template, check that it collapses ALL the varying parts.** A key that normalises one axis and not another
+silently reports churn as variety, and it will do it in whichever direction has the most turnover — which
+here is the late game, the exact place being measured. The fix was to strip names gathered from the
+house's own people rather than pattern-matched for capitals, which would have eaten Rome, Capua and
+Pompeii.
