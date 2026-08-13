@@ -1392,18 +1392,43 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.20.0 (`795cdbf`), 61 checks, suite green. `main`, the item branch and the
-upload mirror are all at the same commit.
+**Shipped and verified:** v3.20.0 at `2f5a8c7`. Suite green, **61/61 in 12.7 min**. `main`, the item
+branch `claude/ludus-item-audit-1vbdct` and the upload mirror are all at that commit; the tree is clean.
 
-**Two items are measured and NOT built,** #131 and #132, and the second has an open question that must be
-settled before anything is written. The probes are kept in `test/probes/` with their faults commented at
-the lines that carry them; they are not part of the suite.
+**Two items are measured and NOT built,** #131 and #132. Neither is blocked on measurement any more —
+both are blocked on a design decision, which is the honest reason nothing was written. The probes are kept
+in `test/probes/` with their faults commented at the lines that carry them; they are not part of the
+suite (`test/run.mjs` discovers `test/checks/*.mjs` only).
+
+**One harness fix shipped with them.** The rope's lanista never answered `d.reSignOffer` — an auctor whose
+contract has ended, which on screen is a blocking modal the week cannot proceed past. The offer that
+raises it is guarded on its own absence, so once one stuck the contract system was shut for the rest of
+that house's run. Measured before and after: 3 of 10 houses ever raise it, and those 3 spent 387 of 1,009
+house-weeks — 38% — frozen on it. Rare to start, permanent once started. There is now a `contract` step,
+on by default. **Any state the UI treats as modal needs a rope step; game line 12244 enumerates exactly
+what halts a week and is the authority on that list.**
 
 ### #131 — the late game reads what week one reads
 
-97.1% of what a year-12 house is SHOWN was available in week one; late-only content is 2.9%, twenty labels
-against a hundred perennial, only four of them ever urgent. The game does retire its early items — gone by
-year 7 — and puts nothing in their place. Re-run with `node test/probes/late.mjs 10 420`.
+Every agenda label stamped with the eras it is ever SHOWN in. Re-measured after the harness fix, and the
+headline held:
+
+                         before the fix    after
+    PERENNIAL in year 12+     97.1%        96.5%
+    LATE-ONLY in year 12+      2.9%         3.5%
+
+Twenty late-only labels against a hundred perennial, only three or four ever urgent. The game does retire
+its early content — early-only items are gone by year 7 — and puts nothing in its place. Re-run with
+`node test/probes/late.mjs 10 420`.
+
+**Quote only the year-12 figures.** The early-era percentages swing hard between runs (early-only in year
+1-3 read 7.0% and then 45.6%) because they depend on how many houses survive long enough to be classified
+at all.
+
+**Two cheap explanations have been checked and neither yields a fix.** Late content that exists but never
+surfaces is 3 labels, all perennial, none urgent, no bug — `agendaTop`'s rule holds. And late systems with
+no voice is #132, largely refuted. **What is left is writing new late-game content, which is a design
+decision about what a great house should be urgently asked for, not something measurement can settle.**
 
 ### #132 — and the one system with almost no voice
 
@@ -1444,14 +1469,29 @@ What survives, and is still worth someone's time:
 - before building anything, re-run `test/probes/primacy.mjs` with a reference player that does NOT tour.
   If the primacy is plentiful for a stay-at-home house, there is nothing here to fix and the item closes.
 
-### The standing hazard
+### The standing hazard, and it got worse
 
-Across this session's two items, instrument faults outnumbered game faults roughly two to one — six
-against one. Every one was found by asking what a good player, or a correct probe, would do that mine was
-not. Two habits earned their keep and should survive into the next session: **print the raw material a
-regex is filtering** (it caught two misses by eye), and **when a new probe contradicts a measurement you
-took an hour ago, suspect the probe first** — that is what the rites reading "never live" was, one probe
-after they were measured at 21% of the year-12 block.
+Across this session's two items, **instrument faults outran game faults by roughly eight to two.** The
+list, because the pattern is more useful than any one of them: a grep that read one of four signalling
+channels; `agKey` normalising digits but not names, which reported the opposite conclusion on #131;
+`unhonoured` not being on the handle; `primusEligible` taking a gladiator rather than a state;
+`bayHolder` returning null so "not mine" was true every week; a regex matching a man's mastery instead of
+the smiths' bench; a denominator mixing weeks where a thing could happen with weeks where it structurally
+could not; and a reference player standing in a modal doorway for eight years.
+
+Three habits earned their keep and should survive into the next session:
+
+- **print the raw material a regex is filtering.** Two misses were caught by eye that no amount of
+  re-reading the regex would have found — the household read 0% while "Nobody feeds this house, or nurses
+  it, or keeps it" sat in its own printout at 33%.
+- **when a new probe contradicts a measurement you took an hour ago, suspect the probe.** The rites
+  reading "never live" came one probe after they were measured at 21% of the year-12 block.
+- **when a rate moves with the length of a run and the code producing it does not, look at the
+  denominator.** That is the whole of #132.
+
+And the judgement call to weigh before picking the next item: at eight-to-two, the probes are getting into
+territory where the measuring is harder than the thing measured. That is a reason to prefer items whose
+answer is a decision over items whose answer is another number.
 
 ## Changelog (shipped)
 
