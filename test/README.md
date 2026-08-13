@@ -2029,3 +2029,15 @@ available items grows over the same span, from 7.5 to 12.2.
 So the late game is not short of things on the list. It is short of things that are urgent, things that are
 new, and variety. Any future item about late-game pacing should start from those three numbers rather than
 from the impression that the list is short.
+
+## Reordering redistributes scroll; it does not reduce it
+
+`reach` measures 80% of the game's actions sitting below the first screen, and the obvious response is to
+move the important things up. Moving the party from sixth of seven sections to second took it from
+y=2,655 to y=1,763 — nearly a screen — and left the total at 80%, because the temple's offerings moved
+down by the same amount.
+
+That is worth knowing before anybody spends a release on ordering: the scroll total is conserved under
+permutation. Ordering fixes WHICH things are close, which matters when a panel names a lever and the lever
+is three screens away, but the aggregate only moves when content is removed, condensed, or folded — and
+folding trades scroll for taps, which `reach` measures on both sides so the trade can be seen.

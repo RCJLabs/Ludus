@@ -21360,6 +21360,27 @@ export default function App(){
             </Sect>
           ); })()}
 
+          {/* ---- THE LEVER, PUT NEXT TO THE PANEL THAT NAMES IT ----
+               `reach` measured this at y=2,655 on this face — three screens down, and sixth of seven
+               sections — while `Your Standing` directly above it says favour is what holds your next
+               rung and points the player at "the block below this one". It was not below this one: the
+               road to Rome and the whole temple stood between them. The party is the largest lever
+               measured on the census ladder (mean rung 2.70 against 1.50, and 218 weeks at Rome against
+               31), so it now sits under the panel that sends you to it, and the copy is true. */}
+          <Sect live={sectFresh(S,"party")} sid="party" title="Throw a party" note="favor & fame">
+          {Object.entries(PARTY).map(([k,p])=>(
+            <div key={k} className="panel" style={{padding:13}}>
+              <div className="flex items-center justify-between">
+                <div className="disp" style={{fontSize:"var(--fs-md)",fontWeight:700}}>{p.label.toUpperCase()}</div>
+                <span className="gold">{p.cost}d</span>
+              </div>
+              <div className="dim" style={{fontSize:"var(--fs-md)",margin:"4px 0 8px"}}>{p.desc} <span style={{color:"#bfa8c8"}}>+{p.warm} with every patron</span> · <span style={{color:"#d8c08a"}}>+{p.fame} fame</span></div>
+              <button className="btn" style={{width:"100%"}} disabled={S.gold<p.cost || S.week-S.lastParty<2} onClick={()=>host(k)}>
+                {S.week-S.lastParty<2? `The villa recovers — ${2-(S.week-S.lastParty)} week${2-(S.week-S.lastParty)>1?"s":""}` : S.gold<p.cost? "Not enough coin" : "Send invitations"}
+              </button>
+            </div>
+          ))}
+          </Sect>
           {(!S.over && (S.fame >= 250 || (S.flags.primusHeld||0) > 0 || riseOf(S) >= 2 || romeRuns(S) > 0)) && (()=>{
             const sen = (S.patrons||[]).filter(p=>p.rank==="senator").sort((a,b)=>b.favor-a.favor)[0];
             const bar = romeBar(S), ready = romeReady(S), been = romeRuns(S) > 0;
@@ -21491,20 +21512,6 @@ export default function App(){
               </div>
             </Sect>
           ); })()}
-          <Sect live={sectFresh(S,"party")} sid="party" title="Throw a party" note="favor & fame">
-          {Object.entries(PARTY).map(([k,p])=>(
-            <div key={k} className="panel" style={{padding:13}}>
-              <div className="flex items-center justify-between">
-                <div className="disp" style={{fontSize:"var(--fs-md)",fontWeight:700}}>{p.label.toUpperCase()}</div>
-                <span className="gold">{p.cost}d</span>
-              </div>
-              <div className="dim" style={{fontSize:"var(--fs-md)",margin:"4px 0 8px"}}>{p.desc} <span style={{color:"#bfa8c8"}}>+{p.warm} with every patron</span> · <span style={{color:"#d8c08a"}}>+{p.fame} fame</span></div>
-              <button className="btn" style={{width:"100%"}} disabled={S.gold<p.cost || S.week-S.lastParty<2} onClick={()=>host(k)}>
-                {S.week-S.lastParty<2? `The villa recovers — ${2-(S.week-S.lastParty)} week${2-(S.week-S.lastParty)>1?"s":""}` : S.gold<p.cost? "Not enough coin" : "Send invitations"}
-              </button>
-            </div>
-          ))}
-          </Sect>
           {lawOf(S).edicts.length>0 && (
             <Sect title="What the law says" note={lawWord(S)}>
               {lawOf(S).edicts.map(k=>{ const E = EDICTS[k], bad = (()=>{ try{ return E.check(S); }catch(e){ return false; } })();

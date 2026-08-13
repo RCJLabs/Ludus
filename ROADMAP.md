@@ -1392,6 +1392,30 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v3.19.0 — The panel said "the block below this one" and it was three screens away
+
+v3.7.0 gave the census ladder's Standing panel a line naming the lever that moves it: *"Throw a party —
+the block below this one — and every patron warms to you."* `reach` then measured where that block
+actually was. **y=2,655**, sixth of seven sections on the face, with the whole road to Rome and the whole
+temple standing between the sentence and the thing it pointed at.
+
+The party is the largest lever measured on the ladder — mean census rung 2.70 against 1.50, and 218 weeks
+at Rome against 31. It now sits directly under the panel that sends you to it, above the road to Rome
+rather than below it.
+
+    SEND INVITATIONS   y=2,655  ->  y=1,763        892 pixels, just over one screen
+    its position on the face   6th of 7  ->  2nd
+
+**And the honest half: total scroll did not move.** 80% of the things that change the house still sit
+below the first 844 pixels, because pushing one section up pushes another down — the temple's offerings
+went from above the party to below it, at y=2,395 to 2,688. **Reordering redistributes scroll; it does not
+reduce it.** The only things that reduce it are removing content, condensing it, or folding it, and the
+last of those trades scroll for taps at a rate `reach` now measures on both sides.
+
+So this release is not a fix for the 80%. It is a fix for one specific sentence being false, and for the
+most valuable lever in the middle game sitting further from the panel that recommends it than any other
+action on the face. The 80% is a separate problem and wants a different kind of answer.
+
 ### v3.18.0 — The week gets quieter with the years, and the fix I reached for already existed
 
 Two findings, one of them about the game and one about me.
