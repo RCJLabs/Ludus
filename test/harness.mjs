@@ -373,6 +373,15 @@ export async function installRope(p){
 
          Opt-in for the same reason `gear` is: freeing a man costs you a fighter, and a player who
          frees everyone eligible is a measurably different player. */
+      /* ---- AND THE TABLE, which v3.7.0 measured as the largest lever on the census ladder ----
+         Paired then: a lanista who entertains reaches mean rung 2.70 against 1.50 and 218 weeks at Rome
+         against 31, for about 457 denarii a week. It is also a sink, and a "does everything" arm without
+         it is not one. Opt-in with the other two, for the same reason. */
+      if(o.party === true && typeof A.hostParty === "function"){
+        const sp = d.gold - LAN.reserve(d);
+        const kind = sp > 4000 ? "decadent" : sp > 1600 ? "lavish" : sp > 700 ? "modest" : null;
+        if(kind && fin(A.hostParty,[d, kind])) bump("party");
+      }
       if(o.free === true && typeof A.grantRudis === "function"){
         for(const g of A.activeG(d)){
           if(!fin(A.rudisEligible,[g])) continue;

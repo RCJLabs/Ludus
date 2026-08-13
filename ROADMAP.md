@@ -1392,6 +1392,60 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v3.16.0 — The surplus was a missing sink after all, and I had the reason backwards
+
+No game change. One measurement, which decides whether to build a fourth sink and says not to.
+
+Three sinks were built or priced in four releases, each measured alone: steel that wears out (v3.13/14),
+freedom priced at what it cost in Rome (v3.15), and the table the census ladder turns on (v3.7). Every arm
+still ended with tens of thousands idle — the gear arm even bought 179 master's pieces, the biggest fixed
+sink in the game, and finished on 87,054 denarii. From that I concluded in v3.14.0 that "any sink that
+buys capability refunds part of its own cost" and that closing the surplus would need something on the
+income side.
+
+**The thing I never measured was the NET.** A balance is a history; the net says whether the gap is still
+widening at the end of the game. Four arms plus a combined one, same eight seeds, 400 weeks:
+
+| arm | net gold/week at year 12+ | holding |
+|---|---|---|
+| nothing (the old reference player) | **769d** | 88,555d |
+| steel only | 48d | 37,874d |
+| freedom only | 465d | 56,907d |
+| the table only | 255d | 30,527d |
+| **every sink at once** | **19d** | **16,662d** |
+
+**The sinks close it.** A player who uses all three runs essentially break-even at year 12+ — 19 denarii a
+week against a bill of 750 — and holds 16,662 instead of 88,555, a fall of 81%. Income does not outrun
+them. The v3.14.0 conclusion was wrong, and it was wrong because it read a BALANCE and reasoned about a
+RATE.
+
+**And they compound rather than adding.** Alone they take 94%, 40% and 66% off the net; together they take
+97.5%. That is not because each is stronger than measured — it is because they are not independent. Coin
+spent on steel is coin that never became the income that would have funded the parties, and a house that
+freed its best man earns less thereafter to spend on either. Measuring a sink alone systematically
+understates what a set of them does.
+
+**One honesty note on the magnitudes.** v3.14.0 measured steel taking year-12 gold from 107,246 to 87,054,
+a fall of 19%; here steel alone takes 88,555 to 37,874, a fall of 57%. Same change, same direction, wildly
+different size — and the difference is the seed set, which is the lesson this project has already learned
+twice ("the 6x gap was the seed set, and pairing settled the real effect at 1.6x"). Only the ORDERING
+within one seed set is trustworthy. Both runs agree that steel is a real sink; neither pins its size, and
+nothing here should be quoted as a coefficient.
+
+**What this changes about what to do next.** The middle game's coin problem is not a design gap — it is a
+DISCOVERABILITY gap, which is what the last four releases have actually been fixing: the party the panel
+never named, the bench nothing points at, the man who has earned the rudis that only one line of counsel
+ever mentioned. A player who finds these levers has no surplus. A player who does not holds 88,555 denarii
+and reasonably concludes the game has run out.
+
+It also makes the case for flipping the `gear`, `free` and `party` defaults much stronger than it was an
+hour ago. The reference player who uses none of them holds 88,555 denarii and looks like a broken economy;
+the one who plays holds 16,662 and looks correct. Every figure in the heads of `policy`, `ends`, `careers`
+and `survive` describes the former.
+
+The rope gained a `party` step to make the combined arm honest — a "does everything" arm without the
+largest per-week sink in the game is not one. Opt-in, with the other two.
+
 ### v3.15.1 — Three faults in the ten minutes after pricing freedom
 
 v3.15.0 gave `grantRudis` a fee and an early return when the house cannot pay it. That introduced three

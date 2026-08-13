@@ -1965,3 +1965,26 @@ pass. Tally 1 failure in 7 runs across 5 builds against a documented ~1 in 8.
 
 Both halves matter. Re-running first and shrugging would have been wrong even though the answer was luck,
 because the reasoning is what distinguishes this from the two occasions the same conclusion was wrong.
+
+## Measure the rate, not the balance
+
+Four releases of work on the middle game's coin surplus read the same quantity every time: how much gold
+the house was HOLDING. Each new sink dented it and left tens of thousands behind, which looked like
+evidence that income outruns any sink — and produced a design rule in v3.14.0 that turned out to be wrong.
+
+The quantity that answers the question is the NET CHANGE per week. A balance is a history: it is dominated
+by what the house accumulated before the sink existed. The net says whether the gap is still widening at
+the point you care about. Measured, the old reference player runs +769 denarii a week at year 12+ and one
+who uses every available sink runs +19 — the sinks close it, and no amount of staring at balances would
+ever have shown that.
+
+When a claim is about whether something is being ABSORBED, measure the flow. Stocks lag; rates do not.
+
+## Sinks compound, so measuring one at a time understates the set
+
+Steel, freedom and the table take 94%, 40% and 66% off the year-12 net when measured alone, and 97.5% when
+run together. They are not independent: coin spent on steel never became the income that would have paid
+for the parties, and a house that freed its best fighter earns less thereafter to spend on either.
+
+So a set of sinks measured one at a time will systematically read weaker than it is, and a designer adding
+them one at a time will overshoot. Measure the combined arm before pricing the next one.
