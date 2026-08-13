@@ -1446,6 +1446,48 @@ should be urgently asked for, not something measurement can settle.** The measur
 explanations that would have made this a bug have each been checked and failed, and the third of them was
 a real instrument fault that still did not move the number.
 
+#### The estate, so the blank page is not blank — `test/probes/estate.mjs`
+
+"What should a great house be urgently asked for?" has stalled this item twice, so the one thing
+measurement CAN do was done: what a year-12 house owns that a week-one house does not. Every quantity in
+both eras off the same houses, sorted by ratio, 10 × 420.
+
+    NEW ENTIRELY          5 rooms (15 levels) · census rung 4 · brand tier 3 · 3 edicts standing
+                          · law heat 21 · 75 towns known · 3 children
+    MUCH MORE OF          fame 119 -> 3,791 (31.9x) · 39 men killed by yours (19.5x) · 36 buried (12x)
+                          · 251 bouts (11.4x) · 9 feats (9x) · weekly bill 48d -> 364d (7.6x)
+                          · 43 men on the books (5.4x) · 14 unburied dead (4.7x)
+    BARELY MOVED          4 men in the yard (1.3x) · 4 patrons (1.3x) · piety 1.0x · 2 ties (1.0x)
+    LESS OF               unrest 4.5 -> 1.7 (0.4x)
+
+And the systems, as a share of the era's weeks:
+
+    MAXED BY YEAR 12      armourer, collegium, doctrine, medicus, blessing, wife, doctore, aedile,
+                          election — every one of them 100%, from 3-75% early
+    NEVER FIRES LATE      the primacy 0% · a vow 0% · a saga 0% · a court case 0% · a loan 0%
+    RARE LATE             at Rome 8% · a war 6% · the bay held 43%
+    GOES BACKWARDS        a name in Capua 67% -> 52%
+
+**The reading, which is a design thesis and not a measurement: a year-12 house has acquired everything
+acquirable and is at risk of nothing.** Every system that could apply pressure is either maxed out
+(patrons at 94 of 100, all four staff, doctrine, blessing, every room) or never fires. Unrest — the
+game's main pressure system, and the spine of the whole rebellion arc — *falls* by 60%. The perennial
+labels that fill a late week are the only things still moving: men on the block, the rope, the unburied.
+
+So the shape of the answer is that **the late game does not need more things to acquire. It needs things
+that can be LOST.** That is the proposal to accept or reject before anything is written.
+
+**Two cautions on the above, both mine.** The census rung is a fact about the reference player's
+spending, not the ladder's pricing: it reads "ready in every term but the coin" on 93% of late weeks
+while having held 25,249d at some point, because it builds whenever `spare()` clears 6,000 and never
+banks the 15,000 the fifth rung asks. A `miser` arm (no rooms, rites or parties) reaches rung 5 and 72,752d
+and is then blocked by FAVOUR on 93% of late weeks, favour being what parties buy. Neither arm ever stands
+on rungs 6 or 7. **That is not new** — `census`'s own head already records "one house reached Patron of
+the Games, in year eleven. None reached Amicus Caesaris", measured over 24 houses, and the threshold
+design was the accepted outcome of that work. It is re-measured here, not rediscovered.
+And the `time`-marked quantities (bouts, buried, feats, towns known) grow with weeks survived rather than
+with success, so their ratios flatter. The late column is a survivors' sample: 5 of 10 houses reach it.
+
 ### #132 — and the one system with almost no voice
 
 The obvious follow-up was "find the late systems with no agenda line". Six of the seven that a grep

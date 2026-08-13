@@ -10,6 +10,7 @@ Run them straight:
     node test/probes/silent.mjs 10 420
     node test/probes/primacy.mjs 10 420
     node test/probes/road.mjs 10 420       # where the reference house is standing
+    node test/probes/estate.mjs 10 420     # what a great house owns; add `on miser` for the saving arm
     node test/probes/scroll.mjs 16         # week to measure the screens at
 
 `late`, `primacy` and `road` take a third argument, `on` or `off`, which is the reference player's
@@ -43,6 +44,17 @@ departure was ever matched by a return. Written to test a code-read, and the cod
 rope had no travel step and `comeHome` has one caller in the whole game, a UI button, so the
 reference player emigrated. It counts TRANSITIONS rather than weeks-away, because a house three
 hundred weeks into an emigration and a house on its fourth week of a tour both read "on the coast".
+
+**`estate.mjs`** — what a year-12 house owns that a week-one house does not: every quantity in both
+eras off the same houses, sorted by ratio, plus which systems are switched on. Written to give #131's
+design decision some raw material instead of a blank page. It does NOT claim anything is silent —
+#132 is what that costs. Two faults in its first pass, both caught by the printed raw material rather
+than by re-reading the code: `d.book.bouts` does not exist (the count is `d.book.n`), so it read 0
+bouts against a rope reporting 1,851; and its house snapshots were taken after the loop, which is the
+state at DEATH — three houses with 0 men and -2,910d, labelled "at the wall". It also carries a
+`miser` arm, because "the house is short of coin" is a claim about the player's spending until you
+have run one that does not spend. **A zero in both columns is the rope's policy, not the game's
+content** — it never saves a kit, builds a work, or frees a man.
 
 **`scroll.mjs`** — where the vertical pixels go, per place, as the page ARRIVES versus with every fold
 thrown open. The second is what `reach` necessarily measures and it is 40% taller than the first.
