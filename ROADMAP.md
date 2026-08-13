@@ -1390,6 +1390,58 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ---
 
+## Where the work stands — read this first
+
+**Shipped and verified:** v3.20.0 (`795cdbf`), 61 checks, suite green. `main`, the item branch and the
+upload mirror are all at the same commit.
+
+**Two items are measured and NOT built,** #131 and #132, and the second has an open question that must be
+settled before anything is written. The probes are kept in `test/probes/` with their faults commented at
+the lines that carry them; they are not part of the suite.
+
+### #131 — the late game reads what week one reads
+
+97.1% of what a year-12 house is SHOWN was available in week one; late-only content is 2.9%, twenty labels
+against a hundred perennial, only four of them ever urgent. The game does retire its early items — gone by
+year 7 — and puts nothing in their place. Re-run with `node test/probes/late.mjs 10 420`.
+
+### #132 — and the one system with almost no voice
+
+The obvious follow-up was "find the late systems with no agenda line". Six of the seven that a grep
+accused turn out to speak, through channels the grep did not know existed. **There are at least four:**
+
+    the agenda      agendaRanked / agendaTop — the week's ranked list
+    SECT_MARK       eight marks that light a section and reach the villa's face chips
+    the man's ask   PRIMUS_ASK and the ambition channel put a whole event in front of the player
+    the arena card  d.games.offers — an offer titled "the primacy of Capua" simply appears there
+
+Anyone claiming a system is silent must clear all four. The collegium is the case that makes the point:
+live 430 weeks, never on the agenda, and a mark fires on 100% of them.
+
+The primacy is the survivor. Its gate is open on about half of all play and neither the agenda nor any
+mark ever names it — the card is its only voice.
+
+**THE OPEN QUESTION, and the reason nothing was built.** How often the card actually carries the offer is
+not settled. At 10 houses x 420 weeks the probe says 3% of open weeks; at 2 houses x 60 weeks the same
+probe says 29%. `d.games` persists between games weeks and carries its own `week` field, so the long-run
+figure may be counting weeks where no card existed at all — and the rope's own tally says a long run
+spends real time at Rome with no card up. **The honest question is "of the open weeks in which a card
+exists, how many carry the offer", and it is a one-line change to `test/probes/primacy.mjs`.** Settle it
+first: 3% and 29% point at different builds, and one of them points at no build.
+
+If it survives, the design choice is genuinely open — an agenda line, a ninth `SECT_MARK` key, its own ask
+in the way `PRIMUS_ASK` handles the defence, or simply a better card cadence. That is a decision, not a
+measurement, and it bears on #88: Rome is gated behind the primacy, so this channel gates the run's ending.
+
+### The standing hazard
+
+Across this session's two items, instrument faults outnumbered game faults roughly two to one — six
+against one. Every one was found by asking what a good player, or a correct probe, would do that mine was
+not. Two habits earned their keep and should survive into the next session: **print the raw material a
+regex is filtering** (it caught two misses by eye), and **when a new probe contradicts a measurement you
+took an hour ago, suspect the probe first** — that is what the rites reading "never live" was, one probe
+after they were measured at 21% of the year-12 block.
+
 ## Changelog (shipped)
 
 ### v3.20.0 — The block charged you to learn a number it was already showing you
