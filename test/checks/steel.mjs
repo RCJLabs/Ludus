@@ -61,6 +61,9 @@ export async function run({ p }){
 
   const out = await p.evaluate(()=>{
     const A = window.__LVDVS;
+    /* the wear table and the mend pair, read off the game — every figure in this check that used to be
+       a literal about them now comes from here. See the note in section 5. */
+    const WR = A.WEAR_RATE || { weapon:[4,7] };
     const bad = [], lines = [];
     const SLOTS = A.SLOTS;
     const wOf = (g,s) => A.wearOf(g, s);
@@ -309,21 +312,35 @@ export async function run({ p }){
 
     /* ================= 5. THE PIECE OUTLIVES ITS OWNER ================= */
     {
+      /* ---- AND THE "25 BOUTS" WAS A LITERAL IN THIS SENTENCE ----
+         It was 100 divided by the mean of the old WEAR_RATE.weapon, written out as a number, and v3.13.0
+         moved that rate — so the line would have gone on quoting 25 while the real figure was 18. It is
+         derived from the game's own table now, which is the #125 lesson applied to this check. */
+      const perBout = (WR.weapon[0] + WR.weapon[1]) / 2;
+      const needs = Math.round(100 / perBout);
       lines.push(`careers in that house: ${P0.men} men fought, median ${P0.careerMed} bouts, most `
-        + `${P0.careerMax} — against the ~25 a weapon needs to break (over 8 houses: median 3, p90 8, `
-        + `2 of 241 men ever reached 25, and 207 of 263 left the yard dead)`);
-      if(P0.careerMed != null && P0.careerMed >= 20)
-        bad.push(`the median man fought ${P0.careerMed} bouts, which is inside the 25 a weapon needs `
-          + `— measured at 3, and if careers have grown that far then wear has become a different `
-          + `system and the figures in this check's head are stale`);
+        + `${P0.careerMax} — against the ~${needs} an unmended weapon needs to break at `
+        + `WEAR_RATE.weapon ${WR.weapon[0]}-${WR.weapon[1]} (over 8 houses at the old 3-6: median 3, `
+        + `p90 8, 2 of 241 men ever reached 25, and 207 of 263 left the yard dead)`);
+      if(P0.careerMed != null && P0.careerMed >= needs * 0.8)
+        bad.push(`the median man fought ${P0.careerMed} bouts, which is inside the ${needs} an unmended `
+          + `weapon needs — measured at 3, and if careers have grown that far then wear has become a `
+          + `different system and the figures in this check's head are stale`);
     }
 
     /* ================= 6. THE ROOM DOES WHAT IT SAYS ================= */
     {
       const P2 = played("armed", 60, 2);
-      lines.push(`the same house with the armoury at level ${P2.arm} (+${(P2.arm*2.2).toFixed(1)} a week `
-        + `against 3-6 a bout): ${P2.bouts} bouts · ${P2.broke} broke · keen ${P2.keen}% · `
-        + `worn or worse ${P2.lowBands}%   (per ~1,050 bouts: 28 breaks at L0, 2 at L1, 0 at L2 and L4)`);
+      /* both halves of this were literals too — the mend rate and the wear it was set against — and
+         both are read off the game now. The parenthesised history is labelled as the OLD pair, because
+         it was measured under it and is not a claim about the current one. */
+      const mendWk = P2.arm * (A.MEND_RATE != null ? A.MEND_RATE : 0.18);
+      lines.push(`the same house with the armoury at level ${P2.arm} (+${mendWk.toFixed(2)} a week per slot `
+        + `against ${WR.weapon[0]}-${WR.weapon[1]} a bout, ceiling ${A.MEND_CEIL}): ${P2.bouts} bouts · `
+        + `${P2.broke} broke · keen ${P2.keen}% · worn or worse ${P2.lowBands}%`);
+      lines.push(`   under the OLD pair (wear 3-6, mend 2.2 a level, no ceiling) this read 28 breaks at `
+        + `L0, 2 at L1 and NONE at L2 or L4 per ~1,050 bouts — the armoury switched wear off entirely, `
+        + `which is what v3.13.0 changed`);
       if(P2.arm !== 2)
         bad.push(`the armoury arm asked for level 2 and built ${P2.arm} — \`buildUp\` needs the coin `
           + `in hand, and a probe that floors its purse inside the week loop silently gets level 1`);

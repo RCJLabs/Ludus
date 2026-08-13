@@ -688,8 +688,21 @@ const isMaster   = id => !!(GEAR[id] && GEAR[id].master);
 /* every master's piece in the house wants a smith on it every week, whether it is on
    a man or on the wall. This is the real price of the bench — the ticket is once, the
    keep is forever, and a house that arms eight men out of it feels it every Saturday. */
+/* ---- AND GOOD STEEL BELOW THE MASTER'S BENCH COST NOTHING TO KEEP ----
+   `keep` is set on the nineteen master's pieces and on nothing else, so this summed to exactly 0.0
+   denarii in every era of a 2,555-week measurement — the reference player never reaches the bench, and
+   below it there was no such thing as maintenance. A rack of forty bought pieces was as free to hold
+   as an empty one.
+   Anything dear enough to be a real piece of kit now wants a smith's attention. The floor keeps the
+   opening exactly as it was: house issue is free, and so is everything a young house can afford, so
+   `survive` sees none of this. It bites a house that has armed eight men in three-hundred-denarii
+   steel, which is a house with the coin to feel it and not notice. */
+const KEEP_FLOOR = 260;            // under this it is ironmongery and the yard smith does it in a morning
+const KEEP_RATE  = 0.006;          // 1.8d a week on a 300d blade, 6d on a 1,000d one
+const kitKeepOf = it => !it || !wears(it) ? 0
+  : it.keep ? it.keep : (it.price > KEEP_FLOOR ? Math.max(1, Math.round(it.price * KEEP_RATE)) : 0);
 const gearUpkeep = d => Object.entries(d.gear||{}).reduce((n,[id,c])=>
-  n + (GEAR[id] && GEAR[id].keep ? GEAR[id].keep * (c||0) : 0), 0);
+  n + kitKeepOf(GEAR[id]) * (c||0), 0);
 const rackCap   = d => 8 + bLevel(d,"armamentarium")*7;        // 8 / 15 / 22 / 29
 const rackUsed  = d => Object.entries(d.gear||{}).reduce((n,[id,c])=> n + (wears(GEAR[id])?(c||0):0), 0);
 const rackOver  = d => Math.max(0, rackUsed(d) - rackCap(d));
@@ -3844,7 +3857,14 @@ function docLesson(d, g){
   if(line) chron(d, line, "good");
 }
 const RETRAIN_WEEKS = 3, RETRAIN_FEE = 240;
-const WEAR_RATE = { weapon:[3,6], offhand:[2,5], helm:[1,3], armor:[2,4] };
+/* ---- WHAT A BOUT TAKES OUT OF WHAT HE CARRIES ----
+   Raised in v3.13.0, together with the armoury's mend coming down, because the two only mean anything
+   against each other: at the old pair a level-2 armoury already broke even and a level-4 one restored
+   four times what the sand took. The pair is now set so that a man who fights most weeks loses ground
+   on his steel even in a finished house — about a point and a half a week on his weapon net of the
+   best care in the game — so a piece reaches the end of its life in something over a year of hard use
+   and has to be replaced rather than merely maintained. */
+const WEAR_RATE = { weapon:[4,7], offhand:[3,6], helm:[2,4], armor:[2,5] };
 /* a bout takes something out of everything he carries */
 function wearKit(d, g, hard){
   if(!g.kit) return;
@@ -3871,7 +3891,40 @@ function wearKit(d, g, hard){
     }
   }
 }
-/* the armoury keeps what he carries in order */
+/* ---- THE ARMOURY KEEPS WHAT HE CARRIES IN ORDER, AND IT USED TO KEEP IT NEW ----
+   This mended `L * 2.2 * armourerMend` a week into EVERY slot, free, for ever. Against a weapon that
+   loses 3 to 6 in a bout and a man who fights about weekly, level 2 already breaks even at 4.4 and
+   level 4 with a good armourer restores up to 18.5 a week against a wear the same armourer has cut by
+   a quarter. So from the moment the second level went up, steel stopped costing anything.
+
+   MEASURED over 8 houses and 2,555 weeks of the reference player, before this changed:
+
+     era         armoury lvl   free mend/wk/slot   mean condition   weapons under 25   pieces broken
+     year 1-3       0.00              0.0              54.5%              0.0%
+     year 3-7       1.09              3.8              53.8%             22.4%
+     year 7-12      3.36             12.0              97.1%              0.0%
+     year 12+       3.96             14.1              99.2%              0.0%              0 in 8 houses
+
+   Nothing broke in any house in any era. Steel is a real cost for the first seven years and then it is
+   free for ever, which is one of the reasons a year-12 house sits on 102,000 denarii with a 532-a-week
+   bill and 60 of the game's 70 purchasable pieces affordable and unbought.
+
+   Two changes, and no new state on the man for either. The rate becomes an UPKEEP rather than a
+   restoration — it slows the decline and cannot reverse it for a man who fights every week — and it
+   stops short of new, because a smith with a whetstone does not make a used blade new. What makes a
+   piece new is buying one, and now something has to. */
+/* ---- AND THE RATE THAT MATTERS IS PER MAN PER WEEK, NOT PER BOUT ----
+   The first two attempts at this pair set the mend against the wear of ONE BOUT and both left steel
+   sitting comfortably above the warning line for ever. A house fights about one bout a week and shares
+   it round the yard, so a man in a roster of three and a half fights roughly once every three and a
+   half weeks: his weapon loses about 5.5 a bout, a good armourer takes a quarter off that, and the
+   real figure is therefore about 1.2 a week and not 5.5. A mend of 0.45 a level was 2.7 a week at the
+   fourth level with a good armourer — still more than double what the sand was taking.
+   0.18 a level is 0.72 a week at the fourth level, or about 1.1 with the best armourer in the game:
+   just under what a man in ordinary rotation loses, so steel drifts down over a career, the warning
+   line is reachable, and a man who fights far more than his share wears his kit out. */
+const MEND_RATE = 0.18;    // per armamentarium level per week, against about 1.2 a week of real wear
+const MEND_CEIL = 88;      // free care keeps a piece serviceable; it does not make it new
 function repairWeek(d){
   const L = bLevel(d,"armamentarium");
   if(!L) return;
@@ -3882,7 +3935,9 @@ function repairWeek(d){
       const it = GEAR[g.kit[s]];
       if(!wears(it)) continue;
       if(g.wear[s]==null) g.wear[s] = 100;
-      g.wear[s] = Math.min(100, g.wear[s] + L*2.2*armourerMend(d));
+      /* never DOWN — a piece already better than the ceiling is simply left alone */
+      if(g.wear[s] >= MEND_CEIL) continue;
+      g.wear[s] = Math.min(MEND_CEIL, g.wear[s] + L*MEND_RATE*armourerMend(d));
     }
   }
 }
@@ -25020,6 +25075,15 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        pieces ON THE SHELF — worn condition lives in `g.wear[slot]`, which is what `wearOf` reads
        and what `wearWord` puts a word to. See `steel`. */
     wears, wearOf, WEAR_RATE, SLOTS, wearKit, repairWeek,
+    /* ---- AND THE WHOLE OTHER HALF OF IT, WHICH NOTHING COULD SEE ----
+       `wearKit` was on the handle and every term that opposes it was not: the armoury's free weekly
+       mend, the armourer's two multipliers, the rack's overcrowding strain, the steel perk, what a
+       repair actually costs and what the racks cost to keep. So the only measurable half of the steel
+       economy was the half that takes condition away, and the question a player asks — does any of
+       this ever cost me anything — could not be asked at all. See `steel` and the v3.13.0 entry. */
+    gearUpkeep, kitKeepOf, KEEP_FLOOR, KEEP_RATE, MEND_RATE, MEND_CEIL,
+    repairFee, armourerWear, armourerMend, armourerCut, perkWear,
+    rackCap, rackUsed, rackOver, rackStrain, rackRent, staffSkill,
     /* ---- AND WHAT A TOWN DOWN THE BAY THINKS OF YOU ----
        `cityFavWord` took zero samples in the scales sweep and #115 was written because nothing had
        ever toured. Two scales live here: `bayPol[key].favor`, which only a bout in that town moves,

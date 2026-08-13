@@ -1392,6 +1392,68 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v3.13.0 — The armoury was not maintaining steel, it was switching wear off
+
+The ask was more wear, more maintenance, more breakage, so that arms and armour have to be bought again
+and the middle game's surplus has somewhere to go. The system already existed. Measured first, over 8
+houses and 2,555 weeks of the reference player:
+
+| era | armoury lvl | free mend/wk/slot | mean condition | weapons under 25 | pieces broken |
+|---|---|---|---|---|---|
+| year 1–3 | 0.00 | 0.0 | 54.5% | 0.0% | |
+| year 3–7 | 1.09 | 3.8 | 53.8% | 22.4% | |
+| year 7–12 | 3.36 | 12.0 | **97.1%** | 0.0% | |
+| year 12+ | 3.96 | 14.1 | **99.2%** | 0.0% | **0 in 8 houses** |
+
+Steel is a real cost for seven years and then free for ever. `repairWeek` mended `level × 2.2 ×
+armourerMend` into every slot every week, free, with no ceiling — against a weapon losing 3 to 6 in a
+bout, the second level already broke even and the fourth restored four times what the sand took, from a
+wear the same armourer had also cut by a quarter.
+
+**And the number the whole balance turns on had never been measured.** Both of the first two attempts at
+a new rate set the mend against the wear of ONE BOUT and both left steel comfortably above the warning
+line for ever. A house fights about one bout a week and shares it round the yard, so a man fights **0.18
+to 0.29 times a week** — his weapon loses about 5.5 a bout, an armourer takes a quarter off, and the real
+figure is about **1.2 a week, not 5.5.** A mend of 0.45 a level was still more than double it.
+
+**What changed.** `WEAR_RATE` up — weapon 4–7, offhand 3–6, helm 2–4, armor 2–5. `MEND_RATE` 2.2 → **0.18
+a level**, which is 0.72 a week at the fourth level or about 1.1 with the best armourer in the game: just
+under what a man in ordinary rotation loses. And a ceiling, `MEND_CEIL` 88 — free care keeps a piece
+serviceable, it does not make it new. What makes a piece new is buying one, and now something has to.
+
+| era | mean condition | weapon | weapons under 25 | pieces broken |
+|---|---|---|---|---|
+| year 1–3 | 54.0% | 54% | — | |
+| year 3–7 | 57.9% | 58% | 16% | |
+| year 7–12 | 60.9% | 52% | 10% | |
+| year 12+ | 60.7% | **49%** | **18%** | **2 in 8 houses** |
+
+**And maintenance now exists below the master's bench.** `gearUpkeep` sums `keep`, which is set on the
+nineteen master's pieces and nothing else — so it read exactly **0.0 denarii in every era**, and a rack of
+forty bought pieces was as free to hold as an empty one. Anything over 260 denarii now wants a smith at
+0.6% of its price a week. The floor is deliberate: house issue and everything a young house can afford
+stay free, so the opening is untouched, and `survive` came through at (4 standing, 7 men).
+
+**What this does NOT do, said plainly.** It does not by itself soak a 102,000-denarii surplus. `gearUpkeep`
+on the reference player reaches 5.5d a week, because he owns almost no bought steel — the cost lands on a
+player who arms his men well, which is the right place for it. What it does is turn good steel from a
+one-off purchase into a standing commitment, which is the precondition for the sink that already exists:
+**19 master's pieces at 2,900 to 9,500 denarii, and arming eight men in the dearest kit is 212,000 to buy
+and 856 a week to keep** — twice the year-12 surplus and more than the whole current bill. `masterOpen`
+wants armoury level 2 and acclaim, both of which a middle-game house has. It is open, it is enormous, and
+nothing has ever bought from it.
+
+**Twelve functions reached the handle**, because the wear half of this economy was measurable and every
+term that opposes it was not: `gearUpkeep`, `repairFee`, `armourerWear`, `armourerMend`, `armourerCut`,
+`perkWear`, `rackCap`, `rackUsed`, `rackOver`, `rackStrain`, `rackRent`, `staffSkill`, plus the new
+`kitKeepOf`, `MEND_RATE` and `MEND_CEIL`. The question a player asks — does any of this ever cost me
+anything — could not be asked from outside the file at all.
+
+**And `steel` was quoting three literals about the pair it tests**: "the ~25 a weapon needs to break",
+"+4.4 a week", "against 3-6 a bout". All three would have gone on printing the old economy after the
+constants moved. They are derived from `A.WEAR_RATE` and `A.MEND_RATE` now, and the historical figures are
+labelled as belonging to the old pair — the #125 lesson, applied to the check that needed it next.
+
 ### v3.12.0 — Two items raised off a check's own honesty, and one of them still paid
 
 The last two items of this audit round were both raised off a check's "what is not asserted" clause
