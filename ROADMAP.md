@@ -1421,17 +1421,28 @@ live 430 weeks, never on the agenda, and a mark fires on 100% of them.
 The primacy is the survivor. Its gate is open on about half of all play and neither the agenda nor any
 mark ever names it — the card is its only voice.
 
-**THE OPEN QUESTION, and the reason nothing was built.** How often the card actually carries the offer is
-not settled. At 10 houses x 420 weeks the probe says 3% of open weeks; at 2 houses x 60 weeks the same
-probe says 29%. `d.games` persists between games weeks and carries its own `week` field, so the long-run
-figure may be counting weeks where no card existed at all — and the rope's own tally says a long run
-spends real time at Rome with no card up. **The honest question is "of the open weeks in which a card
-exists, how many carry the offer", and it is a one-line change to `test/probes/primacy.mjs`.** Settle it
-first: 3% and 29% point at different builds, and one of them points at no build.
+**THE OPEN QUESTION IS NOW SETTLED, AND IT DISSOLVED THE ITEM.** The 3%-versus-29% gap was real and it
+was neither noise nor a stale card. Only Capua's own card builder carries the primus branch, and it rolls
+a flat `R()<0.6`. Split by where the card was:
 
-If it survives, the design choice is genuinely open — an agenda line, a ninth `SECT_MARK` key, its own ask
-in the way `PRIMUS_ASK` handles the defence, or simply a better card cadence. That is a decision, not a
-measurement, and it bears on #88: Rome is gated behind the primacy, so this channel gates the run's ending.
+    2 houses x 60w      20 card weeks,   0 on the road (0%),  15 offers  ->  15/20 = 75% of Capua cards
+    10 houses x 420w   779 card weeks, 711 on the road (91%), 37 offers  ->  37/68 = 54% of Capua cards
+
+So the primacy is offered on most of the Capua cards a qualifying house sees, exactly as written. What
+collapses over a long run is not the offer rate — it is how often the house is *in Capua* on a games week.
+The reference lanista tours, and by year twelve 91% of its cards are somewhere else.
+
+**That makes the finding a fact about the reference player's policy, not a demonstrated fault in the
+game.** A house that stayed in Capua would meet the primacy constantly. Two hypotheses were killed on the
+way to this — the stale-card one (a card is genuinely up on 70% of open weeks) and an `activeG`-versus-
+`d.gladiators` denominator (identical numbers) — and both were mine.
+
+What survives, and is still worth someone's time:
+- the primacy has **no agenda line and no `SECT_MARK` key**, on any horizon. That part held.
+- whether touring should crowd out the crown of the city is a **design question about the road**, not
+  about the primacy, and it reaches #88: Rome is gated behind the primacy.
+- before building anything, re-run `test/probes/primacy.mjs` with a reference player that does NOT tour.
+  If the primacy is plentiful for a stay-at-home house, there is nothing here to fix and the item closes.
 
 ### The standing hazard
 

@@ -36,18 +36,27 @@ including the `fame >= TIERS[2].fame` term that the survey omitted.
 **`scroll.mjs`** — where the vertical pixels go, per place, as the page ARRIVES versus with every fold
 thrown open. The second is what `reach` necessarily measures and it is 40% taller than the first.
 
-## Open question on `primacy.mjs`, unresolved
+## The `primacy.mjs` question, settled — and what it cost
 
-The headline in #132 is that a primus offer reaches the card on **3% of open weeks**, measured at
-10 houses x 420 weeks. Run at **2 houses x 60 weeks the same probe says 29%**, and that gap is not
-explained. Two candidates, neither checked:
+The gap was real: 3% of open weeks at 10x420, 29% at 2x60, off the same probe. Three explanations were
+tried and the first two were wrong, which is the usual ratio here.
 
-- `d.games` persists between games weeks — it carries its own `week` field — so `d.games.offers` may be
-  reporting a STALE card in weeks that have no games at all. If so the 29% is nearer the truth and the
-  3% is diluted by counting weeks where no card existed either way.
-- long runs spend real time at Rome or travelling, where no card is up. The rope reports exactly this:
-  `192 weeks refused (at Rome with no card up this week 110, ...)`.
+    stale cards      REFUTED. d.games does persist, but a card is genuinely up on 70% of open weeks.
+    activeG          REFUTED. The game gates on activeG(d) and the probe used d.gladiators; swapping to
+                     the game's own predicate changed nothing at any of three horizons.
+    the road         THIS ONE. Only Capua's own card builder carries the primus branch.
 
-**Settle this before building anything on the 3%.** The right form of the question is almost certainly
-"of the open weeks in which a card exists at all, how many carry the offer" — which is a one-line change
-to the probe (compare `d.games.week` to `d.week`) and changes what, if anything, is wrong.
+            2 x 60     20 card weeks,   0 on the road (0%),  15 offers -> 75% of Capua cards
+            10 x 420  779 card weeks, 711 on the road (91%), 37 offers -> 54% of Capua cards
+
+The primus offer fires on most Capua cards a qualifying house sees, which is what a flat `R()<0.6`
+predicts. What falls away over a long run is how often the house is in Capua at all. **The headline was a
+fact about the reference player's touring, not about the primacy.**
+
+The general shape is worth keeping, because it is not the same mistake as the earlier ones: every
+predicate was right and every channel was counted, and the number was still misleading because the
+DENOMINATOR mixed two populations — weeks where the thing could happen and weeks where it structurally
+could not. When a rate moves with the length of a run and the code that produces it does not, the
+denominator is the first place to look.
+
+Before anything is built on this, run it against a reference player that does not tour.
