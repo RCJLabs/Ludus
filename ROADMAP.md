@@ -1392,6 +1392,48 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v3.18.0 — The week gets quieter with the years, and the fix I reached for already existed
+
+Two findings, one of them about the game and one about me.
+
+**THE WEEK GETS QUIETER, not flatter.** The middle-game brainstorm's option 3 said a twenty-year house is
+asked for the same 0.8 urgent things a week as a first-year one, measured through the reference player as
+he then was — the man v3.17.0 showed reaches a fifth of the game and never gets to Rome. Re-measured
+through BOTH men, 8 houses of 400 weeks, same seeds:
+
+| | urgent/wk, yr 1-3 → yr 12+ | new/wk | distinct labels shown |
+|---|---|---|---|
+| the old player | 0.98 → **0.61** | 4.8 → 2.9 | 271 → 136 |
+| the v3.17.0 player | 0.89 → **0.64** | 4.9 → 2.5 | 248 → 171 |
+
+Both decline, so it is the game and not the probe — and it is worse than the item claimed. The list of
+things *available* grows (7.5 to 12.2 items) while what is URGENT falls by a third and what is NEW falls
+by half. A great house is asked for less than a poor one, and hears a third fewer distinct things.
+
+**AND THE FIX I REACHED FOR WAS ALREADY THERE.** The obvious late-game item is the master's bench: 19
+pieces at 2,900 to 9,500 denarii behind `masterOpen`, which an audit item (#62) had recorded as "open and
+never used, and nothing points at it". The gate was measured properly first, per #101 — bench open with
+something affordable and unbought stands in 0.0% of year 1-3 weeks, 6.4% of year 7-12 and **72.1% of year
+12+**, which is 22.7% of a house's life and concentrated exactly in the era that measured quietest. A line
+was written naming the dearest affordable piece and its price and weekly keep. It passed the suite.
+
+Then a diagnostic printed the agenda beside it and the line above mine read *"Capua's master smiths will
+take your commissions now"*. It has been there all along, at urgency 2, with a comment over it saying **"the
+one time it is worth saying out loud — after that the tab speaks for itself"**, and a gate that stops it the
+moment the house owns a single master's piece.
+
+So the premise was wrong, and worse, my version reintroduced precisely what that comment exists to prevent:
+it named a different piece every week and would have gone on for ever. It is reverted. The existing line's
+comment now carries this episode, because the next person to read "nothing points at the bench" in an audit
+list should find the answer next to the code rather than repeat the work.
+
+**The check for "does anything mention this?" is `grep`, not a measurement.** I ran a 3,200-house-week
+probe to establish that the bench is reachable and never bought, which was true, and inferred from it that
+nothing points at it, which did not follow and took ten seconds to falsify. Measuring the world is not the
+same as reading the file.
+
+No net change to the game. Task #62 is closed as REFUTED.
+
 ### v3.17.0 — The reference player could not reach Rome
 
 No game change. The reference player arms his men and entertains now, which the last four releases had

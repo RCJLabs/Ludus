@@ -3035,8 +3035,14 @@ function agenda(d){
     add(2, "villa", "The potters want your name", "license it wide, or keep it fine");
   if(marryReady(d) && (d.flags.matchCool==null || d.week>=d.flags.matchCool))
     add(1, "villa", "The matchmakers are calling", "a wife, and an heir of your own blood");
-  /* the one time it is worth saying out loud — after that the tab speaks for itself */
-  /* until he owns one or tells the gatekeeper he knows his trade — then it stops asking */
+  /* ---- THE ONE TIME IT IS WORTH SAYING OUT LOUD — after that the tab speaks for itself ----
+     Until he owns one or tells the gatekeeper he knows his trade, then it stops asking.
+     AND THAT IS DELIBERATE, which v3.18.0 had to find out the hard way. An audit item said the master's
+     bench was "open and never used, and nothing points at it", a probe confirmed the bench stands open
+     in 72.1% of year-12 weeks with something affordable and unbought, and a second agenda line was
+     written naming the dearest piece and its price — before anybody grepped for this one. It fires once
+     per house by design: a line that names a different piece every week is the #101 wallpaper fault
+     wearing a hat. The premise was wrong and the check is `grep`, not a measurement. */
   if(masterOpen(d) && !(d.flags.learned && d.flags.learned.bench) && !d.flags.noLessons
      && !Object.keys(d.gear||{}).some(id=>isMaster(id) && d.gear[id]>0))
     add(2, "armory", "Capua's master smiths will take your commissions now", "famous steel, and a smith's wage on it forever");

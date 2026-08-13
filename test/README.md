@@ -2006,3 +2006,26 @@ Two lessons. Deferring a re-baselining is not free — the model player decays a
 through him decays with him. And a bar that is a FLOOR survives its player getting better, which is why
 none of the dozen bars here needed moving: floors are the right shape for reachability, and this is the
 argument for writing them that way.
+
+## "Nothing points at this" is a grep, not a measurement
+
+An audit item said the master's bench was open, enormous and unmentioned. Two of the three were true and
+measured properly: it stands open with something affordable and unbought in 72.1% of year-12 weeks. The
+third was inferred from the first two and was wrong — there has been an agenda line for it all along, one
+scroll above where the new one was inserted, with a comment explaining that it deliberately fires once.
+
+The cost was a whole release's worth of work that ended in a revert. The lesson is cheap and specific:
+before building a thing that TELLS the player something, grep for the words. Reachability is a question
+about the world and needs a probe; existence is a question about the file and needs a search. Confusing
+the two is how you spend an afternoon rebuilding what is already there.
+
+## The week gets quieter with the years
+
+Worth recording as a standing fact about LVDVS, measured through two different reference players over 8
+houses of 400 weeks: urgent agenda items fall from about 0.95 a week in year 1-3 to about 0.62 in year 12+,
+new items from 4.85 to 2.7, and the count of DISTINCT labels a player sees from ~260 to ~150. The number of
+available items grows over the same span, from 7.5 to 12.2.
+
+So the late game is not short of things on the list. It is short of things that are urgent, things that are
+new, and variety. Any future item about late-game pacing should start from those three numbers rather than
+from the impression that the list is short.
