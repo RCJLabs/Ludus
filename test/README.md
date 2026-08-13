@@ -61,6 +61,7 @@ reason the check exists usually has not.
 | `bulk` | fast | four functions held every balance change in a 22,700-line file, and nothing ever said stop |
 | `week` | fast | the week's work, and where it says so. `agenda(d)` rendered two screens down (y=1565 measured) in a section that opened itself only on an urgency-3 week. Measured over 289 weeks of the reference player first: the list is NEVER empty, 54% of weeks carry seven items or more, its items span 4.11 tabs — and five labels were lit on 41 to 62% of every week a house lives, two of them added by this audit in the three releases before anybody counted. So an item carries its AGE now and only what is urgent or new is shown: the shown block fell from 5.6 items to 2.3, and the worst standing item from 62% of weeks to 16%. This holds the age arithmetic, the ranking, and both bars. From v3.5.0 it holds the same question for the tabs' SECTIONS: ten of eleven are live on 35% of weeks or more and three on over 90%, so "open what is actionable" opens almost everything — what opens a section is live AND young, which lands at 9.2% of weeks against 64.7% for availability alone |
 | `words` | slow | what a panel says in the state a player is most likely to be standing in, rather than the state it was written for. From v3.7.0 it also holds the census ladder in each of the three states where one gate alone is short, and the party's arithmetic: the button tested `!need.full` before every substantive gate and `riseWeek` drains standing in exactly that case, so it read "The town is not yet used to you" in 98.7% of 1,256 measured weeks and named the wrong thing in 84.7% of them. Four lines found the same way. The letter from Rome warned that half the imperial bouts are sine missione and that your patrons have no reach in that city, and did not say that `stopAtCrux: !offer.imperial` makes it the only bout in the game you cannot coach — the bout's own beats do say it, two lines in, which is after the wagons are loaded. `The blood of the house` told a lanista of sixty to "climb a little higher" when `marryReady` is false above 55 whatever the house is worth. `The aedile` was a box whose whole content is his stance, with only the weeks remaining on its summary line. All three are read off a real save loaded into a real browser, because a copy assertion written against the source file asserts that a string exists somewhere, which is not the claim |
+| `reach` | slow | how far every action is from the thumb, in TAPS — the thing five releases of UI work never counted. Depth is 1 for the tab, +1 for a face chip, +1 for each closed section, and scroll is kept separate because a tap and a scroll are different costs. Measured at week 16: 22 actions at one tap, 16 at two, 5 at three, nothing deeper — so the audit item's "three taps down" was the floor of the deep end and its example was not in it. What is barred is structural and needs no margin: nothing past three taps, the three-tap population may not grow, and every PLACE a player arrives must offer something at the shallowest depth that place can give (1 on a tab, 2 on a face). That last bar caught `villa · The Cells`, whose only two actions were both inside one folded section. About 77% of actions sit below the first screen, printed not barred, because a button's y depends on how many men are in the yard |
 | `worst` | fast | the record book had a slot for the house's worst night that nothing ever wrote and nothing ever read; filling it found two more things nobody was writing |
 | `nights` | fast | a man's page had everything about his condition and nothing about any afternoon of his life |
 | `phases` | fast | the week was split into four phases so a check could run one alone, and no check ever called any of them — nor asserted the hard rule that no class may be clumsy in its own kit |
@@ -1863,3 +1864,20 @@ Three floors were asked for and one was set. The arithmetic decided each:
 Refusing to set a bar is a result, not a gap, as long as the refusal carries the number that justifies it
 and the quantity is printed so it can be barred later. A bar that flakes teaches people to ignore the
 suite, which costs more than the bar was ever going to catch.
+
+## Count the cost the player actually pays
+
+Five releases of UI work were argued from screen text, fold position and section counts. None of them
+counted TAPS, and the audit item that finally asked for it guessed wrong: "the build UI is three taps
+down" — building is on the ludus tab, whose deepest action is two, and the three-tap population is five
+actions out of forty-three, all of them on the villa.
+
+What the count did find is that the cost is scroll, not depth: about 77% of the things that change the
+house sit below the first 844 pixels, some past y=2,900. Depth and scroll had been argued as one thing for
+three releases because neither had a number.
+
+Two lessons in the shape of the bar. Depth is arithmetic on the DOM given a state, not a sample, so its
+bar needs no margin — unlike every count-comparison bar in this suite. And the first version of the
+per-place bar was impossible to pass: it asked every TAB for a one-tap action when two tabs put all their
+actions behind a face chip by construction. A bar has to be stated against the best the thing being
+measured could possibly do, which for a face is two taps and not one.

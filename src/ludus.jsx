@@ -21768,7 +21768,15 @@ export default function App(){
                They are one section now, because they are one decision — what this house spends on the
                men who are not on a card this week. The feast keeps the freshness mark; it is the one
                the week's agenda points at. */}
-          <Sect live={sectFresh(S,"cells")} sid="cells" title="What you can do for the block" note={`${activeG(S).length} in the cells · ${unrestWord(S.unrest).toLowerCase()}`}
+          {/* ---- THE ONLY ACTIONABLE THING ON THIS FACE, AND IT WAS FOLDED ----
+               `reach` counts the taps between the tab bar and every action. The Cells face carries
+               exactly two things a player can do — the feast and walking the cells — and both were
+               inside this section, so its shallowest action cost 3 taps where 2 is all that face can
+               ever ask: the chip, and the button. Folding the only actionable panel on a face saves no
+               scroll and costs a tap, and #117 measured working the cells as the largest single lever
+               in the game while #119 found nothing ever suggested walking them. `open` here still
+               defers to whatever the player last did with it — `Sect` remembers by `sid`. */}
+          <Sect open live={sectFresh(S,"cells")} sid="cells" title="What you can do for the block" note={`${activeG(S).length} in the cells · ${unrestWord(S.unrest).toLowerCase()}`}
             mark={sectMark(S,"feast")}>
             {(()=>{ const cost = feastCost(S), reach = feastReach(S);
               return (<div style={{paddingBottom:9,marginBottom:9,borderBottom:"1px dotted #33271a"}}>

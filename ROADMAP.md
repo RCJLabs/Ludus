@@ -1392,6 +1392,53 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Changelog (shipped)
 
+### v3.11.0 — Nobody had ever counted the taps
+
+**#126 — nothing measured how deep an action is.** Five releases of UI work were argued from screen text,
+fold position and section counts, and none of them counted the thing a player actually spends. The item
+guessed at it — "the build UI is three taps down" — and guessed wrong: building is on the ludus tab, whose
+deepest action is two taps.
+
+Depth, defined the way a thumb experiences it: 1 for the tab, +1 if the action sits behind a face chip,
++1 for each closed section it sits inside. Scroll is deliberately kept separate, because a tap and a
+scroll are different costs and lumping them is how "above the fold" got argued for three releases without
+either number being written down. Measured at week 16 of a founded house, 43 actions that change the house:
+
+| | actions |
+|---|---|
+| one tap | 22 |
+| two taps | 16 |
+| three taps | 5 (12%) |
+| deeper than three | **none** |
+
+All five of the three-tap actions are on the villa, behind a face chip AND a closed section: the
+collegium, the household's three women, and **the party** — the lever the middle-game measurement found
+moves the census ladder from rung 1.50 to 2.70 and Rome from 31 weeks to 218, sitting three taps and two
+and a half screens from the tab bar.
+
+**The real cost is scroll, not depth: about 77% of the things that change the house sit below the first
+844 pixels**, the furthest past y=2,900. That is printed rather than barred, because a button's y depends
+on how many men are in the yard and how many slavers are at the block.
+
+**And the one bar that fired found something.** Every PLACE a player can arrive must offer an action at
+the shallowest depth that place can give — 1 on a plain tab, 2 on a face. `villa · The Cells` failed it:
+its only two actions are the feast and walking the cells, both inside one folded section, so its
+shallowest action cost 3 taps where 2 was all that face could ever ask. #117 measured working the cells as
+the largest single lever in the game and #119 found nothing ever suggested walking them; folding the only
+actionable panel on a face saves no scroll and costs a tap. It opens by default now, and the face went
+from 3 taps to 2.
+
+New check `reach` (60). Its bar on depth carries no margin, because depth is arithmetic on the DOM rather
+than a sample — unlike every count-comparison bar in this suite. Three probe faults first, each a way of
+measuring nothing: an arm that advanced 60 weeks pressing End Week and nothing else, which is `ends`'s
+`idle` policy, went bankrupt near week 55 and reported the TITLE SCREEN's seven buttons as the game's
+actions; reading every `button` counted section summaries as actions when they are the cost of depth
+rather than things at the bottom of it; and the gatekeeper's teaching panel came in because it is an
+inline panel and not a `.modalwrap`, exactly as the note over the harness's `clearAll` says. The
+per-place bar was also wrong once — first stated per TAB, where the familia and the villa cannot give a
+one-tap action because their actions all sit behind a chip by construction, so it failed both for being
+built as designed.
+
 ### v3.10.0 — A census with three entries that could not fail, reading twenty of twenty
 
 **#128 — `policy`'s subsystem census had no floor, and three of its twenty were free passes.** Both
