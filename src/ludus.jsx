@@ -12205,7 +12205,22 @@ function weekWeight(d){
   load += Math.min(4, deadlines(d).filter(x=>x.due - d.week <= 2).length * 2);
   load += activeG(d).filter(g=>refusing(g)).length * 3;
   if(d.election && !d.election.done) load += 2;
-  if((d.unburied||[]).some(m=>!m.done)) load += 1;
+  /* ---- A MAN YOU CAN NO LONGER PUT RIGHT IS NOT THIS WEEK'S BUSINESS ----
+     This read `(d.unburied||[]).some(m=>!m.done)`, with no window, and it was the only reader of
+     that list without one. The agenda line uses `unhonoured(d)` and prints "after this nobody can
+     put it right"; the villa section that offers the rites uses `unhonoured(S)` under a "6w to
+     decide" caption. `markUnburied` keeps the last fourteen men for ever and only `holdMunera`
+     clears one, which the UI offers inside the window alone — so past six weeks the entry is
+     permanent and there is nothing the player can do about it.
+     `load` is the ONLY gate on "Let it run", the game's single multi-week advance (19573), so a
+     term that can never return to 0 retires that button for the rest of the run.
+     MEASURED over 10 houses x 420 weeks before the change: the term fired on 95.6% of all
+     house-weeks, every one of the ten houses was permanently stuck between week 10 and week 37,
+     and every house's LAST quiet week fell inside its first 13. Windowed, the last quiet week moves
+     to week 145-325 for seven of the ten and quiet weeks go from 1.8% of play to 4.1%.
+     It was invisible because none of `weekWeight`, `unhonoured` or `holdMunera` was on the handle,
+     so no check could ask the week its shape or bury a man. */
+  if(unhonoured(d).some(m=>!m.done)) load += 1;
   if(d.poach || d.doctoreOffer || d.reSignOffer || d.romeOffer) load += 2;
   if(activeG(d).some(g=>canMaster(d,g))) load += 1;
   if(owedList(d).some(x=>d.week - x.due >= 4)) load += 1;
@@ -25025,6 +25040,13 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     SECT_LIVE, SECT_KEYS, sectLive, sectFresh, secAge, sectTick, SEC_FRESH,
     /* what the game says to a player who has never seen it before */
     LESSONS, lessonFor, lessonsRead, LESSON_QUIET, CHARTER, charterAt,
+    /* ---- THE WEEK'S SHAPE, AND THE DEAD IT WEIGHS ----
+       `holdMunera` is an action a lanista takes and it was not here, which the file's first rule
+       forbids: its only caller was the UI closure at 18649, so no check could ever bury a man and
+       `d.honoured` read 0 across every measurement this project has taken. `weekWeight` decides
+       whether the week is quiet, which is the only gate on the "Let it run" fast-forward, and it
+       was not reachable either — so nothing could see that the two disagree about the window. */
+    weekWeight, weeksToSomething, unhonoured, holdMunera, markUnburied, RITES, RITE_KEYS, RITE_WINDOW,
     /* the five openings BY NAME — a check that invents a scenario key gets `clean` back
        without a word, which is how four fifths of one check's coverage went missing */
     SCENARIOS, SC_KEYS, BKEYS, bLevel, masterOpen, canLearnSig,

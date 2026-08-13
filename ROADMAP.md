@@ -87,7 +87,7 @@ npm run test:all      every check, fast and slow — about thirteen minutes
 npm run coverage      not what passes, but what no check ever touches
 ```
 
-**61 checks.** Most read into the game through a test handle and answer in seconds; a
+**62 checks.** Most read into the game through a test handle and answer in seconds; a
 handful drive a real browser through the real screens. Every one of them exists because
 of a bug that shipped, and the comment at the top of each says which — that comment
 is the durable part, not the numbers inside it. See `test/README.md` for the table.
@@ -1392,7 +1392,7 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.21.0. Suite green, **61/61**. `main`, the item branch and the upload mirror
+**Shipped and verified:** v3.22.0. Suite green, **62/62**. `main`, the item branch and the upload mirror
 are all at that commit; the tree is clean.
 
 **ONE item is measured and not built, #131** — and it is blocked on a design decision, which is the
@@ -1445,6 +1445,15 @@ classified at all.
 should be urgently asked for, not something measurement can settle.** The measuring is finished. Three
 explanations that would have made this a bug have each been checked and failed, and the third of them was
 a real instrument fault that still did not move the number.
+
+**AND CHASING IT FOUND A LIVE FAULT, WHICH IS NOT WHAT ANYONE EXPECTED.** The estate table below put
+14 unburied dead at year 12 — the cap, not a trend. Following that to what the unburied actually cost
+turned up a load term with no window, which had quietly retired the game's only multi-week advance
+after week ~13 in every house ever measured. Shipped as v3.22.0; full write-up in the changelog. The
+lesson for #131 is not about the fix: **"the late game is thin" and "a late-game affordance is
+broken" look identical from the agenda census, and only the second one is cheap to settle.** Before
+writing new content, it is worth asking of each measured late-game quantity what it COSTS and what the
+player can DO about it — that is a bug hunt, and this one took an afternoon.
 
 #### The estate, so the blank page is not blank — `test/probes/estate.mjs`
 
@@ -1584,6 +1593,64 @@ territory where the measuring is harder than the thing measured. That is a reaso
 answer is a decision over items whose answer is another number.
 
 ## Changelog (shipped)
+
+### v3.22.0 — One dead man you could no longer bury retired the fast-forward button for the rest of the run
+
+Chasing #131's "the late game reads what week one reads" into what a great house actually OWNS, the
+estate table put **14 unburied dead** at year 12 against 3 early — and 14 is the cap `markUnburied`
+keeps. Not a growing liability: a saturated one. Pulling that thread found a live fault in the game.
+
+`weekWeight(d)` scores the week and calls it `quiet` only at load 0, and that is the **sole gate on
+"Let it run · Nw"** (line 19573) — the game's single multi-week advance. One of its load terms read
+the unburied with no window:
+
+    if((d.unburied||[]).some(m=>!m.done)) load += 1;
+
+**Every other reader of that list has one.** The agenda line uses `unhonoured(d)`, six weeks, and
+prints *"after this nobody can put it right"*. The villa section offering the rites uses
+`unhonoured(S)` under a *"6w to decide"* caption. `markUnburied` keeps the last fourteen men for ever
+and only `holdMunera` clears one, which the UI offers inside the window alone. So six weeks after a
+death the entry was permanent, **the player had no action left that could clear it**, and load could
+never return to 0.
+
+Measured over 10 houses × 420 weeks before the change:
+
+    the term fired on                        95.6% of all house-weeks (1,942 of 2,031)
+    houses stuck for good                    10 of 10, between week 10 and week 37
+    every house's LAST quiet week            inside its first 13 — 1, 1, 2, 3, 3, 4, 10, 12, 13, 13
+    windowed, the last quiet week            145, 161, 174, 204, 234, 276, 325 for seven of them
+    quiet weeks as a share of play           1.8% -> 4.1%
+
+On one seed, held still: **3 quiet weeks ending at week 6 became 9 ending at week 172.** The fix is
+the window every other reader already applies — a man you can no longer put right is not this week's
+business.
+
+**It was invisible because none of it was reachable.** `weekWeight`, `unhonoured` and `holdMunera`
+were all off the handle, and `holdMunera`'s only caller was the UI closure at 18649 — so no check
+could ask the week its shape or bury a man, and `d.honoured` read 0 in every measurement this project
+has ever taken. **That is the file's first rule broken**: an action a lanista can take must be a
+function of the save *and* on the handle. It is the same class as `setOut`/`comeHome` (v2.46),
+`nameHeir`, `makeMarket` and v3.21.0's own road fix — and the fourth time a system has read as dead
+because nothing could drive it.
+
+`quiet` is the 62nd check. It holds the rule rather than the number — a man past the window may not
+weigh on the week — and drives the three rites end to end at the same time, since they had never once
+been driven: doing nothing costs 0d and +4 unrest, a fire at the gate 114d for −7, a full card 588d
+for −19 unrest, +11 fame and the `d.honoured` the munera lesson reads for "done". Against the old
+line it fails on the load, on the week's shape, and on both.
+
+**`survive` came back (2,3) — passing, at the low end.** The 20-run tally sits at median 3 standing
+and 6 men, and this build drew 2 and 3. It is worth saying why that is being read as variance rather
+than as damage: `weekWeight` has exactly one consumer, the button at 19573, and neither reading of the
+unburied term consumes an RNG draw — so a headless house plays an identical sequence before and after.
+The in-browser difference is that a quiet week renders an extra button beside End Week, which is the
+one `survive` clicks either way. If a later build draws low again, that reasoning is the thing to
+check first.
+
+**One theory died on the way and is worth recording.** The `munera` lesson (`when` any undone man,
+`done` only on full games) looked like it would sit in the villa tab's queue for ever and starve the
+two lessons behind it — which is precisely the failure `lessons` exists for. It does not: reading a
+lesson marks it learned (line 19611) and the queue advances. Inferred, then checked, then dropped.
 
 ### v3.21.0 — The reference player could not come home, and every long run was measured from Puteoli
 

@@ -11,6 +11,7 @@ Run them straight:
     node test/probes/primacy.mjs 10 420
     node test/probes/road.mjs 10 420       # where the reference house is standing
     node test/probes/estate.mjs 10 420     # what a great house owns; add `on miser` for the saving arm
+    node test/probes/quiet.mjs 10 420      # the week's shape, and the fast-forward button
     node test/probes/scroll.mjs 16         # week to measure the screens at
 
 `late`, `primacy` and `road` take a third argument, `on` or `off`, which is the reference player's
@@ -55,6 +56,14 @@ state at DEATH — three houses with 0 men and -2,910d, labelled "at the wall". 
 `miser` arm, because "the house is short of coin" is a claim about the player's spending until you
 have run one that does not spend. **A zero in both columns is the rope's policy, not the game's
 content** — it never saves a kit, builds a work, or frees a man.
+
+**`quiet.mjs`** — how many weeks the game calls quiet, which is the only gate on "Let it run". Written
+to test a specific claim: that one dead man past the six-week rites window retired that button for the
+rest of the run. It did — the term fired on 95.6% of house-weeks and every house's last quiet week
+fell inside its first 13. Fixed in v3.22.0 and `quiet` (the check) holds it. **Its counterfactual
+column inverted when the fix landed** and had to be turned round to reconstruct the OLD load from the
+new code; left as it was it silently drifted below the truth. A probe that measures a fault needs
+deciding, at the time it is written, what it should say once the fault is gone.
 
 **`scroll.mjs`** — where the vertical pixels go, per place, as the page ARRIVES versus with every fold
 thrown open. The second is what `reach` necessarily measures and it is 40% taller than the first.
