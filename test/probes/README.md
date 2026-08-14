@@ -13,6 +13,7 @@ Run them straight:
     node test/probes/estate.mjs 10 420     # what a great house owns; add `on miser` for the saving arm
     node test/probes/quiet.mjs 10 420      # the week's shape, and the fast-forward button
     node test/probes/handle.mjs            # player actions no check can reach (no houses to play)
+    node test/probes/dark.mjs 8 320        # and whether those actions ever open, and ever do anything
     node test/probes/scroll.mjs 16         # week to measure the screens at
 
 `late`, `primacy` and `road` take a third argument, `on` or `off`, which is the reference player's
