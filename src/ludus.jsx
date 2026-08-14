@@ -25059,6 +25059,16 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     answerNem, nemCallOut, callFavour, repay, sellDebt, runGambit, backCandidate, swearIn,
     applyRefusal, skipWeeks, charterSkip, firstBuyWarn,
     saveKit, applyKit, dropKit, watchField, startPlan, breakPlan, clearWatch,
+    /* ---- AND THE HALF THAT MAKES THEM DRIVEABLE, v3.24.0 ----
+       Exposing an action is not enough on its own. To drive one a check needs the TABLE it takes its
+       key from, or it invents the keys — which `lessons` spent two releases doing before its opening
+       scan read the five scenario keys off the handle. And to know whether a PLAYER could have taken
+       it, it needs the game's own READINESS GATE; reconstructing that gate instead of calling it is
+       the exact fault that made #132's first three answers wrong.
+       So the rule is three parts, not one: the action, the table it reads, and the gate that opens
+       it. Everything here was found by asking what the nineteen above actually reference. */
+    GAMBITS, SWEARING, PLANSEASON, FAVOURS,
+    nemAnswerReady, nemCanCallOut, favourReady, gambitReady, gambitStale, seasonOfMan,
     /* the five openings BY NAME — a check that invents a scenario key gets `clean` back
        without a word, which is how four fifths of one check's coverage went missing */
     SCENARIOS, SC_KEYS, BKEYS, bLevel, masterOpen, canLearnSig,

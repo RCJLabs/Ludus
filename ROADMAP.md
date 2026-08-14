@@ -1395,7 +1395,8 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 **Shipped and verified:** v3.23.0. Suite green, **62/62**. `main`, the item branch and the upload mirror
 are all at that commit; the tree is clean.
 
-**ONE item is measured and not built, #131** — and it is blocked on a design decision, which is the
+**#134 opened** by driving what v3.23.0 exposed — see below; it needs a rope step before it can be
+measured at all. **ONE item is measured and not built, #131** — and it is blocked on a design decision, which is the
 honest reason nothing was written for it in two sessions. **#132 closed this session,** refuted on its
 own falsification clause once the instrument was fixed. **#133 opened** and is a number rather than a
 decision, if that is what you want next. The probes are kept in `test/probes/` with their faults
@@ -1546,6 +1547,31 @@ places the player is taught to look. That is a small, cheap, optional item, not 
 **And the design question that hung off it is void.** "Whether touring should crowd out the crown of the
 city" was asking about behaviour no player exhibits: a house that comes home spends 4% of its weeks away,
 not 91%. There is nothing to weigh.
+
+### #134 — the nemesis can be answered, and the reference player never answers
+
+**Opened by driving the sixteen v3.23.0 exposed.** All sixteen work — nothing threw across 1,495
+house-weeks, which was not the prediction. Five never open, and four of those five are facts about
+the rope rather than the game: it never borrows (`repay`), never saves a kit (`applyKit`, `dropKit`)
+and never starts a man on a season (`breakPlan`). The fifth is `nemCallOut`, and it traces:
+
+    nemEdge(d) = (d.nemHouse.answered || 0) - (d.nemHouse.hits || 0)
+    nemCanCallOut needs stage >= 2 AND nemEdge >= 1 AND heat >= 45 AND a man at pfame >= 18
+
+`hits` is incremented when the rival schemes against you (heat +4); `answered` only by `answerNem`
+(heat −3) or a won gambit (heat −2). **The lanista has no step for either**, so `answered` stays 0
+while `hits` climbs, the edge is permanently negative, and the call-out gate never opened once —
+against `answerNem`'s own gate being open on **73% of weeks**. The nemesis exists; the house just
+never hits back.
+
+**What makes this worth an item rather than just another rope step:** the two terms pull against each
+other. You need `heat >= 45` *and* `edge >= 1`, but every answer that raises the edge LOWERS the heat
+by 3, and only being hit raises it. That may be a fine tension or it may be a window that cannot open
+— which is the exact shape `grudge` exists for, "two rival-vengeance events waited above the ceiling
+of the number they read". **It cannot be settled without a rope step that answers**, so the step comes
+first and the measurement second. *Falsifies if:* a player that answers reaches stage 2, heat 45 and
+edge 1 together at any reasonable rate, in which case the call-out is simply content the reference
+player declines.
 
 ### #133 — the coast may be a losing proposition for any house that comes back
 

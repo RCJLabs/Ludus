@@ -77,6 +77,15 @@ to 102 the moment the instrument was written up, and the balancer parsed prose. 
 first now. The rule it enforces lives in `actions` as a derived list; this probe is the readable
 version with the raw material printed under it.
 
+**`dark.mjs`** — drives all nineteen actions v3.23.0 exposed and asks two different questions per
+action: how often the game's OWN readiness gate is open, and whether calling it on a clone changes
+the save. The two disagree in both directions and both disagreements are findings — never open but
+always works is content the player never meets; often open and inert is a button that does nothing.
+Result: nothing throws, five never open, and four of those five are the rope not borrowing, not
+saving kits and not starting seasons. Its own weakest rows are the ones where the game has no gate
+and the probe had to invent one — `clearWatch` reads 93% open and 11% effective purely because
+"a man exists" is not a gate. Where the game HAS a gate it is called, never reconstructed.
+
 **`scroll.mjs`** — where the vertical pixels go, per place, as the page ARRIVES versus with every fold
 thrown open. The second is what `reach` necessarily measures and it is 40% taller than the first.
 
