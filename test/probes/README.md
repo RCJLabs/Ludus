@@ -15,6 +15,7 @@ Run them straight:
     node test/probes/handle.mjs            # player actions no check can reach (no houses to play)
     node test/probes/dark.mjs 8 320        # and whether those actions ever open, and ever do anything
     node test/probes/nemesis.mjs 10 420    # #134; add `silent` for the arm that never replies
+    node test/probes/season.mjs 24         # seeds per season; controlled pairs, no houses to compare
     node test/probes/scroll.mjs 16         # week to measure the screens at
 
 `late`, `primacy` and `road` take a third argument, `on` or `off`, which is the reference player's
@@ -105,6 +106,23 @@ above the build threshold spent 7 times and never got ahead. Both were the same 
 timer — and the fix was a policy with a reason (`nemEdge < 1`: answer until you are ahead, then use
 it), not a threshold tuned until the output looked right. **If you find yourself adjusting a constant
 because the number came out wrong, that is this mistake.**
+
+**`season.mjs`** — the five long training arcs, which no measurement in this project had ever run.
+A CONTROLLED PAIR rather than a policy arm: two houses from the same seed, identical but for one man
+put on a season, control run first so it cannot inherit RNG state (`styles` paid two releases for
+that lesson), pairs discarded and counted if the two men do not start identical.
+
+**Its first version asked the wrong question and its own output said so.** It compared stats after
+the season's advertised length — and `still on` came back 20 to 23 of 24 with `finished` at 0 to 3,
+because `planWeek` only advances while the man is `active`. The advertised length is a floor, so the
+comparison was measuring a season still in flight against a control that had drilled freely
+throughout. It also called a column `alive` while testing `status === "active"`, which counts an
+injured man as dead. Both are why it now runs to completion or death and reports the calendar cost.
+
+**And it drops pairs rather than zeroing them:** a dead man's stat total is not a training result.
+That is also its limitation — 14 to 21 of 24 men die before the payout, but the probe puts the season
+on `activeG(d)[0]` and the rope fights its best man every week, so the trainee is the one on the sand.
+**That death rate is confounded and is written up as such, not as a finding.**
 
 **`scroll.mjs`** — where the vertical pixels go, per place, as the page ARRIVES versus with every fold
 thrown open. The second is what `reach` necessarily measures and it is 40% taller than the first.

@@ -10908,10 +10908,20 @@ function calendarRows(d, span){
     if(g.learning && g.learning.weeks > 0)
       put(d.week + g.learning.weeks, "man", `${g.name} takes up the ${g.learning.to.toLowerCase()}`,
         `learning a second style — he does not fight while he does`, "men");
+    /* ---- THE SOONEST HE COULD FINISH, WHICH IS NOT WHEN HE WILL ----
+       `planWeeksLeft` counts weeks of WORK remaining, and `planWeek` advances a season only while
+       the man is `active` — so every week he spends hurt is a week the clock does not move, and
+       `d.week + planWeeksLeft(g)` is a floor rather than a date. Measured over 24 controlled pairs
+       per season: an 18-week season took a median of 22 and 26 calendar weeks, a 12-week one 18, a
+       14-week one 17, an 8-week one 12. The quoted day was early by 22 to 44% on every kind that
+       finished at all. This is the #109 shape — a line telling the player how close a thing is,
+       computed off the wrong quantity — so the date stays as the earliest it could be and the note
+       stops implying it is the day. */
     { const pl = seasonOfMan(g);
       if(pl && planWeeksLeft(g) > 0)
         put(d.week + planWeeksLeft(g), "man", `${g.name} finishes his season`,
-          `${PLANSEASON[pl.kind] ? PLANSEASON[pl.kind].name.toLowerCase() : "a season"} — worth nothing until it is done`, "men"); }
+          `${PLANSEASON[pl.kind] ? PLANSEASON[pl.kind].name.toLowerCase() : "a season"} — ${planWeeksLeft(g)}`
+          + ` week${planWeeksLeft(g)===1?"":"s"} of work left, and it only moves in the weeks he is fit`, "men"); }
     { const w = watchedBy(d, g);
       if(w) put(w.week + WATCH_KEEPS, "quiet",
         w.known ? `House ${w.house} stops watching ${g.name}` : `Whatever is at your wall gives up on ${g.name}`,

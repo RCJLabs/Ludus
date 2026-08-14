@@ -1392,10 +1392,12 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.24.0. Suite green, **62/62**. `main`, the item branch and the upload mirror
+**Shipped and verified:** v3.25.0. Suite green, **62/62**. `main`, the item branch and the upload mirror
 are all at that commit; the tree is clean.
 
-**#134 closed** in v3.24.0, refuted on its own clause once the rope could reply to the arch-rival. **ONE item is measured and not built, #131** — and it is blocked on a design decision, which is the
+**#134 closed** in v3.24.0, refuted on its own clause once the rope could reply to the arch-rival.
+**#135 opened** and deliberately not concluded — the season death rate is confounded by the rope's own
+bout policy, and says so. **ONE item is measured and not built, #131** — and it is blocked on a design decision, which is the
 honest reason nothing was written for it in two sessions. **#132 closed this session,** refuted on its
 own falsification clause once the instrument was fixed. **#133 opened** and is a number rather than a
 decision, if that is what you want next. The probes are kept in `test/probes/` with their faults
@@ -1561,6 +1563,23 @@ stage < 3, and an answer is only permitted every three weeks. I read one term of
 Full write-up, including the two wrong versions of the rope step and why they were wrong the same
 way, in the v3.24.0 changelog.
 
+### #135 — a man on a season is also the man you are fighting, and he dies before it pays
+
+**Opened, deliberately not concluded.** Over 24 controlled pairs per season, 14 to 21 of every 24 men
+died before the payout — which lands in one lump on the final week, so a man who dies in week 17 of 18
+gets nothing. That looks damning for the design and it is **confounded**: the probe puts the season on
+`activeG(d)[0]`, and the rope's `takeBout` sorts by average stat and fights its best man every week, so
+the trainee is also the one on the sand.
+
+Separating the two needs an arm that trains a man it does not fight — which is a bout-policy change,
+not a season one, and is the same trap as every other item this session that turned out to be about the
+reference player. *Falsifies if:* a man kept off the card finishes his season at a reasonable rate, in
+which case the death rate belongs to the bout policy and the season is fine. *Confirms if:* he dies
+anyway, in which case a lump payout at the end of eighteen weeks is a bet almost nobody collects.
+
+The calendar half of this is already settled and fixed in v3.25.0 — the advertised length is a floor,
+and the deadline line said otherwise.
+
 ### #133 — the coast may be a losing proposition for any house that comes back
 
 **Opened by this session, not measured properly, do not build on it yet.** Measured on the way past, three
@@ -1617,6 +1636,50 @@ territory where the measuring is harder than the thing measured. That is a reaso
 answer is a decision over items whose answer is another number.
 
 ## Changelog (shipped)
+
+### v3.25.0 — "He finishes his season in six weeks" was the soonest he could, not when he would
+
+`PLANSEASON` is five long training arcs, 8 to 18 weeks, that fix a man's drill and pay a block of
+stats and a named trait **in one lump at the end**. **No season had ever run in this project.**
+`startPlan` was off the handle until v3.23.0 and the reference player has no step for it — which
+`dark.mjs` proved sideways: `breakPlan`'s gate was open on 0% of weeks because there was never a
+season to break. So the balance question had never been asked.
+
+**Measured as controlled pairs** — two houses from the same seed, identical but for one named man put
+on a season on week one, control run first so it cannot inherit RNG state, 24 pairs per kind:
+
+    season   advertised   ever finished   median weeks actually taken
+    wall           18w        5 of 24              22w
+    quick          18w        3 of 24              26w
+    crowd          12w       10 of 24              18w
+    smith          14w        4 of 24              17w
+    mend            8w        4 of 24              12w
+
+**The advertised length is a floor, not a length.** `planWeek` advances a season only while the man is
+`active`, so every week he spends hurt is a week the clock does not move — and the deadline line put
+the finish at `d.week + planWeeksLeft(g)`, which treats weeks of WORK as weeks of CALENDAR. The quoted
+day was early by **22 to 44%** on every kind that finished at all. That is the #109 shape exactly: a
+line telling the player how close a thing is, computed off the wrong quantity, in a project that has
+now shipped that mistake three times. The date stays as the earliest it could be — the game genuinely
+cannot know the real one — and the note now says how many weeks of *work* are left and that it only
+moves in the weeks he is fit.
+
+**What is NOT concluded, and why.** 14 to 21 of every 24 men died before the payout. That looks
+damning for a system that pays nothing until the final week, and it is **confounded**: this probe puts
+the season on `activeG(d)[0]`, and the rope's `takeBout` sorts by average stat and fights its best man
+every week. So the trainee is also the one being sent to the sand. **That is a fact about the rope's
+bout policy at least as much as about the season**, and separating them needs an arm that trains a man
+it does not fight. Stated here rather than shipped as a finding.
+
+**`survive` drew (2,2)** — the low end of a 24-run tally with median (3,6), and the check printed its
+own reading: *"only 2 men between them, but 2 houses still standing — a bad run of luck, not a
+gutting."* Unambiguously variance here rather than arguably: the only game change in this release is
+the text of a note on a deadline entry, which consumes no RNG draw and cannot reach the opening.
+
+**And no `season` step was added to the rope.** The other four steps this run — contract, road, nem —
+each freed the player from a state it could not leave. A season is a genuine strategic choice, not a
+cage, and the measurement above does not establish that a competent house starts one. Adding a step
+would have re-based every figure in the suite on a guess about good play.
 
 ### v3.24.0 — The house never hit back, so the arch-rival's best door had never opened
 
