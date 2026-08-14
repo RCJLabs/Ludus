@@ -14,6 +14,7 @@ Run them straight:
     node test/probes/quiet.mjs 10 420      # the week's shape, and the fast-forward button
     node test/probes/handle.mjs            # player actions no check can reach (no houses to play)
     node test/probes/dark.mjs 8 320        # and whether those actions ever open, and ever do anything
+    node test/probes/nemesis.mjs 10 420    # #134; add `silent` for the arm that never replies
     node test/probes/scroll.mjs 16         # week to measure the screens at
 
 `late`, `primacy` and `road` take a third argument, `on` or `off`, which is the reference player's
@@ -86,6 +87,24 @@ Result: nothing throws, five never open, and four of those five are the rope not
 saving kits and not starting seasons. Its own weakest rows are the ones where the game has no gate
 and the probe had to invent one — `clearWatch` reads 93% open and 11% effective purely because
 "a man exists" is not a gate. Where the game HAS a gate it is called, never reconstructed.
+
+**`nemesis.mjs`** — #134, and the design worth copying. `nemCanCallOut` is a CONJUNCTION of five
+terms, so "the gate never opened" says nothing about which one is holding and the fix depends
+entirely on that. It counts each term separately, and the pairs, the way `census` splits its four
+gates. Two things make it trustworthy: it cross-checks its own reading of the gate against the game's
+own `nemCanCallOut` and prints both (66 against 66, and 0 against 0 — if they ever diverge, the
+reading is wrong), and it runs a `silent` arm so "the edge is never positive" can be attributed to
+the player rather than the game.
+
+It refuted the item AND its premise: heat and edge hold together on 27.2% of nemesis weeks, because
+the −3 per answer is swamped by +1.4 a week of drift I had not read.
+
+**And it caught two bad rope steps before the good one, which is the part to remember.** Answering
+whenever affordable spent 202 times and broke `policy`'s buildings bar; answering only from surplus
+above the build threshold spent 7 times and never got ahead. Both were the same fault — a policy on a
+timer — and the fix was a policy with a reason (`nemEdge < 1`: answer until you are ahead, then use
+it), not a threshold tuned until the output looked right. **If you find yourself adjusting a constant
+because the number came out wrong, that is this mistake.**
 
 **`scroll.mjs`** — where the vertical pixels go, per place, as the page ARRIVES versus with every fold
 thrown open. The second is what `reach` necessarily measures and it is 40% taller than the first.

@@ -225,6 +225,9 @@ export async function installRope(p){
          cells, buy, doctore, build, rites, census, staff, school, heir, rome, bout  (all default true)
          gear, party                                                        (default TRUE from v3.17.0)
          contract                                                           (default TRUE from v3.20.0)
+         nem           (default TRUE from v3.24.0 — answers the arch-rival and names the day when it
+                        holds the upper hand. `nem:false` is the arm that never replies, which is
+                        every measurement this project took before the step existed)
          road          (default TRUE — accept a town's invitation and COME HOME once the welcome
                         wears. `road:false` is the stay-at-home arm: it declines the invitation too,
                         because a house that leaves once and cannot return is not a house that stays)
@@ -432,6 +435,36 @@ export async function installRope(p){
       if(on("contract") && d.reSignOffer){
         const fee = d.reSignOffer.fee || 0;
         if(fin(A.answerReSignWith,[d, d.gold >= fee])) bump(d.gold >= fee ? "reSigned" : "letWalk");
+      }
+
+      /* ---- THE ARCH-RIVAL, WHOM THIS LANISTA NEVER ONCE HIT BACK ----
+         `nemEdge` is `answered - hits`. `hits` climbs when the rival schemes at you; `answered` moves
+         only through `answerNem` or a won gambit, and there was a step for neither — so `answered`
+         stayed 0 for every house this project has ever run, the edge was permanently negative, and
+         `nemCanCallOut` (stage>=2 AND edge>=1 AND heat>=45 AND a man at pfame>=18) could not open.
+         Measured before this step, 8 houses x 320 weeks: the call-out gate opened on 0 weeks while
+         `answerNem`'s own gate was open on 73% of them. The nemesis existed; the house never replied.
+         The policy is the one the panel offers: answer when you can afford it, and when you hold the
+         upper hand, name the day yourself rather than waiting to be challenged. Answering is priced
+         at `160 + fame*0.5` and comes out of `spare()` like every other discretionary spend, so a
+         house that cannot afford the reply does not make it — which is the honest version, since
+         `answerNem` simply returns null below the price and a step that ignored that would report a
+         reply it never made. */
+      if(on("nem") && d.nemHouse){
+        if(A.nemCanCallOut(d) && fin(A.nemCallOut,[d])) bump("calledOut");
+        /* ---- TWO WRONG VERSIONS OF THIS BEFORE THE RIGHT ONE, AND BOTH WERE POLICIES ----
+           Guarded on `spare() > cost` it answered 202 times at `160 + fame*0.5` — about 690d a week
+           at late fame against a weekly bill of 364 — and `policy` failed on the buildings: the
+           best-off house held 2 of 5 rooms against a bar of 3, which is that check doing its job.
+           Guarded instead on clearing the build threshold after paying, it answered 7 times in 2,586
+           weeks and the call-out window opened in 1 house of 10. One arm bought revenge with the
+           roof; the other never got ahead. Both were the same mistake: answering ON A TIMER, for ever.
+           A player chasing the call-out answers until he holds the upper hand and then USES it, so
+           the spend is bounded by the rival's hits rather than by the calendar. `nemEdge < 1` is that
+           condition, off the game's own function — and once the edge is up the branch above names the
+           day instead of paying again. */
+        else if(A.nemEdge(d) < 1 && A.nemAnswerReady(d) && spare() > 160 + d.fame*0.5
+                && fin(A.answerNem,[d])) bump("answeredNem");
       }
 
       if(on("bout")){

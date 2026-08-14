@@ -1392,11 +1392,10 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.23.0. Suite green, **62/62**. `main`, the item branch and the upload mirror
+**Shipped and verified:** v3.24.0. Suite green, **62/62**. `main`, the item branch and the upload mirror
 are all at that commit; the tree is clean.
 
-**#134 opened** by driving what v3.23.0 exposed — see below; it needs a rope step before it can be
-measured at all. **ONE item is measured and not built, #131** — and it is blocked on a design decision, which is the
+**#134 closed** in v3.24.0, refuted on its own clause once the rope could reply to the arch-rival. **ONE item is measured and not built, #131** — and it is blocked on a design decision, which is the
 honest reason nothing was written for it in two sessions. **#132 closed this session,** refuted on its
 own falsification clause once the instrument was fixed. **#133 opened** and is a number rather than a
 decision, if that is what you want next. The probes are kept in `test/probes/` with their faults
@@ -1548,30 +1547,19 @@ places the player is taught to look. That is a small, cheap, optional item, not 
 city" was asking about behaviour no player exhibits: a house that comes home spends 4% of its weeks away,
 not 91%. There is nothing to weigh.
 
-### #134 — the nemesis can be answered, and the reference player never answers
+### #134 — CLOSED in v3.24.0, REFUTED on its own falsification clause, and the premise was wrong too
 
-**Opened by driving the sixteen v3.23.0 exposed.** All sixteen work — nothing threw across 1,495
-house-weeks, which was not the prediction. Five never open, and four of those five are facts about
-the rope rather than the game: it never borrows (`repay`), never saves a kit (`applyKit`, `dropKit`)
-and never starts a man on a season (`breakPlan`). The fifth is `nemCallOut`, and it traces:
+The item named its own refutation: *"the window opening at a decent rate for the answering arm."* It
+opens on **4.4% of nemesis weeks, in 8 of 10 houses**, 66 times, once the rope can reply. Against the
+arm that never replies: 0.0%, 0 of 10, with the edge sitting at −5 or worse on 1,588 of 2,094 weeks.
+The edge was the single blocking term and it was zero because nothing ever answered.
 
-    nemEdge(d) = (d.nemHouse.answered || 0) - (d.nemHouse.hits || 0)
-    nemCanCallOut needs stage >= 2 AND nemEdge >= 1 AND heat >= 45 AND a man at pfame >= 18
+The tension the item was built on does not exist either. Heat and edge hold together on 27.2% of
+nemesis weeks: the −3 an answer costs is swamped by +1.4 a week of drift at `ludus.jsx:10090` while
+stage < 3, and an answer is only permitted every three weeks. I read one term of the sum, not both.
 
-`hits` is incremented when the rival schemes against you (heat +4); `answered` only by `answerNem`
-(heat −3) or a won gambit (heat −2). **The lanista has no step for either**, so `answered` stays 0
-while `hits` climbs, the edge is permanently negative, and the call-out gate never opened once —
-against `answerNem`'s own gate being open on **73% of weeks**. The nemesis exists; the house just
-never hits back.
-
-**What makes this worth an item rather than just another rope step:** the two terms pull against each
-other. You need `heat >= 45` *and* `edge >= 1`, but every answer that raises the edge LOWERS the heat
-by 3, and only being hit raises it. That may be a fine tension or it may be a window that cannot open
-— which is the exact shape `grudge` exists for, "two rival-vengeance events waited above the ceiling
-of the number they read". **It cannot be settled without a rope step that answers**, so the step comes
-first and the measurement second. *Falsifies if:* a player that answers reaches stage 2, heat 45 and
-edge 1 together at any reasonable rate, in which case the call-out is simply content the reference
-player declines.
+Full write-up, including the two wrong versions of the rope step and why they were wrong the same
+way, in the v3.24.0 changelog.
 
 ### #133 — the coast may be a losing proposition for any house that comes back
 
@@ -1629,6 +1617,57 @@ territory where the measuring is harder than the thing measured. That is a reaso
 answer is a decision over items whose answer is another number.
 
 ## Changelog (shipped)
+
+### v3.24.0 — The house never hit back, so the arch-rival's best door had never opened
+
+No game code changed. A rope step, the item it was built to answer, and two wrong versions of the
+step on the way — both of which were wrong in the same instructive way.
+
+**The gap.** `nemEdge` is `answered - hits`. `hits` climbs when the arch-rival schemes at you;
+`answered` moves only through `answerNem` or a won gambit — and `__ROPE.lanista` had a step for
+neither. So `answered` was 0 in every house this project has ever run, the edge was permanently
+negative, and `nemCanCallOut` could not open.
+
+**#134 is refuted.** It asked whether the call-out window can open at all, since `heat >= 45` and
+`edge >= 1` are both required while every answer raises the edge and lowers the heat by 3. Each of
+the five terms counted separately, the way `census` splits its four:
+
+    of the weeks a nemesis existed          never replies (2,094w)   replies (1,499w)
+    stage >= 2                                   96.5%                   92.4%
+    heat >= 45                                   95.7%                   80.8%
+    edge >= 1                                     0.0%                   39.8%
+    a man at pfame >= 18                         58.5%                   61.0%
+    no challenge already pending                 62.7%                   58.6%
+    ALL FOUR TOGETHER                             0.0%                    4.4%
+
+The window opens 66 times in **8 of 10 houses**, and the lanista takes it every time.
+
+**The premise was wrong as well as the conclusion.** Heat and edge hold together on 27.2% of nemesis
+weeks. The −3 an answer costs is swamped by the **+1.4 a week of passive drift** at `ludus.jsx:10090`
+while stage < 3, and an answer is only permitted every three weeks. I read one term of the sum and
+not the other. What thins 27.2% to 4.4% is the pfame term and the fact that a call-out *issues a
+grudge match*, raising a `challenge` deadline that shuts the window until it resolves — a cooldown,
+working as designed.
+
+**TWO WRONG STEPS FIRST, AND THEY ARE THE USEFUL PART.** Guarded on affordability alone the lanista
+answered **202 times** at `160 + fame*0.5` — about 690d a week at late fame against a weekly bill of
+364 — and `policy` failed: *the best-off house held 2 of 5 rooms against a bar of 3*. Revenge was
+outbidding the roof every week because it asked first and asked small. Guarded instead on clearing the
+build threshold after paying, it answered **7 times in 2,586 weeks** and the window opened in 1 house
+of 10. One arm bought revenge with the buildings; the other never got ahead.
+
+Both were the same mistake — **answering on a timer, for ever.** A player chasing the call-out answers
+until he holds the upper hand and then *uses* it, which bounds the spend by the rival's hits instead
+of by the calendar. `nemEdge(d) < 1` is that condition, off the game's own function: 86 answers, 66
+call-outs, `policy` green at 4 of 5 rooms. **The threshold was not tuned until the numbers looked
+right; the policy was replaced with one that has a reason.** That distinction is the whole of it —
+the first two arms are what fitting a constant to a desired answer looks like from the inside.
+
+**Sixth time** a system has read as unreachable because of the reference player rather than the game:
+`setOut`/`comeHome`, `nameHeir`, `makeMarket`, `holdMunera`, the road, and now this. The difference is
+that the probe was built to say WHICH TERM was short rather than whether the gate fired, and it
+cross-checks its own reading against the game's own `nemCanCallOut` and prints both — 66 against 66,
+0 against 0. **That is the design to copy for any conjunction gate.**
 
 ### v3.23.0 — Sixteen things a player can do that no check could reach
 

@@ -25068,7 +25068,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        So the rule is three parts, not one: the action, the table it reads, and the gate that opens
        it. Everything here was found by asking what the nineteen above actually reference. */
     GAMBITS, SWEARING, PLANSEASON, FAVOURS,
-    nemAnswerReady, nemCanCallOut, favourReady, gambitReady, gambitStale, seasonOfMan,
+    nemAnswerReady, nemCanCallOut, nemEdge, favourReady, gambitReady, gambitStale, seasonOfMan,
     /* the five openings BY NAME — a check that invents a scenario key gets `clean` back
        without a word, which is how four fifths of one check's coverage went missing */
     SCENARIOS, SC_KEYS, BKEYS, bLevel, masterOpen, canLearnSig,
