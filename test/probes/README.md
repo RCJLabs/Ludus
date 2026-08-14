@@ -15,7 +15,7 @@ Run them straight:
     node test/probes/handle.mjs            # player actions no check can reach (no houses to play)
     node test/probes/dark.mjs 8 320        # and whether those actions ever open, and ever do anything
     node test/probes/nemesis.mjs 10 420    # #134; add `silent` for the arm that never replies
-    node test/probes/season.mjs 24         # seeds per season; controlled pairs, no houses to compare
+    node test/probes/season.mjs 24 40 bench # seeds, tail, and `bench` to keep the trainee off the card
     node test/probes/scroll.mjs 16         # week to measure the screens at
 
 `late`, `primacy` and `road` take a third argument, `on` or `off`, which is the reference player's
@@ -120,9 +120,14 @@ throughout. It also called a column `alive` while testing `status === "active"`,
 injured man as dead. Both are why it now runs to completion or death and reports the calendar cost.
 
 **And it drops pairs rather than zeroing them:** a dead man's stat total is not a training result.
-That is also its limitation — 14 to 21 of 24 men die before the payout, but the probe puts the season
-on `activeG(d)[0]` and the rope fights its best man every week, so the trainee is the one on the sand.
-**That death rate is confounded and is written up as such, not as a finding.**
+
+**The `bench` arm is what settled it.** 14 to 21 of 24 men died before the payout — but the probe puts
+the season on `activeG(d)[0]` and the rope fights its best man every week, so the trainee was the one
+on the sand. `bench` (a rope option, applied to BOTH sides of the pair) keeps him off the card:
+2 to 6 die instead, and every season then takes exactly its advertised length. Both halves of the
+finding belonged to the bout policy. **A confound named at the time and settled by one arm is the
+cheapest thing in this directory — the alternative was publishing "seasons kill men" and being
+wrong.**
 
 **`scroll.mjs`** — where the vertical pixels go, per place, as the page ARRIVES versus with every fold
 thrown open. The second is what `reach` necessarily measures and it is 40% taller than the first.

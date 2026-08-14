@@ -33,9 +33,12 @@
    and counted, because a pair that did not start identical measures nothing. */
 import { serve, open } from "../harness.mjs";
 const SEEDS = +(process.argv[2] || 24), TAIL = +(process.argv[3] || 40);
+/* #135's control arm: `bench` keeps the trainee off the card entirely, so the death rate can be
+   attributed to the season or to the bout policy rather than to both at once. */
+const BENCH = process.argv[4] === "bench";
 const { server, port } = await serve({ page:"dist/test.html" });
 const { browser, p } = await open(port);
-const out = await p.evaluate(([SEEDS, TAIL])=>{
+const out = await p.evaluate(([SEEDS, TAIL, BENCH])=>{
   const A = window.__LVDVS, R = window.__ROPE;
   if(!A.PLANSEASON || !A.startPlan) return { err:"PLANSEASON/startPlan not on the handle" };
   const KINDS = Object.keys(A.PLANSEASON);
@@ -66,7 +69,8 @@ const out = await p.evaluate(([SEEDS, TAIL])=>{
       if(!g || g.status === "dead") break;
       if(g.status === "active") activeWeeks++; else hurtWeeks++;
       if(kind && !g.plan && done === null){ done = wk; break; }   /* the season ended */
-      R.lanista(d);
+      /* the bench applies to BOTH arms, so the comparison stays like for like */
+      R.lanista(d, BENCH ? { bench:[id] } : {});
     }
     const g = (d.gladiators||[]).find(x=>x.id === id);
     return { id, start, weeks: wk, activeWeeks, hurtWeeks, done,
@@ -104,11 +108,11 @@ const out = await p.evaluate(([SEEDS, TAIL])=>{
   }
     return { rows, voided, mismatched, SEEDS, TAIL, pays:KINDS.map(k=>({ k,
     pays:A.PLANSEASON[k].pays, trait:A.PLANSEASON[k].trait||null, weeks:A.PLANSEASON[k].weeks })) };
-}, [SEEDS, TAIL]);
+}, [SEEDS, TAIL, BENCH]);
 await browser.close(); server.close();
 if(out.err){ console.error(out.err); process.exit(1); }
 const f = v => (Math.round(v*10)/10).toFixed(1);
-console.log(`=== IS A SEASON WORTH ITS WEEKS? ===`);
+console.log(`=== IS A SEASON WORTH ITS WEEKS? ===  [${BENCH ? "TRAINEE BENCHED — never fought" : "trainee fights as usual"}]`);
 console.log(`  ${out.SEEDS} seeds per season, control first, same seed both arms · tail ${out.TAIL} weeks`);
 console.log(`  ${out.voided} pairs void (season would not start) · ${out.mismatched} discarded for not starting identical\n`);
 console.log(`  what each season PAYS on paper:`);

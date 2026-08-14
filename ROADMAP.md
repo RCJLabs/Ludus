@@ -1396,8 +1396,8 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 are all at that commit; the tree is clean.
 
 **#134 closed** in v3.24.0, refuted on its own clause once the rope could reply to the arch-rival.
-**#135 opened** and deliberately not concluded — the season death rate is confounded by the rope's own
-bout policy, and says so. **ONE item is measured and not built, #131** — and it is blocked on a design decision, which is the
+**#135 closed and answered** — the season death rate was the rope's bout policy, and a season buys a
+trait rather than stats. **ONE item is measured and not built, #131** — and it is blocked on a design decision, which is the
 honest reason nothing was written for it in two sessions. **#132 closed this session,** refuted on its
 own falsification clause once the instrument was fixed. **#133 opened** and is a number rather than a
 decision, if that is what you want next. The probes are kept in `test/probes/` with their faults
@@ -1563,22 +1563,47 @@ stage < 3, and an answer is only permitted every three weeks. I read one term of
 Full write-up, including the two wrong versions of the rope step and why they were wrong the same
 way, in the v3.24.0 changelog.
 
-### #135 — a man on a season is also the man you are fighting, and he dies before it pays
+### #135 — CLOSED, ANSWERED: the death rate was the bout policy, and a season buys a trait
 
-**Opened, deliberately not concluded.** Over 24 controlled pairs per season, 14 to 21 of every 24 men
-died before the payout — which lands in one lump on the final week, so a man who dies in week 17 of 18
-gets nothing. That looks damning for the design and it is **confounded**: the probe puts the season on
-`activeG(d)[0]`, and the rope's `takeBout` sorts by average stat and fights its best man every week, so
-the trainee is also the one on the sand.
+The item was opened deliberately unconcluded — 14 to 21 of every 24 men died before their season paid
+out, and the probe put the season on `activeG(d)[0]` while the rope's `takeBout` sorts by average
+stat, so the trainee was also the man on the sand. The arm named to settle it was one that trains a
+man it does not fight. `bench` is that arm — a list of ids never picked for a bout, applied to BOTH
+sides of the pair so the comparison stays like for like. It changes nothing by default.
 
-Separating the two needs an arm that trains a man it does not fight — which is a bout-policy change,
-not a season one, and is the same trap as every other item this session that turned out to be about the
-reference player. *Falsifies if:* a man kept off the card finishes his season at a reasonable rate, in
-which case the death rate belongs to the bout policy and the season is fine. *Confirms if:* he dies
-anyway, in which case a lump payout at the end of eighteen weeks is a bet almost nobody collects.
+    season   advertised   finished FOUGHT   finished BENCHED   median weeks benched   injured weeks
+    wall           18w         5 of 24          21 of 24              18w                 0.5
+    quick          18w         3 of 24          17 of 24              18w                 0.5
+    crowd          12w        10 of 24          20 of 24              12w                 0.2
+    smith          14w         4 of 24          19 of 24              14w                 0.1
+    mend            8w         4 of 24          22 of 24               8w                 0.1
 
-The calendar half of this is already settled and fixed in v3.25.0 — the advertised length is a floor,
-and the deadline line said otherwise.
+**Both halves belonged to the bout policy.** Benched, 2 to 6 men die instead of 14 to 21, and every
+season takes EXACTLY its advertised length because injured weeks fall to about a tenth of one. So the
+season's clock is not misdesigned — it is exact for a man who is not being fought, and the overrun
+measured in v3.25.0 is entirely the injury a fighting man accumulates. **The v3.25.0 write-up
+presented that overrun as a property of seasons; it is a property of seasons plus a bout policy, and
+this is the correction.** The deadline fix still stands, because most men do fight and the line
+ignored injury either way.
+
+**And the original question is finally answerable, because men now live to collect.** Among pairs
+where both men survived (n = 9 to 16):
+
+    season   stat gain over the control   traits held, control vs season
+    wall             +5.6                          11 vs 25
+    quick           +12.5                           9 vs 19
+    crowd            +1.5                           7 vs 22
+    smith            -3.7                           5 vs 14
+    mend            -11.7                           7 vs 7   (no trait by design)
+
+**A season buys a TRAIT, not stats.** `wall` pays 14 points on paper and nets +5.6, because the
+control spent the same weeks drilling and gained too. Three of five land within a few points of
+ordinary drilling and two land behind it. The trait is the part that is reliably delivered — roughly
+tripled across every kind that has one. Whether that is the intended bargain is a design question;
+that it IS the bargain is now measured.
+
+**Do not quote the stat column as a direction per season** — n is 9 to 16 and it swings. The trait
+effect is the one large enough to stand on this sample.
 
 ### #133 — the coast may be a losing proposition for any house that comes back
 

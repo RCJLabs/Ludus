@@ -225,6 +225,8 @@ export async function installRope(p){
          cells, buy, doctore, build, rites, census, staff, school, heir, rome, bout  (all default true)
          gear, party                                                        (default TRUE from v3.17.0)
          contract                                                           (default TRUE from v3.20.0)
+         bench         (a list of gladiator ids never sent to the sand — the control arm for #135;
+                        they train and age and cost as usual, they are simply never picked)
          nem           (default TRUE from v3.24.0 — answers the arch-rival and names the day when it
                         holds the upper hand. `nem:false` is the arm that never replies, which is
                         every measurement this project took before the step existed)
@@ -469,7 +471,16 @@ export async function installRope(p){
 
       if(on("bout")){
         const av = g => A.STATS.reduce((s,k)=>s+(g[k]||0),0)/6;
-        const men = A.activeG(d).filter(g=>!g.injury && (g.fatigue||0) < 55).sort((x,z)=>av(z)-av(x));
+        /* ---- THE BENCH, ADDED FOR #135 ----
+           `season.mjs` measured 14 to 21 of every 24 men dying before their season paid out, and the
+           figure was confounded: it puts the season on `activeG(d)[0]` and this step sorts by average
+           stat, so the trainee IS the man being fought every week. Whether that death rate belongs to
+           the season or to the bout policy cannot be separated without an arm that trains a man it
+           does not send to the sand. `bench` is a list of ids never picked for a bout — nothing else
+           about them changes, so they still train, still age, still cost their upkeep. */
+        const bench = new Set([].concat(o.bench || []));
+        const men = A.activeG(d).filter(g=>!g.injury && (g.fatigue||0) < 55 && !bench.has(g.id))
+          .sort((x,z)=>av(z)-av(x));
         /* the primacy first when it is up — a purse-maximising pick passes it over, and it is the
            other gate on Rome. At Rome, take whatever card is there: the imperial bill is sine
            missione 54% of the time and refusing it lapses the trip. */
