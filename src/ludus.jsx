@@ -25047,6 +25047,18 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        whether the week is quiet, which is the only gate on the "Let it run" fast-forward, and it
        was not reachable either — so nothing could see that the two disagree about the window. */
     weekWeight, weeksToSomething, unhonoured, holdMunera, markUnburied, RITES, RITE_KEYS, RITE_WINDOW,
+    /* ---- NINETEEN MORE THE SWEEP FOUND, v3.23.0 ----
+       `test/probes/handle.mjs` differences every function the UI calls inside a `mut(d => …)`
+       closure — which IS the definition of a player action — against this object. Sixteen of these
+       could be reached by a click and by NOTHING ELSE in the program, which is `holdMunera`'s exact
+       shape and the fifth time that shape has cost a wrong published finding. Three more
+       (`applyRefusal`, `sellDebt`, `swearIn`) are run by the weekly code as well, so they were
+       exercised — but never as the player's own action.
+       `actions` derives the list now instead of holding a hand-written one, so a future action that
+       forgets this line fails a check rather than going quietly dark. */
+    answerNem, nemCallOut, callFavour, repay, sellDebt, runGambit, backCandidate, swearIn,
+    applyRefusal, skipWeeks, charterSkip, firstBuyWarn,
+    saveKit, applyKit, dropKit, watchField, startPlan, breakPlan, clearWatch,
     /* the five openings BY NAME — a check that invents a scenario key gets `clean` back
        without a word, which is how four fifths of one check's coverage went missing */
     SCENARIOS, SC_KEYS, BKEYS, bLevel, masterOpen, canLearnSig,

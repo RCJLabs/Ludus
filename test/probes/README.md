@@ -12,6 +12,7 @@ Run them straight:
     node test/probes/road.mjs 10 420       # where the reference house is standing
     node test/probes/estate.mjs 10 420     # what a great house owns; add `on miser` for the saving arm
     node test/probes/quiet.mjs 10 420      # the week's shape, and the fast-forward button
+    node test/probes/handle.mjs            # player actions no check can reach (no houses to play)
     node test/probes/scroll.mjs 16         # week to measure the screens at
 
 `late`, `primacy` and `road` take a third argument, `on` or `off`, which is the reference player's
@@ -64,6 +65,17 @@ fell inside its first 13. Fixed in v3.22.0 and `quiet` (the check) holds it. **I
 column inverted when the fix landed** and had to be turned round to reconstruct the OLD load from the
 new code; left as it was it silently drifted below the truth. A probe that measures a fault needs
 deciding, at the time it is written, what it should say once the fault is gone.
+
+**`handle.mjs`** — every function the UI calls inside a `mut(d => …)` closure, differenced against
+the live handle. Static, so it plays no houses. It found nineteen off the handle and sixteen
+reachable by a click and by nothing else — the fifth instance of the fault that produced
+`setOut`/`comeHome`, `nameHeir`, `makeMarket` and `holdMunera`. Two things it got wrong first: it
+counted "off the handle" as one condition, when three of the nineteen are also called by the weekly
+code and so were being exercised anyway; and **it matched its own documentation** — the note added to
+`src/ludus.jsx` explaining the sweep contains the words `mut(d => …)`, so the closure count went 101
+to 102 the moment the instrument was written up, and the balancer parsed prose. Comments are stripped
+first now. The rule it enforces lives in `actions` as a derived list; this probe is the readable
+version with the raw material printed under it.
 
 **`scroll.mjs`** — where the vertical pixels go, per place, as the page ARRIVES versus with every fold
 thrown open. The second is what `reach` necessarily measures and it is 40% taller than the first.

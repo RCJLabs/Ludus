@@ -11,10 +11,62 @@
    its name says. And that a house driven on nothing but these gets through a
    year without throwing. */
 
-import { hasHandle } from "../harness.mjs";
+import { hasHandle, ROOT } from "../harness.mjs";
+import fs from "node:fs";
+import path from "node:path";
 
 export const name = "actions";
 export const describe = "every player action runs without a screen in front of it";
+
+/* ---- THE LIST BELOW CANNOT CATCH WHAT WAS NEVER ADDED TO IT ----
+   It is hand-written, so it fails loudly when a lifted action goes missing — and by construction it
+   is silent about an action nobody ever thought to list. That blind spot has now cost five findings:
+   `setOut`/`comeHome` (v2.46, two 12-house batches emigrated and reported half the game dark),
+   `nameHeir` (the heir null in 8 of 8 houses), `makeMarket` (a block battery silently measuring the
+   founding stall five times), `holdMunera` (v3.22.0, `d.honoured` reading 0 in every measurement
+   this project ever took), and the nineteen the sweep below found in v3.23.0. `coverage` cannot see
+   it either: it reports what no check TOUCHES, among things already on the handle.
+   So the list is now DERIVED as well as declared, the way `school` derives its field list rather
+   than writing it down. The rule is the file's own first one, and the definition of a player action
+   is not "mutates the save" — that sweeps in every internal helper — but "the UI calls it inside a
+   `mut(d => …)` closure". That closure IS the player doing something.
+   Read off the source rather than the screen, like `layers` and half of `saves`, because the claim
+   is about what the FILE exposes and a rendered page cannot answer it. */
+/* ---- COMMENTS ARE STRIPPED FIRST, AND THE REASON IS EMBARRASSING ----
+   The note added to the `__LVDVS` block in v3.23.0 contains the words `mut(d => …)` while explaining
+   this sweep, and the pattern matched it: the closure count went 101 to 102 the moment the instrument
+   was documented, and the balancer then parsed prose. It changed no conclusion — the phantom body
+   holds no calls — but a comment QUOTING a real call would have injected an action that does not
+   exist, and a doc-comment is exactly where such a quote goes. */
+const decomment = t => t.replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, " "))
+                        .replace(/(^|[^:])\/\/[^\n]*/g, (m, p) => p + m.slice(p.length).replace(/./g, " "));
+
+function sweepSource(){
+  const src = decomment(fs.readFileSync(path.join(ROOT, "src/ludus.jsx"), "utf8"));
+  const bodies = [];
+  const re = /\bmut\(\s*d\s*=>/g;
+  let m;
+  while((m = re.exec(src))){
+    let i = m.index + m[0].length, depth = 1;
+    const start = i;
+    while(i < src.length && depth > 0){ const c = src[i]; if(c === "(") depth++; else if(c === ")") depth--; i++; }
+    bodies.push({ text: src.slice(start, i - 1), from: start, to: i - 1 });
+  }
+  const top = new Set();
+  for(const line of src.split("\n")){
+    const mm = /^(?:async\s+)?function\s+([A-Za-z_$][\w$]*)/.exec(line)
+            || /^(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=/.exec(line);
+    if(mm) top.add(mm[1]);
+  }
+  const KEYWORDS = new Set(["if","for","while","switch","catch","return","typeof","function","await"]);
+  const called = new Set();
+  for(const b of bodies){
+    const rx = /\b([A-Za-z_$][\w$]*)\s*\(\s*d\s*[,)]/g;
+    let c;
+    while((c = rx.exec(b.text))) if(!KEYWORDS.has(c[1]) && top.has(c[1])) called.add(c[1]);
+  }
+  return { actions:[...called].sort(), bodies:bodies.length };
+}
 
 /* named here so a lift that forgets to export something fails loudly rather than
    quietly reducing what the checks can reach */
@@ -152,6 +204,21 @@ export async function run({ p, errors }){
   if(out.threw.length) fails.push(`threw: ${out.threw.join(" | ")}`);
   if(out.crash) fails.push(`the year crashed: ${out.crash}`);
   if(out.weeks < 52) fails.push(`only ${out.weeks} of 52 weeks ran`);
+  /* ---- AND THE DERIVED HALF ---- */
+  const swept = sweepSource();
+  const handleKeys = new Set(await p.evaluate(()=>Object.keys(window.__LVDVS||{})));
+  const unreachable = swept.actions.filter(k => !handleKeys.has(k));
+  lines.push(`swept ${swept.bodies} \`mut(d=>…)\` closures: ${swept.actions.length} player actions, `
+    + `${swept.actions.length - unreachable.length} on the handle`);
+  if(!swept.bodies)
+    fails.push(`the source sweep found NO \`mut(d=>…)\` closures — the parser is broken, and a broken `
+      + `sweep reports "nothing is missing", which is indistinguishable from a clean one`);
+  else if(unreachable.length)
+    fails.push(`${unreachable.length} action${unreachable.length===1?"":"s"} the UI can call and no check `
+      + `can: ${unreachable.join(", ")} — each is at module scope and off the handle, which is the `
+      + `\`holdMunera\` shape that has cost this project five wrong findings. Add them to the `
+      + `\`__LVDVS\` block at the foot of src/ludus.jsx`);
+
   if(errors.length) fails.push(`${errors.length} page errors`);
 
   return { pass: fails.length === 0, why: fails.join("; ") || null, lines };

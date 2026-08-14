@@ -1392,7 +1392,7 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.22.0. Suite green, **62/62**. `main`, the item branch and the upload mirror
+**Shipped and verified:** v3.23.0. Suite green, **62/62**. `main`, the item branch and the upload mirror
 are all at that commit; the tree is clean.
 
 **ONE item is measured and not built, #131** — and it is blocked on a design decision, which is the
@@ -1409,6 +1409,16 @@ weekly phase behind it. So the reference house answered `bayCall` at the questio
 made one departure and zero returns**, 246 to 363 weeks in one town, 54% of all house-weeks away. There
 is now a `road` step, on by default, which breaks camp when `welcomeOf` drops below 1. Full write-up in
 the v3.21.0 changelog.
+
+**AND THE SHAPE IS NOW CAUGHT MECHANICALLY.** v3.23.0 swept every function the UI calls inside a
+`mut(d => …)` closure — which is the definition of a player action — against the handle, and found
+**nineteen off it, sixteen of them reachable by a click and by nothing else in the program**:
+`callFavour`, `repay`, the nemesis pair, the watch-and-plan four, the kit three, `skipWeeks`, and
+more. `actions` derives that list now instead of holding a hand-written one, so the fifth instance
+of this fault is also the last that can happen silently. **Exposing them proves nothing about whether
+those systems work** — it makes the question askable, and on this project's base rate several will be
+dead or faulty when something finally drives them. That is the obvious next item and it is a bug hunt
+rather than a design call.
 
 **That is the second harness fix of this shape in two releases** — v3.20.0's was `d.reSignOffer`, an
 auctor standing in a blocking modal for eight years. Both are the same failure: **a state the reference
@@ -1593,6 +1603,68 @@ territory where the measuring is harder than the thing measured. That is a reaso
 answer is a decision over items whose answer is another number.
 
 ## Changelog (shipped)
+
+### v3.23.0 — Sixteen things a player can do that no check could reach
+
+No behaviour changed. What changed is that the blind spot which produced four of this project's
+wrong findings is now closed mechanically instead of by remembering.
+
+**The pattern, stated once.** Four times a system has read as dead content because the function
+behind it was not on the `__LVDVS` handle, so nothing outside a mounted component could drive it —
+and each time a confident wrong finding was published first:
+
+    setOut / comeHome   v2.46   two 12-house batches emigrated and reported half the game dark
+    nameHeir                    the heir null in 8 of 8 houses, zero successions
+    makeMarket                  a block battery silently measuring the founding stall five times
+    holdMunera          v3.22   `d.honoured` read 0 in every measurement this project ever took
+
+Neither existing guard could see it. `coverage` answers "what does no check touch" — among things
+already on the handle. And `actions` holds a **hand-written** list of names: it catches an action
+that goes missing and is silent, by construction, about one nobody ever thought to list.
+
+**The definition is the whole trick, and it is not "mutates the save"** — that sweeps in every
+internal helper and needs a judgement call per row, which is how a sweep becomes a list nobody reads.
+A player action is a function the UI calls inside a `mut(d => …)` closure. That closure *is* the
+player doing something, and it is exactly how `holdMunera` was reached and by nothing else.
+
+**Nineteen were off the handle. Sixteen of them were reachable by a click and by nothing else in the
+program** — `holdMunera`'s exact shape:
+
+    answerNem · nemCallOut     the nemesis, called out and answered
+    callFavour                 calling in a patron's favour — a system with its own roadmap section
+    repay                      the moneylenders
+    backCandidate              backing a candidate for the aedileship
+    runGambit                  the crowd gambits
+    watchField · startPlan · breakPlan · clearWatch    watching a man and building a plan on it
+    saveKit · applyKit · dropKit                       the kits
+    skipWeeks                  the fast-forward — the very button v3.22.0 was about
+    charterSkip · firstBuyWarn
+
+The other three — `applyRefusal`, `sellDebt`, `swearIn` — are called by the weekly code as well, so
+a check driving `endWeek` runs them. They were exercised; what could not be driven was the *player's*
+own version of the action. Counting the two classes together would have reported nineteen dead
+systems where the sharp figure is sixteen, and the probe makes the split itself rather than leaving it
+to an eyeball.
+
+All nineteen are on the handle now, and `actions` derives the list as well as declaring it — the way
+`school` derives its field list instead of writing it down. Take one name back off and it fails by
+name with the line to add it to. It reads the source directly, like `layers` and half of `saves`,
+because the claim is about what the FILE exposes and a rendered page cannot answer it.
+
+**And the instrument caught itself, which is the part worth keeping.** The closure count went 101 to
+102 the moment the sweep was documented: the note added to the `__LVDVS` block contains the words
+`mut(d => …)` while explaining the sweep, and `/\bmut\(\s*d\s*=>/` matched its own documentation.
+The balancer then parsed prose. It changed no conclusion — the phantom body holds no calls — but a
+comment *quoting a real call* would have injected an action that does not exist, and a doc-comment is
+precisely where such a quote goes. Comments are stripped before anything is matched now. A one-off
+discrepancy between two runs of the same logic was the only thing that showed it.
+
+**`survive` came back (3,8)** — above the 21-run median of 3 standing and 6 men, which also settles
+v3.22.0's (2,3) as the draw it was read as rather than damage.
+
+**What this does not do.** Exposing a function proves nothing about whether the system behind it
+works — it only makes the question askable. On this project's base rate several of the sixteen will
+turn out to be dead or faulty when something finally drives them, and that is the follow-up work.
 
 ### v3.22.0 — One dead man you could no longer bury retired the fast-forward button for the rest of the run
 
