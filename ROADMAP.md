@@ -1397,10 +1397,10 @@ are all at that commit; the tree is clean.
 
 **#134 closed** in v3.24.0, refuted on its own clause once the rope could reply to the arch-rival.
 **#135 closed and answered** — the season death rate was the rope's bout policy, and a season buys a
-trait rather than stats. **ONE item is measured and not built, #131** — and it is blocked on a design decision, which is the
+trait rather than stats. **ONLY #131 IS LEFT, and it is a design decision.** #132, #133, #134 and #135 all closed this
+session, three of them refuted on their own falsification clauses. **#131 is measured and not built** — and it is blocked on a design decision, which is the
 honest reason nothing was written for it in two sessions. **#132 closed this session,** refuted on its
-own falsification clause once the instrument was fixed. **#133 opened** and is a number rather than a
-decision, if that is what you want next. The probes are kept in `test/probes/` with their faults
+own falsification clause once the instrument was fixed. **#133 closed** in this session, refuted: a tour pays, and the item had been opened on lifespans. The probes are kept in `test/probes/` with their faults
 commented at the lines that carry them; they are not part of the suite (`test/run.mjs` discovers
 `test/checks/*.mjs` only).
 
@@ -1605,25 +1605,36 @@ that it IS the bargain is now measured.
 **Do not quote the stat column as a direction per season** — n is 9 to 16 and it swings. The trait
 effect is the one large enough to stand on this sample.
 
-### #133 — the coast may be a losing proposition for any house that comes back
+### #133 — CLOSED, REFUTED. A tour pays, and the item was opened on the weak statistic
 
-**Opened by this session, not measured properly, do not build on it yet.** Measured on the way past, three
-arms of 10 houses × 420 weeks — a house stuck on the coast, one that tours and returns, one that never
-leaves — the shuttling house is the shortest-lived of the three:
+I opened this on three whole-house arms whose *lifespans* read 175 weeks for the shuttling house
+against 261 stuck and 259 staying home, wrote "do not quote those medians", and said what would
+settle it: *a returning house should end RICHER than one that never went, and it does not have to
+live longer to show it.* Measured that way, as controlled pairs — same seed twice, identical but for
+`road`, control first — it goes the other way:
 
-    median life   stuck 261w  ·  tour-and-return 175w  ·  never leaves 259w
+    24 seeds x 320 weeks · 12 pairs where the house ACTUALLY toured, 12 where it never left
+    at the last week both were still playing (median 205w compared):
+      GOLD    never leaves    813      toured  3,547
+      FAME    never leaves  1,740      toured  2,841
+      the touring house was RICHER in 10 of 12 pairs, more famous in 9 of 12
 
-Which is backwards from what `src/ludus.jsx:9632` says it built: *"a tour is untouched; an emigration
-bleeds."* The mechanism is plausible on inspection — 25d a week while travelling, `d.games` nulled on both
-`setOut` and `comeHome` so a round trip costs two card weeks, and purses fading past `STAY_FRESH` — but
-plausible mechanisms are exactly what this project keeps getting wrong.
+**And the statistic the item was opened on flips too:** median life 279w toured against 223w staying
+home. The original reading was an artifact of three things at once — unpaired arms on different
+seeds, lifespans, and **including houses that never toured**, which are identical in both arms and
+drag any difference toward zero while looking like more data. Excluding them is what made the effect
+visible; it is half the seeds.
 
-**Do not quote those medians.** n=10, censored at the 420-week wall, and lifespan medians in this game
-have swung 36w to 20w between two runs of the same build (`ends`). They are a reason to look, not a
-finding. What would settle it is a paired measurement on the same seeds with the same RNG draw count —
-gold and fame trajectories rather than lifespans, since lifespan is the noisiest statistic available here.
-The falsification is clean: if a tour pays for itself, a returning house should end richer than one that
-never went, and it does not have to live longer to show it.
+**Two things kept honest.** n is 12 touring pairs, so the sign test (10 of 12) is the read, not the
+mean — paired runs diverge in RNG and one runaway house drags an average. And the effect is NOT
+uniform over time: at week 80 the touring house is richer in only 3 of 11 pairs, at 160 in 4 of 6,
+at 240 in 3 of 4. A tour appears to cost early and pay later, which is a different and more
+interesting claim than "a tour pays", and this sample is too small to make it.
+
+**What this says about the method, since it is the fourth item this session to turn on it:** the
+first pass compared POLICIES across houses; this one compared the SAME HOUSE with one thing changed.
+Every item this session that came out clean used the second shape — #135, #134's term split, and this.
+Whole-house policy arms are for questions about policies. For a question about one decision, pair it.
 
 ### The standing hazard, and it got worse
 

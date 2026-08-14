@@ -16,6 +16,7 @@ Run them straight:
     node test/probes/dark.mjs 8 320        # and whether those actions ever open, and ever do anything
     node test/probes/nemesis.mjs 10 420    # #134; add `silent` for the arm that never replies
     node test/probes/season.mjs 24 40 bench # seeds, tail, and `bench` to keep the trainee off the card
+    node test/probes/coast.mjs 24 320      # #133; controlled pairs, stay-at-home vs tour-and-return
     node test/probes/scroll.mjs 16         # week to measure the screens at
 
 `late`, `primacy` and `road` take a third argument, `on` or `off`, which is the reference player's
@@ -128,6 +129,17 @@ on the sand. `bench` (a rope option, applied to BOTH sides of the pair) keeps hi
 finding belonged to the bout policy. **A confound named at the time and settled by one arm is the
 cheapest thing in this directory — the alternative was publishing "seasons kill men" and being
 wrong.**
+
+**`coast.mjs`** — #133, and it refuted the item I had opened. The first pass compared three
+whole-house POLICY arms on lifespans across different seeds and read the touring house as
+shortest-lived. Paired properly — same seed twice, identical but for `road`, control first — the
+touring house is richer in 10 of 12 pairs and lives longer too.
+
+**The line that made the difference: it excludes pairs where the tour never happened.** A house tours
+only if `bayCall` fires, so in half the seeds both arms are the same house doing the same things.
+Averaging those in dilutes any effect toward zero while looking like twice the data. They are counted
+and dropped. It also compares at the last week BOTH were still playing rather than at a fixed
+horizon, because a dead house's gold answers a different question.
 
 **`scroll.mjs`** — where the vertical pixels go, per place, as the page ARRIVES versus with every fold
 thrown open. The second is what `reach` necessarily measures and it is 40% taller than the first.
