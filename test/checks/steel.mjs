@@ -186,6 +186,27 @@ export async function run({ p }){
         careerMed: q(cs,0.5), careerMax: cs.length ? Math.max(...cs) : 0, men:cs.length };
     };
 
+    /* ---- #136: THE ARMOURY COMPARISON WAS ONE HOUSE AGAINST ONE HOUSE ----
+       Section 6 compared a single armed house's `lowBands` against a single plain one with a strict
+       inequality, and it flipped (9.4% against 5.1%) on a build whose only change was one extra key
+       in `EVENTS` with its `make` neutered to `return null` — a reshuffle of `pickEvent`, not a fault.
+       One house per arm is the smallest sample there is. `pooled` runs several per arm and sums the
+       BANDS before taking the share, so the statistic rests on man-slot-weeks rather than on two
+       trajectories, and the arms stay matched because each pair shares its index. */
+    const pooled = (tag, weeks, arm, k) => {
+      const bands = Object.fromEntries(BANDS.map(b=>[b,0]));
+      let n = 0, bouts = 0, broke = 0, armLvl = null, houses = 0;
+      for(let i = 0; i < k; i++){
+        const r = played(`${tag}-${i}`, weeks, arm);
+        for(const b of BANDS) bands[b] += r.bands[b] || 0;
+        n += r.n; bouts += r.bouts; broke += r.broke; houses++;
+        if(armLvl === null || r.arm < armLvl) armLvl = r.arm;   /* the WORST level any arm reached */
+      }
+      return { bands, n, bouts, broke, houses, arm: armLvl,
+        keen: n ? +(bands.keen/n*100).toFixed(1) : null,
+        lowBands: n ? +((bands.worn+bands.failing+bands["all but gone"])/n*100).toFixed(1) : null };
+    };
+
     /* ================= 1. THE RATE, off the man ================= */
     const B = bench("rate", { tries:90 });
     if(B.why) bad.push(B.why);
@@ -330,24 +351,31 @@ export async function run({ p }){
 
     /* ================= 6. THE ROOM DOES WHAT IT SAYS ================= */
     {
-      const P2 = played("armed", 60, 2);
+      const ARMS = 5;
+      const P2 = pooled("armed", 60, 2, ARMS);
+      const P0p = pooled("plain", 60, 0, ARMS);
       /* both halves of this were literals too — the mend rate and the wear it was set against — and
          both are read off the game now. The parenthesised history is labelled as the OLD pair, because
          it was measured under it and is not a claim about the current one. */
       const mendWk = P2.arm * (A.MEND_RATE != null ? A.MEND_RATE : 0.18);
-      lines.push(`the same house with the armoury at level ${P2.arm} (+${mendWk.toFixed(2)} a week per slot `
-        + `against ${WR.weapon[0]}-${WR.weapon[1]} a bout, ceiling ${A.MEND_CEIL}): ${P2.bouts} bouts · `
-        + `${P2.broke} broke · keen ${P2.keen}% · worn or worse ${P2.lowBands}%`);
+      lines.push(`${P2.houses} houses with the armoury at level ${P2.arm} (+${mendWk.toFixed(2)} a week per `
+        + `slot against ${WR.weapon[0]}-${WR.weapon[1]} a bout, ceiling ${A.MEND_CEIL}): ${P2.bouts} bouts · `
+        + `${P2.broke} broke · keen ${P2.keen}% · worn or worse ${P2.lowBands}% over ${P2.n} man-slot-weeks`);
+      lines.push(`   against ${P0p.houses} pooled houses with NO armoury: keen ${P0p.keen}% · worn or worse `
+        + `${P0p.lowBands}% over ${P0p.n} — pooled because one house against one house flipped on a `
+        + `reshuffle (#136)`);
       lines.push(`   under the OLD pair (wear 3-6, mend 2.2 a level, no ceiling) this read 28 breaks at `
         + `L0, 2 at L1 and NONE at L2 or L4 per ~1,050 bouts — the armoury switched wear off entirely, `
         + `which is what v3.13.0 changed`);
       if(P2.arm !== 2)
         bad.push(`the armoury arm asked for level 2 and built ${P2.arm} — \`buildUp\` needs the coin `
           + `in hand, and a probe that floors its purse inside the week loop silently gets level 1`);
-      else if(P2.n > 200 && P0.n > 200 && P2.lowBands > P0.lowBands)
-        bad.push(`the house WITH the armoury spent more of its time below "serviceable" `
-          + `(${P2.lowBands}%) than the one without (${P0.lowBands}%) — \`repairWeek\` adds `
-          + `level*2.2 a week and is supposed to be the thing that holds steel up`);
+      else if(P2.n > 1000 && P0p.n > 1000 && P2.lowBands > P0p.lowBands + 1.5)
+        bad.push(`the ${P2.houses} houses WITH the armoury spent more of their time below "serviceable" `
+          + `(${P2.lowBands}%) than the ${P0p.houses} without (${P0p.lowBands}%), by more than the 1.5 `
+          + `points of slack this bar allows — \`repairWeek\` adds level*${A.MEND_RATE != null ? A.MEND_RATE : 0.18} `
+          + `a week per level and is supposed to be the thing that holds steel up. Pooled over `
+          + `${P2.n} and ${P0p.n} man-slot-weeks, so this is not one unlucky house`);
     }
 
     return { bad, lines };

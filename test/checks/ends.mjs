@@ -276,7 +276,12 @@ export async function run({ p }){
        life 54w->159w and 58w->118w on two runs and 74w->41w on a third, so the lever's value is
        reported and not pinned. Its effect on FAME was large in every run and is printed. */
     {
-      const LONG = 120, LH = 12;
+      /* ---- #136: TWELVE HOUSES PER ARM LEFT SIX DEAD, AND THE BAR IS A SHARE OF THE DEAD ----
+         `proven` read 3 of 6 by debt (50%) against a bar of 45% on a build whose only change was one
+         extra key in `EVENTS` with its `make` neutered to `return null` — a reshuffle of `pickEvent`,
+         not a fault. A share taken over six is moved 17 points by one house. The arms are widened so
+         the denominator is the thing being measured rather than the thing limiting it. */
+      const LONG = 120, LH = 28;
       const arc = [];
       for(const arm of ["idle","proven","proven+cells","careless"]){
         for(let h=0; h<LH; h++){

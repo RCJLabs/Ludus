@@ -3389,6 +3389,62 @@ function recomputeFavor(d){
 }
 const topPatron = d => patronsOf(d).reduce((m,p)=> (!m || p.favor>m.favor) ? p : m, null);
 
+/* ---- #131: SOMETHING A GREAT HOUSE CAN LOSE ----
+   Measured over 10 houses x 420 weeks: a year-12 house holds four patrons at a mean favour of 94 of
+   100, and NOTHING in this file ever took one away. Favour decayed; the man stayed. That is the
+   shape of the whole late game — 97.7% of what a year-12 house is shown was available in week one,
+   because by then it has acquired everything acquirable and is at risk of nothing.
+   A patron is a person, and the lanista is 53 by year twelve. So they die. The seat does not stay
+   empty: `patronWeek` already refills an unheld rank with a stranger at `ri(28,42)`, which is the
+   whole point — twelve years of standing becomes thirty-five points of standing, and `d.favor` is
+   the weighted mean the census ladder and Rome both read.
+   NEVER the last patron. `recomputeFavor` sets `d.favor = 0` on an empty list, which would be a
+   death spiral rather than a loss. */
+const PATRON_HELD = 60;        // three years and a bit before a man is old enough in your service
+/* ---- AND A GAP, BECAUSE THE FIRST VERSION HAD NONE AND `card` CAUGHT IT ----
+   `patronOld` finds ANY long-held favoured patron, so with nothing between firings the event could
+   take one man after another: every survivor is also long-held, and the seat refills at `ri(28,42)`
+   which is below the 55 the gate wants, so the house grinds down to strangers and stays there.
+   Measured by the suite rather than by me: `card` went from 53 cards and 3.36 bouts each to 38 and
+   3.00, because a house whose standing and fame had been quietly gutted gets fewer games weeks. That
+   is the difference between a loss and a tax, and it is the exact failure #131 was warned about.
+   A patron dies once in a long while. Men do. */
+const PATRON_GAP = 120;        // six years and more between deaths in one house
+/* ---- AND THE FIRST VERSION WAS A WOUND RATHER THAN A LOSS, WHICH `policy` PROVED ----
+   Seating the heir cold at `ri(28,42)` took the reference player's best house from fame 3,720 to
+   1,645 and put FIVE subsystems dark — armourer, vow, war, rome, city — against a control with the
+   event's `make` neutered to `return null`, which passed at 19 of 20. `d.favor` is the weighted mean
+   of the patrons and the census ladder's `favorOk` and Rome's gate both read it, so a house that
+   keeps replacing 90s with 35s never climbs again. That is content REMOVED, which is the opposite of
+   what #131 is for.
+   A family remembers its clients. Attend the pyre and the heir starts from a share of what his father
+   thought of you; send a letter and he starts from nothing, which is the real cost of the cheap door. */
+const PATRON_HEIR = 0.6;       // of the dead man's favour, if you stood at his pyre
+function patronDies(d, pid, mourned){
+  const ps = patronsOf(d);
+  if(ps.length < 2) return false;
+  const i = ps.findIndex(p=>p.id === pid);
+  if(i < 0) return false;
+  const p = ps[i];
+  ps.splice(i, 1);
+  if(mourned) d.flags.patronMourned = { w:d.week, favor:p.favor };
+  recomputeFavor(d);
+  return p;
+}
+/* ---- AND THE GATE WAS NOT LATE, WHICH IS THE FAULT UNDER THE OTHER TWO ----
+   `PATRON_HELD` is 60 weeks, which a house meets in its FOURTH YEAR. Measured over the reference
+   player's own eight houses: deaths were landing at weeks 60 to 86 on houses that then died at 70 to
+   86, and `policy` read the damage as the late game going out of reach — five subsystems dark. #131
+   is about a house at YEAR TWELVE. A loss aimed at a great house must not be able to touch a young
+   one, however long it has held its first magistrate.
+   The lanista is 40 at the founding and 53 by year twelve, and his patrons are his contemporaries.
+   So they die when his own generation starts to: `PATRON_AGE` is the gate, and it is late by the same
+   clock the player already reads on his own record sheet. */
+const PATRON_AGE = 50;         // the lanista's years, not the house's weeks
+const patronOld = d => (patronsOf(d).length >= 2 && d.lanista && (d.lanista.age||0) >= PATRON_AGE)
+  ? patronsOf(d).find(p => d.week - (p.since||0) >= PATRON_HELD && p.favor >= 55) || null
+  : null;
+
 /* ---- WHAT THEY WANT ----
    A want is a small contract with a deadline. Meeting it buys real standing;
    letting it lapse is remembered longer. */
@@ -3516,6 +3572,10 @@ function patronWeek(d){
     const arrive = 0.14 + (acclaimOf(d)>=62 ? 0.12 : acclaimOf(d)>=40 ? 0.06 : 0);
     if(d.fame >= RANKS[rk].fameGate && (RANKS[rk].fameGate===0 || R()<arrive)){
       const p = makePatron(d, rk);
+      /* a house that stood at the old man's pyre is not a stranger to the family that buried him */
+      { const m = d.flags.patronMourned;
+        if(m && typeof m === "object" && d.week - m.w <= 26)
+          p.favor = clamp(Math.max(p.favor, rnd(m.favor * PATRON_HEIR)), 0, 100); }
       ps.push(p);
       chron(d, `${p.name} has begun asking about your house. ${acclaimOf(d)>=40?"Your name is hard to avoid in Capua these days. ":""}${RANKS[rk].blurb}`, "good");
       break;
@@ -15209,6 +15269,45 @@ const EVENTS = {
       d.fame = Math.max(0, d.fame - 6);
       return `You let him write. He is thorough, he is not unkind about it, and the aedile's office now holds an account of exactly what this house is.`;
     } },
+  /* ---- #131: THE FIRST THING A GREAT HOUSE CAN LOSE ----
+     The late game had nothing that takes an acquired thing away, which is why year twelve reads like
+     week one. This is the smallest true version: a patron you have held for years dies, the seat
+     refills with a stranger at a third of his favour, and `d.favor` — which the census ladder and
+     Rome both read — falls with him. The choice is not whether to lose him. It is whether the family
+     that buries him remembers you were there. */
+  patronGone: {
+    make(d){
+      if(d.city || d.travel || d.rome) return null;
+      if(d.flags.patronDied && d.week - d.flags.patronDied < PATRON_GAP) return null;
+      const p = patronOld(d); if(!p) return null;
+      const held = Math.floor((d.week - (p.since||0)) / YEAR_WEEKS);
+      const cost = rnd(180 + d.fame*0.35);
+      return { id:"patronGone", title:"A Death In The Family",
+        text:`${p.name} is dead. ${held >= 1 ? `He has had his hand over this house for ${held} year${held===1?"":"s"}, ` : ""}`
+          + `and whatever the house is worth in this town, some of it is his doing. The family burns him on `
+          + `Thursday. His heir is a younger man who has never been to the sand and knows your name the way `
+          + `he knows a supplier's. A funeral of that rank costs ${cost} denarii to attend properly — black, `
+          + `a gift, and your men stood down for the day.`,
+        choices:[`Attend, properly — ${cost}d`, "Send a letter and keep the day"],
+        data:{ pid:p.id, name:p.name, cost } }; },
+    run(d, ev, i){
+      d.flags.patronDied = d.week;
+      const mourn = i === 0 && d.gold >= ev.data.cost;
+      if(mourn) d.gold -= ev.data.cost;
+      const before = d.favor;
+      const gone = patronDies(d, ev.data.pid, mourn);
+      if(!gone) return `Word comes that ${ev.data.name} is dead, and by the time it reaches you the family has already buried him.`;
+      const drop = Math.max(0, before - d.favor);
+      chron(d, `${gone.name} is dead. The house is ${drop} points of standing lighter for it.`, "bad");
+      if(mourn)
+        return `You go in black and you stand where a client stands, and the heir sees you do it. `
+          + `${gone.name} is still gone and the standing he lent you went into the ground with him — `
+          + `${drop} points of it. What you bought is that the next man of that rank arrives knowing `
+          + `you kept the day.`;
+      d.fame = Math.max(0, d.fame - 4);
+      return `You send a letter. It is read out with the others. ${gone.name} was worth ${drop} points of `
+        + `this house's standing and every one of them went with him, and the family noticed who was at `
+        + `the pyre and who was not.`; } },
   bayCall: {
     make(d){ if(d.city || d.travel || d.rome || d.fame < 90) return null;
       const men = activeG(d).filter(g=>g.pfame >= 22);
@@ -25079,6 +25178,9 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        it. Everything here was found by asking what the nineteen above actually reference. */
     GAMBITS, SWEARING, PLANSEASON, FAVOURS,
     nemAnswerReady, nemCanCallOut, nemEdge, favourReady, gambitReady, gambitStale, seasonOfMan,
+    /* #131's first piece: the loss, its gate, and the constant behind it — the action, its table and
+       its gate, which is the rule v3.24.0 settled on. */
+    patronDies, patronOld, PATRON_HELD, PATRON_GAP, PATRON_HEIR, PATRON_AGE, recomputeFavor, patronWeek,
     /* the five openings BY NAME — a check that invents a scenario key gets `clean` back
        without a word, which is how four fifths of one check's coverage went missing */
     SCENARIOS, SC_KEYS, BKEYS, bLevel, masterOpen, canLearnSig,

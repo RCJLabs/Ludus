@@ -86,7 +86,13 @@ export async function run({ p, errors }){
        passes STAY_FRESH=6, `travel` weeks back — nine for Pompeii. The bar is 25, which is loose
        enough to survive a change to either constant and still catch the fault, since the thing it is
        catching does not take 25 weeks or 250: it never happens at all. */
-    const HOUSES = 6, WEEKS = 220, PATIENCE = 25;
+    /* ---- #136: SIX HOUSES WAS NOT ENOUGH, AND THE BAR COUNTED THE DEAD ----
+       This read 5 of 6 on a build whose only change was one extra key in `EVENTS` with its `make`
+       neutered to `return null` — a reshuffle of `pickEvent`, not a fault. Two things were wrong and
+       both are mine: six houses is a sample where one bad draw is 17%, and a house that DIED on the
+       coast was counted as one that failed to come home. It cannot come home; it is dead. The dead
+       are counted apart now and the bar is on the houses that were alive to make the trip. */
+    const HOUSES = 16, WEEKS = 220, PATIENCE = 25;
     const stranded = [];
     for(let h=0; h<HOUSES; h++){
       const g = A.newGameState("Rf"+h, "clean", `ROADF-${h}`, null);
@@ -102,7 +108,9 @@ export async function run({ p, errors }){
       stranded.push({ h, took, dead: !!g.over, where: g.city || null });
     }
     const cameBack = stranded.filter(x=>x.took != null).length;
+    const died = stranded.filter(x=>x.took == null && x.dead).length;
     const sent = stranded.length;
+    const couldReturn = sent - died;          /* the population the bar is actually about */
     const slowest = Math.max(0, ...stranded.map(x=>x.took||0));
 
     /* and the same thing observed over natural play, PRINTED rather than barred — it is the figure
@@ -123,7 +131,7 @@ export async function run({ p, errors }){
       }
     }
     return { outOk, outTwice, arrived, clocked, cardOk, cardN: card.length,
-      sent, cameBack, slowest, stranded, PATIENCE,
+      sent, cameBack, died, couldReturn, slowest, stranded, PATIENCE,
       freshMed: med(freshP), staleMed: med(staleP),
       welFresh: +welFresh.toFixed(2), welStale: +welStale.toFixed(2),
       homeOk, home, wiped,
@@ -147,8 +155,8 @@ export async function run({ p, errors }){
   if(!out.wiped) fails.push("coming home did not wipe the stay clock");
 
   const pc = (n,dn) => dn ? `${Math.round(n/dn*100)}%` : "-";
-  lines.push(`put on the coast and left to the reference player: ${out.cameBack} of ${out.sent} came home`
-    + `, slowest ${out.slowest}w of ${out.PATIENCE} allowed`
+  lines.push(`put on the coast and left to the reference player: ${out.cameBack} of ${out.couldReturn} came home`
+    + ` (${out.died} of ${out.sent} died there and could not), slowest ${out.slowest}w of ${out.PATIENCE} allowed`
     + (out.cameBack < out.sent
         ? ` · STRANDED: ${out.stranded.filter(x=>x.took==null).map(x=>`house ${x.h} ${x.dead?"died in":"still in"} ${x.where||"?"}`).join(", ")}`
         : ""));
@@ -165,13 +173,17 @@ export async function run({ p, errors }){
   if(!out.sent)
     fails.push(`no house could be put on the coast at all — this section proves nothing when it sends `
       + `nobody, and a bar that quietly measures an empty set is the fault it was written to prevent`);
+  else if(!out.couldReturn)
+    fails.push(`every one of ${out.sent} houses died on the coast, so nothing was left to make the trip `
+      + `and this section measured an empty set`);
   else if(!out.cameBack)
-    fails.push(`${out.sent} houses were put in Pompeii and NOT ONE came home inside ${out.PATIENCE} weeks `
+    fails.push(`${out.couldReturn} houses were put in Pompeii and NOT ONE came home inside ${out.PATIENCE} weeks `
       + `— the reference player has no way back from the coast, which is the v2.46 stranding again: `
       + `every late-game figure this project publishes is then measured on an emigrated house`);
-  else if(out.cameBack < out.sent)
-    fails.push(`only ${out.cameBack} of ${out.sent} houses came home inside ${out.PATIENCE} weeks `
-      + `[measured: all of them, slowest 8] — coming home is conditional on something it should not be`);
+  else if(out.cameBack < out.couldReturn)
+    fails.push(`only ${out.cameBack} of ${out.couldReturn} LIVING houses came home inside ${out.PATIENCE} `
+      + `weeks [measured: all of them, slowest 8] — coming home is conditional on something it should not `
+      + `be. The dead are already excluded, so this is not a house that simply ran out of road`);
 
   if(errors.length) fails.push(`${errors.length} page errors`);
   return { pass: fails.length === 0, why: fails.slice(0,3).join("; ") || null, lines };
