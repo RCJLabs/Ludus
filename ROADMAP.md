@@ -1477,6 +1477,37 @@ file ever removed a patron or a room**, the two things the estate table marks as
 12. It was blocked by #136 for one release — four checks were fitted to a single RNG trajectory and any
 new `EVENTS` key reshuffled every draw after it — and went in unchanged once those were widened.
 
+#### And then: does it ever HAPPEN? — `test/probes/reach.mjs`
+
+Every figure in the v3.27.0 release is about whether the loss is CORRECT. Not one is about whether a
+player ever sees it — `patron` hand-builds the state, setting `lanista.age` to `PATRON_AGE + 5`, so it
+would pass identically if the gate were unreachable in play. That is the standing hazard's exact
+shape, so it was measured before anything else was built. **24 houses × 420 weeks of the reference
+player:**
+
+    still up at 420w              0 of 24    weeks lived: median 196, range 17-368
+    lanista ever reached 50      10 of 24    at week 217 median (73-253)
+    the gate ever opened         10 of 24    at week 217 median (73-257)
+    a patron actually died        9 of 24    at week 247 median (104-311), 1-2 times
+
+**It is not dead content, and the right frame is the conditional one: 9 of the 10 houses that reached
+the gate saw a death.** The 38% is the survival rate, not the gate — the piece works, and the same
+pattern can carry the next one. The one house that reached the gate and never fired had 13 weeks
+between opening and dying, which is `pickEvent` being a draw rather than a schedule.
+
+Two things fell out of it that were not the question. **#131's premise describes a state under half of
+runs reach** — "a year-12 house" is week 216 against a median lifespan of 196 — so a loss aimed at
+year 12 is aimed at the top two fifths of runs by construction. And **a succession resets the gate**:
+house 22 went from a lanista of 44 to an heir of 27 and the age term shut for a decade, which is
+defensible (a young man's patrons are not dying) but is worth knowing before the next piece leans on
+`lanista.age` too.
+
+*Instrument note, since it bit the first draft:* the chronicle is not a counter. `chron` unshifts into
+`d.log`, which rolls at `LOG_ROLL` and spills into a capped `d.kept`, so counting death lines
+undercounts by an amount that GROWS WITH THE LENGTH OF THE RUN — the denominator fault the brief warns
+about, in the one place it would have inflated the answer I wanted. `d.flags.patronDied` is stamped
+every firing and never rolls.
+
 #### The estate, so the blank page is not blank — `test/probes/estate.mjs`
 
 "What should a great house be urgently asked for?" has stalled this item twice, so the one thing
