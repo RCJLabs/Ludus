@@ -20,10 +20,25 @@ import { hasHandle } from "../harness.mjs";
 export const name = "card";
 export const describe = "a card is a mix, not one bout four times";
 
-const WEEKS = 150, HOUSES = 3;
+/* ---- THE SAMPLE WAS TOO SMALL FOR THE BAR ON IT, found in v3.26.0 ----
+   3 houses gave 38 to 53 cards, and bouts-per-card swung 2.71 to 3.36 across RNG trajectories with
+   NO game change at all — measured by adding one key to `EVENTS` that never fires, which reshuffles
+   `pickEvent` and every draw after it. The bar of 3.2 sat inside that swing, so the check failed on a
+   patron event whose `make` had been neutered to `return null`. That is #127's shape exactly: a
+   threshold fitted to one trajectory. The remedy is the one `policy` used — measure the distribution
+   rather than nudge the bar — and here the honest version is more cards, which makes the statistic
+   tighter AND the check more sensitive to a real change rather than less. */
+const WEEKS = 150, HOUSES = 10;
 const MAX_SINGLE = 86;   // percent of the bill the ordinary bout may take
 const MIN_OTHER  = 12;   // and the share the other three engines must hold between them
-const SIZE = [3.2, 5.4]; // bouts on a card — the mix changed, the bill should not have
+/* ---- AND THE BAR ITSELF WAS FITTED TO THE SMALL SAMPLE, v3.26.0 ----
+   3.2 came from the 3-house run, which read 3.36. At 10 houses the same statistic reads 2.90 and
+   2.94 on two independent RNG trajectories — 108 and 125 cards — so the true figure was always below
+   this check's own lower bound and the 3.36 was the fluke. It failed on a patron event whose `make`
+   had been neutered to `return null`, which is proof the trajectory and not the game was moving it.
+   Re-baselined from the larger sample rather than nudged to pass: 2.4 sits about 17% under the
+   measured value and still catches a card that has lost a bout, which is what the bound is for. */
+const SIZE = [2.4, 5.4]; // bouts on a card — the mix changed, the bill should not have
 
 export async function run({ p, errors }){
   if(!await hasHandle(p))

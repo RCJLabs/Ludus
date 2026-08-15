@@ -1392,12 +1392,13 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.25.0. Suite green, **62/62**. `main`, the item branch and the upload mirror
+**Shipped and verified:** v3.26.0. Suite green, **62/62**. `main`, the item branch and the upload mirror
 are all at that commit; the tree is clean.
 
 **#134 closed** in v3.24.0, refuted on its own clause once the rope could reply to the arch-rival.
 **#135 closed and answered** — the season death rate was the rope's bout policy, and a season buys a
-trait rather than stats. **ONLY #131 IS LEFT, and it is a design decision.** #132, #133, #134 and #135 all closed this
+trait rather than stats. **#136 IS THE ITEM IN FRONT OF #131**, and #131's first piece is built and held behind it.
+**#131 itself is a design decision, and the thesis is accepted.** #132, #133, #134 and #135 all closed this
 session, three of them refuted on their own falsification clauses. **#131 is measured and not built** — and it is blocked on a design decision, which is the
 honest reason nothing was written for it in two sessions. **#132 closed this session,** refuted on its
 own falsification clause once the instrument was fixed. **#133 closed** in this session, refuted: a tour pays, and the item had been opened on lifespans. The probes are kept in `test/probes/` with their faults
@@ -1466,6 +1467,14 @@ lesson for #131 is not about the fix: **"the late game is thin" and "a late-game
 broken" look identical from the agenda census, and only the second one is cheap to settle.** Before
 writing new content, it is worth asking of each measured late-game quantity what it COSTS and what the
 player can DO about it — that is a bug hunt, and this one took an afternoon.
+
+**THE THESIS WAS ACCEPTED AND THE FIRST PIECE IS BUILT AND HELD.** A patron a house has held for
+years dies and the seat refills with a stranger — chosen because a search found that **nothing in the
+file ever removed a patron or a room**, the two things the estate table marks as new entirely at year
+12. It works and it had a check. **It is blocked by #136:** four checks are fitted to a single RNG
+trajectory and any new `EVENTS` key reshuffles every draw after it, so the suite cannot currently
+accept late-game content of any kind. #136 is now the item in front of this one. The design and its
+three measured corrections are written up in the v3.26.0 changelog so nothing is lost.
 
 #### The estate, so the blank page is not blank — `test/probes/estate.mjs`
 
@@ -1636,6 +1645,31 @@ first pass compared POLICIES across houses; this one compared the SAME HOUSE wit
 Every item this session that came out clean used the second shape — #135, #134's term split, and this.
 Whole-house policy arms are for questions about policies. For a question about one decision, pair it.
 
+### #136 — four checks are fitted to one RNG trajectory, and this blocks every future event
+
+**Opened by trying to build #131's first piece, and it is now the item in front of it.** Adding one
+key to the `EVENTS` table — with its `make` neutered to `return null`, so the event never fires —
+failed `card`, `ends`, `roads` and `steel`, every one of them identically to the live version. One
+extra key reshuffles `pickEvent` and every draw after it, which `policy`'s head has warned about since
+v2.98.0 and which nothing since has acted on.
+
+    card    38-53 cards sampled · bound 3.2 · true value at 10 houses is 2.90-2.94   FIXED in v3.26.0
+    ends    6 houses · debt endings read 0-10% on one trajectory and 50% on another
+    roads   6 houses · 6 of 6 came home on one, 5 of 6 on another
+    steel   2 houses · the armoury comparison flips sign
+
+**All four sit on small samples, and `card` shows the remedy works**: at 10 houses instead of 3 the
+statistic is stable at ~2.9 across trajectories, the bar sits under it with margin, and the check is
+now MORE sensitive to a real change rather than less. The same treatment is owed to the other three —
+raise n, re-derive the bound from the distribution, do not nudge it.
+
+**Why it matters beyond tidiness: every piece of late-game content is a new event.** #131 cannot be
+built at all while a new `EVENTS` key fails four checks, because there is no way to tell a real
+regression from a reshuffle. The patron-death piece is built and measured and held for exactly this
+reason. *Falsifies if:* the three remaining checks hold their bars at a larger sample without
+re-baselining, in which case the trajectory was not the cause and something in the reshuffle is a real
+effect worth understanding instead.
+
 ### The standing hazard, and it got worse
 
 Across the last two sessions' items, **instrument faults outran game faults by roughly nine to two.** The
@@ -1672,6 +1706,46 @@ territory where the measuring is harder than the thing measured. That is a reaso
 answer is a decision over items whose answer is another number.
 
 ## Changelog (shipped)
+
+### v3.26.0 — Four checks are fitted to one RNG trajectory, and any new event exposes them
+
+**#131's first piece was built, measured, and is NOT in this release.** The thesis was accepted — a
+great house has acquired everything and is at risk of nothing, so the late game needs things that can
+be **lost** — and a search found the sharpest case: **nothing in `src/ludus.jsx` ever removed a patron
+or a room.** A patron a house had held for years now died, the seat refilled with a stranger at a
+third of his favour, and attending the pyre bought the heir's opinion. It worked, it had a check, and
+three iterations of its design were driven by measurement rather than taste (the cost lands on the
+REPLACEMENT, not the death, because `recomputeFavor` is a mean; and the gate had to move from 60 weeks
+of service to the lanista's own age, because 60 weeks is year FOUR and the loss was gutting young
+houses).
+
+**It is held back because the suite cannot currently accept a new event, and that is the finding.**
+
+`card`, `ends`, `roads` and `steel` all failed. None of it was the patron event. Neutering its `make`
+to `return null` — leaving only its KEY in the `EVENTS` table — reproduced **every failure
+identically**:
+
+    card    3.00 bouts per card live · 2.71 with the event neutered · bound 3.2
+    ends    3 of 6 `proven` houses by debt (50%) against a measured 0-10%, both live and neutered
+    roads   5 of 6 came home, both live and neutered
+    steel   the armoury comparison flipped, both live and neutered
+
+One extra key reshuffles `pickEvent` and every draw after it, which `policy`'s head has warned about
+since v2.98.0: *"consuming two extra rolls of the RNG and reshuffling every draw after it can."* Four
+checks have bars fitted to a single trajectory, and they all sit on small samples — `card` counted 38
+to 53 cards, `ends` 6 houses, `roads` 6, `steel` 2.
+
+**`card` is fixed here and is the model for the rest.** Measured like for like at 10 houses instead of
+3: **2.94 without the change and 2.90 with it**, so the true figure was always below its own 3.2 lower
+bound and the 3.36 that set it was one lucky trajectory. Re-baselined from the larger sample rather
+than nudged to pass — #127's rule — and the sample tripled, which makes the statistic tighter and the
+check MORE sensitive to a real change, not less.
+
+**What this blocks.** #131 cannot be built at all until `ends`, `roads` and `steel` get the same
+treatment, because *every* piece of late-game content is a new event. That is now the item in front of
+#131, and it is a real one: raising n on three checks and re-deriving their bars from the distribution.
+Doing it in a hurry to land one patron event would have weakened four real guards, which is why the
+content is written up here and held rather than shipped green-by-adjustment.
 
 ### v3.25.0 — "He finishes his season in six weeks" was the soonest he could, not when he would
 
