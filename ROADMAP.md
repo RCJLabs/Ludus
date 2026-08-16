@@ -1400,8 +1400,11 @@ are all at that commit; the tree is clean.
 trait rather than stats. **#136 CLOSED in v3.27.0, and #131's first piece shipped on top of it** — a patron a great house has
 held for years can now die. **#131 stays open**: it is one loss against a table full of permanent
 acquisitions, and whether it reads as a loss or as a nag is a question for `late.mjs` after a release.
-The thesis is accepted and the next pieces come from the same search — **a room still cannot be lost**,
-and the staff who walk out at unrest 90 never do, because a great house's unrest is 1.7.
+The thesis is accepted, but **the second piece was refuted before it was written** — staff DO leave a
+great house (22 losses over 4,295 house-weeks, 6 to a late solvent one), and the estate table had been
+reading presence at a snapshot. What it found instead is sharper and cheaper: the late game does not
+lack losses, it lacks losses that COST anything — an armourer lost at 9,809d was replaced a week later
+at 10,381d. **A room still cannot be lost**, and that one is untouched.
 **#132, #133, #134, #135 and #136 all closed this session**, three of them refuted on their own
 falsification clauses: #132 once the instrument was fixed, #133 because a tour pays and the item had
 been opened on lifespans, #134 on its own clause once the rope could answer the arch-rival. The probes are kept in `test/probes/` with their faults
@@ -1507,6 +1510,53 @@ defensible (a young man's patrons are not dying) but is worth knowing before the
 undercounts by an amount that GROWS WITH THE LENGTH OF THE RUN — the denominator fault the brief warns
 about, in the one place it would have inflated the answer I wanted. `d.flags.patronDied` is stamped
 every firing and never rolls.
+
+#### The second piece, REFUTED before a line of it was written — `test/probes/walk.mjs`
+
+The candidate was "staff who walk out at unrest 90 never do, because a great house's unrest is 1.7".
+**Reading the file first refuted the premise on every term**, before any week was played: there is no 90
+anywhere, there is no single gate, and two of the three doors have nothing to do with unrest.
+
+    medicus     d.unrest > 72 || repStyle(d) === "blood"    R()<0.06/wk after 6 weeks
+    armourer    d.gold < -120                               R()<0.06/wk after 6 weeks
+    household   d.unrest > 78 || d.gold < -80               R()<0.05/wk after 8 weeks, never the wife
+    poached     rival grudge >= 40 && warmth < 45           R()<0.02/wk after 10 weeks
+
+The medicus door is OR'd with a POLICY the player chooses, and `chair` already measures that arm firing
+— the butcher loses his surgeon. The armourer door is pure insolvency. Then 24 houses × 420 weeks,
+**4,295 house-weeks, 1,353 of them a late non-blood house:**
+
+    great-house unrest    median 5.7 · p75 15.9 · p90 27.5 · p99 71.8 · max 76.7    (not 1.7, and not flat)
+    medicus  unrest > 72  open on 1.61% of all weeks, 0.89% of great-house weeks — NOT never
+    household unrest > 78 open on 0.81% of all weeks, 0.00% of great-house weeks
+    poached               open on 16.90% of all weeks, 17.52% of great-house weeks — the widest door by far
+    what actually left     22 losses · 10 to a late non-blood house · 6 to one that was also solvent
+
+**So staff already leave a great house, and the item as posed is dead.** One near-miss is worth keeping:
+the household gate is 78 and great-house unrest tops out at **76.7**, so that door is shut by about a
+point and a half rather than by design.
+
+**And the finding underneath it is better than the item was.** The estate table's "staff at 100% of late
+weeks" reads PRESENCE AT A SNAPSHOT, which cannot tell a role that was never lost from one lost and
+refilled before anybody looked. Fifteen of the 22 losses refilled, median 8 weeks. House 2 lost its
+armourer in week 276 holding 9,809d and had another **one week later, holding 10,381d** — richer than
+when he left.
+
+> The late game does not lack losses. It lacks losses that COST anything. A few hundred denarii
+> against five figures is not a loss, it is a receipt.
+
+That is a decision and a much cheaper one than new content: price replacement against what a great house
+actually holds, rather than build more things to take away. *Falsifies if:* the refill is not generally
+cheap or fast — n is small here (3 late-solvent losses with refill data, and one of them took 110 weeks),
+so the median-8 figure wants a bigger sample before anything is built on it.
+
+*Instrument, verified rather than assumed:* `repStyle`, `warmth` and `houseFolk` are pure reads, so
+observing every week does not move the run — and re-running this probe on `reach.mjs`'s seeds reproduced
+its 24 lifespans EXACTLY (156, 26, 323, 74, 266, …). An earlier draft read a median lifespan of ~120
+against `reach`'s 196 and the difference was entirely the seed prefix, which is why that is an argument
+now. Two faults in the first draft were mine: `great` was defined as late AND SOLVENT and the table then
+reported the debt doors open on 0.00% of great-house weeks, which is the definition read back rather
+than a finding; and losses were nearly counted off the chronicle, which rolls.
 
 #### The estate, so the blank page is not blank — `test/probes/estate.mjs`
 
