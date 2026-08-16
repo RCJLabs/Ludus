@@ -1404,9 +1404,13 @@ The thesis is accepted, but **the second piece was refuted before it was written
 great house, and the estate table had been reading presence at a snapshot. The first replacement for it
 ("the losses are unpriced") **was then refuted too, by its own falsification clause**: over four runs of
 72 houses a replacement costs a stable 1.1 weeks of the house's own bill, which is not free. What
-survives is not about price. A staff loss is undone in one to two weeks; a patron's death is never
-undone. **The late game's losses fail because they are REVERSIBLE, not because they are cheap** — so the
-lever is irreversibility. **A room still cannot be lost**, and that one is untouched.
+survives is not about price. **And the reversibility thesis that replaced it was refuted in turn** by
+`late.mjs`, in the opposite direction: late-game estate losses are the LEAST reversible in the game
+(62-66% against 80-100% early), and a third of everything that happens to a late estate is already a
+loss. What is actually true, stable over four seeds × 72 houses: **the late game is not at risk of
+nothing, it is OUT OF THINGS TO BUY** — gains collapse ~88% while losses rise fifteenfold. And **a room
+still cannot be lost** is now measured rather than assumed: every room, every feat, the doctore, the
+doctrine, the collegium, the aedile and the wife were lost ZERO times in 288 house-runs.
 **#132, #133, #134, #135 and #136 all closed this session**, three of them refuted on their own
 falsification clauses: #132 once the instrument was fixed, #133 because a tour pays and the item had
 been opened on lifespans, #134 on its own clause once the rope could answer the arch-rival. The probes are kept in `test/probes/` with their faults
@@ -1590,6 +1594,55 @@ against `reach`'s 196 and the difference was entirely the seed prefix, which is 
 now. Two faults in the first draft were mine: `great` was defined as late AND SOLVENT and the table then
 reported the debt doors open on 0.00% of great-house weeks, which is the definition read back rather
 than a finding; and losses were nearly counted off the chronicle, which rolls.
+
+#### AND THE REVERSIBILITY THESIS WAS WRONG TOO, IN THE OPPOSITE DIRECTION — `test/probes/late.mjs`
+
+Third statement of this item, third refutation, and this one is the useful one. The thesis was *"the
+late game's losses fail because they are REVERSIBLE."* `estate.mjs` reads snapshots, which is the
+instrument that cannot tell "never lost" from "lost and refilled before anybody looked" — so this reads
+**transitions**: every week the set of things a house holds is diffed against last week's, and each gain
+and loss is recorded with its era and whether that exact thing ever came back. **Four seeds × 72 houses
+× 420 weeks.**
+
+Printing the raw table caught the first draft answering a different question. It took `estate.mjs`'s
+twenty booleans as one flat inventory and reported the late game at 47% losses — and **832 of the 1,332
+losses were `nemesis`**, with `rome` at 130 and `saga` at 100 behind it. A nemesis is an arch-rival who
+comes and goes, `d.rome` is a TRIP, a saga is a running story. Three quarters of the signal was episodes
+being mistaken for possessions. Split three ways — ESTATE, CONTESTED, EPISODE — the estate reads:
+
+    era     gains   losses   losses/1k wks   losses as a share of estate changes   reversible (censoring-corrected)
+    early   1077-984-963-1028    4-10        0.8 - 1.9              0% - 1%                80% - 100%
+    mid      333-294-255-366    27-63        6.8 - 14.3             8% - 15%               67% -  75%
+    late     124-119- 74-144    40-72       12.9 - 16.3            33% - 38%               62% -  66%
+
+**Late losses are the LEAST reversible in the game, not the most.** The thesis is refuted on its own
+statement. (The raw reversibility figure reads 40-49% late, and that number is contaminated: a thing
+lost in week 400 of a house ending at 420 has twenty weeks to return and one lost in week 40 has
+hundreds, so the rate MOVES WITH THE LENGTH OF THE RUN while the code producing it does not. Restricting
+to losses whose house had ≥40 weeks left moves late from 49% to 62%. Both are printed.)
+
+**What is true instead is stable to a rounding step across all four seeds, and it is a better answer
+than any of the three theses:**
+
+> The late game is not at risk of nothing. It is OUT OF THINGS TO BUY. Gains collapse by about 88% —
+> roughly 1,000 in the early era against 120 in the late — while losses rise fifteenfold. A third of
+> everything that happens to a late estate is now a loss. The problem was never the losses.
+
+And the single sharpest fact, verified on all four seeds, **288 house-runs with zero exceptions**:
+
+    NEVER LOST BY ANY HOUSE, EVER — every room (valetudinarium, armamentarium, palus, carceres,
+    balneae), all ~15 feats, the doctore, the doctrine, the collegium, the aedile, and the wife.
+    Gained hundreds of times between them. Lost zero times.
+
+So "a room still cannot be lost" is no longer a hunch from a search; it is measured. What CAN be lost
+late is patrons, the medicus, the armourer, the blessing, the heir and the household — and after
+v3.27.0 the patron is the only one of those that is not simply re-bought.
+
+*The method note, which is the actual lesson:* **three theses in three turns, each refuted by the next
+measurement.** Reversibility, price, and unrest all felt like the answer and none survived contact. The
+thing that kept working was not the thinking — it was printing the raw material every single time. The
+`nemesis` row, the censoring window, and the 200-420d fee formula each turned a confident wrong answer
+into a correct one, and none of the three was visible from the summary statistic.
 
 #### The estate, so the blank page is not blank — `test/probes/estate.mjs`
 
