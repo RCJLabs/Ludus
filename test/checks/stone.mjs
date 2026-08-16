@@ -78,6 +78,46 @@ export async function run({ p, errors }){
        burial society. One purchase's effect was being credited to another's. Both halves are pinned
        here by MECHANISM rather than by copy, so a rewiring makes the words and the code diverge
        loudly instead of quietly. */
+    /* ---- 5. EVERY PERK IS DELIVERED AT THE SIZE ITS OWN TABLE NAMES — #141 ----
+       #141 opened claiming four of the five works buy nothing, and its falsification clause refuted
+       it: the chapel and the baths are not dead, they are INSURANCE. A house that neglects unrest
+       dies of rebellion 6 times in 16 and 2 with a chapel, its peak unrest halved from 79 to 40 —
+       under the arc's own gate of 70. The reference player never sees that because he feasts.
+       So the VALUE of these perks is situational and cannot honestly be pinned by a check. Their
+       DELIVERY can, and delivery is the whole of what makes them situational rather than dead: a
+       perk silently disconnected would read exactly like a perk that does not matter, which is the
+       distinction this item spent two releases getting wrong. Each kind is driven through the
+       game's own `worksWeek` and must move its quantity by exactly what its table says. */
+    const perkNotes = [];
+    {
+      const give = k => { const b = A.newGameState("Pw","clean","STONE-PERK-"+k,null);
+        b.works = { [k]: { left:0, began:0, paid:0, owed:0, idle:0 } };
+        while(A.activeG(b).length < 2) b.gladiators.push(A.genGladiator(b, 55));
+        return b; };
+      const near = (a, b2) => Math.abs(a - b2) < 0.051;
+      /* calm — the chapel, and the one the whole item turned on */
+      { const b = give("chapel"); b.unrest = 50; const n = A.workPerk(b, "calm");
+        A.worksWeek(b);
+        if(!near(50 - b.unrest, n)) bad.push(`the chapel's calm moved unrest by ${(50-b.unrest).toFixed(2)}, not the ${n} its table names`);
+        else perkNotes.push(`calm ${n}/wk off unrest`); }
+      /* fame — the school, the one perk that reaches the house on its own */
+      { const b = give("school"); b.fame = 500; const n = A.workPerk(b, "fame");
+        A.worksWeek(b);
+        if(!near(b.fame - 500, n)) bad.push(`the school's fame moved by ${(b.fame-500).toFixed(2)}, not the ${n} its table names`);
+        else perkNotes.push(`fame +${n}/wk`); }
+      /* regard — the tomb's stated effect, beside the unstated one above */
+      { const b = give("tomb"); const g = A.activeG(b)[0]; const was = A.regardOf(g);
+        const n = A.workPerk(b, "regard"); A.worksWeek(b);
+        if(!near(A.regardOf(g) - was, n)) bad.push(`the tomb's regard moved a man by ${(A.regardOf(g)-was).toFixed(2)}, not the ${n} its table names`);
+        else perkNotes.push(`regard +${n}/wk per man`); }
+      /* and the two that are READ elsewhere rather than applied here — they must at least register */
+      for(const [k, kind] of [["baths","rest"],["spina","crowd"]]){
+        const b = give(k), n = A.workPerk(b, kind);
+        if(!(n > 0)) bad.push(`the ${k} no longer registers as a "${kind}" work — its perk is read at the `
+          + `fatigue and bout sites and a zero here means it was silently disconnected`);
+      }
+    }
+
     /* the term the death sites actually read, called rather than reconstructed */
     const tPerk = (()=>{ const b = A.newGameState("Tp","clean","STONE-TP",null);
       b.works = {};
@@ -92,7 +132,7 @@ export async function run({ p, errors }){
       bad.push(`the tomb's say credits the CELLS with a death costing less; the tomb's term is on `
         + `d.lanista.health and the cells' share is softened by collSoften — the burial society`);
 
-    return { rows, bad, first, started, down, cost:W.cost, drewFrom, tPerk, say,
+    return { rows, bad, first, started, down, cost:W.cost, drewFrom, tPerk, say, perkNotes,
       weekly:A.workWeekly(W), idleWeeks, deposit:A.WORK_DEPOSIT };
   });
 
@@ -103,6 +143,7 @@ export async function run({ p, errors }){
   lines.push(`a house holding ${out.down + 10}d — ten denarii over the deposit on a ${out.cost}d work — ${out.started ? "can commission it" : "CANNOT commission it"}`);
   lines.push(`the masons drew ${out.drewFrom}d for a week's work (the quoted weekly is ${out.weekly}d)`);
   lines.push(`with an empty purse the site stood idle for ${out.idleWeeks === 0 ? "both weeks" : `only ${2-out.idleWeeks} of two weeks`}`);
+  lines.push(`every perk delivered at its table's size: ${out.perkNotes.join(" · ")}`);
 
   /* ---- and WHERE that term sits, read off the source the way `layers` and `actions` do ----
      A handle call can say the tomb registers as a regard work; only the source can say the 0.7 is

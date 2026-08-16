@@ -1392,9 +1392,9 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.31.0 — #140 closed (the perks work and four of them buy nothing; the
-tomb's `say` named the wrong party), suite green at **65/65**. v3.30.0 shipped #131's second loss,
-the fire (`blaze` is the 65th check). v3.29.0 closed #138, v3.28.0 closed #137, and the measurement session before
+**Shipped and verified:** v3.32.0 — #141 refuted for the chapel (it is insurance, not a dead perk:
+rebellion deaths 24 of 64 → 8 with one), suite green at **65/65**. v3.31.0 closed #140, v3.30.0
+shipped #131's second loss, the fire (`blaze` is the 65th check). v3.29.0 closed #138, v3.28.0 closed #137, and the measurement session before
 those settled the five seams and left the instruments — `catalogue.mjs`, `yard.mjs`, `named.mjs`,
 `ghost.mjs`, `scen.mjs`, `sink.mjs` — each with its first wrong version documented in
 `test/probes/README.md`. `main`, the item branch and the upload mirror are at this commit; the tree
@@ -1427,15 +1427,15 @@ whole log, never pipe it through `tail` — the summary line is not the interest
   exactly, and four of the five buy nothing at the house level even when the stone is a GIFT — so
   repricing the stone cannot work, and what to do about it is a design decision rather than a
   measurement. The live question it leaves is below.
-- **#141 — three of the five works move a quantity the house's fate does not read.** Granted FREE
-  at week one — the upper bound of every purchasing policy — the chapel, baths, tomb and spina are
-  coin flips on both fame and lifespan over 48 pairs (18-23 of 48), while moving their own quantity
-  by exactly what their tables promise. The school, whose perk is a direct additive on FAME, reads
-  36 of 48. *The decision:* give the four perks a term the outcome reads, or accept them as vanity
-  the fiction already sells honestly. *Falsifies if:* a house driven at a policy that leans on
-  unrest or fatigue (a blood-doctrine house running hot, say) does convert the chapel or the baths
-  into survival — this measured the reference player, whose unrest sits at 9.9 and whose deaths are
-  the ledger's rather than the cells'.
+- **#141 — REFUTED FOR THE CHAPEL in v3.32.0, and narrowed to three works.** Its clause fired on the
+  first arm that tested it: for a house that neglects unrest, the chapel cuts deaths by rebellion
+  from **24 of 64 to 8 of 64** — 6→2, 5→2, 6→2, 7→2 on four seeds, the most stable effect this
+  session has measured. It is not a dead perk, it is INSURANCE against a failure mode the reference
+  player does not have, because he feasts. The baths, tomb and spina did NOT convert (unstable, seed
+  by seed), so what survives of the item is three works rather than four, and it is now a design
+  question rather than a measurement — see the changelog for why that is a smaller claim than it
+  looks. **Do not quote the baths as converting:** one seed read 6→1 and the other three 5→6, 6→6,
+  7→2, which is exactly the vivid single-seed case this project keeps getting burned by.
 - **#139 — the opening tagged "Fragile" is measured the safest in the game.** Small and
   decision-shaped: relabel, retune, or accept, with the numbers attached.
 - **#137 — CLOSED, shipped in v3.28.0.** Sand endings 1-2% → 36-38%, silence 81% → 0-1%, verified on
@@ -2088,6 +2088,58 @@ territory where the measuring is harder than the thing measured. That is a reaso
 answer is a decision over items whose answer is another number.
 
 ## Changelog (shipped)
+
+### v3.32.0 — #141 refuted for the chapel: it is insurance, not a dead perk
+
+v3.31.0 closed #140 by measuring that four of the five works buy nothing at the house level even
+granted FREE, and opened #141 to decide what to do about it. **Its falsification clause fired on the
+first arm that honestly tested it, which is the second time in two releases that testing the clause
+before building was what saved the item from being wrong.**
+
+The clause: *"a house driven at a policy that leans on unrest does convert the chapel into
+survival — this measured the reference player, whose unrest sits at 9.9 and whose deaths are the
+ledger's."* `perk.mjs` grows a `hot` arm built from the rope's own switches rather than a number of
+mine — `cells:false`, which takes away the feast and the cell-walk, the only two levers a player has
+against unrest. And the measurement is no longer fame or lifespan, which are downstream of
+everything and can always be argued away as noise: **it is the ENDING**. The chapel's job is unrest,
+unrest's job is the rebellion arc, and a rebellion is a named way to die.
+
+    deaths by REBELLION, 16 houses a seed, control against the same seed with a free chapel
+    seed PKA   6 -> 2        peak unrest 79.3 -> 40.5
+    seed PKB   5 -> 2        peak unrest 53.2 -> 35.5      (the rebellion arc's first gate is 70)
+    seed PKC   6 -> 2        peak unrest 78.1 -> 26.2
+    seed PKD   7 -> 2        peak unrest 78.1 -> 75.0
+    pooled    24 of 64 -> 8 of 64
+
+**So the chapel is not a dead perk. It is insurance against a failure mode the reference player does
+not have.** The mechanism is clean and it explains the whole of #140's cool-run null: a chapel is a
+DRAIN, and a drain only matters when there is inflow. A house that feasts has no sustained inflow,
+so 1.1 a week does nothing and the cool arm reads a coin flip; a house that neglects the cells
+accumulates, and the same 1.1 a week holds it under the gate that kills it.
+
+**Two things did NOT convert, and one of them nearly went in as a finding.** The baths read 6→1 on
+the first seed — a clean-looking halving — and 5→6, 6→6, 7→2 on the other three. The tomb and the
+spina are the same story. Only the chapel survives four seeds, and the baths are recorded here
+precisely so nobody quotes that first seed later. What is left of #141 is three works rather than
+four, and the honest framing of it is much weaker than the item was opened at: three perks that a
+reference player has no use for, on a shelf he cannot afford anyway (#138), one of which has now
+turned out to be doing its job in conditions nobody had measured.
+
+**An arm was built and DISCARDED on the way, which is the part worth keeping.** The first hot arm
+was `cells:false` *and* sine stakes: unrest reached 40.6, which looked like the clause's house — and
+lifespan collapsed to 40 weeks, because those houses were dying of an empty yard rather than of the
+cells. A null result there says nothing about the chapel; it says the arm was answering a different
+question. Both arms are kept in the probe with that written at the top of them, because "the perk
+did not help" and "the house died of something else first" are indistinguishable from a rate and
+this project has published the confusion before.
+
+**The guard that ships with it is delivery, not value.** These perks are situational, so their worth
+cannot honestly be pinned by a check — but a perk silently DISCONNECTED would read exactly like a
+perk that does not matter, which is the distinction this item spent two releases getting wrong. So
+`stone` now drives each kind through the game's own `worksWeek` and holds it to the size its own
+table names: calm 1.1 off unrest, fame +3, regard +0.4 a man, and the two that are read elsewhere
+(the baths' rest, the spina's crowd) at least registering. Verified by disconnecting the chapel's
+calm line — it fails, naming the figure.
 
 ### v3.31.0 — #140 closed: the perks work, and four of them buy nothing
 

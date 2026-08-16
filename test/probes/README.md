@@ -27,7 +27,8 @@ Run them straight:
     node test/probes/ghost.mjs 12 300 SEED # who clears d.nemesis, caught by a setter trap — #137
     node test/probes/scen.mjs 24 420 SEED  # the five foundings compared; run on >=3 seeds
     node test/probes/sink.mjs 24 420 SEED  # #138: does a works-buying rope finish the tier? paired
-    node test/probes/perk.mjs 16 420 SEED  # #140: what each work is worth GRANTED FREE — the upper bound
+    node test/probes/perk.mjs 16 420 SEED         # #140: what each work is worth GRANTED FREE
+    node test/probes/perk.mjs 16 420 SEED hot     # #141: and for a house that neglects unrest
     node test/probes/catalogue.mjs 72 420 SEED on   # the census with the works step switched on
 
 `keep`, `walk` and `fires` run in about 25 seconds at 72 houses, which is cheap enough that **they take
@@ -127,7 +128,17 @@ inherited harshest both did; every other difference drowned. The tags carry the 
 measured hard, and "Fragile" is measured the safest opening in the game.
 
 **`perk.mjs`** — what a work is worth when it costs NOTHING, which is how #140 was settled without a
-policy arm. Its clause asked for a fame-maximising player; granting each work free at week one bounds
+policy arm, and then how #141 was REFUTED for the chapel by its `hot` arm. Two lessons live in it.
+**First: measure the ENDING, not the outcome.** Fame and lifespan are downstream of everything, so a
+coin flip there can always be argued away as noise swamping a real effect — and for four releases it
+was. The chapel's job is unrest, unrest's job is the rebellion arc, and a rebellion is a NAMED way to
+die: counted that way the chapel takes 24 deaths of 64 down to 8, on four seeds, where the fame
+column had read a flat coin flip. **Second: an arm that is hot for the wrong reason answers a
+different question.** The first `hot` was `cells:false` plus sine stakes — unrest 40.6, which looked
+right, and lifespan 40 weeks, because those houses were dying of an empty yard. No perk saves a house
+losing men that fast, so its null said nothing. Both arms are kept, with that written over them.
+Also: **the baths read 6→1 on one seed and 5→6, 6→6, 7→2 on the other three** — recorded so nobody
+ever quotes the first one. Its clause asked for a fame-maximising player; granting each work free at week one bounds
 every purchasing policy that could ever exist from above, so a perk that does not pay here cannot pay
 bought. It found the item's stated mechanism wrong — the perks deliver their tables exactly (the
 school's +3/wk over ~210 weeks predicts +630 and measured +631, the instrument proving itself) — and
