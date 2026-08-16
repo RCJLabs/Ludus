@@ -1401,10 +1401,12 @@ trait rather than stats. **#136 CLOSED in v3.27.0, and #131's first piece shippe
 held for years can now die. **#131 stays open**: it is one loss against a table full of permanent
 acquisitions, and whether it reads as a loss or as a nag is a question for `late.mjs` after a release.
 The thesis is accepted, but **the second piece was refuted before it was written** — staff DO leave a
-great house (22 losses over 4,295 house-weeks, 6 to a late solvent one), and the estate table had been
-reading presence at a snapshot. What it found instead is sharper and cheaper: the late game does not
-lack losses, it lacks losses that COST anything — an armourer lost at 9,809d was replaced a week later
-at 10,381d. **A room still cannot be lost**, and that one is untouched.
+great house, and the estate table had been reading presence at a snapshot. The first replacement for it
+("the losses are unpriced") **was then refuted too, by its own falsification clause**: over four runs of
+72 houses a replacement costs a stable 1.1 weeks of the house's own bill, which is not free. What
+survives is not about price. A staff loss is undone in one to two weeks; a patron's death is never
+undone. **The late game's losses fail because they are REVERSIBLE, not because they are cheap** — so the
+lever is irreversibility. **A room still cannot be lost**, and that one is untouched.
 **#132, #133, #134, #135 and #136 all closed this session**, three of them refuted on their own
 falsification clauses: #132 once the instrument was fixed, #133 because a tour pays and the item had
 been opened on lifespans, #134 on its own clause once the rope could answer the arch-rival. The probes are kept in `test/probes/` with their faults
@@ -1532,23 +1534,54 @@ The medicus door is OR'd with a POLICY the player chooses, and `chair` already m
     poached               open on 16.90% of all weeks, 17.52% of great-house weeks — the widest door by far
     what actually left     22 losses · 10 to a late non-blood house · 6 to one that was also solvent
 
-**So staff already leave a great house, and the item as posed is dead.** One near-miss is worth keeping:
-the household gate is 78 and great-house unrest tops out at **76.7**, so that door is shut by about a
-point and a half rather than by design.
+**So staff already leave a great house, and the item as posed is dead.**
+
+*(A "near-miss" was recorded here from that 24-house run — that great-house unrest tops out at 76.7
+against a gate of 78, so the household door is shut by a point and a half. **It is not.** At 72 houses
+the same figure reads 97.2, 97.2, 71.5 and 100 across four seeds, and the door is open on 0.00% to 0.87%
+of great-house weeks depending on the seed. A maximum is the least stable statistic there is and it
+should never have been quoted from 24 houses.)*
 
 **And the finding underneath it is better than the item was.** The estate table's "staff at 100% of late
 weeks" reads PRESENCE AT A SNAPSHOT, which cannot tell a role that was never lost from one lost and
-refilled before anybody looked. Fifteen of the 22 losses refilled, median 8 weeks. House 2 lost its
-armourer in week 276 holding 9,809d and had another **one week later, holding 10,381d** — richer than
-when he left.
+refilled before anybody looked. The losses are real and the seat refills.
 
-> The late game does not lack losses. It lacks losses that COST anything. A few hundred denarii
-> against five figures is not a loss, it is a receipt.
+#### THE FIRST VERSION OF THAT FINDING WAS WRONG, AND ITS OWN FALSIFICATION CLAUSE CAUGHT IT
 
-That is a decision and a much cheaper one than new content: price replacement against what a great house
-actually holds, rather than build more things to take away. *Falsifies if:* the refill is not generally
-cheap or fast — n is small here (3 late-solvent losses with refill data, and one of them took 110 weeks),
-so the median-8 figure wants a bigger sample before anything is built on it.
+It was published here as *"the late game does not lack losses, it lacks losses that COST anything — a few
+hundred denarii against five figures is not a loss, it is a receipt."* That was written off 24 houses,
+**one turn after this same document recorded #136's rule that a bar taken over a handful of houses is a
+bar on one RNG trajectory.** The vivid case behind it — an armourer lost at 9,809d and replaced a week
+later — is the p99 of the distribution, not the median.
+
+The clause said the median-8-weeks figure wanted a bigger sample. It did. The price question needed no
+bigger sample at all, only a better instrument: `makeStaff` charges `rnd(skill*5+40)` over `ri(32,56)` /
+`ri(48,76)` — 200 to 420 denarii, **a formula with no term for the house's wealth, roster or era** — so
+the ratio can be read on every late-solvent week rather than on six losses. **Four independent runs of
+72 houses × 420 weeks, ~3,600 great-house weeks each:**
+
+    replacement in WEEKS OF THE HOUSE'S OWN BILL   median 1.1 · 1.1 · 1.1 · 1.1     (p25 0.9-1.0, p75 1.4-1.6)
+    replacement as a share of gold held            median 10.4% · 9.1% · 9.0% · 10.7%
+    gold a great house actually holds              median 2,976 · 3,403 · 3,464 · 2,891d
+    weeks the seat stays empty                     median 1 · 2 · 2 · 1
+    the poach door, open on great-house weeks      41.2% · 24.2% · 38.9% · 24.4%   <- NOT stable, do not quote
+
+So the median great house holds about 3,000d, not five figures, and pays about a tenth of its box and
+**one week of its own operating bill** to undo the loss. That is not free. The first claim is refuted.
+
+**What survives is sharper, and it is not about price at all.** A staff loss costs roughly one week of
+running the house and is undone in one to two weeks. A patron's death costs thirty-five points of
+standing and is never undone — the seat refills with a stranger, which is the point. The late game's
+losses do not fail because they are cheap. **They fail because they are REVERSIBLE.**
+
+> If the late game is to have stakes, the lever is irreversibility, not price.
+
+That is a decision, and it is also a retroactive argument that v3.27.0's patron piece was built on the
+right axis by accident rather than by design. *Falsifies if:* a loss that is cheap but permanent still
+reads as trivial to a player — which `late.mjs` can ask once there is more than one of them.
+
+*On the four-run table:* every figure quoted above is stable to within a rounding step across four seeds
+EXCEPT the poach door, which swings 24% to 41% and is recorded here only so nobody quotes it later.
 
 *Instrument, verified rather than assumed:* `repStyle`, `warmth` and `houseFolk` are pure reads, so
 observing every week does not move the run — and re-running this probe on `reach.mjs`'s seeds reproduced

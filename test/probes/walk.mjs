@@ -55,7 +55,7 @@ const out = await p.evaluate(([H,W,LATE,SEED])=>{
   const openW = { medUnrest:0, medBlood:0, armDebt:0, hhUnrest:0, hhDebt:0, poach:0 };
   const greatOpen = { medUnrest:0, medBlood:0, armDebt:0, hhUnrest:0, hhDebt:0, poach:0 };
   const fires = { medicus:0, armourer:0, household:0 };
-  const firedAt = [], greatWeeksByHouse = [];
+  const firedAt = [], greatWeeksByHouse = [], greatGold = [], greatBill = [];
   let allW = 0, lateW = 0, greatW = 0, greatBroke = 0;
 
   for(let h=0; h<H; h++){
@@ -75,6 +75,16 @@ const out = await p.evaluate(([H,W,LATE,SEED])=>{
       allW++; unrestAll.push(un);
       if(late){ lateW++; unrestLate.push(un); }
       if(great){ greatW++; greatWeeks++; unrestGreat.push(un); if(!solvent) greatBroke++; }
+
+      /* ---- WHAT UNDOING IT COSTS, WHICH NEEDS NO RARE EVENT ----
+         The falsification clause on the first pass wanted a bigger sample, and brute-forcing organic
+         losses is the wrong instrument for it: only the REFILL LATENCY needs a loss to observe. The
+         PRICE does not. `makeStaff` draws skill from ri(32,56)/ri(48,76) and charges `rnd(skill*5+40)`
+         — 200 to 420 denarii — and that formula contains NO term for the house's wealth, its roster or
+         its era. So the ratio can be measured on every late-solvent week instead of on six losses.
+         The honest denominator is not gold alone but the WEEK'S OWN BILL: "a replacement costs about
+         one week of running the house" is a sentence a player can act on; "3% of holdings" is not. */
+      if(great && solvent){ greatGold.push(gold); greatBill.push(A.weeklyBill(d) || 0); }
 
       const grudged = (d.rivals||[]).some(x=>x.grudge>=40 && A.warmth(d,x.name)<45);
       const g = { medUnrest: un > 72, medBlood: blood, armDebt: gold < -120,
@@ -111,7 +121,7 @@ const out = await p.evaluate(([H,W,LATE,SEED])=>{
       hh: Object.keys(A.houseFolk(d)||{}).length });
   }
   return { unrestAll, unrestLate, unrestGreat, openW, greatOpen, fires, firedAt,
-    greatWeeksByHouse, allW, lateW, greatW, greatBroke };
+    greatWeeksByHouse, allW, lateW, greatW, greatBroke, greatGold, greatBill };
 }, [H, W, LATE, SEED]);
 
 const q = (a, f) => { if(!a.length) return "-"; const s=a.slice().sort((x,y)=>x-y);
@@ -182,5 +192,22 @@ for(const r of out.greatWeeksByHouse)
   console.log(`  ${String(r.h).padStart(5)}  ${String(r.lived).padStart(5)}  ${String(r.greatWeeks).padStart(8)}`
     + `  ${String(r.over||"still up").padEnd(14)}  ${String(r.unrest).padStart(6)} ${String(r.gold).padStart(7)}`
     + `  ${r.blood?"yes  ":"no   "}  ${r.med?"y":"-"}    ${r.arm?"y":"-"}   ${r.hh}`);
+
+/* ---- THE PRICE, ON EVERY LATE-SOLVENT WEEK RATHER THAN ON SIX LOSSES ---- */
+const FEE_LO = 200, FEE_HI = 420, FEE_MID = 310;   // rnd(skill*5+40) over ri(32,56) and ri(48,76)
+const G = out.greatGold, B = out.greatBill;
+console.log(`\n  WHAT A REPLACEMENT COSTS — ${G.length} late, solvent house-weeks`);
+console.log(`    the fee is rnd(skill*5+40) on ri(32,56)/ri(48,76) = ${FEE_LO}-${FEE_HI}d, and that formula`);
+console.log(`    has NO term for the house's wealth, its roster or its era.`);
+console.log(`    gold held        ${spread(G)}`);
+console.log(`    the week's bill  ${spread(B)}`);
+if(G.length){
+  const share = G.map(g => g > 0 ? FEE_MID / g * 100 : 100);
+  const weeks = B.map(b => b > 0 ? FEE_MID / b : 0);
+  console.log(`    a ${FEE_MID}d replacement as a share of gold held    ${spread(share).replace(/(\d+\.?\d*)/g,"$1")}  (%)`);
+  console.log(`    the same, in weeks of the house's own bill        ${spread(weeks)}  (weeks)`);
+  const trivial = share.filter(s=>s < 10).length;
+  console.log(`    weeks where a replacement is under a TENTH of the box: ${trivial} of ${G.length} (${pc(trivial,G.length)})`);
+}
 
 await browser.close(); server.close();
