@@ -1392,9 +1392,12 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.27.0. Suite green, **63/63**. `main`, the item branch and the upload mirror
-are all at that commit; the tree is clean. **Nothing is half-built and no item is mid-flight** — the
-last four commits are measurement and documentation only, so a new session starts on a clean board.
+**Shipped and verified:** still v3.27.0 — this session shipped no game change and bumped no version.
+It was a measurement session: the five seams the last session left were each asked as their own
+question, two were killed and three became items, and the board below is ranked by player impact over
+risk. Suite untouched and green at **63/63**; `main`, the item branch and the upload mirror are at
+this commit; the tree is clean. The new instruments are `catalogue.mjs`, `yard.mjs`, `named.mjs`,
+`ghost.mjs` and `scen.mjs`, each with its first wrong version documented in `test/probes/README.md`.
 
 ### Before you run anything
 
@@ -1407,55 +1410,169 @@ whole log, never pipe it through `tail` — the summary line is not the interest
 
 ### The board
 
-**Six items closed this session** — #132, #133, #134, #135, #136 and the whole of #131's second half.
-Four of the six were REFUTED rather than built, three of them on their own falsification clauses. That
-ratio is the point of the method and not a sign it is going badly.
+**Four items open, ranked by player impact over risk:**
 
-**#131 is the only item still open, and it has been turned inside out.** It was opened as *"the late game
-has no stakes"* and three separate answers to that were each refuted by the next measurement — unrest,
-then price, then reversibility. What replaced them is stable over four seeds × 72 houses:
+- **#137 — the named enemy cannot survive the week that names him.** A measured game fault, not a
+  design call: one house lookup unmakes nearly every fighter-nemesis the same week he is named, and
+  84% of the episodes it does not kill directly it kills by eviction. The fix is one line's worth of
+  decision; the measurement is finished and below.
+- **#138 — the reference player has no step for the game's own late-game sink.** The acquirable
+  catalogue is now COUNTED (71 keys) and #131's "out of things to buy" is refuted as stated: a late
+  house dies holding about half the shelf, and the half it never touches is the works-and-monuments
+  tier — which the rope cannot buy because no step exists, the sixth instance of *a policy the player
+  cannot execute is not a policy*.
+- **#139 — the opening tagged "Fragile" is measured the safest in the game.** Small and
+  decision-shaped: relabel, retune, or accept, with the numbers attached.
+- **#131 stays open, and #138's count REFRAMES its decision.** The late game is not out of things to
+  buy — it is out of things the reference player can reach. Before writing new content or new losses,
+  #138 has to land, because every "nothing left" figure was measured on a player with no works step.
 
-> The late game is not at risk of nothing. It is **OUT OF THINGS TO BUY.** Estate gains collapse about
-> 88% between the early and late eras (~1,000 against ~120) while losses rise fifteenfold, and a third of
-> everything that happens to a late estate is already a loss.
+**The prior session closed six** — #132, #133, #134, #135, #136 and #131's second half — four of them
+refuted on their own falsification clauses. This session killed two of its five seams the same way.
+The full #131 record, three refuted theses and all, is preserved in the sections further down.
 
-**The one open question that decides what to build:** the acquirable catalogue is finite and appears to
-be exhausted by about week 180. Count it — how many acquirable keys exist, when the median house holds
-them all, what a late house has left on its list. That is a number, not a hunch, and it decides whether
-#131's answer is *add late acquisitions* or *make the permanent tier losable*. **`keep.mjs` already has
-the inventory to do it.**
+The hardest fact from last session still stands, verified on four seeds, **288 house-runs with no
+exceptions**: every room, all ~15 feats, the doctore, the doctrine, the collegium, the aedile and the
+wife were gained hundreds of times between them and lost **zero** times.
 
-And the hardest fact to argue with, verified on four seeds, **288 house-runs with no exceptions**: every
-room, all ~15 feats, the doctore, the doctrine, the collegium, the aedile and the wife were gained
-hundreds of times between them and lost **zero** times.
+### The seams, settled — five asked as their own questions, two killed, three became items
 
-### Seams for the next items — OBSERVATIONS, not findings
+The last session left five loose ends marked "observations, not findings" and this session's whole job
+was to confirm or kill them before building on any of them. The record, in the order they were listed:
 
-Each of these fell out of this session's probes while they were pointed at something else. **None has
-been measured as its own question and none should be quoted as a finding.** They are listed because a
-loose end with a number attached is a much better starting point than a blank page, and because every
-one of them is cheap to settle with an instrument that already exists.
+1. **"The yard shrinks after the early game" — KILLED, and the corpse was the instrument.** keep.mjs's
+   men row diffs the ACTIVE set, so every injury books a departure and a return, and a man who dies
+   hurt books a departure that never comes back. Run on the SAME houses (seed `LATE`, 72 × 420),
+   keep.mjs reads net -53 mid / -67 late while true arrivals (new ids) against true exits (the game's
+   own GONE statuses) read net **+30 mid / +27 late** — and the true net is positive in every era on
+   all four seeds tried (+13 to +48). Its "left the yard" column runs ~3x the true exits. The yard is
+   not shrinking; the instrument was counting injuries as men lost. `yard.mjs` is the corrected
+   instrument and keep.mjs's row now says what it is. What the corrected instrument found instead:
+   deaths run level across eras (~140-180/1k weeks) and the rope's yard sits at 3-4 men against its
+   own want of 5, blocked on 56-63% of late want-weeks by its own price bar (spare() median 51d late
+   against a cheapest man of ~202d) — a fact about the rope's reserve policy, recorded here so nobody
+   reads it as the market drying up.
+2. **"Is the nemesis churn rate right?" — became #137**, and the question dissolved on measurement:
+   the rate is not a rate anybody chose, it is the wreckage of one failed lookup. Below.
+3. **The contested tier as the model for losable permanents — STANDS, unexamined further, and its
+   urgency DROPPED.** #138's count says the late game has an unreachable shelf before it has a
+   missing-loss problem, so the copy-this-loop model stays on file until #131's direction is settled.
+4. **"Half of everything arrived in the first 90 weeks" — CONFIRMED in passing by the catalogue count**
+   (first-holds by era: ~1,250 early / ~380 mid / ~90 late per 72 houses), and absorbed into #138: the
+   question was never whether acquisition front-loads, but whether anything is left to acquire. There
+   is — the house just cannot reach it.
+5. **The five foundings compared — became #139.** Most differences drown in batch noise at n=24×3;
+   two survive the sign test on all three seeds, and one of them contradicts its own label.
 
-- **The yard shrinks after the early game and nobody has asked why.** `keep.mjs` counts men in and out:
-  early is net **+116**, mid **-63**, late **-65** across 72 houses. A house that is richer every year is
-  net-losing men every year. Is that the roster cap, the market drying up, or deaths outrunning buying?
-  The instrument is already there — it just needs the question asked of it.
-- **A nemesis arrives and leaves about once every 16 house-weeks** — 832 arrivals over 13,678 weeks, by
-  far the most churning thing in the game. It was excluded from `keep.mjs` as an EPISODE, correctly, but
-  nothing has ever asked whether that rate is *right*. A named enemy that turns over four times a year is
-  arguably not a named enemy.
-- **The contested tier is the one thing that already behaves the way #131 wants.** The bay, the primacy
-  and the name Capua settles on are held, taken by rivals, and won back — `repName` lost 66 / gained 114,
-  `bay` 42 / 83, `primacy` 18 / 18. That is a working loss-and-recovery loop nobody designed as one, and
-  it is the obvious model to copy if #131's answer turns out to be *make the permanent tier losable*.
-- **Half of everything a great house holds arrived in the first 90 weeks and never moved again.** The
-  never-lost list is also a never-*touched* list after acquisition: rooms, doctrine, doctore, collegium,
-  aedile, wife. Whether that is a problem or simply what a settled estate is, is a design question rather
-  than a measurement — but it is the design question #131 has been circling for three sessions.
-- **The five founding scenarios have never been compared on anything.** Every long-run figure in this
-  document is measured on `clean`. Whether `even hand`, `your uncle`, `one good man` and `old guard`
-  produce meaningfully different houses is unmeasured, and every probe here takes the scenario as an
-  argument already.
+### #137 — the named enemy cannot survive the week that names him
+
+The seam said a fighter-nemesis (`d.nemesis` — the man of another house the cells have named, not
+#134's `d.nemHouse`) arrives and leaves once every 16 house-weeks, and asked whether that rate is
+right. Measured as its own question, **72 houses × 420 weeks, two seeds** (`named.mjs`):
+
+    episodes                    725 · 712        (one per 16.6w / 15.9w — keep.mjs's 832/13,678 confirmed)
+    ended ON THE SAND           9 (1%) · 11 (2%)     <- the designed payoff: morale, unrest, fame, a line
+    ended with a line saying so 126 (18%) · 115 (16%)
+    ended in SILENCE            578 (81%) · 576 (82%),  median 3 weeks, most with the man still
+                                standing on his own house's roster
+
+The silent 81% could not be attributed by any weekly diff — the clear rate turned out to be THREE
+TIMES the visible episode rate, because most episodes are born and unmade inside one week, between two
+week-end reads. So `ghost.mjs` traps the assignment itself — `Object.defineProperty(d, "nemesis",
+{set})` with a stack capture — and the mechanism fell out in one run. Four seeds × 12 houses × 300w:
+
+    nemeses named            132 / 132 / 149 / 98 rival men · 736 / 586 / 750 / 476 CIRCUIT men
+    circuit-born nemeses unmade THE SAME WEEK they were named: 99-100% on every seed (732/736 … 476/476)
+    rival-born episodes ended by EVICTION: 82-87% (111, 111, 130, 80) — direct clears of any kind ~10%
+    the clearing line, every time: nemesisWeek, ludus.jsx:10009
+    (the first two seeds both read 132 rival men — that is a coincidence in one counter, not a
+     determinism; the fresh seeds broke it and every RATIO above held)
+
+**The fault, named exactly:** `ludus.jsx:14568` lets a pit man become a nemesis by handing
+`nemesisCheck` a synthetic house — `{name:f.house, fighters:d.circuit}`, where `f.house` is drawn from
+`SMALL_HOUSES`. `nemesisWeek` at 10007 then looks that name up in `d.rivals`, which only ever holds
+the five named rival houses, finds nothing, concludes the man is gone, and nulls him — the same week,
+every time, with no chronicle line. And because a HATED circuit man (he killed one of yours) evicts a
+standing rival nemesis first (the one-at-a-time rule at 9997 yields to hated), each doomed usurper
+also silently destroys the rival episode it displaced — which is why rival nemeses re-appear over and
+over (`beatYou` persists, so the next bout against his house re-names the same man) and why the system
+churns at 4x a year. The player-facing cost: the game's revenge arc — beat the name on the sand for
++11/18 morale to every man, -4/7 unrest, +12/22 fame — fires on **1-2% of episodes**, and a hated
+nemesis's -1.2 morale/week pressure barely exists because he cannot stand a full week.
+
+*Verified:* the churn rate matches keep.mjs's independent count; the trap's attribution is a stack,
+not an inference; and the same-week-clear and eviction RATIOS hold within a few points across four
+seeds. *The decision the item asks:* may a pit man be a
+nemesis at all? If yes, 10007 must learn to look in `d.circuit`; if no, 14568 must stop naming him —
+either way the eviction rule needs the same look. *Falsifies if:* after the fix, `named.mjs` still
+reads >50% silent endings or the sand share stays under 5% — then the lookup was not what starved the
+payoff and the item is wrong about its own mechanism. NOTE the fix is a balance change in disguise:
+today a hated circuit nemesis drains morale for under a week; fixed, he stands until answered. Measure
+the morale term before shipping, and expect `EVENTS`-adjacent checks to move (#136's rule).
+
+### #138 — the reference player has no step for the game's own late-game sink
+
+The open question ROADMAP said decides #131's direction, answered (`catalogue.mjs`, 72 × 420, four
+seeds; headline quoted only off houses that lived past 300 weeks): **the acquirable catalogue is 71
+keys** — 20 room levels, 9 works and monuments, 19 feats, 3 staff seats, 4 household roles, doctrine,
+collegium, aedile, heir, wife, 4 patron slots, 8 census rungs.
+
+    held at death (houses past 300w)   median 32-45 of 71, across the four seeds
+    the LAST new item arrives          median week 273-303
+    weeks lived after the last new     median 79-105
+    first-holds by era, per 72 houses  ~1,250-1,350 early · ~350-430 mid · ~60-125 late
+
+So "the catalogue is exhausted by week 180" is **refuted as stated** — a late house dies holding about
+half the shelf, still picking up one or two new things a year. What it NEVER holds is the point.
+Never held by ANY late house, any seed (37 of 37, 29 of 29, …):
+
+    all 9 works and monuments     spina 7,000d … capua 150,000d — the file's own comments call these
+                                  "the true late-game sink" and "what a fortune is spent on once the
+                                  yard is finished", and the agenda nags "Xd sitting in the box"
+    census rungs 5-7              15,000 / 30,000 / 80,000d      (known: the accepted threshold design)
+    feats gated on untaken acts   threefree, cloth, forge, munera, lion — the rope frees no man,
+                                  stages no munus, buys no master steel for the forge
+
+**And the works are not priced out of reach — they are out of POLICY.** Peak gold over a late house's
+life: median 12,300-13,300d across the four seeds, max 17,600-29,300d, against a works tier of
+5,500-12,000d each. Most late houses could at some point have paid for most of the five works
+outright. The rope's `build` step raises the
+five rooms and never once calls `beginWork` — its only callers in the whole file are the two villa
+buttons and the agenda line (grep-verified). That is `holdMunera`, `setOut`/`comeHome`, `startPlan`,
+`gear` and `party` again: the sixth instance of *a policy the player cannot execute is not a policy*,
+this time sitting under every "out of things to buy" figure #131 rests on.
+
+*The item:* give the rope a works step (opt-in first, like `gear` was — flipping a default re-bases
+the suite and belongs to its own release), then re-measure the late game's gains collapse and the
+"nothing left" claim with the shelf actually reachable. *Falsifies if:* a works-buying rope still
+cannot finish the works tier on cumulative income — then the shelf is genuinely priced past play, the
+"out of things to buy" headline survives, and #131's answer goes back to losses (where the contested
+tier stays the model to copy). Either outcome decides #131's direction, which is what the last session
+asked of this count.
+
+### #139 — the opening tagged "Fragile" is measured the safest in the game
+
+The five foundings, compared on an outcome for the first time (`scen.mjs`, 24 houses × 420 weeks ×
+three seeds, reference player). Discipline first: at this n the median lifespans swing 2x between
+seeds (veterans read 130, 173, 281), so nothing is quoted unless its SIGN holds on all three seeds.
+Two things do:
+
+    alive at week 90, of 24:   champion 19 · 18 · 22      (pooled 59 of 72)
+                               clean    17 · 17 · 14      (pooled 48 of 72)
+                               inherited 13 · 8 · 13      (pooled 34 of 72)
+    and champion's worst house died at week 44 — every other opening buries houses in single digits.
+
+`inherited` ("Your Uncle's Debts", tag **Hard**, six men on 260d) is measured exactly as sold — the
+harshest opening, dead of the ledger it warns about. But `champion` ("One Good Man", tag **Fragile**,
+"it can die on any given afternoon") is the gentlest opening in the game by survival, on every seed,
+at the median AND at the tail. The one man at 80-90 wins the tier-matched cards the rope takes, and
+nothing about the opening kills houses early. *The decision:* relabel the tag to what it actually is,
+retune so the promise is kept (the legend's death actually ending runs would do it — today the house
+just buys men and carries on), or accept the tag as describing a feeling rather than odds. *Falsifies
+if:* the champion's edge is the rope's best-man bout policy rather than the opening — run the same
+comparison with `bench` holding the legend off the sand; if champion then reads mid-pack, the safety
+was the policy's, not the scenario's. *Caveat, stated:* all figures are the reference player's; a
+human playing `inherited` can sell men week one, which the rope never does.
 
 ### The method note, which cost the most to learn and is the most reusable
 

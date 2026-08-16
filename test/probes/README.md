@@ -21,6 +21,11 @@ Run them straight:
     node test/probes/keep.mjs 72 420 SEED  # what a house HOLDS — gains against losses, by era
     node test/probes/walk.mjs 72 420 180 SEED   # can a great house lose the people in it
     node test/probes/fires.mjs 24 420      # does v3.27.0's patron death ever fire in real play
+    node test/probes/catalogue.mjs 72 420 SEED  # the acquirable catalogue, counted — #138's instrument
+    node test/probes/yard.mjs 72 420 SEED  # true arrivals/exits with causes, and the buy gate
+    node test/probes/named.mjs 72 420 SEED # the fighter-nemesis: how an episode actually ends
+    node test/probes/ghost.mjs 12 300 SEED # who clears d.nemesis, caught by a setter trap — #137
+    node test/probes/scen.mjs 24 420 SEED  # the five foundings compared; run on >=3 seeds
 
 `keep`, `walk` and `fires` run in about 25 seconds at 72 houses, which is cheap enough that **they take
 a seed prefix and should always be run on three or four of them.** Two findings died this session for
@@ -74,6 +79,45 @@ standing hazard in one sentence. 9 of the 10 houses that reach the gate see a pa
 survival rate, not the gate. Counts firings off `d.flags.patronDied` rather than the chronicle, which
 rolls at `LOG_ROLL` and would undercount by an amount that GROWS WITH THE LENGTH OF THE RUN. **Run this
 against any new late-game content before believing a check that passes on a hand-built save.**
+
+**`catalogue.mjs`** — the acquirable catalogue read off the game's own tables (71 keys: room levels,
+works and monuments, feats, staff seats, household, doctrine/collegium/aedile/heir/wife, patron slots,
+census rungs), and per house: the week its LAST new item arrived, the drought after it, and what was
+never held, with prices. It settled the "out of things to buy" seam by refuting it as stated — a late
+house dies holding about half the catalogue, and everything it never holds is either the works tier
+(no rope step exists — #138) or priced past its peak gold. Its two designed-in guards: the headline is
+quoted only off houses past 300 weeks, because a last-acquisition week is censored by the death week;
+and every remaining key prints with its listed price against the house's peak gold, so "nothing left
+to buy" and "nothing left it could pay for" cannot be conflated.
+
+**`yard.mjs`** — why the yard shrinks, and it does not. keep.mjs's men row diffs the ACTIVE set, so
+every injury books a departure and a return, and a man who dies hurt books a departure with no return
+— which is the whole of the "net-losing men" seam. This counts true arrivals (new ids) against the
+game's own GONE statuses on the same houses and reads net POSITIVE in every era, all four seeds. It
+also reads the rope's buy gate every week it would want a man, split cap / empty stall / unaffordable,
+because a fire count cannot separate doors — the walk.mjs lesson. The gate sample is taken before
+`R.lanista` runs, so its "affordable" is an upper bound; the buys are counted off the roster diff.
+
+**`named.mjs`** — the fighter-nemesis (`d.nemesis`, not #134's `d.nemHouse`), and how an episode ends
+as the player sees it: on the sand (the designed payoff), told by a chronicle line, or silence. Its
+first version never closed an episode — `cur` survived the push, so one finished episode was re-booked
+every following week, 8,057 "episodes" at one per 1.5 weeks against keep.mjs's one per 16 — and the
+raw sample table is what caught it: the same man, the same since-week, an end-week counting up by one.
+Its second version could not attribute 539 endings at all, which is what `ghost.mjs` is for.
+
+**`ghost.mjs`** — the attribution `named.mjs` could not make, made by trapping the write:
+`Object.defineProperty(d, "nemesis", {set})` with a stack capture names the clearing function, and the
+fid is searched everywhere at that instant. The lesson it leaves: when a weekly diff cannot attribute
+a transition, trap the assignment — most nemesis episodes turned out to be born and unmade INSIDE one
+week, invisible to any diff taken at week boundaries. What it found is #137: circuit-born nemeses are
+unmade the same week by a house lookup that only knows the five rivals.
+
+**`scen.mjs`** — the five foundings, finally compared on an outcome. Reads its keys off `SC_KEYS`
+(a wrong key silently becomes `clean` — the lessons fault) and prints each scenario's week-one men and
+coin so five identical rows cannot be read past. At 24 houses a seed, median lifespans swing by 2x
+between seeds, so nothing is quoted unless the SIGN holds on all three: champion opening gentlest and
+inherited harshest both did; every other difference drowned. The tags carry the verdict: "Hard" is
+measured hard, and "Fragile" is measured the safest opening in the game.
 
 **`silent.mjs`** — for each late system, a predicate for LIVE taken off the game's own functions, then
 whether the agenda named it and whether a `SECT_MARK` fired. This is #132's survey. Five of its predicates
