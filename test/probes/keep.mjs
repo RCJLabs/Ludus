@@ -169,7 +169,15 @@ for(const c of out.CATS){
   }
   console.log("");
 }
-console.log(`\n  MEN, kept apart on purpose`);
+/* ---- THE MEN ROW IS ACTIVE-SET TRANSITIONS, NOT ARRIVALS AND EXITS ----
+   A man carried off injured leaves the ACTIVE set and re-enters it when he heals, so both columns
+   are inflated by every injury — about threefold against true exits — and a man who dies injured,
+   or is still hurt when the era turns or the house ends, books a departure with no return. That is
+   what made mid and late read net-negative here (-53 / -67 on this probe's own seed) while TRUE
+   arrivals-minus-exits, measured off new ids against the game's own GONE statuses on the identical
+   houses, is net POSITIVE in every era (+30 / +27). `yard.mjs` is the corrected instrument; this
+   row is kept because the diff itself is honest — it just counts injuries as departures. */
+console.log(`\n  MEN — ACTIVE-SET transitions (injury-inflated; see yard.mjs for true arrivals/exits)`);
 for(const e of ERAS)
   console.log(`  ${e.padEnd(6)} ${String(out.menLost[e]).padStart(5)} left the yard · ${String(out.menGot[e]).padStart(5)} arrived`
     + ` · net ${out.menGot[e]-out.menLost[e] >= 0 ? "+" : ""}${out.menGot[e]-out.menLost[e]}`);
