@@ -2996,9 +2996,14 @@ function agenda(d){
     if(!anyOn && buildable.length){
       const big = buildable.map(k=>workDef(k)).sort((a,b)=>b.cost-a.cost)[0];
       const monu = MONU_KEYS.some(k=>buildable.includes(k));
-      add(1, "villa", `${Math.round(d.gold)}d sitting in the box`,
-        monu ? `${big.name.toLowerCase()} — ${Math.ceil(big.cost*WORK_DEPOSIT)}d down of ${big.cost}d, and it outlives you`
-             : "there are things a house this old can start building");
+      /* #141: name the work this house needs and say why — the rule and the measurement behind it
+         are over `workNeed`. "Things a house this old can build" is not a claim about anything. */
+      const need = workNeed(d, k => buildable.includes(k)), NW = need ? workDef(need.k) : null;
+      add(1, "villa",
+        NW ? `${Math.round(d.gold)}d in the box, and ${NW.name.toLowerCase()} unbuilt` : `${Math.round(d.gold)}d sitting in the box`,
+        NW ? `${Math.ceil(NW.cost*WORK_DEPOSIT)}d down of ${NW.cost}d — ${need.why}`
+        : monu ? `${big.name.toLowerCase()} — ${Math.ceil(big.cost*WORK_DEPOSIT)}d down of ${big.cost}d, and it outlives you`
+        : "there are things a house this old can start building");
     } }
   if((d.flags.litDue||0) > 0)
     add((d.flags.litDue||0) >= 4 ? 3 : 2, "villa",
@@ -12476,6 +12481,28 @@ const workOpen = (d,k) => { const W = workDef(k); if(!W) return false;
   return true; };
 const workPerk = (d, kind) => ALL_WORK_KEYS.reduce((n,k)=>{ const W = workDef(k);
   return (workDone(d,k) && W && W.perk===kind) ? n + W.n : n; }, 0);
+/* ---- WHICH WORK THIS HOUSE'S OWN STATE ARGUES FOR — #141 ----
+   Measured: a work's perk pays only where its quantity is a live problem. The chapel is INSURANCE —
+   for a house that lets unrest run it takes deaths by rebellion from 24 of 64 to 8, on four seeds —
+   and is worth nothing to a house that feasts. The tomb halves the man-weeks lost to a man who will
+   not go out (130 -> 53, 172 -> 44 on the reference player; 263 -> 140, 314 -> 94 on one that
+   neglects the cells). The baths and the spina have no failure mode behind them and are flavour.
+   So the agenda's one hint at the sink names the work the house needs and says why, instead of
+   telling every house alike that "there are things a house this old can build" — which is not a
+   claim about anything. Ordered by severity; each arm requires its own work to still be buildable.
+   Lives here rather than inside `agenda` because `bulk` caught it growing that function past its
+   cap, and the right answer to that is a named concept rather than a bigger allowance. */
+const workNeed = (d, canBuy) => {
+  const worn = activeG(d).filter(g=>(g.fatigue||0) > 58).length;
+  const sulking = activeG(d).filter(g=>regardRefuse(g) || regardOf(g) < 30).length;
+  if(d.unrest >= 30 && canBuy("chapel"))
+    return { k:"chapel", why:`the cells are at ${Math.round(d.unrest)} and a shrine takes 1.1 off every week of it` };
+  if(sulking && canBuy("tomb"))
+    return { k:"tomb", why:`${sulking === 1 ? "a man is" : sulking+" men are"} past caring what you think — a tomb buys back 0.4 of that a week` };
+  if(worn >= 2 && canBuy("baths"))
+    return { k:"baths", why:`${worn} men are worked past what they have, and the baths shed six more fatigue a week` };
+  return null;
+};
 /* ---- STONE IS PAID FOR AS IT RISES ----
    A work wanted its whole price in a morning: 7,000 for a spina, 30,000 for a
    colossus, 150,000 for the amphitheatre of Capua — 336,500 denarii of building
@@ -25302,6 +25329,9 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     formWord, formOf, FORM_TELL, formShift, formPower, wearWord, houseWord, warmth,
     patronWord, strainWord, favWord, favourOf, fanWord, fansOf, demeanor,
     unrestWord, grudgeWord, healthWord, regardWord, regardOf, facWord, bandWord, cityFavWord,
+    /* the gate a man stops going out at — #141 needed to count the DOOR before counting what came
+       through it, and a probe that writes `regardOf(g) <= 18` reconstructs the gate instead */
+    regardRefuse,
     /* the line of the house: who may be named, naming him, and taking it up */
     nameHeir, heirEligible, HEIRS, houseRecord,
     /* the summit: the gate, the letter, the bar, and the trip's own clock */
@@ -25334,8 +25364,10 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* what a fortune can be spent on once the yard is finished */
     beginWork, workOpen, workDone, workOn, workUpkeep, WORKS, MONUMENTS, ALL_WORK_KEYS,
     /* the term every perk is read through — #140 needed it to ask what the tomb's `say` was
-       claiming, and a check that cannot call it has to reconstruct the formula instead */
-    workPerk,
+       claiming, and a check that cannot call it has to reconstruct the formula instead — and the
+       rule deciding which work a house is pointed at, so `near` can assert on the decision rather
+       than on the sentence it produces */
+    workPerk, workNeed,
     workWeekly, WORK_DEPOSIT, worksWeek, workDef, WORK_KEYS, MONU_KEYS, monuReady,
     /* what other people owe you, which is the quantity two proximity lines quote and a
        third one does not — see `near` */

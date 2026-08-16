@@ -251,6 +251,48 @@ export async function run({ p }){
       if(!atDeposit) bad.push(`a house holding the ${cheap}'s deposit is not told there is anything to build — `
         + `the line's gate asks for more than beginWork's does`);
       if(underDeposit) bad.push(`the sink's hint fires on a house that cannot commission anything`);
+
+      /* ---- and it must name the work THIS house needs — #141 ----
+         The measurement behind this: a work's perk pays only where its quantity is a live problem.
+         The chapel took deaths by rebellion from 24 of 64 to 8 for a house that lets unrest run, and
+         is worth nothing to one that feasts. So an unrest-ridden house must be pointed at the chapel
+         by name, with its own figure in the reason — a hint that says "things a house this old can
+         build" to every house alike is not a claim about anything. */
+      /* the DECISION off the handle, and the SENTENCE it produced — both, because a rule that picks
+         the chapel and a line that then fails to say so are different faults and this check exists
+         for the second kind */
+      const pickFor = st => (A.workNeed(st, () => true) || {}).k || null;
+      const detailFor = st => { const ag = A.agenda(st)||[];
+        const row = ag.find(x=>JSON.stringify(x).includes("in the box"));
+        return row ? JSON.stringify(row) : ""; };
+      const rich = () => { const s = fresh(null, "SINKNEED"); s.week = 300; s.works = {}; s.gold = 40000;
+        while(A.activeG(s).length < 4 && !A.rosterFull(s)){ const m=(s.market||[])[0]; if(!m) break;
+          if(!A.buyFromBlock(s,m.id,null)) break; } return s; };
+      { const s = rich(); s.unrest = 55;
+        const t = detailFor(s);
+        if(pickFor(s) !== "chapel") bad.push(`workNeed picks ${pickFor(s)} for a house at unrest 55, not the chapel`);
+        if(!/chapel|shrine/i.test(t)) bad.push(`a house at unrest 55 with every work unbuilt is not pointed at the shrine — got ${t.slice(0,120)}`);
+        else if(!/55/.test(t)) bad.push(`the shrine is named but the house's own unrest figure is not in the reason`);
+        else lines.push(`the sink's hint targets: unrest 55 -> the shrine, with the figure in the reason`); }
+      { const s = rich(); s.unrest = 0;
+        A.activeG(s).forEach(g=>{ g.regard = 5; });
+        const t = detailFor(s);
+        if(pickFor(s) !== "tomb") bad.push(`workNeed picks ${pickFor(s)} for men past caring, not the tomb`);
+        if(!/tomb/i.test(t)) bad.push(`a house whose men are past caring is not pointed at the tomb — got ${t.slice(0,120)}`);
+        else lines.push(`   men at regard 5 -> the tomb`); }
+      { const s = rich(); s.unrest = 0;
+        A.activeG(s).forEach(g=>{ g.regard = 60; g.fatigue = 75; });
+        const t = detailFor(s);
+        if(pickFor(s) !== "baths") bad.push(`workNeed picks ${pickFor(s)} for worn men, not the baths`);
+        if(!/baths/i.test(t)) bad.push(`a house of worn men is not pointed at the baths — got ${t.slice(0,120)}`);
+        else lines.push(`   worn men -> the baths`); }
+      { const s = rich(); s.unrest = 0;
+        A.activeG(s).forEach(g=>{ g.regard = 60; g.fatigue = 5; });
+        const t = detailFor(s);
+        if(pickFor(s) !== null) bad.push(`workNeed picks ${pickFor(s)} for a house with no live problem`);
+        if(/the cells are at|past caring|worked past/i.test(t))
+          bad.push(`a house with no live problem is being sold insurance it does not need — got ${t.slice(0,120)}`);
+        else lines.push(`   and a house with nothing wrong gets the plain line, not a false diagnosis`); }
     }
 
     /* ---- 5. THE FIVE THAT WERE RIGHT, kept so they stay right ---- */

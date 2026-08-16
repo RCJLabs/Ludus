@@ -1392,9 +1392,9 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.32.0 — #141 refuted for the chapel (it is insurance, not a dead perk:
-rebellion deaths 24 of 64 → 8 with one), suite green at **65/65**. v3.31.0 closed #140, v3.30.0
-shipped #131's second loss, the fire (`blaze` is the 65th check). v3.29.0 closed #138, v3.28.0 closed #137, and the measurement session before
+**Shipped and verified:** v3.33.0 — #141 CLOSED: the works are three tiers, not five, and the
+agenda's one hint at the sink now names the work this house needs and why. Suite green at **65/65**.
+v3.32.0 refuted #141 for the chapel, v3.31.0 closed #140, v3.30.0 shipped #131's second loss. v3.29.0 closed #138, v3.28.0 closed #137, and the measurement session before
 those settled the five seams and left the instruments — `catalogue.mjs`, `yard.mjs`, `named.mjs`,
 `ghost.mjs`, `scen.mjs`, `sink.mjs` — each with its first wrong version documented in
 `test/probes/README.md`. `main`, the item branch and the upload mirror are at this commit; the tree
@@ -1427,7 +1427,11 @@ whole log, never pipe it through `tail` — the summary line is not the interest
   exactly, and four of the five buy nothing at the house level even when the stone is a GIFT — so
   repricing the stone cannot work, and what to do about it is a design decision rather than a
   measurement. The live question it leaves is below.
-- **#141 — REFUTED FOR THE CHAPEL in v3.32.0, and narrowed to three works.** Its clause fired on the
+- **#141 — CLOSED in v3.33.0.** Three tiers: the chapel is insurance that saves the house, the tomb
+  is insurance against something cheap, the baths and spina are accepted flavour. The hint that
+  points at them now reads the house first. Full write-up in the changelog. Below is how it was
+  opened, kept because the item was wrong twice before it was right.
+- **#141 as opened — REFUTED FOR THE CHAPEL in v3.32.0, and narrowed to three works.** Its clause fired on the
   first arm that tested it: for a house that neglects unrest, the chapel cuts deaths by rebellion
   from **24 of 64 to 8 of 64** — 6→2, 5→2, 6→2, 7→2 on four seeds, the most stable effect this
   session has measured. It is not a dead perk, it is INSURANCE against a failure mode the reference
@@ -2088,6 +2092,59 @@ territory where the measuring is harder than the thing measured. That is a reaso
 answer is a decision over items whose answer is another number.
 
 ## Changelog (shipped)
+
+### v3.33.0 — #141 closed: three tiers, not five, and the hint now names which one you need
+
+v3.32.0 refuted #141 for the chapel. This finishes the item by asking the same question of the tomb
+and then acting on all five answers.
+
+**The tomb's door, counted before any arm was built to push a house through it.** Regard has a named
+failure the way unrest does — `regardRefuse` is `regardOf(g) <= 18`, a man who one day will not go
+out — so the tomb is the chapel's SHAPE. Whether it is the chapel's STORY is cheaper to count than a
+cruel policy arm is to build, which is `walk.mjs`'s habit: count the door first.
+
+    refusing man-weeks, control -> with a free tomb
+    reference player   130 of 10,160 (1.28%) -> 53      ·   172 of 9,407 (1.83%) -> 44
+    neglecting the cells   263 of 9,058 (2.90%) -> 140  ·   314 of 6,972 (4.50%) -> 94
+
+**The door opens and the tomb halves it.** So the works are three tiers, not the flat "four dead
+perks" this item was opened at:
+
+    the chapel   its quantity has a named ENDING       converts, and it saves the house
+                 (unrest -> rebellion)                 24 deaths of 64 -> 8
+    the tomb     a named FAILURE that is CHEAP         converts, but a refusal costs a man-week,
+                 (regard -> a man will not go out)     not a house — halved, and worth little
+    baths/spina  no failure mode behind them at all    do not convert, and cannot: fatigue is a
+                 (fatigue; crowd, 1 of ~15 terms)      modifier and crowd is diluted by design
+
+**The baths and the spina are ACCEPTED as flavour, which is a decision and not a shrug.** Giving
+fatigue a terminal state means building a new system beside strain and injury, which already occupy
+it; the spina's +4 crowd is one term of fifteen by design. Both deliver exactly what they promise
+(v3.31.0), and repricing them buys nothing measurable, because #140 established that FREE is the
+upper bound of any purchase.
+
+**What ships instead is the thing the measurement actually indicts: the game never told you which
+one you needed.** The agenda's single hint at the sink said *"there are things a house this old can
+start building"* to every house alike — to one at unrest 9 and one at unrest 79 identically. That is
+not a claim about anything, and it is the `near`/`words` class this project has now shipped fixes for
+five times. The line reads the house before it speaks:
+
+    unrest >= 30           -> the shrine, "the cells are at 55 and a shrine takes 1.1 off every week of it"
+    a man past caring      -> the tomb, "2 men are past caring what you think — 0.4 of that a week"
+    two or more worn men   -> the baths, "3 men are worked past what they have"
+    nothing wrong          -> the plain line, unchanged. A house with no live problem is not sold
+                              insurance it does not need.
+
+Each arm requires its OWN work to still be buildable, and the reason carries the house's own figure
+so a player can price it — which is the whole point, since these perks are worth a great deal or
+nothing depending on a number only he can see.
+
+**The rule lives in `workNeed` rather than inside `agenda`, because `bulk` caught the first draft
+growing that function past its cap** — and the right answer to that check is a named concept, not a
+bigger allowance. `agenda` ends this release at 198 lines against its limit of 200, where it began at
+193. `near` holds all four arms, asserting the DECISION off the handle and the SENTENCE it produces
+separately, because a rule that picks the chapel and a line that then fails to say so are different
+faults and this check exists for the second kind.
 
 ### v3.32.0 — #141 refuted for the chapel: it is insurance, not a dead perk
 

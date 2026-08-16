@@ -70,6 +70,7 @@ const out = await p.evaluate(([H,W,SEED,OPTS])=>{
     }
     const hist = [];
     let unrestSum = 0, fatSum = 0, fatN = 0, regSum = 0, regN = 0, healthSum = 0, wk = 0, peakUnrest = 0;
+    let refuseWeeks = 0, minReg = 100;
     for(let w=0; w<W; w++){
       if(d.over) break;
       R.lanista(d, OPTS || undefined);
@@ -78,12 +79,21 @@ const out = await p.evaluate(([H,W,SEED,OPTS])=>{
       unrestSum += d.unrest || 0;
       if((d.unrest||0) > peakUnrest) peakUnrest = d.unrest || 0;
       healthSum += (d.lanista && d.lanista.health) || 0;
-      for(const g of A.activeG(d)){ fatSum += g.fatigue||0; fatN++; regSum += A.regardOf(g)||0; regN++; }
+      for(const g of A.activeG(d)){ fatSum += g.fatigue||0; fatN++;
+        const rg = A.regardOf(g)||0; regSum += rg; regN++;
+        if(rg < minReg) minReg = rg;
+        /* THE DOOR, called rather than reconstructed: the tomb's quantity has a named failure the
+           way the chapel's does — a man at regard <= 18 one day will not go out. Counting man-weeks
+           at that gate says whether the tomb has anything to insure against before any arm is built
+           to push a house toward it. `walk.mjs`'s habit: a door that never opens and a door that
+           opens while the roll never lands are different findings. */
+        if(A.regardRefuse(g)) refuseWeeks++;
+      }
       hist.push({ gold: Math.round(d.gold), fame: Math.round(d.fame), acc: Math.round(d.acclaim||0) });
     }
     return { life: d.week, hist, end: d.over ? d.over.kind : "alive",
       unrest: wk ? unrestSum/wk : 0, health: wk ? healthSum/wk : 0,
-      peakUnrest, fat: fatN ? fatSum/fatN : 0, reg: regN ? regSum/regN : 0,
+      peakUnrest, refuseWeeks, minReg, manWeeks: regN, fat: fatN ? fatSum/fatN : 0, reg: regN ? regSum/regN : 0,
       built: A.WORK_KEYS.filter(k=>A.workDone(d,k)).length };
   };
 
@@ -160,6 +170,23 @@ for(const k of out.KEYS){
   const peakC = med(out.rows.map(r=>r.ctl.peakUnrest)), peakK = med(out.rows.map(r=>r.arms.chapel.peakUnrest));
   console.log(`    PEAK unrest ever reached: control median ${f1(peakC)} · with the chapel ${f1(peakK)}`
     + `   (the rebellion arc's own first gate is 70)`);
+}
+
+/* ---- THE TOMB'S DOOR, counted before any arm is built to push a house through it ----
+   The chapel converted because unrest has a named failure (the rebellion) that a reference house
+   reaches. Regard has one too — a man at <= 18 stops going out — so the tomb is the same SHAPE.
+   Whether it is the same STORY depends on whether that door ever opens, and that is cheaper to
+   count than a cruel arm is to build. */
+{
+  const rw = out.rows.reduce((s,r)=>s+r.ctl.refuseWeeks, 0);
+  const mw = out.rows.reduce((s,r)=>s+r.ctl.manWeeks, 0);
+  const mins = out.rows.map(r=>r.ctl.minReg).sort((a,b)=>a-b);
+  const rwT = out.rows.reduce((s,r)=>s+r.arms.tomb.refuseWeeks, 0);
+  console.log(`\n  THE TOMB'S DOOR — a man at regard <= 18 will not go out (regardRefuse, called not rebuilt):`);
+  console.log(`    control: ${rw} refusing man-weeks of ${mw} (${(rw/Math.max(1,mw)*100).toFixed(2)}%) · `
+    + `LOWEST regard any man reached: ${mins.slice(0,5).map(f1).join(", ")}${mins.length>5?" …":""}`);
+  console.log(`    with the tomb: ${rwT} refusing man-weeks`);
+  console.log(`    (if the door never opens the tomb has nothing to insure against, and no arm can change that)`);
 }
 
 console.log(`\n  THE TOMB'S SECOND EFFECT, which its table entry does not carry — the lanista's own life:`);
