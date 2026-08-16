@@ -1392,10 +1392,10 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.28.0 — #137 built and closed, suite green at **64/64** (the `named`
-check is the 64th). The session before that was measurement only: the five seams were each asked as
-their own question, two killed, three made items; the instruments are `catalogue.mjs`, `yard.mjs`,
-`named.mjs`, `ghost.mjs` and `scen.mjs`, each with its first wrong version documented in
+**Shipped and verified:** v3.29.0 — #138 built and closed, suite green at **64/64**. v3.28.0 closed
+#137 the release before (the `named` check is the 64th). The measurement session before those
+settled the five seams and left the instruments — `catalogue.mjs`, `yard.mjs`, `named.mjs`,
+`ghost.mjs`, `scen.mjs`, now joined by `sink.mjs` — each with its first wrong version documented in
 `test/probes/README.md`. `main`, the item branch and the upload mirror are at this commit; the tree
 is clean.
 
@@ -1410,21 +1410,33 @@ whole log, never pipe it through `tail` — the summary line is not the interest
 
 ### The board
 
-**Three items open, ranked by player impact over risk:**
+**The board, ranked by player impact over risk:**
 
-- **#137 — CLOSED, shipped in v3.28.0.** The lookup fixed, the eviction rule damped, verified on its
-  own falsification clause: sand endings 1-2% → 36-38%, silence 81% → 0-1%. Full write-up in the
-  changelog; the measurement record is in the section below, kept as it was opened.
-- **#138 — the reference player has no step for the game's own late-game sink.** The acquirable
-  catalogue is now COUNTED (71 keys) and #131's "out of things to buy" is refuted as stated: a late
-  house dies holding about half the shelf, and the half it never touches is the works-and-monuments
-  tier — which the rope cannot buy because no step exists, the sixth instance of *a policy the player
-  cannot execute is not a policy*.
+- **#131 — OPEN, and its direction is now DECIDED BY MEASUREMENT: losses, not acquisitions.** #138's
+  falsification clause fired: even a works-buying reference player cannot finish the works tier
+  (2 houses of 72 pairs) and never begins a monument, so the late game's remaining shelf is either
+  a measured bad trade (#140) or priced past cumulative income. The contested tier (bay, primacy,
+  repName — held, taken, won back) is the model to copy, and v3.27.0's patron death is the first
+  piece already standing. The next piece of late-game content should be a LOSS.
+- **#140 — stone does not pay: the sink's bottom shelf is a measured bad trade.** Opened by #138's
+  paired runs, three seeds × 24 pairs: the works-buying house ends RICHER in 3 / 3 / 1 of 24 pairs,
+  lives longer in 2 / 4 / 1, ends more famous in 3 / 6 / 3 — while building 1-5 works per surviving
+  house. The perks are priced against quantities that are already solved: the chapel's calm 1.1/wk
+  against a late-house unrest median of 5.7, the school's +3 fame/wk at 12,000d against bout fame.
+  *The decision:* reprice the perks, reprice the stone, or accept the works as vanity the fiction
+  sells honestly ("nothing to show for it until the last of it") — but today the game's own agenda
+  nags a player toward a purchase that measurably shortens his house's life. *Falsifies if:* a
+  fame-maximising arm (not the survival rope) shows stone paying on the score a player actually
+  chases — the one works-on house that lived 400 weeks ended at fame 6,833 against its control's
+  3,223, and n=1 is exactly the kind of vivid case this project has been burned by.
 - **#139 — the opening tagged "Fragile" is measured the safest in the game.** Small and
   decision-shaped: relabel, retune, or accept, with the numbers attached.
-- **#131 stays open, and #138's count REFRAMES its decision.** The late game is not out of things to
-  buy — it is out of things the reference player can reach. Before writing new content or new losses,
-  #138 has to land, because every "nothing left" figure was measured on a player with no works step.
+- **#137 — CLOSED, shipped in v3.28.0.** Sand endings 1-2% → 36-38%, silence 81% → 0-1%, verified on
+  its own falsification clause.
+- **#138 — CLOSED, shipped in v3.29.0.** Both halves answered: the rope has a works step (opt-in,
+  with the reserve extended to mason draws), and the "out of things to buy" headline SURVIVES in
+  sharpened form — reachable-but-not-worth-it at the bottom (#140), unreachable at the top. Full
+  write-up in the changelog.
 
 **The prior session closed six** — #132, #133, #134, #135, #136 and #131's second half — four of them
 refuted on their own falsification clauses. This session killed two of its five seams the same way.
@@ -1555,6 +1567,18 @@ cannot finish the works tier on cumulative income — then the shelf is genuinel
 "out of things to buy" headline survives, and #131's answer goes back to losses (where the contested
 tier stays the model to copy). Either outcome decides #131's direction, which is what the last session
 asked of this count.
+
+**BUILT AND SHIPPED IN v3.29.0, AND THE FALSIFICATION CLAUSE FIRED — which is the informative
+outcome.** The step exists (opt-in `works:true`; its first version killed its houses and the reserve
+had to learn that a mason's draw is an obligation — see the changelog). Measured over three seeds ×
+24 controlled pairs: the shelf's bottom is REACHABLE (1-5 works per surviving house, masons idle
+9-17 weeks a run) but the tier is not FINISHABLE (all five works: 2 of 72; a monument: never begun),
+and building is a net harm on every seed — richer 3/3/1 of 24, longer-lived 2/4/1. So the headline
+survives sharpened: the late game's remaining shelf is reachable-but-not-worth-it at the bottom
+(now #140) and priced past cumulative income at the top. **#131's answer goes back to losses**, per
+this clause, with the contested tier as the model. The stale agenda gate found along the way (the
+one hint pointing at the sink asked for the full price when the door opens at the 25% deposit —
+fired on 12-15% of open weeks) is fixed in the same release and pinned by `near`.
 
 ### #139 — the opening tagged "Fragile" is measured the safest in the game
 
@@ -2057,6 +2081,52 @@ territory where the measuring is harder than the thing measured. That is a reaso
 answer is a decision over items whose answer is another number.
 
 ## Changelog (shipped)
+
+### v3.29.0 — #138: the sink is reachable now, and reaching it answered #131's open question
+
+The works and monuments are the file's own late-game sink — 336,500 denarii of stone, repriced long
+ago into instalments so "a house that nets a few thousand a year can put up a monument over three
+years instead of never" — and no reference player had ever commissioned one, because `beginWork`'s
+only callers were the two villa buttons. The sixth instance of *a policy the player cannot execute
+is not a policy*, sitting under every "out of things to buy" figure #131 rests on.
+
+**The rope has a `works` step now, opt-in (`works:true`), and its first version was a lesson worth
+the price.** Commissioning at `spare() > deposit` gutted the houses that used it: richer in 1 pair
+of 24, alive-longer in 1, with lifespans like 338→72 and 420→161 — because `worksWeek` takes the
+mason's weekly draw from gold before any of the player's own spending sees it, and the rope's
+twelve-week reserve did not know the obligation existed. The fix is not a tuned constant but the
+reserve's own principle extended to a new obligation class: running draws count in the reserve, and
+a commission requires the deposit plus twelve weeks of the new draw from spare(). Masons idle 9-17
+weeks per 24-house run after it, against 64 before.
+
+**Measured, three seeds × 24 controlled pairs (`sink.mjs` — same seed twice, control first,
+compared at the last common week):**
+
+    the works-buying house ends RICHER      3 / 3 / 1  of 24
+    lives LONGER                            2 / 4 / 1  of 24
+    ends MORE FAMOUS                        3 / 6 / 3  of 24
+    what gets built              chapel 27 · spina 25 · tomb 15 · baths 8 · school 2, over 72 pairs
+    all five works finished (the monument door)   2 of 72 · a monument begun: NEVER
+
+**So #138's falsification clause fired, and #131's open question is answered: the direction is
+LOSSES.** The shelf's bottom is reachable and measurably not worth reaching (opened as #140); the
+tier that could absorb a fortune — three monuments at 144,000d and the amphitheatre at 150,000 —
+is beyond any reference house's cumulative income. "Out of things to buy" survives in sharpened
+form, the contested tier stays the model to copy, and v3.27.0's patron death was the right first
+piece.
+
+**One game change ships with it, found by the probe's control arm.** The agenda's one hint at the
+sink — "Xd sitting in the box" — still filtered on `d.gold >= cost`, the full price, though the
+stone repricing opened the door at the 25% deposit and the villa button already said so. Measured:
+the door open on 57-62% of eligible weeks, the hint firing on 12-15%. The line now gates on
+`beginWork`'s own deposit, its monument branch quotes the down payment beside the price, and `near`
+holds it both ways: a house holding the chapel's deposit is told, a house under every deposit is
+not.
+
+The default stays `works:false`: #140 says the purchase is a bad trade under current pricing, so a
+reference player who buys stone is not yet modelling competence — the step exists so every future
+measurement CAN, which is what this item was for. `catalogue.mjs` takes `on` as a fifth argument to
+run its census works-aware.
 
 ### v3.28.0 — #137: the named enemy survives the week that names him
 

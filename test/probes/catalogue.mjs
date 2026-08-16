@@ -26,11 +26,14 @@
 import { serve, open } from "../harness.mjs";
 const H = +(process.argv[2] || 72), W = +(process.argv[3] || 420);
 const SEED = process.argv[4] || "CAT";
+/* `on` runs the rope with the #138 works step (opt-in in the harness), so the same census can be
+   read with the shelf reachable. Everything before v3.29.0 was measured with it off. */
+const WORKS_ON = process.argv[5] === "on";
 
 const { server, port } = await serve({ page:"dist/test.html" });
 const { browser, p } = await open(port);
 
-const out = await p.evaluate(([H,W,SEED])=>{
+const out = await p.evaluate(([H,W,SEED,WORKS_ON])=>{
   const A = window.__LVDVS, R = window.__ROPE;
 
   /* the catalogue, off the tables */
@@ -71,7 +74,7 @@ const out = await p.evaluate(([H,W,SEED])=>{
     const newByEra = { early:0, mid:0, late:0 };
     for(let w=0; w<W; w++){
       if(d.over) break;
-      R.lanista(d);
+      R.lanista(d, WORKS_ON ? { works:true } : undefined);
       if(d.over) break;
       if(d.gold > peakGold) peakGold = d.gold;
       const s = heldNow(d);
@@ -90,11 +93,11 @@ const out = await p.evaluate(([H,W,SEED])=>{
   }
   return { KEYS, COST, houses, neverHeldLate, nCat: KEYS.length,
     lateN: houses.filter(x=>x.late).length };
-}, [H, W, SEED]);
+}, [H, W, SEED, WORKS_ON]);
 
 const med = a => { const v=[...a].sort((x,y)=>x-y); return v.length ? v[Math.floor(v.length/2)] : "-"; };
 
-console.log(`\n${H} houses x ${W}w · seed "${SEED}" · catalogue = ${out.nCat} acquirable keys`);
+console.log(`\n${H} houses x ${W}w · seed "${SEED}" · works step ${WORKS_ON?"ON":"off"} · catalogue = ${out.nCat} acquirable keys`);
 console.log(`(20 room levels · 9 works+monuments · feats · 3 staff · household · doctrine/collegium/aedile/heir/wife · 4 patron slots · 8 census rungs)\n`);
 
 console.log(`  RAW, one row per house that reached the late era (>=180w) — the headline is read off these only:`);

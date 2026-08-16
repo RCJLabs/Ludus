@@ -232,6 +232,27 @@ export async function run({ p }){
         bad.push(`tier 3 is no longer gated on the monuments — its closed line names them`);
     }
 
+    /* ---- 4b. THE SINK'S ONE HINT OPENS WHEN THE DOOR DOES — #138 ----
+       Stone is commissioned at its 25% deposit and paid as it rises; the villa button gates on
+       the deposit. The agenda's "sitting in the box" line still asked for the FULL price, so the
+       one hint pointing at the sink fired on 12-15% of the weeks the door was open (57-62%),
+       measured over three seeds x 24 houses. The line's gate must be beginWork's own. */
+    {
+      const dep = k => Math.ceil(A.workDef(k).cost * A.WORK_DEPOSIT);
+      const cheap = A.WORK_KEYS.slice().sort((a,b)=>dep(a)-dep(b))[0];
+      const says = d => JSON.stringify(A.agenda(d)||[]).includes("sitting in the box");
+      const d = fresh(null, "SINKNAG"); d.week = 300; d.works = {};
+      d.gold = dep(cheap) + 25;                      /* the deposit and small change — not the price */
+      const atDeposit = says(d);
+      d.gold = Math.min(...A.WORK_KEYS.map(dep)) - 50;   /* under every deposit */
+      const underDeposit = says(d);
+      lines.push(`the sink's hint: fires holding ${dep(cheap)+25}d (the ${cheap}'s deposit) ${atDeposit ? "yes" : "NO"}, `
+        + `silent under every deposit ${underDeposit ? "NO" : "yes"}`);
+      if(!atDeposit) bad.push(`a house holding the ${cheap}'s deposit is not told there is anything to build — `
+        + `the line's gate asks for more than beginWork's does`);
+      if(underDeposit) bad.push(`the sink's hint fires on a house that cannot commission anything`);
+    }
+
     /* ---- 5. THE FIVE THAT WERE RIGHT, kept so they stay right ---- */
     {
       /* blessLeft against the panel that shows it */

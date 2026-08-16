@@ -26,6 +26,8 @@ Run them straight:
     node test/probes/named.mjs 72 420 SEED # the fighter-nemesis: how an episode actually ends
     node test/probes/ghost.mjs 12 300 SEED # who clears d.nemesis, caught by a setter trap — #137
     node test/probes/scen.mjs 24 420 SEED  # the five foundings compared; run on >=3 seeds
+    node test/probes/sink.mjs 24 420 SEED  # #138: does a works-buying rope finish the tier? paired
+    node test/probes/catalogue.mjs 72 420 SEED on   # the census with the works step switched on
 
 `keep`, `walk` and `fires` run in about 25 seconds at 72 houses, which is cheap enough that **they take
 a seed prefix and should always be run on three or four of them.** Two findings died this session for
@@ -118,6 +120,17 @@ coin so five identical rows cannot be read past. At 24 houses a seed, median lif
 between seeds, so nothing is quoted unless the SIGN holds on all three: champion opening gentlest and
 inherited harshest both did; every other difference drowned. The tags carry the verdict: "Hard" is
 measured hard, and "Fragile" is measured the safest opening in the game.
+
+**`sink.mjs`** — #138's paired instrument: same seed twice, identical but for the rope's opt-in
+`works` step, control first, compared at the last common week. Its finding closed the item the
+falsifying way — the works-buying house is poorer and shorter-lived on all three seeds, finishes the
+five-work tier in 2 of 72 pairs, and never begins a monument — and its control arm found the stale
+agenda gate (the sink's one hint asking the full price where the door opens at the deposit, 12-15%
+against 57-62%). What its first version got wrong was the POLICY, not the probe: commissioning at
+`spare() > deposit` ignored that the mason's draw outranks the player's own spending inside
+`worksWeek`, and the arm it measured was a house bleeding to death, not a house buying stone. The
+reserve now counts running draws; the probe was right both times and the difference between the two
+runs is the lesson.
 
 **`silent.mjs`** — for each late system, a predicate for LIVE taken off the game's own functions, then
 whether the agenda named it and whether a `SECT_MARK` fired. This is #132's survey. Five of its predicates

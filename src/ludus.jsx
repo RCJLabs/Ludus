@@ -2987,13 +2987,18 @@ function agenda(d){
      the whole file, in the Villa render, so a player with a hundred thousand denarii
      in the box was never once told there was anything left to spend it on. */
   { const pool = monuReady(d) ? ALL_WORK_KEYS : WORK_KEYS;   /* monuments only exist once the works are finished */
-    const buildable = pool.filter(k=>!workDone(d,k) && workOpen(d,k) && d.gold >= workDef(k).cost);
+    /* #138: this filter still asked for the FULL price after the stone repricing made a work
+       commissionable at its 25% deposit — the villa button already gates on the deposit, so the
+       one hint pointing at the sink fired on 12-15% of the weeks the door was actually open
+       (57-62%), measured over three seeds x 24 houses. The line's gate is beginWork's own. */
+    const buildable = pool.filter(k=>!workDone(d,k) && workOpen(d,k) && d.gold >= Math.ceil(workDef(k).cost*WORK_DEPOSIT));
     const anyOn = pool.some(k=>workOn(d,k));
     if(!anyOn && buildable.length){
       const big = buildable.map(k=>workDef(k)).sort((a,b)=>b.cost-a.cost)[0];
       const monu = MONU_KEYS.some(k=>buildable.includes(k));
       add(1, "villa", `${Math.round(d.gold)}d sitting in the box`,
-        monu ? `${big.name.toLowerCase()} — ${big.cost}d, and it outlives you` : "there are things a house this old can build");
+        monu ? `${big.name.toLowerCase()} — ${Math.ceil(big.cost*WORK_DEPOSIT)}d down of ${big.cost}d, and it outlives you`
+             : "there are things a house this old can start building");
     } }
   if((d.flags.litDue||0) > 0)
     add((d.flags.litDue||0) >= 4 ? 3 : 2, "villa",

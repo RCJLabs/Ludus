@@ -234,11 +234,22 @@ export async function installRope(p){
                         wears. `road:false` is the stay-at-home arm: it declines the invitation too,
                         because a house that leaves once and cannot return is not a house that stays)
          free                                                                          (default FALSE —
-           the one opt-in step: freeing everyone eligible takes the house's fame from 2,232 to 1,270,
+           opt-in: freeing everyone eligible takes the house's fame from 2,232 to 1,270,
            and fame is the quantity most of this suite's reachability leans on. See the step's note)
+         works         (default FALSE — opt-in, #138: commission the works and monuments, cheapest
+                        open site first, one at a time, deposit from spare(). Flipping this default
+                        re-bases what a long-lived house owns and is its own release. `works:true`)
        `play(d, weeks, opts)` runs many and pools the counters. */
     const LAN = {
-      reserve: d => Math.max(700, A.weeklyBill(d) * 12),
+      /* the reserve is twelve weeks of obligations. A rising work's mason draw IS an obligation —
+         worksWeek takes it from gold before any of this player's own spending sees it — and the
+         first works policy that ignored that killed its houses: commissioned at spare() > deposit,
+         the works-on arm was RICHER in 1 pair of 24 and died earlier in most (338w -> 72w, 420 ->
+         161). Not a constant to tune; the existing reserve rule applied to a new obligation class.
+         For every arm without a rising work the term is zero and this line is exactly the old one. */
+      reserve: d => Math.max(700, (A.weeklyBill(d) + LAN.draws(d)) * 12),
+      draws: d => (A.ALL_WORK_KEYS||[]).reduce((s,k)=>{ const on = A.workOn && A.workOn(d,k);
+        return s + (on && on.owed > 0 ? A.workWeekly(A.workDef(k)) : 0); }, 0),
       rooms: ["valetudinarium","armamentarium","palus","carceres","balneae"],
     };
     const lanista = (d, opts) => {
@@ -268,6 +279,35 @@ export async function installRope(p){
       }
       if(on("build") && spare() > 6000)
         for(const k of LAN.rooms) if(fin(A.buildUp,[d,k])){ bump("built"); break; }
+      /* ---- THE STONE, WHICH NO POLICY OF MINE HAS EVER COMMISSIONED — #138 ----
+         The works and monuments are the file's own late-game sink ("what a fortune is spent on
+         once the yard is finished"), the agenda nags about them, and they have been payable in
+         instalments since the stone repricing — 25% down, a weekly draw that idles gracefully.
+         `beginWork`'s only callers were the two villa buttons, so the reference player never
+         commissioned one in the project's history: measured over four seeds x 72 houses x 420
+         weeks, EVERY late house held zero of the nine, while its peak gold (median 12,300-13,300d)
+         covered the whole first tier's prices one by one. The sixth instance of "a policy the
+         player cannot execute is not a policy", and it sat under every out-of-things-to-buy
+         figure #131 rests on.
+         OPT-IN, the way `gear` began: switching it on re-bases what a long-lived house owns and
+         earns (five perk streams), and flipping the default is its own release with every affected
+         figure re-measured. `works:true` asks for it. The policy is the game's own shape: one site
+         at a time (the agenda's `anyOn` rule), the cheapest open work first because finishing is
+         what opens the monument tier, and the deposit paid from spare() like every other
+         discretionary coin — the weekly draw is what the instalment design already tolerates. */
+      if(o.works === true && typeof A.beginWork === "function"){
+        const anyOn = (A.ALL_WORK_KEYS||[]).some(k=>A.workOn(d,k));
+        if(!anyOn){
+          const pick = (A.ALL_WORK_KEYS||[])
+            .filter(k=>!A.workDone(d,k) && A.workOpen(d,k))
+            .map(k=>({ k, W:A.workDef(k) }))
+            /* the deposit AND twelve weeks of the draw it commits to, from spare() — the same
+               twelve-week rule the reserve holds everything else to */
+            .filter(x=>x.W && Math.ceil(x.W.cost*A.WORK_DEPOSIT) + A.workWeekly(x.W)*12 <= spare())
+            .sort((a,b)=>a.W.cost-b.W.cost)[0];
+          if(pick && fin(A.beginWork,[d,pick.k]) === true) bump("commissioned");
+        }
+      }
       if(on("rites")){
         if(!d.blessing && spare() > 3500)
           for(const gd of Object.keys(A.GODS||{})) if(fin(A.makeOffering,[d,gd])){ bump("offering"); break; }
