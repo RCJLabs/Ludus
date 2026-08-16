@@ -88,7 +88,14 @@ const out = await p.evaluate(([H,W,SEED,EARLY,LATE])=>{
     on("loan", d.loan); on("aedile", d.aedile); on("election", d.election);
     on("court", d.court); on("saga", d.saga); on("repName", d.repName);
     on("primacy", A.primusMine && A.primusMine(d)); on("bay", (d.bay||{}).holder);
-    for(const k of Object.keys(d.buildings||{})) s.add("room:"+k);
+    /* LEVEL keys from v3.30.0, was presence-only. Presence-only meant the fire (`roomFire`, which
+       takes a wing's top level and deliberately never its presence) was invisible to this probe —
+       the instrument that owns the never-lost list could not see the first room loss ever shipped.
+       Encoded as one key per level, an UPGRADE books only a gain (a new key appears, nothing
+       vanishes) and a burn books exactly the top key lost, which is what the header's note about
+       `room:bath@1 -> room:bath@2` always wanted. */
+    for(const k of Object.keys(d.buildings||{})){ const L = d.buildings[k]||0;
+      for(let i=1;i<=L;i++) s.add(`room:${k}@${i}`); }
     for(const k of Object.keys(d.works||{})) s.add("work:"+k);
     for(const k of Object.keys(d.household||{})) s.add("hh:"+k);
     for(const x of (A.patronsOf(d)||[])) s.add("patron:"+x.id);

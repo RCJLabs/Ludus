@@ -81,6 +81,10 @@ standing hazard in one sentence. 9 of the 10 houses that reach the gate see a pa
 survival rate, not the gate. Counts firings off `d.flags.patronDied` rather than the chronicle, which
 rolls at `LOG_ROLL` and would undercount by an amount that GROWS WITH THE LENGTH OF THE RUN. **Run this
 against any new late-game content before believing a check that passes on a hand-built save.**
+From v3.30.0 it asks the same question of the fire (`d.flags.roomBurned`), and it finally takes the
+seed prefix the first version only claimed to: three prefixes read a floor burned in 2 / 4 / 6 of 24
+houses, 12 of the 16 whose estate ever reached the 8-level bar — the constraint is estate size, which
+is the gate doing what it is for, and the under-building it reads is the same fact #138 measured.
 
 **`catalogue.mjs`** — the acquirable catalogue read off the game's own tables (71 keys: room levels,
 works and monuments, feats, staff seats, household, doctrine/collegium/aedile/heir/wife, patron slots,

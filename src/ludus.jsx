@@ -8751,6 +8751,33 @@ const bLevel = (d, k) => (d.buildings && d.buildings[k]) || 0;
    to do: how many men are in it, and how the house it stands in expects to live. */
 const houseLoad = d => (0.55 + activeG(d).length*0.075) * (1 + riseOf(d)*0.14);
 const bUpkeep = d => Math.round(BKEYS.reduce((s,k)=>{ const L=bLevel(d,k); return s + (L? BUILDINGS[k].upkeep[L-1] : 0); }, 0) * houseLoad(d));
+const bLevels = d => BKEYS.reduce((s,k)=>s + bLevel(d,k), 0);
+/* ---- #131: THE SECOND THING A GREAT HOUSE CAN LOSE ----
+   Measured over 288 house-runs with zero exceptions: no house ever lost a room. The estate table
+   marks rooms and patrons as the two things a year-12 house holds that a week-one house does not;
+   the patron went in v3.27.0, and this is the other half. A fire takes the TOP LEVEL of one
+   built-up wing — never the wing itself, so nothing that reads a room's PRESENCE (the staff rooms,
+   the charter, the lessons) ever loses its footing — and the rebuild is `buildUp` at the same
+   price it always was, which is a real purchase on the shelf a late house otherwise finds empty.
+   The gates follow the patron piece's three lessons exactly:
+   · LATE BY THE ESTATE'S OWN CLOCK, not the calendar — a fire wants a house big enough to burn
+     (ROOM_FIRE_LEVELS built levels), the way a patron's death wanted the lanista's years. A young
+     house at one or two wings cannot be touched.
+   · A GAP, because `patronOld` with no gap took one man after another — fires do not chain.
+   · A LOSS, NOT A WOUND: one level, once in a long while, with the rebuild fully in the player's
+     hands. The first patron draft gutted houses and put five subsystems dark; the bar here is that
+     `policy` and the suite hold, which is measured, not promised. */
+const ROOM_FIRE_LEVELS = 8;    // wings built before there is an upper floor to lose
+const ROOM_FIRE_GAP = 100;     // five years and more between fires in one house
+const roomAblaze = d => bLevels(d) >= ROOM_FIRE_LEVELS
+  ? pick(BKEYS.filter(k => bLevel(d,k) >= 2)) || null
+  : null;
+function roomBurns(d, k){
+  const L = bLevel(d, k);
+  if(L < 2) return false;                     /* never the wing itself — the top floor is the loss */
+  d.buildings[k] = L - 1;
+  return { key:k, was:L, now:L-1, rebuild: BUILDINGS[k].cost[L-1] };
+}
 
 /* ---- THE GODS ----
    Rome did nothing without the gods, least of all put men on sand to die. A house
@@ -15332,6 +15359,45 @@ const EVENTS = {
       return `You send a letter. It is read out with the others. ${gone.name} was worth ${drop} points of `
         + `this house's standing and every one of them went with him, and the family noticed who was at `
         + `the pyre and who was not.`; } },
+  /* ---- #131: THE SECOND THING A GREAT HOUSE CAN LOSE ----
+     The fire, to go with the funeral. The wing's top floor is gone whichever door is taken — the
+     loss is certain, the way the patron's death is certain — and the choice is what you spend
+     meeting it: the men's bodies against the stores. The rebuild is the same `buildUp` the wing
+     was raised by, at the same price, which is a real purchase in the era the catalogue count
+     measured as out of them. */
+  roomFire: {
+    make(d){
+      if(d.city || d.travel || d.rome) return null;
+      if(d.flags.roomBurned && d.week - d.flags.roomBurned < ROOM_FIRE_GAP) return null;
+      const k = roomAblaze(d); if(!k) return null;
+      const B = BUILDINGS[k];
+      const stores = rnd(120 + bLevels(d)*22);
+      return { id:"roomFire", title:"Fire In The Night",
+        text:`It starts in the ${B.short.toLowerCase()} an hour before dawn — a brazier, a lamp, a hand nobody will name — and by the time the shouting wakes you the upper floor of the ${B.name.toLowerCase()} is alight from one end to the other. The floor is lost; anyone can see that. What is decided in the next hour is everything stacked under it: ${stores} denarii of stores, steel and grain, and whether the men who pull it clear come out whole.`,
+        choices:[`Send the yard in for the stores`, "Stand them back and let it have the wing"],
+        data:{ k, stores } }; },
+    run(d, ev, i){
+      d.flags.roomBurned = d.week;
+      const burned = roomBurns(d, ev.data.k);
+      if(!burned) return `The fire is out by morning, and the damage is less than the shouting promised.`;
+      const B = BUILDINGS[burned.key];
+      chron(d, `The ${B.name.toLowerCase()}'s upper floor burned in the night. Rebuilding it is ${burned.rebuild} denarii of stone and carpentry, whenever the house can stand it.`, "bad");
+      if(i === 0){
+        activeG(d).forEach(g=>{ g.fatigue = clamp((g.fatigue||0) + 17, 0, 100); });
+        let hurt = null;
+        if(R() < 0.4){
+          hurt = pick(activeG(d).filter(g=>!g.injury)) || null;
+          if(hurt){ const inj = pick(INJURIES); hurt.injury = { name:inj[0], weeks:inj[1], pen:inj[2] }; }
+        }
+        d.gold -= Math.round(ev.data.stores * 0.25);
+        d.unrest = clamp(d.unrest + 2, 0, 100);
+        return `They go in under wet hides and come out black to the waist, and most of what was stacked there comes out with them — a quarter of it is ash, ${Math.round(ev.data.stores*0.25)} denarii's worth. `
+          + `${hurt ? `${hurt.name} is carried out last, ${hurt.injury.name.toLowerCase()}, and will not train for ${hurt.injury.weeks} weeks. ` : `Nobody is carried out, which by rights somebody should have been. `}`
+          + `The ${B.name.toLowerCase()}'s top floor is gone whatever they saved, and the yard will be a week remembering its legs.`;
+      }
+      d.gold -= ev.data.stores;
+      d.unrest = clamp(d.unrest + 8, 0, 100);
+      return `You hold them at the wall and let it burn, and it takes the stores with it — ${ev.data.stores} denarii of steel and grain, gone by sunrise. Nobody is hurt. The men stand in the cold watching the house that owns them come down a floor, and something in how quietly they watch is worth minding.`; } },
   bayCall: {
     make(d){ if(d.city || d.travel || d.rome || d.fame < 90) return null;
       const men = activeG(d).filter(g=>g.pfame >= 22);
@@ -25208,6 +25274,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* #131's first piece: the loss, its gate, and the constant behind it — the action, its table and
        its gate, which is the rule v3.24.0 settled on. */
     patronDies, patronOld, PATRON_HELD, PATRON_GAP, PATRON_HEIR, PATRON_AGE, recomputeFavor, patronWeek,
+    /* #131's second piece: the fire — the loss, its finder, and the two constants that gate it */
+    roomBurns, roomAblaze, bLevels, ROOM_FIRE_LEVELS, ROOM_FIRE_GAP,
     /* the five openings BY NAME — a check that invents a scenario key gets `clean` back
        without a word, which is how four fifths of one check's coverage went missing */
     SCENARIOS, SC_KEYS, BKEYS, bLevel, masterOpen, canLearnSig,

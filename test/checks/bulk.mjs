@@ -41,7 +41,7 @@ const ALLOWED = {
   simulatePair:   { max: 240, why: "and the same again over sixteen; the four engines share this and it is the shape, not neglect" },
   doFight:        { max: 360, why: "a long sequential ledger, but its purse branch alone reads eleven enclosing locals — the seams are not narrow" },
   FightModal:     { max: 400, why: "one React render; splitting it moves JSX around without making anything measurable" },
-  EVENTS:         { max: 1080, why: "a table of fifty-seven events, not a function — length here is content, and the note on how the week's one question is drawn sits between the table and pickEvent, which is where this check attributes it" },
+  EVENTS:         { max: 1110, why: "a table of fifty-eight events, not a function — length here is content, and the note on how the week's one question is drawn sits between the table and pickEvent, which is where this check attributes it. Raised 1080 -> 1110 for roomFire (#131's second loss, v3.30.0): a designed event is the sanctioned way this table grows, and the headroom is deliberately a few lines, not a hundred, so drift still says stop" },
   LESSONS:        { max: 320, why: "a table of thirty-five notes, not a function — and half its length is now the four ways a lesson can be lost, written above the entries they happened to" },
   /* ---- AND THIS ALLOWANCE USED TO BE ON THE WRONG NAME ----
      It read `takeUpTheHouse: 7000` with the reason "the App component and everything under it". That

@@ -78,7 +78,11 @@ export async function run({ p }){
     if(!R || typeof R.play !== "function")
       return { bad:["`__ROPE.play` is missing — the harness no longer carries the reference player"], lines };
 
-    const HOUSES = 8, WEEKS = 320;
+    /* 24 from v3.30.0, was 8 — the roomFire key's reshuffle caught two MORE bars fitted to a
+       trajectory (#136's shape, third instance): across seven dead-key trajectories at n=8,
+       best-rooms swung 1..4 against a bar of 3 and the census floor tripped once, two false
+       failures in seven runs with no game change. Everything asserted below is re-derived at 24. */
+    const HOUSES = 24, WEEKS = 320;
     const q = (a,f)=>{ const b=a.filter(v=>v!=null).slice().sort((x,y)=>x-y);
       return b.length ? b[Math.max(0,Math.floor(b.length*f)-1)] : null; };
 
@@ -199,19 +203,21 @@ export async function run({ p }){
         + `same seeds across builds; bar 22] — either the event pool has narrowed or the houses are `
         + `dying before the week can ask them anything`);
     if(roomsBest < 3)
-      bad.push(`the best-off house held ${roomsBest} of 5 rooms [measured all five at level 4; bar 3] — `
+      bad.push(`the best-off house held ${roomsBest} of 5 rooms [measured 4-5 of 24 across four `
+        + `trajectories at this n, after best-of-EIGHT swung 1..4 across seven and false-failed twice; bar 3] — `
         + `the reference player can no longer afford the buildings, so the late game is out of reach`);
     if(!anyRank)
       bad.push(`no house claimed a single census rung [measured rungs up to 7; bar at least one house] — `
         + `\`claimRise\` is one of the two gates on Rome and the ladder has stopped moving`);
     /* ---- #128: THE CENSUS NOW HAS A FLOOR, AND IT SITS WHERE THE ARITHMETIC PUTS IT ----
        The census was printed and never asserted, so a subsystem going dark changed a line nobody
-       compared against anything. The floor cannot be "all twenty", because two of them are coin flips
-       on eight houses: measured, `war` switched on in 1 house of 8 and `rome` in 1 of 8, so p-hat is
-       0.125 and P(0 of 8) is 0.875^8 = 34% for each — a bar requiring both would fail more than half
-       of all runs with nothing changed. The next-rarest group sits at 4 of 8, where P(0 of 8) is 0.4%.
-       So 18 of 20 is the only floor that is under both fragile systems and above every stable one, and
-       it fails by chance in roughly 0.5% of runs.
+       compared against anything. The floor cannot be "all twenty", because two of the systems are
+       rare: at the original n=8, `war` and `rome` each switched on in 1 house, p-hat 0.125, and
+       P(0 of 8) was 34% for each — a bar requiring both would fail more than half of all runs with
+       nothing changed. AT n=24 the same p-hat gives P(0 of 24) = 0.875^24 = 4.1% per fragile system
+       and about 0.2% for both at once, so the floor of 18 (two dark allowed) that was barely wide
+       enough at eight houses now carries real margin — it held on all four measured trajectories,
+       where at n=8 it tripped one of seven on a pure reshuffle.
 
        WHAT IS DELIBERATELY NOT BARRED, and why. Per-system floors are not set: eight houses is one
        observation of each system's rate, and a system seen 8 of 8 has a 95% lower bound near p=0.63,

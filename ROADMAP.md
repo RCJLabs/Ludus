@@ -1392,10 +1392,10 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.29.0 — #138 built and closed, suite green at **64/64**. v3.28.0 closed
-#137 the release before (the `named` check is the 64th). The measurement session before those
-settled the five seams and left the instruments — `catalogue.mjs`, `yard.mjs`, `named.mjs`,
-`ghost.mjs`, `scen.mjs`, now joined by `sink.mjs` — each with its first wrong version documented in
+**Shipped and verified:** v3.30.0 — #131's second loss (the fire) shipped, suite green at **65/65**
+(`blaze` is the 65th). v3.29.0 closed #138, v3.28.0 closed #137, and the measurement session before
+those settled the five seams and left the instruments — `catalogue.mjs`, `yard.mjs`, `named.mjs`,
+`ghost.mjs`, `scen.mjs`, `sink.mjs` — each with its first wrong version documented in
 `test/probes/README.md`. `main`, the item branch and the upload mirror are at this commit; the tree
 is clean.
 
@@ -1412,12 +1412,15 @@ whole log, never pipe it through `tail` — the summary line is not the interest
 
 **The board, ranked by player impact over risk:**
 
-- **#131 — OPEN, and its direction is now DECIDED BY MEASUREMENT: losses, not acquisitions.** #138's
-  falsification clause fired: even a works-buying reference player cannot finish the works tier
-  (2 houses of 72 pairs) and never begins a monument, so the late game's remaining shelf is either
-  a measured bad trade (#140) or priced past cumulative income. The contested tier (bay, primacy,
-  repName — held, taken, won back) is the model to copy, and v3.27.0's patron death is the first
-  piece already standing. The next piece of late-game content should be a LOSS.
+- **#131 — OPEN, direction decided (losses), and TWO pieces now stand: the patron (v3.27.0) and the
+  fire (v3.30.0).** Rooms have left the never-lost list by the front door — `keep.mjs` reads 14
+  floors burned and rebuilt over 72 houses where 288 house-runs had read zero, ever. What remains
+  never-lost and is candidate material for a third piece: the doctore, the doctrine, the collegium,
+  the aedile, and the feats (which are records and arguably should stay). The succession also turns
+  out to reach real play now — wife and heir "lost" 7/7 on seed LATE, both cleared by the designed
+  succession door, which earlier trajectories never lived to use. Whether a third piece is needed
+  before re-measuring the late game's read (`late.mjs`'s 97.7% perennial figure) is the next
+  decision on this item.
 - **#140 — stone does not pay: the sink's bottom shelf is a measured bad trade.** Opened by #138's
   paired runs, three seeds × 24 pairs: the works-buying house ends RICHER in 3 / 3 / 1 of 24 pairs,
   lives longer in 2 / 4 / 1, ends more famous in 3 / 6 / 3 — while building 1-5 works per surviving
@@ -2081,6 +2084,52 @@ territory where the measuring is harder than the thing measured. That is a reaso
 answer is a decision over items whose answer is another number.
 
 ## Changelog (shipped)
+
+### v3.30.0 — #131's second loss: the fire, and the third instance of #136's shape
+
+The estate table marks rooms and patrons as the two things a year-12 house holds that a week-one
+house does not. The patron went in v3.27.0; this is the other half, measured first: **288 house-runs
+with zero exceptions, no house ever lost a room.**
+
+**The fire takes the top level of one built-up wing, never the wing itself** — nothing that reads a
+room's PRESENCE (the staff rooms, the charter, the lessons) can lose its footing — and the rebuild
+is `buildUp` at the price the level always cost, which is a real purchase in the era the catalogue
+count measured as out of them. The gates are the patron piece's three lessons, applied rather than
+relearned: late by the ESTATE'S own clock (`ROOM_FIRE_LEVELS` 8 built levels — a young house cannot
+be touched), a 100-week gap so fires do not chain, and a loss rather than a wound — the floor is
+gone whichever door is taken, and the choice trades the men's bodies against the stores (send the
+yard in: every man pays fatigue, someone may be hurt, a quarter of the stores still burns; stand
+back: the stores go whole and the men watch, which unrest remembers).
+
+**Adding the key caught the third instance of #136's shape, and the diagnostic is now routine.**
+`policy` and `steel` failed; neutering the event's `make` to `return null` reproduced both failures
+identically, so the content was innocent and two more bars were fitted to one RNG trajectory. Seven
+dead-key trajectories measured it: `policy`'s best-rooms bar swung 1..4 against a bar of 3 (two
+false failures in seven runs) and its census floor tripped once; `steel`'s armoury difference swung
+-2.4 to +2.6 against a slack of 1.5. Treated the #136 way — widened and re-derived, never nudged:
+`policy` runs 24 houses now (was 8; rooms read 4-5 across four trajectories at the new n, and the
+census floor's arithmetic is recomputed for it), `steel`'s slack is 3.5 with the measured swing
+written into the failure text, and `bulk`'s EVENTS allowance moves 1080 → 1110 because a designed
+event is the sanctioned way that table grows.
+
+**Reachability, measured before belief (the fires.mjs rule):** across three seed prefixes × 24
+houses, a floor burned in 2 / 4 / 6 houses — 12 of the 16 whose estate ever reached the 8-level bar.
+The constraint is estate size, which is the gate doing what it is for; the reference player's
+under-building is the same fact #138 measured. And `keep.mjs` carries room LEVELS now (presence-only
+had made the fire invisible to the very instrument that owns the never-lost list): on seed LATE it
+reads 14 floors burned across five room keys, rebuilds visible in the gains column. **Rooms are off
+the never-lost list.**
+
+**One observation from the same run, flagged as an observation:** wife and heir read "lost 7 / 7"
+where 288 earlier house-runs read zero — both cleared by the SUCCESSION, the designed door at
+`succeed` ("she keeps her rooms and her authority and is nobody's wife now"). Successions simply
+never happened in the earlier trajectories' lifetimes; post-v3.28.0 houses live long enough to use
+the door. Designed behaviour becoming reachable, not a fault — but the never-lost list's old
+wording ("the wife, lost zero times") is stale and this is the correction.
+
+`blaze` is the 65th check. `roomBurns`, `roomAblaze`, `bLevels` and the two constants are on the
+handle, and `fires.mjs` now asks its does-it-ever-happen question of both losses and takes the seed
+prefix it always claimed to.
 
 ### v3.29.0 — #138: the sink is reachable now, and reaching it answered #131's open question
 

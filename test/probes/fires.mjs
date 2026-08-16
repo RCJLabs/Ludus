@@ -1,5 +1,11 @@
 /* DOES THE THING I JUST SHIPPED EVER HAPPEN?
 
+   From v3.30.0 this asks its question of BOTH losses — the patron (v3.27.0) and the fire
+   (`roomFire`, #131's second piece), which is gated on the ESTATE's clock (ROOM_FIRE_LEVELS built
+   levels) rather than the lanista's years, so the two tables also say which clock a reference house
+   reaches first. `d.flags.roomBurned` is the fire's stamp, for the same reason patronDied is the
+   patron's: the chronicle rolls and a flag does not.
+
    v3.27.0 added the first loss a great house can suffer — a patron held for years dies. Every figure
    in that release is about whether the loss is CORRECT: the mean moves on the replacement, the gate
    is late, the last patron is safe, the 120-week gap holds. Not one of them is about whether a player
@@ -24,34 +30,47 @@
      state every week costs the run nothing. `run` is the only mutator and only the rope calls it. */
 import { serve, open } from "../harness.mjs";
 const H = +(process.argv[2] || 24), W = +(process.argv[3] || 420);
+/* a seed prefix, which the README promised and the first version never took — REACH keeps every
+   figure ever quoted off this probe reproducible */
+const SEED = process.argv[4] || "REACH";
 
 const { server, port } = await serve({ page:"dist/test.html" });
 const { browser, p } = await open(port);
 
-const out = await p.evaluate(([H,W])=>{
+const out = await p.evaluate(([H,W,SEED])=>{
   const A = window.__LVDVS, R = window.__ROPE;
   const rows = [];
   for(let h=0; h<H; h++){
-    const d = A.newGameState("Rc"+h, "clean", `REACH-${h}`, null);
+    const d = A.newGameState("Rc"+h, "clean", `${SEED}-${h}`, null);
     const startAge = d.lanista ? d.lanista.age : null;
     let firstOpen = null, fired = null, deaths = 0, lastStamp = null, ageAt50 = null;
+    let estateAt = null, fireOpen = null, burned = null, burns = 0, lastBurn = null, levelsPeak = 0;
     for(let w=0; w<W; w++){
       if(d.over) break;
       if(ageAt50 == null && d.lanista && d.lanista.age >= A.PATRON_AGE) ageAt50 = d.week;
       if(firstOpen == null && A.EVENTS.patronGone.make(d)) firstOpen = d.week;
+      if(estateAt == null && A.bLevels(d) >= A.ROOM_FIRE_LEVELS) estateAt = d.week;
+      if(fireOpen == null && A.EVENTS.roomFire.make(d)) fireOpen = d.week;
+      levelsPeak = Math.max(levelsPeak, A.bLevels(d));
       R.lanista(d);
       const stamp = d.flags ? d.flags.patronDied : null;
       if(stamp != null && stamp !== lastStamp){
         deaths++; if(fired == null) fired = stamp; lastStamp = stamp;
       }
+      const bstamp = d.flags ? d.flags.roomBurned : null;
+      if(bstamp != null && bstamp !== lastBurn){
+        burns++; if(burned == null) burned = bstamp; lastBurn = bstamp;
+      }
     }
     rows.push({ h, startAge, endAge: d.lanista ? d.lanista.age : null, ageAt50,
       lived: d.week, over: d.over ? d.over.kind : null, firstOpen, fired, deaths,
+      estateAt, fireOpen, burned, burns, levelsPeak,
       patrons: A.patronsOf(d).length, favor: Math.round(d.favor||0), fame: Math.round(d.fame||0) });
   }
   return { rows, PATRON_AGE:A.PATRON_AGE, PATRON_HELD:A.PATRON_HELD,
-    PATRON_GAP:A.PATRON_GAP, YW:A.YEAR_WEEKS || 18 };
-}, [H, W]);
+    PATRON_GAP:A.PATRON_GAP, YW:A.YEAR_WEEKS || 18,
+    RFL:A.ROOM_FIRE_LEVELS, RFG:A.ROOM_FIRE_GAP };
+}, [H, W, SEED]);
 
 const R = out.rows;
 const med = a => { const s=a.slice().sort((x,y)=>x-y); return s.length ? s[Math.floor(s.length/2)] : "-"; };
@@ -73,6 +92,18 @@ console.log(`  a patron actually DIED          ${String(saw.length).padStart(2)}
   + (saw.length ? `   at week ${med(saw.map(r=>r.fired))} median (${rng(saw.map(r=>r.fired))})` : ""));
 console.log(`  deaths per house that saw one   ${saw.length ? `${med(saw.map(r=>r.deaths))} median (${rng(saw.map(r=>r.deaths))})` : "-"}`);
 console.log(`  weeks lived, all houses         ${med(R.map(r=>r.lived))} median (${rng(R.map(r=>r.lived))})\n`);
+
+const estate = R.filter(r=>r.estateAt != null);
+const fOpen  = R.filter(r=>r.fireOpen != null);
+const burnt  = R.filter(r=>r.burned != null);
+console.log(`  THE FIRE (roomFire) — the estate's clock, not the lanista's: ${out.RFL} built levels, gap ${out.RFG}w`);
+console.log(`  estate ever reached ${out.RFL} levels   ${String(estate.length).padStart(2)} of ${R.length}  ${pc(estate.length)}`
+  + (estate.length ? `   at week ${med(estate.map(r=>r.estateAt))} median (${rng(estate.map(r=>r.estateAt))})` : ""));
+console.log(`  the fire gate ever OPENED       ${String(fOpen.length).padStart(2)} of ${R.length}  ${pc(fOpen.length)}`
+  + (fOpen.length ? `   at week ${med(fOpen.map(r=>r.fireOpen))} median (${rng(fOpen.map(r=>r.fireOpen))})` : ""));
+console.log(`  a floor actually BURNED         ${String(burnt.length).padStart(2)} of ${R.length}  ${pc(burnt.length)}`
+  + (burnt.length ? `   at week ${med(burnt.map(r=>r.burned))} median (${rng(burnt.map(r=>r.burned))}), ${rng(burnt.map(r=>r.burns))} times` : ""));
+console.log(`  built levels at peak, all houses  median ${med(R.map(r=>r.levelsPeak))} (${rng(R.map(r=>r.levelsPeak))})\n`);
 
 console.log(`  house  start  end  lived  ending           age50   gate    died  n  favour   fame`);
 for(const r of R)

@@ -370,10 +370,17 @@ export async function run({ p }){
       if(P2.arm !== 2)
         bad.push(`the armoury arm asked for level 2 and built ${P2.arm} — \`buildUp\` needs the coin `
           + `in hand, and a probe that floors its purse inside the week loop silently gets level 1`);
-      else if(P2.n > 1000 && P0p.n > 1000 && P2.lowBands > P0p.lowBands + 1.5)
+      /* the slack was 1.5 until v3.30.0 and false-failed on a pure reshuffle: across seven dead-key
+         trajectories the with-minus-without difference read -2.3, -2.4, +2.6, +0.6, -2.4, +0.7 and
+         +1.8 — the SIGN itself flips run to run at five houses an arm, because the houses' whole
+         trajectories dominate the slot-week count. 3.5 sits above the widest measured swing; the
+         v3.13.0 regression this guards (the armoury switching wear off entirely) reads as tens of
+         points and the keen bar above catches it first either way. */
+      else if(P2.n > 1000 && P0p.n > 1000 && P2.lowBands > P0p.lowBands + 3.5)
         bad.push(`the ${P2.houses} houses WITH the armoury spent more of their time below "serviceable" `
-          + `(${P2.lowBands}%) than the ${P0p.houses} without (${P0p.lowBands}%), by more than the 1.5 `
-          + `points of slack this bar allows — \`repairWeek\` adds level*${A.MEND_RATE != null ? A.MEND_RATE : 0.18} `
+          + `(${P2.lowBands}%) than the ${P0p.houses} without (${P0p.lowBands}%), by more than the 3.5 `
+          + `points of slack this bar allows [the difference swings -2.4 to +2.6 across seven dead-key `
+          + `trajectories with no game change] — \`repairWeek\` adds level*${A.MEND_RATE != null ? A.MEND_RATE : 0.18} `
           + `a week per level and is supposed to be the thing that holds steel up. Pooled over `
           + `${P2.n} and ${P0p.n} man-slot-weeks, so this is not one unlucky house`);
     }
