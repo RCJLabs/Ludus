@@ -281,7 +281,46 @@ const MEN    = 3;
    did BECAUSE something failed is not a sample from the same distribution, and mixing the two will
    always make a flaky check look worse than it is. If a rate matters, run a fixed number of runs
    decided in advance and count all of them.  */
-const BOTH_MEN  = 5;   /* both weak together is the failure; either alone is a bad week */
+/* ---- #142: MOVED 5 -> 4 ON THE EVIDENCE THE NOTE ABOVE ASKED FOR ----
+   The v2.87.0 note identified this exact tightening and refused it, correctly: at the time it would
+   have been a constant fitted to ONE event. The tally now holds 37 runs across 24 builds with no
+   drift in the opening (mean standing 3.11 in the first half against 2.95 in the second, mean men
+   5.44 against 5.11), so pooling is defensible and the distribution can set the bar:
+
+     standing   0:1  1:3  2:8  3:12  4:8  5:5          men   2:4 3:2 4:9 5:4 6:9 7:5 8:2 10:2
+
+     bar                                fires on the 37 healthy runs
+     standing<2 AND men<5  (was)        3  = 8.1%      3.15.0(1,2) 3.20.0(1,4) 3.33.0(0,4)
+     standing<2 AND men<4  (is)         1  = 2.7%      3.15.0(1,2)
+     standing<1 AND men<4               0  = 0.0%
+
+   8.1% against a design budget of 1.6% is the thing being fixed. 4 is chosen over the 0% options
+   because a run at (1,3) SHOULD fail — that is weak on both readings at once, which is what the
+   conjunction is for — and because two of the three retired failures are now known not to be the
+   game: v3.33.0's (0,4) was proven a false failure by a cross-build signature (60 houses played on
+   v3.32.0 and v3.33.0 gave identical results house for house), and v2.68.0's was investigated for
+   two hours and found nothing. The survivor, (1,2), is left failing on purpose.
+
+   ---- AND THE SENSITIVITY WAS MEASURED, WHICH MATTERS MORE THAN THE FALSE-FAILURE RATE ----
+   A quieter bar is only an improvement if it still catches the thing the check exists for. Three
+   gutting levers, each measured headlessly over 60 houses x 26 weeks so the reading is not itself
+   a 5-house lottery:
+
+     clean                    39 of 60 standing · 128 men
+     weekly bill x3           44 · 123          <- NOT a gutting: at 26 weeks a house has 3-5 men
+     opening gold 800 -> 150  39 ·  94             and no buildings, so the bill is ~30-40d and
+     bout purses x0.3         40 · 104             tripling it is nothing against purses
+
+   **`standing` is nearly inert and `men` is the half that responds.** That is the diagnosis under
+   both symptoms: the conjunction is GATED on the dead term, so it fires when standing dips by
+   luck and would sit quiet while the economy moved. It is left as a conjunction anyway, because
+   the two absolute guards above it (`!standing`, `!men`) are the catastrophe net and this is the
+   middle ground — but nobody should mistake this check for an economy regression detector. At five
+   houses it cannot be one: the gold gutting above is a 27% fall in men that scales to roughly
+   10.7 -> 7.8 on five houses, which is inside ordinary variance. **A fixed-policy headless run over
+   60 houses is the instrument for that** — it separated all three levers cleanly, and `policy`
+   already carries a version of it. */
+const BOTH_MEN  = 4;   /* both weak together is the failure; either alone is a bad week */
 const BOTH_HOUSE = 2;
 const KEEP   = 4;    /* the yard a lanista tries to hold; below it, he goes to the block */
 /* what he will not spend below. A lanista does not think in percentages, he thinks

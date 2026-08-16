@@ -1392,7 +1392,8 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.33.0 — #141 CLOSED: the works are three tiers, not five, and the
+**Shipped and verified:** v3.34.0 — #142 CLOSED: `survive`'s bar re-derived from 37 runs (8.1% →
+2.7% false failures) and its `standing` reading measured as nearly inert. v3.33.0 — #141 CLOSED: the works are three tiers, not five, and the
 agenda's one hint at the sink now names the work this house needs and why. Suite green at **65/65**.
 v3.32.0 refuted #141 for the chapel, v3.31.0 closed #140, v3.30.0 shipped #131's second loss. v3.29.0 closed #138, v3.28.0 closed #137, and the measurement session before
 those settled the five seams and left the instruments — `catalogue.mjs`, `yard.mjs`, `named.mjs`,
@@ -1440,7 +1441,9 @@ whole log, never pipe it through `tail` — the summary line is not the interest
   question rather than a measurement — see the changelog for why that is a smaller claim than it
   looks. **Do not quote the baths as converting:** one seed read 6→1 and the other three 5→6, 6→6,
   7→2, which is exactly the vivid single-seed case this project keeps getting burned by.
-- **#142 — `survive`'s bar is set from a rate the pooled tally no longer supports.** 35 runs across
+- **#142 — CLOSED in v3.34.0**, and the calibration found something better than the bar: `survive`'s
+  `standing` reading is nearly INERT. Full write-up in the changelog.
+- **#142 as opened — `survive`'s bar is set from a rate the pooled tally no longer supports.** 35 runs across
   24 builds now read 3 failures (9%), standing min 0 / median 3 / max 5. The check's own
   false-failure table puts 9% at a true standing rate near 55-65%; its bar was derived from 70%.
   #127's rule says re-derive from the distribution rather than nudge — and the same rule is why it
@@ -2100,6 +2103,56 @@ territory where the measuring is harder than the thing measured. That is a reaso
 answer is a decision over items whose answer is another number.
 
 ## Changelog (shipped)
+
+### v3.34.0 — #142: the bar moves on evidence, and the calibration found the better fault
+
+`survive` failed v3.33.0's release run at (0,4) and the failure was proven false by a cross-build
+signature. That opened #142 on its false-failure RATE. The rate turned out to be the smaller half.
+
+**The bar moved, and the v2.87.0 note is what licensed it.** That note identified this exact
+tightening years ago and refused it — *"it would be a constant fitted to ONE event... a bar is moved
+when the evidence says where to put it"*. The tally now holds **37 runs across 24 builds with no
+drift** (mean standing 3.11 in the first half against 2.95 in the second; men 5.44 against 5.11), so
+pooling is defensible and the distribution sets it:
+
+    bar                                fires on the 37 healthy runs
+    standing<2 AND men<5   (was)       3  = 8.1%    3.15.0(1,2) 3.20.0(1,4) 3.33.0(0,4)
+    standing<2 AND men<4   (is)        1  = 2.7%    3.15.0(1,2)
+    standing<1 AND men<4               0  = 0.0%
+
+4 is chosen over the 0% options because a run at **(1,3) should still fail** — weak on both readings
+at once is what the conjunction is for — and because two of the three retired failures are known not
+to be the game. (1,2) is left failing on purpose. The design budget was 1.6%; 2.7% is close and 8.1%
+was not.
+
+**And the sensitivity was measured, which matters more.** A quieter bar is only an improvement if it
+still catches what the check exists for, so three gutting levers were run headlessly over 60 houses
+each — big enough that the reading is not itself a five-house lottery:
+
+    clean                     39 of 60 standing · 128 men
+    weekly bill x3            44 · 123      <- NOT a gutting, and the most instructive lever
+    opening gold 800 -> 150   39 ·  94
+    bout purses x0.3          40 · 104
+
+**`standing` is nearly inert; `men` is the half that responds** — and the conjunction is GATED on the
+dead term. That is one cause under both symptoms: it fires when standing dips by luck, and would sit
+quiet while the economy moved. It stays a conjunction (the two absolute guards above it are the
+catastrophe net and this is the middle ground), but the head now says plainly that **at five houses
+this cannot be an economy-regression detector**: the gold gutting is a 27% fall in men, which scales
+to about 10.7 → 7.8 on five houses and is inside ordinary variance.
+
+**The lever that taught the most was the one that did nothing.** Tripling the weekly bill was chosen
+as the gutting and is not one — at 26 weeks a house has three to five men and no buildings, so its
+bill is 30-40d and tripling it is nothing against purses. Had that been read as "the check missed a
+3x cost regression", this release would have shipped a confident wrong finding about `survive`. Sixty
+headless houses said otherwise. **Suspect the lever before the instrument.**
+
+`open.mjs` is graduated into `test/probes/` as the instrument for the question `survive` cannot
+answer — the project's own long-standing note asked for it (*"ask 'has it moved' with a fixed policy
+across builds, not with the check"*), and its real power is that an unchanged opening gives an
+IDENTICAL signature rather than a close one, which is how v3.33.0's (0,4) was settled. Two tally
+entries written by the deliberately-broken builds were removed: they carried v3.33.0's label and not
+its code, which is precisely the dirty data a tally is worthless with.
 
 ### v3.33.0 — #141 closed: three tiers, not five, and the hint now names which one you need
 

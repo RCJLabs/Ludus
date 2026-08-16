@@ -27,6 +27,7 @@ Run them straight:
     node test/probes/ghost.mjs 12 300 SEED # who clears d.nemesis, caught by a setter trap — #137
     node test/probes/scen.mjs 24 420 SEED  # the five foundings compared; run on >=3 seeds
     node test/probes/sink.mjs 24 420 SEED  # #138: does a works-buying rope finish the tier? paired
+    node test/probes/open.mjs                     # #142: the opening on a fixed policy — diff the SIG across builds
     node test/probes/perk.mjs 16 420 SEED         # #140: what each work is worth GRANTED FREE
     node test/probes/perk.mjs 16 420 SEED hot     # #141: and for a house that neglects unrest
     node test/probes/catalogue.mjs 72 420 SEED on   # the census with the works step switched on
@@ -126,6 +127,17 @@ coin so five identical rows cannot be read past. At 24 houses a seed, median lif
 between seeds, so nothing is quoted unless the SIGN holds on all three: champion opening gentlest and
 inherited harshest both did; every other difference drowned. The tags carry the verdict: "Hard" is
 measured hard, and "Fragile" is measured the safest opening in the game.
+
+**`open.mjs`** — the opening on a fixed policy over 60 headless houses, and the answer to "has it
+moved". Its point is that when nothing relevant changes the SIGNATURE is identical rather than merely
+close, which is a stronger statement than "within noise": v3.33.0's `survive` failure was settled by
+running this on v3.32.0 and v3.33.0 and getting the same week, men, gold and ending house for house.
+It also measured the thing #142 turned on — `survive`'s `standing` reading is nearly inert (39 of 60
+clean, 44 with the weekly bill tripled, 39 with opening gold cut to 150, 40 with purses at 30%) while
+`men` responds (128 / 123 / 94 / 104). **The lever that taught the most was the one that did nothing:**
+tripling the weekly bill was chosen as a "gutting" and is not one, because at 26 weeks a house has
+3-5 men and no buildings and its bill is ~30-40d. A null result from a lever that does not move the
+thing you are testing says nothing about the check — suspect the lever before the instrument.
 
 **`perk.mjs`** — what a work is worth when it costs NOTHING, which is how #140 was settled without a
 policy arm, and then how #141 was REFUTED for the chapel by its `hot` arm. Two lessons live in it.
