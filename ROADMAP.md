@@ -1393,29 +1393,91 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 ## Where the work stands — read this first
 
 **Shipped and verified:** v3.27.0. Suite green, **63/63**. `main`, the item branch and the upload mirror
-are all at that commit; the tree is clean.
+are all at that commit; the tree is clean. **Nothing is half-built and no item is mid-flight** — the
+last four commits are measurement and documentation only, so a new session starts on a clean board.
 
-**#134 closed** in v3.24.0, refuted on its own clause once the rope could reply to the arch-rival.
-**#135 closed and answered** — the season death rate was the rope's bout policy, and a season buys a
-trait rather than stats. **#136 CLOSED in v3.27.0, and #131's first piece shipped on top of it** — a patron a great house has
-held for years can now die. **#131 stays open**: it is one loss against a table full of permanent
-acquisitions, and whether it reads as a loss or as a nag is a question for `late.mjs` after a release.
-The thesis is accepted, but **the second piece was refuted before it was written** — staff DO leave a
-great house, and the estate table had been reading presence at a snapshot. The first replacement for it
-("the losses are unpriced") **was then refuted too, by its own falsification clause**: over four runs of
-72 houses a replacement costs a stable 1.1 weeks of the house's own bill, which is not free. What
-survives is not about price. **And the reversibility thesis that replaced it was refuted in turn** by
-`late.mjs`, in the opposite direction: late-game estate losses are the LEAST reversible in the game
-(62-66% against 80-100% early), and a third of everything that happens to a late estate is already a
-loss. What is actually true, stable over four seeds × 72 houses: **the late game is not at risk of
-nothing, it is OUT OF THINGS TO BUY** — gains collapse ~88% while losses rise fifteenfold. And **a room
-still cannot be lost** is now measured rather than assumed: every room, every feat, the doctore, the
-doctrine, the collegium, the aedile and the wife were lost ZERO times in 288 house-runs.
-**#132, #133, #134, #135 and #136 all closed this session**, three of them refuted on their own
-falsification clauses: #132 once the instrument was fixed, #133 because a tour pays and the item had
-been opened on lifespans, #134 on its own clause once the rope could answer the arch-rival. The probes are kept in `test/probes/` with their faults
-commented at the lines that carry them; they are not part of the suite (`test/run.mjs` discovers
-`test/checks/*.mjs` only).
+### Before you run anything
+
+    npm install --no-save playwright@1.56.1     # see "the environment" at the end of this section
+
+`node build.js` must be run from the repo root — a `cd` earlier in a compound command silently kills it.
+`node build.js --test` writes `dist/test.html`, which every probe and every browser check loads.
+`npm test` is the fast tier; `npm run test:all` is all 63 and takes about thirteen minutes. Capture the
+whole log, never pipe it through `tail` — the summary line is not the interesting part.
+
+### The board
+
+**Six items closed this session** — #132, #133, #134, #135, #136 and the whole of #131's second half.
+Four of the six were REFUTED rather than built, three of them on their own falsification clauses. That
+ratio is the point of the method and not a sign it is going badly.
+
+**#131 is the only item still open, and it has been turned inside out.** It was opened as *"the late game
+has no stakes"* and three separate answers to that were each refuted by the next measurement — unrest,
+then price, then reversibility. What replaced them is stable over four seeds × 72 houses:
+
+> The late game is not at risk of nothing. It is **OUT OF THINGS TO BUY.** Estate gains collapse about
+> 88% between the early and late eras (~1,000 against ~120) while losses rise fifteenfold, and a third of
+> everything that happens to a late estate is already a loss.
+
+**The one open question that decides what to build:** the acquirable catalogue is finite and appears to
+be exhausted by about week 180. Count it — how many acquirable keys exist, when the median house holds
+them all, what a late house has left on its list. That is a number, not a hunch, and it decides whether
+#131's answer is *add late acquisitions* or *make the permanent tier losable*. **`keep.mjs` already has
+the inventory to do it.**
+
+And the hardest fact to argue with, verified on four seeds, **288 house-runs with no exceptions**: every
+room, all ~15 feats, the doctore, the doctrine, the collegium, the aedile and the wife were gained
+hundreds of times between them and lost **zero** times.
+
+### Seams for the next items — OBSERVATIONS, not findings
+
+Each of these fell out of this session's probes while they were pointed at something else. **None has
+been measured as its own question and none should be quoted as a finding.** They are listed because a
+loose end with a number attached is a much better starting point than a blank page, and because every
+one of them is cheap to settle with an instrument that already exists.
+
+- **The yard shrinks after the early game and nobody has asked why.** `keep.mjs` counts men in and out:
+  early is net **+116**, mid **-63**, late **-65** across 72 houses. A house that is richer every year is
+  net-losing men every year. Is that the roster cap, the market drying up, or deaths outrunning buying?
+  The instrument is already there — it just needs the question asked of it.
+- **A nemesis arrives and leaves about once every 16 house-weeks** — 832 arrivals over 13,678 weeks, by
+  far the most churning thing in the game. It was excluded from `keep.mjs` as an EPISODE, correctly, but
+  nothing has ever asked whether that rate is *right*. A named enemy that turns over four times a year is
+  arguably not a named enemy.
+- **The contested tier is the one thing that already behaves the way #131 wants.** The bay, the primacy
+  and the name Capua settles on are held, taken by rivals, and won back — `repName` lost 66 / gained 114,
+  `bay` 42 / 83, `primacy` 18 / 18. That is a working loss-and-recovery loop nobody designed as one, and
+  it is the obvious model to copy if #131's answer turns out to be *make the permanent tier losable*.
+- **Half of everything a great house holds arrived in the first 90 weeks and never moved again.** The
+  never-lost list is also a never-*touched* list after acquisition: rooms, doctrine, doctore, collegium,
+  aedile, wife. Whether that is a problem or simply what a settled estate is, is a design question rather
+  than a measurement — but it is the design question #131 has been circling for three sessions.
+- **The five founding scenarios have never been compared on anything.** Every long-run figure in this
+  document is measured on `clean`. Whether `even hand`, `your uncle`, `one good man` and `old guard`
+  produce meaningfully different houses is unmeasured, and every probe here takes the scenario as an
+  argument already.
+
+### The method note, which cost the most to learn and is the most reusable
+
+**Three theses in three turns, each refuted by the next measurement.** None survived contact. What kept
+working was not the thinking — it was **printing the raw material every single time**. Three confident
+wrong answers were caught by three raw tables: the `nemesis` row (episodes counted as possessions), the
+censoring window (a rate that moved with the length of the run), and the `200-420d` fee formula (a price
+read off one vivid house at the p99 rather than the median). **Not one of the three was visible from the
+summary statistic.** Prefer a probe that prints its own denominator over one that prints a percentage,
+and run anything cheap on three or four seeds before quoting it.
+
+The probes are kept in `test/probes/` with their faults commented at the lines that carry them; they are
+not part of the suite (`test/run.mjs` discovers `test/checks/*.mjs` only). **Read `test/probes/README.md`
+before writing a new one** — most of the instruments a new item needs already exist, and each entry says
+what its first version got wrong.
+
+### The environment, which will bite a fresh session
+
+The container ships Playwright 1.62.1, which wants a Chromium build (1234) that is not in `/opt`; what is
+there is 1194. Every browser check and every probe fails on a version error until you run
+`npm install --no-save playwright@1.56.1`. It is deliberately NOT committed — `package.json` should keep
+its real floor — so **this recurs in every fresh container and is the first thing to do.**
 
 **The reference player could not come home, and it had re-based every long-run figure since v2.93.0.** The rope had
 no travel step, and `comeHome` has exactly one caller in the game — the UI button at line 18653, with no
@@ -1486,7 +1548,7 @@ file ever removed a patron or a room**, the two things the estate table marks as
 12. It was blocked by #136 for one release — four checks were fitted to a single RNG trajectory and any
 new `EVENTS` key reshuffled every draw after it — and went in unchanged once those were widened.
 
-#### And then: does it ever HAPPEN? — `test/probes/reach.mjs`
+#### And then: does it ever HAPPEN? — `test/probes/fires.mjs`
 
 Every figure in the v3.27.0 release is about whether the loss is CORRECT. Not one is about whether a
 player ever sees it — `patron` hand-builds the state, setting `lanista.age` to `PATRON_AGE + 5`, so it
@@ -1588,14 +1650,14 @@ reads as trivial to a player — which `late.mjs` can ask once there is more tha
 EXCEPT the poach door, which swings 24% to 41% and is recorded here only so nobody quotes it later.
 
 *Instrument, verified rather than assumed:* `repStyle`, `warmth` and `houseFolk` are pure reads, so
-observing every week does not move the run — and re-running this probe on `reach.mjs`'s seeds reproduced
+observing every week does not move the run — and re-running this probe on `fires.mjs`'s seeds reproduced
 its 24 lifespans EXACTLY (156, 26, 323, 74, 266, …). An earlier draft read a median lifespan of ~120
 against `reach`'s 196 and the difference was entirely the seed prefix, which is why that is an argument
 now. Two faults in the first draft were mine: `great` was defined as late AND SOLVENT and the table then
 reported the debt doors open on 0.00% of great-house weeks, which is the definition read back rather
 than a finding; and losses were nearly counted off the chronicle, which rolls.
 
-#### AND THE REVERSIBILITY THESIS WAS WRONG TOO, IN THE OPPOSITE DIRECTION — `test/probes/late.mjs`
+#### AND THE REVERSIBILITY THESIS WAS WRONG TOO, IN THE OPPOSITE DIRECTION — `test/probes/keep.mjs`
 
 Third statement of this item, third refutation, and this one is the useful one. The thesis was *"the
 late game's losses fail because they are REVERSIBLE."* `estate.mjs` reads snapshots, which is the

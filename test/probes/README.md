@@ -18,6 +18,14 @@ Run them straight:
     node test/probes/season.mjs 24 40 bench # seeds, tail, and `bench` to keep the trainee off the card
     node test/probes/coast.mjs 24 320      # #133; controlled pairs, stay-at-home vs tour-and-return
     node test/probes/scroll.mjs 16         # week to measure the screens at
+    node test/probes/keep.mjs 72 420 SEED  # what a house HOLDS — gains against losses, by era
+    node test/probes/walk.mjs 72 420 180 SEED   # can a great house lose the people in it
+    node test/probes/fires.mjs 24 420      # does v3.27.0's patron death ever fire in real play
+
+`keep`, `walk` and `fires` run in about 25 seconds at 72 houses, which is cheap enough that **they take
+a seed prefix and should always be run on three or four of them.** Two findings died this session for
+being read off 24 houses on one seed, and one of them was a MAXIMUM. If a figure moves between seeds it
+is not a finding, and the probe should print it as unstable rather than let it be quoted.
 
 `late`, `primacy` and `road` take a third argument, `on` or `off`, which is the reference player's
 `road` option: `on` tours and comes home, `off` never leaves Capua. Everything measured before
@@ -34,6 +42,38 @@ Its first version reported the opposite (29% late-only) because `agKey` normalis
 so every per-man line counted as fresh content each time the yard turned over. It now strips names
 gathered off the house's own people. **Do not pattern-match capitals for this** — that eats Rome, Capua
 and Pompeii.
+
+**`keep.mjs`** — the same question as `late.mjs` from the other side: not what a great house is SHOWN
+but what it HOLDS. Diffs the set of held things week against week, so every gain and every loss is
+counted with its era and whether that exact thing came back — the instrument `estate.mjs` could not be,
+since a snapshot cannot tell "never lost" from "lost and refilled before anybody looked". **It was
+written under the name `late.mjs` and overwrote that probe**, which had to be recovered from git; the two
+ask different questions and both are needed. Its own first draft read the late game at 47% losses, and
+the raw table gave it away: **832 of 1,332 losses were `nemesis`**, with `rome` at 130 and `saga` at 100.
+An arch-rival who comes and goes is not a possession, `d.rome` is a TRIP, a saga is a story — so the
+inventory splits ESTATE / CONTESTED / EPISODE now. Second fault, same probe: "how much of what was lost
+came back" falls with the era for a reason that is not the game, since a thing lost in week 400 of a
+house ending at 420 has twenty weeks to return. It carries the weeks each house had left and reports the
+raw and the fair rate side by side — late reads 49% raw and 62% fair.
+
+**`walk.mjs`** — whether a great house can lose the PEOPLE in it, and the answer is that it already
+could. Refuted its own item before a week was played, by reading the file first: there is no unrest-90
+gate anywhere, the medicus door is OR'd with a policy the player chooses, and the armourer door is pure
+insolvency. Counts each door's OPEN WEEKS before counting fires, because a door that never opens and a
+door that opens constantly while the roll never lands are different findings that a fire count cannot
+separate. Also measures what replacement COSTS without needing a rare event: `makeStaff` charges
+`rnd(skill*5+40)` over `ri(32,56)`/`ri(48,76)` and that formula has no term for the house's wealth, so
+the ratio reads on every late-solvent week. Two faults in its first draft were mine — `great` was defined
+as late AND SOLVENT and the table then reported the debt doors open on 0.00% of great-house weeks, which
+is the definition read back; and losses were nearly counted off the chronicle, which rolls.
+
+**`fires.mjs`** — does the content v3.27.0 shipped ever actually fire? `patron` hand-builds its state,
+setting `lanista.age` to `PATRON_AGE + 5`, so it would pass identically if the gate were unreachable in
+play — content proved correct on a hand-built save and never observed on a played one is this project's
+standing hazard in one sentence. 9 of the 10 houses that reach the gate see a patron die; the 38% is the
+survival rate, not the gate. Counts firings off `d.flags.patronDied` rather than the chronicle, which
+rolls at `LOG_ROLL` and would undercount by an amount that GROWS WITH THE LENGTH OF THE RUN. **Run this
+against any new late-game content before believing a check that passes on a hand-built save.**
 
 **`silent.mjs`** — for each late system, a predicate for LIVE taken off the game's own functions, then
 whether the agenda named it and whether a `SECT_MARK` fired. This is #132's survey. Five of its predicates

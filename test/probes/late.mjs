@@ -1,194 +1,176 @@
-/* IS THE LATE GAME ONE-DIRECTIONAL? — the falsification clause on the reversibility thesis
+/* DOES THE LATE GAME HAVE ANYTHING ON THE LIST THAT IS ITS OWN?
 
-   #131 measured that 97.7% of what a year-12 house is shown was available in week one, and the estate
-   table said why: a great house has ACQUIRED EVERYTHING AND IS AT RISK OF NOTHING. Two attempts to name
-   the missing thing were then refuted by measurement — staff already leave (`walk.mjs`), and the
-   replacement is not free (1.1 weeks of the house's own bill, stable over four seeds). What survived
-   both refutations is a claim about DIRECTION rather than about price:
+   Three numbers are already on file, measured through two reference players over 8 houses of 400 weeks:
+   urgent items fall from about 0.95 a week in year 1-3 to about 0.62 in year 12+; new items from 4.85 to
+   2.7; distinct labels a player ever sees from ~260 to ~150. And the count of AVAILABLE items GROWS over
+   the same span, 7.5 to 12.2. So the late list is not short. It is long and stale.
 
-     the late game's losses do not fail because they are cheap. They fail because they are REVERSIBLE.
+   That leaves a question the three numbers do not answer, and it is the one that decides what to build:
+   is the late list long because late systems are adding to it, or because EARLY items never stop firing?
 
-   That is a testable sentence and this is the test. `estate.mjs` reads SNAPSHOTS, which is exactly the
-   instrument that could not tell "never lost" from "lost and refilled before anybody looked" — the
-   fault that produced the last two dead items. So this reads TRANSITIONS instead: every week, the set
-   of things the house holds is diffed against last week's, and every gain and every loss is recorded
-   with the era it happened in and whether that exact thing ever came back.
+   So every label is stamped with the eras it is ever seen in, and sorted into:
+     EARLY-ONLY   never seen after year 7
+     PERENNIAL    seen in the first era and still seen in the last
+     LATE-ONLY    never seen before year 7 — the late game's own content
+   and each is weighted by how often it is actually SHOWN (urgency >= 3 or age <= AG_FRESH, which is
+   agendaTop's own rule) rather than merely available, because a player reads the shown block.
 
-   THE THESIS PREDICTS, and each of these can fail:
-     · late weeks carry gains and almost no losses
-     · the few late losses are REGAINED, at a much higher rate than early ones
-     · the one thing that is permanently lost is men, which are replaceable by purchase — so the
-       inventory keeps men apart from the estate rather than letting them drown the signal
+   THE FALSIFIABLE FORM. If the late game has content of its own, LATE-ONLY labels should be a decent
+   share of what a year-12 house is shown, and some of them should be urgent. If instead year 12 is
+   reading the same perennial furniture as year 1 — "There are men on the block", "#d sitting in the
+   box" — then the quietness is not a shortage of items at all; it is that nothing NEW is ever asked of a
+   great house, and the fix is content rather than tuning.
 
-   ---- INSTRUMENT, GIVEN THIS SESSION'S RECORD ----
-   · n is 72 houses and the run takes seconds, so it is run on FOUR SEEDS and anything that moves
-     between them is printed as unstable rather than quoted. Two findings died this session for being
-     read off 24 houses, and one of them was a MAXIMUM.
-   · a room upgrade must not read as a loss. Rooms are keyed on presence alone and levels are counted
-     separately, because `room:bath@1 -> room:bath@2` would otherwise book a loss and a gain per level.
-   · the raw transition list is printed, not just the counts. The regex-and-trust habit is what this
-     project's standing hazard is made of.
+   AND THE PROBE FAULT TO AVOID, which has bitten every long-run measurement in this project: the
+   reference lanista must actually PLAY. A house that presses End Week and nothing else is bankrupt by
+   week 55 and never reaches year 12 at all, so the late eras would be measured on a handful of survivors
+   selected for having done nothing. R.lanista ends the week itself — no endWeek after it.
 
-   ---- AND PRINTING IT CAUGHT THE FIRST DRAFT, WHICH ANSWERED THE WRONG QUESTION ----
-   The first inventory took `estate.mjs`'s twenty booleans as one flat list of "things the house holds"
-   and reported that late weeks are 47% losses — a result that would have refuted the thesis outright.
-   The raw table said otherwise: **832 of the 1,332 losses were `nemesis`**, with `rome` at 130 and
-   `saga` at 100 behind it. A nemesis is an arch-rival who comes and goes, `d.rome` is a TRIP, and a
-   saga is a running story. None of them is a possession, and together they were three quarters of the
-   signal. The inventory is split three ways now:
-
-     ESTATE     rooms, works, feats, staff, household, patrons, doctrine, wife, heir, collegium, aedile
-     CONTESTED  the bay, the primacy, the name Capua settles on — held, and takeable BY A RIVAL
-     EPISODE    nemesis, Rome, saga, court, election, war, loan, vow — begun and finished, never "lost"
-
-   Only the first two can answer #131. The third is printed so that the next reader can see it was
-   excluded on purpose rather than quietly dropped. */
+   AND THE ONE THIS PROBE ACTUALLY MADE. The first run reported 171 LATE-ONLY labels carrying 29% of what
+   a year-12 house reads, which would have meant the late game had plenty of its own content and the
+   problem was only its urgency. Reading the list gave it away: "Dromas has earned his mastery",
+   "Boudica could be taught a move of his own", "Sostratos is not buried properly". Those are LATE-ONLY
+   because DROMAS did not exist in year one — the item is perennial and the man is new. agKey normalises
+   digits to # and stops there, so every per-man line is a fresh label each time the yard turns over,
+   which also inflates the "distinct labels a player sees" figure that the quietness item rests on.
+   So the key here strips NAMES too, gathered from the house's own people rather than guessed at. */
 import { serve, open } from "../harness.mjs";
-const H = +(process.argv[2] || 72), W = +(process.argv[3] || 420);
-const SEED = process.argv[4] || "LATE";
-const EARLY = 90, LATE = 180;
-/* a loss only proves irreversibility if the house lived long enough to have undone it */
-const FAIR = +(process.argv[5] || 40);
-
+const H = +(process.argv[2] || 8), W = +(process.argv[3] || 420);
 const { server, port } = await serve({ page:"dist/test.html" });
 const { browser, p } = await open(port);
-
-const out = await p.evaluate(([H,W,SEED,EARLY,LATE])=>{
+/* ---- AND THE HOUSE WAS NOT IN CAPUA WHILE THIS WAS MEASURED ----
+   The rope had no travel step and `comeHome` has one caller in the game, a UI button, so a house
+   that answered `bayCall` emigrated for good — 54% of all measured house-weeks were spent in a
+   coastal town (`road.mjs`). Every era census this file ever printed was taken partly from Puteoli.
+   `road` now comes home when the welcome wears; `road:false` never leaves. */
+const ARM = process.argv[4] || "on";     /* on | off */
+const out = await p.evaluate(([H,W,ARM])=>{
+  const OPTS = ARM === "off" ? { road:false } : {};
   const A = window.__LVDVS, R = window.__ROPE;
-  const era = w => w < EARLY ? "early" : w < LATE ? "mid" : "late";
-  const ERAS = ["early","mid","late"];
-  const CATS = ["estate","contested","episode"];
-  /* an episode is begun and finished; a holding is acquired and kept. Conflating them made the first
-     draft of this probe read 47% losses in the late game, three quarters of which were one arch-rival
-     arriving and leaving. */
-  const EPISODE = new Set(["nemesis","rome","saga","court","election","war","loan","vow"]);
-  const CONTESTED = new Set(["bay","primacy","repName"]);
-  const catOf = k => EPISODE.has(k) ? "episode" : CONTESTED.has(k) ? "contested" : "estate";
-  const zero = () => { const o={}; for(const c of CATS) o[c] = { early:0, mid:0, late:0 }; return o; };
-  const gains = zero(), losses = zero(), regained = zero();
-  const weeks = { early:0, mid:0, late:0 };
-  const lostFor = {}; for(const c of CATS) lostFor[c] = { early:[], mid:[], late:[] };
-  const menLost = { early:0, mid:0, late:0 }, menGot = { early:0, mid:0, late:0 };
-  const byKey = {};                       /* what actually moves, so the counter can be read */
-  const sample = [];
-
-  /* the estate: what the house HOLDS, men excluded. Presence only — a level is not a key. */
-  const held = d => {
-    const s = new Set();
-    const on = (k,v) => { if(v) s.add(k); };
-    on("doctore", d.doctore); on("medicus", d.medicus); on("armourer", d.armourer);
-    on("doctrine", d.doctrine); on("blessing", d.blessing); on("vow", d.vow);
-    on("nemesis", d.nemesis); on("collegium", d.collegium); on("war", d.war);
-    on("heir", d.heir); on("wife", (d.domus||{}).wife); on("rome", d.rome);
-    on("loan", d.loan); on("aedile", d.aedile); on("election", d.election);
-    on("court", d.court); on("saga", d.saga); on("repName", d.repName);
-    on("primacy", A.primusMine && A.primusMine(d)); on("bay", (d.bay||{}).holder);
-    for(const k of Object.keys(d.buildings||{})) s.add("room:"+k);
-    for(const k of Object.keys(d.works||{})) s.add("work:"+k);
-    for(const k of Object.keys(d.household||{})) s.add("hh:"+k);
-    for(const x of (A.patronsOf(d)||[])) s.add("patron:"+x.id);
-    for(const k of Object.keys(d.feats||{})) s.add("feat:"+k);
-    return s;
+  const ERAS = [[1,52,"year 1-3"],[53,120,"year 3-7"],[121,220,"year 7-12"],[221,9999,"year 12+"]];
+  const era = w => (ERAS.find(e=>w>=e[0]&&w<=e[1])||ERAS[3])[2];
+  const eraNames = ERAS.map(e=>e[2]);
+  /* per label: which eras it was AVAILABLE in, which it was SHOWN in, and its best urgency */
+  const lab = new Map();
+  /* every name this house has ever known, so a per-man line collapses onto its template. Taken off the
+     state rather than pattern-matched for capitals, which would eat Rome, Capua and Pompeii. */
+  const known = new Set();
+  const learn = d => {
+    for(const g of (d.gladiators||[])) if(g && g.name) known.add(g.name);
+    for(const g of (d.market||[])) if(g && g.name) known.add(g.name);
+    for(const g of (d.fallen||[])) if(g && g.name) known.add(g.name);
+    for(const h of (d.rivals||[])) if(h && h.name) known.add(h.name);
+    for(const s of (d.staff||[])) if(s && s.name) known.add(s.name);
+    for(const s of Object.values(d.patrons||{})) if(s && s.name) known.add(s.name);
+    if(d.doctore && d.doctore.name) known.add(d.doctore.name);
+    if(d.lanista && d.lanista.name) known.add(d.lanista.name);
+    if(d.heir && d.heir.name) known.add(d.heir.name);
   };
-  const menOf = d => new Set((d.gladiators||[]).filter(g=>g.status==="active").map(g=>g.id));
-
+  const KEY = label => {
+    let t = String(label||"");
+    for(const n of known) if(n && t.includes(n)) t = t.split(n).join("~");
+    return A.agKey(t);
+  };
+  const shownBy = {}, urgentBy = {}, weeks = {};
+  for(const n of eraNames){ shownBy[n] = 0; urgentBy[n] = 0; weeks[n] = 0; }
+  let died = 0, reached = 0;
   for(let h=0; h<H; h++){
-    const d = A.newGameState("Lt"+h, "clean", `${SEED}-${h}`, null);
-    let prev = held(d), prevMen = menOf(d);
-    const openLoss = new Map();           /* key -> week it went, still not back */
+    const d = A.newGameState("Lt"+h, "clean", `LATE-${h}`, null);
+    let far = false;
     for(let w=0; w<W; w++){
-      if(d.over) break;
-      R.lanista(d);
-      if(d.over) break;
-      const e = era(d.week); weeks[e]++;
-      const now = held(d), men = menOf(d);
-
-      for(const k of now) if(!prev.has(k)){
-        const c = catOf(k);
-        gains[c][e]++; byKey[k] = byKey[k] || {g:0,l:0,c}; byKey[k].g++;
-        if(openLoss.has(k)){                       /* it came back */
-          const o = openLoss.get(k); openLoss.delete(k);
-          regained[c][o.era]++; lostFor[c][o.era].push({ back: d.week - o.w, room: d.week - o.w });
-          if(sample.length < 600) sample.push({h, key:k, lost:o.w, back:d.week, era:o.era, c});
+      if(d.over){ died++; break; }
+      const E = era(d.week);
+      weeks[E]++; if(E === eraNames[eraNames.length-1]) far = true;
+      learn(d);
+      const rank = A.agendaRanked(d);
+      const top = A.agendaTop(rank);
+      const topKeys = new Set(top.map(a=>KEY(a.label)));
+      for(const a of rank){
+        const k = KEY(a.label);
+        let r = lab.get(k);
+        if(!r){ r = { k, avail:{}, shown:{}, urg:0, urgSum:0, urgN:0, eraUrg:{} }; lab.set(k, r); }
+        r.avail[E] = (r.avail[E]||0) + 1;
+        r.urg = Math.max(r.urg, a.urgency||0);
+        r.eraUrg[E] = Math.max(r.eraUrg[E]||0, a.urgency||0);
+        r.urgSum += (a.urgency||0); r.urgN++;
+        if(topKeys.has(k)){
+          r.shown[E] = (r.shown[E]||0) + 1;
+          shownBy[E]++;
+          if((a.urgency||0) >= 3) urgentBy[E]++;
         }
       }
-      for(const k of prev) if(!now.has(k)){
-        const c = catOf(k);
-        losses[c][e]++; byKey[k] = byKey[k] || {g:0,l:0,c}; byKey[k].l++;
-        openLoss.set(k, { w:d.week, era:e, c });
-      }
-      for(const g of men) if(!prevMen.has(g)) menGot[e]++;
-      for(const g of prevMen) if(!men.has(g)) menLost[e]++;
-      prev = now; prevMen = men;
+      R.lanista(d, OPTS);   /* ends the week itself */
     }
-    /* ---- CENSORING, WHICH WOULD HAVE FAKED THE HEADLINE ----
-       "How much of what was lost came back" falls with the era for a reason that has nothing to do
-       with the game: a thing lost in week 400 of a house that ends at 420 has twenty weeks to return,
-       and one lost in week 40 has hundreds. The raw rate therefore MOVES WITH THE LENGTH OF THE RUN
-       while the code producing it does not — the exact denominator fault the brief names. Every loss
-       carries the weeks its house had left, so the report can restrict to losses that were given a
-       fair chance and quote that instead. */
-    for(const [,o] of openLoss) lostFor[o.c][o.era].push({ back:null, room: d.week - o.w });
+    if(far) reached++;
   }
-  return { gains, losses, weeks, regained, lostFor, menLost, menGot, byKey, sample, ERAS, CATS };
-}, [H, W, SEED, EARLY, LATE]);
-
-const ERAS = out.ERAS;
-const per = (n, w) => w ? (n/w*1000).toFixed(1) : "-";
-const pcs = (n, dn) => dn ? `${Math.round(n/dn*100)}%` : "-";
-const medOf = a => { const v=(a||[]).filter(x=>x!=null).sort((x,y)=>x-y); return v.length ? v[Math.floor(v.length/2)] : "-"; };
-
-console.log(`\n${H} houses x ${W}w · seed "${SEED}" · early <${EARLY}w · mid <${LATE}w · late >=${LATE}w`);
-console.log(`estate holdings only — men are counted apart, since they are the one thing always lost\n`);
-for(const c of out.CATS){
-  console.log(`  ${c.toUpperCase()}`);
-  console.log(`    era     weeks   gains   losses   losses/1k wks   losses as a share of changes`);
-  for(const e of ERAS){
-    const tot = out.gains[c][e] + out.losses[c][e];
-    console.log(`    ${e.padEnd(6)} ${String(out.weeks[e]).padStart(6)}  ${String(out.gains[c][e]).padStart(6)}`
-      + `  ${String(out.losses[c][e]).padStart(7)}   ${String(per(out.losses[c][e], out.weeks[e])).padStart(13)}`
-      + `   ${pcs(out.losses[c][e], tot).padStart(6)}`);
-  }
-  console.log(`    reversible? — RAW, then restricted to losses whose house had >=${FAIR}w left to undo them`);
-  for(const e of ERAS){
-    const all = out.lostFor[c][e];
-    if(!all.length){ console.log(`      ${e.padEnd(6)} nothing lost`); continue; }
-    const backs = all.filter(x=>x.back != null);
-    /* a loss is only evidence of irreversibility if its house lived long enough to have undone it */
-    const fair = all.filter(x=>x.back != null || x.room >= FAIR);
-    const fairBack = fair.filter(x=>x.back != null);
-    console.log(`      ${e.padEnd(6)} raw ${String(backs.length).padStart(3)}/${String(all.length).padEnd(4)}`
-      + ` (${pcs(backs.length, all.length).padStart(4)})   ·   fair ${String(fairBack.length).padStart(3)}/${String(fair.length).padEnd(4)}`
-      + ` (${pcs(fairBack.length, fair.length).padStart(4)})   ·   median ${String(medOf(backs.map(x=>x.back))).padStart(3)}w away`
-      + `   ·   ${fair.length - fairBack.length} never came back with time to`);
-  }
-  console.log("");
-}
-console.log(`\n  MEN, kept apart on purpose`);
-for(const e of ERAS)
-  console.log(`  ${e.padEnd(6)} ${String(out.menLost[e]).padStart(5)} left the yard · ${String(out.menGot[e]).padStart(5)} arrived`
-    + ` · net ${out.menGot[e]-out.menLost[e] >= 0 ? "+" : ""}${out.menGot[e]-out.menLost[e]}`);
-
-/* patron ids are per-house and collide across houses, so they are one row rather than 200 */
-const roll = k => /^patron:/.test(k) ? "patron:*" : /^feat:/.test(k) ? "feat:*" : k;
-const agg = {};
-for(const [k,v] of Object.entries(out.byKey)){
-  const r = roll(k); agg[r] = agg[r] || {g:0,l:0,c:v.c,n:0};
-  agg[r].g += v.g; agg[r].l += v.l; agg[r].n++;
-}
-const moved = Object.entries(agg).filter(([,v])=>v.l > 0).sort((a,b)=>b[1].l-a[1].l);
-console.log(`  WHAT ACTUALLY MOVES — every key ever lost, so the counter can be read rather than trusted`);
-for(const [k,v] of moved.slice(0,20))
-  console.log(`    ${k.padEnd(16)} ${v.c.padEnd(10)} lost ${String(v.l).padStart(4)} · gained ${String(v.g).padStart(4)}`);
-const nev = Object.entries(agg).filter(([,v])=>v.l === 0);
-console.log(`\n  NEVER LOST BY ANY HOUSE, IN ${H} HOUSES — this is #131 stated exactly:`);
-for(const [k,v] of nev.sort((a,b)=>b[1].g-a[1].g).slice(0,18))
-  console.log(`    ${k.padEnd(16)} ${v.c.padEnd(10)} gained ${String(v.g).padStart(4)}${v.n>1?` · ${v.n} distinct keys`:""}`);
-if(nev.length > 18) console.log(`    … and ${nev.length-18} more`);
-if(out.sample.length){
-  console.log(`\n  a sample of losses that were undone, late era only:`);
-  for(const s of out.sample.filter(x=>x.era==="late").slice(0,10))
-    console.log(`    house ${String(s.h).padStart(2)} ${s.key.padEnd(20)} gone week ${String(s.lost).padStart(3)} → back week ${String(s.back).padStart(3)} (${s.back-s.lost}w)`);
-}
-
+  return { labs:[...lab.values()], names:eraNames, nNames:known.size, reached, shownBy, urgentBy, weeks, died, H, W, rope:R.say() };
+}, [H,W,ARM]);
 await browser.close(); server.close();
+
+const N = out.names, FIRST = N[0], LAST = N[N.length-1];
+const cls = r => {
+  const seen = N.filter(n => r.avail[n]);
+  if(!seen.length) return "unseen";
+  const early = seen.includes(FIRST) || seen.includes(N[1]);
+  const late = seen.includes(LAST) || seen.includes(N[2]);
+  return early && late ? "PERENNIAL" : late ? "LATE-ONLY" : "EARLY-ONLY";
+};
+const groups = { "EARLY-ONLY":[], "PERENNIAL":[], "LATE-ONLY":[] };
+for(const r of out.labs){ const c = cls(r); if(groups[c]) groups[c].push(r); }
+
+console.log(`=== WHAT A GREAT HOUSE IS ASKED FOR ===`);
+console.log(`  ${out.H} houses x up to ${out.W} weeks · ${out.reached} reached year 12+ · ${out.died} ended somewhere`);
+console.log(`  weeks by era: ${N.map(n=>`${n} ${out.weeks[n]}`).join(" · ")}`);
+console.log(`  ${out.labs.length} distinct labels once ${out.nNames} names are normalised out\n`);
+
+console.log(`  kind          labels   of the SHOWN block in ${LAST}   urgent among them`);
+for(const k of ["EARLY-ONLY","PERENNIAL","LATE-ONLY"]){
+  const g = groups[k];
+  const sh = g.reduce((n,r)=>n + (r.shown[LAST]||0), 0);
+  const pct = out.shownBy[LAST] ? (sh/out.shownBy[LAST]*100) : 0;
+  const urg = g.filter(r=>r.urg >= 3).length;
+  console.log(`  ${k.padEnd(12)} ${String(g.length).padStart(6)}   ${pct.toFixed(1).padStart(24)}%   `
+    + `${urg} of ${g.length} labels can reach urgency 3`);
+}
+
+console.log(`\n  and the same split in every era, as a share of what is SHOWN:`);
+for(const k of ["EARLY-ONLY","PERENNIAL","LATE-ONLY"]){
+  const g = groups[k];
+  console.log(`  ${k.padEnd(12)} ` + N.map(n=>{
+    const sh = g.reduce((a,r)=>a + (r.shown[n]||0), 0);
+    return `${n} ${(out.shownBy[n] ? sh/out.shownBy[n]*100 : 0).toFixed(1)}%`; }).join(" · "));
+}
+console.log(`\n  THE SHOWN BLOCK IN ${LAST.toUpperCase()}, most often first — this is what a great house reads:`);
+const late = out.labs.filter(r=>r.shown[LAST]).sort((a,b)=>(b.shown[LAST]||0)-(a.shown[LAST]||0));
+for(const r of late.slice(0,18)){
+  const share = (r.shown[LAST]/out.weeks[LAST]*100).toFixed(0);
+  console.log(`    ${String(share).padStart(3)}% of weeks  urg<=${r.urg}  ${cls(r).padEnd(10)}  ${r.k}`);
+}
+
+console.log(`\n  AND THE LATE-ONLY LABELS IN FULL — the late game's own content, such as it is:`);
+const lo = groups["LATE-ONLY"].sort((a,b)=>(b.shown[LAST]||0)-(a.shown[LAST]||0));
+if(!lo.length) console.log(`    NONE. Every label a year-12 house sees, it could have seen in year one.`);
+for(const r of lo.slice(0,20))
+  console.log(`    shown ${String(r.shown[LAST]||0).padStart(4)}w  urg<=${r.urg}  mean urg ${(r.urgSum/r.urgN).toFixed(1)}  ${r.k}`);
+
+console.log(`\n  urgent items per week, by era: `
+  + N.map(n=>`${n} ${(out.urgentBy[n]/Math.max(1,out.weeks[n])).toFixed(2)}`).join(" · "));
+console.log(`  rope: ${out.rope}`);
+
+/* ---- AVAILABLE IN THE LAST ERA AND NEVER SHOWN THERE ----
+   agendaTop's rule is `urgency >= 3 || age <= AG_FRESH`, so a label sitting at urgency 3 CANNOT be
+   withheld. A late-only label that is available in year 12+ and never shown there is therefore either
+   never urgent in that era (whatever its lifetime maximum was) or never fresh — it has been on the list
+   so long that its age has run past AG_FRESH and it simply never rises again. That second case is
+   content the house owns, that the game knows about, and that the player is never pointed at. */
+const stale = out.labs.filter(r => (r.avail[LAST]||0) > 0 && !(r.shown[LAST]||0))
+  .sort((a,b)=>(b.avail[LAST]||0)-(a.avail[LAST]||0));
+console.log(`\n  AVAILABLE IN ${LAST.toUpperCase()} AND NEVER ONCE SHOWN THERE — ${stale.length} labels:`);
+console.log(`    weeks   best urgency in that era   lifetime best   label`);
+for(const r of stale.slice(0, 18))
+  console.log(`    ${String(r.avail[LAST]).padStart(5)}   ${String(r.eraUrg[LAST]||0).padStart(24)}   `
+    + `${String(r.urg).padStart(13)}   ${cls(r).padEnd(10)} ${r.k.slice(0,50)}`);
+const urgentStale = stale.filter(r => (r.eraUrg[LAST]||0) >= 3);
+console.log(`\n  of those, ${urgentStale.length} reached urgency 3 IN THAT ERA and were still never shown,`);
+console.log(`  which agendaTop's own rule says is impossible — if any appear, the rule is not what ranks the block.`);
+for(const r of urgentStale.slice(0,8)) console.log(`    ${r.k.slice(0,60)}`);
