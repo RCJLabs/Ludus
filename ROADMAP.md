@@ -1392,8 +1392,9 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.30.0 — #131's second loss (the fire) shipped, suite green at **65/65**
-(`blaze` is the 65th). v3.29.0 closed #138, v3.28.0 closed #137, and the measurement session before
+**Shipped and verified:** v3.31.0 — #140 closed (the perks work and four of them buy nothing; the
+tomb's `say` named the wrong party), suite green at **65/65**. v3.30.0 shipped #131's second loss,
+the fire (`blaze` is the 65th check). v3.29.0 closed #138, v3.28.0 closed #137, and the measurement session before
 those settled the five seams and left the instruments — `catalogue.mjs`, `yard.mjs`, `named.mjs`,
 `ghost.mjs`, `scen.mjs`, `sink.mjs` — each with its first wrong version documented in
 `test/probes/README.md`. `main`, the item branch and the upload mirror are at this commit; the tree
@@ -1421,17 +1422,20 @@ whole log, never pipe it through `tail` — the summary line is not the interest
   succession door, which earlier trajectories never lived to use. Whether a third piece is needed
   before re-measuring the late game's read (`late.mjs`'s 97.7% perennial figure) is the next
   decision on this item.
-- **#140 — stone does not pay: the sink's bottom shelf is a measured bad trade.** Opened by #138's
-  paired runs, three seeds × 24 pairs: the works-buying house ends RICHER in 3 / 3 / 1 of 24 pairs,
-  lives longer in 2 / 4 / 1, ends more famous in 3 / 6 / 3 — while building 1-5 works per surviving
-  house. The perks are priced against quantities that are already solved: the chapel's calm 1.1/wk
-  against a late-house unrest median of 5.7, the school's +3 fame/wk at 12,000d against bout fame.
-  *The decision:* reprice the perks, reprice the stone, or accept the works as vanity the fiction
-  sells honestly ("nothing to show for it until the last of it") — but today the game's own agenda
-  nags a player toward a purchase that measurably shortens his house's life. *Falsifies if:* a
-  fame-maximising arm (not the survival rope) shows stone paying on the score a player actually
-  chases — the one works-on house that lived 400 weeks ended at fame 6,833 against its control's
-  3,223, and n=1 is exactly the kind of vivid case this project has been burned by.
+- **#140 — CLOSED in v3.31.0. The premise held, MY STATED MECHANISM WAS WRONG, and the fix it named
+  is refuted.** Full write-up in the changelog. In one line: the perks all deliver their tables
+  exactly, and four of the five buy nothing at the house level even when the stone is a GIFT — so
+  repricing the stone cannot work, and what to do about it is a design decision rather than a
+  measurement. The live question it leaves is below.
+- **#141 — three of the five works move a quantity the house's fate does not read.** Granted FREE
+  at week one — the upper bound of every purchasing policy — the chapel, baths, tomb and spina are
+  coin flips on both fame and lifespan over 48 pairs (18-23 of 48), while moving their own quantity
+  by exactly what their tables promise. The school, whose perk is a direct additive on FAME, reads
+  36 of 48. *The decision:* give the four perks a term the outcome reads, or accept them as vanity
+  the fiction already sells honestly. *Falsifies if:* a house driven at a policy that leans on
+  unrest or fatigue (a blood-doctrine house running hot, say) does convert the chapel or the baths
+  into survival — this measured the reference player, whose unrest sits at 9.9 and whose deaths are
+  the ledger's rather than the cells'.
 - **#139 — the opening tagged "Fragile" is measured the safest in the game.** Small and
   decision-shaped: relabel, retune, or accept, with the numbers attached.
 - **#137 — CLOSED, shipped in v3.28.0.** Sand endings 1-2% → 36-38%, silence 81% → 0-1%, verified on
@@ -2084,6 +2088,58 @@ territory where the measuring is harder than the thing measured. That is a reaso
 answer is a decision over items whose answer is another number.
 
 ## Changelog (shipped)
+
+### v3.31.0 — #140 closed: the perks work, and four of them buy nothing
+
+#138 measured that a works-buying house ends poorer and shorter-lived and opened #140 with a stated
+mechanism: *"the perks are priced against quantities that are already solved — the chapel's calm
+1.1/wk against a late-house unrest median of 5.7."* **That was mine and it was wrong.**
+
+**The falsification clause named a fame-maximising policy arm. `perk.mjs` answers it at the upper
+bound instead, which is stronger than any arm:** grant each work FREE at week one — no deposit, no
+mason's draw — and every purchasing policy that could ever exist is bounded above by what that
+measures. Three seeds × 16 pairs, control run first:
+
+    work    perk        the quantity its OWN table names        fame better   life longer
+    chapel  calm 1.1    unrest  9.9 -> 6.1 / 9.1 -> 4.3 / 10.2 -> 6.3   23/48        22/48
+    baths   rest 6      fatigue 15.4 -> 12.3 / 17.4 -> 13.3 / 17.1 -> 13.6  20/48    19/48
+    tomb    regard 0.4  regard  +3.0 / +3.5 / +1.0                   20/48        22/48
+    spina   crowd 4     (reads through the purse; unstable)         18/48        19/48
+    school  fame 3      fame +631 / +358 / +1178                    36/48        26/48
+
+**Every perk delivers its table exactly** — the school's +3/wk over ~210 weeks predicts +630 and
+measured +631, which is the instrument proving itself. The chapel genuinely cuts unrest by 39-47%.
+Nothing is "already solved" and nothing is broken.
+
+**And four of the five buy nothing anyway.** Free, at the ceiling of what any policy could reach,
+the chapel, baths, tomb and spina are coin flips on both fame and lifespan. The one that lands is
+the school, whose perk is a direct additive on the score everything downstream reads. So the fault
+is not the price of the stone and not the size of the perks — **it is that three of them move
+quantities the house's fate is insensitive to at these magnitudes.** A reference house's unrest is
+9.9 and its deaths are the ledger's; taking four points off unrest changes nothing that decides a
+run.
+
+**Which refutes the fix #140 implied.** Repricing the stone cannot help: free is the upper bound and
+free does not pay. That is now #141, and it is a design decision — give the four perks a term the
+outcome reads, or accept them as vanity the fiction already sells honestly ("nothing to show for it
+until the last of it"). Measurement has taken it as far as it goes.
+
+**A second half, from `sink.mjs`'s new collection window:** a work pays nothing until its last week
+and then pays every week the house survives, so what a buyer receives is the perk *times the weeks
+left to collect it*. Bought, 36 finished works began at median week 102, finished at 132, and were
+collected for a median of **90 weeks** — under half the 200+ the free grant enjoys. The purchase is
+worse than this release's table on both terms.
+
+**One game change ships with it, and it is a real fault rather than a balance opinion.** The tomb's
+`say` read *"and a death costs the cells far less."* Its second effect is real and lands somewhere
+else entirely: `workPerk(d,"regard")` multiplies the **lanista's** health loss by 0.7 at all four
+death sites, while the cells' share of a death is softened by `collSoften` — the burial society, a
+different purchase. One work's effect was being credited to another's, which is the `near`/`words`
+fault class exactly: a claim about the state that the state does not hold. The line now names the
+lanista, and `stone` pins **both halves by mechanism rather than by copy** — it calls `workPerk`
+(now on the handle, so a check need not reconstruct the formula) and reads the source for where the
+0.7 sits, failing if the sites stop being the lanista's health or if the copy goes back to claiming
+the cells. Verified against the old wording: it fails, naming the fault.
 
 ### v3.30.0 — #131's second loss: the fire, and the third instance of #136's shape
 

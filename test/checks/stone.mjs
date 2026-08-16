@@ -21,7 +21,11 @@
    far. That is a pricing decision and it is not this check's business; what this
    guards is that the instalment does what it says. */
 
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { hasHandle } from "../harness.mjs";
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 
 export const name = "stone";
 export const describe = "a work is paid for as it rises, and the sums add up";
@@ -67,7 +71,28 @@ export async function run({ p, errors }){
       const leftAfter = A.workOn(d, first) ? A.workOn(d, first).left : -1;
       idleWeeks = leftBefore - leftAfter;      /* should be 0 — no coin, no week's work */
     }
-    return { rows, bad, first, started, down, cost:W.cost, drewFrom,
+    /* ---- 4. WHAT A WORK'S `say` CLAIMS IS WHAT ITS PERK DOES — #140 ----
+       The tomb's line read "a death costs the cells far less". Its second effect is real and lands
+       somewhere else entirely: `workPerk(d,"regard")` multiplies the LANISTA's health loss by 0.7 at
+       the four death sites, while the cells' share of a death is softened by `collSoften` — the
+       burial society. One purchase's effect was being credited to another's. Both halves are pinned
+       here by MECHANISM rather than by copy, so a rewiring makes the words and the code diverge
+       loudly instead of quietly. */
+    /* the term the death sites actually read, called rather than reconstructed */
+    const tPerk = (()=>{ const b = A.newGameState("Tp","clean","STONE-TP",null);
+      b.works = {};
+      const off = A.workPerk(b, "regard");
+      b.works = { tomb: { left:0, began:0, paid:0, owed:0, idle:0 } };
+      return { off, on: A.workPerk(b, "regard") }; })();
+    const say = (A.WORKS.tomb && A.WORKS.tomb.say) || "";
+    if(!(tPerk.off === 0 && tPerk.on > 0))
+      bad.push(`the tomb no longer registers as a "regard" work (workPerk read ${tPerk.off} then ${tPerk.on}) — `
+        + `the 0.7 on the lanista's death cost hangs off exactly that term`);
+    if(/costs the cells/i.test(say))
+      bad.push(`the tomb's say credits the CELLS with a death costing less; the tomb's term is on `
+        + `d.lanista.health and the cells' share is softened by collSoften — the burial society`);
+
+    return { rows, bad, first, started, down, cost:W.cost, drewFrom, tPerk, say,
       weekly:A.workWeekly(W), idleWeeks, deposit:A.WORK_DEPOSIT };
   });
 
@@ -78,6 +103,24 @@ export async function run({ p, errors }){
   lines.push(`a house holding ${out.down + 10}d — ten denarii over the deposit on a ${out.cost}d work — ${out.started ? "can commission it" : "CANNOT commission it"}`);
   lines.push(`the masons drew ${out.drewFrom}d for a week's work (the quoted weekly is ${out.weekly}d)`);
   lines.push(`with an empty purse the site stood idle for ${out.idleWeeks === 0 ? "both weeks" : `only ${2-out.idleWeeks} of two weeks`}`);
+
+  /* ---- and WHERE that term sits, read off the source the way `layers` and `actions` do ----
+     A handle call can say the tomb registers as a regard work; only the source can say the 0.7 is
+     on the lanista and not on the cells, which is the whole of what the say got wrong. */
+  {
+    const src = fs.readFileSync(path.join(ROOT, "src", "ludus.jsx"), "utf8")
+      .split("\n").filter(l => !/^\s*(\/\/|\*|\/\*)/.test(l)).join("\n");
+    const sites = src.split("\n").filter(l => /workPerk\(d,\s*["']regard["']\)\s*\?/.test(l));
+    const onLanista = sites.filter(l => /lanista\.health/.test(l));
+    lines.push(`the tomb's unstated second effect: workPerk "regard" reads ${out.tPerk.off} without it and `
+      + `${out.tPerk.on} with it, and its 0.7 sits on ${onLanista.length} of ${sites.length} death sites, `
+      + `every one of them the LANISTA's health`);
+    if(!sites.length)
+      fails.push(`no site multiplies a death by the tomb's regard perk any more — the say promises it`);
+    else if(onLanista.length !== sites.length)
+      fails.push(`${sites.length - onLanista.length} of ${sites.length} tomb-perk death sites are no longer on `
+        + `d.lanista.health — if the effect has moved to the cells then the say must move with it`);
+  }
 
   if(!out.started)
     fails.push(`a house with the deposit in hand could not commission a work — the instalment is not doing anything`);

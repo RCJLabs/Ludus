@@ -12409,7 +12409,14 @@ const WORKS = {
   tomb:    { name:"A tomb for the house", cost:8500, upkeep:11, years:2,
     blurb:"Not a plot. A tomb, on the road out, with room for every man who ever wore your colours and space for the names to be cut.",
     done:"Every man in that block has now seen exactly where he is going, and it is not a ditch.",
-    perk:"regard", n:0.4, say:"Every man's regard climbs 0.4 a week, and a death costs the cells far less." },
+    /* ---- #140: THIS LINE NAMED THE WRONG PARTY ----
+       It read "and a death costs the cells far less". The tomb's second effect is real but it does
+       not land on the cells: `workPerk(d,"regard")` multiplies the LANISTA's health loss by 0.7 at
+       the four death sites, and what softens a death for the cells is `collSoften` — the burial
+       society, a different purchase. So the one work that quietly does more than its `n` says was
+       crediting it to the wrong people, which is the `near`/`words` fault class exactly: a claim
+       about the state that the state does not hold. */
+    perk:"regard", n:0.4, say:"Every man's regard climbs 0.4 a week, and burying one takes less out of you than it would have." },
 };
 const WORK_KEYS = Object.keys(WORKS);
 /* ---- MONUMENTS ----
@@ -25326,6 +25333,9 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     setOut, comeHome, stayWeeks, welcomeOf,
     /* what a fortune can be spent on once the yard is finished */
     beginWork, workOpen, workDone, workOn, workUpkeep, WORKS, MONUMENTS, ALL_WORK_KEYS,
+    /* the term every perk is read through — #140 needed it to ask what the tomb's `say` was
+       claiming, and a check that cannot call it has to reconstruct the formula instead */
+    workPerk,
     workWeekly, WORK_DEPOSIT, worksWeek, workDef, WORK_KEYS, MONU_KEYS, monuReady,
     /* what other people owe you, which is the quantity two proximity lines quote and a
        third one does not — see `near` */

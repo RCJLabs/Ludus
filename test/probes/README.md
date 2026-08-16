@@ -27,6 +27,7 @@ Run them straight:
     node test/probes/ghost.mjs 12 300 SEED # who clears d.nemesis, caught by a setter trap — #137
     node test/probes/scen.mjs 24 420 SEED  # the five foundings compared; run on >=3 seeds
     node test/probes/sink.mjs 24 420 SEED  # #138: does a works-buying rope finish the tier? paired
+    node test/probes/perk.mjs 16 420 SEED  # #140: what each work is worth GRANTED FREE — the upper bound
     node test/probes/catalogue.mjs 72 420 SEED on   # the census with the works step switched on
 
 `keep`, `walk` and `fires` run in about 25 seconds at 72 houses, which is cheap enough that **they take
@@ -124,6 +125,17 @@ coin so five identical rows cannot be read past. At 24 houses a seed, median lif
 between seeds, so nothing is quoted unless the SIGN holds on all three: champion opening gentlest and
 inherited harshest both did; every other difference drowned. The tags carry the verdict: "Hard" is
 measured hard, and "Fragile" is measured the safest opening in the game.
+
+**`perk.mjs`** — what a work is worth when it costs NOTHING, which is how #140 was settled without a
+policy arm. Its clause asked for a fame-maximising player; granting each work free at week one bounds
+every purchasing policy that could ever exist from above, so a perk that does not pay here cannot pay
+bought. It found the item's stated mechanism wrong — the perks deliver their tables exactly (the
+school's +3/wk over ~210 weeks predicts +630 and measured +631, the instrument proving itself) — and
+the item's premise right for a different reason: four of the five are coin flips on fame and lifespan
+even free, because they move quantities the house's fate does not read. **The habit worth keeping:
+when an item blames a price, test the free version first; it separates "this costs too much" from
+"this is not worth anything", and only the second one makes repricing pointless.** Granting at week
+one is deliberately generous and is stated as such — a real house gets its first work around week 200.
 
 **`sink.mjs`** — #138's paired instrument: same seed twice, identical but for the rope's opt-in
 `works` step, control first, compared at the last common week. Its finding closed the item the

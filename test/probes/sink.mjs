@@ -46,7 +46,15 @@ const out = await p.evaluate(([H,W,SEED])=>{
     }
     const finished = A.ALL_WORK_KEYS.filter(k=>A.workDone(d,k));
     const rising = A.ALL_WORK_KEYS.filter(k=>A.workOn(d,k));
-    return { life: d.week, hist, finished, rising, idleWeeks, nagOpen, doorOpen, sample,
+    /* ---- THE COLLECTION WINDOW, which is what a perk is actually bought for ----
+       A work pays NOTHING until the last week of it ("nothing to show for it until the last of
+       it") and then pays its perk every week the house survives. So the thing a buyer receives is
+       not the perk, it is the perk TIMES the weeks left to collect it. `perk.mjs` grants works at
+       week one and measures 200+ weeks of collection; this measures what a bought one gets. */
+    const collected = finished.map(k=>{ const w = (d.works||{})[k];
+      const fin = w && w.began != null ? w.began + (A.workDef(k).years * 18) : null;
+      return { k, began: w ? w.began : null, fin, weeks: fin == null ? null : Math.max(0, d.week - fin) }; });
+    return { life: d.week, hist, finished, rising, idleWeeks, nagOpen, doorOpen, sample, collected,
       monuReady: A.WORK_KEYS.every(k=>A.workDone(d,k)) };
   };
 
@@ -82,6 +90,17 @@ const byWork = {};
 for(const p2 of out) for(const k of p2.on.finished) byWork[k] = (byWork[k]||0)+1;
 console.log(`  what actually got built: ${Object.entries(byWork).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k} ${v}`).join(" · ")||"nothing"}`);
 console.log(`  masons idle (a site up, unpaid): ${out.reduce((s,p2)=>s+p2.on.idleWeeks,0)} weeks across all works-on houses`);
+{
+  const all = out.flatMap(p2=>p2.on.collected||[]).filter(c=>c.weeks != null);
+  console.log(`\n  THE COLLECTION WINDOW — a work pays nothing until its last week, then pays every week the house lives:`);
+  if(!all.length) console.log(`    nothing finished`);
+  else {
+    console.log(`    ${all.length} finished works · began median w${med(all.map(c=>c.began))} · finished median w${med(all.map(c=>c.fin))}`);
+    console.log(`    weeks the perk was actually COLLECTED: median ${med(all.map(c=>c.weeks))} · `
+      + `spread ${all.map(c=>c.weeks).sort((a,b)=>a-b).join(" ")}`);
+    console.log(`    (perk.mjs grants a work at week one and measures 200+ weeks of collection — that is the upper bound)`);
+  }
+}
 const dSum = out.reduce((s,p2)=>s+p2.off.doorOpen,0), nSum = out.reduce((s,p2)=>s+p2.off.nagOpen,0), sSum = out.reduce((s,p2)=>s+p2.off.sample,0);
 console.log(`\n  THE NAG'S STALE GATE, read off the CONTROL arm (no step interfering):`);
 console.log(`  weeks a work could be COMMISSIONED (deposit in the box):  ${dSum} of ${sSum} (${sSum?Math.round(dSum/sSum*100):0}%)`);
