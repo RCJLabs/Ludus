@@ -1392,12 +1392,12 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** still v3.27.0 — this session shipped no game change and bumped no version.
-It was a measurement session: the five seams the last session left were each asked as their own
-question, two were killed and three became items, and the board below is ranked by player impact over
-risk. Suite untouched and green at **63/63**; `main`, the item branch and the upload mirror are at
-this commit; the tree is clean. The new instruments are `catalogue.mjs`, `yard.mjs`, `named.mjs`,
-`ghost.mjs` and `scen.mjs`, each with its first wrong version documented in `test/probes/README.md`.
+**Shipped and verified:** v3.28.0 — #137 built and closed, suite green at **64/64** (the `named`
+check is the 64th). The session before that was measurement only: the five seams were each asked as
+their own question, two killed, three made items; the instruments are `catalogue.mjs`, `yard.mjs`,
+`named.mjs`, `ghost.mjs` and `scen.mjs`, each with its first wrong version documented in
+`test/probes/README.md`. `main`, the item branch and the upload mirror are at this commit; the tree
+is clean.
 
 ### Before you run anything
 
@@ -1410,12 +1410,11 @@ whole log, never pipe it through `tail` — the summary line is not the interest
 
 ### The board
 
-**Four items open, ranked by player impact over risk:**
+**Three items open, ranked by player impact over risk:**
 
-- **#137 — the named enemy cannot survive the week that names him.** A measured game fault, not a
-  design call: one house lookup unmakes nearly every fighter-nemesis the same week he is named, and
-  84% of the episodes it does not kill directly it kills by eviction. The fix is one line's worth of
-  decision; the measurement is finished and below.
+- **#137 — CLOSED, shipped in v3.28.0.** The lookup fixed, the eviction rule damped, verified on its
+  own falsification clause: sand endings 1-2% → 36-38%, silence 81% → 0-1%. Full write-up in the
+  changelog; the measurement record is in the section below, kept as it was opened.
 - **#138 — the reference player has no step for the game's own late-game sink.** The acquirable
   catalogue is now COUNTED (71 keys) and #131's "out of things to buy" is refuted as stated: a late
   house dies holding about half the shelf, and the half it never touches is the works-and-monuments
@@ -1502,7 +1501,14 @@ nemesis's -1.2 morale/week pressure barely exists because he cannot stand a full
 
 *Verified:* the churn rate matches keep.mjs's independent count; the trap's attribution is a stack,
 not an inference; and the same-week-clear and eviction RATIOS hold within a few points across four
-seeds. *The decision the item asks:* may a pit man be a
+seeds.
+
+**BUILT AND SHIPPED IN v3.28.0, VERIFIED ON THE CLAUSE ABOVE.** The falsification bar was ">50%
+silent or sand under 5% after the fix falsifies the mechanism" — measured after: silent 0-1%, sand
+36-38%. The fix also surfaced a second fault the first had been hiding (the eviction churn, damped in
+the same release), and the balance warning above was measured rather than guessed: the -1.2/wk term
+is now live on ~92% of weeks and house lifespans still move only within seed noise. Full write-up in
+the v3.28.0 changelog; the `named` check holds the rules. *The decision the item asks:* may a pit man be a
 nemesis at all? If yes, 10007 must learn to look in `d.circuit`; if no, 14568 must stop naming him —
 either way the eviction rule needs the same look. *Falsifies if:* after the fix, `named.mjs` still
 reads >50% silent endings or the sand share stays under 5% — then the lookup was not what starved the
@@ -2052,7 +2058,53 @@ answer is a decision over items whose answer is another number.
 
 ## Changelog (shipped)
 
-### v3.27.0 — #136 closed, and #131's first piece goes in unchanged
+### v3.28.0 — #137: the named enemy survives the week that names him
+
+The fighter-nemesis (`d.nemesis`) had one designed payoff — beat the name on the sand for +11/18
+morale to every man, -4/7 unrest, +12/22 fame and a chronicle line — and it fired on **1-2% of
+episodes**. The system churned a "named enemy" once every 16 weeks, and nothing had asked whether
+that rate was right until this session's probes did.
+
+**The fault, two lines apart for who knows how many versions.** `ludus.jsx:14568` names a pit man
+nemesis with a synthetic house — `{name:f.house, fighters:d.circuit}`, `f.house` drawn from
+`SMALL_HOUSES` — and `nemesisWeek`'s lookup only ever searched the five rival houses. It concluded
+the man was gone and unmade him THE SAME WEEK he was named, silently: **99-100% of circuit-born
+nemeses on every measured seed** (732/736, 586/586, 745/750, 475/476). Worse, a HATED circuit man
+(he killed one of yours) evicts a standing rival nemesis on the way through, so **82-87% of the real
+rival episodes died with him** — which is why the same rival kept being re-named (`beatYou` persists)
+and the whole system read as churn. Found by `named.mjs` (the endings: 81% silent), attributed by
+`ghost.mjs` (a setter trap with a stack capture — the weekly diff could not see it because the clear
+rate was THREE TIMES the visible episode rate; most episodes lived and died inside one week).
+
+**The fix is the lookup, plus the line the player was owed.** A man is still here if he stands on his
+own house's roster OR on the circuit — the fid is the identity, not the house name. And the one
+remaining quiet exit (a rival's man retiring unfamously) now writes a chronicle line instead of
+leaving the panel silently empty.
+
+**And the fix exposed a second fault it had been hiding, which is this project's usual shape.** With
+killers persistent, the title chained hand to hand **once every 4.4 weeks** — every pit loss to any
+man who had ever killed one of yours re-dealt the name. The eviction rule now reads the way its own
+comment always did: a killer takes the title off a man who merely beat you, but not off another
+killer. A hated name holds until the sand settles it or the man leaves it.
+
+**Measured after, 72 × 420, two seeds:** one episode per **47-60 weeks** (a season-scale enemy,
+median 25-42 weeks), endings **sand 36-38% · told 32-38% · replaced 25-30% · silent 0-1%**. The
+balance change the fix un-hides was measured before shipping, as the item demanded: a nemesis now
+stands 95-96% of weeks, hated on ~92%, so the -1.2 morale/week term is live for most of a house's
+life — and house lifespans move only within seed noise (11,572 vs 12,009 house-weeks on one seed,
+12,865 vs 11,312 the other way on the second; late-era house counts 29 → 32 on the catalogue seed),
+because the payoff is finally collectable and the rope collects it at the pit. `doFight`'s own
+morale weight for fighting your nemesis (-8, -14 hated) applies now too, having been unreachable
+for circuit men.
+
+**`named` is the 64th check.** It holds the rules rather than the trajectory: a nemesis may be
+cleared only when the man is genuinely gone from every roster and the circuit; a killer takes the
+title from a non-hated name and not from a hated one; the quiet exit writes its line; and a win at
+the pit brings the name down, writes the line, and lifts the yard. `nemesisCheck` is on the handle —
+the naming could not be driven by anything before this.
+
+Both probes carry their post-fix expectations in their heads (the `quiet.mjs` lesson), so the next
+reader knows what the repaired world should print.
 
 v3.26.0 held a finished piece of content because four checks failed on a build whose only change was
 one extra key in the `EVENTS` table with its `make` neutered to `return null`. This is that fixed, and

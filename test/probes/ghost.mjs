@@ -19,7 +19,13 @@
        episodes, 111 ended as that eviction and only 17 ever ended through a real channel.
 
    The general lesson: when a weekly diff cannot attribute a transition, trap the write. A setter on
-   the save's own field costs ten lines and answers "who did this" with a stack instead of a guess. */
+   the save's own field costs ten lines and answers "who did this" with a stack instead of a guess.
+
+   FIXED IN v3.28.0 — on the repaired build this prints a different world, and should: same-week
+   clears fall from ~740 to single digits, nemesisSettled becomes the top clearing function, and most
+   title changes are hated handovers (sets, not clears — the eviction rule holds a hated name against
+   the next killer). If "nemesisWeek · CIRCUIT man · dur:0w" ever dominates this table again, the
+   lookup has regressed; the `named` check in test/checks/ holds the rule. */
 import { serve, open } from "../harness.mjs";
 const H = +(process.argv[2] || 12), W = +(process.argv[3] || 300);
 const SEED = process.argv[4] || "NFA";

@@ -9994,7 +9994,12 @@ function nemesisCheck(d, h, f){
   const hated = (f.killedYours||0) > 0;
   if(!hated && (f.beatYou||0) < 2) return;
   if(d.nemesis && d.nemesis.fid===f.id){ d.nemesis.hated = d.nemesis.hated || hated; return; }
-  if(d.nemesis && !hated) return;                 // one at a time unless this one has killed
+  /* one at a time. A killer takes the title off a man who merely beat you — but not off another
+     killer. #137's lookup fix made the pit's killers persistent, and without this second clause
+     the title chained hand to hand once every 4.4 weeks (measured, 72 x 420): every pit loss to
+     any man who had ever killed one of yours re-dealt the name, which is the old churn wearing
+     the fix's clothes. A hated name holds until it is settled or the man leaves the sand. */
+  if(d.nemesis && (!hated || d.nemesis.hated)) return;
   f.nemTitle = f.nemTitle || pick(NEM_TITLES);
   d.nemesis = { fid:f.id, house:h.name, name:f.name, title:f.nemTitle, hated, since:d.week };
   chron(d, hated
@@ -10004,9 +10009,23 @@ function nemesisCheck(d, h, f){
 const nemesisIn = (d, opp) => d.nemesis && opp && opp.name===d.nemesis.name ? d.nemesis : null;
 function nemesisWeek(d){
   const n = d.nemesis; if(!n) return;
+  /* ---- #137: A PIT MAN IS A NEMESIS TOO, AND THIS LOOKUP DID NOT KNOW IT ----
+     The bout aftermath names a circuit man nemesis with a synthetic house — {name:f.house,
+     fighters:d.circuit}, f.house drawn from SMALL_HOUSES — and this lookup only ever knew the five
+     rival houses. So it concluded the man was gone and unmade him THE SAME WEEK he was named, with
+     no line: 99-100% of circuit-born nemeses on every measured seed, and 82-87% of rival-born
+     episodes died with them, evicted by a hated usurper who then evaporated. The revenge arc paid
+     out on 1-2% of episodes. Measured by test/probes/named.mjs, attributed to this line by
+     test/probes/ghost.mjs. The fid is the identity; the man is still here if he stands on his own
+     house's roster OR on the circuit. */
   const h = (d.rivals||[]).find(x=>x.name===n.house);
-  const still = h && h.fighters.some(f=>f.id===n.fid);
-  if(!still){ d.nemesis = null; return; }
+  const still = (h && h.fighters.some(f=>f.id===n.fid)) || (d.circuit||[]).some(f=>f.id===n.fid);
+  if(!still){
+    /* he left by a door that did not announce it — the rivals' quiet retirements, mostly. The
+       cells carried this name for weeks; an empty panel is not an ending. */
+    chron(d, `${n.name}${n.title?`, ${n.title},`:""} is not on anybody's card. Retired, sold on, dead in some town with a smaller arena — the cells hear it the way everyone does, by his not being there, and whatever they were carrying about him has nowhere to go now.`, "info");
+    d.nemesis = null; return;
+  }
   if(n.hated){
     d.gladiators.forEach(g=>{ if(g.status==="active"){ g.morale = clamp(g.morale-1.2,0,100); g.defiance = clamp(g.defiance+0.6,0,100); } });
   }
@@ -25178,6 +25197,9 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        it. Everything here was found by asking what the nineteen above actually reference. */
     GAMBITS, SWEARING, PLANSEASON, FAVOURS,
     nemAnswerReady, nemCanCallOut, nemEdge, favourReady, gambitReady, gambitStale, seasonOfMan,
+    /* the fighter-nemesis (d.nemesis, not the arch-rival house above) — #137 found every
+       circuit-born one unmade the same week it was named, and nothing could drive the naming */
+    nemesisCheck,
     /* #131's first piece: the loss, its gate, and the constant behind it — the action, its table and
        its gate, which is the rule v3.24.0 settled on. */
     patronDies, patronOld, PATRON_HELD, PATRON_GAP, PATRON_HEIR, PATRON_AGE, recomputeFavor, patronWeek,

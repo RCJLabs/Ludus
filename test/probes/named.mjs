@@ -13,6 +13,13 @@
    behind it: of the episodes a house lives through, how many end on the sand, and how many just
    evaporate? A named enemy who is mostly unmade by someone else's roster churn is not a named enemy.
 
+   FIXED IN v3.28.0, and this probe now measures the repaired world (the quiet.mjs lesson: decide at
+   writing time what a fault-probe should say once the fault is gone). Post-fix expectations, measured
+   on two seeds: one episode per 47-60 weeks, sand 36-38%, told 32-38%, replaced 25-30%, silent 0-1%.
+   A "replaced" ending is a hated man taking the title — a handover with its own chronicle line, split
+   out below so the fix is not measured against a bar it should pass. If silent climbs back past a few
+   percent, the lookup has regressed; the `named` CHECK holds the rule.
+
    ATTRIBUTION, and why it can be trusted:
    · the settled end is detected off the chronicle AT THE WEEK IT HAPPENS — `nemesisSettled`'s two
      lines verbatim ("is dead on your sand" / "was beaten in front of everyone"). The log rolls at
@@ -54,7 +61,11 @@ const out = await p.evaluate(([H,W,SEED])=>{
         const sameName = (d.rivals||[]).filter(x=>x.name===cur.house);
         const hh = sameName[0];
         const still = hh && !hh.retired && hh.fighters.some(f=>f.id===cur.fid);
-        const cause = settled ? "sand" : told ? "told" : "silent";
+        /* "replaced" is its own player-facing ending, split out after the #137 fix made it common:
+           a hated man takes the title and the panel switches to a NEW named enemy with its own
+           chronicle line. The player sees a handover, not an absence — conflating it with silence
+           would fail the fix against a bar it should pass. */
+        const cause = settled ? "sand" : told ? "told" : n ? "replaced" : "silent";
         const mech = !hh ? "houseGone" : hh.retired ? "houseRetired" : !still ? "offRoster" : "onRoster";
         eps.push({ h, since:cur.since, end:d.week, dur:d.week-cur.since, hated:cur.hated, cause, mech,
           dupHouses: sameName.length, away: hh ? (hh.away||0) : -1, war: !!d.war,
