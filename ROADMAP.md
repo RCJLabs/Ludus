@@ -1440,6 +1440,14 @@ whole log, never pipe it through `tail` — the summary line is not the interest
   question rather than a measurement — see the changelog for why that is a smaller claim than it
   looks. **Do not quote the baths as converting:** one seed read 6→1 and the other three 5→6, 6→6,
   7→2, which is exactly the vivid single-seed case this project keeps getting burned by.
+- **#142 — `survive`'s bar is set from a rate the pooled tally no longer supports.** 35 runs across
+  24 builds now read 3 failures (9%), standing min 0 / median 3 / max 5. The check's own
+  false-failure table puts 9% at a true standing rate near 55-65%; its bar was derived from 70%.
+  #127's rule says re-derive from the distribution rather than nudge — and the same rule is why it
+  was NOT touched in v3.33.0, whose own run is one of the three failures. Doing it in a release the
+  bar did not fail is the honest version. *Falsifies if:* the three failures turn out to share a
+  cause other than the draw (all three were investigated as variance; only the v3.33.0 one was
+  proven so by a cross-build signature).
 - **#139 — the opening tagged "Fragile" is measured the safest in the game.** Small and
   decision-shaped: relabel, retune, or accept, with the numbers attached.
 - **#137 — CLOSED, shipped in v3.28.0.** Sand endings 1-2% → 36-38%, silence 81% → 0-1%, verified on
@@ -2151,7 +2159,9 @@ Identical is the useful word. It is not "within noise": no path a new house exec
 is what one would expect from a diff that consumes no RNG draw — `workNeed` and `regardRefuse` are
 pure reads and the rest is a handle line and a sentence. `policy` (24 houses × 320 weeks) and `ends`
 (28 per arm) also passed, and both are far larger samples of the same opening economy than
-`survive`'s five houses.
+`survive`'s five houses. **Then two clean re-runs both came back (3,4)** — the identical pair
+v3.32.0 drew — so the tally now carries `3.33.0 (0,4) FAIL · (3,4) · (3,4)` and the release is
+promoted on that, the way v3.15.0 and v3.20.0 were before it.
 
 *And one observation for a future item, deliberately NOT acted on here:* the pooled tally now reads
 **3 failures in 35 runs (9%), standing min 0 / median 3 / max 5.** The check's own false-failure
