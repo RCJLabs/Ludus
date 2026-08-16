@@ -2139,6 +2139,27 @@ Each arm requires its OWN work to still be buildable, and the reason carries the
 so a player can price it — which is the whole point, since these perks are worth a great deal or
 nothing depending on a number only he can see.
 
+**`survive` FAILED on this release's run at (0,4) — a new minimum — and it is a FALSE failure,
+proven rather than argued.** The check's own head says to price the bar before hunting the bug, and
+the technique it names is the one that settled this: *ask "has it moved" with a fixed policy across
+builds, not with the check.* Sixty houses × 26 weeks through `__ROPE`, v3.32.0's source against this
+one, printing each house's week, men, gold and ending:
+
+    standing 39 of 60 · men 128        — and the two signatures are IDENTICAL, house for house
+
+Identical is the useful word. It is not "within noise": no path a new house executes differs, which
+is what one would expect from a diff that consumes no RNG draw — `workNeed` and `regardRefuse` are
+pure reads and the rest is a handle line and a sentence. `policy` (24 houses × 320 weeks) and `ends`
+(28 per arm) also passed, and both are far larger samples of the same opening economy than
+`survive`'s five houses.
+
+*And one observation for a future item, deliberately NOT acted on here:* the pooled tally now reads
+**3 failures in 35 runs (9%), standing min 0 / median 3 / max 5.** The check's own false-failure
+table puts 9% at a true standing rate near 55-65%, not the 70% its bar was derived from. Re-deriving
+that bar from 35 runs is real work and #127's rule says to do it from the distribution — but doing
+it in the release whose run just failed would be nudging a threshold to pass, which is the same
+rule's other half. It goes on the board, not into this diff.
+
 **The rule lives in `workNeed` rather than inside `agenda`, because `bulk` caught the first draft
 growing that function past its cap** — and the right answer to that check is a named concept, not a
 bigger allowance. `agenda` ends this release at 198 lines against its limit of 200, where it began at
