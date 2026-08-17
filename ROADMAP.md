@@ -1392,7 +1392,8 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.36.0 — #145 closed: the late game asks 51% more and shows none of it,
+**Shipped and verified:** v3.37.0 — #143 refuted as opened, its one-word residue fixed (a lesson
+whose first sentence was false on 33% of the weeks it could be read). Carries #145 with it. v3.36.0 — #145 closed: the late game asks 51% more and shows none of it,
 and the armoury drain that ran 308 weeks unseen now re-announces as it worsens. v3.35.0 — #144 closed: one agenda item had been exempt from ageing for
 the whole run (shown on 100.0% of the weeks it existed, now 24.8%). v3.34.0 before it. **#131's measurement question is closed on top of it — the
 97.7% is frequency-weighted and cannot be moved by rare content, so it is retired as a target.
@@ -1521,13 +1522,20 @@ Swept with `coverage`, `handle.mjs`, `dark.mjs`, a re-run of `late.mjs`, and two
 item below carries a figure and a sample size; where a number is an OBSERVATION that has not been
 asked as its own question, it says so. Ranked by player impact over risk.
 
-**#143 — one dead man is one agenda line, and a late house has fourteen of them.** `ludus.jsx:2936`
-raises `${m.name} is not buried properly` inside a loop over the unburied, and `markUnburied` keeps
-the last fourteen for ever. Measured over 10 houses × 246 year-12 weeks, it is the top item of the
-late block at **104% of weeks** — more than one line per week, on average, from one system. Every
-other late item is competing with a queue that regenerates. *Falsifies if:* the shown block already
-collapses them (the `week` check's age rule may hide all but the newest) — in which case this is a
-census artifact and #144 absorbs it.
+**#143 — REFUTED as opened, and the residue is one word.** I read "104% of year-12 weeks" as
+fourteen lines crowding the block. It is ~1.04 lines a WEEK, and the agenda loop runs over
+`unhonoured(d)`, which windows to the six weeks a burial is decidable — so the fourteen `markUnburied`
+keeps never reach the agenda. Re-measured on the current build, 16 houses × 420 weeks: burial lines
+are **1.15 in the list and 0.76 shown per late week, 16% of the block**, and the share is FLAT across
+eras (15% / 11% / 14% / 16%), so it is not a late-game crowding problem at all.
+**What survived is smaller and real:** the `munera` LESSON's door was `(d.unburied||[]).some(m=>!m.done)`
+with no window — the last unwindowed reader of that list, in the very release note that claimed to
+have fixed the last of them. Open on **97% of weeks**, and on **33% of those (620 of 1,857) the six
+weeks its own first sentence promises were already gone.** Windowed on `unhonoured`, the door opens
+on 65% of weeks and its claim is true on **100%** of them, false on 0. Shipped in v3.37.0.
+*And a claim of mine died on the way:* I measured that lesson holding the villa slot on 1,276 weeks
+and starving `acclaim` and `dynasty` to zero. That was my probe — `lessonFor` skips anything in
+`d.flags.learned` and I never marked a lesson read, so I had modelled a player who reads nothing.
 
 **#144 — CLOSED in v3.35.0, and it was a live game fault rather than the census artifact it was
 opened as.** `agKey` normalises digits and nothing else, so the rope's line took a new key every time
@@ -2263,6 +2271,39 @@ territory where the measuring is harder than the thing measured. That is a reaso
 answer is a decision over items whose answer is another number.
 
 ## Changelog (shipped)
+
+### v3.37.0 — #143: the last unwindowed reader, in the note that said there were none left
+
+#143 was opened off my own misreading. The audit recorded the burial line at "104% of year-12 weeks"
+and I wrote it up as fourteen lines crowding the block. It is **~1.04 lines a week**, and the agenda
+loop runs over `unhonoured(d)` — windowed to the six weeks a burial can still be decided — so the
+fourteen `markUnburied` keeps never reach the agenda at all. Re-measured, 16 houses × 420 weeks:
+
+    burial lines        in list/wk   shown/wk   share of the shown block
+    year 1-3                  1.03       0.70              15%
+    year 7-12                 0.96       0.63              14%
+    year 12+                  1.15       0.76              16%
+
+Flat across every era. Not a late-game crowding problem, and the item as written is refuted.
+
+**What survived is one word.** The `munera` lesson's door read `(d.unburied||[]).some(m=>!m.done)` —
+no window — which is the exact pattern v3.22.0's note beside `weekWeight` says was "the only reader
+of that list without one". It was not the only one. `markUnburied` keeps fourteen men for ever and
+only `holdMunera` clears one, inside the six weeks, so the door stood open on **97% of weeks** — and
+on **33% of those (620 of 1,857) the six weeks the lesson's own first sentence promises were already
+gone.** A note whose opening claim is false a third of the time it can be read is the `near`/`words`
+fault exactly. Windowed on the game's own `unhonoured`: the door opens on 65% of weeks and its claim
+is true on **100% of them, false on 0.**
+
+**And a finding of mine died on the way, which is the part worth keeping.** I measured that lesson
+holding the villa tab's lesson slot on 1,276 of 1,909 weeks and starving `acclaim` and `dynasty` to
+zero — a dramatic queue-starvation result in a class this project has documented. It was my probe.
+`lessonFor` skips anything in `d.flags.learned`, `learned` is written by an explicit `read()` at
+ludus.jsx:19891, and my probe never marked a lesson read — so I had measured a player who reads
+nothing and reported it as the game. Caught before it was written up, by asking who sets the flag.
+
+This release also carries **#145** (below), because the #143 fix landed after that release's suite had
+started and a build the suite has not seen does not get promoted.
 
 ### v3.36.0 — #145: the late game asks more and shows none of it, and one drain ran 308 weeks unseen
 

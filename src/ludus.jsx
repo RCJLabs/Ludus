@@ -8638,7 +8638,15 @@ const LESSONS = [
     text:"Three denarii a week per man puts the house into a burial society. It never wins you a bout. What it does is halve what a death costs the cells, because men who know what happens to them afterward take a burial differently. It is the easiest line to cut in a bad month, and stopping it after men have gone into the ground under it costs double what stopping it before does." },
   { id:"munera", tab:"villa", title:"Games For Your Own Dead",
     done:d=>(d.honoured||0)>0,
-    when:d=>(d.unburied||[]).some(m=>!m.done),
+    /* ---- #143: THE DOOR MUST BE THE WINDOW THE TEXT PROMISES ----
+       This read `(d.unburied||[]).some(m=>!m.done)` — the ONE reader of that list with no window
+       left, and the v3.22.0 note beside `weekWeight` claimed to have fixed the last of them.
+       `markUnburied` keeps fourteen men for ever and only `holdMunera` clears one, inside the six
+       weeks, so the door stood open on 97% of weeks — and on 33% of those the six weeks this very
+       text promises were already gone (12 houses x 420w: open 1,857 weeks, decidable on 1,237,
+       expired on 620). A lesson whose first sentence is false a third of the time it can be read is
+       the `near`/`words` fault exactly. `unhonoured` is the game's own windowed reader. */
+    when:d=>unhonoured(d).some(m=>!m.done),
     text:"Funeral games are what a rich man's sons stage at his tomb. Nobody has ever staged them for a gladiator. You have six weeks to burn a fire at the gate with his name said aloud, or put on a full card at your own expense — or do nothing, which costs no money and which the men notice more than either of the others." },
 
   /* ---- AND ONE STARVED BY THE QUEUE IN FRONT OF IT ----
