@@ -1513,6 +1513,103 @@ The hardest fact from last session still stands, verified on four seeds, **288 h
 exceptions**: every room, all ~15 feats, the doctore, the doctrine, the collegium, the aedile and the
 wife were gained hundreds of times between them and lost **zero** times.
 
+### THE AUDIT — ten items, and the four candidates it killed on the way
+
+Swept with `coverage`, `handle.mjs`, `dark.mjs`, a re-run of `late.mjs`, and two fresh probes. Every
+item below carries a figure and a sample size; where a number is an OBSERVATION that has not been
+asked as its own question, it says so. Ranked by player impact over risk.
+
+**#143 — one dead man is one agenda line, and a late house has fourteen of them.** `ludus.jsx:2936`
+raises `${m.name} is not buried properly` inside a loop over the unburied, and `markUnburied` keeps
+the last fourteen for ever. Measured over 10 houses × 246 year-12 weeks, it is the top item of the
+late block at **104% of weeks** — more than one line per week, on average, from one system. Every
+other late item is competing with a queue that regenerates. *Falsifies if:* the shown block already
+collapses them (the `week` check's age rule may hide all but the newest) — in which case this is a
+census artifact and #144 absorbs it.
+
+**#144 — one item is four labels because the venue's name is inside it.** `ludus.jsx:2975` writes
+`${men.length} at the rope in ${pitOf(d).name}`, and `agKey` normalises digits but not names. The
+same pit item reads as four separate perennial labels at **25% / 24% / 21% / 20% of late weeks** —
+one item on roughly 90% of weeks, counted as four. **This inflates every label census this project
+has run, #131's included.** *Falsifies if:* collapsing them moves the year-12 perennial share by
+less than a point, which would make it a tidiness fix rather than a measurement fix.
+
+**#145 — the game asks a year-twelve house exactly as much as a week-one house.** Urgent items per
+week, 10 houses × 1,758 weeks: **year 1-3 0.96 · 3-7 1.07 · 7-12 1.07 · 12+ 0.96.** Flat. A great
+house has five rooms, four patrons, a doctrine and a collegium and its week is no more demanding
+than a founding house's. This is #131's headline restated on a statistic that is NOT
+frequency-weighted, and it is the better version of it. *Falsifies if:* urgency was never meant to
+scale and the intended curve is flat — a design answer, but one nobody has stated.
+
+**#146 — the reference player cannot field a man on one week in twelve.** 159 of 1,758 weeks refused,
+**137 of them "nobody fit"** (7.8%). A house that cannot fight does not earn, and the ledger is what
+kills 42% of houses. Whether that is the rope under-managing fatigue or the yard being too small to
+absorb injuries is exactly the split `yard.mjs` was built for — it already measures the buy gate
+blocked on 56-63% of late want-weeks by the rope's own price bar. *Falsifies if:* a policy arm that
+buys more aggressively drops the refusal rate without shortening lives, which makes it the rope's
+fault and not the game's.
+
+**#147 — two endings are 85% of all outcomes and six designed endings never fire.** 60 houses × 420
+weeks on the current build: **ruin 26 (43%) · debt 25 (42%)** · alive 5 · banned 2 · emptied 1 ·
+rebellion 1. `oldAge`, `closed`, `triumph`, `foreclosed` and the rest read zero — and `oldAge` is the
+notable one, because the rope NOW names heirs, so the system it needs is live. The roadmap's older
+"seven of twelve endings" note predates that step. *Falsifies if:* the missing endings need player
+choices the rope declines by policy rather than gates it cannot reach — the `feats` lesson exactly,
+and the cheap test is an arm that deliberately pursues each.
+
+**#148 — the five openings differ by twenty-five points of survival and nothing says so.** Alive at
+week 90, pooled 3 seeds × 24 houses: **veterans 63 of 72 · clean 60 · champion 58 · castoffs 45 ·
+inherited 38.** #139 refuted the claim that the tags are ordered wrongly, but it did not ask whether
+that SPREAD is intended: a player picking `inherited` takes a 35% relative cut in survival against
+`veterans`, and the only signal is the word "Hard". *Falsifies if:* the spread is the point and the
+tags carry it — in which case the item is to price the tags against the measured spread, which is
+smaller work than retuning.
+
+**#149 — four player systems the reference player has never once exercised.** Gate open on **0 of
+1,100 house-weeks** (8 houses × 320): `repay`, `applyKit`, `dropKit`, `breakPlan`. Each is a fact
+about the rope rather than the game — it never borrows, never applies a saved kit (though `saveKit`'s
+gate is open on 93% of weeks), never runs a season in-run. **That is #138's exact shape**, and #138
+found a real fault behind it. *Falsifies if:* driving each one finds them all correct, which is still
+worth the coverage — `wall` cost a release and refuted both its hypotheses.
+
+**#150 — a third of paid gambit attempts do nothing.** `runGambit` returned null on **348 of 1,100**
+calls (32%) while changing the save on the other 752. A gambit that is refused and a gambit that runs
+and fails are different events and this probe cannot tell them apart. *Falsifies if:* every null is
+the affordability guard, in which case the item is a UI one — the button should say why.
+
+**#151 — the top of the standing ladder is held by nobody.** Census rungs 5, 6 and 7 were held by
+**0 of 37 late houses** across four seeds (`catalogue.mjs`). This is re-confirmation rather than
+discovery — `census`'s own head records it and the threshold design was the accepted outcome — but
+it is now measured on the current build with the works step available, and it is the largest block of
+priced-and-unreachable content left. *Falsifies if:* a deliberately banking arm reaches rung 5, which
+`estate.mjs`'s `miser` arm nearly did (72,752d held, blocked on FAVOUR rather than coin).
+
+**#152 — the check suite reaches 424 handle functions and no single check reaches more than 50.**
+`coverage` reports the best-covered checks at `roads` 50, `policy` 49, `quiet` 48 of 424, and nine
+checks at 0 because they drive the real UI through module bindings the counter cannot see. The
+handle has grown from 257 to 424 entries during this project. *Falsifies if:* the dark set is mostly
+readers and helpers that no check would sensibly call — the `wall` rule applies: **group the dark
+functions before choosing, because a cluster is a system nobody is watching and a lone name is a
+reader somebody will call next week.**
+
+#### The four candidates this audit KILLED, which is the part worth reading
+
+Each of these looked like an item and was measured before it was written up. The ratio is the point.
+
+- **"`clearWatch` is a live button that does nothing" — dead.** `dark.mjs` reads it open on 1,021
+  weeks and inert on 926 of them (91%), which is a striking pair. It returns false when
+  `!g.watchedBy`, the probe's fixture picks men who are not being watched, and the UI renders the
+  button only inside the "Somebody is watching him" block. Fixture artifact.
+- **"Quiet weeks have regressed to zero" — dead, and it was my bug.** A fresh probe read 0 quiet
+  weeks of 10,800 against v3.22.0's documented 4.1%, which would have meant a shipped fix had
+  regressed. `weekWeight` returns `{kind, n}` and I compared it to `0`. Read correctly it is
+  **449 of 10,800 = 4.2%**, matching the documented figure — the fix is holding.
+- **"The four never-open actions are dead content" — half dead.** They are dead to the REFERENCE
+  PLAYER, not to the game, which `dark.mjs`'s own head warns about in those words. Kept as #149 with
+  the honest framing rather than dropped.
+- **"`handle.mjs` will find actions off the handle" — nothing to find.** 0 of them. The v3.23.0
+  sweep plus `actions` deriving its list has held for eleven releases.
+
 ### The seams, settled — five asked as their own questions, two killed, three became items
 
 The last session left five loose ends marked "observations, not findings" and this session's whole job
