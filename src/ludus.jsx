@@ -707,7 +707,24 @@ const rackCap   = d => 8 + bLevel(d,"armamentarium")*7;        // 8 / 15 / 22 / 
 const rackUsed  = d => Object.entries(d.gear||{}).reduce((n,[id,c])=> n + (wears(GEAR[id])?(c||0):0), 0);
 const rackOver  = d => Math.max(0, rackUsed(d) - rackCap(d));
 const rackStrain= d => { const o = rackOver(d); return o ? 1 + Math.min(0.75, o*0.07) : 1; };
-const rackRent  = d => rackOver(d) * 4;                         // a week of it, in coin
+const rackRent  = d => rackOver(d) * 4;
+/* ---- #145: A CONDITION THAT IS GETTING WORSE IS NEWS AGAIN ----
+   `agKey` flattens every digit to "#", so "1 past what it holds" and "22 past" were one key and one
+   age — and BOTH of the game's attention channels filter on novelty (`agendaTop` on age, the tab
+   mark on `fresh`, which its own comment says was made the whole test so a standing item could not
+   keep the badge lit). So this was announced for three weeks and then went silent for the rest of
+   the run, however far it ran and however much it cost.
+   MEASURED, 16 houses x 420 weeks: a year-12 house is over its racks on 86% of weeks, by 22 pieces,
+   wearing everything 1.71x faster and paying 88d a week for it, in unbroken runs of up to 308 WEEKS
+   — and it was SHOWN the line on 0.5% of its late weeks. That is the largest invisible drain this
+   project has measured.
+   Banding the key re-announces the thing when it materially worsens and keeps it quiet while it
+   merely persists: 0.5% -> 6.3% of late weeks, which is news rather than nagging. This is #144's
+   mechanism used the other way round — there a churning sentence needed a stable identity, here a
+   flattened number needed a moving one. */
+const rackKey   = d => { const o = rackOver(d);
+  return "rack:" + (o >= 40 ? 5 : o >= 20 ? 4 : o >= 10 ? 3 : o >= 5 ? 2 : 1); };
+                         // a week of it, in coin
 const rackWord  = d => { const u = rackUsed(d), c = rackCap(d);
   return u > c ? "overfull" : u >= c-1 ? "full" : u >= c*0.7 ? "filling" : "room enough"; };
 /* what a piece fetches when it goes back out the door */
@@ -3045,7 +3062,8 @@ function agenda(d){
   if(d.city && stayWeeks(d) >= 10)
     add(2, "arena", `${stayWeeks(d)} weeks at ${CITIES[d.city].name}`,
       "Capua is forgetting the house — patrons cool, wants go unasked, and the town has seen the bill");
-  if(rackOver(d)) add(2, "armory", `The armoury is ${rackOver(d)} past what it holds`, `${rackRent(d)}d a week and everything wearing faster`);
+  if(rackOver(d)) add(2, "armory", `The armoury is ${rackOver(d)} past what it holds`,   /* #145: `rackKey` bands it */
+    `${rackRent(d)}d a week and everything wearing ${Math.round((rackStrain(d)-1)*100)}% faster`, rackKey(d));
   if((d.deadSteel||[]).length) add(1, "armory", `${d.deadSteel.length} piece${d.deadSteel.length===1?"":"s"} came back off a body`, "somebody will have to carry it");
   if((d.market||[]).length && d.gold > 500 && activeG(d).length < 6)
     add(1, "market", "There are men on the block", `${d.market.length} standing`);

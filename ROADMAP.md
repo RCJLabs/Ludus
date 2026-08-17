@@ -1392,7 +1392,8 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.35.0 — #144 closed: one agenda item had been exempt from ageing for
+**Shipped and verified:** v3.36.0 — #145 closed: the late game asks 51% more and shows none of it,
+and the armoury drain that ran 308 weeks unseen now re-announces as it worsens. v3.35.0 — #144 closed: one agenda item had been exempt from ageing for
 the whole run (shown on 100.0% of the weeks it existed, now 24.8%). v3.34.0 before it. **#131's measurement question is closed on top of it — the
 97.7% is frequency-weighted and cannot be moved by rare content, so it is retired as a target.
 #139 is refuted too — measurement only, no game change
@@ -1537,12 +1538,13 @@ Measured over 12 houses x 320 weeks: the item stood in the agenda on 1,493 weeks
 17,645 readings and ran as high as 222. Fixed by letting an item declare a stable `key`: shown falls
 to **370 of 1,493 (24.8%)** and its age now runs to 67. Full write-up in the changelog.
 
-**#145 — the game asks a year-twelve house exactly as much as a week-one house.** Urgent items per
-week, 10 houses × 1,758 weeks: **year 1-3 0.96 · 3-7 1.07 · 7-12 1.07 · 12+ 0.96.** Flat. A great
-house has five rooms, four patrons, a doctrine and a collegium and its week is no more demanding
-than a founding house's. This is #131's headline restated on a statistic that is NOT
-frequency-weighted, and it is the better version of it. *Falsifies if:* urgency was never meant to
-scale and the intended curve is flat — a design answer, but one nobody has stated.
+**#145 — CLOSED in v3.36.0, and the item as opened was WRONG.** Re-measured on the current build the
+late game asks a great deal MORE, not the same: the whole list grows **7.85 → 11.85 items a week**
+(+51%) and urgency-2 items **double, 2.45 → 5.14**. What is flat is the SHOWN block — 4.70 / 4.61 /
+4.62 / 4.59 across the four eras — because both of the game's attention channels filter on novelty,
+and the late game's added demand all lands at urgency 2. Of a late house's shown slots, **75% are
+there for being NEW and only 3% for being urgent.** Full write-up in the changelog, including the
+costed exemplar it found. (16 houses × 420 weeks.)
 
 **#146 — the reference player cannot field a man on one week in twelve.** 159 of 1,758 weeks refused,
 **137 of them "nobody fit"** (7.8%). A house that cannot fight does not earn, and the ledger is what
@@ -2261,6 +2263,50 @@ territory where the measuring is harder than the thing measured. That is a reaso
 answer is a decision over items whose answer is another number.
 
 ## Changelog (shipped)
+
+### v3.36.0 — #145: the late game asks more and shows none of it, and one drain ran 308 weeks unseen
+
+The audit opened #145 as *"the game asks a year-twelve house exactly as much as a week-one house"*.
+Re-measured on the current build — #139's rule, and #144 had just changed what the agenda shows — the
+premise is **wrong in the interesting direction**:
+
+    16 houses x 420w     whole list   SHOWN   urgency3   urgency2   urgency1
+    year 1-3                   7.85    4.70       0.96       2.45       4.45
+    year 3-7                  10.82    4.61       1.14       3.80       5.88
+    year 7-12                 11.86    4.62       1.19       4.56       6.11
+    year 12+                  11.85    4.59       1.14       5.14       5.58
+
+The late game asks **51% more** and the shown block does not move a hair. The reason is that the
+extra demand is all at urgency 2, and **both** of the game's "look here" channels filter on novelty:
+`agendaTop` keeps `urgency>=3 || age<=3`, and the tab mark's own code is `tab !== k && m.fresh`, with
+a comment saying `m.urg > 0` was removed precisely so a standing item could not keep the badge lit.
+Of a late house's shown slots, **75% are there for being new and 3% for being urgent.**
+
+**What that filters out of a year-twelve house, per week it is carried:** the armoury over capacity
+86% · a rival holding the bay 55% · men who have STOPPED ASKING for what they want 38% · the master
+smiths open 36% · a doctore offering 28% · patrons fallen below Rome's ask 14%.
+
+**And the first of those is a costed drain that ran for three hundred weeks unseen.**
+
+    over its racks   mean over   wear strain   rent/wk   longest unbroken run   SHOWN
+    year 1-3    2%        1.0        1.07x        4d              11w
+    year 7-12  70%       12.0        1.64x       48d             150w
+    year 12+   86%       22.1        1.71x       88d             308w           0.5% of late weeks
+
+A year-twelve house pays **88 denarii a week** — about a quarter of its whole weekly bill — and wears
+every piece of steel **71% faster**, for runs of up to **308 consecutive weeks**, and is shown the
+line on **one late week in two hundred**. It was told for three weeks, once, when the condition was
+one piece over.
+
+**The cause is #144's normalisation, inverted.** `agKey` flattens every digit to `#`, so "1 past what
+it holds" and "22 past" are one key and one age. #144 gave a churning sentence a stable identity; this
+gives a flattened number a moving one — `rackKey` bands the magnitude, so the item is news again when
+it materially worsens and silent while it merely persists. Measured both ways on the same instrument:
+**0.5% → 6.3% of late weeks shown.** News, not nagging.
+
+The sub-line now carries the strain it is costing (`71% faster`) rather than "everything wearing
+faster", because the number is the argument. And `agenda` stays inside `bulk`'s 200-line cap — the
+explanation lives on `rackKey`, the same call `bulk` forced on #144's `workNeed`.
 
 ### v3.35.0 — #144: one agenda item was exempt from ageing for the whole run
 
