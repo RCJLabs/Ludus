@@ -1392,7 +1392,8 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.34.0. **#131's measurement question is closed on top of it — the
+**Shipped and verified:** v3.35.0 — #144 closed: one agenda item had been exempt from ageing for
+the whole run (shown on 100.0% of the weeks it existed, now 24.8%). v3.34.0 before it. **#131's measurement question is closed on top of it — the
 97.7% is frequency-weighted and cannot be moved by rare content, so it is retired as a target.
 #139 is refuted too — measurement only, no game change
 and no bump**: the "Fragile is safest" finding does not reproduce on the current build and is not
@@ -1527,12 +1528,14 @@ other late item is competing with a queue that regenerates. *Falsifies if:* the 
 collapses them (the `week` check's age rule may hide all but the newest) — in which case this is a
 census artifact and #144 absorbs it.
 
-**#144 — one item is four labels because the venue's name is inside it.** `ludus.jsx:2975` writes
-`${men.length} at the rope in ${pitOf(d).name}`, and `agKey` normalises digits but not names. The
-same pit item reads as four separate perennial labels at **25% / 24% / 21% / 20% of late weeks** —
-one item on roughly 90% of weeks, counted as four. **This inflates every label census this project
-has run, #131's included.** *Falsifies if:* collapsing them moves the year-12 perennial share by
-less than a point, which would make it a tidiness fix rather than a measurement fix.
+**#144 — CLOSED in v3.35.0, and it was a live game fault rather than the census artifact it was
+opened as.** `agKey` normalises digits and nothing else, so the rope's line took a new key every time
+its venue rotated — and a new key is an age of 0, which `agendaTop` shows. `PIT_MOVE` is **4** and
+`AG_FRESH` is **3**, so its age ran 0,1,2,3 and reset before it could ever become furniture.
+Measured over 12 houses x 320 weeks: the item stood in the agenda on 1,493 weeks and was **SHOWN on
+1,493 of them — 100.0%**, age never once above 3, while every other item read age>3 on 9,431 of
+17,645 readings and ran as high as 222. Fixed by letting an item declare a stable `key`: shown falls
+to **370 of 1,493 (24.8%)** and its age now runs to 67. Full write-up in the changelog.
 
 **#145 — the game asks a year-twelve house exactly as much as a week-one house.** Urgent items per
 week, 10 houses × 1,758 weeks: **year 1-3 0.96 · 3-7 1.07 · 7-12 1.07 · 12+ 0.96.** Flat. A great
@@ -2258,6 +2261,36 @@ territory where the measuring is harder than the thing measured. That is a reaso
 answer is a decision over items whose answer is another number.
 
 ## Changelog (shipped)
+
+### v3.35.0 — #144: one agenda item was exempt from ageing for the whole run
+
+The audit opened this as a census artifact — one pit item counted as four labels because the venue's
+name is inside it. It is a live game fault, and the mechanism is an exact interaction between two
+constants four apart.
+
+`agKey` is `replace(/\d+/g,"#").slice(0,48)`: it normalises digits and nothing else. The rope's line
+is `${men.length} at the rope in ${pitOf(d).name}`, the rope moves every **PIT_MOVE = 4** weeks, and
+a new key is an age of 0. `agendaTop` keeps anything with `age <= AG_FRESH`, which is **3**. So the
+item's age ran 0,1,2,3 and reset one week before it could ever pass the bar.
+
+    12 houses x 320 weeks          in the agenda   SHOWN      age above 3
+    the rope's line, before             1,493      1,493  =100.0%      never
+    the rope's line, after              1,493        370  = 24.8%      runs to 67
+    every other agenda item                  —          —        9,431 of 17,645 readings, max 222
+
+**An item's identity is not its sentence.** `add()` takes an optional stable `key` now, `agId(a)` is
+that key where it exists and the old label-derived one where it does not, and the rope declares
+`"pit"`. Nothing else changes: every item without a key ages exactly as before.
+
+**The check that should have caught this had the right bar and the wrong key.** `week` holds
+MAX_STANDING — no single label may be in the shown block on more than 34% of weeks — and the fault
+walked past it by splitting into four labels of ~25% each. **The fault evaded the bar by the same
+mechanism that caused it.** Keying that tally by identity was the obvious repair and it is NOT
+sufficient: with no declared key `agId` falls back to the sentence, the four labels are four again,
+and the check passes — verified, not assumed. So the guard is a different statistic. A real item is
+new once and then ages; one whose identity rotates keeps coming back new. Healthy items read **3-5%**
+new-again over the weeks they appear; the rope's line read **49-58%**. The bar is 20%, and the
+failure text names the fix. Verified both ways: it fails on the unkeyed build and passes on this one.
 
 ### v3.34.0 — #142: the bar moves on evidence, and the calibration found the better fault
 

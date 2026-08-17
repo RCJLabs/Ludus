@@ -41,13 +41,14 @@ export const describe = "the week's work and the tabs' sections both open on wha
 
 /* the bars sit a long way from the measured values, because this is a shape and not a threshold */
 const MAX_SHOWN   = 5.0;   // mean items in the shown block; measured 7+ on 54% of weeks BEFORE the change
-const MAX_STANDING = 0.34; // the share of weeks any ONE label may be in the shown block
+const MAX_STANDING = 0.34;
+const MAX_FRESH_AGAIN = 0.20;  /* #144 — see the note at the bar */ // the share of weeks any ONE label may be in the shown block
 
 export async function run({ p }){
   if(!await hasHandle(p))
     return { pass:false, why:"no test handle — build with `node build.js --test`", lines:[] };
 
-  const out = await p.evaluate(([MAX_SHOWN, MAX_STANDING])=>{
+  const out = await p.evaluate(([MAX_SHOWN, MAX_STANDING, MAX_FRESH_AGAIN])=>{
     const A = window.__LVDVS, R = window.__ROPE;
     const bad = [], lines = [];
     for(const fn of ["agendaRanked","agendaTop","agendaTick","agAge","agKey"])
@@ -92,7 +93,7 @@ export async function run({ p }){
     {
       const HOUSES = 6, WEEKS = 200;
       let weeks = 0, shownSum = 0, allSum = 0, emptyShown = 0, sevenShown = 0;
-      const inShown = {}, everSeen = {};
+      const inShown = {}, everSeen = {}, seenN = {}, freshN = {};
       for(let h=0; h<HOUSES; h++){
         const d = A.newGameState("Ws"+h, "clean", `WEEK-SHAPE-${h}`, null);
         for(let w=0; w<WEEKS; w++){
@@ -102,7 +103,23 @@ export async function run({ p }){
           weeks++; allSum += rank.length; shownSum += top.length;
           if(!top.length) emptyShown++;
           if(top.length >= 7) sevenShown++;
-          for(const a of top) inShown[A.agKey(a.label)] = (inShown[A.agKey(a.label)]||0)+1;
+          /* ---- #144: BY IDENTITY, NOT BY SENTENCE ----
+             This was keyed on `agKey(a.label)` and that is how the fault it exists to catch walked
+             past it. The rope's line carries the venue, the venue rotates every PIT_MOVE=4 weeks, so
+             one permanent item split itself into four labels at ~25% each — every one of them under
+             this bar of 34%, while the ITEM sat in the shown block on 100.0% of the 1,493 weeks it
+             appeared (12 houses x 320w). A bar on the sentence cannot see an item that changes its
+             sentence. `agId` is the item's declared key where it has one. */
+          for(const a of top){ const k = A.agId ? A.agId(a) : A.agKey(a.label);
+            inShown[k] = (inShown[k]||0)+1; }
+          /* ---- #144, THE GUARD THAT ACTUALLY CATCHES IT ----
+             Grouping by identity is not enough: an item that SHOULD declare a key and does not falls
+             back to its sentence and hides as several labels, each under the standing bar. The
+             detectable signature of a rotating key is different — the item keeps reading NEW. A real
+             item is new once and then ages; the rope's line read age 0 on 468 of the 1,493 weeks it
+             appeared (31%) because its venue rotated every 4 weeks against an AG_FRESH of 3. */
+          for(const a of rank){ const k = A.agId ? A.agId(a) : A.agKey(a.label);
+            seenN[k] = (seenN[k]||0)+1; if((a.age||0) <= 0) freshN[k] = (freshN[k]||0)+1; }
           for(const a of rank) everSeen[A.agKey(a.label)] = (everSeen[A.agKey(a.label)]||0)+1;
           R.lanista(d);
           d.pendingEvent = null;
@@ -119,6 +136,20 @@ export async function run({ p }){
           + `seven or more on 54% of weeks and five labels were lit on 41-62% of every week a house `
           + `lives — if the shown block is that long again then novelty has stopped selecting and the `
           + `wallpaper has simply moved to the top of the tab`);
+
+      { const rows = Object.entries(seenN).filter(([,n])=>n >= 25)
+          .map(([k,n])=>[k, (freshN[k]||0)/n, n]).sort((a,b)=>b[1]-a[1]).slice(0, 5);
+        lines.push(`most often NEW AGAIN (of the weeks it is in the list): `
+          + (rows.map(([k,r,n])=>`"${k}" ${(r*100).toFixed(0)}% of ${n}`).join(" · ") || "nothing"));
+        /* healthy items read 3-5% here; the rope's rotating key read 31%. 20% sits clear of both. */
+        const churn = rows.filter(([,r])=>r > MAX_FRESH_AGAIN);
+        if(churn.length)
+          bad.push(`${churn.map(([k,r,n])=>`"${k}" reads NEW on ${(r*100).toFixed(0)}% of the ${n} weeks it is in the list`).join("; ")} `
+            + `[bar ${Math.round(MAX_FRESH_AGAIN*100)}%; healthy items read 3-5%]. An item is new once and then ages. `
+            + `One that keeps coming back new has an identity that is rotating under it — #144: the rope's `
+            + `line carried its venue, the venue moved every 4 weeks against an AG_FRESH of 3, and the item `
+            + `sat in the shown block on 100% of the weeks it existed while hiding from the standing bar as `
+            + `four labels of ~25% each. Give it a stable \`key\` in \`add()\``); }
 
       const worst = Object.entries(inShown).sort((a,b)=>b[1]-a[1]).slice(0, 6);
       lines.push(`most often in the shown block: ` + (worst.map(([k,n])=>`"${k}" ${(n/weeks*100).toFixed(0)}%`).join(" · ") || "nothing"));
@@ -198,7 +229,7 @@ export async function run({ p }){
     }
 
     return { bad, lines };
-  }, [MAX_SHOWN, MAX_STANDING]);
+  }, [MAX_SHOWN, MAX_STANDING, MAX_FRESH_AGAIN]);
 
   return { pass: out.bad.length === 0, why: out.bad.slice(0,3).join("; ") || null, lines: out.lines };
 }

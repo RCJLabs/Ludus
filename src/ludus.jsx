@@ -2833,9 +2833,22 @@ function tabMarks(d){
    and they are still the reason a player eventually goes and buys a doctore.
    The label is normalised because half of them carry a number that changes week to week. */
 const agKey = s => String(s||"").replace(/\d+/g, "#").slice(0, 48);
-const agAge = (d, label) => { const m = (d.flags && d.flags.agSeen) || null;
-  const w = m ? m[agKey(label)] : null;
+/* ---- #144: AN ITEM'S IDENTITY IS NOT ITS SENTENCE ----
+   `agKey` normalises digits and nothing else, so a label carrying a rotating proper noun gets a NEW
+   key every time the noun rotates — and a new key is an age of 0, which `agendaTop` reads as new and
+   always shows. The rope is the case that proves it: `PIT_MOVE` is 4 and `AG_FRESH` is 3, so the pit
+   line's age ran 0,1,2,3 and reset before it could ever pass the freshness bar. MEASURED over 12
+   houses x 320 weeks: it stood in the agenda on 1,493 weeks and was SHOWN on 1,493 of them — 100.0%,
+   with its age never once above 3 — while every other item read age>3 on 9,431 of 17,645 readings
+   and ran as high as 222. One permanent item, exempt for the whole run from the rule the age system
+   exists to enforce.
+   So an item may declare a stable `key`. Where it does, that is its identity for ageing and the
+   sentence is free to change; where it does not, this is exactly the old behaviour. */
+const agId = a => (a && a.key) || agKey(a && a.label);
+const agAgeBy = (d, id) => { const m = (d.flags && d.flags.agSeen) || null;
+  const w = m ? m[id] : null;
   return w == null ? 0 : Math.max(0, d.week - w); };
+const agAge = (d, label) => agAgeBy(d, agKey(label));
 /* run once a week: anything still being asked for keeps its first-seen week, anything answered forgets */
 function agendaTick(d){
   if(!d.flags) d.flags = {};
@@ -2843,7 +2856,7 @@ function agendaTick(d){
   const now = {};
   let items = [];
   try { items = agenda(d) || []; } catch(e){ items = []; }
-  for(const a of items){ const k = agKey(a.label);
+  for(const a of items){ const k = agId(a);
     now[k] = was[k] != null ? was[k] : d.week; }
   d.flags.agSeen = now;
 }
@@ -2851,7 +2864,7 @@ function agendaTick(d){
 function agendaRanked(d){
   let items = [];
   try { items = agenda(d) || []; } catch(e){ items = []; }
-  return items.map(a=>Object.assign({}, a, { age: agAge(d, a.label) }))
+  return items.map(a=>Object.assign({}, a, { age: agAgeBy(d, agId(a)) }))
     .sort((x,y)=> (y.urgency - x.urgency) || (x.age - y.age));
 }
 /* what a player is shown before he asks for the rest: everything urgent, and everything new */
@@ -2862,7 +2875,7 @@ const agWord = age => age <= 0 ? "new this week" : age <= AG_FRESH ? `${age} wee
 
 function agenda(d){
   const A = [];
-  const add = (urgency, tab, label, sub) => A.push({ urgency, tab, label:herOwn(d,label), sub:herOwn(d,sub) });
+  const add = (urgency, tab, label, sub, key) => A.push({ urgency, tab, label:herOwn(d,label), sub:herOwn(d,sub), key });
   if(d.pendingEvent) add(3, "ludus", d.pendingEvent.title, "a decision is waiting");
   if(d.succession) add(3, "ludus", "The house has no head", "somebody must take it up");
   /* anything with a date on it */
@@ -2973,7 +2986,8 @@ function agenda(d){
     if(men.length && free.length && !d.city && !d.travel && !d.rome)
       add(d.week <= 12 ? 2 : 1, "arena",
         `${men.length} at the rope in ${pitOf(d).name}`,
-        `${men.map(f=>f.name).join(", ")} — no festival needed, and ${free.length===1?"one man is":free.length+" men are"} free`); }
+        `${men.map(f=>f.name).join(", ")} — no festival needed, and ${free.length===1?"one man is":free.length+" men are"} free`,
+        "pit"); }
   agendaSquare(d, add);
   if(d.unrest >= 70) add(2, "ludus", "The cells are close to fire", unrestWord(d.unrest));
   if(d.lanista && d.lanista.health < 30 && !d.heir) add(2, "ludus", "You are failing and have named nobody", "the house dies with you");
@@ -25269,6 +25283,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     agenda, URG, agendaGods, agendaCan, agendaSquare,
     /* the week's work as the panel ranks it: newest first, and what is shown before you ask */
     agendaRanked, agendaTop, agendaTick, agAge, agKey, agWord, AG_FRESH,
+    /* #144: an item's identity for ageing, which is its `key` where it declares one */
+    agId, agAgeBy,
     /* which sections have something in them this week — see the note over SECT_LIVE */
     SECT_LIVE, SECT_KEYS, sectLive, sectFresh, secAge, sectTick, SEC_FRESH,
     /* what the game says to a player who has never seen it before */
