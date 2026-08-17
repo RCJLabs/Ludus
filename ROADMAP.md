@@ -1392,7 +1392,10 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.34.0 — #142 CLOSED: `survive`'s bar re-derived from 37 runs (8.1% →
+**Shipped and verified:** v3.34.0. **#139 is refuted on top of it — measurement only, no game change
+and no bump**: the "Fragile is safest" finding does not reproduce on the current build and is not
+stable across policies, and the rule it leaves is that a board item must be re-measured before it is
+built. #142 CLOSED: `survive`'s bar re-derived from 37 runs (8.1% →
 2.7% false failures) and its `standing` reading measured as nearly inert. v3.33.0 — #141 CLOSED: the works are three tiers, not five, and the
 agenda's one hint at the sink now names the work this house needs and why. Suite green at **65/65**.
 v3.32.0 refuted #141 for the chapel, v3.31.0 closed #140, v3.30.0 shipped #131's second loss. v3.29.0 closed #138, v3.28.0 closed #137, and the measurement session before
@@ -1451,8 +1454,29 @@ whole log, never pipe it through `tail` — the summary line is not the interest
   bar did not fail is the honest version. *Falsifies if:* the three failures turn out to share a
   cause other than the draw (all three were investigated as variance; only the v3.33.0 one was
   proven so by a cross-build signature).
-- **#139 — the opening tagged "Fragile" is measured the safest in the game.** Small and
-  decision-shaped: relabel, retune, or accept, with the numbers attached.
+- **#139 — REFUTED, and the way it died is a rule about the BOARD rather than about a probe.**
+  Re-measured on the current build it does not reproduce, and it is not stable across policies:
+
+        alive at week 90, of 72 (3 seeds x 24), the reference player
+        veterans 63 · clean 60 · CHAMPION 58 · castoffs 45 · inherited 38
+
+  Champion is third, not first. When #139 was opened at v3.27.0 the same probe read champion 59 and
+  clean 48 — a lead of eleven — and **six releases shipped between then and the re-measurement**
+  (the #137 nemesis fix alone changed the morale pressure on every house in the game). Across
+  policies it swings from first to last: 19 at default, 22 with `gear:false`, 15 neglecting the
+  cells, 0 under sine stakes. A ranking that moves like that is a fact about the policy, not the
+  opening, which is the same lesson #133 learned and the reason its clause named this test.
+  **What survives on every build and every policy is `inherited`:** 38 of 72 here, 34 of 72 at
+  v3.27.0, worst under all four policies. Its "Hard" tag is measured accurate, so the tags are left
+  alone and nothing is relabelled or retuned.
+  *And the blurb was checked too, since it makes its own claim:* "it can die on any given afternoon"
+  is TRUE — the champion's founding man dies at median week **13, in 24 of 24 houses** — but the
+  house does not die with him: **24 of 24 outlived him**, by a median 146 weeks. The rope is actively
+  hard on that scenario, fighting its best man every week until he is gone, and the house still
+  recovers. Nothing there is a fault; it is a scenario that reads its own first fortnight honestly.
+  **THE RULE THIS LEAVES:** a finding is about the build it was measured on. An item that sits on
+  the board across releases must be RE-MEASURED before it is built, not built from the numbers that
+  opened it — this one would have shipped a relabelling of a tag that is not wrong.
 - **#137 — CLOSED, shipped in v3.28.0.** Sand endings 1-2% → 36-38%, silence 81% → 0-1%, verified on
   its own falsification clause.
 - **#138 — CLOSED, shipped in v3.29.0.** Both halves answered: the rope has a works step (opt-in,

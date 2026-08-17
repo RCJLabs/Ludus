@@ -19,11 +19,26 @@
 import { serve, open } from "../harness.mjs";
 const H = +(process.argv[2] || 24), W = +(process.argv[3] || 420);
 const SEED = process.argv[4] || "SCEN";
+/* ---- #139'S CLAUSE, WIDENED ----
+   The finding "the opening tagged Fragile is the safest in the game" was measured on ONE policy —
+   the reference player — and its clause asked whether the champion's edge belongs to the SCENARIO or
+   to the rope's habit of fighting its best man every week. `bench` was named for that, but benching
+   a one-man house means it cannot fight at all, which is a different scenario rather than a control.
+   Running the same comparison under several POLICIES is the honest version: if champion is safest
+   under all of them the safety is the opening's, and if it flips it was the rope's. */
+const MODE = process.argv[5] || "default";
+const MODES = {
+  default: undefined,
+  reckless: { stakes:"sine" },      /* every bout a death match — the legend is actually risked */
+  neglect:  { cells:false },        /* never feasts, never walks the cells */
+  bare:     { gear:false },         /* fights in house issue, which is how every figure before v3.17.0 was taken */
+};
+const OPTS = MODES[MODE];
 
 const { server, port } = await serve({ page:"dist/test.html" });
 const { browser, p } = await open(port);
 
-const out = await p.evaluate(([H,W,SEED])=>{
+const out = await p.evaluate(([H,W,SEED,OPTS])=>{
   const A = window.__LVDVS, R = window.__ROPE;
   const rows = [];
   for(const sc of A.SC_KEYS){
@@ -32,15 +47,26 @@ const out = await p.evaluate(([H,W,SEED])=>{
     for(let h=0; h<H; h++){
       const d = A.newGameState("Sc"+h, sc, `${SEED}-${sc}-${h}`, null);
       if(r.men0==null){ r.men0 = A.activeG(d).length; r.gold0 = d.gold; }
+      /* the blurb's own claim, tested: "Everything the house has is standing in one cell, and it
+         can die on any given afternoon." So: when does the STARTING man die, and does the house die
+         with him? A scenario whose legend dies and whose house carries on is not fragile. */
+      const first = A.activeG(d)[0], firstId = first ? first.id : null;
+      let legendGone = null;
       let fameBest = 0, goldPeak = d.gold, rung = 0;
       for(let w=0; w<W; w++){
         if(d.over) break;
-        R.lanista(d);
+        R.lanista(d, OPTS || undefined);
+        if(legendGone == null && firstId != null){
+          const g = (d.gladiators||[]).find(x=>x.id===firstId);
+          if(!g || A.isGone(g)) legendGone = d.week;
+        }
         fameBest = Math.max(fameBest, d.fame||0);
         goldPeak = Math.max(goldPeak, d.gold||0);
         rung = Math.max(rung, A.riseOf(d)||0);
       }
       r.lives.push(d.week);
+      (r.legend = r.legend || []).push({ gone: legendGone, lived: d.week,
+        after: legendGone == null ? null : d.week - legendGone });
       if(d.week>=90) r.alive90++; if(d.week>=180) r.alive180++; if(d.week>=300) r.alive300++;
       r.fameBest = Math.max(r.fameBest, Math.round(fameBest));
       r.fameAtDeath.push(Math.round(d.fame||0));
@@ -52,10 +78,10 @@ const out = await p.evaluate(([H,W,SEED])=>{
     rows.push(r);
   }
   return rows;
-}, [H, W, SEED]);
+}, [H, W, SEED, OPTS || null]);
 
 const med = a => { const v=[...a].sort((x,y)=>x-y); return v.length ? v[Math.floor(v.length/2)] : "-"; };
-console.log(`\n${H} houses x ${W}w per scenario · seed "${SEED}" · reference player, all defaults\n`);
+console.log(`\n${H} houses x ${W}w per scenario · seed "${SEED}" · policy: ${MODE}\n`);
 console.log(`  scenario    wk1 men/coin   med life   alive @90/@180/@300   best fame   med fame@end   med peak gold   best rung`);
 for(const r of out){
   console.log(`  ${r.sc.padEnd(10)} ${String(r.men0).padStart(5)} / ${String(r.gold0).padEnd(6)} ${String(med(r.lives)).padStart(7)}   ${String(r.alive90).padStart(6)} /${String(r.alive180).padStart(4)} /${String(r.alive300).padStart(4)}   ${String(r.fameBest).padStart(9)}   ${String(med(r.fameAtDeath)).padStart(12)}   ${String(med(r.goldPeak)).padStart(13)}   ${String(r.rungBest).padStart(9)}`);
@@ -63,6 +89,17 @@ for(const r of out){
 console.log(`\n  lifespans, whole spread — the median above is NOT the claim:`);
 for(const r of out)
   console.log(`  ${r.sc.padEnd(10)} ${r.lives.sort((a,b)=>a-b).join(" ")}`);
+console.log(`\n  THE FOUNDING MAN — "it can die on any given afternoon", tested:`);
+console.log(`  scenario    his death wk (median)   houses that OUTLIVED him   weeks they went on`);
+for(const r of out){
+  const L = r.legend || [], died = L.filter(x=>x.gone != null);
+  const outlived = died.filter(x=>x.after > 0);
+  const medAfter = outlived.length ? med(outlived.map(x=>x.after)) : "-";
+  console.log(`  ${r.sc.padEnd(10)} ${String(died.length ? med(died.map(x=>x.gone)) : "-").padStart(12)} (${died.length}/${L.length} died)`
+    + `   ${String(outlived.length).padStart(10)} of ${died.length}`
+    + `   ${String(medAfter).padStart(10)}w median`);
+}
+
 console.log(`\n  endings:`);
 for(const r of out)
   console.log(`  ${r.sc.padEnd(10)} ${Object.entries(r.ends).map(([k,v])=>`${k} ${v}`).join(" · ")}`);

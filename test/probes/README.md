@@ -25,7 +25,7 @@ Run them straight:
     node test/probes/yard.mjs 72 420 SEED  # true arrivals/exits with causes, and the buy gate
     node test/probes/named.mjs 72 420 SEED # the fighter-nemesis: how an episode actually ends
     node test/probes/ghost.mjs 12 300 SEED # who clears d.nemesis, caught by a setter trap — #137
-    node test/probes/scen.mjs 24 420 SEED  # the five foundings compared; run on >=3 seeds
+    node test/probes/scen.mjs 24 420 SEED [default|reckless|neglect|bare]  # the five foundings
     node test/probes/sink.mjs 24 420 SEED  # #138: does a works-buying rope finish the tier? paired
     node test/probes/open.mjs                     # #142: the opening on a fixed policy — diff the SIG across builds
     node test/probes/perk.mjs 16 420 SEED         # #140: what each work is worth GRANTED FREE
@@ -159,6 +159,17 @@ even free, because they move quantities the house's fate does not read. **The ha
 when an item blames a price, test the free version first; it separates "this costs too much" from
 "this is not worth anything", and only the second one makes repricing pointless.** Granting at week
 one is deliberately generous and is stated as such — a real house gets its first work around week 200.
+
+**`scen.mjs`** — the five foundings compared on an outcome. It reads its keys off `SC_KEYS` (a wrong
+key silently becomes `clean`) and prints each scenario's week-one men and coin so five identical rows
+cannot be read past. From v3.35 it takes a POLICY arm and tracks the founding man, because #139 —
+"the opening tagged Fragile is the safest in the game" — died on both: champion is third of five on
+the current build (58 of 72 against clean's 60 and veterans' 63), and its rank swings 1st/1st/mid/last
+across `default`/`bare`/`neglect`/`reckless`. **The lesson is about the BOARD, not the probe:** the
+finding was true when measured at v3.27.0 and six releases shipped before anyone acted on it. Re-run
+an item's measurement before building it. The legend tracker exists because the scenario's blurb makes
+a claim — "it can die on any given afternoon" — which is true (median week 13, 24 of 24) while the
+implication is not (24 of 24 houses outlived him, by ~146 weeks).
 
 **`sink.mjs`** — #138's paired instrument: same seed twice, identical but for the rope's opt-in
 `works` step, control first, compared at the last common week. Its finding closed the item the
