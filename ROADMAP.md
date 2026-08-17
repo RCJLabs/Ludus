@@ -1392,7 +1392,9 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.34.0. **#139 is refuted on top of it — measurement only, no game change
+**Shipped and verified:** v3.34.0. **#131's measurement question is closed on top of it — the
+97.7% is frequency-weighted and cannot be moved by rare content, so it is retired as a target.
+#139 is refuted too — measurement only, no game change
 and no bump**: the "Fragile is safest" finding does not reproduce on the current build and is not
 stable across policies, and the rule it leaves is that a board item must be re-measured before it is
 built. #142 CLOSED: `survive`'s bar re-derived from 37 runs (8.1% →
@@ -1417,7 +1419,26 @@ whole log, never pipe it through `tail` — the summary line is not the interest
 
 **The board, ranked by player impact over risk:**
 
-- **#131 — OPEN, direction decided (losses), and TWO pieces now stand: the patron (v3.27.0) and the
+- **#131 — ITS MEASUREMENT QUESTION IS CLOSED, AND THE HEADLINE IS RETIRED AS A TARGET.** Re-measured
+  on the current build (`late.mjs 10 420 off`), the year-12 split reads **PERENNIAL 98.3% ·
+  LATE-ONLY 1.7%** against v3.27.0's 97.7% / 2.3%. Two shipped losses moved it by nothing — and the
+  reason is the metric, not the game: **"A Death In The Family" IS in the late-only list, shown for
+  1 week of 246.** The share is FREQUENCY-WEIGHTED, so it is dominated by items that recur every
+  week (`~ is not buried properly` tops the late block at 104% of weeks — more than one line a week
+  — and `# at the rope in <venue>` appears four times at 20-25% each), and a once-per-run loss can
+  never register against them. A third loss would move it about 0.4 of a point.
+  So *"the late game reads what week one reads"* is true and will REMAIN true however much late
+  content ships, because it measures **what a late week usually looks like** rather than **whether
+  late content exists.** Those are different questions and only the first one this statistic can
+  answer. The fair metric for the second is the one `fires.mjs` already uses — the share of RUNS
+  that see a piece of content, where the patron death reads 9 of the 10 houses that reach its gate.
+  **Nothing more should be built to move the 97.7%.** Whether a third loss is worth having is now a
+  plain design question with no number pending behind it.
+  *Two observations, recorded as observations:* the top late item raising more than one line a week
+  wants its own look (several unburied men each get a line), and `agKey` counts one pit item as four
+  labels because the venue name is in it — neither changes the split above, since all of them are
+  perennial either way.
+- **#131's CONTENT — direction decided (losses), and TWO pieces stand: the patron (v3.27.0) and the
   fire (v3.30.0).** Rooms have left the never-lost list by the front door — `keep.mjs` reads 14
   floors burned and rebuilt over 72 houses where 288 house-runs had read zero, ever. What remains
   never-lost and is candidate material for a third piece: the doctore, the doctrine, the collegium,
