@@ -1584,13 +1584,26 @@ it is now measured on the current build with the works step available, and it is
 priced-and-unreachable content left. *Falsifies if:* a deliberately banking arm reaches rung 5, which
 `estate.mjs`'s `miser` arm nearly did (72,752d held, blocked on FAVOUR rather than coin).
 
-**#152 — the check suite reaches 424 handle functions and no single check reaches more than 50.**
-`coverage` reports the best-covered checks at `roads` 50, `policy` 49, `quiet` 48 of 424, and nine
-checks at 0 because they drive the real UI through module bindings the counter cannot see. The
-handle has grown from 257 to 424 entries during this project. *Falsifies if:* the dark set is mostly
-readers and helpers that no check would sensibly call — the `wall` rule applies: **group the dark
-functions before choosing, because a cluster is a system nobody is watching and a lone name is a
-reader somebody will call next week.**
+**#152 — 143 of 424 handle functions are called by no check, and they GROUP into three systems.**
+`coverage` finished: **281 of 424 reached, 143 never called.** Per the `wall` rule the list was
+grouped before anything was picked, and it is not 143 lone names — the three largest clusters are
+whole systems nobody is watching:
+
+    the cost of KEEPING steel   12   rackCap · rackUsed · rackOver · rackStrain · rackRent ·
+                                     gearUpkeep · kitKeepOf · repairWeek · perkWear ·
+                                     armourerWear · armourerMend · armourerCut
+    Rome's own readouts          9   romeRuns · romeTriumphs · romeStanding · romeWord · romePrize ·
+                                     romePurseMult · romeSineOdds · romeGreeting · makeImperialBout
+    the name Capua settles on    7   addRep · repLeader · repOf · repTotal · repShare · repSettle ·
+                                     repWeek   (`chair` drives `repStyle` and nothing underneath it)
+
+The steel cluster is the one to take first: `steel` is a 65-check suite's most thorough check and it
+touches 18 functions, none of them these — so the half of the steel economy that **takes condition
+away** is guarded and the half that **pays to keep it** is not, which is the exact asymmetry v3.13.0
+was written to fix. And a separate hazard the same run printed: **`scales` alone carries 15 functions
+no other check reaches**, so one check going quiet takes fifteen readers with it.
+*Falsifies if:* a cluster turns out to be readers the UI calls and no check would sensibly drive —
+`wall` drove eleven such, refuted both its hypotheses, and was still worth a release for the coverage.
 
 #### The four candidates this audit KILLED, which is the part worth reading
 
