@@ -273,7 +273,12 @@ export async function installRope(p){
         const c = (d.doctoreMarket||[]).filter(x=>x.fee <= spare()*0.5).sort((a,b)=>b.fee-a.fee)[0];
         if(c && fin(A.hireDoctore,[d, c.id])) bump("doctore");
       }
-      if(on("buy") && A.activeG(d).filter(g=>!g.injury).length < 5 && !A.rosterFull(d)){
+      /* ---- #146: HOW MANY MEN THIS PLAYER KEEPS, as a lever rather than a constant ----
+         The buy gate has been a hard 5 since the rope was written, and #146 asks whether the weeks
+         the reference player cannot field anybody (8.1%, of which 94% are simply an EMPTY yard) are
+         the game's attrition or this number being too low. `keep` makes that testable; it defaults
+         to 5, which is exactly the old behaviour. */
+      if(on("buy") && A.activeG(d).filter(g=>!g.injury).length < (o.keep || 5) && !A.rosterFull(d)){
         const m = (d.market||[]).filter(x=>x.price <= spare()*0.5).sort((a,b)=>b.price-a.price)[0];
         if(m && fin(A.buyFromBlock,[d, m.id, null])) bump("bought");
       }

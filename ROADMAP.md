@@ -1554,13 +1554,20 @@ and the late game's added demand all lands at urgency 2. Of a late house's shown
 there for being NEW and only 3% for being urgent.** Full write-up in the changelog, including the
 costed exemplar it found. (16 houses × 420 weeks.)
 
-**#146 — the reference player cannot field a man on one week in twelve.** 159 of 1,758 weeks refused,
-**137 of them "nobody fit"** (7.8%). A house that cannot fight does not earn, and the ledger is what
-kills 42% of houses. Whether that is the rope under-managing fatigue or the yard being too small to
-absorb injuries is exactly the split `yard.mjs` was built for — it already measures the buy gate
-blocked on 56-63% of late want-weeks by the rope's own price bar. *Falsifies if:* a policy arm that
-buys more aggressively drops the refusal rate without shortening lives, which makes it the rope's
-fault and not the game's.
+**#146 — REFUTED on its own falsification clause, and the premise was misdiagnosed too.** The item
+guessed the 7.8% at fatigue or too small a yard. Decomposed on the current build (16 houses × 420
+weeks, 297 such weeks): **94% are simply an EMPTY yard** — every man gone — against 4% all-tired and
+3% all-injured. And an empty yard is not a trap: **141 empty spells, median ONE week, 140 of them
+recovered**, gold held while empty a median 772d against the rope's 700d reserve floor, so it can
+buy. It is the last man dying and a replacement arriving next week.
+**The clause said it would falsify if buying harder closed the gaps without shortening lives.** A
+`keep` lever was added to the rope for it (opt-in, defaulting to the old hard 5). 20 controlled pairs,
+keep 5 against keep 8: no-fit weeks **7.9% → 7.7%** (fewer in 4 of 20), lifespan **224w → 185w**
+(longer in 4 of 20), fame **2,032 → 1,570**. A bigger yard does not close the gaps and measurably
+shortens the run — the upkeep is not recovered. **Not the rope's fault and not a fault at all**: the
+gaps are the churn of a small yard, and the game is right that enlarging it is a bad trade.
+*Kept from it:* `keep` is now a lever any future measurement can use, which is worth more than the
+item was.
 
 **#147 — two endings are 85% of all outcomes and six designed endings never fire.** 60 houses × 420
 weeks on the current build: **ruin 26 (43%) · debt 25 (42%)** · alive 5 · banned 2 · emptied 1 ·
