@@ -491,6 +491,104 @@ export async function run({ p }){
         + `letting the line end with him. A player who takes the chair sees it 0 times, by design`);
     }
 
+    /* ================= 6. THE THREE RUINS GATES, SPLIT BY TERM =================
+       #147. Section 5 answers `foreclosed`, `closed` and `oldAge`. It never counted the other three
+       — `banned`, `disgrace` and `ruined` are the RUINS table, and each is a conjunction, so the
+       count of the whole says nothing about which term holds. Split by term over 216 house-runs on
+       nine policies (`test/probes/finish.mjs`):
+
+         banned     LIVE, and rare: it fires 1-2 houses in 24 on some seeds. When it stands one term
+                    short the term is `heat >= 90`, which the reference player tops out at 76.
+         ruined     ONE TERM SHORT for 352-632 weeks in every arm, and the term is ALWAYS
+                    `grudge >= 95`. On those weeks the angriest rival in the bay stood at 24-48, and
+                    NO house had ever lost a man to another house. Not a decay problem either: the
+                    high-water counterfactual — had the rival EVER been at 95, at any earlier week —
+                    is 0 of 24 houses in all nine arms. The gate wants a rival at the height of a
+                    feud and a house down to two men and under 120 fame, and those are two different
+                    houses. Left alone and opened as its own item: the repair is the rival system
+                    being able to take a house apart, not a smaller number here.
+         disgrace   FIXED in v3.38.0, and the fix is a term REMOVED rather than a threshold moved.
+                    It read `repOf(blood) >= 88 && d.favor <= 6 && facOf(front) <= 12`. `d.favor` is
+                    the weighted mean of your PATRONS, refilled at `ri(28,42)` on any empty seat, and
+                    the ending's own text is about the front rows and the editors and never mentions
+                    a patron. In the two blood-playing arms the gate stood one term short for 301 and
+                    259 weeks and the missing term was `favor <= 6` on 301 of 301 and 259 of 261.
+                    After: three seed prefixes x 24 houses — the reference player 0, mercy 0, the
+                    heirless arm 0, the borrower 0; a house that fights every bout sine missione
+                    7 / 9 / 4, and one that takes the death match when the bill has one 11 / 8 / 5.
+
+       WHAT IS HELD HERE is the shape of `disgrace`, on a bench rather than a campaign, plus the
+       driven half so "reachable" is demonstrated and not asserted. And a TRIPWIRE on `ruined`: it is
+       a known-shut gate, and a known-shut gate must not be quietly nailed shut — if the grudge term
+       ever comes within reach the line says so and asks for the re-measurement. */
+    {
+      const bench = (blood, favor, front) => {
+        const d = A.newGameState("Dg", "clean", `DG-${blood}-${favor}-${front}`, null);
+        d.rep = { blood, show:0, craft:0, mercy:0 };
+        d.factions = { parm:40, scut:40, mob:40, front };
+        d.favor = favor;
+        try { return A.RUINS.disgrace.need(d) === true; } catch(e){ return `threw: ${e.message}`; }
+      };
+      /* the change itself: the patrons are no longer in this gate, so a house whose patrons adore
+         it still falls when the front rows have gone. That row is the whole fix. */
+      const rows = { "88/100/12": bench(88,100,12), "88/0/12": bench(88,0,12),
+                     "87/0/12": bench(87,0,12), "88/0/13": bench(88,0,13) };
+      lines.push(`disgrace, on a bench (blood/favour/front -> fires): `
+        + Object.entries(rows).map(([k,v])=>`${k} -> ${v}`).join(" · "));
+      if(rows["88/100/12"] !== true)
+        bad.push(`\`disgrace\` did not fire for a house at blood 88 and front 12 whose PATRONS are at `
+          + `100 — the patron term came out of this gate in v3.38.0 because it was the only thing `
+          + `holding it shut (missing on 301 of 301 two-term weeks), and if it is back the ending is `
+          + `unreachable again`);
+      if(rows["88/0/12"] !== true) bad.push(`\`disgrace\` will not fire at blood 88 and front 12 at all`);
+      if(rows["87/0/12"] === true || rows["88/0/13"] === true)
+        bad.push(`\`disgrace\` fires one point under its own bars (blood 87: ${rows["87/0/12"]}, `
+          + `front 13: ${rows["88/0/13"]}) — the two terms it has left must both bite`);
+
+      /* and driven, because a bench proves the shape and not the reachability */
+      let fell = 0, alive = 0;
+      const HD = 12, HW = 150;
+      for(let h=0; h<HD; h++){
+        const d = A.newGameState("Dh"+h, "clean", `DG-HOT-${h}`, null);
+        for(let w=0; w<HW; w++){
+          if(d.over) break;
+          window.__ROPE.lanista(d, { preferStakes:"sine" });
+        }
+        if(d.over && d.over.kind === "disgrace") fell++;
+        if(!d.over) alive++;
+      }
+      lines.push(`disgrace, driven: ${fell} of ${HD} houses that take the death match whenever the `
+        + `bill has one died of it inside ${HW} weeks (${alive} still standing) — measured 11/8/5 of `
+        + `24 on three seed prefixes, and 0 of 24 for the reference player on all three`);
+      if(!fell)
+        bad.push(`not one of ${HD} houses playing for blood reached \`disgrace\` in ${HW} weeks — it `
+          + `is measured at a third of them, so either the gate has moved or \`preferStakes\` has come `
+          + `unwired from \`lanista\` again, which is the fault that made this arm byte-identical to `
+          + `the reference player before v3.38.0`);
+
+      /* the tripwire on the gate that is still shut */
+      { let close = 0, grMax = 0;
+        for(let h=0; h<8; h++){
+          const d = A.newGameState("Rn"+h, "clean", `RUINED-${h}`, null);
+          for(let w=0; w<200; w++){
+            if(d.over) break;
+            window.__ROPE.lanista(d);
+            const gr = Math.max(0, ...((d.rivals||[]).map(x=>x.grudge||0)));
+            const men = d.gladiators.filter(g=>!A.isGone(g)).length;
+            if((d.fame||0) < 120 && men <= 2){ close++; grMax = Math.max(grMax, gr); }
+          }
+        }
+        lines.push(`ruined: ${close} weeks with the house at two men and under 120 fame, and the `
+          + `angriest rival across all of them stood at ${Math.round(grMax)} against the 95 asked `
+          + `(measured 24-48 over 216 house-runs; the gate is shut and the roadmap holds why)`);
+        if(close >= 20 && grMax >= 95)
+          bad.push(`a rival reached grudge ${Math.round(grMax)} while the house was at two men and `
+            + `under 120 fame — \`ruined\` was written up as shut BECAUSE those two states belong to `
+            + `different houses. If they now co-occur the roadmap's account of it is stale and the `
+            + `ending wants re-measuring rather than this bar`);
+      }
+    }
+
     lines.push(`the night answered the way a solvent player would: `
       + (Object.entries(upr).map(([k,n])=>`${k} ${n}`).join(" · ") || "no uprising faced")
       + ` — answering "meet them with steel" every time, which is what the published table did, `

@@ -11314,7 +11314,27 @@ const RUINS = {
 There is no appeal because there is no procedure to appeal to. Men who owe you money stop being at home. ${o.name} sells the racks to Verrus at a price that is an opinion about you, and the men go, one at a time, to houses that are still on the roll.
 
 Nothing burned. Nobody died. It took four years to build and eleven days to be told it was over.` },
-  disgrace:{ need:d=>repOf(d,"blood") >= 88 && d.favor <= 6 && facOf(d,"front") <= 12,
+  /* ---- AND ONE OF THESE THREE TERMS WAS ABOUT SOMEBODY ELSE ----
+     #147 went looking for the endings nothing ever reaches and split each of these conjunctions by
+     term, the way `nemesis` splits `nemCanCallOut`. `disgrace` fired 0 times over 216 house-runs
+     across nine policies. In the two that play for blood it stood ONE TERM SHORT for 301 weeks and
+     259 weeks, and the term missing was `d.favor <= 6` on 301 of 301 and 259 of 261.
+     `d.favor` is not the crowd. It is `recomputeFavor`'s weighted mean of your PATRONS, and an
+     empty seat refills at `ri(28,42)` — so short of the list emptying outright the mean cannot sit
+     at six, and the best any of 24 blood houses ever got it to was 10. Read this gate's own text:
+     the front rows stop coming, the editors stop asking, Capua would rather watch something else.
+     Not one word of it is about a patron. The term was a third constituency bolted onto a two-
+     constituency ending, and it was the only thing holding the door.
+     MEASURED BOTH WAYS, because dropping a term is a change to how often a house dies:
+       · the reference player never comes close — `front <= 12` over 24 houses of up to 900 weeks
+         gets no lower than 22, which is not even the "hostile" band. Same for mercy, for the heirless
+         arm, and for the house that borrows. The two-term gate is shut for all of them.
+       · a house that takes the death match whenever the bill has one reaches `front` 0, holds both
+         terms for 301 weeks, and dies at a median of 41 weeks — of `ruin`, generically, with the
+         reason it actually died sitting there unread.
+     What is NOT claimed: that this makes `disgrace` common. It is the ending of one way of playing,
+     and it should be reachable by playing that way. See `ends`. */
+  disgrace:{ need:d=>repOf(d,"blood") >= 88 && facOf(d,"front") <= 12,
     warnAt:0,
     warn:d=>`The front rows have stopped coming to your cards. Not all of them and not loudly, but the good seats are emptier every time and the editor has noticed before you did.`,
     title:"NOBODY WILL BOOK YOU",
@@ -25533,8 +25553,15 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        200 played houses produced seven of the twelve endings the source can set. `oldAge` needs an
        HEIR, `foreclosed` a LOAN grown to four times its principal, `closed` five men FREED, and
        `triumph` a choice made on the road back from Rome — four systems no sweep policy has ever
-       used. The probe that went looking for them failed its own control; see `ends`. */
+       used. The probe that went looking for them failed its own control; see the `ends` CHECK, which
+       has since answered `foreclosed`, `closed` and `oldAge` and is where those three live.
+       v3.38.0 ADDS THE THREE THIS NOTE NEVER COUNTED — `banned`, `disgrace` and `ruined` are the
+       RUINS table, they are CONJUNCTIONS of three or four terms each, and a count of the whole says
+       nothing about which term is holding. `nemesis` established that a conjunction must be split by
+       term before anything can be fixed; these go on the handle so `test/probes/finish.mjs` can call
+       the game's own `need` and count the terms beside it rather than keeping a copy of either. */
     borrow, LENDERS, LEND_KEYS, owes, loanLender, EMPTY_LIMIT,
+    RUINS, RUIN_KEYS, facOf, lawOf, inBreach,
     /* ---- AND WHETHER THE WEEK'S NUDGE POINTS AT THE BIGGEST LEVER ----
        #117 measured working the cells as the largest lever in the game. The agenda offers the feast
        at unrest 35 and never mentions walking the cells at all — see `agendaCan`. #119. */

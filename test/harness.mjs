@@ -239,6 +239,12 @@ export async function installRope(p){
          works         (default FALSE — opt-in, #138: commission the works and monuments, cheapest
                         open site first, one at a time, deposit from spare(). Flipping this default
                         re-bases what a long-lived house owns and is its own release. `works:true`)
+         answer        (default NONE, #147 — `answer(ev, d)` returns the index to take on this week's
+                        question, or null to leave the rope's own reading of it alone. The rope
+                        answers 0 to everything bar `uprising` and `bayCall`, and one of the game's
+                        twelve endings — `triumph` — is choice 1 on `romeReturn` and nothing else,
+                        so without this lever "the rope never triumphs" is a statement about the
+                        rope rather than about the game)
        `play(d, weeks, opts)` runs many and pools the counters. */
     const LAN = {
       /* the reserve is twelve weeks of obligations. A rising work's mason draw IS an obligation —
@@ -529,7 +535,20 @@ export async function installRope(p){
         /* the primacy first when it is up — a purse-maximising pick passes it over, and it is the
            other gate on Rome. At Rome, take whatever card is there: the imperial bill is sine
            missione 54% of the time and refusing it lapses the trip. */
-        const t = takeBout(d, { men, wantStakes: d.rome ? null : (o.stakes || "standard"),
+        /* ---- AND THE THIRD TIME THIS OPTION HAS BEEN DROPPED ON THE FLOOR ----
+           `takeBout` above documents two honest readings — `wantStakes` STRICT, `preferStakes` take
+           it if the bill has it — and then this line collapsed every one of them into a strict
+           `wantStakes`, so `preferStakes` never reached `takeBout` at all and `lanista(d, {preferStakes})`
+           was inert. Found the way #136 says to find these: an arm passing `preferStakes:"sine"` came
+           back BYTE-IDENTICAL to the reference player over 24 houses and 4,000 weeks — same endings,
+           same weeks lived, same raw rows — while a stakes census over 1,702 played weeks showed the
+           arena bill carrying 564 sine offers against 1,410 standard. A lever with 22% of the bill to
+           work with does not produce zero divergence; the lever was not connected.
+           The default is untouched on purpose: with neither option given this is still
+           `wantStakes:"standard"`, which is what every figure in this project was measured on. */
+        const t = takeBout(d, { men,
+          wantStakes:   d.rome ? null : (o.wantStakes || (o.preferStakes ? null : (o.stakes || "standard"))),
+          preferStakes: d.rome ? null : (o.preferStakes || null),
           choice: o.choice || "press",
           pick: us => { const pr = us.filter(x=>x.primus); return (pr.length ? pr : us)
             .sort((a,b)=>(b.purse||0)-(a.purse||0))[0]; } });
@@ -579,6 +598,16 @@ export async function installRope(p){
            which is the thing being controlled for. `bayCall`'s second door is "Write back that you
            are needed here", and it is the only road out of Capua a player is ever offered. */
         if(ev.id === "bayCall" && !on("road")) i = 1;
+        /* ---- AND AN ARM THAT IS PURSUING ONE PARTICULAR ENDING ----
+           #147 asked which of the twelve endings the source can set are unreachable and which are
+           merely declined, and the only honest test of "declined" is an arm that declines the other
+           way. `triumph` is exactly one door on exactly one event (`romeReturn`, choice 1); a policy
+           that wants it does not want a different rope, it wants to answer that one question
+           differently. `answer(ev, d)` returns an index, or null to leave the default alone. */
+        if(typeof o.answer === "function"){
+          const j = o.answer(ev, d);
+          if(j != null && j >= 0) i = j;
+        }
         fin(()=>A.EVENTS[ev.id].run(d, ev, i), []);
         d.pendingEvent = null;
       }

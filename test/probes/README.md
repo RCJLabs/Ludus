@@ -31,6 +31,8 @@ Run them straight:
     node test/probes/perk.mjs 16 420 SEED         # #140: what each work is worth GRANTED FREE
     node test/probes/perk.mjs 16 420 SEED hot     # #141: and for a house that neglects unrest
     node test/probes/catalogue.mjs 72 420 SEED on   # the census with the works step switched on
+    node test/probes/finish.mjs 24 900 SEED # #147: nine arms, one per ending, and the RUINS gates split by term
+    node test/probes/succ.mjs 30 1400 SEED [grant]  # #147: the second generation, with and without a free ledger
 
 `keep`, `walk` and `fires` run in about 25 seconds at 72 houses, which is cheap enough that **they take
 a seed prefix and should always be run on three or four of them.** Two findings died this session for
@@ -287,6 +289,43 @@ only if `bayCall` fires, so in half the seeds both arms are the same house doing
 Averaging those in dilutes any effect toward zero while looking like twice the data. They are counted
 and dropped. It also compares at the last week BOTH were still playing rather than at a fixed
 horizon, because a dead house's gold answers a different question.
+
+**`finish.mjs`** — #147, and the shape to copy when a count of outcomes is all you have. The item said
+seven of the twelve endings never fire; a count cannot tell a gate the game will not open from a door
+the reference player walks past, so this runs NINE arms, each the smallest deviation from the rope
+that could reach one ending — borrow and never repay, free the earners then sell the rest, answer
+`romeReturn` with its second door, decline the chair, name no heir, fight only sine. Four of the seven
+fell out immediately (`foreclosed` 22-24 of 24 at week 26, deterministically; `oldAge` 2 of 24;
+`triumph` 1 of 24), which refuted the item.
+
+The part worth keeping is the RUINS half. Those three gates are three- and four-term conjunctions and
+nothing had ever counted them, so — the `nemesis` design — each is asked of the game's own
+`RUINS[k].need(d)` AND split by term beside it, with a "one short, and which one is missing" tally
+under that. `disgrace` came back one term short for 301 weeks with the same term missing 301 times,
+which is a fix; `ruined` came back one term short for 352-632 weeks in every arm, and a high-water
+counterfactual (had the term EVER been true earlier in that house's life) read 0, which killed the
+obvious repair before it was written.
+
+**Three instrument faults, two of them mine and one in the shared rope.** It was called `ends` first,
+on a misreading of a handle comment as pointing at a deleted probe — it points at `test/checks/ends.mjs`,
+which is alive and already answers three of the twelve; two files of that name would have put two
+answers to one question in the suite. Its `hot` arm (`preferStakes:"sine"`) came back **byte-identical
+to the reference player** over 24 houses and 4,000 weeks, which #136's rule says is impossible for a
+live lever — a stakes census then showed the arena bill carrying 564 sine offers of 2,538, and the
+fault was `lanista` collapsing every stakes option into a strict `wantStakes` so `preferStakes` never
+reached `takeBout` at all. And see `succ` below for the third.
+
+**`succ.mjs`** — the lanista's own clock, and whether the second generation is arithmetic or luck.
+ARM A drives the game's `lanistaWeek` with no house on it, which is the kindest run the health number
+can have; ARM B plays real houses with a free-grant lever so a gate that opens only for a house which
+cannot go broke is legible as a survival problem rather than a gate fault. It is: a retirement
+succession comes up in 5 of 90 ordinary houses and 22 of 30 solvent ones.
+
+**Its first version had the fault this file exists to warn about.** ARM A advanced the age with
+`A.WEEKS_PER_YEAR`, which is not on the handle — `x % undefined` is NaN, the age never moved, and all
+twelve rows printed "he never got to 62" while ARM B beside them was reaching 62 in twenty-two houses
+of thirty. Two arms of one probe disagreeing IS the alarm. It reads the year boundary off `yearOf`
+now and prints the age each row actually ran to, so a frozen clock cannot pass as a healthy one.
 
 **`scroll.mjs`** — where the vertical pixels go, per place, as the page ARRIVES versus with every fold
 thrown open. The second is what `reach` necessarily measures and it is 40% taller than the first.

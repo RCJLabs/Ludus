@@ -1392,7 +1392,11 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.37.0 — #143 refuted as opened, its one-word residue fixed (a lesson
+**Shipped and verified:** v3.38.0 — #147 refuted on its own clause (the missing endings are
+declined, not unreachable: 22-24 of 24 houses reach `foreclosed` when a policy goes after it) and one
+real gate fault fixed on the way — `disgrace` was held shut by a term that reads your PATRONS in an
+ending about the front rows, and now fires for 7-11 of 24 houses that play for blood and 0 of 24 for
+the reference player. Suite green at **65/65** in 13.2 minutes, `survive` drawing (3,5). Opens #153. v3.37.0 — #143 refuted as opened, its one-word residue fixed (a lesson
 whose first sentence was false on 33% of the weeks it could be read). Carries #145 with it. v3.36.0 — #145 closed: the late game asks 51% more and shows none of it,
 and the armoury drain that ran 308 weeks unseen now re-announces as it worsens. v3.35.0 — #144 closed: one agenda item had been exempt from ageing for
 the whole run (shown on 100.0% of the weeks it existed, now 24.8%). v3.34.0 before it. **#131's measurement question is closed on top of it — the
@@ -1569,13 +1573,61 @@ gaps are the churn of a small yard, and the game is right that enlarging it is a
 *Kept from it:* `keep` is now a lever any future measurement can use, which is worth more than the
 item was.
 
-**#147 — two endings are 85% of all outcomes and six designed endings never fire.** 60 houses × 420
-weeks on the current build: **ruin 26 (43%) · debt 25 (42%)** · alive 5 · banned 2 · emptied 1 ·
-rebellion 1. `oldAge`, `closed`, `triumph`, `foreclosed` and the rest read zero — and `oldAge` is the
-notable one, because the rope NOW names heirs, so the system it needs is live. The roadmap's older
-"seven of twelve endings" note predates that step. *Falsifies if:* the missing endings need player
-choices the rope declines by policy rather than gates it cannot reach — the `feats` lesson exactly,
-and the cheap test is an arm that deliberately pursues each.
+**#147 — REFUTED on its own clause, and one real gate fault fell out of the refutation.** The item
+counted ruin 26 / debt 25 of 60 houses and called seven endings dead. Its clause said it would
+falsify if the missing ones are choices the rope declines rather than gates it cannot reach, and
+named the test: an arm that deliberately pursues each. Nine arms, 24 houses × up to 900 weeks each,
+three seed prefixes (`test/probes/finish.mjs`):
+
+    foreclosed   borrow the line and never repay      22-24 of 24, at week 26, deterministically
+    oldAge       call `endTheLine` when offered       2 of 24 (0 on one seed)
+    triumph      answer `romeReturn` with door two    1 of 24
+    lanistaDied  never name an heir                   0 — the arm lives 155w and the man does not die
+    closed       free every earner, sell the rest     0 here; `ends` holds it reachable on a bench
+
+**So the endings are not unreachable, they are declined** — `foreclosed` needs a loan, `triumph` one
+door on one event, `oldAge` the refusal of a chair the rope always takes. Same conclusion the `ends`
+check reached for three of them several releases ago, now measured for the rest.
+
+The second generation was measured properly while the arm was up (`test/probes/succ.mjs`, 90 houses
+× 1,400 weeks, three seeds): a retirement succession is raised in **5 of 90 houses (5.6%)** and
+generation 2 with it. Hold the ledger up — coin topped to 20,000 a week — and it is **22 of 30**. The
+gate is the house's solvency, not the lanista's clock: on his 62nd birthday his health reads 98-100.
+
+**What the refutation turned up is worth more than the item.** The three RUINS gates had never been
+counted at all, and split by term (the `nemesis` design) two of them are conjunctions whose parts
+belong to different houses:
+
+* `disgrace` read `blood ≥ 88 && d.favor ≤ 6 && front ≤ 12`. In the two blood-playing arms it stood
+  **one term short for 301 and 259 weeks, and the missing term was `favor ≤ 6` on 301 of 301 and 259
+  of 261.** `d.favor` is `recomputeFavor`'s weighted mean of your PATRONS, and an empty seat refills
+  at `ri(28,42)`, so the mean cannot sit at six; the best any of 24 blood houses reached was 10. The
+  ending's own text is about the front rows and the editors and never mentions a patron. **FIXED in
+  v3.38.0 by removing the term, not by moving a number.** After: the reference player 0, mercy 0, the
+  heirless arm 0, the borrower 0 on all three seeds; a house fighting every bout sine missione 7 / 9
+  / 4 of 24, and one taking the death match whenever the bill has one 11 / 8 / 5. `ends`'s own
+  `careless` arm, written years earlier and untouched, independently reads disgrace 10 of 21 dead.
+* `ruined` stands **one term short for 352-632 weeks in every arm and the term is always
+  `grudge ≥ 95`** — see #153.
+
+*Kept from it:* `RUINS`, `RUIN_KEYS`, `facOf`, `lawOf` and `inBreach` on the handle so a gate is
+asked of the game and never re-implemented; an `answer(ev, d)` lever on the rope, without which
+"the rope never triumphs" is a statement about the rope; and a harness fix — `preferStakes` had never
+been wired through `lanista` at all, so an arm passing it came back **byte-identical to the reference
+player over 24 houses**, while the arena bill carries 564 sine offers against 1,410 standard.
+
+**#153 — a rival can resent you, and cannot take you apart.** `ruined`'s gate wants a rival at
+grudge 95 while the house is at two men and under 120 fame. Split by term over 216 house-runs on nine
+policies, it holds two of three for 352-632 weeks and the missing one is always the grudge. On those
+weeks the angriest rival in the bay stood at **24-48**, and **no house had ever lost a man to another
+house**. It is not decay: the high-water counterfactual — had any rival EVER reached 95, at any
+earlier week of that house's life — is **0 of 24 in all nine arms**. Grudge is raised by what YOU do
+to a rival (poach his man +18, answer him +8, buy the editor +14) and decays 0.35-1.7 a week, so it
+measures your aggression and a dying house has none. The prose describes a hostile takeover; the
+game has houses fall over instead. *Falsifies if:* a rival CAN be made to grudge 95 against a
+shrinking house by some policy — in which case the item is the gate and not the rival system. If it
+cannot, the repair is that a rival with a grudge should be able to close a house, and lowering 95
+would only make the ending fire for the wrong reason.
 
 **#148 — the five openings differ by twenty-five points of survival and nothing says so.** Alive at
 week 90, pooled 3 seeds × 24 houses: **veterans 63 of 72 · clean 60 · champion 58 · castoffs 45 ·
@@ -2278,6 +2330,94 @@ territory where the measuring is harder than the thing measured. That is a reaso
 answer is a decision over items whose answer is another number.
 
 ## Changelog (shipped)
+
+### v3.38.0 — #147: the endings are declined, not unreachable, and one gate was reading the wrong people
+
+**#147 is refuted on its own clause.** It counted ruin 26 and debt 25 of 60 houses, called seven of
+the twelve endings dead, and said it would falsify if the missing ones are choices the reference
+player declines rather than gates it cannot reach. Nine arms, 24 houses × up to 900 weeks each on
+three seed prefixes, each arm the smallest deviation from the rope that could reach one ending:
+
+    foreclosed   borrow the largest line, never repay      22-24 of 24, at week 26
+    oldAge       call `endTheLine` the week it is offered   2 of 24 (0 on one seed)
+    triumph      answer `romeReturn` with its second door   1 of 24
+    lanistaDied  never name an heir                         0 — the arm lives 155w and the man lives
+    closed       free every earner, then sell the rest      0 here; `ends` holds it on a bench
+
+`foreclosed` is not even rare — it is deterministic. Murena's cap is 2,400 at 5.8% a week, the gate is
+`owes > principal × 4`, and ln4/ln1.058 is 24.6 weeks, so 22 of 24 houses foreclose at week 26 with
+9,825 owed and no variance between them. The rope had simply never borrowed.
+
+**The second generation, measured properly** (`test/probes/succ.mjs`, 90 houses × 1,400 weeks over
+three seeds): a retirement succession is raised in **5 of 90 (5.6%)**. Hold the ledger up — coin
+topped to 20,000 a week — and it is **22 of 30**. So the gate is the house's solvency and not the
+lanista's clock: on his 62nd birthday his health reads **98-100**, because the staff, the baths and
+the feasts outrun the 0.045-a-year decay by a wide margin. Left alone with nothing but age against
+mending he is dead at 57-59 and would never see the gate at all; a real house never leaves him alone.
+
+#### The fix: `disgrace` was a two-constituency ending with a third constituency in its gate
+
+The three RUINS gates — `banned`, `disgrace`, `ruined` — had never been counted by anything. They are
+conjunctions, so following `nemesis` each was asked of the game's own `RUINS[k].need(d)` and split by
+term beside it, with a "one short, and which term is missing" tally under that.
+
+`disgrace` read `repOf(blood) >= 88 && d.favor <= 6 && facOf(front) <= 12`. Over 216 house-runs it
+fired zero times. In the two arms that play for blood it stood **one term short for 301 weeks and for
+259 weeks, and the missing term was `d.favor <= 6` on 301 of 301 and on 259 of 261.**
+
+`d.favor` is not the crowd. It is `recomputeFavor`'s weighted mean of your **patrons**, and
+`patronWeek` refills an empty seat at `ri(28,42)`, so short of the list emptying outright the mean
+cannot sit at six — the best any of 24 blood houses ever got it to was 10. Read the ending's own text:
+the front rows stop coming, the editors stop asking, Capua would rather watch something else. Not one
+word of it is about a patron.
+
+**The term is removed rather than moved.** Nothing is fitted; a term that belongs to another system
+came out of a gate that has two terms of its own, both of which its prose describes. Measured both
+ways on three seed prefixes × 24 houses:
+
+    the reference player          0    front tops out at 22 — not even the "hostile" band
+    mercy, heirless, borrower     0    on all three seeds
+    every bout sine missione      7 / 9 / 4 of 24
+    the death match when offered  11 / 8 / 5 of 24
+
+and `ends`'s own `careless` arm — written years before this and untouched by it — independently reads
+**disgrace 10 of 21 dead** over its 120-week arc. The ending of one way of playing, reachable by
+playing that way, and shut for everyone else.
+
+#### Three instrument faults, and one of them was in the shared rope
+
+* **`preferStakes` had never been wired through `lanista`.** An arm passing it came back
+  **byte-identical to the reference player** over 24 houses and 4,000 weeks — same endings, same weeks
+  lived, same raw rows. #136's rule says a live lever cannot do that, so the lever was dead: a stakes
+  census over 1,702 played weeks found the arena bill carrying **564 sine offers against 1,410
+  standard**, and `lanista` was collapsing every stakes option into a strict `wantStakes` that
+  `takeBout` then filtered on. The default is untouched on purpose — with neither option given it is
+  still `wantStakes:"standard"`, which is what every figure in this project was measured on.
+* **`succ`'s clock arm was frozen.** It advanced the lanista's age with `A.WEEKS_PER_YEAR`, which is
+  not on the handle; `x % undefined` is NaN, the age never moved, and twelve rows read "he never got
+  to 62" while the arm beside them was reaching 62 in twenty-two houses of thirty. Two arms of one
+  probe disagreeing is the alarm. It reads `yearOf` now and prints the age each row ran to.
+* **The probe was called `ends` first**, on a misreading of a handle comment as pointing at a deleted
+  probe. It points at `test/checks/ends.mjs`, which is alive and already answers `foreclosed`,
+  `closed` and `oldAge`. Renamed to `finish`, and the handle comment corrected — two files of one
+  name in two directories is how a suite ends up with two answers to one question.
+
+#### What is opened rather than fixed
+
+`ruined` stands **one term short for 352-632 weeks in every arm and the term is always
+`grudge >= 95`.** On those weeks the angriest rival in the bay stood at **24-48** and **no house had
+ever lost a man to another house.** It is not the grudge decaying either: the high-water
+counterfactual — had any rival EVER reached 95 at any earlier week of that house's life — is **0 of
+24 in all nine arms.** Grudge is raised by what you do to a rival and decays 0.35-1.7 a week, so it
+measures your aggression; a house shrinking to two men has none to measure. The gate's prose is a
+hostile takeover and the game has houses fall over instead. Lowering the 95 would make the ending
+fire for the wrong reason, so it is **#153** and not a smaller number.
+
+*Also in:* `RUINS`, `RUIN_KEYS`, `facOf`, `lawOf` and `inBreach` on the test handle, so a gate is
+asked of the game and never re-implemented beside it; an `answer(ev, d)` lever on the rope, without
+which "the rope never triumphs" is a statement about the rope; `ends` grows a section 6 holding
+`disgrace` on a bench and driven, plus a tripwire that speaks up if `ruined`'s grudge term ever comes
+within reach.
 
 ### v3.37.0 — #143: the last unwindowed reader, in the note that said there were none left
 
