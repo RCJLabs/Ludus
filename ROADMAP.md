@@ -1392,7 +1392,14 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.43.0 — #152's steel-keeping cluster closed: twelve functions no check
+**Shipped and verified:** v3.44.0 — #153 refuted on its own clause, and the conclusion it was opened
+on was mine and wrong: `ruined`'s two halves belong to different POLICIES, not different houses. An
+arm that attacks one rival by every means the game offers drives the angriest rival to 98 while the
+house is at two men, satisfies the gate on 36-46 weeks a seed and ends there in 2 of 24 runs on all
+three. `ends`'s five-release-old "this gate is shut" tripwire is a reachability guard now, and its
+negative is the finding — strip the feud actions and gate-weeks go 8 to 0 while median life goes 25w
+to 201w. No game change. Suite green at **66/66**, `survive` drawing (2,7). v3.43.0 — #152's
+steel-keeping cluster closed: twelve functions no check
 reached, all of them wired to something the player feels, and driving them found that a piece which
 snapped at the tang never left `d.gear` — still counted against the armoury's cap, still drawing rent,
 still billed for upkeep, and re-issuable to another man at condition 100 out of a rack that held none.
@@ -1638,7 +1645,8 @@ belong to different houses:
   / 4 of 24, and one taking the death match whenever the bill has one 11 / 8 / 5. `ends`'s own
   `careless` arm, written years earlier and untouched, independently reads disgrace 10 of 21 dead.
 * `ruined` stands **one term short for 352-632 weeks in every arm and the term is always
-  `grudge ≥ 95`** — see #153.
+  `grudge ≥ 95`** — see #153, which refuted this reading: the terms co-occur under a policy that
+  picks a fight, and the ending fires 2 of 24 for it.
 
 *Kept from it:* `RUINS`, `RUIN_KEYS`, `facOf`, `lawOf` and `inBreach` on the handle so a gate is
 asked of the game and never re-implemented; an `answer(ev, d)` lever on the rope, without which
@@ -1646,18 +1654,37 @@ asked of the game and never re-implemented; an `answer(ev, d)` lever on the rope
 been wired through `lanista` at all, so an arm passing it came back **byte-identical to the reference
 player over 24 houses**, while the arena bill carries 564 sine offers against 1,410 standard.
 
-**#153 — a rival can resent you, and cannot take you apart.** `ruined`'s gate wants a rival at
-grudge 95 while the house is at two men and under 120 fame. Split by term over 216 house-runs on nine
-policies, it holds two of three for 352-632 weeks and the missing one is always the grudge. On those
-weeks the angriest rival in the bay stood at **24-48**, and **no house had ever lost a man to another
-house**. It is not decay: the high-water counterfactual — had any rival EVER reached 95, at any
-earlier week of that house's life — is **0 of 24 in all nine arms**. Grudge is raised by what YOU do
-to a rival (poach his man +18, answer him +8, buy the editor +14) and decays 0.35-1.7 a week, so it
-measures your aggression and a dying house has none. The prose describes a hostile takeover; the
-game has houses fall over instead. *Falsifies if:* a rival CAN be made to grudge 95 against a
-shrinking house by some policy — in which case the item is the gate and not the rival system. If it
-cannot, the repair is that a rival with a grudge should be able to close a house, and lowering 95
-would only make the ending fire for the wrong reason.
+**#153 — REFUTED on its own clause in v3.44.0. The two halves belong to different POLICIES, not to
+different houses.** The clause said it falsifies if a rival can be made to grudge 95 against a
+shrinking house by some policy. One can. Grudge is raised by what YOU do to a rival, so the arm is a
+house that does all of it at ONE rival for the whole run — a gambit whenever the six-week cooldown
+allows, a word in his best man's ear whenever there is room and coin, the arch-rival answered in its
+own coin. Over three seeds × 24 houses (`test/probes/finish.mjs`, arm `feud`):
+
+| | |
+|---|---|
+| the gate's own `need()` | held on **36, 37 and 46 weeks** |
+| the angriest rival, on those weeks | **98** of the 95 asked |
+| runs that ENDED at `ruined` | **2 of 24, on every seed** |
+| median life | **22-32 weeks**, against the reference player's 162 |
+| men lost to another house | 13-23 an arm, in 6-10 of 24 houses |
+
+The earlier reading — that the terms never co-occur and the high-water counterfactual is 0 — was
+policy-bound, which is exactly what the clause was written to catch. Under the feud arm the
+counterfactual is 60 weeks in 7 of 24 houses.
+
+**And the ending's story is the prose's, from the other side.** A house reaches `ruined` by picking a
+fight it cannot pay for: the gambits and the courting bankrupt it, the rival it has been provoking
+ends at grudge 98, and the house is at two men and forgotten. "No single thing did it" is a fair
+description of that. Nothing is wrong with the gate and nothing is wrong with the rival system; the
+reference player simply never starts a fight.
+
+*Kept from it:* `ends` carried a tripwire since v3.38.0 asserting this gate was shut, with the reason
+"those two states belong to different houses" written on it. A shut-gate bar guards nothing and that
+one had a stale reason on it for five releases. It is a REACHABILITY guard now — it drives the feud
+policy and fails if `ruined` stops being satisfiable — and it was negative-tested: strip the three
+feud actions out of the same loop and gate-weeks go 8 → **0** while median life goes 25w → **201w**,
+with the angriest rival still reaching 100. Two states, two policies, in the check's own output.
 
 **#148 — CLOSED in v3.39.0, and the spread was not the finding.** Re-measured on the current build,
 4 seeds × 24 houses per opening (alive at week 90): **champion 88% · veterans 86% · clean 74% ·
@@ -2491,6 +2518,55 @@ widening the bar until it stops firing — that is how it got `MEN = 6`. The can
 houses, since the spread is a sample-size property and the check already takes five minutes.
 
 ## Changelog (shipped)
+
+### v3.44.0 — #153: the two halves of `ruined` belong to different policies, not different houses
+
+#147 measured `ruined` standing two-of-three for 352-632 weeks in every arm, with the missing term
+always `grudge >= 95`, the angriest rival on those weeks reading 24-48, and a high-water counterfactual
+of zero. I wrote it up as a gate whose halves describe different houses — a rival at the height of a
+feud, and a house nobody is competing with any more — and opened #153 on the reading that the repair
+was the rival system rather than the number. **Its clause said it falsifies if a rival can be made to
+grudge 95 against a shrinking house by some policy. One can.**
+
+Grudge is raised by what YOU do to a rival — poach his man, answer him in his own coin, buy the
+editor, land a gambit — so the arm is a house that does all of it, at one rival, for the whole run: a
+gambit whenever the six-week cooldown allows, a word in his best man's ear whenever there is room and
+coin, the arch-rival answered whenever that is up. Three seeds × 24 houses:
+
+    the gate's own need() held on        36 / 37 / 46 weeks
+    the angriest rival on those weeks    98, against the 95 asked
+    runs that ENDED at `ruined`          2 of 24, on every seed
+    median life                          22-32 weeks (the reference player: 162)
+    men lost to another house            13-23 an arm, in 6-10 of 24 houses
+
+The earlier zero was policy-bound — under this arm the counterfactual is 60 weeks in 7 of 24 houses.
+**The measurement was right and the conclusion drawn from it was not**, and the clause was written the
+way it was precisely so that could be caught.
+
+#### What the ending actually is
+
+A house reaches `ruined` by picking a fight it cannot pay for. The gambits and the courting bankrupt
+it; the rival it has spent the run provoking finishes at grudge 98; the house is down to two men and
+under 120 fame. "No single thing did it. He outbid you on the block for a year, took two of your men
+with money you could not match" is a fair description of that from the other side of the wall — and
+the arm does lose 13 to 23 men to other houses over its run, so the taking is real and not one-way.
+Nothing is wrong with the gate and nothing is wrong with the rival system. The reference player simply
+never starts a fight, which is a fact about the reference player.
+
+#### The stale tripwire, replaced
+
+v3.38.0 left a bar in `ends` asserting this gate was shut, with the reason written on it: "`ruined`
+was written up as shut BECAUSE those two states belong to different houses." A shut-gate bar guards
+nothing — it can only fire if the game gets BETTER — and this one carried a wrong reason for five
+releases. It is a reachability guard now: it drives the feud policy and fails if `ruined` stops being
+satisfiable at all.
+
+**Negative-tested, and the negative is the finding.** Strip the three feud actions out of the same
+loop and leave everything else identical: gate-weeks go **8 → 0**, median life goes **25w → 201w**,
+and the angriest rival still reaches **100**. The grudge was never the hard part. Being hated and
+being finished at the same time is, and it takes a policy to arrange.
+
+No game change ships with this; the release is the corrected account and the guard that holds it.
 
 ### v3.43.0 — #152: the piece that snapped at the tang was still on the books
 

@@ -566,26 +566,51 @@ export async function run({ p }){
           + `unwired from \`lanista\` again, which is the fault that made this arm byte-identical to `
           + `the reference player before v3.38.0`);
 
-      /* the tripwire on the gate that is still shut */
-      { let close = 0, grMax = 0;
-        for(let h=0; h<8; h++){
-          const d = A.newGameState("Rn"+h, "clean", `RUINED-${h}`, null);
+      /* ---- AND `ruined` IS REACHED BY THE HOUSE THAT STARTS THE FIGHT — #153 ----
+         v3.38.0 left a tripwire here saying this gate was shut and that its two halves "belong to
+         different houses". They do not. They belong to different POLICIES, which is what #153 was
+         opened to test and what its own clause said would refute it. Grudge is raised by what YOU do
+         to a rival, so an arm that does all of it at one rival for a whole run — a gambit whenever
+         the cooldown allows, a word in his best man's ear whenever there is room and coin, the
+         arch-rival answered in its own coin — drives the angriest rival in the bay to **98** while
+         the house is at two men and under 120 fame. Measured over three seeds x 24 houses: the
+         gate's own `need()` holds on 36, 37 and 46 weeks and `ruined` ENDS the run in **2 of 24 on
+         every seed**, at a median life of 22-32 weeks against the reference player's 162.
+
+         That is the ending working, and the story it tells is the one the prose tells from the other
+         side: the house that gets taken apart is the house that picked the fight and ran out of coin
+         having it. What is held here is REACHABILITY — a shut-gate bar guards nothing, and this one
+         had a stale reason written on it for five releases. */
+      { let need = 0, grMax = 0, ended = 0, lived = [];
+        for(let h=0; h<12; h++){
+          const d = A.newGameState("Fd"+h, "clean", `RUINED-FEUD-${h}`, null);
           for(let w=0; w<200; w++){
             if(d.over) break;
+            const rv = (d.rivals||[]).filter(x=>!x.retired)[0];
+            if(rv){
+              for(const k of A.GAM_KEYS) if(fin(A.runGambit,[d, k, rv.name])) break;
+              if(!d.court){ const f = (rv.fighters||[]).slice().sort((a,b)=>(b.wins||0)-(a.wins||0))[0];
+                if(f) fin(A.startCourt,[d, rv.name, f.id]); }
+              if(d.nemHouse && d.nemHouse.house === rv.name && A.nemAnswerReady(d)) fin(A.answerNem,[d]);
+            }
+            if(d.over) break;
             window.__ROPE.lanista(d);
-            const gr = Math.max(0, ...((d.rivals||[]).map(x=>x.grudge||0)));
-            const men = d.gladiators.filter(g=>!A.isGone(g)).length;
-            if((d.fame||0) < 120 && men <= 2){ close++; grMax = Math.max(grMax, gr); }
+            grMax = Math.max(grMax, ...((d.rivals||[]).map(x=>x.grudge||0)));
+            let hit = false; try { hit = A.RUINS.ruined.need(d); } catch(e){}
+            if(hit) need++;
           }
+          lived.push(d.week);
+          if(d.over && d.over.kind === "ruined") ended++;
         }
-        lines.push(`ruined: ${close} weeks with the house at two men and under 120 fame, and the `
-          + `angriest rival across all of them stood at ${Math.round(grMax)} against the 95 asked `
-          + `(measured 24-48 over 216 house-runs; the gate is shut and the roadmap holds why)`);
-        if(close >= 20 && grMax >= 95)
-          bad.push(`a rival reached grudge ${Math.round(grMax)} while the house was at two men and `
-            + `under 120 fame — \`ruined\` was written up as shut BECAUSE those two states belong to `
-            + `different houses. If they now co-occur the roadmap's account of it is stale and the `
-            + `ending wants re-measuring rather than this bar`);
+        lines.push(`ruined, driven by a house that picks the fight: the gate's own need() held on ${need} `
+          + `weeks of 12 houses, the angriest rival reached ${Math.round(grMax)} of the 95 asked, and `
+          + `${ended} of 12 runs ENDED there (median life ${lived.sort((a,b)=>a-b)[6]}w) — measured over `
+          + `three seeds x 24 houses at 36/37/46 gate-weeks and 2 of 24 endings each`);
+        if(!need)
+          bad.push(`a house that spent its whole run attacking one rival never once satisfied \`ruined\` `
+            + `(angriest rival ${Math.round(grMax)} of 95) — #153 measured the gate reachable on three `
+            + `seeds, and if it has closed then the grudge sources or their decay have moved and the `
+            + `roadmap's account of this ending is stale`);
       }
     }
 

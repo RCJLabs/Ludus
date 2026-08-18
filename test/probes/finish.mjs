@@ -82,6 +82,26 @@ const out = await p.evaluate(([H,W,SEED])=>{
        is a different question from whether it is reachable, and it is the one that matters. */
     hot:    { note:"takes the death match whenever it is on the bill, and fights anyway when it is not",
       opts:{ preferStakes:"sine" } },
+    /* ---- #153'S CLAUSE: CAN A RIVAL BE MADE TO HATE YOU WHILE YOU ARE DYING? ----
+       `ruined` wants one rival at grudge 95 while the house is at two men and under 120 fame, and it
+       stood two-of-three for 352-632 weeks in every arm with the grudge missing every time — the
+       angriest rival across those weeks reading 24-48. Grudge is raised by what YOU do to a rival, so
+       the honest test is an arm that does all of it, at ONE rival, for the whole run: a gambit
+       whenever the cooldown allows, a word in his best man's ear whenever there is room and coin, and
+       the arch-rival answered in its own coin whenever that is up. It is also a good way to go broke,
+       which is the point — the gate wants a house that is hated AND finished, and this is the policy
+       most likely to be both. */
+    feud:   { note:"one rival, attacked by every means the game offers, for the whole run — #153",
+      each(d){
+        const h = (d.rivals||[]).filter(x=>!x.retired)[0];
+        if(!h || d.over) return;
+        for(const k of A.GAM_KEYS) if(A.runGambit(d, k, h.name)) break;
+        if(!d.court){
+          const f = (h.fighters||[]).slice().sort((a,b)=>(b.wins||0)-(a.wins||0))[0];
+          if(f) A.startCourt(d, h.name, f.id);
+        }
+        if(d.nemHouse && d.nemHouse.house === h.name && A.nemAnswerReady(d)) A.answerNem(d);
+      } },
   };
 
   const runArm = (name, arm) => {

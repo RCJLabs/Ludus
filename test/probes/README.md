@@ -399,6 +399,15 @@ which is a fix; `ruined` came back one term short for 352-632 weeks in every arm
 counterfactual (had the term EVER been true earlier in that house's life) read 0, which killed the
 obvious repair before it was written.
 
+**#153 came back to it for a tenth arm, `feud`, and that arm overturned a conclusion this same probe
+had produced.** The RUINS split said `ruined` stood two-of-three for hundreds of weeks with the grudge
+always missing, and I wrote that up as two halves belonging to different HOUSES. They belong to
+different POLICIES: an arm that attacks one rival by every means the game offers — gambit, courting,
+answering the arch-rival — drives the angriest rival to 98 while the house is at two men, satisfies the
+gate on 36-46 weeks per seed, and ends there in 2 of 24 runs on all three. **A conjunction that never
+co-occurs under the arms you happened to run is not a conjunction that cannot co-occur**, and the only
+way to tell is an arm built to make it happen.
+
 **Three instrument faults, two of them mine and one in the shared rope.** It was called `ends` first,
 on a misreading of a handle comment as pointing at a deleted probe — it points at `test/checks/ends.mjs`,
 which is alive and already answers three of the twelve; two files of that name would have put two
