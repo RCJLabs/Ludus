@@ -348,7 +348,7 @@ as what the function returns; a system can be perfectly correct and still lie.**
 One thing to copy: it reconstructs `dark`'s own gating in a second arm, so the item's original 348-of-
 1,100 could be compared like for like instead of against a number taken a different way.
 
-**`kit.mjs`** — #149, and the clearest example in this directory of why a control arm goes first. The
+**`kit.mjs`** — #149 and #152. The clearest example in this directory of why a control arm goes first, The
 steel economy has a conservation law — for anything that wears, `d.gear[id]` equals what men are
 carrying plus what the rack lists in `d.gearCond[id]` — and `equipOne` is the path the whole game is
 built around, so it runs before anything else. **It failed the first version of the audit**, three
@@ -364,6 +364,18 @@ forty passes of the "arm him off the rack" button over a rack of fourteen bought
 of them worn by anybody. That last one was found by the ledger arm coming back BALANCED — every kind
 reading `0w`, which is not a clean bill of health, it is an arm that never moved any bought steel. The
 per-id ledger is printed even when it balances for exactly that reason.
+
+**#152 came back to it for the break path**, and the conservation law paid for itself a second time:
+a piece that snapped at the tang never left `d.gear`, so the house went on owning it, the armoury went
+on charging rent for it, and once every copy had broken a man could still be armed with one at
+condition 100 out of a rack that held none. The arm drives a real break — condition to 1, then
+`wearKit` until the kit changes — and uses the game's own "finally goes" chronicle line as the witness,
+because `steel`'s head records that a hand-rolled break detector undercounts by 60%.
+
+**Its third fixture was wrong the same way as the first two.** The arm originally asked "can another
+man be armed with the piece that just broke" while the house still owned two more of that kind, so
+"HE GETS IT" proved nothing at all. It breaks every copy first now and then asks. Three fixtures, one
+mistake: a test whose subject was never actually in question.
 
 **Its own fixtures were wrong twice, and both were the same mistake** — a test whose subject never
 moved. "`applyKit` left the named piece alone" was true only because the saved kit happened to want

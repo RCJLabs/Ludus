@@ -180,6 +180,59 @@ const out = await p.evaluate(([REPS,SEED])=>{
     held.push(`equipOne on a man carrying a NAMED piece (the control): ${men[1].kit[slot]===w3 ? "refused, as documented" : "TOOK IT"}`);
   }
 
+  /* ---- ARM 4c: WHAT BECOMES OF A PIECE THAT BREAKS — #152 ----
+     The steel-keeping cluster is twelve functions no check reaches, and every one of them counts
+     what the house OWNS: `rackUsed` fills the room from `d.gear`, `rackRent` charges 4d a week for
+     every piece past the cap, `gearUpkeep` bills `kitKeepOf` on each. So what `d.gear` says after a
+     sword snaps is not bookkeeping, it is the price of the room. `wearKit`'s break path reads:
+
+         const spare = defaultKit(g.cls)[s];
+         g.kit[s] = (GEAR[spare] && gearFree(d, spare) > 0) ? spare : BARE[s];
+         g.wear[s] = 100;
+
+     — the man is re-armed and nothing else is said. This drives a break directly, with the game's
+     own chronicle line as the witness rather than a detector of mine (`steel`'s head records that a
+     hand-rolled break detector undercounts by 60%), and then asks the three questions the cluster
+     turns on: does the house still own it, does the room still hold it, and can somebody else pick
+     it up. */
+  const broke = [];
+  {
+    const { d, buy } = stocked("break");
+    const men = A.activeG(d);
+    const id = buy.find(x=>A.GEAR[x].slot === "weapon") || buy[0];
+    const slot = A.GEAR[id].slot;
+    A.equipOne(d, men[0].id, slot, id);
+    const ownedWas = d.gear[id], freeWas = A.gearFree(d, id), usedWas = A.rackUsed(d);
+    const keepWas = A.gearUpkeep(d);
+    broke.push(`before: the house owns ${ownedWas} ${A.GEAR[id].name}, ${A.gearUsed(d,id)} worn, `
+      + `${freeWas} free · the room holds ${usedWas} of ${A.rackCap(d)} · upkeep ${keepWas}d a week`);
+    /* one point of condition left, then one bout's worth of wear — the game breaks it, not the probe */
+    men[0].wear[slot] = 1;
+    let fired = 0;
+    for(let i=0;i<40 && men[0].kit[slot]===id;i++){ A.wearKit(d, men[0], true); fired++; }
+    const line = [...(d.log||[]), ...(d.kept||[])].some(L=>(L.text||"").includes("finally goes"));
+    broke.push(`the game's own line "finally goes" was written: ${line} (after ${fired} bouts of wear)`);
+    broke.push(`after: he carries ${A.GEAR[men[0].kit[slot]] ? A.GEAR[men[0].kit[slot]].name : "nothing"}`
+      + ` · the house owns ${d.gear[id]||0} · ${A.gearUsed(d,id)} worn · ${A.gearFree(d,id)} free`
+      + ` · the room holds ${A.rackUsed(d)} · upkeep ${A.gearUpkeep(d)}d a week`);
+    /* AND THE QUESTION THE WHOLE CLUSTER TURNS ON, asked properly.
+       The house owns three of this kind, so arming a second man after one broke is correct and
+       proves nothing. Break the LAST one and then ask: a house that owns none of a piece must not
+       be able to put it on anybody. */
+    while((d.gear[id]||0) > 0){
+      const g2 = A.activeG(d).find(x=>x.kit[slot] !== id);
+      if(!g2 || !A.equipOne(d, g2.id, slot, id)) break;
+      g2.wear[slot] = 1;
+      for(let i=0;i<40 && g2.kit[slot]===id;i++) A.wearKit(d, g2, true);
+    }
+    broke.push(`every one of them broken: the house owns ${d.gear[id]||0} · ${A.gearUsed(d,id)} worn`
+      + ` · ${A.gearFree(d,id)} free · the room holds ${A.rackUsed(d)}`);
+    const took = A.equipOne(d, men[1].id, slot, id);
+    broke.push(`a man asks for one anyway: ${took ? `HE GETS IT, at condition ${A.wearOf(men[1], slot)} — out of a rack that holds none` : "refused, as it must be"}`);
+    const off = audit(d).bad;
+    broke.push(`the ledger: ${off.length ? off.map(b=>`${b.id} owned ${b.owned} worn ${b.worn} racked ${b.racked}`).join(" · ") : "owned = worn + racked, every kind"}`);
+  }
+
   /* ---- ARM 5: `dropKit`, and the eight-kit cap ---- */
   const kitCap = [];
   {
@@ -242,7 +295,7 @@ const out = await p.evaluate(([REPS,SEED])=>{
     season.push(`startPlan again after breaking returned ${JSON.stringify(re)} · seasonOfMan ${A.seasonOfMan(g2) ? "set" : "NOT SET"}`);
   }
 
-  return { rows, tale, held, kitCap, loan, season };
+  return { rows, tale, held, broke, kitCap, loan, season };
 }, [REPS, SEED]);
 
 console.log(`\n  THE STEEL LEDGER — owned must equal worn plus racked, ${REPS} passes per arm · seed "${SEED}"\n`);
@@ -262,6 +315,8 @@ console.log(`\n  WHAT A SAVED KIT DOES TO A PIECE'S CONDITION:`);
 for(const t of out.tale) console.log(`    ${t}`);
 console.log(`\n  THE PIECE THAT IS NOT GOING BACK ON THE RACK:`);
 for(const t of out.held) console.log(`    ${t}`);
+console.log(`\n  WHAT BECOMES OF A PIECE THAT BREAKS:`);
+for(const t of out.broke) console.log(`    ${t}`);
 console.log(`\n  THE KIT BOOK:`);
 for(const t of out.kitCap) console.log(`    ${t}`);
 console.log(`\n  REPAY:`);

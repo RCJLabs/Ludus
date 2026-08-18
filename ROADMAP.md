@@ -1392,7 +1392,13 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.42.0 — #151 refuted on its own clause: a banking arm that keeps
+**Shipped and verified:** v3.43.0 — #152's steel-keeping cluster closed: twelve functions no check
+reached, all of them wired to something the player feels, and driving them found that a piece which
+snapped at the tang never left `d.gear` — still counted against the armoury's cap, still drawing rent,
+still billed for upkeep, and re-issuable to another man at condition 100 out of a rack that held none.
+`steel` grows a section 8 driving all twelve. Suite **65 of 66**, the one failure `survive` at (0,4) —
+false, proven by cross-build signatures identical house for house at both 26 and 300 weeks, and two
+clean re-runs at (4,9) and (4,6). Opens #155. v3.42.0 — #151 refuted on its own clause: a banking arm that keeps
 entertaining reaches Known in Rome in 3-5 houses of 16, and the "blocked on favour" evidence came from
 `estate`'s `miser`, which banks by switching the table — the favour engine — off. Split by the game's
 own four booleans over 192 house-runs, coin is the last term standing on 96-100% of one-short weeks
@@ -1789,26 +1795,36 @@ the repair is not a smaller number: it is that the census reads `d.gold` alone w
 beside it says a man "had to BE worth it", and the house's stone, steel and men are worth a great deal
 that the censor cannot see (`paragonReach` already draws exactly this distinction for the block).
 
-**#152 — 143 of 424 handle functions are called by no check, and they GROUP into three systems.**
-`coverage` finished: **281 of 424 reached, 143 never called.** Per the `wall` rule the list was
-grouped before anything was picked, and it is not 143 lone names — the three largest clusters are
-whole systems nobody is watching:
+**#152 — the steel-keeping cluster is CLOSED in v3.43.0; the sweep itself stays open.** Re-run on the
+current build: **291 of 435 exposed functions are reached, 144 never called** (the count moved with
+the handle, not against it — v3.38.0-v3.42.0 added functions as well as checks). The clause said it
+falsifies if a cluster turns out to be readers the UI calls and no check would sensibly drive. **The
+steel cluster is not that.** Every one of the twelve is wired to something the player feels — the
+rent leaves the box in `rackWeek`, the strain multiplies wear inside `wearKit`, `gearUpkeep` is a
+term in `weeklyBill`, the armourer's three numbers scale price, wear and mending — and none of them
+was driven by anything.
 
-    the cost of KEEPING steel   12   rackCap · rackUsed · rackOver · rackStrain · rackRent ·
-                                     gearUpkeep · kitKeepOf · repairWeek · perkWear ·
-                                     armourerWear · armourerMend · armourerCut
-    Rome's own readouts          9   romeRuns · romeTriumphs · romeStanding · romeWord · romePrize ·
-                                     romePurseMult · romeSineOdds · romeGreeting · makeImperialBout
-    the name Capua settles on    7   addRep · repLeader · repOf · repTotal · repShare · repSettle ·
-                                     repWeek   (`chair` drives `repStyle` and nothing underneath it)
+**Driving them found a real fault, in the ledger all twelve read from.** `wearKit`'s break path
+reassigned `g.kit[s]` and said nothing else, so a piece that snapped at the tang stayed in `d.gear`
+for ever. Measured (`test/probes/kit.mjs`): a house owning three of a kind **still owned three** after
+one broke, the armoury still counted it against `rackCap`, `gearUpkeep` still billed for it every
+week — and once every copy had broken, a man could still be armed with one, **at condition 100, out
+of a rack that held none**, in the same week the chronicle said it had been beaten out of any use. It
+goes through `swapSlot` with a new `scrap` flag now, so the wreck leaves the ledger, and `clearProv`
+goes with it so a broken piece's history does not transfer to the house issue that replaces it.
 
-The steel cluster is the one to take first: `steel` is a 65-check suite's most thorough check and it
-touches 18 functions, none of them these — so the half of the steel economy that **takes condition
-away** is guarded and the half that **pays to keep it** is not, which is the exact asymmetry v3.13.0
-was written to fix. And a separate hazard the same run printed: **`scales` alone carries 15 functions
-no other check reaches**, so one check going quiet takes fifteen readers with it.
-*Falsifies if:* a cluster turns out to be readers the UI calls and no check would sensibly drive —
-`wall` drove eleven such, refuted both its hypotheses, and was still worth a release for the coverage.
+*Kept from it:* `steel` grows a section 8 that drives all twelve on a bench and holds what each one
+claims — the room at 8/15/22/29, house issue not counting against it, `rackWeek` taking exactly
+`rackRent` out of the box, the strain reaching `wearKit` (**5.72 a bout in a tidy room against 9.28
+at sixteen over**), `kitKeepOf` free at the floor and price×`KEEP_RATE` above it, `gearUpkeep` landing
+in `weeklyBill`, `repairWeek` mending level×`MEND_RATE`×`armourerMend` and never past `MEND_CEIL` nor
+downward, the armourer's three multipliers reading exactly 1 with nobody hired, and the wreck leaving
+`d.gear`. Both break bars were negative-tested against the unfixed code.
+
+**What is still open** is the sweep: 144 functions, and the other two clusters `coverage` named —
+Rome's nine readouts and the seven under `repStyle` that name what Capua calls you. Neither has been
+driven. The rule the `wall` release set still applies: group before picking, and pick the cluster
+whose functions are wired to something rather than the longest list.
 
 #### The four candidates this audit KILLED, which is the part worth reading
 
@@ -2462,7 +2478,90 @@ And the judgement call to weigh before picking the next item: at eight-to-two, t
 territory where the measuring is harder than the thing measured. That is a reason to prefer items whose
 answer is a decision over items whose answer is another number.
 
+**#155 — `survive` fails three times more often than its own derivation says it should.** #142
+re-derived its bar from 37 runs and put the expected false-failure rate at **2.7%**. Over 54 runs it
+is **5 of 54 (9%)**, and two of those five are in the last four releases (v3.41.0 at (1,1), v3.43.0 at
+(0,4)) — each one costing a cross-build signature run to disprove, and each one proven false by 60
+houses reading identical house for house. The bar is a conjunction (`standing < 3 && men < 4`) taken
+over FIVE houses through five real browsers, and #142's own note says its `standing` reading is nearly
+inert: 39 of 60 clean, 44 with the weekly bill tripled. *Falsifies if:* the 2.7% was derived over a
+different span or policy than the runs being counted against it, in which case the figures are not
+comparable and the item is to re-derive rather than to change anything. What is NOT proposed is
+widening the bar until it stops firing — that is how it got `MEN = 6`. The candidate repair is more
+houses, since the spread is a sample-size property and the check already takes five minutes.
+
 ## Changelog (shipped)
+
+### v3.43.0 — #152: the piece that snapped at the tang was still on the books
+
+`coverage`, re-run on the current build: **291 of 435 exposed functions are reached by at least one
+check, 144 never called.** Its largest cluster is the cost of KEEPING steel — `rackCap`, `rackUsed`,
+`rackOver`, `rackStrain`, `rackRent`, `gearUpkeep`, `kitKeepOf`, `repairWeek`, `perkWear`,
+`armourerWear`, `armourerMend`, `armourerCut`. #152's clause said it falsifies if a cluster turns out
+to be readers the UI calls that no check would sensibly drive. This one is the opposite: every one of
+the twelve reaches the player. The rent leaves the box in `rackWeek`. The strain multiplies wear
+inside `wearKit`. `gearUpkeep` is a term in `weeklyBill`, which is the number the home page quotes.
+The armourer's three multipliers scale what steel costs, how fast it wears and how fast it mends, and
+the staff panel quotes all three as percentages. Nothing drove any of it.
+
+#### What driving it found
+
+`wearKit`'s break path read:
+
+    const spare = defaultKit(g.cls)[s];
+    g.kit[s] = (GEAR[spare] && gearFree(d, spare) > 0) ? spare : BARE[s];
+    g.wear[s] = 100;
+
+The man is re-armed and nothing else is said — so **a piece that broke never left `d.gear`.** Measured
+directly (`test/probes/kit.mjs`, with the game's own "finally goes" line as the witness rather than a
+hand-rolled detector, which `steel`'s head records as undercounting by 60%):
+
+* a house owning three of a kind **still owned three** after one of them broke;
+* the armoury still counted it against `rackCap`, so it still drew `rackRent` at 4d a week;
+* `gearUpkeep` still billed `kitKeepOf` on it, every week, for ever;
+* and with every copy broken, `equipOne` **still armed a man with one — at condition 100, out of a
+  rack that held none** — in the same week the chronicle told the player it had been beaten out of
+  any use.
+
+It goes through `swapSlot` with a new `scrap` flag now: the wreck is decremented out of `d.gear`
+rather than pushed back into `d.gearCond`, and `clearProv` goes with it so a broken piece's history
+does not transfer to the house issue that replaces it. The v3.40.0 conservation law still balances,
+which is how the fix is checked rather than asserted.
+
+#### `steel` section 8, and what the bench reads
+
+    the room holds 8 / 15 / 22 / 29 at armamentarium 0-3
+    12 wearing pieces in a room built for 8: over by 4 · strain x1.28 · rent 16d a week
+       and `rackWeek` takes exactly that out of the box
+    wear off a weapon over 60 bouts: 5.72 a bout in a room within its cap, 9.28 at 16 over (x1.75)
+    the smith's fee: a 260d piece costs 0d a week · a 280d piece costs 2d (floor 260d, rate 0.006)
+       four more of them: upkeep +8d a week, and the weekly bill +8d
+    the armoury at 3 mends 0.54 a week per slot (3 x 0.18 x armourer 1.00)
+    the armourer with no armourer: cut 1 · wear 1 · mend 1
+    a piece that broke: owned 1 -> 0 · the room 1 -> 0 · re-issuing it was refused
+
+#### And what the fix is worth, which is worth stating plainly
+
+Nothing that the reference player does. The release run read 65 of 66 with `survive` drawing **(0,4)**
+— its fifth failure in 54 runs — and the cross-build signature says the failure is false and the fix
+is inert on the rope: 60 houses through 26 weeks are **identical house for house** between v3.42.0 and
+v3.43.0, and so are 40 houses through **300** weeks (alive 5/40, median week 154, men 3, gold −137,
+median rack 13 owned / 3 over / 12d rent / 14d upkeep, max owned 74 — every figure the same on both
+builds). That is consistent with what `steel`'s own era table already says: the median man fights 3
+bouts against the ~18 an unmended weapon needs, and nothing broke in any house in any era it measured.
+Two further `survive` runs read (4,9) and (4,6), both passing.
+
+So this is a correctness fix on a path the reference player almost never reaches and a player who
+fights one man hard certainly does — which is exactly the kind of thing a coverage sweep is for, and
+exactly why the fix ships with a bench rather than a trajectory bar. **The failing entry stays in the
+committed tally.**
+
+Every figure is derived from the game's own constants rather than written down — `KEEP_FLOOR`,
+`KEEP_RATE`, `MEND_RATE`, `MEND_CEIL` and `bLevel` are all read, which is the #125 lesson this check
+already carries elsewhere. The strain row is the one worth keeping: the panel tells the player
+"everything wears 75% faster" and until now nothing had checked that the sentence reaches `wearKit`.
+Both break bars were negative-tested — restore the bare reassignment and the check names the fault in
+its own words.
 
 ### v3.42.0 — #151: the ladder is not held by favour, and the arm that said so had switched it off
 

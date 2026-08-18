@@ -903,10 +903,20 @@ function saveKit(d, gid){
    three worn by men, and two still listed on the rack** — the ledger `owned === worn + racked` off
    by two. And the condition went with nobody: the rack held one Noric Gladius at 31, a man applied
    the saved kit, and he read **100** while the 31 stayed on the shelf. */
-function swapSlot(d, g, slot, id){
+function swapSlot(d, g, slot, id, scrap){
   g.wear = g.wear || {}; d.gearCond = d.gearCond || {};
-  const old = GEAR[g.kit[slot]];
-  if(wears(old)) (d.gearCond[g.kit[slot]] = d.gearCond[g.kit[slot]] || []).push(wearOf(g, slot));
+  const oid = g.kit[slot], old = GEAR[oid];
+  /* ---- `scrap` IS THE PIECE THAT DOES NOT GO BACK ON THE RACK — #152 ----
+     A weapon that snaps at the tang is not stock, it is scrap, and the house does not still own it.
+     `wearKit`'s break path reassigned `g.kit[s]` and said nothing else, so measured directly
+     (`test/probes/kit.mjs`): a house owning three of a piece still owned three after one of them
+     broke, the armoury still counted it against `rackCap`, `gearUpkeep` still billed for it every
+     week for ever — and the next man to ask for one WAS HANDED THE BROKEN ONE, at condition 100,
+     in the week the chronicle said it had been beaten out of any use. */
+  if(wears(old)){
+    if(scrap){ d.gear[oid] = (d.gear[oid]||1) - 1; if(d.gear[oid] <= 0) delete d.gear[oid]; }
+    else (d.gearCond[oid] = d.gearCond[oid] || []).push(wearOf(g, slot));
+  }
   g.kit[slot] = id;
   const now = GEAR[id];
   if(wears(now)){
@@ -4077,8 +4087,10 @@ function wearKit(d, g, hard){
       }
       const broke = it.name;
       const spare = defaultKit(g.cls)[s];
-      g.kit[s] = (GEAR[spare] && gearFree(d, spare) > 0) ? spare : BARE[s];
-      g.wear[s] = 100;
+      /* #152: through `swapSlot` with `scrap`, so the wreck leaves `d.gear` and whatever replaces it
+         arrives at the condition the armoury actually records for it */
+      swapSlot(d, g, s, (GEAR[spare] && gearFree(d, spare) > 0) ? spare : BARE[s], true);
+      clearProv(g, s);
       chron(d, `${g.name}'s ${broke.toLowerCase()} finally goes — ${s==="weapon"?"snapped at the tang":s==="offhand"?"split through the boss":"beaten out of any use"}. He finishes on house stock.`, "bad");
     }
   }
@@ -25669,7 +25681,9 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     gearUsed, gearFree, isBasic, wears, armFromRack,
     gearUpkeep, kitKeepOf, KEEP_FLOOR, KEEP_RATE, MEND_RATE, MEND_CEIL,
     repairFee, armourerWear, armourerMend, armourerCut, perkWear,
-    rackCap, rackUsed, rackOver, rackStrain, rackRent, staffSkill,
+    /* #152: the twelve of the steel-keeping cluster no check reached. `rackWeek` goes with them —
+       the rent is only a number until something takes it out of the box. */
+    rackCap, rackUsed, rackOver, rackStrain, rackRent, rackWeek, staffSkill,
     /* ---- AND WHAT A TOWN DOWN THE BAY THINKS OF YOU ----
        `cityFavWord` took zero samples in the scales sweep and #115 was written because nothing had
        ever toured. Two scales live here: `bayPol[key].favor`, which only a bout in that town moves,

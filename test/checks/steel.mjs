@@ -535,6 +535,170 @@ export async function run({ p }){
       }
     }
 
+    /* ================= 8. THE COST OF KEEPING IT — #152 =================
+       `coverage` groups the 144 functions no check reaches, and its largest cluster is this one:
+       rackCap, rackUsed, rackOver, rackStrain, rackRent, gearUpkeep, kitKeepOf, repairWeek,
+       perkWear, armourerWear, armourerMend and armourerCut. Twelve functions, all of them wired to
+       something real — the rent comes out of the box in `rackWeek`, the strain multiplies wear in
+       `wearKit`, the upkeep is a term in `weeklyBill`, the armourer's three numbers scale price,
+       wear and mending — and not one driven by anything. That is the asymmetry v3.13.0 was written
+       to fix, still half in place: the half that TAKES condition away is guarded above, and the half
+       that PAYS TO KEEP IT was not.
+
+       Driving it found a real fault, and it is in the same place all of them read from. `wearKit`'s
+       break path reassigned `g.kit[s]` and said nothing else, so a piece that snapped at the tang
+       stayed in `d.gear` for ever: measured (`test/probes/kit.mjs`), a house owning three of a kind
+       still owned three after one broke, the armoury still counted it against `rackCap`, `gearUpkeep`
+       still billed for it every week — and when every copy had broken, a man could still be armed
+       with one, at condition 100, out of a rack that held none. It goes through `swapSlot` with the
+       `scrap` flag now, so the wreck leaves the ledger.
+
+       Held here as a bench, because every one of these is a pure function of the save. */
+    {
+      const stock = tag => { const d = A.newGameState("Kp", "clean", `STEEL-KEEP-${tag}`, null);
+        d.gold = 90000; return d; };
+      const wearing = Object.keys(A.GEAR).filter(id=>A.wears(A.GEAR[id]));
+
+      /* ---- the room: what it holds, what it does not, and what it charges ---- */
+      { const d = stock("rack");
+        const capAt = L => { d.buildings = { armamentarium:L }; return A.rackCap(d); };
+        const caps = [0,1,2,3].map(capAt);
+        lines.push(`the room holds ${caps.join(" / ")} at armamentarium 0-3`);
+        for(let L=0; L<caps.length; L++) if(caps[L] !== 8 + L*7)
+          bad.push(`\`rackCap\` reads ${caps[L]} at level ${L}, against the 8 + level*7 its own comment quotes`);
+
+        d.buildings = {};
+        const before = A.rackUsed(d);
+        /* house issue is not stock in the room — only steel that WEARS is */
+        const basic = Object.keys(A.GEAR).find(id=>A.isBasic(id));
+        if(basic) for(let i=0;i<5;i++) A.buyGearItem(d, basic);
+        if(A.rackUsed(d) !== before)
+          bad.push(`five pieces of house issue changed \`rackUsed\` from ${before} to ${A.rackUsed(d)} — `
+            + `the room counts steel that wears, and stock is what the room is FOR`);
+        for(let i=0;i<12;i++) A.buyGearItem(d, wearing[i % wearing.length]);
+        const used = A.rackUsed(d), cap = A.rackCap(d), over = A.rackOver(d);
+        lines.push(`${used} wearing pieces in a room built for ${cap}: over by ${over} · `
+          + `strain x${A.rackStrain(d).toFixed(2)} · rent ${A.rackRent(d)}d a week`);
+        if(over !== Math.max(0, used - cap)) bad.push(`\`rackOver\` is not used minus cap`);
+        if(A.rackRent(d) !== over*4) bad.push(`\`rackRent\` reads ${A.rackRent(d)} against ${over}x4`);
+        const wantStrain = over ? 1 + Math.min(0.75, over*0.07) : 1;
+        if(Math.abs(A.rackStrain(d) - wantStrain) > 1e-9)
+          bad.push(`\`rackStrain\` reads ${A.rackStrain(d)} against the 1 + min(0.75, over*0.07) it is documented as`);
+        /* and the rent is only a number until something takes it */
+        const box = d.gold; A.rackWeek(d);
+        if(Math.round(box - d.gold) !== A.rackRent(d))
+          bad.push(`\`rackWeek\` took ${Math.round(box - d.gold)}d out of the box against a rent of `
+            + `${A.rackRent(d)}d — the overcrowding charge is the only thing that makes the cap bite`);
+        else lines.push(`   and \`rackWeek\` takes exactly that out of the box`);
+      }
+
+      /* ---- the strain is a multiplier on WEAR, not a line of prose ---- */
+      { const run = (over) => {
+          const d = stock("strain-"+over);
+          d.buildings = { armamentarium:0 };
+          const id = wearing.find(x=>A.GEAR[x].slot === "weapon");
+          const n = over ? 24 : 1;
+          for(let i=0;i<n;i++) A.buyGearItem(d, id);
+          const g = A.activeG(d)[0];
+          A.equipOne(d, g.id, "weapon", id);
+          let lost = 0;
+          for(let i=0;i<60;i++){ g.wear.weapon = 100; A.wearKit(d, g, false); lost += 100 - g.wear.weapon; }
+          return { strain:A.rackStrain(d), per:lost/60, over:A.rackOver(d) };
+        };
+        const tidy = run(false), packed = run(true);
+        lines.push(`wear off a weapon over 60 bouts: ${tidy.per.toFixed(2)} a bout in a room within its cap, `
+          + `${packed.per.toFixed(2)} at ${packed.over} over (strain x${packed.strain.toFixed(2)})`);
+        if(packed.strain <= 1) bad.push(`the packed room reported no strain at all`);
+        else if(!(packed.per > tidy.per))
+          bad.push(`steel wore ${packed.per.toFixed(2)} a bout in a room ${packed.over} past its cap against `
+            + `${tidy.per.toFixed(2)} in a tidy one — \`rackStrain\` is quoted at the player as "everything `
+            + `wears ${Math.round((packed.strain-1)*100)}% faster" and must reach \`wearKit\` to mean it`);
+      }
+
+      /* ---- what a piece costs to keep, and that the weekly bill carries it ---- */
+      { const d = stock("keep");
+        const cheap = wearing.find(id=>A.GEAR[id].price > 0 && A.GEAR[id].price <= A.KEEP_FLOOR && !A.GEAR[id].keep);
+        const dear  = wearing.find(id=>A.GEAR[id].price > A.KEEP_FLOOR && !A.GEAR[id].keep);
+        const kc = cheap ? A.kitKeepOf(A.GEAR[cheap]) : null, kd = dear ? A.kitKeepOf(A.GEAR[dear]) : null;
+        lines.push(`the smith's fee: ${cheap?`${A.GEAR[cheap].name} at ${A.GEAR[cheap].price}d costs ${kc}d a week`:"(no cheap piece to test)"}`
+          + ` · ${dear?`${A.GEAR[dear].name} at ${A.GEAR[dear].price}d costs ${kd}d`:"(no dear piece)"}`
+          + ` (the floor is ${A.KEEP_FLOOR}d, the rate ${A.KEEP_RATE})`);
+        if(cheap && kc !== 0)
+          bad.push(`a ${A.GEAR[cheap].price}d piece costs ${kc}d a week to keep — under KEEP_FLOOR `
+            + `(${A.KEEP_FLOOR}) it is ironmongery and free, which is what keeps \`survive\` clear of all this`);
+        if(dear && kd !== Math.max(1, Math.round(A.GEAR[dear].price * A.KEEP_RATE)))
+          bad.push(`\`kitKeepOf\` reads ${kd}d on a ${A.GEAR[dear].price}d piece against price x ${A.KEEP_RATE}`);
+        if(dear){
+          const billWas = A.weeklyBill(d), keepWas = A.gearUpkeep(d);
+          for(let i=0;i<4;i++) A.buyGearItem(d, dear);
+          const grew = A.gearUpkeep(d) - keepWas, billGrew = A.weeklyBill(d) - billWas;
+          lines.push(`   four more of them: upkeep +${grew}d a week, and the weekly bill +${billGrew}d`);
+          if(grew !== kd*4) bad.push(`\`gearUpkeep\` grew ${grew}d for four pieces at ${kd}d each`);
+          if(billGrew < grew) bad.push(`the weekly bill grew ${billGrew}d where the steel alone added ${grew}d — `
+            + `\`gearUpkeep\` is a term in \`weeklyBill\` and the player is quoted that bill`);
+        }
+      }
+
+      /* ---- the armoury mends, and the armourer's three numbers are three real claims ---- */
+      { const d = stock("mend");
+        const id = wearing.find(x=>A.GEAR[x].slot === "weapon");
+        A.buyGearItem(d, id);
+        const g = A.activeG(d)[0];
+        A.equipOne(d, g.id, "weapon", id);
+        d.buildings = {};
+        g.wear.weapon = 40; A.repairWeek(d);
+        if(g.wear.weapon !== 40) bad.push(`\`repairWeek\` mended ${g.wear.weapon-40} with no armoury built at all`);
+        d.buildings = { armamentarium:3 };
+        g.wear.weapon = 40; A.repairWeek(d);
+        const gained = g.wear.weapon - 40, want = 3*A.MEND_RATE*A.armourerMend(d);
+        lines.push(`the armoury at 3 mends ${gained.toFixed(2)} a week per slot (3 x ${A.MEND_RATE} x armourer ${A.armourerMend(d).toFixed(2)})`);
+        if(Math.abs(gained - want) > 1e-6)
+          bad.push(`\`repairWeek\` added ${gained.toFixed(3)} against level x MEND_RATE x armourerMend = ${want.toFixed(3)}`);
+        g.wear.weapon = A.MEND_CEIL + 5; A.repairWeek(d);
+        if(g.wear.weapon !== A.MEND_CEIL + 5)
+          bad.push(`a piece above MEND_CEIL (${A.MEND_CEIL}) was moved to ${g.wear.weapon} — free care never `
+            + `works a piece DOWN, and its own comment says so`);
+        g.wear.weapon = A.MEND_CEIL - 1; A.repairWeek(d);
+        if(g.wear.weapon > A.MEND_CEIL)
+          bad.push(`\`repairWeek\` carried a piece past MEND_CEIL to ${g.wear.weapon} — free care keeps steel `
+            + `serviceable, it does not make it new`);
+        lines.push(`the armourer with no armourer: cut ${A.armourerCut(d)} · wear ${A.armourerWear(d)} · mend ${A.armourerMend(d)}`);
+        for(const [f,v] of [["armourerCut",A.armourerCut(d)],["armourerWear",A.armourerWear(d)],["armourerMend",A.armourerMend(d)]])
+          if(v !== 1) bad.push(`\`${f}\` reads ${v} with nobody hired — the three of them are quoted at the `
+            + `player as percentages OFF a baseline, so an unstaffed house has to read exactly 1`);
+        /* the steel perk is the fourth multiplier on the same line of `wearKit` */
+        lines.push(`the steel perk: wear x${A.perkWear(d)} without it`);
+        if(A.perkWear(d) !== 1) bad.push(`\`perkWear\` reads ${A.perkWear(d)} on a house with no works standing`);
+      }
+
+      /* ---- and the wreck leaves the ledger ---- */
+      { const d = stock("break");
+        const id = wearing.find(x=>A.GEAR[x].slot === "weapon");
+        A.buyGearItem(d, id);
+        const g = A.activeG(d)[0];
+        A.equipOne(d, g.id, "weapon", id);
+        const ownedWas = d.gear[id], roomWas = A.rackUsed(d);
+        g.wear.weapon = 1;
+        for(let i=0;i<40 && g.kit.weapon===id;i++) A.wearKit(d, g, true);
+        const gone = g.kit.weapon !== id;
+        const again = A.equipOne(d, A.activeG(d)[1] ? A.activeG(d)[1].id : g.id, "weapon", id);
+        lines.push(`a piece that broke: owned ${ownedWas} -> ${d.gear[id]||0} · the room ${roomWas} -> ${A.rackUsed(d)}`
+          + ` · re-issuing it to somebody else ${again ? "SUCCEEDED" : "was refused"}`);
+        if(!gone) bad.push(`a weapon driven to condition 0 forty times over never broke — this section's `
+          + `whole point is what happens when it does`);
+        else {
+          if((d.gear[id]||0) !== ownedWas - 1)
+            bad.push(`the house owned ${ownedWas} and owns ${d.gear[id]||0} after one of them snapped at the `
+              + `tang — a wreck is not stock, and while it sits in \`d.gear\` it fills \`rackCap\`, draws `
+              + `\`rackRent\` and is billed by \`gearUpkeep\` for ever`);
+          if(again)
+            bad.push(`the house owns none of a piece and armed a man with one anyway — before v3.43.0 the `
+              + `broken one came back at condition 100 in the same week the chronicle said it had been `
+              + `beaten out of any use`);
+        }
+      }
+    }
+
     return { bad, lines };
   });
 
