@@ -31,6 +31,7 @@ Run them straight:
     node test/probes/perk.mjs 16 420 SEED         # #140: what each work is worth GRANTED FREE
     node test/probes/perk.mjs 16 420 SEED hot     # #141: and for a house that neglects unrest
     node test/probes/catalogue.mjs 72 420 SEED on   # the census with the works step switched on
+    node test/probes/kit.mjs 40 KIT       # #149: the steel ledger, the forged piece, and the four dark doors
     node test/probes/finish.mjs 24 900 SEED # #147: nine arms, one per ending, and the RUINS gates split by term
     node test/probes/succ.mjs 30 1400 SEED [grant]  # #147: the second generation, with and without a free ledger
 
@@ -309,6 +310,29 @@ describe a SHAPE rather than a difficulty, so each became a measurement:
 Run it under `reckless`, `neglect` and `bare` as well as `default` before quoting any of it — #139
 was a finding that held on the reference player and flipped on the others, and this probe's header
 carries that lesson. Both surviving claims here hold under all four.
+
+**`kit.mjs`** — #149, and the clearest example in this directory of why a control arm goes first. The
+steel economy has a conservation law — for anything that wears, `d.gear[id]` equals what men are
+carrying plus what the rack lists in `d.gearCond[id]` — and `equipOne` is the path the whole game is
+built around, so it runs before anything else. **It failed the first version of the audit**, three
+kinds out of balance, and the law was wrong rather than the code: `buyGearItem` pushes a `gearCond`
+entry for every purchase and `equipOne` only draws one down for steel that WEARS, so house issue
+accumulates entries nobody spends. Filtered to `wears`, the control balances and the arms under it
+became readable — and `applyKit` was three of a piece owned, three worn, two still on the rack.
+
+Two more faults came out of the same drive, and neither is a count: `applyKit` and `armFromRack` both
+took a man's forged, named piece, against the forging's own line and against `equipOne`'s explicit
+refusal; and `condOf` scored every candidate for a slot at the wear of the piece already in it, so
+forty passes of the "arm him off the rack" button over a rack of fourteen bought kinds ended with none
+of them worn by anybody. That last one was found by the ledger arm coming back BALANCED — every kind
+reading `0w`, which is not a clean bill of health, it is an arm that never moved any bought steel. The
+per-id ledger is printed even when it balances for exactly that reason.
+
+**Its own fixtures were wrong twice, and both were the same mistake** — a test whose subject never
+moved. "`applyKit` left the named piece alone" was true only because the saved kit happened to want
+the piece the man was already holding; "the book holds 6 of 12 saved kits" was `saveKit` deduping by
+`cls · weapon` across six class names, which says nothing about the eight-kit cap. If an arm reports
+that nothing happened, check that it asked for something to happen.
 
 **`finish.mjs`** — #147, and the shape to copy when a count of outcomes is all you have. The item said
 seven of the twelve endings never fire; a count cannot tell a gate the game will not open from a door

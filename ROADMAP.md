@@ -1392,7 +1392,14 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.39.0 — #148 closed: the openings' 35-point survival spread is real and
+**Shipped and verified:** v3.40.0 — #149 closed: `repay`, `breakPlan` and `dropKit` are correct, and
+driving `applyKit` found three real faults in the steel economy's unguarded half — a piece could be
+moved between a man and the rack without its condition going with it (three owned, three worn, two
+still listed on the rack), both dark paths took a man's forged and named piece, and `condOf` scored
+every candidate at the wear of the piece already in the slot, so "arm him off the rack" handed out
+house issue precisely when a man's own steel was finished. `steel` grows a section 7 whose four bars
+were each negative-tested against the unfixed code. Suite green at **65/65**, `survive` drawing
+(3,10). v3.39.0 — #148 closed: the openings' 35-point survival spread is real and
 is not what the tags describe. Two of the five made a claim about a trajectory and both were
 measurably false — `veterans`' "closing window" is backwards (its founding men outlast every other
 opening's by 3-5×, under all four policies) and `champion`'s "everything is standing in one cell" is
@@ -1660,12 +1667,41 @@ ordering claim — but its blurb now bounds the state to "until you put somebody
 which is both true and the first thing a player should do. Nothing is retuned: the spread stands,
 and the item was never that the spread is wrong.
 
-**#149 — four player systems the reference player has never once exercised.** Gate open on **0 of
-1,100 house-weeks** (8 houses × 320): `repay`, `applyKit`, `dropKit`, `breakPlan`. Each is a fact
-about the rope rather than the game — it never borrows, never applies a saved kit (though `saveKit`'s
-gate is open on 93% of weeks), never runs a season in-run. **That is #138's exact shape**, and #138
-found a real fault behind it. *Falsifies if:* driving each one finds them all correct, which is still
-worth the coverage — `wall` cost a release and refuted both its hypotheses.
+**#149 — CLOSED in v3.40.0. Two of the four were correct; the third was hiding three faults.**
+`repay` is clean on every reading taken: 500 against 2,400 owed moves gold by exactly 500 and owed to
+1,900, an over-payment returns exactly what was owed and closes the loan, repaying nothing owed
+returns 0, and a house paying 200 a week for 60 weeks clears the debt and lives. `breakPlan` is clean
+too — it lifts the season, a man can be put back on one afterwards, and calling it on a man with no
+season does nothing (its only blemish is that it returns `undefined`, so a caller cannot tell a
+success from a no-op; recorded, not fixed). `dropKit` removes the right kit, ignores an id that was
+never there, and `saveKit`'s eight-kit cap holds once you feed it eight distinct names.
+
+**`applyKit` is where the item paid.** The steel economy states a conservation law about itself —
+for anything that wears, `d.gear[id] === gearUsed(d,id) + d.gearCond[id].length`: a piece is on a man
+or on the rack, and `d.gearCond` remembers what each unworn one is like. `equipOne` keeps both halves.
+Driving the dark paths (`test/probes/kit.mjs`, with `equipOne` first as the control so a failing LAW
+could not read as failing code) found:
+
+1. **`applyKit` and `armFromRack` moved steel without moving its condition.** After 120 applications:
+   three of a piece owned, all three worn by men, **two still listed on the rack**. And the rack held
+   one Noric Gladius at condition 31, a man applied the saved kit, and he read **100** while the 31
+   stayed on the shelf — free repair in one direction, forgotten wear in the other.
+2. **Both took a man's FORGED, named piece** — `gladius_f` became `sica_f` under `applyKit` and
+   `fuscina_f` under `armFromRack` — against the forging's own chronicle line, "It is his, and it is
+   not going back on the rack", and against `equipOne`, which refuses.
+3. **`condOf` scored every candidate at the wear of the piece already in the slot.** It read
+   `g.wear[it.slot]` and ignored the piece entirely, so a man whose sword was at 3 had every sword in
+   the armoury scored at 3; `gearScore` docks a worn piece twice and house issue is a flat 100, so the
+   "arm him off the rack" button handed out the wooden one. Forty passes over a rack of fourteen
+   bought kinds ended with **none of them worn by anybody**. After the fix: 93 calls, 140 slots
+   changed, men carrying bought steel again.
+
+*Fixed by* one `swapSlot(d, g, slot, id)` that both bookings go through, `isNamed` guards on the two
+dark paths, and `condOf` reading the armoury's record of the candidate. Nothing the reference player
+does touches any of it — the rope buys by price and equips through `equipOne` — so no figure in the
+suite was measured on the old behaviour. `steel` grows a section 7 holding the ledger, the condition
+hand-over, the forged piece and the scorer, and **all four bars were negative-tested**: each one
+fails on the unfixed code and passes on the fixed.
 
 **#150 — a third of paid gambit attempts do nothing.** `runGambit` returned null on **348 of 1,100**
 calls (32%) while changing the save on the other 752. A gambit that is refused and a gambit that runs
@@ -2353,6 +2389,72 @@ territory where the measuring is harder than the thing measured. That is a reaso
 answer is a decision over items whose answer is another number.
 
 ## Changelog (shipped)
+
+### v3.40.0 — #149: the four dark doors, and the steel ledger behind one of them
+
+`dark` found four actions whose gate never opens on a rope-played house — `repay`, `applyKit`,
+`dropKit`, `breakPlan` — each a fact about the reference player rather than about the game. The item
+said driving them might find them all correct and that this would still be worth the coverage. Two of
+them are correct. The third was hiding three faults, and they are not small.
+
+**`repay` is clean.** Borrow 2,400 from Murena: `repay(500)` returns 500, owed goes to 1,900, gold
+moves by exactly 500. `repay(999999)` returns exactly the 1,900 still owed, closes the loan and
+leaves the rest of the coin alone. `repay(100)` with nothing owed returns 0 and moves nothing. A
+house that pays 200 a week for sixty weeks clears the debt and is alive at the end.
+
+**`breakPlan` and `dropKit` are clean.** The season lifts, a man can be put back on one afterwards,
+and breaking a season nobody is on does nothing. `dropKit` removes the right kit and ignores an id
+that was never there; the eight-kit cap holds once it is fed eight distinct names — `saveKit` dedupes
+by `cls · weapon`, so twelve saves of six classes is six kits, which is a fact about the fixture and
+not about the cap. The one blemish, recorded and not fixed: `breakPlan` returns `undefined`, so a
+caller cannot tell a success from a no-op.
+
+#### The conservation law, and the control that had to run first
+
+For anything that wears, the game states this about itself:
+
+    d.gear[id]  ===  gearUsed(d, id)  +  (d.gearCond[id] || []).length
+    owned             worn by somebody     on the rack, each with its own condition
+
+`equipOne` keeps both halves — the outgoing piece's wear goes into the pool, the incoming piece's
+condition comes out of it — so `equipOne` is the control arm, and it ran first. **It failed the first
+version of the audit**, three kinds out of balance, and the law was wrong rather than the code:
+`buyGearItem` pushes a `gearCond` entry for every purchase and `equipOne` only draws one down
+`if(wears(now))`, so house-issue stock accumulates entries nobody ever spends. Filtered to `wears`,
+the control balances and everything below it is readable.
+
+**1. `applyKit` and `armFromRack` moved steel without moving its condition.** Both assigned `g.kit`
+wholesale and touched `d.gearCond` not at all. After 120 applications: three of a piece owned, all
+three worn by men, **two still listed on the rack**. Told as one exchange: the rack held one Noric
+Gladius at condition 31, a man applied the saved kit, and he read **100** while the 31 stayed on the
+shelf. Free repair one way, forgotten wear the other.
+
+**2. Both took a man's forged, named piece.** `forgeForMan` writes `g.named = {slot,…}` and its own
+chronicle line is unambiguous — "It is his, and it is not going back on the rack." `equipOne` honours
+that with an explicit refusal and `stripAll` skips the slot. `applyKit` turned `gladius_f` into
+`sica_f` and `armFromRack` turned it into `fuscina_f`, the first time either was asked.
+
+**3. `condOf` scored every candidate at the wear of the piece already in the slot.** It read
+`g.wear[it.slot]` and ignored the piece entirely. `gearScore` docks a worn piece twice — the
+`0.5 + c/200` scale and a flat 14 under condition 25 — while house issue is a flat 100, so a man whose
+sword was down to 3 had every sword in the armoury scored at 3 and the "arm him off the rack" button
+handed him the wooden one. Worst exactly when it mattered most. Forty passes over a rack of fourteen
+bought kinds ended with **none of them worn by anybody**; after the fix the same fixture reads 93
+calls and 140 slots changed, with men carrying bought steel again. It also repairs `kitFaults`' "better
+on the rack" nudge, which compared two scores that were both the man's own wear and so could never
+see a keen piece sitting unused.
+
+#### What shipped
+
+One `swapSlot(d, g, slot, id)` that makes both bookings, with `equipOne`, `applyKit` and
+`armFromRack` all going through it; `isNamed` guards on the two dark paths; and `condOf` reading the
+armoury's record of the candidate rather than the slot. **Nothing the reference player does touches
+any of this** — the rope buys by price and equips through `equipOne` — so no figure in the suite was
+measured on the old behaviour.
+
+`steel` grows a section 7: the ledger on all three paths (control first), the condition hand-over,
+the forged piece, and the scorer. **All four bars were negative-tested** — each fails on the unfixed
+code and passes on the fixed, which is the only evidence that a green check is doing anything.
 
 ### v3.39.0 — #148: two openings told the player something the game contradicts
 

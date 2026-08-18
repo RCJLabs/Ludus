@@ -822,7 +822,7 @@ function gearAvailable(d, g, slot){
 function gearScore(d, g, id){
   const it = GEAR[id]; if(!it) return -99;
   const alien = it.styles && it.styles.length && !it.styles.includes(g.cls);
-  const cond = wears(it) ? condOf(d, g, it) : 100;
+  const cond = wears(it) ? condOf(d, g, it, id) : 100;
   const scale = wears(it) ? (0.5 + cond/200) : 1;
   let s = (it.atk*0.6 + it.def*0.30) * scale * 100;
   s += it.sho * 8;
@@ -833,14 +833,32 @@ function gearScore(d, g, id){
   if(D && D.gear && D.gear[it.slot]) s += 3;           // the school's own kind of steel
   return s;
 }
-const condOf = (d, g, it) => {
+/* ---- WHAT CONDITION IS *THIS* PIECE IN — #149 ----
+   This read `g.wear[it.slot]` and ignored the piece entirely, so every candidate for a slot was
+   scored at whatever the man happened to be carrying there. `gearScore` docks a worn piece twice
+   (the 0.5+c/200 scale and a flat 14 under condition 25) and house issue is a flat 100, so a man
+   whose sword was down to 5 had every sword in the armoury scored at 5 and `armFromRack` handed him
+   the wooden one — worst exactly when it mattered most. MEASURED, `test/probes/kit.mjs`: forty
+   passes of the "arm him" button over a rack of fourteen bought kinds ended with **0 of them worn by
+   anybody**, every man in stock kit, on a house holding twelve of each.
+   `d.gearCond[id]` is the armoury's own record of what each unworn piece is like, and the rack picks
+   its best — the same piece `equipOne` would hand over. Nothing the reference player does reads this:
+   the rope buys by price and equips through `equipOne`, so this moves the two "arm him off the rack"
+   buttons and nothing that any figure in the suite was measured on. */
+const condOf = (d, g, it, id) => {
   if(!wears(it)) return 100;
-  const w = g.wear && g.wear[it.slot];
-  return w==null ? 100 : w;
+  const key = id == null ? (g && g.kit && g.kit[it.slot]) : id;
+  if(g && g.kit && key != null && g.kit[it.slot] === key) return wearOf(g, it.slot);
+  const pool = (d && d.gearCond && d.gearCond[key]) || [];
+  return pool.length ? Math.max(...pool) : 100;
 };
 function bestKitFor(d, g){
   const out = {};
   for(const s of SLOTS){
+    /* #149: "It is his, and it is not going back on the rack" — the forging says so and `equipOne`
+       refuses to move it. `armFromRack` did not know, and took a named piece off a man in the probe
+       (gladius_f became fuscina_f) the first time it was asked. */
+    if(isNamed(g, s)){ out[s] = (g.kit && g.kit[s]) || BARE[s]; continue; }
     const pool = gearAvailable(d, g, s);
     if(!pool.length){ out[s] = (g.kit && g.kit[s]) || BARE[s]; continue; }
     out[s] = pool.reduce((m,id)=> gearScore(d,g,id) > gearScore(d,g,m) ? id : m, pool[0]);
@@ -854,9 +872,10 @@ function armFromRack(d, gid){
   const now = bestKitFor(d, g);
   const changed = SLOTS.filter(s=>was[s]!==now[s]);
   if(!changed.length) return { changed:[] };
-  g.kit = now;
-  g.wear = g.wear || {};
-  changed.forEach(s=>{ if(g.wear[s]==null) g.wear[s] = 100; });
+  /* #149: one slot at a time, through the same two bookings `equipOne` makes — this assigned the
+     whole kit at once and touched `d.gearCond` not at all, so the outgoing piece's condition was
+     forgotten and the incoming one arrived at whatever the slot happened to read. */
+  changed.forEach(s=>{ swapSlot(d, g, s, now[s]); });
   changed.forEach(s=>{ clearProv(g, s); claimDeadSteel(d, g, s); });
   return { changed, was, now };
 }
@@ -873,20 +892,44 @@ function saveKit(d, gid){
   else d.kits = [{ id:d.nextId++, name, cls:g.cls, slots }, ...d.kits].slice(0, 8);
   return true;
 }
+/* ---- MOVING ONE PIECE, AND THE CONDITION THAT GOES WITH IT — #149 ----
+   A piece of bought steel is either on a man or on the rack, and `d.gearCond[id]` is the armoury's
+   record of what each unworn one is like. So a swap is two bookings, not one: the outgoing piece's
+   wear goes back into the pool, and the incoming piece's condition comes out of it. `equipOne` did
+   both and `stripAll` did the outgoing half; `applyKit` did NEITHER, and `dark` could not see it
+   because the reference player never saves a loadout.
+   MEASURED, `test/probes/kit.mjs`, with `equipOne` run first as the control so a failing law could
+   not be mistaken for failing code: after 120 applications the armoury held **three of a piece, all
+   three worn by men, and two still listed on the rack** — the ledger `owned === worn + racked` off
+   by two. And the condition went with nobody: the rack held one Noric Gladius at 31, a man applied
+   the saved kit, and he read **100** while the 31 stayed on the shelf. */
+function swapSlot(d, g, slot, id){
+  g.wear = g.wear || {}; d.gearCond = d.gearCond || {};
+  const old = GEAR[g.kit[slot]];
+  if(wears(old)) (d.gearCond[g.kit[slot]] = d.gearCond[g.kit[slot]] || []).push(wearOf(g, slot));
+  g.kit[slot] = id;
+  const now = GEAR[id];
+  if(wears(now)){
+    const pool = d.gearCond[id] || [];
+    g.wear[slot] = pool.length ? pool.splice(pool.indexOf(Math.max(...pool)),1)[0] : 100;
+  } else g.wear[slot] = 100;
+}
 function applyKit(d, gid, kid){
   const g = d.gladiators.find(x=>x.id===gid);
   const K = (d.kits||[]).find(k=>k.id===kid);
   if(!g || !K || g.status!=="active") return null;
-  const out = {}, missing = [];
+  const missing = [], held = [];
   for(const s of SLOTS){
+    /* the forged piece is his; a saved loadout is not an instruction to hand it back */
+    if(isNamed(g, s)){ held.push(GEAR[g.kit[s]] ? GEAR[g.kit[s]].name : s); continue; }
     const want = K.slots[s];
-    if(want && (isBasic(want) || gearFree(d,want)>0 || g.kit[s]===want)) out[s] = want;
-    else { out[s] = BARE[s]; if(want && GEAR[want]) missing.push(GEAR[want].name); }
+    const take = (want && (isBasic(want) || gearFree(d,want)>0 || g.kit[s]===want)) ? want : BARE[s];
+    if(take !== want && want && GEAR[want]) missing.push(GEAR[want].name);
+    if(g.kit[s] !== take) swapSlot(d, g, s, take);
   }
-  g.kit = out;
   g.wear = g.wear || {};
   SLOTS.forEach(s=>{ if(g.wear[s]==null) g.wear[s] = 100; });
-  return { missing };
+  return { missing, held };
 }
 const dropKit = (d, kid) => { d.kits = (d.kits||[]).filter(k=>k.id!==kid); };
 /* what is wrong with what he is carrying */
@@ -18205,15 +18248,7 @@ function equipOne(d, gid, slot, id){ const g=d.gladiators.find(x=>x.id===gid); i
   if(g.kit[slot]===id) return false;
   if(!isBasic(id) && gearFree(d,id)<=0) return false;
   if(g.named && g.named.slot===slot) return false;
-  g.wear = g.wear || {}; d.gearCond = d.gearCond || {};
-  const old = GEAR[g.kit[slot]];
-  if(wears(old)){ (d.gearCond[g.kit[slot]] = d.gearCond[g.kit[slot]] || []).push(wearOf(g, slot)); }
-  g.kit[slot] = id;
-  const now = GEAR[id];
-  if(wears(now)){
-    const pool = d.gearCond[id] || [];
-    g.wear[slot] = pool.length ? pool.splice(pool.indexOf(Math.max(...pool)),1)[0] : 100;
-  } else g.wear[slot] = 100;
+  swapSlot(d, g, slot, id);          /* #149: the same two bookings `applyKit` now makes */
   return true;
 }
 
@@ -25565,6 +25600,14 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        repair actually costs and what the racks cost to keep. So the only measurable half of the steel
        economy was the half that takes condition away, and the question a player asks — does any of
        this ever cost me anything — could not be asked at all. See `steel` and the v3.13.0 entry. */
+    /* ---- AND THE LEDGER THAT SAYS WHICH PIECE ON THE RACK IS WORN ---- #149
+       `d.gearCond[id]` is a POOL of conditions, one entry per piece of that kind sitting unworn,
+       and `g.wear[slot]` is the condition of the piece the man is carrying there. Every path that
+       moves a piece between those two places has to move its condition with it, and only two of the
+       four did. Checking that needs the ownership arithmetic the game itself uses — owned equals
+       worn plus racked — so `gearUsed`, `gearFree` and `isBasic` come out here rather than being
+       rebuilt in a probe, which is the mistake `stone` made and had to be rewritten for. */
+    gearUsed, gearFree, isBasic, wears, armFromRack,
     gearUpkeep, kitKeepOf, KEEP_FLOOR, KEEP_RATE, MEND_RATE, MEND_CEIL,
     repairFee, armourerWear, armourerMend, armourerCut, perkWear,
     rackCap, rackUsed, rackOver, rackStrain, rackRent, staffSkill,

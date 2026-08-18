@@ -385,6 +385,156 @@ export async function run({ p }){
           + `${P2.n} and ${P0p.n} man-slot-weeks, so this is not one unlucky house`);
     }
 
+    /* ================= 7. THE LEDGER: A PIECE IS ON A MAN OR ON THE RACK =================
+       #149. `dark` found four actions whose gate never opens on a rope-played house, and three of
+       them are the gear book: the reference player buys by price and equips through `equipOne`, so
+       `saveKit`, `applyKit` and the two "arm him off the rack" buttons were driven by nothing.
+       Driving them found the steel economy's other half unguarded, exactly where #152 said it was.
+
+       The law the game states about itself, for anything that WEARS:
+
+           d.gear[id]  ===  gearUsed(d, id)  +  (d.gearCond[id] || []).length
+
+       `equipOne` kept both halves — the outgoing piece's wear goes into the pool, the incoming
+       piece's condition comes out. `applyKit` and `armFromRack` assigned `g.kit` wholesale and
+       touched the pool not at all. Measured over 120 applications (`test/probes/kit.mjs`, with
+       `equipOne` as the control so a failing LAW could not read as failing code): three of a piece
+       owned, all three worn by men, and two still listed on the rack. The condition went nowhere
+       either — the rack held one Noric Gladius at 31, a man applied the saved kit, and he read 100
+       while the 31 stayed on the shelf.
+
+       Two more came out of the same drive and are held here too:
+       · a FORGED piece is named and its own chronicle line says "It is his, and it is not going back
+         on the rack". `equipOne` refuses to move it. `applyKit` took it (gladius_f became sica_f) and
+         `armFromRack` took it (gladius_f became fuscina_f).
+       · `condOf` read `g.wear[it.slot]` and ignored the piece, so every candidate for a slot was
+         scored at whatever the man was already carrying there. Forty passes of the "arm him" button
+         over a rack of fourteen bought kinds ended with NONE of them worn by anybody — the button
+         handed out house issue precisely when a man's own steel was finished. It is 93 calls and
+         140 slots changed after, on the same fixture.
+
+       This section is a BENCH, not a campaign: it drives the three paths on a stocked house and reads
+       the game's own ownership arithmetic back. No trajectory, nothing to reshuffle. */
+    {
+      const stocked = tag => {
+        const d = A.newGameState("St", "clean", `STEEL-LEDGER-${tag}`, null);
+        d.gold = 60000;
+        const ids = Object.keys(A.GEAR).filter(id=>A.wears(A.GEAR[id])).slice(0, 10);
+        for(const id of ids) for(let i=0;i<3;i++) A.buyGearItem(d, id);
+        return { d, ids };
+      };
+      const offBy = d => {
+        const out = [];
+        for(const id of Object.keys(d.gear||{})){
+          if(!A.wears(A.GEAR[id])) continue;                 /* stock steel never draws the pool */
+          const owned = d.gear[id]||0; if(!owned) continue;
+          const worn = A.gearUsed(d, id), racked = ((d.gearCond||{})[id]||[]).length;
+          if(worn + racked !== owned) out.push(`${id} owned ${owned} worn ${worn} racked ${racked}`);
+        }
+        return out;
+      };
+
+      /* the control first: if this fails, the law is wrong and not the code */
+      { const { d, ids } = stocked("equip");
+        const men = A.activeG(d);
+        for(let r=0;r<12;r++) for(const g of men){
+          const id = ids[(r + g.id) % ids.length];
+          A.equipOne(d, g.id, A.GEAR[id].slot, id);
+        }
+        const off = offBy(d);
+        lines.push(`the ledger after ${12*men.length} equipOne calls (the control): ${off.length ? off.join(" · ") : "owned = worn + racked, every kind"}`);
+        if(off.length)
+          bad.push(`\`equipOne\` — the path the game is built around — left the steel ledger out of `
+            + `balance (${off.join("; ")}). That is the CONTROL for this section, so read it as the law `
+            + `being wrong before reading the arms under it as faults`);
+      }
+
+      /* and the two that were dark */
+      for(const [what, drive] of [
+        ["applyKit", (d, ids, men)=>{
+          for(const id of ids.slice(0,4)) A.equipOne(d, men[0].id, A.GEAR[id].slot, id);
+          A.saveKit(d, men[0].id);
+          const k = (d.kits||[])[0];
+          for(let r=0;r<12;r++) for(const g of men) if(k) A.applyKit(d, g.id, k.id);
+        }],
+        ["armFromRack", (d, ids, men)=>{
+          for(let r=0;r<12;r++) for(const g of men){
+            A.buyGearItem(d, ids[r % ids.length]);
+            A.armFromRack(d, g.id);
+            g.wear = g.wear || {};
+            for(const s of A.SLOTS) if(g.wear[s] != null) g.wear[s] = Math.max(0, g.wear[s] - 9);
+          }
+        }],
+      ]){
+        const { d, ids } = stocked(what);
+        drive(d, ids, A.activeG(d));
+        const off = offBy(d);
+        lines.push(`the ledger after ${what}: ${off.length ? off.join(" · ") : "owned = worn + racked, every kind"}`);
+        if(off.length)
+          bad.push(`\`${what}\` left the steel ledger out of balance (${off.join("; ")}) — a piece is on `
+            + `a man or on the rack, and every path that moves one has to move its condition with it. `
+            + `This is what v3.40.0 fixed by routing both through \`swapSlot\`, and \`equipOne\` above `
+            + `passes, so the law is not the problem`);
+      }
+
+      /* the condition travels with the piece, told as one exchange */
+      { const { d, ids } = stocked("cond");
+        const men = A.activeG(d);
+        const id = ids.find(x=>A.GEAR[x].slot === "weapon") || ids[0];
+        const slot = A.GEAR[id].slot;
+        d.gearCond[id] = [31, 100];
+        A.equipOne(d, men[0].id, slot, id);
+        men[0].wear[slot] = 12;
+        A.saveKit(d, men[0].id);
+        A.applyKit(d, men[1].id, (d.kits||[])[0].id);
+        const got = A.wearOf(men[1], slot), pool = (d.gearCond[id]||[]);
+        lines.push(`condition travels: the rack held 31, a saved kit was applied, the man reads ${got} `
+          + `and the rack now holds ${pool.join(",")||"nothing"} (before v3.40.0 he read 100 and the 31 stayed)`);
+        if(got === 100 && !pool.includes(31))
+          bad.push(`a man who took the armoury's only battered piece reads 100 — \`applyKit\` is handing `
+            + `out condition it did not draw from \`d.gearCond\`, which is free repair and the fault #149 found`);
+      }
+
+      /* and the piece that is not going back on the rack */
+      { const { d, ids } = stocked("named");
+        const men = A.activeG(d);
+        const id = ids.find(x=>A.GEAR[x].slot === "weapon") || ids[0];
+        const slot = A.GEAR[id].slot;
+        const other = ids.find(x=>A.GEAR[x].slot === slot && x !== id);
+        A.equipOne(d, men[0].id, slot, id);
+        men[0].named = { slot, title:"The Check's Own", made:1 };
+        if(other){ A.equipOne(d, men[1].id, slot, other); A.saveKit(d, men[1].id); }
+        const keptK = (()=>{ const k=(d.kits||[])[0]; if(!k) return true;
+          A.applyKit(d, men[0].id, k.id); return men[0].kit[slot] === id; })();
+        A.armFromRack(d, men[0].id);
+        const keptR = men[0].kit[slot] === id;
+        lines.push(`the forged piece: applyKit ${keptK?"leaves it":"TAKES IT"} · armFromRack ${keptR?"leaves it":"TAKES IT"} `
+          + `(equipOne has always refused; the forging's own line is "it is not going back on the rack")`);
+        if(!keptK) bad.push(`\`applyKit\` took a man's FORGED, named piece — the forge says "It is his, and `
+          + `it is not going back on the rack", \`equipOne\` refuses and \`stripAll\` skips the slot`);
+        if(!keptR) bad.push(`\`armFromRack\` took a man's FORGED, named piece — \`bestKitFor\` must hold a `
+          + `named slot where it is, which is what the "arm him off the rack" button does to it`);
+      }
+
+      /* the scorer values the CANDIDATE, not the slot */
+      { const { d, ids } = stocked("score");
+        const g = A.activeG(d)[0];
+        const id = ids.find(x=>A.GEAR[x].slot === "weapon") || ids[0];
+        const slot = A.GEAR[id].slot;
+        A.equipOne(d, g.id, slot, id);
+        g.wear[slot] = 3;                     /* his own is finished; the rack's are not */
+        const res = A.armFromRack(d, g.id);
+        const now = A.GEAR[g.kit[slot]];
+        lines.push(`a man whose weapon is at 3, re-armed off a full rack: he is handed `
+          + `${now ? now.name : "nothing"}${now && A.wears(now) ? "" : " (HOUSE ISSUE)"} `
+          + `— before v3.40.0 \`condOf\` scored every candidate at HIS wear, so the answer was the wooden one`);
+        if(now && !A.wears(now))
+          bad.push(`a man whose own weapon is at condition 3 was re-armed into house issue off a rack `
+            + `holding ${ids.length} bought kinds — \`condOf\` is scoring candidates by the wear of the `
+            + `piece already in the slot instead of by what the armoury records for each of them`);
+      }
+    }
+
     return { bad, lines };
   });
 
