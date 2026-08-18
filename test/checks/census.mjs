@@ -69,8 +69,18 @@ export async function run({ p, errors }){
       d.fame = (nx.fame||0)+5;
       d.patrons = [{ id:9002, name:"P", rank:"senator", favor:nx.favor, want:null, since:0, served:0, slighted:0 }];
       A.recomputeFavor(d);
-      d.gold = (nx.cost||0) - 1;
-      return { can: A.canClaimRise(d), gold: d.gold, census: nx.cost };
+      /* ---- ONE DENARIUS UNDER THE CENSUS, NOT ONE UNDER THE BOX — #154 ----
+         This set `d.gold` to the census less one and asserted refusal, which was the same thing until
+         v3.45.0: the census reads WORTH now — the box, what the town owes, the racks at half, the men
+         and the wings — so a house with three men and their kit in it is already worth a few thousand
+         before a denarius is counted. Setting the box a shade under the price left the house OVER the
+         census and the bar fired on a fixture rather than on the game. The worth is walked to exactly
+         one short instead, off the game's own `censusWorth`, which is the only reading that tests what
+         this bar is about. */
+      d.gold = 0;
+      d.gold = Math.max(0, (nx.cost||0) - 1 - A.censusWorth(d));
+      return { can: A.canClaimRise(d), gold: d.gold, worth: A.censusWorth(d), census: nx.cost,
+        over: A.censusWorth(d) - (nx.cost||0) };
     })();
 
     /* 3. the standing meter is not the thing holding anybody: how many weeks it
@@ -162,7 +172,11 @@ export async function run({ p, errors }){
   for(const r of out.rungs)
     lines.push(`   ${r.name.padEnd(24)} census ${String(r.census).padStart(6)}d · received for ${String(r.fee).padStart(5)}d · ` +
       `${r.took ? `kept ${r.kept}d of ${r.census}d` : "COULD NOT BE TAKEN"}`);
-  lines.push(`a house one denarius under the census (${out.shy.gold} of ${out.shy.census}) ${out.shy.can ? "was received anyway" : "is not received"}`);
+  lines.push(`a house one denarius under the census — worth ${out.shy.worth} against ${out.shy.census} `
+    + `(${out.shy.gold}d of that in the box) — ${out.shy.can ? "was received anyway" : "is not received"}`);
+  if(out.shy.over !== -1)
+    lines.push(`   (the fixture lands ${out.shy.over > 0 ? out.shy.over + " OVER" : (-out.shy.over) + " under"} rather than exactly one short; `
+      + `it walks the WORTH there, and the house's men and kit are worth something before any coin is added)`);
   lines.push(`the standing meter fills in ${out.fill} weeks once fame and favour are met — it was never the thing holding`);
   lines.push(`patrons tended reach favour ${out.favour.tendedTop}${out.favour.tendedYr!=null?` by year ${out.favour.tendedYr}`:""}; ` +
     `patrons ignored reach ${out.favour.ignoredTop}`);

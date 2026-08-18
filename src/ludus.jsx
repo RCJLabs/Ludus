@@ -9554,14 +9554,60 @@ function riseWeek(d){
    every week, for as long as you are somebody — and that was already built. */
 const RISE_ADMIT = 0.25;
 const riseFee = nx => Math.ceil((nx.cost||0) * RISE_ADMIT);
+/* ---- A CENSUS COUNTS PROPERTY, AND THIS ONE COUNTED THE CASH BOX — #154 ----
+   The note above already made the right argument — "Nobody took 400,000 sesterces off an eques; he
+   had to BE worth it" — and then read `d.gold`. The panel says the same thing twice, in the row
+   labelled "What the census must find you worth" and in the line under it: "The census counts what
+   you have; it does not take it." What the house HAS is not what is in the box.
+
+   MEASURED, five policies x 16 houses x 700 weeks, three seeds (`test/probes/rung.mjs`). The top rung
+   wants 80,000 held at the same moment as favour 90, and #154 was opened on the reading that the two
+   cannot be had together. They can — barely — and the honest figure is the one that matters:
+
+     weeks at favour 90+                 772 to 2,743, easily, by any arm that entertains
+     weeks holding 80,000 in coin        0 in fourteen of the fifteen arm-seeds
+     weeks with BOTH                     13, in ONE house of forty-eight
+
+   and that one house was running the only policy that tries — entertain when favour slips towards
+   the bar, bank the rest of the time. Every other arm peaks between 16,050 and 54,074 in the box,
+   because favour is bought at the table and the table is the coin. So the apex is not unreachable;
+   it is reachable by one house in forty-eight for thirteen weeks, which is not a rung, it is a
+   coincidence. That is not what makes the change below right. What makes it right is that the panel
+   has always said "What the census must find you worth" and "the census counts what you have", and
+   what a house HAS was never what was in its box.
+
+   WHAT IS COUNTED, and each part was priced before it went in: the box, the debts owed to the house,
+   the racks at half what the steel cost, the men at `gladValue`, and the wings at what they were
+   built for. NOT the works and monuments — they were left out deliberately, because the measurement
+   below was taken without them and a term nobody has measured is a term nobody should ship.
+
+   WHAT IT MOVES, which is the part that decides it. The highest rung the price allows, over 16 houses:
+
+     counting the box only     0x1 1x3 2x1 3x3 4x4 5x3 6x1
+     counting property         0x1 1x3 2x1 4x3 5x5 6x2 7x1
+
+   About one rung, and exactly one house of sixteen reaches the top. Every other policy measured is
+   unchanged by it — they do not build, so they have no property to count. This does not make the
+   ladder cheap for a finished house; it makes the apex reachable by one that spent twenty years
+   putting up stone, which is what the rung's own blurb describes.
+
+   THE FEE IS STILL COIN. Sportula, clerks and a night the town remembers are not paid in bricks, so
+   `feeOk` is a separate term and `canClaimRise` wants both. */
+const censusWorth = d => Math.round((d.gold||0) + owedTotal(d)
+  + Object.entries(d.gear||{}).reduce((n,[id,c])=> n + (wears(GEAR[id]) ? GEAR[id].price*0.5*(c||0) : 0), 0)
+  + activeG(d).reduce((n,g)=> n + gladValue(g), 0)
+  + BKEYS.reduce((n,k)=>{ const L = bLevel(d,k), c = BUILDINGS[k].cost||[];
+      let t = 0; for(let i=0;i<L;i++) t += c[i]||0; return n + t; }, 0));
 const riseNeed = d => {
   const nx = riseNext(d); if(!nx) return null;
-  return { fame: nx.fame||0, favor: nx.favor||0, cost: nx.cost||0, fee: riseFee(nx),
+  const worth = censusWorth(d), fee = riseFee(nx);
+  return { fame: nx.fame||0, favor: nx.favor||0, cost: nx.cost||0, fee, worth,
     fameOk: d.fame >= (nx.fame||0), favorOk: d.favor >= (nx.favor||0),
-    goldOk: d.gold >= (nx.cost||0), full: d.rise && d.rise.standing >= 100 };
+    goldOk: worth >= (nx.cost||0), feeOk: d.gold >= fee,
+    full: d.rise && d.rise.standing >= 100 };
 };
 const canClaimRise = d => {
-  const n = riseNeed(d); return !!(n && n.fameOk && n.favorOk && n.goldOk && n.full);
+  const n = riseNeed(d); return !!(n && n.fameOk && n.favorOk && n.goldOk && n.feeOk && n.full);
 };
 function claimRise(d){
   if(!canClaimRise(d)) return false;
@@ -21713,7 +21759,7 @@ export default function App(){
             const rising = !!(need && need.fameOk && need.favorOk);
             /* the first SUBSTANTIVE thing short, which is what the button is supposed to say */
             const short = !need ? null : !need.fameOk ? "fame" : !need.favorOk ? "favour"
-              : !need.goldOk ? "coin" : null;
+              : !need.goldOk ? "coin" : !need.feeOk ? "fee" : null;   /* #154: the fee is still coin */
             return (
             <Sect title="Your Standing" note={rk.name} open={can} mark={sectMark(S,"standing")}>
               <div className="disp" style={{fontSize:"var(--fs-lg)",color:"#e8d092"}}>{rk.name}</div>
@@ -21748,7 +21794,7 @@ export default function App(){
                   </div>
                   {[["Renown", need.fame, rnd(S.fame), need.fameOk],
                     ["Patrons' favour", need.favor, rnd(S.favor), need.favorOk],
-                    ["What the census must find you worth", need.cost, rnd(S.gold), need.goldOk]].filter(r=>r[1]>0).map(([lbl,req,have,ok])=>(
+                    ["What the census must find you worth", need.cost, need.worth, need.goldOk]].filter(r=>r[1]>0).map(([lbl,req,have,ok])=>(
                     <div key={lbl} className="flex items-center justify-between gap-2" style={{fontSize:"var(--fs-base)",padding:"2px 0"}}>
                       <span style={{color:ok?"#a9c98a":"#cfc0a0"}}>{ok?"✓":"·"} {lbl}</span>
                       <span className="rowval dim" style={{color:ok?"#a9c98a":undefined}}>{have} / {req}</span>
@@ -21756,8 +21802,10 @@ export default function App(){
                   ))}
                   {need.cost>0 && (
                     <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:5}}>
-                      The census counts what you have; it does not take it. Being received costs {need.fee} denarii
-                      in sportula, clerks and a night the town remembers{riseOf(S)>=3 || (nx.cost||0)>=8000 ? ", and the city's charges rise with the rank thereafter" : ""}.
+                      The census counts what you have — the box, what the town owes you, the steel on the racks,
+                      the men in the cells and the wings they stand in — and it does not take any of it. Being
+                      received costs {need.fee} denarii in coin, for sportula, clerks and a night the town
+                      remembers{riseOf(S)>=3 || (nx.cost||0)>=8000 ? ", and the city's charges rise with the rank thereafter" : ""}.
                     </div>
                   )}
                   {/* ---- AND THE LEVER, WHICH THE PANEL NEVER NAMED ----
@@ -21790,9 +21838,15 @@ export default function App(){
                        Known in Rome in 3-5 houses of 16, against 0-1 for the reference player. */}
                   {short === "coin" && (
                     <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:5}}>
-                      The census counts the coin in the box on the day it looks, and nothing else — not
-                      the stone, not the racks, not the men. A house that keeps building never holds
-                      enough at one time; the coin has to be sitting there when you ask to be received.
+                      Everything the house owns counts towards this, so a wing put up or a man bought moves
+                      it as surely as coin does — and the ladder no longer asks you to choose between the
+                      census and the stone. What it will not count is a purse you have already spent.
+                    </div>
+                  )}
+                  {short === "fee" && (
+                    <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:5}}>
+                      The census is satisfied — the house is worth what it must be. What is missing is the
+                      {" "}{need.fee} denarii the reception itself costs, and that part is paid in coin.
                     </div>
                   )}
                   {/* ---- A BUTTON THAT BLAMED THE METER FOR EVERYTHING ----
@@ -21806,7 +21860,8 @@ export default function App(){
                     {can ? `Take your place as ${nx.name} — ${need.fee}d`
                       : short === "fame" ? `Rome counts your renown at ${rnd(S.fame)} — the rung wants ${need.fame}`
                       : short === "favour" ? `Your patrons hold you at ${rnd(S.favor)} — the rung wants ${need.favor}`
-                      : short === "coin" ? `The census wants you worth ${nx.cost}d — you hold ${rnd(S.gold)}`
+                      : short === "coin" ? `The census wants you worth ${nx.cost}d — the house counts ${need.worth}`
+                      : short === "fee" ? `Worth it, and ${need.fee - rnd(S.gold)}d short of the reception itself`
                       : !need.full ? `The town is not yet used to you — ${rnd(stand)} of 100`
                       : `Pay ${need.fee}d to be received`}
                   </button>
@@ -25525,7 +25580,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        through it, and a probe that writes `regardOf(g) <= 18` reconstructs the gate instead */
     regardRefuse,
     /* the line of the house: who may be named, naming him, and taking it up */
-    nameHeir, heirEligible, HEIRS, houseRecord,
+    nameHeir, heirEligible, HEIRS, houseRecord, censusWorth,   /* #154 */
     /* the summit: the gate, the letter, the bar, and the trip's own clock */
     romeReady, romeProved, offerRome, romeBar, ROME_BOUTS, ROME_WEEKS_PER_BOUT, ROME_RANK,
     /* ---- AND THE MAN WHO IS ACTUALLY ON THAT BILL, in v2.90.0 ----

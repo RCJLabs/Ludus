@@ -320,6 +320,20 @@ against whatever rung the house is reaching for, and counts which one is missing
 hold. The answer is unambiguous — coin is the last term standing on 96-100% of one-short weeks from
 rung 3 up, and favour appears in no one-short row at any rung in any arm that entertains.
 
+**#154 came back to it and the clause named its own arm.** The top rung wants 80,000 held at the same
+moment as favour 90, and no arm held both because `hostParty` fires whenever spare allows — so the
+missing policy was "entertain on a CYCLE": table off in the rope, hosted only when favour slips below
+92, everything else banked. It is the best census policy measured (median rung 5, rung 6 in 5 of 16),
+and it holds both requirements at once for **13 weeks in one house of forty-eight** — so the clause
+falsified, barely.
+
+The part worth copying is what the probe did NEXT. "Read a worth instead of the box" is only a repair
+if some version of it clears the bar, so the candidate definitions were built up ONE TERM AT A TIME —
+box, +debts, +racks at half, +men, +stone — and each was asked the same question and priced off the
+game's own tables. Four of the five change nothing; only the stone moves anything, and it moves it by
+about one rung. **Price every term of a proposed fix before writing the fix**, and the design call
+makes itself.
+
 **Its real work was disproving another probe.** #151 was opened on `estate`'s `miser` arm reporting
 72,752d held and the house "blocked on FAVOUR". `miser` is `{build:false, rites:false, party:false}`,
 and the table is the favour engine — the rope's own note prices it at mean rung 2.70 against 1.50. So

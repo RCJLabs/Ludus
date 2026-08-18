@@ -43,6 +43,22 @@ const out = await p.evaluate(([H,W,SEED])=>{
       opts:{ build:false, rites:false } },
     works:  { note:"the works arm, which is where a long-lived house's coin actually goes",
       opts:{ works:true } },
+    /* ---- #154'S CLAUSE, WHICH NAMES ITS OWN ARM ----
+       The last rung wants 80,000 HELD at the same moment as favour 90, and no arm above holds both:
+       the one that banks hardest (`miser`) never entertains and caps out at favour 84-89, and the one
+       that reaches favour 100 spends the coin buying it, because `hostParty` fires whenever spare
+       allows. The clause names the missing policy — entertain on a CYCLE rather than every week the
+       purse permits. So: the table off in the rope, and hosted here only when favour has slipped
+       towards the bar, with everything else banked. `modest` is 150d for +5 warm on every patron, so
+       holding station should be cheap; whether it is cheap ENOUGH is the question. */
+    cycle:  { note:"banks, and throws a party only when favour slips towards the 90 the top rung wants",
+      opts:{ build:false, rites:false, party:false },
+      each(d){
+        if(d.over || (d.favor||0) >= 92) return;
+        const sp = d.gold - 700;
+        const kind = sp > 4000 ? "decadent" : sp > 1600 ? "lavish" : sp > 700 ? "modest" : null;
+        if(kind) A.hostParty(d, kind);
+      } },
     /* ---- THE FREE GRANT, WHICH IS THE ONLY WAY TO ASK "IS IT THE COIN" ----
        Every arm above spends: `hostParty` fires whenever spare allows, so even `banker` never banks
        past its reserve, and the top rung wants 80,000 HELD at the same moment as favour 90 — which
@@ -62,11 +78,61 @@ const out = await p.evaluate(([H,W,SEED])=>{
     const rung = {};
     for(let h=0; h<H; h++){
       const d = A.newGameState("Rg"+h, "clean", `${SEED}-${h}`, null);
-      let best = 0, goldPeak = 0, favPeak = 0, famePeak = 0;
+      let best = 0, goldPeak = 0, favPeak = 0, famePeak = 0, rich = 0, liked = 0, both = 0;
+      const wp = { box:0, owed:0, rack:0, men:0, all:0 }, wb = { owed:0, rack:0, men:0, all:0 };
+      const ceil = { box:0, men:0, all:0 };
       for(let w=0; w<W; w++){
         if(d.over) break;
         if(arm.grant) d.gold = Math.max(d.gold, arm.grant);
+        if(arm.each) arm.each(d);
+        if(d.over) break;
         R.lanista(d, arm.opts);
+        /* #154: the two requirements of the top rung, asked TOGETHER rather than one at a time */
+        if((d.gold||0) >= 80000) rich++;
+        if((d.favor||0) >= 90) liked++;
+        if((d.gold||0) >= 80000 && (d.favor||0) >= 90) both++;
+        /* ---- AND WHAT A CENSUS WOULD COUNT IF IT COUNTED PROPERTY ----
+           `goldOk` reads `d.gold` alone. The flavour beside it says a man "had to BE worth it", and
+           `paragonReach` already draws exactly this distinction for the block — box against worth.
+           So the candidate definitions are built up one term at a time and each is asked the same
+           question, because "read a worth instead" is only a repair if some version of it reaches
+           80,000 while favour is at 90. Every part is priced off the game's own tables. */
+        const box = d.gold||0;
+        const owed = A.owedTotal(d)||0;
+        let racks = 0;
+        for(const [id,c] of Object.entries(d.gear||{}))
+          if(A.wears(A.GEAR[id])) racks += A.GEAR[id].price * 0.5 * (c||0);
+        let stone = 0;
+        for(const k of Object.keys(A.BUILDINGS)){
+          const L = A.bLevel(d,k), cost = A.BUILDINGS[k].cost||[];
+          for(let i=0;i<L;i++) stone += cost[i]||0;
+        }
+        const men = A.activeG(d).reduce((n,g)=>n + (A.gladValue(g)||0), 0);
+        const w1 = box + owed, w2 = w1 + racks, w3 = w2 + men, w4 = w3 + stone;
+        wp.box  = Math.max(wp.box,  box);
+        wp.owed = Math.max(wp.owed, w1);
+        wp.rack = Math.max(wp.rack, w2);
+        wp.men  = Math.max(wp.men,  w3);
+        wp.all  = Math.max(wp.all,  w4);
+        if((d.favor||0) >= 90){
+          if(w1 >= 80000) wb.owed++;
+          if(w2 >= 80000) wb.rack++;
+          if(w3 >= 80000) wb.men++;
+          if(w4 >= 80000) wb.all++;
+        }
+        /* ---- AND THE WHOLE LADDER UNDER EACH READING, WHICH IS WHERE THE RISK IS ----
+           "Count the stone" opens the top rung for a house that builds; it also has to be asked what
+           it does to the rungs BELOW, because a census a finished house walks up is not a ladder. The
+           highest rung whose fame, favour and PRICE are all met is recorded under each reading — the
+           standing meter and the fee are left out on purpose, so this is the ceiling either reading
+           allows and not a claim about how fast anybody would get there. */
+        for(let r=1; r<A.RISE_RANKS.length; r++){
+          const R3 = A.RISE_RANKS[r];
+          if((d.fame||0) < (R3.fame||0) || (d.favor||0) < (R3.favor||0)) continue;
+          if(box >= (R3.cost||0)) ceil.box = Math.max(ceil.box, r);
+          if(w3  >= (R3.cost||0)) ceil.men = Math.max(ceil.men, r);
+          if(w4  >= (R3.cost||0)) ceil.all = Math.max(ceil.all, r);
+        }
         const r = A.riseOf(d);
         best = Math.max(best, r);
         goldPeak = Math.max(goldPeak, d.gold||0);
@@ -83,7 +149,7 @@ const out = await p.evaluate(([H,W,SEED])=>{
         if(on === 4) R2.all++;
         if(on === 3){ const miss = terms.find(t=>!t[1])[0]; R2.oneShort[miss] = (R2.oneShort[miss]||0)+1; }
       }
-      houses.push({ best, week:d.week, over:d.over?d.over.kind:"alive",
+      houses.push({ best, week:d.week, over:d.over?d.over.kind:"alive", rich, liked, both, wp, wb, ceil,
         goldPeak:Math.round(goldPeak), favPeak:Math.round(favPeak), famePeak:Math.round(famePeak),
         favEnd:Math.round(d.favor||0), patrons:(A.patronsOf(d)||[]).length });
     }
@@ -107,6 +173,22 @@ for(const a of out.rows){
     + ` · fame ${med(Hs.map(x=>x.famePeak))} (max ${Math.max(...Hs.map(x=>x.famePeak))})`
     + ` · patrons at the end ${med(Hs.map(x=>x.patrons))}`);
   console.log(`    median life ${med(Hs.map(x=>x.week))}w`);
+  console.log(`    the top rung's two demands: weeks holding 80,000+ ${Hs.reduce((s,x)=>s+x.rich,0)}`
+    + ` · weeks at favour 90+ ${Hs.reduce((s,x)=>s+x.liked,0)}`
+    + ` · weeks with BOTH AT ONCE ${Hs.reduce((s,x)=>s+x.both,0)}`
+    + ` (in ${Hs.filter(x=>x.both>0).length} of ${Hs.length} houses)`);
+  { const pk = k => Math.max(...Hs.map(x=>Math.round(x.wp[k])));
+    const wk = k => Hs.reduce((s,x)=>s+x.wb[k],0);
+    console.log(`    what a census could COUNT, best any house reached — box ${pk("box")} · +debts owed ${pk("owed")}`
+      + ` · +racks at half ${pk("rack")} · +men ${pk("men")} · +stone ${pk("all")}`);
+    console.log(`    weeks each definition would clear 80,000 WITH favour 90 — +debts ${wk("owed")}`
+      + ` · +racks ${wk("rack")} · +men ${wk("men")} · +stone ${wk("all")}`);
+    const cd = k => { const t={}; for(const x of Hs) t[x.ceil[k]] = (t[x.ceil[k]]||0)+1;
+      return Object.entries(t).sort((a,b)=>+a[0]-+b[0]).map(([r,n])=>`${r}x${n}`).join(" "); };
+    console.log(`    the highest rung the PRICE would allow (fame and favour met, meter and fee ignored):`);
+    console.log(`       counting the box only  ${cd("box")}`);
+    console.log(`       + debts, racks and men ${cd("men")}`);
+    console.log(`       + the stone as well    ${cd("all")}`); }
   for(const tgt of Object.keys(a.rung).sort((x,y)=>+x-+y)){
     const R2 = a.rung[tgt], one = R2.oneShort;
     const rk = out.ranks[+tgt];

@@ -1392,7 +1392,15 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.44.0 — #153 refuted on its own clause, and the conclusion it was opened
+**Shipped and verified:** v3.45.0 — #154 closed, and its clause falsified at the margin: 80,000 held
+with favour 90 comes up for 13 weeks in one house of forty-eight, under the cycle policy the clause
+itself named (which is also the best census policy measured — median rung 5, rung 6 in 5 of 16). What
+shipped is not a smaller number: the panel has always said "What the census must find you worth" and
+"the census counts what you have", and `goldOk` read `d.gold`. `censusWorth` counts the box, the debts
+owed, the racks at half, the men and the wings; the reception fee stays coin as its own term. Measured
+at about one rung, with exactly one house of sixteen reaching the top. Two checks were reading the old
+census and both caught it. Suite green at **66/66**, `survive` drawing (2,2). v3.44.0 — #153 refuted
+on its own clause, and the conclusion it was opened
 on was mine and wrong: `ruined`'s two halves belong to different POLICIES, not different houses. An
 arm that attacks one rival by every means the game offers drives the angriest rival to 98 while the
 house is at two men, satisfies the gate on 36-46 weeks a seed and ends there in 2 of 24 runs on all
@@ -1806,21 +1814,45 @@ and nothing else, so a house that keeps building never holds enough at one time.
 tripwire in `census`: a played house handed 200,000d a week reaches the top rung 8 times in 8, so if
 coin ever stops being able to open the ladder, something else has shut it.
 
-**#154 — the last rung asks for two things that cannot both be had.** `Amicus Caesaris` wants 80,000
-denarii HELD, at the same moment as favour 90. Across 192 house-runs on four policies and three seeds
-it was reached **0 times**; hand the house coin and it is reached by **14 of 16**, so the gate is not
-shut on fame, favour or the meter. But the two requirements are opposed: the arm that banks hardest
-(`miser`, no table) peaks at **45,343 / 54,074 / 45,337 denarii** across the three seeds — still short
-of 80,000 — and its favour caps at **84-89**, under the 90 the rung asks; the arm that reaches favour
-100 peaks at **25,620-38,634 denarii**, because favour is bought at the table and the table is the
-coin. **This is the shape the source itself removed from `closed`'s gate** — its note says `freed >= 5`
-and `freed > lost` were "in direct opposition: the only way to earn the first is to fail the second",
-and that no ratio replaced it because anything fitted to two data points is how `survive` got `MEN = 6`.
-*Falsifies if:* some policy holds 80,000 while carrying favour 90 — the obvious candidate is
-entertaining on a cycle rather than every week the purse allows, which no arm here does. If none can,
-the repair is not a smaller number: it is that the census reads `d.gold` alone while the flavour text
-beside it says a man "had to BE worth it", and the house's stone, steel and men are worth a great deal
-that the censor cannot see (`paragonReach` already draws exactly this distinction for the block).
+**#154 — CLOSED in v3.45.0, and the clause falsified at the margin.** It said the last rung cannot be
+reached because 80,000 held and favour 90 cannot both be had, and named the missing policy: entertain
+on a CYCLE rather than every week the purse allows. Built (`test/probes/rung.mjs`, arm `cycle`: the
+table off in the rope, hosted only when favour slips below 92, everything else banked) and run over
+five policies × 16 houses × 700 weeks on three seeds:
+
+| | |
+|---|---|
+| weeks at favour 90+ | 772–2,743, easily, by any arm that entertains |
+| weeks holding 80,000 in the box | 0 in fourteen of the fifteen arm-seeds |
+| weeks with **both at once** | **13, in one house of forty-eight** — and it was the cycle arm |
+
+So the apex is not unreachable. It is reachable by one house in forty-eight for thirteen weeks, which
+is a coincidence rather than a rung. **And the cycle arm is the best census policy measured** — median
+rung 5, and rung 6 in 5 of 16 houses against 0 for the every-week banker and 1 for the reference
+player. That is a player-facing finding the item did not expect.
+
+**What shipped is not a smaller number.** The panel has always said "What the census must find you
+worth" and, under it, "The census counts what you have; it does not take it" — and `goldOk` read
+`d.gold`. What a house HAS was never what was in its box, and the rung's own flavour makes the
+argument: "Nobody took 400,000 sesterces off an eques — he had to BE worth it." `censusWorth(d)` now
+counts the box, the debts owed to the house, the racks at half what the steel cost, the men at
+`gladValue`, and the wings at what they were built for. Not the works and monuments: the measurement
+below was taken without them, and a term nobody has measured is a term nobody should ship.
+
+**What it moves, which is what decided it.** The highest rung the price allows, 16 houses of the
+reference player:
+
+    counting the box only     0x1 1x3 2x1 3x3 4x4 5x3 6x1
+    counting property         0x1 1x3 2x1 4x3 5x5 6x2 7x1
+
+About one rung, and exactly one house of sixteen reaches the top. The arms that do not build — miser,
+banker, cycle — are unchanged by it, because they have no property to count. The reception fee is
+still coin and is its own term (`feeOk`), with its own line on the panel, because sportula and clerks
+are not paid in bricks.
+
+*Kept from it:* `census`'s "one denarius under" bench was built on the box and passed for the wrong
+reason the moment worth was counted — it walks the WORTH to exactly one short now, off the game's own
+`censusWorth`.
 
 **#152 — the steel-keeping cluster is CLOSED in v3.43.0; the sweep itself stays open.** Re-run on the
 current build: **291 of 435 exposed functions are reached, 144 never called** (the count moved with
@@ -2518,6 +2550,74 @@ widening the bar until it stops firing — that is how it got `MEN = 6`. The can
 houses, since the spread is a sample-size property and the check already takes five minutes.
 
 ## Changelog (shipped)
+
+### v3.45.0 — #154: a census counts property, and this one counted the cash box
+
+#154 said the last rung cannot be reached because 80,000 held and favour 90 cannot both be had, and
+its clause named the policy nobody had tried: entertain on a CYCLE rather than every week the purse
+allows. Built as `rung`'s `cycle` arm — the table off in the rope, hosted only when favour slips below
+92, everything else banked — and run over five policies × 16 houses × 700 weeks on three seeds:
+
+    weeks at favour 90+                772-2,743, easily, by any arm that entertains
+    weeks holding 80,000 in the box    0 in fourteen of the fifteen arm-seeds
+    weeks with BOTH AT ONCE            13, in ONE house of forty-eight — the cycle arm
+
+**So the clause falsifies, at the margin.** The apex is reachable by one house in forty-eight for
+thirteen weeks, which is a coincidence rather than a rung. Every other arm peaks between 16,050 and
+54,074 in the box, because favour is bought at the table and the table is the coin.
+
+**And the cycle arm is the best census policy measured** — median rung 5, and rung 6 in 5 of 16 houses
+against 0 for the every-week banker and 1 for the reference player. The item asked whether the rung
+was reachable and got back a better way to play, which is worth more than the answer.
+
+#### What shipped, and why it is not a smaller number
+
+The panel has always carried two sentences: the row is labelled **"What the census must find you
+worth"**, and the line under it reads **"The census counts what you have; it does not take it."**
+`goldOk` read `d.gold`. What a house HAS was never what was in its box, and the source's own flavour
+makes the argument out loud — *"Nobody took 400,000 sesterces off an eques — he had to BE worth it."*
+`paragonReach` already draws exactly this box-against-worth distinction for the block, with a comment
+saying the two answer different questions.
+
+`censusWorth(d)` counts the box, the debts owed to the house, the racks at half what the steel cost,
+the men at `gladValue`, and the wings at what they were built for. **Not** the works and monuments —
+the measurement was taken without them, and a term nobody has measured is a term nobody should ship.
+
+#### What it moves, which is what decided it
+
+Each candidate definition was priced before any of it was written, one term at a time, and asked the
+same question. The highest rung the price allows over 16 houses of the reference player:
+
+    counting the box only     0x1 1x3 2x1 3x3 4x4 5x3 6x1
+    counting property         0x1 1x3 2x1 4x3 5x5 6x2 7x1
+
+About one rung, and exactly one house of sixteen reaches the top. The arms that do not build are
+unchanged by it — they have no property to count — so this does not make the ladder cheap for a
+finished house. It makes the apex reachable by one that spent twenty years putting up stone, which is
+what the rung's blurb describes.
+
+The reception fee is still coin, as its own term (`feeOk`) with its own line on the panel and its own
+button text: sportula, clerks and a night the town remembers are not paid in bricks. And the coin hint
+v3.42.0 added — "the census counts the coin in the box and nothing else" — was true when it shipped
+and is now false, so it says the opposite.
+
+#### Two checks that were reading the old census, and both earned their keep
+
+**`near` caught it on the release run** — "15 of the census rows tick against a number they do not
+name", 50 states over five rungs. It set `d.gold` to the price less one and then re-derived `goldOk`
+as `d.gold >= cost`, which was the game's own reading until this release; both halves went stale at
+once, the fixture no longer putting anybody one short and the re-derivation no longer describing the
+gate. It reads `censusWorth` off the handle now rather than keeping a copy, and carries `feeOk`. That
+is a proximity check doing exactly what it exists for, on the first release that moved the number
+underneath it.
+
+#### The check that passed for the wrong reason
+
+`census` sets a house one denarius under the census and asserts it is refused. It did that by setting
+`d.gold` to the price less one, which was the same thing until this release — and the moment worth was
+counted, three men and their kit put the house OVER the census while the box said otherwise, so the
+bar fired on the fixture rather than on the game. It walks the WORTH to exactly one short now, off
+`censusWorth` itself: worth 29,999 against 30,000, of which 28,734 is coin, and refused.
 
 ### v3.44.0 — #153: the two halves of `ruined` belong to different policies, not different houses
 

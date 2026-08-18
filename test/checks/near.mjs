@@ -318,7 +318,16 @@ export async function run({ p }){
       if(drift[29] > 400) bad.push(`the creditors' line moved ${drift[29]}d in one week — the figure quoted `
         + `is not the figure the gate will read`);
 
-      /* riseNeed's rows against its button */
+      /* ---- riseNeed's rows against its button, and the row is WORTH now — #154 ----
+         This set `d.gold` to the census less one and then re-derived `goldOk` as `d.gold >= cost`,
+         which was the same reading the game used until v3.45.0. The census counts property now — the
+         box, the debts owed, the racks at half, the men and the wings — so a house with three men and
+         their kit in it is worth a few thousand before any coin is counted, and both halves of this
+         block were stale at once: the fixture no longer put anybody one short, and the re-derivation
+         no longer described the gate. It reads `censusWorth` off the handle rather than keeping its
+         own copy, and it carries `feeOk`, which is the term the reception's own price became when
+         the census stopped being a bill. FIFTEEN of fifty rows disagreed on the release run, which is
+         this check doing exactly what it is for. */
       let rw = 0, rn = 0;
       for(let rank=0; rank<5; rank++) for(let i=0;i<10;i++){
         const d = stock(fresh(null,"RS"+rank+i));
@@ -326,14 +335,19 @@ export async function run({ p }){
         const nx = A.riseNext(d); if(!nx) continue;
         d.fame  = i%3===0 ? (nx.fame||0) - 1 : (nx.fame||0) + 5;
         d.favor = i%3===1 ? (nx.favor||0) - 1 : (nx.favor||0) + 5;
-        d.gold  = i%3===2 ? (nx.cost||0) - 1 : (nx.cost||0) + 5;
+        /* walk the WORTH to one short or a little over, which is what the row shows */
+        d.gold = 0;
+        const bare = A.censusWorth(d);
+        d.gold = Math.max(0, (nx.cost||0) - bare + (i%3===2 ? -1 : 5));
         const need = A.riseNeed(d); rn++;
-        const rows = need.fameOk && need.favorOk && need.goldOk && need.full;
+        const rows = need.fameOk && need.favorOk && need.goldOk && need.feeOk && need.full;
         if(!!A.canClaimRise(d) !== !!rows) rw++;
         if(need.fameOk !== (d.fame >= (nx.fame||0))) rw++;
-        if(need.goldOk !== (d.gold >= (nx.cost||0))) rw++;
+        if(need.goldOk !== (A.censusWorth(d) >= (nx.cost||0))) rw++;
+        if(need.worth !== A.censusWorth(d)) rw++;
       }
-      lines.push(`the census: ${rn} states over five rungs, ${rw} rows that disagree with the button`);
+      lines.push(`the census: ${rn} states over five rungs, ${rw} rows that disagree with the button `
+        + `(the row shows what the house is WORTH, and the reception's fee is its own term)`);
       if(rw) bad.push(`${rw} of the census rows tick against a number they do not name`);
 
       /* romeBar: the letter must never come with the renown rung unmet */
