@@ -786,7 +786,7 @@ Five ways in, replacing the old founding gift:
 | **A Clean Start** | 800d, 3 men, nothing wrong — its own kind of pressure |
 | **Your Uncle's Debts** | 260d, **6 men**, unrest 26, a carceres already built. The upkeep will eat you if you stand still |
 | **One Good Man** | 520d, **a single legend** at 70 fame with Defiant and nobody behind him |
-| **The Old Guard** | 700d, 4 men averaging **32 years and 9 scars**. A closing window |
+| **The Old Guard** | 700d, 4 men averaging **32 years and 9 scars** — and the most durable founding roster in the game (#148) |
 | **Another House's Leavings** | 640d, 5 men at **unrest 38 and double defiance** — Tullius' rejects, and told so |
 
 ### The festival year
@@ -1392,7 +1392,12 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.38.0 — #147 refuted on its own clause (the missing endings are
+**Shipped and verified:** v3.39.0 — #148 closed: the openings' 35-point survival spread is real and
+is not what the tags describe. Two of the five made a claim about a trajectory and both were
+measurably false — `veterans`' "closing window" is backwards (its founding men outlast every other
+opening's by 3-5×, under all four policies) and `champion`'s "everything is standing in one cell" is
+true for a median seven weeks of a 200-week run. Two sentences fixed, nothing retuned. Suite green at
+**65/65**, `survive` drawing (4,6). v3.38.0 — #147 refuted on its own clause (the missing endings are
 declined, not unreachable: 22-24 of 24 houses reach `foreclosed` when a policy goes after it) and one
 real gate fault fixed on the way — `disgrace` was held shut by a term that reads your PATRONS in an
 ending about the front rows, and now fires for 7-11 of 24 houses that play for blood and 0 of 24 for
@@ -1629,13 +1634,31 @@ shrinking house by some policy — in which case the item is the gate and not th
 cannot, the repair is that a rival with a grudge should be able to close a house, and lowering 95
 would only make the ending fire for the wrong reason.
 
-**#148 — the five openings differ by twenty-five points of survival and nothing says so.** Alive at
-week 90, pooled 3 seeds × 24 houses: **veterans 63 of 72 · clean 60 · champion 58 · castoffs 45 ·
-inherited 38.** #139 refuted the claim that the tags are ordered wrongly, but it did not ask whether
-that SPREAD is intended: a player picking `inherited` takes a 35% relative cut in survival against
-`veterans`, and the only signal is the word "Hard". *Falsifies if:* the spread is the point and the
-tags carry it — in which case the item is to price the tags against the measured spread, which is
-smaller work than retuning.
+**#148 — CLOSED in v3.39.0, and the spread was not the finding.** Re-measured on the current build,
+4 seeds × 24 houses per opening (alive at week 90): **champion 88% · veterans 86% · clean 74% ·
+castoffs 68% · inherited 53%** — 35 points, wider than the item as opened, and it does not close
+later (58% to 32% at week 180). The clause said the item is to price the tags against that spread,
+so each tag was read as a CLAIM and measured. Three of the five are not difficulty ratings at all,
+they describe a shape, and a shape can be false:
+
+| tag | the claim | measured |
+|---|---|---|
+| `inherited` **"Hard"** | it is the hard one | **true** — 53% against 88%, the only difficulty claim the game makes and it is right |
+| `champion` **"Fragile"** | "everything the house has is standing in one cell, and it can die on any given afternoon" | **true for a median SEVEN WEEKS.** The reference player has a second man in the yard by week 6-7 on every seed and under every policy, and this is the longest-lived opening in the game |
+| `veterans` **"A closing window"** | "every one of them past the top of the hill. Whatever you build, build it fast" | **backwards.** The typical founding veteran is gone in week **37-50**, against 15-16 for `castoffs` and `inherited` and 9-14 for `clean` and `champion` — three to five times longer, on a smaller roster than two of those |
+| `castoffs` **"Volatile"** | the outcome is unusually uncertain | **mixed** — widest spread of lives under 2 of 4 policies, and `inherited` is widest under 3 of 4 seeds of the default. Recorded, not changed (#127) |
+
+The veterans result survives the control #139 established: first or joint-first for founding-roster
+durability under all four of `scen`'s policies, including `reckless`, where every bout is a death
+match. And the obvious confound is the wrong way round — `inherited` starts with six men to
+`veterans`' four, so the order statistic favours it, and it still loses by 2×. The measurement is
+taken on the MEDIAN founding man rather than the last one for exactly that reason.
+
+**Shipped: the two sentences the game contradicts.** `veterans` is tagged "Old hands" and no longer
+tells the player to hurry; `champion` keeps "Fragile" — #139 already measured and refuted the
+ordering claim — but its blurb now bounds the state to "until you put somebody in the next one",
+which is both true and the first thing a player should do. Nothing is retuned: the spread stands,
+and the item was never that the spread is wrong.
 
 **#149 — four player systems the reference player has never once exercised.** Gate open on **0 of
 1,100 house-weeks** (8 houses × 320): `repay`, `applyKit`, `dropKit`, `breakPlan`. Each is a fact
@@ -2330,6 +2353,46 @@ territory where the measuring is harder than the thing measured. That is a reaso
 answer is a decision over items whose answer is another number.
 
 ## Changelog (shipped)
+
+### v3.39.0 — #148: two openings told the player something the game contradicts
+
+#148 asked whether the survival spread across the five foundings is intended and whether the tags
+carry it. Re-measured on the current build, 4 seeds × 24 houses per opening, alive at week 90:
+
+    champion   88%      veterans   86%      clean   74%      castoffs   68%      inherited   53%
+
+35 points, wider than the item as opened, and it does not close later — 58% to 32% at week 180. The
+spread is not the finding. What the player is told about it is one word each, and **three of those
+five words are not difficulty ratings at all**: they describe a shape, and a shape can be false.
+
+**"A closing window" is backwards.** `veterans` says "every one of them past the top of the hill.
+Whatever you build, build it fast." Measured on the MEDIAN founding man — the last one is an order
+statistic and the rosters are different sizes — a veteran is gone in **week 37-50**, against 15-16
+for `castoffs` and `inherited` and 9-14 for `clean` and `champion`. Three to five times longer than
+anybody else's men, on a smaller roster than two of them. The confound runs the wrong way:
+`inherited` starts with six to `veterans`' four and still loses by 2×. And it survives #139's
+control — first or joint-first under all four of `scen`'s policies, including `reckless`, where
+every bout is a death match. There is no window; "build it fast" is an imperative about a clock
+that does not tick. Tagged **"Old hands"** now, and the last sentence of the blurb is gone.
+
+**"Fragile" is true for a median seven weeks.** `champion` says "everything the house has is
+standing in one cell, and it can die on any given afternoon". The reference player has a second man
+in the yard by **week 6-7 on every seed and under every policy tried**, and this is the longest-lived
+opening in the game (median 158-256 weeks). The tag stays — #139 already measured the ORDERING claim
+and refuted it, and on week one, which is when the player reads it, the sentence is true. What ships
+is the bound: "standing in one cell **until you put somebody in the next one**", which is true and is
+also the first thing a player should do about it.
+
+**"Volatile" is left alone.** `castoffs` holds the widest spread of lives under 2 of 4 policies, and
+`inherited` is widest under 3 of 4 seeds of the default. Mixed is not a finding, and #127's rule is
+that a threshold — or here a word — does not move on a number that will not hold still.
+
+**"Hard" on `inherited` is correct** and is the only difficulty claim the game makes: 53% against 88%.
+
+*Kept from it:* `scen` grows three tests, one per testable tag — when the founding roster actually
+goes (median and last, so roster size cannot carry the result), how long a one-man house stays a
+one-man house, and the quartile spread of lives, because a median is exactly the statistic that
+cannot show what "volatile" means.
 
 ### v3.38.0 — #147: the endings are declined, not unreachable, and one gate was reading the wrong people
 

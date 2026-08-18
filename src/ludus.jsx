@@ -1394,11 +1394,35 @@ const SCENARIOS = {
     blurb:"Six men, a full block, and a creditor who was owed before you were. The upkeep alone will eat you if you stand still.",
     gold:260, fame:22, unrest:26, men:[[30,48],[30,48],[30,48],[30,48],[34,52],[34,52]],
     buildings:{ carceres:1 } },
+  /* ---- #148: TWO OF THESE FIVE MADE A CLAIM ABOUT A TRAJECTORY, AND BOTH WERE WRONG ----
+     The openings differ by 35 points of survival at week 90 (champion 88%, veterans 86%, clean 74%,
+     castoffs 68%, inherited 53% — 4 seeds x 24 houses each), and the only thing the player is told
+     is one word apiece. Three of those words describe a SHAPE rather than a difficulty, which means
+     they can be measured, and `scen` now does:
+
+       "Fragile"            everything is standing in one cell — TRUE FOR A MEDIAN SEVEN WEEKS. The
+                            reference player has a second man in the yard by week 6-7 on every seed
+                            and under every policy tried, and this is the longest-lived opening in
+                            the game. The tag stays (#139 already measured the ORDERING claim and
+                            refuted it); the sentence that said the state lasts is bounded instead.
+       "A closing window"   the four are a wasting asset, so build fast — BACKWARDS. The typical
+                            founding veteran is gone in week 37-50 against 15-16 for `castoffs` and
+                            `inherited`, 9-14 for `clean` and `champion`: three to five times longer
+                            than any other opening's men, on fewer of them than two of those rosters
+                            hold. First or joint-first under all four of `scen`'s policies. There is
+                            no window, and "build it fast" was an imperative about a clock that does
+                            not tick.
+       "Volatile"           castoffs holds the widest spread of lives under 2 of 4 policies and
+                            `inherited` under 3 of 4 seeds of the default. MIXED, so it is recorded
+                            and NOT changed — #127's rule.
+
+     "Hard" on `inherited` is the one tag that is a difficulty claim, and it is correct: 53% alive at
+     week 90 against 88%. Nothing else here is retuned; two sentences that the game contradicts are. */
   champion: { name:"One Good Man", tag:"Fragile",
-    blurb:"A name the editors already know, and nobody behind him. Everything the house has is standing in one cell, and it can die on any given afternoon.",
+    blurb:"A name the editors already know, and nobody behind him. Everything the house has is standing in one cell until you put somebody in the next one, and until you do it can die on any given afternoon.",
     gold:520, fame:70, unrest:14, men:[[80,90]], legendFirst:true },
-  veterans: { name:"The Old Guard", tag:"A closing window",
-    blurb:"Four men who have all done this a long time. Skilled, scarred, and every one of them past the top of the hill. Whatever you build, build it fast.",
+  veterans: { name:"The Old Guard", tag:"Old hands",
+    blurb:"Four men who have all done this a long time. Skilled, scarred, and every one of them past the top of the hill — and still the last four men in Capua you would bet against.",
     gold:700, fame:45, unrest:18, men:[[58,72],[58,72],[58,72],[58,72]], old:true },
   castoffs: { name:"Another House's Leavings", tag:"Volatile",
     blurb:"Five men Tullius did not want, sold cheap and told so to their faces. There is talent in here somewhere and not one of them owes you anything.",

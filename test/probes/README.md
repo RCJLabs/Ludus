@@ -290,6 +290,26 @@ Averaging those in dilutes any effect toward zero while looking like twice the d
 and dropped. It also compares at the last week BOTH were still playing rather than at a fixed
 horizon, because a dead house's gold answers a different question.
 
+**`scen.mjs`, extended for #148** — the item asked whether the openings' 35-point survival spread is
+carried by what the player is told, and what he is told is one word each. Three of those five words
+describe a SHAPE rather than a difficulty, so each became a measurement:
+
+* *"A closing window"* — when does the founding roster actually go? Reported on the **median**
+  founding man as well as the last, because the last one is an order statistic and the rosters run
+  from one man to six: `inherited` has six to `veterans`' four, so a naive "when are they all gone"
+  favours it for arithmetic reasons alone. On the median the answer is unambiguous — a veteran lasts
+  three to five times longer than anybody else's man, which is the opposite of the tag.
+* *"Fragile"* — how long is a one-man house a one-man house? Seven weeks, on every seed and every
+  policy. Worth stating plainly that this is a fact about the REFERENCE PLAYER, who buys: a player
+  who declines to buy keeps the state. That is the honest reading and it is why the fix bounded the
+  sentence ("until you put somebody in the next one") rather than deleting it.
+* *"Volatile"* — the quartile spread of lives, because the median is precisely the statistic that
+  cannot show what the word means. It came back mixed and nothing was changed on it.
+
+Run it under `reckless`, `neglect` and `bare` as well as `default` before quoting any of it — #139
+was a finding that held on the reference player and flipped on the others, and this probe's header
+carries that lesson. Both surviving claims here hold under all four.
+
 **`finish.mjs`** — #147, and the shape to copy when a count of outcomes is all you have. The item said
 seven of the twelve endings never fire; a count cannot tell a gate the game will not open from a door
 the reference player walks past, so this runs NINE arms, each the smallest deviation from the rope
