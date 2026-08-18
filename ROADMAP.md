@@ -1392,7 +1392,13 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.40.0 — #149 closed: `repay`, `breakPlan` and `dropKit` are correct, and
+**Shipped and verified:** v3.41.0 — #150 refuted on its own clause (nothing is paid for a refusal —
+coin moved on 0 of 1,800 nulls — and every null a caller can reach past the cooldown is the price),
+which made it a UI item, and both UI faults are fixed: the panel quoted odds the engine would not roll
+(990 wrong rows of 6,448, understated every time) and a shut door gave no reason. Adds `gambit`, the
+66th check, to a system nothing had ever touched. Suite **65 of 66**, the one failure `survive` at
+(1,1) — proven false by a 60-house cross-build signature that is identical house for house, and two
+clean re-runs at (2,11) and (1,11). v3.40.0 — #149 closed: `repay`, `breakPlan` and `dropKit` are correct, and
 driving `applyKit` found three real faults in the steel economy's unguarded half — a piece could be
 moved between a man and the rack without its condition going with it (three owned, three worn, two
 still listed on the rack), both dark paths took a man's forged and named piece, and `condOf` scored
@@ -1703,10 +1709,33 @@ suite was measured on the old behaviour. `steel` grows a section 7 holding the l
 hand-over, the forged piece and the scorer, and **all four bars were negative-tested**: each one
 fails on the unfixed code and passes on the fixed.
 
-**#150 — a third of paid gambit attempts do nothing.** `runGambit` returned null on **348 of 1,100**
-calls (32%) while changing the save on the other 752. A gambit that is refused and a gambit that runs
-and fails are different events and this probe cannot tell them apart. *Falsifies if:* every null is
-the affordability guard, in which case the item is a UI one — the button should say why.
+**#150 — REFUTED on its own clause in v3.41.0, and it was a UI item after all.** Nothing was ever
+paid: every guard in `runGambit` runs before `d.gold -= cost`, and **coin moved on 0 of 1,800 nulls**
+over three seeds × 12 houses × 320 weeks (`test/probes/quiet2.mjs`). Split by the game's own guards,
+with the reconstruction agreeing with the function on 2,106 of 2,106 calls:
+
+| way out | share of calls | share of the nulls |
+|---|---|---|
+| the six-week cooldown | 70-73% | **81-86%** |
+| the price | 12-16% | 14-19% |
+| unknown trick / unknown house | 0% | 0% |
+| it ran | 14-15% | — |
+
+Counted the way `dark` counts — gated on `gambitReady` first, so the cooldown cannot appear — 52-63%
+would be null and **every one of them is the price**, which is the falsification clause word for word.
+
+**Two real faults on the panel, though.** *The odds it quoted were not the odds the game rolled:* it
+worked them out for itself from `gambitDone`, the count stored at the last use, while `runGambit`
+rolled against `gambitStale`, that count minus one per `GAM_FORGET` weeks since. Of **6,448 rows the
+panel drew, 990 were wrong — and wrong in the same direction every time**, understating by a median 7
+points and up to 14. Fixed by `gambitOdds(d,k)`, which both sides now call, so they cannot drift
+again. *And a shut door said nothing:* the rival buttons rendered behind `ready && S.gold >= cost`, so
+a house short of the price saw a name, a blurb, a price and odds, with no button and no reason; it now
+names the shortfall and says a refusal costs nothing.
+
+*Kept from it:* `gambit`, the suite's 66th check — **nothing had ever touched this system** — holding
+the forgetting curve (48% fresh → 27% after three throws → 34/41/48% as the town forgets) and all four
+refusals with the coin read on each side. Both bars were negative-tested against the unfixed code.
 
 **#151 — the top of the standing ladder is held by nobody.** Census rungs 5, 6 and 7 were held by
 **0 of 37 late houses** across four seeds (`catalogue.mjs`). This is re-confirmation rather than
@@ -2389,6 +2418,69 @@ territory where the measuring is harder than the thing measured. That is a reaso
 answer is a decision over items whose answer is another number.
 
 ## Changelog (shipped)
+
+### v3.41.0 — #150: a panel that quoted the wrong odds, and a shut door that said nothing
+
+The item read `runGambit` returning null on 348 of 1,100 calls and called it "a third of PAID gambit
+attempts do nothing". Nothing is paid: all four guards run before `d.gold -= cost`. Measured over
+three seeds, 12 houses × 320 weeks (`test/probes/quiet2.mjs`), **coin moved on 0 of 1,800 nulls**.
+
+Split by the game's own guards — re-tested immediately before each call, in the order the function
+tests them, with the reconstruction agreeing with the function on **2,106 of 2,106 calls**:
+
+    the six-week cooldown       70-73% of calls    81-86% of the nulls
+    the price                   12-16%             14-19%
+    unknown trick, unknown house     0%                  0%
+    it ran                      14-15%
+
+And counted the way `dark` counts — gated on `gambitReady` first, so the cooldown cannot be one of
+its nulls — 52-63% would return null and **every one is the price**. That is #150's falsification
+clause word for word: *"every null is the affordability guard, in which case the item is a UI one —
+the button should say why."*
+
+#### The panel quoted a number the engine would not roll
+
+`runGambit` rolls against `gambitStale(d,k)` — the number of times you have used a trick, minus one
+for every `GAM_FORGET` (26) weeks since you last did. The forgetting is not incidental; it is the
+whole of `GAM_FORGET`'s own note, written because "by the eighth throw of anything the odds are on
+the floor and stay there for the rest of the run". The panel worked its odds out for itself, from
+`gambitDone` — the raw count stored at the last use, which never moves between uses.
+
+Of **6,448 rows the panel drew across three seeds, 990 quoted a number the engine would not use**,
+and it was the WORSE number every single time: a median 7 points understated, up to 14. A player
+looking at "about 27 in a hundred" was being offered 48.
+
+The fix is not "call the other function". It is `gambitOdds(d,k)`, which the panel and the roll both
+call now — the same move `workNeed` and `rackKey` made on their own systems, and the only one that
+stops the two drifting apart again.
+
+#### And when it would not work, it said nothing at all
+
+The rival buttons rendered behind `ready && S.gold >= cost`. A house twenty denarii short saw the
+trick's name, its blurb, its price and its odds — and no button, and no reason. The cooldown was
+already named in the panel header ("not for 4 weeks"); the price was not named anywhere. It now says
+how far short the house is, and that a refusal is free, which is the fact the item got backwards.
+
+#### `survive` drew (1,1) on the release run, and it is a false failure
+
+Recorded rather than re-rolled away. The release run read 65 of 66, the one failure being `survive`
+at 1 house standing and 1 man — its fourth in 47 runs. Proven false the way v3.33.0's (0,4) was:
+`open.mjs` ran 60 headless houses through 26 weeks on both builds and the signature is **identical
+house for house** — same week, same men, same gold, same ending, sixty times — so no path a new house
+executes differs between v3.40.0 and v3.41.0. Standing 39 of 60 and men 128 on both, which is the
+clean baseline #142 measured. Two further `survive` runs on a quiet machine read (2,11) and (1,11),
+both passing. Nothing the reference player does calls `runGambit` at all, so there was never a route
+by which this release could touch the opening. **The failing entry stays in the committed tally** —
+a check's false-failure rate is a property worth keeping honest, and it is now 4 of 47 (9%).
+
+#### `gambit`, the suite's 66th check
+
+**Nothing in the suite had ever touched this system** — no check mentioned `runGambit`, `GAMBITS` or
+any of it. The new one is a bench: the forgetting curve (48% fresh → 27% after three throws in one
+week → 34% → 41% → 48% as 26 weeks pass at a time, with the stored count sitting at 3 throughout,
+which is exactly why reading it lied), and all four refusals with the coin read on each side of every
+one. Both bars were negative-tested — restore `gambitDone` and the curve flatlines at 27% while the
+worn count falls to zero, and the check names the fault.
 
 ### v3.40.0 — #149: the four dark doors, and the steel ledger behind one of them
 

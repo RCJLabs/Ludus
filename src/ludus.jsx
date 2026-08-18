@@ -11517,6 +11517,15 @@ const gambitStale = (d,k) => {
   return Math.max(0, gambitDone(d,k) - Math.floor(since / GAM_FORGET));
 };
 const gambitReady = d => !d.flags.gambitWeek || d.week - d.flags.gambitWeek >= 6;
+/* ---- ONE FORMULA, BECAUSE TWO OF THEM DISAGREED — #150 ----
+   The panel worked its odds out for itself and used `gambitDone`; `runGambit` used `gambitStale`,
+   which is the same count minus one for every GAM_FORGET weeks the town has had to forget. Measured
+   over three seeds, 12 houses x 320 weeks: of 6,448 rows the panel drew, 990 quoted a number the
+   engine would not roll — and it was the worse number every single time, by a median 7 points and up
+   to 14. Changing the panel to call `gambitStale` would have fixed it once; a shared function is what
+   stops it happening again, and it is what `workNeed` and `rackKey` are for on their own systems. */
+const gambitOdds = (d,k) => { const G = GAMBITS[k]; if(!G) return 0;
+  return clamp(G.odds(d) - gambitStale(d,k)*0.07, 0.12, 0.86); };
 function runGambit(d, k, houseName){
   const G = GAMBITS[k]; if(!G || !gambitReady(d)) return null;
   const h = (d.rivals||[]).find(x=>x.name===houseName); if(!h) return null;
@@ -11527,9 +11536,9 @@ function runGambit(d, k, houseName){
   /* it gets harder each time you use the same trick, and easier the longer you leave
      it alone — the count that matters is the one the town has not forgotten yet */
   const worn = gambitStale(d, k);
+  const p = gambitOdds(d, k);          /* #150: read BEFORE the count moves — the panel's own number */
   d.gambits = Object.assign({}, d.gambits||{}, { [k]: worn + 1 });
   d.gamWhen = Object.assign({}, d.gamWhen||{}, { [k]: d.week });
-  const p = clamp(G.odds(d) - worn*0.07, 0.12, 0.86);
   const won = R() < p;
   lawOf(d).heat = clamp(lawOf(d).heat + (won ? G.heat*0.4 : G.heat), 0, 100);
   addRep(d, "blood", won ? 2 : 5);
@@ -20978,8 +20987,19 @@ export default function App(){
                 <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:6}}>
                   They have been doing all of this to you since the day you opened. None of it is legal and all of it is ordinary.
                 </div>
+                {/* ---- THE PANEL QUOTED ONE NUMBER AND THE ENGINE ROLLED ANOTHER — #150 ----
+                    `runGambit` rolls against `gambitStale`, which is the count of times you have
+                    used this trick MINUS one for every GAM_FORGET weeks since you last did — the
+                    forgetting is the whole point of `GAM_FORGET` and its note above. This line read
+                    `gambitDone`, the raw count stored at the last use, so it went on quoting the
+                    penalty for a trick Capua had already forgotten.
+                    MEASURED over three seeds, 12 houses x 320 weeks each (`test/probes/quiet2.mjs`):
+                    of 6,448 rows this panel drew, 990 quoted a number the engine would not use —
+                    5% to 21% of them depending on the seed — and it was the WORSE number every
+                    single time, by a median 7 points and up to 14. */}
                 {GAM_KEYS.map(k=>{ const G = GAMBITS[k], cost = G.cost(S);
-                  const p = clamp(G.odds(S) - gambitDone(S,k)*0.07, 0.12, 0.86);
+                  const worn = gambitStale(S,k), tried = gambitDone(S,k);
+                  const p = gambitOdds(S,k);      /* the same function `runGambit` rolls against */
                   return (
                     <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:7,marginTop:7}}>
                       <div className="flex items-center justify-between gap-2">
@@ -20988,8 +21008,23 @@ export default function App(){
                       </div>
                       <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:1}}>{G.blurb}</div>
                       <div style={{fontSize:"var(--fs-sm)",marginTop:2,color:p>=0.55?"#9aa86a":p>=0.35?"#d8ac5f":"#d96f5d"}}>
-                        about {Math.round(p*100)} in a hundred{gambitDone(S,k)>0 ? ` · you have tried this ${gambitDone(S,k)} time${gambitDone(S,k)>1?"s":""}` : ""}
+                        about {Math.round(p*100)} in a hundred{worn>0
+                          ? ` · you have tried this ${worn} time${worn>1?"s":""} that anybody still remembers`
+                          : tried>0 ? ` · you have used this before, and Capua has stopped counting it` : ""}
                       </div>
+                      {/* ---- AND WHEN IT WOULD NOT WORK, IT SAID NOTHING AT ALL — #150 ----
+                          The rival buttons rendered behind `ready && S.gold >= cost`, so a house short
+                          of the price saw a name, a blurb, a price and odds, and no way to press any
+                          of it and no reason given. That is the whole of what the item turned out to
+                          be: `runGambit` never charges for a refusal (measured, coin moved on 0 of
+                          1,800 nulls), and every null a caller can reach with the cooldown clear is
+                          this one. `munusReady`'s panel below already learned to name the thing that
+                          is in the way; this one does the same. */}
+                      {ready && S.gold < cost && (
+                        <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:5,fontStyle:"italic"}}>
+                          {rnd(cost - S.gold)}d short of the asking price. Nothing is spent on a refusal.
+                        </div>
+                      )}
                       {ready && S.gold >= cost && (
                         <div className="flex gap-2" style={{marginTop:5}}>
                           {rivals.map(h=>(
@@ -25422,7 +25457,11 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        So the rule is three parts, not one: the action, the table it reads, and the gate that opens
        it. Everything here was found by asking what the nineteen above actually reference. */
     GAMBITS, SWEARING, PLANSEASON, FAVOURS,
-    nemAnswerReady, nemCanCallOut, nemEdge, favourReady, gambitReady, gambitStale, seasonOfMan,
+    /* #150: the panel quotes `gambitDone` and the engine rolls `gambitStale`, and the two differ by
+       whatever the town has had time to forget. Both come out here so a probe can print the gap
+       rather than recompute either of them. */
+    nemAnswerReady, nemCanCallOut, nemEdge, favourReady, gambitReady, gambitStale, gambitDone, gambitOdds,
+    GAM_KEYS, GAM_FORGET, seasonOfMan,
     /* the fighter-nemesis (d.nemesis, not the arch-rival house above) — #137 found every
        circuit-born one unmade the same week it was named, and nothing could drive the naming */
     nemesisCheck,

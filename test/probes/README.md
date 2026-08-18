@@ -32,6 +32,7 @@ Run them straight:
     node test/probes/perk.mjs 16 420 SEED hot     # #141: and for a house that neglects unrest
     node test/probes/catalogue.mjs 72 420 SEED on   # the census with the works step switched on
     node test/probes/kit.mjs 40 KIT       # #149: the steel ledger, the forged piece, and the four dark doors
+    node test/probes/quiet2.mjs 12 320 GAM  # #150: runGambit's nulls split by its own guards, and the panel's odds
     node test/probes/finish.mjs 24 900 SEED # #147: nine arms, one per ending, and the RUINS gates split by term
     node test/probes/succ.mjs 30 1400 SEED [grant]  # #147: the second generation, with and without a free ledger
 
@@ -310,6 +311,22 @@ describe a SHAPE rather than a difficulty, so each became a measurement:
 Run it under `reckless`, `neglect` and `bare` as well as `default` before quoting any of it — #139
 was a finding that held on the reference player and flipped on the others, and this probe's header
 carries that lesson. Both surviving claims here hold under all four.
+
+**`quiet2.mjs`** — #150, and the shape for any "this function returns null a lot" item. A count of
+nulls is not a finding; the split is. `runGambit` has exactly four ways out before it does anything,
+so the probe re-tests the game's own guards immediately before each call, IN THE ORDER THE FUNCTION
+TESTS THEM, and then asserts the call agreed — 2,106 of 2,106 across three seeds, which is what makes
+the split quotable. It also reads coin on both sides of every null, because the item's headline
+("a third of PAID attempts do nothing") was a claim about spending and deserved to be measured rather
+than argued from the source.
+
+Its second half is the useful one: having established the nulls were all the price, it went on to
+check what the panel SAYS, and found it quoting `gambitDone` where the engine rolls `gambitStale` —
+990 wrong rows of 6,448, wrong in the same direction every time. **Ask what the screen says as well
+as what the function returns; a system can be perfectly correct and still lie.**
+
+One thing to copy: it reconstructs `dark`'s own gating in a second arm, so the item's original 348-of-
+1,100 could be compared like for like instead of against a number taken a different way.
 
 **`kit.mjs`** — #149, and the clearest example in this directory of why a control arm goes first. The
 steel economy has a conservation law — for anything that wears, `d.gear[id]` equals what men are
