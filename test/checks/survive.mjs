@@ -320,6 +320,33 @@ const MEN    = 3;
    10.7 -> 7.8 on five houses, which is inside ordinary variance. **A fixed-policy headless run over
    60 houses is the instrument for that** — it separated all three levers cleanly, and `policy`
    already carries a version of it. */
+/* ---- #155: THE POOLED RATE WAS THREE THINGS AT ONCE, AND #142'S BAR IS ON BUDGET ----
+   An item was opened claiming this check fires three times more often than #142 derived — 2.7%
+   against an observed 9%. It does not, and the item's own clause named the escape: the two figures
+   were not comparable. Re-scored against today's constants over 58 recorded runs:
+
+     the conjunction   standing < 2 AND men < 4      2 = 3.4%    against #142's derived 2.7%
+     the collapse      standing === 0                2 = 3.4%    against about 1.4% expected
+     neither           3.20.0 (1,4)                  1           failed under constants since retired
+
+   #142's 2.7% was derived for the CONJUNCTION and for nothing else. Counting the catastrophe net's
+   firings against it, and counting a run that failed under BOTH_MEN = 5, is counting three
+   populations as one. The conjunction is doing exactly what it was set to do.
+
+   THE COLLAPSE IS NOT A BUG EITHER, and its old comment claimed it could not happen: the per-house
+   standing rate across the whole tally is 58%, so all five falling together has about a 1.4% chance
+   a run — once in seventy-odd — and over fifty-eight runs it has come up twice. Both were proven
+   false by a cross-build signature (60 headless houses, identical house for house), which is now
+   named in the failure message itself so the next reader does not rediscover it.
+
+   Over-dispersion was checked before any of this was written, because "the runs are not independent"
+   would have been a different item: variance on `standing` is 1.52 against a binomial 1.22 at the
+   observed rate, a factor of 1.25, which is mild and does not need a model.
+
+   WHAT IS NOT DONE: the bar is not widened, HOUSES is not raised. The rate the bar was derived for
+   is the rate it delivers, and a check that stops firing is not the goal. What was actually wrong
+   was the SUMMARY LINE, which pooled everything into one percentage — and that single number is
+   what opened the item. It splits by bar now. */
 const BOTH_MEN  = 4;   /* both weak together is the failure; either alone is a bad week */
 const BOTH_HOUSE = 2;
 const KEEP   = 4;    /* the yard a lanista tries to hold; below it, he goes to the block */
@@ -425,8 +452,19 @@ export async function run({ p, errors, port }){
 
   const fails = [];
   if(live.length < HOUSES) fails.push(`${HOUSES - live.length} of ${HOUSES} houses produced no save at all`);
-  /* the collapse: nothing left anywhere. Neither of these happens by bad luck. */
-  if(!standing) fails.push(`not one of ${HOUSES} houses came through ${WEEKS} weeks able to field a man`);
+  /* ---- THE COLLAPSE: NOTHING LEFT ANYWHERE ----
+     This comment used to read "Neither of these happens by bad luck", and #155 measured that it does.
+     Over 57 recorded runs the per-house standing rate is about 58%, so all five falling together has
+     roughly a 1.3% chance a run — about once in seventy-six — and it has come up twice, at v3.33.0
+     and v3.43.0, BOTH proven false by a cross-build signature over 60 headless houses. The guard
+     stays exactly as it is, because a run where nobody can field a man is worth stopping for. What
+     changes is that it now says what to do next, so the next reader does not spend two hours
+     rediscovering it. */
+  if(!standing) fails.push(`not one of ${HOUSES} houses came through ${WEEKS} weeks able to field a man`
+    + ` — measured at about a 1.3% chance a run on five houses, and twice out of twice so far it has`
+    + ` been luck rather than the build. Before believing it: \`node test/probes/open.mjs\` on this`
+    + ` build and on the last, and diff the SIG line. Identical house for house means no path a new`
+    + ` house executes differs and this is the tail`);
   if(!men) fails.push(`${HOUSES} houses, ${WEEKS} weeks, and not a man left in any yard`);
   /* and the gutting: both readings weak at once */
   if(standing < BOTH_HOUSE && men < BOTH_MEN)
@@ -452,9 +490,43 @@ export async function run({ p, errors, port }){
     const q = (a,f) => a[Math.min(a.length-1, Math.floor(a.length*f))];
     lines.push(`THE POOLED TALLY, ${all.length} run${all.length===1?"":"s"} across ${builds} build${builds===1?"":"s"}`
       + ` [#130 — the head's own figures were 1 of 12 and 2 of 47, all hand-copied from one build family]:`);
-    lines.push(`   failures ${failed} of ${all.length} (${(failed/all.length*100).toFixed(0)}%)`
-      + ` · standing min ${st[0]} / median ${q(st,0.5)} / max ${st[st.length-1]}`
-      + ` · men min ${mn[0]} / median ${q(mn,0.5)} / max ${mn[mn.length-1]}`);
+    /* ---- AND THE POOLED RATE IS THREE DIFFERENT THINGS — #155 ----
+       This line said "failures N of M (X%)" and nothing else, and that single number opened a
+       roadmap item claiming the check fires three times more often than #142 derived. It does not.
+       The recorded pairs are re-scored against the CURRENT constants and split by which bar they
+       trip, because pooling them answers no question anybody has:
+         · the conjunction is the bar #142 derived at 2.7%, and it is the only one that figure was
+           ever about.
+         · `standing === 0` is the catastrophe net, whose own comment used to say it does not happen
+           by bad luck. At a measured per-house standing rate near 58% all five falling has about a
+           1.3% chance a run, so over fifty-odd runs it happens, and it has — twice, both proven
+           false by cross-build signature.
+         · and some recorded failures trip NEITHER bar now, because they failed under constants that
+           have since been retired. Counting those against the current bar is counting the past twice.
+       Re-scoring rather than trusting the stored `pass` flag is the point: the flag is what the bar
+       said on the day, and the bars have moved. */
+    const trips = e => { const r = [];
+      if(e.standing === 0) r.push("no house standing");
+      if(e.men === 0) r.push("no man anywhere");
+      if(e.standing < BOTH_HOUSE && e.men < BOTH_MEN) r.push("the conjunction");
+      return r; };
+    const nowFail = all.filter(e=>trips(e).length);
+    const byBar = {};
+    for(const e of nowFail) for(const t of trips(e)) byBar[t] = (byBar[t]||0)+1;
+    const retired = all.filter(e=>!e.pass && !trips(e).length);
+    const pc = n => (n/all.length*100).toFixed(1);
+    lines.push(`   failures as RECORDED ${failed} of ${all.length} (${pc(failed)}%)`
+      + ` · re-scored against today's bars ${nowFail.length} (${pc(nowFail.length)}%)`
+      + (retired.length ? ` · ${retired.length} of the recorded ones trip no current bar at all `
+        + `(${retired.map(e=>`${e.v} (${e.standing},${e.men})`).join(", ")}) — they failed under constants since retired` : ""));
+    lines.push(`   and by WHICH bar, which is the only comparison #142's 2.7% supports: `
+      + (Object.entries(byBar).map(([k,v])=>`${k} ${v} (${pc(v)}%)`).join(" · ") || "none")
+      + ` — the conjunction is the bar that figure was derived for`);
+    lines.push(`   standing min ${st[0]} / median ${q(st,0.5)} / max ${st[st.length-1]}`
+      + ` · men min ${mn[0]} / median ${q(mn,0.5)} / max ${mn[mn.length-1]}`
+      + ` · per-house standing ${(st.reduce((a,b)=>a+b,0)/all.length/HOUSES*100).toFixed(0)}%`
+      + `, so all ${HOUSES} falling together has about a `
+      + `${(Math.pow(1 - st.reduce((a,b)=>a+b,0)/all.length/HOUSES, HOUSES)*100).toFixed(1)}% chance a run`);
     lines.push(`   every pair so far: ${all.map(x=>`${x.v} (${x.standing},${x.men})${x.pass?"":" FAIL"}`).join(" · ")}`);
     if(all.length < 20)
       lines.push(`   ${20 - all.length} more run${20-all.length===1?"":"s"} before this is worth setting a bar on`

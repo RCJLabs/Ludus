@@ -1392,7 +1392,14 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.45.0 — #154 closed, and its clause falsified at the margin: 80,000 held
+**Shipped and verified:** v3.46.0 — #155 refuted on its own clause: the 2.7% #142 derived was for the
+CONJUNCTION alone, and the observed "9%" pooled it with the catastrophe net and with one run that
+failed under a constant since retired. Re-scored over 58 runs the conjunction fires at 3.4% against a
+derived 2.7% — on budget — and `standing === 0` at 3.4% against about 1.4% expected, which is two
+events. The comment claiming the collapse "does not happen by bad luck" was measured wrong and now
+carries the arithmetic and the disambiguation. Nothing was widened; what was wrong was one pooled
+percentage in the summary line, and it splits by bar now. Suite green at **66/66**, `survive` drawing
+(3,3). v3.45.0 — #154 closed, and its clause falsified at the margin: 80,000 held
 with favour 90 comes up for 13 weeks in one house of forty-eight, under the cycle policy the clause
 itself named (which is also the best census policy measured — median rung 5, rung 6 in 5 of 16). What
 shipped is not a smaller number: the panel has always said "What the census must find you worth" and
@@ -2537,19 +2544,86 @@ And the judgement call to weigh before picking the next item: at eight-to-two, t
 territory where the measuring is harder than the thing measured. That is a reason to prefer items whose
 answer is a decision over items whose answer is another number.
 
-**#155 — `survive` fails three times more often than its own derivation says it should.** #142
-re-derived its bar from 37 runs and put the expected false-failure rate at **2.7%**. Over 54 runs it
-is **5 of 54 (9%)**, and two of those five are in the last four releases (v3.41.0 at (1,1), v3.43.0 at
-(0,4)) — each one costing a cross-build signature run to disprove, and each one proven false by 60
-houses reading identical house for house. The bar is a conjunction (`standing < 3 && men < 4`) taken
-over FIVE houses through five real browsers, and #142's own note says its `standing` reading is nearly
-inert: 39 of 60 clean, 44 with the weekly bill tripled. *Falsifies if:* the 2.7% was derived over a
-different span or policy than the runs being counted against it, in which case the figures are not
-comparable and the item is to re-derive rather than to change anything. What is NOT proposed is
-widening the bar until it stops firing — that is how it got `MEN = 6`. The candidate repair is more
-houses, since the spread is a sample-size property and the check already takes five minutes.
+**#155 — REFUTED on its own clause in v3.46.0. The two figures were never comparable, and the bar is
+on budget.** The item put #142's derived 2.7% against an observed 9% and called it a threefold
+overshoot. Re-scored against today's constants over 58 recorded runs, the failures are three
+populations, not one:
+
+| what tripped | count | rate | against |
+|---|---|---|---|
+| the conjunction, `standing < 2 && men < 4` | 2 | **3.4%** | #142's derived **2.7%** |
+| the collapse, `standing === 0` | 2 | 3.4% | about **1.4%** expected |
+| neither — 3.20.0 (1,4) | 1 | — | failed under `BOTH_MEN = 5`, since retired |
+
+**#142's 2.7% was derived for the conjunction and nothing else.** Counting the catastrophe net's
+firings against it, and counting a run that failed under a constant that has since moved, is counting
+three things as one. The bar delivers the rate it was set for. (The item also misquoted the bar as
+`standing < 3`; it is 2.)
+
+**The collapse is not a bug either, and its own comment said it could not happen.** It read "Neither
+of these happens by bad luck." The per-house standing rate across the whole tally is **58%**, so all
+five falling together has about a **1.4% chance a run** — once in seventy-odd — and over 58 runs it
+has come up twice. Both were proven false by cross-build signature, and that procedure is now named
+in the failure message itself rather than rediscovered each time.
+
+Over-dispersion was checked before anything was written, because "the runs are not independent" would
+have been a different item: variance on `standing` is **1.52** against a binomial **1.22** at the
+observed rate — a factor of 1.25, mild, and not needing a model.
+
+*What was actually wrong* was the summary line, which pooled everything into one percentage — and that
+single number is what opened this item. It splits by bar now, re-scoring the stored pairs against the
+current constants rather than trusting the `pass` flag, which is only what the bar said on the day.
+Neither the bar nor `HOUSES` was touched: a check that stops firing is not the goal.
 
 ## Changelog (shipped)
+
+### v3.46.0 — #155: one percentage, three populations, and a bar that was on budget all along
+
+I opened #155 off a single line this check prints: "failures 5 of 54 (9%)", against the 2.7% #142
+derived when it re-set the bar. Three times over budget, twice in the last four releases, each one
+costing a cross-build signature to disprove. The clause said it falsifies if the two figures are not
+comparable. **They are not**, and the way they are not is sharper than the clause guessed.
+
+Re-scored against today's constants over 58 recorded runs — re-scored, not read off the stored `pass`
+flag, because that flag is only what the bar said on the day and the bars have moved:
+
+    the conjunction   standing < 2 AND men < 4     2 = 3.4%    against #142's derived 2.7%
+    the collapse      standing === 0               2 = 3.4%    against about 1.4% expected
+    neither           3.20.0 (1,4)                 1           failed under BOTH_MEN = 5, retired
+
+**#142's 2.7% was derived for the conjunction and for nothing else.** Counting the catastrophe net's
+firings against it, and counting a run that failed under a constant that has since been retired, is
+counting three populations as one. The conjunction fires at 3.4% where it was set to fire at 2.7%.
+That is the bar doing its job, on a sample where one event moves the rate by 1.7 points.
+
+#### The collapse is not a bug either, and its comment said it could not happen
+
+    /* the collapse: nothing left anywhere. Neither of these happens by bad luck. */
+
+The per-house standing rate across the whole tally is **58%**. All five houses falling together is
+therefore about a **1.4% chance a run** — once in seventy-odd — and the check has run 58 times. It has
+come up twice, at v3.33.0 and v3.43.0, and **both were proven false by a cross-build signature**: 60
+headless houses identical house for house between the build that failed and the one before it.
+
+The guard is untouched, because a run where nobody can field a man is worth stopping for. What changed
+is that the failure message now carries the arithmetic and names the disambiguation — run `open.mjs`
+on both builds and diff the SIG line — so the next reader does not spend two hours rediscovering the
+procedure I have now executed twice.
+
+Over-dispersion was checked before any of this was written, because "the five houses are not
+independent" would have been a different item and a real one: variance on `standing` is **1.52**
+against a binomial **1.22** at the observed rate, a factor of 1.25. Mild. No model needed.
+
+#### What was actually wrong was the summary line
+
+Not the bar, not `HOUSES`, not the policy. One printed percentage that pooled a conjunction, a
+catastrophe net and a retired constant, and it was enough to open a roadmap item against a check that
+was behaving exactly as designed. It splits by bar now, and prints the per-house rate and the
+implied chance of the collapse beside it, so the next person reading this tally is reading three
+numbers that mean something rather than one that means nothing.
+
+**Nothing was widened.** The item said so itself — that is how this check got `MEN = 6` — and the
+measurement never asked for it.
 
 ### v3.45.0 — #154: a census counts property, and this one counted the cash box
 
