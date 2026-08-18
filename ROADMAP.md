@@ -1392,7 +1392,13 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.41.0 — #150 refuted on its own clause (nothing is paid for a refusal —
+**Shipped and verified:** v3.42.0 — #151 refuted on its own clause: a banking arm that keeps
+entertaining reaches Known in Rome in 3-5 houses of 16, and the "blocked on favour" evidence came from
+`estate`'s `miser`, which banks by switching the table — the favour engine — off. Split by the game's
+own four booleans over 192 house-runs, coin is the last term standing on 96-100% of one-short weeks
+from rung 3 up and favour appears in no one-short row anywhere. The panel's coin row now explains
+itself, and `census` grows a free-grant tripwire (8 of 8 played houses reach the top rung). Opens
+#154. Suite green at **66/66**, `survive` drawing (4,5). v3.41.0 — #150 refuted on its own clause (nothing is paid for a refusal —
 coin moved on 0 of 1,800 nulls — and every null a caller can reach past the cooldown is the price),
 which made it a UI item, and both UI faults are fixed: the panel quoted odds the engine would not roll
 (990 wrong rows of 6,448, understated every time) and a shut door gave no reason. Adds `gambit`, the
@@ -1737,12 +1743,51 @@ names the shortfall and says a refusal costs nothing.
 the forgetting curve (48% fresh → 27% after three throws → 34/41/48% as the town forgets) and all four
 refusals with the coin read on each side. Both bars were negative-tested against the unfixed code.
 
-**#151 — the top of the standing ladder is held by nobody.** Census rungs 5, 6 and 7 were held by
-**0 of 37 late houses** across four seeds (`catalogue.mjs`). This is re-confirmation rather than
-discovery — `census`'s own head records it and the threshold design was the accepted outcome — but
-it is now measured on the current build with the works step available, and it is the largest block of
-priced-and-unreachable content left. *Falsifies if:* a deliberately banking arm reaches rung 5, which
-`estate.mjs`'s `miser` arm nearly did (72,752d held, blocked on FAVOUR rather than coin).
+**#151 — REFUTED on its own clause in v3.42.0, and the evidence it was opened on was an arm
+artefact.** The clause said it falsifies if a deliberately banking arm reaches rung 5. One does:
+across three seeds × 16 houses (`test/probes/rung.mjs`), an arm that stops building and keeps
+entertaining reaches **Known in Rome in 5, 4 and 3 of 16 houses**, against 0-1 for the reference
+player, and rung 6 (Patron of the Games) comes up too — once for the reference player, twice for the
+banker on one seed.
+
+**The "blocked on FAVOUR" reading came from `estate`'s `miser`, which banks by switching the table
+off** — and the rope's own note calls the table "the largest lever on the census ladder", worth mean
+rung 2.70 against 1.50. Measured side by side: `miser` peaks at favour 52-70 median / 84-89 max; the
+same arm with the table left ON peaks at 70-81 / 100. An arm that banks by not spending on the thing
+it is trying to buy measures itself, not the price. `estate.mjs`'s header now carries that in full.
+
+**What is actually in the way is coin, everywhere, always.** `canClaimRise` is a conjunction of four
+and `riseNeed(d)` hands all four over already split, so nothing was reconstructed. Over 192 house-runs
+on four policies and three seeds, of the weeks a house is ONE term short of the next rung:
+
+    rung 3 Friend of the Magistracy   coin held 68-71%    the town's ear 28-32%
+    rung 4 Eques                      coin held 89-97%    the town's ear 3-11%
+    rung 5 Known in Rome              coin held 96-100%
+    rung 6 Patron of the Games        coin held 100%
+
+**Favour appears in no one-short row, at any rung, in any arm that entertains.**
+
+*Shipped:* the panel's coin row had no explanation while the favour row has had one for releases —
+and coin is the case that actually happens. It now says the census counts the box on the day it looks
+and nothing else, so a house that keeps building never holds enough at one time. Plus a driven
+tripwire in `census`: a played house handed 200,000d a week reaches the top rung 8 times in 8, so if
+coin ever stops being able to open the ladder, something else has shut it.
+
+**#154 — the last rung asks for two things that cannot both be had.** `Amicus Caesaris` wants 80,000
+denarii HELD, at the same moment as favour 90. Across 192 house-runs on four policies and three seeds
+it was reached **0 times**; hand the house coin and it is reached by **14 of 16**, so the gate is not
+shut on fame, favour or the meter. But the two requirements are opposed: the arm that banks hardest
+(`miser`, no table) peaks at **45,343 / 54,074 / 45,337 denarii** across the three seeds — still short
+of 80,000 — and its favour caps at **84-89**, under the 90 the rung asks; the arm that reaches favour
+100 peaks at **25,620-38,634 denarii**, because favour is bought at the table and the table is the
+coin. **This is the shape the source itself removed from `closed`'s gate** — its note says `freed >= 5`
+and `freed > lost` were "in direct opposition: the only way to earn the first is to fail the second",
+and that no ratio replaced it because anything fitted to two data points is how `survive` got `MEN = 6`.
+*Falsifies if:* some policy holds 80,000 while carrying favour 90 — the obvious candidate is
+entertaining on a cycle rather than every week the purse allows, which no arm here does. If none can,
+the repair is not a smaller number: it is that the census reads `d.gold` alone while the flavour text
+beside it says a man "had to BE worth it", and the house's stone, steel and men are worth a great deal
+that the censor cannot see (`paragonReach` already draws exactly this distinction for the block).
 
 **#152 — 143 of 424 handle functions are called by no check, and they GROUP into three systems.**
 `coverage` finished: **281 of 424 reached, 143 never called.** Per the `wall` rule the list was
@@ -2418,6 +2463,65 @@ territory where the measuring is harder than the thing measured. That is a reaso
 answer is a decision over items whose answer is another number.
 
 ## Changelog (shipped)
+
+### v3.42.0 — #151: the ladder is not held by favour, and the arm that said so had switched it off
+
+#151 said census rungs 5, 6 and 7 were held by nobody, and its clause said it falsifies if a
+deliberately banking arm reaches rung 5. **One does.** Across three seeds × 16 houses
+(`test/probes/rung.mjs`), an arm that stops building and keeps entertaining reaches Known in Rome in
+**5, 4 and 3 of 16 houses** against 0-1 for the reference player, and Patron of the Games comes up as
+well — once for the reference player, twice for the banker on one seed.
+
+#### The evidence the item was opened on was an arm measuring itself
+
+The item cited `estate.mjs`'s `miser` — "72,752d held, blocked on FAVOUR rather than coin". `miser`
+is `{ build:false, rites:false, party:false }`, and the rope's own note calls the table **"the
+largest lever on the census ladder"**, worth mean rung 2.70 against 1.50 and favour 79 against 40.
+Side by side over the same seeds:
+
+    miser  (no table)    favour  52-70 median · 84-89 max     best rung 4-6
+    banker (table on)    favour  70-81 median ·   100 max     best rung 5-6
+
+A banking arm that banks by not spending on the thing it is trying to buy is not measuring the price.
+`estate.mjs`'s header now says so at length, so the next reader does not inherit it.
+
+#### What is in the way is coin, at every rung, in every arm
+
+`canClaimRise` is a conjunction of four and `riseNeed(d)` returns all four booleans already split, so
+nothing here is reconstructed — the probe reads the game's own `fameOk`, `favorOk`, `goldOk` and
+`full` every week against whatever rung the house is currently reaching for. Of the weeks a house is
+exactly one term short, over 192 house-runs:
+
+    Friend of the Magistracy    coin held  68-71%     the town's ear 28-32%
+    Eques                       coin held  89-97%     the town's ear  3-11%
+    Known in Rome               coin held 96-100%
+    Patron of the Games         coin held    100%
+
+**Favour appears in no one-short row, at any rung, in any arm that entertains.** The standing meter —
+"the town's ear" — holds the bottom of the ladder, and it is only time.
+
+#### What shipped
+
+The panel's coin row had no explanation. The favour row has had one for releases, written because
+"the panel named the number and never once said where the number comes from" — and coin is the case
+that actually happens, on 96-100% of one-short weeks from rung 3 up. It now says that the census
+counts the coin in the box on the day it looks and nothing else, not the stone or the racks or the
+men, so a house that keeps building never holds enough at one time.
+
+And `census` grows a driven tripwire on top of its bench: a played house handed 200,000 denarii a
+week reaches the top rung **8 times out of 8**. A free grant is the upper bound on every banking
+policy there is, so if that ever stops working, something other than money has shut the ladder and
+this account of it is stale. It fails loudly if any coin-granted house ends short of favour, which is
+the specific wrong answer this release exists to bury.
+
+#### Opened, not fixed — #154
+
+`Amicus Caesaris` wants 80,000 denarii **held** at the same moment as favour 90, and those cannot both
+be had by any policy measured. The hardest-banking arm peaks at 45,343 / 54,074 / 45,337 denarii
+across three seeds — short of 80,000 — with favour capped at 84-89; the arm that reaches favour 100
+peaks at 25,620-38,634, because favour is bought at the table and the table is the coin. Reached 0
+times in 192 house-runs; reached by 14 of 16 the moment coin is handed over. It is the same shape the
+source removed from `closed`'s gate for being unsatisfiable, and the repair is not a smaller number.
 
 ### v3.41.0 — #150: a panel that quoted the wrong odds, and a shut door that said nothing
 

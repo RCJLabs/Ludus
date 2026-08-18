@@ -21763,6 +21763,26 @@ export default function App(){
                       further. Leave them alone and it cools every week, which is what is happening now.
                     </div>
                   )}
+                  {/* ---- AND THE TERM THAT IS ACTUALLY IN THE WAY, WHICH HAD NO SENTENCE AT ALL ----
+                       The favour hint above was written because "the panel named the number and never
+                       once said where the number comes from". The coin row had the same hole, and it
+                       is the row that matters: split by the game's own four booleans over 192
+                       house-runs on four policies and three seeds (`test/probes/rung.mjs`), coin is
+                       the LAST TERM STANDING on 96-100% of the weeks a house is one short of rungs 3
+                       and above. Favour does not appear in a single one-short row at any rung in any
+                       arm — the older reading that favour holds the top came from `estate`'s `miser`,
+                       which banks by switching off the table, and the table IS the favour engine.
+                       What the sentence has to carry is the thing the row does not: `goldOk` reads
+                       `d.gold` and nothing else, so every denarius in stone is a denarius the census
+                       cannot see. Measured: an arm that stops building and keeps entertaining reaches
+                       Known in Rome in 3-5 houses of 16, against 0-1 for the reference player. */}
+                  {short === "coin" && (
+                    <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:5}}>
+                      The census counts the coin in the box on the day it looks, and nothing else — not
+                      the stone, not the racks, not the men. A house that keeps building never holds
+                      enough at one time; the coin has to be sitting there when you ask to be received.
+                    </div>
+                  )}
                   {/* ---- A BUTTON THAT BLAMED THE METER FOR EVERYTHING ----
                        `!need.full` was tested FIRST, and the meter is never full while fame or favour
                        is short because `riseWeek` drains it in exactly that case. Measured over 1,256

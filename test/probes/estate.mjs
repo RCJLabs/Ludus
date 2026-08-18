@@ -33,7 +33,20 @@ const ARM = process.argv[4] || "on";
    banks the 15,000 the fifth rung asks — and reads "ready in every term but the coin" on 93% of late
    weeks while having held 25,249d at some point in its life. That is a fact about its spending, not
    about the ladder's pricing, and the two are only separable with a control. `miser` turns off the
-   discretionary spends and asks how high the same house climbs. */
+   discretionary spends and asks how high the same house climbs.
+
+   ---- AND `miser` PRODUCED A WRONG FINDING, WHICH #151 HAD TO UNDO ----
+   It reported 72,752 denarii held and the house "blocked on FAVOUR rather than coin", and that went
+   into the roadmap as evidence the top of the census ladder is held shut by favour. It is not. The
+   arm switches off `party`, and the rope's own note calls the table "the largest lever on the census
+   ladder", worth mean rung 2.70 against 1.50 and favour 79 against 40. Measured side by side over
+   three seeds x 16 houses (`test/probes/rung.mjs`): `miser` peaks at favour 52-70 median and 84-89
+   max, while the same arm with the table left ON peaks at 70-81 median and 100 max — and reaches
+   Known in Rome in 3-5 houses of 16 where `miser` reaches it in 0-1. Favour appears in NO one-short
+   row at any rung in any arm that entertains; coin is the last term standing on 96-100% of them.
+   THE LESSON IS THE ARM'S, NOT THE GAME'S: a banking arm that banks by not spending on the thing it
+   is trying to buy is not measuring the price, it is measuring itself. If you use `miser` to say
+   anything about the ladder, say it about `banker` instead. */
 const MISER = process.argv[5] === "miser";
 const { server, port } = await serve({ page:"dist/test.html" });
 const { browser, p } = await open(port);

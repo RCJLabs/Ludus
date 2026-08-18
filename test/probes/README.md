@@ -33,6 +33,7 @@ Run them straight:
     node test/probes/catalogue.mjs 72 420 SEED on   # the census with the works step switched on
     node test/probes/kit.mjs 40 KIT       # #149: the steel ledger, the forged piece, and the four dark doors
     node test/probes/quiet2.mjs 12 320 GAM  # #150: runGambit's nulls split by its own guards, and the panel's odds
+    node test/probes/rung.mjs 16 700 RUNG   # #151: the census ladder's four terms, split, plus a free-grant bound
     node test/probes/finish.mjs 24 900 SEED # #147: nine arms, one per ending, and the RUINS gates split by term
     node test/probes/succ.mjs 30 1400 SEED [grant]  # #147: the second generation, with and without a free ledger
 
@@ -311,6 +312,25 @@ describe a SHAPE rather than a difficulty, so each became a measurement:
 Run it under `reckless`, `neglect` and `bare` as well as `default` before quoting any of it — #139
 was a finding that held on the reference player and flipped on the others, and this probe's header
 carries that lesson. Both surviving claims here hold under all four.
+
+**`rung.mjs`** — #151, and the third conjunction-split in this directory after `nemesis` and `finish`.
+`canClaimRise` wants fame, favour, coin held and a full standing meter, and `riseNeed(d)` hands all
+four back as booleans, so the probe reconstructs nothing: it reads the game's own four every week
+against whatever rung the house is reaching for, and counts which one is missing when the other three
+hold. The answer is unambiguous — coin is the last term standing on 96-100% of one-short weeks from
+rung 3 up, and favour appears in no one-short row at any rung in any arm that entertains.
+
+**Its real work was disproving another probe.** #151 was opened on `estate`'s `miser` arm reporting
+72,752d held and the house "blocked on FAVOUR". `miser` is `{build:false, rites:false, party:false}`,
+and the table is the favour engine — the rope's own note prices it at mean rung 2.70 against 1.50. So
+`banker` here is the same arm with the table left ON, and it reaches Known in Rome in 3-5 houses of 16
+where `miser` reaches it in 0-1. **When an arm turns something off to isolate a variable, check that
+what it turned off is not the variable.**
+
+It also carries a `granted` arm — coin topped to 200,000 a week — because "is it the coin" can only be
+answered from above: a house that cannot run out reaches the top rung 14 times in 16, and every
+remaining wait at every rung is the standing meter. That is what turns "rung 7 is unreached" from a
+complaint into a measurement of what rung 7 costs.
 
 **`quiet2.mjs`** — #150, and the shape for any "this function returns null a lot" item. A count of
 nulls is not a finding; the split is. `runGambit` has exactly four ways out before it does anything,

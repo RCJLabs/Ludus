@@ -120,7 +120,41 @@ export async function run({ p, errors }){
         ignoredTop: Math.round(Math.max(...ignored.map(r=>r.top))) };
     })();
 
-    return { rungs, shy, fill, favour, admit: A.RISE_ADMIT };
+    /* ---- AND IS THE LADDER CLIMBABLE BY A HOUSE THAT PLAYS? — #151 ----
+       Everything above is a bench: states built by hand to meet one gate at a time. It cannot say
+       whether a real house ever gets there, and #151 was opened on the claim that rungs 5-7 are held
+       by nobody. Split by the game's own four booleans over 192 house-runs on four policies and
+       three seeds (`test/probes/rung.mjs`), the answer is that **coin is the last term standing on
+       96-100% of every one-short week from rung 3 up**, and favour appears in no one-short row at
+       any rung in any arm that entertains. The older reading — that favour holds the top — came from
+       `estate`'s `miser`, which banks by switching the table OFF, and the table is the favour engine.
+
+       So the tripwire is a FREE GRANT, which is the only honest way to ask "is it the coin": hand a
+       played house more coin than the top rung asks and see how far it climbs. Measured, 16 houses:
+       **14 of 16 reach Amicus Caesaris**, and every remaining wait at every rung is the standing
+       meter, which is time. If this ever stops reaching the top, something other than money has shut
+       the ladder and the roadmap's account of it is stale. Eight houses here rather than sixteen,
+       because the claim is reachability and not a rate. */
+    const climbed = (()=>{
+      const best = [], why = {};
+      for(let h=0; h<8; h++){
+        const d = A.newGameState("Cl"+h, "clean", `CENSUS-CLIMB-${h}`, null);
+        let top = 0;
+        for(let w=0; w<420; w++){
+          if(d.over) break;
+          d.gold = Math.max(d.gold, 200000);
+          window.__ROPE.lanista(d);
+          top = Math.max(top, A.riseOf(d));
+        }
+        best.push(top);
+        const n = A.riseNeed(d);
+        if(n){ const miss = !n.fameOk ? "fame" : !n.favorOk ? "favour" : !n.goldOk ? "coin" : !n.full ? "the town's ear" : "nothing";
+          why[miss] = (why[miss]||0)+1; }
+      }
+      return { best, why, topRung: A.RISE_RANKS.length - 1 };
+    })();
+
+    return { rungs, shy, fill, favour, admit: A.RISE_ADMIT, climbed };
   });
 
   const lines = [], fails = [];
@@ -161,6 +195,22 @@ export async function run({ p, errors }){
      first favour gate without ever answering anybody. */
   if(out.favour.ignoredTop >= 48)
     fails.push(`a house that ignores its patrons still reaches favour ${out.favour.ignoredTop} — the climb costs nothing`);
+
+  /* ---- and the whole ladder is climbable when the coin is not the obstacle — #151 ---- */
+  { const C = out.climbed, made = C.best.filter(r=>r>=C.topRung).length;
+    lines.push(`played houses handed 200,000d every week reach rung ${C.best.join(", ")} of ${C.topRung} — ` +
+      `${made} of ${C.best.length} to the top` +
+      (Object.keys(C.why).length ? ` · what the stragglers were still short of: ${Object.entries(C.why).map(([k,v])=>`${k} ${v}`).join(" · ")}` : ""));
+    if(!made)
+      fails.push(`not one of ${C.best.length} played houses reached rung ${C.topRung} with 200,000d handed to it ` +
+        `every week (best ${Math.max(...C.best)}) — measured at 14 of 16, and a free grant is the upper bound ` +
+        `on every banking policy there is. If coin cannot open the top of the ladder then something ` +
+        `else has shut it, and #151's account of this is stale`);
+    if(C.why.favour)
+      fails.push(`${C.why.favour} of ${C.best.length} coin-granted houses ended still short of FAVOUR — the ` +
+        `#151 measurement found favour in no one-short row at any rung of any entertaining arm, and ` +
+        `\`estate\`'s \`miser\` said otherwise only because it switches the table off`);
+  }
 
   if(errors.length) fails.push(`${errors.length} page errors`);
   return { pass: fails.length === 0, why: fails.slice(0,3).join("; ") || null, lines };
