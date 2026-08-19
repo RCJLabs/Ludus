@@ -25859,7 +25859,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        `actions` derives the list now instead of holding a hand-written one, so a future action that
        forgets this line fails a check rather than going quietly dark. */
     answerNem, nemCallOut, callFavour, repay, sellDebt, runGambit, backCandidate, swearIn,
-    applyRefusal, skipWeeks, charterSkip, firstBuyWarn,
+    applyRefusal, skipWeeks, charterSkip, firstBuyWarn, ENTRANCES, ENTRANCE_KEYS, deadlines,
     saveKit, applyKit, dropKit, watchField, startPlan, breakPlan, clearWatch,
     /* ---- AND THE HALF THAT MAKES THEM DRIVEABLE, v3.24.0 ----
        Exposing an action is not enough on its own. To drive one a check needs the TABLE it takes its

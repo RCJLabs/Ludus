@@ -1392,7 +1392,18 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.56.0 — #161 REFUTED on its own clause, which had predicted it: the
+**Shipped and verified:** v3.57.0 — the audit after ten releases. `coverage` reads **101 of 463**
+never called, down from 144 of 435 against a surface that grew by 28. Three items opened, each with
+figures: **#166**, the entrance, where `showman` is worth **+16.7 points of win rate** over 600 bouts
+on four seed prefixes and `boxes` reads identical to no entrance at all; **#167**, four patron favours
+READY on 6,555-6,823 patron-weeks of 18 houses and never once called; and **#168**, the missio cap —
+`pfame*0.20 + houseFavour*0.22` alone reaches `MISSIO_CAP` 28 in **18 of 18 houses by median week 8**
+and peaks at ten times it, so seven other things a player buys stop paying from week 8. #166 and #168
+are one fault seen twice. **Two candidates died on measurement**: `skipWeeks` carries nobody past a
+deadline, and the watch could not be priced against mirrored men — 121 of 150 reads came back
+"measured", which is `foeTactic`'s `built` term being a difference that twins score zero on. No game
+change. Suite green at **69/69**.
+v3.56.0 — #161 REFUTED on its own clause, which had predicted it: the
 agenda's six were a coverage artefact and the age system is doing its job. Driven over 12 played
 houses of 420 weeks and 12 more with the ledger held up, the collapsed list draws **50.8%** of rows
 with the "and N waiting" button standing on **95.3%** of weeks; expanded, all four of `agWord`'s
@@ -2960,7 +2971,113 @@ engine walks to cannot come apart. The panel also names what the number buys, in
 cap — which was priced and shown nowhere at all. `street` gains the sum bar, the ceilings, the two
 derived gates and the six unrelated dark readouts the item listed. Negative-tested.
 
-## Changelog (shipped)## Changelog (shipped)
+**#166 — the entrance is a free sixteen points of win rate, and one of the four buys nothing.** Four
+buttons on the arena panel, pressed before every bout, and the string "entrance" appears in **no check
+and no probe** in the whole suite. 150 mirrored bouts a word on four seed prefixes, the same seeds in
+every arm:
+
+| word | win rate, four prefixes | spared when he went down | crowd | fame a bout |
+|---|---|---|---|---|
+| none | 45.3 / 49.3 / 50.0 / 39.3% | 91.5% | 95.1 | 13.6 |
+| **showman** | **58.7 / 70.0 / 64.0 / 58.0%** | **98.4%** | 99.4 | 19.2 |
+| grim | 47.3 / 50.7 / 50.7 / 39.3% | 92.4% | 94.9 | 14.0 |
+| boxes | 45.3 / 49.3 / 50.0 / 39.3% | 91.5% | 95.1 | 13.6 |
+
+**`showman` is worth +13.4 to +20.7 points of win rate**, mean +16.7 over 600 bouts, plus 6.9 points
+of spare rate and 5.6 fame a bout — while its blurb reads like a trade-off ("strutting is not
+resting"). **`boxes` reads identical to `none` on every prefix, to the digit**: its `missio:10` lands
+inside a cap that is already full (see #168), so its whole effect for an established house is +2
+patron favour a bout. And **`grim` is a survival word nobody is told about** — +2.0 win rate, which is
+noise, but **96.1% spared against a GREEN man against 88.6%** for no entrance, which is its doubled
+dread doing exactly what the code says and the blurb never mentions. *Falsifies if:* the spread is the
+mirrored setup — a real card's opponents vary, and `showman`'s crowd term may be worth less against a
+man who is not your twin.
+
+**#167 — four patron favours, ready on all but a handful of patron-weeks, and never once called.**
+`callFavour`, `favourReady`, `favourOf` and `backCandidate` are all dark. Over 18 played houses of 420
+weeks with the ledger held up:
+
+| rank | patron-weeks held | its gate open | READY | houses that ever had it ready |
+|---|---|---|---|---|
+| magistrate | 6,823 | 3,607 | 3,607 | 18 of 18 |
+| merchant | 6,823 | 6,823 | 6,823 | 18 of 18 |
+| noble | 6,701 | 6,701 | 6,701 | 18 of 18 |
+| senator | 6,561 | 6,561 | **6,555** | 18 of 18 |
+
+So this is not unreachable content — it is a lever nobody pulls. Each was called on a house built to
+want it and each paid: the magistrate takes 55 off a rival's grudge, the merchant carries ten weeks of
+upkeep, the noble takes fame off the biggest house in the bay, the senator drops a name in Rome. The
+reference player calls **none of them, ever**, which is #158's shape: a policy question the rope has
+never been asked. *Falsifies if:* an arm that calls every favour the moment it is ready is not
+measurably better off — in which case the four are priced right and the silence costs nothing.
+
+**#168 — seven things a player buys all share one 28-point cap that two things he does not choose
+saturate by week 8.** `missioScore`'s standing term is
+`min(MISSIO_CAP, pfame*0.20 + houseFavour*0.22 + ctx.fav + patron*0.10)`, with `MISSIO_CAP` 28.
+Measured over 18 houses of 420 weeks: **`pfame*0.20 + houseFavour*0.22` alone reaches 28 in 18 of 18
+houses at a median week 8**, and peaks between 63.6 and 285.8 — up to **ten times the cap**. So
+everything else feeding that term buys nothing from about week 8 onward: `favMissio(g)` (a man's own
+favour with the crowd, up to 15), `veteranGuard(g)`, `riseFav(d)` (3 a census rung), `blessMercy(d)`
+(Fortuna's blessing, 9), the mercy works perk, and the "salute the boxes" entrance (10). Measured
+directly on the missio curve: a founding house gains **6.3 points** of a beaten man's life from +10
+there, a made house **1.7**, and **a great house — standing 46.7 against a cap of 28 — gains 0.0**.
+The game has diagnosed this once already: `ACCLAIM_MISSIO` exists precisely because "a late house
+saturates that cap on fame and favour alone, which left acclaim with nothing left to do", and the
+street's voice was put OUTSIDE the cap for it. Nobody checked the other six. *Falsifies if:* the cap
+is doing what it is for and these are meant to be early-game levers — in which case the fault is six
+panels promising a late house something it cannot have.
+
+## Changelog (shipped)
+
+### v3.57.0 — the audit after ten releases: three items, and two that did not survive
+
+`coverage` reads **101 of 463** exposed functions never called through the handle, down from 144 of
+435 at the last audit against a surface that grew by 28. Most of what is left is plumbing and
+readers, so this pass took the clusters where not being called means something a PLAYER does has
+never been measured, and measured them. `test/probes/audit.mjs` holds all of it.
+
+#### What was opened
+
+**#166 — the entrance.** Four buttons pressed before every bout, and the string "entrance" appears in
+no check and no probe in the suite. 150 mirrored bouts a word on four seed prefixes: `showman` wins
+**58.7 / 70.0 / 64.0 / 58.0%** against no entrance's **45.3 / 49.3 / 50.0 / 39.3%** — mean **+16.7
+points** over 600 bouts — plus 6.9 points of spare rate and 5.6 fame a bout, behind a blurb that reads
+like a trade-off. `boxes` reads identical to no entrance on all four prefixes. `grim` is noise on the
+win rate and worth 7.5 points of spare rate against a green man, which nothing tells the player.
+
+**#167 — the patron's favour.** All four ranks held and READY on 6,555 to 6,823 patron-weeks of 18
+houses over 420 weeks, every one paying when called, and the reference player calls none of them ever.
+Not unreachable content — a lever nobody pulls, which is #158's shape.
+
+**#168 — the missio cap.** `pfame*0.20 + houseFavour*0.22` alone reaches `MISSIO_CAP` 28 in **18 of 18
+houses at a median week 8**, peaking at 63.6 to 285.8 — up to ten times the cap. Seven other things
+feed that same term and buy nothing after week 8. On the curve, +10 there is worth **6.3 points** of a
+beaten man's life to a founding house, **1.7** to a made one and **0.0** to a great one. The game
+diagnosed this once for acclaim and put the street's voice outside the cap; nobody checked the other
+six. This is why `boxes` is dead, so #166 and #168 are one fault seen twice.
+
+#### And two that did not survive, which is the point of measuring first
+
+`skipWeeks` looked like it might carry a player past a deadline it does not name — it breaks on an
+event, an ending, a succession, Rome, a doctore, a re-signing and a card, but not on `deadlines(d)`.
+Driven, it stops after one week in every case tried including a levy three weeks out, because
+something else always interrupts first. No fault, nothing opened.
+
+**The watch could not be measured the way I measured it, and the arm is kept as a warning.** Blind,
+watched and countering the read all came back 39.3 / 39.3 / 40.0 — but the read said "measured" on
+**121 of 150 bouts**, and `FOE_TACTIC_ANSWER`'s answer to measured is "Nothing to exploit". Mirrored
+men are the cause: `foeTactic`'s `built` term is a DIFFERENCE, so twins score zero on it and sort on
+record alone. Over sixty men off the generator, `board` reads aggressive 43 · measured 14 · defensive
+3. Pricing the watch needs a varied card, not a mirror — and that is a probe, not a conclusion.
+
+No game change in this release. `ENTRANCES`, `ENTRANCE_KEYS` and `deadlines` go onto the test handle
+so the entrance can be driven at all.
+
+`survive` drew **(0,9)** on one run and failed on it — `standing 0`, which #155 measured at 3.4%
+against about 1.4% expected. It is false, and the proof is unusually short: **the entire source diff
+for this release is one line of the test handle**, which esbuild strips from `index.html`, and
+`open`'s 60-house signature is identical to v3.56.0's house for house. The failing entry stays in the
+tally.
 
 ### v3.56.0 — #161 refuted: the agenda's six were a coverage artefact, and the age system works
 
