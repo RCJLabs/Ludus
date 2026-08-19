@@ -1392,7 +1392,20 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.52.0 — #156 REFUTED and #157 closed, on one piece of work on Rome.
+**Shipped and verified:** v3.53.0 — #165 half-falsified on inspection and closed on what was left.
+The tier was always on screen — a whole villa section with a bar, the rung, the number and the blurb —
+so the headline was wrong; what was shown nowhere is `acclaimTarget`, the six-term number the level
+walks toward. Measuring it found the top of the ladder empty: 30 houses over 420 weeks on three seed
+prefixes spend **nought weeks in the last two rungs of six**, and with the ledger held up so the house
+cannot go broke, **97 weeks of 10,387 in the fifth and 3 in the sixth**. The terms say why — the men
+(46) and the fame spill (14) cap themselves for any house that survives, so 60 of the 117 points
+arrive for nothing, while the styles pay 5.5 of 22 and freed legends **0.0 of 12 in all thirty played
+houses**. Nothing is nudged for it (#127's rule); what shipped is `acclaimTerms`, one table that
+`acclaimTarget` sums and the panel renders, so a breakdown that disagrees with the number beside it is
+impossible rather than unlikely — and the panel now names what the name buys, including `streetVoice`,
+worth up to 9 points of a beaten man's life and shown nowhere at all until now. Suite green at
+**68/68**.
+v3.52.0 — #156 REFUTED and #157 closed, on one piece of work on Rome.
 #156's falsification is satisfied — a man at **99 in all six takes 64-65%** of imperial bouts and two
 of three about **70-72%** of the time — and the gradient is steep: on the shape a house actually
 trains, key 78 wins 2.0%, key 92 16.7%, key 99 30.0%. Played houses win 2.3% because **the man they
@@ -2816,15 +2829,132 @@ starts dying of this, and an ending that lands with no warning in the chronicle,
 later loosening would break silently. Negative-tested with the gate opened to `blood >= 1 && front <=
 99`: 10 of 10 reference-player houses die of it and the bar names it.
 
-**#165 — acclaim is computed every week and shown to nobody.** `near`'s own printed output says it:
-*"acclaimTarget reads 14.0 against acclaim 0.0 — a rate read by acclaimWeek, shown to nobody, and not
-a proximity line at all."* `d.acclaim` gates `masterOpen` (the master armourer), `merchLive` at 62,
-`streetVoice` and `acclaimCrowd`, and Rome's prizes pay into it — and `acclaimIdx`, `acclaimWeek`,
-`fansOf`, `pietyFame`, `buried20`, `monuReady`, `openLicenceNow` and `holdTourney` are all dark.
-*Falsifies if:* the tier is on screen somewhere and only the target is hidden, in which case this is
-one line in a panel rather than a system nobody can see.
+**#165 — CLOSED in v3.53.0. Half the clause falsified on inspection and the other half found
+something worse.** The falsification named was "the tier is on screen somewhere and only the target
+is hidden" — and it is: the villa has carried a whole section, "The house as a name", with a bar, the
+rung's name, the number out of a hundred, the rung's blurb, the graffiti wall and the potters' cut,
+plus `acclaimWord` on the summary strip and the master's gate named in points on the armoury screen.
+So the headline was wrong as written. What was shown nowhere was `acclaimTarget` — the six-term
+number `acclaimWeek` walks toward at 10% a week up and 3% down — and the prose above the bar named
+three of its six terms.
 
-## Changelog (shipped)
+**And the top of the ladder is empty.** 30 houses on three seed prefixes over 420 weeks spend
+**29.8% / 35.6% / 26.3% / 8.3%** of their weeks in the first four rungs and **nought in the last
+two**. With the ledger held up so the house cannot go broke — the upper bound on every policy —
+**97 weeks of 10,387 in the fifth rung and 3 in the sixth**. Each of those two carries a `once`
+chronicle line written for a moment almost nobody reaches. Why, from the terms at each house's best
+week (played / granted, against the ceiling):
+
+| term | played | granted | ceiling |
+|---|---|---|---|
+| the men | 32.0 | 46.0 | 46 — capped for two houses in three |
+| the styles it likes | 5.5 | 7.2 | 22 |
+| legends you freed | 0.0 | 0.7 | 12 — nought in all thirty played houses |
+| the primacy, yours | 1.4 | 12.1 | 14 |
+| your standing spills | 10.4 | 14.0 | 14 — capped past fame 234 |
+| names on the walls | 3.0 | 5.7 | 9 |
+
+Sixty of the hundred and seventeen points on offer arrive for nothing, and the two a player could
+actually chase pay a quarter and a sixteenth of their face. **Nothing is nudged for it** — #127's
+rule is to measure the distribution, not move the threshold — but the six are `acclaimTerms` now, the
+table `acclaimTarget` sums and the panel renders, so the breakdown a player reads and the number the
+engine walks to cannot come apart. The panel also names what the number buys, including `streetVoice`
+— the top tiers' say in the missio, worth up to 9 points of a beaten man's life, outside the editor's
+cap — which was priced and shown nowhere at all. `street` gains the sum bar, the ceilings, the two
+derived gates and the six unrelated dark readouts the item listed. Negative-tested.
+
+## Changelog (shipped)## Changelog (shipped)
+
+### v3.53.0 — #165: the street's number was shown, and where it was going was not
+
+#### The clause falsified on the first half and the item was worth doing anyway
+
+"Acclaim is computed every week and shown to nobody" — the falsification named was that the tier is
+already on screen. It is. The villa carries "The house as a name" with a bar, the rung, the number out
+of a hundred, the blurb, the graffiti wall and the potters' cut; the summary strip carries
+`acclaimWord`; the armoury names the master's gate in points. What was shown nowhere is
+`acclaimTarget`, the six-term number `acclaimWeek` converges toward at 10% a week up and 3% down. So a
+player could read where his name stood and had nothing to tell him where it was going or what moved
+it — and the one sentence that described the rate named three of the six terms.
+
+#### The top two rungs of six are unreached content
+
+30 houses on three seed prefixes over 420 weeks:
+
+    where the house LIVES, weeks in each rung        played        the ledger held up
+    0  unknown to the street                          29.8%              2.7%
+    1  known in the wine-shops                        35.6%             13.4%
+    2  names on the walls                             26.3%             47.0%
+    3  figures on the shelves                          8.3%             35.9%
+    4  a name the whole city plays at                  0.0%              0.9%   (97 of 10,387 weeks)
+    5  the street's own house                          0.0%              0.0%   (3 of 10,387)
+
+The granted arm is the upper bound — a house that cannot go broke, with the master's bench, the
+potters and the street's voice open in 30 of 30 — and it still spends a week in a hundred in the
+fifth rung and none to speak of in the sixth. Each of the two carries a `once` chronicle line.
+
+#### And the terms say why
+
+The six at each house's best week, reconstructed here and printed summed against `acclaimTarget`'s own
+answer, which matched to the decimal on all sixty houses:
+
+    term                    played   granted   ceiling
+    the men                   32.0      46.0      46    capped for two houses in three
+    the styles it likes        5.5       7.2      22
+    legends you freed          0.0       0.7      12    nought in all thirty played houses
+    the primacy, yours         1.4      12.1      14
+    your standing spills      10.4      14.0      14    capped past fame 234
+    names on the walls         3.0       5.7       9
+
+Sixty of the 117 points arrive for nothing — the men and the spill cap themselves for any house that
+survives — while the two a player could chase pay a quarter and a sixteenth of their face. The styles
+term is a SHARE of the rep ledger, so it can only be maxed by a house whose reputation is nothing but
+showmanship, which no playing house is.
+
+#### What changed, and what deliberately did not
+
+Nothing is nudged. #127's rule is to measure the distribution and not move the threshold, and the
+finding here is a distribution: the item to open off it is whether a share-of-ledger term can ever pay
+its face. What shipped is legibility, and one source of truth for it.
+
+`acclaimTerms(d)` is the six as a table with a name, a value, a ceiling and a sentence each.
+`acclaimTarget` is its sum. `TheStreet` renders the same table, so a breakdown that does not add up to
+the number beside it is impossible rather than merely unlikely — which is #150's and #162's fault
+prevented rather than found. The panel also says which way the number is moving, what the next rung
+wants, and whether what the house is doing now would get there.
+
+And it names what the number buys. The master's bench already stated its own gate on the armoury
+screen and the potters' cut was on this panel, but **`streetVoice` — the top tiers speaking for a
+beaten man of yours, worth up to ACCLAIM_MISSIO points of missio and sitting outside the editor's cap
+— was priced and shown nowhere at all**. The two gates the panel names are asked of the gate rather
+than typed: `merchGate()` and `streetGate()` walk the scale until the function flips, which is #125's
+lesson, and the second of them reads **41** rather than the 40 in `streetVoice`'s formula, because the
+term is nought at exactly 40.
+
+#### What `street` holds now
+
+The sum bar — the six terms must add to `acclaimTarget` under its own clamp, on four states from a
+founding house to a great one. Every term bounded by the ceiling the panel prints beside it, and every
+term reachable off nought. The ceilings summing past 100 so the top rung is possible in principle. The
+two derived gates agreeing with the functions either side of themselves. The rung occupancy recorded,
+not barred. And the six readouts on the item's list that turned out to have nothing to do with acclaim
+— `fansOf`, `pietyFame`, `buried20`, `monuReady`, `openLicenceNow` and `holdTourney` — driven and
+asserted, including that the tourney actually pays the man it crowns.
+
+Negative-tested both ways: drifting `acclaimTarget` five points off its own table fails on every state,
+and uncapping the men's term fails the ceiling bar and the check's own older bar together.
+
+#### Three instrument faults, all a subject that never moved
+
+`primusMine` reads `d.primus.mine`, not the house name, so the first draft of the term budget set a
+primus with the right house on it and read +0.0 for a term worth 14. The base state carried fame 3000,
+so the fame-spill trial measured nothing against a base that already had it. And `workDone` reads
+`w.left <= 0` rather than a `done` flag, so the dark-readout arm reported `monuReady` false with every
+work finished. All three were caught by the answer being suspiciously round.
+
+A fourth, in the shipped code and caught by the page going blank: the two gates were first computed in
+an IIFE at module load, and `clamp` is a `const` declared further down the file — the whole handle died
+on "clamp is not a function". They are functions now.
 
 ### v3.52.0 — #156 and #157: the summit is not a wall, and the city's good opinion is charged for in men
 

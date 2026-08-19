@@ -2120,6 +2120,13 @@ function merchWeekly(d){
   const base = (acclaimOf(d) - 55) * (1 + topPfame(d)/140);
   return Math.round(Math.max(0, base) * ((d.brand && d.brand.licensed) ? 1.9 : 1));
 }
+/* ---- THE TWO GATES THE PANEL NAMES, DERIVED BY WALKING THE SCALE ----
+   `#125`'s lesson: a figure a panel repeats is a figure that drifts, so neither 62 nor 40 is written
+   down twice — the panel asks the gate where it is. They are FUNCTIONS and not folded constants: the
+   first draft computed both in an IIFE at module load, `clamp` is a `const` declared further down the
+   file, and the whole handle died on "clamp is not a function" with the page blank. */
+const merchGate  = () => { for(let a=0;a<=100;a++) if(merchLive({ acclaim:a })) return a; return 100; };
+const streetGate = () => { for(let a=0;a<=100;a++) if(streetVoice({ acclaim:a }) > 0) return a; return 100; };
 const GRAFFITI = [
   g => `${g.name}, the sigh of the girls`,
   g => `${g.name} the ${g.origin||"Thracian"}, and no other`,
@@ -2157,14 +2164,33 @@ function acclaimTarget(d){
      title a RIVAL was holding. It reads `primusMine` now. Measured after both:
      a calm great house lands in the seventies, a house holding the primacy in a
      show streak still clears 92, and the last rung lapses when the heat goes. */
+  return clamp(acclaimTerms(d).reduce((s,t)=>s+t.v, 0), 0, 100);
+}
+/* ---- AND THE SIX TERMS, WHICH USED TO BE A SUM NOBODY COULD SEE (#165) ----
+   The villa panel showed the LEVEL — a bar, the rung's name, the number out of a hundred — and
+   described the rate in prose that named three of these six. So a player could read where his name
+   stood and had nothing to tell him where it was going or what would move it.
+   They are a table now, `acclaimTarget` is their sum, and the panel renders the same table, so the
+   breakdown a player reads and the number the engine walks to cannot come apart. */
+function acclaimTerms(d){
   const men = activeG(d).map(g=>g.pfame||0).sort((a,b)=>b-a);
   const top3 = (men[0]||0)*0.5 + (men[1]||0)*0.28 + (men[2]||0)*0.16;   // your famous few
-  const spectacle = repShare(d,"show")*22 + repShare(d,"blood")*10;      // the popular styles
-  const freedLegends = Math.min(12, (d.freed||[]).filter(f=>(f.wins||0)>=10).length * 4);
-  const primus = primusMine(d) ? 14 : 0;                                 // yours, not merely somebody's
-  const spill = Math.min(14, (d.fame||0)*0.06);                          // your standing spills into the street
-  const graff = Math.min(9, activeG(d).filter(g=>g.graffiti).length * 3);
-  return clamp(Math.min(46, top3*0.5) + spectacle + freedLegends + primus + spill + graff, 0, 100);
+  const legends = (d.freed||[]).filter(f=>(f.wins||0)>=10).length;
+  const walls = activeG(d).filter(g=>g.graffiti).length;
+  return [
+    { k:"men",     name:"Your famous few",     v:Math.min(46, top3*0.5), top:46,
+      say:"The men on this week's card, by their own renown. The biggest thing the street cares about, and the first to cap." },
+    { k:"show",    name:"The styles it likes", v:repShare(d,"show")*22 + repShare(d,"blood")*10, top:22,
+      say:"What the ledger says your house is for. Showmanship pays most, blood pays less, craft and mercy pay nothing here." },
+    { k:"legends", name:"Legends you freed",   v:Math.min(12, legends*4), top:12,
+      say:`A man freed with ten wins behind him, four points each. You have freed ${legends===0?"none":legends}.` },
+    { k:"primus",  name:"The primacy, yours",  v:primusMine(d) ? 14 : 0, top:14,
+      say:"Held by your own man, not merely held in Capua. A rival wearing the crown is worth nothing to you." },
+    { k:"spill",   name:"Your standing spills", v:Math.min(14, (d.fame||0)*0.06), top:14,
+      say:"Renown leaks into the street on its own. It caps at fame 234, which almost any house reaches." },
+    { k:"walls",   name:"Names on the walls",  v:Math.min(9, walls*3), top:9,
+      say:`Three points a man with a graffito, up to three men. ${walls===0?"Nobody of yours is on a wall." : `${walls} of yours ${walls===1?"is":"are"}.`}` },
+  ];
 }
 function acclaimWeek(d){
   if(d.over) return;
@@ -18269,6 +18295,74 @@ function ImperialShape({ me, o }){
   );
 }
 
+/* ---- WHERE THE NAME IS GOING, AND WHAT IT BUYS (#165) ----
+   #165 said acclaim was "computed every week and shown to nobody". Half of that was wrong on
+   inspection — this panel has always carried the LEVEL, with a bar, the rung's name, the number out
+   of a hundred and the rung's blurb — and half was exactly right: `acclaimTarget`, the six-term
+   number `acclaimWeek` walks toward at 10% a week up and 3% down, appeared nowhere, and the prose
+   above named three of the six.
+
+   Measured, 30 houses on three seed prefixes over 420 weeks, the terms at each house's best week:
+
+                        played      with the ledger held up      ceiling
+       the men            32.0            46.0 (capped)             46
+       the styles          5.5             7.2                      22
+       freed legends       0.0             0.7                      12
+       the primacy         1.4            12.1                      14
+       the fame spill     10.4            14.0 (capped)             14
+       the walls           3.0             5.7                       9
+
+   So sixty of the hundred and seventeen points on offer arrive for nothing — the men and the spill
+   cap themselves for any house that survives — while the two a player could actually chase pay a
+   quarter and a sixteenth of their face. Which is why the top of the ladder is empty: rungs 4 and 5
+   took **0 weeks of 4,800** in play, and 97 and 3 of 10,387 for a house that cannot go broke. Each
+   of those two rungs carries a `once` chronicle line written for a moment almost nobody reaches.
+
+   Nothing is nudged for it — `#127`'s rule is to measure the distribution and not move the
+   threshold — but the table is on the screen now, off `acclaimTerms`, which is the same table
+   `acclaimTarget` sums. And the three gates are named: the master's bench already stated its own on
+   the armoury screen, the potters' cut was on this panel, and `streetVoice` — the top tiers' say in
+   the missio, worth up to ACCLAIM_MISSIO points of a beaten man's life, outside the editor's cap —
+   was shown nowhere at all. */
+function TheStreet({ S }){
+  const a = acclaimOf(S), t = acclaimTarget(S);
+  const nx = ACCLAIM_TIERS.find(x=>x.at > a);
+  const dir = t > a + 1 ? "warming" : t < a - 1 ? "cooling" : "settled";
+  return (
+    <div style={{marginTop:9}}>
+      <div className="flex items-center justify-between gap-2" style={{fontSize:"var(--fs-md)"}}>
+        <span className="dim">The street is <span style={{color:dir==="warming"?"#9aa86a":dir==="cooling"?"#d96f5d":"#cbc08e"}}>{dir}</span> to you</span>
+        <span className="rowval dim" style={{flexShrink:0}}>walking to {Math.round(t)}</span>
+      </div>
+      <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:2,lineHeight:1.35}}>
+        {nx ? `"${nx.name}" wants ${nx.at}. ${t >= nx.at ? "What you are doing now would get you there." : "What you are doing now would not."}`
+            : "There is no rung above this one."}
+      </div>
+      <div className="tag tag-gold" style={{margin:"9px 0 4px"}}>What the street counts</div>
+      {acclaimTerms(S).map(x=>(
+        <div key={x.k} style={{borderTop:"1px dotted #33271a",padding:"5px 0"}}>
+          <div className="flex items-center justify-between gap-2">
+            <span style={{fontSize:"var(--fs-md)",color:x.v >= x.top - 0.5 ? "#9aa86a" : "#cfc0a0"}}>{x.name}</span>
+            <span className="rowval dim" style={{flexShrink:0,fontSize:"var(--fs-sm)"}}>{Math.round(x.v)} of {x.top}{x.v >= x.top - 0.5 ? " · full" : ""}</span>
+          </div>
+          <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:1,lineHeight:1.35}}>{x.say}</div>
+        </div>
+      ))}
+      <div className="tag tag-gold" style={{margin:"9px 0 4px"}}>What the name buys</div>
+      <div style={{fontSize:"var(--fs-md)",lineHeight:1.45}}>
+        <div>{masterOpen(S) ? <span className="gold">The masters take your commissions.</span>
+          : <span className="dim">The masters want acclaim {MASTER_ACCLAIM} — {Math.max(0, Math.ceil(MASTER_ACCLAIM - a))} short, and a second-level armoury.</span>}</div>
+        <div>{merchLive(S) ? <span className="gold">The potters pay {merchWeekly(S)}d a week.</span>
+          : <span className="dim">The potters want acclaim {merchGate()} — {Math.max(0, Math.ceil(merchGate() - a))} short.</span>}</div>
+        <div>{streetVoice(S) > 0
+          ? <span className="gold">The top tiers speak for a beaten man of yours — {streetVoice(S).toFixed(1)} of {ACCLAIM_MISSIO}, outside the editor's cap.</span>
+          : <span className="dim">The top tiers say nothing for a beaten man until acclaim {streetGate()} — {Math.max(0, Math.ceil(streetGate() - a))} short.</span>}</div>
+        <div className="dim">The stands are {acclaimCrowd(S)} louder for a house of this name.</div>
+      </div>
+    </div>
+  );
+}
+
 function Sect({ title, note, open, tone, mark, live, sid, children }){
   const ref = useRef(null);
   useEffect(()=>{ if(!ref.current) return;
@@ -21704,14 +21798,14 @@ export default function App(){
 
           <Sect title="The house as a name" note={acclaimWord(acclaimOf(S))}>
             <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>
-              What the street makes of you — not the editors, not the good families. The wine-shops, the walls by the gate, the potters' stalls. Won by famous men, spectacle, and the primus; it cools if you go quiet.
+              What the street makes of you — not the editors, not the good families. The wine-shops, the walls by the gate, the potters' stalls.
             </div>
             <Bar v={acclaimOf(S)} label="the name" color="linear-gradient(90deg,#4a3a24,#e0bd72)"/>
             <div className="flex items-center justify-between" style={{fontSize:"var(--fs-base)",marginTop:4}}>
               <span className="disp" style={{color:"#e8d092"}}>{acclaimTier(S).name}</span>
               <span className="rowval dim">{Math.round(acclaimOf(S))}/100</span>
             </div>
-            <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>{acclaimTier(S).blurb}</div>
+            <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>{acclaimTier(S).blurb}</div><TheStreet S={S}/>
 
             {(()=>{ const walls = activeG(S).filter(g=>g.graffiti);
               return walls.length>0 && (<>
@@ -25935,7 +26029,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* what the engine pays for a point of each stat, and what a pairing is worth */
     power, COUNTERS, CLS_EDGE,
     /* the street: what it thinks of you, and what it will say for your men */
-    acclaimOf, acclaimTarget, acclaimWeek, acclaimWord, streetVoice, merchWeekly,
+    acclaimOf, acclaimTarget, acclaimWeek, acclaimWord, streetVoice, merchWeekly, acclaimTerms, merchLive, masterOpen, MASTER_ACCLAIM, acclaimTier, ACCLAIM_TIERS, acclaimCrowd, ACCLAIM_MISSIO, isFavourite, fanPurse, tourneyReady, merchGate, streetGate,
     missioScore, missioOdds, missioAccount, ACCLAIM_TIERS, ACCLAIM_MISSIO, MISSIO_CAP, MISSIO_MID,
     /* where a mark sits on a body, and the seller's undisclosed one */
     addScar, scarMark, TARGETS, FLAWS,
