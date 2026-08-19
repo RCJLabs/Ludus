@@ -1392,7 +1392,17 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.49.0 — #164 refuted on its own clause by a controlled pair, and the
+**Shipped and verified:** v3.50.0 — #163 closed, and its clause did NOT falsify: with a rope that
+borrows when short and repays everything above its reserve, **the loan is a fuse under every lender**
+— never borrowing lives a median **156w with 16 of 72 alive at 420**, against 62w/3 (Gratus), 42w/1
+(Scaeva) and 42w/0 (Murena), with 30-52 of 72 foreclosed. So the panel says so now: each lender's row
+carries the week his debt reaches four times what you took (`loanFuse` = ln4/ln(1+rate) — weeks 41, 25
+and 18) and the hard lenders their own clock. One real fault fixed: the hard clock consulted `owes`
+not at all, so it seized houses that had paid the debt below what they borrowed — it reads the same
+test the branch above already uses, worth 42 → 30 foreclosures of 72. **And a process fault recorded
+in full**: I shipped that fix off a single seed reading +133w, and seeds two and three read −198w and
+−152w; the controls swing 95/248/209 weeks between seeds. Suite green at **67/67**, `survive` drawing
+(2,5). v3.49.0 — #164 refuted on its own clause by a controlled pair, and the
 answer is reassuring where it mattered: v3.38.0's loosened `disgrace` gate moved **0 of 24 reference-
 player houses** on all three seeds (medians identical at 248/248, 77/77, 324/324), every one of the 48
 houses that changed is a house that now ends `disgrace` with no collateral in 144 pairs, and the
@@ -2670,13 +2680,42 @@ three coarse bands ("even quoted 41% · the sand gave 40.6%") and touches none o
 a panel quoting a number the engine would not roll, on a system with four entries; this is the same
 shape on a bigger surface. *Falsifies if:* the three-band comparison already covers what these five do.
 
-**#163 — the loan is a twenty-five-week fuse and no policy has ever repaid one.** Borrow Murena's cap
-— 2,400 at 5.8% a week — against a gate of four times principal: ln4/ln1.058 is 24.6 weeks, and
-**22-24 of 24 houses foreclose at week 26 holding 9,825 owed, with no variance between them at all**.
-`repay` is correct on a bench (v3.40.0) and is driven by nothing. *Falsifies if:* a house that borrows
-and services the debt is measurably better off than one that never borrows — in which case the loan is
-a tool and the item is to teach the rope to use it. If it is never worth it, the fuse is the design and
-the item is to say so where the player takes the money.
+**#163 — CLOSED in v3.50.0. The clause did not falsify: the loan is a fuse under every lender, and
+the panel says so now.** The clause asked whether a house that borrows and SERVICES the debt is
+measurably better off than one that never borrows. A rope lever was built for it with no constant in
+either trigger — borrow the week gold falls below `LAN.reserve(d)`, repay everything above that
+reserve every week after — and run against a never-borrowing control on the same seeds, 72 houses an
+arm over three seeds:
+
+| | median life | mean | still standing at 420 | foreclosed |
+|---|---|---|---|---|
+| **never borrows** | **156w** | 208 | **16 of 72** | 0 |
+| Gratus, 3.5%/wk, serviced | 62w | 144 | 3 | 30 |
+| Scaeva, 8.2%/wk, serviced | 42w | 89 | 1 | 51 |
+| Murena, 5.8%/wk, serviced | 42w | 72 | 0 | 52 |
+
+**Borrowing is catastrophic under all three, even while paying it down every week.** So the second
+branch of the clause applies — *the fuse is the design and the item is to say so where the player
+takes the money* — and it does: each lender's row now carries the week his debt reaches four times
+what you took if it is left alone (`loanFuse`, which is `ln4/ln(1+rate)`, the gate solved for weeks:
+**week 41, 25 and 18**), and the hard lenders carry the week they take the house regardless.
+
+**One real fault fell out on the way**, and it was found by reading the branch rather than the
+numbers: `if(owes(d) > d.loan.principal * 4.0 || (L.hard && w >= L.patience + 30))` — the second
+clause consulted `owes` **not at all**, so a hard lender seized a house that had paid him down to
+fifty denarii on the same week as one that had never sent him anything. The repair is not a new
+number: `loanWeek` already gates its reputation hit one branch above on `owes(d) > d.loan.principal`,
+and the clock reads the same test now. Measured pooled, before and after: Gratus foreclosures **42 →
+30 of 72**, median life **52 → 62w**, mean **119 → 144**, and 3 houses live to 420 that did not.
+Murena is untouched, correctly — he has no clock.
+
+**A process fault worth recording.** The first seed read the Gratus arm at **+133 weeks and +2,164
+fame against its control** and I shipped the clock fix on it. Seeds two and three read **−198w** and
+**−152w**, and pooled the arm is far worse than the control. The controls themselves swing 95 / 248 /
+209 weeks of median life between seeds, so any comparison against one of them on one seed is worth
+nothing. The fix survives because its argument was never the numbers — it is that the clock ignored a
+test the file already uses one branch above — but the framing it shipped under was wrong, and the
+pooled figures are the ones above.
 
 **#164 — REFUTED in v3.49.0 on its own clause, and the answer is reassuring in the one place it
 mattered.** The clause said it falsifies if the displacement is exactly the houses whose story the
@@ -2716,6 +2755,60 @@ a proximity line at all."* `d.acclaim` gates `masterOpen` (the master armourer),
 one line in a panel rather than a system nobody can see.
 
 ## Changelog (shipped)
+
+### v3.50.0 — #163: the loan is a fuse under every lender, and the panel now says so
+
+`dark` found `repay`'s gate open on 0 of 1,100 house-weeks: nothing in this project has ever borrowed,
+so every measurement of `foreclosed` has been of a house that took the money and spent it. That one is
+deterministic — 22-24 of 24 houses out at week 26 with 9,825 owed and no variance between them. What
+it cannot say is whether the loan is a TOOL for a house that services the debt.
+
+A rope lever was built for it with no constant in either trigger: borrow the week gold falls below
+`LAN.reserve(d)` — twelve weeks of obligations, the rope's own idea of having nothing — and repay
+everything above that reserve every week after. Against a never-borrowing control on the same seeds,
+**72 houses an arm over three seeds**:
+
+    never borrows              median 156w · mean 208 · 16 of 72 alive at 420 · 0 foreclosed
+    Gratus  3.5%/wk serviced   median  62w · mean 144 ·  3 alive · 30 foreclosed
+    Scaeva  8.2%/wk serviced   median  42w · mean  89 ·  1 alive · 51 foreclosed
+    Murena  5.8%/wk serviced   median  42w · mean  72 ·  0 alive · 52 foreclosed
+
+**Borrowing is catastrophic under all three, while paying it down every week.** So the clause's second
+branch applies — the fuse is the design, and the item is to say so where the money is taken.
+
+#### What the panel says now
+
+It gave the rate, the cap, the patience and whether he collects in men, and left the countdown
+implicit. The rate IS the countdown: `loanWeek` compounds `owed` every week and forecloses at four
+times the principal. `loanFuse(M)` is that gate solved for weeks — `ln4/ln(1+rate)` — so each lender's
+row now reads the week his debt reaches four times what you took if it is left alone: **41, 25 and
+18**. The hard lenders carry their own clock beside it. Nothing is written down; both numbers come off
+`L.rate` and `L.patience`.
+
+#### One real fault, found by reading the branch rather than the numbers
+
+    if(owes(d) > d.loan.principal * 4.0 || (L.hard && w >= L.patience + 30))
+
+The second clause consulted `owes` **not at all**. A hard lender seized a house that had paid him down
+to fifty denarii on the same week he seized one that had never sent him anything. The repair is not a
+new number — `loanWeek` already gates its reputation hit one branch above on
+`owes(d) > d.loan.principal`, and the clock reads the same test now. Pooled, before and after:
+Gratus foreclosures **42 → 30 of 72**, median life **52 → 62w**, mean **119 → 144**, three houses
+reaching 420 that did not. Murena is untouched, correctly: he has no clock.
+
+#### And a process fault, which is the part to remember
+
+The first seed read the Gratus arm at **+133 weeks and +2,164 fame against its control**, and I shipped
+the clock fix on that reading, with a write-up calling the loan a tool being killed by a clock. Seeds
+two and three read **−198w** and **−152w**. Pooled, the arm is far worse than the control and the
+framing was simply wrong.
+
+**The controls themselves swing 95 / 248 / 209 weeks of median life between seeds.** Against a spread
+that wide, one seed cannot support any comparison at all — which is what this project's standing note
+says, in the words "two findings died for being read off 24 houses". The fix survives because its
+argument was never the numbers; it is that the clock ignored a test the file already uses one branch
+above. But it shipped under a claim that three seeds retracted, and the retraction is louder here than
+the fix.
 
 ### v3.49.0 — #164: what the new ending displaced, and whether it came unannounced
 

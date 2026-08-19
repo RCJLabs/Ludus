@@ -415,6 +415,40 @@ export async function run({ p }){
         lines.push(`foreclosed: borrowed ${borrowed} · ended "${d.over?d.over.kind:"alive"}" at w${d.week}`
           + ` (measured reachable in 6 of 6 houses at week 44)`);
       }
+      /* ---- AND WHAT THE PANEL PROMISES ABOUT IT — #163 ----
+         The borrow panel gave the rate, the cap and the patience, and left the countdown implicit.
+         `loanFuse` is the gate above solved for weeks — ln4/ln(1+rate) — and `loanClock` is the hard
+         lender's own `patience + 30`. Both are on the panel now, so both have to be the truth: a
+         house that borrows and never pays must actually be foreclosed at about the week its own row
+         quotes. MEASURED with a rope that borrows when short and repays everything above its reserve
+         (72 houses an arm, three seeds): never borrowing lives a median 156 weeks with 16 of 72 alive
+         at 420; the cheapest lender serviced lives 62 with 3 alive and 30 foreclosed; the other two
+         read 42 weeks with 0 and 1. The loan is a fuse under every lender, and the panel says so now. */
+      { const rows = A.LEND_KEYS.map(k=>{ const M = A.LENDERS[k];
+          return { k, rate:M.rate, cap:M.cap, hard:!!M.hard, fuse:A.loanFuse(M), clock:A.loanClock(M) }; });
+        lines.push(`the panel's countdown: ` + rows.map(r=>`${r.k} ${Math.round(r.rate*1000)/10}%/wk -> four times over at w${r.fuse}`
+          + (r.hard ? `, or w${r.clock} regardless` : "")).join(" · "));
+        for(const r of rows){
+          const want = Math.ceil(Math.log(4)/Math.log(1+r.rate));
+          if(r.fuse !== want)
+            bad.push(`\`loanFuse\` quotes week ${r.fuse} for ${r.k} against ln4/ln(1+${r.rate}) = ${want} — `
+              + `the panel's countdown has to be the gate \`loanWeek\` actually uses`);
+          if(r.hard !== (r.clock > 0))
+            bad.push(`${r.k} is ${r.hard?"hard":"soft"} and \`loanClock\` says ${r.clock} — only a hard lender has a clock`);
+        }
+        /* driven: the quoted week is the week it happens, within the warning's own slack */
+        const d2 = A.newGameState("Fz", "clean", "ENDS-FUSE", null);
+        const M0 = A.LENDERS[A.LEND_KEYS[0]];
+        A.borrow(d2, A.LEND_KEYS[0], M0.cap);
+        let at = null;
+        for(let w=0; w<200 && !d2.over; w++){ answerWeek(d2); try { A.endWeek(d2); } catch(e){ break; } if(d2.over) at = A.loanWeeks(d2); }
+        lines.push(`   driven, borrowing ${M0.cap}d from ${A.LEND_KEYS[0]} and never paying: `
+          + `${d2.over?d2.over.kind:"still going"} at ${at==null?"-":at} weeks of loan against the ${A.loanFuse(M0)} quoted`);
+        if(d2.over && d2.over.kind === "foreclosed" && at != null && Math.abs(at - A.loanFuse(M0)) > 8)
+          bad.push(`the panel quotes week ${A.loanFuse(M0)} and the house was taken at ${at} — a countdown that is `
+            + `eight weeks out is not a countdown, and the player is reading it before he takes the money`);
+      }
+
       if(!borrowed)
         bad.push(`the foreclosure arm could not borrow at all — \`borrow(d, who, amount)\` is the `
           + `only door to \`foreclosed\`, and without it that ending is untested rather than reached`);

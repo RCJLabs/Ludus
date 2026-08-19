@@ -7139,11 +7139,42 @@ function loanWeek(d){
       chron(d, `${L.name} takes ${fullName(t)} against the debt. Nobody asks you first. ${worth} denarii comes off the total and the yard watches him go through the gate with a stranger's hand on his arm.`, "bad");
     }
   }
-  if(owes(d) > d.loan.principal * 4.0 || (L.hard && w >= L.patience + 30)){
+  /* ---- AND THE CLOCK TOOK HOUSES THAT WERE PAYING — #163 ----
+     The second clause read `L.hard && w >= L.patience + 30` and consulted `owes` not at all, so a hard
+     lender seized a house that had paid him down to fifty denarii on the same week he seized one that
+     had never sent him anything. Nothing had ever measured it because nothing had ever borrowed:
+     `dark` found `repay`'s gate open on 0 of 1,100 house-weeks.
+     MEASURED with a rope that borrows when it is short and repays from surplus (`test/probes/fuse.mjs`,
+     24 houses x 420 weeks): under Gratus — the cheapest lender — **14 of 24 houses were foreclosed and
+     every single one at a loan age of exactly 43 weeks**, none on the balance, while the same arm
+     cleared 120 loans outright and made a payment in 345 separate weeks. And those houses were the
+     ones the loan was WORKING for: median fame 1,574 against 337 for a house that never borrows, and
+     median census rung 4 against 1.
+     The repair is not a new number. `loanWeek` already carries the idea one branch above — the
+     reputation hit at `patience + 8` is gated on `owes(d) > d.loan.principal`, a man who still owes
+     more than he took. The clock now reads the same test: too long under his paper AND still owing
+     more than you borrowed. A house paying it down is not in default, and Gratus has no reason to
+     take a house that is paying him. */
+  if(owes(d) > d.loan.principal * 4.0
+     || (L.hard && w >= L.patience + 30 && owes(d) > d.loan.principal)){
     d.over = { kind:"foreclosed", lender:L.name, owed:owes(d), name:d.name };
   }
 }
 const canBorrow = d => !d.loan && !d.over;
+/* ---- WHAT THE MONEY ACTUALLY COSTS, ON THE PANEL WHERE IT IS TAKEN — #163 ----
+   The panel gave the rate, the cap, the patience and whether he collects in men, and left the player
+   to work out the rest. The rest is the whole thing: `loanWeek` compounds `owed` by the rate every
+   week and forecloses at four times the principal, so the rate IS a countdown and nobody was shown
+   it. MEASURED with a rope that borrows when short and repays everything above its reserve
+   (`test/probes/fuse.mjs`, 72 houses an arm over three seeds): a house that never borrows lives a
+   median 156 weeks with 16 of 72 still standing at 420; the same houses borrowing from the CHEAPEST
+   lender and servicing the debt live 62 weeks with 3 standing and 30 foreclosed, and the other two
+   lenders read 42 weeks with 0 and 1. **The loan is not a tool under any lender**, which is a fair
+   thing for a game to contain and an unfair thing for it to hide.
+   Both numbers are derived rather than written: the fuse is ln4/ln(1+rate), which is the gate above
+   solved for weeks, and the hard lender's clock is his own `patience + 30`. */
+const loanFuse = M => M ? Math.ceil(Math.log(4) / Math.log(1 + M.rate)) : 0;
+const loanClock = M => M && M.hard ? M.patience + 30 : 0;
 
 /* ---- THE FACTIONS ----
    Capua was a meter. It is four constituencies now, two of which have hated each
@@ -22336,6 +22367,11 @@ export default function App(){
                       <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2}}>
                         Up to {M.cap}d · quiet for {M.patience} weeks{M.hard? " · he collects in men" : " · he does not take men"}
                       </div>
+                      {/* #163: the rate is a countdown and the panel never said so */}
+                      <div style={{fontSize:"var(--fs-base)",marginTop:2,color:"#d98476"}}>
+                        Left unpaid it is four times what you took by week {loanFuse(M)}, and he takes the house
+                        {M.hard ? ` — or at ${loanClock(M)} weeks regardless, if you still owe more than you borrowed` : ""}.
+                      </div>
                       <div className="grid grid-cols-3 gap-2" style={{marginTop:6}}>
                         {[300,700,M.cap].filter((v,i,a)=>a.indexOf(v)===i && v<=M.cap).map(v=>(
                           <button key={v} className="btn btn-ghost" onClick={()=>takeLoan(k,v)}>{v}d</button>
@@ -25755,7 +25791,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        nothing about which term is holding. `nemesis` established that a conjunction must be split by
        term before anything can be fixed; these go on the handle so `test/probes/finish.mjs` can call
        the game's own `need` and count the terms beside it rather than keeping a copy of either. */
-    borrow, LENDERS, LEND_KEYS, owes, loanLender, EMPTY_LIMIT,
+    borrow, LENDERS, LEND_KEYS, owes, loanLender, canBorrow, loanWeeks, loanFuse, loanClock, EMPTY_LIMIT,   /* #163 */
     RUINS, RUIN_KEYS, facOf, lawOf, inBreach,
     /* ---- AND WHETHER THE WEEK'S NUDGE POINTS AT THE BIGGEST LEVER ----
        #117 measured working the cells as the largest lever in the game. The agenda offers the feast

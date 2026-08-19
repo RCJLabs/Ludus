@@ -239,6 +239,10 @@ export async function installRope(p){
          works         (default FALSE — opt-in, #138: commission the works and monuments, cheapest
                         open site first, one at a time, deposit from spare(). Flipping this default
                         re-bases what a long-lived house owns and is its own release. `works:true`)
+         loan          (default NONE, #163 — `loan:"murena"` borrows from that lender the week gold
+                        falls below `LAN.reserve(d)` and pays the debt down from everything above the
+                        reserve every week after. Both triggers are the rope's own reserve, so there
+                        is no threshold in it. Nothing in the suite borrows without this)
          party         (default TRUE — host whenever spare allows. `party:"rung"` hosts only while
                         favour is SHORT of what the next census rung asks, and banks otherwise: the
                         target is the game's own gate rather than a number somebody chose, so it
@@ -484,6 +488,24 @@ export async function installRope(p){
          stops at the gate gives that up. The earlier "whole rung" came from `rung`'s `cycle` arm,
          which differed from the rope in its SPARE THRESHOLD as well as its schedule and was never a
          control. This lever stays because a measured no-improvement is worth keeping findable. */
+      /* ---- THE MONEY NOBODY HAS EVER BORROWED — #163 ----
+         `dark` found `repay`'s gate open on 0 of 1,100 house-weeks, because the rope has never taken
+         a loan. That makes `foreclosed` a 25-week fuse in every measurement of it — borrow and never
+         service it and 22-24 houses of 24 go out at week 26 with 9,825 owed, deterministically. The
+         question the fuse cannot answer is whether the loan is a TOOL: a house that borrows when it
+         is short and pays it down from surplus is a different house from one that borrows and spends.
+         `loan:"<lender>"` is that player. The trigger is the rope's own idea of having nothing —
+         gold below `LAN.reserve(d)`, twelve weeks of obligations — and the repayment is everything
+         above it, so there is no constant in either. */
+      if(o.loan && typeof A.borrow === "function"){
+        const res = LAN.reserve(d);
+        if(A.canBorrow && A.canBorrow(d) && d.gold < res){
+          if(fin(A.borrow,[d, o.loan, 99999])) bump("borrowed");
+        } else if(d.loan && d.gold > res){
+          const paid = fin(A.repay,[d, Math.floor(d.gold - res)]);
+          if(paid > 0) bump("repaid");
+        }
+      }
       if(o.party !== false && typeof A.hostParty === "function"){
         const need = o.party === "rung" && typeof A.riseNeed === "function" ? fin(A.riseNeed,[d]) : null;
         const wants = o.party !== "rung" || !need || (d.favor||0) < (need.favor||0);

@@ -36,6 +36,7 @@ Run them straight:
     node test/probes/rung.mjs 16 700 RUNG   # #151: the census ladder's four terms, split, plus a free-grant bound
     node test/probes/imperial.mjs 16 900 ROME  # #152: Rome's nine readouts, and what the trip is actually worth
     node test/probes/displace.mjs 24 420 DSP  # #164: what a changed gate displaced, paired against the old one
+    node test/probes/fuse.mjs 24 420 FUSE     # #163: borrow-and-service against never-borrow, all three lenders
     node test/probes/finish.mjs 24 900 SEED # #147: nine arms, one per ending, and the RUINS gates split by term
     node test/probes/succ.mjs 30 1400 SEED [grant]  # #147: the second generation, with and without a free ledger
 
@@ -314,6 +315,25 @@ describe a SHAPE rather than a difficulty, so each became a measurement:
 Run it under `reckless`, `neglect` and `bare` as well as `default` before quoting any of it — #139
 was a finding that held on the reference player and flipped on the others, and this probe's header
 carries that lesson. Both surviving claims here hold under all four.
+
+**`fuse.mjs`** — #163, and the sharpest lesson about seeds this directory has. It answers whether the
+loan is a tool by giving the rope a policy that borrows when short and repays from surplus, against a
+control that never borrows — 72 houses an arm over three seeds. It is not: never borrowing lives a
+median 156 weeks with 16 of 72 alive at 420, and the best lender serviced lives 62 with 3 alive and 30
+foreclosed.
+
+**Its first seed said the opposite, by a mile.** The Gratus arm read +133 weeks and +2,164 fame against
+its control, and a game fix shipped on that reading before seeds two and three came in at −198w and
+−152w. The reason is visible in the control row: the never-borrowing arm's own median life is **95,
+248 and 209 weeks** across the three seeds. Against a spread that wide a one-seed difference is noise
+wearing a result's clothes. **Run the control on three seeds before you believe anything about the
+arm — and print the control's own spread, not just the difference.**
+
+Two smaller habits worth copying. It tracks the age of the LOAN separately from the age of the house,
+because "foreclosed at week 60" means nothing until you know the loan was 43 weeks old — and that
+column is what showed 14 of 14 foreclosures landing on a clock rather than a balance. And it runs
+every lender rather than the cheapest, which is what separated the one soft lender (no clock, all
+foreclosures on the balance) from the two hard ones.
 
 **`displace.mjs`** — #164, and the cheapest controlled pair in this directory. When a gate is loosened
 and an ending starts firing, the question is not how often but *what it replaced and when* — and the
