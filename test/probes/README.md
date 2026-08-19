@@ -35,6 +35,7 @@ Run them straight:
     node test/probes/quiet2.mjs 12 320 GAM  # #150: runGambit's nulls split by its own guards, and the panel's odds
     node test/probes/rung.mjs 16 700 RUNG   # #151: the census ladder's four terms, split, plus a free-grant bound
     node test/probes/imperial.mjs 16 900 ROME  # #152: Rome's nine readouts, and what the trip is actually worth
+    node test/probes/displace.mjs 24 420 DSP  # #164: what a changed gate displaced, paired against the old one
     node test/probes/finish.mjs 24 900 SEED # #147: nine arms, one per ending, and the RUINS gates split by term
     node test/probes/succ.mjs 30 1400 SEED [grant]  # #147: the second generation, with and without a free ledger
 
@@ -313,6 +314,25 @@ describe a SHAPE rather than a difficulty, so each became a measurement:
 Run it under `reckless`, `neglect` and `bare` as well as `default` before quoting any of it — #139
 was a finding that held on the reference player and flipped on the others, and this probe's header
 carries that lesson. Both surviving claims here hold under all four.
+
+**`displace.mjs`** — #164, and the cheapest controlled pair in this directory. When a gate is loosened
+and an ending starts firing, the question is not how often but *what it replaced and when* — and the
+old gate can usually be had EXACTLY rather than approximated. `disgrace`'s three-term version fired 0
+times in 216 house-runs, so a `disgrace` that cannot fire is the old behaviour: `RUINS` is on the
+handle and `ruinWeek` looks its `need` up at call time, so the control pass sets it to `()=>false` and
+the live pass leaves it alone. Same seeds, same policies, nothing else different.
+
+**The control has its own control**, printed on every arm: if any house ends `disgrace` with the gate
+neutered, the patch did not take and every number under it is worthless. Say so in the output rather
+than trusting it — a monkey-patch that silently misses is indistinguishable from a null result.
+
+It answers three things a count cannot: whether the REFERENCE PLAYER moved (it did not — 0 of 24 on
+three seeds, medians identical), whether the displacement was clean (all 48 changed houses are
+disgrace houses, no collateral in 144 pairs), and whether the ending arrived announced (48 of 48 got
+the warning, a median six weeks out — read out of the chronicle, not inferred from `ruinWeek`).
+
+The habit worth copying is the last one: **when the defence of a change is "the player was warned",
+read the warning out of the log.** The code path being present is not the same as the line being there.
 
 **`imperial.mjs`** — #152's second coverage cluster, and an example of asking the right question
 first. Rome's nine readouts look like nine things to check; eight of them hang off `romeStanding`, so

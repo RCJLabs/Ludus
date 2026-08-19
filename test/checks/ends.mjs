@@ -560,6 +560,49 @@ export async function run({ p }){
       lines.push(`disgrace, driven: ${fell} of ${HD} houses that take the death match whenever the `
         + `bill has one died of it inside ${HW} weeks (${alive} still standing) — measured 11/8/5 of `
         + `24 on three seed prefixes, and 0 of 24 for the reference player on all three`);
+
+      /* ---- AND THE TWO THINGS #164 PROVED, WHICH WERE LINES AND ARE NOW BARS ----
+         v3.38.0 loosened this gate and nothing measured what it displaced. A controlled pair —
+         the same seeds run twice with `RUINS.disgrace.need` neutered, which IS the pre-v3.38.0 gate
+         because the three-term version fired 0 times in 216 house-runs — settled it over three
+         seeds x 24 houses (`test/probes/displace.mjs`):
+           · the REFERENCE PLAYER did not move at all. 0 of 24 houses changed ending or week, on all
+             three seeds, medians identical at 248/248, 77/77 and 324/324 weeks. No figure in this
+             project measured on the rope was touched by that release.
+           · the displacement was CLEAN: every one of the 48 houses whose run changed is a house that
+             now ends `disgrace`. No collateral reshuffle in 144 house-pairs.
+           · it does fire 10-36 weeks earlier than what it replaced, and it should: at the moment the
+             gate first holds the house has fought a median 18-34 bouts, buried 8-18 men, and is down
+             to ONE OR TWO. It is naming the last weeks of an already-dead house, not shortening a
+             live one.
+           · and the player was told. The chronicle carried "the front rows have stopped coming" in
+             **48 of 48** of them, a median SIX weeks before the house closed, which is `ruinWeek`'s
+             designed window delivered.
+         Both halves are held here because both are the kind of thing a later loosening would break
+         silently: a reference player that starts dying of this, or an ending that lands unannounced. */
+      { let base = 0, unwarned = 0, seen = 0;
+        for(let h=0; h<10; h++){
+          const d = A.newGameState("Dg"+h, "clean", `DG-BASE-${h}`, null);
+          for(let w=0; w<HW; w++){ if(d.over) break; window.__ROPE.lanista(d); }
+          if(d.over && d.over.kind === "disgrace"){
+            base++;
+            const told = [...(d.log||[]), ...(d.kept||[])].some(L=>(L.text||"").includes("front rows have stopped coming"));
+            if(!told) unwarned++;
+          }
+          seen++;
+        }
+        lines.push(`   and the reference player over ${seen} houses of ${HW} weeks: ${base} died of it `
+          + `(measured 0 of 24 on three seeds — this ending belongs to a way of playing, not to everybody)`);
+        if(base)
+          bad.push(`${base} of ${seen} REFERENCE PLAYER houses ended in \`disgrace\` — the paired measurement `
+            + `behind #164 found 0 of 24 on three seeds, and a house that plays the ordinary way is not `
+            + `supposed to be a byword for blood. If the gate has been loosened again, this is the cost`);
+        if(unwarned)
+          bad.push(`${unwarned} houses ended in \`disgrace\` with no "the front rows have stopped coming" `
+            + `line in the chronicle — \`ruinWeek\` writes the warning the first week the gate holds and `
+            + `waits six before it lands, and 48 of 48 measured houses got it. An ending that arrives `
+            + `unannounced is a trapdoor`);
+      }
       if(!fell)
         bad.push(`not one of ${HD} houses playing for blood reached \`disgrace\` in ${HW} weeks — it `
           + `is measured at a third of them, so either the gate has moved or \`preferStakes\` has come `

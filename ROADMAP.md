@@ -1392,7 +1392,14 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.48.0 — #158 refuted on its own clause, and the sign is the opposite of
+**Shipped and verified:** v3.49.0 — #164 refuted on its own clause by a controlled pair, and the
+answer is reassuring where it mattered: v3.38.0's loosened `disgrace` gate moved **0 of 24 reference-
+player houses** on all three seeds (medians identical at 248/248, 77/77, 324/324), every one of the 48
+houses that changed is a house that now ends `disgrace` with no collateral in 144 pairs, and the
+chronicle carried the warning in **48 of 48** of them a median six weeks before the end. It does fire
+10-36 weeks earlier — on houses already down to one or two men after burying 8-18. Two of those
+findings are bars in `ends` now, negative-tested. Suite green at **67/67**, `survive` drawing (4,5).
+v3.48.0 — #158 refuted on its own clause, and the sign is the opposite of
 what the item claimed: hosting only while favour is short of the next rung reaches mean rung **2.73**
 against the default's **2.96** over 48 houses an arm on three seeds, and never entertaining at all
 reaches 2.23. The evidence the item was opened on came from an arm that differed in its SPARE
@@ -2671,12 +2678,34 @@ and services the debt is measurably better off than one that never borrows — i
 a tool and the item is to teach the rope to use it. If it is never worth it, the fuse is the design and
 the item is to say so where the player takes the money.
 
-**#164 — a new ending became a plurality for one policy and nothing measured what it displaced.**
-v3.38.0's two-term `disgrace` fires for **10 of 21 dead houses** in `ends`' own `careless` arm over 120
-weeks, and 7 / 9 / 4 of 24 in the probe's blood arms. Those houses used to end `ruin`. *Falsifies if:*
-the displacement is exactly the houses whose story it tells — the test is the week each would have
-ended under the old gate. **An ending that fires EARLIER than the one it replaced shortens runs**, and
-no measurement has looked at that.
+**#164 — REFUTED in v3.49.0 on its own clause, and the answer is reassuring in the one place it
+mattered.** The clause said it falsifies if the displacement is exactly the houses whose story the
+ending tells, and named the test: the week each would have ended under the old gate. Run as a
+controlled pair — the same seeds twice, with `RUINS.disgrace.need` neutered as the control, which IS
+the pre-v3.38.0 gate because the three-term version fired **0 times in 216 house-runs** — over three
+seeds × 24 houses × three policies:
+
+**The reference player did not move at all.** 0 of 24 houses changed ending or week, on all three
+seeds; medians identical at **248/248, 77/77 and 324/324** weeks. Nothing this project measures on the
+rope was touched by that release, which v3.38.0 claimed and never proved.
+
+**The displacement is clean.** Every one of the **48 houses whose run changed is a house that now
+ends `disgrace`** — no collateral reshuffle in 144 house-pairs, which is unusual for a change that
+writes a chronicle line and moves every draw after it.
+
+**It does fire earlier, by a median 10-36 weeks**, and blood-arm median life moves 0 to −15 weeks. But
+at the moment the gate first holds the house has fought a median **18-34 bouts**, buried **8-18 men**,
+and is down to **one or two**. It is naming the last weeks of an already-dead house rather than
+shortening a live one — which is the clause's "exactly the houses whose story it tells", met.
+
+**And the player was told.** The chronicle carried *"The front rows have stopped coming to your
+cards"* in **48 of 48** of them, a median **six weeks** before the house closed — `ruinWeek`'s designed
+window, delivered rather than assumed.
+
+*Kept from it:* two of those findings were lines in `ends` and are bars now — a reference player that
+starts dying of this, and an ending that lands with no warning in the chronicle, are both things a
+later loosening would break silently. Negative-tested with the gate opened to `blood >= 1 && front <=
+99`: 10 of 10 reference-player houses die of it and the bar names it.
 
 **#165 — acclaim is computed every week and shown to nobody.** `near`'s own printed output says it:
 *"acclaimTarget reads 14.0 against acclaim 0.0 — a rate read by acclaimWeek, shown to nobody, and not
@@ -2687,6 +2716,49 @@ a proximity line at all."* `d.acclaim` gates `masterOpen` (the master armourer),
 one line in a panel rather than a system nobody can see.
 
 ## Changelog (shipped)
+
+### v3.49.0 — #164: what the new ending displaced, and whether it came unannounced
+
+v3.38.0 took a term out of `disgrace`'s gate and the ending went from firing never to firing for a
+third to a half of the houses that play for blood. Nothing measured what those houses used to end as,
+or when. **An ending that fires earlier than the one it replaced shortens runs**, and shortening runs
+quietly is how a content change becomes a balance change.
+
+#### The control is the old gate, exactly
+
+The three-term version fired 0 times in 216 house-runs, so a `disgrace` that *cannot* fire IS the old
+behaviour. `RUINS` is on the handle and `ruinWeek` looks its `need` up at call time, so the control
+pass neuters it and the live pass leaves it alone — same seeds, same policies, everything else
+identical. The control runs first (`season`'s rule) and has its own control: **0 houses ended
+`disgrace` with the gate neutered**, printed on every arm, because if the patch had not taken then
+every number under it would be worthless.
+
+#### Four findings, three seeds × 24 houses × three policies
+
+**The reference player did not move at all.** 0 of 24 houses changed ending or week, on all three
+seeds. Median life identical: 248/248, 77/77, 324/324. No figure this project measures on the rope was
+touched by that release — which v3.38.0 asserted and never proved.
+
+**The displacement is clean.** All 48 houses whose run changed are houses that now end `disgrace`.
+No collateral reshuffle in 144 house-pairs, which is not what you would expect from a change that
+writes a chronicle line and moves every RNG draw after it.
+
+**It fires 10-36 weeks earlier**, and blood-arm median life moves 0 to −15 weeks. At the moment the
+gate first holds, the house has fought a median **18-34 bouts**, buried **8-18 men**, holds **one or
+two**, and reads blood 118 against the 88 asked with the front rows at 11 against 12. It is naming the
+last weeks of a house that has already destroyed itself, not cutting a live run short.
+
+**And the player was told.** The chronicle carried *"The front rows have stopped coming to your
+cards"* in **48 of 48** disgraced houses, a median **six weeks** before the end. That is `ruinWeek`'s
+designed window, measured out of the log rather than assumed from the code.
+
+#### Two lines in `ends` became bars
+
+A reference player that starts dying of this, and an ending that lands unannounced, are both things a
+later loosening of the gate would break in silence. Both are negative-tested: open the gate to
+`blood >= 1 && front <= 99` and 10 of 10 reference-player houses die of it, and the check says so.
+
+No game change. The release is the pair, the account and the two guards.
 
 ### v3.48.0 — #158: the policy with a reason had the wrong reason
 
