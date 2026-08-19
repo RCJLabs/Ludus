@@ -213,7 +213,99 @@ export async function run({ p, errors }){
       return { bad, note };
     })();
 
-    return { rows, steps, foreign, foreignQuiet, terms, dark,
+    /* ================= #168: THE BOX'S CAP, AND THE MAN'S OWN NAME BESIDE IT =================
+       `missioScore`'s standing was one number under one cap — the house's favour and rung, the man's
+       renown, the crowd's affection for him, and what he had survived, summed and truncated at
+       MISSIO_CAP 28. Measured over 18 houses of 420 weeks with the ledger held up, **the cap is full
+       on 5,850 of 5,939 house-weeks (98.5%)** and throws away a mean of **51.7 points a week**, twice
+       the cap itself. The HOUSE's side alone means 38.7, so it saturates the cap unaided:
+
+           house              the box   the man   summed   capped   thrown away
+           a founding house       2.6       1.6      4.3      4.3          0.0
+           a made house          15.9      24.6     40.5     28.0         12.5
+           a great house         33.7      49.5     83.2     28.0         55.2
+           the top of it         43.0      69.3    112.3     28.0         84.3
+
+       So a famous man and an unknown man of the same great house were worth the same on the ground.
+       The crowd's affection and his years sit OUTSIDE the cap now, bounded at MISSIO_MAN, for the
+       reason `street` was given its own allowance: they are not the editor's box.
+
+       THE FIRST ANSWER WAS A SHARED CAP AND THE MEASUREMENT KILLED IT. Halving the cap and giving
+       each side 14 can only pay LESS, because `min(a,H)+min(b,H) <= min(a+b,2H)` — paired on 30 seeds
+       it read deaths a bout 0.173 → 0.211, up 22%, and median life 97w → 89w. The additive shape
+       reads 0.173 → 0.161 and 97w → 129w on the same seeds, with per-prefix medians moving 217→267,
+       180→216 and 67→85, so it is a real and consistent easing and not noise. That price is recorded
+       here and in the roadmap because it is a balance decision and MISSIO_MAN is the one line to
+       revisit if it is the wrong one. */
+    const box = (()=>{
+      const bad = [], note = [];
+      const mk = (favor, pf, fav, wins) => { const q = A.newGameState("Bx","clean","STREET-BOX",null);
+        q.favor = favor; const g = A.activeG(q)[0];
+        g.pfame = pf; g.favour = fav; g.wins = wins; return { q, g }; };
+      /* A POOR ACCOUNT, on purpose. `MERCY_CASE` is crowd 62 / account 42 / endured 16, which puts a
+         great house's man at the 0.97 clamp where nothing can be told from anything — the first draft
+         of these bars read 95.0 against 97.0 and 95.0 against 95.0 and could not see its own subject.
+         This is the case where the missio actually decides: a short bout, badly lost. */
+      const HARD = { crowd:30, account:20, endured:6 };
+      const price = (favor, pf, fav, wins, man) => { const { q, g } = mk(favor, pf, fav, wins);
+        const P = A.missioPlace(q, null);
+        const ctx = Object.assign({}, P, { tier:2, patron:null, fav:P.fav,
+          man: man == null ? A.favMissio(g) + A.veteranGuard(g) : man });
+        return A.missioOdds(A.missioScore(g, ctx, HARD.crowd, HARD.account, HARD.endured, true)); };
+      /* 1. the man's own name must be worth something to a house whose box is already full.
+         THE SAME MAN, twice: the only difference is what the tiers make of him. The first draft
+         compared a veteran against a man with no record at all, which also handed the control the
+         15-point `green` bonus for a novice — a control that differed in two ways. */
+      const great = { favor:85, pf:140, fav:70, wins:40 };
+      const loved   = price(great.favor, great.pf, great.fav, great.wins);
+      const unknown = price(great.favor, great.pf, 0, great.wins, 0);
+      note.push(`a great house's beaten man: loved by the tiers and forty bouts in, ${(loved*100).toFixed(1)}% — `
+        + `the same house's unknown, ${(unknown*100).toFixed(1)}% (MISSIO_MAN ${A.MISSIO_MAN}, the cap ${A.MISSIO_CAP})`);
+      if(!(loved > unknown + 0.01))
+        bad.push(`a great house's beloved veteran is spared ${(loved*100).toFixed(1)}% and its unknown `
+          + `${(unknown*100).toFixed(1)}% — that is #168: the house's standing alone fills MISSIO_CAP `
+          + `${A.MISSIO_CAP} (its box means 38.7 over 18 played houses), so everything the MAN is worth `
+          + `was being truncated away and making a man famous stopped protecting him`);
+      /* 2. and it is an allowance, not immunity — bounded at MISSIO_MAN */
+      /* THE CLAMP ITSELF. The first draft compared `man: 999` against a real veteran's 26 and read
+         them equal — of course it did, both are past the bound. What must be shown is that the bound
+         BITES: everything at or above it reads the same, and less than it reads less. */
+      const atBound  = price(great.favor, great.pf, 0, 40, A.MISSIO_MAN);
+      const overBound= price(great.favor, great.pf, 0, 40, A.MISSIO_MAN * 40);
+      const under    = price(great.favor, great.pf, 0, 40, A.MISSIO_MAN / 3);
+      note.push(`and the bound bites: a man's own side at ${A.MISSIO_MAN} reads ${(atBound*100).toFixed(1)}%, `
+        + `forty times that reads ${(overBound*100).toFixed(1)}%, and a third of it ${(under*100).toFixed(1)}%`);
+      if(Math.abs(overBound - atBound) > 0.002)
+        bad.push(`a man's own side at forty times MISSIO_MAN ${A.MISSIO_MAN} reads ${(overBound*100).toFixed(1)}% `
+          + `against ${(atBound*100).toFixed(1)}% at the bound — it is an allowance, not immunity, and the `
+          + `clamp is the only thing making that true`);
+      if(!(atBound > under + 0.01))
+        bad.push(`a man's own side reads the same at ${A.MISSIO_MAN} as at a third of it — the allowance `
+          + `is not reaching the score at all`);
+      if(A.MISSIO_MAN !== A.ACCLAIM_MISSIO)
+        bad.push(`MISSIO_MAN is ${A.MISSIO_MAN} against ACCLAIM_MISSIO ${A.ACCLAIM_MISSIO} — the man's own `
+          + `name is bounded at what the top tiers' voice is bounded at, on purpose and for the same `
+          + `stated reason, so that neither is a number of its own`);
+      /* 3. the box still caps, and the house cannot buy its way past it */
+      const rich = price(100, 220, 0, 40, 0), richer = price(100, 400, 0, 40, 0);
+      note.push(`the box still caps: a house at favour 100 with a man at renown 220 reads `
+        + `${(rich*100).toFixed(1)}%, and at renown 400 ${(richer*100).toFixed(1)}%`);
+      if(Math.abs(rich - richer) > 0.005)
+        bad.push(`the box moved ${((richer-rich)*100).toFixed(1)} points between renown 220 and 400 — it is `
+          + `capped at ${A.MISSIO_CAP} and a house past it must not buy more`);
+      /* 4. a man who is not yours is not read this way at all */
+      const { q, g } = mk(85, 140, 70, 40);
+      const P = A.missioPlace(q, null);
+      const theirs = A.missioScore(g, Object.assign({}, P, { tier:2, man:99 }), 62, 42, 16, false);
+      const mine   = A.missioScore(g, Object.assign({}, P, { tier:2, man:99 }), 62, 42, 16, true);
+      if(theirs >= mine)
+        bad.push(`another house's man scores ${theirs.toFixed(1)} against your own man's ${mine.toFixed(1)} — `
+          + `\`own === false\` fixes his standing at 18 and gives him none of your allowance`);
+      note.push(`another house's man is read at a flat 18 of standing, not yours: ${theirs.toFixed(1)} against ${mine.toFixed(1)}`);
+      return { bad, note };
+    })();
+
+    return { rows, steps, foreign, foreignQuiet, terms, dark, box,
       tiers: A.ACCLAIM_TIERS.map(t=>({ at:t.at, name:t.name })),
       cap: A.MISSIO_CAP, top: A.ACCLAIM_MISSIO,
       word: [0,20,40,62,82,92,100].map(a=>`${a} ${A.acclaimWord(a)}`),
@@ -269,6 +361,14 @@ export async function run({ p, errors }){
     fails.push(`a rival holding the primacy is worth ${out.withTheirs - out.withNone} points of YOUR acclaim — the term is reading d.primus rather than whose it is`);
   if(!(out.withMine > out.withNone))
     fails.push("holding the primacy yourself is worth nothing to the street");
+
+  /* ---- #168 ---- */
+  for(const n of out.box.note) lines.push(n);
+  for(const b of out.box.bad) fails.push(b);
+  lines.push(`MEASURED, recorded not barred: the cap is full on 5,850 of 5,939 house-weeks (98.5%) and `
+    + `throws away a mean of 51.7 points a week. The additive repair reads deaths a bout 0.173 → 0.161 `
+    + `and median life 97w → 129w over 30 houses on three prefixes; the shared-cap version it replaced `
+    + `read 0.211 and 89w. See the roadmap.`);
 
   /* ---- #165 ---- */
   for(const r of out.terms.rows)

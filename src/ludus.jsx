@@ -8114,16 +8114,57 @@ function power(f, tactic, oppCls, mom, atkMod){
    editor would weigh it: the fight the man just gave, how long he made it last,
    what the tiers want — and only then who his master is, which is capped, because
    a great house should buy a man a hearing and not immunity. */
-const MISSIO_CAP   = 28;   /* the most that standing, fame and a patron can be worth */
+const MISSIO_CAP   = 28;   /* the most the whole of standing can be worth, shared — see #168 */
 const MISSIO_MID   = 57;   /* the score at which the box is a coin */
 const MISSIO_SLOPE = 14;   /* how sharply it turns either side of that */
 /* account: 0–100, what he took off the man who beat him.
    endured: 0–40, how long he made it last, scaled by the caller because a melee
             runs to twenty-six rounds and a pairing to twelve.
    own:     false for a man who is not yours — the town knows his house about this much. */
+/* ---- AND THE CAP WAS BEING SPENT BY ONE SIDE OF IT (#168) ----
+   Standing was one number under one cap: the house's favour and its rung, the man's own renown, the
+   crowd's affection for him and what he had survived, all summed and truncated at 28. Measured over
+   18 houses of 420 weeks with the ledger held up, the cap is full on **5,850 of 5,939 house-weeks**
+   and throws away a mean of **51.7 points a week** — nearly twice the cap itself. Worse, the HOUSE's
+   side alone means 38.7, so it saturates the cap on its own and the man's side contributes exactly
+   nothing to a house of any size:
+
+       house               the box   the man   summed   capped   thrown away
+       a founding house        2.6       1.6      4.3      4.3          0.0
+       a made house           15.9      24.6     40.5     28.0         12.5
+       a great house          33.7      49.5     83.2     28.0         55.2
+       the top of it          43.0      69.3    112.3     28.0         84.3
+
+   Which is a statement about the game, not only about arithmetic: **a famous man and an unknown man
+   of the same great house were worth the same on the ground.** Making a man famous stopped
+   protecting him.
+
+   The source already states the rule that sorts these. Beside `street`: "the top tiers, who are
+   nobody's client and shout anyway. OUTSIDE THE CAP because the cap is the editor's box." By that
+   rule the house's favour, its rung, a patron and the salute to the boxes are the box; a man's own
+   renown, the crowd's affection and his years are not.
+
+   So the cap is SHARED now rather than raised — half to who owns him, half to who he is. The whole
+   of standing is still bounded by MISSIO_CAP, and because `min(a,H) + min(b,H) <= min(a+b, 2H)` the
+   split can only ever pay LESS than the old single cap, never more: nobody buys immunity out of this,
+   and a great house's deference stops covering a man who has earned nothing himself. */
+/* HALVING THE CAP AND SHARING IT WAS THE FIRST ANSWER AND IT WAS THE WRONG ONE. Because
+   `min(a,H) + min(b,H) <= min(a+b, 2H)`, a shared cap can only ever pay LESS — and paired on the same
+   30 seeds it paid a great deal less: deaths a bout **0.173 → 0.211, up 22%**, median life 97w → 89w.
+   That is a difficulty increase bought with a structural argument, which is not a trade this item
+   asked for. The cap keeps everything it had.
+   What the man's own standing gets instead is what the street already has: a small allowance OUTSIDE
+   the cap, for the same stated reason. `ACCLAIM_MISSIO` is 9 — "a hearing, still, and not immunity" —
+   and the crowd's affection for a man and the years he has survived are the same kind of thing as the
+   top tiers shouting for him, so they are worth the same and bounded the same. Nobody loses a point
+   of what he had; what changes is that a man who is loved and has lasted is no longer invisible
+   behind his owner's standing. */
+const MISSIO_MAN = ACCLAIM_MISSIO;   /* his own name, outside the box's cap and deliberately small */
 function missioScore(A, ctx, crowd, account, endured, own){
-  const standing = own === false ? 18 : Math.min(MISSIO_CAP,
+  const box = Math.min(MISSIO_CAP,
     (A.pfame||0)*0.20 + (ctx.favor||0)*0.22 + (ctx.fav||0) + (ctx.patron ? ctx.patron.favor*0.10 : 0));
+  const man = own === false ? 0 : clamp(ctx.man||0, 0, MISSIO_MAN);
+  const standing = own === false ? 18 : box + man;
   /* A man nobody has heard of yet is not worth killing. Standing is built almost
      entirely from fame and favour, so a house in its first season had none of it and
      a fallen man was condemned four times in five — a founding fighter was dying in
@@ -9904,7 +9945,7 @@ function mercyAt(d, city){
   const P = missioPlace(d, city);
   const pt = patronsOf(d).slice().sort((a,b)=>b.favor-a.favor)[0] || null;
   const ctx = Object.assign({}, P, { tier:2,
-    fav: favMissio(g) + veteranGuard(g) + P.fav,
+    fav: P.fav, man: favMissio(g) + veteranGuard(g),
     patron: pt ? { name:pt.name, favor:pt.favor } : null });
   return missioOdds(missioScore(g, ctx, MERCY_CASE.crowd, MERCY_CASE.account, MERCY_CASE.endured, true));
 }
@@ -14720,7 +14761,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   gc.formStam = formStam(g);
   if(offer.stakes==="sine" && lawSine(d) && !offer.sealed){ d.gold -= lawSine(d); offer.sealed = 1; }
   const PLACE = missioPlace(d, away ? offer.city : null);   /* #160: the offer panel prices these too */
-  const simCtx = { plan:PE, ...PLACE, fav: favMissio(g) + veteranGuard(g) + PLACE.fav,
+  const simCtx = { plan:PE, ...PLACE, fav: PLACE.fav, man: favMissio(g) + veteranGuard(g),
     footing:V.footing * W.footing, footingB:V.footing * Wb.footing, sky:W.stam, skyB:Wb.stam, venue:V.missio,
       favor: imperial ? Math.min(d.favor, 20) : PLACE.favor, tier: Math.min(offer.tier,3),
       hostile:!!bribeHouse, patron: imperial ? null : (patron ? {name:patron.name, favor:patron.favor} : null),
@@ -25860,6 +25901,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        forgets this line fails a check rather than going quietly dark. */
     answerNem, nemCallOut, callFavour, repay, sellDebt, runGambit, backCandidate, swearIn,
     applyRefusal, skipWeeks, charterSkip, firstBuyWarn, ENTRANCES, ENTRANCE_KEYS, deadlines,
+    favMissio, veteranGuard, riseFav, blessMercy, favourOf, MISSIO_MID, MISSIO_SLOPE, missioWord, MISSIO_MAN,
     saveKit, applyKit, dropKit, watchField, startPlan, breakPlan, clearWatch,
     /* ---- AND THE HALF THAT MAKES THEM DRIVEABLE, v3.24.0 ----
        Exposing an action is not enough on its own. To drive one a check needs the TABLE it takes its

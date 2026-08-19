@@ -1392,7 +1392,19 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.57.0 — the audit after ten releases. `coverage` reads **101 of 463**
+**Shipped and verified:** v3.58.0 — #168 closed. `missioScore`'s standing was one capped number, and
+**the cap is full on 5,850 of 5,939 house-weeks (98.5%)**, throwing away a mean of **51.7 points a
+week** — twice the cap — with the house's side alone meaning 38.7 and saturating it unaided. The
+statement about the game is sharper than the arithmetic: **a famous man and an unknown man of the same
+great house were worth the same on the ground.** The repair follows the rule the source already states
+beside `street` — "outside the cap because the cap is the editor's box" — so the crowd's affection and
+a man's years now sit outside it, bounded at `MISSIO_MAN = ACCLAIM_MISSIO`. A great house's beloved
+veteran is spared **71.1%** against its unknown's **56.4%**, +14.7 points of a man's life for
+something worth nothing before. **The first answer was wrong and its price is recorded**: a shared
+14/14 cap can only pay less and read +22% deaths and 97w → 89w, where the shipped shape reads −7%
+deaths and 97w → **129w** — a real easing of about a quarter, stated rather than buried, with
+`MISSIO_MAN` the one line to revisit. Suite green at **69/69**.
+v3.57.0 — the audit after ten releases. `coverage` reads **101 of 463**
 never called, down from 144 of 435 against a surface that grew by 28. Three items opened, each with
 figures: **#166**, the entrance, where `showman` is worth **+16.7 points of win rate** over 600 bouts
 on four seed prefixes and `boxes` reads identical to no entrance at all; **#167**, four patron favours
@@ -3011,23 +3023,103 @@ reference player calls **none of them, ever**, which is #158's shape: a policy q
 never been asked. *Falsifies if:* an arm that calls every favour the moment it is ready is not
 measurably better off — in which case the four are priced right and the silence costs nothing.
 
-**#168 — seven things a player buys all share one 28-point cap that two things he does not choose
-saturate by week 8.** `missioScore`'s standing term is
-`min(MISSIO_CAP, pfame*0.20 + houseFavour*0.22 + ctx.fav + patron*0.10)`, with `MISSIO_CAP` 28.
-Measured over 18 houses of 420 weeks: **`pfame*0.20 + houseFavour*0.22` alone reaches 28 in 18 of 18
-houses at a median week 8**, and peaks between 63.6 and 285.8 — up to **ten times the cap**. So
-everything else feeding that term buys nothing from about week 8 onward: `favMissio(g)` (a man's own
-favour with the crowd, up to 15), `veteranGuard(g)`, `riseFav(d)` (3 a census rung), `blessMercy(d)`
-(Fortuna's blessing, 9), the mercy works perk, and the "salute the boxes" entrance (10). Measured
-directly on the missio curve: a founding house gains **6.3 points** of a beaten man's life from +10
-there, a made house **1.7**, and **a great house — standing 46.7 against a cap of 28 — gains 0.0**.
-The game has diagnosed this once already: `ACCLAIM_MISSIO` exists precisely because "a late house
-saturates that cap on fame and favour alone, which left acclaim with nothing left to do", and the
-street's voice was put OUTSIDE the cap for it. Nobody checked the other six. *Falsifies if:* the cap
-is doing what it is for and these are meant to be early-game levers — in which case the fault is six
-panels promising a late house something it cannot have.
+**#168 — CLOSED in v3.58.0. The clause did not falsify, and the sharpest form of it is a sentence
+about the game rather than about arithmetic: a famous man and an unknown man of the same great house
+were worth the same on the ground.** `missioScore`'s standing was one number under one cap — the
+house's favour and rung, the man's own renown, the crowd's affection for him, and what he had
+survived, summed and truncated at `MISSIO_CAP` 28. Over 18 houses of 420 weeks with the ledger held
+up, **the cap is full on 5,850 of 5,939 house-weeks (98.5%)** and throws away a mean of **51.7 points
+a week**, twice the cap itself. The house's side alone means **38.7**, so it saturates the cap unaided:
+
+| house | the box | the man | summed | capped | thrown away |
+|---|---|---|---|---|---|
+| a founding house | 2.6 | 1.6 | 4.3 | 4.3 | 0.0 |
+| a made house | 15.9 | 24.6 | 40.5 | 28.0 | 12.5 |
+| a great house | 33.7 | 49.5 | 83.2 | 28.0 | **55.2** |
+| the top of it | 43.0 | 69.3 | 112.3 | 28.0 | **84.3** |
+
+The repair follows the rule the source already states beside `street` — *"outside the cap because the
+cap is the editor's box"*. The crowd's affection for a man and the years he has survived are not the
+box, so they sit outside it now, bounded at `MISSIO_MAN = ACCLAIM_MISSIO` for the same stated reason
+and at the same size. Measured on the missio curve for a short bout badly lost: a great house's
+beloved veteran is spared **71.1%** against its unknown's **56.4%** — **+14.7 points of a man's life**
+for something that bought exactly nothing before.
+
+**And the first answer was wrong, which is recorded because the price is the point.** Halving the cap
+and sharing it 14/14 can only ever pay less, since `min(a,H)+min(b,H) ≤ min(a+b,2H)`; paired on 30
+seeds it read deaths a bout **0.173 → 0.211 (+22%)** and median life **97w → 89w**. The additive shape
+reads **0.173 → 0.161** and **97w → 129w** on the same seeds, with per-prefix medians moving 217→267,
+180→216 and 67→85 — a real and consistent easing, not noise. **That is a difficulty reduction of
+about a quarter and it is the cost of this repair**; `MISSIO_MAN` is one line to revisit if it is the
+wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
+
+### v3.58.0 — #168: the cap was the editor's box, and it had been spent by one side of it
+
+`missioScore`'s standing was one number under one cap: the house's favour and rung, the man's own
+renown, the crowd's affection for him and what he had survived, summed and truncated at
+`MISSIO_CAP` 28.
+
+    18 houses x 420w, the ledger held up
+      the cap is full on            5,850 of 5,939 house-weeks (98.5%)
+      thrown away, mean a week      51.7 points — twice the cap itself
+      the box's side, mean          38.7 — it saturates the cap unaided
+
+    priced at four standings          the box   the man   summed   capped   thrown away
+      a founding house                    2.6       1.6      4.3      4.3          0.0
+      a made house                       15.9      24.6     40.5     28.0         12.5
+      a great house                      33.7      49.5     83.2     28.0         55.2
+      the top of it                      43.0      69.3    112.3     28.0         84.3
+
+The arithmetic is the small half of it. The statement about the GAME is that **a famous man and an
+unknown man of the same great house were worth the same on the ground** — his own renown, the crowd's
+affection and his years all sat inside a cap his owner's standing had already filled, so making a man
+famous stopped protecting him. `favourOf` has a whole named scale for that affection, from "one more
+man on the sand" to "the darling of Capua", and above a certain house size it bought nothing.
+
+#### The rule that sorts the terms is already in the source
+
+Beside `street`, two lines below the cap: *"the top tiers, who are nobody's client and shout anyway.
+**Outside the cap because the cap is the editor's box**, and deliberately small."* By that rule the
+house's favour, its rung, a patron and the salute to the boxes ARE the box — `riseFav`'s own comment
+says "your name carries weight in the editor's box" — and a man's own crowd and his years are not.
+
+So they sit outside it now, bounded at `MISSIO_MAN = ACCLAIM_MISSIO`, at the same size and for the
+same reason, so neither is a number of its own. On the missio curve for a short bout badly lost, a
+great house's beloved veteran is spared **71.1%** against its unknown's **56.4%** — **+14.7 points of
+a man's life** for something worth nothing the week before.
+
+#### The first answer was wrong, and the price is why
+
+Halving the cap and giving each side 14 looked cleaner: same ceiling, shared. It cannot work, because
+`min(a,H) + min(b,H) ≤ min(a+b, 2H)` — a shared cap can only ever pay LESS. Paired on 30 seeds:
+
+    same 30 seeds, 420w              deaths a bout   median life   alive at 420
+      v3.57.0, one cap                     0.1731           97w              1
+      the shared cap, 14/14                0.2109           89w              1     +22% deaths
+      the additive shape, shipped          0.1610          129w              2      −7% deaths
+
+**The shipped shape eases the game by about a quarter of its median life** — per-prefix medians move
+217→267, 180→216 and 67→85, so it is consistent across all three and not noise. That is a real
+balance change bought with a structural argument, it is stated here rather than buried, and
+`MISSIO_MAN` is the single line to revisit if it is the wrong trade.
+
+#### What `street` holds now
+
+That a great house's beloved veteran is spared measurably more often than its unknown, which is the
+bar the one-cap shape fails with both reading 56.4%. That the allowance is bounded — forty times
+`MISSIO_MAN` reads the same as `MISSIO_MAN`, a third of it reads less — so it is an allowance and not
+immunity. That the box still caps, a house at favour 100 reading the same at renown 220 and 400. And
+that another house's man is still read at a flat 18 and gets none of it.
+
+**Two instrument faults in my own bars, both caught by the numbers being impossible.** The first
+compared a veteran against a man with no record at all, which also handed the control the 15-point
+`green` novice bonus — a control that differed in two ways, reading 95.0% against 97.0% the wrong way
+round. The second tested a man's side at 999 against a real veteran's 26 and found them equal, which
+they must be: both are past the bound. And both bars were run at `MERCY_CASE`'s crowd 62 / account 42,
+where a great house sits on the 0.97 clamp and nothing can be told from anything. They run at crowd 30
+/ account 20 now — a short bout badly lost, which is where the missio actually decides.
 
 ### v3.57.0 — the audit after ten releases: three items, and two that did not survive
 
