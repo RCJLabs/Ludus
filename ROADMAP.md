@@ -87,7 +87,7 @@ npm run test:all      every check, fast and slow — about thirteen minutes
 npm run coverage      not what passes, but what no check ever touches
 ```
 
-**63 checks.** Most read into the game through a test handle and answer in seconds; a
+**70 checks.** Most read into the game through a test handle and answer in seconds; a
 handful drive a real browser through the real screens. Every one of them exists because
 of a bug that shipped, and the comment at the top of each says which — that comment
 is the durable part, not the numbers inside it. See `test/README.md` for the table.
@@ -1392,7 +1392,26 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.58.0 — #168 closed. `missioScore`'s standing was one capped number, and
+**Shipped and verified:** v3.59.0 — #166 half REFUTED on its own falsification clause and closed on
+what was left, which was not what was opened. The clause said the +16.7 points of win rate might be
+the mirrored setup, and it was: a mirror is a bout where `mobClear` is FALSE every time — twins share
+a renown, the peak of the noise is one boolean, and `showman`'s momentum wins that coin by
+construction. Against a card `pickRivalOpp` deals, 2,400 bouts a word on four seed prefixes paired
+bout for bout, the word is worth **+7.1 points** and **+6.7** weighted by the renown gap 12 played
+houses actually deal. **And the crowd is not what pays**: split into its terms, sixteen points of
+noise are worth **+0.0** and one point of momentum **+8.4**, which is above the band this file's own
+note sets for a trait. Two more of the opening figures died — the spare rate (+6.9 → +2.2) and grim
+against a green man (+7.5 → +2.3). What survived is `boxes`: the last term in `missioScore` still
+inside the editor's cap that a player CHOOSES, worth **0.0 points from a man's renown of 140 upward**.
+It sits outside the cap now at `ENT_MISSIO = ACCLAIM_MISSIO`, the third small allowance on one number,
+and over 420 weeks a house that salutes loses **12.85% of its bouts to a death against 19.31%** —
+a third of them, off a button that does not move the win rate by a digit. The four words also **price
+themselves** off one table, so a term cannot be added without the player being told. `stage` is the
+70th check, five bars, all negative-tested; the rope gains an `entrance` lever. **Two items opened on
+the way, both found by the instrument**: #169, a bout that stops twice loses its first half from the
+log — **22.0% of 2,136 played bouts**, 1,753 beats dropped — and #170, the size of that momentum
+point. Suite green at **70/70**.
+v3.58.0 — #168 closed. `missioScore`'s standing was one capped number, and
 **the cap is full on 5,850 of 5,939 house-weeks (98.5%)**, throwing away a mean of **51.7 points a
 week** — twice the cap — with the house's side alone meaning 38.7 and saturating it unaided. The
 statement about the game is sharper than the arithmetic: **a famous man and an unknown man of the same
@@ -2983,27 +3002,59 @@ engine walks to cannot come apart. The panel also names what the number buys, in
 cap — which was priced and shown nowhere at all. `street` gains the sum bar, the ceilings, the two
 derived gates and the six unrelated dark readouts the item listed. Negative-tested.
 
-**#166 — the entrance is a free sixteen points of win rate, and one of the four buys nothing.** Four
-buttons on the arena panel, pressed before every bout, and the string "entrance" appears in **no check
-and no probe** in the whole suite. 150 mirrored bouts a word on four seed prefixes, the same seeds in
-every arm:
+**#166 — CLOSED in v3.59.0. The falsification clause fired: half the headline was the mirror, and
+the half that was left belonged to a different term.** The clause said the +16.7 might be the
+mirrored setup. It was, and the reason is one line: the peak of the noise is a single boolean, and
 
-| word | win rate, four prefixes | spared when he went down | crowd | fame a bout |
-|---|---|---|---|---|
-| none | 45.3 / 49.3 / 50.0 / 39.3% | 91.5% | 95.1 | 13.6 |
-| **showman** | **58.7 / 70.0 / 64.0 / 58.0%** | **98.4%** | 99.4 | 19.2 |
-| grim | 47.3 / 50.7 / 50.7 / 39.3% | 92.4% | 94.9 | 14.0 |
-| boxes | 45.3 / 49.3 / 50.0 / 39.3% | 91.5% | 95.1 | 13.6 |
+    let mobHis = ((B.pfame||0) - (A.pfame||0)) > 12;
+    const mobClear = Math.abs((A.pfame||0) - (B.pfame||0)) > 12;
+    if(crowd>=82 && !cPeak && !mobClear) mobHis = sA!==sB ? sB : mom<0 ? true : mom>0 ? false : R()<0.5;
 
-**`showman` is worth +13.4 to +20.7 points of win rate**, mean +16.7 over 600 bouts, plus 6.9 points
-of spare rate and 5.6 fame a bout — while its blurb reads like a trade-off ("strutting is not
-resting"). **`boxes` reads identical to `none` on every prefix, to the digit**: its `missio:10` lands
-inside a cap that is already full (see #168), so its whole effect for an established house is +2
-patron favour a bout. And **`grim` is a survival word nobody is told about** — +2.0 win rate, which is
-noise, but **96.1% spared against a GREEN man against 88.6%** for no entrance, which is its doubled
-dread doing exactly what the code says and the blurb never mentions. *Falsifies if:* the spread is the
-mirrored setup — a real card's opponents vary, and `showman`'s crowd term may be worth less against a
-man who is not your twin.
+twins share a renown, so `mobClear` is FALSE in every mirrored bout and `showman`'s momentum point
+wins that coin by construction. Re-measured against a card `pickRivalOpp` deals — 2,400 bouts a word
+on four seed prefixes, paired bout for bout on a signature taken BEFORE the fight, because a bout
+mutates both men:
+
+| word | mirrored | a real card | weighted by the card played houses deal |
+|---|---|---|---|
+| none | 45.5% | 70.7% | 70.7% |
+| **showman** | **63.8%  (+18.3)** | **77.8%  (+7.1)** | **77.4%  (+6.7)** |
+| grim | 46.8%  (+1.3) | 72.5%  (+1.8) | 72.4%  (+1.6) |
+| boxes | 45.5%  (+0.0) | 70.7%  (+0.0) | 70.7%  (+0.0) |
+
+The weight is measured, not chosen: wrapping `doFight` on the handle over 12 played houses catches
+every single bout a house actually FIGHTS (4,231 of them), and the renown gap is **mine ahead 47.7% ·
+inside twelve 13.4% · his ahead 38.9%**. The wrapper's own calibration — mean stated chance 35.7%
+against 37.1% actually won — is what says the reading is the game's and not the instrument's.
+
+**And the crowd is not what pays.** Two extra words, each keeping the wind cost and the two fame and
+dropping exactly one of the pair that could carry the peak, every bout forced inside twelve:
+
+| the word | win rate | against no entrance |
+|---|---|---|
+| none | 69.8% | — |
+| crowd +16, wind −5, fame +2 | 69.8% | **+0.0** |
+| momentum +1, wind −5, fame +2 | 78.2% | **+8.4** |
+| all four | 79.5% | +9.7 |
+
+One point of momentum is `p *= 1 + mom*0.03` compounded over twelve rounds. **Two more opening
+figures did not survive**: the spare rate (+6.9 mirrored → +2.2 on a card, +0.0 in the ablation) and
+grim against a green man (+7.5 → +2.3).
+
+**What survived is `boxes`, and it was the sharper fault.** Its missio was the last term in
+`missioScore` a player CHOOSES that was still inside the editor's cap — the cap #168 had just shown
+full on 98.5% of house-weeks — so it was worth 15.4 points of a beaten man's life at a renown of 20,
+12.1 at 60 and **0.0 from 140 upward**: a button that stops working exactly as a house acquires men
+worth keeping — its win rate identical to no entrance at all in every band, to the digit. It sits
+outside the cap now at `ENT_MISSIO = ACCLAIM_MISSIO`, the third small allowance on one number (the
+street, the man, the day), worth **+7.1 points to a great house**. Over
+420 weeks with the word pressed every week, 12 houses an arm, control first: **19.31% of bouts killed
+his man with no entrance, 12.85% with the salute** — a third of the deaths, off a word that does not
+move the win rate by a digit. The four words also price themselves off one table now, so a term
+cannot be added without the player being told. `stage` is the 70th check; the rope gains an
+`entrance` lever. `open`'s 60-house signature is byte-identical.
+*What is NOT changed:* the size of that momentum point. It is now shown to the player rather than
+hidden, and whether it should be that large is #170.
 
 **#167 — four patron favours, ready on all but a handful of patron-weeks, and never once called.**
 `callFavour`, `favourReady`, `favourOf` and `backCandidate` are all dark. Over 18 played houses of 420
@@ -3022,6 +3073,34 @@ upkeep, the noble takes fame off the biggest house in the bay, the senator drops
 reference player calls **none of them, ever**, which is #158's shape: a policy question the rope has
 never been asked. *Falsifies if:* an arm that calls every favour the moment it is ready is not
 measurably better off — in which case the four are priced right and the silence costs nothing.
+
+**#169 — a bout that stops twice loses its first half from the log the player reads.** All four
+engines carry `if(pending) res.beats = pending.beats.concat(res.beats)` BELOW the early return for a
+bout that has come to the balance again, so the accumulated log is joined on only when the fight
+finally ends; the second crux returns the segment since the FIRST one and nothing before it, and
+`speak` hands that straight to the modal. Traced on one held bout: 12 beats, then a resume returning
+**8 instead of 20** — the intro, the salute, the entrance line and every exchange of the opening,
+gone. Counted over 12 played houses of 420 weeks, 2,136 bouts: **42.0% never stop, 36.0% stop once,
+15.7% stop twice and 6.3% stop three times**, so **22.0% of bouts lose part of their log** and
+**1,753 beats are dropped** across 1,841 resumes. **It is not cosmetic and that is why it is an item
+rather than a line in v3.59.0**: `favourBout` is handed `beats` and `rounds` is `Math.max` over them,
+so two systems have been reading a truncated log. Moving the join above the return was tried and
+measured — `open`'s 60-house signature moves from **men 128 to men 118**, house for house — which is
+a behaviour change needing its own median life, deaths a bout and `survive` tally. *Falsifies if:*
+the modal is not in fact fed the returned beats on a second crux, in which case this is engine-only
+and only `favourBout` and `rounds` are affected.
+
+**#170 — one point of momentum is worth more than any trait in the game, and it is free.** This file
+states its own scale beside the traits: "the first cut measured Brutal at +16 points and Showman at
++14, which is not a trait, it is a different man. A trait is worth three to six points here." The
+entrance's `mom:1` measures at **+8.4 points of win rate** (2,400 bouts a word, four prefixes, every
+bout forced inside twelve so the peak cannot confound it), above that band, on a button pressed
+before every bout at no cost — the 5 wind it is billed for measures at **+0.0**. Over 420 weeks it is
+worth a median house life of **362 weeks against no entrance's 154**, the largest single effect any
+arm in this project has read off one button. *Falsifies if:* the trait band is not the right
+comparison — a trait is a fact about a man and an entrance is a decision the player makes every week,
+and a decision may be allowed to be worth more than a fact. In which case the answer is that the
+other three words are too small, not that this one is too big, and the item is about them.
 
 **#168 — CLOSED in v3.58.0. The clause did not falsify, and the sharpest form of it is a sentence
 about the game rather than about arithmetic: a famous man and an unknown man of the same great house
@@ -3054,6 +3133,150 @@ about a quarter and it is the cost of this repair**; `MISSIO_MAN` is one line to
 wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
+
+### v3.59.0 — #166: the sixteen points were the mirror, and the crowd was never what paid
+
+#166 was opened with a falsification clause and the clause fired. It said the +16.7 points of win
+rate for `showman` might be an artefact of measuring against a twin. It was, and the reason is one
+boolean:
+
+    let mobHis = ((B.pfame||0) - (A.pfame||0)) > 12;
+    const mobClear = Math.abs((A.pfame||0) - (B.pfame||0)) > 12;
+    if(crowd>=82 && !cPeak && !mobClear) mobHis = sA!==sB ? sB : mom<0 ? true : mom>0 ? false : R()<0.5;
+
+The crowd term is applied to BOTH men — `shoA` and `shoB` are the same expression — so sixteen points
+of noise into a bout between twins lifts both sides equally and cancels. Everything it was worth came
+through the peak, which goes to one man whole, and twins have an identical renown, so `mobClear` is
+false in **100% of mirrored bouts** and `showman`'s `mom:1` wins the tiebreak by construction.
+
+#### What a card the game deals actually says
+
+`test/probes/enter.mjs`. The opponent comes from `pickRivalOpp`, the generator behind every offer in
+the game; the tier is the game's own band table matched to my man; 2,400 bouts a word on four seed
+prefixes; and the four words share the seed set bout for bout.
+
+| word | mirrored | a real card | weighted by the card played houses deal |
+|---|---|---|---|
+| none | 45.5% | 70.7% | 70.7% |
+| **showman** | **63.8%  (+18.3)** | **77.8%  (+7.1)** | **77.4%  (+6.7)** |
+| grim | 46.8%  (+1.3) | 72.5%  (+1.8) | 72.4%  (+1.6) |
+| boxes | 45.5%  (+0.0) | 70.7%  (+0.0) | 70.7%  (+0.0) |
+
+The weight is measured rather than chosen. Wrapping `doFight` on the handle catches every single
+bout twelve played houses actually FIGHT rather than every bout they are offered — 4,231 of them —
+and the renown gap comes out **mine ahead 47.7% · inside twelve 13.4% · his ahead 38.9%**. Banded on
+the gap, the card says +6.4 / +8.8 / +6.2, so the mirror was not merely the wrong average, it was one
+band of three quoted as all of them.
+
+*One limit, stated:* the card arm's bouts sit at a median stated chance of **74%** while the bouts
+the reference player actually walks into sit at **11%** — the rope takes hopeless cards, and this
+arm does not. The direction of that is knowable: a word that helps you win is worth less in a bout
+you cannot win, so **+6.7 is if anything the generous end** of what a played house would see.
+
+#### And the crowd is not what pays
+
+Two words that exist nowhere in the game — added to `ENTRANCES` and deliberately not to
+`ENTRANCE_KEYS` — each keeping the wind cost and the two fame, each dropping exactly one of the pair
+that could carry the peak, with every bout forced inside twelve so the tiebreak is live:
+
+| the word | win rate | against no entrance |
+|---|---|---|
+| none | 69.8% | — |
+| crowd +16, wind −5, fame +2 | 69.8% | **+0.0** |
+| momentum +1, wind −5, fame +2 | 78.2% | **+8.4** |
+| all four | 79.5% | +9.7 |
+
+`p *= 1 + clamp(mom,-3,3)*0.03`, compounded over twelve rounds, and this file's own note two hundred
+lines above it says a one per cent edge on power is worth about three points of win rate. The
+arithmetic was never hidden; nobody had ever pressed the button. **Two more of the opening figures
+died on the card**: the spare rate (+6.9 mirrored → +2.2, and +0.0 in the ablation) and grim against
+a green man (+7.5 → +2.3).
+
+#### The fault that survived was the other one
+
+`boxes` reads identical to no entrance on the win rate in all three gap bands, to the digit —
+75.5 / 71.6 / 64.6% either way. Its missio was the last term in `missioScore` that a PLAYER chooses
+and the only one still inside the editor's cap — the cap
+#168 had just measured full on 98.5% of house-weeks. On the curve, at a short bout badly lost:
+
+| the man's renown / the house's favour | no salute | inside the cap | outside it |
+|---|---|---|---|
+| 20 / 10 | 51.6% | 67.0%  (+15.4) | 67.0%  (+15.4) |
+| 60 / 18 | 68.2% | 80.3%  (+12.1) | 80.3%  (+12.1) |
+| 140 / 30 | 83.5% | 83.5%  (**+0.0**) | 90.6%  (+7.1) |
+| 600 / 55 | 83.5% | 83.5%  (**+0.0**) | 90.6%  (+7.1) |
+| 1400 / 80 | 83.5% | 83.5%  (**+0.0**) | 90.6%  (+7.1) |
+
+A button whose whole promise is "when he is on the ground looking up, they remember it", switching
+itself off exactly as a house acquires men worth keeping. The repair is the rule the source already
+states twice — outside the cap because the cap is the editor's box — so `ENT_MISSIO = ACCLAIM_MISSIO`
+joins the street's voice and the man's own name as the third small allowance on one number, and
+`ENTRANCES.boxes.missio` is that constant rather than a second copy of it.
+
+#### What it is worth in play, and what it costs
+
+The rope gains an `entrance` lever, so this is a policy arm rather than a bout arm: one word pressed
+every week for 420 of them, 12 houses each, control first.
+
+| word | bouts | his men died | a bout | median life |
+|---|---|---|---|---|
+| none | 1,787 | 345 | **19.31%** | 154w |
+| boxes | 2,171 | 279 | **12.85%** | 186w |
+| showman | 3,074 | 415 | 13.50% | 362w |
+| grim | 2,455 | 337 | 13.73% | 260w |
+
+The salute removes about a third of the deaths, and since it does not move the win rate by a digit,
+that is the whole of it — which is what the arithmetic predicts: nine points at `MISSIO_SLOPE` 14 is
+an odds ratio of about 1.9, and 68% spared becomes 80%. **Nothing in the suite moves**, because the
+reference player presses no word at all: `open`'s 60-house signature is byte-identical.
+
+#### And the panel prices the four words instead of describing them
+
+`entranceSays` reads one table, so the line and the effect cannot come apart, and a term added to a
+word without a phrase for it fails `stage`. What a player sees now:
+
+    showman  +16 to the tiers before a blow lands · +1 momentum into the first exchange — the
+             largest of these · -5 of his wind, spent walking · +2 to the house's name
+    grim     the other man starts 8 shaken   (16 — doubled, because he has barely fought)
+    boxes    +9 with the editor if he goes down, outside the box's cap · +2 with every patron you hold
+
+`grim`'s doubling is `entDread` now, read by the sand and by the line, so the two cannot disagree.
+
+#### Four instrument faults, and the fourth is the one to remember
+
+- **The first signature was taken AFTER the fight**, which is a measurement of the outcome — a bout
+  mutates both men — so the four words came back "not paired" on bouts they had run identically. The
+  signature check caught it by printing the first mismatching bout in full.
+- **Every crux resume was counted as a fresh bout**, so 3,198 bouts read as 6,777 and a third of them
+  landed in an invented "held" bucket. Caught the same way #150 was: by printing the raw twelve, where
+  the same two men appeared four rows running.
+- **`o.men` takes gladiators, not ids**, so `men:[g.id]` handed `undefined` to `doFight` and the
+  check reported "the rope could not fight a bout" with no reason.
+- **The `entrance` lever shipped unconnected.** `run` honoured it and `lanista`'s `takeBout` call did
+  not forward it, so all four career arms came back byte-identical — 1,787 bouts and 345 deaths in
+  every one. The note directly above that call records `wantStakes` shipping inert in exactly the same
+  way — written in v2.91.0, wired up in v3.0.0 — and was found the same way. The tell is the same
+  both times: **a lever with real leverage does not produce zero divergence.**
+
+#### The 70th check
+
+`stage`, five bars, all negative-tested: every non-cosmetic term names itself and a term with no
+phrase fails; the salute lands outside the box cap and is bounded there, with the shape it replaced
+negative-tested on the same fixture; all four words reach the sand through the rope's lever and leave
+their mark; `grim`'s doubling is one rule; and the salute pays every patron once. **The fifth needed
+two goes** — the first mutation loosened `if(ENT.favor)` and the check passed, because that guard is
+inside `if(!pending)` and the one that matters is the outer one. Loosening the outer one reads "a
+coached bout paid the salute again: 39.0 → 43.0 across two words from the box", which is the fault.
+
+#### Two items opened, both found by the instrument
+
+**#169** — a bout that stops at a second crux returns only the segment since the first one, so the
+modal replays from halfway: 22.0% of 2,136 played bouts, 1,753 beats dropped. Moving the join above
+the early return was tried and moves `open`'s signature from men 128 to men 118, so it is a behaviour
+change (`favourBout` and `rounds` both read that log) and wants its own release rather than a line in
+this one. **#170** — whether one point of momentum should be worth 8.4 points of win rate on a free
+button, against the three-to-six-point band this file sets for a trait. Neither is nudged here;
+#127's rule is to measure the distribution and not move the threshold, and both now have one.
 
 ### v3.58.0 — #168: the cap was the editor's box, and it had been spent by one side of it
 

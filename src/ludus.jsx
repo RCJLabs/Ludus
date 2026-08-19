@@ -8160,11 +8160,24 @@ const MISSIO_SLOPE = 14;   /* how sharply it turns either side of that */
    of what he had; what changes is that a man who is loved and has lasted is no longer invisible
    behind his owner's standing. */
 const MISSIO_MAN = ACCLAIM_MISSIO;   /* his own name, outside the box's cap and deliberately small */
+/* ---- AND THE LAST TERM THE CAP COULD STILL EAT (#166) ----
+   #168 took the man's own side out of the box's cap and left one thing inside it: the salute, the
+   only term in the whole score a PLAYER chooses on the day. Measured on the curve, at a short bout
+   badly lost, it was worth 15.4 points of a beaten man's life at a renown of 20, 12.1 at 60 and
+   0.0 from 140 upward — a button that switches itself off exactly as a house acquires men worth
+   keeping, which is the opposite of what it promises. It is the same kind of thing as the street
+   and the man — a small allowance outside the editor's box, for the same stated reason — so it is
+   worth the same and bounded the same. Three allowances, one number. Outside the cap it is worth
+   7.1 points to a great house, and a house that salutes every week loses 12.85% of its bouts to a
+   death against 19.31% for one that presses nothing. */
+const ENT_MISSIO = ACCLAIM_MISSIO;   /* what the afternoon itself can be worth, outside the cap */
 function missioScore(A, ctx, crowd, account, endured, own){
   const box = Math.min(MISSIO_CAP,
     (A.pfame||0)*0.20 + (ctx.favor||0)*0.22 + (ctx.fav||0) + (ctx.patron ? ctx.patron.favor*0.10 : 0));
   const man = own === false ? 0 : clamp(ctx.man||0, 0, MISSIO_MAN);
-  const standing = own === false ? 18 : box + man;
+  /* what he did before the horn, which is his own doing and not his master's */
+  const day = own === false ? 0 : clamp(ctx.day||0, 0, ENT_MISSIO);
+  const standing = own === false ? 18 : box + man + day;
   /* A man nobody has heard of yet is not worth killing. Standing is built almost
      entirely from fame and favour, so a house in its first season had none of it and
      a fallen man was condemned four times in five — a founding fighter was dying in
@@ -14583,11 +14596,39 @@ const ENTRANCES = {
   grim:    { name:"Silent and grim", short:"Grim", dread:1,
     blurb:"Helmeted, unhurried, saying nothing. It gets into the other man before the steel does.",
     enter:(a,b)=>`${a.name} comes on slow and says nothing at all, and ${b.name} watches him the whole way, which is the point.` },
-  boxes:   { name:"Salute the boxes", short:"Boxes", missio:10, favor:2,
+  boxes:   { name:"Salute the boxes", short:"Boxes", missio:ENT_MISSIO, favor:2,
     blurb:"He gives the editor and the good seats their due first. When he is on the ground looking up, they remember it.",
     enter:(a,b)=>`${a.name} turns to the editor's box and the front rows before he turns to the man, and the right people notice.` },
 };
 const ENTRANCE_KEYS = Object.keys(ENTRANCES);
+/* the grim approach gets further into a green man than a seasoned one — one rule, read by the sand
+   and by the line the player is shown, because a doubling nobody is told about is a dice roll */
+const oppGreen = opp => ((opp && opp.wins != null ? opp.wins : 99) < 4);
+const entDread = (E, green) => (E.dread||0) + (E.dread && green ? 1 : 0);
+/* ---- WHAT THE FOUR BUTTONS ACTUALLY DO (#166) ----
+   Four words pressed before every bout, described in prose and priced nowhere. Measured against a
+   card the game itself deals — 2,400 bouts a word on four seed prefixes — `showman` is worth 6.7
+   points of win rate, and not one of them comes from the crowd: split into its terms, the sixteen
+   points of noise are worth 0.0 and the single point of momentum is worth 8.4, which is more than
+   any trait in this file by its own stated scale. A blurb that reads as a trade-off in front of the
+   largest free edge in the arena panel is not flavour, it is a hidden number. Every non-cosmetic
+   term now names itself, off the table, so a term cannot be added without the player being told. */
+const ENT_TERM = {
+  crowd:  v => `${v>0?"+":""}${v} to the tiers before a blow lands`,
+  mom:    v => `${v>0?"+":""}${v} momentum into the first exchange — the largest of these`,
+  stam:   v => `${v} of his wind, spent walking`,
+  dread:  (v,green) => `the other man starts ${entDread({dread:v}, green)*8} shaken`
+    + (green ? " — doubled, because he has barely fought" : ""),
+  missio: v => `+${v} with the editor if he goes down, outside the box's cap`,
+  fame:   v => `+${v} to the house's name`,
+  favor:  v => `+${v} with every patron you hold`,
+};
+const ENT_TERM_KEYS = ["crowd","mom","stam","dread","missio","fame","favor"];
+function entranceSays(key, opp){
+  const E = ENTRANCES[key] || ENTRANCES.none, green = oppGreen(opp);
+  const said = ENT_TERM_KEYS.filter(k=>E[k]).map(k=>ENT_TERM[k](E[k], green));
+  return said.length ? said.join(" · ") : "Nothing bought, nothing spent.";
+}
 
 const CRUX = {
   press: { label:"Press him", short:"PRESS",
@@ -14770,10 +14811,9 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   /* the entrance — a bout-start effect only, never re-applied on a coached resume */
   const ENT = ENTRANCES[offer.entrance||"none"] || ENTRANCES.none;
   if(!pending){
-    simCtx.fav += (ENT.missio||0);
-    /* the grim approach gets further into a green man than a seasoned one */
-    const oppGreen = (offer.opp && offer.opp.wins!=null ? offer.opp.wins : 99) < 4;
-    simCtx.entrance = (ENT.dread && oppGreen) ? Object.assign({}, ENT, { dread: ENT.dread + 1 }) : ENT;
+    simCtx.day = ENT.missio || 0;      /* outside the editor's cap, where a chosen thing can be felt */
+    const green = oppGreen(offer.opp);
+    simCtx.entrance = (ENT.dread && green) ? Object.assign({}, ENT, { dread: entDread(ENT, green) }) : ENT;
     if(ENT.fame) d.fame += ENT.fame;
     if(ENT.favor){ patronsOf(d).forEach(p=>{ p.favor = clamp(p.favor+ENT.favor,0,100); }); recomputeFavor(d); }
   }
@@ -25198,7 +25238,7 @@ export default function App(){
                     style={entrance===k?{borderColor:"#c99a4b",color:"#e0bd72",background:"#2b2115"}:undefined}>{ENTRANCES[k].name}</button>
                 ))}
               </div>
-              <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:5}}>{ENTRANCES[entrance].blurb}</div>
+              <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:5}}>{ENTRANCES[entrance].blurb}</div><div style={{fontSize:"var(--fs-sm)",marginTop:4,color:"#c99a4b"}}>{entranceSays(entrance, pick && pick.opp)}</div>
             </div>
           );
           const wagerRow = (
@@ -25900,7 +25940,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        `actions` derives the list now instead of holding a hand-written one, so a future action that
        forgets this line fails a check rather than going quietly dark. */
     answerNem, nemCallOut, callFavour, repay, sellDebt, runGambit, backCandidate, swearIn,
-    applyRefusal, skipWeeks, charterSkip, firstBuyWarn, ENTRANCES, ENTRANCE_KEYS, deadlines,
+    applyRefusal, skipWeeks, charterSkip, firstBuyWarn, ENTRANCES, ENTRANCE_KEYS, deadlines, entranceSays, entDread, oppGreen, ENT_MISSIO, ENT_TERM_KEYS, ENT_TERM,
     favMissio, veteranGuard, riseFav, blessMercy, favourOf, MISSIO_MID, MISSIO_SLOPE, missioWord, MISSIO_MAN,
     saveKit, applyKit, dropKit, watchField, startPlan, breakPlan, clearWatch,
     /* ---- AND THE HALF THAT MAKES THEM DRIVEABLE, v3.24.0 ----

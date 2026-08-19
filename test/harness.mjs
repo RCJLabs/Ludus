@@ -125,6 +125,9 @@ export async function installRope(p){
       const o = opts || {};
       const list = [].concat(ids || []);
       if(!offer || !list.length) return { ran:false };
+      /* #166: the four words on the arena panel, pressed before every bout, and nothing in this
+         suite had ever pressed one. The panel writes the same field on the same object. */
+      if(o.entrance) offer.entrance = o.entrance;
       let r = offer.melee   ? fin(A.doMelee,     [d, list.slice(0,3), offer, null, null, o.tactic || "measured"])
             : offer.pair    ? fin(A.doPairFight, [d, list.slice(0,2), offer, o.tactic || "measured", null, null])
             : offer.venatio ? fin(A.doVenatio,   [d, list[0], offer, o.tactic || "measured", null, null])
@@ -256,6 +259,14 @@ export async function installRope(p){
                         is `bookEye` — 22 of the 24 opened it by median week 2 and 14 sat at the
                         third-off cap by week 33 — which is how #162 was measured. `betAgainst`
                         tells the man to go down instead, which is a different game entirely.)
+         entrance      (default NONE, #166 — one of `ENTRANCE_KEYS`, written onto every offer this
+                        rope fights, exactly as the arena panel writes it. `showman` is the one that
+                        pays: 6.7 points of win rate on a card the game deals, and all of it is the
+                        single point of momentum — split into its terms the sixteen points of crowd
+                        are worth 0.0. `boxes` is the missio one and lives outside the editor's cap
+                        from v3.59.0; before that the cap ate it whole for any established house.
+                        SINGLES ONLY: `doFight` is the only engine that reads `offer.entrance`, so
+                        on a melee, a pairing or a hunt the word is written and does nothing.)
          bench         (a list of gladiator ids never sent to the sand — the control arm for #135;
                         they train and age and cost as usual, they are simply never picked)
          nem           (default TRUE from v3.24.0 — answers the arch-rival and names the day when it
@@ -635,6 +646,11 @@ export async function installRope(p){
           wantStakes:   d.rome ? null : (o.wantStakes || (o.preferStakes ? null : (o.stakes || "standard"))),
           preferStakes: d.rome ? null : (o.preferStakes || null),
           choice: o.choice || "press",
+          /* and the lever the note above this one is about caught the NEXT lever added: `entrance`
+             shipped with `run` honouring it and this call not forwarding it, so four career arms
+             came back byte-identical — 1787 bouts and 345 deaths in all four, which is what an
+             unconnected lever looks like every time. */
+          entrance: o.entrance || null,
           bet: o.bet || null, betAgainst: !!o.betAgainst,
           pick: us => { const pr = us.filter(x=>x.primus); return (pr.length ? pr : us)
             .sort((a,b)=>(b.purse||0)-(a.purse||0))[0]; } });

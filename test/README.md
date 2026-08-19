@@ -51,6 +51,9 @@ reason the check exists usually has not.
 | `rope` | fast | the pit filled half the weeks and paid the same in year twelve as in year one |
 | `table` | fast | the only lever against the only number that ends a run cost 120 denarii flat, forever |
 | `street` | fast | acclaim climbed past the top of its ladder into nothing, and the missio never read it |
+| `board` | fast | the bookmaker's board and the settlement priced the same wager off two different numbers |
+| `repute` | fast | four reputation tallies all clamped at 120 and all decaying 1.5% a week, so a house that saturated three of them could never be named again — arithmetic, not chance |
+| `stage` | fast | four buttons pressed before every bout, priced nowhere, and one of them switched itself off exactly as a house got big enough to have men worth keeping |
 | `chronicle` | fast | one in five lines the chronicle ever wrote was the same weekly receipt |
 | `marks` | fast | a man bought with an old wound carried a scar drawn at NaN,NaN for as long as you owned him — and the four parts a bout wears down, held to the balance their split thresholds exist for |
 | `grudge` | fast | two rival-vengeance events waited above the ceiling of the number they read |

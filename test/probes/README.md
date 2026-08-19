@@ -39,6 +39,7 @@ Run them straight:
     node test/probes/fuse.mjs 24 420 FUSE     # #163: borrow-and-service against never-borrow, all three lenders
     node test/probes/finish.mjs 24 900 SEED # #147: nine arms, one per ending, and the RUINS gates split by term
     node test/probes/succ.mjs 30 1400 SEED [grant]  # #147: the second generation, with and without a free ledger
+    node test/probes/enter.mjs 150 SEED    # #166: the four entrance words against a card that is not a mirror
 
 `keep`, `walk` and `fires` run in about 25 seconds at 72 houses, which is cheap enough that **they take
 a seed prefix and should always be run on three or four of them.** Two findings died this session for
