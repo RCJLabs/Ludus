@@ -103,6 +103,23 @@ export async function installRope(p){
       return { res:r, rounds:n };
     };
 
+    /* ---- THE WAGER, WHICH THE ROPE NEVER PLACED (#162) ----
+       Every call in here passed `null` for the bet, so nothing in this suite had ever settled one,
+       and `bookEye` — the book shortening its board 5.5% for every wager the house wins, to a third
+       off — could not be reached by any measurement. `bet: <denarii>` backs the house's man at that
+       stake on every single bout it takes. The chance is copied VERBATIM from `makeBet` in the arena
+       panel (src:18938), because that is the number the wager is actually struck on: the sheet's man,
+       no prep edge, no read on how he means to fight it. Copying it is deliberate and it is the only
+       copy in this file — the panel's own price is struck on a DIFFERENT number, which is #162. */
+    const betFor = (d, offer, gid, o) => {
+      if(!o.bet || !offer || !offer.opp) return null;
+      const g = A.activeG(d).find(x=>x.id===gid); if(!g) return null;
+      const amt = typeof o.bet === "number" ? o.bet : 200;
+      if(d.gold < amt) return null;
+      return { amount:amt, against:!!o.betAgainst,
+        chance:A.winChance(g, offer.opp, 0, o.tactic || "measured") };
+    };
+
     /* run one offer with whichever engine it belongs to, and answer it */
     const run = (d, offer, ids, opts) => {
       const o = opts || {};
@@ -111,7 +128,9 @@ export async function installRope(p){
       let r = offer.melee   ? fin(A.doMelee,     [d, list.slice(0,3), offer, null, null, o.tactic || "measured"])
             : offer.pair    ? fin(A.doPairFight, [d, list.slice(0,2), offer, o.tactic || "measured", null, null])
             : offer.venatio ? fin(A.doVenatio,   [d, list[0], offer, o.tactic || "measured", null, null])
-            :                 fin(A.doFight,     [d, list[0], offer, o.tactic || "measured", null, null, null, o.plan || "none"]);
+            :                 (()=>{ const bt = betFor(d, offer, list[0], o);
+                                       if(bt){ d.gold -= bt.amount; d.flags.lastBet = d.week; R.wagers = (R.wagers||0)+1; }
+                                       return fin(A.doFight, [d, list[0], offer, o.tactic || "measured", bt, null, null, o.plan || "none"]); })();
       if(r && r.__err) return { ran:false, err:r.__err };
       R.bouts++;
       const held = !!(r && r.crux);
@@ -225,6 +244,14 @@ export async function installRope(p){
          cells, buy, doctore, build, rites, census, staff, school, heir, rome, bout  (all default true)
          gear, party                                                        (default TRUE from v3.17.0)
          contract                                                           (default TRUE from v3.20.0)
+         bet           (denarii — back the house's man on every SINGLE bout it takes, at the chance
+                        the arena panel's `makeBet` stores. Default OFF, and off is the honest
+                        default: measured over 24 houses on three seed prefixes wagering 5% of the
+                        purse, the arm lived 125w median against the control's 146w and ended on
+                        35d against 118d, so it is not free. What it reaches that nothing else did
+                        is `bookEye` — 22 of the 24 opened it by median week 2 and 14 sat at the
+                        third-off cap by week 33 — which is how #162 was measured. `betAgainst`
+                        tells the man to go down instead, which is a different game entirely.)
          bench         (a list of gladiator ids never sent to the sand — the control arm for #135;
                         they train and age and cost as usual, they are simply never picked)
          nem           (default TRUE from v3.24.0 — answers the arch-rival and names the day when it
@@ -604,6 +631,7 @@ export async function installRope(p){
           wantStakes:   d.rome ? null : (o.wantStakes || (o.preferStakes ? null : (o.stakes || "standard"))),
           preferStakes: d.rome ? null : (o.preferStakes || null),
           choice: o.choice || "press",
+          bet: o.bet || null, betAgainst: !!o.betAgainst,
           pick: us => { const pr = us.filter(x=>x.primus); return (pr.length ? pr : us)
             .sort((a,b)=>(b.purse||0)-(a.purse||0))[0]; } });
         if(t && t.ran !== false){

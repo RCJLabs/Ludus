@@ -13663,7 +13663,30 @@ const HUNT_SAY = {
   defensive:  "Point out, ground given, no more of himself spent than he must. The safest morning on offer by some way, and it costs a few beasts that a bolder man would have finished.",
   showboat:   "He plays it to the tiers with a thing that does not care about tiers. Fewer kills, and a name they keep.",
 };
-const oddsFor = p => Math.max(1.05, (1/clamp(p,0.02,0.98)) * (1-VIG));
+/* ---- ONE PRICE, STRUCK ONCE ----
+   The panel printed `oddsFor(p)` — the bare constant vig — and `settleBet` inlined a different
+   formula and paid THAT. Measured, 24 won wagers a cell at 400d, the game's own payout sentence
+   against the game's own quote:
+     eye 0, no trait   quoted 1.95, paid 1.95     — the only cell the two agreed on
+     eye 1             quoted 1.95, paid 1.84     42d short of the 778d the panel implied
+     eye 3             quoted 1.95, paid 1.62    128d short
+     eye 6             quoted 1.95, paid 1.30    256d short — a third of the payout
+     eye 0, `shrewd`   quoted 1.95, paid 2.08     54d MORE than quoted
+   `bookEye` shortens the board 5.5% for every wager the house has won and `lanVig` halves the vig
+   for a lanista who has won five of them, and the panel's number knew about neither, though the
+   wager row prints `bookEyeWord` in prose two inches below it. And the eye is not a corner: over
+   24 houses on three seed prefixes that wager 5% of the purse on every single bout, 22 opened it
+   by median week 2 — the first won wager — and 14 sat at the third-off cap by median week 33.
+   One function now, and `settleBet` pays what the board says. */
+const oddsFor = (d, p) => Math.max(1.05, (1/clamp(p,0.02,0.98)) * (1-lanVig(d)) * bookEye(d));
+/* ---- AND STRUCK ON THE SHEET'S MAN ----
+   The panel priced the INFORMED probability — prep edge in, the foe's tactic in once he had been
+   watched — while the wager was placed on `winChance(g, opp, 0, tactic)`, which knows neither. Six
+   weeks of drill quoted 1.09 to 1 on a board that was in fact offering 1.95: 344d of a 400d wager,
+   and backwards, because it is the drilled man the wager row itself calls "the whole of what a
+   wager is for". The board's probability lives here now, and the panel and `makeBet` both take it
+   from the same place. */
+const betChance = (g, opp, tactic) => winChance(g, opp, 0, tactic);
 const oddsWord = o => `${o.toFixed(2)} to 1`;
 
 function settleBet(d, g, offer, bet, won, res){
@@ -13672,7 +13695,7 @@ function settleBet(d, g, offer, bet, won, res){
   const p = bet.chance;
   const backedHim = !bet.against;
   const hit = backedHim ? won : !won;
-  const odds = Math.max(1.05, (1/clamp(backedHim ? p : 1-p, 0.02, 0.98)) * (1-lanVig(d)) * bookEye(d));
+  const odds = oddsFor(d, backedHim ? p : 1-p);
   if(hit){
     const pay = rnd(bet.amount * odds);
     d.gold += pay;
@@ -18935,7 +18958,7 @@ export default function App(){
 
   /* the bookmaker prices what you actually told him to do, not a neutral bout */
   const makeBet = (g, opp)=> stake>0 && S.gold>=stake
-    ? { amount:stake, against, chance:winChance(g, opp, 0, tactic) } : null;
+    ? { amount:stake, against, chance:betChance(g, opp, tactic) } : null;
   const fightOffer = (offer)=>{
     if(!fGid) return;
     const d = clone(S);
@@ -24900,6 +24923,31 @@ export default function App(){
                 <span className="tag">The bookmakers</span>
                 {stake>0 && <span className="gold" style={{fontSize:"var(--fs-base)"}}>{stake}d at risk</span>}
               </div>
+              {(()=>{ /* ---- THE PRICE, WHERE THE WAGER IS ----
+                     It used to sit on the offer panel only, so the pits — which take a wager through
+                     this same row — showed no price at all, and the one it did print was struck on the
+                     player's own informed chance rather than on the board's. Both fixed: `betChance` is
+                     what the wager is placed on and `oddsFor` prices it with the vig and the eye the
+                     book will actually apply. A pit bout with nobody picked yet has no opponent to
+                     price — the cellar decides that at the horn — so it says so instead of inventing
+                     a number. */
+                const meB = fGid ? activeG(S).find(x=>x.id===fGid) : null;
+                const foe = pick.kind==="single" ? (pick.o && pick.o.opp)
+                          : pick.kind==="pits" && pitPick!=null ? (S.circuit||[]).find(x=>x.id===pitPick)
+                          : null;
+                if(!meB) return null;
+                if(!foe)
+                  return pick.kind==="pits"
+                    ? <div className="dim" style={{fontSize:"var(--fs-base)",marginBottom:7,fontStyle:"italic"}}>No price until you name the man. They do not take a wager on whoever turns up.</div>
+                    : null;
+                const pb = betChance(meB, foe, tactic);
+                return (
+                  <div style={{fontSize:"var(--fs-base)",marginBottom:7}}>
+                    <span className="dim">The board: </span>
+                    <span className="gold">{oddsWord(oddsFor(S, pb))}</span>
+                    <span className="dim"> on {meB.name} · {oddsWord(oddsFor(S, 1-pb))} against</span>
+                  </div>
+                ); })()}
               <div className="flex gap-2" style={{flexWrap:"wrap",marginBottom:7}}>
                 <button className={`chip ${stake===0?"on":""}`} onClick={()=>{setStake(0);setAgainst(false);}}>No wager</button>
                 {stakesFor(S).map(v=>(<button key={v} className={`chip ${stake===v?"on":""}`} disabled={S.gold<v} style={S.gold<v?{opacity:.4}:undefined} onClick={()=>setStake(v)}>{v}d</button>))}
@@ -25180,7 +25228,6 @@ export default function App(){
                   </div>
                 </div>
               ) : null}
-              {me && <div style={{fontSize:"var(--fs-base)",marginTop:6}}><span className="dim">Bookmakers: </span><span className="gold">{oddsWord(oddsFor(p))}</span><span className="dim"> on {me.name} · {oddsWord(oddsFor(1-p))} against</span></div>}
               {tacticRow}
               {entranceRow}
               {wagerRow}
@@ -25721,7 +25768,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        handle, so no check could ask it directly whether its gates open. */
     familyWeek, childAge, livingKids, marryReady,
     /* the bookmakers' price, which is how the panel actually tells a player what he is walking into */
-    oddsFor, oddsWord,
+    oddsFor, oddsWord, betChance, VIG, lanVig, bookEye, bookEyeWord, settleBet,
     REP_ORDER, REP_KINDS,
     REP_SETTLE, REP_KEEP, REP_TAKE, REP_FLOOR,
     /* the lanista's climb: the rungs, the gates, and what standing pays and costs */

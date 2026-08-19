@@ -1392,7 +1392,20 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.50.0 — #163 closed, and its clause did NOT falsify: with a rope that
+**Shipped and verified:** v3.51.0 — #162 closed, and its clause did NOT falsify: the arena panel
+quoted one price and `settleBet` paid another, in **seven of eight** trait-and-eye cells. Measured off
+the game's own payout sentence against the game's own quote, 24 won wagers a cell at 400d: the panel
+said 1.95 to 1 everywhere while the book paid 1.30 at `bookEye` 6 (**256d short of the 778d the quote
+implies, a third of the payout**) and 2.08 for a `shrewd` lanista (54d more). Neither term was in the
+panel's number, though the wager row prints the eye's own warning in prose two inches below it. **And
+the third fault ran the other way**: the price was struck on the player's INFORMED chance while the
+wager is placed on the sheet's, so six weeks of drill quoted **1.09 to 1 on a board offering 1.95** —
+backwards, and against exactly the player the wager row calls "the whole of what a wager is for". Not
+a corner either: with a `bet` lever on the rope (which had never placed a wager), 22 of 24 houses over
+three seeds opened the eye by **median week 2** and 14 sat at the third-off cap by week 33. One
+`oddsFor(d, p)`, one `betChance`, and the price moved into the shared wager row so the **pits** have
+one at last. `board` is the 68th check, negative-tested both ways. Suite green at **68/68**.
+v3.50.0 — #163 closed, and its clause did NOT falsify: with a rope that
 borrows when short and repays everything above its reserve, **the loan is a fuse under every lender**
 — never borrowing lives a median **156w with 16 of 72 alive at 420**, against 62w/3 (Gratus), 42w/1
 (Scaeva) and 42w/0 (Murena), with 30-52 of 72 foreclosed. So the panel says so now: each lender's row
@@ -2674,11 +2687,30 @@ item is to make the check call them directly so the count means something.
 function underneath it. *Falsifies if:* the churn bar is a sufficient guard — it is a real bar and it
 caught the fault once, so this may be a coverage artefact rather than a hole.
 
-**#162 — the bookmaker quotes odds at the player and nothing checks them.** `oddsFor`, `oddsWord`,
-`bookOf`, `foeSeen`, `foeTactic` — 0 of 67. The `odds` check compares the quote against the sand at
-three coarse bands ("even quoted 41% · the sand gave 40.6%") and touches none of the five. #150 found
-a panel quoting a number the engine would not roll, on a system with four entries; this is the same
-shape on a bigger surface. *Falsifies if:* the three-band comparison already covers what these five do.
+**#162 — CLOSED in v3.51.0. The clause did not falsify, and the panel was wrong in three separate
+ways at once.** The `odds` check holds the PROBABILITY against the sand; the PRICE is different
+arithmetic and nothing had ever looked at it. Measured off the game's own payout sentence ("The
+bookmakers pay N denarii at X to 1") set beside the game's own quote, 24 won wagers a cell at 400d,
+the two agreed in **one of eight cells**:
+
+| shrewd | eye | panel | paid | 400d pays | the panel implied |
+|---|---|---|---|---|---|
+| no | 0 | 1.95 | 1.95 | 778d | 778d |
+| no | 1 | 1.95 | 1.84 | 736d | 778d |
+| no | 3 | 1.95 | 1.62 | 650d | 778d |
+| no | 6 | 1.95 | 1.30 | 522d | 778d |
+| yes | 0 | 1.95 | 2.08 | 832d | 778d |
+| yes | 6 | 1.95 | 1.39 | 557d | 778d |
+
+`bookEye` shortens the board 5.5% for every wager the house wins, to a third off; `lanVig` halves the
+vig for a lanista carrying `shrewd`, earned at five wagers won. The panel's number knew about neither,
+though the wager row prints `bookEyeWord` in prose two inches below it. **And the third fault ran the
+other way**: the panel priced the INFORMED chance while `makeBet` stored `winChance(g, opp, 0,
+tactic)`. Six weeks of drill quoted **1.09 to 1 on a board that was offering 1.95** — 344d of a 400d
+wager, understated, and backwards, directly above a sentence reading "It does not know your man has
+drilled for this one, and that is the whole of what a wager is for." One `oddsFor(d, p)` now, one
+`betChance`, and the price moved into the wager row so the **pits** — which take a wager through the
+same row and showed no price at all — have one too. `board` is the 68th check and negative-tested.
 
 **#163 — CLOSED in v3.50.0. The clause did not falsify: the loan is a fuse under every lender, and
 the panel says so now.** The clause asked whether a house that borrows and SERVICES the debt is
@@ -2755,6 +2787,90 @@ a proximity line at all."* `d.acclaim` gates `masterOpen` (the master armourer),
 one line in a panel rather than a system nobody can see.
 
 ## Changelog (shipped)
+
+### v3.51.0 — #162: the board quoted one price and the book paid another
+
+`odds` holds the arena panel's PROBABILITY against the sand and has done since v2.90.0. Nothing had
+ever looked at the PRICE, which is different arithmetic with two terms the panel did not have.
+
+The instrument is the game arguing with itself: `settleBet` writes its own sentence — "The bookmakers
+pay N denarii at X to 1" — so the measurement is that sentence parsed out of the return, set beside
+`oddsWord(oddsFor(p))`, the game's own quote, on the same chance. No formula is copied anywhere in it.
+24 won wagers a cell at 400d:
+
+    shrewd  eye     panel    paid    400d pays    the panel implied
+    no       0      1.95     1.95       778d          778d       the one cell that agreed
+    no       1      1.95     1.84       736d          778d       42d short
+    no       3      1.95     1.62       650d          778d       128d short
+    no       6      1.95     1.30       522d          778d       256d short — a third of it
+    yes      0      1.95     2.08       832d          778d       54d MORE than quoted
+    yes      6      1.95     1.39       557d          778d       221d short
+
+Two missing terms. `bookEye` shortens the board 5.5% for every wager the house has won, to a third
+off. `lanVig` halves the vig for a lanista carrying `shrewd`, which is earned at five wagers won. The
+player was TOLD about the first — `bookEyeWord` prints in the wager row from the first won wager, up
+to "Nobody in Capua will give you a real price any more" — while the number beside it did not move.
+
+#### And it is not a corner
+
+The rope had never placed a wager: every call passed `null` for the bet, so nothing in this project
+had settled one and `bookEye` had never opened. With a `bet` lever on the harness, 24 houses over
+three seed prefixes wagering 5% of the purse on every single bout, each against the same house never
+wagering (control first, on every seed):
+
+    opened the eye at all       22 of 24, median week 2 — the first won wager
+    earned `shrewd`             15 of 24, median week 14
+    at the third-off cap        14 of 24, median week 33
+    median life                 never wagers 146w · wagers 125w
+    median gold at the end      never wagers 118d · wagers 35d
+
+So the wager is not a fuse the way the loan is; it is simply mispriced on the panel from about the
+second week of any house that takes one.
+
+#### The third fault ran the other way, and hit the player the design is built around
+
+The panel priced `p` off the informed man — prep edge in, the foe's tactic in once he had been watched
+— while `makeBet` stored `winChance(g, opp, 0, tactic)`, which knows neither:
+
+    blind      panel 45.2%   wager 45.2%    1.95 against 1.95      agreed
+    watched    panel 41.2%   wager 45.2%    2.14 against 1.95      77d over on 400d
+    drilled    panel 80.9%   wager 45.2%    1.09 against 1.95      344d UNDER on 400d
+    both       panel 78.3%   wager 45.2%    1.12 against 1.95      329d under
+
+Six weeks of drill made the panel quote **1.09 to 1 on a board that was in fact offering 1.95**, two
+inches above the wager row's own sentence: "It does not know your man has drilled for this one, and
+that is the whole of what a wager is for." The number contradicted the prose beneath it, and in the
+direction that talks the player out of the one wager the design says is worth taking.
+
+#### What changed
+
+One price, struck once. `oddsFor(d, p)` carries the vig and the eye and `settleBet` calls it instead
+of inlining a second copy. `betChance(g, opp, tactic)` is the board's probability — the sheet's man,
+no prep, no read — and `makeBet` and the panel both take it from there. The player's own informed
+reading stays exactly where it was, on the offer, which is where it belongs.
+
+The price also moved into the wager row, which is shared: **the pits take a wager through that row and
+showed no price at all**. They have one now, off the circuit fighter the player has picked, and when
+he has picked nobody it says so rather than inventing a number — the cellar decides that at the horn.
+
+#### The 68th check, and what it holds
+
+`board` holds the quote against the payout over the whole grid of trait and eye, off the engine's own
+sentence; that both terms still move the price, so a constant cannot pass by reverting `settleBet`
+with it; that `betChance` is blind to prep and to the watch while the informed reading is not; that
+the payout is the arithmetic it prints; that the eye opens on a won wager and never on a lost one and
+that its words track its number; `bookOf`'s six derivations; and that a read is bought rather than
+guessed and the man across the sand fights the same way every time he is asked. Negative-tested both
+ways: the quote bar fails in seven of eight cells on the unfixed price, and the sheet bar fails on an
+informed `betChance`.
+
+**Two faults in the check itself, both the same shape — a subject that never moved.** `bookBout(d, o)`
+takes two arguments and the first draft passed four, so the gladiator landed in `o`, `o.win` and
+`o.crowd` and `o.rounds` were all undefined, and the book read three bouts at nought per cent, nought
+crowd and nought rounds — every bar below it would have held against a book that had recorded nothing.
+And the drilled arm set a `prep` object with no `fid`, which `prepFor` requires to match
+`offer.oppRef.fid`, so it read an edge of 0.00 in all four arms and would have reported that the drill
+changes nothing. Both are named in the check's own comments where they happened.
 
 ### v3.50.0 — #163: the loan is a fuse under every lender, and the panel now says so
 
