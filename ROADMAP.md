@@ -1392,7 +1392,15 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.46.0 — #155 refuted on its own clause: the 2.7% #142 derived was for the
+**Shipped and verified:** v3.47.0 — #152's second cluster driven: Rome's nine readouts hang off one
+number, and measuring it found that the imperial games are won about **1% of the time** — 400 bouts
+across 32 houses, 4 won, **no house ever banking a triumph** — so three of the four `ROME_PRIZES`,
+`ROME_TURNS.watched` and `romeGreeting`'s triumph branch are unreached content. Adds `imperial`, the
+67th check, holding the standing ladder's arithmetic, all four of `romeWord`'s bands, the prize table
+and the summit claim, and recording the win rate rather than barring on it. **Opens ten items,
+#156-#165** — two out of Rome, one on the reference player's own party policy, five more coverage
+clusters, and two loose ends this session left. Suite green at **67/67**, `survive` drawing (2,5).
+v3.46.0 — #155 refuted on its own clause: the 2.7% #142 derived was for the
 CONJUNCTION alone, and the observed "9%" pooled it with the catastrophe net and with one run that
 failed under a constant since retired. Re-scored over 58 runs the conjunction fires at 3.4% against a
 derived 2.7% — on budget — and `standing === 0` at 3.4% against about 1.4% expected, which is two
@@ -2575,7 +2583,141 @@ single number is what opened this item. It splits by bar now, re-scoring the sto
 current constants rather than trusting the `pass` flag, which is only what the bar said on the day.
 Neither the bar nor `HOUSES` was touched: a check that stops firing is not the goal.
 
+**#156 — the imperial games are won once in a hundred, so half of Rome cannot be reached.** 400 bouts
+on the imperial sand across 32 houses (16 played, 16 with the ledger held up, 900 weeks each):
+**4 won — 1.0%**. **No house banked a triumph**, which wants two of three in one trip. The man sent
+averages **73-80** on the mean of his class's key stats; the man met averages **98.7-98.9**, because
+`makeImperialBout` draws at quality 100+ and then adds `ri(1,4)` to every key stat, which the 99 clamp
+catches. The best man any house ever sent — 98.3 — met a floor of 95.8. Left unreached: `ROME_PRIZES`
+1-3 (1,800d, 3,600d and 7,000d), `ROME_TURNS.watched`, and `romeGreeting`'s triumph branch. *Falsifies
+if:* an arm that pours everything into one man wins two of three — `season` and `bench` exist for
+exactly that policy. If none can, the question is whether the summit should have a gradient at all:
+pinned at the clamp, a house that improves cannot improve its odds.
+
+**#157 — Rome's standing is bought by turning up, and paid for in blood.** `romeStanding = runs*12 +
+triumphs*26 + best*8`, so nine trips reach 100 with no wins at all. Measured: houses reached Rome up
+to **seventeen times**; `romeWord` said "they know your house in Rome" for **12 of 16** granted houses
+and **4 of 16** played ones, **not one of which had ever won a bout there**. And standing feeds
+`romeSineOdds`, which takes the death-match share from **50% to 72%**. The house Rome knows best is
+the house that has lost there most, and it is put in a fight to the death three times in four.
+*Falsifies if:* that share is not actually paid in men — count burials per trip against standing. If
+it is, the repair is that standing should read what you did rather than how often you came.
+
+**#158 — the reference player entertains on the wrong schedule, and it costs a whole rung.** The rope
+hosts a party whenever spare allows. An arm that hosts **only when favour slips below 92** and banks
+the rest of the time reaches median census rung **5 against 4**, and rung 6 in **5 of 16 houses
+against 0** (16 houses × 700 weeks, three seeds), while holding more coin (median peak 19,225 against
+15,645). *Falsifies if:* the gain is the banking and not the timing — the control is a third arm that
+banks the same and parties every week regardless. This reaches further than the ladder: every figure
+this project quotes is taken on the rope, and a rope with a beatable policy in it is a systematic bias.
+
+**#159 — what Capua calls you: seven functions, nought calls.** `addRep`, `repLeader`, `repOf`,
+`repShare`, `repSettle`, `repTotal`, `repWeek` — reached by **0 of 67 checks**. `chair` drives
+`repStyle` and nothing underneath it. This system sets the lanista's traits, half of `disgrace`'s gate
+and what the town says about the house. *Falsifies if:* they are pure readers the UI calls and no
+check would sensibly drive — which is #152's own clause, and the clause the Rome cluster failed.
+
+**#160 — the bay and the road: six functions, nought calls.** `baySince`, `bayStandard`, `bayWorth`,
+`cityAfter`, `cityCustom`, `cityTier` — 0 of 67. `coast` drives the tour itself; these are what a town
+is worth, what it remembers and how fast it forgets. *Falsifies if:* `coast` reaches them through the
+UI rather than the handle, which `coverage`'s own caveat explicitly allows for — in which case the
+item is to make the check call them directly so the count means something.
+
+**#161 — the agenda's own six are dark, and two of them are v3.35.0's fix.** `agAgeBy`, `agWord`,
+`agendaCan`, `agendaGods`, `agendaSquare`, `agendaTick` — 0 of 67. `agAgeBy` and `agendaTick` ARE
+#144's repair, shipped with a check (`week`) that holds the churn RATE rather than the identity
+function underneath it. *Falsifies if:* the churn bar is a sufficient guard — it is a real bar and it
+caught the fault once, so this may be a coverage artefact rather than a hole.
+
+**#162 — the bookmaker quotes odds at the player and nothing checks them.** `oddsFor`, `oddsWord`,
+`bookOf`, `foeSeen`, `foeTactic` — 0 of 67. The `odds` check compares the quote against the sand at
+three coarse bands ("even quoted 41% · the sand gave 40.6%") and touches none of the five. #150 found
+a panel quoting a number the engine would not roll, on a system with four entries; this is the same
+shape on a bigger surface. *Falsifies if:* the three-band comparison already covers what these five do.
+
+**#163 — the loan is a twenty-five-week fuse and no policy has ever repaid one.** Borrow Murena's cap
+— 2,400 at 5.8% a week — against a gate of four times principal: ln4/ln1.058 is 24.6 weeks, and
+**22-24 of 24 houses foreclose at week 26 holding 9,825 owed, with no variance between them at all**.
+`repay` is correct on a bench (v3.40.0) and is driven by nothing. *Falsifies if:* a house that borrows
+and services the debt is measurably better off than one that never borrows — in which case the loan is
+a tool and the item is to teach the rope to use it. If it is never worth it, the fuse is the design and
+the item is to say so where the player takes the money.
+
+**#164 — a new ending became a plurality for one policy and nothing measured what it displaced.**
+v3.38.0's two-term `disgrace` fires for **10 of 21 dead houses** in `ends`' own `careless` arm over 120
+weeks, and 7 / 9 / 4 of 24 in the probe's blood arms. Those houses used to end `ruin`. *Falsifies if:*
+the displacement is exactly the houses whose story it tells — the test is the week each would have
+ended under the old gate. **An ending that fires EARLIER than the one it replaced shortens runs**, and
+no measurement has looked at that.
+
+**#165 — acclaim is computed every week and shown to nobody.** `near`'s own printed output says it:
+*"acclaimTarget reads 14.0 against acclaim 0.0 — a rate read by acclaimWeek, shown to nobody, and not
+a proximity line at all."* `d.acclaim` gates `masterOpen` (the master armourer), `merchLive` at 62,
+`streetVoice` and `acclaimCrowd`, and Rome's prizes pay into it — and `acclaimIdx`, `acclaimWeek`,
+`fansOf`, `pietyFame`, `buried20`, `monuReady`, `openLicenceNow` and `holdTourney` are all dark.
+*Falsifies if:* the tier is on screen somewhere and only the target is hidden, in which case this is
+one line in a panel rather than a system nobody can see.
+
 ## Changelog (shipped)
+
+### v3.47.0 — #152's second cluster: Rome's nine, and the half of Rome that cannot be reached
+
+`coverage` groups the 144 exposed functions no check calls. With the steel-keeping twelve closed in
+v3.43.0, the largest remaining cluster was Rome's own readouts — `romeRuns`, `romeTriumphs`,
+`romeStanding`, `romeWord`, `romePrize`, `romePurseMult`, `romeSineOdds`, `romeGreeting` and
+`makeImperialBout`. Eight of the nine hang off one number:
+
+    romeStanding = clamp(runs*12 + triumphs*26 + best*8, 0, 100)
+
+so the first question was never whether the readouts are correct. It was whether their input moves.
+
+#### It moves, and only one of its three terms ever does
+
+16 houses × 900 weeks, played and again with the ledger held up (`test/probes/imperial.mjs`):
+
+    houses that reached Rome at all      11 of 16 played · 16 of 16 granted
+    twice or more                         6 of 16 played · 15 of 16 (one got there SEVENTEEN times)
+    bouts fought on the imperial sand     88 played · 312 granted
+    bouts WON                              0 and 4 — about ONE PER CENT
+    houses that ever banked a triumph      0 of 32
+
+The man sent averages **73-80** on the mean of his class's key stats. The man met averages
+**98.7-98.9**: `makeImperialBout` draws at quality 100+ and then adds `ri(1,4)` to every key stat,
+which the 99 clamp catches, so he sits on the ceiling. The best man any house ever sent — 98.3 — met
+a floor of 95.8. A triumph wants two wins of three in one trip; at a one-per-cent bout that is about
+a twentieth of a per cent, and zero in thirty-two houses is exactly what it should be.
+
+**So the standing ladder is climbed by attendance and `romeTriumphs` stays nought**, which leaves
+dark, inside a system a house takes twenty years to reach: three of the four `ROME_PRIZES` (1,800d,
+3,600d and 7,000d), `ROME_TURNS.watched`, and `romeGreeting`'s triumph branch. Content, written and
+priced, that the game does not deliver. That is **#156** and **#157**, and neither is fixed here —
+the difficulty is deliberate, `makeImperialBout`'s own comment says so at length, and whether it is
+too deliberate is a design question that wants its own measurement rather than a number nudged
+inside a coverage release.
+
+#### `imperial`, the suite's 67th check
+
+What a coverage check can honestly hold: the arithmetic and the reachability of the LADDER.
+
+    0/0/0 -> standing   0 · "nobody at all"                · purse x1     · sine 0.5
+    1/0/2 -> standing  28 · "a name they half recognise"   · purse x1.126 · sine 0.562
+    1/1/2 -> standing  54 · "Rome has heard of you"        · purse x1.243 · sine 0.619
+    2/2/3 -> standing 100 · "they know your house in Rome" · purse x1.45  · sine 0.72
+
+All four of `romeWord`'s bands sit on a ladder a house can climb, `romeGreeting` gives four distinct
+lines across its four states, all four prizes are addressable and each is dearer than the last, and
+the two multipliers are checked against their own formulas at every rung. It bars on the summit claim
+itself — the imperial man must draw harder than Capua's best, because that sentence is why the
+numbers are where they are — and on the reward for coming back reaching the card: a house Rome knows
+is offered 77% sine and a median 5,606d against a stranger's 53% and 3,357d.
+
+The win rate is **recorded and not barred**. A check that fails because the game is hard is a check
+that will be edited until it stops, and the honest place for that number is the roadmap.
+
+**One instrument fault, mine, caught by the check on its first run.** Three of seven ladder rows
+failed `romeSineOdds` — because the row stores the reading to three decimal places and I compared it
+against the unrounded formula at a tolerance of 1e-6. The rounding, not the code. Both multiplier bars
+round the expectation the same way the row does now.
 
 ### v3.46.0 — #155: one percentage, three populations, and a bar that was on budget all along
 

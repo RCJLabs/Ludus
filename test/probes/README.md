@@ -34,6 +34,7 @@ Run them straight:
     node test/probes/kit.mjs 40 KIT       # #149: the steel ledger, the forged piece, and the four dark doors
     node test/probes/quiet2.mjs 12 320 GAM  # #150: runGambit's nulls split by its own guards, and the panel's odds
     node test/probes/rung.mjs 16 700 RUNG   # #151: the census ladder's four terms, split, plus a free-grant bound
+    node test/probes/imperial.mjs 16 900 ROME  # #152: Rome's nine readouts, and what the trip is actually worth
     node test/probes/finish.mjs 24 900 SEED # #147: nine arms, one per ending, and the RUINS gates split by term
     node test/probes/succ.mjs 30 1400 SEED [grant]  # #147: the second generation, with and without a free ledger
 
@@ -312,6 +313,24 @@ describe a SHAPE rather than a difficulty, so each became a measurement:
 Run it under `reckless`, `neglect` and `bare` as well as `default` before quoting any of it — #139
 was a finding that held on the reference player and flipped on the others, and this probe's header
 carries that lesson. Both surviving claims here hold under all four.
+
+**`imperial.mjs`** — #152's second coverage cluster, and an example of asking the right question
+first. Rome's nine readouts look like nine things to check; eight of them hang off `romeStanding`, so
+the only question that matters is whether its three terms move. Two of them never do: over 32 houses
+and 400 bouts on the imperial sand the win rate is **1%** and no house ever banks a triumph, so the
+ladder is climbed by attendance alone and three prizes, one `ROME_TURN` and one greeting branch are
+unreached content.
+
+**The comparison that explains it is the one `makeImperialBout`'s own comment invites.** Its note says
+the summit had once been measurably softer than a good Tuesday at home and was raised for it — which
+is a claim about two distributions, so the probe draws both 160 times from the same house and takes
+the mean of the class's key stats. 98.6 against 96.9, with a median 10 career wins against 0. The
+opponent is on the 99 clamp; the man sent averages 73-80. **When a source comment states a comparison,
+run the comparison — it is a measurement somebody already framed for you.**
+
+It also carries a granted arm, because "does a house reach Rome twice" and "does a house survive long
+enough to" are different questions, and the pair separates them: 6 of 16 played houses get there
+twice, 15 of 16 do with the ledger held up, and one reaches it seventeen times without ever winning.
 
 **`rung.mjs`** — #151, and the third conjunction-split in this directory after `nemesis` and `finish`.
 `canClaimRise` wants fame, favour, coin held and a full standing meter, and `riseNeed(d)` hands all
