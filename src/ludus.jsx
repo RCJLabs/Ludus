@@ -1993,6 +1993,31 @@ const REP_SETTLE = 0.36;   /* what it takes to be given a name */
 const REP_KEEP   = 0.30;   /* and what it takes to keep the one you have */
 const REP_TAKE   = 0.06;   /* how far another must be clear to take it off you */
 const REP_FLOOR  = 14;     /* below this the town has not been paying attention */
+/* ---- AND THE CAP WAS TURNING THE WHOLE THING OFF (#159) ----
+   Each tally was clamped at 120 and every one of them decays 1.5% a week, so a tally settles at
+   `inflow / 0.015`. A house that plays a rounded game feeds all four past that clamp inside a
+   couple of hundred weeks, and then the arithmetic closes the system:
+
+       with the other three at a cap C, the leader needs 3C·s/(1−s) to hold share s
+       SETTLE 0.36 → 202.5   ·   KEEP 0.30 → 154.3   ·   and the cap was 120
+
+   Both are above the cap, so a house whose other three tallies saturate MUST lose its name and can
+   never win another. Measured over 30 houses of 420 weeks with the ledger held up — the long-lived
+   arm, where saturation actually happens — the town had no name at all for **72.3% of the weeks**,
+   said "blood" and "show" for **nought weeks of 10,878**, and changed its mind **0 times** while
+   dropping a name 32 times. `hard` was earned by 0 houses of 60 and `merciful` by 1 of 30; both
+   want fifteen straight weeks of one name.
+
+   No threshold is nudged — the three shares are what they were. The cap's job is to bound pathology
+   and it had become the thing shaping the name, so it is derived now from the decay it fights: the
+   equilibrium of a house earning REP_CAP_RATE of one kind every week for ever. The most any of
+   thirty long-lived houses ever put on a single kind with the cap lifted entirely was 232.5, so this
+   sits clear of ordinary play and binds nothing a real house does. Paired on the same seeds, the
+   nameless share falls 72.3% → 18.4% with the ledger held up and 23.1% → 6.3% in ordinary play, and
+   the median life is 56 weeks either way. */
+const REP_DECAY    = 0.985;
+const REP_CAP_RATE = 4.5;                                        /* a house doing nothing else */
+const REP_CAP      = Math.round(REP_CAP_RATE / (1 - REP_DECAY)); /* 300 */
 /* Twenty-one places read this and not one of them ever said so. What a settled
    reputation is actually buying, and costing, in the words the mechanics use. */
 const REP_EFFECTS = {
@@ -2060,11 +2085,11 @@ function repSettle(d){
 const repShare = (d,k) => { const t = repTotal(d); return t? repOf(d,k)/t : 0; };
 function addRep(d, k, n){
   if(!d.rep) d.rep = { blood:0, show:0, craft:0, mercy:0 };
-  d.rep[k] = clamp(d.rep[k] + n, 0, 120);
+  d.rep[k] = clamp(d.rep[k] + n, 0, REP_CAP);
 }
 function repWeek(d){
   if(!d.rep) d.rep = { blood:0, show:0, craft:0, mercy:0 };
-  for(const k of REP_ORDER) d.rep[k] = Math.max(0, d.rep[k] * 0.985);
+  for(const k of REP_ORDER) d.rep[k] = Math.max(0, d.rep[k] * REP_DECAY);
   repSettle(d);                 /* the town makes up its mind once a week, not once a render */
   const st = repStyle(d);
   if(st){
@@ -25948,7 +25973,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* the bookmakers' price, which is how the panel actually tells a player what he is walking into */
     oddsFor, oddsWord, betChance, VIG, lanVig, bookEye, bookEyeWord, settleBet,
     REP_ORDER, REP_KINDS,
-    REP_SETTLE, REP_KEEP, REP_TAKE, REP_FLOOR,
+    REP_SETTLE, REP_KEEP, REP_TAKE, REP_FLOOR, REP_CAP, REP_DECAY, REP_CAP_RATE, REP_EFFECTS, repShareOf,
     /* the lanista's climb: the rungs, the gates, and what standing pays and costs */
     /* the four nights a man is known for */
     markNight, NIGHTS, nightWhere,

@@ -1392,7 +1392,19 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.53.0 — #165 half-falsified on inspection and closed on what was left.
+**Shipped and verified:** v3.54.0 — #159 closed, and the clause falsified: nothing in the reputation
+system is a pure reader, and the system was **arithmetically switching itself off**. Four tallies
+clamped at 120, all decaying 1.5% a week, so a tally settles at `inflow/0.015` and everything a
+rounded house feeds ends up on the clamp — at which point the leader needs **3C·s/(1−s)**, or 202.5 to
+be named and 154.3 to keep it, both past the cap. A house whose other three saturate MUST lose its
+name and can never win another. Measured over 30 houses of 420 weeks with the ledger held up, the town
+had **no name for the house 72.3% of the time**, said "blood" or "show" for **nought weeks of
+10,878**, and changed its mind **0 times** while dropping a name 32. The repair is the cap, derived
+from the decay it fights rather than chosen — no threshold moved — and the nameless share falls to
+**18.4%** long-lived and **6.3%** in ordinary play at an identical median life and a byte-identical
+60-house opening signature. `repute` is the 69th check, negative-tested; one of its own bars could not
+see the fault it was written for until it read the decayed value. Suite green at **69/69**.
+v3.53.0 — #165 half-falsified on inspection and closed on what was left.
 The tier was always on screen — a whole villa section with a bar, the rung, the number and the blurb —
 so the headline was wrong; what was shown nowhere is `acclaimTarget`, the six-term number the level
 walks toward. Measuring it found the top of the ladder empty: 30 houses over 420 weeks on three seed
@@ -2720,11 +2732,38 @@ policy that stops at the gate gives that up. A policy with a reason still needs 
 the default is a provable no-op — 60 houses through 26 weeks identical house for house against the
 build before. A measured no-improvement is worth keeping findable.
 
-**#159 — what Capua calls you: seven functions, nought calls.** `addRep`, `repLeader`, `repOf`,
-`repShare`, `repSettle`, `repTotal`, `repWeek` — reached by **0 of 67 checks**. `chair` drives
-`repStyle` and nothing underneath it. This system sets the lanista's traits, half of `disgrace`'s gate
-and what the town says about the house. *Falsifies if:* they are pure readers the UI calls and no
-check would sensibly drive — which is #152's own clause, and the clause the Rome cluster failed.
+**#159 — CLOSED in v3.54.0. The clause falsified — nothing here is a pure reader — and the system
+was arithmetically switching itself off.** Each of the four tallies was clamped at 120 and all four
+decay 1.5% a week, so a tally settles at `inflow / 0.015` and every kind a rounded house feeds at
+more than 1.8 a week ends up sitting on the clamp. Then the arithmetic closes it:
+
+> with the other three at a cap C, the leader needs **3C·s/(1−s)** to hold share s
+> SETTLE 0.36 → **202.5** · KEEP 0.30 → **154.3** · and the cap was **120**
+
+Both above the cap, so a house whose other three tallies saturate **must** lose its name and can
+never win another — not unlikely, impossible. Measured over 30 houses of 420 weeks, paired on the
+same seeds with the control first:
+
+| | old cap 120 | derived cap |
+|---|---|---|
+| **ledger held up** (the long-lived arm) | | |
+| the town had no name for it at all | **72.3%** of 10,878 weeks | 18.4% |
+| weeks it said "blood" or "show" | 0 | 0 |
+| changed its mind / dropped a name | 0 / 32 | 0 / 19 |
+| `merciful` earned, of 30 | 1 | 0 |
+| **as the rope plays** | | |
+| no name at all | 23.1% | **6.3%** |
+| changed its mind / dropped a name | 24 / 19 | 27 / 13 |
+| `merciful` earned, of 30 | 22 | 21 |
+| median life | 56w | 56w |
+
+No threshold moved (#127's rule). `REP_CAP` is derived from the decay it fights — the equilibrium of
+a house earning `REP_CAP_RATE` of one kind every week for ever — which puts it clear of anything
+ordinary play reaches: 232.5 was the most any of thirty long-lived houses ever put on one kind with
+the cap lifted entirely. `open`'s 60-house signature is identical, because the cap cannot bind inside
+26 weeks. `hard` is earned by no house in any arm — it wants fifteen straight weeks of the blood name
+and the reference player never holds it, which is a fact about the policy, not the machinery.
+`repute` is the 69th check and holds the arithmetic that closed the system, negative-tested.
 
 **#160 — the bay and the road: six functions, nought calls.** `baySince`, `bayStandard`, `bayWorth`,
 `cityAfter`, `cityCustom`, `cityTier` — 0 of 67. `coast` drives the tour itself; these are what a town
@@ -2864,6 +2903,89 @@ cap — which was priced and shown nowhere at all. `street` gains the sum bar, t
 derived gates and the six unrelated dark readouts the item listed. Negative-tested.
 
 ## Changelog (shipped)## Changelog (shipped)
+
+### v3.54.0 — #159: the cap was deciding what Capua called you, and then stopping it saying anything
+
+`chair` holds that each of the four names is EARNABLE by a house that goes after it. That is the
+right shape for "can it be got" and it cannot see the thing underneath: what happens to a house that
+simply keeps playing.
+
+#### The arithmetic that closed the system
+
+Four tallies, each clamped at 120, all decaying 1.5% a week. A tally settles at `inflow / 0.015`, so
+any kind a rounded house feeds at more than 1.8 a week ends up sitting on the clamp. And then:
+
+    with the other three at a cap C, the leader needs 3C·s/(1−s) to hold share s
+    SETTLE 0.36 → 202.5      KEEP 0.30 → 154.3      the cap was 120
+
+Both above the cap. A house whose other three tallies saturate must lose its name and can never win
+another — that is not a probability, it is arithmetic, and it is the strongest form the finding has.
+
+#### What it looked like in play
+
+30 houses on three seed prefixes over 420 weeks, paired on the same seeds, control first:
+
+    the ledger held up — the long-lived arm, where saturation is reached
+                                              cap 120     the derived cap
+      no name at all                            72.3%           18.4%
+      weeks it said "blood" or "show"               0               0     of 10,878
+      changed its mind / dropped a name        0 / 32          0 / 19
+      `merciful` earned, of 30                      1               0
+      the tally at its highest                  457.8           574.3     of a possible 480 / 1200
+
+    as the rope actually plays
+      no name at all                            23.1%            6.3%
+      changed its mind / dropped a name       24 / 19         27 / 13
+      `merciful` earned, of 30                     22              21
+      median life                                 56w             56w
+
+The old cap left a long-lived house nameless for nearly three weeks in four, and every effect hanging
+off the name — the purse, the debts collected, which patron courts you, whether the medicus stays,
+the town's taste on the road, a gambit's odds, an extra bout on a festival card — quietly went with
+it. And two lanista traits go with it too: `hard` and `merciful` want fifteen straight weeks of one
+name.
+
+#### The repair is the cap, and it is derived rather than chosen
+
+No threshold moved — #127's rule, and the three shares are what they were. The cap's job is to bound
+pathology and it had become the thing shaping the name, so it is now the equilibrium of a stated
+inflow: `REP_CAP = REP_CAP_RATE / (1 − REP_DECAY)`, a house earning 4.5 of one kind every week for
+ever. That is clear of anything ordinary play reaches — **232.5** was the most any of thirty
+long-lived houses ever put on a single kind with the cap lifted entirely — so it binds nothing a real
+house does and still stops a runaway.
+
+`open`'s 60-house signature is byte-identical house for house, which is what the change predicts: the
+cap cannot bind inside 26 weeks, so nothing about the opening can have moved.
+
+#### What it does not fix, said plainly
+
+`blood` and `show` are the name for **nought weeks of 10,878** in the long-lived arm under both caps.
+That is the reference player's policy and not the machinery — it does not kill and it does not
+showboat — and `chair` already measures a house that chases `show` holding it 824 weeks of 917. `hard`
+is earned by no house in any of the four arms for the same reason.
+
+#### The 69th check
+
+`repute` holds the arithmetic: a house driven to equilibrium with a leader genuinely ahead of the pack
+must end up named, which is the bar the old cap fails; the cap's derivation, so it cannot drift back
+to a written-down number; that no three tallies may sit on it at once; all five constants binding —
+floor, settle, keep, take and the drop when nobody replaces it; the readers agreeing with each other;
+and each name carrying its patron, its listed effects and its weekly payment. Negative-tested: on the
+old cap it reports "a house that has earned 4 blood a week against 2 of everything else, for five
+hundred weeks, is called nothing in particular".
+
+**And one bar of my own could not see the fault it was written for.** A tally held at the cap reads
+`REP_CAP × REP_DECAY`, not `REP_CAP` — `repWeek` decays after `addRep` clamps — so the first draft
+tested `>= REP_CAP − 0.5` and printed "0 of the four tallies are sitting on the cap of 120" on the
+very build the check exists to fail. It reads the decayed value now, and reports 4 of 4.
+
+#### And a reading that nearly shipped as a finding
+
+A first pass over 12 houses read craft 57.1% of weeks and every other name at **nought**, 0 changes of
+mind, and a tally peaking at 437 — while a 30-house run on the same build read all four names used and
+24 changes of mind. Both were true. The first prefix happened to produce long-lived houses, which
+saturate; the second short-lived ones, which never do. #136's rule, and the reason the granted arm is
+the one that settles it: a house that cannot go broke is the long-lived case by construction.
 
 ### v3.53.0 — #165: the street's number was shown, and where it was going was not
 
