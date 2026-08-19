@@ -244,6 +244,10 @@ export async function installRope(p){
          cells, buy, doctore, build, rites, census, staff, school, heir, rome, bout  (all default true)
          gear, party                                                        (default TRUE from v3.17.0)
          contract                                                           (default TRUE from v3.20.0)
+         tour          (deliberate touring — the moment a town's welcome wears, move straight to
+                        whichever of the three knows the house least, never going home. #160's upper
+                        bound on `bayWide`. Implies nothing about `road`, which stays the reactive
+                        default; `tour` supersedes its come-home step.)
          bet           (denarii — back the house's man on every SINGLE bout it takes, at the chance
                         the arena panel's `makeBet` stores. Default OFF, and off is the honest
                         default: measured over 24 houses on three seed prefixes wagering 5% of the
@@ -663,8 +667,21 @@ export async function installRope(p){
          of my own, so it tracks the constant instead of drifting from it.
          AFTER the bout, because `comeHome` nulls `d.games` — deciding to leave before fighting
          throws away the card that was the reason to be there. */
-      if(on("road") && d.city && !d.travel && !d.rome && A.welcomeOf(d) < 1){
+      if(on("road") && !o.tour && d.city && !d.travel && !d.rome && A.welcomeOf(d) < 1){
         if(fin(A.comeHome,[d])) bump("cameHome");
+      }
+      /* ---- THE HOUSE THAT WORKS THE WHOLE BAY (#160) ----
+         `road` is REACTIVE: it takes the invitation `bayCall` happens to send and comes home when
+         the welcome wears. `tour:true` is the deliberate policy — break camp the same week and go
+         straight to whichever of the three towns knows the house least, never touching Capua in
+         between, because `setOut` will carry a house from one town to another directly. It is the
+         upper bound on "can a house be known the length of the bay", which `bayWide` wants at 150
+         of a possible 180 while `BAY_DECAY` takes 0.55 a week off every town you are not standing
+         in. Off by default: it is a measuring arm, not the reference player. */
+      if(o.tour && !d.travel && !d.rome && !d.over && A.welcomeOf(d) < 1){
+        const towns = (A.CITY_KEYS||[]).filter(k=>k !== d.city);
+        const next = towns.sort((a,b)=>A.knownIn(d,a) - A.knownIn(d,b))[0];
+        if(next && fin(A.setOut,[d, next])) bump("setOut");
       }
 
       /* the week's question, answered the way a solvent player would — NOT always choice 0, which on

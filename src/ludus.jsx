@@ -9868,12 +9868,54 @@ function bayWeek(d){
 }
 const bayHolder = d => (d.bay && d.bay.holder) || null;
 const baySince  = d => d.bay && d.bay.holder ? d.week - d.bay.since : 0;
+/* ---- WHERE THE AFTERNOON HAPPENS, PRICED ONCE (#160) ----
+   The six missio terms that depend on the house and the PLACE rather than on the man or the bout.
+   `doFight` built them inline and the offer panel did not build them at all: `bayWorth` turned the
+   stranger penalty into a percentage with a fixed ×2.6 and ignored the rest, so the panel printed
+   ONE number for three towns the sand puts thirty-five points apart. Measured, 120 mirrored bouts a
+   cell, counting spares among LOSSES:
+
+       a man of yours put down, spared        panel said        Pompeii      Neapolis     Puteoli
+       a town that has never seen you            51%          55.3/68.5%   90.0/88.0%   77.6/81.4%
+       a town that knows you at 50               75%          75.3/79.4%   92.2/97.5%   85.1/92.9%
+       and at home, "every time"                 —                    94.8% and 92.4%
+
+   `cityCustom`'s own missio line is −7 at Pompeii, +10 at Neapolis and +2 at Puteoli, which is
+   exactly the spread the panel was throwing away, and "against every time at home" was 94.8%.
+   One function now, and the panel prices the same terms `doFight` fights on. */
+function missioPlace(d, city){
+  const away = !!city;
+  return {
+    favor:    away ? 12 + knownIn(d, city)*0.45 : d.favor,
+    street:   streetVoice(d) * (away ? 0.35 : 1),
+    doctrine: docMissio(d),
+    aedile:   away ? cityMissio(d, city) : aedileMissio(d),
+    strange:  away ? Math.max(0, 19 - knownIn(d, city)*0.19) * docStrange(d) : 0,
+    fav:      (away ? 0 : riseFav(d)) + blessMercy(d) + pit(d, "mercy", 0),
+  };
+}
+/* ONE STATED AFTERNOON, so the two numbers are comparable and neither is an average of nothing:
+   the house's best-known man, put down at an ordinary crowd having given a fair account of himself.
+   `street` prices its own scale the same way, off the same three figures. */
+const MERCY_CASE = { crowd:62, account:42, endured:16 };
+function mercyAt(d, city){
+  const g = activeG(d).slice().sort((a,b)=>(b.pfame||0)-(a.pfame||0))[0];
+  if(!g) return null;
+  const P = missioPlace(d, city);
+  const pt = patronsOf(d).slice().sort((a,b)=>b.favor-a.favor)[0] || null;
+  const ctx = Object.assign({}, P, { tier:2,
+    fav: favMissio(g) + veteranGuard(g) + P.fav,
+    patron: pt ? { name:pt.name, favor:pt.favor } : null });
+  return missioOdds(missioScore(g, ctx, MERCY_CASE.crowd, MERCY_CASE.account, MERCY_CASE.endured, true));
+}
 /* what the bay is worth to you right now, so the offer can say it plainly */
 function bayWorth(d, key){
   const C = CITIES[key]; if(!C) return null;
   const k = knownIn(d, key);
+  const here = mercyAt(d, key), home = mercyAt(d, null);
   return { purse:C.purse, known:Math.round(k),
-    strangerMercy: Math.round(100 - Math.max(0, 19 - k*0.19)*2.6),
+    mercyHere: here == null ? null : Math.round(here*100),
+    mercyHome: home == null ? null : Math.round(home*100),
     rusting: (d.known && d.known[key] > 0 && d.city !== key) };
 }
 
@@ -14657,7 +14699,6 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   const F = (d.games && d.games.fest) ? CALENDAR.find(x=>x.key===d.games.fest) : null;
   const imperial = !!offer.imperial;
   const away = offer.city ? CITIES[offer.city] : null;
-  const localStanding = offer.city ? 12 + knownIn(d, offer.city)*0.45 : 0;
   if(!pending && g.injury && g.injury.care==="work") remember(d, g, "hurt");
   if(!pending && offer.stakes==="sine") remember(d, g, "sine");
   if(!offer.venue) offer.venue = venueFor(d, offer);
@@ -14678,8 +14719,10 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   gc.lastLate = lastNum(g,"latePow");
   gc.formStam = formStam(g);
   if(offer.stakes==="sine" && lawSine(d) && !offer.sealed){ d.gold -= lawSine(d); offer.sealed = 1; }
-  const simCtx = { plan:PE, street: streetVoice(d) * (away ? 0.35 : 1), fav:favMissio(g) + veteranGuard(g) + (away ? 0 : riseFav(d)) + blessMercy(d) + pit(d,"mercy",0), doctrine:docMissio(d), footing:V.footing * W.footing, footingB:V.footing * Wb.footing, sky:W.stam, skyB:Wb.stam, venue:V.missio, aedile: away ? cityMissio(d, offer.city) : aedileMissio(d), strange: away ? Math.max(0, 19 - knownIn(d, offer.city)*0.19) * docStrange(d) : 0,
-      favor: imperial ? Math.min(d.favor, 20) : (away ? localStanding : d.favor), tier: Math.min(offer.tier,3),
+  const PLACE = missioPlace(d, away ? offer.city : null);   /* #160: the offer panel prices these too */
+  const simCtx = { plan:PE, ...PLACE, fav: favMissio(g) + veteranGuard(g) + PLACE.fav,
+    footing:V.footing * W.footing, footingB:V.footing * Wb.footing, sky:W.stam, skyB:Wb.stam, venue:V.missio,
+      favor: imperial ? Math.min(d.favor, 20) : PLACE.favor, tier: Math.min(offer.tier,3),
       hostile:!!bribeHouse, patron: imperial ? null : (patron ? {name:patron.name, favor:patron.favor} : null),
       repShow: workPerk(d,"crowd") + femCrowd(g) + favCrowd(g) + W.crowd + provCrowd(g) + ((g.mastery && g.mastery.cls===g.cls) ? masteryCrowd(g) : 0) + signatureCrowd(g) + (repStyle(d)==="show" ? 8 : 0) + (nem ? 10 : 0) + (offer.rematch ? 8 : 0) + (away ? cityCrowd(d, offer.city) : facCrowd(d, g.cls)) + seasonCrowd(d) + V.crowd + (away ? 0 : acclaimCrowd(d)) + (g.graffiti ? 3 : 0),
       guarded: choice==="cover" };
@@ -21447,14 +21490,12 @@ export default function App(){
                           </div>
                         ); })()}
                       {knownIn(S,k)>0 ? (<>
-                        <div className="dim" style={{fontSize:"var(--fs-base)"}}>They know you there: {Math.round(knownIn(S,k))}/100 — tier {cityTier(S,k)} cards.</div>
+                        <div className="dim" style={{fontSize:"var(--fs-base)"}}>They know you there: {Math.round(knownIn(S,k))}/100 — tier {cityTier(S,k)} cards.{(()=>{ const w = bayWorth(S,k); return w.mercyHere == null ? "" : ` A man of yours put down there is spared about ${w.mercyHere} in a hundred, against ${w.mercyHome} at home.`; })()}</div>
                         {!S.city && !S.travel && <div style={{fontSize:"var(--fs-base)",color:"#d8ac5f"}}>
                           Bleeding away at {BAY_DECAY.toFixed(2)} a week while you are not in it.
                         </div>}
                       </>) : (
-                        <div className="dim" style={{fontSize:"var(--fs-base)"}}>
-                          A stranger there. A man of yours who goes down is spared about {bayWorth(S,k).strangerMercy}% of the time, against every time at home.
-                        </div>
+                        <div className="dim" style={{fontSize:"var(--fs-base)"}}>{(()=>{ const w = bayWorth(S,k); return w.mercyHere == null ? "A stranger there, and no man in the yard to say what that would cost." : `A stranger there. A man of yours put down on that sand is spared about ${w.mercyHere} times in a hundred, against ${w.mercyHome} at home.`; })()}</div>
                       )}
                       <button className="btn" style={{width:"100%",marginTop:6}} disabled={!!S.rome} onClick={()=>takeRoad(k)}>Take the road · {c.travel} week{c.travel>1?"s":""}</button>
                     </div>
@@ -25893,6 +25934,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     makeGames, makeCityGames, festivalNow, CALENDAR,
     /* the coast: what each town puts on, and what it takes from an afternoon */
     CITIES, CITY_CUSTOM, cityCustom, cityServed, cityAfter, knownIn, cityTier, bayPol,
+    missioPlace, mercyAt, MERCY_CASE, bayRomeCut, bayStandard, circuitQuality, cityMissio, cityPurse, cityCrowd,
     setOut, comeHome, stayWeeks, welcomeOf,
     /* what a fortune can be spent on once the yard is finished */
     beginWork, workOpen, workDone, workOn, workUpkeep, WORKS, MONUMENTS, ALL_WORK_KEYS,

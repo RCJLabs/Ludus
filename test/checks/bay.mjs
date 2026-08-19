@@ -310,6 +310,141 @@ export async function run({ p }){
           + `puts their grudge up 12, which is what makes turning up a decision`);
     }
 
+
+    /* ================= 5. THE NUMBER THE OFFER PANEL PRINTS — #160 =================
+       `bayWorth(d,key).strangerMercy` was `100 − max(0, 19 − known·0.19)·2.6`: the missio penalty
+       for being a stranger, turned into a percentage by a fixed factor. The engine subtracts those
+       points from a missio SCORE and puts the score through `missioOdds`, which is a logistic, so a
+       fixed factor can be right at one point on that curve and nowhere else — and the panel's
+       version dropped `docStrange` and, worse, every term belonging to the TOWN. It printed the same
+       number for three towns whose `cityCustom.missio` runs −7, +2 and +10. Measured, 120 mirrored
+       bouts a cell, counting spares among LOSSES because that is what the sentence claims:
+
+           a man of yours put down, spared    panel said     Pompeii      Neapolis     Puteoli
+           a town that has never seen you        51%       55.3/68.5%   90.0/88.0%   77.6/81.4%
+           a town that knows you at 50           75%       75.3/79.4%   92.2/97.5%   85.1/92.9%
+           and at home, "against every time"      —                 94.8% and 92.4%
+
+       `missioPlace(d, city)` is the six place terms now, `doFight` spreads it into its own context
+       and `bayWorth` prices one STATED afternoon through the engine's own `missioScore`/`missioOdds`
+       with it. What the panel prints tracks the sand and in the right order: 52/79/63 at a standing
+       of nought against 55/90/78 measured, and 92 at home against 94.8. */
+    {
+      const K = A.CITY_KEYS;
+      const d = A.newGameState("Bm", "clean", "BAY-MERCY", null);
+      d.gold = 60000; d.fame = 900; d.week = 60;
+      while(A.activeG(d).length < 3 && !A.rosterFull(d)){
+        const m = (d.market||[])[0]; if(!m || !A.buyFromBlock(d, m.id, null)) break; }
+      if(!A.activeG(d).length) bad.push("could not stock a house to price the offer panel with");
+      else {
+        d.known = {};
+        const at = kn => { for(const k of K) d.known[k] = kn;
+          return Object.fromEntries(K.map(k=>[k, A.bayWorth(d,k)])); };
+        const zero = at(0), fifty = at(50);
+        const home = zero[K[0]].mercyHome;
+        lines.push(`the offer panel, priced through the engine: `
+          + K.map(k=>`${k.slice(0,3)} ${zero[k].mercyHere}%→${fifty[k].mercyHere}%`).join(" · ")
+          + ` · at home ${home}%   (the sand: pom 55/75 · nea 90/92 · put 78/85 · home 95)`);
+
+        /* the town's own custom must reach the number — this is the bar the old panel failed */
+        const byMissio = K.slice().sort((a,b)=>(A.cityCustom(a).missio) - (A.cityCustom(b).missio));
+        for(let i=1;i<byMissio.length;i++){
+          const lo = byMissio[i-1], hi = byMissio[i];
+          if(!(zero[hi].mercyHere > zero[lo].mercyHere))
+            bad.push(`the panel quotes ${zero[hi].mercyHere}% at ${hi} (custom missio `
+              + `${A.cityCustom(hi).missio}) against ${zero[lo].mercyHere}% at ${lo} (${A.cityCustom(lo).missio}) — `
+              + `a town that leans on the editor FOR a beaten man must quote better than one that leans `
+              + `against him. The old panel printed one number for all three because it read only `
+              + `\`knownIn\`, and the sand puts them thirty-five points apart`);
+        }
+        /* local standing must still move it, in every town */
+        for(const k of K) if(!(fifty[k].mercyHere > zero[k].mercyHere))
+          bad.push(`being known at ${k} moved the quoted mercy from ${zero[k].mercyHere}% to ${fifty[k].mercyHere}%`);
+        /* and home is not "every time" */
+        if(!(home < 100))
+          bad.push(`the panel says a beaten man is spared ${home}% of the time at home. The old copy said `
+            + `"against every time at home" and the sand says 94.8% — the missio is a probability and `
+            + `the panel must not promise otherwise`);
+        if(!(home > fifty[byMissio[0]].mercyHere))
+          bad.push(`Capua quotes ${home}% against ${fifty[byMissio[0]].mercyHere}% at ${byMissio[0]} for a house `
+            + `known there at 50 — home should still be the safest sand a house has`);
+
+        /* the panel and the engine must be the SAME call, not two that agree today */
+        for(const k of K){
+          const direct = Math.round(A.mercyAt(d, k) * 100);
+          if(direct !== fifty[k].mercyHere)
+            bad.push(`\`bayWorth\` quotes ${fifty[k].mercyHere}% at ${k} and \`mercyAt\` answers ${direct}% — `
+              + `they are one function on purpose`);
+        }
+        /* `missioPlace` is where the away/home difference lives, and only there */
+        const away = A.missioPlace(d, K[0]), athome = A.missioPlace(d, null);
+        lines.push(`missioPlace at ${K[0]}: strange ${away.strange.toFixed(1)} · the town's man ${away.aedile} · `
+          + `standing ${away.favor.toFixed(1)} · the street ${away.street.toFixed(2)}   ·   at home: strange `
+          + `${athome.strange} · the aedile ${athome.aedile} · standing ${athome.favor.toFixed(1)}`);
+        if(!(away.strange > 0) || athome.strange !== 0)
+          bad.push(`the stranger penalty reads ${away.strange} away and ${athome.strange} at home — it is the `
+            + `whole of what makes a town different from Capua`);
+        if(away.street >= athome.street && athome.street > 0)
+          bad.push(`the top tiers shout as loudly for you down the bay (${away.street}) as at home (${athome.street})`);
+      }
+    }
+
+    /* ================= 6. THE FIVE OTHERS ON #160's LIST ================= */
+    {
+      const d = A.newGameState("Bs", "clean", "BAY-SIX", null);
+      d.week = 120; d.bay = { holder:"Ampliatus", since:80, weeks:40 };
+      if(A.baySince(d) !== 40) bad.push(`\`baySince\` reads ${A.baySince(d)} for a holder since week 80 read in week 120`);
+      if(A.bayHolder(d) !== "Ampliatus") bad.push(`\`bayHolder\` reads ${A.bayHolder(d)}`);
+      { const q = A.clone(d); q.bay = null;
+        if(A.baySince(q) !== 0 || A.bayHolder(q) !== null)
+          bad.push(`with nobody holding the bay, \`baySince\`/\`bayHolder\` read ${A.baySince(q)}/${A.bayHolder(q)}`); }
+
+      /* the circuit is set against the bay's own standard, and must climb with it */
+      const q0 = A.clone(d), q1 = A.clone(d);
+      A.activeG(q1).forEach(g=>{ for(const k of A.STATS) g[k] = 99; });
+      const s0 = A.bayStandard(q0), s1 = A.bayStandard(q1);
+      const t0 = [0,1,2,3].map(t=>A.circuitQuality(q0,t)), t1 = [0,1,2,3].map(t=>A.circuitQuality(q1,t));
+      lines.push(`bayStandard ${s0.toFixed(1)} → ${s1.toFixed(1)} when the yard is all 99s; the circuit draws `
+        + `${t0.join("/")} → ${t1.join("/")} — the bottom rung is the floor and does not move`);
+      if(!(s1 >= s0)) bad.push(`\`bayStandard\` fell from ${s0.toFixed(1)} to ${s1.toFixed(1)} when the best man in the bay improved`);
+      if(t1[0] !== t0[0]) bad.push(`the bottom rung of the circuit moved ${t0[0]} → ${t1[0]} — it is the floor, and the opening must not move`);
+      if(!(t1[3] > t0[3])) bad.push(`the top rung of the circuit did not reach for a better bay (${t0[3]} → ${t1[3]})`);
+
+      /* cityTier's bands, off the game's own thresholds rather than a copy */
+      const tiers = [0, 29, 30, 59, 60, 100].map(kn=>{ const e = A.clone(d); e.known = { pompeii:kn };
+        return `${kn}→${A.cityTier(e,"pompeii")}`; });
+      lines.push(`cityTier: ${tiers.join(" · ")}`);
+      const band = kn => { const e = A.clone(d); e.known = { pompeii:kn }; return A.cityTier(e,"pompeii"); };
+      if(!(band(0) === 1 && band(100) === 3 && band(0) < band(60)))
+        bad.push(`\`cityTier\` does not climb with local standing: ${tiers.join(" ")}`);
+
+      /* cityCustom is a table with a name, a want and three numbers, for every town */
+      for(const k of A.CITY_KEYS){
+        const C = A.cityCustom(k);
+        if(!C || !C.name || !C.wants || C.missio == null || C.purse == null || C.crowd == null)
+          bad.push(`\`cityCustom\` for ${k} is missing a name, a want or one of its three numbers`);
+      }
+      if(A.cityCustom("nowhere") !== null) bad.push("`cityCustom` invents a custom for a town that does not exist");
+      if(A.bayWorth(d, "nowhere") !== null) bad.push("`bayWorth` invents a worth for a town that does not exist");
+      lines.push(`the customs: ${A.CITY_KEYS.map(k=>`${k.slice(0,3)} wants ${A.cityCustom(k).wants}, missio ${A.cityCustom(k).missio}`).join(" · ")}`);
+
+      /* cityAfter, by name, on an afternoon the town wanted and one it did not */
+      { const e = A.newGameState("Ba", "clean", "BAY-AFTER", null);
+        e.city = "pompeii"; e.flags.cityArrived = e.week;
+        const off = { id:1, tier:2, festival:"x", opp:{ name:"x" }, stakes:"sine", purse:600, city:"pompeii" };
+        const P0 = Object.assign({}, A.bayPol(e, "pompeii"));
+        const sum = [];
+        A.cityAfter(e, off, { won:true, theirDead:true, spared:false, crowd:80, vigour:70 }, sum);
+        const P1 = A.bayPol(e, "pompeii");
+        lines.push(`cityAfter at Pompeii on the afternoon it came for: local standing 0 → ${A.knownIn(e,"pompeii").toFixed(1)} · `
+          + `the magistrate ${P0.favor.toFixed(0)} → ${P1.favor.toFixed(0)} · the home house ${P0.grudge} → ${P1.grudge} · ${sum.length} lines said`);
+        if(!(A.knownIn(e,"pompeii") > 0)) bad.push("`cityAfter` credited no local standing for a bout fought in the town");
+        if(!(P1.favor > P0.favor)) bad.push("`cityAfter` moved the magistrate not at all for the afternoon the town wanted");
+        if(!(P1.grudge > P0.grudge)) bad.push("`cityAfter` left the home house's temper alone after a Capuan took a purse off their sand");
+        if((P1.fought||0) !== 1) bad.push(`\`cityAfter\` counted ${P1.fought} bouts fought in the town`);
+        if(!sum.length) bad.push("`cityAfter` told the player nothing about an afternoon in a town with a custom"); }
+    }
+
     return { bad, lines };
   });
 

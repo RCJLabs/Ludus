@@ -1392,7 +1392,18 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.54.0 — #159 closed, and the clause falsified: nothing in the reputation
+**Shipped and verified:** v3.55.0 — #160 closed. The clause falsified for **five of the six** —
+`coast` and `bay` between them drive the tour, the customs, the decay and the rival taking the bay —
+and the sixth was printing a number the sand does not roll. `bayWorth` turned the stranger penalty
+into a percentage with a fixed ×2.6, dropping `docStrange` and every term belonging to the town, so
+the offer panel printed **one number for three towns the sand puts thirty-five points apart**: 51% at
+a standing of nought against a measured 55.3/68.5% at Pompeii, 90.0/88.0% at Neapolis and 77.6/81.4%
+at Puteoli — the spread being `cityCustom`'s own missio line, −7 / +10 / +2. And "against every time
+at home" is **94.8%**. `missioPlace(d, city)` is the six place terms now, `doFight` spreads it into
+its own context and the panel prices one stated afternoon through the engine's `missioScore` and
+`missioOdds`; it reads 50/77/66 and 92 at home, in the right order and erring low. `open`'s 60-house
+signature is byte-identical, which is what says the extraction is faithful. Suite green at **69/69**.
+v3.54.0 — #159 closed, and the clause falsified: nothing in the reputation
 system is a pure reader, and the system was **arithmetically switching itself off**. Four tallies
 clamped at 120, all decaying 1.5% a week, so a tally settles at `inflow/0.015` and everything a
 rounded house feeds ends up on the clamp — at which point the leader needs **3C·s/(1−s)**, or 202.5 to
@@ -2765,11 +2776,30 @@ the cap lifted entirely. `open`'s 60-house signature is identical, because the c
 and the reference player never holds it, which is a fact about the policy, not the machinery.
 `repute` is the 69th check and holds the arithmetic that closed the system, negative-tested.
 
-**#160 — the bay and the road: six functions, nought calls.** `baySince`, `bayStandard`, `bayWorth`,
-`cityAfter`, `cityCustom`, `cityTier` — 0 of 67. `coast` drives the tour itself; these are what a town
-is worth, what it remembers and how fast it forgets. *Falsifies if:* `coast` reaches them through the
-UI rather than the handle, which `coverage`'s own caveat explicitly allows for — in which case the
-item is to make the check call them directly so the count means something.
+**#160 — CLOSED in v3.55.0. The clause falsified for five of the six, and the sixth was printing a
+number the sand does not roll.** `coast` drives `cityAfter` and `cityCustom` through `doFight` and
+asserts their effects; `bay` tours all three towns and holds `knownIn` against `BAY_DECAY`, both
+scales, the rival taking the bay and turning up to take it back. What neither reached was a CLAIM.
+`bayWorth(d,key).strangerMercy` was `100 − max(0, 19 − known·0.19)·2.6` — the stranger penalty turned
+into a percentage by a fixed factor, dropping `docStrange` and every term belonging to the town — and
+the offer panel printed it as *"A stranger there. A man of yours who goes down is spared about N% of
+the time, against every time at home."* Measured, 120 mirrored bouts a cell, counting spares among
+**losses**, which is what the sentence claims:
+
+| a man of yours put down, spared | panel said | Pompeii | Neapolis | Puteoli |
+|---|---|---|---|---|
+| a town that has never seen you | **51%** | 55.3 / 68.5% | 90.0 / 88.0% | 77.6 / 81.4% |
+| a town that knows you at 50 | **75%** | 75.3 / 79.4% | 92.2 / 97.5% | 85.1 / 92.9% |
+| and at home | *"every time"* | **94.8%** | **92.4%** | (Capua, both grades) |
+
+One number for three towns thirty-five points apart, because `cityCustom`'s own missio line runs −7
+at Pompeii, +10 at Neapolis and +2 at Puteoli and the panel read only `knownIn`. `missioPlace(d,city)`
+is the six place terms now — standing, the street, the doctrine, the town's magistrate, the stranger
+penalty and the house's own mercy — `doFight` spreads it into its own context and `bayWorth` prices
+one **stated** afternoon through the engine's `missioScore`/`missioOdds` with it. The panel reads
+50/77/66 at a standing of nought and 92 at home, in the right order and erring low, which is the safe
+direction when the number is a man's life. `open`'s 60-house signature is identical, which is what
+says the extraction is faithful. `bay` gains the panel bars and the five others driven by name.
 
 **#161 — the agenda's own six are dark, and two of them are v3.35.0's fix.** `agAgeBy`, `agWord`,
 `agendaCan`, `agendaGods`, `agendaSquare`, `agendaTick` — 0 of 67. `agAgeBy` and `agendaTick` ARE
@@ -2903,6 +2933,74 @@ cap — which was priced and shown nowhere at all. `street` gains the sum bar, t
 derived gates and the six unrelated dark readouts the item listed. Negative-tested.
 
 ## Changelog (shipped)## Changelog (shipped)
+
+### v3.55.0 — #160: the offer panel's number for a strange town, against what the sand does
+
+Five of the six fell to the clause: `coast` drives `cityAfter` and `cityCustom` through `doFight` and
+asserts their effects, and `bay` tours all three towns and holds `knownIn` against `BAY_DECAY`, both
+scales, the rival taking the bay and turning up to take it back. The item was thinner than it looked.
+
+What neither check reached was a **claim**. The offer panel, for any town the house is unknown in:
+
+> "A stranger there. A man of yours who goes down is spared about N% of the time, against every time
+> at home."
+
+    bayWorth:   strangerMercy = 100 − max(0, 19 − knownIn·0.19) · 2.6
+    the engine:  strange      = max(0, 19 − knownIn·0.19) · docStrange(d), subtracted from a
+                                missio SCORE and put through missioOdds, which is a logistic
+
+A fixed factor can be right at one point on that curve and nowhere else; this one also dropped
+`docStrange` and, worse, every term belonging to the town. Measured, 120 mirrored bouts a cell,
+counting spares among LOSSES because that is what the sentence claims:
+
+    a man of yours put down, spared      panel said      Pompeii      Neapolis     Puteoli
+    a town that has never seen you          51%        55.3/68.5%   90.0/88.0%   77.6/81.4%
+    a town that knows you at 50             75%        75.3/79.4%   92.2/97.5%   85.1/92.9%
+    at home, "against every time"            —                  94.8% and 92.4%
+
+One number for three towns thirty-five points apart. `cityCustom`'s missio line is −7 at Pompeii,
++10 at Neapolis, +2 at Puteoli — exactly the spread the panel was throwing away — and a beaten man
+dies at home about six times in a hundred, which "every time" does not allow for.
+
+#### One place, priced once
+
+`missioPlace(d, city)` is the six terms that depend on the house and the PLACE rather than on the man
+or the bout: local standing, the street's voice, the doctrine, the town's magistrate or Capua's
+aedile, the stranger penalty, and the house's own claim on mercy. `doFight` spreads it into its
+context; `bayWorth` prices one **stated** afternoon through it with the engine's own `missioScore`
+and `missioOdds` — the house's best-known man, put down at an ordinary crowd having given a fair
+account of himself, which is the same three figures `street` prices its scale on.
+
+The panel now reads pom 50% → 74%, nea 77% → 91%, put 66% → 84% across a standing of nought to fifty,
+and 92% at home, against a sand of 55/75, 90/92, 78/85 and 95. In the right order, and erring low.
+
+**`open`'s 60-house signature is byte-identical**, which is what says the extraction is faithful
+rather than merely plausible: `missioPlace` reproduces the four terms and the two overrides exactly,
+including `favor`'s away branch, which was an inline `localStanding` local that is now gone.
+
+#### And the five others, driven by name
+
+`bayStandard` climbs 81.4 → 99.0 with the best man on any sand in the bay and the circuit's top rung
+follows 82 → 94 while its bottom rung stays 34 — the floor the opening depends on. `cityTier` bands
+at 30 and 60. `baySince` reads 40 for a holder since week 80 in week 120, and 0 with nobody holding
+it. `cityAfter` credits local standing, the magistrate's favour and the home house's temper on one
+call, and says so.
+
+#### The road itself, recorded not barred
+
+18 houses over 420 weeks with the ledger held up, three policies:
+
+    policy                  weeks away   bayKnownTotal   known the whole bay
+    as it plays (road)             739             102              6 of 18
+    deliberately touring         5,016             180             18 of 18   median week 48
+    never leaves                     0               0              0 of 18
+
+`bayWide` is reachable and the deliberate tourist reaches it every time, pegging all three towns at
+93-100 and taking the full 150 fame off the Rome bar; the rope's reactive policy — take the
+invitation `bayCall` sends, come home when the welcome wears — reaches it in a third of houses. A
+`tour` lever is on the harness for the upper bound. Nine of the eighteen tourists ended in rebellion,
+which `bay`'s own head already measured as a probe that never walked the cells rather than a price on
+being away.
 
 ### v3.54.0 — #159: the cap was deciding what Capua called you, and then stopping it saying anything
 
