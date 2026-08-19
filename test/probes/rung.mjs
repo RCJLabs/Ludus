@@ -37,6 +37,16 @@ const out = await p.evaluate(([H,W,SEED])=>{
   const A = window.__LVDVS, R = window.__ROPE;
   const ARMS = {
     base:   { note:"the reference player, unchanged", opts:undefined },
+    /* ---- #158: THE PAIR THAT ISOLATES THE TIMING ----
+       `cycle` below answered #154's clause but is not a clean control for #158: it hosts from its own
+       spare rule (`gold - 700`) while the rope hosts from `LAN.reserve(d)`, so it differs in the
+       THRESHOLD as well as the schedule. `timed` is the reference player with one thing changed —
+       `party:"rung"`, which hosts only while favour is short of what the next census rung asks and
+       banks otherwise. Same reserve, same kind ladder, same everything else, same seeds. */
+    timed:  { note:"the reference player, hosting only while favour is short of the next rung — #158",
+      opts:{ party:"rung" } },
+    dry:    { note:"the reference player, never entertaining at all — the other end of the range",
+      opts:{ party:false } },
     miser:  { note:"`estate`'s own banking arm — build, rites AND the table off",
       opts:{ build:false, rites:false, party:false } },
     banker: { note:"banks the same coin but keeps entertaining — the table is the favour engine",
@@ -150,6 +160,7 @@ const out = await p.evaluate(([H,W,SEED])=>{
         if(on === 3){ const miss = terms.find(t=>!t[1])[0]; R2.oneShort[miss] = (R2.oneShort[miss]||0)+1; }
       }
       houses.push({ best, week:d.week, over:d.over?d.over.kind:"alive", rich, liked, both, wp, wb, ceil,
+        parties:(d.flags&&d.flags.__parties)||0,
         goldPeak:Math.round(goldPeak), favPeak:Math.round(favPeak), famePeak:Math.round(famePeak),
         favEnd:Math.round(d.favor||0), patrons:(A.patronsOf(d)||[]).length });
     }

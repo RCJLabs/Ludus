@@ -1392,7 +1392,14 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.47.0 — #152's second cluster driven: Rome's nine readouts hang off one
+**Shipped and verified:** v3.48.0 — #158 refuted on its own clause, and the sign is the opposite of
+what the item claimed: hosting only while favour is short of the next rung reaches mean rung **2.73**
+against the default's **2.96** over 48 houses an arm on three seeds, and never entertaining at all
+reaches 2.23. The evidence the item was opened on came from an arm that differed in its SPARE
+THRESHOLD as well as its schedule and was never a control. The reason the reason was wrong is in
+`riseWeek`: surplus favour is not wasted, it speeds the standing meter by up to five a week, so the
+table never stops paying. `party:"rung"` stays opt-in with the figures beside it; the default is a
+provable no-op. Suite green at **67/67**, `survive` drawing (4,6). v3.47.0 — #152's second cluster driven: Rome's nine readouts hang off one
 number, and measuring it found that the imperial games are won about **1% of the time** — 400 bouts
 across 32 houses, 4 won, **no house ever banking a triumph** — so three of the four `ROME_PRIZES`,
 `ROME_TURNS.watched` and `romeGreeting`'s triumph branch are unreached content. Adds `imperial`, the
@@ -2603,13 +2610,34 @@ the house that has lost there most, and it is put in a fight to the death three 
 *Falsifies if:* that share is not actually paid in men — count burials per trip against standing. If
 it is, the repair is that standing should read what you did rather than how often you came.
 
-**#158 — the reference player entertains on the wrong schedule, and it costs a whole rung.** The rope
-hosts a party whenever spare allows. An arm that hosts **only when favour slips below 92** and banks
-the rest of the time reaches median census rung **5 against 4**, and rung 6 in **5 of 16 houses
-against 0** (16 houses × 700 weeks, three seeds), while holding more coin (median peak 19,225 against
-15,645). *Falsifies if:* the gain is the banking and not the timing — the control is a third arm that
-banks the same and parties every week regardless. This reaches further than the ladder: every figure
-this project quotes is taken on the rope, and a rope with a beatable policy in it is a systematic bias.
+**#158 — REFUTED in v3.48.0 on its own clause, and the sign is the opposite of what I claimed.** The
+item said the rope entertains on the wrong schedule and it costs a whole rung, and its clause named
+the control: *the gain is the banking rather than the timing*. It was neither — it was a third thing
+the pair did not hold constant. The evidence came from `rung`'s `cycle` arm, which hosts from its own
+spare rule (`gold - 700`) where the rope hosts from `LAN.reserve(d)`, so it differed in the SPARE
+THRESHOLD as well as the schedule and was never a control at all.
+
+Built properly as a rope lever — `party:"rung"`, hosting only while favour is short of what the next
+census rung asks, same reserve, same kind ladder, same seeds, nothing else changed — and paired over
+**48 houses an arm across three seeds, 700 weeks each**:
+
+| | mean rung | past rung 5 | at rung 6 |
+|---|---|---|---|
+| party every week affordable (**the default**) | **2.96** | 15 of 48 | 7 |
+| party only while short of the gate | 2.73 | 13 of 48 | 7 |
+| never entertaining at all | 2.23 | 8 of 48 | 3 |
+
+**The timing change is slightly worse, and the rope's own claim about the table holds** — 2.96 against
+2.23, and 15 houses past rung 5 against 8.
+
+*Why the reason was wrong* is in `riseWeek`, and it is worth writing down: surplus favour is not
+wasted. It SPEEDS the standing meter — `over = (fame - need)/200 + (favor - need)/60`, worth up to
+five a week on top of the base four. So there is no point at which the table stops paying, and a
+policy that stops at the gate gives that up. A policy with a reason still needs the reason to be true.
+
+*Kept from it:* `party:"rung"` stays as an opt-in lever with the measurement written beside it, and
+the default is a provable no-op — 60 houses through 26 weeks identical house for house against the
+build before. A measured no-improvement is worth keeping findable.
 
 **#159 — what Capua calls you: seven functions, nought calls.** `addRep`, `repLeader`, `repOf`,
 `repShare`, `repSettle`, `repTotal`, `repWeek` — reached by **0 of 67 checks**. `chair` drives
@@ -2659,6 +2687,45 @@ a proximity line at all."* `d.acclaim` gates `masterOpen` (the master armourer),
 one line in a panel rather than a system nobody can see.
 
 ## Changelog (shipped)
+
+### v3.48.0 — #158: the policy with a reason had the wrong reason
+
+I opened #158 one turn earlier, off `rung`'s `cycle` arm reaching a whole census rung further than the
+every-week banker. Its clause named the control I thought was missing — *the gain is the banking
+rather than the timing*. It was neither. `cycle` hosts from its own spare rule (`gold - 700`) where
+the rope hosts from `LAN.reserve(d)`, which for a late house is thousands, so the two arms differed in
+the **spare threshold** as well as the schedule and the comparison was never a control at all.
+
+Built properly this time as a rope lever — `party:"rung"`, hosting only while favour is short of what
+the next census rung asks, same reserve, same kind ladder, same seeds, nothing else changed — and
+paired over **48 houses an arm across three seeds, 700 weeks each**:
+
+    party every week affordable (the default)   mean rung 2.96 · 15 of 48 past rung 5 · 7 at rung 6
+    party only while short of the gate          mean rung 2.73 · 13 of 48             · 7
+    never entertaining at all                   mean rung 2.23 ·  8 of 48             · 3
+
+**The timing change is slightly worse.** And the rope's own long-standing claim about the table — that
+entertaining is how the ladder moves at all — holds: 2.96 against 2.23, fifteen houses past rung 5
+against eight.
+
+#### Why the reason was wrong, which is the part worth keeping
+
+The lever was built on an argument, not a constant: once favour clears what the next rung asks,
+another party buys nothing on the ladder, so the coin is better held — especially since v3.45.0 made
+the census count what the house is worth. That argument is wrong, and `riseWeek` says so:
+
+    const over = (d.fame - (nx.fame||0)) / 200 + (d.favor - (nx.favor||0)) / 60;
+    s += 4 + clamp(over, 0, 5);
+
+**Surplus favour is not wasted — it speeds the standing meter**, worth up to five a week on top of the
+base four. There is no point at which the table stops paying, so a policy that stops at the gate gives
+that up. *A policy with a reason still needs the reason to be true*, which is a sharper version of the
+rule `nemesis` wrote about constants.
+
+The lever stays, opt-in, with the measurement written beside it in the rope. The default is untouched
+and provably so: 60 houses through 26 weeks are identical house for house against the build before.
+A measured no-improvement is worth keeping findable — the next person to have this idea will find the
+answer instead of the idea.
 
 ### v3.47.0 — #152's second cluster: Rome's nine, and the half of Rome that cannot be reached
 

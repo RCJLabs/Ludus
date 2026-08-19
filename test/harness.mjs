@@ -239,6 +239,10 @@ export async function installRope(p){
          works         (default FALSE — opt-in, #138: commission the works and monuments, cheapest
                         open site first, one at a time, deposit from spare(). Flipping this default
                         re-bases what a long-lived house owns and is its own release. `works:true`)
+         party         (default TRUE — host whenever spare allows. `party:"rung"` hosts only while
+                        favour is SHORT of what the next census rung asks, and banks otherwise: the
+                        target is the game's own gate rather than a number somebody chose, so it
+                        re-aims as the house climbs. `party:false` is the arm that never entertains)
          answer        (default NONE, #147 — `answer(ev, d)` returns the index to take on this week's
                         question, or null to leave the rope's own reading of it alone. The rope
                         answers 0 to everything bar `uprising` and `bayCall`, and one of the game's
@@ -454,9 +458,37 @@ export async function installRope(p){
          it is not one. ON from v3.17.0 with `gear`: entertaining is how the census ladder moves at all —
          rung 2.70 against 1.50 — and a reference player who never does it cannot reach the rungs this
          suite asserts he reaches. */
+      /* ---- AND *WHEN*, WHICH WAS NEVER A DECISION UNTIL #158 ----
+         This hosted whenever spare allowed, which is a policy on a purse rather than a policy with a
+         reason — the fault `nemesis` names in its own head ("if you find yourself adjusting a constant
+         because the number came out wrong, that is this mistake"). Favour is bought at the table and
+         the census wants a THRESHOLD of it, so once the house clears what the next rung asks, another
+         party buys nothing on the ladder and the coin would be better held: the census counts what you
+         are worth (v3.45.0) and the top rung wants 80,000 of it.
+         `party:"rung"` hosts only while favour is short of `riseNeed(d).favor`. There is no constant in
+         that — the target is the game's own next gate, so the policy re-aims itself as the house climbs
+         and stops entirely at the top of the ladder. `party:true` (the default) is unchanged.
+
+         ---- AND IT IS MEASURABLY WORSE, WHICH IS WHY THE DEFAULT DID NOT MOVE ----
+         #158 was opened on the reading that the rope entertains on the wrong schedule and it costs a
+         whole rung. Paired on the same seeds with nothing else changed — 48 houses an arm over three
+         seeds, 700 weeks each:
+
+           party every week affordable (default)   mean rung 2.96 · 15 of 48 past rung 5 · 7 at rung 6
+           party only while short of the gate      mean rung 2.73 · 13 of 48         · 7
+           never entertaining at all               mean rung 2.23 ·  8 of 48         · 3
+
+         The reason the reason was wrong is in `riseWeek`: surplus favour is not wasted, it SPEEDS the
+         standing meter — `over = (fame - need)/200 + (favor - need)/60`, worth up to five a week on
+         top of the base four. So there is no point at which the table stops paying, and a policy that
+         stops at the gate gives that up. The earlier "whole rung" came from `rung`'s `cycle` arm,
+         which differed from the rope in its SPARE THRESHOLD as well as its schedule and was never a
+         control. This lever stays because a measured no-improvement is worth keeping findable. */
       if(o.party !== false && typeof A.hostParty === "function"){
+        const need = o.party === "rung" && typeof A.riseNeed === "function" ? fin(A.riseNeed,[d]) : null;
+        const wants = o.party !== "rung" || !need || (d.favor||0) < (need.favor||0);
         const sp = d.gold - LAN.reserve(d);
-        const kind = sp > 4000 ? "decadent" : sp > 1600 ? "lavish" : sp > 700 ? "modest" : null;
+        const kind = !wants ? null : sp > 4000 ? "decadent" : sp > 1600 ? "lavish" : sp > 700 ? "modest" : null;
         if(kind && fin(A.hostParty,[d, kind])) bump("party");
       }
       if(o.free === true && typeof A.grantRudis === "function"){
