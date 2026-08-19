@@ -51,7 +51,7 @@ export async function run({ p }){
   const out = await p.evaluate(([MAX_SHOWN, MAX_STANDING, MAX_FRESH_AGAIN])=>{
     const A = window.__LVDVS, R = window.__ROPE;
     const bad = [], lines = [];
-    for(const fn of ["agendaRanked","agendaTop","agendaTick","agAge","agKey"])
+    for(const fn of ["agendaRanked","agendaTop","agendaTick","agAge","agKey","agAgeBy","agWord","agendaCan","agendaGods","agendaSquare"])
       if(typeof A[fn] !== "function") bad.push(`\`${fn}\` is not on the handle — the week's panel cannot be driven`);
     if(bad.length) return { bad, lines };
 
@@ -228,6 +228,113 @@ export async function run({ p }){
       }
     }
 
+
+    /* ================= 5. THE SIX UNDERNEATH THE CHURN BAR — #161 =================
+       #161 listed `agAgeBy`, `agWord`, `agendaCan`, `agendaGods`, `agendaSquare` and `agendaTick` as
+       dark and said outright that this might be a coverage artefact, because two of them ARE #144's
+       repair and this check holds the churn RATE above them. **It was.** Driven over 12 played houses
+       of 420 weeks and 12 more with the ledger held up, nothing under the rate was broken:
+
+         the collapsed list drew 5,623 of 11,067 rows (50.8%), and the "and N things that have been
+           waiting" button stood on 95.3% of weeks; with it pressed, `agWord`'s four bands split
+           13.4 / 16.7 / 14.7 / 23.4 per cent of rows plus 9.2% urgent — every band reachable
+         the pit line #144 fixed ages to 102 weeks now and is shown on 26.1% of the weeks it stands,
+           against the 100.0% at an age never above 3 that #144 measured before the repair
+         and the churn signature — an unurgent item shown on most of the weeks it stands — is carried
+           only by the festival lines, which are NEW EVERY WEEK they appear: a Capuan card stands for
+           exactly one week (weeks 14, 20, 21, 23, 26 on the first seed), so an age of 0 is the truth
+           about them. A town's card, which does stand for several, ages 3 to 7.
+
+       So this section closes the coverage rather than a fault: the three contributors must fire when
+       the house can act and go quiet when it cannot, `agWord` must say four different things, and the
+       identity underneath must survive a rotating sentence. */
+    {
+      const base = () => { const q = A.newGameState("Wf","clean","WEEK-SIX",null); q.week = 40; return q; };
+      const fire = (fn, setup) => { const q = base(); setup(q); const got = [];
+        try { A[fn](q, (urgency, tab, label, sub, key)=>got.push({ urgency, tab, label, sub, key })); }
+        catch(e){ return { err:e.message }; }
+        return got; };
+      const say = r => Array.isArray(r) ? r.map(x=>`u${x.urgency} "${x.label}"`).join(" · ") : `THREW ${r.err}`;
+      const must = (nm, r, want) => {
+        if(!Array.isArray(r)){ bad.push(`\`${nm}\` threw: ${r.err}`); return; }
+        if(want && !r.length) bad.push(`${nm}: ${want ? "it wanted saying" : ""} and the agenda said nothing`);
+        if(!want && r.length) bad.push(`${nm}: nothing could be done about it and the agenda raised ${say(r)} anyway `
+          + `— advice a house cannot act on is the \`agendaCan\` fault this project has already priced`);
+      };
+      must("a calm house", fire("agendaCan", q=>{ q.unrest = 0; q.gold = 90000; }), false);
+      must("a house in uproar with nothing in the box", fire("agendaCan", q=>{ q.unrest = 60; q.gold = 0; }), false);
+      const feast = fire("agendaCan", q=>{ q.unrest = 60; q.gold = 90000; });
+      must("a house in uproar that can pay for a feast", feast, true);
+      must("the same house, away down the bay", fire("agendaCan", q=>{ q.unrest = 60; q.gold = 90000; q.city = "pompeii"; }), false);
+
+      must("a godless house", fire("agendaGods", q=>{ q.piety = 0; }), true);
+      must("a house keeping its rites with nothing to spend", fire("agendaGods", q=>{ q.piety = 60; q.gold = 0; }), false);
+      const altar = fire("agendaGods", q=>{ q.piety = 60; q.gold = 90000; q.lastOffering = -99;
+        A.activeG(q).slice(0,2).forEach(g=>{ g.injury = { name:"a cut", weeks:3, care:"rest" }; }); });
+      must("two men laid up and coin for the altar", altar, true);
+      must("a godless house at Rome", fire("agendaGods", q=>{ q.piety = 0; q.rome = { travel:0, fought:0, won:0 }; }), false);
+
+      must("no doctore and nobody in the square", fire("agendaSquare", q=>{ q.doctore = null; q.doctoreMarket = []; }), false);
+      const sq = fire("agendaSquare", q=>{ q.doctore = null; q.gold = 90000;
+        q.doctoreMarket = [{ name:"Ictus", fee:900, skill:70 }, { name:"Barca", fee:2200, skill:84 }]; });
+      must("a doctore for sale and the coin to take him", sq, true);
+      must("a doctore already hired", fire("agendaSquare", q=>{ q.doctore = { name:"Ictus", skill:70 };
+        q.doctoreMarket = [{ name:"Barca", fee:2200, skill:84 }]; }), false);
+      const offer = fire("agendaSquare", q=>{ q.doctore = null; q.doctoreOffer = { name:"Barca", fee:2200 }; });
+      must("a doctore offering himself", offer, true);
+      /* a house that cannot afford one is still TOLD what it would cost — the source's own rule is
+         that advice must not go quiet exactly when it is needed */
+      const poor = fire("agendaSquare", q=>{ q.doctore = null; q.gold = 100;
+        q.doctoreMarket = [{ name:"Ictus", fee:900, skill:70 }]; });
+      if(Array.isArray(poor) && !poor.length)
+        bad.push(`a house with 100d and a doctore asking 900d is told nothing about the square. The line `
+          + `exists to say what it would cost — "advice goes quiet exactly when it is needed" is the `
+          + `fault \`agendaCan\` is named after`);
+      if(Array.isArray(sq) && Array.isArray(offer) && sq.length && offer.length && !(offer[0].urgency > sq[0].urgency))
+        bad.push(`a doctore who is offering himself is urgency ${offer[0].urgency} and one merely for sale is `
+          + `${sq[0].urgency} — the one that will not wait must rank above the one that will`);
+      lines.push(`   the contributors: a feast at ${say(feast)} · the altar at ${say(altar)} · the square at ${say(sq)}`);
+      lines.push(`   and each goes quiet for a house that cannot act, and for one that is away`);
+
+      const words = [0, 1, A.AG_FRESH, A.AG_FRESH+1, 11, 12, 40].map(a=>({ a, w:A.agWord(a) }));
+      lines.push(`   agWord: ` + words.map(x=>`${x.a}→"${x.w}"`).join(" · "));
+      const kinds = new Set(words.map(x=>x.w));
+      if(kinds.size < 4)
+        bad.push(`\`agWord\` says ${kinds.size} different things across ages 0 to 40 (${[...kinds].join(", ")}) — `
+          + `it has four bands and the panel prints it on every unurgent row`);
+      if(A.agWord(0) === A.agWord(1))
+        bad.push(`\`agWord\` says the same thing for an item raised this morning and one a week old`);
+
+      { const q = base(); q.week = 50;
+        q.flags.agSeen = { "a stable key":44, [A.agKey("A thing with 3 men in it")]:40 };
+        if(A.agAgeBy(q, "a stable key") !== 6)
+          bad.push(`\`agAgeBy\` reads ${A.agAgeBy(q, "a stable key")} for a declared key first seen in week 44, read in week 50`);
+        if(A.agAgeBy(q, A.agKey("A thing with 9 men in it")) !== 10)
+          bad.push(`\`agAgeBy\` does not normalise the count out of a label: a thing first seen in week 40 reads `
+            + `${A.agAgeBy(q, A.agKey("A thing with 9 men in it"))} in week 50`);
+        if(A.agAgeBy(q, "never raised") !== 0)
+          bad.push(`\`agAgeBy\` reads ${A.agAgeBy(q, "never raised")} for something the agenda has never raised`);
+        if(A.agId({ key:"mine", label:"a sentence that rotates" }) !== "mine")
+          bad.push("`agId` does not prefer a declared key over the sentence — that IS #144's repair"); }
+
+      { const q = A.newGameState("Wt","clean","WEEK-TICK",null); q.week = 10;
+        A.agendaTick(q);
+        const first = Object.assign({}, q.flags.agSeen || {});
+        const n0 = Object.keys(first).length;
+        q.week = 15; A.agendaTick(q);
+        const now = q.flags.agSeen || {};
+        const kept = Object.entries(now).filter(([k,v])=>first[k] === v).length;
+        const fresh = Object.entries(now).filter(([k,v])=>v === 15).length;
+        lines.push(`   agendaTick: ${n0} keys stamped in week 10; five weeks on, ${Object.keys(now).length} stand — `
+          + `${kept} keeping their first week and ${fresh} stamped anew`);
+        if(!n0) bad.push("`agendaTick` stamped nothing at all for a founding house — the ages are counted off this");
+        if(!kept) bad.push(`\`agendaTick\` re-stamped every key after five weeks, so nothing can ever age past 0 — `
+          + `which is #144's fault applied to everything at once`);
+        for(const [k,v] of Object.entries(now))
+          if(first[k] != null && v !== first[k])
+            bad.push(`\`agendaTick\` moved "${k}" from week ${first[k]} to ${v} while it was still being asked for`);
+      }
+    }
     return { bad, lines };
   }, [MAX_SHOWN, MAX_STANDING, MAX_FRESH_AGAIN]);
 

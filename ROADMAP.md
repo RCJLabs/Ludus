@@ -1392,7 +1392,18 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.55.0 — #160 closed. The clause falsified for **five of the six** —
+**Shipped and verified:** v3.56.0 — #161 REFUTED on its own clause, which had predicted it: the
+agenda's six were a coverage artefact and the age system is doing its job. Driven over 12 played
+houses of 420 weeks and 12 more with the ledger held up, the collapsed list draws **50.8%** of rows
+with the "and N waiting" button standing on **95.3%** of weeks; expanded, all four of `agWord`'s
+bands are reachable; and the pit line #144 repaired now **ages to 102 weeks and is shown on 26.1%**
+of the weeks it stands, against 100.0% at an age never above 3 before the fix. **Two of my own
+readings died on the way and both were the probe** — "two of `agWord`'s bands are dead text" was the
+collapsed list measured alone, and "the festival lines carry the churn signature" was a Capuan card
+that stands for exactly one week, so an age of 0 is the truth about it. `week` gains the six by name,
+negative-tested both ways. No source change; nothing was wrong. **The board is clear.** Suite green
+at **69/69**.
+v3.55.0 — #160 closed. The clause falsified for **five of the six** —
 `coast` and `bay` between them drive the tour, the customs, the decay and the rival taking the bay —
 and the sixth was printing a number the sand does not roll. `bayWorth` turned the stranger penalty
 into a percentage with a fixed ×2.6, dropping `docStrange` and every term belonging to the town, so
@@ -2801,11 +2812,28 @@ one **stated** afternoon through the engine's `missioScore`/`missioOdds` with it
 direction when the number is a man's life. `open`'s 60-house signature is identical, which is what
 says the extraction is faithful. `bay` gains the panel bars and the five others driven by name.
 
-**#161 — the agenda's own six are dark, and two of them are v3.35.0's fix.** `agAgeBy`, `agWord`,
-`agendaCan`, `agendaGods`, `agendaSquare`, `agendaTick` — 0 of 67. `agAgeBy` and `agendaTick` ARE
-#144's repair, shipped with a check (`week`) that holds the churn RATE rather than the identity
-function underneath it. *Falsifies if:* the churn bar is a sufficient guard — it is a real bar and it
-caught the fault once, so this may be a coverage artefact rather than a hole.
+**#161 — REFUTED in v3.56.0 on its own clause. It was a coverage artefact, and the age system is
+doing its job.** The clause said so: "the churn bar is a real bar and it caught the fault once, so
+this may be a coverage artefact rather than a hole." `week` already drives `agendaRanked`,
+`agendaTop`, `agendaTick`, `agAge`, `agKey` and `agId` and holds the churn rate above them;
+`agAgeBy` is one line of arithmetic under `agAge`. Driven anyway over 12 played houses of 420 weeks
+and 12 more with the ledger held up, nothing underneath was broken:
+
+- the collapsed list drew **5,623 of 11,067 rows (50.8%)**, and the *"and N things that have been
+  waiting"* button stood on **95.3%** of weeks; with it pressed, `agWord`'s four bands split
+  13.4 / 16.7 / 14.7 / 23.4 per cent of rows plus 9.2% urgent — **every band reachable**
+- the pit line #144 repaired ages to **102 weeks** now and is shown on **26.1%** of the weeks it
+  stands, against the 100.0% at an age never above 3 that #144 measured before the fix
+- 697 distinct lines over the played arm, a median 148 a house
+- and the three contributors each fire when the house can act and go quiet when it cannot
+
+**Two of my own readings died on the way, both the probe and not the game.** "Two of `agWord`'s four
+bands are dead text — 0 rows of 10,013": they are not, the panel is `allTodos ? RANK : TOP` with a
+button offered whenever anything is waiting, and I had measured the collapsed list alone. And "the
+festival lines carry the churn signature — raised 112 weeks, shown 100%, oldest 0": they are new
+every week they appear, because a Capuan card stands for exactly one week, so an age of 0 is the
+truth about them. `week` gains the six by name — the contributors fired and silenced, `agWord`'s
+bands, `agAgeBy`'s identity and `agendaTick`'s keep-or-forget — negative-tested both ways.
 
 **#162 — CLOSED in v3.51.0. The clause did not falsify, and the panel was wrong in three separate
 ways at once.** The `odds` check holds the PROBABILITY against the sand; the PRICE is different
@@ -2933,6 +2961,58 @@ cap — which was priced and shown nowhere at all. `street` gains the sum bar, t
 derived gates and the six unrelated dark readouts the item listed. Negative-tested.
 
 ## Changelog (shipped)## Changelog (shipped)
+
+### v3.56.0 — #161 refuted: the agenda's six were a coverage artefact, and the age system works
+
+The item's own clause called this: "the churn bar is a real bar and it caught the fault once, so this
+may be a coverage artefact rather than a hole." It was. `week` already drives `agendaRanked`,
+`agendaTop`, `agendaTick`, `agAge`, `agKey` and `agId`, and `agAgeBy` is one line of arithmetic under
+`agAge`. Driven anyway, over 12 played houses of 420 weeks and 12 more with the ledger held up:
+
+    the collapsed list drew                5,623 of 11,067 rows (50.8%)
+    the "and N waiting" button stood on    95.3% of weeks, hiding 5,444 rows
+    agWord's bands, list expanded          13.4 / 16.7 / 14.7 / 23.4 per cent, plus 9.2% urgent
+    the pit line #144 repaired             ages to 102 weeks, shown on 26.1% of the weeks it stands
+                                           (before the repair: 100.0%, age never above 3)
+    distinct lines a house ever saw        697, a median 148 a house
+
+Nothing under the rate is broken. The three contributors fire when the house can act, go quiet when
+it cannot, and go quiet for a house that is away — which is the rule `agendaCan` is named after.
+
+#### Two of my own readings died on the way, and both were the probe
+
+**"Two of `agWord`'s four bands are dead text — 0 rows of 10,013."** The row prints `"now"` for
+anything urgent and `agWord(age)` otherwise, and `agendaTop` shows the unurgent only while they are
+fresh — so on the collapsed list the upper two bands genuinely never appear. But the panel is
+`allTodos ? RANK : TOP`, with a button offered whenever anything is waiting, and I had measured the
+collapsed list alone. Read the screen before writing up what it cannot show.
+
+**"The festival lines carry the churn signature — raised 112 weeks, shown 100%, oldest 0."** That is
+#144's exact fingerprint and it was worth chasing. It is not the fault: a Capuan card stands for
+**exactly one week** — weeks 14, 20, 21, 23, 26 on the first seed — so each is genuinely new and an
+age of 0 is the truth about it. A town's card, which does stand for several weeks, ages 3 to 7 under
+the same key. The signature and the fault are not the same thing, and the difference is one query.
+
+And a third, smaller: the familia's items can never be in the shown set, because the panel folds
+every `tab:"men"` row into one pointing at the familia. Counting them in `raised` and looking for
+them in `shown` reported two lines "raised 924 weeks, shown 0" as though something were broken.
+
+#### What `week` holds now
+
+The six by name, on top of the churn rate it already held. Each of `agendaCan`, `agendaGods` and
+`agendaSquare` fired on a house that can act and **silenced** on one that cannot — no coin, no
+unrest, the post already filled, or the house away down the bay — because advice a house cannot act
+on is the fault `agendaCan` is named after; and the inverse held too, that a house too poor for a
+doctore is still told what one would cost. `agWord` saying four different things and turning over at
+`AG_FRESH`. `agAgeBy` on a declared key, on a normalised label and on something never raised.
+`agendaTick` keeping a first-seen week for an item still being asked for.
+
+Negative-tested both ways: dropping `agendaCan`'s coin gate fails with "a house in uproar with
+nothing in the box: nothing could be done about it and the agenda raised it anyway", and reverting
+#144's repair — `agId` no longer preferring a declared key — fails the new bar and the old churn bar
+together, the churn bar naming four rope venues reading NEW on 49-58% of the weeks they stand.
+
+**No source change.** Nothing was wrong.
 
 ### v3.55.0 — #160: the offer panel's number for a strange town, against what the sand does
 
