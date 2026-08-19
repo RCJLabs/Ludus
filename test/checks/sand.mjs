@@ -186,6 +186,22 @@ export async function run({ p, errors }){
           const s = JSON.parse(localStorage.getItem(k)); if(!s || !s.gladiators) continue;
           for(const g of s.gladiators){ if(g.status!=="active") continue;
             g.lastFought = -9; g.fatigue = 0; g.strain = 0; g.injury = null; }
+          /* ---- AND THE ONES THE EARLIER ARMS BURIED, which the first restock could not reach ----
+             This check fights four real bouts before it reaches the pits and men die in them. The
+             reset above stands up the LIVING; a yard that lost enough of them offers an empty list,
+             the driver picks nothing, and the run reports "nothing would send them out", which is a
+             shrug and not a finding — it failed exactly that way once in the suite while passing
+             alone. The yard is refilled from its own men so nothing about the roster is invented. */
+          const live = () => s.gladiators.filter(g=>g.status==="active");
+          const seed = s.gladiators[0];
+          let guard = 0;
+          while(live().length < 4 && seed && guard++ < 8){
+            const c = JSON.parse(JSON.stringify(seed));
+            c.id = (s.nextId = (s.nextId||900) + 1);
+            c.status = "active"; c.injury = null; c.fatigue = 0; c.strain = 0; c.lastFought = -9;
+            c.name = `${seed.name} ${["Secundus","Tertius","Quartus","Quintus"][guard%4]}`;
+            s.gladiators.push(c);
+          }
           s.gold = Math.max(s.gold, 20000);
           localStorage.setItem(k, JSON.stringify(s));
         } catch(e){}
@@ -261,7 +277,21 @@ export async function run({ p, errors }){
           `${x.disabled?"[disabled]":""}${(x.className||"").toString().split(/\s+/)[0]}:${(x.innerText||"").split("\n")[0].trim().slice(0,22)}`)
           .slice(0,14).join(" · ");
       });
-      bad.push(`${label}: nothing would send them out after choosing ${picked} and ${steps.length} step${steps.length===1?"":"s"} — on screen: ${stuck}`);
+      /* and say what the YARD held, because "no rows to choose" and "rows chosen and the send
+         stayed dead" are different faults and the sentence above cannot tell them apart */
+      const yard = await p.evaluate(()=>{
+        /* off the save, the way `restock` reaches it — the live state is a React closure and there
+           is no handle onto it, and a reporting line that always says "(no state)" is worse than
+           none at all */
+        for(const k of Object.keys(localStorage)) if(/ludus-slot-\d/.test(k)){
+          try { const S = JSON.parse(localStorage.getItem(k)); if(!S || !S.gladiators) continue;
+            const act = S.gladiators.filter(g=>g.status==="active");
+            return `${act.length} active, ${act.filter(g=>!g.injury && (g.fatigue||0)<55).length} of them fit,`
+              + ` ${S.gladiators.length - act.length} off the roster`;
+          } catch(e){}
+        }
+        return "(no save to read)"; }).catch(()=>"(unreadable)");
+      bad.push(`${label}: nothing would send them out after choosing ${picked} and ${steps.length} step${steps.length===1?"":"s"} — the yard held ${yard} — on screen: ${stuck}`);
       await clearAll(p, 8); continue; }
     await p.waitForTimeout(1500);
 

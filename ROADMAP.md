@@ -1392,7 +1392,24 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.51.0 — #162 closed, and its clause did NOT falsify: the arena panel
+**Shipped and verified:** v3.52.0 — #156 REFUTED and #157 closed, on one piece of work on Rome.
+#156's falsification is satisfied — a man at **99 in all six takes 64-65%** of imperial bouts and two
+of three about **70-72%** of the time — and the gradient is steep: on the shape a house actually
+trains, key 78 wins 2.0%, key 92 16.7%, key 99 30.0%. Played houses win 2.3% because **the man they
+send is 83.9 across all six against a card at 99.0**; a house trains a focus and Rome does not. **And
+the item's own headline was read off the statistic that hides its subject**: the card's key-stat mean
+sits at 98.5-99.0 whether it is a first visit or a seventeenth, because it clamps, while its all-six
+mean goes 96.6 → 99.0. This probe made that mistake twice before catching it. #157 confirmed and
+repaired: 24 of 30 houses reached standing 100 with 12 wins in 522 bouts between them, and it is
+charged for in men — **1.53 buried a trip at the bottom band against 2.01 at the top**, with the
+forced-stakes control reading 12.0% against 84.0%. Attendance is now capped one point short of
+`romeWord`'s second band (the cap is the band, nothing written down), so the upper two are bought
+with wins; paired on the same seeds, top-band trips **134 → 9** and burials **536 → 511**. Both means
+are on the imperial card now and the road-to-Rome panel says what standing charges. `imperial` gains
+three sections, negative-tested. Two instrument faults on the way: `survive`'s (1,2) proven false by an
+identical 60-house signature, and `sand`'s fourth driver fault — it buries men in four real bouts and
+its restock could not reach the buried. Suite green at **68/68**.
+v3.51.0 — #162 closed, and its clause did NOT falsify: the arena panel
 quoted one price and `settleBet` paid another, in **seven of eight** trait-and-eye cells. Measured off
 the game's own payout sentence against the game's own quote, 24 won wagers a cell at 400d: the panel
 said 1.95 to 1 everywhere while the book paid 1.30 at `bookEye` 6 (**256d short of the 778d the quote
@@ -2620,25 +2637,46 @@ single number is what opened this item. It splits by bar now, re-scoring the sto
 current constants rather than trusting the `pass` flag, which is only what the bar said on the day.
 Neither the bar nor `HOUSES` was touched: a check that stops firing is not the goal.
 
-**#156 — the imperial games are won once in a hundred, so half of Rome cannot be reached.** 400 bouts
-on the imperial sand across 32 houses (16 played, 16 with the ledger held up, 900 weeks each):
-**4 won — 1.0%**. **No house banked a triumph**, which wants two of three in one trip. The man sent
-averages **73-80** on the mean of his class's key stats; the man met averages **98.7-98.9**, because
-`makeImperialBout` draws at quality 100+ and then adds `ri(1,4)` to every key stat, which the 99 clamp
-catches. The best man any house ever sent — 98.3 — met a floor of 95.8. Left unreached: `ROME_PRIZES`
-1-3 (1,800d, 3,600d and 7,000d), `ROME_TURNS.watched`, and `romeGreeting`'s triumph branch. *Falsifies
-if:* an arm that pours everything into one man wins two of three — `season` and `bench` exist for
-exactly that policy. If none can, the question is whether the summit should have a gradient at all:
-pinned at the clamp, a house that improves cannot improve its odds.
+**#156 — REFUTED in v3.52.0 on its own clause, and the item's headline figure was read off the
+statistic that hides the thing it was about.** The falsification it named is satisfied: a man at 99
+in all six takes **64-65%** of imperial bouts and two of three in one trip about **70-72%** of the
+time. And there is a gradient, a steep one — on the shape a house actually trains, against the card a
+returning house actually draws, key 78 wins **2.0%**, key 92 **16.7%**, key 99 **30.0%**.
 
-**#157 — Rome's standing is bought by turning up, and paid for in blood.** `romeStanding = runs*12 +
-triumphs*26 + best*8`, so nine trips reach 100 with no wins at all. Measured: houses reached Rome up
-to **seventeen times**; `romeWord` said "they know your house in Rome" for **12 of 16** granted houses
-and **4 of 16** played ones, **not one of which had ever won a bout there**. And standing feeds
-`romeSineOdds`, which takes the death-match share from **50% to 72%**. The house Rome knows best is
-the house that has lost there most, and it is put in a fight to the death three times in four.
-*Falsifies if:* that share is not actually paid in men — count burials per trip against standing. If
-it is, the repair is that standing should read what you did rather than how often you came.
+Why played houses win 2.3% anyway is a different thing entirely: **the man they send is 83.9 across
+all six while the card is 99.0 across all six.** A house trains a focus and Rome does not. Over 459
+identified imperial bouts the sender averaged 94-101 on his class's two key stats and won 10.7%; walk
+all six up together and the same card is taken 70.7%. The four stats nobody trains are most of the gap.
+
+**And the fault the item could not see.** `makeImperialBout` draws at `min(104, 100 + romeRuns)` and
+again at 106 when `ROME_TURNS.matched` fires. Both clamp to 99 on the KEY stats, so the card's
+key-stat mean reads 98.5-99.0 on a first visit and on a seventeenth while its **ALL-SIX mean goes
+96.6 to 99.0**. The item was opened on "the man met averages 98.7-98.9", which is the reading that
+cannot show the escalation. The probe made the same mistake twice before catching it — read on key
+stats alone, two of its own arms disagreed by sixty points and both were quotable. Both means are on
+the imperial card now, for both men, and `imperial` holds the disagreement as a fact.
+
+**#157 — CLOSED in v3.52.0. The clause did not falsify: the blood is real, and standing reads what
+you did now.** Driven over 30 houses on three seed prefixes, 900 weeks each with the ledger held up:
+297 trips, 522 imperial bouts, **12 won between them**, 17 of the 30 never taking a single bout at
+Rome — and **24 of the 30 ending at standing 100** with the city saying "they know your house in
+Rome". The count #157 asked for, taken:
+
+| what Rome said | trips | bouts | won | sine drawn | buried a trip |
+|---|---|---|---|---|---|
+| nobody at all | 59 | 102 | 1 | 51.0% | 1.53 |
+| a name they half recognise | 71 | 118 | 2 | 65.3% | 1.66 |
+| Rome has heard of you | 33 | 58 | 4 | 63.8% | 1.79 |
+| they know your house in Rome | 134 | 244 | 5 | 68.4% | **2.01** |
+
+and the mechanism holds with the stakes **forced**, so the two cells differ in the word alone: on the
+imperial sand a standard bout buried **12.0%** of an 80-stat man's outings and a sine missione bout
+buried **84.0%**. The repair is the one the item named. The attendance term is capped one point short
+of `romeWord`'s second band — nothing written down, the cap is the band — so a house that has never
+won at Rome tops out at "a name they half recognise" however often it goes, and the two upper bands
+are bought with what was done there. Paired on the same seeds: trips at the top band **134 → 9**,
+burials on the imperial sand **536 → 511**. The panel says what standing buys and what it charges,
+off the same number.
 
 **#158 — REFUTED in v3.48.0 on its own clause, and the sign is the opposite of what I claimed.** The
 item said the rope entertains on the wrong schedule and it costs a whole rung, and its clause named
@@ -2787,6 +2825,121 @@ a proximity line at all."* `d.acclaim` gates `masterOpen` (the master armourer),
 one line in a panel rather than a system nobody can see.
 
 ## Changelog (shipped)
+
+### v3.52.0 — #156 and #157: the summit is not a wall, and the city's good opinion is charged for in men
+
+Two items on one subsystem, measured off the same runs, and one of them refuted by its own named test.
+
+#### #156 — the falsification it named is satisfied
+
+The item held that the imperial games are won once in a hundred and that, with the card pinned at the
+99 clamp, a house that improves cannot improve its odds. It named the test: an arm that pours
+everything into one man. The strongest form of that is not a policy but the free-grant trick turned on
+the fighter — a man who is 99 in all six, in the best kit the game sells, with the heart and the record
+of a man who has done nothing else. 150 bouts a word:
+
+    aggressive  won 64.0% · died 19.3%   →  two of three in one trip: 70.5%
+    measured    won 65.3% · died 20.7%   →  72.3%
+    defensive   won 58.7% · died 26.0%   →  62.9%
+    showboat    won 50.7% · died 26.0%   →  51.0%
+
+And the gradient is steep. Walked up the scale on the shape a house actually trains — key stats at the
+step, the other four eighteen below, which is the gap played houses show — against the card a
+returning house actually draws:
+
+    key stats    70     78     86     92     96     99
+    won         0.0%   2.0%   6.0%  16.7%  26.7%  30.0%
+
+#### So why do played houses win 2.3%?
+
+Because of what they send. Over 459 identified imperial bouts by 30 played houses:
+
+    the man's key stats   bouts   won      all six
+    0-74                    101   1.0%      58.3
+    74-82                   128   0.0%      64.7
+    82-88                   113   0.9%      72.1
+    88-94                    89   7.9%      78.3
+    94-101                   28  10.7%      83.9      · the card, all six: 99.0
+
+A house trains a focus. The man it sends to Rome is 94-101 on his class's two key stats and **83.9
+across all six**, against a card that is 99.0 across all six. Walk all six up together and the same
+card is taken 70.7%. The four stats nobody trains are most of the gap, and nothing had ever said so.
+
+#### The fault #156 could not see, because of the number it was opened on
+
+`makeImperialBout` draws at `min(104, 100 + romeRuns)` and again at 106 when `ROME_TURNS.matched`
+fires. Both clamp to 99 on the KEY stats. So:
+
+    the card on a first visit                key stats 98.6 · all six 96.8
+    on a ninth visit, matched                key stats 99.0 · all six 99.0
+
+The escalation is entirely in the four stats nobody looks at. #156's own headline — "the man met
+averages 98.7-98.9" — is the key-stat reading, which cannot show it. **This probe made the same
+mistake twice before it caught it**: the first draft of its gradient arm raised all six together
+(a man no house builds) and the first draft of its played arm kept the PEAK key-stat mean of the men
+sent. Read on key stats alone, two arms of the same probe disagreed by sixty points and both looked
+quotable. Both means are on the imperial card now, for both men, with the sentence that explains them.
+
+#### #157 — confirmed, and the repair is the one the item named
+
+`romeStanding = runs*12 + triumphs*26 + best*8`, so seven visits reached the top band with no wins.
+Driven, 30 houses on three seed prefixes, 900 weeks each with the ledger held up: 297 trips, 522
+imperial bouts, **12 won between them**, 17 of the 30 never taking a bout there at all — and 24 of the
+30 ending at standing 100 with the city saying "they know your house in Rome". The count the item
+asked for:
+
+    what Rome said              trips   bouts   won   sine drawn   buried a trip
+    nobody at all                  59     102     1        51.0%        1.53
+    a name they half recognise     71     118     2        65.3%        1.66
+    Rome has heard of you          33      58     4        63.8%        1.79
+    they know your house in Rome  134     244     5        68.4%        2.01
+
+and the mechanism, with the stakes **forced** so the two cells differ in the word alone (a comparison
+of drawn stakes would confound the stakes with the standing that drew them): on the imperial sand a
+standard bout buried **12.0%** of an 80-stat man's outings and a sine missione bout buried **84.0%**.
+The house Rome knew best was the house that had lost there most, and it was being put in a fight to
+the death three times in four for it.
+
+**What changed.** The attendance term is capped one point short of `romeWord`'s second band. Nothing
+is written down — the cap IS the band, and the check derives it by walking standing until the city's
+word changes. A house that has never won at Rome tops out at "a name they half recognise" however
+often it goes; the two upper bands are bought with what was done there. Coming back still counts, it
+just cannot buy the whole opinion. Paired on the same seeds: trips at the top band **134 → 9**,
+burials on the imperial sand **536 → 511**. And the road-to-Rome panel now says what the good opinion
+buys and what it charges — the purse multiple and the death-match share, both off the same number that
+was already computed and never shown.
+
+#### Two instrument faults, one in the suite and one of my own
+
+`survive` drew **(1,2)** on the first full run and it is a false failure, proven the way this project
+proves them: `open.mjs` on v3.51.0 and on v3.52.0 gave the same week, men, gold and ending **house for
+house across all sixty**, so the answer is not "within noise" but "no path a new house executes
+differs". Which is what the change predicts — `romeStanding` moves nothing before a house reaches Rome,
+and 26 weeks is nowhere near it. The failing entry stays in the committed tally.
+
+`sand` failed on the pits with "nothing would send them out after choosing 0 and 0 steps" and passed
+alone twice afterwards. **The fourth driver fault in that check, and the same shape as the third.** It
+fights four real bouts before it reaches the pits, and men die in them; its `restock` stands the LIVING
+back up but cannot reach the buried, so a yard that lost enough of them offers an empty list and the
+driver reports a shrug. The yard is refilled from its own men now, and when the send button is dead the
+failure line says what the yard held — because "no rows to choose" and "rows chosen and the send stayed
+dead" are different faults and the old sentence could not tell them apart.
+
+#### And the App line budget
+
+The two new panels put `App` at 7258 lines against `bulk`'s 7200, which is the bar doing its job. They
+are `RomeStanding` and `ImperialShape` at module scope now, rendered from one line each, and `App` is
+back at exactly 7200. Raising the budget to fit a comment block would have been the wrong move.
+
+#### What `imperial` holds now
+
+Three new sections, on top of the ladder arithmetic it already held: the attendance cap and that a
+house which never won cannot reach the second band while a house with a triumph outranks it; the
+invisible escalation, held as the disagreement between two statistics so no future measurement of this
+card is taken on the one that hides it; and the gradient and the blood — a man at 99 must beat a man
+at 78 by a wide margin, and sine missione must bury more than double what standard stakes do.
+Negative-tested: on the uncapped formula it fails with "seventeen visits and no wins reads standing
+100" and "a house with a triumph stands at 90 against 100 for one that has never won".
 
 ### v3.51.0 — #162: the board quoted one price and the book paid another
 

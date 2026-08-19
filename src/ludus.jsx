@@ -12813,8 +12813,32 @@ const ROME_PRIZES = [
   { name:"a statue voted you at the foot of the Capitoline", purse:7000, acclaim:18 },
 ];
 const romePrize = d => ROME_PRIZES[Math.min(ROME_PRIZES.length-1, romeTriumphs(d))];
-/* the city's standing opinion of you, which is not fame */
-const romeStanding = d => clamp(romeRuns(d)*12 + romeTriumphs(d)*26 + romeBest(d)*8, 0, 100);
+/* ---- THE CITY'S STANDING OPINION OF YOU, WHICH IS NOT FAME ----
+   And which used to be bought by turning up. `runs*12` alone reached the top band in seven visits,
+   so measured over 30 played houses on three seed prefixes, 900 weeks each with the ledger held up:
+   297 trips, 522 imperial bouts, **12 won between them**, and 17 of the 30 never took a single bout
+   at Rome — yet 24 of them ended at standing 100 with `romeWord` saying "they know your house in
+   Rome". Which would be a harmless flattery except that standing feeds `romeSineOdds`, and the
+   flattery is charged for in men:
+
+       what Rome said              trips   bouts   won   sine drawn   buried a trip
+       nobody at all                  59     102     1        51.0%        1.53
+       a name they half recognise     71     118     2        65.3%        1.66
+       Rome has heard of you          33      58     4        63.8%        1.79
+       they know your house in Rome  134     244     5        68.4%        2.01
+
+   and the mechanism holds with the stakes FORCED, so the two cells differ in the word alone: on the
+   imperial sand a standard bout buried 12.0% of an 80-stat man's outings and a sine missione bout
+   buried 84.0%. The house Rome knew best was the house that had lost there most, and it was being
+   put in a fight to the death three times in four for it.
+
+   The attendance term is capped one point short of the second band now. `romeWord`'s bands are 22,
+   50 and 78; nothing is written down here — the cap is the band. A house that has never won at Rome
+   tops out at "a name they half recognise" however often it goes, and the two upper bands are bought
+   with what you did there. Coming back still counts; it just cannot buy the whole opinion. */
+const ROME_ATTEND_CAP = 48;                       /* one short of `romeWord`'s second band, 50 */
+const romeStanding = d => clamp(Math.min(romeRuns(d)*12, ROME_ATTEND_CAP)
+  + romeTriumphs(d)*26 + romeBest(d)*8, 0, 100);
 const romeWord = d => { const v = romeStanding(d);
   return v>=78?"they know your house in Rome" : v>=50?"Rome has heard of you" : v>=22?"a name they half recognise" : "nobody at all"; };
 const romeEditor = d => ROME_EDITORS[Math.min(ROME_EDITORS.length-1, romeRuns(d))] || ROME_EDITORS[0];
@@ -18186,6 +18210,65 @@ function DoctoreBust({ name, size=56 }){
    held in memory rather than in the save, so it does not survive a reload, and that is deliberate: it
    is a preference about one sitting, not a fact about the house. */
 const SECT_MEM = {};
+/* ---- WHAT STANDING BUYS, AND WHAT IT COSTS (#157) ----
+   `romeWord` is a compliment and it was the only thing on the road-to-Rome panel. The same number
+   sets `romePurseMult` and `romeSineOdds`, and measured over 30 played houses the top band drew
+   three bouts in four to the death and buried 2.01 men a trip against 1.53 at the bottom. Both
+   halves are printed now, off the one number. See `imperial` §5 and the roadmap. */
+function RomeStanding({ S }){
+  const sine = Math.round(romeSineOdds(S)*100);
+  const mult = Math.round((romePurseMult(S)-1)*100);
+  const capped = romeRuns(S)*12 > ROME_ATTEND_CAP;
+  return (
+    <div className="panel" style={{padding:10,marginTop:9,background:"#1c1610",borderColor:"#6d5426"}}>
+      <div className="flex items-center justify-between gap-2" style={{marginBottom:4}}>
+        <span className="tag tag-gold">What Rome makes of you</span>
+        <span className="rowval" style={{fontSize:"var(--fs-sm)",color:"#e0bd72",flexShrink:0}}>{romeWord(S)}</span>
+      </div>
+      <div style={{fontSize:"var(--fs-md)",lineHeight:1.4}}>
+        Purses on the imperial sand {mult>0?`+${mult}%`:"as billed"} · <span className="blood">{sine} of every hundred bouts there will be to the death</span>
+      </div>
+      <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3,lineHeight:1.35}}>
+        {capped
+          ? "Coming back has bought all the opinion it can buy. The rest of it is won on the sand — a bout taken there is worth more to the city than another journey."
+          : "The city's opinion is what it will charge you for. It asks more of a house it knows, and what it asks for is blood."}
+      </div>
+    </div>
+  );
+}
+
+/* ---- AND THE MAN ROME SENDS IS COMPLETE, WHICH THE CLASS STATS HIDE (#156) ----
+   `makeImperialBout` draws at `min(104, 100 + romeRuns)` and adds ri(1,4) to every KEY stat, which
+   the 99 clamp catches — so on the two numbers a lanista reads about his own man, the imperial card
+   looks the same on a first visit and a seventeenth. Measured, 150 cards a rung: the key-stat mean
+   sat at 98.6-99.0 throughout while the ALL-SIX mean went 96.8 to 99.0. #156 was itself opened on
+   the key-stat reading and could not see the thing it was about.
+   That is also why a house that trains a focus loses here. Over 459 imperial bouts by played houses
+   the man sent averaged 94-101 on his class's two key stats and 83.9 across all six, against a card
+   at 99.0 across all six, and won 10.7%. Walk all six up together and the same card is taken 70.7%.
+   The four stats nobody trains are most of the gap, so both means are on the card, for both men. */
+function ImperialShape({ me, o }){
+  if(!me || !o || !o.imperial || !o.opp) return null;
+  const key = (CLASSES[me.cls]||{key:[]}).key || [];
+  const km = a => key.length ? key.reduce((n,k)=>n+(a[k]||0),0)/key.length : 0;
+  const mine = statMean(me), his = statMean(o.opp);
+  return (
+    <div className="panel" style={{padding:9,marginTop:8,background:"#1c1610",borderColor:"#6d5426"}}>
+      <div className="tag tag-gold" style={{marginBottom:4}}>He has no weak side</div>
+      <div style={{fontSize:"var(--fs-md)",lineHeight:1.4}}>
+        {me.name} — {Math.round(km(me))} at {key.map(k=>STAT_NAMES[k].toLowerCase()).join(" and ")},{" "}
+        <span className={mine < his - 4 ? "blood" : "gold"}>{Math.round(mine)} across all six</span>.
+        {" "}Rome's man — {Math.round(km(o.opp))}, and <span className="blood">{Math.round(his)} across all six</span>.
+      </div>
+      <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3,lineHeight:1.35}}>
+        A man drilled at one thing, against a man who is finished at all of them. The two numbers your own
+        yard puts in front of you every week are the two he is best at, and out here it is the other four
+        that decide it.
+      </div>
+    </div>
+  );
+}
+
 function Sect({ title, note, open, tone, mark, live, sid, children }){
   const ref = useRef(null);
   useEffect(()=>{ if(!ref.current) return;
@@ -21978,7 +22061,7 @@ export default function App(){
                   <div style={{fontSize:"var(--fs-md)",color:r.met?"#a9c98a":"#cfc0a0"}}>{r.met?"✓":r.soft?"◦":"·"} {r.label}</div>
                   <div className="dim" style={{fontSize:"var(--fs-sm)",marginLeft:14,marginTop:1,overflowWrap:"anywhere"}}>{r.detail}</div>
                 </div>
-              ))}
+              ))}{been && <RomeStanding S={S}/>}
               <div className="panel" style={{padding:10,marginTop:9,background:"#1c1610",borderColor:ready?"#c99a4b":"#3e2f1f"}}>
                 <div style={{fontSize:"var(--fs-md)",color:ready?"#e8d092":"#cfc0a0"}}>
                   {ready ? "The road is open — a letter under an imperial seal cannot be far behind."
@@ -25169,7 +25252,7 @@ export default function App(){
                       he does off his own numbers.
                     </div>
                   </div>
-                ); })()}
+                ); })()}<ImperialShape me={me} o={o}/>
               {(()=>{ const pe = me ? prepFor(S, me, o) : 0; if(pe<=0) return null;
                 const right = prepPlans(S, o);
                 return (
@@ -25675,7 +25758,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        is a mean stat of 78.6 and the bill draws 93 to 99. A number you cannot convert is a number
        you will get wrong. */
     makeImperialBout, qStat, qForStat, kitFor, watchHim, watchCost, foeTactic, FOE_EDGE,
-    romeRuns, romeTriumphs, romeStanding, romeWord, romeSineOdds, romePurseMult, romeGreeting,
+    romeRuns, romeTriumphs, romeBest, romeStanding, romeWord, romeSineOdds, romePurseMult, romeGreeting,
+    ROME_ATTEND_CAP,
     romePrize, ROME_PRIZES, ROME_TURNS, RT_KEYS, ROME_FAME, ROME_COOLDOWN,
     /* the four engines and the four ways into them */
     simulateFight, simulatePair, simulateMelee, simulateVenatio,
