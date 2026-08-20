@@ -1392,7 +1392,23 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.61.0 — #167 closed, and its clause fired on a conclusion that did not
+**Shipped and verified:** v3.62.0 — #170 closed, and its clause named the right comparison in a way
+that made the case worse. Measured against the other decisions rather than against traits — 2,000
+bouts an arm on two seed families, every arm meeting the same men bout for bout — the best the tactic
+offers is **+0.5 and +3.5**, the best a plan that reads him right **+3.0 and +4.1**, the best a word
+from the box **+1.8 and +4.2**, and `showman` was **+8.5 and +9.0**: twice anything else a player can
+choose, and the only one whose cost was fiction. Its blurb bills one — *"strutting is not resting"* —
+and the five wind behind that phrase measured at **nought**. The long way to his mark costs him
+`BREATHER_BACK` now, 0.24 of his own wind, the same share that waving him off at a crux gives back:
+one number for both, and a man built to last pays less of it. At that value the word reads **+0.4 and
++2.5**, inside the band the rest of the panel occupies, and becomes the class's spare-rate word rather
+than its win-rate word. Over 24 houses of 420 weeks the four read **17.16% / 12.02% / 13.15% /
+14.97%** of bouts killing his man at median lives of **284 / 246 / 244 / 212** weeks — four answers
+rather than one right one. `stage` gains the bar, negative-tested both ways; `open`'s 60-house
+signature is byte-identical, which is what says the two `survive` draws either side of this release
+— **(1,3)** and **(1,5)** on the same build, both in the tally — are the tail and not the change.
+Suite green at **71/71** on the second of two full runs.
+v3.61.0 — #167 closed, and its clause fired on a conclusion that did not
 follow. All four patron favours stand READY on **38,714 of 50,917 patron-weeks** of a played house
 and nothing in this project had ever called one. Driven both ways over 72 houses of 420 weeks an arm
 on two seed families, paired house for house: calling every favour **the moment it is ready** costs
@@ -3180,6 +3196,53 @@ artefact of the trigger set rather than of calling at all, which a second, diffe
 trigger set would show. The one measured reads each trigger off what that favour's own `run`
 changes, which is the least arbitrary set available, but it is still one set.
 
+**#170 — CLOSED in v3.62.0. The clause named the right comparison and it made the case worse, not
+better: measured against the other decisions rather than against traits, `showman` was worth roughly
+twice the best of anything else a player can choose, and free.** The clause said a decision may be
+allowed to be worth more than a fact about a man. So the whole class was priced on one fixture in one
+run — 2,000 bouts an arm on two seed families, every arm meeting the same men bout for bout
+(`test/probes/choice.mjs`). A player at the rail decides four things and no more:
+
+| class | the best button | worth, two families | the whole spread |
+|---|---|---|---|
+| tactic | defensive | +0.5 · +3.5 | 6.7 · 8.5 wide |
+| plan | the read that is RIGHT | +3.0 · +4.1 | 10.5 · 9.8 wide |
+| the word from the box | wave him off | +1.8 · +4.2 | 2.6 · 4.2 wide |
+| **entrance** | **showman** | **+8.5 · +9.0** | 16.5 · 14.8 wide |
+
+Every other class tops out at four points and pays for its best button with a worse one — showboat at
+−6.2, a plan that reads him wrong at −7.5. The entrance was the only class whose best button cost
+nothing, and its blurb billed a cost: *"strutting is not resting"*, five points of wind, measured at
+**nought**. Walking that cost showed no setting of a flat number ever made the word a trade.
+
+**The repair is the number the blurb already promises, taken from a constant that was already there.**
+The long way to his mark costs him `BREATHER_BACK` — 0.24 of his own wind, the same share that waving
+him off at a crux gives back. One number for both, and it is his own wind rather than a flat five, so
+it costs a man built to last less than a man who is not. At that value `showman` reads **+0.4 and
++2.5**, inside the band the rest of the panel occupies, and becomes the class's spare-rate word rather
+than its win-rate word — 94.0% against grim's 91.8% and boxes' 91.2% on the first family. Over 24
+houses of 420 weeks the four words read **17.16% / 12.02% / 13.15% / 14.97%** of bouts killing his
+man at median lives of **284 / 246 / 244 / 212** weeks: four different answers rather than one right
+one. `open`'s 60-house signature is byte-identical, because the reference player presses no word.
+`stage` gains the bar, negative-tested both ways: the walk must be `BREATHER_BACK` and it must
+actually come off him — the fault was a cost written down and never taken.
+*Two things the run also said, recorded:* the tactic is nearly inert on a real card (+0.5 and +3.5
+for the best of four, against `engines`'s mirror where it is a triangle), and `hound` and `blind` are
+never on the crux menu at all in 2,000 bouts, because they need the bout to have hurt somebody in a
+particular place first.
+
+**#171 — the reference player is incompetent in one specific, measured way.** `lanista` is "one week
+of competent play" and every reachability figure in this project rests on it. It calls no patron
+favour, ever, and #167 measured what that costs: called when there is something for them to do, the
+same four are worth **+188 and +537 of weekly mean fame**, 0.6 more men, **14 and 19 houses standing
+at 420 weeks against 11 and 15**, and ruinous endings **30 → 18**, at no cost in life. The rope
+carries `favours:"wise"` and its default is still off, because turning it on re-bases every figure
+this project has published — `policy`'s benchmarks, `ends`'s ending mix, `late`'s perennial share,
+`estate`'s late-game table — and that is a release, not a line. *Falsifies if:* the gain is an
+artefact of the trigger set rather than of calling at all, which a second, differently-derived
+trigger set would show. The one measured reads each trigger off what that favour's own `run`
+changes, which is the least arbitrary set available, but it is still one set.
+
 **#170 — one point of momentum is worth more than any trait in the game, and it is free.** This file
 states its own scale beside the traits: "the first cut measured Brutal at +16 points and Showman at
 +14, which is not a trait, it is a different man. A trait is worth three to six points here." The
@@ -3223,6 +3286,85 @@ about a quarter and it is the cost of this repair**; `MISSIO_MAN` is one line to
 wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
+
+### v3.62.0 — #170: the loudest button in the game, priced against the rest of the panel
+
+#170 was opened against the band this file states for a TRAIT — three to six points — and it carried
+its own falsification: *falsifies if the trait band is not the right comparison. A trait is a fact
+about a man and an entrance is a decision the player makes every week, and a decision may be allowed
+to be worth more than a fact.* That is the right objection. It also makes the case worse.
+
+#### Everything a player decides at the rail, on one fixture
+
+`test/probes/choice.mjs`. The fixture is #166's card rather than a mirror, on purpose: twins share a
+renown, which makes `mobClear` false in every bout and hands the crowd's peak to whoever has momentum
+by construction, so a mirror inflates exactly the term under test. 500 bouts an arm a prefix, four
+prefixes, two seed families, every arm carrying a signature taken before the fight.
+
+| class | the best button | worth, two families | the whole spread |
+|---|---|---|---|
+| tactic | defensive | +0.5 · +3.5 | 6.7 · 8.5 wide |
+| plan | the read that is RIGHT | +3.0 · +4.1 | 10.5 · 9.8 wide |
+| the word from the box | wave him off | +1.8 · +4.2 | 2.6 · 4.2 wide |
+| **entrance** | **showman** | **+8.5 · +9.0** | 16.5 · 14.8 wide |
+
+Every other class tops out at four points, and every other class pays for its best button with a
+worse one — showboat at −6.2, a plan that reads him wrong at −7.5, and the plan's own note in the
+source says what a right read is *allowed* to be worth: "roughly half" of the seventeen points its
+first cut measured. The entrance was the only class whose best button had no worse one beside it.
+
+#### And its cost was a sentence
+
+Split into its halves on the same fixture, each keeping the wind and the two fame:
+
+    the mob only  (crowd +16)      60.8% won   ·   the moment only (momentum +1)   68.8% won
+    both, at the old cost          75.9% won   ·   nothing chosen                  68.8% won
+
+Walking the flat wind cost from 5 to 40 showed the shape of the problem: taking wind off him costs
+him bouts and RAISES his spare rate, because a man who loses long is spared more often than a man who
+wins short. There is no flat number at which the word becomes a trade. What there is, is the number
+its blurb already promised, in the unit the game already uses.
+
+#### The repair is a constant that was already in the file
+
+`BREATHER_BACK = 0.24` — what waving a man off at a crux gives him back. The long way to his mark
+costs him the same share of his own wind, so "strutting is not resting" is one number with the order
+that undoes it, and a man built to last pays less of it than a man who is not.
+
+| word | won | spared when he went down |
+|---|---|---|
+| none | 68.8% · 67.5% | 89.9% · 91.7% |
+| **showman** | **69.2% · 70.0%** | **94.0% · 91.8%** |
+| grim | 69.5% · 69.0% | 91.8% · 94.3% |
+| boxes | 68.8% · 67.5% | 91.2% · 93.5% |
+| *showman as it shipped in v3.59.0* | *75.9% · 75.2%* | *93.3% · 91.9%* |
+
++0.4 and +2.5 against nothing, inside the band the rest of the panel occupies, and the word is now
+what its name says: you buy the crowd, the fame and a much better chance he gets up, and you pay a
+breather for it. Over 24 houses of 420 weeks the four words read **17.16% / 12.02% / 13.15% / 14.97%**
+of bouts killing his man at median lives of **284 / 246 / 244 / 212** weeks. `open`'s 60-house
+signature is byte-identical, because the reference player presses no word at all.
+
+#### Two instrument faults, and two things the run said in passing
+
+- **The first cut of the class table was read off 160 bouts an arm and every number in it was wrong
+  in a way that mattered**: it made the tactic's best button +8.1 where 2,000 bouts say +0.5, which
+  would have closed this item as "the entrance is in line with the tactic". #136, for the fourth time.
+- **The wind bar in `stage` read "the first beat" and both arms said 100.0%**, because the intro and
+  the salute are pushed BEFORE the entrance block runs. It reads the two beats either side of the
+  entrance's own line now, in one bout, so the difference is the walk and nothing else.
+- *Recorded, not acted on:* the tactic is nearly inert when chosen blind on a real card — the triangle
+  `engines` measures is a triangle against a KNOWN answer, and the opponent's is not known.
+- *Recorded, not acted on:* `hound` and `blind` were never on the crux menu once in 2,000 bouts. They
+  need the bout to have already hurt somebody in a particular place, and on this fixture it does not.
+
+#### And the suite
+
+Two full runs, both in the tally: **70/71** with `survive` drawing **(1,3)**, and **71/71** with the
+same build drawing **(1,5)**. The first is the tail rather than the change, and here that is provable
+without leaving the build — `open`'s 60-house signature is byte-identical to the build before this
+one, house for house, because the reference player presses no entrance and every line touched here is
+behind one.
 
 ### v3.61.0 — #167: the four favours were never mispriced, and nobody was ever told when
 

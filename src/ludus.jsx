@@ -8316,6 +8316,9 @@ function traitPow(f, foe, vMine, vTheirs, crowdFrac, round){
    around it and enough that it decides close bouts, and not enough to be the whole
    of him. Stoic and Iron Hide read smaller than that in a straight mirror on purpose —
    most of what they are worth is banked in the weeks between bouts. */
+/* what waving a man off gives him back, and — from v3.62.0 — what the long walk to his mark costs
+   him. One number for both, because "strutting is not resting" is a promise about exactly this. */
+const BREATHER_BACK = 0.24;
 const GAS_AT = 0.40;                 /* the share of his wind at which it starts to tell */
 function gasOf(f, st, sm){
   const frac = clamp(sm>0 ? st/sm : 0, 0, 1);
@@ -8380,7 +8383,7 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
   let mobHis = ((B.pfame||0) - (A.pfame||0)) > 12;
   const mobClear = Math.abs((A.pfame||0) - (B.pfame||0)) > 12;
   const orderTgt = order && order.target || null;/* aim your blows at one place */
-  if(order && order.breather){ sA = Math.min(smA, sA + smA*0.24); mom = clamp(mom-1,-3,3); crowd = clamp(crowd-6,0,100); }
+  if(order && order.breather){ sA = Math.min(smA, sA + smA*BREATHER_BACK); mom = clamp(mom-1,-3,3); crowd = clamp(crowd-6,0,100); }
   const legNow = legOrder || !!(order && order.debuff==="legs");
   /* both carry across a crux the way the legs order does */
   const hounding = !!(R0 && R0.hound) || !!(order && order.hound);
@@ -8455,7 +8458,7 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
     /* the entrance — how he came onto the sand, and what it bought him */
     if(ctx.entrance){ const E = ctx.entrance;
       if(E.crowd) crowd = clamp(crowd + E.crowd, 0, 100);
-      if(E.stam) sA = Math.max(smA*0.5, sA + E.stam);
+      if(E.wind) sA = Math.max(smA*0.5, sA - smA*E.wind);
       if(E.dread) vB = clamp(vB - E.dread*8, 40, 100);
       if(E.mom) mom = clamp(mom + E.mom, -3, 3);
       if(E.enter) push("intro", E.enter(A, B));
@@ -14638,7 +14641,7 @@ function simulatePair(As, Bs, tA, stakes, ctx, opts){
 const ENTRANCES = {
   none:    { name:"Straight to the mark", short:"—",
     blurb:"No theatre. He walks to his place and waits for the horn." },
-  showman: { name:"Work the mob", short:"Mob", crowd:16, stam:-5, fame:2, mom:1,
+  showman: { name:"Work the mob", short:"Mob", crowd:16, wind:BREATHER_BACK, fame:2, mom:1,
     blurb:"Arms up, the slow turn, the whole way in. The stands are his before a blow lands, and the noise carries him into the first exchange — but strutting is not resting.",
     enter:(a,b)=>`${a.name} takes the long way to his mark, arms wide to the tiers, and the noise comes up to meet him.` },
   grim:    { name:"Silent and grim", short:"Grim", dread:1,
@@ -14663,15 +14666,15 @@ const entDread = (E, green) => (E.dread||0) + (E.dread && green ? 1 : 0);
    term now names itself, off the table, so a term cannot be added without the player being told. */
 const ENT_TERM = {
   crowd:  v => `${v>0?"+":""}${v} to the tiers before a blow lands`,
-  mom:    v => `${v>0?"+":""}${v} momentum into the first exchange — the largest of these`,
-  stam:   v => `${v} of his wind, spent walking`,
+  mom:    v => `${v>0?"+":""}${v} momentum into the first exchange`,
+  wind:   v => `${Math.round(v*100)}% of his wind, spent walking — what waving him off would give back`,
   dread:  (v,green) => `the other man starts ${entDread({dread:v}, green)*8} shaken`
     + (green ? " — doubled, because he has barely fought" : ""),
   missio: v => `+${v} with the editor if he goes down, outside the box's cap`,
   fame:   v => `+${v} to the house's name`,
   favor:  v => `+${v} with every patron you hold`,
 };
-const ENT_TERM_KEYS = ["crowd","mom","stam","dread","missio","fame","favor"];
+const ENT_TERM_KEYS = ["crowd","mom","wind","dread","missio","fame","favor"];
 function entranceSays(key, opp){
   const E = ENTRANCES[key] || ENTRANCES.none, green = oppGreen(opp);
   const said = ENT_TERM_KEYS.filter(k=>E[k]).map(k=>ENT_TERM[k](E[k], green));
@@ -26011,7 +26014,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        `actions` derives the list now instead of holding a hand-written one, so a future action that
        forgets this line fails a check rather than going quietly dark. */
     answerNem, nemCallOut, callFavour, favourWorth, nobleStory, senatorName, merchantCarry, repay, sellDebt, runGambit, backCandidate, swearIn,
-    applyRefusal, skipWeeks, charterSkip, firstBuyWarn, ENTRANCES, ENTRANCE_KEYS, deadlines, entranceSays, entDread, oppGreen, ENT_MISSIO, ENT_TERM_KEYS, ENT_TERM,
+    applyRefusal, skipWeeks, charterSkip, firstBuyWarn, ENTRANCES, ENTRANCE_KEYS, deadlines, entranceSays, entDread, oppGreen, ENT_MISSIO, ENT_TERM_KEYS, ENT_TERM, BREATHER_BACK,
     favMissio, veteranGuard, riseFav, blessMercy, favourOf, MISSIO_MID, MISSIO_SLOPE, missioWord, MISSIO_MAN,
     saveKit, applyKit, dropKit, watchField, startPlan, breakPlan, clearWatch,
     /* ---- AND THE HALF THAT MAKES THEM DRIVEABLE, v3.24.0 ----
@@ -26144,7 +26147,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* the domestic half of the house: who she is, what she costs, and what she does */
     HOUSEHOLD, HH_KEYS, hireFolk, householdWeek, householdCount, houseFolk, hasFolk, hhWage, hhUpkeep,
     /* the word from the box — the three or four things a crux will take */
-    CRUX, forgeReady,
+    CRUX, forgeReady, PLANS, PLAN_KEYS, TELLS, TELL_KEYS, planEffect,
     /* the man in the chair: what the job does to him, and what it makes of him */
     lanistaWeek, LAN_TRAITS, LAN_KEYS, hasLT, repStyle, addRep, makeLanista,
     /* ---- AND THE NAME CAPUA SETTLES ON, which is the input to all of the above ----

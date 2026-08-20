@@ -277,7 +277,7 @@ const out = await p.evaluate(([N,SEED])=>{
       };
       try {
         for(const pre of [`${SEED}-C1`, `${SEED}-C2`, `${SEED}-C3`]){
-          for(let h=0; h<4; h++){
+          for(let h=0; h<8; h++){
             const d = A.newGameState("Cr"+h, "clean", `${pre}-${h}`, null);
             let w = 0;
             for(; w<420; w++){
@@ -448,11 +448,11 @@ for(const b of out.box)
   console.log(`  ${String(b.fame).padStart(5)} / ${String(b.favor).padStart(3)}          ${f1(b.none)}%     ${f1(b.inside)}%  ${(b.inside-b.none>=0?"+":"")}${(b.inside-b.none).toFixed(1)}`
     + `        ${f1(b.outside)}%  ${(b.outside-b.none>=0?"+":"")}${(b.outside-b.none).toFixed(1)}`);
 
-console.log(`\n6 · THE POLICY OVER A CAREER — 12 houses x 420 weeks a word, control first`);
+console.log(`\n6 · THE POLICY OVER A CAREER — 24 houses x 420 weeks a word, control first`);
 console.log(`  word      bouts   his men died   a bout    median life`);
 for(const r of out.career)
   console.log(`  ${r.word.padEnd(8)} ${String(r.bouts).padStart(5)}   ${String(r.deaths).padStart(10)}   ${(r.rate*100).toFixed(2)}%    ${String(r.median).padStart(3)}w   [${r.lives.join(" ")}]`);
-console.log(`  the twelve lives are printed because a median of twelve is one number and these arms`);
+console.log(`  every life is printed because a median of twenty-four is one number and these arms`);
 console.log(`  diverge on the first bout — the death RATE over ~2,000 bouts is the figure to read.`);
 
 console.log(`\n  instrument: ${okM && okC ? "both arms paired" : "PAIRING BROKEN — the numbers above mean nothing"}\n`);

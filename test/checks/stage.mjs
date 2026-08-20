@@ -19,6 +19,11 @@
        grim      46.8%  (+1.3)   72.5%  (+1.8)   72.4%  (+1.6)
        boxes     45.5%  (+0.0)   70.7%  (+0.0)   70.7%  (+0.0)
 
+   Those are the v3.59.0 figures and `showman`'s is no longer one of them: #170 re-priced the word
+   against the rest of the panel in v3.62.0 and made its billed cost real, which takes it to +0.4 and
+   +2.5. The section below is kept as written because it is what was found, and because the ablation
+   it records — the crowd worth nought and the momentum worth everything — is still the reason.
+
    Half the headline was the mirror. What was left was worse than the headline, because splitting
    `showman` into its terms — same seeds, one term dropped a time — says the crowd is not what pays:
 
@@ -146,6 +151,39 @@ export async function run({ p }){
       }
     }
 
+    /* ---- 3b. AND THE COST THE LOUDEST WORD IS BILLED FOR HAS TO BE REAL (#170) ----
+       Priced against every other decision a player makes at the rail — the tactic, the plan and the
+       word from the box — `showman` was worth +8.5 and +9.0 points of win rate on two seed families
+       against a best-of-anything-else of +3.0 and +4.2, and the five wind its blurb billed measured
+       at nothing. The walk costs a breather now: `BREATHER_BACK`, the same share of his own wind
+       that waving him off gives back, one constant for both. The bar is that it is one constant and
+       that it actually comes off him — a cost written down and not taken is what this was. */
+    {
+      if(A.ENTRANCES.showman.wind !== A.BREATHER_BACK)
+        bad.push(`\`showman\` bills ${A.ENTRANCES.showman.wind} of his wind against BREATHER_BACK `
+          + `${A.BREATHER_BACK} — the walk and the breather are two numbers again`);
+      /* the beats either side of the entrance line, in ONE bout: the salute is pushed before the
+         wind is taken and the entrance's own line after it, so the difference is the walk and
+         nothing else. Reading "the first beat" instead read the intro, which is pushed before the
+         entrance block runs, and both arms said 100.0% — a bar that could not see its own subject. */
+      const { d:wd, g:wg } = fixture("WIND");
+      const wt = R.takeBout(wd, { entrance:"showman", singlesOnly:true, men:[wg], silent:true });
+      const wb = (wt.res && wt.res.beats) || [];
+      const at = wb.findIndex(x=>/takes the long way/.test(x.text||""));
+      if(at < 1) bad.push(`the showman's own entrance line is not in the log, so his wind cannot be read either side of it`);
+      else {
+        const before = wb[at-1].sA, after = wb[at].sA;
+        lines.push(`he is on ${before.toFixed(1)}% of his wind at the salute and ${after.toFixed(1)}% by the time he reaches his mark`);
+        if(!(after < before - 1))
+          bad.push(`the long way to his mark cost him ${(before-after).toFixed(1)} points of wind — the blurb `
+            + `bills "strutting is not resting", and #170 is what happens when that is a sentence and not a number`);
+        const want = before - A.BREATHER_BACK*100;
+        if(Math.abs(after - want) > 1.5)
+          bad.push(`the walk took ${(before-after).toFixed(1)}% of his wind against the ${(A.BREATHER_BACK*100).toFixed(0)}% `
+            + `a breather gives back — the two are supposed to be one number`);
+      }
+    }
+
     /* ---- 4. THE DOUBLING AGAINST A GREEN MAN IS ONE RULE ---- */
     {
       const G = A.ENTRANCES.grim;
@@ -193,16 +231,16 @@ export async function run({ p }){
     return { bad, lines };
   });
 
-  out.lines.push(`MEASURED, recorded not barred (test/probes/enter.mjs): 2,400 bouts a word on four seed `
-    + `prefixes against \`pickRivalOpp\`'s card, paired bout for bout on a signature taken BEFORE the `
-    + `fight. \`showman\` +7.1 points of win rate on the card against +18.3 mirrored, +6.7 weighted by `
-    + `the renown gap 12 played houses actually deal (mine ahead 47.7% · inside twelve 13.4% · his `
-    + `ahead 38.9%). Split into its terms the sixteen points of crowd are worth +0.0 and the one point `
-    + `of momentum +8.4. Two opening claims did NOT survive: +6.9 points of spare rate (+2.2 on a card, `
-    + `+0.0 in the ablation) and grim's +7.5 against a green man (+2.3). Pressed every week for 420 of `
-    + `them over 12 houses, control first: no entrance 19.31% of bouts killed his man, the salute `
-    + `12.85%, working the mob 13.50%, silent and grim 13.73% — and the salute's third of the deaths `
-    + `is the whole of the repair, since it does not move the win rate by a digit. \`open\`'s 60-house `
+  out.lines.push(`MEASURED, recorded not barred (test/probes/enter.mjs, test/probes/choice.mjs): the four `
+    + `words were re-priced in v3.62.0 against every OTHER decision a player makes at the rail, 2,000 `
+    + `bouts an arm on two seed families, every arm meeting the same men bout for bout. The best the `
+    + `tactic offers is +0.5 and +3.5, the best a plan that reads him right +3.0 and +4.1, the best a `
+    + `word from the box +1.8 and +4.2 — and \`showman\` was +8.5 and +9.0, twice anything else and `
+    + `free, with the five wind its blurb billed measuring at nought. Its walk costs a breather now `
+    + `(BREATHER_BACK, the same share waving him off gives back) and it reads +0.4 and +2.5, inside `
+    + `the band the rest occupy, with the class's best spare rate. Over 24 houses of 420 weeks: `
+    + `deaths a bout 17.16% with no entrance, 12.02% saluting the boxes, 13.15% working the mob, `
+    + `14.97% silent and grim, at median lives of 284 / 246 / 244 / 212 weeks. \`open\`'s 60-house `
     + `signature is byte-identical, because the reference player presses no word at all. See the roadmap.`);
 
   return { pass: out.bad.length === 0, why: out.bad.slice(0,3).join("; ") || null, lines: out.lines };
