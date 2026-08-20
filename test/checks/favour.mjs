@@ -189,6 +189,33 @@ export async function run({ p }){
       lines.push(`the house's standing, before and after each call: ${paid.join(" · ")}`);
     }
 
+    /* ---- 4b. A FAVOUR WHOSE EFFECT IS A FLAG IS ONLY NEWS ONCE (#172) ----
+       The senator's `run` sets `romeEarly` and the second call cannot set it again, so every call
+       after the first paid 34 of the house's standing for forty-five to eighty fame — and standing
+       is what `riseRomeCut` reads, 150 off Rome's bar at rung five. Over 240 houses of 420 weeks,
+       called at the best moment anybody has found, that was 913 calls where one would have done and
+       the house reached Rome 370 times against a control's 497. Its gate is its own effect now, the
+       way the magistrate's is a grudge and the noble's is a rival with a name. */
+    {
+      const d = house("ONCE");
+      const pt = of(d, "senator");
+      if(!pt) bad.push(`no senator to drive for the one-shot bar`);
+      else {
+        if(!A.favourReady(d, pt)) bad.push(`the senator would not come ready on a house that holds him at 95`);
+        A.callFavour(d, pt.id);
+        if(!d.flags.romeEarly) bad.push(`the senator spoke and \`romeEarly\` was not set`);
+        pt.favor = 95; pt.calledAt = null; A.recomputeFavor(d);
+        if(A.favourReady(d, pt))
+          bad.push(`the senator is ready to say it again with \`romeEarly\` already set — a second word `
+            + `cannot set a flag that is set, so it is 34 of the house's standing for nothing, and `
+            + `standing is what \`riseRomeCut\` takes off Rome's bar`);
+        const said = A.favourWorth(d, pt);
+        if(!/already said it|only news/i.test(said))
+          bad.push(`the senator's line still offers the bar it has already lowered: "${said}"`);
+        lines.push(`once he has said it: ready ${A.favourReady(d, pt)} · "${said}"`);
+      }
+    }
+
     /* ---- 5. THE THREE GATES ---- */
     {
       const d = house("GATE");

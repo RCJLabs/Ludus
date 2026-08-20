@@ -46,6 +46,7 @@ Run them straight:
     node test/probes/favour.mjs 24 420 SEED  # #167: the four favours called on sight, called wisely, and not at all
     node test/probes/choice.mjs 500 SEED   # #170: every button at the sand — tactic, entrance, plan, word — on one scale
     node test/probes/sample.mjs 72 420 SEED '{"bet":200}'  # how many houses THAT figure needs, for any rope arm
+    node test/probes/valve.mjs 80 420 SEED   # #172: each favour measured by what its own run() acts on
 
 ## HOW MANY HOUSES A FIGURE NEEDS — read this before quoting one
 

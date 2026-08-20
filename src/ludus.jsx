@@ -3732,9 +3732,18 @@ const FAVOURS = {
       addRep(d, "show", 6);
       return `${p.name} tells a story about House ${h.name} at the baths, and by the market it has grown two heads. It costs them ${lost} fame. They will work out who started it.`;
     } },
+  /* ---- AND A WORD IN ROME IS ONLY NEWS ONCE (#172) ----
+     `run` sets `romeEarly`, a flag, and the second call cannot set it again — so every call after
+     the first paid 34 of the house's standing for forty-five to eighty fame, and `recomputeFavor`
+     took that standing off `d.favor`, which is what `riseRomeCut` reads: 150 off Rome's bar at rung
+     five, 90 at four, 45 at three. Measured over 240 houses of 420 weeks, called at the best moment
+     anybody has found — fame within the 150 it buys — the arm reached Rome 370 times against a
+     control's 497, a fall of 26% at 38u/78d and p=0.000, off 913 calls where one would have done.
+     Gated, the calls fall to 131 and the imperial runs come back to 485. The gate is the favour's
+     own effect, the way the magistrate's is a grudge and the noble's is a rival with a name. */
   senator: { title:"A name dropped in Rome", cost:34, wait:30,
     ask:"He will say your house's name somewhere it carries. Rome is a long way off and it hears a great deal.",
-    can:()=>true,
+    can:d=>!(d.flags && d.flags.romeEarly),
     run(d,p){ const n = senatorName(R());
       d.fame += n; d.flags.romeEarly = 1;
       return `${p.name} mentions your house in a room in Rome. You will never know which room. Fame +${n}, and the imperial invitation will not wait as long as it would have.`; } },
@@ -3776,6 +3785,7 @@ function favourWorth(d, p){
     return `House ${h.name} carries a name of ${Math.round(h.fame||0)}; the story takes ${nobleStory(h,0,0)} to ${nobleStory(h,1,1)} off it`
       + ((h.fame||0) > (d.fame||0) ? " — they are ahead of you" : "");
   }
+  if(d.flags && d.flags.romeEarly) return "He has already said it. A name is only news in Rome once.";
   const gap = Math.round(romeBar(d) - (d.fame||0));
   return `${senatorName(0)} to ${senatorName(1)} of name, and 150 off Rome's bar`
     + (d.rome ? "" : gap > 0 ? ` — you are ${gap} short of it` : " — and Rome is already within reach");

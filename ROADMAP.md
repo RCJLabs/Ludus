@@ -1399,7 +1399,23 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.64.0 — the audit #171 asked for, turned on this project's own published
+**Shipped and verified:** v3.65.0 — #172 closed, and v3.64.0's rule paid for itself the release after
+it shipped. The clause said a lever that buys nothing on average may still be the one that saves a
+particular run; what it actually wanted was a different QUANTITY, because one house's life varies by
+139 weeks and median life could never have seen any of this. Measured by what each favour's own `run`
+acts on, 240 houses of 420 weeks an arm: **the magistrate takes men lost to defection from 327 to 41**
+(10u/104d, p=0.000) and it works by prevention rather than rescue — its `run` drops the angriest
+grudge by 55 and `startPoach` needs 35, so the fuse never lights. **The noble takes the weeks spent
+behind the biggest name in the bay from 54.9% to 48.0%** (68u/118d, p=0.000). Neither was ever
+mispriced; #171 measured both with the one instrument that could not see them. **The senator was the
+fault, and it is a flag**: `run` sets `romeEarly` and a second call cannot set it again, so every call
+after the first paid 34 of the house's standing — which is what `riseRomeCut` takes off Rome's bar —
+for forty-five to eighty fame. **913 calls across 240 houses where one would have done, and the house
+reached Rome 26% less often for it.** Its gate is its own effect now, the shape the other three
+already had; calls fall to 131, imperial runs return to 485 against the control's 497, and the three
+together go to **46 houses standing at 420 weeks against 31**. `favour` gains the bar, negative-tested;
+`open`'s 60-house signature is byte-identical. Suite green at **71/71**.
+v3.64.0 — the audit #171 asked for, turned on this project's own published
 figures. #136 has fired five times and the fifth one shipped a wrong number, so the missing thing was
 never another probe — it was the arithmetic that says how many houses a claim needs. `needN` measures
 the spread BETWEEN houses and turns it into `2*sd/sqrt(n)`: the smallest difference the run could have
@@ -3237,7 +3253,75 @@ Negative-tested — put the join back and it reads "the log SHRANK across a word
 11 → 5 → 17 beats".
 
 **#171 — CLOSED in v3.63.0, REFUTED on its own clause, and it took one of my own published figures
-with it.** The clause was: *falsifies if the gain is an artefact of the trigger set rather than of
+with it.** *(v3.65.0: its −26.7 weeks for the three was the senator's repeat-calling, and with that
+gated the same arm reads +12.1 weeks — not significant either way. Life was the wrong quantity for
+all of it; see #172.)* The clause was: *falsifies if the gain is an artefact of the trigger set rather than of
+calling at all, which a second, differently-derived trigger set would show.* It is, and it did.
+
+`favours:"thrift"` is that second set, derived from the opposite side: `wise` reads every trigger off
+what a favour's own `run` CHANGES, and `thrift` asks nothing about the world at all — the price of a
+favour is the house's standing, the only thing standing is for is the next rung, so call anything
+`riseNeed(d).favor` will not miss. Same lever, same favours, same houses. At 240 houses of 420 weeks
+an arm, control first, paired house for house:
+
+| arm | life | standing | weekly fame | census rung | standing at 420w | ruinous ends |
+|---|---|---|---|---|---|---|
+| control | — | — | — | — | 46 of 240 | 77 |
+| the moment it is ready | 102u/132d −35.1 | 54u/186d **−20.2** | −92.8 | −0.6 | 31 | 80 |
+| **wise** (the effect side) | 113u/105d −3.5 | 71u/162d −9.4 | 124u/109d **+134.4** | −0.1 | **55** | **50** |
+| **thrift** (the cost side) | 108u/124d **−17.0** | 83u/157d −10.2 | 113u/127d **−99.0** | −0.3 | 40 | 75 |
+| wise, without the merchant | 90u/119d **−26.7** | 56u/158d −8.4 | −59.3 | −0.3 | **24** | 78 |
+
+**And the sample had to be raised to see any of it.** #167 published +188 and +537 of weekly fame for
+`wise` off 72 houses an arm on two families. Ablated at 72, dropping the NOBLE trigger read better
+than the whole policy on every axis — which is the signature of a sample too small for the variance,
+not of a policy. At 240 the honest figure is **+134.4 at 124u/109d**, a sign count nobody should
+quote, and the life is a wash. `favour` and the v3.61.0 notes carry the corrected numbers now.
+
+**What is robust is the ending mix, and it is one favour.** Ruinous ends 77 → 50 and houses standing
+46 → 55 — and dropping the merchant from the policy takes that to 78 ruins and 24 standing, worse
+than never calling at all. The merchant carries ten weeks of the bill; ruin is a money ending; that
+is the whole mechanism.
+
+**So the default does not flip.** Turning `favours:"wise"` on would bake four judgements of mine into
+every reachability figure this project publishes in order to buy one mechanical effect that three of
+those four judgements are actively paying for. The rope carries `favours` (true / `"wise"` /
+`"thrift"` / a rank) and `favourSkip` so the ablation is reproducible, and its default stays off.
+
+**#172 — CLOSED in v3.65.0. The clause fired for two of the three, and the third turned out to be a
+fault with a one-line gate: a favour whose whole effect is a FLAG was callable for ever.** The clause
+was that a lever buying nothing on average may still be the one that saves a particular run, and that
+the measurement wanted doing on the houses that were in trouble. It wanted doing on a different
+QUANTITY, which is the same thing said better and is v3.64.0's rule: one house's life varies by 139
+weeks, so median life could never have seen any of this. Each favour is measured by what its own `run`
+acts on now — 240 houses of 420 weeks an arm, control first, paired house for house:
+
+| the favour | what it acts on | control | called on its trigger | sign test |
+|---|---|---|---|---|
+| **magistrate** | poaches lit · **men lost** | 454 · **327** | 68 · **41** | 12u/111d · **10u/104d, p=0.000** |
+| **noble** | weeks spent behind the biggest name | 54.9% | **48.0%** | 68u/118d, **p=0.000** |
+| senator | imperial runs reached | 497 | **370** | 38u/78d, **p=0.000 — the wrong way** |
+
+**The magistrate is a safety valve and it works, and it works by prevention rather than rescue.** Its
+`run` drops the angriest grudge by 55 and `startPoach` needs 35 to begin, so the fuse never lights:
+**327 men walked out of the control's houses and 41 out of the arm's.** The noble does exactly what
+she is for. Neither was ever mispriced — #171 measured both with the one instrument that could not
+see them, and its −26.7 weeks belongs to the third.
+
+**The senator was the fault.** `run` sets `d.flags.romeEarly`, a flag, and a second call cannot set
+it again — so every call after the first paid 34 of the house's standing for forty-five to eighty
+fame, and standing is what `riseRomeCut` reads: 150 off Rome's bar at rung five, 90 at four, 45 at
+three. **913 calls across 240 houses where one would have done**, and the house reached Rome 26% less
+often for it. Its gate is its own effect now — `can: d => !d.flags.romeEarly`, the same shape as the
+magistrate's grudge and the noble's rival — and the calls fall to **131**, the imperial runs come back
+to **485 against the control's 497**, and the three together go from −0.6 imperial runs a house to
++0.2 with **46 houses standing at 420 weeks against 31**. `favour` gains the bar, negative-tested;
+`open`'s 60-house signature is byte-identical because the reference player calls nothing.
+
+**#171 — CLOSED in v3.63.0, REFUTED on its own clause, and it took one of my own published figures
+with it.** *(v3.65.0: its −26.7 weeks for the three was the senator's repeat-calling, and with that
+gated the same arm reads +12.1 weeks — not significant either way. Life was the wrong quantity for
+all of it; see #172.)* The clause was: *falsifies if the gain is an artefact of the trigger set rather than of
 calling at all, which a second, differently-derived trigger set would show.* It is, and it did.
 
 `favours:"thrift"` is that second set, derived from the opposite side: `wise` reads every trigger off
@@ -3376,6 +3460,72 @@ about a quarter and it is the cost of this repair**; `MISSIO_MAN` is one line to
 wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
+
+### v3.65.0 — #172: two safety valves that worked, and a word in Rome that was only news once
+
+#172 said three favours cost the house more than they can buy. It carried a clause — *a lever that
+buys nothing on average may still be the one that saves a particular run* — and the honest form of
+that clause is not "look at the houses that were in trouble", which is selection on the outcome. It
+is **look at a different quantity**, and v3.64.0 had just made the case: one house's life varies by a
+standard deviation of 139 weeks, so 240 houses cannot see a difference under 18. Median life could
+never have priced a lever that fires four times a run.
+
+#### So each favour is measured by what its own `run` acts on
+
+`test/probes/valve.mjs`. Conditioning is on the STATE at the time and never on how the run ended: a
+poach that started is a poach that started whether or not the house later ruined. 240 houses of 420
+weeks an arm, control first, paired house for house, and the merchant left out of every arm because
+#171 established he is the one that pays.
+
+| the favour | what it acts on | control | on its trigger | sign test | needs |
+|---|---|---|---|---|---|
+| **magistrate** | poaches lit | 454 | **68** | 12u/111d p=0.000 | 12 of 240 |
+| | **men lost to defection** | **327** | **41** | 10u/104d p=0.000 | 13 of 240 |
+| **noble** | weeks behind the biggest name | 54.9% | **48.0%** | 68u/118d p=0.000 | 131 of 240 |
+| senator | imperial runs reached | 497 | **370** | 38u/78d p=0.000 | 45 of 240 |
+
+And every whole-run figure beside them — life, deaths a bout, houses standing, ruinous ends — reads
+"NOT YET A FIGURE" at 240 houses, exactly as v3.64.0 says it must. **#171's −26.7 weeks was that.**
+
+#### The magistrate is a valve, and it works by prevention
+
+`run` drops the angriest rival's grudge by 55; `startPoach` will not begin at all below 35. So calling
+it does not catch a falling man — **it stops the fall**: 454 fuses lit in the control's houses against
+68 in the arm's, and **327 men walked out against 41**. That is 286 men, and #171 priced it at minus
+twenty-six weeks of median life because that is the only thing it looked at.
+
+#### The senator was the fault, and the fault is that a flag can only be set once
+
+`run` sets `d.flags.romeEarly`, which takes 150 off `romeBar`. A second call cannot set it again. So
+every call after the first paid **34 of the house's standing** for forty-five to eighty fame — and
+standing is precisely what `riseRomeCut` reads: 150 off Rome's bar at rung five, 90 at four, 45 at
+three. The trigger fires whenever fame is within the 150 the favour buys, which after the first call
+is most weeks. **913 calls across 240 houses where one would have done**, and the arm reached Rome
+370 times against the control's 497.
+
+The gate is the favour's own effect, which is the shape the other three already had — the magistrate
+needs a grudge to drop, the noble a rival with a name — so `can: d => !d.flags.romeEarly`, and the
+panel line says "He has already said it. A name is only news in Rome once."
+
+| | calls | imperial runs | ever Rome | standing at 420w |
+|---|---|---|---|---|
+| control | 0 | 497 | 124 of 240 | 31 |
+| senator, before | 913 | **370** | 126 | 33 |
+| senator, after | **131** | **485** | 126 | 36 |
+| the three, before | 1,872 | 351 | 123 | 28 |
+| the three, after | 1,173 | **541** | 126 | **46** |
+
+`favour` gains the bar, negative-tested — with the gate removed it reads "the senator is ready to say
+it again with `romeEarly` already set". `open`'s 60-house signature is byte-identical, because the
+reference player calls no favour at all.
+
+#### What this release is really evidence for
+
+v3.64.0 built the arithmetic and annotated six old figures with it. This is the first item measured
+under the rule from the start, and the rule did not merely stop a wrong number being published — it
+**changed the answer**. Two favours that had been written down as costing the house are the two doing
+the most for it, and the one that really was broken was invisible in the metric everything had been
+measured in. The lesson is not "use more houses". It is **measure the thing the lever touches**.
 
 ### v3.64.0 — the spread between houses, which is the largest number in this project and was never written down
 
