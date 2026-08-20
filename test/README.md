@@ -54,6 +54,7 @@ reason the check exists usually has not.
 | `board` | fast | the bookmaker's board and the settlement priced the same wager off two different numbers |
 | `repute` | fast | four reputation tallies all clamped at 120 and all decaying 1.5% a week, so a house that saturated three of them could never be named again — arithmetic, not chance |
 | `stage` | fast | four buttons pressed before every bout, priced nowhere, and one of them switched itself off exactly as a house got big enough to have men worth keeping |
+| `favour` | fast | four patron favours stood ready on 38,714 of 50,917 patron-weeks and nothing in the game had ever called one — and calling them on sight is worse than never calling them at all |
 | `chronicle` | fast | one in five lines the chronicle ever wrote was the same weekly receipt |
 | `marks` | fast | a man bought with an old wound carried a scar drawn at NaN,NaN for as long as you owned him — and the four parts a bout wears down, held to the balance their split thresholds exist for |
 | `grudge` | fast | two rival-vengeance events waited above the ceiling of the number they read |

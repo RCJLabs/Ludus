@@ -259,6 +259,12 @@ export async function installRope(p){
                         is `bookEye` — 22 of the 24 opened it by median week 2 and 14 sat at the
                         third-off cap by week 33 — which is how #162 was measured. `betAgainst`
                         tells the man to go down instead, which is a different game entirely.)
+         favours       (default NONE, #167 — `true` calls every patron favour the moment `favourReady`
+                        says it is ready; a rank name or a list of them calls only those, so the four
+                        can be priced apart; `"wise"` calls each one only when there is something for
+                        it to do, every trigger read off what that favour's own `run` changes. The
+                        price is the patron's own favour and, through `recomputeFavor`, the house's
+                        standing, which is what makes any of these a policy rather than a free lunch)
          entrance      (default NONE, #166 — one of `ENTRANCE_KEYS`, written onto every offer this
                         rope fights, exactly as the arena panel writes it. `showman` is the one that
                         pays: 6.7 points of win rate on a card the game deals, and all of it is the
@@ -546,6 +552,40 @@ export async function installRope(p){
         } else if(d.loan && d.gold > res){
           const paid = fin(A.repay,[d, Math.floor(d.gold - res)]);
           if(paid > 0) bump("repaid");
+        }
+      }
+      /* ---- #167: THE FOUR FAVOURS, WHICH NOTHING HAD EVER CALLED ----
+         All four ranks are held and READY on essentially every patron-week a played house has —
+         6,555 to 6,823 of them over 18 houses — and `callFavour` was dark in every measurement this
+         project has taken. It is not unreachable content; it is a lever nobody pulls, which is
+         #158's shape. `favours:true` calls every one the moment it is ready; `favours:"senator"` or
+         a list calls only those ranks, so the four can be priced apart. The cost is the patron's own
+         favour, and `recomputeFavor` takes the house's standing down with it, which is why "call
+         everything" is a policy and not a free lunch. */
+      if(o.favours && typeof A.callFavour === "function"){
+        /* `wise` calls each favour ONLY when there is something for it to do, and every trigger is
+           read off what the favour's own `run` changes rather than off a number somebody chose:
+             magistrate  there is a poach or a soft nemesis for it to clear — the two things it clears
+             merchant    gold is below the rope's own reserve, the same trigger the loan lever uses
+             noble       the biggest rival's name is ahead of the house's own, and she takes a fifth
+             senator     fame is within the 150 that `romeEarly` takes off `romeBar`, so the 150 bridges
+           Without this the arm is "call it the moment it is ready", which is the clause #167 was
+           opened with and also the least considered policy in the game. */
+        const rivalTop = k => (d.rivals||[]).slice().sort((a,b)=>(b[k]||0)-(a[k]||0))[0] || null;
+        const WISE = {
+          magistrate: () => !!d.poach || !!(d.nemHouse) || !!(d.nemesis && !d.nemesis.hated),
+          merchant:   () => d.gold < LAN.reserve(d),
+          noble:      () => { const h = rivalTop("fame"); return !!h && (h.fame||0) > (d.fame||0); },
+          senator:    () => typeof A.romeBar === "function" && !d.rome
+                            && (d.fame||0) >= fin(A.romeBar,[d]) - 150,
+        };
+        const wise = o.favours === "wise";
+        const want = (o.favours === true || wise) ? null : [].concat(o.favours);
+        for(const pt of A.patronsOf(d)){
+          if(want && want.indexOf(pt.rank) < 0) continue;
+          if(wise && !(WISE[pt.rank] && WISE[pt.rank]())) continue;
+          if(!fin(A.favourReady,[d, pt])) continue;
+          if(fin(A.callFavour,[d, pt.id])) bump("favour:" + pt.rank);
         }
       }
       if(o.party !== false && typeof A.hostParty === "function"){

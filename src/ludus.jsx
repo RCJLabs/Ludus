@@ -3680,6 +3680,28 @@ function serveWants(d, ev){
 /* ---- CALLING IT IN ----
    Standing has only ever sat on the missio roll. These four owe you something,
    and each of them can do exactly one thing that nobody else in Capua can. */
+/* ---- WHAT A FAVOUR IS WORTH TODAY, WHICH IS THE ONLY THING THAT MATTERS ABOUT IT (#167) ----
+   All four ranks are held and READY on 38,714 of 50,917 patron-weeks a played house has, and no
+   measurement this project ever took called one. Driven both ways over 72 houses of 420 weeks on two
+   seed families, the timing is the whole of it:
+
+     called the moment it is ready   the house's standing falls 21 and 18 points (54 and 59 houses
+                                     of 72 worse), its weekly fame 166 and 179, its census rung 0.6,
+                                     and the imperial runs nearly halve — 157 to 87 and 163 to 91
+     called when there is something  weekly fame +188 and +537 (38u/31d and 45u/27d), 0.6 more men,
+     for it to do                    14 and 19 houses standing at 420 weeks against 11 and 15, at no
+                                     cost in life and, on the second family, none in standing either
+
+   The four are not mispriced. What the panel never says is WHEN, and when is worth the difference
+   between the best policy in the patron system and one that is worse than never calling at all.
+   These three exist so the line the player reads and the roll the favour makes cannot come apart —
+   the shape #150, #162, #165, #160 and #166 all turned out to have. */
+/* TWO rolls, in the order the old inline expression made them, because collapsing them to one
+   would have changed both the distribution and the RNG stream and `open`'s signature would have
+   said so — which is what it is for */
+const nobleStory   = (h, a, b) => Math.min(h.fame||0, rnd(Math.max(60 + a*40, (h.fame||0)*(0.18 + b*0.12))));
+const senatorName  = r => rnd(45 + r*35);
+const merchantCarry = d => Math.max(0, weeklyBill(d) - (d.doctore ? docWage(d.doctore) : 0)) * 10;
 const FAVOURS = {
   magistrate: { title:"A word with the other house", cost:30, wait:22,
     ask:"He knows every lanista in Campania and has leverage on most of them. He will make one of them let a thing drop.",
@@ -3704,7 +3726,7 @@ const FAVOURS = {
       const h = (d.rivals||[]).sort((a,b)=>b.fame-a.fame)[0];
       /* tuned at 60–100 when the biggest house in the bay held ~300 — a quarter of a
          name. Now that names scale with the era, the story takes the same share. */
-      const lost = Math.min(h.fame, rnd(Math.max(60+R()*40, h.fame*(0.18+R()*0.12))));
+      const lost = nobleStory(h, R(), R());
       h.fame -= lost;
       h.grudge = clamp(h.grudge+18, 0, 100);
       addRep(d, "show", 6);
@@ -3713,7 +3735,7 @@ const FAVOURS = {
   senator: { title:"A name dropped in Rome", cost:34, wait:30,
     ask:"He will say your house's name somewhere it carries. Rome is a long way off and it hears a great deal.",
     can:()=>true,
-    run(d,p){ const n = rnd(45+R()*35);
+    run(d,p){ const n = senatorName(R());
       d.fame += n; d.flags.romeEarly = 1;
       return `${p.name} mentions your house in a room in Rome. You will never know which room. Fame +${n}, and the imperial invitation will not wait as long as it would have.`; } },
 };
@@ -3731,6 +3753,32 @@ function callFavour(d, pid){
   const line = F.run(d, p);
   chron(d, line, "good");
   return line;
+}
+
+/* one line, off the same quantities `run` uses, so what the player reads and what the roll does
+   cannot come apart. It is deliberately dull when the favour has nothing to do and pointed when it
+   has — which is the whole finding of #167. */
+function favourWorth(d, p){
+  const F = FAVOURS[p.rank]; if(!F) return "";
+  if(p.rank === "magistrate"){
+    const h = (d.rivals||[]).slice().sort((a,b)=>(b.grudge||0)-(a.grudge||0))[0];
+    if(!h) return "No house in the bay is keeping an account of you.";
+    const also = [];
+    if(d.poach && d.poach.house === h.name) also.push("calls off the man he has out for yours");
+    if(d.nemesis && d.nemesis.house === h.name && !d.nemesis.hated) also.push("drops the grudge he was nursing");
+    return `House ${h.name} is at ${Math.round(h.grudge||0)}; this takes it to ${Math.max(0, Math.round(h.grudge||0) - 55)}`
+      + (also.length ? ` — and ${also.join(", and ")}` : "");
+  }
+  if(p.rank === "merchant") return `About ${merchantCarry(d)} denarii, at this week's bill`;
+  if(p.rank === "noble"){
+    const h = (d.rivals||[]).slice().sort((a,b)=>(b.fame||0)-(a.fame||0))[0];
+    if(!h) return "Nobody in the bay is worth telling a story about yet.";
+    return `House ${h.name} carries a name of ${Math.round(h.fame||0)}; the story takes ${nobleStory(h,0,0)} to ${nobleStory(h,1,1)} off it`
+      + ((h.fame||0) > (d.fame||0) ? " — they are ahead of you" : "");
+  }
+  const gap = Math.round(romeBar(d) - (d.fame||0));
+  return `${senatorName(0)} to ${senatorName(1)} of name, and 150 off Rome's bar`
+    + (d.rome ? "" : gap > 0 ? ` — you are ${gap} short of it` : " — and Rome is already within reach");
 }
 
 function patronWeek(d){
@@ -22099,7 +22147,7 @@ export default function App(){
                           <span className="tag" style={ready?{borderColor:"#c99a4b",color:"#e8d092"}:undefined}>{F.title}</span>
                           <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{F.cost} standing</span>
                         </div>
-                        <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>{F.ask}</div>
+                        <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>{F.ask}</div><div style={{fontSize:"var(--fs-sm)",marginTop:4,color:"#c99a4b"}}>{favourWorth(S, p)}</div>
                         <button className={`btn ${ready?"":"btn-ghost"}`} style={{width:"100%",marginTop:6}}
                           disabled={!ready} onClick={()=>askFavour(p.id)}>
                           {wait ? `He has done enough for now · ${wait} week${wait===1?"":"s"}`
@@ -25962,7 +26010,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        exercised — but never as the player's own action.
        `actions` derives the list now instead of holding a hand-written one, so a future action that
        forgets this line fails a check rather than going quietly dark. */
-    answerNem, nemCallOut, callFavour, repay, sellDebt, runGambit, backCandidate, swearIn,
+    answerNem, nemCallOut, callFavour, favourWorth, nobleStory, senatorName, merchantCarry, repay, sellDebt, runGambit, backCandidate, swearIn,
     applyRefusal, skipWeeks, charterSkip, firstBuyWarn, ENTRANCES, ENTRANCE_KEYS, deadlines, entranceSays, entDread, oppGreen, ENT_MISSIO, ENT_TERM_KEYS, ENT_TERM,
     favMissio, veteranGuard, riseFav, blessMercy, favourOf, MISSIO_MID, MISSIO_SLOPE, missioWord, MISSIO_MAN,
     saveKit, applyKit, dropKit, watchField, startPlan, breakPlan, clearWatch,

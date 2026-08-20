@@ -87,7 +87,7 @@ npm run test:all      every check, fast and slow — about thirteen minutes
 npm run coverage      not what passes, but what no check ever touches
 ```
 
-**70 checks.** Most read into the game through a test handle and answer in seconds; a
+**71 checks.** Most read into the game through a test handle and answer in seconds; a
 handful drive a real browser through the real screens. Every one of them exists because
 of a bug that shipped, and the comment at the top of each says which — that comment
 is the durable part, not the numbers inside it. See `test/README.md` for the table.
@@ -1392,7 +1392,23 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.60.0 — #169 closed, and its falsification clause did not fire: the modal
+**Shipped and verified:** v3.61.0 — #167 closed, and its clause fired on a conclusion that did not
+follow. All four patron favours stand READY on **38,714 of 50,917 patron-weeks** of a played house
+and nothing in this project had ever called one. Driven both ways over 72 houses of 420 weeks an arm
+on two seed families, paired house for house: calling every favour **the moment it is ready** costs
+**21.2 and 18.2 points of the house's standing** (54 and 59 houses of 72 worse), **166 and 179 of
+weekly mean fame**, 0.6 of census rung, and takes the imperial runs from **157 to 87 and 163 to 91**.
+Calling the same four **when there is something for them to do** — every trigger read off what that
+favour's own `run` changes — is worth **+188 and +537 of weekly fame**, 0.6 more men, **14 and 19
+houses standing at 420 weeks against 11 and 15**, and ruinous endings **30 → 18**, at no cost in
+life. The cost was never the patron's favour: `recomputeFavor` is a weighted mean, so it is the
+house's standing, which is what the census rung asks for and what `riseRomeCut` takes off Rome's bar
+— the senator's own favour lowers that bar by 150 and costs more than 150 in the rung it spends. So
+the four are priced fine and the silence was not free; what the panel never said is WHEN, and it says
+it now, off one source with the roll. `favour` is the 71st check, five bars, all negative-tested —
+and the first version of the one-source bar could not see the fault it was written for. `open`'s
+60-house signature is byte-identical. Suite green at **71/71**.
+v3.60.0 — #169 closed, and its falsification clause did not fire: the modal
 IS fed the truncated array, and what it does with it is worse than the trace suggested. `FightModal`
 is not keyed and keeps its own cursor, so a resume that stops again hands it an array shorter than
 the index it holds — `done` is true on arrival and it renders the last beat of the segment. Fourteen
@@ -3080,23 +3096,43 @@ cannot be added without the player being told. `stage` is the 70th check; the ro
 *What is NOT changed:* the size of that momentum point. It is now shown to the player rather than
 hidden, and whether it should be that large is #170.
 
-**#167 — four patron favours, ready on all but a handful of patron-weeks, and never once called.**
-`callFavour`, `favourReady`, `favourOf` and `backCandidate` are all dark. Over 18 played houses of 420
-weeks with the ledger held up:
+**#167 — CLOSED in v3.61.0. The clause fired and the conclusion it proposed did not follow: calling
+every favour the moment it is ready IS worse than never calling one, and calling the same four when
+there is something for them to do is the best thing in the patron system.** All four ranks are held
+and READY on **38,714 of 50,917 patron-weeks** a played house has, and `callFavour` was dark in every
+measurement this project ever took. Driven both ways — 72 houses of 420 weeks an arm, two seed
+families, control first, paired house for house:
 
-| rank | patron-weeks held | its gate open | READY | houses that ever had it ready |
-|---|---|---|---|---|
-| magistrate | 6,823 | 3,607 | 3,607 | 18 of 18 |
-| merchant | 6,823 | 6,823 | 6,823 | 18 of 18 |
-| noble | 6,701 | 6,701 | 6,701 | 18 of 18 |
-| senator | 6,561 | 6,561 | **6,555** | 18 of 18 |
+| arm | standing | weekly fame | census rung | houses standing at 420w | ruinous ends | imperial runs |
+|---|---|---|---|---|---|---|
+| control | — | — | — | 11 · 15 of 72 | 30 · 15 | 157 · 163 |
+| **the moment it is ready** | **−21.2 · −18.2** (54 and 59 of 72 worse) | **−166 · −179** | −0.6 · −0.6 | 7 · 10 | 27 · 26 | **87 · 91** |
+| **when there is something to do** | −9.7 · **+0.4** | **+188 · +537** (38u/31d, 45u/27d) | −0.1 · **+0.7** | **14 · 19** | **18 · 16** | 146 · 187 |
 
-So this is not unreachable content — it is a lever nobody pulls. Each was called on a house built to
-want it and each paid: the magistrate takes 55 off a rival's grudge, the merchant carries ten weeks of
-upkeep, the noble takes fame off the biggest house in the bay, the senator drops a name in Rome. The
-reference player calls **none of them, ever**, which is #158's shape: a policy question the rope has
-never been asked. *Falsifies if:* an arm that calls every favour the moment it is ready is not
-measurably better off — in which case the four are priced right and the silence costs nothing.
+Every trigger in the second arm is read off what that favour's own `run` changes and nothing else: a
+poach or a soft nemesis for the magistrate, because those are the two things it clears; gold below
+the rope's own reserve for the merchant, the same trigger `loan` uses; a rival whose name is ahead of
+yours for the noble; and fame within the 150 that `romeEarly` takes off `romeBar` for the senator.
+
+**The cost was never the patron's favour.** It is the HOUSE's standing — `recomputeFavor` is a
+weighted mean, and `d.favor` is what the census rung asks for, what the editor's box weighs, and what
+`riseRomeCut` takes off Rome's bar. That is why calling on sight halves the imperial runs while the
+senator's own favour is the thing that lowers Rome's bar by 150: the rung it costs you is worth more
+than the 150 it buys. And once called, readiness collapses — 76.0% of patron-weeks ready in the
+control against **2.9%** in the call-everything arm.
+
+So the four are priced fine and the silence was not free. What the panel never said is WHEN. It says
+it now: `favourWorth(d, p)` prints what THIS call would do today — the rival and the grudge it would
+drop and whether a poach goes with it, the denarii the merchant would carry at this week's bill, the
+name the story would take off the biggest house in the bay, the fame the senator gives and how far
+short of Rome you still are. `nobleStory` and `senatorName` are one source for the line and the roll,
+and `open`'s 60-house signature is byte-identical because the extraction keeps both of the noble's
+rolls in the order the inline expression made them. `favour` is the 71st check, five bars, all
+negative-tested — **and the first version of the one-source bar could not see the fault it was
+written for**: it read the band off `nobleStory` and compared it to the roll, so a panel made to
+quote a band the roll can leave passed. It reads the numbers out of the line the player sees now.
+*Not changed:* the reference player still calls nothing. Flipping that default re-bases every figure
+in this project and is #171.
 
 **#169 — CLOSED in v3.60.0. The clause did not falsify — the modal IS fed the truncated array — and
 what the screen does with it is worse than the trace suggested: the order the player gives is never
@@ -3131,6 +3167,18 @@ clash more often, and a clash is favour. `odds` gains the invariant rather than 
 may only grow across a word from the box, and the bout must still open where it opened.
 Negative-tested — put the join back and it reads "the log SHRANK across a word from the box —
 11 → 5 → 17 beats".
+
+**#171 — the reference player is incompetent in one specific, measured way.** `lanista` is "one week
+of competent play" and every reachability figure in this project rests on it. It calls no patron
+favour, ever, and #167 measured what that costs: called when there is something for them to do, the
+same four are worth **+188 and +537 of weekly mean fame**, 0.6 more men, **14 and 19 houses standing
+at 420 weeks against 11 and 15**, and ruinous endings **30 → 18**, at no cost in life. The rope
+carries `favours:"wise"` and its default is still off, because turning it on re-bases every figure
+this project has published — `policy`'s benchmarks, `ends`'s ending mix, `late`'s perennial share,
+`estate`'s late-game table — and that is a release, not a line. *Falsifies if:* the gain is an
+artefact of the trigger set rather than of calling at all, which a second, differently-derived
+trigger set would show. The one measured reads each trigger off what that favour's own `run`
+changes, which is the least arbitrary set available, but it is still one set.
 
 **#170 — one point of momentum is worth more than any trait in the game, and it is free.** This file
 states its own scale beside the traits: "the first cut measured Brutal at +16 points and Showman at
@@ -3175,6 +3223,85 @@ about a quarter and it is the cost of this repair**; `MISSIO_MAN` is one line to
 wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
+
+### v3.61.0 — #167: the four favours were never mispriced, and nobody was ever told when
+
+#167 was opened as a lever nobody pulls — #158's shape — with its own falsification: *falsifies if an
+arm that calls every favour the moment it is ready is not measurably better off, in which case the
+four are priced right and the silence costs nothing.* The clause fires. The conclusion does not.
+
+#### What a played house is holding
+
+38,714 of its 50,917 patron-weeks have at least one favour standing READY — 76.0% — and `callFavour`
+was dark in every measurement this project has taken. The rope gains `favours`, which takes `true`
+(call each the moment `favourReady` says so), a rank name (so the four can be priced apart) or
+`"wise"`.
+
+#### The two policies, 72 houses of 420 weeks an arm, two seed families, paired on the same seeds
+
+| arm | standing | weekly fame | census rung | men | standing at 420w | ruinous ends | imperial runs |
+|---|---|---|---|---|---|---|---|
+| control | — | — | — | 2.3 · 2.4 | 11 · 15 of 72 | 30 · 15 | 157 · 163 |
+| **the moment it is ready** | **−21.2 · −18.2** | **−166 · −179** | −0.6 · −0.6 | 2.2 · 2.1 | 7 · 10 | 27 · 26 | **87 · 91** |
+| **when there is something to do** | −9.7 · **+0.4** | **+188 · +537** | −0.1 · **+0.7** | 2.9 · 3.0 | **14 · 19** | **18 · 16** | 146 · 187 |
+
+On the paired sign counts the call-everything arm is worse on standing in **54 and 59 houses of 72**,
+and the considered arm is better on fame in **38 of 69 and 45 of 72**. Every trigger in that second
+arm is read off what the favour's own `run` changes and nothing else:
+
+    magistrate   a poach or a soft nemesis is out — the two things it clears
+    merchant     gold is below the rope's own reserve, the same trigger `loan` uses
+    noble        the biggest rival's name is ahead of the house's own, and she takes a fifth of it
+    senator      fame is within the 150 that `romeEarly` takes off `romeBar`, so the 150 bridges
+
+#### Why calling on sight is worse than never calling
+
+The cost is not the patron's favour. `recomputeFavor` is a weighted mean, so every call takes the
+HOUSE's standing down with it, and `d.favor` is what the census rung asks for, what the editor's box
+weighs, and what `riseRomeCut` takes off Rome's bar — 150 at rung 5, 90 at 4, 45 at 3. That is why
+the arm that calls the senator's favour on sight, the one favour whose whole purpose is to lower
+Rome's bar by 150, gets to Rome barely half as often: it spends the rung that was worth more. And
+once called, readiness collapses — **76.0% of patron-weeks ready in the control against 2.9%** in the
+call-everything arm, because the cooldowns never clear.
+
+Individually, no rank pays for itself: across the two families the paired life difference is −1.6 and
+−11.4 for the magistrate, +6.3 and −5.5 for the merchant, −4.7 and +22.6 for the noble, −12.5 and
++15.6 for the senator. It is not any one of them. It is the timing.
+
+#### So the panel says when
+
+`favourWorth(d, p)` prints what THIS call would do today, and it is deliberately dull when the favour
+has nothing to do:
+
+    magistrate  House Solonius is at 2; this takes it to 0
+                House Solonius is at 62; this takes it to 7 — and calls off the man he has out for yours
+    merchant    About 300 denarii, at this week's bill
+    noble       House Tullius carries a name of 345; the story takes 62 to 104 off it
+    senator     45 to 80 of name, and 150 off Rome's bar — you are 100 short of it
+
+`nobleStory` and `senatorName` are one source for the line and the roll, so the band the player reads
+is the band the sand rolls in. `merchantCarry` is `weeklyBill` less the doctore's wage, which is
+exactly the set `endWeek` zeroes. `open`'s 60-house signature is **byte-identical**: the noble's
+extraction keeps BOTH of its rolls, in the order the inline expression made them, because collapsing
+them to one would have changed the distribution and the stream and the signature would have said so.
+
+#### The 71st check, and a bar that could not see its own fault
+
+`favour`, five bars, all negative-tested: every rank's line names a figure; what the line PROMISED is
+what the sand does; the line moves when there is something to do; each favour pays what its title
+says and the house pays for it; and all three of `favourReady`'s gates hold. **The first version of
+the second bar passed the mutation it exists to catch** — it read the band off `nobleStory` and
+compared it to the roll, so a panel made to quote a band the roll can leave sailed through, because
+the bar never looked at the panel. It parses the two numbers out of the line the player sees now,
+which is the only comparison that closes the loop. Four of the five negative tests fired first time;
+this one took two goes, which is the third time in four releases that a bar needed proving before it
+could be believed.
+
+#### What is deliberately NOT changed
+
+The reference player still calls nothing. Turning `favours:"wise"` on by default re-bases every figure
+this project has published — `policy`'s benchmarks, `ends`'s ending mix, `late`'s perennial share,
+`estate`'s late-game table — which is a release rather than a line, and is #171.
 
 ### v3.60.0 — #169: the order you gave was never shown happening
 

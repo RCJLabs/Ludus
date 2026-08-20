@@ -43,6 +43,7 @@ Run them straight:
     node test/probes/relay.mjs 14         # #169: what the arena SHOWS after a word from the box (browser)
     node test/probes/join.mjs 24 420 SEED # #169: what the truncated log costs, and what mending it moves
     node test/probes/join.mjs 1 1 SEED wide  # ...and the opening across TWELVE prefixes, when four cannot decide
+    node test/probes/favour.mjs 24 420 SEED  # #167: the four favours called on sight, called wisely, and not at all
 
 `keep`, `walk` and `fires` run in about 25 seconds at 72 houses, which is cheap enough that **they take
 a seed prefix and should always be run on three or four of them.** Two findings died this session for
