@@ -1399,7 +1399,26 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.68.0 — **#173 closed, and the item's question was the smaller half of
+**Shipped and verified:** v3.69.0 — **#174 closed, and the price was copied SIX times rather than
+five.** The item's sweep walked `src/ludus.jsx`; the reference player is a consumer of the engine
+exactly the way the panel is, and `test/harness.mjs:674` held a copy too. **And that copy had already
+drifted** — the rope's was unrounded where the engine charges `rnd(...)`, so across fame 0–4,000 the
+two disagree on **2,000 of 4,001 values, every odd one**, by half a denarius. The clause falsified and
+named the wrong extraction: folding affordability into `nemAnswerReady` would change a gate meaning
+"the cooldown has passed" for every reader, so the fix is a separate `nemAnswerCost(d)` — six sites to
+one, `open`'s signature byte-identical. One copy was load-bearing: the panel's "ready but short"
+label differed from the affordable one only by the word *"him"*, and it is **259 of 1,868 nemesis
+house-weeks (13.9%), met by 8 of 12 houses** — it says "not enough coin" now. **The guard is on the
+CLASS**: `copies.mjs`, the 72nd check, reads the source like `layers` and fails when arithmetic
+appears on both sides of the App boundary or in both engine and rope; negative-tested three ways.
+**Its own filter was the instrument fault** — skipping only lines that BEGAN with a comment marker
+made four paragraphs describing the price count as four copies of it. Opens **#178**: the same shape
+one altitude down, `55 + end*0.6` written 6 times across the four fight engines and `1 + mods.atk*0.7`
+4 times. The App budget held at exactly 7,200 without being raised. Suite green at **72/72 in 13.5
+minutes** — and v3.67.0's honesty fix fired in anger for the first time, `survive` drawing (2, 7) and
+printing *"of which 4 are in the 3 houses that ENDED, leaving 3 with the houses still going"*, a run
+that under the old reading looked like seven men available to two standing houses.
+v3.68.0 — **#173 closed, and the item's question was the smaller half of
 what was wrong.** `collDues` keyed off whether the collegium RECORD exists, where every other reader
 asks `collOn` — and `lapseCollegium` leaves the record. So the button labelled **"Stop the dues"**
 took away `collSoften` (deaths back to full unrest and full lanista health), took away `collBury` (no
@@ -3364,6 +3383,21 @@ a design question with no measurement behind it yet.
 times; dues 13d against a 286d bill, 4.5%; dropping them would have saved 0 of the 29 houses that
 died of the ledger.)*
 
+**#178 — the same fault one altitude down: six copies of the stamina line across four fight
+engines.** `copies.mjs`, built for #174, reports rather than fails on arithmetic duplicated *inside*
+the engine, because the four fight engines are separate by design. What it reports is not small:
+**`55 + end*0.6` — what a man starts a bout with — is written 6 times** (`8371` twice, `13216`,
+`13561`, `14476` twice), **`1 + mods.atk*0.7` 4 times** (`8572`, `13307`, `13366`, `13651`), and
+`8 + skill*0.22`, `1 + mods.atk*0.95`, `8 + length*3`, `0.26 + crowd*0.0022` twice each. Reprice a
+man's starting stamina and you must find four engines; that is the same failure mode as #174 with a
+different boundary, and it is the mode that produced six live faults already. *Falsifies if:* the
+duplication is load-bearing — the four engines may want to diverge, and a shared `startStam(g)` would
+make a future divergence harder to write rather than easier. That is a real argument and it is why
+this is an item rather than a change. **Not measured yet:** whether the six sites currently agree in
+every term (the sweep matches `55 + end*0.6` but not what surrounds it), which is the cheap first
+step and decides whether this is tidiness or a live disagreement like the rope's half-denarius.
+
+
 **#177 — the collegium's own note says it should be "the easiest line to cut in a bad month", and
 after #173's fix it is cuttable but never worth cutting.** The design intent is written above
 `COLL_FEE` in the file: *"It is the cheapest humane thing in this game and the easiest line to cut in
@@ -3382,16 +3416,47 @@ number would do to the 54 of 72 houses that hold a society and never cut it — 
 would pay for it. #127's rule applies: measure the distribution before touching the constant.
 
 
-**#174 — the last copy of a price, and the last instance of a class this project has fixed five
-times.** `answerNem`'s cost is `rnd(160 + d.fame*0.5)`, written once in the engine and **four more
-times in the panel** — the disabled test, and three branches of the button's own label. A mechanical
-sweep for arithmetic written on both sides of the App boundary returns **exactly one hit**, this one:
-#150, #162, #165, #160 and #166 each removed an instance, and this is what is left. It is not a live
-fault — the panel's fourth copy agrees with the engine's, so the button is correctly disabled and no
-player is offered a dead press today. Every previous instance became a live fault the moment one copy
-drifted. *Falsifies if:* the extraction costs more than it buys — `nemAnswerReady` would want the
-affordability test folded into it, and that gate is read by the rope, three probes and the panel, so
-a change there is not free.
+**#174 — CLOSED in v3.69.0. The price was copied SIX times, not five, and the sixth had already
+drifted.** The item said `rnd(160 + d.fame*0.5)` was written once in the engine and four times in the
+panel, and that a mechanical sweep for the class returned exactly one instance. The sweep walked
+`src/ludus.jsx` only. **The reference player is a consumer of the engine exactly the way the panel
+is, and it held a copy too** — `test/harness.mjs:674`, guarding its own step on `spare() > 160 +
+d.fame*0.5`.
+
+**And that copy was not merely redundant, it disagreed.** The rope's was UNROUNDED where the engine
+charges `rnd(...)`, so on **2,000 of the 4,001 fame values from 0 to 4,000 — every odd one — the two
+differed by half a denarius** (fame 1: rope 160.5, engine 161). The class this item names is "two
+copies that will one day stop agreeing"; here they already had.
+
+*Falsified on its own clause,* which read: *the extraction costs more than it buys — `nemAnswerReady`
+would want the affordability test folded into it, and that gate is read by the rope, three probes and
+the panel.* It would, and that is precisely the extraction NOT to do: the gate means the three-week
+cooldown has passed, and giving it a second meaning changes it for every reader. The extraction that
+was needed is a separate reader, `nemAnswerCost(d)`, which touches no existing gate. Six sites became
+one; `open`'s 60-house signature is **byte-identical**.
+
+**The panel's middle label turned out to be worth a wording.** Of its three branches, the one for
+"ready but the purse is short" differed from the affordable one by the word *"him"* on an
+already-greyed button. Measured, it is not a corner: **259 of the 1,868 house-weeks a nemesis exists
+(13.9%), met by 8 of 12 houses**. It says *"not enough coin"* now, the idiom the collegium's founding
+button already uses.
+
+**And the guard is on the CLASS, not on this price** — after six instances (#150, #162, #165, #160,
+#166, #174) that is what the evidence supports. `copies.mjs` is the **72nd check**: it reads the
+source the way `layers` does, finds arithmetic of the shape `<number> + <field>*<number>`, and fails
+when one appears on both sides of the App boundary or in both the engine and the rope.
+Negative-tested three ways — against the unfixed tree (catches all six sites with line numbers),
+against a single re-inlined panel copy, and against a single re-inlined rope copy.
+
+**Its own filter was the instrument fault.** The first version skipped a line only if it BEGAN with a
+comment marker, and this file's comments are indented prose whose continuation lines start with
+words — so four paragraphs *describing* #174's price counted as four copies of it. The sweep was
+reporting its own documentation. It tracks block-comment state now.
+
+*(One note on scope: the App budget. The explanation of the label change was first written beside the
+button and took App to 7,203 lines against `bulk`'s 7,200. The cap was not raised — the comment moved
+to the engine side, where it costs nothing, and App is back at exactly 7,200.)*
+
 
 **#175 — a red suite costs one release in eight, and the pair it fails on does not read as it
 counts.** Scored over the FIRST run of each build in the 89-run tally — the extra rows exist only
@@ -3633,6 +3698,71 @@ about a quarter and it is the cost of this repair**; `MISSIO_MAN` is one line to
 wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
+
+### v3.69.0 — #174: the price was copied six times, not five, and the sixth had already drifted
+
+The item was the last instance of a class this project has fixed five times — a number the engine
+rolls, written again somewhere that only displays or gates it. It said `rnd(160 + d.fame*0.5)` was in
+the engine once and the panel four times, and that a mechanical sweep returned exactly one hit.
+
+#### The sweep had a blind spot and a bug
+
+**The blind spot:** it walked `src/ludus.jsx`. The reference player is a consumer of the engine
+exactly the way the panel is, and `test/harness.mjs:674` guarded its own step on `spare() > 160 +
+d.fame*0.5`. Six copies, not five.
+
+**And that sixth had already drifted.** The rope's copy was UNROUNDED where the engine charges
+`rnd(...)`. Across fame 0–4,000 the two disagree on **2,000 of 4,001 values — every odd one** — by
+half a denarius (fame 1: rope 160.5, engine 161). The class is "two copies that will one day stop
+agreeing." These had.
+
+**The bug was in my own re-sweep**, and it is the standing hazard again: the first version skipped a
+line only if it BEGAN with a comment marker. This file's comments are indented prose whose
+continuation lines start with words, so four paragraphs *describing* the price counted as four copies
+of it — the sweep was reporting its own documentation, and reported 5 sites for an expression that
+had 1. It tracks block-comment state now, and the corrected count is what everything above rests on.
+
+#### The clause falsified, and named the wrong extraction
+
+*"The extraction costs more than it buys — `nemAnswerReady` would want the affordability test folded
+into it, and that gate is read by the rope, three probes and the panel."* Correct, and that is the
+extraction **not** to do: the gate means the three-week cooldown has passed, and giving it a second
+meaning changes it for every reader. What was needed is a separate reader, `nemAnswerCost(d)`, which
+touches no existing gate. Six sites became one. `open`'s 60-house signature is byte-identical.
+
+#### One of the copies was load-bearing after all
+
+The panel built three labels off two tests, and the middle one — ready, purse short — differed from
+the affordable one only by the word *"him"* on an already-greyed button. That looked like a dead
+branch worth deleting until it was counted: **259 of the 1,868 house-weeks a nemesis exists (13.9%),
+met by 8 of 12 houses.** It is the second most common state of that button. It says *"not enough
+coin"* now — the idiom the collegium's founding button already uses.
+
+#### The guard is on the class
+
+After six instances (#150, #162, #165, #160, #166, #174), a guard on this one price would be the
+wrong lesson. `copies.mjs` is the **72nd check**: it reads the source the way `layers` does, finds
+arithmetic shaped `<number> + <field>*<number>`, and fails when one appears on both sides of the App
+boundary or in both the engine and the rope. Negative-tested three ways — the unfixed tree (it names
+all six sites with line numbers), a single re-inlined panel copy, and a single re-inlined rope copy.
+
+#### And it immediately found the next one
+
+`copies` reports rather than fails on duplication *inside* the engine, because the four fight engines
+are separate by design. What it reports is **`55 + end*0.6` written 6 times** and **`1 + mods.atk*0.7`
+4 times**, plus four more twice each. Reprice a man's starting stamina and you must find four
+engines. That is **#178**, opened rather than changed — the engines may want to diverge, and merging
+them would make a future divergence harder to write.
+
+*The App budget held.* The label change's explanation was first written beside the button and took App
+to 7,203 lines against `bulk`'s 7,200. The cap was not raised; the comment moved to the engine side,
+where it costs nothing, and App is back at exactly 7,200.
+
+Suite green at **72/72 in 13.5 minutes**. And v3.67.0's honesty fix fired in anger for the first
+time, which two releases of fixtures could not produce: `survive` drew **(2, 7)** and printed
+*"7 men between them — of which 4 are in the 3 houses that ENDED, leaving 3 with the houses still
+going."* Under the old reading that run looked like seven men available to two standing houses. It
+was three.
 
 ### v3.68.0 — #173: the button said "Stop the dues" and the dues did not stop
 

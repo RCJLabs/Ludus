@@ -38,12 +38,17 @@ const out = await p.evaluate(([H,W,ARM])=>{
   const OPTS = ARM === "silent" ? { nem:false } : {};
   const t = { weeks:0, hasNem:0, stage2:0, edge1:0, heat45:0, manOk:0, noChallenge:0,
               allFour:0, canCall:0, answered:0, calledOut:0, everCall:0,
-              heatAndStage:0, edgeAndStage:0, heatAndEdge:0 };
+              heatAndStage:0, edgeAndStage:0, heatAndEdge:0,
+              /* ---- #174: WHAT THE ANSWER BUTTON ACTUALLY READS ----
+                 The panel builds three labels off two tests, and the middle one — ready but the
+                 purse is short — exists only to change "Answer him" to "Answer". Whether that
+                 branch is worth a wording at all is a count, not an opinion, so count it. */
+              btnCooling:0, btnShort:0, btnReady:0, everShort:0 };
   const houses = [];
   const edgeSeen = {}, heatBands = {};
   for(let h=0;h<H;h++){
     const d = A.newGameState("Nm"+h,"clean",`NEM-${h}`,null);
-    let bestEdge = -99, bestHeat = 0, calls = 0, nemWeeks = 0, ans = 0;
+    let bestEdge = -99, bestHeat = 0, calls = 0, nemWeeks = 0, ans = 0, shortWeeks = 0;
     for(let w=0;w<W;w++){
       if(d.over) break;
       t.weeks++;
@@ -66,6 +71,11 @@ const out = await p.evaluate(([H,W,ARM])=>{
         if(h45 && e1) t.heatAndEdge++;
         if(s2 && e1 && h45 && man && noCh) t.allFour++;
         if(A.nemCanCallOut(d)){ t.canCall++; calls++; }
+        /* the three states of the answer button, off the game's own gate and its own price */
+        { const cost = A.nemAnswerCost(d);   /* no fallback: if the export goes, this must fail loudly */
+          if(!A.nemAnswerReady(d)) t.btnCooling++;
+          else if(d.gold < cost){ t.btnShort++; shortWeeks++; }
+          else t.btnReady++; }
         if(edge > bestEdge) bestEdge = edge;
         if((n.heat||0) > bestHeat) bestHeat = n.heat||0;
         edgeSeen[Math.max(-5, Math.min(5, edge))] = (edgeSeen[Math.max(-5, Math.min(5, edge))]||0)+1;
@@ -77,6 +87,7 @@ const out = await p.evaluate(([H,W,ARM])=>{
       if(did.calledOut){ t.calledOut++; }
     }
     if(calls) t.everCall++;
+    if(shortWeeks) t.everShort++;
     houses.push({ h, weeks:d.week, nemWeeks, ans, calls,
       bestEdge: bestEdge === -99 ? null : bestEdge, bestHeat: Math.round(bestHeat),
       ended: d.over ? d.over.kind : "alive" });
@@ -112,4 +123,12 @@ for(const h of out.houses)
   console.log(`  ${String(h.h).padStart(5)}  ${String(h.weeks).padStart(5)}  ${String(h.nemWeeks).padStart(13)}`
     + `  ${String(h.ans).padStart(7)}  ${String(h.calls).padStart(11)}  ${String(h.bestEdge==null?"-":h.bestEdge).padStart(9)}`
     + `  ${String(h.bestHeat).padStart(9)}  ${h.ended}`);
+console.log(`\n  #174 — THE ANSWER BUTTON, over the ${T.hasNem} house-weeks a nemesis existed:`);
+console.log(`    cooling off  (not ready)      ${String(T.btnCooling).padStart(5)}  (${pc(T.btnCooling,T.hasNem)})   reads "Answered · Nw"`);
+console.log(`    ready, purse SHORT            ${String(T.btnShort).padStart(5)}  (${pc(T.btnShort,T.hasNem)})   reads "Answer him · Nd — not enough coin"`);
+console.log(`    ready and affordable          ${String(T.btnReady).padStart(5)}  (${pc(T.btnReady,T.hasNem)})   reads "Answer him · Nd"`);
+console.log(`    houses that ever saw the short label: ${T.everShort} of ${out.H}`);
+console.log(`    — before v3.69.0 the short branch said only "Answer · Nd", differing from the affordable`);
+console.log(`      one by the word "him" on an already-greyed button. It is not a rare state, which is`);
+console.log(`      why it was worth a wording rather than a deletion.`);
 console.log(`\n  rope: ${out.rope}`);

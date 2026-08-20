@@ -671,7 +671,7 @@ export async function installRope(p){
            the spend is bounded by the rival's hits rather than by the calendar. `nemEdge < 1` is that
            condition, off the game's own function — and once the edge is up the branch above names the
            day instead of paying again. */
-        else if(A.nemEdge(d) < 1 && A.nemAnswerReady(d) && spare() > 160 + d.fame*0.5
+        else if(A.nemEdge(d) < 1 && A.nemAnswerReady(d) && spare() > A.nemAnswerCost(d)
                 && fin(A.answerNem,[d])) bump("answeredNem");
       }
 

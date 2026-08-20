@@ -10664,11 +10664,30 @@ function nemScheme(d){
 const nemPurse = d => (d.flags.nemBribe && d.week < d.flags.nemBribe) ? 0.85 : 1;
 const nemEdge = d => d.nemHouse ? (d.nemHouse.answered||0) - (d.nemHouse.hits||0) : 0;
 const nemAnswerReady = d => !!(d.nemHouse && (!d.flags.nemAnswerWk || d.week - d.flags.nemAnswerWk >= 3));
+/* ---- THE LAST PRICE WRITTEN ON BOTH SIDES OF THE BOUNDARY — #174 ----
+   `rnd(160 + d.fame*0.5)` was written six times: once here in `answerNem`, FOUR times in the panel
+   (the disabled test and all three branches of the button's label), and once more in the reference
+   player, which guards its own step on `spare() > 160 + d.fame*0.5`. The sweep that opened the item
+   reported five and called it the only instance of the class, because it walked `src/ludus.jsx` and
+   the rope is a consumer of the engine exactly the way the panel is.
+   Nothing had drifted yet — `rnd` is `Math.round`, so all six agreed. #150, #162, #165, #160 and
+   #166 are what happens when one of them stops agreeing. It is one function now, and the price is
+   NOT folded into `nemAnswerReady`: that gate means the three-week cooldown has passed, it is read
+   by the rope, two probes and a check, and giving it a second meaning is the change the item's own
+   clause warned against.
+   The panel built three labels off two tests and the middle one — ready, purse short — did nothing
+   but drop the word "him" from an already-greyed button. It is not a rare state: measured over 12
+   houses of 420 weeks, it is 259 of the 1,868 house-weeks a nemesis exists (13.9%), and 8 of the 12
+   houses meet it. (It read 11.0% of 1,721 before the rope's own copy of this price was corrected
+   below; those are different trajectories, not a paired comparison, and the conclusion is the same
+   either way.) It says why the button is dead now, the way the collegium's "not enough coin" does. (Written here rather than beside the button because `bulk` holds App at 7,200 lines and it
+   is at the cap.) */
+const nemAnswerCost = d => rnd(160 + d.fame*0.5);
 /* strike back at the arch-rival in his own coin */
 function answerNem(d){
   const n = d.nemHouse; if(!n || !nemAnswerReady(d)) return null;
   const h = houseOf(d, n.house); if(!h) return null;
-  const cost = rnd(160 + d.fame*0.5);
+  const cost = nemAnswerCost(d);
   if(d.gold < cost) return null;
   d.gold -= cost; d.flags.nemAnswerWk = d.week;
   n.answered = (n.answered||0)+1; n.heat = clamp(n.heat-3, 0, 100);
@@ -21446,11 +21465,11 @@ export default function App(){
                   </div>
                 ) : (<>
                   <div className="grid grid-cols-2 gap-2" style={{marginTop:9}}>
-                    <button className="btn btn-ghost" disabled={!nemAnswerReady(S) || S.gold < rnd(160+S.fame*0.5)}
+                    <button className="btn btn-ghost" disabled={!nemAnswerReady(S) || S.gold < nemAnswerCost(S)}
                       onClick={nemAnswer}>
                       {!nemAnswerReady(S) ? `Answered · ${3-(S.week-(S.flags.nemAnswerWk||0))}w`
-                        : S.gold < rnd(160+S.fame*0.5) ? `Answer · ${rnd(160+S.fame*0.5)}d`
-                        : `Answer him · ${rnd(160+S.fame*0.5)}d`}
+                        : S.gold < nemAnswerCost(S) ? `Answer him · ${nemAnswerCost(S)}d — not enough coin`
+                        : `Answer him · ${nemAnswerCost(S)}d`}
                     </button>
                     <button className={`btn ${nemCanCallOut(S)?"":"btn-ghost"}`} disabled={!nemCanCallOut(S)} onClick={nemCall}>
                       {nemCanCallOut(S) ? "Name the day" : "Name the day"}
@@ -26051,7 +26070,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* #150: the panel quotes `gambitDone` and the engine rolls `gambitStale`, and the two differ by
        whatever the town has had time to forget. Both come out here so a probe can print the gap
        rather than recompute either of them. */
-    nemAnswerReady, nemCanCallOut, nemEdge, favourReady, gambitReady, gambitStale, gambitDone, gambitOdds,
+    nemAnswerReady, nemAnswerCost, nemCanCallOut, nemEdge, favourReady, gambitReady, gambitStale, gambitDone, gambitOdds,
     GAM_KEYS, GAM_FORGET, seasonOfMan,
     /* the fighter-nemesis (d.nemesis, not the arch-rival house above) — #137 found every
        circuit-born one unmade the same week it was named, and nothing could drive the naming */
