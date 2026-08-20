@@ -24,6 +24,14 @@
    THE ARMS, control FIRST, the same seeds in every one:
      control · all four · and each rank alone, so a policy that pays can be told from a rank that does
 
+   AND HOW BIG THE SAMPLE HAS TO BE, which is the lesson of #171. The first pass ran 72 houses an arm
+   on two seed families and published +188 and +537 of weekly fame for the considered policy. Ablated
+   at that sample, DROPPING one of its four triggers read better than the whole policy — twice, and by
+   more than the policy was worth. That is a sample too small for the variance of a 420-week run, not
+   a finding about triggers. At 240 houses an arm the same policy reads +134.4 at 124u/109d, a sign
+   count nobody should quote, and its life is a wash; what survives is the ending mix, and that is the
+   merchant alone. Nothing below 240 houses an arm should be quoted from this probe.
+
    INSTRUMENT NOTES:
    · the calls made are PRINTED per arm. `preferStakes` and `entrance` both shipped inert in this
      rope, and both times the tell was zero divergence; an arm reporting nought calls is not a
@@ -37,11 +45,14 @@
 */
 import { serve, open } from "../harness.mjs";
 const H = +(process.argv[2] || 12), W = +(process.argv[3] || 420), SEED = process.argv[4] || "FAV";
+/* a comma list narrows the arms, so the sample can be spent where the question is. #171 found the
+   twelve-arm run at 72 houses could not separate effects of this size from the variance. */
+const ONLY = (process.argv[5] || "").split(",").filter(Boolean);
 
 const { server, port } = await serve({ page:"dist/test.html" });
 const { browser, p } = await open(port);
 
-const out = await p.evaluate(([H,W,SEED])=>{
+const out = await p.evaluate(([H,W,SEED,ONLY])=>{
   const A = window.__LVDVS, R = window.__ROPE;
   const RANKS = ["magistrate","merchant","noble","senator"];
   const PRES = [`${SEED}-1`, `${SEED}-2`, `${SEED}-3`];
@@ -98,13 +109,17 @@ const out = await p.evaluate(([H,W,SEED])=>{
       rate: bouts ? deaths/bouts : null, alive: rows.filter(r=>r.life >= W).length };
   };
 
+  const ALL = [["control", undefined], ["all four", { favours:true }],
+    ["wise", { favours:"wise" }], ["thrift", { favours:"thrift" }]];
+  for(const rk of RANKS) ALL.push(["wise -"+rk.slice(0,3), { favours:"wise", favourSkip:rk }]);
+  for(const rk of RANKS) ALL.push([rk, { favours:rk }]);
   const rows = [];
-  rows.push(arm("control", undefined));                      /* control FIRST */
-  rows.push(arm("all four", { favours:true }));
-  rows.push(arm("wise", { favours:"wise" }));
-  for(const rk of RANKS) rows.push(arm(rk, { favours:rk }));
+  for(const [label, opts] of ALL){                           /* control FIRST, always */
+    if(ONLY.length && label !== "control" && ONLY.indexOf(label) < 0) continue;
+    rows.push(arm(label, opts));
+  }
   return { rows, RANKS, H, W, PRES };
-}, [H, W, SEED]);
+}, [H, W, SEED, ONLY]);
 
 const f = (v, n=1) => v == null ? "  —" : v.toFixed(n);
 console.log(`\n#167 — THE FOUR FAVOURS, CALLED AND NOT CALLED   (${out.H} houses x ${out.PRES.length} prefixes x ${out.W}w an arm)\n`);

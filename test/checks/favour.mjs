@@ -7,15 +7,18 @@
    item was opened with its own falsification: *falsifies if an arm that calls every favour the
    moment it is ready is not measurably better off.*
 
-   IT IS NOT. It is measurably WORSE. 72 houses of 420 weeks an arm, two seed families, paired on
-   the same seeds:
+   IT IS NOT. It is measurably WORSE. 240 houses of 420 weeks an arm, control first, paired house
+   for house — a sample #171 had to raise from 72, because at 72 the ablations disagreed with the
+   policy by more than the policy was worth:
 
-       called the moment it is ready   standing −21.2 and −18.2 (54 and 59 houses of 72 worse),
-                                       weekly fame −166 and −179, census rung −0.6 both times, and
-                                       the imperial runs nearly halve: 157 → 87 and 163 → 91
-       called when there is something  weekly fame +188 and +537 (38u/31d and 45u/27d), 0.6 more
-       for it to do                    men, 14 and 19 houses standing at 420 weeks against 11 and
-                                       15, ruinous endings 30 → 18, at no cost in life
+       called the moment it is ready   standing −20.2 (186 houses of 240 worse), weekly fame −92.8,
+                                       census rung −0.6, imperial runs 606 → 364
+       called when there is something  weekly fame +134.4 at 124u/109d, life a wash at −3.5 weeks —
+       for it to do                    and ruinous ends 77 → 50 with 55 houses standing against 46
+       the same, without the merchant   78 ruins, 24 standing, −26.7 weeks of life
+
+   The third line is the one that says what the second is: the gain is the merchant carrying ten
+   weeks of the bill, and the other three triggers together are a net loss. See #171 and #172.
 
    So the clause fires and the conclusion it proposed — "the four are priced right and the silence
    costs nothing" — does not follow. The four are priced fine. What the panel never said is WHEN,
@@ -211,15 +214,20 @@ export async function run({ p }){
     return { bad, lines };
   });
 
-  out.lines.push(`MEASURED, recorded not barred (test/probes/favour.mjs): 72 houses x 420 weeks an arm on `
-    + `two seed families, control first, paired house for house. Calling every favour the moment it is `
-    + `ready costs 21.2 and 18.2 points of the house's standing (54 and 59 houses of 72 worse), 166 and `
-    + `179 of weekly mean fame, 0.6 of census rung, and takes the imperial runs from 157 to 87 and 163 `
-    + `to 91. Calling each one only when there is something for it to do — a poach or a nemesis for the `
-    + `magistrate, gold below the reserve for the merchant, a rival ahead of you for the noble, Rome `
-    + `within the 150 for the senator — is worth +188 and +537 of weekly fame, 0.6 more men, 14 and 19 `
-    + `houses standing at 420 weeks against 11 and 15, and takes ruinous endings from 30 to 18, at no `
-    + `cost in life. The rope carries \`favours:true\` and \`favours:"wise"\` for both. See the roadmap.`);
+  out.lines.push(`MEASURED, recorded not barred (test/probes/favour.mjs). THE FIGURES BELOW REPLACE THE `
+    + `ONES THIS CHECK CARRIED AT v3.61.0, which were read off 72 houses an arm and were too small a `
+    + `sample for the variance — #171 found it by ablation. At 240 houses of 420 weeks an arm, control `
+    + `first, paired house for house: calling every favour the moment it is ready still loses, and `
+    + `loses clearly — 20.2 points of the house's standing (186 houses of 240 worse), 92.8 of weekly `
+    + `mean fame, 0.6 of census rung, and the imperial runs from 606 to 364. Calling each only when `
+    + `there is something for it to do reads +134.4 of weekly fame at 124u/109d, which is not a sign `
+    + `count anybody should quote, and its life is a wash at -3.5 weeks. What IS robust is the ending `
+    + `mix — ruinous ends 77 -> 50 and houses standing at 420 weeks 46 -> 55 — and that is ONE favour: `
+    + `drop the merchant from the policy and it goes to 78 ruins, 24 standing and -26.7 weeks of life. `
+    + `A second, differently-derived trigger set built off the COST rather than the effect `
+    + `(\`favours:"thrift"\`) loses on every axis, which is #171's clause firing: the gain belongs to `
+    + `one trigger, not to calling. The rope carries \`favours\` true/wise/thrift/a rank, and `
+    + `\`favourSkip\` to ablate one. See the roadmap.`);
 
   return { pass: out.bad.length === 0, why: out.bad.slice(0,3).join("; ") || null, lines: out.lines };
 }

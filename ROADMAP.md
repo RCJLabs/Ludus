@@ -1392,7 +1392,22 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.62.0 — #170 closed, and its clause named the right comparison in a way
+**Shipped and verified:** v3.63.0 — #171 REFUTED on its own clause, and it corrected a figure this
+project published two releases ago. The clause said the favour gain might belong to the trigger set
+rather than to calling; `favours:"thrift"`, derived from the COST side instead of the effect side —
+call anything the next census rung will not miss — loses on every axis: **−17.0 weeks of life, −99.0
+of weekly fame, 40 houses standing at 420 weeks against the control's 46**. And the sample had to be
+raised to see it. #167's **+188 and +537** of weekly fame for `wise` came off 72 houses an arm; at 72
+the ablations disagreed with the policy by more than the policy was worth, which is a sample too
+small for the variance rather than a policy. At **240 houses an arm** the honest figure is **+134.4
+at 124u/109d** — a sign count nobody should quote — and the life is a wash. What survives is the
+ending mix, **ruinous ends 77 → 50 and houses standing 46 → 55**, and it is ONE favour: drop the
+merchant and the same policy reads 78 ruins, 24 standing and **−26.7 weeks**. So the reference
+player's default does not flip: it would bake four judgements of mine into every reachability figure
+here to buy one mechanical effect that three of the four are paying for. The rope gains `"thrift"`
+and `favourSkip`; `favour` and the v3.61.0 notes carry the corrected numbers; **#172** is opened on
+the three that cost more than they buy. No game change. Suite green at **71/71**.
+v3.62.0 — #170 closed, and its clause named the right comparison in a way
 that made the case worse. Measured against the other decisions rather than against traits — 2,000
 bouts an arm on two seed families, every arm meeting the same men bout for bout — the best the tactic
 offers is **+0.5 and +3.5**, the best a plan that reads him right **+3.0 and +4.1**, the best a word
@@ -1417,7 +1432,9 @@ weekly mean fame**, 0.6 of census rung, and takes the imperial runs from **157 t
 Calling the same four **when there is something for them to do** — every trigger read off what that
 favour's own `run` changes — is worth **+188 and +537 of weekly fame**, 0.6 more men, **14 and 19
 houses standing at 420 weeks against 11 and 15**, and ruinous endings **30 → 18**, at no cost in
-life. The cost was never the patron's favour: `recomputeFavor` is a weighted mean, so it is the
+life. *(CORRECTED in v3.63.0: those figures are off 72 houses an arm and the sample is too small for
+the variance. At 240 the fame reads +134.4 at 124u/109d and the life is a wash; what survives is the
+ending mix, and it is the merchant alone. See #171.)* The cost was never the patron's favour: `recomputeFavor` is a weighted mean, so it is the
 house's standing, which is what the census rung asks for and what `riseRomeCut` takes off Rome's bar
 — the senator's own favour lowers that bar by 150 and costs more than 150 in the rung it spends. So
 the four are priced fine and the silence was not free; what the panel never said is WHEN, and it says
@@ -3112,6 +3129,10 @@ cannot be added without the player being told. `stage` is the 70th check; the ro
 *What is NOT changed:* the size of that momentum point. It is now shown to the player rather than
 hidden, and whether it should be that large is #170.
 
+**#167 — CLOSED in v3.61.0, and its central figure CORRECTED in v3.63.0 — see #171: the +188 and
++537 below are off 72 houses an arm, which is too small a sample for the variance, and at 240 the
+considered arm reads +134.4 of weekly fame at 124u/109d with the life a wash. What survives is the
+ending mix and it is one of the four favours, not the policy.**
 **#167 — CLOSED in v3.61.0. The clause fired and the conclusion it proposed did not follow: calling
 every favour the moment it is ready IS worse than never calling one, and calling the same four when
 there is something for them to do is the best thing in the patron system.** All four ranks are held
@@ -3184,17 +3205,52 @@ may only grow across a word from the box, and the bout must still open where it 
 Negative-tested — put the join back and it reads "the log SHRANK across a word from the box —
 11 → 5 → 17 beats".
 
-**#171 — the reference player is incompetent in one specific, measured way.** `lanista` is "one week
-of competent play" and every reachability figure in this project rests on it. It calls no patron
-favour, ever, and #167 measured what that costs: called when there is something for them to do, the
-same four are worth **+188 and +537 of weekly mean fame**, 0.6 more men, **14 and 19 houses standing
-at 420 weeks against 11 and 15**, and ruinous endings **30 → 18**, at no cost in life. The rope
-carries `favours:"wise"` and its default is still off, because turning it on re-bases every figure
-this project has published — `policy`'s benchmarks, `ends`'s ending mix, `late`'s perennial share,
-`estate`'s late-game table — and that is a release, not a line. *Falsifies if:* the gain is an
-artefact of the trigger set rather than of calling at all, which a second, differently-derived
-trigger set would show. The one measured reads each trigger off what that favour's own `run`
-changes, which is the least arbitrary set available, but it is still one set.
+**#171 — CLOSED in v3.63.0, REFUTED on its own clause, and it took one of my own published figures
+with it.** The clause was: *falsifies if the gain is an artefact of the trigger set rather than of
+calling at all, which a second, differently-derived trigger set would show.* It is, and it did.
+
+`favours:"thrift"` is that second set, derived from the opposite side: `wise` reads every trigger off
+what a favour's own `run` CHANGES, and `thrift` asks nothing about the world at all — the price of a
+favour is the house's standing, the only thing standing is for is the next rung, so call anything
+`riseNeed(d).favor` will not miss. Same lever, same favours, same houses. At 240 houses of 420 weeks
+an arm, control first, paired house for house:
+
+| arm | life | standing | weekly fame | census rung | standing at 420w | ruinous ends |
+|---|---|---|---|---|---|---|
+| control | — | — | — | — | 46 of 240 | 77 |
+| the moment it is ready | 102u/132d −35.1 | 54u/186d **−20.2** | −92.8 | −0.6 | 31 | 80 |
+| **wise** (the effect side) | 113u/105d −3.5 | 71u/162d −9.4 | 124u/109d **+134.4** | −0.1 | **55** | **50** |
+| **thrift** (the cost side) | 108u/124d **−17.0** | 83u/157d −10.2 | 113u/127d **−99.0** | −0.3 | 40 | 75 |
+| wise, without the merchant | 90u/119d **−26.7** | 56u/158d −8.4 | −59.3 | −0.3 | **24** | 78 |
+
+**And the sample had to be raised to see any of it.** #167 published +188 and +537 of weekly fame for
+`wise` off 72 houses an arm on two families. Ablated at 72, dropping the NOBLE trigger read better
+than the whole policy on every axis — which is the signature of a sample too small for the variance,
+not of a policy. At 240 the honest figure is **+134.4 at 124u/109d**, a sign count nobody should
+quote, and the life is a wash. `favour` and the v3.61.0 notes carry the corrected numbers now.
+
+**What is robust is the ending mix, and it is one favour.** Ruinous ends 77 → 50 and houses standing
+46 → 55 — and dropping the merchant from the policy takes that to 78 ruins and 24 standing, worse
+than never calling at all. The merchant carries ten weeks of the bill; ruin is a money ending; that
+is the whole mechanism.
+
+**So the default does not flip.** Turning `favours:"wise"` on would bake four judgements of mine into
+every reachability figure this project publishes in order to buy one mechanical effect that three of
+those four judgements are actively paying for. The rope carries `favours` (true / `"wise"` /
+`"thrift"` / a rank) and `favourSkip` so the ablation is reproducible, and its default stays off.
+
+**#172 — three of the four favours cost the house more than they can buy, at the best moment anybody
+has found to call them.** `wise` minus the merchant is the magistrate, the noble and the senator
+called only when there is something for each to do — a poach or a soft nemesis out, a rival's name
+ahead of yours, Rome within the 150 that `romeEarly` bridges. Over 240 houses of 420 weeks that
+policy reads **−26.7 weeks of life (90u/119d), −59.3 of weekly fame, 24 houses standing at 420 weeks
+against the control's 46, and 78 ruinous ends against 77** — worse than calling nothing, at the best
+timing anyone has measured. The cost is `recomputeFavor`: a weighted mean, so 26 to 34 points off one
+patron is 8 to 11 off the house, and `d.favor` is what the census rung asks for, what the editor's box
+weighs and what `riseRomeCut` takes off Rome's bar. *Falsifies if:* the three are not meant to pay for
+themselves in the house's own numbers — the magistrate's is a safety valve against a rival taking a
+man, and a lever that buys nothing on average may still be the one that saves a particular run. That
+would want the measurement done on the houses that were IN trouble rather than on all of them.
 
 **#170 — CLOSED in v3.62.0. The clause named the right comparison and it made the case worse, not
 better: measured against the other decisions rather than against traits, `showman` was worth roughly
@@ -3286,6 +3342,66 @@ about a quarter and it is the cost of this repair**; `MISSIO_MAN` is one line to
 wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
+
+### v3.63.0 — #171: the favour policy was one favour, and seventy-two houses could not see it
+
+#171 asked whether the reference player should call patron favours, since #167 had measured that
+calling them well was worth +188 and +537 of weekly mean fame. It carried a clause: *falsifies if the
+gain is an artefact of the trigger set rather than of calling at all, which a second, differently-
+derived trigger set would show.* It is, it did, and on the way it took #167's headline with it.
+
+#### The second set, derived from the other side
+
+`wise` reads every trigger off what a favour's own `run` CHANGES. `thrift` asks nothing about the
+world: the price of a favour is the house's standing, the only thing standing is FOR is the next rung
+of the census, so call anything `riseNeed(d).favor` will not miss. Same lever, same four favours, same
+houses, opposite reasoning. 240 houses of 420 weeks an arm, control first, paired house for house:
+
+| arm | life | standing | weekly fame | rung | standing at 420w | ruinous ends |
+|---|---|---|---|---|---|---|
+| control | — | — | — | — | 46 of 240 | 77 |
+| the moment it is ready | 102u/132d −35.1 | 54u/186d −20.2 | −92.8 | −0.6 | 31 | 80 |
+| **wise** (effect side) | 113u/105d −3.5 | 71u/162d −9.4 | 124u/109d +134.4 | −0.1 | **55** | **50** |
+| **thrift** (cost side) | 108u/124d −17.0 | 83u/157d −10.2 | 113u/127d −99.0 | −0.3 | 40 | 75 |
+| wise, minus the merchant | 90u/119d −26.7 | 56u/158d −8.4 | −59.3 | −0.3 | **24** | 78 |
+
+#### And the sample was too small, which the ablation found before the second set did
+
+#167's figures came off 72 houses an arm on two seed families. Ablating `wise` one trigger at a time
+at that sample gave this, on family one:
+
+    wise                fame +188.1 (38u/31d)   life −1.2    14 standing   18 ruins
+    wise, minus noble   fame +351.4 (44u/23d)   life +32.3   18 standing   14 ruins
+    wise, minus senator fame +274.5 (33u/32d)   life +27.2   14 standing   —
+
+Dropping a trigger read BETTER than the whole policy, twice, by more than the policy was worth. That
+is not a policy, it is a sample that cannot separate an effect of this size from the variance of a
+420-week run. Raised to 240 houses an arm the answer settles: **+134.4 at 124u/109d**, which does not
+reach a sign count worth quoting, and a life that is a wash. **#136 for the fifth time, and this one
+is worse than the others because the figure had already shipped** — `favour`'s measured paragraph and
+the v3.61.0 notes both quoted it. Both carry the corrected numbers now.
+
+#### What does survive is one favour, and it is mechanical
+
+Ruinous ends **77 → 50** and houses standing at 420 weeks **46 → 55** are the robust part. Take the
+merchant out of the policy and it goes to **78 ruins, 24 standing and −26.7 weeks of life** — worse
+than never calling at all. He carries ten weeks of the bill; ruin is a money ending; there is nothing
+else to it. The merchant alone reads 66 ruins and 45 standing, so it is not that he is a great lever,
+it is that he is the only one whose effect is larger than what it costs the house's standing.
+
+#### So the default does not flip
+
+Turning `favours:"wise"` on by default would bake four judgements of mine into `policy`'s benchmarks,
+`ends`'s ending mix, `late`'s perennial share and `estate`'s table, in order to buy one mechanical
+effect that three of the four judgements are actively paying for. The rope keeps the lever and gains
+two more — `favours:"thrift"` and `favourSkip`, so the ablation above is reproducible by anybody —
+and its default stays off. **No game change in this release.**
+
+#### And an item that is the residue
+
+**#172**: the magistrate, the noble and the senator, called at the best moment anybody has found for
+them, cost the house 26.7 weeks of life and 22 of the 46 houses that would otherwise have been
+standing at 420 weeks. That is a pricing question about three favours, and it has its own clause.
 
 ### v3.62.0 — #170: the loudest button in the game, priced against the rest of the panel
 
@@ -3388,7 +3504,10 @@ was dark in every measurement this project has taken. The rope gains `favours`, 
 | **when there is something to do** | −9.7 · **+0.4** | **+188 · +537** | −0.1 · **+0.7** | 2.9 · 3.0 | **14 · 19** | **18 · 16** | 146 · 187 |
 
 On the paired sign counts the call-everything arm is worse on standing in **54 and 59 houses of 72**,
-and the considered arm is better on fame in **38 of 69 and 45 of 72**. Every trigger in that second
+and the considered arm is better on fame in **38 of 69 and 45 of 72**. **CORRECTED in v3.63.0** — this table is 72 houses an arm and #171 found that too small: ablating the
+policy one trigger at a time moved it further than the policy was worth. At 240 houses the considered
+arm reads +134.4 of weekly fame at 124u/109d and a life that is a wash, and the robust part — ruinous
+ends 77 → 50, standing 46 → 55 — is the merchant alone. Every trigger in that second
 arm is read off what the favour's own `run` changes and nothing else:
 
     magistrate   a poach or a soft nemesis is out — the two things it clears

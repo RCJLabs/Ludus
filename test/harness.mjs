@@ -262,9 +262,13 @@ export async function installRope(p){
          favours       (default NONE, #167 — `true` calls every patron favour the moment `favourReady`
                         says it is ready; a rank name or a list of them calls only those, so the four
                         can be priced apart; `"wise"` calls each one only when there is something for
-                        it to do, every trigger read off what that favour's own `run` changes. The
+                        it to do, every trigger read off what that favour's own `run` changes; and
+                        `"thrift"` calls anything the next census rung will not miss, which is the
+                        same lever derived from the COST side instead — #171's second set. The
                         price is the patron's own favour and, through `recomputeFavor`, the house's
                         standing, which is what makes any of these a policy rather than a free lunch)
+         favourSkip    (a rank or list of them dropped from whatever `favours` policy is running,
+                        so a policy can be ablated one trigger at a time — #171)
          entrance      (default NONE, #166 — one of `ENTRANCE_KEYS`, written onto every offer this
                         rope fights, exactly as the arena panel writes it. `showman` is the one that
                         pays: 6.7 points of win rate on a card the game deals, and all of it is the
@@ -579,11 +583,26 @@ export async function installRope(p){
           senator:    () => typeof A.romeBar === "function" && !d.rome
                             && (d.fame||0) >= fin(A.romeBar,[d]) - 150,
         };
-        const wise = o.favours === "wise";
-        const want = (o.favours === true || wise) ? null : [].concat(o.favours);
+        /* ---- AND A SECOND SET, DERIVED FROM THE OTHER SIDE (#171) ----
+           `wise` reads every trigger off the BENEFIT — what that favour's own `run` changes. #167's
+           clause was that the gain might be an artefact of one trigger set, so `thrift` reads them
+           off the COST instead and asks nothing about the world: the price of a favour is the
+           house's standing, and the only thing standing is FOR is the next rung of the census, so
+           call anything the rung will not miss. `riseNeed(d).favor` is the game's own ask and
+           `F.cost` the game's own price; the test is deliberately conservative, because the actual
+           drop in `d.favor` is a weighted mean and therefore smaller than the cost. At the top of
+           the ladder there is no next rung and nothing to save it for, and this becomes `true`. */
+        const wise = o.favours === "wise", thrift = o.favours === "thrift";
+        const need = thrift ? fin(A.riseNeed,[d]) : null;
+        const floor = need ? (need.favor||0) : 0;
+        const want = (o.favours === true || wise || thrift) ? null : [].concat(o.favours);
         for(const pt of A.patronsOf(d)){
           if(want && want.indexOf(pt.rank) < 0) continue;
+          /* `favourSkip` drops one rank from whatever policy is running, so a policy can be
+             ablated a trigger at a time and "a considered set" told from "one good trigger" */
+          if(o.favourSkip && [].concat(o.favourSkip).indexOf(pt.rank) >= 0) continue;
           if(wise && !(WISE[pt.rank] && WISE[pt.rank]())) continue;
+          if(thrift && !((d.favor||0) >= floor + ((A.FAVOURS[pt.rank]||{}).cost||0))) continue;
           if(!fin(A.favourReady,[d, pt])) continue;
           if(fin(A.callFavour,[d, pt.id])) bump("favour:" + pt.rank);
         }
