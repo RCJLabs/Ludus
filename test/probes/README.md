@@ -40,6 +40,9 @@ Run them straight:
     node test/probes/finish.mjs 24 900 SEED # #147: nine arms, one per ending, and the RUINS gates split by term
     node test/probes/succ.mjs 30 1400 SEED [grant]  # #147: the second generation, with and without a free ledger
     node test/probes/enter.mjs 150 SEED    # #166: the four entrance words against a card that is not a mirror
+    node test/probes/relay.mjs 14         # #169: what the arena SHOWS after a word from the box (browser)
+    node test/probes/join.mjs 24 420 SEED # #169: what the truncated log costs, and what mending it moves
+    node test/probes/join.mjs 1 1 SEED wide  # ...and the opening across TWELVE prefixes, when four cannot decide
 
 `keep`, `walk` and `fires` run in about 25 seconds at 72 houses, which is cheap enough that **they take
 a seed prefix and should always be run on three or four of them.** Two findings died this session for

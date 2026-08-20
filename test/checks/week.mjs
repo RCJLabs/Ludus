@@ -93,9 +93,10 @@ export async function run({ p }){
     {
       const HOUSES = 6, WEEKS = 200;
       let weeks = 0, shownSum = 0, allSum = 0, emptyShown = 0, sevenShown = 0;
-      const inShown = {}, everSeen = {}, seenN = {}, freshN = {};
+      const inShown = {}, everSeen = {}, seenN = {}, freshN = {}, heldN = {};
       for(let h=0; h<HOUSES; h++){
         const d = A.newGameState("Ws"+h, "clean", `WEEK-SHAPE-${h}`, null);
+        let prevKeys = new Set(), nextKeys = new Set();
         for(let w=0; w<WEEKS; w++){
           if(d.over) break;
           const rank = A.agendaRanked(d).filter(a=>a.tab !== "men");
@@ -117,10 +118,26 @@ export async function run({ p }){
              back to its sentence and hides as several labels, each under the standing bar. The
              detectable signature of a rotating key is different — the item keeps reading NEW. A real
              item is new once and then ages; the rope's line read age 0 on 468 of the 1,493 weeks it
-             appeared (31%) because its venue rotated every 4 weeks against an AG_FRESH of 3. */
+             appeared (31%) because its venue rotated every 4 weeks against an AG_FRESH of 3.
+
+             ---- AND THE DENOMINATOR WAS WRONG, WHICH TOOK FOUR RELEASES TO FIRE (#169's run) ----
+             It counted every week the item was in the list. An item that stands for ONE week and
+             goes is new every time it appears, and that is the truth about it rather than a fault:
+             measured, "the Floralia" and "the Vulcanalia" read 100% over 31 and 33 weeks with a mean
+             run of 1.0 week and NOUGHT held-over weeks between them, and "# patrons are still
+             waiting" and "A levy of #d" the same at runs of 1.2 and 1.4. The identical misreading
+             was caught in a probe in v3.56.0 and nobody looked at the check.
+             An item cannot AGE on a week it was not there the week before, so those are the only
+             weeks that can say anything: the rate is over HELD-OVER weeks now. It costs the guard
+             nothing — the rope's rotating line stood continuously, so 468 of 1,493 becomes 468 of
+             about 1,470 — while the four one-week items drop out of the sum entirely, and every
+             item that really does stand and age reads 0-3% here against a bar of 20%. */
           for(const a of rank){ const k = A.agId ? A.agId(a) : A.agKey(a.label);
-            seenN[k] = (seenN[k]||0)+1; if((a.age||0) <= 0) freshN[k] = (freshN[k]||0)+1; }
+            seenN[k] = (seenN[k]||0)+1;
+            if(prevKeys.has(k)){ heldN[k] = (heldN[k]||0)+1; if((a.age||0) <= 0) freshN[k] = (freshN[k]||0)+1; } }
+          nextKeys = new Set(rank.map(a=>A.agId ? A.agId(a) : A.agKey(a.label)));
           for(const a of rank) everSeen[A.agKey(a.label)] = (everSeen[A.agKey(a.label)]||0)+1;
+          prevKeys = nextKeys;
           R.lanista(d);
           d.pendingEvent = null;
           try { A.endWeek(d); } catch(e){ break; }
@@ -137,14 +154,18 @@ export async function run({ p }){
           + `lives — if the shown block is that long again then novelty has stopped selecting and the `
           + `wallpaper has simply moved to the top of the tab`);
 
-      { const rows = Object.entries(seenN).filter(([,n])=>n >= 25)
+      { const rows = Object.entries(heldN).filter(([,n])=>n >= 25)
           .map(([k,n])=>[k, (freshN[k]||0)/n, n]).sort((a,b)=>b[1]-a[1]).slice(0, 5);
-        lines.push(`most often NEW AGAIN (of the weeks it is in the list): `
+        lines.push(`most often NEW AGAIN (of the weeks it was ALSO in the list the week before): `
           + (rows.map(([k,r,n])=>`"${k}" ${(r*100).toFixed(0)}% of ${n}`).join(" · ") || "nothing"));
+        { const once = Object.entries(seenN).filter(([k,n])=>n >= 25 && (heldN[k]||0) < 5)
+            .map(([k,n])=>`"${k}" ${n}w`).slice(0, 4);
+          lines.push(`  and the items that never stand two weeks running, which cannot age and are `
+            + `not counted above: ` + (once.join(" · ") || "none")); }
         /* healthy items read 3-5% here; the rope's rotating key read 31%. 20% sits clear of both. */
         const churn = rows.filter(([,r])=>r > MAX_FRESH_AGAIN);
         if(churn.length)
-          bad.push(`${churn.map(([k,r,n])=>`"${k}" reads NEW on ${(r*100).toFixed(0)}% of the ${n} weeks it is in the list`).join("; ")} `
+          bad.push(`${churn.map(([k,r,n])=>`"${k}" reads NEW on ${(r*100).toFixed(0)}% of the ${n} weeks it stood over from the week before`).join("; ")} `
             + `[bar ${Math.round(MAX_FRESH_AGAIN*100)}%; healthy items read 3-5%]. An item is new once and then ages. `
             + `One that keeps coming back new has an identity that is rotating under it — #144: the rope's `
             + `line carried its venue, the venue moved every 4 weeks against an AG_FRESH of 3, and the item `

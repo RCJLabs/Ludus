@@ -1392,7 +1392,31 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.59.0 — #166 half REFUTED on its own falsification clause and closed on
+**Shipped and verified:** v3.60.0 — #169 closed, and its falsification clause did not fire: the modal
+IS fed the truncated array, and what it does with it is worse than the trace suggested. `FightModal`
+is not keyed and keeps its own cursor, so a resume that stops again hands it an array shorter than
+the index it holds — `done` is true on arrival and it renders the last beat of the segment. Fourteen
+bouts through the real screens: a bout shows **9.7 beats** from the horn, a word answered on a bout
+that then ends shows **10.4**, and **a word answered on a bout that then stops again shows 1.0** —
+the player says the word and the arena jumps to the line it was already on. That is **22% of played
+bouts**. The opening note also guessed wrong about who else was reading the short log, which is why
+this was measured before it was mended: scoring the whole log against the truncated view of it on one
+build over 1,920 held bouts, `favourBout`'s `close` flips on **10.8%** and `boutAccount`'s `turn` — a
+man's own account of how the bout that made him turned — moves on **4.4%**, while `rounds` moves on
+**nought**, because a max over a suffix of a rising run is the same number. And the signature move
+that held the fix back was one seed set: twelve prefixes of 60 houses read **527 → 556 standing and
+1,781 → 1,795 men**, and 72 houses of 420 weeks **16.71% → 16.47%** deaths a bout at a median life of
+**172w → 178w** — both small, both in the only direction the mechanism allows. `odds` gains the
+invariant rather than the symptom, negative-tested. **The suite came back 68 of 70 and neither
+failure was the game**: `ends` held the `ruined` gate open on 12 houses of one seed prefix, where the
+gate-weeks run 36/21/5 across three (and 6/5/30 after), and `week`'s churn bar counted "reads NEW"
+over every week an item was in the list when an item that stands for ONE WEEK is new every time by
+construction — the same misreading this project caught in a probe in v3.56.0 and never looked for in
+the check. Both repaired and negative-tested. Suite green at **70/70**, on the third of three full
+runs: the first was 68/70 on those two checks, the second 69/70 on `survive` drawing (0,4) — the
+same build having drawn (3,4) an hour before, which is the tail and not the build, and all three
+entries are in the committed tally.
+v3.59.0 — #166 half REFUTED on its own falsification clause and closed on
 what was left, which was not what was opened. The clause said the +16.7 points of win rate might be
 the mirrored setup, and it was: a mirror is a bout where `mobClear` is FALSE every time — twins share
 a renown, the peak of the noise is one boolean, and `showman`'s momentum wins that coin by
@@ -3074,21 +3098,39 @@ reference player calls **none of them, ever**, which is #158's shape: a policy q
 never been asked. *Falsifies if:* an arm that calls every favour the moment it is ready is not
 measurably better off — in which case the four are priced right and the silence costs nothing.
 
-**#169 — a bout that stops twice loses its first half from the log the player reads.** All four
-engines carry `if(pending) res.beats = pending.beats.concat(res.beats)` BELOW the early return for a
-bout that has come to the balance again, so the accumulated log is joined on only when the fight
-finally ends; the second crux returns the segment since the FIRST one and nothing before it, and
-`speak` hands that straight to the modal. Traced on one held bout: 12 beats, then a resume returning
-**8 instead of 20** — the intro, the salute, the entrance line and every exchange of the opening,
-gone. Counted over 12 played houses of 420 weeks, 2,136 bouts: **42.0% never stop, 36.0% stop once,
-15.7% stop twice and 6.3% stop three times**, so **22.0% of bouts lose part of their log** and
-**1,753 beats are dropped** across 1,841 resumes. **It is not cosmetic and that is why it is an item
-rather than a line in v3.59.0**: `favourBout` is handed `beats` and `rounds` is `Math.max` over them,
-so two systems have been reading a truncated log. Moving the join above the return was tried and
-measured — `open`'s 60-house signature moves from **men 128 to men 118**, house for house — which is
-a behaviour change needing its own median life, deaths a bout and `survive` tally. *Falsifies if:*
-the modal is not in fact fed the returned beats on a second crux, in which case this is engine-only
-and only `favourBout` and `rounds` are affected.
+**#169 — CLOSED in v3.60.0. The clause did not falsify — the modal IS fed the truncated array — and
+what the screen does with it is worse than the trace suggested: the order the player gives is never
+shown happening.** All four engines carried `if(pending) res.beats = pending.beats.concat(res.beats)`
+BELOW the early return for a bout that has come to the balance again, so a resume that stopped again
+returned the segment since the last crux and nothing before it. `speak` hands that straight to
+`FightModal`, which is not keyed and keeps its own cursor `i` — so it is handed an array SHORTER than
+the index it is holding, `done` is true on arrival, and it renders the last beat of the segment.
+Driven through the real screens, fourteen bouts on a real card (`test/probes/relay.mjs`):
+
+| what the player pressed | beats the arena actually showed |
+|---|---|
+| the bout, from the horn | 9.7 |
+| a word answered on a bout that then ENDS | 10.4  (10 9 13 16 3 13 14 10 6) |
+| **a word answered on a bout that then STOPS AGAIN** | **1.0  (1 1 1)** |
+
+He says the word, the arena jumps to the line it was already on, and the exchange he bought is not
+drawn. The five/six/three split of stops matched the engine's own 42/36/22 over 2,136 played bouts.
+
+**And the opening note guessed wrong about which readers it took with it**, which is why the item was
+worth measuring rather than fixing. Over 1,920 held bouts, scoring the whole log and the truncated
+view of it side by side on one build: `favourBout`'s `close` — a clash anywhere in the fight, worth
+1.6 favour — flips on **10.8%**, and `boutAccount`'s `turn`, a man's own account of how the bout that
+made him turned, moves on **4.4%**. `rounds` does NOT move, on nought of 1,920: a `Math.max` over a
+suffix of a rising run is the same number. Neither do `end` or `spared`, which live in the tail.
+
+**And the signature move that held the fix back was one seed set.** Four prefixes read men 128 → 118;
+twelve prefixes of 60 houses read **527 → 556 standing and 1,781 → 1,795 men**, and 72 houses of 420
+weeks read **16.71% → 16.47%** of bouts killing his man at a median life of **172w → 178w**. Both
+small, both in the one direction the mechanism allows — a log with more of the fight in it finds a
+clash more often, and a clash is favour. `odds` gains the invariant rather than the symptom: a log
+may only grow across a word from the box, and the bout must still open where it opened.
+Negative-tested — put the join back and it reads "the log SHRANK across a word from the box —
+11 → 5 → 17 beats".
 
 **#170 — one point of momentum is worth more than any trait in the game, and it is free.** This file
 states its own scale beside the traits: "the first cut measured Brutal at +16 points and Showman at
@@ -3133,6 +3175,121 @@ about a quarter and it is the cost of this repair**; `MISSIO_MAN` is one line to
 wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
+
+### v3.60.0 — #169: the order you gave was never shown happening
+
+#169 was opened off a trace and carried a clause: *falsifies if the modal is not in fact fed the
+returned beats on a second crux, in which case this is engine-only.* It is fed them, and the screen
+does something worse than the trace suggested.
+
+#### What the player sees
+
+`FightModal` is not keyed and holds its own cursor, and `speak` re-sets `fight` on the same mounted
+component:
+
+    const beats = fight.beats;
+    const done  = i >= beats.length-1;
+    const b     = beats[Math.min(i, beats.length-1)];
+
+so a resume that stops again hands it an array SHORTER than the index it is holding. `done` is true
+on arrival and it renders the last beat of the segment. Fourteen bouts driven through the real
+screens, beats read off the arena's own `aria-label` at 1× with a 100ms poll (`test/probes/relay.mjs`):
+
+| what the player pressed | beats the arena actually showed |
+|---|---|
+| the bout, from the horn | 9.7 |
+| a word answered on a bout that then ENDS | 10.4  (10 9 13 16 3 13 14 10 6) |
+| **a word answered on a bout that then STOPS AGAIN** | **1.0  (1 1 1)** |
+
+The five/six/three split of stops in those fourteen matches the engine's own 42% / 36% / 22% over
+2,136 played bouts. So on about a fifth of bouts the game asks for a decision at the moment it
+matters, takes it, and draws nothing of what it bought.
+
+#### And the opening note guessed wrong about who else was reading the short log
+
+Which is the reason this was an item and not a line in v3.59.0. The whole log and the truncated view
+of it can both be computed from one bout on one build, so every reader of `res.beats` was scored
+twice — 1,920 held bouts, driven segment by segment:
+
+| the reader | how often the short log changes its answer |
+|---|---|
+| `favourBout`'s `close` — a clash anywhere, worth 1.6 favour | **10.8%** |
+| `boutAccount`'s `turn` — how the bout that made him turned | **4.4%** |
+| `boutAccount`'s `end` | 0.0% |
+| `rounds` | **0.0%** |
+| `doFight`'s `spared` | 0.0% |
+
+`rounds` was named in the opening note as a casualty and is not one: a `Math.max` over a suffix of a
+rising run is the same number, and `end` and `spared` live in the tail by construction. What was
+missed instead is `boutAccount` — the six-deep account each man keeps of his own last bouts, written
+because "a man could not be asked how he won the bout that made him", which on 4.4% of held bouts
+could only be asked about the last third of it. *Measured on singles only, and said so:* the melee's
+`forced` (an appeal, and in a melee men fall all the way through) and the pairing's `spared` for one
+of two men are the same shape and were not driven separately. The repair covers all four engines
+either way, because the line moved is the same line in each.
+
+#### And the signature move that held the fix back was one seed set
+
+Four prefixes read men 128 → 118 and that is why v3.59.0 shipped without this. Twelve prefixes of 60
+houses, paired on the same seeds, control first:
+
+    standing   527 of 720  →  556 of 720
+    men        1,781       →  1,795
+    per prefix men 139 131 125 140 115 152 163 146 134 190 186 160
+                   138 131 104 151 170 141 169 136 157 175 161 162
+
+and 72 houses of 420 weeks read **16.71% → 16.47%** of bouts killing his man, at a median life of
+**172w → 178w**. Small, and in the one direction the mechanism allows: a log with more of the fight
+in it finds a clash more often, a clash is 1.6 favour, and favour is missio and crowd. There is no
+mechanism by which mending the log could cost a house men, which is what says the 118 was chaos —
+and what makes the twelve-prefix arm the answer rather than a bigger version of the same doubt.
+
+#### The repair, and the bar
+
+The join moves above the early return in all four engines. `odds` — which already holds the shape of
+a held bout's return — gains the invariant rather than the symptom: **a log may only grow across a
+word from the box, and the bout must still open where it opened.** Negative-tested: put the join back
+and it reads "the log SHRANK across a word from the box — 11 → 5 → 17 beats". The screen reading is
+recorded rather than barred, because a crux is chance and a browser bar that fishes for a two-stop
+bout would be a bar on the weather.
+
+Three full runs went into this release and all three are in the tally: **68/70** on the two checks
+below, **69/70** on `survive` drawing **(0,4)**, and **70/70**. The middle one is the tail rather
+than the build and is provable without leaving the build: the SAME build drew **(3,4)** an hour
+earlier and **(4,9)** an hour later, and the 720-house opening arm reads 556 standing against the
+control's 527 — a build that new houses could not survive does not stand MORE of them.
+
+#### Five instrument faults — and two of them were in the SUITE
+
+- **The first crux detector counted "more than one live button and no skip"**, which reads the
+  VERDICT screen as a crux and turned a bout that stopped once into one that stopped four times. The
+  crux panel names itself — "FROM THE BOX" — and nothing else in the game says those words.
+- **Eight tries were the same bout, eight times.** `restock` restores the save and reloads, and the
+  save carries `rngState`, which the load path puts straight back into the generator: eight runs came
+  back with the same seventeen beats and the same missio, to the word, and the report read "no bout
+  came to the balance twice" when what it had measured was one bout eight times.
+- **Four seed prefixes could not tell chaos from a systematic move** — the same edit read 190 → 193
+  standing on one seed set and 185 → 171 on the next. Twelve settle it. This is #136's rule arriving
+  a third time, and the probe takes a `wide` argument now so the wide arm is one word away.
+
+The suite came back **68 of 70** on the mended build, and neither failure was the game.
+
+- **`ends` held the `ruined` gate open on 12 houses of ONE seed prefix.** It read 0 and said the
+  ending had closed. Driven properly — 24 houses on three prefixes, on the build before the change
+  and the build after — the gate-weeks run **36 / 21 / 5** and **6 / 5 / 30**: wide open on both,
+  with a sevenfold spread between prefixes, so a bar on one of them is a coin and it landed on the
+  0 side. Three prefixes now, summed, with the per-prefix counts printed — which is what the comment
+  above that bar has claimed the measurement was since #153.
+- **`week`'s churn bar had the wrong denominator, and it is a misreading this project already caught
+  once — in a probe, in v3.56.0, and nobody looked at the check.** It counted "reads NEW" over every
+  week an item was in the list. An item that stands for ONE week and goes is new every time, which is
+  the truth about it and not a fault: measured, "the Floralia" and "the Vulcanalia" read **100% over
+  31 and 33 weeks with a mean run of 1.0 week and NOUGHT held-over weeks between them**, and the two
+  others it flagged run 1.2 and 1.4 weeks. An item cannot age on a week it was not there the week
+  before, so the rate is over **held-over weeks** now. It costs #144's guard nothing — the rope's
+  rotating line stood continuously, so 468 of 1,493 becomes 468 of about 1,470 — and every item that
+  really does stand and age reads 0-3% against the bar of 20%. Negative-tested by moving the bar to
+  2%, where it names the 3% item.
 
 ### v3.59.0 — #166: the sixteen points were the mirror, and the crowd was never what paid
 

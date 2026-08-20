@@ -658,9 +658,20 @@ export async function run({ p }){
          side: the house that gets taken apart is the house that picked the fight and ran out of coin
          having it. What is held here is REACHABILITY — a shut-gate bar guards nothing, and this one
          had a stale reason written on it for five releases. */
+      /* ---- AND THE BAR WAS ON ONE TRAJECTORY, WHICH IS #136 AGAIN (found in v3.60.0) ----
+         This drove 12 houses on ONE seed prefix and failed if the gate never opened. Measured
+         properly — 24 houses on three prefixes, on the build before an unrelated change and the
+         build after — the gate-week count per prefix runs 36 / 21 / 5 and 6 / 5 / 30. The gate is
+         wide open on both builds and the per-prefix spread is sevenfold, so a bar taken on one of
+         them is a coin. It fell on the 0 side once, on a change that cannot reach this system
+         except by moving the trajectory. Three prefixes now, summed, which is what the comment
+         above has claimed the measurement was since #153. */
       { let need = 0, grMax = 0, ended = 0, lived = [];
-        for(let h=0; h<12; h++){
-          const d = A.newGameState("Fd"+h, "clean", `RUINED-FEUD-${h}`, null);
+        const byPre = [];
+        for(const pre of ["RUINED-FEUD", "RUINED-FEUD-B", "RUINED-FEUD-C"]){
+        const need0 = need;
+        for(let h=0; h<8; h++){
+          const d = A.newGameState("Fd"+h, "clean", `${pre}-${h}`, null);
           for(let w=0; w<200; w++){
             if(d.over) break;
             const rv = (d.rivals||[]).filter(x=>!x.retired)[0];
@@ -679,15 +690,17 @@ export async function run({ p }){
           lived.push(d.week);
           if(d.over && d.over.kind === "ruined") ended++;
         }
+        byPre.push(need - need0);
+        }
         lines.push(`ruined, driven by a house that picks the fight: the gate's own need() held on ${need} `
-          + `weeks of 12 houses, the angriest rival reached ${Math.round(grMax)} of the 95 asked, and `
-          + `${ended} of 12 runs ENDED there (median life ${lived.sort((a,b)=>a-b)[6]}w) — measured over `
-          + `three seeds x 24 houses at 36/37/46 gate-weeks and 2 of 24 endings each`);
+          + `weeks of 24 houses across three prefixes (${byPre.join("/")}), the angriest rival reached `
+          + `${Math.round(grMax)} of the 95 asked, and ${ended} of 24 runs ENDED there (median life `
+          + `${lived.sort((a,b)=>a-b)[12]}w) — measured at 24 houses a prefix the gate-weeks run 36/21/5`);
         if(!need)
           bad.push(`a house that spent its whole run attacking one rival never once satisfied \`ruined\` `
-            + `(angriest rival ${Math.round(grMax)} of 95) — #153 measured the gate reachable on three `
-            + `seeds, and if it has closed then the grudge sources or their decay have moved and the `
-            + `roadmap's account of this ending is stale`);
+            + `on any of three seed prefixes (angriest rival ${Math.round(grMax)} of 95) — #153 measured `
+            + `the gate reachable on three seeds, and if it has closed then the grudge sources or their `
+            + `decay have moved and the roadmap's account of this ending is stale`);
       }
     }
 

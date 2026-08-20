@@ -226,6 +226,55 @@ export async function run({ p }){
           bad.push(`a HELD bout is reporting a \`win\` — it has credited nothing and decided nothing, `
             + `and anything reading that field will score the bout before it happened`);
       }
+
+      /* ---- AND THE LOG A HELD BOUT CARRIES BACK MUST BE THE WHOLE BOUT (#169) ----
+         The join was below the early return in all four engines, so a bout that came to the
+         balance TWICE returned only the segment since the first crux. `speak` gives that straight
+         to `FightModal`, which keeps its own cursor and is handed an array shorter than the index
+         it holds — so the arena jumped to the line it was already on and the exchange the player's
+         order bought was never drawn: 1.0 beats shown against 10.4 for the same button on a bout
+         that ended instead. Two readers went with it, `favourBout`'s `close` on 10.8% of held
+         bouts and `boutAccount`'s `turn` on 4.4%. The bar is the invariant, not the symptom: a
+         log may only grow, and the bout must still begin where it began. */
+      {
+        let segs = null, tries = 0;
+        for(let i=0;i<60 && !segs;i++){
+          const d2 = state(`ODDS-LOG-${i}`);
+          const o2 = mkOffer(d2, mkOpp(82));
+          const g2 = twin(d2, o2.opp);
+          let r = A.doFight(d2, g2.id, o2, "measured", 0, null, null, null);
+          if(!r || r.__err) continue;
+          const got = [(r.beats||[]).slice()];
+          let n = 0;
+          while(r && r.crux && n < 4){
+            const pd = r.pending; pd.beats = r.beats; n++;
+            r = A.doFight(d2, pd.gid, pd.offer, pd.tactic, pd.bet, pd, "press");
+            if(!r || r.__err) break;
+            got.push((r.beats||[]).slice());
+          }
+          tries++;
+          if(!r || r.__err || r.crux) continue;
+          if(n >= 2) segs = got;                    /* a bout that stopped TWICE, which is the case */
+        }
+        if(!segs)
+          bad.push(`sixty bouts and not one came to the balance twice in ${tries} that finished — `
+            + `either the crux has stopped repeating or this fixture no longer produces long bouts`);
+        else {
+          const opened = (segs[0][0] || {}).text;
+          const lens = segs.map(x=>x.length);
+          const shrank = lens.findIndex((n,i)=>i > 0 && n < lens[i-1]);
+          const last = segs[segs.length-1];
+          lines.push(`a bout held ${segs.length-1} times carries ${lens.join(" → ")} beats, `
+            + `and still opens on "${String(opened).slice(0,44)}…"`);
+          if(shrank > 0)
+            bad.push(`the log SHRANK across a word from the box — ${lens.join(" → ")} beats — so the `
+              + `exchange that word bought is not in what came back, and the modal is handed an array `
+              + `shorter than the cursor it is holding`);
+          if((last[0] || {}).text !== opened)
+            bad.push(`a finished bout no longer opens where it opened: "${String((last[0]||{}).text).slice(0,44)}" `
+              + `against "${String(opened).slice(0,44)}"`);
+        }
+      }
     }
 
     /* ================= 3. THE RANKING THE PANEL RECOMMENDS — NO SAMPLING ================= */

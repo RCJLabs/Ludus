@@ -13946,13 +13946,13 @@ function doMelee(d, ids, offer, pending, choice, tactic){
   } else {
     res = simulateMelee(field, mctx, pending ? { from:pending.crux, resumeLine:"You say nothing at all, which is also a decision." } : { stopAtCrux:true });
   }
+  if(pending) res.beats = pending.beats.concat(res.beats);
   if(res.unfinished){
     return { pending:{ ids, offer, crux:res.crux, ents:field, melee:true },
       beats:res.beats, crux:true, melee:true, tier:offer.tier, festival:offer.festival, stakes:"melee", venue:offer.venue, factions:d.factions,
       ents: field.map(e=>({ name:e.name, cls:e.cls, kit:e.kit, scars:e.scars||[], mine:!!e.mine, house:e.house,
         out:!!e.out, dead:!!e.dead, fem:isF(e) })) };
   }
-  if(pending) res.beats = pending.beats.concat(res.beats);
 
   const sum = [`Appearance fees: ${t.app*gs.length} denarii.`];
   d.gold += t.app*gs.length;
@@ -14114,13 +14114,13 @@ function doVenatio(d, gid, offer, tactic, pending, choice){
     res = simulateVenatio(gc, offer.beast, tacticNow, vctx,
       pending ? { from: pending.crux, resumeLine: C ? C.line(g) : undefined } : { stopAtCrux:true });
   }
+  if(pending) res.beats = pending.beats.concat(res.beats);
   if(res.unfinished){
     return { pending:{ gid, offer, tactic, crux:res.crux, venatio:true },
       beats:res.beats, crux:true, venatio:true, beast:offer.beast, tier:offer.tier, stakes:"venatio", festival:offer.festival, venue:offer.venue, factions:d.factions,
       A:{ name:g.name, nick:g.nick, cls:g.cls, origin:g.origin, sub:"your house", kit:gc.kit, scars:gc.scars||[], fem:isF(g) },
       B:{ name:B.name, cls:"beast", sub:"the hunt" } };
   }
-  if(pending) res.beats = pending.beats.concat(res.beats);
 
   if(g.ambition && g.ambition.kind==="nobeast") ambitionBroken(d, g);
   if(isAuctor(g)) g.auctor.served++;
@@ -14251,13 +14251,13 @@ function doPairFight(d, ids, offer, tactic, pending, choice){
     res = simulatePair(clones, opps, tacticNow, offer.stakes, pctx,
       pending ? { from: pending.crux, resumeLine: C ? C.line(gs[0]) : undefined } : { stopAtCrux:true });
   }
+  if(pending) res.beats = pending.beats.concat(res.beats);
   if(res.unfinished){
     return { pending:{ ids, offer, tactic, crux:res.crux, pair:true },
       beats:res.beats, crux:true, pair:true, tier:offer.tier, stakes:offer.stakes, festival:offer.festival,
       A:clones.map(c=>({ name:c.name, nick:c.nick, cls:c.cls, kit:c.kit, scars:c.scars||[], sub:"your house", fem:isF(c) })),
       B:opps.map(o=>({ name:o.name, nick:o.nick, cls:o.cls, kit:o.kit, scars:o.scars||[], sub:o.house?`House ${o.house}`:"the pits", fem:isF(o) })) };
   }
-  if(pending) res.beats = pending.beats.concat(res.beats);
 
   const sum = [`Appearance fees: ${t.app*2} denarii.`];
   d.gold += t.app*2;
@@ -14762,6 +14762,29 @@ function boutAftermath(d, g, gid, offer, res, win, F, sum){
   }
 }
 
+/* ---- THE ORDER YOU GAVE WAS NEVER SHOWN HAPPENING (#169) ----
+   All four engines carried the join BELOW the early return for a bout that has come to the balance
+   again, so the accumulated log was tacked on only when the fight finally ENDED and a resume that
+   stopped again returned the segment since the last crux and nothing before it. `speak` hands that
+   result straight to `FightModal`, which is not keyed and keeps its own cursor `i`, so the array it
+   is given is SHORTER than the index it is holding: `done` is true on arrival and it renders the
+   last beat of the segment. Driven through the real screens, fourteen bouts on a real card:
+
+       from the horn                                          9.7 beats shown
+       a word answered on a bout that then ENDS               10.4 beats  [10 9 13 16 3 13 14 10 6]
+       a word answered on a bout that then STOPS AGAIN        1.0 beats   [1 1 1]
+
+   The player says the word, the arena jumps to the line it was already on, and the exchange he
+   bought is not drawn. It is 22% of played bouts, and it took two other things with it: over 1,920
+   held bouts, `favourBout`'s `close` — a clash anywhere in the fight — flipped on 10.8% of them,
+   and `boutAccount`'s `turn`, the man's own account of how the bout turned, moved on 4.4%. Three
+   readers were NOT affected and are named because the opening note guessed wrong about one of
+   them: `rounds` is a max over a suffix of a rising run, and `end` and `spared` live in the tail.
+   Moving the join above the return is the whole fix. Paired on the same seeds over 720 opening
+   houses it reads 527 -> 556 standing and 1,781 -> 1,795 men, and over 72 houses of 420 weeks
+   16.71% -> 16.47% of bouts killing his man at a median life of 172w -> 178w: no cost, and a
+   little to the good in the direction the mechanism says it must be, because a log with more of
+   the fight in it finds a clash more often. */
 function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   const g = d.gladiators.find(x=>x.id===gid);
   const t = TIERS[offer.tier];
@@ -14831,6 +14854,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
       pending ? { from: pending.crux, resumeLine: C ? C.line(g) : undefined, stopAtCrux: !offer.imperial, order: C ? C.order : null }
               : { stopAtCrux: !offer.imperial });
   }
+  if(pending) res.beats = pending.beats.concat(res.beats);
   if(res.unfinished){
     return { pending:{ gid, offer, tactic, bet, plan:planKey, crux:res.crux, bribeHouse },
       beats: res.beats, crux:true, tier:offer.tier, stakes:offer.stakes, festival:offer.festival, venue:offer.venue, factions:d.factions,
@@ -14838,7 +14862,6 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
       B:{ name:offer.opp.name, nick:offer.opp.nick, cls:offer.opp.cls, origin:offer.opp.origin,
           sub:offer.opp.house? `House ${offer.opp.house}`:"the pits", kit:oc.kit, scars:oc.scars||[], fem:isF(offer.opp) } };
   }
-  if(pending) res.beats = pending.beats.concat(res.beats);
   if(imperial){
     res.beats.splice(1, 0, Object.assign({}, res.beats[0], { kind:"intro", actor:null,
       text:`The box above the sand is not a magistrate's. Whatever your patrons are worth in Capua, they are worth nothing here.` }));
