@@ -1399,7 +1399,22 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.69.0 — **#174 closed, and the price was copied SIX times rather than
+**Shipped and verified:** v3.70.0 — **#176 closed, and refuted as I opened it.** The item blamed the
+four definitions of "standing" (88 / 74 / 77 / 91% on 800 identical houses) for #142's *"`standing` is
+nearly inert"*. My hypothesis was that `open.mjs` ignores `d.over` and so cannot see the bankruptcies
+an economic squeeze causes. **Wrong**: under the same squeeze the four readings fall **−22.5, −22.5,
+−21.3, −20.4 points** — they differ in level, not in response — and only **7 of 240** houses ended
+while still holding a fit man. **The fault was the sample.** At 240 houses the opening-purse lever
+moves standing **77% → 58% (−18.3 points)** where #142 read 0 at 60 houses; the instrument agrees with
+#142 on `men` (−25.2% against −26.6%), which is the signature of noise rather than a changed game.
+Four independent 60-house runs read **−16, −9, −3, −16** (sd **6.3**), so sixty houses cannot separate
+"inert" from "falls by a fifth". **#136's rule for the sixth time, and the first time it caught a
+figure that had become the rationale for a bar design** — the conjunction is not "gated on a dead
+term"; both halves move, `men` more, which is all that survives of the sentence. The bars are not
+moved; this corrects the rationale and reframes #175. No game change; `src/ludus.jsx` untouched.
+Suite green at **72/72 in 13.5 minutes**, `survive` drawing (4, 11) with v3.67.0's clause firing for
+the second release running — 5 of the 11 men were in the one house that had ENDED.
+v3.69.0 — **#174 closed, and the price was copied SIX times rather than
 five.** The item's sweep walked `src/ludus.jsx`; the reference player is a consumer of the engine
 exactly the way the panel is, and `test/harness.mjs:674` held a copy too. **And that copy had already
 drifted** — the rope's was unrounded where the engine charges `rnd(...)`, so across fame 0–4,000 the
@@ -3480,15 +3495,44 @@ and it cannot be cut by more houses (5 Chromiums is the ceiling; 7 cost two fals
 worse kind). The remaining candidate is making the check take the signature itself instead of a
 human running `open.mjs` by hand each time — which needs a baseline the check does not have.
 
-**#176 — `open.mjs` and `survive` do not use the word "standing" the same way, and a published
-figure was read off the wrong one.** On **800 identical houses** the four available readings are
-**88%** (`!over && yard>0`, which is `survive`), **74%** (`!over && fit>0`), **77%** (`fit>0`, which
-is `open.mjs`), **91%** (`yard>0`) — a spread of 17 points on the same material. Exact signature
-equality is unaffected, so every false-failure proof this project has published still stands. But
-#142's **"`standing` is nearly inert and `men` is the half that responds"** was read off the 77%
-reading and applied to the 88% one. *Falsifies if:* the conclusion survives being re-measured on
-`survive`'s own definition — which is the cheap thing to do and has not been done. Not a live fault;
-it is a figure that has not earned the sentence built on it.
+**#176 — CLOSED in v3.70.0, and REFUTED as I opened it. The definitions were a red herring; the
+sample size was the fault, and it had become the justification for a bar design.**
+
+The item said four readings of "standing" differ by 17 points on 800 identical houses — 88%
+(`!over && yard>0`, `survive`), 74% (`!over && fit>0`), 77% (`fit>0`, `open.mjs`), 91% (`yard>0`) —
+and that #142's *"`standing` is nearly inert and `men` is the half that responds"* was read off the
+77% one and applied to the 88% one. My hypothesis for WHY that mattered: `open.mjs` ignores `d.over`,
+so a house that went bankrupt but still holds a fit man counts as standing, and going bankrupt is
+exactly what an economic squeeze causes.
+
+**That hypothesis is wrong.** Under the same squeeze the four readings fall **−22.5, −22.5, −21.3 and
+−20.4 points** — they differ in level and not in response — and at the hardest setting only **7 of
+240** houses had ended while still holding a fit man. The level difference is real and matters to
+anyone quoting an absolute rate. It is not what broke #142.
+
+**What broke #142 is that sixty houses cannot see the effect.** Re-measured over 240 houses on four
+seed prefixes, the same opening-purse lever:
+
+    opening gold 800 -> 150     standing 77% -> 58%  (-18.3 points)     men -25.2%
+    #142 read, at 60 houses     standing 65% -> 65%  (  0.0 points)     men -26.6%
+
+The instrument **agrees with #142 on the quantity #142 sampled well** (men, −25.2% against −26.6%)
+and disagrees on the one it did not — the signature of sampling noise rather than a changed game or
+a broken probe. Prefix by prefix, the four independent 60-house runs read **−16, −9, −3 and −16**
+houses, mean −11.0, **sd 6.3**; #142's 0 sits 1.8 sd from that mean, which is unlucky rather than
+impossible, and one of my own four prefixes read only −3.
+
+**This is #136's rule for the sixth time** — a bar taken over a handful of houses is a bar on one RNG
+trajectory — and it is the first time it caught a figure that had become the *rationale for a design*.
+What follows: the conjunction is **not** "gated on a dead term". Both halves move, `men` more than
+`standing` (−25% against −18 points), which is the defensible half of the original sentence and all
+that survives of it. **The bars are not moved on this** — it corrects the rationale, not the
+threshold, and where the threshold belongs is #175's question, which this now reframes.
+
+*Not re-run:* the other two of #142's three levers. Its own explanation of `bill x3` is sound (at 26
+weeks the bill is 30–40d and tripling it is nothing against purses), and `purses x0.3` has no lever
+reachable without patching the engine, which the handle cannot do (#173).
+
 
 **#171 — CLOSED in v3.63.0, REFUTED on its own clause, and it took one of my own published figures
 with it.** *(v3.65.0: its −26.7 weeks for the three was the senator's repeat-calling, and with that
@@ -3698,6 +3742,68 @@ about a quarter and it is the cost of this repair**; `MISSIO_MAN` is one line to
 wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
+
+### v3.70.0 — #176 refuted as I opened it: the definitions were a red herring and sixty houses were the fault
+
+The item said `survive` and `open.mjs` do not use the word "standing" the same way, and that #142's
+*"`standing` is nearly inert and `men` is the half that responds"* — the sentence the check's bar
+design rests on — was read off the wrong one. Half of that is right. The half I built the item on is
+not.
+
+#### My hypothesis, and its refutation
+
+`open.mjs` reads `fit>0` and ignores `d.over`; `survive` reads `!over && yard>0`. So a house that
+went bankrupt in week nine but still holds a fit man counts as standing under `open` and not under
+`survive` — and going bankrupt is exactly what an economic squeeze causes. A clean mechanism for how
+#142's instrument could be blind to its own levers.
+
+**It is wrong.** Under the same squeeze the four readings fall together:
+
+    survive   !over && yard>0    86% -> 64%    -22.5 points
+              !over && fit>0     75% -> 53%    -22.5
+    open.mjs  fit>0              77% -> 55%    -21.3
+              yard>0             89% -> 68%    -20.4
+
+They differ in LEVEL by up to 17 points and not in RESPONSE. At the hardest setting only **7 of 240**
+houses had ended while still holding a fit man — the mechanism exists and is negligible. The level
+difference is real and matters to anyone quoting an absolute rate; it is not what broke #142.
+
+#### What did break it
+
+    opening gold 800 -> 150     standing 77% -> 58%  (-18.3 points)     men -25.2%
+    #142 read, at 60 houses     standing 65% -> 65%  (  0.0 points)     men -26.6%
+
+The instrument **agrees with #142 on the quantity #142 sampled well** — men, −25.2% against −26.6% —
+and disagrees on the one it did not. That is the signature of sampling noise, not of a changed game
+or a broken probe, and it is the check that makes the rest of this trustworthy.
+
+Broken out prefix by prefix, four independent 60-house runs on the same lever read **−16, −9, −3 and
+−16** houses: mean −11.0, **sd 6.3**. #142's 0 sits 1.8 sd from that mean — unlucky rather than
+impossible, and one of my own four prefixes read only −3. **Sixty houses cannot separate "inert" from
+"falls by a fifth."**
+
+#### Why this one matters more than the five before it
+
+This is #136's rule for the sixth time — *a bar taken over a handful of houses is a bar on one RNG
+trajectory* — and it is the first time it caught a figure that had stopped being a figure and become
+**the rationale for a design**. The withdrawn sentence's consequence was: *"the conjunction is GATED
+on the dead term, so it fires when standing dips by luck and would sit quiet while the economy
+moved."* Both halves move. `men` moves more than `standing` (−25% against −18 points), which is the
+defensible remainder of the original sentence and all that survives of it.
+
+**The bars are not moved on this.** It corrects the rationale, not the threshold — and it reframes
+#175, which is where the threshold question lives. `survive`'s head carries the withdrawal.
+
+*Not re-run:* the other two of #142's three levers. Its own explanation of `bill x3` is sound — at 26
+weeks the bill is 30–40d and tripling it is nothing against purses — and `purses x0.3` has no lever
+reachable without patching the engine, which the handle cannot do (#173).
+
+*No game change in this release. `src/ludus.jsx` is untouched.* Suite green at **72/72 in 13.5
+minutes**, `survive` drawing **(4, 11)** — and v3.67.0's honesty clause fired for the second release
+running, more starkly than the first: *"11 men between them — of which 5 are in the 1 house that
+ENDED, leaving 6 with the houses still going."* Nearly half the reported men were in a single dead
+house. Two releases of hand-built fixtures could not produce that reading; two consecutive real draws
+have.
 
 ### v3.69.0 — #174: the price was copied six times, not five, and the sixth had already drifted
 

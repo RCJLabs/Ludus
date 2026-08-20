@@ -55,7 +55,34 @@ const out = await p.evaluate(([C,W,SEED])=>{
       cohorts.push(houses);
     }
   }
-  return { cohorts, W, PRES };
+
+  /* ---- #176: DOES `standing` RESPOND TO AN ECONOMIC SQUEEZE, ON EACH OF THE FOUR READINGS? ----
+     #142 swept three gutting levers over 60 houses and read `standing` 39 / 44 / 39 / 40 against
+     `men` 128 / 123 / 94 / 104, and concluded **"`standing` is nearly inert and `men` is the half
+     that responds"** — the sentence the current bar design rests on. It was read off `open.mjs`'s
+     definition, which is `activeG(d).length > 0` and **ignores `d.over` entirely**. A house that
+     went bankrupt in week nine but still has a fit man in the yard counts as standing under it.
+     Going bankrupt is precisely what an economic squeeze causes. So the hypothesis is not that #142
+     measured badly, it is that its instrument was blind to the failure mode its levers produce.
+     The lever here is the opening purse, which needs NO patching — the handle is an object of copied
+     references and the engine calls the module-scope binding (#173), so a patched `weeklyBill` would
+     be a silent no-op. `d.gold` is state, and state is what the engine reads. One lever, not three,
+     and the claim under test is only "is it inert", which one responding lever settles. */
+  const squeeze = [];
+  for(const gold of [800, 400, 150, 50]){
+    const rows = [];
+    for(const pre of PRES){
+      for(let h=0; h<60; h++){
+        const d = A.newGameState("Sq"+h, "clean", `${pre}-SQ-${h}`, null);
+        d.gold = gold;
+        for(let w=0; w<W; w++){ if(d.over) break; R.lanista(d); if(!d.lanista) break; }
+        rows.push({ pre, over: d.over ? (d.over.kind||"ended") : null,
+                    yard: inYard(d), fit: (d.gladiators||[]).filter(g=>g.status==="active").length });
+      }
+    }
+    squeeze.push({ gold, rows });
+  }
+  return { cohorts, squeeze, W, PRES };
 }, [C, W, SEED]);
 
 const cohorts = out.cohorts, N = cohorts.length;
@@ -147,6 +174,70 @@ for(const [lbl, pick] of [["as it reads now (men over all houses)", r=>r.menAll]
 }
 console.log(`\n  the three bars overlap under the corrected sum by construction: standing 0 forces men 0.`);
 console.log(`  so the question the fix asks is not "does it fire less" but "are the three bars three things".`);
+
+/* ---------------- #176: the squeeze ---------------- */
+const DEFS = [
+  ["survive   !over && yard>0", h=>!h.over && h.yard>0],
+  ["          !over && fit>0 ", h=>!h.over && h.fit>0],
+  ["open.mjs  fit>0          ", h=>h.fit>0],
+  ["          yard>0         ", h=>h.yard>0],
+];
+console.log(`\n#176 — DOES \`standing\` RESPOND TO AN ECONOMIC SQUEEZE?`);
+console.log(`the opening purse, ${out.squeeze[0].rows.length} houses a level, ${out.W} weeks, ${out.PRES.length} seed prefixes\n`);
+console.log(`  opening gold   ` + DEFS.map(([l])=>l.trim().padStart(18)).join("") + `        men   ended`);
+for(const S of out.squeeze){
+  const n = S.rows.length;
+  const cells = DEFS.map(([,f]) => {
+    const k = S.rows.filter(f).length;
+    return `${k} (${(k/n*100).toFixed(0)}%)`.padStart(18);
+  }).join("");
+  const men = S.rows.reduce((a,h)=>a+h.yard, 0);
+  const ended = S.rows.filter(h=>h.over).length;
+  console.log(`  ${String(S.gold).padStart(12)}   ${cells} ${String(men).padStart(10)} ${String(ended).padStart(7)}`);
+}
+{
+  const a = out.squeeze[0], b = out.squeeze[out.squeeze.length-1], n = a.rows.length;
+  console.log(`\n  fall from ${a.gold}d to ${b.gold}d, in points:`);
+  for(const [lbl,f] of DEFS){
+    const x = a.rows.filter(f).length/n*100, y = b.rows.filter(f).length/n*100;
+    const d = y - x;
+    console.log(`    ${lbl}  ${x.toFixed(0)}% -> ${y.toFixed(0)}%   ${d>=0?"+":""}${d.toFixed(1)} points`
+      + (Math.abs(d) < 3 ? "   <- inert" : ""));
+  }
+  const mA = a.rows.reduce((s,h)=>s+h.yard,0), mB = b.rows.reduce((s,h)=>s+h.yard,0);
+  console.log(`    men                         ${mA} -> ${mB}   ${((mB-mA)/mA*100).toFixed(1)}%`);
+  console.log(`\n  the ending mix, which is the mechanism:`);
+  for(const S of [a,b]){
+    const mix = {}; S.rows.forEach(h=>{ const k = h.over||"alive"; mix[k]=(mix[k]||0)+1; });
+    console.log(`    ${String(S.gold).padStart(4)}d: ` + Object.entries(mix).sort((x,y)=>y[1]-x[1])
+      .map(([k,v])=>`${k} ${v}`).join(" · "));
+  }
+  const deadFit = b.rows.filter(h=>h.over && h.fit>0).length;
+  console.log(`\n  houses that ENDED but still hold a fit man, at ${b.gold}d: ${deadFit} of ${n}`);
+  console.log(`  — every one of those counts as "standing" under \`open.mjs\`'s reading and not under \`survive\`'s.`);
+
+  /* ---- COULD 60 HOUSES ON ONE PREFIX HAVE READ 39 -> 39? ----
+     #142's figures came from 60 houses, which is what `open.mjs` runs, on one seed family. #136's
+     rule has fired five times in this project: a bar taken over a handful of houses is a bar on one
+     RNG trajectory. The four prefixes here are four independent 60-house runs, so the spread at
+     that sample is free to read rather than argue about. */
+  console.log(`\n  THE SAME LEVER, PREFIX BY PREFIX — four independent 60-house runs, open.mjs's own reading`);
+  console.log(`    prefix        800d      150d      change       #142 read 39 -> 39 of 60`);
+  const g150 = out.squeeze.find(x=>x.gold === 150);
+  for(const pre of out.PRES){
+    const A2 = a.rows.filter(h=>h.pre===pre), B2 = g150.rows.filter(h=>h.pre===pre);
+    const x = A2.filter(h=>h.fit>0).length, y = B2.filter(h=>h.fit>0).length;
+    console.log(`    ${pre.padEnd(10)} ${String(x).padStart(6)}/${A2.length} ${String(y).padStart(6)}/${B2.length}`
+      + `   ${(y-x)>=0?"+":""}${y-x}`);
+  }
+  const per = out.PRES.map(pre => {
+    const A2 = a.rows.filter(h=>h.pre===pre), B2 = g150.rows.filter(h=>h.pre===pre);
+    return B2.filter(h=>h.fit>0).length - A2.filter(h=>h.fit>0).length; });
+  const mu = per.reduce((s,v)=>s+v,0)/per.length;
+  const sd = Math.sqrt(per.reduce((s,v)=>s+(v-mu)**2,0)/Math.max(1,per.length-1));
+  console.log(`    mean change ${mu.toFixed(1)} houses, sd ${sd.toFixed(1)} across the four runs;`);
+  console.log(`    #142's 0 sits ${sd ? Math.abs((0-mu)/sd).toFixed(1) : "?"} standard deviations from this mean.`);
+}
 console.log();
 
 await browser.close();

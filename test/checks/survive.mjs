@@ -319,7 +319,38 @@ const MEN    = 3;
    houses it cannot be one: the gold gutting above is a 27% fall in men that scales to roughly
    10.7 -> 7.8 on five houses, which is inside ordinary variance. **A fixed-policy headless run over
    60 houses is the instrument for that** — it separated all three levers cleanly, and `policy`
-   already carries a version of it. */
+   already carries a version of it.
+
+   ---- THE SENTENCE IN BOLD ABOVE IS WITHDRAWN — #176, v3.70.0 ----
+   `standing` is NOT inert, and the run that said so could not have known. Re-measured over 240
+   houses on four seed prefixes, the same opening-purse lever:
+
+     opening gold 800 -> 150     standing 77% -> 58%  (-18.3 points)     men -25.2%
+     #142 read, at 60 houses     standing 65% -> 65%  (  0.0 points)     men -26.6%
+
+   The instrument agrees with #142 on the quantity #142 sampled well and disagrees on the one it did
+   not, which is the signature of sampling noise rather than of a changed game or a broken probe.
+   Broken out prefix by prefix, the four independent 60-house runs read **-16, -9, -3 and -16
+   houses**, mean -11.0 with an sd of **6.3**. #142's 0 sits 1.8 sd from that mean — unlucky, not
+   impossible, and one of the four prefixes here read only -3. **Sixty houses cannot separate "inert"
+   from "falls by a fifth."** That is #136's rule for the sixth time, and this is the first time it
+   caught a figure that had become the JUSTIFICATION FOR A BAR DESIGN.
+
+   What follows from the withdrawal: the conjunction is NOT "gated on a dead term". Both halves move
+   under an economic squeeze, `men` more than `standing` (-25% against -18 points), which is the
+   defensible half of the original sentence and all that survives of it. The bars are NOT moved on
+   this — it corrects the rationale, not the threshold, and where the threshold belongs is #175's
+   question. The other two levers are not re-run: #142's own explanation of `bill x3` is sound (at 26
+   weeks the bill is 30-40d and tripling it is nothing against purses) and `purses x0.3` has no
+   lever reachable without patching the engine, which the handle cannot do (#173).
+
+   AND THE FOUR DEFINITIONS WERE A RED HERRING, which is worth recording because it was my
+   hypothesis. `open.mjs` reads `fit>0` and ignores `d.over`; this check reads `!over && yard>0`. On
+   800 identical houses they differ by up to 17 points in LEVEL (88 / 74 / 77 / 91). They do not
+   differ in RESPONSE: under the same squeeze they fall -22.5, -22.5, -21.3 and -20.4 points. The
+   guess was that `open`'s blindness to `over` hid the bankruptcies an economic squeeze causes; at
+   the hardest setting only **7 of 240** houses had ended while still holding a fit man. The level
+   difference is real and matters to anyone quoting an absolute rate. It is not what broke #142. */
 /* ---- #155: THE POOLED RATE WAS THREE THINGS AT ONCE, AND #142'S BAR IS ON BUDGET ----
    An item was opened claiming this check fires three times more often than #142 derived — 2.7%
    against an observed 9%. It does not, and the item's own clause named the escape: the two figures
