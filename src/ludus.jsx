@@ -26151,7 +26151,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* the nineteen things a house is remembered for, and the gates on each of them */
     FEATS, FEAT_KEYS, hasFeat, featWeek, featNear, recordCloth,
     /* the burial society: founding it, the stone, and what cutting it costs */
-    foundCollegium, lapseCollegium, collBury, collOn, COLL_FEE, COLL_DUES,
+    foundCollegium, lapseCollegium, collBury, collOn, collDues, COLL_FEE, COLL_DUES,
     /* your own games: whether the city will take one, and what the card costs */
     munusReady, munusWait, munusCost, munusSellFee, MUNUS_OCCASIONS, MUNUS_SCALES, SPECTACLES,
     /* the domestic half of the house: who she is, what she costs, and what she does */

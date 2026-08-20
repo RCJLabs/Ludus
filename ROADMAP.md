@@ -1399,7 +1399,27 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.65.0 — #172 closed, and v3.64.0's rule paid for itself the release after
+**Shipped and verified:** v3.66.0 — the audit after nine releases, and the first one run under
+v3.64.0's rule: every figure in it is a COUNT or a SHARE, never a median life. `coverage` reads **103
+of 475** never called by a check, 39 of them named in no check and no probe; most are readers, and
+the systems among them were driven. **Two items opened.** **#173**: `lapseCollegium` takes 22 morale
+and 16 defiance off every man plus 14 unrest, has exactly one caller — a button — and nothing in the
+game lapses it; over 72 houses of 420 weeks **48 held it for 9,482 house-weeks and it lapsed 0
+times**, while the dues are **13d of a 286d bill**, and for the **29 houses that died of the ledger**
+— losing a median 101d a week — dropping them would have saved **0 of 29**. **#174**: a mechanical
+sweep for arithmetic written on both sides of the App boundary returns exactly one hit, `answerNem`'s
+price in five places, which is the last instance of a class five releases have each removed one of.
+**Three confirmations, which is the point of measuring**: the war's second door reaches **24 of 72
+houses and the drive agrees with its own arithmetic** (23.1 predicted, 24 measured) where the
+original gate reached **0 of 72**; `buyLot` is reachable on **398 house-weeks** with the room and the
+coin; and the staff walk out **43 times** across 12,162 staff-weeks. **And the dark-button instrument
+was itself wrong**: `dark.mjs` reconstructed a gate the game does not use and built two fixtures that
+could not change anything, reporting five wrong answers — corrected, **there are no dead buttons among
+the nineteen**. No game change. `open`'s 60-house signature is byte-identical across the one-line
+handle export, which is what says the two `survive` draws on this build — **(1,2)** and **(2,5)**,
+both in the tally — are the tail and not the change. Suite green at **71/71** on the second of two
+full runs.
+v3.65.0 — #172 closed, and v3.64.0's rule paid for itself the release after
 it shipped. The clause said a lever that buys nothing on average may still be the one that saves a
 particular run; what it actually wanted was a different QUANTITY, because one house's life varies by
 139 weeks and median life could never have seen any of this. Measured by what each favour's own `run`
@@ -3252,6 +3272,31 @@ may only grow across a word from the box, and the bout must still open where it 
 Negative-tested — put the join back and it reads "the log SHRANK across a word from the box —
 11 → 5 → 17 beats".
 
+**#173 — the burial society cannot be lost, and the one door out of it is a button nobody would ever
+press.** `lapseCollegium` takes **22 morale and 16 defiance off every man in the yard and adds 14
+unrest** — the heaviest single yard-wide loss written anywhere in the file — and it has exactly ONE
+caller, a button that says stop paying. Nothing in the game lapses it: not debt, not foreclosure, not
+a missed week. Driven over 72 houses of 420 weeks: **48 of 72 ever hold it, for 9,482 house-weeks,
+and it lapsed 0 times.** And the button's upside is measured: the dues are **13d against a weekly
+bill of 286d, 4.5% of it**. Its own clause is already answered — for the **29 houses that died of the
+ledger**, which is the only state where 4.5% could matter, the last twenty weeks were losing a median
+**101d a week**, so dropping the dues would have turned the tide for **0 of 29**. So the consequence
+is written, expensive, and unreachable: this is #131's shape exactly, and #131's open question is
+which third loss to build. This one has a measured case and a target. *Falsifies if:* the collegium is
+meant to be a thing you keep — in which case the loss should be deleted rather than reached, and the
+22/16/14 is dead weight rather than content.
+
+**#174 — the last copy of a price, and the last instance of a class this project has fixed five
+times.** `answerNem`'s cost is `rnd(160 + d.fame*0.5)`, written once in the engine and **four more
+times in the panel** — the disabled test, and three branches of the button's own label. A mechanical
+sweep for arithmetic written on both sides of the App boundary returns **exactly one hit**, this one:
+#150, #162, #165, #160 and #166 each removed an instance, and this is what is left. It is not a live
+fault — the panel's fourth copy agrees with the engine's, so the button is correctly disabled and no
+player is offered a dead press today. Every previous instance became a live fault the moment one copy
+drifted. *Falsifies if:* the extraction costs more than it buys — `nemAnswerReady` would want the
+affordability test folded into it, and that gate is read by the rope, three probes and the panel, so
+a change there is not free.
+
 **#171 — CLOSED in v3.63.0, REFUTED on its own clause, and it took one of my own published figures
 with it.** *(v3.65.0: its −26.7 weeks for the three was the senator's repeat-calling, and with that
 gated the same arm reads +12.1 weeks — not significant either way. Life was the wrong quantity for
@@ -3460,6 +3505,73 @@ about a quarter and it is the cost of this repair**; `MISSIO_MAN` is one line to
 wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
+
+### v3.66.0 — the audit after nine releases: two items, three confirmations, and an instrument that was wrong about five things
+
+The board emptied for the first time in nine releases, so this is the cycle point. It is also the
+first audit run under v3.64.0's rule, and that rule shaped every question in it: a house's life varies
+by a standard deviation of 139 weeks, so **nothing here is priced in weeks lived**. Every figure is a
+count or a share, which the same samples see comfortably.
+
+#### Where it looked
+
+`coverage` reads **103 of 475** exposed functions never called by a check, against 101 of 463 at the
+last audit — steady, on a surface that grew by twelve. Thirty-nine of the 103 are named in **no check
+and no probe**, which is the stronger signal. Most of those are readers. Four are systems with a
+written cost or a written offer, and `test/probes/meet.mjs` drove all four over 72 houses of 420
+weeks.
+
+#### The instrument was wrong first, which is the standing hazard doing its work
+
+`dark.mjs` is this project's "does a player ever meet this" instrument, and its own head warns against
+reconstructing a gate the game already has. It was doing exactly that:
+
+    clearWatch   gated on "he is alive" rather than `g.watchedBy`, and handed the FIRST man
+                 rather than a watched one — 2,408 opens, 78% of them "did nothing", every
+                 one of them a man nobody was watching. Corrected: 684 opens, 100% change the save.
+    applyKit     saved the first man's kit and applied it back to the FIRST man, which is a
+                 no-op by construction — 2,408 of 2,408 read OPEN AND INERT. Corrected to apply
+                 to a second man: 92% change the save.
+    repay · dropKit · breakPlan   read 0 of 2,470 house-weeks and looked like content nobody can
+                 reach. All three are gated on a system the REFERENCE PLAYER does not pursue — a
+                 loan, a saved kit, a drilled season. They are armed in the clone now and all
+                 three work, and the rope's own rate is reported beside it rather than instead.
+
+**Corrected, there are no dead buttons among the nineteen.** Every one works when the game's own gate
+is open and a fair fixture is built. That is a refutation of five readings this file has been carrying,
+and it is the fourth time an instrument fault has outnumbered the game fault it was looking for.
+
+#### Three confirmations
+
+- **The war's second door works, and the drive agrees with its own arithmetic.** The file's note says
+  the arc once had one door — the "open the gates" branch of `uprising` — and fired *not once* across
+  48 houses. Measured now: **24 of 72 houses see it, and all 24 by the news door, none by their own
+  gate.** At `WAR_AWAY_ODDS` 0.0035 a week from week 60, these houses' own lifespans predict **23.1**;
+  the drive read **24**. All four stages are reached, for 3,125 house-weeks.
+- **`buyLot` is reachable.** The legions sell in bulk on **902 house-weeks**, of which **577** had a
+  cell free and **398** the coin as well.
+- **The staff do walk out**: 43 departures across 12,162 staff-weeks, 38 of 72 houses ever holding a
+  medicus and 26 an armourer.
+
+#### And two items
+
+**#173 — the burial society cannot be lost.** 48 of 72 houses hold it for 9,482 house-weeks; it
+lapsed **0 times**; nothing in the game lapses it and the only caller is a button. The dues are **13d
+against a 286d weekly bill**. The clause answered itself: the **29 houses that died of the ledger**
+were losing a median **101d a week** over their last twenty, so dropping the dues would have saved
+**0 of 29**. A 22-morale, 16-defiance, 14-unrest consequence that nothing can reach.
+
+**#174 — the last copied price.** A mechanical sweep for arithmetic written on both sides of the App
+boundary returns **exactly one hit**: `160 + fame*0.5`, in the engine once and the panel four times.
+Five releases each removed an instance of this class; this is what is left, and it is not yet a live
+fault only because the copies still agree.
+
+*No game change in this release.* The only `src/ludus.jsx` edit is one line on the test handle,
+exporting the collegium's readers so `meet.mjs` could price the dues without reconstructing them —
+`open`'s 60-house signature is byte-identical across it. Two full suite runs: the first 70/71 with
+`survive` drawing **(1,2)**, the second **71/71** in 13.2 minutes at **(2,5)**. Both entries are in
+the tally, the failing one included; the identical signature is what says the draw is the spread and
+not the release.
 
 ### v3.65.0 — #172: two safety valves that worked, and a word in Rome that was only news once
 

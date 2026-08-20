@@ -83,4 +83,7 @@
 {"v":"3.62.0","standing":1,"men":5,"houses":5,"weeks":26,"pass":true},
 {"v":"3.63.0","standing":5,"men":6,"houses":5,"weeks":26,"pass":true},
 {"v":"3.64.0","standing":3,"men":4,"houses":5,"weeks":26,"pass":true},
-{"v":"3.65.0","standing":1,"men":7,"houses":5,"weeks":26,"pass":true}]
+{"v":"3.65.0","standing":1,"men":7,"houses":5,"weeks":26,"pass":true},
+{"v":"3.65.0","standing":1,"men":6,"houses":5,"weeks":26,"pass":true},
+{"v":"3.66.0","standing":1,"men":2,"houses":5,"weeks":26,"pass":false},
+{"v":"3.66.0","standing":2,"men":5,"houses":5,"weeks":26,"pass":true}]

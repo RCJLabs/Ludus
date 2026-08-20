@@ -47,8 +47,16 @@ const out = await p.evaluate(([H,W])=>{
       args:d=>[d] },
     { k:"callFavour",  gate:d=>A.patronsOf(d).some(x=>A.favourReady(d,x)),
       args:d=>{ const p = A.patronsOf(d).find(x=>A.favourReady(d,x)); return p ? [d, p.id] : null; } },
-    { k:"repay",       gate:d=>!!d.loan && d.gold > 0,
-      args:d=>d.loan ? [d, Math.min(d.gold, 50)] : null },
+    /* ---- AND FOUR ROWS THAT READ "NEVER OPEN" ABOUT THE ROPE, NOT ABOUT THE GAME ----
+       `repay` wants a loan, `applyKit` and `dropKit` want a saved kit, `breakPlan` wants a drilled
+       season — and the reference player borrows nothing, saves no kit and drills no season, so all
+       four read 0 of 2,470 house-weeks and looked like content nobody can reach. That is a fact
+       about the policy. `arm` switches the system on IN THE CLONE first, so the row answers the
+       question that was meant: once a player has done the thing before it, does the next step work?
+       The OPEN column still reports the reference player's own rate, and a row with an `arm` says so. */
+    { k:"repay",       gate:d=>!!d.loan && d.gold > 0, rope:"never borrows",
+      arm:d=>{ if(!d.loan && A.canBorrow && A.canBorrow(d)) A.borrow(d, "murena", 2000); },
+      args:d=>d.loan ? [d, Math.min(Math.max(d.gold,1), 50)] : null },
     { k:"sellDebt",    gate:d=>(d.owed||[]).some(x=>!x.paid),
       args:d=>{ const x=(d.owed||[]).find(y=>!y.paid); return x ? [d, x.id] : null; } },
     { k:"runGambit",   gate:d=>A.gambitReady(d) && (d.rivals||[]).length > 0,
@@ -69,21 +77,35 @@ const out = await p.evaluate(([H,W])=>{
       args:d=>[d] },
     { k:"saveKit",     gate:d=>A.activeG(d).length > 0,
       args:d=>{ const g=A.activeG(d)[0]; return g ? [d, g.id] : null; } },
-    { k:"applyKit",    gate:d=>(d.kits||[]).length > 0 && A.activeG(d).length > 0,
-      args:d=>{ const g=A.activeG(d)[0], k=(d.kits||[])[0]; return (g&&k) ? [d, g.id, k.id] : null; } },
-    { k:"dropKit",     gate:d=>(d.kits||[]).length > 0,
+    /* saving the FIRST man's kit and applying it back to the FIRST man is a no-op by construction,
+       and read as 2,408 of 2,408 opens doing nothing — an "OPEN AND INERT" verdict manufactured
+       entirely by the fixture. It saves off one man and applies to ANOTHER, which is what the
+       screen is for, and says NO FIXTURE on a yard of one. */
+    { k:"applyKit",    gate:d=>(d.kits||[]).length > 0 && A.activeG(d).length > 1, rope:"saves no kit",
+      arm:d=>{ const g=A.activeG(d)[0]; if(g && !(d.kits||[]).length) A.saveKit(d, g.id); },
+      args:d=>{ const men=A.activeG(d), k=(d.kits||[])[0];
+                return (men.length > 1 && k) ? [d, men[1].id, k.id] : null; } },
+    { k:"dropKit",     gate:d=>(d.kits||[]).length > 0, rope:"saves no kit",
+      arm:d=>{ const g=A.activeG(d)[0]; if(g && !(d.kits||[]).length) A.saveKit(d, g.id); },
       args:d=>{ const k=(d.kits||[])[0]; return k ? [d, k.id] : null; } },
     { k:"watchField",  gate:d=>!!(d.games && d.games.week === d.week && (d.games.offers||[]).length),
       args:d=>{ const o=(d.games&&d.games.offers||[])[0]; return o ? [d, o] : null; } },
     { k:"startPlan",   gate:d=>A.activeG(d).some(g=>!A.seasonOfMan(g)),
       args:d=>{ const g=A.activeG(d).find(x=>!A.seasonOfMan(x)); return g ? [d, g, Object.keys(A.PLANSEASON)[0]] : null; } },
-    { k:"breakPlan",   gate:d=>A.activeG(d).some(g=>A.seasonOfMan(g)),
+    { k:"breakPlan",   gate:d=>A.activeG(d).some(g=>A.seasonOfMan(g)), rope:"drills no season",
+      arm:d=>{ const g=A.activeG(d).find(x=>!A.seasonOfMan(x));
+               if(g) A.startPlan(d, g, Object.keys(A.PLANSEASON)[0]); },
       args:d=>{ const g=A.activeG(d).find(x=>A.seasonOfMan(x)); return g ? [d, g, "probe"] : null; } },
-    { k:"clearWatch",  gate:d=>A.activeG(d).length > 0,
-      args:d=>{ const g=A.activeG(d)[0]; return g ? [d, g] : null; } },
+    /* the panel offers this INSIDE a block gated on `g.watchedBy`, so a gate of "he is alive" is not
+       the game's gate — it read 78% of 2,408 opens as a button that did nothing, and every one of
+       those was a man nobody was watching. The probe's own head warns against reconstructing a
+       gate; this file was doing it. */
+    { k:"clearWatch",  gate:d=>A.activeG(d).some(g=>g.watchedBy),
+      args:d=>{ const g=A.activeG(d).find(x=>x.watchedBy); return g ? [d, g] : null; } },
   ];
   const tally = {};
-  for(const r of ROWS) tally[r.k] = { open:0, noFixture:0, changed:0, same:0, threw:0, ret:{} };
+  for(const r of ROWS) tally[r.k] = { open:0, armed:0, noFixture:0, changed:0, same:0, threw:0, ret:{},
+    rope: r.rope || null };
 
   let weeks = 0;
   for(let h=0;h<H;h++){
@@ -95,9 +117,16 @@ const out = await p.evaluate(([H,W])=>{
         const t = tally[r.k];
         let isOpen = false;
         try { isOpen = !!r.gate(d); } catch(e){ }
-        if(!isOpen) continue;
-        t.open++;
+        if(isOpen) t.open++;
         const c = clone(d);
+        /* a row with an `arm` switches its own system on in the clone and asks again — the reference
+           player's rate is already counted above and is reported beside it, not instead of it */
+        if(!isOpen && r.arm){
+          try { r.arm(c); } catch(e){}
+          try { isOpen = !!r.gate(c); } catch(e){}
+          if(isOpen) t.armed++;
+        }
+        if(!isOpen) continue;
         let a = null;
         try { a = r.args(c); } catch(e){}
         if(!a){ t.noFixture++; continue; }
@@ -118,15 +147,23 @@ if(out.miss){ console.error("not on the handle: " + out.miss.join(", ")); proces
 const pc = (n,d) => d ? `${Math.round(n/d*100)}%` : "-";
 console.log(`=== THE SIXTEEN, DRIVEN ===`);
 console.log(`  ${out.weeks} house-weeks over ${out.H} houses x ${out.W} weeks\n`);
-console.log(`  action          gate open        no fixture   CHANGED THE SAVE   did nothing   threw`);
-const rows = Object.entries(out.tally).sort((a,b)=>a[1].open-b[1].open);
+console.log(`  action          open to the rope   armed   no fixture   CHANGED THE SAVE   did nothing   threw`);
+const rows = Object.entries(out.tally).sort((a,b)=>(a[1].open+a[1].armed)-(b[1].open+b[1].armed));
 for(const [k,t] of rows){
   const tried = t.changed + t.same;
-  console.log(`  ${k.padEnd(15)} ${String(t.open).padStart(6)} (${pc(t.open,out.weeks).padStart(4)})`
+  console.log(`  ${k.padEnd(15)} ${String(t.open).padStart(7)} (${pc(t.open,out.weeks).padStart(4)})`
+    + `   ${String(t.armed||0).padStart(6)}`
     + `   ${String(t.noFixture).padStart(10)}`
     + `   ${String(t.changed).padStart(9)} (${pc(t.changed,tried).padStart(4)})`
     + `   ${String(t.same).padStart(11)}   ${String(t.threw).padStart(5)}`
-    + (t.open === 0 ? "   <- NEVER OPEN" : tried && !t.changed ? "   <- OPEN AND INERT" : ""));
+    + (t.open === 0 && !t.armed ? "   <- NEVER OPEN" : tried && !t.changed ? "   <- OPEN AND INERT" : ""));
+}
+const armedRows = rows.filter(([,t])=>t.rope);
+if(armedRows.length){
+  console.log(`\n  the ARMED column is weeks where the reference player's own policy closed the gate and the`);
+  console.log(`  clone had the system switched on before asking. It is a fact about the rope, not the game:`);
+  for(const [k,t] of armedRows)
+    console.log(`    ${k.padEnd(15)} the reference player ${t.rope}`);
 }
 console.log(`\n  what each returned: `);
 for(const [k,t] of rows){
