@@ -105,6 +105,13 @@ Three things worth knowing before adding one:
 - **The seeded RNG correlates draws within a page load.** A win rate at n=1500 swings
   about two and a half points between identical runs. Bands are wide on purpose;
   assert direction, not targets. A check nobody trusts is worse than no check.
+- **And a long-run figure needs far more houses than it looks like.** Measured across
+  eight rope arms, one house's LIFE varies by a standard deviation of **139 weeks** on a
+  420-week run, its weekly mean fame by **1,004**, and its death rate by **5.5 points**.
+  So `2*sd/sqrt(n)` — the smallest difference a run could see — is **33 weeks of life at
+  72 houses and 57 at 24**, against roughly 1.3 points of death rate. `test/harness.mjs`
+  exports `needN`, and `test/probes/sample.mjs` will price any rope arm. Quote deaths a
+  bout; do not quote a median life that the sample could not have seen.
 - **Check the instrument before you believe the finding.** More findings in this
   project have turned out to be faults in the probe than faults in the game: probes
   that force-fed gold, took the richest bout every week, never courted a patron,
@@ -1392,7 +1399,24 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.63.0 — #171 REFUTED on its own clause, and it corrected a figure this
+**Shipped and verified:** v3.64.0 — the audit #171 asked for, turned on this project's own published
+figures. #136 has fired five times and the fifth one shipped a wrong number, so the missing thing was
+never another probe — it was the arithmetic that says how many houses a claim needs. `needN` measures
+the spread BETWEEN houses and turns it into `2*sd/sqrt(n)`: the smallest difference the run could have
+seen. Run over eight rope arms, the spread is the fact nothing here had written down — **one house's
+life varies by a standard deviation of 139 weeks on a 420-week run**, its weekly fame by 1,004 and
+its death rate by 5.5 points. So **72 houses cannot see a life difference under 33 weeks, and 24
+cannot see one under 57**. Calibrated against the known correction first: pointed at the 72 houses
+#167 published from, it says the fame claim needs 189 and the life claim 89,391 — which is exactly
+what raising the sample to 240 then found, and it clears the one figure that did hold (standing,
+needing 39). Six published figures are annotated as a result, among them **#169's 172w → 178w**,
+**#170's 284/246/244/212**, **#163's 52 → 62w** and **#166's 362-against-154**, which was twelve
+houses against an 80-week floor. **The suite itself is clean** — `policy` prints its medians and does
+not assert them, and no check bars a life comparison — so this is a fault in the writing, not in the
+bars. The rule is in both READMEs now: quote deaths a bout, which the same runs see comfortably at
+1.3 points, and never a median life the sample could not have seen. No game change. Suite green at
+**71/71**.
+v3.63.0 — #171 REFUTED on its own clause, and it corrected a figure this
 project published two releases ago. The clause said the favour gain might belong to the trigger set
 rather than to calling; `favours:"thrift"`, derived from the COST side instead of the effect side —
 call anything the next census rung will not miss — loses on every axis: **−17.0 weeks of life, −99.0
@@ -1419,7 +1443,8 @@ one number for both, and a man built to last pays less of it. At that value the 
 +2.5**, inside the band the rest of the panel occupies, and becomes the class's spare-rate word rather
 than its win-rate word. Over 24 houses of 420 weeks the four read **17.16% / 12.02% / 13.15% /
 14.97%** of bouts killing his man at median lives of **284 / 246 / 244 / 212** weeks — four answers
-rather than one right one. `stage` gains the bar, negative-tested both ways; `open`'s 60-house
+rather than one right one *(the death rates carry that; the median lives are inside the noise at 24
+houses — see v3.64.0)*. `stage` gains the bar, negative-tested both ways; `open`'s 60-house
 signature is byte-identical, which is what says the two `survive` draws either side of this release
 — **(1,3)** and **(1,5)** on the same build, both in the tally — are the tail and not the change.
 Suite green at **71/71** on the second of two full runs.
@@ -2694,7 +2719,10 @@ live longer to show it.* Measured that way, as controlled pairs — same seed tw
       the touring house was RICHER in 10 of 12 pairs, more famous in 9 of 12
 
 **And the statistic the item was opened on flips too:** median life 279w toured against 223w staying
-home. The original reading was an artifact of three things at once — unpaired arms on different
+home. *(v3.64.0 re-ran `road:false` against its control over 72 houses of 420 weeks and read the
+tour at −3.3 weeks with 22 houses better and 21 worse — nothing. Fifty-six weeks is above what 72
+houses can see, so this one is not arithmetically impossible the way the others are; it simply does
+not reproduce on the current build.)* The original reading was an artifact of three things at once — unpaired arms on different
 seeds, lifespans, and **including houses that never toured**, which are identical in both arms and
 drag any difference toward zero while looking like more data. Excluding them is what made the effect
 visible; it is half the seeds.
@@ -3002,6 +3030,8 @@ fifty denarii on the same week as one that had never sent him anything. The repa
 number: `loanWeek` already gates its reputation hit one branch above on `owes(d) > d.loan.principal`,
 and the clock reads the same test now. Measured pooled, before and after: Gratus foreclosures **42 →
 30 of 72**, median life **52 → 62w**, mean **119 → 144**, and 3 houses live to 420 that did not.
+*(v3.64.0: the ten weeks of median life and the twenty-five of mean are both inside what 72 houses
+can see, which is 33. The foreclosure count is the figure that survives.)*
 Murena is untouched, correctly — he has no clock.
 
 **A process fault worth recording.** The first seed read the Gratus arm at **+133 weeks and +2,164
@@ -3198,8 +3228,9 @@ suffix of a rising run is the same number. Neither do `end` or `spared`, which l
 
 **And the signature move that held the fix back was one seed set.** Four prefixes read men 128 → 118;
 twelve prefixes of 60 houses read **527 → 556 standing and 1,781 → 1,795 men**, and 72 houses of 420
-weeks read **16.71% → 16.47%** of bouts killing his man at a median life of **172w → 178w**. Both
-small, both in the one direction the mechanism allows — a log with more of the fight in it finds a
+weeks read **16.71% → 16.47%** of bouts killing his man at a median life of **172w → 178w** *(the
+six weeks of median life is inside the noise — 72 houses cannot see less than 33; the death rate is
+the figure here. See v3.64.0.)*. Both small, both in the one direction the mechanism allows — a log with more of the fight in it finds a
 clash more often, and a clash is favour. `odds` gains the invariant rather than the symptom: a log
 may only grow across a word from the box, and the bout must still open where it opened.
 Negative-tested — put the join back and it reads "the log SHRANK across a word from the box —
@@ -3278,8 +3309,9 @@ it costs a man built to last less than a man who is not. At that value `showman`
 +2.5**, inside the band the rest of the panel occupies, and becomes the class's spare-rate word rather
 than its win-rate word — 94.0% against grim's 91.8% and boxes' 91.2% on the first family. Over 24
 houses of 420 weeks the four words read **17.16% / 12.02% / 13.15% / 14.97%** of bouts killing his
-man at median lives of **284 / 246 / 244 / 212** weeks: four different answers rather than one right
-one. `open`'s 60-house signature is byte-identical, because the reference player presses no word.
+man at median lives of **284 / 246 / 244 / 212** weeks *(the death rates are the figures; 24 houses
+cannot see less than 57 weeks of life, so only the 284-against-212 is even at the edge of visible.
+See v3.64.0.)*: four different answers rather than one right one. `open`'s 60-house signature is byte-identical, because the reference player presses no word.
 `stage` gains the bar, negative-tested both ways: the walk must be `BREATHER_BACK` and it must
 actually come off him — the fault was a cost written down and never taken.
 *Two things the run also said, recorded:* the tactic is nearly inert on a real card (+0.5 and +3.5
@@ -3306,7 +3338,9 @@ entrance's `mom:1` measures at **+8.4 points of win rate** (2,400 bouts a word, 
 bout forced inside twelve so the peak cannot confound it), above that band, on a button pressed
 before every bout at no cost — the 5 wind it is billed for measures at **+0.0**. Over 420 weeks it is
 worth a median house life of **362 weeks against no entrance's 154**, the largest single effect any
-arm in this project has read off one button. *Falsifies if:* the trait band is not the right
+arm in this project has read off one button. *(That was twelve houses. At twenty-four it read 244
+against 284, and v3.64.0 puts the smallest life difference twelve houses can see at 80 weeks. The
+death rate — 5.4 points, which IS supported — is what the entrance actually moves.)* *Falsifies if:* the trait band is not the right
 comparison — a trait is a fact about a man and an entrance is a decision the player makes every week,
 and a decision may be allowed to be worth more than a fact. In which case the answer is that the
 other three words are too small, not that this one is too big, and the item is about them.
@@ -3342,6 +3376,91 @@ about a quarter and it is the cost of this repair**; `MISSIO_MAN` is one line to
 wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
+
+### v3.64.0 — the spread between houses, which is the largest number in this project and was never written down
+
+#171 corrected a figure this project had shipped, and it was caught by accident: the ablation only
+ran because #171's clause asked for a second trigger set. #136 has now fired five times. Five times
+the answer has been "run it on more seeds", and five times the next measurement chose its sample the
+same way — by feel. Twenty-seven probes take a house count as their first argument and not one of
+them knows what it should be. So this release builds the arithmetic instead of another probe.
+
+#### What it is
+
+`needN(diffs)` in `test/harness.mjs`, given the PAIRED per-house differences between an arm and its
+control:
+
+    se   = sd / sqrt(n)          the error on the figure at the sample it was read off
+    need = 4 * sd^2 / mean^2     the houses at which a difference this size clears two of them
+    mde  = 2 * se                the smallest difference the run you DID could have seen
+
+The mde is the one that matters when auditing a number somebody already published, because **the
+observed difference can never justify the sample that produced it**: a small run only reports the
+differences that happened to come out large. At or below the mde is noise; just above it is inflated.
+It prints the sign test beside the t, and the sign test is the one to believe — lives are censored at
+the run length and fame has a long tail.
+
+#### Calibrated against a known correction before it was pointed at anything else
+
+Run against `{"favours":"wise"}` at the exact 72 houses #167 published from:
+
+| what #167 quoted | the instrument, at 72 | what 240 houses then found |
+|---|---|---|
+| weekly fame **+188** | needs **189** houses · 72 could only see 304 | +134.4, and not significant |
+| median life, "no cost" | needs **89,391** · 72 could only see 43 | a wash, −3.5 |
+| standing −9.7 | needs **39** — supported | −9.4 |
+
+It separates the one figure that held from the two that did not, at the sample that produced them,
+without being told the answer. That is the reason to point it at the figures nobody has checked.
+
+#### The spread, over eight of the arms this project publishes from
+
+`works`, `road`, `bet`, `loan`, `party`, `nem`, `free` and `entrance`, 72 houses of 420 weeks each,
+control first, paired house for house:
+
+| what you are quoting | spread between houses (sd) | 12 houses can see | 24 | 72 | 240 | 720 |
+|---|---|---|---|---|---|---|
+| median or mean life | **139** (92–210) | 80w | 57w | **33w** | 18w | 10w |
+| weekly mean fame | **1,004** (737–1,520) | 580 | 410 | **237** | 130 | 75 |
+| deaths a bout, points of % | **5.5** (3.2–19.9) | 3.2 | 2.2 | **1.3** | 0.7 | 0.4 |
+
+**A single house's life varies by a standard deviation of 139 weeks on a 420-week run.** That one
+number explains every instance of #136 this project has had, and it is why the same eight arms split
+so cleanly into figures that are real and figures that were never there:
+
+    real at five to twenty-five houses     the wager  −151w (8u/63d, p=0.000)
+                                           the lender −138w (18u/54d, p=0.000)
+                                           never entertaining −51w (15u/36d, p=0.005)
+    never visible at seventy-two           the works −10.5w (needs 532) · the tour −3.3w (needs 4,581)
+                                           never answering the rival −12.6w (needs 487)
+                                           freeing everyone −8.7w (needs 444)
+                                           the entrance +17.5w (needs 575) — but its DEATH RATE
+                                           −5.4 points (23u/49d, p=0.003) is supported at sixteen
+
+#### Six figures annotated, and the pattern in them
+
+Every one is a life claim standing beside a death-rate claim that was fine:
+
+    #169   median life 172w → 178w over 72 houses            six weeks against a floor of 33
+    #170   median lives 284 / 246 / 244 / 212 over 24        only 284-vs-212 is even at the edge
+    #163   median life 52 → 62w over 72                      ten weeks; the foreclosure count survives
+    #166   362 weeks against 154, over TWELVE houses         a floor of 80; at 24 it read 244 vs 284
+    #168   97w → 129w                                        beside a death rate that was the argument
+    #133   279w toured against 223w staying                  re-run here at −3.3w, 22u/21d — nothing
+
+The last is the only one that is not arithmetically impossible: 56 weeks is above what 72 houses can
+see. It simply does not reproduce on this build.
+
+#### And the suite is clean, which is worth saying plainly
+
+`policy` prints its medians and does not assert them — its own head explains why, at length, from a
+48-house distribution — and no check in the suite bars a life comparison. **The bars learned this
+lesson and the prose never did.** The rule is written into both READMEs now: quote deaths a bout,
+which the same runs see comfortably at 1.3 points, and never quote a median life the sample could not
+have seen. `sample.mjs` will price any rope arm given as JSON, so the next figure can be checked
+before it is written rather than two releases after it ships.
+
+*No game change in this release.*
 
 ### v3.63.0 — #171: the favour policy was one favour, and seventy-two houses could not see it
 

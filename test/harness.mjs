@@ -904,5 +904,56 @@ export async function endWeek(p){
 export const inside = (p, fn, arg) => p.evaluate(fn, arg);
 export const hasHandle = p => p.evaluate(()=>!!window.__LVDVS);
 
+/* ---- HOW MANY HOUSES A FIGURE ACTUALLY NEEDS ----
+   Twenty-seven probes in this directory take a house count as their first argument and not one of
+   them knows what it should be. Every figure this project has published was read off a number
+   somebody chose by feel — 12, 24, 30, 72 — and the one time that was checked, #171 found 72 was a
+   third of what the question needed and a figure had already shipped off it. #136 has fired five
+   times; this is the arithmetic that would have caught all five before the writing-up.
+
+   Given the PAIRED per-house differences between an arm and its control, it returns:
+     mean   the figure being claimed
+     sd     how much a single house varies around it — the thing that decides everything
+     se     sd/sqrt(n), the error on the figure at the sample it was read off
+     t      mean/se. Below 2 the figure is not separated from nothing.
+     need   4*sd^2/mean^2 — the houses at which a difference THIS SIZE would clear two standard
+            errors. If `need` is larger than `n`, the figure is not yet a figure.
+     mde    2*sd/sqrt(n) — the SMALLEST difference the sample you ran could have seen. This is the
+            more useful of the two when auditing a figure somebody already published, because the
+            observed difference cannot be used to justify the sample that produced it: a small run
+            only reports the differences that happened to come out large, so anything at or below
+            the mde is noise and anything above it is inflated. Quote the mde, not the estimate.
+     up/dn/p  the sign test, which assumes nothing about the shape of the distribution. Lives are
+            censored at the run length and fame has a long tail, so the t is the optimistic reading
+            and the sign test is the one to believe.
+   The normal approximation with a continuity correction is used for p; at the sample sizes worth
+   quoting it agrees with the exact binomial to the third decimal, and below those sizes nothing
+   should be quoted anyway. */
+export function needN(diffs){
+  const d = (diffs||[]).filter(x=>typeof x === "number" && isFinite(x));
+  const n = d.length;
+  if(n < 2) return { n, mean:null, sd:null, se:null, t:null, need:null, up:0, dn:0, p:null };
+  const mean = d.reduce((a,b)=>a+b,0)/n;
+  const sd = Math.sqrt(d.reduce((a,b)=>a+(b-mean)*(b-mean),0)/(n-1));
+  const se = sd/Math.sqrt(n);
+  const up = d.filter(x=>x>0).length, dn = d.filter(x=>x<0).length, m = up+dn;
+  const z = m ? (Math.abs(up - m/2) - 0.5)/Math.sqrt(m/4) : 0;
+  const erf = x => { const t = 1/(1+0.3275911*Math.abs(x));
+    const y = 1 - (((((1.061405429*t - 1.453152027)*t) + 1.421413741)*t - 0.284496736)*t + 0.254829592)*t*Math.exp(-x*x);
+    return x >= 0 ? y : -y; };
+  return { n, mean, sd, se, t: se ? mean/se : null, mde: 2*se,
+    need: mean ? Math.ceil(4*sd*sd/(mean*mean)) : Infinity,
+    up, dn, p: m ? +(1 - erf(z/Math.SQRT2)).toFixed(4) : null };
+}
+/* one line a probe can print instead of quoting a number it cannot support */
+export const sayNeed = (label, r) => `${String(label).padEnd(16)} `
+  + (r.mean == null ? "too few to say"
+    : `${r.mean >= 0 ? "+" : ""}${r.mean.toFixed(1).padStart(8)}  sd ${r.sd.toFixed(1).padStart(7)}`
+      + `  se ${r.se.toFixed(1).padStart(6)}  t ${r.t.toFixed(2).padStart(5)}`
+      + `  ${r.up}u/${r.dn}d p=${r.p == null ? "  —  " : r.p.toFixed(3)}`
+      + `  needs ${r.need === Infinity ? "∞" : r.need} of ${r.n}`
+      + `  · ${r.n} could only see ${r.mde.toFixed(1)}`
+      + (r.need > r.n ? "   ← NOT YET A FIGURE" : ""));
+
 export const pct = (a,b) => b ? +(a/b*100).toFixed(1) : 0;
 export const ok   = (cond, msg) => ({ pass:!!cond, msg });

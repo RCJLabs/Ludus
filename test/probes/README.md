@@ -45,6 +45,36 @@ Run them straight:
     node test/probes/join.mjs 1 1 SEED wide  # ...and the opening across TWELVE prefixes, when four cannot decide
     node test/probes/favour.mjs 24 420 SEED  # #167: the four favours called on sight, called wisely, and not at all
     node test/probes/choice.mjs 500 SEED   # #170: every button at the sand — tactic, entrance, plan, word — on one scale
+    node test/probes/sample.mjs 72 420 SEED '{"bet":200}'  # how many houses THAT figure needs, for any rope arm
+
+## HOW MANY HOUSES A FIGURE NEEDS — read this before quoting one
+
+`sample.mjs` measures the spread BETWEEN houses and turns it into the sample a claim needs. Run over
+eight of the rope arms this project has published figures from, the spread is the dominant fact and
+nothing here had ever written it down:
+
+| what you are quoting | spread between houses (sd) | 12 houses can see | 24 | 72 | 240 | 720 |
+|---|---|---|---|---|---|---|
+| median/mean life, 420w | **139** (92–210) | 80w | 57w | **33w** | 18w | 10w |
+| weekly mean fame | **1,004** (737–1,520) | 580 | 410 | **237** | 130 | 75 |
+| deaths a bout, % | **5.5** (3.2–19.9) | 3.2 | 2.2 | **1.3** | 0.7 | 0.4 |
+
+Those are `2*sd/sqrt(n)` — the SMALLEST difference the run could have seen. **A difference at or below
+the figure in the column is noise, and one just above it is inflated**, because a small run only
+reports the differences that happened to come out large. The observed difference can never justify
+the sample that produced it.
+
+Three things follow, and they are the rule now:
+
+- **Do not quote a median life difference under about 35 weeks off 72 houses, or 60 off 24.** Most of
+  the ones in the roadmap were smaller than that; the ones that are real — the wager at −151, the
+  lender at −138, never entertaining at −51 — are real at five to twenty-five houses.
+- **Quote deaths a bout instead.** It is the metric that works at these samples: the same runs that
+  cannot see 30 weeks of life see 1.3 points of death rate comfortably.
+- **Print the sign test, not the t.** Lives are censored at the run length and fame has a long tail,
+  so the t is the optimistic reading of a distribution that is not normal.
+
+    node test/probes/sample.mjs 72 420 SEED '{"favours":"wise"}'   # any rope arm, as JSON
 
 `keep`, `walk` and `fires` run in about 25 seconds at 72 houses, which is cheap enough that **they take
 a seed prefix and should always be run on three or four of them.** Two findings died this session for
