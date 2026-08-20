@@ -101,7 +101,32 @@ export async function run({ p, errors }){
     const rungs = A.RISE_RANKS.map((r,i)=>({ i, name:r.name, fame:r.fame||0,
       favor:r.favor||0, cost:r.cost||0, fee:i? A.riseFee(r) : 0 }));
 
-    return { curve, idle, lines, stoneTotal, rungs, slides, censusTop: A.CENSUS_TOP || null };
+    /* 7. ---- A CHARGE THAT OUTLIVED THE THING IT PAID FOR — #173 ----
+          `collDues` read `d.collegium ? ... : 0` — whether the RECORD exists — where every other
+          reader of the society asks `collOn`, whether it is still being paid for. `lapseCollegium`
+          leaves the record, so the one button that calls it took every benefit away and kept
+          billing, forever, with no way to re-found. Over 72 houses of 420 weeks pressing it the
+          first week they held one, 114,663 of 115,272 denarii (99.5%) left the purse AFTER the
+          press, a median 1,962d a house against a 180d fee.
+          This is a SHAPE bar, which is what this check is for: whatever the dues are repriced to,
+          a society that has lapsed must charge nothing and a society that is paid for must charge
+          something. It is written against the panel's own promise, not against a number. */
+    const soc = (()=>{
+      const d = A.newGameState("Coll","clean","LEDCOLL",null);
+      d.gold = 5000;
+      const founded = A.foundCollegium(d);
+      const men = A.activeG(d).length;
+      const on  = { on:A.collOn(d), dues:A.collDues(d), bill:A.weeklyBill(d), soften:A.collSoften(d) };
+      A.lapseCollegium(d, true);
+      const off = { on:A.collOn(d), dues:A.collDues(d), bill:A.weeklyBill(d), soften:A.collSoften(d) };
+      /* `weeklyBill` is the deterministic reader the ledger charges from — no RNG, no events, so
+         the two states are comparable to the denarius. Driving `endWeek` instead would let the
+         lapse's own morale and unrest changes move the week and the difference would not be the
+         dues any more. */
+      return { founded, men, on, off, fee:A.COLL_FEE, rate:A.COLL_DUES };
+    })();
+
+    return { curve, idle, lines, stoneTotal, rungs, slides, soc, censusTop: A.CENSUS_TOP || null };
   });
 
   const lines = [], fails = [];
@@ -157,6 +182,28 @@ export async function run({ p, errors }){
     if(b.favor < a.favor) fails.push(`${b.name} asks less favour than ${a.name}`);
     if(b.cost < a.cost)   fails.push(`${b.name} asks a smaller census than ${a.name}`);
     if(b.fee <= 0)        fails.push(`${b.name} is free to be received`);
+  }
+
+  /* ---- the burial society charges only while it is a burial society — #173 ---- */
+  {
+    const S = out.soc;
+    lines.push(`the collegium on a house of ${S.men} at ${S.rate}d a man: paid up ${S.on.dues}d/wk`
+      + ` (bill ${S.on.bill}d, soften ${S.on.soften}) → lapsed ${S.off.dues}d/wk`
+      + ` (bill ${S.off.bill}d, soften ${S.off.soften})`);
+    if(!S.founded) fails.push("could not found a collegium with 5,000 denarii in the box");
+    if(!S.on.on)   fails.push("a freshly founded collegium does not read as on");
+    if(S.on.dues <= 0)
+      fails.push(`a paid-up collegium on ${S.men} men charges ${S.on.dues}d a week — the dues have stopped charging entirely`);
+    if(S.off.on)   fails.push("a lapsed collegium still reads as on");
+    if(S.off.dues !== 0)
+      fails.push(`the button says "Stop the dues" and a lapsed collegium still charges ${S.off.dues}d a week (#173)`);
+    if(S.off.bill >= S.on.bill)
+      fails.push(`lapsing the collegium did not lower the weekly bill: ${S.on.bill}d → ${S.off.bill}d (#173)`);
+    if(S.on.bill - S.off.bill !== S.on.dues)
+      fails.push(`lapsing moved the bill by ${S.on.bill - S.off.bill}d where the dues are ${S.on.dues}d`
+        + ` — the ledger and the reader disagree about what the society costs (#173)`);
+    if(S.off.soften !== 1)
+      fails.push(`a lapsed collegium still softens deaths (collSoften ${S.off.soften})`);
   }
 
   if(errors.length) fails.push(`${errors.length} page errors`);

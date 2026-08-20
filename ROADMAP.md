@@ -1399,7 +1399,30 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.67.0 — the last release ended by noting that `survive`'s spread was
+**Shipped and verified:** v3.68.0 — **#173 closed, and the item's question was the smaller half of
+what was wrong.** `collDues` keyed off whether the collegium RECORD exists, where every other reader
+asks `collOn` — and `lapseCollegium` leaves the record. So the button labelled **"Stop the dues"**
+took away `collSoften` (deaths back to full unrest and full lanista health), took away `collBury` (no
+more names on the stone), charged 22 morale, 16 defiance and 14 unrest — **and kept billing**, while
+the panel printed *"The dues stopped in week N"* and its own cost note stopped displaying the charge.
+`foundCollegium` refuses while the record exists, so it could not be undone. Over 72 houses of 420
+weeks pressing it the first week they held one: **114,663 of 115,272 denarii, 99.5%, left the purse
+AFTER the press** — median **1,962d** a house against a **180d** fee, worst 5,391d — for **+3.1
+unrest** (p=0.000, 39u/15d) and **−20.2 men under the stone** (0u/52d), with gold at the end moving
++96.8 ± 364.8, which is nothing, because nothing was saved. Fixed; `open`'s 60-house signature is
+byte-identical. **And the item's own direction is settled by re-measuring on the fixed build**: at
+12.2d of a 286d bill, pressing is still never right (unrest +4.1, gold +67.4 ± 716.2), so *reaching*
+the loss is refuted — and *deleting* it is refuted the other way, because a free lapse would make
+pressing correct and turn a coherent bad choice into free money. **The instrument was proven first**:
+the probe's original arm switch, `A.collOn = () => false`, is a silent no-op — the engine calls the
+module-scope binding — and would have published "the society is worth nothing"; caught before the run
+by patching and then asking the engine whether anything moved. `ledger.mjs` gains the bar as a shape,
+negative-tested both ways. `dues.mjs` is the 49th probe. **Opens #177**, which the fix made testable
+for the first time: the file's own note says the collegium should be *"the easiest line to cut in a
+bad month"*, and at 12.2d of a 286d bill it is now cuttable but never worth cutting — a house would
+need a 34-man roster for the dues to cover the 101d-a-week shortfall the ledger deaths were carrying.
+Opened rather than nudged, because what the constant should be is a distribution nobody has measured.
+v3.67.0 — the last release ended by noting that `survive`'s spread was
 being written off as a footnote each time it fired; this is that footnote measured. It does not
 reopen the bar — #155 settled that — it counts the COST, over the tally's FIRST run of each build,
 because the extra rows exist only when a failure has just happened and a rate pooled over all 89
@@ -3292,19 +3315,72 @@ may only grow across a word from the box, and the bout must still open where it 
 Negative-tested — put the join back and it reads "the log SHRANK across a word from the box —
 11 → 5 → 17 beats".
 
-**#173 — the burial society cannot be lost, and the one door out of it is a button nobody would ever
-press.** `lapseCollegium` takes **22 morale and 16 defiance off every man in the yard and adds 14
-unrest** — the heaviest single yard-wide loss written anywhere in the file — and it has exactly ONE
-caller, a button that says stop paying. Nothing in the game lapses it: not debt, not foreclosure, not
-a missed week. Driven over 72 houses of 420 weeks: **48 of 72 ever hold it, for 9,482 house-weeks,
-and it lapsed 0 times.** And the button's upside is measured: the dues are **13d against a weekly
-bill of 286d, 4.5% of it**. Its own clause is already answered — for the **29 houses that died of the
-ledger**, which is the only state where 4.5% could matter, the last twenty weeks were losing a median
-**101d a week**, so dropping the dues would have turned the tide for **0 of 29**. So the consequence
-is written, expensive, and unreachable: this is #131's shape exactly, and #131's open question is
-which third loss to build. This one has a measured case and a target. *Falsifies if:* the collegium is
-meant to be a thing you keep — in which case the loss should be deleted rather than reached, and the
-22/16/14 is dead weight rather than content.
+**#173 — CLOSED in v3.68.0, and the item's own question turned out to be the smaller half.** The
+clause was *falsifies if the collegium is meant to be a thing you keep, in which case the loss should
+be deleted rather than reached.* It is meant to be a thing you keep — and the loss should be neither
+reached nor deleted, because **the button was lying.**
+
+`collDues` read `d.collegium ? activeG(d).length * COLL_DUES : 0` — whether the RECORD exists — where
+every other reader of the society asks `collOn`, which is `d.collegium && !d.collegium.lapsed`.
+`lapseCollegium` sets `lapsed` and leaves the record. So pressing the one button that calls it, the
+button labelled **"Stop the dues"**, took `collSoften` away (deaths back to full unrest and full
+lanista health at all four death sites), took `collBury` away (no more names on the stone), charged
+**22 morale, 16 defiance and 14 unrest** — and kept billing. The panel then printed *"The dues stopped
+in week N"*, its own cost note (`collOn(S) ? collDues(S)+"d/wk" : "burial society"`) stopped
+displaying the charge, and `foundCollegium` refuses while `d.collegium` exists, so it could not be
+undone. **A dominated press: strictly worse in every quantity, permanently.**
+
+Measured over 72 houses of 420 weeks, pressing it the first week the house held a society:
+**114,663 of the 115,272 denarii those houses paid in dues — 99.5% — left the purse AFTER the press**,
+a median of **1,962d a house** against a **180d** founding fee, worst **5,391d**. Gold at the end
+moved **+96.8 ± 364.8**, which is nothing, because nothing was ever saved. What the press did buy:
+**+3.1 mean unrest** (p=0.000, 39 houses up against 15 down) and **−20.2 men under the stone**
+(0 up against 52 down). Fixed: `collDues` keys off `collOn`. `open`'s 60-house signature is
+**byte-identical** across it — the rope has no collegium step and no played house ever lapses one, so
+no path a new house executes differs.
+
+**And with the dues genuinely stopping, pressing it is still never right**, which is what settles the
+item's own direction. Re-measured on the fixed build: unrest **+4.1** (p=0.000, 41u/13d), stones
+**−20.2**, and gold **+67.4 ± 716.2** — the purse does not measurably improve even now, because the
+dues are **12.2d of a 286d bill**. So the society is a thing you keep, and:
+- *reaching* the loss from inside the game is refuted — the `short` arm presses at the first week the
+  purse will not cover the bill, which is the only moment an auto-lapse could fire, and the purse
+  still does not move while unrest does. The 29 houses that died of the ledger were losing a median
+  101d a week against 12.2d of dues.
+- *deleting* the loss is refuted too, and this is the part the item had backwards: with the dues
+  actually stopping, a free lapse would make pressing **correct** — you would save 12.2d a week for
+  no cost — turning a coherent bad choice into a mandatory good one. The 22/16/14 is what makes the
+  button a real decision rather than free money.
+
+`ledger.mjs` gains the bar, as a SHAPE rather than a value, so a repricing cannot resurrect it: a
+lapsed society must charge nothing, a paid-up one must charge something, and the bill must move by
+exactly the dues. Negative-tested — against the unfixed code all three fire, the first reading *"the
+button says \"Stop the dues\" and a lapsed collegium still charges 9d a week"*. `dues.mjs` is the
+49th probe. *Left open, deliberately:* a lapsed society can never be re-founded, which is now the
+permanent consequence of an honest choice rather than of a hidden one. Whether that should soften is
+a design question with no measurement behind it yet.
+
+*(The original item, for the record: 48 of 72 houses held it for 9,482 house-weeks and it lapsed 0
+times; dues 13d against a 286d bill, 4.5%; dropping them would have saved 0 of the 29 houses that
+died of the ledger.)*
+
+**#177 — the collegium's own note says it should be "the easiest line to cut in a bad month", and
+after #173's fix it is cuttable but never worth cutting.** The design intent is written above
+`COLL_FEE` in the file: *"It is the cheapest humane thing in this game and the easiest line to cut in
+a bad month."* Before v3.68.0 cutting it saved nothing at all, because the dues kept charging — so
+the intent could not be tested. It can now, and it is not delivered: the dues are **12.2d against a
+286d weekly bill (4.3%)**, and pressing the button at the first week the purse will not cover the
+bill — the exact "bad month" the note describes — moves gold by **+67.4 ± 716.2**, which 72 houses
+cannot separate from zero, while unrest moves **+4.1** (p=0.000, 41 up against 13 down). The
+arithmetic of the gap: the 29 houses that died of the ledger were short a median **101d a week**, so
+at `COLL_DUES` 3 a house would need a **34-man roster** for the dues to cover its shortfall, against
+a rope median nearer 10–14. *Falsifies if:* the note is describing the FEELING of the choice rather
+than its arithmetic — a line you cut because you cannot stand the weekly reminder, not because it
+saves the house. That reading is defensible and would close this without a change. **Not measured
+yet:** what `COLL_DUES` would have to be for the cut to be a real bad-month lever, and what that same
+number would do to the 54 of 72 houses that hold a society and never cut it — which is the half that
+would pay for it. #127's rule applies: measure the distribution before touching the constant.
+
 
 **#174 — the last copy of a price, and the last instance of a class this project has fixed five
 times.** `answerNem`'s cost is `rnd(160 + d.fame*0.5)`, written once in the engine and **four more
@@ -3557,6 +3633,103 @@ about a quarter and it is the cost of this repair**; `MISSIO_MAN` is one line to
 wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
+
+### v3.68.0 — #173: the button said "Stop the dues" and the dues did not stop
+
+The item was opened on a consequence nothing could reach: `lapseCollegium` takes 22 morale and 16
+defiance off every man in the yard and adds 14 unrest — the heaviest yard-wide loss written anywhere
+in the file — with exactly one caller, a button, which across 72 houses of 420 weeks fired 0 times.
+Its clause was *falsifies if the collegium is meant to be a thing you keep, in which case the loss
+should be deleted rather than reached.* Measuring it found the smaller question sitting on top of a
+much larger one.
+
+#### The instrument, before anything else
+
+The first draft of the probe disabled the society with `A.collOn = () => false` on the test handle.
+That is a **silent no-op**: the handle is an object of copied references and the engine calls the
+module-scope binding, so `weeklyBill` and `collSoften` came back unchanged and both arms would have
+been byte-identical — I would have published "the burial society is worth nothing." This is the fault
+that shipped an inert `entrance` lever in #166, and it was caught this time **before** the run, by
+patching the handle and then asking the engine whether anything had moved:
+
+    weeklyBill  39 -> 39   UNCHANGED: the patch does not reach it
+    collSoften 0.5 -> 0.5  UNCHANGED: the patch does not reach it
+
+Every arm in the shipped probe drives the society through real player actions on the handle instead,
+which is the only thing the engine sees.
+
+#### And that test is what found the fault
+
+`collDues` was `d => d.collegium ? activeG(d).length * COLL_DUES : 0` — keyed on whether the RECORD
+exists, where every other reader of the society asks `collOn`, which is `d.collegium &&
+!d.collegium.lapsed`. `lapseCollegium` sets `lapsed` and leaves the record. So pressing the button
+labelled **"Stop the dues"**:
+
+    collOn        true -> false      every benefit gone
+    collSoften     0.5 -> 1          deaths cost full unrest and full lanista health again
+    collBury         — -> refuses    no more names on the stone
+    collDues         9d ->       9d  THE DUES DO NOT STOP
+    weeklyBill      39d ->      39d
+
+The panel then prints *"The dues stopped in week N."* Its own cost note reads `collOn(S) ?
+collDues(S)+"d/wk" : "burial society"`, so the charge **stops being displayed** at the same moment.
+And `foundCollegium` refuses while `d.collegium` exists, so it cannot be undone. A press that is
+strictly worse than not pressing, in every quantity, permanently — and invisible.
+
+#### What it cost
+
+72 houses of 420 weeks, pressing the first week the house held a society:
+
+    dues paid in all                       115,272d
+    of that, paid AFTER the press          114,663d   = 99.5%
+    per house that pressed: median           1,962d   worst 5,391d
+    against a founding fee of                  180d
+    gold at the end                        +96.8 ± 364.8   — nothing, because nothing was saved
+    mean unrest                                  +3.1   p=0.000, 39 up / 15 down
+    men under the stone                         −20.2   0 up / 52 down
+
+The fix is that `collDues` keys off `collOn`. `open`'s 60-house signature is **byte-identical** across
+it — the rope has no collegium step and no played house ever lapses one, so no path a new house
+executes differs. It also makes the panel's existing sentence true rather than needing new text.
+
+#### And then the item's own question, answered honestly
+
+Re-measured on the fixed build, pressing is **still never right**: unrest **+4.1** (p=0.000, 41u/13d),
+stones **−20.2**, gold **+67.4 ± 716.2** — the purse does not measurably improve even with the dues
+genuinely stopping, because they are **12.2d of a 286d bill**. So the collegium is a thing you keep,
+and both of the item's directions are refuted:
+
+- **Reaching** it from inside the game — an auto-lapse when the house cannot pay — fails on its own
+  numbers. The `short` arm presses at the first week the purse will not cover the bill, the only
+  moment such a rule could fire, and the purse still does not move while unrest does. The 29 houses
+  that died of the ledger were losing a median 101d a week against 12.2d of dues.
+- **Deleting** the loss fails the other way, and this is the part the item had backwards: with the
+  dues actually stopping, a free lapse would make pressing *correct* — save 12.2d a week for no cost
+  — turning a coherent bad choice into a mandatory good one. The 22/16/14 is what makes it a decision.
+
+`ledger.mjs` gains the bar as a SHAPE rather than a value, so a repricing cannot resurrect it: a
+lapsed society charges nothing, a paid-up one charges something, and the bill moves by exactly the
+dues. Negative-tested — all three fire against the unfixed code, the first reading *"the button says
+\"Stop the dues\" and a lapsed collegium still charges 9d a week."* `dues.mjs` is the 49th probe.
+
+#### And one thing the fix made testable for the first time
+
+The design intent is written in the file, above `COLL_FEE`: *"It is the cheapest humane thing in this
+game and the easiest line to cut in a bad month."* While the dues kept charging, that could not be
+tested — cutting saved nothing by construction. It can be now, and **it is not delivered**: at 12.2d
+of a 286d bill, cutting at the first week the purse will not cover the bill moves gold +67.4 ± 716.2,
+which this sample cannot separate from zero. The 29 houses that died of the ledger were short a
+median 101d a week, so at 3d a man a house would need a **34-man roster** for the dues to cover its
+shortfall. That is **#177**, opened rather than fixed — the constant is not nudged, because what
+`COLL_DUES` should be is a distribution nobody has measured, and the 54 of 72 houses that hold a
+society and never cut it are the ones who would pay for the change (#127's rule).
+
+Suite green at **71/71 in 14.0 minutes**, `survive` drawing **(5, 7)** — the first full-standing draw
+in the 91-run tally, and the second row to carry v3.67.0's split (`menUp` 7, `ended` 0).
+
+*Left open deliberately:* a lapsed society can never be re-founded. That is now the permanent
+consequence of an honest choice rather than a hidden one, and whether it should soften is a design
+question with no measurement behind it yet.
 
 ### v3.67.0 — what a red suite costs, and a pair of readings that never counted the same houses
 

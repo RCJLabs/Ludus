@@ -49,6 +49,7 @@ Run them straight:
     node test/probes/valve.mjs 80 420 SEED   # #172: each favour measured by what its own run() acts on
     node test/probes/meet.mjs 24 420 SEED    # what a played house ever meets — the war, the lot, the society, the staff
     node test/probes/cohort.mjs 40 26 SEED   # #175: what survive's two readings actually count, and whether it is the same houses
+    node test/probes/dues.mjs 24 420 SEED    # #173: the burial society, and the button that said "Stop the dues"
 
 ## HOW MANY HOUSES A FIGURE NEEDS — read this before quoting one
 

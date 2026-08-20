@@ -9486,8 +9486,20 @@ const warMarket = d => { const S = warStage(d); return (S && !d.war.done && S.ma
    humane thing in this game and the easiest line to cut in a bad month. */
 const COLL_FEE = 180;
 const COLL_DUES = 3;
-const collDues = d => d.collegium ? activeG(d).length * COLL_DUES : 0;
 const collOn = d => !!(d.collegium && !d.collegium.lapsed);
+/* ---- THE BUTTON SAID "STOP THE DUES" AND THE DUES DID NOT STOP — #173 ----
+   This read `d.collegium ? ... : 0`, which is whether the RECORD exists, where every other reader
+   of the society asks `collOn`, which is whether it is still being paid for. `lapseCollegium` sets
+   `lapsed` and leaves the record, so pressing the one button that calls it took away `collSoften`
+   (deaths back to full unrest and full lanista health), took away `collBury` (no more names on the
+   stone), charged 22 morale and 16 defiance and 14 unrest — and kept billing. The panel then printed
+   "The dues stopped in week N" while its own cost note, `collOn(S) ? collDues(S)+"d/wk" : ...`,
+   stopped displaying the charge; and `foundCollegium` refuses while `d.collegium` exists, so it
+   could not be undone. Measured over 72 houses of 420 weeks pressing it the first week they held a
+   society: **114,663 of the 115,272 denarii those houses paid in dues, 99.5%, left the purse AFTER
+   the press** — a median of 1,962d a house against a 180d founding fee, worst 5,391d. Gold at the
+   end moved +96.8 ± 364.8, which is nothing, because nothing was ever saved. */
+const collDues = d => collOn(d) ? activeG(d).length * COLL_DUES : 0;
 function foundCollegium(d){
   if(d.collegium || d.gold < COLL_FEE) return false;
   d.gold -= COLL_FEE;
