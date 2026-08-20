@@ -1399,7 +1399,27 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.66.0 — the audit after nine releases, and the first one run under
+**Shipped and verified:** v3.67.0 — the last release ended by noting that `survive`'s spread was
+being written off as a footnote each time it fired; this is that footnote measured. It does not
+reopen the bar — #155 settled that — it counts the COST, over the tally's FIRST run of each build,
+because the extra rows exist only when a failure has just happened and a rate pooled over all 89
+answers no question. **The check trips a bar on 7 of 57 builds = 12.3%**, 95% Wilson 6.1–23.2%,
+costing 32 extra runs and about **7 hours** of suite time, and **all seven re-ran green on the same
+build** — four of them additionally proven false by an identical 60-house signature. The drift that
+looked real is the conditioning: `standing` falls 2.98 → 2.47 pooled (t −1.94) but 2.85 → 2.56 over
+first runs (t −0.79) — the opening has not moved. **And the pair does not read as it counts**: `men`
+sums the yards of houses that have already ENDED, proven from the record with no run at all, since
+four rows read `standing === 0` alongside `men > 0`. The loudest is **v3.57.0 at (0, 9)** — nine men,
+above the tally's median of five — printed under *"not one house came through able to field a man"*;
+in every collapse row **100% of the men counted were in dead houses**. Fixed as a READING, not as a
+bar: correcting the sum is provably not a cure, because `menUp <= men` means it can only fire MORE
+and it un-fails **none of the seven**. The tally records the split now so the bar's position becomes
+answerable in ten releases. Opens **#175** (can the 12.3% be cut at all — not by loosening, not by
+more houses) and **#176**: the word "standing" reads **88 / 74 / 77 / 91%** on 800 identical houses
+depending which of four definitions you take, and #142's "standing is nearly inert" was read off the
+77% one and applied to the 88% one. `cohort.mjs` is the 48th probe. No game change; `src/ludus.jsx`
+untouched.
+v3.66.0 — the audit after nine releases, and the first one run under
 v3.64.0's rule: every figure in it is a COUNT or a SHARE, never a median life. `coverage` reads **103
 of 475** never called by a check, 39 of them named in no check and no probe; most are readers, and
 the systems among them were driven. **Two items opened.** **#173**: `lapseCollegium` takes 22 morale
@@ -3297,6 +3317,38 @@ drifted. *Falsifies if:* the extraction costs more than it buys — `nemAnswerRe
 affordability test folded into it, and that gate is read by the rope, three probes and the panel, so
 a change there is not free.
 
+**#175 — a red suite costs one release in eight, and the pair it fails on does not read as it
+counts.** Scored over the FIRST run of each build in the 89-run tally — the extra rows exist only
+because a failure had just happened, so pooling them answers no question — `survive` trips a bar on
+**7 of 57 builds = 12.3%** (95% Wilson 6.1–23.2%), costing 32 extra runs, about **7 hours** of suite
+time, and **all seven re-ran green on the same build** — four of them (v3.33.0, v3.43.0, v3.62.0,
+v3.66.0) additionally proven false by an identical 60-house signature, which is proof rather than
+evidence; for the other three the green re-run is all the record holds. Separately, `men` sums the yards of houses
+that have **already ended** — proven from the record with no run at all, because four rows read
+`standing === 0` alongside `men > 0`, which is impossible if the two readings counted the same
+houses. The loudest is **v3.57.0 at (0, 9)**: nine men, above the tally's own median of five,
+reported under the words *"not one house came through able to field a man"* — and in every collapse
+row 100% of the men counted were inside dead houses. **Fixed in v3.67.0 as a reading, not as a bar.**
+*Falsifies if:* correcting the sum is a cure for the rate — it is not, and that is provable rather
+than measured: `menUp <= men` always, so the correction can only make bars fire MORE, and re-scored
+against all seven first-run failures it un-fails **none of them**. What the release ships instead is
+the SPLIT in the tally, so the question of where the bar belongs becomes answerable off evidence in
+ten releases rather than off argument now — the same move #142 made when it started the tally. *The
+open half:* whether the 12.3% can be cut at all. It cannot be cut by loosening (#155 settled that),
+and it cannot be cut by more houses (5 Chromiums is the ceiling; 7 cost two false failures of a
+worse kind). The remaining candidate is making the check take the signature itself instead of a
+human running `open.mjs` by hand each time — which needs a baseline the check does not have.
+
+**#176 — `open.mjs` and `survive` do not use the word "standing" the same way, and a published
+figure was read off the wrong one.** On **800 identical houses** the four available readings are
+**88%** (`!over && yard>0`, which is `survive`), **74%** (`!over && fit>0`), **77%** (`fit>0`, which
+is `open.mjs`), **91%** (`yard>0`) — a spread of 17 points on the same material. Exact signature
+equality is unaffected, so every false-failure proof this project has published still stands. But
+#142's **"`standing` is nearly inert and `men` is the half that responds"** was read off the 77%
+reading and applied to the 88% one. *Falsifies if:* the conclusion survives being re-measured on
+`survive`'s own definition — which is the cheap thing to do and has not been done. Not a live fault;
+it is a figure that has not earned the sentence built on it.
+
 **#171 — CLOSED in v3.63.0, REFUTED on its own clause, and it took one of my own published figures
 with it.** *(v3.65.0: its −26.7 weeks for the three was the senator's repeat-calling, and with that
 gated the same arm reads +12.1 weeks — not significant either way. Life was the wrong quantity for
@@ -3505,6 +3557,90 @@ about a quarter and it is the cost of this repair**; `MISSIO_MAN` is one line to
 wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
+
+### v3.67.0 — what a red suite costs, and a pair of readings that never counted the same houses
+
+The last release ended by noting that `survive`'s spread was being written off as a footnote each
+time it fired. This is that footnote measured. It does not reopen the BAR — #155 settled that and its
+reasoning holds — it counts the COST, which nobody had.
+
+#### The instrument first, again, and this time it was mine
+
+Halfway through this I read the tally on disk and found it ending at v3.48.0 with no v3.6x rows at
+all, which would have meant the previous release's notes were false. They were not. **The container
+had reset the repo to v3.48.0 for the third time** and I was reading a rolled-back filesystem. The
+recovered tally holds all 89 rows including both v3.66.0 draws. Nothing was published from the bad
+read, because the raw material got printed before the conclusion did.
+
+#### The cost, counted over the right rows
+
+The tally's extra rows exist ONLY because a failure had just happened — a build is re-run when it
+fails and not otherwise — so a failure rate pooled over all 89 rows answers no question. Scored over
+the **first run of each build**, which is one unconditioned draw a release:
+
+    trips a bar on the first run    7 of 57 builds = 12.3%   (95% Wilson 6.1% – 23.2%)
+    the conjunction alone           5.6%   against #142's derived 2.7%
+    the collapse net alone          4.5%   against the 2.0% its own 54% per-house rate predicts
+    cost                            32 extra runs ≈ 7 hours of suite time
+    and of the seven                7 re-ran green on the same build, 0 were ever a real regression
+
+**One release in eight comes back red for nothing.** All seven were followed by a passing re-run on
+the same build; four of those (v3.33.0, v3.43.0, v3.62.0, v3.66.0) were additionally proven false by
+an identical 60-house signature, which is proof rather than evidence. For the other three the green
+re-run is all the record holds, and that is the weaker claim — a bad draw and a fixed regression
+look alike from one re-run.
+
+The drift that looked real is not. Pooled over every row, `standing` falls from 2.98 to 2.47 between
+halves — t −1.94, close enough to look like the opening getting harder across eighteen releases. Over
+first runs only it is 2.85 to 2.56, **t −0.79**. The apparent drift was the conditioning: failures
+drag the mean down and then summon extra rows. The opening has not moved.
+
+#### And the pair does not read as it counts
+
+`men` is `live.reduce((n,x) => n + x.yard, 0)`, and `live` is every house that produced a save,
+**ended or not**. So a house that ruined at week nine with four men in its cells contributes four to
+`men` and nothing to `standing`, while the summary line reads as though the men belonged to the
+houses still going.
+
+**The committed record proves it with no run at all.** Four rows have `standing === 0` alongside
+`men > 0`, which cannot happen if the two readings counted the same houses. The loudest is v3.57.0
+at **(0, 9)** — nine men, above the tally's own median of five — printed under the words *"not one of
+5 houses came through able to field a man."* In every collapse row **100% of the men counted were
+inside houses that had already ended.**
+
+`test/probes/cohort.mjs` (48th probe) measures the size on 800 houses: contamination runs at about
+**one man per ended house**, 3.3% of the sum on the rope's strong policy and rising with the number
+of houses that die. It does not pretend to be the check's policy — the rope stands **4.39 of 5**
+where the check stands **2.72**, and that difference is printed rather than assumed.
+
+#### Fixed as a reading, not as a bar
+
+**The bars are not touched, and correcting the sum is provably not a cure for the 12.3%.** `menUp <=
+men` always, so the correction can only make a `men < k` bar fire MORE; re-scored against all seven
+first-run failures it **un-fails none of them**. What ships is the honesty: the summary line now says
+how many of the men are in dead houses, the collapse message stops contradicting itself, and the
+tally records `menUp` and `ended` alongside the pair — so in ten releases the bar's position is
+answerable off evidence instead of argument. That is the same move #142 made when it started the
+tally, and it is why the rows before this release must be counted separately from the rows after.
+
+#### Two items
+
+**#175** carries the open half: whether the 12.3% can be cut at all. Not by loosening (#155), not by
+more houses (five Chromiums is the ceiling — seven cost two false failures of a worse kind). The
+remaining candidate is the check taking the signature itself rather than a human running `open.mjs`
+by hand, which needs a baseline it does not have.
+
+**#176 — the word "standing" means four different things.** On 800 identical houses: **88%**
+(`!over && yard>0`, `survive`), **74%** (`!over && fit>0`), **77%** (`fit>0`, `open.mjs`), **91%**
+(`yard>0`). A 17-point spread on the same material. Exact signature equality is unaffected so every
+false-failure proof stands — but #142's *"`standing` is nearly inert and `men` is the half that
+responds"* was read off the 77% reading and applied to the 88% one.
+
+*No game change in this release. `src/ludus.jsx` is untouched.* Suite green at **71/71 in 14.0
+minutes**, `survive` drawing (4, 5) — a healthy draw, which means the new clause on the summary line
+did not fire in the run that shipped it. It is negative-tested against five fixtures instead,
+v3.57.0's own (0, 9) among them, where it now reads *"9 men between them — of which 9 are in the 5
+houses that ENDED, leaving 0 with the houses still going."*
 
 ### v3.66.0 — the audit after nine releases: two items, three confirmations, and an instrument that was wrong about five things
 

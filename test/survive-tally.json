@@ -86,4 +86,5 @@
 {"v":"3.65.0","standing":1,"men":7,"houses":5,"weeks":26,"pass":true},
 {"v":"3.65.0","standing":1,"men":6,"houses":5,"weeks":26,"pass":true},
 {"v":"3.66.0","standing":1,"men":2,"houses":5,"weeks":26,"pass":false},
-{"v":"3.66.0","standing":2,"men":5,"houses":5,"weeks":26,"pass":true}]
+{"v":"3.66.0","standing":2,"men":5,"houses":5,"weeks":26,"pass":true},
+{"v":"3.67.0","standing":4,"men":5,"menUp":5,"ended":1,"houses":5,"weeks":26,"pass":true}]

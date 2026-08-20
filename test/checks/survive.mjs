@@ -347,6 +347,28 @@ const MEN    = 3;
    is the rate it delivers, and a check that stops firing is not the goal. What was actually wrong
    was the SUMMARY LINE, which pooled everything into one percentage — and that single number is
    what opened the item. It splits by bar now. */
+
+/* ---- #175: THE COST OF A RED SUITE, COUNTED — AND THE PAIR IS NOT WHAT IT READS AS ----
+   #155 settled the BAR and this does not reopen it. What nobody had counted is the COST. Scored
+   over the tally's FIRST run of each build — the extra rows exist only because a failure had just
+   happened, so pooling them answers no question — this check trips a bar on **7 of 57 builds =
+   12.3%** (95% Wilson 6.1-23.2%). One release in eight. All seven were followed by a passing re-run
+   on the same build; four of them (v3.33.0, v3.43.0, v3.62.0, v3.66.0) were additionally proven false
+   by an identical 60-house signature, which is proof rather than evidence. For the other three the
+   green re-run is all the record holds — a bad draw and a fixed regression look alike from one. The pile costs 32 extra runs, about **7 hours**
+   of suite time. The conjunction alone is 5.6% against #142's derived 2.7%, and the collapse net is
+   4.5% against the 2.0% its own 54% per-house rate predicts.
+
+   The drift that looked real is not: pooled over every row `standing` falls from 2.98 to 2.47
+   between halves (t -1.94), but that is the CONDITIONING — over first runs only it is 2.85 to 2.56,
+   t -0.79. The opening has not got harder. The re-runs make it look as though it had.
+
+   AND `open.mjs`, the instrument used to prove those failures false, DOES NOT USE THIS WORD THE SAME
+   WAY. On 800 identical houses the four available readings of "standing" are 88% (`!over && yard>0`,
+   this check), 74% (`!over && fit>0`), 77% (`fit>0`, which is `open.mjs`), 91% (`yard>0`). Exact
+   signature equality is unaffected and the false-failure proofs stand. But a figure CALIBRATED on
+   one of these does not transfer to another, and #142's "standing is nearly inert" was read off the
+   77% one. */
 const BOTH_MEN  = 4;   /* both weak together is the failure; either alone is a bad week */
 const BOTH_HOUSE = 2;
 const KEEP   = 4;    /* the yard a lanista tries to hold; below it, he goes to the block */
@@ -448,7 +470,23 @@ export async function run({ p, errors, port }){
      the same thing, and for a long time this check accepted it as if it were. */
   const standing = live.filter(x=>!x.over && x.yard > 0).length;
   const men = live.reduce((n,x)=>n+x.yard, 0);
-  lines.push(`${standing} of ${live.length} houses still standing after ${WEEKS} weeks, ${men} men between them (this policy scores 4-7)`);
+  /* ---- AND `men` HAS ALWAYS SUMMED THE DEAD HOUSES TOO — #175 ----
+     That reduce runs over `live`, which is every house that produced a save, ENDED OR NOT. So a
+     house that ruined at week nine with four men in its cells contributes four to `men` and nothing
+     to `standing`, and the line below has been reading as though the men belonged to the houses
+     still going. They need not. The committed tally proves it without a run: four rows have
+     `standing === 0` alongside `men > 0`, which cannot happen if the two readings counted the same
+     houses, and the loudest is v3.57.0 at (0, 9) — nine men above the tally's own median of five,
+     reported under the words "not one house came through able to field a man".
+     The bars are NOT moved for this. `menUp <= men` always, so correcting the sum can only make
+     them fire MORE, and re-scored against all seven first-run failures it un-fails none of them —
+     it is an honesty fix, not a cure for the re-run rate. What is recorded instead is the SPLIT, in
+     the tally, so that in ten releases the question can be answered off evidence rather than
+     argument. That is the same move #142 made when it started the tally. */
+  const menUp = live.filter(x=>!x.over).reduce((n,x)=>n+x.yard, 0);
+  const ended = live.filter(x=>x.over).length;
+  lines.push(`${standing} of ${live.length} houses still standing after ${WEEKS} weeks, ${men} men between them (this policy scores 4-7)`
+    + (men > menUp ? ` — of which ${men - menUp} ${men - menUp === 1 ? "is" : "are"} in the ${ended} house${ended===1?"":"s"} that ENDED, leaving ${menUp} with the houses still going` : ``));
 
   const fails = [];
   if(live.length < HOUSES) fails.push(`${HOUSES - live.length} of ${HOUSES} houses produced no save at all`);
@@ -461,8 +499,9 @@ export async function run({ p, errors, port }){
      changes is that it now says what to do next, so the next reader does not spend two hours
      rediscovering it. */
   if(!standing) fails.push(`not one of ${HOUSES} houses came through ${WEEKS} weeks able to field a man`
-    + ` — measured at about a 1.3% chance a run on five houses, and twice out of twice so far it has`
-    + ` been luck rather than the build. Before believing it: \`node test/probes/open.mjs\` on this`
+    + (men ? ` (the ${men} men in the line above are all inside houses that had already ended — see #175)` : ``)
+    + ` — measured at about a 2.0% chance a run at the tally's per-house standing rate of 54%, and`
+    + ` four times out of four so far it has been luck rather than the build. Before believing it: \`node test/probes/open.mjs\` on this`
     + ` build and on the last, and diff the SIG line. Identical house for house means no path a new`
     + ` house executes differs and this is the tail`);
   if(!men) fails.push(`${HOUSES} houses, ${WEEKS} weeks, and not a man left in any yard`);
@@ -478,7 +517,10 @@ export async function run({ p, errors, port }){
 
   /* ---- and the observation goes on the pile, whatever it was ---- */
   const was = readTally();
-  const mine = { v: version(), standing, men, houses: live.length, weeks: WEEKS, pass: fails.length === 0 };
+  /* `menUp` and `ended` are new in v3.67.0 and are recorded rather than acted on: the rows before
+     that release do not carry them, so anything read off them must say so and count only the rows
+     that have them. */
+  const mine = { v: version(), standing, men, menUp, ended, houses: live.length, weeks: WEEKS, pass: fails.length === 0 };
   let wrote = true;
   try { fs.writeFileSync(TALLY, JSON.stringify([...was, mine], null, 0).replace(/\},\{/g, "},\n{") + "\n"); }
   catch(e){ wrote = false; lines.push(`could not write the tally: ${e.message}`); }
