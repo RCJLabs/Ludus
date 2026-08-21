@@ -19163,6 +19163,665 @@ function endTheLine(d){
    It also takes lines OUT of App, which `bulk` holds at 7,200 and which is sitting at exactly
    7,200 — so this refactor buys the room the rest of the work needs. */
 const SECT = {
+  staff: (S, X, k) => { const { hireStaff, letStaffGo } = X;
+    const s = S[k], ST = STAFF[k], lvl = bLevel(S, ST.room);
+               const mkt = (S.staffMarket||{})[k] || [];
+               return (
+                 <Sect key={k} title={`The ${ST.name.toLowerCase()}`}
+                   note={s ? `${s.name} · ${s.wage}d/wk` : !lvl ? "no room for one" : "the post is empty"}>
+                   {!lvl ? (
+                     <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
+                       You have no {ST.room==="valetudinarium"?"infirmary":"armoury"} for him to work in. Build the room first.
+                     </div>
+                   ) : s ? (<>
+                     <div className="disp" style={{fontSize:"var(--fs-lg)",color:"#e8d092"}}>{s.name} <span className="dim" style={{fontSize:"var(--fs-base)"}}>of {s.origin}</span></div>
+                     <Bar v={s.skill} label="skill" color="linear-gradient(90deg,#4a3a24,#c99a4b)"/>
+                     <div className="dim" style={{fontSize:"var(--fs-md)",marginTop:4}}>
+                       {k==="medicus"
+                         ? `Wounds close ${Math.round((medicusMult(S)-1)*100)}% faster than the room alone, and a wound is ${Math.round(medicusGuard(S)*100)}% less likely to set badly.`
+                         : `Steel costs ${Math.round((1-armourerCut(S))*100)}% less, wears ${Math.round((1-armourerWear(S))*100)}% slower, and mends ${Math.round((armourerMend(S)-1)*100)}% faster.`}
+                     </div>
+                     <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>
+                       {s.weeks} weeks in the house. He wants {ST.wants}.
+                     </div>
+                     <button className="btn btn-ghost" style={{width:"100%",marginTop:7}} onClick={()=>letStaffGo(k)}>Let him go</button>
+                   </>) : (<>
+                     <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:7}}>{ST.blurb}</div>
+                     {mkt.length===0
+                       ? <div className="dim" style={{fontSize:"var(--fs-md)"}}>Nobody is looking for a place this week.</div>
+                       : mkt.map(c=>(
+                           <button key={c.id} className="optrow" style={{marginBottom:6,padding:10}}
+                             disabled={S.gold<c.fee} onClick={()=>hireStaff(k,c.id)}>
+                             <div className="flex items-center justify-between gap-2">
+                               <span className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d092"}}>{c.name} <span className="dim">of {c.origin}</span></span>
+                               <span className="rowval gold" style={{fontSize:"var(--fs-sm)"}}>{c.fee}d · {c.wage}d/wk</span>
+                             </div>
+                             <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2}}>
+                               {c.skill>=68?"Very good, and knows it." : c.skill>=50?"Sound enough." : "Cheap, and it will show."} · skill {c.skill}
+                             </div>
+                           </button>
+                         ))}
+                   </>)}
+                 </Sect>
+               );
+  },
+  rack: (S, X, slot) => { const { buyGear, rackFilt, sellOne, setRackFilt } = X;
+      const benchOpen = masterOpen(S);
+      const all = Object.entries(GEAR).filter(([id,it])=>it.slot===slot
+        && (!it.master || benchOpen || (S.gear[id]||0) > 0));
+      /* whose styles are actually in this yard — 2.41 of six classes on a measured week */
+      const mine = [...new Set(activeG(S).map(g=>g.cls))];
+      const inStyle = it => !it.styles || !it.styles.length || it.styles.some(c=>mine.includes(c));
+      const FILTS = [
+        ["style", "In our styles", it=>inStyle(it)],
+        ["all",   "Everything",    ()=>true],
+        ["owned", "On the racks",  (it,id)=>(S.gear[id]||0) > 0],
+      ];
+      const F = FILTS.find(x=>x[0]===rackFilt) || FILTS[0];
+      const items = all.filter(([id,it])=>F[2](it,id))
+        .sort((a,b)=>(a[1].price||0)-(b[1].price||0));
+      const own = all.reduce((n,[id])=>n+(S.gear[id]||0),0);
+      const idle = all.reduce((n,[id])=>n+gearFree(S,id),0);
+      const cheapest = items.filter(([,it])=>it.price>0).map(([,it])=>gearPrice(S,it.price,slot)).sort((a,b)=>a-b)[0];
+      return (
+      <React.Fragment key={slot}>
+        <Sect open title={`The ${SLOT_NAME[slot].toLowerCase()} rack`}
+          note={own ? `${own} owned${idle?` · ${idle} idle`:""}` : cheapest ? `from ${cheapest}d` : "house stock"}>
+          {/* the filter, and it says what it is hiding rather than hiding it silently */}
+          <div className="flex gap-1" style={{flexWrap:"wrap",marginBottom:3}}>
+            {FILTS.map(([k,label,fn])=>{
+              const n = all.filter(([id,it])=>fn(it,id)).length;
+              return (
+                <button key={k} className={`chip ${rackFilt===k?"on":""}`} onClick={()=>setRackFilt(k)}
+                  style={{fontSize:"var(--fs-micro)",padding:"4px 10px",
+                    borderColor: rackFilt===k ? "#c99a4b" : "#3e2f1f",
+                    color: rackFilt===k ? "#e8d092" : "#b09b7d"}}>
+                  {label} <span className="dim">{n}</span>
+                </button>
+              );
+            })}
+          </div>
+          <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",marginBottom:2}}>
+            {rackFilt==="style"
+              ? (mine.length
+                  ? `${items.length} of ${all.length}, cheapest first — what ${mine.length===1?"the man":"the men"} in this yard can carry without it being clumsy.`
+                  : `Nobody is in the yard, so nothing is out of style. All ${all.length}, cheapest first.`)
+              : rackFilt==="owned"
+              ? (items.length ? `The ${items.length} you have bought.` : "You have bought none of these. The house issue is free and always will be.")
+              : `All ${all.length}, cheapest first. Gear outside a man's own style still works, but clumsily.`}
+          </div>
+          {items.length===0 && (
+            <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:6}}>
+              Nothing here under that filter. Try Everything.
+            </div>
+          )}
+          {items.map(([id,it])=>{
+                const owned = S.gear[id]||0, free = gearFree(S,id);
+                return (
+                  <div key={id} style={{borderTop:"1px dotted #33271a",paddingTop:8,marginTop:8}}>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="disp" style={{fontSize:"var(--fs-base)",color:it.master?"#e8c98a":it.price?"#e8d9b8":"#b9a37c"}}>{it.name}</div>
+                      {it.price>0
+                        ? <span className="gold" style={{fontSize:"var(--fs-md)",whiteSpace:"nowrap"}}>{it.price}d{owned?` · ${owned} owned`:""}</span>
+                        : <span className="tag">Costs nothing</span>}
+                    </div>
+                    {/* the family the seven headings used to carry, now on the row it belongs to */}
+                    <div className="flex items-center gap-1" style={{flexWrap:"wrap",margin:"3px 0 1px"}}>
+                      <span className="tag" style={{fontSize:"var(--fs-micro)",padding:"2px 7px"}}>{artName(slot, it.art)}</span>
+                      {it.master && <span className="tag tag-gold" style={{fontSize:"var(--fs-micro)",padding:"2px 7px"}}>A master's piece · {it.keep}d a week to keep</span>}
+                      {!inStyle(it) && <span className="tag" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",borderColor:"#7c5a22",color:"#cfa060"}}>clumsy for this yard</span>}
+                    </div>
+                    <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",margin:"2px 0 3px"}}>{it.desc}</div>
+                    <GearStats it={it}/>
+                    {it.master && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>No sharper than the best on the rack. Twice as loud — and the crowd is the purse, the name, and the finger that goes up when he is down.</div>}
+                    {it.styles && it.styles.length>0 && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>Suits: {it.styles.join(", ")}</div>}
+                    {it.price>0 && (
+                      <button className={`btn ${it.stock?"btn-ghost":""}`} style={{width:"100%",marginTop:7}} disabled={S.gold<gearPrice(S,it.price,it.slot)} onClick={()=>buyGear(id)}>
+                        {S.gold<gearPrice(S,it.price,it.slot) ? "Not enough coin"
+                          : `${it.stock?"Order":"Buy"} for ${gearPrice(S,it.price,it.slot)}d${free>0?` · ${free} on the rack`:""}`}
+                      </button>
+                    )}
+                    {!it.stock && it.price>0 && free>0 && (
+                      <button className="btn btn-ghost" style={{width:"100%",marginTop:5,fontSize:"var(--fs-sm)",padding:"10px 10px"}}
+                        onClick={()=>sellOne(id)}>
+                        Sell one back · about {rnd(it.price*resaleRate(S)*0.85)}d
+                      </button>
+                    )}
+                    {it.price>0 && owned>0 && free===0 && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:3}}>Every one you own is on a man.</div>}
+                  </div>
+                );
+              })}
+        </Sect>
+      </React.Fragment>
+    );
+  },
+  rome: (S, X) => {
+    const sen = (S.patrons||[]).filter(p=>p.rank==="senator").sort((a,b)=>b.favor-a.favor)[0];
+    const bar = romeBar(S), ready = romeReady(S), been = romeRuns(S) > 0;
+    const rungs = [
+      /* v2.53.0 opened a second road — the census — and this screen went on
+         naming only the first, so a house climbing the ladder was being told
+         the only way up was an afternoon it had already decided against. */
+      { met:romeProved(S), label:"A primus at Capua, or the fourth rung",
+        detail:(S.flags.primusHeld||0)>0 ? "the town has crowned your man"
+          : riseOf(S) >= ROME_RANK ? `the census counts you ${RISE_RANKS[riseOf(S)].short}`
+          : `top the bill at a great games and win it — or climb to ${RISE_RANKS[ROME_RANK].name} (rung ${ROME_RANK} of ${RISE_RANKS.length-1}, you are ${riseOf(S)})` },
+      { met:!!(sen && sen.favor>=70), label:"A senator in your debt", detail:sen ? `${sen.name} · favour ${rnd(sen.favor)} / 70` : "no senator has taken an interest yet" },
+      { met:bayWide(S), label:"Known the length of the bay", detail:`${Math.round(bayKnownTotal(S)/180*100)}% — Pompeii, Neapolis, Puteoli · shortens the road`, soft:true },
+      { met:S.fame >= bar, label:"A name that carries to Rome", detail:`${rnd(S.fame)} / ${rnd(bar)} renown${romeRuns(S)>0?` (higher each campaign)`:""}` },
+    ];
+    const doneCount = rungs.filter(r=>r.met || r.soft).length;
+    return (
+    <Sect title="The road to Rome" note={been ? `${romeTriumphs(S)?`${romeTriumphs(S)} taken`:`best ${romeBest(S)} of 3`}` : ready ? "Rome is calling" : `${rungs.filter(r=>r.met && !r.soft).length} of 3`} open={ready}
+      mark={sectMark(S,"rome")}>
+      <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",margin:"1px 0 9px"}}>
+        {been
+          ? "You have stood on the imperial sand. The city keeps its own tablet on you now, and every return asks a greater name than the last."
+          : "The imperial games are the summit. There is a way up to them, and it runs through Capua's crown, a senator's favour, and a name loud enough to be heard in the capital."}
+      </div>
+      {rungs.map((r,i)=>(
+        <div key={i} style={{padding:"5px 0",borderTop:i?"1px dotted #26201a":undefined}}>
+          <div style={{fontSize:"var(--fs-md)",color:r.met?"#a9c98a":"#cfc0a0"}}>{r.met?"✓":r.soft?"◦":"·"} {r.label}</div>
+          <div className="dim" style={{fontSize:"var(--fs-sm)",marginLeft:14,marginTop:1,overflowWrap:"anywhere"}}>{r.detail}</div>
+        </div>
+      ))}{been && <RomeStanding S={S}/>}
+      <div className="panel" style={{padding:10,marginTop:9,background:"#1c1610",borderColor:ready?"#c99a4b":"#3e2f1f"}}>
+        <div style={{fontSize:"var(--fs-md)",color:ready?"#e8d092":"#cfc0a0"}}>
+          {ready ? "The road is open — a letter under an imperial seal cannot be far behind."
+            : been && S.rome ? "You are on the imperial sand now."
+            : `Rome is watching. It will send for a house that has done all three${bayWide(S)?", and the bay has already carried your name north":""}.`}
+        </div>
+      </div>
+    </Sect>
+    );
+  },
+  doctrine: (S, X) => { const { declare } = X;
+    const D = doctrineOf(S);
+               return (
+                 <Sect live={sectFresh(S,"school")} sid="school" title="The doctrine of the house" note={D? D.name : "none set"}>
+                   {D ? (<>
+                     <div className="disp" style={{fontSize:"var(--fs-xl)",color:"#e8d092"}}>{D.name}</div>
+                     <div style={{fontSize:"var(--fs-lg)",fontStyle:"italic",marginTop:3}}>{D.creed}</div>
+                     <div className="dim" style={{fontSize:"var(--fs-md)",marginTop:5}}>{D.body}</div>
+                     <div className="laurel" style={{fontSize:"var(--fs-base)",marginTop:5}}>{D.note}</div>
+                   </>) : (
+                     <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
+                       This house has no school. It does what the week asks and Capua forms its own opinion, which is the opinion you deserve.
+                     </div>
+                   )}
+                   <div style={{marginTop:9}}>
+                     {DOC_KEYS.filter(k=>!docIs(S,k)).map(k=>{ const X = DOCTRINES[k];
+                       const fee = D ? rnd(X.cost*1.8) : X.cost;
+                       return (
+                         <button key={k} className="optrow" style={{marginBottom:6,padding:10}}
+                           disabled={S.gold<fee} onClick={()=>declare(k)}>
+                           <div className="flex items-center justify-between gap-2">
+                             <span className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d092"}}>{X.name}</span>
+                             <span className="rowval gold" style={{fontSize:"var(--fs-sm)"}}>{fee}d</span>
+                           </div>
+                           <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2,textAlign:"left"}}>{X.note}</div>
+                         </button>
+                       ); })}
+                   </div>
+                   {D && <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:4}}>
+                     Turning the house over costs nearly twice as much, twenty fame, and a week of every man wondering what the last year was for.
+                   </div>}
+                 </Sect>
+               );
+  },
+  temple: (S, X) => { const { offerTo, vowTo } = X;
+    const bg = blessOf(S), pi = pietyOf(S), stake = vowStake(S);
+               /* It opened only for a house that already had a vow standing or was nearly
+                  godless — so the one screen that could start any of this was shut to every
+                  house that had never touched it, which was all of them. It opens when there
+                  is something to do: a blessing riding, an ill turn to sit out, or an altar
+                  that will take a gift the box can stand. */
+               const cheapest = Math.min(...GOD_KEYS.map(k=>GODS[k].cost(S)));
+               const canAct = offeringReady(S) && S.gold >= cheapest;
+               return (
+               <Sect live={sectFresh(S,"temple")} sid="temple" title="The Temple" note={bg ? `blessed · ${GODS[bg].name}` : pietyWord(pi)}
+                 mark={sectMark(S,"temple")}
+                 open={!!S.vow || !!bg || pi<=20 || illLuck(S) || canAct}>
+                 <div className="flex items-center justify-between" style={{marginBottom:3,fontSize:"var(--fs-md)"}}>
+                   <span>Piety of the house</span>
+                   <span style={{color: pi>=60?"#e0bd72":pi>=38?"#cfc0a0":pi>=18?"#d8ac5f":"#d96f5d"}}>{pietyWord(pi)}</span>
+                 </div>
+                 <div className="track" style={{height:6}}>
+                   <div className="fill" style={{width:`${pi}%`, background: pi<20? "linear-gradient(90deg,#7c2a22,#cf5a49)" : "linear-gradient(90deg,#6a5a2c,#e0bd72)"}}/>
+                 </div>
+                 <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",margin:"5px 0 9px"}}>
+                   Rome did nothing without the gods. A pious house keeps the patrons and the crowd warm; a godless one, the streets restless — and the omens turn against it.
+                 </div>
+                 {bg && (
+                   <div className="panel" style={{padding:9,marginBottom:9,background:"#1c1610",borderColor:"#c99a4b"}}>
+                     <div className="flex items-center justify-between">
+                       <span className="tag tag-gold">Blessed · {GODS[bg].name}</span>
+                       <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{blessLeft(S)}w left</span>
+                     </div>
+                     <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:3}}>{GODS[bg].boon}</div>
+                   </div>
+                 )}
+                 {illLuck(S) && !bg && <div className="blood" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:8}}>
+                   The house is under an ill turn — an omen defied, or a vow let go. It will pass.
+                 </div>}
+                 {S.vow ? (
+                   <div className="panel" style={{padding:9,marginBottom:9,background:"#241b11",borderColor:"#6d5426"}}>
+                     <span className="tag" style={{borderColor:"#6d5426",color:"#d8ac5f"}}>A vow stands · {GODS[S.vow.god]?GODS[S.vow.god].name:"a god"}</span>
+                     <div style={{fontSize:"var(--fs-md)",marginTop:4}}>Not a man to fall before it is out — <span className="dim">{Math.max(1,S.vow.until-S.week)} week{S.vow.until-S.week===1?"":"s"} left</span>. {S.vow.stake}d pledged on it.</div>
+                     {/* what it is worth is what it has stood through, and the panel says so
+                         rather than leaving a player to find out at the settlement */}
+                     {/* VOW_BLESS_AT was read here and declared nowhere — the identifier
+                         appeared exactly once in the file and once in the built bundle, with
+                         no binding in front of it, so this line threw ReferenceError inside
+                         the render. Which means: any house with a vow standing that opened
+                         the temple got no screen at all. It shipped in the release that added
+                         this very panel, and neither check could see it — `temple` settles vows
+                         by calling resolveVow and never renders, `sweep` renders and never has
+                         a vow. The name was left over from before the vow stopped handing out
+                         blessings; there is one threshold in this system now and this is it. */}
+                     <div style={{fontSize:"var(--fs-base)",marginTop:3,color:vowRisked(S.vow)>=VOW_EARNT_AT?"#a9c98a":"#cfc0a0"}}>
+                       {S.vow.bouts||0} card{(S.vow.bouts||0)===1?"":"s"} fought under it · comes back at {rnd(S.vow.stake*vowReturn(S.vow))}d
+                       {vowRisked(S.vow) >= VOW_EARNT_AT
+                         ? ` and the piety of a house that risked something`
+                         : `, and ${VOW_EARNT_AT - vowRisked(S.vow)} more card${VOW_EARNT_AT-vowRisked(S.vow)===1?"":"s"} before the gods count it as risked`}
+                     </div>
+                   </div>
+                 ) : (
+                   <div className="dim" style={{fontSize:"var(--fs-sm)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:6}}>An offering, or a vow</div>
+                 )}
+                 {GOD_KEYS.map(k=>{ const G = GODS[k], cost = G.cost(S), ready = offeringReady(S), afford = S.gold>=cost;
+                   return (
+                     <div key={k} className="panel" style={{padding:9,marginBottom:6,background:"#1c1610"}}>
+                       <div className="flex items-center justify-between gap-2">
+                         <span className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d092"}}>{G.name} <span className="dim" style={{fontWeight:400}}>· {G.of}</span></span>
+                         <span className="rowval gold" style={{fontSize:"var(--fs-sm)"}}>{cost}d</span>
+                       </div>
+                       <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2}}>{G.boon}</div>
+                       <div className="flex gap-2" style={{marginTop:6}}>
+                         <button className="btn" style={{flex:1}} disabled={!ready || !afford} onClick={()=>offerTo(k)}>
+                           {!ready ? `Altar rests · ${OFFERING_COOL-(S.week-S.lastOffering)}w` : !afford ? "Not enough coin" : `Offer · ${G.weeks}w blessing`}
+                         </button>
+                         {/* the label read "Vow ·  stake" — a figure that was never
+                             interpolated, so the one button in the game that asks a player to
+                             pledge coin never said how much */}
+                         {!S.vow && <button className="btn btn-ghost" style={{flex:1}} disabled={S.gold < stake}
+                           onClick={()=>setAsk({ title:`A Vow to ${G.name}`, confirm:`Swear it · ${stake}d`,
+                             /* "the coin returns doubled in goodwill" was a rosy description of
+                                a bet a young house loses more often than it wins: measured over
+                                200 vows, a house under fame 300 keeps 46% of them. It says what
+                                it is betting on now, in the house's own recent dead. */
+                             text:`You pledge ${stake} denarii to ${G.name} and swear that not a man of this house will fall in the month to come. What comes back depends on what you risked in it — nothing ventured, your pledge and a polite word; a month of hard cards kept clean, the coin with interest and a markedly more pious house. A blessing is bought at the altar, not won here. Break it — bury a man before it is out — and the coin is forfeit and the gods turn cold.${buried20(S) ? ` You have buried ${buried20(S)} in the last twenty weeks.` : ` You have buried nobody in twenty weeks.`}`,
+                             run:()=>vowTo(k) })}>{S.gold < stake ? "Not enough to pledge" : `Vow · ${stake}d`}</button>}
+                       </div>
+                     </div>
+                   );
+                 })}
+                 <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",marginTop:4}}>
+                   One blessing rides with the house at a time; a fresh offering takes the last one's place. The gods keep their own counsel about which houses they favour.
+                 </div>
+               </Sect>
+             );
+  },
+  yourStanding: (S, X) => { const { takeRise } = X;
+    const rk = riseRank(S), nx = riseNext(S), need = riseNeed(S), can = canClaimRise(S);
+               const stand = S.rise ? S.rise.standing : 0;
+               /* the same condition `riseWeek` uses to decide whether the meter climbs or drains */
+               const rising = !!(need && need.fameOk && need.favorOk);
+               /* the first SUBSTANTIVE thing short, which is what the button is supposed to say */
+               const short = !need ? null : !need.fameOk ? "fame" : !need.favorOk ? "favour"
+                 : !need.goldOk ? "coin" : !need.feeOk ? "fee" : null;   /* #154: the fee is still coin */
+               return (
+               <Sect title="Your Standing" note={rk.name} open={can} mark={sectMark(S,"standing")}>
+                 <div className="disp" style={{fontSize:"var(--fs-lg)",color:"#e8d092"}}>{rk.name}</div>
+                 <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",margin:"3px 0 9px"}}>{rk.blurb}</div>
+                 {riseOf(S)>0 && rk.perk && (
+                   <div className="panel" style={{padding:9,marginBottom:10,background:"#171712",borderColor:"#3e4a30"}}>
+                     <span className="tag" style={{color:"#a9c98a",borderColor:"#3e4a30"}}>What it buys</span>
+                     <div style={{fontSize:"var(--fs-md)",marginTop:3}}>{rk.perk}</div>
+                   </div>
+                 )}
+                 {nx ? (
+                   <div className="panel" style={{padding:11,background:"#1c1610",borderColor:can?"#c99a4b":"#3e2f1f"}}>
+                     <div className="flex items-center justify-between gap-2" style={{marginBottom:5}}>
+                       <span className="disp" style={{fontSize:"var(--fs-base)",color:can?"#e8d092":"#cfc0a0"}}>Next: {nx.name}</span>
+                       <span className="tag">{nx.short}</span>
+                     </div>
+                     {/* ---- A METER THAT SAYS "GROWING" WHILE IT DRAINS ----
+                          `riseWeek` adds 4 or more to standing only when fame AND favour are both met,
+                          and takes 2 OFF every week either is short. Measured over 1,256 weeks of the
+                          reference player, the meter is slipping rather than filling in 77.1% of them —
+                          and this label said "the town must grow used to you" in all of them. A bar that
+                          reads the same going up as coming down is not reporting a direction. */}
+                     <div className="tag" style={{marginBottom:5,
+                       color: need.full ? "#a9c98a" : rising ? undefined : "#d98476",
+                       borderColor: need.full ? "#3e4a30" : rising ? undefined : "#5a2a22"}}>
+                       {need.full ? "The town is used to you" : rising
+                         ? "The town is growing used to you" : "Their interest is cooling, not growing"}
+                     </div>
+                     <div className="track" style={{height:6,marginBottom:9}}>
+                       <div className="fill" style={{width:`${stand}%`, background: stand>=100? "linear-gradient(90deg,#6a5a2c,#e8d092)"
+                         : rising ? "linear-gradient(90deg,#4a4030,#c99a4b)" : "linear-gradient(90deg,#3a2622,#8a4438)"}}/>
+                     </div>
+                     {[["Renown", need.fame, rnd(S.fame), need.fameOk],
+                       ["Patrons' favour", need.favor, rnd(S.favor), need.favorOk],
+                       ["What the census must find you worth", need.cost, need.worth, need.goldOk]].filter(r=>r[1]>0).map(([lbl,req,have,ok])=>(
+                       <div key={lbl} className="flex items-center justify-between gap-2" style={{fontSize:"var(--fs-base)",padding:"2px 0"}}>
+                         <span style={{color:ok?"#a9c98a":"#cfc0a0"}}>{ok?"✓":"·"} {lbl}</span>
+                         <span className="rowval dim" style={{color:ok?"#a9c98a":undefined}}>{have} / {req}</span>
+                       </div>
+                     ))}
+                     {need.cost>0 && (
+                       <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:5}}>
+                         The census counts what you have — the box, what the town owes you, the steel on the racks,
+                         the men in the cells and the wings they stand in — and it does not take any of it. Being
+                         received costs {need.fee} denarii in coin, for sportula, clerks and a night the town
+                         remembers{riseOf(S)>=3 || (nx.cost||0)>=8000 ? ", and the city's charges rise with the rank thereafter" : ""}.
+                       </div>
+                     )}
+                     {/* ---- AND THE LEVER, WHICH THE PANEL NEVER NAMED ----
+                          Favour is the first failing gate on the next rung in 60-83% of weeks past year
+                          three, and it is bought at your own table: measured on the same eight seeds, a
+                          lanista who entertains reaches mean rung 2.70 against 1.50, favour 79 against
+                          40, and 218 weeks at Rome against 31. One party alone IS a treadmill — the
+                          per-patron bump is repaid by decay in about fifteen weeks — but kept up it pins
+                          favour at 100 by the thirtieth week for about 457 denarii a week. The panel
+                          named the number and never once said where the number comes from. */}
+                     {short === "favour" && (
+                       <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:5}}>
+                         Favour is bought at your own table and at the games. Throw a party — the block below
+                         this one — and every patron warms to you; answer what they ask for and they warm
+                         further. Leave them alone and it cools every week, which is what is happening now.
+                       </div>
+                     )}
+                     {/* ---- AND THE TERM THAT IS ACTUALLY IN THE WAY, WHICH HAD NO SENTENCE AT ALL ----
+                          The favour hint above was written because "the panel named the number and never
+                          once said where the number comes from". The coin row had the same hole, and it
+                          is the row that matters: split by the game's own four booleans over 192
+                          house-runs on four policies and three seeds (`test/probes/rung.mjs`), coin is
+                          the LAST TERM STANDING on 96-100% of the weeks a house is one short of rungs 3
+                          and above. Favour does not appear in a single one-short row at any rung in any
+                          arm — the older reading that favour holds the top came from `estate`'s `miser`,
+                          which banks by switching off the table, and the table IS the favour engine.
+                          What the sentence has to carry is the thing the row does not: `goldOk` reads
+                          `d.gold` and nothing else, so every denarius in stone is a denarius the census
+                          cannot see. Measured: an arm that stops building and keeps entertaining reaches
+                          Known in Rome in 3-5 houses of 16, against 0-1 for the reference player. */}
+                     {short === "coin" && (
+                       <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:5}}>
+                         Everything the house owns counts towards this, so a wing put up or a man bought moves
+                         it as surely as coin does — and the ladder no longer asks you to choose between the
+                         census and the stone. What it will not count is a purse you have already spent.
+                       </div>
+                     )}
+                     {short === "fee" && (
+                       <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:5}}>
+                         The census is satisfied — the house is worth what it must be. What is missing is the
+                         {" "}{need.fee} denarii the reception itself costs, and that part is paid in coin.
+                       </div>
+                     )}
+                     {/* ---- A BUTTON THAT BLAMED THE METER FOR EVERYTHING ----
+                          `!need.full` was tested FIRST, and the meter is never full while fame or favour
+                          is short because `riseWeek` drains it in exactly that case. Measured over 1,256
+                          weeks of the reference player: this button read "The town is not yet used to
+                          you" in 98.7% of all weeks, and in 84.7% of those the thing actually short was
+                          fame, favour or coin. It named the one term that was a CONSEQUENCE of the others
+                          and never named a cause. The substantive gates are tested first now. */}
+                     <button className={`btn ${can?"":"btn-ghost"}`} style={{width:"100%",marginTop:8}} disabled={!can} onClick={takeRise}>
+                       {can ? `Take your place as ${nx.name} — ${need.fee}d`
+                         : short === "fame" ? `Rome counts your renown at ${rnd(S.fame)} — the rung wants ${need.fame}`
+                         : short === "favour" ? `Your patrons hold you at ${rnd(S.favor)} — the rung wants ${need.favor}`
+                         : short === "coin" ? `The census wants you worth ${nx.cost}d — the house counts ${need.worth}`
+                         : short === "fee" ? `Worth it, and ${need.fee - rnd(S.gold)}d short of the reception itself`
+                         : !need.full ? `The town is not yet used to you — ${rnd(stand)} of 100`
+                         : `Pay ${need.fee}d to be received`}
+                     </button>
+                   </div>
+                 ) : (
+                   <div className="panel" style={{padding:11,background:"#1c1610",borderColor:"#c99a4b"}}>
+                     <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>There is no higher rung. A slaver climbed all the way to Rome, and men will tell the story long after the sand forgets your name.</div>
+                   </div>
+                 )}
+               </Sect>
+             );
+  },
+  soFar: (S, X) => {
+    const c = closing(S), R2 = c.R2, V = verdictOf(c); return (
+               <Sect title="The house so far" note={`${R2.years} year${R2.years===1?"":"s"}`}>
+                 <div className="dim" style={{fontSize:"var(--fs-base)",marginBottom:6}}>
+                   {R2.years} year{R2.years===1?"":"s"} · {S.week} weeks · fame {rnd(S.fame)}
+                   {c.gen>1 && ` · ${c.gen} lanistae`}
+                   {c.doctrine && ` · ${c.doctrine.name}`}
+                 </div>
+                 <div className="grid grid-cols-3 gap-2" style={{fontSize:"var(--fs-md)"}}>
+                   <div><div className="dim" style={{fontSize:"var(--fs-sm)"}}>Served</div>{R2.served}</div>
+                   <div><div className="dim" style={{fontSize:"var(--fs-sm)"}}>Bouts</div>{c.bouts}{c.bouts>0 && <span className="dim" style={{fontSize:"var(--fs-sm)"}}> · {c.winPc}%</span>}</div>
+                   <div><div className="dim" style={{fontSize:"var(--fs-sm)"}}>Buried</div><span className="blood">{R2.lost}</span></div>
+                   <div><div className="dim" style={{fontSize:"var(--fs-sm)"}}>Freed</div><span className="gold">{R2.freed}</span></div>
+                   <div><div className="dim" style={{fontSize:"var(--fs-sm)"}}>Walked out</div>{R2.out}</div>
+                   <div><div className="dim" style={{fontSize:"var(--fs-sm)"}}>Killed</div>{R2.k}</div>
+                 </div>
+                 <div className="panel" style={{padding:11,marginTop:9,background:"#1c1610",borderColor:"#6d5426"}}>
+                   <div className="disp" style={{fontSize:"var(--fs-md)",color:"#e8d092",marginBottom:3}}>{V.name}</div>
+                   <div style={{fontSize:"var(--fs-md)"}}>{V.say(c)}</div>
+                 </div>
+                 {c.best && c.best.wins>0 && (
+                   <div style={{fontSize:"var(--fs-md)",borderTop:"1px dotted #33271a",paddingTop:6,marginTop:8}}>
+                     <span className="dim">The best of them so far is </span>
+                     {c.best.nick? `${c.best.name}, ${c.best.nick}` : c.best.name}
+                     <span className="dim"> — {c.best.wins} won.</span>
+                   </div>
+                 )}
+                 <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",marginTop:7}}>
+                   Nothing is settled while the gate still opens. This is only where it stands.
+                 </div>
+               </Sect>
+             );
+  },
+  blood: (S, X) => { const { seekMatch } = X;
+    const dm = domusOf(S), w = dm.wife, kids = dm.children.filter(c=>!c.dead);
+               const UP = c => { const u=c.up||{}, p=u.palus||0, r=u.rhetor||0, b=u.box||0; if(!(p+r+b)) return "still small";
+                 return p>=r&&p>=b ? "raised in the yard" : r>=b ? "sent for letters" : "learning the trade"; };
+               /* the closed note used to read "no family yet" in BOTH of the two ways a house can have
+                  no family, and they are not the same thing: one is a bar you can clear this year and
+                  the other is a door that has shut. `marryReady` wants fame 60 or any rung of the
+                  census AND a lanista under 56, so the summary names whichever of the two is holding. */
+               return (
+               <Sect live={sectFresh(S,"blood")} sid="blood" title="The blood of the house"
+                 note={w ? `${kids.filter(c=>!c.wed).length} at home` : marryReady(S) ? "a match awaits"
+                   : (S.lanista && S.lanista.age >= 56) ? "too late for a match"
+                   : `a match wants fame 60 — you have ${rnd(S.fame)}`}>
+                 {w ? (<>
+                   <div className="flex items-center justify-between gap-2" style={{marginBottom:6}}>
+                     <span className="disp" style={{fontSize:"var(--fs-md)",color:"#d9c0e0"}}>{w.name}</span>
+                     <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>of {w.family} · your wife</span>
+                   </div>
+                   {kids.length===0 && <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>No children yet. The house waits.</div>}
+                   {kids.map(c=>{ const age=childAge(S,c); const heir = S.heir && S.heir.cid===c.id;
+                     return (
+                       <div key={c.id} style={{borderTop:"1px dotted #33271a",padding:"5px 0"}}>
+                         <div className="flex items-center justify-between gap-2">
+                           <span className="rowname" style={{fontSize:"var(--fs-md)",color:heir?"#e8d092":undefined}}>{c.name}{heir?" · your heir":""}</span>
+                           <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{c.sex==="m"?"son":"daughter"} · {age} yr{c.wed?" · married out":""}</span>
+                         </div>
+                         {!c.wed && <div className="dim" style={{fontSize:"var(--fs-sm)"}}>{c.sex==="m"? UP(c) : age>=15?"of an age to be matched":"still at home"}{c.mentorId&&(()=>{ const m=S.gladiators.find(g=>g.id===c.mentorId); return m?` · at ${m.name}'s shoulder`:""; })()}</div>}
+                       </div>
+                     ); })}
+                   <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",marginTop:7}}>A house with a wife in it runs a shade warmer, and a son raised in this yard becomes an heir worth more than whoever is left when you die.</div>
+                 </>) : marryReady(S) ? (<>
+                   <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:7}}>
+                     A man alone at the head of a ludus leaves nothing behind but a ledger. Take a wife, and the house can make an heir of its own blood.
+                   </div>
+                   <button className="btn" style={{width:"100%"}} onClick={seekMatch}>Let it be known you are looking for a match</button>
+                 </>) : (S.lanista && S.lanista.age >= 56) ? (
+                   /* AND THIS BRANCH USED TO SAY "climb a little higher", WHICH WAS A LIE.
+                      `marryReady` is false above 55 whatever the house is worth, so an old lanista was
+                      told to work at a thing no amount of work would ever open. The blood is shut; the
+                      line is not, because `heirEligible` always offers a nephew. */
+                   <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
+                     No family in Capua will match a daughter to a lanista of {S.lanista.age}, and no purse changes that. Whatever this house leaves behind will not be your own blood — name an heir from outside it, on the House sheet, before the choice is made for you.
+                   </div>
+                 ) : (
+                   <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
+                     Climb a little higher and the matchmakers of Capua will come calling. They want fame 60, or any rung of the census; you have fame {rnd(S.fame)} and stand {riseRank(S).short}.
+                   </div>
+                 )}
+               </Sect>
+             );
+  },
+  block: (S, X) => {
+    const here = [...new Set((S.market||[]).map(g=>g.slaver).filter(Boolean))];
+               if(!here.length) return null;
+               return (
+                 <Sect live={sectFresh(S,"block")} sid="block" title="Who is standing at the block" note={`${here.length} slaver${here.length===1?"":"s"}`}
+                   mark={sectMark(S,"block")}>
+                   {here.map(k=>{ const S2 = slaverOf(k), x = dealings(S,k);
+                     return (
+                       <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:6,marginTop:6}}>
+                         <div className="flex items-center justify-between gap-2">
+                           <span className="rowname" style={{fontSize:"var(--fs-md)"}}>{S2.full}</span>
+                           <span className="rowval dim" style={{fontSize:"var(--fs-sm)",whiteSpace:"nowrap"}}>{slaverWord(S,k)}</span>
+                         </div>
+                         <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:1}}>{S2.line}</div>
+                         {(x.bought>0 || x.burned>0) && (
+                           <div style={{fontSize:"var(--fs-sm)",marginTop:2,color:x.burned>=2?"#d96f5d":"#8f7e62"}}>
+                             {x.bought} bought from him{x.burned>0 ? `, ${x.burned} not what he said` : ""}
+                             {slaverPrice(S,k)<1 ? ` · prices you ${Math.round((1-slaverPrice(S,k))*100)}% keener` : slaverPrice(S,k)>1 ? ` · ${Math.round((slaverPrice(S,k)-1)*100)}% dearer for you` : ""}
+                           </div>
+                         )}
+                       </div>
+                     ); })}
+                 </Sect>
+               );
+  },
+  year: (S, X) => {
+    const now = festivalNow(S), soon = nextFestivals(S, 3);
+               return (
+                 <Sect title="The year" note={`${seasonOf(S).name} · year ${yearOf(S)}, week ${yearWeek(S)}${now?" · games":""}`} open={!!now}>
+                   {(()=>{ const Sn = seasonOf(S);
+                     return (
+                       <div style={{marginBottom:8}}>
+                         <div className="flex items-center justify-between gap-2">
+                           <span className="disp" style={{fontSize:"var(--fs-md)",fontWeight:700,
+                             color: Sn.key==="winter"?"#9dc0d4" : Sn.key==="summer"?"#d8ac5f" : Sn.key==="autumn"?"#c99a4b":"#9aa86a"}}>
+                             {Sn.name.toUpperCase()}
+                           </span>
+                           <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{Sn.months}</span>
+                         </div>
+                         <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:2}}>{Sn.line}</div>
+                         <div className="flex gap-3" style={{fontSize:"var(--fs-sm)",marginTop:4,flexWrap:"wrap"}}>
+                           {Sn.purse!==1 && <span style={{color:Sn.purse>1?"#9aa86a":"#d96f5d"}}>purses ×{Sn.purse.toFixed(2)}</span>}
+                           {Sn.train!==1 && <span style={{color:Sn.train>1?"#9aa86a":"#d96f5d"}}>training ×{Sn.train.toFixed(2)}</span>}
+                           {Sn.fat!==1 && <span style={{color:Sn.fat<1?"#9aa86a":"#d96f5d"}}>fatigue ×{Sn.fat.toFixed(2)}</span>}
+                           {Sn.upkeep>0 && <span className="blood">+{Sn.upkeep}d a man</span>}
+                           {Sn.heal!==1 && <span style={{color:Sn.heal>1?"#9aa86a":"#d96f5d"}}>mending ×{Sn.heal.toFixed(2)}</span>}
+                           {Sn.pits!==1 && <span className="blood">pits ×{Sn.pits.toFixed(2)}</span>}
+                         </div>
+                       </div>
+                     ); })()}
+                   {now ? (<div style={{marginBottom:8}}>
+                     <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,color:"#e8d092"}}>{now.name.replace(/^the /,"").toUpperCase()}</div>
+                     <div style={{fontSize:"var(--fs-lg)",marginTop:3}}>{now.blurb}</div>
+                   </div>) : (S.munera ? (<div style={{marginBottom:8}}>
+                     <div className="disp" style={{fontSize:"var(--fs-md)",fontWeight:700,color:"#d96f5d"}}>FUNERAL GAMES</div>
+                     <div style={{fontSize:"var(--fs-lg)",marginTop:3}}>A death in a noble house, and the old kind of games to mark it. Double purses, and every bout sine missione — that is what these were for.</div>
+                   </div>) : <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>No festival this week. The pits are always open.</div>)}
+                   <div className="flex gap-1" style={{marginBottom:6}}>
+                     {Array.from({length:YEAR_WEEKS}).map((_,i)=>{ const w=i+1;
+                       const f=CALENDAR.find(x=>x.w===w), cur=w===yearWeek(S);
+                       const sn = SEASONS.slice().reverse().find(x=>w>=x.at) || SEASONS[0];
+                       const base = sn.key==="winter"?"#2a3238" : sn.key==="summer"?"#33291a" : sn.key==="autumn"?"#2f2617" : "#25301f";
+                       return <div key={i} title={f?f.name:sn.name} style={{flex:1,height:cur?9:6,borderRadius:2,
+                         background: cur ? "#e8d092" : f ? (f.rest? "#5a6a35":"#8a6a2c") : base}}/>;
+                     })}
+                   </div>
+                   {soon.filter(f=>weeksUntil(S,f)>0).slice(0,2).map(f=>(
+                     <div key={f.key} className="flex items-center justify-between gap-2" style={{fontSize:"var(--fs-md)",padding:"2px 0"}}>
+                       <span className="rowname dim">{f.name} <span style={{fontSize:"var(--fs-sm)"}}>· {f.month}</span></span>
+                       <span className="rowval" style={{fontSize:"var(--fs-base)",color:"#c0b492"}}>{weeksUntil(S,f)} week{weeksUntil(S,f)===1?"":"s"}</span>
+                     </div>
+                   ))}
+                 </Sect>
+               );
+  },
+  cellsNight: (S, X) => { const { setEar } = X;
+    const on = earOn(S), inside = earInside(S);
+               const ear = inside ? S.gladiators.find(g=>g.id===S.ear.gid) : null;
+               return (
+                 <Sect title="The cells at night"
+                   note={on ? (inside ? `${ear? ear.name : "—"} is listening` : `the gatekeeper · ${EAR_FEE}d a week`) : "nobody is listening"}
+                   open={(S.yardMissed||0) > 0}>
+                   {(S.yardMissed||0) > 0 && (
+                     <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:6}}>
+                       {S.yardMissed} thing{S.yardMissed===1?"":"s"} {S.yardMissed===1?"has":"have"} happened in that block that nobody told you about.
+                     </div>
+                   )}
+                   {!on ? (<>
+                     <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>
+                       Everything about these men reaches you as a word like "restless". Somebody has to be listening, and there are only two kinds of somebody.
+                     </div>
+                     <button className="btn btn-ghost" style={{width:"100%",marginBottom:6}} disabled={S.gold<EAR_FEE*4}
+                       onClick={()=>setEar("gate")}>Pay the gatekeeper · {EAR_FEE}d a week</button>
+                     <div className="dim" style={{fontSize:"var(--fs-base)",marginBottom:5}}>Or put one of your own inside it. He hears far more, and if they work out who he is, it costs the whole yard.</div>
+                     {activeG(S).filter(g=>!isAuctor(g)).map(g=>(
+                       <button key={g.id} className="optrow" style={{marginBottom:5,padding:9}} onClick={()=>setEar("man", g.id)}>
+                         <div className="flex items-center justify-between gap-2">
+                           <span className="disp" style={{fontSize:"var(--fs-base)"}}>{g.name}</span>
+                           <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{demeanor(g.defiance).toLowerCase()}</span>
+                         </div>
+                       </button>
+                     ))}
+                   </>) : (<>
+                     {(S.heard||[]).length===0
+                       ? <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>Nothing worth carrying up this week.</div>
+                       : (S.heard||[]).map((h,i)=>(
+                           <div key={i} style={{borderTop:"1px dotted #33271a",padding:"7px 0",fontSize:"var(--fs-lg)"}}>{h}</div>
+                         ))}
+                     {inside && (
+                       <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:7}}>
+                         {(S.ear.risk||0) > 90 ? "He is going to be found out. It is a question of which week."
+                          : (S.ear.risk||0) > 45 ? "He has been at this a while now. Men notice a man who is always nearby."
+                          : "Nobody suspects him yet."}
+                       </div>
+                     )}
+                     <button className="btn btn-ghost" style={{width:"100%",marginTop:8}} onClick={()=>setEar(null)}>
+                       {inside ? "Take him off it" : "Stop the retainer"}
+                     </button>
+                   </>)}
+                 </Sect>
+               );
+  },
+  lastWeek: (S, X) => {
+    const D=S.lastWeek; const dl=D.dl||{};
+               const bits=[]; if(dl.gold) bits.push(`${dl.gold>0?"+":""}${dl.gold}d`);
+               if(dl.fame) bits.push(`${dl.fame>0?"+":""}${dl.fame} fame`);
+               if(dl.unrest) bits.push(`${dl.unrest>0?"+":""}${dl.unrest} unrest`);
+               return (
+               <Sect title="Last week" note={bits.length? bits.join(" · ") : "a quiet one"}>
+                 {(D.lines||[]).length===0
+                   ? <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>Nothing happened worth the ink.</div>
+                   : D.lines.map((l,i)=>(
+                       <div key={i} style={{fontSize:"var(--fs-md)",padding:"3px 0",borderTop:i?"1px dotted #26201a":undefined,
+                         color: l.kind==="bad"?"#d9a89e" : l.kind==="good"?"#cfe0b0" : "#cfc0a0"}}>{l.text}</div>
+                     ))}
+                 {D.more>0 && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:5,fontStyle:"italic"}}>…and {D.more} more in the chronicle.</div>}
+               </Sect>
+               );
+  },
+  rivals: (S, X) => {
+    const away = (S.rivals||[]).filter(h=>h.away).length;
+    const fresh = (S.rivalLog||[]).filter(r=>S.week - r.week <= 4).length;
+    return (
+      <Sect title="The other houses"
+        note={`${fresh? `${fresh} this month · ` : ""}${away? `${away} away` : "all in Capua"}`}>
+        {(S.rivalLog||[]).slice(0,5).map((r,i)=>(
+          <div key={i} style={{borderTop:i?"1px dotted #33271a":"none",padding:"6px 0"}}>
+            <div style={{fontSize:"var(--fs-md)"}}>{r.text}</div>
+            <div className="dim" style={{fontSize:"var(--fs-sm)"}}>week {r.week}</div>
+          </div>
+        ))}
+      </Sect>
+    );
+  },
   cells: (S, X) => { const { doTourney, feast, walkCells } = X;
     return (
     <Sect open live={sectFresh(S,"cells")} sid="cells" title="What you can do for the block" note={`${activeG(S).length} in the cells · ${unrestWord(S.unrest).toLowerCase()}`}
@@ -21201,7 +21860,7 @@ export default function App(){
      already defined — the first attempt used "the last 2-space const" and landed inside the
      SHEETS object literal, which is a parse error and was caught by the build rather than by a
      reader. */
-  const SX = { askFavour, backHim, buyGear, carryOut, declare, dismissDoc, doRite, doTourney, feast, hireDoc, hireStaff, host, joinCollegium, letStaffGo, mut, offerTo, openLicence, roster, seekMatch, selG, sellOne, setCrest, setDrill, setEar, setPupil, standings, stopCollegium, stopRetrain, takeRise, vowTo, walkCells };
+  const SX = { askFavour, backHim, buyGear, carryOut, rackFilt, setRackFilt, declare, dismissDoc, doRite, doTourney, feast, hireDoc, hireStaff, host, joinCollegium, letStaffGo, mut, offerTo, openLicence, roster, seekMatch, selG, sellOne, setCrest, setDrill, setEar, setPupil, standings, stopCollegium, stopRetrain, takeRise, vowTo, walkCells };
 
   return (
     <div className={`lr shell${prefs.reduceMotion?" reduce-motion":""}${prefs.largeText?" large-text":""}${prefs.colorblind?" cb":""}`}>
@@ -21646,138 +22305,20 @@ export default function App(){
               </div>
             </div>
           )}
-          {(S.rivalLog||[]).length>0 && (()=>{
-            const away = (S.rivals||[]).filter(h=>h.away).length;
-            const fresh = (S.rivalLog||[]).filter(r=>S.week - r.week <= 4).length;
-            return (
-              <Sect title="The other houses"
-                note={`${fresh? `${fresh} this month · ` : ""}${away? `${away} away` : "all in Capua"}`}>
-                {(S.rivalLog||[]).slice(0,5).map((r,i)=>(
-                  <div key={i} style={{borderTop:i?"1px dotted #33271a":"none",padding:"6px 0"}}>
-                    <div style={{fontSize:"var(--fs-md)"}}>{r.text}</div>
-                    <div className="dim" style={{fontSize:"var(--fs-sm)"}}>week {r.week}</div>
-                  </div>
-                ))}
-              </Sect>
-            ); })()}
+          {(S.rivalLog||[]).length>0 && SECT.rivals(S, SX)}
 
 
-          {(()=>{ const on = earOn(S), inside = earInside(S);
-            const ear = inside ? S.gladiators.find(g=>g.id===S.ear.gid) : null;
-            return (
-              <Sect title="The cells at night"
-                note={on ? (inside ? `${ear? ear.name : "—"} is listening` : `the gatekeeper · ${EAR_FEE}d a week`) : "nobody is listening"}
-                open={(S.yardMissed||0) > 0}>
-                {(S.yardMissed||0) > 0 && (
-                  <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:6}}>
-                    {S.yardMissed} thing{S.yardMissed===1?"":"s"} {S.yardMissed===1?"has":"have"} happened in that block that nobody told you about.
-                  </div>
-                )}
-                {!on ? (<>
-                  <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>
-                    Everything about these men reaches you as a word like "restless". Somebody has to be listening, and there are only two kinds of somebody.
-                  </div>
-                  <button className="btn btn-ghost" style={{width:"100%",marginBottom:6}} disabled={S.gold<EAR_FEE*4}
-                    onClick={()=>setEar("gate")}>Pay the gatekeeper · {EAR_FEE}d a week</button>
-                  <div className="dim" style={{fontSize:"var(--fs-base)",marginBottom:5}}>Or put one of your own inside it. He hears far more, and if they work out who he is, it costs the whole yard.</div>
-                  {activeG(S).filter(g=>!isAuctor(g)).map(g=>(
-                    <button key={g.id} className="optrow" style={{marginBottom:5,padding:9}} onClick={()=>setEar("man", g.id)}>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="disp" style={{fontSize:"var(--fs-base)"}}>{g.name}</span>
-                        <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{demeanor(g.defiance).toLowerCase()}</span>
-                      </div>
-                    </button>
-                  ))}
-                </>) : (<>
-                  {(S.heard||[]).length===0
-                    ? <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>Nothing worth carrying up this week.</div>
-                    : (S.heard||[]).map((h,i)=>(
-                        <div key={i} style={{borderTop:"1px dotted #33271a",padding:"7px 0",fontSize:"var(--fs-lg)"}}>{h}</div>
-                      ))}
-                  {inside && (
-                    <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:7}}>
-                      {(S.ear.risk||0) > 90 ? "He is going to be found out. It is a question of which week."
-                       : (S.ear.risk||0) > 45 ? "He has been at this a while now. Men notice a man who is always nearby."
-                       : "Nobody suspects him yet."}
-                    </div>
-                  )}
-                  <button className="btn btn-ghost" style={{width:"100%",marginTop:8}} onClick={()=>setEar(null)}>
-                    {inside ? "Take him off it" : "Stop the retainer"}
-                  </button>
-                </>)}
-              </Sect>
-            ); })()}
+          {SECT.cellsNight(S, SX)}
 
 
 
 
 
-          {S.lastWeek && (()=>{ const D=S.lastWeek; const dl=D.dl||{};
-            const bits=[]; if(dl.gold) bits.push(`${dl.gold>0?"+":""}${dl.gold}d`);
-            if(dl.fame) bits.push(`${dl.fame>0?"+":""}${dl.fame} fame`);
-            if(dl.unrest) bits.push(`${dl.unrest>0?"+":""}${dl.unrest} unrest`);
-            return (
-            <Sect title="Last week" note={bits.length? bits.join(" · ") : "a quiet one"}>
-              {(D.lines||[]).length===0
-                ? <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>Nothing happened worth the ink.</div>
-                : D.lines.map((l,i)=>(
-                    <div key={i} style={{fontSize:"var(--fs-md)",padding:"3px 0",borderTop:i?"1px dotted #26201a":undefined,
-                      color: l.kind==="bad"?"#d9a89e" : l.kind==="good"?"#cfe0b0" : "#cfc0a0"}}>{l.text}</div>
-                  ))}
-              {D.more>0 && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:5,fontStyle:"italic"}}>…and {D.more} more in the chronicle.</div>}
-            </Sect>
-            ); })()}
+          {S.lastWeek && SECT.lastWeek(S, SX)}
 
           {SECT.annals(S, SX)}
 
-          {(()=>{ const now = festivalNow(S), soon = nextFestivals(S, 3);
-            return (
-              <Sect title="The year" note={`${seasonOf(S).name} · year ${yearOf(S)}, week ${yearWeek(S)}${now?" · games":""}`} open={!!now}>
-                {(()=>{ const Sn = seasonOf(S);
-                  return (
-                    <div style={{marginBottom:8}}>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="disp" style={{fontSize:"var(--fs-md)",fontWeight:700,
-                          color: Sn.key==="winter"?"#9dc0d4" : Sn.key==="summer"?"#d8ac5f" : Sn.key==="autumn"?"#c99a4b":"#9aa86a"}}>
-                          {Sn.name.toUpperCase()}
-                        </span>
-                        <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{Sn.months}</span>
-                      </div>
-                      <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:2}}>{Sn.line}</div>
-                      <div className="flex gap-3" style={{fontSize:"var(--fs-sm)",marginTop:4,flexWrap:"wrap"}}>
-                        {Sn.purse!==1 && <span style={{color:Sn.purse>1?"#9aa86a":"#d96f5d"}}>purses ×{Sn.purse.toFixed(2)}</span>}
-                        {Sn.train!==1 && <span style={{color:Sn.train>1?"#9aa86a":"#d96f5d"}}>training ×{Sn.train.toFixed(2)}</span>}
-                        {Sn.fat!==1 && <span style={{color:Sn.fat<1?"#9aa86a":"#d96f5d"}}>fatigue ×{Sn.fat.toFixed(2)}</span>}
-                        {Sn.upkeep>0 && <span className="blood">+{Sn.upkeep}d a man</span>}
-                        {Sn.heal!==1 && <span style={{color:Sn.heal>1?"#9aa86a":"#d96f5d"}}>mending ×{Sn.heal.toFixed(2)}</span>}
-                        {Sn.pits!==1 && <span className="blood">pits ×{Sn.pits.toFixed(2)}</span>}
-                      </div>
-                    </div>
-                  ); })()}
-                {now ? (<div style={{marginBottom:8}}>
-                  <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,color:"#e8d092"}}>{now.name.replace(/^the /,"").toUpperCase()}</div>
-                  <div style={{fontSize:"var(--fs-lg)",marginTop:3}}>{now.blurb}</div>
-                </div>) : (S.munera ? (<div style={{marginBottom:8}}>
-                  <div className="disp" style={{fontSize:"var(--fs-md)",fontWeight:700,color:"#d96f5d"}}>FUNERAL GAMES</div>
-                  <div style={{fontSize:"var(--fs-lg)",marginTop:3}}>A death in a noble house, and the old kind of games to mark it. Double purses, and every bout sine missione — that is what these were for.</div>
-                </div>) : <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>No festival this week. The pits are always open.</div>)}
-                <div className="flex gap-1" style={{marginBottom:6}}>
-                  {Array.from({length:YEAR_WEEKS}).map((_,i)=>{ const w=i+1;
-                    const f=CALENDAR.find(x=>x.w===w), cur=w===yearWeek(S);
-                    const sn = SEASONS.slice().reverse().find(x=>w>=x.at) || SEASONS[0];
-                    const base = sn.key==="winter"?"#2a3238" : sn.key==="summer"?"#33291a" : sn.key==="autumn"?"#2f2617" : "#25301f";
-                    return <div key={i} title={f?f.name:sn.name} style={{flex:1,height:cur?9:6,borderRadius:2,
-                      background: cur ? "#e8d092" : f ? (f.rest? "#5a6a35":"#8a6a2c") : base}}/>;
-                  })}
-                </div>
-                {soon.filter(f=>weeksUntil(S,f)>0).slice(0,2).map(f=>(
-                  <div key={f.key} className="flex items-center justify-between gap-2" style={{fontSize:"var(--fs-md)",padding:"2px 0"}}>
-                    <span className="rowname dim">{f.name} <span style={{fontSize:"var(--fs-sm)"}}>· {f.month}</span></span>
-                    <span className="rowval" style={{fontSize:"var(--fs-base)",color:"#c0b492"}}>{weeksUntil(S,f)} week{weeksUntil(S,f)===1?"":"s"}</span>
-                  </div>
-                ))}
-              </Sect>
-            ); })()}
+          {SECT.year(S, SX)}
 
 
 
@@ -22278,46 +22819,7 @@ export default function App(){
                 tab's House sheet — under Records &amp; Annals — and whoever is looking for a place will be here.
               </div>
             </div>
-          ) : STAFF_KEYS.map(k=>{ const s = S[k], ST = STAFF[k], lvl = bLevel(S, ST.room);
-            const mkt = (S.staffMarket||{})[k] || [];
-            return (
-              <Sect key={k} title={`The ${ST.name.toLowerCase()}`}
-                note={s ? `${s.name} · ${s.wage}d/wk` : !lvl ? "no room for one" : "the post is empty"}>
-                {!lvl ? (
-                  <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
-                    You have no {ST.room==="valetudinarium"?"infirmary":"armoury"} for him to work in. Build the room first.
-                  </div>
-                ) : s ? (<>
-                  <div className="disp" style={{fontSize:"var(--fs-lg)",color:"#e8d092"}}>{s.name} <span className="dim" style={{fontSize:"var(--fs-base)"}}>of {s.origin}</span></div>
-                  <Bar v={s.skill} label="skill" color="linear-gradient(90deg,#4a3a24,#c99a4b)"/>
-                  <div className="dim" style={{fontSize:"var(--fs-md)",marginTop:4}}>
-                    {k==="medicus"
-                      ? `Wounds close ${Math.round((medicusMult(S)-1)*100)}% faster than the room alone, and a wound is ${Math.round(medicusGuard(S)*100)}% less likely to set badly.`
-                      : `Steel costs ${Math.round((1-armourerCut(S))*100)}% less, wears ${Math.round((1-armourerWear(S))*100)}% slower, and mends ${Math.round((armourerMend(S)-1)*100)}% faster.`}
-                  </div>
-                  <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>
-                    {s.weeks} weeks in the house. He wants {ST.wants}.
-                  </div>
-                  <button className="btn btn-ghost" style={{width:"100%",marginTop:7}} onClick={()=>letStaffGo(k)}>Let him go</button>
-                </>) : (<>
-                  <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:7}}>{ST.blurb}</div>
-                  {mkt.length===0
-                    ? <div className="dim" style={{fontSize:"var(--fs-md)"}}>Nobody is looking for a place this week.</div>
-                    : mkt.map(c=>(
-                        <button key={c.id} className="optrow" style={{marginBottom:6,padding:10}}
-                          disabled={S.gold<c.fee} onClick={()=>hireStaff(k,c.id)}>
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d092"}}>{c.name} <span className="dim">of {c.origin}</span></span>
-                            <span className="rowval gold" style={{fontSize:"var(--fs-sm)"}}>{c.fee}d · {c.wage}d/wk</span>
-                          </div>
-                          <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2}}>
-                            {c.skill>=68?"Very good, and knows it." : c.skill>=50?"Sound enough." : "Cheap, and it will show."} · skill {c.skill}
-                          </div>
-                        </button>
-                      ))}
-                </>)}
-              </Sect>
-            ); })}
+          ) : STAFF_KEYS.map(k => SECT.staff(S, SX, k))}
           {/* ---- WHAT THIS TAB IS FOR, BEFORE THE DETAIL OF IT, from v3.3.0 ----
                The market's answer — how much room is in the cells and how fresh the stock is — was this
                line of flavour text, measured at y=361 under two staff sections. The header already
@@ -22346,29 +22848,7 @@ export default function App(){
                 </div>
               </div>
             ); })()}
-          {(()=>{ const here = [...new Set((S.market||[]).map(g=>g.slaver).filter(Boolean))];
-            if(!here.length) return null;
-            return (
-              <Sect live={sectFresh(S,"block")} sid="block" title="Who is standing at the block" note={`${here.length} slaver${here.length===1?"":"s"}`}
-                mark={sectMark(S,"block")}>
-                {here.map(k=>{ const S2 = slaverOf(k), x = dealings(S,k);
-                  return (
-                    <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:6,marginTop:6}}>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="rowname" style={{fontSize:"var(--fs-md)"}}>{S2.full}</span>
-                        <span className="rowval dim" style={{fontSize:"var(--fs-sm)",whiteSpace:"nowrap"}}>{slaverWord(S,k)}</span>
-                      </div>
-                      <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:1}}>{S2.line}</div>
-                      {(x.bought>0 || x.burned>0) && (
-                        <div style={{fontSize:"var(--fs-sm)",marginTop:2,color:x.burned>=2?"#d96f5d":"#8f7e62"}}>
-                          {x.bought} bought from him{x.burned>0 ? `, ${x.burned} not what he said` : ""}
-                          {slaverPrice(S,k)<1 ? ` · prices you ${Math.round((1-slaverPrice(S,k))*100)}% keener` : slaverPrice(S,k)>1 ? ` · ${Math.round((slaverPrice(S,k)-1)*100)}% dearer for you` : ""}
-                        </div>
-                      )}
-                    </div>
-                  ); })}
-              </Sect>
-            ); })()}
+          {SECT.block(S, SX)}
           {(()=>{ const p = paragonOf(S); if(!p) return null;
             const R2 = paragonReach(S, p), L = liquidate(S);
             const canNow = S.gold >= p.price, canAfter = S.gold + L.total >= p.price;
@@ -22569,55 +23049,7 @@ export default function App(){
 
           {SECT.houseName(S, SX)}
 
-          {(()=>{ const dm = domusOf(S), w = dm.wife, kids = dm.children.filter(c=>!c.dead);
-            const UP = c => { const u=c.up||{}, p=u.palus||0, r=u.rhetor||0, b=u.box||0; if(!(p+r+b)) return "still small";
-              return p>=r&&p>=b ? "raised in the yard" : r>=b ? "sent for letters" : "learning the trade"; };
-            /* the closed note used to read "no family yet" in BOTH of the two ways a house can have
-               no family, and they are not the same thing: one is a bar you can clear this year and
-               the other is a door that has shut. `marryReady` wants fame 60 or any rung of the
-               census AND a lanista under 56, so the summary names whichever of the two is holding. */
-            return (
-            <Sect live={sectFresh(S,"blood")} sid="blood" title="The blood of the house"
-              note={w ? `${kids.filter(c=>!c.wed).length} at home` : marryReady(S) ? "a match awaits"
-                : (S.lanista && S.lanista.age >= 56) ? "too late for a match"
-                : `a match wants fame 60 — you have ${rnd(S.fame)}`}>
-              {w ? (<>
-                <div className="flex items-center justify-between gap-2" style={{marginBottom:6}}>
-                  <span className="disp" style={{fontSize:"var(--fs-md)",color:"#d9c0e0"}}>{w.name}</span>
-                  <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>of {w.family} · your wife</span>
-                </div>
-                {kids.length===0 && <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>No children yet. The house waits.</div>}
-                {kids.map(c=>{ const age=childAge(S,c); const heir = S.heir && S.heir.cid===c.id;
-                  return (
-                    <div key={c.id} style={{borderTop:"1px dotted #33271a",padding:"5px 0"}}>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="rowname" style={{fontSize:"var(--fs-md)",color:heir?"#e8d092":undefined}}>{c.name}{heir?" · your heir":""}</span>
-                        <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{c.sex==="m"?"son":"daughter"} · {age} yr{c.wed?" · married out":""}</span>
-                      </div>
-                      {!c.wed && <div className="dim" style={{fontSize:"var(--fs-sm)"}}>{c.sex==="m"? UP(c) : age>=15?"of an age to be matched":"still at home"}{c.mentorId&&(()=>{ const m=S.gladiators.find(g=>g.id===c.mentorId); return m?` · at ${m.name}'s shoulder`:""; })()}</div>}
-                    </div>
-                  ); })}
-                <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",marginTop:7}}>A house with a wife in it runs a shade warmer, and a son raised in this yard becomes an heir worth more than whoever is left when you die.</div>
-              </>) : marryReady(S) ? (<>
-                <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:7}}>
-                  A man alone at the head of a ludus leaves nothing behind but a ledger. Take a wife, and the house can make an heir of its own blood.
-                </div>
-                <button className="btn" style={{width:"100%"}} onClick={seekMatch}>Let it be known you are looking for a match</button>
-              </>) : (S.lanista && S.lanista.age >= 56) ? (
-                /* AND THIS BRANCH USED TO SAY "climb a little higher", WHICH WAS A LIE.
-                   `marryReady` is false above 55 whatever the house is worth, so an old lanista was
-                   told to work at a thing no amount of work would ever open. The blood is shut; the
-                   line is not, because `heirEligible` always offers a nephew. */
-                <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
-                  No family in Capua will match a daughter to a lanista of {S.lanista.age}, and no purse changes that. Whatever this house leaves behind will not be your own blood — name an heir from outside it, on the House sheet, before the choice is made for you.
-                </div>
-              ) : (
-                <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
-                  Climb a little higher and the matchmakers of Capua will come calling. They want fame 60, or any rung of the census; you have fame {rnd(S.fame)} and stand {riseRank(S).short}.
-                </div>
-              )}
-            </Sect>
-          ); })()}
+          {SECT.blood(S, SX)}
 
           </>)}
 
@@ -22629,158 +23061,9 @@ export default function App(){
               exactly one place: the screen you only ever see once, at the end. A house
               that simply keeps going — which is what a long successful run does — never
               saw a word of it. Same reckoning, same verdict, readable any week. */}
-          {S.week > 20 && (()=>{ const c = closing(S), R2 = c.R2, V = verdictOf(c); return (
-            <Sect title="The house so far" note={`${R2.years} year${R2.years===1?"":"s"}`}>
-              <div className="dim" style={{fontSize:"var(--fs-base)",marginBottom:6}}>
-                {R2.years} year{R2.years===1?"":"s"} · {S.week} weeks · fame {rnd(S.fame)}
-                {c.gen>1 && ` · ${c.gen} lanistae`}
-                {c.doctrine && ` · ${c.doctrine.name}`}
-              </div>
-              <div className="grid grid-cols-3 gap-2" style={{fontSize:"var(--fs-md)"}}>
-                <div><div className="dim" style={{fontSize:"var(--fs-sm)"}}>Served</div>{R2.served}</div>
-                <div><div className="dim" style={{fontSize:"var(--fs-sm)"}}>Bouts</div>{c.bouts}{c.bouts>0 && <span className="dim" style={{fontSize:"var(--fs-sm)"}}> · {c.winPc}%</span>}</div>
-                <div><div className="dim" style={{fontSize:"var(--fs-sm)"}}>Buried</div><span className="blood">{R2.lost}</span></div>
-                <div><div className="dim" style={{fontSize:"var(--fs-sm)"}}>Freed</div><span className="gold">{R2.freed}</span></div>
-                <div><div className="dim" style={{fontSize:"var(--fs-sm)"}}>Walked out</div>{R2.out}</div>
-                <div><div className="dim" style={{fontSize:"var(--fs-sm)"}}>Killed</div>{R2.k}</div>
-              </div>
-              <div className="panel" style={{padding:11,marginTop:9,background:"#1c1610",borderColor:"#6d5426"}}>
-                <div className="disp" style={{fontSize:"var(--fs-md)",color:"#e8d092",marginBottom:3}}>{V.name}</div>
-                <div style={{fontSize:"var(--fs-md)"}}>{V.say(c)}</div>
-              </div>
-              {c.best && c.best.wins>0 && (
-                <div style={{fontSize:"var(--fs-md)",borderTop:"1px dotted #33271a",paddingTop:6,marginTop:8}}>
-                  <span className="dim">The best of them so far is </span>
-                  {c.best.nick? `${c.best.name}, ${c.best.nick}` : c.best.name}
-                  <span className="dim"> — {c.best.wins} won.</span>
-                </div>
-              )}
-              <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",marginTop:7}}>
-                Nothing is settled while the gate still opens. This is only where it stands.
-              </div>
-            </Sect>
-          ); })()}
+          {S.week > 20 && SECT.soFar(S, SX)}
 
-          {(()=>{ const rk = riseRank(S), nx = riseNext(S), need = riseNeed(S), can = canClaimRise(S);
-            const stand = S.rise ? S.rise.standing : 0;
-            /* the same condition `riseWeek` uses to decide whether the meter climbs or drains */
-            const rising = !!(need && need.fameOk && need.favorOk);
-            /* the first SUBSTANTIVE thing short, which is what the button is supposed to say */
-            const short = !need ? null : !need.fameOk ? "fame" : !need.favorOk ? "favour"
-              : !need.goldOk ? "coin" : !need.feeOk ? "fee" : null;   /* #154: the fee is still coin */
-            return (
-            <Sect title="Your Standing" note={rk.name} open={can} mark={sectMark(S,"standing")}>
-              <div className="disp" style={{fontSize:"var(--fs-lg)",color:"#e8d092"}}>{rk.name}</div>
-              <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",margin:"3px 0 9px"}}>{rk.blurb}</div>
-              {riseOf(S)>0 && rk.perk && (
-                <div className="panel" style={{padding:9,marginBottom:10,background:"#171712",borderColor:"#3e4a30"}}>
-                  <span className="tag" style={{color:"#a9c98a",borderColor:"#3e4a30"}}>What it buys</span>
-                  <div style={{fontSize:"var(--fs-md)",marginTop:3}}>{rk.perk}</div>
-                </div>
-              )}
-              {nx ? (
-                <div className="panel" style={{padding:11,background:"#1c1610",borderColor:can?"#c99a4b":"#3e2f1f"}}>
-                  <div className="flex items-center justify-between gap-2" style={{marginBottom:5}}>
-                    <span className="disp" style={{fontSize:"var(--fs-base)",color:can?"#e8d092":"#cfc0a0"}}>Next: {nx.name}</span>
-                    <span className="tag">{nx.short}</span>
-                  </div>
-                  {/* ---- A METER THAT SAYS "GROWING" WHILE IT DRAINS ----
-                       `riseWeek` adds 4 or more to standing only when fame AND favour are both met,
-                       and takes 2 OFF every week either is short. Measured over 1,256 weeks of the
-                       reference player, the meter is slipping rather than filling in 77.1% of them —
-                       and this label said "the town must grow used to you" in all of them. A bar that
-                       reads the same going up as coming down is not reporting a direction. */}
-                  <div className="tag" style={{marginBottom:5,
-                    color: need.full ? "#a9c98a" : rising ? undefined : "#d98476",
-                    borderColor: need.full ? "#3e4a30" : rising ? undefined : "#5a2a22"}}>
-                    {need.full ? "The town is used to you" : rising
-                      ? "The town is growing used to you" : "Their interest is cooling, not growing"}
-                  </div>
-                  <div className="track" style={{height:6,marginBottom:9}}>
-                    <div className="fill" style={{width:`${stand}%`, background: stand>=100? "linear-gradient(90deg,#6a5a2c,#e8d092)"
-                      : rising ? "linear-gradient(90deg,#4a4030,#c99a4b)" : "linear-gradient(90deg,#3a2622,#8a4438)"}}/>
-                  </div>
-                  {[["Renown", need.fame, rnd(S.fame), need.fameOk],
-                    ["Patrons' favour", need.favor, rnd(S.favor), need.favorOk],
-                    ["What the census must find you worth", need.cost, need.worth, need.goldOk]].filter(r=>r[1]>0).map(([lbl,req,have,ok])=>(
-                    <div key={lbl} className="flex items-center justify-between gap-2" style={{fontSize:"var(--fs-base)",padding:"2px 0"}}>
-                      <span style={{color:ok?"#a9c98a":"#cfc0a0"}}>{ok?"✓":"·"} {lbl}</span>
-                      <span className="rowval dim" style={{color:ok?"#a9c98a":undefined}}>{have} / {req}</span>
-                    </div>
-                  ))}
-                  {need.cost>0 && (
-                    <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:5}}>
-                      The census counts what you have — the box, what the town owes you, the steel on the racks,
-                      the men in the cells and the wings they stand in — and it does not take any of it. Being
-                      received costs {need.fee} denarii in coin, for sportula, clerks and a night the town
-                      remembers{riseOf(S)>=3 || (nx.cost||0)>=8000 ? ", and the city's charges rise with the rank thereafter" : ""}.
-                    </div>
-                  )}
-                  {/* ---- AND THE LEVER, WHICH THE PANEL NEVER NAMED ----
-                       Favour is the first failing gate on the next rung in 60-83% of weeks past year
-                       three, and it is bought at your own table: measured on the same eight seeds, a
-                       lanista who entertains reaches mean rung 2.70 against 1.50, favour 79 against
-                       40, and 218 weeks at Rome against 31. One party alone IS a treadmill — the
-                       per-patron bump is repaid by decay in about fifteen weeks — but kept up it pins
-                       favour at 100 by the thirtieth week for about 457 denarii a week. The panel
-                       named the number and never once said where the number comes from. */}
-                  {short === "favour" && (
-                    <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:5}}>
-                      Favour is bought at your own table and at the games. Throw a party — the block below
-                      this one — and every patron warms to you; answer what they ask for and they warm
-                      further. Leave them alone and it cools every week, which is what is happening now.
-                    </div>
-                  )}
-                  {/* ---- AND THE TERM THAT IS ACTUALLY IN THE WAY, WHICH HAD NO SENTENCE AT ALL ----
-                       The favour hint above was written because "the panel named the number and never
-                       once said where the number comes from". The coin row had the same hole, and it
-                       is the row that matters: split by the game's own four booleans over 192
-                       house-runs on four policies and three seeds (`test/probes/rung.mjs`), coin is
-                       the LAST TERM STANDING on 96-100% of the weeks a house is one short of rungs 3
-                       and above. Favour does not appear in a single one-short row at any rung in any
-                       arm — the older reading that favour holds the top came from `estate`'s `miser`,
-                       which banks by switching off the table, and the table IS the favour engine.
-                       What the sentence has to carry is the thing the row does not: `goldOk` reads
-                       `d.gold` and nothing else, so every denarius in stone is a denarius the census
-                       cannot see. Measured: an arm that stops building and keeps entertaining reaches
-                       Known in Rome in 3-5 houses of 16, against 0-1 for the reference player. */}
-                  {short === "coin" && (
-                    <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:5}}>
-                      Everything the house owns counts towards this, so a wing put up or a man bought moves
-                      it as surely as coin does — and the ladder no longer asks you to choose between the
-                      census and the stone. What it will not count is a purse you have already spent.
-                    </div>
-                  )}
-                  {short === "fee" && (
-                    <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:5}}>
-                      The census is satisfied — the house is worth what it must be. What is missing is the
-                      {" "}{need.fee} denarii the reception itself costs, and that part is paid in coin.
-                    </div>
-                  )}
-                  {/* ---- A BUTTON THAT BLAMED THE METER FOR EVERYTHING ----
-                       `!need.full` was tested FIRST, and the meter is never full while fame or favour
-                       is short because `riseWeek` drains it in exactly that case. Measured over 1,256
-                       weeks of the reference player: this button read "The town is not yet used to
-                       you" in 98.7% of all weeks, and in 84.7% of those the thing actually short was
-                       fame, favour or coin. It named the one term that was a CONSEQUENCE of the others
-                       and never named a cause. The substantive gates are tested first now. */}
-                  <button className={`btn ${can?"":"btn-ghost"}`} style={{width:"100%",marginTop:8}} disabled={!can} onClick={takeRise}>
-                    {can ? `Take your place as ${nx.name} — ${need.fee}d`
-                      : short === "fame" ? `Rome counts your renown at ${rnd(S.fame)} — the rung wants ${need.fame}`
-                      : short === "favour" ? `Your patrons hold you at ${rnd(S.favor)} — the rung wants ${need.favor}`
-                      : short === "coin" ? `The census wants you worth ${nx.cost}d — the house counts ${need.worth}`
-                      : short === "fee" ? `Worth it, and ${need.fee - rnd(S.gold)}d short of the reception itself`
-                      : !need.full ? `The town is not yet used to you — ${rnd(stand)} of 100`
-                      : `Pay ${need.fee}d to be received`}
-                  </button>
-                </div>
-              ) : (
-                <div className="panel" style={{padding:11,background:"#1c1610",borderColor:"#c99a4b"}}>
-                  <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>There is no higher rung. A slaver climbed all the way to Rome, and men will tell the story long after the sand forgets your name.</div>
-                </div>
-              )}
-            </Sect>
-          ); })()}
+          {SECT.yourStanding(S, SX)}
 
           {/* ---- THE LEVER, PUT NEXT TO THE PANEL THAT NAMES IT ----
                `reach` measured this at y=2,655 on this face — three screens down, and sixth of seven
@@ -22790,137 +23073,9 @@ export default function App(){
                measured on the census ladder (mean rung 2.70 against 1.50, and 218 weeks at Rome against
                31), so it now sits under the panel that sends you to it, and the copy is true. */}
           {SECT.party(S, SX)}
-          {(!S.over && (S.fame >= 250 || (S.flags.primusHeld||0) > 0 || riseOf(S) >= 2 || romeRuns(S) > 0)) && (()=>{
-            const sen = (S.patrons||[]).filter(p=>p.rank==="senator").sort((a,b)=>b.favor-a.favor)[0];
-            const bar = romeBar(S), ready = romeReady(S), been = romeRuns(S) > 0;
-            const rungs = [
-              /* v2.53.0 opened a second road — the census — and this screen went on
-                 naming only the first, so a house climbing the ladder was being told
-                 the only way up was an afternoon it had already decided against. */
-              { met:romeProved(S), label:"A primus at Capua, or the fourth rung",
-                detail:(S.flags.primusHeld||0)>0 ? "the town has crowned your man"
-                  : riseOf(S) >= ROME_RANK ? `the census counts you ${RISE_RANKS[riseOf(S)].short}`
-                  : `top the bill at a great games and win it — or climb to ${RISE_RANKS[ROME_RANK].name} (rung ${ROME_RANK} of ${RISE_RANKS.length-1}, you are ${riseOf(S)})` },
-              { met:!!(sen && sen.favor>=70), label:"A senator in your debt", detail:sen ? `${sen.name} · favour ${rnd(sen.favor)} / 70` : "no senator has taken an interest yet" },
-              { met:bayWide(S), label:"Known the length of the bay", detail:`${Math.round(bayKnownTotal(S)/180*100)}% — Pompeii, Neapolis, Puteoli · shortens the road`, soft:true },
-              { met:S.fame >= bar, label:"A name that carries to Rome", detail:`${rnd(S.fame)} / ${rnd(bar)} renown${romeRuns(S)>0?` (higher each campaign)`:""}` },
-            ];
-            const doneCount = rungs.filter(r=>r.met || r.soft).length;
-            return (
-            <Sect title="The road to Rome" note={been ? `${romeTriumphs(S)?`${romeTriumphs(S)} taken`:`best ${romeBest(S)} of 3`}` : ready ? "Rome is calling" : `${rungs.filter(r=>r.met && !r.soft).length} of 3`} open={ready}
-              mark={sectMark(S,"rome")}>
-              <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",margin:"1px 0 9px"}}>
-                {been
-                  ? "You have stood on the imperial sand. The city keeps its own tablet on you now, and every return asks a greater name than the last."
-                  : "The imperial games are the summit. There is a way up to them, and it runs through Capua's crown, a senator's favour, and a name loud enough to be heard in the capital."}
-              </div>
-              {rungs.map((r,i)=>(
-                <div key={i} style={{padding:"5px 0",borderTop:i?"1px dotted #26201a":undefined}}>
-                  <div style={{fontSize:"var(--fs-md)",color:r.met?"#a9c98a":"#cfc0a0"}}>{r.met?"✓":r.soft?"◦":"·"} {r.label}</div>
-                  <div className="dim" style={{fontSize:"var(--fs-sm)",marginLeft:14,marginTop:1,overflowWrap:"anywhere"}}>{r.detail}</div>
-                </div>
-              ))}{been && <RomeStanding S={S}/>}
-              <div className="panel" style={{padding:10,marginTop:9,background:"#1c1610",borderColor:ready?"#c99a4b":"#3e2f1f"}}>
-                <div style={{fontSize:"var(--fs-md)",color:ready?"#e8d092":"#cfc0a0"}}>
-                  {ready ? "The road is open — a letter under an imperial seal cannot be far behind."
-                    : been && S.rome ? "You are on the imperial sand now."
-                    : `Rome is watching. It will send for a house that has done all three${bayWide(S)?", and the bay has already carried your name north":""}.`}
-                </div>
-              </div>
-            </Sect>
-            ); })()}
+          {(!S.over && (S.fame >= 250 || (S.flags.primusHeld||0) > 0 || riseOf(S) >= 2 || romeRuns(S) > 0)) && SECT.rome(S, SX)}
 
-          {(()=>{ const bg = blessOf(S), pi = pietyOf(S), stake = vowStake(S);
-            /* It opened only for a house that already had a vow standing or was nearly
-               godless — so the one screen that could start any of this was shut to every
-               house that had never touched it, which was all of them. It opens when there
-               is something to do: a blessing riding, an ill turn to sit out, or an altar
-               that will take a gift the box can stand. */
-            const cheapest = Math.min(...GOD_KEYS.map(k=>GODS[k].cost(S)));
-            const canAct = offeringReady(S) && S.gold >= cheapest;
-            return (
-            <Sect live={sectFresh(S,"temple")} sid="temple" title="The Temple" note={bg ? `blessed · ${GODS[bg].name}` : pietyWord(pi)}
-              mark={sectMark(S,"temple")}
-              open={!!S.vow || !!bg || pi<=20 || illLuck(S) || canAct}>
-              <div className="flex items-center justify-between" style={{marginBottom:3,fontSize:"var(--fs-md)"}}>
-                <span>Piety of the house</span>
-                <span style={{color: pi>=60?"#e0bd72":pi>=38?"#cfc0a0":pi>=18?"#d8ac5f":"#d96f5d"}}>{pietyWord(pi)}</span>
-              </div>
-              <div className="track" style={{height:6}}>
-                <div className="fill" style={{width:`${pi}%`, background: pi<20? "linear-gradient(90deg,#7c2a22,#cf5a49)" : "linear-gradient(90deg,#6a5a2c,#e0bd72)"}}/>
-              </div>
-              <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",margin:"5px 0 9px"}}>
-                Rome did nothing without the gods. A pious house keeps the patrons and the crowd warm; a godless one, the streets restless — and the omens turn against it.
-              </div>
-              {bg && (
-                <div className="panel" style={{padding:9,marginBottom:9,background:"#1c1610",borderColor:"#c99a4b"}}>
-                  <div className="flex items-center justify-between">
-                    <span className="tag tag-gold">Blessed · {GODS[bg].name}</span>
-                    <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{blessLeft(S)}w left</span>
-                  </div>
-                  <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:3}}>{GODS[bg].boon}</div>
-                </div>
-              )}
-              {illLuck(S) && !bg && <div className="blood" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:8}}>
-                The house is under an ill turn — an omen defied, or a vow let go. It will pass.
-              </div>}
-              {S.vow ? (
-                <div className="panel" style={{padding:9,marginBottom:9,background:"#241b11",borderColor:"#6d5426"}}>
-                  <span className="tag" style={{borderColor:"#6d5426",color:"#d8ac5f"}}>A vow stands · {GODS[S.vow.god]?GODS[S.vow.god].name:"a god"}</span>
-                  <div style={{fontSize:"var(--fs-md)",marginTop:4}}>Not a man to fall before it is out — <span className="dim">{Math.max(1,S.vow.until-S.week)} week{S.vow.until-S.week===1?"":"s"} left</span>. {S.vow.stake}d pledged on it.</div>
-                  {/* what it is worth is what it has stood through, and the panel says so
-                      rather than leaving a player to find out at the settlement */}
-                  {/* VOW_BLESS_AT was read here and declared nowhere — the identifier
-                      appeared exactly once in the file and once in the built bundle, with
-                      no binding in front of it, so this line threw ReferenceError inside
-                      the render. Which means: any house with a vow standing that opened
-                      the temple got no screen at all. It shipped in the release that added
-                      this very panel, and neither check could see it — `temple` settles vows
-                      by calling resolveVow and never renders, `sweep` renders and never has
-                      a vow. The name was left over from before the vow stopped handing out
-                      blessings; there is one threshold in this system now and this is it. */}
-                  <div style={{fontSize:"var(--fs-base)",marginTop:3,color:vowRisked(S.vow)>=VOW_EARNT_AT?"#a9c98a":"#cfc0a0"}}>
-                    {S.vow.bouts||0} card{(S.vow.bouts||0)===1?"":"s"} fought under it · comes back at {rnd(S.vow.stake*vowReturn(S.vow))}d
-                    {vowRisked(S.vow) >= VOW_EARNT_AT
-                      ? ` and the piety of a house that risked something`
-                      : `, and ${VOW_EARNT_AT - vowRisked(S.vow)} more card${VOW_EARNT_AT-vowRisked(S.vow)===1?"":"s"} before the gods count it as risked`}
-                  </div>
-                </div>
-              ) : (
-                <div className="dim" style={{fontSize:"var(--fs-sm)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:6}}>An offering, or a vow</div>
-              )}
-              {GOD_KEYS.map(k=>{ const G = GODS[k], cost = G.cost(S), ready = offeringReady(S), afford = S.gold>=cost;
-                return (
-                  <div key={k} className="panel" style={{padding:9,marginBottom:6,background:"#1c1610"}}>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d092"}}>{G.name} <span className="dim" style={{fontWeight:400}}>· {G.of}</span></span>
-                      <span className="rowval gold" style={{fontSize:"var(--fs-sm)"}}>{cost}d</span>
-                    </div>
-                    <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2}}>{G.boon}</div>
-                    <div className="flex gap-2" style={{marginTop:6}}>
-                      <button className="btn" style={{flex:1}} disabled={!ready || !afford} onClick={()=>offerTo(k)}>
-                        {!ready ? `Altar rests · ${OFFERING_COOL-(S.week-S.lastOffering)}w` : !afford ? "Not enough coin" : `Offer · ${G.weeks}w blessing`}
-                      </button>
-                      {/* the label read "Vow ·  stake" — a figure that was never
-                          interpolated, so the one button in the game that asks a player to
-                          pledge coin never said how much */}
-                      {!S.vow && <button className="btn btn-ghost" style={{flex:1}} disabled={S.gold < stake}
-                        onClick={()=>setAsk({ title:`A Vow to ${G.name}`, confirm:`Swear it · ${stake}d`,
-                          /* "the coin returns doubled in goodwill" was a rosy description of
-                             a bet a young house loses more often than it wins: measured over
-                             200 vows, a house under fame 300 keeps 46% of them. It says what
-                             it is betting on now, in the house's own recent dead. */
-                          text:`You pledge ${stake} denarii to ${G.name} and swear that not a man of this house will fall in the month to come. What comes back depends on what you risked in it — nothing ventured, your pledge and a polite word; a month of hard cards kept clean, the coin with interest and a markedly more pious house. A blessing is bought at the altar, not won here. Break it — bury a man before it is out — and the coin is forfeit and the gods turn cold.${buried20(S) ? ` You have buried ${buried20(S)} in the last twenty weeks.` : ` You have buried nobody in twenty weeks.`}`,
-                          run:()=>vowTo(k) })}>{S.gold < stake ? "Not enough to pledge" : `Vow · ${stake}d`}</button>}
-                    </div>
-                  </div>
-                );
-              })}
-              <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",marginTop:4}}>
-                One blessing rides with the house at a time; a fresh offering takes the last one's place. The gods keep their own counsel about which houses they favour.
-              </div>
-            </Sect>
-          ); })()}
+          {SECT.temple(S, SX)}
           {lawOf(S).edicts.length>0 && (
             SECT.law(S, SX)
           )}
@@ -22971,38 +23126,7 @@ export default function App(){
             SECT.owed(S, SX)
           )}
 
-          {(()=>{ const D = doctrineOf(S);
-            return (
-              <Sect live={sectFresh(S,"school")} sid="school" title="The doctrine of the house" note={D? D.name : "none set"}>
-                {D ? (<>
-                  <div className="disp" style={{fontSize:"var(--fs-xl)",color:"#e8d092"}}>{D.name}</div>
-                  <div style={{fontSize:"var(--fs-lg)",fontStyle:"italic",marginTop:3}}>{D.creed}</div>
-                  <div className="dim" style={{fontSize:"var(--fs-md)",marginTop:5}}>{D.body}</div>
-                  <div className="laurel" style={{fontSize:"var(--fs-base)",marginTop:5}}>{D.note}</div>
-                </>) : (
-                  <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
-                    This house has no school. It does what the week asks and Capua forms its own opinion, which is the opinion you deserve.
-                  </div>
-                )}
-                <div style={{marginTop:9}}>
-                  {DOC_KEYS.filter(k=>!docIs(S,k)).map(k=>{ const X = DOCTRINES[k];
-                    const fee = D ? rnd(X.cost*1.8) : X.cost;
-                    return (
-                      <button key={k} className="optrow" style={{marginBottom:6,padding:10}}
-                        disabled={S.gold<fee} onClick={()=>declare(k)}>
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d092"}}>{X.name}</span>
-                          <span className="rowval gold" style={{fontSize:"var(--fs-sm)"}}>{fee}d</span>
-                        </div>
-                        <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2,textAlign:"left"}}>{X.note}</div>
-                      </button>
-                    ); })}
-                </div>
-                {D && <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:4}}>
-                  Turning the house over costs nearly twice as much, twenty fame, and a week of every man wondering what the last year was for.
-                </div>}
-              </Sect>
-            ); })()}
+          {SECT.doctrine(S, SX)}
 
           {S.election && !S.election.done && (
             SECT.aedileship(S, SX)
@@ -23203,95 +23327,7 @@ export default function App(){
             })}
           </div>
 
-          {SLOTS.filter(s=>s===rack).map(slot=>{
-            const benchOpen = masterOpen(S);
-            const all = Object.entries(GEAR).filter(([id,it])=>it.slot===slot
-              && (!it.master || benchOpen || (S.gear[id]||0) > 0));
-            /* whose styles are actually in this yard — 2.41 of six classes on a measured week */
-            const mine = [...new Set(activeG(S).map(g=>g.cls))];
-            const inStyle = it => !it.styles || !it.styles.length || it.styles.some(c=>mine.includes(c));
-            const FILTS = [
-              ["style", "In our styles", it=>inStyle(it)],
-              ["all",   "Everything",    ()=>true],
-              ["owned", "On the racks",  (it,id)=>(S.gear[id]||0) > 0],
-            ];
-            const F = FILTS.find(x=>x[0]===rackFilt) || FILTS[0];
-            const items = all.filter(([id,it])=>F[2](it,id))
-              .sort((a,b)=>(a[1].price||0)-(b[1].price||0));
-            const own = all.reduce((n,[id])=>n+(S.gear[id]||0),0);
-            const idle = all.reduce((n,[id])=>n+gearFree(S,id),0);
-            const cheapest = items.filter(([,it])=>it.price>0).map(([,it])=>gearPrice(S,it.price,slot)).sort((a,b)=>a-b)[0];
-            return (
-            <React.Fragment key={slot}>
-              <Sect open title={`The ${SLOT_NAME[slot].toLowerCase()} rack`}
-                note={own ? `${own} owned${idle?` · ${idle} idle`:""}` : cheapest ? `from ${cheapest}d` : "house stock"}>
-                {/* the filter, and it says what it is hiding rather than hiding it silently */}
-                <div className="flex gap-1" style={{flexWrap:"wrap",marginBottom:3}}>
-                  {FILTS.map(([k,label,fn])=>{
-                    const n = all.filter(([id,it])=>fn(it,id)).length;
-                    return (
-                      <button key={k} className={`chip ${rackFilt===k?"on":""}`} onClick={()=>setRackFilt(k)}
-                        style={{fontSize:"var(--fs-micro)",padding:"4px 10px",
-                          borderColor: rackFilt===k ? "#c99a4b" : "#3e2f1f",
-                          color: rackFilt===k ? "#e8d092" : "#b09b7d"}}>
-                        {label} <span className="dim">{n}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-                <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",marginBottom:2}}>
-                  {rackFilt==="style"
-                    ? (mine.length
-                        ? `${items.length} of ${all.length}, cheapest first — what ${mine.length===1?"the man":"the men"} in this yard can carry without it being clumsy.`
-                        : `Nobody is in the yard, so nothing is out of style. All ${all.length}, cheapest first.`)
-                    : rackFilt==="owned"
-                    ? (items.length ? `The ${items.length} you have bought.` : "You have bought none of these. The house issue is free and always will be.")
-                    : `All ${all.length}, cheapest first. Gear outside a man's own style still works, but clumsily.`}
-                </div>
-                {items.length===0 && (
-                  <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:6}}>
-                    Nothing here under that filter. Try Everything.
-                  </div>
-                )}
-                {items.map(([id,it])=>{
-                      const owned = S.gear[id]||0, free = gearFree(S,id);
-                      return (
-                        <div key={id} style={{borderTop:"1px dotted #33271a",paddingTop:8,marginTop:8}}>
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="disp" style={{fontSize:"var(--fs-base)",color:it.master?"#e8c98a":it.price?"#e8d9b8":"#b9a37c"}}>{it.name}</div>
-                            {it.price>0
-                              ? <span className="gold" style={{fontSize:"var(--fs-md)",whiteSpace:"nowrap"}}>{it.price}d{owned?` · ${owned} owned`:""}</span>
-                              : <span className="tag">Costs nothing</span>}
-                          </div>
-                          {/* the family the seven headings used to carry, now on the row it belongs to */}
-                          <div className="flex items-center gap-1" style={{flexWrap:"wrap",margin:"3px 0 1px"}}>
-                            <span className="tag" style={{fontSize:"var(--fs-micro)",padding:"2px 7px"}}>{artName(slot, it.art)}</span>
-                            {it.master && <span className="tag tag-gold" style={{fontSize:"var(--fs-micro)",padding:"2px 7px"}}>A master's piece · {it.keep}d a week to keep</span>}
-                            {!inStyle(it) && <span className="tag" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",borderColor:"#7c5a22",color:"#cfa060"}}>clumsy for this yard</span>}
-                          </div>
-                          <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",margin:"2px 0 3px"}}>{it.desc}</div>
-                          <GearStats it={it}/>
-                          {it.master && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>No sharper than the best on the rack. Twice as loud — and the crowd is the purse, the name, and the finger that goes up when he is down.</div>}
-                          {it.styles && it.styles.length>0 && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>Suits: {it.styles.join(", ")}</div>}
-                          {it.price>0 && (
-                            <button className={`btn ${it.stock?"btn-ghost":""}`} style={{width:"100%",marginTop:7}} disabled={S.gold<gearPrice(S,it.price,it.slot)} onClick={()=>buyGear(id)}>
-                              {S.gold<gearPrice(S,it.price,it.slot) ? "Not enough coin"
-                                : `${it.stock?"Order":"Buy"} for ${gearPrice(S,it.price,it.slot)}d${free>0?` · ${free} on the rack`:""}`}
-                            </button>
-                          )}
-                          {!it.stock && it.price>0 && free>0 && (
-                            <button className="btn btn-ghost" style={{width:"100%",marginTop:5,fontSize:"var(--fs-sm)",padding:"10px 10px"}}
-                              onClick={()=>sellOne(id)}>
-                              Sell one back · about {rnd(it.price*resaleRate(S)*0.85)}d
-                            </button>
-                          )}
-                          {it.price>0 && owned>0 && free===0 && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:3}}>Every one you own is on a man.</div>}
-                        </div>
-                      );
-                    })}
-              </Sect>
-            </React.Fragment>
-          );})}
+          {SLOTS.filter(s=>s===rack).map(slot => SECT.rack(S, SX, slot))}
         </div>)}
 
       </div></div>

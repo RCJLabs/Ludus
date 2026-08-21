@@ -8,6 +8,11 @@ def app_locals(L):
     for x in L[start:]:
         m=re.match(r'\s{2}const (\w+)\s*=', x)
         if m: names.add(m.group(1))
+        # useState pairs are declared by DESTRUCTURING, which neither detector saw. The rack reads
+        # `rackFilt` from `const [rackFilt,setRackFilt] = useState("style")`; missed, it was neither
+        # passed nor reported, and the armory blanked on open.
+        m=re.match(r'\s{2}const \[([^\]]*)\]\s*=', x)
+        if m: names.update(re.findall(r'\w+', m.group(1)))
     return start, names
 
 def blocks(L, start):
