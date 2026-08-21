@@ -341,7 +341,9 @@ export async function run({ p, errors }){
        so a mark on the Villa tab dropped the player on The House to go hunting. Each face
        carries the loudest mark of the sections that live on it. */
     { const faceOf = (seed, act)=>{ const d = house(seed); act(d);
-        const out = {}; for(const f of ["house","standing","council","familia"]) out[f] = A.faceMark(d,"villa",f);
+        /* three faces since v3.85.0: `The Cells` carried one panel and was folded into `The House`,
+           and its marks came with it — a chip that stops reporting the feast is worse than a chip. */
+        const out = {}; for(const f of ["house","standing","council"]) out[f] = A.faceMark(d,"villa",f);
         return out; };
       R.faces = {
         "a letter from Rome": faceOf("GL_FR", d=>{ d.flags.primusHeld = 1; d.fame = A.romeBar(d) + 500;
@@ -389,10 +391,10 @@ export async function run({ p, errors }){
     lines.push(`   ${k.padEnd(21)} ${Object.entries(v).map(([f,m])=>`${f} ${m===true?"·":m?`[${m.urg}] ${m.n}`:"—"}`).join("  ")}`);
   if(!out.faces["a letter from Rome"].standing)
     fails.push("a letter from Rome left the villa's Standing face unmarked, which is the face the road to Rome is on");
-  if(out.faces["a letter from Rome"].familia)
-    fails.push("a letter from Rome marked The Cells, which has nothing to do with it");
-  if(!out.faces["the cells simmering"].familia)
-    fails.push("simmering cells left The Cells unmarked, and the feast is on that face");
+  if(out.faces["a letter from Rome"].house)
+    fails.push("a letter from Rome marked The House, which has nothing to do with it");
+  if(!out.faces["the cells simmering"].house)
+    fails.push("simmering cells left The House unmarked, and the feast is on that face now");
   if(out.faces["the cells simmering"].standing)
     fails.push("simmering cells marked Standing, which is not where the answer is");
   if(Object.values(out.faces["a quiet house"]).some(Boolean))
