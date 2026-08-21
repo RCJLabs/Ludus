@@ -498,10 +498,21 @@ export async function installRope(p){
             const bare = !cur || !cur.price;
             if(!worn && !bare) continue;
             /* mending is the cheaper answer while there is anything left to mend */
-            if(worn && !bare){
+            /* mending is switchable so a probe can run a house that ARMS its men and then lets the
+               steel go — the state the armory's "steel is close to going" item exists for. Turning
+               the whole gear step off does not reach it: with nothing bought there is no steel to
+               wear out, and the item cannot fire for want of a subject. */
+            if(worn && !bare && o.mend !== false){
               const fee = fin(A.repairFee,[d, g]) || 0;
               if(fee > 0 && fee <= spareNow() * 0.25 && fin(A.mendKitOf,[d, g.id])){ bump("mended"); continue; }
             }
+            /* AND `mend:false` ALONE DOES NOT NEGLECT ANYTHING. Skipping the mend drops straight
+               through to the buy below, so a worn piece is REPLACED instead of repaired — which is
+               more attentive, not less. A probe using it to make decaying steel measured 2,323
+               house-weeks without a single piece under 34 and nearly concluded the armory's agenda
+               line was unreachable. `neglect` is the arm that actually leaves steel alone: arm a man
+               who has nothing, and after that never mend and never replace. */
+            if(worn && !bare && o.neglect) continue;
             const master = A.masterOpen && A.masterOpen(d);
             /* ---- WHICH END OF THE RACK, AS A SWITCH ----
                This has always taken the DEAREST piece it can afford, on the assumption that price
