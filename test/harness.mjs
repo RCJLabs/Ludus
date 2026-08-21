@@ -902,12 +902,31 @@ export const slot = p => p.evaluate(()=>{
   return best;
 });
 
-export async function found(p, { scenario = /clean start|even hand|your uncle|one good man|old guard/i } = {}){
+/* ---- AND `seed` EXISTS BECAUSE A YARDSTICK NEEDS THE SAME HOUSE TWICE ----
+   Leaving the field empty is the right default for every check that wants a house nobody has run —
+   `survive`'s whole retry rests on two draws being independent. But a measurement meant to be
+   DIFFED across builds cannot afford it: `reach` founded a random house each run, so its first two
+   nav-tally rows read 38 actions and then 40, and the y of every button moved with a roster that had
+   nothing to do with the build. Two rows like that cannot be compared, which is the one thing the
+   tally was written for. Pass a seed and the same Capua is built every time. */
+export async function found(p, { scenario = /clean start|even hand|your uncle|one good man|old guard/i, seed = null } = {}){
   await p.evaluate(()=>localStorage.clear());
   await p.reload({ waitUntil:"load" });
   await p.waitForTimeout(900);
   await click(p, /found a house/);
   await p.waitForTimeout(300);
+  if(seed){
+    const typed = await p.evaluate(sd => {
+      const el = [...document.querySelectorAll("input")].find(x => /seed/i.test(x.getAttribute("aria-label")||""));
+      if(!el) return false;
+      const set = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+      set.call(el, sd);
+      el.dispatchEvent(new Event("input", { bubbles:true }));
+      return true;
+    }, seed);
+    if(!typed) throw new Error("found({seed}) — no seed field on the founding screen");
+    await p.waitForTimeout(200);
+  }
   await click(p, scenario);
   await p.waitForTimeout(200);
   await click(p, /take the keys/);

@@ -71,7 +71,9 @@ const TEACH = /^(understood|i know my trade|i know the work|carry on|so be it|th
 
 export async function run({ p, errors }){
   const lines = [], fails = [];
-  await found(p);
+  /* a FIXED house: the tally at the end of this check is meant to be diffed across builds, and a
+     random roster moves every y in it (#: the first two rows read 38 actions then 40). */
+  await found(p, { seed:"REACH-1" });
   for(let w=0; w<16; w++){ if(!(await endWeek(p))) break; await clearAll(p); }
   await clearAll(p, 20);
 
