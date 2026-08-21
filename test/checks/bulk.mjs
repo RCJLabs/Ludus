@@ -51,7 +51,15 @@ const ALLOWED = {
      component. v3.8.0 added `endTheLine` beside `takeUpTheHouse` and the 7,000 lines moved to the new
      function, which is how this was found: the check failed naming a two-line function as 7,021 lines.
      `default` is in the regex now, App is measured as itself, and the allowance says what it is. */
-  App:            { max: 7200, why: "the whole screen — every tab, every face, every panel. It is one React component by design and splitting it is a different task entirely" },
+  /* ---- AND THIS ALLOWANCE WAS EARNED DOWN, WHICH IS THE POINT OF HAVING IT ----
+     7,200 was "the whole screen — every tab, every face, every panel", written when App held all
+     thirty-two <Sect> panels inline. The overhaul lifted every one of them into SECT below, and App
+     is 5,946 lines. Leaving the old number would have handed the file 1,254 lines of silent headroom
+     and this check would have stopped meaning anything for a year. So it comes down to where the
+     work actually landed, plus room to breathe — an allowance that never tightens after a split is
+     an allowance that only ever ratchets the wrong way. */
+  App:            { max: 6100, why: "the whole screen minus its panels — tabs, faces, state and handlers. Was 7,200 when the thirty-two <Sect> panels were inline; they are in SECT now and this came down with them" },
+  SECT:           { max: 1500, why: "a registry of thirty-two panels, not a function — length here is content, the same argument EVENTS makes. Each entry is one <Sect> lifted out of App verbatim, so the total is the markup that was already there; what changed is that a face is now a readable list of what it shows, in order, which is the whole point of the overhaul. It grows when the game gains a panel, and the headroom is a hundred lines rather than a thousand so drift still says stop" },
   Fighter:        { max: 300, why: "the man on the sand, drawn — one SVG in one function" },
 };
 

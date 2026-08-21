@@ -225,6 +225,36 @@ export async function run({ p, errors }){
      the share below the fold, and the furthest y per place — so two builds diff cleanly.
      It records and does nothing else. No bar is set on it here; the three-tap ceiling above is the
      only bar this check enforces, and it is untouched. */
+  /* ---- AND THE NUMBER THE REORDER ACTUALLY MOVES ----
+     Phase C reorders the sections inside each face. "Better" needs to be a figure before the change,
+     or it is taste with a version number on it — the training-square move was reverted for exactly
+     that, when the pinned house said furthest y was 2534 before and 2534 after.
+     What a reorder can move is this: the action-free panel a player scrolls THROUGH to reach the
+     last action on a face. Reference prose above an action pushes that action down by its own
+     height; the same prose below it costs nothing. So per face: how many pixels of section carrying
+     no action sit above the furthest action, and which sections they are. That sum is the ceiling on
+     what reordering that face can win, and it is measured, not guessed.
+     Printed, not barred. It moves with the number of men in the yard like everything else here. */
+  {
+    const acts = {};
+    for(const r of doers){ const k = `${r.where} :: ${r.group}`; acts[k] = (acts[k]||0) + 1; }
+    const rows2 = [];
+    for(const [face, v] of Object.entries(byPlace)){
+      const mine = sects.filter(x => x.where === face).sort((a,b)=>a.top-b.top);
+      const dead = mine.filter(x => !acts[`${face} :: ${x.title}`] && x.top < v.maxY);
+      const px = dead.reduce((a,x)=>a+x.h, 0);
+      if(px > 0) rows2.push({ face, px, n: v.n, maxY: v.maxY, names: dead.sort((a,b)=>b.h-a.h) });
+    }
+    rows2.sort((a,b)=>b.px-a.px);
+    if(rows2.length){
+      lines.push(`AND WHAT A REORDER COULD WIN — action-free panel sitting ABOVE the furthest action:`);
+      for(const r of rows2.slice(0,6))
+        lines.push(`   ${r.face.padEnd(24)} ${String(r.px).padStart(5)}px above y=${r.maxY} `
+          + `(${r.n} actions) — ${r.names.slice(0,3).map(x=>`${x.title} ${x.h}px`).join(", ")}`);
+      lines.push(`   ${rows2.reduce((a,r)=>a+r.px,0)}px in all, across ${rows2.length} faces`);
+    }
+  }
+
   /* ---- WHAT A PLAYER SCROLLS PAST, PRINTED ---- */
   {
     const byFace = {};

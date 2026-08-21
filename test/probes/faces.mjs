@@ -97,6 +97,39 @@ for(const t of ["ludus","familia","arena","armory","market","villa"]){
     rows.push({ where: f ? `${t} · ${f}` : t, n: seen.length, err: errors.length - before });
   }
 }
+/* AND THE MODAL, which is a face by every measure except the one the switcher uses. A gladiator's
+   record has its own five-way chip row and its own <Sect> panels, and none of it is on a tab — so
+   the walk above cannot see it, and the last two sections left in App live there. Opened here: a
+   roster card is a button.panel that calls setSelId, and the record chips are the one tablist the
+   selector above deliberately throws away, because inside .modalwrap is exactly where they are. */
+const modalRows = [];
+{
+  await tab(p, "familia"); await p.waitForTimeout(300); await clearAll(p, 6);
+  await tab(p, "familia"); await p.waitForTimeout(300);
+  await show("THE ROSTER"); await p.waitForTimeout(320);
+  const opened = await p.evaluate(()=>{
+    const b=[...document.querySelectorAll("button.panel")].find(x=>x.offsetParent!==null);
+    if(!b) return false; b.click(); return true; });
+  if(!opened) console.log("  the modal could not be opened — no roster card on this house");
+  else {
+    await p.waitForTimeout(360);
+    const chips = await p.evaluate(()=>[...document.querySelectorAll('.modalwrap [role=tablist] button[role=tab]')]
+      .map(b=>(b.innerText||"").trim()).filter(Boolean));
+    for(const c of chips){
+      await p.evaluate(l=>{ const b=[...document.querySelectorAll('.modalwrap [role=tablist] button[role=tab]')]
+        .find(x=>(x.innerText||"").trim()===l); if(b) b.click(); }, c);
+      await p.waitForTimeout(260);
+      const before = errors.length;
+      const seen = await p.evaluate(()=>[...document.querySelectorAll(".modalwrap details.sect")]
+        .map(d=>((d.querySelector("summary")||{}).innerText||"").split("\n")[0].trim()));
+      seen.forEach(t2=>SEEN.add(t2));
+      total += seen.length;
+      modalRows.push({ where: `a man's record · ${c}`, n: seen.length, err: errors.length - before });
+    }
+  }
+}
+rows.push(...modalRows);
+
 console.log(`\nDOES EVERY FACE STILL RENDER?  (pinned REACH-1, week ${WEEKS})\n`);
 for(const r of rows) console.log(`  ${r.where.padEnd(30)} ${String(r.n).padStart(2)} sections${r.err ? `   ${r.err} ERRORS` : ""}`);
 console.log(`\n  ${rows.length} faces · ${total} sections · ${errors.length} page errors`);

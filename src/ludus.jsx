@@ -19163,6 +19163,50 @@ function endTheLine(d){
    It also takes lines OUT of App, which `bulk` holds at 7,200 and which is sitting at exactly
    7,200 — so this refactor buys the room the rest of the work needs. */
 const SECT = {
+  wants: (S, X) => { const { selG } = X;
+    return (
+    <Sect title="What he wants" note={selG.ambition.met?"granted":selG.ambition.broken?"broken":selG.ambition.promised?"your word given":""}>
+      <div style={{fontSize:"var(--fs-lg)"}}>{ambWord(selG)}</div>
+      {(()=>{ const st = ambState(selG);
+        const line = {
+          silent:  ["dim","He has not mentioned it. He would not."],
+          asked:   ["gold","He has raised it with you once."],
+          pressed: ["blood","He has raised it twice. There will not be a third time."],
+          despair: ["blood","He has stopped asking. That is not the same as having stopped wanting it."],
+          met:     ["laurel","He has it. He will not forget who gave it to him."],
+          broken:  ["blood","You did the one thing. He has stopped expecting anything."],
+        }[st] || ["dim",""];
+        return <div className={line[0]} style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>{line[1]}</div>;
+      })()}
+    </Sect>
+    ); },
+  regard: (S, X) => { const { selG } = X;
+    const v = regardOf(selG), mem = (selG.memory||[]).slice().reverse();
+                 return (
+                   <Sect title="What he makes of you" note={regardWord(v)}>
+                     <Bar v={v} label="regard" color={`linear-gradient(90deg,#4a3a24,${regardColour(v)})`}/>
+                     {mem.length===0
+                       ? <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:4}}>
+                           Nothing has passed between you yet that he would count either way.
+                         </div>
+                       : <div style={{marginTop:5}}>
+                           {mem.slice(0,5).map((m,i)=>{
+                             const isGrief = m.kind==="grief";
+                             const bad = isGrief ? !m.settled : REGARD[m.kind].bad;
+                             const txt = isGrief
+                               ? (m.settled ? `He carried ${m.forName} onto the sand, and left the grief there.` : `He is still carrying ${m.forName}, who died beside him.`)
+                               : her(REGARD[m.kind].say, selG);
+                             return (
+                             <div key={i} style={{fontSize:"var(--fs-md)",padding:"2px 0",color:bad?"#d9a89e":"#cfc0a0"}}>
+                               {txt}{!isGrief && m.again>1 && <span className="dim"> ({m.again} times)</span>}
+                             </div>
+                             ); })}
+                         </div>}
+                     {regardLoyal(selG) && <div className="laurel" style={{fontSize:"var(--fs-base)",marginTop:5}}>No other house's coin will move him.</div>}
+                     {regardRefuse(selG) && <div className="blood" style={{fontSize:"var(--fs-base)",marginTop:5}}>He does what he is told and not one thing more.</div>}
+                   </Sect>
+                 );
+  },
   staff: (S, X, k) => { const { hireStaff, letStaffGo } = X;
     const s = S[k], ST = STAFF[k], lvl = bLevel(S, ST.room);
                const mkt = (S.staffMarket||{})[k] || [];
@@ -19369,7 +19413,7 @@ const SECT = {
                  </Sect>
                );
   },
-  temple: (S, X) => { const { offerTo, vowTo } = X;
+  temple: (S, X) => { const { offerTo, setAsk, vowTo } = X;
     const bg = blessOf(S), pi = pietyOf(S), stake = vowStake(S);
                /* It opened only for a house that already had a vow standing or was nearly
                   godless — so the one screen that could start any of this was shut to every
@@ -20445,7 +20489,7 @@ const SECT = {
       </div>)}
     </Sect>
     ); },
-  annals: (S, X) => { const { carryOut, standings } = X;
+  annals: (S, X) => { const { carryOut, setAnnals, setSheet, setShowChron, standings } = X;
     return (
     <Sect title="The house — records & annals" note={isFirstHouse(S) ? "✦ First House · lanista, houses, book…" : "lanista, the houses, the book, the roll…"}>
     <div className="grid grid-cols-2 gap-2">
@@ -21860,7 +21904,7 @@ export default function App(){
      already defined — the first attempt used "the last 2-space const" and landed inside the
      SHEETS object literal, which is a parse error and was caught by the build rather than by a
      reader. */
-  const SX = { askFavour, backHim, buyGear, carryOut, rackFilt, setRackFilt, declare, dismissDoc, doRite, doTourney, feast, hireDoc, hireStaff, host, joinCollegium, letStaffGo, mut, offerTo, openLicence, roster, seekMatch, selG, sellOne, setCrest, setDrill, setEar, setPupil, standings, stopCollegium, stopRetrain, takeRise, vowTo, walkCells };
+  const SX = { askFavour, backHim, buyGear, carryOut, rackFilt, setAnnals, setAsk, setRackFilt, setSheet, setShowChron, declare, dismissDoc, doRite, doTourney, feast, hireDoc, hireStaff, host, joinCollegium, letStaffGo, mut, offerTo, openLicence, roster, seekMatch, selG, sellOne, setCrest, setDrill, setEar, setPupil, standings, stopCollegium, stopRetrain, takeRise, vowTo, walkCells };
 
   return (
     <div className={`lr shell${prefs.reduceMotion?" reduce-motion":""}${prefs.largeText?" large-text":""}${prefs.colorblind?" cb":""}`}>
@@ -23685,46 +23729,9 @@ export default function App(){
                 </div>
               );
             })()}
-            {gView==="standing" && (()=>{ const v = regardOf(selG), mem = (selG.memory||[]).slice().reverse();
-              return (
-                <Sect title="What he makes of you" note={regardWord(v)}>
-                  <Bar v={v} label="regard" color={`linear-gradient(90deg,#4a3a24,${regardColour(v)})`}/>
-                  {mem.length===0
-                    ? <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:4}}>
-                        Nothing has passed between you yet that he would count either way.
-                      </div>
-                    : <div style={{marginTop:5}}>
-                        {mem.slice(0,5).map((m,i)=>{
-                          const isGrief = m.kind==="grief";
-                          const bad = isGrief ? !m.settled : REGARD[m.kind].bad;
-                          const txt = isGrief
-                            ? (m.settled ? `He carried ${m.forName} onto the sand, and left the grief there.` : `He is still carrying ${m.forName}, who died beside him.`)
-                            : her(REGARD[m.kind].say, selG);
-                          return (
-                          <div key={i} style={{fontSize:"var(--fs-md)",padding:"2px 0",color:bad?"#d9a89e":"#cfc0a0"}}>
-                            {txt}{!isGrief && m.again>1 && <span className="dim"> ({m.again} times)</span>}
-                          </div>
-                          ); })}
-                      </div>}
-                  {regardLoyal(selG) && <div className="laurel" style={{fontSize:"var(--fs-base)",marginTop:5}}>No other house's coin will move him.</div>}
-                  {regardRefuse(selG) && <div className="blood" style={{fontSize:"var(--fs-base)",marginTop:5}}>He does what he is told and not one thing more.</div>}
-                </Sect>
-              ); })()}
+            {gView==="standing" && SECT.regard(S, SX)}
             {gView==="standing" && selG.ambition && (
-              <Sect title="What he wants" note={selG.ambition.met?"granted":selG.ambition.broken?"broken":selG.ambition.promised?"your word given":""}>
-                <div style={{fontSize:"var(--fs-lg)"}}>{ambWord(selG)}</div>
-                {(()=>{ const st = ambState(selG);
-                  const line = {
-                    silent:  ["dim","He has not mentioned it. He would not."],
-                    asked:   ["gold","He has raised it with you once."],
-                    pressed: ["blood","He has raised it twice. There will not be a third time."],
-                    despair: ["blood","He has stopped asking. That is not the same as having stopped wanting it."],
-                    met:     ["laurel","He has it. He will not forget who gave it to him."],
-                    broken:  ["blood","You did the one thing. He has stopped expecting anything."],
-                  }[st] || ["dim",""];
-                  return <div className={line[0]} style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>{line[1]}</div>;
-                })()}
-              </Sect>
+              SECT.wants(S, SX)
             )}
             {gView==="record" && selG.traits.length>0 && <div style={{marginBottom:8}}>
               {selG.traits.map(t=><div key={t} style={{fontSize:"var(--fs-md)"}}><span className="tag tag-gold" style={{marginRight:6}}>{t}</span><span className="dim">{TRAITS[t]}</span></div>)}
