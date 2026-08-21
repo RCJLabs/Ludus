@@ -110,19 +110,39 @@ export async function run({ p, errors }){
       out.push({ where, label: label.slice(0, 44), taps: 1 + faceCost + closed, group: head.slice(0, 32),
         y: Math.round(b.getBoundingClientRect().top + window.scrollY), disabled: b.disabled });
     }
+    /* ---- AND THE GEOMETRY, WHICH IS WHAT A PLAYER ACTUALLY SCROLLS PAST ----
+       Everything above measures where the ACTIONS are. The complaint this instrument was built for
+       is scrolling to FIND things, and most of what a player scrolls past is not a button — it is a
+       section of prose, a table, a picture of the yard. A 135-line panel costs the same scroll
+       whether it carries a control or none at all, so a yardstick that sees only buttons cannot
+       score a restructure that moves reading matter. The first prototype proved it: the training
+       square moved two places up the ludus tab and the action-only reading was IDENTICAL, 2534
+       before and after, because ludus carries 2 of the pinned house's 44 actions.
+       Measured while every section is open, which is the same state the buttons are read in. */
+    const sects = [];
+    for(const d of all){
+      const r = d.getBoundingClientRect();
+      const head = ((d.querySelector("summary")||{}).innerText||"").split("\n")[0].trim();
+      sects.push({ where, title: head.slice(0, 32),
+        top: Math.round(r.top + window.scrollY), h: Math.round(r.height),
+        openByDefault: was[all.indexOf(d)] });
+    }
+    const sc = document.querySelector(".scroll > div");
+    const faceH = sc ? Math.round(sc.getBoundingClientRect().height) : 0;
     all.forEach((d,i)=>{ d.open = was[i]; });
-    return out;
+    return { actions: out, sects, faceH };
   }, [where, faceCost, teach.source.replace(/^\^|\$$/g, "")]);
 
-  const rows = [];
+  const rows = [], sects = [], faceH = {};
+  const take = (where, r) => { rows.push(...r.actions); sects.push(...r.sects); faceH[where] = r.faceH; };
   for(const t of ["ludus","familia","arena","armory","market","villa"]){
     await tab(p, t); await p.waitForTimeout(340); await clearAll(p, 8);
     await tab(p, t); await p.waitForTimeout(340);
     const fs = await faces();
-    if(!fs.length){ rows.push(...await read(t, 0, TEACH)); continue; }
+    if(!fs.length){ take(t, await read(t, 0, TEACH)); continue; }
     for(const f of fs){
       await showFace(f); await p.waitForTimeout(340);
-      rows.push(...await read(`${t} · ${f}`, 1, TEACH));
+      take(`${t} · ${f}`, await read(`${t} · ${f}`, 1, TEACH));
     }
   }
 
@@ -205,16 +225,40 @@ export async function run({ p, errors }){
      the share below the fold, and the furthest y per place — so two builds diff cleanly.
      It records and does nothing else. No bar is set on it here; the three-tap ceiling above is the
      only bar this check enforces, and it is untouched. */
+  /* ---- WHAT A PLAYER SCROLLS PAST, PRINTED ---- */
+  {
+    const byFace = {};
+    for(const x of sects){ const f = byFace[x.where] || (byFace[x.where] = { n:0, h:0, tall:null });
+      f.n++; f.h += x.h; if(!f.tall || x.h > f.tall.h) f.tall = x; }
+    const faces = Object.entries(byFace).sort((a,b)=>b[1].h - a[1].h);
+    lines.push(`AND THE GEOMETRY — ${sects.length} sections across ${faces.length} faces, `
+      + `${Math.round(Object.values(faceH).reduce((a,b)=>a+b,0)).toLocaleString()}px of face in all:`);
+    for(const [f, v] of faces.slice(0, 6))
+      lines.push(`   ${f.padEnd(28)} ${String(v.n).padStart(2)} sections · ${String(v.h).padStart(5)}px`
+        + ` · tallest "${v.tall.title}" ${v.tall.h}px`);
+    const tall = sects.slice().sort((a,b)=>b.h - a.h).slice(0, 5);
+    lines.push(`   the five tallest anywhere: ` + tall.map(x=>`${x.title} ${x.h}px (${x.where})`).join(" | "));
+    const openN = sects.filter(x=>x.openByDefault).length;
+    lines.push(`   ${openN} of ${sects.length} sections stand OPEN before a player touches anything`);
+  }
+
   try {
     const NAV = path.join(ROOT, "test", "nav-tally.json");
     const was = fs.existsSync(NAV) ? JSON.parse(fs.readFileSync(NAV, "utf8")) : [];
     const v = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8")).version;
     const places = {};
     for(const [t, x] of Object.entries(byPlace)) places[t] = { n:x.n, min:x.min, maxY:x.maxY };
+    const geo = {};
+    for(const x of sects){ const g = geo[x.where] || (geo[x.where] = { n:0, h:0 }); g.n++; g.h += x.h; }
+    for(const k of Object.keys(geo)) geo[k].faceH = faceH[k] || 0;
     const row = { v, buttons: live.length, doers: doers.length,
       taps: hist, belowFold: far.length,
       foldPct: +(far.length/doers.length*100).toFixed(1),
-      furthestY: far.length ? far[0].y : 0, places };
+      furthestY: far.length ? far[0].y : 0,
+      sections: sects.length,
+      sectionPx: sects.reduce((a,x)=>a+x.h, 0),
+      openByDefault: sects.filter(x=>x.openByDefault).length,
+      places, geo };
     const all = [...was, row];
     fs.writeFileSync(NAV, JSON.stringify(all, null, 0).replace(/\},\{"v"/g, "},\n{\"v\"") + "\n");
     if(all.length > 1){
@@ -222,7 +266,8 @@ export async function run({ p, errors }){
       const d = (a, b) => { const n = b - a; return n === 0 ? "same" : (n > 0 ? `+${n}` : `${n}`); };
       lines.push(`the nav tally, ${all.length} builds: against ${prev.v} — `
         + `actions ${d(prev.doers, row.doers)} · below the fold ${d(prev.belowFold, row.belowFold)} `
-        + `(${prev.foldPct}% → ${row.foldPct}%) · furthest y ${d(prev.furthestY, row.furthestY)}`);
+        + `(${prev.foldPct}% → ${row.foldPct}%) · furthest y ${d(prev.furthestY, row.furthestY)}`
+        + ` · sections ${d(prev.sections||0, row.sections)} · section px ${d(prev.sectionPx||0, row.sectionPx)}`);
     } else lines.push(`the nav tally starts here: ${row.doers} actions, ${row.foldPct}% below the fold, furthest y=${row.furthestY}`);
   } catch(e){ lines.push(`could not write the nav tally: ${e.message}`); }
 
