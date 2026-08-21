@@ -2901,8 +2901,9 @@ const sectMark = (d, key) => { const f = SECT_MARK[key]; if(!f) return null;
    `vView` keys and the values are SECT_MARK keys; a face with nothing worth a mark gets
    none, which is also information. */
 const FACE_SECTS = {
-  villa: { house:[], standing:["standing","rome","temple"], council:["rites"],
-    familia:["feast","cells","collegium"] },
+  /* `The Cells` was folded into `The House` in v3.85.0 — a face that carried one panel — so the
+     marks it raised come with it, or the chip stops reporting the feast the agenda points at. */
+  villa: { house:["feast","cells","collegium"], standing:["standing","rome","temple"], council:["rites"] },
 };
 /* A face carries only what is ASKING — the counted marks. The plain dots one level down are
    availability, not news: "you could found the burial society", "the altar is rested". Both
@@ -19642,9 +19643,9 @@ const SECT = {
                </Sect>
              );
   },
-  soFar: (S, X) => {
+  soFar: (S, X, forceOpen) => {
     const c = closing(S), R2 = c.R2, V = verdictOf(c); return (
-               <Sect title="The house so far" note={`${R2.years} year${R2.years===1?"":"s"}`}>
+               <Sect title="The house so far" note={`${R2.years} year${R2.years===1?"":"s"}`} open={forceOpen}>
                  <div className="dim" style={{fontSize:"var(--fs-base)",marginBottom:6}}>
                    {R2.years} year{R2.years===1?"":"s"} · {S.week} weeks · fame {rnd(S.fame)}
                    {c.gen>1 && ` · ${c.gen} lanistae`}
@@ -19751,10 +19752,10 @@ const SECT = {
                  </Sect>
                );
   },
-  year: (S, X) => {
+  year: (S, X, forceOpen) => {
     const now = festivalNow(S), soon = nextFestivals(S, 3);
                return (
-                 <Sect title="The year" note={`${seasonOf(S).name} · year ${yearOf(S)}, week ${yearWeek(S)}${now?" · games":""}`} open={!!now}>
+                 <Sect title="The year" note={`${seasonOf(S).name} · year ${yearOf(S)}, week ${yearWeek(S)}${now?" · games":""}`} open={forceOpen ?? (!!now)}>
                    {(()=>{ const Sn = seasonOf(S);
                      return (
                        <div style={{marginBottom:8}}>
@@ -19848,13 +19849,13 @@ const SECT = {
                  </Sect>
                );
   },
-  lastWeek: (S, X) => {
+  lastWeek: (S, X, forceOpen) => {
     const D=S.lastWeek; const dl=D.dl||{};
                const bits=[]; if(dl.gold) bits.push(`${dl.gold>0?"+":""}${dl.gold}d`);
                if(dl.fame) bits.push(`${dl.fame>0?"+":""}${dl.fame} fame`);
                if(dl.unrest) bits.push(`${dl.unrest>0?"+":""}${dl.unrest} unrest`);
                return (
-               <Sect title="Last week" note={bits.length? bits.join(" · ") : "a quiet one"}>
+               <Sect title="Last week" note={bits.length? bits.join(" · ") : "a quiet one"} open={forceOpen}>
                  {(D.lines||[]).length===0
                    ? <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>Nothing happened worth the ink.</div>
                    : D.lines.map((l,i)=>(
@@ -19865,11 +19866,11 @@ const SECT = {
                </Sect>
                );
   },
-  rivals: (S, X) => {
+  rivals: (S, X, forceOpen) => {
     const away = (S.rivals||[]).filter(h=>h.away).length;
     const fresh = (S.rivalLog||[]).filter(r=>S.week - r.week <= 4).length;
     return (
-      <Sect title="The other houses"
+      <Sect title="The other houses" open={forceOpen}
         note={`${fresh? `${fresh} this month · ` : ""}${away? `${away} away` : "all in Capua"}`}>
         {(S.rivalLog||[]).slice(0,5).map((r,i)=>(
           <div key={i} style={{borderTop:i?"1px dotted #33271a":"none",padding:"6px 0"}}>
@@ -20173,9 +20174,9 @@ const SECT = {
         ); })}
     </Sect>
     ); },
-  law: (S, X) => {
+  law: (S, X, forceOpen) => {
     return (
-    <Sect title="What the law says" note={lawWord(S)}>
+    <Sect title="What the law says" note={lawWord(S)} open={forceOpen}>
       {lawOf(S).edicts.map(k=>{ const E = EDICTS[k], bad = (()=>{ try{ return E.check(S); }catch(e){ return false; } })();
         return (
           <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:7,marginTop:7}}>
@@ -20521,7 +20522,8 @@ const SECT = {
     return (
     <Sect title="The house — records & annals" note={isFirstHouse(S) ? "✦ First House · lanista, houses, book…" : "lanista, the houses, the book, the roll…"}>
     <div className="grid grid-cols-2 gap-2">
-      {[["lanista","The Lanista", S.lanista? `${S.lanista.age}, ${healthWord(S.lanista.health)}` : "—"],
+      {[["stand","Where Things Stand", `last week, the year, the houses${S.week>20?", the long view":""}`],
+        ["lanista","The Lanista", S.lanista? `${S.lanista.age}, ${healthWord(S.lanista.health)}` : "—"],
         ["standings","The Houses", isFirstHouse(S) ? "✦ First House of Capua" : (()=>{ const t=leagueTable(S);
           return `${ordN(t.findIndex(r=>r.you)+1)} of ${t.length} in Capua`; })()],
         ["house","The House", `${BKEYS.filter(k=>bLevel(S,k)>0).length}/5 built`],
@@ -21363,6 +21365,28 @@ export default function App(){
     ["Young · Prime · Past peak · Veteran", "#b09b7d", "Where he stands on the hill. A man is in his prime from 23 to 28; before that he is still filling out, after it he starts giving pieces back."],
   ];
   const SHEETS = {
+    /* ---- THE PANELS A PLAYER CAN ONLY READ, GATHERED OFF THE TABS ----
+       Twelve of the game's thirty-three sections contain no <button> anywhere in their source —
+       measured on the SOURCE, not on one house, because `The blood of the house` offers a match the
+       moment the lanista can take one and the pinned house simply never can. Ten of the twelve sat
+       inline on the tabs, competing for the same room as the week's work: on the ludus tab, six of
+       ten sections and 40% of the height had nothing a player could do with them.
+       Five are archival rather than live — what happened, what is coming, where the other houses
+       stand, the long view, and the law — and they belong where this game already puts reference:
+       behind a tile, in a sheet, beside the nine that were already there.
+       THE OTHER FIVE STAY, and the reasons are not symmetrical. `The road to Rome` is live progress
+       toward something you are in the middle of. `unrest` and `the yard` are what the ludus tab IS.
+       `the block` names the sellers standing in the market. `the aedile` is 123px beside the election
+       it explains. Folding a panel because it lacks a button would have moved all ten. */
+    stand: { title:"WHERE THINGS STAND", body: ()=>(
+      <div className="flex flex-col gap-3">
+        {SECT.lastWeek(S, SX, true)}
+        {SECT.year(S, SX, true)}
+        {(S.rivalLog||[]).length>0 && SECT.rivals(S, SX, true)}
+        {S.week > 20 && SECT.soFar(S, SX, true)}
+        {SECT.law(S, SX, true)}
+      </div>) },
+
     lanista: { title:"THE LANISTA", body:()=>{ const L = S.lanista; if(!L) return null;
       const got = LAN_KEYS.filter(k=>hasLT(S,k));
       return (<>
@@ -22380,9 +22404,6 @@ export default function App(){
           {SECT.unrest(S)}
           {SECT.cellsNight(S, SX)}
           {SECT.square(S, SX)}
-          {SECT.year(S, SX)}
-          {S.lastWeek && SECT.lastWeek(S, SX)}
-          {(S.rivalLog||[]).length>0 && SECT.rivals(S, SX)}
           {SECT.annals(S, SX)}
           {S.week<=2 && (
             <div className="panel" style={{padding:13}}>
@@ -23084,7 +23105,7 @@ export default function App(){
         {tab==="villa" && (<div className="flex flex-col gap-3">
           <div className="flex gap-1" role="tablist" aria-label="Villa sections"
             style={{flexWrap:"wrap",borderBottom:"1px solid #33271a",paddingBottom:8}}>
-            {[["house","The House"],["standing","Standing"],["council","Coin & Council"],["familia","The Cells"]].map(([k,l])=>{
+            {[["house","The House"],["standing","Standing"],["council","Coin & Council"]].map(([k,l])=>{
               /* the face carries the mark of whatever is on it, so a mark on the Villa tab
                  leads somewhere instead of dropping the player on The House to hunt */
               const fm = faceMark(S, "villa", k);
@@ -23109,6 +23130,28 @@ export default function App(){
           {SECT.houseName(S, SX)}
           {SECT.colours(S, SX)}
 
+          {/* ---- THE CELLS WERE A WHOLE FACE FOR ONE PANEL ----
+               `The Cells` carried a single section — one chip on the villa's row, one tap, and 971px of
+               face behind it holding one thing. It is folded in here: what this house spends on the men
+               who are not on a card belongs beside the house's own name and blood, and the villa's face
+               row is three chips instead of four. Nothing moved out of reach — the panel is one tap in,
+               exactly as it was, on a face a player already had reason to open. */}
+          {/* ---- THREE THINGS YOU CAN DO FOR THE BLOCK, IN ONE PLACE ----
+               These were three separate `Sect`s, each holding one paragraph and one button, on a face
+               that had nothing else on it. Measured on a founded house: three collapsed disclosures of
+               two lines apiece, and a player had to open all three to find out what any of them cost.
+               They are one section now, because they are one decision — what this house spends on the
+               men who are not on a card this week. The feast keeps the freshness mark; it is the one
+               the week's agenda points at. */}
+          {/* ---- THE ONLY ACTIONABLE THING ON THIS FACE, AND IT WAS FOLDED ----
+               `reach` counts the taps between the tab bar and every action. The Cells face carries
+               exactly two things a player can do — the feast and walking the cells — and both were
+               inside this section, so its shallowest action cost 3 taps where 2 is all that face can
+               ever ask: the chip, and the button. Folding the only actionable panel on a face saves no
+               scroll and costs a tap, and #117 measured working the cells as the largest single lever
+               in the game while #119 found nothing ever suggested walking them. `open` here still
+               defers to whatever the player last did with it — `Sect` remembers by `sid`. */}
+          {SECT.cells(S, SX)}
           </>)}
 
           {vView==="standing" && (<>
@@ -23130,15 +23173,11 @@ export default function App(){
           {monuReady(S) && (
             SECT.monuments(S, SX)
           )}
-          {lawOf(S).edicts.length>0 && (
-            SECT.law(S, SX)
-          )}
           {/* ---- THE ACCOUNT, BEFORE IT IS CLOSED ----
               closing() and verdictOf() existed and were beautiful and were rendered in
               exactly one place: the screen you only ever see once, at the end. A house
               that simply keeps going — which is what a long successful run does — never
               saw a word of it. Same reckoning, same verdict, readable any week. */}
-          {S.week > 20 && SECT.soFar(S, SX)}
 
           </>)}
 
@@ -23255,24 +23294,6 @@ export default function App(){
 
           </>)}
 
-          {vView==="familia" && (<>
-          {/* ---- THREE THINGS YOU CAN DO FOR THE BLOCK, IN ONE PLACE ----
-               These were three separate `Sect`s, each holding one paragraph and one button, on a face
-               that had nothing else on it. Measured on a founded house: three collapsed disclosures of
-               two lines apiece, and a player had to open all three to find out what any of them cost.
-               They are one section now, because they are one decision — what this house spends on the
-               men who are not on a card this week. The feast keeps the freshness mark; it is the one
-               the week's agenda points at. */}
-          {/* ---- THE ONLY ACTIONABLE THING ON THIS FACE, AND IT WAS FOLDED ----
-               `reach` counts the taps between the tab bar and every action. The Cells face carries
-               exactly two things a player can do — the feast and walking the cells — and both were
-               inside this section, so its shallowest action cost 3 taps where 2 is all that face can
-               ever ask: the chip, and the button. Folding the only actionable panel on a face saves no
-               scroll and costs a tap, and #117 measured working the cells as the largest single lever
-               in the game while #119 found nothing ever suggested walking them. `open` here still
-               defers to whatever the player last did with it — `Sect` remembers by `sid`. */}
-          {SECT.cells(S, SX)}
-          </>)}
         </div>)}
 
         {tab==="armory" && (<div className="flex flex-col gap-3">

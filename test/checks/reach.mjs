@@ -166,7 +166,14 @@ export async function run({ p, errors }){
     if(!was || r.taps < was.taps || (r.taps === was.taps && r.y < was.y)) best.set(r.label.toLowerCase(), r);
   }
   const live = [...best.values()].filter(r=>!r.disabled);
-  const doers = live.filter(r=>!OPENER.test(r.label) && !MANROW.test(r.label));
+  /* ---- AND OPENERS ARE TOLD BY WHERE THEY ARE, NOT ONLY BY WHAT THEY SAY ----
+     OPENER is a hand-kept list of labels, so adding a twelfth tile to the records grid made it an
+     ACTION: `Where Things Stand` landed in the tally as the deepest doer in the game at y=3,673 and
+     the row reported furthest y +557 on a build that had only moved reading matter into a sheet.
+     Every one of those tiles lives inside the records & annals section and every one opens a sheet,
+     so the section is the test. The label list stays for the openers that sit elsewhere. */
+  const RECORDS = /records & annals/i;
+  const doers = live.filter(r=>!OPENER.test(r.label) && !MANROW.test(r.label) && !RECORDS.test(r.group||""));
 
   if(doers.length < 12){
     fails.push(`only ${doers.length} live actions found across the six tabs [measured 39 at week 16] — `
