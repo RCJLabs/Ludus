@@ -354,6 +354,14 @@ export async function run({ p, errors }){
       sections: sects.length,
       sectionPx: sects.reduce((a,x)=>a+x.h, 0),
       openByDefault: sects.filter(x=>x.openByDefault).length,
+      /* ---- AND THE ARRIVAL FIGURES, BECAUSE THE ROW COULD NOT SEE PHASE E ----
+         Every number above is measured with the sections forced open, so folding a panel by default
+         moves NONE of them: the first phase E change took villa/Standing from 2,151px to 1,546px on
+         arrival and this row read "same" across the board. A yardstick that cannot score the change
+         being made is not a yardstick for it. */
+      arrivePx: Object.values(arrivalH).reduce((a,b)=>a+b,0),
+      openSects: arrivals.filter(x=>x.open).length,
+      openPx: arrivals.filter(x=>x.open).reduce((a,x)=>a+x.h,0),
       places, geo };
     const all = [...was, row];
     fs.writeFileSync(NAV, JSON.stringify(all, null, 0).replace(/\},\{"v"/g, "},\n{\"v\"") + "\n");
@@ -363,7 +371,10 @@ export async function run({ p, errors }){
       lines.push(`the nav tally, ${all.length} builds: against ${prev.v} — `
         + `actions ${d(prev.doers, row.doers)} · below the fold ${d(prev.belowFold, row.belowFold)} `
         + `(${prev.foldPct}% → ${row.foldPct}%) · furthest y ${d(prev.furthestY, row.furthestY)}`
-        + ` · sections ${d(prev.sections||0, row.sections)} · section px ${d(prev.sectionPx||0, row.sectionPx)}`);
+        + ` · sections ${d(prev.sections||0, row.sections)} · section px ${d(prev.sectionPx||0, row.sectionPx)}`
+        + `\n      and on arrival: ${row.arrivePx}px of face ${d(prev.arrivePx||0, row.arrivePx)} · `
+        + `${row.openSects} sections standing open ${d(prev.openSects||0, row.openSects)} · `
+        + `${row.openPx}px of them ${d(prev.openPx||0, row.openPx)}`);
     } else lines.push(`the nav tally starts here: ${row.doers} actions, ${row.foldPct}% below the fold, furthest y=${row.furthestY}`);
   } catch(e){ lines.push(`could not write the nav tally: ${e.message}`); }
 

@@ -20199,8 +20199,22 @@ const SECT = {
     </Sect>
     ); },
   watch: (S, X) => { const { askFavour } = X;
+    /* ---- OPEN WHEN SOMEBODY IS ASKING, NOT ALWAYS ----
+       This stood open unconditionally and was measured at 649px on a house with no patrons and
+       929px on one with several — between a quarter and a third of the whole villa/Standing face,
+       whose arrival height is 2,151px on an idle house and 2,488px on a played one. With no patrons
+       the entire panel is one line of "no one of consequence has heard of you" and the closing
+       flourish about keeping a patron warm.
+       The rule is the one The Temple already follows: a panel stands open when it holds something
+       wanting an answer. Here that is a patron with a `want`, or a favour actually ready to call in
+       — both from the same two tests the rows below already make, so the summary cannot disagree
+       with the body. The rest is a standing readout: names, ranks, favour bars. Reference costs one
+       tap. What would falsify it: villa/Standing's arrival height not falling by about the panel's
+       height, or reach's floor bar going red because nothing else on that face is reachable at two
+       taps — The Temple holds that floor, and is itself conditionally open. */
     return (
-    <Sect title="Those Who Watch" note={`standing ${rnd(S.favor)}`} open>
+    <Sect title="Those Who Watch" note={`standing ${rnd(S.favor)}`}
+      open={(S.patrons||[]).some(p => p.want || favourReady(S, p))}>
       {(S.patrons||[]).length===0 && <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>No one of consequence has heard of you yet.</div>}
       {(S.patrons||[]).map(p=>{
         const w = p.want, item = w ? WANTS[w.kind] : null;
