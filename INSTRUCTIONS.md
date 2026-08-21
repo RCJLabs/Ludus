@@ -23,6 +23,8 @@ The factual project state — architecture, systems, data tables, measured balan
 3. Update **ROADMAP.md**: prepend a `### vX` entry at the `## Changelog (shipped)` anchor, move finished To-do items to ✅, refresh the `*Last updated*` footer.
 4. Copy `index.html`, `src/ludus.jsx`, and `ROADMAP.md` → `/mnt/user-data/outputs/`, re-zip the repo (exclude `node_modules`, `dist`, `package-lock.json`), then `present_files` with `index.html` first.
 
+5. **Fast-forward `main` to the release.** The app builds from `main`, so work that stops at the feature branch is work Evan cannot see. `git push origin <branch>:main` once the suite is green. Four releases once sat on a branch while `main` served v3.79.0 and the app looked untouched — the pipeline is not finished until `main` carries the version you just bumped.
+
 ## Verify before shipping — Evan can't runtime-test
 - **Sim the numbers before shipping them.** Any new or changed gear, class, event, tier, or resource constant gets a **Monte-Carlo run** through the headless harness: slice `ludus.jsx` at the `/* ================= UI` marker, strip the `import` lines, `eval` it, and export what you need via `Object.assign(globalThis, {...})`. Report **win %, death %, mean rounds, crowd**, N ≥ 800. In a sim game the math *is* the game — never ship math you haven't run.
 - **Also run a full-campaign regression**: 3–5 headless 80-week campaigns with a plausible player policy, asserting no crash and reporting week reached, gold, fame, and end state. This is what catches integration bugs that unit-level sims miss.
