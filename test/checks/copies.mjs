@@ -16,9 +16,23 @@
    six.
 
    IT DOES NOT FAIL ON ENGINE-INTERNAL REPEATS, and it prints them instead. `55 + end*0.6` is written
-   six times across the four fight engines and `1 + mods.atk*0.7` four times; those four engines are
-   separate by design and merging them is a different task. They are the same failure mode at a
-   different altitude, so the count is reported every run and drift in it is visible.
+   six times across the four fight engines and `1 + mods.atk*0.7` four times.
+
+   ---- AND THEY ARE NOT THE SAME FAULT, WHICH THIS COMMENT USED TO CLAIM — #178 ----
+   The sentence here read "they are the same failure mode at a different altitude", and that framing
+   opened an item. Measuring it closed the item against the framing. What makes the class above
+   dangerous is that a CONSUMER — a panel, a gate, a reference player — silently stops agreeing with
+   what the engine will do, so a price is quoted that will not be charged or a press is offered that
+   will be refused. There is an observer being misled, and that is the whole harm.
+   Six engines each computing a fighter's starting stamina have no observer between them. A
+   divergence there would be a DESIGN DECISION — melee wanting tougher men than venatio is a thing
+   somebody might choose — not a fault. The evidence matches: across every release in the repository,
+   v3.2.0 to v3.71.0, the six sites have **never** differed, where #174's single cross-boundary copy
+   had already drifted (unrounded against the engine's `rnd`, disagreeing on every odd fame). And no
+   consumer outside `src/ludus.jsx` holds a copy of any of them.
+   So the list below is a REPRICING MAP and not a fault list: it says where a change to one of these
+   numbers would have to be made in more than one place. Read it that way. It is still worth printing
+   every run, because a number that grows is a number worth looking at.
 
    THE FILTER TRACKS BLOCK-COMMENT STATE rather than line shape, and that is not a detail: this
    file's comments are indented prose whose continuation lines start with words, so a version that
@@ -99,8 +113,9 @@ export async function run(){
     .filter(([,at]) => at.engine.length > 1 && !at.panel.length && !at.rope.length)
     .sort((a,b) => b[1].engine.length - a[1].engine.length);
   if(inside.length){
-    lines.push(`${inside.length} written more than once INSIDE the engine — not a failure, the four `
-      + `fight engines are separate by design, but the same failure mode:`);
+    lines.push(`${inside.length} written more than once INSIDE the engine — a REPRICING MAP, not a `
+      + `fault list (#178): no consumer sits between two engines, so a divergence here would be a `
+      + `design decision. Where a change would have to be made twice:`);
     for(const [key, at] of inside.slice(0, 6))
       lines.push(`   ${key.padEnd(22)} ${at.engine.length} sites — ${at.engine.join(", ")}`);
   } else lines.push("nothing is written more than once inside the engine either");

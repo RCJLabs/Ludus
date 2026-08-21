@@ -1399,7 +1399,25 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.71.0 — **#175 closed: the re-run rate CAN be cut, and the experiment was
+**Shipped and verified:** v3.72.0 — **#178 refuted, and the fault was in the sentence that opened
+it.** `copies.mjs`'s head explained why it only REPORTS engine-internal duplication by calling it
+"the same failure mode at a different altitude". That framing opened #178; measuring closed the item
+against the framing. The six copies of `55 + end*0.6` — a fighter's starting stamina, one pair in
+each of the four engines — **agree exactly, and have never differed across every release in the
+repository, v3.2.0 to v3.71.0**; no consumer outside `src/ludus.jsx` holds a copy and no engine
+initialises stamina any other way. **And it is not #174's fault**: what makes that class dangerous is
+a CONSUMER silently disagreeing with the engine, so a price is quoted that will not be charged — there
+is an observer being misled. Six engines have no observer between them, so a divergence would be a
+design decision, not a fault. The evidence matches the distinction: these six never drifted in seventy
+releases, while #174's one cross-boundary copy already had. **Nothing is extracted** — a shared
+`startStam(g)` buys a repricing convenience against a fault that cannot occur. What is fixed is the
+sentence: the list is a **repricing map**, not a fault list, and says so now. No game change.
+**And the suite went red on `seller`, a check that had never failed in 24 recorded runs** — proven
+false four ways: the diff touches zero lines of `src/ludus.jsx`, a solo re-run passed with the
+assessment working, `seller` has no prior failure on record, and the second full run came back
+**72/72**. That opened **#179**: `survive` could be given a retry only because it has kept a tally
+since #142; the other eight browser checks record nothing, so this one had to be diagnosed by hand.
+v3.71.0 — **#175 closed: the re-run rate CAN be cut, and the experiment was
 already in the record.** `survive` trips a bar on **7 of 61 first runs (11.5%)**, each costing a full
 13.4-minute suite re-run plus a human to order it. The item rejected its own last candidate because
 it needs a baseline the check lacks — but **a second draw needs no baseline**: `found` leaves the
@@ -3414,19 +3432,55 @@ a design question with no measurement behind it yet.
 times; dues 13d against a 286d bill, 4.5%; dropping them would have saved 0 of the 29 houses that
 died of the ledger.)*
 
-**#178 — the same fault one altitude down: six copies of the stamina line across four fight
-engines.** `copies.mjs`, built for #174, reports rather than fails on arithmetic duplicated *inside*
-the engine, because the four fight engines are separate by design. What it reports is not small:
-**`55 + end*0.6` — what a man starts a bout with — is written 6 times** (`8371` twice, `13216`,
-`13561`, `14476` twice), **`1 + mods.atk*0.7` 4 times** (`8572`, `13307`, `13366`, `13651`), and
-`8 + skill*0.22`, `1 + mods.atk*0.95`, `8 + length*3`, `0.26 + crowd*0.0022` twice each. Reprice a
-man's starting stamina and you must find four engines; that is the same failure mode as #174 with a
-different boundary, and it is the mode that produced six live faults already. *Falsifies if:* the
-duplication is load-bearing — the four engines may want to diverge, and a shared `startStam(g)` would
-make a future divergence harder to write rather than easier. That is a real argument and it is why
-this is an item rather than a change. **Not measured yet:** whether the six sites currently agree in
-every term (the sweep matches `55 + end*0.6` but not what surrounds it), which is the cheap first
-step and decides whether this is tidiness or a live disagreement like the rope's half-denarius.
+**#178 — CLOSED in v3.72.0, REFUTED on its own clause, and the fault was in the sentence that
+opened it.** The item asked whether the six copies of `55 + end*0.6` agree in every term, and called
+them "the same failure mode as #174 with a different boundary". Both halves of that are answered and
+the second is wrong.
+
+**They agree, and they always have.** All six sites are the same expression in the same role — a
+fighter's starting stamina — one pair in `simulateFight`, one in `simulateMelee`, one in
+`simulateVenatio`, one pair in `simulatePair`. Sampled across every release in the repository,
+**v3.2.0 through v3.71.0, there has never been more than one distinct expression**. No consumer
+outside `src/ludus.jsx` holds a copy of it, and no engine initialises stamina any other way — every
+`sA`, `sB` and `e.stam` in the file derives from these six.
+
+**And it is not #174's fault at all.** What made #150, #162, #165, #160, #166 and #174 dangerous is
+that a CONSUMER — a panel, a gate, a reference player — silently stopped agreeing with what the
+engine would do, so a price was quoted that would not be charged or a press was offered that would be
+refused. **There is an observer being misled, and that is the entire harm.** Six engines each
+computing a fighter's starting stamina have no observer between them: a divergence there would be a
+*design decision* — melee wanting tougher men than venatio is a thing somebody might choose — not a
+fault. The evidence matches the distinction exactly: these six have never drifted in seventy
+releases, while #174's single cross-boundary copy had already drifted, unrounded against the engine's
+`rnd` and disagreeing on every odd fame.
+
+**So nothing is extracted.** A shared `startStam(g)` would buy a repricing convenience and cost four
+engines' worth of churn against a fault that does not exist and, by the argument above, cannot. The
+clause said *falsifies if the duplication is load-bearing*; it is not load-bearing, but neither is
+the case for removing it.
+
+**What is fixed is the sentence that produced the item.** `copies.mjs`'s head claimed the
+engine-internal repeats were "the same failure mode at a different altitude", and its report line
+said the same. Both now say what the list actually is: a **repricing map** — where a change to one of
+these numbers would have to be made in more than one place — and not a fault list. It is still
+printed every run, because a count that grows is worth looking at.
+
+
+**#179 — `survive` has a tally and the other eight browser checks have nothing.** v3.71.0 gave
+`survive` a confirm-on-failure second draw, justified by a measured first-run failure rate of **7 of
+61 builds, 11.5%**, and by nine hand-run retries that all came back clean. That measurement was only
+possible because `survive` has written every observation to `test/survive-tally.json` since #142. **No
+other browser check records anything.** v3.72.0 is the first time in the surviving record that one of
+them failed: `seller` came back *"the fee was taken and the assessment never appeared"* in a release
+whose diff touches **zero lines of `src/ludus.jsx`** — it could not have been the build — and it
+passed alone on the next run, showing the assessment appearing correctly. Scored over the 24 suite
+logs still on disk, that is **1 of 24**, and one observation is not a rate: the point is not that
+4.2% is the number, it is that **for eight of the nine browser checks nobody has ever counted, so the
+number is unknown and every instance has to be diagnosed by hand** the way `survive`'s were before
+v3.71.0. *Falsifies if:* the other eight genuinely do not flake — in which case a tally will show that
+within a dozen releases at no cost, which is the same bet #142 made and won. *The cheap first step is
+not a retry:* it is recording, because a retry for a check whose false-failure rate is unmeasured
+would be #175's mistake in reverse — buying detection power away to fix a problem nobody has sized.
 
 
 **#177 — the collegium's own note says it should be "the easiest line to cut in a bad month", and
@@ -3788,6 +3842,74 @@ about a quarter and it is the cost of this repair**; `MISSIO_MAN` is one line to
 wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
+
+### v3.72.0 — #178 refuted: it looked like the same fault one altitude down, and it is a different thing
+
+Two releases ago `copies.mjs` was built to guard a class with six instances — a number the engine
+rolls, written again somewhere that only displays or gates it. It reports rather than fails on
+arithmetic duplicated *inside* the engine, and its head explained that choice with a sentence: *"they
+are the same failure mode at a different altitude."* That sentence opened #178. Measuring it closed
+the item against the sentence.
+
+#### They agree, and they always have
+
+All six sites of `55 + end*0.6` are the same expression in the same role — a fighter's starting
+stamina — one pair in `simulateFight`, one in `simulateMelee`, one in `simulateVenatio`, one pair in
+`simulatePair`. Sampled across every release in the repository, **v3.2.0 through v3.71.0, there has
+never been more than one distinct expression.** No consumer outside `src/ludus.jsx` holds a copy, and
+no engine initialises stamina any other way — every `sA`, `sB` and `e.stam` in the file derives from
+these six.
+
+#### And it is not the same fault
+
+What made #150, #162, #165, #160, #166 and #174 dangerous is that a **consumer** — a panel, a gate, a
+reference player — silently stopped agreeing with what the engine would do, so a price was quoted
+that would not be charged, or a press was offered that would be refused. There is an observer being
+misled, and that is the entire harm.
+
+Six engines each computing a fighter's starting stamina have no observer between them. A divergence
+there would be a **design decision** — melee wanting tougher men than venatio is a thing somebody
+might choose — not a fault.
+
+The evidence matches the distinction exactly. These six have never drifted in seventy releases.
+#174's single cross-boundary copy had *already* drifted: unrounded against the engine's `rnd`,
+disagreeing on every odd fame value.
+
+#### So nothing is extracted
+
+A shared `startStam(g)` would buy a repricing convenience and cost four engines' worth of churn
+against a fault that does not exist and, by the argument above, cannot. The clause said *falsifies if
+the duplication is load-bearing*. It is not load-bearing — but neither is the case for removing it,
+and "a bar is moved when the evidence says where to" cuts both ways.
+
+#### What is fixed is the sentence that produced the item
+
+`copies.mjs`'s head and its report line both said "the same failure mode". Both now say what the list
+actually is: a **repricing map** — where a change to one of these numbers would have to be made in
+more than one place — and not a fault list. It is still printed every run, because a count that grows
+is worth looking at.
+
+#### And the suite went red on a check that had never failed
+
+The first full run came back **71/72**, the failure `seller`: *"paid for a man (HAVE HIM LOOKED OVER
+· 190D) and no panel on the block moved to read level 2 — the fee was taken and the assessment never
+appeared."* It is a false failure, on four independent grounds rather than an impression:
+
+- **this release's diff touches zero lines of `src/ludus.jsx`.** There is no game code in it at all —
+  a check's comment, this file, and the version string. It could not be the build.
+- **re-run alone it passed**, and printed the assessment working: paid 62D, Divico reads
+  57/45/57/41/39/51 and his bars say 57/45/57/41/39/51.
+- **across the 24 suite logs still on disk, `seller` had never failed before.** 1 of 24.
+- and the **second full run came back 72/72** with `seller` green, which is the v3.62.0 / v3.66.0
+  precedent for a proven-false failure: run it twice and record both.
+
+`survive` drew (3, 5) on the first run and **(2, 2)** on the second — both on one draw, both passing.
+The second is the closest any draw has come to the conjunction since v3.71.0 shipped the retry: one
+house fewer standing and the bar would have fired (1 < 2 and 2 < 4) and taken the second draw in
+anger for the first time.
+
+*No game change in this release. `src/ludus.jsx` is untouched.* Suite green at **72/72 in 13.2
+minutes** on the second of two full runs. Opens **#179**.
 
 ### v3.71.0 — #175: the re-run rate can be cut, and the experiment was already in the record
 
