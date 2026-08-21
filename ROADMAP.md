@@ -1399,7 +1399,23 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.75.0 — **the audit after nine releases.** `coverage` reads **377 of 477**
+**Shipped and verified:** v3.76.0 — **#180 closed, and the item was too small: the crux choice is a
+CONSTANT.** It was opened on the cloth never being thrown; reading the harness found why, and it is
+not about mercy. `lanista`'s bout step passes **`choice: o.choice || "press"`**, so the reference
+player answers every crux with the same word — front foot — and never covers, finishes or throws the
+cloth. Every figure this project has published sits inside that policy. The lever was proven connected
+first (#166 shipped an inert one), then all four answers driven paired over 72 houses of 420 weeks:
+**press is the most lethal of the three viable answers.** `cover` takes deaths a bout **19.03% →
+13.68%, −5.4 points** (p=0.002, 22u/50d, needs 19 of 72) and holds **+0.9 men**, with bouts, deaths,
+life, fame and alive all washes; `finish` is indistinguishable; blanket `cloth` is ruinous — **0 of 72
+alive at 420w** against 18, median life 207w → 49w, fame −2,094. **So the item's own remedy would not
+have worked**: `cover` throws 0 cloths and leaves `owedLife` as invisible as before, and `cloth`
+destroys the house — mercy is a judgement, not a setting (**#184**), and whether the default should
+move at all is **#183**, left open because it reprices every figure in this file. **And a figure of
+mine died on the way**: the six-house calibration read cover at 675 bouts against press's 423, and
+paired at 72 it is **+13.0 ± 41.0, not a figure** — #170's lesson, except the caution was written into
+the probe's head before the run rather than discovered after. `crux.mjs` is the 51st probe.
+v3.75.0 — **the audit after nine releases.** `coverage` reads **377 of 477**
 reached, **100 never called** (103 of 475 last time, on a surface that grew by two), **49 of them
 named in no check and no probe** — with the tool's own caveat that it sees only handle calls, so
 "never called" is not "never runs". Then the largest content table in the file, never before counted:
@@ -3518,17 +3534,74 @@ these numbers would have to be made in more than one place — and not a fault l
 printed every run, because a count that grows is worth looking at.
 
 
-**#180 — the reference player has never once shown mercy, and it hides a whole arc.** `owedLife`
-gates on `d.flags.everCloth`, which only `recordCloth` sets — and `recordCloth` is what throwing the
-cloth to spare a beaten man calls. Across **16,300 house-weeks and 72 houses the cloth was thrown 0
-times**, so `everCloth` is 0 in every house this project has ever run. Given a state with the flag
-set, `owedLife` is offered on **10 of 400** draws, so the door opens; nobody has ever knocked.
-`owedBack` is its continuation and inherits the blockage — a chain, not two gaps. Two independent
-instruments point here: `recordCloth` and `owedList` are both in coverage's 49 named by no check and
-no probe. *Falsifies if:* mercy is not a policy a competent lanista would follow — but the file
-disagrees with that, `collSoften` and the whole missio system are built for it, and the rope already
-answers every other kind of question the sand asks. *The work is a rope step, not a game change*: a
-mercy policy with a reason, measured the way #158 measured the party schedule.
+**#180 — CLOSED in v3.76.0, and the item was too small. The cloth is not missing; the CRUX CHOICE IS
+A CONSTANT.** The item was opened on `everCloth` reading 0 across 72 houses and 16,300 house-weeks.
+Reading the harness to find where a mercy step would go found the reason, and it is not about mercy:
+`lanista`'s bout step passes **`choice: o.choice || "press"`**. The reference player answers EVERY
+crux with the same word — front foot, *"he hits harder and takes more doing it"* — and has done in
+every figure this project has ever published. It never covers, never picks the finish, never throws
+the cloth. A lever with a constant behind it, which is the shape #158 found in the party schedule and
+#138 in the works step.
+
+**The lever was proven connected first** — #166 shipped an inert one and four career arms came back
+byte-identical — and then all four answers were driven paired, 72 houses of 420 weeks an arm, control
+first:
+
+    arm      bouts   deaths   deaths a bout   cloths   alive at 420w   ruin   debt   median life
+    press    13283     2140          19.03%        0            18     17     30          207w
+    cover    14216     1846          13.68%        0            18      7     37          240w
+    finish   13676     1991          17.34%        0            11     15     30          237w
+    cloth     3294      466          14.94%     2366             0     24     48           49w
+
+**`press` is the most lethal of the three viable answers.** Against it `cover` takes deaths a bout
+**19.03% → 13.68%, −5.4 points** (p=0.002, 22 houses up against 50 down, needs 19 of 72) and holds
+**+0.9 men** in the yard (needs 65 of 72). Bouts, deaths, life, fame and houses alive are all
+**washes** — none is a figure at this sample. `finish` is indistinguishable from pressing on every
+quantity. **Blanket `cloth` is ruinous**: median life 207w → 49w, fame −2,094, **0 of 72 alive at
+420 weeks** against 18, all supported at needs 3–13.
+
+**Which means the item's own remedy would not have worked.** Switching the default to `cover` throws
+**0 cloths** — the `owedLife → owedBack` arc stays exactly as invisible — and switching it to `cloth`
+destroys the house. The cloth needs a CONDITIONAL policy, not a blanket one, and that is **#184**.
+
+**And a figure of mine died on the way, which is the point of the sample rule.** The six-house
+calibration that made this look urgent read `cover` at 675 bouts against `press`'s 423 — 60% more,
+which could only have meant longer lives. At 72 houses paired it is **+13.0 ± 41.0, not a figure**.
+#170's lesson exactly: its first class table came off 160 bouts an arm and made a tactic's best +8.1
+where 2,000 bouts said +0.5. The caution was written down before the run rather than after.
+
+*What this does NOT settle,* and it is left open as **#183** rather than acted on: whether the
+reference player's default should move. `cover` is measurably less lethal at no measured cost — but
+"no measured cost" at 72 houses cannot see a fame difference under 581 or a life difference under 49
+weeks, and moving the default reprices every figure in this file.
+
+
+**#183 — should the reference player stop pressing?** v3.76.0 measured all four crux answers paired
+over 72 houses of 420 weeks. `cover` takes deaths a bout from **19.03% to 13.68%** (−5.4 points,
+p=0.002, 22u/50d, needs 19 of 72) and holds **+0.9 men** (needs 65 of 72), while bouts, deaths, life,
+fame and houses-alive are all washes. On the measured quantities it is strictly better than the
+`press` this project has always used. *Falsifies if:* the cost is in a quantity 72 houses cannot see —
+fame needs **153** houses to resolve and life **1,131**, so "no measured cost" is not "no cost", and
+the CRUX table's own words for cover are *"He wins less and lives more"*, of which only the second
+half is measured. **The cheap first step is a win-rate arm, not a bigger life arm:** if covering does
+not measurably cost wins either, the table's claim is a panel saying something the engine does not do
+— #177's shape, for the seventh time. *And the reason this is an item rather than a change:* moving
+the reference player's default reprices **every figure in this file**, including the balance reference
+and every death rate in the changelog. That is a deliberate act with a written reason, the way #158
+moved the party schedule, or it is not done at all.
+
+**#184 — the cloth needs a conditional policy, and blanket answers cannot give it one.** #180 set out
+to make `owedLife` reachable by giving the rope a mercy step, and the measurement showed neither
+blanket answer does it: `cover` throws **0 cloths** in 72 houses of 420 weeks, and `cloth` throws
+2,366 while destroying the house — **0 of 72 alive at 420 weeks** against 18, median life 207w → 49w,
+fame −2,094, all supported at needs 3–13. So mercy is not a setting, it is a JUDGEMENT: throw it when
+this man is likely to die and is worth more alive than this bout is worth. *Falsifies if:* no such
+rule beats pressing on deaths a bout without costing the house — in which case the cloth is a button
+for players and not a policy, and `owedLife` is content only a human will ever meet, which is a
+finding rather than a fault. **Not measured yet:** what the crux actually exposes at the moment of
+choice — `cx.sA`, `cx.vB`, `cx.mom` are read by `CRUX.finish`'s own `when`, so the state a rule would
+need is already there to be counted.
+
 
 **#181 — the primacy's rematch is written for a state a house reaches six times in sixteen thousand
 weeks.** `primacy` asks three things at once: hold the city title, six weeks since taking it, and a
@@ -3965,6 +4038,57 @@ about a quarter and it is the cost of this repair**; `MISSIO_MAN` is one line to
 wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
+
+### v3.76.0 — #180: the reference player presses at every crux, and nothing ever chose that
+
+The audit opened #180 on the cloth never being thrown — `everCloth` 0 across 72 houses and 16,300
+house-weeks, hiding the `owedLife → owedBack` arc from every measurement. Reading the harness to find
+where a mercy step would go found the reason, and it is not about mercy.
+
+#### A lever with a constant behind it
+
+`lanista`'s bout step passes **`choice: o.choice || "press"`**. The reference player answers every
+crux with the same word — front foot, *"he hits harder and takes more doing it"* — and has done in
+every figure this project has ever published. It never covers, never picks the finish, never throws
+the cloth. That is the shape #158 found in the party schedule and #138 in the works step: not a
+missing feature, a decision nobody made.
+
+The lever was proven connected before anything was measured with it, because #166 shipped an inert
+one and four career arms came back byte-identical. Then all four answers, paired, 72 houses of 420
+weeks an arm, control first:
+
+    arm      bouts   deaths   deaths a bout   cloths   alive at 420w   ruin   debt   median life
+    press    13283     2140          19.03%        0            18     17     30          207w
+    cover    14216     1846          13.68%        0            18      7     37          240w
+    finish   13676     1991          17.34%        0            11     15     30          237w
+    cloth     3294      466          14.94%     2366             0     24     48           49w
+
+**`press` is the most lethal of the three viable answers.** `cover` takes deaths a bout **−5.4
+points** (p=0.002, 22u/50d, needs 19 of 72) and holds **+0.9 men** (needs 65 of 72); bouts, deaths,
+life, fame and houses-alive are all washes. `finish` is indistinguishable from pressing on every
+quantity measured. Blanket `cloth` is ruinous — **0 of 72 alive at 420 weeks** against 18, median life
+207w → 49w, fame −2,094, supported at needs 3–13.
+
+#### Which means the item's own remedy would not have worked
+
+Switch the default to `cover` and the cloth is still thrown **0 times** — `owedLife` stays exactly as
+invisible. Switch it to `cloth` and the house dies. Mercy is not a setting; it is a judgement, and
+that is **#184**. Whether the default should move at all is **#183**, left open rather than acted on:
+moving it reprices every figure in this file, and "no measured cost" at 72 houses cannot see a fame
+difference under 581 or a life difference under 49 weeks.
+
+#### And a figure of mine died on the way
+
+The six-house calibration that made this look urgent read `cover` at **675 bouts against press's
+423** — 60% more, which could only have meant longer lives. Paired at 72 houses it is **+13.0 ± 41.0,
+not a figure.** That is #170's lesson exactly: its first class table came off 160 bouts an arm and
+made a tactic's best +8.1 where 2,000 bouts said +0.5. The difference this time is that the caution
+was written down **before** the run rather than discovered after it — the probe's own head says those
+bout counts are the reason to run the real thing and not a result.
+
+`crux.mjs` is the **51st probe**. *No game change in this release. `src/ludus.jsx` is untouched.*
+Suite green at **72/72 in 13.2 minutes**, `survive` drawing (3, 4) on one draw, and the run tally
+reads its third row — *"3 complete runs across 3 builds, 0 of them red."*
 
 ### v3.75.0 — the audit after nine releases: the events table is healthy, and two of my own counters were not
 
