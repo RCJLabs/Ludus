@@ -26409,6 +26409,11 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     patronWeek, serveWants, recomputeFavor, patronsOf, WANTS, RANKS,
     feastCost, feastReach, FEAST_BASE, FEAST_HEAD, FEAST_STANDING, RETRAIN_FEE, FORGE_FEE, BUILDINGS, PARTY, STAFF,
     /* loading an old save */
+    /* gearPrice is on the handle so a probe can ask what a piece COSTS rather than what its table
+       says: the price a player sees runs through the armamentarium level (down to 0.58), the
+       festival's gear modifier, a perk, the armourer's cut and the doctore. Reconstructing that in a
+       probe would be a probe keeping its own books, which is the fault `d.poachedIn` was. */
+    gearPrice,
     migrate, SAVE_FIELDS, SAVE_MAYBE, SAVE_NUMBERS, MAN_FIELDS, MAN_NUMBERS, REPAIRS, SAVE_VER,
     /* the tables a check may need to reason about */
     TIERS, CLASSES, GEAR, EVENTS, LASTING, STATS,

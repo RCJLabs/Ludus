@@ -503,12 +503,21 @@ export async function installRope(p){
               if(fee > 0 && fee <= spareNow() * 0.25 && fin(A.mendKitOf,[d, g.id])){ bump("mended"); continue; }
             }
             const master = A.masterOpen && A.masterOpen(d);
-            const want = Object.entries(A.GEAR)
+            /* ---- WHICH END OF THE RACK, AS A SWITCH ----
+               This has always taken the DEAREST piece it can afford, on the assumption that price
+               buys quality — which the catalogue bears out, rho +0.79 on weapons. But the armory
+               lists gear cheapest first, so if that assumption is right the UI is putting the pieces
+               a good player wants at the bottom of the longest scroll in the game, and if it is
+               wrong the rope has been overpaying for 80 releases. Either way it is worth knowing
+               rather than assuming, so the end is an option and both arms can be run on one seed. */
+            const afford = Object.entries(A.GEAR)
               .filter(([id,it])=> it.slot === s && it.price > 0
                 && (!it.styles || !it.styles.length || it.styles.includes(g.cls))
                 && (!it.master || master)
-                && it.price <= (it.master ? spareNow()/3 : spareNow()*0.4))
-              .sort((a,b)=> b[1].price - a[1].price)[0];
+                && it.price <= (it.master ? spareNow()/3 : spareNow()*0.4));
+            const want = (o.gearEnd === "cheap"
+              ? afford.slice().sort((a,b)=> a[1].price - b[1].price)
+              : afford.slice().sort((a,b)=> b[1].price - a[1].price))[0];
             if(!want) continue;
             if(fin(A.buyGearItem,[d, want[0]])){
               bump(want[1].master ? "master" : "bought:gear");
