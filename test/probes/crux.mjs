@@ -64,9 +64,19 @@ const out = await p.evaluate(([H,W,SEED])=>{
             R.lanista(d, choice ? { choice } : undefined);
             if(!d.lanista) break;
           }
+          /* ---- #183: THE HALF OF THE CRUX TABLE'S CLAIM NOBODY HAD MEASURED ----
+             `CRUX.cover` reads "He wins less and lives more." v3.76.0 measured the second half —
+             deaths a bout 19.03% -> 13.68% — and left the first unmeasured; fame came back
+             +399 ± 581, trending UP and nowhere near a figure, which is not the same as a win rate.
+             `d.book` is the game's own record of every bout through all four engines: n, w, drew,
+             killed. Read it rather than counting wins here — the audit's lesson was that the moment
+             you keep your own books you are testing your bookkeeping and calling it the game. */
+          const B = d.book || {};
           rows[id] = { life:w, alive: w >= W ? 1 : 0,
             cloth: (d.flags && d.flags.everCloth) || 0,
-            book: (d.book && d.book.n) || 0,
+            book: B.n || 0, wins: B.w || 0, drew: B.drew || 0, killed: B.killed || 0,
+            winRate: B.n ? (B.w||0)/B.n*100 : null,
+            drawRate: B.n ? (B.drew||0)/B.n*100 : null,
             bouts: cur.bouts, deaths: cur.deaths,
             deathRate: cur.bouts ? cur.deaths/cur.bouts*100 : null,
             men: A.activeG(d).length,
@@ -84,8 +94,9 @@ const out = await p.evaluate(([H,W,SEED])=>{
   const arms = [];
   arms.push({ label:"press", rows: arm(null) });      /* control FIRST — today's default */
   arms.push({ label:"cover", rows: arm("cover") });
-  arms.push({ label:"finish", rows: arm("finish") });
-  arms.push({ label:"cloth", rows: arm("cloth") });
+  /* #183 asks one question — does covering cost wins — so only the two arms it compares are run.
+     v3.76.0's four-arm table already settled finish (indistinguishable) and cloth (ruinous), and
+     re-running them would double the wall-clock to re-answer a question that is answered. */
   return { arms, H, W, PRES };
 }, [H, W, SEED]);
 
@@ -98,6 +109,16 @@ const M = (rows,k) => { const v = ids.map(id=>rows[id] && rows[id][k]).filter(x=
 console.log(`\n#180 — WHAT THE CRUX CHOICE IS WORTH, AND WHAT PRESSING HAS COST`);
 console.log(`${ids.length} houses of ${out.W} weeks an arm, ${out.PRES.length} seed prefixes, control first, paired house for house`);
 console.log(`"press" is today's default and is the control — every figure this project has published sits in that row\n`);
+console.log(`  arm      bouts    wins   WIN RATE   draws   deaths a bout   killed   alive at ${out.W}w   median life`);
+for(const a of out.arms){
+  const lives = ids.map(id=>a.rows[id].life).sort((x,y)=>x-y);
+  console.log(`  ${a.label.padEnd(8)} ${String(T(a.rows,"book")).padStart(6)} ${String(T(a.rows,"wins")).padStart(7)} `
+    + `${(T(a.rows,"book") ? T(a.rows,"wins")/T(a.rows,"book")*100 : 0).toFixed(2).padStart(9)}% `
+    + `${String(T(a.rows,"drew")).padStart(7)} ${(M(a.rows,"deathRate")||0).toFixed(2).padStart(14)}% `
+    + `${String(T(a.rows,"killed")).padStart(8)} ${String(T(a.rows,"alive")).padStart(13)} `
+    + `${String(lives[Math.floor(lives.length/2)]).padStart(12)}w`);
+}
+console.log(`\n  the older table, for the quantities v3.76.0 settled:`);
 console.log(`  arm      bouts   deaths   deaths a bout   cloths   alive at ${out.W}w   ruin   debt   median life`);
 for(const a of out.arms){
   const lives = ids.map(id=>a.rows[id].life).sort((x,y)=>x-y);
@@ -108,7 +129,7 @@ for(const a of out.arms){
 }
 for(const a of out.arms.slice(1)){
   console.log(`\n  ${a.label.toUpperCase()} against pressing — and what ${ids.length} houses can actually see`);
-  for(const k of ["deathRate","bouts","deaths","life","men","fame","alive"]){
+  for(const k of ["winRate","drawRate","wins","deathRate","bouts","deaths","life","men","fame","alive"]){
     const diffs = ids.map(id => { const x = a.rows[id][k], y = base[id][k];
       return (x==null||y==null) ? null : x-y; }).filter(x=>x!=null);
     const r = needN(diffs);

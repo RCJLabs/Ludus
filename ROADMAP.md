@@ -1399,7 +1399,20 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.77.0 — **#181 closed: the primacy rematch's gate is one term wearing
+**Shipped and verified:** v3.78.0 — **#183 closed on its first step: the crux table's "He wins less"
+is supported by nothing.** v3.76.0 left that objection standing, having measured only the living half
+of *"He wins less and lives more"*. Measured off `d.book` — the game's own record of every bout
+through all four engines, read rather than reconstructed — press against cover over 72 houses of 420
+weeks: **press 28.83% wins, cover 30.02%.** Covering wins slightly MORE. The conservative paired
+per-house test is **+0.8 points, needs 1,301 houses, 72 could only see 3.4**, so this is written as
+*unsupported* rather than disproved; pooling per bout gives **+1.19 at 2.28 sigma** and is quoted only
+because it agrees on the sign, bouts within a house not being independent. And `killed` reads **press
+1,657 against cover 1,651** — covering kills as many opponents while losing far fewer of its own.
+**Cover therefore dominates press on everything measurable and is worse on nothing.** The default is
+**not** moved here: that is **#185**, with its blast radius written down first — `open`'s signature,
+every check's baseline, `survive`'s tally, and every death rate in this file, all of which describe a
+lanista who would no longer exist. Only the probe changed; `src/ludus.jsx` untouched.
+v3.77.0 — **#181 closed: the primacy rematch's gate is one term wearing
 two.** `primusEligible` is `wins >= 5 && pfame >= 35`; split over the 99 house-weeks a house held the
 title, a second man was in the yard on **99 of 99**, cleared the wins on **15**, cleared the pfame on
 **55**, and cleared **both on 15 — the same 15**. Every man with the record also has the name, so
@@ -3595,19 +3608,52 @@ reference player's default should move. `cover` is measurably less lethal at no 
 weeks, and moving the default reprices every figure in this file.
 
 
-**#183 — should the reference player stop pressing?** v3.76.0 measured all four crux answers paired
-over 72 houses of 420 weeks. `cover` takes deaths a bout from **19.03% to 13.68%** (−5.4 points,
-p=0.002, 22u/50d, needs 19 of 72) and holds **+0.9 men** (needs 65 of 72), while bouts, deaths, life,
-fame and houses-alive are all washes. On the measured quantities it is strictly better than the
-`press` this project has always used. *Falsifies if:* the cost is in a quantity 72 houses cannot see —
-fame needs **153** houses to resolve and life **1,131**, so "no measured cost" is not "no cost", and
-the CRUX table's own words for cover are *"He wins less and lives more"*, of which only the second
-half is measured. **The cheap first step is a win-rate arm, not a bigger life arm:** if covering does
-not measurably cost wins either, the table's claim is a panel saying something the engine does not do
-— #177's shape, for the seventh time. *And the reason this is an item rather than a change:* moving
-the reference player's default reprices **every figure in this file**, including the balance reference
-and every death rate in the changelog. That is a deliberate act with a written reason, the way #158
-moved the party schedule, or it is not done at all.
+**#183 — CLOSED in v3.78.0 on its first step. "He wins less" has no support, and every reading of
+the data points the other way.** The item's clause named the missing half: `CRUX.cover` reads *"He
+wins less and lives more"*, v3.76.0 measured only the living, and fame's +399 ± 581 is not a win rate.
+Measured directly off `d.book` — the game's own record of every bout through all four engines, read
+rather than reconstructed — press against cover, 72 houses of 420 weeks, paired:
+
+    arm      bouts    wins   WIN RATE   draws   deaths a bout   killed   alive at 420w
+    press    14788    4264     28.83%      19          19.03%     1657            18
+    cover    15886    4769     30.02%      26          13.68%     1651            18
+
+**Covering wins slightly MORE, not less.** The paired per-house test is the conservative one and it
+says **+0.8 points, needs 1,301 houses, 72 could only see 3.4** — so a real cost up to 3.4 points
+cannot be excluded, and this is written as *unsupported* rather than *disproved*. Pooling per bout
+gives **+1.19 points at 2.28 sigma**, but bouts inside one house share its men, its kit and its week,
+so that pooling overstates significance by an unknown factor and is quoted here only because it
+agrees on the sign. **Both readings agree on the sign; neither supports the table's claim.**
+
+And `killed` is the line that makes the trade legible: **press 1,657 against cover 1,651.** Covering
+kills as many opponents while losing far fewer of its own — deaths a bout **19.03% → 13.68%**.
+
+**So cover dominates press on everything this project can measure and is worse on nothing:** deaths a
+bout −5.4 points (supported, needs 19), men +0.9 (supported, needs 65), win rate no cost and possibly
+a small gain, with bouts, deaths, life, fame and houses-alive all washes.
+
+*The default is NOT moved here, and that is deliberate rather than timid.* It is **#185**, with the
+blast radius written down: moving it changes `open`'s signature, every check's baseline, and the
+meaning of every death rate published in this file. #158 moved the party schedule as its own act with
+its own reason, and this is larger. What v3.78.0 settles is that the objection which would have
+blocked it — *"he wins less"* — is not supported by anything.
+
+
+**#185 — move the reference player off `press`, and reprice what that invalidates.** v3.76.0 and
+v3.78.0 between them measured all four crux answers and then the one quantity that could have
+defended the default. `cover` takes deaths a bout **19.03% → 13.68%** (needs 19 of 72), holds **+0.9
+men** (needs 65), and costs **no measurable wins** — the point estimate is +0.8 points in cover's
+favour and the pooled per-bout reading +1.19. It is better on everything measurable and worse on
+nothing. *Falsifies if:* the cost is in a quantity nothing here can see — life needs 1,131 houses and
+the win rate 1,301, so "no measured cost" remains an absence of evidence. **The reason this is its own
+item is the blast radius, which should be written down before anything moves:** `open.mjs`'s 60-house
+signature shifts, every check's baseline shifts, `survive`'s tally becomes two populations either side
+of the change, and **every death rate published in this file describes a lanista who no longer
+exists** — including the balance reference. The work is therefore not a one-word edit: it is the edit,
+a re-measurement of the figures that move, and a line in each of them saying which policy they were
+taken under. #158 moved the party schedule as a deliberate act with a written reason; this is the same
+act an order of magnitude larger.
+
 
 **#184 — the cloth needs a conditional policy, and blanket answers cannot give it one.** #180 set out
 to make `owedLife` reachable by giving the rope a mercy step, and the measurement showed neither
@@ -4084,6 +4130,51 @@ about a quarter and it is the cost of this repair**; `MISSIO_MAN` is one line to
 wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
+
+### v3.78.0 — #183: "He wins less" is the half of the crux table nobody had measured, and it is not true
+
+v3.76.0 found the reference player answers every crux with a hard-coded `"press"`, and that `cover`
+takes deaths a bout from **19.03% to 13.68%**. It left the objection standing: `CRUX.cover` reads
+*"He wins less and lives more"*, and only the living had been measured. Fame's **+399 ± 581** is not
+a win rate.
+
+#### Measured off the game's own book
+
+`d.book` records every bout through all four engines — `n`, `w`, `drew`, `killed`. Read rather than
+reconstructed, which is this project's most expensive lesson: the audit's `d.poachedIn` counter was a
+field invented in a probe and could only ever return zero, while `did.events` and `everCloth` are why
+the surviving figures stand. Press against cover, 72 houses of 420 weeks, paired:
+
+    arm      bouts    wins   WIN RATE   draws   deaths a bout   killed   alive at 420w
+    press    14788    4264     28.83%      19          19.03%     1657            18
+    cover    15886    4769     30.02%      26          13.68%     1651            18
+
+**Covering wins slightly more, not less.** The conservative reading is the paired per-house test:
+**+0.8 points, needs 1,301 houses, 72 could only see 3.4** — so a real cost up to 3.4 points cannot
+be excluded, and this is written as *unsupported*, not *disproved*. Pooling per bout gives **+1.19
+points at 2.28 sigma**, quoted only because it agrees on the sign: bouts inside one house share its
+men, its kit and its week, so that pooling overstates significance by an unknown factor. Both
+readings agree on the direction and neither supports the table.
+
+`killed` makes the trade legible: **press 1,657, cover 1,651.** Covering kills as many opponents
+while losing far fewer of its own.
+
+#### What that settles, and what it does not
+
+Cover dominates press on everything measurable and is worse on nothing — deaths a bout −5.4 points
+(needs 19), men +0.9 (needs 65), no measurable win cost, and bouts, deaths, life, fame and
+houses-alive all washes.
+
+**The default is not moved here, and that is deliberate rather than timid.** It is **#185**, with the
+blast radius written down first: `open`'s signature shifts, every check's baseline shifts, `survive`'s
+tally splits into two populations, and every death rate in this file describes a lanista who would no
+longer exist. What v3.78.0 settles is that the one objection which could have blocked that move —
+*"he wins less"* — is supported by nothing.
+
+*Only the probe changed; `src/ludus.jsx` is untouched.* Suite green at **72/72 in 13.1 minutes**,
+back to the usual wall-clock after v3.77.0's 18.2 — the difference being that this run's `survive`
+drew clean on the first draw and took no second one. The run tally reads **5 complete runs across 5
+builds, 0 red**.
 
 ### v3.77.0 — #181: the primacy rematch's gate is one term wearing two
 
