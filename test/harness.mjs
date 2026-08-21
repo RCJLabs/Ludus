@@ -26,7 +26,32 @@ const MIME = { ".html":"text/html", ".js":"text/javascript", ".json":"applicatio
    is not there — every check then drowned in the same two 404 console errors and
    called them page errors. Serving it as "/" makes sw.js resolve the way it does in
    a real install, and the noise goes away because the cause does. */
+/* A STALE ARTIFACT ANSWERS THE WRONG QUESTION AND SOUNDS CERTAIN DOING IT. `npm test` builds
+   before it serves; a probe run by hand does not, and `npm run build` writes index.html while
+   every probe here loads dist/test.html — only `build:test` writes that. So a probe run straight
+   after an ordinary build measures the PREVIOUS build's source and reports it as today's.
+
+   This is not hypothetical. The face-walk gate below was proved by breaking a section on purpose
+   and checking the gate went red; it stayed green, and the reason was this exactly — both the
+   clean run and the broken run had loaded the same forty-minute-old test.html. The clean run's
+   "INTACT — 32 expected and 32 rendered" was correct by luck, not by method, which is the worse
+   of the two outcomes because it is the one you believe.
+
+   So: refuse. Serving a build older than the source it claims to be is the instrument fault this
+   project has hit most often, and it costs one stat call to make impossible. LUDUS_STALE_OK=1 for
+   the deliberate case — comparing against an old build on purpose. */
+function freshness(page){
+  const art = path.join(ROOT, page), src = path.join(ROOT, "src/ludus.jsx");
+  let a, b; try { a = fs.statSync(art).mtimeMs; b = fs.statSync(src).mtimeMs; } catch { return null; }
+  if(a >= b) return null;
+  return `${page} is ${Math.round((b-a)/1000)}s older than src/ludus.jsx — it is a PREVIOUS build.\n`
+    + `  Run \`npm run build:test\` (not \`npm run build\`, which writes index.html) and try again.\n`
+    + `  Set LUDUS_STALE_OK=1 if you meant to measure the old build.`;
+}
+
 export function serve({ page = "dist/test.html" } = {}){
+  const stale = process.env.LUDUS_STALE_OK ? null : freshness(page);
+  if(stale) throw new Error("stale build — " + stale);
   const server = http.createServer((req,res)=>{
     const rel = decodeURIComponent(req.url.split("?")[0]);
     const file = path.join(ROOT, rel === "/" ? page : rel);
