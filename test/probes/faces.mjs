@@ -26,11 +26,17 @@
 */
 import { serve, open, found, tab, clearAll } from "../harness.mjs";
 const WANT = process.argv[2] ? +process.argv[2] : null;
+/* HOW DEEP TO RUN BEFORE LOOKING. The gate only proves the sections that actually RENDER, and a
+   good few are gated on the state of the house — "The house so far" wants `S.week > 20`, the road
+   to Rome wants fame or a primus. Walked at week 16 those panels are not on the page, so breaking
+   one would not have shown. 26 weeks is the depth `open` already uses for its cross-build
+   signature, and it lights the week-20 gates. Both depths are baselined; quote the one you ran. */
+const WEEKS = +(process.env.FACES_WEEKS || 26);
 
 const { server, port } = await serve({ page:"dist/test.html" });
 const { browser, p, errors } = await open(port);
 await found(p, { seed:"REACH-1" });
-for(let w=0; w<16; w++){ const ok = await p.evaluate(()=>{
+for(let w=0; w<WEEKS; w++){ const ok = await p.evaluate(()=>{
     const b=[...document.querySelectorAll("button")].find(x=>/^end week$/i.test((x.innerText||"").trim()));
     if(b){ b.click(); return true; } return false; });
   if(!ok) break; await p.waitForTimeout(160); await clearAll(p, 3); }
@@ -73,7 +79,7 @@ for(const t of ["ludus","familia","arena","armory","market","villa"]){
     rows.push({ where: f ? `${t} · ${f}` : t, n, err: errors.length - before });
   }
 }
-console.log(`\nDOES EVERY FACE STILL RENDER?\n`);
+console.log(`\nDOES EVERY FACE STILL RENDER?  (pinned REACH-1, week ${WEEKS})\n`);
 for(const r of rows) console.log(`  ${r.where.padEnd(30)} ${String(r.n).padStart(2)} sections${r.err ? `   ${r.err} ERRORS` : ""}`);
 console.log(`\n  ${rows.length} faces · ${total} sections · ${errors.length} page errors`);
 if(WANT != null) console.log(`  ${total === WANT && !errors.length ? `INTACT — ${WANT} expected and ${WANT} rendered` : `BROKEN — expected ${WANT}, got ${total}, ${errors.length} errors`}`);
