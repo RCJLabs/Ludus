@@ -19147,6 +19147,39 @@ function endTheLine(d){
   return true;
 }
 
+/* ---- PHASE B: A SECTION IS DATA, NOT A POSITION ----
+   The tabs are being reorganised by WHEN a thing is used rather than WHAT it is about, and the
+   first attempt at that moved one <Sect> block two places up the ludus tab. It broke the build
+   — the sections sit at three different indent levels inside three different conditionals — and
+   when it was fixed the yardstick could not see any improvement. Doing that thirty-three times,
+   across a re-tabbing, is a series of chances to ship a blank screen.
+   So order becomes DATA. Each section moves out here as a render function; while the migration
+   runs each one is still CALLED from exactly where its markup used to sit, so nothing moves on
+   screen and every step is verifiable by the one invariant that matters: `reach`'s nav-tally row
+   must come back byte-identical — same 44 actions, same taps, same 32 sections, same 16,963px of
+   section. That is the `open.mjs` signature test wearing different clothes, and it is the same
+   reason #185 could quote its 55%: capture the before, then prove nothing else moved.
+   Once every section is out here, ordering is a one-line array edit instead of surgery.
+   It also takes lines OUT of App, which `bulk` holds at 7,200 and which is sitting at exactly
+   7,200 — so this refactor buys the room the rest of the work needs. */
+const SECT = {
+  unrest: S => (
+  <Sect title="Unrest in the cells" note={unrestWord(S.unrest)} open={S.unrest>=50 || !!S.rebellion}
+    mark={sectMark(S,"cells")}>
+    <Bar v={S.unrest} color="linear-gradient(90deg,#6a3a1a,#b8463a)"/>
+    {S.rebellion && <div className="blood" style={{fontSize:"var(--fs-md)",marginTop:5,fontStyle:"italic"}}>
+      {["","Whispers move between the cells after dark.","Conspiracy — steel is missing, and eyes follow the guards.","The spark is lit. Tonight decides everything."][S.rebellion.stage]}
+    </div>}
+    <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:6}}>Cruelty, wasted deaths, and denied freedom feed it. Victories, feasts, and the rudis cool it. At its height, the house burns.</div>
+    {(()=>{ const bros=(S.ties||[]).filter(t=>t.kind==="brother").length, riv=(S.ties||[]).filter(t=>t.kind==="rival").length;
+      if(!bros && !riv) return null;
+      return <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:5,fontStyle:"italic"}}>
+        In the cells: {bros} bond{bros===1?"":"s"}, {riv} feud{riv===1?"":"s"}. Fighters who trust each other are worth more on the sand and more dangerous in the dark.
+      </div>; })()}
+  </Sect>
+  ),
+};
+
 export default function App(){
   const [screen,setScreen] = useState("loading");
   const [S,setS] = useState(null);
@@ -21240,19 +21273,7 @@ export default function App(){
               ))}
             </div>)}
           </Sect>
-          <Sect title="Unrest in the cells" note={unrestWord(S.unrest)} open={S.unrest>=50 || !!S.rebellion}
-            mark={sectMark(S,"cells")}>
-            <Bar v={S.unrest} color="linear-gradient(90deg,#6a3a1a,#b8463a)"/>
-            {S.rebellion && <div className="blood" style={{fontSize:"var(--fs-md)",marginTop:5,fontStyle:"italic"}}>
-              {["","Whispers move between the cells after dark.","Conspiracy — steel is missing, and eyes follow the guards.","The spark is lit. Tonight decides everything."][S.rebellion.stage]}
-            </div>}
-            <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:6}}>Cruelty, wasted deaths, and denied freedom feed it. Victories, feasts, and the rudis cool it. At its height, the house burns.</div>
-            {(()=>{ const bros=(S.ties||[]).filter(t=>t.kind==="brother").length, riv=(S.ties||[]).filter(t=>t.kind==="rival").length;
-              if(!bros && !riv) return null;
-              return <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:5,fontStyle:"italic"}}>
-                In the cells: {bros} bond{bros===1?"":"s"}, {riv} feud{riv===1?"":"s"}. Fighters who trust each other are worth more on the sand and more dangerous in the dark.
-              </div>; })()}
-          </Sect>
+          {SECT.unrest(S)}
           {S.week<=2 && (
             <div className="panel" style={{padding:13}}>
               <div className="tag tag-gold" style={{marginBottom:6}}>The lanista's first lessons</div>
