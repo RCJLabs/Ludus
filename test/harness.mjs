@@ -704,7 +704,31 @@ export async function installRope(p){
         const t = takeBout(d, { men,
           wantStakes:   d.rome ? null : (o.wantStakes || (o.preferStakes ? null : (o.stakes || "standard"))),
           preferStakes: d.rome ? null : (o.preferStakes || null),
-          choice: o.choice || "press",
+          /* ---- THE CRUX ANSWER WAS A CONSTANT NOBODY CHOSE, AND IT WAS THE LETHAL ONE — #185 ----
+             This read `o.choice || "press"` from the day the step was written, so the reference
+             player answered EVERY crux front-foot and every figure this project published before
+             v3.79.0 was taken inside that policy. It was never a decision; it was a default.
+             Measured, all four answers, 72 houses of 420 weeks an arm, paired, control first
+             (v3.76.0 for the first four columns, v3.78.0 for the wins):
+
+               arm      bouts    wins   WIN RATE   deaths a bout   killed   alive at 420w   median life
+               press    14788    4264     28.83%          19.03%     1657            18          207w
+               cover    15886    4769     30.02%          13.68%     1651            18          240w
+               finish   13676       —          —          17.34%        —            11          237w
+               cloth     3294       —          —          14.94%        —             0           49w
+
+             `cover` takes deaths a bout **-5.4 points** (p=0.002, 22u/50d, needs 19 of 72) and holds
+             **+0.9 men** (needs 65 of 72). `finish` is indistinguishable from pressing on every
+             quantity. Blanket `cloth` is ruinous — 0 of 72 alive at 420 weeks against 18.
+             And the objection the CRUX table itself raises — cover means "He wins less and lives
+             more" — is not supported: covering wins **30.02% against 28.83%**, and kills as many
+             opponents (1,651 against 1,657) while losing far fewer of its own. The paired per-house
+             test cannot resolve a win difference (needs 1,301) so that is written as unsupported
+             rather than disproved, but every reading agrees on the sign and none supports the table.
+             So: better on everything measurable, worse on nothing. The default moves.
+             WHAT THIS INVALIDATES is written up in v3.79.0 and is not small — `open`'s signature,
+             every bar calibrated on rope output, and every death rate published before it. */
+          choice: o.choice || "cover",
           /* and the lever the note above this one is about caught the NEXT lever added: `entrance`
              shipped with `run` honouring it and this call not forwarding it, so four career arms
              came back byte-identical — 1787 bouts and 345 deaths in all four, which is what an

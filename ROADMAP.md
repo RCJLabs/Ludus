@@ -1134,6 +1134,16 @@ State `ver: 6`. `migrate()` is additive and idempotent — it backfills `rivals`
 
 ## Balance reference (measured, N ≥ 800)
 
+**AND EVERY FIGURE HERE TAKEN BEFORE v3.79.0 DESCRIBES A LANISTA WHO NO LONGER EXISTS.** The
+reference player answered every crux with a hard-coded `"press"` from the day that step was written
+until v3.79.0 moved it to `"cover"` on the measurement in #185. That is not a small correction to
+apply in your head: over 60 houses of 26 weeks it takes the opening from **39 of 60 standing and 118
+men to 49 of 60 and 183** — a 55% increase in men — and over 420 weeks it takes deaths a bout from
+**19.03% to 13.68%**. Anything below that is priced in deaths, survival, or the size of a yard, and
+was measured before v3.79.0, is a PRESS-ERA figure. It is not wrong; it is an answer to a different
+question, and the honest thing is that this file cannot re-measure all of them at once. Where a
+figure matters, re-take it and say which policy it was taken under.
+
 **Read this against the source, not instead of it.** These figures were measured when they
 were written and several have been retuned since; where a number matters, the comment above
 it in `src/ludus.jsx` carries the measurement it was actually set on, and `npm test engines`
@@ -1399,7 +1409,22 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.78.0 — **#183 closed on its first step: the crux table's "He wins less"
+**Shipped and verified:** v3.79.0 — **#185 closed: the reference player stops pressing.** Three
+releases built to this — v3.76.0 found the crux answer was a hard-coded `"press"` nobody had chosen
+and the most lethal of the three viable answers; v3.78.0 removed the last objection by measuring the
+win rate at **30.02% cover against 28.83% press**. The edit is one word. The baseline was captured
+**before** it: over 60 houses of 26 weeks the opening goes from **39 of 60 standing and 118 men to 49
+of 60 and 183**, a **55% increase in men** — far larger than the career arms implied, because the crux
+answer matters most while a house is three men deep and washes out by year eight, so **every 420-week
+arm in #180 and #183 measured this at the horizon where it is smallest**. **Zero checks failed and 124
+reported lines moved**: the rope fights more and refuses less (9,058 → 9,817 bouts), `ends`' ruin gate
+held 10 weeks → 25, `census`' rungs shifted — and not one bar fired. That is the design working, and
+equally the admission that **the suite would not have caught this had it been accidental**. Every
+figure in this file priced in deaths, survival or yard size and taken before v3.79.0 is a **press-era
+figure**, and the balance reference now says so at the top. Still a constant, though a measured one:
+a lanista who covers when hurt and presses when winning would beat both, which is #184's judgement
+and unmeasured.
+v3.78.0 — **#183 closed on its first step: the crux table's "He wins less"
 is supported by nothing.** v3.76.0 left that objection standing, having measured only the living half
 of *"He wins less and lives more"*. Measured off `d.book` — the game's own record of every bout
 through all four engines, read rather than reconstructed — press against cover over 72 houses of 420
@@ -3639,20 +3664,40 @@ its own reason, and this is larger. What v3.78.0 settles is that the objection w
 blocked it — *"he wins less"* — is not supported by anything.
 
 
-**#185 — move the reference player off `press`, and reprice what that invalidates.** v3.76.0 and
-v3.78.0 between them measured all four crux answers and then the one quantity that could have
-defended the default. `cover` takes deaths a bout **19.03% → 13.68%** (needs 19 of 72), holds **+0.9
-men** (needs 65), and costs **no measurable wins** — the point estimate is +0.8 points in cover's
-favour and the pooled per-bout reading +1.19. It is better on everything measurable and worse on
-nothing. *Falsifies if:* the cost is in a quantity nothing here can see — life needs 1,131 houses and
-the win rate 1,301, so "no measured cost" remains an absence of evidence. **The reason this is its own
-item is the blast radius, which should be written down before anything moves:** `open.mjs`'s 60-house
-signature shifts, every check's baseline shifts, `survive`'s tally becomes two populations either side
-of the change, and **every death rate published in this file describes a lanista who no longer
-exists** — including the balance reference. The work is therefore not a one-word edit: it is the edit,
-a re-measurement of the figures that move, and a line in each of them saying which policy they were
-taken under. #158 moved the party schedule as a deliberate act with a written reason; this is the same
-act an order of magnitude larger.
+**#185 — CLOSED in v3.79.0. The default moved, nothing broke, and 124 reported lines moved anyway —
+which says more about the checks than about the change.**
+
+The edit is one word: `choice: o.choice || "press"` becomes `"cover"`, carrying the measurement that
+justifies it. What matters is what was done around it.
+
+**The baseline was captured BEFORE the edit,** which is the half that makes any of this reportable:
+
+    open.mjs, 60 houses x 26 weeks    press: standing 39 of 60 · men 118
+                                      cover: standing 49 of 60 · men 183
+
+**A 55% increase in men through the opening** — far larger than the 420-week arms implied, where
+houses-alive was identical at 18 of 72 either way. The crux answer matters enormously while a house
+is three men deep with no cushion and washes out by year eight, which means every career-length arm
+in #180 and #183 was measuring this effect at the horizon where it is *smallest*.
+
+**Zero checks failed, and 124 reported lines moved.** Both halves are the finding. The rope now
+fights more and refuses less (**9,058 → 9,817 bouts**, 1,951 → 1,856 weeks refused, 8,244 → 9,240
+words spoken); `ends`' ruin gate held on **10 weeks → 25** and ended a run **0 of 24 → 1 of 24**;
+`census`' rung distribution shifted. Not one bar fired. That is the design working — `ledger`'s own
+head says these checks hold *"the shape of the standing economy rather than its values"* — **and it
+is also the admission that they would not have caught this change had it been accidental.** #142
+already established the suite is not an economy regression detector; this is what that looks like
+from the other side.
+
+**What it invalidates is written into the balance reference rather than quietly left.** Every figure
+in this file priced in deaths, survival, or the size of a yard and taken before v3.79.0 is a
+PRESS-ERA figure — not wrong, but an answer to a different question. The file cannot re-measure them
+all at once and says so; where one matters, it gets re-taken with its policy named.
+
+*What is still a constant:* `"cover"` is a measured constant rather than an unmeasured one, which is
+progress and not the end of it. A lanista who covers when hurt and presses when winning would beat
+both, and nothing here has measured that — it is the same judgement #184 wants for the cloth, and the
+two belong together.
 
 
 **#184 — the cloth needs a conditional policy, and blanket answers cannot give it one.** #180 set out
@@ -4130,6 +4175,54 @@ about a quarter and it is the cost of this repair**; `MISSIO_MAN` is one line to
 wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
+
+### v3.79.0 — #185: the reference player stops pressing, and 124 numbers move without a single bar firing
+
+Three releases established it. v3.76.0 found the crux answer was a hard-coded `"press"` that nobody
+had chosen, and that press is the most lethal of the three viable answers. v3.78.0 removed the one
+objection that could have blocked a move — the CRUX table's *"He wins less"* — by measuring the win
+rate at **30.02% for cover against 28.83% for press**. This is the move.
+
+#### The edit is one word; the work is everything around it
+
+The baseline was captured **before** the edit, which is what makes the rest reportable:
+
+    open.mjs, 60 houses x 26 weeks    press: standing 39 of 60 · men 118
+                                      cover: standing 49 of 60 · men 183
+
+**A 55% increase in men through the opening.** That is far larger than the career arms implied, where
+houses-alive came back identical at 18 of 72 either way — and the reason is structural: the crux
+answer matters enormously while a house is three men deep with no cushion, and washes out by year
+eight when other pressures dominate. **Every 420-week arm in #180 and #183 was measuring this effect
+at the horizon where it is smallest.**
+
+#### Zero checks failed. 124 reported lines moved.
+
+Both halves are the finding, and the second is the uncomfortable one. The rope fights more and
+refuses less — **9,058 → 9,817 bouts**, 1,951 → 1,856 weeks refused, 8,244 → 9,240 words spoken.
+`ends`' ruin gate held on **10 weeks → 25** and ended a run **0 of 24 → 1 of 24**. `census`' rung
+distribution shifted. Not one bar fired.
+
+That is the design working as written — `ledger`'s head says these checks hold *"the shape of the
+standing economy rather than its values"* — **and it is equally the admission that the suite would
+not have caught this change had it been accidental.** #142 established the suite is not an economy
+regression detector; this is what that fact looks like from the other side, and it is worth writing
+down rather than reading zero failures as approval.
+
+#### What it invalidates, written down rather than left quiet
+
+Every figure in this file priced in deaths, survival, or the size of a yard and taken before v3.79.0
+is a **press-era figure** — not wrong, but an answer to a different question. The balance reference
+now says so at the top, with the size of the correction. The file cannot re-measure them all at once
+and admits that instead of pretending otherwise.
+
+#### And it is still a constant
+
+`"cover"` is a *measured* constant where `"press"` was an unmeasured one. That is progress, not the
+end of it: a lanista who covers when hurt and presses when winning would beat both, and nothing here
+has measured that. It is the same judgement #184 wants for the cloth, and the two belong together.
+
+*The only change outside the ROADMAP is one word in `test/harness.mjs`; `src/ludus.jsx` is untouched.*
 
 ### v3.78.0 — #183: "He wins less" is the half of the crux table nobody had measured, and it is not true
 
