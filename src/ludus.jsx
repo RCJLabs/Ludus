@@ -19163,6 +19163,185 @@ function endTheLine(d){
    It also takes lines OUT of App, which `bulk` holds at 7,200 and which is sitting at exactly
    7,200 — so this refactor buys the room the rest of the work needs. */
 const SECT = {
+  square: (S, X) => { const { dismissDoc, hireDoc, setDrill, setPupil, stopRetrain } = X;
+    return (
+    <Sect live={sectFresh(S,"square")} sid="square" title="The training square" note={S.doctore ? `${S.doctore.name} · ${S.doctore.wage}d/wk` : "no doctore — you run it"}>
+      {S.doctore ? (<div>
+        <div className="flex gap-3" style={{alignItems:"center",marginBottom:6}}>
+          <div style={{flex:"0 0 auto",width:60,height:60,borderRadius:"50%",overflow:"hidden",border:"1px solid #6d5426"}}>
+            <DoctoreBust name={S.doctore.name} size={60}/>
+          </div>
+          <div style={{minWidth:0}}>
+            <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,color:"#e8d092"}}>
+              {S.doctore.name}{S.doctore.nick? <span style={{color:"#d8c08a"}}>, {S.doctore.nick}</span>:null}
+            </div>
+            <div className="flex items-center gap-1" style={{flexWrap:"wrap",marginTop:5}}>
+              <span className="tag">{docWord(S.doctore.skill)}</span>
+              <span className="tag tag-gold">{STAT_NAMES[S.doctore.spec]}</span>
+              {S.doctore.fromHouse && <span className="tag tag-gold">✦ of this house</span>}
+            </div>
+          </div>
+        </div>
+        <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>{S.doctore.past}.</div>
+        {S.doctore.tag && (<>
+          <div style={{fontSize:"var(--fs-md)",marginTop:5,color:"#cfc0a0"}}>
+            <span className="laurel">{S.doctore.name}, {S.doctore.tag}.</span> {S.doctore.pastLine}
+          </div>
+          {docCreed(S) && (
+            <div className="panel" style={{padding:9,marginTop:7,background:"#1c1610"}}>
+              <div className="flex items-center justify-between gap-2">
+                <span className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d092"}}>He {docCreed(S).name}</span>
+                <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>
+                  {(()=>{ const C=docCreed(S), b=[];
+                    if(C.train!==1 && C.train!=null) b.push(`training ×${C.train.toFixed(2)}`);
+                    if(C.strain!=null) b.push(`strain ×${C.strain.toFixed(2)}`);
+                    if(C.regard) b.push(`regard ${C.regard>0?"+":""}${C.regard}/wk`);
+                    if(C.calm) b.push(`unrest −${C.calm}/wk`);
+                    if(C.injure) b.push(`injuries ×${C.injure.toFixed(2)}`);
+                    return b.join(" · "); })()}
+                </span>
+              </div>
+              <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:2}}>{docCreed(S).line}</div>
+              {docSays(S) && <div style={{fontSize:"var(--fs-md)",marginTop:5,borderTop:"1px dotted #33271a",paddingTop:5}}>{docSays(S)}</div>}
+            </div>
+          )}
+        </>)}
+        <div style={{fontSize:"var(--fs-md)",marginTop:6}}>
+          Training <span className="laurel">+{Math.round((docTrain(S,"__none")-1)*100)}%</span> to all,
+          <span className="laurel"> +{Math.round((docTrain(S,S.doctore.spec)-1)*100)}%</span> to {STAT_NAMES[S.doctore.spec].toLowerCase()}.
+          Fewer men torn in training{S.doctore.fromHouse? ", and the cells quieter for it":""}.
+        </div>
+        {(()=>{ const p = docPupil(S) ? S.gladiators.find(g=>g.id===docPupil(S)) : null;
+          return (
+            <div className="panel" style={{padding:10,marginTop:9,background:"#1c1610",borderColor:p?"#c99a4b":"#4e3c26"}}>
+              <div className="tag tag-gold" style={{marginBottom:5}}>His week</div>
+              {p ? (
+                <div>
+                  <div style={{fontSize:"var(--fs-lg)"}}>
+                    {S.doctore.retrainTo
+                      ? <>Remaking <span className="gold">{p.name}</span> as a {S.doctore.retrainTo.toLowerCase()} — {S.doctore.retrainLeft} week{S.doctore.retrainLeft===1?"":"s"} left.</>
+                      : <>Working only on <span className="gold">{p.name}</span>.</>}
+                  </div>
+                  <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>
+                    {S.doctore.retrainTo
+                      ? "He trains at nothing else until it is finished."
+                      : "Far more for him, far less for everyone else — and some weeks the doctore turns something up."}
+                  </div>
+                  <button className="btn btn-ghost" style={{width:"100%",marginTop:7}}
+                    onClick={()=>S.doctore.retrainTo ? stopRetrain() : setPupil(p.id)}>
+                    {S.doctore.retrainTo ? "Call it off" : "Back to the whole yard"}
+                  </button>
+                </div>
+              ) : (
+                <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
+                  Drilling the whole familia. Send him to one man from that man's page and the rest of the yard will feel it.
+                </div>
+              )}
+            </div>
+          ); })()}
+        {(()=>{ const D = drillOf(S), k = S.doctore.drill||"none";
+          return (
+            <div className="panel" style={{padding:10,marginTop:9,background:"#1c1610",borderColor:k!=="none"?"#5a6a35":"#4e3c26"}}>
+              <div className="tag tag-gold" style={{marginBottom:5}}>The week's drill · the whole yard</div>
+              <div className="flex gap-1" style={{flexWrap:"wrap",marginBottom:6}}>
+                {DRILL_KEYS.map(dk=>(
+                  <button key={dk} className={`chip ${k===dk?"on":""}`} onClick={()=>setDrill(dk)}
+                    style={k===dk?{borderColor:"#c99a4b",color:"#e0bd72",background:"#2b2115"}:{}}>{DRILLS[dk].short}</button>
+                ))}
+              </div>
+              <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>{D.blurb}</div>
+              {k!=="none" && <div className="laurel" style={{fontSize:"var(--fs-sm)",marginTop:4}}>
+                {S.doctore.skill<50 ? "A modest hand — the drill only half takes." : S.doctore.skill<72 ? "He gets a good week's work out of it." : "The finest in Capua — the whole yard moves as one."}
+              </div>}
+            </div>
+          ); })()}
+        <button className="btn btn-ghost" style={{width:"100%",marginTop:8}} onClick={dismissDoc}>Dismiss him</button>
+      </div>) : (<div>
+        <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>
+          No one runs the square but you. A doctore drills harder than a lanista can, and a man you freed will drill hardest of all.
+        </div>
+        {/* ---- THE WHOLE OF WHAT YOU ARE GOING WITHOUT ----
+             This was a `details.sect` INSIDE the Training Square's `details.sect` — a section
+             inside a section, so the six things a doctore is worth were two clicks down on a tab
+             a player already has to scroll. Measured on a founded house at week 17 it was the only
+             nested disclosure in the game. It is a plain block now: the section it lives in only
+             renders when there is no doctore, so this list is the reason the section exists and
+             there is nothing to hide it behind. */}
+        <div style={{marginBottom:9,background:"#1a1510",border:"1px solid #4a3a22",borderRadius:6,padding:"7px 10px"}}>
+          <div style={{fontSize:"var(--fs-base)",color:"#d8ac5f",marginBottom:3}}>What you are doing without</div>
+          {DOC_WORTH.map(([label, say], i)=>(
+            <div key={i} style={{padding:"4px 0",borderTop: i? "1px dotted #33271a" : "none"}}>
+              <span style={{fontSize:"var(--fs-base)",color:"#cfc0a0"}}>{label}</span>
+              <span className="dim" style={{fontSize:"var(--fs-base)"}}> — {say(S)}</span>
+            </div>
+          ))}
+        </div>
+        {(S.doctoreMarket||[]).length===0 && <div className="dim" style={{fontSize:"var(--fs-md)"}}>No one worth the wage is looking for work. Ask again after the next market.</div>}
+        {(S.doctoreMarket||[]).map(c=>(
+          <div key={c.id} style={{borderTop:"1px dotted #33271a",paddingTop:9,marginTop:9}}>
+            <div className="flex items-center justify-between gap-2">
+              <span className="disp" style={{fontSize:"var(--fs-md)"}}>{c.name} of {c.origin}</span>
+              <span className="gold" style={{fontSize:"var(--fs-md)",whiteSpace:"nowrap"}}>{c.fee}d + {c.wage}/wk</span>
+            </div>
+            <div className="flex items-center gap-1" style={{flexWrap:"wrap",margin:"4px 0"}}>
+              <span className="tag">{docWord(c.skill)}</span>
+              <span className="tag tag-gold">{STAT_NAMES[c.spec]}</span>
+            </div>
+            <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>{c.past}.</div>
+            <div className="flex gap-1" style={{flexWrap:"wrap",marginTop:5}}>
+              <span className="chip" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",borderColor:"#5a6a4a",color:"#9aa86a"}}>The yard +{docShare(c)}%</span>
+              <span className="chip" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",borderColor:"#5a6a4a",color:"#9aa86a"}}>One pupil +{docPupilShare(c)}%</span>
+              <span className="chip" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",borderColor:"#5a6a4a",color:"#9aa86a"}}>Hurt at the post −{docGuardPc(c)}%</span>
+              <span className="chip" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",borderColor:"#6d5426",color:"#d8ac5f"}}>{STAT_NAMES[c.spec]} +28%</span>
+            </div>
+            <button className="btn" style={{width:"100%",marginTop:7}} disabled={S.gold<c.fee} onClick={()=>hireDoc(c.id)}>
+              {S.gold<c.fee ? "Not enough coin" : `Take him on — ${c.fee}d`}
+            </button>
+          </div>
+        ))}
+      </div>)}
+    </Sect>
+    ); },
+  annals: (S, X) => { const { carryOut, standings } = X;
+    return (
+    <Sect title="The house — records & annals" note={isFirstHouse(S) ? "✦ First House · lanista, houses, book…" : "lanista, the houses, the book, the roll…"}>
+    <div className="grid grid-cols-2 gap-2">
+      {[["lanista","The Lanista", S.lanista? `${S.lanista.age}, ${healthWord(S.lanista.health)}` : "—"],
+        ["standings","The Houses", isFirstHouse(S) ? "✦ First House of Capua" : (()=>{ const t=leagueTable(S);
+          return `${ordN(t.findIndex(r=>r.you)+1)} of ${t.length} in Capua`; })()],
+        ["house","The House", `${BKEYS.filter(k=>bLevel(S,k)>0).length}/5 built`],
+        ["factions","The Stands", FACTIONS[facTop(S)].short + " " + facWord(facOf(S,facTop(S)))],
+        ["repute","What Capua Says", repStyle(S)? REP_KINDS[repStyle(S)].name : "undecided"],
+        ["feats","Feats", `${FEAT_KEYS.filter(k=>hasFeat(S,k)).length}/${FEAT_KEYS.length}`],
+        ["book","The Record Book", `${(S.book&&S.book.n)||0} bouts`],
+        ["annals","The Annals", `${(S.annals||[]).length} served`],
+        ["roll","Roll of the House", `${((S.freed||[]).length)+((S.fallen||[]).length)+((S.retired||[]).length)} remembered`],
+        ["chron","The Chronicle", `${S.log.length} line${S.log.length===1?"":"s"}`],
+        ["carry","Carry It Out", "share this house"]].map(([k,l,sub])=>(
+        <button key={k} className="optrow" style={{padding:11}}
+          onClick={()=>k==="annals"? setAnnals(true) : k==="carry"? carryOut() : k==="chron"? setShowChron(true) : setSheet(k)}>
+          <div className="disp" style={{fontSize:"var(--fs-sm)",color:"#e8d092"}}>{l}</div>
+          <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2}}>{sub}</div>
+        </button>
+      ))}
+    </div>
+    </Sect>
+    ); },
+  yard: (S, X) => {
+    return (
+    <Sect title="The yard" note={`${BKEYS.reduce((n,k)=>n+bLevel(S,k),0)} of 20 wings · ${activeG(S).length} in the yard`}>
+            <LudusPlan S={S}/>
+            <div className="flex items-center justify-between" style={{marginTop:6}}>
+    <span className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>
+      {(()=>{ const built = BKEYS.reduce((n,k)=>n+bLevel(S,k),0), works = workAny(S).length;
+        return built===0 ? "Four walls, a yard, and whatever you brought with you."
+          : works>0 ? `${built} of 20 wings raised, and ${works} thing${works===1?"":"s"} that will outlast you.`
+          : `${built} of 20 wings raised.`; })()}
+    </span>
+    <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{activeG(S).length} in the yard</span>
+            </div>
+          </Sect>
+    ); },
   unrest: S => (
   <Sect title="Unrest in the cells" note={unrestWord(S.unrest)} open={S.unrest>=50 || !!S.rebellion}
     mark={sectMark(S,"cells")}>
@@ -20527,6 +20706,19 @@ export default function App(){
   ); })()}</>) },
   };
 
+  /* ---- THE CONTEXT THE EXTRACTED SECTIONS RECEIVE — phase B ----
+     31 of App's 121 locals are touched by a section, and almost every one by exactly a single
+     section. They are handed over whole rather than per-section so the extraction stays
+     mechanical, and each section DESTRUCTURES what it needs on its first line — which means the
+     markup inside it is never rewritten. That matters more than it looks: `host`, `declare` and
+     `standings` are handler names AND ordinary English words that appear in the prose of these
+     panels, so a rename would have quietly corrupted the text a player reads.
+     It sits immediately before App's return because that is the one place every handler above is
+     already defined — the first attempt used "the last 2-space const" and landed inside the
+     SHEETS object literal, which is a parse error and was caught by the build rather than by a
+     reader. */
+  const SX = { askFavour, backHim, buyGear, carryOut, declare, dismissDoc, doRite, doTourney, feast, hireDoc, hireStaff, host, joinCollegium, letStaffGo, mut, offerTo, openLicence, roster, seekMatch, selG, sellOne, setCrest, setDrill, setEar, setPupil, standings, stopCollegium, stopRetrain, takeRise, vowTo, walkCells };
+
   return (
     <div className={`lr shell${prefs.reduceMotion?" reduce-motion":""}${prefs.largeText?" large-text":""}${prefs.colorblind?" cb":""}`}>
       <style>{CSS}</style>
@@ -20923,18 +21115,7 @@ export default function App(){
                   </div>
                 </div>
               )}
-              <Sect title="The yard" note={`${BKEYS.reduce((n,k)=>n+bLevel(S,k),0)} of 20 wings · ${activeG(S).length} in the yard`}>
-            <LudusPlan S={S}/>
-            <div className="flex items-center justify-between" style={{marginTop:6}}>
-              <span className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>
-                {(()=>{ const built = BKEYS.reduce((n,k)=>n+bLevel(S,k),0), works = workAny(S).length;
-                  return built===0 ? "Four walls, a yard, and whatever you brought with you."
-                    : works>0 ? `${built} of 20 wings raised, and ${works} thing${works===1?"":"s"} that will outlast you.`
-                    : `${built} of 20 wings raised.`; })()}
-              </span>
-              <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{activeG(S).length} in the yard</span>
-            </div>
-          </Sect>
+              {SECT.yard(S, SX)}
 
           {(()=>{ const C = charterAt(S); if(!C) return null;
                 const i = S.charter.i;
@@ -21063,28 +21244,7 @@ export default function App(){
             </Sect>
             ); })()}
 
-          <Sect title="The house — records & annals" note={isFirstHouse(S) ? "✦ First House · lanista, houses, book…" : "lanista, the houses, the book, the roll…"}>
-          <div className="grid grid-cols-2 gap-2">
-            {[["lanista","The Lanista", S.lanista? `${S.lanista.age}, ${healthWord(S.lanista.health)}` : "—"],
-              ["standings","The Houses", isFirstHouse(S) ? "✦ First House of Capua" : (()=>{ const t=leagueTable(S);
-                return `${ordN(t.findIndex(r=>r.you)+1)} of ${t.length} in Capua`; })()],
-              ["house","The House", `${BKEYS.filter(k=>bLevel(S,k)>0).length}/5 built`],
-              ["factions","The Stands", FACTIONS[facTop(S)].short + " " + facWord(facOf(S,facTop(S)))],
-              ["repute","What Capua Says", repStyle(S)? REP_KINDS[repStyle(S)].name : "undecided"],
-              ["feats","Feats", `${FEAT_KEYS.filter(k=>hasFeat(S,k)).length}/${FEAT_KEYS.length}`],
-              ["book","The Record Book", `${(S.book&&S.book.n)||0} bouts`],
-              ["annals","The Annals", `${(S.annals||[]).length} served`],
-              ["roll","Roll of the House", `${((S.freed||[]).length)+((S.fallen||[]).length)+((S.retired||[]).length)} remembered`],
-              ["chron","The Chronicle", `${S.log.length} line${S.log.length===1?"":"s"}`],
-              ["carry","Carry It Out", "share this house"]].map(([k,l,sub])=>(
-              <button key={k} className="optrow" style={{padding:11}}
-                onClick={()=>k==="annals"? setAnnals(true) : k==="carry"? carryOut() : k==="chron"? setShowChron(true) : setSheet(k)}>
-                <div className="disp" style={{fontSize:"var(--fs-sm)",color:"#e8d092"}}>{l}</div>
-                <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2}}>{sub}</div>
-              </button>
-            ))}
-          </div>
-          </Sect>
+          {SECT.annals(S, SX)}
 
           {(()=>{ const now = festivalNow(S), soon = nextFestivals(S, 3);
             return (
@@ -21137,142 +21297,7 @@ export default function App(){
 
 
 
-          <Sect live={sectFresh(S,"square")} sid="square" title="The training square" note={S.doctore ? `${S.doctore.name} · ${S.doctore.wage}d/wk` : "no doctore — you run it"}>
-            {S.doctore ? (<div>
-              <div className="flex gap-3" style={{alignItems:"center",marginBottom:6}}>
-                <div style={{flex:"0 0 auto",width:60,height:60,borderRadius:"50%",overflow:"hidden",border:"1px solid #6d5426"}}>
-                  <DoctoreBust name={S.doctore.name} size={60}/>
-                </div>
-                <div style={{minWidth:0}}>
-                  <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,color:"#e8d092"}}>
-                    {S.doctore.name}{S.doctore.nick? <span style={{color:"#d8c08a"}}>, {S.doctore.nick}</span>:null}
-                  </div>
-                  <div className="flex items-center gap-1" style={{flexWrap:"wrap",marginTop:5}}>
-                    <span className="tag">{docWord(S.doctore.skill)}</span>
-                    <span className="tag tag-gold">{STAT_NAMES[S.doctore.spec]}</span>
-                    {S.doctore.fromHouse && <span className="tag tag-gold">✦ of this house</span>}
-                  </div>
-                </div>
-              </div>
-              <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>{S.doctore.past}.</div>
-              {S.doctore.tag && (<>
-                <div style={{fontSize:"var(--fs-md)",marginTop:5,color:"#cfc0a0"}}>
-                  <span className="laurel">{S.doctore.name}, {S.doctore.tag}.</span> {S.doctore.pastLine}
-                </div>
-                {docCreed(S) && (
-                  <div className="panel" style={{padding:9,marginTop:7,background:"#1c1610"}}>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d092"}}>He {docCreed(S).name}</span>
-                      <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>
-                        {(()=>{ const C=docCreed(S), b=[];
-                          if(C.train!==1 && C.train!=null) b.push(`training ×${C.train.toFixed(2)}`);
-                          if(C.strain!=null) b.push(`strain ×${C.strain.toFixed(2)}`);
-                          if(C.regard) b.push(`regard ${C.regard>0?"+":""}${C.regard}/wk`);
-                          if(C.calm) b.push(`unrest −${C.calm}/wk`);
-                          if(C.injure) b.push(`injuries ×${C.injure.toFixed(2)}`);
-                          return b.join(" · "); })()}
-                      </span>
-                    </div>
-                    <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:2}}>{docCreed(S).line}</div>
-                    {docSays(S) && <div style={{fontSize:"var(--fs-md)",marginTop:5,borderTop:"1px dotted #33271a",paddingTop:5}}>{docSays(S)}</div>}
-                  </div>
-                )}
-              </>)}
-              <div style={{fontSize:"var(--fs-md)",marginTop:6}}>
-                Training <span className="laurel">+{Math.round((docTrain(S,"__none")-1)*100)}%</span> to all,
-                <span className="laurel"> +{Math.round((docTrain(S,S.doctore.spec)-1)*100)}%</span> to {STAT_NAMES[S.doctore.spec].toLowerCase()}.
-                Fewer men torn in training{S.doctore.fromHouse? ", and the cells quieter for it":""}.
-              </div>
-              {(()=>{ const p = docPupil(S) ? S.gladiators.find(g=>g.id===docPupil(S)) : null;
-                return (
-                  <div className="panel" style={{padding:10,marginTop:9,background:"#1c1610",borderColor:p?"#c99a4b":"#4e3c26"}}>
-                    <div className="tag tag-gold" style={{marginBottom:5}}>His week</div>
-                    {p ? (
-                      <div>
-                        <div style={{fontSize:"var(--fs-lg)"}}>
-                          {S.doctore.retrainTo
-                            ? <>Remaking <span className="gold">{p.name}</span> as a {S.doctore.retrainTo.toLowerCase()} — {S.doctore.retrainLeft} week{S.doctore.retrainLeft===1?"":"s"} left.</>
-                            : <>Working only on <span className="gold">{p.name}</span>.</>}
-                        </div>
-                        <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>
-                          {S.doctore.retrainTo
-                            ? "He trains at nothing else until it is finished."
-                            : "Far more for him, far less for everyone else — and some weeks the doctore turns something up."}
-                        </div>
-                        <button className="btn btn-ghost" style={{width:"100%",marginTop:7}}
-                          onClick={()=>S.doctore.retrainTo ? stopRetrain() : setPupil(p.id)}>
-                          {S.doctore.retrainTo ? "Call it off" : "Back to the whole yard"}
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
-                        Drilling the whole familia. Send him to one man from that man's page and the rest of the yard will feel it.
-                      </div>
-                    )}
-                  </div>
-                ); })()}
-              {(()=>{ const D = drillOf(S), k = S.doctore.drill||"none";
-                return (
-                  <div className="panel" style={{padding:10,marginTop:9,background:"#1c1610",borderColor:k!=="none"?"#5a6a35":"#4e3c26"}}>
-                    <div className="tag tag-gold" style={{marginBottom:5}}>The week's drill · the whole yard</div>
-                    <div className="flex gap-1" style={{flexWrap:"wrap",marginBottom:6}}>
-                      {DRILL_KEYS.map(dk=>(
-                        <button key={dk} className={`chip ${k===dk?"on":""}`} onClick={()=>setDrill(dk)}
-                          style={k===dk?{borderColor:"#c99a4b",color:"#e0bd72",background:"#2b2115"}:{}}>{DRILLS[dk].short}</button>
-                      ))}
-                    </div>
-                    <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>{D.blurb}</div>
-                    {k!=="none" && <div className="laurel" style={{fontSize:"var(--fs-sm)",marginTop:4}}>
-                      {S.doctore.skill<50 ? "A modest hand — the drill only half takes." : S.doctore.skill<72 ? "He gets a good week's work out of it." : "The finest in Capua — the whole yard moves as one."}
-                    </div>}
-                  </div>
-                ); })()}
-              <button className="btn btn-ghost" style={{width:"100%",marginTop:8}} onClick={dismissDoc}>Dismiss him</button>
-            </div>) : (<div>
-              <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>
-                No one runs the square but you. A doctore drills harder than a lanista can, and a man you freed will drill hardest of all.
-              </div>
-              {/* ---- THE WHOLE OF WHAT YOU ARE GOING WITHOUT ----
-                   This was a `details.sect` INSIDE the Training Square's `details.sect` — a section
-                   inside a section, so the six things a doctore is worth were two clicks down on a tab
-                   a player already has to scroll. Measured on a founded house at week 17 it was the only
-                   nested disclosure in the game. It is a plain block now: the section it lives in only
-                   renders when there is no doctore, so this list is the reason the section exists and
-                   there is nothing to hide it behind. */}
-              <div style={{marginBottom:9,background:"#1a1510",border:"1px solid #4a3a22",borderRadius:6,padding:"7px 10px"}}>
-                <div style={{fontSize:"var(--fs-base)",color:"#d8ac5f",marginBottom:3}}>What you are doing without</div>
-                {DOC_WORTH.map(([label, say], i)=>(
-                  <div key={i} style={{padding:"4px 0",borderTop: i? "1px dotted #33271a" : "none"}}>
-                    <span style={{fontSize:"var(--fs-base)",color:"#cfc0a0"}}>{label}</span>
-                    <span className="dim" style={{fontSize:"var(--fs-base)"}}> — {say(S)}</span>
-                  </div>
-                ))}
-              </div>
-              {(S.doctoreMarket||[]).length===0 && <div className="dim" style={{fontSize:"var(--fs-md)"}}>No one worth the wage is looking for work. Ask again after the next market.</div>}
-              {(S.doctoreMarket||[]).map(c=>(
-                <div key={c.id} style={{borderTop:"1px dotted #33271a",paddingTop:9,marginTop:9}}>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="disp" style={{fontSize:"var(--fs-md)"}}>{c.name} of {c.origin}</span>
-                    <span className="gold" style={{fontSize:"var(--fs-md)",whiteSpace:"nowrap"}}>{c.fee}d + {c.wage}/wk</span>
-                  </div>
-                  <div className="flex items-center gap-1" style={{flexWrap:"wrap",margin:"4px 0"}}>
-                    <span className="tag">{docWord(c.skill)}</span>
-                    <span className="tag tag-gold">{STAT_NAMES[c.spec]}</span>
-                  </div>
-                  <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>{c.past}.</div>
-                  <div className="flex gap-1" style={{flexWrap:"wrap",marginTop:5}}>
-                    <span className="chip" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",borderColor:"#5a6a4a",color:"#9aa86a"}}>The yard +{docShare(c)}%</span>
-                    <span className="chip" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",borderColor:"#5a6a4a",color:"#9aa86a"}}>One pupil +{docPupilShare(c)}%</span>
-                    <span className="chip" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",borderColor:"#5a6a4a",color:"#9aa86a"}}>Hurt at the post −{docGuardPc(c)}%</span>
-                    <span className="chip" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",borderColor:"#6d5426",color:"#d8ac5f"}}>{STAT_NAMES[c.spec]} +28%</span>
-                  </div>
-                  <button className="btn" style={{width:"100%",marginTop:7}} disabled={S.gold<c.fee} onClick={()=>hireDoc(c.id)}>
-                    {S.gold<c.fee ? "Not enough coin" : `Take him on — ${c.fee}d`}
-                  </button>
-                </div>
-              ))}
-            </div>)}
-          </Sect>
+          {SECT.square(S, SX)}
           {SECT.unrest(S)}
           {S.week<=2 && (
             <div className="panel" style={{padding:13}}>
