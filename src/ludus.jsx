@@ -22484,7 +22484,10 @@ export default function App(){
           </button>
 
           <div className="flex gap-1" role="tablist" aria-label="Familia sections"
-            style={{borderBottom:"1px solid #33271a",paddingBottom:8}}>
+            /* wrapping, for the same reason the villa's row wraps: two chips fitted a phone and a
+               third did not, and a row that runs off the edge does not scroll — it pushes the shell
+               and clips the house's own name. `surface` caught it at 19px hidden. */
+            style={{flexWrap:"wrap",borderBottom:"1px solid #33271a",paddingBottom:8}}>
             {[["roster","The Roster"],["board","The Doctore's Board"],["armory","The Armoury"]].map(([k,l])=>(
               <button key={k} role="tab" aria-selected={mView===k} aria-label={l} onClick={()=>setMView(k)}
                 className={`chip ${mView===k?"on":""}`}
