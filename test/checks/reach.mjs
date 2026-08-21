@@ -50,7 +50,9 @@
      · and it counted the gatekeeper's teaching panel, which is an INLINE panel and not a `.modalwrap`,
        exactly as the note over the harness's `clearAll` says. */
 
-import { found, endWeek, clearAll, tab } from "../harness.mjs";
+import { found, endWeek, clearAll, tab, ROOT } from "../harness.mjs";
+import fs from "node:fs";
+import path from "node:path";
 
 export const name = "reach";
 export const describe = "nothing a player does is more than three taps from the tab bar";
@@ -188,6 +190,39 @@ export async function run({ p, errors }){
     + `furthest ${far.length ? `y=${far[0].y} "${far[0].label}" on ${far[0].where}` : "none"}`);
   if(far.length) lines.push(`   the five furthest: `
     + far.slice(0,5).map(r=>`y=${r.y} ${r.label} (${r.where})`).join(" | "));
+
+  /* ---- THE YARDSTICK FOR THE NAVIGATION OVERHAUL ----
+     Everything above is printed and most of it is not barred, which is right — the y of a button
+     depends on how many men are in the yard, and a bar on that would fire on a good week. But a
+     restructure of the tabs has to be scored against what it replaced, and "better" without a
+     BEFORE is an opinion. #185 captured `open`'s signature before moving the crux default and that
+     is the only reason the 55% could be quoted at all.
+     So the same move `survive` made in #142 and the runner made in #179: write the numbers down,
+     one row a build, and let ten releases of them answer a question that no single run can. The
+     row is deliberately the SHAPE of the navigation and not its prose — counts, the tap histogram,
+     the share below the fold, and the furthest y per place — so two builds diff cleanly.
+     It records and does nothing else. No bar is set on it here; the three-tap ceiling above is the
+     only bar this check enforces, and it is untouched. */
+  try {
+    const NAV = path.join(ROOT, "test", "nav-tally.json");
+    const was = fs.existsSync(NAV) ? JSON.parse(fs.readFileSync(NAV, "utf8")) : [];
+    const v = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8")).version;
+    const places = {};
+    for(const [t, x] of Object.entries(byPlace)) places[t] = { n:x.n, min:x.min, maxY:x.maxY };
+    const row = { v, buttons: live.length, doers: doers.length,
+      taps: hist, belowFold: far.length,
+      foldPct: +(far.length/doers.length*100).toFixed(1),
+      furthestY: far.length ? far[0].y : 0, places };
+    const all = [...was, row];
+    fs.writeFileSync(NAV, JSON.stringify(all, null, 0).replace(/\},\{"v"/g, "},\n{\"v\"") + "\n");
+    if(all.length > 1){
+      const prev = all[all.length - 2];
+      const d = (a, b) => { const n = b - a; return n === 0 ? "same" : (n > 0 ? `+${n}` : `${n}`); };
+      lines.push(`the nav tally, ${all.length} builds: against ${prev.v} — `
+        + `actions ${d(prev.doers, row.doers)} · below the fold ${d(prev.belowFold, row.belowFold)} `
+        + `(${prev.foldPct}% → ${row.foldPct}%) · furthest y ${d(prev.furthestY, row.furthestY)}`);
+    } else lines.push(`the nav tally starts here: ${row.doers} actions, ${row.foldPct}% below the fold, furthest y=${row.furthestY}`);
+  } catch(e){ lines.push(`could not write the nav tally: ${e.message}`); }
 
   if(errors.length) fails.push(`${errors.length} page errors`);
   return { pass: fails.length === 0, why: fails.slice(0,3).join("; ") || null, lines };
