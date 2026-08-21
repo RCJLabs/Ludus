@@ -428,6 +428,19 @@ So cheapest-first stays, and so does the rope's gear policy, which is not costin
 
 `gearPrice` is on the handle now, because a probe asking what a piece *costs* has to use the game's own function — the price a player sees runs through the armamentarium level (down to 0.58), the festival, a perk, the armourer and the doctore.
 
+### Six tabs, and why they stay six
+The plan was to fold six tabs into five places grouped by the weekly loop. It does not survive its own measurement, and the measurement is the game's own agenda — `agenda(d)`, which already knows what wants an answer and where — read over **2,306 house-weeks**.
+
+The agenda is never empty (0 of 2,306 weeks, mean 7.1 items) and its items span **4.02 distinct tabs on a mean week**. The source's own v2.9x note recorded 4.11 over 289 weeks of the reference player, so two measurements eighty releases apart agree. 48.2% of weeks touch exactly four tabs and 74% touch four or more — and **no tab is ever the only one wanted**, 0.0% for all six.
+
+A week's business genuinely lives in four places. Five places is not fewer journeys, it is the same journeys with a chip row in the way — and `reach` charges a face one tap more than a tab, so every merge makes everything on both tabs one deeper. Re-tabbing costs before it benefits. Nothing was re-tabbed.
+
+**The armory is the outlier, and it is not a fault.** It is wanted on 6.5% of weeks against 60–88% for every other tab, raises four distinct agenda lines against 15–22, and carries no urgent items — while holding 12 of the 44 actions and the tallest panel in the game. That reads like an agenda blind to gear. It is not: on houses that arm their men and then never mend or replace, the armory sits on the agenda **46.0% of weeks**, seven times the rate. It is quiet because the reference player keeps its business done.
+
+Getting there cost three bad arms, each of which returned a clean zero that looked like a finding. `gear:false` does not neglect gear, it removes it — with nothing bought there is no steel to wear out. `mend:false` does not either: skipping the mend falls through to the buy below, so a worn piece is *replaced* rather than repaired, which is more attentive, not less. And forty weeks is too short a window regardless — steel wears slowly, and neglected for 120 weeks it reaches 1.03.
+
+One latent fault came out of it. The agenda's guard read `(g.wear && g.wear[s] || 100) < 25`, and wear counts *down*, so a piece worn to exactly 0 took the `|| 100` branch and reported itself pristine — the one state the line most wants to raise. It is `?? 100` now. It changes nothing today: 6,151 house-weeks of neglect put 230 pieces in the 1–24 band and none at exactly 0, so both forms raise the item on the same 205 weeks.
+
 ### Seeded runs
 Every roll came out of `Math.random`, so no house could be handed to anybody else and no measurement could be repeated. There is one **mulberry32** behind the same `R()` that everything already called, so nothing else in the codebase changed.
 
