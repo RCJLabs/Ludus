@@ -97,11 +97,13 @@ export async function run({ p, errors }){
       moves("a work is begun", "ludus", d=>{ d.gold = 90000;
         const k = A.ALL_WORK_KEYS.find(x=>A.workOpen(d,x) && !A.workOn(d,x) && !A.workDone(d,x));
         if(k) A.beginWork(d, k); }),
-      moves("steel starts to go", "armory", d=>{ const g = A.activeG(d)[0];
+      /* the armoury is a FACE of the familia since v3.86.0, so worn steel must light `men` — its
+         four signature terms moved into the men's, and this is what proves they arrived */
+      moves("steel starts to go", "men", d=>{ const g = A.activeG(d)[0];
         const bought = Object.keys(A.GEAR).find(x=>{ const it=A.GEAR[x];
           return it.slot==="weapon" && !it.stock && it.price>0 && it.price < 900; });
         if(bought){ A.buyGearItem(d, bought); A.equipOne(d, g.id, "weapon", bought);
-          A.markSeen(d, "armory"); g.wear = g.wear||{}; g.wear.weapon = 6; } }),
+          A.markSeen(d, "men"); g.wear = g.wear||{}; g.wear.weapon = 6; } }),
       moves("a man is buried", "men", d=>{ const g = A.activeG(d)[0]; g.status = "dead";
         d.fallen = (d.fallen||[]).concat([{ name:g.name, week:d.week }]); }),
     ];

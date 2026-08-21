@@ -51,7 +51,7 @@ const readFace = () => p.evaluate(()=>{
    per tab is fixed by the source, so the index is the stable key and the label is only for print. */
 const walk = async () => {
   const out = [];
-  for(const t of ["ludus","familia","arena","armory","market","villa"]){
+  for(const t of ["ludus","familia","arena","market","villa"]){
     await tab(p, t); await p.waitForTimeout(320); await clearAll(p, 6);
     await tab(p, t); await p.waitForTimeout(280);
     const n = (await faces()).length;

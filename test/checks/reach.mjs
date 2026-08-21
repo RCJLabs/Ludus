@@ -148,7 +148,7 @@ export async function run({ p, errors }){
   const rows = [], sects = [], faceH = {}, arrivals = [], arrivalH = {};
   const take = (where, r) => { rows.push(...r.actions); sects.push(...r.sects); faceH[where] = r.faceH;
     arrivals.push(...r.arrival); arrivalH[where] = r.arrivalH; };
-  for(const t of ["ludus","familia","arena","armory","market","villa"]){
+  for(const t of ["ludus","familia","arena","market","villa"]){
     await tab(p, t); await p.waitForTimeout(340); await clearAll(p, 8);
     await tab(p, t); await p.waitForTimeout(340);
     const fs = await faces();

@@ -28,7 +28,7 @@ await installRope(p);
 
 const arm = async (gearOn) => p.evaluate(([H,W,gearOn])=>{
   const A = window.__LVDVS, R = window.__ROPE;
-  const TABS = ["ludus","men","arena","armory","market","villa"];
+  const TABS = ["ludus","men","arena","market","villa"];
   const span = {}, pair = {}, solo = {}, hit = {};
   for(const t of TABS){ solo[t]=0; hit[t]=0; for(const u of TABS) pair[`${t}|${u}`]=0; }
   let weeks=0, empty=0, items=0, urgent={}; const lab={};

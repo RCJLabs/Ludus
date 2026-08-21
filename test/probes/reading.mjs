@@ -51,7 +51,7 @@ const faces = () => p.evaluate(()=>[...document.querySelectorAll('div[role=tabli
   .flatMap(d=>[...d.querySelectorAll('button[role=tab]')]).map(b=>(b.innerText||"").split("\n").find(x=>/[a-z]/i.test(x))||""));
 
 const rows = [];
-for(const t of ["ludus","familia","arena","armory","market","villa"]){
+for(const t of ["ludus","familia","arena","market","villa"]){
   await tab(p, t); await p.waitForTimeout(340); await clearAll(p, 6); await tab(p, t); await p.waitForTimeout(300);
   const n = (await faces()).length;
   for(let fi=0; fi<Math.max(1,n); fi++){

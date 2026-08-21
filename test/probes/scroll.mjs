@@ -80,7 +80,7 @@ const read = (where) => p.evaluate((where)=>{
 }, where);
 
 const places = [];
-for(const t of ["ludus","familia","arena","armory","market","villa"]){
+for(const t of ["ludus","familia","arena","market","villa"]){
   await tab(p, t); await p.waitForTimeout(340); await clearAll(p, 8);
   await tab(p, t); await p.waitForTimeout(340);
   const fs = await faces();

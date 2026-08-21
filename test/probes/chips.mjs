@@ -26,7 +26,7 @@ const faces = () => p.evaluate(()=>[...document.querySelectorAll('div[role=tabli
   .flatMap(d=>[...d.querySelectorAll('button[role=tab]')]).map(b=>(b.innerText||"").trim()));
 
 const rows = [];
-for(const t of ["ludus","familia","arena","armory","market","villa"]){
+for(const t of ["ludus","familia","arena","market","villa"]){
   await tab(p, t); await p.waitForTimeout(320); await clearAll(p, 6);
   await tab(p, t); await p.waitForTimeout(300);
   const fs = await faces(); const list = fs.length ? fs : [null];

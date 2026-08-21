@@ -45,7 +45,7 @@ export async function run({ p, errors }){
   await p.waitForTimeout(1100);
   await clearAll(p, 16);
 
-  const TABS = ["ludus","familia","arena","armory","market","villa"];
+  const TABS = ["ludus","familia","arena","market","villa"];
   const lines = [], bad = [];
   if(grown) lines.push(`grown to ${grown.name}, fame ${grown.fame}, week ${grown.week} — the size a long game reaches`);
   for(const t of TABS){

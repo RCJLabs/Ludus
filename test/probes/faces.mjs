@@ -80,7 +80,7 @@ const dump = () => p.evaluate(()=>[...document.querySelectorAll('[role=tablist]'
   tabs: [...d.querySelectorAll('button[role=tab]')].map(b=>(b.innerText||"").trim()).join(", ").slice(0,60) })));
 
 let total = 0; const rows = []; const SEEN = new Set();
-for(const t of ["ludus","familia","arena","armory","market","villa"]){
+for(const t of ["ludus","familia","arena","market","villa"]){
   await tab(p, t); await p.waitForTimeout(360); await clearAll(p, 6);
   await tab(p, t); await p.waitForTimeout(300);
   if(t === "ludus") for(const d of await dump())

@@ -2489,7 +2489,7 @@ const CHARTER = [
   { id:"doctore", tab:"ludus", title:"Find somebody who can teach",
     how:"Nobody in this yard knows how. A doctore drills every man faster and breaks fewer of them doing it, puts the whole yard on one drill a week, and is the only road to a signature blow or a second. Two are asking at the square, and they have been there since the day you took the keys.",
     done:d=>!!d.doctore || (d.flags.everDoctore||0) > 0 },
-  { id:"arm", tab:"armory", title:"Arm somebody properly",
+  { id:"arm", tab:"men:armory", title:"Arm somebody properly",
     how:"House issue keeps a man alive and does nothing else. Buy a real piece, then arm him off the rack.",
     done:d=>rackUsed(d) > 0 || d.gladiators.some(g=>SLOTS.some(s=>wears(GEAR[g.kit&&g.kit[s]]))) },
   { id:"games", tab:"arena", title:"Take a card at the games",
@@ -2740,7 +2740,7 @@ function agendaGods(d, add){
    Signatures name only arrivals, never drift. Fatigue creeping up and unrest wandering are
    not news; they would light every tab every week and the dots would stop meaning
    anything, which is worse than not having them. */
-const TAB_KEYS = ["ludus","men","arena","armory","market","villa"];
+const TAB_KEYS = ["ludus","men","arena","market","villa"];   /* the armoury is a face of `men` since v3.86.0 */
 const joinSig = parts => parts.filter(x=>x!=null && x!=="").join("|");
 const TAB_SIG = {
   /* the house itself: the stone, the ladder, the society, the standing */
@@ -2761,8 +2761,16 @@ const TAB_SIG = {
      that much turnover has something on this tab most weeks and the dot is telling the
      truth; #99 says 44% of houses die inside a year, so turnover is the game's texture and
      not a leak in the signature. */
+  /* the men — and, since v3.86.0, the racks, because the armoury is a face of this tab. The four
+     terms below the roster were `armory`'s own signature: steel that wants mending, a kit that is
+     wrong, what is owned, what came back off a body. A face folded in whose signature was left
+     behind is a tab that stops going bright when the thing on it changes. */
   men: d => joinSig([
     activeG(d).map(g=>g.id).join(","),
+    activeG(d).filter(g=>kitFaults(d,g).length).map(g=>g.id).join(","),
+    activeG(d).some(g=>forgeReady(d,g)) ? "forge" : "",
+    Object.keys(d.gear||{}).length,
+    (d.deadSteel||[]).length,
     activeG(d).filter(g=>canFight(g) && !g.injury).map(g=>g.id).join(","),
     activeG(d).filter(g=>g.plan).map(g=>g.id).join(","),
     d.reSignOffer ? `res${d.reSignOffer.id||d.reSignOffer.name}` : "",
@@ -2782,13 +2790,6 @@ const TAB_SIG = {
     d.primus && d.primus.mine ? "hold" : d.primus ? "held" : "",
     d.rome ? `rome${d.rome.fought}` : "",
     munusReady(d) ? "munus" : "",
-  ]),
-  /* the racks: steel that wants mending, a kit that is wrong, a piece that could be cut */
-  armory: d => joinSig([
-    activeG(d).filter(g=>kitFaults(d,g).length).map(g=>g.id).join(","),
-    activeG(d).some(g=>forgeReady(d,g)) ? "forge" : "",
-    Object.keys(d.gear||{}).length,
-    (d.deadSteel||[]).length,
   ]),
   /* the block, and the other three stalls */
   market: d => joinSig([
@@ -2900,6 +2901,11 @@ const sectMark = (d, key) => { const f = SECT_MARK[key]; if(!f) return null;
    So each face carries the loudest mark of the sections that live on it. The names are the
    `vView` keys and the values are SECT_MARK keys; a face with nothing worth a mark gets
    none, which is also information. */
+/* Only the villa's chips carry marks — the familia's are plain, so there is no `men` entry here.
+   The first draft of the armoury fold added one keyed on "rack" and "steel", and neither is a
+   SECT_MARK key: they were names I made up, which is the fault `d.poachedIn` was, and they would
+   have sat in the config for ever looking like they did something. If the armoury face is ever to
+   go bright, it needs a real SECT_MARK predicate first. */
 const FACE_SECTS = {
   /* `The Cells` was folded into `The House` in v3.85.0 — a face that carried one panel — so the
      marks it raised come with it, or the chip stops reporting the feast the agenda points at. */
@@ -3034,7 +3040,14 @@ const agWord = age => age <= 0 ? "new this week" : age <= AG_FRESH ? `${age} wee
    200 lines `bulk` allows — nine lines of prose inside it took the check red. */
 function agenda(d){
   const A = [];
-  const add = (urgency, tab, label, sub, key) => A.push({ urgency, tab, label:herOwn(d,label), sub:herOwn(d,sub), key });
+  /* `tab` may name a FACE as "tab:face" — the armoury is a face of the familia since v3.86.0, and a
+     row that set only the tab dropped the player on The Roster, one chip short of the panel it was
+     pointing at. The tab field stays a plain tab key so everything that groups or badges by tab is
+     untouched; `dest` carries the rest, and only the row's own tap reads it. */
+  const add = (urgency, tab, label, sub, key) => {
+    const [t, face] = String(tab).split(":");
+    A.push({ urgency, tab:t, dest: face ? tab : null, label:herOwn(d,label), sub:herOwn(d,sub), key });
+  };
   if(d.pendingEvent) add(3, "ludus", d.pendingEvent.title, "a decision is waiting");
   if(d.succession) add(3, "ludus", "The house has no head", "somebody must take it up");
   /* anything with a date on it */
@@ -3100,11 +3113,11 @@ function agenda(d){
   }
   /* `?? 100`, not `|| 100` — see the note above `agenda`: wear counts down and 0 is a real value */
   { const going = activeG(d).filter(g=>SLOTS.some(s=>wears(GEAR[g.kit&&g.kit[s]]) && ((g.wear&&g.wear[s]) ?? 100) < 25));
-    if(going.length === 1) add(1, "armory", `${going[0].name}'s steel is close to going`, "have it mended");
-    else if(going.length > 1) add(1, "armory", `${going.length} men have steel close to going`, going.map(g=>g.name).join(", "));
+    if(going.length === 1) add(1, "men:armory", `${going[0].name}'s steel is close to going`, "have it mended");
+    else if(going.length > 1) add(1, "men:armory", `${going.length} men have steel close to going`, going.map(g=>g.name).join(", "));
     const wrong = activeG(d).filter(g=>!going.includes(g) && kitFaults(d,g).some(f=>f.why==="unfamiliar"));
-    if(wrong.length === 1) add(1, "armory", `${wrong[0].name} is carrying the wrong thing`, "it is not his style");
-    else if(wrong.length > 1) add(1, "armory", `${wrong.length} men are carrying the wrong thing`, "none of it is their style"); }
+    if(wrong.length === 1) add(1, "men:armory", `${wrong[0].name} is carrying the wrong thing`, "it is not his style");
+    else if(wrong.length > 1) add(1, "men:armory", `${wrong.length} men are carrying the wrong thing`, "none of it is their style"); }
   for(const m of unhonoured(d)) if(!m.done)
     add(2, "villa", `${m.name} is not buried properly`, `${RITE_WINDOW-(d.week-m.week)} weeks to decide`);
   agendaSchool(d, add);
@@ -3205,9 +3218,9 @@ function agenda(d){
   if(d.city && stayWeeks(d) >= 10)
     add(2, "arena", `${stayWeeks(d)} weeks at ${CITIES[d.city].name}`,
       "Capua is forgetting the house — patrons cool, wants go unasked, and the town has seen the bill");
-  if(rackOver(d)) add(2, "armory", `The armoury is ${rackOver(d)} past what it holds`,   /* #145: `rackKey` bands it */
+  if(rackOver(d)) add(2, "men:armory", `The armoury is ${rackOver(d)} past what it holds`,   /* #145: `rackKey` bands it */
     `${rackRent(d)}d a week and everything wearing ${Math.round((rackStrain(d)-1)*100)}% faster`, rackKey(d));
-  if((d.deadSteel||[]).length) add(1, "armory", `${d.deadSteel.length} piece${d.deadSteel.length===1?"":"s"} came back off a body`, "somebody will have to carry it");
+  if((d.deadSteel||[]).length) add(1, "men:armory", `${d.deadSteel.length} piece${d.deadSteel.length===1?"":"s"} came back off a body`, "somebody will have to carry it");
   if((d.market||[]).length && d.gold > 500 && activeG(d).length < 6)
     add(1, "market", "There are men on the block", `${d.market.length} standing`);
   /* the house's newer trades, surfaced so they introduce themselves */
@@ -3230,7 +3243,7 @@ function agenda(d){
      wearing a hat. The premise was wrong and the check is `grep`, not a measurement. */
   if(masterOpen(d) && !(d.flags.learned && d.flags.learned.bench) && !d.flags.noLessons
      && !Object.keys(d.gear||{}).some(id=>isMaster(id) && d.gear[id]>0))
-    add(2, "armory", "Capua's master smiths will take your commissions now", "famous steel, and a smith's wage on it forever");
+    add(2, "men:armory", "Capua's master smiths will take your commissions now", "famous steel, and a smith's wage on it forever");
   return A.sort((a,b)=>b.urgency-a.urgency);
 }
 const URG = { 3:{c:"#d96f5d",w:"now"}, 2:{c:"#d8ac5f",w:"soon"}, 1:{c:"#b09b7d",w:"when you can"} };
@@ -8837,7 +8850,7 @@ const LESSONS = [
      offered NO LESSON AT ALL to a new house: three written for that tab, none reachable.
      What was meant was "he has bought steel of his own", and `gearCond` is exactly that —
      it gets an entry the moment a bought piece enters the rack, and never for house issue. */
-  { id:"armory", tab:"armory", title:"Steel and Style",
+  { id:"armory", tab:"men", title:"Steel and Style",
     done:d=>Object.keys(d.gearCond||{}).length>0 || d.week>=10,
     text:"Standard kit is always free on the racks. Bought pieces arm one man at a time. Gear outside a man's own style still works, but clumsily — a net-man in a legionary's shield is worse than useless." },
   /* ---- AND THE SAME FAULT AS `armory`, IN THREE OPENINGS OUT OF FIVE ----
@@ -8995,11 +9008,11 @@ const LESSONS = [
      A lesson cannot open after it has closed. Its door is now owning the steel, and its exit
      is having seen a piece come back off the sand worn — which is the thing it is about, and
      which is strictly later than both. Bought pieces enter the pool at 100. */
-  { id:"wear", tab:"armory", title:"Steel Does Not Last",
+  { id:"wear", tab:"men", title:"Steel Does Not Last",
     done:d=>Object.values(d.gearCond||{}).some(pool=>(pool||[]).some(c=>c<80)),
     when:d=>Object.keys(d.gearCond||{}).length>0 || (d.forged||[]).length>0,
     text:"House stock is maintained and lasts forever. Bought steel wears every bout and eventually breaks in the middle of one. Watch the condition, have it mended before it goes, and remember that a fine blade at nothing left is worse than the plain one on the rack." },
-  { id:"bench", tab:"armory", title:"The Master's Bench",
+  { id:"bench", tab:"men", title:"The Master's Bench",
     done:d=>Object.keys(d.gear||{}).some(id=>isMaster(id)),
     when:d=>masterOpen(d),
     text:"Every piece on the rack put together comes to about eleven thousand denarii, and by now you have more than that doing nothing. The masters are the answer to it — and understand what you are buying, because it is not a sharper edge. Point for point of attack and defence their work is the same as the best plain steel in the room. What it is, is famous: twice the showmanship of anything else, which is the crowd, and the crowd is the purse, the name your man is building, and the finger that goes up instead of down when he is on his knees. It is heavier than the plain version every time, and every piece wants a smith's wage every week for as long as you own it, whether it is on a man or on the wall." },
@@ -21956,6 +21969,16 @@ export default function App(){
      already defined — the first attempt used "the last 2-space const" and landed inside the
      SHEETS object literal, which is a parse error and was caught by the build rather than by a
      reader. */
+  /* ---- A ROW THAT SENDS YOU SOMEWHERE HAS TO SEND YOU ALL THE WAY ----
+     The agenda and the charter route by TAB. That was enough while every destination was a tab, and
+     it stopped being enough the moment the armoury became a face of the familia in v3.86.0: an item
+     about worn steel set the tab to `men` and dropped the player on The Roster, one chip short of
+     the panel it was pointing at — which is worse than the tab it replaced, not better. `goTo` sets
+     the face as well when the destination names one. */
+  const goTo = key => { const [t, face] = String(key).split(":");
+    setTab(t);
+    if(face && t === "men") setMView(face);
+    if(face && t === "villa") setVView(face); };
   const SX = { askFavour, backHim, buyGear, carryOut, rackFilt, setAnnals, setAsk, setRackFilt, setSheet, setShowChron, declare, dismissDoc, doRite, doTourney, feast, hireDoc, hireStaff, host, joinCollegium, letStaffGo, mut, offerTo, openLicence, roster, seekMatch, selG, sellOne, setCrest, setDrill, setEar, setPupil, standings, stopCollegium, stopRetrain, takeRise, vowTo, walkCells };
 
   return (
@@ -22104,7 +22127,7 @@ export default function App(){
                   </div>
                 ) : shown.map((a,i)=>(
                   <button key={i} className="optrow" style={{width:"100%",marginBottom:5,padding:"8px 10px",textAlign:"left"}}
-                    onClick={()=>setTab(a.tab)}>
+                    onClick={()=>goTo(a.dest || a.tab)}>
                     <div className="flex items-center justify-between gap-2">
                       <span className="disp" style={{fontSize:"var(--fs-base)",minWidth:0,
                         color: a.urgency>=3 ? "#e8b0a0" : a.age<=0 ? "#e8d092" : "#e8d9b8"}}>{a.label}</span>
@@ -22367,7 +22390,7 @@ export default function App(){
                     <div className="disp" style={{fontSize:"var(--fs-lg)",color:"#e8d092"}}>{C.title}</div>
                     <div style={{fontSize:"var(--fs-lg)",marginTop:3}}>{C.how}</div>
                     <div className="flex gap-2" style={{marginTop:8}}>
-                      <button className="btn" style={{flex:1}} onClick={()=>setTab(C.tab)}>Take me there</button>
+                      <button className="btn" style={{flex:1}} onClick={()=>goTo(C.dest || C.tab)}>Take me there</button>
                       <button className="btn btn-ghost" style={{whiteSpace:"nowrap"}}
                         onClick={()=>setAsk({ title:"Leave Off The Charter", confirm:"I know the work",
                           text:"You will stop being told what to do next. Nothing else changes and it cannot be turned back on.",
@@ -22462,7 +22485,7 @@ export default function App(){
 
           <div className="flex gap-1" role="tablist" aria-label="Familia sections"
             style={{borderBottom:"1px solid #33271a",paddingBottom:8}}>
-            {[["roster","The Roster"],["board","The Doctore's Board"]].map(([k,l])=>(
+            {[["roster","The Roster"],["board","The Doctore's Board"],["armory","The Armoury"]].map(([k,l])=>(
               <button key={k} role="tab" aria-selected={mView===k} aria-label={l} onClick={()=>setMView(k)}
                 className={`chip ${mView===k?"on":""}`}
                 style={{whiteSpace:"nowrap",...(mView===k?{borderColor:"#c99a4b",color:"#e0bd72",background:"#2b2115"}:{})}}>
@@ -22608,6 +22631,118 @@ export default function App(){
                   </div>
                 ); })}
             </>); })()}
+          {/* ---- THE ARMOURY IS A FACE OF THE FAMILIA NOW, NOT A TAB OF ITS OWN ----
+               Measured off the game's own agenda over 2,306 house-weeks: the armory is wanted on
+               6.5% of weeks against 60-88% for every other tab, raises 4 distinct lines against
+               15-22, and carries no urgent item at all — while holding a sixth of the tab bar and
+               the tallest panel in the game. It is quiet because a lanista who keeps his steel
+               mended has nothing to answer there; neglect it for 120 weeks and it climbs to 46%.
+               THE COST IS REAL AND IS NOT HIDDEN: its twelve actions go from one tap to two,
+               because reach charges a face a tap more than a tab. That is the trade — a tap on one
+               week in fifteen, against a place in the bar that is wanted on nearly every week. The
+               same arithmetic is why no OTHER tab was merged: the week spans 4.02 of them and none
+               is ever the only one wanted. And the steel belongs with the men who carry it. */}
+          {mView==="armory" && (<div className="flex flex-col gap-3">
+          {(()=>{ const u = rackUsed(S), c = rackCap(S), over = rackOver(S);
+            return (
+              <div className="panel" style={{padding:12, borderColor: over? "#7c2a22" : u>=c-1 ? "#6d5426" : "#3e2f1f"}}>
+                <div className="flex items-center justify-between" style={{marginBottom:4}}>
+                  <span className="tag tag-gold">The racks</span>
+                  <span className="rowval" style={{fontSize:"var(--fs-base)",color:over?"#d96f5d":u>=c-1?"#d8ac5f":"#9aa86a"}}>
+                    {u} of {c} · {rackWord(S)}
+                  </span>
+                </div>
+                <Bar v={Math.min(100, u/c*100)} label="" color={over
+                  ? "linear-gradient(90deg,#5a1a14,#d96f5d)" : "linear-gradient(90deg,#4a3a24,#c99a4b)"}/>
+                <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:4}}>
+                  {over
+                    ? `Past what the room holds. Everything wears ${Math.round((rackStrain(S)-1)*100)}% faster and it costs ${rackRent(S)} denarii a week to keep it stacked against the wall.`
+                    : `House issue does not count — it is issue. A bigger armoury holds seven more.`}
+                </div>
+                {(()=>{ const eq = S.gladiators.reduce((n,g)=> n + (isGone(g)||!g.kit ? 0 : SLOTS.filter(s=>!(g.named&&g.named.slot===s) && wears(GEAR[g.kit[s]])).length), 0);
+                  return (
+                    <button className="btn btn-ghost" style={{width:"100%",marginTop:9}} disabled={eq===0}
+                      onClick={()=>setAsk({ title:"Strip Every Man",
+                        confirm:`Rack all ${eq} piece${eq>1?"s":""}`,
+                        text:`Every gladiator goes back to plain house issue, and ${eq} bought piece${eq>1?"s go":" goes"} back on the rack — ready to hand out again from scratch. Nothing is sold and nothing is lost; you are only starting the loadout over. Named weapons stay with the men who earned them.`,
+                        run:()=>unequipAll() })}>
+                      {eq ? `Strip all men to the rack · ${eq}` : "Every man is on house issue"}
+                    </button>
+                  ); })()}
+              </div>
+            ); })()}
+
+          {(S.deadSteel||[]).length>0 && (
+            <div className="panel" style={{padding:11,borderColor:"#7c2a22"}}>
+              <div className="tag tag-blood" style={{marginBottom:4}}>Off the dead</div>
+              <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:5}}>
+                Pieces that came back off a body. Somebody will end up carrying them, and he will know it.
+              </div>
+              {S.deadSteel.map((x,i)=>(
+                <div key={i} className="flex items-center justify-between gap-2" style={{borderTop:"1px dotted #33271a",padding:"4px 0"}}>
+                  <span className="rowname" style={{fontSize:"var(--fs-md)"}}>{GEAR[x.id] ? GEAR[x.id].name : x.id}</span>
+                  <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{x.from}, week {x.week}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {activeG(S).length>0 && (
+            <div className="panel" style={{padding:11}}>
+              <div className="flex items-center justify-between gap-2">
+                <div style={{minWidth:0}}>
+                  <div className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d092"}}>Arm the whole line</div>
+                  <div className="dim" style={{fontSize:"var(--fs-base)"}}>
+                    {(()=>{ const n = activeG(S).filter(g=>kitFaults(S,g).length).length;
+                      return n ? `${n} man${n===1?" is":"men are"} carrying less than the racks can give ${n===1?"him":"them"}.`
+                        : "Everyone is carrying the best of what the house owns."; })()}
+                  </div>
+                </div>
+                <button className="btn" style={{whiteSpace:"nowrap"}} onClick={armAll}>Go down the line</button>
+              </div>
+            </div>
+          )}
+
+          {(()=>{ const open = masterOpen(S), keep = gearUpkeep(S);
+            const owned = Object.keys(S.gear||{}).filter(id=>isMaster(id)).reduce((n,id)=>n+(S.gear[id]||0),0);
+            const lvl = bLevel(S,"armamentarium"), acc = acclaimOf(S);
+            if(!open && lvl < 1 && acc < 12) return null;      /* a new house has enough to read */
+            return (
+              <div className="panel" style={{padding:12, borderColor: open? "#6d5426" : "#3e2f1f"}}>
+                <div className="flex items-center justify-between gap-2" style={{marginBottom:4}}>
+                  <span className={open?"tag tag-gold":"tag"}>The master's bench</span>
+                  {open
+                    ? <span className="rowval" style={{fontSize:"var(--fs-base)",color:keep?"#d8ac5f":"#9aa86a"}}>
+                        {owned ? `${owned} in the house · ${keep}d a week` : "open to you"}</span>
+                    : <span className="rowval dim" style={{fontSize:"var(--fs-base)"}}>closed</span>}
+                </div>
+                <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>
+                  {open
+                    ? `Capua's best smiths will take your commissions. Their work is no sharper than the good stuff on the rack — it is famous, which is the crowd, and the crowd is the purse, the name, and the raised finger when he is down and asking. Every piece wants a smith on it every week for as long as you own it.`
+                    : lvl < 2
+                      ? `A man who signs four blades a year does not set his bench up in a shed. Build the armoury to a second level and make a name worth his signature, and the top of the trade opens to you.`
+                      : `Your workshop would do. Your name in the street would not — not yet. ${MASTER_ACCLAIM - Math.round(acc)} more points of acclaim and the masters will take your commissions.`}
+                </div>
+              </div>
+            ); })()}
+
+          <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>The racks hold what you have bought and nothing else. Every piece arms one man at a time — equip it from his page. A free hand, a bare head and a bare chest cost nothing and always will.</div>
+
+          <div className="grid grid-cols-4 gap-2">
+            {SLOTS.map(slot=>{
+              const owned = Object.entries(GEAR).filter(([id,it])=>it.slot===slot).reduce((n,[id])=>n+(S.gear[id]||0),0);
+              const idle  = Object.entries(GEAR).filter(([id,it])=>it.slot===slot).reduce((n,[id])=>n+gearFree(S,id),0);
+              return (
+                <button key={slot} className={`focusbtn ${rack===slot?"on":""}`} onClick={()=>setRack(slot)}>
+                  {SLOT_NAME[slot].toUpperCase()}
+                  <span className="sub">{owned? `${owned} owned${idle?`, ${idle} idle`:""}` : "house stock"}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {SLOTS.filter(s=>s===rack).map(slot => SECT.rack(S, SX, slot))}
+          </div>)}
         </div>)}
 
         {tab==="arena" && (<div className="flex flex-col gap-3">
@@ -23296,112 +23431,11 @@ export default function App(){
 
         </div>)}
 
-        {tab==="armory" && (<div className="flex flex-col gap-3">
-          {(()=>{ const u = rackUsed(S), c = rackCap(S), over = rackOver(S);
-            return (
-              <div className="panel" style={{padding:12, borderColor: over? "#7c2a22" : u>=c-1 ? "#6d5426" : "#3e2f1f"}}>
-                <div className="flex items-center justify-between" style={{marginBottom:4}}>
-                  <span className="tag tag-gold">The racks</span>
-                  <span className="rowval" style={{fontSize:"var(--fs-base)",color:over?"#d96f5d":u>=c-1?"#d8ac5f":"#9aa86a"}}>
-                    {u} of {c} · {rackWord(S)}
-                  </span>
-                </div>
-                <Bar v={Math.min(100, u/c*100)} label="" color={over
-                  ? "linear-gradient(90deg,#5a1a14,#d96f5d)" : "linear-gradient(90deg,#4a3a24,#c99a4b)"}/>
-                <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:4}}>
-                  {over
-                    ? `Past what the room holds. Everything wears ${Math.round((rackStrain(S)-1)*100)}% faster and it costs ${rackRent(S)} denarii a week to keep it stacked against the wall.`
-                    : `House issue does not count — it is issue. A bigger armoury holds seven more.`}
-                </div>
-                {(()=>{ const eq = S.gladiators.reduce((n,g)=> n + (isGone(g)||!g.kit ? 0 : SLOTS.filter(s=>!(g.named&&g.named.slot===s) && wears(GEAR[g.kit[s]])).length), 0);
-                  return (
-                    <button className="btn btn-ghost" style={{width:"100%",marginTop:9}} disabled={eq===0}
-                      onClick={()=>setAsk({ title:"Strip Every Man",
-                        confirm:`Rack all ${eq} piece${eq>1?"s":""}`,
-                        text:`Every gladiator goes back to plain house issue, and ${eq} bought piece${eq>1?"s go":" goes"} back on the rack — ready to hand out again from scratch. Nothing is sold and nothing is lost; you are only starting the loadout over. Named weapons stay with the men who earned them.`,
-                        run:()=>unequipAll() })}>
-                      {eq ? `Strip all men to the rack · ${eq}` : "Every man is on house issue"}
-                    </button>
-                  ); })()}
-              </div>
-            ); })()}
-
-          {(S.deadSteel||[]).length>0 && (
-            <div className="panel" style={{padding:11,borderColor:"#7c2a22"}}>
-              <div className="tag tag-blood" style={{marginBottom:4}}>Off the dead</div>
-              <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:5}}>
-                Pieces that came back off a body. Somebody will end up carrying them, and he will know it.
-              </div>
-              {S.deadSteel.map((x,i)=>(
-                <div key={i} className="flex items-center justify-between gap-2" style={{borderTop:"1px dotted #33271a",padding:"4px 0"}}>
-                  <span className="rowname" style={{fontSize:"var(--fs-md)"}}>{GEAR[x.id] ? GEAR[x.id].name : x.id}</span>
-                  <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{x.from}, week {x.week}</span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {activeG(S).length>0 && (
-            <div className="panel" style={{padding:11}}>
-              <div className="flex items-center justify-between gap-2">
-                <div style={{minWidth:0}}>
-                  <div className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d092"}}>Arm the whole line</div>
-                  <div className="dim" style={{fontSize:"var(--fs-base)"}}>
-                    {(()=>{ const n = activeG(S).filter(g=>kitFaults(S,g).length).length;
-                      return n ? `${n} man${n===1?" is":"men are"} carrying less than the racks can give ${n===1?"him":"them"}.`
-                        : "Everyone is carrying the best of what the house owns."; })()}
-                  </div>
-                </div>
-                <button className="btn" style={{whiteSpace:"nowrap"}} onClick={armAll}>Go down the line</button>
-              </div>
-            </div>
-          )}
-
-          {(()=>{ const open = masterOpen(S), keep = gearUpkeep(S);
-            const owned = Object.keys(S.gear||{}).filter(id=>isMaster(id)).reduce((n,id)=>n+(S.gear[id]||0),0);
-            const lvl = bLevel(S,"armamentarium"), acc = acclaimOf(S);
-            if(!open && lvl < 1 && acc < 12) return null;      /* a new house has enough to read */
-            return (
-              <div className="panel" style={{padding:12, borderColor: open? "#6d5426" : "#3e2f1f"}}>
-                <div className="flex items-center justify-between gap-2" style={{marginBottom:4}}>
-                  <span className={open?"tag tag-gold":"tag"}>The master's bench</span>
-                  {open
-                    ? <span className="rowval" style={{fontSize:"var(--fs-base)",color:keep?"#d8ac5f":"#9aa86a"}}>
-                        {owned ? `${owned} in the house · ${keep}d a week` : "open to you"}</span>
-                    : <span className="rowval dim" style={{fontSize:"var(--fs-base)"}}>closed</span>}
-                </div>
-                <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>
-                  {open
-                    ? `Capua's best smiths will take your commissions. Their work is no sharper than the good stuff on the rack — it is famous, which is the crowd, and the crowd is the purse, the name, and the raised finger when he is down and asking. Every piece wants a smith on it every week for as long as you own it.`
-                    : lvl < 2
-                      ? `A man who signs four blades a year does not set his bench up in a shed. Build the armoury to a second level and make a name worth his signature, and the top of the trade opens to you.`
-                      : `Your workshop would do. Your name in the street would not — not yet. ${MASTER_ACCLAIM - Math.round(acc)} more points of acclaim and the masters will take your commissions.`}
-                </div>
-              </div>
-            ); })()}
-
-          <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>The racks hold what you have bought and nothing else. Every piece arms one man at a time — equip it from his page. A free hand, a bare head and a bare chest cost nothing and always will.</div>
-
-          <div className="grid grid-cols-4 gap-2">
-            {SLOTS.map(slot=>{
-              const owned = Object.entries(GEAR).filter(([id,it])=>it.slot===slot).reduce((n,[id])=>n+(S.gear[id]||0),0);
-              const idle  = Object.entries(GEAR).filter(([id,it])=>it.slot===slot).reduce((n,[id])=>n+gearFree(S,id),0);
-              return (
-                <button key={slot} className={`focusbtn ${rack===slot?"on":""}`} onClick={()=>setRack(slot)}>
-                  {SLOT_NAME[slot].toUpperCase()}
-                  <span className="sub">{owned? `${owned} owned${idle?`, ${idle} idle`:""}` : "house stock"}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {SLOTS.filter(s=>s===rack).map(slot => SECT.rack(S, SX, slot))}
-        </div>)}
 
       </div></div>
 
       <nav className="bar" role="tablist" aria-label="Sections" style={{position:"fixed",left:0,right:0,bottom:0,zIndex:20,background:"#14100c",borderTop:"1px solid #3e2f1f",display:"flex",paddingBottom:"env(safe-area-inset-bottom)"}}>
-        {[["ludus","Ludus",Landmark],["men","Familia",Users],["arena","Arena",Swords],["armory","Armory",Shield],["market","Market",ShoppingBag],["villa","Villa",Wine]].map(([k,l,I])=>{
+        {[["ludus","Ludus",Landmark],["men","Familia",Users],["arena","Arena",Swords],["market","Market",ShoppingBag],["villa","Villa",Wine]].map(([k,l,I])=>{
           /* the mark: the loudest thing the agenda has for this tab, and whether anything
              on it has moved since it was last looked at. The tab you are on never wears
              one — you are looking at it. */
@@ -24827,7 +24861,9 @@ export default function App(){
         for(const r of rows){ let g = byWeek.find(x=>x.week===r.week); if(!g){ g={week:r.week, rows:[]}; byWeek.push(g); } g.rows.push(r); }
         const away = w => { const n = w - S.week;
           return n<=0 ? "this week" : n===1 ? "next week" : `in ${n} weeks`; };
-        const go = tab => { setCal(false); if(tab) setTab(tab); };
+        /* the calendar's own rows route the same way the agenda does — through goTo, so a row
+           naming the armoury opens the face and not just the tab it now lives on */
+        const go = tab => { setCal(false); if(tab) goTo(tab); };
         return (
           <div className="modalwrap" role="dialog" aria-modal="true" aria-label="The year ahead" style={{zIndex:Z.calendar}} onClick={()=>setCal(false)}>
             <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>

@@ -36,7 +36,7 @@ export async function run({ p, errors }){
   await clearAll(p);
 
   const lines = [], visited = [];
-  const TABS = ["ludus","familia","arena","armory","market","villa"];
+  const TABS = ["ludus","familia","arena","market","villa"];
 
   /* every face a tab has, by its own switcher. the tab bar's own buttons carry
      role=tab too, so a face switcher is told apart by living inside a tablist that
