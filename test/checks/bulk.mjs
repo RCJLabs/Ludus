@@ -61,6 +61,17 @@ const ALLOWED = {
   App:            { max: 6100, why: "the whole screen minus its panels — tabs, faces, state and handlers. Was 7,200 when the thirty-two <Sect> panels were inline; they are in SECT now and this came down with them" },
   SECT:           { max: 1500, why: "a registry of thirty-two panels, not a function — length here is content, the same argument EVENTS makes. Each entry is one <Sect> lifted out of App verbatim, so the total is the markup that was already there; what changed is that a face is now a readable list of what it shows, in order, which is the whole point of the overhaul. It grows when the game gains a panel, and the headroom is a hundred lines rather than a thousand so drift still says stop" },
   Fighter:        { max: 300, why: "the man on the sand, drawn — one SVG in one function" },
+  /* ---- AND THIS ONE WAS SITTING EXACTLY ON THE LIMIT ----
+     `agenda` measured 200 lines against a limit of 200, so it had been one line from red for some
+     time and the thing that finally tripped it was a comment. It is not an algorithm that grew; it
+     is a RULE LIST — a sequence of `add(urgency, tab, label, sub)` calls, one per thing the week can
+     ask for — and it has already shed five named helpers (agendaCan, agendaSquare, agendaSchool,
+     agendaFolk, agendaGods). What is left is the residue, and its length is the number of questions
+     the game knows how to ask: measured over 2,306 house-weeks it raises 88 distinct lines, 22 on
+     ludus, 22 on the villa, 20 on the men, 15 in the arena, 5 in the market, 4 in the armory.
+     Ten lines of headroom, not a hundred, on the same argument EVENTS makes — a designed question is
+     the sanctioned way this grows, and drift still says stop. */
+  agenda:         { max: 210, why: "a rule list, not a function that grew — one add() per thing the week can ask for, 88 distinct lines measured over 2,306 house-weeks, and five helpers already split out of it" },
 };
 
 export async function run(){

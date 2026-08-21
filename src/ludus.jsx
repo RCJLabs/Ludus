@@ -3018,6 +3018,19 @@ const agendaTop = list => list.filter(a=>a.urgency >= 3 || a.age <= AG_FRESH);
 const agWord = age => age <= 0 ? "new this week" : age <= AG_FRESH ? `${age} week${age===1?"":"s"} now`
   : age < 12 ? `${age} weeks now` : "standing";
 
+/* ---- `|| 100` READ A DESTROYED PIECE AS A PRISTINE ONE ----
+   The steel guard inside `agenda` reads a man's wear, and wear counts DOWN from 100. Written
+   `(g.wear && g.wear[s] || 100) < 25`, a piece worn to exactly 0 took the `|| 100` branch and
+   reported itself untouched — the one state the line most wants to raise was the one state it could
+   not see. `?? 100` substitutes for absent only, not for zero.
+   LATENT, and worth saying plainly rather than claiming a fix: 6,151 house-weeks of houses that arm
+   their men and then never mend or replace put 230 pieces into the 1-24 band and NONE at exactly 0,
+   the minimum observed anywhere being 1.03 — so the old form and this one raise the item on
+   precisely the same 205 weeks, 3.3%. Nothing on screen moved. It is corrected because the next
+   change that rounds wear, or lets a piece rest at zero instead of breaking, would turn a silent
+   misread into a bug with no symptom.
+   The note sits out here because it is documentation, not logic, and `agenda` was at exactly the
+   200 lines `bulk` allows — nine lines of prose inside it took the check red. */
 function agenda(d){
   const A = [];
   const add = (urgency, tab, label, sub, key) => A.push({ urgency, tab, label:herOwn(d,label), sub:herOwn(d,sub), key });
@@ -3084,15 +3097,7 @@ function agenda(d){
     else if(g.ambition && g.ambition.despair) add(2, "men", `${g.name} has stopped asking`, "for the thing he wanted");
 
   }
-  /* ---- `|| 100` READ A DESTROYED PIECE AS A PRISTINE ONE ----
-     Wear counts DOWN from 100, so a piece worn to exactly 0 took the `|| 100` branch and reported
-     itself as untouched — the one state this line most wants to raise was the one state it could not
-     see. It is `?? 100` now, which only substitutes for absent, not for zero.
-     LATENT, and said plainly: 6,151 house-weeks of houses that arm their men and then never mend or
-     replace put 230 pieces into the 1-24 band and NONE at exactly 0 — the minimum wear observed
-     anywhere was 1.03 — so the old form and this one raise the item on precisely the same 205 weeks
-     (3.3%). Nothing on screen moves. It is fixed because the next thing that rounds wear, or lets a
-     piece sit at zero instead of breaking, would turn a silent misread into a bug with no symptom. */
+  /* `?? 100`, not `|| 100` — see the note above `agenda`: wear counts down and 0 is a real value */
   { const going = activeG(d).filter(g=>SLOTS.some(s=>wears(GEAR[g.kit&&g.kit[s]]) && ((g.wear&&g.wear[s]) ?? 100) < 25));
     if(going.length === 1) add(1, "armory", `${going[0].name}'s steel is close to going`, "have it mended");
     else if(going.length > 1) add(1, "armory", `${going.length} men have steel close to going`, going.map(g=>g.name).join(", "));
