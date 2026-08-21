@@ -51,6 +51,7 @@ const out = await p.evaluate(([H,W,SEED])=>{
      with a denominator, which is the difference between an assertion and a measurement. */
   let clothHouses = 0, clothTotal = 0, primacyHouses = 0;
   let primacyWeeks = 0, sixWeeks = 0, secondMan = 0, bothTerms = 0, eligUnknown = false;
+  let anyOther = 0, winsOK = 0, fameOK = 0, othersSeen = 0, menWins = 0, menFame = 0;
   /* ---- TWO OF THESE COUNTERS WERE WRONG AND ONE WAS UNFALSIFIABLE ----
      `primacyHouses` first read `d.primus && d.primus.mine` AFTER the loop — which is "held it at the
      moment the house ended", not "ever held it", and 63 of 72 houses end dead. It is sampled inside
@@ -86,6 +87,20 @@ const out = await p.evaluate(([H,W,SEED])=>{
           if(elig === null) eligUnknown = true;
           else if(elig.length) secondMan++;
           if(held >= 6 && elig && elig.length) bothTerms++;
+          /* ---- #181: WHICH HALF OF `primusEligible` BINDS? ----
+             It is `status==="active" && wins >= PRIMUS_GATE.wins && pfame >= PRIMUS_GATE.pfame`,
+             which is 5 and 35. "A second eligible man on 15 of 99 weeks" does not say whether the
+             house has nobody with the record or nobody with the name, and the fix depends entirely
+             on which — `census` splits its four gates for the same reason. Counted off the game's
+             own constants rather than the two numbers written out here, so a repricing moves this
+             measurement with it. */
+          if(others.length) anyOther++;
+          const G = A.PRIMUS_GATE || { wins:5, pfame:35 };
+          if(others.some(x => x.wins >= G.wins)) winsOK++;
+          if(others.some(x => x.pfame >= G.pfame)) fameOK++;
+          for(const x of others){ othersSeen++;
+            if(x.wins >= G.wins) menWins++;
+            if(x.pfame >= G.pfame) menFame++; }
         }
         const evs = (did && did.events) || {};
         for(const k of Object.keys(evs)){
@@ -102,7 +117,9 @@ const out = await p.evaluate(([H,W,SEED])=>{
   }
   return { KEYS, pushed, seen, byHouse, weeks, houses, alive, W, PRES,
            clothHouses, clothTotal, primacyHouses,
-           primacyWeeks, sixWeeks, secondMan, bothTerms, eligUnknown };
+           primacyWeeks, sixWeeks, secondMan, bothTerms, eligUnknown,
+           anyOther, winsOK, fameOK, othersSeen, menWins, menFame,
+           GATE: A.PRIMUS_GATE || null };
 }, [H, W, SEED]);
 
 const { KEYS, pushed, seen, byHouse } = out;
@@ -191,6 +208,15 @@ console.log(`\n    \`primacy\` asks THREE things at once; split, over the ${out.
 console.log(`      held it six weeks or more                    ${out.sixWeeks} of ${out.primacyWeeks}`);
 console.log(`      had a second \`primusEligible\` man            ${out.eligUnknown ? "primusEligible is not on the handle — not guessed at" : `${out.secondMan} of ${out.primacyWeeks}`}`);
 console.log(`      BOTH at once, which is what the event needs  ${out.eligUnknown ? "—" : `${out.bothTerms} of ${out.primacyWeeks}`}`);
+{
+  const G = out.GATE || { wins:"?", pfame:"?" };
+  console.log(`\n    and WHICH HALF of \`primusEligible\` binds — it is wins >= ${G.wins} AND pfame >= ${G.pfame}:`);
+  console.log(`      weeks with any other man in the yard at all   ${out.anyOther} of ${out.primacyWeeks}`);
+  console.log(`      weeks with one at ${String(G.wins).padStart(2)}+ wins                    ${out.winsOK} of ${out.primacyWeeks}`);
+  console.log(`      weeks with one at ${String(G.pfame).padStart(2)}+ pfame                   ${out.fameOK} of ${out.primacyWeeks}`);
+  console.log(`      weeks with one passing BOTH                   ${out.secondMan} of ${out.primacyWeeks}`);
+  console.log(`      and man for man, over ${out.othersSeen} non-holder man-weeks: ${out.menWins} cleared the wins, ${out.menFame} the pfame`);
+}
 console.log(`    (\`courted\` has no counter here on purpose: the two fields a first draft counted,`);
 console.log(`     \`d.poachedIn\` and \`d.flags.everCourted\`, do not exist in the file. It never fired`);
 console.log(`     in ${out.weeks} house-weeks, which is the game's own record and needs no help from mine.)`);

@@ -1399,7 +1399,26 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.76.0 — **#180 closed, and the item was too small: the crux choice is a
+**Shipped and verified:** v3.77.0 — **#181 closed: the primacy rematch's gate is one term wearing
+two.** `primusEligible` is `wins >= 5 && pfame >= 35`; split over the 99 house-weeks a house held the
+title, a second man was in the yard on **99 of 99**, cleared the wins on **15**, cleared the pfame on
+**55**, and cleared **both on 15 — the same 15**. Every man with the record also has the name, so
+`pfame >= 35` **rejects nobody** the wins term has not already rejected. The wins half is structural
+in the way that matters: the primacy holder is the man absorbing the house's bouts, so the second man
+is by construction short of a record. **The dead term is NOT removed, and that is the decision** —
+`primusEligible` has four call sites, this measured one, and at line 5334 it runs on a house that does
+not hold the title, a different distribution nobody has counted. What ships is the measurement written
+beside the constant. **A second door was looked for and is not one**: line 7142 carries the same
+condition without the six-week wait, but it is a whisper from the ear system, not the bout — worth
+recording because the game foreshadows a rematch the same term makes rare, which leaves the item's
+"rare treat" clause standing rather than settling it. Only comment changes to `src/ludus.jsx`;
+`open`'s signature byte-identical. **And v3.71.0's retry fired in anger for the first time**: the
+first draw came in at **(0, 8)** — no house standing, all eight men inside two ended houses — the
+check took a second draw of five fresh houses, read **(3, 12)** and passed. Cost **18.2 against a
+usual 13.2 minutes**, about five for the second draw against the ~4.5 priced; both draws are in the
+tally so the first-draw rate is untouched. Ten of ten failing draws in this project's history have now
+come back clean on the next draw, and this is the first where no human had to ask.
+v3.76.0 — **#180 closed, and the item was too small: the crux choice is a
 CONSTANT.** It was opened on the cloth never being thrown; reading the harness found why, and it is
 not about mercy. `lanista`'s bout step passes **`choice: o.choice || "press"`**, so the reference
 player answers every crux with the same word — front foot — and never covers, finishes or throws the
@@ -3603,17 +3622,44 @@ choice — `cx.sA`, `cx.vB`, `cx.mom` are read by `CRUX.finish`'s own `when`, so
 need is already there to be counted.
 
 
-**#181 — the primacy's rematch is written for a state a house reaches six times in sixteen thousand
-weeks.** `primacy` asks three things at once: hold the city title, six weeks since taking it, and a
-second `primusEligible` man. Split over the **99 house-weeks** where a house held the title:
-**46 of 99** had the six weeks, **15 of 99** had the second man, and **6 of 99** had both. At the
-offer rate a fair fixture measures — **24 of 400 armed draws** — that is about **0.4 expected
-firings across 72 houses**, and 0 observed agrees with the arithmetic rather than contradicting it.
-So this is NOT a shut door and the item does not claim one: it is a rematch priced beyond any sample
-this project runs, and the binding term is the second eligible man rather than the six-week wait.
-*Falsifies if:* it is meant to be a rare treat — a bout that turns up once in a long campaign is a
-defensible design, and this closes without a change. **Not measured yet:** what `primusEligible`
-actually rejects, which decides whether 15 of 99 is a tuning number or a structural one.
+**#181 — CLOSED in v3.77.0. The binding term is the wins, and the other half of the conjunction
+rejects nobody.** The item asked whether "a second eligible man on 15 of 99 house-weeks" is tuning or
+structure, and left the answer to what `primusEligible` actually rejects. It is
+`status==="active" && wins >= PRIMUS_GATE.wins && pfame >= PRIMUS_GATE.pfame` — 5 and 35 — and
+counted off the constants rather than the literals, so a repricing moves the measurement with it.
+Over the 99 house-weeks a house held the title:
+
+    any other man in the yard at all      99 of 99
+    one at 5+ wins                        15 of 99
+    one at 35+ pfame                      55 of 99
+    one passing BOTH                      15 of 99
+    man for man, over 391 non-holder man-weeks: 15 cleared the wins, 66 cleared the pfame
+
+**`secondMan` equals `winsOK` exactly.** Every man who clears the wins term also clears the pfame
+term, so in this context `pfame >= 35` **rejects nobody that `wins >= 5` has not already rejected**.
+The pfame half is dead weight here, and the wins half is the whole gate. It is structural in the
+sense that matters: the man holding the primacy is the man who has been absorbing the house's bouts,
+so the SECOND man is by construction the one short of a record — a second man exists on 99 of 99
+weeks and has five wins on 15.
+
+**And the term is NOT removed, which is the actual decision.** `primusEligible` has four call sites
+and this measured one. At `src/ludus.jsx:5334` the condition is `d.primus && !d.primus.mine &&
+activeG(d).some(primusEligible)` — a house that does NOT hold the title, whose best man has not been
+absorbing its bouts, so the wins-to-pfame relationship there is a different distribution entirely and
+is unmeasured. Deleting a term on the strength of one use in four is the error this file has caught
+six times. What ships is the measurement written down beside the constant.
+
+**A second door was checked for and is not one.** `src/ludus.jsx:7142` carries the same second-man
+condition with no six-week wait, which looked like the war's-two-doors shape. It is a WHISPER —
+flavour from the ear system, *"he has worked out his own record against the man holding the primacy
+and he did not need to write it down"* — gated additionally on `earOn`. Not a door to the bout, but
+worth recording: the game foreshadows a rematch that the same term then makes rare, which is weak
+evidence against the item's own *"meant to be a rare treat"* clause and not proof of it.
+
+*The clause is left standing rather than resolved.* At ~0.4 expected firings over 72 houses of 420
+weeks the rematch is content essentially no player meets, and whether that is intended is a design
+call with the distribution now under it — which is what #127's rule asks for before a constant moves.
+
 
 **#182 — `courted` is pushed by the player poaching, and the reference player never poaches.**
 `courted` has `make(){ return null; }` — never offered by `pickEvent` — and is pushed from the
@@ -4038,6 +4084,67 @@ about a quarter and it is the cost of this repair**; `MISSIO_MAN` is one line to
 wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
+
+### v3.77.0 — #181: the primacy rematch's gate is one term wearing two
+
+The audit measured `primacy` at ~0.4 expected firings over 72 houses of 420 weeks and named the
+binding term as "a second `primusEligible` man, 15 of 99 house-weeks" — then left the real question
+open: is 15 of 99 a tuning number or a structural one? That depends on what `primusEligible` rejects,
+and it rejects on two terms at once.
+
+#### Split, over the 99 house-weeks a house held the title
+
+    any other man in the yard at all      99 of 99
+    one at 5+ wins                        15 of 99
+    one at 35+ pfame                      55 of 99
+    one passing BOTH                      15 of 99
+    man for man, over 391 non-holder man-weeks: 15 cleared the wins, 66 cleared the pfame
+
+**The both-column equals the wins-column exactly.** Every man who clears the record also clears the
+name, so in this context `pfame >= 35` **rejects nobody** that `wins >= 5` has not already rejected.
+The conjunction is one term wearing two.
+
+And the wins term is structural in the way that matters: the man holding the primacy is the man who
+has been absorbing the house's bouts, so the *second* man is by construction the one short of a
+record. A second man is in the yard on **99 of 99** weeks. He has five wins on **15**.
+
+#### The term is not removed, and that is the decision
+
+`primusEligible` has **four call sites** and this measured one. At `src/ludus.jsx:5334` the condition
+runs on a house that does **not** hold the title — whose best man has not been absorbing its bouts —
+so the wins-to-pfame relationship there is a different distribution nobody has counted. Deleting a
+term on the strength of one use in four is the fault this file has caught six times. What ships is
+the measurement written down beside the constant, where the next reader will find it.
+
+#### A second door was looked for and is not one
+
+`src/ludus.jsx:7142` carries the same second-man condition with no six-week wait, which had the
+war's-two-doors shape. It is a **whisper** — flavour from the ear system, *"he has worked out his own
+record against the man holding the primacy and he did not need to write it down"* — gated
+additionally on `earOn`. Not a door to the bout. Worth recording anyway: the game foreshadows a
+rematch that the same term then makes rare, which is weak evidence against the item's *"meant to be a
+rare treat"* clause rather than proof of it, and the clause is left standing.
+
+*The only change to `src/ludus.jsx` is a comment; `open`'s 60-house signature is byte-identical.*
+
+#### And v3.71.0's retry fired in anger for the first time
+
+Suite green at **72/72 in 18.2 minutes** — and the five extra minutes are the finding. `survive`'s
+first draw came in at **(0, 8)**: not one house standing, and all eight men counted sitting inside the
+two houses that had already ended. That is the collapse bar, a genuine trip, and before v3.71.0 it
+would have turned the suite red and cost a human a 13-minute re-run to decide. Instead the check took
+a second draw of five fresh houses, read **(3, 12)**, and passed.
+
+Everything about it landed where it was predicted. The cost: **18.2 against a usual 13.2 minutes**, so
+about five minutes for the second draw against the **~4.5** the item priced. The record: **both draws
+are in the tally**, `draw: 1` with `pass: false` and `draw: 2` with `pass: true`, so the first-draw
+rate #175 is scored on is untouched and the retry launders nothing. And the honesty clause carried the
+row that mattered — under the pre-v3.67.0 reading, `(0, 8)` would have printed as eight men in hand.
+
+Ten of ten failing draws in this project's history have now come back clean on the next draw, and this
+is the first one where no human had to ask for it.
+
+
 
 ### v3.76.0 — #180: the reference player presses at every crux, and nothing ever chose that
 

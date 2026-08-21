@@ -10340,6 +10340,15 @@ function makeCityGames(d){
 const PRIMUS_GATE = { wins:5, pfame:35 };
 const PRIMUS_ASK = 0.14;        // his own channel, ahead of the weekly lottery he could not win
 const PRIMUS_ASK_GAP = 30;      // and then he leaves it, so a long reign is asked two or three times
+/* ---- THE PFAME HALF REJECTS NOBODY THE WINS HALF DOES NOT — #181, MEASURED, NOT REMOVED ----
+   Over the 99 house-weeks a played house held the primacy, a second man was in the yard on 99 of
+   99, cleared 5+ wins on 15, cleared 35+ pfame on 55, and cleared BOTH on 15 — the same 15. Every
+   man who has the record also has the name, so in that context this conjunction is one term wearing
+   two. Man for man over 391 non-holder man-weeks: 15 cleared the wins, 66 the pfame.
+   It is left exactly as it is on purpose. This has FOUR call sites and one of them was measured.
+   At line 5334 the house does NOT hold the title, so its best man has not been absorbing its bouts
+   and the wins-to-pfame relationship is a different distribution that nobody has counted. Deleting
+   a term on the strength of one use in four is the fault this file has caught six times. */
 const primusEligible = g => g && g.status==="active" && g.wins>=PRIMUS_GATE.wins && g.pfame>=PRIMUS_GATE.pfame;
 const holdsPrimus = (d,g) => !!(d.primus && d.primus.mine && g && d.primus.gid===g.id);
 const primusMine = d => !!(d.primus && d.primus.mine);
