@@ -388,6 +388,17 @@ Above it, the four permanent situation panels — the war, the primacy, a nemesi
 
 The home tab is a strip, an agenda, six tiles and five panels. Verified across **1,500 houses × 8 weeks** with zero malformed or thrown agendas.
 
+### The section registry
+The overhaul above rebuilt the home tab. This one is underneath it: every `<Sect>` panel in the game — thirty-two of them — used to be written inline inside `App`, which was 7,034 lines and read as one continuous wall of markup. They are now entries in a `SECT` registry at module scope, and each face is a list of what it shows, in order. `App` is **5,946 lines**; `SECT` is 1,384.
+
+Nothing about the screen changed, and that is the point: the yardstick (`reach`, on a pinned house) read **actions same, below the fold same, furthest y same, sections same, section px same** after every batch. Code moved; not one pixel did.
+
+**What made it safe.** Lifting markup out of the scope it was written in does not fail at build time — it fails when a player opens that panel. `blood` renders the lanista's wife from a `w` computed in the block above it, and lifted without it the villa went blank on a build that compiled cleanly. Two attempts at a static scope checker were abandoned, both for the same reason: these panels are mostly prose, and prose is full of ordinary words that are also names in a 26,000-line file. The best filter left `him`, `at`, `freed`.
+
+So the gate is a runtime one — `test/probes/faces.mjs` opens every face of every tab plus the gladiator's record sheet, 15 faces, and counts what renders. It was proved by breaking a section on purpose on a *non-default* face and checking it went red, and it refuses to run against a build older than the source.
+
+**And it is blind to handlers**, which the suite found and the gate could not: nothing runs an `onClick` by rendering it. Four sections called names they were never handed, the gate read 36 of 36 sections and zero errors, and `sweep` and `surface` failed on 18 page errors apiece. `test/checks/scope.mjs` closes that: it matches **call position only** — `name(`, which English does not produce — which is the one restriction that makes a static check work here where bare word matching could not.
+
 ### Seeded runs
 Every roll came out of `Math.random`, so no house could be handed to anybody else and no measurement could be repeated. There is one **mulberry32** behind the same `R()` that everything already called, so nothing else in the codebase changed.
 
