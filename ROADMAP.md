@@ -415,6 +415,19 @@ The plan after lifting the sections was to reorder each face by when in the week
 
 On arrival the same headroom is villa · Standing 754px, villa · Coin & Council 228px, ludus 176px, and zero everywhere else. Reordering ludus is worth **176px against a face 2,949px tall**. The premise did not survive its own measurement, so nothing was reordered. What the same instrument found instead is above: the panels that stand open, and the fact that the market and the arena are barely sections at all — 2,358px of the market's 2,481px and 2,160px of the arena's 2,221px sits outside any `<Sect>`.
 
+### The weapon rack, and why it stays as it is
+It is the largest single object in the game — 3,727px, 85% of the armory's arrival height — so it was opened as an item on the assumption that eighteen cards is too many. Both halves of that were wrong.
+
+**The rows are not padded.** "About 207px a row" was 3,727 divided by 18, not a measurement. Measured, a weapon row is 193px median: buy button 44px (27%), flavour 37px (23%), the stat *Attack +5%* 23px (14%), the family tag *STRAIGHT BLADES* 23px (14%), name and price and owned count 21px (13%), and *Suits: Murmillo, Secutor, Hoplomachus* 18px (9%). Everything but the flavour is what you need to pick a weapon. The only trim available is 18%, and it is the game's voice.
+
+**And neither end of the rack wins.** The list is sorted cheapest first — 30, 32, 80, 95 … 560 — while price tracks quality across the catalogue (weapon ρ +0.79, armor +0.65, offhand +0.55, helm +0.43) and the reference player buys the dearest piece it can afford. That looked like a real fault: good play's choices sitting at the bottom of the longest scroll in the game, reorderable at no cost in taps or height.
+
+It did not survive being measured. The rope's rule is a policy, not an observation, so it was run against its opposite — **90 seeds played twice, 40 weeks, everything else identical**. Bouts, wins, burials, fame and gold all inside the noise; win rate 41.8% against 41.2%, burials a hundred bouts 11.93 against 12.21, eight houses ended either way. Men alive cleared its mde pooled (−0.64 against 0.54), and the per-prefix split took it apart: −0.67 inside the noise, −0.07 inside the noise, −1.20 clears. One trajectory of three, with pooling tightening the mde while the effect lived in one seed set — the same trap as everywhere else in this file.
+
+So cheapest-first stays, and so does the rope's gear policy, which is not costing it anything. An affordability-based sort had already died earlier: across 60 houses, **83–97% of in-style pieces are affordable at every week sampled**, so there was nothing to push down.
+
+`gearPrice` is on the handle now, because a probe asking what a piece *costs* has to use the game's own function — the price a player sees runs through the armamentarium level (down to 0.58), the festival, a perk, the armourer and the doctore.
+
 ### Seeded runs
 Every roll came out of `Math.random`, so no house could be handed to anybody else and no measurement could be repeated. There is one **mulberry32** behind the same `R()` that everything already called, so nothing else in the codebase changed.
 
