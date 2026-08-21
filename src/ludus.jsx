@@ -22377,25 +22377,13 @@ export default function App(){
               </div>
             </div>
           )}
-          {(S.rivalLog||[]).length>0 && SECT.rivals(S, SX)}
-
-
-          {SECT.cellsNight(S, SX)}
-
-
-
-
-
-          {S.lastWeek && SECT.lastWeek(S, SX)}
-
-          {SECT.annals(S, SX)}
-
-          {SECT.year(S, SX)}
-
-
-
-          {SECT.square(S, SX)}
           {SECT.unrest(S)}
+          {SECT.cellsNight(S, SX)}
+          {SECT.square(S, SX)}
+          {SECT.year(S, SX)}
+          {S.lastWeek && SECT.lastWeek(S, SX)}
+          {(S.rivalLog||[]).length>0 && SECT.rivals(S, SX)}
+          {SECT.annals(S, SX)}
           {S.week<=2 && (
             <div className="panel" style={{padding:13}}>
               <div className="tag tag-gold" style={{marginBottom:6}}>The lanista's first lessons</div>
@@ -23117,26 +23105,14 @@ export default function App(){
           </div>
 
           {vView==="house" && (<>
-          {SECT.colours(S, SX)}
-
-          {SECT.houseName(S, SX)}
-
           {SECT.blood(S, SX)}
+          {SECT.houseName(S, SX)}
+          {SECT.colours(S, SX)}
 
           </>)}
 
           {vView==="standing" && (<>
-          {SECT.watch(S, SX)}
-
-          {/* ---- THE ACCOUNT, BEFORE IT IS CLOSED ----
-              closing() and verdictOf() existed and were beautiful and were rendered in
-              exactly one place: the screen you only ever see once, at the end. A house
-              that simply keeps going — which is what a long successful run does — never
-              saw a word of it. Same reckoning, same verdict, readable any week. */}
-          {S.week > 20 && SECT.soFar(S, SX)}
-
           {SECT.yourStanding(S, SX)}
-
           {/* ---- THE LEVER, PUT NEXT TO THE PANEL THAT NAMES IT ----
                `reach` measured this at y=2,655 on this face — three screens down, and sixth of seven
                sections — while `Your Standing` directly above it says favour is what holds your next
@@ -23145,20 +23121,24 @@ export default function App(){
                measured on the census ladder (mean rung 2.70 against 1.50, and 218 weeks at Rome against
                31), so it now sits under the panel that sends you to it, and the copy is true. */}
           {SECT.party(S, SX)}
-          {(!S.over && (S.fame >= 250 || (S.flags.primusHeld||0) > 0 || riseOf(S) >= 2 || romeRuns(S) > 0)) && SECT.rome(S, SX)}
-
+          {SECT.watch(S, SX)}
           {SECT.temple(S, SX)}
-          {lawOf(S).edicts.length>0 && (
-            SECT.law(S, SX)
-          )}
-
+          {(!S.over && (S.fame >= 250 || (S.flags.primusHeld||0) > 0 || riseOf(S) >= 2 || romeRuns(S) > 0)) && SECT.rome(S, SX)}
           {(S.gold >= 4000 || Object.keys(S.works||{}).length>0) && (
             SECT.works(S, SX)
           )}
-
           {monuReady(S) && (
             SECT.monuments(S, SX)
           )}
+          {lawOf(S).edicts.length>0 && (
+            SECT.law(S, SX)
+          )}
+          {/* ---- THE ACCOUNT, BEFORE IT IS CLOSED ----
+              closing() and verdictOf() existed and were beautiful and were rendered in
+              exactly one place: the screen you only ever see once, at the end. A house
+              that simply keeps going — which is what a long successful run does — never
+              saw a word of it. Same reckoning, same verdict, readable any week. */}
+          {S.week > 20 && SECT.soFar(S, SX)}
 
           </>)}
 
@@ -23192,26 +23172,21 @@ export default function App(){
                 )}
               </div>
             ); })()}
-          {SECT.household(S, SX)}
-
-          {owedList(S).length>0 && (
-            SECT.owed(S, SX)
+          {unhonoured(S).filter(m=>!m.done).length > 0 && (
+            SECT.rites(S, SX)
           )}
-
-          {SECT.doctrine(S, SX)}
-
           {S.election && !S.election.done && (
             SECT.aedileship(S, SX)
           )}
-
           {/* the stance is the whole of what this section says, so it is said on the summary line and
               the box is not a box you open to learn one word — see the note over SECT_LIVE */}
           {aedileOn(S) && (
             SECT.aedile(S, SX)
           )}
-
-          {unhonoured(S).filter(m=>!m.done).length > 0 && (
-            SECT.rites(S, SX)
+          {SECT.household(S, SX)}
+          {SECT.doctrine(S, SX)}
+          {owedList(S).length>0 && (
+            SECT.owed(S, SX)
           )}
 
           {(()=>{ const L = loanLender(S);

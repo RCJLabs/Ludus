@@ -441,6 +441,22 @@ Getting there cost three bad arms, each of which returned a clean zero that look
 
 One latent fault came out of it. The agenda's guard read `(g.wear && g.wear[s] || 100) < 25`, and wear counts *down*, so a piece worn to exactly 0 took the `|| 100` branch and reported itself pristine — the one state the line most wants to raise. It is `?? 100` now. It changes nothing today: 6,151 house-weeks of neglect put 230 pieces in the 1–24 band and none at exactly 0, so both forms raise the item on the same 205 weeks.
 
+### The faces, put in the order of the week
+Phase B made every face a list of section calls; this spends it. Four faces are reordered so that what you *do* comes before what you *consult*, following the reference player's own weekly sequence — the cells, then training, then the men, then the calendar, then the record.
+
+| face | now reads |
+|---|---|
+| **ludus** | unrest → the cells at night → the training square → the year → last week → the other houses → the annals |
+| **villa · The House** | the blood of the house → the house as a name → house colours |
+| **villa · Standing** | Your Standing → throw a party → those who watch → the Temple → the road to Rome → great works → monuments → what the law says → the house so far |
+| **villa · Coin & Council** | not yet buried → the aedileship → the aedile → the household → the doctrine → owed to the house |
+
+**One placement was already load-bearing and is preserved.** A previous release deliberately put *Throw a party* directly beneath *Your Standing*, because that panel's copy points the player at "the block below this one" and the party is the largest measured lever on the census ladder (mean rung 2.70 against 1.50). Any order that separated them would have made the copy a lie — the same fault this file records half a dozen times elsewhere.
+
+**And the yardstick cannot score this**, which is worth stating rather than dressing up. Reordering sections cannot change a face's total height, so every arrival figure in `reach`'s row is mathematically obliged to read *same*. What the instrument can say is what it was used for here — a guardrail, not a justification: all 36 sections still render across 15 faces with no page errors, every face keeps its shallowest tap count (nothing got deeper), the five furthest actions in the game are unchanged, and ludus's deepest action came up **2,534px → 2,202px**. One action crossed the 844px line the other way, which is the cost of putting a tall panel like *unrest* first.
+
+The market is left alone: its two sections are a staff panel that lives inside a ternary and the block, with a summary panel between them, so reordering it is a restructure rather than a move.
+
 ### Seeded runs
 Every roll came out of `Math.random`, so no house could be handed to anybody else and no measurement could be repeated. There is one **mulberry32** behind the same `R()` that everything already called, so nothing else in the codebase changed.
 
