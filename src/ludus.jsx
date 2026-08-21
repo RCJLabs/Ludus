@@ -8911,7 +8911,20 @@ const LESSONS = [
   { id:"collegium", tab:"villa", title:"A Stone With His Name",
     done:d=>!!d.collegium,
     when:d=>d.gold>=COLL_FEE || d.week>=14,
-    text:"Three denarii a week per man puts the house into a burial society. It never wins you a bout. What it does is halve what a death costs the cells, because men who know what happens to them afterward take a burial differently. It is the easiest line to cut in a bad month, and stopping it after men have gone into the ground under it costs double what stopping it before does." },
+    /* ---- #177: THE CHARTER PROMISED A LEVER THE ARITHMETIC WILL NOT HONOUR ----
+       This read "It is the easiest line to cut in a bad month", which is a promise about money, and
+       it is false. `collDues` is `activeG(d).length * COLL_DUES`, so the dues scale with the ROSTER —
+       and in a bad month the roster has already collapsed. Measured over 72 houses of 420 weeks,
+       across the 295 house-weeks where a house held a society and could not cover its bill: the
+       roster runs 1 / 3 / 6 men at the 10th, 50th and 90th, against a shortfall of 34 / 200 / 556
+       denarii. The dues are about 12d. **They cover the week on 6 of those 295, 2.0%.** The lever is
+       weakest exactly where the note says to reach for it.
+       No repricing fixes it, which is why the constant is untouched: at 30d a man — TEN times today
+       — it still covers only 65 of 295, and a house that keeps its society pays 122d a week, 53% of
+       its whole bill, for ever, to buy that. The shape is wrong, not the number.
+       So the text says what is true. The second clause was always accurate — `lapseCollegium` takes
+       22 morale and 16 defiance with a man under the stone against 12 and 8 without — and it stays. */
+    text:"Three denarii a week per man puts the house into a burial society. It never wins you a bout. What it does is halve what a death costs the cells, because men who know what happens to them afterward take a burial differently. It will not save you a bad month — the dues shrink with the roster, so they are smallest when the purse is emptiest — and stopping it after men have gone into the ground under it costs double what stopping it before does." },
   { id:"munera", tab:"villa", title:"Games For Your Own Dead",
     done:d=>(d.honoured||0)>0,
     /* ---- #143: THE DOOR MUST BE THE WINDOW THE TEXT PROMISES ----
@@ -9483,7 +9496,10 @@ const warMarket = d => { const S = warStage(d); return (S && !d.war.done && S.ma
 /* ---- THE COLLEGIUM ----
    A burial society. The men pay in, and when one of them dies there is a stone
    with his name on it instead of a pit. It never wins a bout. It is the cheapest
-   humane thing in this game and the easiest line to cut in a bad month. */
+   humane thing in this game. It is NOT the easiest line to cut in a bad month, which this comment
+   used to claim and #177 measured: the dues scale with the roster and the roster collapses first, so
+   across 295 bad-month house-weeks they cover the shortfall on 2.0% of them. Kept cheap on purpose;
+   it is a thing you hold, not a lever you pull. */
 const COLL_FEE = 180;
 const COLL_DUES = 3;
 const collOn = d => !!(d.collegium && !d.collegium.lapsed);

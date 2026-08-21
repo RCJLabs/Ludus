@@ -48,6 +48,7 @@ const out = await p.evaluate(([H,W,SEED])=>{
   const A = window.__LVDVS, R = window.__ROPE;
   const PRES = [`${SEED}-1`, `${SEED}-2`, `${SEED}-3`];
 
+  const bad = [], rosters = [];
   const arm = (when) => {
     const rows = {};
     for(const pre of PRES){
@@ -69,6 +70,18 @@ const out = await p.evaluate(([H,W,SEED])=>{
           if(du > 0){ paid += du; if(pressedAt != null) paidAfter += du;
             if(bill > 0) worst = Math.max(worst, du/bill*100); }
           if(A.collOn(d)){ held++; if(d.gold < bill) shortHeld++; }
+          /* ---- #177: WHAT WOULD THE DUES HAVE TO BE TO MATTER IN A BAD MONTH? ----
+             The item's unmeasured half. `COLL_DUES` is per MAN, so what a cut is worth is
+             `roster * COLL_DUES`, and what it would need to be worth is the week's shortfall.
+             Record both for every week a house holds a society AND cannot cover its bill — that
+             is the "bad month" the file's note describes — so the distribution can be read rather
+             than its median quoted. #127's rule: measure the distribution, do not nudge the
+             threshold. Recorded for the CONTROL arm only, where nothing has been cut. */
+          if(A.collOn(d) && d.gold < bill){
+            const roster = A.activeG(d).length;
+            bad.push({ short: bill - d.gold, roster, dues: du, bill });
+          }
+          if(A.collOn(d)) rosters.push(A.activeG(d).length);
           /* the press */
           if(pressedAt == null && A.collOn(d)){
             const go = when === "early" ? true
@@ -93,10 +106,12 @@ const out = await p.evaluate(([H,W,SEED])=>{
     return rows;
   };
 
-  const never = arm("never");   /* control FIRST */
+  const never = arm("never");   /* control FIRST — and the only arm `bad`/`rosters` are read from */
+  const badCtl = bad.slice(), rosterCtl = rosters.slice();
   const early = arm("early");
   const shortA = arm("short");
   return { arms:[["never",never],["early",early],["short",shortA]], H, W, PRES,
+           bad: badCtl, rosters: rosterCtl,
            COLL_FEE: A.COLL_FEE, COLL_DUES: A.COLL_DUES };
 }, [H, W, SEED]);
 
@@ -134,6 +149,36 @@ console.log(`    in the panel, that the dues stopped. On this build it should be
     const per = pressed.map(id=>out.arms[1][1][id].paidAfter).sort((a,b)=>a-b);
     console.log(`    per house that pressed early: median ${per[Math.floor(per.length/2)]}d, worst ${per[per.length-1]}d,`);
     console.log(`    against a founding fee of ${out.COLL_FEE}d.`);
+  }
+}
+
+/* ---------------- #177: what would COLL_DUES have to be? ---------------- */
+{
+  const q = (a,f) => a.length ? a.slice().sort((x,y)=>x-y)[Math.min(a.length-1, Math.floor(a.length*f))] : null;
+  const B = out.bad, R = out.rosters;
+  console.log(`\n#177 — WHAT WOULD THE DUES HAVE TO BE TO MATTER IN A BAD MONTH?`);
+  console.log(`  bad months held (society on, purse will not cover the week's bill): ${B.length} house-weeks`);
+  if(!B.length) console.log(`  none — the clause cannot be tested on this run`);
+  else {
+    const sh = B.map(x=>x.short), ro = B.map(x=>x.roster);
+    console.log(`  the SHORTFALL, as a distribution and not a median:`);
+    console.log(`     10% ${q(sh,0.10)}d · 25% ${q(sh,0.25)}d · median ${q(sh,0.50)}d · 75% ${q(sh,0.75)}d · 90% ${q(sh,0.90)}d`);
+    console.log(`  the ROSTER in those weeks (the dues are per man, so this is the multiplier):`);
+    console.log(`     10% ${q(ro,0.10)} · median ${q(ro,0.50)} · 90% ${q(ro,0.90)} men`);
+    console.log(`  today's dues cover the shortfall on ${B.filter(x=>x.dues >= x.short).length} of ${B.length} `
+      + `(${(B.filter(x=>x.dues >= x.short).length/B.length*100).toFixed(1)}%) of those weeks`);
+    console.log(`\n  SO WHAT WOULD COLL_DUES HAVE TO BE? — the rate at which cutting covers the week:`);
+    console.log(`    rate   covers the bad month   and costs a house that KEEPS it, per week   as a share of the bill`);
+    for(const rate of [3, 5, 8, 12, 20, 30]){
+      const covers = B.filter(x=>x.roster*rate >= x.short).length;
+      const keepCost = R.length ? R.reduce((a,n)=>a+n*rate,0)/R.length : 0;
+      const billMean = B.length ? B.reduce((a,x)=>a+x.bill,0)/B.length : 1;
+      console.log(`    ${String(rate).padStart(4)}d  ${`${covers} of ${B.length} (${(covers/B.length*100).toFixed(0)}%)`.padStart(21)}`
+        + `   ${keepCost.toFixed(0).padStart(38)}d   ${(keepCost/billMean*100).toFixed(1).padStart(20)}%`
+        + (rate === out.COLL_DUES ? "   <- today" : ""));
+    }
+    console.log(`\n  — the left column is the few weeks a dying house gets a reprieve; the right two are what`);
+    console.log(`    every one of the ${out.arms[0][1] ? Object.keys(out.arms[0][1]).filter(id=>out.arms[0][1][id].everHeld).length : "?"} houses that hold a society and never cut it pays, for ever, to buy it.`);
   }
 }
 

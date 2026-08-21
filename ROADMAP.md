@@ -1399,7 +1399,21 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.72.0 — **#178 refuted, and the fault was in the sentence that opened
+**Shipped and verified:** v3.73.0 — **#177 closed: the charter promised a bad-month lever the
+arithmetic will not honour.** v3.68.0's fix made the file's own design note testable for the first
+time; measured, it is false, and structurally rather than by a constant being mis-set. `collDues` is
+`activeG(d).length * COLL_DUES`, so the dues scale with the ROSTER — and in a bad month the roster has
+already collapsed. Across **295 house-weeks** where a house held a society and could not cover its
+bill, the roster runs **1 / 3 / 6** men against a shortfall of **34 / 200 / 556** denarii, so the dues
+are about 12d and **cover the week on 6 of 295 — 2.0%**. No repricing rescues it: at **30d a man, ten
+times today**, the cut still covers only 65 of 295 while every house that keeps its society pays
+**53% of its whole weekly bill, for ever**. `COLL_DUES` is untouched — the shape is wrong, not the
+number. **The clause falsified but still needed a change**, because the sentence is not a code comment
+— it is in the CHARTER, told to the player: *"It is the easiest line to cut in a bad month."* That is
+the shape six releases have each removed one of, **a panel stating something the engine will not do**,
+except the previous six were copied numbers and this is a copied CLAIM, which no sweep would find.
+Corrected; `open`'s signature byte-identical, `charter` green.
+v3.72.0 — **#178 refuted, and the fault was in the sentence that opened
 it.** `copies.mjs`'s head explained why it only REPORTS engine-internal duplication by calling it
 "the same failure mode at a different altitude". That framing opened #178; measuring closed the item
 against the framing. The six copies of `55 + end*0.6` — a fighter's starting stamina, one pair in
@@ -3483,22 +3497,45 @@ not a retry:* it is recording, because a retry for a check whose false-failure r
 would be #175's mistake in reverse — buying detection power away to fix a problem nobody has sized.
 
 
-**#177 — the collegium's own note says it should be "the easiest line to cut in a bad month", and
-after #173's fix it is cuttable but never worth cutting.** The design intent is written above
-`COLL_FEE` in the file: *"It is the cheapest humane thing in this game and the easiest line to cut in
-a bad month."* Before v3.68.0 cutting it saved nothing at all, because the dues kept charging — so
-the intent could not be tested. It can now, and it is not delivered: the dues are **12.2d against a
-286d weekly bill (4.3%)**, and pressing the button at the first week the purse will not cover the
-bill — the exact "bad month" the note describes — moves gold by **+67.4 ± 716.2**, which 72 houses
-cannot separate from zero, while unrest moves **+4.1** (p=0.000, 41 up against 13 down). The
-arithmetic of the gap: the 29 houses that died of the ledger were short a median **101d a week**, so
-at `COLL_DUES` 3 a house would need a **34-man roster** for the dues to cover its shortfall, against
-a rope median nearer 10–14. *Falsifies if:* the note is describing the FEELING of the choice rather
-than its arithmetic — a line you cut because you cannot stand the weekly reminder, not because it
-saves the house. That reading is defensible and would close this without a change. **Not measured
-yet:** what `COLL_DUES` would have to be for the cut to be a real bad-month lever, and what that same
-number would do to the 54 of 72 houses that hold a society and never cut it — which is the half that
-would pay for it. #127's rule applies: measure the distribution before touching the constant.
+**#177 — CLOSED in v3.73.0. The clause falsified, and the reason is structural rather than a
+constant being set wrong.** The item asked what `COLL_DUES` would have to be for cutting the society
+to be a real bad-month lever, and what that number would cost the 54 of 72 houses that hold one and
+never cut it. #127's rule was applied: measure the distribution, do not nudge the threshold. The
+distribution says **no threshold works**.
+
+**The dues are weakest exactly where the note reaches for them.** `collDues` is `activeG(d).length *
+COLL_DUES`, so they scale with the ROSTER — and in a bad month the roster has already collapsed.
+Across the **295 house-weeks** where a house held a society and could not cover its bill:
+
+    the shortfall      10%  34d · 25%  95d · median 200d · 75% 339d · 90% 556d
+    the roster         10%   1  ·            median   3  ·            90%   6 men
+    so the dues are about 12d, and they cover the week on 6 of 295 — 2.0%
+
+**And no repricing fixes it**, which is the finding rather than the number:
+
+    rate   covers the bad month      costs a house that KEEPS it      share of its bill
+      3d      6 of 295  ( 2%)                    12d                        5.3%   <- today
+      8d     21 of 295  ( 7%)                    33d                       14.2%
+     20d     45 of 295  (15%)                    81d                       35.5%
+     30d     65 of 295  (22%)                   122d                       53.2%
+
+At **ten times** today's rate the cut still rescues under a quarter of bad months, while every house
+that keeps its society pays **over half its weekly bill, for ever**, to buy that. The shape of the
+lever is wrong for the job, not its calibration. `COLL_DUES` is untouched.
+
+**So the clause falsifies — but not quietly, because the note is player-facing.** The item allowed
+that *"the note is describing the FEELING of the choice rather than its arithmetic … that reading is
+defensible and would close this without a change."* It would have, had the sentence lived only in a
+code comment. It does not: it is in the **charter**, at `src/ludus.jsx:8914`, told to the player —
+*"It is the easiest line to cut in a bad month."* That is a promise about money, and the arithmetic
+will not honour it. This is the shape five releases have each removed one of: **a panel stating
+something the engine will not do.**
+
+Corrected to what is true — *"It will not save you a bad month — the dues shrink with the roster, so
+they are smallest when the purse is emptiest"* — and the second clause kept, because it was always
+accurate: `lapseCollegium` takes 22 morale and 16 defiance with a man under the stone against 12 and
+8 without. The code comment above `COLL_FEE` carried the same claim and carries the measurement now.
+`open`'s 60-house signature is **byte-identical**; `charter` green.
 
 
 **#174 — CLOSED in v3.69.0. The price was copied SIX times, not five, and the sixth had already
@@ -3842,6 +3879,60 @@ about a quarter and it is the cost of this repair**; `MISSIO_MAN` is one line to
 wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
+
+### v3.73.0 — #177: the charter promised a bad-month lever, and the dues are smallest when the purse is emptiest
+
+v3.68.0 fixed a button that said "Stop the dues" and kept charging. That fix made the file's own
+design note testable for the first time — *"the cheapest humane thing in this game and the easiest
+line to cut in a bad month"* — because before it, cutting saved nothing by construction. #177 asked
+what `COLL_DUES` would have to be for that to be true, and what the answer would cost the houses that
+never cut. #127's rule was applied: measure the distribution, do not nudge the threshold.
+
+#### The distribution says no threshold works
+
+`collDues` is `activeG(d).length * COLL_DUES`. The dues scale with the **roster** — and in a bad
+month the roster has already collapsed. Across the 295 house-weeks where a house held a society and
+could not cover its bill:
+
+    the shortfall      10%  34d · 25%  95d · median 200d · 75% 339d · 90% 556d
+    the roster         10%   1  ·            median   3  ·            90%   6 men
+    so the dues are about 12d, and they cover the week on 6 of 295 — 2.0%
+
+**The lever is weakest exactly where the note says to reach for it.** And repricing does not rescue
+it:
+
+    rate   covers the bad month      costs a house that KEEPS it      share of its bill
+      3d      6 of 295  ( 2%)                    12d                        5.3%   <- today
+      8d     21 of 295  ( 7%)                    33d                       14.2%
+     20d     45 of 295  (15%)                    81d                       35.5%
+     30d     65 of 295  (22%)                   122d                       53.2%
+
+At ten times today's rate the cut still rescues under a quarter of bad months, while every one of the
+**54 of 72** houses that hold a society and never cut it pays over half its weekly bill, for ever, to
+buy that. The shape is wrong for the job, not the calibration. **`COLL_DUES` is untouched.**
+
+#### The clause falsified — and it still needed a change, because the note is player-facing
+
+The item allowed that the note might describe the *feeling* of the choice rather than its arithmetic,
+and that this "would close this without a change." It would have, had the sentence lived only in a
+code comment. It does not. It is in the **charter**, at `src/ludus.jsx:8914`, told to the player:
+*"It is the easiest line to cut in a bad month."*
+
+That is a promise about money and the arithmetic will not honour it — which is the shape #150, #162,
+#165, #160, #166 and #174 each removed one instance of: **a panel stating something the engine will
+not do.** The difference here is that the previous six were copied numbers and this one is a copied
+*claim*, which no sweep would ever have found.
+
+Corrected to what is true — *"It will not save you a bad month — the dues shrink with the roster, so
+they are smallest when the purse is emptiest"* — with the second clause kept, because it was always
+accurate: `lapseCollegium` takes 22 morale and 16 defiance with a man under the stone against 12 and
+8 without. The code comment above `COLL_FEE` carried the same claim and carries the measurement now.
+
+`open`'s 60-house signature is **byte-identical** across the change, and `charter` is green. Suite
+green at **72/72 in 13.2 minutes**, `survive` drawing (3, 4) on one draw and `seller` green — which
+is worth one line, because `seller` is the check that went red in v3.72.0 on a race and opened #179.
+One clean run is not a rate either; it is the second data point of the record that item exists to
+start keeping.
 
 ### v3.72.0 — #178 refuted: it looked like the same fault one altitude down, and it is a different thing
 
