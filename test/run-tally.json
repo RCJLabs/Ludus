@@ -13,4 +13,5 @@
 {"v":"3.84.0","checks":73,"failed":[]},
 {"v":"3.85.0","checks":73,"failed":["glance"]},
 {"v":"3.85.0","checks":73,"failed":[]},
-{"v":"3.86.0","checks":73,"failed":["surface"]}]
+{"v":"3.86.0","checks":73,"failed":["surface"]},
+{"v":"3.86.0","checks":73,"failed":[]}]
