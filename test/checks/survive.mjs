@@ -477,7 +477,11 @@ async function playOne(p){
     bouts:(d.book&&d.book.n)||0, over:d.over ? (d.over.kind||"ended") : null };
 }
 
-export async function run({ p, errors, port }){
+/* ---- ONE DRAW: FIVE FRESH HOUSES, PLAYED AND SCORED ----
+   Lifted out of `run` whole so a second one can be taken. `found` leaves the seed field empty, and
+   an empty seed is a house nobody has run — so two draws are two independent samples, which is the
+   entire basis of the retry below. */
+async function oneDraw({ p, errors, port }){
   const lines = [];
   /* the first house takes the session the runner opened; the rest get their own,
      because three houses queueing behind one browser was most of this check's cost */
@@ -492,58 +496,112 @@ export async function run({ p, errors, port }){
   }));
   for(const s of seats) if(s && s.browser) await s.browser.close().catch(()=>{});
 
-  const allErrors = seats.filter(Boolean).flatMap(s => s.errors || []);
   for(const x of runs) if(x.why) lines.push(x.why);
   const live = runs.map(x=>x.r).filter(Boolean);
   for(const x of live)
     lines.push(`week ${String(x.week).padStart(2)} · gold ${String(x.gold).padStart(6)} · fame ${String(x.fame).padStart(4)} · ${x.yard} in the yard (${x.fit} fit) · ${x.bouts} bouts · ${x.bought} bought${x.over?` · ENDED: ${x.over}`:""}`);
-  /* standing means it can still field somebody. The absence of an end-flag is not
-     the same thing, and for a long time this check accepted it as if it were. */
+
   const standing = live.filter(x=>!x.over && x.yard > 0).length;
   const men = live.reduce((n,x)=>n+x.yard, 0);
-  /* ---- AND `men` HAS ALWAYS SUMMED THE DEAD HOUSES TOO — #175 ----
-     That reduce runs over `live`, which is every house that produced a save, ENDED OR NOT. So a
-     house that ruined at week nine with four men in its cells contributes four to `men` and nothing
-     to `standing`, and the line below has been reading as though the men belonged to the houses
-     still going. They need not. The committed tally proves it without a run: four rows have
-     `standing === 0` alongside `men > 0`, which cannot happen if the two readings counted the same
-     houses, and the loudest is v3.57.0 at (0, 9) — nine men above the tally's own median of five,
-     reported under the words "not one house came through able to field a man".
-     The bars are NOT moved for this. `menUp <= men` always, so correcting the sum can only make
-     them fire MORE, and re-scored against all seven first-run failures it un-fails none of them —
-     it is an honesty fix, not a cure for the re-run rate. What is recorded instead is the SPLIT, in
-     the tally, so that in ten releases the question can be answered off evidence rather than
-     argument. That is the same move #142 made when it started the tally. */
   const menUp = live.filter(x=>!x.over).reduce((n,x)=>n+x.yard, 0);
   const ended = live.filter(x=>x.over).length;
   lines.push(`${standing} of ${live.length} houses still standing after ${WEEKS} weeks, ${men} men between them (this policy scores 4-7)`
     + (men > menUp ? ` — of which ${men - menUp} ${men - menUp === 1 ? "is" : "are"} in the ${ended} house${ended===1?"":"s"} that ENDED, leaving ${menUp} with the houses still going` : ``));
 
-  const fails = [];
-  if(live.length < HOUSES) fails.push(`${HOUSES - live.length} of ${HOUSES} houses produced no save at all`);
-  /* ---- THE COLLAPSE: NOTHING LEFT ANYWHERE ----
-     This comment used to read "Neither of these happens by bad luck", and #155 measured that it does.
-     Over 57 recorded runs the per-house standing rate is about 58%, so all five falling together has
-     roughly a 1.3% chance a run — about once in seventy-six — and it has come up twice, at v3.33.0
-     and v3.43.0, BOTH proven false by a cross-build signature over 60 headless houses. The guard
-     stays exactly as it is, because a run where nobody can field a man is worth stopping for. What
-     changes is that it now says what to do next, so the next reader does not spend two hours
-     rediscovering it. */
-  if(!standing) fails.push(`not one of ${HOUSES} houses came through ${WEEKS} weeks able to field a man`
-    + (men ? ` (the ${men} men in the line above are all inside houses that had already ended — see #175)` : ``)
-    + ` — measured at about a 2.0% chance a run at the tally's per-house standing rate of 54%, and`
-    + ` four times out of four so far it has been luck rather than the build. Before believing it: \`node test/probes/open.mjs\` on this`
-    + ` build and on the last, and diff the SIG line. Identical house for house means no path a new`
-    + ` house executes differs and this is the tail`);
-  if(!men) fails.push(`${HOUSES} houses, ${WEEKS} weeks, and not a man left in any yard`);
-  /* and the gutting: both readings weak at once */
+  /* THE STATISTICAL BARS — the ones a draw can trip by luck, and the only ones that are retried */
+  const bars = [];
+  if(!standing) bars.push(`not one of ${HOUSES} houses came through ${WEEKS} weeks able to field a man`
+    + (men ? ` (the ${men} men in the line above are all inside houses that had already ended — see #175)` : ``));
+  if(!men) bars.push(`${HOUSES} houses, ${WEEKS} weeks, and not a man left in any yard`);
   if(standing < BOTH_HOUSE && men < BOTH_MEN)
-    fails.push(`${standing} of ${HOUSES} houses standing AND only ${men} men between them — the opening has been gutted`);
-  /* one weak reading is a bad week and says so without failing */
+    bars.push(`${standing} of ${HOUSES} houses standing AND only ${men} men between them — the opening has been gutted`);
   else if(standing < FLOOR)
     lines.push(`only ${standing} houses standing, but ${men} men still in their yards — a bad run of luck, not a gutting`);
   else if(men < MEN)
     lines.push(`only ${men} men between them, but ${standing} houses still standing — a bad run of luck, not a gutting`);
+
+  /* THE HARD FAULTS — never a draw artifact, so never retried */
+  const hard = [];
+  if(live.length < HOUSES) hard.push(`${HOUSES - live.length} of ${HOUSES} houses produced no save at all`);
+
+  /* ---- A DOOR TO EXERCISE THE RETRY, BECAUSE OTHERWISE IT SHIPS UNRUN ----
+     The second draw only happens on a bar trip, which is 11.5% of runs, so the release that adds it
+     will almost certainly not execute it — that is exactly how v3.67.0's honesty clause shipped
+     having only ever been tested against hand-built fixtures. `SURVIVE_FORCE_FIRST=1` makes the
+     FIRST draw report a bar it did not trip, and nothing else: the second draw is real, the bars are
+     real, and the pass/fail that comes out is the genuine article. It is off unless the variable is
+     set, and it says so in the output so no run can be misread as a real trip. */
+  if(process.env.SURVIVE_FORCE_FIRST === "1" && !oneDraw.__forced){
+    oneDraw.__forced = true;
+    bars.push(`FORCED BY SURVIVE_FORCE_FIRST=1 — not a real trip, this draw actually read (${standing},${men})`);
+  }
+
+  return { lines, live, standing, men, menUp, ended, bars, hard };
+}
+
+export async function run({ p, errors, port }){
+  const lines = [];
+  const A = await oneDraw({ p, errors, port });
+  lines.push(...A.lines);
+
+  /* ---- #175: A SECOND DRAW, TAKEN ONLY WHEN THE FIRST TRIPS A BAR ----
+     Scored over the first run of each build in the committed tally — the extra rows exist only
+     because a failure had just happened, so pooling them answers no question — this check trips a
+     bar on **7 of 61 builds, 11.5%**, and each one cost a full 13.4-minute suite re-run plus a
+     human deciding to order it. #155 settled that it cannot be cut by loosening; five Chromiums is
+     the ceiling, and seven cost two false failures of a worse kind. The item named one remaining
+     candidate — the check taking the cross-build signature itself — and rejected it, because that
+     needs a baseline the check does not have.
+     A SECOND DRAW NEEDS NO BASELINE. `found` leaves the seed empty, so every draw is a house nobody
+     has run, and two draws are two independent samples of the same build.
+     AND THE EXPERIMENT HAS ALREADY BEEN RUN, BY HAND, NINE TIMES. Every failing draw in the tally
+     was followed by another run of the same build, and **all nine came back clean — 0 of 9**. That
+     is what this automates. Under independence the confirmed rate is 11.5% squared, about **1.3%**;
+     the observed retry-failure rate is 0 of 9, whose 95% upper bound is 30%, so 1.3% is the estimate
+     the arithmetic supports and the record does not contradict.
+     WHAT IT COSTS: this check is 269 seconds of a 13.4-minute suite, so a second draw adds
+     0.115 x 4.5 = about **half a minute per release on average**, against the 1.5 minutes of expected
+     machine time it removes and the human round-trip it removes entirely.
+     WHAT IT COSTS IN POWER, stated plainly because it is the risk: if a real regression trips a bar
+     with probability q, confirming halves nothing and squares it — a gutting that fails every draw
+     is still caught every time, but a MARGINAL regression at q = 0.5 is caught 25% of the time
+     rather than 50%. That is a real loss and it is accepted on this ground: a five-house draw could
+     never see a marginal regression anyway (#176 established that even SIXTY houses cannot separate
+     "inert" from "falls by a fifth"), and both draws are written to the tally, so the evidence for
+     where the bar belongs keeps accumulating rather than being hidden by the retry.
+     Page errors and houses that produced no save are NOT retried — those are never draw artifacts. */
+  let B = null;
+  if(A.bars.length && !A.hard.length){
+    lines.push(`— the first draw tripped a bar (${A.standing},${A.men}); taking a SECOND draw of `
+      + `${HOUSES} fresh houses before calling it, because 9 of 9 such draws in the tally came back `
+      + `clean when re-run by hand (#175) —`);
+    B = await oneDraw({ p, errors, port });
+    lines.push(...B.lines);
+  }
+
+  const seen = B || A;
+  const standing = seen.standing, men = seen.men, menUp = seen.menUp, ended = seen.ended;
+  const allErrors = errors || [];
+  /* ---- WHAT ACTUALLY FAILS ----
+     `standing` means the house can still field somebody; the absence of an end-flag is not the same
+     thing, and for a long time this check accepted it as if it were. `men` sums the yards of every
+     house that produced a save, ENDED OR NOT, which v3.67.0 stopped hiding — the line above says how
+     many of the men are inside houses that had already gone under. The bars are unchanged by both
+     that fix and by the retry: `menUp <= men` always, so correcting the sum can only make them fire
+     MORE, and re-scored against all seven first-run failures it un-fails none of them.
+     The CONFIRMED bars are the second draw's when a second draw was taken, and the first draw's
+     otherwise. Hard faults from either draw always fail — a house that produced no save at all is
+     not a bad draw, and neither is a page error. */
+  const fails = [...A.hard, ...(B ? B.hard : []), ...seen.bars];
+  if(B && !B.bars.length)
+    lines.push(`the second draw read (${B.standing},${B.men}) and tripped nothing — the first was the `
+      + `tail, not the build. Both draws are in the tally, so the first is not hidden. If this build `
+      + `is genuinely suspect the proof is unchanged: \`node test/probes/open.mjs\` here and on the `
+      + `last build, and diff the SIG line — identical house for house means no path a new house executes differs`);
+  if(B && B.bars.length)
+    lines.push(`TWO independent draws of ${HOUSES} fresh houses BOTH tripped a bar — (${A.standing},${A.men}) `
+      + `then (${B.standing},${B.men}). At the tally's rate that is about a 1.3% coincidence, so this `
+      + `is the build and not the draw. Confirm with \`node test/probes/open.mjs\` against the last build`);
   if(allErrors.length) fails.push(`${allErrors.length} page errors: ${allErrors.slice(0,2).join(" | ")}`);
 
   /* ---- and the observation goes on the pile, whatever it was ---- */
@@ -551,11 +609,30 @@ export async function run({ p, errors, port }){
   /* `menUp` and `ended` are new in v3.67.0 and are recorded rather than acted on: the rows before
      that release do not carry them, so anything read off them must say so and count only the rows
      that have them. */
-  const mine = { v: version(), standing, men, menUp, ended, houses: live.length, weeks: WEEKS, pass: fails.length === 0 };
-  let wrote = true;
-  try { fs.writeFileSync(TALLY, JSON.stringify([...was, mine], null, 0).replace(/\},\{/g, "},\n{") + "\n"); }
-  catch(e){ wrote = false; lines.push(`could not write the tally: ${e.message}`); }
-  const all = [...was, mine];
+  /* BOTH draws go on the pile, marked. Recording only the survivor would make the retry launder the
+     record: the first-run rate is the number #175 is about, and the whole point of the tally is that
+     in ten releases the bar's position is answerable off evidence. `draw` is 1 or 2; rows before
+     v3.71.0 carry neither it nor `menUp`, so anything read off them must say so and count only the
+     rows that have them. Scoring the FIRST draw of each build is still exactly what it was. */
+  const row = (dr, draw) => ({ v: version(), standing: dr.standing, men: dr.men, menUp: dr.menUp,
+    ended: dr.ended, houses: dr.live.length, weeks: WEEKS, draw,
+    pass: !(dr.bars.length || dr.hard.length) });
+  const mineAll = B ? [row(A,1), row(B,2)] : [row(A,1)];
+  /* ---- A FORCED RUN IS NOT AN OBSERVATION ----
+     `SURVIVE_FORCE_FIRST=1` makes the first draw report a bar it did not trip. Writing that to the
+     tally would put a failure into the permanent record that never happened, and the first-run
+     failure rate — the number #175 is entirely about — is read straight off these rows. So a forced
+     run reports and does not record. Found by asking what the test hook would leave behind before
+     running it, which is cheaper than finding it in the tally afterwards. */
+  const forced = process.env.SURVIVE_FORCE_FIRST === "1";
+  let wrote = !forced;
+  if(forced) lines.push(`SURVIVE_FORCE_FIRST=1 — this run is NOT written to the tally, because a forced `
+    + `trip is not an observation and the first-run rate is read off these rows`);
+  else {
+    try { fs.writeFileSync(TALLY, JSON.stringify([...was, ...mineAll], null, 0).replace(/\},\{/g, "},\n{") + "\n"); }
+    catch(e){ wrote = false; lines.push(`could not write the tally: ${e.message}`); }
+  }
+  const all = [...was, ...mineAll];
   if(all.length > 1){
     const failed = all.filter(x=>!x.pass).length;
     const builds = new Set(all.map(x=>x.v)).size;

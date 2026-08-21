@@ -1399,7 +1399,23 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.70.0 — **#176 closed, and refuted as I opened it.** The item blamed the
+**Shipped and verified:** v3.71.0 — **#175 closed: the re-run rate CAN be cut, and the experiment was
+already in the record.** `survive` trips a bar on **7 of 61 first runs (11.5%)**, each costing a full
+13.4-minute suite re-run plus a human to order it. The item rejected its own last candidate because
+it needs a baseline the check lacks — but **a second draw needs no baseline**: `found` leaves the
+seed empty, so two draws are two independent samples of the same build. And every failing draw in the
+tally was already followed by a re-run: **nine of nine came back clean.** The check takes that second
+draw itself now. Confirmed rate under independence **1.3%**; honestly, 0 of 9 has a 95% upper bound of
+30%, so 1.3% is what the arithmetic supports rather than a demonstration. Cost **~0.5 min per release
+on average** (survive is 269s; the forced two-draw run measured 560s). **The power cost is stated
+rather than hidden**: confirming squares the detection probability, so a marginal regression at q=0.5
+is caught 25% of the time instead of 50% — accepted because a five-house draw could never see one
+anyway (#176) and because **both draws go to the tally**, so evidence accumulates rather than being
+laundered. Negative-tested and not a rubber stamp: forced, draw two read (2,2) and would have failed
+at (1,2). **Two faults caught by asking what the test would leave behind** — the retry would have
+shipped unexercised (v3.67.0's mistake), and a forced run must not be recorded or it corrupts the one
+number the item is about. No game change; `src/ludus.jsx` untouched.
+v3.70.0 — **#176 closed, and refuted as I opened it.** The item blamed the
 four definitions of "standing" (88 / 74 / 77 / 91% on 800 identical houses) for #142's *"`standing` is
 nearly inert"*. My hypothesis was that `open.mjs` ignores `d.over` and so cannot see the bankruptcies
 an economic squeeze causes. **Wrong**: under the same squeeze the four readings fall **−22.5, −22.5,
@@ -3473,27 +3489,57 @@ button and took App to 7,203 lines against `bulk`'s 7,200. The cap was not raise
 to the engine side, where it costs nothing, and App is back at exactly 7,200.)*
 
 
-**#175 — a red suite costs one release in eight, and the pair it fails on does not read as it
-counts.** Scored over the FIRST run of each build in the 89-run tally — the extra rows exist only
-because a failure had just happened, so pooling them answers no question — `survive` trips a bar on
-**7 of 57 builds = 12.3%** (95% Wilson 6.1–23.2%), costing 32 extra runs, about **7 hours** of suite
-time, and **all seven re-ran green on the same build** — four of them (v3.33.0, v3.43.0, v3.62.0,
-v3.66.0) additionally proven false by an identical 60-house signature, which is proof rather than
-evidence; for the other three the green re-run is all the record holds. Separately, `men` sums the yards of houses
-that have **already ended** — proven from the record with no run at all, because four rows read
-`standing === 0` alongside `men > 0`, which is impossible if the two readings counted the same
-houses. The loudest is **v3.57.0 at (0, 9)**: nine men, above the tally's own median of five,
-reported under the words *"not one house came through able to field a man"* — and in every collapse
-row 100% of the men counted were inside dead houses. **Fixed in v3.67.0 as a reading, not as a bar.**
-*Falsifies if:* correcting the sum is a cure for the rate — it is not, and that is provable rather
-than measured: `menUp <= men` always, so the correction can only make bars fire MORE, and re-scored
-against all seven first-run failures it un-fails **none of them**. What the release ships instead is
-the SPLIT in the tally, so the question of where the bar belongs becomes answerable off evidence in
-ten releases rather than off argument now — the same move #142 made when it started the tally. *The
-open half:* whether the 12.3% can be cut at all. It cannot be cut by loosening (#155 settled that),
-and it cannot be cut by more houses (5 Chromiums is the ceiling; 7 cost two false failures of a
-worse kind). The remaining candidate is making the check take the signature itself instead of a
-human running `open.mjs` by hand each time — which needs a baseline the check does not have.
+**#175 — CLOSED in v3.71.0. The rate can be cut, and the experiment was already in the record,
+run nine times by hand.**
+
+Scored over the FIRST run of each build — the extra rows exist only because a failure had just
+happened, so pooling them answers no question — `survive` trips a bar on **7 of 61 builds, 11.5%**,
+and each one cost a full 13.4-minute suite re-run plus a human deciding to order it. #155 settled
+that it cannot be cut by loosening; five Chromiums is the ceiling and seven cost two false failures
+of a worse kind. The item named one remaining candidate, the check taking the cross-build signature
+itself, and rejected it because that needs a baseline the check does not have.
+
+**A second draw needs no baseline.** `found` leaves the seed field empty, and an empty seed is a
+house nobody has run, so two draws are two independent samples of the same build — which is why one
+build reads (1,2) and then (2,5).
+
+**And every failing draw in the tally was already followed by a re-run of the same build. All nine
+came back clean — 0 of 9.** That is precisely the retry, executed by hand, nine times, with a
+perfect record. Under independence the confirmed rate is 11.5% squared, about **1.3%**. Stated
+honestly: 0 of 9 has a 95% upper bound of **30%**, so 1.3% is what the arithmetic supports and what
+nine hand-run retries do not contradict — it is not a demonstration that the retry never fails.
+
+**What it costs.** This check is **269s** of a 13.4-minute suite, so a second draw adds
+0.115 × 4.5 ≈ **half a minute per release on average**, against 1.5 minutes of expected machine time
+removed and the human round-trip removed entirely. Measured: the forced two-draw run took **560s**.
+
+**What it costs in power, which is the real risk.** If a regression trips a bar with probability q,
+confirming squares it. A gutting that fails every draw is caught every time; a MARGINAL regression at
+q = 0.5 is caught 25% of the time rather than 50%. Accepted on two grounds: a five-house draw could
+never see a marginal regression anyway — **#176 established that even sixty houses cannot separate
+"inert" from "falls by a fifth"** — and **both draws are written to the tally**, so the evidence for
+where the bar belongs keeps accumulating rather than being laundered by the retry. Page errors and
+houses that produced no save are never retried; those are not draw artifacts.
+
+**It is not a rubber stamp,** and the negative test shows it: forced, the first draw read (4, 5) and
+the second read **(2, 2)** — which passed only because `standing` 2 is not below `BOTH_HOUSE` 2. Had
+it read (1, 2) the check would have failed with *"TWO independent draws of 5 fresh houses BOTH
+tripped a bar"*.
+
+**Two faults found by asking before running rather than after.** The retry fires on 11.5% of runs, so
+the release adding it would almost certainly never execute it — which is exactly how v3.67.0's
+honesty clause shipped having only been tested against hand-built fixtures. `SURVIVE_FORCE_FIRST=1`
+makes the first draw report a bar it did not trip and leaves the second draw and the verdict genuine.
+And **a forced run must not be written to the tally**: the first-run failure rate is read straight off
+those rows, so recording a trip that never happened would corrupt the one number this item is about.
+The first forced run was made before that guard existed and did write two rows; they were removed and
+the tally restored to the committed 93.
+
+*(The other half of the item, `men` summing the yards of houses that had already ended, was fixed in
+v3.67.0 as a reading rather than a bar, and its clause is provable rather than measured: `menUp <=
+men` always, so the correction can only make bars fire MORE, and re-scored against all seven
+first-run failures it un-fails none of them.)*
+
 
 **#176 — CLOSED in v3.70.0, and REFUTED as I opened it. The definitions were a red herring; the
 sample size was the fault, and it had become the justification for a bar design.**
@@ -3742,6 +3788,76 @@ about a quarter and it is the cost of this repair**; `MISSIO_MAN` is one line to
 wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
+
+### v3.71.0 — #175: the re-run rate can be cut, and the experiment was already in the record
+
+`survive` trips a bar on **7 of 61 first runs, 11.5%**, and every one has cost a full 13.4-minute
+suite re-run plus a human deciding to order it — 32 extra runs and about seven hours across the
+project. #155 settled that it cannot be cut by loosening. Five Chromiums is the ceiling and seven
+cost two false failures of a worse kind. The item named one remaining candidate — the check taking
+the cross-build signature itself — and rejected it, because that needs a baseline the check does not
+have.
+
+#### A second draw needs no baseline
+
+`found` leaves the seed field empty, and an empty seed is a house nobody has run. So two draws are
+two independent samples of the same build, which is why one build reads (1,2) and then (2,5). The
+obstacle the item named does not apply.
+
+#### And the experiment had already been run, nine times, by hand
+
+Every failing draw in the committed tally was followed by another run of the same build:
+
+    3.15.0 (1,2)F -> (3,5)      3.52.0 (1,2)F -> (4,5)
+    3.33.0 (0,4)F -> (3,4)      3.57.0 (0,9)F -> (3,6)
+    3.41.0 (1,1)F -> (2,11)     3.60.0 (0,4)F -> (4,9)
+    3.43.0 (0,4)F -> (4,9)      3.62.0 (1,3)F -> (1,5)
+                                3.66.0 (1,2)F -> (2,5)
+
+**Nine of nine came back clean.** That is the retry, already executed, with a perfect record. Under
+independence the confirmed rate is 11.5% squared, about **1.3%** — and stated honestly, 0 of 9 has a
+95% upper bound of **30%**, so 1.3% is what the arithmetic supports and what nine hand-run retries do
+not contradict. It is not a demonstration that the retry never fails.
+
+#### The cost, both kinds
+
+`survive` is **269s** of the suite, so a second draw adds **about half a minute per release on
+average** against 1.5 minutes of machine time removed and the human round-trip removed entirely. The
+forced two-draw run measured **560s**.
+
+The cost in power is the real risk and is stated plainly: if a regression trips a bar with
+probability q, confirming squares it. A gutting that fails every draw is still caught every time; a
+marginal regression at q = 0.5 is caught 25% of the time rather than 50%. Accepted on two grounds —
+a five-house draw could never see a marginal regression anyway (**#176**: even sixty houses cannot
+separate "inert" from "falls by a fifth"), and **both draws are written to the tally**, so the
+evidence keeps accumulating rather than being laundered by the retry. Page errors and houses that
+produced no save are never retried.
+
+#### It is not a rubber stamp
+
+Negative-tested: forced, the first draw read (4, 5) and the second read **(2, 2)**, which passed only
+because `standing` 2 is not below `BOTH_HOUSE` 2, and which still printed its own "bad run of luck"
+note because `men` 2 is below `MEN` 3. Had it read (1, 2) the check would have failed with *"TWO
+independent draws of 5 fresh houses BOTH tripped a bar."*
+
+#### Two faults caught by asking what the test would leave behind
+
+The retry fires on 11.5% of runs, so **the release adding it would almost certainly never execute
+it** — exactly how v3.67.0's honesty clause shipped having only been tested against hand-built
+fixtures. `SURVIVE_FORCE_FIRST=1` makes the first draw report a bar it did not trip, leaving the
+second draw and the verdict genuine.
+
+And **a forced run must not be written to the tally.** The first-run failure rate is read straight
+off those rows, so recording a trip that never happened would corrupt the one number this item is
+about. The first forced run predated that guard and did write two rows; they were removed and the
+tally restored to the committed 93.
+
+*No game change in this release. `src/ludus.jsx` is untouched.* Suite green at **72/72 in 13.3
+minutes**, `survive` drawing **(3, 5)** on one draw — healthy, so the retry correctly stayed dormant,
+which is the expected case 88.5% of the time and the whole reason the forced hook had to exist. What
+the shipping run does confirm is the new schema: the row carries **`draw: 1`**, so the first-draw rate
+this item is scored on stays readable, and any future `draw: 2` row is visibly a confirmation rather
+than an independent observation.
 
 ### v3.70.0 — #176 refuted as I opened it: the definitions were a red herring and sixty houses were the fault
 
