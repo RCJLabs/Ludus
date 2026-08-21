@@ -19163,6 +19163,490 @@ function endTheLine(d){
    It also takes lines OUT of App, which `bulk` holds at 7,200 and which is sitting at exactly
    7,200 — so this refactor buys the room the rest of the work needs. */
 const SECT = {
+  cells: (S, X) => { const { doTourney, feast, walkCells } = X;
+    return (
+    <Sect open live={sectFresh(S,"cells")} sid="cells" title="What you can do for the block" note={`${activeG(S).length} in the cells · ${unrestWord(S.unrest).toLowerCase()}`}
+      mark={sectMark(S,"feast")}>
+      {(()=>{ const cost = feastCost(S), reach = feastReach(S);
+        return (<div style={{paddingBottom:9,marginBottom:9,borderBottom:"1px dotted #33271a"}}>
+          <div className="flex items-center justify-between gap-2">
+            <span className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d9b8"}}>A feast for the familia</span>
+            <span className="gold" style={{fontSize:"var(--fs-base)",whiteSpace:"nowrap"}}>{cost}d</span>
+          </div>
+          <div className="dim" style={{fontSize:"var(--fs-md)",margin:"3px 0 7px"}}>Meat, honeyed wine, and a night without the whip. Loyalty is cheaper than rebellion.</div>
+          {reach < 0.95 && (
+            <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",margin:"0 0 7px"}}>
+              {activeG(S).length} at the tables, and a house of this standing cannot set them the way it once did.
+              One night goes {Math.round(reach*100)}% as far as it did when there were four of them.
+            </div>
+          )}
+          <button className="btn" style={{width:"100%"}} disabled={S.gold<cost || S.week-S.lastFeast<3} onClick={feast}>
+            {S.week-S.lastFeast<3? `The men feasted recently — ${3-(S.week-S.lastFeast)} week${3-(S.week-S.lastFeast)>1?"s":""}` : S.gold<cost? "Not enough coin" : "Set the tables"}
+          </button>
+        </div>); })()}
+
+      <div style={{paddingBottom:9,marginBottom:9,borderBottom:"1px dotted #33271a"}}>
+        <div className="flex items-center justify-between gap-2">
+          <span className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d9b8"}}>A tournament in the yard</span>
+          <span className="dim" style={{fontSize:"var(--fs-base)",whiteSpace:"nowrap"}}>settles the block</span>
+        </div>
+        <div className="dim" style={{fontSize:"var(--fs-md)",margin:"3px 0 7px"}}>
+          Set the whole familia against itself for an afternoon — wooden swords, no editor, every man with something to prove. The winner walks tall for weeks; who meets him in the final may come out of it a brother or a rival.
+        </div>
+        <button className="btn" style={{width:"100%"}} disabled={!tourneyReady(S)} onClick={doTourney}>
+          {activeG(S).filter(g=>canFight(g)).length<4 ? "Not enough fit men — you need four"
+            : (S.week - (S.flags.tourneyWk!=null?S.flags.tourneyWk:-99)) < TOURNEY_COOL
+            ? `The yard is still sore — ${TOURNEY_COOL-(S.week-S.flags.tourneyWk)}w`
+            : "Hold the tournament"}
+        </button>
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between gap-2">
+          <span className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d9b8"}}>Walk the cells tonight</span>
+          <span className="dim" style={{fontSize:"var(--fs-base)",whiteSpace:"nowrap"}}>costs nothing</span>
+        </div>
+        <div className="dim" style={{fontSize:"var(--fs-md)",margin:"3px 0 7px"}}>
+          Go down among the familia after the lamps are lit. It costs nothing but an evening — a little warmth to the block, and the truth of what passes between the men, which you will not learn from the gallery. Some nights, the block asks something of you.
+        </div>
+        <button className="btn" style={{width:"100%"}} disabled={!walkReady(S)} onClick={walkCells}>
+          {(S.rome||S.city||S.travel) ? "Not while the house is on the road"
+            : !walkReady(S) ? `You were down there recently — ${WALK_COOL-(S.week-(S.flags.walkWk!=null?S.flags.walkWk:-99))}w`
+            : "Go down to the block"}
+        </button>
+      </div>
+    </Sect>
+    ); },
+  collegium: (S, X) => { const { joinCollegium, roster, stopCollegium } = X;
+    return (
+    <Sect live={sectFresh(S,"collegium")} sid="collegium" title="The collegium" note={collOn(S)? `${collDues(S)}d/wk` : "burial society"}
+      mark={sectMark(S,"collegium")}>
+      {!S.collegium ? (<>
+        <div style={{fontSize:"var(--fs-lg)"}}>
+          A burial society. The house pays {COLL_DUES} denarii a week for every man on the roster, and when one of them dies there is a stone with his name on it, his style and the number of his victories — instead of a pit outside the wall.
+        </div>
+        <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:5}}>
+          It will never win you a bout. But men who know what happens to them afterward take a death in the house differently.
+        </div>
+        <button className="btn" style={{width:"100%",marginTop:8}} disabled={S.gold<COLL_FEE} onClick={joinCollegium}>
+          {S.gold<COLL_FEE ? `Found it · ${COLL_FEE}d — not enough coin` : `Found it · ${COLL_FEE}d, then ${COLL_DUES}d a man each week`}
+        </button>
+      </>) : S.collegium.lapsed ? (
+        <div>
+          <div className="blood" style={{fontSize:"var(--fs-lg)"}}>The dues stopped in week {S.collegium.lapsed}.</div>
+          <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:4}}>
+            {S.collegium.buried
+              ? `${S.collegium.buried} went into the ground under it before you cut it. That is not a thing the cells forget.`
+              : "Nobody had needed it yet. They counted it anyway."}
+          </div>
+        </div>
+      ) : (
+        <div>
+          <div style={{fontSize:"var(--fs-lg)"}}>Paid up. {S.collegium.buried
+            ? `${S.collegium.buried} ${S.collegium.buried===1?"man has":"men have"} gone into the ground under it with ${S.collegium.buried===1?"his":"their"} own name${S.collegium.buried===1?"":"s"} on the stone.`
+            : "Nobody has needed it yet."}</div>
+          <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:4}}>
+            A death here costs half the unrest it otherwise would, and the yard is quieter for knowing why.
+          </div>
+          <button className="btn btn-ghost" style={{width:"100%",marginTop:8}} onClick={stopCollegium}>Stop the dues</button>
+        </div>
+      )}
+    </Sect>
+    ); },
+  rites: (S, X) => { const { doRite } = X;
+    return (
+    <Sect title="Not yet buried properly" note={`${RITE_WINDOW}w to decide`} open mark={sectMark(S,"rites")}>
+      <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>
+        Funeral games are what a rich man's sons stage at his tomb. Nobody has ever staged them for a gladiator, which is exactly what makes it worth doing.
+      </div>
+      {unhonoured(S).filter(m=>!m.done).map(m=>(
+        <div key={m.gid} style={{borderTop:"1px dotted #33271a",paddingTop:9,marginTop:9}}>
+          <div className="flex items-center justify-between gap-2">
+            <span className="disp" style={{fontSize:"var(--fs-md)"}}>{m.name}</span>
+            <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>
+              {m.wins} victories · {RITE_WINDOW - (S.week - m.week)} week{RITE_WINDOW-(S.week-m.week)===1?"":"s"} left
+            </span>
+          </div>
+          {(m.kin||[]).length>0 && (
+            <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2}}>
+              {(m.kin||[]).map(k=>{ const b=S.gladiators.find(x=>x.id===k); return b?b.name:null; }).filter(Boolean).join(" and ")} called him brother, and {(m.kin||[]).length>1?"they are":"he is"} watching what you do about it.
+            </div>
+          )}
+          {RITE_KEYS.map(k=>{ const R2 = RITES[k], c = R2.cost(m);
+            return (
+              <button key={k} className={`optrow ${k==="none"?"":""}`} style={{marginTop:6,padding:9}}
+                disabled={S.gold<c} onClick={()=>doRite(m.gid,k)}>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="disp" style={{fontSize:"var(--fs-base)",color:k==="none"?"#a08e70":"#e8d092"}}>{R2.name}</span>
+                  <span className="rowval" style={{fontSize:"var(--fs-sm)",color:c>S.gold?"#d96f5d":c?"#d8ac5f":"#8d7e65"}}>{c? c+"d" : "costs nothing"}</span>
+                </div>
+                <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2}}>{R2.desc}</div>
+              </button>
+            ); })}
+        </div>
+      ))}
+    </Sect>
+    ); },
+  aedile: (S, X) => {
+    return (
+    <Sect live={sectFresh(S,"aedile")} sid="aedile" title="The aedile"
+      note={`${S.aedile.friendly ? "he owes you" : S.aedile.hostile ? "he is against you" : "no view of you"} · ${S.aedile.until - S.week}w left`}>
+      <div className="disp" style={{fontSize:"var(--fs-md)",color:"#e8d092"}}>{S.aedile.name}</div>
+      <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:3}}>
+        {S.aedile.friendly
+          ? "He took the office with your money and has not forgotten it. One extra bout on every card, purses a seventh higher, and he leans forward when one of yours is down."
+          : S.aedile.hostile
+          ? "He knows whose name was on the other man's list. One fewer bout on every card, purses a ninth lighter, and he does not look your way when a decision is being made."
+          : "He has no particular view of you, which is its own kind of position."}
+      </div>
+    </Sect>
+    ); },
+  aedileship: (S, X) => { const { backHim } = X;
+    return (
+    <Sect title="The aedileship" note={`${Math.max(0, 3-(S.week-S.election.week))}w to the vote`} open>
+      <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>
+        The names are on the walls. The aedile is the man who decides whose gladiators are on the card, what they are paid, and — when one of them is down and looking up — whether he leans forward.
+      </div>
+      {S.election.cands.map(c=>{
+        const mine = S.election.backed===c.id;
+        return (
+          <div key={c.id} style={{borderTop:"1px dotted #33271a",paddingTop:9,marginTop:9}}>
+            <div className="flex items-center justify-between gap-2">
+              <span className="disp" style={{fontSize:"var(--fs-base)",color:mine?"#e8d092":undefined}}>{c.name}</span>
+              {c.rival && <span className="tag tag-blood">House {c.rival} is behind him</span>}
+            </div>
+            <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:2}}>He {c.say}.</div>
+            {mine ? (
+              <div className="laurel" style={{fontSize:"var(--fs-base)",marginTop:5}}>Your money is on him — {S.election.spent}d.</div>
+            ) : S.election.backed ? null : (
+              <div className="grid grid-cols-3 gap-2" style={{marginTop:6}}>
+                {[1,2,3].map(l=>(
+                  <button key={l} className="btn btn-ghost" disabled={S.gold<backLevels[l].n}
+                    onClick={()=>backHim(c.id,l)}>{backLevels[l].n}d</button>
+                ))}
+              </div>
+            )}
+          </div>
+        ); })}
+      {!S.election.backed && (
+        <button className="btn" style={{width:"100%",marginTop:9}} onClick={()=>backHim(null,0)}>
+          Stay out of it
+        </button>
+      )}
+    </Sect>
+    ); },
+  owed: (S, X) => { const { mut } = X;
+    return (
+    <Sect title="Owed to the house" note={`${owedTotal(S)}d · ${cashWord(S)}`}>
+      <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:6}}>
+        An editor who pays in sixty days is not the same as an editor who pays. You can wait, or sell the paper at {Math.round(discountRate(S)*100)}% to a man who does nothing else.
+      </div>
+      {owedList(S).map(x=>{ const late = S.week - x.due;
+        return (
+          <div key={x.id} style={{borderTop:"1px dotted #33271a",paddingTop:7,marginTop:7}}>
+            <div className="flex items-center justify-between gap-2">
+              <span className="rowname" style={{fontSize:"var(--fs-md)"}}>{x.from}</span>
+              <span className="rowval gold" style={{fontSize:"var(--fs-base)"}}>{x.amount}d</span>
+            </div>
+            <div className="flex items-center justify-between gap-2" style={{marginTop:2}}>
+              <span style={{fontSize:"var(--fs-base)",color: late>=4?"#d96f5d" : late>0?"#d8ac5f" : "#8d7e65"}}>
+                {late >= 4 ? `${late} weeks late and not at home` : late > 0 ? `${late} week${late===1?"":"s"} late` : `due in ${x.due - S.week}`}
+              </span>
+              <button className="btn btn-ghost" style={{padding:"10px 9px",fontSize:"var(--fs-sm)"}}
+                onClick={()=>mut(d=>{ sellDebt(d, x.id); })}>
+                Sell it for {rnd(x.amount*discountRate(S))}d
+              </button>
+            </div>
+          </div>
+        ); })}
+    </Sect>
+    ); },
+  household: (S, X) => { const { mut } = X;
+    return (
+    <Sect live={sectFresh(S,"household")} sid="household" title="The household" note={`${householdCount(S)} of ${HH_KEYS.length}`}>
+      <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:7}}>
+        A ludus was a household before it was a business. None of these people will ever be on a card and the place does not run without them.
+      </div>
+      {HH_KEYS.map(k=>{ const H = HOUSEHOLD[k], f = houseFolk(S)[k], fee = rnd(hhWage(S,k)*16);
+        return (
+          <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:8,marginTop:8}}>
+            <div className="flex items-center justify-between gap-2">
+              <span className="disp" style={{fontSize:"var(--fs-base)",color:f?"#e8d092":"#b09b7d"}}>
+                {f ? `${f.name} · ${H.name.toLowerCase()}` : H.name}
+              </span>
+              <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{f ? `${f.weeks}w · ${hhWage(S,k)}d/wk` : (k==="wife" ? "—" : `${fee}d · ${hhWage(S,k)}d/wk`)}</span>
+            </div>
+            {f && <div style={{marginTop:2}}><span className="tag tag-gold">{hhWord(f)}</span></div>}
+            <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:2}}>{f ? H.line : H.blurb}</div>
+            {!f && k!=="wife" && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>How good she turns out to be is not on the price. A great one is worth half again what a poor one is.</div>}
+            {!f && <button className="btn btn-ghost" style={{width:"100%",marginTop:6}}
+              disabled={k!=="wife" && S.gold<fee}
+              onClick={()=>mut(d=>{ hireFolk(d, k); })}>
+              {k==="wife" ? "She has always been here" : `Take her on · ${fee}d`}
+            </button>}
+          </div>
+        ); })}
+    </Sect>
+    ); },
+  monuments: (S, X) => { const { mut } = X;
+    return (
+    <Sect title="Monuments" note={`${monuAny(S).length} of ${MONU_KEYS.length}`} open={monuAny(S).length<MONU_KEYS.length}>
+      <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:7}}>
+        The great works are finished and the strongbox is still heavy. This is what is left to spend a fortune on — not blood or a better yard, but a name that outlives the man who made it.
+      </div>
+      {MONU_KEYS.map(k=>{ const W = MONUMENTS[k], on = workOn(S,k), done = workDone(S,k);
+        return (
+          <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:8,marginTop:8}}>
+            <div className="flex items-center justify-between gap-2">
+              <span className="disp" style={{fontSize:"var(--fs-base)",color:done?"#e8d092":on?"#d8ac5f":"#b09b7d"}}>{W.name}</span>
+              <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>
+                {done ? "standing" : on ? `${on.left} weeks` : `${W.cost}d · ${W.years} years`}
+              </span>
+            </div>
+            <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:2}}>{done ? W.done : W.blurb}</div>
+            {done && <div className="laurel" style={{fontSize:"var(--fs-base)",marginTop:3}}>{W.say}</div>}
+            {on && <Bar v={100 - on.left/(W.years*YEAR_WEEKS)*100} label="" color="linear-gradient(90deg,#4a3a24,#c99a4b)"/>}
+            {!done && !on && (
+              <button className="btn btn-ghost" style={{width:"100%",marginTop:6}}
+                disabled={S.gold < Math.ceil(W.cost*WORK_DEPOSIT)} onClick={()=>mut(d=>{ beginWork(d, k); })}>
+                {S.gold < Math.ceil(W.cost*WORK_DEPOSIT)
+                  ? `${Math.ceil(W.cost*WORK_DEPOSIT)}d down — not yet`
+                  : `Begin it · ${Math.ceil(W.cost*WORK_DEPOSIT)}d down, ${workWeekly(W)}d a week`}
+              </button>
+            )}
+          </div>
+        ); })}
+    </Sect>
+    ); },
+  works: (S, X) => { const { mut } = X;
+    return (
+    <Sect title="Great works" note={`${workAny(S).length} of ${WORK_KEYS.length}`}>
+      <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:7}}>
+        Things a house builds when it has outgrown buying men. They cost more than everything else put together and take years to finish.
+      </div>
+      {WORK_KEYS.map(k=>{ const W = WORKS[k], on = workOn(S,k), done = workDone(S,k);
+        return (
+          <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:8,marginTop:8}}>
+            <div className="flex items-center justify-between gap-2">
+              <span className="disp" style={{fontSize:"var(--fs-base)",color:done?"#e8d092":on?"#d8ac5f":"#b09b7d"}}>{W.name}</span>
+              <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>
+                {done ? "standing" : on ? `${on.left} weeks` : `${W.cost}d · ${W.years} years`}
+              </span>
+            </div>
+            <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:2}}>{done ? W.done : W.blurb}</div>
+            {done && <div className="laurel" style={{fontSize:"var(--fs-base)",marginTop:3}}>{W.say}</div>}
+            {on && <Bar v={100 - on.left/(W.years*YEAR_WEEKS)*100} label="" color="linear-gradient(90deg,#4a3a24,#c99a4b)"/>}
+            {!done && !on && (workOpen(S,k)
+              ? <button className="btn btn-ghost" style={{width:"100%",marginTop:6}}
+                  disabled={S.gold < Math.ceil(W.cost*WORK_DEPOSIT)} onClick={()=>mut(d=>{ beginWork(d, k); })}>
+                  {S.gold < Math.ceil(W.cost*WORK_DEPOSIT)
+                    ? `${Math.ceil(W.cost*WORK_DEPOSIT)}d down — not yet`
+                    : `Begin it · ${Math.ceil(W.cost*WORK_DEPOSIT)}d down, ${workWeekly(W)}d a week`}
+                </button>
+              : <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:6,fontStyle:"italic"}}>
+                  {/* ONE SENTENCE FOR TWO DIFFERENT GATES. The three tier-2 monuments are
+                      gated on the five plain WORKS — a spina, baths, a shrine, a school and
+                      a tomb — and this told you to finish your monuments, which is the tier
+                      above. Only the amphitheatre wants the monuments. */}
+                  {workDef(k).tier === 3
+                    ? "The city will not hear this from a house that has not put up its own monuments first."
+                    : "The city will not hear this from a house that has not finished the works in its own yard first."}
+                </div>)}
+          </div>
+        ); })}
+    </Sect>
+    ); },
+  law: (S, X) => {
+    return (
+    <Sect title="What the law says" note={lawWord(S)}>
+      {lawOf(S).edicts.map(k=>{ const E = EDICTS[k], bad = (()=>{ try{ return E.check(S); }catch(e){ return false; } })();
+        return (
+          <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:7,marginTop:7}}>
+            <div className="flex items-center justify-between gap-2">
+              <span className="rowname" style={{fontSize:"var(--fs-md)",color:bad?"#d98476":"#cfc0a0"}}>{E.name}</span>
+              {bad && <span className="tag tag-blood">in breach</span>}
+            </div>
+            <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:1}}>
+              {bad ? E.broke(S)
+                : k==="numbers" ? `The edict allows ${lawCap(S)}. You keep ${S.gladiators.filter(g=>!isGone(g)).length}.`
+                : k==="vectigal" ? `${Math.round(lawTax(S)*100)}% on every man you buy.`
+                : k==="sine" ? `${lawSine(S)} denarii for the seal on every card without missio.`
+                : "The house is within it."}
+            </div>
+          </div>
+        ); })}
+      {lawOf(S).fines>0 && <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:6}}>Paid in fines: {lawOf(S).fines}d</div>}
+    </Sect>
+    ); },
+  party: (S, X) => { const { host } = X;
+    return (
+    <Sect live={sectFresh(S,"party")} sid="party" title="Throw a party" note="favor & fame">
+    {Object.entries(PARTY).map(([k,p])=>(
+      <div key={k} className="panel" style={{padding:13}}>
+        <div className="flex items-center justify-between">
+          <div className="disp" style={{fontSize:"var(--fs-md)",fontWeight:700}}>{p.label.toUpperCase()}</div>
+          <span className="gold">{p.cost}d</span>
+        </div>
+        <div className="dim" style={{fontSize:"var(--fs-md)",margin:"4px 0 8px"}}>{p.desc} <span style={{color:"#bfa8c8"}}>+{p.warm} with every patron</span> · <span style={{color:"#d8c08a"}}>+{p.fame} fame</span></div>
+        <button className="btn" style={{width:"100%"}} disabled={S.gold<p.cost || S.week-S.lastParty<2} onClick={()=>host(k)}>
+          {S.week-S.lastParty<2? `The villa recovers — ${2-(S.week-S.lastParty)} week${2-(S.week-S.lastParty)>1?"s":""}` : S.gold<p.cost? "Not enough coin" : "Send invitations"}
+        </button>
+      </div>
+    ))}
+    </Sect>
+    ); },
+  watch: (S, X) => { const { askFavour } = X;
+    return (
+    <Sect title="Those Who Watch" note={`standing ${rnd(S.favor)}`} open>
+      {(S.patrons||[]).length===0 && <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>No one of consequence has heard of you yet.</div>}
+      {(S.patrons||[]).map(p=>{
+        const w = p.want, item = w ? WANTS[w.kind] : null;
+        const sub = w && w.gid ? S.gladiators.find(g=>g.id===w.gid) : null;
+        return (
+          <div key={p.id} style={{borderTop:"1px dotted #33271a",paddingTop:9,marginTop:9}}>
+            <div className="flex items-center justify-between gap-2">
+              <span className="disp" style={{fontSize:"var(--fs-md)",color:patronColor(p.favor)}}>{p.name}</span>
+              <span className="tag">{RANKS[p.rank].name}</span>
+            </div>
+            <div className="flex items-center justify-between gap-2" style={{margin:"4px 0 3px"}}>
+              <span style={{fontSize:"var(--fs-md)",color:patronColor(p.favor)}}>{patronWord(p.favor)}</span>
+              <span className="dim" style={{fontSize:"var(--fs-sm)"}}>
+                {p.served>0 && `${p.served} favour${p.served>1?"s":""} kept`}{p.served>0&&p.slighted>0 && " · "}{p.slighted>0 && `${p.slighted} slighted`}
+              </span>
+            </div>
+            <div className="track" style={{height:5}}>
+              <div className="fill" style={{width:`${p.favor}%`, background: p.favor<20? "linear-gradient(90deg,#7c2a22,#cf5a49)" : "linear-gradient(90deg,#6a5a2c,#d8ac5f)"}}/>
+            </div>
+            {w ? (
+              <div className="panel" style={{padding:9,marginTop:7,background:"#1c1610",borderColor:"#5a4a2c"}}>
+                <div className="flex items-center justify-between gap-2" style={{marginBottom:3}}>
+                  <span className="tag tag-gold">He asks</span>
+                  <span className="dim" style={{fontSize:"var(--fs-sm)",whiteSpace:"nowrap"}}>{w.weeks} week{w.weeks===1?"":"s"} left</span>
+                </div>
+                <div style={{fontSize:"var(--fs-md)"}}>{item.ask(S, p, sub)}</div>
+              </div>
+            ) : <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:4}}>{RANKS[p.rank].blurb}</div>}
+            {(()=>{ const F = FAVOURS[p.rank]; if(!F) return null;
+              const ready = favourReady(S, p), wait = favourWait(S, p);
+              return (
+                <div className="panel" style={{padding:9,marginTop:7,background:"#1c1610",
+                  borderColor: ready ? "#c99a4b" : "#3e2f1f"}}>
+                  <div className="flex items-center justify-between gap-2" style={{marginBottom:3}}>
+                    <span className="tag" style={ready?{borderColor:"#c99a4b",color:"#e8d092"}:undefined}>{F.title}</span>
+                    <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{F.cost} standing</span>
+                  </div>
+                  <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>{F.ask}</div><div style={{fontSize:"var(--fs-sm)",marginTop:4,color:"#c99a4b"}}>{favourWorth(S, p)}</div>
+                  <button className={`btn ${ready?"":"btn-ghost"}`} style={{width:"100%",marginTop:6}}
+                    disabled={!ready} onClick={()=>askFavour(p.id)}>
+                    {wait ? `He has done enough for now · ${wait} week${wait===1?"":"s"}`
+                      : p.favor < F.cost ? `Not owed enough · ${Math.round(p.favor)}/${F.cost}`
+                      : !F.can(S) ? "Nothing for him to do just now"
+                      : "Call it in"}
+                  </button>
+                </div>
+              ); })()}
+          </div>
+        );
+      })}
+      <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:9}}>
+        A patron kept warm leans on the editor when your man is in the sand. One left to go cold talks at the baths instead.
+      </div>
+    </Sect>
+    ); },
+  houseName: (S, X) => { const { openLicence } = X;
+    return (
+    <Sect title="The house as a name" note={acclaimWord(acclaimOf(S))}>
+      <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>
+        What the street makes of you — not the editors, not the good families. The wine-shops, the walls by the gate, the potters' stalls.
+      </div>
+      <Bar v={acclaimOf(S)} label="the name" color="linear-gradient(90deg,#4a3a24,#e0bd72)"/>
+      <div className="flex items-center justify-between" style={{fontSize:"var(--fs-base)",marginTop:4}}>
+        <span className="disp" style={{color:"#e8d092"}}>{acclaimTier(S).name}</span>
+        <span className="rowval dim">{Math.round(acclaimOf(S))}/100</span>
+      </div>
+      <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>{acclaimTier(S).blurb}</div><TheStreet S={S}/>
+
+      {(()=>{ const walls = activeG(S).filter(g=>g.graffiti);
+        return walls.length>0 && (<>
+          <div className="tag tag-gold" style={{margin:"11px 0 4px"}}>Names on the walls</div>
+          {walls.map(g=>(
+            <div key={g.id} style={{borderTop:"1px dotted #33271a",padding:"5px 0"}}>
+              <div className="rowname" style={{fontSize:"var(--fs-md)",color:"#e8d092"}}>{g.name}</div>
+              <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>“{g.graffiti.line}”</div>
+            </div>
+          ))}
+        </>); })()}
+
+      {merchLive(S) ? (<>
+        <div className="tag tag-gold" style={{margin:"11px 0 4px"}}>Figures on the shelves</div>
+        <div className="flex items-center justify-between" style={{fontSize:"var(--fs-md)"}}>
+          <span>The potters' cut</span>
+          <span className="rowval gold">{merchWeekly(S)}d a week</span>
+        </div>
+        <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:2}}>
+          {S.brand&&S.brand.licensed ? "Licensed wide — lamps and figures in half the houses of Capua." : "Made only at the good workshop by the forum."}
+          {S.brand&&S.brand.earned>0 ? ` ${S.brand.earned}d earned so far.` : ""}
+        </div>
+        {!S.brand.decided && (
+          <button className="btn" style={{width:"100%",marginTop:8}} onClick={openLicence}>Hear the potter's offer</button>
+        )}
+      </>) : (
+        <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:9}}>
+          Make a bigger name — a famous man or two, a run of good spectacle — and the potters will come wanting to sell it.
+        </div>
+      )}
+    </Sect>
+    ); },
+  colours: (S, X) => { const { setCrest } = X;
+    return (
+    <Sect title="House Colours" note={(S.crest&&S.crest.motto)||"colours, crest & motto"}>
+      <div className="flex items-center gap-3" style={{marginBottom:11}}>
+        <Crest crest={S.crest} size={54}/>
+        <div>
+          <div className="disp" style={{fontSize:"var(--fs-lg)",color:"#e8d092"}}>{S.name}</div>
+          {S.crest && S.crest.motto && <div style={{fontSize:"var(--fs-md)",fontStyle:"italic",color:"#cfc0a0"}}>“{S.crest.motto}”</div>}
+          <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>Your men fight in these colours — the plume they wear and the face of their shields.</div>
+        </div>
+      </div>
+      <div className="tag" style={{marginBottom:6}}>The field</div>
+      <div className="flex gap-2" style={{flexWrap:"wrap",marginBottom:11}}>
+        {HOUSE_COLOURS.map(([hex,nm])=>(
+          <button key={hex} aria-label={nm} title={nm} onClick={()=>setCrest({c1:hex})}
+            /* a thirty-pixel swatch is a thirty-pixel miss. Seven still fit a row
+               at the full forty-four, so there is no reason to be under it. */
+            style={{width:44,height:44,borderRadius:8,background:hex,cursor:"pointer",padding:0,
+              border:(S.crest&&S.crest.c1===hex)?"2px solid #e8d092":"1px solid #3e2f1f"}}/>
+        ))}
+      </div>
+      <div className="tag" style={{marginBottom:6}}>The device</div>
+      <div className="flex gap-2" style={{flexWrap:"wrap",marginBottom:11}}>
+        {HOUSE_COLOURS.map(([hex,nm])=>(
+          <button key={hex} aria-label={nm} title={nm} onClick={()=>setCrest({c2:hex})}
+            /* a thirty-pixel swatch is a thirty-pixel miss. Seven still fit a row
+               at the full forty-four, so there is no reason to be under it. */
+            style={{width:44,height:44,borderRadius:8,background:hex,cursor:"pointer",padding:0,
+              border:(S.crest&&S.crest.c2===hex)?"2px solid #e8d092":"1px solid #3e2f1f"}}/>
+        ))}
+      </div>
+      <div className="tag" style={{marginBottom:6}}>The crest</div>
+      <div className="flex gap-2" style={{flexWrap:"wrap",marginBottom:11}}>
+        {CREST_SYMS.map(sym=>(
+          <button key={sym} aria-label={sym} onClick={()=>setCrest({sym})}
+            style={{padding:5,borderRadius:8,background:"#1a1410",cursor:"pointer",lineHeight:0,
+              border:(S.crest&&S.crest.sym===sym)?"2px solid #e8d092":"1px solid #3e2f1f"}}>
+            <Crest crest={Object.assign({}, S.crest, { sym })} size={34}/>
+          </button>
+        ))}
+      </div>
+      <div className="tag" style={{marginBottom:6}}>The motto</div>
+      <div className="flex gap-2" style={{flexWrap:"wrap"}}>
+        <button className={`chip ${!S.crest||!S.crest.motto?"on":""}`} onClick={()=>setCrest({motto:""})}>None</button>
+        {HOUSE_MOTTOS.map(m=>(
+          <button key={m} className={`chip ${S.crest&&S.crest.motto===m?"on":""}`} onClick={()=>setCrest({motto:m})}>{m}</button>
+        ))}
+      </div>
+    </Sect>
+    ); },
   square: (S, X) => { const { dismissDoc, hireDoc, setDrill, setPupil, stopRetrain } = X;
     return (
     <Sect live={sectFresh(S,"square")} sid="square" title="The training square" note={S.doctore ? `${S.doctore.name} · ${S.doctore.wage}d/wk` : "no doctore — you run it"}>
@@ -22081,95 +22565,9 @@ export default function App(){
           </div>
 
           {vView==="house" && (<>
-          <Sect title="House Colours" note={(S.crest&&S.crest.motto)||"colours, crest & motto"}>
-            <div className="flex items-center gap-3" style={{marginBottom:11}}>
-              <Crest crest={S.crest} size={54}/>
-              <div>
-                <div className="disp" style={{fontSize:"var(--fs-lg)",color:"#e8d092"}}>{S.name}</div>
-                {S.crest && S.crest.motto && <div style={{fontSize:"var(--fs-md)",fontStyle:"italic",color:"#cfc0a0"}}>“{S.crest.motto}”</div>}
-                <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>Your men fight in these colours — the plume they wear and the face of their shields.</div>
-              </div>
-            </div>
-            <div className="tag" style={{marginBottom:6}}>The field</div>
-            <div className="flex gap-2" style={{flexWrap:"wrap",marginBottom:11}}>
-              {HOUSE_COLOURS.map(([hex,nm])=>(
-                <button key={hex} aria-label={nm} title={nm} onClick={()=>setCrest({c1:hex})}
-                  /* a thirty-pixel swatch is a thirty-pixel miss. Seven still fit a row
-                     at the full forty-four, so there is no reason to be under it. */
-                  style={{width:44,height:44,borderRadius:8,background:hex,cursor:"pointer",padding:0,
-                    border:(S.crest&&S.crest.c1===hex)?"2px solid #e8d092":"1px solid #3e2f1f"}}/>
-              ))}
-            </div>
-            <div className="tag" style={{marginBottom:6}}>The device</div>
-            <div className="flex gap-2" style={{flexWrap:"wrap",marginBottom:11}}>
-              {HOUSE_COLOURS.map(([hex,nm])=>(
-                <button key={hex} aria-label={nm} title={nm} onClick={()=>setCrest({c2:hex})}
-                  /* a thirty-pixel swatch is a thirty-pixel miss. Seven still fit a row
-                     at the full forty-four, so there is no reason to be under it. */
-                  style={{width:44,height:44,borderRadius:8,background:hex,cursor:"pointer",padding:0,
-                    border:(S.crest&&S.crest.c2===hex)?"2px solid #e8d092":"1px solid #3e2f1f"}}/>
-              ))}
-            </div>
-            <div className="tag" style={{marginBottom:6}}>The crest</div>
-            <div className="flex gap-2" style={{flexWrap:"wrap",marginBottom:11}}>
-              {CREST_SYMS.map(sym=>(
-                <button key={sym} aria-label={sym} onClick={()=>setCrest({sym})}
-                  style={{padding:5,borderRadius:8,background:"#1a1410",cursor:"pointer",lineHeight:0,
-                    border:(S.crest&&S.crest.sym===sym)?"2px solid #e8d092":"1px solid #3e2f1f"}}>
-                  <Crest crest={Object.assign({}, S.crest, { sym })} size={34}/>
-                </button>
-              ))}
-            </div>
-            <div className="tag" style={{marginBottom:6}}>The motto</div>
-            <div className="flex gap-2" style={{flexWrap:"wrap"}}>
-              <button className={`chip ${!S.crest||!S.crest.motto?"on":""}`} onClick={()=>setCrest({motto:""})}>None</button>
-              {HOUSE_MOTTOS.map(m=>(
-                <button key={m} className={`chip ${S.crest&&S.crest.motto===m?"on":""}`} onClick={()=>setCrest({motto:m})}>{m}</button>
-              ))}
-            </div>
-          </Sect>
+          {SECT.colours(S, SX)}
 
-          <Sect title="The house as a name" note={acclaimWord(acclaimOf(S))}>
-            <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>
-              What the street makes of you — not the editors, not the good families. The wine-shops, the walls by the gate, the potters' stalls.
-            </div>
-            <Bar v={acclaimOf(S)} label="the name" color="linear-gradient(90deg,#4a3a24,#e0bd72)"/>
-            <div className="flex items-center justify-between" style={{fontSize:"var(--fs-base)",marginTop:4}}>
-              <span className="disp" style={{color:"#e8d092"}}>{acclaimTier(S).name}</span>
-              <span className="rowval dim">{Math.round(acclaimOf(S))}/100</span>
-            </div>
-            <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>{acclaimTier(S).blurb}</div><TheStreet S={S}/>
-
-            {(()=>{ const walls = activeG(S).filter(g=>g.graffiti);
-              return walls.length>0 && (<>
-                <div className="tag tag-gold" style={{margin:"11px 0 4px"}}>Names on the walls</div>
-                {walls.map(g=>(
-                  <div key={g.id} style={{borderTop:"1px dotted #33271a",padding:"5px 0"}}>
-                    <div className="rowname" style={{fontSize:"var(--fs-md)",color:"#e8d092"}}>{g.name}</div>
-                    <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>“{g.graffiti.line}”</div>
-                  </div>
-                ))}
-              </>); })()}
-
-            {merchLive(S) ? (<>
-              <div className="tag tag-gold" style={{margin:"11px 0 4px"}}>Figures on the shelves</div>
-              <div className="flex items-center justify-between" style={{fontSize:"var(--fs-md)"}}>
-                <span>The potters' cut</span>
-                <span className="rowval gold">{merchWeekly(S)}d a week</span>
-              </div>
-              <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:2}}>
-                {S.brand&&S.brand.licensed ? "Licensed wide — lamps and figures in half the houses of Capua." : "Made only at the good workshop by the forum."}
-                {S.brand&&S.brand.earned>0 ? ` ${S.brand.earned}d earned so far.` : ""}
-              </div>
-              {!S.brand.decided && (
-                <button className="btn" style={{width:"100%",marginTop:8}} onClick={openLicence}>Hear the potter's offer</button>
-              )}
-            </>) : (
-              <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:9}}>
-                Make a bigger name — a famous man or two, a run of good spectacle — and the potters will come wanting to sell it.
-              </div>
-            )}
-          </Sect>
+          {SECT.houseName(S, SX)}
 
           {(()=>{ const dm = domusOf(S), w = dm.wife, kids = dm.children.filter(c=>!c.dead);
             const UP = c => { const u=c.up||{}, p=u.palus||0, r=u.rhetor||0, b=u.box||0; if(!(p+r+b)) return "still small";
@@ -22224,61 +22622,7 @@ export default function App(){
           </>)}
 
           {vView==="standing" && (<>
-          <Sect title="Those Who Watch" note={`standing ${rnd(S.favor)}`} open>
-            {(S.patrons||[]).length===0 && <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>No one of consequence has heard of you yet.</div>}
-            {(S.patrons||[]).map(p=>{
-              const w = p.want, item = w ? WANTS[w.kind] : null;
-              const sub = w && w.gid ? S.gladiators.find(g=>g.id===w.gid) : null;
-              return (
-                <div key={p.id} style={{borderTop:"1px dotted #33271a",paddingTop:9,marginTop:9}}>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="disp" style={{fontSize:"var(--fs-md)",color:patronColor(p.favor)}}>{p.name}</span>
-                    <span className="tag">{RANKS[p.rank].name}</span>
-                  </div>
-                  <div className="flex items-center justify-between gap-2" style={{margin:"4px 0 3px"}}>
-                    <span style={{fontSize:"var(--fs-md)",color:patronColor(p.favor)}}>{patronWord(p.favor)}</span>
-                    <span className="dim" style={{fontSize:"var(--fs-sm)"}}>
-                      {p.served>0 && `${p.served} favour${p.served>1?"s":""} kept`}{p.served>0&&p.slighted>0 && " · "}{p.slighted>0 && `${p.slighted} slighted`}
-                    </span>
-                  </div>
-                  <div className="track" style={{height:5}}>
-                    <div className="fill" style={{width:`${p.favor}%`, background: p.favor<20? "linear-gradient(90deg,#7c2a22,#cf5a49)" : "linear-gradient(90deg,#6a5a2c,#d8ac5f)"}}/>
-                  </div>
-                  {w ? (
-                    <div className="panel" style={{padding:9,marginTop:7,background:"#1c1610",borderColor:"#5a4a2c"}}>
-                      <div className="flex items-center justify-between gap-2" style={{marginBottom:3}}>
-                        <span className="tag tag-gold">He asks</span>
-                        <span className="dim" style={{fontSize:"var(--fs-sm)",whiteSpace:"nowrap"}}>{w.weeks} week{w.weeks===1?"":"s"} left</span>
-                      </div>
-                      <div style={{fontSize:"var(--fs-md)"}}>{item.ask(S, p, sub)}</div>
-                    </div>
-                  ) : <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:4}}>{RANKS[p.rank].blurb}</div>}
-                  {(()=>{ const F = FAVOURS[p.rank]; if(!F) return null;
-                    const ready = favourReady(S, p), wait = favourWait(S, p);
-                    return (
-                      <div className="panel" style={{padding:9,marginTop:7,background:"#1c1610",
-                        borderColor: ready ? "#c99a4b" : "#3e2f1f"}}>
-                        <div className="flex items-center justify-between gap-2" style={{marginBottom:3}}>
-                          <span className="tag" style={ready?{borderColor:"#c99a4b",color:"#e8d092"}:undefined}>{F.title}</span>
-                          <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{F.cost} standing</span>
-                        </div>
-                        <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>{F.ask}</div><div style={{fontSize:"var(--fs-sm)",marginTop:4,color:"#c99a4b"}}>{favourWorth(S, p)}</div>
-                        <button className={`btn ${ready?"":"btn-ghost"}`} style={{width:"100%",marginTop:6}}
-                          disabled={!ready} onClick={()=>askFavour(p.id)}>
-                          {wait ? `He has done enough for now · ${wait} week${wait===1?"":"s"}`
-                            : p.favor < F.cost ? `Not owed enough · ${Math.round(p.favor)}/${F.cost}`
-                            : !F.can(S) ? "Nothing for him to do just now"
-                            : "Call it in"}
-                        </button>
-                      </div>
-                    ); })()}
-                </div>
-              );
-            })}
-            <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:9}}>
-              A patron kept warm leans on the editor when your man is in the sand. One left to go cold talks at the baths instead.
-            </div>
-          </Sect>
+          {SECT.watch(S, SX)}
 
           {/* ---- THE ACCOUNT, BEFORE IT IS CLOSED ----
               closing() and verdictOf() existed and were beautiful and were rendered in
@@ -22445,20 +22789,7 @@ export default function App(){
                road to Rome and the whole temple stood between them. The party is the largest lever
                measured on the census ladder (mean rung 2.70 against 1.50, and 218 weeks at Rome against
                31), so it now sits under the panel that sends you to it, and the copy is true. */}
-          <Sect live={sectFresh(S,"party")} sid="party" title="Throw a party" note="favor & fame">
-          {Object.entries(PARTY).map(([k,p])=>(
-            <div key={k} className="panel" style={{padding:13}}>
-              <div className="flex items-center justify-between">
-                <div className="disp" style={{fontSize:"var(--fs-md)",fontWeight:700}}>{p.label.toUpperCase()}</div>
-                <span className="gold">{p.cost}d</span>
-              </div>
-              <div className="dim" style={{fontSize:"var(--fs-md)",margin:"4px 0 8px"}}>{p.desc} <span style={{color:"#bfa8c8"}}>+{p.warm} with every patron</span> · <span style={{color:"#d8c08a"}}>+{p.fame} fame</span></div>
-              <button className="btn" style={{width:"100%"}} disabled={S.gold<p.cost || S.week-S.lastParty<2} onClick={()=>host(k)}>
-                {S.week-S.lastParty<2? `The villa recovers — ${2-(S.week-S.lastParty)} week${2-(S.week-S.lastParty)>1?"s":""}` : S.gold<p.cost? "Not enough coin" : "Send invitations"}
-              </button>
-            </div>
-          ))}
-          </Sect>
+          {SECT.party(S, SX)}
           {(!S.over && (S.fame >= 250 || (S.flags.primusHeld||0) > 0 || riseOf(S) >= 2 || romeRuns(S) > 0)) && (()=>{
             const sen = (S.patrons||[]).filter(p=>p.rank==="senator").sort((a,b)=>b.favor-a.favor)[0];
             const bar = romeBar(S), ready = romeReady(S), been = romeRuns(S) > 0;
@@ -22591,93 +22922,15 @@ export default function App(){
             </Sect>
           ); })()}
           {lawOf(S).edicts.length>0 && (
-            <Sect title="What the law says" note={lawWord(S)}>
-              {lawOf(S).edicts.map(k=>{ const E = EDICTS[k], bad = (()=>{ try{ return E.check(S); }catch(e){ return false; } })();
-                return (
-                  <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:7,marginTop:7}}>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="rowname" style={{fontSize:"var(--fs-md)",color:bad?"#d98476":"#cfc0a0"}}>{E.name}</span>
-                      {bad && <span className="tag tag-blood">in breach</span>}
-                    </div>
-                    <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:1}}>
-                      {bad ? E.broke(S)
-                        : k==="numbers" ? `The edict allows ${lawCap(S)}. You keep ${S.gladiators.filter(g=>!isGone(g)).length}.`
-                        : k==="vectigal" ? `${Math.round(lawTax(S)*100)}% on every man you buy.`
-                        : k==="sine" ? `${lawSine(S)} denarii for the seal on every card without missio.`
-                        : "The house is within it."}
-                    </div>
-                  </div>
-                ); })}
-              {lawOf(S).fines>0 && <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:6}}>Paid in fines: {lawOf(S).fines}d</div>}
-            </Sect>
+            SECT.law(S, SX)
           )}
 
           {(S.gold >= 4000 || Object.keys(S.works||{}).length>0) && (
-            <Sect title="Great works" note={`${workAny(S).length} of ${WORK_KEYS.length}`}>
-              <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:7}}>
-                Things a house builds when it has outgrown buying men. They cost more than everything else put together and take years to finish.
-              </div>
-              {WORK_KEYS.map(k=>{ const W = WORKS[k], on = workOn(S,k), done = workDone(S,k);
-                return (
-                  <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:8,marginTop:8}}>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="disp" style={{fontSize:"var(--fs-base)",color:done?"#e8d092":on?"#d8ac5f":"#b09b7d"}}>{W.name}</span>
-                      <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>
-                        {done ? "standing" : on ? `${on.left} weeks` : `${W.cost}d · ${W.years} years`}
-                      </span>
-                    </div>
-                    <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:2}}>{done ? W.done : W.blurb}</div>
-                    {done && <div className="laurel" style={{fontSize:"var(--fs-base)",marginTop:3}}>{W.say}</div>}
-                    {on && <Bar v={100 - on.left/(W.years*YEAR_WEEKS)*100} label="" color="linear-gradient(90deg,#4a3a24,#c99a4b)"/>}
-                    {!done && !on && (workOpen(S,k)
-                      ? <button className="btn btn-ghost" style={{width:"100%",marginTop:6}}
-                          disabled={S.gold < Math.ceil(W.cost*WORK_DEPOSIT)} onClick={()=>mut(d=>{ beginWork(d, k); })}>
-                          {S.gold < Math.ceil(W.cost*WORK_DEPOSIT)
-                            ? `${Math.ceil(W.cost*WORK_DEPOSIT)}d down — not yet`
-                            : `Begin it · ${Math.ceil(W.cost*WORK_DEPOSIT)}d down, ${workWeekly(W)}d a week`}
-                        </button>
-                      : <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:6,fontStyle:"italic"}}>
-                          {/* ONE SENTENCE FOR TWO DIFFERENT GATES. The three tier-2 monuments are
-                              gated on the five plain WORKS — a spina, baths, a shrine, a school and
-                              a tomb — and this told you to finish your monuments, which is the tier
-                              above. Only the amphitheatre wants the monuments. */}
-                          {workDef(k).tier === 3
-                            ? "The city will not hear this from a house that has not put up its own monuments first."
-                            : "The city will not hear this from a house that has not finished the works in its own yard first."}
-                        </div>)}
-                  </div>
-                ); })}
-            </Sect>
+            SECT.works(S, SX)
           )}
 
           {monuReady(S) && (
-            <Sect title="Monuments" note={`${monuAny(S).length} of ${MONU_KEYS.length}`} open={monuAny(S).length<MONU_KEYS.length}>
-              <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:7}}>
-                The great works are finished and the strongbox is still heavy. This is what is left to spend a fortune on — not blood or a better yard, but a name that outlives the man who made it.
-              </div>
-              {MONU_KEYS.map(k=>{ const W = MONUMENTS[k], on = workOn(S,k), done = workDone(S,k);
-                return (
-                  <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:8,marginTop:8}}>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="disp" style={{fontSize:"var(--fs-base)",color:done?"#e8d092":on?"#d8ac5f":"#b09b7d"}}>{W.name}</span>
-                      <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>
-                        {done ? "standing" : on ? `${on.left} weeks` : `${W.cost}d · ${W.years} years`}
-                      </span>
-                    </div>
-                    <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:2}}>{done ? W.done : W.blurb}</div>
-                    {done && <div className="laurel" style={{fontSize:"var(--fs-base)",marginTop:3}}>{W.say}</div>}
-                    {on && <Bar v={100 - on.left/(W.years*YEAR_WEEKS)*100} label="" color="linear-gradient(90deg,#4a3a24,#c99a4b)"/>}
-                    {!done && !on && (
-                      <button className="btn btn-ghost" style={{width:"100%",marginTop:6}}
-                        disabled={S.gold < Math.ceil(W.cost*WORK_DEPOSIT)} onClick={()=>mut(d=>{ beginWork(d, k); })}>
-                        {S.gold < Math.ceil(W.cost*WORK_DEPOSIT)
-                          ? `${Math.ceil(W.cost*WORK_DEPOSIT)}d down — not yet`
-                          : `Begin it · ${Math.ceil(W.cost*WORK_DEPOSIT)}d down, ${workWeekly(W)}d a week`}
-                      </button>
-                    )}
-                  </div>
-                ); })}
-            </Sect>
+            SECT.monuments(S, SX)
           )}
 
           </>)}
@@ -22712,55 +22965,10 @@ export default function App(){
                 )}
               </div>
             ); })()}
-          <Sect live={sectFresh(S,"household")} sid="household" title="The household" note={`${householdCount(S)} of ${HH_KEYS.length}`}>
-            <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:7}}>
-              A ludus was a household before it was a business. None of these people will ever be on a card and the place does not run without them.
-            </div>
-            {HH_KEYS.map(k=>{ const H = HOUSEHOLD[k], f = houseFolk(S)[k], fee = rnd(hhWage(S,k)*16);
-              return (
-                <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:8,marginTop:8}}>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="disp" style={{fontSize:"var(--fs-base)",color:f?"#e8d092":"#b09b7d"}}>
-                      {f ? `${f.name} · ${H.name.toLowerCase()}` : H.name}
-                    </span>
-                    <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{f ? `${f.weeks}w · ${hhWage(S,k)}d/wk` : (k==="wife" ? "—" : `${fee}d · ${hhWage(S,k)}d/wk`)}</span>
-                  </div>
-                  {f && <div style={{marginTop:2}}><span className="tag tag-gold">{hhWord(f)}</span></div>}
-                  <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:2}}>{f ? H.line : H.blurb}</div>
-                  {!f && k!=="wife" && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>How good she turns out to be is not on the price. A great one is worth half again what a poor one is.</div>}
-                  {!f && <button className="btn btn-ghost" style={{width:"100%",marginTop:6}}
-                    disabled={k!=="wife" && S.gold<fee}
-                    onClick={()=>mut(d=>{ hireFolk(d, k); })}>
-                    {k==="wife" ? "She has always been here" : `Take her on · ${fee}d`}
-                  </button>}
-                </div>
-              ); })}
-          </Sect>
+          {SECT.household(S, SX)}
 
           {owedList(S).length>0 && (
-            <Sect title="Owed to the house" note={`${owedTotal(S)}d · ${cashWord(S)}`}>
-              <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:6}}>
-                An editor who pays in sixty days is not the same as an editor who pays. You can wait, or sell the paper at {Math.round(discountRate(S)*100)}% to a man who does nothing else.
-              </div>
-              {owedList(S).map(x=>{ const late = S.week - x.due;
-                return (
-                  <div key={x.id} style={{borderTop:"1px dotted #33271a",paddingTop:7,marginTop:7}}>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="rowname" style={{fontSize:"var(--fs-md)"}}>{x.from}</span>
-                      <span className="rowval gold" style={{fontSize:"var(--fs-base)"}}>{x.amount}d</span>
-                    </div>
-                    <div className="flex items-center justify-between gap-2" style={{marginTop:2}}>
-                      <span style={{fontSize:"var(--fs-base)",color: late>=4?"#d96f5d" : late>0?"#d8ac5f" : "#8d7e65"}}>
-                        {late >= 4 ? `${late} weeks late and not at home` : late > 0 ? `${late} week${late===1?"":"s"} late` : `due in ${x.due - S.week}`}
-                      </span>
-                      <button className="btn btn-ghost" style={{padding:"10px 9px",fontSize:"var(--fs-sm)"}}
-                        onClick={()=>mut(d=>{ sellDebt(d, x.id); })}>
-                        Sell it for {rnd(x.amount*discountRate(S))}d
-                      </button>
-                    </div>
-                  </div>
-                ); })}
-            </Sect>
+            SECT.owed(S, SX)
           )}
 
           {(()=>{ const D = doctrineOf(S);
@@ -22797,87 +23005,17 @@ export default function App(){
             ); })()}
 
           {S.election && !S.election.done && (
-            <Sect title="The aedileship" note={`${Math.max(0, 3-(S.week-S.election.week))}w to the vote`} open>
-              <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>
-                The names are on the walls. The aedile is the man who decides whose gladiators are on the card, what they are paid, and — when one of them is down and looking up — whether he leans forward.
-              </div>
-              {S.election.cands.map(c=>{
-                const mine = S.election.backed===c.id;
-                return (
-                  <div key={c.id} style={{borderTop:"1px dotted #33271a",paddingTop:9,marginTop:9}}>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="disp" style={{fontSize:"var(--fs-base)",color:mine?"#e8d092":undefined}}>{c.name}</span>
-                      {c.rival && <span className="tag tag-blood">House {c.rival} is behind him</span>}
-                    </div>
-                    <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:2}}>He {c.say}.</div>
-                    {mine ? (
-                      <div className="laurel" style={{fontSize:"var(--fs-base)",marginTop:5}}>Your money is on him — {S.election.spent}d.</div>
-                    ) : S.election.backed ? null : (
-                      <div className="grid grid-cols-3 gap-2" style={{marginTop:6}}>
-                        {[1,2,3].map(l=>(
-                          <button key={l} className="btn btn-ghost" disabled={S.gold<backLevels[l].n}
-                            onClick={()=>backHim(c.id,l)}>{backLevels[l].n}d</button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ); })}
-              {!S.election.backed && (
-                <button className="btn" style={{width:"100%",marginTop:9}} onClick={()=>backHim(null,0)}>
-                  Stay out of it
-                </button>
-              )}
-            </Sect>
+            SECT.aedileship(S, SX)
           )}
 
           {/* the stance is the whole of what this section says, so it is said on the summary line and
               the box is not a box you open to learn one word — see the note over SECT_LIVE */}
           {aedileOn(S) && (
-            <Sect live={sectFresh(S,"aedile")} sid="aedile" title="The aedile"
-              note={`${S.aedile.friendly ? "he owes you" : S.aedile.hostile ? "he is against you" : "no view of you"} · ${S.aedile.until - S.week}w left`}>
-              <div className="disp" style={{fontSize:"var(--fs-md)",color:"#e8d092"}}>{S.aedile.name}</div>
-              <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:3}}>
-                {S.aedile.friendly
-                  ? "He took the office with your money and has not forgotten it. One extra bout on every card, purses a seventh higher, and he leans forward when one of yours is down."
-                  : S.aedile.hostile
-                  ? "He knows whose name was on the other man's list. One fewer bout on every card, purses a ninth lighter, and he does not look your way when a decision is being made."
-                  : "He has no particular view of you, which is its own kind of position."}
-              </div>
-            </Sect>
+            SECT.aedile(S, SX)
           )}
 
           {unhonoured(S).filter(m=>!m.done).length > 0 && (
-            <Sect title="Not yet buried properly" note={`${RITE_WINDOW}w to decide`} open mark={sectMark(S,"rites")}>
-              <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>
-                Funeral games are what a rich man's sons stage at his tomb. Nobody has ever staged them for a gladiator, which is exactly what makes it worth doing.
-              </div>
-              {unhonoured(S).filter(m=>!m.done).map(m=>(
-                <div key={m.gid} style={{borderTop:"1px dotted #33271a",paddingTop:9,marginTop:9}}>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="disp" style={{fontSize:"var(--fs-md)"}}>{m.name}</span>
-                    <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>
-                      {m.wins} victories · {RITE_WINDOW - (S.week - m.week)} week{RITE_WINDOW-(S.week-m.week)===1?"":"s"} left
-                    </span>
-                  </div>
-                  {(m.kin||[]).length>0 && (
-                    <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2}}>
-                      {(m.kin||[]).map(k=>{ const b=S.gladiators.find(x=>x.id===k); return b?b.name:null; }).filter(Boolean).join(" and ")} called him brother, and {(m.kin||[]).length>1?"they are":"he is"} watching what you do about it.
-                    </div>
-                  )}
-                  {RITE_KEYS.map(k=>{ const R2 = RITES[k], c = R2.cost(m);
-                    return (
-                      <button key={k} className={`optrow ${k==="none"?"":""}`} style={{marginTop:6,padding:9}}
-                        disabled={S.gold<c} onClick={()=>doRite(m.gid,k)}>
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="disp" style={{fontSize:"var(--fs-base)",color:k==="none"?"#a08e70":"#e8d092"}}>{R2.name}</span>
-                          <span className="rowval" style={{fontSize:"var(--fs-sm)",color:c>S.gold?"#d96f5d":c?"#d8ac5f":"#8d7e65"}}>{c? c+"d" : "costs nothing"}</span>
-                        </div>
-                        <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2}}>{R2.desc}</div>
-                      </button>
-                    ); })}
-                </div>
-              ))}
-            </Sect>
+            SECT.rites(S, SX)
           )}
 
           {(()=>{ const L = loanLender(S);
@@ -22942,39 +23080,7 @@ export default function App(){
               </div>
             ); })()}
 
-          <Sect live={sectFresh(S,"collegium")} sid="collegium" title="The collegium" note={collOn(S)? `${collDues(S)}d/wk` : "burial society"}
-            mark={sectMark(S,"collegium")}>
-            {!S.collegium ? (<>
-              <div style={{fontSize:"var(--fs-lg)"}}>
-                A burial society. The house pays {COLL_DUES} denarii a week for every man on the roster, and when one of them dies there is a stone with his name on it, his style and the number of his victories — instead of a pit outside the wall.
-              </div>
-              <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:5}}>
-                It will never win you a bout. But men who know what happens to them afterward take a death in the house differently.
-              </div>
-              <button className="btn" style={{width:"100%",marginTop:8}} disabled={S.gold<COLL_FEE} onClick={joinCollegium}>
-                {S.gold<COLL_FEE ? `Found it · ${COLL_FEE}d — not enough coin` : `Found it · ${COLL_FEE}d, then ${COLL_DUES}d a man each week`}
-              </button>
-            </>) : S.collegium.lapsed ? (
-              <div>
-                <div className="blood" style={{fontSize:"var(--fs-lg)"}}>The dues stopped in week {S.collegium.lapsed}.</div>
-                <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:4}}>
-                  {S.collegium.buried
-                    ? `${S.collegium.buried} went into the ground under it before you cut it. That is not a thing the cells forget.`
-                    : "Nobody had needed it yet. They counted it anyway."}
-                </div>
-              </div>
-            ) : (
-              <div>
-                <div style={{fontSize:"var(--fs-lg)"}}>Paid up. {S.collegium.buried
-                  ? `${S.collegium.buried} ${S.collegium.buried===1?"man has":"men have"} gone into the ground under it with ${S.collegium.buried===1?"his":"their"} own name${S.collegium.buried===1?"":"s"} on the stone.`
-                  : "Nobody has needed it yet."}</div>
-                <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:4}}>
-                  A death here costs half the unrest it otherwise would, and the yard is quieter for knowing why.
-                </div>
-                <button className="btn btn-ghost" style={{width:"100%",marginTop:8}} onClick={stopCollegium}>Stop the dues</button>
-              </div>
-            )}
-          </Sect>
+          {SECT.collegium(S, SX)}
 
           </>)}
 
@@ -22994,57 +23100,7 @@ export default function App(){
                scroll and costs a tap, and #117 measured working the cells as the largest single lever
                in the game while #119 found nothing ever suggested walking them. `open` here still
                defers to whatever the player last did with it — `Sect` remembers by `sid`. */}
-          <Sect open live={sectFresh(S,"cells")} sid="cells" title="What you can do for the block" note={`${activeG(S).length} in the cells · ${unrestWord(S.unrest).toLowerCase()}`}
-            mark={sectMark(S,"feast")}>
-            {(()=>{ const cost = feastCost(S), reach = feastReach(S);
-              return (<div style={{paddingBottom:9,marginBottom:9,borderBottom:"1px dotted #33271a"}}>
-                <div className="flex items-center justify-between gap-2">
-                  <span className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d9b8"}}>A feast for the familia</span>
-                  <span className="gold" style={{fontSize:"var(--fs-base)",whiteSpace:"nowrap"}}>{cost}d</span>
-                </div>
-                <div className="dim" style={{fontSize:"var(--fs-md)",margin:"3px 0 7px"}}>Meat, honeyed wine, and a night without the whip. Loyalty is cheaper than rebellion.</div>
-                {reach < 0.95 && (
-                  <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",margin:"0 0 7px"}}>
-                    {activeG(S).length} at the tables, and a house of this standing cannot set them the way it once did.
-                    One night goes {Math.round(reach*100)}% as far as it did when there were four of them.
-                  </div>
-                )}
-                <button className="btn" style={{width:"100%"}} disabled={S.gold<cost || S.week-S.lastFeast<3} onClick={feast}>
-                  {S.week-S.lastFeast<3? `The men feasted recently — ${3-(S.week-S.lastFeast)} week${3-(S.week-S.lastFeast)>1?"s":""}` : S.gold<cost? "Not enough coin" : "Set the tables"}
-                </button>
-              </div>); })()}
-
-            <div style={{paddingBottom:9,marginBottom:9,borderBottom:"1px dotted #33271a"}}>
-              <div className="flex items-center justify-between gap-2">
-                <span className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d9b8"}}>A tournament in the yard</span>
-                <span className="dim" style={{fontSize:"var(--fs-base)",whiteSpace:"nowrap"}}>settles the block</span>
-              </div>
-              <div className="dim" style={{fontSize:"var(--fs-md)",margin:"3px 0 7px"}}>
-                Set the whole familia against itself for an afternoon — wooden swords, no editor, every man with something to prove. The winner walks tall for weeks; who meets him in the final may come out of it a brother or a rival.
-              </div>
-              <button className="btn" style={{width:"100%"}} disabled={!tourneyReady(S)} onClick={doTourney}>
-                {activeG(S).filter(g=>canFight(g)).length<4 ? "Not enough fit men — you need four"
-                  : (S.week - (S.flags.tourneyWk!=null?S.flags.tourneyWk:-99)) < TOURNEY_COOL
-                  ? `The yard is still sore — ${TOURNEY_COOL-(S.week-S.flags.tourneyWk)}w`
-                  : "Hold the tournament"}
-              </button>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between gap-2">
-                <span className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d9b8"}}>Walk the cells tonight</span>
-                <span className="dim" style={{fontSize:"var(--fs-base)",whiteSpace:"nowrap"}}>costs nothing</span>
-              </div>
-              <div className="dim" style={{fontSize:"var(--fs-md)",margin:"3px 0 7px"}}>
-                Go down among the familia after the lamps are lit. It costs nothing but an evening — a little warmth to the block, and the truth of what passes between the men, which you will not learn from the gallery. Some nights, the block asks something of you.
-              </div>
-              <button className="btn" style={{width:"100%"}} disabled={!walkReady(S)} onClick={walkCells}>
-                {(S.rome||S.city||S.travel) ? "Not while the house is on the road"
-                  : !walkReady(S) ? `You were down there recently — ${WALK_COOL-(S.week-(S.flags.walkWk!=null?S.flags.walkWk:-99))}w`
-                  : "Go down to the block"}
-              </button>
-            </div>
-          </Sect>
+          {SECT.cells(S, SX)}
           </>)}
         </div>)}
 

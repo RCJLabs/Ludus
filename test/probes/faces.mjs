@@ -22,7 +22,19 @@
    errors: 0" on a build whose section count had fallen from 32 to 20, because villa has four faces
    and the broken ones were the three it never opened.
 
-   Usage: node test/probes/faces.mjs [expected-total]
+   WHAT THIS GATE DOES NOT PROVE, which matters as much as what it does. It only sees sections that
+   RENDER, and nine of the 33 authored <Sect> blocks do not render on REACH-1 at week 26: five sit
+   behind call-site conditions this house never meets (gold >= 4000, monuReady, owedList, an open
+   election, an unhonoured death), two live in the gladiator modal, which is not a face. Extracting
+   one of those is green by luck rather than by proof, and luck reads exactly like proof.
+
+   TO PROVE ONE ANYWAY: replace its call-site condition with `true &&`, build:test, run this, then
+   revert. Forcing the five named above took the count 34 -> 39, +5 exactly, with 0 page errors —
+   which is what proved them. Read the errors, do not just count them: `X is not defined` is a real
+   scope break, `Cannot read properties of undefined` is only the absent state you forced.
+
+   Usage: node test/probes/faces.mjs [expected-total]     FACES_NAMES=1 to list what rendered
+          FACES_WEEKS=n to change the depth (default 26)
 */
 import { serve, open, found, tab, clearAll } from "../harness.mjs";
 const WANT = process.argv[2] ? +process.argv[2] : null;
@@ -63,7 +75,7 @@ const dump = () => p.evaluate(()=>[...document.querySelectorAll('[role=tablist]'
   tag: d.tagName.toLowerCase(), label: d.getAttribute("aria-label")||"", modal: !!(d.closest('.modalwrap')||d.closest('.modal')),
   tabs: [...d.querySelectorAll('button[role=tab]')].map(b=>(b.innerText||"").trim()).join(", ").slice(0,60) })));
 
-let total = 0; const rows = [];
+let total = 0; const rows = []; const SEEN = new Set();
 for(const t of ["ludus","familia","arena","armory","market","villa"]){
   await tab(p, t); await p.waitForTimeout(360); await clearAll(p, 6);
   await tab(p, t); await p.waitForTimeout(300);
@@ -74,14 +86,21 @@ for(const t of ["ludus","familia","arena","armory","market","villa"]){
   for(const f of list){
     if(f){ await show(f); await p.waitForTimeout(320); }
     const before = errors.length;
-    const n = await p.evaluate(()=>document.querySelectorAll("details.sect").length);
-    total += n;
-    rows.push({ where: f ? `${t} · ${f}` : t, n, err: errors.length - before });
+    /* names, not just a count. A count going 34 -> 34 while one panel silently swapped for another
+       is a real way to be fooled, and the names cost nothing. They also say what the gate DOESN'T
+       cover: any authored <Sect> whose title never appears here did not render on this house, so
+       extracting it is unproven and wants a hand-check. */
+    const seen = await p.evaluate(()=>[...document.querySelectorAll("details.sect")]
+      .map(d=>((d.querySelector("summary")||{}).innerText||"").split("\n")[0].trim()));
+    seen.forEach(t2=>SEEN.add(t2));
+    total += seen.length;
+    rows.push({ where: f ? `${t} · ${f}` : t, n: seen.length, err: errors.length - before });
   }
 }
 console.log(`\nDOES EVERY FACE STILL RENDER?  (pinned REACH-1, week ${WEEKS})\n`);
 for(const r of rows) console.log(`  ${r.where.padEnd(30)} ${String(r.n).padStart(2)} sections${r.err ? `   ${r.err} ERRORS` : ""}`);
 console.log(`\n  ${rows.length} faces · ${total} sections · ${errors.length} page errors`);
+if(process.env.FACES_NAMES) console.log("  saw: " + [...SEEN].sort().join(" | "));
 if(WANT != null) console.log(`  ${total === WANT && !errors.length ? `INTACT — ${WANT} expected and ${WANT} rendered` : `BROKEN — expected ${WANT}, got ${total}, ${errors.length} errors`}`);
 [...new Set(errors.map(e=>String(e).split("\n")[0]))].slice(0,4).forEach(e=>console.log(`    ${e.slice(0,140)}`));
 console.log();
