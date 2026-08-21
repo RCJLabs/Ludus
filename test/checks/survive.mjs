@@ -589,6 +589,15 @@ export async function run({ p, errors, port }){
      many of the men are inside houses that had already gone under. The bars are unchanged by both
      that fix and by the retry: `menUp <= men` always, so correcting the sum can only make them fire
      MORE, and re-scored against all seven first-run failures it un-fails none of them.
+     ---- AND v3.74.0 IS THE FIRST DRAW WHERE THE TWO READINGS DISAGREE ----
+     It came in at **standing 1, men 5, menUp 1, ended 2** and PASSED, because the conjunction asks
+     `men < 4` and 5 is not. Had it asked `menUp < 4` it would have FIRED: one house standing with
+     one man actually in its yard, and four of the five men counted sitting inside two houses that
+     had already gone under. That is the case v3.67.0 said would eventually decide this — recorded,
+     COUNTED, and not acted on, because one draw is one draw and #136's rule has fired six times in
+     this project on exactly that temptation. When there are enough such rows to score, the question
+     is whether the conjunction's second term should read the yards of the houses still going.
+     Today the count is one.
      The CONFIRMED bars are the second draw's when a second draw was taken, and the first draw's
      otherwise. Hard faults from either draw always fail — a house that produced no save at all is
      not a bad draw, and neither is a page error. */

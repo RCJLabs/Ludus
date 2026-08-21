@@ -1399,7 +1399,25 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.73.0 — **#177 closed: the charter promised a bad-month lever the
+**Shipped and verified:** v3.74.0 — **#179 closed by building the record, which is what the item said
+the first step was.** `survive` could be given a retry in v3.71.0 only because it has kept a tally
+since #142; nothing else recorded anything, so `seller`'s v3.72.0 race took a solo re-run, a second
+full suite and a hand count of 24 scratch log files to diagnose. The record lives in the **runner**
+now — one place instead of eight, covering all **72** checks rather than the nine that drive a
+browser — as `test/run-tally.json`, one row a run, keyed by version like `survive`'s. **Only COMPLETE
+runs are recorded**, which is the discipline v3.67.0 paid for: a partial run has a different
+denominator and pooling it would silently deflate every rate read off the file. Negative-tested both
+ways. **It records and does nothing else** — no retry is built on it, because a retry for a check
+whose false-failure rate nobody has measured would be #175's reasoning run backwards; under twelve
+runs the runner prints that the sample is too thin to read. It cannot recover the past: the tally
+starts at one, the same bet #142 made, and #142's is what paid for #175 eleven releases later. No
+game change. **And the run that proved it turned up the thing the tally was built to catch**:
+`survive` drew (1, 5) and passed, the **first draw in the record where the two readings of `men`
+disagree** — `menUp` is 1, so four of the five men counted were inside two houses that had already
+gone under, and a conjunction reading `menUp < 4` would have fired where `men < 4` did not. That is
+the case v3.67.0 wrote the split into the tally to count. Recorded and counted, not acted on: one
+draw is one draw, and #136's rule has fired six times on that temptation.
+v3.73.0 — **#177 closed: the charter promised a bad-month lever the
 arithmetic will not honour.** v3.68.0's fix made the file's own design note testable for the first
 time; measured, it is false, and structurally rather than by a constant being mis-set. `collDues` is
 `activeG(d).length * COLL_DUES`, so the dues scale with the ROSTER — and in a bad month the roster has
@@ -3480,21 +3498,34 @@ these numbers would have to be made in more than one place — and not a fault l
 printed every run, because a count that grows is worth looking at.
 
 
-**#179 — `survive` has a tally and the other eight browser checks have nothing.** v3.71.0 gave
-`survive` a confirm-on-failure second draw, justified by a measured first-run failure rate of **7 of
-61 builds, 11.5%**, and by nine hand-run retries that all came back clean. That measurement was only
-possible because `survive` has written every observation to `test/survive-tally.json` since #142. **No
-other browser check records anything.** v3.72.0 is the first time in the surviving record that one of
-them failed: `seller` came back *"the fee was taken and the assessment never appeared"* in a release
-whose diff touches **zero lines of `src/ludus.jsx`** — it could not have been the build — and it
-passed alone on the next run, showing the assessment appearing correctly. Scored over the 24 suite
-logs still on disk, that is **1 of 24**, and one observation is not a rate: the point is not that
-4.2% is the number, it is that **for eight of the nine browser checks nobody has ever counted, so the
-number is unknown and every instance has to be diagnosed by hand** the way `survive`'s were before
-v3.71.0. *Falsifies if:* the other eight genuinely do not flake — in which case a tally will show that
-within a dozen releases at no cost, which is the same bet #142 made and won. *The cheap first step is
-not a retry:* it is recording, because a retry for a check whose false-failure rate is unmeasured
-would be #175's mistake in reverse — buying detection power away to fix a problem nobody has sized.
+**#179 — CLOSED in v3.74.0 by building the record, which is what the item said the first step was.**
+`survive` could be given a confirm-on-failure second draw in v3.71.0 for one reason: it has written
+every observation to its own tally since #142, and that is what made *"7 of 61 builds, 11.5%"* a
+measurement rather than an impression. Nothing else recorded anything, so when `seller` went red in
+v3.72.0 — in a release whose diff touched **zero lines of `src/ludus.jsx`** — establishing it was a
+race took a solo re-run, a second full suite, and a hand count of 24 surviving log files.
+
+**The record now lives in the runner, not in the checks.** One place instead of eight, and it covers
+all **72** rather than the nine that drive a browser — `test/run-tally.json`, one row a run:
+`{v, checks, failed:[names]}`, keyed by version exactly like `survive`'s.
+
+**And only COMPLETE runs are recorded, which is the discipline the file exists to protect.** v3.67.0
+found that `survive`'s extra tally rows existed only *because* a failure had just happened, so
+pooling them answered no question and the rate had to be scored over the first run of each build. The
+same trap is available here wearing different clothes: a partial run — `npm test`, or naming three
+checks — has a different denominator, and pooling it with a full one would silently deflate every
+rate computed off the file. A row is written when, and only when, every check ran. Negative-tested
+both ways: `node test/run.mjs copies charter` writes nothing, a full `npm run test:all` writes one row.
+
+**It records and does nothing else, deliberately.** No retry is built on it and none should be until
+there is something to build one on — a retry for a check whose false-failure rate nobody has measured
+would be #175's reasoning run backwards, buying detection power away to fix a problem of unknown
+size. The runner says so out loud while the sample is thin: below twelve runs it prints *"too few
+runs to read a rate off yet (#179 opened it at 1; survive's own bar wanted 37)."*
+
+*What it cannot do:* it cannot recover the past. The 24 suite logs that happened to survive on disk
+are all the history there is, and they are a scratch directory, not a record. The tally starts at one.
+That is the same bet #142 made — and #142's is what paid for #175 eleven releases later.
 
 
 **#177 — CLOSED in v3.73.0. The clause falsified, and the reason is structural rather than a
@@ -3879,6 +3910,66 @@ about a quarter and it is the cost of this repair**; `MISSIO_MAN` is one line to
 wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
+
+### v3.74.0 — #179: every check gets the record `survive` has had since #142
+
+Three releases ago `survive` was given a confirm-on-failure second draw. It could be justified for
+one reason: `survive` has written every observation to its own tally since #142, so *"7 of 61 builds,
+11.5%"* was a measurement. **Nothing else recorded anything.** When `seller` went red in v3.72.0 — in
+a release whose diff touched zero lines of `src/ludus.jsx` — establishing it was a race took a solo
+re-run, a second full suite, and a hand count of 24 log files that happened to survive in a scratch
+directory. That is the loop v3.71.0 removed from one check and left in place for the other
+seventy-one.
+
+#### The record goes in the runner
+
+One place instead of eight, and it covers all 72 checks rather than the nine that drive a browser.
+`test/run-tally.json`, one row a run — `{v, checks, failed:[names]}` — keyed by version exactly like
+`survive`'s, and printed as a pooled summary at the end of every full run.
+
+#### Only complete runs are recorded, and that is the whole point
+
+v3.67.0 found that `survive`'s extra tally rows existed only *because* a failure had just happened,
+so pooling them answered no question and the rate had to be scored over the first run of each build.
+The same trap is available here in different clothes: a partial run — `npm test`, or naming three
+checks — has a different denominator, and pooling it with a full one would silently deflate every
+rate read off the file. A row is written when, and only when, every check ran.
+
+Negative-tested both ways: `node test/run.mjs copies charter` writes nothing, and a full
+`npm run test:all` writes one row.
+
+#### It records and does nothing else
+
+No retry is built on it, and none should be until there is something to build one on. A retry for a
+check whose false-failure rate nobody has measured would be #175's reasoning run backwards — buying
+detection power away to fix a problem of unknown size. The runner says so out loud while the sample
+is thin: under twelve runs it prints *"too few runs to read a rate off yet (#179 opened it at 1;
+survive's own bar wanted 37)."*
+
+It cannot recover the past. The tally starts at one. That is the same bet #142 made, and #142's is
+what paid for #175 eleven releases later.
+
+#### And the run that proved it turned up something the tally was built to catch
+
+Suite green at **72/72 in 13.2 minutes**, and the first row of `run-tally.json` reads
+*"1 complete run across 1 build, 0 of them red · no check has failed a complete run yet — too few
+runs to read a rate off yet."* Which is correct and is the point.
+
+`survive` drew **(1, 5)** and passed — and it is the **first draw in the whole record where the two
+readings of `men` disagree.** The row is `standing 1, men 5, menUp 1, ended 2`: one house standing
+with **one man actually in its yard**, and four of the five men counted sitting inside two houses
+that had already gone under. The conjunction asks `men < 4` and 5 is not, so it did not fire. Had it
+asked `menUp < 4` it would have.
+
+That is exactly the case v3.67.0 said would eventually decide whether the bar's second term should
+read the yards of the houses still going — it wrote the split into the tally precisely so this could
+be counted rather than argued. **Recorded and counted, not acted on.** One draw is one draw, and
+#136's rule has fired six times in this project on that temptation. `survive`'s head carries the
+observation and the count, which is one.
+
+*No game change in this release. `src/ludus.jsx` is untouched.* The only edits after the green run
+were comment text — this file, which is written after every suite by construction, and the note in
+`survive`'s head recording the divergence above.
 
 ### v3.73.0 — #177: the charter promised a bad-month lever, and the dues are smallest when the purse is emptiest
 

@@ -149,6 +149,50 @@ if(skipped.length){
   if(slowSkipped.length && !want.length)
     console.log(`\x1b[33mthose drive a real browser. Before a release: npm run test:all\x1b[0m`);
 }
+/* ---- #179: EVERY CHECK GETS THE RECORD `survive` HAS HAD SINCE #142 ----
+   v3.71.0 gave `survive` a confirm-on-failure second draw, and it could only be justified because
+   `survive` has written every observation to its own tally since #142 — that is what made "7 of 61
+   builds, 11.5%" a measurement rather than an impression. Nothing else recorded anything. So when
+   `seller` went red in v3.72.0 — in a release whose diff touched zero lines of `src/ludus.jsx` —
+   there was no record to score it against, and it took a solo re-run, a second full suite, and a
+   hand count of 24 surviving log files to establish it was a race. That is the loop v3.71.0 removed
+   from one check and left in place for the other seventy-one.
+
+   ONLY COMPLETE RUNS ARE RECORDED, and that is the whole discipline of the file. v3.67.0 found that
+   `survive`'s extra tally rows existed only BECAUSE a failure had just happened, so pooling them
+   answered no question; the rate had to be scored over the first run of each build. The same trap is
+   available here in a different shape — a partial run (`npm test`, or naming three checks) has a
+   different denominator, and pooling it with a full one would silently deflate every rate computed
+   off this file. So a row is written when, and only when, every check ran.
+
+   It records rather than acts. No retry is built on it and none should be until there is something
+   to build on: a retry for a check whose false-failure rate nobody has measured would be #175's
+   reasoning run backwards, buying detection power away to fix a problem of unknown size. In a dozen
+   releases this file will say which checks flake and how often, and that is a different conversation
+   from the one available now. */
+const RUN_TALLY = path.join(ROOT, "test", "run-tally.json");
+if(!want.length && !skipped.length){
+  try {
+    const was = fs.existsSync(RUN_TALLY) ? JSON.parse(fs.readFileSync(RUN_TALLY, "utf8")) : [];
+    const v = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8")).version;
+    const row = { v, checks: done.length, failed: done.filter(x => !x.res.pass).map(x => x.c.name) };
+    const all = [...was, row];
+    fs.writeFileSync(RUN_TALLY, JSON.stringify(all, null, 0).replace(/\},\{/g, "},\n{") + "\n");
+    const byCheck = {};
+    for(const r of all) for(const n of r.failed) byCheck[n] = (byCheck[n] || 0) + 1;
+    const names = Object.entries(byCheck).sort((a,b) => b[1] - a[1]);
+    const red = all.filter(r => r.failed.length).length;
+    console.log(`\nthe run tally: ${all.length} complete run${all.length===1?"":"s"} across `
+      + `${new Set(all.map(r=>r.v)).size} build${new Set(all.map(r=>r.v)).size===1?"":"s"}, `
+      + `${red} of them red (${(red/all.length*100).toFixed(1)}%)`
+      + (names.length ? ` · ${names.map(([n,k])=>`${n} ${k}`).join(" · ")}`
+                      : ` · no check has failed a complete run yet`));
+    if(all.length < 12)
+      console.log(`  — too few runs to read a rate off yet (#179 opened it at 1; survive's own bar `
+        + `wanted 37). It records, and says nothing else, until there is something to say.`);
+  } catch(e){ console.log(`\ncould not write the run tally: ${e.message}`); }
+}
+
 /* the shipping build is left in place, uninstrumented, so the tree is clean after */
 execFileSync(process.execPath, ["build.js"], { cwd: ROOT, stdio: "ignore" });
 process.exit(failed ? 1 : 0);
