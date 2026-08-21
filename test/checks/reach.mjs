@@ -94,6 +94,18 @@ export async function run({ p, errors }){
     const depthOf = el => { let n = 0, x = el.parentElement;
       while(x){ if(x.tagName === "DETAILS") n++; x = x.parentElement; } return n; };
     const was = all.map(d=>d.open);
+    /* ---- AND FIRST, THE STATE A PLAYER IS ACTUALLY IN ----
+       Everything below this is read with every section FORCED OPEN, which is right for counting taps
+       (a shut section hides its buttons) and right for diffing builds (it is deterministic). It is
+       the wrong state for scrolling, and scrolling is the complaint. A player arrives with 6 of 32
+       sections open; the other 26 are a 44px summary line, not a 649px panel. So the arrival
+       geometry is captured BEFORE anything is opened, and the two are reported side by side. Quoting
+       the open figure as though it were the lived one would inflate every pixel in this check. */
+    const arrival = all.map(d=>{ const r = d.getBoundingClientRect();
+      return { where, title: ((d.querySelector("summary")||{}).innerText||"").split("\n")[0].trim().slice(0,32),
+        top: Math.round(r.top + window.scrollY), h: Math.round(r.height), open: d.open }; });
+    const arrivalH = (()=>{ const sc = document.querySelector(".scroll > div");
+      return sc ? Math.round(sc.getBoundingClientRect().height) : 0; })();
     /* shallowest first, or nested content is never laid out and its y cannot be read */
     all.slice().sort((a,b)=>depthOf(a)-depthOf(b)).forEach(d=>{ d.open = true; });
     const scroll = document.querySelector(".scroll > div");
@@ -130,11 +142,12 @@ export async function run({ p, errors }){
     const sc = document.querySelector(".scroll > div");
     const faceH = sc ? Math.round(sc.getBoundingClientRect().height) : 0;
     all.forEach((d,i)=>{ d.open = was[i]; });
-    return { actions: out, sects, faceH };
+    return { actions: out, sects, faceH, arrival, arrivalH };
   }, [where, faceCost, teach.source.replace(/^\^|\$$/g, "")]);
 
-  const rows = [], sects = [], faceH = {};
-  const take = (where, r) => { rows.push(...r.actions); sects.push(...r.sects); faceH[where] = r.faceH; };
+  const rows = [], sects = [], faceH = {}, arrivals = [], arrivalH = {};
+  const take = (where, r) => { rows.push(...r.actions); sects.push(...r.sects); faceH[where] = r.faceH;
+    arrivals.push(...r.arrival); arrivalH[where] = r.arrivalH; };
   for(const t of ["ludus","familia","arena","armory","market","villa"]){
     await tab(p, t); await p.waitForTimeout(340); await clearAll(p, 8);
     await tab(p, t); await p.waitForTimeout(340);
@@ -243,15 +256,68 @@ export async function run({ p, errors }){
       const mine = sects.filter(x => x.where === face).sort((a,b)=>a.top-b.top);
       const dead = mine.filter(x => !acts[`${face} :: ${x.title}`] && x.top < v.maxY);
       const px = dead.reduce((a,x)=>a+x.h, 0);
-      if(px > 0) rows2.push({ face, px, n: v.n, maxY: v.maxY, names: dead.sort((a,b)=>b.h-a.h) });
+      const live = mine.filter(x => acts[`${face} :: ${x.title}`]);
+      if(px > 0) rows2.push({ face, px, n: v.n, maxY: v.maxY, names: dead.sort((a,b)=>b.h-a.h), live });
     }
     rows2.sort((a,b)=>b.px-a.px);
     if(rows2.length){
       lines.push(`AND WHAT A REORDER COULD WIN — action-free panel sitting ABOVE the furthest action:`);
       for(const r of rows2.slice(0,6))
         lines.push(`   ${r.face.padEnd(24)} ${String(r.px).padStart(5)}px above y=${r.maxY} `
-          + `(${r.n} actions) — ${r.names.slice(0,3).map(x=>`${x.title} ${x.h}px`).join(", ")}`);
-      lines.push(`   ${rows2.reduce((a,r)=>a+r.px,0)}px in all, across ${rows2.length} faces`);
+          + `(${r.n} actions) — dead: ${r.names.slice(0,3).map(x=>`${x.title} ${x.h}px`).join(", ")}`
+          + `\n${" ".repeat(30)}live: ${r.live.map(x=>`${x.title} (${acts[`${r.face} :: ${x.title}`]})`).join(", ") || "none"}`);
+      /* NOT SUMMED ACROSS FACES, and the first version of this line did sum them. The gatekeeper's
+         lesson sits above the tab content on every face, so it appears in six of these rows — it is
+         ONE panel counted six times, and adding the rows up produced a headline number that no
+         player could ever scroll past. The worst single face is the figure that means something. */
+      lines.push(`   the worst single face is ${rows2[0].face} at ${rows2[0].px}px. NOT summed: the `
+        + `gatekeeper's lesson sits above every tab, so it is one panel appearing in ${rows2.filter(r=>r.names.some(x=>/gatekeeper/i.test(x.title))).length} rows here, not several`);
+    }
+    /* ---- AND THE SAME THING IN THE STATE A PLAYER ARRIVES IN ----
+       All of the above is measured with every section open. On arrival most are shut, and a shut
+       section is a summary line rather than a panel — so this is the number that says what a
+       reorder is actually worth, and it is the smaller one. */
+    {
+      const byFace = {};
+      for(const x of arrivals){ const f = byFace[x.where] || (byFace[x.where] = []); f.push(x); }
+      const out2 = [];
+      for(const [face, list] of Object.entries(byFace)){
+        const v = byPlace[face]; if(!v) continue;
+        const sorted = list.slice().sort((a,b)=>a.top-b.top);
+        const lastLive = sorted.filter(x => acts[`${face} :: ${x.title}`]).pop();
+        const cut = lastLive ? lastLive.top : 0;
+        const dead = sorted.filter(x => !acts[`${face} :: ${x.title}`] && x.top < cut);
+        out2.push({ face, px: dead.reduce((a,x)=>a+x.h,0), n: dead.length,
+          openH: faceH[face] || 0, arriveH: arrivalH[face] || 0 });
+      }
+      out2.sort((a,b)=>b.px-a.px);
+      lines.push(`AND THE SAME ON ARRIVAL, with sections in their default state — the number that counts:`);
+      for(const r of out2.slice(0,6))
+        lines.push(`   ${r.face.padEnd(24)} face is ${String(r.arriveH).padStart(5)}px on arrival vs `
+          + `${String(r.openH).padStart(5)}px fully open · ${r.px}px of action-free section above the last action (${r.n})`);
+      /* ---- AND WHERE THE ARRIVAL HEIGHT ACTUALLY COMES FROM ----
+         If reordering shut sections wins almost nothing, the height is somewhere else, and guessing
+         where would be the same mistake again. So: what share of each face is section at all, and
+         what are the tallest things standing open before a player touches anything. */
+      /* ---- THE SIX THAT STAND OPEN ----
+         This turned out to be the whole of it. Reordering shut sections wins 0-754px a face; these
+         six cost more than every reorder on every face put together, and a player has not asked for
+         any of them. Listed with the height each one adds to the face it is on. */
+      const openOnes = arrivals.filter(x=>x.open).sort((a,b)=>b.h-a.h);
+      lines.push(`AND THE ${openOnes.length} THAT STAND OPEN BEFORE A PLAYER TOUCHES ANYTHING — `
+        + `${openOnes.reduce((a,x)=>a+x.h,0)}px between them, against 0-754px for every reorder:`);
+      for(const x of openOnes) lines.push(`   ${String(x.h).padStart(5)}px  ${x.title.padEnd(32)} ${x.where}`);
+      lines.push(`AND WHAT THAT ARRIVAL HEIGHT IS MADE OF — section vs everything else:`);
+      for(const [face, list] of Object.entries(byFace).sort((a,b)=>(arrivalH[b[0]]||0)-(arrivalH[a[0]]||0)).slice(0,6)){
+        const tot = arrivalH[face] || 0;
+        const sect = list.reduce((a,x)=>a+x.h, 0);
+        const open = list.filter(x=>x.open).sort((a,b)=>b.h-a.h);
+        lines.push(`   ${face.padEnd(24)} ${String(tot).padStart(5)}px = ${String(sect).padStart(5)}px of `
+          + `${list.length} sections (${open.length} open) + ${String(tot-sect).padStart(5)}px that is not a section`
+          + (open.length ? ` · open: ${open.slice(0,3).map(x=>`${x.title} ${x.h}px`).join(", ")}` : ""));
+      }
+    }
+    {
     }
   }
 

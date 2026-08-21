@@ -4,4 +4,5 @@
 {"v":"3.77.0","checks":72,"failed":[]},
 {"v":"3.78.0","checks":72,"failed":[]},
 {"v":"3.79.0","checks":72,"failed":[]},
-{"v":"3.80.0","checks":72,"failed":["bulk","surface","sweep"]}]
+{"v":"3.80.0","checks":72,"failed":["bulk","surface","sweep"]},
+{"v":"3.80.0","checks":73,"failed":[]}]
