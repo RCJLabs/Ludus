@@ -399,6 +399,22 @@ So the gate is a runtime one — `test/probes/faces.mjs` opens every face of eve
 
 **And it is blind to handlers**, which the suite found and the gate could not: nothing runs an `onClick` by rendering it. Four sections called names they were never handed, the gate read 36 of 36 sections and zero errors, and `sweep` and `surface` failed on 18 page errors apiece. `test/checks/scope.mjs` closes that: it matches **call position only** — `name(`, which English does not produce — which is the one restriction that makes a static check work here where bare word matching could not.
 
+### What stands open
+A panel that opens itself is saying *look here*. Six did it before a player touched anything, 7,166px between them on the pinned house, and the yardstick could not see any of it — every figure in `reach`'s row is measured with sections forced open, so folding one moved nothing. The row now carries arrival px, sections standing open, and their height.
+
+**Those Who Watch** was the one that was wrong. It stood open unconditionally: 649px on a house with no patrons — where the entire panel reads *"no one of consequence has heard of you"* — and 929px on one with several, against a villa · Standing face that is 2,151px on arrival. It now opens when a patron has a want or a favour is ready to call in, both from the same two tests the rows below already make, so the summary cannot disagree with the body.
+
+Measured on **two houses of the same seed**, one founded and left alone and one driven sixteen weeks by the rope, so the arms differ only in whether anybody played: the idle house's villa · Standing fell **2,151px → 1,546px** (−28%), and the played house's panel stayed open at 812px because there a patron was asking. Controls unchanged in both.
+
+The other five stay, each for its own reason. **The Temple** is already conditional — a vow, a blessing, low piety, ill luck. **The training square** has no `open` prop at all; it opens through the freshness system, and its 1,130px is the branch explaining what a doctore *is*, standing open for exactly the player who has none. **What you can do for the block** is the only actionable section on a 971px face, and folding it takes its shallowest action from two taps to three, which `reach` fails by design. **The aedile** is 123px.
+
+**The weapon rack is a different problem.** At 3,727px it is 85% of the armory's arrival height and the largest single object in the game — but it *is* the armory, so folding it empties the tab. It is 18 rows of about 207px, one per gear item matching the house's styles, out of a catalogue of 73 (weapon 32, helm 15, offhand 14, armor 12). The row is already lean: one buy button, with the sell button appearing only when you own a spare. So the height is list length, not row waste, and the open question is whether the armory should show eighteen cards or a compact list that expands. That change would take buying from one tap to two, and `reach` bars the armory at one — which is the constraint any answer has to satisfy.
+
+### The order of things, refuted
+The plan after lifting the sections was to reorder each face by when in the week a thing is used. `reach` supported it: 4,844px of action-free panel sitting above the furthest action, worst face 1,320px. Both halves of that were wrong. It **summed across faces**, and the gatekeeper's lesson sits above every tab — one panel counted seven times. And it measured with **every section forced open**, which is the right state for counting taps and the wrong one for scrolling.
+
+On arrival the same headroom is villa · Standing 754px, villa · Coin & Council 228px, ludus 176px, and zero everywhere else. Reordering ludus is worth **176px against a face 2,949px tall**. The premise did not survive its own measurement, so nothing was reordered. What the same instrument found instead is above: the panels that stand open, and the fact that the market and the arena are barely sections at all — 2,358px of the market's 2,481px and 2,160px of the arena's 2,221px sits outside any `<Sect>`.
+
 ### Seeded runs
 Every roll came out of `Math.random`, so no house could be handed to anybody else and no measurement could be repeated. There is one **mulberry32** behind the same `R()` that everything already called, so nothing else in the codebase changed.
 
