@@ -1399,7 +1399,27 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
-**Shipped and verified:** v3.74.0 — **#179 closed by building the record, which is what the item said
+**Shipped and verified:** v3.75.0 — **the audit after nine releases.** `coverage` reads **377 of 477**
+reached, **100 never called** (103 of 475 last time, on a surface that grew by two), **49 of them
+named in no check and no probe** — with the tool's own caveat that it sees only handle calls, so
+"never called" is not "never runs". Then the largest content table in the file, never before counted:
+`EVENTS`, 59 entries over **72 houses and 16,300 house-weeks**. **The confirmation: 55 of 59 are met,
+93%.** The four that are not are three different problems, separated off the game's own machinery —
+`make.length` distinguishes what `pickEvent` offers from what another system pushes. **#180**: the
+reference player has **never thrown the cloth — 0 times in 16,300 house-weeks** — so `everCloth` is 0
+in every house ever run and the `owedLife → owedBack` arc is invisible; armed, `owedLife` is offered
+on 10 of 400 draws. **#181**: `primacy` is not shut but priced beyond any sample — over 99 house-weeks
+holding the title, six weeks 46, a second eligible man 15, **both 6 of 99**, giving ~0.4 expected
+firings over 72 houses against 0 observed. **#182**: `courted`'s pusher is the player poaching, which
+the rope never does; its sibling `defected` fires 115 times, proving the mechanism works.
+**And two of the counters written to support all this were wrong.** `primacyHouses` sampled after the
+loop — "held it when the house ended", not ever — and read **0 of 72** where the corrected counter
+reads **14 of 72**; I had already written `primacy` up as a rope blind spot on the strength of it, and
+it is the opposite kind of thing. The poach counter read `d.poachedIn` and `d.flags.everCourted`,
+**neither of which exists in the file** — invented here, structurally incapable of returning anything
+but 0, and it would have confirmed its own hypothesis for free. The sound counter is the one reading a
+field the game maintains itself. `events.mjs` is the 50th probe. No game change.
+v3.74.0 — **#179 closed by building the record, which is what the item said
 the first step was.** `survive` could be given a retry in v3.71.0 only because it has kept a tally
 since #142; nothing else recorded anything, so `seller`'s v3.72.0 race took a solo re-run, a second
 full suite and a hand count of 24 scratch log files to diagnose. The record lives in the **runner**
@@ -3498,6 +3518,41 @@ these numbers would have to be made in more than one place — and not a fault l
 printed every run, because a count that grows is worth looking at.
 
 
+**#180 — the reference player has never once shown mercy, and it hides a whole arc.** `owedLife`
+gates on `d.flags.everCloth`, which only `recordCloth` sets — and `recordCloth` is what throwing the
+cloth to spare a beaten man calls. Across **16,300 house-weeks and 72 houses the cloth was thrown 0
+times**, so `everCloth` is 0 in every house this project has ever run. Given a state with the flag
+set, `owedLife` is offered on **10 of 400** draws, so the door opens; nobody has ever knocked.
+`owedBack` is its continuation and inherits the blockage — a chain, not two gaps. Two independent
+instruments point here: `recordCloth` and `owedList` are both in coverage's 49 named by no check and
+no probe. *Falsifies if:* mercy is not a policy a competent lanista would follow — but the file
+disagrees with that, `collSoften` and the whole missio system are built for it, and the rope already
+answers every other kind of question the sand asks. *The work is a rope step, not a game change*: a
+mercy policy with a reason, measured the way #158 measured the party schedule.
+
+**#181 — the primacy's rematch is written for a state a house reaches six times in sixteen thousand
+weeks.** `primacy` asks three things at once: hold the city title, six weeks since taking it, and a
+second `primusEligible` man. Split over the **99 house-weeks** where a house held the title:
+**46 of 99** had the six weeks, **15 of 99** had the second man, and **6 of 99** had both. At the
+offer rate a fair fixture measures — **24 of 400 armed draws** — that is about **0.4 expected
+firings across 72 houses**, and 0 observed agrees with the arithmetic rather than contradicting it.
+So this is NOT a shut door and the item does not claim one: it is a rematch priced beyond any sample
+this project runs, and the binding term is the second eligible man rather than the six-week wait.
+*Falsifies if:* it is meant to be a rare treat — a bout that turns up once in a long campaign is a
+defensible design, and this closes without a change. **Not measured yet:** what `primusEligible`
+actually rejects, which decides whether 15 of 99 is a tuning number or a structural one.
+
+**#182 — `courted` is pushed by the player poaching, and the reference player never poaches.**
+`courted` has `make(){ return null; }` — never offered by `pickEvent` — and is pushed from the
+poaching path when the PLAYER courts a rival's man, in two branches: the rival catching you at it,
+and his man coming over the wall to you. It fired **0 times in 16,300 house-weeks**. Its sibling
+`defected` sits three lines below with the same `make(){ return null; }` and fires **115 times across
+38 houses**, which is what says the push mechanism works and this particular pusher is simply never
+run. Same family as #180 and the same fix shape: a rope step. *Falsifies if:* poaching is a losing
+policy — #171 and #172 measured the magistrate's side of this and found prevention beats rescue, so
+the reverse may not pay either; that is a measurement, not an assumption.
+
+
 **#179 — CLOSED in v3.74.0 by building the record, which is what the item said the first step was.**
 `survive` could be given a confirm-on-failure second draw in v3.71.0 for one reason: it has written
 every observation to its own tally since #142, and that is what made *"7 of 61 builds, 11.5%"* a
@@ -3910,6 +3965,76 @@ about a quarter and it is the cost of this repair**; `MISSIO_MAN` is one line to
 wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
+
+### v3.75.0 — the audit after nine releases: the events table is healthy, and two of my own counters were not
+
+The board emptied for the second time this session, which is the cycle point. Run under v3.64.0's
+rule — every figure a count or a share, never a median life.
+
+#### Where it looked
+
+`coverage` reads **377 of 477** exposed functions reached by at least one check, **100 never called**,
+against 103 of 475 at the last audit on a surface that grew by two. **49 of the 100 are named in no
+check and no probe**, up from 39. One caveat the tool states itself and which matters: it only sees
+calls made through the test handle, so `makeRivals` and `makeLanista` are in the list and both run at
+every founding. **"Never called" is not "never runs."**
+
+Then the largest content table in the file, which no audit had ever counted: `EVENTS`, 59 entries,
+driven over **72 houses and 16,300 house-weeks**.
+
+#### The confirmation, which is the point of measuring
+
+**55 of 59 entries are met, 93%.** The table is not full of dead content. `ambition` reaches 71 houses
+of 72, `leagueYear` 69, `ludusNight` 59; the tail thins out honestly rather than falling off a cliff.
+
+#### And the four that are not met are three different problems
+
+The probe separates them off the game's own machinery rather than a reconstruction: an entry whose
+`make` takes the save is offered by `pickEvent`; an entry whose `make` takes nothing is pushed by
+another system. `make.length` tells them apart with no guessing.
+
+- **`owedLife` and `owedBack` — the reference player has never shown mercy.** The gate is
+  `d.flags.everCloth`, set only by `recordCloth`, which is what throwing the cloth calls. It was
+  thrown **0 times in 16,300 house-weeks**. With the flag armed the event is offered on **10 of 400**
+  draws, so the door opens and nobody has knocked. `owedBack` is its continuation. **#180.**
+- **`primacy` — priced beyond any sample.** Not a shut door, and the item says so. Over the 99
+  house-weeks a house held the title: six weeks **46 of 99**, a second eligible man **15 of 99**,
+  both **6 of 99**. At the fixture's measured offer rate that is **~0.4 expected firings over 72
+  houses**; 0 observed agrees with the arithmetic. **#181.**
+- **`courted` — its pusher is never run.** The player poaching is what pushes it; the rope never
+  poaches. Its sibling `defected`, three lines below with the same `make(){ return null; }`, fires
+  **115 times across 38 houses** — which is what proves the mechanism works. **#182.**
+
+#### And two of the counters written to support all this were wrong
+
+This is the finding I would keep if I could keep only one.
+
+`primacyHouses` first read `d.primus && d.primus.mine` **after** the loop — "held it at the moment
+the house ended", not "ever held it", and 63 of 72 houses end dead. It reported **0 of 72**. Sampled
+inside the week it reports **14 of 72**. On the strength of the first number I had already written
+`primacy` up as a rope blind spot alongside `owedLife`. **It is the opposite kind of thing**, and the
+whole of #181 exists because the counter got fixed.
+
+Worse, the poach counter read `d.poachedIn` and `d.flags.everCourted`. **Neither field exists in
+`src/ludus.jsx`.** I invented both. It could only ever return 0 — it would have confirmed the
+hypothesis it was written to test, for free, and *"0 of 72 houses ever courted a rival's man"* would
+have shipped as a measurement. It is deleted rather than fixed: `courted` never appearing in
+`did.events` is the game's own record and needs no counter of mine.
+
+The one counter that was sound is the one reading a field the game maintains itself — `everCloth`,
+cumulative. That is the same reason the driven half of the probe is trustworthy: `did.events` is the
+rope's own record, not a reconstruction of one. **Read the record the game already keeps; the moment
+you keep your own, you are testing your bookkeeping and calling it the game.**
+
+`events.mjs` is the **50th probe**. *No game change in this release. `src/ludus.jsx` is untouched.*
+
+Suite green at **72/72 in 13.5 minutes**, and the run tally reads its second row — *"2 complete runs
+across 2 builds, 0 of them red."* `survive` drew **(1, 8)** with `menUp` **1**, which is the **second**
+row where the two readings of `men` disagree, and the same shape as v3.74.0's first: one house
+standing, one man actually in its yard, passing only because the men of two ended houses are counted
+with the living. **Two of the eleven rows that carry the split now disagree.** Recorded and counted,
+not acted on — two draws is two draws, and a bar moved on n=2 is the mistake #142 started the tally
+to avoid.
 
 ### v3.74.0 — #179: every check gets the record `survive` has had since #142
 

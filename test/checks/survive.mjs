@@ -597,7 +597,13 @@ export async function run({ p, errors, port }){
      COUNTED, and not acted on, because one draw is one draw and #136's rule has fired six times in
      this project on exactly that temptation. When there are enough such rows to score, the question
      is whether the conjunction's second term should read the yards of the houses still going.
-     Today the count is one.
+     v3.75.0 IS THE SECOND, and it is the same shape as the first: **standing 1, men 8, menUp 1,
+     ended 2**, against v3.74.0's standing 1, men 5, menUp 1, ended 2. Two of the eleven rows that
+     carry the split now disagree, both with ONE house standing and ONE man actually in its yard,
+     both passing only because the men of two dead houses are counted with the living. Still not
+     acted on — two draws is two draws, #136's rule has fired six times on smaller temptations than
+     this, and a bar moved on n=2 is exactly the mistake #142 started the tally to avoid. Today the
+     count is two, of eleven rows that can show it.
      The CONFIRMED bars are the second draw's when a second draw was taken, and the first draw's
      otherwise. Hard faults from either draw always fail — a house that produced no save at all is
      not a bad draw, and neither is a page error. */
