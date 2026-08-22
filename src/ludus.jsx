@@ -25150,7 +25150,9 @@ export default function App(){
                 );
               };
               return (<>
-                <button className="optrow" style={{width:"100%",textAlign:"left",padding:"10px 11px",marginBottom:9,
+                {/* the masthead, and NOT an agenda row — `report` counts the sheet's rows against
+                    the agenda's length, so this says plainly that it is not one of them */}
+                <button className="optrow leadrow" style={{width:"100%",textAlign:"left",padding:"10px 11px",marginBottom:9,
                     borderLeft:"3px solid var(--line-3)"}}
                   onClick={()=>{ setReport(null); setDeskDoc({ doc:"lastWeek", label:"The week that was" }); }}>
                   <div className="flex items-center justify-between gap-2">

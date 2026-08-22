@@ -59,7 +59,7 @@ const { server, port } = await serve({ page:"dist/test.html" });
 const { browser, p, errors } = await open(port);
 await found(p, { seed:"REACH-1" });
 for(let w=0; w<WEEKS; w++){ const ok = await p.evaluate(()=>{
-    const b=[...document.querySelectorAll("button")].find(x=>/^end week$/i.test((x.innerText||"").trim()));
+    const b=[...document.querySelectorAll("button")].find(x=>/^end week/i.test((x.innerText||"").trim()));
     if(b){ b.click(); return true; } return false; });
   if(!ok) break; await p.waitForTimeout(160); await clearAll(p, 3); }
 

@@ -56,12 +56,14 @@ export async function run({ p, errors }){
   await p.evaluate(()=>{ const b=document.querySelector(".reportbar"); if(b) b.click(); });
   await p.waitForTimeout(400);
   const sheet = await p.evaluate(()=>{ const w=[...document.querySelectorAll(".modalwrap")].pop();
-    return w ? [...w.querySelectorAll("button.optrow")].length : -1; });
+    return w ? [...w.querySelectorAll("button.optrow:not(.leadrow)")].length : -1; });
   lines.push(`the sheet holds ${sheet} rows`);
+  /* v3.99.0: the sheet leads with a masthead row — the week that was — which is not an agenda
+     item and carries the .leadrow mark so this count stays the agenda's. */
   if(sheet !== truth.agendaN) fails.push(`the sheet holds ${sheet} rows over an agenda of ${truth.agendaN}`);
 
   const openRow = await p.evaluate(()=>{ const w=[...document.querySelectorAll(".modalwrap")].pop();
-    const b=[...(w?w.querySelectorAll("button.optrow"):[])].find(x=>/open ›/.test(x.innerText||""));
+    const b=[...(w?w.querySelectorAll("button.optrow:not(.leadrow)"):[])].find(x=>/open ›/.test(x.innerText||""));
     if(!b) return null; const lab=(b.innerText||"").split("\n")[0]; b.click(); return lab; });
   await p.waitForTimeout(450);
   if(openRow){
@@ -78,7 +80,7 @@ export async function run({ p, errors }){
   await p.evaluate(()=>{ const b=document.querySelector(".reportbar"); if(b) b.click(); });
   await p.waitForTimeout(350);
   const travelled = await p.evaluate(()=>{ const w=[...document.querySelectorAll(".modalwrap")].pop();
-    const b=[...(w?w.querySelectorAll("button.optrow"):[])].find(x=>/›/.test(x.innerText||"") && !/open ›/.test(x.innerText||""));
+    const b=[...(w?w.querySelectorAll("button.optrow:not(.leadrow)"):[])].find(x=>/›/.test(x.innerText||"") && !/open ›/.test(x.innerText||""));
     if(!b) return null; const lab=(b.innerText||"").split("\n")[0]; b.click(); return lab; });
   await p.waitForTimeout(450);
   if(travelled){

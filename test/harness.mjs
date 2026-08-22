@@ -1025,10 +1025,19 @@ export async function found(p, { scenario = /clean start|even hand|your uncle|on
   await clearAll(p);
 }
 
+/* ---- PREFIX, NOT THE WHOLE LABEL ----
+   This matched /^end week$/ — anchored at BOTH ends — until v3.99.0 gave the button the week's
+   close and it began reading "End week · 2 unanswered". The button did not move and did not
+   break; the matcher simply stopped finding it, endWeek() returned false, and every check that
+   advances a week through the screen quietly played a shorter game. `reach` was the one that
+   noticed, and only because its house came out different: the arena lost three actions and the
+   villa gained six, which reads exactly like a game fault and was a matcher.
+   The same lesson the scene's doors taught in v3.92.0: a control's FIRST WORDS are stable and
+   everything after them is the build's business. */
 export async function endWeek(p){
   await tab(p, "ludus");
   await p.waitForTimeout(140);
-  const went = await click(p, /^end week$/i);
+  const went = await click(p, /^end week/i);
   if(!went) return false;
   await p.waitForTimeout(720);
   return true;

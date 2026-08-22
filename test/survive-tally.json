@@ -131,4 +131,5 @@
 {"v":"3.97.0","standing":1,"men":1,"menUp":1,"ended":2,"houses":5,"weeks":26,"draw":1,"pass":false},
 {"v":"3.97.0","standing":2,"men":2,"menUp":2,"ended":2,"houses":5,"weeks":26,"draw":2,"pass":true},
 {"v":"3.98.0","standing":1,"men":9,"menUp":2,"ended":3,"houses":5,"weeks":26,"draw":1,"pass":true},
-{"v":"3.98.0","standing":5,"men":6,"menUp":6,"ended":0,"houses":5,"weeks":26,"draw":1,"pass":true}]
+{"v":"3.98.0","standing":5,"men":6,"menUp":6,"ended":0,"houses":5,"weeks":26,"draw":1,"pass":true},
+{"v":"3.99.0","standing":5,"men":16,"menUp":16,"ended":0,"houses":5,"weeks":26,"draw":1,"pass":true}]

@@ -71,7 +71,7 @@ const walk = async () => {
 
 /* ---- ARM ONE: founded and left alone, which is what reach measures ---- */
 for(let w=0; w<W; w++){ const ok = await p.evaluate(()=>{
-    const b=[...document.querySelectorAll("button")].find(x=>/^end week$/i.test((x.innerText||"").trim()));
+    const b=[...document.querySelectorAll("button")].find(x=>/^end week/i.test((x.innerText||"").trim()));
     if(b){ b.click(); return true; } return false; });
   if(!ok) break; await p.waitForTimeout(150); await clearAll(p, 3); }
 const idle = await walk();
