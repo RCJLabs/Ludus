@@ -466,7 +466,9 @@ The overhaul's destination, arrived at in phases with the tabs kept underneath t
 
 **The report bar (v3.90.0).** The morning report docks above the nav on every tab but home — a count coloured by the worst urgency on it, opening a sheet where every row either unfolds its document or travels to the face it names. Bar and rows come from one agenda read per render, so the count cannot promise what the sheet does not hold. The `report` check (76th) walks it on the played pinned morning.
 
-Still open in this arc: phase 4 (collapsing the tab bar itself — held until the new model proves itself in real use, by design), the art pass (the rooms are placeholder-grade silhouettes), and how the scene breathes on a big late house — eight men in the yard and twelve-item mornings.
+**Phase 4 (v3.92.0).** The tab bar is gone. On the ludus the rooms are the bar; everywhere else one door — *back to the ludus* — with the report riding above it. The scene grew its last two doors (the road for the arena; the yard's ground for the familia), the shell carries `data-place`, and the harness navigates like a player, verifying every arrival. The collapse cost nothing the yardstick can see: 43 doers before and after, because the doors replaced the tabs one for one. One instrument fault worth its ink: the door-knocker matched by substring, the gate's aria contains "the road", and the tally reported "market 5 → 0" on an untouched market — doors match by prefix now.
+
+Still open in this arc: the art pass (the rooms are placeholder-grade silhouettes), and whatever real play on a big house turns up next — its first two screenshots each found something no fixture had.
 
 ### Seeded runs
 Every roll came out of `Math.random`, so no house could be handed to anybody else and no measurement could be repeated. There is one **mulberry32** behind the same `R()` that everything already called, so nothing else in the codebase changed.
