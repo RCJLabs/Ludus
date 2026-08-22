@@ -457,6 +457,15 @@ Phase B made every face a list of section calls; this spends it. Four faces are 
 
 The market is left alone: its two sections are a staff panel that lives inside a ternary and the block, with a summary panel between them, so reordering it is a restructure rather than a move.
 
+### The morning ludus
+The overhaul's destination, arrived at in phases with the tabs kept underneath throughout. The fusion: **the scene is what the house *is*, the report is what the week *asks*, documents are how you answer** — and what has no room in a ludus arrives as mail, which is the fiction being load-bearing rather than a workaround.
+
+**The desk (v3.87.0–v3.88.0).** The agenda's destination syntax grew a third part — `tab:face:panel`, the panel being a `SECT` registry id — and a row that carries one opens that panel as a *document*: the item's own words as the letterhead, the panel itself as the body (the same function the tab renders, so there is no copy to drift), "see it in the house" underneath. Fifteen items name panels; one candidate was refused because its panel does not contain the offer it names — a letter whose body does not answer its letterhead is the copied-claim fault in new clothes. The `desk` check holds the ids to `SECT`'s real names statically (a typo does not throw — it silently travels) and walks three letters on the played pinned morning.
+
+**The scene (v3.89.0).** The ludus tab opens on a vertical cutaway of the house — villa, shrine, square, yard with each man standing in it, cells, racks, gate — replacing four panels: 2,051px of arrival panel became ~640px of scene, sections standing open went 5 → 4, and the nav tally scored every figure of it. Every room is a control and a tap opens a document through the desk; a document opened *from* the scene hides its footer, because the scene is the house. Callers are derived from the same agenda items the report rows carry — the v2.9x freshness lesson applied to a drawing, because a `touch()` call somebody forgets is invisible. The `scene` check walks the rooms the way `desk` walks the letters.
+
+Still open in this arc: phase 3 (the scene becomes home, the report becomes the primary surface, the tab bar collapses), the art pass (the rooms are placeholder-grade silhouettes), and how the scene breathes on a big late house — eight men in the yard and twelve-item mornings.
+
 ### Seeded runs
 Every roll came out of `Math.random`, so no house could be handed to anybody else and no measurement could be repeated. There is one **mulberry32** behind the same `R()` that everything already called, so nothing else in the codebase changed.
 
