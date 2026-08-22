@@ -198,6 +198,26 @@ const CSS = `
   60%{opacity:1}
   to{transform:perspective(1500px) rotateY(0);opacity:1}}
 
+/* ---- THE ENTRY ROW ----
+   The armoury measured 4,821px on an 844px screen -- five and a half screens of continuous
+   scroll -- and the cost was not prose. Thirty-one buttons came to 1,426px of it, because every
+   piece of gear on the rack carried a full-width BUY button whether or not you were considering
+   it. A rack is a list of things with prices, which is a page of a ledger: name on the left, the
+   sum on the right, a dotted leader between them, one line each. What the row cannot say in a
+   line -- what the thing is, what it does, what it suits, and the button that spends the coin --
+   waits behind the row until asked for. The marks that decide whether you open it at all stay on
+   the line: what it costs, whether you own any, whether it is a master's piece, and whether it
+   would be clumsy in this yard. */
+.entry{border-top:1px dotted var(--line)}
+.entry>summary{list-style:none;display:flex;align-items:baseline;gap:7px;padding:8px 2px;min-height:var(--tap);cursor:pointer}
+.entry>summary::-webkit-details-marker{display:none}
+.entry>summary:focus-visible{outline:1px solid var(--gold-line);outline-offset:2px}
+.entry[open]>summary{border-bottom:1px dotted var(--line-3)}
+.entryname{flex:0 1 auto;min-width:0;font-size:var(--fs-base);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.entrymark{flex:0 0 auto;font-size:var(--fs-micro);white-space:nowrap}
+.entrylead{flex:1 1 14px;min-width:14px;align-self:center;border-bottom:1px dotted var(--line-3);opacity:.65}
+.entrysum{flex:0 0 auto;font-size:var(--fs-md);white-space:nowrap;font-variant-numeric:tabular-nums}
+
 .sect>.sectbody{padding:0 13px 13px}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}.spurt{display:none}.hitflash{display:none}}
 `;
@@ -19415,38 +19435,46 @@ const SECT = {
           )}
           {items.map(([id,it])=>{
                 const owned = S.gear[id]||0, free = gearFree(S,id);
+                const price = it.price > 0 ? gearPrice(S, it.price, it.slot) : 0;
+                const dear = it.price > 0 && S.gold < price;
                 return (
-                  <div key={id} style={{borderTop:"1px dotted var(--line)",paddingTop:8,marginTop:8}}>
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="disp" style={{fontSize:"var(--fs-base)",color:it.master?"var(--gold-hi)":it.price?"var(--ink)":"var(--ink-dim2)"}}>{it.name}</div>
-                      {it.price>0
-                        ? <span className="gold" style={{fontSize:"var(--fs-md)",whiteSpace:"nowrap"}}>{it.price}d{owned?` · ${owned} owned`:""}</span>
-                        : <span className="tag">Costs nothing</span>}
+                  <details key={id} className="entry">
+                    <summary>
+                      <span className="entryname disp" style={{color:it.master?"var(--gold-hi)":it.price?"var(--ink)":"var(--ink-dim2)"}}>{it.name}</span>
+                      {/* the marks worth a glance before you open the row */}
+                      {it.master && <span className="entrymark" style={{color:"var(--gold)"}}>a master&#39;s</span>}
+                      {!inStyle(it) && <span className="entrymark" style={{color:"var(--gold)"}}>clumsy here</span>}
+                      {owned > 0 && <span className="entrymark dim">{owned} owned{free>0?` · ${free} idle`:""}</span>}
+                      <span className="entrylead"/>
+                      <span className="entrysum" style={{color:it.price>0 ? (dear?"var(--ink-faint)":"var(--gold)") : "var(--ink-dim)"}}>
+                        {it.price>0 ? `${price}d` : "house issue"}
+                      </span>
+                    </summary>
+                    <div style={{padding:"2px 2px 11px"}}>
+                      <div className="flex items-center gap-1" style={{flexWrap:"wrap",margin:"1px 0 3px"}}>
+                        <span className="tag" style={{fontSize:"var(--fs-micro)",padding:"2px 7px"}}>{artName(slot, it.art)}</span>
+                        {it.master && <span className="tag tag-gold" style={{fontSize:"var(--fs-micro)",padding:"2px 7px"}}>A master&#39;s piece · {it.keep}d a week to keep</span>}
+                        {!inStyle(it) && <span className="tag" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",borderColor:"var(--gold-edge)",color:"var(--gold)"}}>clumsy for this yard</span>}
+                      </div>
+                      <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",margin:"2px 0 3px"}}>{it.desc}</div>
+                      <GearStats it={it}/>
+                      {it.master && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>No sharper than the best on the rack. Twice as loud — and the crowd is the purse, the name, and the finger that goes up when he is down.</div>}
+                      {it.styles && it.styles.length>0 && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>Suits: {it.styles.join(", ")}</div>}
+                      {it.price>0 && (
+                        <button className={`btn ${it.stock?"btn-ghost":""}`} style={{width:"100%",marginTop:7}} disabled={dear} onClick={()=>buyGear(id)}>
+                          {dear ? "Not enough coin"
+                            : `${it.stock?"Order":"Buy"} for ${price}d${free>0?` · ${free} on the rack`:""}`}
+                        </button>
+                      )}
+                      {!it.stock && it.price>0 && free>0 && (
+                        <button className="btn btn-ghost" style={{width:"100%",marginTop:5,fontSize:"var(--fs-sm)",padding:"10px 10px"}}
+                          onClick={()=>sellOne(id)}>
+                          Sell one back · about {rnd(it.price*resaleRate(S)*0.85)}d
+                        </button>
+                      )}
+                      {it.price>0 && owned>0 && free===0 && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:3}}>Every one you own is on a man.</div>}
                     </div>
-                    {/* the family the seven headings used to carry, now on the row it belongs to */}
-                    <div className="flex items-center gap-1" style={{flexWrap:"wrap",margin:"3px 0 1px"}}>
-                      <span className="tag" style={{fontSize:"var(--fs-micro)",padding:"2px 7px"}}>{artName(slot, it.art)}</span>
-                      {it.master && <span className="tag tag-gold" style={{fontSize:"var(--fs-micro)",padding:"2px 7px"}}>A master's piece · {it.keep}d a week to keep</span>}
-                      {!inStyle(it) && <span className="tag" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",borderColor:"var(--gold-edge)",color:"var(--gold)"}}>clumsy for this yard</span>}
-                    </div>
-                    <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",margin:"2px 0 3px"}}>{it.desc}</div>
-                    <GearStats it={it}/>
-                    {it.master && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>No sharper than the best on the rack. Twice as loud — and the crowd is the purse, the name, and the finger that goes up when he is down.</div>}
-                    {it.styles && it.styles.length>0 && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>Suits: {it.styles.join(", ")}</div>}
-                    {it.price>0 && (
-                      <button className={`btn ${it.stock?"btn-ghost":""}`} style={{width:"100%",marginTop:7}} disabled={S.gold<gearPrice(S,it.price,it.slot)} onClick={()=>buyGear(id)}>
-                        {S.gold<gearPrice(S,it.price,it.slot) ? "Not enough coin"
-                          : `${it.stock?"Order":"Buy"} for ${gearPrice(S,it.price,it.slot)}d${free>0?` · ${free} on the rack`:""}`}
-                      </button>
-                    )}
-                    {!it.stock && it.price>0 && free>0 && (
-                      <button className="btn btn-ghost" style={{width:"100%",marginTop:5,fontSize:"var(--fs-sm)",padding:"10px 10px"}}
-                        onClick={()=>sellOne(id)}>
-                        Sell one back · about {rnd(it.price*resaleRate(S)*0.85)}d
-                      </button>
-                    )}
-                    {it.price>0 && owned>0 && free===0 && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:3}}>Every one you own is on a man.</div>}
-                  </div>
+                  </details>
                 );
               })}
         </Sect>
@@ -20917,7 +20945,9 @@ export default function App(){
      doctrine letter while two other letters unfolded by their own open props and made the force look
      alive. A parent effect runs after every child's, so this is the last word. */
   useEffect(()=>{ if(deskDoc && deskRef.current)
-    for(const dd of deskRef.current.querySelectorAll("details")) dd.open = true; }, [deskDoc]);
+    for(const dd of deskRef.current.querySelectorAll("details.sect")) dd.open = true; }, [deskDoc]);
+  /* SECTIONS, not every details on the page: entry rows are folded on purpose, and a letter
+     that blew all of them open would arrive longer than the page it was lifted from. */
   const [dealH,setDealH] = useState(null);   /* the rival house you are treating with */
   const [dealMsg,setDealMsg] = useState(null);
   const [cal,setCal] = useState(false);      /* the year ahead, everything dated in one place */
