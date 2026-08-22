@@ -21403,10 +21403,19 @@ export default function App(){
           {S && (
             <Group title="This house"
               note={`Kept automatically${saved? ` — last saved ${whenWord(saved)}`:""}. Slot ${slot||1} of ${SLOTS_N}.`}>
+              {S.flags.underwritten > 0 && (
+                <div className="panel" style={{padding:9,marginBottom:9,background:"#1c1610",borderColor:"#5a6a35"}}>
+                  <span className="laurel" style={{fontSize:"var(--fs-md)"}}>The merchant is carrying your upkeep — {S.flags.underwritten} week{S.flags.underwritten===1?"":"s"} left on his word.</span>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-2" style={{marginBottom:7}}>
                 <button className="btn btn-ghost" onClick={()=>{ setShowSettings(false); setXfer({mode:"export"}); }}>Copy transfer code</button>
                 <button className="btn btn-ghost" onClick={()=>{ setShowSettings(false); toTitle(); }}>Switch houses</button>
               </div>
+              {S.flags.noLessons ? (
+                <button className="btn btn-ghost" style={{width:"100%",marginTop:7}}
+                  onClick={()=>mut(d=>{ d.flags.noLessons = 0; d.flags.learned = {}; })}>Ask the gatekeeper again</button>
+              ) : null}
             </Group>
           )}
 
@@ -22466,25 +22475,10 @@ export default function App(){
               <div style={{fontSize:"var(--fs-lg)"}}>Fight in the pits to earn coin and fame — first blood keeps your men alive; anything bloodier down there is a coin flip with a blade. At 25 fame the editors take notice and the games open, where famed men are far more likely to be spared. Train between bouts, watch fatigue, and mind the fire in your men — the best fighters are often the most dangerous to own.</div>
             </div>
           )}
-          <div className="panel" style={{padding:13}}>
-            {S.flags.noLessons && (
-              <button className="btn btn-ghost" style={{width:"100%",marginBottom:9}}
-                onClick={()=>mut(d=>{ d.flags.noLessons = 0; d.flags.learned = {}; })}>Ask the gatekeeper again</button>
-            )}
-            <div className="tag" style={{marginBottom:6}}>The Ledger</div>
-            {S.flags.underwritten > 0 && (
-              <div className="panel" style={{padding:9,marginBottom:9,background:"#1c1610",borderColor:"#5a6a35"}}>
-                <span className="laurel" style={{fontSize:"var(--fs-md)"}}>The merchant is carrying your upkeep — {S.flags.underwritten} week{S.flags.underwritten===1?"":"s"} left.</span>
-              </div>
-            )}
-            <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>
-              This house is written down after every change{saved? ` — last kept ${whenWord(saved)}`:""}. Lift it out as a transfer code to carry it elsewhere, or keep it safe against a bad week.
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <button className="btn btn-ghost" onClick={()=>setXfer({mode:"export"})}>Copy the ledger</button>
-              <button className="btn btn-ghost" onClick={toTitle}>Back to the records</button>
-            </div>
-          </div>
+          {/* THE LEDGER LEFT THE PAGE (v3.94.0): settings already carried "This house" with the
+               transfer code and the switch, so the panel here was a near-duplicate at the foot of
+               home. Its two pieces that were NOT duplicated — the merchant-underwritten note and
+               the gatekeeper reset — moved into that settings group with it. */}
         </div>)}
 
         {tab==="men" && (<div className="flex flex-col gap-3">
