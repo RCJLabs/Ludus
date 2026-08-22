@@ -2616,7 +2616,7 @@ function agendaCan(d, add){
   /* a rung you have already paid for in fame and favour, and are not drawing on */
   if(canClaimRise(d)){
     const nx = riseNext(d);
-    add(2, "villa", `${nx ? nx.name : "The next rung"} is there to be taken`,
+    add(2, "villa:standing:yourStanding", `${nx ? nx.name : "The next rung"} is there to be taken`,
       `${riseFee(nx)}d to be received — the stipend runs from the week you are`);
   }
 }
@@ -2647,7 +2647,7 @@ function agendaSquare(d, add){
   const can = (d.doctoreMarket||[]).filter(c=>c.fee<=d.gold).sort((a,b)=>b.skill-a.skill)[0];
   const ask = Math.min(...d.doctoreMarket.map(c=>c.fee));
   const fresh = d.week <= YEAR_WEEKS / 2;        /* the first half-year, while it is still news */
-  add(can && fresh ? 2 : 1, "ludus", "Nobody in this yard can teach",
+  add(can && fresh ? 2 : 1, "ludus::square", "Nobody in this yard can teach",
     can ? `${can.name} is asking ${can.fee}d — every man would train faster for it`
         : `the square is asking ${ask}d and you have ${rnd(d.gold)}d`);
 }
@@ -2667,7 +2667,7 @@ function agendaSchool(d, add){
   if(d.week < 12) return;                       /* the opening has louder problems */
   const cheapest = Math.min(...DOC_KEYS.map(k=>DOCTRINES[k].cost));
   if(d.gold < cheapest + weeklyBill(d) * 6) return;
-  add(1, "villa", "This house teaches no particular thing",
+  add(1, "villa:council:doctrine", "This house teaches no particular thing",
     `six schools, ${cheapest}d and up — one of them is the way you already fight`);
 }
 /* ---- AND THE SAME FAULT ONE LAYER DOWN: THE DOMESTIC HALF OF THE HOUSE ----
@@ -2703,7 +2703,7 @@ function agendaGods(d, add){
   if(d.city || d.travel || d.rome) return;
   const pi = pietyOf(d);
   if(pi <= 20){
-    add(2, "villa", "This house is keeping no rites at all",
+    add(2, "villa:standing:temple", "This house is keeping no rites at all",
       illLuck(d) ? "godless, and under an ill turn for it"
         : `${pietyWord(pi)} — the streets feel it, and the omens run against you`);
     return;
@@ -2712,7 +2712,7 @@ function agendaGods(d, add){
   const hurt = activeG(d).filter(g=>g.injury).length;
   const G = hurt >= 2 ? GODS.aesculapius : d.unrest >= 45 ? GODS.mars : null;
   if(!G || d.gold < G.cost(d)) return;
-  add(1, "villa", `The altar would take a gift to ${G.name}`,
+  add(1, "villa:standing:temple", `The altar would take a gift to ${G.name}`,
     hurt >= 2 ? `${hurt} men laid up · ${G.cost(d)}d for ${G.weeks} weeks of clean mending`
       : `the cells are ${unrestWord(d.unrest).toLowerCase()} · ${G.cost(d)}d for ${G.weeks} weeks of a soldier's steadiness`);
 }
@@ -3040,13 +3040,17 @@ const agWord = age => age <= 0 ? "new this week" : age <= AG_FRESH ? `${age} wee
    200 lines `bulk` allows — nine lines of prose inside it took the check red. */
 function agenda(d){
   const A = [];
-  /* `tab` may name a FACE as "tab:face" — the armoury is a face of the familia since v3.86.0, and a
-     row that set only the tab dropped the player on The Roster, one chip short of the panel it was
-     pointing at. The tab field stays a plain tab key so everything that groups or badges by tab is
-     untouched; `dest` carries the rest, and only the row's own tap reads it. */
+  /* `tab` may name a FACE as "tab:face" (v3.86.0 — a row that set only the tab dropped the player
+     one chip short of its panel) and, since v3.87.0, a PANEL as "tab:face:panel" — the third part is
+     a SECT registry id, and a row that carries one opens that panel as a DOCUMENT in place instead
+     of travelling at all. The morning-ludus direction in one line: the agenda already knows what
+     wants an answer; now it can hand you the panel that answers it. An empty middle part
+     ("men::square") names a panel across tabs without inventing a face. The `tab` field stays a
+     plain key throughout, so everything that groups or badges by tab is untouched. */
   const add = (urgency, tab, label, sub, key) => {
-    const [t, face] = String(tab).split(":");
-    A.push({ urgency, tab:t, dest: face ? tab : null, label:herOwn(d,label), sub:herOwn(d,sub), key });
+    const [t, face, doc] = String(tab).split(":");
+    A.push({ urgency, tab:t, dest: face ? `${t}:${face}` : null, doc: doc || null,
+      label:herOwn(d,label), sub:herOwn(d,sub), key });
   };
   if(d.pendingEvent) add(3, "ludus", d.pendingEvent.title, "a decision is waiting");
   if(d.succession) add(3, "ludus", "The house has no head", "somebody must take it up");
@@ -3101,8 +3105,8 @@ function agenda(d){
     else if(made.length>1) add(1, "men", `${made.length} men have nothing left to learn`,
       `${made.slice(0,3).map(g=>g.name).join(", ")}${made.length>3?" and others":""}${tail}`); }
   { const waiting = patronsOf(d).filter(p=>p.want && p.want.due && p.want.due - d.week <= 2);
-    if(waiting.length===1) add(waiting[0].want.due<=d.week?3:2, "villa", `${waiting[0].name} is still waiting`, WANTS[waiting[0].want.kind].label.toLowerCase());
-    else if(waiting.length>1) add(waiting.some(p=>p.want.due<=d.week)?3:2, "villa",
+    if(waiting.length===1) add(waiting[0].want.due<=d.week?3:2, "villa:standing:watch", `${waiting[0].name} is still waiting`, WANTS[waiting[0].want.kind].label.toLowerCase());
+    else if(waiting.length>1) add(waiting.some(p=>p.want.due<=d.week)?3:2, "villa:standing:watch",
       `${waiting.length} patrons are still waiting`, waiting.map(p=>p.name.split(" ").pop()).join(", ")); }
   if(d.romeOffer) add(3, "ludus", "Rome has sent for you", `${d.romeOffer.due - d.week} weeks to answer`);
   /* men */
@@ -3119,13 +3123,13 @@ function agenda(d){
     if(wrong.length === 1) add(1, "men:armory", `${wrong[0].name} is carrying the wrong thing`, "it is not his style");
     else if(wrong.length > 1) add(1, "men:armory", `${wrong.length} men are carrying the wrong thing`, "none of it is their style"); }
   for(const m of unhonoured(d)) if(!m.done)
-    add(2, "villa", `${m.name} is not buried properly`, `${RITE_WINDOW-(d.week-m.week)} weeks to decide`);
+    add(2, "villa:council:rites", `${m.name} is not buried properly`, `${RITE_WINDOW-(d.week-m.week)} weeks to decide`);
   agendaSchool(d, add);
   agendaFolk(d, add);
   agendaGods(d, add);
   agendaCan(d, add);
   /* the town */
-  if(d.election && !d.election.done) add(2, "villa", "The aedileship is open", `${Math.max(0,3-(d.week-d.election.week))} weeks to the vote`);
+  if(d.election && !d.election.done) add(2, "villa:council:aedileship", "The aedileship is open", `${Math.max(0,3-(d.week-d.election.week))} weeks to the vote`);
   if(d.games && d.games.offers && d.games.offers.length && activeG(d).some(g=>canFight(g) && g.lastFought<d.week))
     add(2, "arena", d.games.festival, `${d.games.offers.length} on the card`);
   if(d.poach) add(2, "men", `${(d.gladiators.find(x=>x.id===d.poach.gid)||{}).name} is being talked to`, `House ${d.poach.house}`);
@@ -3228,11 +3232,11 @@ function agenda(d){
     if(sig.length===1) add(1, "men", `${sig[0].name} could be taught a move of his own`, "a signature, from the doctore");
     else if(sig.length>1) add(1, "men", `${sig.length} men could be taught a move of their own`, "signatures, from the doctore"); }
   if(d.doctore && (d.doctore.drill||"none")==="none" && !d.flags.everDrill && activeG(d).length>=3)
-    add(1, "men", "The doctore is set to no drill", "put the whole yard on a week's emphasis");
+    add(1, "men::square", "The doctore is set to no drill", "put the whole yard on a week's emphasis");
   if(merchLive(d) && d.brand && !d.brand.decided)
     add(2, "villa", "The potters want your name", "license it wide, or keep it fine");
   if(marryReady(d) && (d.flags.matchCool==null || d.week>=d.flags.matchCool))
-    add(1, "villa", "The matchmakers are calling", "a wife, and an heir of your own blood");
+    add(1, "villa:house:blood", "The matchmakers are calling", "a wife, and an heir of your own blood");
   /* ---- THE ONE TIME IT IS WORTH SAYING OUT LOUD — after that the tab speaks for itself ----
      Until he owns one or tells the gatekeeper he knows his trade, then it stops asking.
      AND THAT IS DELIBERATE, which v3.18.0 had to find out the hard way. An audit item said the master's
@@ -20614,6 +20618,20 @@ export default function App(){
   const [pairSel,setPairSel] = useState([]);
   const [annals,setAnnals] = useState(false);
   const [sheet,setSheet] = useState(null);
+  /* ---- THE DESK: an agenda item opened as a document, v3.87.0 ----
+     Holds the agenda row itself. The document renders the SECT panel the row names in `doc` inside
+     a letter frame — the panel, not a copy of it, so its controls are the real controls and the
+     recurring shape this project keeps finding ("a panel quotes a number the engine will not roll")
+     cannot recur here by construction. */
+  const [deskDoc,setDeskDoc] = useState(null);
+  const deskRef = useRef(null);
+  /* the frame UNFOLDS the panel — as an EFFECT, not a ref callback, and the difference is the whole
+     fix: refs are set before child effects run, so a ref-callback force was silently overwritten by
+     Sect's own mount effect (remembered ?? open), and `desk` read "0 of 1 panels unfolded" on the
+     doctrine letter while two other letters unfolded by their own open props and made the force look
+     alive. A parent effect runs after every child's, so this is the last word. */
+  useEffect(()=>{ if(deskDoc && deskRef.current)
+    for(const dd of deskRef.current.querySelectorAll("details")) dd.open = true; }, [deskDoc]);
   const [dealH,setDealH] = useState(null);   /* the rival house you are treating with */
   const [dealMsg,setDealMsg] = useState(null);
   const [cal,setCal] = useState(false);      /* the year ahead, everything dated in one place */
@@ -20755,7 +20773,7 @@ export default function App(){
 
   const mut = fn => { const d = clone(S); fn(d); d.rngState = rngGet(); setS(d); };
 
-  const clearTransient = ()=>{ setFight(null); setSelId(null); setEvResult(null); setGearPick(null); setAsk(null); setFGid(null); setArenaWiz(false); setArenaStep(0); setArenaPick(null); setDealH(null); setDealMsg(null); };
+  const clearTransient = ()=>{ setFight(null); setSelId(null); setEvResult(null); setGearPick(null); setAsk(null); setFGid(null); setArenaWiz(false); setArenaStep(0); setArenaPick(null); setDealH(null); setDealMsg(null); setDeskDoc(null); };
   const begin = ()=>{ clearTransient();
     if(!slot){ let free=1; for(let i=1;i<=SLOTS_N;i++) if(!slots[i]){ free=i; break; } setSlot(free); }
     const d0 = newGameState(nameIn.trim()||"House of Aurelius", bonus, seedIn, pitchIn);
@@ -20823,6 +20841,7 @@ export default function App(){
     [!!teachPick,    ()=>setTeachPick(null)],
     [!!showChron,    ()=>setShowChron(false)],
     [!!annals,       ()=>setAnnals(false)],
+    [!!deskDoc,      ()=>setDeskDoc(null)],
     [!!sheet,        ()=>setSheet(null)],
     [!!showSettings, ()=>setShowSettings(false)],
     [!!cal,          ()=>setCal(false)],
@@ -22127,7 +22146,7 @@ export default function App(){
                   </div>
                 ) : shown.map((a,i)=>(
                   <button key={i} className="optrow" style={{width:"100%",marginBottom:5,padding:"8px 10px",textAlign:"left"}}
-                    onClick={()=>goTo(a.dest || a.tab)}>
+                    onClick={()=>a.doc && SECT[a.doc] ? setDeskDoc(a) : goTo(a.dest || a.tab)}>
                     <div className="flex items-center justify-between gap-2">
                       <span className="disp" style={{fontSize:"var(--fs-base)",minWidth:0,
                         color: a.urgency>=3 ? "#e8b0a0" : a.age<=0 ? "#e8d092" : "#e8d9b8"}}>{a.label}</span>
@@ -22464,15 +22483,23 @@ export default function App(){
                   <span className="tag tag-gold">What the men need</span>
                   <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{MEN.length} thing{MEN.length===1?"":"s"}</span>
                 </div>
-                {MEN.map((a,i)=>(
-                  <div key={i} className="optrow" style={{padding:"9px 9px",marginBottom:5,borderColor:URG[a.urgency].c,cursor:"default"}}>
+                {/* a row is INERT unless it can hand you the answer: rows that name a panel open it
+                     as a document (v3.87.0), the rest stay what they were — a report line. The same
+                     rule as the ludus agenda, so a row reads as tappable exactly when tapping does
+                     something. */}
+                {MEN.map((a,i)=>{ const docable = a.doc && SECT[a.doc];
+                  const inner = (<>
                     <div className="flex items-center justify-between gap-2">
                       <span style={{fontSize:"var(--fs-md)",color:a.urgency===3?"#e8d9b8":"#cfc0a0",textAlign:"left"}}>{a.label}</span>
-                      <span className="rowval" style={{fontSize:"var(--fs-sm)",color:URG[a.urgency].c,whiteSpace:"nowrap"}}>{URG[a.urgency].w}</span>
+                      <span className="rowval" style={{fontSize:"var(--fs-sm)",color:URG[a.urgency].c,whiteSpace:"nowrap"}}>{docable ? "open ›" : URG[a.urgency].w}</span>
                     </div>
                     {a.sub && <div className="dim" style={{fontSize:"var(--fs-base)",textAlign:"left"}}>{a.sub}</div>}
-                  </div>
-                ))}
+                  </>);
+                  return docable
+                    ? <button key={i} className="optrow" style={{width:"100%",padding:"9px 9px",marginBottom:5,borderColor:URG[a.urgency].c,textAlign:"left"}}
+                        onClick={()=>setDeskDoc(a)}>{inner}</button>
+                    : <div key={i} className="optrow" style={{padding:"9px 9px",marginBottom:5,borderColor:URG[a.urgency].c,cursor:"default"}}>{inner}</div>;
+                })}
               </div>
             ); })()}
 
@@ -24767,6 +24794,32 @@ export default function App(){
       })()}
 
 
+      {/* ---- A DOCUMENT FROM THE DESK, v3.87.0 — the morning-ludus direction's first real piece ----
+           An agenda row that names a panel opens it HERE, framed as the letter or report it
+           fictionally is, instead of sending the player travelling. The body is the SECT panel
+           itself — the same function the tab renders, so the controls are the real controls and
+           there is no copy to drift. The panel's own <details> are forced open on mount: a document
+           is read unfolded, and Sect's per-sid memory would otherwise deliver a remembered-shut
+           panel inside an opened letter. That write does land in SECT_MEM, which is view-state
+           only — reading the letter counts as having opened the panel, which is what it means. */}
+      {deskDoc && SECT[deskDoc.doc] && (
+        <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.pick}} onClick={()=>setDeskDoc(null)}>
+          <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()} ref={deskRef}
+            style={{borderColor:"#6d5426",background:"linear-gradient(168deg,#241c12,#1a1410)"}}>
+            <div style={{textAlign:"center",marginBottom:2}}>
+              <span className="tag tag-gold">{deskDoc.urgency>=3 ? "URGENT" : "FROM THE MORNING'S BUSINESS"}</span>
+            </div>
+            <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".1em",color:"#e8d092",textAlign:"center"}}>{deskDoc.label}</div>
+            {deskDoc.sub && <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",textAlign:"center",marginBottom:10}}>{deskDoc.sub}</div>}
+            {SECT[deskDoc.doc](S, SX)}
+            <div className="flex gap-2" style={{marginTop:12}}>
+              <button className="btn btn-ghost" style={{flex:1,whiteSpace:"nowrap"}}
+                onClick={()=>{ const w = deskDoc.dest || deskDoc.tab; setDeskDoc(null); goTo(w); }}>See it in the house</button>
+              <button className="btn" style={{flex:1}} onClick={()=>setDeskDoc(null)}>Put it down</button>
+            </div>
+          </div>
+        </div>
+      )}
       {sheet && SHEETS[sheet] && (
         <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.pick}} onClick={()=>setSheet(null)}>
           <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
