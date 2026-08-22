@@ -21630,6 +21630,9 @@ export default function App(){
         {SECT.unrest(S, SX, true)}
         {SECT.lastWeek(S, SX, true)}
         {SECT.year(S, SX, true)}
+        <button className="btn btn-ghost" style={{width:"100%",fontSize:"var(--fs-sm)"}} onClick={()=>{ setSheet(null); setCal(true); }}>
+          The year ahead ›
+        </button>
         {(S.rivalLog||[]).length>0 && SECT.rivals(S, SX, true)}
         {S.week > 20 && SECT.soFar(S, SX, true)}
         {SECT.law(S, SX, true)}
@@ -22281,7 +22284,7 @@ export default function App(){
         </div>
       </div>
 
-      <div className="scroll" style={{width:"100%"}}><div style={{width:"100%",maxWidth:640,margin:"0 auto",padding:`calc(var(--hdr-h,84px) + 14px) 14px calc(var(--nav-h,72px) + ${tab!=="ludus" && S && !S.over && AGN.length ? "62px" : "14px"})`}}>
+      <div className="scroll" style={{width:"100%"}}><div style={{width:"100%",maxWidth:640,margin:"0 auto",padding:`calc(var(--hdr-h,84px) + 14px) 14px calc(var(--nav-h,72px) + ${S && !S.over && AGN.length ? "62px" : "14px"})`}}>
 
         {(()=>{ const L = lessonFor(S, tab); if(!L || S.flags.noLessons) return null;
           const read = ()=>mut(d=>{ d.flags.learned = Object.assign({}, d.flags.learned, {[L.id]:1}); });
@@ -22334,222 +22337,13 @@ export default function App(){
                week. So there is always something to show, a jump is worth having — and a flat list of
                seven is the wrong shape, because five labels are lit on 41 to 62% of every week a house
                lives. What is urgent or NEW is here; the standing furniture is a count and a tap. */}
-          {(()=>{
-            const EV = agendaRanked(S);
-            if(!EV.length) return null;
-            /* the men's business stays one row pointing at the men's tab — that split is deliberate and
-               predates this panel, and 460 of 2,194 measured items were the familia's */
-            const MEN = EV.filter(a=>a.tab==="men");
-            const RANK = EV.filter(a=>a.tab!=="men");
-            const TOP = agendaTop(RANK), rest = RANK.length - TOP.length;
-            const press = EV.filter(a=>a.urgency>=3).length;
-            const TN = TAB_NAMES;
-            const shown = allTodos ? RANK : TOP;
-            return (
-              <div className="panel" style={{padding:12,
-                borderColor: press ? "#7c2a22" : TOP.length ? "#6d5426" : "#3e2f1f",
-                background: press ? "#1d1310" : "#1a1510"}}>
-                <div className="flex items-center justify-between" style={{marginBottom:6}}>
-                  <span className={press?"tag tag-blood":"tag tag-gold"}>This week</span>
-                  <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>
-                    {seasonOf(S).name.toLowerCase()} · year {yearOf(S)}, week {yearWeek(S)}
-                  </span>
-                </div>
-                {shown.length===0 ? (
-                  <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
-                    Nothing new is asking anything of you. {rest} thing{rest===1?"":"s"} still standing —
-                    train them, or find them something to do.
-                  </div>
-                ) : shown.map((a,i)=>(
-                  <button key={i} className="optrow" style={{width:"100%",marginBottom:5,padding:"8px 10px",textAlign:"left"}}
-                    onClick={()=>a.doc && SECT[a.doc] ? setDeskDoc(a) : goTo(a.dest || a.tab)}>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="disp" style={{fontSize:"var(--fs-base)",minWidth:0,
-                        color: a.urgency>=3 ? "#e8b0a0" : a.age<=0 ? "#e8d092" : "#e8d9b8"}}>{a.label}</span>
-                      <span className="rowval dim" style={{fontSize:"var(--fs-sm)",flexShrink:0,whiteSpace:"nowrap"}}>
-                        {TN[a.tab] || a.tab} ›
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between gap-2" style={{marginTop:1}}>
-                      <span className="dim" style={{fontSize:"var(--fs-sm)",minWidth:0}}>{a.sub}</span>
-                      <span style={{fontSize:"var(--fs-micro)",flexShrink:0,whiteSpace:"nowrap",
-                        color: a.urgency>=3 ? "#d96f5d" : a.age<=0 ? "#9aa86a" : "#8a7a5e"}}>
-                        {a.urgency>=3 ? "now" : agWord(a.age)}
-                      </span>
-                    </div>
-                  </button>
-                ))}
-                {MEN.length>0 && (
-                  <button className="optrow" style={{width:"100%",marginBottom:5,padding:"8px 10px",textAlign:"left"}}
-                    onClick={()=>setTab("men")}>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d9b8",minWidth:0}}>
-                        {MEN.length} thing{MEN.length===1?"":"s"} in the familia
-                      </span>
-                      <span className="rowval dim" style={{fontSize:"var(--fs-sm)",flexShrink:0}}>Familia ›</span>
-                    </div>
-                    <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:1}}>
-                      {MEN[0].label}{MEN.length>1?` · and ${MEN.length-1} more`:""}
-                    </div>
-                  </button>
-                )}
-                {(rest>0 || allTodos) && (
-                  <button className="btn btn-ghost" style={{width:"100%",marginTop:2}}
-                    onClick={()=>setAllTodos(!allTodos)}>
-                    {allTodos ? "Just what is new" : `And ${rest} thing${rest===1?"":"s"} that have been waiting`}
-                  </button>
-                )}
-                {/* the doctore's word on the week, which lived at the bottom of the old section */}
-                {(()=>{ const C = counsel(S); if(!C) return null;
-                  return (
-                    <div style={{borderTop:"1px dotted #4e3c26",marginTop:8,paddingTop:8}}>
-                      <div className="flex gap-2" style={{alignItems:"flex-start"}}>
-                        {S.doctore && <div style={{flex:"0 0 auto",width:46,height:46,borderRadius:"50%",overflow:"hidden",border:"1px solid #5a6a4a"}}>
-                          <DoctoreBust name={S.doctore.name} size={46}/>
-                        </div>}
-                        <div style={{minWidth:0}}>
-                          <span className="tag" style={{borderColor:"#5a6a4a",color:"#9aa86a"}}>The doctore</span>
-                          <div style={{fontSize:"var(--fs-md)",fontStyle:"italic",color:"#cfc0a0",marginTop:3}}>{C.say(S)}</div>
-                        </div>
-                      </div>
-                    </div>
-                  ); })()}
-                <button className="btn btn-ghost" style={{width:"100%",marginTop:6,fontSize:"var(--fs-sm)"}} onClick={()=>setCal(true)}>
-                  The year ahead ›
-                </button>
-              </div>
-            ); })()}
-          {/* The house's own name and standing lead the page — who you are first,
-              then what you are holding, then how that reads against your years. */}
-          {(()=>{ const upkeepEst = weeklyBill(S);
-            const owedIn = owedTotal(S), merch = merchLive(S) ? merchWeekly(S) : 0;
-            const Stat = ({label, val, colour})=>(
-              <div style={{minWidth:0}}>
-                <div className="dim" style={{fontSize:"var(--fs-micro)",textTransform:"uppercase",letterSpacing:".06em"}}>{label}</div>
-                <div className="disp" style={{fontSize:"var(--fs-lg)",color:colour||"#e8d092",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{val}</div>
-              </div>
-            );
-            const REC = houseRecord(S);
-            const reg = activeG(S);
-            const avgReg = reg.length ? reg.reduce((n,g)=>n+regardOf(g),0)/reg.length : 0;
-            const rows = [
-              ["Fame", rnd(S.fame), standing("fame", S.fame, S.week)],
-              ["Coin", rnd(S.gold), standing("gold", S.gold, S.week)],
-              ["The cells", `${Math.round(S.unrest)} unrest`, standingLow("unrest", S.unrest)],
-              ["What they make of you", Math.round(avgReg), standing("regard", avgReg, S.week)],
-            ].filter(r=>r[2]);
-            return (
-              <div className="panel" style={{padding:13}}>
-                <div className="flex items-center gap-2" style={{marginBottom:9}}>
-                  {S.crest && <Crest crest={S.crest} size={34}/>}
-                  <div style={{minWidth:0,flex:"1 1 auto"}}>
-                    <div className="disp" style={{fontSize:"var(--fs-xl)",fontWeight:900,letterSpacing:".1em",color:"#e8d092",lineHeight:1.15}}>
-                      {S.name.toUpperCase()}
-                      {(S.generation||1)>1 && <span style={{fontSize:"var(--fs-sm)",color:"#b09b7d"}}> · {["","","II","III","IV","V","VI","VII"][S.generation]||S.generation}</span>}
-                    </div>
-                    <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",lineHeight:1.3}}>A ludus of Capua — {fameTitle(S.fame)}</div>
-                  </div>
-                </div>
-                <div className="flex gap-3" style={{fontSize:"var(--fs-base)",flexWrap:"wrap",paddingBottom:9,marginBottom:9,borderBottom:"1px dotted #33271a"}}>
-                  <span>Familia {roster.length}/{cellsCap(S)}</span>
-                  <span className="blood">Fallen {S.fallen.length}</span>
-                  <span className="gold">Freed {S.freed.length}</span>
-                  {(()=>{ const fit = fitOn(S, S.week), all = activeG(S).length;
-                    return <span style={{marginLeft:"auto",color:fit<=1?YARD_COLOUR(fit):"#8a7a5c"}}>
-                      {fit === all ? `${all} in the yard` : `${fit} fit of ${all}`}
-                    </span>; })()}
-                </div>
-                <div className="grid grid-cols-3 gap-2" style={{marginBottom:9}}>
-                  <Stat label="Coin" val={`${rnd(S.gold)}d`} colour={S.gold<0?"#d96f5d":"#e0bd72"}/>
-                  <Stat label="Upkeep" val={`−${upkeepEst}d/wk`} colour="#cfa88a"/>
-                  {/* what arrives without a bout being fought. The stipend a received
-                      house draws was the largest number in the ledger and was written
-                      down nowhere — the box filled and nothing on the page said why. */}
-                  {(()=>{ const inWk = riseStipend(S) + merch;
-                    return inWk > 0
-                      ? <Stat label="Coming in" val={`+${inWk}d/wk`} colour="#9aa86a"/>
-                      : <Stat label="Owed you" val={`${owedIn}d`} colour="#cfc0a0"/>; })()}
-                  <Stat label="Fame" val={rnd(S.fame)} colour="#d8c08a"/>
-                  <Stat label="Standing" val={rnd(S.favor)} colour="#bfa8c8"/>
-                  <Stat label="Record" val={`${REC.w}\u2013${REC.l}`} colour="#cfc0a0"/>
-                </div>
-                {/* the two readings that do not fit a number: what the town calls you,
-                    and how close the cells are to ending the run */}
-                <div className="flex items-center justify-between gap-2" style={{fontSize:"var(--fs-sm)",marginBottom:5}}>
-                  <span className="dim" style={{textTransform:"uppercase",letterSpacing:".06em",fontSize:"var(--fs-micro)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>The name</span>
-                  <span style={{color:"#e0bd72",flexShrink:0}}>{acclaimWord(acclaimOf(S))}</span>
-                </div>
-                <div className="flex items-center justify-between gap-2" style={{fontSize:"var(--fs-sm)",marginBottom:3}}>
-                  <span className="dim" style={{textTransform:"uppercase",letterSpacing:".06em",fontSize:"var(--fs-micro)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>Unrest — ends a run</span>
-                  <span style={{color: S.unrest>=68?"#d96f5d":S.unrest>=45?"#d8ac5f":"#9aa86a",flexShrink:0}}>{unrestWord(S.unrest)}</span>
-                </div>
-                <div className="track" style={{height:6}}>
-                  <div className="fill" style={{width:`${clamp(S.unrest,0,100)}%`, background: S.unrest>=68?"linear-gradient(90deg,#7c2a22,#d96f5d)":"linear-gradient(90deg,#5a4a2c,#d8ac5f)"}}/>
-                </div>
-                {/* and the third, which is what actually stops a house: whether anybody can stand */}
-                {(()=>{ const fit = fitOn(S, S.week), curve = fitCurve(S, 6), thin = curve.find(c=>c.fit<=1);
-                  return (
-                    <>
-                      <div className="flex items-center justify-between gap-2" style={{fontSize:"var(--fs-sm)",marginTop:7}}>
-                        <span className="dim" style={{textTransform:"uppercase",letterSpacing:".06em",fontSize:"var(--fs-micro)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>Fit to stand</span>
-                        <span style={{color:YARD_COLOUR(fit),flexShrink:0}}>{YARD_WORD(fit)}</span>
-                      </div>
-                      {thin && (
-                        <button className="dim" onClick={()=>setCal(true)}
-                          style={{display:"block",width:"100%",textAlign:"left",background:"none",border:"none",padding:"3px 0 0",fontSize:"var(--fs-sm)",lineHeight:1.35,color:"#cfa88a",fontStyle:"italic",cursor:"pointer"}}>
-                          {thin.week===S.week
-                            ? (fit<=0 ? "Nobody can be put on a card this week." : "One man, and nobody behind him.")
-                            : `${thin.fit<=0 ? "Nobody is fit" : "Only one man is fit"} in ${thin.week-S.week} week${thin.week-S.week===1?"":"s"} — do not promise that week.`}
-                          {" "}<span style={{color:"#8a6a2c"}}>the year ahead ›</span>
-                        </button>
-                      )}
-                    </>
-                  ); })()}
-                {S.lanista && (S.lanista.age>=48 || S.lanista.health<55) && (
-                  <div className="flex items-center justify-between" style={{fontSize:"var(--fs-sm)",marginTop:7,borderTop:"1px dotted #33271a",paddingTop:6}}>
-                    <span className="dim" style={{textTransform:"uppercase",letterSpacing:".06em",fontSize:"var(--fs-micro)"}}>After you · {S.lanista.age}, {healthWord(S.lanista.health)}</span>
-                    <span style={{color: S.heir?"#9aa86a":"#d96f5d"}}>{S.heir ? `heir: ${S.heir.name.split(" ")[0]}` : "no heir named"}</span>
-                  </div>
-                )}
-                {rows.length>0 && (
-                  <details className="sect" style={{marginTop:9,background:"none",border:"none",boxShadow:"none",padding:0}}>
-                    <summary style={{padding:"7px 0 3px"}}>
-                      <span className="dim" style={{fontSize:"var(--fs-micro)",textTransform:"uppercase",letterSpacing:".08em",minWidth:0,overflow:"hidden",textOverflow:"ellipsis"}}>Against a house {S.week} weeks old</span>
-                      <span className="chev" aria-hidden="true">⌄</span>
-                    </summary>
-                    <div style={{paddingTop:2}}>
-                      {(()=>{ const P = pitchOf(S), eff = pitchEffects(S);
-                        return (
-                          <div style={{marginBottom:7,paddingBottom:6,borderBottom:"1px dotted #33271a"}}>
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="dim" style={{fontSize:"var(--fs-sm)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>The hand you took</span>
-                              <span className="rowval" style={{fontSize:"var(--fs-sm)",color:"#e0bd72",flexShrink:0}}>{P.name}</span>
-                            </div>
-                            {eff.length>0 && (
-                              <div className="flex gap-1" style={{flexWrap:"wrap",marginTop:4}}>
-                                {eff.map((x,i)=>(
-                                  <span key={i} className="chip" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",borderColor:x.colour,color:x.colour}}>
-                                    {x.label} {x.pc>0?"+":""}{x.pc}%
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        ); })()}
-                      {rows.map(([label,v,st],i)=>(
-                        <div key={i} className="flex items-center justify-between gap-2" style={{padding:"3px 0"}}>
-                          <span className="rowname" style={{fontSize:"var(--fs-base)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{label}</span>
-                          <span className="flex items-center gap-2" style={{flexShrink:0}}>
-                            <span style={{fontSize:"var(--fs-base)",color:"#e0bd72"}}>{v}</span>
-                            <span style={{fontSize:"var(--fs-sm)",color:st.colour,whiteSpace:"nowrap"}}>{st.word}</span>
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </details>
-                )}
-              </div>
-            ); })()}
+          {/* ---- THIS WEEK LEFT THE PAGE, AND THE HOUSE WENT HOME (v3.93.0) ----
+               The agenda panel and the house summary both lived here, above the scene, and together
+               they pushed the drawn ludus two screens down. The panel's list is the SAME list the
+               morning report carries, so the report bar is universal now — home included — and the
+               week's business is one identical tap everywhere. The doctore's word rides at the foot
+               of the report sheet, the year-ahead sits beside the year in WHERE THINGS STAND, and
+               the house summary leads the villa's House face, which is what it describes. */}
           {/* the men's business belongs on the men's tab; this one keeps the house's */}
           {(()=>{ const EVERY = agenda(S);
             const MEN = EVERY.filter(a=>a.tab==="men");
@@ -23510,6 +23304,137 @@ export default function App(){
           </div>
 
           {vView==="house" && (<>
+          {/* The house's own name and standing lead the page — who you are first,
+              then what you are holding, then how that reads against your years. */}
+          {(()=>{ const upkeepEst = weeklyBill(S);
+            const owedIn = owedTotal(S), merch = merchLive(S) ? merchWeekly(S) : 0;
+            const Stat = ({label, val, colour})=>(
+              <div style={{minWidth:0}}>
+                <div className="dim" style={{fontSize:"var(--fs-micro)",textTransform:"uppercase",letterSpacing:".06em"}}>{label}</div>
+                <div className="disp" style={{fontSize:"var(--fs-lg)",color:colour||"#e8d092",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{val}</div>
+              </div>
+            );
+            const REC = houseRecord(S);
+            const reg = activeG(S);
+            const avgReg = reg.length ? reg.reduce((n,g)=>n+regardOf(g),0)/reg.length : 0;
+            const rows = [
+              ["Fame", rnd(S.fame), standing("fame", S.fame, S.week)],
+              ["Coin", rnd(S.gold), standing("gold", S.gold, S.week)],
+              ["The cells", `${Math.round(S.unrest)} unrest`, standingLow("unrest", S.unrest)],
+              ["What they make of you", Math.round(avgReg), standing("regard", avgReg, S.week)],
+            ].filter(r=>r[2]);
+            return (
+              <div className="panel" style={{padding:13}}>
+                <div className="flex items-center gap-2" style={{marginBottom:9}}>
+                  {S.crest && <Crest crest={S.crest} size={34}/>}
+                  <div style={{minWidth:0,flex:"1 1 auto"}}>
+                    <div className="disp" style={{fontSize:"var(--fs-xl)",fontWeight:900,letterSpacing:".1em",color:"#e8d092",lineHeight:1.15}}>
+                      {S.name.toUpperCase()}
+                      {(S.generation||1)>1 && <span style={{fontSize:"var(--fs-sm)",color:"#b09b7d"}}> · {["","","II","III","IV","V","VI","VII"][S.generation]||S.generation}</span>}
+                    </div>
+                    <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",lineHeight:1.3}}>A ludus of Capua — {fameTitle(S.fame)}</div>
+                  </div>
+                </div>
+                <div className="flex gap-3" style={{fontSize:"var(--fs-base)",flexWrap:"wrap",paddingBottom:9,marginBottom:9,borderBottom:"1px dotted #33271a"}}>
+                  <span>Familia {roster.length}/{cellsCap(S)}</span>
+                  <span className="blood">Fallen {S.fallen.length}</span>
+                  <span className="gold">Freed {S.freed.length}</span>
+                  {(()=>{ const fit = fitOn(S, S.week), all = activeG(S).length;
+                    return <span style={{marginLeft:"auto",color:fit<=1?YARD_COLOUR(fit):"#8a7a5c"}}>
+                      {fit === all ? `${all} in the yard` : `${fit} fit of ${all}`}
+                    </span>; })()}
+                </div>
+                <div className="grid grid-cols-3 gap-2" style={{marginBottom:9}}>
+                  <Stat label="Coin" val={`${rnd(S.gold)}d`} colour={S.gold<0?"#d96f5d":"#e0bd72"}/>
+                  <Stat label="Upkeep" val={`−${upkeepEst}d/wk`} colour="#cfa88a"/>
+                  {/* what arrives without a bout being fought. The stipend a received
+                      house draws was the largest number in the ledger and was written
+                      down nowhere — the box filled and nothing on the page said why. */}
+                  {(()=>{ const inWk = riseStipend(S) + merch;
+                    return inWk > 0
+                      ? <Stat label="Coming in" val={`+${inWk}d/wk`} colour="#9aa86a"/>
+                      : <Stat label="Owed you" val={`${owedIn}d`} colour="#cfc0a0"/>; })()}
+                  <Stat label="Fame" val={rnd(S.fame)} colour="#d8c08a"/>
+                  <Stat label="Standing" val={rnd(S.favor)} colour="#bfa8c8"/>
+                  <Stat label="Record" val={`${REC.w}\u2013${REC.l}`} colour="#cfc0a0"/>
+                </div>
+                {/* the two readings that do not fit a number: what the town calls you,
+                    and how close the cells are to ending the run */}
+                <div className="flex items-center justify-between gap-2" style={{fontSize:"var(--fs-sm)",marginBottom:5}}>
+                  <span className="dim" style={{textTransform:"uppercase",letterSpacing:".06em",fontSize:"var(--fs-micro)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>The name</span>
+                  <span style={{color:"#e0bd72",flexShrink:0}}>{acclaimWord(acclaimOf(S))}</span>
+                </div>
+                <div className="flex items-center justify-between gap-2" style={{fontSize:"var(--fs-sm)",marginBottom:3}}>
+                  <span className="dim" style={{textTransform:"uppercase",letterSpacing:".06em",fontSize:"var(--fs-micro)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>Unrest — ends a run</span>
+                  <span style={{color: S.unrest>=68?"#d96f5d":S.unrest>=45?"#d8ac5f":"#9aa86a",flexShrink:0}}>{unrestWord(S.unrest)}</span>
+                </div>
+                <div className="track" style={{height:6}}>
+                  <div className="fill" style={{width:`${clamp(S.unrest,0,100)}%`, background: S.unrest>=68?"linear-gradient(90deg,#7c2a22,#d96f5d)":"linear-gradient(90deg,#5a4a2c,#d8ac5f)"}}/>
+                </div>
+                {/* and the third, which is what actually stops a house: whether anybody can stand */}
+                {(()=>{ const fit = fitOn(S, S.week), curve = fitCurve(S, 6), thin = curve.find(c=>c.fit<=1);
+                  return (
+                    <>
+                      <div className="flex items-center justify-between gap-2" style={{fontSize:"var(--fs-sm)",marginTop:7}}>
+                        <span className="dim" style={{textTransform:"uppercase",letterSpacing:".06em",fontSize:"var(--fs-micro)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>Fit to stand</span>
+                        <span style={{color:YARD_COLOUR(fit),flexShrink:0}}>{YARD_WORD(fit)}</span>
+                      </div>
+                      {thin && (
+                        <button className="dim" onClick={()=>setCal(true)}
+                          style={{display:"block",width:"100%",textAlign:"left",background:"none",border:"none",padding:"3px 0 0",fontSize:"var(--fs-sm)",lineHeight:1.35,color:"#cfa88a",fontStyle:"italic",cursor:"pointer"}}>
+                          {thin.week===S.week
+                            ? (fit<=0 ? "Nobody can be put on a card this week." : "One man, and nobody behind him.")
+                            : `${thin.fit<=0 ? "Nobody is fit" : "Only one man is fit"} in ${thin.week-S.week} week${thin.week-S.week===1?"":"s"} — do not promise that week.`}
+                          {" "}<span style={{color:"#8a6a2c"}}>the year ahead ›</span>
+                        </button>
+                      )}
+                    </>
+                  ); })()}
+                {S.lanista && (S.lanista.age>=48 || S.lanista.health<55) && (
+                  <div className="flex items-center justify-between" style={{fontSize:"var(--fs-sm)",marginTop:7,borderTop:"1px dotted #33271a",paddingTop:6}}>
+                    <span className="dim" style={{textTransform:"uppercase",letterSpacing:".06em",fontSize:"var(--fs-micro)"}}>After you · {S.lanista.age}, {healthWord(S.lanista.health)}</span>
+                    <span style={{color: S.heir?"#9aa86a":"#d96f5d"}}>{S.heir ? `heir: ${S.heir.name.split(" ")[0]}` : "no heir named"}</span>
+                  </div>
+                )}
+                {rows.length>0 && (
+                  <details className="sect" style={{marginTop:9,background:"none",border:"none",boxShadow:"none",padding:0}}>
+                    <summary style={{padding:"7px 0 3px"}}>
+                      <span className="dim" style={{fontSize:"var(--fs-micro)",textTransform:"uppercase",letterSpacing:".08em",minWidth:0,overflow:"hidden",textOverflow:"ellipsis"}}>Against a house {S.week} weeks old</span>
+                      <span className="chev" aria-hidden="true">⌄</span>
+                    </summary>
+                    <div style={{paddingTop:2}}>
+                      {(()=>{ const P = pitchOf(S), eff = pitchEffects(S);
+                        return (
+                          <div style={{marginBottom:7,paddingBottom:6,borderBottom:"1px dotted #33271a"}}>
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="dim" style={{fontSize:"var(--fs-sm)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>The hand you took</span>
+                              <span className="rowval" style={{fontSize:"var(--fs-sm)",color:"#e0bd72",flexShrink:0}}>{P.name}</span>
+                            </div>
+                            {eff.length>0 && (
+                              <div className="flex gap-1" style={{flexWrap:"wrap",marginTop:4}}>
+                                {eff.map((x,i)=>(
+                                  <span key={i} className="chip" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",borderColor:x.colour,color:x.colour}}>
+                                    {x.label} {x.pc>0?"+":""}{x.pc}%
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ); })()}
+                      {rows.map(([label,v,st],i)=>(
+                        <div key={i} className="flex items-center justify-between gap-2" style={{padding:"3px 0"}}>
+                          <span className="rowname" style={{fontSize:"var(--fs-base)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{label}</span>
+                          <span className="flex items-center gap-2" style={{flexShrink:0}}>
+                            <span style={{fontSize:"var(--fs-base)",color:"#e0bd72"}}>{v}</span>
+                            <span style={{fontSize:"var(--fs-sm)",color:st.colour,whiteSpace:"nowrap"}}>{st.word}</span>
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                )}
+              </div>
+            ); })()}
           {SECT.blood(S, SX)}
           {SECT.houseName(S, SX)}
           {SECT.colours(S, SX)}
@@ -23687,7 +23612,8 @@ export default function App(){
            Docked above the nav on every tab but home, where the report already opens the page. The
            count is the whole agenda, coloured by the worst thing on it — the same derivation as the
            rows, so the bar cannot promise what the sheet does not hold. */}
-      {tab!=="ludus" && S && !S.over && AGN.length>0 && (
+      {/* everywhere since v3.93.0 — home included, now that THIS WEEK left the page */}
+      {S && !S.over && AGN.length>0 && (
         <button className="reportbar" aria-label={`The morning report — ${AGN.length} matter${AGN.length===1?"":"s"}`}
           onClick={()=>setReport(true)}
           style={{position:"fixed",left:0,right:0,bottom:"calc(var(--nav-h,72px))",zIndex:19,
@@ -25043,8 +24969,23 @@ export default function App(){
                 {a.sub && <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:1}}>{a.sub}</div>}
               </button>
             ); })}
-            <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",textAlign:"center",marginTop:4}}>
-              the same list the week's work carries — a row opens its paper, or takes you where it stands
+                {/* the doctore's word on the week, which lived at the bottom of the old section */}
+                {(()=>{ const C = counsel(S); if(!C) return null;
+                  return (
+                    <div style={{borderTop:"1px dotted #4e3c26",marginTop:8,paddingTop:8}}>
+                      <div className="flex gap-2" style={{alignItems:"flex-start"}}>
+                        {S.doctore && <div style={{flex:"0 0 auto",width:46,height:46,borderRadius:"50%",overflow:"hidden",border:"1px solid #5a6a4a"}}>
+                          <DoctoreBust name={S.doctore.name} size={46}/>
+                        </div>}
+                        <div style={{minWidth:0}}>
+                          <span className="tag" style={{borderColor:"#5a6a4a",color:"#9aa86a"}}>The doctore</span>
+                          <div style={{fontSize:"var(--fs-md)",fontStyle:"italic",color:"#cfc0a0",marginTop:3}}>{C.say(S)}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ); })()}
+            <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",textAlign:"center",marginTop:6}}>
+              a row opens its paper, or takes you where it stands
             </div>
           </div>
         </div>

@@ -67,12 +67,19 @@ export async function run({ p, errors }){
   if(docable.length < 2) fails.push(`only ${docable.length} doc-bearing items on the played pinned morning — it carried `
     + `watch, doctrine and blood when this was written; if the rope or the agenda changed, re-read this morning before trusting the walk`);
 
+  /* the agenda rows live in the REPORT SHEET since v3.93.0 — THIS WEEK left the home page — so
+     each letter is opened the way a player opens it: the bar, then the row. */
   let opened = 0, unfolded = 0;
   for(const r of docable.filter(x=>x.tab === "ludus" || x.tab === "villa")){
+    await p.evaluate(()=>{ const b=document.querySelector(".reportbar"); if(b) b.click(); });
+    await p.waitForTimeout(350);
     const hit = await p.evaluate(lab=>{
-      const b=[...document.querySelectorAll("button.optrow")].find(x=>(x.innerText||"").includes(lab.slice(0,30)));
+      const w=[...document.querySelectorAll(".modalwrap")].pop();
+      const b=[...(w?w.querySelectorAll("button.optrow"):[])].find(x=>(x.innerText||"").includes(lab.slice(0,30)));
       if(!b) return false; b.click(); return true; }, r.label);
-    if(!hit) continue;
+    if(!hit){ await p.evaluate(()=>{ const w=[...document.querySelectorAll(".modalwrap")].pop();
+      const c=[...(w?w.querySelectorAll("button"):[])].find(x=>/close/i.test(x.getAttribute("aria-label")||x.innerText||""));
+      if(c) c.click(); }); await p.waitForTimeout(200); continue; }
     await p.waitForTimeout(350);
     const state = await p.evaluate(()=>{
       const w=[...document.querySelectorAll(".modalwrap")].pop(); if(!w) return null;
@@ -92,8 +99,11 @@ export async function run({ p, errors }){
   /* ---- and the footer travels to the face the item names ---- */
   const doctrine = docable.find(r=>r.doc==="doctrine");
   if(doctrine){
-    await p.evaluate(lab=>{ const b=[...document.querySelectorAll("button.optrow")]
-      .find(x=>(x.innerText||"").includes(lab.slice(0,30))); if(b) b.click(); }, doctrine.label);
+    await p.evaluate(()=>{ const b=document.querySelector(".reportbar"); if(b) b.click(); });
+    await p.waitForTimeout(350);
+    await p.evaluate(lab=>{ const w=[...document.querySelectorAll(".modalwrap")].pop();
+      const b=[...(w?w.querySelectorAll("button.optrow"):[])].find(x=>(x.innerText||"").includes(lab.slice(0,30)));
+      if(b) b.click(); }, doctrine.label);
     await p.waitForTimeout(320);
     await p.evaluate(()=>{ const b=[...document.querySelectorAll(".modalwrap button")]
       .find(x=>/see it in the house/i.test(x.innerText||"")); if(b) b.click(); });

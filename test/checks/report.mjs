@@ -30,8 +30,11 @@ export async function run({ p, errors }){
   await p.waitForTimeout(1100); await clearAll(p, 8);
 
   await tab(p, "ludus"); await p.waitForTimeout(300);
+  /* INVERTED in v3.93.0: THIS WEEK left the home page, so the bar is universal now — a home
+     without the bar would mean the week's business is reachable from everywhere EXCEPT the
+     place a session starts. */
   const onHome = await p.evaluate(()=>!!document.querySelector(".reportbar"));
-  if(onHome) fails.push("the bar shows on ludus, where the report already opens the page");
+  if(!onHome) fails.push("no report bar on the ludus — THIS WEEK left the page in v3.93.0 and the bar is the only door to the week from home");
 
   await tab(p, "arena"); await p.waitForTimeout(350); await clearAll(p, 4);
   await tab(p, "arena"); await p.waitForTimeout(250); await clearAll(p, 4);
