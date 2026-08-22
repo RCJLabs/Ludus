@@ -2694,7 +2694,7 @@ function agendaFolk(d, add){
   const ask = Math.min(...missing.map(k => rnd(hhWage(d, k) * 16)));
   if(d.gold < ask + weeklyBill(d) * 12) return;
   const H = HOUSEHOLD[missing[0]];
-  add(1, "villa", missing.length === HH_KEYS.length - 1
+  add(1, "villa:council:household", missing.length === HH_KEYS.length - 1
       ? "Nobody feeds this house, or nurses it, or keeps it"
       : `${missing.length} of the household have never been hired`,
     `${H.name.toLowerCase()} from ${ask}d — ${H.line.replace(/\.$/, "").toLowerCase()}`);
@@ -3171,7 +3171,7 @@ function agenda(d){
         `${men.map(f=>f.name).join(", ")} — no festival needed, and ${free.length===1?"one man is":free.length+" men are"} free`,
         "pit"); }
   agendaSquare(d, add);
-  if(d.unrest >= 70) add(2, "ludus", "The cells are close to fire", unrestWord(d.unrest));
+  if(d.unrest >= 70) add(2, "ludus::cells", "The cells are close to fire", unrestWord(d.unrest));
   if(d.lanista && d.lanista.health < 30 && !d.heir) add(2, "ludus", "You are failing and have named nobody", "the house dies with you");
   { const br = inBreach(d);
     if(br.length) add(lawOf(d).heat>=45?3:2, "villa",
@@ -3206,7 +3206,7 @@ function agenda(d){
       `The city is owed ${liturgy(d)}d a week and has not had it`,
       `${d.flags.litDue} week${d.flags.litDue===1?"":"s"} behind — your standing is bleeding for it`);
   if(liquid(d) < 120 && owedTotal(d) >= 250)
-    add(2, "villa", `${owedTotal(d)}d owed to you and ${Math.round(liquid(d))} in the box`, "rich on paper is not rich");
+    add(2, "villa:council:owed", `${owedTotal(d)}d owed to you and ${Math.round(liquid(d))} in the box`, "rich on paper is not rich");
   /* the slide toward the creditors' line, which is the one number that ends a run
      without anybody deciding anything */
   if(d.gold < 0){
@@ -3239,7 +3239,7 @@ function agenda(d){
   if(d.doctore && (d.doctore.drill||"none")==="none" && !d.flags.everDrill && activeG(d).length>=3)
     add(1, "men::square", "The doctore is set to no drill", "put the whole yard on a week's emphasis");
   if(merchLive(d) && d.brand && !d.brand.decided)
-    add(2, "villa", "The potters want your name", "license it wide, or keep it fine");
+    add(2, "villa:house:houseName", "The potters want your name", "license it wide, or keep it fine");
   if(marryReady(d) && (d.flags.matchCool==null || d.week>=d.flags.matchCool))
     add(1, "villa:house:blood", "The matchmakers are calling", "a wife, and an heir of your own blood");
   /* ---- THE ONE TIME IT IS WORTH SAYING OUT LOUD — after that the tab speaks for itself ----
