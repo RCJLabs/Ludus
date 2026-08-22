@@ -518,6 +518,36 @@ That is the same fault three times in one release — hidden text has no `innerT
 
 **`scroll`'s button count had been wrong since it was written.** Folding the whole villa away changed the page height by 503px and the button count by *nothing*, which is impossible, and that is what gave it away. Chrome hides a closed `<details>`'s contents **without zeroing its descendants' rects**: House Colours measured 44px tall inside a 1,155px page while its `.sectbody` still reported a 951px box and every one of its 47 swatches a 44×44 rect. Every "buttons on screen" figure the check had printed was inflated. It asks the ancestor now, not the geometry — and the first correction over-shot the other way, excluding controls inside a folded row's SUMMARY, which is where the block keeps its buy button: a closed `<details>` hides its body, not its summary. The check gains a second ceiling on CHOICES, because screens are not the only way a page crowds and a short page can still hand the reader a wall of buttons.
 
+**The worksheet (v3.99.0).** The loop was measured before it was touched, and the first number refuted the obvious suspect: **a week transition costs a mean 2.5 taps, worst 4.** (The first run said 25 — the probe was oscillating against the charter's opt-out confirm, clicking "I know the work" and then "Think again" twenty-four times. Instrument, not game.) The cost is not the week boundary. It is what surrounds it.
+
+**What the agenda actually is**, over 320 played weeks and 2,269 rows: **7.09 rows a week**, of which **41% already name a panel** and open it in place with its real controls, **0.8%** travel to a face, and **58% land the player on a bare tab** — which, since v3.98.0 folded every section, means arriving at a page of shut drawers. The three-tap fault this release is for, recreated by the release before it.
+
+Three changes, one surface:
+
+* **A row may carry its deed.** `agenda` stays pure — it stores the NAME of a deed and App turns the name into a press. Only ATOMIC deeds qualify: one press, no argument, nothing to choose. Three so far (the feast, walking the block, taking the rung); a deed that needs a man picked or a sum named is not a row's business and keeps its panel, where the choosing lives. Pressing one leaves the sheet standing and the row simply goes, because the agenda recomputes — which is idea #4 arriving for free.
+* **Three things, not one list.** A standing want ("nobody nurses this house") used to sit in the same weight as a debt falling due, every week, which is how a list teaches you to stop reading it. Now: **Due** / **Worth doing** / **What the house still wants**, led by *the week that was* — a morning report should begin with the morning.
+* **The week has a close.** End Week reads *"End week · N unanswered"*, counting only what is DUE. Counting all 7.09 rows would print a number every morning and mean nothing by the second week.
+
+**An honest correction on the pitch.** "Make the report actionable" was sold as the biggest lever; measurement put its ceiling lower than advertised. 41% of rows were already actionable in place, and only three items in the whole agenda reduce to an atomic verb. The grouping and the close carry more of this release's weight than the verbs do.
+
+`sheet` is the new check, and it forces its own fixture twice: a house at unrest 72 with coin (so a deed exists to press, and pressing it must move the house — the feast took unrest 72→65 and 121d), and a house with a levy falling due this week (so the close's number is exercised at all, rather than passing on a founding that happens to owe nothing). One instrument fault caught in the writing: `.btn` uppercases through CSS and `innerText` returns the *transformed* text, so a lowercase `/unanswered/` never matched "END WEEK · 1 UNANSWERED".
+
+### The loop, queued
+Measured and argued in v3.99.0's brainstorm; ordered by expected value, not by ease.
+
+1. ~~Rows carry their deed~~ — v3.99.0.
+2. ~~Three groups, not one list~~ — v3.99.0.
+3. ~~The week has a close~~ — v3.99.0.
+4. **Return to the list, not the room.** Acting from a row should strike it through and leave you on the sheet. Half-arrived already: a row's own deed leaves the sheet standing. The other half — travelling and coming back — is open.
+5. **Fold the armoury into the man.** `familia · The Armoury` is a whole face carrying **one action**. Gear belongs on the gladiator's card: you kit *him*, not the rack.
+6. **Deadlines on a clock.** Urgency is a colour with no horizon. A *this week / next / later* column on the sheet, and a season strip on the scene.
+7. **Make the scene report state.** Racks tarnishing as steel wears, cells darkening with unrest, the gate lit with new stock — then navigation IS information. Should wait for the art pass; it is the same work.
+8. **Land on the morning, don't dismiss it.** "The week that was" is the one moment with narrative weight and it is spent as a modal you tap past. Merge it with the report as the page you arrive on.
+9. **Set the week's work in one place.** Assignments are per-man, per-card; a yard-level board matches how a lanista thinks.
+10. **A "what you can do here" strip per face.** 81% of actions sit below the first 844px and `villa · The House` carries 2,440px of dead section above its last action.
+
+Items 2, 6 and 9 change what the game ASKS of the player, not merely where the buttons are — those want a measurement of whether the pacing improves, not just a build.
+
 Still open in this arc: the art pass (the rooms are placeholder-grade silhouettes); the fonts, still an external Google Fonts fetch that will not load offline (pre-existing, but the ledger leans on type harder than the night ground did); and whatever real play on a big house turns up next — its first two screenshots each found something no fixture had.
 
 ### Seeded runs

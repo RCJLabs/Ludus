@@ -2668,7 +2668,8 @@ function agendaCan(d, add){
          Math.round of it is 1 for every house that can exist, and this line read
          "it would reach 1 of them" to a house of eight. The panel on the villa tab
          has always quoted it correctly, as a percentage; this now says the same thing. */
-      `${unrestWord(d.unrest).toLowerCase()} · ${feastCost(d)}d, and on ${activeG(d).length} men it lands ${Math.round(feastReach(d)*100)}% as hard as on four`);
+      `${unrestWord(d.unrest).toLowerCase()} · ${feastCost(d)}d, and on ${activeG(d).length} men it lands ${Math.round(feastReach(d)*100)}% as hard as on four`,
+      null, "feast");
   /* ---- AND A MAN AT ANOTHER HOUSE, WHICH NOTHING HAS EVER MENTIONED ----
      `courted` fired 0 times across 4,908 house-weeks and six of the arc's functions were
      dark. Its falsification came back the same way #95's did: a policy that deliberately
@@ -2730,7 +2731,7 @@ function agendaCan(d, add){
   if(canClaimRise(d)){
     const nx = riseNext(d);
     add(2, "villa:standing:yourStanding", `${nx ? nx.name : "The next rung"} is there to be taken`,
-      `${riseFee(nx)}d to be received — the stipend runs from the week you are`);
+      `${riseFee(nx)}d to be received — the stipend runs from the week you are`, null, "takeRise");
   }
 }
 
@@ -3165,10 +3166,10 @@ const agWord = age => age <= 0 ? "new this week" : age <= AG_FRESH ? `${age} wee
 function agenda(d){
   const A = [];
   /* tab[:face][:panel] — see the note above `agenda` */
-  const add = (urgency, tab, label, sub, key) => {
+  const add = (urgency, tab, label, sub, key, act) => {
     const [t, face, doc] = String(tab).split(":");
     A.push({ urgency, tab:t, dest: face ? `${t}:${face}` : null, doc: doc || null,
-      label:herOwn(d,label), sub:herOwn(d,sub), key });
+      label:herOwn(d,label), sub:herOwn(d,sub), key, act: act || null });
   };
   if(d.pendingEvent) add(3, "ludus", d.pendingEvent.title, "a decision is waiting");
   if(d.succession) add(3, "ludus", "The house has no head", "somebody must take it up");
@@ -3284,7 +3285,7 @@ function agenda(d){
         `${men.map(f=>f.name).join(", ")} — no festival needed, and ${free.length===1?"one man is":free.length+" men are"} free`,
         "pit"); }
   agendaSquare(d, add);
-  if(d.unrest >= 70) add(2, "ludus::cells", "The cells are close to fire", unrestWord(d.unrest));
+  if(d.unrest >= 70) add(2, "ludus::cells", "The cells are close to fire", unrestWord(d.unrest), null, "walkCells");
   if(d.lanista && d.lanista.health < 30 && !d.heir) add(2, "ludus", "You are failing and have named nobody", "the house dies with you");
   { const br = inBreach(d);
     if(br.length) add(lawOf(d).heat>=45?3:2, "villa",
@@ -21002,6 +21003,10 @@ export default function App(){
      the tab bar both read this, so switching tabs cannot disagree with what the bar showed */
   const marks = (S && !S.over) ? tabMarks(S) : null;
   const AGN = (S && !S.over) ? (()=>{ try { return agenda(S)||[]; } catch(e){ return []; } })() : [];
+  /* what is still DUE — the only count the week's close is about. The whole agenda is 7.09 rows
+     a week and most of them are wants; a button that said "12 unanswered" every morning would
+     mean nothing by the second week. */
+  const DUE_N = AGN.filter(a=>a.urgency>=3).length;
   useEffect(()=>{ if(!S || S.over || !marks) return;
     /* the ask list is part of "seen" now, so the third dep is what is asking as well as
        what has changed — otherwise a new urgent item on the tab you are already looking at
@@ -22358,6 +22363,18 @@ export default function App(){
     setTab(t);
     if(face && t === "men") setMView(face);
     if(face && t === "villa") setVView(face); };
+  /* ---- WHAT A ROW CAN DO WITHOUT LEAVING THE LIST ----
+     `agenda` is pure and knows nothing of handlers, so it stores the NAME of a deed and this
+     turns the name into a press. Only ATOMIC deeds qualify — one press, no argument, nothing to
+     choose. A deed that needs a man picked or a sum named is not a row's business: those rows
+     keep opening their panel, where the choosing lives. Every verb is written as the doing of
+     it, not as the name of a screen. */
+  const ROW_ACTS = {
+    feast:     { verb: () => `Set the tables · ${feastCost(S)}d`, run: feast },
+    walkCells: { verb: () => "Go down to the block",              run: walkCells },
+    takeRise:  { verb: () => "Take the rung",                     run: takeRise },
+  };
+
   const SX = { askFavour, backHim, buyGear, carryOut, rackFilt, setAnnals, setAsk, setRackFilt, setSheet, setShowChron, declare, dismissDoc, doRite, doTourney, feast, hireDoc, hireStaff, host, joinCollegium, letStaffGo, mut, offerTo, openLicence, roster, seekMatch, selG, sellOne, setCrest, setDrill, setEar, setPupil, standings, stopCollegium, stopRetrain, takeRise, vowTo, walkCells };
 
   return (
@@ -22396,14 +22413,14 @@ export default function App(){
                 const n = weeksToSomething(S, 6);
                 return (
                   <span className="flex gap-2">
-                    <button className="btn btn-ghost" onClick={advance}>End Week</button>
+                    <button className="btn btn-ghost" onClick={advance}>{DUE_N ? `End week · ${DUE_N} unanswered` : "End week"}</button>
                     <button className="btn" onClick={runOn} style={{whiteSpace:"nowrap"}}>
                       Let it run · {n}w
                     </button>
                   </span>
                 );
               }
-              return <button className="btn" onClick={advance} disabled={blocked}>End Week</button>;
+              return <button className="btn" onClick={advance} disabled={blocked}>{DUE_N ? `End week · ${DUE_N} unanswered` : "End week"}</button>;
             })()}
           </div>
         </div>
@@ -25092,21 +25109,72 @@ export default function App(){
               <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".12em",color:"var(--ink-hi)"}}>THE MORNING REPORT</div>
               <button className="btn btn-ghost" style={{padding:"10px 10px"}} aria-label="Close" onClick={()=>setReport(null)}><X size={14}/></button>
             </div>
-            {AGN.map((a,i)=>{ const FACES = { house:"The House", standing:"Standing", council:"Coin & Council",
+            {/* ---- THREE THINGS, NOT ONE LIST ----
+                 The sheet used to be one flat column, so a standing want ("nobody nurses this
+                 house") sat in the same weight as a debt falling due this week, every week, which
+                 is how a list teaches you to stop reading it. Measured over 320 played weeks the
+                 agenda raises 7.09 rows a week, and most of them are wants. So: what is DUE, what
+                 is worth doing, and what this house still lacks — and the week that was, at the
+                 head, because a morning report should begin with the morning. */}
+            {(()=>{
+              const FACES = { house:"The House", standing:"Standing", council:"Coin & Council",
                 armory:"The Armoury", roster:"The Roster", board:"The Board" };
-              const where = `${TAB_NAMES[a.tab]||a.tab}${a.dest ? ` · ${FACES[a.dest.split(":")[1]]||""}` : ""}`;
-              const docable = a.doc && SECT[a.doc];
-              return (
-              <button key={i} className="optrow" style={{width:"100%",textAlign:"left",padding:"10px 11px",marginBottom:6,
-                  borderLeft:`3px solid ${URG[a.urgency].c}`}}
-                onClick={()=>{ setReport(null); docable ? setDeskDoc(a) : goTo(a.dest || a.tab); }}>
-                <div className="flex items-center justify-between gap-2">
-                  <span style={{fontSize:"var(--fs-md)",color:a.urgency===3?"var(--ink)":"var(--ink-2)",minWidth:0}}>{a.label}</span>
-                  <span className="rowval dim" style={{fontSize:"var(--fs-sm)",whiteSpace:"nowrap"}}>{docable ? "open ›" : `${where} ›`}</span>
-                </div>
-                {a.sub && <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:1}}>{a.sub}</div>}
-              </button>
-            ); })}
+              const GROUPS = [
+                { key:3, title:"Due", note:"this week" },
+                { key:2, title:"Worth doing", note:"while there is time" },
+                { key:1, title:"What the house still wants", note:"no hurry" },
+              ];
+              const row = (a, i) => {
+                const where = `${TAB_NAMES[a.tab]||a.tab}${a.dest ? ` · ${FACES[a.dest.split(":")[1]]||""}` : ""}`;
+                const docable = a.doc && SECT[a.doc];
+                const deed = a.act && ROW_ACTS[a.act];
+                return (
+                  <div key={i} style={{marginBottom:6}}>
+                    <button className="optrow" style={{width:"100%",textAlign:"left",padding:"10px 11px",
+                        borderLeft:`3px solid ${URG[a.urgency].c}`}}
+                      onClick={()=>{ setReport(null); docable ? setDeskDoc(a) : goTo(a.dest || a.tab); }}>
+                      <div className="flex items-center justify-between gap-2">
+                        <span style={{fontSize:"var(--fs-md)",color:a.urgency===3?"var(--ink)":"var(--ink-2)",minWidth:0}}>{a.label}</span>
+                        <span className="rowval dim" style={{fontSize:"var(--fs-sm)",whiteSpace:"nowrap"}}>{docable ? "open ›" : `${where} ›`}</span>
+                      </div>
+                      {a.sub && <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:1}}>{a.sub}</div>}
+                    </button>
+                    {/* the deed itself, on the line, for the rows whose deed is one press */}
+                    {deed && (
+                      <button className="btn" style={{width:"100%",marginTop:3,padding:"9px 12px"}}
+                        onClick={()=>{ deed.run(); }}>
+                        {deed.verb()}
+                      </button>
+                    )}
+                  </div>
+                );
+              };
+              return (<>
+                <button className="optrow" style={{width:"100%",textAlign:"left",padding:"10px 11px",marginBottom:9,
+                    borderLeft:"3px solid var(--line-3)"}}
+                  onClick={()=>{ setReport(null); setDeskDoc({ doc:"lastWeek", label:"The week that was" }); }}>
+                  <div className="flex items-center justify-between gap-2">
+                    <span style={{fontSize:"var(--fs-md)",color:"var(--ink-2)"}}>The week that was</span>
+                    <span className="rowval dim" style={{fontSize:"var(--fs-sm)",whiteSpace:"nowrap"}}>open ›</span>
+                  </div>
+                </button>
+                {GROUPS.map(G => { const rows = AGN.filter(a=>a.urgency===G.key);
+                  if(!rows.length) return null;
+                  return (
+                    <div key={G.key} style={{marginBottom:4}}>
+                      <div className="flex items-center justify-between gap-2"
+                        style={{margin:"2px 2px 5px",borderBottom:"1px dotted var(--line-3)",paddingBottom:3}}>
+                        <span className="disp" style={{fontSize:"var(--fs-sm)",letterSpacing:".1em",
+                          color: G.key===3 ? "var(--blood)" : G.key===2 ? "var(--gold)" : "var(--ink-dim)"}}>
+                          {G.title.toUpperCase()}
+                        </span>
+                        <span className="dim" style={{fontSize:"var(--fs-sm)"}}>{rows.length} · {G.note}</span>
+                      </div>
+                      {rows.map(row)}
+                    </div>
+                  ); })}
+              </>);
+            })()}
                 {/* the doctore's word on the week, which lived at the bottom of the old section */}
                 {(()=>{ const C = counsel(S); if(!C) return null;
                   return (
