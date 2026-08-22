@@ -3038,15 +3038,20 @@ const agWord = age => age <= 0 ? "new this week" : age <= AG_FRESH ? `${age} wee
    misread into a bug with no symptom.
    The note sits out here because it is documentation, not logic, and `agenda` was at exactly the
    200 lines `bulk` allows — nine lines of prose inside it took the check red. */
+/* ---- WHERE AN ITEM POINTS: tab[:face][:panel] ----
+   `add`'s tab may name a FACE as "tab:face" (v3.86.0 — a row that set only the tab dropped the
+   player one chip short of its panel) and, since v3.87.0, a PANEL as "tab:face:panel" — the third
+   part is a SECT registry id, and a row that carries one opens that panel as a DOCUMENT in place
+   instead of travelling at all. The morning-ludus direction in one line: the agenda already knows
+   what wants an answer; now it can hand you the panel that answers it. An empty middle part
+   ("men::square") names a panel across tabs without inventing a face. The `tab` field stays a plain
+   key throughout, so everything that groups or badges by tab is untouched. The `desk` check holds
+   the ids to SECT's real names, because a typo does not throw — it silently travels.
+   (This note sits out here because agenda sits two lines under its bulk allowance, and prose is
+   documentation, not size.) */
 function agenda(d){
   const A = [];
-  /* `tab` may name a FACE as "tab:face" (v3.86.0 — a row that set only the tab dropped the player
-     one chip short of its panel) and, since v3.87.0, a PANEL as "tab:face:panel" — the third part is
-     a SECT registry id, and a row that carries one opens that panel as a DOCUMENT in place instead
-     of travelling at all. The morning-ludus direction in one line: the agenda already knows what
-     wants an answer; now it can hand you the panel that answers it. An empty middle part
-     ("men::square") names a panel across tabs without inventing a face. The `tab` field stays a
-     plain key throughout, so everything that groups or badges by tab is untouched. */
+  /* tab[:face][:panel] — see the note above `agenda` */
   const add = (urgency, tab, label, sub, key) => {
     const [t, face, doc] = String(tab).split(":");
     A.push({ urgency, tab:t, dest: face ? `${t}:${face}` : null, doc: doc || null,
