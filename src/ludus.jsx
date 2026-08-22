@@ -23333,6 +23333,8 @@ export default function App(){
                         <div className="v" style={{color: key ? "var(--gold)" : (lvl>=2 ? "var(--ink)" : "var(--ink-2)")}}>
                           {lvl>=2 ? rnd(g[k]) : `${lo}–${hi}`}
                         </div>
+                        <Band lo={lo} hi={hi} exact={lvl>=2 ? g[k] : null}
+                          label={STAT_NAMES[k]} color={key?BRONZE:"var(--line-4)"}/>
                       </div>
                     ); })}
                 </div>

@@ -39,11 +39,16 @@ const readBlock = p => p.evaluate(()=>{
     if(!el.querySelector('[role=progressbar]')) continue;
     if(!/^\d+d$/.test((((el.querySelector(".gold")||{}).innerText)||"").trim())) continue;
     const txt = (el.innerText||"").replace(/\s+/g," ");
+    /* everything the panel holds, folded or not — used ONLY for the read-level sentence */
+    const deep = (el.textContent||"").replace(/\s+/g," ");
     out.push({
       name: ((el.innerText||"").split("\n")[0]||"").trim(),
-      /* which sentence is showing IS the read level, without asking the game anything */
-      lvl: /Assessed:/.test(txt) ? 2 : /walks round/.test(txt) ? 1 : 0,
-      offered: /looked over/i.test(txt),
+      /* which sentence the panel CARRIES is the read level, without asking the game anything.
+         v3.97.0: read it off textContent, not innerText — the sentence is folded behind the row
+         now, and a folded sentence is still the panel's. Reading it as "not there" made every
+         scouted man look unscouted and turned two honest bars into a reported leak. */
+      lvl: /Assessed:/.test(deep) ? 2 : /walks round/.test(deep) ? 1 : 0,
+      offered: /looked over/i.test(deep),
       bands: [...txt.matchAll(/\b(\d{1,2})[–-](\d{1,2})\b/g)].map(m=>[+m[1], +m[2]]),
       exact: [...txt.matchAll(/\b(?:Stre|Agil|Endu|Tech|Show|Disc)\s+(\d{1,3})\b/g)].map(m=>+m[1]),
       bars: [...el.querySelectorAll('[role=progressbar]')].map(b=>{
@@ -108,7 +113,11 @@ export async function run({ p, errors }){
   /* ---- 3. and paying for a man does what it says ---- */
   await tab(p, "market"); await p.waitForTimeout(240); await clearAll(p, 6);
   await tab(p, "market"); await p.waitForTimeout(240);
-  const paid = await p.evaluate(()=>{ const b = [...document.querySelectorAll("button.btn")]
+  const paid = await p.evaluate(()=>{
+    /* v3.97.0: the fee sits behind the candidate's row. Open them first — that IS the player's
+       path, and a hidden button has no innerText for the matcher below to find. */
+    for(const d of document.querySelectorAll("details.entry.card")) d.open = true;
+    const b = [...document.querySelectorAll("button.btn")]
     .find(x => /looked over/i.test(x.innerText||"") && !x.disabled);
     if(!b) return null; const t = (b.innerText||"").trim(); b.click(); return t; });
   if(!paid){
