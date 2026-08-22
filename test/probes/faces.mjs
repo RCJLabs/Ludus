@@ -33,9 +33,11 @@
    which is what proved them. Read the errors, do not just count them: `X is not defined` is a real
    scope break, `Cannot read properties of undefined` is only the absent state you forced.
 
-   BASELINE, v3.85.0: 14 faces, 30 sections, 0 page errors on REACH-1 at week 26. It was 15 faces
-   and 36 sections until five archival panels moved into the `stand` sheet and the villa's one-panel
-   `Cells` face was folded into `The House`.
+   BASELINE, v3.89.0: 14 faces, 27 sections, 0 page errors on REACH-1 at week 26. The trail down:
+   36 until v3.85.0 moved five archival panels into the `stand` sheet and folded the villa's
+   one-panel `Cells` face into `The House` (30); 31 with the armoury face; 27 when the scene drew
+   the yard, the square, unrest and the cells at night out of the panel list entirely — those four
+   live as rooms now, their panels opening as documents.
 
    Usage: node test/probes/faces.mjs [expected-total]     FACES_NAMES=1 to list what rendered
           FACES_WEEKS=n to change the depth (default 26)

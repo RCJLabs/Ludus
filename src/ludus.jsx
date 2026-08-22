@@ -33,6 +33,7 @@ const CSS = `
 .tag-gold{border-color:#8a6a2c;color:#e0bd72}
 .track{height:7px;border-radius:99px;background:#120d09;border:1px solid #33271a;overflow:hidden}
 .fill{height:100%;border-radius:99px;transition:width .4s}
+.scn{cursor:pointer}.scn:focus-visible{outline:1px solid #c99a4b;outline-offset:2px}
 .tabbtn{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 2px;min-height:56px;color:#a08d6b;font-family:'Cinzel',serif;font-size:var(--fs-micro);letter-spacing:.04em;text-transform:uppercase;background:none;border:none;cursor:pointer;border-top:2px solid transparent;overflow:hidden;white-space:nowrap}
 .tabbtn.on{color:#e0bd72;border-top-color:#c99a4b}
 .modalwrap{position:fixed;inset:0;background:rgba(10,7,5,.84);display:flex;align-items:flex-end;justify-content:center;z-index:50}
@@ -20598,6 +20599,175 @@ const SECT = {
   ),
 };
 
+/* ---- THE SCENE — phase 2 of the morning ludus, drafted outside the tree while the suite runs ----
+
+   The ludus, drawn: a compact vertical cutaway that REPLACES four of the ludus tab's panels (the
+   yard, unrest, the cells at night, the training square) rather than stacking above them. Every
+   room is a real tappable control, and what a tap opens is a DOCUMENT — the desk mechanism from
+   v3.87.0, so the panel that opens is the SECT panel itself, force-unfolded, with "see it in the
+   house" underneath. The scene is a picture that opens letters.
+
+   CALLERS are derived, never hand-set: an agenda item that names a panel (a.doc) stands at the room
+   that panel lives in, urgency-coloured, the same derivation the report rows use. A room with no
+   caller is still tappable — the browse layer the pure-mail idea lacked.
+
+   Sizing: the four panels this replaces measured 354+153+414+1130 = 2,051px on arrival. The scene
+   budget is ~640px. Ludus gets SHORTER by ~1,400px, which for once is a change the arrival tally
+   can actually score.
+*/
+const SCENE_ROOM = {   /* which room a panel's caller stands at */
+  square:"square", cells:"cells", unrest:"cells", cellsNight:"cells",
+  watch:"villa", blood:"villa", houseName:"villa", household:"villa", doctrine:"villa",
+  aedileship:"villa", yourStanding:"villa", rites:"villa", owed:"villa", temple:"shrine",
+  rack:"racks", collegium:"cells",
+};
+function Scene({ S, agenda, openDoc, openMan, go }){
+  const A = agenda || [];
+  const at = room => A.filter(a=>a.doc && SCENE_ROOM[a.doc]===room);
+  const worst = list => list.reduce((m,a)=>Math.max(m,a.urgency||1), 0);
+  const Badge = ({x,y,list,forRoom}) => !list.length ? null : (
+    <g aria-hidden="true">
+      <circle cx={x} cy={y} r="9" fill={worst(list)>=3 ? "#cf5a49" : "#c99a4b"}>
+        {worst(list)>=3 && <animate attributeName="opacity" values="1;.5;1" dur="1.8s" repeatCount="indefinite"/>}
+      </circle>
+      <text x={x} y={y+4} textAnchor="middle" fontSize="11" fontWeight="bold" fill="#14100c">{list.length}</text>
+    </g>);
+  const men = activeG(S);
+  const label = (x,y,t,anchor) => <text x={x} y={y} textAnchor={anchor||"middle"} fontSize="10.5"
+    fill="#b09b7d" fontStyle="italic" fontFamily="Georgia,serif">{t}</text>;
+  const room = (x,y,t) => <text x={x} y={y} fontSize="10" letterSpacing="3" fill="#8a6a2c"
+    fontFamily="'Cinzel',serif">{t}</text>;
+  const Man = ({x,y,g,tone}) => (
+    <g className="scn" role="button" tabIndex={0} aria-label={`${g.name} the ${g.cls}`}
+      onClick={()=>openMan(g.id)} onKeyDown={e=>{ if(e.key==="Enter") openMan(g.id); }}>
+      <circle cx={x} cy={y} r="7" fill="#241c12" stroke={g.injury?"#a8705f":tone} strokeWidth="1.3"/>
+      <path d={`M${x} ${y+8} q-9 3 -10 27 l5 0 q1 -11 5 -14 q4 3 5 14 l5 0 q-1 -24 -10 -27 Z`}
+        fill="#241c12" stroke={g.injury?"#a8705f":tone} strokeWidth="1.3"/>
+      {label(x, y+48, g.name.slice(0,11))}
+    </g>);
+
+  return (
+    <svg viewBox="0 0 390 640" style={{display:"block",width:"100%",height:"auto"}} role="group"
+      aria-label="The ludus — every room opens its own business">
+      <defs>
+        <linearGradient id="scn-dawn" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#2b2115"/><stop offset="1" stopColor="#14100c"/>
+        </linearGradient>
+        <linearGradient id="scn-stone" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#241c12"/><stop offset="1" stopColor="#1a1410"/>
+        </linearGradient>
+        <radialGradient id="scn-torch"><stop offset="0" stopColor="#c99a4b" stopOpacity=".5"/>
+          <stop offset="1" stopColor="#c99a4b" stopOpacity="0"/></radialGradient>
+      </defs>
+      <rect width="390" height="640" fill="url(#scn-dawn)"/>
+      <rect x="0" y="16" width="12" height="624" fill="url(#scn-stone)"/>
+      <rect x="378" y="16" width="12" height="624" fill="url(#scn-stone)"/>
+
+      {/* THE VILLA — travels; its callers are the villa-panel documents */}
+      <g className="scn" role="button" tabIndex={0} aria-label="The villa — the house's own business"
+        onClick={()=>go("villa")} onKeyDown={e=>{ if(e.key==="Enter") go("villa"); }}>
+        {room(26, 34, "THE VILLA")}
+        <path d="M28 108 L28 62 L195 30 L362 62 L362 108 Z" fill="url(#scn-stone)" stroke="#33271a"/>
+        <path d="M20 64 L195 26 L370 64 L370 58 L195 18 L20 58 Z" fill="#2e2416" stroke="#3e2f1f"/>
+        <rect x="176" y="66" width="38" height="42" rx="3" fill="#0f0c08" stroke="#6d5426"/>
+        <rect x="66" y="72" width="24" height="24" fill="#1c1408" stroke="#3e2f1f"/>
+        <circle cx="78" cy="84" r="13" fill="url(#scn-torch)"/>
+        <Badge x={224} y={72} list={at("villa")}/>
+      </g>
+
+      {/* THE SHRINE */}
+      <g className="scn" role="button" tabIndex={0} aria-label="The shrine — the temple"
+        onClick={()=>openDoc({ label:"The Temple", sub:"the gods, and what they are owed", doc:"temple", dest:"villa:standing", tab:"villa" })}
+        onKeyDown={e=>{ if(e.key==="Enter") openDoc({ label:"The Temple", doc:"temple", dest:"villa:standing", tab:"villa" }); }}>
+        <path d="M306 172 L306 140 L328 126 L350 140 L350 172 Z" fill="url(#scn-stone)" stroke="#33271a"/>
+        <ellipse cx="328" cy="152" rx="4" ry="6" fill="#8a6a2c" opacity=".55"/>
+        {label(328, 188, "the shrine")}
+        <Badge x={352} y={132} list={at("shrine")}/>
+      </g>
+
+      {/* THE TRAINING SQUARE — opens the square as a document */}
+      <g className="scn" role="button" tabIndex={0}
+        aria-label={S.doctore ? `The training square — ${S.doctore.name} has the drill` : "The training square — no doctore"}
+        onClick={()=>openDoc({ label:"The training square", sub:S.doctore?`${S.doctore.name} · ${S.doctore.wage}d a week`:"no doctore — you run it", doc:"square", scene:true, tab:"ludus" })}
+        onKeyDown={e=>{ if(e.key==="Enter") openDoc({ label:"The training square", doc:"square", scene:true, tab:"ludus" }); }}>
+        {room(26, 216, "THE TRAINING SQUARE")}
+        <rect x="24" y="226" width="270" height="96" fill="#2a2013" stroke="#33271a"/>
+        <rect x="60" y="240" width="7" height="66" rx="2" fill="#3a2c18" stroke="#241c12"/>
+        {S.doctore && <g>
+          <circle cx="132" cy="252" r="7" fill="#241c12" stroke="#c99a4b" strokeWidth="1.3"/>
+          <path d="M132 260 q-9 3 -10 27 l5 0 q1 -11 5 -14 q4 3 5 14 l5 0 q-1 -24 -10 -27 Z" fill="#241c12" stroke="#c99a4b" strokeWidth="1.3"/>
+          <line x1="145" y1="242" x2="145" y2="290" stroke="#8a6a2c" strokeWidth="2"/>
+          {label(132, 314, S.doctore.name.slice(0,12))}
+        </g>}
+        {!S.doctore && label(120, 280, "no doctore — the drill only half takes")}
+        <Badge x={286} y={234} list={at("square")}/>
+      </g>
+
+      {/* THE YARD — each man is his own control, straight to his card */}
+      <g>
+        {room(26, 356, "THE YARD")}
+        <rect x="24" y="366" width="342" height="100" fill="#191309" stroke="#33271a"/>
+        {men.slice(0,7).map((g,i)=><Man key={g.id} x={56+i*46} y={382} g={g}
+          tone={(g.fatigue||0)>55?"#a8917d":"#e8d9b8"}/>)}
+        {men.length>7 && label(340, 420, `+${men.length-7}`)}
+        {men.length===0 && label(195, 414, "nobody — the cells stand empty")}
+      </g>
+
+      {/* THE CELLS — opens what you can do for the block */}
+      <g className="scn" role="button" tabIndex={0}
+        aria-label={`The cells at night — ${unrestWord(S.unrest).toLowerCase()}`}
+        onClick={()=>openDoc({ label:"The cells at night", sub:unrestWord(S.unrest).toLowerCase(), doc:"cellsNight", scene:true, tab:"ludus" })}
+        onKeyDown={e=>{ if(e.key==="Enter") openDoc({ label:"The cells at night", doc:"cellsNight", scene:true, tab:"ludus" }); }}>
+        {room(26, 496, "THE CELLS")}
+        <rect x="24" y="506" width="200" height="58" fill="url(#scn-stone)" stroke="#33271a"/>
+        {[44,92,140,188].map(x=><g key={x}>
+          <rect x={x} y={518} width="26" height="20" fill="#0b0906"/>
+          <line x1={x+7} y1={518} x2={x+7} y2={538} stroke="#3e2f1f" strokeWidth="1.3"/>
+          <line x1={x+14} y1={518} x2={x+14} y2={538} stroke="#3e2f1f" strokeWidth="1.3"/>
+          <line x1={x+21} y1={518} x2={x+21} y2={538} stroke="#3e2f1f" strokeWidth="1.3"/>
+        </g>)}
+        {S.unrest >= 40 && <circle cx="120" cy="512" r="16" fill="url(#scn-torch)"/>}
+        {label(124, 580, S.unrest>=55?"close to fire":S.unrest>=30?"restless tonight":"quiet tonight")}
+        <Badge x={216} y={512} list={at("cells")}/>
+      </g>
+
+      {/* THE RACKS — travels to the armoury face */}
+      <g className="scn" role="button" tabIndex={0} aria-label="The racks — the armoury"
+        onClick={()=>go("men:armory")} onKeyDown={e=>{ if(e.key==="Enter") go("men:armory"); }}>
+        {room(248, 496, "THE RACKS")}
+        <rect x="244" y="506" width="122" height="58" fill="#191309" stroke="#33271a"/>
+        <line x1="254" y1="552" x2="356" y2="552" stroke="#3a2c18" strokeWidth="4"/>
+        <g stroke="#8a6a2c" strokeWidth="1.6" fill="none">
+          <line x1="266" y1="516" x2="266" y2="550"/><line x1="288" y1="518" x2="288" y2="550"/>
+          <path d="M310 516 q5 9 0 34"/><rect x="326" y="518" width="14" height="26" rx="6"/>
+        </g>
+        {label(305, 580, `${Object.keys(S.gear||{}).length} pieces`)}
+        <Badge x={358} y={512} list={at("racks")}/>
+      </g>
+
+      {/* THE GATE — the market and the road; the pending event stands here */}
+      <g className="scn" role="button" tabIndex={0} aria-label="The gate — the block and the road out"
+        onClick={()=>go("market")} onKeyDown={e=>{ if(e.key==="Enter") go("market"); }}>
+        {room(26, 610, "THE GATE")}
+        <path d="M150 640 L150 604 Q195 582 240 604 L240 640 Z" fill="#0f0c08" stroke="#6d5426" strokeWidth="1.4"/>
+        <line x1="167" y1="640" x2="167" y2="598" stroke="#241c12" strokeWidth="3"/>
+        <line x1="184" y1="640" x2="184" y2="592" stroke="#241c12" strokeWidth="3"/>
+        <line x1="201" y1="640" x2="201" y2="590" stroke="#241c12" strokeWidth="3"/>
+        <line x1="218" y1="640" x2="218" y2="596" stroke="#241c12" strokeWidth="3"/>
+        {(S.market||[]).length>0 && label(300, 628, `${S.market.length} on the block`)}
+        {S.pendingEvent && <g>
+          <circle cx="104" cy="606" r="8" fill="#241c12" stroke="#e0bd72" strokeWidth="1.4"/>
+          <path d="M104 615 q-10 3 -11 25 l24 0 q-1 -22 -11 -25 Z" fill="#241c12" stroke="#e0bd72" strokeWidth="1.4"/>
+          <circle cx="117" cy="596" r="8" fill="#cf5a49">
+            <animate attributeName="opacity" values="1;.5;1" dur="1.8s" repeatCount="indefinite"/>
+          </circle>
+          <text x="117" y="600" textAnchor="middle" fontSize="10" fontWeight="bold" fill="#14100c">!</text>
+        </g>}
+      </g>
+    </svg>
+  );
+}
+
 export default function App(){
   const [screen,setScreen] = useState("loading");
   const [S,setS] = useState(null);
@@ -22401,7 +22571,13 @@ export default function App(){
                   </div>
                 </div>
               )}
-              {SECT.yard(S, SX)}
+              {/* ---- THE SCENE, v3.89.0 — the yard drawn, and three panels folded into it ----
+                   Replaces the yard panel where it stood, plus unrest and the training square below,
+                   and the cells at night — 2,051px of panel on arrival becomes ~640px of ludus. Every
+                   room is a control: the men open their cards, the square and the cells open their
+                   panels AS DOCUMENTS through the desk, the villa, racks and gate travel. Callers are
+                   derived from the same agenda items the report rows carry — never hand-set. */}
+              <Scene S={S} agenda={agenda(S)} openDoc={setDeskDoc} openMan={setSelId} go={goTo}/>
 
           {(()=>{ const C = charterAt(S); if(!C) return null;
                 const i = S.charter.i;
@@ -22448,9 +22624,6 @@ export default function App(){
               </div>
             </div>
           )}
-          {SECT.unrest(S)}
-          {SECT.cellsNight(S, SX)}
-          {SECT.square(S, SX)}
           {SECT.annals(S, SX)}
           {S.week<=2 && (
             <div className="panel" style={{padding:13}}>
@@ -24818,8 +24991,9 @@ export default function App(){
             {deskDoc.sub && <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",textAlign:"center",marginBottom:10}}>{deskDoc.sub}</div>}
             {SECT[deskDoc.doc](S, SX)}
             <div className="flex gap-2" style={{marginTop:12}}>
-              <button className="btn btn-ghost" style={{flex:1,whiteSpace:"nowrap"}}
-                onClick={()=>{ const w = deskDoc.dest || deskDoc.tab; setDeskDoc(null); goTo(w); }}>See it in the house</button>
+              {/* a document opened FROM the scene has no elsewhere to see — the scene is the house */}
+              {!deskDoc.scene && <button className="btn btn-ghost" style={{flex:1,whiteSpace:"nowrap"}}
+                onClick={()=>{ const w = deskDoc.dest || deskDoc.tab; setDeskDoc(null); goTo(w); }}>See it in the house</button>}
               <button className="btn" style={{flex:1}} onClick={()=>setDeskDoc(null)}>Put it down</button>
             </div>
           </div>
