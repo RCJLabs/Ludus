@@ -20036,7 +20036,7 @@ const SECT = {
   },
   cells: (S, X) => { const { doTourney, feast, walkCells } = X;
     return (
-    <Sect live={sectFresh(S,"cells")} sid="cells" title="What you can do for the block" note={`${activeG(S).length} in the cells · ${unrestWord(S.unrest).toLowerCase()}`}
+    <Sect open live={sectFresh(S,"cells")} sid="cells" title="What you can do for the block" note={`${activeG(S).length} in the cells · ${unrestWord(S.unrest).toLowerCase()}`}
       mark={sectMark(S,"feast")}>
       {(()=>{ const cost = feastCost(S), reach = feastReach(S);
         return (<div style={{paddingBottom:9,marginBottom:9,borderBottom:"1px dotted var(--line)"}}>
@@ -20088,9 +20088,9 @@ const SECT = {
       </div>
     </Sect>
     ); },
-  collegium: (S, X) => { const { joinCollegium, roster, stopCollegium } = X;
+  collegium: (S, X, forceOpen) => { const { joinCollegium, roster, stopCollegium } = X;
     return (
-    <Sect live={sectFresh(S,"collegium")} sid="collegium" title="The collegium" note={collOn(S)? `${collDues(S)}d/wk` : "burial society"}
+    <Sect open={forceOpen} live={sectFresh(S,"collegium")} sid="collegium" title="The collegium" note={collOn(S)? `${collDues(S)}d/wk` : "burial society"}
       mark={sectMark(S,"collegium")}>
       {!S.collegium ? (<>
         <div style={{fontSize:"var(--fs-lg)"}}>
@@ -23735,7 +23735,9 @@ export default function App(){
               </Sect>
             ); })()}
 
-          {SECT.collegium(S, SX)}
+          {/* open on arrival: Coin & Council's other actions all sit behind folded sections,
+              and a face a player can arrive at must offer him something to do. See `reach`. */}
+          {SECT.collegium(S, SX, true)}
 
           </>)}
 
