@@ -464,7 +464,9 @@ The overhaul's destination, arrived at in phases with the tabs kept underneath t
 
 **The scene (v3.89.0).** The ludus tab opens on a vertical cutaway of the house — villa, shrine, square, yard with each man standing in it, cells, racks, gate — replacing four panels: 2,051px of arrival panel became ~640px of scene, sections standing open went 5 → 4, and the nav tally scored every figure of it. Every room is a control and a tap opens a document through the desk; a document opened *from* the scene hides its footer, because the scene is the house. Callers are derived from the same agenda items the report rows carry — the v2.9x freshness lesson applied to a drawing, because a `touch()` call somebody forgets is invisible. The `scene` check walks the rooms the way `desk` walks the letters.
 
-Still open in this arc: phase 3 (the scene becomes home, the report becomes the primary surface, the tab bar collapses), the art pass (the rooms are placeholder-grade silhouettes), and how the scene breathes on a big late house — eight men in the yard and twelve-item mornings.
+**The report bar (v3.90.0).** The morning report docks above the nav on every tab but home — a count coloured by the worst urgency on it, opening a sheet where every row either unfolds its document or travels to the face it names. Bar and rows come from one agenda read per render, so the count cannot promise what the sheet does not hold. The `report` check (76th) walks it on the played pinned morning.
+
+Still open in this arc: phase 4 (collapsing the tab bar itself — held until the new model proves itself in real use, by design), the art pass (the rooms are placeholder-grade silhouettes), and how the scene breathes on a big late house — eight men in the yard and twelve-item mornings.
 
 ### Seeded runs
 Every roll came out of `Math.random`, so no house could be handed to anybody else and no measurement could be repeated. There is one **mulberry32** behind the same `R()` that everything already called, so nothing else in the codebase changed.
