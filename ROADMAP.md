@@ -13753,7 +13753,7 @@ What the board actually was, measured at 390px with sections folded and the gate
 Fifteen controls a man, 204px a man, and **85% of the chips on the page existed to show a lanista
 what he did not choose**. So each man's choosing folds behind his choice — the row reads his work
 and opens his chips on a tap. At ten men: **157 pressable controls → 17, and 2,638px → 1,848px**,
-with all 143 chips still in the page one tap in. `board` asserts the *shape* of the growth (≤3
+with all 143 chips still in the page one tap in. `yard` asserts the *shape* of the growth (≤3
 controls a man) rather than a pixel, and separately asserts the chips are still there, so folding
 cannot quietly become dropping.
 
