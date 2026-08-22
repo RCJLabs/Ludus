@@ -229,6 +229,10 @@ const CSS = `
 .entry.card{border-top:none}
 .entry.card>summary{display:block;padding:0;min-height:0}
 .entry.card[open]>summary{border-bottom:1px dotted var(--line-3);padding-bottom:8px;margin-bottom:8px}
+/* the board's work line: a card entry, but the summary is a ledger row again -- name of the
+   week's work on the left, the leader, and the invitation on the right */
+.entry.card.work>summary{display:flex;align-items:baseline;gap:7px;padding:5px 2px;min-height:var(--tap)}
+.entry.card.work[open]>summary{padding-bottom:6px;margin-bottom:6px}
 .statstrip{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-top:6px}
 .statstrip>div{min-width:0}
 .statstrip .k{font-size:var(--fs-micro);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -4061,11 +4065,19 @@ function sparPartner(d, g){
   const p = d.gladiators.find(x=>x.id===g.sparWith);
   return (p && p.status==="active" && p.regimen==="spar" && p.sparWith===g.id) ? p : null;
 }
+/* ---- AND THIS SENTENCE WAS WRONG FOR FIVE OF THE EIGHT REGIMENS ----
+   It named rest, spar, and a "cond" that has not been a key since the migration at step 16
+   renamed it to `hill` — and then fell through to the palus line for everything else. A man on
+   the weights, the pila, the footwork square, the hill or the crowd all read "At the palus ·
+   <whatever he was last pointed at>", which is a readout that contradicts the lit chip six
+   pixels below it. It went unseen while the line was a dim subtitle under a roster card; the
+   board now puts it on the summary a man reads INSTEAD of the chips, so it has to be true. */
 const regimenWord = (d,g) => {
-  if(g.regimen==="rest") return "Resting";
-  if(g.regimen==="cond") return "Conditioning";
-  if(g.regimen==="spar"){ const p = sparPartner(d,g); return p ? `Sparring with ${p.name}` : "Sparring — no partner"; }
-  return `At the palus · ${STAT_NAMES[g.focus]}`;
+  const r = g.regimen || "palus";
+  if(r==="rest") return "Resting";
+  if(r==="spar"){ const p = sparPartner(d,g); return p ? `Sparring with ${p.name}` : "Sparring — no partner"; }
+  if(r==="palus") return `At the palus · ${STAT_NAMES[g.focus]}`;
+  return (REGIMENS[r] || REGIMENS.palus).name;
 };
 
 /* ---- THE CELL BLOCK ----
@@ -22958,27 +22970,50 @@ export default function App(){
                     </div>
                     {season ? (
                       <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>On a season — {PLANSEASON[season.kind]?PLANSEASON[season.kind].name:"in training"}, {planWeeksLeft(g)}w left. He drills at nothing else.</div>
-                    ) : (<>
-                      <div className="flex gap-1" style={{flexWrap:"wrap"}}>
-                        {REG_KEYS.map(k=>(
-                          <button key={k} className={`chip ${reg===k?"on":""}`} style={{fontSize:"var(--fs-micro)",padding:"3px 7px",...(reg===k?{borderColor:"var(--gold-line)",color:"var(--gold-hi)",background:"var(--raise)"}:{})}}
-                            onClick={()=>{ if(k==="spar") setSparPick(g.id); else setRegimen(g.id,k); }}>{REGIMENS[k].short}</button>
-                        ))}
-                      </div>
-                      {reg==="palus" && (
-                        <div className="flex gap-1" style={{flexWrap:"wrap",marginTop:5}}>
-                          {STATS.map(s=>(
-                            <button key={s} className={`chip ${g.focus===s?"on":""}`} style={{fontSize:"var(--fs-micro)",padding:"2px 6px",...(g.focus===s?{borderColor:"var(--gold-deep)",color:"var(--gold-hi)"}:{})}}
-                              onClick={()=>setFocus(g.id,s)}>{STAT_NAMES[s].slice(0,3)}</button>
+                    ) : (
+                      /* ---- THE BOARD WAS FIFTEEN CONTROLS A MAN, AND SIX IN SEVEN WERE UNLIT ----
+                         Measured on the shipped build: the board is 52 buttons at three men, 97 at
+                         six, 157 at ten — 45, 87 and 143 of them chips, of which 7, 13 and 21 were
+                         LIT. Eighty-five per cent of the controls on the page a lanista uses to set
+                         the week's work exist to show him what he did NOT choose. The page grew
+                         204px a man; a yard of ten ran 2,638px, three full screens of chips.
+
+                         So the choosing folds behind the choice. Each man's line now READS what he
+                         is doing — which is the thing you came to check — and opens his eight
+                         regimens (and, at the palus, his six emphases) only when you mean to change
+                         it. One control a man instead of fifteen, and nothing is out of reach: the
+                         same chips, one tap further in.
+
+                         It uses the ledger entry the armoury and the block already use, so a row
+                         that opens looks the same everywhere in the house. */
+                      <details className="entry card work" style={{marginTop:2}}>
+                        <summary>
+                          <span className="entryname" style={{color: reg==="rest" ? "var(--laurel-hi)" : "var(--ink-2)"}}>{regimenWord(S,g)}</span>
+                          <span className="entrylead"/>
+                          <span className="entrysum dim" style={{fontSize:"var(--fs-micro)"}}>set his week ⌄</span>
+                        </summary>
+                        <div className="flex gap-1" style={{flexWrap:"wrap"}}>
+                          {REG_KEYS.map(k=>(
+                            <button key={k} className={`chip ${reg===k?"on":""}`} style={{fontSize:"var(--fs-micro)",padding:"3px 7px",...(reg===k?{borderColor:"var(--gold-line)",color:"var(--gold-hi)",background:"var(--raise)"}:{})}}
+                              onClick={()=>{ if(k==="spar") setSparPick(g.id); else setRegimen(g.id,k); }}>{REGIMENS[k].short}</button>
                           ))}
                         </div>
-                      )}
-                      {reg==="spar" && (
-                        <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:4,color:sparPartner(S,g)?"var(--laurel-hi)":"var(--gold)"}}>
-                          {sparPartner(S,g) ? `Paired with ${sparPartner(S,g).name}` : "Tap SPAR again to pick a partner"}
-                        </div>
-                      )}
-                    </>)}
+                        <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",marginTop:4}}>{REGIMENS[reg] ? REGIMENS[reg].desc : ""}</div>
+                        {reg==="palus" && (
+                          <div className="flex gap-1" style={{flexWrap:"wrap",marginTop:5}}>
+                            {STATS.map(s=>(
+                              <button key={s} className={`chip ${g.focus===s?"on":""}`} style={{fontSize:"var(--fs-micro)",padding:"2px 6px",...(g.focus===s?{borderColor:"var(--gold-deep)",color:"var(--gold-hi)"}:{})}}
+                                onClick={()=>setFocus(g.id,s)}>{STAT_NAMES[s].slice(0,3)}</button>
+                            ))}
+                          </div>
+                        )}
+                        {reg==="spar" && (
+                          <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:4,color:sparPartner(S,g)?"var(--laurel-hi)":"var(--gold)"}}>
+                            {sparPartner(S,g) ? `Paired with ${sparPartner(S,g).name}` : "Tap SPAR again to pick a partner"}
+                          </div>
+                        )}
+                      </details>
+                    )}
                   </div>
                 ); })}
             </>); })()}
@@ -23753,6 +23788,17 @@ export default function App(){
                 )}
               </div>
             ); })()}
+          {/* ---- AND THE ONE SECTION WITH SOMETHING IN IT WAS LAST ----
+               Measured on the shipped build, arriving as a player arrives — sections folded, the
+               gatekeeper hushed, a 844px phone. The House laid out four shut drawers of 44-62px
+               each and then this, the only open one, at y=739; its first pressable thing sat at
+               872px, PAST the fold. Coin & Council did the same at 726px. Both faces were built
+               to open with a reading (who you are; what the week costs) and both then made a
+               player scroll through headers with nothing behind them to reach the one drawer that
+               was deliberately left open BECAUSE it is the only thing to do here.
+               A drawer that is open because it holds the week's work belongs above the ones that
+               are shut. Nothing is removed and nothing is folded — the order is the change. */}
+          {SECT.cells(S, SX)}
           {SECT.blood(S, SX)}
           {SECT.houseName(S, SX)}
           {SECT.colours(S, SX)}
@@ -23778,7 +23824,6 @@ export default function App(){
                scroll and costs a tap, and #117 measured working the cells as the largest single lever
                in the game while #119 found nothing ever suggested walking them. `open` here still
                defers to whatever the player last did with it — `Sect` remembers by `sid`. */}
-          {SECT.cells(S, SX)}
           </>)}
 
           {vView==="standing" && (<>
@@ -23849,6 +23894,11 @@ export default function App(){
           {aedileOn(S) && (
             SECT.aedile(S, SX)
           )}
+          {/* open on arrival, and now FIRST on arrival: Coin & Council's other actions all sit behind
+              folded sections, so a face a player can arrive at must offer him something to do — and the
+              one thing it offers was measured at y=726 on a 844px phone, under three shut drawers of
+              44px apiece. See the note in The House above, and `reach`. */}
+          {SECT.collegium(S, SX, true)}
           {SECT.household(S, SX)}
           {SECT.doctrine(S, SX)}
           {owedList(S).length>0 && (
@@ -23917,9 +23967,6 @@ export default function App(){
               </Sect>
             ); })()}
 
-          {/* open on arrival: Coin & Council's other actions all sit behind folded sections,
-              and a face a player can arrive at must offer him something to do. See `reach`. */}
-          {SECT.collegium(S, SX, true)}
 
           </>)}
 

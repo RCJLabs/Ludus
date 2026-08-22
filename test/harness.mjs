@@ -1052,6 +1052,30 @@ export async function forge(p, build, arg = null){
 }
 
 /* autosave is debounced 500ms — anything less and you read the week before */
+/* ---- WAIT OUT THE PAGE TURN, OR MEASURE A ROTATED BOX ----
+   `.leaf` runs a 420ms transform on the page wrapper on every tab change (src:195). An element's
+   getBoundingClientRect() mid-rotation is the box of the ROTATED shape, not the layout box, and
+   nothing about that reads as an error: it comes back as a number.
+
+   Found while measuring what a face offers on arrival. Two probes disagreed about the market by
+   210px and I went looking for the game fault between them; there was none. The wrapper was
+   reporting 143px wide instead of 390 on four of eight faces — every height, every y, and
+   therefore every "is it above the fold" taken from those reads was wrong, in both directions,
+   silently. The probe that looked right was the one that happened to visit the villa last, where
+   an extra face-click had eaten the animation.
+
+   So: let the animations finish, then ASSERT the wrapper is its full width before believing a
+   pixel. A geometry read that cannot be trusted must throw, not return a number. */
+export async function settle(p, { min = 340 } = {}){
+  await p.evaluate(()=>Promise.all(document.getAnimations().map(a=>a.finished.catch(()=>{}))));
+  await p.waitForTimeout(120);
+  const w = await p.evaluate(()=>{ const el = document.querySelector(".scroll > div");
+    return el ? Math.round(el.getBoundingClientRect().width) : -1; });
+  if(w < 0) throw new Error("settle(): no page wrapper — nothing to measure");
+  if(w < min) throw new Error(`settle(): the page is still turning — the wrapper reads ${w}px wide, not ~390. Every geometry read here would be the box of a rotating element.`);
+  return w;
+}
+
 export const waitSaved = p => p.waitForTimeout(950);
 
 export const slot = p => p.evaluate(()=>{

@@ -50,7 +50,7 @@
      · and it counted the gatekeeper's teaching panel, which is an INLINE panel and not a `.modalwrap`,
        exactly as the note over the harness's `clearAll` says. */
 
-import { found, endWeek, clearAll, tab, ROOT } from "../harness.mjs";
+import { found, endWeek, clearAll, tab, settle, ROOT } from "../harness.mjs";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -152,9 +152,15 @@ export async function run({ p, errors }){
     await tab(p, t); await p.waitForTimeout(340); await clearAll(p, 8);
     await tab(p, t); await p.waitForTimeout(340);
     const fs = await faces();
-    if(!fs.length){ take(t, await read(t, 0, TEACH)); continue; }
+    /* ---- AND NOTHING HERE IS A PIXEL UNTIL THE PAGE HAS STOPPED TURNING ----
+       `.leaf` animates the wrapper for 420ms on every tab change and `tab()` changes it twice
+       (home, then the door), so the 340ms above was not enough for a room with no faces: this
+       check has been reading `ludus`'s arrival geometry off a ROTATING element, whose rect is the
+       box of the rotated shape. A face-click bought the other four rooms another 340ms and hid
+       it. See the note over `settle`. */
+    if(!fs.length){ await settle(p); take(t, await read(t, 0, TEACH)); continue; }
     for(const f of fs){
-      await showFace(f); await p.waitForTimeout(340);
+      await showFace(f); await p.waitForTimeout(340); await settle(p);
       take(`${t} · ${f}`, await read(`${t} · ${f}`, 1, TEACH));
     }
   }

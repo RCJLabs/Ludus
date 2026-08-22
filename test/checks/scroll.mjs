@@ -15,7 +15,7 @@
    like the chip had failed to land. It had not — what differs between them is below the fold.
    The check asserts it is on the face it thinks it is before it believes a number.
 */
-import { found, tab, clearAll } from "../harness.mjs";
+import { found, tab, clearAll, settle } from "../harness.mjs";
 
 export const name = "scroll";
 export const describe = "no room costs more screens to read than it is allowed";
@@ -73,6 +73,9 @@ export async function run({ p, errors }){
         if(c) c.click(); }, r.face.source);
       await p.waitForTimeout(260);
     }
+    /* every number below is a pixel, and `.leaf` turns the page for 420ms on a tab change — the
+       240ms above was short, so a room with no face was measured mid-rotation. See `settle`. */
+    await settle(p);
 
     const m = await p.evaluate(`(()=>{
       const wrap = document.querySelector(".scroll > div");

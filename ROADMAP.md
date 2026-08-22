@@ -13735,6 +13735,67 @@ no longer exists. The seams to check: content that never fires, ladders whose to
 rungs nobody reaches, prices set before three repricings, screens that show a figure
 nobody can act on, and anything the coverage sweep says no check has ever touched.
 
+
+### The board was already the one place — the fault was the opposite one
+The item read *"assignments are per-man, per-card; a yard-level board matches how a lanista
+thinks."* It was refuted by opening the tab. The Doctore's Board has laid the whole yard out on one
+page since v2.x — every man's regimen and how worn he is, with three bulk verbs over it and the
+doctore's house drill above them. Setting a full yard's week already cost one tap a man.
+
+What the board actually was, measured at 390px with sections folded and the gatekeeper hushed:
+
+| yard | height | pressable controls | chips | lit |
+|---|---|---|---|---|
+| 3 men | 1,208px | 52 | 45 | 7 |
+| 6 men | 1,821px | 97 | 87 | 13 |
+| 10 men | 2,638px | 157 | 143 | 21 |
+
+Fifteen controls a man, 204px a man, and **85% of the chips on the page existed to show a lanista
+what he did not choose**. So each man's choosing folds behind his choice — the row reads his work
+and opens his chips on a tap. At ten men: **157 pressable controls → 17, and 2,638px → 1,848px**,
+with all 143 chips still in the page one tap in. `board` asserts the *shape* of the growth (≤3
+controls a man) rather than a pixel, and separately asserts the chips are still there, so folding
+cannot quietly become dropping.
+
+**And the sentence that row now carries was wrong for five of the eight regimens.** `regimenWord`
+named `rest`, `spar`, and a `cond` key the step-16 migration renamed to `hill`, then fell through to
+`At the palus · <focus>` for everything else. A man on the weights, the pila, the footwork square,
+the hill or the crowd read as being at the palus. It survived years as a dim subtitle under a roster
+card; it could not survive being the line a player reads *instead of* the chips. Eight men on eight
+regimens now print eight sentences; before the fix, six of them said "palus".
+
+### The order of things, un-refuted — but only for two faces
+*The order of things, refuted* above is still right about what it measured, and it named its own
+limit: `reach` reads with **every section forced open**. Re-measured in the state v3.98.0 actually
+ships — folded, gatekeeper hushed, 844px phone — two faces put their first pressable thing past the
+fold, and for the same reason in both: the one section deliberately left **open** because it holds
+the only work on that face was placed **last**, under three or four shut drawers of 44–62px.
+
+| face | first press, before | after |
+|---|---|---|
+| villa · The House | 872px | 686px |
+| villa · Coin & Council | 726px | 557px |
+
+The order is the whole change — nothing folded, nothing removed. Every other face already put a
+press above the fold. So the refutation stands for the general case and fails for these two, which
+is the smaller and truer claim.
+
+### A rect is not a rect while the page is turning
+`.leaf` runs a 420ms transform on the page wrapper on every tab change. `getBoundingClientRect()`
+mid-rotation returns the box of the **rotated** shape, and nothing about that reads as an error — it
+comes back as a plausible number. Two probes disagreed about the market by 210px and the hunt was on
+for the game fault between them. There was none: the wrapper was reporting **143px wide instead of
+390** on four of eight faces, so every height, every y, and every "is it above the fold" taken from
+those reads was wrong in both directions.
+
+`settle(p)` now waits out `document.getAnimations()` and then **asserts the wrapper is its full
+width**, throwing rather than returning a number it cannot stand behind. `reach` and `scroll` both
+needed it: each waited 340ms and 240ms against a 420ms animation, and both were saved only by an
+extra face-click on four of five rooms — `reach` had been reading `ludus`'s arrival geometry off a
+rotating element, and `scroll` every room with no face.
+
+That is the ninth instrument fault against the second game fault in this stretch. The ratio holds.
+
 ---
 
-*Last updated: v3.5.0*
+*Last updated: v3.105.0*
