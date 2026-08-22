@@ -72,6 +72,15 @@ const ALLOWED = {
      Ten lines of headroom, not a hundred, on the same argument EVENTS makes — a designed question is
      the sanctioned way this grows, and drift still says stop. */
   agenda:         { max: 210, why: "a rule list, not a function that grew — one add() per thing the week can ask for, 88 distinct lines measured over 2,306 house-weeks, and five helpers already split out of it" },
+  /* ---- AND THIS ONE GREW BECAUSE THE HOUSE GAINED A SECOND GROUND ----
+     v3.95.0 named the structural colours and gave the ludus parchment behind every door. Both
+     halves land here: the palette is two declaration blocks (night and paper, the same 32 names
+     twice), and the ledger re-points those names plus the dozen component surfaces whose grounds
+     are gradients rather than single colours — .btn, .panel, .track and the rest — which a
+     variable cannot reach on its own. It is a STYLESHEET, not a function: length here is content,
+     the same argument EVENTS and SECT make. It grows when the game gains a surface, and the
+     headroom is a dozen lines rather than a hundred so drift still says stop. */
+  CSS:            { max: 216, why: "a stylesheet, not a function — the type scale, the palette declared twice (night and paper), and the ledger's re-pointing of it. Length here is content, as with EVENTS and SECT" },
 };
 
 export async function run(){

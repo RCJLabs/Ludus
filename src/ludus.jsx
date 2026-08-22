@@ -5,7 +5,7 @@ import { Coins, Star, Crown, Flame, Swords, Shield, Wine, Users, Landmark, Shopp
 
 const CSS = `
 *,*::before,*::after{box-sizing:border-box}
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=IM+Fell+English:ital@0;1&display=swap');
 /* ---- THE TYPE SCALE ----
    Nine hundred and sixty-seven inline font sizes had grown up here one element at
    a time, across twenty distinct values between 9px and 19px — six of them sitting
@@ -13,56 +13,66 @@ const CSS = `
    to keep straight in the source. Eight steps now, and nothing under 11.5px: the
    tab bar was set in 9px and the tags in 10px, which is smaller than any phone
    should ask a reader to work at. Change a step here and it moves everywhere. */
-.lr{--fs-micro:11.5px;--fs-sm:12.5px;--fs-base:13.5px;--fs-md:14.5px;
+/* ---- THE PALETTE ----
+   Two hundred and ninety-one colours had grown up in this file one element at a time, every one
+   of them a literal spelled out at the point of use, and four of them -- #1c1610, #1d1610,
+   #1a1410, #1a1510 -- were the same colour under four spellings, two points apart and
+   indistinguishable on glass. The structural ones are named here, the way the type scale above
+   is named: ink, gold, blood, laurel, and the grounds and lines they sit on. Change a colour
+   here and it moves everywhere. What is NOT named here stays literal on purpose -- the drawn
+   ludus and the fighter figures are paintings, not chrome, and a painting does not re-theme. */
+.lr{--ink-hi:#e8d092;--ink:#e8d9b8;--ink-2:#cfc0a0;--ink-dim:#b09b7d;--ink-dim2:#b9a37c;--ink-faint:#8d7e65;--gold:#d8ac5f;--gold-hi:#e0bd72;--gold-line:#c99a4b;--gold-edge:#6d5426;--gold-deep:#75581c;--blood:#d96f5d;--blood-hi:#d98476;--blood-str:#cf5a49;--blood-edge:#7c2a22;--laurel:#9aa86a;--laurel-hi:#b9c58a;--laurel-lt:#a9c98a;--laurel-edge:#5a6a35;--laurel-edge2:#5a6a4a;--ground:#171210;--panel:#1c1610;--panel-2:#241c12;--raise:#2b2115;--line:#33271a;--line-2:#3e2f1f;--line-3:#4a3a24;--azure:#9dc0d4;--azure-edge:#5a7a8a;--violet:#bfa8c8;--violet-edge:#8a6a9c;--line-4:#4e3c26;--bar-fade:rgba(23,18,16,.96);--fs-micro:11.5px;--fs-sm:12.5px;--fs-base:13.5px;--fs-md:14.5px;
     --fs-lg:15.5px;--fs-xl:17px;--fs-xxl:19px;--fs-display:46px;
     --tap:44px;
-    overflow-x:clip;max-width:100%;background:#171210;background-image:radial-gradient(1100px 560px at 50% -8%, #2b2115 0%, #171210 62%);color:#e8d9b8;font-family:'Cormorant Garamond',Georgia,serif;min-height:100vh;font-size:17px;line-height:1.45}
+    overflow-x:clip;max-width:100%;background:var(--ground);background-image:radial-gradient(1100px 560px at 50% -8%, var(--raise) 0%, var(--ground) 62%);color:var(--ink);font-family:'Cormorant Garamond',Georgia,serif;min-height:100vh;font-size:17px;line-height:1.45}
 .shell{position:relative;min-height:100vh}
 .scroll{width:100%}
 .bar{flex:0 0 auto}
+.lr.cb{--laurel:#5aa9e6;--laurel-hi:#8fc3ea}
+
 .disp{font-family:'Cinzel',serif;letter-spacing:.1em}
-.panel{background:linear-gradient(165deg,#261d15,#1d1610);border:1px solid #3e2f1f;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.35)}
-.btn{font-family:'Cinzel',serif;letter-spacing:.07em;font-size:var(--fs-sm);text-transform:uppercase;padding:11px 14px;min-height:var(--tap);display:inline-flex;align-items:center;justify-content:center;border-radius:8px;border:1px solid #6d5426;background:linear-gradient(180deg,#3a2c18,#2a1f10);color:#dfc389;cursor:pointer;transition:filter .15s}
+.panel{background:linear-gradient(165deg,var(--raise),var(--panel));border:1px solid var(--line-2);border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.35)}
+.btn{font-family:'Cinzel',serif;letter-spacing:.07em;font-size:var(--fs-sm);text-transform:uppercase;padding:11px 14px;min-height:var(--tap);display:inline-flex;align-items:center;justify-content:center;border-radius:8px;border:1px solid var(--gold-edge);background:linear-gradient(180deg,var(--line),var(--panel-2));color:var(--gold-hi);cursor:pointer;transition:filter .15s}
 .btn:hover{filter:brightness(1.18)}
 .btn:disabled{opacity:.38;cursor:not-allowed}
-.btn-blood{border-color:#7c2a22;background:linear-gradient(180deg,#5c221b,#411713);color:#eab6a8}
-.btn-ghost{background:transparent;border-color:#4a3a26;color:#b9a37c}
-.gold{color:#d8ac5f}.blood{color:#d96f5d}.laurel{color:#9aa86a}.dim{color:#b09b7d}
-.tag{display:inline-block;font-family:'Cinzel',serif;font-size:var(--fs-micro);letter-spacing:.09em;text-transform:uppercase;padding:2px 7px;border:1px solid #4a3a26;border-radius:99px;color:#b9a37c}
-.tag-blood{border-color:#7c2a22;color:#d98476}
-.tag-gold{border-color:#8a6a2c;color:#e0bd72}
-.track{height:7px;border-radius:99px;background:#120d09;border:1px solid #33271a;overflow:hidden}
+.btn-blood{border-color:var(--blood-edge);background:linear-gradient(180deg,var(--blood-edge),var(--blood-edge));color:var(--blood-hi)}
+.btn-ghost{background:transparent;border-color:var(--line-3);color:var(--ink-dim2)}
+.gold{color:var(--gold)}.blood{color:var(--blood)}.laurel{color:var(--laurel)}.dim{color:var(--ink-dim)}
+.tag{display:inline-block;font-family:'Cinzel',serif;font-size:var(--fs-micro);letter-spacing:.09em;text-transform:uppercase;padding:2px 7px;border:1px solid var(--line-3);border-radius:99px;color:var(--ink-dim2)}
+.tag-blood{border-color:var(--blood-edge);color:var(--blood-hi)}
+.tag-gold{border-color:var(--gold-deep);color:var(--gold-hi)}
+.track{height:7px;border-radius:99px;background:var(--ground);border:1px solid var(--line);overflow:hidden}
 .fill{height:100%;border-radius:99px;transition:width .4s}
-.scn{cursor:pointer}.scn:focus-visible{outline:1px solid #c99a4b;outline-offset:2px}
-.tabbtn{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 2px;min-height:56px;color:#a08d6b;font-family:'Cinzel',serif;font-size:var(--fs-micro);letter-spacing:.04em;text-transform:uppercase;background:none;border:none;cursor:pointer;border-top:2px solid transparent;overflow:hidden;white-space:nowrap}
-.tabbtn.on{color:#e0bd72;border-top-color:#c99a4b}
+.scn{cursor:pointer}.scn:focus-visible{outline:1px solid var(--gold-line);outline-offset:2px}
+.tabbtn{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 2px;min-height:56px;color:var(--ink-faint);font-family:'Cinzel',serif;font-size:var(--fs-micro);letter-spacing:.04em;text-transform:uppercase;background:none;border:none;cursor:pointer;border-top:2px solid transparent;overflow:hidden;white-space:nowrap}
+.tabbtn.on{color:var(--gold-hi);border-top-color:var(--gold-line)}
 .modalwrap{position:fixed;inset:0;background:rgba(10,7,5,.84);display:flex;align-items:flex-end;justify-content:center;z-index:50}
-.modal{width:100%;max-width:560px;box-sizing:border-box;max-height:92vh;overflow-y:auto;background:linear-gradient(170deg,#292017,#1a1410);border:1px solid #4e3c26;border-radius:14px 14px 0 0;padding:18px}
+.modal{width:100%;max-width:560px;box-sizing:border-box;max-height:92vh;overflow-y:auto;background:linear-gradient(170deg,var(--raise),var(--panel));border:1px solid var(--line-4);border-radius:14px 14px 0 0;padding:18px}
 @media(min-width:640px){.modalwrap{align-items:center}.modal{border-radius:14px}}
-.tickline{padding:4px 0;border-bottom:1px dotted #33271a;animation:tick .35s ease-out}
+.tickline{padding:4px 0;border-bottom:1px dotted var(--line);animation:tick .35s ease-out}
 @keyframes tick{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
-.sel{background:#1a1410;border:1px solid #4a3a26;color:#e8d9b8;border-radius:7px;padding:9px 10px;min-height:var(--tap);font-family:'Cormorant Garamond',Georgia,serif;font-size:var(--fs-lg)}
-.chip{font-family:'Cinzel',serif;font-size:var(--fs-micro);letter-spacing:.07em;text-transform:uppercase;padding:7px 11px;min-height:38px;display:inline-flex;align-items:center;justify-content:center;border-radius:99px;border:1px solid #4a3a26;background:none;color:#b9a37c;cursor:pointer}
-.chip.on{border-color:#c99a4b;color:#e0bd72;background:#2b2115}
+.sel{background:var(--panel);border:1px solid var(--line-3);color:var(--ink);border-radius:7px;padding:9px 10px;min-height:var(--tap);font-family:'Cormorant Garamond',Georgia,serif;font-size:var(--fs-lg)}
+.chip{font-family:'Cinzel',serif;font-size:var(--fs-micro);letter-spacing:.07em;text-transform:uppercase;padding:7px 11px;min-height:38px;display:inline-flex;align-items:center;justify-content:center;border-radius:99px;border:1px solid var(--line-3);background:none;color:var(--ink-dim2);cursor:pointer}
+.chip.on{border-color:var(--gold-line);color:var(--gold-hi);background:var(--raise)}
 .focusbtn{font-family:'Cinzel',serif;font-size:var(--fs-sm);letter-spacing:.04em;min-height:46px;padding:8px 4px;
-  border-radius:8px;border:1px solid #4a3a26;background:#1a1410;color:#b9a37c;cursor:pointer;
+  border-radius:8px;border:1px solid var(--line-3);background:var(--panel);color:var(--ink-dim2);cursor:pointer;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;line-height:1.15;transition:border-color .15s}
-.focusbtn:hover{border-color:#6d5426}
-.focusbtn.on{border-color:#c99a4b;color:#e8d092;background:linear-gradient(180deg,#3a2c18,#2a1f10)}
+.focusbtn:hover{border-color:var(--gold-edge)}
+.focusbtn.on{border-color:var(--gold-line);color:var(--ink-hi);background:linear-gradient(180deg,var(--line),var(--panel-2))}
 .focusbtn .sub{font-family:'Cormorant Garamond',Georgia,serif;font-size:var(--fs-micro);letter-spacing:0;opacity:.75}
-.arena{position:relative;overflow:hidden;border-radius:10px;border:1px solid #4e3c26;height:232px;
+.arena{position:relative;overflow:hidden;border-radius:10px;border:1px solid var(--line-4);height:232px;
   background:linear-gradient(#0d0a07 0%,#14100b 26%,#2a2013 29%,#3f2f1a 33%,#6d5531 58%,#9a7844 100%)}
-.v-pit{background:linear-gradient(#0a0806 0%,#100d09 30%,#241c12 34%,#4a3a22 62%,#6b5433 100%)!important;border-color:#3e2f1f!important}
-.v-yard{background:linear-gradient(#0f0d0c 0%,#1a1715 24%,#3a3630 28%,#6e6a62 40%,#a8a498 72%,#c9c5b8 100%)!important;border-color:#6d6656!important}
-.v-field{background:linear-gradient(#0b0d08 0%,#131710 26%,#26301c 31%,#3d4b2a 55%,#5c6f3c 100%)!important;border-color:#4a5a35!important}
-.v-amphi{background:linear-gradient(#0d0a07 0%,#181209 22%,#3a2c18 27%,#6d5531 55%,#a88a52 100%)!important;border-color:#6d5426!important}
-.v-imperial{background:linear-gradient(#0d0a09 0%,#1c1510 20%,#4a3820 26%,#8a6c3c 52%,#cba765 100%)!important;border-color:#c99a4b!important}
-.v-harbour{background:linear-gradient(#0a0c0e 0%,#121820 24%,#2c3038 29%,#6a6250 56%,#9d9068 100%)!important;border-color:#5a6270!important}
-.wound{position:absolute;border-radius:50%;background:#7c1d14;pointer-events:none}
+.v-pit{background:linear-gradient(var(--ground) 0%,var(--ground) 30%,var(--panel-2) 34%,var(--line-3) 62%,var(--line-4) 100%)!important;border-color:var(--line-2)!important}
+.v-yard{background:linear-gradient(#0f0d0c 0%,#1a1715 24%,#3a3630 28%,#6e6a62 40%,#a8a498 72%,#c9c5b8 100%)!important;border-color:var(--ink-faint)!important}
+.v-field{background:linear-gradient(#0b0d08 0%,#131710 26%,#26301c 31%,#3d4b2a 55%,#5c6f3c 100%)!important;border-color:var(--laurel-edge)!important}
+.v-amphi{background:linear-gradient(#0d0a07 0%,#181209 22%,#3a2c18 27%,#6d5531 55%,#a88a52 100%)!important;border-color:var(--gold-edge)!important}
+.v-imperial{background:linear-gradient(#0d0a09 0%,#1c1510 20%,#4a3820 26%,#8a6c3c 52%,#cba765 100%)!important;border-color:var(--gold-line)!important}
+.v-harbour{background:linear-gradient(#0a0c0e 0%,#121820 24%,#2c3038 29%,#6a6250 56%,#9d9068 100%)!important;border-color:var(--ink-faint)!important}
+.wound{position:absolute;border-radius:50%;background:var(--blood-edge);pointer-events:none}
 .arenashake{animation:shk .3s}
 @keyframes shk{0%,100%{transform:translate(0,0)}20%{transform:translate(-4px,2px)}40%{transform:translate(4px,-2px)}60%{transform:translate(-3px,-1px)}80%{transform:translate(3px,1px)}}
 .crowdrow{position:absolute;top:0;left:0;right:0;height:56px;display:flex;align-items:flex-end;justify-content:center;gap:3px;padding:0 4px;overflow:hidden}
-.chead{width:9px;border-radius:99px 99px 2px 2px;background:#0b0806;flex:0 0 auto}
+.chead{width:9px;border-radius:99px 99px 2px 2px;background:var(--ground);flex:0 0 auto}
 .roar{position:absolute;inset:0;pointer-events:none;transition:opacity .5s;
   background:radial-gradient(70% 46% at 50% 2%, rgba(255,186,92,.22), transparent 72%)}
 .dust{position:absolute;left:0;right:0;bottom:0;height:52px;pointer-events:none;
@@ -70,14 +80,14 @@ const CSS = `
 .fig{position:absolute;bottom:14px;transition:transform .26s cubic-bezier(.3,1.5,.5,1);transform-origin:50% 100%}
 .bob{animation:bob 2.4s ease-in-out infinite}
 @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2.5px)}}
-.spurt{position:absolute;width:5px;height:5px;border-radius:99px;background:#a81d14;pointer-events:none;animation:spr .72s ease-out forwards}
+.spurt{position:absolute;width:5px;height:5px;border-radius:99px;background:var(--blood-edge);pointer-events:none;animation:spr .72s ease-out forwards}
 @keyframes spr{0%{opacity:.95;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.35)}}
 .hitflash{position:absolute;inset:0;pointer-events:none;background:rgba(200,40,25,.16);animation:flash .3s ease-out forwards}
 @keyframes flash{to{opacity:0}}
-.momtrack{height:5px;border-radius:99px;background:#120d09;border:1px solid #33271a;position:relative;overflow:hidden}
-.momfill{position:absolute;top:0;bottom:0;background:linear-gradient(90deg,#8a6a2c,#d8ac5f);transition:all .3s}
+.momtrack{height:5px;border-radius:99px;background:var(--ground);border:1px solid var(--line);position:relative;overflow:hidden}
+.momfill{position:absolute;top:0;bottom:0;background:linear-gradient(90deg,var(--gold-deep),var(--gold));transition:all .3s}
 .caption{min-height:52px;font-size:var(--fs-xl);line-height:1.34}
-:focus-visible{outline:2px solid #e0bd72;outline-offset:2px;border-radius:6px}
+:focus-visible{outline:2px solid var(--gold-hi);outline-offset:2px;border-radius:6px}
 .sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 /* ---- NOTHING IN HERE IS ALLOWED TO CUT A WORD IN HALF ----
    These two carried white-space:nowrap with text-overflow:ellipsis, and between them they were
@@ -105,23 +115,89 @@ const CSS = `
 .grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
 .grid-cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}
 .selbtn{width:100%;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:8px;
-  background:#1a1410;border:1px solid #4a3a26;color:#e8d9b8;border-radius:7px;padding:9px 11px;
+  background:var(--panel);border:1px solid var(--line-3);color:var(--ink);border-radius:7px;padding:9px 11px;
   font-family:'Cormorant Garamond',Georgia,serif;font-size:15px;text-align:left;cursor:pointer;transition:border-color .15s}
-.selbtn:hover{border-color:#6d5426}
+.selbtn:hover{border-color:var(--gold-edge)}
 .optrow{width:100%;text-align:left;padding:12px;min-height:var(--tap);margin-bottom:7px;cursor:pointer;color:inherit;font:inherit;
-  background:linear-gradient(165deg,#261d15,#1d1610);border:1px solid #3e2f1f;border-radius:10px}
-.optrow.on{border-color:#c99a4b;background:linear-gradient(165deg,#332816,#241b11)}
+  background:linear-gradient(165deg,var(--raise),var(--panel));border:1px solid var(--line-2);border-radius:10px}
+.optrow.on{border-color:var(--gold-line);background:linear-gradient(165deg,var(--line),var(--panel-2))}
 .reduce-motion *,.reduce-motion *::before,.reduce-motion *::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
 .lr.large-text{font-size:19.5px}
 /* colourblind-friendly: the confusable pair here is "good" green vs "bad" red — remap green to a blue that reads clear against the red for red-green colour vision */
 .lr.cb .laurel{color:#5aa9e6}
 .lr.cb .dot-good{background:#5aa9e6}
-.sect{border:1px solid #3e2f1f;border-radius:10px;background:linear-gradient(165deg,#241b11,#1d1610);overflow:hidden}
+.sect{border:1px solid var(--line-2);border-radius:10px;background:linear-gradient(165deg,var(--panel-2),var(--panel));overflow:hidden}
 .sect>summary{list-style:none;cursor:pointer;padding:12px 13px;display:flex;align-items:center;justify-content:space-between;gap:8px;
-  font-family:'Cinzel',serif;font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:#d8ac5f}
+  font-family:'Cinzel',serif;font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--gold)}
 .sect>summary::-webkit-details-marker{display:none}
-.sect>summary .chev{font-size:15px;color:#8a6a2c;line-height:1;transition:transform .15s;flex:0 0 auto}
+.sect>summary .chev{font-size:15px;color:var(--gold-deep);line-height:1;transition:transform .15s;flex:0 0 auto}
 .sect[open]>summary .chev{transform:rotate(180deg)}
+/* ================= THE LEDGER =================
+   The house is a PLACE and the record of it is a BOOK. Home is the place: the drawn ludus keeps
+   its night palette, because you are looking at buildings and not at paper. Everything behind a
+   door is the book -- the same panels, the same words, re-inked on a sheet. Nothing here restyles
+   a component; it re-points the palette named above, which is the whole reason the palette was
+   named. Note that the emphasis colours INVERT and the names still hold: --ink-hi is brighter
+   than --ink on a dark ground and DARKER than it on paper, because "more emphasis" is the role
+   and the direction belongs to the surface.
+   Letters and sheets take the paper everywhere, home included -- a letter is paper wherever it
+   is read, and the desk documents were already written as letters. */
+.lr[data-place]:not([data-place="ludus"]), .lr .modal{
+  --ground:#e6d9b8;--panel:#ddcea6;--panel-2:#d6c69b;--raise:#cfbe90;--well:#c9b787;
+  --ink:#33291b;--ink-hi:#1e1710;--ink-2:#4a3d29;--ink-dim:#6b5c44;--ink-dim2:#6b5c44;--ink-faint:#675941;
+  --gold:#7a5518;--gold-hi:#6d4d16;--gold-line:#765a1c;--gold-edge:#bda471;--gold-deep:#8a6a2c;
+  --blood:#9a2f22;--blood-hi:#7e2418;--blood-str:#8f2a1c;--blood-edge:#b5745f;
+  --laurel:#4a5a24;--laurel-hi:#3d4a1c;--laurel-lt:#55682c;--laurel-edge:#93a06a;--laurel-edge2:#93a06a;
+  --line:#c2ad80;--line-2:#b39c6d;--line-3:#a89165;--azure:#245a72;--azure-edge:#7f9aa8;--violet:#553a63;--violet-edge:#9d86ab;--line-4:#9c855a;--bar-fade:rgba(226,212,176,.96);
+  color:var(--ink)}
+.lr.cb[data-place]:not([data-place="ludus"]), .lr.cb .modal{--laurel:#1d5c86;--laurel-hi:#17486a}
+/* the sheet: a warm ground, a little foxing, and a shadow at the head and foot where a
+   bound page darkens. No image is fetched for any of it. */
+.lr[data-place]:not([data-place="ludus"]), .lr .modal{
+  background-color:#e6d9b8;
+  background-image:
+    radial-gradient(circle at 13% 16%, rgba(146,116,68,.13), transparent 42%),
+    radial-gradient(circle at 86% 61%, rgba(146,116,68,.11), transparent 38%),
+    radial-gradient(circle at 44% 91%, rgba(132,104,62,.10), transparent 40%),
+    linear-gradient(180deg, rgba(116,88,46,.17), rgba(116,88,46,0) 13%, rgba(116,88,46,0) 87%, rgba(116,88,46,.19))}
+/* a panel on paper is a BLOCK OF ENTRIES, not a raised card: the box shadow and the heavy
+   rounding go, and a ruled line does the separating that a border used to do. */
+.lr[data-place]:not([data-place="ludus"]) .panel, .lr .modal .panel{
+  background:linear-gradient(165deg,rgba(255,250,235,.34),rgba(190,166,118,.16));
+  border-color:var(--line-3);border-radius:3px;box-shadow:none}
+.lr[data-place]:not([data-place="ludus"]) .btn, .lr .modal .btn{
+  background:linear-gradient(180deg,#e2d3a8,#d2bf90);border-color:var(--gold-deep);color:#3b2c12}
+.lr[data-place]:not([data-place="ludus"]) .btn-ghost, .lr .modal .btn-ghost{
+  background:transparent;border-color:var(--line-4);color:var(--ink-2)}
+.lr[data-place]:not([data-place="ludus"]) .btn-blood, .lr .modal .btn-blood{
+  background:linear-gradient(180deg,#cf9b8c,#bd8272);border-color:var(--blood);color:#3d1410}
+.lr[data-place]:not([data-place="ludus"]) .focusbtn, .lr .modal .focusbtn{
+  background:rgba(255,250,235,.30);border-color:var(--line-3);color:var(--ink-2)}
+.lr[data-place]:not([data-place="ludus"]) .focusbtn.on, .lr .modal .focusbtn.on{
+  background:linear-gradient(180deg,#e2d3a8,#d2bf90);border-color:var(--gold-deep);color:#3b2c12}
+.lr[data-place]:not([data-place="ludus"]) .tabbtn, .lr .modal .tabbtn{color:var(--ink-dim)}
+.lr[data-place]:not([data-place="ludus"]) .tabbtn.on, .lr .modal .tabbtn.on{color:var(--gold-hi)}
+.lr[data-place]:not([data-place="ludus"]) .track, .lr .modal .track{
+  background:rgba(120,94,52,.22);border-color:var(--line-3)}
+.lr[data-place]:not([data-place="ludus"]) .sel, .lr .modal .sel{background:rgba(255,250,235,.40)}
+.lr[data-place]:not([data-place="ludus"]) .modal{border-color:var(--line-4)}
+/* the steward's own hand, kept to the places a man actually writes by hand: what the doctore
+   says, and the notes in the margin. Body text stays set in the book face -- a script at
+   13px on a phone is a tax paid on every line, and this game is mostly lines. */
+.hand{font-family:'IM Fell English','Cormorant Garamond',Georgia,serif;font-style:italic}
+
+/* ---- OPENING THE BOOK ----
+   Leaving the ludus opens the ledger at that page: the sheet swings in on its spine, which is
+   the left edge. It is a mount animation on a keyed wrapper, so it plays once on arrival and
+   leaves NO transform behind -- a lingering one would re-parent every position:fixed child.
+   The reduce-motion class (and the media query) already flatten it to nothing.
+   NOTE: this whole block lives inside a template literal. No backticks in the prose. */
+.leaf{transform-origin:left center;backface-visibility:hidden;animation:leaf .42s cubic-bezier(.22,.61,.36,1)}
+@keyframes leaf{
+  from{transform:perspective(1500px) rotateY(-74deg);opacity:.15}
+  60%{opacity:1}
+  to{transform:perspective(1500px) rotateY(0);opacity:1}}
+
 .sect>.sectbody{padding:0 13px 13px}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}.spurt{display:none}.hitflash{display:none}}
 `;
@@ -342,7 +418,7 @@ const wears = it => !!it && !it.stock && it.price > 0;
 const wearOf = (g, s) => (g && g.wear && g.wear[s]!=null) ? clamp(g.wear[s], 0, 100) : 100;
 const wearEff = c => 0.5 + c/200;
 const wearWord = c => c>=85 ? "keen" : c>=60 ? "serviceable" : c>=35 ? "worn" : c>=15 ? "failing" : "all but gone";
-const wearColour = c => cbc(c>=60 ? "#9aa86a" : c>=35 ? "#d8ac5f" : "#d96f5d");
+const wearColour = c => cbc(c>=60 ? "var(--laurel)" : c>=35 ? "var(--gold)" : "var(--blood)");
 const isNamed = (g, s) => !!(g && g.named && g.named.slot===s);
 
 function kitMods(kit, cls, g){
@@ -448,18 +524,18 @@ const NICKS = ["the Beast of Capua","the Shadow","Doom of the Sands","the Fury",
    man who ever wore your colours, opened when he arrives and closed when he goes,
    whatever way he goes. */
 const FATES = {
-  dead:     { label:"Killed",            colour:"#d96f5d", verb:g=>`died on the sand` },
-  beasts:   { label:"Killed by a beast", colour:"#d96f5d", verb:g=>`was killed at the hunt` },
-  revolt:   { label:"Died in revolt",    colour:"#d96f5d", verb:g=>`died the night the cells rose` },
-  freed:    { label:"Given the rudis",   colour:"#e0bd72", verb:g=>`was given the rudis` },
-  retired:  { label:"Released",          colour:"#c0b492", verb:g=>`was released from the sacramentum` },
-  departed: { label:"Served his term",   colour:"#9dc0d4", verb:g=>`served out his contract and left` },
-  escaped:  { label:"Escaped",           colour:"#bfa8c8", verb:g=>`went out through the open gates` },
-  defected: { label:"Defected",          colour:"#bfa8c8", verb:g=>`left for another house` },
-  sold:     { label:"Sold",              colour:"#9c8a6f", verb:g=>`was sold on` },
-  levied:   { label:"Taken for the legions", colour:"#9c8a6f", verb:g=>`was levied for the war` },
+  dead:     { label:"Killed",            colour:"var(--blood)", verb:g=>`died on the sand` },
+  beasts:   { label:"Killed by a beast", colour:"var(--blood)", verb:g=>`was killed at the hunt` },
+  revolt:   { label:"Died in revolt",    colour:"var(--blood)", verb:g=>`died the night the cells rose` },
+  freed:    { label:"Given the rudis",   colour:"var(--gold-hi)", verb:g=>`was given the rudis` },
+  retired:  { label:"Released",          colour:"var(--ink-2)", verb:g=>`was released from the sacramentum` },
+  departed: { label:"Served his term",   colour:"var(--azure)", verb:g=>`served out his contract and left` },
+  escaped:  { label:"Escaped",           colour:"var(--violet)", verb:g=>`went out through the open gates` },
+  defected: { label:"Defected",          colour:"var(--violet)", verb:g=>`left for another house` },
+  sold:     { label:"Sold",              colour:"var(--ink-dim)", verb:g=>`was sold on` },
+  levied:   { label:"Taken for the legions", colour:"var(--ink-dim)", verb:g=>`was levied for the war` },
 };
-const fateOf = a => FATES[a.fate] || { label:"Still on the sand", colour:"#e8d9b8", verb:()=>"is still fighting" };
+const fateOf = a => FATES[a.fate] || { label:"Still on the sand", colour:"var(--ink)", verb:()=>"is still fighting" };
 
 function annalsEntry(d, g){
   return { id:g.id, name:g.name, nick:g.nick, origin:g.origin, cls:g.cls, sex:g.sex||"m",
@@ -756,17 +832,17 @@ function rackWeek(d){
    the same four numbers and a different object entirely, and the story is carried
    by the slot rather than the item, so it survives the man who earned it. */
 const PROV = {
-  forged:  { colour:"#c99a4b", crowd:5, morale:8, dread:0,
+  forged:  { colour:"var(--gold-line)", crowd:5, morale:8, dread:0,
     line:p=>`Made for him by your own smith, week ${p.week}.` },
-  spoils:  { colour:"#d8ac5f", crowd:7, morale:6, dread:0,
+  spoils:  { colour:"var(--gold)", crowd:7, morale:6, dread:0,
     line:p=>`Taken off ${p.from}${p.house?` of House ${p.house}`:""} on the sand, after.` },
-  gift:    { colour:"#bfa8c8", crowd:6, morale:5, dread:0,
+  gift:    { colour:"var(--violet)", crowd:6, morale:5, dread:0,
     line:p=>`Sent up from ${p.from} with no note and no explanation.` },
-  imperial:{ colour:"#e8d092", crowd:11, morale:10, dread:0,
+  imperial:{ colour:"var(--ink-hi)", crowd:11, morale:10, dread:0,
     line:p=>`Carried onto the imperial sand at Rome and carried off it again.` },
-  primacy: { colour:"#e8d092", crowd:8, morale:7, dread:0,
+  primacy: { colour:"var(--ink-hi)", crowd:8, morale:7, dread:0,
     line:p=>`He held the primacy of Capua in this.` },
-  dead:    { colour:"#7c2a22", crowd:4, morale:-7, dread:1,
+  dead:    { colour:"var(--blood-edge)", crowd:4, morale:-7, dread:1,
     line:p=>`${p.from} was wearing this when he died in it. The cells know which piece it is.` },
 };
 const provOf   = (g,s) => (g && g.prov && g.prov[s]) || null;
@@ -1434,7 +1510,7 @@ function pitchEffects(d){
     const v = P[key] == null ? 1 : P[key];
     const pc = Math.round((v - 1) * 100);
     const good = lowGood ? pc < 0 : pc > 0;
-    return { label, pc, good, colour: pc===0 ? "#b09b7d" : good ? "#9aa86a" : "#d96f5d" };
+    return { label, pc, good, colour: pc===0 ? "var(--ink-dim)" : good ? "var(--laurel)" : "var(--blood)" };
   }).filter(x=>x.pc !== 0);
 }
 const pitchOf = d => PITCHES[(d && d.pitch) || "plain"] || PITCHES.plain;
@@ -3256,7 +3332,7 @@ function agenda(d){
     add(2, "men:armory", "Capua's master smiths will take your commissions now", "famous steel, and a smith's wage on it forever");
   return A.sort((a,b)=>b.urgency-a.urgency);
 }
-const URG = { 3:{c:"#d96f5d",w:"now"}, 2:{c:"#d8ac5f",w:"soon"}, 1:{c:"#b09b7d",w:"when you can"} };
+const URG = { 3:{c:"var(--blood)",w:"now"}, 2:{c:"var(--gold)",w:"soon"}, 1:{c:"var(--ink-dim)",w:"when you can"} };
 const TAB_NAMES = { ludus:"Ludus", men:"Familia", arena:"Arena", armory:"Armory", market:"Market", villa:"Villa" };
 
 /* ---- SEEDED RANDOMNESS ----
@@ -3468,8 +3544,8 @@ function bodyWear(g){
 }
 const wornWord = w => w<0.12 ? "sound" : w<0.26 ? "seasoned" : w<0.44 ? "battle-worn"
   : w<0.64 ? "breaking down" : "held together with linen";
-const wornColour = w => w<0.12 ? "#8a9c6a" : w<0.26 ? "#b5a06a" : w<0.44 ? "#cf9a4b"
-  : w<0.64 ? "#d07a4a" : "#cf5a49";
+const wornColour = w => w<0.12 ? "var(--laurel)" : w<0.26 ? "var(--ink-dim2)" : w<0.44 ? "var(--gold)"
+  : w<0.64 ? "var(--blood)" : "var(--blood-str)";
 /* a grave wound can leave something permanent on its own — no need to be opened
    three times, only to be opened badly once, and the more worn the body the likelier */
 function graveLasting(d, g, part, care){
@@ -3577,7 +3653,7 @@ const RANKS = {
 };
 const rankKeys = ["magistrate","merchant","noble","senator"];
 const patronWord = f => f<15 ? "affronted" : f<32 ? "cool" : f<52 ? "civil" : f<72 ? "warm" : f<88 ? "a friend of the house" : "devoted";
-const patronColor = f => f<15 ? "#cf5a49" : f<32 ? "#9c8a6f" : f<72 ? "#cfc0a0" : "#e0bd72";
+const patronColor = f => f<15 ? "var(--blood-str)" : f<32 ? "#9c8a6f" : f<72 ? "var(--ink-2)" : "var(--gold-hi)";
 
 function makePatron(d, rank){
   const fem = rank==="noble";
@@ -4447,7 +4523,7 @@ const formOf = g => clamp(g.form || 0, -100, 100);
    explains form and the tag on his row both read it, and both used to carry a bare 24 */
 const FORM_TELL = 14;
 const formWord = v => v>=34?"in form" : v>=FORM_TELL?"sharp" : v>-FORM_TELL?"level" : v>-34?"off his stride" : "shaken";
-const formColour = v => cbc(v>=FORM_TELL?"#9aa86a" : v>-FORM_TELL?"#b09b7d" : "#d96f5d");
+const formColour = v => cbc(v>=FORM_TELL?"var(--laurel)" : v>-FORM_TELL?"var(--ink-dim)" : "var(--blood)");
 const formPower = g => 1 + formOf(g)/100 * 0.036;      // ±3.6% at the extremes
 const formStam  = g => 1 - formOf(g)/100 * 0.04;       // and he tires a shade slower on a run
 function formShift(d, g, n, note){
@@ -4477,7 +4553,7 @@ function formWeek(d){
 const favourOf = g => clamp((g && g.favour) || 0, 0, 100);
 const favWord  = v => v>=82?"the darling of Capua" : v>=62?"they chant for him" : v>=40?"a name in the stands"
   : v>=18?"known by sight" : "one more man on the sand";
-const favColour= v => v>=62?"#e8d092" : v>=40?"#c99a4b" : v>=18?"#b09b7d" : "#8d7e65";
+const favColour= v => v>=62?"var(--ink-hi)" : v>=40?"var(--gold-line)" : v>=18?"var(--ink-dim)" : "var(--ink-faint)";
 /* what the affection is worth */
 const favPurse  = g => 1 + favourOf(g)/100 * 0.22;
 const favMissio = g => favourOf(g)/100 * 15;          // they lean, they do not overrule
@@ -5872,7 +5948,7 @@ function rivalWeekly(d){
    of form that persists, a rising man the whole bay starts to name, a season that
    goes wrong. It moves the fame table on its own, and the city talks about it. */
 const houseFortune = h => { const f=h.form||0; return f>=45?"having a season" : f>=18?"in good form" : f<=-45?"in decline" : f<=-18?"struggling" : "steady"; };
-const fortuneColour = h => { const f=h.form||0; return f>=18?"#9aa86a" : f<=-18?"#d96f5d" : "#b09b7d"; };
+const fortuneColour = h => { const f=h.form||0; return f>=18?"var(--laurel)" : f<=-18?"var(--blood)" : "var(--ink-dim)"; };
 const STAR_GATE = 52;
 const houseStar = h => { const s = (h.fighters||[]).filter(f=>!f.injury).sort((a,b)=>(b.pfame||0)-(a.pfame||0))[0]; return s && (s.pfame||0)>=STAR_GATE ? s : null; };
 /* who a rival sends to a grudge — its named star if it has one, so "you will meet him one day" comes true */
@@ -6247,7 +6323,7 @@ const REGARD_KEYS = Object.keys(REGARD);
 const regardOf = g => clamp(g.regard==null ? 50 : g.regard, 0, 100);
 const regardWord = v => v>=82?"would follow you anywhere" : v>=64?"trusts you" : v>=46?"takes you as he finds you"
   : v>=28?"has his doubts" : v>=12?"does not trust you" : "hates you";
-const regardColour = v => cbc(v>=64?"#9aa86a" : v>=46?"#b09b7d" : v>=28?"#d8ac5f" : "#d96f5d");
+const regardColour = v => cbc(v>=64?"var(--laurel)" : v>=46?"var(--ink-dim)" : v>=28?"var(--gold)" : "var(--blood)");
 function remember(d, g, kind, mult){
   if(!g || !REGARD[kind]) return;
   const R2 = REGARD[kind];
@@ -7024,9 +7100,9 @@ function familyWeek(d){
    do now, and the calendar stops being scenery. */
 const EDITORS = ["Aulus Vibius","Publius Sittius","the aedile Norbanus","Marcus Blossius","the younger Calavius"];
 const DL = {
-  booking:   { name:"A booking", colour:"#c99a4b" },
-  challenge: { name:"A challenge", colour:"#d96f5d" },
-  levy:      { name:"A levy", colour:"#d8ac5f" },
+  booking:   { name:"A booking", colour:"var(--gold-line)" },
+  challenge: { name:"A challenge", colour:"var(--blood)" },
+  levy:      { name:"A levy", colour:"var(--gold)" },
 };
 const dueIn = (d, x) => x.due - d.week;
 const deadlines = d => (d.deadlines||[]).slice().sort((a,b)=>a.due-b.due);
@@ -7344,7 +7420,7 @@ const FACTIONS = {
 const FAC_KEYS = Object.keys(FACTIONS);
 const facOf = (d,k) => (d.factions && d.factions[k]!=null) ? d.factions[k] : 40;
 const facWord = v => v>=78?"partisan" : v>=60?"warm" : v>=40?"indifferent" : v>=22?"cold" : "hostile";
-const facColour = v => cbc(v>=60?"#9aa86a" : v>=40?"#b09b7d" : v>=22?"#d8ac5f" : "#d96f5d");
+const facColour = v => cbc(v>=60?"var(--laurel)" : v>=40?"var(--ink-dim)" : v>=22?"var(--gold)" : "var(--blood)");
 const isHeavy = cls => HEAVY.includes(cls);
 function facMove(d, k, n){
   if(!d.factions) d.factions = { parm:40, scut:40, mob:40, front:40 };
@@ -7488,7 +7564,7 @@ const foeWord = e => {
     : e.l > e.w ? `lost to ${foeTimes(e.l)}${e.w? `, beaten ${e.w}`:""}`
     : `met ${foeTimes(n)}, nothing settled`;
 };
-const foeColour = e => (e.w||0) > (e.l||0) ? "#9aa86a" : (e.l||0) > (e.w||0) ? "#d96f5d" : "#cbc08e";
+const foeColour = e => (e.w||0) > (e.l||0) ? "var(--laurel)" : (e.l||0) > (e.w||0) ? "var(--blood)" : "var(--ink-2)";
 /* the live man behind a card — the offer carries a copy, and a copy does not remember */
 function liveFoe(d, o){
   if(!o) return null;
@@ -9608,7 +9684,7 @@ const LAN_TRAITS = {
 const LAN_KEYS = Object.keys(LAN_TRAITS);
 const hasLT = (d,k) => !!(d.lanista && d.lanista.traits && d.lanista.traits.includes(k));
 const healthWord = h => h>=80?"hale" : h>=60?"well enough" : h>=40?"tired" : h>=22?"failing" : "not long";
-const healthColour = h => cbc(h>=60?"#9aa86a" : h>=35?"#d8ac5f" : "#d96f5d");
+const healthColour = h => cbc(h>=60?"var(--laurel)" : h>=35?"var(--gold)" : "var(--blood)");
 
 function makeLanista(d){
   return { name:`${pick(PRAENOMINA)} ${pick(NOMINA)} ${pick(COGNOMINA)}`, age: ri(34,46), health: ri(78,92),
@@ -11101,8 +11177,8 @@ function courtWeek(d){
    What a man is — his class, his years, what the bill says he has done — is public.
    What he is good at is not. An afternoon at somebody else's yard, and a coin in the
    right hand, buys you the readings and whatever his own people say about him. */
-const READ_BANDS = [[80,"exceptional","#e0bd72"],[68,"strong","#cbc08e"],[56,"sound","#cfc0a0"],
-                    [44,"fair","#b09b7d"],[0,"poor","#cfa88a"]];
+const READ_BANDS = [[80,"exceptional","var(--gold-hi)"],[68,"strong","var(--ink-2)"],[56,"sound","var(--ink-2)"],
+                    [44,"fair","var(--ink-dim)"],[0,"poor","var(--blood-hi)"]];
 const readWord   = v => (READ_BANDS.find(b=>v>=b[0]) || READ_BANDS[READ_BANDS.length-1]);
 const scoutCost  = (d, f) => rnd(60 + (f.pfame||0)*2.2 + (f.wins||0)*13 + (d.fame||0)*0.02);
 const SCOUT_KEEPS = 10;                                   /* how long a reading stays good */
@@ -11148,8 +11224,8 @@ function readMatch(g, foe, seen){
     : edge > -0.04 ? "even, near enough"
     : edge > -0.14 ? "would be second best"
     : "is overmatched";
-  const colour = !seen ? (counter?"#9aa86a":against?"#cfa88a":"#b09b7d")
-    : edge>0.04 ? "#9aa86a" : edge>-0.04 ? "#cbc08e" : "#d96f5d";
+  const colour = !seen ? (counter?"var(--laurel)":against?"var(--blood-hi)":"var(--ink-dim)")
+    : edge>0.04 ? "var(--laurel)" : edge>-0.04 ? "var(--ink-2)" : "var(--blood)";
   return { word, colour, edge, counter, against };
 }
 /* how your house reads against him — vaguer until you have had him watched */
@@ -11271,7 +11347,7 @@ function boutPattern(g){
 const boutWord = a => a.died ? "he did not come back"
   : a.win ? (a.killed ? "won, and killed him" : "won")
   : a.spared ? "beaten, and spared" : "beaten";
-const boutColour = a => a.died ? "#d96f5d" : a.win ? "#9aa86a" : "#cfa88a";
+const boutColour = a => a.died ? "var(--blood)" : a.win ? "var(--laurel)" : "var(--blood-hi)";
 
 /* ---- AND THEY WATCH YOU BACK ----
    All the scouting ran one way. You could pay to have any man in Campania looked
@@ -11429,7 +11505,7 @@ function fitCurve(d, span){
   for(let i=0;i<=span;i++) out.push({ week:d.week+i, fit:fitOn(d, d.week+i) });
   return out;
 }
-const YARD_COLOUR = n => n<=0 ? "#d96f5d" : n<=1 ? "#d8ac5f" : n<=2 ? "#b09b7d" : "#9aa86a";
+const YARD_COLOUR = n => n<=0 ? "var(--blood)" : n<=1 ? "var(--gold)" : n<=2 ? "var(--ink-dim)" : "var(--laurel)";
 const YARD_WORD = n => n<=0 ? "nobody can stand" : n===1 ? "one man, and no second" : n===2 ? "two — thin" : n<=4 ? "enough for a card" : "deep enough to choose";
 /* the sentence you want before you put a name on a bill */
 function promiseRead(d, gid, due){
@@ -11451,8 +11527,8 @@ function promiseRead(d, gid, due){
    contract in the arena, a patron waiting in the villa, a reading going stale in a
    rival's file. Nothing ever put them on one line together, which is the only way a
    man plans anything. This does. */
-const CAL_TONE = { fest:"#e0bd72", season:"#b09b7d", duty:"#d96f5d", coin:"#d8ac5f",
-                   town:"#bfa8c8", house:"#9aa86a", road:"#9dc0d4", quiet:"#8a7a5c", man:"#cbc08e" };
+const CAL_TONE = { fest:"var(--gold-hi)", season:"var(--ink-dim)", duty:"var(--blood)", coin:"var(--gold)",
+                   town:"var(--violet)", house:"var(--laurel)", road:"var(--azure)", quiet:"var(--ink-faint)", man:"var(--ink-2)" };
 function calendarRows(d, span){
   const N = span == null ? YEAR_WEEKS : span;
   const out = [];
@@ -11460,7 +11536,7 @@ function calendarRows(d, span){
     if(wk == null || !isFinite(wk)) return;
     const w = Math.max(d.week, Math.round(wk));
     if(w > d.week + N) return;
-    out.push({ week:w, kind, title, sub, tone:CAL_TONE[kind]||"#cfc0a0", tab });
+    out.push({ week:w, kind, title, sub, tone:CAL_TONE[kind]||"var(--ink-2)", tab });
   };
   /* the fixed year — the festivals and the turn of the seasons */
   for(let i=0;i<=N;i++){
@@ -12537,14 +12613,14 @@ function standing(kind, v, week){
   const n = normOf(kind, week); if(!n) return null;
   const band = v >= n.hi ? 3 : v >= n.mid ? 2 : v >= n.lo ? 1 : 0;
   const word = ["behind most houses","a little behind","about typical","ahead of most houses"][band];
-  return { band, word, n, colour:cbc(["#d96f5d","#d8ac5f","#b09b7d","#9aa86a"][band]) };
+  return { band, word, n, colour:cbc(["var(--blood)","var(--gold)","var(--ink-dim)","var(--laurel)"][band]) };
 }
 /* the two that are better low */
 function standingLow(kind, v, marks){
   const m = marks || [12, 30, 55];
   const band = v >= m[2] ? 0 : v >= m[1] ? 1 : v >= m[0] ? 2 : 3;
   const word = ["dangerously high","higher than most","about typical","quieter than most"][band];
-  return { band, word, colour:cbc(["#d96f5d","#d8ac5f","#b09b7d","#9aa86a"][band]) };
+  return { band, word, colour:cbc(["var(--blood)","var(--gold)","var(--ink-dim)","var(--laurel)"][band]) };
 }
 
 /* ---- WHY IT WENT THAT WAY ----
@@ -17270,7 +17346,7 @@ function makePitOffer(d, g, stakes, fid){
 
 /* ================= UI ================= */
 
-const BRONZE="#c99a4b", BLOOD="#b8463a", LAUREL="#8a9a5b";
+const BRONZE="var(--gold-line)", BLOOD="var(--blood-str)", LAUREL="var(--laurel)";
 /* ---- THE ONE WORD YOU GET FOR FREE, AND IT USED TO STOP AT SIXTY-SIX ----
    `readMatch` gives a real reading only when you have PAID to have the man watched, and only
    15.3% of the offers a house is shown are against a man whose measure it holds. For the other
@@ -17306,7 +17382,7 @@ function GearStats({ it, cls }){
     <div>
       <div className="flex gap-2" style={{flexWrap:"wrap",fontSize:"var(--fs-base)"}}>
         {rows.map(r=>(
-          <span key={r[0]} style={{color: r[2]>0 ? "#9aa86a" : "#cf5a49"}}>{r[1]} {pct(r[2])}</span>
+          <span key={r[0]} style={{color: r[2]>0 ? "var(--laurel)" : "var(--blood-str)"}}>{r[1]} {pct(r[2])}</span>
         ))}
       </div>
       {alien && <div className="blood" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:2}}>Not of his style — clumsy in his hands.</div>}
@@ -17603,12 +17679,12 @@ const Fighter = React.memo(function Fighter({ kit, pose, wounds, scars, fallen, 
         <path d="M50,62 Q56,64 62,62 M50,69 Q56,71 62,69" stroke={SKIN_D} strokeWidth=".9" fill="none" opacity=".5"/>
       </g>)}
       {hasChest && (<g>
-        <path d="M45,41 Q56,37 67,41 L65,68 Q56,72 47,68Z" fill={gilt? "#c99a3c":"#6d5738"} stroke={gilt? "#8a6520":"#4d3d26"} strokeWidth="1.2"/>
+        <path d="M45,41 Q56,37 67,41 L65,68 Q56,72 47,68Z" fill={gilt? "var(--gold-line)":"var(--line-4)"} stroke={gilt? "var(--gold-deep)":"var(--line-4)"} strokeWidth="1.2"/>
         {gilt && <path d="M50,47 Q56,51 62,47 M50,57 Q56,61 62,57" stroke="#8a6520" strokeWidth="1" fill="none"/>}
       </g>)}
       {gilt && <ellipse cx="64" cy="42" rx="8" ry="5" fill="#d9a842" stroke="#8a6520" strokeWidth="1"/>}
       <path d="M46,76 L66,76 L69,95 Q56,99 43,95Z" fill={LEATHER}/>
-      <rect x="43" y="72" width="26" height="6" rx="2" fill={gilt? "#a8801f":LEATHER_D}/>
+      <rect x="43" y="72" width="26" height="6" rx="2" fill={gilt? "var(--gold-deep)":LEATHER_D}/>
       {shieldOrNet()}
       {offBlade()}
       {mainArm()}
@@ -17911,7 +17987,7 @@ function LudusPlan({ S }){
   /* a room's fill deepens with its level */
   const lvl = (k, base) => { const n = B(k); return n===0 ? dim : n===1 ? "#3c3120" : n===2 ? "#4e3f27" : base; };
   const label = (x, y, t, on) => (
-    <text x={x} y={y} fontSize="7.2" fill={on ? "#c9b489" : "#8f7e62"}
+    <text x={x} y={y} fontSize="7.2" fill={on ? "var(--ink-2)" : "var(--ink-faint)"}
       fontFamily="Cormorant Garamond, Georgia, serif" textAnchor="middle" letterSpacing="0.4">{t}</text>
   );
   /* men stand about the yard */
@@ -17919,7 +17995,7 @@ function LudusPlan({ S }){
   return (
     <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img"
       aria-label={`A plan of the ludus. ${BKEYS.reduce((n,k)=>n+B(k),0)} of 20 wings built, ${men.length} men in the yard${hurt?`, ${hurt} in the infirmary`:""}.`}
-      style={{display:"block",borderRadius:8,background:"#1a1510"}}>
+      style={{display:"block",borderRadius:8,background:"var(--panel)"}}>
       <defs>
         <linearGradient id="sand" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#6b5533"/><stop offset="100%" stopColor="#8a6d40"/>
@@ -17944,7 +18020,7 @@ function LudusPlan({ S }){
       <rect x="22" y="70" width="56" height="96" rx="2" fill={lvl("palus", lit)} stroke={stone} strokeWidth="1"/>
       {[0,1,2].map(i=>(
         <g key={i}>
-          <rect x={46} y={82+i*30} width="7" height="18" rx="2" fill={B("palus")>i ? "#8a6d40" : "#3a3020"}/>
+          <rect x={46} y={82+i*30} width="7" height="18" rx="2" fill={B("palus")>i ? "var(--ink-faint)" : "var(--line-2)"}/>
         </g>
       ))}
       {label(50, 176, `PALUS ${B("palus")||""}`, B("palus")>0)}
@@ -17952,7 +18028,7 @@ function LudusPlan({ S }){
       {/* armoury and infirmary down the east */}
       <rect x="222" y="70" width="56" height="44" rx="2" fill={lvl("armamentarium", lit)} stroke={stone} strokeWidth="1"/>
       {[0,1,2].map(i=>(
-        <rect key={i} x={234+i*13} y="82" width="3" height="20" fill={B("armamentarium")>i ? "#c9b489" : "#3a3020"}/>
+        <rect key={i} x={234+i*13} y="82" width="3" height="20" fill={B("armamentarium")>i ? "var(--ink-2)" : "var(--line-2)"}/>
       ))}
       {/* the armoury's name sits inside its own wall — below it is the infirmary, which
           is drawn after this and would paint straight over the letters */}
@@ -17961,7 +18037,7 @@ function LudusPlan({ S }){
       <rect x="222" y="122" width="56" height="44" rx="2" fill={lvl("valetudinarium", lit)} stroke={stone} strokeWidth="1"/>
       {[0,1,2].map(i=>(
         <rect key={i} x={232} y={130+i*11} width="36" height="6" rx="1.5"
-          fill={i < hurt ? "#7c2a22" : (B("valetudinarium")>i ? "#5a4a30" : "#3a3020")}/>
+          fill={i < hurt ? "var(--blood-edge)" : (B("valetudinarium")>i ? "var(--line-4)" : "var(--line-2)")}/>
       ))}
       {label(250, 176, `INFIRMARY ${B("valetudinarium")||""}`, B("valetudinarium")>0)}
 
@@ -17991,7 +18067,7 @@ function LudusPlan({ S }){
       {/* and the men, standing about in it */}
       {men.slice(0,8).map((g,i)=>{
         const [x,y] = spots[i] || spots[0];
-        const c = refusing(g) ? "#d96f5d" : g.learning ? "#d8ac5f" : lastingOf(g).length ? "#a8563f" : "#e8d9b8";
+        const c = refusing(g) ? "var(--blood)" : g.learning ? "var(--gold)" : lastingOf(g).length ? "#a8563f" : "var(--ink)";
         return (
           <g key={g.id} opacity="0.95">
             <circle cx={x} cy={y-5} r="2.6" fill={c}/>
@@ -18038,16 +18114,16 @@ function HPBar({ label, v, s, cls, flip }){
           bear of the north" — the hunt puts the whole phrase in here, so the one bout where
           the label needs two lines was the one bout that could not have them. Found by the
           `sand` check on its first full run, on the crux and the night both. */}
-      <div className="disp" style={{fontSize:"var(--fs-micro)", letterSpacing:".07em", color:"#e0bd72",
+      <div className="disp" style={{fontSize:"var(--fs-micro)", letterSpacing:".07em", color:"var(--gold-hi)",
         overflowWrap:"anywhere", lineHeight:1.25}}>{label}</div>
       <div className="dim" style={{fontSize:"var(--fs-micro)", marginBottom:3}}>{cls}</div>
       <div className="track" style={{height:6}} role="progressbar" aria-label={`${label} health`}
         aria-valuenow={Math.round(clamp((v-20)/80*100,0,100))} aria-valuemin={0} aria-valuemax={100}>
         <div className="fill" style={{width:`${clamp((v-20)/80*100,0,100)}%`, marginLeft: flip? "auto":0,
-          background: v>60? "linear-gradient(90deg,#6a7a3a,#9aa86a)" : v>35? "linear-gradient(90deg,#8a6a2c,#d8ac5f)" : "linear-gradient(90deg,#7c2a22,#cf5a49)"}}/>
+          background: v>60? "linear-gradient(90deg,var(--laurel-edge2),var(--laurel))" : v>35? "linear-gradient(90deg,var(--gold-deep),var(--gold))" : "linear-gradient(90deg,var(--blood-edge),var(--blood-str))"}}/>
       </div>
       <div className="track" style={{height:3, marginTop:2, opacity:.75}}>
-        <div className="fill" style={{width:`${clamp(s,0,100)}%`, marginLeft: flip? "auto":0, background:"#5e7f8a"}}/>
+        <div className="fill" style={{width:`${clamp(s,0,100)}%`, marginLeft: flip? "auto":0, background:"var(--ink-faint)"}}/>
       </div>
     </div>
   );
@@ -18227,8 +18303,8 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
           <div className="flex gap-1" style={{flexWrap:"wrap",marginBottom:6}}>
             {fight.ents.map((e,i)=>(
               <span key={i} className="tag" style={{
-                borderColor: b.dead[i] ? "#5a1a14" : b.out[i] ? "#3e2f1f" : e.mine ? "#8a3a2b" : "#3d5a6b",
-                color: b.dead[i] ? "#6b4038" : b.out[i] ? "#8f7e62" : e.mine ? "#e8a08c" : "#9dc0d4",
+                borderColor: b.dead[i] ? "var(--blood-edge)" : b.out[i] ? "var(--line-2)" : e.mine ? "var(--blood-edge)" : "var(--azure-edge)",
+                color: b.dead[i] ? "var(--blood-edge)" : b.out[i] ? "var(--ink-faint)" : e.mine ? "var(--blood-hi)" : "var(--azure)",
                 textDecoration: b.out[i] ? "line-through" : "none", fontSize:"var(--fs-micro)" }}>
                 {e.name}{b.dead[i] ? " ✝" : ""}
               </span>
@@ -18322,7 +18398,7 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
             <div className="momtrack" style={{flex:1}}>
               <div className="momfill" style={{ left: momPct<50? `${momPct}%`:"50%", right: momPct<50? "50%":`${100-momPct}%` }}/>
             </div>
-            <span className="disp" style={{fontSize:"var(--fs-micro)",letterSpacing:".06em",color: b.crowd>=78?"#e0bd72":b.crowd>=45?"#d8ac5f":"#8d7e65",whiteSpace:"nowrap"}}>
+            <span className="disp" style={{fontSize:"var(--fs-micro)",letterSpacing:".06em",color: b.crowd>=78?"var(--gold-hi)":b.crowd>=45?"var(--gold)":"var(--ink-faint)",whiteSpace:"nowrap"}}>
               CROWD {Math.round(b.crowd||0)}
             </span>
           </div>
@@ -18333,12 +18409,12 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
           <div className="flex items-center justify-between gap-2" style={{marginTop:6}}>
             <div className="flex gap-1" style={{flexWrap:"wrap",minWidth:0}}>
               {(b.mkA||[]).map(k=>(
-                <span key={k} className="chip" style={{fontSize:"var(--fs-micro)",padding:"1px 6px",borderColor:"#7c2a22",color:"#d98476"}}>{MARK_WORD[k]}</span>
+                <span key={k} className="chip" style={{fontSize:"var(--fs-micro)",padding:"1px 6px",borderColor:"var(--blood-edge)",color:"var(--blood-hi)"}}>{MARK_WORD[k]}</span>
               ))}
             </div>
             <div className="flex gap-1" style={{flexWrap:"wrap",minWidth:0,justifyContent:"flex-end"}}>
               {(b.mkB||[]).map(k=>(
-                <span key={k} className="chip" style={{fontSize:"var(--fs-micro)",padding:"1px 6px",borderColor:"#5a6a35",color:"#b9c58a"}}>{MARK_WORD[k]}</span>
+                <span key={k} className="chip" style={{fontSize:"var(--fs-micro)",padding:"1px 6px",borderColor:"var(--laurel-edge)",color:"var(--laurel-hi)"}}>{MARK_WORD[k]}</span>
               ))}
             </div>
           </div>
@@ -18346,7 +18422,7 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
 
         {!done && b.sp!=null && (
           <div className="disp" style={{textAlign:"center",fontSize:"var(--fs-micro)",letterSpacing:".07em",marginTop:6,
-            color: b.sp===2?"#9aa86a":b.sp===1?"#d8ac5f":"#d96f5d"}}>
+            color: b.sp===2?"var(--laurel)":b.sp===1?"var(--gold)":"var(--blood)"}}>
             {b.sp===2 ? "IF HE FALLS NOW — THE BOX WOULD SPARE HIM"
               : b.sp===1 ? "IF HE FALLS NOW — IT WOULD BE CLOSE"
               : "IF HE FALLS NOW — THE THUMB WOULD TURN"}
@@ -18355,17 +18431,17 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
         )}
 
         {b.named && (
-          <div className="disp" style={{marginTop:8,textAlign:"center",fontSize:"var(--fs-base)",letterSpacing:".1em",color:"#e0bd72"}}>✦ {b.named.toUpperCase()} ✦</div>
+          <div className="disp" style={{marginTop:8,textAlign:"center",fontSize:"var(--fs-base)",letterSpacing:".1em",color:"var(--gold-hi)"}}>✦ {b.named.toUpperCase()} ✦</div>
         )}
         <div className="caption" role="log" aria-live="polite" aria-atomic="true"
-          style={{marginTop:b.named?4:10, color: b.named? "#e0bd72" : b.kind==="crit"||b.kind==="death"? "#eab6a8" : b.kind==="crowd"? "#e0bd72":"#e8d9b8"}}>
+          style={{marginTop:b.named?4:10, color: b.named? "var(--gold-hi)" : b.kind==="crit"||b.kind==="death"? "var(--blood-hi)" : b.kind==="crowd"? "var(--gold-hi)":"var(--ink)"}}>
           {b.text}
         </div>
         {b.stands && (
           <div style={{marginTop:5,fontSize:"var(--fs-md)",fontStyle:"italic",
-            color: b.stands.silent ? "#8d7e65" : (FAC_TINT[b.stands.fac] ? "#cfc0a0" : "#cfc0a0")}}>
+            color: b.stands.silent ? "var(--ink-faint)" : (FAC_TINT[b.stands.fac] ? "var(--ink-2)" : "var(--ink-2)")}}>
             {b.stands.silent ? b.stands.line : <>
-              <span style={{color:FAC_TINT[b.stands.fac]||"#9aa86a"}}>“{b.stands.line}”</span>
+              <span style={{color:FAC_TINT[b.stands.fac]||"var(--laurel)"}}>“{b.stands.line}”</span>
               <span className="dim" style={{fontSize:"var(--fs-base)"}}> — {b.stands.who}</span>
             </>}
           </div>
@@ -18384,8 +18460,8 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
           const entries = Object.entries(base).filter(([k,c]) => !c.when || c.when(cx));
           const sig = solo && fight.A ? SIGNATURES[fight.A.cls] : null;
           return (
-          <div className="panel" style={{marginTop:8,padding:12,borderColor:"#c99a4b"}}>
-            <div className="disp" style={{fontSize:"var(--fs-base)",fontWeight:700,letterSpacing:".1em",marginBottom:4,color:"#e8d092"}}>
+          <div className="panel" style={{marginTop:8,padding:12,borderColor:"var(--gold-line)"}}>
+            <div className="disp" style={{fontSize:"var(--fs-base)",fontWeight:700,letterSpacing:".1em",marginBottom:4,color:"var(--ink-hi)"}}>
               {solo ? "FROM THE BOX" : "ONE WORD FROM THE BOX"}
             </div>
             <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:9}}>
@@ -18419,17 +18495,17 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
         })()}
 
         {done && !fight.crux && (
-          <div className="panel" style={{marginTop:8, padding:12, borderColor: fight.dead? "#7c2a22" : fight.win? "#5a6a35":"#4e3c26"}}>
-            <div className="disp" style={{fontSize:"var(--fs-base)", fontWeight:700, marginBottom:6, color: fight.dead? "#d98476": fight.win? "#b9c58a":"#e0bd72"}}>
+          <div className="panel" style={{marginTop:8, padding:12, borderColor: fight.dead? "var(--blood-edge)" : fight.win? "var(--laurel-edge)":"var(--line-4)"}}>
+            <div className="disp" style={{fontSize:"var(--fs-base)", fontWeight:700, marginBottom:6, color: fight.dead? "var(--blood-hi)": fight.win? "var(--laurel-hi)":"var(--gold-hi)"}}>
               {fight.dead? "A DEATH IN THE HOUSE" : fight.win? "VICTORY" : "DEFEAT"}
             </div>
             {fight.sum.map((s,k)=><div key={k} style={{fontSize:"var(--fs-lg)", padding:"2px 0"}}>{s}</div>)}
             {fight.reading && fight.reading.length>0 && (
-              <div className="panel" style={{padding:11,marginTop:9,background:"#1c1610",
-                borderColor: fight.win ? "#4e3c26" : "#7c2a22"}}>
+              <div className="panel" style={{padding:11,marginTop:9,background:"var(--panel)",
+                borderColor: fight.win ? "var(--line-4)" : "var(--blood-edge)"}}>
                 <div className="tag" style={{marginBottom:4}}>What decided it</div>
                 {fight.reading.map((r,k)=>(
-                  <div key={k} style={{fontSize:"var(--fs-md)",borderTop:k?"1px dotted #33271a":"none",paddingTop:k?5:0,marginTop:k?5:0}}>{r.s || r}</div>
+                  <div key={k} style={{fontSize:"var(--fs-md)",borderTop:k?"1px dotted var(--line)":"none",paddingTop:k?5:0,marginTop:k?5:0}}>{r.s || r}</div>
                 ))}
               </div>
             )}
@@ -18573,10 +18649,10 @@ function RomeStanding({ S }){
   const mult = Math.round((romePurseMult(S)-1)*100);
   const capped = romeRuns(S)*12 > ROME_ATTEND_CAP;
   return (
-    <div className="panel" style={{padding:10,marginTop:9,background:"#1c1610",borderColor:"#6d5426"}}>
+    <div className="panel" style={{padding:10,marginTop:9,background:"var(--panel)",borderColor:"var(--gold-edge)"}}>
       <div className="flex items-center justify-between gap-2" style={{marginBottom:4}}>
         <span className="tag tag-gold">What Rome makes of you</span>
-        <span className="rowval" style={{fontSize:"var(--fs-sm)",color:"#e0bd72",flexShrink:0}}>{romeWord(S)}</span>
+        <span className="rowval" style={{fontSize:"var(--fs-sm)",color:"var(--gold-hi)",flexShrink:0}}>{romeWord(S)}</span>
       </div>
       <div style={{fontSize:"var(--fs-md)",lineHeight:1.4}}>
         Purses on the imperial sand {mult>0?`+${mult}%`:"as billed"} · <span className="blood">{sine} of every hundred bouts there will be to the death</span>
@@ -18606,7 +18682,7 @@ function ImperialShape({ me, o }){
   const km = a => key.length ? key.reduce((n,k)=>n+(a[k]||0),0)/key.length : 0;
   const mine = statMean(me), his = statMean(o.opp);
   return (
-    <div className="panel" style={{padding:9,marginTop:8,background:"#1c1610",borderColor:"#6d5426"}}>
+    <div className="panel" style={{padding:9,marginTop:8,background:"var(--panel)",borderColor:"var(--gold-edge)"}}>
       <div className="tag tag-gold" style={{marginBottom:4}}>He has no weak side</div>
       <div style={{fontSize:"var(--fs-md)",lineHeight:1.4}}>
         {me.name} — {Math.round(km(me))} at {key.map(k=>STAT_NAMES[k].toLowerCase()).join(" and ")},{" "}
@@ -18658,7 +18734,7 @@ function TheStreet({ S }){
   return (
     <div style={{marginTop:9}}>
       <div className="flex items-center justify-between gap-2" style={{fontSize:"var(--fs-md)"}}>
-        <span className="dim">The street is <span style={{color:dir==="warming"?"#9aa86a":dir==="cooling"?"#d96f5d":"#cbc08e"}}>{dir}</span> to you</span>
+        <span className="dim">The street is <span style={{color:dir==="warming"?"var(--laurel)":dir==="cooling"?"var(--blood)":"var(--ink-2)"}}>{dir}</span> to you</span>
         <span className="rowval dim" style={{flexShrink:0}}>walking to {Math.round(t)}</span>
       </div>
       <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:2,lineHeight:1.35}}>
@@ -18667,9 +18743,9 @@ function TheStreet({ S }){
       </div>
       <div className="tag tag-gold" style={{margin:"9px 0 4px"}}>What the street counts</div>
       {acclaimTerms(S).map(x=>(
-        <div key={x.k} style={{borderTop:"1px dotted #33271a",padding:"5px 0"}}>
+        <div key={x.k} style={{borderTop:"1px dotted var(--line)",padding:"5px 0"}}>
           <div className="flex items-center justify-between gap-2">
-            <span style={{fontSize:"var(--fs-md)",color:x.v >= x.top - 0.5 ? "#9aa86a" : "#cfc0a0"}}>{x.name}</span>
+            <span style={{fontSize:"var(--fs-md)",color:x.v >= x.top - 0.5 ? "var(--laurel)" : "var(--ink-2)"}}>{x.name}</span>
             <span className="rowval dim" style={{flexShrink:0,fontSize:"var(--fs-sm)"}}>{Math.round(x.v)} of {x.top}{x.v >= x.top - 0.5 ? " · full" : ""}</span>
           </div>
           <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:1,lineHeight:1.35}}>{x.say}</div>
@@ -18709,9 +18785,9 @@ function Sect({ title, note, open, tone, mark, live, sid, children }){
         <span style={{minWidth:0,display:"flex",alignItems:"center",gap:6}}>
           {m && (m.urg
             ? <span role="img" aria-label={`${m.n} wanting an answer — `} style={{flex:"0 0 auto",minWidth:18,height:18,borderRadius:9,
-                padding:"0 4px",background:URG[m.urg].c,color:"#14100c",fontFamily:"'Cinzel',serif",
+                padding:"0 4px",background:URG[m.urg].c,color:"var(--ground)",fontFamily:"'Cinzel',serif",
                 fontSize:"var(--fs-micro)",fontWeight:900,lineHeight:"18px",textAlign:"center"}}>{m.n > 9 ? "9+" : m.n}</span>
-            : <span role="img" aria-label="something new — " style={{flex:"0 0 auto",width:7,height:7,borderRadius:4,background:"#c99a4b"}}/>)}
+            : <span role="img" aria-label="something new — " style={{flex:"0 0 auto",width:7,height:7,borderRadius:4,background:"var(--gold-line)"}}/>)}
           <span style={{minWidth:0,overflowWrap:"anywhere"}}>{title}</span>
         </span>
         <span style={{display:"flex",alignItems:"center",gap:8,flex:"0 1 auto",minWidth:0,justifyContent:"flex-end"}}>
@@ -19222,7 +19298,7 @@ const SECT = {
     const v = regardOf(selG), mem = (selG.memory||[]).slice().reverse();
                  return (
                    <Sect title="What he makes of you" note={regardWord(v)}>
-                     <Bar v={v} label="regard" color={`linear-gradient(90deg,#4a3a24,${regardColour(v)})`}/>
+                     <Bar v={v} label="regard" color={`linear-gradient(90deg,var(--line-3),${regardColour(v)})`}/>
                      {mem.length===0
                        ? <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:4}}>
                            Nothing has passed between you yet that he would count either way.
@@ -19235,7 +19311,7 @@ const SECT = {
                                ? (m.settled ? `He carried ${m.forName} onto the sand, and left the grief there.` : `He is still carrying ${m.forName}, who died beside him.`)
                                : her(REGARD[m.kind].say, selG);
                              return (
-                             <div key={i} style={{fontSize:"var(--fs-md)",padding:"2px 0",color:bad?"#d9a89e":"#cfc0a0"}}>
+                             <div key={i} style={{fontSize:"var(--fs-md)",padding:"2px 0",color:bad?"var(--blood-hi)":"var(--ink-2)"}}>
                                {txt}{!isGrief && m.again>1 && <span className="dim"> ({m.again} times)</span>}
                              </div>
                              ); })}
@@ -19256,8 +19332,8 @@ const SECT = {
                        You have no {ST.room==="valetudinarium"?"infirmary":"armoury"} for him to work in. Build the room first.
                      </div>
                    ) : s ? (<>
-                     <div className="disp" style={{fontSize:"var(--fs-lg)",color:"#e8d092"}}>{s.name} <span className="dim" style={{fontSize:"var(--fs-base)"}}>of {s.origin}</span></div>
-                     <Bar v={s.skill} label="skill" color="linear-gradient(90deg,#4a3a24,#c99a4b)"/>
+                     <div className="disp" style={{fontSize:"var(--fs-lg)",color:"var(--ink-hi)"}}>{s.name} <span className="dim" style={{fontSize:"var(--fs-base)"}}>of {s.origin}</span></div>
+                     <Bar v={s.skill} label="skill" color="linear-gradient(90deg,var(--line-3),var(--gold-line))"/>
                      <div className="dim" style={{fontSize:"var(--fs-md)",marginTop:4}}>
                        {k==="medicus"
                          ? `Wounds close ${Math.round((medicusMult(S)-1)*100)}% faster than the room alone, and a wound is ${Math.round(medicusGuard(S)*100)}% less likely to set badly.`
@@ -19275,7 +19351,7 @@ const SECT = {
                            <button key={c.id} className="optrow" style={{marginBottom:6,padding:10}}
                              disabled={S.gold<c.fee} onClick={()=>hireStaff(k,c.id)}>
                              <div className="flex items-center justify-between gap-2">
-                               <span className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d092"}}>{c.name} <span className="dim">of {c.origin}</span></span>
+                               <span className="disp" style={{fontSize:"var(--fs-base)",color:"var(--ink-hi)"}}>{c.name} <span className="dim">of {c.origin}</span></span>
                                <span className="rowval gold" style={{fontSize:"var(--fs-sm)"}}>{c.fee}d · {c.wage}d/wk</span>
                              </div>
                              <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2}}>
@@ -19316,8 +19392,8 @@ const SECT = {
               return (
                 <button key={k} className={`chip ${rackFilt===k?"on":""}`} onClick={()=>setRackFilt(k)}
                   style={{fontSize:"var(--fs-micro)",padding:"4px 10px",
-                    borderColor: rackFilt===k ? "#c99a4b" : "#3e2f1f",
-                    color: rackFilt===k ? "#e8d092" : "#b09b7d"}}>
+                    borderColor: rackFilt===k ? "var(--gold-line)" : "var(--line-2)",
+                    color: rackFilt===k ? "var(--ink-hi)" : "var(--ink-dim)"}}>
                   {label} <span className="dim">{n}</span>
                 </button>
               );
@@ -19340,9 +19416,9 @@ const SECT = {
           {items.map(([id,it])=>{
                 const owned = S.gear[id]||0, free = gearFree(S,id);
                 return (
-                  <div key={id} style={{borderTop:"1px dotted #33271a",paddingTop:8,marginTop:8}}>
+                  <div key={id} style={{borderTop:"1px dotted var(--line)",paddingTop:8,marginTop:8}}>
                     <div className="flex items-center justify-between gap-2">
-                      <div className="disp" style={{fontSize:"var(--fs-base)",color:it.master?"#e8c98a":it.price?"#e8d9b8":"#b9a37c"}}>{it.name}</div>
+                      <div className="disp" style={{fontSize:"var(--fs-base)",color:it.master?"var(--gold-hi)":it.price?"var(--ink)":"var(--ink-dim2)"}}>{it.name}</div>
                       {it.price>0
                         ? <span className="gold" style={{fontSize:"var(--fs-md)",whiteSpace:"nowrap"}}>{it.price}d{owned?` · ${owned} owned`:""}</span>
                         : <span className="tag">Costs nothing</span>}
@@ -19351,7 +19427,7 @@ const SECT = {
                     <div className="flex items-center gap-1" style={{flexWrap:"wrap",margin:"3px 0 1px"}}>
                       <span className="tag" style={{fontSize:"var(--fs-micro)",padding:"2px 7px"}}>{artName(slot, it.art)}</span>
                       {it.master && <span className="tag tag-gold" style={{fontSize:"var(--fs-micro)",padding:"2px 7px"}}>A master's piece · {it.keep}d a week to keep</span>}
-                      {!inStyle(it) && <span className="tag" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",borderColor:"#7c5a22",color:"#cfa060"}}>clumsy for this yard</span>}
+                      {!inStyle(it) && <span className="tag" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",borderColor:"var(--gold-edge)",color:"var(--gold)"}}>clumsy for this yard</span>}
                     </div>
                     <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",margin:"2px 0 3px"}}>{it.desc}</div>
                     <GearStats it={it}/>
@@ -19402,13 +19478,13 @@ const SECT = {
           : "The imperial games are the summit. There is a way up to them, and it runs through Capua's crown, a senator's favour, and a name loud enough to be heard in the capital."}
       </div>
       {rungs.map((r,i)=>(
-        <div key={i} style={{padding:"5px 0",borderTop:i?"1px dotted #26201a":undefined}}>
-          <div style={{fontSize:"var(--fs-md)",color:r.met?"#a9c98a":"#cfc0a0"}}>{r.met?"✓":r.soft?"◦":"·"} {r.label}</div>
+        <div key={i} style={{padding:"5px 0",borderTop:i?"1px dotted var(--raise)":undefined}}>
+          <div style={{fontSize:"var(--fs-md)",color:r.met?"var(--laurel-lt)":"var(--ink-2)"}}>{r.met?"✓":r.soft?"◦":"·"} {r.label}</div>
           <div className="dim" style={{fontSize:"var(--fs-sm)",marginLeft:14,marginTop:1,overflowWrap:"anywhere"}}>{r.detail}</div>
         </div>
       ))}{been && <RomeStanding S={S}/>}
-      <div className="panel" style={{padding:10,marginTop:9,background:"#1c1610",borderColor:ready?"#c99a4b":"#3e2f1f"}}>
-        <div style={{fontSize:"var(--fs-md)",color:ready?"#e8d092":"#cfc0a0"}}>
+      <div className="panel" style={{padding:10,marginTop:9,background:"var(--panel)",borderColor:ready?"var(--gold-line)":"var(--line-2)"}}>
+        <div style={{fontSize:"var(--fs-md)",color:ready?"var(--ink-hi)":"var(--ink-2)"}}>
           {ready ? "The road is open — a letter under an imperial seal cannot be far behind."
             : been && S.rome ? "You are on the imperial sand now."
             : `Rome is watching. It will send for a house that has done all three${bayWide(S)?", and the bay has already carried your name north":""}.`}
@@ -19422,7 +19498,7 @@ const SECT = {
                return (
                  <Sect live={sectFresh(S,"school")} sid="school" title="The doctrine of the house" note={D? D.name : "none set"}>
                    {D ? (<>
-                     <div className="disp" style={{fontSize:"var(--fs-xl)",color:"#e8d092"}}>{D.name}</div>
+                     <div className="disp" style={{fontSize:"var(--fs-xl)",color:"var(--ink-hi)"}}>{D.name}</div>
                      <div style={{fontSize:"var(--fs-lg)",fontStyle:"italic",marginTop:3}}>{D.creed}</div>
                      <div className="dim" style={{fontSize:"var(--fs-md)",marginTop:5}}>{D.body}</div>
                      <div className="laurel" style={{fontSize:"var(--fs-base)",marginTop:5}}>{D.note}</div>
@@ -19438,7 +19514,7 @@ const SECT = {
                          <button key={k} className="optrow" style={{marginBottom:6,padding:10}}
                            disabled={S.gold<fee} onClick={()=>declare(k)}>
                            <div className="flex items-center justify-between gap-2">
-                             <span className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d092"}}>{X.name}</span>
+                             <span className="disp" style={{fontSize:"var(--fs-base)",color:"var(--ink-hi)"}}>{X.name}</span>
                              <span className="rowval gold" style={{fontSize:"var(--fs-sm)"}}>{fee}d</span>
                            </div>
                            <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2,textAlign:"left"}}>{X.note}</div>
@@ -19466,16 +19542,16 @@ const SECT = {
                  open={!!S.vow || !!bg || pi<=20 || illLuck(S) || canAct}>
                  <div className="flex items-center justify-between" style={{marginBottom:3,fontSize:"var(--fs-md)"}}>
                    <span>Piety of the house</span>
-                   <span style={{color: pi>=60?"#e0bd72":pi>=38?"#cfc0a0":pi>=18?"#d8ac5f":"#d96f5d"}}>{pietyWord(pi)}</span>
+                   <span style={{color: pi>=60?"var(--gold-hi)":pi>=38?"var(--ink-2)":pi>=18?"var(--gold)":"var(--blood)"}}>{pietyWord(pi)}</span>
                  </div>
                  <div className="track" style={{height:6}}>
-                   <div className="fill" style={{width:`${pi}%`, background: pi<20? "linear-gradient(90deg,#7c2a22,#cf5a49)" : "linear-gradient(90deg,#6a5a2c,#e0bd72)"}}/>
+                   <div className="fill" style={{width:`${pi}%`, background: pi<20? "linear-gradient(90deg,var(--blood-edge),var(--blood-str))" : "linear-gradient(90deg,var(--line-4),var(--gold-hi))"}}/>
                  </div>
                  <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",margin:"5px 0 9px"}}>
                    Rome did nothing without the gods. A pious house keeps the patrons and the crowd warm; a godless one, the streets restless — and the omens turn against it.
                  </div>
                  {bg && (
-                   <div className="panel" style={{padding:9,marginBottom:9,background:"#1c1610",borderColor:"#c99a4b"}}>
+                   <div className="panel" style={{padding:9,marginBottom:9,background:"var(--panel)",borderColor:"var(--gold-line)"}}>
                      <div className="flex items-center justify-between">
                        <span className="tag tag-gold">Blessed · {GODS[bg].name}</span>
                        <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{blessLeft(S)}w left</span>
@@ -19487,8 +19563,8 @@ const SECT = {
                    The house is under an ill turn — an omen defied, or a vow let go. It will pass.
                  </div>}
                  {S.vow ? (
-                   <div className="panel" style={{padding:9,marginBottom:9,background:"#241b11",borderColor:"#6d5426"}}>
-                     <span className="tag" style={{borderColor:"#6d5426",color:"#d8ac5f"}}>A vow stands · {GODS[S.vow.god]?GODS[S.vow.god].name:"a god"}</span>
+                   <div className="panel" style={{padding:9,marginBottom:9,background:"var(--panel-2)",borderColor:"var(--gold-edge)"}}>
+                     <span className="tag" style={{borderColor:"var(--gold-edge)",color:"var(--gold)"}}>A vow stands · {GODS[S.vow.god]?GODS[S.vow.god].name:"a god"}</span>
                      <div style={{fontSize:"var(--fs-md)",marginTop:4}}>Not a man to fall before it is out — <span className="dim">{Math.max(1,S.vow.until-S.week)} week{S.vow.until-S.week===1?"":"s"} left</span>. {S.vow.stake}d pledged on it.</div>
                      {/* what it is worth is what it has stood through, and the panel says so
                          rather than leaving a player to find out at the settlement */}
@@ -19501,7 +19577,7 @@ const SECT = {
                          by calling resolveVow and never renders, `sweep` renders and never has
                          a vow. The name was left over from before the vow stopped handing out
                          blessings; there is one threshold in this system now and this is it. */}
-                     <div style={{fontSize:"var(--fs-base)",marginTop:3,color:vowRisked(S.vow)>=VOW_EARNT_AT?"#a9c98a":"#cfc0a0"}}>
+                     <div style={{fontSize:"var(--fs-base)",marginTop:3,color:vowRisked(S.vow)>=VOW_EARNT_AT?"var(--laurel-lt)":"var(--ink-2)"}}>
                        {S.vow.bouts||0} card{(S.vow.bouts||0)===1?"":"s"} fought under it · comes back at {rnd(S.vow.stake*vowReturn(S.vow))}d
                        {vowRisked(S.vow) >= VOW_EARNT_AT
                          ? ` and the piety of a house that risked something`
@@ -19513,9 +19589,9 @@ const SECT = {
                  )}
                  {GOD_KEYS.map(k=>{ const G = GODS[k], cost = G.cost(S), ready = offeringReady(S), afford = S.gold>=cost;
                    return (
-                     <div key={k} className="panel" style={{padding:9,marginBottom:6,background:"#1c1610"}}>
+                     <div key={k} className="panel" style={{padding:9,marginBottom:6,background:"var(--panel)"}}>
                        <div className="flex items-center justify-between gap-2">
-                         <span className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d092"}}>{G.name} <span className="dim" style={{fontWeight:400}}>· {G.of}</span></span>
+                         <span className="disp" style={{fontSize:"var(--fs-base)",color:"var(--ink-hi)"}}>{G.name} <span className="dim" style={{fontWeight:400}}>· {G.of}</span></span>
                          <span className="rowval gold" style={{fontSize:"var(--fs-sm)"}}>{cost}d</span>
                        </div>
                        <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2}}>{G.boon}</div>
@@ -19554,18 +19630,18 @@ const SECT = {
                  : !need.goldOk ? "coin" : !need.feeOk ? "fee" : null;   /* #154: the fee is still coin */
                return (
                <Sect title="Your Standing" note={rk.name} open={can} mark={sectMark(S,"standing")}>
-                 <div className="disp" style={{fontSize:"var(--fs-lg)",color:"#e8d092"}}>{rk.name}</div>
+                 <div className="disp" style={{fontSize:"var(--fs-lg)",color:"var(--ink-hi)"}}>{rk.name}</div>
                  <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",margin:"3px 0 9px"}}>{rk.blurb}</div>
                  {riseOf(S)>0 && rk.perk && (
-                   <div className="panel" style={{padding:9,marginBottom:10,background:"#171712",borderColor:"#3e4a30"}}>
-                     <span className="tag" style={{color:"#a9c98a",borderColor:"#3e4a30"}}>What it buys</span>
+                   <div className="panel" style={{padding:9,marginBottom:10,background:"var(--ground)",borderColor:"var(--line-4)"}}>
+                     <span className="tag" style={{color:"var(--laurel-lt)",borderColor:"var(--line-4)"}}>What it buys</span>
                      <div style={{fontSize:"var(--fs-md)",marginTop:3}}>{rk.perk}</div>
                    </div>
                  )}
                  {nx ? (
-                   <div className="panel" style={{padding:11,background:"#1c1610",borderColor:can?"#c99a4b":"#3e2f1f"}}>
+                   <div className="panel" style={{padding:11,background:"var(--panel)",borderColor:can?"var(--gold-line)":"var(--line-2)"}}>
                      <div className="flex items-center justify-between gap-2" style={{marginBottom:5}}>
-                       <span className="disp" style={{fontSize:"var(--fs-base)",color:can?"#e8d092":"#cfc0a0"}}>Next: {nx.name}</span>
+                       <span className="disp" style={{fontSize:"var(--fs-base)",color:can?"var(--ink-hi)":"var(--ink-2)"}}>Next: {nx.name}</span>
                        <span className="tag">{nx.short}</span>
                      </div>
                      {/* ---- A METER THAT SAYS "GROWING" WHILE IT DRAINS ----
@@ -19575,21 +19651,21 @@ const SECT = {
                           and this label said "the town must grow used to you" in all of them. A bar that
                           reads the same going up as coming down is not reporting a direction. */}
                      <div className="tag" style={{marginBottom:5,
-                       color: need.full ? "#a9c98a" : rising ? undefined : "#d98476",
-                       borderColor: need.full ? "#3e4a30" : rising ? undefined : "#5a2a22"}}>
+                       color: need.full ? "var(--laurel-lt)" : rising ? undefined : "var(--blood-hi)",
+                       borderColor: need.full ? "var(--line-4)" : rising ? undefined : "var(--blood-edge)"}}>
                        {need.full ? "The town is used to you" : rising
                          ? "The town is growing used to you" : "Their interest is cooling, not growing"}
                      </div>
                      <div className="track" style={{height:6,marginBottom:9}}>
-                       <div className="fill" style={{width:`${stand}%`, background: stand>=100? "linear-gradient(90deg,#6a5a2c,#e8d092)"
-                         : rising ? "linear-gradient(90deg,#4a4030,#c99a4b)" : "linear-gradient(90deg,#3a2622,#8a4438)"}}/>
+                       <div className="fill" style={{width:`${stand}%`, background: stand>=100? "linear-gradient(90deg,var(--line-4),var(--ink-hi))"
+                         : rising ? "linear-gradient(90deg,#4a4030,var(--gold-line))" : "linear-gradient(90deg,#3a2622,#8a4438)"}}/>
                      </div>
                      {[["Renown", need.fame, rnd(S.fame), need.fameOk],
                        ["Patrons' favour", need.favor, rnd(S.favor), need.favorOk],
                        ["What the census must find you worth", need.cost, need.worth, need.goldOk]].filter(r=>r[1]>0).map(([lbl,req,have,ok])=>(
                        <div key={lbl} className="flex items-center justify-between gap-2" style={{fontSize:"var(--fs-base)",padding:"2px 0"}}>
-                         <span style={{color:ok?"#a9c98a":"#cfc0a0"}}>{ok?"✓":"·"} {lbl}</span>
-                         <span className="rowval dim" style={{color:ok?"#a9c98a":undefined}}>{have} / {req}</span>
+                         <span style={{color:ok?"var(--laurel-lt)":"var(--ink-2)"}}>{ok?"✓":"·"} {lbl}</span>
+                         <span className="rowval dim" style={{color:ok?"var(--laurel-lt)":undefined}}>{have} / {req}</span>
                        </div>
                      ))}
                      {need.cost>0 && (
@@ -19659,7 +19735,7 @@ const SECT = {
                      </button>
                    </div>
                  ) : (
-                   <div className="panel" style={{padding:11,background:"#1c1610",borderColor:"#c99a4b"}}>
+                   <div className="panel" style={{padding:11,background:"var(--panel)",borderColor:"var(--gold-line)"}}>
                      <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>There is no higher rung. A slaver climbed all the way to Rome, and men will tell the story long after the sand forgets your name.</div>
                    </div>
                  )}
@@ -19682,12 +19758,12 @@ const SECT = {
                    <div><div className="dim" style={{fontSize:"var(--fs-sm)"}}>Walked out</div>{R2.out}</div>
                    <div><div className="dim" style={{fontSize:"var(--fs-sm)"}}>Killed</div>{R2.k}</div>
                  </div>
-                 <div className="panel" style={{padding:11,marginTop:9,background:"#1c1610",borderColor:"#6d5426"}}>
-                   <div className="disp" style={{fontSize:"var(--fs-md)",color:"#e8d092",marginBottom:3}}>{V.name}</div>
+                 <div className="panel" style={{padding:11,marginTop:9,background:"var(--panel)",borderColor:"var(--gold-edge)"}}>
+                   <div className="disp" style={{fontSize:"var(--fs-md)",color:"var(--ink-hi)",marginBottom:3}}>{V.name}</div>
                    <div style={{fontSize:"var(--fs-md)"}}>{V.say(c)}</div>
                  </div>
                  {c.best && c.best.wins>0 && (
-                   <div style={{fontSize:"var(--fs-md)",borderTop:"1px dotted #33271a",paddingTop:6,marginTop:8}}>
+                   <div style={{fontSize:"var(--fs-md)",borderTop:"1px dotted var(--line)",paddingTop:6,marginTop:8}}>
                      <span className="dim">The best of them so far is </span>
                      {c.best.nick? `${c.best.name}, ${c.best.nick}` : c.best.name}
                      <span className="dim"> — {c.best.wins} won.</span>
@@ -19714,15 +19790,15 @@ const SECT = {
                    : `a match wants fame 60 — you have ${rnd(S.fame)}`}>
                  {w ? (<>
                    <div className="flex items-center justify-between gap-2" style={{marginBottom:6}}>
-                     <span className="disp" style={{fontSize:"var(--fs-md)",color:"#d9c0e0"}}>{w.name}</span>
+                     <span className="disp" style={{fontSize:"var(--fs-md)",color:"var(--violet)"}}>{w.name}</span>
                      <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>of {w.family} · your wife</span>
                    </div>
                    {kids.length===0 && <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>No children yet. The house waits.</div>}
                    {kids.map(c=>{ const age=childAge(S,c); const heir = S.heir && S.heir.cid===c.id;
                      return (
-                       <div key={c.id} style={{borderTop:"1px dotted #33271a",padding:"5px 0"}}>
+                       <div key={c.id} style={{borderTop:"1px dotted var(--line)",padding:"5px 0"}}>
                          <div className="flex items-center justify-between gap-2">
-                           <span className="rowname" style={{fontSize:"var(--fs-md)",color:heir?"#e8d092":undefined}}>{c.name}{heir?" · your heir":""}</span>
+                           <span className="rowname" style={{fontSize:"var(--fs-md)",color:heir?"var(--ink-hi)":undefined}}>{c.name}{heir?" · your heir":""}</span>
                            <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{c.sex==="m"?"son":"daughter"} · {age} yr{c.wed?" · married out":""}</span>
                          </div>
                          {!c.wed && <div className="dim" style={{fontSize:"var(--fs-sm)"}}>{c.sex==="m"? UP(c) : age>=15?"of an age to be matched":"still at home"}{c.mentorId&&(()=>{ const m=S.gladiators.find(g=>g.id===c.mentorId); return m?` · at ${m.name}'s shoulder`:""; })()}</div>}
@@ -19758,14 +19834,14 @@ const SECT = {
                    mark={sectMark(S,"block")}>
                    {here.map(k=>{ const S2 = slaverOf(k), x = dealings(S,k);
                      return (
-                       <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:6,marginTop:6}}>
+                       <div key={k} style={{borderTop:"1px dotted var(--line)",paddingTop:6,marginTop:6}}>
                          <div className="flex items-center justify-between gap-2">
                            <span className="rowname" style={{fontSize:"var(--fs-md)"}}>{S2.full}</span>
                            <span className="rowval dim" style={{fontSize:"var(--fs-sm)",whiteSpace:"nowrap"}}>{slaverWord(S,k)}</span>
                          </div>
                          <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:1}}>{S2.line}</div>
                          {(x.bought>0 || x.burned>0) && (
-                           <div style={{fontSize:"var(--fs-sm)",marginTop:2,color:x.burned>=2?"#d96f5d":"#8f7e62"}}>
+                           <div style={{fontSize:"var(--fs-sm)",marginTop:2,color:x.burned>=2?"var(--blood)":"var(--ink-faint)"}}>
                              {x.bought} bought from him{x.burned>0 ? `, ${x.burned} not what he said` : ""}
                              {slaverPrice(S,k)<1 ? ` · prices you ${Math.round((1-slaverPrice(S,k))*100)}% keener` : slaverPrice(S,k)>1 ? ` · ${Math.round((slaverPrice(S,k)-1)*100)}% dearer for you` : ""}
                            </div>
@@ -19784,27 +19860,27 @@ const SECT = {
                        <div style={{marginBottom:8}}>
                          <div className="flex items-center justify-between gap-2">
                            <span className="disp" style={{fontSize:"var(--fs-md)",fontWeight:700,
-                             color: Sn.key==="winter"?"#9dc0d4" : Sn.key==="summer"?"#d8ac5f" : Sn.key==="autumn"?"#c99a4b":"#9aa86a"}}>
+                             color: Sn.key==="winter"?"var(--azure)" : Sn.key==="summer"?"var(--gold)" : Sn.key==="autumn"?"var(--gold-line)":"var(--laurel)"}}>
                              {Sn.name.toUpperCase()}
                            </span>
                            <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{Sn.months}</span>
                          </div>
                          <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:2}}>{Sn.line}</div>
                          <div className="flex gap-3" style={{fontSize:"var(--fs-sm)",marginTop:4,flexWrap:"wrap"}}>
-                           {Sn.purse!==1 && <span style={{color:Sn.purse>1?"#9aa86a":"#d96f5d"}}>purses ×{Sn.purse.toFixed(2)}</span>}
-                           {Sn.train!==1 && <span style={{color:Sn.train>1?"#9aa86a":"#d96f5d"}}>training ×{Sn.train.toFixed(2)}</span>}
-                           {Sn.fat!==1 && <span style={{color:Sn.fat<1?"#9aa86a":"#d96f5d"}}>fatigue ×{Sn.fat.toFixed(2)}</span>}
+                           {Sn.purse!==1 && <span style={{color:Sn.purse>1?"var(--laurel)":"var(--blood)"}}>purses ×{Sn.purse.toFixed(2)}</span>}
+                           {Sn.train!==1 && <span style={{color:Sn.train>1?"var(--laurel)":"var(--blood)"}}>training ×{Sn.train.toFixed(2)}</span>}
+                           {Sn.fat!==1 && <span style={{color:Sn.fat<1?"var(--laurel)":"var(--blood)"}}>fatigue ×{Sn.fat.toFixed(2)}</span>}
                            {Sn.upkeep>0 && <span className="blood">+{Sn.upkeep}d a man</span>}
-                           {Sn.heal!==1 && <span style={{color:Sn.heal>1?"#9aa86a":"#d96f5d"}}>mending ×{Sn.heal.toFixed(2)}</span>}
+                           {Sn.heal!==1 && <span style={{color:Sn.heal>1?"var(--laurel)":"var(--blood)"}}>mending ×{Sn.heal.toFixed(2)}</span>}
                            {Sn.pits!==1 && <span className="blood">pits ×{Sn.pits.toFixed(2)}</span>}
                          </div>
                        </div>
                      ); })()}
                    {now ? (<div style={{marginBottom:8}}>
-                     <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,color:"#e8d092"}}>{now.name.replace(/^the /,"").toUpperCase()}</div>
+                     <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,color:"var(--ink-hi)"}}>{now.name.replace(/^the /,"").toUpperCase()}</div>
                      <div style={{fontSize:"var(--fs-lg)",marginTop:3}}>{now.blurb}</div>
                    </div>) : (S.munera ? (<div style={{marginBottom:8}}>
-                     <div className="disp" style={{fontSize:"var(--fs-md)",fontWeight:700,color:"#d96f5d"}}>FUNERAL GAMES</div>
+                     <div className="disp" style={{fontSize:"var(--fs-md)",fontWeight:700,color:"var(--blood)"}}>FUNERAL GAMES</div>
                      <div style={{fontSize:"var(--fs-lg)",marginTop:3}}>A death in a noble house, and the old kind of games to mark it. Double purses, and every bout sine missione — that is what these were for.</div>
                    </div>) : <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>No festival this week. The pits are always open.</div>)}
                    <div className="flex gap-1" style={{marginBottom:6}}>
@@ -19813,13 +19889,13 @@ const SECT = {
                        const sn = SEASONS.slice().reverse().find(x=>w>=x.at) || SEASONS[0];
                        const base = sn.key==="winter"?"#2a3238" : sn.key==="summer"?"#33291a" : sn.key==="autumn"?"#2f2617" : "#25301f";
                        return <div key={i} title={f?f.name:sn.name} style={{flex:1,height:cur?9:6,borderRadius:2,
-                         background: cur ? "#e8d092" : f ? (f.rest? "#5a6a35":"#8a6a2c") : base}}/>;
+                         background: cur ? "var(--ink-hi)" : f ? (f.rest? "var(--laurel-edge)":"var(--gold-deep)") : base}}/>;
                      })}
                    </div>
                    {soon.filter(f=>weeksUntil(S,f)>0).slice(0,2).map(f=>(
                      <div key={f.key} className="flex items-center justify-between gap-2" style={{fontSize:"var(--fs-md)",padding:"2px 0"}}>
                        <span className="rowname dim">{f.name} <span style={{fontSize:"var(--fs-sm)"}}>· {f.month}</span></span>
-                       <span className="rowval" style={{fontSize:"var(--fs-base)",color:"#c0b492"}}>{weeksUntil(S,f)} week{weeksUntil(S,f)===1?"":"s"}</span>
+                       <span className="rowval" style={{fontSize:"var(--fs-base)",color:"var(--ink-2)"}}>{weeksUntil(S,f)} week{weeksUntil(S,f)===1?"":"s"}</span>
                      </div>
                    ))}
                  </Sect>
@@ -19856,7 +19932,7 @@ const SECT = {
                      {(S.heard||[]).length===0
                        ? <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>Nothing worth carrying up this week.</div>
                        : (S.heard||[]).map((h,i)=>(
-                           <div key={i} style={{borderTop:"1px dotted #33271a",padding:"7px 0",fontSize:"var(--fs-lg)"}}>{h}</div>
+                           <div key={i} style={{borderTop:"1px dotted var(--line)",padding:"7px 0",fontSize:"var(--fs-lg)"}}>{h}</div>
                          ))}
                      {inside && (
                        <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:7}}>
@@ -19882,8 +19958,8 @@ const SECT = {
                  {(D.lines||[]).length===0
                    ? <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>Nothing happened worth the ink.</div>
                    : D.lines.map((l,i)=>(
-                       <div key={i} style={{fontSize:"var(--fs-md)",padding:"3px 0",borderTop:i?"1px dotted #26201a":undefined,
-                         color: l.kind==="bad"?"#d9a89e" : l.kind==="good"?"#cfe0b0" : "#cfc0a0"}}>{l.text}</div>
+                       <div key={i} style={{fontSize:"var(--fs-md)",padding:"3px 0",borderTop:i?"1px dotted var(--raise)":undefined,
+                         color: l.kind==="bad"?"var(--blood-hi)" : l.kind==="good"?"var(--laurel-lt)" : "var(--ink-2)"}}>{l.text}</div>
                      ))}
                  {D.more>0 && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:5,fontStyle:"italic"}}>…and {D.more} more in the chronicle.</div>}
                </Sect>
@@ -19896,7 +19972,7 @@ const SECT = {
       <Sect title="The other houses" open={forceOpen}
         note={`${fresh? `${fresh} this month · ` : ""}${away? `${away} away` : "all in Capua"}`}>
         {(S.rivalLog||[]).slice(0,5).map((r,i)=>(
-          <div key={i} style={{borderTop:i?"1px dotted #33271a":"none",padding:"6px 0"}}>
+          <div key={i} style={{borderTop:i?"1px dotted var(--line)":"none",padding:"6px 0"}}>
             <div style={{fontSize:"var(--fs-md)"}}>{r.text}</div>
             <div className="dim" style={{fontSize:"var(--fs-sm)"}}>week {r.week}</div>
           </div>
@@ -19909,9 +19985,9 @@ const SECT = {
     <Sect open live={sectFresh(S,"cells")} sid="cells" title="What you can do for the block" note={`${activeG(S).length} in the cells · ${unrestWord(S.unrest).toLowerCase()}`}
       mark={sectMark(S,"feast")}>
       {(()=>{ const cost = feastCost(S), reach = feastReach(S);
-        return (<div style={{paddingBottom:9,marginBottom:9,borderBottom:"1px dotted #33271a"}}>
+        return (<div style={{paddingBottom:9,marginBottom:9,borderBottom:"1px dotted var(--line)"}}>
           <div className="flex items-center justify-between gap-2">
-            <span className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d9b8"}}>A feast for the familia</span>
+            <span className="disp" style={{fontSize:"var(--fs-base)",color:"var(--ink)"}}>A feast for the familia</span>
             <span className="gold" style={{fontSize:"var(--fs-base)",whiteSpace:"nowrap"}}>{cost}d</span>
           </div>
           <div className="dim" style={{fontSize:"var(--fs-md)",margin:"3px 0 7px"}}>Meat, honeyed wine, and a night without the whip. Loyalty is cheaper than rebellion.</div>
@@ -19926,9 +20002,9 @@ const SECT = {
           </button>
         </div>); })()}
 
-      <div style={{paddingBottom:9,marginBottom:9,borderBottom:"1px dotted #33271a"}}>
+      <div style={{paddingBottom:9,marginBottom:9,borderBottom:"1px dotted var(--line)"}}>
         <div className="flex items-center justify-between gap-2">
-          <span className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d9b8"}}>A tournament in the yard</span>
+          <span className="disp" style={{fontSize:"var(--fs-base)",color:"var(--ink)"}}>A tournament in the yard</span>
           <span className="dim" style={{fontSize:"var(--fs-base)",whiteSpace:"nowrap"}}>settles the block</span>
         </div>
         <div className="dim" style={{fontSize:"var(--fs-md)",margin:"3px 0 7px"}}>
@@ -19944,7 +20020,7 @@ const SECT = {
 
       <div>
         <div className="flex items-center justify-between gap-2">
-          <span className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d9b8"}}>Walk the cells tonight</span>
+          <span className="disp" style={{fontSize:"var(--fs-base)",color:"var(--ink)"}}>Walk the cells tonight</span>
           <span className="dim" style={{fontSize:"var(--fs-base)",whiteSpace:"nowrap"}}>costs nothing</span>
         </div>
         <div className="dim" style={{fontSize:"var(--fs-md)",margin:"3px 0 7px"}}>
@@ -20001,7 +20077,7 @@ const SECT = {
         Funeral games are what a rich man's sons stage at his tomb. Nobody has ever staged them for a gladiator, which is exactly what makes it worth doing.
       </div>
       {unhonoured(S).filter(m=>!m.done).map(m=>(
-        <div key={m.gid} style={{borderTop:"1px dotted #33271a",paddingTop:9,marginTop:9}}>
+        <div key={m.gid} style={{borderTop:"1px dotted var(--line)",paddingTop:9,marginTop:9}}>
           <div className="flex items-center justify-between gap-2">
             <span className="disp" style={{fontSize:"var(--fs-md)"}}>{m.name}</span>
             <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>
@@ -20018,8 +20094,8 @@ const SECT = {
               <button key={k} className={`optrow ${k==="none"?"":""}`} style={{marginTop:6,padding:9}}
                 disabled={S.gold<c} onClick={()=>doRite(m.gid,k)}>
                 <div className="flex items-center justify-between gap-2">
-                  <span className="disp" style={{fontSize:"var(--fs-base)",color:k==="none"?"#a08e70":"#e8d092"}}>{R2.name}</span>
-                  <span className="rowval" style={{fontSize:"var(--fs-sm)",color:c>S.gold?"#d96f5d":c?"#d8ac5f":"#8d7e65"}}>{c? c+"d" : "costs nothing"}</span>
+                  <span className="disp" style={{fontSize:"var(--fs-base)",color:k==="none"?"var(--ink-dim)":"var(--ink-hi)"}}>{R2.name}</span>
+                  <span className="rowval" style={{fontSize:"var(--fs-sm)",color:c>S.gold?"var(--blood)":c?"var(--gold)":"var(--ink-faint)"}}>{c? c+"d" : "costs nothing"}</span>
                 </div>
                 <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2}}>{R2.desc}</div>
               </button>
@@ -20032,7 +20108,7 @@ const SECT = {
     return (
     <Sect live={sectFresh(S,"aedile")} sid="aedile" title="The aedile"
       note={`${S.aedile.friendly ? "he owes you" : S.aedile.hostile ? "he is against you" : "no view of you"} · ${S.aedile.until - S.week}w left`}>
-      <div className="disp" style={{fontSize:"var(--fs-md)",color:"#e8d092"}}>{S.aedile.name}</div>
+      <div className="disp" style={{fontSize:"var(--fs-md)",color:"var(--ink-hi)"}}>{S.aedile.name}</div>
       <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:3}}>
         {S.aedile.friendly
           ? "He took the office with your money and has not forgotten it. One extra bout on every card, purses a seventh higher, and he leans forward when one of yours is down."
@@ -20051,9 +20127,9 @@ const SECT = {
       {S.election.cands.map(c=>{
         const mine = S.election.backed===c.id;
         return (
-          <div key={c.id} style={{borderTop:"1px dotted #33271a",paddingTop:9,marginTop:9}}>
+          <div key={c.id} style={{borderTop:"1px dotted var(--line)",paddingTop:9,marginTop:9}}>
             <div className="flex items-center justify-between gap-2">
-              <span className="disp" style={{fontSize:"var(--fs-base)",color:mine?"#e8d092":undefined}}>{c.name}</span>
+              <span className="disp" style={{fontSize:"var(--fs-base)",color:mine?"var(--ink-hi)":undefined}}>{c.name}</span>
               {c.rival && <span className="tag tag-blood">House {c.rival} is behind him</span>}
             </div>
             <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:2}}>He {c.say}.</div>
@@ -20084,13 +20160,13 @@ const SECT = {
       </div>
       {owedList(S).map(x=>{ const late = S.week - x.due;
         return (
-          <div key={x.id} style={{borderTop:"1px dotted #33271a",paddingTop:7,marginTop:7}}>
+          <div key={x.id} style={{borderTop:"1px dotted var(--line)",paddingTop:7,marginTop:7}}>
             <div className="flex items-center justify-between gap-2">
               <span className="rowname" style={{fontSize:"var(--fs-md)"}}>{x.from}</span>
               <span className="rowval gold" style={{fontSize:"var(--fs-base)"}}>{x.amount}d</span>
             </div>
             <div className="flex items-center justify-between gap-2" style={{marginTop:2}}>
-              <span style={{fontSize:"var(--fs-base)",color: late>=4?"#d96f5d" : late>0?"#d8ac5f" : "#8d7e65"}}>
+              <span style={{fontSize:"var(--fs-base)",color: late>=4?"var(--blood)" : late>0?"var(--gold)" : "var(--ink-faint)"}}>
                 {late >= 4 ? `${late} weeks late and not at home` : late > 0 ? `${late} week${late===1?"":"s"} late` : `due in ${x.due - S.week}`}
               </span>
               <button className="btn btn-ghost" style={{padding:"10px 9px",fontSize:"var(--fs-sm)"}}
@@ -20110,9 +20186,9 @@ const SECT = {
       </div>
       {HH_KEYS.map(k=>{ const H = HOUSEHOLD[k], f = houseFolk(S)[k], fee = rnd(hhWage(S,k)*16);
         return (
-          <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:8,marginTop:8}}>
+          <div key={k} style={{borderTop:"1px dotted var(--line)",paddingTop:8,marginTop:8}}>
             <div className="flex items-center justify-between gap-2">
-              <span className="disp" style={{fontSize:"var(--fs-base)",color:f?"#e8d092":"#b09b7d"}}>
+              <span className="disp" style={{fontSize:"var(--fs-base)",color:f?"var(--ink-hi)":"var(--ink-dim)"}}>
                 {f ? `${f.name} · ${H.name.toLowerCase()}` : H.name}
               </span>
               <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{f ? `${f.weeks}w · ${hhWage(S,k)}d/wk` : (k==="wife" ? "—" : `${fee}d · ${hhWage(S,k)}d/wk`)}</span>
@@ -20137,16 +20213,16 @@ const SECT = {
       </div>
       {MONU_KEYS.map(k=>{ const W = MONUMENTS[k], on = workOn(S,k), done = workDone(S,k);
         return (
-          <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:8,marginTop:8}}>
+          <div key={k} style={{borderTop:"1px dotted var(--line)",paddingTop:8,marginTop:8}}>
             <div className="flex items-center justify-between gap-2">
-              <span className="disp" style={{fontSize:"var(--fs-base)",color:done?"#e8d092":on?"#d8ac5f":"#b09b7d"}}>{W.name}</span>
+              <span className="disp" style={{fontSize:"var(--fs-base)",color:done?"var(--ink-hi)":on?"var(--gold)":"var(--ink-dim)"}}>{W.name}</span>
               <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>
                 {done ? "standing" : on ? `${on.left} weeks` : `${W.cost}d · ${W.years} years`}
               </span>
             </div>
             <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:2}}>{done ? W.done : W.blurb}</div>
             {done && <div className="laurel" style={{fontSize:"var(--fs-base)",marginTop:3}}>{W.say}</div>}
-            {on && <Bar v={100 - on.left/(W.years*YEAR_WEEKS)*100} label="" color="linear-gradient(90deg,#4a3a24,#c99a4b)"/>}
+            {on && <Bar v={100 - on.left/(W.years*YEAR_WEEKS)*100} label="" color="linear-gradient(90deg,var(--line-3),var(--gold-line))"/>}
             {!done && !on && (
               <button className="btn btn-ghost" style={{width:"100%",marginTop:6}}
                 disabled={S.gold < Math.ceil(W.cost*WORK_DEPOSIT)} onClick={()=>mut(d=>{ beginWork(d, k); })}>
@@ -20167,16 +20243,16 @@ const SECT = {
       </div>
       {WORK_KEYS.map(k=>{ const W = WORKS[k], on = workOn(S,k), done = workDone(S,k);
         return (
-          <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:8,marginTop:8}}>
+          <div key={k} style={{borderTop:"1px dotted var(--line)",paddingTop:8,marginTop:8}}>
             <div className="flex items-center justify-between gap-2">
-              <span className="disp" style={{fontSize:"var(--fs-base)",color:done?"#e8d092":on?"#d8ac5f":"#b09b7d"}}>{W.name}</span>
+              <span className="disp" style={{fontSize:"var(--fs-base)",color:done?"var(--ink-hi)":on?"var(--gold)":"var(--ink-dim)"}}>{W.name}</span>
               <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>
                 {done ? "standing" : on ? `${on.left} weeks` : `${W.cost}d · ${W.years} years`}
               </span>
             </div>
             <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:2}}>{done ? W.done : W.blurb}</div>
             {done && <div className="laurel" style={{fontSize:"var(--fs-base)",marginTop:3}}>{W.say}</div>}
-            {on && <Bar v={100 - on.left/(W.years*YEAR_WEEKS)*100} label="" color="linear-gradient(90deg,#4a3a24,#c99a4b)"/>}
+            {on && <Bar v={100 - on.left/(W.years*YEAR_WEEKS)*100} label="" color="linear-gradient(90deg,var(--line-3),var(--gold-line))"/>}
             {!done && !on && (workOpen(S,k)
               ? <button className="btn btn-ghost" style={{width:"100%",marginTop:6}}
                   disabled={S.gold < Math.ceil(W.cost*WORK_DEPOSIT)} onClick={()=>mut(d=>{ beginWork(d, k); })}>
@@ -20202,9 +20278,9 @@ const SECT = {
     <Sect title="What the law says" note={lawWord(S)} open={forceOpen}>
       {lawOf(S).edicts.map(k=>{ const E = EDICTS[k], bad = (()=>{ try{ return E.check(S); }catch(e){ return false; } })();
         return (
-          <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:7,marginTop:7}}>
+          <div key={k} style={{borderTop:"1px dotted var(--line)",paddingTop:7,marginTop:7}}>
             <div className="flex items-center justify-between gap-2">
-              <span className="rowname" style={{fontSize:"var(--fs-md)",color:bad?"#d98476":"#cfc0a0"}}>{E.name}</span>
+              <span className="rowname" style={{fontSize:"var(--fs-md)",color:bad?"var(--blood-hi)":"var(--ink-2)"}}>{E.name}</span>
               {bad && <span className="tag tag-blood">in breach</span>}
             </div>
             <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:1}}>
@@ -20228,7 +20304,7 @@ const SECT = {
           <div className="disp" style={{fontSize:"var(--fs-md)",fontWeight:700}}>{p.label.toUpperCase()}</div>
           <span className="gold">{p.cost}d</span>
         </div>
-        <div className="dim" style={{fontSize:"var(--fs-md)",margin:"4px 0 8px"}}>{p.desc} <span style={{color:"#bfa8c8"}}>+{p.warm} with every patron</span> · <span style={{color:"#d8c08a"}}>+{p.fame} fame</span></div>
+        <div className="dim" style={{fontSize:"var(--fs-md)",margin:"4px 0 8px"}}>{p.desc} <span style={{color:"var(--violet)"}}>+{p.warm} with every patron</span> · <span style={{color:"var(--gold-hi)"}}>+{p.fame} fame</span></div>
         <button className="btn" style={{width:"100%"}} disabled={S.gold<p.cost || S.week-S.lastParty<2} onClick={()=>host(k)}>
           {S.week-S.lastParty<2? `The villa recovers — ${2-(S.week-S.lastParty)} week${2-(S.week-S.lastParty)>1?"s":""}` : S.gold<p.cost? "Not enough coin" : "Send invitations"}
         </button>
@@ -20258,7 +20334,7 @@ const SECT = {
         const w = p.want, item = w ? WANTS[w.kind] : null;
         const sub = w && w.gid ? S.gladiators.find(g=>g.id===w.gid) : null;
         return (
-          <div key={p.id} style={{borderTop:"1px dotted #33271a",paddingTop:9,marginTop:9}}>
+          <div key={p.id} style={{borderTop:"1px dotted var(--line)",paddingTop:9,marginTop:9}}>
             <div className="flex items-center justify-between gap-2">
               <span className="disp" style={{fontSize:"var(--fs-md)",color:patronColor(p.favor)}}>{p.name}</span>
               <span className="tag">{RANKS[p.rank].name}</span>
@@ -20270,10 +20346,10 @@ const SECT = {
               </span>
             </div>
             <div className="track" style={{height:5}}>
-              <div className="fill" style={{width:`${p.favor}%`, background: p.favor<20? "linear-gradient(90deg,#7c2a22,#cf5a49)" : "linear-gradient(90deg,#6a5a2c,#d8ac5f)"}}/>
+              <div className="fill" style={{width:`${p.favor}%`, background: p.favor<20? "linear-gradient(90deg,var(--blood-edge),var(--blood-str))" : "linear-gradient(90deg,var(--line-4),var(--gold))"}}/>
             </div>
             {w ? (
-              <div className="panel" style={{padding:9,marginTop:7,background:"#1c1610",borderColor:"#5a4a2c"}}>
+              <div className="panel" style={{padding:9,marginTop:7,background:"var(--panel)",borderColor:"var(--line-4)"}}>
                 <div className="flex items-center justify-between gap-2" style={{marginBottom:3}}>
                   <span className="tag tag-gold">He asks</span>
                   <span className="dim" style={{fontSize:"var(--fs-sm)",whiteSpace:"nowrap"}}>{w.weeks} week{w.weeks===1?"":"s"} left</span>
@@ -20284,13 +20360,13 @@ const SECT = {
             {(()=>{ const F = FAVOURS[p.rank]; if(!F) return null;
               const ready = favourReady(S, p), wait = favourWait(S, p);
               return (
-                <div className="panel" style={{padding:9,marginTop:7,background:"#1c1610",
-                  borderColor: ready ? "#c99a4b" : "#3e2f1f"}}>
+                <div className="panel" style={{padding:9,marginTop:7,background:"var(--panel)",
+                  borderColor: ready ? "var(--gold-line)" : "var(--line-2)"}}>
                   <div className="flex items-center justify-between gap-2" style={{marginBottom:3}}>
-                    <span className="tag" style={ready?{borderColor:"#c99a4b",color:"#e8d092"}:undefined}>{F.title}</span>
+                    <span className="tag" style={ready?{borderColor:"var(--gold-line)",color:"var(--ink-hi)"}:undefined}>{F.title}</span>
                     <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{F.cost} standing</span>
                   </div>
-                  <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>{F.ask}</div><div style={{fontSize:"var(--fs-sm)",marginTop:4,color:"#c99a4b"}}>{favourWorth(S, p)}</div>
+                  <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>{F.ask}</div><div style={{fontSize:"var(--fs-sm)",marginTop:4,color:"var(--gold-line)"}}>{favourWorth(S, p)}</div>
                   <button className={`btn ${ready?"":"btn-ghost"}`} style={{width:"100%",marginTop:6}}
                     disabled={!ready} onClick={()=>askFavour(p.id)}>
                     {wait ? `He has done enough for now · ${wait} week${wait===1?"":"s"}`
@@ -20314,9 +20390,9 @@ const SECT = {
       <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>
         What the street makes of you — not the editors, not the good families. The wine-shops, the walls by the gate, the potters' stalls.
       </div>
-      <Bar v={acclaimOf(S)} label="the name" color="linear-gradient(90deg,#4a3a24,#e0bd72)"/>
+      <Bar v={acclaimOf(S)} label="the name" color="linear-gradient(90deg,var(--line-3),var(--gold-hi))"/>
       <div className="flex items-center justify-between" style={{fontSize:"var(--fs-base)",marginTop:4}}>
-        <span className="disp" style={{color:"#e8d092"}}>{acclaimTier(S).name}</span>
+        <span className="disp" style={{color:"var(--ink-hi)"}}>{acclaimTier(S).name}</span>
         <span className="rowval dim">{Math.round(acclaimOf(S))}/100</span>
       </div>
       <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>{acclaimTier(S).blurb}</div><TheStreet S={S}/>
@@ -20325,8 +20401,8 @@ const SECT = {
         return walls.length>0 && (<>
           <div className="tag tag-gold" style={{margin:"11px 0 4px"}}>Names on the walls</div>
           {walls.map(g=>(
-            <div key={g.id} style={{borderTop:"1px dotted #33271a",padding:"5px 0"}}>
-              <div className="rowname" style={{fontSize:"var(--fs-md)",color:"#e8d092"}}>{g.name}</div>
+            <div key={g.id} style={{borderTop:"1px dotted var(--line)",padding:"5px 0"}}>
+              <div className="rowname" style={{fontSize:"var(--fs-md)",color:"var(--ink-hi)"}}>{g.name}</div>
               <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>“{g.graffiti.line}”</div>
             </div>
           ))}
@@ -20358,8 +20434,8 @@ const SECT = {
       <div className="flex items-center gap-3" style={{marginBottom:11}}>
         <Crest crest={S.crest} size={54}/>
         <div>
-          <div className="disp" style={{fontSize:"var(--fs-lg)",color:"#e8d092"}}>{S.name}</div>
-          {S.crest && S.crest.motto && <div style={{fontSize:"var(--fs-md)",fontStyle:"italic",color:"#cfc0a0"}}>“{S.crest.motto}”</div>}
+          <div className="disp" style={{fontSize:"var(--fs-lg)",color:"var(--ink-hi)"}}>{S.name}</div>
+          {S.crest && S.crest.motto && <div className="hand" style={{fontSize:"var(--fs-lg)",color:"var(--ink-2)"}}>“{S.crest.motto}”</div>}
           <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>Your men fight in these colours — the plume they wear and the face of their shields.</div>
         </div>
       </div>
@@ -20370,7 +20446,7 @@ const SECT = {
             /* a thirty-pixel swatch is a thirty-pixel miss. Seven still fit a row
                at the full forty-four, so there is no reason to be under it. */
             style={{width:44,height:44,borderRadius:8,background:hex,cursor:"pointer",padding:0,
-              border:(S.crest&&S.crest.c1===hex)?"2px solid #e8d092":"1px solid #3e2f1f"}}/>
+              border:(S.crest&&S.crest.c1===hex)?"2px solid var(--ink-hi)":"1px solid var(--line-2)"}}/>
         ))}
       </div>
       <div className="tag" style={{marginBottom:6}}>The device</div>
@@ -20380,15 +20456,15 @@ const SECT = {
             /* a thirty-pixel swatch is a thirty-pixel miss. Seven still fit a row
                at the full forty-four, so there is no reason to be under it. */
             style={{width:44,height:44,borderRadius:8,background:hex,cursor:"pointer",padding:0,
-              border:(S.crest&&S.crest.c2===hex)?"2px solid #e8d092":"1px solid #3e2f1f"}}/>
+              border:(S.crest&&S.crest.c2===hex)?"2px solid var(--ink-hi)":"1px solid var(--line-2)"}}/>
         ))}
       </div>
       <div className="tag" style={{marginBottom:6}}>The crest</div>
       <div className="flex gap-2" style={{flexWrap:"wrap",marginBottom:11}}>
         {CREST_SYMS.map(sym=>(
           <button key={sym} aria-label={sym} onClick={()=>setCrest({sym})}
-            style={{padding:5,borderRadius:8,background:"#1a1410",cursor:"pointer",lineHeight:0,
-              border:(S.crest&&S.crest.sym===sym)?"2px solid #e8d092":"1px solid #3e2f1f"}}>
+            style={{padding:5,borderRadius:8,background:"var(--panel)",cursor:"pointer",lineHeight:0,
+              border:(S.crest&&S.crest.sym===sym)?"2px solid var(--ink-hi)":"1px solid var(--line-2)"}}>
             <Crest crest={Object.assign({}, S.crest, { sym })} size={34}/>
           </button>
         ))}
@@ -20407,12 +20483,12 @@ const SECT = {
     <Sect live={sectFresh(S,"square")} sid="square" title="The training square" note={S.doctore ? `${S.doctore.name} · ${S.doctore.wage}d/wk` : "no doctore — you run it"}>
       {S.doctore ? (<div>
         <div className="flex gap-3" style={{alignItems:"center",marginBottom:6}}>
-          <div style={{flex:"0 0 auto",width:60,height:60,borderRadius:"50%",overflow:"hidden",border:"1px solid #6d5426"}}>
+          <div style={{flex:"0 0 auto",width:60,height:60,borderRadius:"50%",overflow:"hidden",border:"1px solid var(--gold-edge)"}}>
             <DoctoreBust name={S.doctore.name} size={60}/>
           </div>
           <div style={{minWidth:0}}>
-            <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,color:"#e8d092"}}>
-              {S.doctore.name}{S.doctore.nick? <span style={{color:"#d8c08a"}}>, {S.doctore.nick}</span>:null}
+            <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,color:"var(--ink-hi)"}}>
+              {S.doctore.name}{S.doctore.nick? <span style={{color:"var(--gold-hi)"}}>, {S.doctore.nick}</span>:null}
             </div>
             <div className="flex items-center gap-1" style={{flexWrap:"wrap",marginTop:5}}>
               <span className="tag">{docWord(S.doctore.skill)}</span>
@@ -20423,13 +20499,13 @@ const SECT = {
         </div>
         <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>{S.doctore.past}.</div>
         {S.doctore.tag && (<>
-          <div style={{fontSize:"var(--fs-md)",marginTop:5,color:"#cfc0a0"}}>
+          <div style={{fontSize:"var(--fs-md)",marginTop:5,color:"var(--ink-2)"}}>
             <span className="laurel">{S.doctore.name}, {S.doctore.tag}.</span> {S.doctore.pastLine}
           </div>
           {docCreed(S) && (
-            <div className="panel" style={{padding:9,marginTop:7,background:"#1c1610"}}>
+            <div className="panel" style={{padding:9,marginTop:7,background:"var(--panel)"}}>
               <div className="flex items-center justify-between gap-2">
-                <span className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d092"}}>He {docCreed(S).name}</span>
+                <span className="disp" style={{fontSize:"var(--fs-base)",color:"var(--ink-hi)"}}>He {docCreed(S).name}</span>
                 <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>
                   {(()=>{ const C=docCreed(S), b=[];
                     if(C.train!==1 && C.train!=null) b.push(`training ×${C.train.toFixed(2)}`);
@@ -20441,7 +20517,7 @@ const SECT = {
                 </span>
               </div>
               <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:2}}>{docCreed(S).line}</div>
-              {docSays(S) && <div style={{fontSize:"var(--fs-md)",marginTop:5,borderTop:"1px dotted #33271a",paddingTop:5}}>{docSays(S)}</div>}
+              {docSays(S) && <div style={{fontSize:"var(--fs-md)",marginTop:5,borderTop:"1px dotted var(--line)",paddingTop:5}}>{docSays(S)}</div>}
             </div>
           )}
         </>)}
@@ -20452,7 +20528,7 @@ const SECT = {
         </div>
         {(()=>{ const p = docPupil(S) ? S.gladiators.find(g=>g.id===docPupil(S)) : null;
           return (
-            <div className="panel" style={{padding:10,marginTop:9,background:"#1c1610",borderColor:p?"#c99a4b":"#4e3c26"}}>
+            <div className="panel" style={{padding:10,marginTop:9,background:"var(--panel)",borderColor:p?"var(--gold-line)":"var(--line-4)"}}>
               <div className="tag tag-gold" style={{marginBottom:5}}>His week</div>
               {p ? (
                 <div>
@@ -20480,12 +20556,12 @@ const SECT = {
           ); })()}
         {(()=>{ const D = drillOf(S), k = S.doctore.drill||"none";
           return (
-            <div className="panel" style={{padding:10,marginTop:9,background:"#1c1610",borderColor:k!=="none"?"#5a6a35":"#4e3c26"}}>
+            <div className="panel" style={{padding:10,marginTop:9,background:"var(--panel)",borderColor:k!=="none"?"var(--laurel-edge)":"var(--line-4)"}}>
               <div className="tag tag-gold" style={{marginBottom:5}}>The week's drill · the whole yard</div>
               <div className="flex gap-1" style={{flexWrap:"wrap",marginBottom:6}}>
                 {DRILL_KEYS.map(dk=>(
                   <button key={dk} className={`chip ${k===dk?"on":""}`} onClick={()=>setDrill(dk)}
-                    style={k===dk?{borderColor:"#c99a4b",color:"#e0bd72",background:"#2b2115"}:{}}>{DRILLS[dk].short}</button>
+                    style={k===dk?{borderColor:"var(--gold-line)",color:"var(--gold-hi)",background:"var(--raise)"}:{}}>{DRILLS[dk].short}</button>
                 ))}
               </div>
               <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>{D.blurb}</div>
@@ -20506,18 +20582,18 @@ const SECT = {
              nested disclosure in the game. It is a plain block now: the section it lives in only
              renders when there is no doctore, so this list is the reason the section exists and
              there is nothing to hide it behind. */}
-        <div style={{marginBottom:9,background:"#1a1510",border:"1px solid #4a3a22",borderRadius:6,padding:"7px 10px"}}>
-          <div style={{fontSize:"var(--fs-base)",color:"#d8ac5f",marginBottom:3}}>What you are doing without</div>
+        <div style={{marginBottom:9,background:"var(--panel)",border:"1px solid var(--line-3)",borderRadius:6,padding:"7px 10px"}}>
+          <div style={{fontSize:"var(--fs-base)",color:"var(--gold)",marginBottom:3}}>What you are doing without</div>
           {DOC_WORTH.map(([label, say], i)=>(
-            <div key={i} style={{padding:"4px 0",borderTop: i? "1px dotted #33271a" : "none"}}>
-              <span style={{fontSize:"var(--fs-base)",color:"#cfc0a0"}}>{label}</span>
+            <div key={i} style={{padding:"4px 0",borderTop: i? "1px dotted var(--line)" : "none"}}>
+              <span style={{fontSize:"var(--fs-base)",color:"var(--ink-2)"}}>{label}</span>
               <span className="dim" style={{fontSize:"var(--fs-base)"}}> — {say(S)}</span>
             </div>
           ))}
         </div>
         {(S.doctoreMarket||[]).length===0 && <div className="dim" style={{fontSize:"var(--fs-md)"}}>No one worth the wage is looking for work. Ask again after the next market.</div>}
         {(S.doctoreMarket||[]).map(c=>(
-          <div key={c.id} style={{borderTop:"1px dotted #33271a",paddingTop:9,marginTop:9}}>
+          <div key={c.id} style={{borderTop:"1px dotted var(--line)",paddingTop:9,marginTop:9}}>
             <div className="flex items-center justify-between gap-2">
               <span className="disp" style={{fontSize:"var(--fs-md)"}}>{c.name} of {c.origin}</span>
               <span className="gold" style={{fontSize:"var(--fs-md)",whiteSpace:"nowrap"}}>{c.fee}d + {c.wage}/wk</span>
@@ -20528,10 +20604,10 @@ const SECT = {
             </div>
             <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>{c.past}.</div>
             <div className="flex gap-1" style={{flexWrap:"wrap",marginTop:5}}>
-              <span className="chip" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",borderColor:"#5a6a4a",color:"#9aa86a"}}>The yard +{docShare(c)}%</span>
-              <span className="chip" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",borderColor:"#5a6a4a",color:"#9aa86a"}}>One pupil +{docPupilShare(c)}%</span>
-              <span className="chip" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",borderColor:"#5a6a4a",color:"#9aa86a"}}>Hurt at the post −{docGuardPc(c)}%</span>
-              <span className="chip" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",borderColor:"#6d5426",color:"#d8ac5f"}}>{STAT_NAMES[c.spec]} +28%</span>
+              <span className="chip" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",borderColor:"var(--laurel-edge2)",color:"var(--laurel)"}}>The yard +{docShare(c)}%</span>
+              <span className="chip" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",borderColor:"var(--laurel-edge2)",color:"var(--laurel)"}}>One pupil +{docPupilShare(c)}%</span>
+              <span className="chip" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",borderColor:"var(--laurel-edge2)",color:"var(--laurel)"}}>Hurt at the post −{docGuardPc(c)}%</span>
+              <span className="chip" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",borderColor:"var(--gold-edge)",color:"var(--gold)"}}>{STAT_NAMES[c.spec]} +28%</span>
             </div>
             <button className="btn" style={{width:"100%",marginTop:7}} disabled={S.gold<c.fee} onClick={()=>hireDoc(c.id)}>
               {S.gold<c.fee ? "Not enough coin" : `Take him on — ${c.fee}d`}
@@ -20560,7 +20636,7 @@ const SECT = {
         ["carry","Carry It Out", "share this house"]].map(([k,l,sub])=>(
         <button key={k} className="optrow" style={{padding:11}}
           onClick={()=>k==="annals"? setAnnals(true) : k==="carry"? carryOut() : k==="chron"? setShowChron(true) : setSheet(k)}>
-          <div className="disp" style={{fontSize:"var(--fs-sm)",color:"#e8d092"}}>{l}</div>
+          <div className="disp" style={{fontSize:"var(--fs-sm)",color:"var(--ink-hi)"}}>{l}</div>
           <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2}}>{sub}</div>
         </button>
       ))}
@@ -20591,7 +20667,7 @@ const SECT = {
   unrest: (S, X, forceOpen) => (
   <Sect title="Unrest in the cells" note={unrestWord(S.unrest)} open={forceOpen ?? (S.unrest>=50 || !!S.rebellion)}
     mark={sectMark(S,"cells")}>
-    <Bar v={S.unrest} color="linear-gradient(90deg,#6a3a1a,#b8463a)"/>
+    <Bar v={S.unrest} color="linear-gradient(90deg,var(--gold-edge),var(--blood-str))"/>
     {S.rebellion && <div className="blood" style={{fontSize:"var(--fs-md)",marginTop:5,fontStyle:"italic"}}>
       {["","Whispers move between the cells after dark.","Conspiracy — steel is missing, and eyes follow the guards.","The spark is lit. Tonight decides everything."][S.rebellion.stage]}
     </div>}
@@ -21306,7 +21382,7 @@ export default function App(){
   const CarrySheet = ()=> !carry ? null : (
     <div className="modalwrap" style={{zIndex:Z.page}} role="dialog" aria-modal="true" onClick={()=>setCarry(null)}>
       <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
-        <div className="disp" style={{fontSize:"var(--fs-xxl)",color:"#e8d092",marginBottom:6}}>
+        <div className="disp" style={{fontSize:"var(--fs-xxl)",color:"var(--ink-hi)",marginBottom:6}}>
           {carry.mode==="out" ? "CARRY THIS HOUSE OUT" : "BRING A HOUSE IN"}
         </div>
         {carry.mode==="out" ? (<>
@@ -21314,8 +21390,8 @@ export default function App(){
             Everything about this house, in one string. Copy it into a message and somebody else can pick it up exactly where you left it.
           </div>
           <textarea readOnly value={carry.text} onFocus={e=>e.target.select()}
-            style={{width:"100%",height:120,boxSizing:"border-box",background:"#100d0a",color:"#b09b7d",
-              border:"1px solid #4e3c26",borderRadius:8,padding:9,fontSize:"var(--fs-micro)",fontFamily:"monospace",resize:"none"}}/>
+            style={{width:"100%",height:120,boxSizing:"border-box",background:"var(--ground)",color:"var(--ink-dim)",
+              border:"1px solid var(--line-4)",borderRadius:8,padding:9,fontSize:"var(--fs-micro)",fontFamily:"monospace",resize:"none"}}/>
           <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:5}}>
             {carry.text ? `${carry.text.length} characters` : "packing it up…"} · week {S?S.week:0} · {S?S.gladiators.filter(g=>!isGone(g)).length:0} men
           </div>
@@ -21326,13 +21402,13 @@ export default function App(){
             Paste a house here. It goes into an empty record and does not touch the ones you have.
           </div>
           <textarea value={carry.text} onChange={e=>readHouse(e.target.value)} placeholder="LVDVS1...."
-            style={{width:"100%",height:120,boxSizing:"border-box",background:"#100d0a",color:"#b09b7d",
-              border:"1px solid "+(carry.err?"#7c2a22":carry.found?"#5a6a35":"#4e3c26"),borderRadius:8,padding:9,
+            style={{width:"100%",height:120,boxSizing:"border-box",background:"var(--ground)",color:"var(--ink-dim)",
+              border:"1px solid "+(carry.err?"var(--blood-edge)":carry.found?"var(--laurel-edge)":"var(--line-4)"),borderRadius:8,padding:9,
               fontSize:"var(--fs-micro)",fontFamily:"monospace",resize:"none"}}/>
           {carry.err && <div className="blood" style={{fontSize:"var(--fs-md)",marginTop:6}}>{carry.err}</div>}
           {carry.found && (
-            <div className="panel" style={{padding:10,marginTop:7,borderColor:"#5a6a35"}}>
-              <div className="disp" style={{fontSize:"var(--fs-lg)",color:"#e8d092"}}>{carry.found.name}</div>
+            <div className="panel" style={{padding:10,marginTop:7,borderColor:"var(--laurel-edge)"}}>
+              <div className="disp" style={{fontSize:"var(--fs-lg)",color:"var(--ink-hi)"}}>{carry.found.name}</div>
               <div className="dim" style={{fontSize:"var(--fs-md)"}}>
                 week {carry.found.week} · {carry.found.men} men · {carry.found.fame} fame
               </div>
@@ -21353,8 +21429,8 @@ export default function App(){
     const Row = ({label, desc, on, onToggle}) => (
       <button className={`optrow${on?" on":""}`} onClick={onToggle} aria-pressed={on} style={{display:"block",marginBottom:7}}>
         <div className="flex items-center justify-between gap-2">
-          <span className="disp" style={{fontSize:"var(--fs-sm)",color:"#e8d092",minWidth:0}}>{label}</span>
-          <span className="chip" style={{flexShrink:0,pointerEvents:"none",...(on?{borderColor:"#c99a4b",color:"#e0bd72",background:"#2b2115"}:{})}}>{on?"On":"Off"}</span>
+          <span className="disp" style={{fontSize:"var(--fs-sm)",color:"var(--ink-hi)",minWidth:0}}>{label}</span>
+          <span className="chip" style={{flexShrink:0,pointerEvents:"none",...(on?{borderColor:"var(--gold-line)",color:"var(--gold-hi)",background:"var(--raise)"}:{})}}>{on?"On":"Off"}</span>
         </div>
         {desc && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:3,lineHeight:1.35}}>{desc}</div>}
       </button>
@@ -21372,7 +21448,7 @@ export default function App(){
       <div className="modalwrap" role="dialog" aria-modal="true" aria-label="Settings" style={{zIndex:Z.sheet}} onClick={()=>setShowSettings(false)}>
         <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
           <div className="flex items-center justify-between gap-2" style={{marginBottom:10}}>
-            <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".12em",color:"#e8d092"}}>SETTINGS</div>
+            <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".12em",color:"var(--ink-hi)"}}>SETTINGS</div>
             <button className="btn btn-ghost" style={{padding:"10px 10px",flexShrink:0}} aria-label="Close" onClick={()=>setShowSettings(false)}><X size={14}/></button>
           </div>
 
@@ -21404,7 +21480,7 @@ export default function App(){
             <Group title="This house"
               note={`Kept automatically${saved? ` — last saved ${whenWord(saved)}`:""}. Slot ${slot||1} of ${SLOTS_N}.`}>
               {S.flags.underwritten > 0 && (
-                <div className="panel" style={{padding:9,marginBottom:9,background:"#1c1610",borderColor:"#5a6a35"}}>
+                <div className="panel" style={{padding:9,marginBottom:9,background:"var(--panel)",borderColor:"var(--laurel-edge)"}}>
                   <span className="laurel" style={{fontSize:"var(--fs-md)"}}>The merchant is carrying your upkeep — {S.flags.underwritten} week{S.flags.underwritten===1?"":"s"} left on his word.</span>
                 </div>
               )}
@@ -21423,12 +21499,12 @@ export default function App(){
             {S && (
               <div className="flex items-center justify-between gap-2" style={{marginBottom:4}}>
                 <span className="dim" style={{fontSize:"var(--fs-sm)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>This house was founded</span>
-                <span className="rowval" style={{fontSize:"var(--fs-sm)",color:"#e0bd72",flexShrink:0}}>{pitchOf(S).name.toLowerCase()}</span>
+                <span className="rowval" style={{fontSize:"var(--fs-sm)",color:"var(--gold-hi)",flexShrink:0}}>{pitchOf(S).name.toLowerCase()}</span>
               </div>
             )}
             <div className="flex items-center justify-between gap-2" style={{marginBottom:4}}>
-              <span className="disp" style={{fontSize:"var(--fs-sm)",color:"#e8d092",minWidth:0,overflow:"hidden",textOverflow:"ellipsis"}}>LVDVS — Blood &amp; Sand</span>
-              <span className="rowval" style={{fontSize:"var(--fs-sm)",color:"#c9a961",fontFamily:"ui-monospace,Menlo,monospace"}}>
+              <span className="disp" style={{fontSize:"var(--fs-sm)",color:"var(--ink-hi)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis"}}>LVDVS — Blood &amp; Sand</span>
+              <span className="rowval" style={{fontSize:"var(--fs-sm)",color:"var(--gold)",fontFamily:"ui-monospace,Menlo,monospace"}}>
                 {APP_VERSION ? `v${APP_VERSION}` : "unversioned build"}
               </span>
             </div>
@@ -21460,7 +21536,7 @@ export default function App(){
         onClose={()=>{ SFX.stopCrowd(); setFight(null); }}
         onSpeak={null} onMute={v=>setPref("sound", !v)}/>}
       <div style={{maxWidth:460,width:"100%"}}>
-        <div className="disp" style={{fontSize:"var(--fs-display)",fontWeight:900,textAlign:"center",letterSpacing:".22em",color:"#e8d092"}}>LVDVS</div>
+        <div className="disp" style={{fontSize:"var(--fs-display)",fontWeight:900,textAlign:"center",letterSpacing:".22em",color:"var(--ink-hi)"}}>LVDVS</div>
         <div className="dim" style={{textAlign:"center",fontStyle:"italic",marginTop:2,marginBottom:18}}>Blood, sand, and the fortunes of a Roman house.</div>
         <div className="flex items-center justify-between" style={{marginBottom:8}}>
           <span className="tag tag-gold">The Records</span>
@@ -21472,10 +21548,10 @@ export default function App(){
         {[1,2,3].map(i=>{
           const sum = saveSummary(slots[i]);
           return (
-            <div key={i} className="panel" style={{padding:13,marginBottom:9,borderColor: sum? (sum.over?"#7c2a22":"#5a4a2c") : undefined}}>
+            <div key={i} className="panel" style={{padding:13,marginBottom:9,borderColor: sum? (sum.over?"var(--blood-edge)":"var(--line-4)") : undefined}}>
               {sum ? (<div>
                 <div className="flex items-center justify-between gap-2">
-                  <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,color:"#e8d092",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{sum.name}</div>
+                  <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,color:"var(--ink-hi)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{sum.name}</div>
                   <span className="dim" style={{fontSize:"var(--fs-sm)",whiteSpace:"nowrap"}}>{whenWord(sum.savedAt)}</span>
                 </div>
                 <div className="dim" style={{fontSize:"var(--fs-md)",margin:"3px 0 5px"}}>Week {sum.week} · {sum.title} · {sum.fame} fame</div>
@@ -21502,7 +21578,7 @@ export default function App(){
       </div>
       {ask && (
         <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.demand}} onClick={()=>setAsk(null)}>
-          <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()} style={{borderColor: ask.danger? "#7c2a22":"#4e3c26"}}>
+          <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()} style={{borderColor: ask.danger? "var(--blood-edge)":"var(--line-4)"}}>
             <div className={`disp ${ask.danger?"blood":""}`} style={{fontSize:"var(--fs-lg)",fontWeight:700,letterSpacing:".1em",marginBottom:8}}>{ask.title.toUpperCase()}</div>
             <div style={{fontSize:"var(--fs-xl)"}}>{ask.text}</div>
             <button className={`btn ${ask.danger?"btn-blood":""}`} style={{width:"100%",marginTop:14}}
@@ -21518,13 +21594,13 @@ export default function App(){
     <div className="lr" style={{display:"flex",alignItems:"safe center",justifyContent:"center",padding:20}}>
       <style>{CSS}</style>
       <div style={{maxWidth:460,width:"100%"}}>
-        <div className="disp" style={{fontSize:"var(--fs-display)",fontWeight:900,textAlign:"center",letterSpacing:".22em",color:"#e8d092"}}>LVDVS</div>
+        <div className="disp" style={{fontSize:"var(--fs-display)",fontWeight:900,textAlign:"center",letterSpacing:".22em",color:"var(--ink-hi)"}}>LVDVS</div>
         <div className="dim" style={{textAlign:"center",fontStyle:"italic",marginTop:2,marginBottom:18}}>Blood, sand, and the fortunes of a Roman house.</div>
         <div className="panel" style={{padding:14, marginBottom:12}}>
           <div className="tag" style={{marginBottom:8}}>Name your house</div>
           <input className="sel" aria-label="The name of your house" style={{width:"100%",boxSizing:"border-box"}} value={nameIn} onChange={e=>setNameIn(e.target.value)} maxLength={30}/>
           {legacy && legacy.houses>0 && (
-            <div className="panel" style={{padding:11,margin:"14px 0 4px",background:"#1c1610",borderColor:"#4e3c26"}}>
+            <div className="panel" style={{padding:11,margin:"14px 0 4px",background:"var(--panel)",borderColor:"var(--line-4)"}}>
               <div className="flex items-center justify-between" style={{marginBottom:4}}>
                 <span className="tag tag-gold">What Capua remembers of you</span>
                 <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{legacy.houses} house{legacy.houses===1?"":"s"}</span>
@@ -21535,9 +21611,9 @@ export default function App(){
               </div>
               {LEG_KEYS.map(k=>{ const L2 = LEGACIES[k], got = legacyEarned(legacy,k), have = legacy[k]||0;
                 return (
-                  <div key={k} style={{borderTop:"1px dotted #33271a",padding:"5px 0"}}>
+                  <div key={k} style={{borderTop:"1px dotted var(--line)",padding:"5px 0"}}>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="rowname disp" style={{fontSize:"var(--fs-sm)",color:got?"#e8d092":"#8d7e65"}}>{L2.name}</span>
+                      <span className="rowname disp" style={{fontSize:"var(--fs-sm)",color:got?"var(--ink-hi)":"var(--ink-faint)"}}>{L2.name}</span>
                       <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{Math.min(have,L2.need)}/{L2.need} {L2.unit}</span>
                     </div>
                     {got && <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>{L2.say} <span className="laurel">{L2.boon}</span></div>}
@@ -21552,14 +21628,14 @@ export default function App(){
           {PITCH_KEYS.map(k=>{ const P = PITCHES[k];
             return (
               <button key={k} className={`optrow ${pitchIn===k?"on":""}`} style={{marginBottom:6,padding:10,
-                borderColor: pitchIn===k ? "#c99a4b" : undefined}} onClick={()=>setPitchIn(k)}>
+                borderColor: pitchIn===k ? "var(--gold-line)" : undefined}} onClick={()=>setPitchIn(k)}>
                 <div className="flex items-center justify-between gap-2">
-                  <span className="disp" style={{fontSize:"var(--fs-base)",color:pitchIn===k?"#e8d092":"#b09b7d"}}>{P.name}</span>
+                  <span className="disp" style={{fontSize:"var(--fs-base)",color:pitchIn===k?"var(--ink-hi)":"var(--ink-dim)"}}>{P.name}</span>
                   <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{P.tag}</span>
                 </div>
                 <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2,textAlign:"left"}}>{P.blurb}</div>
                 {pitchIn===k && k!=="plain" && (
-                  <div style={{fontSize:"var(--fs-sm)",marginTop:4,textAlign:"left",color:k==="patron"?"#9aa86a":"#d8ac5f"}}>
+                  <div style={{fontSize:"var(--fs-sm)",marginTop:4,textAlign:"left",color:k==="patron"?"var(--laurel)":"var(--gold)"}}>
                     purses ×{P.purse.toFixed(2)} · upkeep ×{P.upkeep.toFixed(2)} · unrest ×{P.unrest.toFixed(2)} · the block ×{P.market.toFixed(2)} · mending ×{P.heal.toFixed(2)} · missio {P.mercy>0?"+":""}{P.mercy}
                   </div>
                 )}
@@ -21579,13 +21655,13 @@ export default function App(){
             return (
               <button key={k} className={`optrow ${on?"on":""}`} style={{marginBottom:7}} onClick={()=>setBonus(k)}>
                 <div className="flex items-center justify-between gap-2">
-                  <span className="disp" style={{fontSize:"var(--fs-base)",color:on?"#e8d092":"#e8d9b8"}}>{S2.name}</span>
+                  <span className="disp" style={{fontSize:"var(--fs-base)",color:on?"var(--ink-hi)":"var(--ink)"}}>{S2.name}</span>
                   <span className="rowval tag">{S2.tag}</span>
                 </div>
                 <div className="dim" style={{fontSize:"var(--fs-md)",marginTop:3}}>{S2.blurb}</div>
                 <div className="flex gap-3" style={{fontSize:"var(--fs-base)",marginTop:5}}>
                   <span className="gold">{S2.gold}d</span>
-                  <span style={{color:"#d8c08a"}}>{S2.fame} fame</span>
+                  <span style={{color:"var(--gold-hi)"}}>{S2.fame} fame</span>
                   <span>{S2.men.length} {S2.men.length===1?"man":"men"}</span>
                   <span className="blood">unrest {S2.unrest}</span>
                 </div>
@@ -21608,17 +21684,17 @@ export default function App(){
 
   const MARKS = [
     ["Gladiatrix", "#c8aad4", "A woman on the sand. She fights as anyone does; the difference is at the gate, where the novelty draws a bigger crowd and better fame, and in the boxes, where the senator disapproves and the noblewoman does not."],
-    ["Auctoratus · N left", "#9dc0d4", "A free man who sold himself to the arena. Paid up front and by the week rather than bought, contracted for a set number of bouts, and gone when they are served. He cannot be sold, the rudis means nothing to him, and he will not rise with the others."],
-    ["✦ Primus of Capua", "#e8d092", "There is one man in this city the whole city can name, and for now he is yours. Worth fame every week — and a queue of challengers on nearly every card."],
-    ["✦ rare fire", "#e8d092", "Something in this one the arena has not seen yet. A ceiling far above the block price, and usually a temper to match."],
-    ["Firebrand", "#d96f5d", "You bought his name from an informer. He is the one the cells would follow. Free him and the whole conspiracy dies with the gesture."],
-    ["Given up", "#d96f5d", "He asked you twice for the one thing he wanted and you did not answer. He has stopped asking, which costs more than either answer would have."],
-    ["Your word", "#e8d092", "You promised him that thing. Keep it and he is yours entirely and the yard hears about it. Spend it and they hear about that instead."],
-    ["With the doctore", "#e8d092", "He has the doctore's whole attention this week — far better for him, measurably worse for everyone else at the post."],
-    ["Being remade · Nw", "#e8d092", "Three weeks off the sand while the doctore takes his style apart and rebuilds him as something else."],
-    ["Kit failing", "#d96f5d", "Something he carries is close to breaking. Bought steel dulls and splits; have it seen to at the armoury before it goes in the middle of a bout."],
-    ["A named piece", "#e8d092", "Steel your own smith made for this man alone. Better, slower to wear, unsellable, and it bends rather than breaks."],
-    ["Young · Prime · Past peak · Veteran", "#b09b7d", "Where he stands on the hill. A man is in his prime from 23 to 28; before that he is still filling out, after it he starts giving pieces back."],
+    ["Auctoratus · N left", "var(--azure)", "A free man who sold himself to the arena. Paid up front and by the week rather than bought, contracted for a set number of bouts, and gone when they are served. He cannot be sold, the rudis means nothing to him, and he will not rise with the others."],
+    ["✦ Primus of Capua", "var(--ink-hi)", "There is one man in this city the whole city can name, and for now he is yours. Worth fame every week — and a queue of challengers on nearly every card."],
+    ["✦ rare fire", "var(--ink-hi)", "Something in this one the arena has not seen yet. A ceiling far above the block price, and usually a temper to match."],
+    ["Firebrand", "var(--blood)", "You bought his name from an informer. He is the one the cells would follow. Free him and the whole conspiracy dies with the gesture."],
+    ["Given up", "var(--blood)", "He asked you twice for the one thing he wanted and you did not answer. He has stopped asking, which costs more than either answer would have."],
+    ["Your word", "var(--ink-hi)", "You promised him that thing. Keep it and he is yours entirely and the yard hears about it. Spend it and they hear about that instead."],
+    ["With the doctore", "var(--ink-hi)", "He has the doctore's whole attention this week — far better for him, measurably worse for everyone else at the post."],
+    ["Being remade · Nw", "var(--ink-hi)", "Three weeks off the sand while the doctore takes his style apart and rebuilds him as something else."],
+    ["Kit failing", "var(--blood)", "Something he carries is close to breaking. Bought steel dulls and splits; have it seen to at the armoury before it goes in the middle of a bout."],
+    ["A named piece", "var(--ink-hi)", "Steel your own smith made for this man alone. Better, slower to wear, unsellable, and it bends rather than breaks."],
+    ["Young · Prime · Past peak · Veteran", "var(--ink-dim)", "Where he stands on the hill. A man is in his prime from 23 to 28; before that he is still filling out, after it he starts giving pieces back."],
   ];
   const SHEETS = {
     /* ---- THE PANELS A PLAYER CAN ONLY READ, GATHERED OFF THE TABS ----
@@ -21650,17 +21726,17 @@ export default function App(){
     lanista: { title:"THE LANISTA", body:()=>{ const L = S.lanista; if(!L) return null;
       const got = LAN_KEYS.filter(k=>hasLT(S,k));
       return (<>
-        <div className="disp" style={{fontSize:"var(--fs-xl)",fontWeight:700,color:"#e8d092"}}>{L.name}</div>
+        <div className="disp" style={{fontSize:"var(--fs-xl)",fontWeight:700,color:"var(--ink-hi)"}}>{L.name}</div>
         <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:9}}>
           {L.age} years old · {yearOf(S)} year{yearOf(S)===1?"":"s"} at the head of this house
         </div>
         <div className="flex items-center justify-between" style={{fontSize:"var(--fs-md)",marginBottom:9}}>
-          <span>Rank</span><span style={{color:riseOf(S)>0?"#e8d092":"#cfc0a0"}}>{riseName(S)}{riseNext(S)?"":" · the top rung"}</span>
+          <span>Rank</span><span style={{color:riseOf(S)>0?"var(--ink-hi)":"var(--ink-2)"}}>{riseName(S)}{riseNext(S)?"":" · the top rung"}</span>
         </div>
         <div className="flex items-center justify-between" style={{fontSize:"var(--fs-md)"}}>
           <span>Health</span><span style={{color:healthColour(L.health)}}>{healthWord(L.health)}</span>
         </div>
-        <Bar v={L.health} label="health" color={`linear-gradient(90deg,#4a3a24,${healthColour(L.health)})`}/>
+        <Bar v={L.health} label="health" color={`linear-gradient(90deg,var(--line-3),${healthColour(L.health)})`}/>
         <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",margin:"7px 0 12px"}}>
           {L.health>=80 ? "You are as well as a man in this trade gets."
            : L.health>=60 ? "The years are on you but not heavily."
@@ -21673,9 +21749,9 @@ export default function App(){
         </div>
         <div className="tag tag-gold" style={{margin:"0 0 4px"}}>After you</div>
         {S.heir ? (
-          <div className="panel" style={{padding:9,marginBottom:10,background:"#1c1610",borderColor:"#5a6a35"}}>
+          <div className="panel" style={{padding:9,marginBottom:10,background:"var(--panel)",borderColor:"var(--laurel-edge)"}}>
             <div className="flex items-center justify-between gap-2">
-              <span className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d092"}}>{S.heir.name}</span>
+              <span className="disp" style={{fontSize:"var(--fs-base)",color:"var(--ink-hi)"}}>{S.heir.name}</span>
               <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{HEIRS[S.heir.kind].name}</span>
             </div>
             <div className="dim" style={{fontSize:"var(--fs-md)",marginTop:3}}>{HEIRS[S.heir.kind].line}</div>
@@ -21687,7 +21763,7 @@ export default function App(){
           {heirEligible(S).map(k=>(
             <button key={k} className="optrow" style={{marginBottom:6,padding:10}} onClick={()=>chooseHeir(k)}>
               <div className="flex items-center justify-between gap-2">
-                <span className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d092"}}>{HEIRS[k].name}</span>
+                <span className="disp" style={{fontSize:"var(--fs-base)",color:"var(--ink-hi)"}}>{HEIRS[k].name}</span>
                 <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>
                   keeps {Math.round(HEIRS[k].fameKeep*100)}% fame · {Math.round(HEIRS[k].favorKeep*100)}% standing
                 </span>
@@ -21703,9 +21779,9 @@ export default function App(){
           return (<>
           <div className="tag tag-gold" style={{margin:"12px 0 4px"}}>The house's blood</div>
           {w ? (<>
-            <div className="panel" style={{padding:9,marginBottom:8,background:"#1c1610",borderColor:"#5a4a6a"}}>
+            <div className="panel" style={{padding:9,marginBottom:8,background:"var(--panel)",borderColor:"var(--ink-faint)"}}>
               <div className="flex items-center justify-between gap-2">
-                <span className="disp" style={{fontSize:"var(--fs-base)",color:"#d9c0e0"}}>{w.name}</span>
+                <span className="disp" style={{fontSize:"var(--fs-base)",color:"var(--violet)"}}>{w.name}</span>
                 <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>of {w.family} · your wife</span>
               </div>
               <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:3}}>
@@ -21715,9 +21791,9 @@ export default function App(){
             {kids.length===0 && <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:6}}>No children yet. The house waits.</div>}
             {kids.map(c=>{ const age=childAge(S,c); const heir = S.heir && S.heir.cid===c.id;
               return (
-                <div key={c.id} style={{borderTop:"1px dotted #33271a",padding:"6px 0"}}>
+                <div key={c.id} style={{borderTop:"1px dotted var(--line)",padding:"6px 0"}}>
                   <div className="flex items-center justify-between gap-2">
-                    <span className="rowname" style={{fontSize:"var(--fs-md)",color:heir?"#e8d092":undefined}}>{c.name}{heir?" · heir":""}</span>
+                    <span className="rowname" style={{fontSize:"var(--fs-md)",color:heir?"var(--ink-hi)":undefined}}>{c.name}{heir?" · heir":""}</span>
                     <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{c.sex==="m"?"son":"daughter"} · {age} yr{c.wed?" · married out":""}</span>
                   </div>
                   {!c.wed && <div className="dim" style={{fontSize:"var(--fs-base)"}}>{c.sex==="m"? UPWORD(c) : age>=15?"of an age to be matched":"still at home"}</div>}
@@ -21737,7 +21813,7 @@ export default function App(){
         {(S.forebears||[]).length>0 && (<>
           <div className="tag tag-gold" style={{margin:"12px 0 4px"}}>Those who had it before you</div>
           {(S.forebears||[]).map((f,i)=>(
-            <div key={i} style={{borderTop:"1px dotted #33271a",padding:"6px 0"}}>
+            <div key={i} style={{borderTop:"1px dotted var(--line)",padding:"6px 0"}}>
               <div className="flex items-center justify-between gap-2">
                 <span className="rowname" style={{fontSize:"var(--fs-md)"}}>{f.name}</span>
                 {/* a man can leave the chair on his feet since v3.8.0 — the retirement branch of
@@ -21756,9 +21832,9 @@ export default function App(){
         {got.length===0 && <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>Nothing yet. You have not been at it long enough to be a type.</div>}
         {LAN_KEYS.map(k=>{ const T = LAN_TRAITS[k], has = hasLT(S,k);
           return (
-            <div key={k} style={{borderTop:"1px dotted #33271a",padding:"6px 0",opacity:has?1:0.45}}>
+            <div key={k} style={{borderTop:"1px dotted var(--line)",padding:"6px 0",opacity:has?1:0.45}}>
               <div className="flex items-center justify-between gap-2">
-                <span className="rowname disp" style={{fontSize:"var(--fs-base)",color:has?(T.bad?"#d96f5d":"#e8d092"):"#8d7e65"}}>{T.name}</span>
+                <span className="rowname disp" style={{fontSize:"var(--fs-base)",color:has?(T.bad?"var(--blood)":"var(--ink-hi)"):"var(--ink-faint)"}}>{T.name}</span>
                 <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{has? "yours" : T.earn}</span>
               </div>
               <div className="dim" style={{fontSize:"var(--fs-md)"}}>{T.line}</div>
@@ -21771,12 +21847,12 @@ export default function App(){
       </div>
       {FAC_KEYS.map(k=>{ const v = facOf(S,k), F = FACTIONS[k];
         return (
-          <div key={k} style={{borderTop:"1px dotted #33271a",padding:"9px 0"}}>
+          <div key={k} style={{borderTop:"1px dotted var(--line)",padding:"9px 0"}}>
             <div className="flex items-center justify-between gap-2">
               <span className="rowname disp" style={{fontSize:"var(--fs-base)",color:facColour(v)}}>{F.name}</span>
               <span className="rowval" style={{fontSize:"var(--fs-sm)",color:facColour(v)}}>{facWord(v)} · {Math.round(v)}</span>
             </div>
-            <Bar v={v} label={F.name} color={`linear-gradient(90deg,#4a3a24,${facColour(v)})`}/>
+            <Bar v={v} label={F.name} color={`linear-gradient(90deg,var(--line-3),${facColour(v)})`}/>
             <div className="dim" style={{fontSize:"var(--fs-md)",marginTop:4}}>{F.want}</div>
             <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>They sit at {F.seat}. Courting them cools {FACTIONS[F.opposed].name.toLowerCase()}.</div>
           </div>
@@ -21797,7 +21873,7 @@ export default function App(){
         back:"Signed on again, for coin, of his own free will.",
       })[k] || "Free, and getting on with it somewhere.";
       const Row = ({name, right, sub, colour}) => (
-        <div style={{padding:"5px 0",borderBottom:"1px dotted #33271a"}}>
+        <div style={{padding:"5px 0",borderBottom:"1px dotted var(--line)"}}>
           <div className="flex items-center justify-between gap-2">
             <span className="rowname" style={{fontSize:"var(--fs-md)",color:colour||undefined}}>{name}</span>
             {right && <span className="rowval dim" style={{fontSize:"var(--fs-sm)",whiteSpace:"nowrap"}}>{right}</span>}
@@ -21814,11 +21890,11 @@ export default function App(){
         {fore.length>0 && (
           <div className="panel" style={{padding:12,marginBottom:9}}>
             <div className="tag tag-gold" style={{marginBottom:6}}>Those who held the keys before you</div>
-            {fore.map((pr,i)=>(<Row key={i} name={pr.name} right={pr.age?`${pr.age} years`:""} colour="#e8d092"/>))}
+            {fore.map((pr,i)=>(<Row key={i} name={pr.name} right={pr.age?`${pr.age} years`:""} colour="var(--ink-hi)"/>))}
           </div>
         )}
         {fallen.length>0 && (
-          <div className="panel" style={{padding:12,marginBottom:9,borderColor:"#5a2a22"}}>
+          <div className="panel" style={{padding:12,marginBottom:9,borderColor:"var(--blood-edge)"}}>
             <div className="tag tag-blood" style={{marginBottom:6}}>The dead of this house · {fallen.length}</div>
             {fallen.slice().reverse().slice(0,30).map((f,i)=>(
               <Row key={i} name={(f.name||"—").split(" — ")[0].split(",")[0]} colour="#d9a89e"
@@ -21828,10 +21904,10 @@ export default function App(){
           </div>
         )}
         {freed.length>0 && (
-          <div className="panel" style={{padding:12,marginBottom:9,borderColor:"#5a4a2c"}}>
-            <div className="tag" style={{marginBottom:6,borderColor:"#c99a4b",color:"#e0bd72"}}>Given the rudis · {freed.length}</div>
+          <div className="panel" style={{padding:12,marginBottom:9,borderColor:"var(--line-4)"}}>
+            <div className="tag" style={{marginBottom:6,borderColor:"var(--gold-line)",color:"var(--gold-hi)"}}>Given the rudis · {freed.length}</div>
             {freed.slice().reverse().slice(0,30).map((f,i)=>(
-              <Row key={i} name={(f.name||"—").split(",")[0]} colour="#e8d092"
+              <Row key={i} name={(f.name||"—").split(",")[0]} colour="var(--ink-hi)"
                 right={f.wins!=null?`${f.wins} wins`:""}
                 sub={f.became ? whatBecame(f.became) : "Walked out a free man. Capua is small; he may yet turn up."}/>
             ))}
@@ -21852,13 +21928,13 @@ export default function App(){
       const rank = table.findIndex(r=>r.you)+1;
       const snap = (S.league && S.league.snap) || null;
       const move = row => { if(!snap) return null; const key = row.you?"__you__":row.name; const was = snap[key];
-        if(was==null) return { a:"new", c:"#b09b7d" };
-        return row.fame>was+3 ? { a:"▲", c:"#9aa86a" } : row.fame<was-3 ? { a:"▼", c:"#d96f5d" } : { a:"–", c:"#6d5d47" }; };
+        if(was==null) return { a:"new", c:"var(--ink-dim)" };
+        return row.fame>was+3 ? { a:"▲", c:"var(--laurel)" } : row.fame<was-3 ? { a:"▼", c:"var(--blood)" } : { a:"–", c:"#6d5d47" }; };
       return (<>
         <div className="panel" style={{padding:13}}>
           <div className="flex items-center justify-between" style={{marginBottom:9}}>
             <span className="tag tag-gold">The League of Capua</span>
-            <span className="rowval" style={{fontSize:"var(--fs-sm)", color: isFirstHouse(S)?"#e0bd72":"#cfc0a0"}}>
+            <span className="rowval" style={{fontSize:"var(--fs-sm)", color: isFirstHouse(S)?"var(--gold-hi)":"var(--ink-2)"}}>
               {isFirstHouse(S) ? `First House · held ${leagueHeld(S)}w` : `you stand ${ordN(rank)} of ${table.length}`}
             </span>
           </div>
@@ -21873,17 +21949,17 @@ export default function App(){
                  tell the houses apart, so neither can be the one that gets cut.
                  The figures move ABOVE the detail now — rank, name and fame on one line
                  that is allowed to wrap, everything the house is doing underneath it. */
-              <div key={h.name+i} style={{padding:"6px 0",borderBottom:"1px dotted #33271a",
-                ...(h.you?{background:"#1c1610",borderRadius:6,padding:"6px 8px"}:{})}}>
+              <div key={h.name+i} style={{padding:"6px 0",borderBottom:"1px dotted var(--line)",
+                ...(h.you?{background:"var(--panel)",borderRadius:6,padding:"6px 8px"}:{})}}>
                 <div className="flex items-start justify-between gap-2" style={{flexWrap:"wrap"}}>
-                <div className="rowname" style={{fontSize:"var(--fs-lg)", color:h.you?"#e8d092":undefined, minWidth:0, flex:"1 1 60%"}}>
+                <div className="rowname" style={{fontSize:"var(--fs-lg)", color:h.you?"var(--ink-hi)":undefined, minWidth:0, flex:"1 1 60%"}}>
                   <span className="dim" style={{marginRight:7,fontSize:"var(--fs-base)"}}>{i+1}</span>
-                  {i===0 && <span style={{color:"#e0bd72",marginRight:4}}>✦</span>}
+                  {i===0 && <span style={{color:"var(--gold-hi)",marginRight:4}}>✦</span>}
                   {riv && riv.away>0 && <span className="dim" style={{fontSize:"var(--fs-sm)"}}>away · </span>}
                   {riv && riv.doctore && <span className="laurel" style={{fontSize:"var(--fs-sm)"}}>doctore · </span>}
                   {h.name}
                   {riv && (warmth(S,h.raw)>=25
-                    ? <span style={{fontSize:"var(--fs-sm)",marginLeft:7,fontStyle:"italic",color:warmth(S,h.raw)>=50?"#9aa86a":"#b09b7d"}}>{houseWord(warmth(S,h.raw))}</span>
+                    ? <span style={{fontSize:"var(--fs-sm)",marginLeft:7,fontStyle:"italic",color:warmth(S,h.raw)>=50?"var(--laurel)":"var(--ink-dim)"}}>{houseWord(warmth(S,h.raw))}</span>
                     : <span className="dim" style={{fontSize:"var(--fs-sm)",marginLeft:7,fontStyle:"italic"}}>{grudgeWord(riv.grudge)}</span>)}
                 </div>
                 <div className="flex items-center gap-2" style={{flexShrink:0,marginLeft:"auto"}}>
@@ -21913,11 +21989,11 @@ export default function App(){
             const live = liveRivals(S);
             if(!gone.length && live.length >= BAY_FLOOR) return null;
             return (
-              <div style={{borderTop:"1px dotted #33271a",marginTop:8,paddingTop:7}}>
+              <div style={{borderTop:"1px dotted var(--line)",marginTop:8,paddingTop:7}}>
                 {gone.length>0 && <div className="dim" style={{fontSize:"var(--fs-base)"}}>
-                  <span style={{color:"#b09b7d"}}>Folded</span> · {gone.map(h=>`House ${h.name}`).join(", ")} — sold up and gone out of the trade.
+                  <span style={{color:"var(--ink-dim)"}}>Folded</span> · {gone.map(h=>`House ${h.name}`).join(", ")} — sold up and gone out of the trade.
                 </div>}
-                {live.length < BAY_FLOOR && <div style={{fontSize:"var(--fs-base)",marginTop:3,color:"#d8ac5f"}}>
+                {live.length < BAY_FLOOR && <div style={{fontSize:"var(--fs-base)",marginTop:3,color:"var(--gold)"}}>
                   {live.length===0
                     ? "There is no other house left in Capua. A yard does not sit empty long — somebody will buy one of them inside the season."
                     : `Only ${live.length===1?"one house":`${live.length} houses`} still open against you. The empty yards are for sale and they will not stay that way.`}
@@ -21931,18 +22007,18 @@ export default function App(){
       </>); } },
     book: { title:"THE RECORD BOOK", body:()=>{ const K = bookOf(S), B = K.B;
       const Row = ({l,v,sub}) => (
-        <div className="flex items-center justify-between gap-2" style={{borderTop:"1px dotted #33271a",padding:"5px 0"}}>
+        <div className="flex items-center justify-between gap-2" style={{borderTop:"1px dotted var(--line)",padding:"5px 0"}}>
           <span className="rowname" style={{fontSize:"var(--fs-md)"}}>{l}{sub && <span className="dim" style={{fontSize:"var(--fs-sm)"}}> · {sub}</span>}</span>
-          <span className="rowval" style={{fontSize:"var(--fs-md)",color:"#e0bd72"}}>{v}</span>
+          <span className="rowval" style={{fontSize:"var(--fs-md)",color:"var(--gold-hi)"}}>{v}</span>
         </div>);
       const Table = ({title, rows, fmt}) => rows.length ? (
         <>
           <div className="tag tag-gold" style={{margin:"12px 0 3px"}}>{title}</div>
           {rows.map(r=>(
-            <div key={r.k} className="flex items-center justify-between gap-2" style={{borderTop:"1px dotted #33271a",padding:"5px 0"}}>
+            <div key={r.k} className="flex items-center justify-between gap-2" style={{borderTop:"1px dotted var(--line)",padding:"5px 0"}}>
               <span className="rowname" style={{fontSize:"var(--fs-md)"}}>{fmt? fmt(r.k) : r.k}</span>
               <span className="rowval" style={{fontSize:"var(--fs-base)"}}>
-                <span style={{color:r.pc>=55?"#9aa86a":r.pc>=45?"#b09b7d":"#d96f5d"}}>{r.pc}%</span>
+                <span style={{color:r.pc>=55?"var(--laurel)":r.pc>=45?"var(--ink-dim)":"var(--blood)"}}>{r.pc}%</span>
                 <span className="dim"> · {r.w}–{r.n-r.w-r.d}{r.d? `–${r.d}` : ""}</span>
               </span>
             </div>
@@ -21955,13 +22031,13 @@ export default function App(){
         {/* the number is under here. This is the feeling, and it is read off the number. */}
         {(()=>{ const said = bookSays(S); if(!said.length) return null;
           return (
-            <div className="panel" style={{padding:12,marginBottom:12,borderColor:"#6d5426",
-              background:"linear-gradient(165deg,#2b2216,#1d1610)"}}>
+            <div className="panel" style={{padding:12,marginBottom:12,borderColor:"var(--gold-edge)",
+              background:"linear-gradient(165deg,var(--raise),var(--panel))"}}>
               <div className="tag tag-gold" style={{marginBottom:6}}>What it comes to</div>
               {said.map((x,i)=>(
                 <div key={i} style={{fontSize:"var(--fs-md)",lineHeight:1.4,
                   marginTop:i?8:0,
-                  color: x.tone==="bad" ? "#d9a89e" : x.tone==="good" ? "#cfe0b0" : "#cfc0a0"}}>{x.text}</div>
+                  color: x.tone==="bad" ? "var(--blood-hi)" : x.tone==="good" ? "var(--laurel-lt)" : "var(--ink-2)"}}>{x.text}</div>
               ))}
             </div>
           ); })()}
@@ -22005,8 +22081,8 @@ export default function App(){
         <Table title="Against the great houses" rows={K.rank(B.house)} fmt={k=>"House "+k}/>
         {K.best && (<>
           <div className="tag tag-gold" style={{margin:"12px 0 3px"}}>The best man it ever had</div>
-          <div style={{borderTop:"1px dotted #33271a",padding:"6px 0"}}>
-            <div className="disp" style={{fontSize:"var(--fs-md)",color:"#e8d092"}}>{K.best.nick? `${K.best.name}, ${K.best.nick}` : K.best.name}</div>
+          <div style={{borderTop:"1px dotted var(--line)",padding:"6px 0"}}>
+            <div className="disp" style={{fontSize:"var(--fs-md)",color:"var(--ink-hi)"}}>{K.best.nick? `${K.best.name}, ${K.best.nick}` : K.best.name}</div>
             <div className="dim" style={{fontSize:"var(--fs-md)"}}>
               {K.best.wins}–{K.best.losses}{K.best.kills? `, ${K.best.kills} killed`:""} · {FATES[K.best.fate] ? FATES[K.best.fate].label.toLowerCase() : "still serving"}
             </div>
@@ -22014,8 +22090,8 @@ export default function App(){
         </>)}
         <div className="tag tag-gold" style={{margin:"12px 0 3px"}}>How they ended</div>
         {Object.entries(K.fates).sort((a,b)=>b[1]-a[1]).map(([f,c])=>(
-          <div key={f} className="flex items-center justify-between gap-2" style={{borderTop:"1px dotted #33271a",padding:"5px 0"}}>
-            <span className="rowname" style={{fontSize:"var(--fs-md)",color:FATES[f]? FATES[f].colour : "#b09b7d"}}>
+          <div key={f} className="flex items-center justify-between gap-2" style={{borderTop:"1px dotted var(--line)",padding:"5px 0"}}>
+            <span className="rowname" style={{fontSize:"var(--fs-md)",color:FATES[f]? FATES[f].colour : "var(--ink-dim)"}}>
               {FATES[f] ? FATES[f].label : "Still serving"}
             </span>
             <span className="rowval dim" style={{fontSize:"var(--fs-base)"}}>{c}</span>
@@ -22024,7 +22100,7 @@ export default function App(){
         {(S.forebears||[]).length>0 && (<>
           <div className="tag tag-gold" style={{margin:"12px 0 3px"}}>The line</div>
           {[...(S.forebears||[]), { name:S.lanista.name, age:S.lanista.age, to:null, traits:S.lanista.traits }].map((f,i)=>(
-            <div key={i} className="flex items-center justify-between gap-2" style={{borderTop:"1px dotted #33271a",padding:"5px 0"}}>
+            <div key={i} className="flex items-center justify-between gap-2" style={{borderTop:"1px dotted var(--line)",padding:"5px 0"}}>
               <span className="rowname" style={{fontSize:"var(--fs-md)"}}>{f.name}</span>
               <span className="rowval dim" style={{fontSize:"var(--fs-base)"}}>{f.to? `${f.retired ? "stepped back at" : "died at"} ${f.age}, week ${f.to}` : `holds it now, ${f.age}`}</span>
             </div>
@@ -22037,13 +22113,13 @@ export default function App(){
       </div>
       <div className="tag tag-gold" style={{marginBottom:4}}>The styles</div>
       {Object.entries(CLASSES).map(([c,C])=>(
-        <div key={c} style={{borderTop:"1px dotted #33271a",padding:"7px 0"}}>
+        <div key={c} style={{borderTop:"1px dotted var(--line)",padding:"7px 0"}}>
           <div className="flex items-center justify-between gap-2">
-            <span className="rowname disp" style={{fontSize:"var(--fs-base)",color:"#e8d092"}}>{c}</span>
+            <span className="rowname disp" style={{fontSize:"var(--fs-base)",color:"var(--ink-hi)"}}>{c}</span>
             <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{C.key.map(k=>STAT_NAMES[k]).join(" · ")}</span>
           </div>
           <div className="dim" style={{fontSize:"var(--fs-md)"}}>{C.desc}</div>
-          <div style={{fontSize:"var(--fs-base)",color:"#9aa86a"}}>Beats {COUNTERS[c]} · beaten by {Object.keys(COUNTERS).find(k=>COUNTERS[k]===c)}</div>
+          <div style={{fontSize:"var(--fs-base)",color:"var(--laurel)"}}>Beats {COUNTERS[c]} · beaten by {Object.keys(COUNTERS).find(k=>COUNTERS[k]===c)}</div>
         </div>
       ))}
       <div className="tag tag-gold" style={{margin:"12px 0 4px"}}>Where they came from</div>
@@ -22051,10 +22127,10 @@ export default function App(){
         const up = Object.entries(O.mod).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).map(([k])=>STAT_NAMES[k]);
         const dn = Object.entries(O.mod).filter(([,v])=>v<0).map(([k])=>STAT_NAMES[k]);
         return (
-          <div key={o} style={{borderTop:"1px dotted #33271a",padding:"6px 0"}}>
+          <div key={o} style={{borderTop:"1px dotted var(--line)",padding:"6px 0"}}>
             <div className="flex items-center justify-between gap-2">
               <span className="rowname disp" style={{fontSize:"var(--fs-base)"}}>{o}</span>
-              <span className="rowval" style={{fontSize:"var(--fs-sm)",color:"#9aa86a"}}>{up.join(", ")||"—"}{dn.length?<span className="blood"> · {dn.join(", ")} short</span>:null}</span>
+              <span className="rowval" style={{fontSize:"var(--fs-sm)",color:"var(--laurel)"}}>{up.join(", ")||"—"}{dn.length?<span className="blood"> · {dn.join(", ")} short</span>:null}</span>
             </div>
             <div className="dim" style={{fontSize:"var(--fs-md)"}}>The {O.blurb}.</div>
           </div>
@@ -22062,7 +22138,7 @@ export default function App(){
       })}
       <div className="tag tag-gold" style={{margin:"12px 0 4px"}}>Marks on a man</div>
       {MARKS.map(([t,col,txt])=>(
-        <div key={t} style={{borderTop:"1px dotted #33271a",padding:"7px 0"}}>
+        <div key={t} style={{borderTop:"1px dotted var(--line)",padding:"7px 0"}}>
           <span className="tag" style={{borderColor:col,color:col,marginBottom:3,display:"inline-block"}}>{t}</span>
           <div className="dim" style={{fontSize:"var(--fs-md)"}}>{txt}</div>
         </div>
@@ -22092,21 +22168,21 @@ export default function App(){
     if(!w && !lit) return null;
     return (
       <div className="dim" style={{fontSize:"var(--fs-base)",marginBottom:4,lineHeight:1.45}}>
-        {w>0 && <div>The works and monuments · <span style={{color:"#cfa88a"}}>{w}d a week</span> — stone wants keeping.</div>}
-        {lit>0 && <div>What the city asks of a house of your standing · <span style={{color:"#cfa88a"}}>{lit}d a week</span> — a street kept, a feast stood, your name on a portico. You may not decline it and stay received.</div>}
+        {w>0 && <div>The works and monuments · <span style={{color:"var(--ink-2)"}}>{w}d a week</span> — stone wants keeping.</div>}
+        {lit>0 && <div>What the city asks of a house of your standing · <span style={{color:"var(--ink-2)"}}>{lit}d a week</span> — a street kept, a feast stood, your name on a portico. You may not decline it and stay received.</div>}
       </div>
     ); })()}
   {BKEYS.map(k=>{
     const B = BUILDINGS[k], L = bLevel(S,k), next = L<4 ? B.cost[L] : null;
     return (
-      <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:9,marginTop:9}}>
+      <div key={k} style={{borderTop:"1px dotted var(--line)",paddingTop:9,marginTop:9}}>
         <div className="flex items-center justify-between gap-2">
-          <span className="disp" style={{fontSize:"var(--fs-base)",color:L?"#e8d092":"#b09b7d"}}>{B.name}</span>
+          <span className="disp" style={{fontSize:"var(--fs-base)",color:L?"var(--ink-hi)":"var(--ink-dim)"}}>{B.name}</span>
           <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{B.short}</span>
         </div>
         <div className="flex gap-1" style={{margin:"5px 0"}}>
           {[0,1,2,3].map(i=>(
-            <div key={i} style={{flex:1,height:5,borderRadius:99,background:i<L?"#c99a4b":"#33271a"}}/>
+            <div key={i} style={{flex:1,height:5,borderRadius:99,background:i<L?"var(--gold-line)":"var(--line)"}}/>
           ))}
         </div>
         <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
@@ -22131,9 +22207,9 @@ export default function App(){
       {got.length===0 && <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:7}}>Nothing yet that anyone would write down.</div>}
       {FEAT_KEYS.map(k=>{ const F = FEATS[k], done = hasFeat(S,k), near = done ? null : featNear(S,k);
         return (
-          <div key={k} style={{borderTop:"1px dotted #33271a",padding:"6px 0"}}>
+          <div key={k} style={{borderTop:"1px dotted var(--line)",padding:"6px 0"}}>
             <div className="flex items-center justify-between gap-2">
-              <span className="rowname disp" style={{fontSize:"var(--fs-base)",color:done?"#e8d092":"#8d7e65"}}>{F.name}</span>
+              <span className="rowname disp" style={{fontSize:"var(--fs-base)",color:done?"var(--ink-hi)":"var(--ink-faint)"}}>{F.name}</span>
               {done
                 ? <span className="rowval laurel" style={{fontSize:"var(--fs-sm)"}}>year {Math.floor((S.feats[k]-1)/YEAR_WEEKS)+1}</span>
                 : <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>—</span>}
@@ -22141,8 +22217,8 @@ export default function App(){
             <div className="dim" style={{fontSize:"var(--fs-base)",opacity:done?1:0.6}}>{F.desc}</div>
             {/* how close, which the sheet never said. A house was standing on five of
                 these gates for a hundred weeks at a time and read the same dash. */}
-            {near && <div style={{fontSize:"var(--fs-base)",color:"#c99a4b",fontStyle:"italic"}}>{near}</div>}
-            {F.perk && <div style={{fontSize:"var(--fs-base)",color:done?"#9aa86a":"#5a5240"}}>{PERKS[F.perk]}</div>}
+            {near && <div style={{fontSize:"var(--fs-base)",color:"var(--gold-line)",fontStyle:"italic"}}>{near}</div>}
+            {F.perk && <div style={{fontSize:"var(--fs-base)",color:done?"var(--laurel)":"var(--line-4)"}}>{PERKS[F.perk]}</div>}
           </div>
         ); })}
     </div>
@@ -22153,7 +22229,7 @@ export default function App(){
     <div className="panel" style={{padding:13}}>
       <div className="flex items-center justify-between" style={{marginBottom:6}}>
         <span className="tag tag-gold">What Capua Says</span>
-        {st && <span className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d092"}}>{REP_KINDS[st].name.toUpperCase()}</span>}
+        {st && <span className="disp" style={{fontSize:"var(--fs-base)",color:"var(--ink-hi)"}}>{REP_KINDS[st].name.toUpperCase()}</span>}
       </div>
       {REP_ORDER.map(k=>(
         <div key={k} style={{marginBottom:5}}>
@@ -22162,14 +22238,14 @@ export default function App(){
             <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{Math.round(repShare(S,k)*100)}%</span>
           </div>
           <Bar v={repShare(S,k)*100} label={REP_KINDS[k].name}
-            color={st===k? "linear-gradient(90deg,#8a6a2c,#d8ac5f)" : "#5a4a34"}/>
+            color={st===k? "linear-gradient(90deg,var(--gold-deep),var(--gold))" : "var(--line-4)"}/>
         </div>
       ))}
       <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:6}}>
         {st ? REP_KINDS[st].line : "Nobody has decided what kind of house this is yet."}
       </div>
       {st ? (
-        <div className="panel" style={{padding:"10px 11px",marginTop:9,background:"#1c1610"}}>
+        <div className="panel" style={{padding:"10px 11px",marginTop:9,background:"var(--panel)"}}>
           <div className="flex items-center justify-between gap-2" style={{marginBottom:6}}>
             <span className="tag tag-gold">What it is buying you</span>
             <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>and what it costs</span>
@@ -22177,13 +22253,13 @@ export default function App(){
           {(REP_EFFECTS[st]||[]).map(([label, what, good], i)=>(
             <div key={i} className="flex items-center justify-between gap-2" style={{padding:"3px 0"}}>
               <span className="rowname" style={{fontSize:"var(--fs-base)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{label}</span>
-              <span className="rowval" style={{fontSize:"var(--fs-sm)",color:good?"#9aa86a":"#d96f5d",flexShrink:0}}>{what}</span>
+              <span className="rowval" style={{fontSize:"var(--fs-sm)",color:good?"var(--laurel)":"var(--blood)",flexShrink:0}}>{what}</span>
             </div>
           ))}
           {(()=>{ const mine = repShareOf(S, st), held = S.repName ? S.week - S.repName.since : 0;
             const room = Math.round((mine - REP_KEEP) * 100);
             return (
-              <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",marginTop:7,lineHeight:1.4,borderTop:"1px dotted #33271a",paddingTop:6}}>
+              <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",marginTop:7,lineHeight:1.4,borderTop:"1px dotted var(--line)",paddingTop:6}}>
                 Held {held===0?"since this week":held===1?"a week":`${held} weeks`}, at {Math.round(mine*100)} in the hundred.
                 {" "}A name is given at {Math.round(REP_SETTLE*100)} and kept until it falls under {Math.round(REP_KEEP*100)} —
                 {room > 0
@@ -22232,14 +22308,14 @@ export default function App(){
     <div data-place={tab} className={`lr shell${prefs.reduceMotion?" reduce-motion":""}${prefs.largeText?" large-text":""}${prefs.colorblind?" cb":""}`}>
       <style>{CSS}</style>
 
-      <div className="bar" style={{position:"fixed",top:0,left:0,right:0,zIndex:20,background:"linear-gradient(180deg,#1d1610,rgba(23,18,16,.96))",borderBottom:"1px solid #3e2f1f",padding:"calc(10px + env(safe-area-inset-top)) 14px 10px"}}>
+      <div className="bar" style={{position:"fixed",top:0,left:0,right:0,zIndex:20,background:"linear-gradient(180deg,var(--panel),var(--bar-fade))",borderBottom:"1px solid var(--line-2)",padding:"calc(10px + env(safe-area-inset-top)) 14px 10px"}}>
         {/* the title must never be crushed by the buttons — it holds its ground and
             they drop to a second row instead */}
         <div className="flex items-center justify-between gap-2" style={{flexWrap:"wrap"}}>
           <div className="flex items-center gap-2" style={{minWidth:150,flex:"1 1 auto"}}>
             {S.crest && <Crest crest={S.crest} size={26}/>}
             <div style={{minWidth:0,flex:"1 1 auto"}}>
-              <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,color:"#e8d092",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{S.name.toUpperCase()}{(S.generation||1)>1 && <span style={{fontSize:"var(--fs-sm)",color:"#b09b7d"}}> · {["","","II","III","IV","V","VI","VII"][S.generation]||S.generation}</span>}</div>
+              <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,color:"var(--ink-hi)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{S.name.toUpperCase()}{(S.generation||1)>1 && <span style={{fontSize:"var(--fs-sm)",color:"var(--ink-dim)"}}> · {["","","II","III","IV","V","VI","VII"][S.generation]||S.generation}</span>}</div>
               <button className="dim" onClick={()=>setCal(true)} aria-label="The year ahead"
                 /* an eighteen-pixel-tall control in a masthead that cannot grow. The padding
                    buys a real hit area and the matching negative margin gives the layout
@@ -22252,7 +22328,7 @@ export default function App(){
                 style={{background:"none",border:"none",padding:"15px 0",margin:"-15px 0",font:"inherit",textAlign:"left",cursor:"pointer",
                   width:"100%",fontSize:"var(--fs-sm)",color:"inherit",position:"relative",zIndex:1,lineHeight:1.25}}>
                 <span style={{whiteSpace:"nowrap"}}>{seasonOf(S).name} · year {yearOf(S)}, week {yearWeek(S)}</span>
-                <span style={{whiteSpace:"nowrap"}}> · {S.travel? "on the road" : S.city? CITIES[S.city].name : fameTitle(S.fame)} <span style={{color:"#8a6a2c"}}>›</span></span>
+                <span style={{whiteSpace:"nowrap"}}> · {S.travel? "on the road" : S.city? CITIES[S.city].name : fameTitle(S.fame)} <span style={{color:"var(--gold-deep)"}}>›</span></span>
               </button>
             </div>
           </div>
@@ -22277,10 +22353,10 @@ export default function App(){
         </div>
         <div className="flex items-center gap-3" style={{marginTop:7,fontSize:"var(--fs-base)",flexWrap:"wrap"}}>
           <span className="flex items-center gap-1 gold"><Coins size={13} aria-hidden="true"/>{rnd(S.gold)}</span>
-          <span className="flex items-center gap-1" style={{color:"#d8c08a"}}><Star size={13} aria-hidden="true"/>{rnd(S.fame)}</span>
-          <span className="flex items-center gap-1" style={{color:"#bfa8c8"}}><Crown size={13} aria-hidden="true"/>{rnd(S.favor)}</span>
+          <span className="flex items-center gap-1" style={{color:"var(--gold-hi)"}}><Star size={13} aria-hidden="true"/>{rnd(S.fame)}</span>
+          <span className="flex items-center gap-1" style={{color:"var(--violet)"}}><Crown size={13} aria-hidden="true"/>{rnd(S.favor)}</span>
           {S.loan && (
-            <span className="flex items-center gap-1" style={{color: owes(S)>S.loan.principal*2 ? "#d96f5d":"#d8ac5f"}}>
+            <span className="flex items-center gap-1" style={{color: owes(S)>S.loan.principal*2 ? "var(--blood)":"var(--gold)"}}>
               <Coins size={13} aria-hidden="true"/>−{owes(S)}
             </span>
           )}
@@ -22289,11 +22365,11 @@ export default function App(){
               <Flame size={13} aria-hidden="true"/>you: {healthWord(S.lanista.health)}
             </span>
           )}
-          <span className="flex items-center gap-1" style={{color:"#cf5a49",marginLeft:"auto"}}><Flame size={13} aria-hidden="true"/>{unrestWord(S.unrest)}</span>
+          <span className="flex items-center gap-1" style={{color:"var(--blood-str)",marginLeft:"auto"}}><Flame size={13} aria-hidden="true"/>{unrestWord(S.unrest)}</span>
         </div>
       </div>
 
-      <div className="scroll" style={{width:"100%"}}><div style={{width:"100%",maxWidth:640,margin:"0 auto",padding:`calc(var(--hdr-h,84px) + 14px) 14px calc(var(--nav-h,72px) + ${S && !S.over && AGN.length ? "62px" : "14px"})`}}>
+      <div className="scroll" style={{width:"100%"}}><div key={tab} className={tab!=="ludus" ? "leaf" : undefined} style={{width:"100%",maxWidth:640,margin:"0 auto",padding:`calc(var(--hdr-h,84px) + 14px) 14px calc(var(--nav-h,72px) + ${S && !S.over && AGN.length ? "62px" : "14px"})`}}>
 
         {(()=>{ const L = lessonFor(S, tab); if(!L || S.flags.noLessons) return null;
           const read = ()=>mut(d=>{ d.flags.learned = Object.assign({}, d.flags.learned, {[L.id]:1}); });
@@ -22306,7 +22382,7 @@ export default function App(){
           );
           /* the first few arrive open, because you do not yet know who is talking */
           if(!lessonFolds(S)) return (
-            <div className="panel" style={{padding:13,marginBottom:12,borderColor:"#6d5426",background:"linear-gradient(165deg,#2b2216,#1d1610)"}}>
+            <div className="panel" style={{padding:13,marginBottom:12,borderColor:"var(--gold-edge)",background:"linear-gradient(165deg,var(--raise),var(--panel))"}}>
               <div className="flex items-center justify-between gap-2" style={{marginBottom:5}}>
                 <span className="tag tag-gold">The gatekeeper — {L.title}</span>
               </div>
@@ -22318,10 +22394,10 @@ export default function App(){
           return (
             /* keyed by the note, or React reuses the element and the next one arrives
                already open because you happened to read the last one */
-            <details key={L.id} className="sect" style={{marginBottom:12,borderColor:"#6d5426",background:"linear-gradient(165deg,#241c12,#1d1610)"}}>
+            <details key={L.id} className="sect" style={{marginBottom:12,borderColor:"var(--gold-edge)",background:"linear-gradient(165deg,var(--panel-2),var(--panel))"}}>
               <summary style={{padding:"10px 12px",minHeight:"var(--tap)"}}>
                 <span className="dim" style={{fontSize:"var(--fs-base)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis"}}>
-                  The gatekeeper has a word about <span style={{color:"#e0bd72"}}>{L.title.toLowerCase()}</span>
+                  The gatekeeper has a word about <span style={{color:"var(--gold-hi)"}}>{L.title.toLowerCase()}</span>
                 </span>
                 <span className="chev" aria-hidden="true">⌄</span>
               </summary>
@@ -22363,29 +22439,29 @@ export default function App(){
             const bnr = (c,title,sub,urgent,explain)=>banners.push({c,title,sub,urgent:!!urgent,explain});
             /* urgent = something you can act on now; the rest are threads you are simply in.
                every banner carries an explain line so a tap says what it actually means. */
-            if(S.war && !S.war.done) bnr("#7c2a22", warStage(S).name, "the war in the south", false,
+            if(S.war && !S.war.done) bnr("var(--blood-edge)", warStage(S).name, "the war in the south", false,
               "A slave war burns in the south, and it moves through stages. It unsettles every cell in Campania and shapes how the arena and the law treat a house of fighting men. How you carry the ludus through it is remembered long after.");
-            if(isFirstHouse(S)) bnr("#e0bd72", "First House of Capua", `held ${leagueHeld(S)}w`, false,
+            if(isFirstHouse(S)) bnr("var(--gold-hi)", "First House of Capua", `held ${leagueHeld(S)}w`, false,
               `Your house sits at the top of Capua's fame table — the First House, held ${leagueHeld(S)} week${leagueHeld(S)===1?"":"s"} now. It brings the better bills and a richer purse, and every rival is measuring the gap. Lose the top spot and you lose the edge.`);
-            if(S.primus) bnr(S.primus.mine?"#c99a4b":"#4e3c26", S.primus.mine?"Primus of Capua":`Primacy · ${S.primus.house}`, S.primus.mine?S.primus.name:"", false,
+            if(S.primus) bnr(S.primus.mine?"var(--gold-line)":"var(--line-4)", S.primus.mine?"Primus of Capua":`Primacy · ${S.primus.house}`, S.primus.mine?S.primus.name:"", false,
               S.primus.mine
                 ? `${S.primus.name} is the Primus of Capua — the town's crowned champion, and he wears your colours. When the primacy is challenged, defend it to keep the crown.`
                 : `House ${S.primus.house} holds the primacy of Capua — the town's crowned champion. Win a primus bout at a great games to take the crown for your own house.`);
-            if(S.nemesis) bnr("#7c2a22", S.nemesis.name, "has your measure", false,
+            if(S.nemesis) bnr("var(--blood-edge)", S.nemesis.name, "has your measure", false,
               `${S.nemesis.name} has beaten your house, and the crowd knows his name set against yours. He is a nemesis: until you put him down on the sand, he has your measure and the tiers will keep saying so.`);
             if(S.nemHouse){ const grudgeLive=(S.deadlines||[]).some(x=>x.kind==="challenge"&&x.nem);
-              bnr("#7c2a22", `The feud · House ${S.nemHouse.house}`, grudgeLive?"the day is named":(nemEdge(S)>0?"you hold the upper hand":nemEdge(S)<0?"he holds the upper hand":"even, for now"), grudgeLive,
+              bnr("var(--blood-edge)", `The feud · House ${S.nemHouse.house}`, grudgeLive?"the day is named":(nemEdge(S)>0?"you hold the upper hand":nemEdge(S)<0?"he holds the upper hand":"even, for now"), grudgeLive,
                 `A running feud with House ${S.nemHouse.house}. Bad blood builds between the two houses until it comes to a named grudge match — win those and the upper hand, and the crowd, are yours.`); }
             if(S.saga){ const sg = S.gladiators.find(x=>x.id===S.saga.gid);
-              if(sg) bnr("#c99a4b", sg.name, S.saga.stage>=3?"his reckoning is set":"the crowd's champion", S.saga.stage>=3,
+              if(sg) bnr("var(--gold-line)", sg.name, S.saga.stage>=3?"his reckoning is set":"the crowd's champion", S.saga.stage>=3,
                 `${sg.name} has caught the crowd. A saga is building around him bout by bout, toward a reckoning the whole town will come to see. Keep winning and the story — and his fame — grows.`); }
-            if(aedileOn(S)) bnr(S.aedile.friendly?"#5a6a35":S.aedile.hostile?"#7c2a22":"#3e2f1f", "The aedile", S.aedile.friendly?"owes you":S.aedile.hostile?"knows whose list":"neutral", S.aedile.hostile,
+            if(aedileOn(S)) bnr(S.aedile.friendly?"var(--laurel-edge)":S.aedile.hostile?"var(--blood-edge)":"var(--line-2)", "The aedile", S.aedile.friendly?"owes you":S.aedile.hostile?"knows whose list":"neutral", S.aedile.hostile,
               `The aedile is the magistrate who puts on Capua's games and enforces its law. ${S.aedile.friendly?"This one owes you — he bends the editor's box and the purse your way.":S.aedile.hostile?"This one has you on his list — expect the law to fall harder on your house.":"This one is neutral, watching which kind of house you turn out to be."} Win his election with your standing and games, or lose it to a rival.`);
-            if(S.city) bnr("#6d5426", CITIES[S.city].name, "you are on the circuit", false,
+            if(S.city) bnr("var(--gold-edge)", CITIES[S.city].name, "you are on the circuit", false,
               `You are fighting away from Capua, in ${CITIES[S.city].name}, down the bay. Win here and the town comes to know your name. A house known the length of the whole bay — Pompeii, Neapolis, Puteoli — carries word all the way to Rome, and shortens its road there.`);
-            if(S.travel) bnr("#6d5426", "On the road", `${S.travel.weeks}w`, false,
+            if(S.travel) bnr("var(--gold-edge)", "On the road", `${S.travel.weeks}w`, false,
               "The house is on the road between towns. Nothing happens on the sand until you arrive — the weeks are travel, tolls, and men who have never left Campania looking at the hills.");
-            if(canClaimRise(S)) bnr("#c99a4b", `Received as ${riseNext(S).name}`, "your standing awaits", true,
+            if(canClaimRise(S)) bnr("var(--gold-line)", `Received as ${riseNext(S).name}`, "your standing awaits", true,
               `Your standing has climbed enough to be received as ${riseNext(S).name}, the next rung of the lanista's own rise out of the slaver's trade. Go to the Villa's Standing to take your place.`);
             const urgent = banners.filter(b=>b.urgent), ongoing = banners.filter(b=>!b.urgent);
             const explainBnr = b => setAsk({ title:b.title, info:true, confirm:"Understood",
@@ -22396,7 +22472,7 @@ export default function App(){
                   {urgent.map((b,i)=>(
                     <button key={i} className="panel" onClick={()=>explainBnr(b)}
                       style={{padding:"10px 9px",borderColor:b.c,flex:"1 1 auto",minWidth:0,textAlign:"left",cursor:"pointer"}}>
-                      <div className="disp" style={{fontSize:"var(--fs-sm)",color:"#e8d092",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{b.title}</div>
+                      <div className="disp" style={{fontSize:"var(--fs-sm)",color:"var(--ink-hi)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{b.title}</div>
                       {b.sub && <div className="dim" style={{fontSize:"var(--fs-micro)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{b.sub}</div>}
                     </button>
                   ))}
@@ -22426,12 +22502,12 @@ export default function App(){
           {(()=>{ const C = charterAt(S); if(!C) return null;
                 const i = S.charter.i;
                 return (
-                  <div className="panel" style={{padding:13,borderColor:"#6d5426",background:"#1c1610"}}>
+                  <div className="panel" style={{padding:13,borderColor:"var(--gold-edge)",background:"var(--panel)"}}>
                     <div className="flex items-center justify-between" style={{marginBottom:5}}>
                       <span className="tag tag-gold">The first year</span>
                       <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{i+1} of {CHARTER.length}</span>
                     </div>
-                    <div className="disp" style={{fontSize:"var(--fs-lg)",color:"#e8d092"}}>{C.title}</div>
+                    <div className="disp" style={{fontSize:"var(--fs-lg)",color:"var(--ink-hi)"}}>{C.title}</div>
                     <div style={{fontSize:"var(--fs-lg)",marginTop:3}}>{C.how}</div>
                     <div className="flex gap-2" style={{marginTop:8}}>
                       <button className="btn" style={{flex:1}} onClick={()=>goTo(C.dest || C.tab)}>Take me there</button>
@@ -22448,8 +22524,8 @@ export default function App(){
                    the doctore's word and the year-ahead button that used to close it. */}
             </>); })()}
           {S.rome && (
-            <div className="panel" style={{padding:14,borderColor:"#c99a4b",background:"linear-gradient(165deg,#2f2415,#1d1610)"}}>
-              <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".14em",color:"#e8d092",marginBottom:5}}>ROME</div>
+            <div className="panel" style={{padding:14,borderColor:"var(--gold-line)",background:"linear-gradient(165deg,var(--raise),var(--panel))"}}>
+              <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".14em",color:"var(--ink-hi)",marginBottom:5}}>ROME</div>
               {S.rome.travel>0 ? (
                 <div style={{fontSize:"var(--fs-lg)"}}>On the road north — {S.rome.travel} week{S.rome.travel>1?"s":""} of wagons and tolls. Nothing happens in Capua now.</div>
               ) : (
@@ -22463,7 +22539,7 @@ export default function App(){
               <div className="flex gap-1" style={{marginTop:8}}>
                 {Array.from({length:ROME_BOUTS}).map((_,i)=>(
                   <div key={i} style={{flex:1,height:6,borderRadius:99,
-                    background: i<S.rome.won ? "#c99a4b" : i<S.rome.fought ? "#7c2a22" : "#33271a"}}/>
+                    background: i<S.rome.won ? "var(--gold-line)" : i<S.rome.fought ? "var(--blood-edge)" : "var(--line)"}}/>
                 ))}
               </div>
             </div>
@@ -22485,7 +22561,7 @@ export default function App(){
           {/* what the men themselves are asking for, where the men are */}
           {(()=>{ const MEN = agenda(S).filter(a=>a.tab==="men"); if(!MEN.length) return null;
             return (
-              <div className="panel" style={{padding:12, borderColor: MEN.some(a=>a.urgency===3)?"#7c2a22":"#6d5426"}}>
+              <div className="panel" style={{padding:12, borderColor: MEN.some(a=>a.urgency===3)?"var(--blood-edge)":"var(--gold-edge)"}}>
                 <div className="flex items-center justify-between" style={{marginBottom:6}}>
                   <span className="tag tag-gold">What the men need</span>
                   <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{MEN.length} thing{MEN.length===1?"":"s"}</span>
@@ -22497,7 +22573,7 @@ export default function App(){
                 {MEN.map((a,i)=>{ const docable = a.doc && SECT[a.doc];
                   const inner = (<>
                     <div className="flex items-center justify-between gap-2">
-                      <span style={{fontSize:"var(--fs-md)",color:a.urgency===3?"#e8d9b8":"#cfc0a0",textAlign:"left"}}>{a.label}</span>
+                      <span style={{fontSize:"var(--fs-md)",color:a.urgency===3?"var(--ink)":"var(--ink-2)",textAlign:"left"}}>{a.label}</span>
                       <span className="rowval" style={{fontSize:"var(--fs-sm)",color:URG[a.urgency].c,whiteSpace:"nowrap"}}>{docable ? "open ›" : URG[a.urgency].w}</span>
                     </div>
                     {a.sub && <div className="dim" style={{fontSize:"var(--fs-base)",textAlign:"left"}}>{a.sub}</div>}
@@ -22512,7 +22588,7 @@ export default function App(){
 
           <button className="optrow" style={{padding:10}} onClick={()=>setSheet("glossary")}>
             <div className="flex items-center justify-between gap-2">
-              <span className="disp" style={{fontSize:"var(--fs-sm)",color:"#e8d092"}}>What the marks mean</span>
+              <span className="disp" style={{fontSize:"var(--fs-sm)",color:"var(--ink-hi)"}}>What the marks mean</span>
               <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>styles · origins · tags</span>
             </div>
           </button>
@@ -22521,11 +22597,11 @@ export default function App(){
             /* wrapping, for the same reason the villa's row wraps: two chips fitted a phone and a
                third did not, and a row that runs off the edge does not scroll — it pushes the shell
                and clips the house's own name. `surface` caught it at 19px hidden. */
-            style={{flexWrap:"wrap",borderBottom:"1px solid #33271a",paddingBottom:8}}>
+            style={{flexWrap:"wrap",borderBottom:"1px solid var(--line)",paddingBottom:8}}>
             {[["roster","The Roster"],["board","The Doctore's Board"],["armory","The Armoury"]].map(([k,l])=>(
               <button key={k} role="tab" aria-selected={mView===k} aria-label={l} onClick={()=>setMView(k)}
                 className={`chip ${mView===k?"on":""}`}
-                style={{whiteSpace:"nowrap",...(mView===k?{borderColor:"#c99a4b",color:"#e0bd72",background:"#2b2115"}:{})}}>
+                style={{whiteSpace:"nowrap",...(mView===k?{borderColor:"var(--gold-line)",color:"var(--gold-hi)",background:"var(--raise)"}:{})}}>
                 {l}
               </button>
             ))}
@@ -22534,16 +22610,16 @@ export default function App(){
           {mView==="roster" && (<>
           {roster.length===0 && <div className="panel dim" style={{padding:16,textAlign:"center",fontStyle:"italic"}}>The cells stand empty. The market has men, if you have coin.</div>}
           {roster.map(g=>(
-            <button key={g.id} className="panel" style={{width:"100%",textAlign:"left",padding:12,cursor:"pointer",color:"inherit",font:"inherit",borderColor:g.legend?"#8a6a2c":undefined}} onClick={()=>setSelId(g.id)}>
+            <button key={g.id} className="panel" style={{width:"100%",textAlign:"left",padding:12,cursor:"pointer",color:"inherit",font:"inherit",borderColor:g.legend?"var(--gold-deep)":undefined}} onClick={()=>setSelId(g.id)}>
               <div className="flex items-center justify-between gap-2">
-                <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700}}>{g.name}{g.nick?<span style={{color:"#d8c08a"}}>, {g.nick}</span>:null}</div>
+                <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700}}>{g.name}{g.nick?<span style={{color:"var(--gold-hi)"}}>, {g.nick}</span>:null}</div>
                 <span className="dim" style={{fontSize:"var(--fs-base)",whiteSpace:"nowrap"}}>{g.wins}–{g.losses}{g.kills?` · ${g.kills} kills`:""}</span>
               </div>
               <div className="flex items-center gap-1" style={{flexWrap:"wrap",margin:"6px 0"}}>
                 <span className="tag">{g.cls}</span><span className="tag">{g.origin}</span>
                 {g.legend && <span className="tag tag-gold">✦ rare fire</span>}
-                {isF(g) && <span className="tag" style={{borderColor:"#8a6a9c",color:"#c8aad4"}}>Gladiatrix</span>}
-                {isAuctor(g) && <span className="tag" style={{borderColor:"#5a7a8a",color:"#9dc0d4"}}>Auctoratus · {auctorLeft(g)} left</span>}
+                {isF(g) && <span className="tag" style={{borderColor:"var(--violet-edge)",color:"var(--violet)"}}>Gladiatrix</span>}
+                {isAuctor(g) && <span className="tag" style={{borderColor:"var(--azure-edge)",color:"var(--azure)"}}>Auctoratus · {auctorLeft(g)} left</span>}
                 {(()=>{ const bad = SLOTS.filter(s=>wears(GEAR[g.kit&&g.kit[s]]) && wearOf(g,s)<35).length;
                   return bad ? <span className="tag tag-blood">Kit failing</span> : null; })()}
                 {Math.abs(formOf(g))>=FORM_TELL && <span className="tag" style={{borderColor:formColour(formOf(g)),color:formColour(formOf(g))}}>{formWord(formOf(g))}</span>}
@@ -22558,10 +22634,10 @@ export default function App(){
                 {g.status==="injured" && <span className="tag tag-blood">{g.injury.name} · {g.injury.weeks}w</span>}
                 {g.status==="away" && <span className="tag">Away</span>}
                 {rudisEligible(g) && <span className="tag tag-gold">Rudis earned</span>}
-                {g.age>PRIME[1] && <span className="tag" style={{borderColor:g.age>31?"#7c2a22":undefined, color:g.age>31?"#d98476":undefined}}>{ageTag(g.age)} · {g.age}</span>}
+                {g.age>PRIME[1] && <span className="tag" style={{borderColor:g.age>31?"var(--blood-edge)":undefined, color:g.age>31?"var(--blood-hi)":undefined}}>{ageTag(g.age)} · {g.age}</span>}
                 {(g.scars||[]).length>0 && <span className="tag">{g.scars.length} scar{g.scars.length>1?"s":""}</span>}
                 {bodyWear(g)>=0.44 && <span className="tag" style={{borderColor:wornColour(bodyWear(g)),color:wornColour(bodyWear(g))}}>{wornWord(bodyWear(g))}</span>}
-                {kinOf(S,g.id,"brother").length>0 && <span className="tag" style={{borderColor:"#5a6a35",color:"#b9c58a"}}>{kinOf(S,g.id,"brother").length} brother{kinOf(S,g.id,"brother").length>1?"s":""}</span>}
+                {kinOf(S,g.id,"brother").length>0 && <span className="tag" style={{borderColor:"var(--laurel-edge)",color:"var(--laurel-hi)"}}>{kinOf(S,g.id,"brother").length} brother{kinOf(S,g.id,"brother").length>1?"s":""}</span>}
                 {kinOf(S,g.id,"rival").length>0 && <span className="tag tag-blood">bad blood</span>}
                 {isFavourite(g) && <span className="tag tag-gold">♦ crowd favourite</span>}
               </div>
@@ -22569,7 +22645,7 @@ export default function App(){
               <div className="flex gap-3" style={{fontSize:"var(--fs-sm)"}}>
                 <div style={{flex:1}}><span className="dim">Morale</span><Bar v={g.morale} color={LAUREL}/></div>
                 <div style={{flex:1}}><span className="dim">Fatigue</span><Bar v={g.fatigue} color={BRONZE}/></div>
-                <div style={{flex:1}}><span className="dim">Bearing</span><div style={{fontSize:"var(--fs-base)",color:g.defiance>60?"#cf5a49":"#cfc0a0"}}>{demeanor(g.defiance)}</div></div>
+                <div style={{flex:1}}><span className="dim">Bearing</span><div style={{fontSize:"var(--fs-base)",color:g.defiance>60?"var(--blood-str)":"var(--ink-2)"}}>{demeanor(g.defiance)}</div></div>
               </div>
             </button>
           ))}
@@ -22577,11 +22653,11 @@ export default function App(){
 
           {mView==="board" && (()=>{ const men = activeG(S);
             const fatWord = g => g.fatigue>82?"spent":g.fatigue>60?"tired":g.fatigue>35?"working":"fresh";
-            const fatCol = g => g.fatigue>82?"#d96f5d":g.fatigue>60?"#d8ac5f":"#9aa86a";
-            const strCol = g => strainOf(g)>55?"#d96f5d":strainOf(g)>32?"#d8ac5f":"#8d7e65";
+            const fatCol = g => g.fatigue>82?"var(--blood)":g.fatigue>60?"var(--gold)":"var(--laurel)";
+            const strCol = g => strainOf(g)>55?"var(--blood)":strainOf(g)>32?"var(--gold)":"var(--ink-faint)";
             return (<>
               {S.doctore ? (
-                <div className="panel" style={{padding:10,borderColor:(S.doctore.drill||"none")!=="none"?"#5a6a35":"#3e2f1f"}}>
+                <div className="panel" style={{padding:10,borderColor:(S.doctore.drill||"none")!=="none"?"var(--laurel-edge)":"var(--line-2)"}}>
                   <div className="flex items-center justify-between" style={{marginBottom:6}}>
                     <span className="tag tag-gold">The week's drill — the whole yard</span>
                     <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{S.doctore.name} · {docWord(S.doctore.skill)}</span>
@@ -22589,7 +22665,7 @@ export default function App(){
                   <div className="flex gap-1" style={{flexWrap:"wrap",marginBottom:6}}>
                     {DRILL_KEYS.map(dk=>(
                       <button key={dk} className={`chip ${(S.doctore.drill||"none")===dk?"on":""}`} onClick={()=>setDrill(dk)}
-                        style={(S.doctore.drill||"none")===dk?{borderColor:"#c99a4b",color:"#e0bd72",background:"#2b2115"}:{}}>{DRILLS[dk].short}</button>
+                        style={(S.doctore.drill||"none")===dk?{borderColor:"var(--gold-line)",color:"var(--gold-hi)",background:"var(--raise)"}:{}}>{DRILLS[dk].short}</button>
                     ))}
                   </div>
                   <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>{drillOf(S).blurb}</div>
@@ -22619,7 +22695,7 @@ export default function App(){
                           matching negative margin gives the layout back. And the name wraps:
                           it was nowrap with an ellipsis, which on a long name cut it. */}
                       <button onClick={()=>setSelId(g.id)} style={{background:"none",border:0,
-                        padding:"11px 0",margin:"-11px 0",font:"inherit",color:"#e8d092",cursor:"pointer",
+                        padding:"11px 0",margin:"-11px 0",font:"inherit",color:"var(--ink-hi)",cursor:"pointer",
                         minWidth:0,textAlign:"left",position:"relative",zIndex:1}}>
                         <span className="disp" style={{fontSize:"var(--fs-md)",overflowWrap:"anywhere"}}>{g.name}</span>
                         <span className="dim" style={{fontSize:"var(--fs-sm)"}}> · {g.cls}</span>
@@ -22631,7 +22707,7 @@ export default function App(){
                     </div>
                     {/* the same four readings for every man, so the yard can be compared at a glance */}
                     <div className="flex items-center gap-2" style={{flexWrap:"wrap",marginBottom:5,fontSize:"var(--fs-micro)"}}>
-                      <span style={{color: canFight(g) && g.lastFought < S.week ? "#9aa86a" : "#8d7e65"}}>
+                      <span style={{color: canFight(g) && g.lastFought < S.week ? "var(--laurel)" : "var(--ink-faint)"}}>
                         {!canFight(g) ? (g.injury ? "hurt" : "not fit") : g.lastFought >= S.week ? "fought this week" : "ready"}
                       </span>
                       <span className="dim">·</span>
@@ -22647,20 +22723,20 @@ export default function App(){
                     ) : (<>
                       <div className="flex gap-1" style={{flexWrap:"wrap"}}>
                         {REG_KEYS.map(k=>(
-                          <button key={k} className={`chip ${reg===k?"on":""}`} style={{fontSize:"var(--fs-micro)",padding:"3px 7px",...(reg===k?{borderColor:"#c99a4b",color:"#e0bd72",background:"#2b2115"}:{})}}
+                          <button key={k} className={`chip ${reg===k?"on":""}`} style={{fontSize:"var(--fs-micro)",padding:"3px 7px",...(reg===k?{borderColor:"var(--gold-line)",color:"var(--gold-hi)",background:"var(--raise)"}:{})}}
                             onClick={()=>{ if(k==="spar") setSparPick(g.id); else setRegimen(g.id,k); }}>{REGIMENS[k].short}</button>
                         ))}
                       </div>
                       {reg==="palus" && (
                         <div className="flex gap-1" style={{flexWrap:"wrap",marginTop:5}}>
                           {STATS.map(s=>(
-                            <button key={s} className={`chip ${g.focus===s?"on":""}`} style={{fontSize:"var(--fs-micro)",padding:"2px 6px",...(g.focus===s?{borderColor:"#8a6a2c",color:"#e0bd72"}:{})}}
+                            <button key={s} className={`chip ${g.focus===s?"on":""}`} style={{fontSize:"var(--fs-micro)",padding:"2px 6px",...(g.focus===s?{borderColor:"var(--gold-deep)",color:"var(--gold-hi)"}:{})}}
                               onClick={()=>setFocus(g.id,s)}>{STAT_NAMES[s].slice(0,3)}</button>
                           ))}
                         </div>
                       )}
                       {reg==="spar" && (
-                        <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:4,color:sparPartner(S,g)?"#b9c58a":"#d8ac5f"}}>
+                        <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:4,color:sparPartner(S,g)?"var(--laurel-hi)":"var(--gold)"}}>
                           {sparPartner(S,g) ? `Paired with ${sparPartner(S,g).name}` : "Tap SPAR again to pick a partner"}
                         </div>
                       )}
@@ -22682,15 +22758,15 @@ export default function App(){
           {mView==="armory" && (<div className="flex flex-col gap-3">
           {(()=>{ const u = rackUsed(S), c = rackCap(S), over = rackOver(S);
             return (
-              <div className="panel" style={{padding:12, borderColor: over? "#7c2a22" : u>=c-1 ? "#6d5426" : "#3e2f1f"}}>
+              <div className="panel" style={{padding:12, borderColor: over? "var(--blood-edge)" : u>=c-1 ? "var(--gold-edge)" : "var(--line-2)"}}>
                 <div className="flex items-center justify-between" style={{marginBottom:4}}>
                   <span className="tag tag-gold">The racks</span>
-                  <span className="rowval" style={{fontSize:"var(--fs-base)",color:over?"#d96f5d":u>=c-1?"#d8ac5f":"#9aa86a"}}>
+                  <span className="rowval" style={{fontSize:"var(--fs-base)",color:over?"var(--blood)":u>=c-1?"var(--gold)":"var(--laurel)"}}>
                     {u} of {c} · {rackWord(S)}
                   </span>
                 </div>
                 <Bar v={Math.min(100, u/c*100)} label="" color={over
-                  ? "linear-gradient(90deg,#5a1a14,#d96f5d)" : "linear-gradient(90deg,#4a3a24,#c99a4b)"}/>
+                  ? "linear-gradient(90deg,#5a1a14,var(--blood))" : "linear-gradient(90deg,var(--line-3),var(--gold-line))"}/>
                 <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:4}}>
                   {over
                     ? `Past what the room holds. Everything wears ${Math.round((rackStrain(S)-1)*100)}% faster and it costs ${rackRent(S)} denarii a week to keep it stacked against the wall.`
@@ -22710,13 +22786,13 @@ export default function App(){
             ); })()}
 
           {(S.deadSteel||[]).length>0 && (
-            <div className="panel" style={{padding:11,borderColor:"#7c2a22"}}>
+            <div className="panel" style={{padding:11,borderColor:"var(--blood-edge)"}}>
               <div className="tag tag-blood" style={{marginBottom:4}}>Off the dead</div>
               <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:5}}>
                 Pieces that came back off a body. Somebody will end up carrying them, and he will know it.
               </div>
               {S.deadSteel.map((x,i)=>(
-                <div key={i} className="flex items-center justify-between gap-2" style={{borderTop:"1px dotted #33271a",padding:"4px 0"}}>
+                <div key={i} className="flex items-center justify-between gap-2" style={{borderTop:"1px dotted var(--line)",padding:"4px 0"}}>
                   <span className="rowname" style={{fontSize:"var(--fs-md)"}}>{GEAR[x.id] ? GEAR[x.id].name : x.id}</span>
                   <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{x.from}, week {x.week}</span>
                 </div>
@@ -22728,7 +22804,7 @@ export default function App(){
             <div className="panel" style={{padding:11}}>
               <div className="flex items-center justify-between gap-2">
                 <div style={{minWidth:0}}>
-                  <div className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d092"}}>Arm the whole line</div>
+                  <div className="disp" style={{fontSize:"var(--fs-base)",color:"var(--ink-hi)"}}>Arm the whole line</div>
                   <div className="dim" style={{fontSize:"var(--fs-base)"}}>
                     {(()=>{ const n = activeG(S).filter(g=>kitFaults(S,g).length).length;
                       return n ? `${n} man${n===1?" is":"men are"} carrying less than the racks can give ${n===1?"him":"them"}.`
@@ -22745,11 +22821,11 @@ export default function App(){
             const lvl = bLevel(S,"armamentarium"), acc = acclaimOf(S);
             if(!open && lvl < 1 && acc < 12) return null;      /* a new house has enough to read */
             return (
-              <div className="panel" style={{padding:12, borderColor: open? "#6d5426" : "#3e2f1f"}}>
+              <div className="panel" style={{padding:12, borderColor: open? "var(--gold-edge)" : "var(--line-2)"}}>
                 <div className="flex items-center justify-between gap-2" style={{marginBottom:4}}>
                   <span className={open?"tag tag-gold":"tag"}>The master's bench</span>
                   {open
-                    ? <span className="rowval" style={{fontSize:"var(--fs-base)",color:keep?"#d8ac5f":"#9aa86a"}}>
+                    ? <span className="rowval" style={{fontSize:"var(--fs-base)",color:keep?"var(--gold)":"var(--laurel)"}}>
                         {owned ? `${owned} in the house · ${keep}d a week` : "open to you"}</span>
                     : <span className="rowval dim" style={{fontSize:"var(--fs-base)"}}>closed</span>}
                 </div>
@@ -22790,24 +22866,24 @@ export default function App(){
               : "A house that means to end yours";
             const beat = (S.rivalLog||[]).find(r=>r.house===n.house);
             return (
-              <div className="panel" style={{padding:13, borderColor:"#7c2a22", background:"#2a1512"}}>
+              <div className="panel" style={{padding:13, borderColor:"var(--blood-edge)", background:"var(--blood-edge)"}}>
                 <div className="flex items-center justify-between" style={{marginBottom:4}}>
                   <span className="tag tag-blood">The Feud · House {n.house}</span>
-                  <span className="rowval" style={{fontSize:"var(--fs-sm)", color:"#d98476"}}>{L}</span>
+                  <span className="rowval" style={{fontSize:"var(--fs-sm)", color:"var(--blood-hi)"}}>{L}</span>
                 </div>
                 <div className="dim" style={{fontSize:"var(--fs-md)", fontStyle:"italic", marginBottom:6}}>{stageWord}.</div>
-                <Bar v={n.heat} label="bad blood" color="linear-gradient(90deg,#5a1a14,#d96f5d)"/>
+                <Bar v={n.heat} label="bad blood" color="linear-gradient(90deg,var(--blood-edge),var(--blood))"/>
                 {(()=>{ const edge = nemEdge(S), hits=(n.hits||0), ans=(n.answered||0);
                   return (hits||ans) ? (
                     <div className="flex items-center justify-between gap-2" style={{marginTop:7,fontSize:"var(--fs-base)"}}>
-                      <span className="dim">His blows landed: <span style={{color:"#d98476"}}>{hits}</span> · yours answered: <span style={{color:"#9aa86a"}}>{ans}</span></span>
-                      <span className="rowval" style={{fontSize:"var(--fs-sm)",color:edge>0?"#9aa86a":edge<0?"#d96f5d":"#b09b7d",whiteSpace:"nowrap"}}>
+                      <span className="dim">His blows landed: <span style={{color:"var(--blood-hi)"}}>{hits}</span> · yours answered: <span style={{color:"var(--laurel)"}}>{ans}</span></span>
+                      <span className="rowval" style={{fontSize:"var(--fs-sm)",color:edge>0?"var(--laurel)":edge<0?"var(--blood)":"var(--ink-dim)",whiteSpace:"nowrap"}}>
                         {edge>0?"upper hand: yours":edge<0?"upper hand: his":"dead even"}
                       </span>
                     </div>
                   ) : null; })()}
-                {n.lastScheme && !grudgeLive && <div style={{fontSize:"var(--fs-base)", marginTop:6, color:"#cdb89a", fontStyle:"italic"}}>Last: {n.lastScheme}</div>}
-                {!n.lastScheme && beat && <div style={{fontSize:"var(--fs-base)", marginTop:6, color:"#cdb89a"}}>{beat.text}</div>}
+                {n.lastScheme && !grudgeLive && <div style={{fontSize:"var(--fs-base)", marginTop:6, color:"var(--ink-2)", fontStyle:"italic"}}>Last: {n.lastScheme}</div>}
+                {!n.lastScheme && beat && <div style={{fontSize:"var(--fs-base)", marginTop:6, color:"var(--ink-2)"}}>{beat.text}</div>}
                 {grudgeLive ? (
                   <div className="blood" style={{fontSize:"var(--fs-base)", marginTop:6, fontWeight:600}}>
                     The grudge match is on the card below — it will not wait past its day.
@@ -22840,7 +22916,7 @@ export default function App(){
                below the card now, which is what a player came for. */}
           {(()=>{ const p = pactOf(S); if(!p) return null;
             const P = PACTS[p.kind], pace = pactPace(S);
-            const col = pace==="impossible" ? "#d96f5d" : pace==="behind" ? "#d8ac5f" : "#9aa86a";
+            const col = pace==="impossible" ? "var(--blood)" : pace==="behind" ? "var(--gold)" : "var(--laurel)";
             return (
               <div className="panel" style={{padding:12,borderColor:col}}>
                 <div className="flex items-center justify-between" style={{marginBottom:3}}>
@@ -22849,8 +22925,8 @@ export default function App(){
                     {pactOwed(S)} owed · {pactLeft(S)} weeks
                   </span>
                 </div>
-                <div className="disp" style={{fontSize:"var(--fs-md)",color:"#e8d092"}}>{P.name}</div>
-                <Bar v={p.done/p.need*100} label="" color={`linear-gradient(90deg,#4a3a24,${col})`}/>
+                <div className="disp" style={{fontSize:"var(--fs-md)",color:"var(--ink-hi)"}}>{P.name}</div>
+                <Bar v={p.done/p.need*100} label="" color={`linear-gradient(90deg,var(--line-3),${col})`}/>
                 <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:3}}>
                   {p.done} of {p.need} given{p.rate ? `, ${p.rate}d a card` : ""}{p.bonus ? `, ${p.bonus}d at the end of it` : ""}.
                   {P.exclusive ? " Nobody else's games in Capua until it is done." : ""}
@@ -22903,13 +22979,13 @@ export default function App(){
                   const worn = gambitStale(S,k), tried = gambitDone(S,k);
                   const p = gambitOdds(S,k);      /* the same function `runGambit` rolls against */
                   return (
-                    <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:7,marginTop:7}}>
+                    <div key={k} style={{borderTop:"1px dotted var(--line)",paddingTop:7,marginTop:7}}>
                       <div className="flex items-center justify-between gap-2">
                         <span className="rowname" style={{fontSize:"var(--fs-md)"}}>{G.name}</span>
                         <span className="rowval gold" style={{fontSize:"var(--fs-base)"}}>{cost}d</span>
                       </div>
                       <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:1}}>{G.blurb}</div>
-                      <div style={{fontSize:"var(--fs-sm)",marginTop:2,color:p>=0.55?"#9aa86a":p>=0.35?"#d8ac5f":"#d96f5d"}}>
+                      <div style={{fontSize:"var(--fs-sm)",marginTop:2,color:p>=0.55?"var(--laurel)":p>=0.35?"var(--gold)":"var(--blood)"}}>
                         about {Math.round(p*100)} in a hundred{worn>0
                           ? ` · you have tried this ${worn} time${worn>1?"s":""} that anybody still remembers`
                           : tried>0 ? ` · you have used this before, and Capua has stopped counting it` : ""}
@@ -22944,7 +23020,7 @@ export default function App(){
               </div>
             ); })()}
           {S.fame>=MUNUS_SCALES.modest.gate && !S.travel && !S.city && (
-            <div className="panel" style={{padding:14,borderColor:"#6d5426"}}>
+            <div className="panel" style={{padding:14,borderColor:"var(--gold-edge)"}}>
               <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,letterSpacing:".04em",marginBottom:3}}>GIVE THE CITY GAMES</div>
               <div className="dim" style={{fontSize:"var(--fs-md)",marginBottom:11}}>
                 {/* THE COOLDOWN IS NOT THE ONLY THING THAT REFUSES THIS. `munusReady` also
@@ -22967,7 +23043,7 @@ export default function App(){
 
           {(()=>{ const C = awayIn(S);
             if(S.travel) return (
-              <div className="panel" style={{padding:13,borderColor:"#6d5426"}}>
+              <div className="panel" style={{padding:13,borderColor:"var(--gold-edge)"}}>
                 <div className="tag tag-gold" style={{marginBottom:5}}>On the road</div>
                 <div style={{fontSize:"var(--fs-lg)"}}>
                   {S.travel.home ? "Back up the road to Capua" : `South for ${CITIES[S.travel.to].name}`} — {S.travel.weeks} week{S.travel.weeks===1?"":"s"}.
@@ -22976,13 +23052,13 @@ export default function App(){
               </div>
             );
             if(C) return (
-              <div className="panel" style={{padding:13,borderColor:"#6d5426"}}>
+              <div className="panel" style={{padding:13,borderColor:"var(--gold-edge)"}}>
                 <div className="flex items-center justify-between" style={{marginBottom:5}}>
                   <span className="tag tag-gold">{C.name}</span>
                   <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>known here {Math.round(knownIn(S,S.city))}/100</span>
                 </div>
                 <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>{C.crowd}</div>
-                <Bar v={knownIn(S,S.city)} label="local standing" color="linear-gradient(90deg,#6d5426,#d8ac5f)"/>
+                <Bar v={knownIn(S,S.city)} label="local standing" color="linear-gradient(90deg,var(--gold-edge),var(--gold))"/>
                 <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:5}}>
                   Capua counts for nothing on this sand — the editor here weighs what he has seen with his own eyes. Purses ×{C.purse.toFixed(2)}.
                 </div>
@@ -22996,7 +23072,7 @@ export default function App(){
                   Three towns down the bay who have never heard of you. Nothing you have built in Capua travels — but neither do your grudges.
                 </div>
                 {bayHolder(S) && (
-                  <div className="panel" style={{padding:10,marginBottom:8,background:"#2a1512",borderColor:"#7c2a22"}}>
+                  <div className="panel" style={{padding:10,marginBottom:8,background:"var(--blood-edge)",borderColor:"var(--blood-edge)"}}>
                     <div className="tag tag-blood" style={{marginBottom:3}}>House {bayHolder(S)} has the bay</div>
                     <div style={{fontSize:"var(--fs-md)"}}>
                       {baySince(S)} weeks of taking every card down the coast while your wagons stood in the yard.
@@ -23008,25 +23084,25 @@ export default function App(){
                 )}
                 {CITY_KEYS.map(k=>{ const c = CITIES[k];
                   return (
-                    <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:9,marginTop:9}}>
+                    <div key={k} style={{borderTop:"1px dotted var(--line)",paddingTop:9,marginTop:9}}>
                       <div className="flex items-center justify-between gap-2">
-                        <span className="disp" style={{fontSize:"var(--fs-base)",color:knownIn(S,k)?"#e8d092":"#b09b7d"}}>{c.name}</span>
+                        <span className="disp" style={{fontSize:"var(--fs-base)",color:knownIn(S,k)?"var(--ink-hi)":"var(--ink-dim)"}}>{c.name}</span>
                         <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{c.travel}wk · purses ×{c.purse.toFixed(2)}</span>
                       </div>
                       <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:2}}>{c.blurb}</div>
                       {/* the town's own politics: who runs its games, what it wants, whose sand it is */}
                       {(()=>{ const P = (S.bayPol||{})[k], CU = CITY_CUSTOM[k]; if(!CU) return null;
                         return (
-                          <div className="panel" style={{padding:9,marginTop:6,background:"#1c1610",borderColor:"#3e2f1f"}}>
+                          <div className="panel" style={{padding:9,marginTop:6,background:"var(--panel)",borderColor:"var(--line-2)"}}>
                             <div className="flex items-center justify-between gap-2">
                               <span className="tag">{CU.name}</span>
-                              {P && <span className="rowval" style={{fontSize:"var(--fs-sm)",color:P.favor>=58?"#9aa86a":P.favor>=38?"#cfc0a0":"#d8ac5f"}}>{cityFavWord(P.favor)}</span>}
+                              {P && <span className="rowval" style={{fontSize:"var(--fs-sm)",color:P.favor>=58?"var(--laurel)":P.favor>=38?"var(--ink-2)":"var(--gold)"}}>{cityFavWord(P.favor)}</span>}
                             </div>
                             <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>{CU.say}</div>
-                            <div style={{fontSize:"var(--fs-base)",marginTop:4,color:"#c0b492"}}>{CU.keep}</div>
+                            <div style={{fontSize:"var(--fs-base)",marginTop:4,color:"var(--ink-2)"}}>{CU.keep}</div>
                             {P ? (<>
                               <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:4}}>{P.mag} puts on the games here.</div>
-                              <div style={{fontSize:"var(--fs-sm)",color:P.grudge>=45?"#d96f5d":"#8d7e65"}}>
+                              <div style={{fontSize:"var(--fs-sm)",color:P.grudge>=45?"var(--blood)":"var(--ink-faint)"}}>
                                 House {P.house} has always had this sand{P.grudge>=45?" — and wants you off it":P.grudge>=20?", and has noticed you":""}.
                               </div>
                             </>) : (
@@ -23036,7 +23112,7 @@ export default function App(){
                         ); })()}
                       {knownIn(S,k)>0 ? (<>
                         <div className="dim" style={{fontSize:"var(--fs-base)"}}>They know you there: {Math.round(knownIn(S,k))}/100 — tier {cityTier(S,k)} cards.{(()=>{ const w = bayWorth(S,k); return w.mercyHere == null ? "" : ` A man of yours put down there is spared about ${w.mercyHere} in a hundred, against ${w.mercyHome} at home.`; })()}</div>
-                        {!S.city && !S.travel && <div style={{fontSize:"var(--fs-base)",color:"#d8ac5f"}}>
+                        {!S.city && !S.travel && <div style={{fontSize:"var(--fs-base)",color:"var(--gold)"}}>
                           Bleeding away at {BAY_DECAY.toFixed(2)} a week while you are not in it.
                         </div>}
                       </>) : (
@@ -23082,7 +23158,7 @@ export default function App(){
             const cheapest = (S.market||[]).length ? Math.min(...(S.market||[]).map(m=>m.price)) : null;
             const canBuy = (S.market||[]).filter(m=>m.price <= S.gold).length;
             return (
-              <div className="panel" style={{padding:12,borderColor: room<=0 ? "#6d5426" : "#3e2f1f"}}>
+              <div className="panel" style={{padding:12,borderColor: room<=0 ? "var(--gold-edge)" : "var(--line-2)"}}>
                 <div className="flex items-center justify-between" style={{marginBottom:3}}>
                   <span className="tag tag-gold">The block</span>
                   <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>
@@ -23107,12 +23183,12 @@ export default function App(){
             const canNow = S.gold >= p.price, canAfter = S.gold + L.total >= p.price;
             const left = 3 - (S.week - (S.flags.paragonWeek||S.week));
             return (
-              <div className="panel" style={{padding:13,borderColor:"#c99a4b",background:"#1c1610"}}>
+              <div className="panel" style={{padding:13,borderColor:"var(--gold-line)",background:"var(--panel)"}}>
                 <div className="flex items-center justify-between" style={{marginBottom:4}}>
                   <span className="tag tag-gold">✦ The whole town has come to look</span>
                   <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{left>0?`${left} week${left===1?"":"s"} to decide`:"today or not at all"}</span>
                 </div>
-                <div className="disp" style={{fontSize:"var(--fs-xl)",color:"#e8d092"}}>{fullName(p)}</div>
+                <div className="disp" style={{fontSize:"var(--fs-xl)",color:"var(--ink-hi)"}}>{fullName(p)}</div>
                 <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:1}}>
                   {p.origin} · {p.cls} · {p.wins}–{p.losses}{p.kills?`, ${p.kills} killed`:""} · {rnd(p.pfame)} renown · {p.age}
                 </div>
@@ -23130,7 +23206,7 @@ export default function App(){
                   </button>
                 ) : (
                   <>
-                    <div className="panel" style={{padding:10,marginTop:8,background:"#2a1512",borderColor:"#7c2a22"}}>
+                    <div className="panel" style={{padding:10,marginTop:8,background:"var(--blood-edge)",borderColor:"var(--blood-edge)"}}>
                       <div className="tag tag-blood" style={{marginBottom:3}}>Or take the house apart</div>
                       <div className="dim" style={{fontSize:"var(--fs-base)"}}>
                         {L.steelN} pieces of steel off the racks, {L.debtN} debt{L.debtN===1?"":"s"} sold at a discount, and {L.menN} men led out through the gate — about <span className="gold">{L.total}d</span>.
@@ -23151,7 +23227,7 @@ export default function App(){
             ); })()}
           {S.powLot && (()=>{ const lot = S.powLot, space = cellsCap(S) - roster.length, afford = S.gold>=lot.price;
             return (
-              <div className="panel" style={{padding:12,borderColor:"#7c2a22",background:"#241511"}}>
+              <div className="panel" style={{padding:12,borderColor:"var(--blood-edge)",background:"var(--blood-edge)"}}>
                 <div className="flex items-center justify-between">
                   <span className="tag tag-blood">A lot of captives</span>
                   <span className="gold" style={{fontSize:"var(--fs-md)"}}>{lot.price}d the lot</span>
@@ -23168,35 +23244,35 @@ export default function App(){
               </div>
             ); })()}
           {S.market.filter(g=>!g.paragon).map(g=>(
-            <div key={g.id} className="panel" style={{padding:12,borderColor:g.contested?"#8a6a2c":isAuctor(g)?"#5a7a8a":g.legend?"#8a6a2c":undefined}}>
+            <div key={g.id} className="panel" style={{padding:12,borderColor:g.contested?"var(--gold-deep)":isAuctor(g)?"var(--azure-edge)":g.legend?"var(--gold-deep)":undefined}}>
               <div className="flex items-center justify-between">
                 <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700}}>{g.name}</div>
                 <span className="gold" style={{fontSize:"var(--fs-lg)"}}>{g.price}d</span>
               </div>
               <div className="flex items-center gap-1" style={{flexWrap:"wrap",margin:"5px 0"}}>
                 <span className="tag">{g.cls}</span><span className="tag">{g.origin}</span>
-                {isF(g) && <span className="tag" style={{borderColor:"#8a6a9c",color:"#c8aad4"}}>Gladiatrix</span>}
+                {isF(g) && <span className="tag" style={{borderColor:"var(--violet-edge)",color:"var(--violet)"}}>Gladiatrix</span>}
                 {favourOf(g)>=40 && <span className="tag" style={{borderColor:favColour(favourOf(g)),color:favColour(favourOf(g))}}>{favWord(favourOf(g))}</span>}
                 {masterOf(g) && g.mastery.cls===g.cls && <span className="tag tag-gold">✦ {MASTERY[g.mastery.cls].name}</span>}
-                {g.benched && g.benched.weeks>0 && <span className="tag" style={{borderColor:"#6d5426",color:"#d8ac5f"}}>Kept apart · {g.benched.weeks}w</span>}
-                {g.learning && <span className="tag" style={{borderColor:"#6d5426",color:"#d8ac5f"}}>At the far post · {g.learning.weeks}w</span>}
+                {g.benched && g.benched.weeks>0 && <span className="tag" style={{borderColor:"var(--gold-edge)",color:"var(--gold)"}}>Kept apart · {g.benched.weeks}w</span>}
+                {g.learning && <span className="tag" style={{borderColor:"var(--gold-edge)",color:"var(--gold)"}}>At the far post · {g.learning.weeks}w</span>}
                 {g.second && <span className="tag">Two trades</span>}
                 {lastingOf(g).length>0 && <span className="tag tag-blood">{LASTING[lastingOf(g)[0]].name}</span>}
-                {g.yardName && <span className="tag" style={{borderColor:"#5a6a4a",color:"#9aa86a"}}>"{g.yardName}"</span>}
-                {!g.sworn && <span className="tag" style={{borderColor:"#6d5426",color:"#d8ac5f"}}>Not yet sworn</span>}
-                {isDamn(g) && <span className="tag" style={{borderColor:"#7c2a22",color:"#d98476"}}>Condemned · {damnLeft(g)} to serve</span>}
-                {isAuctor(g) && <span className="tag" style={{borderColor:"#5a7a8a",color:"#9dc0d4"}}>Auctoratus · free</span>}
+                {g.yardName && <span className="tag" style={{borderColor:"var(--laurel-edge2)",color:"var(--laurel)"}}>"{g.yardName}"</span>}
+                {!g.sworn && <span className="tag" style={{borderColor:"var(--gold-edge)",color:"var(--gold)"}}>Not yet sworn</span>}
+                {isDamn(g) && <span className="tag" style={{borderColor:"var(--blood-edge)",color:"var(--blood-hi)"}}>Condemned · {damnLeft(g)} to serve</span>}
+                {isAuctor(g) && <span className="tag" style={{borderColor:"var(--azure-edge)",color:"var(--azure)"}}>Auctoratus · free</span>}
                 {g.warCaptive && <span className="tag tag-blood">Taken in the south</span>}
                 {g.contested && <span className="tag tag-gold">✦ House {g.contested.house} is bidding</span>}
                 {g.soldBy && <span className="tag">Sold on by House {g.soldBy}</span>}
                 {g.soldOn && <span className="tag tag-gold">✦ A finished man · {g.wins}–{g.losses}</span>}
-                {g.slaver && <span className="tag" style={{borderColor:"#5a6a4a",color:"#9aa86a"}}>{slaverOf(g.slaver).name}</span>}
-                <span className="tag" style={{borderColor:g.age>31?"#7c2a22":g.age<=PRIME[1]?"#5a6a35":undefined,
-                  color:g.age>31?"#d98476":g.age<=PRIME[1]?"#b9c58a":undefined}}>{ageTag(g.age)} · {g.age}</span>
+                {g.slaver && <span className="tag" style={{borderColor:"var(--laurel-edge2)",color:"var(--laurel)"}}>{slaverOf(g.slaver).name}</span>}
+                <span className="tag" style={{borderColor:g.age>31?"var(--blood-edge)":g.age<=PRIME[1]?"var(--laurel-edge)":undefined,
+                  color:g.age>31?"var(--blood-hi)":g.age<=PRIME[1]?"var(--laurel-hi)":undefined}}>{ageTag(g.age)} · {g.age}</span>
                 {(g.scars||[]).length>0 && <span className="tag">{g.scars.length} scar{g.scars.length>1?"s":""}</span>}
               </div>
               {g.story && STORIES[g.story] && (
-                <div style={{fontSize:"var(--fs-base)",fontStyle:"italic",color:"#bfa8c8",marginBottom:3}}>They say {PR(g).he} is {STORIES[g.story].line}.</div>
+                <div style={{fontSize:"var(--fs-base)",fontStyle:"italic",color:"var(--violet)",marginBottom:3}}>They say {PR(g).he} is {STORIES[g.story].line}.</div>
               )}
               {(()=>{ const lvl = readLevel(S, g), src2 = lvl>=1 ? g : (g.shown || g);
                 return (<>
@@ -23205,12 +23281,12 @@ export default function App(){
                   )}
                   {/* what a great house comes down here for: somebody else's finished man */}
                   {g.soldOn && (
-                    <div style={{fontSize:"var(--fs-base)",marginBottom:3,color:"#d8ac5f"}}>
+                    <div style={{fontSize:"var(--fs-base)",marginBottom:3,color:"var(--gold)"}}>
                       Out of {g.soldOn} — {g.wins} wins behind him and {rnd(g.pfame)} renown that came with him.
                       <span className="dim"> There is very little left to teach a man of {g.age}; what you are buying is the years somebody else spent.</span>
                     </div>
                   )}
-                  <div style={{fontSize:"var(--fs-md)",fontStyle:"italic",color:g.legend?"#e0bd72":"#cfc0a0"}}>
+                  <div style={{fontSize:"var(--fs-md)",fontStyle:"italic",color:g.legend?"var(--gold-hi)":"var(--ink-2)"}}>
                     {g.legend ? "There is something in this one's eyes the arena has not yet seen."
                      : lvl>=2 ? `Assessed: ${potentialWord(g.potential,g)}. At ${g.age}, ${ageWord(g.age,g)}.`
                      : lvl>=1 ? `Your doctore walks round ${PR(g).him} once. ${potentialWord(g.potential,g)}, he thinks. At ${g.age}, ${ageWord(g.age,g)}.`
@@ -23225,11 +23301,11 @@ export default function App(){
                       return (
                         <div key={k}>
                           <div className="dim" style={{fontSize:"var(--fs-sm)"}}>{STAT_NAMES[k].slice(0,4)}</div>
-                          <div style={{fontSize:"var(--fs-md)", color: lvl>=2 ? "#e8d9b8" : "#c0b492"}}>
+                          <div style={{fontSize:"var(--fs-md)", color: lvl>=2 ? "var(--ink)" : "var(--ink-2)"}}>
                             {lvl>=2 ? rnd(g[k]) : `${lo}–${hi}`}
                           </div>
                           <Band lo={lo} hi={hi} exact={lvl>=2 ? g[k] : null}
-                            label={STAT_NAMES[k]} color={key?BRONZE:"#6a5a40"}/>
+                            label={STAT_NAMES[k]} color={key?BRONZE:"var(--line-4)"}/>
                         </div>
                       ); })}
                   </div>
@@ -23241,8 +23317,8 @@ export default function App(){
                     </div>
                   )}
                   {lvl>=2 && (
-                    <div className="panel" style={{padding:9,marginTop:6,background:"#1c1610",
-                      borderColor: g.flaw ? "#7c2a22" : "#5a6a35"}}>
+                    <div className="panel" style={{padding:9,marginTop:6,background:"var(--panel)",
+                      borderColor: g.flaw ? "var(--blood-edge)" : "var(--laurel-edge)"}}>
                       {g.flaw
                         ? <><span className="blood" style={{fontSize:"var(--fs-md)"}}>{FLAWS[g.flaw].name}.</span>
                             <span className="dim" style={{fontSize:"var(--fs-md)"}}> {PR(g).He} {FLAWS[g.flaw].tell}.</span></>
@@ -23256,14 +23332,14 @@ export default function App(){
                     </button>; })()}
                 </>); })()}
               {isAuctor(g) && (
-                <div className="panel" style={{padding:9,marginTop:6,background:"#1c1610",borderColor:"#5a7a8a"}}>
+                <div className="panel" style={{padding:9,marginTop:6,background:"var(--panel)",borderColor:"var(--azure-edge)"}}>
                   <div style={{fontSize:"var(--fs-md)"}}>Not for sale — {PR(g).he} is free, and offering. {g.auctor.fee}d in hand, {g.auctor.wage}d a week, {g.auctor.bouts} bouts, then {PR(g).he} walks.</div>
                   <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>{g.auctor.why}</div>
                 </div>
               )}
               {(()=>{ const cost = g.contested ? g.contested.ceiling : g.price;
                 return (
-                  <button className="btn" style={{width:"100%",marginTop:8, ...(g.contested?{borderColor:"#c99a4b"}:{})}}
+                  <button className="btn" style={{width:"100%",marginTop:8, ...(g.contested?{borderColor:"var(--gold-line)"}:{})}}
                     disabled={S.gold<cost || rosterFull(S)} onClick={()=>bidFor(g)}>
                     {rosterFull(S)? "The cells are full" : S.gold<cost ? "Not enough coin"
                       : g.contested ? `Outbid House ${g.contested.house} — ${cost} denarii`
@@ -23276,7 +23352,7 @@ export default function App(){
 
         {tab==="villa" && (<div className="flex flex-col gap-3">
           <div className="flex gap-1" role="tablist" aria-label="Villa sections"
-            style={{flexWrap:"wrap",borderBottom:"1px solid #33271a",paddingBottom:8}}>
+            style={{flexWrap:"wrap",borderBottom:"1px solid var(--line)",paddingBottom:8}}>
             {[["house","The House"],["standing","Standing"],["council","Coin & Council"]].map(([k,l])=>{
               /* the face carries the mark of whatever is on it, so a mark on the Villa tab
                  leads somewhere instead of dropping the player on The House to hunt */
@@ -23286,11 +23362,11 @@ export default function App(){
                 aria-label={fm ? `${l}, ${fm===true?"something new":`${fm.n} wanting an answer`}` : l}
                 className={`chip ${vView===k?"on":""}`}
                 style={{whiteSpace:"nowrap",display:"inline-flex",alignItems:"center",gap:5,
-                  ...(vView===k?{borderColor:"#c99a4b",color:"#e0bd72",background:"#2b2115"}:{})}}>
+                  ...(vView===k?{borderColor:"var(--gold-line)",color:"var(--gold-hi)",background:"var(--raise)"}:{})}}>
                 {fm && (fm===true
-                  ? <span aria-hidden="true" style={{flex:"0 0 auto",width:6,height:6,borderRadius:3,background:"#c99a4b"}}/>
+                  ? <span aria-hidden="true" style={{flex:"0 0 auto",width:6,height:6,borderRadius:3,background:"var(--gold-line)"}}/>
                   : <span aria-hidden="true" style={{flex:"0 0 auto",minWidth:15,height:15,borderRadius:8,padding:"0 3px",
-                      background:URG[fm.urg].c,color:"#14100c",fontFamily:"'Cinzel',serif",fontSize:"var(--fs-micro)",
+                      background:URG[fm.urg].c,color:"var(--ground)",fontFamily:"'Cinzel',serif",fontSize:"var(--fs-micro)",
                       fontWeight:900,lineHeight:"15px",textAlign:"center"}}>{fm.n > 9 ? "9+" : fm.n}</span>)}
                 {l}
               </button>
@@ -23305,7 +23381,7 @@ export default function App(){
             const Stat = ({label, val, colour})=>(
               <div style={{minWidth:0}}>
                 <div className="dim" style={{fontSize:"var(--fs-micro)",textTransform:"uppercase",letterSpacing:".06em"}}>{label}</div>
-                <div className="disp" style={{fontSize:"var(--fs-lg)",color:colour||"#e8d092",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{val}</div>
+                <div className="disp" style={{fontSize:"var(--fs-lg)",color:colour||"var(--ink-hi)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{val}</div>
               </div>
             );
             const REC = houseRecord(S);
@@ -23322,48 +23398,48 @@ export default function App(){
                 <div className="flex items-center gap-2" style={{marginBottom:9}}>
                   {S.crest && <Crest crest={S.crest} size={34}/>}
                   <div style={{minWidth:0,flex:"1 1 auto"}}>
-                    <div className="disp" style={{fontSize:"var(--fs-xl)",fontWeight:900,letterSpacing:".1em",color:"#e8d092",lineHeight:1.15}}>
+                    <div className="disp" style={{fontSize:"var(--fs-xl)",fontWeight:900,letterSpacing:".1em",color:"var(--ink-hi)",lineHeight:1.15}}>
                       {S.name.toUpperCase()}
-                      {(S.generation||1)>1 && <span style={{fontSize:"var(--fs-sm)",color:"#b09b7d"}}> · {["","","II","III","IV","V","VI","VII"][S.generation]||S.generation}</span>}
+                      {(S.generation||1)>1 && <span style={{fontSize:"var(--fs-sm)",color:"var(--ink-dim)"}}> · {["","","II","III","IV","V","VI","VII"][S.generation]||S.generation}</span>}
                     </div>
                     <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",lineHeight:1.3}}>A ludus of Capua — {fameTitle(S.fame)}</div>
                   </div>
                 </div>
-                <div className="flex gap-3" style={{fontSize:"var(--fs-base)",flexWrap:"wrap",paddingBottom:9,marginBottom:9,borderBottom:"1px dotted #33271a"}}>
+                <div className="flex gap-3" style={{fontSize:"var(--fs-base)",flexWrap:"wrap",paddingBottom:9,marginBottom:9,borderBottom:"1px dotted var(--line)"}}>
                   <span>Familia {roster.length}/{cellsCap(S)}</span>
                   <span className="blood">Fallen {S.fallen.length}</span>
                   <span className="gold">Freed {S.freed.length}</span>
                   {(()=>{ const fit = fitOn(S, S.week), all = activeG(S).length;
-                    return <span style={{marginLeft:"auto",color:fit<=1?YARD_COLOUR(fit):"#8a7a5c"}}>
+                    return <span style={{marginLeft:"auto",color:fit<=1?YARD_COLOUR(fit):"var(--ink-faint)"}}>
                       {fit === all ? `${all} in the yard` : `${fit} fit of ${all}`}
                     </span>; })()}
                 </div>
                 <div className="grid grid-cols-3 gap-2" style={{marginBottom:9}}>
-                  <Stat label="Coin" val={`${rnd(S.gold)}d`} colour={S.gold<0?"#d96f5d":"#e0bd72"}/>
-                  <Stat label="Upkeep" val={`−${upkeepEst}d/wk`} colour="#cfa88a"/>
+                  <Stat label="Coin" val={`${rnd(S.gold)}d`} colour={S.gold<0?"var(--blood)":"var(--gold-hi)"}/>
+                  <Stat label="Upkeep" val={`−${upkeepEst}d/wk`} colour="var(--blood-hi)"/>
                   {/* what arrives without a bout being fought. The stipend a received
                       house draws was the largest number in the ledger and was written
                       down nowhere — the box filled and nothing on the page said why. */}
                   {(()=>{ const inWk = riseStipend(S) + merch;
                     return inWk > 0
-                      ? <Stat label="Coming in" val={`+${inWk}d/wk`} colour="#9aa86a"/>
-                      : <Stat label="Owed you" val={`${owedIn}d`} colour="#cfc0a0"/>; })()}
+                      ? <Stat label="Coming in" val={`+${inWk}d/wk`} colour="var(--laurel)"/>
+                      : <Stat label="Owed you" val={`${owedIn}d`} colour="var(--ink-2)"/>; })()}
                   <Stat label="Fame" val={rnd(S.fame)} colour="#d8c08a"/>
-                  <Stat label="Standing" val={rnd(S.favor)} colour="#bfa8c8"/>
-                  <Stat label="Record" val={`${REC.w}\u2013${REC.l}`} colour="#cfc0a0"/>
+                  <Stat label="Standing" val={rnd(S.favor)} colour="var(--violet)"/>
+                  <Stat label="Record" val={`${REC.w}\u2013${REC.l}`} colour="var(--ink-2)"/>
                 </div>
                 {/* the two readings that do not fit a number: what the town calls you,
                     and how close the cells are to ending the run */}
                 <div className="flex items-center justify-between gap-2" style={{fontSize:"var(--fs-sm)",marginBottom:5}}>
                   <span className="dim" style={{textTransform:"uppercase",letterSpacing:".06em",fontSize:"var(--fs-micro)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>The name</span>
-                  <span style={{color:"#e0bd72",flexShrink:0}}>{acclaimWord(acclaimOf(S))}</span>
+                  <span style={{color:"var(--gold-hi)",flexShrink:0}}>{acclaimWord(acclaimOf(S))}</span>
                 </div>
                 <div className="flex items-center justify-between gap-2" style={{fontSize:"var(--fs-sm)",marginBottom:3}}>
                   <span className="dim" style={{textTransform:"uppercase",letterSpacing:".06em",fontSize:"var(--fs-micro)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>Unrest — ends a run</span>
-                  <span style={{color: S.unrest>=68?"#d96f5d":S.unrest>=45?"#d8ac5f":"#9aa86a",flexShrink:0}}>{unrestWord(S.unrest)}</span>
+                  <span style={{color: S.unrest>=68?"var(--blood)":S.unrest>=45?"var(--gold)":"var(--laurel)",flexShrink:0}}>{unrestWord(S.unrest)}</span>
                 </div>
                 <div className="track" style={{height:6}}>
-                  <div className="fill" style={{width:`${clamp(S.unrest,0,100)}%`, background: S.unrest>=68?"linear-gradient(90deg,#7c2a22,#d96f5d)":"linear-gradient(90deg,#5a4a2c,#d8ac5f)"}}/>
+                  <div className="fill" style={{width:`${clamp(S.unrest,0,100)}%`, background: S.unrest>=68?"linear-gradient(90deg,var(--blood-edge),var(--blood))":"linear-gradient(90deg,var(--line-4),var(--gold))"}}/>
                 </div>
                 {/* and the third, which is what actually stops a house: whether anybody can stand */}
                 {(()=>{ const fit = fitOn(S, S.week), curve = fitCurve(S, 6), thin = curve.find(c=>c.fit<=1);
@@ -23375,19 +23451,19 @@ export default function App(){
                       </div>
                       {thin && (
                         <button className="dim" onClick={()=>setCal(true)}
-                          style={{display:"block",width:"100%",textAlign:"left",background:"none",border:"none",padding:"3px 0 0",fontSize:"var(--fs-sm)",lineHeight:1.35,color:"#cfa88a",fontStyle:"italic",cursor:"pointer"}}>
+                          style={{display:"block",width:"100%",textAlign:"left",background:"none",border:"none",padding:"3px 0 0",fontSize:"var(--fs-sm)",lineHeight:1.35,color:"var(--ink-2)",fontStyle:"italic",cursor:"pointer"}}>
                           {thin.week===S.week
                             ? (fit<=0 ? "Nobody can be put on a card this week." : "One man, and nobody behind him.")
                             : `${thin.fit<=0 ? "Nobody is fit" : "Only one man is fit"} in ${thin.week-S.week} week${thin.week-S.week===1?"":"s"} — do not promise that week.`}
-                          {" "}<span style={{color:"#8a6a2c"}}>the year ahead ›</span>
+                          {" "}<span style={{color:"var(--gold-deep)"}}>the year ahead ›</span>
                         </button>
                       )}
                     </>
                   ); })()}
                 {S.lanista && (S.lanista.age>=48 || S.lanista.health<55) && (
-                  <div className="flex items-center justify-between" style={{fontSize:"var(--fs-sm)",marginTop:7,borderTop:"1px dotted #33271a",paddingTop:6}}>
+                  <div className="flex items-center justify-between" style={{fontSize:"var(--fs-sm)",marginTop:7,borderTop:"1px dotted var(--line)",paddingTop:6}}>
                     <span className="dim" style={{textTransform:"uppercase",letterSpacing:".06em",fontSize:"var(--fs-micro)"}}>After you · {S.lanista.age}, {healthWord(S.lanista.health)}</span>
-                    <span style={{color: S.heir?"#9aa86a":"#d96f5d"}}>{S.heir ? `heir: ${S.heir.name.split(" ")[0]}` : "no heir named"}</span>
+                    <span style={{color: S.heir?"var(--laurel)":"var(--blood)"}}>{S.heir ? `heir: ${S.heir.name.split(" ")[0]}` : "no heir named"}</span>
                   </div>
                 )}
                 {rows.length>0 && (
@@ -23399,10 +23475,10 @@ export default function App(){
                     <div style={{paddingTop:2}}>
                       {(()=>{ const P = pitchOf(S), eff = pitchEffects(S);
                         return (
-                          <div style={{marginBottom:7,paddingBottom:6,borderBottom:"1px dotted #33271a"}}>
+                          <div style={{marginBottom:7,paddingBottom:6,borderBottom:"1px dotted var(--line)"}}>
                             <div className="flex items-center justify-between gap-2">
                               <span className="dim" style={{fontSize:"var(--fs-sm)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>The hand you took</span>
-                              <span className="rowval" style={{fontSize:"var(--fs-sm)",color:"#e0bd72",flexShrink:0}}>{P.name}</span>
+                              <span className="rowval" style={{fontSize:"var(--fs-sm)",color:"var(--gold-hi)",flexShrink:0}}>{P.name}</span>
                             </div>
                             {eff.length>0 && (
                               <div className="flex gap-1" style={{flexWrap:"wrap",marginTop:4}}>
@@ -23419,7 +23495,7 @@ export default function App(){
                         <div key={i} className="flex items-center justify-between gap-2" style={{padding:"3px 0"}}>
                           <span className="rowname" style={{fontSize:"var(--fs-base)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{label}</span>
                           <span className="flex items-center gap-2" style={{flexShrink:0}}>
-                            <span style={{fontSize:"var(--fs-base)",color:"#e0bd72"}}>{v}</span>
+                            <span style={{fontSize:"var(--fs-base)",color:"var(--gold-hi)"}}>{v}</span>
                             <span style={{fontSize:"var(--fs-sm)",color:st.colour,whiteSpace:"nowrap"}}>{st.word}</span>
                           </span>
                         </div>
@@ -23494,10 +23570,10 @@ export default function App(){
             const weeks = bill > 0 ? Math.floor((S.gold + owed) / bill) : null;
             const tight = weeks != null && weeks < 6;
             return (
-              <div className="panel" style={{padding:12,borderColor: debt ? "#6d5426" : tight ? "#7c2a22" : "#3e2f1f"}}>
+              <div className="panel" style={{padding:12,borderColor: debt ? "var(--gold-edge)" : tight ? "var(--blood-edge)" : "var(--line-2)"}}>
                 <div className="flex items-center justify-between" style={{marginBottom:3}}>
                   <span className="tag tag-gold">The week's cost</span>
-                  <span className="rowval" style={{fontSize:"var(--fs-sm)",color:tight?"#d96f5d":"#b09b7d"}}>
+                  <span className="rowval" style={{fontSize:"var(--fs-sm)",color:tight?"var(--blood)":"var(--ink-dim)"}}>
                     −{bill}d a week
                   </span>
                 </div>
@@ -23509,7 +23585,7 @@ export default function App(){
                 {(owed>0 || debt>0) && (
                   <div className="dim" style={{fontSize:"var(--fs-md)",marginTop:3}}>
                     {owed>0 ? `${owed}d owed TO you by editors` : ""}{owed>0&&debt>0 ? " · " : ""}
-                    {debt>0 ? <span style={{color:"#d96f5d"}}>{debt}d owed BY you to {loanLender(S).name}</span> : ""}
+                    {debt>0 ? <span style={{color:"var(--blood)"}}>{debt}d owed BY you to {loanLender(S).name}</span> : ""}
                   </div>
                 )}
               </div>
@@ -23540,10 +23616,10 @@ export default function App(){
                 </div>
                 {LEND_KEYS.map(k=>{ const M = LENDERS[k];
                   return (
-                    <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:9,marginTop:9}}>
+                    <div key={k} style={{borderTop:"1px dotted var(--line)",paddingTop:9,marginTop:9}}>
                       <div className="flex items-center justify-between gap-2">
                         <span className="disp" style={{fontSize:"var(--fs-base)"}}>{M.name}</span>
-                        <span className="rowval" style={{fontSize:"var(--fs-sm)",color:M.rate>0.07?"#d96f5d":M.rate>0.05?"#d8ac5f":"#9aa86a"}}>
+                        <span className="rowval" style={{fontSize:"var(--fs-sm)",color:M.rate>0.07?"var(--blood)":M.rate>0.05?"var(--gold)":"var(--laurel)"}}>
                           {Math.round(M.rate*1000)/10}% a week
                         </span>
                       </div>
@@ -23552,7 +23628,7 @@ export default function App(){
                         Up to {M.cap}d · quiet for {M.patience} weeks{M.hard? " · he collects in men" : " · he does not take men"}
                       </div>
                       {/* #163: the rate is a countdown and the panel never said so */}
-                      <div style={{fontSize:"var(--fs-base)",marginTop:2,color:"#d98476"}}>
+                      <div style={{fontSize:"var(--fs-base)",marginTop:2,color:"var(--blood-hi)"}}>
                         Left unpaid it is four times what you took by week {loanFuse(M)}, and he takes the house
                         {M.hard ? ` — or at ${loanClock(M)} weeks regardless, if you still owe more than you borrowed` : ""}.
                       </div>
@@ -23567,16 +23643,16 @@ export default function App(){
             );
             const o = owes(S), w = loanWeeks(S), late = w >= L.patience;
             return (
-              <div className="panel" style={{padding:13, borderColor: late?"#7c2a22":"#6d5426"}}>
+              <div className="panel" style={{padding:13, borderColor: late?"var(--blood-edge)":"var(--gold-edge)"}}>
                 <div className="flex items-center justify-between" style={{marginBottom:4}}>
                   <div className="disp" style={{fontSize:"var(--fs-md)",fontWeight:700}}>OWED TO {L.name.toUpperCase()}</div>
-                  <span className="rowval" style={{fontSize:"var(--fs-md)",color:late?"#d96f5d":"#d8ac5f"}}>{o}d</span>
+                  <span className="rowval" style={{fontSize:"var(--fs-md)",color:late?"var(--blood)":"var(--gold)"}}>{o}d</span>
                 </div>
                 <div className="dim" style={{fontSize:"var(--fs-md)"}}>
                   Borrowed {S.loan.principal}d, {w} week{w===1?"":"s"} ago, at {Math.round(L.rate*1000)/10}% a week. It grows whether you look at it or not.
                 </div>
                 <Bar v={Math.min(100, o/(S.loan.principal*4.0)*100)} label="debt"
-                  color={late?"linear-gradient(90deg,#5a1a14,#d96f5d)":"linear-gradient(90deg,#4a3a24,#d8ac5f)"}/>
+                  color={late?"linear-gradient(90deg,var(--blood-edge),var(--blood))":"linear-gradient(90deg,var(--line-3),var(--gold))"}/>
                 <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:4}}>
                   {o > S.loan.principal*2.4 ? "This is very near the number at which he stops discussing it."
                    : late && L.hard ? "He has been patient and he has stopped. He collects in men when there is no coin."
@@ -23612,11 +23688,11 @@ export default function App(){
           onClick={()=>setReport(true)}
           style={{position:"fixed",left:0,right:0,bottom:"calc(var(--nav-h,72px))",zIndex:19,
             display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,
-            maxWidth:640,margin:"0 auto",padding:"9px 14px",background:"#1c1610",
-            borderTop:"1px solid #6d5426",borderBottom:"1px solid #241c12",cursor:"pointer",
-            font:"inherit",color:"inherit",border:"none",borderTopStyle:"solid",borderTopWidth:1,borderTopColor:"#6d5426"}}>
-          <span className="disp" style={{fontSize:"var(--fs-sm)",fontWeight:700,letterSpacing:".16em",color:"#e8d092"}}>THE MORNING REPORT</span>
-          <span style={{background:AGN.some(a=>a.urgency>=3)?"#cf5a49":"#c99a4b",color:"#14100c",
+            maxWidth:640,margin:"0 auto",padding:"9px 14px",background:"var(--panel)",
+            borderTop:"1px solid var(--gold-edge)",borderBottom:"1px solid var(--panel-2)",cursor:"pointer",
+            font:"inherit",color:"inherit",border:"none",borderTopStyle:"solid",borderTopWidth:1,borderTopColor:"var(--gold-edge)"}}>
+          <span className="disp" style={{fontSize:"var(--fs-sm)",fontWeight:700,letterSpacing:".16em",color:"var(--ink-hi)"}}>THE MORNING REPORT</span>
+          <span style={{background:AGN.some(a=>a.urgency>=3)?"var(--blood-str)":"var(--gold-line)",color:"var(--ground)",
             fontFamily:"'Cinzel',serif",fontWeight:900,minWidth:22,height:22,borderRadius:11,
             textAlign:"center",lineHeight:"22px",fontSize:"var(--fs-sm)"}}>{AGN.length}</span>
         </button>
@@ -23628,8 +23704,8 @@ export default function App(){
            still rides above this, so the week's business is one tap from anywhere. */}
       {tab!=="ludus" && (
         <nav className="bar" role="navigation" aria-label="Home"
-          style={{position:"fixed",left:0,right:0,bottom:0,zIndex:20,background:"#14100c",
-            borderTop:"1px solid #3e2f1f",display:"flex",paddingBottom:"env(safe-area-inset-bottom)"}}>
+          style={{position:"fixed",left:0,right:0,bottom:0,zIndex:20,background:"var(--ground)",
+            borderTop:"1px solid var(--line-2)",display:"flex",paddingBottom:"env(safe-area-inset-bottom)"}}>
           <button className="tabbtn on" aria-label="Back to the ludus" onClick={()=>setTab("ludus")}>
             <Landmark size={17} aria-hidden="true"/>
             The Ludus
@@ -23641,7 +23717,7 @@ export default function App(){
         <div className="modalwrap" style={{zIndex:Z.page}} role="dialog" aria-modal="true" onClick={()=>setSelId(null)}>
           <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
             <div className="flex items-center justify-between" style={{marginBottom:4}}>
-              <div className="disp" style={{fontSize:"var(--fs-xl)",fontWeight:900}}>{selG.name}{selG.nick?<span style={{color:"#d8c08a"}}>, {selG.nick}</span>:null}</div>
+              <div className="disp" style={{fontSize:"var(--fs-xl)",fontWeight:900}}>{selG.name}{selG.nick?<span style={{color:"var(--gold-hi)"}}>, {selG.nick}</span>:null}</div>
               <button className="btn btn-ghost" style={{padding:"10px 10px"}} aria-label="Close" onClick={()=>setSelId(null)}><X size={14}/></button>
             </div>
             <div className="dim" style={{fontSize:"var(--fs-md)",marginBottom:8}}>{selG.cls} — {CLASSES[selG.cls].desc} {ORIGINS[selG.origin].blurb.charAt(0).toUpperCase()+ORIGINS[selG.origin].blurb.slice(1)}.</div>
@@ -23651,7 +23727,7 @@ export default function App(){
               <span>Renown <b>{rnd(selG.pfame)}</b></span>
               <span>Age <b>{selG.age}</b></span>
             </div>
-            <div style={{fontSize:"var(--fs-lg)",fontStyle:"italic",marginBottom:8,color:selG.legend?"#e0bd72":"#cfc0a0"}}>
+            <div style={{fontSize:"var(--fs-lg)",fontStyle:"italic",marginBottom:8,color:selG.legend?"var(--gold-hi)":"var(--ink-2)"}}>
               The doctore's eye: {selG.read ? `potential ${rnd(selG.potential)}, heart ${rnd(selG.heart)}` : potentialWord(selG.potential, selG)}. Bearing: {demeanor(selG.defiance).toLowerCase()}{selG.read? ` (${rnd(selG.defiance)})`:""}. At {selG.age} {PR(selG).he} is {ageWord(selG.age, selG)}.{yearBurden(selG) > 0 && (()=>{ const y = selG.yearCap || {};
                 const worst = Object.entries(y).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${(STAT_NAMES[k]||k).toLowerCase()} ${v}`).join(", ");
                 return <span className="blood"> The years have taken {worst} off what he can ever be again, and no amount of the post gives it back.</span>; })()}
@@ -23661,11 +23737,11 @@ export default function App(){
               return (
                 <div className="flex gap-1" role="tablist" aria-label="Record sections"
                   /* wrapping, not scrolling: a chip row that runs off the edge looks like a cut-off word */
-                  style={{marginBottom:10,flexWrap:"wrap",borderBottom:"1px solid #33271a",paddingBottom:8}}>
+                  style={{marginBottom:10,flexWrap:"wrap",borderBottom:"1px solid var(--line)",paddingBottom:8}}>
                   {views.map(([k,l])=>(
                     <button key={k} role="tab" aria-selected={gView===k} onClick={()=>setGView(k)}
                       className={`chip ${gView===k?"on":""}`}
-                      style={{whiteSpace:"nowrap",...(gView===k?{borderColor:"#c99a4b",color:"#e0bd72",background:"#2b2115"}:{})}}>
+                      style={{whiteSpace:"nowrap",...(gView===k?{borderColor:"var(--gold-line)",color:"var(--gold-hi)",background:"var(--raise)"}:{})}}>
                       {l}{k==="body" && hurt && <span className="blood" style={{marginLeft:3}}>●</span>}
                       {k==="body" && !hurt && worn && <span style={{marginLeft:3,color:wornColour(bodyWear(selG))}}>●</span>}
                     </button>
@@ -23674,12 +23750,12 @@ export default function App(){
               );
             })()}
             {gView==="standing" && fansOf(selG)>=12 && (
-              <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",borderColor:isFavourite(selG)?"#8a6a2c":"#3e2f1f"}}>
+              <div className="panel" style={{padding:10,marginBottom:9,background:"var(--panel)",borderColor:isFavourite(selG)?"var(--gold-deep)":"var(--line-2)"}}>
                 <div className="flex items-center justify-between" style={{marginBottom:6}}>
                   <span className={`tag ${isFavourite(selG)?"tag-gold":""}`}>{isFavourite(selG)?"♦ Crowd Favourite":"The crowd"}</span>
                   <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{fanWord(fansOf(selG))}</span>
                 </div>
-                <Bar v={fansOf(selG)} label="following" color="linear-gradient(90deg,#6d5426,#e0bd72)"/>
+                <Bar v={fansOf(selG)} label="following" color="linear-gradient(90deg,var(--gold-edge),var(--gold-hi))"/>
                 {isFavourite(selG) && <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:5}}>
                   The seats fill for his name — a fatter purse when he fights, and a mob that will not forgive you for benching, selling, or burying him.
                 </div>}
@@ -23687,13 +23763,13 @@ export default function App(){
             )}
             {gView==="body" && bodyWear(selG) >= 0.12 && (()=>{ const w = bodyWear(selG);
               return (
-                <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",borderColor:wornColour(w)}}>
+                <div className="panel" style={{padding:10,marginBottom:9,background:"var(--panel)",borderColor:wornColour(w)}}>
                   <div className="flex items-center justify-between" style={{marginBottom:6}}>
                     <span className="tag" style={{color:wornColour(w),borderColor:wornColour(w)}}>The body</span>
                     <span className="rowval" style={{fontSize:"var(--fs-base)",color:wornColour(w)}}>{wornWord(w)}</span>
                   </div>
                   <div className="track" style={{height:6}}>
-                    <div className="fill" style={{width:`${Math.round(w/0.85*100)}%`, background:`linear-gradient(90deg,#4a3a24,${wornColour(w)})`}}/>
+                    <div className="fill" style={{width:`${Math.round(w/0.85*100)}%`, background:`linear-gradient(90deg,var(--line-3),${wornColour(w)})`}}/>
                   </div>
                   <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:6}}>
                     {w<0.26 ? `${PR(selG).He} has taken his knocks and carries them well.`
@@ -23709,7 +23785,7 @@ export default function App(){
               selG.scars.forEach(s=>{ byPart[s.part]=(byPart[s.part]||0)+1; });
               const cap = selG.scarCap||{};
               return (
-                <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",borderColor:"#5a3a2c"}}>
+                <div className="panel" style={{padding:10,marginBottom:9,background:"var(--panel)",borderColor:"var(--blood-edge)"}}>
                   <div className="tag tag-blood" style={{marginBottom:5}}>Old wounds</div>
                   <div style={{fontSize:"var(--fs-md)"}}>
                     {Object.entries(byPart).map(([p,n])=>(
@@ -23726,7 +23802,7 @@ export default function App(){
             })()}
             {gView==="kit" && (()=>{ const mine = (S.kits||[]).filter(k=>k.cls===selG.cls);
               return (
-                <div className="panel" style={{padding:10,marginTop:8,marginBottom:9,background:"#1c1610",borderColor:"#3e2f1f"}}>
+                <div className="panel" style={{padding:10,marginTop:8,marginBottom:9,background:"var(--panel)",borderColor:"var(--line-2)"}}>
                   <div className="flex items-center justify-between" style={{marginBottom:4}}>
                     <span className="tag">Kits you keep</span>
                     <button className="btn btn-ghost" style={{padding:"10px 9px",fontSize:"var(--fs-sm)"}} onClick={()=>keepKit(selG.id)}>
@@ -23738,7 +23814,7 @@ export default function App(){
                         Nothing kept for a {selG.cls.toLowerCase()} yet. Keep a kit and you can put it on the next one in a tap.
                       </div>
                     : mine.map(k=>(
-                        <div key={k.id} className="flex items-center justify-between gap-2" style={{borderTop:"1px dotted #33271a",padding:"5px 0"}}>
+                        <div key={k.id} className="flex items-center justify-between gap-2" style={{borderTop:"1px dotted var(--line)",padding:"5px 0"}}>
                           <span className="rowname" style={{fontSize:"var(--fs-md)"}}>{k.name}</span>
                           <span className="flex gap-1">
                             <button className="btn btn-ghost" style={{padding:"10px 9px",fontSize:"var(--fs-sm)"}} onClick={()=>useKit(selG.id,k.id)}>Put it on him</button>
@@ -23749,9 +23825,9 @@ export default function App(){
                 </div>
               ); })()}
             {gView==="standing" && isAuctor(selG) && (
-              <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",borderColor:"#5a7a8a"}}>
+              <div className="panel" style={{padding:10,marginBottom:9,background:"var(--panel)",borderColor:"var(--azure-edge)"}}>
                 <div className="flex items-center justify-between gap-2" style={{marginBottom:4}}>
-                  <span className="tag" style={{borderColor:"#5a7a8a",color:"#9dc0d4"}}>Under contract</span>
+                  <span className="tag" style={{borderColor:"var(--azure-edge)",color:"var(--azure)"}}>Under contract</span>
                   <span className="rowval dim" style={{fontSize:"var(--fs-base)"}}>{selG.auctor.wage}d / week</span>
                 </div>
                 <div style={{fontSize:"var(--fs-lg)"}}>{auctorLeft(selG)} of {selG.auctor.bouts} bouts still owed.</div>
@@ -23763,7 +23839,7 @@ export default function App(){
             )}
             {gView==="record" && (()=>{ const v = formOf(selG); if(Math.abs(v)<7) return null;
               return (
-                <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",borderColor:formColour(v)}}>
+                <div className="panel" style={{padding:10,marginBottom:9,background:"var(--panel)",borderColor:formColour(v)}}>
                   <div className="flex items-center justify-between">
                     <span className="tag">Form</span>
                     <span className="rowval" style={{fontSize:"var(--fs-base)",color:formColour(v)}}>{formWord(v)}</span>
@@ -23783,8 +23859,8 @@ export default function App(){
               const free = isAuctor(selG), cond = isDamn(selG);
               const swear = key => mut(d=>{ const g = d.gladiators.find(x=>x.id===selG.id); if(g && !g.sworn) swearIn(d, g.id, key); });
               return (
-                <div className="panel" style={{padding:11,marginBottom:9,background:"#241b11",borderColor:"#6d5426"}}>
-                  <div className="tag" style={{marginBottom:4,borderColor:"#6d5426",color:"#d8ac5f"}}>Not yet sworn</div>
+                <div className="panel" style={{padding:11,marginBottom:9,background:"var(--panel-2)",borderColor:"var(--gold-edge)"}}>
+                  <div className="tag" style={{marginBottom:4,borderColor:"var(--gold-edge)",color:"var(--gold)"}}>Not yet sworn</div>
                   <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
                     {free
                       ? `The oath is his to say — ${OATH}, and he says it knowing what it signs away.`
@@ -23798,7 +23874,7 @@ export default function App(){
                       <button key={k} className="optrow" disabled={!afford} style={{display:"block",marginBottom:6,opacity:afford?1:0.5}}
                         onClick={()=>{ if(afford) swear(k); }}>
                         <div className="flex items-center justify-between gap-2">
-                          <span className="disp" style={{fontSize:"var(--fs-sm)",color:"#e8d092"}}>{S2.name}</span>
+                          <span className="disp" style={{fontSize:"var(--fs-sm)",color:"var(--ink-hi)"}}>{S2.name}</span>
                           <span className="rowval gold" style={{fontSize:"var(--fs-sm)"}}>{S2.cost? `${S2.cost}d` : "free"}</span>
                         </div>
                         <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2,lineHeight:1.35}}>{S2.desc}</div>
@@ -23809,7 +23885,7 @@ export default function App(){
               );
             })()}
             {gView==="standing" && selG.sworn && selG.sworn.how!=="quick" && (
-              <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",borderColor:"#4e3c26"}}>
+              <div className="panel" style={{padding:10,marginBottom:9,background:"var(--panel)",borderColor:"var(--line-4)"}}>
                 <div className="tag" style={{marginBottom:3}}>Sworn in</div>
                 <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
                   {selG.sworn.free
@@ -23821,8 +23897,8 @@ export default function App(){
             {gView==="train" && (selG.signature || selG.teaching || canLearnSig(S,selG)) && (()=>{
               const has = sigTech(selG);
               return (
-                <div className="panel" style={{padding:11,marginBottom:9,background:"#1c1610",
-                  borderColor: has ? "#c99a4b" : selG.teaching ? "#6d5426" : "#4e3c26"}}>
+                <div className="panel" style={{padding:11,marginBottom:9,background:"var(--panel)",
+                  borderColor: has ? "var(--gold-line)" : selG.teaching ? "var(--gold-edge)" : "var(--line-4)"}}>
                   {has ? (<>
                     <div className="flex items-center justify-between" style={{marginBottom:3}}>
                       <span className="tag tag-gold">{has.name}</span>
@@ -23854,8 +23930,8 @@ export default function App(){
               );
             })()}
             {gView==="train" && (canMaster(S,selG) || masterOf(selG) || selG.learning || selG.second) && (
-              <div className="panel" style={{padding:11,marginBottom:9,background:"#1c1610",
-                borderColor: selG.learning ? "#6d5426" : masterOf(selG) ? "#c99a4b" : "#4e3c26"}}>
+              <div className="panel" style={{padding:11,marginBottom:9,background:"var(--panel)",
+                borderColor: selG.learning ? "var(--gold-edge)" : masterOf(selG) ? "var(--gold-line)" : "var(--line-4)"}}>
                 {selG.learning ? (<>
                   <div className="tag tag-gold" style={{marginBottom:3}}>At the far post</div>
                   <div style={{fontSize:"var(--fs-lg)"}}>Being taught the {selG.learning.to.toLowerCase()}'s trade — {selG.learning.weeks} week{selG.learning.weeks===1?"":"s"} left.</div>
@@ -23911,14 +23987,14 @@ export default function App(){
               </div>
             )}
             {gView==="standing" && isDamn(selG) && (
-              <div className="panel" style={{padding:11,marginBottom:9,background:"#2a1512",borderColor:"#7c2a22"}}>
+              <div className="panel" style={{padding:11,marginBottom:9,background:"var(--blood-edge)",borderColor:"var(--blood-edge)"}}>
                 <div className="flex items-center justify-between" style={{marginBottom:3}}>
                   <span className="tag tag-blood">Condemned to the school</span>
-                  <span className="rowval" style={{fontSize:"var(--fs-base)",color:"#d98476"}}>{damnLeft(selG)} of {selG.damnatus.bouts} left</span>
+                  <span className="rowval" style={{fontSize:"var(--fs-base)",color:"var(--blood-hi)"}}>{damnLeft(selG)} of {selG.damnatus.bouts} left</span>
                 </div>
                 <div style={{fontSize:"var(--fs-lg)"}}>Sentenced for {selG.damnatus.what}.</div>
                 <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:3}}>{selG.damnatus.note}</div>
-                <Bar v={100 - damnLeft(selG)/selG.damnatus.bouts*100} label="sentence" color="linear-gradient(90deg,#5a1a14,#d98476)"/>
+                <Bar v={100 - damnLeft(selG)/selG.damnatus.bouts*100} label="sentence" color="linear-gradient(90deg,var(--blood-edge),var(--blood-hi))"/>
                 <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:4}}>
                   He cannot be sold — he belongs to the sentence until it is served. Fight it out and he becomes a gladiator of this house like any other.
                 </div>
@@ -23930,7 +24006,7 @@ export default function App(){
                 mut(d=>{ const g = d.gladiators.find(x=>x.id===selG.id); if(g && g.refusing) msg = applyRefusal(d, g, method); });
                 if(msg) setAsk({ title, confirm:"So it goes", text:msg, run:()=>{} }); };
               return (
-                <div className="panel" style={{padding:11,marginBottom:9,background:"#2a1512",borderColor:"#7c2a22"}}>
+                <div className="panel" style={{padding:11,marginBottom:9,background:"var(--blood-edge)",borderColor:"var(--blood-edge)"}}>
                   <div className="tag tag-blood" style={{marginBottom:4}}>He will not go out</div>
                   <div style={{fontSize:"var(--fs-lg)"}}>{REFUSE_REASONS[selG.refusing.reason].say(selG)}</div>
                   <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:4}}>
@@ -23940,16 +24016,16 @@ export default function App(){
                   </div>
                   <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:9,marginBottom:6,textTransform:"uppercase",letterSpacing:".06em"}}>Get him on his feet</div>
                   <button className="optrow" style={{display:"block",marginBottom:6}} onClick={()=>bring("talk","You Talk to Him")}>
-                    <div className="disp" style={{fontSize:"var(--fs-sm)",color:"#e8d092"}}>Talk to him</div>
+                    <div className="disp" style={{fontSize:"var(--fs-sm)",color:"var(--ink-hi)"}}>Talk to him</div>
                     <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2,lineHeight:1.35}}>Costs nothing and may fail — it turns on what you have been to him. The better he regards you, the likelier he rises.</div>
                   </button>
                   {canGive && (
                     <button className="optrow" style={{display:"block",marginBottom:6}} onClick={()=>bring("give","You Give Him What He Wants")}>
-                      <div className="disp" style={{fontSize:"var(--fs-sm)",color:"#e8d092"}}>Give him what he wants</div>
+                      <div className="disp" style={{fontSize:"var(--fs-sm)",color:"var(--ink-hi)"}}>Give him what he wants</div>
                       <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2,lineHeight:1.35}}>Grant the thing he stopped asking for. He is on his feet at once — and the whole block sees it.</div>
                     </button>
                   )}
-                  <button className="optrow" style={{display:"block",borderColor:"#7c2a22"}} onClick={()=>bring("whip","The Whip")}>
+                  <button className="optrow" style={{display:"block",borderColor:"var(--blood-edge)"}} onClick={()=>bring("whip","The Whip")}>
                     <div className="blood" style={{fontSize:"var(--fs-sm)",fontWeight:700}}>The whip</div>
                     <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2,lineHeight:1.35}}>He goes out for certain, but breaks something in him — and every other man loses heart and hardens against you.</div>
                   </button>
@@ -23965,7 +24041,7 @@ export default function App(){
             </div>}
             {gView==="body" && selG.injury && (()=>{ const care = selG.injury.care || "rest"; const fee = surgeonFee(S, selG.injury);
               return (
-                <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",borderColor:"#7c2a22"}}>
+                <div className="panel" style={{padding:10,marginBottom:9,background:"var(--panel)",borderColor:"var(--blood-edge)"}}>
                   <div className="flex items-center justify-between gap-2" style={{marginBottom:5}}>
                     <span className="tag tag-blood">{selG.injury.name}</span>
                     <span className="rowval dim" style={{fontSize:"var(--fs-base)"}}>{Math.max(1,Math.ceil(selG.injury.weeks))} week{Math.ceil(selG.injury.weeks)>1?"s":""}</span>
@@ -23991,8 +24067,8 @@ export default function App(){
               );
             })()}
             {gView==="record" && isMade(selG) && (
-              <div className="panel" style={{padding:9,marginBottom:9,background:"#1c1610",borderColor:"#c99a4b"}}>
-                <span className="tag" style={{color:"#e0bd72",borderColor:"#6a5a2c"}}>Made</span>
+              <div className="panel" style={{padding:9,marginBottom:9,background:"var(--panel)",borderColor:"var(--gold-line)"}}>
+                <span className="tag" style={{color:"var(--gold-hi)",borderColor:"var(--line-4)"}}>Made</span>
                 <div style={{fontSize:"var(--fs-md)",marginTop:3}}>
                   He is finished. Every one of them is at his ceiling and the palus has nothing further to give him —
                   what is left is the sand, and whatever he can put into the younger men.
@@ -24007,7 +24083,7 @@ export default function App(){
                     <span className="dim">{STAT_NAMES[k]}</span>
                     <span>{rnd(selG[k])}{statCap(selG,k)<99 && <span className="blood" style={{fontSize:"var(--fs-micro)"}}> /{statCap(selG,k)}</span>}</span>
                   </div>
-                  <Bar v={selG[k]} color={CLASSES[selG.cls].key.includes(k)?BRONZE:"#6a5a40"}/>
+                  <Bar v={selG[k]} color={CLASSES[selG.cls].key.includes(k)?BRONZE:"var(--line-4)"}/>
                 </div>
               ))}
               <div>
@@ -24024,7 +24100,7 @@ export default function App(){
               const B = selG.bouts || [];
               if(!B.length) return null;
               return (
-                <div className="panel" style={{padding:10,marginBottom:10,background:"#1c1610"}}>
+                <div className="panel" style={{padding:10,marginBottom:10,background:"var(--panel)"}}>
                   <div className="flex items-center justify-between gap-2" style={{marginBottom:6}}>
                     <span className="tag">How it went</span>
                     <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>his last {B.length} {B.length===1?"bout":"bouts"}</span>
@@ -24032,15 +24108,15 @@ export default function App(){
                   {(()=>{ const P = boutPattern(selG); if(!P) return null;
                     const mine = P.rows.filter(r=>WHY_YOURS[r.k]);
                     return (
-                      <div className="panel" style={{padding:"9px 10px",marginBottom:8,background:"#1a1510",
-                        borderColor: mine.length ? "#7c2a22" : "#4a3a22"}}>
+                      <div className="panel" style={{padding:"9px 10px",marginBottom:8,background:"var(--panel)",
+                        borderColor: mine.length ? "var(--blood-edge)" : "var(--line-3)"}}>
                         <div className="dim" style={{fontSize:"var(--fs-micro)",textTransform:"uppercase",letterSpacing:".07em",marginBottom:4}}>
                           What keeps deciding them
                         </div>
                         {P.rows.map((r,i)=>(
                           <div key={i} className="flex items-center justify-between gap-2" style={{padding:"2px 0"}}>
                             <span style={{fontSize:"var(--fs-base)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
-                              color: WHY_YOURS[r.k] ? "#cfa88a" : "#b09b7d"}}>{WHY_NAMES[r.k] || r.k}</span>
+                              color: WHY_YOURS[r.k] ? "var(--ink-2)" : "var(--ink-dim)"}}>{WHY_NAMES[r.k] || r.k}</span>
                             <span className="rowval dim" style={{fontSize:"var(--fs-sm)",flexShrink:0}}>{r.n} of {P.of}</span>
                           </div>
                         ))}
@@ -24052,10 +24128,10 @@ export default function App(){
                       </div>
                     ); })()}
                   {B.map((a,i)=>(
-                    <details key={i} style={{borderTop:i?"1px dotted #33271a":"none",padding:"5px 0"}}>
+                    <details key={i} style={{borderTop:i?"1px dotted var(--line)":"none",padding:"5px 0"}}>
                       <summary style={{listStyle:"none",cursor:"pointer"}}>
                         <span className="flex items-center justify-between gap-2">
-                          <span style={{fontSize:"var(--fs-md)",color:"#cfc0a0",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                          <span style={{fontSize:"var(--fs-md)",color:"var(--ink-2)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                             {a.foe}{a.foeHouse? <span className="dim" style={{fontSize:"var(--fs-sm)"}}> · House {a.foeHouse}</span> : null}
                           </span>
                           <span className="rowval" style={{fontSize:"var(--fs-sm)",color:boutColour(a),flexShrink:0}}>{boutWord(a)}</span>
@@ -24067,14 +24143,14 @@ export default function App(){
                         </span>
                       </summary>
                       {a.turn && <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",margin:"5px 0 3px",lineHeight:1.4}}>{a.turn}</div>}
-                      {a.end && <div style={{fontSize:"var(--fs-base)",lineHeight:1.4,color:"#cfc0a0"}}>{a.end}</div>}
+                      {a.end && <div style={{fontSize:"var(--fs-base)",lineHeight:1.4,color:"var(--ink-2)"}}>{a.end}</div>}
                       {!a.turn && !a.end && <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:4}}>Nothing of it was written down.</div>}
                       {(a.why||[]).length>0 && (
-                        <div style={{marginTop:6,paddingTop:5,borderTop:"1px dotted #33271a"}}>
+                        <div style={{marginTop:6,paddingTop:5,borderTop:"1px dotted var(--line)"}}>
                           <span className="dim" style={{fontSize:"var(--fs-micro)",textTransform:"uppercase",letterSpacing:".07em"}}>What decided it</span>
                           {(a.why||[]).map((r,j)=>(
                             <div key={j} style={{fontSize:"var(--fs-base)",lineHeight:1.4,marginTop:2,
-                              color: WHY_YOURS[r.k] ? "#cfa88a" : "#b09b7d"}}>{r.s}</div>
+                              color: WHY_YOURS[r.k] ? "var(--ink-2)" : "var(--ink-dim)"}}>{r.s}</div>
                           ))}
                         </div>
                       )}
@@ -24088,15 +24164,15 @@ export default function App(){
               const F = (selG.foes||[]).slice().sort((a,b)=>(b.last||0)-(a.last||0));
               if(!F.length) return null;
               return (
-                <div className="panel" style={{padding:10,marginBottom:10,background:"#1c1610"}}>
+                <div className="panel" style={{padding:10,marginBottom:10,background:"var(--panel)"}}>
                   <div className="flex items-center justify-between gap-2" style={{marginBottom:6}}>
                     <span className="tag">Who he has met</span>
                     <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{F.length} named {F.length===1?"man":"men"}</span>
                   </div>
                   {F.slice(0, 8).map((e,i)=>(
-                    <div key={i} style={{borderTop:i?"1px dotted #33271a":"none",padding:"5px 0"}}>
+                    <div key={i} style={{borderTop:i?"1px dotted var(--line)":"none",padding:"5px 0"}}>
                       <div className="flex items-center justify-between gap-2">
-                        <span style={{fontSize:"var(--fs-md)",color:"#cfc0a0",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                        <span style={{fontSize:"var(--fs-md)",color:"var(--ink-2)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                           {e.nick? `${e.name}, ${e.nick}` : e.name}
                         </span>
                         <span className="rowval" style={{fontSize:"var(--fs-sm)",color:foeColour(e)}}>{foeWord(e)}</span>
@@ -24115,13 +24191,13 @@ export default function App(){
               );
             })()}
             {gView==="standing" && (tiesOf(S, selG.id).length>0 || selG.mentor || selG.protege) && (
-              <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610"}}>
+              <div className="panel" style={{padding:10,marginBottom:9,background:"var(--panel)"}}>
                 <div className="tag" style={{marginBottom:6}}>Bonds</div>
                 {selG.mentor && (()=>{ const m=S.gladiators.find(x=>x.id===selG.mentor);
                   return (
                     <button className="optrow" style={{width:"100%",marginBottom:5,padding:8}} disabled={!m} onClick={()=>m&&setSelId(m.id)}>
                       <div className="flex items-center justify-between gap-2" style={{fontSize:"var(--fs-md)"}}>
-                        <span><span style={{color:"#e8d092"}}>Taught by</span><span className="dim"> · </span>{m?m.name:(selG.mentorName||"—")}</span>
+                        <span><span style={{color:"var(--ink-hi)"}}>Taught by</span><span className="dim"> · </span>{m?m.name:(selG.mentorName||"—")}</span>
                         <span className="dim" style={{fontSize:"var(--fs-base)",whiteSpace:"nowrap"}}>the old hand</span>
                       </div>
                     </button>
@@ -24130,7 +24206,7 @@ export default function App(){
                   return (
                     <button className="optrow" style={{width:"100%",marginBottom:5,padding:8}} disabled={!r} onClick={()=>r&&setSelId(r.id)}>
                       <div className="flex items-center justify-between gap-2" style={{fontSize:"var(--fs-md)"}}>
-                        <span><span style={{color:"#e8d092"}}>Bringing on</span><span className="dim"> · </span>{r?r.name:(selG.protegeName||"—")}</span>
+                        <span><span style={{color:"var(--ink-hi)"}}>Bringing on</span><span className="dim"> · </span>{r?r.name:(selG.protegeName||"—")}</span>
                         <span className="dim" style={{fontSize:"var(--fs-base)",whiteSpace:"nowrap"}}>{r?`toward his fifth · ${clamp(r.wins,0,5)}/5`:"his protégé"}</span>
                       </div>
                     </button>
@@ -24143,7 +24219,7 @@ export default function App(){
                     <button key={i} className="optrow" style={{width:"100%",marginBottom:5,padding:8}} onClick={()=>setSelId(o.id)}>
                       <div className="flex items-center justify-between gap-2" style={{fontSize:"var(--fs-md)"}}>
                         <span>
-                          <span style={{color: bro?"#b9c58a":"#d98476"}}>{bro? "Brother":"Bad blood"}</span>
+                          <span style={{color: bro?"var(--laurel-hi)":"var(--blood-hi)"}}>{bro? "Brother":"Bad blood"}</span>
                           <span className="dim"> · </span>{o.name}
                         </span>
                         <span className="dim" style={{fontSize:"var(--fs-base)",whiteSpace:"nowrap"}}>{tieWord(t)}</span>
@@ -24168,18 +24244,18 @@ export default function App(){
                 : s.stage>=2 && s.foe ? `The crowd has named his equal: ${s.foe.name} of House ${s.foe.house}`
                 : "A champion the crowd comes to see";
               return (
-                <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",borderColor:"#8a6a2c"}}>
+                <div className="panel" style={{padding:10,marginBottom:9,background:"var(--panel)",borderColor:"var(--gold-deep)"}}>
                   <div className="flex items-center justify-between" style={{marginBottom:6}}>
                     <span className="tag tag-gold">The Champion's Road</span>
-                    <span className="rowval" style={{fontSize:"var(--fs-sm)",color:"#e0bd72"}}>Act {Math.min(s.stage,4)} of 4</span>
+                    <span className="rowval" style={{fontSize:"var(--fs-sm)",color:"var(--gold-hi)"}}>Act {Math.min(s.stage,4)} of 4</span>
                   </div>
                   <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:6}}>{word}.</div>
-                  <Bar v={s.renown} label="renown" color="linear-gradient(90deg,#6d5426,#e0bd72)"/>
+                  <Bar v={s.renown} label="renown" color="linear-gradient(90deg,var(--gold-edge),var(--gold-hi))"/>
                 </div>
               ); })()}
             {gView==="kit" && (<>
             <div style={{position:"relative",height:176,borderRadius:10,overflow:"hidden",
-              border:"1px solid #4e3c26",marginBottom:10,
+              border:"1px solid var(--line-4)",marginBottom:10,
               background:"linear-gradient(#100c08 0%,#241a0e 22%,#6d5531 66%,#9a7844 100%)"}}>
               <div style={{position:"absolute",left:"50%",bottom:10,transform:"translateX(-50%)"}}>
                 <Fighter col={S.crest} fem={isF(selG)} kit={selG.kit || defaultKit(selG.cls)} scars={selG.scars} pose="idle" wounds={[]}/>
@@ -24194,11 +24270,11 @@ export default function App(){
             </div>
             </>)}
             {gView==="body" && lastingOf(selG).length>0 && (
-              <div className="panel" style={{padding:11,marginBottom:9,background:"#2a1512",borderColor:"#7c2a22"}}>
+              <div className="panel" style={{padding:11,marginBottom:9,background:"var(--blood-edge)",borderColor:"var(--blood-edge)"}}>
                 <div className="tag tag-blood" style={{marginBottom:4}}>What never closed</div>
                 {lastingOf(selG).map(k=>(
-                  <div key={k} style={{borderTop:"1px dotted #33271a",paddingTop:5,marginTop:5}}>
-                    <div style={{fontSize:"var(--fs-md)",color:"#d98476"}}>{LASTING[k].name}</div>
+                  <div key={k} style={{borderTop:"1px dotted var(--line)",paddingTop:5,marginTop:5}}>
+                    <div style={{fontSize:"var(--fs-md)",color:"var(--blood-hi)"}}>{LASTING[k].name}</div>
                     <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:1}}>{LASTING[k].say}</div>
                   </div>
                 ))}
@@ -24213,8 +24289,8 @@ export default function App(){
               </div>
             )}
             {gView==="standing" && isF(selG) && (
-              <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",borderColor:"#8a6a9c"}}>
-                <div className="tag" style={{marginBottom:3,borderColor:"#8a6a9c",color:"#bfa8c8"}}>A woman on the sand</div>
+              <div className="panel" style={{padding:10,marginBottom:9,background:"var(--panel)",borderColor:"var(--violet-edge)"}}>
+                <div className="tag" style={{marginBottom:3,borderColor:"var(--violet-edge)",color:"var(--violet)"}}>A woman on the sand</div>
                 <div className="dim" style={{fontSize:"var(--fs-md)"}}>
                   The upper tiers will not shut up about her and the front rows think it is vulgar. Crowd +{femCrowd(selG)}, purses ×{femPurse(selG).toFixed(2)}, and the two halves of the amphitheatre move in opposite directions every time she goes out.
                 </div>
@@ -24240,11 +24316,11 @@ export default function App(){
                 `${at(N.brink)}${N.brink.opp?` — ${N.brink.opp}`:""}. ${PR(selG).He} finished it with ${N.brink.left} left in ${PR(selG).him} and walked out on ${PR(selG).his} own feet, which was more than anybody in the seats expected.`]);
               if(!rows.length) return null;
               return (
-                <div className="panel" style={{padding:11,marginBottom:9,background:"#171712",borderColor:"#5c4a2a"}}>
+                <div className="panel" style={{padding:11,marginBottom:9,background:"var(--ground)",borderColor:"var(--line-4)"}}>
                   <div className="tag tag-gold" style={{marginBottom:4}}>What he is known for</div>
                   {rows.map(([t,say],i)=>(
-                    <div key={t} style={{borderTop:i?"1px dotted #33271a":"none",paddingTop:i?6:0,marginTop:i?6:0}}>
-                      <div className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d092"}}>{t}</div>
+                    <div key={t} style={{borderTop:i?"1px dotted var(--line)":"none",paddingTop:i?6:0,marginTop:i?6:0}}>
+                      <div className="disp" style={{fontSize:"var(--fs-base)",color:"var(--ink-hi)"}}>{t}</div>
                       <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:1,lineHeight:1.4}}>{her(say, selG)}</div>
                     </div>
                   ))}
@@ -24253,12 +24329,12 @@ export default function App(){
             })()}
             {gView==="standing" && (()=>{ const v = favourOf(selG); if(v < 8) return null;
               return (
-                <div className="panel" style={{padding:11,marginBottom:9,background:"#1c1610",borderColor:favColour(v)}}>
+                <div className="panel" style={{padding:11,marginBottom:9,background:"var(--panel)",borderColor:favColour(v)}}>
                   <div className="flex items-center justify-between" style={{marginBottom:3}}>
                     <span className="tag">What Capua makes of him</span>
                     <span className="rowval" style={{fontSize:"var(--fs-base)",color:favColour(v)}}>{favWord(v)}</span>
                   </div>
-                  <Bar v={v} label="" color="linear-gradient(90deg,#4a3a24,#e8d092)"/>
+                  <Bar v={v} label="" color="linear-gradient(90deg,var(--line-3),var(--ink-hi))"/>
                   <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:4}}>
                     Purses ×{favPurse(selG).toFixed(2)} when he is on the card{v>=25 ? `, and they are ${Math.round(favMissio(selG))} less willing to watch him die.` : "."}
                   </div>
@@ -24268,7 +24344,7 @@ export default function App(){
                 </div>
               ); })()}
             {gView==="kit" && provCrowd(selG)>0 && (
-              <div className="panel" style={{padding:9,marginBottom:7,background:"#1c1610",borderColor:"#6d5426"}}>
+              <div className="panel" style={{padding:9,marginBottom:7,background:"var(--panel)",borderColor:"var(--gold-edge)"}}>
                 <div className="laurel" style={{fontSize:"var(--fs-base)"}}>
                   The crowd knows his steel when he walks out — {provCrowd(selG)} to them.
                 </div>
@@ -24280,10 +24356,10 @@ export default function App(){
             {gView==="kit" && (()=>{ const faults = kitFaults(S, selG);
               if(!faults.length) return null;
               return (
-                <div className="panel" style={{padding:9,marginBottom:7,background:"#1c1610",
-                  borderColor: faults.some(f=>f.why!=="better on the rack") ? "#7c2a22" : "#6d5426"}}>
+                <div className="panel" style={{padding:9,marginBottom:7,background:"var(--panel)",
+                  borderColor: faults.some(f=>f.why!=="better on the rack") ? "var(--blood-edge)" : "var(--gold-edge)"}}>
                   {faults.map((f,i)=>(
-                    <div key={i} style={{fontSize:"var(--fs-base)",color:f.why==="unfamiliar"?"#d98476":f.why==="failing"?"#d96f5d":"#d8ac5f"}}>
+                    <div key={i} style={{fontSize:"var(--fs-base)",color:f.why==="unfamiliar"?"var(--blood-hi)":f.why==="failing"?"var(--blood)":"var(--gold)"}}>
                       {f.why==="unfamiliar" ? `${f.name} is not his style — he carries it clumsily.`
                         : f.why==="failing" ? `${f.name} is close to going.`
                         : `There is better on the rack for him.`}
@@ -24314,7 +24390,7 @@ export default function App(){
                             ? <span className="blood" style={{fontSize:"var(--fs-base)"}}> · unfamiliar</span> : null}
                           {wears(cur) && <span style={{fontSize:"var(--fs-sm)", color:wearColour(wearOf(selG,slot))}}> · {wearWord(wearOf(selG,slot))}</span>}
                         </span>
-                        <ChevronRight size={15} style={{color:"#9c8a6f",flexShrink:0}}/>
+                        <ChevronRight size={15} style={{color:"var(--ink-faint)",flexShrink:0}}/>
                       </button>
                       {wears(cur) && (
                         <div className="track" style={{height:4,marginTop:3}}>
@@ -24324,13 +24400,13 @@ export default function App(){
                     </div>
                   );
                 })}
-                <div className="panel" style={{padding:9,marginTop:8,background:"#1c1610"}}>
+                <div className="panel" style={{padding:9,marginTop:8,background:"var(--panel)"}}>
                   <div className="flex gap-3" style={{flexWrap:"wrap",fontSize:"var(--fs-md)"}}>
                     <span className="dim">Kit total:</span>
-                    <span style={{color:m.atk>=0?"#9aa86a":"#cf5a49"}}>Attack {pct(m.atk)}</span>
-                    <span style={{color:m.def>=0?"#9aa86a":"#cf5a49"}}>Guard {pct(m.def)}</span>
-                    <span style={{color:m.spd>=0?"#9aa86a":"#cf5a49"}}>Speed {pct(m.spd)}</span>
-                    <span style={{color:m.sho>=0?"#9aa86a":"#cf5a49"}}>Crowd {pct(m.sho)}</span>
+                    <span style={{color:m.atk>=0?"var(--laurel)":"var(--blood-str)"}}>Attack {pct(m.atk)}</span>
+                    <span style={{color:m.def>=0?"var(--laurel)":"var(--blood-str)"}}>Guard {pct(m.def)}</span>
+                    <span style={{color:m.spd>=0?"var(--laurel)":"var(--blood-str)"}}>Speed {pct(m.spd)}</span>
+                    <span style={{color:m.sho>=0?"var(--laurel)":"var(--blood-str)"}}>Crowd {pct(m.sho)}</span>
                   </div>
                   {m.clumsy.length>0 && <div className="blood" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:4}}>Ill-suited to his style: {m.clumsy.join(", ")}.</div>}
                 </div>
@@ -24354,7 +24430,7 @@ export default function App(){
                   </div>
                 )}
                 {selG.named && (
-                  <div className="panel" style={{padding:9,marginTop:7,background:"#1c1610",borderColor:"#c99a4b"}}>
+                  <div className="panel" style={{padding:9,marginTop:7,background:"var(--panel)",borderColor:"var(--gold-line)"}}>
                     <div className="disp gold" style={{fontSize:"var(--fs-md)"}}>{selG.named.title}</div>
                     <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:2}}>
                       Made for him in year {Math.floor((selG.named.made-1)/YEAR_WEEKS)+1}. It wears half as fast, it cannot be taken off him, and it will not break — only bend.
@@ -24364,8 +24440,8 @@ export default function App(){
               </div>
             ); })()}
             {gView==="train" && S.doctore && selG.status==="active" && (
-              <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",
-                borderColor: docPupil(S)===selG.id ? "#c99a4b" : "#4e3c26"}}>
+              <div className="panel" style={{padding:10,marginBottom:9,background:"var(--panel)",
+                borderColor: docPupil(S)===selG.id ? "var(--gold-line)" : "var(--line-4)"}}>
                 <div className="flex items-center justify-between gap-2" style={{marginBottom:5}}>
                   <span className="tag tag-gold">The doctore</span>
                   <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{STAT_NAMES[S.doctore.spec]} · {docWord(S.doctore.skill)}</span>
@@ -24401,13 +24477,13 @@ export default function App(){
             {gView==="train" && (()=>{ const p = seasonOfMan(selG);
               if(p){ const P = PLANSEASON[p.kind];
                 return (
-                  <div className="panel" style={{padding:11,marginBottom:9,background:"#1c1610",borderColor:"#c99a4b"}}>
+                  <div className="panel" style={{padding:11,marginBottom:9,background:"var(--panel)",borderColor:"var(--gold-line)"}}>
                     <div className="flex items-center justify-between" style={{marginBottom:3}}>
                       <span className="tag tag-gold">On a season</span>
-                      <span className="rowval" style={{fontSize:"var(--fs-sm)",color:"#e0bd72"}}>{planWeeksLeft(selG)} weeks left</span>
+                      <span className="rowval" style={{fontSize:"var(--fs-sm)",color:"var(--gold-hi)"}}>{planWeeksLeft(selG)} weeks left</span>
                     </div>
-                    <div className="disp" style={{fontSize:"var(--fs-md)",color:"#e8d092"}}>{P.name}</div>
-                    <Bar v={planPct(selG)} label="" color="linear-gradient(90deg,#4a3a24,#c99a4b)"/>
+                    <div className="disp" style={{fontSize:"var(--fs-md)",color:"var(--ink-hi)"}}>{P.name}</div>
+                    <Bar v={planPct(selG)} label="" color="linear-gradient(90deg,var(--line-3),var(--gold-line))"/>
                     <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:3}}>
                       This week: {REGIMENS[planDrill(selG)] ? REGIMENS[planDrill(selG)].name : "the post"}. It pays{" "}
                       {Object.entries(P.pays).map(([k,v])=>`+${v} ${STAT_NAMES[k].toLowerCase()}`).join(", ")}
@@ -24433,11 +24509,11 @@ export default function App(){
                       <button key={k} className="optrow" style={{padding:10,marginBottom:6}}
                         onClick={()=>mut(d=>{ const g=d.gladiators.find(x=>x.id===selG.id); if(g) startPlan(d, g, k); })}>
                         <div className="flex items-center justify-between gap-2">
-                          <span className="disp" style={{fontSize:"var(--fs-base)",color:"#e8d092"}}>{P.name}</span>
+                          <span className="disp" style={{fontSize:"var(--fs-base)",color:"var(--ink-hi)"}}>{P.name}</span>
                           <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{P.weeks} weeks</span>
                         </div>
                         <div className="dim" style={{fontSize:"var(--fs-base)",textAlign:"left",marginTop:2}}>{P.blurb}</div>
-                        <div style={{fontSize:"var(--fs-sm)",textAlign:"left",marginTop:2,color:"#9aa86a"}}>
+                        <div style={{fontSize:"var(--fs-sm)",textAlign:"left",marginTop:2,color:"var(--laurel)"}}>
                           {Object.entries(P.pays).map(([s,v])=>`+${v} ${STAT_NAMES[s].toLowerCase()}`).join(" · ")}
                           {P.trait ? ` · ${P.trait}` : ""}
                         </div>
@@ -24449,7 +24525,7 @@ export default function App(){
               if(!w || !w.known) return null;
               const left = WATCH_KEEPS - (S.week - w.week);
               return (
-                <div className="panel" style={{padding:11,marginBottom:9,borderColor:"#7c2a22",background:"#1c1610"}}>
+                <div className="panel" style={{padding:11,marginBottom:9,borderColor:"var(--blood-edge)",background:"var(--panel)"}}>
                   <div className="flex items-center justify-between gap-2" style={{marginBottom:4}}>
                     <span className="tag tag-blood">Somebody is watching him</span>
                     <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{left>0? `${left} more week${left===1?"":"s"}` : "going cold"}</span>
@@ -24472,7 +24548,7 @@ export default function App(){
             {gView==="train" && (()=>{ const pr = prepOf(selG); if(!pr) return null;
               const live = !!prepLive(S, selG);
               return (
-                <div className="panel" style={{padding:11,marginBottom:9,borderColor:live?"#6d5426":"#7c2a22",background:"#1c1610"}}>
+                <div className="panel" style={{padding:11,marginBottom:9,borderColor:live?"var(--gold-edge)":"var(--blood-edge)",background:"var(--panel)"}}>
                   <div className="flex items-center justify-between gap-2" style={{marginBottom:4}}>
                     <span className="tag tag-gold">Drilling for one man</span>
                     <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{prepWord(selG)}</span>
@@ -24481,7 +24557,7 @@ export default function App(){
                     {pr.name}<span className="dim"> of House {pr.house}{pr.cls?` · ${pr.cls}`:""}</span>
                   </div>
                   <div className="track" style={{height:5,marginBottom:6}}>
-                    <div className="fill" style={{width:`${Math.round(prepEdge(selG)*100)}%`,background:"linear-gradient(90deg,#5a4a2c,#c99a4b)"}}/>
+                    <div className="fill" style={{width:`${Math.round(prepEdge(selG)*100)}%`,background:"linear-gradient(90deg,var(--line-4),var(--gold-line))"}}/>
                   </div>
                   <div className="dim" style={{fontSize:"var(--fs-base)",marginBottom:7,lineHeight:1.35}}>
                     {live
@@ -24511,13 +24587,13 @@ export default function App(){
             </div>
             {(()=>{ const s = strainOf(selG); if(s<8) return null;
               return (
-                <div className="panel" style={{padding:9,marginBottom:8,background:"#1c1610",
-                  borderColor: s>55?"#7c2a22" : s>30?"#6d5426" : "#4e3c26"}}>
+                <div className="panel" style={{padding:9,marginBottom:8,background:"var(--panel)",
+                  borderColor: s>55?"var(--blood-edge)" : s>30?"var(--gold-edge)" : "var(--line-4)"}}>
                   <div className="flex items-center justify-between" style={{fontSize:"var(--fs-md)"}}>
                     <span>Strain</span>
-                    <span style={{color: s>55?"#d96f5d" : s>30?"#d8ac5f" : "#b09b7d"}}>{strainWord(s)}</span>
+                    <span style={{color: s>55?"var(--blood)" : s>30?"var(--gold)" : "var(--ink-dim)"}}>{strainWord(s)}</span>
                   </div>
-                  <Bar v={s} label="strain" color={s>55?"#d96f5d":s>30?"#d8ac5f":"#5a4a34"}/>
+                  <Bar v={s} label="strain" color={s>55?"var(--blood)":s>30?"var(--gold)":"var(--line-4)"}/>
                   <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>
                     Deep tiredness that a night does not touch. It eats what he gains and it is how men tear things. Only rest takes it off.
                   </div>
@@ -24527,7 +24603,7 @@ export default function App(){
               {REGIMENS[selG.regimen||"palus"].desc}
               {(()=>{ const p = sparPartner(S, selG); if(!p) return null;
                 const t = tieBetween(S, selG.id, p.id);
-                return <span> Paired with <span style={{color:"#e0bd72"}}>{p.name}</span>
+                return <span> Paired with <span style={{color:"var(--gold-hi)"}}>{p.name}</span>
                   {t && t.kind==="brother" ? " — they trust each other, and it shows."
                    : t && t.kind==="rival" ? <span className="blood"> — there is bad blood here. They will go too hard.</span>
                    : "."}</span>;
@@ -24555,7 +24631,7 @@ export default function App(){
                 {STATS.map(k=>{ const trade = (CLASSES[selG.cls] && CLASSES[selG.cls].key || []).includes(k);
                   return (
                   <button key={k} className={`focusbtn ${selG.focus===k?"on":""}`} onClick={()=>setFocus(selG.id,k)}
-                    style={trade && selG.focus!==k ? { borderColor:"#6d5426" } : undefined}>
+                    style={trade && selG.focus!==k ? { borderColor:"var(--gold-edge)" } : undefined}>
                     {STAT_NAMES[k].toUpperCase()}
                     <span className="sub">
                       {rnd(selG[k])}{statCap(selG,k)<99 && <span className="blood"> / {statCap(selG,k)}</span>}
@@ -24571,12 +24647,12 @@ export default function App(){
               const boy = teaching ? S.gladiators.find(g=>g.id===selG.protege) : null;
               const pool = S.gladiators.filter(g=>canLearn(g, selG));
               return (
-                <div className="panel" style={{padding:10,marginTop:2,marginBottom:8,background:"#1c1610",
-                  borderColor: teaching ? "#6d5426" : "#4e3c26"}}>
+                <div className="panel" style={{padding:10,marginTop:2,marginBottom:8,background:"var(--panel)",
+                  borderColor: teaching ? "var(--gold-edge)" : "var(--line-4)"}}>
                   <div className="tag" style={{marginBottom:6}}>The far post</div>
                   {teaching ? (<>
                     <div style={{fontSize:"var(--fs-lg)",marginBottom:4}}>
-                      Bringing on <span style={{color:"#e0bd72"}}>{boy ? boy.name : (selG.protegeName||"a green one")}</span>
+                      Bringing on <span style={{color:"var(--gold-hi)"}}>{boy ? boy.name : (selG.protegeName||"a green one")}</span>
                       {boy && <span className="dim"> · {Math.max(0, 5-(boy.wins||0))} more wins and the boy is made</span>}
                     </div>
                     <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:8,lineHeight:1.35}}>
@@ -24591,7 +24667,7 @@ export default function App(){
                     </div>
                     {pool.length===0
                       ? <div className="dim" style={{fontSize:"var(--fs-md)"}}>No one green enough to teach — a boy wants two wins or fewer, and to be young enough to change.</div>
-                      : <button className="btn" style={{width:"100%",borderColor:"#c99a4b",color:"#e8d092"}}
+                      : <button className="btn" style={{width:"100%",borderColor:"var(--gold-line)",color:"var(--ink-hi)"}}
                           onClick={()=>setTeachPick(selG.id)}>Put him to teaching</button>}
                   </>)}
                 </div>
@@ -24606,7 +24682,7 @@ export default function App(){
               {isAuctor(selG)
                 ? <button className="btn btn-ghost" disabled>Contract · {auctorLeft(selG)} bouts</button>
                 : rudisEligible(selG)
-                ? <button className="btn" style={{borderColor:"#c99a4b",color:"#e8d092"}} onClick={()=>freeG(selG.id)}>Grant the rudis</button>
+                ? <button className="btn" style={{borderColor:"var(--gold-line)",color:"var(--ink-hi)"}} onClick={()=>freeG(selG.id)}>Grant the rudis</button>
                 : retireEligible(selG)
                 ? <button className="btn" onClick={()=>retire(selG.id)}>Release him</button>
                 : <button className="btn btn-ghost" disabled>Rudis: 10 wins, 90 renown</button>}
@@ -24639,7 +24715,7 @@ export default function App(){
                   <button key={id} className={`optrow ${on?"on":""}`}
                     onClick={()=>{ equip(g.id, gearPick.slot, id); setGearPick(null); }}>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="disp" style={{fontSize:"var(--fs-base)",color:on?"#e8d092":"#e8d9b8"}}>{it.name}</span>
+                      <span className="disp" style={{fontSize:"var(--fs-base)",color:on?"var(--ink-hi)":"var(--ink)"}}>{it.name}</span>
                       {on ? <span className="tag tag-gold">Worn</span>
                           : spare!=null ? <span className="dim" style={{fontSize:"var(--fs-sm)",whiteSpace:"nowrap"}}>{spare} owned</span>
                           : <span className="tag">Standard</span>}
@@ -24667,13 +24743,13 @@ export default function App(){
           <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.sheet}} onClick={close}>
             <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
               <div className="flex items-center justify-between" style={{marginBottom:6}}>
-                <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".08em",color:"#e8d092"}}>HOUSE {h.name.toUpperCase()}</div>
+                <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".08em",color:"var(--ink-hi)"}}>HOUSE {h.name.toUpperCase()}</div>
                 <button className="btn btn-ghost" style={{padding:"8px 10px"}} aria-label="Close" onClick={close}><X size={14}/></button>
               </div>
               <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:8}}>
                 {L.name}{L.trait?` — ${L.trait}`:""}. {grudgeWord(h.grudge)}{feud?" You are in a feud with this house.":""}
               </div>
-              {dealMsg && <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",borderColor:"#6d5426",fontSize:"var(--fs-md)"}}>{dealMsg}</div>}
+              {dealMsg && <div className="panel" style={{padding:10,marginBottom:9,background:"var(--panel)",borderColor:"var(--gold-edge)",fontSize:"var(--fs-md)"}}>{dealMsg}</div>}
 
               <div className="flex items-center justify-between gap-2" style={{marginBottom:5}}>
                 <span className="tag tag-gold">His men</span>
@@ -24686,7 +24762,7 @@ export default function App(){
                   <button key={f.id} className="optrow" style={{padding:"9px 10px",marginBottom:6}}
                     onClick={()=>setManCard({ house:h.name, fid:f.id })}>
                     <div className="flex items-center justify-between gap-2">
-                      <span style={{fontSize:"var(--fs-md)",color:isStar?"#e0bd72":"#cfc0a0",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                      <span style={{fontSize:"var(--fs-md)",color:isStar?"var(--gold-hi)":"var(--ink-2)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                         {isStar?"★ ":""}{f.name}{f.nick?`, ${f.nick}`:""}
                       </span>
                       <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{f.cls} · {f.wins}–{f.losses}{f.age?` · ${f.age}`:""}</span>
@@ -24696,7 +24772,7 @@ export default function App(){
                         {f.injury ? <span className="blood">carrying {f.injury.name.toLowerCase()}</span>
                           : seen ? "you have his measure" : "you have never had him watched"}
                       </span>
-                      <span className="rowval dim" style={{fontSize:"var(--fs-sm)",color:"#8a6a2c"}}>›</span>
+                      <span className="rowval dim" style={{fontSize:"var(--fs-sm)",color:"var(--gold-deep)"}}>›</span>
                     </div>
                   </button>
                 ); })}
@@ -24739,7 +24815,7 @@ export default function App(){
           <div className="modalwrap" role="dialog" aria-modal="true" aria-label={f.name} style={{zIndex:Z.card}} onClick={()=>setManCard(null)}>
             <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
               <div className="flex items-center justify-between gap-2" style={{marginBottom:3}}>
-                <div className="disp" style={{fontSize:"var(--fs-xl)",fontWeight:900,letterSpacing:".06em",color:isStar?"#e0bd72":"#e8d092",minWidth:0,overflow:"hidden",textOverflow:"ellipsis"}}>
+                <div className="disp" style={{fontSize:"var(--fs-xl)",fontWeight:900,letterSpacing:".06em",color:isStar?"var(--gold-hi)":"var(--ink-hi)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis"}}>
                   {isStar?"★ ":""}{f.name}{f.nick?`, ${f.nick}`:""}
                 </div>
                 <button className="btn btn-ghost" style={{padding:"8px 10px",flexShrink:0}} aria-label="Close" onClick={()=>setManCard(null)}><X size={14}/></button>
@@ -24752,7 +24828,7 @@ export default function App(){
                 {(f.pfame||0)>=55 ? " — the tiers know him" : (f.pfame||0)>=28 ? " — a name in Capua" : " — nobody has written him down"}
                 {f.injury ? <span className="blood"> · carrying {f.injury.name.toLowerCase()}</span> : null}
               </div>
-              {dealMsg && <div className="panel" style={{padding:10,marginBottom:9,background:"#1c1610",borderColor:"#6d5426",fontSize:"var(--fs-md)"}}>{dealMsg}</div>}
+              {dealMsg && <div className="panel" style={{padding:10,marginBottom:9,background:"var(--panel)",borderColor:"var(--gold-edge)",fontSize:"var(--fs-md)"}}>{dealMsg}</div>}
 
               <div className="panel" style={{padding:"10px 11px",marginBottom:9}}>
                 <div className="flex items-center justify-between gap-2" style={{marginBottom:6}}>
@@ -24771,12 +24847,12 @@ export default function App(){
                           </span>
                         </div>
                         <div className="track" style={{height:4,marginTop:2}}>
-                          <div className="fill" style={{width:`${clamp(v,0,100)}%`,background:"linear-gradient(90deg,#5a4a2c,#c99a4b)"}}/>
+                          <div className="fill" style={{width:`${clamp(v,0,100)}%`,background:"linear-gradient(90deg,var(--line-4),var(--gold-line))"}}/>
                         </div>
                       </div>
                     ); })}
                   {tells.length>0 && (
-                    <div style={{marginTop:8,borderTop:"1px dotted #33271a",paddingTop:7}}>
+                    <div style={{marginTop:8,borderTop:"1px dotted var(--line)",paddingTop:7}}>
                       {tells.map((t,i)=><div key={i} className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:3,lineHeight:1.35}}>{t}</div>)}
                     </div>
                   )}
@@ -24818,7 +24894,7 @@ export default function App(){
                   {met.map(({g,e})=>(
                     <div key={g.id} className="flex items-center justify-between gap-2" style={{padding:"3px 0"}}>
                       <span className="rowname" style={{fontSize:"var(--fs-base)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
-                        color: isGone(g) ? "#8f7e62" : "#cfc0a0"}}>
+                        color: isGone(g) ? "var(--ink-faint)" : "var(--ink-2)"}}>
                         {g.name}{isGone(g)? <span className="dim" style={{fontSize:"var(--fs-sm)"}}> · gone</span> : null}
                       </span>
                       <span className="rowval" style={{fontSize:"var(--fs-sm)",color:foeColour(e),flexShrink:0}}>{foeWord(e)}</span>
@@ -24837,7 +24913,7 @@ export default function App(){
                 /* whose name goes against his — every fit man of yours, with the reading */
                 const fit = mine.filter(m=>!m.g.injury);
                 return (
-                  <div className="panel" style={{padding:"10px 11px",borderColor:"#6d5426",background:"#1c1610"}}>
+                  <div className="panel" style={{padding:"10px 11px",borderColor:"var(--gold-edge)",background:"var(--panel)"}}>
                     <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:8,lineHeight:1.4}}>
                       Whose name goes against his? Say it and the town holds you to it — if your man is not
                       on the sand by the day, it is your house the story is about.
@@ -24848,7 +24924,7 @@ export default function App(){
                           <button key={m.g.id} className="optrow" style={{padding:"9px 10px",marginBottom:6}}
                             onClick={()=>doNameHim(h.name, f.id, m.g.id)}>
                             <div className="flex items-center justify-between gap-2">
-                              <span style={{fontSize:"var(--fs-md)",color:"#e8d9b8",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                              <span style={{fontSize:"var(--fs-md)",color:"var(--ink)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                                 {m.g.name}<span className="dim" style={{fontSize:"var(--fs-sm)"}}> · {m.g.cls}</span>
                               </span>
                               <span className="rowval" style={{fontSize:"var(--fs-sm)",color:m.colour}}>{m.word}</span>
@@ -24871,7 +24947,7 @@ export default function App(){
                 </button>
               </div>
               {drilling ? (
-                <div className="panel" style={{padding:"10px 11px",marginTop:7,borderColor:"#6d5426",background:"#1c1610"}}>
+                <div className="panel" style={{padding:"10px 11px",marginTop:7,borderColor:"var(--gold-edge)",background:"var(--panel)"}}>
                   <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:8,lineHeight:1.4}}>
                     Whose weeks go on him? Whoever it is comes off his own work — sharper for that
                     one bout and flatter for everything else, and it is wasted if the day never comes.
@@ -24884,7 +24960,7 @@ export default function App(){
                           <button key={m.g.id} className="optrow" style={{padding:"9px 10px",marginBottom:6}}
                             onClick={()=>doDrill(h.name, f.id, m.g.id)}>
                             <div className="flex items-center justify-between gap-2">
-                              <span style={{fontSize:"var(--fs-md)",color:"#e8d9b8",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                              <span style={{fontSize:"var(--fs-md)",color:"var(--ink)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                                 {m.g.name}<span className="dim" style={{fontSize:"var(--fs-sm)"}}> · {m.g.cls}</span>
                               </span>
                               <span className="rowval" style={{fontSize:"var(--fs-sm)",color:m.colour}}>{m.word}</span>
@@ -24945,7 +25021,7 @@ export default function App(){
         <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.pick}} onClick={()=>setReport(null)}>
           <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
             <div className="flex items-center justify-between" style={{marginBottom:10}}>
-              <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".12em",color:"#e8d092"}}>THE MORNING REPORT</div>
+              <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".12em",color:"var(--ink-hi)"}}>THE MORNING REPORT</div>
               <button className="btn btn-ghost" style={{padding:"10px 10px"}} aria-label="Close" onClick={()=>setReport(null)}><X size={14}/></button>
             </div>
             {AGN.map((a,i)=>{ const FACES = { house:"The House", standing:"Standing", council:"Coin & Council",
@@ -24957,7 +25033,7 @@ export default function App(){
                   borderLeft:`3px solid ${URG[a.urgency].c}`}}
                 onClick={()=>{ setReport(null); docable ? setDeskDoc(a) : goTo(a.dest || a.tab); }}>
                 <div className="flex items-center justify-between gap-2">
-                  <span style={{fontSize:"var(--fs-md)",color:a.urgency===3?"#e8d9b8":"#cfc0a0",minWidth:0}}>{a.label}</span>
+                  <span style={{fontSize:"var(--fs-md)",color:a.urgency===3?"var(--ink)":"var(--ink-2)",minWidth:0}}>{a.label}</span>
                   <span className="rowval dim" style={{fontSize:"var(--fs-sm)",whiteSpace:"nowrap"}}>{docable ? "open ›" : `${where} ›`}</span>
                 </div>
                 {a.sub && <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:1}}>{a.sub}</div>}
@@ -24966,14 +25042,14 @@ export default function App(){
                 {/* the doctore's word on the week, which lived at the bottom of the old section */}
                 {(()=>{ const C = counsel(S); if(!C) return null;
                   return (
-                    <div style={{borderTop:"1px dotted #4e3c26",marginTop:8,paddingTop:8}}>
+                    <div style={{borderTop:"1px dotted var(--line-4)",marginTop:8,paddingTop:8}}>
                       <div className="flex gap-2" style={{alignItems:"flex-start"}}>
-                        {S.doctore && <div style={{flex:"0 0 auto",width:46,height:46,borderRadius:"50%",overflow:"hidden",border:"1px solid #5a6a4a"}}>
+                        {S.doctore && <div style={{flex:"0 0 auto",width:46,height:46,borderRadius:"50%",overflow:"hidden",border:"1px solid var(--laurel-edge2)"}}>
                           <DoctoreBust name={S.doctore.name} size={46}/>
                         </div>}
                         <div style={{minWidth:0}}>
-                          <span className="tag" style={{borderColor:"#5a6a4a",color:"#9aa86a"}}>The doctore</span>
-                          <div style={{fontSize:"var(--fs-md)",fontStyle:"italic",color:"#cfc0a0",marginTop:3}}>{C.say(S)}</div>
+                          <span className="tag" style={{borderColor:"var(--laurel-edge2)",color:"var(--laurel)"}}>The doctore</span>
+                          <div className="hand" style={{fontSize:"var(--fs-lg)",color:"var(--ink-2)",marginTop:3}}>{C.say(S)}</div>
                         </div>
                       </div>
                     </div>
@@ -24987,11 +25063,11 @@ export default function App(){
       {deskDoc && SECT[deskDoc.doc] && (
         <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.pick}} onClick={()=>setDeskDoc(null)}>
           <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()} ref={deskRef}
-            style={{borderColor:"#6d5426",background:"linear-gradient(168deg,#241c12,#1a1410)"}}>
+            style={{borderColor:"var(--gold-edge)",background:"linear-gradient(168deg,var(--panel-2),var(--panel))"}}>
             <div style={{textAlign:"center",marginBottom:2}}>
               <span className="tag tag-gold">{deskDoc.urgency>=3 ? "URGENT" : "FROM THE MORNING'S BUSINESS"}</span>
             </div>
-            <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".1em",color:"#e8d092",textAlign:"center"}}>{deskDoc.label}</div>
+            <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".1em",color:"var(--ink-hi)",textAlign:"center"}}>{deskDoc.label}</div>
             {deskDoc.sub && <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",textAlign:"center",marginBottom:10}}>{deskDoc.sub}</div>}
             {SECT[deskDoc.doc](S, SX)}
             <div className="flex gap-2" style={{marginTop:12}}>
@@ -25007,7 +25083,7 @@ export default function App(){
         <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.pick}} onClick={()=>setSheet(null)}>
           <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
             <div className="flex items-center justify-between" style={{marginBottom:10}}>
-              <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".12em",color:"#e8d092"}}>{SHEETS[sheet].title}</div>
+              <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".12em",color:"var(--ink-hi)"}}>{SHEETS[sheet].title}</div>
               <button className="btn btn-ghost" style={{padding:"10px 10px"}} aria-label="Close" onClick={()=>setSheet(null)}><X size={14}/></button>
             </div>
             {SHEETS[sheet].body()}
@@ -25031,7 +25107,7 @@ export default function App(){
         <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.pick}} onClick={close}>
           <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
             <div className="flex items-center justify-between gap-2" style={{marginBottom:3}}>
-              <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".12em",color:"#e8d092"}}>THE CHRONICLE</div>
+              <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".12em",color:"var(--ink-hi)"}}>THE CHRONICLE</div>
               <button className="btn btn-ghost" style={{padding:"10px 10px",flexShrink:0}} aria-label="Close" onClick={close}><X size={14}/></button>
             </div>
             <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",marginBottom:8,lineHeight:1.35}}>
@@ -25045,15 +25121,15 @@ export default function App(){
                   return (
                     <button key={k} className={`chip ${chronFilt===k?"on":""}`} disabled={n===0}
                       onClick={()=>{ setChronFilt(k); setChronMore(false); }}
-                      style={chronFilt===k?{borderColor:"#c99a4b",color:"#e0bd72",background:"#2b2115"}:undefined}>
+                      style={chronFilt===k?{borderColor:"var(--gold-line)",color:"var(--gold-hi)",background:"var(--raise)"}:undefined}>
                       {CHRON_FILTERS[k].name} · {n}
                     </button>
                   ); })}
               </div>
               <input className="sel" value={chronQ} onChange={e=>{ setChronQ(e.target.value); setChronMore(false); }}
                 placeholder="A name, a house, a word…" aria-label="Search the chronicle"
-                style={{width:"100%",boxSizing:"border-box",background:"#100d0a",color:"#cfc0a0",
-                  border:"1px solid #4e3c26",borderRadius:8,padding:"8px 9px",fontSize:"var(--fs-md)",marginBottom:9,fontFamily:"inherit"}}/>
+                style={{width:"100%",boxSizing:"border-box",background:"var(--ground)",color:"var(--ink-2)",
+                  border:"1px solid var(--line-4)",borderRadius:8,padding:"8px 9px",fontSize:"var(--fs-md)",marginBottom:9,fontFamily:"inherit"}}/>
             </>)}
             {all.length>0 && hits.length===0 && (
               <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
@@ -25069,15 +25145,15 @@ export default function App(){
                 <React.Fragment key={i}>
                   {edge && (
                     <div className="dim" style={{fontSize:"var(--fs-micro)",textTransform:"uppercase",letterSpacing:".08em",
-                      margin:"10px 0 4px",borderTop:"1px solid #3e2f1f",paddingTop:7}}>
+                      margin:"10px 0 4px",borderTop:"1px solid var(--line-2)",paddingTop:7}}>
                       Older than the roll — only what was remembered
                     </div>
                   )}
                   {head!=null && (
                     <div className="tag tag-gold" style={{display:"inline-block",margin:"9px 0 4px"}}>Year {head}</div>
                   )}
-                  <div style={{padding:"4px 0",borderBottom:"1px dotted #33271a",fontSize:"var(--fs-lg)",
-                    color:e.kind==="bad"?"#d98476":e.kind==="good"?"#cbc08e":e.kind==="event"?"#b9a8c8":"#cfc0a0"}}>
+                  <div style={{padding:"4px 0",borderBottom:"1px dotted var(--line)",fontSize:"var(--fs-lg)",
+                    color:e.kind==="bad"?"var(--blood-hi)":e.kind==="good"?"var(--ink-2)":e.kind==="event"?"var(--violet)":"var(--ink-2)"}}>
                     <span className="dim" style={{fontSize:"var(--fs-sm)"}}>W{((e.week-1)%YEAR_WEEKS)+1}</span> — {e.text}
                   </div>
                 </React.Fragment>
@@ -25107,7 +25183,7 @@ export default function App(){
           <div className="modalwrap" role="dialog" aria-modal="true" aria-label="The year ahead" style={{zIndex:Z.calendar}} onClick={()=>setCal(false)}>
             <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
               <div className="flex items-center justify-between gap-2" style={{marginBottom:3}}>
-                <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".12em",color:"#e8d092"}}>THE YEAR AHEAD</div>
+                <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".12em",color:"var(--ink-hi)"}}>THE YEAR AHEAD</div>
                 <button className="btn btn-ghost" style={{padding:"10px 10px",flexShrink:0}} aria-label="Close" onClick={()=>setCal(false)}><X size={14}/></button>
               </div>
               <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:10,lineHeight:1.4}}>
@@ -25119,9 +25195,9 @@ export default function App(){
                 const thin = curve.filter(c=>c.fit<=1), first = thin[0];
                 const back = curve.find(c=>first && c.week>first.week && c.fit>=2);
                 return (
-                  <div className="panel" style={{padding:"10px 11px",marginBottom:11,borderColor:"#4a3a22",background:"#1a1510"}}>
+                  <div className="panel" style={{padding:"10px 11px",marginBottom:11,borderColor:"var(--line-3)",background:"var(--panel)"}}>
                     <div className="flex items-center justify-between gap-2" style={{marginBottom:7}}>
-                      <span className="tag" style={{borderColor:"#6d5426",color:"#d8ac5f"}}>Who can stand</span>
+                      <span className="tag" style={{borderColor:"var(--gold-edge)",color:"var(--gold)"}}>Who can stand</span>
                       <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{curve[0].fit} fit now · {activeG(S).length} in the yard</span>
                     </div>
                     <div className="flex" style={{gap:3,alignItems:"flex-end"}}>
@@ -25164,7 +25240,7 @@ export default function App(){
                     const inner = (<>
                       <div className="flex items-center justify-between gap-2">
                         <span style={{fontSize:"var(--fs-md)",color:r.tone,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.title}</span>
-                        {r.tab && <span className="rowval dim" style={{fontSize:"var(--fs-sm)",color:"#8a6a2c"}}>{TAB_NAMES[r.tab]||r.tab} ›</span>}
+                        {r.tab && <span className="rowval dim" style={{fontSize:"var(--fs-sm)",color:"var(--gold-deep)"}}>{TAB_NAMES[r.tab]||r.tab} ›</span>}
                       </div>
                       {r.sub && <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2,lineHeight:1.35}}>{r.sub}</div>}
                     </>);
@@ -25190,14 +25266,14 @@ export default function App(){
         return (
           <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.demand}}>
             <div className="modal" tabIndex={-1}>
-              <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".12em",color:"#e8d092",marginBottom:9}}>{ret ? "THE LONG TENURE" : "THE HOUSE GOES ON"}</div>
+              <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".12em",color:"var(--ink-hi)",marginBottom:9}}>{ret ? "THE LONG TENURE" : "THE HOUSE GOES ON"}</div>
               <div style={{fontSize:"var(--fs-lg)",marginBottom:9}}>
                 {ret
                   ? `${S.succession.lan} is ${S.succession.age} and has been doing this for ${S.succession.years} year${S.succession.years===1?"":"s"}. There is no single morning it ends. There is a winter where the walk down to the square gets long, and a spring where somebody else has already set the drills before he arrives. He is not going to say the word, so you say it.`
                   : `${S.succession.lan} is dead at ${S.succession.age}. The sand is still there, the men are still in the cells, and the debts have not noticed.`}
               </div>
-              <div className="panel" style={{padding:11,marginBottom:10,background:"#1c1610",borderColor:"#c99a4b"}}>
-                <div className="disp" style={{fontSize:"var(--fs-md)",color:"#e8d092",marginBottom:3}}>{S.succession.heir}</div>
+              <div className="panel" style={{padding:11,marginBottom:10,background:"var(--panel)",borderColor:"var(--gold-line)"}}>
+                <div className="disp" style={{fontSize:"var(--fs-md)",color:"var(--ink-hi)",marginBottom:3}}>{S.succession.heir}</div>
                 <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>{H.line}</div>
               </div>
               <div className="dim" style={{fontSize:"var(--fs-md)",marginBottom:10}}>
@@ -25226,9 +25302,9 @@ export default function App(){
         const row = a => {
           const f = fateOf(a);
           return (
-            <div key={a.id} style={{borderTop:"1px dotted #33271a",padding:"7px 0"}}>
+            <div key={a.id} style={{borderTop:"1px dotted var(--line)",padding:"7px 0"}}>
               <div className="flex items-center justify-between gap-2">
-                <span className="rowname disp" style={{fontSize:"var(--fs-base)",color:a.left?"#c0b492":"#e8d092"}}>
+                <span className="rowname disp" style={{fontSize:"var(--fs-base)",color:a.left?"var(--ink-2)":"var(--ink-hi)"}}>
                   {a.nick? `${a.name}, ${a.nick}` : a.name}
                 </span>
                 <span className="rowval" style={{fontSize:"var(--fs-sm)",color:f.colour}}>{f.label}</span>
@@ -25243,9 +25319,9 @@ export default function App(){
                   ? `Year ${Math.floor((a.joined-1)/YEAR_WEEKS)+1} to year ${Math.floor((a.left-1)/YEAR_WEEKS)+1}${a.age? `, ${a.age} years old`:""}.`
                   : `Since year ${Math.floor((a.joined-1)/YEAR_WEEKS)+1}. Still standing.`}
                 {a.ambMet && <span className="laurel"> He got what he wanted.</span>}
-                {a.stone && <span style={{color:"#9dc0d4"}}> Buried under his own name.</span>}
+                {a.stone && <span style={{color:"var(--azure)"}}> Buried under his own name.</span>}
                 {a.munera==="games" && <span className="laurel"> The house held games for him.</span>}
-                {a.munera==="rite" && <span style={{color:"#b9c58a"}}> A fire was burned at the gate for him.</span>}
+                {a.munera==="rite" && <span style={{color:"var(--laurel-hi)"}}> A fire was burned at the gate for him.</span>}
               </div>
             </div>
           );
@@ -25254,7 +25330,7 @@ export default function App(){
           <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.sheet}} onClick={()=>setAnnals(false)}>
             <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
               <div className="flex items-center justify-between" style={{marginBottom:4}}>
-                <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".12em",color:"#e8d092"}}>THE ANNALS</div>
+                <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".12em",color:"var(--ink-hi)"}}>THE ANNALS</div>
                 <button className="btn btn-ghost" style={{padding:"10px 10px"}} aria-label="Close" onClick={()=>setAnnals(false)}><X size={14}/></button>
               </div>
               <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:10}}>
@@ -25277,15 +25353,15 @@ export default function App(){
 
       {S.reSignOffer && !fight && (
         <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.contract}}>
-          <div className="modal" tabIndex={-1} style={{borderColor:"#8a6a2c"}}>
-            <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,letterSpacing:".1em",marginBottom:8,color:"#e8d092"}}>HIS TERM IS UP</div>
+          <div className="modal" tabIndex={-1} style={{borderColor:"var(--gold-deep)"}}>
+            <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,letterSpacing:".1em",marginBottom:8,color:"var(--ink-hi)"}}>HIS TERM IS UP</div>
             <div style={{fontSize:"var(--fs-xl)"}}>
               {S.reSignOffer.name} has served every bout he contracted for and is owed nothing further. He is standing in the yard in his own clothes with the gate open behind him, and he has not walked through it. He will sign again for {S.reSignOffer.fee} denarii and {S.reSignOffer.wage} a week, for {S.reSignOffer.bouts} more bouts.
             </div>
             <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:8}}>
               Let him go and the familia watches a man leave through the front gate, which is the one thing you cannot afford them to think about.
             </div>
-            <button className="btn" style={{width:"100%",marginTop:12,borderColor:"#c99a4b",color:"#e8d092"}}
+            <button className="btn" style={{width:"100%",marginTop:12,borderColor:"var(--gold-line)",color:"var(--ink-hi)"}}
               disabled={S.gold<S.reSignOffer.fee} onClick={()=>answerReSign(true)}>
               {S.gold<S.reSignOffer.fee ? "Not enough coin" : `Sign him again — ${S.reSignOffer.fee}d`}
             </button>
@@ -25296,17 +25372,17 @@ export default function App(){
 
       {S.romeOffer && !fight && (
         <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.week}}>
-          <div className="modal" tabIndex={-1} style={{borderColor:"#c99a4b"}}>
-            <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,letterSpacing:".12em",marginBottom:8,color:"#e8d092"}}>A LETTER FROM ROME</div>
+          <div className="modal" tabIndex={-1} style={{borderColor:"var(--gold-line)"}}>
+            <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,letterSpacing:".12em",marginBottom:8,color:"var(--ink-hi)"}}>A LETTER FROM ROME</div>
             <div style={{fontSize:"var(--fs-xl)"}}>
               {S.romeOffer.senator} has put your house forward for the imperial games. Three bouts on the greatest sand in the world, in front of the only crowd that has ever mattered — and purses that would buy Capua twice over.
             </div>
-            <div className="panel" style={{padding:11,marginTop:10,background:"#1c1610",borderColor:"#7c2a22"}}>
+            <div className="panel" style={{padding:11,marginTop:10,background:"var(--panel)",borderColor:"var(--blood-edge)"}}>
               <div className="blood" style={{fontSize:"var(--fs-md)"}}>
                 Understand what is being offered. Half the imperial bouts are fought sine missione. Your patrons have no reach in that city — nobody up in that box owes you anything. And the crowd is too big to shout over: not one order of yours will reach the sand once a bout starts, which is not true of any other card you have ever taken. Whatever happens there ends this house, one way or the other.
               </div>
             </div>
-            <button className="btn" style={{width:"100%",marginTop:12,borderColor:"#c99a4b",color:"#e8d092"}} onClick={()=>answerRome(true)}>Load the wagons</button>
+            <button className="btn" style={{width:"100%",marginTop:12,borderColor:"var(--gold-line)",color:"var(--ink-hi)"}} onClick={()=>answerRome(true)}>Load the wagons</button>
             <button className="btn btn-ghost" style={{width:"100%",marginTop:8}} onClick={()=>answerRome(false)}>Capua is enough</button>
           </div>
         </div>
@@ -25314,14 +25390,14 @@ export default function App(){
 
       {S.doctoreOffer && !fight && (
         <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.offer}}>
-          <div className="modal" tabIndex={-1} style={{borderColor:"#8a6a2c"}}>
-            <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,letterSpacing:".1em",marginBottom:8,color:"#e8d092"}}>HE ASKS TO STAY</div>
+          <div className="modal" tabIndex={-1} style={{borderColor:"var(--gold-deep)"}}>
+            <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,letterSpacing:".1em",marginBottom:8,color:"var(--ink-hi)"}}>HE ASKS TO STAY</div>
             <div style={{fontSize:"var(--fs-xl)"}}>
               {S.doctoreOffer.kind==="rudis"
                 ? `${S.doctoreOffer.name} does not leave with the crowd. He finds you after, the rudis still in his hand, and says he has nowhere to be — and that the young ones in your cells hold a blade like farmers.`
                 : `${S.doctoreOffer.name} takes his release, then stops at the gate. He is too old for the sand and he knows it. He asks whether the square needs a voice.`}
             </div>
-            <div className="panel" style={{padding:11,marginTop:10,background:"#1c1610"}}>
+            <div className="panel" style={{padding:11,marginTop:10,background:"var(--panel)"}}>
               <div className="flex items-center gap-1" style={{flexWrap:"wrap",marginBottom:4}}>
                 <span className="tag">{docWord(S.doctoreOffer.skill)}</span>
                 <span className="tag tag-gold">{STAT_NAMES[S.doctoreOffer.spec]}</span>
@@ -25330,7 +25406,7 @@ export default function App(){
               <div className="dim" style={{fontSize:"var(--fs-md)"}}>{S.doctoreOffer.wage} denarii a week — half what a hired man would ask.</div>
               {S.doctore && <div className="blood" style={{fontSize:"var(--fs-md)",marginTop:4}}>{S.doctore.name} would give up the square.</div>}
             </div>
-            <button className="btn" style={{width:"100%",marginTop:12,borderColor:"#c99a4b",color:"#e8d092"}} onClick={()=>takeOffer(true)}>Give him the square</button>
+            <button className="btn" style={{width:"100%",marginTop:12,borderColor:"var(--gold-line)",color:"var(--ink-hi)"}} onClick={()=>takeOffer(true)}>Give him the square</button>
             <button className="btn btn-ghost" style={{width:"100%",marginTop:8}} onClick={()=>takeOffer(false)}>Let him go free</button>
           </div>
         </div>
@@ -25366,7 +25442,7 @@ export default function App(){
                        : edge<=-6 ? <span className="dim">Weaker at {STAT_NAMES[me.focus].toLowerCase()} — little to learn</span>
                        : <span className="dim">Evenly matched at {STAT_NAMES[me.focus].toLowerCase()}</span>}
                     </div>
-                    {t && <div style={{fontSize:"var(--fs-base)",marginTop:2,color:t.kind==="brother"?"#b9c58a":"#d98476"}}>
+                    {t && <div style={{fontSize:"var(--fs-base)",marginTop:2,color:t.kind==="brother"?"var(--laurel-hi)":"var(--blood-hi)"}}>
                       {t.kind==="brother" ? "Brothers — they will look after each other" : "Bad blood — they will go too hard, and one may not walk away"}
                     </div>}
                     {busy && <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2}}>Currently paired with someone else; that pairing breaks.</div>}
@@ -25411,7 +25487,7 @@ export default function App(){
                       <span className="dim"> · {5-(r.wins||0)} wins from made</span>
                     </div>
                     {v.origin===r.origin && <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2}}>Same country — they already speak to each other.</div>}
-                    {t && <div style={{fontSize:"var(--fs-base)",marginTop:2,color:t.kind==="brother"?"#b9c58a":"#d98476"}}>
+                    {t && <div style={{fontSize:"var(--fs-base)",marginTop:2,color:t.kind==="brother"?"var(--laurel-hi)":"var(--blood-hi)"}}>
                       {t.kind==="brother" ? "Brothers already — the boy will take every word of it" : "Bad blood between them — he will not hear a thing the old man says"}
                     </div>}
                   </button>
@@ -25468,15 +25544,15 @@ export default function App(){
         const done = ()=>{ setShowGuide(false); setPref("guideDone", true); };
         return (
           <div className="modalwrap" role="dialog" aria-modal="true" aria-label="Opening guide" style={{zIndex:Z.card}}>
-            <div className="modal" tabIndex={-1} style={{maxWidth:440,borderColor:"#c99a4b"}}>
+            <div className="modal" tabIndex={-1} style={{maxWidth:440,borderColor:"var(--gold-line)"}}>
               <div className="flex items-center justify-between" style={{marginBottom:8}}>
-                <div className="disp" style={{fontSize:"var(--fs-sm)",letterSpacing:".12em",color:"#b09b7d"}}>A FEW WORDS BEFORE YOU START · {st+1}/{STEPS.length}</div>
+                <div className="disp" style={{fontSize:"var(--fs-sm)",letterSpacing:".12em",color:"var(--ink-dim)"}}>A FEW WORDS BEFORE YOU START · {st+1}/{STEPS.length}</div>
                 <button className="btn btn-ghost" style={{padding:"6px 10px",fontSize:"var(--fs-micro)"}} onClick={done}>Skip</button>
               </div>
-              <div className="disp" style={{fontSize:"var(--fs-xxl)",color:"#e8d092",letterSpacing:".08em",marginBottom:8}}>{S0.t}</div>
+              <div className="disp" style={{fontSize:"var(--fs-xxl)",color:"var(--ink-hi)",letterSpacing:".08em",marginBottom:8}}>{S0.t}</div>
               <div style={{fontSize:"var(--fs-xl)",lineHeight:1.5,marginBottom:14}}>{S0.b}</div>
               <div className="flex items-center gap-1" style={{marginBottom:12,justifyContent:"center"}}>
-                {STEPS.map((_,i)=>(<span key={i} style={{width:7,height:7,borderRadius:99,background:i===st?"#c99a4b":"#4a3a26"}}/>))}
+                {STEPS.map((_,i)=>(<span key={i} style={{width:7,height:7,borderRadius:99,background:i===st?"var(--gold-line)":"var(--line-3)"}}/>))}
               </div>
               <div className="flex gap-2">
                 {st>0 && <button className="btn btn-ghost" style={{flex:1}} onClick={()=>setGuideStep(st-1)}>‹ Back</button>}
@@ -25488,8 +25564,8 @@ export default function App(){
       })()}
       {S && S.pendingLesson && (
         <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.ledger}}>
-          <div className="modal" tabIndex={-1} style={{maxWidth:430,borderColor:"#c99a4b"}}>
-            <div className="disp" style={{fontSize:"var(--fs-xxl)",color:"#e8d092",letterSpacing:".1em",marginBottom:8}}>
+          <div className="modal" tabIndex={-1} style={{maxWidth:430,borderColor:"var(--gold-line)"}}>
+            <div className="disp" style={{fontSize:"var(--fs-xxl)",color:"var(--ink-hi)",letterSpacing:".1em",marginBottom:8}}>
               {S.pendingLesson.title.toUpperCase()}
             </div>
             {S.pendingLesson.text.split(SPLIT2).map((p,i)=>(
@@ -25511,7 +25587,7 @@ export default function App(){
         const Delta = ({label, v, good, suffix}) => v===0 ? null : (
           <div style={{minWidth:0}}>
             <div className="dim" style={{fontSize:"var(--fs-micro)",textTransform:"uppercase",letterSpacing:".06em"}}>{label}</div>
-            <div className="disp" style={{fontSize:"var(--fs-lg)",color: (good? v>0 : v<0) ? "#9aa86a" : "#d96f5d"}}>
+            <div className="disp" style={{fontSize:"var(--fs-lg)",color: (good? v>0 : v<0) ? "var(--laurel)" : "var(--blood)"}}>
               {v>0?"+":""}{v}{suffix||""}
             </div>
           </div>
@@ -25520,7 +25596,7 @@ export default function App(){
         <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.week}} onClick={close}>
           <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
             <div className="flex items-center justify-between" style={{marginBottom:3}}>
-              <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".1em",color:"#e8d092"}}>THE WEEK THAT WAS</div>
+              <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".1em",color:"var(--ink-hi)"}}>THE WEEK THAT WAS</div>
               <button className="btn btn-ghost" style={{padding:"8px 10px"}} aria-label="Close" onClick={close}><X size={14}/></button>
             </div>
             <div className="dim" style={{fontSize:"var(--fs-sm)",marginBottom:9}}>{D.season} · year {D.year}, week {D.yw}</div>
@@ -25536,8 +25612,8 @@ export default function App(){
             {D.lines.length===0
               ? <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>Nothing happened worth the ink.</div>
               : D.lines.map((l,i)=>(
-                  <div key={i} style={{fontSize:"var(--fs-md)",padding:"4px 0",borderTop:i?"1px dotted #26201a":undefined,
-                    color: l.kind==="bad"?"#d9a89e" : l.kind==="good"?"#cfe0b0" : "#cfc0a0"}}>{l.text}</div>
+                  <div key={i} style={{fontSize:"var(--fs-md)",padding:"4px 0",borderTop:i?"1px dotted var(--raise)":undefined,
+                    color: l.kind==="bad"?"var(--blood-hi)" : l.kind==="good"?"var(--laurel-lt)" : "var(--ink-2)"}}>{l.text}</div>
                 ))}
             {D.more>0 && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:6,fontStyle:"italic"}}>…and {D.more} more in the chronicle.</div>}
             <button className="btn" style={{width:"100%",marginTop:12}} onClick={close}>Carry on</button>
@@ -25548,14 +25624,14 @@ export default function App(){
       {skipped && skipped.ran>=2 && (
         <div className="modalwrap" style={{zIndex:Z.page}} role="dialog" aria-modal="true" onClick={()=>setSkipped(null)}>
           <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
-            <div className="disp" style={{fontSize:"var(--fs-xl)",color:"#e8d092",marginBottom:6}}>
+            <div className="disp" style={{fontSize:"var(--fs-xl)",color:"var(--ink-hi)",marginBottom:6}}>
               WEEKS {skipped.from}–{skipped.to-1}
             </div>
             <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:9}}>
               {skipped.ran} weeks went by without asking anything of you.
             </div>
             {(S.log||[]).filter(l=>l.week>=skipped.from).slice(0,8).map((l,i)=>(
-              <div key={i} style={{borderTop:"1px dotted #33271a",padding:"6px 0",fontSize:"var(--fs-md)"}}>
+              <div key={i} style={{borderTop:"1px dotted var(--line)",padding:"6px 0",fontSize:"var(--fs-md)"}}>
                 <span className="dim" style={{fontSize:"var(--fs-sm)"}}>wk {l.week} · </span>{l.text}
               </div>
             ))}
@@ -25565,7 +25641,7 @@ export default function App(){
       )}
       {ask && (
         <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.demand}} onClick={()=>setAsk(null)}>
-          <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()} style={{borderColor: ask.danger? "#7c2a22":"#4e3c26"}}>
+          <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()} style={{borderColor: ask.danger? "var(--blood-edge)":"var(--line-4)"}}>
             <div className={`disp ${ask.danger?"blood":""}`} style={{fontSize:"var(--fs-lg)",fontWeight:700,letterSpacing:".1em",marginBottom:8}}>{ask.title.toUpperCase()}</div>
             <div style={{fontSize:"var(--fs-xl)"}}>{ask.text}</div>
             <button className={`btn ${ask.danger?"btn-blood":""}`} style={{width:"100%",marginTop:14}}
@@ -25602,7 +25678,7 @@ export default function App(){
             <div className="flex items-center gap-2" style={{flexWrap:"wrap"}}>
               {steps.map(([l,n])=>(
                 <span key={n} className="disp" style={{fontSize:"var(--fs-micro)",letterSpacing:".05em",
-                  color: step===n?"#e8d092":step>n?"#9aa86a":"#6d5d47"}}>{n>0?"› ":""}{n+1}. {l}</span>
+                  color: step===n?"var(--ink-hi)":step>n?"var(--laurel)":"var(--ink-faint)"}}>{n>0?"› ":""}{n+1}. {l}</span>
               ))}
             </div>
             <button className="btn btn-ghost" style={{padding:"8px 10px"}} aria-label="Close" onClick={close}><X size={14}/></button>
@@ -25619,7 +25695,7 @@ export default function App(){
           <button key={`${occ.kind}-${(occ.o && occ.o.id) != null ? occ.o.id : title}`}
             className="optrow" style={{marginBottom:7,width:"100%"}} onClick={()=>goPick(occ)}>
             <div className="flex items-center justify-between gap-2">
-              <span className="disp" style={{fontSize:"var(--fs-md)",color:"#e8d9b8"}}>{title}</span>
+              <span className="disp" style={{fontSize:"var(--fs-md)",color:"var(--ink)"}}>{title}</span>
               {right}
             </div>
             {tags}
@@ -25639,15 +25715,15 @@ export default function App(){
                 ? (S.fame < TIERS[4].fame ? `${Math.ceil(TIERS[4].fame - S.fame)} more fame` : `${Math.ceil(55 - (S.favor||0))} more standing`)
                 : null;
               return (
-                <div className="panel" style={{padding:"8px 10px",marginBottom:10,background:"#1a1510",borderColor:"#4a3a22"}}>
+                <div className="panel" style={{padding:"8px 10px",marginBottom:10,background:"var(--panel)",borderColor:"var(--line-3)"}}>
                   <div className="flex items-center justify-between gap-2">
                     <span className="dim" style={{fontSize:"var(--fs-micro)",textTransform:"uppercase",letterSpacing:".07em"}}>What your name is worth here</span>
-                    <span className="rowval" style={{fontSize:"var(--fs-sm)",color: edge>0?"#9aa86a":"#8a7a5c",flexShrink:0}}>
+                    <span className="rowval" style={{fontSize:"var(--fs-sm)",color: edge>0?"var(--laurel)":"var(--ink-faint)",flexShrink:0}}>
                       {edge>0 ? `purses +${edge}%` : "purses at the standard"}
                     </span>
                   </div>
                   <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:3,lineHeight:1.35}}>
-                    {fameTitle(S.fame)} — the editors will put you as high as <span style={{color:"#e0bd72"}}>{TIERS[rung].name}</span>.
+                    {fameTitle(S.fame)} — the editors will put you as high as <span style={{color:"var(--gold-hi)"}}>{TIERS[rung].name}</span>.
                     {open ? " The top of the table is open to you at the great games."
                           : short ? ` ${short.charAt(0).toUpperCase()+short.slice(1)} and the imperial bill opens at the great games.`
                           : ""}
@@ -25753,8 +25829,8 @@ export default function App(){
                 <button key={g.id} className={`optrow ${on?"on":""}`} style={{marginBottom:6,width:"100%"}}
                   onClick={()=> multi ? togglePair(g.id) : setFGid(on?null:g.id)}>
                   <div className="flex items-center justify-between gap-2">
-                    <span className="disp" style={{fontSize:"var(--fs-base)",color:on?"#e8d092":"#e8d9b8",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{fullName(g)}</span>
-                    {on ? <Check size={15} style={{color:"#c99a4b",flexShrink:0}}/> : <span className="dim" style={{fontSize:"var(--fs-base)",flexShrink:0}}>{g.wins}–{g.losses}</span>}
+                    <span className="disp" style={{fontSize:"var(--fs-base)",color:on?"var(--ink-hi)":"var(--ink)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{fullName(g)}</span>
+                    {on ? <Check size={15} style={{color:"var(--gold-line)",flexShrink:0}}/> : <span className="dim" style={{fontSize:"var(--fs-base)",flexShrink:0}}>{g.wins}–{g.losses}</span>}
                   </div>
                   <div className="flex items-center justify-between gap-2" style={{marginTop:2}}>
                     <span className="dim" style={{fontSize:"var(--fs-base)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
@@ -25762,11 +25838,11 @@ export default function App(){
                     </span>
                     {read && <span className="rowval" style={{fontSize:"var(--fs-sm)",color:read.colour,flexShrink:0}}>{read.word}</span>}
                   </div>
-                  {booked && <div style={{fontSize:"var(--fs-sm)",marginTop:3,color:"#e0bd72"}}>✦ His name is the one on the bill.</div>}
+                  {booked && <div style={{fontSize:"var(--fs-sm)",marginTop:3,color:"var(--gold-hi)"}}>✦ His name is the one on the bill.</div>}
                   {(()=>{ const pe = prepFor(S, g, o); return pe>0
-                    ? <div style={{fontSize:"var(--fs-sm)",marginTop:3,color:"#9aa86a"}}>✦ He has drilled for this man — {prepWord(g)}.</div>
+                    ? <div style={{fontSize:"var(--fs-sm)",marginTop:3,color:"var(--laurel)"}}>✦ He has drilled for this man — {prepWord(g)}.</div>
                     : null; })()}
-                  {pick.kind==="single" && (()=>{ const w=metWord(liveFoe(S,pick.o),g); return w?<div style={{fontSize:"var(--fs-base)",marginTop:2,color:"#d8ac5f"}}>{w}</div>:null; })()}
+                  {pick.kind==="single" && (()=>{ const w=metWord(liveFoe(S,pick.o),g); return w?<div style={{fontSize:"var(--fs-base)",marginTop:2,color:"var(--gold)"}}>{w}</div>:null; })()}
                   {/* ---- WHAT THE PURSE IS FOR ----
                        Sine missione pays 1.8x and carried a two-word tag. Measured
                        across five hundred bouts a side at matched statlines: an even
@@ -25781,7 +25857,7 @@ export default function App(){
                        warning stands on its own when there is no figure to put in it. */
                     const lose = Math.round((1 - winChance(g, foe, prepFor(S,g,o), tactic||"measured")) * 100);
                     const ok = Number.isFinite(lose);
-                    return (<div style={{fontSize:"var(--fs-sm)",marginTop:3,color:"#d96f5d"}}>
+                    return (<div style={{fontSize:"var(--fs-sm)",marginTop:3,color:"var(--blood)"}}>
                       {ok
                         ? `✦ No appeal is asked and none is given. He loses about ${lose} in a hundred, and a loss here is his life.`
                         : `✦ No appeal is asked and none is given. A loss here is his life.`}
@@ -25791,7 +25867,7 @@ export default function App(){
               );
             })}
             {needTwo && chosen.length===2 && (()=>{ const t=tieBetween(S,chosen[0].id,chosen[1].id);
-              return <div style={{fontSize:"var(--fs-md)",marginTop:2,color:t&&t.kind==="brother"?"#b9c58a":t?"#d98476":"#8f7e62"}}>
+              return <div style={{fontSize:"var(--fs-md)",marginTop:2,color:t&&t.kind==="brother"?"var(--laurel-hi)":t?"var(--blood-hi)":"var(--ink-faint)"}}>
                 {t? (t.kind==="brother"?"Brothers — each fights harder for the other at his shoulder.":"Bad blood — neither will cover the other."):"They barely know each other."}
               </div>; })()}
             {enough && <button className="btn" style={{width:"100%",marginTop:10}} disabled={!valid} onClick={()=>setArenaStep(2)}>
@@ -25819,14 +25895,14 @@ export default function App(){
               <div className="flex gap-2" style={{flexWrap:"wrap"}}>
                 {ENTRANCE_KEYS.map(k=>(
                   <button key={k} className={`chip ${entrance===k?"on":""}`} onClick={()=>setEntrance(k)}
-                    style={entrance===k?{borderColor:"#c99a4b",color:"#e0bd72",background:"#2b2115"}:undefined}>{ENTRANCES[k].name}</button>
+                    style={entrance===k?{borderColor:"var(--gold-line)",color:"var(--gold-hi)",background:"var(--raise)"}:undefined}>{ENTRANCES[k].name}</button>
                 ))}
               </div>
-              <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:5}}>{ENTRANCES[entrance].blurb}</div><div style={{fontSize:"var(--fs-sm)",marginTop:4,color:"#c99a4b"}}>{entranceSays(entrance, pick && pick.opp)}</div>
+              <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:5}}>{ENTRANCES[entrance].blurb}</div><div style={{fontSize:"var(--fs-sm)",marginTop:4,color:"var(--gold-line)"}}>{entranceSays(entrance, pick && pick.opp)}</div>
             </div>
           );
           const wagerRow = (
-            <div style={{borderTop:"1px dotted #33271a",marginTop:12,paddingTop:10}}>
+            <div style={{borderTop:"1px dotted var(--line)",marginTop:12,paddingTop:10}}>
               <div className="flex items-center justify-between" style={{marginBottom:6}}>
                 <span className="tag">The bookmakers</span>
                 {stake>0 && <span className="gold" style={{fontSize:"var(--fs-base)"}}>{stake}d at risk</span>}
@@ -25862,7 +25938,7 @@ export default function App(){
               </div>
               {stake>0 && (<div className="grid grid-cols-2 gap-2">
                 <button className={`chip ${!against?"on":""}`} onClick={()=>setAgainst(false)}>Back your man</button>
-                <button className={`chip ${against?"on":""}`} style={against?{borderColor:"#7c2a22",color:"#d98476",background:"#2a1512"}:undefined} onClick={()=>setAgainst(true)}>Have him lose</button>
+                <button className={`chip ${against?"on":""}`} style={against?{borderColor:"var(--blood-edge)",color:"var(--blood-hi)",background:"var(--blood-edge)"}:undefined} onClick={()=>setAgainst(true)}>Have him lose</button>
               </div>)}
               {stake>0 && against && <div className="blood" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:6}}>He will be told to go down, and he will know you asked.</div>}
               {(()=>{ /* the board is struck on the sheet. What is in your yard is not on it. */
@@ -25899,13 +25975,13 @@ export default function App(){
                       <div className="flex items-center justify-between gap-2" style={{marginBottom:8,flexWrap:"wrap"}}>
                         <span className="flex items-center gap-1" style={{flexWrap:"wrap"}}>
                           <span className="chip" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",
-                            borderColor: pc>0?"#5a6a4a":pc<0?"#7c2a22":"#4e3c26",
-                            color: pc>0?"#9aa86a":pc<0?"#d96f5d":"#b09b7d"}}>
+                            borderColor: pc>0?"var(--laurel-edge2)":pc<0?"var(--blood-edge)":"var(--line-4)",
+                            color: pc>0?"var(--laurel)":pc<0?"var(--blood)":"var(--ink-dim)"}}>
                             Purses {pc>0?"+":""}{pc}%
                           </span>
                           {dr>0 && (
                             <span className="chip" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",
-                              borderColor:"#5a6a4a",color:"#9aa86a"}}
+                              borderColor:"var(--laurel-edge2)",color:"var(--laurel)"}}
                               title="The town pays over the odds to say your house was here">
                               Your name +{dr}%
                             </span>
@@ -25962,7 +26038,7 @@ export default function App(){
                               the night deals — which is why `sand` caught this once in six runs
                               and `room` catches it every time. */}
                           <div className="flex items-center justify-between gap-2">
-                            <span className="disp" style={{fontSize:"var(--fs-base)",color:on?"#e8d092":"#e8d9b8",minWidth:0,whiteSpace:"normal",overflowWrap:"anywhere"}}>
+                            <span className="disp" style={{fontSize:"var(--fs-base)",color:on?"var(--ink-hi)":"var(--ink)",minWidth:0,whiteSpace:"normal",overflowWrap:"anywhere"}}>
                               {f.nick? `${f.name}, ${f.nick}` : f.name}
                             </span>
                             <span className="gold" style={{fontSize:"var(--fs-base)",flexShrink:0}}>{pitPurse(S, f, pitStakes)}d</span>
@@ -25977,7 +26053,7 @@ export default function App(){
                             <span className="dim" style={{fontSize:"var(--fs-sm)"}}>against {me.name}</span>
                             <span className="rowval" style={{fontSize:"var(--fs-sm)",color:read.colour}}>{read.word}</span>
                           </div>}
-                          {mw && <div style={{fontSize:"var(--fs-sm)",marginTop:2,color:"#d8ac5f",textAlign:"left"}}>{mw}</div>}
+                          {mw && <div style={{fontSize:"var(--fs-sm)",marginTop:2,color:"var(--gold)",textAlign:"left"}}>{mw}</div>}
                         </button>
                       );
                     })}
@@ -26042,13 +26118,13 @@ export default function App(){
                   </button>
                 ); })()}
               {o.venue && <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>{VEN(o.venue).say}</div>}
-              {o.sky && <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:2,color:"#9dc0d4"}}>{SKY(o.sky).say}{shelterOf(o.venue)>0.3?" There is a roof of a kind over most of it.":""}</div>}
-              {me && (()=>{ const w=metWord(liveFoe(S,o),me); return w?<div style={{fontSize:"var(--fs-md)",marginTop:2,color:"#d8ac5f"}}>{w}</div>:null; })()}
+              {o.sky && <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:2,color:"var(--azure)"}}>{SKY(o.sky).say}{shelterOf(o.venue)>0.3?" There is a roof of a kind over most of it.":""}</div>}
+              {me && (()=>{ const w=metWord(liveFoe(S,o),me); return w?<div style={{fontSize:"var(--fs-md)",marginTop:2,color:"var(--gold)"}}>{w}</div>:null; })()}
               {(()=>{ if(!me) return null;
                 const tr = theirRead(S, me, o);
                 if(tr<=0 || !(me.watchedBy && me.watchedBy.known)) return null;
                 return (
-                  <div className="panel" style={{padding:9,marginTop:8,background:"#1c1610",borderColor:"#7c2a22"}}>
+                  <div className="panel" style={{padding:9,marginTop:8,background:"var(--panel)",borderColor:"var(--blood-edge)"}}>
                     <div className="tag tag-blood" style={{marginBottom:4}}>They have had him watched</div>
                     <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",lineHeight:1.35}}>
                       House {me.watchedBy.house} has been at your wall. Whoever they send will know {me.name}'s work
@@ -26068,7 +26144,7 @@ export default function App(){
               {(()=>{ if(!me || !o.imperial) return null;
                 const pr = prepOf(me); if(!pr) return null;
                 return (
-                  <div className="panel" style={{padding:9,marginTop:8,background:"#1c1610",borderColor:"#7c2a22"}}>
+                  <div className="panel" style={{padding:9,marginTop:8,background:"var(--panel)",borderColor:"var(--blood-edge)"}}>
                     <div className="tag tag-blood" style={{marginBottom:4}}>The drill does not travel</div>
                     <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",lineHeight:1.35}}>
                       {me.name} has {prepWord(me)} of {pr.name} in him and it is worth nothing here. Rome's man
@@ -26081,7 +26157,7 @@ export default function App(){
               {(()=>{ const pe = me ? prepFor(S, me, o) : 0; if(pe<=0) return null;
                 const right = prepPlans(S, o);
                 return (
-                  <div className="panel" style={{padding:9,marginTop:8,background:"#1c1610",borderColor:"#5a6a35"}}>
+                  <div className="panel" style={{padding:9,marginTop:8,background:"var(--panel)",borderColor:"var(--laurel-edge)"}}>
                     <div className="flex items-center justify-between gap-2" style={{marginBottom:4}}>
                       <span className="tag tag-gold">He has drilled for this man</span>
                       <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{prepWord(me)}</span>
@@ -26094,21 +26170,21 @@ export default function App(){
                     <div className="tag" style={{margin:"2px 0 4px"}}>The plan</div>
                     <div className="grid grid-cols-2 gap-2">
                       {PLAN_KEYS.map(k=>{ const hints = right.includes(k);
-                        return <button key={k} className={`focusbtn ${plan===k?"on":""}`} onClick={()=>setPlan(k)} style={hints?{borderColor:"#c99a4b"}:undefined}>{PLANS[k].name}<span className="sub">{hints?"he has drilled for exactly this":PLANS[k].desc}</span></button>; })}
+                        return <button key={k} className={`focusbtn ${plan===k?"on":""}`} onClick={()=>setPlan(k)} style={hints?{borderColor:"var(--gold-line)"}:undefined}>{PLANS[k].name}<span className="sub">{hints?"he has drilled for exactly this":PLANS[k].desc}</span></button>; })}
                     </div>
                   </div>
                 ); })()}
               {(!o.watched && !(me && prepFor(S, me, o) > 0)) ? (
                 <button className="btn btn-ghost" style={{width:"100%",marginTop:8}} disabled={S.gold<watchCost(S,o)} onClick={()=>haveWatched(o.id)}>Have him watched · {watchCost(S,o)}d</button>
               ) : o.watched ? (
-                <div className="panel" style={{padding:9,marginTop:8,background:"#1c1610",borderColor:"#6d5426"}}>
+                <div className="panel" style={{padding:9,marginTop:8,background:"var(--panel)",borderColor:"var(--gold-edge)"}}>
                   <div className="tag tag-gold" style={{marginBottom:4}}>What they saw</div>
                   {(()=>{ const ft = o.watchedTac || foeTactic(o.opp);
                     return (
-                      <div className="panel" style={{padding:"8px 10px",marginBottom:7,background:"#1c1610",borderColor:"#5a6a35"}}>
+                      <div className="panel" style={{padding:"8px 10px",marginBottom:7,background:"var(--panel)",borderColor:"var(--laurel-edge)"}}>
                         <div className="flex items-center justify-between gap-2">
                           <span className="dim" style={{fontSize:"var(--fs-micro)",textTransform:"uppercase",letterSpacing:".07em"}}>How he means to fight it</span>
-                          <span className="rowval" style={{fontSize:"var(--fs-sm)",color:"#9aa86a",flexShrink:0}}>{FOE_TACTIC_WORD[ft]}</span>
+                          <span className="rowval" style={{fontSize:"var(--fs-sm)",color:"var(--laurel)",flexShrink:0}}>{FOE_TACTIC_WORD[ft]}</span>
                         </div>
                         <div style={{fontSize:"var(--fs-md)",marginTop:3,lineHeight:1.4}}>{her(FOE_TACTIC_SAY[ft](o.opp), o.opp)}</div>
                         <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:3,fontStyle:"italic"}}>{FOE_TACTIC_ANSWER[ft]}</div>
@@ -26117,7 +26193,7 @@ export default function App(){
                   {(()=>{ const T = (o.opp && o.opp.traits || []).filter(t=>TRAIT_SEEN[t]);
                     if(!T.length) return null;
                     return (
-                      <div className="panel" style={{padding:"8px 10px",marginBottom:7,background:"#1c1610",borderColor:"#6d5426"}}>
+                      <div className="panel" style={{padding:"8px 10px",marginBottom:7,background:"var(--panel)",borderColor:"var(--gold-edge)"}}>
                         <div className="dim" style={{fontSize:"var(--fs-micro)",textTransform:"uppercase",letterSpacing:".07em",marginBottom:3}}>What kind of man he is</div>
                         {T.map(t=>(
                           <div key={t} style={{padding:"3px 0"}}>
@@ -26132,7 +26208,7 @@ export default function App(){
                   <div className="tag" style={{margin:"7px 0 4px"}}>The plan</div>
                   <div className="grid grid-cols-2 gap-2">
                     {PLAN_KEYS.map(k=>{ const hints=o.watched[0]!=="nothing"&&o.watched.some(t=>TELLS[t].plan===k);
-                      return <button key={k} className={`focusbtn ${plan===k?"on":""}`} onClick={()=>setPlan(k)} style={hints?{borderColor:"#c99a4b"}:undefined}>{PLANS[k].name}<span className="sub">{hints?"fits what they saw":PLANS[k].desc}</span></button>; })}
+                      return <button key={k} className={`focusbtn ${plan===k?"on":""}`} onClick={()=>setPlan(k)} style={hints?{borderColor:"var(--gold-line)"}:undefined}>{PLANS[k].name}<span className="sub">{hints?"fits what they saw":PLANS[k].desc}</span></button>; })}
                   </div>
                 </div>
               ) : null}
@@ -26182,8 +26258,8 @@ export default function App(){
                     Have the field watched · {fieldWatchCost(S,o)}d
                   </button>
                 ) : (
-                  <div className="panel" style={{padding:10,background:"#1c1610",borderColor:"#5a6a35"}}>
-                    <span className="tag" style={{borderColor:"#5a6a35",color:"#a9c98a"}}>What came back</span>
+                  <div className="panel" style={{padding:10,background:"var(--panel)",borderColor:"var(--laurel-edge)"}}>
+                    <span className="tag" style={{borderColor:"var(--laurel-edge)",color:"var(--laurel-lt)"}}>What came back</span>
                     {o.watched[0]==="nothing"
                       ? <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:3}}>Eight men who will fight each other. Nothing more to say about them.</div>
                       : o.watched.map((k,i)=>(
@@ -26196,7 +26272,7 @@ export default function App(){
                   {MPLAN_KEYS.map(k=>{ const hints = o.watched && o.watched[0]!=="nothing" && o.watched.some(t=>FIELD_TELLS[t] && FIELD_TELLS[t].plan===k);
                     return (
                       <button key={k} className={`chip ${mplan===k?"on":""}`} onClick={()=>setMplan(k)}
-                        style={mplan===k?{borderColor:"#c99a4b",color:"#e0bd72",background:"#2b2115"}:(hints?{borderColor:"#5a6a35",color:"#a9c98a"}:undefined)}>
+                        style={mplan===k?{borderColor:"var(--gold-line)",color:"var(--gold-hi)",background:"var(--raise)"}:(hints?{borderColor:"var(--laurel-edge)",color:"var(--laurel-lt)"}:undefined)}>
                         {MELEE_PLANS[k].name}{hints?" ✓":""}
                       </button>
                     ); })}
@@ -26218,7 +26294,7 @@ export default function App(){
               <div style={{fontSize:"var(--fs-lg)",textTransform:"capitalize"}}>{B.name}</div>
               <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",margin:"2px 0 6px"}}>{B.desc}</div>
               <div style={{fontSize:"var(--fs-md)",marginBottom:5}}>
-                <span style={{color:"#e8d092"}}>What it asks · {STAT_NAMES[RAW.tests||"str"]}</span>
+                <span style={{color:"var(--ink-hi)"}}>What it asks · {STAT_NAMES[RAW.tests||"str"]}</span>
                 <span className="dim"> — {RAW.ask}</span>
               </div>
               {me && (()=>{ const v = me[RAW.tests||"str"]||50;
@@ -26258,7 +26334,7 @@ export default function App(){
           <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.offer}} onClick={close}>
             <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
               <div className="flex items-center justify-between" style={{marginBottom:9}}>
-                <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".1em",color:"#e8d092"}}>GIVE THE CITY GAMES</div>
+                <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".1em",color:"var(--ink-hi)"}}>GIVE THE CITY GAMES</div>
                 <button className="btn btn-ghost" style={{padding:"8px 10px"}} aria-label="Close" onClick={close}><X size={14}/></button>
               </div>
 
@@ -26267,7 +26343,7 @@ export default function App(){
                 return (
                   <button key={k} className={`optrow ${on?"on":""}`} style={{marginBottom:6,width:"100%"}} onClick={()=>set({occasion:k})}>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="disp" style={{fontSize:"var(--fs-base)",color:on?"#e8d092":"#e8d9b8"}}>{oc.name}</span>
+                      <span className="disp" style={{fontSize:"var(--fs-base)",color:on?"var(--ink-hi)":"var(--ink)"}}>{oc.name}</span>
                       <span className="dim" style={{fontSize:"var(--fs-sm)",whiteSpace:"nowrap"}}>{oc.tag}</span>
                     </div>
                     <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2}}>{oc.blurb}</div>
@@ -26279,7 +26355,7 @@ export default function App(){
                 {MUN_SCALE_KEYS.map(k=>{ const sc = MUNUS_SCALES[k], locked = S.fame < sc.gate;
                   return (
                     <button key={k} className={`chip ${p.scale===k?"on":""}`} disabled={locked}
-                      style={locked?{opacity:.4}:(p.scale===k?{borderColor:"#c99a4b",color:"#e0bd72",background:"#2b2115"}:undefined)}
+                      style={locked?{opacity:.4}:(p.scale===k?{borderColor:"var(--gold-line)",color:"var(--gold-hi)",background:"var(--raise)"}:undefined)}
                       onClick={()=>set({scale:k})}>{sc.name}{locked?` · ${sc.gate} fame`:""}</button>
                   ); })}
               </div>
@@ -26288,22 +26364,22 @@ export default function App(){
               <div className="tag" style={{marginBottom:6}}>The card</div>
               <button className={`optrow ${p.hunt?"on":""}`} style={{marginBottom:6,width:"100%"}} onClick={()=>set({hunt:!p.hunt})}>
                 <div className="flex items-center justify-between gap-2">
-                  <span className="disp" style={{fontSize:"var(--fs-base)",color:p.hunt?"#e8d092":"#e8d9b8"}}>A morning hunt</span>
+                  <span className="disp" style={{fontSize:"var(--fs-base)",color:p.hunt?"var(--ink-hi)":"var(--ink)"}}>A morning hunt</span>
                   <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{p.hunt?"✓ ":""}the mob's delight</span>
                 </div>
                 <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>Beasts to open the day. The cheap seats love it; it costs more and reads as blood.</div>
               </button>
               <button className={`optrow ${p.sine?"on":""}`} style={{marginBottom:6,width:"100%"}} onClick={()=>set({sine:!p.sine})}>
                 <div className="flex items-center justify-between gap-2">
-                  <span className="disp" style={{fontSize:"var(--fs-base)",color:p.sine?"#d98476":"#e8d9b8"}}>To the death</span>
-                  <span className="rowval" style={{fontSize:"var(--fs-sm)",color:p.sine?"#d98476":"#9c8a6f"}}>{p.sine?"✓ ":""}sine missione</span>
+                  <span className="disp" style={{fontSize:"var(--fs-base)",color:p.sine?"var(--blood-hi)":"var(--ink)"}}>To the death</span>
+                  <span className="rowval" style={{fontSize:"var(--fs-sm)",color:p.sine?"var(--blood-hi)":"var(--ink-faint)"}}>{p.sine?"✓ ":""}sine missione</span>
                 </div>
                 <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>No mercy on the card. The mob roars for it; the good seats look away, and their favour cools.</div>
               </button>
 
               <div className="tag" style={{margin:"11px 0 6px"}}>The centrepiece</div>
               <button className={`optrow ${!p.spectacle?"on":""}`} style={{marginBottom:6,width:"100%"}} onClick={()=>set({spectacle:null})}>
-                <div className="disp" style={{fontSize:"var(--fs-base)",color:!p.spectacle?"#e8d092":"#e8d9b8"}}>No centrepiece</div>
+                <div className="disp" style={{fontSize:"var(--fs-base)",color:!p.spectacle?"var(--ink-hi)":"var(--ink)"}}>No centrepiece</div>
                 <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>An honest card of bouts. Nothing grand, nothing to go wrong.</div>
               </button>
               {SPEC_KEYS.map(k=>{ const SP = SPECTACLES[k];
@@ -26315,13 +26391,13 @@ export default function App(){
                   <button key={k} className={`optrow ${on?"on":""}`} style={{marginBottom:6,width:"100%",opacity:locked?0.5:1}}
                     disabled={locked} onClick={()=>set({spectacle:on?null:k})}>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="disp" style={{fontSize:"var(--fs-base)",color:on?"#e8d092":"#e8d9b8"}}>{SP.name}</span>
+                      <span className="disp" style={{fontSize:"var(--fs-base)",color:on?"var(--ink-hi)":"var(--ink)"}}>{SP.name}</span>
                       <span className="rowval gold" style={{fontSize:"var(--fs-sm)"}}>+{SP.cost}d</span>
                     </div>
                     <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>{SP.blurb}</div>
                     {locked
                       ? <div className="blood" style={{fontSize:"var(--fs-sm)",marginTop:2}}>{lockedScale?"Needs a Lavish munus":`Needs ${SP.fameGate} fame`}</div>
-                      : <div style={{fontSize:"var(--fs-sm)",marginTop:2,color: k==="execution"?"#d96f5d" : "#b09b7d"}}>
+                      : <div style={{fontSize:"var(--fs-sm)",marginTop:2,color: k==="execution"?"var(--blood)" : "var(--ink-dim)"}}>
                           {k==="execution" ? "The mob feasts; the front rows and the senator go cold."
                             : `A bet on the production — grander scale, likelier to land. ${on?"":""}`}
                         </div>}
@@ -26334,7 +26410,7 @@ export default function App(){
                 <button className={`chip ${!p.headliner?"on":""}`} onClick={()=>set({headliner:null})}>None</button>
                 {eligible.slice(0,8).map(g=>(
                   <button key={g.id} className={`chip ${p.headliner===g.id?"on":""}`}
-                    style={p.headliner===g.id?{borderColor:"#c99a4b",color:"#e0bd72",background:"#2b2115"}:undefined}
+                    style={p.headliner===g.id?{borderColor:"var(--gold-line)",color:"var(--gold-hi)",background:"var(--raise)"}:undefined}
                     onClick={()=>set({headliner:p.headliner===g.id?null:g.id})}>{g.name}</button>
                 ))}
               </div>
@@ -26354,7 +26430,7 @@ export default function App(){
                 </button>
               </div>
 
-              <div className="panel" style={{padding:11,marginBottom:11,background:"#1c1610",borderColor:canAfford?"#6d5426":"#7c2a22"}}>
+              <div className="panel" style={{padding:11,marginBottom:11,background:"var(--panel)",borderColor:canAfford?"var(--gold-edge)":"var(--blood-edge)"}}>
                 {p.sell ? (
                   <div className="flex items-center justify-between" style={{fontSize:"var(--fs-md)"}}>
                     <span className="dim">The editor pays you</span><span className="gold">+{fee}d</span>
@@ -26362,7 +26438,7 @@ export default function App(){
                 ) : (
                   <div className="flex items-center justify-between" style={{fontSize:"var(--fs-md)"}}>
                     <span className="dim">Out of your own coin</span>
-                    <span style={{color:canAfford?"#e0bd72":"#d96f5d"}}>−{cost}d</span>
+                    <span style={{color:canAfford?"var(--gold-hi)":"var(--blood)"}}>−{cost}d</span>
                   </div>
                 )}
                 <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:4}}>
@@ -26396,9 +26472,9 @@ export default function App(){
               <div style={{fontSize:"var(--fs-xl)",marginBottom:6}}>{S.pendingEvent.text}</div>
               {/* when a date is being asked of a named man, the count before you answer */}
               {S.pendingEvent.note && S.pendingEvent.note.word && (()=>{ const N = S.pendingEvent.note;
-                const col = !N.ok ? "#d96f5d" : N.tight ? "#d8ac5f" : "#9aa86a";
+                const col = !N.ok ? "var(--blood)" : N.tight ? "var(--gold)" : "var(--laurel)";
                 return (
-                  <div className="panel" style={{padding:"9px 11px",marginTop:8,marginBottom:2,borderColor:col,background:"#1a1510",borderLeft:`3px solid ${col}`}}>
+                  <div className="panel" style={{padding:"9px 11px",marginTop:8,marginBottom:2,borderColor:col,background:"var(--panel)",borderLeft:`3px solid ${col}`}}>
                     <div className="dim" style={{fontSize:"var(--fs-micro)",textTransform:"uppercase",letterSpacing:".08em",marginBottom:2}}>The doctore counts it out</div>
                     <div style={{fontSize:"var(--fs-md)",lineHeight:1.4,color:col}}>{N.word}</div>
                   </div>
@@ -26413,11 +26489,11 @@ export default function App(){
 
       {S.over && !fight && (
         <div className="modalwrap" style={{zIndex:Z.page}} role="dialog" aria-modal="true">
-          <div className="modal" tabIndex={-1} style={{borderColor:"#7c2a22"}}>
+          <div className="modal" tabIndex={-1} style={{borderColor:"var(--blood-edge)"}}>
             <div className="disp blood" style={{fontSize:"var(--fs-xxl)",fontWeight:900,marginBottom:8,letterSpacing:".12em"}}>{OVER_TEXT[S.over.kind](S.over).title}</div>
             <div style={{fontSize:"var(--fs-xl)"}}>{OVER_TEXT[S.over.kind](S.over).text}</div>
             {(()=>{ const c = closing(S), R2 = c.R2, V = verdictOf(c); return (<>
-              <div className="panel" style={{padding:11,marginTop:12,background:"#1c1610"}}>
+              <div className="panel" style={{padding:11,marginTop:12,background:"var(--panel)"}}>
                 <div className="dim" style={{fontSize:"var(--fs-base)",marginBottom:5}}>
                   {R2.years} year{R2.years===1?"":"s"} · {S.week} weeks · fame {rnd(S.fame)}
                   {c.gen>1 && ` · ${c.gen} lanistae`}
@@ -26433,46 +26509,46 @@ export default function App(){
                 </div>
               </div>
 
-              <div className="panel" style={{padding:12,marginTop:9,background:"#1c1610",borderColor:"#6d5426"}}>
-                <div className="disp" style={{fontSize:"var(--fs-lg)",color:"#e8d092",marginBottom:4}}>{V.name}</div>
+              <div className="panel" style={{padding:12,marginTop:9,background:"var(--panel)",borderColor:"var(--gold-edge)"}}>
+                <div className="disp" style={{fontSize:"var(--fs-lg)",color:"var(--ink-hi)",marginBottom:4}}>{V.name}</div>
                 <div style={{fontSize:"var(--fs-lg)"}}>{V.say(c)}</div>
               </div>
 
-              <div className="panel" style={{padding:11,marginTop:9,background:"#1c1610"}}>
+              <div className="panel" style={{padding:11,marginTop:9,background:"var(--panel)"}}>
                 <div className="tag tag-gold" style={{marginBottom:5}}>The account</div>
                 {c.best && c.best.wins>0 && (
-                  <div style={{fontSize:"var(--fs-md)",borderTop:"1px dotted #33271a",paddingTop:5}}>
+                  <div style={{fontSize:"var(--fs-md)",borderTop:"1px dotted var(--line)",paddingTop:5}}>
                     <span className="dim">The best of them was </span>
                     {c.best.nick? `${c.best.name}, ${c.best.nick}` : c.best.name}
                     <span className="dim"> — {c.best.wins} won, and {fateOf(c.best).verb(c.best)}.</span>
                   </div>
                 )}
                 {c.styles.length>0 && (
-                  <div style={{fontSize:"var(--fs-md)",borderTop:"1px dotted #33271a",paddingTop:5,marginTop:5}}>
+                  <div style={{fontSize:"var(--fs-md)",borderTop:"1px dotted var(--line)",paddingTop:5,marginTop:5}}>
                     <span className="dim">Your best style was the </span>{c.styles[0].k.toLowerCase()}
                     <span className="dim"> at {c.styles[0].pc}%{c.styles.length>1 ? `, your worst the ${c.styles[c.styles.length-1].k.toLowerCase()} at ${c.styles[c.styles.length-1].pc}%.` : "."}</span>
                   </div>
                 )}
                 {c.nemesisHouse && (
-                  <div style={{fontSize:"var(--fs-md)",borderTop:"1px dotted #33271a",paddingTop:5,marginTop:5}}>
+                  <div style={{fontSize:"var(--fs-md)",borderTop:"1px dotted var(--line)",paddingTop:5,marginTop:5}}>
                     <span className="dim">House {c.nemesisHouse.h} took you apart — </span>{c.nemesisHouse.w} of {c.nemesisHouse.n}
                     <span className="dim">, and they will remember it longer than you will.</span>
                   </div>
                 )}
                 {c.worstYear && (
-                  <div style={{fontSize:"var(--fs-md)",borderTop:"1px dotted #33271a",paddingTop:5,marginTop:5}}>
+                  <div style={{fontSize:"var(--fs-md)",borderTop:"1px dotted var(--line)",paddingTop:5,marginTop:5}}>
                     <span className="dim">Year {c.worstYear[0]} was the worst of it — </span>{c.worstYear[1]} buried
                     <span className="dim">.</span>
                   </div>
                 )}
                 {c.purse>0 && (
-                  <div style={{fontSize:"var(--fs-md)",borderTop:"1px dotted #33271a",paddingTop:5,marginTop:5}}>
+                  <div style={{fontSize:"var(--fs-md)",borderTop:"1px dotted var(--line)",paddingTop:5,marginTop:5}}>
                     <span className="dim">Purses taken: </span>{c.purse}d
                     <span className="dim">{c.feats? ` · ${c.feats} feat${c.feats===1?"":"s"} to the house.` : "."}</span>
                   </div>
                 )}
                 {c.freedMen.length>0 && (
-                  <div style={{fontSize:"var(--fs-md)",borderTop:"1px dotted #33271a",paddingTop:6,marginTop:6}}>
+                  <div style={{fontSize:"var(--fs-md)",borderTop:"1px dotted var(--line)",paddingTop:6,marginTop:6}}>
                     <div className="dim" style={{fontSize:"var(--fs-base)"}}>Walked out on their own legs</div>
                     <div className="gold" style={{fontSize:"var(--fs-md)",marginTop:2}}>{c.freedMen.join(" · ")}</div>
                   </div>
