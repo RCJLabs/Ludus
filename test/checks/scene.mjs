@@ -92,6 +92,42 @@ export async function run({ p, errors }){
     if(!/villa/i.test(now)) fails.push(`tapping the villa landed on ${now}`);
   }
 
+  /* ---- AND A FULL YARD, BECAUSE A TWO-MAN HOUSE CANNOT CATCH A COLLISION ----
+     The first big house to look at the scene — year 15, eight men — found the names writing over
+     each other: Boduognatas into Asmatokos into Vermina. The pinned morning carries two men and
+     could never have shown it. So: a house driven to a full yard, and every name label's real
+     BBox measured — no two labels on the same baseline may touch. */
+  await installRope(p);   /* the reload above dropped it — the rope is per-page */
+  await p.evaluate(()=>{ const A=window.__LVDVS,R=window.__ROPE;
+    const d=A.newGameState("Full","clean","YARD-8",null);
+    for(let i=0;i<40;i++){ if(d.over) break; R.lanista(d, { keep:8 }); }
+    let k=null; for(const q of Object.keys(localStorage)) if(/ludus-slot-\d/.test(q)) k=q;
+    if(k) localStorage.setItem(k, JSON.stringify(d)); });
+  await p.reload({ waitUntil:"domcontentloaded" }); await p.waitForTimeout(1100);
+  await p.evaluate(()=>{ const b=[...document.querySelectorAll("button")]
+    .find(x=>/take up the keys/i.test(x.innerText||"")); if(b) b.click(); });
+  await p.waitForTimeout(1100); await clearAll(p, 8);
+  await tab(p, "ludus"); await p.waitForTimeout(400); await clearAll(p, 6);
+  await tab(p, "ludus"); await p.waitForTimeout(300);
+  const yard = await p.evaluate(()=>{
+    const svg = document.querySelector('svg[aria-label^="The ludus"]'); if(!svg) return null;
+    const names = [...svg.querySelectorAll("text")].filter(t=>{
+      const g = t.closest(".scn"); return g && / the \w+$/i.test(g.getAttribute("aria-label")||""); });
+    const boxes = names.map(t=>{ const b = t.getBBox(); return { t:(t.textContent||""), x:b.x, w:b.width, y:b.y }; });
+    const clashes = [];
+    for(let i=0;i<boxes.length;i++) for(let j=i+1;j<boxes.length;j++){
+      const a=boxes[i], b=boxes[j];
+      if(Math.abs(a.y-b.y) < 4 && a.x < b.x+b.w && b.x < a.x+a.w) clashes.push(`${a.t} / ${b.t}`);
+    }
+    return { men: names.length, clashes };
+  });
+  if(!yard) fails.push("no scene on the full-yard house");
+  else {
+    lines.push(`full yard: ${yard.men} name labels, ${yard.clashes.length} collisions${yard.clashes.length?` — ${yard.clashes.join(", ")}`:""}`);
+    if(yard.men < 5) fails.push(`only ${yard.men} men drawn on a house driven to a full yard — the keep:8 fixture has drifted`);
+    for(const c of yard.clashes) fails.push(`yard names collide: ${c}`);
+  }
+
   if(errors.length) fails.push(`${errors.length} page errors`);
   return { pass: fails.length === 0, why: fails.slice(0,3).join("; ") || null, lines };
 }

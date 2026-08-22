@@ -20567,9 +20567,12 @@ const SECT = {
     </div>
     </Sect>
     ); },
-  yard: (S, X) => {
+  /* the drawn scene superseded this panel's place on the tab, but the LudusPlan inside it — the
+     built wings — is drawn NOWHERE else. `content` caught it orphaned; its door is the House sheet,
+     whose tile already counts the wings the plan shows. */
+  yard: (S, X, forceOpen) => {
     return (
-    <Sect title="The yard" note={`${BKEYS.reduce((n,k)=>n+bLevel(S,k),0)} of 20 wings · ${activeG(S).length} in the yard`}>
+    <Sect title="The yard" note={`${BKEYS.reduce((n,k)=>n+bLevel(S,k),0)} of 20 wings · ${activeG(S).length} in the yard`} open={forceOpen}>
             <LudusPlan S={S}/>
             <div className="flex items-center justify-between" style={{marginTop:6}}>
     <span className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>
@@ -20582,8 +20585,11 @@ const SECT = {
             </div>
           </Sect>
     ); },
-  unrest: S => (
-  <Sect title="Unrest in the cells" note={unrestWord(S.unrest)} open={S.unrest>=50 || !!S.rebellion}
+  /* orphaned with yard when the scene took the tab — the rebellion-stage whispers live only here.
+     Its door is WHERE THINGS STAND; the ALARM stays on home, because the scene's cells now speak
+     the rebellion's stages in their caption. */
+  unrest: (S, X, forceOpen) => (
+  <Sect title="Unrest in the cells" note={unrestWord(S.unrest)} open={forceOpen ?? (S.unrest>=50 || !!S.rebellion)}
     mark={sectMark(S,"cells")}>
     <Bar v={S.unrest} color="linear-gradient(90deg,#6a3a1a,#b8463a)"/>
     {S.rebellion && <div className="blood" style={{fontSize:"var(--fs-md)",marginTop:5,fontStyle:"italic"}}>
@@ -20637,13 +20643,13 @@ function Scene({ S, agenda, openDoc, openMan, go }){
     fill="#b09b7d" fontStyle="italic" fontFamily="Georgia,serif">{t}</text>;
   const room = (x,y,t) => <text x={x} y={y} fontSize="10" letterSpacing="3" fill="#8a6a2c"
     fontFamily="'Cinzel',serif">{t}</text>;
-  const Man = ({x,y,g,tone}) => (
+  const Man = ({x,y,g,tone,row}) => (
     <g className="scn" role="button" tabIndex={0} aria-label={`${g.name} the ${g.cls}`}
       onClick={()=>openMan(g.id)} onKeyDown={e=>{ if(e.key==="Enter") openMan(g.id); }}>
       <circle cx={x} cy={y} r="7" fill="#241c12" stroke={g.injury?"#a8705f":tone} strokeWidth="1.3"/>
       <path d={`M${x} ${y+8} q-9 3 -10 27 l5 0 q1 -11 5 -14 q4 3 5 14 l5 0 q-1 -24 -10 -27 Z`}
         fill="#241c12" stroke={g.injury?"#a8705f":tone} strokeWidth="1.3"/>
-      {label(x, y+48, g.name.slice(0,11))}
+      {label(x, y+48+(row?14:0), g.name.slice(0,12))}
     </g>);
 
   return (
@@ -20707,9 +20713,13 @@ function Scene({ S, agenda, openDoc, openMan, go }){
       <g>
         {room(26, 356, "THE YARD")}
         <rect x="24" y="366" width="342" height="100" fill="#191309" stroke="#33271a"/>
-        {men.slice(0,7).map((g,i)=><Man key={g.id} x={56+i*46} y={382} g={g}
+        {/* six slots, not seven-and-a-collision: a real house carries names like Boduognatas and
+             Diophantos, and at 46px spacing they wrote over each other — caught on the first big
+             house to look at the scene, year 15, eight men. Wider slots, and neighbouring names on
+             ALTERNATING baselines so even two long ones cannot touch. The rest are a count. */}
+        {men.slice(0,6).map((g,i)=><Man key={g.id} x={54+i*56} y={382} g={g} row={i%2}
           tone={(g.fatigue||0)>55?"#a8917d":"#e8d9b8"}/>)}
-        {men.length>7 && label(340, 420, `+${men.length-7}`)}
+        {men.length>6 && label(346, 400, `+${men.length-6} more`)}
         {men.length===0 && label(195, 414, "nobody — the cells stand empty")}
       </g>
 
@@ -20727,7 +20737,12 @@ function Scene({ S, agenda, openDoc, openMan, go }){
           <line x1={x+21} y1={518} x2={x+21} y2={538} stroke="#3e2f1f" strokeWidth="1.3"/>
         </g>)}
         {S.unrest >= 40 && <circle cx="120" cy="512" r="16" fill="url(#scn-torch)"/>}
-        {label(124, 580, S.unrest>=55?"close to fire":S.unrest>=30?"restless tonight":"quiet tonight")}
+        {label(124, 580, S.rebellion
+          ? ["","whispers after dark","steel is missing","the spark is lit"][S.rebellion.stage] || "the cells are turning"
+          : S.unrest>=55?"close to fire":S.unrest>=30?"restless tonight":"quiet tonight")}
+        {S.rebellion && <circle cx="212" cy="576" r="5" fill="#cf5a49">
+          <animate attributeName="opacity" values="1;.4;1" dur="1.4s" repeatCount="indefinite"/>
+        </circle>}
         <Badge x={216} y={512} list={at("cells")}/>
       </g>
 
@@ -21592,6 +21607,7 @@ export default function App(){
        it explains. Folding a panel because it lacks a button would have moved all ten. */
     stand: { title:"WHERE THINGS STAND", body: ()=>(
       <div className="flex flex-col gap-3">
+        {SECT.unrest(S, SX, true)}
         {SECT.lastWeek(S, SX, true)}
         {SECT.year(S, SX, true)}
         {(S.rivalLog||[]).length>0 && SECT.rivals(S, SX, true)}
@@ -22034,7 +22050,7 @@ export default function App(){
         The gold tag is whatever he is actually carrying. Gear outside his own style still works, but clumsily — a net-man behind a legionary's shield is worse than useless.
       </div>
     </>) },
-    house:  { title:"THE HOUSE",          body:()=>(<><div className="panel" style={{padding:13}}>
+    house:  { title:"THE HOUSE",          body:()=>(<>{SECT.yard(S, SX, true)}<div className="panel" style={{padding:13}}>
   <div className="flex items-center justify-between" style={{marginBottom:7}}>
     <span className="tag tag-gold">The House</span>
     <span className="dim" style={{fontSize:"var(--fs-base)"}}>{bUpkeep(S)}d / week</span>
