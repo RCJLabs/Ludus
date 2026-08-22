@@ -37,4 +37,5 @@
 {"v":"3.100.0","checks":81,"failed":[]},
 {"v":"3.101.0","checks":82,"failed":[]},
 {"v":"3.102.0","checks":82,"failed":["room"]},
-{"v":"3.102.0","checks":82,"failed":[]}]
+{"v":"3.102.0","checks":82,"failed":[]},
+{"v":"3.103.0","checks":83,"failed":[]}]
