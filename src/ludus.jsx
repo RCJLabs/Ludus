@@ -20799,6 +20799,9 @@ export default function App(){
      recurring shape this project keeps finding ("a panel quotes a number the engine will not roll")
      cannot recur here by construction. */
   const [deskDoc,setDeskDoc] = useState(null);
+  /* the morning report as a SURFACE (v3.90.0, phase 3): the same agenda the ludus panel carries,
+     one tap from every other tab, each row opening its document or travelling to its room. */
+  const [report,setReport] = useState(null);
   const deskRef = useRef(null);
   /* the frame UNFOLDS the panel — as an EFFECT, not a ref callback, and the difference is the whole
      fix: refs are set before child effects run, so a ref-callback force was silently overwritten by
@@ -20834,6 +20837,7 @@ export default function App(){
   /* the bar's marks, computed once per render from one agenda pass — the effect below and
      the tab bar both read this, so switching tabs cannot disagree with what the bar showed */
   const marks = (S && !S.over) ? tabMarks(S) : null;
+  const AGN = (S && !S.over) ? (()=>{ try { return agenda(S)||[]; } catch(e){ return []; } })() : [];
   useEffect(()=>{ if(!S || S.over || !marks) return;
     /* the ask list is part of "seen" now, so the third dep is what is asking as well as
        what has changed — otherwise a new urgent item on the tab you are already looking at
@@ -20948,7 +20952,7 @@ export default function App(){
 
   const mut = fn => { const d = clone(S); fn(d); d.rngState = rngGet(); setS(d); };
 
-  const clearTransient = ()=>{ setFight(null); setSelId(null); setEvResult(null); setGearPick(null); setAsk(null); setFGid(null); setArenaWiz(false); setArenaStep(0); setArenaPick(null); setDealH(null); setDealMsg(null); setDeskDoc(null); };
+  const clearTransient = ()=>{ setFight(null); setSelId(null); setEvResult(null); setGearPick(null); setAsk(null); setFGid(null); setArenaWiz(false); setArenaStep(0); setArenaPick(null); setDealH(null); setDealMsg(null); setDeskDoc(null); setReport(null); };
   const begin = ()=>{ clearTransient();
     if(!slot){ let free=1; for(let i=1;i<=SLOTS_N;i++) if(!slots[i]){ free=i; break; } setSlot(free); }
     const d0 = newGameState(nameIn.trim()||"House of Aurelius", bonus, seedIn, pitchIn);
@@ -21017,6 +21021,7 @@ export default function App(){
     [!!showChron,    ()=>setShowChron(false)],
     [!!annals,       ()=>setAnnals(false)],
     [!!deskDoc,      ()=>setDeskDoc(null)],
+    [!!report,       ()=>setReport(null)],
     [!!sheet,        ()=>setSheet(null)],
     [!!showSettings, ()=>setShowSettings(false)],
     [!!cal,          ()=>setCal(false)],
@@ -22240,7 +22245,7 @@ export default function App(){
         </div>
       </div>
 
-      <div className="scroll" style={{width:"100%"}}><div style={{width:"100%",maxWidth:640,margin:"0 auto",padding:"calc(var(--hdr-h,84px) + 14px) 14px calc(var(--nav-h,72px) + 14px)"}}>
+      <div className="scroll" style={{width:"100%"}}><div style={{width:"100%",maxWidth:640,margin:"0 auto",padding:`calc(var(--hdr-h,84px) + 14px) 14px calc(var(--nav-h,72px) + ${tab!=="ludus" && S && !S.over && AGN.length ? "62px" : "14px"})`}}>
 
         {(()=>{ const L = lessonFor(S, tab); if(!L || S.flags.noLessons) return null;
           const read = ()=>mut(d=>{ d.flags.learned = Object.assign({}, d.flags.learned, {[L.id]:1}); });
@@ -23642,6 +23647,24 @@ export default function App(){
 
       </div></div>
 
+      {/* ---- THE MORNING REPORT'S BAR, v3.90.0 ----
+           Docked above the nav on every tab but home, where the report already opens the page. The
+           count is the whole agenda, coloured by the worst thing on it — the same derivation as the
+           rows, so the bar cannot promise what the sheet does not hold. */}
+      {tab!=="ludus" && S && !S.over && AGN.length>0 && (
+        <button className="reportbar" aria-label={`The morning report — ${AGN.length} matter${AGN.length===1?"":"s"}`}
+          onClick={()=>setReport(true)}
+          style={{position:"fixed",left:0,right:0,bottom:"calc(var(--nav-h,72px))",zIndex:19,
+            display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,
+            maxWidth:640,margin:"0 auto",padding:"9px 14px",background:"#1c1610",
+            borderTop:"1px solid #6d5426",borderBottom:"1px solid #241c12",cursor:"pointer",
+            font:"inherit",color:"inherit",border:"none",borderTopStyle:"solid",borderTopWidth:1,borderTopColor:"#6d5426"}}>
+          <span className="disp" style={{fontSize:"var(--fs-sm)",fontWeight:700,letterSpacing:".16em",color:"#e8d092"}}>THE MORNING REPORT</span>
+          <span style={{background:AGN.some(a=>a.urgency>=3)?"#cf5a49":"#c99a4b",color:"#14100c",
+            fontFamily:"'Cinzel',serif",fontWeight:900,minWidth:22,height:22,borderRadius:11,
+            textAlign:"center",lineHeight:"22px",fontSize:"var(--fs-sm)"}}>{AGN.length}</span>
+        </button>
+      )}
       <nav className="bar" role="tablist" aria-label="Sections" style={{position:"fixed",left:0,right:0,bottom:0,zIndex:20,background:"#14100c",borderTop:"1px solid #3e2f1f",display:"flex",paddingBottom:"env(safe-area-inset-bottom)"}}>
         {[["ludus","Ludus",Landmark],["men","Familia",Users],["arena","Arena",Swords],["market","Market",ShoppingBag],["villa","Villa",Wine]].map(([k,l,I])=>{
           /* the mark: the loudest thing the agenda has for this tab, and whether anything
@@ -24980,6 +25003,34 @@ export default function App(){
            is read unfolded, and Sect's per-sid memory would otherwise deliver a remembered-shut
            panel inside an opened letter. That write does land in SECT_MEM, which is view-state
            only — reading the letter counts as having opened the panel, which is what it means. */}
+      {report && (
+        <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.pick}} onClick={()=>setReport(null)}>
+          <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
+            <div className="flex items-center justify-between" style={{marginBottom:10}}>
+              <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".12em",color:"#e8d092"}}>THE MORNING REPORT</div>
+              <button className="btn btn-ghost" style={{padding:"10px 10px"}} aria-label="Close" onClick={()=>setReport(null)}><X size={14}/></button>
+            </div>
+            {AGN.map((a,i)=>{ const FACES = { house:"The House", standing:"Standing", council:"Coin & Council",
+                armory:"The Armoury", roster:"The Roster", board:"The Board" };
+              const where = `${TAB_NAMES[a.tab]||a.tab}${a.dest ? ` · ${FACES[a.dest.split(":")[1]]||""}` : ""}`;
+              const docable = a.doc && SECT[a.doc];
+              return (
+              <button key={i} className="optrow" style={{width:"100%",textAlign:"left",padding:"10px 11px",marginBottom:6,
+                  borderLeft:`3px solid ${URG[a.urgency].c}`}}
+                onClick={()=>{ setReport(null); docable ? setDeskDoc(a) : goTo(a.dest || a.tab); }}>
+                <div className="flex items-center justify-between gap-2">
+                  <span style={{fontSize:"var(--fs-md)",color:a.urgency===3?"#e8d9b8":"#cfc0a0",minWidth:0}}>{a.label}</span>
+                  <span className="rowval dim" style={{fontSize:"var(--fs-sm)",whiteSpace:"nowrap"}}>{docable ? "open ›" : `${where} ›`}</span>
+                </div>
+                {a.sub && <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:1}}>{a.sub}</div>}
+              </button>
+            ); })}
+            <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",textAlign:"center",marginTop:4}}>
+              the same list the week's work carries — a row opens its paper, or takes you where it stands
+            </div>
+          </div>
+        </div>
+      )}
       {deskDoc && SECT[deskDoc.doc] && (
         <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.pick}} onClick={()=>setDeskDoc(null)}>
           <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()} ref={deskRef}
