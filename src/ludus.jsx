@@ -20653,7 +20653,7 @@ function Scene({ S, agenda, openDoc, openMan, go }){
     </g>);
 
   return (
-    <svg viewBox="0 0 390 640" style={{display:"block",width:"100%",height:"auto"}} role="group"
+    <svg viewBox="0 0 390 700" style={{display:"block",width:"100%",height:"auto"}} role="group"
       aria-label="The ludus — every room opens its own business">
       <defs>
         <linearGradient id="scn-dawn" x1="0" y1="0" x2="0" y2="1">
@@ -20665,7 +20665,7 @@ function Scene({ S, agenda, openDoc, openMan, go }){
         <radialGradient id="scn-torch"><stop offset="0" stopColor="#c99a4b" stopOpacity=".5"/>
           <stop offset="1" stopColor="#c99a4b" stopOpacity="0"/></radialGradient>
       </defs>
-      <rect width="390" height="640" fill="url(#scn-dawn)"/>
+      <rect width="390" height="700" fill="url(#scn-dawn)"/>
       <rect x="0" y="16" width="12" height="624" fill="url(#scn-stone)"/>
       <rect x="378" y="16" width="12" height="624" fill="url(#scn-stone)"/>
 
@@ -20709,17 +20709,25 @@ function Scene({ S, agenda, openDoc, openMan, go }){
         <Badge x={286} y={234} list={at("square")}/>
       </g>
 
-      {/* THE YARD — each man is his own control, straight to his card */}
+      {/* THE YARD — each man is his own control, straight to his card, and the band itself is
+           the door to the familia: with the tab bar gone (v3.92.0) every place needs a room, and
+           the men's place is where the men stand. The figures sit ABOVE the band in the SVG, so a
+           tap on a man is still his card and a tap on the ground is the roster. */}
       <g>
         {room(26, 356, "THE YARD")}
-        <rect x="24" y="366" width="342" height="100" fill="#191309" stroke="#33271a"/>
+        <g className="scn" role="button" tabIndex={0} aria-label="The yard — the familia"
+          onClick={()=>go("men")} onKeyDown={e=>{ if(e.key==="Enter") go("men"); }}>
+          <rect x="24" y="366" width="342" height="100" fill="#191309" stroke="#33271a"/>
+        </g>
         {/* six slots, not seven-and-a-collision: a real house carries names like Boduognatas and
              Diophantos, and at 46px spacing they wrote over each other — caught on the first big
              house to look at the scene, year 15, eight men. Wider slots, and neighbouring names on
              ALTERNATING baselines so even two long ones cannot touch. The rest are a count. */}
         {men.slice(0,6).map((g,i)=><Man key={g.id} x={54+i*56} y={382} g={g} row={i%2}
           tone={(g.fatigue||0)>55?"#a8917d":"#e8d9b8"}/>)}
-        {men.length>6 && label(346, 400, `+${men.length-6} more`)}
+        {/* below the name rows, not beside the sixth man — at (346,400) it sat on his head,
+             which the check missed because it only measured name against name */}
+        {men.length>6 && label(340, 462, `+${men.length-6} more`)}
         {men.length===0 && label(195, 414, "nobody — the cells stand empty")}
       </g>
 
@@ -20778,6 +20786,15 @@ function Scene({ S, agenda, openDoc, openMan, go }){
           </circle>
           <text x="117" y="600" textAnchor="middle" fontSize="10" fontWeight="bold" fill="#14100c">!</text>
         </g>}
+      </g>
+      {/* THE ROAD — the arena's door */}
+      <g className="scn" role="button" tabIndex={0} aria-label="The road — to the sand"
+        onClick={()=>go("arena")} onKeyDown={e=>{ if(e.key==="Enter") go("arena"); }}>
+        <path d="M150 640 L118 700 L272 700 L240 640 Z" fill="#1a1410" stroke="#241c12"/>
+        <line x1="176" y1="656" x2="171" y2="672" stroke="#241c12" strokeWidth="3"/>
+        <line x1="214" y1="656" x2="219" y2="672" stroke="#241c12" strokeWidth="3"/>
+        <text x="195" y="686" textAnchor="middle" fontSize="10" letterSpacing="3" fill="#8a6a2c"
+          fontFamily="'Cinzel',serif">THE ROAD — TO THE SAND</text>
       </g>
     </svg>
   );
@@ -20896,15 +20913,18 @@ export default function App(){
   // mis-reports (it was cutting off the nav and the last on-screen controls).
   useEffect(()=>{
     const root = document.documentElement;
-    const hdr = document.querySelector(".shell > .bar");
-    const nav = document.querySelector('.shell > nav[role="tablist"]');
+    /* re-queried on every run: since v3.92.0 the bottom nav exists only off the ludus, so the
+       element this measured can appear and vanish per tab — and an absent nav must write ZERO,
+       or the scroll area keeps 72px of padding for a bar that is not there. */
     const set = () => {
+      const hdr = document.querySelector(".shell > .bar");
+      const nav = document.querySelector(".shell > nav.bar");
       if (hdr) root.style.setProperty("--hdr-h", hdr.offsetHeight + "px");
-      if (nav) root.style.setProperty("--nav-h", nav.offsetHeight + "px");
+      root.style.setProperty("--nav-h", nav ? nav.offsetHeight + "px" : "0px");
     };
     set();
     const ro = typeof ResizeObserver!=="undefined" ? new ResizeObserver(set) : null;
-    if (ro){ if(hdr) ro.observe(hdr); if(nav) ro.observe(nav); }
+    if (ro){ const h = document.querySelector(".shell > .bar"); if(h) ro.observe(h); }
     window.addEventListener("resize", set);
     window.addEventListener("orientationchange", set);
     return () => {
@@ -20912,7 +20932,7 @@ export default function App(){
       window.removeEventListener("resize", set);
       window.removeEventListener("orientationchange", set);
     };
-  }, [screen]);
+  }, [screen, tab]);   /* the nav appears and vanishes with the tab since v3.92.0 — re-measure on every move */
   const [plan,setPlan] = useState("none");
   const [entrance,setEntrance] = useState("none");
   const [held,setHeld] = useState(null);
@@ -22197,7 +22217,7 @@ export default function App(){
   const SX = { askFavour, backHim, buyGear, carryOut, rackFilt, setAnnals, setAsk, setRackFilt, setSheet, setShowChron, declare, dismissDoc, doRite, doTourney, feast, hireDoc, hireStaff, host, joinCollegium, letStaffGo, mut, offerTo, openLicence, roster, seekMatch, selG, sellOne, setCrest, setDrill, setEar, setPupil, standings, stopCollegium, stopRetrain, takeRise, vowTo, walkCells };
 
   return (
-    <div className={`lr shell${prefs.reduceMotion?" reduce-motion":""}${prefs.largeText?" large-text":""}${prefs.colorblind?" cb":""}`}>
+    <div data-place={tab} className={`lr shell${prefs.reduceMotion?" reduce-motion":""}${prefs.largeText?" large-text":""}${prefs.colorblind?" cb":""}`}>
       <style>{CSS}</style>
 
       <div className="bar" style={{position:"fixed",top:0,left:0,right:0,zIndex:20,background:"linear-gradient(180deg,#1d1610,rgba(23,18,16,.96))",borderBottom:"1px solid #3e2f1f",padding:"calc(10px + env(safe-area-inset-top)) 14px 10px"}}>
@@ -23681,39 +23701,21 @@ export default function App(){
             textAlign:"center",lineHeight:"22px",fontSize:"var(--fs-sm)"}}>{AGN.length}</span>
         </button>
       )}
-      <nav className="bar" role="tablist" aria-label="Sections" style={{position:"fixed",left:0,right:0,bottom:0,zIndex:20,background:"#14100c",borderTop:"1px solid #3e2f1f",display:"flex",paddingBottom:"env(safe-area-inset-bottom)"}}>
-        {[["ludus","Ludus",Landmark],["men","Familia",Users],["arena","Arena",Swords],["market","Market",ShoppingBag],["villa","Villa",Wine]].map(([k,l,I])=>{
-          /* the mark: the loudest thing the agenda has for this tab, and whether anything
-             on it has moved since it was last looked at. The tab you are on never wears
-             one — you are looking at it. */
-          const m = (marks && marks[k]) || { n:0, urg:0, fresh:false };
-          /* fresh is the whole test now. It used to be `m.urg > 0 || m.fresh`, and the first
-             half never went out — a standing item kept the badge lit through every visit,
-             so the mark stopped meaning "look here" and started meaning "this tab exists". */
-          const show = tab !== k && m.fresh;
-          const col = m.urg ? URG[m.urg].c : "#c99a4b";
-          const label = m.urg
-            ? `${l}, ${m.n} ${m.n===1?"thing":"things"} wanting an answer${m.fresh?", and something new":""}`
-            : `${l}, something new`;
-          return (
-          <button key={k} role="tab" aria-selected={tab===k} aria-label={show ? label : l}
-            className={`tabbtn ${tab===k?"on":""}`} onClick={()=>setTab(k)}
-            style={{position:"relative"}}>
-            <span style={{position:"relative",display:"inline-flex"}}>
-              <I size={17} aria-hidden="true"/>
-              {show && (m.urg
-                ? <span aria-hidden="true" style={{position:"absolute",top:-7,right:-11,minWidth:17,height:17,
-                    borderRadius:9,padding:"0 3px",background:col,color:"#14100c",fontFamily:"'Cinzel',serif",
-                    fontSize:"var(--fs-micro)",fontWeight:900,lineHeight:"17px",textAlign:"center",
-                    boxShadow:"0 0 0 1.5px #14100c"}}>{m.n > 9 ? "9+" : m.n}</span>
-                /* nothing is asking, but something arrived — a quieter mark */
-                : <span aria-hidden="true" style={{position:"absolute",top:-3,right:-6,width:7,height:7,
-                    borderRadius:4,background:col,boxShadow:"0 0 0 1.5px #14100c"}}/>)}
-            </span>
-            {l}
+      {/* ---- PHASE 4: THE TAB BAR IS GONE ----
+           The scene is the navigation now. Off the ludus, one door home; on it, nothing at all —
+           the rooms are the bar. Every place the five tabs reached has a room: the villa, the yard
+           (familia), the gate (market), the road (arena), the racks (armoury face). The report bar
+           still rides above this, so the week's business is one tap from anywhere. */}
+      {tab!=="ludus" && (
+        <nav className="bar" role="navigation" aria-label="Home"
+          style={{position:"fixed",left:0,right:0,bottom:0,zIndex:20,background:"#14100c",
+            borderTop:"1px solid #3e2f1f",display:"flex",paddingBottom:"env(safe-area-inset-bottom)"}}>
+          <button className="tabbtn on" aria-label="Back to the ludus" onClick={()=>setTab("ludus")}>
+            <Landmark size={17} aria-hidden="true"/>
+            The Ludus
           </button>
-        );})}
-      </nav>
+        </nav>
+      )}
 
       {selG && (
         <div className="modalwrap" style={{zIndex:Z.page}} role="dialog" aria-modal="true" onClick={()=>setSelId(null)}>

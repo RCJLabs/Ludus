@@ -899,10 +899,56 @@ export const click = (p, re) => p.evaluate(s=>{
   if(el){ el.click(); return true; } return false;
 }, re.source);
 
-export const tab = (p, key) => p.evaluate(k=>{
-  const t = [...document.querySelectorAll("button[role=tab]")].find(b => new RegExp(k,"i").test(b.getAttribute("aria-label")||""));
-  if(t){ t.click(); return true; } return false;
-}, key);
+/* ---- NAVIGATION IS THE SCENE NOW, AND SO IS THIS HELPER ----
+   v3.92.0 removed the tab bar: the drawn ludus is the nav, with one "back to the ludus" door
+   everywhere else. This helper walks the same path a player does — home first, then through the
+   room — rather than reaching for buttons that no longer exist. Face chips (The Roster, The
+   Armoury…) still carry role=tab and still route through the old matcher, so callers that pass a
+   chip label are untouched. `armory` gets the two-step it always needed: the yard, then the chip —
+   the old matcher never actually worked for it, because the label is spelled Armoury.
+   Every arrival is VERIFIED against the shell's data-place, not assumed from the click. */
+const SCN_DOOR = { familia:"the yard", men:"the yard", arena:"the road", market:"the gate", villa:"the villa" };
+export const tab = async (p, key) => {
+  const k = String(key).toLowerCase();
+  if(!(k in SCN_DOOR) && k !== "ludus" && k !== "armory")
+    return p.evaluate(kk=>{ const t=[...document.querySelectorAll("button[role=tab]")]
+      .find(b => new RegExp(kk,"i").test(b.getAttribute("aria-label")||""));
+      if(t){ t.click(); return true; } return false; }, key);
+  const home = () => p.evaluate(()=>{ const b=[...document.querySelectorAll("button")]
+    .find(x=>/back to the ludus/i.test(x.getAttribute("aria-label")||"")); if(b){ b.click(); return true; } return false; });
+  const place = () => p.evaluate(()=>{ const sh=document.querySelector("[data-place]");
+    return sh ? sh.getAttribute("data-place") : null; });
+  /* POLL, NEVER SLEEP-AND-HOPE. The first version waited 180ms after the home click and clicked
+     the door blind; on a slow run the scene had not mounted, the door missed, and reach read the
+     LUDUS's buttons under the market's name -- the dedup then emptied the place and the tally
+     said "market 5 -> 0" on a build where nothing about the market changed. Arrivals are awaited
+     against data-place, and the door retries once. */
+  const until = async (fn, ms) => { const t0 = Date.now();
+    while(Date.now() - t0 < ms){ if(await fn()) return true; await p.waitForTimeout(90); } return fn(); };
+  if(await place() !== "ludus"){
+    await home();
+    if(!await until(async()=>(await place())==="ludus", 2200)) return false;
+  }
+  if(k === "ludus") return (await place()) === "ludus";
+  const door = SCN_DOOR[k] || SCN_DOOR.familia;
+  /* PREFIX, NOT SUBSTRING. The gate's aria is "The gate -- the block and the road out", which
+     CONTAINS "the road" -- so knocking for the road opened the gate, the arena read measured the
+     market, and the label-dedup then handed every market action to "arena": the tally said
+     "market 5 -> 0" while the market itself was untouched. Every door's first words are unique;
+     nothing else about an aria-label is guaranteed to be. */
+  const knock = () => p.evaluate(lab=>{ const g=[...document.querySelectorAll(".scn")]
+    .find(x=>(x.getAttribute("aria-label")||"").toLowerCase().startsWith(lab));
+    if(!g) return false; g.dispatchEvent(new MouseEvent("click",{bubbles:true})); return true; }, door);
+  const wantP = (k === "familia" || k === "armory") ? "men" : k;
+  if(!await knock()) { await p.waitForTimeout(250); if(!await knock()) return false; }
+  if(!await until(async()=>(await place())===wantP, 2200)) return false;
+  if(k === "armory"){
+    await p.evaluate(()=>{ const c=[...document.querySelectorAll("button[role=tab]")]
+      .find(b=>/armoury/i.test(b.getAttribute("aria-label")||b.innerText||"")); if(c) c.click(); });
+    await p.waitForTimeout(160);
+  }
+  return (await place()) === wantP;
+};
 
 /* the topmost overlay, by computed z-index rather than DOM order */
 export const top = p => p.evaluate(()=>{

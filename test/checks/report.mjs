@@ -34,7 +34,10 @@ export async function run({ p, errors }){
   if(onHome) fails.push("the bar shows on ludus, where the report already opens the page");
 
   await tab(p, "arena"); await p.waitForTimeout(350); await clearAll(p, 4);
-  await tab(p, "arena"); await p.waitForTimeout(250);
+  await tab(p, "arena"); await p.waitForTimeout(250); await clearAll(p, 4);
+  /* the second arrival can raise a first-visit lesson on the scene-door path, and its modal
+     sits later in the DOM than the report sheet -- counting rows in it read "0 rows over an
+     agenda of 6". Clear it the way a player would before opening the report. */
   const truth = await p.evaluate(()=>{
     const b=document.querySelector(".reportbar");
     const S = (()=>{ try { return JSON.parse(localStorage.getItem(
@@ -77,7 +80,7 @@ export async function run({ p, errors }){
   await p.waitForTimeout(450);
   if(travelled){
     const st = await p.evaluate(()=>({ modal: !!document.querySelector(".modalwrap"),
-      tab: (()=>{ const b=[...document.querySelectorAll(".tabbtn")].find(x=>x.className.includes("on")); return (b&&b.innerText.trim())||"?"; })() }));
+      tab: (()=>{ const sh=document.querySelector("[data-place]"); return sh?sh.getAttribute("data-place"):"?"; })() }));
     lines.push(`travel row "${travelled.slice(0,36)}" -> ${st.tab}, sheet ${st.modal?"STILL OPEN":"closed"}`);
     if(st.modal) fails.push("the sheet stayed open behind a journey");
   }
