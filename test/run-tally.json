@@ -27,4 +27,5 @@
 {"v":"3.94.0","checks":77,"failed":[]},
 {"v":"3.95.0","checks":78,"failed":[]},
 {"v":"3.96.0","checks":79,"failed":[]},
-{"v":"3.97.0","checks":79,"failed":["seller"]}]
+{"v":"3.97.0","checks":79,"failed":["seller"]},
+{"v":"3.97.0","checks":79,"failed":[]}]
