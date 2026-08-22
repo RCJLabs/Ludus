@@ -6,7 +6,7 @@
    to 36 rather than 44 on purpose — a six-chip training row at 44 would be a
    third taller for nothing. */
 
-import { found, endWeek, clearAll, tab, click } from "../harness.mjs";
+import { found, endWeek, clearAll, tab, click , forge } from "../harness.mjs";
 
 export const name = "surface";
 export const describe = "no type under the scale, no primary control under a thumb";
@@ -27,7 +27,7 @@ export async function run({ p, errors }){
      twelve WEEKS old has short names and three-digit numbers and clips nothing, so this
      check would have passed the whole way through the bug. The figures are pushed up to
      the size a long game actually reaches before anything is measured. */
-  const grown = await p.evaluate(()=>{
+  const grown = await forge(p, (A, R) => {
     let key = null, s = null;
     for(const k of Object.keys(localStorage)) if(/ludus-slot-\d/.test(k)){
       try { const x = JSON.parse(localStorage.getItem(k)); if(x && x.gladiators){ key = k; s = x; } } catch(e){} }
@@ -36,13 +36,8 @@ export async function run({ p, errors }){
     s.fame = 23703; s.gold = 25451; s.acclaim = 100;
     s.week = 12*18 + 17;
     for(const h of (s.rivals||[])) h.fame = 3000 + Math.round(h.fame||0);
-    localStorage.setItem(key, JSON.stringify(s));
-    return { name:s.name, fame:s.fame, week:s.week };
+    return { plant:s, name:s.name, fame:s.fame, week:s.week };
   });
-  await p.reload({ waitUntil:"domcontentloaded" });
-  await p.waitForTimeout(1100);
-  await click(p, /take up the keys/i);
-  await p.waitForTimeout(1100);
   await clearAll(p, 16);
 
   const TABS = ["ludus","familia","arena","market","villa"];

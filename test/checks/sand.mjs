@@ -21,7 +21,7 @@
    LUDUS. And the bout has to appear in the record book afterwards, because a screen that runs
    beautifully and books nothing is the fault this project has shipped twice. */
 
-import { found, endWeek, clearAll, tab, click, waitSaved, slot } from "../harness.mjs";
+import { found, endWeek, clearAll, tab, click, waitSaved, slot , forge } from "../harness.mjs";
 
 export const name = "sand";
 export const describe = "a bout runs in a real browser, from the card to the verdict";
@@ -109,8 +109,8 @@ export async function run({ p, errors }){
   /* a house that can actually field a card: six fit men so a pair and a melee have somebody
      for them, coin so nothing is refused for price, and the guides put away because they
      stand in front of the yard and `clearAll` does not know their words */
-  const ready = await p.evaluate(()=>{
-    const A = window.__LVDVS; if(!A) return { why:"no test handle" };
+  const ready = await forge(p, (A, R) => {
+    if(!A) return { why:"no test handle" };
     let key = null, s = null;
     for(const k of Object.keys(localStorage)) if(/ludus-slot-\d/.test(k)){
       try { const x = JSON.parse(localStorage.getItem(k)); if(x && x.gladiators){ key = k; s = x; } } catch(e){} }
@@ -145,18 +145,16 @@ export async function run({ p, errors }){
       if(bestN >= 4) break;
     }
     if(best) s.games = best;
-    localStorage.setItem(key, JSON.stringify(s));
-    return { men:A.activeG(s).length, offers:kindsOf(s), classes:A.activeG(s).map(g=>g.cls),
+    /* forge() plants this into every slot, stamps it, and refuses to continue if the house that
+       loads is not the one planted — this check fights the card it forges, so a clobbered
+       fixture would have it fighting somebody else's */
+    return { plant:s, men:A.activeG(s).length, offers:kindsOf(s), classes:A.activeG(s).map(g=>g.cls),
       book:(s.book&&s.book.n)||0, drawnOver:s.week };
   });
   if(ready.why) return { pass:false, why:ready.why, lines };
   lines.push(`${ready.men} fit men (${ready.classes.join(", ")})`);
   lines.push(`a bill drawn over ${ready.drawnOver} weeks holding ${ready.offers.length} kind${ready.offers.length===1?"":"s"}: ${ready.offers.join(", ") || "nothing"}`);
 
-  await p.reload({ waitUntil:"domcontentloaded" });
-  await p.waitForTimeout(1100);
-  await click(p, /take up the keys/i);
-  await p.waitForTimeout(1200);
   await clearAll(p, 16);
 
   /* one bout of every kind the bill actually drew, plus the pits, which are always open */

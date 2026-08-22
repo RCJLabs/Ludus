@@ -12,7 +12,7 @@
    this check reads the save afterwards to prove it: the gold went down, the piece is on him, and
    the house owns it.
 */
-import { found, clearAll, tab, slot, waitSaved } from "../harness.mjs";
+import { found, clearAll, tab, slot, waitSaved, forge } from "../harness.mjs";
 
 export const name = "arm";
 export const describe = "a man can be armed from his own card, and the coin and the steel both move";
@@ -22,16 +22,10 @@ export async function run({ p, errors }){
   await found(p, { seed:"ARM" });
   await clearAll(p);
 
-  /* coin enough that price is never the reason nothing happens */
-  await p.evaluate(()=>{ const A = window.__LVDVS;
-    const d = A.newGameState("Arm","clean","ARM",null);
-    d.gold = 9000;
-    let k=null; for(const q of Object.keys(localStorage)) if(/ludus-slot-\d/.test(q)) k=q;
-    if(k) localStorage.setItem(k, JSON.stringify(d)); });
-  await p.reload({ waitUntil:"domcontentloaded" }); await p.waitForTimeout(1100);
-  await p.evaluate(()=>{ const b=[...document.querySelectorAll("button")]
-    .find(x=>/take up the keys/i.test(x.innerText||"")); if(b) b.click(); });
-  await p.waitForTimeout(1100); await clearAll(p, 8);
+  /* coin enough that price is never the reason nothing happens. forge() stamps the house it
+     plants and refuses to go on if the stamp does not survive the load — see harness. */
+  await forge(p, A => { const d = A.newGameState("Arm","clean","ARM",null); d.gold = 9000; return d; });
+  await clearAll(p, 8);
 
   /* to a man, through the yard, the way a player reaches one */
   if(!await tab(p, "men")) return { pass:false, why:"could not reach the familia", lines };

@@ -25,7 +25,7 @@
    So this check drives the harness's own contract and asserts the OUTCOME rather than the call:
    not "did endWeek find a button" but "did the week actually move".
 */
-import { found, endWeek, tab, click, clearAll, slot, waitSaved } from "../harness.mjs";
+import { found, endWeek, tab, click, clearAll, slot, waitSaved , forge } from "../harness.mjs";
 
 export const name = "guards";
 export const describe = "the harness still reaches what it claims to reach, and says so when it cannot";
@@ -61,15 +61,10 @@ export async function run({ p, errors }){
      pattern still matched. The fault only exists once the label GROWS — which is the whole shape
      of it. A levy falling due this week is an urgency-3 row by construction, so the button must
      read "End week · 1 unanswered" before the week is advanced. */
-  await p.evaluate(()=>{ const A = window.__LVDVS;
+  await forge(p, (A, R) => {
     const d = A.newGameState("Guards","clean","GUARDS-DUE",null);
     d.deadlines = [{ id: 9101, kind:"levy", amount: 200, due: d.week }];
-    let k=null; for(const q of Object.keys(localStorage)) if(/ludus-slot-\d/.test(q)) k=q;
-    if(k) localStorage.setItem(k, JSON.stringify(d)); });
-  await p.reload({ waitUntil:"domcontentloaded" }); await p.waitForTimeout(1100);
-  await p.evaluate(()=>{ const b=[...document.querySelectorAll("button")]
-    .find(x=>/take up the keys/i.test(x.innerText||"")); if(b) b.click(); });
-  await p.waitForTimeout(1100); await clearAll(p, 8); await waitSaved(p);
+    return d; }); await clearAll(p, 8); await waitSaved(p);
 
   const primed = await slot(p);
   const label = await p.evaluate(()=>{ const b=[...document.querySelectorAll("button")]

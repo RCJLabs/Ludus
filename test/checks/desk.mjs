@@ -16,7 +16,7 @@
    "See it in the house" actually lands on the face the item names, because a footer that travels to
    the wrong room is worse than no footer.
 */
-import { found, tab, clearAll, installRope } from "../harness.mjs";
+import { found, tab, clearAll, installRope , forge } from "../harness.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -45,19 +45,15 @@ export async function run({ p, errors }){
      state, three uses, nothing re-derived. */
   await found(p, { seed:"REACH-1" });
   await installRope(p);
-  const rows = await p.evaluate(()=>{
-    const A = window.__LVDVS, R = window.__ROPE;
+  /* the same played morning three ways: planted, and its agenda handed back, so the walk below
+     asserts against the list the house actually raises rather than one composed here */
+  const { rows } = await forge(p, (A, R) => {
     const d = A.newGameState("Reach", "clean", "REACH-1", null);
     for(let i=0;i<16;i++){ if(d.over) break; R.lanista(d); }
-    let key=null; for(const k of Object.keys(localStorage)) if(/ludus-slot-\d/.test(k)) key=k;
-    if(key) localStorage.setItem(key, JSON.stringify(d));
     let list=[]; try { list = A.agenda(d)||[]; } catch(e){}
-    return list.map(x=>({ label:x.label, doc:x.doc||null, dest:x.dest||null, tab:x.tab }));
+    return { plant:d, rows:list.map(x=>({ label:x.label, doc:x.doc||null, dest:x.dest||null, tab:x.tab })) };
   });
-  await p.reload({ waitUntil:"domcontentloaded" }); await p.waitForTimeout(1100);
-  await p.evaluate(()=>{ const b=[...document.querySelectorAll("button")]
-    .find(x=>/take up the keys/i.test((x.innerText||"").trim())); if(b) b.click(); });
-  await p.waitForTimeout(1100); await clearAll(p, 8);
+  await clearAll(p, 8);
   await tab(p, "ludus"); await p.waitForTimeout(350); await clearAll(p, 6);
   await tab(p, "ludus"); await p.waitForTimeout(300);
 

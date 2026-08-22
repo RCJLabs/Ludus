@@ -16,7 +16,7 @@
    check asserts at least one badge on the pinned morning — a derivation that silently returns
    nothing is the dot-that-never-lights fault, invisible precisely when broken.
 */
-import { found, tab, clearAll, installRope } from "../harness.mjs";
+import { found, tab, clearAll, installRope , forge } from "../harness.mjs";
 
 export const name = "scene";
 export const describe = "every room in the drawn ludus does what it promises";
@@ -25,15 +25,10 @@ export async function run({ p, errors }){
   const lines = [], fails = [];
   await found(p, { seed:"REACH-1" });
   await installRope(p);
-  await p.evaluate(()=>{ const A=window.__LVDVS,R=window.__ROPE;
+  await forge(p, (A, R) => {
     const d=A.newGameState("Reach","clean","REACH-1",null);
     for(let i=0;i<16;i++){ if(d.over) break; R.lanista(d); }
-    let k=null; for(const q of Object.keys(localStorage)) if(/ludus-slot-\d/.test(q)) k=q;
-    if(k) localStorage.setItem(k, JSON.stringify(d)); });
-  await p.reload({ waitUntil:"domcontentloaded" }); await p.waitForTimeout(1100);
-  await p.evaluate(()=>{ const b=[...document.querySelectorAll("button")]
-    .find(x=>/take up the keys/i.test(x.innerText||"")); if(b) b.click(); });
-  await p.waitForTimeout(1100); await clearAll(p, 8);
+    return d; }); await clearAll(p, 8);
   await tab(p, "ludus"); await p.waitForTimeout(400); await clearAll(p, 6);
   await tab(p, "ludus"); await p.waitForTimeout(300);
 
@@ -130,7 +125,7 @@ export async function run({ p, errors }){
      could never have shown it. So: a house driven to a full yard, and every name label's real
      BBox measured — no two labels on the same baseline may touch. */
   await installRope(p);   /* the reload above dropped it -- the rope is per-page */
-  await p.evaluate(()=>{ const A=window.__LVDVS,R=window.__ROPE;
+  await forge(p, (A, R) => {
     const d=A.newGameState("Full","clean","YARD-8",null);
     for(let i=0;i<16;i++){ if(d.over) break; R.lanista(d); }
     /* THE ROPE CANNOT HOLD A BIG YARD. Its measured steady state is ~4.5 men (90 paired seeds,
@@ -151,11 +146,10 @@ export async function run({ p, errors }){
       c.id = String(base.id) + "-clone" + i; c.name = nm; c.nick = null; c.injury = null; c.fatigue = 20;
       d.gladiators.push(c);
     });
-    for(const q of Object.keys(localStorage)) if(/ludus-slot-\d/.test(q)) localStorage.setItem(q, JSON.stringify(d)); });
-  await p.reload({ waitUntil:"domcontentloaded" }); await p.waitForTimeout(1100);
-  await p.evaluate(()=>{ const b=[...document.querySelectorAll("button")]
-    .find(x=>/take up the keys/i.test(x.innerText||"")); if(b) b.click(); });
-  await p.waitForTimeout(1100); await clearAll(p, 8);
+    /* forge() plants into EVERY slot — the lesson this fixture learned the hard way, now the
+       helper's job rather than each caller's — and refuses to continue if it does not survive. */
+    return d; });
+  await clearAll(p, 8);
   await tab(p, "ludus"); await p.waitForTimeout(400); await clearAll(p, 6);
   await tab(p, "ludus"); await p.waitForTimeout(300);
   const yard = await p.evaluate(()=>{

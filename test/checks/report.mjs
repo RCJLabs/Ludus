@@ -10,7 +10,7 @@
 
    Walked on the played pinned morning, like desk and scene.
 */
-import { found, tab, clearAll, installRope } from "../harness.mjs";
+import { found, tab, clearAll, installRope , forge } from "../harness.mjs";
 
 export const name = "report";
 export const describe = "the report bar counts true, and every row opens its paper or travels";
@@ -19,15 +19,10 @@ export async function run({ p, errors }){
   const lines = [], fails = [];
   await found(p, { seed:"REACH-1" });
   await installRope(p);
-  await p.evaluate(()=>{ const A=window.__LVDVS,R=window.__ROPE;
+  await forge(p, (A, R) => {
     const d=A.newGameState("Reach","clean","REACH-1",null);
     for(let i=0;i<16;i++){ if(d.over) break; R.lanista(d); }
-    let k=null; for(const q of Object.keys(localStorage)) if(/ludus-slot-\d/.test(q)) k=q;
-    if(k) localStorage.setItem(k, JSON.stringify(d)); });
-  await p.reload({ waitUntil:"domcontentloaded" }); await p.waitForTimeout(1100);
-  await p.evaluate(()=>{ const b=[...document.querySelectorAll("button")]
-    .find(x=>/take up the keys/i.test(x.innerText||"")); if(b) b.click(); });
-  await p.waitForTimeout(1100); await clearAll(p, 8);
+    return d; }); await clearAll(p, 8);
 
   await tab(p, "ludus"); await p.waitForTimeout(300);
   /* INVERTED in v3.93.0: THIS WEEK left the home page, so the bar is universal now — a home

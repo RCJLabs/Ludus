@@ -991,6 +991,66 @@ export async function clearAll(p, rounds = 26){
   }
 }
 
+/* ---- PLANTING A HOUSE, AND PROVING IT TOOK ----
+   Fifteen checks forge a whole state into a save slot and then measure the screen that comes
+   back. `room` showed what happens when the plant does not take: it forges the widest line the
+   interface can be asked to draw, and on the runs where the app's autosave got there first it
+   measured a RANDOM house against that line and reported the line "is not on the panel". It had
+   been passing on the wrong fixture some of the time — a vacuous pass in a check that had never
+   once gone red, and a bisect found it rather than any guard.
+
+   `fixtures` bars the specific race statically (nothing may yield between the write and the
+   reload). This is the other half, and it is the half a static rule cannot reach: the plant is
+   STAMPED, and if the stamp does not survive the load the check stops with a sentence saying so
+   instead of quietly measuring somebody else's house.
+
+   The builder runs in the page with the handle and the rope, and returns either
+     the state to plant, or
+     { plant: state, ...anything } — the rest comes back to the caller, because several of these
+       forges also compute the numbers the check is about to assert against, and splitting that
+       into two round trips would be a worse shape than the one it replaces, or
+     { why: "..." } with no `plant` — an early-out, returned untouched.
+   Nothing yields between the write and the reload, by construction. */
+export async function forge(p, build, arg = null){
+  const token = "fg" + Math.random().toString(36).slice(2, 10);
+  const out = await p.evaluate(([src, token, arg]) => {
+    const A = window.__LVDVS, R = window.__ROPE;
+    const res = (new Function("A", "R", "arg", "return (" + src + ")(A, R, arg)"))(A, R, arg);
+    if(!res || typeof res !== "object") return { __forge:"the builder returned nothing to plant" };
+    const d = res.plant || (res.gladiators ? res : null);
+    if(!d) return res;                       /* an early-out, e.g. { why: ... } — hand it back */
+    d.flags = d.flags || {};
+    d.flags.__forge = token;
+    /* EVERY SLOT, not the first one found. "Take up the keys" resumes the ACTIVE slot, and a
+       find-first write can land in a different one — which is how scene's yard fixture once
+       reported a roster of five with two men drawn, two different houses in one sentence. The
+       check that learned it wrote to every slot by hand; the helper does it for everyone. */
+    const keys = Object.keys(localStorage).filter(q=>/ludus-slot-\d/.test(q));
+    if(!keys.length) return { __forge:"no ludus slot to write into — found() has not run" };
+    const blob = JSON.stringify(d);
+    for(const k of keys) localStorage.setItem(k, blob);
+    const rest = {}; for(const key of Object.keys(res)) if(key !== "plant") rest[key] = res[key];
+    return Object.assign(rest, { __planted:true });
+  }, [build.toString(), token, arg]);
+
+  if(out && out.__forge) throw new Error(`forge(): ${out.__forge}`);
+  if(!out || !out.__planted) return out;     /* the builder chose not to plant */
+
+  await p.reload({ waitUntil:"domcontentloaded" });
+  await p.waitForTimeout(1100);
+  await p.evaluate(()=>{ const b=[...document.querySelectorAll("button")]
+    .find(x=>/take up the keys/i.test(x.innerText||"")); if(b) b.click(); });
+  await p.waitForTimeout(1100);
+
+  const got = await slot(p);
+  if(!got || !got.flags || got.flags.__forge !== token)
+    throw new Error("forge(): the planted house did not survive the load — the app's own save is "
+      + "on screen instead, so everything measured after this would be another house. Check that "
+      + "nothing yields between the write and the reload (see the `fixtures` check).");
+  const rest = {}; for(const k of Object.keys(out)) if(k !== "__planted") rest[k] = out[k];
+  return rest;
+}
+
 /* autosave is debounced 500ms — anything less and you read the week before */
 export const waitSaved = p => p.waitForTimeout(950);
 

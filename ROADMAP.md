@@ -590,6 +590,18 @@ Censused: **15 files forge a whole state into a save slot, 20 forges in all.** T
 
 **What this does NOT cover, named rather than half-built.** The rule is static, so it bars the known race and nothing else. A forge can still fail quietly for other reasons — no slot key found, the wrong key written, the app re-seeding after load — and no check asserts at RUNTIME that the state it measured is the state it wrote. The honest fix is a `forge()` in the harness that stamps a token into the state it plants and refuses to continue if that token does not survive the load, with the fifteen call sites migrated onto it. That is a release of its own and it is not this one; adding an unused helper nobody calls would be worse than leaving the gap named.
 
+**The forge migration (v3.104.0).** The gap named in v3.103.0 and left open on purpose: `fixtures` bars the known race statically, but nothing asserted at RUNTIME that the house a check measured is the house it wrote. `forge()` closes it — the plant is **stamped**, and if the stamp does not survive the load the check stops with a sentence saying so instead of quietly measuring somebody else's ludus.
+
+Validated by sabotage before anything was migrated onto it: made to plant into a slot nobody loads, it refuses with *"the planted house did not survive the load — the app's own save is on screen instead, so everything measured after this would be another house."*
+
+**It also inherited a lesson from the check that had already paid for it.** The first version wrote to the first slot it found. `scene`'s yard fixture writes to EVERY slot deliberately, because "take up the keys" resumes the ACTIVE slot while a find-first write can land in another — which is exactly how that fixture once reported *a roster of five with two men drawn, two different houses in one sentence*. The helper plants into every slot now, so the lesson is the harness's rather than one caller's.
+
+**Nine checks migrated** — arm, desk, guards, report, room, sand, scene, sheet, surface — and the raw-write population fell from **20 forges to 9**. The boilerplate went with it: each call site loses the slot hunt, the reload, the keys and two waits, and keeps only the part that is about the house. `room`, the check that started all of this, is among them.
+
+One hazard worth recording for whoever migrates the rest: a builder that already declared `const A = window.__LVDVS` now receives `A` as a parameter, and the collision is a module-level `SyntaxError` that names the identifier and not the file.
+
+**Left unmigrated, deliberately**: `sand:204` and `sweep:279` write from inside loops rather than once at the top, and `words` is a generic mutator that takes its body as a source string and already writes every slot and reloads at once — forcing it through `forge` would fight its design rather than fix anything. Four probes also still forge by hand; probes are run by hand and are not in the suite. All of them remain covered by `fixtures`' static rule.
+
 ### The loop, queued
 Measured and argued in v3.99.0's brainstorm; ordered by expected value, not by ease.
 

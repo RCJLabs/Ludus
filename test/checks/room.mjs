@@ -32,7 +32,7 @@
    forces the widest word AND the widest line together, so the next time a scale gets a longer
    word the row it shares is measured with it. */
 
-import { serve, open, found, endWeek, clearAll, tab, click, hasHandle } from "../harness.mjs";
+import { serve, open, found, endWeek, clearAll, tab, click, hasHandle , forge } from "../harness.mjs";
 
 export const name = "room";
 export const describe = "the widest line the content space allows still fits the row it goes in";
@@ -48,8 +48,8 @@ export async function run({ p, errors }){
   for(let w=0; w<3; w++){ if(!(await endWeek(p))) break; await clearAll(p); }
   await clearAll(p);
 
-  const set = await p.evaluate(()=>{
-    const A = window.__LVDVS; if(!A) return { why:"no handle" };
+  const set = await forge(p, (A, R) => {
+    if(!A) return { why:"no handle" };
     let key=null, s=null;
     for(const k of Object.keys(localStorage)) if(/ludus-slot-\d/.test(k)){
       try { const x=JSON.parse(localStorage.getItem(k)); if(x&&x.gladiators){ key=k; s=x; } } catch(e){} }
@@ -84,9 +84,8 @@ export async function run({ p, errors }){
          drive the stats to the band rather than writing the word — the word is the game's. */
       for(const k of A.STATS) f[k] = 84;
     }
-    localStorage.setItem(key, JSON.stringify(s));
     const one = s.circuit[0];
-    return { why:null, wCls, wHouse, wName, wNick, word:A.menace(one),
+    return { plant:s, why:null, wCls, wHouse, wName, wNick, word:A.menace(one),
       words:(A.MENACE_WORDS||[]).join("/"), n:s.circuit.length,
       l1:`${wName}, ${wNick}`,
       l2:`${wCls} · ${wHouse} · 12–12, 9 killed` };
@@ -100,18 +99,14 @@ export async function run({ p, errors }){
     bad.push(`the stats meant to force a wide menace word read "${set.word}" instead — the scale `
       + `has moved and this check is now measuring the row against a narrow word`);
 
-  /* ---- DO NOT WAIT AFTER WRITING A FIXTURE: THE APP IS STILL RUNNING ----
-     This waited 950ms here, which is `waitSaved`'s job — to let the app's debounced autosave
-     flush. That is exactly backwards after writing state by hand: the app holds its own S in
-     memory, and during the wait its autosave writes that state OVER the fixture. Then the reload
-     loads the app's house, not the forged one, and the sixteen men at the rope come back with
-     their real names — which is why this check intermittently reported that the widest line was
-     "not on the panel" when the panel was fine and the fixture had simply been clobbered.
-     Every other check that forges state (sheet, arm, guards) writes and reloads at once. */
-  await p.reload({ waitUntil:"domcontentloaded" });
-  await p.waitForTimeout(1000);
-  await click(p, /take up the keys/i);
-  await p.waitForTimeout(1000);
+  /* ---- THE FORGE IS PROVEN, NOT HOPED FOR ----
+     This once wrote the fixture and then called waitSaved() before reloading — backwards, since
+     waitSaved exists to let the app's own debounced autosave flush, and the app is still holding
+     its house in memory. During that gap its autosave wrote over the fixture; the reload loaded
+     the app's men; and the check measured a random house against the widest line it had composed
+     and reported that the line "is not on the panel". It had been passing on the wrong fixture
+     some of the time. forge() plants, reloads at once, and refuses to continue unless the house
+     that comes back is the one it planted. */
   await clearAll(p, 14);
   await tab(p, "arena"); await p.waitForTimeout(320);
   await clearAll(p, 8);

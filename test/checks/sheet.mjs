@@ -19,7 +19,7 @@
    high enough to want a feast and coin enough to throw one — and a founding has neither. The
    state is built through the handle and written to the slot, the way desk and report do it.
 */
-import { found, clearAll, tab, slot, waitSaved } from "../harness.mjs";
+import { found, clearAll, tab, slot, waitSaved , forge } from "../harness.mjs";
 
 export const name = "sheet";
 export const describe = "the report groups the week, its deeds are real, and the week can be closed";
@@ -58,15 +58,10 @@ export async function run({ p, errors }){
   await clearAll(p);
 
   /* ---- a house with the cells up and coin in the box, so a deed exists to press ---- */
-  await p.evaluate(()=>{ const A = window.__LVDVS;
+  await forge(p, (A, R) => {
     const d = A.newGameState("Sheet","clean","SHEET",null);
     d.unrest = 72; d.gold = 6000;
-    let k=null; for(const q of Object.keys(localStorage)) if(/ludus-slot-\d/.test(q)) k=q;
-    if(k) localStorage.setItem(k, JSON.stringify(d)); });
-  await p.reload({ waitUntil:"domcontentloaded" }); await p.waitForTimeout(1100);
-  await p.evaluate(()=>{ const b=[...document.querySelectorAll("button")]
-    .find(x=>/take up the keys/i.test(x.innerText||"")); if(b) b.click(); });
-  await p.waitForTimeout(1100); await clearAll(p, 8);
+    return d; }); await clearAll(p, 8);
 
   await openReport(p);
   const sh = await readSheet(p);
@@ -129,16 +124,11 @@ export async function run({ p, errors }){
      The founding above happens to owe nothing this week, so the close read "End week" and the
      number went unexercised — the half most likely to rot. A levy falling due THIS week is an
      urgency-3 row by construction, so force one and read the button again. */
-  await p.evaluate(()=>{ const A = window.__LVDVS;
+  await forge(p, (A, R) => {
     const d = A.newGameState("Due","clean","SHEET-DUE",null);
     d.unrest = 40; d.gold = 4000;
     d.deadlines = [{ id: 9001, kind:"levy", amount: 240, due: d.week }];
-    let k=null; for(const q of Object.keys(localStorage)) if(/ludus-slot-\d/.test(q)) k=q;
-    if(k) localStorage.setItem(k, JSON.stringify(d)); });
-  await p.reload({ waitUntil:"domcontentloaded" }); await p.waitForTimeout(1100);
-  await p.evaluate(()=>{ const b=[...document.querySelectorAll("button")]
-    .find(x=>/take up the keys/i.test(x.innerText||"")); if(b) b.click(); });
-  await p.waitForTimeout(1100); await clearAll(p, 8);
+    return d; }); await clearAll(p, 8);
   for(let i=0;i<3;i++){
     if(!await p.evaluate(()=>!!document.querySelector(".modalwrap"))) break;
     await p.keyboard.press("Escape"); await p.waitForTimeout(180);
