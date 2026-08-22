@@ -18806,7 +18806,17 @@ function Sect({ title, note, open, tone, mark, live, sid, children }){
   const ref = useRef(null);
   useEffect(()=>{ if(!ref.current) return;
     const remembered = sid != null ? SECT_MEM[sid] : undefined;
-    ref.current.open = remembered != null ? remembered : (!!open || live === true);
+    /* ---- FOLDED UNTIL ASKED FOR (v3.98.0) ----
+       A section used to open itself if it had anything fresh in it, and the villa carried
+       55 buttons on arrival because most of its sections did. A page that opens everything
+       has no shape: the reader is handed the whole room and has to find the part he came
+       for. Every section starts closed now and says on its own line what is inside — the
+       note is the summary, which is the ledger's argument everywhere else in this build.
+       `open` still forces: that is how a letter and a sheet show their contents, and how
+       the desk unfolds a document. `live` keeps its OTHER job, which is dimming a section
+       that has nothing in it yet ("nothing yet"), it just no longer opens the drawer.
+       SECT_MEM still wins over both, so what a player opened stays open as he moves. */
+    ref.current.open = remembered != null ? remembered : !!open;
   }, []);
   const m = mark === true ? { urg:0, n:0 } : (mark || null);
   const asleep = live === false;
@@ -19419,7 +19429,7 @@ const SECT = {
       const cheapest = items.filter(([,it])=>it.price>0).map(([,it])=>gearPrice(S,it.price,slot)).sort((a,b)=>a-b)[0];
       return (
       <React.Fragment key={slot}>
-        <Sect open title={`The ${SLOT_NAME[slot].toLowerCase()} rack`}
+        <Sect title={`The ${SLOT_NAME[slot].toLowerCase()} rack`}
           note={own ? `${own} owned${idle?` · ${idle} idle`:""}` : cheapest ? `from ${cheapest}d` : "house stock"}>
           {/* the filter, and it says what it is hiding rather than hiding it silently */}
           <div className="flex gap-1" style={{flexWrap:"wrap",marginBottom:3}}>
@@ -19898,7 +19908,7 @@ const SECT = {
   year: (S, X, forceOpen) => {
     const now = festivalNow(S), soon = nextFestivals(S, 3);
                return (
-                 <Sect title="The year" note={`${seasonOf(S).name} · year ${yearOf(S)}, week ${yearWeek(S)}${now?" · games":""}`} open={forceOpen ?? (!!now)}>
+                 <Sect title="The year" note={`${seasonOf(S).name} · year ${yearOf(S)}, week ${yearWeek(S)}${now?" · games":""}`} open={forceOpen}>
                    {(()=>{ const Sn = seasonOf(S);
                      return (
                        <div style={{marginBottom:8}}>
@@ -20026,7 +20036,7 @@ const SECT = {
   },
   cells: (S, X) => { const { doTourney, feast, walkCells } = X;
     return (
-    <Sect open live={sectFresh(S,"cells")} sid="cells" title="What you can do for the block" note={`${activeG(S).length} in the cells · ${unrestWord(S.unrest).toLowerCase()}`}
+    <Sect live={sectFresh(S,"cells")} sid="cells" title="What you can do for the block" note={`${activeG(S).length} in the cells · ${unrestWord(S.unrest).toLowerCase()}`}
       mark={sectMark(S,"feast")}>
       {(()=>{ const cost = feastCost(S), reach = feastReach(S);
         return (<div style={{paddingBottom:9,marginBottom:9,borderBottom:"1px dotted var(--line)"}}>
@@ -23665,8 +23675,7 @@ export default function App(){
 
           {(()=>{ const L = loanLender(S);
             if(!L) return (
-              <div className="panel" style={{padding:13}}>
-                <div className="disp" style={{fontSize:"var(--fs-md)",fontWeight:700,marginBottom:3}}>THE MONEYLENDERS</div>
+              <Sect title="The moneylenders" sid="lenders" note="three men in Capua">
                 <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>
                   Three men in Capua will put coin on your table this afternoon. Every one of them is a worse idea than he looks and a better one than a bad month.
                 </div>
@@ -23695,15 +23704,16 @@ export default function App(){
                       </div>
                     </div>
                   ); })}
-              </div>
+              </Sect>
             );
             const o = owes(S), w = loanWeeks(S), late = w >= L.patience;
             return (
-              <div className="panel" style={{padding:13, borderColor: late?"var(--blood-edge)":"var(--gold-edge)"}}>
-                <div className="flex items-center justify-between" style={{marginBottom:4}}>
-                  <div className="disp" style={{fontSize:"var(--fs-md)",fontWeight:700}}>OWED TO {L.name.toUpperCase()}</div>
-                  <span className="rowval" style={{fontSize:"var(--fs-md)",color:late?"var(--blood)":"var(--gold)"}}>{o}d</span>
-                </div>
+              /* the debt rides on the summary line: a folded section must not hide a number
+                 that is growing whether you look at it or not. */
+              <Sect title={`Owed to ${L.name}`} sid="lenders"
+                tone={late?"var(--blood-edge)":"var(--gold-edge)"}
+                mark={late ? {urg:3, n:1} : undefined}
+                note={`${o}d${late?" · he has stopped waiting":""}`}>
                 <div className="dim" style={{fontSize:"var(--fs-md)"}}>
                   Borrowed {S.loan.principal}d, {w} week{w===1?"":"s"} ago, at {Math.round(L.rate*1000)/10}% a week. It grows whether you look at it or not.
                 </div>
@@ -23722,7 +23732,7 @@ export default function App(){
                     </button>
                   ))}
                 </div>
-              </div>
+              </Sect>
             ); })()}
 
           {SECT.collegium(S, SX)}
