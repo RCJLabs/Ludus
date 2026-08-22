@@ -30,14 +30,22 @@ export const describe = "no room costs more screens to read than it is allowed";
 const ROOMS = [
   { key:"armory", face:/armoury/i,  max:3.0, why:"a ledger page of racks; 2.4 measured at v3.96.0, was 5.7" },
   { key:"arena",  face:null,        max:3.0, why:"three towns and the pits; 2.2 measured" },
-  { key:"market", face:null,        max:4.4, why:"the block, the staff and the slavers — people, not priced objects, and a man for sale needs his stats visible to be compared. 3.6 measured" },
+  /* EARNED DOWN, the way bulk's allowances are. This was 4.4 when a man on the block was 490px
+     and four of them were two thirds of the page. The row put his six numbers on the line and
+     the rest behind it: 2.1 measured. Leaving 4.4 would hand the page two screens of silent
+     headroom and this ceiling would stop meaning anything. */
+  { key:"market", face:null,        max:2.9, why:"the block, the staff and the slavers; 2.1 measured at v3.97.0, was 3.5 here and 4.6 on a played house" },
   { key:"villa",  face:/the house/i,max:3.0, why:"2.0 measured; its length is collapsibles, which are already folded" },
-  /* the roster is the one room whose length is a function of the SAVE, not the layout: one card
-     per man. This check founds its own house, so it reads 1.3 screens on the three men it starts
-     with; the ceiling is set for a full yard (the 5.8 screens a played house measured), and it is
-     deliberately loose because a card is what a man IS here. The honest way down, if it is ever
-     wanted, is fewer words per card — not folding the men away behind rows. */
-  { key:"men",    face:/roster/i,   max:6.2, why:"one card per man; 1.3 screens at founding here, 5.8 measured on a full yard" },
+  /* ---- AND THIS CEILING WAS SET FROM A NUMBER THAT WAS NEVER THE ROSTER'S ----
+     6.2 came from "5.8 screens measured on a played yard", and that measurement was the ARMOURY
+     wearing the roster's name — the sticky-face fault this check now guards against, recorded
+     before the guard existed. Measured properly, a played six-man yard is 1,752px: 2.1 screens,
+     at 174px a man. The roster was never the crowded room; the market was.
+     Its length is still a function of the SAVE rather than the layout — one card per man — so the
+     ceiling has to cover a full house: 174px a man against the cells' cap, plus the page's own
+     chrome. 4.5 screens holds a dozen men with room to spare, and a card stays a card, because a
+     card is what a man IS here. */
+  { key:"men",    face:/roster/i,   max:4.5, why:"one card per man at 174px; 1.3 screens on a founding's three, 2.1 on a played six. The old 6.2 was the armoury's figure mislabelled" },
 ];
 const SCREEN = 844;
 

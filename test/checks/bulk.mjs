@@ -80,7 +80,7 @@ const ALLOWED = {
      variable cannot reach on its own. It is a STYLESHEET, not a function: length here is content,
      the same argument EVENTS and SECT make. It grows when the game gains a surface, and the
      headroom is a dozen lines rather than a hundred so drift still says stop. */
-  CSS:            { max: 234, why: "a stylesheet, not a function — the type scale, the palette declared twice (night and paper), the ledger's re-pointing of it, and the entry row. Length here is content, as with EVENTS and SECT. Raised 216 -> 234 for the entry row (v3.96.0), which took the armoury from 4,821px to 2,061px: twenty lines of stylesheet bought back two thousand pixels of scroll, and the headroom stays a dozen lines so drift still says stop" },
+  CSS:            { max: 248, why: "a stylesheet, not a function — the type scale, the palette declared twice (night and paper), the ledger's re-pointing of it, and the two entry rows. Length here is content, as with EVENTS and SECT. Raised 216 -> 234 for the gear row (v3.96.0, armoury 4,821px -> 2,061px) and 234 -> 248 for the candidate's row and its stat strip (v3.97.0, the market 3,869px -> 1,779px on a played house). Both times a dozen lines of stylesheet bought back a thousand-odd pixels of scroll, which is the trade this allowance exists to permit — and the headroom stays a dozen lines so drift still says stop" },
 };
 
 export async function run(){

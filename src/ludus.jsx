@@ -218,6 +218,22 @@ const CSS = `
 .entrylead{flex:1 1 14px;min-width:14px;align-self:center;border-bottom:1px dotted var(--line-3);opacity:.65}
 .entrysum{flex:0 0 auto;font-size:var(--fs-md);white-space:nowrap;font-variant-numeric:tabular-nums}
 
+/* ---- THE CANDIDATE'S ROW ----
+   A man on the block was 490px, and four of them were 1,918px of a 2,908px page. The argument
+   for leaving them alone was that a man for sale needs his stats visible to be compared against
+   another man -- but at 490px apiece you can see 1.7 of them at once, so the visibility was not
+   buying the comparison it was supposed to. The numbers go ON the line, six of them in a strip,
+   and what the row cannot compare on -- the rumour, the seller's patter, the doctore's opinion,
+   the flaw, and the coin -- waits behind it. Four men now fit on one screen, which is the first
+   time the block has actually been comparable. */
+.entry.card{border-top:none}
+.entry.card>summary{display:block;padding:0;min-height:0}
+.entry.card[open]>summary{border-bottom:1px dotted var(--line-3);padding-bottom:8px;margin-bottom:8px}
+.statstrip{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-top:6px}
+.statstrip>div{min-width:0}
+.statstrip .k{font-size:var(--fs-micro);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.statstrip .v{font-size:var(--fs-sm);white-space:nowrap;font-variant-numeric:tabular-nums}
+
 .sect>.sectbody{padding:0 13px 13px}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}.spurt{display:none}.hitflash{display:none}}
 `;
@@ -23273,8 +23289,13 @@ export default function App(){
                 </button>
               </div>
             ); })()}
-          {S.market.filter(g=>!g.paragon).map(g=>(
-            <div key={g.id} className="panel" style={{padding:12,borderColor:g.contested?"var(--gold-deep)":isAuctor(g)?"var(--azure-edge)":g.legend?"var(--gold-deep)":undefined}}>
+          {S.market.filter(g=>!g.paragon).map(g=>{
+            /* lvl was computed in an IIFE halfway down the card; the summary needs it too, so it
+               is hoisted to the row and the IIFE is gone. */
+            const lvl = readLevel(S, g), src2 = lvl>=1 ? g : (g.shown || g);
+            return (
+            <details key={g.id} className="entry card panel" style={{padding:12,borderColor:g.contested?"var(--gold-deep)":isAuctor(g)?"var(--azure-edge)":g.legend?"var(--gold-deep)":undefined}}>
+              <summary>
               <div className="flex items-center justify-between">
                 <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700}}>{g.name}</div>
                 <span className="gold" style={{fontSize:"var(--fs-lg)"}}>{g.price}d</span>
@@ -23301,11 +23322,37 @@ export default function App(){
                   color:g.age>31?"var(--blood-hi)":g.age<=PRIME[1]?"var(--laurel-hi)":undefined}}>{ageTag(g.age)} · {g.age}</span>
                 {(g.scars||[]).length>0 && <span className="tag">{g.scars.length} scar{g.scars.length>1?"s":""}</span>}
               </div>
+                {/* the six numbers, on the line, because this is what one man is chosen over
+                    another BY. The class's own stats are the gold ones. */}
+                <div className="statstrip">
+                  {STATS.map(k=>{ const [lo,hi] = bandOf(src2[k], lvl);
+                    const key = CLASSES[g.cls].key.includes(k);
+                    return (
+                      <div key={k}>
+                        <div className="k dim">{STAT_NAMES[k].slice(0,3)}</div>
+                        <div className="v" style={{color: key ? "var(--gold)" : (lvl>=2 ? "var(--ink)" : "var(--ink-2)")}}>
+                          {lvl>=2 ? rnd(g[k]) : `${lo}–${hi}`}
+                        </div>
+                      </div>
+                    ); })}
+                </div>
+                {/* the act sits with the sum. preventDefault, or buying a man would also toggle
+                    the row he is standing in — a button inside a summary still opens it. */}
+                {(()=>{ const cost = g.contested ? g.contested.ceiling : g.price;
+                  return (
+                    <button className="btn" style={{width:"100%",marginTop:8, ...(g.contested?{borderColor:"var(--gold-line)"}:{})}}
+                      disabled={S.gold<cost || rosterFull(S)}
+                      onClick={e=>{ e.preventDefault(); e.stopPropagation(); bidFor(g); }}>
+                      {rosterFull(S)? "The cells are full" : S.gold<cost ? "Not enough coin"
+                        : g.contested ? `Outbid House ${g.contested.house} — ${cost} denarii`
+                        : isAuctor(g) ? `Take his oath — ${g.price} denarii` : `Buy for ${g.price} denarii`}
+                    </button>
+                  ); })()}
+              </summary>
+              <div>
               {g.story && STORIES[g.story] && (
                 <div style={{fontSize:"var(--fs-base)",fontStyle:"italic",color:"var(--violet)",marginBottom:3}}>They say {PR(g).he} is {STORIES[g.story].line}.</div>
               )}
-              {(()=>{ const lvl = readLevel(S, g), src2 = lvl>=1 ? g : (g.shown || g);
-                return (<>
                   {g.pitch && !g.scouted && (
                     <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:3}}>{g.pitch}</div>
                   )}
@@ -23322,23 +23369,9 @@ export default function App(){
                      : lvl>=1 ? `Your doctore walks round ${PR(g).him} once. ${potentialWord(g.potential,g)}, he thinks. At ${g.age}, ${ageWord(g.age,g)}.`
                      : `The seller talks ${PR(g).him} up and up. At ${g.age}, ${ageWord(g.age,g)}.`}
                   </div>
-                  {/* ONE grid, not two. The panel used to carry this row of numbers and then a
-                      second row of bars lower down, six stats drawn twice for 144 pixels a man on
-                      the tab that is nothing but these panels — and the lower row was the leak. */}
-                  <div className="grid grid-cols-3 gap-2" style={{margin:"6px 0"}}>
-                    {STATS.map(k=>{ const [lo,hi] = bandOf(src2[k], lvl);
-                      const key = CLASSES[g.cls].key.includes(k);
-                      return (
-                        <div key={k}>
-                          <div className="dim" style={{fontSize:"var(--fs-sm)"}}>{STAT_NAMES[k].slice(0,4)}</div>
-                          <div style={{fontSize:"var(--fs-md)", color: lvl>=2 ? "var(--ink)" : "var(--ink-2)"}}>
-                            {lvl>=2 ? rnd(g[k]) : `${lo}–${hi}`}
-                          </div>
-                          <Band lo={lo} hi={hi} exact={lvl>=2 ? g[k] : null}
-                            label={STAT_NAMES[k]} color={key?BRONZE:"var(--line-4)"}/>
-                        </div>
-                      ); })}
-                  </div>
+                  {/* THE GRID IS THE STRIP NOW, and there is still only one of them. v3.53.0
+                      removed a second row of bars from this panel for drawing six stats twice;
+                      the same rule retires the grid rather than letting it sit under the strip. */}
                   {lvl<2 && (
                     <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>
                       {lvl>=1
@@ -23360,24 +23393,15 @@ export default function App(){
                       disabled={S.gold<fee} onClick={()=>scout(g.id)}>
                       {`Have ${PR(g).him} looked over · ${fee}d`}
                     </button>; })()}
-                </>); })()}
               {isAuctor(g) && (
                 <div className="panel" style={{padding:9,marginTop:6,background:"var(--panel)",borderColor:"var(--azure-edge)"}}>
                   <div style={{fontSize:"var(--fs-md)"}}>Not for sale — {PR(g).he} is free, and offering. {g.auctor.fee}d in hand, {g.auctor.wage}d a week, {g.auctor.bouts} bouts, then {PR(g).he} walks.</div>
                   <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>{g.auctor.why}</div>
                 </div>
               )}
-              {(()=>{ const cost = g.contested ? g.contested.ceiling : g.price;
-                return (
-                  <button className="btn" style={{width:"100%",marginTop:8, ...(g.contested?{borderColor:"var(--gold-line)"}:{})}}
-                    disabled={S.gold<cost || rosterFull(S)} onClick={()=>bidFor(g)}>
-                    {rosterFull(S)? "The cells are full" : S.gold<cost ? "Not enough coin"
-                      : g.contested ? `Outbid House ${g.contested.house} — ${cost} denarii`
-                      : isAuctor(g) ? `Take his oath — ${g.price} denarii` : `Buy for ${g.price} denarii`}
-                  </button>
-                ); })()}
-            </div>
-          ))}
+              </div>
+            </details>
+          );})}
         </div>)}
 
         {tab==="villa" && (<div className="flex flex-col gap-3">
