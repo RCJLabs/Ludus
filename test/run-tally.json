@@ -32,4 +32,5 @@
 {"v":"3.98.0","checks":79,"failed":["reach"]},
 {"v":"3.98.0","checks":79,"failed":[]},
 {"v":"3.99.0","checks":80,"failed":["report","reach"]},
-{"v":"3.99.0","checks":80,"failed":[]}]
+{"v":"3.99.0","checks":80,"failed":[]},
+{"v":"3.100.0","checks":81,"failed":["scope"]}]

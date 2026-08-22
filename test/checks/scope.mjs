@@ -53,14 +53,21 @@ export async function run(){
      boundary here: sections lifted free-standing close with `    ); },` and sections lifted out of an
      IIFE close with `  },`, and a scan that keyed on one of them silently gave every entry a length
      of one line — which is why the first run of this found only one of the four faults. */
+  /* ---- AND THE REGISTRY HAS AN END ----
+     The last entry's range used to run all the way to App, on the assumption that nothing lives
+     between the two. v3.100.0 lifted Morning and GearDrawer out of App to module scope and put
+     them exactly there, so every name those components take as a PROP was read as an undeclared
+     call inside `unrest`, the last entry — two faults reported against a section that does not
+     contain the code. The registry closes at its own `};` and the walk stops there. */
+  const sectEnd = (()=>{ for(let i = secti + 1; i < appi; i++) if(/^\};/.test(L[i])) return i; return appi; })();
   const heads = [];
-  for(let i = secti + 1; i < appi; i++){
+  for(let i = secti + 1; i < sectEnd; i++){
     const m = L[i].match(/^  (\w+): \(S(?:, X)?(?:, (\w+))?\) =>/);
     if(m) heads.push({ i, name: m[1], param: m[2] || null });
   }
   const bad = new Map();
   heads.forEach((h, idx) => {
-    const end = idx + 1 < heads.length ? heads[idx+1].i - 1 : appi - 1;
+    const end = idx + 1 < heads.length ? heads[idx+1].i - 1 : sectEnd - 1;
     const taken = new Set(((L[h.i].match(/const \{([^}]*)\}/)?.[1]) || "").split(",").map(s=>s.trim()).filter(Boolean));
     const local = new Set();
     for(let k = h.i; k <= end; k++){

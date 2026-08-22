@@ -550,6 +550,8 @@ That change would have made `modals` pass on nothing. Its only bar was "the dige
 
 Two probe faults, both mine, both the same shape as ever: the check pressed the gatekeeper's UNDERSTOOD instead of a man, and then looked for the slot buttons without first opening the card's KIT face.
 
+**And the lift broke `scope`, which had an assumption nobody had written down.** Its last SECT entry's range ran all the way to App, because until now nothing lived between the registry's close and the component. Morning and GearDrawer live exactly there, so every name they take as a PROP — `equip`, `armWith` — read as an undeclared call inside `unrest`, the last entry, and the check reported two faults against a section that does not contain the code. The registry closes at its own `};` and the walk stops there now. It still finds all 33 sections, so the bound tightened the attribution without blinding the scan.
+
 ### The loop, queued
 Measured and argued in v3.99.0's brainstorm; ordered by expected value, not by ease.
 
