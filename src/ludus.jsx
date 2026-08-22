@@ -816,6 +816,10 @@ const kitKeepOf = it => !it || !wears(it) ? 0
   : it.keep ? it.keep : (it.price > KEEP_FLOOR ? Math.max(1, Math.round(it.price * KEEP_RATE)) : 0);
 const gearUpkeep = d => Object.entries(d.gear||{}).reduce((n,[id,c])=>
   n + kitKeepOf(GEAR[id]) * (c||0), 0);
+/* the block takes new stock every third week — the panel and the drawn gate both ask here */
+const MARKET_CYCLE = 3;
+const marketFresh = d => ((d.week - 1) % MARKET_CYCLE) === 0;
+const marketIn    = d => MARKET_CYCLE - ((d.week - 1) % MARKET_CYCLE);
 const rackCap   = d => 8 + bLevel(d,"armamentarium")*7;        // 8 / 15 / 22 / 29
 const rackUsed  = d => Object.entries(d.gear||{}).reduce((n,[id,c])=> n + (wears(GEAR[id])?(c||0):0), 0);
 const rackOver  = d => Math.max(0, rackUsed(d) - rackCap(d));
@@ -3166,10 +3170,11 @@ const agWord = age => age <= 0 ? "new this week" : age <= AG_FRESH ? `${age} wee
 function agenda(d){
   const A = [];
   /* tab[:face][:panel] — see the note above `agenda` */
-  const add = (urgency, tab, label, sub, key, act) => {
+  const add = (urgency, tab, label, sub, key, act, when) => {
     const [t, face, doc] = String(tab).split(":");
     A.push({ urgency, tab:t, dest: face ? `${t}:${face}` : null, doc: doc || null,
-      label:herOwn(d,label), sub:herOwn(d,sub), key, act: act || null });
+      label:herOwn(d,label), sub:herOwn(d,sub), key, act: act || null,
+      when: (typeof when === "number" ? when : null) });
   };
   if(d.pendingEvent) add(3, "ludus", d.pendingEvent.title, "a decision is waiting");
   if(d.succession) add(3, "ludus", "The house has no head", "somebody must take it up");
@@ -3180,7 +3185,8 @@ function agenda(d){
     const lbl = x.kind==="booking" ? `${x.name} is contracted for ${x.festName}`
       : x.kind==="challenge" ? (x.mine ? `${x.name} must answer for your word` : `${x.name} was named in public`)
       : `A levy of ${x.amount}d`;
-    add(n<=0?3:2, x.kind==="levy"?"villa":"arena", lbl, n<=0?"due this week":n===1?"due next week":`${n} weeks`);
+    add(n<=0?3:2, x.kind==="levy"?"villa":"arena", lbl,
+      n<=0?"due this week":n===1?"due next week":`${n} weeks`, null, null, n);
   }
   /* the infirmary held up against the calendar — a promise you are on course to break */
   for(const x of deadlines(d)){
@@ -3188,7 +3194,8 @@ function agenda(d){
     const n = x.due - d.week; if(n < 0 || n > 8) continue;
     const rd = promiseRead(d, x.gid, x.due);
     if(rd && !rd.ok) add(n<=2 ? 3 : 2, "men",
-      `${x.name} will not be fit for ${x.kind==="booking" ? (x.festName||"the day") : "the day that was named"}`, rd.word);
+      `${x.name} will not be fit for ${x.kind==="booking" ? (x.festName||"the day") : "the day that was named"}`,
+      rd.word, null, null, n);
   }
   { const fit = fitOn(d, d.week), all = activeG(d).length;
     /* `all > fit` was there to keep this quiet when you simply have few men — but a
@@ -21040,7 +21047,12 @@ function Scene({ S, agenda, openDoc, openMan, go }){
           <line x1="266" y1="516" x2="266" y2="550"/><line x1="288" y1="518" x2="288" y2="550"/>
           <path d="M310 516 q5 9 0 34"/><rect x="326" y="518" width="14" height="26" rx="6"/>
         </g>
-        {label(305, 580, `${Object.keys(S.gear||{}).length} pieces`)}
+        {(()=>{ const u = rackUsed(S), c = rackCap(S), over = rackOver(S);
+          /* the same number the armoury reads, and what it means: full racks strain, and
+             an empty rack is worth saying out loud because house issue is not steel. */
+          return label(305, 580, over ? `${u} of ${c} — past the room`
+            : u === 0 ? "bare — house issue only"
+            : `${u} of ${c} on the racks`); })()}
         <Badge x={358} y={512} list={at("racks")}/>
       </g>
 
@@ -21053,7 +21065,8 @@ function Scene({ S, agenda, openDoc, openMan, go }){
         <line x1="184" y1="640" x2="184" y2="592" stroke="#241c12" strokeWidth="3"/>
         <line x1="201" y1="640" x2="201" y2="590" stroke="#241c12" strokeWidth="3"/>
         <line x1="218" y1="640" x2="218" y2="596" stroke="#241c12" strokeWidth="3"/>
-        {(S.market||[]).length>0 && label(300, 628, `${S.market.length} on the block`)}
+        {(S.market||[]).length>0 && label(300, 628,
+          `${S.market.length} on the block${marketFresh(S) ? " — fresh" : ""}`)}
         {S.pendingEvent && <g>
           <circle cx="104" cy="606" r="8" fill="#241c12" stroke="#e0bd72" strokeWidth="1.4"/>
           <path d="M104 615 q-10 3 -11 25 l24 0 q-1 -22 -11 -25 Z" fill="#241c12" stroke="#e0bd72" strokeWidth="1.4"/>
@@ -23379,7 +23392,7 @@ export default function App(){
                line of flavour text, measured at y=361 under two staff sections. The header already
                carries the coin on every tab, so this says only what the market itself knows. */}
           {(()=>{ const n = rosterCount(S), cap = cellsCap(S), room = cap - n;
-            const fresh = 3 - ((S.week-1) % 3);
+            const fresh = marketIn(S);
             const cheapest = (S.market||[]).length ? Math.min(...(S.market||[]).map(m=>m.price)) : null;
             const canBuy = (S.market||[]).filter(m=>m.price <= S.gold).length;
             return (
@@ -25238,6 +25251,14 @@ export default function App(){
                 { key:2, title:"Worth doing", note:"while there is time" },
                 { key:1, title:"What the house still wants", note:"no hurry" },
               ];
+              /* WHAT FALLS FIRST, FIRST. A dated row carries `when` — the weeks until — so the
+                 group can be ordered by it instead of by whatever order the agenda was built in.
+                 Rows with no date keep their place behind the dated ones: a thing with a day on
+                 it outranks a thing without, at the same urgency. */
+              const clock = a => a.when == null ? null
+                : a.when <= 0 ? "this week" : a.when === 1 ? "next week" : `${a.when} weeks`;
+              const byWhen = (x, y) =>
+                (x.when == null) - (y.when == null) || ((x.when ?? 0) - (y.when ?? 0));
               const row = (a, i) => {
                 const where = `${TAB_NAMES[a.tab]||a.tab}${a.dest ? ` · ${FACES[a.dest.split(":")[1]]||""}` : ""}`;
                 const docable = a.doc && SECT[a.doc];
@@ -25251,7 +25272,14 @@ export default function App(){
                         <span style={{fontSize:"var(--fs-md)",color:a.urgency===3?"var(--ink)":"var(--ink-2)",minWidth:0}}>{a.label}</span>
                         <span className="rowval dim" style={{fontSize:"var(--fs-sm)",whiteSpace:"nowrap"}}>{docable ? "open ›" : `${where} ›`}</span>
                       </div>
-                      {a.sub && <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:1}}>{a.sub}</div>}
+                      <div className="flex items-center justify-between gap-2" style={{marginTop:1}}>
+                        {a.sub ? <span className="dim" style={{fontSize:"var(--fs-base)",minWidth:0}}>{a.sub}</span> : <span/>}
+                        {clock(a) && (
+                          <span className="tag" style={{flex:"0 0 auto",fontSize:"var(--fs-micro)",padding:"2px 7px",
+                            borderColor: a.when<=0 ? "var(--blood-edge)" : a.when===1 ? "var(--gold-edge)" : "var(--line-3)",
+                            color: a.when<=0 ? "var(--blood)" : a.when===1 ? "var(--gold)" : "var(--ink-dim)"}}>{clock(a)}</span>
+                        )}
+                      </div>
                     </button>
                     {/* the deed itself, on the line, for the rows whose deed is one press */}
                     {deed && (
@@ -25274,7 +25302,7 @@ export default function App(){
                     <span className="rowval dim" style={{fontSize:"var(--fs-sm)",whiteSpace:"nowrap"}}>open ›</span>
                   </div>
                 </button>
-                {GROUPS.map(G => { const rows = AGN.filter(a=>a.urgency===G.key);
+                {GROUPS.map(G => { const rows = AGN.filter(a=>a.urgency===G.key).slice().sort(byWhen);
                   if(!rows.length) return null;
                   return (
                     <div key={G.key} style={{marginBottom:4}}>

@@ -564,6 +564,18 @@ So the pattern is not rot. **It is that when a tool breaks, nothing says so.** e
 
 **And it immediately found something nobody had gone looking for: `clearAll()` could not clear the charter.** It pressed "I know the work" — an OPT-OUT, not an acknowledgement — which opens the charter's confirm; the modal branch answered that with its last button, "Think again", which returns to the charter, whose opt-out it pressed again, round and round until the rounds ran out with LEAVE OFF THE CHARTER standing over the page. **clearAll manufactured the overlay it then failed to clear**, and every check that calls it and then reads the screen was reading through one. Two probes this session had hand-rolled dismissals to work around it without anyone asking why the workaround was needed. Nothing depended on the press — `sand`, `room` and `relay` all switch the lessons off in STATE — so the word came out of the list. `guards` went 27s to 15s on the fix, which is the oscillation it had been paying for.
 
+**The clock and the drawing (v3.102.0).** Two of the queue, and the second one found a lie.
+
+**#6 — a date is a field, not a sentence.** Measured: **111 of 735 agenda rows carried a horizon, and every one carried it as PROSE** in the sub line — "due next week", "3 weeks". Urgency is a colour with no calendar, so the sheet could not order by what falls first and the reader could not plan against it. Rows now carry `when`, the weeks until, which does two things: a clock rides on the row (blood for this week, gold for next, plain after), and each group is ordered by it — **a thing with a day on it outranks a thing without, at the same urgency**, and rows with no date keep their place behind the dated ones.
+
+**#7 — the drawing was keeping its own numbers, and one of them was wrong.** The racks' caption read `Object.keys(S.gear).length` pieces: the count of gear IDS the save has ever touched, zero-count entries included. The armoury's own panel reads `rackUsed()`, which sums what is actually on the rack. **Over 120 played weeks the two disagreed in 115 of them** — the scene drew *eight pieces standing* where the racks held **none**. The drawn number is the one nobody checks, which is exactly why it drifted. It reads `rackUsed` of `rackCap` now, says "bare — house issue only" when there is no steel, and "past the room" when the racks are over capacity.
+
+The gate got the same treatment for the same reason. The block restocks every third week, and that expression lived inline inside the market panel — so the drawn gate would have needed a second copy of it to say "fresh". `MARKET_CYCLE`, `marketFresh` and `marketIn` are module-scope now and both the panel and the drawing ask there. **A number a drawing and a panel both report must have one source, or they drift and the drawn one goes unchecked.**
+
+Both guards were validated by breaking them, which is the standing rule since v3.101.0. Restoring the old caption turns `scene` red with *"the racks hold nothing and the drawing says 8 pieces"* — the fault stated in the words a reader would use. `sheet` asserts a levy due this week puts a clock reading "this week" on its own row.
+
+Still open on the drawing: the villa and the training square report nothing about the house, and the road nothing about what is booked. Those want the art pass rather than more captions — the shapes are placeholder-grade, and hanging more text on them is not the same as drawing a ludus that shows its own condition.
+
 ### The loop, queued
 Measured and argued in v3.99.0's brainstorm; ordered by expected value, not by ease.
 
@@ -572,8 +584,8 @@ Measured and argued in v3.99.0's brainstorm; ordered by expected value, not by e
 3. ~~The week has a close~~ — v3.99.0.
 4. **Return to the list, not the room.** Acting from a row should strike it through and leave you on the sheet. Half-arrived already: a row's own deed leaves the sheet standing. The other half — travelling and coming back — is open.
 5. ~~Fold the armoury into the man~~ — v3.100.0.
-6. **Deadlines on a clock.** Urgency is a colour with no horizon. A *this week / next / later* column on the sheet, and a season strip on the scene.
-7. **Make the scene report state.** Racks tarnishing as steel wears, cells darkening with unrest, the gate lit with new stock — then navigation IS information. Should wait for the art pass; it is the same work.
+6. ~~Deadlines on a clock~~ — v3.102.0.
+7. ~~Make the scene report state~~ — v3.102.0 (the numbers; the art pass is still open).
 8. ~~Land on the morning, don't dismiss it~~ — v3.100.0.
 9. **Set the week's work in one place.** Assignments are per-man, per-card; a yard-level board matches how a lanista thinks.
 10. **A "what you can do here" strip per face.** 81% of actions sit below the first 844px and `villa · The House` carries 2,440px of dead section above its last action.

@@ -160,6 +160,20 @@ export async function run({ p, errors }){
   await openReport(p);
   const sh2 = await readSheet(p);
   lines.push(`with a levy due: groups ${sh2 ? sh2.heads.join(" → ") : "(no sheet)"}`);
+  /* ---- AND THE DATE MUST BE ON THE ROW ----
+     111 of 735 agenda rows carried a horizon and every one carried it as PROSE. `when` makes it a
+     field, so the row can print a clock and the group can be ordered by what falls first. A levy
+     due this week must say so on its own line. */
+  const clocks = await p.evaluate(`(()=>{
+    const w = [...document.querySelectorAll(".modalwrap")]
+      .sort((a,b)=>(+getComputedStyle(b).zIndex||50)-(+getComputedStyle(a).zIndex||50))[0];
+    if(!w) return [];
+    return [...w.querySelectorAll("span.tag")].map(t=>(t.innerText||"").trim())
+      .filter(t=>/^(this week|next week|\\d+ weeks)$/i.test(t));
+  })()`);
+  lines.push(`clocks on the sheet: ${clocks.join(" · ") || "(none)"}`);
+  if(!clocks.some(c=>/this week/i.test(c)))
+    fails.push("a levy falls due this week and no row carries a clock saying so — the horizon is prose again");
   if(sh2 && sh2.heads[0] !== "DUE")
     fails.push(`something is due and the sheet leads with "${sh2.heads[0]||"nothing"}" — due must lead`);
 

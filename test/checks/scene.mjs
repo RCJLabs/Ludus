@@ -48,6 +48,31 @@ export async function run({ p, errors }){
   lines.push(`${badges} caller badge${badges===1?"":"s"} standing in the scene`);
   if(badges < 1) fails.push("no caller badge in the scene on a morning the agenda raises seven items — the derivation is returning nothing, which is the dot that never lights");
 
+  /* ---- THE DRAWING MUST NOT KEEP ITS OWN NUMBERS ----
+     The racks' caption read `Object.keys(S.gear).length` — the count of gear IDS the save has
+     ever touched, zero-count entries included — while the armoury's panel read rackUsed(), which
+     sums what is on the rack. Over 120 played weeks they disagreed in 115: the scene drew seven
+     pieces standing where the racks held none. A number the drawing and a panel both report has
+     to come from one place, and this asserts the drawn one against the handle's. */
+  {
+    const rack = await p.evaluate(()=>{
+      const A = window.__LVDVS;
+      const k = Object.keys(localStorage).find(q=>/ludus-slot-\d/.test(q));
+      const d = JSON.parse(localStorage.getItem(k));
+      const g = [...document.querySelectorAll(".scn")]
+        .find(x=>(x.getAttribute("aria-label")||"").toLowerCase().startsWith("the racks"));
+      return { drawn: g ? (g.textContent||"").replace(/\s+/g," ").trim() : null,
+               used: A.rackUsed(d), cap: A.rackCap(d) };
+    });
+    lines.push(`the racks are drawn "${rack.drawn}" against rackUsed ${rack.used} of ${rack.cap}`);
+    const said = rack.drawn && rack.drawn.match(/(\d+)\s+of\s+(\d+)/);
+    if(rack.used === 0){
+      if(!/bare/i.test(rack.drawn||"")) fails.push(`the racks hold nothing and the drawing says "${rack.drawn}"`);
+    } else if(!said || +said[1] !== rack.used){
+      fails.push(`the drawing says "${rack.drawn}" and the racks hold ${rack.used} — the scene is keeping a second number for the same rack`);
+    }
+  }
+
   const tapScn = lab => p.evaluate(l=>{ const g=[...document.querySelectorAll(".scn")]
     .find(x=>(x.getAttribute("aria-label")||"").toLowerCase().includes(l)); if(!g) return false;
     g.dispatchEvent(new MouseEvent("click",{bubbles:true})); return true; }, lab);
