@@ -582,6 +582,14 @@ It forges the widest line the game can compose — the longest class against the
 
 Still open on the drawing: the villa and the training square report nothing about the house, and the road nothing about what is booked. Those want the art pass rather than more captions — the shapes are placeholder-grade, and hanging more text on them is not the same as drawing a ludus that shows its own condition.
 
+**The fixture audit (v3.103.0).** `room`'s red raised a question the check audit had not asked: `guards` tests the harness's contract, but nothing tested whether a check's FIXTURE actually landed before it measured anything. A bisect caught `room`, not a guard.
+
+Censused: **15 files forge a whole state into a save slot, 20 forges in all.** The specific race — anything that yields between writing the fixture and reloading the page — was `room` alone, and it is closed: **19 of 20 write and reload with nothing in between**, and the twentieth (`relay`) is a write followed by a function DEFINITION rather than the next thing to happen. `relay` also proves the correct ordering by counter-example: its `waitSaved()` comes BEFORE the write, letting the app's autosave settle first, then writes and reloads at once.
+
+`fixtures` is the guard, and it reads the test tree rather than the game — like `bulk` and `scope`, it costs two seconds and catches the fault at the moment it is typed rather than the release after. Validated by breaking it, per the standing rule: restoring `room`'s `waitSaved` turns it red with *"room.mjs:87 yields 1× before reloading (waitSaved()) — the app is awake for that whole gap and its autosave will write its own house over the fixture."*
+
+**What this does NOT cover, named rather than half-built.** The rule is static, so it bars the known race and nothing else. A forge can still fail quietly for other reasons — no slot key found, the wrong key written, the app re-seeding after load — and no check asserts at RUNTIME that the state it measured is the state it wrote. The honest fix is a `forge()` in the harness that stamps a token into the state it plants and refuses to continue if that token does not survive the load, with the fifteen call sites migrated onto it. That is a release of its own and it is not this one; adding an unused helper nobody calls would be worse than leaving the gap named.
+
 ### The loop, queued
 Measured and argued in v3.99.0's brainstorm; ordered by expected value, not by ease.
 
