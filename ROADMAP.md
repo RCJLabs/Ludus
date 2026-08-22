@@ -574,6 +574,12 @@ The gate got the same treatment for the same reason. The block restocks every th
 
 Both guards were validated by breaking them, which is the standing rule since v3.101.0. Restoring the old caption turns `scene` red with *"the racks hold nothing and the drawing says 8 pieces"* — the fault stated in the words a reader would use. `sheet` asserts a levy due this week puts a clock reading "this week" on its own row.
 
+**And the release's own suite found what the audit was actually for.** `room` went red for the first time in its life — "the panel does not carry the man's whole line" — and it was not this release: bisected against the parent commit, both sources pass three runs out of three in isolation. `room` was **flaky**, and the reason is the shape v3.101.0 went looking for.
+
+It forges the widest line the game can compose — the longest class against the longest house against the longest name and nick, taken from the tables rather than invented — writes it over every man at the rope, and then called **`waitSaved()` before reloading**. That is exactly backwards after writing state by hand: `waitSaved` exists to let the app's debounced autosave flush, and the app is still running with its own house in memory. During the wait, its autosave writes that house OVER the fixture; the reload then loads the app's men, not the forged ones, and the check measures a random house against the widest line it composed and quietly reports the line "is not on the panel".
+
+**So it had been passing on the wrong fixture some of the time** — the vacuous pass this audit exists to catch, in the check that had never once gone red. Write and reload at once, the way `sheet`, `arm` and `guards` do, and the rope comes back "Convictolitavis, the Beast of Capua" on every row, four runs out of four.
+
 Still open on the drawing: the villa and the training square report nothing about the house, and the road nothing about what is booked. Those want the art pass rather than more captions — the shapes are placeholder-grade, and hanging more text on them is not the same as drawing a ludus that shows its own condition.
 
 ### The loop, queued

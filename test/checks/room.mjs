@@ -32,7 +32,7 @@
    forces the widest word AND the widest line together, so the next time a scale gets a longer
    word the row it shares is measured with it. */
 
-import { serve, open, found, endWeek, clearAll, tab, click, waitSaved, hasHandle } from "../harness.mjs";
+import { serve, open, found, endWeek, clearAll, tab, click, hasHandle } from "../harness.mjs";
 
 export const name = "room";
 export const describe = "the widest line the content space allows still fits the row it goes in";
@@ -100,7 +100,14 @@ export async function run({ p, errors }){
     bad.push(`the stats meant to force a wide menace word read "${set.word}" instead — the scale `
       + `has moved and this check is now measuring the row against a narrow word`);
 
-  await waitSaved(p);
+  /* ---- DO NOT WAIT AFTER WRITING A FIXTURE: THE APP IS STILL RUNNING ----
+     This waited 950ms here, which is `waitSaved`'s job — to let the app's debounced autosave
+     flush. That is exactly backwards after writing state by hand: the app holds its own S in
+     memory, and during the wait its autosave writes that state OVER the fixture. Then the reload
+     loads the app's house, not the forged one, and the sixteen men at the rope come back with
+     their real names — which is why this check intermittently reported that the widest line was
+     "not on the panel" when the panel was fine and the fixture had simply been clobbered.
+     Every other check that forges state (sheet, arm, guards) writes and reloads at once. */
   await p.reload({ waitUntil:"domcontentloaded" });
   await p.waitForTimeout(1000);
   await click(p, /take up the keys/i);
