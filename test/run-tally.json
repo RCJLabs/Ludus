@@ -23,4 +23,5 @@
 {"v":"3.91.0","checks":77,"failed":[]},
 {"v":"3.92.0","checks":77,"failed":[]},
 {"v":"3.93.0","checks":77,"failed":["sweep"]},
-{"v":"3.93.0","checks":77,"failed":[]}]
+{"v":"3.93.0","checks":77,"failed":[]},
+{"v":"3.94.0","checks":77,"failed":[]}]
