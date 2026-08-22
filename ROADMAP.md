@@ -536,6 +536,20 @@ Bisected rather than guessed: the pre-worksheet build passed at 9 of 26, the age
 
 `sheet` is the new check, and it forces its own fixture twice: a house at unrest 72 with coin (so a deed exists to press, and pressing it must move the house — the feast took unrest 72→65 and 121d), and a house with a levy falling due this week (so the close's number is exercised at all, rather than passing on a founding that happens to owe nothing). One instrument fault caught in the writing: `.btn` uppercases through CSS and `innerText` returns the *transformed* text, so a lowercase `/unanswered/` never matched "END WEEK · 1 UNANSWERED".
 
+**The morning, and the man (v3.100.0).** Two of the queue, and both turned out to be about where a thing BELONGS rather than how it looks.
+
+**#8 — the week that was is the page you arrive on.** It was a modalwrap thrown over whatever you were looking at, with a button whose only job was to make it go away: the one moment in the loop with narrative weight, spent as an interruption. It is a panel at the head of the ludus now, and ending a week puts you there. The guard that matters is unchanged and was never the z-index — `!S.pendingEvent && !evResult && !fight` is what keeps it from covering the answer to a question you were just asked. A question and its answer are one thing; the week that was comes after both.
+
+That change would have made `modals` pass on nothing. Its only bar was "the digest covered the answer", which a panel makes *structurally impossible* — the good outcome, and also the outcome where the check stops proving anything. It counts the mornings that actually render now and bars zero, on either sighting: `mornings` samples the instant the week turns, so a morning correctly WAITING behind an open question shows up in `followed` instead. `layers` needed nothing — `Z.week` still carries Rome's letter.
+
+**#5 — you kit the man, not the rack.** Assignment always lived on the gladiator; BUYING lived on a face of its own that `reach` measured as carrying **one action**. So the loop was: stand at the man, find he has nothing fit to carry, leave him, walk to the racks, buy, walk back, open the drawer again. The drawer now lists what the house has *not* bought — priced, his own styles first, as ledger rows — and one press buys it and arms him. The racks keep their face, because that is where stock and the room's capacity are read; you simply no longer have to go there to put a sword in a man's hand.
+
+**One mutation, not two.** `mut` clones the current state out of a closure, so `buyGear(id)` followed by `equip(...)` would clone the same stale state twice and the second write would overwrite the first — the man armed and the coin never spent, or the reverse. Both halves happen inside one clone, and `arm` is the new check that proves it from the save: Gladius bought for 30d **and** on Theudobald's weapon slot, in one press.
+
+**And App paid for both by shedding, not by being allowed more.** It stood at 6,087 of 6,100 before this release and 6,103 after the racks folded in. `bulk`'s own note is against raising a ceiling to fit the next thing — an allowance that never tightens after a split only ratchets the wrong way, and App came DOWN from 7,200 when the panels became SECT. So **Morning** and **GearDrawer** were lifted to module scope on the same argument: each reads state and a handler or two and nothing else, so neither needs to live inside the component that owns them. App is **6,012** now, with 88 lines of room it did not have before.
+
+Two probe faults, both mine, both the same shape as ever: the check pressed the gatekeeper's UNDERSTOOD instead of a man, and then looked for the slot buttons without first opening the card's KIT face.
+
 ### The loop, queued
 Measured and argued in v3.99.0's brainstorm; ordered by expected value, not by ease.
 
@@ -543,10 +557,10 @@ Measured and argued in v3.99.0's brainstorm; ordered by expected value, not by e
 2. ~~Three groups, not one list~~ — v3.99.0.
 3. ~~The week has a close~~ — v3.99.0.
 4. **Return to the list, not the room.** Acting from a row should strike it through and leave you on the sheet. Half-arrived already: a row's own deed leaves the sheet standing. The other half — travelling and coming back — is open.
-5. **Fold the armoury into the man.** `familia · The Armoury` is a whole face carrying **one action**. Gear belongs on the gladiator's card: you kit *him*, not the rack.
+5. ~~Fold the armoury into the man~~ — v3.100.0.
 6. **Deadlines on a clock.** Urgency is a colour with no horizon. A *this week / next / later* column on the sheet, and a season strip on the scene.
 7. **Make the scene report state.** Racks tarnishing as steel wears, cells darkening with unrest, the gate lit with new stock — then navigation IS information. Should wait for the art pass; it is the same work.
-8. **Land on the morning, don't dismiss it.** "The week that was" is the one moment with narrative weight and it is spent as a modal you tap past. Merge it with the report as the page you arrive on.
+8. ~~Land on the morning, don't dismiss it~~ — v3.100.0.
 9. **Set the week's work in one place.** Assignments are per-man, per-card; a yard-level board matches how a lanista thinks.
 10. **A "what you can do here" strip per face.** 81% of actions sit below the first 844px and `villa · The House` carries 2,440px of dead section above its last action.
 

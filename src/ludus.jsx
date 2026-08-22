@@ -20758,6 +20758,151 @@ const SCENE_ROOM = {   /* which room a panel's caller stands at */
   aedileship:"villa", yourStanding:"villa", rites:"villa", owed:"villa", temple:"shrine",
   rack:"racks", collegium:"cells",
 };
+/* ---- THE MORNING ----
+   The week's own report, at the head of the page a player arrives on. Before v3.100.0 this was a
+   modalwrap thrown over whatever you were looking at, with a button whose only job was to make it
+   go away — the one moment in the loop with narrative weight, spent as an interruption.
+   It renders only when no question is open, no answer is being read and no bout is running: a
+   question and its answer are one thing, and the week that was comes after both. That condition
+   lives at the call site, where the state is; this draws what it is given. */
+/* ---- THE KIT DRAWER ----
+   What one man carries, opened from his own card. v3.100.0 gave it the second half of the job:
+   the pieces the house has NOT bought yet, priced, bought and worn in one press. Before that,
+   arming a man who had nothing fit meant leaving him for a face of its own — `reach` measured
+   that face as carrying a single action — and walking back.
+   It is lifted out of App on the same argument as SECT and Morning: it reads the state and two
+   handlers and nothing else, so it does not need to live inside the component that owns them. */
+function GearDrawer({ S, pick, close, equip, armWith }){
+        const g = S.gladiators.find(x=>x.id===pick.gid);
+        if(!g) return null;
+        const kit = g.kit || defaultKit(g.cls);
+        const opts = Object.entries(GEAR).filter(([id,it])=>it.slot===pick.slot && (isBasic(id) || gearFree(S,id)>0 || kit[pick.slot]===id));
+        const dualLock = pick.slot==="offhand" && GEAR[kit.weapon] && GEAR[kit.weapon].art==="dual";
+        return (
+          <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.gear}} onClick={()=>close()}>
+            <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
+              <div className="flex items-center justify-between" style={{marginBottom:4}}>
+                <div className="disp" style={{fontSize:"var(--fs-md)",fontWeight:700,letterSpacing:".1em"}}>{SLOT_NAME[pick.slot].toUpperCase()}</div>
+                <button className="btn btn-ghost" style={{padding:"10px 10px"}} aria-label="Close" onClick={()=>close()}><X size={14}/></button>
+              </div>
+              <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:10}}>
+                For {g.name} — {g.cls}.{dualLock ? " Both his hands are full; a shield would only hinder him." : ""}
+              </div>
+              {opts.map(([id,it])=>{
+                const on = kit[pick.slot]===id;
+                const alien = it.styles && it.styles.length && !it.styles.includes(g.cls);
+                const spare = isBasic(id) ? null : (S.gear[id]||0);
+                return (
+                  <button key={id} className={`optrow ${on?"on":""}`}
+                    onClick={()=>{ equip(g.id, pick.slot, id); close(); }}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="disp" style={{fontSize:"var(--fs-base)",color:on?"var(--ink-hi)":"var(--ink)"}}>{it.name}</span>
+                      {on ? <span className="tag tag-gold">Worn</span>
+                          : spare!=null ? <span className="dim" style={{fontSize:"var(--fs-sm)",whiteSpace:"nowrap"}}>{spare} owned</span>
+                          : <span className="tag">Standard</span>}
+                    </div>
+                    <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",margin:"3px 0 4px"}}>{it.desc}</div>
+                    <GearStats it={it} cls={g.cls}/>
+                    {alien && !on && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>Suits: {it.styles.join(", ")}</div>}
+                  </button>
+                );
+              })}
+              {/* ---- AND WHAT THE HOUSE HAS NOT BOUGHT YET ----
+                   The armoury was a separate errand: leave the man, walk to the racks, buy, walk
+                   back. These are the pieces for his slot that nobody owns, cheapest first with
+                   his own styles ahead of the rest, and the press buys AND arms him. The racks
+                   keep their face — it is where stock and the room's capacity are read — but you
+                   no longer have to go there to put a sword in a man's hand. */}
+              {(()=>{
+                const inStyle = it => !it.styles || !it.styles.length || it.styles.includes(g.cls);
+                const buyable = Object.entries(GEAR)
+                  .filter(([id,it])=> it.slot===pick.slot && !isBasic(id) && it.price>0
+                    && gearFree(S,id)===0 && kit[pick.slot]!==id
+                    && (!it.master || masterOpen(S)))
+                  .sort((a,b)=> (inStyle(b[1])-inStyle(a[1])) || (a[1].price-b[1].price));
+                if(!buyable.length) return null;
+                const over = rackOver(S);
+                return (<>
+                  <div className="flex items-center justify-between gap-2"
+                    style={{margin:"10px 2px 5px",borderBottom:"1px dotted var(--line-3)",paddingBottom:3}}>
+                    <span className="disp" style={{fontSize:"var(--fs-sm)",letterSpacing:".1em",color:"var(--ink-dim)"}}>NOT ON THE RACKS</span>
+                    <span className="dim" style={{fontSize:"var(--fs-sm)"}}>{buyable.length} · bought and worn in one</span>
+                  </div>
+                  {over > 0 && (
+                    <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",margin:"0 2px 5px",color:"var(--blood-hi)"}}>
+                      The racks are {over} past what the room holds — everything you add wears faster and costs rent.
+                    </div>
+                  )}
+                  {buyable.map(([id,it])=>{
+                    const price = gearPrice(S, it.price, it.slot);
+                    const dear = S.gold < price;
+                    const alien = !inStyle(it);
+                    return (
+                      <details key={id} className="entry">
+                        <summary>
+                          <span className="entryname disp" style={{color:it.master?"var(--gold-hi)":"var(--ink)"}}>{it.name}</span>
+                          {it.master && <span className="entrymark" style={{color:"var(--gold)"}}>a master&#39;s</span>}
+                          {alien && <span className="entrymark" style={{color:"var(--gold)"}}>clumsy for him</span>}
+                          <span className="entrylead"/>
+                          <span className="entrysum" style={{color:dear?"var(--ink-faint)":"var(--gold)"}}>{price}d</span>
+                        </summary>
+                        <div style={{padding:"2px 2px 10px"}}>
+                          <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",margin:"2px 0 3px"}}>{it.desc}</div>
+                          <GearStats it={it} cls={g.cls}/>
+                          {alien && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>Suits: {it.styles.join(", ")}</div>}
+                          <button className="btn" style={{width:"100%",marginTop:7}} disabled={dear}
+                            onClick={()=>{ armWith(g.id, pick.slot, id); close(); }}>
+                            {dear ? "Not enough coin" : `Buy it and arm him · ${price}d`}
+                          </button>
+                        </div>
+                      </details>
+                    );
+                  })}
+                </>);
+              })()}
+              <button className="btn btn-ghost" style={{width:"100%",marginTop:8}} onClick={()=>close()}>Leave as he is</button>
+            </div>
+          </div>
+        );
+}
+
+function Morning({ D, close }){
+  const Delta = ({label, v, good, suffix}) => v===0 ? null : (
+    <div style={{minWidth:0}}>
+      <div className="dim" style={{fontSize:"var(--fs-micro)",textTransform:"uppercase",letterSpacing:".06em"}}>{label}</div>
+      <div className="disp" style={{fontSize:"var(--fs-lg)",color: (good? v>0 : v<0) ? "var(--laurel)" : "var(--blood)"}}>
+        {v>0?"+":""}{v}{suffix||""}
+      </div>
+    </div>
+  );
+  return (
+    <div className="panel morning" style={{padding:13,borderColor:"var(--gold-edge)"}}>
+      <div className="flex items-center justify-between" style={{marginBottom:3}}>
+        <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".1em",color:"var(--ink-hi)"}}>THE WEEK THAT WAS</div>
+        <button className="btn btn-ghost" style={{padding:"8px 10px"}} aria-label="Put the morning report away" onClick={close}><X size={14}/></button>
+      </div>
+      <div className="dim" style={{fontSize:"var(--fs-sm)",marginBottom:9}}>{D.season} · year {D.year}, week {D.yw}</div>
+      <div className="grid grid-cols-4 gap-2" style={{marginBottom:10}}>
+        <Delta label="Coin" v={D.dl.gold} good={true} suffix="d"/>
+        <Delta label="Fame" v={D.dl.fame} good={true}/>
+        <Delta label="Standing" v={D.dl.favor} good={true}/>
+        <Delta label="Unrest" v={D.dl.unrest} good={false}/>
+      </div>
+      {D.lost>0 && <div className="blood" style={{fontSize:"var(--fs-md)",marginBottom:8}}>
+        {D.lost} {D.lost===1?"man is":"men are"} no longer in the yard.
+      </div>}
+      {D.lines.length===0
+        ? <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>Nothing happened worth the ink.</div>
+        : D.lines.map((l,i)=>(
+            <div key={i} style={{fontSize:"var(--fs-md)",padding:"4px 0",borderTop:i?"1px dotted var(--raise)":undefined,
+              color: l.kind==="bad"?"var(--blood-hi)" : l.kind==="good"?"var(--laurel-lt)" : "var(--ink-2)"}}>{l.text}</div>
+          ))}
+      {D.more>0 && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:6,fontStyle:"italic"}}>…and {D.more} more in the chronicle.</div>}
+      <button className="btn" style={{width:"100%",marginTop:12}} onClick={close}>Carry on</button>
+    </div>
+  );
+}
+
 function Scene({ S, agenda, openDoc, openMan, go }){
   const A = agenda || [];
   const at = room => A.filter(a=>a.doc && SCENE_ROOM[a.doc]===room);
@@ -21169,7 +21314,7 @@ export default function App(){
       setAsk({ title:"Ledger Restored", confirm:"Good", text:`${o.name} takes its place in the records — week ${o.week}, ${o.gladiators.filter(g=>!isGone(g)).length} men.`, run:()=>{} });
     })(); };
   const [digest,setDigest] = useState(null);
-  const advance = ()=> mut(d=>{ endWeek(d); if(d.lastWeek && d.lastWeek.notable && !d.over) setDigest(d.lastWeek); });
+  const advance = ()=> { setTab("ludus"); mut(d=>{ endWeek(d); if(d.lastWeek && d.lastWeek.notable && !d.over) setDigest(d.lastWeek); }); };
   const [skipped,setSkipped] = useState(null);
   const runOn = () => mut(d=>{ const r = skipWeeks(d, weeksToSomething(d, 6)); setSkipped(r); });
 
@@ -21377,6 +21522,8 @@ export default function App(){
   const sellOne = id => mut(d=>{ sellGearOne(d, id); });
   const buyGear = id => mut(d=>{ buyGearItem(d, id); });
   const equip = (gid, slot, id) => mut(d=>{ equipOne(d, gid, slot, id); });
+  /* buy it and put it on him in a single clone — see the note above about mut and stale state */
+  const armWith = (gid, slot, id) => mut(d=>{ buyGearItem(d, id); equipOne(d, gid, slot, id); });
   const unequipAll = () => mut(d=>{ stripAll(d); });
   const setCrest = patch => mut(d=>{ setCrestTo(d, patch); });
   const takeRise = () => mut(d=>{ claimRise(d); });
@@ -22483,6 +22630,11 @@ export default function App(){
 
 
         {tab==="ludus" && (<div className="flex flex-col gap-3">
+
+          {/* the morning, lifted to module scope so App keeps its ceiling — see Morning() */}
+          {digest && !S.pendingEvent && !evResult && !fight && !S.over &&
+            <Morning D={digest} close={()=>setDigest(null)}/>}
+
           {/* ---- WHAT THE WEEK IS ASKING FOR, FIRST, from v3.2.0 ----
                `agenda(d)` has known what wants an answer and which tab the answer is on since v2.57.0,
                and it rendered inside `This week` — a section MEASURED at y=1565 on a founded house at a
@@ -24776,46 +24928,8 @@ export default function App(){
         </div>
       )}
 
-      {gearPick && (()=>{
-        const g = S.gladiators.find(x=>x.id===gearPick.gid);
-        if(!g) return null;
-        const kit = g.kit || defaultKit(g.cls);
-        const opts = Object.entries(GEAR).filter(([id,it])=>it.slot===gearPick.slot && (isBasic(id) || gearFree(S,id)>0 || kit[gearPick.slot]===id));
-        const dualLock = gearPick.slot==="offhand" && GEAR[kit.weapon] && GEAR[kit.weapon].art==="dual";
-        return (
-          <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.gear}} onClick={()=>setGearPick(null)}>
-            <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
-              <div className="flex items-center justify-between" style={{marginBottom:4}}>
-                <div className="disp" style={{fontSize:"var(--fs-md)",fontWeight:700,letterSpacing:".1em"}}>{SLOT_NAME[gearPick.slot].toUpperCase()}</div>
-                <button className="btn btn-ghost" style={{padding:"10px 10px"}} aria-label="Close" onClick={()=>setGearPick(null)}><X size={14}/></button>
-              </div>
-              <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:10}}>
-                For {g.name} — {g.cls}.{dualLock ? " Both his hands are full; a shield would only hinder him." : ""}
-              </div>
-              {opts.map(([id,it])=>{
-                const on = kit[gearPick.slot]===id;
-                const alien = it.styles && it.styles.length && !it.styles.includes(g.cls);
-                const spare = isBasic(id) ? null : (S.gear[id]||0);
-                return (
-                  <button key={id} className={`optrow ${on?"on":""}`}
-                    onClick={()=>{ equip(g.id, gearPick.slot, id); setGearPick(null); }}>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="disp" style={{fontSize:"var(--fs-base)",color:on?"var(--ink-hi)":"var(--ink)"}}>{it.name}</span>
-                      {on ? <span className="tag tag-gold">Worn</span>
-                          : spare!=null ? <span className="dim" style={{fontSize:"var(--fs-sm)",whiteSpace:"nowrap"}}>{spare} owned</span>
-                          : <span className="tag">Standard</span>}
-                    </div>
-                    <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",margin:"3px 0 4px"}}>{it.desc}</div>
-                    <GearStats it={it} cls={g.cls}/>
-                    {alien && !on && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>Suits: {it.styles.join(", ")}</div>}
-                  </button>
-                );
-              })}
-              <button className="btn btn-ghost" style={{width:"100%",marginTop:4}} onClick={()=>setGearPick(null)}>Leave as he is</button>
-            </div>
-          </div>
-        );
-      })()}
+      {gearPick && <GearDrawer S={S} pick={gearPick} close={()=>setGearPick(null)}
+        equip={equip} armWith={armWith}/>}
 
       {dealH && (()=>{ const h = (S.rivals||[]).find(x=>x.name===dealH);
         if(!h) return null;
@@ -25720,44 +25834,8 @@ export default function App(){
           itself over the top of your own decision and you read what it cost only
           after carrying on from a summary of a week you had not finished. A question
           and its answer are one thing. The week that was comes after both. */}
-      {digest && !S.pendingEvent && !evResult && !fight && !S.over && (()=>{
-        const D = digest, close=()=>setDigest(null);
-        const Delta = ({label, v, good, suffix}) => v===0 ? null : (
-          <div style={{minWidth:0}}>
-            <div className="dim" style={{fontSize:"var(--fs-micro)",textTransform:"uppercase",letterSpacing:".06em"}}>{label}</div>
-            <div className="disp" style={{fontSize:"var(--fs-lg)",color: (good? v>0 : v<0) ? "var(--laurel)" : "var(--blood)"}}>
-              {v>0?"+":""}{v}{suffix||""}
-            </div>
-          </div>
-        );
-        return (
-        <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.week}} onClick={close}>
-          <div className="modal" tabIndex={-1} onClick={e=>e.stopPropagation()}>
-            <div className="flex items-center justify-between" style={{marginBottom:3}}>
-              <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".1em",color:"var(--ink-hi)"}}>THE WEEK THAT WAS</div>
-              <button className="btn btn-ghost" style={{padding:"8px 10px"}} aria-label="Close" onClick={close}><X size={14}/></button>
-            </div>
-            <div className="dim" style={{fontSize:"var(--fs-sm)",marginBottom:9}}>{D.season} · year {D.year}, week {D.yw}</div>
-            <div className="grid grid-cols-4 gap-2" style={{marginBottom:10}}>
-              <Delta label="Coin" v={D.dl.gold} good={true} suffix="d"/>
-              <Delta label="Fame" v={D.dl.fame} good={true}/>
-              <Delta label="Standing" v={D.dl.favor} good={true}/>
-              <Delta label="Unrest" v={D.dl.unrest} good={false}/>
-            </div>
-            {D.lost>0 && <div className="blood" style={{fontSize:"var(--fs-md)",marginBottom:8}}>
-              {D.lost} {D.lost===1?"man is":"men are"} no longer in the yard.
-            </div>}
-            {D.lines.length===0
-              ? <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>Nothing happened worth the ink.</div>
-              : D.lines.map((l,i)=>(
-                  <div key={i} style={{fontSize:"var(--fs-md)",padding:"4px 0",borderTop:i?"1px dotted var(--raise)":undefined,
-                    color: l.kind==="bad"?"var(--blood-hi)" : l.kind==="good"?"var(--laurel-lt)" : "var(--ink-2)"}}>{l.text}</div>
-                ))}
-            {D.more>0 && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:6,fontStyle:"italic"}}>…and {D.more} more in the chronicle.</div>}
-            <button className="btn" style={{width:"100%",marginTop:12}} onClick={close}>Carry on</button>
-          </div>
-        </div>
-        ); })()}
+      {/* THE WEEK THAT WAS LIVES ON THE MORNING NOW (v3.100.0) — see MorningPanel, rendered at
+           the head of the ludus. What stood here was a modalwrap you tapped past. */}
 
       {skipped && skipped.ran>=2 && (
         <div className="modalwrap" style={{zIndex:Z.page}} role="dialog" aria-modal="true" onClick={()=>setSkipped(null)}>

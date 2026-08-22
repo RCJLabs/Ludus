@@ -12,7 +12,7 @@ export const slow = true;   /* drives a real browser through the real screens */
 
 export async function run({ p, errors }){
   await found(p);
-  let asked = 0, clean = 0, split = 0, followed = 0;
+  let asked = 0, clean = 0, split = 0, followed = 0, mornings = 0;
   const seen = [];
   for(let w=0; w<45; w++){
     if(!(await endWeek(p))) break;
@@ -28,6 +28,13 @@ export async function run({ p, errors }){
         .filter(x=>!x.disabled && !/close/i.test(x.getAttribute("aria-label")||""));
       return bs.length >= 2 ? head : null;
     });
+
+    /* v3.100.0: the week that was is a PANEL at the head of the ludus now, not a modal. That
+       makes "the digest covered the answer" structurally impossible — which is the point, and
+       also means the old bar can no longer fail. So count the mornings that actually render:
+       a check whose subject has quietly stopped existing passes vacuously, which is worse than
+       failing, and this file has watched that happen twice this month. */
+    if(await p.evaluate(()=>!!document.querySelector(".panel.morning"))) mornings++;
 
     if(q){
       asked++;
@@ -51,7 +58,7 @@ export async function run({ p, errors }){
           if(bs.length) bs[bs.length-1].click(); });
         await p.waitForTimeout(340);
         const t2 = await top(p);
-        if(t2 && /THE WEEK THAT WAS/i.test(t2.head)) followed++;
+        if(await p.evaluate(()=>!!document.querySelector(".panel.morning"))) followed++;
         if(seen.length<3) seen.push(`"${q}" answered → "${head}"${t2?` → "${t2.head}"`:""}`);
       }
     }
@@ -63,12 +70,19 @@ export async function run({ p, errors }){
     `weeks that asked something : ${asked}`,
     `answer shown straight away : ${clean}`,
     `digest wedged in between   : ${split}`,
-    `digest still shown after   : ${followed} (of ${clean})`,
+    `morning after the answer  : ${followed} (of ${clean})`,
+    `mornings seen straight off : ${mornings} of 45 weeks (a morning behind an open question is not counted here — it is waiting, which is the guard working)`,
     ...seen,
   ];
   const fails = [];
   if(asked < 3) fails.push(`only ${asked} questions in 45 weeks — too few to conclude anything`);
   if(split > 0) fails.push(`${split} of ${asked} answers were covered by the week's digest`);
+  /* the surface must exist at all. Notable weeks are common — a run of 45 that never raises one
+     means the morning stopped rendering, not that the house had a quiet season. */
+  /* either sighting counts: `mornings` samples the instant the week turns, before any question is
+     answered, so a morning correctly WAITING behind an open question shows up in `followed`
+     instead. Barring on the sum is what "the surface exists" actually means. */
+  if(mornings + followed === 0) fails.push("the morning never rendered in 45 weeks, before or after an answer — the week that was has no surface, and every assertion above passes on nothing");
   if(errors.length) fails.push(`${errors.length} page errors`);
   return { pass: fails.length === 0, why: fails.join("; ") || null, lines };
 }
