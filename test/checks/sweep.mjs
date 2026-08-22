@@ -143,7 +143,11 @@ export async function run({ p, errors }){
   const ANSWERS = {
     arena:  { re:/to the sand|choose a bout|on the imperial sand|on the road/i, what:"the card, or why there is none" },
     market: { re:/the block|room for|the cells are full/i,                      what:"what room is in the cells and what is on the block" },
-    ludus:  { re:/this week|nothing new is asking/i,                            what:"what the week is asking for" },
+    /* v3.93.0 moved THIS WEEK off the page and into the report bar, which is FIXED at the foot of
+       the screen — above the fold by construction, on every tab. The rule keeps its meaning ("a
+       player must see what the week asks without scrolling") and changes its evidence: the bar's
+       own label, which carries the count. The scene's caller badges are the second voice. */
+    ludus:  { re:/the morning report/i,                                          what:"what the week is asking for (the report bar)" },
     familia:{ re:/what the men need|the roster/i,                              what:"what the men need" },
     armory: { re:/the racks/i,                                                  what:"what the racks are holding" },
   };
@@ -159,6 +163,11 @@ export async function run({ p, errors }){
         if(!t) continue;
         if(t.length <= 160 || !c.children.length) out.push(t); else walk(c); } };
       const sc = document.querySelector(".scroll > div"); if(sc) walk(sc);
+      /* fixed chrome never scrolls, so it is above the fold by construction — and the report bar
+         is exactly where v3.93.0 moved the week's answer. A reader that walks only the scroll
+         container would call the page silent while the answer sat pinned at its foot. */
+      const bar = document.querySelector(".reportbar");
+      if(bar) out.push((bar.getAttribute("aria-label")||bar.innerText||"").trim());
       return out.join(" \n ");
     }, FOLD);
     if(!A.re.test(seen)) foldMiss.push({ where, what:A.what });
