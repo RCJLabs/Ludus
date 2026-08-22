@@ -971,7 +971,17 @@ export async function clearAll(p, rounds = 26){
         if(bs.length){ bs[bs.length-1].click(); return true; }
       }
       /* the gatekeeper and the opening guide are inline panels, not overlays */
-      const rx = /^(understood|i know my trade|i know the work|carry on|so be it|the doctore nods|next|go on|begin|done|got it|skip|think again)$/i;
+      /* ---- "I KNOW THE WORK" IS AN OPT-OUT, NOT AN ACKNOWLEDGEMENT ----
+         It was in this list, and it MANUFACTURED the overlay this function then could not clear:
+         pressing it opens the charter's confirm, the modal branch above answers that with its last
+         button ("Think again"), which returns to the charter, whose opt-out this line presses
+         again — round and round until `rounds` runs out, leaving LEAVE OFF THE CHARTER standing
+         over the page. Every check that calls clearAll() and then reads the screen was reading
+         through it. `guards` found this; two probes this session had worked around it by hand
+         without anyone asking why the workaround was needed.
+         Nothing depends on the press: sand, room and relay all switch the lessons off in STATE
+         (flags.noLessons), which is the honest way to want them gone. */
+      const rx = /^(understood|i know my trade|carry on|so be it|the doctore nods|next|go on|begin|done|got it|skip|think again)$/i;
       const el = [...document.querySelectorAll("button")].find(b => rx.test((b.innerText||"").trim()) && !b.disabled);
       if(el){ el.click(); return true; }
       return false;
