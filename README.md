@@ -59,3 +59,15 @@ and the comment at the top of each file says which.
 - `build.js` — bundles and inlines everything into index.html; `--test` writes an
   instrumented `dist/test.html` instead, which never ships
 - `test/` — the checks, and a harness that knows where the game hides things
+
+## Typefaces
+
+Three faces are embedded in the build (`src/fonts.js`), subset to the 214 codepoints the game can
+render. All three are under the SIL Open Font License 1.1, which permits embedding:
+
+- **Cinzel** — © Natanael Gama — https://fonts.google.com/specimen/Cinzel
+- **Cormorant Garamond** — © Christian Thalmann, Catharsis Fonts — https://fonts.google.com/specimen/Cormorant+Garamond
+- **IM Fell English** — © Igino Marini — https://fonts.google.com/specimen/IM+Fell+English
+
+They are embedded rather than linked so the offline shell is honest: the app fetches nothing at run
+time. See the header of `src/fonts.js` for why, and `test/checks/type.mjs` for what holds it.

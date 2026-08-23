@@ -13845,6 +13845,48 @@ read on the full-yard house it passed with the collision deliberately restored (
 doctore, so the line that was drawn through the posts never rendered). And the two-house diff, which
 fails any room whose words are identical for a founding and for a house of 260 weeks.
 
+
+### The game had never once rendered in its own typefaces
+Three families were asked for through a Google Fonts at-import: **Cinzel** on every button, tag,
+display heading and tab label, **Cormorant Garamond** for the body, **IM Fell English** for `.hand`.
+An at-import must precede every other rule in a stylesheet. It sat on line 8, under
+`*,*::before,*::after{box-sizing:border-box}`, so every browser dropped it in silence.
+
+Measured on the shipped build: **zero requests** to fonts.googleapis.com and `document.fonts` empty.
+Move the line up one and the request fires immediately. Every player, since the day those families
+were named, has been reading the game in **Liberation Serif** — which is what the new check prints
+when the bug is put back. The parchment-ledger reskin is a typographic decision and it was taken
+against type nobody had ever seen.
+
+**Nothing caught it, and the obvious test confirms the bug is absent.**
+`document.fonts.check("16px 'Cinzel'")` returns **true** for a family that was never requested — the
+spec assumes an unlisted family is a system font. `getComputedStyle().fontFamily` is worse: it
+reports the declared stack, which is a string from the source, not a fact about the page. The only
+reading that cannot be satisfied by a fallback is CDP's `CSS.getPlatformFontsForNode`, which returns
+the family the browser actually **painted**, with a glyph count and a custom-font flag. That is what
+`type` asks.
+
+**Embedded, not re-linked.** The build already writes an offline shell and its own banner said "no
+internet needed except optional fonts"; a link trades a silent bug for a load-time network
+dependency. Only the faces the stylesheet names are in: Cinzel (variable 400–900, one file for all
+three weights), Cormorant Garamond upright (variable 300–700) and italic, and IM Fell English
+**italic only** — `.hand` is the one rule that uses it and never asks for the upright. Google's
+`latin` subset only, since its range already covers Latin-1 and the game's entire non-ASCII
+vocabulary is **26 characters**, all from its own tables. Subset to 214 codepoints. **273KB of woff2
+down to 119KB**, 145KB of it dropped as faces nothing renders; `index.html` 1,251KB → 1,408KB.
+
+**And the layout barely moved** — I predicted overflow and re-tuning, and was wrong. Across all
+eight faces, arrival heights shifted by −40px to +14px, first-press positions by at most 21px, and
+**nothing overflowed anywhere**. Cormorant is metrically close to Georgia, and Cinzel only ever sits
+on short uppercase labels inside buttons with fixed padding and a `min-height`, so its width
+changes do not cascade.
+
+Two things worth writing down. `.hand` is used in exactly **two places** — the motto and one
+chronicle line — and IM Fell English is 54KB, **46% of the embedded weight**; it stays because the
+motto is the house's own signature, but it is the first thing to cut if the payload ever matters.
+And `✦` (U+2726) is in none of the three faces and never was, so it falls back per glyph exactly as
+before — subsetting regressed nothing.
+
 ---
 
-*Last updated: v3.106.0*
+*Last updated: v3.107.0*

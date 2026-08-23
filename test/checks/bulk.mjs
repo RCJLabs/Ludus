@@ -80,7 +80,14 @@ const ALLOWED = {
      variable cannot reach on its own. It is a STYLESHEET, not a function: length here is content,
      the same argument EVENTS and SECT make. It grows when the game gains a surface, and the
      headroom is a dozen lines rather than a hundred so drift still says stop. */
-  CSS:            { max: 248, why: "a stylesheet, not a function — the type scale, the palette declared twice (night and paper), the ledger's re-pointing of it, and the two entry rows. Length here is content, as with EVENTS and SECT. Raised 216 -> 234 for the gear row (v3.96.0, armoury 4,821px -> 2,061px) and 234 -> 248 for the candidate's row and its stat strip (v3.97.0, the market 3,869px -> 1,779px on a played house). Both times a dozen lines of stylesheet bought back a thousand-odd pixels of scroll, which is the trade this allowance exists to permit — and the headroom stays a dozen lines so drift still says stop" },
+  /* ---- RAISED 248 -> 256 FOR THE FACES, v3.107.0 ----
+     Four @font-face rules and a three-line note. The three families were an at-import that never
+     loaded once — it must precede every other rule and sat under the box-sizing line, so every
+     browser dropped it silently — and they are embedded now rather than re-linked, because the
+     build writes an offline shell. Those four rules are content the stylesheet has to carry, the
+     same argument EVENTS and SECT make, and the headroom is seven lines rather than fifty so
+     drift still says stop. The whole account is in src/fonts.js. */
+  CSS:            { max: 256, why: "the stylesheet, plus the four @font-face rules the embedded faces need" },
 };
 
 export async function run(){

@@ -1,11 +1,18 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Coins, Star, Crown, Flame, Swords, Shield, Wine, Users, Landmark, ShoppingBag, X, ChevronRight, Check, Settings } from "lucide-react";
+import { FONT_CINZEL, FONT_CORMORANT, FONT_CORMORANT_ITALIC, FONT_IMFELL_ITALIC } from "./fonts.js";
 
 /* ================= LUDUS — a lanista's chronicle ================= */
 
 const CSS = `
+/* The three faces, embedded. They were an at-import that never loaded once — it must precede
+   every other rule and sat under the box-sizing line below, so every browser dropped it silently.
+   The whole account, and the licences, are in src/fonts.js. NOTE: no backticks in this comment. */
+@font-face{font-family:'Cinzel';font-style:normal;font-weight:400 900;font-display:swap;src:url(${FONT_CINZEL}) format('woff2')}
+@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:300 700;font-display:swap;src:url(${FONT_CORMORANT}) format('woff2')}
+@font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:400;font-display:swap;src:url(${FONT_CORMORANT_ITALIC}) format('woff2')}
+@font-face{font-family:'IM Fell English';font-style:italic;font-weight:400;font-display:swap;src:url(${FONT_IMFELL_ITALIC}) format('woff2')}
 *,*::before,*::after{box-sizing:border-box}
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=IM+Fell+English:ital@0;1&display=swap');
 /* ---- THE TYPE SCALE ----
    Nine hundred and sixty-seven inline font sizes had grown up here one element at
    a time, across twenty distinct values between 9px and 19px — six of them sitting
