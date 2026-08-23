@@ -117,6 +117,31 @@ export async function run(){
     const f = defs.find(x=>x.name===n);
     if(!f) fails.push(`${n} is gone — endWeek and doFight have been put back together`);
   }
+  /* ---- AND NO CHECK MAY QUIETLY REPLACE ANOTHER ----
+     Twice in one session I wrote a new check to a filename that was already taken — `board`, which
+     held the wager panel's odds against what settleBet pays, and `crown`, which drives the primacy
+     itself. Both times the file was silently replaced, both times the suite went green, and both
+     times the ONLY tell was a total that did not move: 83 checks after adding an 84th, 85 after
+     adding an 86th. A check deleted and replaced in one stroke leaves no red line anywhere.
+
+     So: every check's declared `name` must match its filename, and no two may share one. Either
+     mistake now fails here instead of costing a check nobody notices is gone. */
+  { const dir = path.join(ROOT, "test", "checks");
+    const seen = new Map(), namedWrong = [];
+    for(const f of fs.readdirSync(dir).filter(x=>x.endsWith(".mjs"))){
+      const base = f.replace(/\.mjs$/, "");
+      const src = fs.readFileSync(path.join(dir, f), "utf8");
+      const m = src.match(/export\s+const\s+name\s*=\s*["'`]([^"'`]+)["'`]/);
+      if(!m){ namedWrong.push(`${f} declares no name`); continue; }
+      if(m[1] !== base) namedWrong.push(`${f} calls itself "${m[1]}"`);
+      if(seen.has(m[1])) namedWrong.push(`"${m[1]}" is declared by both ${seen.get(m[1])} and ${f}`);
+      seen.set(m[1], f);
+    }
+    lines.push(`${seen.size} checks on disk, each named for its own file`);
+    for(const w of namedWrong)
+      fails.push(`${w} — a check whose name and filename disagree can be replaced by the next one written, and the suite stays green because the total never moves`);
+  }
+
   const ew = defs.find(f=>f.name==="endWeek");
   if(ew){
     lines.push(`   endWeek is ${ew.lines} lines now — it was 425, and the four phases it shed are named functions`);

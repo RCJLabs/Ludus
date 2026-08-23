@@ -14033,6 +14033,19 @@ only form of this worth waking a player for.
 never holds the crown long enough to defend it. It is driven in `crown` off a forged held primacy —
 untested code that looks tested is what this suite keeps finding.
 
+**And I overwrote a check writing this one — for the second time in a session.** `crown` was
+already taken, by the check that drives the primacy *itself*: won, held, lost. I destroyed it
+writing a check about the primacy being *announced*. The first time it was `board`, which holds the
+wager panel's quoted odds against what `settleBet` actually pays.
+
+Both times the file was silently replaced, both times the suite went green, and both times **the
+only tell was a total that did not move** — 83 checks after adding an 84th, 85 after adding an 86th.
+A check deleted and replaced in one stroke leaves no red line anywhere to find.
+
+`bulk` now asserts that every check's declared `name` matches its filename and that no two share
+one. The new check is `herald`. Proven to bite by renaming it back to `crown`: it fails on both the
+mismatch and the duplicate.
+
 Still open from the same table, and the same shape as the bay: the **master's bench** is named on
 100% of 600 live weeks and never urgent; the **household** 35%, no mark; the **lanista's end** 9%.
 Naming something every week without ever asking for it is a third state between silent and speaking,
