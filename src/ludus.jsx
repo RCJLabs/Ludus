@@ -4,6 +4,21 @@ import { FONT_CINZEL, FONT_CORMORANT, FONT_CORMORANT_ITALIC, FONT_IMFELL_ITALIC 
 
 /* ================= LUDUS — a lanista's chronicle ================= */
 
+/* ---- TWO OF THE NINE VENUES WERE DRAWN AS SOMEWHERE ELSE — #193 ----
+   The arena's backdrop is one class, `arena v-${venue}`. `VENUES` has nine keys; the stylesheet had
+   six rules. `forum` is the base — the bare `.arena` gradient IS the warm Capuan sand — so that one
+   is by design. `bowl` is Pompeii's stone amphitheatre and `greek` is the theatre at Neapolis, and
+   both fell through to Capua: **308 of 5,688 bouts, 5.4%, fought at a venue drawn as home**, in
+   exactly the system built to be a change of scene. Puteoli had `.v-harbour`; the other two coast
+   towns looked like the place you left.
+   THE FALSIFIER WAS THAT THE PALETTE DOES NOT SEPARATE ANYWAY, and `paint.mjs` answered it in a
+   unit an eye uses: the six rules that existed sat **ΔE 9.5 to 28.8 apart** in Lab, every pair far
+   above the 2.3 just-noticeable difference, while `bowl` and `greek` sat at **0.0** from the forum
+   because they were the same pixels. So the two holes were real.
+   The pair below is measured, not chosen: `bowl` reads at ΔE 16.1 from the bare arena and `greek`
+   at 17.5, and neither makes the palette tighter than it already was — the closest pair in the set
+   is still `amphi`/`imperial` at 9.5, which predates this. A first cut of `bowl` came in at 6.0
+   from `harbour` and a second at 9.2, both closer than anything that existed; this one clears it. */
 const CSS = `
 /* The three faces, embedded. They were an at-import that never loaded once — it must precede
    every other rule and sat under the box-sizing line below, so every browser dropped it silently.
@@ -75,6 +90,8 @@ const CSS = `
 .v-amphi{background:linear-gradient(#0d0a07 0%,#181209 22%,#3a2c18 27%,#6d5531 55%,#a88a52 100%)!important;border-color:var(--gold-edge)!important}
 .v-imperial{background:linear-gradient(#0d0a09 0%,#1c1510 20%,#4a3820 26%,#8a6c3c 52%,#cba765 100%)!important;border-color:var(--gold-line)!important}
 .v-harbour{background:linear-gradient(#0a0c0e 0%,#121820 24%,#2c3038 29%,#6a6250 56%,#9d9068 100%)!important;border-color:var(--ink-faint)!important}
+.v-bowl{background:linear-gradient(#08080a 0%,#131318 20%,#3d3d43 26%,#6f6e6d 54%,#a8a39a 100%)!important;border-color:var(--ink-faint)!important}
+.v-greek{background:linear-gradient(#0c0b09 0%,#1b1813 20%,#4a4437 25%,#8c8265 52%,#cbb98a 100%)!important;border-color:var(--ink-dim2)!important}
 .wound{position:absolute;border-radius:50%;background:var(--blood-edge);pointer-events:none}
 .arenashake{animation:shk .3s}
 @keyframes shk{0%,100%{transform:translate(0,0)}20%{transform:translate(-4px,2px)}40%{transform:translate(4px,-2px)}60%{transform:translate(-3px,-1px)}80%{transform:translate(3px,1px)}}
