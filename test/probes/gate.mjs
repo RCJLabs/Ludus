@@ -85,8 +85,13 @@ const out = await inside(p, ([H, W, SEED, ARM, KEYS]) => {
     pot: { up:0, down:0, upBy:0, cross:0, pupilWeeks:0, hadDoctore:0, seenAt:{} },
     /* what a man's ambition state is when he first crosses anything */
     stateAt: {}, sig: [],
+    /* ---- AND WHAT HE ENDS UP CARRYING, which is the only thing the player ever reads ----
+       `given` is the draw the week he was made. If a gate re-test exists, the two differ, and the
+       difference is the whole fix. `turnedFrom` records what he was carrying when it changed, so a
+       re-test that quietly eats one particular kind is visible rather than averaged away. */
+    carried: {}, turned: {}, turnedFrom: {}, turnedAt: [], turnedVoiced: 0,
   };
-  for(const k of KEYS){ T.given[k]=0; T.would[k]=0; }
+  for(const k of KEYS){ T.given[k]=0; T.would[k]=0; T.carried[k]=0; T.turned[k]=0; T.turnedFrom[k]=0; }
 
   const GATES = { revenge:"revenge", champion:"champion" };
 
@@ -105,9 +110,18 @@ const out = await inside(p, ([H, W, SEED, ARM, KEYS]) => {
           T.poolAt[pool.size] = (T.poolAt[pool.size]||0)+1;
           if(a.kind in T.given) T.given[a.kind]++;
           g.__pool = [...pool];
+          g.__kind0 = a.kind;
           for(const k of Object.keys(GATES)) if(!pool.has(k)) T.gate[k].closedAt++;
                                              else T.gate[k].alreadyHad++;
         }
+        /* the kind is supposed to be immutable once voiced; both halves of that are counted */
+        if(g.__kind0 && a.kind !== g.__lastKind && g.__lastKind){
+          if(a.kind in T.turned) T.turned[a.kind]++;
+          if(g.__lastKind in T.turnedFrom) T.turnedFrom[g.__lastKind]++;
+          if(T.turnedAt.length < 900) T.turnedAt.push(w);
+          if((a.voiced||0) > 0) T.turnedVoiced++;
+        }
+        g.__lastKind = a.kind;
         if(A.isGone(g)) continue;
         /* and every week after: has a gate that was shut when he arrived come open? */
         const now = poolOf(g);
@@ -142,6 +156,7 @@ const out = await inside(p, ([H, W, SEED, ARM, KEYS]) => {
       }
     }
     for(const g of (d.gladiators||[])) if(!A.isGone(g)) T.aliveAtEnd++;
+    for(const g of (d.gladiators||[])) if(g.ambition && g.ambition.kind in T.carried) T.carried[g.ambition.kind]++;
     T.sig.push(`${d.week}/${A.activeG(d).length}/${Math.round(d.gold)}/${d.over?d.over.kind:"up"}`);
   }
   /* ---- AND THE PROOF THAT THE SAMPLING IS INVISIBLE ----
@@ -184,6 +199,19 @@ for(const [k,G] of Object.entries(T.gate)){
   console.log(`     week of the house at crossing   median ${med(G.week)} · age median ${med(G.age)}`);
 }
 console.log(`\n  state at the moment of crossing: ${Object.entries(T.stateAt).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k} ${v}`).join(" · ") || "(none)"}`);
+console.log(`\n  what he ended up carrying (every man the house ever held, at the end):`);
+for(const [k,v] of Object.entries(T.carried).sort((a,b)=>b[1]-a[1])){
+  const g0 = T.given[k]||0, tot = Object.values(T.carried).reduce((s,x)=>s+x,0);
+  console.log(`     ${k.padEnd(10)} ${String(v).padStart(6)}  ${pc(v,tot)}   given at creation ${pc(g0,T.men)}`);
+}
+const turnTot = Object.values(T.turned).reduce((s,x)=>s+x,0);
+console.log(`\n  ambitions that TURNED after the draw: ${turnTot}  (${pc(turnTot,T.men)} of men)`);
+if(turnTot){
+  console.log(`     into:  ${Object.entries(T.turned).filter(([,v])=>v).map(([k,v])=>`${k} ${v}`).join(" · ")}`);
+  console.log(`     from:  ${Object.entries(T.turnedFrom).filter(([,v])=>v).map(([k,v])=>`${k} ${v}`).join(" · ")}`);
+  console.log(`     median week of the house at the turn: ${med(T.turnedAt)}`);
+}
+console.log(`     turned while ALREADY VOICED: ${T.turnedVoiced}  (must be 0 — a stated want may not move)`);
 console.log(`\n  the doctore's square: ${T.pot.hadDoctore} of ${T.weeks} house-weeks had a doctore · ${T.pot.seenAt.named||0} had a NAMED PUPIL · the lever named one ${T.pot.pupilWeeks} times`);
 console.log(`  potential moved in a living man: ${T.pot.up} rises (+${T.pot.upBy} total) · ${T.pot.down} falls · ${T.pot.cross} of the rises crossed 62 from below`);
 console.log(`\n  men who ever carried a scar     ${T.everScarred}  ${pc(T.everScarred,T.men)}`);
