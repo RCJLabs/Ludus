@@ -4520,6 +4520,18 @@ comment took it red once before. `agenda` is a rule list with ten lines of headr
 helpers already split out of it, so the note and the arithmetic came out as a sixth, `voteWord(d)`,
 and the row is one line again. The allowance was not raised: it only ever ratchets the wrong way.
 
+**And the suite caught a 20px tap target that was not mine.** `surface` went red on
+*villa/THE HOUSE: "One man, and nobod" is 20px tall, floor is 44* — the "the year ahead ›" button
+under the fitness meter. It renders only when `thin` (the next six weeks dip to one fit man or
+none), and `surface` founds its house with **no seed**, so it meets that branch on about one run in
+twenty: three of its fifty-nine recorded reds are this control. Proved pre-existing rather than
+argued — the condition was driven deliberately on a forged grown house with one fit man and the
+rest injured, against **v3.116.0's own source rebuilt from `f1db5d8`**, and it measures 20px there
+too. It is 44 now. *(And the first attempt at that proof was worthless: `git stash push
+src/ludus.jsx` had nothing to stash, because the change was already committed, so the "before" run
+measured the after build. The second reads the old source out of the commit and prints whether
+`voteWord` is in it.)*
+
 `aedile` is the 89th check — the same house driven week by week at home and at Rome, asserting the
 same integers for the call and the settle, the exact three sentences of the countdown, that
 `d.over` is still in the guard, and that the chronicle names the absence. Negative-tested four
