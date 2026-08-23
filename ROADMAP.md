@@ -13698,6 +13698,20 @@ list.*
   `ACCLAIM_MISSIO`, `MISSIO_MID`, `gladValue`), all harmless — the same binding twice — but they are
   five lines of noise in front of the one that will matter.
 
+### One piece of hygiene found by accident, and reverted rather than filed
+Running `node test/coverage.mjs` and one single-check run added **four rows to the per-check
+tallies** — two to `survive-tally.json` and two to `nav-tally.json` — and one of the survive rows
+was `{"houses":2,…,"pass":false}`. `run-tally.json` correctly recorded nothing, because the
+"**only COMPLETE runs are recorded**" discipline v3.74.0 paid for lives in the RUNNER. `survive`
+and the nav check write their own files and have no such guard, so **any coverage sweep silently
+adds rows to the two files a release decision is read off** — #175's retry is justified by
+`survive`'s false-failure rate taken from exactly that file, 7 of 61.
+**Stated honestly: the failing row may well have been mine.** `survive` declares `exclusive` because
+five Chromiums on four cores start missing clicks, `coverage` runs its checks strictly sequentially
+so it does not break that on its own — but a probe of mine was running beside it. The RECORDING is
+the fault either way, and it is the one thing here that can quietly move a published rate. The four
+rows are reverted; `survive-tally.json` and `nav-tally.json` are byte-identical to `main`.
+
 ### The instrument, again
 Two of the ten items above are the probe rather than the game (#186 outright, and #191's first
 tally), and three more findings died on the way: the target→injury map read `res.lastTarget` off
