@@ -3388,7 +3388,19 @@ function agenda(d){
   agendaGods(d, add);
   agendaCan(d, add);
   /* the town */
-  if(d.election && !d.election.done) add(2, "villa:council:aedileship", "The aedileship is open", `${Math.max(0,3-(d.week-d.election.week))} weeks to the vote`);
+  /* ---- AND THE COUNTDOWN WAS A WEEK OUT AT HOME TOO — #192's second half ----
+     `electionWeek` runs BEFORE `ludusLedger` increments the week, so the vote is taken at the end
+     of the week where `d.week - E.week === 3` — which is the last week the row is up. Written
+     `Math.max(0, 3 - …)`, that last week read **"0 weeks to the vote"** and then the player waited
+     one more. The floor was hiding an off-by-one, not a stall: it read zero on the final week of
+     every election ever held, at home as much as at Rome, and `vote.mjs` could not see it because
+     it only counted the weeks an election ran PAST its due date. The check found it in the arm
+     that was supposed to be the control. Three weeks, and the third is the one it happens in. */
+  if(d.election && !d.election.done){
+    const left = 3 - (d.week - d.election.week);
+    add(2, "villa:council:aedileship", "The aedileship is open",
+      left <= 0 ? "the vote is this week" : `${left} week${left===1?"":"s"} to the vote`);
+  }
   if(d.games && d.games.offers && d.games.offers.length && activeG(d).some(g=>canFight(g) && g.lastFought<d.week))
     add(2, "arena", d.games.festival, `${d.games.offers.length} on the card`);
   agendaCrown(d, add); agendaLedger(d, add);
@@ -4931,8 +4943,14 @@ function callElection(d){
   /* the other houses have their own men in this */
   (d.rivals||[]).forEach(h=>{ if(R()<0.55){ const c = pick(cands);
     c.base += ri(6,15); c.rival = c.rival ? c.rival : h.name; } });
-  d.election = { week:d.week, cands, backed:null, spent:0, done:false };
-  chron(d, `The names are going up on the walls again. ${cands.map(c=>c.name.split(" ")[2]).join(", ")} are standing for aedile, and the aedile is the man who decides whose men are on the card.`, "event");
+  /* whether the house is standing in the forum for this decides how it hears about it, and is
+     remembered on the election so the result can say what the lanista's part in it was */
+  const away = !!(d.rome || d.city || d.travel);
+  d.election = { week:d.week, cands, backed:null, spent:0, done:false, away: away ? 1 : 0 };
+  const names = cands.map(c=>c.name.split(" ")[2]).join(", ");
+  chron(d, away
+    ? `Word comes from Capua: the names are going up on the walls again — ${names} are standing for aedile. The man who decides whose men are on the card is being chosen while you are not there to watch it happen.`
+    : `The names are going up on the walls again. ${names} are standing for aedile, and the aedile is the man who decides whose men are on the card.`, "event");
 }
 function backCandidate(d, cid, level){
   const E = d.election; if(!E || E.done) return false;
@@ -4966,6 +4984,8 @@ function resolveElection(d){
     d.fame = Math.max(0, d.fame-8);
     patronsOf(d).forEach(p=>{ if(p.rank==="magistrate") p.favor = clamp(p.favor-14,0,100); }); recomputeFavor(d);
     chron(d, `${won.name} takes the aedileship. He knows exactly whose name was on the other man's subscription list, because everyone does.`, "bad");
+  } else if(E.away && (d.rome || d.city || d.travel)){
+    chron(d, `${won.name} takes the aedileship. The whole of it happened while the house was on the road — no subscription list carried your name, because nobody in Capua could find you to ask. He has no particular view of you, and for the next year he is the man who decides whose men are on the card.`);
   } else {
     chron(d, `${won.name} takes the aedileship. You backed nobody and he has no particular view of you, which is its own kind of position.`);
   }
@@ -4974,8 +4994,27 @@ const aedileOn = d => d.aedile && d.week < d.aedile.until ? d.aedile : null;
 const aedilePurse = d => { const a = aedileOn(d); return a ? (a.friendly?1.14 : a.hostile?0.89 : 1) : 1; };
 const aedileOffers = d => { const a = aedileOn(d); return a ? (a.friendly?1 : a.hostile?-1 : 0) : 0; };
 const aedileMissio = d => { const a = aedileOn(d); return a ? (a.friendly?9 : a.hostile?-8 : 0) : 0; };
+/* ---- CAPUA VOTES WHETHER OR NOT YOU ARE IN IT — #192, v3.117.0 ----
+   This opened `if(d.rome || d.over) return;`, so a house away at the imperial games had no vote
+   until it came home — and the agenda row `villa:council:aedileship` sat on the villa the whole
+   time with its note reading `Math.max(0, 3 - (d.week - d.election.week))`, floored at zero.
+   Measured over 48 houses x 420 weeks on four seeds: 568 elections, 23 stalled, **143 of 1,845
+   open weeks past the due date (7.8%), 18 of 48 houses (37.5%) saw one, the longest ran 16 weeks
+   against a designed 3, and the row read "0 weeks to the vote" on all 143 of them.**
+
+   THE GUARD WAS THE ANOMALY AND THE COAST IS THE PROOF. `d.city` was never in it, so a house
+   touring Puteoli has always voted on time; only Rome froze the ballot. An election is something
+   CAPUA does, not something the lanista does — the five other `d.rome` guards in the weekly code
+   (`marketWeek`, `bayWeek`, `nameBlocked` and two events) all pause a thing the PLAYER reaches
+   for, and pausing those is a kindness. Pausing the vote is not a kindness: it holds a clock the
+   screen is already counting down.
+
+   And the panel is reachable from the road — `SECT.aedileship` renders on `S.election &&
+   !S.election.done` with no travel gate — so a lanista at Rome can still put money on a man by
+   letter. What he loses by being away is the forum, not the ballot. `d.over` stays: a house that
+   has ended needs no aedile. */
 function electionWeek(d){
-  if(d.rome || d.over) return;
+  if(d.over) return;
   const wk = ((d.week-1) % YEAR_WEEKS) + 1;
   if(wk === ELECTION_WEEK && (!d.election || d.election.done)) callElection(d);
   else if(d.election && !d.election.done && d.week - d.election.week >= 3) resolveElection(d);
@@ -23054,7 +23093,15 @@ export default function App(){
             <div className="panel" style={{padding:14,borderColor:"var(--gold-line)",background:"linear-gradient(165deg,var(--raise),var(--panel))"}}>
               <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".14em",color:"var(--ink-hi)",marginBottom:5}}>ROME</div>
               {S.rome.travel>0 ? (
-                <div style={{fontSize:"var(--fs-lg)"}}>On the road north — {S.rome.travel} week{S.rome.travel>1?"s":""} of wagons and tolls. Nothing happens in Capua now.</div>
+                /* ---- "NOTHING HAPPENS IN CAPUA NOW" WAS NEVER TRUE, AND #192 MADE IT LESS SO ----
+                   Three weekly systems pause while the house is at Rome and they are all kindnesses:
+                   the block does not restock or let a contested man be bought away (`marketWeek`),
+                   the bay neither forgets you nor changes hands (`bayWeek`), and the arch-rival
+                   cannot be named (`nameBlocked`). Everything else runs — the bill is drawn, the men
+                   train and age and heal, the cells talk, the rivals fight their own bouts, the
+                   patrons cool. And from v3.117.0 Capua elects its aedile too. So the line says
+                   which three, rather than claiming the town holds its breath. */
+                <div style={{fontSize:"var(--fs-lg)"}}>On the road north — {S.rome.travel} week{S.rome.travel>1?"s":""} of wagons and tolls. The block holds and the bay keeps you in mind while you are gone; everything else in Capua carries on without you, and goes on being paid for.</div>
               ) : (
                 <div>
                   <div style={{fontSize:"var(--fs-lg)"}}>Bout {Math.min(S.rome.fought+1, ROME_BOUTS)} of {ROME_BOUTS} on the imperial sand. <span className="gold">{S.rome.won} won.</span></div>
@@ -27414,6 +27461,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* ---- AND WHETHER THE WEEK'S NUDGE POINTS AT THE BIGGEST LEVER ----
        #117 measured working the cells as the largest lever in the game. The agenda offers the feast
        at unrest 35 and never mentions walking the cells at all — see `agendaCan`. #119. */
+    ELECTION_WEEK, aedileOn, aedilePurse, aedileOffers, aedileMissio,   /* #192 */
     walkReady, WALK_COOL,          /* feastCost is above, with the feast — this line had it twice */
     /* the war: its stages, its clock and what it does to the block */
     WAR, warWeek, warIdx, warStage, warMarket, warElsewhere, WAR_AWAY_AT, WAR_AWAY_ODDS,
