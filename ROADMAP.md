@@ -1644,7 +1644,7 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 **Shipped and verified: v3.105.0 → v3.115.0, eleven releases, 87/87 green, all on `main`.**
 The detail of each is at the foot of this file; this is what a new session needs in one place.
 
-**AND THEN THE AUDIT, at the foot of this file: ten items, #186-#195. #195 shipped in v3.116.0, #192 in v3.117.0, #194 in v3.118.0 and #188 in v3.119.0; the other six are unassigned.** Read that
+**AND THEN THE AUDIT, at the foot of this file: ten items, #186-#195. Five have shipped — #195 (v3.116.0), #192 (v3.117.0), #194 (v3.118.0), #188 (v3.119.0), #187 (v3.120.0); the other five are unassigned.** Read that
 section before this one if you are picking work. Its short version: the five leads the last session
 left are all answered, and **the largest single finding is that `asks`'s silent list was mostly the
 probe's own** — it diffed five channels and the game speaks in eight, so four of its five silences
@@ -4460,6 +4460,71 @@ about a quarter and it is the cost of this repair**; `MISSIO_MAN` is one line to
 wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
+
+### v3.120.0 — #187: the rite printed a countdown, ranked flat, and went under the fold as the clock ran out
+
+`agendaTop` shows a row for being urgent (`urgency >= 3`) or NEW (`age <= AG_FRESH`, three weeks).
+Counted statically, **49 of the 69 rows in `agenda` carry a LITERAL urgency of 1 or 2** — below the
+bar — so for most of the list the screen is a novelty filter: driven over 12 houses × 420 weeks,
+**71–73% of everything on it is there for being new rather than for mattering**, and the mean
+urgency of the busiest rows is exactly their literal, to two decimal places. That is largely the
+design and it is not what shipped here: standing chores are meant to fall under the count and stay
+there. **It is not the design when the row is holding a clock.**
+
+Rows that print a countdown rank on it, mostly — the infirmary deadline goes `n<=2 ? 3 : 2`, a
+patron's want goes 3 the week it falls due, the pact goes 3 when its pace is `impossible`, Rome's
+letter is a flat 3. **The rite did not.** `RITE_WINDOW` is six weeks and `AG_FRESH` is three, so the
+row rode freshness for the first half of its window and fell off for the second:
+
+| weeks the row said were left | on screen, before | after |
+|---|---|---|
+| 5 | 100% | 100% |
+| 4 | 100% | 100% |
+| 3 | 100% | 100% |
+| 2 | 100% | 100% |
+| **1** | **0.0%** of 796 | **100%** |
+| **0** | **0.0%** of 794 | **100%** |
+| the row across its whole window | **66.9%** | **99.9–100%** |
+
+4,813 readings on two seeds, and it is 100/0 rather than approximate because the arithmetic is
+exact: ages 0–3 are covered by freshness and the window is six. **The player was told about the
+burial while there was time to arrange one and never told again once there was not** — after which,
+in the deadline's own words, *"nobody can put it right"*.
+
+It takes the deadline row's own shape, `left <= 2 ? 3 : 2`. **No new constant**: the six and the two
+are both already in the file. The freshness bar carries the first half of the window and the clock
+carries the second.
+
+**It costs the fold almost nothing.** Readings passing `agendaTop` go **44.2% → 46.3%** and
+**39.7% → 41.7%** on the two seeds; the median rows on screen a week moves 5 → 5 and 4 → 5; and
+weeks with an EMPTY top go **24 → 20** and **40 → 32**. The rite is up on about 0.6 weeks in one, so
+it does not crowd anything. **The sim is untouched** — the readings counts are identical to the row
+before and after (2,023 and 2,790 either side), which is what a display-only change should look
+like, and `open`'s 60-house signature is byte-identical. Every reader of `a.urgency` is a screen:
+`agendaTop`, the ranked sort, the row colours, the desk's URGENT tag, the tab dot, and `sectMark`,
+whose bar is `MARK_URG = 2` — so the villa's rites chip was already lit and now reads at 3 rather
+than 2 in the last three weeks.
+
+**`rank` is the 92nd check and its bar is the shape, not the row**: a countdown must not be less
+visible at the end than at the beginning. It walks one unburied man across the whole window, ticking
+the agenda every step the way `endWeek` does, and asserts the row is on screen every week and that
+the weeks past `AG_FRESH` are carried by URGENCY rather than novelty. Both constants are read off
+the handle, so a change to either moves the check with the game. Negative-tested three ways: the
+flat 2 put back (red, naming 2w/1w/0w), the derivation narrowed to the last week (red, naming 2w/1w),
+and — the one worth having — **`AG_FRESH` widened until freshness covers the whole window, which
+goes red with "no week of the window falls past AG_FRESH, so this proves nothing"** rather than
+passing vacuously.
+
+**And the check's own first version failed on a build where the fix was working**, twice over: it
+asserted over the back half of the window, which includes a week freshness still covers, and read
+the urgency off a field called `urgency` that its fixture stores as `urg`. An assertion has to be
+written against the arithmetic and the object that exist.
+
+The static half prints every countdown row it can see and asserts nothing about them — a literal
+urgency is not by itself a fault, the pact's is literal and has a sibling at 3 for the impossible
+case. It sees three; the aedile's runs through `voteWord(d)` and does not appear, which is worth
+knowing about the sweep rather than papering over.
+
 
 ### v3.119.0 — #188: two ambitions were kept by not doing a thing, and nothing ever noticed
 
@@ -13791,7 +13856,7 @@ reads it as a quantity and nothing should. *The item is the fix already made to 
 question of whether the eight channels are now enough; falsifies if a ninth register turns up under
 the two survivors.* `asks.mjs` changed; no game change.
 
-### #187 — the week's list has an urgency scale and 71% of it is a constant, so freshness does all the work.
+### #187 — CLOSED in v3.120.0 for the row it was hurting. The week's list has an urgency scale and 71% of it is a constant, so freshness does all the work.
 `agendaTop = list.filter(a => a.urgency >= 3 || a.age <= AG_FRESH)`, `AG_FRESH = 3`. Counted
 statically off every `add(urg, "tab", …)` in the file: **69 agenda rows, 58 with a LITERAL urgency
 (28 at 1, 21 at 2, 9 at 3) and 11 derived — every one of the eleven a two-value ternary topping out
@@ -13816,6 +13881,15 @@ a system the house owns that the morning list mentions for three weeks and then 
 *Falsifies if the mean urgency of any of these rows is not exactly its literal — it is, to two
 decimal places, in every row above, which is what proves the number was chosen once and never
 derived from the stake.*
+**Closed in v3.120.0, and deliberately not by re-authoring forty-nine rows.** The constant scale is
+mostly the design — a standing chore belongs under the count. What is not the design is a row
+holding a CLOCK and ranking flat, and there was exactly one: the rite, printing *"N weeks to
+decide"* on a six-week window against a three-week freshness bar, **on screen on 100% of the weeks
+that said 5, 4, 3 or 2 left and 0.0% of the 1,590 that said 1 or 0**. It ranks on its own clock now,
+in the deadline row's own shape, and the fold grew by two points. `rank` is the 92nd check and holds
+the shape rather than the row: a countdown may not be less visible at the end than at the beginning.
+**Forty-eight rows are still pinned below the bar and that is left standing**, because the next one
+to move should be moved by a measurement of what it costs the player to miss it, not by this.
 
 ### #188 — CLOSED in v3.119.0 for two of the three; the third is #190. Three of the seven ambitions had no door of their own.
 `stock.mjs`, four policies × 12 houses × 420 weeks. **1,789 ambitions given; `nokill`
@@ -14847,4 +14921,4 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.119.0 — #195, #192, #194 and #188 closed; six of the audit's ten items still open*
+*Last updated: v3.120.0 — #195, #192, #194, #188 and #187 closed; five of the audit's ten items still open*

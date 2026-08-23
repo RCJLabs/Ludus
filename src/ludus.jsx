@@ -3255,6 +3255,24 @@ const agWord = age => age <= 0 ? "new this week" : age <= AG_FRESH ? `${age} wee
    the ids to SECT's real names, because a typo does not throw — it silently travels.
    (This note sits out here because agenda sits two lines under its bulk allowance, and prose is
    documentation, not size.) */
+/* ---- A ROW THAT PRINTS A COUNTDOWN AND DOES NOT RANK ON IT — #187, v3.120.0 ----
+   `agendaTop` shows a row for being urgent (>=3) or NEW (`age <= AG_FRESH`, three weeks), and 49 of
+   the 69 rows in `agenda` carry a LITERAL urgency of 1 or 2 — below the bar — so for most of the
+   list the screen is a novelty filter: 71-73% of everything on it is there for being new rather
+   than for mattering. That is largely the design, and the standing chores are meant to fall under
+   the count. It is not the design when the row itself is holding a clock.
+
+   Four rows print a countdown in their sub-line. Three of them rank on it: the infirmary deadline
+   goes `n<=2 ? 3 : 2`, a patron's want goes 3 the week it falls due, and the pact goes 3 when its
+   pace is `impossible`. The rite did not. `RITE_WINDOW` is six weeks and `AG_FRESH` is three, so
+   the row was shown for the first half of the window and gone for the second — measured over 4,813
+   readings on two seeds, ON SCREEN on 100% of the weeks that said 5, 4, 3 or 2 weeks left and on
+   **0.0% of the 1,590 that said 1 or 0**. It was visible while there was time to act and vanished
+   as the time ran out, which is the opposite of what a deadline is for.
+
+   It takes the deadline row's own shape, `<=2`, so the whole window is now covered: the freshness
+   bar carries its first three weeks and the clock carries its last three. No new constant — the
+   six weeks and the two are both already in the file. See `rank`. */
 /* ---- HOW LONG UNTIL THE VOTE, AND THE FLOOR THAT WAS HIDING AN OFF-BY-ONE — #192 ----
    `electionWeek` runs BEFORE `ludusLedger` increments the week, so the ballot is taken at the end
    of the week where `d.week - E.week === 3` — which is the LAST week the row is up. Written inline
@@ -3428,8 +3446,8 @@ function agenda(d){
     const wrong = activeG(d).filter(g=>!going.includes(g) && kitFaults(d,g).some(f=>f.why==="unfamiliar"));
     if(wrong.length === 1) add(1, "men:armory", `${wrong[0].name} is carrying the wrong thing`, "it is not his style");
     else if(wrong.length > 1) add(1, "men:armory", `${wrong.length} men are carrying the wrong thing`, "none of it is their style"); }
-  for(const m of unhonoured(d)) if(!m.done)
-    add(2, "villa:council:rites", `${m.name} is not buried properly`, `${RITE_WINDOW-(d.week-m.week)} weeks to decide`);
+  for(const m of unhonoured(d)) if(!m.done){ const left = RITE_WINDOW - (d.week - m.week);
+    add(left <= 2 ? 3 : 2, "villa:council:rites", `${m.name} is not buried properly`, `${left} weeks to decide`); }
   agendaSchool(d, add);
   agendaFolk(d, add);
   agendaGods(d, add);
