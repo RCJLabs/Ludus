@@ -4510,6 +4510,14 @@ more place it pays.
 **It is deliberately NOT met without asking.** Every other ambition can be satisfied by an event the
 man never mentions; a promise of abstinence has to be asked for before there is a promise to keep.
 
+Suite green at **91/91 in 11.6 minutes**, on the second run. The first went red on `seller` — *"paid
+for a man and no panel on the block moved to read level 2"* — and it is **proved not this change
+three ways**: `seller` plays FOURTEEN weeks and the new branch cannot fire before week 26 (a man must
+ask, press, and then wait twelve), so it is structurally unreachable; a solo re-run on the same build
+came back green, which is v3.72.0's own method; and `seller` has a recorded failure of exactly this
+assertion, a race, written up in v3.72.0 and now three reds in sixty-four runs. The red run is in the
+tally rather than thrown away.
+
 **`wants` is the 91st check, and its static half is the general shape rather than the two keys.**
 Every entry in `AMBITIONS` must have a door — a line that fires `ambitionMet` on `kind==="<key>"`,
 or a place in `AMB_NEVER` where the clock keeps it. An EIGHTH ambition added later with neither goes
