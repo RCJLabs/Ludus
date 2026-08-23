@@ -13656,9 +13656,11 @@ where the bout ENDS and not on the exit where it stops at the balance. The resum
 nothing, and `goPick` at :26210 clears the plan and not the entrance. `tactic` is deliberately never
 cleared and reads as a standing preference; plan and entrance are written as per-bout and behave
 that way on one exit of three. **The rope reads 55–61% of bouts stopping at the balance.**
-Driven on the real screen (`sticky.mjs`, ten attempts, the other exit as the control): pressed
-"Work the mob", fought, answered the word from the box, came back and read the chip —
-**still lit on 3 of 3 bouts that stopped at the balance, cleared on 3 of 3 that ended outright.**
+Driven on the real screen (`sticky.mjs`, 22 attempts on two seeds, the other exit as the control):
+pressed "Work the mob", fought, answered the word from the box, came back and read the chip —
+**still lit on 8 of 8 bouts that stopped at the balance, cleared on 6 of 6 that ended outright.**
+(Eight of the 22 came back with the row not on screen — the card is consumed and the week has to
+deal another single — and are counted as neither.)
 The entrance costs `BREATHER_BACK` of the man's wind and pays +1 momentum, so a silently repeated
 `showman` is not purely a tax; a silently repeated PLAN is, because #170 priced a plan that reads
 the man wrong at **−7.5 points of win rate**. *Falsifies if the plan only bites when the next offer
