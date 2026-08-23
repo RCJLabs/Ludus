@@ -13950,6 +13950,56 @@ every check that calls it. Chrome does not list SVG SMIL in `getAnimations()`, s
 pulsing caller badge is invisible to it (checked, not assumed), but the wait is capped now anyway:
 a hang is a far worse failure than a slightly early read.
 
+
+### The long game, audited — and the ladder's two doors that do not open together
+Measured across ten houses of 420 weeks on the reference player, with `late`, `estate`, `silent` and
+a new `purse`.
+
+**A year-12 house reads a year-1 house's list.** 97.0% of what it is shown is PERENNIAL — available
+in week one. Late-only labels are 43 of 202 and carry **3.0%** of the shown block. The list is not
+short: urgent items per week *rise* with age (0.85 → 1.00 → 1.13 → 1.22). It is long and stale. The
+single most-read line in a great house is a burial nag at **59% of weeks**, while unburied dead
+grows from 2 to 14.
+
+**The economy inverts.** `purse` reads the gold delta week by week, split by sign, rather than
+re-deriving the purse from the bout tables — a second implementation of the economy would be the one
+with the bug.
+
+| era | mean net/week | mean bill | weeks the box grew |
+|---|---|---|---|
+| year 1–3 | **+59d** | 62d | 42% |
+| year 3–7 | −3d | 217d | 45% |
+| year 7–12 | −16d | 319d | 44% |
+| year 12+ | **−35d** | 335d | 44% |
+
+A house is profitable in its first three years and runs at a loss for ever after, surviving on
+drawdown and lumpy windfalls. Fame grows 38.6×, gold 6.1×, the weekly bill 8.3×.
+
+**And the census ladder asks for a combination the economy makes contradictory.** The first
+conclusion off that table was "rung 7's 80,000d is unreachable by construction". The miser arm
+refuted it inside one run:
+
+| policy | peak gold ever held | what blocks it | top rung reached |
+|---|---|---|---|
+| spender — rooms, rites, parties | 27,593d | **coin, 83% of late weeks**; *ready in every term but the coin, **45%*** | 7 |
+| miser — none of them | **83,339d** | **favour, 93% of late weeks** | 5 |
+
+The coin and the standing are produced by opposite play, and nothing lets a house hold both at once.
+That, not the price, is why 45% of a great house's weeks are spent waiting for money it has already
+earned the right to spend. A number that looks like a tuning problem was a structural one, and the
+falsifying arm is what showed it — a single-policy reading would have shipped the wrong fix.
+
+**Two built systems never ask for anything.** `silent`: the primacy is live **485 weeks** with 0
+agenda lines and 0 marks — during which the player reads "The doctore is set to no drill" on 92% of
+weeks. The collegium: **408 live weeks**, 0 agenda lines. The bay is named every week for 1,100
+weeks and is never once urgent, which is furniture rather than content.
+
+**And one real bug, fixed here.** `d.poach` kept courting a man after he died, was sold or was
+freed: `defect` clears a stale poach, but only on the week the offer lands, up to three weeks later.
+In between the agenda printed the lookup straight — **"undefined is being talked to"**. `late` found
+it precisely *because* it normalises names out of its labels, so four broken strings collapsed into
+one row instead of hiding as four different men.
+
 ---
 
-*Last updated: v3.109.0*
+*Last updated: v3.110.0*

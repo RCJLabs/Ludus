@@ -356,6 +356,43 @@ export async function run({ p, errors }){
       };
       R.faceKeys = A.FACE_SECTS.villa; }
 
+    /* ---- 3d. NO ROW MAY PRINT A LOOKUP IT DID NOT GET ----
+       `d.poach` names a man a rival house is courting, by id. `defect` clears a poach whose man
+       has gone — but only on the week the offer lands, up to three weeks later. In between, the
+       row did `(d.gladiators.find(...)||{}).name` and printed the result straight, so a house whose
+       man died, sold or was freed mid-courtship read "undefined is being talked to" on the morning
+       report. Measured by `late` over ten houses of 420 weeks: four weeks of it, and it only showed
+       up as ONE row because that probe normalises names out of its labels — as four different men
+       it would have read as four ordinary rows and nobody would have looked.
+
+       Driven here on the state that produced it: a live poach whose man is no longer active. The
+       assertion is that no agenda row ANYWHERE carries a broken lookup, so this catches the next
+       one too rather than only this one. */
+    { const d = house("GL_POACH");
+      const victim = A.activeG(d)[0];
+      d.poach = { house:"Ovidius", gid:victim.id, weeks:3 };
+      const before = A.agenda(d).filter(x=>/is being talked to/.test(x.label||"")).length;
+      /* TWO WAYS A MAN LEAVES, and they fail differently. Dead/sold/freed leaves the object in
+         d.gladiators with a status, so the lookup SUCCEEDS and the row names a corpse — an
+         ordinary-looking row that nobody would query. A man spliced out of the array entirely
+         makes the lookup return nothing, which is the literal "undefined is being talked to" that
+         `late` reported. Both are driven, because a guard that only handles one is the guard I
+         wrote first. */
+      victim.status = "dead";                    /* he is gone, the offer is still out */
+      const rowsDead = A.agenda(d);
+      const gone = JSON.parse(JSON.stringify(d));
+      gone.gladiators = gone.gladiators.filter(x=>x.id !== victim.id);   /* spliced out entirely */
+      const rowsGone = A.agenda(gone);
+      const broken = r => r.filter(x=>/\b(undefined|null|NaN|\[object)/.test(
+        String(x.label||"") + " " + String(x.sub||""))).map(x=>x.label);
+      const courting = r => r.filter(x=>/is being talked to/.test(x.label||"")).map(x=>x.label);
+      R.poach = {
+        namedWhileAlive: before,
+        broken: broken(rowsDead).concat(broken(rowsGone)),
+        stillCourting: courting(rowsDead).concat(courting(rowsGone)),
+      };
+    }
+
     return R;
   });
 
@@ -508,6 +545,16 @@ export async function run({ p, errors }){
   }
   { const covered = out.sect.map(x=>x.key), missing = out.sectKeys.filter(k=>!covered.includes(k));
     if(missing.length) fails.push(`${missing.join(", ")} are in SECT_MARK and nothing here drives them`); }
+
+  /* ---- and no row prints a lookup it did not get ---- */
+  lines.push(`the poach row: named while he lived ${out.poach.namedWhileAlive} · once he is gone, `
+    + `${out.poach.stillCourting.length} still courting, ${out.poach.broken.length} broken`);
+  if(!out.poach.namedWhileAlive)
+    fails.push("the poach row did not appear even while the man was alive — this fixture no longer reaches the code it exists for");
+  for(const b of out.poach.broken)
+    fails.push(`an agenda row reads "${b}" — a lookup that came back empty is being printed straight at the player`);
+  if(out.poach.stillCourting.length)
+    fails.push(`a rival is still being shown as courting a man who has left the house: "${out.poach.stillCourting[0]}"`);
 
   /* ---- and it survives being written down ---- */
   if(!out.save.keptSeen) fails.push("the last-looked signatures do not survive a save — every tab lights up on load");

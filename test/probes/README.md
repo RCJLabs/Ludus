@@ -18,6 +18,7 @@ Run them straight:
     node test/probes/season.mjs 24 40 bench # seeds, tail, and `bench` to keep the trainee off the card
     node test/probes/coast.mjs 24 320      # #133; controlled pairs, stay-at-home vs tour-and-return
     node test/probes/scroll.mjs 16         # week to measure the screens at
+    node test/probes/purse.mjs 10 420       # income against the bill, by era
     node test/probes/keep.mjs 72 420 SEED  # what a house HOLDS — gains against losses, by era
     node test/probes/walk.mjs 72 420 180 SEED   # can a great house lose the people in it
     node test/probes/fires.mjs 24 420      # does v3.27.0's patron death ever fire in real play
