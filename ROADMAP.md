@@ -13666,7 +13666,7 @@ is also `watched` — `doFight` is handed `offer.watched ? plan : "none"` — wh
 without touching the inconsistency.*
 
 ### #195 — two men in one house can be given the same name by the crowd.
-`g.nick = pick(NICKS)` appears at sixteen sites and not one of them looks at who already holds one.
+`pick(NICKS)` appears at fourteen sites and not one of them looks at who already holds one.
 Fourteen names. Over **120 houses (ten runs of 12 × 420)**: **567 of your men were named by the
 crowd, 89 (15.7%) took a name the house had used before, and 8 (1.4%) took one a man still on the
 books was wearing** — about one house in fifteen ends up with two living men called the Serpent.
