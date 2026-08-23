@@ -1325,7 +1325,7 @@ Measured over 12 weeks of strength work from 45:
 Measured over 90-week campaigns: merciful houses finish with a freed-man doctore ("the finest in Capua") and unrest 0; brutal houses receive **zero** offers and ruin out by week 14–52. Dismissing a freed doctore costs 8 unrest and 8 morale across the roster.
 
 ### Retirement
-`retireEligible` at **age ≥ 31 or scarBurden ≥ 20**. Releasing a man gives +12 fame, −9 unrest, +5 morale to the rest, and defuses the rebellion if he was the ringleader. Compare the rudis (+60 fame, −12 unrest) which needs 10 wins and 90 renown — retirement is the merciful exit for a man who will never earn it.
+`retireEligible` at **age ≥ 31 or scarBurden ≥ 20**. Releasing a man gives +12 fame, −9 unrest, +5 morale to the rest, and defuses the rebellion if he was the ringleader. Compare the rudis (+60 fame, −12 unrest) which needs 10 wins and **180** renown — retirement is the merciful exit for a man who will never earn it. *(This row said 90 until v3.122.0, as did the man's own card and the row below; the gate has been 180 throughout — see #190.)*
 
 ### Classes (6, in a counter cycle)
 Murmillo → Thraex → Hoplomachus → Secutor → Retiarius → Dimachaerus → Murmillo. Countering grants **×1.12** power. Each class needs an entry in `CLASSES`, `COUNTERS`, `ATTACKS`, and `DEFAULT_KIT`.
@@ -1394,7 +1394,7 @@ Tuning dials, in the order you'd reach for them:
 | Class counter | `power()` | `× 1.12` |
 | Momentum | `power()` | `± 3 steps × 3%` |
 | Missio threshold | `simulateFight` | `spare ≥ 42` |
-| Rudis gate | `rudisEligible` | 10 wins **and** 90 renown |
+| Rudis gate | `rudisEligible` | 10 wins **and** 180 renown *(this table said 90 until v3.122.0 — #190)* |
 | Year length | `WEEKS_PER_YEAR` | 18 weeks |
 | Prime window | `PRIME` | 23–28 |
 | Age → training | `ageTrain` | 1.3 / 1.0 / 0.72 / 0.42 |
@@ -4460,6 +4460,99 @@ about a quarter and it is the cost of this repair**; `MISSIO_MAN` is one line to
 wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
+
+### v3.122.0 — #190: the one line that told a player what the rudis costs had been wrong since v0.90.0
+
+#190 was filed as *"the rudis is a 1–2% state, and the ambition that asks for it is met once in
+twenty-four"*, and its falsifier was: *falsifies if a policy that protects one man — benching the
+rest, feeding him the card — gets him to ten wins reliably, in which case this is about the
+reference player spreading its bouts and not about the gate.* **That policy had never existed**, so
+the falsifier had never been run. Running it changed the item.
+
+**The falsifier substantially fires.** The rope gained a sticky `protect` lever in two readings,
+because the weak one is not a fair test of a gate:
+
+| arm | reached ten wins | took the rudis | what became of them |
+|---|---|---|---|
+| the reference player | ~1% of men | 12 and 14 per 12 houses | — |
+| `protect:true` — every card | **12 of 215 (5.6%)** | 10 | 168 of 215 buried |
+| `protect:"safe"` — matchup shielded too | **3 of 14 and 4 of 12 (21–33%)** | 2 and 4 | 1 of 12 buried |
+
+So the gate is reachable and always was; what makes it look like a 1–2% state is the reference
+player spreading its bouts across the roster. Throwing one man at everything kills him — he holds
+the card a median of **3 weeks** — but a house that also picks his fights gets him there.
+
+**And that reframed the item onto what is actually broken.** If concentrating bouts on one man
+works, the player needs to know *which* man is close. The game holds that number and states it in
+exactly one place: a disabled button on the man's own page reading **`Rudis: 10 wins, 90 renown`**,
+hardcoded. The gate is `pfame >= RUDIS_FAME`, **180**.
+
+**Ninety was the gate in v0.76.0.** That release measured it as unreachable and dropped it to 45;
+v0.90.0 re-measured renown after it had drifted an order of magnitude and set it to **180**. The
+button was never touched, so it has named a superseded number through two recalibrations — and the
+ROADMAP carried the stale figure twice as well (the systems table and the retirement comparison),
+while a third row two hundred lines away stated the real gate. All three are corrected here.
+
+| the band this created — ten wins, renown between what the card claimed and what the gate takes | seed A | seed B |
+|---|---|---|
+| active man-weeks inside it | 53 across 7 men | 63 across 11 men |
+| as a share of every man-week a ten-win man ever spends | **65.4%** | **60.0%** |
+
+A player who did exactly what the only instruction in the game told him found the button still dead
+and no screen willing to say why, about two-thirds of the time he got a man that far.
+
+**The fix is one helper and two surfaces.** `RUDIS_WINS`, `RUDIS_FAME` and `RUDIS_AGE` are named once
+and read by the gate, by `grantRudis`, and by both screens through `rudisStanding(g)` — `ambPool`'s
+rule from #189, for the same reason. The button now names the distance instead of the terms
+(`Rudis: 3 more wins, 40 more renown`), and the man's own card answers the question the ambition
+actually asks.
+
+**Because `freedom`'s ask is a number.** Verbatim: *"catches you crossing the yard and asks for a
+number. Not a speech and not a promise — a number. How many more."* Measured over 12 houses × 420
+weeks on two seeds, the reference player freeing every eligible man:
+
+| | seed A | seed B |
+|---|---|---|
+| men who ever carried `freedom` | 50 | 53 |
+| active man-weeks carrying it | 1,440 | 1,194 |
+| **times it was met** | **1** | **1** |
+| of those man-weeks, ten or more wins short | 74.6% | 66.2% |
+| **spent by a man already past thirty** | **644 (44.7%), 15 men** | **221 (18.5%), 12 men** |
+
+That last row is the one with teeth, and it is not theory: across the two seeds **three men who
+wanted it were freed and one of them got nothing**, because `grantRudis` meets the ambition on
+`age < RUDIS_AGE` and he was thirty. He walked out free carrying an un-met ambition and no line was
+written either way. The card now says it — *"He is 31. He asked for it before he was 30, and that
+part of it is not coming back."*
+
+**Display only, and proved so**: `open.mjs`'s 60-house signature is **byte-identical** to v3.121.0.
+No new RNG draw, no gate moved. What the fix changes is what the player is told.
+
+**`sword` is the 94th check and it drives the real card**, not the helper: it plants five men, opens
+the familia roster, clicks through to the STANDING face and reads what the screen says. The three
+terms come off the handle, so a change to any of them moves the check with the game.
+
+| broken on purpose | result |
+|---|---|
+| **the hardcoded `Rudis: 10 wins, 90 renown` put back** | **red — *"prints [10, 90] where this man is short [3, 40]"*** |
+| the gate returned to bare literals | red — *"rudisEligible still carries a numeric literal"* |
+| the past-thirty clause silenced | red on the helper and on the screen |
+| the card's standing block removed | red on all four freedom fixtures |
+
+The button test is **exact rather than a blocklist**: the integers it prints must equal the
+shortfalls the fixture implies. The first cut simply forbade the literal 90 and went red on a
+working build, because the `limbo` fixture legitimately needs ninety more renown.
+
+**Four instrument faults before any figure was quotable**, which is the ratio this directory keeps
+producing: the probe read the protected man's id *after* the run and so measured fresh replacements
+with a median of 0 wins; the rope's outer guard was `o.protect === true`, so `"safe"` skipped the
+branch entirely and ran as a control **while reporting more bouts than the crude arm** — the shape
+of a lever that is not connected; the safe scan scored only the arena bill when most of this rope's
+bouts come from the pit, and sat out 135 weeks of 138; and `metFreedom` sat inside a
+`status !== "active"` guard while `grantRudis` sets `status = "freed"` two lines before it fires
+`ambitionMet`, so the counter was **structurally incapable of ever seeing one**.
+
+Suite **94/94 green**.
 
 ### v3.121.0 — #189: what a man can want is tested on his body, and his body changes
 
@@ -13920,8 +14013,8 @@ it — `stock`, `fresh`, `venue`, `vote`, `sticky` — and one existing one was 
 it was reporting. That ratio held: **two of the ten items are about the instrument, and the single
 largest finding in this pass is that `asks`'s silent list was mostly its own.**
 
-**Six closed, in v3.116.0–v3.121.0: #195, #192, #194, #188, #187, #189.** A sixth instrument,
-`gate`, was built for the last of them and cost three instrument faults before it printed a figure
+**Seven closed, in v3.116.0–v3.122.0: #195, #192, #194, #188, #187, #189, #190.** A sixth and seventh,
+`gate` and `rudis`, were built for the last two of them, and `gate` and cost three instrument faults before it printed a figure
 worth quoting — the largest being that **the reference player has hired a doctore since the rope
 was written and had never once named him a pupil**, so five written lessons had been unreachable by
 any policy in this directory and one of the two gates #189 is about read as dead when it was merely
@@ -14051,7 +14144,7 @@ The hook is wired for the property, not for the yield: 0 turns into `champion` i
 arm, 2 and 1 across twelve houses each with the square manned. The next move on `champion` is a
 measurement of what SHOULD lift a man's ceiling, not this.
 
-### #190 — the rudis is a 1–2% state, and the ambition that asks for it is met once in twenty-four.
+### #190 — CLOSED in v3.122.0, and the falsifier moved it. The rudis is a 1–2% state, and the ambition that asks for it is met once in twenty-four.
 `rudisEligible = !isAuctor(g) && g.wins >= 10 && g.pfame >= 180`, and `grantRudis` meets the
 `freedom` ambition on that plus `g.age < 30` — which matches the line the man is given, *"To hold the
 rudis before he is thirty."* Split by term over active man-weeks:
@@ -14072,6 +14165,28 @@ weeks, at a median age of 24 — and exactly one of them carried the ambition as
 ~4,270 man-weeks spent carrying `freedom`, **1** had all four terms up. *Falsifies if a policy that
 protects one man — benching the rest, feeding him the card — gets him to ten wins reliably, in which
 case this is about the reference player spreading its bouts and not about the gate.*
+**THE FALSIFIER WAS RUN AND IT SUBSTANTIALLY FIRES.** No such policy existed — `bench` takes fixed
+ids and the roster turns over — so the rope gained a sticky `protect` lever. Feeding one man every
+card kills him (he holds it a median of **3 weeks**; 168 of 215 buried) and still reaches ten wins
+**12 of 215, 5.6%**. Shielding the matchup as well — the card sorted by the game's own `winChance`,
+sitting out below the bar — reaches it **21–33%**, against the reference player's ~1%, and takes the
+rudis 2 and 4 times in 4 houses of 200 weeks. **The gate is reachable; the reference player spreading
+its bouts is most of why it reads as a 1–2% state.**
+**Which reframed the item onto what is actually broken, and it is worse.** If concentrating bouts
+works, the player has to know which man is close — and the game states that in exactly one place: a
+disabled button on the man's page reading **`Rudis: 10 wins, 90 renown`**, hardcoded, against a gate
+of **180**. Ninety was the gate at v0.76.0; that release dropped it to 45 and v0.90.0 set it to 180,
+and the button was never touched. **60.0% and 65.4% of every man-week a ten-win man ever spends is
+spent in the band where the only instruction in the game says he qualifies and the button beside it
+is dead.** The ROADMAP carried the stale number twice as well.
+**Closed in v3.122.0**: the three terms named once and read by the gate, by `grantRudis` and by both
+screens through `rudisStanding`; the button names the distance instead of the terms; and the man's
+card answers the number his ambition actually asks for, including that **44.7% and 18.5% of the
+man-weeks spent wanting the rudis are spent by a man already past thirty** — a clause his own line
+names and nothing told him had run out. Display only: `open`'s signature is byte-identical. `sword`
+is the 94th check and drives the real card.
+**What is deliberately left standing**: the gate itself. It is reachable, the falsifier says so, and
+moving a number that two releases have already re-measured needs its own measurement, not this one.
 
 ### #191 — one of the six injuries is 0.06% of all wounds, and two of the four engines can never deal it.
 `INJ_BY_TARGET` maps six targets to five wounds; the flank is the only target with two, and which
@@ -15045,4 +15160,4 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.121.0 — #195, #192, #194, #188, #187 and #189 closed; four of the audit's ten items still open*
+*Last updated: v3.122.0 — #195, #192, #194, #188, #187, #189 and #190 closed; three of the audit's ten items still open*
