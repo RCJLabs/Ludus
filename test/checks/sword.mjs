@@ -97,11 +97,19 @@ export async function run({ p, errors }){
 
   const CASES = [
     { key:"short",  amb:"freedom", wins:K.wins-3, pfame:K.fame-40, age:24,
-      want:[/3 more wins/i, /40 more renown/i], not:[/not coming back/i] },
+      want:[/3 more wins/i, /40 more renown/i], not:[/not coming back/i],
+      btn:[/3 more wins/i, /40 more renown/i] },
     { key:"clear",  amb:"freedom", wins:K.wins,   pfame:K.fame,    age:24,
-      want:[/he has earned it/i, /\d+d to write/i], not:[/more wins/i, /not coming back/i] },
+      want:[/he has earned it/i, /\d+d to write/i], not:[/more wins/i, /not coming back/i],
+      btn:[/grant the rudis/i] },
     { key:"late",   amb:"freedom", wins:K.wins-3, pfame:K.fame-40, age:K.age+1,
       want:[/3 more wins/i, /not coming back/i, new RegExp(`he is ${K.age+1}`, "i")], not:[] },
+    /* THE BAND THE WRONG SENTENCE CREATED: ten wins and renown between what the card used to claim
+       and what the gate takes. A man here has done everything the old screen asked and is refused,
+       so the button must now name the renown he is actually short. */
+    { key:"limbo",  amb:"freedom", wins:K.wins, pfame:Math.round(K.fame/2), age:24,
+      want:[new RegExp(`${K.fame - Math.round(K.fame/2)} more renown`, "i")], not:[/more wins/i],
+      btn:[new RegExp(`${K.fame - Math.round(K.fame/2)} more renown`, "i")] },
     /* and the control: a panel that answers a question nobody asked is its own fault */
     { key:"other",  amb:"beside",  wins:K.wins-3, pfame:K.fame-40, age:24,
       want:[], not:[/what stands between him and it/i, /more wins/i] },
@@ -128,19 +136,52 @@ export async function run({ p, errors }){
       if(b){ b.click(); return true; } return false; });
     if(!opened){ bad.push(`${c.key}: the roster showed no man to open`); continue; }
     await p.waitForTimeout(420);
-    const txt = await p.evaluate(()=>{
-      const s = [...document.querySelectorAll("details.sect, .sect, section, div")]
-        .filter(x=>/what he wants/i.test((x.innerText||"").slice(0,400)))
-        .sort((a,b)=>(a.innerText||"").length - (b.innerText||"").length)[0];
-      return s ? (s.innerText||"").trim() : "";
+    /* THE BUTTON IS ON EVERY FACE and is the line that was wrong — read it first. It is the only
+       place in the game that ever stated the terms, and it stated them as a hardcoded sentence. */
+    const btn = await p.evaluate(()=>{
+      const b = [...document.querySelectorAll("button")].find(x=>/^rudis:/i.test((x.innerText||"").trim()));
+      return b ? (b.innerText||"").trim() : (
+        [...document.querySelectorAll("button")].some(x=>/grant the rudis/i.test(x.innerText||"")) ? "GRANT THE RUDIS" : "");
     });
-    if(!txt){ bad.push(`${c.key}: the "What he wants" panel did not render at all`); await clearAll(p, 8); continue; }
-    const one = txt.replace(/\s+/g, " ").slice(0, 200);
-    lines.push(`${c.key.padEnd(6)} ${planted.name} (${c.amb}, ${c.wins}w ${c.pfame}f age ${c.age}) → ${one}`);
+    /* `SECT.wants` mounts only under the STANDING face, and the page opens on RECORD — the first
+       cut of this read the default face and reported the panel missing on all four fixtures. */
+    await p.evaluate(()=>{ const b=[...document.querySelectorAll("button")]
+      .find(x=>/^standing$/i.test((x.innerText||"").trim())); if(b) b.click(); });
+    await p.waitForTimeout(380);
+    /* and the section is a <details> that opens CLOSED — the first cut read "WHAT HE WANTS ⌄" and
+       nothing else, then reported the panel silent on every fixture while it was merely folded. */
+    await p.evaluate(()=>{ for(const dd of document.querySelectorAll("details.sect")) dd.open = true; });
+    await p.waitForTimeout(260);
+    const txt = await p.evaluate(()=>{
+      const all = [...document.querySelectorAll("details.sect, .sect, section, div")]
+        .filter(x=>/what he wants/i.test(x.innerText||""))
+        .sort((a,b)=>(a.innerText||"").length - (b.innerText||"").length);
+      return all.length ? (all[0].innerText||"").trim() : "";
+    });
+    if(!txt){ bad.push(`${c.key}: the "What he wants" panel did not render under the STANDING face`); await clearAll(p, 8); continue; }
+    const one = txt.replace(/\s+/g, " ").slice(0, 190);
+    lines.push(`${c.key.padEnd(6)} ${planted.name} (${c.amb}, ${c.wins}w ${c.pfame}f age ${c.age})`);
+    lines.push(`         button: ${btn || "(none)"}`);
+    lines.push(`         panel : ${one}`);
     for(const re of c.want) if(!re.test(txt))
       bad.push(`${c.key}: the panel never says ${re} — the man asked for a number and the screen does not give him one`);
     for(const re of c.not) if(re.test(txt))
       bad.push(`${c.key}: the panel says ${re} and should not`);
+    if(c.btn){ for(const re of c.btn) if(!re.test(btn))
+      bad.push(`${c.key}: the rudis button reads "${btn}" and does not match ${re} — this is the line that stated 90 renown against a gate of ${K.fame}`); }
+    /* ---- AND EVERY NUMBER ON THAT BUTTON IS DERIVED, WHICH IS THE WHOLE FAULT ----
+       The line it replaced was a hardcoded "10 wins, 90 renown" against a gate of 180. A guard
+       that simply forbids the literal 90 is wrong and was written that way first: the `limbo`
+       fixture legitimately needs 90 more renown and it went red on a working build. So the test
+       is exact — the integers the button prints must be precisely the shortfalls the fixture
+       implies, and any other number on it is a constant that has drifted from the gate. */
+    if(/^rudis:/i.test(btn)){
+      const want = [Math.max(0, K.wins - c.wins), Math.max(0, K.fame - c.pfame)].filter(Boolean);
+      const got = (btn.match(/\d+/g) || []).map(Number);
+      if(got.join(",") !== want.join(","))
+        bad.push(`${c.key}: the rudis button prints [${got.join(", ")}] where this man is short [${want.join(", ")}] — `
+          + `a number on that button that the man does not imply is a constant drifting from the gate, which is #190`);
+    }
     await clearAll(p, 8);
   }
 

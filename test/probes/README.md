@@ -61,6 +61,8 @@ Run them straight:
     node test/probes/sticky.mjs 10 SEED      # what the arena panel clears on which of its three exits (browser)
     node test/probes/gate.mjs  12 420 SEED   # when an ambition gate shut at creation comes open later in a life
     node test/probes/gate.mjs  12 420 SEED '{"pupil":true}'   # ...with the doctore's square manned
+    node test/probes/rudis.mjs 12 420 SEED '{"free":true}'    # the wooden sword: four terms and the career under them
+    node test/probes/rudis.mjs 12 420 SEED '{"protect":"safe","free":true,"protectBar":0.45}'   # ...#190's falsifier
 
 ## HOW MANY HOUSES A FIGURE NEEDS — read this before quoting one
 
@@ -611,6 +613,17 @@ state his ambition is in at that moment, and what he ends up carrying against wh
   · and it proves that rather than claiming it: every run drives the same houses a second time with
     sampling off and prints whether the two signatures are byte-identical. If they are not, nothing
     above the line is quotable, and the probe says so in those words.
+
+**`rudis.mjs`** — the wooden sword, and #190's own falsifier, which had never been run because the
+policy it names did not exist. The rope's sticky `protect` lever came with it: `true` feeds one man
+every card, `"safe"` shields the matchup too. The crude arm gets him to ten wins **1.5–5.6%** of the
+time and buries 168 of 215; the shielded arm **21–33%**, against the reference player's ~1%. So the
+gate is reachable and the item was mostly about the bout policy. **Four instrument faults first**,
+and the two worth repeating: the outer guard was `o.protect === true`, so `"safe"` skipped the branch
+and ran as a plain control **while reporting more bouts than the crude arm** — a lever that is not
+connected looks exactly like a lever that does nothing; and the `metFreedom` counter sat inside a
+`status !== "active"` guard while `grantRudis` sets `status = "freed"` two lines before it fires
+`ambitionMet`, so it was structurally incapable of ever counting one and printed 0 for a release.
 
 **`scroll.mjs`** — where the vertical pixels go, per place, as the page ARRIVES versus with every fold
 thrown open. The second is what `reach` necessarily measures and it is 40% taller than the first.
