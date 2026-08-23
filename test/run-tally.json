@@ -49,4 +49,5 @@
 {"v":"3.109.0","checks":85,"failed":[]},
 {"v":"3.110.0","checks":85,"failed":["bulk"]},
 {"v":"3.110.0","checks":85,"failed":[]},
-{"v":"3.111.0","checks":85,"failed":[]}]
+{"v":"3.111.0","checks":85,"failed":[]},
+{"v":"3.111.0","checks":86,"failed":[]}]
