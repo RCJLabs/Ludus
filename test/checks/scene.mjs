@@ -1,153 +1,290 @@
-/* EVERY VENUE IS DRAWN AS ITSELF — #193
+/* THE SCENE — every room does what the drawing promises
 
-   The arena's backdrop is one class: `` className={`arena v-${fight.venue||"forum"} …`} ``. `VENUES`
-   has nine keys and the stylesheet had **six** `.v-` rules. `forum` is the base — the bare `.arena`
-   gradient IS the warm Capuan sand — so eight keys want a rule of their own and two did not have
-   one: **`bowl`, Pompeii's stone amphitheatre, and `greek`, the theatre at Neapolis.** Both fell
-   through to Capua, on **308 of 5,688 bouts, 5.4%**, in exactly the system built to be a change of
-   scene. Puteoli had `.v-harbour`; the other two coast towns looked like the place you left.
+   v3.89.0 drew the ludus: a cutaway where the yard, the square and the cells stopped being panels
+   and became rooms. A drawing can rot in a way a panel cannot — a hotspot whose handler breaks
+   still LOOKS tappable, and nothing renders wrong. So this walks the rooms the way `desk` walks the
+   letters, on the same played pinned morning:
 
-   THE BAR THIS HOLDS IS THE SHAPE, NOT THE TWO KEYS. A tenth venue added later with no rule goes
-   red here rather than shipping as Capua for a year, and it holds the thing that actually matters
-   about a backdrop: that a player can tell one from another. The unit is CIE76 ΔE in Lab, because
-   "these hex codes differ" is not the question. **2.3 is the just-noticeable difference for two
-   patches side by side**; these are seen minutes apart, so the floor here is deliberately set at
-   that JND and the real spread is printed rather than asserted — the eight rules run 9.5 to 28.8,
-   and pinning the check to today's spread would make every future palette tweak a red run.
+     the training square opens the square AS A DOCUMENT, unfolded, with NO "see it in the house" —
+       a document opened from the scene has no elsewhere, the scene is the house
+     the cells at night open the ear's panel the same way
+     the shrine opens the temple WITH the footer, because the temple has a home on the villa
+     a man in the yard opens his card
+     the villa travels
 
-   IT READS PIXELS, NOT THE STYLESHEET. The rules are written in `var(--ground)`-style tokens whose
-   values live elsewhere, so the source text proves nothing. The real element is mounted with the
-   real class, the COMPUTED `background-image` is taken — the browser has already resolved every
-   var() to rgb stops — and those stops go through a canvas `createLinearGradient` so the
-   interpolation is the browser's own. **The host must sit inside `.lr`**, which is where every
-   token in this file is declared: `paint.mjs`'s first cut appended to `document.body`, var()
-   substitution failed, the whole declaration became invalid at computed-value time, and it
-   reported `.v-pit` — 64% of all bouts — as having no gradient at all. That guard is asserted here
-   rather than assumed, because a probe fault that mimics the bug is the worst kind.
+   And the scene's callers are derived from the same agenda items the report rows carry, so the
+   check asserts at least one badge on the pinned morning — a derivation that silently returns
+   nothing is the dot-that-never-lights fault, invisible precisely when broken.
 */
-import fs from "node:fs";
-import path from "node:path";
-import { ROOT, found, clearAll } from "../harness.mjs";
+import { found, tab, clearAll, installRope , forge } from "../harness.mjs";
 
 export const name = "scene";
-export const describe = "every venue has a backdrop of its own, and no two of them look alike";
-export const slow = true;   /* mounts the real element in a real browser */
-
-const JND = 2.3;            /* CIE76: two patches side by side stop being the same colour */
+export const describe = "every room in the drawn ludus does what it promises";
 
 export async function run({ p, errors }){
-  const lines = [], bad = [];
-  const src = fs.readFileSync(path.join(ROOT, "src", "ludus.jsx"), "utf8");
-  const VEN = [...(src.match(/const VENUES = \{([\s\S]*?)\n\};/)||["",""])[1]
-    .matchAll(/^  ([a-z]+):\s*\{/gm)].map(m=>m[1]);
-  const CSS = [...src.matchAll(/^\.v-([a-z]+)\{/gm)].map(m=>m[1]);
-  lines.push(`VENUES ${VEN.length} [${VEN.join(" ")}]  ·  .v- rules ${CSS.length} [${CSS.join(" ")}]`);
-  if(!VEN.length) bad.push("VENUES parsed EMPTY — this check is reading a shape that has moved");
-  if(!CSS.length) bad.push("no .v- rules parsed — this check is reading a shape that has moved");
+  const lines = [], fails = [];
+  await found(p, { seed:"REACH-1" });
+  await installRope(p);
+  await forge(p, (A, R) => {
+    const d=A.newGameState("Reach","clean","REACH-1",null);
+    for(let i=0;i<16;i++){ if(d.over) break; R.lanista(d); }
+    return d; }); await clearAll(p, 8);
+  await tab(p, "ludus"); await p.waitForTimeout(400); await clearAll(p, 6);
+  await tab(p, "ludus"); await p.waitForTimeout(300);
 
-  /* `forum` is the base and is the ONE key allowed to have no rule of its own. Anything else
-     without one is being drawn as the Capuan sand whatever its name says. */
-  const BASE = "forum";
-  const naked = VEN.filter(k => k !== BASE && !CSS.includes(k));
-  if(naked.length)
-    bad.push(`${naked.join(", ")} ${naked.length===1?"has":"have"} no \`.v-\` rule and ${naked.length===1?"is":"are"} drawn as the bare .arena — `
-      + `a venue drawn as somewhere else is #193`);
-  const orphan = CSS.filter(k => !VEN.includes(k));
-  if(orphan.length) lines.push(`rules with no venue behind them (printed, not asserted): ${orphan.join(", ")}`);
+  const hots = await p.evaluate(()=>[...document.querySelectorAll(".scn")]
+    .map(x=>(x.getAttribute("aria-label")||"")));
+  lines.push(`${hots.length} hotspots: ${hots.map(h=>h.split("—")[0].trim()).join(" · ")}`);
+  if(hots.length < 6) fails.push(`only ${hots.length} hotspots in the scene — the drawing has lost rooms`);
 
-  await found(p);
-  await clearAll(p, 8);
+  const badges = await p.evaluate(()=>{
+    const svg = document.querySelector('svg[aria-label^="The ludus"]');
+    return svg ? [...svg.querySelectorAll("circle")].filter(c=>["#c99a4b","#cf5a49"].includes(c.getAttribute("fill"))).length : -1; });
+  lines.push(`${badges} caller badge${badges===1?"":"s"} standing in the scene`);
+  if(badges < 1) fails.push("no caller badge in the scene on a morning the agenda raises seven items — the derivation is returning nothing, which is the dot that never lights");
 
-  const out = await p.evaluate(([VEN, CSS, BASE])=>{
-    const scope = document.querySelector(".lr");
-    if(!scope) return { fatal:"no .lr in the document — the token scope this check depends on is gone" };
-    const host = document.createElement("div");
-    host.style.cssText = "position:fixed;left:-9999px;top:0;width:320px";
-    scope.appendChild(host);
-    const tok = getComputedStyle(host).getPropertyValue("--ground").trim();
-
-    const N = 21;
-    const strip = (cls)=>{
-      const el = document.createElement("div");
-      el.className = "arena" + (cls ? " v-" + cls : "");
-      host.appendChild(el);
-      const bg = getComputedStyle(el).backgroundImage || "";
-      const h = el.getBoundingClientRect().height || 232;
-      host.removeChild(el);
-      const stops = [...bg.matchAll(/rgba?\(([^)]+)\)\s*([\d.]+)%/g)].map(m=>{
-        const n = m[1].split(",").map(x=>parseFloat(x));
-        return { c:[n[0],n[1],n[2]], at:parseFloat(m[2])/100 };
-      });
-      if(stops.length < 2) return { px:null, bg };
-      const cv = document.createElement("canvas"); cv.width = 1; cv.height = Math.round(h);
-      const ctx = cv.getContext("2d");
-      const g = ctx.createLinearGradient(0, 0, 0, cv.height);
-      for(const s of stops) g.addColorStop(Math.min(1, Math.max(0, s.at)), `rgb(${s.c[0]},${s.c[1]},${s.c[2]})`);
-      ctx.fillStyle = g; ctx.fillRect(0, 0, 1, cv.height);
-      const px = [];
-      for(let i=0;i<N;i++){
-        const y = Math.min(cv.height-1, Math.round(i/(N-1)*(cv.height-1)));
-        const d = ctx.getImageData(0, y, 1, 1).data;
-        px.push([d[0], d[1], d[2]]);
-      }
-      return { px, bg };
-    };
-    const lab = ([r,g,b])=>{
-      const f = v => { v/=255; return v<=0.04045 ? v/12.92 : Math.pow((v+0.055)/1.055, 2.4); };
-      const R=f(r), G=f(g), B=f(b);
-      const X=(R*0.4124+G*0.3576+B*0.1805)/0.95047, Y=R*0.2126+G*0.7152+B*0.0722, Z=(R*0.0193+G*0.1192+B*0.9505)/1.08883;
-      const k = t => t>0.008856 ? Math.cbrt(t) : (7.787*t + 16/116);
-      const fx=k(X), fy=k(Y), fz=k(Z);
-      return [116*fy-16, 500*(fx-fy), 200*(fy-fz)];
-    };
-    const dE = (a,b)=>{ const x=lab(a), y=lab(b);
-      return Math.sqrt((x[0]-y[0])**2 + (x[1]-y[1])**2 + (x[2]-y[2])**2); };
-
-    const S = { "(bare .arena)": strip(null) };
-    for(const k of VEN) S[k] = strip(CSS.includes(k) ? k : null);
-    const dead = Object.keys(S).filter(k => !S[k].px);
-    const mean = (a,b)=>{ const A=S[a].px, B=S[b].px; if(!A||!B) return null;
-      let t=0; for(let i=0;i<A.length;i++) t += dE(A[i], B[i]); return t/A.length; };
-    const pairs = [];
-    const ruled = VEN.filter(k=>CSS.includes(k));
-    for(let i=0;i<ruled.length;i++) for(let j=i+1;j<ruled.length;j++)
-      pairs.push({ a:ruled[i], b:ruled[j], d:mean(ruled[i], ruled[j]) });
-    const fromBase = {};
-    for(const k of VEN) fromBase[k] = mean("(bare .arena)", k);
-    scope.removeChild(host);
-    return { tok, dead, pairs, fromBase, ruled };
-  }, [VEN, CSS, BASE]);
-
-  if(out.fatal) return { pass:false, why:out.fatal, lines };
-
-  /* the guard that makes every number below mean anything */
-  lines.push(`host inside .lr · --ground resolves to "${out.tok}"`);
-  if(!out.tok)
-    bad.push("the mounted element resolves --ground to nothing — it is outside the token scope, "
-      + "every var()-written gradient reads as absent, and nothing this check measures is real");
-  if(out.dead.length)
-    bad.push(`${out.dead.join(", ")} computed to no gradient at all — either the rule is gone or the token scope is wrong`);
-
-  lines.push(`distance from the bare .arena, which is what a ruleless venue is drawn as:`);
-  for(const k of VEN.slice().sort((a,b)=>(out.fromBase[b]||0)-(out.fromBase[a]||0)))
-    lines.push(`   ${k.padEnd(10)} ΔE ${out.fromBase[k] == null ? "  -" : out.fromBase[k].toFixed(1).padStart(5)}${k===BASE?"   (the base itself, 0 by design)":""}`);
-  /* a venue with a rule of its own that is a hair from the base has a rule in name only */
-  for(const k of out.ruled){
-    const d = out.fromBase[k];
-    if(d != null && d < JND)
-      bad.push(`.v-${k} is ΔE ${d.toFixed(1)} from the bare .arena — it has a rule and is drawn as Capua anyway`);
+  /* ---- THE DRAWING MUST NOT KEEP ITS OWN NUMBERS ----
+     The racks' caption read `Object.keys(S.gear).length` — the count of gear IDS the save has
+     ever touched, zero-count entries included — while the armoury's panel read rackUsed(), which
+     sums what is on the rack. Over 120 played weeks they disagreed in 115: the scene drew seven
+     pieces standing where the racks held none. A number the drawing and a panel both report has
+     to come from one place, and this asserts the drawn one against the handle's. */
+  {
+    const rack = await p.evaluate(()=>{
+      const A = window.__LVDVS;
+      const k = Object.keys(localStorage).find(q=>/ludus-slot-\d/.test(q));
+      const d = JSON.parse(localStorage.getItem(k));
+      const g = [...document.querySelectorAll(".scn")]
+        .find(x=>(x.getAttribute("aria-label")||"").toLowerCase().startsWith("the racks"));
+      return { drawn: g ? (g.textContent||"").replace(/\s+/g," ").trim() : null,
+               used: A.rackUsed(d), cap: A.rackCap(d) };
+    });
+    lines.push(`the racks are drawn "${rack.drawn}" against rackUsed ${rack.used} of ${rack.cap}`);
+    const said = rack.drawn && rack.drawn.match(/(\d+)\s+of\s+(\d+)/);
+    if(rack.used === 0){
+      if(!/bare/i.test(rack.drawn||"")) fails.push(`the racks hold nothing and the drawing says "${rack.drawn}"`);
+    } else if(!said || +said[1] !== rack.used){
+      fails.push(`the drawing says "${rack.drawn}" and the racks hold ${rack.used} — the scene is keeping a second number for the same rack`);
+    }
   }
 
-  const sorted = out.pairs.filter(x=>x.d != null).sort((a,b)=>a.d-b.d);
-  if(sorted.length){
-    lines.push(`${sorted.length} pairs of ruled venues · closest ${sorted[0].a}/${sorted[0].b} ΔE ${sorted[0].d.toFixed(1)}`
-      + ` · furthest ${sorted[sorted.length-1].a}/${sorted[sorted.length-1].b} ΔE ${sorted[sorted.length-1].d.toFixed(1)}`);
-    for(const q of sorted.slice(0, 4)) lines.push(`   ${q.a.padEnd(10)} vs ${q.b.padEnd(10)} ΔE ${q.d.toFixed(1)}`);
-    for(const q of sorted) if(q.d < JND)
-      bad.push(`${q.a} and ${q.b} are ΔE ${q.d.toFixed(1)} apart — under the ${JND} an eye needs, so they are the same place with two names`);
-  } else bad.push("no pair of ruled venues could be compared — the fixture measured nothing");
+  const tapScn = lab => p.evaluate(l=>{ const g=[...document.querySelectorAll(".scn")]
+    .find(x=>(x.getAttribute("aria-label")||"").toLowerCase().includes(l)); if(!g) return false;
+    g.dispatchEvent(new MouseEvent("click",{bubbles:true})); return true; }, lab);
+  const modalState = () => p.evaluate(()=>{ const w=[...document.querySelectorAll(".modalwrap")].pop();
+    if(!w) return null; const dets=[...w.querySelectorAll("details")];
+    return { title:((w.querySelector(".disp")||{}).innerText||"").slice(0,40), dets:dets.length,
+      open:dets.filter(d=>d.open).length,
+      seeIt: [...w.querySelectorAll("button")].some(b=>/see it in the house/i.test(b.innerText||"")) }; });
+  const shut = () => p.evaluate(()=>{ const b=[...document.querySelectorAll(".modalwrap button")]
+    .find(x=>/put it down|close/i.test(x.innerText||"")); if(b) b.click(); });
 
-  if(errors.length) bad.push(`${errors.length} page errors`);
-  if(!bad.length) lines.push("every venue is drawn as itself, and no two backdrops are within the eye's floor");
-  return { pass: bad.length === 0, why: bad.slice(0,4).join("; ") || null, lines };
+  for(const [lab, wantFooter, must] of [["training square", false, /training square/i],
+                                        ["cells at night", false, /cells at night/i],
+                                        ["shrine", true, /temple/i]]){
+    if(!await tapScn(lab)){ fails.push(`no hotspot matching "${lab}"`); continue; }
+    await p.waitForTimeout(400);
+    const m = await modalState();
+    if(!m){ fails.push(`tapping "${lab}" opened nothing`); continue; }
+    lines.push(`   ${lab} -> "${m.title}" · ${m.open}/${m.dets} unfolded · footer ${m.seeIt?"shown":"hidden"}`);
+    if(!must.test(m.title)) fails.push(`tapping "${lab}" opened "${m.title}"`);
+    if(m.dets && m.open !== m.dets) fails.push(`"${lab}"'s document opened folded — ${m.open} of ${m.dets}`);
+    if(m.seeIt !== wantFooter) fails.push(`"${lab}"'s footer is ${m.seeIt?"shown":"hidden"} and should be ${wantFooter?"shown":"hidden"} — a scene document has no elsewhere; a homed one does`);
+    await shut(); await p.waitForTimeout(250);
+  }
+
+  const man = await p.evaluate(()=>{ const g=[...document.querySelectorAll(".scn")]
+    .find(x=>{ const a=x.getAttribute("aria-label")||"";
+      /* a man reads "Name the Class" with no em-dash; the yard DOOR reads "The yard \u2014 the
+         familia", which also ends " the <word>" and was picked as a man once */
+      return / the \w+$/i.test(a) && a.indexOf("\u2014") < 0 && !/villa|gate|racks|shrine|square|cells/i.test(a); });
+    if(!g) return null; g.dispatchEvent(new MouseEvent("click",{bubbles:true}));
+    return g.getAttribute("aria-label"); });
+  await p.waitForTimeout(450);
+  const card = await p.evaluate(()=>{ const w=[...document.querySelectorAll(".modalwrap")].pop();
+    return w ? ((w.querySelector(".disp")||{}).innerText||"").slice(0,30) : null; });
+  lines.push(`   a man (${man}) -> ${card || "NOTHING"}`);
+  if(!man) fails.push("no man stands in the drawn yard on a house with a living roster");
+  else if(!card || !card.split(",")[0] || !man.includes(card.split(",")[0].trim().split(" ")[0]))
+    fails.push(`tapping ${man} opened "${card}" — not his card`);
+  await shut(); await p.waitForTimeout(250);
+
+  if(await tapScn("the villa")){ await p.waitForTimeout(450);
+    /* read the shell's own data-place — the tab bar this used to read is gone (v3.92.0) */
+    const now = await p.evaluate(()=>{ const sh=document.querySelector("[data-place]"); return sh?sh.getAttribute("data-place"):"?"; });
+    lines.push(`   the villa -> ${now}`);
+    if(now!=="villa") fails.push(`tapping the villa landed on ${now}`);
+    await p.evaluate(()=>{ const b=[...document.querySelectorAll("button")]
+      .find(x=>/back to the ludus/i.test(x.getAttribute("aria-label")||"")); if(b) b.click(); });
+    await p.waitForTimeout(250);
+  }
+
+  /* ---- AND A FULL YARD, BECAUSE A TWO-MAN HOUSE CANNOT CATCH A COLLISION ----
+     The first big house to look at the scene — year 15, eight men — found the names writing over
+     each other: Boduognatas into Asmatokos into Vermina. The pinned morning carries two men and
+     could never have shown it. So: a house driven to a full yard, and every name label's real
+     BBox measured — no two labels on the same baseline may touch. */
+  await installRope(p);   /* the reload above dropped it -- the rope is per-page */
+  await forge(p, (A, R) => {
+    const d=A.newGameState("Full","clean","YARD-8",null);
+    for(let i=0;i<16;i++){ if(d.over) break; R.lanista(d); }
+    /* THE ROPE CANNOT HOLD A BIG YARD. Its measured steady state is ~4.5 men (90 paired seeds,
+       v3.82.0), so keep:8 for 40 weeks left SIX and keep:10 for 60 left FIVE -- the overflow
+       branch never rendered and the collision assert passed green over a deliberately broken
+       build, twice. So the fixture forges the yard: clone the sturdiest man up to nine, under the
+       LONG names the bug was reported with. The scene only reads name, class and fatigue, and
+       this check only reads the scene. */
+    const base = A.activeG(d)[0];
+    const names = ["Boduognatus","Diophantos","Asmatokos","Vercingetorix","Ambiorix"];
+    /* ids may be strings, so Math.max over them is NaN and every clone shares it -- suffix the
+       base id instead. And the save goes to EVERY slot: "take up the keys" resumes the ACTIVE
+       slot while a find-first write can land in another, which is exactly how this fixture
+       reported roster 5 with 2 drawn -- two different houses in one sentence. */
+    names.forEach((nm,i)=>{
+      if(d.gladiators.filter(g=>!g.dead&&!g.sold&&!g.freed&&!g.fled).length >= 9) return;
+      const c = JSON.parse(JSON.stringify(base));
+      c.id = String(base.id) + "-clone" + i; c.name = nm; c.nick = null; c.injury = null; c.fatigue = 20;
+      d.gladiators.push(c);
+    });
+    /* forge() plants into EVERY slot — the lesson this fixture learned the hard way, now the
+       helper's job rather than each caller's — and refuses to continue if it does not survive. */
+    /* and NO doctore, so the square draws its other branch — see the note over judgeFit */
+    d.doctore = null;
+    return d; });
+  await clearAll(p, 8);
+  await tab(p, "ludus"); await p.waitForTimeout(400); await clearAll(p, 6);
+  await tab(p, "ludus"); await p.waitForTimeout(300);
+  const yard = await p.evaluate(()=>{
+    const svg = document.querySelector('svg[aria-label^="The ludus"]'); if(!svg) return null;
+    /* names against names AND every yard text against every FIGURE — the first version measured
+       only name-vs-name and passed while "+5 more" sat on the sixth man's head */
+    const manGs = [...svg.querySelectorAll(".scn")].filter(g=>{ const a=g.getAttribute("aria-label")||"";
+      return / the \w+$/i.test(a) && a.indexOf("\u2014") < 0; });   /* "the armoury" ends the same way; men carry no em-dash */
+    const names = manGs.flatMap(g=>[...g.querySelectorAll("text")]);
+    const yardTexts = [...svg.querySelectorAll("text")].filter(t=>{
+      const b=t.getBBox(); return b.y>370 && b.y<480 && !t.textContent.includes("YARD"); });
+    const box = t=>{ const b=t.getBBox(); return { t:(t.textContent||""), x:b.x, w:b.width, y:b.y, h:b.height }; };
+    const boxes = names.map(box), all = yardTexts.map(box);
+    const figs = manGs.map(g=>{ const b=g.getBBox(); return { t:(g.getAttribute("aria-label")||"").split(" ")[0], x:b.x, w:b.width, y:b.y, h:b.height-16 }; });
+    const clashes = [];
+    for(let i=0;i<boxes.length;i++) for(let j=i+1;j<boxes.length;j++){
+      const a=boxes[i], b=boxes[j];
+      if(Math.abs(a.y-b.y) < 4 && a.x < b.x+b.w && b.x < a.x+a.w) clashes.push(`${a.t} / ${b.t}`);
+    }
+    for(const t of all) for(const f of figs){
+      if(names.some(n=>n.textContent===t.t && Math.abs(box(names.find(n2=>n2.textContent===t.t)).x-t.x)<1)) continue;
+      if(t.x < f.x+f.w && f.x < t.x+t.w && t.y < f.y+f.h && f.y < t.y+t.h) clashes.push(`"${t.t}" over ${f.t}'s figure`);
+    }
+    const roster = (()=>{ try { const d0 = JSON.parse(localStorage.getItem(
+        Object.keys(localStorage).find(k=>/ludus-slot-\d/.test(k))));
+      return d0.gladiators.filter(g=>!g.dead && !g.sold && !g.freed && !g.fled).length; } catch(e){ return -1; } })();
+    const moreT = all.find(t=>/more$/.test(t.t)) || null;
+    return { men: names.length, clashes, roster, more: moreT ? moreT.t : null };
+  });
+  if(!yard) fails.push("no scene on the full-yard house");
+  else {
+    lines.push(`full yard: roster ${yard.roster}, ${yard.men} drawn, more-label ${yard.more?`"${yard.more}"`:"absent"}, ${yard.clashes.length} collisions${yard.clashes.length?` : ${yard.clashes.join(", ")}`:""}`);
+    if(yard.roster <= 6) fails.push(`the fixture yard holds ${yard.roster} men \u2014 the overflow branch has no subject and this check proves nothing about collisions; drive it harder`);
+    if(yard.roster > 6 && !yard.more) fails.push(`roster ${yard.roster} but no "+N more" label rendered`);
+    for(const c of yard.clashes) fails.push(`yard names collide: ${c}`);
+  }
+
+
+  /* ---- AND THE WHOLE DRAWING, NOT JUST THE YARD ----
+     The yard's collision test above was written when the yard was the only room with more than one
+     text in it. The art pass gave the training square four palus posts and the "no doctore" line
+     went straight through two of them — a fault the SHAPE COUNT could not see (it went 3 -> 13,
+     which reads as an improvement) and the yard test does not look at. So: every text in the scene
+     against every other text, every text against every palus post, and every text inside the
+     viewBox. Geometry, from the browser's own getBBox. */
+  const readFit = () => p.evaluate(`(()=>{
+    const svg = document.querySelector('svg[aria-label^="The ludus"]'); if(!svg) return null;
+    const vb = svg.getAttribute("viewBox").split(/\\s+/).map(Number);
+    const texts = [...svg.querySelectorAll("text")].map(t=>{ const b=t.getBBox();
+      return { say:(t.textContent||"").trim().slice(0,30),
+               x1:b.x, y1:b.y, x2:b.x+b.width, y2:b.y+b.height }; });
+    const hit = (a,b)=> a.x1<b.x2 && b.x1<a.x2 && a.y1<b.y2 && b.y1<a.y2;
+    const over = [];
+    for(let i=0;i<texts.length;i++) for(let j=i+1;j<texts.length;j++)
+      if(hit(texts[i],texts[j])) over.push(texts[i].say + " >< " + texts[j].say);
+    /* the palus posts, found by their own dimensions rather than a class the drawing does not carry */
+    const posts = [...svg.querySelectorAll("rect")]
+      .filter(r=>+r.getAttribute("width")===7 && +r.getAttribute("height")===66)
+      .map(r=>({ x1:+r.getAttribute("x"), y1:+r.getAttribute("y"),
+                 x2:+r.getAttribute("x")+7, y2:+r.getAttribute("y")+66 }));
+    const onPost = [];
+    for(const t of texts) for(const q of posts)
+      if(hit(t,q)) onPost.push('"' + t.say + '" crosses the palus post at x=' + q.x1);
+    const outside = texts.filter(t=>t.y2 > vb[3] + 1 || t.y1 < -1 || t.x1 < -1 || t.x2 > vb[2] + 1)
+      .map(t=>t.say);
+    return { n:texts.length, posts:posts.length, over, onPost, outside,
+             lowest:Math.round(texts.reduce((m,t)=>Math.max(m,t.y2),0)), vbH:vb[3] };
+  })()`);
+  /* ---- AND IT HAS TO RUN ON BOTH BRANCHES OF THE SQUARE ----
+     Written as a single read on the full-yard house, this passed with the collision deliberately
+     restored: that house has a doctore, so the "no doctore — the drill only half takes" line —
+     the one that was drawn through two posts — never rendered at all. A geometry test can only
+     see the text that is on the page. The fixture above now forces `doctore = null` so this
+     house draws that branch, and the rich house below carries a doctore and draws the other. */
+  const judgeFit = (fit, whose) => {
+    if(!fit){ fails.push(`no scene to measure the drawing on (${whose})`); return; }
+    lines.push(`the whole drawing, ${whose}: ${fit.n} texts, ${fit.posts} palus posts · lowest text at ${fit.lowest} of ${fit.vbH} · ${fit.over.length} text collisions · ${fit.onPost.length} on a post · ${fit.outside.length} outside the frame`);
+    for(const c of fit.over)    fails.push(`${whose}: two labels sit on top of each other: ${c}`);
+    for(const c of fit.onPost)  fails.push(`${whose}: ${c} \u2014 the sentence is drawn through the drawing`);
+    for(const c of fit.outside) fails.push(`${whose}: "${c}" falls outside the viewBox \u2014 it is drawn and it cannot be read`);
+  };
+  judgeFit(await readFit(), "no doctore");
+
+  /* ---- EVERY ROOM MUST SAY SOMETHING ONLY THIS HOUSE KNOWS ----
+     Measured before the art pass, with the agenda Badge excluded because that is shared machinery
+     and not a room's own voice: rendering a founding beside a house of 260 weeks, five of eight
+     rooms changed their words and three did not. The villa said "THE VILLA", the shrine said "the
+     shrine", and the road said "THE ROAD — TO THE SAND", in that house and in every house — doors
+     with a name painted on them, in a drawing whose whole point is that it reports.
+
+     The trap on the other side is the FIXTURE, not the room: the first cut of this comparison set
+     neither `rise` (the census rung is stored, not derived from fame) nor `piety` (which defaults
+     to 30 in every house), and then blamed the villa and the shrine for saying the same thing
+     twice. So the second house here is deliberately different in every axis a room reads. */
+  const roomWords = () => p.evaluate(`(()=>{
+    const svg = document.querySelector('svg[aria-label^="The ludus"]'); if(!svg) return null;
+    return [...svg.querySelectorAll(":scope > g")].map(g=>({
+      lab: g.getAttribute("aria-label") || "the yard",
+      says: [...g.querySelectorAll("text")].filter(t=>!t.closest("[aria-hidden='true']"))
+              .map(t=>(t.textContent||"").trim()).filter(Boolean).join(" | ") }));
+  })()`);
+  const poor = await roomWords();
+  await forge(p, (A, R) => {
+    const d = A.newGameState("Great","clean","YARD-8",null);
+    d.gold = 90000; d.fame = 900; d.week = 260; d.unrest = 78;
+    d.rise = { rank: 3 }; d.piety = 88; d.blessing = { god:"mars", until: d.week + 3 };
+    while(d.gladiators.length < 9) d.gladiators.push(A.genGladiator(d, 70));
+    d.doctore = { name:"Oppius Naso", skill:82, wage:60, drill:"blade", pupil:null };
+    d.gear = {}; Object.keys(A.GEAR||{}).slice(0,14).forEach(k=>{ d.gear[k] = 1; });
+    d.domus = { wife:{ name:"Caecilia", family:"Metella" }, children:[], nextKin:1 };
+    /* and the BLOCK, or the gate matches by coincidence: the first run of this comparison failed
+       on the gate because both houses happened to carry four men at 221d, which is not the gate
+       being silent. A fixture that differs in every axis a room reads is the only one that can
+       tell a silent room from a lucky one. */
+    d.market = [];
+    return d; });
+  await clearAll(p, 8);
+  await tab(p, "ludus"); await p.waitForTimeout(400); await clearAll(p, 6);
+  await tab(p, "ludus"); await p.waitForTimeout(300);
+  const rich = await roomWords();
+  judgeFit(await readFit(), "with a doctore");
+  if(!poor || !rich) fails.push("could not read the scene's rooms on both houses");
+  else {
+    const mute = [];
+    for(let i=0;i<poor.length;i++){
+      const a = poor[i], b = rich[i];
+      if(b && a.says === b.says) mute.push(`${a.lab.split("\u2014")[0].trim()} ("${a.says || "no words at all"}")`);
+    }
+    lines.push(`rooms: ${poor.length} · silent in both houses: ${mute.length ? mute.join(", ") : "none"}`);
+    for(const m of mute)
+      fails.push(`${m} says the same thing for a founding as for a house of 260 weeks \u2014 it is a door with a name painted on it, not a room that reports`);
+  }
+
+  if(errors.length) fails.push(`${errors.length} page errors`);
+  return { pass: fails.length === 0, why: fails.slice(0,3).join("; ") || null, lines };
 }
