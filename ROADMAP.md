@@ -1644,6 +1644,16 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 **Shipped and verified: v3.105.0 → v3.115.0, eleven releases, 87/87 green, all on `main`.**
 The detail of each is at the foot of this file; this is what a new session needs in one place.
 
+**AND THEN THE AUDIT, at the foot of this file: ten items, #186-#195, nothing assigned.** Read that
+section before this one if you are picking work. Its short version: the five leads the last session
+left are all answered, and **the largest single finding is that `asks`'s silent list was mostly the
+probe's own** — it diffed five channels and the game speaks in eight, so four of its five silences
+were being read the whole time. Two real faults with no ambiguity in them: **the aedile's vote stops
+when the house goes to Rome** while the villa goes on printing "0 weeks to the vote" (37.5% of
+houses, longest stall 16 weeks against a designed 3), and **the arena panel clears the entrance, the
+plan and the pit opponent on one of its three exits** — not the one 55-61% of bouts take. Five new
+probes: `stock`, `fresh`, `venue`, `vote`, `sticky`.
+
 **What changed in the game.** The Doctore's Board folded its chip wall — it was **fifteen controls a
 man and 85% of them unlit**, now 157 pressable controls become 17 at ten men. Three rooms in the
 drawn ludus (villa, shrine, road) said the same words for a founding as for a house of 260 weeks and
@@ -13469,41 +13479,255 @@ Weekly loop, roster, training, fight sim with missio, market, parties, feasts, e
 - ✅ A size guard, so no function grows past the line unremarked
 - ✅ Every one of the thirty-five lessons proved answerable — window, trap, and queue
 
-## The queue, as it stands at v3.115.0
+## The v3.115.0 audit — ten items, #186–#195
 
-**Nothing is assigned.** The next session opens with an audit — ten new measured items — and these
-are the leads it should weigh, not a list to work down. Each is written with what is known and, more
-importantly, what would falsify it.
+**Nothing is assigned; these are ten measured openings, ranked by how much is known.** Every one
+carries the figure it rests on and the clause that kills it. Five new instruments were built for
+it — `stock`, `fresh`, `venue`, `vote`, `sticky` — and one existing one was found to be the fault
+it was reporting. That ratio held: **two of the ten items are about the instrument, and the single
+largest finding in this pass is that `asks`'s silent list was mostly its own.**
 
-### Open leads, ranked by how much is already known
+### #186 — `asks` was diffing five channels and the game speaks in eight. Four of its five silences were the probe's.
+The queue's first lead was `asks`'s five remaining silences. Every one of the five channels it
+diffed is the WEEK'S LIST or a MARK on a section. The game also speaks through **what it teaches**
+(`lessonFor`), through the **perk streams** a feat starts, and through the **derived numbers a
+panel prints**. With those three added the silent list goes **five to two**, and the two that
+remain are not faults:
 
-1. **`asks`'s five remaining silences.** Quantities a late house has a lot of that move nothing in
-   any of five channels: **gear on the shelf** (15 pieces), **feats earned** (7–9), **brand tier**
-   (3), **men freed**, and **law heat** — the last of which is a fact about the reference player,
-   not the game, and should be struck from the list rather than investigated. Run
-   `node test/probes/asks.mjs 6 230`. **Falsifier for any of them:** drive it with a deliberate
-   policy first, the way `heat.mjs` drove the law. Three of these have already turned out to be
-   correct behaviour; assume the next one is too until it resists.
+| quantity | was | now | who was answering |
+|---|---|---|---|
+| gear on the shelf | SILENT | 27/27 | `rackUsed` and `weeklyBill` — a 15-piece shelf is **46d of a 427d weekly bill** |
+| feats earned | SILENT | 27/27 | five perk streams (`firstblood, fivewins, order, standing, steel`) |
+| men freed | SILENT | 27/27 | `acclaimTarget` **21.9 → 33.9** on eight freed legends |
+| acclaim | 27/54 | 54/54 | `acclaim`, `merchWeekly` 0 → 81 |
+| rooms held | 17/26 | 26/26 | the figures channel |
+| household staff | 27/27 | 27/27 | and now `weeklyBill` too |
 
-2. **`purse`: a house is profitable for three years and runs at −35d/week for ever after.**
-   +59d/wk in years 1–3, −3, −16, then −35 by year 12, against a bill going 62d → 335d. It survives
-   on drawdown and windfalls. **Nobody has decided whether this is a fault.** It may be the intended
-   shape of a house always one bad card from the creditors. **Falsifier:** if median lifespan and
-   ending mix are healthy across policies, the slope is drama rather than decay.
+**And two of those were perturbation faults, not channel faults.** "Gear on the shelf" emptied
+`d.gearCond` — the armoury's pool of CONDITIONS for unworn pieces — while every reader that counts
+the rack (`rackUsed`, `rackOver`, `gearFree`, the upkeep, the strain) reads `d.gear`, which the
+perturbation left alone: the probe emptied a side-table and reported the rack silent. "Men freed"
+pushed eight records into `d.freed` **as though it were an object**, with no `wins` on any of them,
+and its one live reader is `acclaimTerms` counting `(d.freed||[]).filter(f=>(f.wins||0)>=10)` — so
+the reader counted nought legends and the game was reported silent about a thing it reads.
+**A perturbation has to be legal in the reader's terms, not just in JavaScript's.**
+What is left: **law heat**, which is a fact about the reference player (`heat.mjs` drives it), and
+**brand tier**, which is a LATCH — `acclaimWeek` compares `acclaimIdx(d)` to `d.brand.tier` only to
+decide whether a rise has just happened and the tier's `once` line should be chronicled. Nothing
+reads it as a quantity and nothing should. *The item is the fix already made to the probe plus the
+question of whether the eight channels are now enough; falsifies if a ninth register turns up under
+the two survivors.* `asks.mjs` changed; no game change.
 
-3. **The "named every week, never urgent" state.** `silent.mjs` shows the **bay** named on 100% of
-   its 1,100 live weeks and never once urgent; the **master's bench** 100% of 600; the **household**
-   35%. That is a third state between silent and speaking — permanent furniture — and nothing
-   measures it. The crown row (v3.111.0) was deliberately built to avoid it. **Falsifier:** if
-   `agendaTop`'s freshness already ages these out of view, they are not furniture on screen.
+### #187 — the week's list has an urgency scale and 71% of it is a constant, so freshness does all the work.
+`agendaTop = list.filter(a => a.urgency >= 3 || a.age <= AG_FRESH)`, `AG_FRESH = 3`. Counted
+statically off every `add(urg, "tab", …)` in the file: **69 agenda rows, 58 with a LITERAL urgency
+(28 at 1, 21 at 2, 9 at 3) and 11 derived — every one of the eleven a two-value ternary topping out
+at 3. So 49 of 69 rows, 71%, are pinned BELOW the bar** and can only ever reach the screen by being
+new. Driven (`fresh.mjs`, 12 houses × 420 weeks, two seeds): of **15,989 / 18,483 on-screen
+readings, 71.3% and 73.4% are there because they are NEW, not because they are urgent**. The
+consequence is a third state the queue guessed at and this measures: a row raised for hundreds of
+weeks at urgency 2 is on screen for exactly three of them.
 
-4. **The art pass, second half.** `scene` now holds geometry and the two-house diff. The venue
-   backdrops (`.arena`, `.v-*`) and the fighter figures were never in scope and have never been
-   measured for the same fault: do they say anything about *this* bout?
+| row | readings | mean urgency | on screen |
+|---|---|---|---|
+| `# pieces came back off a body` | 2,440 · 2,739 | 1.00 | **1.6% · 1.8%** |
+| `Capua's master smiths will take your commissions` | 893 · 1,628 | 2.00 | 4.4% · 4.2% |
+| `House X has the bay` (pooled) | 1,593 · 1,414 | 2.00 | 4.0–8.2% |
+| `dead:20` / `dead:30` | 823 · 915 | 1.00 / 2.00 | 3.1–4.4% |
 
-5. **`sweep`'s thin sections.** It prints, without asserting, that villa · Coin & Council's
-   "THE AEDILE" is 91 characters and no buttons. Printed-not-asserted findings are where the next
-   real fault usually is.
+**This answers the queue's third lead and answers it the other way.** `silent.mjs` reads the bay
+named on **1,607 of its live weeks, 100%** — and the falsifier written beside that lead was "if
+`agendaTop`'s freshness already ages these out of view, they are not furniture on screen". It does:
+the bay is on screen for **4.0–6.8%** of the weeks it is named. It is not permanent furniture, it is
+a system the house owns that the morning list mentions for three weeks and then never again.
+*Falsifies if the mean urgency of any of these rows is not exactly its literal — it is, to two
+decimal places, in every row above, which is what proves the number was chosen once and never
+derived from the stake.*
+
+### #188 — three of the seven ambitions have no door of their own.
+`stock.mjs`, four policies × 12 houses × 420 weeks. **1,789 ambitions given; `nokill` (306),
+`nobeast` (345) and `freedom` (328) are met 0 times — 979 of 1,789, 55% of every ambition the game
+hands out — across 39,023 active man-weeks in the three arms that counted them.** `nokill` is
+BROKEN 36 times and `nobeast` 6; neither is ever kept.
+**The reason is structural, and the grep is short.** `ambitionMet` has seven call sites: `grantRudis`
+and `sagaFree` (freedom), a brother pairing (`beside`), a rematch (`revenge`), tier ≥ 2 at the Ludi
+Romani (`champion`), the nickname award (`nickname`) — and `applyRefusal(d, g, "give")`, which is
+generic. `nokill` and `nobeast` appear only at `ambitionBroken`. The ambition EVENT's own `run`
+promises, refuses or walks on; it never meets anything.
+**The policy was written before the item was filed.** An arm that answers the refusal event with its
+third choice — "Give him the thing he wants" — took it on **60 of 90 and 55 of 79 offers** and met
+`nokill` **11 and 8**, `nobeast` **8 and 16**, `freedom` **8 and 8**. So the door exists; it is one
+door, it belongs to another system, and it is the only one. *Falsifies if "never sent out sine
+missione" is meant to be a promise that is only ever broken — in which case the fault is the written
+`met` line for each of them, which no player has ever read.*
+
+### #189 — two of the seven are handed to 4% of men, because eligibility is tested the week they arrive.
+Same runs. `giveAmbition` filters the pool at man-creation: `champion` needs `potential >= 62`,
+`revenge` needs `(g.scars||[]).length > 0` — and a man off the block has no scars yet.
+
+    freedom 328 · nobeast 345 · beside 351 · nickname 341 · nokill 306   (18–20% each)
+    champion 66 (3.7%) · revenge 52 (2.9%)
+
+Five split **93.4%** and two split **6.6%**. `revenge` is never PRESSED at all in two of four runs
+(0 and 0 against 1 and 3). *Falsifies if a man's ambition is re-drawn later in life — it is not:
+`giveAmbition` has two callers, man-creation and one event that fills in men who have none.*
+
+### #190 — the rudis is a 1–2% state, and the ambition that asks for it is met once in twenty-four.
+`rudisEligible = !isAuctor(g) && g.wins >= 10 && g.pfame >= 180`, and `grantRudis` meets the
+`freedom` ambition on that plus `g.age < 30` — which matches the line the man is given, *"To hold the
+rudis before he is thirty."* Split by term over active man-weeks:
+
+| term | SA | mercy | mercyB |
+|---|---|---|---|
+| `wins >= 10` | 1.8% | 1.5% | 2.8% |
+| `pfame >= 180` | 3.8% | 3.5% | 4.1% |
+| not an auctoratus | 94.9% | 94.6% | 96.7% |
+| `age < 30` | 66.4% | 69.1% | 63.9% |
+| **all four** | **1.2%** | **0.9%** | **2.0%** |
+| distinct men | 11 | 10 | 20 |
+
+**The age clause is not what is binding — the record is.** `wins >= 10` is the term, against a
+career the steel audit measured at **three bouts at the median**. Under `free:true`, the arm that
+frees every eligible man the week he qualifies: **24 men take the rudis across 24 houses of 420
+weeks, at a median age of 24 — and exactly one of them carried the ambition asking for it.** Of
+~4,270 man-weeks spent carrying `freedom`, **1** had all four terms up. *Falsifies if a policy that
+protects one man — benching the rest, feeding him the card — gets him to ten wins reliably, in which
+case this is about the reference player spreading its bouts and not about the gate.*
+
+### #191 — one of the six injuries is 0.06% of all wounds, and two of the four engines can never deal it.
+`INJ_BY_TARGET` maps six targets to five wounds; the flank is the only target with two, and which
+one you get is `injuryFor(target, severe)`. Counted **at the bout** through all four doors, 3,317
+arrivals over two seeds:
+
+    Gashed shoulder 32.0%   Split brow 18.2%   Torn thigh 17.7%
+    Pierced side    16.8%   Mangled hand 15.2%   Cracked ribs  0.06%  (2 of 3,317)
+
+Five of the six sit where a uniform target draw predicts. **`Cracked ribs` — 3 weeks, 7 pen, its own
+name — needs the one non-severe door there is.** Driven straight, 24,000 re-runs of 1,800 pairings
+the rope actually fought: `!win && fell` (severe) fires **10,874 times, 45.3%**; `win && vA<45`
+(mild) fires **505, 2.1%**, and carries a further `R() < 0.4`. Flank inside the mild door is 91,
+against 1,870 inside the severe one — **a 51:1 split before the 0.4 roll**. `doMelee` and
+`doPairFight` pass `severe = true` with `pick(TARGETS)[0]`, so **neither can ever produce it**.
+*Falsifies if a policy that wins narrowly and often — defensive against strong men — lifts it to a
+visible share; the mild door is a WIN, so this is the one item here a tactic might move.*
+**And the first tally of this was wrong in a way worth keeping**: read weekly off `g.injury`, after
+`endWeek` has healed, the counts are biased by how long each wound lasts and `Split brow` (1 week)
+read **36 where the bout count reads 286**. A weekly sweep cannot count a one-week wound.
+
+### #192 — the aedile's vote stops when you go to Rome, and the villa goes on saying "0 weeks to the vote".
+`electionWeek(d)` opens `if(d.rome || d.over) return;`. The vote is due three weeks after the names
+go up. A house at the imperial games has no vote until it comes home, and the agenda row
+`villa:council:aedileship` stays up the whole time with its note reading
+`Math.max(0, 3 - (d.week - d.election.week))` — floored at zero. Measured over **48 houses × 420
+weeks, four seeds**: 568 elections, **23 stall (4.0%)**, **143 of ~1,842 open weeks are past the due
+date (7.8%)**, **18 of 48 houses (37.5%) see at least one**, the longest is **16 weeks against a
+designed 3**, and the row reads **"0 weeks to the vote" on all 143 of them**. `d.rome` guards five
+other things — `marketWeek`, `bayWeek`, `nameBlocked`, two events — and every one of them is Capua
+simply pausing; `nameBlocked` even says so out loud, *"You are in Rome. Capua can wait."* The
+election is the only paused system holding a clock that is already running. *Falsifies if the trip
+is short: it is not — the longest single trip is **15 weeks**, in all four seeds, to the week.*
+
+### #193 — nine venues, six backdrops, and the two that are missing are two of the three coast towns.
+The arena's backdrop is one class: `` className={`arena v-${fight.venue||"forum"} …`} ``. `VENUES`
+has nine keys; the stylesheet has **six** `.v-` rules. Missing: `forum`, `bowl`, `greek`. `forum` is
+the base — `.arena`'s own gradient IS the warm Capuan sand — so that one is by design. **`bowl` is
+Pompeii's stone amphitheatre and `greek` is the theatre at Neapolis**, and both fall through to the
+Capuan forum. Measured over 12 houses × 420 weeks, 5,445 bouts through all four doors:
+
+    pit 64.2%  ·  amphi 17.4%  ·  forum 4.8%  ·  greek 4.7%  ·  harbour 3.7%
+    bowl 1.7%  ·  field 1.7%  ·  imperial 1.6%  ·  yard 0.2%
+
+**349 bouts, 6.4%, are fought at a venue drawn as somewhere else** — and it is exactly the system
+built to be a change of scene: Puteoli has `.v-harbour`, the other two towns look like home. This is
+the second half of the art pass the queue's fourth lead asked for; the fighter figures are still
+unmeasured. *Falsifies if the two missing gradients would be indistinguishable from `.arena` anyway
+— `.v-amphi` and `.arena` already nearly are, which is a separate and smaller question.*
+
+### #194 — the arena panel has three exits and they clear different things.
+`fightOffer` at src/ludus.jsx:21646:
+
+    if(res.crux){ setHeld(…); setFight(res); setFGid(null); setStake(0); setAgainst(false); return; }
+    setS(d); setFight(res); setFGid(null); setStake(0); setAgainst(false);
+      setPitPick(null); setPlan("none"); setEntrance("none");
+
+The three per-bout choices — the pit opponent, the plan and the entrance — are cleared on the exit
+where the bout ENDS and not on the exit where it stops at the balance. The resume at :21694 clears
+nothing, and `goPick` at :26210 clears the plan and not the entrance. `tactic` is deliberately never
+cleared and reads as a standing preference; plan and entrance are written as per-bout and behave
+that way on one exit of three. **The rope reads 55–61% of bouts stopping at the balance.**
+Driven on the real screen (`sticky.mjs`, ten attempts, the other exit as the control): pressed
+"Work the mob", fought, answered the word from the box, came back and read the chip —
+**still lit on 3 of 3 bouts that stopped at the balance, cleared on 3 of 3 that ended outright.**
+The entrance costs `BREATHER_BACK` of the man's wind and pays +1 momentum, so a silently repeated
+`showman` is not purely a tax; a silently repeated PLAN is, because #170 priced a plan that reads
+the man wrong at **−7.5 points of win rate**. *Falsifies if the plan only bites when the next offer
+is also `watched` — `doFight` is handed `offer.watched ? plan : "none"` — which narrows the cost
+without touching the inconsistency.*
+
+### #195 — two men in one house can be given the same name by the crowd.
+`g.nick = pick(NICKS)` appears at sixteen sites and not one of them looks at who already holds one.
+Fourteen names. Over **120 houses (ten runs of 12 × 420)**: **567 of your men were named by the
+crowd, 89 (15.7%) took a name the house had used before, and 8 (1.4%) took one a man still on the
+books was wearing** — about one house in fifteen ends up with two living men called the Serpent.
+The nickname is also an ambition (`nickname`, 341 of 1,789 given, the second most common) and is
+worth 120 to `gladName`. *Falsifies if the duplicate is invisible on screen — `fullName` is
+`${name}, ${nick}`, so it is not, but nobody has checked whether the two men are ever on the same
+list.*
+
+### What was measured and is NOT an item
+- **#144's fix is holding.** `fresh.mjs` swept every agenda identity for the fault #144 fixed once —
+  a rotating identity under a permanent row, so the age resets before the freshness bar applies.
+  **Nothing.** 23 busy rows read max age ≤ 3, and every one has a longest run of **3 consecutive
+  weeks or less** — festivals, event titles, the aedile's three-week vote. The run-length column is
+  the discriminator and the first cut of the probe did not have it: without it, "the Ludi Romani"
+  reads as a rotating identity.
+- **`sweep`'s thin sections.** The queue's fifth lead. It prints exactly one: villa · Coin & Council,
+  "THE AEDILE", 91 characters, no buttons. It is a status readout for a sitting aedile and **its
+  numbers check out** — "one extra bout on every card" is `aedileOffers` +1, "purses a seventh
+  higher" is `aedilePurse` 1.14, "a ninth lighter" is 0.89, "he leans forward" is `aedileMissio` ±9/−8.
+  Nothing to open.
+- **`purse`'s slope is drama, not decay.** 12 houses × 420 weeks: +59d/wk in years 1–3, −2, −14, then
+  **−35d by year 12+** against a bill going 70d → 330d. But the share of UP weeks is **42 / 45 / 45 /
+  45%** — flat across every era — and peak gold held rises **10,378d → 19,580d**, with **8 of 12
+  houses alive at 420 weeks**. The late house is not losing more often, it is swinging harder. The
+  queue's falsifier is met and the item is not opened.
+- **`coverage` has not moved in forty releases.** **377 of 478** exposed functions reached by at
+  least one check, against 377 of 477 at v3.75.0. 101 never called. Worth a note only: the build
+  prints **five duplicate-key warnings** on the handle (`masterOpen`, `ACCLAIM_TIERS`,
+  `ACCLAIM_MISSIO`, `MISSIO_MID`, `gladValue`), all harmless — the same binding twice — but they are
+  five lines of noise in front of the one that will matter.
+
+### The instrument, again
+Two of the ten items above are the probe rather than the game (#186 outright, and #191's first
+tally), and three more findings died on the way: the target→injury map read `res.lastTarget` off
+what `doFight` RETURNS, a field that is not there, and printed `(none)` for every bout of a
+calibration run; the nickname clash counted men who had died two hundred weeks ago until it was
+split into "ever" and "still on the books"; and `sticky` skipped all six of its first attempts
+because the entrance chips are UPPERCASED by the stylesheet and step one of the arena wizard is
+always THE PITS, whose panel has no entrance row at all. **Every one was caught by printing the raw
+material and looking at it.** The ratio this session is roughly five instrument faults to ten items,
+which is better than the last one and is still the reason to check the probe first.
+
+## The queue, as it stands after the audit
+
+**Nothing is assigned.** The ten above are the queue. The five leads the last session left are all
+answered: #186 is lead 1 (and it was the probe), #187 is lead 3 (and the falsifier written beside it
+was met — the bay IS aged out of view, which is a different and better item), #193 is the venue half
+of lead 4, lead 2 is measured and deliberately NOT opened, and lead 5 prints one section whose
+numbers check out.
+
+**What is still unmeasured, and was in scope but not reached:**
+
+1. **The fighter figures** — the other half of lead 4. `scene` holds geometry and the two-house
+   diff; nothing has asked whether the drawn man says anything about THIS man beyond his class and
+   kit. #193 did the backdrops.
+2. **`towns known`, `men on the books`, `rivals met` and `patrons`** read UNTESTED in `asks` — no
+   arm moves them, so nothing is known either way. An untested quantity is not a silent one and
+   should not be filed as either.
+3. **The 101 functions no check calls.** Unchanged in forty releases, and the money cluster inside
+   it is the interesting shape: `gearPrice`, `rudisCost`, `canAffordRudis`, `pitPurse`, `cityPurse`,
+   `cityMissio`, `owedTotal`, `loanLender`, `canBorrow`, `lanVig`, `gladValue` — every price the
+   player is quoted, and no check asserts on one.
 
 ### Standing decisions, not work
 - **#47 — one tap to the obvious bout.** Declined; the multi-tap arena is intended.
@@ -14306,4 +14530,4 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.115.0 — the queue is open; the next session begins with an audit*
+*Last updated: v3.115.0 — the audit is done: ten items, #186-#195, none of them assigned*
