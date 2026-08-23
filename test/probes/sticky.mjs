@@ -21,6 +21,20 @@
    cleared — if it does not, the finding is that nothing ever clears it and the two exits are the
    same, which is a different item and a worse one.
 
+   ---- AND WHAT IT SHOULD SAY NOW THE FAULT IS GONE (v3.118.0) ----
+   `quiet.mjs` had to be turned round after its fix landed, because a probe written to measure a
+   fault reads as an accusation for ever unless somebody decides, at the time, what it means once
+   the number is zero. So: from v3.118.0 all five senders call `spendOrders()` before they branch,
+   and both columns below must read **0**. The paired reading, same two seeds, same bouts:
+
+       stopped at the balance, chip still lit    8 of 8   ->   0 of 8
+       ended outright, chip still lit            0 of 6   ->   0 of 6
+
+   The `crux` column is the control that makes it a measurement rather than a hope: the attempts
+   come back with the same crux/clean pattern before and after, so it is the same bouts either way.
+   Attempts that print "(row not on screen)" are the card being consumed and the week not dealing
+   another single; they are counted as neither and about a third of them do it.
+
    Usage: node test/probes/sticky.mjs [attempts] [seed]
 */
 import { serve, open, found, clearAll, click, tab, waitSaved } from "../harness.mjs";
