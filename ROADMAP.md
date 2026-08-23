@@ -13545,10 +13545,11 @@ decimal places, in every row above, which is what proves the number was chosen o
 derived from the stake.*
 
 ### #188 — three of the seven ambitions have no door of their own.
-`stock.mjs`, four policies × 12 houses × 420 weeks. **1,789 ambitions given; `nokill` (306),
-`nobeast` (345) and `freedom` (328) are met 0 times — 979 of 1,789, 55% of every ambition the game
-hands out — across 39,023 active man-weeks in the three arms that counted them.** `nokill` is
-BROKEN 36 times and `nobeast` 6; neither is ever kept.
+`stock.mjs`, four policies × 12 houses × 420 weeks. **1,789 ambitions given across four policies; `nokill`
+(306), `nobeast` (345) and `freedom` (328) are met 0 times — 979 of 1,789, 55% of every ambition the
+game hands out.** `nokill` and `nobeast` stay at 0 in every arm ever run, including 25,148 active
+man-weeks of an arm that frees every eligible man; `freedom` reaches 1 there and is the subject of
+#190. `nokill` is BROKEN 36 times and `nobeast` 6; neither is ever kept.
 **The reason is structural, and the grep is short.** `ambitionMet` has seven call sites: `grantRudis`
 and `sagaFree` (freedom), a brother pairing (`beside`), a rematch (`revenge`), tier ≥ 2 at the Ludi
 Romani (`champion`), the nickname award (`nickname`) — and `applyRefusal(d, g, "give")`, which is
@@ -13599,14 +13600,14 @@ case this is about the reference player spreading its bouts and not about the ga
 one you get is `injuryFor(target, severe)`. Counted **at the bout** through all four doors, 3,317
 arrivals over two seeds:
 
-    Gashed shoulder 32.0%   Split brow 18.2%   Torn thigh 17.7%
-    Pierced side    16.8%   Mangled hand 15.2%   Cracked ribs  0.06%  (2 of 3,317)
+    Gashed shoulder 31.8%   Split brow 18.2%   Torn thigh 17.7%
+    Pierced side    16.9%   Mangled hand 15.3%   Cracked ribs  0.06%  (2 of 3,317)
 
 Five of the six sit where a uniform target draw predicts. **`Cracked ribs` — 3 weeks, 7 pen, its own
 name — needs the one non-severe door there is.** Driven straight, 24,000 re-runs of 1,800 pairings
 the rope actually fought: `!win && fell` (severe) fires **10,874 times, 45.3%**; `win && vA<45`
 (mild) fires **505, 2.1%**, and carries a further `R() < 0.4`. Flank inside the mild door is 91,
-against 1,870 inside the severe one — **a 51:1 split before the 0.4 roll**. `doMelee` and
+against 1,870 inside the severe one — **20:1 before the 0.4 roll and 51:1 after it**. `doMelee` and
 `doPairFight` pass `severe = true` with `pick(TARGETS)[0]`, so **neither can ever produce it**.
 *Falsifies if a policy that wins narrowly and often — defensive against strong men — lifts it to a
 visible share; the mild door is a WIN, so this is the one item here a tactic might move.*
@@ -13619,7 +13620,7 @@ read **36 where the bout count reads 286**. A weekly sweep cannot count a one-we
 go up. A house at the imperial games has no vote until it comes home, and the agenda row
 `villa:council:aedileship` stays up the whole time with its note reading
 `Math.max(0, 3 - (d.week - d.election.week))` — floored at zero. Measured over **48 houses × 420
-weeks, four seeds**: 568 elections, **23 stall (4.0%)**, **143 of ~1,842 open weeks are past the due
+weeks, four seeds**: 568 elections, **23 stall (4.0%)**, **143 of 1,845 open weeks are past the due
 date (7.8%)**, **18 of 48 houses (37.5%) see at least one**, the longest is **16 weeks against a
 designed 3**, and the row reads **"0 weeks to the vote" on all 143 of them**. `d.rome` guards five
 other things — `marketWeek`, `bayWeek`, `nameBlocked`, two events — and every one of them is Capua
