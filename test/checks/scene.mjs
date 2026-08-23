@@ -148,6 +148,8 @@ export async function run({ p, errors }){
     });
     /* forge() plants into EVERY slot — the lesson this fixture learned the hard way, now the
        helper's job rather than each caller's — and refuses to continue if it does not survive. */
+    /* and NO doctore, so the square draws its other branch — see the note over judgeFit */
+    d.doctore = null;
     return d; });
   await clearAll(p, 8);
   await tab(p, "ludus"); await p.waitForTimeout(400); await clearAll(p, 6);
@@ -185,6 +187,102 @@ export async function run({ p, errors }){
     if(yard.roster <= 6) fails.push(`the fixture yard holds ${yard.roster} men \u2014 the overflow branch has no subject and this check proves nothing about collisions; drive it harder`);
     if(yard.roster > 6 && !yard.more) fails.push(`roster ${yard.roster} but no "+N more" label rendered`);
     for(const c of yard.clashes) fails.push(`yard names collide: ${c}`);
+  }
+
+
+  /* ---- AND THE WHOLE DRAWING, NOT JUST THE YARD ----
+     The yard's collision test above was written when the yard was the only room with more than one
+     text in it. The art pass gave the training square four palus posts and the "no doctore" line
+     went straight through two of them — a fault the SHAPE COUNT could not see (it went 3 -> 13,
+     which reads as an improvement) and the yard test does not look at. So: every text in the scene
+     against every other text, every text against every palus post, and every text inside the
+     viewBox. Geometry, from the browser's own getBBox. */
+  const readFit = () => p.evaluate(`(()=>{
+    const svg = document.querySelector('svg[aria-label^="The ludus"]'); if(!svg) return null;
+    const vb = svg.getAttribute("viewBox").split(/\\s+/).map(Number);
+    const texts = [...svg.querySelectorAll("text")].map(t=>{ const b=t.getBBox();
+      return { say:(t.textContent||"").trim().slice(0,30),
+               x1:b.x, y1:b.y, x2:b.x+b.width, y2:b.y+b.height }; });
+    const hit = (a,b)=> a.x1<b.x2 && b.x1<a.x2 && a.y1<b.y2 && b.y1<a.y2;
+    const over = [];
+    for(let i=0;i<texts.length;i++) for(let j=i+1;j<texts.length;j++)
+      if(hit(texts[i],texts[j])) over.push(texts[i].say + " >< " + texts[j].say);
+    /* the palus posts, found by their own dimensions rather than a class the drawing does not carry */
+    const posts = [...svg.querySelectorAll("rect")]
+      .filter(r=>+r.getAttribute("width")===7 && +r.getAttribute("height")===66)
+      .map(r=>({ x1:+r.getAttribute("x"), y1:+r.getAttribute("y"),
+                 x2:+r.getAttribute("x")+7, y2:+r.getAttribute("y")+66 }));
+    const onPost = [];
+    for(const t of texts) for(const q of posts)
+      if(hit(t,q)) onPost.push('"' + t.say + '" crosses the palus post at x=' + q.x1);
+    const outside = texts.filter(t=>t.y2 > vb[3] + 1 || t.y1 < -1 || t.x1 < -1 || t.x2 > vb[2] + 1)
+      .map(t=>t.say);
+    return { n:texts.length, posts:posts.length, over, onPost, outside,
+             lowest:Math.round(texts.reduce((m,t)=>Math.max(m,t.y2),0)), vbH:vb[3] };
+  })()`);
+  /* ---- AND IT HAS TO RUN ON BOTH BRANCHES OF THE SQUARE ----
+     Written as a single read on the full-yard house, this passed with the collision deliberately
+     restored: that house has a doctore, so the "no doctore — the drill only half takes" line —
+     the one that was drawn through two posts — never rendered at all. A geometry test can only
+     see the text that is on the page. The fixture above now forces `doctore = null` so this
+     house draws that branch, and the rich house below carries a doctore and draws the other. */
+  const judgeFit = (fit, whose) => {
+    if(!fit){ fails.push(`no scene to measure the drawing on (${whose})`); return; }
+    lines.push(`the whole drawing, ${whose}: ${fit.n} texts, ${fit.posts} palus posts · lowest text at ${fit.lowest} of ${fit.vbH} · ${fit.over.length} text collisions · ${fit.onPost.length} on a post · ${fit.outside.length} outside the frame`);
+    for(const c of fit.over)    fails.push(`${whose}: two labels sit on top of each other: ${c}`);
+    for(const c of fit.onPost)  fails.push(`${whose}: ${c} \u2014 the sentence is drawn through the drawing`);
+    for(const c of fit.outside) fails.push(`${whose}: "${c}" falls outside the viewBox \u2014 it is drawn and it cannot be read`);
+  };
+  judgeFit(await readFit(), "no doctore");
+
+  /* ---- EVERY ROOM MUST SAY SOMETHING ONLY THIS HOUSE KNOWS ----
+     Measured before the art pass, with the agenda Badge excluded because that is shared machinery
+     and not a room's own voice: rendering a founding beside a house of 260 weeks, five of eight
+     rooms changed their words and three did not. The villa said "THE VILLA", the shrine said "the
+     shrine", and the road said "THE ROAD — TO THE SAND", in that house and in every house — doors
+     with a name painted on them, in a drawing whose whole point is that it reports.
+
+     The trap on the other side is the FIXTURE, not the room: the first cut of this comparison set
+     neither `rise` (the census rung is stored, not derived from fame) nor `piety` (which defaults
+     to 30 in every house), and then blamed the villa and the shrine for saying the same thing
+     twice. So the second house here is deliberately different in every axis a room reads. */
+  const roomWords = () => p.evaluate(`(()=>{
+    const svg = document.querySelector('svg[aria-label^="The ludus"]'); if(!svg) return null;
+    return [...svg.querySelectorAll(":scope > g")].map(g=>({
+      lab: g.getAttribute("aria-label") || "the yard",
+      says: [...g.querySelectorAll("text")].filter(t=>!t.closest("[aria-hidden='true']"))
+              .map(t=>(t.textContent||"").trim()).filter(Boolean).join(" | ") }));
+  })()`);
+  const poor = await roomWords();
+  await forge(p, (A, R) => {
+    const d = A.newGameState("Great","clean","YARD-8",null);
+    d.gold = 90000; d.fame = 900; d.week = 260; d.unrest = 78;
+    d.rise = { rank: 3 }; d.piety = 88; d.blessing = { god:"mars", until: d.week + 3 };
+    while(d.gladiators.length < 9) d.gladiators.push(A.genGladiator(d, 70));
+    d.doctore = { name:"Oppius Naso", skill:82, wage:60, drill:"blade", pupil:null };
+    d.gear = {}; Object.keys(A.GEAR||{}).slice(0,14).forEach(k=>{ d.gear[k] = 1; });
+    d.domus = { wife:{ name:"Caecilia", family:"Metella" }, children:[], nextKin:1 };
+    /* and the BLOCK, or the gate matches by coincidence: the first run of this comparison failed
+       on the gate because both houses happened to carry four men at 221d, which is not the gate
+       being silent. A fixture that differs in every axis a room reads is the only one that can
+       tell a silent room from a lucky one. */
+    d.market = [];
+    return d; });
+  await clearAll(p, 8);
+  await tab(p, "ludus"); await p.waitForTimeout(400); await clearAll(p, 6);
+  await tab(p, "ludus"); await p.waitForTimeout(300);
+  const rich = await roomWords();
+  judgeFit(await readFit(), "with a doctore");
+  if(!poor || !rich) fails.push("could not read the scene's rooms on both houses");
+  else {
+    const mute = [];
+    for(let i=0;i<poor.length;i++){
+      const a = poor[i], b = rich[i];
+      if(b && a.says === b.says) mute.push(`${a.lab.split("\u2014")[0].trim()} ("${a.says || "no words at all"}")`);
+    }
+    lines.push(`rooms: ${poor.length} · silent in both houses: ${mute.length ? mute.join(", ") : "none"}`);
+    for(const m of mute)
+      fails.push(`${m} says the same thing for a founding as for a house of 260 weeks \u2014 it is a door with a name painted on it, not a room that reports`);
   }
 
   if(errors.length) fails.push(`${errors.length} page errors`);

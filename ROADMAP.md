@@ -13796,6 +13796,46 @@ rotating element, and `scroll` every room with no face.
 
 That is the ninth instrument fault against the second game fault in this stretch. The ratio holds.
 
+
+### The art pass: three rooms were doors with a name painted on them
+The drawn ludus was measured the only way that settles it — render a founding and a house of 260
+weeks (nine men, a doctore, full racks, the cells near fire) and diff each room's words, with the
+agenda Badge excluded because that is shared machinery and not a room's own voice.
+
+Five of eight rooms changed. Three did not: **the villa** said `THE VILLA`, **the shrine** said
+`the shrine`, and **the road** said `THE ROAD — TO THE SAND` — in that house and in every house.
+They were also three of the four thinnest things in the drawing: the shrine was **2 shapes**, the
+road **3**, the villa **5**, against **17** for the cells.
+
+Each now says one thing only this house knows, from the state that room is the door to — the villa
+the census rung it is climbing, the shrine the god riding with the house or the vow standing or how
+the gods find you, the road what is on the card and how many men are fit to walk it. And each is
+drawn to match: the villa a portico and roof courses (5 → 20 shapes), the shrine steps, columns, a
+pediment and an altar that burns only when something is owed or granted (2 → 7), the road flagstone
+courses, cypresses at the verges and a milestone (3 → 11). The **training square** was then the
+thinnest at 3 shapes for the largest floor in the drawing, and got a row of palus posts and a
+walked-on ground (3 → 13). The scene's viewBox went 700 → 720, all of it below the walls, because
+the road was 60px of drawing carrying two lines of text and a name in Cinzel.
+
+**Two faults the shape count could not see, and one it caused.** Giving the square four posts put
+the "no doctore — the drill only half takes" line straight through two of them — the count went
+3 → 13, which reads as an improvement. And the two-house diff found the **gate** silent on the
+branch a founding never reaches: with an empty block it rendered no label at all, falling back to a
+painted name for exactly the house that most needs telling when the next stock arrives.
+
+**And the first two runs of the comparison were the fixture's fault, not the rooms'.** The census
+rung is *stored* (`d.rise.rank`), not derived from fame, and piety defaults to 30 in every house —
+so a "great house" with 90,000d and fame 900 still read "a keeper of slaves" and "the gods find you
+lax", and the villa and the shrine were briefly convicted of a silence that was mine. A third run
+failed on the **gate** because both houses happened to carry four men at 221d. A fixture that
+differs in every axis a room reads is the only one that can tell a silent room from a lucky one.
+
+`scene` now carries both halves: every text against every other text, every text against every palus
+post, every text inside the viewBox — on **both** branches of the square, because written as one
+read on the full-yard house it passed with the collision deliberately restored (that house has a
+doctore, so the line that was drawn through the posts never rendered). And the two-house diff, which
+fails any room whose words are identical for a founding and for a house of 260 weeks.
+
 ---
 
-*Last updated: v3.105.0*
+*Last updated: v3.106.0*
