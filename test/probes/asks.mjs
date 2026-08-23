@@ -28,6 +28,28 @@
      events    which of the EVENTS table can fire at all — the game's largest content channel, and
                one no earlier version of this probe could see
 
+   ---- AND FIVE WAS STILL NOT ENOUGH: THREE MORE, AND THE SILENT LIST EMPTIED ----
+   Every one of the five channels above is the WEEK'S LIST or a MARK on a section. The game speaks
+   in at least three other registers and this probe was blind to all of them, so four of the five
+   quantities it had left on the silent list were read the whole time:
+
+     lesson    what the game would TEACH — `lessonFor(d)`. `gearCond` gates two of the twelve
+               lessons (`armory.done` and the wear lesson's `when`), so emptying the shelf changes
+               what a new house is told and the old channel set could not see it.
+     perk      which permanent perk streams are running — `FEATS[k].perk` for every `hasFeat`.
+               `d.feats` is read by `perkOn`, which is an EFFECT and not a sentence, so "feats
+               earned" read silent while running five perk streams.
+     figures   the derived numbers the panels print: acclaim and its target, the merchandising
+               weekly, the rack's strain and overcrowding, the weekly bill, the credit line, the
+               missio odds. `d.freed` feeds `acclaimTerms`' legend count; `d.brand.tier` is what
+               `acclaimWeek` chronicles when it rises. A quantity that moves a NUMBER on a panel
+               is not silent, and a set-diff of labels will never see it.
+
+   AND THE SHELF WAS THE WRONG FIELD. "gear on the shelf" emptied `d.gearCond`, which is the
+   armoury's pool of CONDITIONS for unworn pieces; every reader that counts the rack —
+   `rackUsed`, `rackOver`, `gearFree` — reads `d.gear`, which the perturbation left alone. So the
+   probe emptied a side-table and reported the rack silent. It empties both now.
+
    TWO VERDICTS CHANGED ON THE SPOT. `children` read SILENT and answers 27 of 27 through section
    liveness (`live blood`). `piety` read as speaking through labels alone and also moves the temple
    MARK. The silent list went from seven to five.
@@ -76,7 +98,7 @@ const out = await inside(p, ([H, W]) => {
                  and one no earlier version of this probe could see
   */
   const chan = d => {
-    const out = { labels:new Set(), urg:{}, marks:{}, live:{}, events:new Set() };
+    const out = { labels:new Set(), urg:{}, marks:{}, live:{}, events:new Set(), lesson:"", perks:"", fig:"" };
     try { for(const r of A.agenda(d)){ const k = norm(r.label);
       out.labels.add(k); out.urg[k] = Math.max(out.urg[k]||0, r.urgency||0); } } catch(e){}
     for(const k of Object.keys(A.SECT_MARK||{})){
@@ -88,6 +110,21 @@ const out = await inside(p, ([H, W]) => {
     for(const [k,e] of Object.entries(A.EVENTS||{})){
       let on = false; try { on = !e.when || !!e.when(d); } catch(x){}
       if(on) out.events.add(k); }
+    /* what the game would TEACH — a channel the first eight versions of this probe could not see */
+    try { const L = A.lessonFor(d); out.lesson = L ? String(L.id||L.title||"") : ""; } catch(e){ out.lesson = "?"; }
+    /* which permanent perk streams are running. `perkOn` is not on the handle; this is the same
+       set built from the two things that are, so it is the game's own answer and not a copy of it */
+    try { out.perks = (A.FEAT_KEYS||[]).filter(k=>A.hasFeat(d,k)).map(k=>(A.FEATS[k]||{}).perk||k).sort().join(","); }
+    catch(e){ out.perks = "?"; }
+    /* the derived numbers a panel prints. Each is the game's own function; a quantity that moves
+       one of these is speaking, whatever the week's list does. */
+    const num = (f, ...a) => { try { const v = f(...a); return typeof v === "number" ? Math.round(v*100)/100 : String(v); } catch(e){ return "?"; } };
+    out.fig = [
+      num(A.acclaimOf, d), num(A.acclaimTarget, d), num(A.merchWeekly, d), num(A.merchLive, d),
+      num(A.rackUsed, d), num(A.rackOver, d), num(A.rackStrain, d), num(A.rackRent, d),
+      num(A.weeklyBill, d), num(A.creditLine, d), num(A.missioOdds, d), num(A.gearUpkeep, d),
+      num(A.riseNeed, d), num(A.censusWorth, d), num(A.acclaimTier, d),
+    ].join("|");
     return out;
   };
   const diff = (a, b) => {
@@ -100,6 +137,13 @@ const out = await inside(p, ([H, W]) => {
     for(const k of Object.keys(a.live))  if(a.live[k]  !== b.live[k])  out.push(`live ${k}`);
     for(const x of a.events) if(!b.events.has(x)) out.push("event -"+x);
     for(const x of b.events) if(!a.events.has(x)) out.push("event +"+x);
+    if(a.lesson !== b.lesson) out.push(`lesson ${a.lesson||"(none)"}->${b.lesson||"(none)"}`);
+    if(a.perks !== b.perks) out.push(`perk ${a.perks||"(none)"}->${b.perks||"(none)"}`);
+    if(a.fig !== b.fig){ const A2 = a.fig.split("|"), B2 = b.fig.split("|");
+      const names = ["acclaim","acclaimTarget","merchWeekly","merchLive","rackUsed","rackOver",
+                     "rackStrain","rackRent","weeklyBill","creditLine","missioOdds","gearUpkeep",
+                     "riseNeed","censusWorth","acclaimTier"];
+      for(let i=0;i<names.length;i++) if(A2[i] !== B2[i]) out.push(`figures ${names[i]} ${A2[i]}->${B2[i]}`); }
     return out;
   };
   const kindOf = t => t.split(" ")[0];
@@ -121,8 +165,14 @@ const out = await inside(p, ([H, W]) => {
                          d=>{ d.buildings={}; }, null],
     ["men on the books", d=>(d.gladiators||[]).length,
                          null, null],
-    ["gear on the shelf",d=>Object.keys(d.gearCond||{}).length,
-                         d=>{ d.gearCond={}; }, null],
+    /* ---- THE WRONG FIELD, FOR EIGHT VERSIONS ----
+       `d.gearCond` is the armoury's pool of CONDITIONS for unworn pieces. Every reader that counts
+       the rack — rackUsed, rackOver, gearFree, the upkeep, the strain — reads `d.gear`. Emptying
+       gearCond alone empties a side-table and leaves the shelf exactly as full as it was, which is
+       how "gear on the shelf" came to read silent. The quantity is read off `rackUsed`, the game's
+       own count, and BOTH fields are cleared. */
+    ["gear on the shelf",d=>{ try { return A.rackUsed(d); } catch(e){ return Object.keys(d.gearCond||{}).length; } },
+                         d=>{ d.gearCond={}; d.gear={}; }, null],
     ["household staff",  d=>Object.keys(d.household||{}).length,
                          d=>{ d.household={}; }, null],
     ["feats earned",     d=>Object.keys(d.feats||{}).length,
@@ -141,8 +191,15 @@ const out = await inside(p, ([H, W]) => {
                          null, null],
     ["piety",            d=>d.piety||0,
                          d=>{ d.piety=0; }, d=>{ d.piety=100; }],
-    ["men freed",        d=>Object.keys(d.freed||{}).length,
-                         null, d=>{ d.freed=(d.freed||{}); for(let i=0;i<8;i++) d.freed["f"+i]={name:"Freed "+i, week:d.week-i*5}; }],
+    /* ---- AND THE HEAPED ARM HAD TO BE THE SHAPE THE READER WANTS ----
+       `d.freed` is an ARRAY of records and its one live reader is `acclaimTerms`, which counts
+       `(d.freed||[]).filter(f=>(f.wins||0)>=10)` — the legends. The first version pushed eight
+       records into it as though it were an OBJECT, with no `wins` on any of them, so the reader
+       counted nought legends and the probe reported the game silent about a thing it reads. A
+       perturbation has to be legal in the reader's terms, not just in JavaScript's. */
+    ["men freed",        d=>(Array.isArray(d.freed) ? d.freed : Object.keys(d.freed||{})).length,
+                         null, d=>{ if(!Array.isArray(d.freed)) d.freed = [];
+                           for(let i=0;i<8;i++) d.freed.push({ name:"Freed "+i, week:d.week-i*5-6, wins:12, cls:"Murmillo" }); }],
   ];
 
   const tally = Q.map(q=>({ name:q[0], moved:0, changed:0, tried:0, base:0, by:{}, examples:[] }));
@@ -199,9 +256,16 @@ for(const t of out.tally){
   for(const e of t.examples) console.log(`      ${e}`);
   if(t.moved && !t.changed) mute.push(t.name);
 }
-console.log(`\n  ${mute.length} quantities move NOTHING in any of the five channels — not a label, not an`);
-console.log(`  urgency, not a mark, not a section's liveness, and not which events can fire:`);
+console.log(`\n  ${mute.length} quantities move NOTHING in any of the EIGHT channels — not a label, not an`);
+console.log(`  urgency, not a mark, not a section's liveness, not which events can fire, not what the`);
+console.log(`  game would teach, not a perk stream, and not one of fifteen numbers a panel prints:`);
 mute.forEach(m=>console.log(`    ${m}`));
+console.log(`\n  WHAT IS LEFT, AND WHY NEITHER IS A GAME FAULT:`);
+console.log(`    law heat    a fact about the REFERENCE PLAYER, not the game — heat.mjs drives it with a`);
+console.log(`                gambit lever and an honest house is past heat 45 on 16% of a 400-week game.`);
+console.log(`    brand tier  a LATCH, not a state. \`acclaimWeek\` compares acclaimIdx(d) to d.brand.tier`);
+console.log(`                only to decide whether a rise has just happened and the tier's \`once\` line`);
+console.log(`                should be chronicled. Nothing reads it as a quantity, and nothing should.`);
 console.log(`\n  And a silence is still only as good as the POLICY that produced the house. Law heat read`);
 console.log(`  silent here until the rope was given a gambit lever — it is live, and an honest house is`);
 console.log(`  past heat 45 on 16% of a four-hundred-week game. Drive a thing before filing it dead.`);
