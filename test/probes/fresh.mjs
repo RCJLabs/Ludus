@@ -40,6 +40,13 @@ const out = await inside(p, ([H, W, SEED]) => {
   const A = window.__LVDVS, R = window.__ROPE;
   const rows = {};           /* identity -> tally */
   let weeks = 0, readings = 0, shownTotal = 0, houses = 0, emptyTop = 0;
+  /* ---- #187: A ROW THAT PRINTS A COUNTDOWN AND RANKS FLAT ----
+     `agendaTop` shows a row for being urgent (>=3) or new (age <= 3). A row whose sub-line says
+     "N weeks to decide" is telling the player it has a clock; if its urgency is a literal, the row
+     is on screen for its first three weeks and under the fold for the rest — shown while there is
+     time and hidden as the time runs out. Every row whose sub carries a "N weeks to <verb>" is
+     tallied by the weeks it says are LEFT, against whether it reached the screen. */
+  const clock = {};
   const topSize = [];
   for(let h=0; h<H; h++){
     const d = A.newGameState("Fresh","clean",SEED+"-"+h, null); houses++;
@@ -68,6 +75,13 @@ const out = await inside(p, ([H, W, SEED]) => {
         t.urgSum += (a.urgency||0);
         if((a.urgency||0) >= 3 || age <= 3){ t.shown++; shown++;
           if((a.urgency||0) >= 3) t.byUrg++; else t.byFresh++; }
+        { const m = String(a.sub||"").match(/^(\d+) weeks? to (\w+)/);
+          if(m){ const left = +m[1], key = "…to " + m[2];
+            const c = clock[key] = clock[key] || { n:0, shown:0, byLeft:{} };
+            c.n++; const on = (a.urgency||0) >= 3 || age <= 3;
+            if(on) c.shown++;
+            const b = c.byLeft[left] = c.byLeft[left] || { n:0, shown:0 };
+            b.n++; if(on) b.shown++; } }
         run[id] = (lastWeek[id] === d.week - 1) ? (run[id]||0) + 1 : 1;
         lastWeek[id] = d.week;
         if(run[id] > (t.maxRun||0)) t.maxRun = run[id];
@@ -78,7 +92,7 @@ const out = await inside(p, ([H, W, SEED]) => {
       if(!shown) emptyTop++;
     }
   }
-  return { rows, weeks, readings, shownTotal, houses, emptyTop,
+  return { rows, clock, weeks, readings, shownTotal, houses, emptyTop,
            topSize: topSize.sort((a,b)=>a-b), rope:R.say() };
 }, [H, W, SEED]);
 
@@ -109,4 +123,11 @@ console.log(`\n  (and ${transient.length} busy rows read max age <= 3 with a lon
 console.log(`\n=== PERMANENT FURNITURE — never urgent, aged out of the screen on >90% of readings`);
 if(!furniture.length) console.log("  none.");
 for(const t of furniture) console.log(`  ${t.id.slice(0,54).padEnd(54)} ${t.n} readings · shown ${pct(t.shown,t.n)}% · mean urgency ${(t.urgSum/t.n).toFixed(2)} · tabs ${Object.keys(t.tabs).join(",")}`);
+console.log(`\n=== #187: ROWS THAT PRINT A COUNTDOWN, BY THE WEEKS THEY SAY ARE LEFT`);
+for(const [k, c] of Object.entries(out.clock || {}).sort((a,b)=>b[1].n-a[1].n)){
+  console.log(`  "${k}" — ${c.n} readings, ${pct(c.shown,c.n)}% reached the screen`);
+  const ks = Object.keys(c.byLeft).map(Number).sort((a,b)=>b-a);
+  console.log(`      ${ks.map(w=>`${w}w left: ${pct(c.byLeft[w].shown,c.byLeft[w].n)}% of ${c.byLeft[w].n}`).join("  ·  ")}`);
+}
+if(!Object.keys(out.clock||{}).length) console.log("  none");
 console.log(`\n  rope: ${out.rope}`);
