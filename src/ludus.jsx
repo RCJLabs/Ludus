@@ -27555,6 +27555,12 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        at unrest 35 and never mentions walking the cells at all — see `agendaCan`. #119. */
     ELECTION_WEEK, aedileOn, aedilePurse, aedileOffers, aedileMissio,   /* #192 */
     AMBITIONS, AMB_KEYS, ambState, ambWeek, AMB_NEVER, AMB_KEPT_BOUTS, ambitionMet, ambitionBroken,   /* #188 */
+    giveAmbition,   /* #189 — the draw itself, so a probe samples the pool with the game's own filter */
+    /* and the seed either side of it: `pick` advances the global stream, so sampling the pool by
+       running the real draw would drive a DIFFERENT game from the one being measured. Save,
+       sample, restore. The first cut of `gate.mjs` did not, and every figure it printed was off a
+       perturbed sim. #189. */
+    rngGet, rngSet,
     walkReady, WALK_COOL,          /* feastCost is above, with the feast — this line had it twice */
     /* the war: its stages, its clock and what it does to the block */
     WAR, warWeek, warIdx, warStage, warMarket, warElsewhere, WAR_AWAY_AT, WAR_AWAY_ODDS,

@@ -270,6 +270,11 @@ export async function installRope(p){
        `lanista(d, opts)` plays one week and RETURNS WHAT IT DID, so a caller can assert on behaviour
        rather than intent. Every part can be switched off through `opts` for a control arm:
          cells, buy, doctore, build, rites, census, staff, school, heir, rome, bout  (all default true)
+         pupil         (name the doctore a pupil and rotate it round the active men. Default OFF and
+                        off is what every figure before v3.121.0 was measured on: the rope hired a
+                        doctore and never named one, so `doctoreWeek` returned early every week and
+                        the five `DOC_LESSONS` — including the only lift a living man's potential
+                        ever gets — were unreachable by any policy in this directory. #189.)
          gear, party                                                        (default TRUE from v3.17.0)
          contract                                                           (default TRUE from v3.20.0)
          tour          (deliberate touring — the moment a town's welcome wears, move straight to
@@ -363,6 +368,26 @@ export async function installRope(p){
         if(!(d.doctoreMarket||[]).length) fin(A.makeStaffMarket,[d]);
         const c = (d.doctoreMarket||[]).filter(x=>x.fee <= spare()*0.5).sort((a,b)=>b.fee-a.fee)[0];
         if(c && fin(A.hireDoctore,[d, c.id])) bump("doctore");
+      }
+      /* ---- #189: THE SQUARE, WHICH THIS PLAYER HIRED AND THEN NEVER USED ----
+         The rope has hired a doctore since it was written and has never once named him a pupil, so
+         `doctoreWeek` returned on its second line every week of every run in this directory and
+         `docLesson` — five written lessons, one of which is the only thing in the game that raises
+         a living man's POTENTIAL — has never fired in a measurement. That is the difference between
+         "the game cannot" and "the policy did not", and it read as the first for #189's champion
+         gate until this lever existed. Round-robin over the active men rather than a favourite:
+         the question the probe asks is what the SYSTEM can reach, and parking the square on one man
+         answers a narrower one. OPT-IN, because it changes what a long-lived house's men become. */
+      if(o.pupil === true && d.doctore && !d.doctore.retrainTo){
+        const men = A.activeG(d);
+        if(men.length){
+          const now = d.doctore.pupil;
+          const next = men[(d.week||0) % men.length];
+          if(next && next.id !== now){
+            if(now) fin(A.setPupilTo,[d, now]);          /* it toggles, so clear before naming */
+            if(fin(A.setPupilTo,[d, next.id])) bump("pupil");
+          }
+        }
       }
       /* ---- #146: HOW MANY MEN THIS PLAYER KEEPS, as a lever rather than a constant ----
          The buy gate has been a hard 5 since the rope was written, and #146 asks whether the weeks
