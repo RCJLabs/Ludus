@@ -4514,6 +4514,12 @@ block does not restock or let a contested man be bought away, the bay neither fo
 changes hands, the arch-rival cannot be named), while the bill, the training, the cells, the rivals
 and the patrons all run. It names the three now.
 
+**And `bulk` caught the fix's prose, which is the second time.** The note explaining the off-by-one
+went inside `agenda` and took it to **222 lines against its allowance of 210** — the same way a
+comment took it red once before. `agenda` is a rule list with ten lines of headroom and five named
+helpers already split out of it, so the note and the arithmetic came out as a sixth, `voteWord(d)`,
+and the row is one line again. The allowance was not raised: it only ever ratchets the wrong way.
+
 `aedile` is the 89th check — the same house driven week by week at home and at Rome, asserting the
 same integers for the call and the settle, the exact three sentences of the countdown, that
 `d.over` is still in the guard, and that the chronicle names the absence. Negative-tested four

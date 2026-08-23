@@ -21,7 +21,27 @@
    FALSIFIER, written before the run: if `d.rome` is only ever set for two weeks or fewer, the
    guard costs nothing and this is a guard doing its job. The trip is `ROME_WEEKS_PER_BOUT` x
    `ROME_BOUTS` plus travel, so the prediction is the other way, but the probe measures it rather
-   than reading it off the constants.
+   than reading it off the constants. It measured 15 weeks, in all four seeds, to the week.
+
+   ---- AND WHAT IT SHOULD SAY NOW THE FAULT IS GONE (v3.117.0) ----
+   `quiet.mjs` had to be turned round after its fix landed, because a probe written to measure a
+   fault reads as an accusation for ever unless somebody decides, at the time, what it means once
+   the number is zero. So: the guard is `d.over` alone from v3.117.0 and these are the readings a
+   HEALTHY build gives — anything else is a regression, not a finding.
+
+       weeks open PAST the three     0.0-0.2% of open weeks
+       of those, at Rome             0
+       of those, the house ended     all of them; a house that has ended holds no vote, which is
+                                     the half of the guard that stayed
+       stalls                        0-1 per 150 elections, never longer than 1 week
+       longest single trip to Rome   15 weeks, unchanged — the trip did not get shorter, the
+                                     ballot stopped waiting for it
+
+   The one number this probe CANNOT see is the one the `aedile` check found: `Math.max(0, 3 - …)`
+   read "0 weeks to the vote" on the last week of every election ever held, at home as much as at
+   Rome, because the vote lands at the end of that week. `zeroNote` below only counts weeks an
+   election ran PAST its due date, so a legitimate final week never entered it. A probe scoped to
+   an item is scoped to the item.
 */
 import { serve, open, found, clearAll, installRope, inside } from "../harness.mjs";
 
