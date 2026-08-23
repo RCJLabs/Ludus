@@ -57,6 +57,31 @@ const out = await inside(p, ([H, W, SEED, ARM, AMB, TRAITS, INJ, NICKS]) => {
   const opts = ARM ? JSON.parse(ARM) : {};
 
   const zero = ks => { const o = {}; for(const k of ks) o[k] = 0; return o; };
+  /* every pairing the rope actually fought, kept so the branch census below runs on the card
+     the game deals rather than on a week-one man against a tier-1 body */
+  const pairs = [];
+  { const orig = A.doFight;
+    A.doFight = function(dd, gid, offer, ...rest){
+      try { const g = (dd.gladiators||[]).find(x=>x.id===gid);
+        if(g && offer && offer.opp && pairs.length < 900)
+          pairs.push([JSON.parse(JSON.stringify(g)), JSON.parse(JSON.stringify(offer.opp)),
+                      rest[0] || "measured", offer.stakes || "standard"]);
+      } catch(e){}
+      return orig.call(this, dd, gid, offer, ...rest); }; }
+
+  /* ---- WHERE THE BLOW LANDED, AND WHICH DOOR THE INJURY CAME THROUGH ----
+     A count of injury NAMES cannot separate a target that never comes up from a target whose
+     injury is always overridden. `injuryFor(target, severe)` is module-scope and cannot be
+     hooked, and THE FIRST VERSION OF THIS TRIED TO READ `res.lastTarget` OFF WHAT `doFight`
+     RETURNS — a field that is not there. It printed `(none)` for every bout of a calibration
+     run, which is the only reason it was caught; a probe measuring its own fallback is the
+     commonest fault in this directory.
+     `simulateFight` IS on the handle, returns `lastTarget`, and is the function the door calls.
+     So the branch is reconstructed from the engine's own verdict, in the order `doFight` tests it:
+        !win && fell            -> injuryFor(lastTarget, TRUE)
+        win && vA<45 && R()<0.4 -> injuryFor(lastTarget, FALSE)     <- the only non-severe door
+     and `severe && flank` is the one pairing that gets overridden, to "Pierced side". */
+
   const T = {
     ambGiven: zero(AMB), ambMet: zero(AMB), ambBroken: zero(AMB), ambDespair: zero(AMB),
     ambVoiced: zero(AMB), ambPressed: zero(AMB), ambPromised: zero(AMB),
@@ -64,7 +89,7 @@ const out = await inside(p, ([H, W, SEED, ARM, AMB, TRAITS, INJ, NICKS]) => {
     inj: zero(INJ), injOther: {},
     nick: zero(NICKS), nickOther: 0,
     men: 0, oppMen: 0, houses: 0, weeks: 0, ambStates: {}, scarPart: {},
-    nickAwarded: 0, nickClash: 0,
+    nickAwarded: 0, nickClashEver: 0, nickClashLive: 0,
   };
   /* a man is counted ONCE, by id+house, whatever happens to him afterwards — a per-week
      tally would weight a long-lived man's ambition by how long he lived */
@@ -105,8 +130,13 @@ const out = await inside(p, ([H, W, SEED, ARM, AMB, TRAITS, INJ, NICKS]) => {
           /* two men in one house can be given the same name by the crowd: `pick(NICKS)` does
              not look at who already holds one. Counted, because a duplicate is a content fault
              the table cannot show. */
-          if(houseNicks.has(g.nick)) T.nickClash++; else houseNicks.add(g.nick);
-          T.nickAwarded++; }
+          T.nickAwarded++;
+          /* "already held" has two readings and only one is a fault the player can see: a name
+             held by a man who died two hundred weeks ago is not a collision in the yard. Both
+             are counted. */
+          if(houseNicks.has(g.nick)) T.nickClashEver++; else houseNicks.add(g.nick);
+          const living = (d.gladiators||[]).filter(x=>!A.isGone(x) && x.id!==g.id && x.nick===g.nick);
+          if(living.length) T.nickClashLive++; }
         for(const s of (g.scars||[])){ const part = (s && (s.part||s.where||s.target)) || (typeof s === "string" ? s : "?");
           T.scarPart[part] = (T.scarPart[part]||0)+1; }
       }
@@ -126,6 +156,27 @@ const out = await inside(p, ([H, W, SEED, ARM, AMB, TRAITS, INJ, NICKS]) => {
         : (a.voiced||0)>=2 ? "pressed" : (a.voiced||0)>=1 ? "asked" : "silent";
       T.ambStates[st] = (T.ambStates[st]||0)+1; }
   }
+  /* ---- AND THE ENGINE DRIVEN STRAIGHT, so the two doors can be counted apart ----
+     Men come out of the game's own generators rather than being identical dummies. */
+  const branch = { severeTgt:{}, mildTgt:{}, sims:0, severe:0, mildEligible:0, dead:0, neither:0 };
+  const SIMS = 12000;
+  branch.pairs = pairs.length;
+  for(let i=0;i<SIMS && pairs.length;i++){
+    const [a0, b0, tac, stakes] = pairs[i % pairs.length];
+    const a = JSON.parse(JSON.stringify(a0)), b = JSON.parse(JSON.stringify(b0));
+    a.mods = null; b.mods = null;
+    let res = null;
+    try { res = A.simulateFight(a, b, tac, stakes, {}, {}); } catch(e){ continue; }
+    if(!res) continue;
+    branch.sims++;
+    if(res.aDies){ branch.dead++; continue; }
+    const win = res.winner === "A";
+    const t = res.lastTarget || "(none)";
+    if(!win && res.fell){ branch.severe++; branch.severeTgt[t] = (branch.severeTgt[t]||0)+1; }
+    else if(win && res.vA < 45){ branch.mildEligible++; branch.mildTgt[t] = (branch.mildTgt[t]||0)+1; }
+    else branch.neither++;
+  }
+  T.branch = branch;
   return { T, rope:R.say() };
 }, [H, W, SEED, ARM, AMB, TRAITS, INJ, NICKS]);
 
@@ -152,6 +203,14 @@ row("INJURIES", T.inj);
 if(Object.keys(T.injOther).length) console.log(`  off-table injury names: ${JSON.stringify(T.injOther)}`);
 row("NICKS", T.nick);
 if(T.nickOther) console.log(`  nicks not in the table: ${T.nickOther}`);
-console.log(`  ${T.nickAwarded} of your men were named by the crowd · ${T.nickClash} of them took a name ALREADY HELD in the same house`);
+console.log(`  ${T.nickAwarded} of your men were named by the crowd · ${T.nickClashEver} took a name the house had used before · ${T.nickClashLive} took one a man STILL ON THE BOOKS was wearing`);
+const B = T.branch || {};
+console.log(`\n=== THE TWO DOORS AN INJURY COMES THROUGH — ${B.sims} re-runs of ${B.pairs} pairings the rope actually fought`);
+console.log(`  he died                                ${B.dead}`);
+console.log(`  neither door (walked off unhurt)       ${B.neither}`);
+console.log(`  !win && fell   -> severe=TRUE          ${B.severe}   ${Object.entries(B.severeTgt||{}).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k} ${v}`).join(" · ")}`);
+console.log(`  win && vA<45   -> severe=FALSE, x0.4   ${B.mildEligible}   ${Object.entries(B.mildTgt||{}).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k} ${v}`).join(" · ")}`);
+const fl = (B.mildTgt||{}).flank || 0;
+console.log(`  "Cracked ribs" needs win && vA<45 && R()<0.4 && flank: ${fl} of ${B.sims} bouts, x0.4 = ${(fl*0.4).toFixed(1)} expected per ${B.sims}`);
 console.log(`\n  scar parts: ${Object.entries(T.scarPart).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k} ${v}`).join(" · ") || "none"}`);
 console.log(`\n  rope: ${out.rope}`);
