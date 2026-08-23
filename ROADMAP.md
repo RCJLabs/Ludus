@@ -1641,6 +1641,49 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 
 ## Where the work stands — read this first
 
+**Shipped and verified: v3.105.0 → v3.115.0, eleven releases, 87/87 green, all on `main`.**
+The detail of each is at the foot of this file; this is what a new session needs in one place.
+
+**What changed in the game.** The Doctore's Board folded its chip wall — it was **fifteen controls a
+man and 85% of them unlit**, now 157 pressable controls become 17 at ten men. Three rooms in the
+drawn ludus (villa, shrine, road) said the same words for a founding as for a house of 260 weeks and
+now report what only this house knows. **The three typefaces render for the first time in the game's
+life** — the `@import` sat under a rule, so every browser dropped it and every player had been
+reading LVDVS in Liberation Serif; they are embedded now, subset to 214 codepoints. The morning list
+survives being read from (four rows in five open a paper, and putting it down used to drop the whole
+list). The crown of Capua is announced — it sat on **93 cards and the week's list named it 0 times**.
+And a house is told what its ledger of dead has come to, at twenty and at thirty, then it goes quiet.
+
+**Two real bugs.** `regimenWord` named three of eight regimens and fell through to "At the palus" for
+the other five, so a man on the hill read as being at the post. And `d.poach` kept courting men who
+had died, been sold or been freed, printing **"undefined is being talked to"** on the morning report.
+
+**What changed in the instrument, which is the more useful half.** `settle()` — `.leaf` rotates the
+page wrapper for 420ms and a rect taken in the first ~80ms is the box of a rotating element (143px
+against 390). `forge()` migration for fixtures. A **check-name guard**, after I silently overwrote
+two existing checks (`board`, `crown`) and both times the suite stayed green because the only tell
+was a total that did not move. A **gambit lever for the rope**, which had no way to break a law, so
+no measurement in this project's history had ever exercised the law system. And `purse`, `ladder`,
+`asks` and `heat` as new probes.
+
+**Read this before opening anything from `asks`'s silent list.** Three investigations in a row that
+began from a "silent" verdict found **nothing to build** — the census ladder was settled design at
+four times my scale (#154), the `banned` ending was settled design (`ends` already records it as
+live and rare), and the law was live all along. `asks` now diffs five channels rather than one and
+names which answered, which is what makes its list rankable; two verdicts flipped the moment it did.
+
+**The ratio, stated plainly, because it is the most reusable thing here.** This session found two
+game faults and made roughly a dozen of its own: a probe that measured its own fallback, a fixture
+that bundled three levers, two predicates read as their plain-English labels, a policy that
+bankrupted its houses and was reported as the game killing them, a short run read as a property of
+the system, and one full measurement taken against a build **65 versions old** after the container
+reset the tree mid-session. Every one is written where it happened. **Suspect the instrument first
+remains the single highest-yield rule in this file.**
+
+**Operational.** The container reset the working tree to an old commit **three times** during this
+session. Nothing was lost because everything had been pushed. Push before every long measurement,
+and check `dist/test.html`'s size (3,038KB at v3.115.0) whenever a number moves for no reason.
+
 **Shipped and verified:** v3.79.0 — **#185 closed: the reference player stops pressing.** Three
 releases built to this — v3.76.0 found the crux answer was a hard-coded `"press"` nobody had chosen
 and the most lethal of the three viable answers; v3.78.0 removed the last objection by measuring the
@@ -13426,7 +13469,50 @@ Weekly loop, roster, training, fight sim with missio, market, parties, feasts, e
 - ✅ A size guard, so no function grows past the line unremarked
 - ✅ Every one of the thirty-five lessons proved answerable — window, trap, and queue
 
-**The queue is clear.**
+## The queue, as it stands at v3.115.0
+
+**Nothing is assigned.** The next session opens with an audit — ten new measured items — and these
+are the leads it should weigh, not a list to work down. Each is written with what is known and, more
+importantly, what would falsify it.
+
+### Open leads, ranked by how much is already known
+
+1. **`asks`'s five remaining silences.** Quantities a late house has a lot of that move nothing in
+   any of five channels: **gear on the shelf** (15 pieces), **feats earned** (7–9), **brand tier**
+   (3), **men freed**, and **law heat** — the last of which is a fact about the reference player,
+   not the game, and should be struck from the list rather than investigated. Run
+   `node test/probes/asks.mjs 6 230`. **Falsifier for any of them:** drive it with a deliberate
+   policy first, the way `heat.mjs` drove the law. Three of these have already turned out to be
+   correct behaviour; assume the next one is too until it resists.
+
+2. **`purse`: a house is profitable for three years and runs at −35d/week for ever after.**
+   +59d/wk in years 1–3, −3, −16, then −35 by year 12, against a bill going 62d → 335d. It survives
+   on drawdown and windfalls. **Nobody has decided whether this is a fault.** It may be the intended
+   shape of a house always one bad card from the creditors. **Falsifier:** if median lifespan and
+   ending mix are healthy across policies, the slope is drama rather than decay.
+
+3. **The "named every week, never urgent" state.** `silent.mjs` shows the **bay** named on 100% of
+   its 1,100 live weeks and never once urgent; the **master's bench** 100% of 600; the **household**
+   35%. That is a third state between silent and speaking — permanent furniture — and nothing
+   measures it. The crown row (v3.111.0) was deliberately built to avoid it. **Falsifier:** if
+   `agendaTop`'s freshness already ages these out of view, they are not furniture on screen.
+
+4. **The art pass, second half.** `scene` now holds geometry and the two-house diff. The venue
+   backdrops (`.arena`, `.v-*`) and the fighter figures were never in scope and have never been
+   measured for the same fault: do they say anything about *this* bout?
+
+5. **`sweep`'s thin sections.** It prints, without asserting, that villa · Coin & Council's
+   "THE AEDILE" is 91 characters and no buttons. Printed-not-asserted findings are where the next
+   real fault usually is.
+
+### Standing decisions, not work
+- **#47 — one tap to the obvious bout.** Declined; the multi-tap arena is intended.
+- **The top of the census ladder** is meant to be a life's work (#154, five policies × 16 houses ×
+  700 weeks). Do not "fix" its price.
+- **`.hand` is 46% of the embedded font payload** for 16 elements. Acceptable, and the first thing
+  to cut if the bundle ever matters.
+
+---
 
 The v2.42.0 audit raised ten items (#78–#87) and all ten have shipped, in
 v2.43.0 through v2.51.0. Two of them half-disproved themselves on the way and
@@ -14220,4 +14306,4 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.115.0*
+*Last updated: v3.115.0 — the queue is open; the next session begins with an audit*
