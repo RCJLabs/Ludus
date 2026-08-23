@@ -51,6 +51,8 @@ const out = await inside(p, ([H, W, SEED, ARM]) => {
     /* and per man, once, so "how many men ever" is separable from "for how long" */
     everWins:0, everPfame:0, everEligible:0, everAll4:0,
     freed:0, freedAges:[], freedWins:[], wantFreedom:0, freedWanting:0, metFreedom:0,
+    everWanted:0, brokeFreedom:0, despairFreedom:0, wantFate:{}, freedOver30:0, freedWantingOver30:0,
+    wantAt:{}, wantPast30:0, menPast30:0, wantShortFame:0,
     /* the career, re-derived on this run rather than quoted */
     bouts:[], boutsDead:[], boutsAlive:[], winsAt:{}, fate:{},
     /* the protected man, if there is one */
@@ -86,14 +88,31 @@ const out = await inside(p, ([H, W, SEED, ARM]) => {
         let el = false; try { el = !!A.rudisEligible(g); } catch(e){}
         if(el){ T.t.eligible++; if(!g.__el){ g.__el = 1; T.everEligible++; } }
         if(el && u30){ T.t.all4++; if(!g.__a4){ g.__a4 = 1; T.everAll4++; } }
-        if(g.ambition && g.ambition.kind === "freedom"){
-          T.wantFreedom++;
-          if(g.ambition.met && !g.__mf){ g.__mf = 1; T.metFreedom++; }
+        /* ---- AND THE NUMBER HE ASKED FOR, WHICH NOTHING ON ANY SCREEN ANSWERS ----
+           His ask is *"asks you for a number. Not a speech and not a promise — a number. How many
+           more."* The game holds it — `10 - g.wins` — and shows it nowhere: `SECT.wants` prints the
+           line and a state, the agenda row fires only once he is ALREADY eligible, and the feat's
+           `near` counts men who have earned it rather than men approaching it. So this counts the
+           man-weeks spent carrying the question, split by how far off the answer was. */
+        if(g.ambition && g.ambition.kind === "freedom"){ T.wantFreedom++;
+          const short = Math.max(0, 10 - (g.wins||0));
+          T.wantAt[Math.min(10, short)] = (T.wantAt[Math.min(10, short)]||0)+1;
+          if((g.age||0) >= 30){ T.wantPast30++; if(!g.__p30){ g.__p30 = 1; T.menPast30++; } }
+          if((g.pfame||0) < 180) T.wantShortFame++;
         }
       }
     }
-    /* the terminal record of everyone the house ever held */
+    /* ---- THE TERMINAL RECORD OF EVERYONE THE HOUSE EVER HELD ----
+       `freedom` MET is counted HERE, over every man whatever his status, and not in the weekly
+       sweep. The first cut counted it inside the sweep's `status !== "active"` guard — and
+       `grantRudis` sets `status = "freed"` two lines before it fires `ambitionMet`, so the counter
+       was structurally incapable of ever seeing one. It printed 0 and the 0 meant nothing. */
     for(const g of (d.gladiators||[])){
+      if(g.ambition && g.ambition.kind === "freedom"){ T.everWanted++;
+        if(g.ambition.met) T.metFreedom++;
+        else if(g.ambition.broken) T.brokeFreedom++;
+        else if(g.ambition.despair) T.despairFreedom++;
+        T.wantFate[g.status] = (T.wantFate[g.status]||0)+1; }
       const n = (g.wins||0) + (g.losses||0);
       T.bouts.push(n);
       (g.status === "dead" ? T.boutsDead : T.boutsAlive).push(n);
@@ -102,7 +121,10 @@ const out = await inside(p, ([H, W, SEED, ARM]) => {
       T.winsAt[b] = (T.winsAt[b]||0)+1;
       if(g.status === "freed"){ T.freed++;
         T.freedAges.push(g.age||0); T.freedWins.push(g.wins||0);
-        if(g.ambition && g.ambition.kind === "freedom") T.freedWanting++; }
+        if((g.age||0) >= 30) T.freedOver30++;
+        if(g.ambition && g.ambition.kind === "freedom"){ T.freedWanting++;
+          /* the one term `grantRudis` adds on top of `rudisEligible`, counted where it bites */
+          if((g.age||0) >= 30) T.freedWantingOver30++; } }
     }
     /* ---- AND THE ONE MAN THE PROTECT ARM FED, followed to whatever happened to him ---- */
     if(opts.protect){
@@ -150,7 +172,17 @@ console.log(`     fates: ${Object.entries(T.fate).sort((a,b)=>b[1]-a[1]).map(([k
 
 console.log(`\n  the rudis actually taken: ${T.freed} men  (median age ${T.q.freedAge}, median ${T.q.freedWins} wins)`);
 console.log(`     of them, carrying the ambition that asks for it: ${T.freedWanting}`);
-console.log(`     man-weeks spent carrying \`freedom\`: ${T.wantFreedom} · times it was MET: ${T.metFreedom}`);
+console.log(`     freed at 30 or over (so grantRudis' extra term bit): ${T.freedOver30} of ${T.freed}`
+  + (T.freedWanting ? ` · of the ${T.freedWanting} who wanted it, ${T.freedWantingOver30} were over 30` : ""));
+console.log(`\n  the \`freedom\` ambition itself — ${T.everWanted} men ever carried it, ${T.wantFreedom} active man-weeks:`);
+console.log(`     MET ${T.metFreedom} · broken ${T.brokeFreedom} · despaired ${T.despairFreedom} · the rest still carrying it or gone with it`);
+console.log(`     what became of the men who wanted it: ${Object.entries(T.wantFate).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k} ${v}`).join(" · ")}`);
+console.log(`\n  THE NUMBER HE ASKED FOR — active man-weeks carrying \`freedom\`, by how many wins short:`);
+for(let i=10;i>=0;i--){ const n=T.wantAt[i]||0; if(!n && i!==0) continue;
+  console.log(`     ${i===10?"10+":String(i).padStart(2)} wins short ${String(n).padStart(6)}  ${pc(n,T.wantFreedom).padStart(6)}  ${"#".repeat(Math.round(n/Math.max(1,T.wantFreedom)*90))}`); }
+console.log(`     and ${T.wantPast30} of those man-weeks (${pc(T.wantPast30,T.wantFreedom)}), across ${T.menPast30} men, were spent by a man already PAST THIRTY —`);
+console.log(`     carrying "to hold the rudis before he is thirty" with the door his own line names already shut.`);
+console.log(`     ${pc(T.wantShortFame,T.wantFreedom)} of them were also short of pfame 180.`);
 
 if(T.prot.men){
   console.log(`\n  === THE FALSIFIER: ${T.prot.men} protected men, one at a time, fed the whole card ===`);
