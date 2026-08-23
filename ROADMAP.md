@@ -4510,6 +4510,9 @@ took it to **6,114 against an allowance of 6,100**, the same way a comment took 
 6,096 of 6,100 — four lines of headroom**, and the next thing added to it should come with
 something taken out.
 
+Suite green at **90/90 in 12.5 minutes**, and the red before it is in the tally where it belongs.
+`open`'s signature re-proved on the tree that ships.
+
 **`orders` is the 90th check, and it is STATIC on purpose.** The fault was not one wrong value, it
 was five functions each deciding for themselves what a finished bout puts down, so the guard is the
 shape: `spendOrders` is the only thing that may put an order down apart from the chip the player
