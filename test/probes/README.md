@@ -54,6 +54,11 @@ Run them straight:
     node test/probes/meet.mjs 24 420 SEED    # what a played house ever meets — the war, the lot, the society, the staff
     node test/probes/cohort.mjs 40 26 SEED   # #175: what survive's two readings actually count, and whether it is the same houses
     node test/probes/dues.mjs 24 420 SEED    # #173: the burial society, and the button that said "Stop the dues"
+    node test/probes/stock.mjs 12 420 SEED [mercy|{json}]  # the four hand-written tables, counted
+    node test/probes/fresh.mjs 12 420 SEED   # the week's list AGED — what never grows old, what is never shown
+    node test/probes/venue.mjs 12 420 SEED   # nine venues against six backdrop rules
+    node test/probes/vote.mjs  12 420 SEED   # the aedile's three-week clock, and the guard that stops it
+    node test/probes/sticky.mjs 10 SEED      # what the arena panel clears on which of its three exits (browser)
 
 ## HOW MANY HOUSES A FIGURE NEEDS — read this before quoting one
 
@@ -545,6 +550,41 @@ succession comes up in 5 of 90 ordinary houses and 22 of 30 solvent ones.
 twelve rows printed "he never got to 62" while ARM B beside them was reaching 62 in twenty-two houses
 of thirty. Two arms of one probe disagreeing IS the alarm. It reads the year boundary off `yearOf`
 now and prints the age each row actually ran to, so a frozen clock cannot pass as a healthy one.
+
+**`stock.mjs`** — the four hand-written tables nobody had counted: AMBITIONS (7 keys x 5 written
+lines), TRAITS (8), INJURIES (6), NICKS (14). Three of the four are not on the test handle, so the
+denominators are PARSED OFF `src/ludus.jsx` and printed — a bad regex shrinks the denominator
+visibly instead of quietly. Three faults of its own, all caught by printing the raw material:
+the target->injury map read `res.lastTarget` off what `doFight` RETURNS, a field that is not there,
+and printed `(none)` for every bout; the injury tally read `g.injury` once a week, AFTER endWeek has
+healed, so a one-week wound was invisible and `Split brow` read 36 where the bout count reads 286;
+and the nickname clash counted men who had died two hundred weeks ago until it was split into "ever"
+and "still on the books". It carries a `mercy` arm — answer the refusal event with its third choice,
+"Give him the thing he wants" — because that is the ONLY door three of the seven ambitions have, and
+"never met" is a statement about the reference player until an arm presses it.
+
+**`fresh.mjs`** — the week's list with its AGE on it. `agendaTop` shows a row because it is urgent
+(>=3) or new (age <= 3), so two faults live at the two ends of one scale: a row whose identity
+rotates under it is permanently new (that is #144, fixed once for the pit line and never swept for),
+and a row pinned below the bar is on screen for three weeks and then never again. **The run-length
+column is the discriminator and the first cut did not have it** — without it a festival, which is up
+for one week at a time, reads exactly like a rotating identity. With it: #144's fix is holding, and
+23 busy low-age rows all have runs of three weeks or less.
+
+**`venue.mjs`** — `VENUES` has nine keys and the stylesheet has six `.v-` rules; both lists are
+parsed off the file and printed, and the counts come off `offer.venue`, the field the renderer
+reads, captured on every bout through all four doors.
+
+**`vote.mjs`** — the aedile's election clock. Opened by `fresh` reading the agenda row at a longest
+run of nineteen consecutive weeks against a designed three. Its falsifier was written before the
+run: if `d.rome` is only ever set for two weeks or fewer the guard costs nothing. It is 15.
+
+**`sticky.mjs`** — which of the arena panel's per-bout choices survive which exit, driven on the
+real screen with the other exit as the control. Two instrument faults before it read anything: the
+entrance chips are UPPERCASED by the stylesheet, so a comparison against the table's own casing
+matched nothing; and step one of the arena wizard is ALWAYS "The Pits", whose panel has stakes,
+tactic and wager rows and no entrance row at all — the first version took that row every time and
+reported six attempts of "no entrance row".
 
 **`scroll.mjs`** — where the vertical pixels go, per place, as the page ARRIVES versus with every fold
 thrown open. The second is what `reach` necessarily measures and it is 40% taller than the first.
