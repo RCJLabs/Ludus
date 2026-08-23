@@ -1681,6 +1681,7 @@ const AMBITIONS = {
     despair:g=>`${g.name} has stopped mentioning the crowd. He fights the same and he no longer looks up at them afterward.` },
   champion: { line:g=>`To win at the Ludi Romani, where the whole city can see it.`,
     met:"He won at the great games, in front of everyone he was ever going to.",
+    turn:g=>`${g.name} has heard what the doctore said about him, from somebody who was standing closer. He has started asking the others what the great games are actually like.`,
     ask:g=>`${g.name} asks when the great games are. Not the local card — the Ludi Romani, where the whole city goes. He has thought about this more than you have.`,
     press:g=>`${g.name} asks again about the Ludi Romani and does not accept the answer he got last time. He does not want a purse. He wants everyone there to see it.`,
     despair:g=>`${g.name} does not ask about the great games any more. Whatever he was going to be, he has decided he will be it here.` },
@@ -1691,6 +1692,7 @@ const AMBITIONS = {
     despair:g=>`${g.name} has stopped asking to be paired with anyone. He goes out alone and he has made his peace with going out alone.` },
   revenge:  { line:g=>`To face the house that marked him.`,
     met:"He got his hands on them, and whatever he was carrying he has put down.",
+    turn:g=>`${g.name} carries a mark now that he did not walk in with. He knows whose house it came from — he was looking at the man when it happened — and he has not asked you for anything.`,
     ask:g=>`${g.name} wants a name on the card. A particular one. He touches the scar while he says it and does not notice he is doing it.`,
     press:g=>`${g.name} asks for the matching again. He has been waiting and he has stopped being polite about the waiting.`,
     despair:g=>`${g.name} does not ask for the matching any more. He still touches the scar.` },
@@ -1699,15 +1701,61 @@ const AMB_KEYS = Object.keys(AMBITIONS);
 const ambState = g => { const a = g && g.ambition; if(!a) return null;
   return a.met ? "met" : a.broken ? "broken" : a.despair ? "despair"
     : a.voiced>=2 ? "pressed" : a.voiced>=1 ? "asked" : "silent"; };
+/* ---- WHAT HE CAN WANT IS TESTED ON HIS BODY, AND HIS BODY CHANGES — #189 ----
+   Three of the seven keys are gated: `champion` on `potential >= 62`, `nickname` on not already
+   having one, `revenge` on carrying a scar. The gate ran exactly once, the week he was made — and
+   a man off the block is unscarred and unassessed, which is the one moment in his life he is least
+   likely to pass any of them. The result, over 12 houses x 420 weeks on two seeds: **`revenge` 2.7%
+   and `champion` 3.7-5.8% of every ambition given, against 14-20% each for the five ungated kinds.**
+
+   THE REVENGE GATE IS NOT SHUT, IT IS UNWATCHED. Of the men it was shut for at arrival — 76-79% of
+   everyone — **53.6 / 57.5 / 54.2 / 54.3% walk through it later**, at a median age of 24 in all four
+   arms, and **79-83% of those crossings happen while the man has still not said a word.** So the
+   game marks him, opens the door, and never looks. The line the table has written for him is
+   *"He touches the scar while he says it and does not notice he is doing it"* — and until now the
+   only men who could ever say it were the ones who arrived already marked, in somebody else's house.
+
+   THE CHAMPION GATE IS A DIFFERENT FAULT AND IS LEFT ALONE. It opens **0, 0, 0 and 4 times** in the
+   same four arms. The only thing in the file that lifts a living man's potential is
+   `DOC_LESSONS.potential`, +2 to +4, behind a named pupil — and the reference player hired a
+   doctore in 2,401 of 2,675 weeks and named a pupil in none of them, so the lesson had never fired
+   in a measurement in this project. With the square manned every week it fires 99 times in 3,444
+   house-weeks and crosses 62 four times. The hook is here because the property should hold at every
+   gate, not because this one pays: at today's numbers it is worth about one man in a hundred houses.
+
+   THE ODDS ARE NOT A NEW CONSTANT. A man drawn uniformly from his old pool is turned into a man
+   drawn uniformly from the new one by exactly this: with probability 1/|new pool| the key that just
+   opened takes it, otherwise he keeps what he has. It is the draw he would have got had the gate
+   been open the week he arrived, and nothing else. Measured against the counterfactual the probe
+   printed before any of this was written — 20/147, 13/122, 25/138, 32/193 — it lands on 1/6.
+
+   AND ONLY WHILE HE IS SILENT. `SECT.wants` shows the line from his first week, under the words
+   "He has not mentioned it. He would not." — so the player is reading his interior, not his word.
+   An interior that changes when he is cut open is the man; a stated want that changes behind the
+   card is a lie. `a.voiced` is the whole guard, and it is checked before the roll so a man who
+   cannot turn does not cost the stream a draw. */
+const ambPool = g => AMB_KEYS.filter(k=>{
+  if(k==="champion") return g.potential>=62;
+  if(k==="nickname") return !g.nick;
+  if(k==="revenge") return (g.scars||[]).length>0;
+  return true;
+});
 function giveAmbition(d, g){
-  const pool = AMB_KEYS.filter(k=>{
-    if(k==="champion") return g.potential>=62;
-    if(k==="nickname") return !g.nick;
-    if(k==="revenge") return (g.scars||[]).length>0;
-    return true;
-  });
+  const pool = ambPool(g);
   g.ambition = { kind: pick(pool.length?pool:["freedom"]), met:false, broken:false,
     voiced:0, since:0, promised:false, despair:false };
+}
+/* a gate that was shut the week he arrived has come open, and he has not spoken yet */
+function ambTurn(d, g, k){
+  const a = g && g.ambition;
+  if(!a || a.kind===k || a.voiced || a.met || a.broken || a.despair) return false;
+  const pool = ambPool(g);
+  if(!pool.includes(k) || !AMBITIONS[k].turn) return false;
+  if(R() >= 1/pool.length) return false;
+  a.kind = k;
+  a.since = d.week;          /* the new want gets its own five-week fuse before he raises it */
+  chron(d, her(AMBITIONS[k].turn(g), g));
+  return true;
 }
 /* he asked, and you answered, and now he is watching what you do */
 function ambDespair(d, g){
@@ -4505,6 +4553,7 @@ const docInjuryGuard = (d, g) => {
 /* What a week of his undivided attention can turn up. */
 const DOC_LESSONS = {
   potential: { weight:3, run:(d,doc,g)=>{ const n = ri(2,4); g.potential = clamp(g.potential+n, 20, 99);
+    ambTurn(d, g, "champion");       /* #189 — the one thing in the file that opens that gate */
     return `${doc.name} spends the week on ${g.name}'s footwork and finds something nobody had looked for. There is more in ${PR(g).him} than the block suggested.`; } },
   trait: { weight:2, run:(d,doc,g)=>{
     const pool = ["Swift Learner","Stoic","Iron Hide","Showman"].filter(t=>!g.traits.includes(t));
@@ -16903,6 +16952,7 @@ function menWeek(d, fest){
         const guard = scarGuard(d) * careGuard * (hasT(g,"Iron Hide") ? 0.55 : 1);
         if(part && R() < (sev ? 0.75 : 0.45) * guard){
           const repeat = addScar(g, part, sev);
+          ambTurn(d, g, "revenge");        /* #189 — the sand marked him, and he had not spoken yet */
           const lasted = checkLasting(d, g, part) || (sev ? graveLasting(d, g, part, care) : null);
           chron(d, repeat
             ? `${g.name} leaves the medicus' table. That ${SCAR_WORD[part]||"wound"} has been opened twice now, and it will not come back all the way.`
@@ -16918,6 +16968,7 @@ function menWeek(d, fest){
         if(R() < 0.13 * (1 - medicusGuard(d))){
           const inj = g.injury;
           addScar(g, inj.part || "flank", true);
+          ambTurn(d, g, "revenge");        /* #189 — the other door a scar comes through */
           checkLasting(d, g, inj.part || "flank");
           g.injury = { name:inj.name, weeks:inj.weeks+2, pen:inj.pen+3, part:inj.part, care:"rest" };
           g.status = "injured";
@@ -27555,7 +27606,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        at unrest 35 and never mentions walking the cells at all — see `agendaCan`. #119. */
     ELECTION_WEEK, aedileOn, aedilePurse, aedileOffers, aedileMissio,   /* #192 */
     AMBITIONS, AMB_KEYS, ambState, ambWeek, AMB_NEVER, AMB_KEPT_BOUTS, ambitionMet, ambitionBroken,   /* #188 */
-    giveAmbition,   /* #189 — the draw itself, so a probe samples the pool with the game's own filter */
+    giveAmbition, ambPool, ambTurn,   /* #189 — the draw, the filter under it, and the re-test at a gate */
     /* and the seed either side of it: `pick` advances the global stream, so sampling the pool by
        running the real draw would drive a DIFFERENT game from the one being measured. Save,
        sample, restore. The first cut of `gate.mjs` did not, and every figure it printed was off a
