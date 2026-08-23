@@ -43,6 +43,13 @@ const out = await inside(p, ([H, W, SEED]) => {
   const topSize = [];
   for(let h=0; h<H; h++){
     const d = A.newGameState("Fresh","clean",SEED+"-"+h, null); houses++;
+    /* ---- THE DISCRIMINATOR, and the first cut did not have it ----
+       "max age <= 3" alone reads a row that is genuinely up for one week at a time — a festival,
+       an event title — as though it were #144's rotating identity. What separates them is the
+       RUN: how many CONSECUTIVE weeks the identity was raised. A rotating identity cannot have a
+       run above 1 (a new key each week); a row that is up for three weeks and gone has a run of
+       three. Only a long run with a low max age is the fault. */
+    const run = {}, lastWeek = {};
     for(let w=0; w<W && !d.over; w++){
       R.lanista(d);
       let list = [];
@@ -52,7 +59,7 @@ const out = await inside(p, ([H, W, SEED]) => {
       for(const a of list){
         const id = A.agId(a);
         const t = rows[id] || (rows[id] = { id, n:0, maxAge:0, old:0, urgent:0, shown:0,
-                                            labels:{}, urgSum:0, tabs:{}, byUrg:0, byFresh:0 });
+                                            labels:{}, urgSum:0, tabs:{}, byUrg:0, byFresh:0, maxRun:0 });
         t.n++; readings++;
         const age = a.age || 0;
         if(age > t.maxAge) t.maxAge = age;
@@ -61,6 +68,9 @@ const out = await inside(p, ([H, W, SEED]) => {
         t.urgSum += (a.urgency||0);
         if((a.urgency||0) >= 3 || age <= 3){ t.shown++; shown++;
           if((a.urgency||0) >= 3) t.byUrg++; else t.byFresh++; }
+        run[id] = (lastWeek[id] === d.week - 1) ? (run[id]||0) + 1 : 1;
+        lastWeek[id] = d.week;
+        if(run[id] > (t.maxRun||0)) t.maxRun = run[id];
         t.labels[String(a.label||"")] = (t.labels[String(a.label||"")]||0)+1;
         if(a.tab) t.tabs[String(a.tab).split(":")[0]] = 1;
       }
@@ -79,21 +89,23 @@ const pct = (a,b) => b ? (a/b*100).toFixed(1) : "0.0";
 const med = out.topSize.length ? out.topSize[Math.floor(out.topSize.length/2)] : 0;
 console.log(`=== THE WEEK'S LIST, AGED — ${out.houses} houses, ${out.weeks} house-weeks, ${out.readings} row-readings`);
 console.log(`  ${out.shownTotal} of ${out.readings} readings pass agendaTop (${pct(out.shownTotal,out.readings)}%) · median ${med} rows on screen a week · ${out.emptyTop} weeks with an EMPTY top\n`);
-console.log(`  ${"identity".padEnd(50)} ${"seen".padStart(6)} ${"maxAge".padStart(7)} ${"age>3".padStart(7)} ${"urgent".padStart(7)} ${"shown".padStart(7)} labels`);
+console.log(`  ${"identity".padEnd(48)} ${"seen".padStart(6)} ${"maxAge".padStart(6)} ${"run".padStart(5)} ${"age>3".padStart(7)} ${"urgent".padStart(7)} ${"shown".padStart(7)} labels`);
 for(const t of rows){
   if(t.n < 40) continue;
   const nl = Object.keys(t.labels).length;
-  console.log(`  ${t.id.slice(0,50).padEnd(50)} ${String(t.n).padStart(6)} ${String(t.maxAge).padStart(7)} ${pct(t.old,t.n).padStart(7)} ${pct(t.urgent,t.n).padStart(7)} ${pct(t.shown,t.n).padStart(7)} ${nl}`);
+  console.log(`  ${t.id.slice(0,48).padEnd(48)} ${String(t.n).padStart(6)} ${String(t.maxAge).padStart(6)} ${String(t.maxRun).padStart(5)} ${pct(t.old,t.n).padStart(7)} ${pct(t.urgent,t.n).padStart(7)} ${pct(t.shown,t.n).padStart(7)} ${nl}`);
 }
 const U = rows.reduce((s,t)=>s+t.byUrg,0), F = rows.reduce((s,t)=>s+t.byFresh,0);
 console.log(`\n  of the ${U+F} readings on screen, ${U} are there because they are URGENT and ${F} because they are NEW (${pct(F,U+F)}%)`);
 const busy = rows.filter(t=>t.n >= 60);
-const everFresh = busy.filter(t=>t.maxAge <= 3);
+const everFresh = busy.filter(t=>t.maxAge <= 3 && t.maxRun > 4);
+const transient = busy.filter(t=>t.maxAge <= 3 && t.maxRun <= 4);
 const furniture = busy.filter(t=>t.urgent === 0 && t.old/t.n > 0.9);
 console.log(`\n=== PERMANENTLY FRESH — an identity that rotates under the row, so the freshness bar never applies`);
 if(!everFresh.length) console.log("  none of the busy rows (>=60 readings). #144's fix is holding.");
-for(const t of everFresh) console.log(`  ${t.id.slice(0,54).padEnd(54)} ${t.n} readings · max age ${t.maxAge} · shown ${pct(t.shown,t.n)}% · ${Object.keys(t.labels).length} distinct labels
+for(const t of everFresh) console.log(`  ${t.id.slice(0,54).padEnd(54)} ${t.n} readings · max age ${t.maxAge} · LONGEST RUN ${t.maxRun} consecutive weeks · shown ${pct(t.shown,t.n)}% · ${Object.keys(t.labels).length} distinct labels
       e.g. ${Object.keys(t.labels).slice(0,2).join("  |  ")}`);
+console.log(`\n  (and ${transient.length} busy rows read max age <= 3 with a longest run of ${Math.max(0,...transient.map(t=>t.maxRun))} weeks or less — genuinely transient, not a rotating identity: ${transient.slice(0,6).map(t=>t.id.slice(0,26)).join(" · ")}${transient.length>6?" …":""})`);
 console.log(`\n=== PERMANENT FURNITURE — never urgent, aged out of the screen on >90% of readings`);
 if(!furniture.length) console.log("  none.");
 for(const t of furniture) console.log(`  ${t.id.slice(0,54).padEnd(54)} ${t.n} readings · shown ${pct(t.shown,t.n)}% · mean urgency ${(t.urgSum/t.n).toFixed(2)} · tabs ${Object.keys(t.tabs).join(",")}`);
