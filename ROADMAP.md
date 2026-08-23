@@ -4510,6 +4510,9 @@ man was written `freshNick(S)` — and `S` there is the SCENARIO (`S.men`, `S.le
 not the state. It would have read `S.gladiators` as undefined, returned the full pool, and done
 nothing at all while looking exactly like the fix.
 
+Suite green at **88/88 in 10.8 minutes**, first run, nothing red. `survive` drew (4, 5) with all
+five houses still standing.
+
 
 ### v3.79.0 — #185: the reference player stops pressing, and 124 numbers move without a single bar firing
 
