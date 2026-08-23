@@ -3184,6 +3184,50 @@ const agWord = age => age <= 0 ? "new this week" : age <= AG_FRESH ? `${age} wee
    the ids to SECT's real names, because a typo does not throw — it silently travels.
    (This note sits out here because agenda sits two lines under its bulk allowance, and prose is
    documentation, not size.) */
+/* ---- THE LEDGER OF THE DEAD ----
+   #131 found that 97% of what a year-12 house reads was available in week one, and named the gap as
+   late content rather than tuning. `asks.mjs` then went looking for it causally: take a played house,
+   perturb one quantity at a time across many late weeks, and diff the week's list either side. Seven
+   quantities can be emptied or heaped without the morning list changing a word, and the largest of
+   them is the house's own body count — 54 perturbations, 54 of which moved the number, none of which
+   moved the list. `d.book.killed` is written in one place and read in one place: a row on the record
+   sheet that says "Killed by your men". By year twelve a house has killed thirty-eight men and the
+   game has never once mentioned it.
+
+   THE BANDS ARE DERIVED, NOT PICKED. Total dead in the ledger, 12 houses x 300 weeks:
+
+       year 1-3    median  5   p90 10   max 16
+       year 3-7    median 11   p90 19   max 24
+       year 7-12   median 18   p90 27   max 30
+       year 12+    median 21   p90 35   max 36
+
+   A young house's MAXIMUM is 16, so twenty is a number only a long game reaches, and thirty is p90
+   of year 7-12 and above. Those are the two bands. (The RATE goes the other way — 13.6 a hundred
+   bouts early against 9.1 late — so the thing that accumulates is the ledger, not the appetite,
+   which is why the bands are on the total.)
+
+   AND IT FADES BY ITSELF. Each band carries a stable key, so `agendaTop` ages it out after
+   AG_FRESH weeks exactly as it ages everything else: three weeks of news when the house crosses a
+   band, then quiet, then news again at the next one. A permanent row about a number that only ever
+   goes up is the fault the bay already has.
+
+   THE SUB IS A FACT, NOT A PROMISE. It prints the rate, which is derived from the same two numbers
+   on the same object. Nothing here claims editors ask for you or that families remember, because
+   nothing in the game does that yet — and a nudge that describes a mechanic which does not exist is
+   worse than saying nothing, which this file has learned twice. */
+const KILL_BANDS = [
+  { at:20, urg:1, say:n=>`${n} men have died at your men's hands` },
+  { at:30, urg:2, say:n=>`${n} dead now, and the ledger only runs one way` },
+];
+function agendaLedger(d, add){
+  const B = d.book; if(!B || !B.n) return;
+  const n = B.killed || 0;
+  const band = KILL_BANDS.filter(x=>n >= x.at).pop();
+  if(!band) return;
+  add(band.urg, "ludus::annals", band.say(n),
+    `${(n / B.n * 100).toFixed(1)} in every hundred bouts your house has fought`, `dead:${band.at}`);
+}
+
 /* ---- THE CROWN OF CAPUA, WHICH THE WEEK NEVER MENTIONED ----
    `silent` set out to find late systems with no voice. Of the nine it drove, the primacy is the
    only one silent in BOTH channels — 485 live weeks, 0 agenda lines, 0 marks. (The collegium reads
@@ -3309,7 +3353,7 @@ function agenda(d){
   if(d.election && !d.election.done) add(2, "villa:council:aedileship", "The aedileship is open", `${Math.max(0,3-(d.week-d.election.week))} weeks to the vote`);
   if(d.games && d.games.offers && d.games.offers.length && activeG(d).some(g=>canFight(g) && g.lastFought<d.week))
     add(2, "arena", d.games.festival, `${d.games.offers.length} on the card`);
-  agendaCrown(d, add);
+  agendaCrown(d, add); agendaLedger(d, add);
   { const pg = poachedMan(d); if(pg) add(2, "men", `${pg.name} is being talked to`, `House ${d.poach.house}`); }
   if(d.court) add(1, "men", `${d.court.name} of House ${d.court.house} is being talked to`, `${d.court.weeks}w — your word, their wall`);
   if(d.loan && owes(d) > d.loan.principal*2) add(2, "villa", `${loanLender(d).name} is owed ${owes(d)}d`, "and it is getting away from you");

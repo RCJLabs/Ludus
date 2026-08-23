@@ -14091,6 +14091,55 @@ card from the creditors is an open question, and it is not the ladder's question
 — 97% of what a late house reads was available in week one — is the real late-game gap, which my
 audit rediscovered rather than found.
 
+
+### D, opened: what the week never counted
+#131's finding — 97% of what a year-12 house reads was available in week one — has been the standing
+late-game gap for three sessions, and "write late content" is a blank page until you know *what
+about a great house the game is blind to*. A grep cannot answer that: a quantity can be read by a
+predicate three functions from any label.
+
+So `asks.mjs` asks causally. Take a house played into its late game; for each of eighteen quantities
+apply an empty arm and a heaped arm; diff the **set of agenda labels** either side, across many
+sampled weeks. Seven quantities can be emptied or heaped without the morning list changing a word:
+**law heat, children, gear on the shelf, feats earned, men killed by yours, brand tier, men freed.**
+
+**Three faults in that probe before it could be believed**, each of which had it lying in a
+different direction:
+
+- It read `d.feats` as an array (it is an object) and `d.killed` for a field that lives at
+  `d.book.killed` — so three quantities read as untested zeroes.
+- It perturbed each house **once, at the wall**, and reported the law silent — while `late` had
+  already shown "The house is in breach of an edict" on 14% of late weeks. A quantity that only
+  speaks under a condition reads as mute on any week the condition does not hold. It samples every
+  seventh late week now.
+- It diffed label **sets**, so a quantity that changes only a row's **urgency** read as silent —
+  and that is exactly what law heat does at src:3350, raising the breach row from 2 to 3 at heat 45.
+  Both are counted now, separately, because "adds a row" and "makes a row shout" are different kinds
+  of content.
+
+**The largest silence was the house's own body count.** 54 perturbations, all of which moved the
+number, none of which moved the list. `d.book.killed` was written in one place and read in one — a
+row on the record sheet saying "Killed by your men". By year twelve a house has killed **thirty-eight
+men** and the game had never once mentioned it.
+
+**The bands are derived.** Total dead: year 1–3 median 5, **max 16**; year 3–7 median 11; year 7–12
+median 18, p90 27; year 12+ median 21, p90 35. A young house's maximum is sixteen, so **twenty** is a
+number only a long game reaches and **thirty** is p90 of year 7–12 and above. The *rate* runs the
+other way — 13.6 a hundred bouts early against 9.1 late — so what accumulates is the ledger, not the
+appetite, and the bands are on the total.
+
+**And it fades.** Each band carries its own stable key, so `agendaTop` ages it out after AG_FRESH
+weeks like everything else. Driven over 8 houses × 300 weeks: the row stood on 263 weeks and was
+**shown on 28 — 11%**. Three weeks of news at each crossing, then quiet. The first probe of that
+reported 100% shown, because when a handle export was missing it stamped `age:0` on every row and
+measured its own fallback.
+
+**What it deliberately does not do.** The sub prints the rate and nothing else. Nothing claims that
+editors ask for you or that families remember, because nothing in the game does that yet, and a
+nudge describing a mechanic that does not exist is worse than saying nothing. The obvious next step —
+a house that kills drawing the magistrate's eye, which would also give **law heat** something to do
+— changes balance and needs its own measurement before it is written.
+
 ---
 
-*Last updated: v3.112.0*
+*Last updated: v3.113.0*
