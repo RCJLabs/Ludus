@@ -58,7 +58,16 @@ const ALLOWED = {
      and this check would have stopped meaning anything for a year. So it comes down to where the
      work actually landed, plus room to breathe — an allowance that never tightens after a split is
      an allowance that only ever ratchets the wrong way. */
-  App:            { max: 6100, why: "the whole screen minus its panels — tabs, faces, state and handlers. Was 7,200 when the thirty-two <Sect> panels were inline; they are in SECT now and this came down with them" },
+  /* ---- AND WHAT App'S FIGURE ACTUALLY COVERS, which is not what the `why` says ----
+     The sweep above measures a definition as the distance to the NEXT top-level `function|const|let`
+     at column zero. There is none after `export default function App`: the test handle is an
+     `if (…) { window.__LVDVS = { … } }` whose members are indented, so nothing terminates App and
+     its figure runs to the END OF THE FILE. Every line added to the handle — a comment, an export —
+     lands on the App component's allowance. That is three of the five reds in v3.116.0–v3.121.0 and
+     it cost each of them a cycle to rediscover. Recorded rather than fixed: raising the allowance is
+     forbidden and re-parsing is its own item with its own measurement. In the meantime a note about
+     a handle export belongs beside the thing it exports, which is above App. */
+  App:            { max: 6100, why: "the whole screen minus its panels — tabs, faces, state and handlers, PLUS everything after it including the test handle (see the note above). Was 7,200 when the thirty-two <Sect> panels were inline; they are in SECT now and this came down with them" },
   SECT:           { max: 1500, why: "a registry of thirty-two panels, not a function — length here is content, the same argument EVENTS makes. Each entry is one <Sect> lifted out of App verbatim, so the total is the markup that was already there; what changed is that a face is now a readable list of what it shows, in order, which is the whole point of the overhaul. It grows when the game gains a panel, and the headroom is a hundred lines rather than a thousand so drift still says stop" },
   Fighter:        { max: 300, why: "the man on the sand, drawn — one SVG in one function" },
   /* ---- AND THIS ONE WAS SITTING EXACTLY ON THE LIMIT ----
