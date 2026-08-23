@@ -13545,7 +13545,7 @@ decimal places, in every row above, which is what proves the number was chosen o
 derived from the stake.*
 
 ### #188 — three of the seven ambitions have no door of their own.
-`stock.mjs`, four policies × 12 houses × 420 weeks. **1,789 ambitions given across four policies; `nokill`
+`stock.mjs`, four policies × 12 houses × 420 weeks. **1,789 ambitions given; `nokill`
 (306), `nobeast` (345) and `freedom` (328) are met 0 times — 979 of 1,789, 55% of every ambition the
 game hands out.** `nokill` and `nobeast` stay at 0 in every arm ever run, including 25,148 active
 man-weeks of an arm that frees every eligible man; `freedom` reaches 1 there and is the subject of
