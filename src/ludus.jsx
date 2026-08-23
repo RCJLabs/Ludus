@@ -20922,17 +20922,248 @@ function Morning({ D, close }){
   );
 }
 
+/* ---- THE DRAWN LUDUS, ONE ROOM TO A COMPONENT ----
+   `Scene` was 198 lines against `bulk`'s 200 and the art pass took it to 264, which is the check
+   doing exactly what it is for. Its own first suggestion was "split it", and this drawing is the
+   one place in the file where that is not moving JSX around: the whole thesis of the scene is that
+   every room opens its own business, so every room is its own definition now, measured on its own,
+   and a new room costs a new name rather than another twenty lines on one function.
+
+   The four helpers the rooms shared are module scope too. `scnSay` and `scnName` are pure; the two
+   components take what they need. Nothing about the drawing changed in this split — the geometry
+   and the words are the same, which is what `scene`'s two new measurements hold it to. */
+const scnSay = (x,y,t,anchor) => <text x={x} y={y} textAnchor={anchor||"middle"} fontSize="10.5"
+  fill="#b09b7d" fontStyle="italic" fontFamily="Georgia,serif">{t}</text>;
+const scnName = (x,y,t) => <text x={x} y={y} fontSize="10" letterSpacing="3" fill="#8a6a2c"
+  fontFamily="'Cinzel',serif">{t}</text>;
+const scnWorst = list => list.reduce((m,a)=>Math.max(m,a.urgency||1), 0);
+const ScnBadge = ({x,y,list}) => !list.length ? null : (
+  <g aria-hidden="true">
+    <circle cx={x} cy={y} r="9" fill={scnWorst(list)>=3 ? "#cf5a49" : "#c99a4b"}>
+      {scnWorst(list)>=3 && <animate attributeName="opacity" values="1;.5;1" dur="1.8s" repeatCount="indefinite"/>}
+    </circle>
+    <text x={x} y={y+4} textAnchor="middle" fontSize="11" fontWeight="bold" fill="#14100c">{list.length}</text>
+  </g>);
+const ScnMan = ({x,y,g,tone,row,openMan}) => (
+  <g className="scn" role="button" tabIndex={0} aria-label={`${g.name} the ${g.cls}`}
+    onClick={()=>openMan(g.id)} onKeyDown={e=>{ if(e.key==="Enter") openMan(g.id); }}>
+    <circle cx={x} cy={y} r="7" fill="#241c12" stroke={g.injury?"#a8705f":tone} strokeWidth="1.3"/>
+    <path d={`M${x} ${y+8} q-9 3 -10 27 l5 0 q1 -11 5 -14 q4 3 5 14 l5 0 q-1 -24 -10 -27 Z`}
+      fill="#241c12" stroke={g.injury?"#a8705f":tone} strokeWidth="1.3"/>
+    {scnSay(x, y+48+(row?14:0), g.name.slice(0,12))}
+  </g>);
+
+const ScnVilla = ({ S, at, go, houseLit }) => (<>
+{/* THE VILLA — travels; its callers are the villa-panel documents */}
+<g className="scn" role="button" tabIndex={0} aria-label="The villa — the house's own business"
+  onClick={()=>go("villa")} onKeyDown={e=>{ if(e.key==="Enter") go("villa"); }}>
+  {scnName(26, 34, "THE VILLA")}
+  <path d="M28 108 L28 62 L195 30 L362 62 L362 108 Z" fill="url(#scn-stone)" stroke="#33271a"/>
+  <path d="M20 64 L195 26 L370 64 L370 58 L195 18 L20 58 Z" fill="#2e2416" stroke="#3e2f1f"/>
+  {/* two courses down the roof, so the mass reads as tile and not as a wedge */}
+  <path d="M46 56 L195 23 L344 56" fill="none" stroke="#3e2f1f" strokeWidth="1"/>
+  <path d="M74 50 L195 23 L316 50" fill="none" stroke="#38291a" strokeWidth="1"/>
+  {/* a portico either side of the door — the villa is the one building in the ludus that is
+       not a shed, and it was drawn as one flat face */}
+  {[104,134,256,286].map(x=>(<g key={x}>
+    <rect x={x} y="72" width="7" height="34" fill="#2e2416" stroke="#3e2f1f" strokeWidth=".7"/>
+    <rect x={x-2} y="68" width="11" height="4" fill="#33271a"/>
+    <rect x={x-2} y="104" width="11" height="4" fill="#33271a"/>
+  </g>))}
+  <rect x="176" y="66" width="38" height="42" rx="3" fill="#0f0c08" stroke="#6d5426"/>
+  <rect x="66" y="72" width="24" height="24" fill={houseLit?"#39290f":"#1c1408"} stroke="#3e2f1f"/>
+  <circle cx="78" cy="84" r="13" fill="url(#scn-torch)"/>
+  {/* the far window is lit only when somebody besides you lives in the house — a wife, a
+       child still at home, or any of the household in their places */}
+  <rect x="300" y="72" width="24" height="24" fill={houseLit?"#39290f":"#141009"} stroke="#3e2f1f"/>
+  {houseLit && <circle cx="312" cy="84" r="13" fill="url(#scn-torch)"/>}
+  <ScnBadge x={224} y={72} list={at("villa")}/>
+  {scnSay(120, 124, riseRank(S).short)}
+</g>
+</>);
+
+const ScnShrine = ({ S, at, openDoc, shrineWord, shrineFire }) => (<>
+{/* THE SHRINE */}
+<g className="scn" role="button" tabIndex={0} aria-label="The shrine — the temple"
+  onClick={()=>openDoc({ label:"The Temple", sub:"the gods, and what they are owed", doc:"temple", dest:"villa:standing", tab:"villa" })}
+  onKeyDown={e=>{ if(e.key==="Enter") openDoc({ label:"The Temple", doc:"temple", dest:"villa:standing", tab:"villa" }); }}>
+  {/* two shapes before this — a pentagon and a blob — for the room that holds every god the
+       house owes. Steps, columns, a pediment, and an altar that BURNS when something is
+       actually owed or granted, which is the only part of it that is state. */}
+  <path d="M300 150 L328 130 L356 150 Z" fill="#2e2416" stroke="#3e2f1f"/>
+  <rect x="303" y="150" width="50" height="6" fill="#33271a" stroke="#3e2f1f" strokeWidth=".7"/>
+  <rect x="308" y="156" width="7" height="22" fill="#2e2416" stroke="#3e2f1f" strokeWidth=".7"/>
+  <rect x="341" y="156" width="7" height="22" fill="#2e2416" stroke="#3e2f1f" strokeWidth=".7"/>
+  {shrineFire && <circle cx="328" cy="164" r="13" fill="url(#scn-torch)"/>}
+  <ellipse cx="328" cy="166" rx="4" ry="7" fill={shrineFire?"#e0bd72":"#8a6a2c"}
+    opacity={shrineFire?".85":".45"}/>
+  <rect x="302" y="178" width="52" height="4" fill="#33271a"/>
+  <rect x="297" y="182" width="62" height="4" fill="#2e2416"/>
+  {scnSay(328, 198, shrineWord)}
+  <ScnBadge x={358} y={136} list={at("shrine")}/>
+</g>
+</>);
+
+const ScnSquare = ({ S, at, openDoc }) => (<>
+{/* THE TRAINING SQUARE — opens the square as a document */}
+<g className="scn" role="button" tabIndex={0}
+  aria-label={S.doctore ? `The training square — ${S.doctore.name} has the drill` : "The training square — no doctore"}
+  onClick={()=>openDoc({ label:"The training square", sub:S.doctore?`${S.doctore.name} · ${S.doctore.wage}d a week`:"no doctore — you run it", doc:"square", scene:true, tab:"ludus" })}
+  onKeyDown={e=>{ if(e.key==="Enter") openDoc({ label:"The training square", doc:"square", scene:true, tab:"ludus" }); }}>
+  {scnName(26, 216, "THE TRAINING SQUARE")}
+  <rect x="24" y="226" width="270" height="96" fill="#2a2013" stroke="#33271a"/>
+  {/* the largest floor in the drawing and it held ONE post — three shapes for 270x96, against
+       seventeen for the cells. A palus is a row of posts and a floor that has been walked on;
+       both are drawn now. The posts stop at y=306 so neither label can land on one. */}
+  <path d="M34 296 q52 -9 104 -2" fill="none" stroke="#332714" strokeWidth="1"/>
+  <path d="M150 302 q62 -8 132 -3" fill="none" stroke="#332714" strokeWidth="1"/>
+  <path d="M40 262 q40 -7 82 -3" fill="none" stroke="#2f2412" strokeWidth="1"/>
+  {[60,88,250,276].map(x=>(<g key={x}>
+    <rect x={x} y="240" width="7" height="66" rx="2" fill="#3a2c18" stroke="#241c12"/>
+    <rect x={x-3} y="238" width="13" height="5" rx="2" fill="#33271a"/>
+  </g>))}
+  {S.doctore && <g>
+    <circle cx="132" cy="252" r="7" fill="#241c12" stroke="#c99a4b" strokeWidth="1.3"/>
+    <path d="M132 260 q-9 3 -10 27 l5 0 q1 -11 5 -14 q4 3 5 14 l5 0 q-1 -24 -10 -27 Z" fill="#241c12" stroke="#c99a4b" strokeWidth="1.3"/>
+    <line x1="145" y1="242" x2="145" y2="290" stroke="#8a6a2c" strokeWidth="2"/>
+    {scnSay(132, 314, S.doctore.name.slice(0,12))}
+  </g>}
+  {/* this sat at y=280, straight through the palus posts the moment there was more than one
+       of them — the shape count said the square was richer and the drawing said it was a
+       sentence with two poles through it. Down to the sill, where the doctore's own name
+       goes in the other branch, and clear of everything. */}
+  {!S.doctore && scnSay(158, 316, "no doctore — the drill only half takes")}
+  <ScnBadge x={286} y={234} list={at("square")}/>
+</g>
+</>);
+
+const ScnYard = ({ S, go, openMan, men }) => (<>
+{/* THE YARD — each man is his own control, straight to his card, and the band itself is
+     the door to the familia: with the tab bar gone (v3.92.0) every place needs a room, and
+     the men's place is where the men stand. The figures sit ABOVE the band in the SVG, so a
+     tap on a man is still his card and a tap on the ground is the roster. */}
+<g>
+  {scnName(26, 356, "THE YARD")}
+  <g className="scn" role="button" tabIndex={0} aria-label="The yard — the familia"
+    onClick={()=>go("men")} onKeyDown={e=>{ if(e.key==="Enter") go("men"); }}>
+    <rect x="24" y="366" width="342" height="100" fill="#191309" stroke="#33271a"/>
+  </g>
+  {/* six slots, not seven-and-a-collision: a real house carries names like Boduognatas and
+       Diophantos, and at 46px spacing they wrote over each other — caught on the first big
+       house to look at the scene, year 15, eight men. Wider slots, and neighbouring names on
+       ALTERNATING baselines so even two long ones cannot touch. The rest are a count. */}
+  {men.slice(0,6).map((g,i)=><ScnMan key={g.id} x={54+i*56} y={382} g={g} row={i%2} openMan={openMan}
+    tone={(g.fatigue||0)>55?"#a8917d":"#e8d9b8"}/>)}
+  {/* below the name rows, not beside the sixth man — at (346,400) it sat on his head,
+       which the check missed because it only measured name against name */}
+  {men.length>6 && scnSay(340, 462, `+${men.length-6} more`)}
+  {men.length===0 && scnSay(195, 414, "nobody — the cells stand empty")}
+</g>
+</>);
+
+const ScnCells = ({ S, at, openDoc }) => (<>
+{/* THE CELLS — opens what you can do for the block */}
+<g className="scn" role="button" tabIndex={0}
+  aria-label={`The cells at night — ${unrestWord(S.unrest).toLowerCase()}`}
+  onClick={()=>openDoc({ label:"The cells at night", sub:unrestWord(S.unrest).toLowerCase(), doc:"cellsNight", scene:true, tab:"ludus" })}
+  onKeyDown={e=>{ if(e.key==="Enter") openDoc({ label:"The cells at night", doc:"cellsNight", scene:true, tab:"ludus" }); }}>
+  {scnName(26, 496, "THE CELLS")}
+  <rect x="24" y="506" width="200" height="58" fill="url(#scn-stone)" stroke="#33271a"/>
+  {[44,92,140,188].map(x=><g key={x}>
+    <rect x={x} y={518} width="26" height="20" fill="#0b0906"/>
+    <line x1={x+7} y1={518} x2={x+7} y2={538} stroke="#3e2f1f" strokeWidth="1.3"/>
+    <line x1={x+14} y1={518} x2={x+14} y2={538} stroke="#3e2f1f" strokeWidth="1.3"/>
+    <line x1={x+21} y1={518} x2={x+21} y2={538} stroke="#3e2f1f" strokeWidth="1.3"/>
+  </g>)}
+  {S.unrest >= 40 && <circle cx="120" cy="512" r="16" fill="url(#scn-torch)"/>}
+  {scnSay(124, 580, S.rebellion
+    ? ["","whispers after dark","steel is missing","the spark is lit"][S.rebellion.stage] || "the cells are turning"
+    : S.unrest>=55?"close to fire":S.unrest>=30?"restless tonight":"quiet tonight")}
+  {S.rebellion && <circle cx="212" cy="576" r="5" fill="#cf5a49">
+    <animate attributeName="opacity" values="1;.4;1" dur="1.4s" repeatCount="indefinite"/>
+  </circle>}
+  <ScnBadge x={216} y={512} list={at("cells")}/>
+</g>
+</>);
+
+const ScnRacks = ({ S, at, go }) => (<>
+{/* THE RACKS — travels to the armoury face */}
+<g className="scn" role="button" tabIndex={0} aria-label="The racks — the armoury"
+  onClick={()=>go("men:armory")} onKeyDown={e=>{ if(e.key==="Enter") go("men:armory"); }}>
+  {scnName(248, 496, "THE RACKS")}
+  <rect x="244" y="506" width="122" height="58" fill="#191309" stroke="#33271a"/>
+  <line x1="254" y1="552" x2="356" y2="552" stroke="#3a2c18" strokeWidth="4"/>
+  <g stroke="#8a6a2c" strokeWidth="1.6" fill="none">
+    <line x1="266" y1="516" x2="266" y2="550"/><line x1="288" y1="518" x2="288" y2="550"/>
+    <path d="M310 516 q5 9 0 34"/><rect x="326" y="518" width="14" height="26" rx="6"/>
+  </g>
+  {(()=>{ const u = rackUsed(S), c = rackCap(S), over = rackOver(S);
+    /* the same number the armoury reads, and what it means: full racks strain, and
+       an empty rack is worth saying out loud because house issue is not steel. */
+    return scnSay(305, 580, over ? `${u} of ${c} — past the room`
+      : u === 0 ? "bare — house issue only"
+      : `${u} of ${c} on the racks`); })()}
+  <ScnBadge x={358} y={512} list={at("racks")}/>
+</g>
+</>);
+
+const ScnGate = ({ S, go }) => (<>
+{/* THE GATE — the market and the road; the pending event stands here */}
+<g className="scn" role="button" tabIndex={0} aria-label="The gate — the block and the road out"
+  onClick={()=>go("market")} onKeyDown={e=>{ if(e.key==="Enter") go("market"); }}>
+  {scnName(26, 610, "THE GATE")}
+  <path d="M150 640 L150 604 Q195 582 240 604 L240 640 Z" fill="#0f0c08" stroke="#6d5426" strokeWidth="1.4"/>
+  <line x1="167" y1="640" x2="167" y2="598" stroke="#241c12" strokeWidth="3"/>
+  <line x1="184" y1="640" x2="184" y2="592" stroke="#241c12" strokeWidth="3"/>
+  <line x1="201" y1="640" x2="201" y2="590" stroke="#241c12" strokeWidth="3"/>
+  <line x1="218" y1="640" x2="218" y2="596" stroke="#241c12" strokeWidth="3"/>
+  {/* and the empty-block branch said NOTHING — the gate fell back to a painted name for
+       exactly the house that most needs telling when the next stock arrives. Caught by the
+       two-house diff in `scene`, on the branch the founding never reaches. */}
+  {scnSay(300, 628, (S.market||[]).length
+    ? `${S.market.length} on the block${marketFresh(S) ? " — fresh" : ""}`
+    : `nobody at the block · ${marketIn(S)}w`)}
+  {S.pendingEvent && <g>
+    <circle cx="104" cy="606" r="8" fill="#241c12" stroke="#e0bd72" strokeWidth="1.4"/>
+    <path d="M104 615 q-10 3 -11 25 l24 0 q-1 -22 -11 -25 Z" fill="#241c12" stroke="#e0bd72" strokeWidth="1.4"/>
+    <circle cx="117" cy="596" r="8" fill="#cf5a49">
+      <animate attributeName="opacity" values="1;.5;1" dur="1.8s" repeatCount="indefinite"/>
+    </circle>
+    <text x="117" y="600" textAnchor="middle" fontSize="10" fontWeight="bold" fill="#14100c">!</text>
+  </g>}
+</g>
+</>);
+
+const ScnRoad = ({ S, go, roadWord }) => (<>
+{/* THE ROAD — the arena's door */}
+<g className="scn" role="button" tabIndex={0} aria-label="The road — to the sand"
+  onClick={()=>go("arena")} onKeyDown={e=>{ if(e.key==="Enter") go("arena"); }}>
+  <path d="M150 640 L112 720 L278 720 L240 640 Z" fill="#1a1410" stroke="#241c12"/>
+  {/* the name first, in the narrow end where the road leaves the gate, then the flagstone
+       courses widening toward the viewer, then the two ruts that were already here */}
+  <text x="195" y="658" textAnchor="middle" fontSize="10" letterSpacing="3" fill="#8a6a2c"
+    fontFamily="'Cinzel',serif">THE ROAD — TO THE SAND</text>
+  <path d="M141 672 L249 672" stroke="#241c12" strokeWidth="1"/>
+  <path d="M134 688 L256 688" stroke="#221b12" strokeWidth="1"/>
+  <path d="M126 704 L264 704" stroke="#221b12" strokeWidth="1"/>
+  <line x1="177" y1="676" x2="169" y2="700" stroke="#241c12" strokeWidth="3"/>
+  <line x1="213" y1="676" x2="221" y2="700" stroke="#241c12" strokeWidth="3"/>
+  {/* cypresses at the verges — every road out of Capua had them, and the road was three
+       shapes: a wedge and two ruts. They stand OUTSIDE the carriageway at this depth. */}
+  {[[92,44],[70,32],[298,44],[320,32]].map(([x,h])=>(
+    <path key={x} d={`M${x} ${714} q-6 -${Math.round(h*0.45)} 0 -${h} q6 ${Math.round(h*0.55)} 0 ${h} Z`}
+      fill="#22200f" stroke="#312c18" strokeWidth=".7"/>))}
+  {/* the milestone, which is what a road out of a town actually carries */}
+  <rect x="272" y="694" width="8" height="20" rx="3" fill="#2e2416" stroke="#3e2f1f" strokeWidth=".8"/>
+  <line x1="274" y1="700" x2="278" y2="700" stroke="#5b471f" strokeWidth="1"/>
+  <line x1="274" y1="705" x2="278" y2="705" stroke="#5b471f" strokeWidth="1"/>
+  {scnSay(195, 713, roadWord)}
+</g>
+</>);
+
 function Scene({ S, agenda, openDoc, openMan, go }){
   const A = agenda || [];
   const at = room => A.filter(a=>a.doc && SCENE_ROOM[a.doc]===room);
-  const worst = list => list.reduce((m,a)=>Math.max(m,a.urgency||1), 0);
-  const Badge = ({x,y,list,forRoom}) => !list.length ? null : (
-    <g aria-hidden="true">
-      <circle cx={x} cy={y} r="9" fill={worst(list)>=3 ? "#cf5a49" : "#c99a4b"}>
-        {worst(list)>=3 && <animate attributeName="opacity" values="1;.5;1" dur="1.8s" repeatCount="indefinite"/>}
-      </circle>
-      <text x={x} y={y+4} textAnchor="middle" fontSize="11" fontWeight="bold" fill="#14100c">{list.length}</text>
-    </g>);
   const men = activeG(S);
 
   /* ---- THREE ROOMS THAT SAID THE SAME THING WHATEVER THE HOUSE ----
@@ -20944,7 +21175,10 @@ function Scene({ S, agenda, openDoc, openMan, go }){
 
      Each now says one thing only this house knows, taken from the state that room is the door to.
      They were also three of the four THINNEST rooms in the drawing — the shrine was 2 shapes and
-     the road 3, against 17 for the cells — so each is drawn up to match what it is. */
+     the road 3, against 17 for the cells — so each is drawn up to match what it is.
+
+     These three readouts live here, not in their rooms, because they are the only state the split
+     below does not hand a room for free. */
   const houseLit = !!(domusOf(S).wife || livingKids(S).length || HH_KEYS.some(k=>hasFolk(S,k)));
   const bless    = blessOf(S);
   const vowLeft  = S.vow ? Math.max(0, S.vow.until - S.week) : 0;
@@ -20958,19 +21192,6 @@ function Scene({ S, agenda, openDoc, openMan, go }){
     : onCard ? `${onCard} on the card · ${fitToGo} fit to go`
     : (()=>{ const f = nextFestivals(S,1)[0];
         return f ? `${f.name}, ${weeksUntil(S,f)}w off` : `${fitToGo} fit to go`; })();
-
-  const label = (x,y,t,anchor) => <text x={x} y={y} textAnchor={anchor||"middle"} fontSize="10.5"
-    fill="#b09b7d" fontStyle="italic" fontFamily="Georgia,serif">{t}</text>;
-  const room = (x,y,t) => <text x={x} y={y} fontSize="10" letterSpacing="3" fill="#8a6a2c"
-    fontFamily="'Cinzel',serif">{t}</text>;
-  const Man = ({x,y,g,tone,row}) => (
-    <g className="scn" role="button" tabIndex={0} aria-label={`${g.name} the ${g.cls}`}
-      onClick={()=>openMan(g.id)} onKeyDown={e=>{ if(e.key==="Enter") openMan(g.id); }}>
-      <circle cx={x} cy={y} r="7" fill="#241c12" stroke={g.injury?"#a8705f":tone} strokeWidth="1.3"/>
-      <path d={`M${x} ${y+8} q-9 3 -10 27 l5 0 q1 -11 5 -14 q4 3 5 14 l5 0 q-1 -24 -10 -27 Z`}
-        fill="#241c12" stroke={g.injury?"#a8705f":tone} strokeWidth="1.3"/>
-      {label(x, y+48+(row?14:0), g.name.slice(0,12))}
-    </g>);
 
   return (
     /* 700 -> 720: the road was 60px of drawing carrying two lines of text and a name in Cinzel,
@@ -20992,196 +21213,14 @@ function Scene({ S, agenda, openDoc, openMan, go }){
       <rect x="0" y="16" width="12" height="624" fill="url(#scn-stone)"/>
       <rect x="378" y="16" width="12" height="624" fill="url(#scn-stone)"/>
 
-      {/* THE VILLA — travels; its callers are the villa-panel documents */}
-      <g className="scn" role="button" tabIndex={0} aria-label="The villa — the house's own business"
-        onClick={()=>go("villa")} onKeyDown={e=>{ if(e.key==="Enter") go("villa"); }}>
-        {room(26, 34, "THE VILLA")}
-        <path d="M28 108 L28 62 L195 30 L362 62 L362 108 Z" fill="url(#scn-stone)" stroke="#33271a"/>
-        <path d="M20 64 L195 26 L370 64 L370 58 L195 18 L20 58 Z" fill="#2e2416" stroke="#3e2f1f"/>
-        {/* two courses down the roof, so the mass reads as tile and not as a wedge */}
-        <path d="M46 56 L195 23 L344 56" fill="none" stroke="#3e2f1f" strokeWidth="1"/>
-        <path d="M74 50 L195 23 L316 50" fill="none" stroke="#38291a" strokeWidth="1"/>
-        {/* a portico either side of the door — the villa is the one building in the ludus that is
-             not a shed, and it was drawn as one flat face */}
-        {[104,134,256,286].map(x=>(<g key={x}>
-          <rect x={x} y="72" width="7" height="34" fill="#2e2416" stroke="#3e2f1f" strokeWidth=".7"/>
-          <rect x={x-2} y="68" width="11" height="4" fill="#33271a"/>
-          <rect x={x-2} y="104" width="11" height="4" fill="#33271a"/>
-        </g>))}
-        <rect x="176" y="66" width="38" height="42" rx="3" fill="#0f0c08" stroke="#6d5426"/>
-        <rect x="66" y="72" width="24" height="24" fill={houseLit?"#39290f":"#1c1408"} stroke="#3e2f1f"/>
-        <circle cx="78" cy="84" r="13" fill="url(#scn-torch)"/>
-        {/* the far window is lit only when somebody besides you lives in the house — a wife, a
-             child still at home, or any of the household in their places */}
-        <rect x="300" y="72" width="24" height="24" fill={houseLit?"#39290f":"#141009"} stroke="#3e2f1f"/>
-        {houseLit && <circle cx="312" cy="84" r="13" fill="url(#scn-torch)"/>}
-        <Badge x={224} y={72} list={at("villa")}/>
-        {label(120, 124, riseRank(S).short)}
-      </g>
-
-      {/* THE SHRINE */}
-      <g className="scn" role="button" tabIndex={0} aria-label="The shrine — the temple"
-        onClick={()=>openDoc({ label:"The Temple", sub:"the gods, and what they are owed", doc:"temple", dest:"villa:standing", tab:"villa" })}
-        onKeyDown={e=>{ if(e.key==="Enter") openDoc({ label:"The Temple", doc:"temple", dest:"villa:standing", tab:"villa" }); }}>
-        {/* two shapes before this — a pentagon and a blob — for the room that holds every god the
-             house owes. Steps, columns, a pediment, and an altar that BURNS when something is
-             actually owed or granted, which is the only part of it that is state. */}
-        <path d="M300 150 L328 130 L356 150 Z" fill="#2e2416" stroke="#3e2f1f"/>
-        <rect x="303" y="150" width="50" height="6" fill="#33271a" stroke="#3e2f1f" strokeWidth=".7"/>
-        <rect x="308" y="156" width="7" height="22" fill="#2e2416" stroke="#3e2f1f" strokeWidth=".7"/>
-        <rect x="341" y="156" width="7" height="22" fill="#2e2416" stroke="#3e2f1f" strokeWidth=".7"/>
-        {shrineFire && <circle cx="328" cy="164" r="13" fill="url(#scn-torch)"/>}
-        <ellipse cx="328" cy="166" rx="4" ry="7" fill={shrineFire?"#e0bd72":"#8a6a2c"}
-          opacity={shrineFire?".85":".45"}/>
-        <rect x="302" y="178" width="52" height="4" fill="#33271a"/>
-        <rect x="297" y="182" width="62" height="4" fill="#2e2416"/>
-        {label(328, 198, shrineWord)}
-        <Badge x={358} y={136} list={at("shrine")}/>
-      </g>
-
-      {/* THE TRAINING SQUARE — opens the square as a document */}
-      <g className="scn" role="button" tabIndex={0}
-        aria-label={S.doctore ? `The training square — ${S.doctore.name} has the drill` : "The training square — no doctore"}
-        onClick={()=>openDoc({ label:"The training square", sub:S.doctore?`${S.doctore.name} · ${S.doctore.wage}d a week`:"no doctore — you run it", doc:"square", scene:true, tab:"ludus" })}
-        onKeyDown={e=>{ if(e.key==="Enter") openDoc({ label:"The training square", doc:"square", scene:true, tab:"ludus" }); }}>
-        {room(26, 216, "THE TRAINING SQUARE")}
-        <rect x="24" y="226" width="270" height="96" fill="#2a2013" stroke="#33271a"/>
-        {/* the largest floor in the drawing and it held ONE post — three shapes for 270x96, against
-             seventeen for the cells. A palus is a row of posts and a floor that has been walked on;
-             both are drawn now. The posts stop at y=306 so neither label can land on one. */}
-        <path d="M34 296 q52 -9 104 -2" fill="none" stroke="#332714" strokeWidth="1"/>
-        <path d="M150 302 q62 -8 132 -3" fill="none" stroke="#332714" strokeWidth="1"/>
-        <path d="M40 262 q40 -7 82 -3" fill="none" stroke="#2f2412" strokeWidth="1"/>
-        {[60,88,250,276].map(x=>(<g key={x}>
-          <rect x={x} y="240" width="7" height="66" rx="2" fill="#3a2c18" stroke="#241c12"/>
-          <rect x={x-3} y="238" width="13" height="5" rx="2" fill="#33271a"/>
-        </g>))}
-        {S.doctore && <g>
-          <circle cx="132" cy="252" r="7" fill="#241c12" stroke="#c99a4b" strokeWidth="1.3"/>
-          <path d="M132 260 q-9 3 -10 27 l5 0 q1 -11 5 -14 q4 3 5 14 l5 0 q-1 -24 -10 -27 Z" fill="#241c12" stroke="#c99a4b" strokeWidth="1.3"/>
-          <line x1="145" y1="242" x2="145" y2="290" stroke="#8a6a2c" strokeWidth="2"/>
-          {label(132, 314, S.doctore.name.slice(0,12))}
-        </g>}
-        {/* this sat at y=280, straight through the palus posts the moment there was more than one
-             of them — the shape count said the square was richer and the drawing said it was a
-             sentence with two poles through it. Down to the sill, where the doctore's own name
-             goes in the other branch, and clear of everything. */}
-        {!S.doctore && label(158, 316, "no doctore — the drill only half takes")}
-        <Badge x={286} y={234} list={at("square")}/>
-      </g>
-
-      {/* THE YARD — each man is his own control, straight to his card, and the band itself is
-           the door to the familia: with the tab bar gone (v3.92.0) every place needs a room, and
-           the men's place is where the men stand. The figures sit ABOVE the band in the SVG, so a
-           tap on a man is still his card and a tap on the ground is the roster. */}
-      <g>
-        {room(26, 356, "THE YARD")}
-        <g className="scn" role="button" tabIndex={0} aria-label="The yard — the familia"
-          onClick={()=>go("men")} onKeyDown={e=>{ if(e.key==="Enter") go("men"); }}>
-          <rect x="24" y="366" width="342" height="100" fill="#191309" stroke="#33271a"/>
-        </g>
-        {/* six slots, not seven-and-a-collision: a real house carries names like Boduognatas and
-             Diophantos, and at 46px spacing they wrote over each other — caught on the first big
-             house to look at the scene, year 15, eight men. Wider slots, and neighbouring names on
-             ALTERNATING baselines so even two long ones cannot touch. The rest are a count. */}
-        {men.slice(0,6).map((g,i)=><Man key={g.id} x={54+i*56} y={382} g={g} row={i%2}
-          tone={(g.fatigue||0)>55?"#a8917d":"#e8d9b8"}/>)}
-        {/* below the name rows, not beside the sixth man — at (346,400) it sat on his head,
-             which the check missed because it only measured name against name */}
-        {men.length>6 && label(340, 462, `+${men.length-6} more`)}
-        {men.length===0 && label(195, 414, "nobody — the cells stand empty")}
-      </g>
-
-      {/* THE CELLS — opens what you can do for the block */}
-      <g className="scn" role="button" tabIndex={0}
-        aria-label={`The cells at night — ${unrestWord(S.unrest).toLowerCase()}`}
-        onClick={()=>openDoc({ label:"The cells at night", sub:unrestWord(S.unrest).toLowerCase(), doc:"cellsNight", scene:true, tab:"ludus" })}
-        onKeyDown={e=>{ if(e.key==="Enter") openDoc({ label:"The cells at night", doc:"cellsNight", scene:true, tab:"ludus" }); }}>
-        {room(26, 496, "THE CELLS")}
-        <rect x="24" y="506" width="200" height="58" fill="url(#scn-stone)" stroke="#33271a"/>
-        {[44,92,140,188].map(x=><g key={x}>
-          <rect x={x} y={518} width="26" height="20" fill="#0b0906"/>
-          <line x1={x+7} y1={518} x2={x+7} y2={538} stroke="#3e2f1f" strokeWidth="1.3"/>
-          <line x1={x+14} y1={518} x2={x+14} y2={538} stroke="#3e2f1f" strokeWidth="1.3"/>
-          <line x1={x+21} y1={518} x2={x+21} y2={538} stroke="#3e2f1f" strokeWidth="1.3"/>
-        </g>)}
-        {S.unrest >= 40 && <circle cx="120" cy="512" r="16" fill="url(#scn-torch)"/>}
-        {label(124, 580, S.rebellion
-          ? ["","whispers after dark","steel is missing","the spark is lit"][S.rebellion.stage] || "the cells are turning"
-          : S.unrest>=55?"close to fire":S.unrest>=30?"restless tonight":"quiet tonight")}
-        {S.rebellion && <circle cx="212" cy="576" r="5" fill="#cf5a49">
-          <animate attributeName="opacity" values="1;.4;1" dur="1.4s" repeatCount="indefinite"/>
-        </circle>}
-        <Badge x={216} y={512} list={at("cells")}/>
-      </g>
-
-      {/* THE RACKS — travels to the armoury face */}
-      <g className="scn" role="button" tabIndex={0} aria-label="The racks — the armoury"
-        onClick={()=>go("men:armory")} onKeyDown={e=>{ if(e.key==="Enter") go("men:armory"); }}>
-        {room(248, 496, "THE RACKS")}
-        <rect x="244" y="506" width="122" height="58" fill="#191309" stroke="#33271a"/>
-        <line x1="254" y1="552" x2="356" y2="552" stroke="#3a2c18" strokeWidth="4"/>
-        <g stroke="#8a6a2c" strokeWidth="1.6" fill="none">
-          <line x1="266" y1="516" x2="266" y2="550"/><line x1="288" y1="518" x2="288" y2="550"/>
-          <path d="M310 516 q5 9 0 34"/><rect x="326" y="518" width="14" height="26" rx="6"/>
-        </g>
-        {(()=>{ const u = rackUsed(S), c = rackCap(S), over = rackOver(S);
-          /* the same number the armoury reads, and what it means: full racks strain, and
-             an empty rack is worth saying out loud because house issue is not steel. */
-          return label(305, 580, over ? `${u} of ${c} — past the room`
-            : u === 0 ? "bare — house issue only"
-            : `${u} of ${c} on the racks`); })()}
-        <Badge x={358} y={512} list={at("racks")}/>
-      </g>
-
-      {/* THE GATE — the market and the road; the pending event stands here */}
-      <g className="scn" role="button" tabIndex={0} aria-label="The gate — the block and the road out"
-        onClick={()=>go("market")} onKeyDown={e=>{ if(e.key==="Enter") go("market"); }}>
-        {room(26, 610, "THE GATE")}
-        <path d="M150 640 L150 604 Q195 582 240 604 L240 640 Z" fill="#0f0c08" stroke="#6d5426" strokeWidth="1.4"/>
-        <line x1="167" y1="640" x2="167" y2="598" stroke="#241c12" strokeWidth="3"/>
-        <line x1="184" y1="640" x2="184" y2="592" stroke="#241c12" strokeWidth="3"/>
-        <line x1="201" y1="640" x2="201" y2="590" stroke="#241c12" strokeWidth="3"/>
-        <line x1="218" y1="640" x2="218" y2="596" stroke="#241c12" strokeWidth="3"/>
-        {/* and the empty-block branch said NOTHING — the gate fell back to a painted name for
-             exactly the house that most needs telling when the next stock arrives. Caught by the
-             two-house diff in `scene`, on the branch the founding never reaches. */}
-        {label(300, 628, (S.market||[]).length
-          ? `${S.market.length} on the block${marketFresh(S) ? " — fresh" : ""}`
-          : `nobody at the block · ${marketIn(S)}w`)}
-        {S.pendingEvent && <g>
-          <circle cx="104" cy="606" r="8" fill="#241c12" stroke="#e0bd72" strokeWidth="1.4"/>
-          <path d="M104 615 q-10 3 -11 25 l24 0 q-1 -22 -11 -25 Z" fill="#241c12" stroke="#e0bd72" strokeWidth="1.4"/>
-          <circle cx="117" cy="596" r="8" fill="#cf5a49">
-            <animate attributeName="opacity" values="1;.5;1" dur="1.8s" repeatCount="indefinite"/>
-          </circle>
-          <text x="117" y="600" textAnchor="middle" fontSize="10" fontWeight="bold" fill="#14100c">!</text>
-        </g>}
-      </g>
-      {/* THE ROAD — the arena's door */}
-      <g className="scn" role="button" tabIndex={0} aria-label="The road — to the sand"
-        onClick={()=>go("arena")} onKeyDown={e=>{ if(e.key==="Enter") go("arena"); }}>
-        <path d="M150 640 L112 720 L278 720 L240 640 Z" fill="#1a1410" stroke="#241c12"/>
-        {/* the name first, in the narrow end where the road leaves the gate, then the flagstone
-             courses widening toward the viewer, then the two ruts that were already here */}
-        <text x="195" y="658" textAnchor="middle" fontSize="10" letterSpacing="3" fill="#8a6a2c"
-          fontFamily="'Cinzel',serif">THE ROAD — TO THE SAND</text>
-        <path d="M141 672 L249 672" stroke="#241c12" strokeWidth="1"/>
-        <path d="M134 688 L256 688" stroke="#221b12" strokeWidth="1"/>
-        <path d="M126 704 L264 704" stroke="#221b12" strokeWidth="1"/>
-        <line x1="177" y1="676" x2="169" y2="700" stroke="#241c12" strokeWidth="3"/>
-        <line x1="213" y1="676" x2="221" y2="700" stroke="#241c12" strokeWidth="3"/>
-        {/* cypresses at the verges — every road out of Capua had them, and the road was three
-             shapes: a wedge and two ruts. They stand OUTSIDE the carriageway at this depth. */}
-        {[[92,44],[70,32],[298,44],[320,32]].map(([x,h])=>(
-          <path key={x} d={`M${x} ${714} q-6 -${Math.round(h*0.45)} 0 -${h} q6 ${Math.round(h*0.55)} 0 ${h} Z`}
-            fill="#22200f" stroke="#312c18" strokeWidth=".7"/>))}
-        {/* the milestone, which is what a road out of a town actually carries */}
-        <rect x="272" y="694" width="8" height="20" rx="3" fill="#2e2416" stroke="#3e2f1f" strokeWidth=".8"/>
-        <line x1="274" y1="700" x2="278" y2="700" stroke="#5b471f" strokeWidth="1"/>
-        <line x1="274" y1="705" x2="278" y2="705" stroke="#5b471f" strokeWidth="1"/>
-        {label(195, 713, roadWord)}
-      </g>
+      <ScnVilla  S={S} at={at} go={go} houseLit={houseLit}/>
+      <ScnShrine S={S} at={at} openDoc={openDoc} shrineWord={shrineWord} shrineFire={shrineFire}/>
+      <ScnSquare S={S} at={at} openDoc={openDoc}/>
+      <ScnYard   S={S} go={go} openMan={openMan} men={men}/>
+      <ScnCells  S={S} at={at} openDoc={openDoc}/>
+      <ScnRacks  S={S} at={at} go={go}/>
+      <ScnGate   S={S} go={go}/>
+      <ScnRoad   S={S} go={go} roadWord={roadWord}/>
     </svg>
   );
 }

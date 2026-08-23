@@ -13830,6 +13830,15 @@ lax", and the villa and the shrine were briefly convicted of a silence that was 
 failed on the **gate** because both houses happened to carry four men at 221d. A fixture that
 differs in every axis a room reads is the only one that can tell a silent room from a lucky one.
 
+**And the art pass tripped `bulk`.** `Scene` was 198 lines against a 200-line ceiling, and 66 lines
+of drawing took it to 264 — the check doing exactly what it exists for. Its own first suggestion was
+"split it", and this is the one place in the file where that is not moving JSX around: the thesis of
+the drawing is that every room opens its own business, so every room is its own top-level definition
+now, measured on its own, and a new room costs a new name rather than another twenty lines on one
+function. The four shared helpers went to module scope with it. `Scene` is off the over-200 list
+entirely, and the rendered SVG markup is **byte-identical** before and after the split, on both
+fixtures — which is the only claim worth making about a refactor.
+
 `scene` now carries both halves: every text against every other text, every text against every palus
 post, every text inside the viewBox — on **both** branches of the square, because written as one
 read on the full-yard house it passed with the collision deliberately restored (that house has a
