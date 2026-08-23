@@ -1644,7 +1644,7 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 **Shipped and verified: v3.105.0 → v3.115.0, eleven releases, 87/87 green, all on `main`.**
 The detail of each is at the foot of this file; this is what a new session needs in one place.
 
-**AND THEN THE AUDIT, at the foot of this file: ten items, #186-#195. #195 shipped in v3.116.0, #192 in v3.117.0 and #194 in v3.118.0; the other seven are unassigned.** Read that
+**AND THEN THE AUDIT, at the foot of this file: ten items, #186-#195. #195 shipped in v3.116.0, #192 in v3.117.0, #194 in v3.118.0 and #188 in v3.119.0; the other six are unassigned.** Read that
 section before this one if you are picking work. Its short version: the five leads the last session
 left are all answered, and **the largest single finding is that `asks`'s silent list was mostly the
 probe's own** — it diffed five channels and the game speaks in eight, so four of its five silences
@@ -4460,6 +4460,70 @@ about a quarter and it is the cost of this repair**; `MISSIO_MAN` is one line to
 wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
+
+### v3.119.0 — #188: two ambitions were kept by not doing a thing, and nothing ever noticed
+
+Five of the seven ambitions name a moment that satisfies them — the rudis, the crowd's name, the
+Ludi Romani, a brother at his shoulder, the house that marked him — and each has a line in the file
+that fires `ambitionMet` on that kind. Two do not. `nokill` is *"Never to be sent out sine
+missione"* and `nobeast` is *"Never to be put in front of an animal"*, and a promise made of
+ABSTINENCE has no event to fire on. Measured over four policies: **651 of them given and 0 ever
+met**, `nokill` broken 36 times and `nobeast` 6 — and two written `met` lines no player had read:
+
+    nokill   "You have never once put <name> on a card with no appeal. He counts."
+    nobeast  "Whatever else you have asked of him, you never asked that."
+
+Both are written as if there is a moment. *"He counts"* says what the mechanic should be.
+
+**The clock was already there and it was pointed the wrong way.** The only thing that ever visits
+such a man is the despair tick — he asked, he pressed, twelve weeks went by without an answer. For
+a promise of abstinence, twelve quiet weeks are not silence, they are the answer; and the proof is
+already in hand, because doing the thing calls `ambitionBroken` on the spot and a broken ambition
+never reaches that loop. A man who arrives there carrying one of those two kinds has, by
+construction, not been sent out that way.
+
+**The one bar is that he has been sent out at all**, and it was chosen by measuring who arrives.
+Over 36 houses × 420 weeks, 25 men reached the tick with one of the two kinds, having fought
+**0 / 2 / 5** bouts at p25 / median / p75 — and **7 of the 25 had never fought at all**, for whom
+meeting it would be hollow. One bout admits 18 of the 25; three would admit 10, which is #190's
+fault written a second time. `AMB_KEPT_BOUTS` is the dial and it is 1.
+
+Paired over the same three seeds, 36 houses × 420 weeks:
+
+| | before | after |
+|---|---|---|
+| `nokill` met | **0** | **7** |
+| `nobeast` met | **0** | **10** |
+| `nokill` given up on | 11 | **4** |
+| `nobeast` given up on | 14 | **5** |
+| despairs across all seven kinds | 64 | **41** |
+| `freedom` met | 0 | 0 — its door exists and is narrow, which is **#190** |
+
+Everything else moves only by the sim diverging, which it does: meeting an ambition is +24 morale,
+−18 defiance and −4 unrest (+34/−26/−7 where his word was given and kept), so a house that keeps a
+promise is calmer from that week on. **`open`'s 60-house signature is byte-identical** — the tick
+needs a man who asked, pressed and then waited twelve weeks, which is past week 26 and out of the
+opening's reach. This bites in the mid-game and later, at about half an ambition met per house per
+420 weeks, and it is squarely the design value: mercy is the strongest long game and this is one
+more place it pays.
+
+**It is deliberately NOT met without asking.** Every other ambition can be satisfied by an event the
+man never mentions; a promise of abstinence has to be asked for before there is a promise to keep.
+
+**`wants` is the 91st check, and its static half is the general shape rather than the two keys.**
+Every entry in `AMBITIONS` must have a door — a line that fires `ambitionMet` on `kind==="<key>"`,
+or a place in `AMB_NEVER` where the clock keeps it. An EIGHTH ambition added later with neither goes
+red rather than being handed out for years and never kept. The driven half sits states exactly on
+the tick and reads what `ambWeek` does with them, including that the chronicle carries the kind's
+own written line with the man's name substituted into it.
+
+Negative-tested five ways. Four were red first time — `nokill` taken out of `AMB_NEVER`, the bar
+dropped to zero, the clock made to meet any kind, and (below) the broken guard. **The fifth is worth
+recording because it came back GREEN**: taking the `a.broken` early-out off `ambWeek` alone changes
+nothing, because `ambitionMet` refuses a broken ambition on its own first line. The property is
+defended twice and the check only goes red with both gone, which is written into the check so nobody
+reads a green run as proof that `ambWeek`'s guard is what holds it.
+
 
 ### v3.118.0 — #194: the week's orders are put down where they are spent, not on one exit of two
 
@@ -13745,7 +13809,7 @@ a system the house owns that the morning list mentions for three weeks and then 
 decimal places, in every row above, which is what proves the number was chosen once and never
 derived from the stake.*
 
-### #188 — three of the seven ambitions have no door of their own.
+### #188 — CLOSED in v3.119.0 for two of the three; the third is #190. Three of the seven ambitions had no door of their own.
 `stock.mjs`, four policies × 12 houses × 420 weeks. **1,789 ambitions given; `nokill`
 (306), `nobeast` (345) and `freedom` (328) are met 0 times — 979 of 1,789, 55% of every ambition the
 game hands out.** `nokill` and `nobeast` stay at 0 in every arm ever run, including 25,148 active
@@ -13762,6 +13826,13 @@ third choice — "Give him the thing he wants" — took it on **60 of 90 and 55 
 door, it belongs to another system, and it is the only one. *Falsifies if "never sent out sine
 missione" is meant to be a promise that is only ever broken — in which case the fault is the written
 `met` line for each of them, which no player has ever read.*
+**Fixed in v3.119.0, and the falsifier decided the shape.** The written `met` lines ARE the fault the
+clause names, so they were made reachable rather than deleted: a promise of abstinence is kept by the
+despair tick, where a man who asked, pressed and waited twelve weeks without your doing the thing has
+by construction kept it. `nokill` met **0 → 7**, `nobeast` **0 → 10** over 36 houses × 420 weeks, and
+despairs across all seven kinds **64 → 41**. The one bar — he must have been on a card at least once —
+was set by measuring who arrives at that tick: 7 of 25 had never fought. `freedom` stays at 0 and
+stays #190's: its door exists and is narrow. `wants` is the 91st check.
 
 ### #189 — two of the seven are handed to 4% of men, because eligibility is tested the week they arrive.
 Same runs. `giveAmbition` filters the pool at man-creation: `champion` needs `potential >= 62`,
@@ -14768,4 +14839,4 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.118.0 — #195, #192 and #194 closed; seven of the audit's ten items still open*
+*Last updated: v3.119.0 — #195, #192, #194 and #188 closed; six of the audit's ten items still open*

@@ -130,6 +130,13 @@ const out = await inside(p, ([H, W, SEED, ARM, AMB, TRAITS, INJ, NICKS]) => {
     rud: { manWeeks:0, wins:0, pfame:0, notAuctor:0, under30:0, eligible:0, all4:0, menAll4:0,
            freed:0, freedAges:[], wantFreedom:0, wantAll4:0 },
     evRefusal: 0, gave: 0,
+    /* ---- #188: WHAT A "NEVER" AMBITION LOOKS LIKE AT THE MOMENT IT IS GIVEN UP ON ----
+       `nokill` and `nobeast` are kept by NOT doing a thing, so no event can fire `ambitionMet` for
+       them and none does — 0 of 651 given. The only clock that ever visits such a man is the
+       despair tick: he asked, he pressed, twelve weeks went by. Before writing a reckoning there,
+       count who arrives at it and with what record, because a bar the men never reach is #190's
+       fault written a second time. */
+    reck: { pressed:{}, despairAt:{}, bouts:[], boutsBy:{} },
     nickAwarded: 0, nickClashEver: 0, nickClashLive: 0,
     /* ---- #195: HOW MUCH ROOM IS THERE IN FOURTEEN NAMES? ----
        A fix that refuses a name somebody already wears is only possible while there is a name
@@ -158,6 +165,13 @@ const out = await inside(p, ([H, W, SEED, ARM, AMB, TRAITS, INJ, NICKS]) => {
           if(!seenAmb.has(key)){ seenAmb.add(key); if(a.kind in T.ambGiven) T.ambGiven[a.kind]++; }
           /* terminal flags are one-way, so counting them every week would multiply; each is
              recorded once per man by a per-man mark on the object the probe owns */
+          if((a.voiced||0) >= 2 && !a.__p_pressN){ a.__p_pressN = 1;
+            T.reck.pressed[a.kind] = (T.reck.pressed[a.kind]||0)+1; }
+          if(a.despair && !a.__p_desN){ a.__p_desN = 1;
+            const n = (g.wins||0) + (g.losses||0);
+            T.reck.despairAt[a.kind] = (T.reck.despairAt[a.kind]||0)+1;
+            (T.reck.boutsBy[a.kind] = T.reck.boutsBy[a.kind]||[]).push(n);
+            if(a.kind === "nokill" || a.kind === "nobeast") T.reck.bouts.push(n); }
           const mark = (flag, bucket) => { const mk = "__p_"+flag;
             if(a[flag] && !a[mk]){ a[mk] = 1; if(a.kind in bucket) bucket[a.kind]++; } };
           mark("met", T.ambMet); mark("broken", T.ambBroken); mark("despair", T.ambDespair);
@@ -335,5 +349,12 @@ console.log(`  rudisEligible (3 of)  ${String(rr.eligible).padStart(7)}  ${(rr.e
 console.log(`  ALL FOUR              ${String(rr.all4).padStart(7)}  ${(rr.all4/rr.manWeeks*100).toFixed(1)}%   ${rr.menAll4} distinct men`);
 console.log(`  of the men who WANT freedom: ${rr.wantFreedom} man-weeks carrying it, ${rr.wantAll4} of them with all four terms up`);
 console.log(`  men actually freed ${rr.freed}, median age at the rudis ${med} (ages ${ages.slice(0,3).join(",")}..${ages.slice(-3).join(",")})`);
+{ const R2 = T.reck, b = R2.bouts.slice().sort((x,y)=>x-y);
+  const q = f => b.length ? b[Math.min(b.length-1, Math.floor(b.length*f))] : 0;
+  console.log(`\n=== #188: WHO ARRIVES AT THE DESPAIR TICK, AND WITH WHAT RECORD`);
+  console.log(`  pressed (voiced>=2) by kind: ${Object.entries(R2.pressed).sort((a,c)=>c[1]-a[1]).map(([k,v])=>`${k} ${v}`).join(" · ")||"none"}`);
+  console.log(`  reached despair by kind:     ${Object.entries(R2.despairAt).sort((a,c)=>c[1]-a[1]).map(([k,v])=>`${k} ${v}`).join(" · ")||"none"}`);
+  console.log(`  bouts fought by a nokill/nobeast man AT that tick: n=${b.length} · min ${b[0]??"-"} · p25 ${q(0.25)} · median ${q(0.5)} · p75 ${q(0.75)} · max ${b[b.length-1]??"-"}`);
+  console.log(`  how many had fought at least: ${[0,1,2,3,5,8].map(k=>`${k}+ ${b.filter(x=>x>=k).length}`).join(" · ")}`); }
 console.log(`\n  refusal event offered ${T.evRefusal} times · the arm answered "give him the thing he wants" ${T.gave} of them`);
 console.log(`\n  rope: ${out.rope}`);
