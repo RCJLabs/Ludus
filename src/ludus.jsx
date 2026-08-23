@@ -24059,8 +24059,15 @@ export default function App(){
                         <span style={{color:YARD_COLOUR(fit),flexShrink:0}}>{YARD_WORD(fit)}</span>
                       </div>
                       {thin && (
+                        /* ---- A 20px TAP TARGET THAT HAD BEEN HIDING BEHIND A RANDOM CONDITION ----
+                           `surface` holds every control to a 44px thumb floor and this one measured
+                           20. It is not new: measured on v3.116.0's source it is 20px there too. It
+                           renders only when `thin` — the next six weeks dip to one fit man or none —
+                           and `surface` founds a house with no seed, so it sees this branch on about
+                           one run in twenty. Three of the check's fifty-nine recorded reds are it.
+                           A random condition is not a reason for a control to be half a thumb. */
                         <button className="dim" onClick={()=>setCal(true)}
-                          style={{display:"block",width:"100%",textAlign:"left",background:"none",border:"none",padding:"3px 0 0",fontSize:"var(--fs-sm)",lineHeight:1.35,color:"var(--ink-2)",fontStyle:"italic",cursor:"pointer"}}>
+                          style={{display:"flex",alignItems:"center",flexWrap:"wrap",minHeight:44,width:"100%",textAlign:"left",background:"none",border:"none",padding:"3px 0 0",fontSize:"var(--fs-sm)",lineHeight:1.35,color:"var(--ink-2)",fontStyle:"italic",cursor:"pointer"}}>
                           {thin.week===S.week
                             ? (fit<=0 ? "Nobody can be put on a card this week." : "One man, and nobody behind him.")
                             : `${thin.fit<=0 ? "Nobody is fit" : "Only one man is fit"} in ${thin.week-S.week} week${thin.week-S.week===1?"":"s"} — do not promise that week.`}
