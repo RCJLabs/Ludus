@@ -4496,7 +4496,7 @@ than it already was**: the closest pair in the set is still `amphi`/`imperial` a
 `bowl` were thrown away for failing exactly that, at **6.0 and 9.2 from `harbour`**, both closer than
 anything that existed. The third clears it at 10.6, with `yard` at 9.5.
 
-**`scene` is the 95th check and its bar is the shape, not the two keys**: a tenth venue added later
+**`backdrop` is the 95th check and its bar is the shape, not the two keys**: a tenth venue added later
 with no rule goes red rather than shipping as Capua for a year, and no two backdrops may sit inside
 the eye's floor. The floor is the **JND**, deliberately, and today's real spread is printed rather
 than asserted — pinning the check to 9.5 would make every future palette tweak a red run.
@@ -4518,6 +4518,13 @@ is hunting is the worst kind, so the check asserts the scope resolved rather tha
 **And one more instrument fault**, in the check itself: a stray line left in the strip comparison
 read `i<A.px?0:A.length`, which parses as `(i<A.px)?0:A.length` and is therefore always truthy. It
 hung the run rather than failing it, which is the reading that looks least like a bug.
+
+**And it very nearly cost an existing check.** The first draft of this one was written to
+`test/checks/scene.mjs` with a `cat >`, and **`scene.mjs` already existed** — v3.89.0's walk of the
+drawn ludus, which the suite has carried since. It was caught by the suite reporting **94 checks and
+not 95**: a new check that does not raise the count has replaced one. `scene.mjs` is restored
+byte-identical to `main` and green; the new one is `backdrop.mjs`. The count is the only thing that
+noticed, which is worth knowing about a directory of ninety-five files named by hand.
 
 **Stylesheet only**: `open.mjs`'s 60-house signature is **byte-identical** — no game path differs.
 The `bulk` CSS allowance goes **256 → 258** for exactly two rules, which is the case its own note
@@ -14321,7 +14328,7 @@ was right that they are close and wrong that it makes the palette indistinguisha
 limestone at **17.5**, and neither makes the palette tighter than it already was — the closest pair
 is still `amphi`/`imperial` at 9.5. Two cuts of `bowl` were thrown away for landing at 6.0 and 9.2
 from `harbour`, closer than anything that existed. Stylesheet only; `open`'s signature is
-byte-identical. `scene` is the 95th check and holds the shape: a tenth venue with no rule goes red,
+byte-identical. `backdrop` is the 95th check and holds the shape: a tenth venue with no rule goes red,
 and no two backdrops may sit inside the eye's floor.
 **And the instrument cost two faults first.** Every colour token in this file is declared on `.lr`,
 not `:root`, so a host appended to `document.body` fails `var()` substitution and the whole
