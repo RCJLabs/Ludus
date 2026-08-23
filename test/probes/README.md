@@ -21,6 +21,7 @@ Run them straight:
     node test/probes/purse.mjs 10 420       # income against the bill, by era
     node test/probes/ladder.mjs 10 420      # three policies against all five terms of the census
     node test/probes/asks.mjs 6 230         # which of a great house's quantities the week's list is blind to
+    node test/probes/heat.mjs 14 400        # is the law dead, or had no policy here ever broken it
     node test/probes/keep.mjs 72 420 SEED  # what a house HOLDS — gains against losses, by era
     node test/probes/walk.mjs 72 420 180 SEED   # can a great house lose the people in it
     node test/probes/fires.mjs 24 420      # does v3.27.0's patron death ever fire in real play

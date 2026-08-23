@@ -14140,6 +14140,45 @@ nudge describing a mechanic that does not exist is worse than saying nothing. Th
 a house that kills drawing the magistrate's eye, which would also give **law heat** something to do
 — changes balance and needs its own measurement before it is written.
 
+
+### Law heat: the law is live, and the rope could not have told you either way
+`asks` put law heat among the seven quantities the week's list is blind to. The rope could not test
+that: it has levers for men, gear, works, parties, rites, stakes and tactics and **none for
+gambits**, so no policy in this suite had ever bribed an editor or put money in front of a rival's
+best man — the things heat measures. That lever exists now, opt-in, and `heat.mjs` drives it.
+
+Measured at v3.113.0, 14 houses × 400 weeks an arm:
+
+| arm | mean heat | h≥45 | h≥70 | h≥90 | urgency-3 breach row | `banned` fires |
+|---|---|---|---|---|---|---|
+| honest | 20.5 | 16.2% | 5.7% | 0.9% | 12.1% | **0.4%** |
+| a trick every 6 weeks | 43.5 | 51.2% | 22.7% | 8.3% | 25.8% | 0.3% |
+| a trick every week | 38.8 | 42.3% | 21.5% | 11.1% | 12.1% | 0.0% |
+
+**The law is live, and already live for an honest house.** Over four hundred weeks an ordinary house
+is in breach on 38% of them, past heat 45 on 16%, and `banned` — the "STRUCK FROM THE ROLL" ending —
+fires at 0.4%, which is `ends`' own figure of one or two houses in twenty-four. Playing the law game
+roughly triples the time past the gates. **Nothing to build.** The quiet `asks` found was its own
+diff of label *sets*: heat's work is on the *urgency* of a row that is not present every week, and
+the urgency counter only compares rows present on both sides.
+
+**Three wrong readings on the way to that, all mine.**
+
+1. A first policy written inside the probe spent down to `d.gold` with no reserve, killed every
+   house inside fifty weeks, and had me writing "a gambit every week kills the house" as a fact
+   about the game. Through the rope, which holds `LAN.reserve(d)` back like every other spending
+   step, the brazen arm outlives the honest one.
+2. An 8 × 320 run showed the honest arm at mean heat 7.6 and 0% past every gate, from which I wrote
+   "nobody had ever broken it". Heat accumulates with a house's **age**, through edicts and standing
+   breaches; at 320 weeks an honest house has not got there yet. The same arm at 400 weeks is 20.5
+   and past 45 on 16% of weeks. **A short run measured a young house and I read it as a property of
+   the system.**
+3. And the numbers before both were taken against a build **65 versions old**. The container reset
+   the working tree to v3.48.0 mid-session and `npm run build:test` quietly rebuilt from it. The
+   only tell was `dist/test.html` dropping 3,038KB → 2,812KB in a step that changed no source. The
+   work was safe on the remote and the tree was restored from it. **When a number moves for no
+   reason, check the version before you explain the number.**
+
 ---
 
-*Last updated: v3.113.0*
+*Last updated: v3.114.0*

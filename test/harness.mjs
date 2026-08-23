@@ -659,6 +659,62 @@ export async function installRope(p){
         const kind = !wants ? null : sp > 4000 ? "decadent" : sp > 1600 ? "lavish" : sp > 700 ? "modest" : null;
         if(kind && fin(A.hostParty,[d, kind])) bump("party");
       }
+      /* ---- THE LAW, AND A LEVER THIS ROPE NEVER HAD ----
+         `asks` reported law heat among the quantities the week's list is blind to, and this rope
+         could not test the claim either way: it has levers for men, gear, works, parties, rites,
+         stakes and tactics and had NONE for gambits, so no policy in this suite had ever bribed an
+         editor or put money in front of a rival's best man — the things heat is a measure of.
+
+         Written, and measured against v3.113.0, 14 houses x 400 weeks an arm:
+
+                        mean heat   h>=45    h>=70    h>=90   urg-3 breach row   `banned` fires
+           honest            20.5   16.2%     5.7%     0.9%              12.1%            0.4%
+           gambit:6          43.5   51.2%    22.7%     8.3%              25.8%            0.3%
+           gambit:1          38.8   42.3%    21.5%    11.1%              12.1%            0.0%
+
+         THE LAW IS LIVE, AND IT WAS ALREADY LIVE FOR AN HONEST HOUSE. Over four hundred weeks an
+         ordinary house is in breach on 38% of them and past heat 45 on 16%, and `banned` — the
+         "STRUCK FROM THE ROLL" ending — fires at 0.4%, which is `ends`' own figure of one or two
+         houses in twenty-four. Playing the law game roughly triples the time spent past the gates.
+         There was nothing here to build; the quiet `asks` found was its own diff of label SETS,
+         and heat's work is on the URGENCY of a row that is not present every week.
+
+         ---- TWO THINGS THIS COMMENT SAID BEFORE, WRONGLY ----
+         It read "nobody had ever broken it" off an honest arm at mean heat 7.6 with 0% past every
+         gate. That arm was 8 houses x 320 weeks: heat accumulates with a house's AGE through
+         edicts and standing breaches, and at 320 weeks the honest house has not got there yet. The
+         same arm at 400 weeks is 20.5 and past 45 on 16% of weeks. A short run measured a young
+         house and I read it as a fact about the system.
+         And the numbers before that were taken against a build 65 versions old, after the
+         container reset the tree to v3.48.0 mid-session and `npm run build:test` quietly rebuilt
+         from it. The tell was dist/test.html dropping 3,038KB -> 2,812KB in a step that changed no
+         source. Check the version when a number moves for no reason.
+
+         OPT-IN, because turning it on by default would move every measurement in the suite.
+         `gambit:N` throws the best-odds trick it can afford at a live rival every N weeks;
+         `gambit:true` is every six. It spends only above `LAN.reserve(d)`, like every other
+         spending step here — an earlier copy of this policy living inside the probe did not, killed
+         every house inside fifty weeks, and had me writing "a gambit every week kills the house"
+         as though it were a fact about the game. */
+      if(o.gambit && typeof A.runGambit === "function"){
+        const every = typeof o.gambit === "number" ? Math.max(1, o.gambit) : 6;
+        if(d.week % every === 0){
+          const rivals = (d.rivals||[]).filter(x=>!x.retired);
+          const keys = Object.keys(A.GAMBITS || {});
+          if(rivals.length && keys.length){
+            const priced = keys.map(k=>({ k,
+              cost: (()=>{ const c = A.GAMBITS[k].cost; return typeof c === "function" ? (fin(c,[d]) || 0) : (c || 0); })(),
+              odds: fin(A.gambitOdds,[d,k]) || 0 }))
+              .filter(x=>x.cost > 0 && x.cost <= d.gold - LAN.reserve(d));
+            if(priced.length){
+              priced.sort((x,y)=>y.odds - x.odds);
+              const target = rivals[d.week % rivals.length].name;
+              const r = fin(A.runGambit,[d, priced[0].k, target]);
+              if(r) bump(r.won ? "gambitWon" : "gambitLost");
+            }
+          }
+        }
+      }
       if(o.free === true && typeof A.grantRudis === "function"){
         for(const g of A.activeG(d)){
           if(!fin(A.rudisEligible,[g])) continue;

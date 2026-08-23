@@ -17,6 +17,14 @@
    Silence here means "raises no business on the week's list", not "is unused". The agenda is the
    thing #131 measured and the thing a player works from, which is why it is the thing measured.
 
+   AND A SILENCE HERE CAN STILL BE THE PROBE'S. This reported LAW HEAT silent. Driven properly —
+   `heat.mjs`, 14 houses x 400 weeks, with a gambit lever added to the rope because it had none —
+   an ordinary house is in breach on 38% of its weeks, past heat 45 on 16%, and the `banned` ending
+   fires at 0.4%. The law is live. What this diff cannot see is heat's actual work, which is on the
+   URGENCY of a row that is not present every week: the urgency counter below only compares rows
+   present in BOTH label sets, so a term that decides how loudly an intermittent row speaks slips
+   through both halves. Before filing anything on this list as dead, drive it deliberately.
+
    AND THE PERTURBATION HAS TO BE LEGAL. Writing d.law.heat = 40 on a house whose law object does
    not exist tests nothing but my own typo, so every mutation reports whether it actually moved the
    quantity it names, and one that did not move is printed as UNTESTED rather than as silence.
