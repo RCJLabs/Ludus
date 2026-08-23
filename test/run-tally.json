@@ -61,4 +61,5 @@
 {"v":"3.118.0","checks":90,"failed":["bulk"]},
 {"v":"3.118.0","checks":90,"failed":[]},
 {"v":"3.119.0","checks":91,"failed":["seller"]},
-{"v":"3.119.0","checks":91,"failed":[]}]
+{"v":"3.119.0","checks":91,"failed":[]},
+{"v":"3.120.0","checks":92,"failed":[]}]

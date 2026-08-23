@@ -4505,6 +4505,9 @@ like, and `open`'s 60-house signature is byte-identical. Every reader of `a.urge
 whose bar is `MARK_URG = 2` — so the villa's rites chip was already lit and now reads at 3 rather
 than 2 in the last three weeks.
 
+Suite green at **92/92 in 11.5 minutes, first run** — the first release in four where `bulk` did not
+go red, because the note went above `agenda` rather than inside it from the start.
+
 **`rank` is the 92nd check and its bar is the shape, not the row**: a countdown must not be less
 visible at the end than at the beginning. It walks one unburied man across the whole window, ticking
 the agenda every step the way `endWeek` does, and asserts the row is on screen every week and that
