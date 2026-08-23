@@ -3222,6 +3222,20 @@ const agWord = age => age <= 0 ? "new this week" : age <= AG_FRESH ? `${age} wee
    the ids to SECT's real names, because a typo does not throw — it silently travels.
    (This note sits out here because agenda sits two lines under its bulk allowance, and prose is
    documentation, not size.) */
+/* ---- HOW LONG UNTIL THE VOTE, AND THE FLOOR THAT WAS HIDING AN OFF-BY-ONE — #192 ----
+   `electionWeek` runs BEFORE `ludusLedger` increments the week, so the ballot is taken at the end
+   of the week where `d.week - E.week === 3` — which is the LAST week the row is up. Written inline
+   as `Math.max(0, 3 - (d.week - d.election.week))`, that week read "0 weeks to the vote" and then
+   the player waited one more. The floor was not a stall guard, it was covering an off-by-one, and
+   it read zero on the final week of every election ever held — at home as much as at Rome.
+   `vote.mjs` could not see it: that probe counts weeks an election ran PAST its due date, and a
+   legitimate last week never entered the count. The `aedile` check found it in the arm that was
+   meant to be the control. Three weeks, and the third is the one it happens in.
+   It is a named helper rather than four lines inside `agenda` because `agenda` is a rule list with
+   ten lines of headroom and the last thing to take it red was a comment — see `bulk`. */
+const voteWord = d => { const left = 3 - (d.week - d.election.week);
+  return left <= 0 ? "the vote is this week" : `${left} week${left===1?"":"s"} to the vote`; };
+
 /* ---- THE LEDGER OF THE DEAD ----
    #131 found that 97% of what a year-12 house reads was available in week one, and named the gap as
    late content rather than tuning. `asks.mjs` then went looking for it causally: take a played house,
@@ -3388,19 +3402,7 @@ function agenda(d){
   agendaGods(d, add);
   agendaCan(d, add);
   /* the town */
-  /* ---- AND THE COUNTDOWN WAS A WEEK OUT AT HOME TOO — #192's second half ----
-     `electionWeek` runs BEFORE `ludusLedger` increments the week, so the vote is taken at the end
-     of the week where `d.week - E.week === 3` — which is the last week the row is up. Written
-     `Math.max(0, 3 - …)`, that last week read **"0 weeks to the vote"** and then the player waited
-     one more. The floor was hiding an off-by-one, not a stall: it read zero on the final week of
-     every election ever held, at home as much as at Rome, and `vote.mjs` could not see it because
-     it only counted the weeks an election ran PAST its due date. The check found it in the arm
-     that was supposed to be the control. Three weeks, and the third is the one it happens in. */
-  if(d.election && !d.election.done){
-    const left = 3 - (d.week - d.election.week);
-    add(2, "villa:council:aedileship", "The aedileship is open",
-      left <= 0 ? "the vote is this week" : `${left} week${left===1?"":"s"} to the vote`);
-  }
+  if(d.election && !d.election.done) add(2, "villa:council:aedileship", "The aedileship is open", voteWord(d));
   if(d.games && d.games.offers && d.games.offers.length && activeG(d).some(g=>canFight(g) && g.lastFought<d.week))
     add(2, "arena", d.games.festival, `${d.games.offers.length} on the card`);
   agendaCrown(d, add); agendaLedger(d, add);
