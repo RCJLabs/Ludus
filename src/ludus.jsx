@@ -5236,6 +5236,23 @@ const RUDIS_WINS = 10, RUDIS_FAME = 180, RUDIS_AGE = 30;
 const rudisEligible = g=> !isAuctor(g) && g.wins>=RUDIS_WINS && g.pfame>=RUDIS_FAME;
 /* what stands between him and the thing he asked for, in his own units. Returns null when the
    question does not apply, so a caller cannot render an answer to a question nobody asked. */
+/* ---- THE ONE PLACE THE GAME STATED THE TERMS, AND IT STATED THEM WRONG ----
+   The man's page carried `Rudis: 10 wins, 90 renown` as a hardcoded string, and the gate is
+   `pfame >= RUDIS_FAME`, which is 180. NINETY WAS THE GATE AT v0.76.0 — that release measured the
+   rudis as unreachable and dropped it to 45, and v0.90.0 re-measured renown after it had drifted an
+   order of magnitude and set it to 180. The button was never touched, so the only line in the game
+   that tells a player what the wooden sword costs a man has named a superseded number through two
+   recalibrations: 60.0% and 65.4% of every man-week a ten-win man ever spends is spent in the band
+   between what it claimed and what the gate takes, told he qualifies and refused with no reason.
+   It was also the same sentence for every man on the roster — the terms, not the distance. */
+const rudisWord = g => {
+  const st = rudisStanding(g);
+  if(!st) return `Rudis: ${RUDIS_WINS} wins, ${RUDIS_FAME} renown`;
+  const bits = [];
+  if(st.wins) bits.push(`${st.wins} more win${st.wins===1?"":"s"}`);
+  if(st.fame) bits.push(`${st.fame} more renown`);
+  return bits.length ? `Rudis: ${bits.join(", ")}` : "Rudis: earned";
+};
 function rudisStanding(g){
   if(!g || isGone(g)) return null;
   const wins = Math.max(0, RUDIS_WINS - (g.wins||0));
@@ -25497,22 +25514,7 @@ export default function App(){
                 ? <button className="btn" style={{borderColor:"var(--gold-line)",color:"var(--ink-hi)"}} onClick={()=>freeG(selG.id)}>Grant the rudis</button>
                 : retireEligible(selG)
                 ? <button className="btn" onClick={()=>retire(selG.id)}>Release him</button>
-                /* ---- THE ONE PLACE THE GAME STATED THE TERMS, AND IT STATED THEM WRONG — #190 ----
-                   This read `Rudis: 10 wins, 90 renown` as a hardcoded string. The gate is
-                   `pfame >= RUDIS_FAME`, which is 180: the only line in the game that tells a
-                   player what the wooden sword costs a man named HALF the renown it actually
-                   takes, so a house that got a man to ten wins and ninety renown found the button
-                   still dead and no screen willing to say why. It was also the same sentence for
-                   every man on the roster — the terms, not the distance — while the ambition that
-                   asks for it asks for *"a number. How many more."* Both halves come off
-                   `rudisStanding` now, which reads the named constants the gate itself reads. */
-                : (()=>{ const st = rudisStanding(selG) || { wins:RUDIS_WINS, fame:RUDIS_FAME };
-                    const bits = [];
-                    if(st.wins) bits.push(`${st.wins} more win${st.wins===1?"":"s"}`);
-                    if(st.fame) bits.push(`${st.fame} more renown`);
-                    return <button className="btn btn-ghost" disabled>
-                      {bits.length ? `Rudis: ${bits.join(", ")}` : "Rudis: earned"}</button>;
-                  })()}
+                : <button className="btn btn-ghost" disabled>{rudisWord(selG)}</button>}
             </div>
           </div>
         </div>
@@ -27686,8 +27688,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     activeG, defaultKit, kitMods, statCap, fullName, yearOf, YEAR_WEEKS, rudisEligible,
     /* the price of freedom, and whether the house can meet it — see the note over grantRudis */
     rudisCost, canAffordRudis, RUDIS_TAX, gladValue,
-    /* the three terms named, and what stands between a man and the thing he asked for — #190 */
-    RUDIS_WINS, RUDIS_FAME, RUDIS_AGE, rudisStanding,
+    RUDIS_WINS, RUDIS_FAME, RUDIS_AGE, rudisStanding, rudisWord,   /* #190 — the three terms, and the distance to them */
   };
   /* ---- WHAT THE CHECKS NEVER REACH ----
      Every function on the handle is wrapped in a counter. It costs a shipping build
