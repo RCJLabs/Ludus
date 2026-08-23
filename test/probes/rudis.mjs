@@ -52,7 +52,7 @@ const out = await inside(p, ([H, W, SEED, ARM]) => {
     everWins:0, everPfame:0, everEligible:0, everAll4:0,
     freed:0, freedAges:[], freedWins:[], wantFreedom:0, freedWanting:0, metFreedom:0,
     everWanted:0, brokeFreedom:0, despairFreedom:0, wantFate:{}, freedOver30:0, freedWantingOver30:0,
-    wantAt:{}, wantPast30:0, menPast30:0, wantShortFame:0,
+    wantAt:{}, wantPast30:0, menPast30:0, wantShortFame:0, limbo:0, limboMen:0, tenPlus:0,
     /* the career, re-derived on this run rather than quoted */
     bouts:[], boutsDead:[], boutsAlive:[], winsAt:{}, fate:{},
     /* the protected man, if there is one */
@@ -100,6 +100,15 @@ const out = await inside(p, ([H, W, SEED, ARM]) => {
           if((g.age||0) >= 30){ T.wantPast30++; if(!g.__p30){ g.__p30 = 1; T.menPast30++; } }
           if((g.pfame||0) < 180) T.wantShortFame++;
         }
+        /* ---- THE BAND THE WRONG NUMBER CREATED ----
+           The man's card carried one hardcoded sentence — "Rudis: 10 wins, 90 renown" — and the
+           gate is `pfame >= 180`. So there is a state where the only screen that states the terms
+           says he has met them and the button beside it stays dead: ten wins and renown between
+           90 and 179. Counted over active man-weeks and over men, because a player who reaches it
+           has done everything the game told him to and is given no reason. */
+        if((g.wins||0) >= 10 && (g.pfame||0) >= 90 && (g.pfame||0) < 180){
+          T.limbo++; if(!g.__limbo){ g.__limbo = 1; T.limboMen++; } }
+        if((g.wins||0) >= 10) T.tenPlus++;
       }
     }
     /* ---- THE TERMINAL RECORD OF EVERYONE THE HOUSE EVER HELD ----
@@ -177,6 +186,10 @@ console.log(`     freed at 30 or over (so grantRudis' extra term bit): ${T.freed
 console.log(`\n  the \`freedom\` ambition itself — ${T.everWanted} men ever carried it, ${T.wantFreedom} active man-weeks:`);
 console.log(`     MET ${T.metFreedom} · broken ${T.brokeFreedom} · despaired ${T.despairFreedom} · the rest still carrying it or gone with it`);
 console.log(`     what became of the men who wanted it: ${Object.entries(T.wantFate).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k} ${v}`).join(" · ")}`);
+console.log(`\n  THE BAND THE CARD'S OWN SENTENCE CREATED — ten wins and renown between 90 (what the card said)`);
+console.log(`  and 180 (what the gate wants): ${T.limbo} active man-weeks across ${T.limboMen} men.`);
+console.log(`     against ${T.tenPlus} man-weeks at ten wins or more in total — ${pc(T.limbo,T.tenPlus)} of every`);
+console.log(`     man-week a ten-win man ever spends is spent inside it, told he qualifies and refused.`);
 console.log(`\n  THE NUMBER HE ASKED FOR — active man-weeks carrying \`freedom\`, by how many wins short:`);
 for(let i=10;i>=0;i--){ const n=T.wantAt[i]||0; if(!n && i!==0) continue;
   console.log(`     ${i===10?"10+":String(i).padStart(2)} wins short ${String(n).padStart(6)}  ${pc(n,T.wantFreedom).padStart(6)}  ${"#".repeat(Math.round(n/Math.max(1,T.wantFreedom)*90))}`); }

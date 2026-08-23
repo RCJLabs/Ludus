@@ -5221,7 +5221,28 @@ function offerDoctore(d, g, kind){
 const potentialWord = (p,g)=> p<50?"a modest ceiling": p<70?`promise in ${PR(g).him}`: p<85?"exceptional promise":"a fire the arena has not yet seen";
 const demeanor = dv=> dv<25?"Compliant": dv<45?"Watchful": dv<65?"Restless": dv<85?"Defiant":"A storm barely chained";
 const unrestWord = u=> u<25?"Docile": u<45?"Restless": u<65?"Simmering": u<80?"Mutinous":"On the edge of fire";
-const rudisEligible = g=> !isAuctor(g) && g.wins>=10 && g.pfame>=180;
+/* ---- THE THREE TERMS, NAMED, BECAUSE A SCREEN HAS TO BE ABLE TO COUNT THEM — #190 ----
+   His ask is *"catches you crossing the yard and asks for a number. Not a speech and not a
+   promise — a number. How many more."* The game holds that number and answered it nowhere:
+   `SECT.wants` printed his line and a state, the agenda row fires only once he is ALREADY
+   eligible, and the `rudis` feat's `near` counts men who have earned it rather than men
+   approaching it. Measured over 12 houses x 420 weeks on two seeds, of the active man-weeks spent
+   carrying `freedom`, 72.8% were ten or more wins short — and 40.5% of them, across a third of the
+   men who ever carried it, were spent by a man ALREADY PAST THIRTY, holding an ambition whose own
+   written line names a door that had shut.
+   The literals were inline in three places and a fourth wanted them, which is how a screen and a
+   gate drift apart. They are named once and read everywhere, `ambPool`'s rule from #189. */
+const RUDIS_WINS = 10, RUDIS_FAME = 180, RUDIS_AGE = 30;
+const rudisEligible = g=> !isAuctor(g) && g.wins>=RUDIS_WINS && g.pfame>=RUDIS_FAME;
+/* what stands between him and the thing he asked for, in his own units. Returns null when the
+   question does not apply, so a caller cannot render an answer to a question nobody asked. */
+function rudisStanding(g){
+  if(!g || isGone(g)) return null;
+  const wins = Math.max(0, RUDIS_WINS - (g.wins||0));
+  const fame = Math.max(0, RUDIS_FAME - (g.pfame||0));
+  return { wins, fame, auctor: isAuctor(g), late: (g.age||0) >= RUDIS_AGE,
+           clear: !wins && !fame && !isAuctor(g) };
+}
 const fullName = g=> g.nick? `${g.name}, ${g.nick}` : g.name;
 
 /* ---- WHAT THE HOUSE REMEMBERS ----
@@ -17575,7 +17596,7 @@ function grantRudis(d, gid){
     chron(d, "The fire goes out of the cells — the man they would have followed walks free, and hope does what the whip could not.", "good");
   }
   addRep(d, "mercy", 16);
-  if(g.ambition && g.ambition.kind==="freedom" && g.age<30) ambitionMet(d, g);
+  if(g.ambition && g.ambition.kind==="freedom" && g.age<RUDIS_AGE) ambitionMet(d, g);
   kinReact(d, gid, "brother", 14, -8);
   dropTies(d, gid);
   chron(d, `${fullName(g)} receives the rudis before a roaring crowd — a free man. Every man in your ludus watches him take it.`, "good");
@@ -19657,6 +19678,29 @@ const SECT = {
           broken:  ["blood","You did the one thing. He has stopped expecting anything."],
         }[st] || ["dim",""];
         return <div className={line[0]} style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>{line[1]}</div>;
+      })()}
+      {/* THE NUMBER HE ASKED FOR — #190. See the note over `rudisStanding`. */}
+      {(()=>{ const a = selG.ambition;
+        if(!a || a.kind !== "freedom" || a.met || a.broken) return null;
+        const st = rudisStanding(selG); if(!st) return null;
+        const bits = [];
+        if(st.wins) bits.push(`${st.wins} more win${st.wins===1?"":"s"}`);
+        if(st.fame) bits.push(`${st.fame} more renown of his own`);
+        if(st.auctor) bits.push(`an oath that has to run out first`);
+        return (
+          <div style={{marginTop:6,paddingTop:5,borderTop:"1px solid var(--line-3)"}}>
+            <div className="dim" style={{fontSize:"var(--fs-sm)",textTransform:"uppercase",letterSpacing:".06em"}}>What stands between him and it</div>
+            <div style={{fontSize:"var(--fs-md)",marginTop:2,color: st.clear ? "var(--laurel)" : "var(--ink-2)"}}>
+              {st.clear ? `Nothing. He has earned it — ${RUDIS_WINS} wins and a name in the town — and it costs ${rudisCost(S, selG)}d to write.`
+                        : bits.join(" · ")}
+            </div>
+            {st.late && (
+              <div className="blood" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>
+                He is {selG.age}. He asked for it before he was {RUDIS_AGE}, and that part of it is not coming back.
+              </div>
+            )}
+          </div>
+        );
       })()}
     </Sect>
     ); },
@@ -25453,7 +25497,22 @@ export default function App(){
                 ? <button className="btn" style={{borderColor:"var(--gold-line)",color:"var(--ink-hi)"}} onClick={()=>freeG(selG.id)}>Grant the rudis</button>
                 : retireEligible(selG)
                 ? <button className="btn" onClick={()=>retire(selG.id)}>Release him</button>
-                : <button className="btn btn-ghost" disabled>Rudis: 10 wins, 90 renown</button>}
+                /* ---- THE ONE PLACE THE GAME STATED THE TERMS, AND IT STATED THEM WRONG — #190 ----
+                   This read `Rudis: 10 wins, 90 renown` as a hardcoded string. The gate is
+                   `pfame >= RUDIS_FAME`, which is 180: the only line in the game that tells a
+                   player what the wooden sword costs a man named HALF the renown it actually
+                   takes, so a house that got a man to ten wins and ninety renown found the button
+                   still dead and no screen willing to say why. It was also the same sentence for
+                   every man on the roster — the terms, not the distance — while the ambition that
+                   asks for it asks for *"a number. How many more."* Both halves come off
+                   `rudisStanding` now, which reads the named constants the gate itself reads. */
+                : (()=>{ const st = rudisStanding(selG) || { wins:RUDIS_WINS, fame:RUDIS_FAME };
+                    const bits = [];
+                    if(st.wins) bits.push(`${st.wins} more win${st.wins===1?"":"s"}`);
+                    if(st.fame) bits.push(`${st.fame} more renown`);
+                    return <button className="btn btn-ghost" disabled>
+                      {bits.length ? `Rudis: ${bits.join(", ")}` : "Rudis: earned"}</button>;
+                  })()}
             </div>
           </div>
         </div>
@@ -27627,6 +27686,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     activeG, defaultKit, kitMods, statCap, fullName, yearOf, YEAR_WEEKS, rudisEligible,
     /* the price of freedom, and whether the house can meet it — see the note over grantRudis */
     rudisCost, canAffordRudis, RUDIS_TAX, gladValue,
+    /* the three terms named, and what stands between a man and the thing he asked for — #190 */
+    RUDIS_WINS, RUDIS_FAME, RUDIS_AGE, rudisStanding,
   };
   /* ---- WHAT THE CHECKS NEVER REACH ----
      Every function on the handle is wrapped in a counter. It costs a shipping build
