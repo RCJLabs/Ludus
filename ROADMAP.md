@@ -1644,7 +1644,7 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 **Shipped and verified: v3.105.0 → v3.115.0, eleven releases, 87/87 green, all on `main`.**
 The detail of each is at the foot of this file; this is what a new session needs in one place.
 
-**AND THEN THE AUDIT, at the foot of this file: ten items, #186-#195. #195 shipped in v3.116.0 and #192 in v3.117.0; the other eight are unassigned.** Read that
+**AND THEN THE AUDIT, at the foot of this file: ten items, #186-#195. #195 shipped in v3.116.0, #192 in v3.117.0 and #194 in v3.118.0; the other seven are unassigned.** Read that
 section before this one if you are picking work. Its short version: the five leads the last session
 left are all answered, and **the largest single finding is that `asks`'s silent list was mostly the
 probe's own** — it diffed five channels and the game speaks in eight, so four of its five silences
@@ -4460,6 +4460,62 @@ about a quarter and it is the cost of this repair**; `MISSIO_MAN` is one line to
 wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
+
+### v3.118.0 — #194: the week's orders are put down where they are spent, not on one exit of two
+
+Five functions send a man out — `fightOffer`, `fightPit`, `meleeGo`, `huntOffer`, `fightPair` — and
+every one of them ends **twice**: once where the bout runs to a verdict, and once where it stops at
+the balance and is held for a word from the box. The two exits cleared different things.
+
+    if(res.crux){ setHeld(…); setFight(res); setFGid(null); setStake(0); setAgainst(false); return; }
+    setS(d); setFight(res); setFGid(null); setStake(0); setAgainst(false);
+      setPitPick(null); setPlan("none"); setEntrance("none");
+
+`fightOffer`'s verdict exit put down the pit opponent, the plan and the entrance; **its crux exit
+put down none of the three and returned early**, `speak` cleared nothing on the way back, and
+`goPick` cleared the plan and the melee plan but not the entrance. So the entrance had exactly ONE
+path that ever put it down — and **55–61% of bouts take the other one**. Two more the item had not
+named: `fightPit` never put down its own pit opponent on either exit, and `meleeGo` never put down
+the melee plan on either.
+
+Driven on the real screen, two seeds, the same bouts before and after:
+
+| | before | after |
+|---|---|---|
+| bouts that stopped at the balance, chip still lit | **8 of 8** | **0 of 8** |
+| bouts that ended outright, chip still lit | 0 of 6 | 0 of 6 |
+
+The crux/clean pattern comes back attempt-for-attempt identical either side, which is what makes it
+a paired measurement rather than two runs that happened to differ.
+
+**The orders are spent the moment they reach the engine.** `offer.entrance` is written before
+`doFight` and the held `pending` carries it, so nothing in flight reads any of these again. One
+helper, `spendOrders()`, puts down all six — pit opponent, plan, melee plan, entrance, stake,
+against — and every sender calls it **ahead of the branch**, so the two exits are clean by
+construction. **`tactic` is deliberately not in it**: it is the one choice on that panel that reads
+as a standing preference rather than an order for this afternoon, and no exit has ever cleared it.
+`fGid` and `pairSel` are not orders either — they are who is going out, and every exit already puts
+them down.
+
+What it costs a player who never noticed: the entrance charges `BREATHER_BACK` of the man's wind
+and pays a point of momentum, so a silently repeated `showman` is not purely a tax. **A silently
+repeated PLAN is** — #170 priced a plan that reads the man wrong at **−7.5 points of win rate** —
+and it only bites when the next offer is also `watched`, which is why this is a correctness fix
+rather than a balance one. `open`'s 60-house signature is byte-identical, as it must be: the change
+is React state and the probe is headless.
+
+**`orders` is the 90th check, and it is STATIC on purpose.** The fault was not one wrong value, it
+was five functions each deciding for themselves what a finished bout puts down, so the guard is the
+shape: `spendOrders` is the only thing that may put an order down apart from the chip the player
+presses and the two handlers that mean *I have changed my mind about this bout*; every sender calls
+it before branching on `res.crux`; `speak` must NOT, because it resumes a bout whose orders were
+already spent; and the helper must clear all six, because an edit that quietly drops `setEntrance`
+out of it puts #194 back with no other symptom. The set of functions branching on `res.crux` is
+derived and compared against the six that are classified, so a seventh added later goes red rather
+than being accepted in silence. Negative-tested four ways — `spendOrders` removed from a sender,
+`setEntrance` dropped from the helper, a stray setter put back on an exit, and `spendOrders` added
+to `speak` — each red with the right sentence.
+
 
 ### v3.117.0 — #192: Capua votes whether or not you are in it, and the countdown was a week out anyway
 
@@ -13787,7 +13843,7 @@ the second half of the art pass the queue's fourth lead asked for; the fighter f
 unmeasured. *Falsifies if the two missing gradients would be indistinguishable from `.arena` anyway
 — `.v-amphi` and `.arena` already nearly are, which is a separate and smaller question.*
 
-### #194 — the arena panel has three exits and they clear different things.
+### #194 — CLOSED in v3.118.0. The arena panel had three exits and they cleared different things.
 `fightOffer` at src/ludus.jsx:21646:
 
     if(res.crux){ setHeld(…); setFight(res); setFGid(null); setStake(0); setAgainst(false); return; }
@@ -13809,6 +13865,13 @@ The entrance costs `BREATHER_BACK` of the man's wind and pays +1 momentum, so a 
 the man wrong at **−7.5 points of win rate**. *Falsifies if the plan only bites when the next offer
 is also `watched` — `doFight` is handed `offer.watched ? plan : "none"` — which narrows the cost
 without touching the inconsistency.*
+**Fixed in v3.118.0, and there were two more than the item named**: `fightPit` never put down its
+own pit opponent on either exit, and `meleeGo` never put down the melee plan on either. One helper,
+`spendOrders()`, called by all five senders ahead of the branch. Chip still lit after a bout held
+at the balance: **8 of 8 → 0 of 8**, same seeds, same bouts. `orders` is the 90th check and it is
+static — the guard is the shape, not the symptom. The falsifier stands and is why this is written
+up as correctness rather than balance: the stale plan only bites when the next offer is `watched`
+too.
 
 ### #195 — CLOSED in v3.116.0. Two men in one house could be given the same name by the crowd.
 `pick(NICKS)` appears at fourteen sites and not one of them looks at who already holds one.
@@ -14696,4 +14759,4 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.117.0 — #195 and #192 closed; eight of the audit's ten items still open*
+*Last updated: v3.118.0 — #195, #192 and #194 closed; seven of the audit's ten items still open*
