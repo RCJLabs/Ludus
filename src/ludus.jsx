@@ -190,7 +190,13 @@ const CSS = `
 .lr[data-place]:not([data-place="ludus"]) .modal{border-color:var(--line-4)}
 /* the steward's own hand, kept to the places a man actually writes by hand: what the doctore
    says, and the notes in the margin. Body text stays set in the book face -- a script at
-   13px on a phone is a tax paid on every line, and this game is mostly lines. */
+   13px on a phone is a tax paid on every line, and this game is mostly lines.
+   THE SECOND HALF OF THAT SENTENCE WAS NEVER WIRED. Embedding the faces (v3.107.0) turned up
+   that .hand was on exactly two elements -- the motto and the doctore's word on the week --
+   while IM Fell English is 54KB, 46% of the embedded type. The margin notes it names are the
+   three voices on a candidate's row, which the row itself already calls out: the rumour, the
+   seller's patter and the doctore's opinion. They carry it now. Each sets italic through this
+   rule rather than inline, so the class is the single place the hand is decided. */
 .hand{font-family:'IM Fell English','Cormorant Garamond',Georgia,serif;font-style:italic}
 
 /* ---- OPENING THE BOOK ----
@@ -23711,10 +23717,10 @@ export default function App(){
               </summary>
               <div>
               {g.story && STORIES[g.story] && (
-                <div style={{fontSize:"var(--fs-base)",fontStyle:"italic",color:"var(--violet)",marginBottom:3}}>They say {PR(g).he} is {STORIES[g.story].line}.</div>
+                <div className="hand" style={{fontSize:"var(--fs-base)",color:"var(--violet)",marginBottom:3}}>They say {PR(g).he} is {STORIES[g.story].line}.</div>
               )}
                   {g.pitch && !g.scouted && (
-                    <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:3}}>{g.pitch}</div>
+                    <div className="dim hand" style={{fontSize:"var(--fs-base)",marginBottom:3}}>{g.pitch}</div>
                   )}
                   {/* what a great house comes down here for: somebody else's finished man */}
                   {g.soldOn && (
@@ -23723,7 +23729,7 @@ export default function App(){
                       <span className="dim"> There is very little left to teach a man of {g.age}; what you are buying is the years somebody else spent.</span>
                     </div>
                   )}
-                  <div style={{fontSize:"var(--fs-md)",fontStyle:"italic",color:g.legend?"var(--gold-hi)":"var(--ink-2)"}}>
+                  <div className="hand" style={{fontSize:"var(--fs-md)",color:g.legend?"var(--gold-hi)":"var(--ink-2)"}}>
                     {g.legend ? "There is something in this one's eyes the arena has not yet seen."
                      : lvl>=2 ? `Assessed: ${potentialWord(g.potential,g)}. At ${g.age}, ${ageWord(g.age,g)}.`
                      : lvl>=1 ? `Your doctore walks round ${PR(g).him} once. ${potentialWord(g.potential,g)}, he thinks. At ${g.age}, ${ageWord(g.age,g)}.`
@@ -23733,7 +23739,7 @@ export default function App(){
                       removed a second row of bars from this panel for drawing six stats twice;
                       the same rule retires the grid rather than letting it sit under the strip. */}
                   {lvl<2 && (
-                    <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>
+                    <div className="dim hand" style={{fontSize:"var(--fs-base)"}}>
                       {lvl>=1
                         ? (g.flaw ? `${FLAWS[g.flaw].hint} Your doctore would want a closer look.` : "Your doctore finds nothing to object to, which is not the same as a guarantee.")
                         : `Nobody here has looked at ${PR(g).him} properly. The numbers are the seller's.`}
@@ -25445,7 +25451,18 @@ export default function App(){
                   <div key={i} style={{marginBottom:6}}>
                     <button className="optrow" style={{width:"100%",textAlign:"left",padding:"10px 11px",
                         borderLeft:`3px solid ${URG[a.urgency].c}`}}
-                      onClick={()=>{ setReport(null); docable ? setDeskDoc(a) : goTo(a.dest || a.tab); }}>
+                      /* ---- THE LIST DOES NOT GO AWAY WHEN YOU READ ONE OF ITS PAPERS ----
+                         Driven on a house of fourteen played weeks: FOUR of five rows open a paper
+                         and one travels. Both branches used to close the sheet, so the common case
+                         — read a paper, put it down — dropped the whole morning's list and left you
+                         on whatever tab happened to be behind it. You were working a list and the
+                         list vanished under you.
+                         The paper already renders after the sheet at the same z, so it simply
+                         stacks: closing it reveals the list again, with no state to remember. The
+                         travelling branch still closes, because you are going to a room on purpose
+                         — and the report bar is docked on every tab, so that way back is one tap,
+                         which is why the travelling half was never the fault it looked like. */
+                      onClick={()=>{ if(docable) setDeskDoc(a); else { setReport(null); goTo(a.dest || a.tab); } }}>
                       <div className="flex items-center justify-between gap-2">
                         <span style={{fontSize:"var(--fs-md)",color:a.urgency===3?"var(--ink)":"var(--ink-2)",minWidth:0}}>{a.label}</span>
                         <span className="rowval dim" style={{fontSize:"var(--fs-sm)",whiteSpace:"nowrap"}}>{docable ? "open ›" : `${where} ›`}</span>
@@ -25531,7 +25548,7 @@ export default function App(){
             <div className="flex gap-2" style={{marginTop:12}}>
               {/* a document opened FROM the scene has no elsewhere to see — the scene is the house */}
               {!deskDoc.scene && <button className="btn btn-ghost" style={{flex:1,whiteSpace:"nowrap"}}
-                onClick={()=>{ const w = deskDoc.dest || deskDoc.tab; setDeskDoc(null); goTo(w); }}>See it in the house</button>}
+                onClick={()=>{ const w = deskDoc.dest || deskDoc.tab; setDeskDoc(null); setReport(null); goTo(w); }}>See it in the house</button>}
               <button className="btn" style={{flex:1}} onClick={()=>setDeskDoc(null)}>Put it down</button>
             </div>
           </div>

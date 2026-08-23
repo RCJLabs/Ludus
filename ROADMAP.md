@@ -13887,6 +13887,34 @@ motto is the house's own signature, but it is the first thing to cut if the payl
 And `✦` (U+2726) is in none of the three faces and never was, so it falls back per glyph exactly as
 before — subsetting regressed nothing.
 
+
+### The hand, wired to the second half of its own rule
+The stylesheet says where `.hand` belongs: *"the places a man actually writes by hand: what the
+doctore says, and the notes in the margin."* Embedding the faces turned up that only the first half
+was ever wired — `.hand` was on **two elements**, the motto and the doctore's word on the week,
+while IM Fell English is 54KB, **46% of the embedded type**.
+
+The margin notes are the three voices a candidate's row already names in its own comment — the
+rumour, the seller's patter, the doctore's opinion. They carry the hand now, and it went from 2
+elements to **16**, the block being where most of them live. Each sets italic through the class
+rather than inline, so the class is the single place the hand is decided. Nothing grew: the rows are
+folded on arrival, the market still reads 1,682px / 2.0 screens, and `surface` finds nothing under
+the type floor.
+
+### Return to the list — the travelling half was never the fault
+The item read *"a row's own deed leaves the sheet standing, the travelling half is open."* Driven on
+a played house of fourteen weeks, the split is the other way round: **four of five rows open a
+paper** and one travels. And both branches closed the sheet — so the **common** press, read a paper
+and put it down, dropped the whole morning's list and left the player on whatever tab was behind it.
+
+The paper already renders after the sheet at the same z-index, so it simply stacks: putting it down
+reveals the list, with no state to remember. The travelling branch still closes on purpose — you are
+going to a room — and the report bar is docked on every tab, so that way back was already **one
+tap**, which is why the half the note called open was not the one that needed work.
+
+`sheet` asserts it through the screen rather than the state, because the fault was never a wrong
+flag: it was that the thing a player was working disappeared.
+
 ---
 
-*Last updated: v3.107.0*
+*Last updated: v3.108.0*

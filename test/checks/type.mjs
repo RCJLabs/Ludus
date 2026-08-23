@@ -105,7 +105,29 @@ export async function run({ p, errors }){
     }
   }
 
-  /* ---- 4. and after all that, still nothing fetched ---- */
+  /* ---- 4. THE HAND HAS TO BE SOMEWHERE WORTH 54KB ----
+     IM Fell English is 46% of the embedded type and was on exactly TWO elements when the faces
+     went in — the motto and the doctore's word on the week — which is a lot of bytes for a face
+     nobody meets. The stylesheet's own rule says where it belongs: "what the doctore says, and
+     the notes in the margin", and the margin notes are the three voices a candidate's row already
+     names — the rumour, the seller's patter, the doctore's opinion. So the block is where the
+     hand has to show up, or the second half of that sentence has come unwired again. */
+  await tab(p, "market"); await p.waitForTimeout(340); await settle(p);
+  await p.evaluate(()=>document.querySelectorAll("details").forEach(d=>d.open = true));
+  await p.waitForTimeout(340);
+  const hands = await p.evaluate(()=>[...document.querySelectorAll(".hand")]
+    .filter(e=>(e.innerText||"").trim()).map(e=>(e.innerText||"").trim().slice(0,40)));
+  lines.push(`the hand on the block: ${hands.length} element${hands.length===1?"":"s"}${hands.length?` — e.g. "${hands[0]}"`:""}`);
+  if(hands.length < 4)
+    fails.push(`only ${hands.length} elements on the block are set in the hand — IM Fell English is 46% of the embedded type and the stylesheet says the margin notes carry it; the rumour, the patter and the doctore's read have come unwired`);
+  else {
+    const got = await painted(".hand");
+    const say = (got||[]).map(f=>`${f.familyName} x${f.glyphCount}`).join(", ");
+    if(!(got||[]).some(f=>/fell/i.test(f.familyName)))
+      fails.push(`the block's margin notes are drawn in ${say || "nothing"} rather than IM Fell — the hand is declared and not delivered`);
+  }
+
+  /* ---- 5. and after all that, still nothing fetched ---- */
   lines.push(`requests to the font hosts: ${reached.length ? reached.join(" · ") : "none — the faces came from the file"}`);
   if(reached.length)
     fails.push(`the page fetched ${reached.length} font resource(s) from Google — the offline shell cannot promise what the network is holding`);

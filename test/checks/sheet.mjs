@@ -167,6 +167,45 @@ export async function run({ p, errors }){
   if(sh2 && sh2.heads[0] !== "DUE")
     fails.push(`something is due and the sheet leads with "${sh2.heads[0]||"nothing"}" — due must lead`);
 
+  /* ---- AND THE LIST SURVIVES BEING READ FROM ----
+     Driven on a played house: FOUR of five rows open a paper rather than travelling, and both
+     branches used to close the sheet — so the common case, read a paper and put it down, dropped
+     the whole morning's list and left the player on whatever tab was behind it. The paper stacks
+     over the sheet now, so putting it down reveals the list. The travelling branch still closes on
+     purpose: you are going to a room, and the report bar is docked on every tab, one tap back.
+
+     This is asserted through the SCREEN rather than the state, because the fault was never that a
+     flag was wrong — it was that the thing a player was working disappeared. */
+  await openReport(p);
+  const kinds = await p.evaluate(`(()=>{
+    const w = [...document.querySelectorAll(".modalwrap")]
+      .sort((a,b)=>(+getComputedStyle(b).zIndex||50)-(+getComputedStyle(a).zIndex||50))[0];
+    if(!w) return null;
+    const rows = [...w.querySelectorAll("button.optrow")].slice(1);
+    return { papers: rows.filter(b=>/open \u203a/.test(b.innerText||"")).length, all: rows.length };
+  })()`);
+  lines.push(`rows that open a paper: ${kinds ? kinds.papers : "?"} of ${kinds ? kinds.all : "?"}`);
+  if(!kinds || !kinds.papers){
+    fails.push("no row on the sheet opens a paper — this fixture cannot exercise the half of the sheet that four rows in five use");
+  } else {
+    const opened = await p.evaluate(`(()=>{
+      const w = [...document.querySelectorAll(".modalwrap")]
+        .sort((a,b)=>(+getComputedStyle(b).zIndex||50)-(+getComputedStyle(a).zIndex||50))[0];
+      const b = [...w.querySelectorAll("button.optrow")].slice(1).find(x=>/open \u203a/.test(x.innerText||""));
+      if(!b) return null; const t=(b.innerText||"").split("\\n")[0].trim().slice(0,34); b.click(); return t;
+    })()`);
+    await p.waitForTimeout(460);
+    const onTop = await p.evaluate(()=>{ const w=[...document.querySelectorAll(".modalwrap")].pop();
+      return w ? (w.innerText||"").trim().split("\n")[0].slice(0,34) : null; });
+    await p.keyboard.press("Escape"); await p.waitForTimeout(460);
+    const back = await p.evaluate(()=>[...document.querySelectorAll(".modalwrap")]
+      .some(w=>/week that was/i.test(w.innerText||"")));
+    lines.push(`opened "${opened}" (paper reads "${onTop}") · put it down → the list is ${back ? "still there" : "GONE"}`);
+    if(!opened) fails.push("a paper row on the sheet could not be pressed");
+    else if(!back)
+      fails.push("putting down a paper opened from the morning report leaves no list behind it — four rows in five open a paper, so this drops the morning's work on the commonest press there is");
+  }
+
   if(errors.length) fails.push(`${errors.length} page errors`);
   return { pass: fails.length === 0, why: fails.slice(0,3).join("; ") || null, lines };
 }
