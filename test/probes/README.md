@@ -562,6 +562,12 @@ and the nickname clash counted men who had died two hundred weeks ago until it w
 and "still on the books". It carries a `mercy` arm — answer the refusal event with its third choice,
 "Give him the thing he wants" — because that is the ONLY door three of the seven ambitions have, and
 "never met" is a statement about the reference player until an arm presses it.
+**And #195's design was settled here rather than argued.** Before writing `freshNick` it counted
+the PRESSURE on the fourteen names week by week: 10 to 12 are worn at any moment across your yard,
+the three rival rosters, the circuit, the block and the pit, so 99.8% of weeks already carry a
+duplicate somewhere and a rule refusing every worn name would empty the pool. It prints the fix's
+own pool separately, off the game's `nicksInPlay` rather than a copy of it, which is the number
+that says whether the scope can ever run dry.
 
 **`fresh.mjs`** — the week's list with its AGE on it. `agendaTop` shows a row because it is urgent
 (>=3) or new (age <= 3), so two faults live at the two ends of one scale: a row whose identity

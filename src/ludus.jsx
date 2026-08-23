@@ -572,6 +572,44 @@ const TRAITS = {
 };
 
 const NICKS = ["the Beast of Capua","the Shadow","Doom of the Sands","the Fury","the Mountain","the Serpent","Bringer of Rain","the Butcher","Slayer of Giants","the Ghost","the Lion","Breaker of Men","the Unchained","the Storm"];
+/* ---- FOURTEEN NAMES, AND UNTIL v3.116.0 NOT ONE OF THE FOURTEEN DRAWS LOOKED ----
+   `pick(NICKS)` was written at fourteen sites and none of them asked who was already wearing the
+   name. Measured over 120 houses (#195): **567 of your men were named by the crowd, 89 took a name
+   the house had used before and 8 took one a man STILL ON THE BOOKS was wearing** — about one
+   house in fifteen ends up with two living men called the Serpent.
+
+   THE FIX IS SCOPED, BECAUSE FOURTEEN NAMES CANNOT COVER THE WORLD. Counted week by week over
+   2,780 house-weeks, 10 of the fourteen are worn at any moment (p90 13, max 14) across your yard,
+   the three rival rosters, the circuit, the block and the pit — so 99.8% of weeks already carry a
+   duplicate SOMEWHERE, and refusing every worn name would empty the pool and start handing out
+   repeats again by a longer road. Two men in different towns called the Lion is how a nickname
+   works. Two men in one yard is not, and neither is two men on one card, which is the only place
+   the game prints both names in one breath.
+
+   So this refuses exactly what a player sees together: every nick worn by a man ON YOUR BOOKS and
+   every nick ON THIS WEEK'S CARD. Those two together average 1.2 wearers a week against fourteen
+   names, so the pool is effectively never empty — and where it is, the old behaviour stands,
+   because a repeated name is better than no name.
+
+   `pick` spends one R() whatever the array length, so a filtered draw costs exactly what the old
+   one did and no roll downstream of it moves. */
+function nicksInPlay(d, more){
+  const taken = new Set();
+  for(const n of (more||[])) if(n) taken.add(n);
+  if(!d) return taken;
+  for(const g of (d.gladiators||[])) if(g && g.nick && !isGone(g)) taken.add(g.nick);
+  for(const o of ((d.games && d.games.offers) || []))
+    for(const x of [o.opp, ...(o.opps||[])]) if(x && x.nick) taken.add(x.nick);
+  return taken;
+}
+/* `more` is a list of names the caller can see and the state cannot yet — `makeGames` builds its
+   card in a local array and only hangs it on `d.games` at the end, so the offers already added
+   this week are invisible to the state and are passed in by hand. */
+function freshNick(d, more){
+  const taken = nicksInPlay(d, more);
+  const free = NICKS.filter(n => !taken.has(n));
+  return pick(free.length ? free : NICKS);
+}
 /* ---- THE ANNALS ----
    The chronicle keeps forty lines and then forgets. This does not. One entry per
    man who ever wore your colours, opened when he arrives and closed when he goes,
@@ -5122,7 +5160,9 @@ function genGladiator(d, quality){
   return g;
 }
 
-function genOpponent(tier, q){
+/* `d` is optional and trailing: every caller outside this file — the checks on the handle —
+   passes two arguments and gets exactly the old behaviour, an unfiltered draw. */
+function genOpponent(tier, q, d){
   const quality = (q!==undefined? q : [34,50,66,82][tier] + ri(-6,10));
   const origin = pick(Object.keys(ORIGINS));
   const cls = pick(Object.keys(CLASSES));
@@ -5138,7 +5178,7 @@ function genOpponent(tier, q){
     pfame: rnd(clamp((quality - 34) * 1.15, 0, 108) * (0.45 + R()*0.85)), kit:kitFor(cls, tier) };
   for(const s of STATS) o[s] = clamp(qStat(quality) + ri(-8,8) + (ORIGINS[origin].mod[s]||0)*2, 8, 99);
   for(const k of CLASSES[cls].key) o[k] = clamp(o[k]+5, 8, 99);
-  if(tier>=2) o.nick = pick(NICKS);
+  if(tier>=2) o.nick = freshNick(d);
   return o;
 }
 
@@ -5295,7 +5335,7 @@ function soldOnMan(d){
   g.potential = clamp(rnd(std) - ri(6, 26), 20, 92);
   g.wins = ri(11, 38); g.losses = ri(3, 14);
   g.pfame = ri(28, 88); g.fans = ri(10, 60);
-  g.nick = g.nick || pick(NICKS);
+  g.nick = g.nick || freshNick(d);
   g.heart = Math.max(g.heart||50, ri(52, 92));
   for(let i=0, n=ri(1,4); i<n; i++) addScar(g, pick(TARGETS)[0], R()<0.35);
   const gone = (d.rivals||[]).filter(h=>h.retired).map(h=>h.name);
@@ -5498,6 +5538,8 @@ function makeGames(d){
   if(!F || F.rest){ d.games = null; return; }
   const festival = F.name;
   const offers = [];
+  /* the names already on the card this week — see the note over `freshNick` */
+  const onCard = () => offers.flatMap(o=>[o.opp, ...(o.opps||[])]).filter(x=>x && x.nick).map(x=>x.nick);
   const add = (tier0, cap)=>{
     const tier = clamp(tier0 + (F.tier||0), 0, cap == null ? 3 : cap);
     /* the opponent generators only know four rungs — pickRivalOpp's bands and
@@ -5522,11 +5564,11 @@ function makeGames(d){
       const avg0 = f => STATS.reduce((n,k)=>n+(f[k]||0),0)/6;
       const mine = activeG(d).reduce((m,g)=>Math.max(m, avg0(g)), 0);
       if(mine - avg0(pr.opp) > 6){
-        const imp = genOpponent(3, qForStat(mine - 2));
+        const imp = genOpponent(3, qForStat(mine - 2), d);
         imp.wins = (imp.wins||0) + ri(8, 18);
         imp.pfame = Math.max(imp.pfame||0, ri(60, 100));
         imp.heart = Math.max(imp.heart||50, ri(65, 92));
-        imp.nick = imp.nick || pick(NICKS);
+        imp.nick = imp.nick || freshNick(d, onCard());
         imp.house = pick(["Puteoli","Neapolis","Ravenna","Praeneste","the imperial school at Capua"]);
         imp.imported = true;
         pr = { opp:imp, ref:null, rematch:false, grudgeM:false };
@@ -5537,7 +5579,7 @@ function makeGames(d){
          better not be the same man. Take the hardest of several looks at the bay. */
       const avg = f => STATS.reduce((n,k)=>n+(f[k]||0),0)/6;
       for(let i=0;i<3;i++){ const alt = pickRivalOpp(d, ot); if(avg(alt.opp) > avg(pr.opp)) pr = alt; }
-      if(!pr.opp.nick) pr.opp.nick = pick(NICKS);              /* nobody unnamed is on that bill */
+      if(!pr.opp.nick) pr.opp.nick = freshNick(d, onCard());              /* nobody unnamed is on that bill */
     }
     offers.push({ id:d.nextId++, tier, festival, opp:pr.opp, oppRef:pr.ref, rematch:pr.rematch, grudgeM:pr.grudgeM,
       stakes:sine?"sine":"standard",
@@ -5550,7 +5592,7 @@ function makeGames(d){
     const p1 = pickRivalOpp(d, ot);
     let p2 = pickRivalOpp(d, ot), guard = 0;
     while(guard++<6 && p2.ref && p1.ref && p2.ref.fid===p1.ref.fid) p2 = pickRivalOpp(d, ot);
-    if(p2.ref && p1.ref && p2.ref.fid===p1.ref.fid){ p2 = { opp:genOpponent(ot), ref:null }; }
+    if(p2.ref && p1.ref && p2.ref.fid===p1.ref.fid){ p2 = { opp:genOpponent(ot, undefined, d), ref:null }; }
     /* ---- A PAIR COULD NEVER BE SINE MISSIONE, AND simulatePair HAS THE WHOLE BRANCH ----
        It reads `stakes==="sine"` twice — the intro ("No appeals will be heard from anyone on this
        sand") and a death path that kills the man where a standard bout would put the question to the
@@ -5862,7 +5904,7 @@ function makeRivalFighter(d, house, quality){
     potential: clamp(quality+ri(-10,15), 20, 95) };
   for(const s of STATS) f[s] = clamp(qStat(quality) + ri(-8,8) + (ORIGINS[origin].mod[s]||0)*2, 8, 99);
   for(const k of CLASSES[cls].key) f[k] = clamp(f[k]+5, 8, 99);
-  if(f.wins>=5) f.nick = pick(NICKS);
+  if(f.wins>=5) f.nick = freshNick(d);
   if(R()<0.10) f.kills = ri(1,2);
   return f;
 }
@@ -5937,7 +5979,7 @@ const RIVAL_MOVES = {
   won: { weight:()=>1.6, when:(d,h)=>h.fighters.length>0,
     run(d,h){ const L=lanistaOf(h.name); const f = pick(h.fighters);
       f.wins++; f.pfame += ri(4,9); h.fame += ri(5,11);
-      if(!f.nick && f.wins>=5) f.nick = pick(NICKS);
+      if(!f.nick && f.wins>=5) f.nick = freshNick(d);
       { const town = pick(["Nola","Cales","Suessa","Atella","Teanum"]);
         return pick([
           `${f.name} of House ${h.name} took a card at ${town} and came back with it. ${L.name} has made sure Capua knows.`,
@@ -6044,7 +6086,7 @@ function rivalWeekly(d){
       const f = pick(fit);
       if(R()<0.56){
         f.wins++; f.pfame += ri(3,8); h.fame += ri(2,5);
-        if(!f.nick && f.wins>=5) f.nick = pick(NICKS);
+        if(!f.nick && f.wins>=5) f.nick = freshNick(d);
         if(R()<0.10) f.kills++;
       } else {
         f.losses++; h.fame += 1;
@@ -7636,7 +7678,7 @@ function circuitQuality(d, tier){
 }
 function makeCircuitMan(d, tier){
   const t = tier==null ? ri(0,2) : tier;
-  const o = genOpponent(t, circuitQuality(d, t) + ri(-6,10));
+  const o = genOpponent(t, circuitQuality(d, t) + ri(-6,10), d);
   o.id = d.nextId++;
   o.house = pick(SMALL_HOUSES);
   o.wins = ri(0,6); o.losses = ri(0,5); o.kills = ri(0,2);
@@ -7741,7 +7783,7 @@ function circuitRecord(d, f, g, youWon, died){
   const m = live.met[g.id] = live.met[g.id] || { w:0, l:0 };
   if(youWon){ live.losses++; live.lostToYou=(live.lostToYou||0)+1; m.l++; }
   else { live.wins++; live.beatYou=(live.beatYou||0)+1; m.w++; live.pfame=(live.pfame||0)+ri(3,7);
-    if(!live.nick && live.wins>=6) live.nick = pick(NICKS); }
+    if(!live.nick && live.wins>=6) live.nick = freshNick(d); }
   meetRecord(d, g, live, { fid:live.id, house:live.house }, youWon, !!died, false);
   if(died){ const i=(d.circuit||[]).indexOf(live); if(i>=0) d.circuit[i] = makeCircuitMan(d, CIRCUIT_MIX[i % CIRCUIT_MIX.length]); }
 }
@@ -7750,7 +7792,7 @@ function pickAnyOpp(d, tier){
   const bands = [[22,46],[38,60],[54,76],[66,99]];
   const avg = f => STATS.reduce((s,k)=>s+f[k],0)/6;
   const pool = (d.circuit||[]).filter(f=>{ const a=avg(f); return a>=bands[tier][0]-12 && a<=bands[tier][1]+12; });
-  if(!pool.length) return { opp: genOpponent(editorBought(d) ? Math.max(0, tier-1) : tier), ref:null, known:false };
+  if(!pool.length) return { opp: genOpponent(editorBought(d) ? Math.max(0, tier-1) : tier, undefined, d), ref:null, known:false };
   /* somebody with a score to settle turns up more often */
   const grudged = pool.filter(f=>f.beatYou>0 || f.lostToYou>0);
   const f = (grudged.length && R()<0.55) ? pick(grudged) : pick(pool);
@@ -8140,7 +8182,7 @@ function newGameState(name, scen, seed, pitch){
     else { const w = defaultKit(g.cls).weapon;
       d.gear[w] = (d.gear[w]||0)+1;
       g.kit = bareKit(g.cls); }
-    if(S.legendFirst && i===0){ g.legend = true; g.nick = pick(NICKS); g.wins = ri(6,10); g.pfame = ri(55,80);
+    if(S.legendFirst && i===0){ g.legend = true; g.nick = freshNick(d); g.wins = ri(6,10); g.pfame = ri(55,80);
       if(!g.traits.includes("Defiant")) g.traits.push("Defiant"); g.defiance = clamp(g.defiance+20,0,100); }
     if(S.old){ g.age = ri(30,34); g.potential = clamp(g.potential-18, 20, 70);
       for(const k of ["tec","dis"]) g[k] = clamp(g[k]+6, 8, 95);
@@ -10567,7 +10609,7 @@ function makeCityGames(d){
     if(P.grudge >= 45 && R() < 0.55){
       const q = clamp(52 + P.grudge*0.35 + knownIn(d,key)*0.15, 45, 92);
       const champ = makeRivalFighter(d, P.house, q);
-      champ.nick = champ.nick || pick(NICKS);
+      champ.nick = champ.nick || freshNick(d);
       offers.push({ id:d.nextId++, tier:Math.max(tier,1), festival:`the games at ${C.name}`, city:key,
         opp:champ, oppRef:null, rematch:false, grudgeM:true, localGrudge:true, homeHouse:P.house,
         stakes: C.taste==="blood" && R()<0.4 ? "sine" : "standard",
@@ -12969,7 +13011,7 @@ function makeParagon(d){
   g.wins = ri(18, 34); g.losses = ri(2, 7); g.kills = ri(3, 11);
   g.pfame = ri(180, 320);
   g.age = ri(26, 31);
-  g.nick = pick(NICKS);
+  g.nick = freshNick(d);
   g.flaw = null; g.scouted = true;
   g.defiance = clamp(g.defiance + ri(12, 24), 0, 100);   // the best man you will ever own
   g.regard = ri(24, 40);                                  // and he owes you nothing yet
@@ -13415,7 +13457,7 @@ function makeImperialBout(d){
      bill was still drawing 90, and the highest night in the game must not be the
      softest. Rome asks more again of a house it has already had. */
   const floor = Math.min(104, 100 + romeRuns(d));
-  const opp = genOpponent(3, hard ? 106 : ri(floor, floor + 3));
+  const opp = genOpponent(3, hard ? 106 : ri(floor, floor + 3), d);
   /* THE SUMMIT HAS TO BE THE SUMMIT.
      With the ceiling raised, a top card in Capua drew a 92-mean man from the rival
      pool while the imperial bill was still drawing 87 — so the highest night in the
@@ -13429,7 +13471,7 @@ function makeImperialBout(d){
   opp.pfame = Math.max(opp.pfame||0, ri(70, 110));
   if(hard){ d.flags.romeHardCard = 0; opp.wins = (opp.wins||0) + ri(4,9); }
   opp.kit = kitFor(opp.cls, 3);
-  opp.nick = opp.nick || pick(NICKS);
+  opp.nick = opp.nick || freshNick(d);
   const sine = R() < romeSineOdds(d);
   return { id:d.nextId++, tier:4, festival:"the imperial games", imperial:true,
     opp, oppRef:null, rematch:false, grudgeM:false, stakes: sine ? "sine" : "standard",
@@ -15322,7 +15364,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
     kinReact(d, gid, "brother", 4, -1);
     kinReact(d, gid, "rival", -3, 1);
     if(g.ambition && g.ambition.kind==="champion" && offer.tier>=2 && d.games && d.games.fest==="romani") ambitionMet(d, g);
-    if(!g.nick && g.wins>=5){ g.nick = pick(NICKS);
+    if(!g.nick && g.wins>=5){ g.nick = freshNick(d);
       if(g.ambition && g.ambition.kind==="nickname") ambitionMet(d, g);
       sum.push(`The crowd has given ${PR(g).him} a name: ${g.name}, ${g.nick}!`); }
   } else if(res.forfeit){
@@ -15398,7 +15440,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
         }
       } else {
         f.wins++; f.beatYou = (f.beatYou||0)+1; f.pfame += ri(4,9); h.fame += 4;
-        if(!f.nick && f.wins>=5) f.nick = pick(NICKS);
+        if(!f.nick && f.wins>=5) f.nick = freshNick(d);
         if(res.aDies){ f.kills++; f.killedYours = (f.killedYours||0)+1;
           sum.push(`He has taken one of yours now. The cells will hear the name before you get home.`); }
         nemesisCheck(d, h, f);
@@ -27318,7 +27360,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* every name and nick a man can be given. A check that wants the longest line the game
        can draw has to read the tables — `room` first sampled 300 generated men for it and got
        a different longest name each run, which is a probe deciding its own bar by chance. */
-    ORIGINS, NICKS, SMALL_HOUSES,
+    ORIGINS, NICKS, SMALL_HOUSES, freshNick, nicksInPlay,
     /* what a rival house's anger has to reach before it does anything */
     GRUDGE_SABOTAGE, GRUDGE_BRIBE, GRUDGE_THUGS,
     /* ---- AND WHAT WARMS BETWEEN TWO LANISTAE, which is the other half of a rival ----

@@ -131,6 +131,13 @@ const out = await inside(p, ([H, W, SEED, ARM, AMB, TRAITS, INJ, NICKS]) => {
            freed:0, freedAges:[], wantFreedom:0, wantAll4:0 },
     evRefusal: 0, gave: 0,
     nickAwarded: 0, nickClashEver: 0, nickClashLive: 0,
+    /* ---- #195: HOW MUCH ROOM IS THERE IN FOURTEEN NAMES? ----
+       A fix that refuses a name somebody already wears is only possible while there is a name
+       left. The world holds more named men than your house does — the three rival rosters, the
+       card, the block, the pit — so before writing `freshNick` this counts the PRESSURE: how many
+       of the fourteen are worn at once, by whom, and how often the free pool would be empty. */
+    pool: { weeks:0, worn:[], exhausted:0, byPlace:{}, clashLive:0, clashCard:0, clashRival:0,
+            clashAny:0, wornMax:0 },
   };
   /* a man is counted ONCE, by id+house, whatever happens to him afterwards — a per-week
      tally would weight a long-lived man's ambition by how long he lived */
@@ -193,6 +200,38 @@ const out = await inside(p, ([H, W, SEED, ARM, AMB, TRAITS, INJ, NICKS]) => {
           T.rud.freed++; if(T.rud.freedAges.length < 400) T.rud.freedAges.push(g.age||0); }
         for(const s of (g.scars||[])){ const part = (s && (s.part||s.where||s.target)) || (typeof s === "string" ? s : "?");
           T.scarPart[part] = (T.scarPart[part]||0)+1; }
+      }
+      /* ---- THE FOURTEEN NAMES, AND WHO IS WEARING THEM THIS WEEK ---- */
+      { const P = T.pool; P.weeks++;
+        const place = {};
+        const add = (where, nick) => { if(!nick) return;
+          (place[where] = place[where] || []).push(nick);
+          P.byPlace[where] = (P.byPlace[where]||0) + 1; };
+        for(const g of (d.gladiators||[])) if(!A.isGone(g)) add("yours", g.nick);
+        for(const h of (d.rivals||[])) for(const f of (h.fighters||[])) add("rivals", f.nick);
+        for(const o of ((d.games && d.games.offers) || [])){
+          for(const x of [o.opp, ...(o.opps||[])]) if(x) add("card", x.nick); }
+        for(const m of (d.market||[])) add("block", m.nick);
+        try { for(const m of (A.pitMen(d)||[])) add("pit", m.nick); } catch(e){}
+        for(const f of (d.circuit||[])) add("circuit", f.nick);
+        if(d.nemesis && d.nemesis.nick) add("nemesis", d.nemesis.nick);
+        /* and the pool the FIX actually draws from — the game's own `nicksInPlay`, not a copy
+           of it — because everything above is the whole world and the fix only refuses what the
+           player sees together. This is the number that decides whether it can ever run dry. */
+        try { const inPlay = A.nicksInPlay(d).size;
+          P.inPlay = (P.inPlay||[]); P.inPlay.push(inPlay);
+          if(inPlay >= NICKS.length) P.inPlayFull = (P.inPlayFull||0) + 1; } catch(e){ P.noHandle = 1; }
+        const all = [].concat(...Object.values(place));
+        const uniq = new Set(all);
+        P.worn.push(uniq.size);
+        if(uniq.size > P.wornMax) P.wornMax = uniq.size;
+        if(uniq.size >= NICKS.length) P.exhausted++;
+        if(all.length > uniq.size) P.clashAny++;
+        const dup = (a, b) => (place[a]||[]).some(n => (place[b]||[]).includes(n));
+        const mine = place.yours || [];
+        if(new Set(mine).size < mine.length) P.clashLive++;
+        if(dup("yours","card")) P.clashCard++;
+        if(dup("yours","rivals")) P.clashRival++;
       }
       /* the men across the sand are drawn from the same tables and are the larger population */
       for(const o of ((d.games && d.games.offers) || [])){
@@ -265,6 +304,15 @@ if(Object.keys(T.injOther).length) console.log(`  off-table injury names: ${JSON
   for(const k of INJ) console.log(`    ${k.padEnd(24)} ${String(ab[k]||0).padStart(6)} ${((ab[k]||0)/tot*100).toFixed(1).padStart(5)}%${ab[k]?"":"   <<< NEVER"}`); }
 row("NICKS", T.nick);
 if(T.nickOther) console.log(`  nicks not in the table: ${T.nickOther}`);
+{ const P = T.pool, w = P.worn.slice().sort((a,b)=>a-b), q = f => w.length ? w[Math.min(w.length-1, Math.floor(w.length*f))] : 0;
+  console.log(`\n=== THE FOURTEEN NAMES UNDER PRESSURE — ${P.weeks} house-weeks`);
+  console.log(`  distinct nicks worn at once: median ${q(0.5)} · p90 ${q(0.9)} · max ${P.wornMax} of ${NICKS.length}`);
+  console.log(`  weeks with NO free name left: ${P.exhausted} (${(P.exhausted/P.weeks*100).toFixed(1)}%)`);
+  console.log(`  where they are worn (nick-sightings): ${Object.entries(P.byPlace).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k} ${v}`).join(" · ")}`);
+  { const ip = (P.inPlay||[]).slice().sort((a,b)=>a-b);
+    if(ip.length) console.log(`  what the FIX refuses (yours + this week's card, off the game's own nicksInPlay): median ${ip[Math.floor(ip.length/2)]} · p90 ${ip[Math.floor(ip.length*0.9)]} · max ${ip[ip.length-1]} of ${NICKS.length} · pool empty on ${P.inPlayFull||0} weeks`);
+    else console.log(`  nicksInPlay is not on the handle in this build — the fix's own pool could not be read`); }
+  console.log(`  weeks with a duplicate anywhere ${P.clashAny} (${(P.clashAny/P.weeks*100).toFixed(1)}%) · two of YOUR living men ${P.clashLive} · yours vs this week's card ${P.clashCard} · yours vs a rival roster ${P.clashRival}`); }
 console.log(`  ${T.nickAwarded} of your men were named by the crowd · ${T.nickClashEver} took a name the house had used before · ${T.nickClashLive} took one a man STILL ON THE BOOKS was wearing`);
 const B = T.branch || {};
 console.log(`\n=== THE TWO DOORS AN INJURY COMES THROUGH — ${B.sims} re-runs of ${B.pairs} pairings the rope actually fought`);
