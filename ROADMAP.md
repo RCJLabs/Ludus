@@ -13975,9 +13975,12 @@ with the bug.
 A house is profitable in its first three years and runs at a loss for ever after, surviving on
 drawdown and lumpy windfalls. Fame grows 38.6×, gold 6.1×, the weekly bill 8.3×.
 
-**And the census ladder asks for a combination the economy makes contradictory.** The first
-conclusion off that table was "rung 7's 80,000d is unreachable by construction". The miser arm
-refuted it inside one run:
+**And then I got the ladder wrong twice, and it was settled ground the whole time — see
+*The ladder, withdrawn* below.** What follows is what the two arms showed; the reading built on top
+of it does not survive.
+
+The first conclusion off that table was "rung 7's 80,000d is unreachable by construction". The miser
+arm refuted it inside one run:
 
 | policy | peak gold ever held | what blocks it | top rung reached |
 |---|---|---|---|
@@ -14051,6 +14054,43 @@ Still open from the same table, and the same shape as the bay: the **master's be
 Naming something every week without ever asking for it is a third state between silent and speaking,
 and nothing measures it yet.
 
+
+### The ladder, withdrawn — settled by #154, at four times the scale
+I proposed building a coin↔standing exchange for the late game, on the reading that "the coin and
+the standing are produced by opposite play and nothing lets a house hold both". Three things were
+wrong with that, and the first two were mine.
+
+**The five terms were read as three.** `riseNeed` returns `fameOk, favorOk, goldOk, feeOk, full`.
+I took `full` to mean *at the top of the ladder* — it means the **standing meter is at 100**, a
+number that fills 4–9 a week while you are over the fame and favour gates and falls 2 a week when
+you are not. And `goldOk` does not read `d.gold` at all: it reads **`censusWorth`** — the box, plus
+what is owed to the house, plus the racks at half what the steel cost, plus the men at `gladValue`,
+plus every wing at what it was built for. The cash test is `feeOk`, a separate and much smaller
+number. I read two predicates as their plain-English labels without opening them.
+
+**The fixture bundled a cheap lever with two dear ones.** `estate`'s miser arm sets
+`{build:false, rites:false, party:false}`. Only the first two are expensive: favour decays 0.35 a
+patron a week and a decadent party is +15 warm to every patron for 900d — about **21d a week** to
+hold the line. So the arm that decides it had never been run. Run as `ladder.mjs`, the third arm —
+no rooms, no rites, **parties on** — clears fame on 99% of late weeks and favour on 90%. The
+"contradiction" was an artefact of turning off three things at once.
+
+**And the apex was already measured, deliberately, and left where it is.** #154 drove five policies
+× 16 houses × 700 weeks (`rung.mjs`) and found exactly what my smaller run found: weeks holding
+80,000 in coin, **0 in fourteen of fifteen arm-seeds**; weeks with both coin and favour 90, **13, in
+one house of forty-eight**. It then changed the census from the cash box to property *because the
+panel had always said so*, and recorded the result: "exactly one house of sixteen reaches the top…
+it makes the apex reachable by one that spent twenty years putting up stone, which is what the
+rung's own blurb describes." The top rung is meant to be a life's work. It is not a fault, and I
+was about to build a feature against it.
+
+**What survives.** `purse` is a new instrument and its reading stands on its own: a house is
+profitable for three years (+59d/wk) and runs at a loss for ever after (−35d/wk by year 12), living
+on drawdown and windfalls. Whether that is a fault or the intended shape of a house always one bad
+card from the creditors is an open question, and it is not the ladder's question. And #131's finding
+— 97% of what a late house reads was available in week one — is the real late-game gap, which my
+audit rediscovered rather than found.
+
 ---
 
-*Last updated: v3.111.0*
+*Last updated: v3.112.0*
