@@ -59,4 +59,6 @@
 {"v":"3.117.0","checks":89,"failed":["surface"]},
 {"v":"3.117.0","checks":89,"failed":[]},
 {"v":"3.118.0","checks":90,"failed":["bulk"]},
-{"v":"3.118.0","checks":90,"failed":[]}]
+{"v":"3.118.0","checks":90,"failed":[]},
+{"v":"3.119.0","checks":91,"failed":["seller"]},
+{"v":"3.119.0","checks":91,"failed":[]}]
