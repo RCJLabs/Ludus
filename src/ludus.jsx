@@ -1721,11 +1721,44 @@ function ambDespair(d, g){
   chron(d, her(AMBITIONS[a.kind].despair(g), g), "bad");
   if(a.promised) chron(d, `He had your word on it, which he mentioned to people.`, "bad");
 }
+/* ---- A "NEVER" AMBITION IS KEPT BY NOT DOING THE THING, SO THE CLOCK IS THE RECKONING — #188 ----
+   Five of the seven ambitions name a moment that satisfies them: the rudis, the crowd's name, the
+   Ludi Romani, a brother at his shoulder, the house that marked him. Two do not. `nokill` is
+   *"Never to be sent out sine missione"* and `nobeast` is *"Never to be put in front of an
+   animal"*, and there was no event in the file that could fire `ambitionMet` for either —
+   measured over four policies, **651 of them given and 0 ever met**, while `nokill` was broken 36
+   times and `nobeast` 6. Their `met` lines were written and no player had read one:
+       nokill   "You have never once put <name> on a card with no appeal. He counts."
+       nobeast  "Whatever else you have asked of him, you never asked that."
+   Both are written as if there is a moment. "He counts" says what the mechanic should be.
+
+   THE CLOCK WAS ALREADY THERE AND IT WAS POINTED THE WRONG WAY. The only thing that ever visits
+   such a man is the despair tick: he asked, he pressed, and twelve weeks went by without an
+   answer. For a promise made of ABSTINENCE, twelve quiet weeks are not silence — they are the
+   answer, and the proof is already in hand, because doing the thing calls `ambitionBroken` on the
+   spot and a broken ambition never reaches this loop. A man who arrives here carrying one of those
+   two kinds has, by construction, not been sent out that way.
+
+   THE ONE BAR IS THAT HE HAS BEEN SENT OUT AT ALL. A promise not to card a man a particular way is
+   not tested until he has been on a card, and **7 of the 25 who reach this tick had never fought**
+   — meeting theirs would be hollow. One bout is the smallest test that means anything and admits
+   18 of the 25; three would admit 10, which is #190's fault written a second time. Measured over
+   36 houses x 420 weeks, the men at this tick had fought **0 / 2 / 5** bouts at p25 / median / p75.
+
+   It is deliberately NOT met without asking. Every other ambition can be satisfied by an event the
+   man never mentions; a promise of abstinence has to be asked for before there is a promise to
+   keep. `a.promised` — his word given on the ambition event — pays the larger `kept` figures
+   through `ambitionMet` exactly as it does everywhere else. */
+const AMB_NEVER = { nokill:1, nobeast:1 };
+const AMB_KEPT_BOUTS = 1;          // he has been on a card at least once, and it was never that card
 function ambWeek(d){
   for(const g of d.gladiators){
     const a = g.ambition;
     if(g.status!=="active" || !a || a.met || a.broken || a.despair) continue;
-    if(a.voiced>=2 && d.week - a.since >= 12) ambDespair(d, g);
+    if(a.voiced>=2 && d.week - a.since >= 12){
+      if(AMB_NEVER[a.kind] && (g.wins||0) + (g.losses||0) >= AMB_KEPT_BOUTS) ambitionMet(d, g);
+      else ambDespair(d, g);
+    }
   }
 }
 /* he got what he wanted */
@@ -27503,6 +27536,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        #117 measured working the cells as the largest lever in the game. The agenda offers the feast
        at unrest 35 and never mentions walking the cells at all — see `agendaCan`. #119. */
     ELECTION_WEEK, aedileOn, aedilePurse, aedileOffers, aedileMissio,   /* #192 */
+    AMBITIONS, AMB_KEYS, ambState, ambWeek, AMB_NEVER, AMB_KEPT_BOUTS, ambitionMet, ambitionBroken,   /* #188 */
     walkReady, WALK_COOL,          /* feastCost is above, with the feast — this line had it twice */
     /* the war: its stages, its clock and what it does to the block */
     WAR, warWeek, warIdx, warStage, warMarket, warElsewhere, WAR_AWAY_AT, WAR_AWAY_ODDS,
