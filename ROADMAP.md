@@ -14179,6 +14179,45 @@ the urgency counter only compares rows present on both sides.
    work was safe on the remote and the tree was restored from it. **When a number moves for no
    reason, check the version before you explain the number.**
 
+
+### Sharpening the instrument that kept sending me at correct behaviour
+Three investigations in a row began from an `asks` "silent" verdict and found nothing to build: the
+census ladder was settled design, the `banned` ending was settled design, and the law was live all
+along. That is not a run of bad luck — it is a verdict too blunt to rank by. `asks` diffed the
+**set of agenda labels** and nothing else, and the game has more than one voice.
+
+It now diffs five channels, and SILENT means silent in all of them:
+
+| channel | what it catches |
+|---|---|
+| labels | the set of agenda rows, normalised |
+| urgency | label → urgency over the **union** of both sides |
+| marks | `SECT_MARK` — what lights a section and the villa's face chips |
+| live | `SECT_LIVE` — whether a section reads as having something in it |
+| events | which of the `EVENTS` table can fire at all |
+
+The urgency fix matters most and is the smallest: the old counter walked the **intersection** of the
+two label sets, which is empty for a row that is not present every week. That is precisely how law
+heat came to read silent — heat's whole job is deciding whether the breach row shows at urgency 2 or
+3, and the breach row is intermittent. And `events` is the game's largest content channel; no
+version of this probe could see it.
+
+**Two verdicts changed on the spot.** `children` read SILENT and in fact answers **27 of 27**
+through section liveness (`live blood`). `piety` read as speaking through labels and also moves the
+**temple mark**. The silent list went from seven to five: law heat, gear on the shelf, feats earned,
+brand tier, men freed — and law heat's entry now carries the caveat that it is a fact about the
+reference player, not the game.
+
+**Every remaining entry now names the channel that answered**, so a quantity that speaks quietly
+through one channel is no longer indistinguishable from one that says nothing at all. That is the
+part that makes the list rankable, which was the point of sharpening it rather than working down it.
+
+**And the container reset the working tree to v3.48.0 twice more during this work.** Both times the
+tell was the same — a file that should exist missing, or `dist/test.html` at 2,812KB instead of
+3,038KB — and both times the tree was restored from the remote with nothing lost, because everything
+had been pushed. It is worth stating as a working rule: *push before every long measurement, and
+check the version whenever a number moves for no reason.*
+
 ---
 
-*Last updated: v3.114.0*
+*Last updated: v3.115.0*

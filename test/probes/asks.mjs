@@ -1,29 +1,43 @@
-/* WHICH OF A GREAT HOUSE'S QUANTITIES DOES THE GAME NEVER ASK ABOUT?
+/* WHICH OF A GREAT HOUSE'S QUANTITIES DOES THE GAME NEVER SPEAK ABOUT?
 
    #131 measured that 97% of what a year-12 house is shown was available in week one, and named the
-   fix as late content rather than tuning. `estate` then listed what is actually DISTINCTIVE about a
-   late house — 3 rooms and 9 room-levels, 36 men on the books, 156 towns known, 3 children, 13.6
-   law heat, 3 standing edicts, 29 buried and 14 of them unburied, 19 rivals met. That is the raw
-   material. What nobody has established is which of those the week's list is BLIND to, and a grep
-   cannot tell you: a quantity can be read by a predicate three functions away from any label.
+   fix as late content rather than tuning. `estate` listed what is actually DISTINCTIVE about a late
+   house — 3 rooms and 9 room-levels, 36 men on the books, 156 towns known, 3 children, 13.6 law
+   heat, 3 standing edicts, 29 buried and 14 of them unburied, 19 rivals met. That is the raw
+   material. What nobody had established is which of those the game is BLIND to, and a grep cannot
+   tell you: a quantity can be read by a predicate three functions from anything it moves.
 
-   So this asks causally. Take a house played to year 12, and for each quantity apply two
-   perturbations — an empty arm and a heaped arm — and diff the SET OF AGENDA LABELS either side. A
-   quantity you can take to zero and to twenty without the morning list changing a word is a
-   quantity the game does not ask about, whatever the source says.
+   So this asks causally. Take a house played into its late game; for each quantity apply an empty
+   arm and a heaped arm; diff what the game says, either side, on every sampled week.
 
-   WHAT THIS CANNOT SEE, said plainly rather than discovered later: a quantity may drive an EVENT,
-   a section's contents, a mark, or a number printed on a panel, none of which is an agenda label.
-   Silence here means "raises no business on the week's list", not "is unused". The agenda is the
-   thing #131 measured and the thing a player works from, which is why it is the thing measured.
+   ---- IT USED TO DIFF ONE CHANNEL, AND THAT WAS NOT ENOUGH TO CONVICT ----
+   The first version compared the SET OF AGENDA LABELS and nothing else. Three investigations that
+   began from a "silent" verdict here found nothing to build — the census ladder was settled design,
+   the `banned` ending was settled design, and the law was live all along. A verdict that keeps
+   sending you at correct behaviour is too blunt to rank by.
 
-   AND A SILENCE HERE CAN STILL BE THE PROBE'S. This reported LAW HEAT silent. Driven properly —
-   `heat.mjs`, 14 houses x 400 weeks, with a gambit lever added to the rope because it had none —
-   an ordinary house is in breach on 38% of its weeks, past heat 45 on 16%, and the `banned` ending
-   fires at 0.4%. The law is live. What this diff cannot see is heat's actual work, which is on the
-   URGENCY of a row that is not present every week: the urgency counter below only compares rows
-   present in BOTH label sets, so a term that decides how loudly an intermittent row speaks slips
-   through both halves. Before filing anything on this list as dead, drive it deliberately.
+   It now diffs five channels, and SILENT means silent in all of them:
+
+     labels    the set of agenda rows, normalised
+     urgency   label -> urgency, over the UNION of both sides, so a row that only APPEARS counts,
+               and so does a term that merely decides how loudly an intermittent row speaks. The
+               old counter walked the INTERSECTION, which is empty for a row that is not there
+               every week — which is exactly how law heat came to read silent.
+     marks     SECT_MARK, the vocabulary that lights a section and the villa's face chips
+     live      SECT_LIVE, which decides whether a section reads as having something in it
+     events    which of the EVENTS table can fire at all — the game's largest content channel, and
+               one no earlier version of this probe could see
+
+   TWO VERDICTS CHANGED ON THE SPOT. `children` read SILENT and answers 27 of 27 through section
+   liveness (`live blood`). `piety` read as speaking through labels alone and also moves the temple
+   MARK. The silent list went from seven to five.
+
+   AND A SILENCE IS STILL ONLY AS GOOD AS THE POLICY THAT MADE THE HOUSE. This reported LAW HEAT
+   silent, and the rope had no gambit lever — no policy in the suite had ever broken a law, and heat
+   is a measure of exactly that. Driven with one (`heat.mjs`, 14 houses x 400 weeks), an honest
+   house is in breach on 38% of its weeks, past heat 45 on 16%, and the `banned` ending fires at
+   0.4%. It still reads silent below, on an honest house at 230 weeks, and that reading is about the
+   player rather than the game. Before filing anything here as dead, drive it deliberately.
 
    AND THE PERTURBATION HAS TO BE LEGAL. Writing d.law.heat = 40 on a house whose law object does
    not exist tests nothing but my own typo, so every mutation reports whether it actually moved the
@@ -42,14 +56,53 @@ const out = await inside(p, ([H, W]) => {
   const A = window.__LVDVS, R = window.__ROPE;
   const clone = x => JSON.parse(JSON.stringify(x));
   const norm = t => String(t||"").replace(/\d+/g,"#").replace(/[A-Z][a-z]+(?:\s[A-Z][a-z]+)*/g,"~");
-  const labels = d => { try { return new Set(A.agenda(d).map(r=>norm(r.label))); } catch(e){ return new Set(); } };
-  /* ---- AND URGENCY IS A CHANGE TOO ----
-     The first cut diffed label SETS only, and reported law heat silent across 50 perturbations.
-     It is not: at src:3350 the breach row is raised from urgency 2 to 3 the moment heat passes 45.
-     A quantity that decides how loudly the week speaks is not one the week ignores — my diff was
-     throwing that away before it could be seen. Both are counted now, separately, because "adds a
-     row" and "makes an existing row shout" are different kinds of content. */
-  const urgs = d => { try { const m = {}; for(const r of A.agenda(d)) m[norm(r.label)] = Math.max(m[norm(r.label)]||0, r.urgency||0); return m; } catch(e){ return {}; } };
+
+  /* ---- FIVE CHANNELS, BECAUSE ONE WAS NOT ENOUGH TO CONVICT ----
+     The first version diffed AGENDA LABELS and nothing else, and called law heat silent. It is not:
+     heat decides the URGENCY of the breach row, and that row is not present every week — so a
+     set-diff misses it twice, once because urgency is not in the set and once because the
+     intersection the urgency counter walked was empty.
+
+     Worse, three investigations that began from a "silent" verdict here found nothing to build: the
+     census ladder was settled design, `banned` was settled design, and the law was live all along.
+     A verdict that keeps sending you at correct behaviour is too blunt to rank by.
+
+     So every channel a week can speak through is diffed, and SILENT means silent in all of them:
+       labels    the set of agenda rows, normalised
+       urgency   label -> urgency, over the UNION so a row that only APPEARS still counts
+       marks     SECT_MARK, the vocabulary that lights a section and the villa's face chips
+       live      SECT_LIVE, which decides whether a section reads as having something in it
+       events    which of the EVENTS table can fire at all — the game's largest content channel,
+                 and one no earlier version of this probe could see
+  */
+  const chan = d => {
+    const out = { labels:new Set(), urg:{}, marks:{}, live:{}, events:new Set() };
+    try { for(const r of A.agenda(d)){ const k = norm(r.label);
+      out.labels.add(k); out.urg[k] = Math.max(out.urg[k]||0, r.urgency||0); } } catch(e){}
+    for(const k of Object.keys(A.SECT_MARK||{})){
+      let v = null; try { v = A.sectMark(d,k); } catch(e){}
+      out.marks[k] = v == null ? "" : (typeof v === "object" ? JSON.stringify(v) : String(v)); }
+    for(const k of Object.keys(A.SECT_LIVE||{})){
+      let v = null; try { v = A.sectLive(d,k); } catch(e){}
+      out.live[k] = v === true ? 1 : v === false ? 0 : -1; }
+    for(const [k,e] of Object.entries(A.EVENTS||{})){
+      let on = false; try { on = !e.when || !!e.when(d); } catch(x){}
+      if(on) out.events.add(k); }
+    return out;
+  };
+  const diff = (a, b) => {
+    const out = [];
+    for(const x of a.labels) if(!b.labels.has(x)) out.push("label -"+x);
+    for(const x of b.labels) if(!a.labels.has(x)) out.push("label +"+x);
+    for(const k of new Set([...Object.keys(a.urg), ...Object.keys(b.urg)]))
+      if((a.urg[k]||0) !== (b.urg[k]||0)) out.push(`urg ${k} ${a.urg[k]||0}->${b.urg[k]||0}`);
+    for(const k of Object.keys(a.marks)) if(a.marks[k] !== b.marks[k]) out.push(`mark ${k}`);
+    for(const k of Object.keys(a.live))  if(a.live[k]  !== b.live[k])  out.push(`live ${k}`);
+    for(const x of a.events) if(!b.events.has(x)) out.push("event -"+x);
+    for(const x of b.events) if(!a.events.has(x)) out.push("event +"+x);
+    return out;
+  };
+  const kindOf = t => t.split(" ")[0];
 
   /* name, read, empty arm, heaped arm */
   const Q = [
@@ -92,7 +145,7 @@ const out = await inside(p, ([H, W]) => {
                          null, d=>{ d.freed=(d.freed||{}); for(let i=0;i<8;i++) d.freed["f"+i]={name:"Freed "+i, week:d.week-i*5}; }],
   ];
 
-  const tally = Q.map(q=>({ name:q[0], moved:0, changed:0, louder:0, tried:0, base:0, examples:[] }));
+  const tally = Q.map(q=>({ name:q[0], moved:0, changed:0, tried:0, base:0, by:{}, examples:[] }));
   let houses = 0, lateHouses = 0, samples = 0;
   for(let h=0; h<H; h++){
     const d = A.newGameState("Asks","clean","ASKS-"+h, null); houses++;
@@ -111,7 +164,7 @@ const out = await inside(p, ([H, W]) => {
     for(let i=0;i<Q.length;i++){
       const [name, read, low, high] = Q[i];
       const t = tally[i]; t.base = read(d);
-      const base = labels(d), baseU = urgs(d);
+      const base = chan(d);
       for(const mut of [low, high]){
         if(!mut) continue;
         t.tried++;
@@ -121,16 +174,11 @@ const out = await inside(p, ([H, W]) => {
         const after = read(c);
         if(after === before) continue;          /* the mutation did not bite — not evidence */
         t.moved++;
-        const now = labels(c), nowU = urgs(c);
-        const gone = [...base].filter(x=>!now.has(x));
-        const born = [...now].filter(x=>!base.has(x));
-        const louder = Object.keys(nowU).filter(k=>baseU[k] != null && nowU[k] !== baseU[k]);
-        if(gone.length || born.length){
+        const ds = diff(base, chan(c));
+        if(ds.length){
           t.changed++;
-          if(t.examples.length < 2) t.examples.push(`${before}→${after}: ${[...gone.map(g=>"-"+g), ...born.map(b=>"+"+b)].slice(0,2).join(" ")}`);
-        } else if(louder.length){
-          t.louder = (t.louder||0) + 1;
-          if(t.examples.length < 2) t.examples.push(`${before}→${after}: urgency only — "${louder[0]}" ${baseU[louder[0]]}→${nowU[louder[0]]}`);
+          for(const one of ds) t.by[kindOf(one)] = (t.by[kindOf(one)]||0) + 1;
+          if(t.examples.length < 2) t.examples.push(`${before}→${after}: ${ds.slice(0,2).join(" · ")}`);
         }
       }
     }
@@ -141,15 +189,20 @@ const out = await inside(p, ([H, W]) => {
 
 await browser.close(); server.close();
 console.log(`=== WHAT THE WEEK'S LIST NOTICES ===  ${out.lateHouses} of ${out.houses} houses reached the late game · ${out.samples} week-samples, each perturbed both ways\n`);
-console.log(`  ${"quantity".padEnd(22)} ${"late".padStart(6)} ${"probes".padStart(7)} ${"moved".padStart(6)} ${"list changed".padStart(13)}`);
+console.log(`  ${"quantity".padEnd(22)} ${"late".padStart(8)} ${"probes".padStart(7)} ${"moved".padStart(6)} ${"answered".padStart(9)}   which channel answered`);
 const mute = [];
 for(const t of out.tally){
-  const verdict = !t.moved ? "UNTESTED" : t.changed ? `${t.changed}/${t.moved}`
-    : t.louder ? `urg only ${t.louder}/${t.moved}` : "*** SILENT ***";
-  console.log(`  ${t.name.padEnd(22)} ${String(t.base).padStart(6)} ${String(t.tried).padStart(7)} ${String(t.moved).padStart(6)} ${verdict.padStart(13)}`);
+  const chans = Object.entries(t.by||{}).sort((x,y)=>y[1]-x[1]).map(([k,v])=>`${k} ${v}`).join(" · ");
+  const verdict = !t.moved ? "UNTESTED" : t.changed ? `${t.changed}/${t.moved}` : "*** SILENT ***";
+  const base = typeof t.base === "number" ? (Math.round(t.base*10)/10) : t.base;
+  console.log(`  ${t.name.padEnd(22)} ${String(base).padStart(8)} ${String(t.tried).padStart(7)} ${String(t.moved).padStart(6)} ${verdict.padStart(9)}   ${chans || (t.moved ? "none" : "-")}`);
   for(const e of t.examples) console.log(`      ${e}`);
-  if(t.moved && !t.changed && !t.louder) mute.push(t.name);
+  if(t.moved && !t.changed) mute.push(t.name);
 }
-console.log(`\n  ${mute.length} quantities can be emptied or heaped without the morning list changing a word:`);
+console.log(`\n  ${mute.length} quantities move NOTHING in any of the five channels — not a label, not an`);
+console.log(`  urgency, not a mark, not a section's liveness, and not which events can fire:`);
 mute.forEach(m=>console.log(`    ${m}`));
+console.log(`\n  And a silence is still only as good as the POLICY that produced the house. Law heat read`);
+console.log(`  silent here until the rope was given a gambit lever — it is live, and an honest house is`);
+console.log(`  past heat 45 on 16% of a four-hundred-week game. Drive a thing before filing it dead.`);
 console.log(`\n  rope: ${out.rope}`);
