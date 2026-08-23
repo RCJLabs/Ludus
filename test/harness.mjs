@@ -270,6 +270,13 @@ export async function installRope(p){
        `lanista(d, opts)` plays one week and RETURNS WHAT IT DID, so a caller can assert on behaviour
        rather than intent. Every part can be switched off through `opts` for a control arm:
          cells, buy, doctore, build, rites, census, staff, school, heir, rome, bout  (all default true)
+         protect       (one man fed the whole card and nobody else on it, sticky until he is freed,
+                        sold or buried. #190's own falsifier, which had never been run: the item
+                        claims `wins >= 10` is out of reach of a three-bout median career, and this
+                        is the policy that would prove it is not. `true` feeds him everything;
+                        `"safe"` also shields the MATCHUP — the card is sorted by the game's own
+                        `winChance` and he sits the week out below 0.60, because a policy that
+                        throws its man at anything is not a fair test of a gate. Default OFF.)
          pupil         (name the doctore a pupil and rotate it round the active men. Default OFF and
                         off is what every figure before v3.121.0 was measured on: the rope hired a
                         doctore and never named one, so `doctoreWeek` returned early every week and
@@ -811,8 +818,70 @@ export async function installRope(p){
            does not send to the sand. `bench` is a list of ids never picked for a bout — nothing else
            about them changes, so they still train, still age, still cost their upkeep. */
         const bench = new Set([].concat(o.bench || []));
-        const men = A.activeG(d).filter(g=>!g.injury && (g.fatigue||0) < 55 && !bench.has(g.id))
+        let safePick = null;
+        let men = A.activeG(d).filter(g=>!g.injury && (g.fatigue||0) < 55 && !bench.has(g.id))
           .sort((x,z)=>av(z)-av(x));
+        /* ---- #190: ONE MAN FED THE WHOLE CARD, which is the falsifier's own policy ----
+           `rudisEligible` wants `wins >= 10` against a career the steel audit measured at THREE
+           bouts at the median, and the clause written beside #190 when it was opened says: falsifies
+           if a policy that protects one man — benching the rest, feeding him the card — gets him to
+           ten wins reliably, in which case the item is about the reference player spreading its
+           bouts and not about the gate. `bench` is the wrong shape for that: it takes fixed ids and
+           the roster turns over. This is its inverse and it is STICKY — the same man every week
+           until he is freed, sold or buried — because a champion who changes with the stat sort is
+           the spread policy again under another name. Nobody else fights; if he is hurt or spent,
+           the house takes no bout that week, which is the cost the policy is meant to pay. */
+        /* the outer guard was `=== true` and the "safe" mode nests inside it, so `protect:"safe"`
+           skipped the whole branch and ran as a plain CONTROL while reporting itself as the arm —
+           it came back with MORE bouts than the crude arm, which is the shape of a lever that is
+           not connected, and #136's rule caught it. */
+        if(o.protect){
+          const live = g => g && g.status === "active" && !A.isGone(g);
+          let champ = d.__protectId ? A.activeG(d).find(g=>g.id === d.__protectId) : null;
+          if(!live(champ)){
+            /* the man nearest the gate — and on a roster where nobody has won anything yet that
+               tie-breaks to the STRONGEST man rather than to whoever `activeG` happens to list
+               first. The first cut sorted on wins and pfame alone, so a new house protected an
+               arbitrary man and the card it was offered gave him a median 12% chance: the arm was
+               feeding its worst fighter and reporting the gate as unreachable. */
+            const av = g => A.STATS.reduce((s,k)=>s+(g[k]||0),0)/6;
+            champ = A.activeG(d).filter(g=>!g.auctor)
+              .sort((a,b)=>((b.wins||0)*1000 + (b.pfame||0) + av(b)) - ((a.wins||0)*1000 + (a.pfame||0) + av(a)))[0];
+            d.__protectId = champ ? champ.id : null;
+          }
+          men = champ ? men.filter(g=>g.id === champ.id) : [];
+          /* ---- AND THE STRONGER READING OF "PROTECTS", because the weak one is not a fair test ----
+             `protect:true` feeds him EVERY card, which is the opposite of protection and kills him:
+             67 protected men over 4 houses held the card a median of 3 weeks and 57 of them were
+             buried. A gate is not proven unreachable by a policy that throws its man at everything.
+             `protect:"safe"` shields the matchup as well: the card is sorted by the game's own
+             `winChance` and he sits the week out rather than take one he is not favoured to win.
+             0.60 is the bar and it is a POLICY number living in the rope, not a game constant —
+             it is "clearly favoured" rather than "even money", which is what a lanista protecting
+             an investment would hold out for. */
+          if(o.protect === "safe" && men.length && champ){
+            const tac = o.tactic || "measured";
+            const ch = x => { try { return x && x.opp ? A.winChance(champ, x.opp, 0, tac) : 0; } catch(e){ return 0; } };
+            /* the candidates `takeBout` would actually see, which is NOT just the arena bill: most
+               of this rope's bouts come from the PIT, generated on the fly when the bill is empty.
+               Scoring the bill alone read "best card on offer: median 0%" and sat out 135 weeks of
+               138 — a lever that refuses everything looks exactly like a game that offers nothing. */
+            let singles = ((d.games && d.games.offers) || []).filter(x=>!x.melee && !x.pair && x.opp);
+            if(!singles.length && !d.city && !d.rome){
+              try {
+                if(!d.pitCard || d.pitCard.week !== d.week) A.makePitCard(d);
+                const pm = A.pitMen(d) || [];
+                const po = A.makePitOffer(d, champ, "standard", pm.length ? pm[0].id : null);
+                if(po && po.opp) singles = [po];
+              } catch(e){}
+            }
+            const best = singles.map(ch).sort((a,b)=>b-a)[0] || 0;
+            R.safeSeen = (R.safeSeen||0) + 1;
+            (R.safeBest = R.safeBest || []).push(Math.round(best*100));
+            if(best < (typeof o.protectBar === "number" ? o.protectBar : 0.60)){ men = []; R.safeSat = (R.safeSat||0) + 1; }
+            else safePick = pool => pool.slice().sort((a,b)=>ch(b) - ch(a))[0];
+          }
+        }
         /* the primacy first when it is up — a purse-maximising pick passes it over, and it is the
            other gate on Rome. At Rome, take whatever card is there: the imperial bill is sine
            missione 54% of the time and refusing it lapses the trip. */
@@ -827,7 +896,7 @@ export async function installRope(p){
            work with does not produce zero divergence; the lever was not connected.
            The default is untouched on purpose: with neither option given this is still
            `wantStakes:"standard"`, which is what every figure in this project was measured on. */
-        const t = takeBout(d, { men,
+        const t = takeBout(d, { men, pick: safePick,
           wantStakes:   d.rome ? null : (o.wantStakes || (o.preferStakes ? null : (o.stakes || "standard"))),
           preferStakes: d.rome ? null : (o.preferStakes || null),
           /* ---- THE CRUX ANSWER WAS A CONSTANT NOBODY CHOSE, AND IT WAS THE LETHAL ONE — #185 ----
@@ -961,6 +1030,7 @@ export async function installRope(p){
          because they were legible in the return and nothing forced a caller to look: a check that
          asked for 300 bouts and was refused 200 of them reported the 100 and said nothing. */
       say: ()=>{
+        const pctl = (a,f)=>{ const z=[...a].sort((x,y)=>x-y); return z[Math.min(z.length-1,Math.floor(z.length*f))]; };
         const ref = Object.entries(R.refused).sort((a,b)=>b[1]-a[1]);
         const n = ref.reduce((s,x)=>s+x[1],0);
         return `${R.bouts} bouts · ${R.held} reached the balance`
@@ -968,6 +1038,8 @@ export async function installRope(p){
           + ` · ${R.rounds} words spoken`
           + (n ? ` · ${n} weeks refused (${ref.map(x=>`${x[0]} ${x[1]}`).join(", ")})` : "")
           + (R.wrongStakes ? ` · ${R.wrongStakes} at the WRONG STAKES` : "")
+          + (R.safeSeen ? ` · protect:safe sat out ${R.safeSat||0} of ${R.safeSeen} weeks it was asked`
+              + (R.safeBest && R.safeBest.length ? ` (best card on offer: p10 ${pctl(R.safeBest,.1)}% · median ${pctl(R.safeBest,.5)}% · p90 ${pctl(R.safeBest,.9)}%)` : "") : "")
           + (R.unresolved ? ` · ${R.unresolved} STILL UNRESOLVED` : "")
           + (R.threw ? ` · ${R.threw} threw` : "");
       } };
