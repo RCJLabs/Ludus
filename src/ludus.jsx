@@ -3638,6 +3638,10 @@ const R = () => {
   t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
   return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
 };
+/* Save and restore the stream. `pick` is `a[Math.floor(R()*a.length)]` and `R()` advances one global
+   counter, so a probe that samples a table by running the game's own draw is spending RNG the played
+   house never spent and measuring a different game — `gate.mjs` did exactly that and read men-ever-
+   scarred at 57.9% against a true 66.1%. Both are on the test handle for that. #189. */
 const rngGet = () => RNG;
 const rngSet = n => { RNG = (n>>>0); };
 /* a seed anyone can read down a telephone */
@@ -27606,12 +27610,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        at unrest 35 and never mentions walking the cells at all — see `agendaCan`. #119. */
     ELECTION_WEEK, aedileOn, aedilePurse, aedileOffers, aedileMissio,   /* #192 */
     AMBITIONS, AMB_KEYS, ambState, ambWeek, AMB_NEVER, AMB_KEPT_BOUTS, ambitionMet, ambitionBroken,   /* #188 */
-    giveAmbition, ambPool, ambTurn,   /* #189 — the draw, the filter under it, and the re-test at a gate */
-    /* and the seed either side of it: `pick` advances the global stream, so sampling the pool by
-       running the real draw would drive a DIFFERENT game from the one being measured. Save,
-       sample, restore. The first cut of `gate.mjs` did not, and every figure it printed was off a
-       perturbed sim. #189. */
-    rngGet, rngSet,
+    giveAmbition, ambPool, ambTurn, rngGet, rngSet,   /* #189 — the draw, its filter, the re-test, and the seed either side */
     walkReady, WALK_COOL,          /* feastCost is above, with the feast — this line had it twice */
     /* the war: its stages, its clock and what it does to the block */
     WAR, warWeek, warIdx, warStage, warMarket, warElsewhere, WAR_AWAY_AT, WAR_AWAY_ODDS,
