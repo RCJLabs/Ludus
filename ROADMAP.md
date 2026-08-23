@@ -1644,7 +1644,7 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 **Shipped and verified: v3.105.0 → v3.115.0, eleven releases, 87/87 green, all on `main`.**
 The detail of each is at the foot of this file; this is what a new session needs in one place.
 
-**AND THEN THE AUDIT, at the foot of this file: ten items, #186-#195. #195 shipped in v3.116.0; the other nine are unassigned.** Read that
+**AND THEN THE AUDIT, at the foot of this file: ten items, #186-#195. #195 shipped in v3.116.0 and #192 in v3.117.0; the other eight are unassigned.** Read that
 section before this one if you are picking work. Its short version: the five leads the last session
 left are all answered, and **the largest single finding is that `asks`'s silent list was mostly the
 probe's own** — it diffed five channels and the game speaks in eight, so four of its five silences
@@ -4460,6 +4460,66 @@ about a quarter and it is the cost of this repair**; `MISSIO_MAN` is one line to
 wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
+
+### v3.117.0 — #192: Capua votes whether or not you are in it, and the countdown was a week out anyway
+
+`electionWeek` opened `if(d.rome || d.over) return;`, so a house away at the imperial games had no
+vote until it came home — while the agenda row `villa:council:aedileship` sat on the villa the whole
+time counting down to a ballot that was not coming. Over 48 houses x 420 weeks on four seeds:
+
+| | before | after |
+|---|---|---|
+| elections called | 568 | **598** |
+| open weeks past the due date | **143 of 1,845 (7.8%)** | **2 of 1,792 (0.1%)** |
+| — of those, the house was at Rome | 12 of 15 in the first seed | **0** |
+| stalls | 23 of 568 (4.0%) | **2 of 598 (0.3%)** |
+| houses that saw one | **18 of 48 (37.5%)** | **2 of 48 (4.2%)** |
+| longest stall | **16 weeks** against a designed 3 | **1 week** |
+| weeks with a sitting aedile | 78.6% | **86–90%** |
+
+**The guard was the anomaly and the coast is the proof.** `d.city` was never in it, so a house
+touring Puteoli has always voted on time; only Rome froze the ballot. An election is something
+CAPUA does. The five other `d.rome` guards in the weekly code — `marketWeek`, `bayWeek`,
+`nameBlocked` and two events — all pause a thing the PLAYER reaches for, and pausing those is a
+kindness. Pausing the vote is not: it holds a clock the screen is already counting down. And the
+panel is reachable from the road (`SECT.aedileship` renders on `S.election && !S.election.done`
+with no travel gate), so a lanista at Rome can still put money on a man by letter. What he loses by
+being away is the forum, not the ballot. `d.over` stays.
+
+**The stall was eating whole cycles, which the item had not priced.** `callElection` only fires on
+`wk === ELECTION_WEEK`, so an election still open a year later resolves on that week instead — and
+the next one is never called. That is where the 568 → 598 comes from, and why the house now holds
+an aedile 86–90% of weeks against 78.6%. **It moves no number for the reference player**: a neutral
+aedile is `aedilePurse` 1, `aedileOffers` 0, `aedileMissio` 0 — identical to holding none — and
+every other reader is gated on `friendly`. `open`'s 60-house signature is **byte-identical**. What
+it does move is a house that BACKS candidates, which gets about 4% more elections to buy; that is
+unmeasured, because nothing in this suite has ever called `backCandidate`.
+
+**And the check went red on the arm that was meant to be the control.** `electionWeek` runs BEFORE
+`ludusLedger` increments the week, so the vote is taken at the end of the week where
+`d.week - E.week === 3` — the last week the row is up. Written `Math.max(0, 3 - …)`, that week read
+**"0 weeks to the vote"** and then the player waited one more. **The floor was hiding an off-by-one
+on every election ever held, at home as much as at Rome**, and `vote.mjs` could not see it because
+it only counted weeks an election ran PAST its due date. The three weeks now read
+**"2 weeks to the vote · 1 week to the vote · the vote is this week"** — which also fixes the
+"1 weeks" that had been sitting in the middle of it.
+
+**Two lines of prose came with it.** A vote called or settled while the house is on the road says
+so — *"Word comes from Capua: the names are going up on the walls again…"* and *"The whole of it
+happened while the house was on the road — no subscription list carried your name, because nobody
+in Capua could find you to ask"* — because a player who comes home to a new aedile should be able
+to learn how he got one. And the Rome panel's **"Nothing happens in Capua now"** was never true and
+this made it less so: three weekly systems pause on the road and all three are kindnesses (the
+block does not restock or let a contested man be bought away, the bay neither forgets you nor
+changes hands, the arch-rival cannot be named), while the bill, the training, the cells, the rivals
+and the patrons all run. It names the three now.
+
+`aedile` is the 89th check — the same house driven week by week at home and at Rome, asserting the
+same integers for the call and the settle, the exact three sentences of the countdown, that
+`d.over` is still in the guard, and that the chronicle names the absence. Negative-tested four
+ways: `d.rome` put back (red, "called w13 at home and wnull from Rome"), the floored countdown put
+back (red, naming all three sentences), `d.over` dropped (red), and the away line removed (red).
+
 
 ### v3.116.0 — #195: fourteen names, fourteen draws, and not one of them looked who had one
 
@@ -13668,7 +13728,7 @@ visible share; the mild door is a WIN, so this is the one item here a tactic mig
 `endWeek` has healed, the counts are biased by how long each wound lasts and `Split brow` (1 week)
 read **36 where the bout count reads 286**. A weekly sweep cannot count a one-week wound.
 
-### #192 — the aedile's vote stops when you go to Rome, and the villa goes on saying "0 weeks to the vote".
+### #192 — CLOSED in v3.117.0. The aedile's vote stopped when you went to Rome, and the villa went on saying "0 weeks to the vote".
 `electionWeek(d)` opens `if(d.rome || d.over) return;`. The vote is due three weeks after the names
 go up. A house at the imperial games has no vote until it comes home, and the agenda row
 `villa:council:aedileship` stays up the whole time with its note reading
@@ -13680,6 +13740,13 @@ other things — `marketWeek`, `bayWeek`, `nameBlocked`, two events — and ever
 simply pausing; `nameBlocked` even says so out loud, *"You are in Rome. Capua can wait."* The
 election is the only paused system holding a clock that is already running. *Falsifies if the trip
 is short: it is not — the longest single trip is **15 weeks**, in all four seeds, to the week.*
+**Fixed in v3.117.0.** The guard is `d.over` alone; Capua votes on time, as it always has while the
+house toured the coast. Open weeks past the due date **143 → 2** (both of them a house that had
+ENDED), houses that see a stall **18 of 48 → 2 of 48**, longest stall **16 weeks → 1**. The item had
+not priced the knock-on: a stall that outlived the year ate the NEXT election too, so elections
+called went **568 → 598** and the house holds an aedile 86–90% of weeks against 78.6%. And the
+check found the adjacent fault the probe could not: the countdown's `Math.max(0, …)` floor was
+hiding an off-by-one on **every** election, at home as much as at Rome. `aedile` is the 89th check.
 
 ### #193 — nine venues, six backdrops, and the two that are missing are two of the three coast towns.
 The arena's backdrop is one class: `` className={`arena v-${fight.venue||"forum"} …`} ``. `VENUES`
@@ -14606,4 +14673,4 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.116.0 — #195 closed; nine of the audit's ten items still open*
+*Last updated: v3.117.0 — #195 and #192 closed; eight of the audit's ten items still open*
