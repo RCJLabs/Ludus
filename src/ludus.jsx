@@ -3275,14 +3275,7 @@ function agenda(d){
   if(d.election && !d.election.done) add(2, "villa:council:aedileship", "The aedileship is open", `${Math.max(0,3-(d.week-d.election.week))} weeks to the vote`);
   if(d.games && d.games.offers && d.games.offers.length && activeG(d).some(g=>canFight(g) && g.lastFought<d.week))
     add(2, "arena", d.games.festival, `${d.games.offers.length} on the card`);
-  /* and the row itself will not print a lookup it did not get — a save written before the fix
-     above can still carry a stale poach into its first week */
-  if(d.poach){ const pg = d.gladiators.find(x=>x.id===d.poach.gid);
-    /* ACTIVE, not merely present. The first cut of this guard tested that the lookup found
-       something, and a dead man is still in d.gladiators with status "dead" — so the row stopped
-       reading "undefined is being talked to" and started reading a corpse's name instead, which is
-       worse: it looks like an ordinary row. `glance` drives exactly that state and caught it. */
-    if(pg && pg.status === "active") add(2, "men", `${pg.name} is being talked to`, `House ${d.poach.house}`); }
+  { const pg = poachedMan(d); if(pg) add(2, "men", `${pg.name} is being talked to`, `House ${d.poach.house}`); }
   if(d.court) add(1, "men", `${d.court.name} of House ${d.court.house} is being talked to`, `${d.court.weeks}w — your word, their wall`);
   if(d.loan && owes(d) > d.loan.principal*2) add(2, "villa", `${loanLender(d).name} is owed ${owes(d)}d`, "and it is getting away from you");
   if(d.reSignOffer) add(2, "men", "A contract is up", "he can re-sign or walk");
@@ -11118,6 +11111,17 @@ function defect(d, p){
     kin:kin.map(o=>o.name), fem:isF(g) };
   d.poach = null;
 }
+/* ---- WHO A RIVAL IS ACTUALLY COURTING ----
+   ACTIVE, not merely found. A man who has died, been sold or been freed is still IN d.gladiators
+   with a status, so a lookup that only asks "did I find something" swaps "undefined is being talked
+   to" for a corpse's name — which is worse, because it reads like an ordinary row and nobody would
+   query it. That was the first fix for this, and `glance` caught it by driving both ways a man
+   leaves: the status change, and being spliced out of the array entirely.
+   One helper, so the week's tick and the morning's list cannot disagree about it. */
+const poachedMan = d => { if(!d.poach) return null;
+  const g = (d.gladiators||[]).find(x=>x.id===d.poach.gid);
+  return (g && g.status === "active") ? g : null; };
+
 function poachWeek(d){
   if(d.poach){
     /* ---- THE MAN CAN LEAVE WHILE THE OFFER IS STILL OUT ----
@@ -11127,8 +11131,7 @@ function poachWeek(d){
        "undefined is being talked to". Caught by `late`, which normalises names out of its labels
        and so saw the same broken string four times across ten houses of 420 weeks instead of four
        different men. A rival does not keep courting a corpse. */
-    const still = d.gladiators.find(x=>x.id===d.poach.gid);
-    if(!still || still.status!=="active"){ d.poach = null; return; }
+    if(!poachedMan(d)){ d.poach = null; return; }
     d.poach.weeks--;
     if(d.poach.weeks<=0) defect(d, d.poach);
     return;
