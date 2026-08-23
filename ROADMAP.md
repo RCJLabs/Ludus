@@ -4516,9 +4516,11 @@ of those turns is a man **your** arena marked, which was previously a population
 doctore since the rope was written and had never once named him one**, so `doctoreWeek` returned on
 its second line every week of every run in this project's history and all five lessons were
 unreachable by any policy here. A new `pupil` lever fixes that: with the square manned every week the
-lesson fires 92–99 times in 3,271–3,444 house-weeks and crosses 62 **two to four times**. The hook is
-there so the property holds at every gate; it is worth about one man in a hundred houses and the
-ROADMAP says so rather than implying the fix moved it.
+lesson fires **50, 99, 65 and 92 times** across the four pupil arms (1,889–3,444 house-weeks) and
+crosses 62 **two to four times** in each. The hook is
+there so the property holds at every gate, not for its yield — and the yield is stated rather than
+implied: **0 turns into `champion` in either default arm**, where the lesson cannot fire at all, and
+**2 and 1 across twelve houses each** with the square manned.
 
 **This one changes the sim, and the proof is a control arm rather than a signature.** `ambTurn` draws
 on the RNG, so `open.mjs`'s 60-house signature necessarily moves. A third build was made that takes
@@ -14044,9 +14046,10 @@ appears exactly once.
 `DOC_LESSONS.potential`, behind a named pupil — and **the rope had never named one in the history of
 this project**, so the lesson was unreachable by any policy here and the first reading of "the gate
 never opens" was a policy zero rather than a game fact. A `pupil` lever now names one; with the
-square manned the lesson fires 92–99 times in ~3,300 house-weeks and crosses 62 two to four times.
-The hook is wired for the property, not for the yield, and it is worth about one man in a hundred
-houses. The next move on `champion` is a measurement of what SHOULD lift a man's ceiling, not this.
+square manned the lesson fires 50–99 times per arm and crosses 62 two to four times.
+The hook is wired for the property, not for the yield: 0 turns into `champion` in either default
+arm, 2 and 1 across twelve houses each with the square manned. The next move on `champion` is a
+measurement of what SHOULD lift a man's ceiling, not this.
 
 ### #190 — the rudis is a 1–2% state, and the ambition that asks for it is met once in twenty-four.
 `rudisEligible = !isAuctor(g) && g.wins >= 10 && g.pfame >= 180`, and `grantRudis` meets the
