@@ -21419,6 +21419,31 @@ function Scene({ S, agenda, openDoc, openMan, go }){
   );
 }
 
+/* ---- WHAT A BOUT SPENDS, CLEARED WHERE IT IS SPENT — #194, v3.118.0 ----
+   Five functions inside `App` send a man out — `fightOffer`, `fightPit`, `meleeGo`, `huntOffer`,
+   `fightPair` — and every one of them ends TWICE: once where the bout runs to a verdict, and once
+   where it stops at the balance and is HELD for a word from the box. The two exits cleared
+   different things. `fightOffer`'s verdict exit put down the pit opponent, the plan and the
+   entrance; its crux exit put down none of the three and returned early, `speak` cleared nothing
+   on the way back, and `goPick` cleared the plan and the melee plan but not the entrance. So the
+   entrance had exactly ONE path that put it down, and 55-61% of bouts take the other one. Driven
+   on the real screen over two seeds: the chip was still lit on 8 of 8 bouts that stopped at the
+   balance and cleared on 6 of 6 that ended outright. Two more the item had not named: `fightPit`
+   never put down its own pit opponent on either exit, and `meleeGo` never put down the melee plan.
+
+   The orders are spent the moment they reach the engine — `offer.entrance` is written before
+   `doFight` and the held `pending` carries it, so nothing in flight reads these again. `App`'s
+   `spendOrders()` puts them down there, ahead of the branch, and both exits are clean by
+   construction. `tactic` is NOT in it and that is deliberate: it is the one choice on that panel
+   that reads as a standing preference rather than an order for this afternoon, and no exit has
+   ever cleared it. `fGid` and `pairSel` are not orders either — they are who is going out, and
+   every exit already puts them down. `orders` is the check.
+
+   The note sits out here rather than beside the helper because `App` is **6,096 lines against an
+   allowance of 6,100** and twenty lines of prose inside it took `bulk` red — the second release
+   running that a comment has done that, after `agenda` at 222 of 210 in v3.117.0. Prose is
+   documentation, not size. FOUR LINES OF HEADROOM: the next thing added to `App` should come with
+   something taken out of it, and the allowance is not the dial. */
 export default function App(){
   const [screen,setScreen] = useState("loading");
   const [S,setS] = useState(null);
@@ -21726,24 +21751,6 @@ export default function App(){
   /* the bookmaker prices what you actually told him to do, not a neutral bout */
   const makeBet = (g, opp)=> stake>0 && S.gold>=stake
     ? { amount:stake, against, chance:betChance(g, opp, tactic) } : null;
-  /* ---- WHAT A BOUT SPENDS, CLEARED WHERE IT IS SPENT — #194, v3.118.0 ----
-     Five functions send a man out and every one of them ends twice: once where the bout runs to a
-     verdict, and once where it stops at the balance and is HELD for a word from the box. The two
-     exits cleared different things. `fightOffer`'s verdict exit cleared the pit opponent, the plan
-     and the entrance; its crux exit cleared none of the three and returned early, `speak` cleared
-     nothing on the way back, and `goPick` cleared the plan and the melee plan but not the
-     entrance. So the entrance had exactly ONE path that put it down, and 55-61% of bouts take the
-     other one. Driven on the real screen over two seeds: the chip was still lit on 8 of 8 bouts
-     that stopped at the balance and cleared on 6 of 6 that ended outright.
-
-     The orders are spent the moment they reach the engine — `offer.entrance` is written before
-     `doFight` and the held `pending` carries it, so nothing in flight reads these again. They are
-     put down there, ahead of the branch, and both exits are clean by construction.
-
-     `tactic` is NOT in here and that is deliberate: it is the one choice on that panel that reads
-     as a standing preference rather than an order for this afternoon, and it has never been
-     cleared by any exit. `fGid` and `pairSel` are not orders either — they are who is going out,
-     and every exit already puts them down. */
   const spendOrders = () => { setPitPick(null); setPlan("none"); setMplan("none");
     setEntrance("none"); setStake(0); setAgainst(false); };
   const fightOffer = (offer)=>{

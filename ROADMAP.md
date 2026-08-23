@@ -4504,6 +4504,12 @@ and it only bites when the next offer is also `watched`, which is why this is a 
 rather than a balance one. `open`'s 60-house signature is byte-identical, as it must be: the change
 is React state and the probe is headless.
 
+**`bulk` caught the fix's prose for the second release running.** Twenty lines of note inside `App`
+took it to **6,114 against an allowance of 6,100**, the same way a comment took `agenda` to 222 of
+210 in v3.117.0. The note moved above `App`; the allowance was not raised. **`App` now stands at
+6,096 of 6,100 — four lines of headroom**, and the next thing added to it should come with
+something taken out.
+
 **`orders` is the 90th check, and it is STATIC on purpose.** The fault was not one wrong value, it
 was five functions each deciding for themselves what a finished bout puts down, so the guard is the
 shape: `spendOrders` is the only thing that may put an order down apart from the chip the player
