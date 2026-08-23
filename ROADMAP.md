@@ -1644,7 +1644,7 @@ Opponent loadout variety: 58 distinct kits at tier 0 (54% bare-headed), 178 at t
 **Shipped and verified: v3.105.0 → v3.115.0, eleven releases, 87/87 green, all on `main`.**
 The detail of each is at the foot of this file; this is what a new session needs in one place.
 
-**AND THEN THE AUDIT, at the foot of this file: ten items, #186-#195, nothing assigned.** Read that
+**AND THEN THE AUDIT, at the foot of this file: ten items, #186-#195. #195 shipped in v3.116.0; the other nine are unassigned.** Read that
 section before this one if you are picking work. Its short version: the five leads the last session
 left are all answered, and **the largest single finding is that `asks`'s silent list was mostly the
 probe's own** — it diffed five channels and the game speaks in eight, so four of its five silences
@@ -4460,6 +4460,56 @@ about a quarter and it is the cost of this repair**; `MISSIO_MAN` is one line to
 wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
+
+### v3.116.0 — #195: fourteen names, fourteen draws, and not one of them looked who had one
+
+`pick(NICKS)` was written at **fourteen sites** and none of them asked who was already wearing the
+name. Measured over 120 houses: **567 of your men were named by the crowd, 89 took a name the house
+had used before and 8 took one a man STILL ON THE BOOKS was wearing** — about one house in fifteen
+ended up with two living men called the Serpent.
+
+**The scope is the whole of the design decision, and it was settled by measuring first.** Fourteen
+names cannot cover the world. Counted week by week over 8,479 house-weeks, **10 to 12 of the
+fourteen are worn at any moment** — p90 13, max 14 — across your yard, the three rival rosters, the
+circuit, the block and the pit, so **99.8% of weeks already carry a duplicate somewhere** and a
+rule that refused every worn name would empty the pool and start handing out repeats again by a
+longer road. Two men in different towns called the Lion is how a nickname works. Two men in one
+yard is not, and neither is two men on one card, which is the only place the game prints both
+names in one breath. So `freshNick(d, more)` refuses exactly that: **the men on your books and the
+men on this week's card**, which together average 1.2 wearers a week against fourteen names, with
+the old unfiltered draw standing where the pool is empty — a repeat beats no name.
+
+Paired on three seeds, same builds, same policy, 8,479 house-weeks and **the same 166 men named in
+the same weeks**:
+
+| | before | after |
+|---|---|---|
+| house-weeks with two of YOUR living men alike | **58** | **0** |
+| men who took a name a stablemate still wore | 2 of 166 | **0 of 166** |
+| weeks with one of yours and one on the card alike | 174 (2.1%) | **88 (1.0%)** |
+| weeks with one of yours and one on a rival roster alike | 1,743 | 1,361 |
+| men named by the crowd | 166 | 166 |
+
+**The card is halved and not zeroed, and that is the scope showing rather than the fix failing**: a
+rival's man named forty weeks ago can arrive on your card later, and nothing renames a man. Closing
+that would mean refusing the rival rosters too — thirteen of the fourteen names in play, and the
+pool empty most weeks. `d.nextId`, the RNG stream and every downstream roll are untouched, because
+`pick` spends one R() whatever the array length: `open`'s 60-house signature is **byte-identical**,
+and every per-place nick count in the probe is the same to the digit.
+
+**`names` is the 88th check and its static half is the one that will catch the next mistake**: the
+only code that may name `NICKS` is the table's own line, the body of `freshNick`, and the handle —
+a fifteenth draw site added later goes red rather than quietly reintroducing the fault at one call
+site. Negative-tested three ways: a draw site put back (red, naming the line), the card blinded
+(red, 46 of 300), and a dead man left holding his name (red). **And its own first version asserted
+`pick(NICKS)` appeared exactly once and read ZERO**, because the draw inside the helper is
+`pick(free.length ? free : NICKS)` — an invariant has to be written against the code that exists.
+
+**One fault caught before it shipped, and it is the usual one.** `newGameState`'s legendary opening
+man was written `freshNick(S)` — and `S` there is the SCENARIO (`S.men`, `S.legendFirst`, `S.old`),
+not the state. It would have read `S.gladiators` as undefined, returned the full pool, and done
+nothing at all while looking exactly like the fix.
+
 
 ### v3.79.0 — #185: the reference player stops pressing, and 124 numbers move without a single bar firing
 
@@ -13667,7 +13717,7 @@ the man wrong at **−7.5 points of win rate**. *Falsifies if the plan only bite
 is also `watched` — `doFight` is handed `offer.watched ? plan : "none"` — which narrows the cost
 without touching the inconsistency.*
 
-### #195 — two men in one house can be given the same name by the crowd.
+### #195 — CLOSED in v3.116.0. Two men in one house could be given the same name by the crowd.
 `pick(NICKS)` appears at fourteen sites and not one of them looks at who already holds one.
 Fourteen names. Over **120 houses (ten runs of 12 × 420)**: **567 of your men were named by the
 crowd, 89 (15.7%) took a name the house had used before, and 8 (1.4%) took one a man still on the
@@ -13676,6 +13726,12 @@ The nickname is also an ambition (`nickname`, 341 of 1,789 given, the second mos
 worth 120 to `gladName`. *Falsifies if the duplicate is invisible on screen — `fullName` is
 `${name}, ${nick}`, so it is not, but nobody has checked whether the two men are ever on the same
 list.*
+**Fixed in v3.116.0, and the scope was the interesting half.** All fourteen draws go through
+`freshNick(d, more)`, which refuses the names on your books and on this week's card and nothing
+else: 10 to 12 of the fourteen are worn somewhere in the world at any moment, so refusing them all
+would empty the pool and reintroduce the fault by a longer road. Two of your living men alike:
+**58 house-weeks → 0**. Yours against the card: **174 → 88**, halved rather than zeroed, because
+nothing renames a man already carrying one. `names` is the 88th check.
 
 ### What was measured and is NOT an item
 - **#144's fix is holding.** `fresh.mjs` swept every agenda identity for the fault #144 fixed once —
@@ -14547,4 +14603,4 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.115.0 — the audit is done: ten items, #186-#195, none of them assigned*
+*Last updated: v3.116.0 — #195 closed; nine of the audit's ten items still open*
