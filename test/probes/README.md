@@ -59,6 +59,8 @@ Run them straight:
     node test/probes/venue.mjs 12 420 SEED   # nine venues against six backdrop rules
     node test/probes/vote.mjs  12 420 SEED   # the aedile's three-week clock, and the guard that stops it
     node test/probes/sticky.mjs 10 SEED      # what the arena panel clears on which of its three exits (browser)
+    node test/probes/gate.mjs  12 420 SEED   # when an ambition gate shut at creation comes open later in a life
+    node test/probes/gate.mjs  12 420 SEED '{"pupil":true}'   # ...with the doctore's square manned
 
 ## HOW MANY HOUSES A FIGURE NEEDS — read this before quoting one
 
@@ -591,6 +593,24 @@ entrance chips are UPPERCASED by the stylesheet, so a comparison against the tab
 matched nothing; and step one of the arena wizard is ALWAYS "The Pits", whose panel has stakes,
 tactic and wager rows and no entrance row at all — the first version took that row every time and
 reported six attempts of "no entrance row".
+
+**`gate.mjs`** — three of the seven ambitions are gated on the man's own body and the gate ran once,
+the week he was made. This walks every man's whole life and asks when a shut gate COMES OPEN, what
+state his ambition is in at that moment, and what he ends up carrying against what he was drawn.
+**Three instrument faults before it printed anything quotable, and the largest was not in the probe:**
+
+  · the rope hires a doctore and had never named him a pupil in the history of this project, so
+    `doctoreWeek` returned on its second line every week of every run here and all five `DOC_LESSONS`
+    — including the only lift a living man's potential ever gets — were unreachable by any policy.
+    A `pupil` lever now names one and rotates it. Off by default; off is what every earlier figure
+    in this directory was measured on. Without it the champion gate reads dead when it is unvisited.
+  · sampling the pool by running the game's own `giveAmbition` burns ninety RNG draws per man per
+    week, and `pick` advances one global counter — so the first cut drove a **different game** from
+    the one it reported, and the difference was material: men ever scarred read 57.9% against a true
+    66.1%. `rngGet`/`rngSet` are on the handle for this and the probe puts the seed back.
+  · and it proves that rather than claiming it: every run drives the same houses a second time with
+    sampling off and prints whether the two signatures are byte-identical. If they are not, nothing
+    above the line is quotable, and the probe says so in those words.
 
 **`scroll.mjs`** — where the vertical pixels go, per place, as the page ARRIVES versus with every fold
 thrown open. The second is what `reach` necessarily measures and it is 40% taller than the first.
