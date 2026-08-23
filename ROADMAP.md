@@ -4461,6 +4461,96 @@ wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
 
+### v3.121.0 — #189: what a man can want is tested on his body, and his body changes
+
+`ambPool` gates three of the seven ambitions on the man himself — `champion` on `potential >= 62`,
+`nickname` on not already carrying one, `revenge` on carrying a scar — and the gate ran **once**, the
+week he was made. That is the one moment in his life he is least likely to pass any of them: a man
+off the block is unscarred and unassessed. Measured over 12 houses × 420 weeks on two seeds and two
+policies: **`revenge` 2.7–2.9% of every ambition given and `champion` 3.7–5.8%, against 14–20% each
+for the four ungated kinds.**
+
+**The revenge gate is not shut. It is unwatched.** Of the men it was shut for — 73–79% of everyone —
+
+| arm | walk through it later | still silent when they do | median age |
+|---|---|---|---|
+| seed A, default | 53.6% of 347 | 79.0% | 24 |
+| seed A, pupil | 57.5% of 259 | 81.9% | 24 |
+| seed B, default | 54.2% of 323 | 78.9% | 24 |
+| seed B, pupil | 54.3% of 420 | 82.9% | 24 |
+
+So the game marks him, opens the door, and never looks again. The line the table wrote for him is
+*"He touches the scar while he says it and does not notice he is doing it"* — and until now the only
+men who could ever say it were the ones who arrived **already marked, in somebody else's house**. A
+scar your own arena put on a man could not become the thing he wants.
+
+**The fix is one function and the odds are not a new constant.** `ambPool` is extracted so the draw
+and the re-test share one predicate; `ambTurn(d, g, k)` runs at the moment a gate opens. A man drawn
+uniformly from his old pool becomes a man drawn uniformly from the new one by exactly this: with
+probability **1/|new pool|** the key that just opened takes it, otherwise he keeps what he has. It is
+the draw he would have had if the gate had been open the week he arrived, and nothing else. The
+counterfactual the probe printed *before any of this was written* — 20/147, 13/122, 25/138, 32/193 —
+lands on 1/6. Three call sites: the two places the weekly sweep marks a man, and `DOC_LESSONS.potential`.
+
+**And only while he is silent.** `SECT.wants` shows the ambition line from a man's first week, under
+the words *"He has not mentioned it. He would not."* — so the player is reading his interior, not his
+word. An interior that changes when he is cut open is the man. A stated want that changes behind the
+card is a lie. `a.voiced` is the whole guard and it is checked before the roll, so a man who cannot
+turn does not cost the stream a draw.
+
+| after, four arms | revenge given at creation | revenge **carried** | champion carried | turns | while voiced |
+|---|---|---|---|---|---|
+| seed A, default | 4.5% | **15.8%** | 4.4% | 37 | **0** |
+| seed A, pupil | 4.1% | **14.6%** | 4.0% | 41 | **0** |
+| seed B, default | 3.4% | **16.8%** | 3.8% | 55 | **0** |
+| seed B, pupil | 4.4% | **15.1%** | 3.7% | 64 | **0** |
+
+`given` and `carried` are measured **in the same run**, so they are phase-matched by construction:
+the first is what the draw alone produces, the second is what the player actually reads. The list is
+flat now — 20.3 / 16.8 / 16.5 / 15.4 / 15.1 / 12.2 on seed B — where `revenge` sat at 2.7%. Every one
+of those turns is a man **your** arena marked, which was previously a population of zero.
+
+**The champion gate is a different fault and is deliberately left standing.** It opens **0, 0, 0 and
+2–4 times** in the same four arms. The only thing in the file that lifts a living man's potential is
+`DOC_LESSONS.potential`, +2 to +4, behind a named pupil — and **the reference player has hired a
+doctore since the rope was written and had never once named him one**, so `doctoreWeek` returned on
+its second line every week of every run in this project's history and all five lessons were
+unreachable by any policy here. A new `pupil` lever fixes that: with the square manned every week the
+lesson fires 92–99 times in 3,271–3,444 house-weeks and crosses 62 **two to four times**. The hook is
+there so the property holds at every gate; it is worth about one man in a hundred houses and the
+ROADMAP says so rather than implying the fix moved it.
+
+**This one changes the sim, and the proof is a control arm rather than a signature.** `ambTurn` draws
+on the RNG, so `open.mjs`'s 60-house signature necessarily moves. A third build was made that takes
+the identical draw at the identical points and never applies the result, which separates re-phasing
+from effect:
+
+| build | standing | men |
+|---|---|---|
+| v3.120.0 — no draw at all | 49 of 60 | 185 |
+| **control — same draw, effect suppressed** | **52 of 60** | **167** |
+| v3.121.0 — draw applied | 50 of 60 | 169 |
+
+The control moves **further** from v3.120.0 than the shipped build does. The whole movement is phase;
+applying the turn on top of it moves the reading back toward where it started. That is what a change
+touching only `a.kind` should look like, and it is proven rather than asserted.
+
+**`turn` is the 93rd check and its bar is the shape, not the key**: a gate that can COME OPEN must be
+re-tested when it does, and a want he has already stated must never move. The static half is general
+over `ambPool` — a fourth gated key is red until somebody either gives it a re-test or writes down
+why its gate can only ever shut, which is what `nickname` (`!g.nick`, true → false) is classified as.
+It also holds that `AMB_KEYS.filter(` appears exactly **once**, because two copies of one predicate is
+how a draw and a re-test drift apart.
+
+Negative-tested six ways, all red: both hooks removed; the `turn` line removed; the `a.voiced` guard
+removed (99 of 600 turned in each of the three spoken states); the odds changed to a half (49.6%
+against the pool's 16.7%); the filter re-inlined (two definitions); and the weekly sweep made unable
+to scar anybody, which trips the **vacuity guard** — *"no man was ever scarred in 400 tries, so this
+proves nothing"*. The driven half runs the turn through `endWeek`'s real sweep rather than calling
+`ambTurn` directly, because a unit test of the function proves the function and not the wiring.
+
+Suite **93/93 green**.
+
 ### v3.120.0 — #187: the rite printed a countdown, ranked flat, and went under the fold as the clock ran out
 
 `agendaTop` shows a row for being urgent (`urgency >= 3`) or NEW (`age <= AG_FRESH`, three weeks).
@@ -13828,6 +13918,14 @@ it — `stock`, `fresh`, `venue`, `vote`, `sticky` — and one existing one was 
 it was reporting. That ratio held: **two of the ten items are about the instrument, and the single
 largest finding in this pass is that `asks`'s silent list was mostly its own.**
 
+**Six closed, in v3.116.0–v3.121.0: #195, #192, #194, #188, #187, #189.** A sixth instrument,
+`gate`, was built for the last of them and cost three instrument faults before it printed a figure
+worth quoting — the largest being that **the reference player has hired a doctore since the rope
+was written and had never once named him a pupil**, so five written lessons had been unreachable by
+any policy in this directory and one of the two gates #189 is about read as dead when it was merely
+unvisited. `gate.mjs` proves its own footprint invisible on every run, because sampling the pool
+with the game's real draw burns RNG the played house never spent.
+
 ### #186 — `asks` was diffing five channels and the game speaks in eight. Four of its five silences were the probe's.
 The queue's first lead was `asks`'s five remaining silences. Every one of the five channels it
 diffed is the WEEK'S LIST or a MARK on a section. The game also speaks through **what it teaches**
@@ -13919,7 +14017,7 @@ despairs across all seven kinds **64 → 41**. The one bar — he must have been
 was set by measuring who arrives at that tick: 7 of 25 had never fought. `freedom` stays at 0 and
 stays #190's: its door exists and is narrow. `wants` is the 91st check.
 
-### #189 — two of the seven are handed to 4% of men, because eligibility is tested the week they arrive.
+### #189 — CLOSED in v3.121.0 for the gate that was open; the other was measured and left. Two of the seven are handed to 4% of men, because eligibility is tested the week they arrive.
 Same runs. `giveAmbition` filters the pool at man-creation: `champion` needs `potential >= 62`,
 `revenge` needs `(g.scars||[]).length > 0` — and a man off the block has no scars yet.
 
@@ -13929,6 +14027,26 @@ Same runs. `giveAmbition` filters the pool at man-creation: `champion` needs `po
 Five split **93.4%** and two split **6.6%**. `revenge` is never PRESSED at all in two of four runs
 (0 and 0 against 1 and 3). *Falsifies if a man's ambition is re-drawn later in life — it is not:
 `giveAmbition` has two callers, man-creation and one event that fills in men who have none.*
+**And the second falsifier, written when the item was opened and answered by `gate.mjs`: if men
+rarely cross either gate while alive and silent, then testing once costs nothing and the fault is the
+creation gate instead.** They cross constantly. **Of the men the revenge gate was shut for — 73–79%
+of everyone — 54–58% walk through it later, at a median age of 24 in all four arms, and 76–84% of
+those crossings happen while he has still not said a word.** So the game marks him, opens the door
+and never looks: the only men who could ever carry *"To face the house that marked him"* were the
+ones marked in somebody else's house before you bought them.
+**Closed in v3.121.0 for `revenge`, at 1/|pool| — the draw he would have had if the gate had been
+open the week he arrived, and not a new constant.** Carried share 2.7% → **15.8 / 14.6 / 16.8 / 15.1%**
+across the four arms, 0 of them turning after he had spoken. `turn` is the 93rd check and holds the
+shape: a gate that can come open is re-tested, a stated want never moves, and `AMB_KEYS.filter(`
+appears exactly once.
+**`champion` is measured and left standing, which is the honest half.** Its gate opens **0, 0, 0 and
+2–4 times** in the same arms. Nothing in the file lifts a living man's potential except
+`DOC_LESSONS.potential`, behind a named pupil — and **the rope had never named one in the history of
+this project**, so the lesson was unreachable by any policy here and the first reading of "the gate
+never opens" was a policy zero rather than a game fact. A `pupil` lever now names one; with the
+square manned the lesson fires 92–99 times in ~3,300 house-weeks and crosses 62 two to four times.
+The hook is wired for the property, not for the yield, and it is worth about one man in a hundred
+houses. The next move on `champion` is a measurement of what SHOULD lift a man's ceiling, not this.
 
 ### #190 — the rudis is a 1–2% state, and the ambition that asks for it is met once in twenty-four.
 `rudisEligible = !isAuctor(g) && g.wins >= 10 && g.pfame >= 180`, and `grantRudis` meets the
@@ -14924,4 +15042,4 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.120.0 — #195, #192, #194, #188 and #187 closed; five of the audit's ten items still open*
+*Last updated: v3.121.0 — #195, #192, #194, #188, #187 and #189 closed; four of the audit's ten items still open*
