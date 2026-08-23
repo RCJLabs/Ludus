@@ -14000,6 +14000,44 @@ In between the agenda printed the lookup straight — **"undefined is being talk
 it precisely *because* it normalises names out of its labels, so four broken strings collapsed into
 one row instead of hiding as four different men.
 
+
+### The crown of Capua, which the week never mentioned
+`silent` drove nine late systems against both channels a week can speak through — the agenda's list
+and the SECT_MARK vocabulary. Eight use at least one. **The primacy uses neither**: 485 live weeks,
+0 agenda lines, 0 marks.
+
+**And I mis-stated this once already.** The collegium reads 0% on the agenda and 100% on the marks,
+which is a voice. Calling it silent alongside the primacy was reading one column of a two-column
+table — the exact fault `silent`'s own header warns about, committed against `silent`'s own output.
+
+Measured in the arena over 10 houses × 420 weeks:
+
+| | |
+|---|---|
+| the primus bout was on the card | **93 times** |
+| the week's list named it | **0 times** |
+| weeks the primacy was challengeable, unsaid | 588 |
+| weeks the house actually held the crown | **2** |
+
+The card row reads "the Ludi Romani · 3 on the card" whether the third of those is a plain bout or
+the first man in the city. A reference player who works the morning list took the crown of Capua
+**twice in four thousand weeks** — not because it is hard, but because nothing said it was there.
+After the change, 93 of 93.
+
+**The night gets the row, not the opportunity.** Being *able* to challenge is true for 588 weeks,
+and a row standing that long is what the **bay** already is — named on 100% of its 1,100 live weeks
+and never once urgent. A card carrying the crown is 93 weeks, expires when the week does, and is the
+only form of this worth waking a player for.
+
+**And the defence branch fired zero times in the whole measurement**, because the reference house
+never holds the crown long enough to defend it. It is driven in `crown` off a forged held primacy —
+untested code that looks tested is what this suite keeps finding.
+
+Still open from the same table, and the same shape as the bay: the **master's bench** is named on
+100% of 600 live weeks and never urgent; the **household** 35%, no mark; the **lanista's end** 9%.
+Naming something every week without ever asking for it is a third state between silent and speaking,
+and nothing measures it yet.
+
 ---
 
-*Last updated: v3.110.0*
+*Last updated: v3.111.0*

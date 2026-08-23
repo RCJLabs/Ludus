@@ -3184,6 +3184,40 @@ const agWord = age => age <= 0 ? "new this week" : age <= AG_FRESH ? `${age} wee
    the ids to SECT's real names, because a typo does not throw — it silently travels.
    (This note sits out here because agenda sits two lines under its bulk allowance, and prose is
    documentation, not size.) */
+/* ---- THE CROWN OF CAPUA, WHICH THE WEEK NEVER MENTIONED ----
+   `silent` set out to find late systems with no voice. Of the nine it drove, the primacy is the
+   only one silent in BOTH channels — 485 live weeks, 0 agenda lines, 0 marks. (The collegium reads
+   0% on the agenda and 100% on the marks, which is a voice; an earlier note here called it silent
+   and was wrong.)
+
+   Then the arena was measured directly, over 10 houses x 420 weeks:
+
+       the primus bout was on the card             93 times
+       the week's list named it                     0 times
+       weeks the primacy was challengeable, unsaid 588
+       weeks the house actually held the crown       2
+
+   The card row says "the Ludi Romani · 3 on the card" whether the third of those is a plain bout or
+   the first man in the city. So the reference player, who reads the list and works it, took the
+   crown of Capua twice in four thousand weeks — not because it is hard, but because nothing ever
+   said it was there.
+
+   AND IT IS THE NIGHT, NOT THE OPPORTUNITY, THAT GETS A ROW. Being *able* to challenge is true for
+   588 weeks, and a row that stands for 588 weeks is furniture — the fault the bay already has
+   (named on 100% of 1,100 live weeks, never once urgent). A card that carries the crown is 93
+   weeks, expires when the week does, and is the only form of this worth waking a player for. */
+function agendaCrown(d, add){
+  const on = (d.games && d.games.offers) || [];
+  const bout = on.find(o=>o && o.primus);
+  if(!bout) return;
+  const p = d.primus;
+  if(bout.defence)
+    add(3, "arena", "Your primacy is to be defended", `${(p&&p.name)||"your man"} against ${(bout.opp&&bout.opp.name)||"a challenger"} — this week or it is forfeit`);
+  else
+    add(3, "arena", "The primacy of Capua is on the card",
+      p ? `${p.name}${p.house?` of House ${p.house}`:""} holds it` : "the first man in the city");
+}
+
 function agenda(d){
   const A = [];
   /* tab[:face][:panel] — see the note above `agenda` */
@@ -3275,6 +3309,7 @@ function agenda(d){
   if(d.election && !d.election.done) add(2, "villa:council:aedileship", "The aedileship is open", `${Math.max(0,3-(d.week-d.election.week))} weeks to the vote`);
   if(d.games && d.games.offers && d.games.offers.length && activeG(d).some(g=>canFight(g) && g.lastFought<d.week))
     add(2, "arena", d.games.festival, `${d.games.offers.length} on the card`);
+  agendaCrown(d, add);
   { const pg = poachedMan(d); if(pg) add(2, "men", `${pg.name} is being talked to`, `House ${d.poach.house}`); }
   if(d.court) add(1, "men", `${d.court.name} of House ${d.court.house} is being talked to`, `${d.court.weeks}w — your word, their wall`);
   if(d.loan && owes(d) > d.loan.principal*2) add(2, "villa", `${loanLender(d).name} is owed ${owes(d)}d`, "and it is getting away from you");
