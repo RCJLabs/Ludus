@@ -96,7 +96,15 @@ const ALLOWED = {
      build writes an offline shell. Those four rules are content the stylesheet has to carry, the
      same argument EVENTS and SECT make, and the headroom is seven lines rather than fifty so
      drift still says stop. The whole account is in src/fonts.js. */
-  CSS:            { max: 256, why: "the stylesheet, plus the four @font-face rules the embedded faces need" },
+  /* ---- RAISED 256 -> 258 FOR TWO VENUE BACKDROPS, v3.123.0 ----
+     `.v-bowl` and `.v-greek`. `VENUES` has nine keys and the stylesheet had six rules, so two of
+     the nine — Pompeii's stone amphitheatre and the theatre at Neapolis — were drawn as the Capuan
+     forum, on 5.4% of every bout fought. That is the case this allowance's own note contemplates:
+     it is a STYLESHEET and it grows when the game gains a surface, which is why v3.107.0 raised it
+     for four @font-face rules and wrote down why. Two rules, two lines, and the headroom is back to
+     one so drift still says stop. The note explaining them sits ABOVE `const CSS`, outside the
+     span this sweep measures and outside the bytes the browser is sent. */
+  CSS:            { max: 258, why: "the stylesheet, plus the four @font-face rules the embedded faces need and the eight venue backdrops" },
 };
 
 export async function run(){
