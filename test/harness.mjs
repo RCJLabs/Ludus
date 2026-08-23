@@ -1053,25 +1053,51 @@ export async function forge(p, build, arg = null){
 
 /* autosave is debounced 500ms — anything less and you read the week before */
 /* ---- WAIT OUT THE PAGE TURN, OR MEASURE A ROTATED BOX ----
-   `.leaf` runs a 420ms transform on the page wrapper on every tab change (src:195). An element's
-   getBoundingClientRect() mid-rotation is the box of the ROTATED shape, not the layout box, and
-   nothing about that reads as an error: it comes back as a number.
+   `.leaf` animates the page wrapper on every tab change (src:209):
 
-   Found while measuring what a face offers on arrival. Two probes disagreed about the market by
-   210px and I went looking for the game fault between them; there was none. The wrapper was
-   reporting 143px wide instead of 390 on four of eight faces — every height, every y, and
-   therefore every "is it above the fold" taken from those reads was wrong, in both directions,
-   silently. The probe that looked right was the one that happened to visit the villa last, where
-   an extra face-click had eaten the animation.
+       from { transform: perspective(1500px) rotateY(-74deg); opacity:.15 }
+       to   { transform: perspective(1500px) rotateY(0);      opacity:1   }
+       .42s cubic-bezier(.22,.61,.36,1)
 
-   So: let the animations finish, then ASSERT the wrapper is its full width before believing a
-   pixel. A geometry read that cannot be trusted must throw, not return a number. */
-export async function settle(p, { min = 340 } = {}){
-  await p.evaluate(()=>Promise.all(document.getAnimations().map(a=>a.finished.catch(()=>{}))));
+   An element's getBoundingClientRect() mid-rotation is the box of the ROTATED shape, and at -74deg
+   under a 1500px perspective that box is about 143px wide against a settled 390. Nothing about it
+   reads as an error: it comes back as a plausible number.
+
+   THE WINDOW IS NARROWER THAN THE ANIMATION. The easing is fast-out, so the wrapper is back to
+   ~400px by 150ms and 390px by 430ms — measured. The genuinely wrong readings live in the first
+   60-80ms, which is exactly the length of one Playwright evaluate round-trip. That is why a probe
+   doing `tab(); evaluate()` lands in it and a check doing `tab(); wait; clearAll(); tab(); wait`
+   never does: audited with LUDUS_TURN_WATCH across palette, room, sand, seller, surface and sweep,
+   and NONE of them was ever caught mid-turn. Their settle() calls are insurance for the next edit,
+   not repairs — the numbers did not move when they were added.
+
+   It cost real work once: two probes disagreed about the market by 210px and there was no game
+   fault between them. So settle() waits the animations out and then ASSERTS the wrapper is its
+   full width, throwing rather than returning a number it cannot stand behind.
+
+   Set LUDUS_TURN_WATCH=1 to have every settle() point report when it finds the page still turning.
+
+   The animation wait is capped. `a.finished` on an INFINITE animation never resolves, and one
+   added to the page later would hang every check that calls this. Chrome does not list SVG SMIL in
+   getAnimations() — the scene's pulsing caller badge is invisible to it, checked — but a CSS
+   `infinite` would be listed, and a hang is a far worse failure than a slightly early read. */
+export async function settle(p, { min = 340, cap = 1500 } = {}){
+  if(process.env.LUDUS_TURN_WATCH){
+    const w0 = await p.evaluate(()=>{ const el = document.querySelector(".scroll > div");
+      return el ? Math.round(el.getBoundingClientRect().width) : -1; });
+    if(w0 >= 0 && w0 < min) console.log(`  !! MID-TURN at a measurement point: wrapper ${w0}px`);
+  }
+  await Promise.race([
+    p.evaluate(()=>Promise.all(document.getAnimations().map(a=>a.finished.catch(()=>{})))),
+    new Promise(r=>setTimeout(r, cap)),
+  ]);
   await p.waitForTimeout(120);
   const w = await p.evaluate(()=>{ const el = document.querySelector(".scroll > div");
     return el ? Math.round(el.getBoundingClientRect().width) : -1; });
-  if(w < 0) throw new Error("settle(): no page wrapper — nothing to measure");
+  /* No wrapper is not a fault: a full-screen modal or the founding screen legitimately has none,
+     and a check measuring one of those still wants the animations flushed. Only the page CAUGHT
+     MID-TURN is a fault, because that is the reading nobody can tell is wrong. */
+  if(w < 0) return 0;
   if(w < min) throw new Error(`settle(): the page is still turning — the wrapper reads ${w}px wide, not ~390. Every geometry read here would be the box of a rotating element.`);
   return w;
 }

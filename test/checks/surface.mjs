@@ -6,7 +6,7 @@
    to 36 rather than 44 on purpose — a six-chip training row at 44 would be a
    third taller for nothing. */
 
-import { found, endWeek, clearAll, tab, click , forge } from "../harness.mjs";
+import { found, endWeek, clearAll, tab, click , forge, settle } from "../harness.mjs";
 
 export const name = "surface";
 export const describe = "no type under the scale, no primary control under a thumb";
@@ -49,6 +49,11 @@ export async function run({ p, errors }){
     await clearAll(p, 8);
     await tab(p, t);
     await p.waitForTimeout(240);
+    /* this check compares every control's HEIGHT to a 44px floor, and a rect taken while the
+       .leaf page-turn is still running is the box of a rotating element — which reads SHORTER
+       than the control is. That is a false failure waiting to happen, on the one check whose
+       whole job is saying a control is too small. 240ms against a 420ms animation. */
+    await settle(p);
     /* every face of the tab, because three tabs mount one of several at a time and the
        villa keeps nineteen of its twenty-three sections behind chips */
     const faces = await p.evaluate(()=>{

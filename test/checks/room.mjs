@@ -32,7 +32,7 @@
    forces the widest word AND the widest line together, so the next time a scale gets a longer
    word the row it shares is measured with it. */
 
-import { serve, open, found, endWeek, clearAll, tab, click, hasHandle , forge } from "../harness.mjs";
+import { serve, open, found, endWeek, clearAll, tab, click, hasHandle , forge, settle } from "../harness.mjs";
 
 export const name = "room";
 export const describe = "the widest line the content space allows still fits the row it goes in";
@@ -110,7 +110,7 @@ export async function run({ p, errors }){
   await clearAll(p, 14);
   await tab(p, "arena"); await p.waitForTimeout(320);
   await clearAll(p, 8);
-  await tab(p, "arena"); await p.waitForTimeout(300);
+  await tab(p, "arena"); await p.waitForTimeout(300); await settle(p); /* the page turn is 420ms and the wait above is shorter — see settle() */
   if(!(await click(p, /choose a bout/i)))
     return { pass:false, why:"the arena tab would not open the wizard", lines };
   await p.waitForTimeout(800);

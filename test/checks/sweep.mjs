@@ -24,7 +24,7 @@
    So: every face of every tab, the counts reported per face so a collapse back to
    four is visible, and a second pass over the villa with a vow actually standing. */
 
-import { found, endWeek, clearAll, tab, click, top, waitSaved } from "../harness.mjs";
+import { found, endWeek, clearAll, tab, click, top, waitSaved, settle } from "../harness.mjs";
 
 export const name = "sweep";
 export const describe = "every tab, section and sheet renders without throwing";
@@ -177,7 +177,7 @@ export async function run({ p, errors }){
   async function sweepTab(t){
     await tab(p, t); await p.waitForTimeout(260);
     await clearAll(p, 10);            /* the gatekeeper arrives when you do, not before */
-    await tab(p, t); await p.waitForTimeout(200);
+    await tab(p, t); await p.waitForTimeout(200); await settle(p); /* the page turn is 420ms and the wait above is shorter — see settle() */
     const fs = await faces(p);
     if(!fs.length){ const n = await openAll(p); await p.waitForTimeout(340);
       visited.push(`${t} (+${n} sections)`); await readScreen(t); await readShape(t);

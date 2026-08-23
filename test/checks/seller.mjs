@@ -25,7 +25,7 @@
    WHAT WOULD FALSIFY IT: a bar whose window is narrower than the printed band, or an aria-valuenow on
    an unscouted man. Both are read off the rendered DOM of a real house, so neither can be argued. */
 
-import { found, endWeek, clearAll, tab } from "../harness.mjs";
+import { found, endWeek, clearAll, tab, settle } from "../harness.mjs";
 
 export const name = "seller";
 export const describe = "the block never shows a stat the player has not paid for";
@@ -68,7 +68,7 @@ export async function run({ p, errors }){
   const men = new Map();
   for(let w=0; w<14; w++){
     await tab(p, "market"); await p.waitForTimeout(200); await clearAll(p, 6);
-    await tab(p, "market"); await p.waitForTimeout(200);
+    await tab(p, "market"); await p.waitForTimeout(200); await settle(p); /* the page turn is 420ms and the wait above is shorter — see settle() */
     for(const r of await readBlock(p)) men.set(r.name + "|" + r.lvl, r);
     if(!(await endWeek(p))) break;
     await clearAll(p);
@@ -111,7 +111,7 @@ export async function run({ p, errors }){
     + `${checked-off} drawn exactly at the band they print, ${leaked.length} carrying an exact number`);
 
   /* ---- 3. and paying for a man does what it says ---- */
-  await tab(p, "market"); await p.waitForTimeout(240); await clearAll(p, 6);
+  await tab(p, "market"); await p.waitForTimeout(240); await clearAll(p, 6); await settle(p); /* the page turn is 420ms and the wait above is shorter — see settle() */
   await tab(p, "market"); await p.waitForTimeout(240);
   const paid = await p.evaluate(()=>{
     /* v3.97.0: the fee sits behind the candidate's row. Open them first — that IS the player's

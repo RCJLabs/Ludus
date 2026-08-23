@@ -20,7 +20,7 @@
    figures, and the six venue backdrops are pictures, not chrome. The ludus is lit by the same
    sun whichever ground the page is on.
 */
-import { found, tab, clearAll } from "../harness.mjs";
+import { found, tab, clearAll, settle } from "../harness.mjs";
 
 export const name = "palette";
 export const describe = "home stays night, every door opens on paper, and nothing is left unreadable";
@@ -65,7 +65,7 @@ export async function run({ p, errors }){
     await p.waitForTimeout(200); } };
 
   /* ---- 1. the two grounds ---- */
-  await tab(p, "ludus"); await dismiss(); await p.waitForTimeout(200);
+  await tab(p, "ludus"); await dismiss(); await p.waitForTimeout(200); await settle(p); /* the page turn is 420ms and the wait above is shorter — see settle() */
   const home = await p.evaluate(KIT + `(()=>{
     const sh = document.querySelector("[data-place]");
     return { place: sh.getAttribute("data-place"), L: lum(parse(getComputedStyle(sh).backgroundColor) || [23,18,16]) };

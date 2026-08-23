@@ -13789,10 +13789,9 @@ for the game fault between them. There was none: the wrapper was reporting **143
 those reads was wrong in both directions.
 
 `settle(p)` now waits out `document.getAnimations()` and then **asserts the wrapper is its full
-width**, throwing rather than returning a number it cannot stand behind. `reach` and `scroll` both
-needed it: each waited 340ms and 240ms against a 420ms animation, and both were saved only by an
-extra face-click on four of five rooms — `reach` had been reading `ludus`'s arrival geometry off a
-rotating element, and `scroll` every room with no face.
+width**, throwing rather than returning a number it cannot stand behind. It was added to `reach` and
+`scroll` on the reasoning that each waited 340ms and 240ms against a 420ms animation — **and that
+reasoning was later measured and found wrong**; see *The rect audit, refuted* below.
 
 That is the ninth instrument fault against the second game fault in this stretch. The ratio holds.
 
@@ -13915,6 +13914,42 @@ tap**, which is why the half the note called open was not the one that needed wo
 `sheet` asserts it through the screen rather than the state, because the fault was never a wrong
 flag: it was that the thing a player was working disappeared.
 
+
+### The rect audit, refuted — and the fault window is 80ms, not 420
+Ten instrument faults to two game faults in one stretch made a sweep for the same classes look like
+better value than another feature. The sweep found six checks — `palette`, `room`, `sand`, `seller`,
+`surface`, `sweep` — reading CSS-pixel rects after navigating with no page-turn guard, each waiting
+200–320ms against a 420ms animation, and each rect deciding something real: a 44px tap-target floor,
+what sits above the fold, a 5,200px² skip threshold.
+
+**None of them was ever mis-measuring.** `settle()` gained a `LUDUS_TURN_WATCH` mode that reports
+whenever a measurement point finds the page still turning; across all six, over a full run, it fired
+**zero** times. Adding the guards moved no number that a second guarded run did not also move —
+`surface`'s armoury count went 29 → 31 with the guard and 31 → 38 between two guarded runs, so it
+was noise, and `seller`'s 227px → 202px panel likewise. The six guards are **insurance for the next
+edit, not repairs**, and the write-up says so.
+
+**The audit itself had two faults, which is the actual lesson.** It collided files by basename
+(`test/probes/board.mjs` against `test/checks/board.mjs`), and it lumped `getBBox` in with
+`getBoundingClientRect`. **`getBBox` returns the element's own user space and no ancestor transform
+touches it** — so the scene's SVG geometry was never at risk, and fixing it would have been work
+against a non-bug.
+
+**And the mechanism was narrower than first written.** The keyframes are
+`rotateY(-74deg) → rotateY(0)` under a 1500px perspective on a fast-out easing, so the wrapper reads
+~143px at the very start, **~400px by 150ms** and 390px by 430ms. The genuinely wrong readings live
+in roughly the **first 60–80ms** — about one Playwright evaluate round-trip. That is exactly why a
+probe doing `tab(); evaluate()` lands in it and a check doing `tab(); wait; clearAll(); tab(); wait`
+never does. The earlier claim in *A rect is not a rect while the page is turning* that `reach` and
+`scroll` "had been reading off a rotating element" was inference from wait times, not measurement,
+and it was wrong.
+
+One real risk was found and closed on the way: `settle()` awaited `a.finished` on every animation,
+and an infinite animation's `finished` never resolves — a future CSS `infinite` would have hung
+every check that calls it. Chrome does not list SVG SMIL in `getAnimations()`, so the scene's
+pulsing caller badge is invisible to it (checked, not assumed), but the wait is capped now anyway:
+a hang is a far worse failure than a slightly early read.
+
 ---
 
-*Last updated: v3.108.0*
+*Last updated: v3.109.0*

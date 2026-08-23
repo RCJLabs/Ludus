@@ -21,7 +21,7 @@
    LUDUS. And the bout has to appear in the record book afterwards, because a screen that runs
    beautifully and books nothing is the fault this project has shipped twice. */
 
-import { found, endWeek, clearAll, tab, click, waitSaved, slot , forge } from "../harness.mjs";
+import { found, endWeek, clearAll, tab, click, waitSaved, slot , forge, settle } from "../harness.mjs";
 
 export const name = "sand";
 export const describe = "a bout runs in a real browser, from the card to the verdict";
@@ -214,7 +214,7 @@ export async function run({ p, errors }){
 
   for(const [label, rowRe, men] of WANT){
     await restock();
-    await tab(p, "arena"); await p.waitForTimeout(320);
+    await tab(p, "arena"); await p.waitForTimeout(320); await settle(p); /* the page turn is 420ms and the wait above is shorter — see settle() */
     await clearAll(p, 8);
     await tab(p, "arena"); await p.waitForTimeout(280);
     if(!(await click(p, /choose a bout/i))){ continue; }
