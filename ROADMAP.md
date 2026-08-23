@@ -4461,6 +4461,72 @@ wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
 
+### v3.123.0 — #193: two of the nine venues were drawn as somewhere else
+
+The arena's backdrop is one class — `` className={`arena v-${fight.venue||"forum"} …`} ``. `VENUES`
+has nine keys and the stylesheet had **six** `.v-` rules. `forum` is the base (the bare `.arena`
+gradient IS the warm Capuan sand) so eight keys want a rule of their own, and two did not have one:
+**`bowl`, Pompeii's stone amphitheatre, and `greek`, the theatre at Neapolis.** Both fell through to
+Capua. Re-measured on the current build over 12 houses × 420 weeks, 5,688 bouts through all four
+doors: **308 of them, 5.4%, fought at a venue drawn as home** — in exactly the system built to be a
+change of scene. Puteoli had `.v-harbour`; the other two coast towns looked like the place you left.
+
+**The falsifier was that the palette does not separate anyway** — *"`.v-amphi` and `.arena` already
+nearly are, which is a separate and smaller question."* A count of missing rules cannot answer that,
+so `paint.mjs` answers it in a unit an eye uses. It mounts the real element with the real class,
+takes the **computed** `background-image` — the browser has already resolved every `var()` to rgb
+stops — hands those stops to a canvas `createLinearGradient` so the interpolation is the browser's
+own, and reports **CIE76 ΔE in Lab** down the strip.
+
+| | before |
+|---|---|
+| the six rules that existed, all 15 pairs | **ΔE 9.5 to 28.8** |
+| closest pair | `amphi`/`imperial` 9.5 |
+| `.v-amphi` from the bare `.arena` | 3.8 — the item's aside was right, and 3.8 is still above the eye's floor |
+| **`bowl` and `greek` from the forum** | **0.0 — the same pixels** |
+
+2.3 is the just-noticeable difference for two patches side by side. Every existing pair clears it by
+four times over, so the palette does separate and the two holes were real. **The falsifier does not
+fire.**
+
+**The two gradients are measured, not chosen.** `bowl` is grey volcanic stone, older and colder than
+Capua's warm sand; `greek` is limestone, luminous and pale. After: `bowl` reads **ΔE 21.1** from the
+bare arena and `greek` **17.5**, and — the bar that matters — **neither makes the palette tighter
+than it already was**: the closest pair in the set is still `amphi`/`imperial` at 9.5. Two cuts of
+`bowl` were thrown away for failing exactly that, at **6.0 and 9.2 from `harbour`**, both closer than
+anything that existed. The third clears it at 10.6, with `yard` at 9.5.
+
+**`scene` is the 95th check and its bar is the shape, not the two keys**: a tenth venue added later
+with no rule goes red rather than shipping as Capua for a year, and no two backdrops may sit inside
+the eye's floor. The floor is the **JND**, deliberately, and today's real spread is printed rather
+than asserted — pinning the check to 9.5 would make every future palette tweak a red run.
+
+| broken on purpose | result |
+|---|---|
+| the `greek` rule removed again | red — *"drawn as the bare .arena"* |
+| `bowl` given a rule that copies the base | red — *"has a rule and is drawn as Capua anyway"* |
+| `greek` made a copy of `bowl` | red — *"the same place with two names"* |
+| **the `.lr` token scope renamed** | **red — *"nothing this check measures is real"*** |
+
+That last one is the guard worth having, because it is the fault the probe actually hit. **Every
+colour token in this file is declared on `.lr`, not `:root`.** `paint.mjs`'s first cut appended its
+host to `document.body`, `var()` substitution failed, the whole `background` declaration became
+invalid at computed-value time — which for `background-image` is `none` — and it reported `.v-pit`,
+**64% of every bout in the game**, as having no gradient at all. A probe fault that mimics the bug it
+is hunting is the worst kind, so the check asserts the scope resolved rather than assuming it.
+
+**And one more instrument fault**, in the check itself: a stray line left in the strip comparison
+read `i<A.px?0:A.length`, which parses as `(i<A.px)?0:A.length` and is therefore always truthy. It
+hung the run rather than failing it, which is the reading that looks least like a bug.
+
+**Stylesheet only**: `open.mjs`'s 60-house signature is **byte-identical** — no game path differs.
+The `bulk` CSS allowance goes **256 → 258** for exactly two rules, which is the case its own note
+contemplates (*"it grows when the game gains a surface"*) and the precedent v3.107.0 set for four
+`@font-face` rules. The headroom is back to one line. The note explaining the rules sits **above**
+`const CSS`, outside the span the sweep measures and outside the bytes the browser is sent.
+
+Suite **95/95 green**.
+
 ### v3.122.0 — #190: the one line that told a player what the rudis costs had been wrong since v0.90.0
 
 #190 was filed as *"the rudis is a 1–2% state, and the ambition that asks for it is met once in
@@ -14013,8 +14079,8 @@ it — `stock`, `fresh`, `venue`, `vote`, `sticky` — and one existing one was 
 it was reporting. That ratio held: **two of the ten items are about the instrument, and the single
 largest finding in this pass is that `asks`'s silent list was mostly its own.**
 
-**Seven closed, in v3.116.0–v3.122.0: #195, #192, #194, #188, #187, #189, #190.** A sixth and seventh,
-`gate` and `rudis`, were built for the last two of them, and `gate` and cost three instrument faults before it printed a figure
+**Eight closed, in v3.116.0–v3.123.0: #195, #192, #194, #188, #187, #189, #190, #193.** Three more —
+`gate`, `rudis` and `paint` — were built for the last three, and `gate` and cost three instrument faults before it printed a figure
 worth quoting — the largest being that **the reference player has hired a doctore since the rope
 was written and had never once named him a pupil**, so five written lessons had been unreachable by
 any policy in this directory and one of the two gates #189 is about read as dead when it was merely
@@ -14228,7 +14294,7 @@ called went **568 → 598** and the house holds an aedile 86–90% of weeks agai
 check found the adjacent fault the probe could not: the countdown's `Math.max(0, …)` floor was
 hiding an off-by-one on **every** election, at home as much as at Rome. `aedile` is the 89th check.
 
-### #193 — nine venues, six backdrops, and the two that are missing are two of the three coast towns.
+### #193 — CLOSED in v3.123.0, and the falsifier did not fire. Nine venues, six backdrops, and the two that are missing are two of the three coast towns.
 The arena's backdrop is one class: `` className={`arena v-${fight.venue||"forum"} …`} ``. `VENUES`
 has nine keys; the stylesheet has **six** `.v-` rules. Missing: `forum`, `bowl`, `greek`. `forum` is
 the base — `.arena`'s own gradient IS the warm Capuan sand — so that one is by design. **`bowl` is
@@ -14243,6 +14309,26 @@ built to be a change of scene: Puteoli has `.v-harbour`, the other two towns loo
 the second half of the art pass the queue's fourth lead asked for; the fighter figures are still
 unmeasured. *Falsifies if the two missing gradients would be indistinguishable from `.arena` anyway
 — `.v-amphi` and `.arena` already nearly are, which is a separate and smaller question.*
+**THE FALSIFIER WAS RUN AND IT DOES NOT FIRE.** A count of missing rules cannot answer "would you see
+the difference", so `paint.mjs` measures the rendered strip in **CIE76 ΔE**: the real element with
+the real class, the COMPUTED `background-image` (every `var()` already resolved to rgb by the
+browser), those stops through a canvas `createLinearGradient` so the interpolation is the browser's
+own. **The six rules that existed sat ΔE 9.5 to 28.8 apart across all 15 pairs**, every one of them
+four times the 2.3 just-noticeable difference — while `bowl` and `greek` sat at **0.0** from the
+forum, being the same pixels. `.v-amphi` against the bare `.arena` is **3.8**, so the item's aside
+was right that they are close and wrong that it makes the palette indistinguishable.
+**Closed in v3.123.0**: `bowl` is grey volcanic stone at ΔE **21.1** from the base and `greek` is
+limestone at **17.5**, and neither makes the palette tighter than it already was — the closest pair
+is still `amphi`/`imperial` at 9.5. Two cuts of `bowl` were thrown away for landing at 6.0 and 9.2
+from `harbour`, closer than anything that existed. Stylesheet only; `open`'s signature is
+byte-identical. `scene` is the 95th check and holds the shape: a tenth venue with no rule goes red,
+and no two backdrops may sit inside the eye's floor.
+**And the instrument cost two faults first.** Every colour token in this file is declared on `.lr`,
+not `:root`, so a host appended to `document.body` fails `var()` substitution and the whole
+declaration becomes invalid at computed-value time — the first cut reported `.v-pit`, **64% of every
+bout**, as having no gradient at all. The check asserts the scope resolved rather than assuming it.
+The second was a stray `i<A.px?0:A.length` in the check's own strip comparison, which parses as
+`(i<A.px)?0:A.length`, is always truthy, and HUNG the run rather than failing it.
 
 ### #194 — CLOSED in v3.118.0. The arena panel had three exits and they cleared different things.
 `fightOffer` at src/ludus.jsx:21646:
@@ -15160,4 +15246,4 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.122.0 — #195, #192, #194, #188, #187, #189 and #190 closed; three of the audit's ten items still open*
+*Last updated: v3.123.0 — #195, #192, #194, #188, #187, #189, #190 and #193 closed; two of the audit's ten items still open*

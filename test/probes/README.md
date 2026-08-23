@@ -63,6 +63,7 @@ Run them straight:
     node test/probes/gate.mjs  12 420 SEED '{"pupil":true}'   # ...with the doctore's square manned
     node test/probes/rudis.mjs 12 420 SEED '{"free":true}'    # the wooden sword: four terms and the career under them
     node test/probes/rudis.mjs 12 420 SEED '{"protect":"safe","free":true,"protectBar":0.45}'   # ...#190's falsifier
+    node test/probes/paint.mjs               # how far apart the arena backdrops are, in CIE76 dE
 
 ## HOW MANY HOUSES A FIGURE NEEDS — read this before quoting one
 
@@ -624,6 +625,18 @@ and ran as a plain control **while reporting more bouts than the crude arm** —
 connected looks exactly like a lever that does nothing; and the `metFreedom` counter sat inside a
 `status !== "active"` guard while `grantRudis` sets `status = "freed"` two lines before it fires
 `ambitionMet`, so it was structurally incapable of ever counting one and printed 0 for a release.
+
+**`paint.mjs`** — the nine arena backdrops, measured as colour rather than counted as rules. #193's
+falsifier is that the missing gradients would be indistinguishable anyway, and only a distance can
+answer that. Mounts the real element with the real class, takes the COMPUTED `background-image` —
+every `var()` already resolved to rgb by the browser — hands those stops to a canvas
+`createLinearGradient` so the interpolation is the browser's own, and reports **CIE76 ΔE in Lab**
+down the strip. The six rules that existed ran 9.5 to 28.8 apart; `bowl` and `greek` sat at 0.0 from
+the forum. **One instrument fault, and it mimicked the bug**: every colour token in this file is
+declared on `.lr`, not `:root`, so a host appended to `document.body` fails `var()` substitution and
+the whole `background` declaration becomes invalid at computed-value time — it reported `.v-pit`,
+64% of every bout, as having no gradient at all. The probe now mounts inside the game's own scope
+and exits loudly if `--ground` resolves empty.
 
 **`scroll.mjs`** — where the vertical pixels go, per place, as the page ARRIVES versus with every fold
 thrown open. The second is what `reach` necessarily measures and it is 40% taller than the first.
