@@ -4538,6 +4538,11 @@ same integers for the call and the settle, the exact three sentences of the coun
 ways: `d.rome` put back (red, "called w13 at home and wnull from Rome"), the floored countdown put
 back (red, naming all three sentences), `d.over` dropped (red), and the away line removed (red).
 
+Suite green at **89/89 in 11.7 minutes**. It took three runs to get there and both reds were worth
+having: `bulk` at 222 of 210 for prose inside `agenda`, and `surface` on the tap target above,
+which was already there. `open`'s 60-house signature was re-proved on the tree that shipped, not
+on the tree the fix was written against.
+
 
 ### v3.116.0 — #195: fourteen names, fourteen draws, and not one of them looked who had one
 
