@@ -6764,12 +6764,46 @@ const REFUSE_REASONS = {
   plain:   { when:()=>true,
     say:g=>`There is no particular reason he will give. He has simply had enough, and today is the day.` },
 };
+const REF_KEYS = Object.keys(REFUSE_REASONS).filter(k=>k!=="plain");
 const refusing = g => !!(g && g.refusing);
 const canFight = g => g && g.status==="active" && !refusing(g) && !g.learning && !(g.benched && g.benched.weeks>0);
 function refuseCandidate(d){
   return activeG(d).filter(g=>!isAuctor(g) && !refusing(g) &&
     (regardRefuse(g) || griefStricken(d,g) || (regardOf(g)<32 && g.defiance>62 && g.morale<32)))
     .sort((a,b)=>regardOf(a)-regardOf(b))[0] || null;
+}
+/* ---- #201: ONE FORMULA, BECAUSE THE PANEL IS ABOUT TO READ IT TOO ----
+   `refuseWeek` worked its chance out inline. #150's rule — the gambit panel quoting one number
+   while the engine rolled another, on 990 of 6,448 rows — says a displayed probability and the roll
+   behind it must be the same function, so it is one now and the arena reads it.
+
+   MEASURED before it was surfaced (probes/refuse.mjs, 8 houses x 300 weeks, 1,600 house-weeks):
+
+     the game has a candidate on          19.7% of house-weeks
+     his chance when it does              p50 16% · worst 42.4%
+     refusals                             41, from 23 men — 8% of every man the house held
+     ...that the game had ALREADY NAMED   75.6%
+     ...out of a clear sky                24.4%, and 80% of those were grieving by the time they sat
+     the refuser was fit to fight         90.2%
+     and once he sits, he sits            a MEDIAN OF 41 WEEKS
+
+   So the item's framing is half wrong and its substance is right: a refusal does not arrive after
+   you have committed — it arrives as a weekly event before you pick anybody. But the man it takes
+   is one you could have used nine times in ten, the game knew who he was three times in four, and
+   it never said. The 24.4% that cannot be warned about are the deaths: the grief and the refusal
+   land in the same sweep. */
+const refuseOdds = (d, g) => {
+  if(!g) return 0;
+  let rg = 50; try { rg = regardOf(g); } catch(e){ return 0; }
+  return clamp(0.05 + Math.max(0, 24 - rg)*0.011 + (griefStricken(d, g) ? 0.11 : 0), 0, 1);
+};
+/* the man the game would take this week, and what it would cost — null when no refusal can happen */
+function refuseRisk(d){
+  if(!d || d.over || d.rome || d.pendingEvent) return null;
+  const g = refuseCandidate(d);
+  if(!g) return null;
+  const key = REF_KEYS.find(k=>{ try { return REFUSE_REASONS[k].when(d, g); } catch(e){ return false; } }) || "plain";
+  return { g, chance: refuseOdds(d, g), key, fit: !g.injury && (g.fatigue||0) < 55 };
 }
 function refuseWeek(d){
   if(d.over || d.rome) return;
@@ -6784,11 +6818,10 @@ function refuseWeek(d){
   if(d.pendingEvent) return;
   const g = refuseCandidate(d);
   if(!g) return;
-  const odds = 0.05 + Math.max(0, (24 - regardOf(g)))*0.011 + (griefStricken(d,g)?0.11:0);
-  if(R() > odds) return;
+  if(R() > refuseOdds(d, g)) return;      /* #201 — the same function the arena panel quotes */
   /* if there is a reason with a name on it — a wound, a brother, a dead man he is still
      carrying — he gives that one. "no particular reason" is only ever the fallback. */
-  const key = shuffled(Object.keys(REFUSE_REASONS).filter(k=>k!=="plain")).find(k=>{
+  const key = shuffled(REF_KEYS).find(k=>{
     try { return REFUSE_REASONS[k].when(d,g); } catch(e){ return false; } }) || "plain";
   g.refusing = { since:d.week, weeks:0, reason:key };
   d.pendingEvent = { id:"refusal", title:"He Will Not Go Out",
@@ -12102,6 +12135,20 @@ const ROW_MARKS = [
     when:(d,g,o,mate)=> { const t = mate && tieBetween(d, g.id, mate.id); return !!(t && t.kind==="rival"); },
     say: (d,g,o,mate)=> { const t = tieBetween(d, g.id, mate.id);
       return `${g.name} and ${mate.name}: ${tieWord(t)}. They will cover each other badly \u2014 and if they win anyway, it may be the end of it.`; } },
+  /* ---- #201: THE MAN WHO IS ABOUT TO SIT DOWN ----
+     Measured: the game names a candidate on 19.7% of house-weeks, he goes on to refuse three times
+     in four when a refusal happens, he is fit to fight 90.2% of the time, and once he sits he sits
+     a median of 41 weeks. None of that was printed anywhere. It goes here rather than in a panel of
+     its own because "on the arena panel before you send him" is what the item asked for, and this
+     table is already the thing that speaks under a man's name in the chooser.
+     It is not a `pair` mark — it is true of one man whether or not anybody else is picked. */
+  { key:"sitting", colour:"var(--blood)",
+    when:(d,g)=>{ const r = refuseRisk(d); return !!(r && r.g && r.g.id === g.id); },
+    say:(d,g)=>{ const r = refuseRisk(d);
+      /* "the man closest to" is a NOUN, and `her()` rewrote it into "the man closest to putting her
+         hands down". Same fault #196 shipped with "a man in his position" — reworded to carry no
+         gendered noun at all, which is the only fix a pronoun helper cannot undo. */
+      return `Nobody in this yard is closer to putting their hands down — about ${Math.round(r.chance*100)} in a hundred this week. ${REFUSE_REASONS[r.key].say(g)}`; } },
   { key:"beside", colour:"var(--gold)", pair:true,
     when:(d,g,o,mate)=> { const a = g.ambition;
       if(!a || a.kind !== "beside" || a.met || a.broken) return false;
@@ -14945,6 +14992,25 @@ function suggestedPlan(d, g, offer){
 /* the standing choice, on his own page beside his focus — which is the precedent this reuses:
    a thing about the man, stored on the man, and read wherever it is needed rather than asked for
    again. Four chips, and a line saying what it means when nobody says otherwise. */
+/* ---- #201: AND ON HIS OWN PAGE, WHERE IT CAN BE SEEN ----
+   The first placement was inside `SECT.regard` — "What he makes of you" — which is exactly where
+   the number behind this lives, and which is a FOLD. It rendered as "WHAT HE MAKES OF YOU · hates
+   you · ⌄" with the warning shut inside it, and a warning behind a fold is not a warning. It sits
+   on his overview instead, the view every man opens on, beside his standing style. */
+function SittingSoon({ d, g }){
+  const r = refuseRisk(d);
+  if(!r || !r.g || !g || r.g.id !== g.id) return null;
+  return (
+    <div className="panel" style={{padding:9,marginTop:11,background:"var(--panel)",borderColor:"var(--blood-edge)"}}>
+      <div className="tag" style={{color:"var(--blood)",marginBottom:3}}>He is close to sitting down</div>
+      <div style={{fontSize:"var(--fs-base)",lineHeight:1.35}}>{her(REFUSE_REASONS[r.key].say(g), g)}</div>
+      <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:4}}>
+        About {Math.round(r.chance*100)} in a hundred nobody can make {PR(g).him} put {PR(g).his} hands up this week.
+        A man who sits down stays down for months, and the rest of the cells watch him do it.
+      </div>
+    </div>
+  );
+}
 function StandingStyle({ g, onPick }){
   if(!g) return null;
   const now = styleOf(g);
@@ -25392,6 +25458,7 @@ export default function App(){
                 and it is the first thing the arena reads about him. The choice moves here from
                 being made again on every single afternoon. */}
             {gView==="record" && <StandingStyle g={selG} onPick={k=>setStanding(selG.id, k)} />}
+            {gView==="record" && <SittingSoon d={S} g={selG} />}   {/* #201 — see the note over SittingSoon */}
             {gView==="record" && (()=>{ const v = formOf(selG); if(Math.abs(v)<7) return null;
               return (
                 <div className="panel" style={{padding:10,marginBottom:9,background:"var(--panel)",borderColor:formColour(v)}}>
@@ -28381,7 +28448,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        the game's own `need` and count the terms beside it rather than keeping a copy of either. */
     borrow, LENDERS, LEND_KEYS, owes, loanLender, canBorrow, loanWeeks, loanFuse, loanClock, EMPTY_LIMIT,   /* #163 */
     RUINS, RUIN_KEYS, facOf, lawOf, inBreach,
-    COUNSEL, WHISPERS, YARD, LATE, NIGHT, ASKS, REFUSE_REASONS, RIVAL_MOVES, FREEDMEN, AFTERS, FEUD_CAUSES,   /* #186 — eleven registers no probe could reach; the account is in checks/voice.mjs */
+    COUNSEL, WHISPERS, YARD, LATE, NIGHT, ASKS, REFUSE_REASONS, RIVAL_MOVES, FREEDMEN, AFTERS, FEUD_CAUSES, griefStricken, isAuctor, refuseCandidate, refuseWeek, endRefusal, refusing, canFight, refuseOdds, refuseRisk, REF_KEYS,   /* #201 — everything the refusal gate reads */   /* #186 — eleven registers no probe could reach; the account is in checks/voice.mjs */
     /* #196 — the conversation the player starts. WORDS is a register like the eleven above, so
        `voice` requires it here, and it is free to sit on its own line now that `bulk` ends App at
        its own closing brace instead of at the end of the file. */
