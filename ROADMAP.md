@@ -4538,7 +4538,44 @@ fixture fails too, rather than being carried untested.
 its closing brace**, so the handle exports this needed cost it nothing. The panel change lands in
 SECT (1,448 of 1,483) and the resolver in EVENTS (1,073 of 1,078). No allowance raised.
 
-Suite **98/98 green**.
+## Three checks the re-phase knocked over, and not one of them was the feature
+
+The first full run came back **95 of 98** — `desk`, `report` and `scene` red. The control build above
+(main plus one empty `EVENTS` key) reproduces `desk` and `scene` exactly, so the re-phase is what moved
+them; but "it's only phase" is a diagnosis of the *trigger*, not an excuse. Each one turned out to be a
+fault in the instrument that the re-phase merely stopped hiding.
+
+**`report` was a race, not a re-phase.** It ran 3, 3, 4 across three runs on one unchanged build. It
+reads the agenda back out of `localStorage` and the save is debounced; the bar on screen was already
+right. `waitSaved` (the harness helper that waits past the debounce) before the read, and it is 4 of 4
+every time. Any check that reads a saved state without waiting for it is a coin-toss that has not been
+called yet.
+
+**`desk` was pinned to one seed.** It asked `REACH-1` for a morning at week 16 carrying two doc-bearing
+rows — true of that seed under the old event phase and nothing more. Now it walks up to 40 seeds for a
+morning that qualifies, and reports which one it used: *REACH-2 at week 17, found in 2 seeds*. A
+fixture that names a seed and a week is measuring the seed.
+
+**`scene`'s denominator was a filter on fields that do not exist** — and so was the ceiling of its own
+fixture. Both read `!g.dead && !g.sold && !g.freed && !g.fled`. The game keeps a man's state in
+`g.status`; there is no `g.dead`, no `g.sold`, no `g.freed` and no `g.fled` anywhere in `ludus.jsx`.
+Every term was `!undefined`, so both filters were **no-ops counting the buried**. The consequences ran
+in opposite directions and cancelled into a green:
+
+- the *denominator* over-counted, so at roster 9 with 5 alive it demanded a `+N more` label for four
+  men who are in the ground;
+- the *ceiling* over-counted too, so the clone loop saw nine before making a single clone, added
+  **nothing**, and left the yard at five — under the overflow gate, with the collision assert passing
+  over a branch that never rendered.
+
+Both now ask `activeG`, and the name list is long enough to fill the yard from a house of one. The
+check reports **roster 8, 6 drawn, `+2 more`, 0 collisions** — the overflow branch has a subject for
+the first time since it was written. Its own vacuity guard (*"the fixture yard holds N men — the
+overflow branch has no subject and this check proves nothing"*) is what caught it: a guard that fires
+on a fixture too weak to test anything is worth more than the assertion it protects.
+
+Suite **98/98 green** in 13.4 min. The three reds are in the run tally where they belong — *report 2 ·
+desk 1 · scene 1* — because a fixture that had to be fixed to go green is a red that happened.
 
 ### v3.126.0 — `bulk` was charging every definition with whatever followed it, and App with the whole test handle
 

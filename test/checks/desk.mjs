@@ -47,12 +47,27 @@ export async function run({ p, errors }){
   await installRope(p);
   /* the same played morning three ways: planted, and its agenda handed back, so the walk below
      asserts against the list the house actually raises rather than one composed here */
-  const { rows } = await forge(p, (A, R) => {
-    const d = A.newGameState("Reach", "clean", "REACH-1", null);
-    for(let i=0;i<16;i++){ if(d.over) break; R.lanista(d); }
-    let list=[]; try { list = A.agenda(d)||[]; } catch(e){}
-    return { plant:d, rows:list.map(x=>({ label:x.label, doc:x.doc||null, dest:x.dest||null, tab:x.tab })) };
+  /* ---- THE MORNING IS SEARCHED FOR, NOT PINNED ----
+     This played 16 weeks of one seed and required the morning it happened to produce to carry two
+     doc-bearing rows. It did when it was written. Adding a single entry to `EVENTS` re-phases the
+     whole event stream — `pickEvent` walks `shuffled(Object.keys(EVENTS))` — so v3.127.0 turned
+     this red without touching anything it tests, and proving that took a control build. A fixture
+     pinned to one phase is a fixture that fails on the next release that adds an event. It walks
+     seeds now until it finds a morning carrying what the walk needs, and says so if none does. */
+  const { rows, from } = await forge(p, (A, R) => {
+    let best = null, tried = 0;
+    for(let s=1; s<=40 && !best; s++){
+      const d = A.newGameState("Reach", "clean", "REACH-"+s, null);
+      for(let i=0;i<16;i++){ if(d.over) break; R.lanista(d); }
+      tried++;
+      let list=[]; try { list = A.agenda(d)||[]; } catch(e){}
+      if(list.filter(x=>x.doc).length >= 2) best = { d, list, s };
+    }
+    if(!best) return { rows:[], from:`no morning in ${tried} seeds carried two doc-bearing rows` };
+    return { plant:best.d, from:`REACH-${best.s} at week ${best.d.week}, found in ${tried} seed${tried===1?"":"s"}`,
+      rows:best.list.map(x=>({ label:x.label, doc:x.doc||null, dest:x.dest||null, tab:x.tab })) };
   });
+  lines.push(`the morning walked: ${from}`);
   await clearAll(p, 8);
   await tab(p, "ludus"); await p.waitForTimeout(350); await clearAll(p, 6);
   await tab(p, "ludus"); await p.waitForTimeout(300);
@@ -60,7 +75,7 @@ export async function run({ p, errors }){
   const docable = rows.filter(r=>r.doc);
   lines.push(`this morning raises ${rows.length} items, ${docable.length} carrying a document: `
     + docable.map(r=>`${r.doc} (${r.label.slice(0,28)})`).join(" · "));
-  if(docable.length < 2) fails.push(`only ${docable.length} doc-bearing items on the played pinned morning — it carried `
+  if(docable.length < 2) fails.push(`only ${docable.length} doc-bearing items after walking forty seeds — it carried `
     + `watch, doctrine and blood when this was written; if the rope or the agenda changed, re-read this morning before trusting the walk`);
 
   /* the agenda rows live in the REPORT SHEET since v3.93.0 — THIS WEEK left the home page — so
