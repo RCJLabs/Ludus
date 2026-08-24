@@ -4461,6 +4461,85 @@ wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
 
+### v3.127.0 — #196: he could always come to you, and you could never go to him
+
+`ASKS` is five entries and every one of them is HIM opening the conversation, through `askWeek`:
+regard 45, three bouts fought, a 6% weekly roll, and `d.flags.asked` — which is one-way, so **a man
+asks you once in his life and never again.** The player had no verb that started anything, while the
+man carried an ambition, a regard score, a memory list, ties and a defiance number.
+
+**Measured before anything was built**, 12 houses × 420 weeks, two seeds:
+
+| | seed A | seed B |
+|---|---|---|
+| men who ever asked you anything | 45 of 475 — **9.5%** | 31 — **7.3%** |
+| weeks a man was at your table | 1.7% | 1.6% |
+| men who reach the point where they *would* speak | 225 — **47.3%** | 192 — **45.0%** |
+| active man-weeks clearing the gate | **25.0%** | **26.7%** |
+| of those, belonging to a man whose one turn is behind him | 28.4% | 17.5% |
+| and he stays that way | median 16 weeks, longest 57 | median 9, longest 49 |
+
+Regard runs at a median of **61** across every man-week. So the room was full of men who thought
+well enough of the house to say something, standing there, and **fewer than one in ten ever did.**
+
+## The verb
+
+`haveWordWith(d, gid)`, off a button on the man's own *"What he makes of you"* panel — which is where
+it belongs, because that panel already IS the relationship. `WORDS` has four entries, drawn on what
+he is actually carrying: the want he has not spoken, a thing he holds against the house, the edge in
+him, or his brother. It is a register in the sense `voice` means, so it sits on the handle and the
+96th check polices it.
+
+**It is not free information, which is the whole design.**
+
+- **The price.** `wants` makes him VOICE an unvoiced ambition — `voiced` and `since` are the two
+  fields the despair tick reads, so learning what he wants **starts his clock**. Knowing costs the
+  quiet, and `talk` asserts it rather than describing it.
+- **The empty case.** A man with nothing on his mind says so, and the week's conversation is spent
+  finding out. Without it the verb is an oracle: ask, and the game tells you the most interesting
+  true thing about a man.
+- **The gates.** One conversation a week, the same man not twice inside `WORD_COOL` (12 weeks), never
+  over the top of something already at your table, never a dead man.
+
+## Two writing faults found by driving the real screen
+
+The check drives the model; the screen was driven separately, and it was worth it. A woman was
+offered **"Tell him no"** — `d.pendingEvent` carries `text: her(ex.text, g)` and passes `choices`
+straight through. **The `ask` event has read `choices:ex.choices` since it was written**, so this was
+never mine alone; both lines are fixed. And `spine`'s text said *"a man in his position"*, which the
+pronoun helper rewrote into *"a man in her position"* — a gendered noun no `he`/`his` substitution can
+reach. Reworded to carry no noun at all.
+
+## `open.mjs` moves a long way and none of it is the feature
+
+`standing 50 → 54, men 170 → 209`. A player-initiated verb the rope never calls cannot do that, so a
+control was built: **main's source plus one empty `EVENTS` key and nothing else.**
+
+| build | standing | men |
+|---|---|---|
+| v3.126.0 | 50 of 60 | 170 |
+| **control — main + one resolver-only key** | **54 of 60** | **209** |
+| v3.127.0 — the whole feature | 54 of 60 | 209 |
+
+**Control and feature are byte-identical.** `pickEvent` walks `shuffled(Object.keys(EVENTS))`, so
+adding a single key re-phases the entire event stream — **100% of the movement is phase and 0% is the
+feature.** Worth recording as a general fact: `open`'s signature can never be byte-identical across a
+release that adds an event, and the empty-key control is how you tell the two apart.
+
+## The check
+
+`talk` is the 98th. It raises all four entries on fixtures built to satisfy their own `need`, runs
+every answer, and asserts the price, the empty case and the four gates. A table of writing nobody has
+run is how `nokill` and `nobeast` went 651 given and 0 met (#188), so an entry that cannot be raised
+on a man built for it fails here as **unreachable writing** — and a fifth entry added later with no
+fixture fails too, rather than being carried untested.
+
+`bulk` is untouched: App stays at 5,786 because **v3.126.0 stopped charging it for everything after
+its closing brace**, so the handle exports this needed cost it nothing. The panel change lands in
+SECT (1,448 of 1,483) and the resolver in EVENTS (1,073 of 1,078). No allowance raised.
+
+Suite **98/98 green**.
+
 ### v3.126.0 — `bulk` was charging every definition with whatever followed it, and App with the whole test handle
 
 `bulk` is the check that says stop: every top-level definition in the source is measured and a new
@@ -14747,7 +14826,7 @@ down this way.
 headroom — **`agenda` at 210/210 and `App` at 5786/5786**. Anything wanting a new agenda row or new
 App state goes red and has to earn its allowance with a written reason. That is the price, not a veto.
 
-### #196 — a man can approach you and you can never approach him.
+### #196 — CLOSED in v3.127.0. A man can approach you and you can never approach him.
 `ASKS` has five entries and every one is HIM opening the conversation. He carries an ambition, a
 regard score, a memory list, ties and a defiance number, and the player has no verb that starts
 anything. One button on the man's STANDING face offering three lines drawn from what he actually
@@ -15640,4 +15719,4 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.126.0 — the v3.115.0 audit is closed, ten of ten, and the ratchet that policed it measures the right span*
+*Last updated: v3.127.0 — the audit is closed ten of ten; #196 is the first of the feature queue*
