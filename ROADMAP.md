@@ -4535,6 +4535,23 @@ opponents and the check accused a pure hash of drawing; the offer panel is three
 first row of every bill is the pits; and `.tag` is `text-transform: uppercase`, which `innerText`
 reflects, so the mood's name came back shouted and compared false while it was on the screen.
 
+## And a check that was under-powered, caught the same way
+
+The first full run came back **102 of 103**, with `houses` red: *"the median house peaked at warmth
+32.7, under the 34 that the first large beat needs"*. Against the real v3.131.0 source it read 48.9
+and passed, so the change was responsible — until the sample was suspected:
+
+| | v3.131.0 | v3.132.0 |
+|---|---|---|
+| 5 houses (what the check ran) | median **48.9** — pass | median **32.7** — FAIL |
+| **24 houses** | median **92.1** — pass | median **100** — pass |
+
+**At the honest sample the ordering reverses** and both clear the bar of 34 by sixty points. The check
+takes a *median* peak warmth over 5 houses; the true value is around 92–100, so one house dying to a
+rebellion at week 88 drags the statistic further than the whole distance to the bar. `card.mjs`
+learned this in v3.26.0 and its note says the cure is more houses rather than a nudged bar. Raised to
+24, which costs eight seconds against three. The bar was never wrong; the sample was.
+
 `bulk`: App 5,776 → **5,779** of 5,786, SECT unchanged at 1,464. No allowance raised.
 
 ### v3.131.0 — #199: a man's style was re-specified every single bout
