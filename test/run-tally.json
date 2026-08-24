@@ -69,4 +69,5 @@
 {"v":"3.123.0","checks":95,"failed":[]},
 {"v":"3.124.0","checks":96,"failed":[]},
 {"v":"3.125.0","checks":97,"failed":["probe"]},
-{"v":"3.125.0","checks":97,"failed":[]}]
+{"v":"3.125.0","checks":97,"failed":[]},
+{"v":"3.126.0","checks":97,"failed":[]}]
