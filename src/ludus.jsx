@@ -4737,13 +4737,100 @@ const FORGE_NAMES = ["Vulcan's Tooth","the Grey Wife","Long Answer","Nightwork",
 const forgeReady = (d, g) => bLevel(d,"armamentarium")>=3 && g && !g.named
   && SLOTS.some(s=>wears(GEAR[g.kit && g.kit[s]]));
 /* A week of the doctore's whole attention, resolved. */
+/* ---- #197: THE TRAINING SQUARE HELD ONE MAN, AND FOUR IN FIVE STOOD AND WATCHED ----
+   `doc.pupil` was a single id, so `doctoreWeek` returned on its second line unless exactly one man
+   was named, and `DOC_LESSONS` — the only thing in the file that raises a LIVING man's potential —
+   reached that one man and nobody else.
+
+   MEASURED before it was widened (probes/square.mjs, 8 houses x 300 weeks an arm):
+
+     arm                                    on the square   never on it   waiting   potential p50/p90
+     control (the reference player)             0 of 249      249 100%      100%           46 / 74
+     pupil:true, round-robin every week       133 of 203       70  34%       80.9%         55 / 83
+     parked on one favourite for his career   121 of 274      153  56%       81.3%         48 / 73
+
+   The control is #189's finding restated: the whole lesson table is unreachable by any measured
+   policy, because the reference player never names anybody. The other two are the item. **Four
+   man-weeks in five under a doctore the house is PAYING FOR are spent waiting**, and that number
+   does not move between the widest rotation a single slot can take and the narrowest — because it
+   is the slot, not the policy. A round-robin nobody would actually play reaches two men in three;
+   a favourite, which is what a player does, reaches fewer than half and buys almost no potential
+   across the house (48/73 against the control's 46/74).
+
+   SO THERE ARE TWO SEATS, and the second one is a bet rather than a bonus. The doctore sets them
+   against each other: one lesson is still taught a week — throughput is unchanged, exposure is
+   doubled — and which of the two takes it is decided on the day, so a green man can have it off a
+   made one. Both leave the square tireder than the palus, which is a real cost against `fit()`.
+   And being put against the same man every morning makes a TIE: usually brothers, sometimes a
+   feud, and likelier a feud when the man who keeps losing the week is already defiant. v3.128.0
+   made both of those legible at the arena — 1.70x on the assist for brothers, 0.55x for rivals —
+   so the second seat is the first verb in the game that deliberately manufactures either.
+
+   NOTHING HERE DRAWS RNG UNLESS A SECOND MAN IS NAMED. That is deliberate and it is checked:
+   `open.mjs` is byte-identical across all 60 houses, because the reference player never names one
+   and so never enters any of these branches. */
+const SQUARE_WEAR = 4;        /* the square is work — both men leave it tireder than the palus */
+const SQUARE_TIE  = 0.16;     /* per week against sparSocial's 0.12: the doctore pairs them on purpose */
+const docSecond = d => (d.doctore && d.doctore.second) || null;
+const onSquare = (d, gid) => !!gid && (docPupil(d) === gid || docSecond(d) === gid);
+const squareMen = d => [docPupil(d), docSecond(d)].filter(Boolean);
+/* the word on the button, which is the only thing the man's page has room to say */
+const squareWord = (d, g) => !d.doctore ? null
+  : d.doctore.retrainTo ? (docPupil(d) === g.id ? "Being remade" : null)
+  : docPupil(d) === g.id ? "He has him this week"
+  : docSecond(d) === g.id ? "On the square with " + ((d.gladiators.find(x=>x.id===docPupil(d))||{}).name || "another")
+  : squareMen(d).length >= 2 ? "Put him on the square \u2014 takes the second man's place"
+  : squareMen(d).length === 1 ? "Put him on the square beside " + ((d.gladiators.find(x=>x.id===docPupil(d))||{}).name || "him")
+  : "Put the doctore on him";
+/* who took the week. The better man ON THE DAY, so a green one can have it off a made one. */
+function squareTook(a, b){
+  const av = g => STATS.reduce((s,k)=>s+(g[k]||0),0)/6;
+  return av(a)*(0.78+R()*0.44) >= av(b)*(0.78+R()*0.44) ? a : b;
+}
+function squareTie(d, doc, a, b, other){
+  const t = tieBetween(d, a.id, b.id);
+  if(!t){
+    if(R() >= SQUARE_TIE) return;
+    /* the man who is NOT taking the week decides which way it goes, if he already had it in him */
+    const kind = R() < (other.defiance > 45 ? 0.42 : 0.68) ? "brother" : "rival";
+    if(addTie(d, a.id, b.id, kind, 26))
+      chron(d, kind === "brother"
+        ? `${a.name} and ${b.name} have been put against each other every morning for weeks. They have stopped pretending they do not like it.`
+        : `${a.name} and ${b.name} have been put against each other every morning for weeks, and one of them is keeping score.`,
+        kind === "brother" ? "good" : "bad");
+    return;
+  }
+  if(t.kind === "rival"){
+    if(R() < 0.08){ t.kind = "brother"; t.strength = clamp(t.strength, 30, 100);
+      chron(d, `${doc.name} has had ${a.name} and ${b.name} at each other for weeks, and somewhere in it the thing between them ran out.`, "good"); }
+    else t.strength = clamp(t.strength + 3, 1, 100);
+    return;
+  }
+  t.strength = clamp(t.strength + 3, 1, 100);
+}
+function squareWeek(d, doc, a, b){
+  b.morale = clamp(b.morale + 2, 0, 100);      /* the first man took his at the top of doctoreWeek */
+  a.fatigue = clamp((a.fatigue||0) + SQUARE_WEAR, 0, 100);
+  b.fatigue = clamp((b.fatigue||0) + SQUARE_WEAR, 0, 100);
+  const took = squareTook(a, b), other = took === a ? b : a;
+  took.morale = clamp(took.morale + 3, 0, 100);
+  other.morale = clamp(other.morale - 2, 0, 100);
+  docLesson(d, took);
+  squareTie(d, doc, a, b, other);
+}
 function doctoreWeek(d){
   const doc = d.doctore;
+  /* the second seat empties itself the same way the first does, and a retrain clears it outright */
+  if(doc && doc.second){
+    const s2 = d.gladiators.find(x=>x.id===doc.second);
+    if(doc.retrainTo || !s2 || s2.status!=="active") doc.second = null;
+  }
   if(!doc || !doc.pupil) return;
   const g = d.gladiators.find(x=>x.id===doc.pupil);
   if(!g || g.status!=="active"){
     if(doc.retrainTo){ chron(d, `${doc.name} loses his pupil mid-lesson and the whole thing is abandoned.`); }
-    doc.pupil = null; doc.retrainTo = null; doc.retrainLeft = 0;
+    doc.pupil = doc.retrainTo ? null : (doc.second || null);   /* #197 — the other man steps up */
+    doc.second = null; doc.retrainTo = null; doc.retrainLeft = 0;
     return;
   }
   g.morale = clamp(g.morale+2, 0, 100);
@@ -4763,6 +4850,8 @@ function doctoreWeek(d){
     chron(d, `${g.name} comes off the square a ${g.cls.toLowerCase()}. He went on as a ${was.toLowerCase()} three weeks ago and ${doc.name} has taken him apart and put him back the other way round.`, "good");
     return;
   }
+  const two = doc.second ? d.gladiators.find(x=>x.id===doc.second) : null;
+  if(two) return squareWeek(d, doc, g, two);   /* #197 — and nothing above here draws a number */
   docLesson(d, g);
 }
 const docCalm = d => d.doctore ? (d.doctore.fromHouse ? 1.2 : 0.4) : 0;
@@ -19678,8 +19767,18 @@ function teachSigTo(d, gid, key){ const g=d.gladiators.find(x=>x.id===gid);
 function makeMasterOf(d, gid){ const g=d.gladiators.find(x=>x.id===gid); return !!(g && makeMaster(d, g)); }
 
 /* --- the doctore --- */
-function setPupilTo(d, gid){ if(!d.doctore || d.doctore.retrainTo) return false;
-  d.doctore.pupil = (d.doctore.pupil===gid) ? null : gid; return true; }
+/* ---- #197: THE SAME ENTRANCE, TWO SEATS ----
+   Kept under its old name and its old signature because the rope, the handle and the man's page
+   all call it, and "put the doctore on him" now means "give him a place on the square". Stepping
+   the first man off PROMOTES the second rather than emptying the square, so the toggle the rope
+   round-robins with behaves exactly as it did: clear, then name, and one man is on. */
+function setPupilTo(d, gid){
+  const doc = d.doctore; if(!doc || doc.retrainTo) return false;
+  if(doc.pupil === gid){ doc.pupil = doc.second || null; doc.second = null; return true; }
+  if(doc.second === gid){ doc.second = null; return true; }
+  if(!doc.pupil){ doc.pupil = gid; return true; }
+  doc.second = gid; return true;          /* a full square: the newer man takes the second seat */
+}
 
 function beginRetrain(d, gid, cls){ const doc=d.doctore; if(!doc || d.gold<RETRAIN_FEE) return false;
   const g = d.gladiators.find(x=>x.id===gid); if(!g || g.status!=="active" || g.cls===cls) return false;
@@ -21197,16 +21296,31 @@ const SECT = {
               <div className="tag tag-gold" style={{marginBottom:5}}>His week</div>
               {p ? (
                 <div>
+                  {/* ---- #197: TWO SEATS, AND THE SECOND ONE IS A BET ----
+                       Measured: four man-weeks in five under a doctore the house pays for were spent
+                       waiting, and that figure did not move between the widest rotation a single slot
+                       can take and a parked favourite — because it was the slot. The panel has to say
+                       what the second seat costs as well as what it buys, or it reads as a free
+                       upgrade: one lesson a week either way, decided on the day, and a tie that may
+                       be a feud. The tie's price is on the arena panel since v3.128.0. */}
+                  {(()=>{ const q = S.gladiators.find(x=>x.id===docSecond(S)); return (<>
                   <div style={{fontSize:"var(--fs-lg)"}}>
                     {S.doctore.retrainTo
                       ? <>Remaking <span className="gold">{p.name}</span> as a {S.doctore.retrainTo.toLowerCase()} — {S.doctore.retrainLeft} week{S.doctore.retrainLeft===1?"":"s"} left.</>
+                      : q ? <><span className="gold">{p.name}</span> and <span className="gold">{q.name}</span>, set against each other.</>
                       : <>Working only on <span className="gold">{p.name}</span>.</>}
                   </div>
                   <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>
                     {S.doctore.retrainTo
                       ? "He trains at nothing else until it is finished."
-                      : "Far more for him, far less for everyone else — and some weeks the doctore turns something up."}
+                      : q ? "One lesson a week still, and whoever has the better of it that morning takes it. They come off the square tired, and men put against each other every day end up brothers or they end up keeping score."
+                      : "Far more for him, far less for everyone else — and some weeks the doctore turns something up. There is room for a second man beside him."}
                   </div>
+                  {q && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:4}}>
+                    {(()=>{ const t = tieBetween(S, p.id, q.id);
+                      return t ? `Between them already: ${tieWord(t)}.` : "Nothing between them yet."; })()}
+                  </div>}
+                  </>); })()}
                   <button className="btn btn-ghost" style={{width:"100%",marginTop:7}}
                     onClick={()=>S.doctore.retrainTo ? stopRetrain() : setPupil(p.id)}>
                     {S.doctore.retrainTo ? "Call it off" : "Back to the whole yard"}
@@ -25510,8 +25624,8 @@ export default function App(){
                 ) : S.doctore.retrainTo ? (
                   <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>He is busy remaking someone else.</div>
                 ) : (<>
-                  <button className={`btn ${docPupil(S)===selG.id?"":"btn-ghost"}`} style={{width:"100%"}} onClick={()=>setPupil(selG.id)}>
-                    {docPupil(S)===selG.id ? "He has him this week" : "Put the doctore on him"}
+                  <button className={`btn ${onSquare(S,selG.id)?"":"btn-ghost"}`} style={{width:"100%"}} onClick={()=>setPupil(selG.id)}>
+                    {squareWord(S, selG)}
                   </button>
                   <button className="btn btn-ghost" style={{width:"100%",marginTop:6}} disabled={S.gold<RETRAIN_FEE}
                     onClick={()=>setRetrainFor(retrainFor===selG.id?null:selG.id)}>
@@ -27769,7 +27883,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     buyGearItem, sellGearOne, equipOne, stripAll, mendKitOf, forgeForMan, armHimOff, armAllOff,
     buildUp, setCrestTo, setCareOf,
     teachSigTo, makeMasterOf, startSecond, switchStyle,
-    setPupilTo, beginRetrain, endRetrain, hireDoctore, dismissDoctore, takeDoctoreOffer,
+    setPupilTo, beginRetrain, endRetrain, hireDoctore, dismissDoctore, takeDoctoreOffer, makeDoctore, docSecond, onSquare, squareMen, squareWord, squareWeek, squareTook, squareTie, SQUARE_WEAR, SQUARE_TIE, doctoreWeek, docLesson, DOC_LESSONS, tieBetween, tieWord, addTie,   /* #197 — the square's second seat, and the tie words the arena panel already uses */
     hireStaffMember, letStaffGoOf, setEarTo,
     haveWatchedOffer, stopPrepFor, buyFromHouse, startCourt, setPrep, nameHim, scoutMan, makePeace,
     /* the drill against one named man: its two constants, the edge it yields, and the reading

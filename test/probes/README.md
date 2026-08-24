@@ -67,6 +67,7 @@ Run them straight:
     node test/probes/ribs.mjs  12 420 SEED   # every wound counted at the bout, by the door that dealt it
     node test/probes/word.mjs  12 420 SEED   # how many men reach the point of speaking to you, and how many do
     node test/probes/beside.mjs 8 300 SEED   # #202; two arms, and whether a man can ever go out beside a friend
+    node test/probes/square.mjs 8 300 SEED   # #197; four policies for the doctore's one seat, and what a second buys
 
 ## HOW MANY HOUSES A FIGURE NEEDS — read this before quoting one
 
@@ -676,6 +677,19 @@ counter bag, so a counter set in `takeBout` reads `undefined` off the handle and
 page shared their totals (253 against 118 when the truth was 135, now fixed by resetting by shape);
 and the bill has to be read BEFORE the week, because `doPairFight` filters its own offer out of
 `d.games.offers` on the way out.
+
+**`square.mjs`** — who gets on the training square. Four arms: the reference player, a round-robin, a
+parked favourite, and two seats. **The control taught 0 of 249 men** — #189 restated, the lesson table
+is unreachable by any measured policy — and **four man-weeks in five under a doctore the house pays for
+are spent waiting**, a figure that does not move between the widest rotation a single slot can take
+(80.9%) and a parked favourite (81.3%), because it is the slot. It also **deflated the rationale for
+the fix it was written for**: two seats move reach 65.5% → 68.2% and waiting 80.9% → 79.3%, because
+what keeps men off the square is that they die. What the second seat does is make ties — 43 brother,
+31 rival, 13 feuds beaten out over 1,543 occupied weeks, against zero in every arm that cannot seat
+two. Three instrument faults worth remembering: the held arm passed `{pupil:true, hold:true}` and so
+was byte-identical to the round-robin (a lever not connected); `d.log` UNSHIFTS and rolls, so
+`slice(oldLength)` reads the oldest end and eventually nothing; and a hand-built doctore crashes the
+App, because `makeDoctore` also supplies an origin, spec, creed and past that the panel reads.
 
 **`scroll.mjs`** — where the vertical pixels go, per place, as the page ARRIVES versus with every fold
 thrown open. The second is what `reach` necessarily measures and it is 40% taller than the first.

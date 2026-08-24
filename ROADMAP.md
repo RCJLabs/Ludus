@@ -4461,6 +4461,96 @@ wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
 
+### v3.129.0 — #197: the training square held one man, and four in five stood and watching
+
+`doc.pupil` was a single id. `doctoreWeek` returned on its second line unless it was set, and
+`DOC_LESSONS` — **the only thing in the file that raises a living man's potential** — reached that one
+man and nobody else.
+
+## The measurement
+
+`probes/square.mjs`, 8 houses × 300 weeks an arm, three policies plus the new one:
+
+| arm | ever on the square | never | man-weeks waiting | potential p50/p90 |
+|---|---|---|---|---|
+| **control — the reference player** | **0 of 249** | **249 · 100%** | **100%** | 46 / 74 |
+| `pupil:true`, round-robin every week | 133 of 203 · 65.5% | 34.5% | 80.9% | 55 / 83 |
+| parked on one favourite for his career | 121 of 274 · 44.2% | 55.8% | 81.3% | 48 / 73 |
+| **two seats** | 219 of 321 · 68.2% | 31.8% | 79.3% | 48 / 76 |
+
+The control restates #189: the whole lesson table is unreachable by any measured policy, because the
+reference player never names anybody. The item is the next two rows — **four man-weeks in five under a
+doctore the house is paying for are spent waiting**, and that figure does not move between the widest
+rotation a single slot can take and the narrowest, because it is the slot and not the policy.
+
+## And the second seat is not a throughput upgrade — measured, and said so
+
+Reach moves **2.7 points** and waiting **1.6**. What keeps men off the square is that they die, not
+that the seat is taken. The rationale I brought to this item does not survive its own probe, and the
+release is not going to pretend otherwise.
+
+What the second seat actually does is **manufacture ties on purpose**, which is the half of #202 the
+game had no verb for. Counted off the lines the square itself writes — unconfounded by house length,
+unlike `d.ties` at the end — over 1,543 occupied weeks:
+
+| | brother | rival | feuds beaten out |
+|---|---|---|---|
+| every arm that cannot seat two | 0 | 0 | 0 |
+| **two seats** | **43** · 27.9/kw | **31** · 20.1/kw | **13** |
+
+36% of them are feuds. v3.128.0 priced both directions at the arena — **1.70×** on the assist for
+brothers, **0.55×** for rivals — so this is the first verb in the game that deliberately makes either,
+and it is a bet rather than a bonus.
+
+## What shipped
+
+Two seats on the square. The doctore sets them against each other: **one lesson a week still**, so
+throughput is unchanged and exposure is doubled, and which of the two takes it is decided on the day —
+a green man can have it off a made one. Both leave the square tireder than the palus (`SQUARE_WEAR`),
+which is a real cost against `fit()`. Being put against the same man every morning makes a tie at
+`SQUARE_TIE` — 0.16/week against `sparSocial`'s 0.12, because the doctore is pairing them on purpose —
+weighted to brother, and **likelier a feud when the man who keeps losing the week is already defiant**.
+
+`setPupilTo` keeps its name and signature: "put the doctore on him" now means "give him a place on the
+square", and stepping the first man off **promotes** the second, so the toggle the rope round-robins
+with behaves exactly as it did.
+
+## `open.mjs` is byte-identical, and now the check enforces it
+
+Nothing in the new code draws a random number unless a second man is named, so a release that changes
+the weekly simulation still comes back exact — all 60 houses, `standing 54 of 60 · men 209`. That is a
+property one stray `R()` above the branch would break silently, so it is asserted rather than trusted:
+from seed 12345, an empty square and a house with no doctore both leave it at **12345**, and one man on
+the square leaves it at **1831578158 — exactly where `docLesson` alone leaves it**.
+
+## Instrument faults
+
+- **The held arm was byte-identical to the round-robin.** It passed `{pupil:true, hold:true}`, so the
+  probe parked the slot and the rope's own rotation renamed it on the same week, every week. Same
+  lessons, same men, same potential — #136's signature for a lever that is not connected, and the
+  third time this project has caught one that way.
+- **The chronicle is `d.log`, it unshifts, and it rolls.** A `slice(oldLength)` reads the *oldest* end,
+  and once the log is full its length stops growing so it reads nothing at all, forever. Walk down
+  from the head to the previous head by object identity.
+- **`rngGet` is the state, not a counter.** Subtracting two states printed *−2,463,401,483 draws*. The
+  property is stated as an identity between states reached from one seed instead, which is exact.
+- **A hand-built doctore crashed the App on render.** `makeDoctore` also gives him an origin, a spec, a
+  creed and a past, and the panel reads them; `{name, skill, wage, drill, pupil}` threw
+  `Cannot read properties of undefined` and it read as *"the square panel would not open"*, which is
+  the wrong diagnosis of a fixture fault.
+
+## The check
+
+`square` is the 100th. It presses four names and releases two and asserts the square goes 1→2→2→1→0;
+it asserts the seed identities above; it runs 400 paired weeks and requires both men tired, a lesson
+taught, a tie made, **never both men's potential raised in one week**, and the week taken by each man
+at least once; it buries a second man, sells a first and starts a retrain and checks the square empties
+and promotes correctly; it reads all five words the button can say; and it opens the real panel through
+the scene hotspot and requires both names, the phrase that says they are set against each other, and
+the sentence naming what is already between them.
+
+`bulk`: App unchanged at 5,783 of 5,786, SECT 1,449 → 1,464 of 1,483. No allowance raised.
+
 ### v3.128.0 — #202: the pair chooser was blind on the one axis the pair engine reads
 
 **The item was filed as a missing verb and the probe falsified that half of it.** #202 said you cannot
@@ -14957,7 +15047,7 @@ carries. *Reuses `ASKS`, `AMBITIONS`, `REGARD`, `memory`.* **To check first**: h
 speak unprompted, over a played house? That cadence is what a new door has to sit beside without
 drowning it — `AMB_COOL` already exists because the ambition event outdrew everything else two to one.
 
-### #197 — the training square holds one man.
+### #197 — CLOSED in v3.129.0. The training square holds one man.
 `doc.pupil` is singular, and `DOC_LESSONS` is the only thing in the file that lifts a LIVING man's
 potential — #189 measured it firing on about 1.5% of weeks and found the reference player had never
 named a pupil at all. `sparWith` already exists and already requires mutual consent. Name two men to
@@ -15849,4 +15939,4 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.128.0 — #202 shrank on contact with its own falsifier and became the better item*
+*Last updated: v3.129.0 — the square holds two, and the second seat is a bet rather than a bonus*

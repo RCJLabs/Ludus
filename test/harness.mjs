@@ -403,6 +403,28 @@ export async function installRope(p){
           }
         }
       }
+      /* ---- #197: AND THE SECOND SEAT, which the round-robin above cannot reach ----
+         `pupil:true` rotates ONE man through the square. `pupil:"two"` keeps BOTH seats filled and
+         rotates the pair, which is the only policy that can say what a second seat is worth. It
+         fills them from the front of the roster rather than by stat, so the arm is not also a
+         "train your best men" policy wearing this one's name. */
+      if(o.pupil === "two" && d.doctore && !d.doctore.retrainTo){
+        const men = A.activeG(d);
+        if(men.length >= 2){
+          const w = d.week || 0;
+          const want = [men[w % men.length], men[(w + 1 + Math.floor(w / men.length)) % men.length]]
+            .filter((g,i,ar)=>g && ar.indexOf(g) === i);
+          if(want.length === 2){
+            const on = fin(A.squareMen,[d]) || [];
+            const same = on.length === 2 && want.every(g=>on.includes(g.id));
+            if(!same){
+              for(const id of on) fin(A.setPupilTo,[d, id]);       /* empty it, then seat the pair */
+              for(const g of want) fin(A.setPupilTo,[d, g.id]);
+              bump("pupil");
+            }
+          }
+        }
+      }
       /* ---- #146: HOW MANY MEN THIS PLAYER KEEPS, as a lever rather than a constant ----
          The buy gate has been a hard 5 since the rope was written, and #146 asks whether the weeks
          the reference player cannot field anybody (8.1%, of which 94% are simply an EMPTY yard) are
