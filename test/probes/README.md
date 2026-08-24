@@ -65,6 +65,7 @@ Run them straight:
     node test/probes/rudis.mjs 12 420 SEED '{"protect":"safe","free":true,"protectBar":0.45}'   # ...#190's falsifier
     node test/probes/paint.mjs               # how far apart the arena backdrops are, in CIE76 dE
     node test/probes/ribs.mjs  12 420 SEED   # every wound counted at the bout, by the door that dealt it
+    node test/probes/word.mjs  12 420 SEED   # how many men reach the point of speaking to you, and how many do
 
 ## HOW MANY HOUSES A FIGURE NEEDS — read this before quoting one
 
@@ -649,6 +650,16 @@ only sees calls that go through the thing you wrapped.** It diffs `g.injury` acr
 which is also the item's own correction about weekly sweeps: `Split brow` heals in one week and read
 36 where the bout count reads 286. The second was a fixture fault — `simulatePair` reads `ctx.d` and
 an empty context threw, which printed as "could not be driven" where the engine was fine.
+
+**`word.mjs`** — the traffic through the one conversation the game had. `askWeek` gates on regard 45,
+three bouts and `d.flags.asked`, and that last term is ONE-WAY, so a man asks you once in his life.
+The probe counts the POOL rather than the outcome: **45-47% of the men a house holds reach the point
+where they would speak and 7-9% ever do**, with a quarter of all active man-weeks clearing the gate
+and a spent man staying spent for a median of 9-16 weeks. It carries its own falsifier — if the pool
+were small the item would be about REGARD and not a missing verb — and prints which of the five
+`ASKS` entries ever fire, `year` being 0 in both seeds. One instrument fault: an unscoped
+`const men = activeG(d).filter(` matched a different function and printed `canFight(g)` as askWeek's
+gate, which is a wrong denominator printed with confidence.
 
 **`scroll.mjs`** — where the vertical pixels go, per place, as the page ARRIVES versus with every fold
 thrown open. The second is what `reach` necessarily measures and it is 40% taller than the first.

@@ -12224,6 +12224,122 @@ const ASKS = {
       return `He stays behind the wall. It is the correct decision for a lanista and you are not required to feel any particular way about it.`; } },
 };
 const ASK_KEYS = Object.keys(ASKS);
+
+/* ---- HE COULD ALWAYS COME TO YOU AND YOU COULD NEVER GO TO HIM — #196 ----
+   `ASKS` is five entries and every one of them is HIM opening the conversation, through `askWeek`:
+   regard 45, three bouts, a 6% weekly roll, and `d.flags.asked` — which is one-way, so **a man asks
+   you once in his life and never again**. Measured over 12 houses x 420 weeks: **47.3% of the men a
+   house holds reach the point where they would speak to you and 9.5% ever do**, on 1.7% of weeks.
+   A quarter of all active man-weeks clear the gate; 28% of those belong to a man whose one turn is
+   already behind him, and he stays that way for a median of 16 weeks and as long as 57.
+
+   So the room was full of men who thought well enough of the house to say something, standing
+   there. This is the other direction, and it is deliberately NOT a second `askWeek`: the player
+   spends the week's one conversation, and what he gets back is whatever the man is actually
+   carrying — his unspoken want, a thing held against the house, the edge in him, or his brother.
+
+   IT IS NOT FREE INFORMATION, WHICH IS THE WHOLE DESIGN. Asking a man with an unvoiced ambition
+   makes him voice it: you learn what he wants, and his clock starts — `voiced` and `since` are the
+   two fields the despair tick reads, so knowing costs you the quiet. And a man with nothing on his
+   mind says so, and the week's conversation is spent on finding that out. */
+const WORD_COOL = 12;      // weeks before the same man will sit down with you again
+const WORDS = {
+  /* the one with a price on it: he tells you the thing he has not said, and starts his own clock */
+  wants: { w:14, need:(d,g)=>{ const a=g.ambition;
+      return !!(a && !a.voiced && !a.met && !a.broken && !a.despair && AMBITIONS[a.kind]); },
+    say:(d,g)=>({ text:`${fullName(g)} sits down on the boards across from you and does not fill the silence. When it comes, it comes plainly: ${ambWord(g).toLowerCase().replace(/\.$/,"")}. He has not said it to anybody in this house and he says it once.`,
+      choices:["Give him your word", "Tell him plainly it will not happen", "Take it in and say nothing"] }),
+    run:(d,g,i)=>{ const a=g.ambition;
+      a.voiced = Math.max(1, a.voiced||0); a.since = d.week;
+      if(i===0){ a.promised = true; g.morale = clamp(g.morale+12,0,100); g.defiance = clamp(g.defiance-7,0,100);
+        remember(d, g, "heard");
+        return `You give him your word. He repeats it back once, the way a man does when he intends to hold you to it, and goes back out to the yard.`; }
+      if(i===1){ g.morale = clamp(g.morale-6,0,100); g.defiance = clamp(g.defiance+3,0,100);
+        remember(d, g, "heard", 0.5);
+        return `You tell him no, and you tell him now rather than in a year. He would rather have that than the waiting, and says so, and neither of you quite believes it.`; }
+      remember(d, g, "heard");
+      return `You let it sit. He has said it out loud in this house once, which he had not done before, and that is not nothing to him even unanswered.`; } },
+  /* the thing he holds, in the words the ledger already keeps for it */
+  grudge: { w:12, need:(d,g)=>(g.memory||[]).some(m=>REGARD[m.kind] && REGARD[m.kind].bad),
+    say:(d,g)=>{ const m = (g.memory||[]).slice().reverse().find(x=>REGARD[x.kind] && REGARD[x.kind].bad);
+      if(!m) return null;
+      return { text:`${fullName(g)} comes when you send for him and stands rather than sits. You ask what is between you and he tells you, without heat, in one sentence. ${REGARD[m.kind].say}`,
+        choices:["Tell him you were wrong", "Tell him it was necessary", "Hear it and leave it there"] }; },
+    run:(d,g,i)=>{
+      if(i===0){ g.regard = clamp(regardOf(g)+12,0,100); g.morale = clamp(g.morale+7,0,100);
+        d.flags.saidWrong = (d.flags.saidWrong||0)+1;
+        return `You say it plainly, which a lanista is not obliged to do and almost never does. He does not forgive it. He does put it down.`; }
+      if(i===1){ g.regard = clamp(regardOf(g)-5,0,100); g.defiance = clamp(g.defiance+4,0,100);
+        return `You tell him what it cost and why, and he listens to all of it. He agrees that it was necessary. He does not agree that it was nothing.`; }
+      remember(d, g, "heard", 0.6);
+      return `You let him say it and you say nothing back. He is still carrying it when he leaves, but he is carrying it in the open now.`; } },
+  /* the edge in him, before it arrives as a refusal on a card you have already taken */
+  spine: { w:10, need:(d,g)=>(g.defiance||0) >= 55,
+    say:(d,g)=>({ text:`${fullName(g)} is not insolent and has never been. He answers what you ask and holds your eye a half-second longer than anybody in this house is supposed to, and you understand that there is a limit somewhere in him and you do not know where it is.`,
+      choices:["Ask him where it is", "Remind him what he is", "Leave it alone"] }),
+    run:(d,g,i)=>{
+      if(i===0){ g.defiance = clamp(g.defiance-9,0,100); g.regard = clamp(regardOf(g)+8,0,100);
+        remember(d, g, "heard");
+        return `He tells you. It is not where you would have guessed and it is not unreasonable, and you both now know the shape of it, which is worth more than the whip and costs less.`; }
+      if(i===1){ g.defiance = clamp(g.defiance+7,0,100); g.morale = clamp(g.morale-9,0,100);
+        g.regard = clamp(regardOf(g)-9,0,100);
+        return `You say the word out loud. He agrees with every part of it and something behind his face files it away.`; }
+      return `You leave it. Whatever it is, it is still in there, and now you have looked at it and looked away.`; } },
+  /* the other man, who is the thing he actually thinks about */
+  beside: { w:8, need:(d,g)=>tieList(d).some(t=>t.kind==="brother" && (t.strength||0)>=40 && (t.a===g.id||t.b===g.id) && bothActive(d,t.a,t.b)),
+    say:(d,g)=>{ const t = tieList(d).find(x=>x.kind==="brother" && (x.strength||0)>=40 && (x.a===g.id||x.b===g.id) && bothActive(d,x.a,x.b));
+      if(!t) return null;
+      const o = d.gladiators.find(x=>x.id===(t.a===g.id?t.b:t.a));
+      if(!o) return null;
+      return { text:`You ask ${fullName(g)} how he is and he answers about ${o.name}, twice, before he notices he is doing it. Whatever else this house is to him, it is the building ${o.name} is in.`,
+        choices:[`Put them out together when you can`, `Tell him the card is not made that way`, "Say nothing"], oid:o.id }; },
+    run:(d,g,i,ex)=>{ const o = d.gladiators.find(x=>x.id===(ex&&ex.oid));
+      const nm = o ? o.name : "the other man";
+      if(i===0){ d.flags.pairWord = d.week; g.morale = clamp(g.morale+9,0,100);
+        if(o) o.morale = clamp(o.morale+6,0,100);
+        remember(d, g, "heard");
+        return `You say you will put them out together when the card allows it. He does not thank you. He goes and tells ${nm}, which is the thanks.`; }
+      if(i===1){ g.morale = clamp(g.morale-7,0,100);
+        return `You tell him how a card is actually made. He knew, and asked anyway, and now he knows you know.`; }
+      remember(d, g, "heard", 0.5);
+      return `You let him talk about ${nm} until he runs out, which takes a while.`; } },
+};
+const WORD_KEYS = Object.keys(WORDS);
+/* one conversation a week, and the same man not twice inside WORD_COOL */
+const wordReady = (d, g) => !!(g && g.status === "active" && !isGone(g) && !d.over && !d.pendingEvent
+  && d.flags.wordWk !== d.week && (g.wordWk == null || d.week - g.wordWk >= WORD_COOL));
+const wordWhy = (d, g) => !g ? "" : !wordReady(d, g)
+  ? (d.pendingEvent ? "there is something else at your table"
+    : d.flags.wordWk === d.week ? "you have had your conversation this week"
+    : g.wordWk != null && d.week - g.wordWk < WORD_COOL ? `${WORD_COOL - (d.week - g.wordWk)} weeks since you last sat with him`
+    : "not now") : "";
+function haveWordWith(d, gid){
+  const g = d.gladiators.find(x=>x.id===gid);
+  if(!wordReady(d, g)) return false;
+  d.flags.wordWk = d.week; g.wordWk = d.week;
+  const fit = WORD_KEYS.filter(k=>{ try { return WORDS[k].need(d, g); } catch(e){ return false; } });
+  let ex = null, k = null;
+  if(fit.length){
+    const tot = fit.reduce((n,q)=>n + WORDS[q].w, 0);
+    let x = R()*tot; k = fit[0];
+    for(const c of fit){ x -= WORDS[c].w; if(x<=0){ k=c; break; } }
+    try { ex = WORDS[k].say(d, g); } catch(e){ ex = null; }
+  }
+  /* AND HE IS ALLOWED TO HAVE NOTHING TO SAY. Without this the verb is an oracle: ask, and the game
+     tells you the most interesting true thing about a man. The week's conversation is spent either
+     way, which is what makes choosing WHO a decision. */
+  if(!ex){
+    remember(d, g, "heard", 0.3);
+    chron(d, her(`You send for ${fullName(g)} and ask him how he is. He says he is well, and asks whether that is all, and it is. Some weeks there is nothing in a man that wants saying.`, g), "info");
+    return true;
+  }
+  d.pendingEvent = { id:"word", title: isF(g) ? "You Send For Her" : "You Send For Him",
+    /* the CHOICES go through `her` as well as the text. The `ask` event below has read
+       `choices:ex.choices` since it was written, so a woman was offered "Tell him no" — same
+       one-word fix, made on both rather than only on the new one. */
+    text: her(ex.text, g), choices: (ex.choices||[]).map(c=>her(c, g)), data:{ k, gid, ex } };
+  return true;
+}
 function askWeek(d){
   if(d.over || d.rome || d.city || d.travel || d.pendingEvent) return;
   const men = activeG(d).filter(g=>regardOf(g) >= 45 && ((g.wins||0)+(g.losses||0)) >= 3 && !(d.flags.asked||[]).includes(g.id));
@@ -12240,7 +12356,7 @@ function askWeek(d){
   if(!ex) return;
   d.flags.asked = [...(d.flags.asked||[]), g.id];
   d.pendingEvent = { id:"ask", title: isF(g) ? "She Wants A Word" : "He Wants A Word", text:her(ex.text, g),
-    choices:ex.choices, data:{ k, gid:g.id, ex } };
+    choices:(ex.choices||[]).map(c=>her(c, g)), data:{ k, gid:g.id, ex } };
 }
 
 /* ---- WAYS TO BE FINISHED ----
@@ -16359,6 +16475,10 @@ const EVENTS = {
     make(){ return null; },
     run(d,ev,i){ const L = LATE[ev.data.k];
       try { return L.run(d, i); } catch(e){ return "It passes."; } } },
+  word:     { make(){ return null; },   /* #196 — raised by the player from the man's own card */
+    run(d,ev,i){ const W = WORDS[ev.data.k]; const g = d.gladiators.find(x=>x.id===ev.data.gid);
+      if(!g || !W) return `He has gone back to the yard.`;
+      try { return W.run(d, g, i, ev.data.ex||{}); } catch(e){ return `Whatever was said, it is said.`; } } },
   ask: {
     make(){ return null; },
     run(d,ev,i){
@@ -19778,6 +19898,20 @@ const SECT = {
                          </div>}
                      {regardLoyal(selG) && <div className="laurel" style={{fontSize:"var(--fs-base)",marginTop:5}}>No other house's coin will move him.</div>}
                      {regardRefuse(selG) && <div className="blood" style={{fontSize:"var(--fs-base)",marginTop:5}}>He does what he is told and not one thing more.</div>}
+                     {/* ---- AND THE CONVERSATION YOU START — #196 ----
+                         `askWeek` is the only conversation in the game and it is his: he asks once
+                         in his life, on a 6% roll, and 47.3% of men reach that point while 9.5%
+                         ever speak. This is the other direction, and it lives here rather than on
+                         the buttons row because this panel already IS the relationship. `mut` comes
+                         through X, so App does not grow a handler for it. */}
+                     {(()=>{ const can = wordReady(S, selG), why = wordWhy(S, selG);
+                       return (
+                         <button className="btn btn-ghost" disabled={!can} style={{width:"100%",marginTop:8}}
+                           onClick={()=>X.mut(d=>{ haveWordWith(d, selG.id); })}>
+                           {(()=>{ const w = isF(selG) ? "Send for her" : "Send for him";
+                              return can ? w : `${w} — ${why}`; })()}
+                         </button>
+                       ); })()}
                    </Sect>
                  );
   },
@@ -27700,6 +27834,10 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     borrow, LENDERS, LEND_KEYS, owes, loanLender, canBorrow, loanWeeks, loanFuse, loanClock, EMPTY_LIMIT,   /* #163 */
     RUINS, RUIN_KEYS, facOf, lawOf, inBreach,
     COUNSEL, WHISPERS, YARD, LATE, NIGHT, ASKS, REFUSE_REASONS, RIVAL_MOVES, FREEDMEN, AFTERS, FEUD_CAUSES,   /* #186 — eleven registers no probe could reach; the account is in checks/voice.mjs */
+    /* #196 — the conversation the player starts. WORDS is a register like the eleven above, so
+       `voice` requires it here, and it is free to sit on its own line now that `bulk` ends App at
+       its own closing brace instead of at the end of the file. */
+    WORDS, WORD_KEYS, WORD_COOL, wordReady, wordWhy, haveWordWith, askWeek, ASK_KEYS,
     /* ---- AND WHETHER THE WEEK'S NUDGE POINTS AT THE BIGGEST LEVER ----
        #117 measured working the cells as the largest lever in the game. The agenda offers the feast
        at unrest 35 and never mentions walking the cells at all — see `agendaCan`. #119. */
