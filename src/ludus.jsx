@@ -11832,6 +11832,69 @@ function prepFor(d, g, offer){
   if(!p || !offer || !offer.oppRef || offer.oppRef.fid !== p.fid) return 0;
   return prepEdge(g);
 }
+/* ---- #202: THE PAIR CHOOSER WAS BLIND ON THE ONE AXIS THE PAIR ENGINE READS ----
+   Three things ride on WHICH two men you send out together, and the chooser said none of them:
+
+     the fight itself   `assistMult` multiplies the assist by 1 + strength/100*0.7 for brothers and
+                        by 1 - strength/100*0.45 for rivals. Two men who came up together assist at
+                        up to 1.70x; two who will not look at each other, at 0.55x. That is the
+                        largest single modifier either man carries into the bout.
+     an ambition        `AMBITIONS.beside` — "to go out on the sand beside someone he trusts" — is
+                        met in exactly one place in the file, inside `doPairFight`, and only when
+                        the tie is ALREADY `brother`. It cannot be met by pairing two strangers,
+                        because the new tie is added after the check.
+     a feud             a rival pair that WINS turns brother 35% of the time. Deliberately sending
+                        two men who hate each other is the only way in the game to end a feud, and
+                        no player has ever been able to aim at it.
+
+   MEASURED before it was written (probes/beside.mjs, 8 houses x 300 weeks an arm). On the weeks a
+   pair was on the bill: two men were fit 99.6% of the time, and two of those men were already
+   BROTHERS on 72.4% of them — so there is a right answer on nearly three pair weeks in four. The
+   top two by stat, which is the order the chooser lists them in and the closest thing to an
+   uninformed pick, WERE that pair 25.3% of the time. One time in four by accident. And on 42.1%
+   of those weeks one of the two brothers was a man carrying `beside` unmet.
+   The cost of not knowing, over the same houses: 68.4% of the men who ever carried `beside` died
+   still carrying it under the reference player, against 39.1% under a rope policy that takes the
+   pair and sends the brothers. The item this closes was filed as a missing VERB — enter your own
+   two men as a pair — and the probe falsified that half: the arm meets it 28.3% of the time just
+   by watching the bill. What is missing is not the entrance. It is the sign over it.
+
+   `rowMarks` also swallows the two marks that were already there — the booking and the drilling —
+   because they were four lines of JSX inside App, which has no allowance left, and a table of
+   marks belongs beside the words it prints rather than in the middle of a render. */
+const ROW_MARKS = [
+  { key:"booked", colour:"var(--gold-hi)",
+    when:(d,g,o)=> !!(o && o.bookedGid === g.id),
+    say: ()=> `His name is the one on the bill.` },
+  { key:"prep", colour:"var(--laurel)",
+    when:(d,g,o)=> prepFor(d, g, o) > 0,
+    say: (d,g)=> `${isF(g)?"She has":"He has"} drilled for this man \u2014 ${prepWord(g)}.` },
+  /* the three below only exist while a PAIR is being chosen, and only once somebody else is
+     picked: a mark about the man beside him is meaningless with nobody beside him. */
+  { key:"brother", colour:"var(--laurel)", pair:true,
+    when:(d,g,o,mate)=> { const t = mate && tieBetween(d, g.id, mate.id); return !!(t && t.kind==="brother"); },
+    say: (d,g,o,mate)=> { const t = tieBetween(d, g.id, mate.id);
+      return `${g.name} and ${mate.name} came up together \u2014 ${tieWord(t)}. They fight better side by side.`; } },
+  { key:"feud", colour:"var(--blood)", pair:true,
+    when:(d,g,o,mate)=> { const t = mate && tieBetween(d, g.id, mate.id); return !!(t && t.kind==="rival"); },
+    say: (d,g,o,mate)=> { const t = tieBetween(d, g.id, mate.id);
+      return `${g.name} and ${mate.name}: ${tieWord(t)}. They will cover each other badly \u2014 and if they win anyway, it may be the end of it.`; } },
+  { key:"beside", colour:"var(--gold)", pair:true,
+    when:(d,g,o,mate)=> { const a = g.ambition;
+      if(!a || a.kind !== "beside" || a.met || a.broken) return false;
+      const t = mate && tieBetween(d, g.id, mate.id);
+      return !!(t && t.kind === "brother"); },
+    say: (d,g,o,mate)=> `This is the thing ${g.name} has been asking for. Send them out together and it is done.` },
+];
+const rowMarks = (d, g, offer, mate) => {
+  const out = [];
+  for(const m of ROW_MARKS){
+    if(m.pair && !mate) continue;
+    try { if(m.when(d, g, offer, mate)) out.push({ key:m.key, colour:m.colour, text:her(m.say(d, g, offer, mate), g) }); }
+    catch(e){}
+  }
+  return out;
+};
 /* which plans his weeks have already told him are the right ones */
 function prepPlans(d, offer){
   if(!offer || !offer.opp) return [];
@@ -26825,7 +26888,7 @@ export default function App(){
                 : pick.kind==="pair" ? fieldAverage(o && o.opps) : null;
               const seen = pick.kind==="single" ? foeSeen(S, o) : !!(o && o.watched);
               const read = foe ? readMatch(g, foe, seen) : null;
-              const booked = !!(o && o.bookedGid === g.id);
+              const mate = x => { if(!multi || pick.kind!=="pair") return null; const oid = pairSel.find(i=>i!==x.id); return oid ? S.gladiators.find(y=>y.id===oid) : null; };   /* #202 — who is already picked; the marks table is at ROW_MARKS */
               return (
                 <button key={g.id} className={`optrow ${on?"on":""}`} style={{marginBottom:6,width:"100%"}}
                   onClick={()=> multi ? togglePair(g.id) : setFGid(on?null:g.id)}>
@@ -26839,10 +26902,7 @@ export default function App(){
                     </span>
                     {read && <span className="rowval" style={{fontSize:"var(--fs-sm)",color:read.colour,flexShrink:0}}>{read.word}</span>}
                   </div>
-                  {booked && <div style={{fontSize:"var(--fs-sm)",marginTop:3,color:"var(--gold-hi)"}}>✦ His name is the one on the bill.</div>}
-                  {(()=>{ const pe = prepFor(S, g, o); return pe>0
-                    ? <div style={{fontSize:"var(--fs-sm)",marginTop:3,color:"var(--laurel)"}}>✦ He has drilled for this man — {prepWord(g)}.</div>
-                    : null; })()}
+                  {rowMarks(S, g, o, mate(g)).map(m=><div key={m.key} style={{fontSize:"var(--fs-sm)",marginTop:3,color:m.colour}}>✦ {m.text}</div>)}
                   {pick.kind==="single" && (()=>{ const w=metWord(liveFoe(S,pick.o),g); return w?<div style={{fontSize:"var(--fs-base)",marginTop:2,color:"var(--gold)"}}>{w}</div>:null; })()}
                   {/* ---- WHAT THE PURSE IS FOR ----
                        Sine missione pays 1.8x and carried a two-word tag. Measured
@@ -27714,7 +27774,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     haveWatchedOffer, stopPrepFor, buyFromHouse, startCourt, setPrep, nameHim, scoutMan, makePeace,
     /* the drill against one named man: its two constants, the edge it yields, and the reading
        it rests on. A check could reach `setPrep` and then had to INFER what it had bought */
-    prepOf, prepFor, prepEdge, prepPlans, PREP_MAX, PREP_DRAG, scoutLive, SCOUT_KEEPS, scoutCost,
+    prepOf, prepFor, prepEdge, prepPlans, PREP_MAX, PREP_DRAG, scoutLive, SCOUT_KEEPS, scoutCost, ROW_MARKS, rowMarks, venueFor, skyFor,   /* #202 — the marks table and the two the chooser's fixture needs */
     courtCost, courtWeek, rateMan, houseOf,
     answerReSignWith, answerRomeWith,
     hostParty, throwFeast, walkTheCells, holdTourney, stageMunus,

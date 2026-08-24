@@ -243,6 +243,13 @@ export async function installRope(p){
         offer = town.length ? town[0] : null;
       }
       if(!offer) return no(want ? `no ${want} bout to be had` : "no offer");
+      /* which ENGINE the week actually reached. `say()` reported bouts and refusals and nothing
+         about the shape of them, so "the reference player fought 0 pairs" was a claim no caller
+         could make without writing its own counter — #202's probe was the third to want one. */
+      if(offer.pair) R.tookPair = (R.tookPair||0)+1;
+      else if(offer.melee) R.tookMelee = (R.tookMelee||0)+1;
+      else if(offer.venatio) R.tookHunt = (R.tookHunt||0)+1;
+      else R.tookSingle = (R.tookSingle||0)+1;
       const ids = offer.melee ? men.slice(0,3).map(g=>g.id)
                 : offer.pair  ? men.slice(0,2).map(g=>g.id)
                 :               [men[0].id];
@@ -821,6 +828,31 @@ export async function installRope(p){
         let safePick = null;
         let men = A.activeG(d).filter(g=>!g.injury && (g.fatigue||0) < 55 && !bench.has(g.id))
           .sort((x,z)=>av(z)-av(x));
+        /* ---- #202: THE PAIR THE REFERENCE PLAYER NEVER TAKES ----
+           `takeBout` filters the bill by stakes and then takes `pool[0]`. `makeGames` pushes every
+           single before it calls `addPair`, so the first matching offer is a single on essentially
+           every card the house is ever shown, and the reference player's pair count over a played
+           house is a fact about ARRAY ORDER, not about the game. `AMBITIONS.beside` is met only
+           inside `doPairFight`, and only when the two men already carry a `brother` tie, so a
+           question about whether that ambition is reachable cannot be asked with a policy that
+           never enters a pair.
+           `pairs:true` is that policy and nothing more: when the bill carries a pair, take it, and
+           send the two men who are already brothers if two such men are fit — which is exactly what
+           a lanista trying to meet the ambition would do. Everything else about the week is
+           untouched, so the arm is comparable to the reference player one bout at a time. */
+        let pairPick = null;
+        if(o.pairs){
+          const fitId = new Set(men.map(g=>g.id));
+          const bro = (A.tieList ? A.tieList(d) : (d.ties||[]))
+            .filter(t=>t.kind==="brother" && fitId.has(t.a) && fitId.has(t.b))
+            .sort((x,z)=>(z.strength||0)-(x.strength||0))[0];
+          if(bro){
+            const a = men.find(g=>g.id===bro.a), b = men.find(g=>g.id===bro.b);
+            if(a && b) men = [a, b].concat(men.filter(g=>g!==a && g!==b));
+          }
+          pairPick = pool => pool.find(x=>x.pair) || pool[0];
+          R.pairsSeen = (R.pairsSeen||0) + 1;
+        }
         /* ---- #190: ONE MAN FED THE WHOLE CARD, which is the falsifier's own policy ----
            `rudisEligible` wants `wins >= 10` against a career the steel audit measured at THREE
            bouts at the median, and the clause written beside #190 when it was opened says: falsifies
@@ -896,7 +928,7 @@ export async function installRope(p){
            work with does not produce zero divergence; the lever was not connected.
            The default is untouched on purpose: with neither option given this is still
            `wantStakes:"standard"`, which is what every figure in this project was measured on. */
-        const t = takeBout(d, { men, pick: safePick,
+        const t = takeBout(d, { men, pick: safePick || pairPick,
           wantStakes:   d.rome ? null : (o.wantStakes || (o.preferStakes ? null : (o.stakes || "standard"))),
           preferStakes: d.rome ? null : (o.preferStakes || null),
           /* ---- THE CRUX ANSWER WAS A CONSTANT NOBODY CHOSE, AND IT WAS THE LETHAL ONE — #185 ----
@@ -1024,8 +1056,18 @@ export async function installRope(p){
 
     window.__ROPE = { answer, run, takeBout, fit, lanista, play,
       stats: ()=>Object.assign({}, R, { refused:Object.assign({}, R.refused) }),
-      reset: ()=>{ R.bouts = R.held = R.rounds = R.unresolved = R.threw = R.wrongStakes = 0;
-        R.refused = {}; },
+      /* ---- reset() NAMED ITS FIELDS BY HAND AND SO IT ALWAYS LAGGED ----
+         It cleared six counters and `refused`. `safeSeen`, `safeSat` and `safeBest` were added for
+         #190 and never joined the list; the engine counters added for #202 would have been the
+         fourth and fifth to miss it. A probe running an arm and its control on ONE PAGE reads the
+         second arm's figures with the first arm's still inside them, and nothing says so — #202's
+         first run reported the pairs arm at 253 pair bouts against a control of 118 when the true
+         second number was 135. So this resets whatever `R` is holding, by shape, and cannot drift
+         behind the counters again. `R` holds only counters; the rope's functions are closures. */
+      reset: ()=>{ for(const k of Object.keys(R)){
+        if(Array.isArray(R[k])) R[k] = [];
+        else if(R[k] && typeof R[k] === "object") R[k] = {};
+        else if(typeof R[k] === "number") R[k] = 0; } },
       /* one line a check can print so its own rope is visible in the log. The refusals are on it
          because they were legible in the return and nothing forced a caller to look: a check that
          asked for 300 bouts and was refused 200 of them reported the 100 and said nothing. */
@@ -1038,6 +1080,7 @@ export async function installRope(p){
           + ` · ${R.rounds} words spoken`
           + (n ? ` · ${n} weeks refused (${ref.map(x=>`${x[0]} ${x[1]}`).join(", ")})` : "")
           + (R.wrongStakes ? ` · ${R.wrongStakes} at the WRONG STAKES` : "")
+          + ` · engines: ${R.tookSingle||0} single, ${R.tookPair||0} pair, ${R.tookMelee||0} melee, ${R.tookHunt||0} hunt`
           + (R.safeSeen ? ` · protect:safe sat out ${R.safeSat||0} of ${R.safeSeen} weeks it was asked`
               + (R.safeBest && R.safeBest.length ? ` (best card on offer: p10 ${pctl(R.safeBest,.1)}% · median ${pctl(R.safeBest,.5)}% · p90 ${pctl(R.safeBest,.9)}%)` : "") : "")
           + (R.unresolved ? ` · ${R.unresolved} STILL UNRESOLVED` : "")
