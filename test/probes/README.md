@@ -68,6 +68,7 @@ Run them straight:
     node test/probes/word.mjs  12 420 SEED   # how many men reach the point of speaking to you, and how many do
     node test/probes/beside.mjs 8 300 SEED   # #202; two arms, and whether a man can ever go out beside a friend
     node test/probes/square.mjs 8 300 SEED   # #197; four policies for the doctore's one seat, and what a second buys
+    node test/probes/warm.mjs   8 360 SEED   # #198; whether two houses can ever become friendly, and who decides
 
 ## HOW MANY HOUSES A FIGURE NEEDS — read this before quoting one
 
@@ -690,6 +691,16 @@ two. Three instrument faults worth remembering: the held arm passed `{pupil:true
 was byte-identical to the round-robin (a lever not connected); `d.log` UNSHIFTS and rolls, so
 `slice(oldLength)` reads the oldest end and eventually nothing; and a hand-built doctore crashes the
 App, because `makeDoctore` also supplies an origin, spec, creed and past that the panel reads.
+
+**`warm.mjs`** — whether a house can ever become friendly with another one. Three arms: peaceful,
+hostile (`gambit:6`) and the new friendly verb (`overture:6`). It **half-falsified the item it was
+written for**: #198 guessed the warm-gated `RIVAL_BEATS` were unreachable, and they are not — all eight
+fired and 11.9% of 59 house-pairs reached warm 50 unaided. The truth it found instead is narrower:
+**every `warmMove` in the file is inside a beat the game rolls at 5.5% a week, or `metHouse`'s +1.1 a
+card**, and the bill chooses who you fight — so warmth was entirely the editor's doing. With the verb,
+warm-50 pairs go 11.9% → 33.3% and peak warmth p50 7 → 27. Note the shape of the distribution before
+reading any median: it is bimodal, p50 7 against p90 64, because a relationship runs hot only if the
+bill happened to pair you over and over.
 
 **`scroll.mjs`** — where the vertical pixels go, per place, as the page ARRIVES versus with every fold
 thrown open. The second is what `reach` necessarily measures and it is 40% taller than the first.
