@@ -4461,6 +4461,77 @@ wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
 
+### v3.124.0 — #186: eight channels were not enough either, and the largest one had never fired
+
+`asks.mjs` asks which of a great house's quantities the game is **blind** to: perturb one, diff what
+the game says either side, and a quantity that moves nothing is content the player can never be told
+about. The verdict is only as good as the list of places it looks, and that list has now been wrong
+three times — one channel, then five, then eight. **v3.115.0 took it to eight and asked whether eight
+was enough. It was not, three ways, and every one of them was the probe rather than the game.**
+
+**The events channel was inert from the day it shipped.** It read `!e.when || !!e.when(d)` — and
+**not one of the 59 `EVENTS` entries has a `when`.** They gate by `make(d)` returning null, which is
+what `pickEvent` walks. So `!e.when` was true for all 59 on both arms, the set was constant, and the
+diff could never fire. The channel its own note called *"the game's largest content channel, and one
+no earlier version of this probe could see"* had reported nothing, ever. It calls `make(d)` on a
+clone now, with the seed put back, because `make` mutates and draws.
+
+**`EVENTS` was never the only register — it was the only one anybody had exported.** Fourteen tables
+in the file pair a predicate over the state with a line of writing. The probe could reach four:
+
+| reachable before | unreachable before |
+|---|---|
+| `EVENTS` 59, `LESSONS` 24, `RUINS` 3, `ROME_TURNS` 3 | `COUNSEL` 16, `WHISPERS` 12, `YARD` 9, `RIVAL_MOVES` 9, `AFTERS` 8, `FREEDMEN` 6, `ASKS` 5, `REFUSE_REASONS` 5, `NIGHT` 5, `FEUD_CAUSES` 5, `LATE` 4 |
+
+All eleven are on the test handle now and the probe diffs them. Two quantities answer through them
+immediately: **`ties`** speaks through `whispers` and `night` (80 hits), and **`men freed`** through
+`freedmen` (52).
+
+**And the heaped arm for law heat was below every gate in the game.** It set `heat = 40`. Every
+discrete reader sits above it — the agenda row that names a breach goes `lawOf(d).heat>=45 ? 3 : 2`,
+and the `banned` ending wants `heat >= 90` — so **both arms, 0 and 40, landed on the same side of
+every threshold the game has**, and the probe reported silence about a question it had never asked.
+Two of the four `GAMBITS` are also priced in heat *continuously* (`- lawOf(d).heat*0.002` and
+`*0.0025`), and no channel read a number that moves without crossing a threshold.
+
+At `heat = 95`, with the four gambit odds added to the figures channel, **law heat answers 71 of its
+75 probes** — the breach row's urgency 2 → 3, and `gambit:poach 0.46 → 0.30`, `gambit:bribe 0.54 →
+0.31`. It was never silent.
+
+**So the silent list goes two to one, and the survivor is correct.** `brand tier` is a LATCH:
+`acclaimWeek` compares `acclaimIdx(d)` to `d.brand.tier` only to decide whether a rise has just
+happened and the tier's `once` line should be chronicled. Nothing reads it as a quantity and nothing
+should. Of the eighteen quantities driven, **seventeen answer and one is a latch** — there is no
+blind quantity left in the list to fix.
+
+*This is the third variant of this directory's oldest lesson, and the three now read as a rule: a
+perturbation must be **legal in the reader's terms** (v3.115.0's `d.gearCond`), must **move the field
+the readers read** (v3.115.0's `d.freed`), and must be **large enough to cross the numbers they
+compare against**.*
+
+**`voice` is the 96th check and it holds the structural half**, which is the one that will rot again.
+It finds the tables the way the audit did — statically, by their own shape, a `when:`/`need:` taking
+`d` — and requires each to be reachable from the handle. A twelfth table added next year goes red
+here rather than sitting unread until somebody thinks to grep. It also holds the `EVENTS` contract
+the inert channel got wrong: every entry must carry the gate the game actually calls.
+
+| broken on purpose | result |
+|---|---|
+| `WHISPERS` taken back off the handle | red — *"a register no probe can reach is a silence nobody can rule out"* |
+| an `EVENTS` entry with neither `make()` nor `build()` | red — *"an entry with no gate can never fire"* |
+| **a twelfth sayings table added and not exported** | **red — the exact shape that made eleven invisible** |
+
+The check's own first run reported **five `EVENTS` entries with no gate at all**. They have one:
+`match`, `raising`, `toga`, `daughter` and `licence` are written on a single line as
+`{ make(){ return null; }, run(…){…} }`, and an indentation-anchored regex missed them. They return
+null on purpose, being raised by their own systems rather than by the weekly roll.
+
+**No game change.** The only edit to `src/ludus.jsx` is one hunk inside the `LVDVS_TEST` fold, and
+the shipping `index.html` is **byte-identical to v3.123.0 apart from the version string**. `open.mjs`
+unchanged at `standing 50 of 60 · men 169`.
+
+Suite **96/96 green**.
+
 ### v3.123.0 — #193: two of the nine venues were drawn as somewhere else
 
 The arena's backdrop is one class — `` className={`arena v-${fight.venue||"forum"} …`} ``. `VENUES`
@@ -14086,7 +14157,7 @@ it — `stock`, `fresh`, `venue`, `vote`, `sticky` — and one existing one was 
 it was reporting. That ratio held: **two of the ten items are about the instrument, and the single
 largest finding in this pass is that `asks`'s silent list was mostly its own.**
 
-**Eight closed, in v3.116.0–v3.123.0: #195, #192, #194, #188, #187, #189, #190, #193.** Three more —
+**Nine closed, in v3.116.0–v3.124.0: #195, #192, #194, #188, #187, #189, #190, #193, #186.** Three more —
 `gate`, `rudis` and `paint` — were built for the last three, and `gate` and cost three instrument faults before it printed a figure
 worth quoting — the largest being that **the reference player has hired a doctore since the rope
 was written and had never once named him a pupil**, so five written lessons had been unreachable by
@@ -14094,7 +14165,7 @@ any policy in this directory and one of the two gates #189 is about read as dead
 unvisited. `gate.mjs` proves its own footprint invisible on every run, because sampling the pool
 with the game's real draw burns RNG the played house never spent.
 
-### #186 — `asks` was diffing five channels and the game speaks in eight. Four of its five silences were the probe's.
+### #186 — CLOSED in v3.124.0, and eight was not enough either. `asks` was diffing five channels and the game speaks in eight. Four of its five silences were the probe's.
 The queue's first lead was `asks`'s five remaining silences. Every one of the five channels it
 diffed is the WEEK'S LIST or a MARK on a section. The game also speaks through **what it teaches**
 (`lessonFor`), through the **perk streams** a feat starts, and through the **derived numbers a
@@ -14124,6 +14195,28 @@ decide whether a rise has just happened and the tier's `once` line should be chr
 reads it as a quantity and nothing should. *The item is the fix already made to the probe plus the
 question of whether the eight channels are now enough; falsifies if a ninth register turns up under
 the two survivors.* `asks.mjs` changed; no game change.
+**THE FALSIFIER FIRES AND IT FIRES THREE TIMES.** Eight was not enough:
+**(1)** the events channel had been INERT since the day it shipped — it read `!e.when || !!e.when(d)`
+and **not one of the 59 `EVENTS` entries has a `when`**, they gate by `make(d)` returning null, so
+`!e.when` was true for all 59 on both arms and the diff could never fire;
+**(2)** `EVENTS` was never the only register, it was the only one anybody had EXPORTED — **fourteen
+tables pair a predicate over the state with a line of writing and the probe could reach four**, the
+other eleven being COUNSEL 16, WHISPERS 12, YARD 9, RIVAL_MOVES 9, AFTERS 8, FREEDMEN 6, ASKS 5,
+REFUSE_REASONS 5, NIGHT 5, FEUD_CAUSES 5 and LATE 4 predicates. `ties` and `men freed` answer through
+them at once;
+**(3)** and the heaped arm for law heat was `40` while every discrete reader sits above it — the
+breach row goes `heat>=45?3:2` and `banned` wants 90 — so **both arms landed the same side of every
+threshold the game has**. Two of the four GAMBITS are priced in heat continuously and no channel read
+a number that moves without crossing one.
+**At heat 95, with the gambit odds in the figures channel, law heat answers 71 of 75 probes.** The
+silent list is **two → one** and the survivor is `brand tier`, a latch that nothing reads as a
+quantity and nothing should. Seventeen of the eighteen quantities answer; there is no blind one left.
+*Which makes three variants of one rule: a perturbation must be legal in the reader's terms, must
+move the field the readers read, and must be large enough to cross the numbers they compare against.*
+`voice` is the 96th check and holds the structural half — every table that gates a written line on
+the state must be reachable from the handle, and every `EVENTS` entry must carry the gate the game
+calls. No game change: one hunk inside the `LVDVS_TEST` fold, and the shipping build is
+byte-identical apart from the version string.
 
 ### #187 — CLOSED in v3.120.0 for the row it was hurting. The week's list has an urgency scale and 71% of it is a constant, so freshness does all the work.
 `agendaTop = list.filter(a => a.urgency >= 3 || a.age <= AG_FRESH)`, `AG_FRESH = 3`. Counted
@@ -15253,4 +15346,4 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.123.0 — #195, #192, #194, #188, #187, #189, #190 and #193 closed; two of the audit's ten items still open*
+*Last updated: v3.124.0 — nine of the audit's ten items closed; #191 alone is still open*
