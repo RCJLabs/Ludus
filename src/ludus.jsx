@@ -27683,11 +27683,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        the game's own `need` and count the terms beside it rather than keeping a copy of either. */
     borrow, LENDERS, LEND_KEYS, owes, loanLender, canBorrow, loanWeeks, loanFuse, loanClock, EMPTY_LIMIT,   /* #163 */
     RUINS, RUIN_KEYS, facOf, lawOf, inBreach,
-    /* ---- THE REGISTERS THE GAME SPEAKS IN, AND NO PROBE COULD SEE — #186 ----
-       Fourteen tables in this file pair a predicate over the state with a line of writing, and
-       `asks.mjs` could reach four of them. These are the other eleven: which of their entries can
-       fire is a sentence the game is willing to say about a quantity, exactly as `EVENTS` is. */
-    COUNSEL, WHISPERS, YARD, LATE, NIGHT, ASKS, REFUSE_REASONS, RIVAL_MOVES, FREEDMEN, AFTERS, FEUD_CAUSES,
+    COUNSEL, WHISPERS, YARD, LATE, NIGHT, ASKS, REFUSE_REASONS, RIVAL_MOVES, FREEDMEN, AFTERS, FEUD_CAUSES,   /* #186 — eleven registers no probe could reach; the account is in checks/voice.mjs */
     /* ---- AND WHETHER THE WEEK'S NUDGE POINTS AT THE BIGGEST LEVER ----
        #117 measured working the cells as the largest lever in the game. The agenda offers the feast
        at unrest 35 and never mentions walking the cells at all — see `agendaCan`. #119. */

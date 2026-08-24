@@ -4530,6 +4530,14 @@ null on purpose, being raised by their own systems rather than by the weekly rol
 the shipping `index.html` is **byte-identical to v3.123.0 apart from the version string**. `open.mjs`
 unchanged at `standing 50 of 60 · men 169`.
 
+**And `bulk` caught it a third time.** `App`'s figure runs to the end of the file — nothing after
+`export default function App` is a top-level definition at column zero, because the handle's members
+are indented — so a four-line note on a handle export lands on the App component's allowance and put
+it at 6104/6100. The eleven exports are one line with a pointer now, and the account lives in
+`voice.mjs` where it belongs. **App is at exactly 6100 of 6100: the next line added anywhere after
+it goes red**, which is the ratchet doing precisely what it is for and is left standing rather than
+raised.
+
 Suite **96/96 green**.
 
 ### v3.123.0 — #193: two of the nine venues were drawn as somewhere else
