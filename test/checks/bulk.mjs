@@ -36,13 +36,13 @@ const LIMIT = 200;
    size it was measured at when it was written down — if a listed function GROWS
    past its allowance it fails too, so an exception is a ceiling and not a pass. */
 const ALLOWED = {
-  simulateFight:  { max: 470, why: "a bout is a state machine; the loop writes twenty closure bindings. See the comment above it." },
-  simulateMelee:  { max: 260, why: "the same shape as simulateFight — eighteen rounds mutating the field in place" },
-  simulatePair:   { max: 240, why: "and the same again over sixteen; the four engines share this and it is the shape, not neglect" },
-  doFight:        { max: 360, why: "a long sequential ledger, but its purse branch alone reads eleven enclosing locals — the seams are not narrow" },
-  FightModal:     { max: 400, why: "one React render; splitting it moves JSX around without making anything measurable" },
-  EVENTS:         { max: 1110, why: "a table of fifty-eight events, not a function — length here is content, and the note on how the week's one question is drawn sits between the table and pickEvent, which is where this check attributes it. Raised 1080 -> 1110 for roomFire (#131's second loss, v3.30.0): a designed event is the sanctioned way this table grows, and the headroom is deliberately a few lines, not a hundred, so drift still says stop" },
-  LESSONS:        { max: 320, why: "a table of thirty-five notes, not a function — and half its length is now the four ways a lesson can be lost, written above the entries they happened to" },
+  simulateFight:  { max: 466, why: "a bout is a state machine; the loop writes twenty closure bindings. See the comment above it." },
+  simulateMelee:  { max: 239, why: "the same shape as simulateFight — eighteen rounds mutating the field in place" },
+  simulatePair:   { max: 232, why: "and the same again over sixteen; the four engines share this and it is the shape, not neglect" },
+  doFight:        { max: 357, why: "a long sequential ledger, but its purse branch alone reads eleven enclosing locals — the seams are not narrow" },
+  FightModal:     { max: 399, why: "one React render; splitting it moves JSX around without making anything measurable" },
+  EVENTS:         { max: 1078, why: "a table of fifty-eight events, not a function — length here is content, and the note on how the week's one question is drawn sits between the table and pickEvent, which is where this check attributes it. Raised 1080 -> 1110 for roomFire (#131's second loss, v3.30.0): a designed event is the sanctioned way this table grows, and the headroom is deliberately a few lines, not a hundred, so drift still says stop" },
+  LESSONS:        { max: 308, why: "a table of thirty-five notes, not a function — and half its length is now the four ways a lesson can be lost, written above the entries they happened to" },
   /* ---- AND THIS ALLOWANCE USED TO BE ON THE WRONG NAME ----
      It read `takeUpTheHouse: 7000` with the reason "the App component and everything under it". That
      was never a fact about `takeUpTheHouse`, which is one line — it was a fact about POSITION. The
@@ -58,18 +58,19 @@ const ALLOWED = {
      and this check would have stopped meaning anything for a year. So it comes down to where the
      work actually landed, plus room to breathe — an allowance that never tightens after a split is
      an allowance that only ever ratchets the wrong way. */
-  /* ---- AND WHAT App'S FIGURE ACTUALLY COVERS, which is not what the `why` says ----
-     The sweep above measures a definition as the distance to the NEXT top-level `function|const|let`
-     at column zero. There is none after `export default function App`: the test handle is an
-     `if (…) { window.__LVDVS = { … } }` whose members are indented, so nothing terminates App and
-     its figure runs to the END OF THE FILE. Every line added to the handle — a comment, an export —
-     lands on the App component's allowance. That is three of the five reds in v3.116.0–v3.121.0 and
-     it cost each of them a cycle to rediscover. Recorded rather than fixed: raising the allowance is
-     forbidden and re-parsing is its own item with its own measurement. In the meantime a note about
-     a handle export belongs beside the thing it exports, which is above App. */
-  App:            { max: 6100, why: "the whole screen minus its panels — tabs, faces, state and handlers, PLUS everything after it including the test handle (see the note above). Was 7,200 when the thirty-two <Sect> panels were inline; they are in SECT now and this came down with them" },
-  SECT:           { max: 1500, why: "a registry of thirty-two panels, not a function — length here is content, the same argument EVENTS makes. Each entry is one <Sect> lifted out of App verbatim, so the total is the markup that was already there; what changed is that a face is now a readable list of what it shows, in order, which is the whole point of the overhaul. It grows when the game gains a panel, and the headroom is a hundred lines rather than a thousand so drift still says stop" },
-  Fighter:        { max: 300, why: "the man on the sand, drawn — one SVG in one function" },
+  /* ---- AND THE THIRD ACT OF THE SAME FAULT, FIXED IN v3.126.0 ----
+     App's figure ran to the END OF THE FILE, because the sweep measured a definition as the distance
+     to the NEXT one and there is none after `export default function App` — the test handle's members
+     are indented, so nothing terminated it. **App read 6,100 where the component is 5,786**, and every
+     line added to the handle landed on the App component's allowance: three of the five reds in
+     v3.116.0-v3.121.0, and by v3.125.0 App sat at exactly 6,100 of 6,100 with an export having to be
+     folded onto an existing line to fit. The sweep ends a definition at its own closing line now.
+     THE ALLOWANCES CAME DOWN WITH THE MEASUREMENTS, which is the rule the SECT split wrote two acts
+     ago: each one moved by exactly the number of lines its figure moved, so the headroom either side
+     is identical and nothing was handed 419 lines of silence. App keeps the zero headroom it had. */
+  App:            { max: 5786, why: "the whole screen minus its panels — tabs, faces, state and handlers, and nothing else: the test handle after it is no longer charged here. Was 7,200 when the thirty-two <Sect> panels were inline; they are in SECT now and this came down with them" },
+  SECT:           { max: 1483, why: "a registry of thirty-two panels, not a function — length here is content, the same argument EVENTS makes. Each entry is one <Sect> lifted out of App verbatim, so the total is the markup that was already there; what changed is that a face is now a readable list of what it shows, in order, which is the whole point of the overhaul. It grows when the game gains a panel, and the headroom is a hundred lines rather than a thousand so drift still says stop" },
+  Fighter:        { max: 298, why: "the man on the sand, drawn — one SVG in one function" },
   /* ---- AND THIS ONE WAS SITTING EXACTLY ON THE LIMIT ----
      `agenda` measured 200 lines against a limit of 200, so it had been one line from red for some
      time and the thing that finally tripped it was a comment. It is not an algorithm that grew; it
@@ -104,25 +105,71 @@ const ALLOWED = {
      for four @font-face rules and wrote down why. Two rules, two lines, and the headroom is back to
      one so drift still says stop. The note explaining them sits ABOVE `const CSS`, outside the
      span this sweep measures and outside the bytes the browser is sent. */
-  CSS:            { max: 258, why: "the stylesheet, plus the four @font-face rules the embedded faces need and the eight venue backdrops" },
+  CSS:            { max: 253, why: "the stylesheet, plus the four @font-face rules the embedded faces need and the eight venue backdrops" },
 };
 
 export async function run(){
   const src = fs.readFileSync(path.join(ROOT, "src", "ludus.jsx"), "utf8").split("\n");
 
-  /* every top-level definition, by the line the next one starts on. Crude on
-     purpose — it is measuring bulk, not parsing JavaScript. */
+  /* ---- EVERY TOP-LEVEL DEFINITION, BY ITS OWN CLOSING LINE ----
+     This measured a definition as the distance to the NEXT one, which charged every definition with
+     whatever followed it — and the file's convention is that a note goes ABOVE the thing it
+     describes, so a note above X was charged to W. The last definition in the file had nothing after
+     it at all and absorbed everything to EOF: **App read 6,100 where the component is 5,786**, the
+     314 being the test handle, so every line added to the handle landed on the App component's
+     allowance. That is the third act of one fault. The first was `export default function App` not
+     matching the regex, so `takeUpTheHouse` — a two-line function — measured 7,021. The second was
+     the allowance being earned down 7,200 -> 6,100 after the SECT split, with the rule this fix
+     obeys: an allowance that never tightens is one that only ratchets the wrong way.
+
+     Measured across the file: **517 of 1,469 definitions were inflated, 3,189 lines charged to the
+     wrong owner.** A definition ends at the first line, at column zero, that begins with a closing
+     token — `}`, `};`, `];`, `});`, or the backtick that ends a template literal. Everything inside
+     a top-level definition in this file is indented, so that line is its end and nothing else is.
+     Verified against all twelve guarded names before it shipped.
+
+     STILL CRUDE ON PURPOSE — it is measuring bulk, not parsing JavaScript. It never crosses into the
+     next definition, so no figure can grow; a definition whose end cannot be found falls back to the
+     old distance and is COUNTED, because a parser that quietly stops attributing is a check that
+     quietly stops meaning anything. */
+  const DEF = /^(?:export\s+)?(?:default\s+)?(?:async\s+)?(?:function|const|let)\s+([A-Za-z_$][\w$]*)/;
+  const CLOSE = /^[}\])`;]/;
+  const starts = [];
+  for(let i=0;i<src.length;i++){ const m = src[i].match(DEF); if(m) starts.push({ name:m[1], at:i }); }
   const defs = [];
-  let cur = null;
-  for(let i=0;i<src.length;i++){
-    const m = src[i].match(/^(?:export\s+)?(?:default\s+)?(?:async\s+)?(?:function|const|let)\s+([A-Za-z_$][\w$]*)/);
-    if(m){ if(cur) defs.push({ name:cur.name, at:cur.at, lines:i - cur.at }); cur = { name:m[1], at:i }; }
+  for(let n=0;n<starts.length;n++){
+    const s = starts[n];
+    const stop = n+1 < starts.length ? starts[n+1].at : src.length;
+    let end = -1;
+    for(let j=s.at+1;j<stop;j++) if(CLOSE.test(src[j])){ end = j; break; }
+    /* ---- AND THE SHORT ONES END WHERE THEY STOP BEING INDENTED ----
+       201 definitions have no closing token at column zero: they are short arrow consts whose
+       continuation lines are indented and whose `;` is indented with them. Every continuation of a
+       top-level definition IS indented, so the last indented line is the end — but only as the
+       FALLBACK, never as the rule. Tried as the rule it breaks on template literals, whose contents
+       sit at column zero: `CSS` measured 1 line instead of 252. It also broke on App at 1,335,
+       because line 22982 is `</div></>) },` — a JSX close at column zero that is not a closing
+       token this regex knows. The closer comes first and the indent only catches what it misses. */
+    if(end < 0){
+      let j = s.at + 1;
+      while(j < stop && (src[j] === "" || /^\s/.test(src[j]))) j++;
+      end = j - 1;
+      while(end > s.at && src[end].trim() === "") end--;
+    }
+    defs.push({ name:s.name, at:s.at, lines: end - s.at + 1, closed: CLOSE.test(src[end] || "") });
   }
-  if(cur) defs.push({ name:cur.name, at:cur.at, lines:src.length - cur.at });
 
   const big = defs.filter(f => f.lines > LIMIT).sort((a,b)=>b.lines-a.lines);
   const lines = [], fails = [];
+  const held = defs.reduce((n,f)=>n+f.lines, 0);
+  const loose = defs.filter(f=>!f.closed).length;
   lines.push(`${src.length.toLocaleString()} lines, ${defs.length} top-level definitions, ${big.length} over ${LIMIT}`);
+  /* what belongs to no definition — the notes between them, the imports, the test handle. Printed
+     rather than asserted: it is a fact about the file's shape, and a rule on it would be a second
+     ratchet nobody has measured. But a SUDDEN collapse in what is attributed would mean the end
+     detection has stopped working, and that is the failure this line exists to make visible. */
+  lines.push(`   ${held.toLocaleString()} lines sit inside a definition · ${(src.length-held).toLocaleString()} between them`
+    + ` · ${defs.length-loose} end on a closing token, ${loose} on their last indented line`);
   for(const f of big){
     const a = ALLOWED[f.name];
     lines.push(`   ${f.name.padEnd(16)} ${String(f.lines).padStart(5)} lines  ${a ? `(allowed to ${a.max})` : "*** NOT ON THE LIST ***"}  @${f.at+1}`);
