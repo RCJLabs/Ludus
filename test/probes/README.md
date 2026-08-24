@@ -72,6 +72,7 @@ Run them straight:
     node test/probes/style.mjs  8 300 SEED   # #199; what a plan is worth, per plan, against the men a house meets
     node test/probes/appetite.mjs 8 300 SEED # #200; what the crowd already answers, and what it ignores
     node test/probes/refuse.mjs 8 300 SEED   # #201; who sits down, and whether the game could have said so
+    node test/probes/medicus.mjs 8 300 SEED  # #203; the four care options against each other, which nothing had run
 
 ## HOW MANY HOUSES A FIGURE NEEDS — read this before quoting one
 
@@ -735,6 +736,19 @@ calling `refuseCandidate` disagreed with the game outright (#150 binds instrumen
 built from ACTIVE men compared against all of `d.gladiators` counted every dead refuser again every
 week — **272 refusals out of 23 men** against a true 41. That last is `scene.mjs`'s denominator fault
 in a new probe.
+
+**`medicus.mjs`** — the four `CARE` options run against each other, which nothing in this project had
+ever done: `setCareOf` is called from the man's page and nowhere else, so every wound figure ever
+published here was taken on the default. It **declined the item it was written for** — #203 asked for
+a "declare him fit" option and that is `through`, which already sets `g.status = "active"`. Measured,
+`through` buys **no bouts at all** (0.939 a week against the default's 0.958) while its houses run 572
+house-weeks against 1,392. `convalesce` is the one that pays: 214 scars per thousand hurt man-weeks
+against 303, and 48.6 lasting hurts against 62.3. And the surgeon is mostly unreachable — **354 of 375
+refusals were for want of a valetudinarium and not one for want of coin.**
+Two faults: the `through` arm was not connected, because the rope's own `fit()` filters `!g.injury`, so
+it declared every wounded man fit and then would not use one (134 bouts against 1,333, houses dead at
+thirty weeks — a catastrophe that was the instrument); and `bump()` writes the WEEK's return value,
+not the rope's stat bag, so every arm printed "care set 0" including the ones plainly working.
 
 **`scroll.mjs`** — where the vertical pixels go, per place, as the page ARRIVES versus with every fold
 thrown open. The second is what `reach` necessarily measures and it is 40% taller than the first.

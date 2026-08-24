@@ -4461,6 +4461,72 @@ wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
 
+### v3.134.0 — #203: the fifth option already existed, so the measurement is the release
+
+#203 asked for a fifth care option: declare a hurt man fit, he takes the card, nobody outside knows.
+**Three of its clauses do not survive the file.**
+
+| the item says | the file says |
+|---|---|
+| "a fourth option on a row that has three" | `CARE` has **four**: rest, convalesce, surgeon, through |
+| "he takes the card" | `setCareOf(_,_,"through")` already sets `g.status = "active"`, and `canFight` has no injury term |
+| "nobody outside knows" | nobody outside knows anything — **nothing in the file reads `g.injury` from outside the house** |
+
+So the proposal is **declined**, and what it was pointing at is measured instead.
+
+## The row no policy in this project had ever pressed
+
+`setCareOf` is called from the man's page and nowhere else, so every wound figure this project has
+published was taken on the default. Four arms, 8 houses × 300 weeks each (`probes/medicus.mjs`).
+Scars and lasting hurts are counted **as taken, per thousand hurt man-weeks**, because the arms do
+not live the same length:
+
+| arm | bouts/wk | scars /kHmw | lasting /kHmw | weeks to heal | house-weeks |
+|---|---|---|---|---|---|
+| rest (the default) | 0.958 | 303.5 | 62.33 | 1.1 | 1,392 |
+| convalesce | 0.960 | **214.3** | **48.63** | 1.3 | 1,177 |
+| surgeon | 0.948 | 309.5 | 76.22 | 1.1 | 1,490 |
+| **through** | **0.939** | 115.2 | 25.51 | 7.7 | **572** |
+
+**`through` buys nothing.** 0.939 bouts a week against the default's 0.958, while its houses ran 572
+house-weeks against 1,392 — a man fighting on an open wound is not an extra man, he is a shorter
+house. #203 proposed a second door onto that.
+
+And the surgeon is mostly unreachable: of **375 attempts to set it, 354 were refused for want of a
+valetudinarium and not one for want of coin.**
+
+## What shipped
+
+The numbers moved onto `CARE` — `heal` and `grave` per option — so the panel and the engine cannot
+quote different figures, which is #150's rule. Each option carries an account of **what it is worth**
+rather than only what it is. `careWhy` names the reason the surgeon is dark: the missing room (which
+is 94% of the cases) or the shortfall in denarii (which was never said at all).
+
+**And App shrank by twenty-six lines**: the row was twenty-five lines of JSX inside it and is now
+`CareRow` at module scope. **5,780 → 5,754.**
+
+## The check's central assertion
+
+`medicus` reads the heal multipliers out of the weekly sweep and `careMult` out of `graveLasting`,
+both by regex, and compares them against what `CARE` says the panel will print. It also asserts that
+**`through` still makes a hurt man fightable** — because that is the whole reason the fifth option was
+declined, and if a later edit removes it the reasoning has gone away and the check must say so rather
+than passing quietly.
+
+## Two instrument faults, and one of them was the old shape again
+
+- **The `through` arm was a lever that was not connected.** The rope's own `fit()` filters `!g.injury`,
+  so the arm declared every wounded man fit and then refused to use any of them: 109 weeks refused for
+  "nobody fit", **134 bouts against the default's 1,333**, and houses dead at thirty weeks. Measured
+  as a catastrophe, and it was the instrument. Under that arm the filter now admits an active man with
+  an open wound, which is what the option means.
+- **`bump()` writes the week's return value, not the rope's stat bag**, so every arm printed "care set
+  0" — including the ones plainly working.
+- And the check's first screen read anchored on the wound's NAME, which is on his roster card too: it
+  read a roster row and reported the panel as saying nothing.
+
+`bulk`: App 5,780 → **5,754** of 5,786. No allowance raised.
+
 ### v3.133.0 — #201: defiance ambushed you, and half of the item was wrong
 
 `REFUSE_REASONS` has six entries and `applyRefusal` four answers, and none of it was ever
@@ -15433,7 +15499,7 @@ the assist multiplier (1.70× to 0.55×), the ambition, and the 35% chance a win
 feud. Shipped as five `✦` marks under the man's row. This is the second time in this project a
 falsifier turned an item into a better one — #187 was the first.
 
-### #203 — the medicus cannot be asked to lie.
+### #203 — CLOSED in v3.134.0, and the proposal DECLINED on measurement. The medicus cannot be asked to lie.
 Injuries already carry `care`: rest, surgeon, convalesce, and **through**, which already means
 fighting wounded. The missing option is declaring a hurt man fit — he takes the card, nobody outside
 knows, and the risk is `graveLasting`. *Reuses `agonyWear`, `checkLasting`.* A fourth option on a row
@@ -16292,4 +16358,4 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.133.0 — the man about to put his hands down is named before you pick anybody*
+*Last updated: v3.134.0 — the fifth option was already there, and measured it is a trap*

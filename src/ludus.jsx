@@ -9800,11 +9800,55 @@ const lessonFor = (d, tab) => LESSONS.find(l => {
 /* ---- THE MEDICUS ----
    A wound is no longer a countdown. Let it mend, buy the surgeon, or send him out
    on it and find out what that costs. */
+/* ---- #203: FOUR PERMANENT CHOICES DESCRIBED ENTIRELY IN PROSE ----
+   The item asked for a fifth option — declare a hurt man fit, he takes the card. **That option is
+   `through` and it has always been here**: `setCareOf(_,_,"through")` sets `g.status = "active"` and
+   the game's `canFight` has no injury term, so a worked-through man can already be sent out. The
+   item's other two clauses do not survive the file either — the row has FOUR options, not three,
+   and "nobody outside knows" is already true because nothing outside reads `g.injury` at all.
+
+   SO THE PROPOSAL IS DECLINED AND THE MEASUREMENT IS THE ITEM. `setCareOf` is called from this
+   panel and nowhere else, so **no policy in this project had ever pressed the row** and every wound
+   figure ever published was taken on the default. Four arms, 8 houses x 300 weeks each
+   (probes/medicus.mjs), scars and lasting hurts counted AS TAKEN per thousand hurt man-weeks
+   because the arms do not live the same length:
+
+     arm           bouts/wk   scars/kHmw   lasting/kHmw   weeks to heal
+     rest (default)   0.958        303.5          62.33            1.1
+     convalesce       0.960        214.3          48.63            1.3
+     surgeon          0.948        309.5          76.22            1.1
+     through          0.939        115.2          25.51            7.7
+
+   **`through` buys nothing.** 0.939 bouts a week against the default's 0.958, while its houses ran
+   572 house-weeks against 1,392 — a man fighting on an open wound is not an extra man, he is a
+   shorter house. The proposal was for a second door onto that.
+
+   And the surgeon is mostly unreachable: of 375 attempts to set it, **354 were refused for want of a
+   valetudinarium** and NOT ONE for want of coin. The panel says "needs medicus", which is right, and
+   says nothing about what the choice is worth, which is the gap.
+
+   The numbers live on the table so the panel cannot quote a different set — #150's rule. */
 const CARE = {
-  rest:    { name:"Let it mend",  desc:"The slow way. He is off the sand until it closes." },
-  convalesce: { name:"Full convalescence", desc:"Bed, broth and no hurry. Slower to heal, but he rises clean — scars and lasting hurts rarely take hold, and his spirits mend with him." },
-  surgeon: { name:"The surgeon",  desc:"Cut, cleaned and stitched properly. Halves the time and most of the scarring." },
-  through: { name:"Work him through it", desc:"He fights and trains on it. The wound does not close, and it may set badly." },
+  rest:    { name:"Let it mend",  short:"MEND", heal:1, grave:1,
+    worth:"The slow way, at the ordinary rate, with the ordinary risk of it setting badly.",
+    desc:"The slow way. He is off the sand until it closes." },
+  convalesce: { name:"Full convalescence", short:"CONVALESCE", heal:0.72, grave:0.3, sub:"slow & clean",
+    worth:"Half again as long in bed, and under a third the chance of a permanent hurt. Measured over four arms it is the only one that lowers both scars and lasting hurts.",
+    desc:"Bed, broth and no hurry. Slower to heal, but he rises clean — scars and lasting hurts rarely take hold, and his spirits mend with him." },
+  surgeon: { name:"The surgeon",  short:"SURGEON", heal:1.6, grave:0.45,
+    worth:"Back on the sand in two thirds of the time, at under half the chance of a permanent hurt.",
+    desc:"Cut, cleaned and stitched properly. Halves the time and most of the scarring." },
+  through: { name:"Work him through it", short:"WORK ON", heal:0, grave:1, hard:true,
+    worth:"It does not close at all while he is using it, and about one week in eight it sets badly. Measured, this buys NO extra bouts — 0.939 a week against 0.958 for letting it mend — and the houses that did it lived half as long.",
+    desc:"He fights and trains on it. The wound does not close, and it may set badly." },
+};
+const CARE_KEYS = Object.keys(CARE);
+/* why the row is dark, in the words the gambit panel already uses for the same job */
+const careWhy = (d, g, k) => {
+  if(k !== "surgeon" || !g || !g.injury) return null;
+  if(!surgeonOK(d)) return "There is no medicus' room to do it in. Build a valetudinarium.";
+  const fee = surgeonFee(d, g.injury);
+  return d.gold < fee ? `${rnd(fee - d.gold)}d short of the fee.` : null;
 };
 const surgeonFee = (d, inj) => rnd((55 + inj.pen*14) * [1, 0.85, 0.75, 0.65, 0.52][bLevel(d,"valetudinarium")]);
 
@@ -14997,6 +15041,42 @@ function suggestedPlan(d, g, offer){
    the number behind this lives, and which is a FOLD. It rendered as "WHAT HE MAKES OF YOU · hates
    you · ⌄" with the warning shut inside it, and a warning behind a fold is not a warning. It sits
    on his overview instead, the view every man opens on, beside his standing style. */
+/* ---- #203: THE INFIRMARY ROW, WITH WHAT EACH CHOICE IS WORTH ----
+   It lived in App as twenty-five lines of JSX that named four buttons and printed one sentence of
+   prose under whichever was on. The four choices are permanent — they decide scars, lasting hurts
+   and weeks off the sand — and the panel quoted no figure for any of them. The numbers come off
+   `CARE` rather than being written here, so the panel and the engine cannot drift apart.
+   And the dark row says WHY it is dark: measured, 354 of 375 surgeon refusals were for want of a
+   valetudinarium and not one for want of coin, so "needs medicus" was the right word and the
+   shortfall in denarii — the other case — was never said at all. */
+function CareRow({ d, g, onPick }){
+  const care = (g.injury && g.injury.care) || "rest";
+  const C = CARE[care] || CARE.rest;
+  const fee = surgeonFee(d, g.injury);
+  return (
+    <div className="panel" style={{padding:10,marginBottom:9,background:"var(--panel)",borderColor:"var(--blood-edge)"}}>
+      <div className="flex items-center justify-between gap-2" style={{marginBottom:5}}>
+        <span className="tag tag-blood">{g.injury.name}</span>
+        <span className="rowval dim" style={{fontSize:"var(--fs-base)"}}>{Math.max(1,Math.ceil(g.injury.weeks))} week{Math.ceil(g.injury.weeks)>1?"s":""}</span>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        {CARE_KEYS.map(c=>{ const why = careWhy(d, g, c);
+          return (
+            <button key={c} className={`focusbtn ${care===c?"on":""}`} disabled={!!why}
+              style={why?{opacity:.4}:undefined} onClick={()=>onPick(c)}>
+              {CARE[c].short}
+              {c==="surgeon" && <span className="sub">{surgeonOK(d) ? fee+"d" : "needs medicus"}</span>}
+              {CARE[c].sub && <span className="sub">{CARE[c].sub}</span>}
+            </button>
+          ); })}
+      </div>
+      {(()=>{ const why = careWhy(d, g, "surgeon");
+        return why ? <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:5,fontStyle:"italic"}}>{why}</div> : null; })()}
+      <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:6}}>{C.desc}</div>
+      <div style={{fontSize:"var(--fs-base)",marginTop:3,color:C.hard?"var(--blood)":"var(--laurel)"}}>{C.worth}</div>
+    </div>
+  );
+}
 function SittingSoon({ d, g }){
   const r = refuseRisk(d);
   if(!r || !r.g || !g || r.g.id !== g.id) return null;
@@ -25661,33 +25741,7 @@ export default function App(){
             {gView==="record" && selG.traits.length>0 && <div style={{marginBottom:8}}>
               {selG.traits.map(t=><div key={t} style={{fontSize:"var(--fs-md)"}}><span className="tag tag-gold" style={{marginRight:6}}>{t}</span><span className="dim">{TRAITS[t]}</span></div>)}
             </div>}
-            {gView==="body" && selG.injury && (()=>{ const care = selG.injury.care || "rest"; const fee = surgeonFee(S, selG.injury);
-              return (
-                <div className="panel" style={{padding:10,marginBottom:9,background:"var(--panel)",borderColor:"var(--blood-edge)"}}>
-                  <div className="flex items-center justify-between gap-2" style={{marginBottom:5}}>
-                    <span className="tag tag-blood">{selG.injury.name}</span>
-                    <span className="rowval dim" style={{fontSize:"var(--fs-base)"}}>{Math.max(1,Math.ceil(selG.injury.weeks))} week{Math.ceil(selG.injury.weeks)>1?"s":""}</span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    {["rest","convalesce","surgeon","through"].map(c=>{
-                      const off = c==="surgeon" && (!surgeonOK(S) || S.gold<fee);
-                      return (
-                        <button key={c} className={`focusbtn ${care===c?"on":""}`} disabled={off}
-                          style={off?{opacity:.4}:undefined} onClick={()=>setCare(selG.id,c)}>
-                          {c==="rest"?"MEND":c==="convalesce"?"CONVALESCE":c==="surgeon"?"SURGEON":"WORK ON"}
-                          {c==="surgeon" && <span className="sub">{surgeonOK(S)? fee+"d" : "needs medicus"}</span>}
-                          {c==="convalesce" && <span className="sub">slow &amp; clean</span>}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:6}}>{CARE[care].desc}</div>
-                  {care==="through" && <div className="blood" style={{fontSize:"var(--fs-base)",marginTop:3}}>
-                    He fights at a penalty and the wound will not close. It may set badly and leave something permanent.
-                  </div>}
-                </div>
-              );
-            })()}
+            {gView==="body" && selG.injury && <CareRow d={S} g={selG} onPick={c=>setCare(selG.id, c)} />}
             {gView==="record" && isMade(selG) && (
               <div className="panel" style={{padding:9,marginBottom:9,background:"var(--panel)",borderColor:"var(--gold-line)"}}>
                 <span className="tag" style={{color:"var(--gold-hi)",borderColor:"var(--line-4)"}}>Made</span>
@@ -28322,7 +28376,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     paragonOf, paragonReach, makeParagon, paragonWeek, paragonExpire, PARAGONS,
     PARAGON_REACH, PARAGON_GAP, PARAGON_ODDS, marketWeek,
     buyGearItem, sellGearOne, equipOne, stripAll, mendKitOf, forgeForMan, armHimOff, armAllOff,
-    buildUp, setCrestTo, setCareOf,
+    buildUp, setCrestTo, setCareOf, CARE, CARE_KEYS, careWhy, surgeonOK, surgeonFee,
     teachSigTo, makeMasterOf, startSecond, switchStyle,
     setPupilTo, beginRetrain, endRetrain, hireDoctore, dismissDoctore, takeDoctoreOffer, makeDoctore, docSecond, onSquare, squareMen, squareWord, squareWeek, squareTook, squareTie, SQUARE_WEAR, SQUARE_TIE, doctoreWeek, docLesson, DOC_LESSONS, tieBetween, tieWord, addTie,   /* #197 — the square's second seat, and the tie words the arena panel already uses */
     hireStaffMember, letStaffGoOf, setEarTo,
