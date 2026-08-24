@@ -4461,6 +4461,98 @@ wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
 
+### v3.126.0 — `bulk` was charging every definition with whatever followed it, and App with the whole test handle
+
+`bulk` is the check that says stop: every top-level definition in the source is measured and a new
+one over 200 lines fails. It measured a definition as **the distance to the next one**, which meant
+each definition carried whatever sat between it and its successor — and the last definition in the
+file carried everything to EOF.
+
+**This is the third act of one fault.** The first: `export default function App` did not match the
+regex, so App was not a definition at all and `takeUpTheHouse` — a two-line function — measured
+**7,021 lines**. The second: the allowance was earned down 7,200 → 6,100 after the SECT split, with
+the rule this release obeys — *an allowance that never tightens after a split is one that only
+ratchets the wrong way.* The third is this: nothing terminates App, because the test handle's members
+are indented.
+
+| | `bulk` said | actually |
+|---|---|---|
+| **App** | **6,100** | **5,786** |
+| EVENTS | 1,101 | 1,069 |
+| simulateMelee | 225 | 204 |
+| SECT | 1,452 | 1,435 |
+| LESSONS | 233 | 221 |
+| simulatePair | 206 | 198 |
+| CSS | 257 | 252 |
+| simulateFight | 436 | 432 |
+| doFight | 359 | 356 |
+| Fighter | 273 | 271 |
+| FightModal | 388 | 387 |
+| agenda | 210 | 210 |
+
+Across the whole file: **517 of 1,469 definitions were inflated, 3,189 lines charged to the wrong
+owner.** The 314 on App are the test handle, which is why three of the five reds in v3.116.0–v3.121.0
+were a comment on a handle export, and why by v3.125.0 App sat at exactly **6,100 of 6,100** with an
+export having to be folded onto an existing line to fit.
+
+**And a second-order effect nobody had noticed.** The file's convention is that a note goes ABOVE the
+thing it describes — so a note above X was charged to **W**, the definition before it. "Put the note
+above the function" only ever worked because the previous function happened to have headroom. A
+twenty-line note above `agenda` would have landed on `agendaCrown`, which is twelve lines long.
+
+## The rule
+
+A definition ends at the first line, at column zero, beginning with a closing token — `}`, `};`,
+`];`, `});`, or the backtick that ends a template literal. Everything inside a top-level definition
+in this file is indented, so that line is its end and nothing else is. **Verified by hand against all
+twelve guarded names** before it shipped.
+
+201 definitions have no such line: short arrow consts whose continuation lines are indented and whose
+`;` is indented with them. Those fall back to **the last indented line**. That rule was tried as the
+*primary* one and had to be rejected — it breaks on template literals, whose contents sit at column
+zero (`CSS` measured **1 line instead of 252**), and on App (**1,335**, because line 22982 is
+`</div></>) },`, a JSX close at column zero). The closer comes first; the indent only catches what it
+misses. Nothing now falls back to the old distance.
+
+## The allowances came down with the measurements
+
+This is the part that matters, and it is the rule act two already wrote. A parser that gets more
+accurate makes every figure smaller; leaving the allowances alone would have **handed the file 419
+lines of silent headroom** and the check would have stopped meaning anything. So each allowance moved
+by exactly the number of lines its figure moved:
+
+| | measured | allowed | headroom |
+|---|---|---|---|
+| App | 6,100 → 5,786 | 6,100 → **5,786** | 0 → 0 |
+| SECT | 1,452 → 1,435 | 1,500 → 1,483 | 48 → 48 |
+| EVENTS | 1,101 → 1,069 | 1,110 → 1,078 | 9 → 9 |
+| simulateFight | 436 → 432 | 470 → 466 | 34 → 34 |
+| simulateMelee | 225 → 204 | 260 → 239 | 35 → 35 |
+| doFight | 359 → 356 | 360 → 357 | 1 → 1 |
+| CSS | 257 → 252 | 258 → 253 | 1 → 1 |
+
+**The ratchet is exactly as tight as it was.** Only the attribution is correct. App keeps its zero
+headroom — the relief this delivers is not room to grow the component, it is that the handle no
+longer costs the component anything.
+
+## Verified three ways
+
+| driven | result |
+|---|---|
+| **twenty lines added to the test handle** | **App unchanged at 5,786 — green.** The whole point |
+| twenty lines added inside `App` | red at 5,806 — the ratchet still bites |
+| a twenty-line note written above `agenda` (at 210/210) | green, and charged to nobody — `agendaCrown` stays 12 |
+
+`bulk` also prints what belongs to no definition now — **23,873 lines inside a definition, 3,873
+between them, 623 ending on a closing token and 846 on their last indented line.** Printed rather
+than asserted: a rule on it would be a second ratchet nobody has measured, but a sudden collapse in
+what is attributed is exactly how this fix would rot, and that line makes it visible.
+
+**No game change.** `src/ludus.jsx` is untouched; the shipping build differs from v3.125.0 only in
+the version string.
+
+Suite **97/97 green**.
+
 ### v3.125.0 — #191: the wound is rare by construction, the construction is right, and the man across the sand was judged by a different rule
 
 `INJ_BY_TARGET` maps six targets onto five wounds and the flank is the only target with two:
@@ -15463,4 +15555,4 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.125.0 — the v3.115.0 audit is closed, ten of ten*
+*Last updated: v3.126.0 — the v3.115.0 audit is closed, ten of ten, and the ratchet that policed it measures the right span*
