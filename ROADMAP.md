@@ -14733,6 +14733,91 @@ always THE PITS, whose panel has no entrance row at all. **Every one was caught 
 material and looking at it.** The ratio this session is roughly five instrument faults to ten items,
 which is better than the last one and is still the reason to check the probe first.
 
+## The feature queue — #196–#205, proposals rather than measured items
+
+**These are not audit items and must not be filed as though they were.** The bar in this project is
+that *it is not an item until you have a number and a falsifier*; what follows is ten places the game
+could gain a verb, each grounded in machinery that already exists but **none of them measured yet**.
+Where a proposal rests on a claim about the current game — "nothing reads this", "the player cannot
+do that" — the claim is named so it can be checked before anything is built, and several will
+certainly shrink or die on contact with a probe. That is expected and is the point of writing them
+down this way.
+
+**The standing constraint on all ten**: `bulk` is honest since v3.126.0 and two figures sit at zero
+headroom — **`agenda` at 210/210 and `App` at 5786/5786**. Anything wanting a new agenda row or new
+App state goes red and has to earn its allowance with a written reason. That is the price, not a veto.
+
+### #196 — a man can approach you and you can never approach him.
+`ASKS` has five entries and every one is HIM opening the conversation. He carries an ambition, a
+regard score, a memory list, ties and a defiance number, and the player has no verb that starts
+anything. One button on the man's STANDING face offering three lines drawn from what he actually
+carries. *Reuses `ASKS`, `AMBITIONS`, `REGARD`, `memory`.* **To check first**: how often does a man
+speak unprompted, over a played house? That cadence is what a new door has to sit beside without
+drowning it — `AMB_COOL` already exists because the ambition event outdrew everything else two to one.
+
+### #197 — the training square holds one man.
+`doc.pupil` is singular, and `DOC_LESSONS` is the only thing in the file that lifts a LIVING man's
+potential — #189 measured it firing on about 1.5% of weeks and found the reference player had never
+named a pupil at all. `sparWith` already exists and already requires mutual consent. Name two men to
+the square and let the doctore drill them against each other: the lesson can land on either, and who
+takes the week seeds a `brother` or `rival` tie. *Reuses `sparWith`, `tieList`, `DOC_LESSONS`.*
+
+### #198 — you can wreck a rival house on purpose and can only warm to one by accident.
+`warm` runs 0–100 with six events gated on it (`drink`, `loan`, `warning`, `offer`, `bitter`, `end`)
+and all four `GAMBITS` are hostile. The asymmetry is the item. A friendly counterpart — a man sent to
+fight on their card for a cut, a doctore lent, a debt settled. *Reuses `warm`, `RIVAL_MOVES`.*
+**To check first**: what `warm` actually reaches in a played house, and how many of those six events
+a house ever sees — if warmth never rises far enough to open them, the fault is the input, not the
+missing verb.
+
+### #199 — a man's style is re-specified every single bout.
+`PLANS` (6) and `TACTIC` (4) are picked per bout and #194 was entirely about those choices leaking
+between them. Let the man carry his own default — how he fights when you do not say — pre-filled on
+the arena panel and overridden when it matters. *Reuses `PLANS`, `TACTIC`, and `g.focus`'s precedent.*
+The only one of the ten that REMOVES interface rather than adding it.
+
+### #200 — the crowd is a number and never a demand.
+Venues carry crowd, missio and fame modifiers; the crowd never asks for anything in particular. Some
+cards could arrive with an appetite — a long one, a quick end — printed on the offer, paying if met
+and souring acclaim if flouted. *Reuses `offer`, `crowd`, `acclaimWeek`.* **To check first**: whether
+the existing crowd modifiers already vary enough per card that an appetite would be a second dial
+saying the same thing.
+
+### #201 — defiance ambushes you.
+`REFUSE_REASONS` has five entries and `applyRefusal` three answers, but a refusal arrives after you
+have committed. Make it a standing, readable risk on the arena panel before you send him. This is the
+audit's most repeated move: a number the game holds and never says. *Reuses `REFUSE_REASONS`,
+`defiance`.*
+
+### #202 — you cannot enter your own two men as a pair.
+`doPairFight` exists and `beside` is an ambition — *"to go out beside someone he trusts"* — but a
+pairing is something the bill offers, never something you build. Paying to enter one is how `beside`
+gets met deliberately and how a `brother` tie forms. *Reuses `doPairFight`, `AMBITIONS.beside`.*
+
+### #203 — the medicus cannot be asked to lie.
+Injuries already carry `care`: rest, surgeon, convalesce, and **through**, which already means
+fighting wounded. The missing option is declaring a hurt man fit — he takes the card, nobody outside
+knows, and the risk is `graveLasting`. *Reuses `agonyWear`, `checkLasting`.* A fourth option on a row
+that has three.
+
+### #204 — the house's dead and freed do nothing.
+`d.freed`, `d.fallen`, `annalsClose`, the Record Book and the Annals all exist, so the house has a
+memory and nothing mechanical reads it. A man trained by a freedman of the house, or carrying a dead
+man's kit, or fighting the week one died. *Reuses `d.freed`, `RITES`, `remember`.* **To check first**:
+the claim that nothing reads them — `voice.mjs`'s method would settle it in an afternoon, and #190
+already showed the freed population is one man per house per 420 weeks, which may make this an item
+about the input rather than the reader.
+
+### #205 — the only way to influence the editor is to bribe him.
+`d.flags.editorBought` and the `EDITORS` table exist, so the model is there; the player's single route
+to it is `bribe`, one of the four illegal gambits. The legitimate version — ask for a different
+opponent, a bigger purse, softer stakes, at the cost of favour and standing, and he can refuse.
+*Reuses `EDITORS`, `favor`, patrons, `aedileOn`.*
+
+**Cheapest three**: #199 (pure reuse, and it shrinks the interface), #201 (surfacing an existing
+number), #203 (one more option on an existing row). **Richest three**: #196, #198 and #205 — each
+opens a verb class the game does not have, rather than deepening one it has.
+
 ## The queue, as it stands after the audit
 
 **Nothing is assigned.** The ten above are the queue. The five leads the last session left are all
