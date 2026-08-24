@@ -15394,7 +15394,7 @@ function boutAftermath(d, g, gid, offer, res, win, F, sum){
     agonyWear(g, inj);
     g.injury = inj; g.status = "injured"; weekMark(d, "hurt", 1, fullName(g));
     sum.push(`${PR(g).He} is carried to the medicus: ${inj.name.toLowerCase()}, ${inj.weeks} week${inj.weeks>1?"s":""} to mend.${bodyWear(g)>0.4?" An old body does not shrug these off the way it used to.":""}`);
-  } else if(win && res.vA<45 && R()<0.4){
+  } else if(win && res.vA<HURT_BAR && R()<0.4){
     const inj = injuryFor(res.lastTarget, false);
     agonyWear(g, inj);
     g.injury = inj; g.status = "injured"; weekMark(d, "hurt", 1, fullName(g));
@@ -15425,6 +15425,22 @@ function boutAftermath(d, g, gid, offer, res, win, F, sum){
    16.71% -> 16.47% of bouts killing his man at a median life of 172w -> 178w: no cost, and a
    little to the good in the direction the mechanism says it must be, because a log with more of
    the fight in it finds a clash more often. */
+/* ---- THE MAN ACROSS THE SAND WAS JUDGED BY A DIFFERENT RULE — #191 ----
+   Your own man's wound branches on how the bout left him: `!win && res.fell` takes the heavy one,
+   `win && res.vA < HURT_BAR` takes the light one. The opponent's line was
+   `injuryFor(res.lastTarget, false)` — ALWAYS the light one — and `simulateFight` returns his
+   vitality right there and it was ignored. Measured over 6,000 re-runs of real pairings,
+   **1,285 of 1,401 opponents beaten without dying are under 45**: median 6, p10 minus seventeen.
+   A man beaten that far past standing was handed cracked ribs where yours gets a pierced side.
+   45 is not a new constant — it is named once now and both sides read it.
+   THIS MAKES `Cracked ribs` RARER, which is the honest direction. #191 asked why one of the six
+   wounds is 0.06% of all wounds; the answer is that it needs a MILD FLANK, mild needs a victory
+   that cost you, and both of the two a played house produced were the opponent's, off this line.
+   The wound is rare by construction and the construction is right — no tactic lifts it (the best of
+   the four gives 11 in 6,000 bouts), and the two engines that cannot deal it at all are correct not
+   to: 601 of 601 men who go down in a melee and 487 of 487 in a pairing are under vitality 40,
+   at medians of 11 and 2. This was the one thing inflating it, and it was a bug. */
+const HURT_BAR = 45;      // won and came off under it -> the light wound; lost past it -> the heavy one
 function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   const g = d.gladiators.find(x=>x.id===gid);
   const t = TIERS[offer.tier];
@@ -15636,7 +15652,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
           h.fame = Math.max(0, h.fame-8);
           sum.push(`House ${h.name} will not forget this death.`);
         } else {
-          f.injury = injuryFor(res.lastTarget, false);
+          f.injury = injuryFor(res.lastTarget, res.vB < HURT_BAR);   /* #191 — the same bar as yours; the note is above doFight */
         }
       } else {
         f.wins++; f.beatYou = (f.beatYou||0)+1; f.pfame += ri(4,9); h.fame += 4;

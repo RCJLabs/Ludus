@@ -123,7 +123,7 @@ const out = await inside(p, ([H, W, SEED, ARM]) => {
   const SIMS = 6000;
   for(const tac of TACS){
     const b = { sims:0, dead:0, sevDoor:0, mildDoor:0, mildAfterRoll:0, neither:0,
-                mildFlank:0, sevFlank:0, ribs:0, wins:0, winLow:0 };
+                mildFlank:0, sevFlank:0, ribs:0, wins:0, winLow:0, lostVB:[] };
     for(let i=0;i<SIMS && pairs.length;i++){
       const [a0,b0] = pairs[i % pairs.length];
       const a = JSON.parse(JSON.stringify(a0)), bb = JSON.parse(JSON.stringify(b0));
@@ -136,6 +136,12 @@ const out = await inside(p, ([H, W, SEED, ARM]) => {
       const win = res.winner === "A";
       if(win) b.wins++;
       if(win && res.vA < 45) b.winLow++;
+      /* ---- AND THE MAN ACROSS THE SAND, WHOSE WOUND IS HARDCODED MILD ----
+         `doFight`'s last branch is `f.injury = injuryFor(res.lastTarget, false)` — the beaten
+         opponent ALWAYS gets the lighter wound, where your own man in the same state gets the
+         heavier one. Both cracked ribs in a played house went to him. So: what vitality is he
+         actually on when he loses? */
+      if(win && !res.bDies && typeof res.vB === "number") b.lostVB.push(Math.round(res.vB));
       const t = res.lastTarget;
       if(!win && res.fell){ b.sevDoor++; if(t==="flank") b.sevFlank++; }
       else if(win && res.vA < 45){ b.mildDoor++;
@@ -145,6 +151,37 @@ const out = await inside(p, ([H, W, SEED, ARM]) => {
     branch[tac] = b;
   }
   T.branch = branch; T.pairs = pairs.length;
+
+  /* ---- AND THE TWO ENGINES THAT HARDCODE `severe = true` ----
+     `doMelee` and `doPairFight` call `injuryFor(pick(TARGETS)[0], true)`. Neither engine returns a
+     lastTarget, so the random target is honest — but both DO carry the man's vitality at the moment
+     he goes down (`ents[i].hpv`, `res.hp.A[i]`) and both throw it away. The file's own convention
+     for severity is low vitality: `doVenatio` uses `res.vA < 40`. So the question a fix turns on is
+     what that vitality actually IS when a man goes down in a melee or a pairing — if they are all
+     under 40 the hardcoded `true` is telling the truth and there is nothing to fix. */
+  const downHp = { melee:[], pair:[] };
+  const dctx = A.newGameState("Ctx","clean",SEED+"-C", null);
+  try {
+    for(let i=0;i<400 && pairs.length;i++){
+      const [a0,b0] = pairs[i % pairs.length];
+      const cp = x => JSON.parse(JSON.stringify(x));
+      /* `simulatePair` reads `ctx.d` for the assist multiplier — `{}` threw on `.ties` and the
+         first run printed "could not be driven" where the fixture, not the engine, was wrong. */
+      const r = A.simulatePair([cp(a0), cp(a0)], [cp(b0), cp(b0)], "measured", "standard",
+        { d: dctx, favor:0, street:"", tier:1, tie:null, patron:null, guarded:false }, {});
+      if(r && r.down && r.hp) for(let j=0;j<2;j++) if(r.down.A[j]) downHp.pair.push(Math.round(r.hp.A[j]));
+    }
+  } catch(e){ downHp.pairErr = String(e.message).slice(0,90); }
+  try {
+    for(let i=0;i<400 && pairs.length;i++){
+      const [a0,b0] = pairs[i % pairs.length];
+      const cp = x => JSON.parse(JSON.stringify(x));
+      const r = A.simulateMelee([cp(a0), cp(a0), cp(a0)], [cp(b0), cp(b0), cp(b0)], "measured", {}, {});
+      const es = (r && (r.ents || (r.beats && r.beats.length && r.beats[r.beats.length-1].ents))) || null;
+      if(Array.isArray(es)) for(const e of es) if(e && e.out && !e.dead && typeof e.hpv === "number") downHp.melee.push(Math.round(e.hpv));
+    }
+  } catch(e){ downHp.meleeErr = String(e.message).slice(0,90); }
+  T.downHp = downHp;
   return { T, rope:R.say() };
 }, [H, W, SEED, ARM]);
 
@@ -177,4 +214,22 @@ for(const [tac,b] of Object.entries(T.branch)){
 const best = Object.entries(T.branch).sort((a,b)=>b[1].ribs-a[1].ribs)[0];
 if(best) console.log(`\n  >>> best tactic for the mild door is ${best[0]}: ${best[1].ribs} ribs in ${best[1].sims} bouts — ${pc(best[1].ribs,best[1].sims)} of bouts fought.`);
 console.log(`      #191 FALSIFIES if a tactic lifts it to a visible share of ALL WOUNDS.`);
+const q = (a,f)=>{ if(!a.length) return "-"; const z=[...a].sort((x,y)=>x-y); return z[Math.min(z.length-1,Math.floor(z.length*f))]; };
+{ const bb = T.branch.measured || {};
+  const a = bb.lostVB || [];
+  const under = a.filter(x=>x<45).length;
+  console.log(`\n  === THE MAN ACROSS THE SAND, WHOSE WOUND IS HARDCODED MILD ===`);
+  console.log(`  ${a.length} opponents beaten without dying · vitality p10 ${q(a,.1)} · median ${q(a,.5)} · p90 ${q(a,.9)}`);
+  console.log(`  ${under} of ${a.length} (${pc(under,a.length)}) are under 45 — the same bar your own man's mild wound needs —`);
+  console.log(`  and every one of them is handed the LIGHTER wound, while your man in that state gets the heavier.`); }
+console.log(`\n  === THE TWO ENGINES THAT HARDCODE severe = true ===`);
+for(const k of ["melee","pair"]){
+  const a = T.downHp[k] || [];
+  const err = T.downHp[k+"Err"];
+  if(err){ console.log(`  ${k.padEnd(6)} could not be driven: ${err}`); continue; }
+  const under = a.filter(x=>x<40).length;
+  console.log(`  ${k.padEnd(6)} ${a.length} men went down · vitality p10 ${q(a,.1)} · median ${q(a,.5)} · p90 ${q(a,.9)}`);
+  console.log(`         ${under} of ${a.length} (${pc(under,a.length)}) are under 40, which is the threshold \`doVenatio\` already uses —`);
+  console.log(`         so ${pc(a.length-under,a.length)} of them are being called SEVERE while the engine knows they are not.`);
+}
 console.log(`\n  rope: ${out.rope}`);
