@@ -135,13 +135,20 @@ export async function run({ p, errors }){
        LONG names the bug was reported with. The scene only reads name, class and fatigue, and
        this check only reads the scene. */
     const base = A.activeG(d)[0];
-    const names = ["Boduognatus","Diophantos","Asmatokos","Vercingetorix","Ambiorix"];
+    const names = ["Boduognatus","Diophantos","Asmatokos","Vercingetorix","Ambiorix",
+                   "Astyanax","Kalliphon","Segomaros","Britomartus"];
     /* ids may be strings, so Math.max over them is NaN and every clone shares it -- suffix the
        base id instead. And the save goes to EVERY slot: "take up the keys" resumes the ACTIVE
        slot while a find-first write can land in another, which is exactly how this fixture
        reported roster 5 with 2 drawn -- two different houses in one sentence. */
+    /* and the CEILING was the same dead filter, on the same fields that do not exist -- see the
+       note over `roster` below. `d.gladiators` counts the buried, so a house that had lost four
+       men over sixteen weeks read nine before a single clone was made, the loop added NOTHING,
+       and the yard stood at five: under the overflow gate, with the check proving nothing. The
+       scene's own census is the only number that can size this fixture, and the name list is
+       long enough to fill the yard from a house of one. */
     names.forEach((nm,i)=>{
-      if(d.gladiators.filter(g=>!g.dead&&!g.sold&&!g.freed&&!g.fled).length >= 9) return;
+      if(A.activeG(d).length >= 9) return;
       const c = JSON.parse(JSON.stringify(base));
       c.id = String(base.id) + "-clone" + i; c.name = nm; c.nick = null; c.injury = null; c.fatigue = 20;
       d.gladiators.push(c);
@@ -175,9 +182,18 @@ export async function run({ p, errors }){
       if(names.some(n=>n.textContent===t.t && Math.abs(box(names.find(n2=>n2.textContent===t.t)).x-t.x)<1)) continue;
       if(t.x < f.x+f.w && f.x < t.x+t.w && t.y < f.y+f.h && f.y < t.y+t.h) clashes.push(`"${t.t}" over ${f.t}'s figure`);
     }
+    /* ---- THE DENOMINATOR WAS A FILTER ON FIELDS THAT DO NOT EXIST ----
+       This read `!g.dead && !g.sold && !g.freed && !g.fled`. The game keeps a man's state in
+       `g.status` — "dead", "freed", "escaped", "sold", "retired", "departed", the `GONE` list —
+       and there is no `g.dead`, no `g.sold`, no `g.freed` and no `g.fled` anywhere in the file. So
+       every term was `!undefined`, the filter was a NO-OP, and "roster" meant every man the house
+       ever held INCLUDING THE BURIED. It was being compared against the men standing in the yard,
+       which the scene draws from `activeG`. It passed only while the fixture had few dead: at
+       roster 9 with 5 alive it demanded a "+N more" label for four men who are in the ground.
+       The scene's own population is the only honest denominator, so it is asked for by name. */
     const roster = (()=>{ try { const d0 = JSON.parse(localStorage.getItem(
         Object.keys(localStorage).find(k=>/ludus-slot-\d/.test(k))));
-      return d0.gladiators.filter(g=>!g.dead && !g.sold && !g.freed && !g.fled).length; } catch(e){ return -1; } })();
+      return (window.__LVDVS.activeG(d0)||[]).length; } catch(e){ return -1; } })();
     const moreT = all.find(t=>/more$/.test(t.t)) || null;
     return { men: names.length, clashes, roster, more: moreT ? moreT.t : null };
   });

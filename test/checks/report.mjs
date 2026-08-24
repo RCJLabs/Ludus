@@ -10,7 +10,7 @@
 
    Walked on the played pinned morning, like desk and scene.
 */
-import { found, tab, clearAll, installRope , forge } from "../harness.mjs";
+import { found, tab, clearAll, installRope , forge, waitSaved } from "../harness.mjs";
 
 export const name = "report";
 export const describe = "the report bar counts true, and every row opens its paper or travels";
@@ -36,14 +36,25 @@ export async function run({ p, errors }){
   /* the second arrival can raise a first-visit lesson on the scene-door path, and its modal
      sits later in the DOM than the report sheet -- counting rows in it read "0 rows over an
      agenda of 6". Clear it the way a player would before opening the report. */
+  /* ---- AND THE SAVE HAS TO HAVE CAUGHT UP, OR THIS COMPARES TWO DIFFERENT MOMENTS ----
+     The bar renders from the LIVE state and the count below is read out of `localStorage`, which
+     is written on a debounce. Without this wait the check read a save one step behind the screen
+     and reported "the bar says 3 matters over an agenda of 4" — a real-looking count mismatch that
+     was neither. Measured on one unchanged build across three runs: 3, 3, 4. `waitSaved` is in the
+     harness for exactly this and its header says so. */
+  await waitSaved(p);
   const truth = await p.evaluate(()=>{
     const b=document.querySelector(".reportbar");
     const S = (()=>{ try { return JSON.parse(localStorage.getItem(
       Object.keys(localStorage).find(k=>/ludus-slot-\d/.test(k)))); } catch(e){ return null; } })();
-    let n = -1; try { n = (window.__LVDVS.agenda(S)||[]).length; } catch(e){}
-    return { bar: b ? (b.getAttribute("aria-label")||"") : null, agendaN: n };
+    let n = -1, rows = []; try { const a = window.__LVDVS.agenda(S)||[];
+      n = a.length; rows = a.map(r=>`${r.urgency}·${String(r.label).slice(0,34)}`); } catch(e){}
+    return { bar: b ? (b.getAttribute("aria-label")||"") : null, agendaN: n, rows };
   });
   lines.push(`arena bar: "${truth.bar}" · the agenda holds ${truth.agendaN}`);
+  /* WHICH rows, not just how many — a count that disagrees with the bar is unactionable without
+     them, and this check has now cost two sessions a diagnosis it could have printed. */
+  for(const r of (truth.rows||[])) lines.push(`     ${r}`);
   if(!truth.bar) fails.push("no report bar on the arena");
   else if(!truth.bar.includes(String(truth.agendaN)))
     fails.push(`the bar says "${truth.bar}" over an agenda of ${truth.agendaN} — the count is a copied number`);
