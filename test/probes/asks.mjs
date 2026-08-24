@@ -98,7 +98,7 @@ const out = await inside(p, ([H, W]) => {
                  and one no earlier version of this probe could see
   */
   const chan = d => {
-    const out = { labels:new Set(), urg:{}, marks:{}, live:{}, events:new Set(), lesson:"", perks:"", fig:"" };
+    const out = { labels:new Set(), urg:{}, marks:{}, live:{}, events:new Set(), lesson:"", perks:"", fig:"", says:{} };
     try { for(const r of A.agenda(d)){ const k = norm(r.label);
       out.labels.add(k); out.urg[k] = Math.max(out.urg[k]||0, r.urgency||0); } } catch(e){}
     for(const k of Object.keys(A.SECT_MARK||{})){
@@ -107,9 +107,63 @@ const out = await inside(p, ([H, W]) => {
     for(const k of Object.keys(A.SECT_LIVE||{})){
       let v = null; try { v = A.sectLive(d,k); } catch(e){}
       out.live[k] = v === true ? 1 : v === false ? 0 : -1; }
-    for(const [k,e] of Object.entries(A.EVENTS||{})){
-      let on = false; try { on = !e.when || !!e.when(d); } catch(x){}
-      if(on) out.events.add(k); }
+    /* ---- THE EVENTS CHANNEL WAS INERT FOR ITS WHOLE LIFE ----
+       This read `!e.when || !!e.when(d)`. **Not one of the 59 EVENTS entries has a `when`** — they
+       all gate by `make(d)` returning null, which is what `pickEvent` walks. So `!e.when` was true
+       for every entry on every arm, the set was the constant 59, and the diff could never fire.
+       The channel the header calls "the game's largest content channel" has been reporting
+       nothing since it was added.
+       `make(d)` is the real gate and it is expensive to ask honestly: it generates opponents and
+       markets, so it MUTATES and it advances the global RNG. The state is cloned and the seed put
+       back, the same discipline `gate.mjs` needed for `giveAmbition`. */
+    { const seed = A.rngGet ? A.rngGet() : null;
+      for(const [k,e] of Object.entries(A.EVENTS||{})){
+        let on = false;
+        try { const c = A.clone(d); on = !!(e.make && e.make(c)); } catch(x){ on = false; }
+        if(on) out.events.add(k); }
+      if(seed != null) A.rngSet(seed); }
+    /* ---- AND ELEVEN MORE TABLES THAT PAIR A PREDICATE WITH A LINE OF WRITING ----
+       `EVENTS` is not the only register. Fourteen tables in the file gate a written line on the
+       state; this probe could reach four. Which entries can fire is the same question the events
+       channel asks, and the answer is a sentence the game is willing to say about a quantity. */
+    { const seed = A.rngGet ? A.rngGet() : null;
+      const live = (tbl, arg) => {
+        const on = [];
+        const entries = Array.isArray(tbl) ? tbl.map((v,i)=>[String(i),v]) : Object.entries(tbl||{});
+        for(const [k,e] of entries){
+          const f = e && (e.when || e.need);
+          if(typeof f !== "function") continue;
+          try { if(arg === undefined ? f(d) : f(d, arg)) on.push(k); } catch(x){}
+        }
+        return on.join(",");
+      };
+      const anyMan = (tbl) => {
+        const men = (()=>{ try { return A.activeG(d) || []; } catch(x){ return []; } })();
+        const hit = new Set();
+        const entries = Object.entries(tbl||{});
+        for(const [k,e] of entries){
+          const f = e && (e.when || e.need);
+          if(typeof f !== "function") continue;
+          for(const g of men){ try { if(f(d, g)){ hit.add(k); break; } } catch(x){} }
+        }
+        return [...hit].sort().join(",");
+      };
+      out.says = {
+        counsel: live(A.COUNSEL), whispers: live(A.WHISPERS), yard: live(A.YARD),
+        late: live(A.LATE), night: live(A.NIGHT), rome: live(A.ROME_TURNS), ruins: live(A.RUINS),
+        asks: anyMan(A.ASKS), refuse: anyMan(A.REFUSE_REASONS),
+        rivals: (()=>{ const hs = d.rivals||[]; const hit = new Set();
+          for(const [k,e] of Object.entries(A.RIVAL_MOVES||{})){ const f = e && (e.when||e.need);
+            if(typeof f !== "function") continue;
+            for(const h of hs){ try { if(f(d, h)){ hit.add(k); break; } } catch(x){} } }
+          return [...hit].sort().join(","); })(),
+        freedmen: (()=>{ const fs = d.freed||[]; const hit = new Set();
+          for(const [k,e] of Object.entries(A.FREEDMEN||{})){ const f = e && (e.when||e.need);
+            if(typeof f !== "function") continue;
+            for(const x2 of fs){ try { if(f(d, x2)){ hit.add(k); break; } } catch(x){} } }
+          return [...hit].sort().join(","); })(),
+      };
+      if(seed != null) A.rngSet(seed); }
     /* what the game would TEACH — a channel the first eight versions of this probe could not see */
     try { const L = A.lessonFor(d); out.lesson = L ? String(L.id||L.title||"") : ""; } catch(e){ out.lesson = "?"; }
     /* which permanent perk streams are running. `perkOn` is not on the handle; this is the same
@@ -137,6 +191,8 @@ const out = await inside(p, ([H, W]) => {
     for(const k of Object.keys(a.live))  if(a.live[k]  !== b.live[k])  out.push(`live ${k}`);
     for(const x of a.events) if(!b.events.has(x)) out.push("event -"+x);
     for(const x of b.events) if(!a.events.has(x)) out.push("event +"+x);
+    for(const k of Object.keys(a.says||{})) if((a.says[k]||"") !== (b.says[k]||""))
+      out.push(`says ${k} [${a.says[k]||"-"}]->[${b.says[k]||"-"}]`);
     if(a.lesson !== b.lesson) out.push(`lesson ${a.lesson||"(none)"}->${b.lesson||"(none)"}`);
     if(a.perks !== b.perks) out.push(`perk ${a.perks||"(none)"}->${b.perks||"(none)"}`);
     if(a.fig !== b.fig){ const A2 = a.fig.split("|"), B2 = b.fig.split("|");
