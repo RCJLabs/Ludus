@@ -4461,6 +4461,87 @@ wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
 
+### v3.125.0 — #191: the wound is rare by construction, the construction is right, and the man across the sand was judged by a different rule
+
+`INJ_BY_TARGET` maps six targets onto five wounds and the flank is the only target with two:
+`injuryFor(target, severe)` gives **"Pierced side"** for a severe flank and **"Cracked ribs"** for a
+mild one. So `Cracked ribs` — 3 weeks, 7 pen, its own name in the table — needs a NON-SEVERE FLANK,
+and #191 counted it at **2 of 3,317 arrivals, 0.06%**, against 15–33% for the other five.
+
+**The answer took three measurements and none of them is the one the item expected.**
+
+**The falsifier does not fire.** The mild door is `win && res.vA < HURT_BAR && R() < 0.4` — a victory
+that cost you — so the clause was that a defensive policy winning narrowly would lift it. Driven
+6,000 re-runs an arm over real pairings: the best of the four tactics gives **11 cracked ribs in
+6,000 bouts, 0.18%**, against `measured`'s 4. `defensive` does maximise survival (508 deaths against
+`aggressive`'s 1,202) and it does win most (2,325), but taking 0.58 damage a round also keeps you
+*above* the bar the mild door needs. No tactic makes it visible.
+
+**The two engines that cannot deal it are correct not to.** `doMelee` and `doPairFight` pass
+`severe = true`, which reads like a shortcut and is not: **601 of 601** men who go down in a melee
+and **487 of 487** in a pairing are under vitality 40, at medians of **11 and 2**. A man who goes
+down there is genuinely wrecked, and both engines carry his vitality (`ents[i].hpv`, `res.hp.A[i]`)
+so the claim could be checked rather than assumed. It was checked. Nothing to fix.
+
+**And `doVenatio` can deal it** — it passes `res.vA < 40`, so a hunt won between 40 and 62 is a mild
+door the item had not counted. It produces 1 to 4 of them per seed.
+
+## What was actually wrong
+
+`doFight` ended with `f.injury = injuryFor(res.lastTarget, false)` — **the beaten opponent always
+took the lighter wound**, where your own man in the same state takes the heavier one — and
+`simulateFight` returns his vitality on the object the call already reads.
+
+**1,285 of 1,401 opponents beaten without dying are under 45**: median 6, p10 **minus seventeen**. A
+man beaten that far past standing was being handed cracked ribs where yours gets a pierced side.
+`45` is named once now, as `HURT_BAR`, and both sides read it.
+
+| 12 houses × 420 weeks, wounds counted at the bout | seed A before | after | seed B before | after |
+|---|---|---|---|---|
+| cracked ribs, all told | 9 (0.73%) | 5 (0.34%) | 17 (0.99%) | 7 (0.41%) |
+| **of those, to the man across the sand** | **6** | **1** | **9** | **0** |
+| to your own men, through `doFight` | 2 | 3 | 4 | 5 |
+| through `doVenatio` | 1 | 1 | 4 | 2 |
+
+**Across both seeds, 15 of the 26 cracked ribs in the game — 58% — were going to a man the player
+does not own.** After, 1 of 12. The player's own count is unchanged within noise, 6 against 8.
+
+**So the fix makes the rare thing rarer, and that is the honest direction.** #191 asked why one of
+six wounds is 0.06% of all wounds. The answer is that it needs a mild flank, mild needs a victory
+that cost you, and most of what was there at all came off a line that had no test in front of it.
+
+**One house in sixty.** `open.mjs` moves, and because **no RNG draw was added** the movement is pure
+effect rather than re-phasing: exactly one of the 60 signatures differs — house 26 ends on 3 men and
+1,072 gold instead of 2 and 881, one rival being out a week longer on a flank hit.
+
+## The check
+
+`wound` is the 97th and it holds two things. **Every entry in `INJURIES` must be reachable** from some
+(target, severity) pair — a seventh wound added with no target is dead content, the bar `wants` holds
+for ambitions. And **both sides of the sand are judged by one rule**, driven through the real
+`doFight` door rather than asserted about the source, with a vacuity guard when the fixture leaves
+nobody wounded.
+
+| broken on purpose | result |
+|---|---|
+| the opponent's severity put back to a bare `false` | red — *"the engine returns his vitality on the same object"* |
+| severity made to decide nothing | red three ways — *"`Pierced side` … no (target, severity) pair produces it — dead content"* |
+
+**The check's own first cut went red on a working build.** It forbade `injuryFor(res.lastTarget,
+false)` anywhere — and `doFight`'s own mild branch passes a bare `false` and is *right* to, because
+the branch above it has already tested `win && res.vA < HURT_BAR`. **A constant is only a fault where
+nothing has tested the thing it stands for.** The assertion matches the opponent's assignment now,
+which is the one that had nothing in front of it. That is the second time in three releases a
+blocklist-shaped assertion failed on correct code.
+
+**And the probe's first cut caught nothing at all**: it wrapped `A.injuryFor` and reported 1,074
+doors entered and 0 wounds. `injuryFor` is module-scope and the game calls it directly, so
+reassigning the handle's property rebinds the probe's own reference and nothing else. The four doors
+*are* called through the handle by the rope — which is exactly why those counted and the wound did
+not. **A wrap only sees calls that go through the thing you wrapped.**
+
+Suite **97/97 green**. This closes the v3.115.0 audit: **ten of ten**.
+
 ### v3.124.0 — #186: eight channels were not enough either, and the largest one had never fired
 
 `asks.mjs` asks which of a great house's quantities the game is **blind** to: perturb one, diff what
@@ -14165,7 +14246,8 @@ it — `stock`, `fresh`, `venue`, `vote`, `sticky` — and one existing one was 
 it was reporting. That ratio held: **two of the ten items are about the instrument, and the single
 largest finding in this pass is that `asks`'s silent list was mostly its own.**
 
-**Nine closed, in v3.116.0–v3.124.0: #195, #192, #194, #188, #187, #189, #190, #193, #186.** Three more —
+**ALL TEN CLOSED, in v3.116.0–v3.125.0.** Five turned out to be about the instrument rather than
+the game — #186 three times over — which is close to the ratio the audit predicted for itself. Three more —
 `gate`, `rudis` and `paint` — were built for the last three, and `gate` and cost three instrument faults before it printed a figure
 worth quoting — the largest being that **the reference player has hired a doctore since the rope
 was written and had never once named him a pupil**, so five written lessons had been unreachable by
@@ -14362,7 +14444,7 @@ is the 94th check and drives the real card.
 **What is deliberately left standing**: the gate itself. It is reachable, the falsifier says so, and
 moving a number that two releases have already re-measured needs its own measurement, not this one.
 
-### #191 — one of the six injuries is 0.06% of all wounds, and two of the four engines can never deal it.
+### #191 — CLOSED in v3.125.0, and the falsifier did not fire. One of the six injuries is 0.06% of all wounds, and two of the four engines can never deal it.
 `INJ_BY_TARGET` maps six targets to five wounds; the flank is the only target with two, and which
 one you get is `injuryFor(target, severe)`. Counted **at the bout** through all four doors, 3,317
 arrivals over two seeds:
@@ -14378,6 +14460,27 @@ against 1,870 inside the severe one — **20:1 before the 0.4 roll and 51:1 afte
 `doPairFight` pass `severe = true` with `pick(TARGETS)[0]`, so **neither can ever produce it**.
 *Falsifies if a policy that wins narrowly and often — defensive against strong men — lifts it to a
 visible share; the mild door is a WIN, so this is the one item here a tactic might move.*
+**IT DOES NOT.** Driven 6,000 re-runs an arm over real pairings, the best of the four tactics gives
+**11 cracked ribs in 6,000 bouts, 0.18%** against `measured`'s 4. `defensive` does survive most (508
+deaths against `aggressive`'s 1,202) and win most (2,325) — and taking 0.58 damage a round also keeps
+you ABOVE the bar the mild door needs.
+**And the two engines that cannot deal it are right not to**, which the item assumed rather than
+measured: **601 of 601** men who go down in a melee and **487 of 487** in a pairing are under vitality
+40, at medians of 11 and 2. Both engines carry the number (`ents[i].hpv`, `res.hp.A[i]`), so the
+hardcoded `severe = true` could be checked instead of assumed. It was, and it is telling the truth.
+**`doVenatio` CAN deal it** — `res.vA < 40` — which the item's count of the doors had missed.
+**What was actually wrong was the man across the sand.** `doFight` ended with
+`f.injury = injuryFor(res.lastTarget, false)`: the beaten opponent ALWAYS took the lighter wound
+while your own man in that state takes the heavier, and `simulateFight` returns his vitality on the
+object the call already reads. **1,285 of 1,401 opponents beaten without dying are under 45** —
+median 6, p10 minus seventeen. **Across two seeds, 15 of the 26 cracked ribs in the game, 58%, were
+going to a man the player does not own**; after the fix, 1 of 12, with the player's own count
+unchanged within noise (6 against 8). `45` is `HURT_BAR` now and both sides read it.
+**So the answer is that the wound is rare BY CONSTRUCTION and the construction is right**, and the
+fix makes it rarer still, which is the honest direction. `open` moves one house in sixty, and since
+no RNG draw was added that one house is pure effect. `wound` is the 97th check: every entry in
+`INJURIES` must be reachable from some (target, severity) pair, and both sides of the sand judged by
+one rule, driven through the real door.
 **And the first tally of this was wrong in a way worth keeping**: read weekly off `g.injury`, after
 `endWeek` has healed, the counts are biased by how long each wound lasts and `Split brow` (1 week)
 read **36 where the bout count reads 286**. A weekly sweep cannot count a one-week wound.
@@ -15354,4 +15457,4 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.124.0 — nine of the audit's ten items closed; #191 alone is still open*
+*Last updated: v3.125.0 — the v3.115.0 audit is closed, ten of ten*
