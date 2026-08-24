@@ -4553,6 +4553,7 @@ learned this in v3.26.0 and its note says the cure is more houses rather than a 
 24, which costs eight seconds against three. The bar was never wrong; the sample was.
 
 `bulk`: App 5,776 → **5,779** of 5,786, SECT unchanged at 1,464. No allowance raised.
+First run 102/103 with the `houses` red above; confirming run **103/103 green** in 13.6 min.
 
 ### v3.131.0 — #199: a man's style was re-specified every single bout
 
