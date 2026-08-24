@@ -50,7 +50,20 @@ export async function run({ p }){
     const fin = (fn, args) => { try { return fn(...args); } catch(e){ return null; } };
     const WORDS = ["nothing between you","civil","on good terms","thick as thieves"];
 
-    const HOUSES = 5, WEEKS = 170;
+    /* ---- FIVE HOUSES WAS TOO SMALL FOR A MEDIAN AGAINST A BAR, found in v3.132.0 ----
+       This ran 5 houses and took the MEDIAN peak warmth against a bar of 34. The true value is
+       around 92-100, so the bar is nowhere near it — but at n=5 one house dying to a rebellion at
+       week 88 drags the median through the floor, and the statistic swings further than the whole
+       distance to the bar. Measured on two builds, same policy, same weeks:
+
+           5 houses    v3.131.0 median 48.9 (pass)   ·   v3.132.0 median 32.7 (FAIL)
+          24 houses    v3.131.0 median 92.1 (pass)   ·   v3.132.0 median 100  (pass)
+
+       At the honest sample the ORDERING REVERSES and both clear the bar by sixty points. The
+       5-house run cost a release two diagnoses and a control build before the sample was suspected.
+       `card.mjs` learned exactly this in v3.26.0 and its note says the cure is more houses rather
+       than a nudged bar; 24 costs eight seconds against three, which is nothing. */
+    const HOUSES = 24, WEEKS = 170;
     const rows = [];
     let threw = 0, firstThrow = null;
 
