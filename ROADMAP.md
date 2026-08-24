@@ -4461,6 +4461,75 @@ wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
 
+### v3.133.0 — #201: defiance ambushed you, and half of the item was wrong
+
+`REFUSE_REASONS` has six entries and `applyRefusal` four answers, and none of it was ever
+foreshadowed. The item says a refusal *"arrives after you have committed"*.
+
+## The measurement corrects the framing and keeps the substance
+
+`probes/refuse.mjs`, 8 houses × 300 weeks, 1,600 house-weeks:
+
+| | |
+|---|---|
+| the game has a candidate on | **19.7%** of house-weeks |
+| his chance when it does | p50 **16%** · worst 42.4% |
+| refusals | 41, from 23 men — **8%** of every man the house held |
+| ...that the game had **already named** | **75.6%** |
+| ...out of a clear sky | 24.4%, and **80% of those were grieving by the time they sat** |
+| the refuser was **fit to fight** | **90.2%** |
+| and once he sits, he sits | a **median of 41 weeks** |
+
+A refusal does not arrive after you have committed — `refuseWeek` runs in the weekly sweep and
+`canFight` simply drops him, before you pick anybody. So the item's framing is wrong. Its substance
+is not: the man it takes is one you could have used nine times in ten, the game knew who he was three
+times in four, and it never said a word. The quarter that cannot be foreshadowed are the deaths — the
+grief and the refusal land in the same sweep, and no panel can print that in advance.
+
+## What shipped
+
+- **`refuseOdds`** — the chance, extracted out of `refuseWeek` so the panel and the roll are one
+  function. #150 is the precedent: the gambit panel quoted one number while `runGambit` rolled
+  another, on 990 of 6,448 rows, and it was the worse number every time.
+- **`refuseRisk(d)`** — the man the game would take this week, his chance and his reason, and `null`
+  whenever no refusal can happen at all (mid-event, at Rome, house over). It cries wolf on a calm
+  house exactly never, because `refuseCandidate` names nobody there.
+- **A `sitting` mark in `ROW_MARKS`** — which is v3.128.0's table, so the warning lands under his name
+  in the fight chooser, which is where the item asked for it, at no structural cost.
+- **`SittingSoon`** on his overview.
+
+## Two placements that were wrong, and the second one is the interesting one
+
+The page warning first went into `SECT.regard` — "What he makes of you" — which is exactly where the
+number behind it lives. That sect is a **fold**. It rendered as `WHAT HE MAKES OF YOU · hates you · ⌄`
+with the warning shut inside, and **a warning behind a fold is not a warning**. It sits on his
+overview now, the view every man opens on.
+
+And the check caught a pronoun fault the model-level test could not have: *"Gannicus is the man
+closest to putting **her** hands down"*. `the man closest to` is a noun, and no `he`/`his` substitution
+reaches it — the same fault #196 shipped with *"a man in his position"*. Reworded to carry no gendered
+noun at all, which is the only fix a pronoun helper cannot undo.
+
+## Three instrument faults in the probe, and the third is an old friend
+
+- **An unscoped `const odds =` regex** matched `docLesson`'s and printed the **doctore's lesson odds**
+  as the refusal gate.
+- **The probe reimplemented the gate** and disagreed with the game — men at regard 64 sat down while
+  the copy scored them zero. #150's rule is one formula, not two, and it binds instruments as hard as
+  panels. It asks `refuseCandidate` now and knows nothing itself.
+- **A set built from a filtered population, compared against an unfiltered one.** `sitting0` was the
+  *active* men; the scan was all of `d.gladiators`. A man who sits down and then dies keeps
+  `g.refusing` on his record and leaves `activeG`, so he was counted as a **new** refusal every week
+  for the rest of the run: **272 refusals out of 23 men**, with a median regard of 99 because most of
+  the rows were the same few corpses. The true figure is **41**. This is `scene.mjs`'s denominator
+  fault from v3.127.0 in another probe, and it is the second time this exact shape has cost a session.
+
+## `open.mjs` is byte-identical to v3.132.0
+
+The odds extraction is behaviour-neutral and everything else is display.
+
+`bulk`: App 5,779 → **5,780** of 5,786, SECT unchanged at 1,464. No allowance raised.
+
 ### v3.132.0 — #200: the crowd was a number and never a demand
 
 `VENUES` carries a flat `crowd` per venue — pit −22 up to imperial +20 — and that was the only
@@ -15345,7 +15414,7 @@ and souring acclaim if flouted. *Reuses `offer`, `crowd`, `acclaimWeek`.* **To c
 the existing crowd modifiers already vary enough per card that an appetite would be a second dial
 saying the same thing.
 
-### #201 — defiance ambushes you.
+### #201 — CLOSED in v3.133.0, with its framing corrected. Defiance ambushes you.
 `REFUSE_REASONS` has five entries and `applyRefusal` three answers, but a refusal arrives after you
 have committed. Make it a standing, readable risk on the arena panel before you send him. This is the
 audit's most repeated move: a number the game holds and never says. *Reuses `REFUSE_REASONS`,
@@ -16222,4 +16291,4 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.132.0 — some cards arrive wanting something, and now that is worth something*
+*Last updated: v3.133.0 — the man about to put his hands down is named before you pick anybody*

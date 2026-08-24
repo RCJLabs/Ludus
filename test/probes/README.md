@@ -71,6 +71,7 @@ Run them straight:
     node test/probes/warm.mjs   8 360 SEED   # #198; whether two houses can ever become friendly, and who decides
     node test/probes/style.mjs  8 300 SEED   # #199; what a plan is worth, per plan, against the men a house meets
     node test/probes/appetite.mjs 8 300 SEED # #200; what the crowd already answers, and what it ignores
+    node test/probes/refuse.mjs 8 300 SEED   # #201; who sits down, and whether the game could have said so
 
 ## HOW MANY HOUSES A FIGURE NEEDS — read this before quoting one
 
@@ -721,6 +722,19 @@ crowd does answer the shape of a bout. The finding that made the feature worth b
 **a death moves the ending crowd by −0.8 across 280 deaths** — the engine does not price the one thing
 an arena crowd is supposed to want. It also prints the base rate of every candidate appetite, which is
 what the payouts were set from. Requires the rope's `boutLog`, added for this.
+
+**`refuse.mjs`** — who puts his hands down, and whether it could have been foreseen. It corrected #201's
+framing: a refusal is a weekly event raised BEFORE you pick anybody, not an ambush after you commit.
+What holds is everything else — the game names a candidate on **19.7%** of house-weeks, **75.6%** of
+refusals come from a man it had already named, the refuser is **fit to fight 90.2%** of the time, and a
+man who sits sits a **median of 41 weeks**. The quarter that cannot be foreseen are deaths: the grief
+and the refusal land in the same sweep.
+Three faults worth remembering, all found in this one probe: an unscoped `const odds =` matched
+`docLesson`'s and printed the DOCTORE's odds as the refusal gate; reimplementing the gate instead of
+calling `refuseCandidate` disagreed with the game outright (#150 binds instruments too); and a set
+built from ACTIVE men compared against all of `d.gladiators` counted every dead refuser again every
+week — **272 refusals out of 23 men** against a true 41. That last is `scene.mjs`'s denominator fault
+in a new probe.
 
 **`scroll.mjs`** — where the vertical pixels go, per place, as the page ARRIVES versus with every fold
 thrown open. The second is what `reach` necessarily measures and it is 40% taller than the first.
