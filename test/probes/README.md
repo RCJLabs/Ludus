@@ -70,6 +70,7 @@ Run them straight:
     node test/probes/square.mjs 8 300 SEED   # #197; four policies for the doctore's one seat, and what a second buys
     node test/probes/warm.mjs   8 360 SEED   # #198; whether two houses can ever become friendly, and who decides
     node test/probes/style.mjs  8 300 SEED   # #199; what a plan is worth, per plan, against the men a house meets
+    node test/probes/appetite.mjs 8 300 SEED # #200; what the crowd already answers, and what it ignores
 
 ## HOW MANY HOUSES A FIGURE NEEDS — read this before quoting one
 
@@ -712,6 +713,14 @@ opponents carry a tell at all. It also found **`TELLS.cold` firing 0 times** —
 every generated opponent because `form` is written on rival HOUSES only — which is #206.
 One trap it documents: `seamOf` gives a shapeless man a habit off a name hash with `dev: 0`, and
 `dev >= 0` satisfies every `high` tell, so an all-stats-equal fixture *always* reads as quick.
+
+**`appetite.mjs`** — what the crowd already responds to, off 1,224 real bouts. It answered #200's own
+"check first" in both directions: the venue constant explains only **37.8%** of where a bout's crowd
+ends up, so the venue is not already the dial; and a long bout ends **+13.0** above a short one, so the
+crowd does answer the shape of a bout. The finding that made the feature worth building is the third:
+**a death moves the ending crowd by −0.8 across 280 deaths** — the engine does not price the one thing
+an arena crowd is supposed to want. It also prints the base rate of every candidate appetite, which is
+what the payouts were set from. Requires the rope's `boutLog`, added for this.
 
 **`scroll.mjs`** — where the vertical pixels go, per place, as the page ARRIVES versus with every fold
 thrown open. The second is what `reach` necessarily measures and it is 40% taller than the first.
