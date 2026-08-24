@@ -4461,6 +4461,82 @@ wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
 
+### v3.132.0 — #200: the crowd was a number and never a demand
+
+`VENUES` carries a flat `crowd` per venue — pit −22 up to imperial +20 — and that was the only
+per-card crowd input in the game: a constant chosen off tier and festival, which nothing can meet or
+flout. The item asked first whether that constant already varies enough that an appetite would be a
+second dial saying the same thing.
+
+## Both halves of the clause pass, and the third line is the reason to build it
+
+`probes/appetite.mjs`, over **1,224 bouts** a reference house actually fought:
+
+| | |
+|---|---|
+| the venue constant explains | **37.8%** of where a bout's crowd ends up — so it is not the dial |
+| a long bout ends | **+13.0** crowd above a short one — the crowd does answer the shape of a bout |
+| **a death moves it** | **−0.8** |
+
+Over **280 deaths**, the crowd does not care that a man died. The one thing an arena crowd is
+supposed to want is the one thing the engine never priced.
+
+## Priced off the base rates
+
+Under a player not trying to meet anything: `quick` 16.2% (and those bouts end on 60.3 crowd against
+74.2 — it costs you the room), `blood` 22.9%, `long` 29.6% (already worth +13), `mercy` 68.1%. So
+`quick` pays most and `mercy` least, and `mercy` stings most when flouted. The **flouting penalty is
+arithmetic, not feel**: an untrying player meets a mood `met` of the time, so the penalty leaving him
+level is `up × met/(1−met)`, and each is set at about 1.4× that.
+
+## The number that looked like evidence and was not
+
+The first cut moved `open.mjs` from 54 of 60 and 209 men to 52 and 186, and it was tempting to read
+that as the penalty biting. **It is not.** Four arms:
+
+| | standing / men |
+|---|---|
+| `APP_SHARE = 0` — no card has a mood | **54 of 60 · 209** — byte-identical to v3.131.0 |
+| the round numbers | 52 of 60 · 186 |
+| the priced numbers | 52 of 60 · 185 |
+| **every penalty set to ZERO, pure gift** | **52 of 60 · 183** |
+
+Pure upside lands in the same place as the penalised arm. What moves the signature is that any state
+change reshuffles which men live and die. The byte-identical control proves the mood costs no draw;
+the zero-penalty arm proves the movement is **divergence, not harm**. Neither is evidence about
+balance, and I had started re-tuning against the 52/186 before running the fourth arm. The numbers
+are set by the arithmetic instead, and this is written down because fitting a constant to a
+trajectory reading is #127's mistake wearing new clothes.
+
+## What shipped
+
+`APPETITES` — four moods, on 28.4% of single cards, **derived from a hash of what the card already
+is** rather than drawn. A roll in `makeGames` would re-phase every seeded house; this hashes `id`,
+venue, tier, festival and `purse`, and the purse is where the entropy comes from because it was
+already randomised when the card was built.
+
+Each is **printed on the offer** with what it pays and what flouting costs, because a demand you
+cannot see before you fight is not a demand. Settled in `doFight` on fields the result already
+carries. Met pays a share of the purse and warms the town; flouted takes no coin — the bonus is
+simply not paid — and sours acclaim.
+
+## The check
+
+`appetite` is the 103rd. Its central assertion is that **three thousand `appetiteOf` calls do not move
+the seed** — one `R()` in there and every seeded house in the project re-phases. It also proves the
+mood is a property of the card (same card twice, same mood), that all four are reachable, that the
+share matches `APP_SHARE`, that melee/pair/hunt/imperial cards never carry one, that each of the four
+is met by a result built to satisfy it and flouted by one built not to, that flouting takes no coin,
+that a card with no mood settles to nothing — and it walks all three wizard steps to read the mood off
+the real offer panel.
+
+Three instrument faults, all mine: `genOpponent` inside the seed test moved the seed by three thousand
+opponents and the check accused a pure hash of drawing; the offer panel is three doors in and the
+first row of every bill is the pits; and `.tag` is `text-transform: uppercase`, which `innerText`
+reflects, so the mood's name came back shouted and compared false while it was on the screen.
+
+`bulk`: App 5,776 → **5,779** of 5,786, SECT unchanged at 1,464. No allowance raised.
+
 ### v3.131.0 — #199: a man's style was re-specified every single bout
 
 `plan` was reset to `"none"` by both `spendOrders` and `goPick`, so it was chosen from scratch every
@@ -15244,7 +15320,7 @@ between them. Let the man carry his own default — how he fights when you do no
 the arena panel and overridden when it matters. *Reuses `PLANS`, `TACTIC`, and `g.focus`'s precedent.*
 The only one of the ten that REMOVES interface rather than adding it.
 
-### #200 — the crowd is a number and never a demand.
+### #200 — CLOSED in v3.132.0. The crowd is a number and never a demand.
 Venues carry crowd, missio and fame modifiers; the crowd never asks for anything in particular. Some
 cards could arrive with an appetite — a long one, a quick end — printed on the offer, paying if met
 and souring acclaim if flouted. *Reuses `offer`, `crowd`, `acclaimWeek`.* **To check first**: whether
@@ -16128,4 +16204,4 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.131.0 — the man carries his own style; the plan stays a bet you have to earn*
+*Last updated: v3.132.0 — some cards arrive wanting something, and now that is worth something*

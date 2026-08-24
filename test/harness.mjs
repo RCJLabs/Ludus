@@ -1018,6 +1018,21 @@ export async function installRope(p){
           if(t.offer && t.offer.primus) bump("primusBout");
           if(t.offer && t.offer.imperial) bump("imperialBout");
           if(t.res && t.res.win) bump("won");
+          /* ---- #200: WHAT THE BOUT ACTUALLY WAS, not just that there was one ----
+             `lanista` read `t.res.win` and threw the rest away, so any question about the SHAPE of
+             the bouts a house fights — how long, how loud, who died — had no answer short of a
+             probe writing its own player. The row is compact and capped; nothing else reads it. */
+          if(t.res && (R.boutLog = R.boutLog || []).length < 20000){
+            const r = t.res;
+            R.boutLog.push({ venue:r.venue || (t.offer && t.offer.venue) || null,
+              sky:(t.offer && t.offer.sky) || null, tier:r.tier != null ? r.tier : (t.offer||{}).tier,
+              stakes:r.stakes || (t.offer||{}).stakes || null,
+              crowd:r.crowd != null ? Math.round(r.crowd) : null,
+              beats:(r.beats||[]).length, rounds:t.rounds || 0,
+              win:!!r.win, mine:!!r.dead, kind: r.pair ? "pair" : r.melee ? "melee" : r.venatio ? "hunt" : "single",
+              killed:(r.beats||[]).some(b=>b && b.kind === "death"),
+              spared:(r.beats||[]).some(b=>b && b.kind === "spared") });
+          }
         } else bump("noBout");
       }
 

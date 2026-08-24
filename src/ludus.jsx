@@ -5123,6 +5123,129 @@ const VENUES = {
     say:"You have read about this floor your whole life. It is smaller than you expected and it is not smaller at all." },
 };
 const CITY_VENUE = { pompeii:"bowl", neapolis:"greek", puteoli:"harbour" };
+
+/* ---- #200: THE CROWD WAS A NUMBER AND NEVER A DEMAND ----
+   `VENUES` carries a flat `crowd` per venue — pit -22 up to imperial +20 — and that was the only
+   per-card crowd input in the game. It is a constant chosen off tier and festival: not a demand,
+   and nothing about it can be met or flouted. The item's own clause asked whether that constant
+   already varies enough per card that an appetite would be a second dial saying the same thing.
+
+   MEASURED over 1,224 bouts a reference house actually fought (probes/appetite.mjs):
+
+     the venue constant explains 37.8% of where a bout's crowd ends up — so it is NOT the dial
+     a long bout ends +13.0 crowd above a short one — so the crowd DOES answer the shape of a bout
+     a death moves it -0.8 — over 280 deaths, THE CROWD DOES NOT CARE THAT A MAN DIED
+
+   Both halves of the clause pass, and the third line is the reason this is worth building: the one
+   thing an arena crowd is supposed to want is the one thing the engine does not price at all.
+
+   PRICED OFF THE BASE RATES, over the same bouts, under a player not trying to meet anything:
+
+     quick  16.2%   and those bouts end on 60.3 crowd against 74.2 — it costs you the room
+     blood  22.9%   and worth -0.8 to the crowd today, so the appetite is what gives it meaning
+     long   29.6%   and worth +13.0 already, so it pays least
+     mercy  68.1%   nearly free to meet, so it pays least of all and stings most when flouted
+
+   AND THE FLOUTING PENALTY IS SET FROM THOSE RATES, by arithmetic. An untrying player meets a mood
+   `met` of the time, so the penalty that leaves him exactly level is `up * met/(1-met)`; each is
+   set at about 1.4x that, which makes ignoring the crowd a small standing loss and meeting it
+   deliberately the whole of the upside. At the round numbers the first cut used, the same
+   arithmetic came to about -0.7 acclaim per appetite for a player who simply does not look, which
+   is a tax on not knowing rather than an opportunity for knowing.
+
+   A NOTE ON WHAT DID **NOT** JUSTIFY THIS. The first cut moved `open.mjs` from 54 of 60 and 209 men
+   to 52 and 186, and it was tempting to read that as the penalty biting. It is not. Three arms:
+
+     APP_SHARE = 0 (no card has a mood)     54 of 60 · 209 men   — BYTE-IDENTICAL to v3.131.0
+     the round numbers                      52 of 60 · 186 men
+     the priced numbers                     52 of 60 · 185 men
+     every penalty set to ZERO, pure gift   52 of 60 · 183 men
+
+   The penalty is worth nothing in that comparison — pure upside lands in the same place. What moves
+   the signature is that ANY state change reshuffles which men live and die. So the byte-identical
+   control proves the mood costs no draw, and the zero-penalty arm proves the movement is divergence
+   rather than harm; neither of them is evidence about the balance, and the numbers above are set by
+   the arithmetic instead.
+
+   IT IS DERIVED, NOT DRAWN. A roll in `makeGames` would re-phase every seeded house in the
+   project; this hashes fields the offer already carries — including `purse`, which is where the
+   entropy comes from, since it was randomised when the card was built. So a card's mood is a
+   property of the occasion rather than a second die. That is what makes the APP_SHARE=0 control
+   byte-identical, and it is the only reason the three arms above can be compared at all: the
+   difference between them is the feature, with no phase drift underneath it. */
+const APPETITES = {
+  quick: { name:"They want it over", w:3, bonus:0.35, up:2.5, down:0.7,
+    say:"The tiers have sat through three of these already and they are not in the mood for a long one.",
+    met:r=>(r.beats||[]).length <= 14,
+    kept:"They got what they came for, and quickly. The noise as he walks off is not for the fighting.",
+    lost:"It went long, and they had said what they wanted. The applause at the end is the polite kind." },
+  blood: { name:"They want blood", w:3, bonus:0.28, up:2.0, down:0.85,
+    say:"Somebody in the front rows has been saying all afternoon that nobody has died yet, and the rows behind have taken it up.",
+    met:r=>!!r.bDies,
+    kept:"They wanted a death and they were given one. It is not a nice sound and it is a loud one.",
+    lost:"Both men walked off, and the tiers had made it plain they wanted otherwise." },
+  long:  { name:"They want a long one", w:4, bonus:0.16, up:1.5, down:0.9,
+    say:"It is a feast day, the tiers are full, and nobody has anywhere to be.",
+    met:r=>(r.beats||[]).length >= 24,
+    kept:"They were given an afternoon rather than a result, which is what they had asked for.",
+    lost:"It was over before they had settled, and they let the editor know it." },
+  mercy: { name:"They have taken to him", w:4, bonus:0.12, up:1.0, down:2.8,
+    say:"The crowd has decided it likes the other man, which is nothing to do with you and will be your problem.",
+    met:r=>!(r.bDies),
+    kept:"He was let up, which is what they had wanted, and the house is remembered kindly for it.",
+    lost:"They had asked for him to be spared. He was not. That is the sort of thing a town keeps." },
+};
+const APP_KEYS = Object.keys(APPETITES);
+function AppetiteLine({ offer }){
+  const k = appetiteOf(offer);
+  if(!k) return null;
+  const A = APPETITES[k];
+  return (
+    <div className="panel" style={{padding:8,marginTop:6,background:"var(--panel)",borderColor:"var(--gold-edge)"}}>
+      <div className="flex items-center justify-between" style={{marginBottom:2}}>
+        <span className="tag tag-gold">{A.name}</span>
+        <span className="rowval gold" style={{fontSize:"var(--fs-sm)"}}>+{Math.round(A.bonus*100)}% of the purse</span>
+      </div>
+      <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",lineHeight:1.35}}>{A.say}</div>
+      <div style={{fontSize:"var(--fs-sm)",marginTop:3,color:"var(--blood)"}}>Give them otherwise and the town cools on the house.</div>
+    </div>
+  );
+}
+/* a stable hash of what the card already is — no draw, so no re-phasing */
+function appHash(offer){
+  const s = `${offer.id}|${offer.venue||""}|${offer.tier||0}|${offer.festival||""}|${offer.purse||0}`;
+  let h = 2166136261;
+  for(let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return (h >>> 0);
+}
+const APP_SHARE = 0.30;         /* not every card has a mood, or a mood stops being one */
+function appetiteOf(offer){
+  if(!offer || offer.melee || offer.venatio || offer.pair || offer.imperial) return null;
+  if(!offer.opp) return null;
+  const h = appHash(offer);
+  if((h % 1000) / 1000 >= APP_SHARE) return null;
+  const bag = [];
+  for(const k of APP_KEYS) for(let i=0;i<APPETITES[k].w;i++) bag.push(k);
+  return bag[(h >>> 10) % bag.length] || null;
+}
+/* judged where the bout resolves, on the fields the result already carries */
+function appetiteAfter(d, g, offer, res, purse){
+  const k = appetiteOf(offer);
+  if(!k) return null;
+  const A = APPETITES[k];
+  let met = false;
+  try { met = !!A.met(res); } catch(e){ return null; }
+  if(met){
+    const paid = rnd(Math.max(12, (purse||0) * A.bonus));
+    d.gold += paid;
+    d.acclaim = clamp((d.acclaim||0) + A.up, 0, 100);
+    chron(d, `${A.kept} (+${paid}d)`, "good");
+    return { k, met:true, paid };
+  }
+  d.acclaim = clamp((d.acclaim||0) - A.down, 0, 100);
+  chron(d, A.lost, "bad");
+  return { k, met:false, paid:0 };
+}
 function venueFor(d, offer){
   if(offer.imperial) return "imperial";
   if(offer.city) return CITY_VENUE[offer.city] || "forum";
@@ -16204,6 +16327,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   /* the reading used to be worked out two hundred lines below this, shown once on the
      result panel and dropped on the floor with the rest of the fight object. It is
      worked out here now so it can go into his book with everything else. */
+  appetiteAfter(d, g, offer, res, win ? purse : 0);   /* #200 — the mood the card came with, settled */
   const why = readBout(d, wasG, offer, { win, crowd:res.crowd },
     { plan:{ right:PE.right, label: PLANS[planKey] && PLANS[planKey].name } });
   boutAccount(d, g, offer, res, { win, died:!!res.aDies, killed:!!res.bDies, purse: win ? purse + t.app : t.app, why });
@@ -27541,6 +27665,9 @@ export default function App(){
                 ); })()}
               {o.venue && <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>{VEN(o.venue).say}</div>}
               {o.sky && <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:2,color:"var(--azure)"}}>{SKY(o.sky).say}{shelterOf(o.venue)>0.3?" There is a roof of a kind over most of it.":""}</div>}
+              {/* #200 — a demand you cannot see before you fight is not a demand. Printed on the
+                  offer, with what it is worth and what flouting it costs, because both are real. */}
+              <AppetiteLine offer={o} />
               {me && (()=>{ const w=metWord(liveFoe(S,o),me); return w?<div style={{fontSize:"var(--fs-md)",marginTop:2,color:"var(--gold)"}}>{w}</div>:null; })()}
               {(()=>{ if(!me) return null;
                 const tr = theirRead(S, me, o);
@@ -28116,7 +28243,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     CIRCUIT_MIX, CIRCUIT_REACH, PIT_DRAW_TOP, PIT_NIGHT,
     /* every action a lanista can take, none of them needing a rendered screen */
     rewardMan, whipMan, sellMan, sellPrice, retireG, grantRudis,
-    setFocusOf, setRegimenOf, setSparOf, setTeachOf, stopTeachOf, setDrillTo, styleOf, styleFrom, styleWord, setStyle, STYLE_KEYS, suggestedPlan, PLAN_READ,   /* #199 — his standing style, and the reading the plan grid pre-fills from */
+    setFocusOf, setRegimenOf, setSparOf, setTeachOf, stopTeachOf, setDrillTo, APPETITES, APP_KEYS, appetiteOf, appetiteAfter, appHash, APP_SHARE, VENUES, VEN, styleOf, styleFrom, styleWord, setStyle, STYLE_KEYS, suggestedPlan, PLAN_READ,   /* #199 — his standing style, and the reading the plan grid pre-fills from */
     boardMen, restWornMen, allToPalus, pairTheYard,
     scoutBlockMan, buyLot, sellTheHouse,
     /* ---- AND WHETHER A MAN IS STILL ON THE BOOKS, added in v2.92.0 ----
