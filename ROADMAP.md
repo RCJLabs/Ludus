@@ -4530,6 +4530,36 @@ panel off the arena page with both halves on it.
 
 `bulk`: App 5,783 → **5,779** of 5,786, SECT unchanged at 1,464. No allowance raised.
 
+## `survive` went red, and it was the draw
+
+The first full run came back **100 of 101**. `survive` tripped its conjunction bar twice — (1,1) then
+(1,2) — and it is built to say so loudly: *"TWO independent draws of 5 fresh houses BOTH tripped a bar.
+At the tally's rate that is about a 1.3% coincidence, so this is the build and not the draw. Confirm
+with `node test/probes/open.mjs` against the last build."*
+
+Taken at its word, and then checked four ways rather than argued with:
+
+| | standing / men |
+|---|---|
+| this build, draw 1 | 1 / 1 — tripped |
+| this build, draw 2 | 1 / 2 — tripped |
+| **the pre-change build, same policy** | **2 / 2 — and three of its five houses ended in ruin** |
+| this build, third draw | 2 / 3 |
+
+And the instrument the check itself names: **`open.mjs` is byte-identical**, all sixty houses, so the
+model's opening did not move by a single draw. The new panel is pure rendering — `rnd` is
+`Math.round`, and `overtureWhy`, `overtureOdds` and every `cost` are reads — so there is no path by
+which it could have.
+
+**Worth recording about the instrument, not as an excuse:** the 1.3% is computed against the pooled
+per-house standing rate of **53%** over 186 runs and 121 builds. The control run and the third draw
+both scored 2 of 5, which puts this build family's opening nearer **40%** — and at 40% the chance of
+two draws each landing at or under one standing house is about **11%**, not 1.3%. The second-draw
+mechanism is right; the arithmetic behind its verdict is anchored to a pooled rate that no longer
+describes the family being tested. That is a note for whoever next sees this bar trip.
+
+The red is in the tally where it belongs. The confirming run came back **101/101 green** in 14.4 min.
+
 ### v3.129.0 — #197: the training square held one man, and four in five stood and watching
 
 `doc.pupil` was a single id. `doctoreWeek` returned on its second line unless it was set, and
