@@ -27717,7 +27717,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     acclaimOf, acclaimTarget, acclaimWeek, acclaimWord, streetVoice, merchWeekly, acclaimTerms, merchLive, masterOpen, MASTER_ACCLAIM, acclaimTier, ACCLAIM_TIERS, acclaimCrowd, ACCLAIM_MISSIO, isFavourite, fanPurse, tourneyReady, merchGate, streetGate,
     missioScore, missioOdds, missioAccount, ACCLAIM_TIERS, ACCLAIM_MISSIO, MISSIO_CAP, MISSIO_MID,
     /* where a mark sits on a body, and the seller's undisclosed one */
-    addScar, scarMark, TARGETS, FLAWS, injuryFor, INJ_BY_TARGET, INJURIES,   /* #191 — every wound comes through injuryFor */
+    addScar, scarMark, TARGETS, FLAWS, injuryFor, INJ_BY_TARGET, INJURIES, HURT_BAR,   /* #191 — every wound comes through injuryFor */
     /* helpers */
     activeG, defaultKit, kitMods, statCap, fullName, yearOf, YEAR_WEEKS, rudisEligible,
     /* the price of freedom, and whether the house can meet it — see the note over grantRudis */
