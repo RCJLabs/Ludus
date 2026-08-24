@@ -14751,6 +14751,117 @@ const TACTIC = {
   defensive:  { pow:0.952, deal:0.52, take:0.58, wind:5   },
   showboat:   { pow:0.965, deal:0.94, take:1.10, wind:7   },
 };
+/* ---- #199: A MAN'S STYLE WAS RE-SPECIFIED EVERY SINGLE BOUT ----
+   `plan` was reset to "none" by both `spendOrders` and `goPick`, so it was chosen from scratch every
+   time; `tactic` was one house-wide `useState` that survived between bouts but was never saved, so
+   it silently reverted to "measured" on every reload. Neither belonged to the man.
+
+   THE TWO CHOICES ARE NOT THE SAME KIND OF CHOICE, and measuring that is what decided this release.
+   `TACTIC` is four fixed trades with no right answer — aggressive deals 1.46x and takes 1.55x — so a
+   standing setting for it can only ever be a preference. `PLANS` is a BET: `planEffect` returns
+   `PLAN_READ.right` (pow 1.027) when one of the opponent's tells names that plan and
+   `PLAN_READ.wrong` (pow 0.970) otherwise, and `none` alone is neutral.
+
+   MEASURED over 1,347 named opponents a played house actually met (probes/style.mjs):
+
+       plan       right         standing it every bout, against `none`'s 0
+       press      22.7%         -1.71% power
+       crowd      17.7%         -1.99%
+       wait       16.3%         -2.07%
+       outlast     8.0%         -2.54%
+       reach       4.4%         -2.75%
+
+   **Every fixed plan is a standing loss.** So the item's own proposal — let the man carry his own
+   default — is right for the tactic and would quietly cost the player power on four bouts in five
+   if it were applied to the plan. The plan keeps no default. What it gets instead is the pre-fill
+   that is not a bet at all: when the man has actually been watched or drilled against this
+   opponent, the plan the reading names is already selected.
+
+   `g.style` IS DERIVED, NOT DRAWN. A random pick in `genGladiator` would re-phase every seeded
+   house in the project; this reads six stats he already has, so `open.mjs` stays byte-identical. */
+const STYLE_KEYS = ["aggressive","measured","defensive","showboat"];
+const styleFrom = g => {
+  if(!g) return "measured";
+  const k = bestStatKey(g);
+  if(k === "sho") return "showboat";
+  if(k === "dis") return "defensive";
+  if(k === "str" || k === "agi") return "aggressive";
+  return "measured";                                   /* end and tec are the patient ones */
+};
+const styleOf = g => (g && g.style && TACTIC[g.style]) ? g.style : styleFrom(g);
+const styleWord = g => ({ aggressive:"goes at them", measured:"fights it straight",
+  defensive:"covers up", showboat:"plays to the tiers" })[styleOf(g)] || "fights it straight";
+function setStyle(d, gid, k){
+  if(!TACTIC[k]) return false;
+  const g = d.gladiators.find(x=>x.id===gid && x.status==="active");
+  if(!g) return false;
+  g.style = k; return true;
+}
+/* the plan the reading already names — and NOTHING when there is no reading, because the numbers
+   above say an unbacked plan is worse than no plan at all */
+function suggestedPlan(d, g, offer){
+  if(!d || !offer || !offer.opp) return "none";
+  const seen = offer.watched || (g && prepFor(d, g, offer) > 0);
+  if(!seen) return "none";
+  const live = TELL_KEYS.filter(k=>{ try { return TELLS[k].when(offer.opp); } catch(e){ return false; } });
+  if(!live.length) return "none";
+  /* the rarest tell that fires is the most informative one — `green` is on 22.7% of the bill and
+     `reach` on 4.4%, and a panel that always pre-picks the common one is not reading anybody */
+  const rank = { reach:0, showman:1, open:2, tires:3, strong:4, quick:5, veteran:6, cold:7, green:8 };
+  live.sort((a,b)=>(rank[a]==null?9:rank[a]) - (rank[b]==null?9:rank[b]));
+  return TELLS[live[0]].plan || "none";
+}
+/* ---- #199: WHAT HE IS ACTUALLY DOING OUT THERE ----
+   `tactic` and `plan` in App are OVERRIDES for this bout and both start null. The chips read his own
+   standing style — not the house-wide sticky that reverted to "measured" on every reload — and the
+   row says whose habit it is, so an override is visibly an override and not a new default. The plan
+   grid resolves the same way through `suggestedPlan`, which returns nothing unless the man has been
+   watched or drilled: every fixed plan measured as a standing LOSS against `none`.
+   It lives out here because App had seven lines of allowance and this release is the one that is
+   supposed to REMOVE interface. */
+/* the standing choice, on his own page beside his focus — which is the precedent this reuses:
+   a thing about the man, stored on the man, and read wherever it is needed rather than asked for
+   again. Four chips, and a line saying what it means when nobody says otherwise. */
+function StandingStyle({ g, onPick }){
+  if(!g) return null;
+  const now = styleOf(g);
+  return (
+    <div style={{marginTop:12}}>
+      <div className="flex items-center justify-between" style={{marginBottom:5}}>
+        <span className="tag">How he fights when you do not say</span>
+        <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{g.style ? "you set this" : "his own temper"}</span>
+      </div>
+      <div className="flex gap-2" style={{flexWrap:"wrap"}}>
+        {STYLE_KEYS.map(k=>(
+          <button key={k} className={`chip ${now===k?"on":""}`} onClick={()=>onPick(k)}
+            style={now===k?{borderColor:"var(--gold-line)",color:"var(--gold-hi)",background:"var(--raise)"}:undefined}>
+            {k[0].toUpperCase()+k.slice(1)}</button>
+        ))}
+      </div>
+      <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:5,lineHeight:1.35}}>
+        He {styleWord(g)}. The arena starts here every time, and anything you change there is for that afternoon only.
+      </div>
+    </div>
+  );
+}
+function StyleRow({ man, now, over, kind, onPick }){
+  const say = (kind==="hunt" ? HUNT_SAY : kind==="pair" ? PAIR_SAY : kind==="melee" ? MELEE_SAY : TACTIC_SAY)[now];
+  return (
+    <div style={{marginTop:11}}>
+      <div className="flex items-center justify-between" style={{marginBottom:6}}>
+        <span className="tag">How he fights</span>
+        {man && <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>
+          {over && over !== styleOf(man) ? `just this afternoon — he usually ${styleWord(man)}` : `his own way: he ${styleWord(man)}`}</span>}
+      </div>
+      <div className="flex gap-2" style={{flexWrap:"wrap"}}>
+        {[["aggressive","Aggressive"],["measured","Measured"],["defensive","Defensive"],["showboat","Showboat"]].map(([k,l])=>(
+          <button key={k} className={`chip ${now===k?"on":""}`} onClick={()=>onPick(k)}>{l}</button>
+        ))}
+      </div>
+      <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:5,lineHeight:1.35}}>{say}</div>
+    </div>
+  );
+}
 const TAC_DEAL = t => (TACTIC[t] || TACTIC.measured).deal;
 const TAC_TAKE = t => (TACTIC[t] || TACTIC.measured).take;
 const TAC_WIND = t => (TACTIC[t] || TACTIC.measured).wind;
@@ -22108,7 +22219,7 @@ export default function App(){
   const [nameIn,setNameIn] = useState("House of Aurelius");
   const [bonus,setBonus] = useState("clean");
   const [fGid,setFGid] = useState(null);
-  const [tactic,setTactic] = useState("measured");
+  const [tactic,setTactic] = useState(null);   /* #199 — an override for THIS bout; null means his own standing style */
   const [pitStakes,setPitStakes] = useState("standard");
   const [pitPick,setPitPick] = useState(null);      /* which of tonight's men you are taking */
   const [gearPick,setGearPick] = useState(null);
@@ -22237,7 +22348,7 @@ export default function App(){
       window.removeEventListener("orientationchange", set);
     };
   }, [screen, tab]);   /* the nav appears and vanishes with the tab since v3.92.0 — re-measure on every move */
-  const [plan,setPlan] = useState("none");
+  const [plan,setPlan] = useState(null);       /* #199 — null means "whatever the reading says", which is usually nothing */
   const [entrance,setEntrance] = useState("none");
   const [held,setHeld] = useState(null);
   const [retrainFor,setRetrainFor] = useState(null);
@@ -22402,10 +22513,13 @@ export default function App(){
     setS(d); setEvResult(msg);
   };
 
+  const styleNow = g => tactic || styleOf(g);        /* #199 — the note is above StyleRow */
+  const planNow = (g, o) => plan != null ? plan : suggestedPlan(S, g, o);
+  const manOf = id => (S.gladiators||[]).find(x=>x.id===id) || null;
   /* the bookmaker prices what you actually told him to do, not a neutral bout */
   const makeBet = (g, opp)=> stake>0 && S.gold>=stake
-    ? { amount:stake, against, chance:betChance(g, opp, tactic) } : null;
-  const spendOrders = () => { setPitPick(null); setPlan("none"); setMplan("none");
+    ? { amount:stake, against, chance:betChance(g, opp, styleNow(g)) } : null;
+  const spendOrders = () => { setPitPick(null); setPlan(null); setMplan("none"); setTactic(null);
     setEntrance("none"); setStake(0); setAgainst(false); };
   const fightOffer = (offer)=>{
     if(!fGid) return;
@@ -22415,7 +22529,7 @@ export default function App(){
     const bet = makeBet(g, offer.opp);
     if(bet){ d.gold -= bet.amount; d.flags.lastBet = d.week; }
     offer.entrance = entrance;
-    const res = doFight(d, fGid, offer, tactic, bet, null, null, offer.watched ? plan : "none");
+    const res = doFight(d, fGid, offer, styleNow(g), bet, null, null, offer.watched ? planNow(g, offer) : "none");
     spendOrders();
     if(res.crux){ setHeld({ base:d, res }); setFight(res); setFGid(null); return; }
     setS(d); setFight(res); setFGid(null);
@@ -22467,7 +22581,7 @@ export default function App(){
     const d = clone(S);
     const live = (d.games&&d.games.offers||[]).find(x=>x.id===offer.id) || offer;
     live.mplan = mplan;
-    const res = doMelee(d, pairSel, live, null, null, tactic);
+    const res = doMelee(d, pairSel, live, null, null, styleNow(manOf(pairSel[0])));
     if(!res) return;
     spendOrders();
     if(res.crux){ setHeld({ base:d, res }); setFight(res); setPairSel([]); setFGid(null); return; }
@@ -22476,7 +22590,7 @@ export default function App(){
   const huntOffer = (offer)=>{
     if(!fGid) return;
     const d = clone(S);
-    const res = doVenatio(d, fGid, offer, tactic);
+    const res = doVenatio(d, fGid, offer, styleNow(manOf(fGid)));
     if(!res) return;
     spendOrders();
     if(res.crux){ setHeld({ base:d, res }); setFight(res); setFGid(null); return; }
@@ -22485,7 +22599,7 @@ export default function App(){
   const fightPair = (offer)=>{
     if(pairSel.length!==2) return;
     const d = clone(S);
-    const res = doPairFight(d, pairSel, offer, tactic);
+    const res = doPairFight(d, pairSel, offer, styleNow(manOf(pairSel[0])));
     if(!res) return;
     spendOrders();
     if(res.crux){ setHeld({ base:d, res }); setFight(res); setPairSel([]); setFGid(null); return; }
@@ -22500,7 +22614,7 @@ export default function App(){
     const offer = makePitOffer(d, g, pitStakes, pitPick);
     const bet = makeBet(g, offer.opp);
     if(bet){ d.gold -= bet.amount; d.flags.lastBet = d.week; }
-    const res = doFight(d, fGid, offer, tactic, bet);
+    const res = doFight(d, fGid, offer, styleNow(manOf(fGid)), bet);
     spendOrders();
     if(res.crux){ setHeld({ base:d, res }); setFight(res); setFGid(null); return; }
     setS(d); setFight(res); setFGid(null);
@@ -22529,6 +22643,7 @@ export default function App(){
          null here throws when the player taps a button that is only there to tell him the price */
       run: can ? ()=>{ mut(d=>grantRudis(d,id)); setSelId(null); } : ()=>{} }); };
   const setFocus = (id,f)=> mut(d=>{ setFocusOf(d, id, f); });
+  const setStanding = (id,k)=> mut(d=>{ setStyle(d, id, k); });      /* #199 */
   const setRegimen = (id,r)=> mut(d=>{ setRegimenOf(d, id, r); });
   const setSpar = (id, mateId)=> mut(d=>{ setSparOf(d, id, mateId); });
   const setTeach = (vetId, rookId) => mut(d=>{ setTeachOf(d, vetId, rookId); });
@@ -25149,6 +25264,10 @@ export default function App(){
                 </div>
               </div>
             )}
+            {/* #199 — on his OVERVIEW, not under Training: it is how he fights, not how he trains,
+                and it is the first thing the arena reads about him. The choice moves here from
+                being made again on every single afternoon. */}
+            {gView==="record" && <StandingStyle g={selG} onPick={k=>setStanding(selG.id, k)} />}
             {gView==="record" && (()=>{ const v = formOf(selG); if(Math.abs(v)<7) return null;
               return (
                 <div className="panel" style={{padding:10,marginBottom:9,background:"var(--panel)",borderColor:formColour(v)}}>
@@ -26987,7 +27106,7 @@ export default function App(){
         const me = fGid ? S.gladiators.find(g=>g.id===fGid) : null;
         const chosen = pairSel.map(id=>S.gladiators.find(g=>g.id===id)).filter(Boolean);
         const close = ()=>{ setArenaWiz(false); setArenaStep(0); setArenaPick(null); };
-        const goPick = occ => { setArenaPick(occ); setFGid(null); setPairSel([]); setPlan("none"); setMplan("none"); setArenaStep(1); };
+        const goPick = occ => { setArenaPick(occ); setFGid(null); setPairSel([]); setPlan(null); setMplan("none"); setTactic(null); setArenaStep(1); };   /* #199 — null is "his own", not "none" */
         const startFight = fn => { setArenaWiz(false); fn(); };
         const steps = [["Where",0],["Your man",1],["Ready",2]];
         const header = (
@@ -27169,7 +27288,7 @@ export default function App(){
                     /* and the number has to be a number. A field's average man is priced from
                        averages, and one missing field used to make the whole quote NaN — so the
                        warning stands on its own when there is no figure to put in it. */
-                    const lose = Math.round((1 - winChance(g, foe, prepFor(S,g,o), tactic||"measured")) * 100);
+                    const lose = Math.round((1 - winChance(g, foe, prepFor(S,g,o), styleNow(g))) * 100);
                     const ok = Number.isFinite(lose);
                     return (<div style={{fontSize:"var(--fs-sm)",marginTop:3,color:"var(--blood)"}}>
                       {ok
@@ -27190,19 +27309,8 @@ export default function App(){
           </>);
         } else {
           const backBtn = <button className="btn btn-ghost" style={{fontSize:"var(--fs-sm)",padding:"6px 10px",marginBottom:9}} onClick={()=>setArenaStep(1)}>‹ Back</button>;
-          const tacticRow = (
-            <div style={{marginTop:11}}>
-              <div className="tag" style={{marginBottom:6}}>How he fights</div>
-              <div className="flex gap-2" style={{flexWrap:"wrap"}}>
-                {[["aggressive","Aggressive"],["measured","Measured"],["defensive","Defensive"],["showboat","Showboat"]].map(([k,l])=>(
-                  <button key={k} className={`chip ${tactic===k?"on":""}`} onClick={()=>setTactic(k)}>{l}</button>
-                ))}
-              </div>
-              <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:5,lineHeight:1.35}}>
-                {(pick.kind==="hunt" ? HUNT_SAY : pick.kind==="pair" ? PAIR_SAY
-                  : pick.kind==="melee" ? MELEE_SAY : TACTIC_SAY)[tactic]}</div>
-            </div>
-          );
+          const tacMan = manOf(fGid) || manOf(pairSel[0]);
+          const tacticRow = <StyleRow man={tacMan} now={styleNow(tacMan)} over={tactic} kind={pick.kind} onPick={setTactic} />;
           const entranceRow = (
             <div style={{marginTop:11}}>
               <div className="tag" style={{marginBottom:6}}>The entrance</div>
@@ -27238,7 +27346,7 @@ export default function App(){
                   return pick.kind==="pits"
                     ? <div className="dim" style={{fontSize:"var(--fs-base)",marginBottom:7,fontStyle:"italic"}}>No price until you name the man. They do not take a wager on whoever turns up.</div>
                     : null;
-                const pb = betChance(meB, foe, tactic);
+                const pb = betChance(meB, foe, styleNow(meB));
                 return (
                   <div style={{fontSize:"var(--fs-base)",marginBottom:7}}>
                     <span className="dim">The board: </span>
@@ -27400,7 +27508,7 @@ export default function App(){
             /* his tactic is priced in only once you actually know it — paid for, or
                drilled against. Guessing does not move the bookmakers. */
             const foeTac = (o.watchedTac || (foeSeen(S,o) ? foeTactic(o.opp) : null)) || null;
-            const p = me ? winChance(me, o.opp, prepFor(S,me,o) - ((me.watchedBy && me.watchedBy.known) ? theirRead(S,me,o)*0.86 : 0), tactic, foeTac) : 0.5;
+            const p = me ? winChance(me, o.opp, prepFor(S,me,o) - ((me.watchedBy && me.watchedBy.known) ? theirRead(S,me,o)*0.86 : 0), styleNow(me), foeTac) : 0.5;
             body = (<>
               {backBtn}
               <div className="flex items-center gap-1" style={{flexWrap:"wrap",marginBottom:5}}>
@@ -27483,8 +27591,8 @@ export default function App(){
                     </div>
                     <div className="tag" style={{margin:"2px 0 4px"}}>The plan</div>
                     <div className="grid grid-cols-2 gap-2">
-                      {PLAN_KEYS.map(k=>{ const hints = right.includes(k);
-                        return <button key={k} className={`focusbtn ${plan===k?"on":""}`} onClick={()=>setPlan(k)} style={hints?{borderColor:"var(--gold-line)"}:undefined}>{PLANS[k].name}<span className="sub">{hints?"he has drilled for exactly this":PLANS[k].desc}</span></button>; })}
+                      {(()=>{ const now = planNow(me, o); return PLAN_KEYS.map(k=>{ const hints = right.includes(k);
+                        return <button key={k} className={`focusbtn ${now===k?"on":""}`} onClick={()=>setPlan(k)} style={hints?{borderColor:"var(--gold-line)"}:undefined}>{PLANS[k].name}<span className="sub">{hints?"he has drilled for exactly this":PLANS[k].desc}</span></button>; }); })()}
                     </div>
                   </div>
                 ); })()}
@@ -27521,8 +27629,8 @@ export default function App(){
                     : o.watched.map((k,i)=><div key={i} style={{fontSize:"var(--fs-md)",padding:"3px 0"}}>{her(TELLS[k].say(o.opp), o.opp)}</div>)}
                   <div className="tag" style={{margin:"7px 0 4px"}}>The plan</div>
                   <div className="grid grid-cols-2 gap-2">
-                    {PLAN_KEYS.map(k=>{ const hints=o.watched[0]!=="nothing"&&o.watched.some(t=>TELLS[t].plan===k);
-                      return <button key={k} className={`focusbtn ${plan===k?"on":""}`} onClick={()=>setPlan(k)} style={hints?{borderColor:"var(--gold-line)"}:undefined}>{PLANS[k].name}<span className="sub">{hints?"fits what they saw":PLANS[k].desc}</span></button>; })}
+                    {(()=>{ const now = planNow(me, o); return PLAN_KEYS.map(k=>{ const hints=o.watched[0]!=="nothing"&&o.watched.some(t=>TELLS[t].plan===k);
+                      return <button key={k} className={`focusbtn ${now===k?"on":""}`} onClick={()=>setPlan(k)} style={hints?{borderColor:"var(--gold-line)"}:undefined}>{PLANS[k].name}<span className="sub">{hints?"fits what they saw":PLANS[k].desc}</span></button>; }); })()}
                   </div>
                 </div>
               ) : null}
@@ -27559,7 +27667,7 @@ export default function App(){
                 <div className="tag" style={{marginBottom:6}}>How your men fight</div>
                 <div className="flex gap-2" style={{flexWrap:"wrap"}}>
                   {[["aggressive","Aggressive"],["measured","Measured"],["defensive","Defensive"],["showboat","Showboat"]].map(([k,l])=>(
-                    <button key={k} className={`chip ${tactic===k?"on":""}`} onClick={()=>setTactic(k)}>{l}</button>
+                    <button key={k} className={`chip ${styleNow(manOf(pairSel[0]))===k?"on":""}`} onClick={()=>setTactic(k)}>{l}</button>
                   ))}
                 </div>
               </div>
@@ -28008,7 +28116,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     CIRCUIT_MIX, CIRCUIT_REACH, PIT_DRAW_TOP, PIT_NIGHT,
     /* every action a lanista can take, none of them needing a rendered screen */
     rewardMan, whipMan, sellMan, sellPrice, retireG, grantRudis,
-    setFocusOf, setRegimenOf, setSparOf, setTeachOf, stopTeachOf, setDrillTo,
+    setFocusOf, setRegimenOf, setSparOf, setTeachOf, stopTeachOf, setDrillTo, styleOf, styleFrom, styleWord, setStyle, STYLE_KEYS, suggestedPlan, PLAN_READ,   /* #199 — his standing style, and the reading the plan grid pre-fills from */
     boardMen, restWornMen, allToPalus, pairTheYard,
     scoutBlockMan, buyLot, sellTheHouse,
     /* ---- AND WHETHER A MAN IS STILL ON THE BOOKS, added in v2.92.0 ----

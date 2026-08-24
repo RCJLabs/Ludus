@@ -69,6 +69,7 @@ Run them straight:
     node test/probes/beside.mjs 8 300 SEED   # #202; two arms, and whether a man can ever go out beside a friend
     node test/probes/square.mjs 8 300 SEED   # #197; four policies for the doctore's one seat, and what a second buys
     node test/probes/warm.mjs   8 360 SEED   # #198; whether two houses can ever become friendly, and who decides
+    node test/probes/style.mjs  8 300 SEED   # #199; what a plan is worth, per plan, against the men a house meets
 
 ## HOW MANY HOUSES A FIGURE NEEDS — read this before quoting one
 
@@ -701,6 +702,16 @@ card**, and the bill chooses who you fight — so warmth was entirely the editor
 warm-50 pairs go 11.9% → 33.3% and peak warmth p50 7 → 27. Note the shape of the distribution before
 reading any median: it is bimodal, p50 7 against p90 64, because a relationship runs hot only if the
 bill happened to pair you over and over.
+
+**`style.mjs`** — what a PLAN is actually worth, per plan, against the 1,347 named opponents a played
+house meets. It decided #199 against the item as filed: `planEffect` pays pow 1.027 for a plan a tell
+names and 0.970 for one it does not, and the best fixed plan (`press`) is right **22.7%** of the time
+— **−1.71% power a bout against `none`'s nothing**. Every fixed plan is a standing loss, so a per-man
+DEFAULT plan would cost the player on four bouts in five, and only the tactic got one. 57.2% of
+opponents carry a tell at all. It also found **`TELLS.cold` firing 0 times** — `formOf(o)` is 0 for
+every generated opponent because `form` is written on rival HOUSES only — which is #206.
+One trap it documents: `seamOf` gives a shapeless man a habit off a name hash with `dev: 0`, and
+`dev >= 0` satisfies every `high` tell, so an all-stats-equal fixture *always* reads as quick.
 
 **`scroll.mjs`** — where the vertical pixels go, per place, as the page ARRIVES versus with every fold
 thrown open. The second is what `reach` necessarily measures and it is 40% taller than the first.
