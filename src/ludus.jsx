@@ -4558,15 +4558,21 @@ const docWord = s => s<45 ? "a competent hand" : s<60 ? "a hard man on the sand"
 /* The doctore can drill the whole yard, or take one man and work only on him.
    The second is far better for that man and worse for everybody else. */
 const docPupil = d => (d.doctore && d.doctore.pupil) || null;
+/* ---- #198: A LENT DOCTORE IS NOT AT YOUR POST ----
+   `OVERTURES.teach` sends him to another house for a season, and it would be a free gift if these
+   four kept paying out while he was gone. All four read `docLent` now: the training share, the
+   guard at the post, the calm he keeps in the cells, and the week's lesson. Nothing here draws a
+   random number, and `docLent` is only ever set by an overture the reference player cannot make,
+   so `open.mjs` stays exact. */
 const docTrain = (d, stat, g) => {
-  const doc = d.doctore; if(!doc) return 1;
+  const doc = d.doctore; if(!doc || docLent(d)) return 1;
   const p = docPupil(d);
   const isPupil = p && g && g.id===p;
   const share = !p ? 0.32 : isPupil ? 0.85 : 0.13;
   return (1 + doc.skill/100*share) * (doc.spec===stat ? 1.28 : 1);
 };
 const docInjuryGuard = (d, g) => {
-  const doc = d.doctore; if(!doc) return 1;
+  const doc = d.doctore; if(!doc || docLent(d)) return 1;
   const isPupil = docPupil(d) && g && g.id===docPupil(d);
   return 1 - doc.skill/200 * (isPupil ? 1.8 : 1);
 };
@@ -4820,6 +4826,11 @@ function squareWeek(d, doc, a, b){
 }
 function doctoreWeek(d){
   const doc = d.doctore;
+  if(doc && d.flags && d.flags.docLent){
+    if(d.week < d.flags.docLent) return;                  /* #198 — he is at somebody else's post */
+    d.flags.docLent = 0;
+    chron(d, `${doc.name} comes back from his season away. He has picked something up over there and he is not going to say what.`, "good");
+  }
   /* the second seat empties itself the same way the first does, and a retrain clears it outright */
   if(doc && doc.second){
     const s2 = d.gladiators.find(x=>x.id===doc.second);
@@ -4854,7 +4865,7 @@ function doctoreWeek(d){
   if(two) return squareWeek(d, doc, g, two);   /* #197 — and nothing above here draws a number */
   docLesson(d, g);
 }
-const docCalm = d => d.doctore ? (d.doctore.fromHouse ? 1.2 : 0.4) : 0;
+const docCalm = d => (d.doctore && !docLent(d)) ? (d.doctore.fromHouse ? 1.2 : 0.4) : 0;
 const docWage = doc => doc ? doc.wage : 0;
 
 /* ---- THE DOCTORE ----
@@ -12694,6 +12705,138 @@ function runGambit(d, k, houseName){
   return { won, line, cost };
 }
 const editorBought = d => !!(d.flags.editorBought && d.week < d.flags.editorBought);
+
+/* ---- #198: FOUR WAYS TO WRECK A HOUSE AND NOT ONE TO WARM ONE ----
+   `GAMBITS` is poach, bribe, poison and word — four, all hostile. Against them, `warm` runs 0-100
+   with four `RIVAL_BEATS` gated on it, and MEASURED (probes/warm.mjs, 8 houses x 360 weeks an arm,
+   59 house-pairs) the writing is NOT dead: every one of the eight beats fired, `end` twice, and
+   11.9% of house-pairs reached warm 50 on their own. So the item's own falsifier — "if warmth never
+   rises far enough to open them, the fault is the input" — half-fires, and the honest reading is
+   narrower and worse:
+
+     warmth PEAK per house-pair   p50 7 · p90 64 · highest 77 (control) / 96 (hostile)
+     cards against one house      p50 6 · p90 30
+     `offer` fired                ONCE in 29 house-pairs, and once more in 30 hostile ones
+
+   **Every `warmMove` caller in the file is either inside a `RIVAL_BEATS.hit` — the game's own 5.5%
+   weekly roll, one-shot per house — or `metHouse`, which is +1.1 a card and only while their grudge
+   is under 30.** The bill decides who you are matched against. So a relationship runs hot or cold on
+   how often the editor happened to pair you, and the player has no action of any kind that warms
+   anybody. That is the asymmetry, stated exactly: it is not that the warm events cannot be reached,
+   it is that reaching them is not something you can DO.
+
+   `OVERTURES` is the counterpart, and it is the same shape as `GAMBITS` so the panel can render
+   either. Each one costs something the house actually feels — a man's week and his skin, the
+   doctore's season, or coin — and each can be refused, because a lanista who hates you says no. */
+const OVERTURE_COOL = 6;        /* the same cadence as a gambit; one move on another house at a time */
+const LEND_WEEKS = 8;           /* a season without your doctore */
+const OVERTURES = {
+  purse: { name:"Send a man to fight on their card", cost:d=>0,
+    blurb:"Their bill is short and yours is not. He goes out under their name, they take the gate, and you take a cut of it.",
+    need:d=>!!bestLendable(d),
+    odds:(d,h)=>0.74 - (h.grudge||0)/100*0.5 + warmth(d,h.name)/100*0.18,
+    warm:12,
+    win:(d,h)=>{ const g = bestLendable(d); if(!g) return `There was nobody fit to send.`;
+      const cut = rnd(60 + d.fame*0.25 + (g.wins||0)*14);
+      d.gold += cut;
+      g.fatigue = clamp((g.fatigue||0) + 22, 0, 100);
+      g.lastFought = d.week;
+      /* he fought. Under another man's eye, on a card you did not read, and it can cost him. */
+      if(R() < 0.16){ const inj = injuryFor(pick(TARGETS)[0], false);
+        g.injury = inj; g.status = "injured";
+        chron(d, `${g.name} comes back from House ${h.name}'s card with ${inj.name.toLowerCase()}. Nobody there did anything wrong. It is what the sand is.`, "bad"); }
+      g.pfame = clamp((g.pfame||0) + 6, 0, 100000);
+      return `${g.name} goes out on House ${h.name}'s bill under their name and comes back with ${cut} denarii of their gate. ${lanistaOf(h.name).name} sends the money the same evening, which not everyone does.`; },
+    lose:(d,h)=>`${lanistaOf(h.name).name} does not need your men on his card, and says so in front of the man who was carrying the offer.` },
+  teach: { name:"Lend them your doctore for the season", cost:d=>0,
+    blurb:"He goes to their square for two months. Your yard drills itself in the meantime, and your own square stands empty.",
+    need:d=>!!d.doctore && !d.doctore.retrainTo && !docLent(d),
+    odds:(d,h)=>0.66 - (h.grudge||0)/100*0.55 + warmth(d,h.name)/100*0.22,
+    warm:20,
+    win:(d,h)=>{ d.flags.docLent = d.week + LEND_WEEKS;
+      d.doctore.pupil = null; d.doctore.second = null;
+      return `${d.doctore.name} goes across to House ${h.name} for ${LEND_WEEKS} weeks. Your men work the palus on their own, and every one of them notices.`; },
+    lose:(d,h)=>`${lanistaOf(h.name).name} thanks you and says his own man is quite good enough, in a tone that means he cannot afford to owe you this.` },
+  coin:  { name:"Send coin against a bad season", cost:d=>rnd(320 + d.fame*0.6),
+    blurb:"No note, no terms, and nothing said about it afterwards. Everybody in Capua will know inside a week.",
+    need:d=>true,
+    odds:(d,h)=>0.82 - (h.grudge||0)/100*0.6 + warmth(d,h.name)/100*0.12,
+    warm:10,
+    win:(d,h)=>{ h.fame = (h.fame||100) + 8; d.fame += 3;
+      return `The money goes to House ${h.name} with nothing attached to it. ${lanistaOf(h.name).name} does not thank you where anyone can hear, and does not forget either.`; },
+    lose:(d,h)=>`It comes back the next morning, whole, with a single line: he is not in difficulty. Everyone understands that he is.` },
+};
+const OV_KEYS = Object.keys(OVERTURES);
+const docLent = d => !!(d.flags && d.flags.docLent && d.week < d.flags.docLent);
+/* the man you would send: fit, unhurt, and not your worst — you are lending a name as well as a body */
+function bestLendable(d){
+  const av = g => STATS.reduce((n,k)=>n+(g[k]||0),0)/6;
+  return activeG(d).filter(g=>!g.injury && (g.fatigue||0) < 55 && g.lastFought < d.week)
+    .sort((a,b)=>av(b)-av(a))[0] || null;
+}
+const overtureReady = d => !d.flags.overtureWeek || d.week - d.flags.overtureWeek >= OVERTURE_COOL;
+const overtureOdds = (d, k, h) => { const O = OVERTURES[k];
+  return (!O || !h) ? 0 : clamp(O.odds(d, h), 0.08, 0.94); };
+/* why the row is dark, in the words the gambit panel already uses for the same job */
+const overtureWhy = (d, k) => {
+  const O = OVERTURES[k]; if(!O) return "There is no such offer.";
+  if(!overtureReady(d)) return `Not for ${OVERTURE_COOL - (d.week - (d.flags.overtureWeek||0))} weeks — you have already made your approach this season.`;
+  if(k === "teach" && docLent(d)) return `${d.doctore ? d.doctore.name : "Your doctore"} is already lent out.`;
+  if(k === "teach" && !d.doctore) return "You have no doctore to lend.";
+  if(k === "teach" && d.doctore.retrainTo) return "He is in the middle of remaking somebody.";
+  if(k === "purse" && !bestLendable(d)) return "Nobody is fit to be sent out this week.";
+  const cost = O.cost(d);
+  if(d.gold < cost) return `${rnd(cost - d.gold)}d short of it. Nothing is spent on a refusal.`;
+  return null;
+};
+/* ---- #198: ONE ROW, TWO TABLES ----
+   The gambit panel was forty-five lines of JSX inside `App`, which has three lines of allowance
+   left, and `OVERTURES` is the same shape as `GAMBITS` — a name, a price, a blurb, odds, and a
+   button per rival. So the row moved out here and renders either table, which pays for the new
+   panel and leaves App smaller than it was. The two differ in exactly three things and they are
+   arguments: the colour, whether the confirmation is a warning, and the line under the odds. */
+function QuietRow({ S, k, name, cost, blurb, odds, note, why, rivals, tone, danger, ask, run }){
+  const p = odds;
+  return (
+    <div style={{borderTop:"1px dotted var(--line)",paddingTop:7,marginTop:7}}>
+      <div className="flex items-center justify-between gap-2">
+        <span className="rowname" style={{fontSize:"var(--fs-md)"}}>{name}</span>
+        {cost > 0 && <span className="rowval gold" style={{fontSize:"var(--fs-base)"}}>{cost}d</span>}
+      </div>
+      <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:1}}>{blurb}</div>
+      <div style={{fontSize:"var(--fs-sm)",marginTop:2,color:p>=0.55?"var(--laurel)":p>=0.35?"var(--gold)":"var(--blood)"}}>
+        about {Math.round(p*100)} in a hundred{note || ""}
+      </div>
+      {why && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:5,fontStyle:"italic"}}>{why}</div>}
+      {!why && (
+        <div className="flex gap-2" style={{marginTop:5}}>
+          {rivals.map(h=>(
+            <button key={h.name} className="btn btn-ghost" style={{flex:1,padding:"10px 6px",fontSize:"var(--fs-micro)"}}
+              onClick={()=>ask(h, p)}>{h.name}</button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+function runOverture(d, k, houseName){
+  const O = OVERTURES[k]; if(!O || !overtureReady(d)) return null;
+  const h = (d.rivals||[]).find(x=>x.name===houseName); if(!h || h.retired) return null;
+  if(overtureWhy(d, k)) return null;
+  const cost = O.cost(d);
+  if(d.gold < cost) return null;
+  d.gold -= cost;
+  d.flags.overtureWeek = d.week;
+  const p = overtureOdds(d, k, h);
+  const won = R() < p;
+  if(won){ warmMove(d, h.name, O.warm); h.grudge = clamp((h.grudge||0) - O.warm*0.5, 0, 100); }
+  else { /* a refusal is not a wound, but it is not free either — you asked in public */
+    d.fame = Math.max(0, d.fame - 2); }
+  const line = won ? O.win(d, h) : O.lose(d, h);
+  chron(d, line, won ? "good" : "info");
+  return { won, line, cost, warm: won ? O.warm : 0 };
+}
+
 
 /* ---- WHAT BECAME OF THEM ----
    The rudis is the moral centre of this game and a freed man has always vanished
@@ -24117,48 +24260,44 @@ export default function App(){
                     of 6,448 rows this panel drew, 990 quoted a number the engine would not use —
                     5% to 21% of them depending on the seed — and it was the WORSE number every
                     single time, by a median 7 points and up to 14. */}
-                {GAM_KEYS.map(k=>{ const G = GAMBITS[k], cost = G.cost(S);
-                  const worn = gambitStale(S,k), tried = gambitDone(S,k);
-                  const p = gambitOdds(S,k);      /* the same function `runGambit` rolls against */
-                  return (
-                    <div key={k} style={{borderTop:"1px dotted var(--line)",paddingTop:7,marginTop:7}}>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="rowname" style={{fontSize:"var(--fs-md)"}}>{G.name}</span>
-                        <span className="rowval gold" style={{fontSize:"var(--fs-base)"}}>{cost}d</span>
-                      </div>
-                      <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:1}}>{G.blurb}</div>
-                      <div style={{fontSize:"var(--fs-sm)",marginTop:2,color:p>=0.55?"var(--laurel)":p>=0.35?"var(--gold)":"var(--blood)"}}>
-                        about {Math.round(p*100)} in a hundred{worn>0
-                          ? ` · you have tried this ${worn} time${worn>1?"s":""} that anybody still remembers`
-                          : tried>0 ? ` · you have used this before, and Capua has stopped counting it` : ""}
-                      </div>
-                      {/* ---- AND WHEN IT WOULD NOT WORK, IT SAID NOTHING AT ALL — #150 ----
-                          The rival buttons rendered behind `ready && S.gold >= cost`, so a house short
-                          of the price saw a name, a blurb, a price and odds, and no way to press any
-                          of it and no reason given. That is the whole of what the item turned out to
-                          be: `runGambit` never charges for a refusal (measured, coin moved on 0 of
-                          1,800 nulls), and every null a caller can reach with the cooldown clear is
-                          this one. `munusReady`'s panel below already learned to name the thing that
-                          is in the way; this one does the same. */}
-                      {ready && S.gold < cost && (
-                        <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:5,fontStyle:"italic"}}>
-                          {rnd(cost - S.gold)}d short of the asking price. Nothing is spent on a refusal.
-                        </div>
-                      )}
-                      {ready && S.gold >= cost && (
-                        <div className="flex gap-2" style={{marginTop:5}}>
-                          {rivals.map(h=>(
-                            <button key={h.name} className="btn btn-ghost" style={{flex:1,padding:"10px 6px",fontSize:"var(--fs-micro)"}}
-                              onClick={()=>setAsk({ title:G.name, danger:true, confirm:`Against ${h.name} · ${cost}d`,
-                                text:`${G.blurb} About ${Math.round(p*100)} in a hundred it works. If it does not, it will be known that you tried, and the magistrate is ${lawWord(S)}.`,
-                                run:()=>mut(d=>{ runGambit(d, k, h.name); }) })}>
-                              {h.name}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ); })}
+                {GAM_KEYS.map(k=>{ const G = GAMBITS[k], cost = G.cost(S), worn = gambitStale(S,k), p = gambitOdds(S,k);
+                  return <QuietRow key={k} S={S} k={k} name={G.name} cost={cost} blurb={G.blurb} odds={p} rivals={rivals} tone="blood" danger
+                    note={worn>0 ? ` · you have tried this ${worn} time${worn>1?"s":""} that anybody still remembers`
+                        : gambitDone(S,k)>0 ? " · you have used this before, and Capua has stopped counting it" : ""}
+                    why={!ready ? `Not for ${6 - (S.week - (S.flags.gambitWeek||0))} weeks.`
+                       : S.gold < cost ? `${rnd(cost - S.gold)}d short of the asking price. Nothing is spent on a refusal.` : null}
+                    ask={(h,pp)=>setAsk({ title:G.name, danger:true, confirm:`Against ${h.name} · ${cost}d`,
+                      text:`${G.blurb} About ${Math.round(pp*100)} in a hundred it works. If it does not, it will be known that you tried, and the magistrate is ${lawWord(S)}.`,
+                      run:()=>mut(d=>{ runGambit(d, k, h.name); }) })} />; })}
+              </div>
+            ); })()}
+          {/* ---- #198: AND THE OTHER HALF OF THE SAME PAGE ----
+               Measured: every `warmMove` in the file is inside a `RIVAL_BEATS.hit` the game rolls at
+               5.5% a week, or `metHouse`'s +1.1 a card. The bill decides who you fight, so a
+               friendship ran hot or cold on the editor's matching and the player had no move. These
+               are the moves. They are refused by a house that hates you, which is why the odds are
+               quoted per rival rather than once. */}
+          {(()=>{ const rivals = (S.rivals||[]).filter(h=>!h.retired);
+            if(!rivals.length) return null;
+            return (
+              <div className="panel" style={{padding:12,marginTop:10}}>
+                <div className="flex items-center justify-between" style={{marginBottom:4}}>
+                  <span className="tag tag-gold">What can be done openly</span>
+                  <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>
+                    {overtureReady(S) ? "one approach a season" : `not for ${OVERTURE_COOL - (S.week - (S.flags.overtureWeek||0))} weeks`}
+                  </span>
+                </div>
+                <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:6}}>
+                  There are four men in Capua doing the same trade as you, and one of them will outlive the rest. Whether any of it was worth doing alone is a question you can still answer.
+                </div>
+                {OV_KEYS.map(k=>{ const O = OVERTURES[k], cost = O.cost(S), why = overtureWhy(S, k);
+                  const best = rivals.slice().sort((a,b)=>overtureOdds(S,k,b) - overtureOdds(S,k,a))[0];
+                  return <QuietRow key={k} S={S} k={k} name={O.name} cost={cost} blurb={O.blurb}
+                    odds={overtureOdds(S, k, best)} rivals={rivals} tone="gold" why={why}
+                    note={` with ${best.name}, and less with a house that has something against you`}
+                    ask={(h,pp)=>setAsk({ title:O.name, confirm:`To ${h.name}${cost>0?` · ${cost}d`:""}`,
+                      text:`${O.blurb} About ${Math.round(overtureOdds(S,k,h)*100)} in a hundred he takes it. If he does not, nothing is lost but the asking, and the asking was in public.`,
+                      run:()=>mut(d=>{ runOverture(d, k, h.name); }) })} />; })}
               </div>
             ); })()}
           {S.fame>=MUNUS_SCALES.modest.gate && !S.travel && !S.city && (
@@ -27774,7 +27913,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        exercised — but never as the player's own action.
        `actions` derives the list now instead of holding a hand-written one, so a future action that
        forgets this line fails a check rather than going quietly dark. */
-    answerNem, nemCallOut, callFavour, favourWorth, nobleStory, senatorName, merchantCarry, repay, sellDebt, runGambit, backCandidate, swearIn,
+    answerNem, nemCallOut, callFavour, favourWorth, nobleStory, senatorName, merchantCarry, repay, sellDebt, runGambit, backCandidate, swearIn, OVERTURES, OV_KEYS, runOverture, overtureReady, overtureOdds, overtureWhy, OVERTURE_COOL, LEND_WEEKS, docLent, bestLendable, docTrain, docCalm, docInjuryGuard,   /* #198 — the friendly counterpart, and everything a lent doctore stops paying */
     applyRefusal, skipWeeks, charterSkip, firstBuyWarn, ENTRANCES, ENTRANCE_KEYS, deadlines, entranceSays, entDread, oppGreen, ENT_MISSIO, ENT_TERM_KEYS, ENT_TERM, BREATHER_BACK,
     favMissio, veteranGuard, riseFav, blessMercy, favourOf, MISSIO_MID, MISSIO_SLOPE, missioWord, MISSIO_MAN,
     saveKit, applyKit, dropKit, watchField, startPlan, breakPlan, clearWatch,

@@ -776,6 +776,33 @@ export async function installRope(p){
           }
         }
       }
+      /* ---- #198: THE FRIENDLY MIRROR OF `gambit`, and it has to exist before the item can be judged ----
+         Every `warmMove` in the game is either the game's own 5.5% weekly roll or +1.1 a card the
+         BILL chose, so "warmth never gets anywhere" was a claim about a player with no way to try.
+         `overture:N` makes the best-odds approach it can afford to the warmest live rival every N
+         weeks; `overture:true` is every six, which is the cooldown. It targets the WARMEST rather
+         than round-robin, because a lanista trying to make a friend works on the one who is already
+         nearest — and round-robin against four houses at one approach a season reaches none of
+         them. Cost is checked against the same reserve every other spend in this rope respects. */
+      if(o.overture && typeof A.runOverture === "function"){
+        const every = typeof o.overture === "number" ? Math.max(1, o.overture) : 6;
+        if(d.week % every === 0 && fin(A.overtureReady,[d])){
+          const live = (d.rivals||[]).filter(x=>!x.retired);
+          const keys = (A.OV_KEYS || []).filter(k=>!fin(A.overtureWhy,[d,k]));
+          if(live.length && keys.length){
+            const target = live.slice().sort((x,y)=>(y.warm||0) - (x.warm||0))[0];
+            const priced = keys.map(k=>({ k,
+              cost: (()=>{ const c = A.OVERTURES[k].cost; return typeof c === "function" ? (fin(c,[d]) || 0) : (c || 0); })(),
+              odds: fin(A.overtureOdds,[d, k, target]) || 0 }))
+              .filter(x=>x.cost <= d.gold - LAN.reserve(d));
+            if(priced.length){
+              priced.sort((x,y)=>y.odds - x.odds);
+              const r = fin(A.runOverture,[d, priced[0].k, target.name]);
+              if(r) bump(r.won ? "overtureTaken" : "overtureRefused");
+            }
+          }
+        }
+      }
       if(o.free === true && typeof A.grantRudis === "function"){
         for(const g of A.activeG(d)){
           if(!fin(A.rudisEligible,[g])) continue;

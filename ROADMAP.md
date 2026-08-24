@@ -4461,6 +4461,75 @@ wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
 
+### v3.130.0 — #198: four ways to wreck a house, and not one to warm one
+
+`GAMBITS` is poach, bribe, poison and word — four, all hostile. Against them `warm` runs 0–100 with
+four `RIVAL_BEATS` gated on it. The item came with its own clause: *if warmth never rises far enough
+to open them, the fault is the input, not the missing verb.*
+
+## The falsifier half-fires, and the truth is narrower and worse
+
+`probes/warm.mjs`, 8 houses × 360 weeks an arm, 59 house-pairs. **Warmth does rise.** Every one of the
+eight beats fired at least once, `end` twice, and **11.9% of house-pairs reached warm 50 with no help
+at all.** The writing is not dead and the item's stated reading is wrong.
+
+What is true is this: **every `warmMove` caller in the file is inside a `RIVAL_BEATS.hit` — the game's
+own 5.5% weekly roll, one-shot per house — or `metHouse`, which is +1.1 a card and only while their
+grudge is under 30.** The bill decides who you are matched against. So a friendship ran hot or cold on
+the editor's matching, and the player had no move of any kind. The asymmetry is confirmed. The reason
+is not that the door is shut; it is that there was no handle on this side of it.
+
+| | control | gambit:6 | **overture:6** |
+|---|---|---|---|
+| warmth peak per house-pair, p50 | 7 | 14 | **27** |
+| ...p90 | 64 | 79 | **100** |
+| house-pairs ever reaching warm 50 | 13.8% | 10.0% | **33.3%** |
+| weeks a rival was too sore to warm at all | 12.2% | 18.3% | **10.7%** |
+| `loan` / `warning` / `offer` / `end` fired | 0 / 4 / 1 / 2 | 1 / 3 / 1 / 2 | **2 / 10 / 3 / 1** |
+
+**2.8× the house-pairs reach warm 50**, and the four warm-gated beats — writing that fired once or
+twice in 29 relationships — start being read.
+
+## What shipped
+
+`OVERTURES`, the same shape as `GAMBITS` so one row renders either, three entries, each costing
+something the house actually feels and each refusable by a lanista who hates you:
+
+- **`purse` — send a man to fight on their card.** He goes out under their name, you take a cut of the
+  gate, and he comes back tired, a little more famous, and 16% of the time hurt. Nobody there did
+  anything wrong; it is what the sand is.
+- **`teach` — lend them your doctore for the season.** Eight weeks. The biggest gift, and the most
+  expensive: **all four of the things he does stop paying** — the training share, the guard at the
+  post, the calm he keeps in the cells, and the week's lesson — and your own square empties.
+- **`coin` — send coin against a bad season.** No note, no terms. The weakest and always available.
+
+Odds fall with their grudge and rise with existing warmth, so the panel quotes them per rival: 74 to a
+friendly house and 24 to one that hates you, for `purse`. One approach a season, the gambit cadence. A
+refusal costs 2 fame, because you asked in public.
+
+**And App got smaller again.** The gambit panel was forty-five lines of JSX inside `App`, which had
+three lines left. `QuietRow` moved out to module scope and renders both tables: **App 5,783 → 5,779**,
+with a whole second panel added.
+
+## `open.mjs` is byte-identical
+
+Three releases running. The reference player cannot make an overture and `d.flags.docLent` is only ever
+set by one, so nothing the rope does reaches any of this — all 60 houses, `standing 54 of 60 · men 209`,
+diffed rather than asserted.
+
+## The check
+
+`overture` is the 101st. Its **first assertion is the claim itself, read off the source**: it counts
+the hostile table against the friendly one and every place in the file that raises warmth, so "the
+player has no move" cannot quietly stop being the reason this shipped. Then it drives each overture to
+an acceptance and to a refusal on houses built for each — an entry that can never be accepted is
+unreachable writing, and one that can never be refused is not an overture — checks the odds are
+actually worse with a house that hates you, proves a lent doctore stops paying on all four counts and
+comes home, proves the season cooldown covers the whole table rather than one row, and reads the real
+panel off the arena page with both halves on it.
+
+`bulk`: App 5,783 → **5,779** of 5,786, SECT unchanged at 1,464. No allowance raised.
+
 ### v3.129.0 — #197: the training square held one man, and four in five stood and watching
 
 `doc.pupil` was a single id. `doctoreWeek` returned on its second line unless it was set, and
@@ -15055,7 +15124,7 @@ named a pupil at all. `sparWith` already exists and already requires mutual cons
 the square and let the doctore drill them against each other: the lesson can land on either, and who
 takes the week seeds a `brother` or `rival` tie. *Reuses `sparWith`, `tieList`, `DOC_LESSONS`.*
 
-### #198 — you can wreck a rival house on purpose and can only warm to one by accident.
+### #198 — CLOSED in v3.130.0. You can wreck a rival house on purpose and can only warm to one by accident.
 `warm` runs 0–100 with six events gated on it (`drink`, `loan`, `warning`, `offer`, `bitter`, `end`)
 and all four `GAMBITS` are hostile. The asymmetry is the item. A friendly counterpart — a man sent to
 fight on their card for a cut, a doctore lent, a debt settled. *Reuses `warm`, `RIVAL_MOVES`.*
@@ -15940,4 +16009,4 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.129.0 — the square holds two, and the second seat is a bet rather than a bonus*
+*Last updated: v3.130.0 — there is a handle on this side of the door now*
