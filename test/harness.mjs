@@ -172,7 +172,14 @@ export async function installRope(p){
        `d.games.offers` fights almost nothing. The pit fills every other week. */
     const av = g => A.STATS.reduce((s,k)=>s+(g[k]||0),0)/6;
     const fit = (d, o) => A.activeG(d)
-      .filter(g=>!g.injury && (g.fatigue||0) < ((o && o.spent) || 62))
+      /* ---- #203: `care:"through"` MEANS HE FIGHTS ON IT, AND THIS FILTER SAID OTHERWISE ----
+         `setCareOf(_, _, "through")` sets `g.status = "active"` and the game's own `canFight` has no
+         injury term, so a worked-through man is one the PLAYER can send. This rope filtered him out
+         anyway, so the arm declared every wounded man fit and then refused to use any of them: 109
+         weeks refused for "nobody fit", 134 bouts against the default's 1,333, and houses dead at
+         thirty weeks. That is a lever not connected, measured as a catastrophe. Under that arm — and
+         only under it — an active man with an open wound is available, which is what the option is. */
+      .filter(g=>(!g.injury || (o && o.care === "through")) && (g.fatigue||0) < ((o && o.spent) || 62))
       .sort((x,z)=>av(z)-av(x));
 
     const no = (why, extra) => { R.refused[why] = (R.refused[why]||0)+1;
@@ -803,6 +810,19 @@ export async function installRope(p){
           }
         }
       }
+      /* ---- #203: THE INFIRMARY ROW NO POLICY IN THIS SUITE HAS EVER TOUCHED ----
+         `CARE` has four options and `setCareOf` is called from the man's page and nowhere else, so
+         every figure this project has published about wounds was taken on the DEFAULT — a man is
+         hurt, he rests, he comes back. `care:"rest"|"convalesce"|"surgeon"|"through"` makes the row
+         a policy. `surgeon` is skipped when the house cannot pay or has no valetudinarium, which is
+         the game's own gate rather than this rope's. */
+      if(o.care && typeof A.setCareOf === "function"){
+        for(const g of (d.gladiators||[])){
+          if(!g.injury || g.injury.care === o.care) continue;
+          if(g.status !== "injured" && g.status !== "active") continue;
+          if(fin(A.setCareOf,[d, g.id, o.care])) bump("care");
+        }
+      }
       if(o.free === true && typeof A.grantRudis === "function"){
         for(const g of A.activeG(d)){
           if(!fin(A.rudisEligible,[g])) continue;
@@ -875,7 +895,7 @@ export async function installRope(p){
            about them changes, so they still train, still age, still cost their upkeep. */
         const bench = new Set([].concat(o.bench || []));
         let safePick = null;
-        let men = A.activeG(d).filter(g=>!g.injury && (g.fatigue||0) < 55 && !bench.has(g.id))
+        let men = A.activeG(d).filter(g=>(!g.injury || o.care === "through") && (g.fatigue||0) < 55 && !bench.has(g.id))
           .sort((x,z)=>av(z)-av(x));
         /* ---- #202: THE PAIR THE REFERENCE PLAYER NEVER TAKES ----
            `takeBout` filters the bill by stakes and then takes `pool[0]`. `makeGames` pushes every
