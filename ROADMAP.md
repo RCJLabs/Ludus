@@ -4461,6 +4461,92 @@ wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
 
+### v3.128.0 — #202: the pair chooser was blind on the one axis the pair engine reads
+
+**The item was filed as a missing verb and the probe falsified that half of it.** #202 said you cannot
+enter your own two men as a pair, and that paying to enter one is *"how `beside` gets met
+deliberately"*. The falsifier written beside it said: falsifies if a policy that simply takes the pair
+when the bill has one meets the ambition at a decent rate. `probes/beside.mjs` ran it — a new
+`pairs:true` rope lever against the reference player, 8 houses × 300 weeks an arm — and **the arm met
+`beside` on the sand 13 times in 46 men, 28.3%.** The entrance is not missing. What is missing is the
+sign over it.
+
+## What actually rides on which two men you send
+
+| | |
+|---|---|
+| **the fight** | `assistMult` multiplies the assist by `1 + strength/100*0.7` for brothers and `1 - strength/100*0.45` for rivals. Two men who came up together assist at up to **1.70×**; two who will not look at each other, at **0.55×**. It is the largest single modifier either man carries into that bout. |
+| **an ambition** | `AMBITIONS.beside` is met in exactly one place in the file, inside `doPairFight`, and **only when the tie is already `brother`** — the new tie is added *after* the check, so pairing two strangers can never meet it. |
+| **a feud** | a rival pair that **wins** turns brother 35% of the time. It is the only way in the game to end a feud, and no player has ever been able to aim at it. |
+
+## The measurement
+
+Over the weeks a pair was on the bill:
+
+| | control | `pairs:true` |
+|---|---|---|
+| weeks the bill carried a pair | 247 · 15.5% | 281 · 15.8% |
+| ...two men fit to take it | 99.6% | 100.0% |
+| **...and two of them already BROTHERS** | **72.4%** | 54.1% |
+| the top two by stat WERE that pair | **25.3%** | 28.9% |
+| one of them wanted `beside` | 42.1% | 32.2% |
+| `beside` met on the sand | 4 of 38 · 10.5% | **13 of 46 · 28.3%** |
+| **died still carrying it** | **68.4%** | 39.1% |
+
+There is a right answer on **nearly three pair weeks in four**, and a player picking his two best men —
+which is the order the chooser lists them in — gets it right **one time in four, by accident**. The cost
+of not knowing is 68.4% of the men who ever wanted this dying still wanting it.
+
+## What shipped
+
+`ROW_MARKS`, a table of five `✦` lines under a man's row in the fight chooser, and `rowMarks(d, g,
+offer, mate)` which raises them. Three are new and only exist once somebody else is picked — a mark
+about the man beside him is meaningless with nobody beside him:
+
+- `brother` — *"X and Y came up together — close. They fight better side by side."* (`tieWord` supplies the degree)
+- `feud` — *"X and Y: bad blood. They will cover each other badly — and if they win anyway, it may be the end of it."*
+- `beside` — *"This is the thing X has been asking for. Send them out together and it is done."*
+
+**No new menu, and App got smaller.** The other two marks — the booking and the drilling — were four
+lines of JSX inside `App`, which had **zero allowance left** (5,786 of 5,786). They moved into the same
+table, and the render collapsed to one line: **App 5,786 → 5,783.** Three lines of headroom created
+rather than an allowance raised.
+
+## `open.mjs` is byte-identical
+
+The whole change is display: `rowMarks` reads state and writes none, and no `EVENTS` key was added, so
+unlike v3.127.0 the signature *can* be exact — and it is, all 60 houses, `standing 54 of 60 · men 209`.
+Diffed against the pre-change build rather than asserted.
+
+## Three instrument faults, two of them in the rope
+
+- **`window.__ROPE` is a façade over the rope's internal counter bag.** New counters set inside
+  `takeBout` land on the closure object; `R.tookPair` read off the handle is `undefined` forever. The
+  probe's first run printed **0 pair bouts** in a table whose own last line said 118. Read through
+  `stats()`.
+- **`reset()` named its fields by hand, so it always lagged.** It cleared six counters and `refused`;
+  `safeSeen`/`safeSat`/`safeBest` were added for #190 and never joined. A probe running two arms on one
+  page reads the second with the first still inside it — the first run reported the pairs arm at 253
+  pair bouts against a control of 118 when the true number was **135**. It resets by shape now and
+  cannot drift behind the counters again.
+- **The bill was read after the week had spent it.** `doPairFight` ends by filtering its own offer out
+  of `d.games.offers`, so a bill read after `lanista` is missing exactly the offer that was taken.
+
+And one in the reasoning, corrected mid-flight: the pair's bond looked like writing-only — two intro
+lines and nothing numeric — until `assistMult` turned up. It is the largest modifier in the bout.
+
+## The check
+
+`beside` is the 99th, and it **drives the real screen**, because #196 shipped a pronoun fault into a
+table its own model-level check passed. It forges the three relations, opens the arena, clicks one man
+and reads the *other* man's row, then clicks the second and reads the first's — the `beside` mark
+cannot appear until the pair is complete, so a check that clicks once has not seen the sentence this
+release exists to print. It also runs the whole table over a **house of women**, and it guards the two
+marks it swallowed: a consolidation that silently stops printing an older line is the failure mode of
+every consolidation in this project.
+
+`bulk` untouched, no allowance raised.
+
 ### v3.127.0 — #196: he could always come to you, and you could never go to him
 
 `ASKS` is five entries and every one of them is HIM opening the conversation, through `askWeek`:
@@ -14905,10 +14991,17 @@ have committed. Make it a standing, readable risk on the arena panel before you 
 audit's most repeated move: a number the game holds and never says. *Reuses `REFUSE_REASONS`,
 `defiance`.*
 
-### #202 — you cannot enter your own two men as a pair.
+### #202 — CLOSED in v3.128.0, and NOT as it was written. You cannot enter your own two men as a pair.
 `doPairFight` exists and `beside` is an ambition — *"to go out beside someone he trusts"* — but a
 pairing is something the bill offers, never something you build. Paying to enter one is how `beside`
 gets met deliberately and how a `brother` tie forms. *Reuses `doPairFight`, `AMBITIONS.beside`.*
+**The probe falsified the verb half and kept the rest.** A `pairs:true` rope lever — take the pair when
+the bill has one, send the two men who are already brothers — met `beside` **28.3%** of the time, so
+the entrance is not missing. But there is a right answer on **72.4%** of pair weeks and an uninformed
+pick finds it **25.3%** of the time, and three things ride on the choice that the chooser never said:
+the assist multiplier (1.70× to 0.55×), the ambition, and the 35% chance a winning rival pair ends its
+feud. Shipped as five `✦` marks under the man's row. This is the second time in this project a
+falsifier turned an item into a better one — #187 was the first.
 
 ### #203 — the medicus cannot be asked to lie.
 Injuries already carry `care`: rest, surgeon, convalesce, and **through**, which already means
@@ -15756,4 +15849,4 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.127.0 — the audit is closed ten of ten; #196 is the first of the feature queue*
+*Last updated: v3.128.0 — #202 shrank on contact with its own falsifier and became the better item*

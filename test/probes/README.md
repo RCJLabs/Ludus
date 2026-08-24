@@ -66,6 +66,7 @@ Run them straight:
     node test/probes/paint.mjs               # how far apart the arena backdrops are, in CIE76 dE
     node test/probes/ribs.mjs  12 420 SEED   # every wound counted at the bout, by the door that dealt it
     node test/probes/word.mjs  12 420 SEED   # how many men reach the point of speaking to you, and how many do
+    node test/probes/beside.mjs 8 300 SEED   # #202; two arms, and whether a man can ever go out beside a friend
 
 ## HOW MANY HOUSES A FIGURE NEEDS — read this before quoting one
 
@@ -660,6 +661,21 @@ were small the item would be about REGARD and not a missing verb — and prints 
 `ASKS` entries ever fire, `year` being 0 in both seeds. One instrument fault: an unscoped
 `const men = activeG(d).filter(` matched a different function and printed `canFight(g)` as askWeek's
 gate, which is a wrong denominator printed with confidence.
+
+**`beside.mjs`** — whether `AMBITIONS.beside` is reachable, and it **falsified the item it was written
+for**. #202 was filed as a missing verb — you cannot enter your own two men as a pair — so the probe
+ran the policy that would meet it if the verb were the only obstacle: a `pairs:true` rope lever that
+takes the pair when the bill has one and sends the two men who are already brothers. It met the
+ambition **28.3%** of the time against the reference player's 10.5%, and the item became signposting
+rather than a verb. The numbers that replaced it: a pair is on the bill **15.5%** of weeks, two of the
+fit men are already brothers on **72.4%** of those, the top two by stat ARE that pair only **25.3%** of
+the time, and **68.4%** of the men who ever carry `beside` die still carrying it.
+Three instrument faults, all worth remembering: `window.__ROPE` is a FAÇADE over the rope's internal
+counter bag, so a counter set in `takeBout` reads `undefined` off the handle and the first run printed
+0 pair bouts under a line saying 118; the rope's `reset()` named its fields by hand so two arms on one
+page shared their totals (253 against 118 when the truth was 135, now fixed by resetting by shape);
+and the bill has to be read BEFORE the week, because `doPairFight` filters its own offer out of
+`d.games.offers` on the way out.
 
 **`scroll.mjs`** — where the vertical pixels go, per place, as the page ARRIVES versus with every fold
 thrown open. The second is what `reach` necessarily measures and it is 40% taller than the first.
