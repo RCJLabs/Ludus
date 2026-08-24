@@ -16,7 +16,21 @@
    the `banned` ending was settled design, and the law was live all along. A verdict that keeps
    sending you at correct behaviour is too blunt to rank by.
 
-   It now diffs five channels, and SILENT means silent in all of them:
+   ---- AND THE COUNT HAS BEEN WRONG TWICE. IT IS NINETEEN REGISTERS NOW, NOT EIGHT ----
+   v3.115.0 took it from five to eight and asked whether eight was enough. It was not, three ways,
+   and every one of them was this probe rather than the game:
+
+     · THE EVENTS CHANNEL WAS INERT FROM THE DAY IT WAS ADDED. It read `!e.when || !!e.when(d)`,
+       and **not one of the 59 EVENTS entries has a `when`** — they gate by `make(d)` returning
+       null, which is what `pickEvent` walks. `!e.when` was true for all 59 on both arms, so the
+       set was constant and the diff could never fire. The channel its own note calls "the game's
+       largest content channel" had reported nothing, ever.
+     · ELEVEN MORE TABLES PAIR A PREDICATE WITH A LINE OF WRITING and none was on the test handle:
+       COUNSEL, WHISPERS, YARD, LATE, NIGHT, ROME_TURNS, RUINS, ASKS, REFUSE_REASONS, RIVAL_MOVES,
+       FREEDMEN. `EVENTS` was never the only register; it was the only one anybody had exported.
+     · AND THE HEAPED ARM FOR LAW HEAT WAS BELOW EVERY GATE IN THE GAME — see the note on it below.
+
+   It now diffs nineteen registers, and SILENT means silent in all of them:
 
      labels    the set of agenda rows, normalised
      urgency   label -> urgency, over the UNION of both sides, so a row that only APPEARS counts,
@@ -178,6 +192,10 @@ const out = await inside(p, ([H, W]) => {
       num(A.rackUsed, d), num(A.rackOver, d), num(A.rackStrain, d), num(A.rackRent, d),
       num(A.weeklyBill, d), num(A.creditLine, d), num(A.missioOdds, d), num(A.gearUpkeep, d),
       num(A.riseNeed, d), num(A.censusWorth, d), num(A.acclaimTier, d),
+      /* the odds on every gambit — two of the four are priced in LAW HEAT, continuously
+         (`- lawOf(d).heat*0.002` and `*0.0025`), and no other channel can see a number that
+         moves without crossing a threshold. #186. */
+      ...(A.GAM_KEYS || Object.keys(A.GAMBITS || {})).map(k => num(A.gambitOdds, d, k)),
     ].join("|");
     return out;
   };
@@ -198,8 +216,9 @@ const out = await inside(p, ([H, W]) => {
     if(a.fig !== b.fig){ const A2 = a.fig.split("|"), B2 = b.fig.split("|");
       const names = ["acclaim","acclaimTarget","merchWeekly","merchLive","rackUsed","rackOver",
                      "rackStrain","rackRent","weeklyBill","creditLine","missioOdds","gearUpkeep",
-                     "riseNeed","censusWorth","acclaimTier"];
-      for(let i=0;i<names.length;i++) if(A2[i] !== B2[i]) out.push(`figures ${names[i]} ${A2[i]}->${B2[i]}`); }
+                     "riseNeed","censusWorth","acclaimTier"]
+        .concat((A.GAM_KEYS || Object.keys(A.GAMBITS || {})).map(k=>"gambit:"+k));
+      for(let i=0;i<A2.length;i++) if(A2[i] !== B2[i]) out.push(`figures ${names[i]||("#"+i)} ${A2[i]}->${B2[i]}`); }
     return out;
   };
   const kindOf = t => t.split(" ")[0];
@@ -209,8 +228,16 @@ const out = await inside(p, ([H, W]) => {
     ["unburied dead",    d=>(A.unhonoured?A.unhonoured(d):[]).length,
                          d=>{ (d.fallen||[]).forEach(m=>m.done=true); },
                          d=>{ d.fallen=(d.fallen||[]); for(let i=0;i<14;i++) d.fallen.push({ id:9000+i, name:"Man "+i, week:d.week-2, done:false }); }],
+    /* ---- AND THE HEAPED ARM HAS TO CROSS THE THRESHOLDS THE READERS USE ----
+       This was `heat=40`. Every discrete reader of law heat in the file sits ABOVE it: the agenda
+       row that names a breach goes `heat>=45 ? 3 : 2`, and the `banned` ending wants `heat>=90`.
+       So both arms — 0 and 40 — landed on the same side of every gate the game has, and the probe
+       reported silence about a quantity it had never actually asked. That is the third variant of
+       this directory's oldest lesson: a perturbation must be legal in the reader's terms, must
+       move the field the readers read, and must be BIG ENOUGH to cross the numbers they compare
+       against. 95 clears both. */
     ["law heat",         d=>((d.law||{}).heat)||0,
-                         d=>{ if(d.law) d.law.heat=0; }, d=>{ if(d.law) d.law.heat=40; }],
+                         d=>{ if(d.law) d.law.heat=0; }, d=>{ if(d.law) d.law.heat=95; }],
     ["edicts standing",  d=>(((d.law||{}).edicts)||[]).length,
                          d=>{ if(d.law) d.law.edicts=[]; }, null],
     ["towns known",      d=>Object.values(d.known||{}).reduce((s,v)=>s+(Array.isArray(v)?v.length:0),0),
@@ -312,17 +339,23 @@ for(const t of out.tally){
   for(const e of t.examples) console.log(`      ${e}`);
   if(t.moved && !t.changed) mute.push(t.name);
 }
-console.log(`\n  ${mute.length} quantities move NOTHING in any of the EIGHT channels — not a label, not an`);
-console.log(`  urgency, not a mark, not a section's liveness, not which events can fire, not what the`);
-console.log(`  game would teach, not a perk stream, and not one of fifteen numbers a panel prints:`);
+console.log(`\n  ${mute.length} quantit${mute.length===1?"y moves":"ies move"} NOTHING in any of the NINETEEN registers — not a label, not an`);
+console.log(`  urgency, not a mark, not a section's liveness, not which events can fire, not one of the`);
+console.log(`  eleven other tables that gate a written line on the state, not what the game would teach,`);
+console.log(`  not a perk stream, and not one of nineteen numbers a panel prints:`);
 mute.forEach(m=>console.log(`    ${m}`));
-console.log(`\n  WHAT IS LEFT, AND WHY NEITHER IS A GAME FAULT:`);
-console.log(`    law heat    a fact about the REFERENCE PLAYER, not the game — heat.mjs drives it with a`);
-console.log(`                gambit lever and an honest house is past heat 45 on 16% of a 400-week game.`);
+console.log(`\n  WHAT IS LEFT, AND WHY IT IS NOT A GAME FAULT:`);
 console.log(`    brand tier  a LATCH, not a state. \`acclaimWeek\` compares acclaimIdx(d) to d.brand.tier`);
 console.log(`                only to decide whether a rise has just happened and the tier's \`once\` line`);
 console.log(`                should be chronicled. Nothing reads it as a quantity, and nothing should.`);
-console.log(`\n  And a silence is still only as good as the POLICY that produced the house. Law heat read`);
-console.log(`  silent here until the rope was given a gambit lever — it is live, and an honest house is`);
-console.log(`  past heat 45 on 16% of a four-hundred-week game. Drive a thing before filing it dead.`);
+console.log(`\n  LAW HEAT CAME OFF THIS LIST AND IT WAS NEVER SILENT. Three faults in this probe, not one`);
+console.log(`  in the game: the heaped arm was heat=40 and every discrete reader sits above it (the`);
+console.log(`  breach row goes \`heat>=45?3:2\`, \`banned\` wants 90), so both arms landed the same side of`);
+console.log(`  every gate; two of the four GAMBITS are priced in heat continuously and no channel read`);
+console.log(`  a number that moves without crossing a threshold; and the events channel below could`);
+console.log(`  never fire at all. At heat 95 it answers on the urgency AND the odds.`);
+console.log(`\n  And a silence is still only as good as the POLICY that produced the house — the reference`);
+console.log(`  player reaches heat 0.7 by week 230, so nothing here was ever going to be about the game`);
+console.log(`  until the arm made the quantity exist. Drive a thing, and drive it far enough, before`);
+console.log(`  filing it dead.`);
 console.log(`\n  rope: ${out.rope}`);
