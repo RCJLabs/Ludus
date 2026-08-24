@@ -110,7 +110,15 @@ export async function run({ p }){
       f.injury = null;
       const offer = { id:9001, tier:0, opp:f, oppRef:{ house:h.name, fid:f.id }, stakes:"standard",
                       purse:100, venue:"forum", sky:"fair", rematch:false, grudgeM:false };
-      try { A.doFight(d, g.id, offer, "aggressive", null, null, "press", "none"); } catch(e){ continue; }
+      /* ---- THROUGH THE ROPE, NOT THROUGH `doFight` ----
+         The first cut called `A.doFight` directly and `probe` — the check that polices the checks —
+         went red on it: about 60% of standard bouts STOP AT THE BALANCE and mutate nothing until
+         the crux is answered, so that share of this fixture's bouts never happened. `R.run` presses
+         the balance the way a player does and returns the resolved result. */
+      const R = window.__ROPE;
+      if(!R || typeof R.run !== "function"){ bad.push("the rope is not installed — this fixture cannot fight honestly"); break; }
+      const out = R.run(d, offer, [g.id], { tactic:"aggressive", choice:"press" });
+      if(!out || !out.ran) continue;
       const after = (h.fighters||[]).find(x=>x.id===f.id);
       if(!after || !after.injury) continue;
       saw++;

@@ -4534,6 +4534,12 @@ nothing has tested the thing it stands for.** The assertion matches the opponent
 which is the one that had nothing in front of it. That is the second time in three releases a
 blocklist-shaped assertion failed on correct code.
 
+**And `probe` — the check that polices the checks — went red on this one.** `wound`'s driven half
+called `A.doFight` directly, and about **60% of standard bouts stop at the balance and mutate
+nothing** until the crux is answered, so that share of the fixture's bouts never happened. It goes
+through `__ROPE.run` now, which presses the balance the way a player does. The suite catching a new
+check's fixture on its first full run is the guard working exactly as intended.
+
 **And the probe's first cut caught nothing at all**: it wrapped `A.injuryFor` and reported 1,074
 doors entered and 0 wounds. `injuryFor` is module-scope and the game calls it directly, so
 reassigning the handle's property rebinds the probe's own reference and nothing else. The four doors
