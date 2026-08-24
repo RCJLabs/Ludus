@@ -4461,6 +4461,81 @@ wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
 
+### v3.131.0 — #199: a man's style was re-specified every single bout
+
+`plan` was reset to `"none"` by both `spendOrders` and `goPick`, so it was chosen from scratch every
+time. `tactic` was one house-wide `useState` that survived between bouts and **was never saved** — a
+standing order the game forgot whenever the page did. Neither belonged to the man.
+
+## The measurement went against the item as filed
+
+The item says *let the man carry his own default* and treats the two choices as one thing. They are
+not. `TACTIC` is four fixed trades with no right answer — aggressive deals 1.46× and takes 1.55× — so
+a standing setting can only ever be a preference. `PLANS` is a **bet**: `planEffect` returns
+`PLAN_READ.right` (pow 1.027) when one of the opponent's tells names that plan, and
+`PLAN_READ.wrong` (pow 0.970) otherwise. `none` alone is neutral.
+
+`probes/style.mjs`, over **1,347 named opponents** a played house actually met:
+
+| plan | right | standing it every bout, against `none`'s 0 |
+|---|---|---|
+| `press` | 22.7% | **−1.71% power** |
+| `crowd` | 17.7% | −1.99% |
+| `wait` | 16.3% | −2.07% |
+| `outlast` | 8.0% | −2.54% |
+| `reach` | 4.4% | −2.75% |
+
+**Every fixed plan is a standing loss.** A per-man default plan — exactly what the item proposed —
+would quietly cost the player power on four bouts in five. So the man carries a standing **tactic**
+and no standing plan, and the plan grid pre-fills only from a reading that has been paid for: 57.2%
+of opponents carry a tell, and the pre-fill fires only when the man has been watched or drilled.
+
+## What shipped
+
+- **`g.style`** — his standing tactic, **derived from his own six stats, not drawn**. A random pick in
+  `genGladiator` would re-phase every seeded house in the project; this reads what he already is, so
+  `open.mjs` stays exact. Over 400 men: measured 151, aggressive 162, defensive 54, showboat 33.
+- **`StandingStyle`** on his **overview** — not under Training, because it is how he fights and not how
+  he trains, and it is the first thing the arena reads about him. Four chips and a line saying what
+  happens when nobody says otherwise.
+- The arena's chips read *his* style and say whose habit it is, so an override reads as an override:
+  *"just this afternoon — he usually goes at them"*.
+- `suggestedPlan` pre-fills the plan grid from the tells, and **returns nothing when nothing has been
+  read** — the numbers above are the reason.
+
+**The interface shrank, which is what this item promised.** `StyleRow` and `StandingStyle` both live at
+module scope: **App 5,779 → 5,776**, with a whole new control added.
+
+## `open.mjs` is byte-identical
+
+Fourth release running.
+
+## The check pins the reasoning to the number it rests on
+
+`style` is the 102nd, and its **first assertion is the premise**: if `PLAN_READ.wrong` ever stops being
+a penalty, a plan stops being a bet and the reason the man gets no standing plan has gone away — so
+the check fails and says exactly that. Then: the style is derived and not drawn (the same man twice
+must give the same answer, or every seeded house re-phases); all four styles are reachable; an old save
+with no `g.style` still reads one; a nonsense style is refused; the plan pre-fills only from a paid
+reading. And **the defect itself** — it sets a man's style on the real screen, reloads the page, and
+requires it to still be there.
+
+## One thing the probe found that is not this item
+
+**`TELLS.cold` fired 0 times in 1,347 opponents.** It reads `formOf(o) <= -30`, and `form` is only
+ever written on rival *houses* — `h.form` — never on a generated fighter, so `formOf(o)` is 0 for
+every opponent the player will ever meet. It is structurally dead, the same shape as #188's `nokill`
+and `nobeast`. Filed below as **#206** rather than fixed here: `formPower` is applied to your man and
+not to his, so giving opponents a form would not move the fight, but drawing one in `genOpponent`
+would re-phase every seeded house, and that is a decision worth taking on its own.
+
+Also worth recording: `seamOf` gives a man with no shape at all a habit anyway, off a name hash with
+`dev: 0` — and `dev >= 0` makes every `high` tell true. A flat fixture therefore *always* reads as
+quick, which cost this check's first run a wrong diagnosis. A genuinely tell-less opponent is one
+whose seam points the way no tell reads.
+
+`bulk`: App 5,779 → **5,776** of 5,786, SECT unchanged at 1,464. No allowance raised.
+
 ### v3.130.0 — #198: four ways to wreck a house, and not one to warm one
 
 `GAMBITS` is poach, bribe, poison and word — four, all hostile. Against them `warm` runs 0–100 with
@@ -15162,7 +15237,7 @@ fight on their card for a cut, a doctore lent, a debt settled. *Reuses `warm`, `
 a house ever sees — if warmth never rises far enough to open them, the fault is the input, not the
 missing verb.
 
-### #199 — a man's style is re-specified every single bout.
+### #199 — CLOSED in v3.131.0, and the plan half deliberately NOT as proposed. A man's style is re-specified every single bout.
 `PLANS` (6) and `TACTIC` (4) are picked per bout and #194 was entirely about those choices leaking
 between them. Let the man carry his own default — how he fights when you do not say — pre-filled on
 the arena panel and overridden when it matters. *Reuses `PLANS`, `TACTIC`, and `g.focus`'s precedent.*
@@ -15212,6 +15287,19 @@ about the input rather than the reader.
 to it is `bribe`, one of the four illegal gambits. The legitimate version — ask for a different
 opponent, a bigger purse, softer stakes, at the cost of favour and standing, and he can refuse.
 *Reuses `EDITORS`, `favor`, patrons, `aedileOn`.*
+
+### #206 — MEASURED, not proposed. `TELLS.cold` cannot fire.
+`cold` reads `formOf(o) <= -30` and names the `press` plan. **`form` is only ever written on rival
+HOUSES** — `h.form`, in the weekly house sweep — and never on a generated fighter, so `formOf(o)` is 0
+for every opponent a player will ever meet. Measured over **1,347 named opponents** across 8 played
+houses (`probes/style.mjs`): 0 firings, against `green` 22.7% and `quick` 15.5%. It is dead writing of
+exactly #188's shape, and it is one of nine tells gating a choice the player pays to be able to make.
+**The decision that makes this its own item rather than a line in v3.131.0**: `formPower` is applied
+to your man and not to his, so giving opponents a form would not move the fight — but *drawing* one in
+`genOpponent` would re-phase every seeded house in the project, and there is a second reading where
+`cold` should read the man's HOUSE form, which exists and is maintained. Two different games.
+**To check first**: whether an opponent carries any route to his house's record at the point `TELLS`
+sees him — `pickRivalOpp` returns a `ref`, but the `opp` handed to `when()` may not carry it.
 
 **Cheapest three**: #199 (pure reuse, and it shrinks the interface), #201 (surfacing an existing
 number), #203 (one more option on an existing row). **Richest three**: #196, #198 and #205 — each
@@ -16039,4 +16127,4 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.130.0 — there is a handle on this side of the door now*
+*Last updated: v3.131.0 — the man carries his own style; the plan stays a bet you have to earn*
