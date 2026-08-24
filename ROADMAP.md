@@ -4529,6 +4529,7 @@ noun at all, which is the only fix a pronoun helper cannot undo.
 The odds extraction is behaviour-neutral and everything else is display.
 
 `bulk`: App 5,779 → **5,780** of 5,786, SECT unchanged at 1,464. No allowance raised.
+Suite **104/104 green** in 14.0 min, first run, no reds.
 
 ### v3.132.0 — #200: the crowd was a number and never a demand
 
