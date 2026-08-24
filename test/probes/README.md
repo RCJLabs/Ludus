@@ -64,6 +64,7 @@ Run them straight:
     node test/probes/rudis.mjs 12 420 SEED '{"free":true}'    # the wooden sword: four terms and the career under them
     node test/probes/rudis.mjs 12 420 SEED '{"protect":"safe","free":true,"protectBar":0.45}'   # ...#190's falsifier
     node test/probes/paint.mjs               # how far apart the arena backdrops are, in CIE76 dE
+    node test/probes/ribs.mjs  12 420 SEED   # every wound counted at the bout, by the door that dealt it
 
 ## HOW MANY HOUSES A FIGURE NEEDS — read this before quoting one
 
@@ -637,6 +638,17 @@ declared on `.lr`, not `:root`, so a host appended to `document.body` fails `var
 the whole `background` declaration becomes invalid at computed-value time — it reported `.v-pit`,
 64% of every bout, as having no gradient at all. The probe now mounts inside the game's own scope
 and exits loudly if `--ground` resolves empty.
+
+**`ribs.mjs`** — every wound in the game, counted AT THE BOUT and attributed to the door that dealt
+it, plus the four tactics driven straight so the branch behind the count is visible. Two instrument
+faults, and the first is the one to remember: **it wrapped `A.injuryFor` and caught nothing** —
+1,074 doors entered, 0 wounds — because `injuryFor` is module-scope and the game calls it directly,
+so reassigning the handle's property rebinds only the probe's own reference. The four doors ARE
+called through the handle by the rope, which is why those counted and the wound did not. **A wrap
+only sees calls that go through the thing you wrapped.** It diffs `g.injury` across each door now,
+which is also the item's own correction about weekly sweeps: `Split brow` heals in one week and read
+36 where the bout count reads 286. The second was a fixture fault — `simulatePair` reads `ctx.d` and
+an empty context threw, which printed as "could not be driven" where the engine was fine.
 
 **`scroll.mjs`** — where the vertical pixels go, per place, as the page ARRIVES versus with every fold
 thrown open. The second is what `reach` necessarily measures and it is 40% taller than the first.
