@@ -46,6 +46,36 @@ export const describe = "seven things about a man are seven readings, and each o
 const FLOOR = { class: 6, fatigue: 2, injury: 3, scars: 2, wins: 5, renown: 3, kills: 3 };
 const SWEEP = { wins:[0,1,2,4,7], renown:[0,40,180], kills:[0,1,4] };
 
+/* ---- AND THE SAME QUESTION PUT TO THE ARENA'S OWN FIGHTER, off the same planted man ----
+   v3.146.0. `test/probes/vocab.mjs` asked both figures the same six questions and the little 35px
+   man in the yard knew MORE about him than the centrepiece did: 22 distinct drawings against 12,
+   with fatigue, injury and his record each worth exactly ONE to the fighter. Bout state was never
+   the gap — seventeen poses, live wounds, wear and aim all work — the drawing simply had no route
+   to the man, because the arena is handed a snapshot built at eight sites and none of them carried
+   him. Each man below is planted ONCE and read twice, so the two figures are never compared across
+   two different men.
+
+   WINS IS DELIBERATELY NOT ON THIS LIST, and its floor here is 1 rather than an oversight. What he
+   was handed for winning is a palm, and a man does not carry a palm into a fight; it is a yard mark
+   and the arena is not the yard. Renown and the men he has killed reach BOTH, through the same two
+   functions at two sizes, which is what keeps one visual language rather than two. */
+const FIG_FLOOR = { class: 6, fatigue: 2, injury: 3, scars: 2, renown: 3, kills: 3 };
+
+/* THE FIGHTER'S SAG IS ON THE SVG'S OWN STYLE, not on any child, so a key built only from child
+   attributes would report fatigue as absent while it was working — the same blindness `opacity`
+   had here until v3.144.0. The root's computed transform is part of the drawing and is read. */
+const FIG_READ = `(()=>{
+  const svg = document.querySelector('svg[viewBox="0 0 128 146"]'); if(!svg) return null;
+  const kids = [...svg.querySelectorAll("circle,path,rect,ellipse,line,polygon,polyline")].map(e=>{
+    const a = n => e.getAttribute(n) || "";
+    return [e.tagName, a("d"), a("points"), a("cx"), a("cy"), a("x"), a("y"),
+            a("x1"), a("y1"), a("x2"), a("y2"), a("r"), a("rx"), a("ry"),
+            a("width"), a("height"), a("fill"), a("stroke"), a("stroke-width"),
+            a("opacity"), a("transform")].join("|");
+  }).join("~");
+  return getComputedStyle(svg).transform + "@@" + kids;
+})()`;
+
 const READ = `(()=>{
   const svg = document.querySelector('svg[aria-label^="The ludus"]'); if(!svg) return null;
   const man = [...svg.querySelectorAll('g[role="button"]')].find(g=>{
@@ -89,9 +119,19 @@ export async function run({ p, errors }){
       g.wins = 0; g.losses = 0; g.kills = 0; g.pfame = 0;
       if(a.axis === "fatigue") g.fatigue = a.i ? 90 : 0;
       if(a.axis === "injury" && a.i > 0)
-        g.injury = { name:"x", weeks:1, pen:2, part:["head","flank","thigh"][a.i-1] };
+        /* THROUGH THE GAME'S OWN CONSTRUCTOR, and on parts it really uses. This swept "head",
+           which is not a target the game has — `injuryFor` sets `part: target` and every target
+           comes from TARGETS: arm, shoulder, thigh, flank, brow, hand. The fighter looks its
+           binding up in that same table, so "head" resolved to nothing and two of the three
+           injured men were drawn identically. The yard tolerated it only because `PART_Y` carries
+           aliases. A fixture that plants states the game cannot produce proves nothing. */
+        g.injury = A.injuryFor(["brow","flank","thigh"][a.i-1], false);
+      /* THROUGH THE GAME'S OWN CONSTRUCTOR. This built `{part, big}` by hand, and the arena figure
+         draws a scar at `s.x, s.y` — coordinates only `scarMark` puts on it — so every scar in this
+         sweep would have been drawn at NaN,NaN on the fighter while reading fine in the yard. The
+         same fault the note over `scarMark` records, re-introduced by the test rather than the game. */
       if(a.axis === "scars")
-        g.scars = Array.from({length:a.i*2}).map((_,k)=>({ part:["flank","arm","head","thigh"][k%4], big:k%2===0 }));
+        g.scars = Array.from({length:a.i*2}).map((_,k)=>A.scarMark(["flank","arm","thigh","brow"][k%4], k%2===0));
       if(a.axis === "wins")   g.wins  = a.sweep[a.i];
       if(a.axis === "renown") g.pfame = a.sweep[a.i];
       if(a.axis === "kills")  g.kills = a.sweep[a.i];
@@ -101,27 +141,49 @@ export async function run({ p, errors }){
     await clearAll(p, 8);
     await tab(p, "ludus"); await p.waitForTimeout(330); await clearAll(p, 5);
     await tab(p, "ludus"); await p.waitForTimeout(330); await settle(p);
-    return await p.evaluate(READ);
+    const yard = await p.evaluate(READ);
+    /* to his card and onto its KIT face, which is where the arena's own figure is shown at rest,
+       captioned "as he takes the sand". `arm` learned both of these: the gatekeeper's note sits
+       above the roster, and the card has five faces with the figure behind only one. */
+    await tab(p, "men"); await p.waitForTimeout(300);
+    await clearAll(p, 6); await p.waitForTimeout(200);
+    await p.evaluate(()=>{ const c = [...document.querySelectorAll("button.panel")][0]; if(c) c.click(); });
+    await p.waitForTimeout(420);
+    await p.evaluate(()=>{ const c = [...document.querySelectorAll(".modalwrap button.chip")]
+      .find(b=>/^kit$/i.test((b.innerText||"").trim())); if(c) c.click(); });
+    await p.waitForTimeout(360); await settle(p);
+    const card = await p.evaluate(FIG_READ);
+    return { yard, card };
   };
 
-  const seen = new Set();
+  const seen = new Set(), figSeen = new Set();
   for(const [axis, want] of Object.entries(FLOOR)){
-    const keys = [];
-    for(let i=0;i<want;i++){
-      const k = await oneMan(axis, i);
-      if(k) keys.push(k); else bad.push(`the yard drew no man at all on ${axis} step ${i}`);
+    const figWant = FIG_FLOOR[axis] || 0;
+    const steps = Math.max(want, figWant);
+    const keys = [], figKeys = [];
+    for(let i=0;i<steps;i++){
+      const r = await oneMan(axis, i);
+      if(r.yard) keys.push(r.yard); else bad.push(`the yard drew no man at all on ${axis} step ${i}`);
+      if(r.card) figKeys.push(r.card); else bad.push(`his card drew no fighter at all on ${axis} step ${i}`);
     }
-    const uniq = new Set(keys);
+    const uniq = new Set(keys.slice(0, want)), figUniq = new Set(figKeys.slice(0, Math.max(figWant,1)));
     for(const k of uniq) seen.add(k);
-    lines.push(`  ${axis.padEnd(8)} ${String(keys.length).padStart(2)} men drawn · ${String(uniq.size).padStart(2)} distinct drawings (needs ${want})`);
+    for(const k of figUniq) figSeen.add(k);
+    lines.push(`  ${axis.padEnd(8)} yard ${String(uniq.size).padStart(2)}/${want}`
+      + `   fighter ${figWant ? `${String(figUniq.size).padStart(2)}/${figWant}` : " — not his to say"}`);
     if(uniq.size < want)
       bad.push(`${want} men differing only in ${axis} produce ${uniq.size} distinct drawing${uniq.size===1?"":"s"} — `
         + `the yard cannot tell them apart, so that reading is not reaching the picture`);
+    if(figWant && figUniq.size < figWant)
+      bad.push(`${figWant} men differing only in ${axis} produce ${figUniq.size} distinct fighter`
+        + `${figUniq.size===1?"":"s"} on the card — the arena's own figure cannot tell them apart, `
+        + `and it is the picture the game is FOR`);
   }
-  lines.unshift(`the yard, over every axis it should read:`);
-  lines.push(`across all ${Object.keys(FLOOR).length} sweeps: ${seen.size} distinct drawings`);
+  lines.unshift(`both drawn men, over every axis each should read:`);
+  lines.push(`distinct drawings across every sweep: yard ${seen.size} · fighter ${figSeen.size}`);
   if(errors.length) bad.push(`${errors.length} page errors`);
   if(!bad.length) lines.push("class, fatigue, where he is hurt, what has closed, what he has won, "
-    + "who knows his name and who he has killed all reach the drawing");
+    + "who knows his name and who he has killed all reach the yard; the fighter reads every one of "
+    + "them but the palm, which is not a thing a man carries into a fight");
   return { pass: bad.length === 0, why: bad.slice(0,3).join("; ") || null, lines };
 }

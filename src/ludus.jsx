@@ -15722,7 +15722,7 @@ function doVenatio(d, gid, offer, tactic, pending, choice){
   if(res.unfinished){
     return { pending:{ gid, offer, tactic, crux:res.crux, venatio:true },
       beats:res.beats, crux:true, venatio:true, beast:offer.beast, tier:offer.tier, stakes:"venatio", festival:offer.festival, venue:offer.venue, factions:d.factions,
-      A:{ name:g.name, nick:g.nick, cls:g.cls, origin:g.origin, sub:"your house", kit:gc.kit, scars:gc.scars||[], fem:isF(g) },
+      A:{ name:g.name, nick:g.nick, cls:g.cls, origin:g.origin, sub:"your house", kit:gc.kit, scars:gc.scars||[], fem:isF(g), bore:boreOf(g) },
       B:{ name:B.name, cls:"beast", sub:"the hunt" } };
   }
 
@@ -15824,7 +15824,7 @@ function doVenatio(d, gid, offer, tactic, pending, choice){
   if(d.games) d.games.offers = d.games.offers.filter(o=>o.id!==offer.id);
   return { beats:res.beats, sum:sum.map(x=>herOwn(d,x)), win:res.killed, dead:res.aDies, crowd:rnd(res.crowd), venue:offer.venue, factions:d.factions,
     venatio:true, beast:offer.beast, tier:offer.tier, stakes:"venatio", festival:offer.festival,
-    A:{ name:g.name, nick:g.nick, cls:g.cls, origin:g.origin, sub:"your house", kit:gc.kit, scars:gc.scars||[], fem:isF(g) },
+    A:{ name:g.name, nick:g.nick, cls:g.cls, origin:g.origin, sub:"your house", kit:gc.kit, scars:gc.scars||[], fem:isF(g), bore:boreOf(g) },
     B:{ name:B.name, cls:"beast", sub:"the hunt" } };
 }
 
@@ -15859,8 +15859,8 @@ function doPairFight(d, ids, offer, tactic, pending, choice){
   if(res.unfinished){
     return { pending:{ ids, offer, tactic, crux:res.crux, pair:true },
       beats:res.beats, crux:true, pair:true, tier:offer.tier, stakes:offer.stakes, festival:offer.festival,
-      A:clones.map(c=>({ name:c.name, nick:c.nick, cls:c.cls, kit:c.kit, scars:c.scars||[], sub:"your house", fem:isF(c) })),
-      B:opps.map(o=>({ name:o.name, nick:o.nick, cls:o.cls, kit:o.kit, scars:o.scars||[], sub:o.house?`House ${o.house}`:"the pits", fem:isF(o) })) };
+      A:clones.map(c=>({ name:c.name, nick:c.nick, cls:c.cls, kit:c.kit, scars:c.scars||[], sub:"your house", fem:isF(c), bore:boreOf(c) })),
+      B:opps.map(o=>({ name:o.name, nick:o.nick, cls:o.cls, kit:o.kit, scars:o.scars||[], sub:o.house?`House ${o.house}`:"the pits", fem:isF(o), bore:boreOf(o) })) };
   }
 
   const sum = [`Appearance fees: ${t.app*2} denarii.`];
@@ -15970,8 +15970,8 @@ function doPairFight(d, ids, offer, tactic, pending, choice){
   if(d.games) d.games.offers = d.games.offers.filter(o=>o.id!==offer.id);
   return { beats:res.beats, sum:sum.map(x=>herOwn(d,x)), win:res.win, dead:res.dead.A.some(Boolean), crowd:rnd(res.crowd), venue:offer.venue, factions:d.factions,
     pair:true, tier:offer.tier, stakes:offer.stakes, festival:offer.festival,
-    A:clones.map((c,i)=>({ name:c.name, nick:c.nick, cls:c.cls, kit:c.kit, scars:c.scars||[], sub:"your house", fem:isF(c) })),
-    B:opps.map(o=>({ name:o.name, nick:o.nick, cls:o.cls, kit:o.kit, scars:o.scars||[], sub:o.house?`House ${o.house}`:"the pits", fem:isF(o) })) };
+    A:clones.map((c,i)=>({ name:c.name, nick:c.nick, cls:c.cls, kit:c.kit, scars:c.scars||[], sub:"your house", fem:isF(c), bore:boreOf(c) })),
+    B:opps.map(o=>({ name:o.name, nick:o.nick, cls:o.cls, kit:o.kit, scars:o.scars||[], sub:o.house?`House ${o.house}`:"the pits", fem:isF(o), bore:boreOf(o) })) };
 }
 
 /* ---- PAIR BOUTS ----
@@ -16478,9 +16478,9 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   if(res.unfinished){
     return { pending:{ gid, offer, tactic, bet, plan:planKey, crux:res.crux, bribeHouse },
       beats: res.beats, crux:true, tier:offer.tier, stakes:offer.stakes, festival:offer.festival, venue:offer.venue, factions:d.factions,
-      A:{ name:g.name, nick:g.nick, cls:g.cls, origin:g.origin, sub:"your house", kit:gc.kit, scars:gc.scars||[], fem:isF(g) },
+      A:{ name:g.name, nick:g.nick, cls:g.cls, origin:g.origin, sub:"your house", kit:gc.kit, scars:gc.scars||[], fem:isF(g), bore:boreOf(g) },
       B:{ name:offer.opp.name, nick:offer.opp.nick, cls:offer.opp.cls, origin:offer.opp.origin,
-          sub:offer.opp.house? `House ${offer.opp.house}`:"the pits", kit:oc.kit, scars:oc.scars||[], fem:isF(offer.opp) } };
+          sub:offer.opp.house? `House ${offer.opp.house}`:"the pits", kit:oc.kit, scars:oc.scars||[], fem:isF(offer.opp), bore:boreOf(offer.opp) } };
   }
   if(imperial){
     res.beats.splice(1, 0, Object.assign({}, res.beats[0], { kind:"intro", actor:null,
@@ -16758,7 +16758,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
       if(v){ b.stands = v; last = i; }
     } }
   return { beats:res.beats, sum:sum.map(x=>herOwn(d,x)), reading:why, win, dead:!!res.aDies, crowd:rnd(res.crowd), name:g.name, venue:offer.venue, factions:d.factions,
-    A:{ name:g.name, nick:g.nick, cls:g.cls, origin:g.origin, sub:"your house", kit:gc.kit, scars:gc.scars||[], fem:isF(g) },
+    A:{ name:g.name, nick:g.nick, cls:g.cls, origin:g.origin, sub:"your house", kit:gc.kit, scars:gc.scars||[], fem:isF(g), bore:boreOf(g) },
     B:{ name:offer.opp.name, nick:offer.opp.nick, cls:offer.opp.cls, origin:offer.opp.origin, sub:offer.opp.house? `House ${offer.opp.house}`:"the pits", kit:oc.kit, scars:oc.scars||[], fem:isF(offer.opp) },
     tier:offer.tier, stakes:offer.stakes, festival:offer.festival };
 }
@@ -18832,6 +18832,60 @@ const UMBRA_BODY = "#100a05", UMBRA_KIT = "#0a0603", UMBRA_DEEP = "#040202", UMB
 /* the drawn man's own box, named so the check that measures where his head falls on the wall
    reads it from here rather than from a number somebody typed into a test. */
 const FIG_W = 118, FIG_H = 146;
+/* ---- WHAT A MAN BRINGS TO THE SAND, AS AGAINST WHAT THE BOUT DOES TO HIM ----
+   `test/probes/vocab.mjs` puts the same six questions to both drawn men. The yard figure answered
+   all six — 22 distinct drawings after v3.144.0. The arena's own fighter, the centrepiece of the
+   game, answered three: **12 distinct drawings, with fatigue, injury and his record each worth
+   exactly ONE.** The little 35px man in the yard knew more about him than the big one does.
+
+   Bout state was never the gap: seventeen poses, live wounds, wear and aim all work. What the
+   drawing had no route to was the man HIMSELF, because the arena is handed a snapshot —
+   `{name, nick, cls, origin, sub, kit, scars, fem}` — built fresh at eight sites, and none of the
+   three carried. `bore` is that route, one field rather than three so the eight sites take one
+   edit each, and the reading is named where both figures can reach it rather than twice.
+
+   THE SHADOW IS THE SAME READING IN BOTH PICTURES, deliberately. v3.144.0 gave the yard man a pool
+   whose reach is his renown and whose darkness is the men he has killed; the arena fighter already
+   HAD a pool and it was a constant, `rx="17"` and one opacity for every man alive. Same rule, two
+   sizes — so the two figures say the same thing the same way, which is the whole point of a
+   visual language. Renown is rooted and saturates at the rudis gate for the reason v3.144.0
+   measured: its median is 0 and its tail runs past 500. */
+/* HE DOES NOT ARRIVE FRESH, which is what `spent` is for. `wearOf` in the arena is bout stamina,
+   and bout stamina starts at his own maximum whatever week he has had — `smA = 55 + A.end*0.6`,
+   with no fatigue term anywhere in it — so a man sent out at fatigue 90 was drawn identical to a
+   rested one until the bout wore him down itself. His fatigue is a FLOOR under the sag rather than
+   a replacement for it, at this weight so a hard week leans him without spending the whole range
+   the bout still needs. */
+const SPENT_SAG = 0.55;
+const boreOf = g => g ? { hurt: g.injury ? g.injury.part : null,
+  spent: Math.min(1, Math.max(0, (g.fatigue||0)/100)),
+  fame: Math.round(g.pfame||0), kills: g.kills||0 } : null;
+const umbraRx = (fame, lo, hi) =>
+  Math.round((lo + (hi-lo)*Math.min(1, Math.sqrt((fame||0)/RUDIS_FAME)))*100)/100;
+const umbraOp = (kills, base) => Math.round((base + 0.06*Math.min(4, kills||0))*100)/100;
+/* ---- AND WHAT HE WALKED IN CARRYING ----
+   `canFight` has no injury term — the game says so in its own note at the surgeon — so a
+   worked-through man can be sent to the sand, and until now he was drawn whole when he got there.
+   He is bound where he is hurt: linen over the part, which is the one thing on him that is neither
+   shadow nor blood, and the mark under it in the register between a scar that has closed and a cut
+   he is taking now. Drawn from TARGETS, the same table the blows themselves choose from, so the
+   binding lands exactly where the wound that caused it landed.
+
+   IT FALLS BACK TO THE TRUNK RATHER THAN TO NOTHING, and to TARGETS[3] because that is exactly what
+   `scarMark` falls back to — one answer for "a mark whose place did not resolve". An exact lookup
+   that missed drew a hurt man WHOLE, which is the failure this release is about, one level down.
+
+   It lives out here rather than inside `Fighter` because it closes over nothing but its own
+   coordinates, and `Fighter` was already at its line allowance — `bulk`'s rule is to split before
+   asking for more room, since an allowance that only ever rises is not a ceiling. */
+const hurtBinding = part => { if(!part) return null;
+  const [ , [hx, hy] ] = TARGETS.find(t=>t[0]===part) || TARGETS[3];
+  return (<g>
+    <path d={`M${hx-9},${hy-3} q9,-3.5 18,0 l0,7 q-9,3.5 -18,0 Z`} fill={UMBRA_SEAM} opacity=".5"/>
+    <path d={`M${hx-8.5},${hy+1} L${hx+8.5},${hy-1.6}`} stroke={UMBRA_KIT} strokeWidth="1.3" opacity=".85"/>
+    <path d={`M${hx-4},${hy+2.6} L${hx+4},${hy-2.6}`} stroke="#b3301e" strokeWidth="2.6"
+      strokeLinecap="round" opacity=".9"/>
+  </g>); };
 const SKIN=UMBRA_BODY, SKIN_D="#191108", LEATHER=UMBRA_KIT, LEATHER_D=UMBRA_DEEP,
       STEEL="#1c1309", STEEL_D=UMBRA_DEEP, BRASS="#2b1f11", BRASS_D="#150e07", CLOTH=UMBRA_KIT,
       BLADE="#120c06", BLADE_D=UMBRA_DEEP, GRIP=UMBRA_DEEP;
@@ -18848,8 +18902,10 @@ const toUmbra = (hex, lift) => { const h = String(hex||"#000").replace("#","");
    Weapons hang off a real arm: shoulder -> forearm -> fist -> grip -> guard -> blade,
    so a sword reads as held rather than growing out of him.
    Drawn facing RIGHT (+x is toward the opponent); side B is mirrored by the parent. */
-const Fighter = React.memo(function Fighter({ kit, pose, wounds, scars, fallen, dead, foe, fem, col, wear, aim }){
+const Fighter = React.memo(function Fighter({ kit, pose, wounds, scars, fallen, dead, foe, fem, col, wear, aim, bore }){
   const K = kit || {};
+  const BR = bore || {};
+  const sag = Math.max(wear||0, (BR.spent||0)*SPENT_SAG);   /* see boreOf: he does not arrive fresh */
   const wArt = kitArt(K,"weapon") || "sword";
   const oArt = kitArt(K,"offhand") || "none";
   const hArt = kitArt(K,"helm") || "bare";
@@ -19073,10 +19129,15 @@ const Fighter = React.memo(function Fighter({ kit, pose, wounds, scars, fallen, 
       /* and a man on his knee is shorter. The origin is already at his feet, so a
          squash reads as the leg folding under him rather than the figure shrinking —
          which is the whole of a kneel without redrawing a limb. */
-      transform:`translate(${P.x}px,${P.y + (fallen||dead ? 0 : (wear||0)*5)}px) rotate(${P.rot + (fallen||dead ? 0 : (wear||0)*4)}deg)${P.kneel ? " scale(1.02,0.74)" : ""}`,
+      transform:`translate(${P.x}px,${P.y + (fallen||dead ? 0 : sag*5)}px) rotate(${P.rot + (fallen||dead ? 0 : sag*4)}deg)${P.kneel ? " scale(1.02,0.74)" : ""}`,
       transition:"transform .24s cubic-bezier(.34,1.45,.5,1), filter .5s, opacity .5s",
       transformOrigin:"56px 134px" }}>
-      <ellipse cx="58" cy="135" rx={fallen||dead?30:17} ry="4" fill="rgba(28,16,8,.34)"/>
+      {/* the pool at his feet was rx 17 and one opacity for every man who ever stood there. It is
+           the yard's reading at the arena's size now: how far it reaches is his renown, how dark it
+           is is the men he has killed. Written as attributes rather than inside an rgba() so that
+           what the drawing says is something a check can read. */}
+      <ellipse cx="58" cy="135" rx={fallen||dead ? 30 : umbraRx(BR.fame, 14, 24)} ry="4"
+        fill="#1c1008" opacity={fallen||dead ? .34 : umbraOp(BR.kills, .3)}/>
       {striking && (()=>{ /* it used to sweep the same arc whatever he was going for */
         const y = aim==null ? 54 : clamp(aim, 20, 104);
         return <path d={`M78,${Math.round(30 + y*0.22)} Q116,${Math.round(y)} 80,${Math.round(y + 34)}`}
@@ -19110,6 +19171,7 @@ const Fighter = React.memo(function Fighter({ kit, pose, wounds, scars, fallen, 
       {offBlade()}
       {mainArm()}
       {helm()}
+      {hurtBinding(BR.hurt)}
       {/* ---- THE ONLY COLOUR ON HIM ----
            Everything above this line is shadow. What follows is the whole of the palette: a
            cut he took tonight, and one that closed. They are drawn LAST so nothing overlaps
@@ -19771,7 +19833,7 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
           {isMelee ? (<>
             {meleeA && <div className="fig" style={{left:`calc(50% - 130px)`}}>
               <div className={b.kind==="clash"?"bob":""}>
-                <Fighter foe={meleeA && !meleeA.mine} col={meleeA && meleeA.mine ? houseCol : null} fem={meleeA.fem} kit={meleeA.kit} scars={meleeA.scars}
+                <Fighter foe={meleeA && !meleeA.mine} col={meleeA && meleeA.mine ? houseCol : null} fem={meleeA.fem} kit={meleeA.kit} scars={meleeA.scars} bore={meleeA.bore}
                   pose={b.actor==="a" && (b.kind==="hit"||b.kind==="crit"||b.kind==="graze") ? "lunge"
                     : b.out[b.a] ? "fallen" : b.kind==="end" ? "victor" : "idle"}
                   wounds={[]} fallen={b.out[b.a]} dead={b.dead[b.a]}/>
@@ -19779,7 +19841,7 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
             </div>}
             {meleeB && <div className="fig" style={{right:`calc(50% - 130px)`, transform:"scaleX(-1)"}}>
               <div className={b.kind==="clash"?"bob":""}>
-                <Fighter foe={!meleeB.mine} fem={meleeB.fem} kit={meleeB.kit} scars={meleeB.scars}
+                <Fighter foe={!meleeB.mine} fem={meleeB.fem} kit={meleeB.kit} scars={meleeB.scars} bore={meleeB.bore}
                   pose={b.out[b.b] ? "fallen" : (b.kind==="hit"||b.kind==="crit") ? "recoil" : "idle"}
                   wounds={[]} fallen={b.out[b.b]} dead={b.dead[b.b]}/>
               </div>
@@ -19789,7 +19851,7 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
               <div key={`a${i}`} className="fig" style={{ left:`calc(50% - ${118 + (i===0?4:44)}px)`,
                 bottom: i===0 ? 14 : 40, zIndex: i===0?3:2, opacity: i===0?1:0.88, transform:`scale(${i===0?1:0.86})`, transformOrigin:"50% 100%" }}>
                 <div className={pairPose("A",i)==="idle" && !b.dA[i] ? "bob":""}>
-                  <Fighter col={houseCol} fem={fight.A[i].fem} kit={fight.A[i].kit} scars={fight.A[i].scars} pose={pairPose("A",i)}
+                  <Fighter col={houseCol} fem={fight.A[i].fem} kit={fight.A[i].kit} scars={fight.A[i].scars} bore={fight.A[i].bore} pose={pairPose("A",i)}
                     wounds={pairWounds("A",i)} fallen={b.dA[i]} dead={b.xA[i]}/>
                 </div>
               </div>
@@ -19799,7 +19861,7 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
                 bottom: i===0 ? 14 : 40, zIndex: i===0?3:2, opacity: i===0?1:0.88,
                 transform:`scaleX(-1) scale(${i===0?1:0.86})`, transformOrigin:"50% 100%" }}>
                 <div className={pairPose("B",i)==="idle" && !b.dB[i] ? "bob":""}>
-                  <Fighter foe fem={fight.B[i].fem} kit={fight.B[i].kit} scars={fight.B[i].scars} pose={pairPose("B",i)}
+                  <Fighter foe fem={fight.B[i].fem} kit={fight.B[i].kit} scars={fight.B[i].scars} bore={fight.B[i].bore} pose={pairPose("B",i)}
                     wounds={pairWounds("B",i)} fallen={b.dB[i]} dead={b.xB[i]}/>
                 </div>
               </div>
@@ -19807,7 +19869,7 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
           </>) : (<>
           <div className="fig" style={{left:`calc(50% - ${closeA}px)`}}>
             <div className={poseFor("A")==="idle" && !downSide ? "bob":""}>
-              <Fighter col={houseCol} fem={fight.A.fem} kit={fight.A.kit} scars={fight.A.scars} pose={poseFor("A")} wounds={woundsFor("A")} fallen={fallenSide==="A"} dead={deadSide==="A"} wear={wearOf("A")} aim={aimOf("A")}/>
+              <Fighter col={houseCol} fem={fight.A.fem} kit={fight.A.kit} scars={fight.A.scars} bore={fight.A.bore} pose={poseFor("A")} wounds={woundsFor("A")} fallen={fallenSide==="A"} dead={deadSide==="A"} wear={wearOf("A")} aim={aimOf("A")}/>
             </div>
           </div>
           {isBeast ? (
@@ -19829,7 +19891,7 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
           ) : (
           <div className="fig" style={{right:`calc(50% - ${closeB}px)`, transform:"scaleX(-1)"}}>
             <div className={poseFor("B")==="idle" && !downSide ? "bob":""}>
-              <Fighter foe fem={fight.B.fem} kit={fight.B.kit} scars={fight.B.scars} pose={poseFor("B")} wounds={woundsFor("B")} fallen={fallenSide==="B"} dead={deadSide==="B"} wear={wearOf("B")} aim={aimOf("B")}/>
+              <Fighter foe fem={fight.B.fem} kit={fight.B.kit} scars={fight.B.scars} bore={fight.B.bore} pose={poseFor("B")} wounds={woundsFor("B")} fallen={fallenSide==="B"} dead={deadSide==="B"} wear={wearOf("B")} aim={aimOf("B")}/>
             </div>
           </div>
           )}
@@ -22519,9 +22581,8 @@ const palmOf = w => { for(const [need,h] of PALM_BANDS) if((w||0) >= need) retur
    a named killer stands in a black pool. It is deliberately NOT blood. Blood on a man in this game
    is his own — a scar that closed or a wound still open — and that rule is the clearest thing in
    the drawing. Borrowing it for what he did to somebody else would cost more than it bought. */
-const umbraOf = g => ({
-  rx: Math.round((7 + 6*Math.min(1, Math.sqrt((g.pfame||0)/RUDIS_FAME)))*100)/100,
-  op: Math.round((0.2 + 0.06*Math.min(4, g.kills||0))*100)/100 });
+/* the same two functions the arena fighter reads, at the yard figure's size — see `boreOf` */
+const umbraOf = g => ({ rx: umbraRx(g.pfame, 7, 13), op: umbraOp(g.kills, 0.2) });
 const ScnMan = ({x,y,g,tone,row,openMan}) => {
   const K = SCN_KIT[g.cls] || SCN_KIT.Murmillo;
   const spent = (g.fatigue||0) > 55;          /* the reading `tone` was carrying and lost */
@@ -26527,7 +26588,7 @@ export default function App(){
             {gView==="kit" && (<>
             <div className="umbra" style={{height:176,marginBottom:10}}>
               <div style={{position:"absolute",left:"50%",bottom:10,transform:"translateX(-50%)"}}>
-                <Fighter col={S.crest} fem={isF(selG)} kit={selG.kit || defaultKit(selG.cls)} scars={selG.scars} pose="idle" wounds={[]}/>
+                <Fighter col={S.crest} fem={isF(selG)} kit={selG.kit || defaultKit(selG.cls)} scars={selG.scars} pose="idle" wounds={[]} bore={boreOf(selG)}/>
               </div>
               <div className="dim" style={{position:"absolute",bottom:5,left:9,fontSize:"var(--fs-micro)",fontStyle:"italic"}}>as he takes the sand</div>
             </div>
