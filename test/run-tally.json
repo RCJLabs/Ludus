@@ -98,4 +98,6 @@
 {"v":"3.146.0","checks":110,"failed":["bulk"]},
 {"v":"3.146.0","checks":110,"failed":[]},
 {"v":"3.147.0","checks":110,"failed":[]},
-{"v":"3.148.0","checks":111,"failed":[]}]
+{"v":"3.148.0","checks":111,"failed":[]},
+{"v":"3.149.0","checks":112,"failed":["careers"]},
+{"v":"3.149.0","checks":112,"failed":[]}]
