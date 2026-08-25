@@ -89,4 +89,5 @@
 {"v":"3.139.0","checks":107,"failed":[]},
 {"v":"3.140.0","checks":108,"failed":["styles"]},
 {"v":"3.140.0","checks":108,"failed":[]},
-{"v":"3.140.0","checks":108,"failed":[]}]
+{"v":"3.140.0","checks":108,"failed":[]},
+{"v":"3.141.0","checks":109,"failed":[]}]
