@@ -73,6 +73,7 @@ Run them straight:
     node test/probes/appetite.mjs 8 300 SEED # #200; what the crowd already answers, and what it ignores
     node test/probes/refuse.mjs 8 300 SEED   # #201; who sits down, and whether the game could have said so
     node test/probes/medicus.mjs 8 300 SEED  # #203; the four care options against each other, which nothing had run
+    node test/probes/annals.mjs 8 420 SEED   # #204; the house's three memory lists, and which of them anything reads
 
 ## HOW MANY HOUSES A FIGURE NEEDS — read this before quoting one
 
@@ -749,6 +750,14 @@ Two faults: the `through` arm was not connected, because the rope's own `fit()` 
 it declared every wounded man fit and then would not use one (134 bouts against 1,333, houses dead at
 thirty weeks — a catastrophe that was the instrument); and `bump()` writes the WEEK's return value,
 not the rope's stat bag, so every arm printed "care set 0" including the ones plainly working.
+
+**`annals.mjs`** — the house's three memory lists against their readers. It **disproved #204's premise**:
+eleven places in the file read `d.freed` or `d.fallen`, and the dead are plentiful (38.5 a house, on
+the books 98.3% of weeks). What it found instead is that `d.freed` has two sources and the reference
+player uses neither — **0.00 men a house** — so six entries of `FREEDMEN` and the whole `legends`
+acclaim term were unreachable; while **`d.retired` is fed 13.25 a house** by a player who presses the
+button, sits ripe on 92.6% of weeks, and was read by nothing at all. Three arms: control, `free:true`
+(#190's lever) and `retire:true` (added here, because `retireG` has one caller in the game).
 
 **`scroll.mjs`** — where the vertical pixels go, per place, as the page ARRIVES versus with every fold
 thrown open. The second is what `reach` necessarily measures and it is 40% taller than the first.

@@ -823,6 +823,19 @@ export async function installRope(p){
           if(fin(A.setCareOf,[d, g.id, o.care])) bump("care");
         }
       }
+      /* ---- #204: THE OTHER WAY A MAN LEAVES FREE, which no policy has ever taken ----
+         `retireG` has exactly one caller in the whole game — a button on the man's page. Measured
+         over 16 houses of 420 weeks, `d.retired` was EMPTY in both arms, so the third of the
+         house's three memory lists has never had a name on it in any measurement this project has
+         run. `retire:true` releases every eligible man (31, or carrying twenty points of scar). */
+      if(o.retire === true && typeof A.retireG === "function"){
+        for(const g of A.activeG(d)){
+          if(!fin(A.retireEligible,[g])) continue;
+          const before = A.activeG(d).length;
+          fin(A.retireG,[d, g.id]);
+          if(A.activeG(d).length < before) bump("retired");
+        }
+      }
       if(o.free === true && typeof A.grantRudis === "function"){
         for(const g of A.activeG(d)){
           if(!fin(A.rudisEligible,[g])) continue;
