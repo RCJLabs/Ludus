@@ -4461,6 +4461,75 @@ wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
 
+### v3.138.0 — Vmbra: the game is a shadow play, and blood is the only colour in it
+
+**The bout is the centrepiece and it was drawn as a lit diorama.** Ten directions were mocked up
+against a real 22-beat fight out of the simulator; the one chosen was the shadow play — men backlit
+so they read as silhouettes, and *the only colour anywhere is what comes out of them*. This release
+makes that the game's visual language rather than one screen's treatment.
+
+**The figure.** Nine colours of skin, steel, brass and cloth, all of them competing with the blood
+for the eye. Every one is gone. What replaces them is not one flat black — a silhouette of nine
+overlapping parts in one value is a blob — but a narrow ladder, the way a leather shadow-puppet
+works: the thicker the stack of hide the light crosses, the darker it lands. Body, then kit over it,
+then the blade darkest of all, with a **lit seam** where two pieces meet, which is the light leaking
+through the join and the only thing that keeps a sword from melting into a shoulder. **Twenty-three
+lit literals and five palette tokens** inside `Fighter` were crushed; the last of them was the
+gilded cuirass, still reading `var(--gold-line)` and coming out bright yellow on a man who was
+otherwise already a shadow.
+
+**A house colour cannot be a hue in a shadow play**, so it survives as the one thing a silhouette can
+still carry: how much light gets through the crest. Yours reads a shade lighter than his, which is
+the whole of *"that one is mine"* at a glance.
+
+**The cuts, and what stays.** Wounds were capped at the last **seven**, so the eighth pushed the
+first off him and a long bout showed a man with the same seven marks he had in round four. On a
+silhouette the cuts *are* the picture — the only colour on the plate, and the only thing that says
+this bout went badly. They all stay now. A fresh cut is wet and **runs**, which is what makes it
+legible on a shape with no interior; a scar is the same mark gone dark and dry. Both are drawn
+**last**, after every piece of kit, because on a silhouette the blood must never be behind a shield.
+
+**The stage.** All nine venue backdrops ran dark sky at the top down to lit sand at the bottom —
+which puts the light *behind the viewer* and makes the men objects in a diorama. They are walls now,
+burning brightest at the height a standing man's head occupies and going dark at the frame and dark
+again at the floor. `backdrop` reads them as pixels: nine venues still distinguishable, closest pair
+**ΔE 5.4** against the eye's floor of 2.3.
+
+**And the ludus followed, because it had to.** The drawn yard was near-black ground with the men as
+*ochre outlines on it* — lighter than the ground they stood on, the exact inverse of the bout. The
+sand takes the light now, the square's floor with it, and every man in the yard and the doctore on
+the square are silhouettes. **One light for the whole game: the ludus by day and the sand by night
+are the same picture seen from two sides.**
+
+That inversion broke things it had to break, and each is worth naming. The room names were ochre
+letters written for a near-black yard and landed at almost exactly the lit sand's own value —
+invisible. They are dark by default now, with `lit` passed only where a label still falls on
+something dark, which is a fact about the drawing and so is written at the call site rather than
+guessed. And **trodden earth was drawn by darkening the ground**: on a lit one it reads as a blot,
+and it was putting the men's own names on the one dark patch in the yard. Ground that has been
+walked is scuffed *paler*.
+
+**The palette: green, blue and purple are retired.** Blood is the only hue left in the game. What
+was `--laurel` is now the brightest warm light — *good is lit* — and `--azure` and `--violet` fold
+into the same ramp. This is one edit at the token block and it moves **159 call sites** without
+touching one of them, which is what naming a palette was for.
+
+**It also makes the colourblind pref do a better job than it was doing.** It existed to pull the
+greens off the reds, and there are no greens: red-against-green cannot happen any more. What *can*
+still happen is blood against a warm gold ground, which a protanope reads as brown on brown. The
+pref moves the blood off the ground's hue instead — toward magenta, which both protanopes and
+deuteranopes separate cleanly.
+
+`palette` holds through all of it: **every text run on every ground still clears 4:1**, worst
+**4.15:1**, and the pref still moves.
+
+**What this is the first release of.** The bout, the drawn ludus and the token block are in the new
+language. The rest of the chrome — panels, sheets, the records, the market rows — is still the old
+dark ledger, which is *compatible* with Vmbra rather than composed for it. Converting those is the
+next release of this work and it is not this one.
+
+Suite **107/107 green in 14.9 min**, first run, no reds.
+
 ### v3.137.0 — the art pass: the drawing did not know which house it was
 
 **The item has been open since v3.102.0 with the same sentence against it** — *"the rooms are
@@ -16583,4 +16652,4 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.137.0 — the drawing knows which house it is: 82.0% of it was the same in every ludus, now 49.1%*
+*Last updated: v3.138.0 — the game is a shadow play; blood is the only colour left in it*
