@@ -4461,6 +4461,79 @@ wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
 
+### v3.142.0 — one ground: the app was two games a hundredfold apart in light
+
+**Reported from real play, with screenshots.** The drawn ludus is a lit yard with black men on it;
+one tap away, the morning report is bright cream paper; one tap the other way, the week's summary is
+near-black. *"It's jarring. We need to match the app to itself. The new style with silhouettes is
+the baseline."*
+
+Measured, the complaint is exact. The palette has been declared **twice** since v3.95.0 — once on
+`.lr` for the night ground the drawn place kept, and again on
+`.lr[data-place]:not([data-place="ludus"])` for the paper every door opened on:
+
+| | ground luminance |
+|---|---|
+| the ludus, and everything on it | **0.007** |
+| every place behind a door | **0.699** |
+
+**A hundredfold, one tap apart.** And no check could see it, because each ground was perfectly
+legible *on its own terms* and nothing had ever asked about the step between them.
+
+## The silhouette decides which one survives
+
+A silhouette needs light behind it. The whole game is on the **lit** ground now, and the change is
+smaller than it sounds: the light palette was already written in full and already proven legible —
+thirteen rules, gated on *"not the ludus"*. Dropping that exclusion is the release. The scene,
+converted in v3.138.0, was already drawn for it.
+
+**Two surfaces had to be found by hand and both are worth naming.** The **fight modal** sat at
+**0.521** against the page's 0.699 — the bout, opening dark on a light page, which is the very thing
+the screenshots showed. And the **blood button** was `#cf9b8c` on `#bd8272`: a pink wash with dark
+text, which on cream reads as disabled. Blood is the only hue left in the game, so the one control
+painted in it has to be the one control that commands.
+
+## `palette`'s contract is inverted, and it is stricter now
+
+The check asserted *"home stays night, every door opens on paper"*. That is exactly the arrangement
+that produced the fault, so the contract is now **one ground, and nothing left on the other** — plus
+the thing nothing measured: **the step between places**, held to 0.12. It reads **0.000** across all
+five surfaces.
+
+It also reaches a class of surface it never could. A modal is not a place, so the four-tab sweep
+never touched one — and a modal is exactly where a player feels the step, because it opens *on top
+of* the page they were reading. One is now mounted and measured directly.
+
+Validated by sabotage: gating the ground back off the ludus turns it red with *"the grounds are
+0.692 apart — ludus at 0.007 against men at 0.699. Moving between two places should not be a change
+of light."*
+
+## And the check was measuring the wrong ground all along
+
+Rewriting it exposed two faults in the instrument, both of which had been hiding real numbers:
+
+- **`groundOf` walked past every control in the game.** It looked for a `backgroundColor`, and every
+  button, panel and sect in this file is painted with a **gradient** — which leaves `backgroundColor`
+  transparent. So a word written on a deep blood button was measured against the *page*: 1.19:1 for
+  text that is actually **7:1** where it sits. It reads gradient stops now, and starts at the element
+  itself rather than its parent, which is what made it skip a button's own paint.
+- Fixing it immediately failed 51 runs at just under 4:1 — and they were **right**. Text on a panel
+  sits on the panel, and a panel is darker than the page. The dim inks cleared 4:1 against the page
+  and not against the surface they are actually written on. Darkened until they clear where they sit.
+
+*(And the regex needed doubled backslashes: it lives inside a template literal, so a single one is
+eaten before the page sees it and `/rgba?\(/` silently becomes a capture group. Third time this
+project has been bitten by that.)*
+
+**A dark control is not a dark left standing.** The "dark surface the palette never reached" scan
+now skips any dark surface whose own words are legible on it — a surface that was missed is one you
+cannot read, and one deep-blood control on a lit page is the point of a one-hue palette, not a fault
+in it.
+
+Every text run on every surface clears 4:1, worst **4.12:1**. `bulk` unchanged at 264/264, no raise.
+
+Suite **109/109 green in 15.7 min**, first run, no reds.
+
 ### v3.141.0 — the drawn man says which man he is: 2 drawings became 17
 
 **A silhouette has no colour, no texture and no face.** Shape is the whole of what it can say — and
@@ -16860,4 +16933,4 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.141.0 — the drawn man says which man he is: two drawings became seventeen*
+*Last updated: v3.142.0 — one ground; moving between two places is no longer a change of light*
