@@ -105,7 +105,7 @@ const ALLOWED = {
      for four @font-face rules and wrote down why. Two rules, two lines, and the headroom is back to
      one so drift still says stop. The note explaining them sits ABOVE `const CSS`, outside the
      span this sweep measures and outside the bytes the browser is sent. */
-  CSS:            { max: 253, why: "the stylesheet, plus the four @font-face rules the embedded faces need and the eight venue backdrops" },
+  CSS:            { max: 264, why: "the stylesheet, plus the four @font-face rules the embedded faces need and the eight venue backdrops. Raised 253 -> 264 in v3.138.0 for Vmbra, and the reason is structural rather than drift: a shadow play needs a LIT SURFACE for a shadow to be a shadow on, and `.umbra` is that surface — one rule, used anywhere a figure is drawn outside the arena. It REPLACED an inline gradient written at the man's-page call site, so the file did not grow by what the stylesheet grew by. The other lines are the three notes on why every venue backdrop inverted and why the colourblind pref now moves blood instead of green, both of which are exactly the kind of thing that gets undone by somebody who does not know it was deliberate" },
 };
 
 export async function run(){

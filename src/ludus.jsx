@@ -43,14 +43,17 @@ const CSS = `
    is named: ink, gold, blood, laurel, and the grounds and lines they sit on. Change a colour
    here and it moves everywhere. What is NOT named here stays literal on purpose -- the drawn
    ludus and the fighter figures are paintings, not chrome, and a painting does not re-theme. */
-.lr{--ink-hi:#e8d092;--ink:#e8d9b8;--ink-2:#cfc0a0;--ink-dim:#b09b7d;--ink-dim2:#b9a37c;--ink-faint:#8d7e65;--gold:#d8ac5f;--gold-hi:#e0bd72;--gold-line:#c99a4b;--gold-edge:#6d5426;--gold-deep:#75581c;--blood:#d96f5d;--blood-hi:#d98476;--blood-str:#cf5a49;--blood-edge:#7c2a22;--laurel:#9aa86a;--laurel-hi:#b9c58a;--laurel-lt:#a9c98a;--laurel-edge:#5a6a35;--laurel-edge2:#5a6a4a;--ground:#171210;--panel:#1c1610;--panel-2:#241c12;--raise:#2b2115;--line:#33271a;--line-2:#3e2f1f;--line-3:#4a3a24;--azure:#9dc0d4;--azure-edge:#5a7a8a;--violet:#bfa8c8;--violet-edge:#8a6a9c;--line-4:#4e3c26;--bar-fade:rgba(23,18,16,.96);--fs-micro:11.5px;--fs-sm:12.5px;--fs-base:13.5px;--fs-md:14.5px;
+.lr{--ink-hi:#e8d092;--ink:#e8d9b8;--ink-2:#cfc0a0;--ink-dim:#b09b7d;--ink-dim2:#b9a37c;--ink-faint:#8d7e65;--gold:#d8ac5f;--gold-hi:#e0bd72;--gold-line:#c99a4b;--gold-edge:#6d5426;--gold-deep:#75581c;--blood:#e0503c;--blood-hi:#ef6d57;--blood-str:#e0140a;--blood-edge:#8a1c12;--laurel:#e8cf94;--laurel-hi:#fbeec6;--laurel-lt:#f2e2ae;--laurel-edge:#8a7440;--laurel-edge2:#7d6a44;--ground:#171210;--panel:#1c1610;--panel-2:#241c12;--raise:#2b2115;--line:#33271a;--line-2:#3e2f1f;--line-3:#4a3a24;--azure:#cdc0a4;--azure-edge:#6f6350;--violet:#e6c079;--violet-edge:#8a6a2c;--line-4:#4e3c26;--bar-fade:rgba(23,18,16,.96);--fs-micro:11.5px;--fs-sm:12.5px;--fs-base:13.5px;--fs-md:14.5px;
     --fs-lg:15.5px;--fs-xl:17px;--fs-xxl:19px;--fs-display:46px;
     --tap:44px;
     overflow-x:clip;max-width:100%;background:var(--ground);background-image:radial-gradient(1100px 560px at 50% -8%, var(--raise) 0%, var(--ground) 62%);color:var(--ink);font-family:'Cormorant Garamond',Georgia,serif;min-height:100vh;font-size:17px;line-height:1.45}
 .shell{position:relative;min-height:100vh}
 .scroll{width:100%}
 .bar{flex:0 0 auto}
-.lr.cb{--laurel:#5aa9e6;--laurel-hi:#8fc3ea}
+/* there are no greens left, so red-against-green cannot happen. What can is blood on a warm gold
+   ground, which a protanope reads as brown on brown -- so the pref moves BLOOD off the ground's
+   hue, toward magenta, which protanopes and deuteranopes both separate cleanly. */
+.lr.cb{--blood:#f0518f;--blood-hi:#ff7aa8;--blood-str:#ff2f7a;--blood-edge:#a01050;--laurel:#dce6e0;--laurel-hi:#f2f8f4}
 
 .disp{font-family:'Cinzel',serif;letter-spacing:.1em}
 .panel{background:linear-gradient(165deg,var(--raise),var(--panel));border:1px solid var(--line-2);border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.35)}
@@ -82,16 +85,24 @@ const CSS = `
 .focusbtn:hover{border-color:var(--gold-edge)}
 .focusbtn.on{border-color:var(--gold-line);color:var(--ink-hi);background:linear-gradient(180deg,var(--line),var(--panel-2))}
 .focusbtn .sub{font-family:'Cormorant Garamond',Georgia,serif;font-size:var(--fs-micro);letter-spacing:0;opacity:.75}
+/* VMBRA: every venue ran dark sky down to lit sand, which puts the light behind the VIEWER and
+   makes the men objects in a diorama. Each is a wall now, brightest at a standing man's head.
+   Nine temperatures of light; the backdrop check holds them apart. (No backticks in here.) */
 .arena{position:relative;overflow:hidden;border-radius:10px;border:1px solid var(--line-4);height:232px;
-  background:linear-gradient(#0d0a07 0%,#14100b 26%,#2a2013 29%,#3f2f1a 33%,#6d5531 58%,#9a7844 100%)}
-.v-pit{background:linear-gradient(var(--ground) 0%,var(--ground) 30%,var(--panel-2) 34%,var(--line-3) 62%,var(--line-4) 100%)!important;border-color:var(--line-2)!important}
-.v-yard{background:linear-gradient(#0f0d0c 0%,#1a1715 24%,#3a3630 28%,#6e6a62 40%,#a8a498 72%,#c9c5b8 100%)!important;border-color:var(--ink-faint)!important}
-.v-field{background:linear-gradient(#0b0d08 0%,#131710 26%,#26301c 31%,#3d4b2a 55%,#5c6f3c 100%)!important;border-color:var(--laurel-edge)!important}
-.v-amphi{background:linear-gradient(#0d0a07 0%,#181209 22%,#3a2c18 27%,#6d5531 55%,#a88a52 100%)!important;border-color:var(--gold-edge)!important}
-.v-imperial{background:linear-gradient(#0d0a09 0%,#1c1510 20%,#4a3820 26%,#8a6c3c 52%,#cba765 100%)!important;border-color:var(--gold-line)!important}
-.v-harbour{background:linear-gradient(#0a0c0e 0%,#121820 24%,#2c3038 29%,#6a6250 56%,#9d9068 100%)!important;border-color:var(--ink-faint)!important}
-.v-bowl{background:linear-gradient(#08080a 0%,#131318 20%,#3d3d43 26%,#6f6e6d 54%,#a8a39a 100%)!important;border-color:var(--ink-faint)!important}
-.v-greek{background:linear-gradient(#0c0b09 0%,#1b1813 20%,#4a4437 25%,#8c8265 52%,#cbb98a 100%)!important;border-color:var(--ink-dim2)!important}
+  background:linear-gradient(#090705 0%,#1d150c 12%,#7a5c2c 30%,#c99a4b 44%,#8a6a2c 64%,#241a0f 88%,#0d0906 100%)}
+.v-pit{background:linear-gradient(#070605 0%,#140f0a 13%,#463523 30%,#6d5531 45%,#402f1c 65%,#140f0a 89%,#070605 100%)!important;border-color:var(--line-2)!important}
+.v-yard{background:linear-gradient(#0a0a09 0%,#1c1a17 12%,#7c786e 30%,#cdc9bb 44%,#86837a 64%,#26241f 88%,#0d0d0b 100%)!important;border-color:var(--ink-faint)!important}
+.v-field{background:linear-gradient(#070906 0%,#141a0f 12%,#4b6130 30%,#7d9a4c 44%,#4e6030 64%,#161c10 88%,#080a07 100%)!important;border-color:var(--laurel-edge)!important}
+.v-amphi{background:linear-gradient(#090705 0%,#1e1509 12%,#8a682c 30%,#e0b25a 44%,#96742f 64%,#281d0e 88%,#0c0805 100%)!important;border-color:var(--gold-edge)!important}
+.v-imperial{background:linear-gradient(#0a0806 0%,#241a0e 11%,#a8823a 29%,#f4cf7e 43%,#ae8a3e 63%,#33260f 87%,#0e0a06 100%)!important;border-color:var(--gold-line)!important}
+.v-harbour{background:linear-gradient(#06080a 0%,#131b22 12%,#586a70 30%,#9fb0ae 44%,#5c6a68 64%,#181f22 88%,#080a0c 100%)!important;border-color:var(--ink-faint)!important}
+.v-bowl{background:linear-gradient(#070708 0%,#17171a 12%,#63626a 30%,#a9a7a4 44%,#67655f 64%,#1c1b1c 88%,#0a0a0b 100%)!important;border-color:var(--ink-faint)!important}
+.v-greek{background:linear-gradient(#080706 0%,#1c1913 12%,#7c7154 30%,#d8c894 44%,#8a7d5c 64%,#241f16 88%,#0a0908 100%)!important;border-color:var(--ink-dim2)!important}
+/* a silhouette on a dark panel is a missing element, so anywhere a figure is drawn outside the
+   arena he stands on this -- the same backlit wall, aimed at his head. It also REPLACES the
+   inline gradient that was written at his page's call site, which is why the file is shorter. */
+.umbra{position:relative;overflow:hidden;border-radius:10px;border:1px solid var(--line-4);
+  background:linear-gradient(#0c0906 0%,#4e3a1c 12%,#c99a4b 26%,#a37f3a 44%,#6d5426 64%,#241a0f 86%,#0d0906 100%)}
 .wound{position:absolute;border-radius:50%;background:var(--blood-edge);pointer-events:none}
 .arenashake{animation:shk .3s}
 @keyframes shk{0%,100%{transform:translate(0,0)}20%{transform:translate(-4px,2px)}40%{transform:translate(4px,-2px)}60%{transform:translate(-3px,-1px)}80%{transform:translate(3px,1px)}}
@@ -277,7 +288,9 @@ const CSS = `
    cannot separate. When the pref is on, cbc() turns the greens blue at the few colour
    helpers and the Bar fill they all pass through; reds and ambers stay as they are. */
 let CB_ON = false;
-const CB_GREEN = { "#9aa86a":"#5aa9e6", "#8a9a5b":"#4e9fd8", "#b9c58a":"#8fc3ea" };
+/* the helpers hand literals to inline styles, so the pref has to reach those too. These are the
+   lit tones, moved cool, matching what `.lr.cb` does to the named ones a rule away. */
+const CB_GREEN = { "#e8cf94":"#dce6e0", "#8a9a5b":"#b8c6c0", "#fbeec6":"#f2f8f4" };
 const cbc = c => (CB_ON && typeof c==="string" && CB_GREEN[c.toLowerCase()]) || c;
 
 const STATS = ["str","agi","end","tec","sho","dis"];
@@ -18803,9 +18816,29 @@ function Band({lo, hi, exact, color, label}){
   </div>;
 }
 
-const SKIN="#a8763e", SKIN_D="#7d5527", LEATHER="#4a3216", LEATHER_D="#33220f",
-      STEEL="#c3c9d0", STEEL_D="#6d747d", BRASS="#c08e3a", BRASS_D="#8a6425", CLOTH="#8d3b2c",
-      BLADE="#dfe5ec", BLADE_D="#565d67", GRIP="#2c1d0e";
+/* ---- VMBRA: THE FIGHTER IS A SHADOW ----
+   The bout is the centrepiece of the game and it was drawn as a lit diorama: nine colours of
+   skin, steel, brass and cloth, all of them competing with the blood for the eye. It is a
+   shadow play now. Every man is backlit, and the ONLY colour anywhere on him is what comes
+   out of him.
+
+   The values are not one flat black, because a silhouette of nine overlapping parts in one
+   value is a blob. They are a narrow ladder, the way a real leather shadow-puppet works: the
+   thicker the stack of hide the light has to cross, the darker it lands. Body first, kit over
+   it, the blade darkest of all — and a lit seam where two pieces meet, which is the light
+   leaking through the join and the only thing that keeps a sword from melting into a shoulder. */
+const UMBRA_BODY = "#170f08", UMBRA_KIT = "#0e0905", UMBRA_DEEP = "#050302", UMBRA_SEAM = "#4a381f";
+const SKIN=UMBRA_BODY, SKIN_D="#191108", LEATHER=UMBRA_KIT, LEATHER_D=UMBRA_DEEP,
+      STEEL="#1c1309", STEEL_D=UMBRA_DEEP, BRASS="#2b1f11", BRASS_D="#150e07", CLOTH=UMBRA_KIT,
+      BLADE="#120c06", BLADE_D=UMBRA_DEEP, GRIP=UMBRA_DEEP;
+/* a house's colour cannot be a hue in a shadow play, so it survives as the one thing a
+   silhouette can still carry: how much light gets through the crest. Crushed to shadow. */
+const toUmbra = (hex, lift) => { const h = String(hex||"#000").replace("#","");
+  if(h.length !== 6) return UMBRA_KIT;
+  const v = i => parseInt(h.slice(i*2, i*2+2), 16);
+  const k = 0.13 + (lift||0);
+  return "#" + [0,1,2].map(i=>Math.round(v(i)*k + 6).toString(16).padStart(2,"0")).join("");
+};
 
 /* A rendered gladiator. Everything he wears comes from his equipped kit, not his class.
    Weapons hang off a real arm: shoulder -> forearm -> fist -> grip -> guard -> blade,
@@ -18822,11 +18855,12 @@ const Fighter = React.memo(function Fighter({ kit, pose, wounds, scars, fallen, 
   const hasManica  = aArt==="manica" || aArt==="gilded" || aArt==="padded";
   const hasGreaves = aArt==="greaves" || aArt==="gilded";
   const hasChest   = aArt==="padded" || aArt==="gilded";
-  const MET = gilt ? "#d9a842" : BRASS, MET_D = gilt ? "#9c7420" : BRASS_D;
-  /* house colours: your men fight in the house's chosen colours (default oxblood),
-     the other house in slate blue */
-  const PLUME = foe ? "#3f5f74" : (col && col.c1 ? col.c1 : CLOTH);
-  const FACE  = gilt ? "#c9992f" : (foe ? "#3a5668" : (col && col.c2 ? col.c2 : "#8e3a2b"));
+  const MET = gilt ? "#201609" : BRASS, MET_D = gilt ? "#120c05" : BRASS_D;
+  /* house colours: your men fight in the house's chosen colours, the other house in slate —
+     and in a shadow play those are not hues, they are how much light the crest lets through.
+     Yours reads a shade lighter than his, which is the whole of "that one is mine" at a glance. */
+  const PLUME = foe ? "#0c0905" : toUmbra(col && col.c1 ? col.c1 : CLOTH, .09);
+  const FACE  = gilt ? "#1d1409" : (foe ? "#0b0704" : toUmbra(col && col.c2 ? col.c2 : "#58241b", .05));
 
   const POSES = {
     idle:    { x:0,  y:0,  rot:0,  arm:0,   armRot:0 },
@@ -18869,46 +18903,46 @@ const Fighter = React.memo(function Fighter({ kit, pose, wounds, scars, fallen, 
   const helm = ()=>{
     if(hArt==="bare") return (<g>
       <circle cx="56" cy="26" r="11" fill={SKIN}/>
-      <path d="M45,23 Q54,10 66,20 Q60,16 54,17 Q48,18 45,23Z" fill="#2a1b0f"/>
-      {fem && <path d="M46,24 Q40,30 43,38 Q48,34 48,28Z" fill="#2a1b0f"/>}
-      <circle cx="64" cy="27" r="1.7" fill="#2a1b0f"/>
+      <path d="M45,23 Q54,10 66,20 Q60,16 54,17 Q48,18 45,23Z" fill="#0a0704"/>
+      {fem && <path d="M46,24 Q40,30 43,38 Q48,34 48,28Z" fill="#0a0704"/>}
+      <circle cx="64" cy="27" r="1.7" fill="#0a0704"/>
       <path d="M66,30 Q69,32 66,34" stroke={SKIN_D} strokeWidth="1.3" fill="none"/>
     </g>);
     if(hArt==="smooth") return (<g>
       <ellipse cx="56" cy="25" rx="12" ry="14" fill={STEEL}/>
       <path d="M66,20 Q71,25 66,31Z" fill={STEEL_D}/>
       <ellipse cx="56" cy="25" rx="12" ry="14" fill="none" stroke={STEEL_D} strokeWidth="1.4"/>
-      <circle cx="64" cy="22" r="2.2" fill="#100b06"/><circle cx="57" cy="22" r="2.2" fill="#100b06"/>
+      <circle cx="64" cy="22" r="2.2" fill="#0a0704"/><circle cx="57" cy="22" r="2.2" fill="#0a0704"/>
       <path d="M46,31 Q56,37 67,31" stroke={STEEL_D} strokeWidth="1.4" fill="none"/>
     </g>);
     if(hArt==="brim") return (<g>
       <ellipse cx="56" cy="26" rx="12" ry="13" fill={BRASS}/>
       <path d="M56,12 Q62,3 70,2 Q63,9 61,14Z" fill={PLUME}/>
       <rect x="42" y="30" width="32" height="3.4" rx="1.5" fill={BRASS_D}/>
-      <rect x="55" y="20" width="12" height="4.8" rx="1.5" fill="#100b06"/>
+      <rect x="55" y="20" width="12" height="4.8" rx="1.5" fill="#0a0704"/>
       <path d="M67,25 L71,27 L67,30Z" fill={BRASS_D}/>
     </g>);
     if(hArt==="griffin") return (<g>
       <ellipse cx="56" cy="26" rx="12" ry="13.5" fill={BRASS}/>
       <path d="M49,13 Q56,0 64,13 Q56,8 49,13Z" fill={PLUME}/>
       <path d="M64,12 Q72,8 73,16" stroke={BRASS_D} strokeWidth="2.4" fill="none"/>
-      <rect x="55" y="21" width="12" height="4.8" rx="1.5" fill="#100b06"/>
+      <rect x="55" y="21" width="12" height="4.8" rx="1.5" fill="#0a0704"/>
       <path d="M67,26 L71,28 L67,31Z" fill={BRASS_D}/>
     </g>);
     if(hArt==="silver") return (<g>
-      <ellipse cx="56" cy="26" rx="12.5" ry="14" fill="#cfd2d6"/>
+      <ellipse cx="56" cy="26" rx="12.5" ry="14" fill="#130d07"/>
       <path d="M47,11 Q56,-4 66,11 Q56,6 47,11Z" fill={PLUME}/>
       <path d="M66,9 Q75,5 77,14" stroke={PLUME} strokeWidth="2.6" fill="none"/>
-      <rect x="41" y="31" width="34" height="3.6" rx="1.6" fill="#9aa0a6"/>
-      <rect x="55" y="21" width="12" height="5" rx="1.5" fill="#0d0906"/>
-      <path d="M67,26 L72,28 L67,32Z" fill="#9aa0a6"/>
-      <path d="M45,20 Q56,16 67,20" stroke="#eef1f4" strokeWidth="1.1" fill="none"/>
+      <rect x="41" y="31" width="34" height="3.6" rx="1.6" fill="#0d0904"/>
+      <rect x="55" y="21" width="12" height="5" rx="1.5" fill="#080604"/>
+      <path d="M67,26 L72,28 L67,32Z" fill="#0d0904"/>
+      <path d="M45,20 Q56,16 67,20" stroke="#4a381f" strokeWidth="1.1" fill="none"/>
     </g>);
     return (<g>
       <ellipse cx="56" cy="26" rx="12.5" ry="14" fill={STEEL}/>
       <path d="M48,12 Q56,-2 65,12 Q56,7 48,12Z" fill={PLUME}/>
       <rect x="41" y="31" width="34" height="3.6" rx="1.6" fill={STEEL_D}/>
-      <rect x="55" y="21" width="12" height="5" rx="1.5" fill="#100b06"/>
+      <rect x="55" y="21" width="12" height="5" rx="1.5" fill="#0a0704"/>
       <path d="M67,26 L72,28 L67,32Z" fill={STEEL_D}/>
     </g>);
   };
@@ -18932,8 +18966,8 @@ const Fighter = React.memo(function Fighter({ kit, pose, wounds, scars, fallen, 
     if(oArt==="net") return (<g style={offT} opacity=".9">
       <path d="M50,54 L60,58 L64,66 L56,68Z" fill={SKIN}/>
       <circle cx="67" cy="66" r="4.4" fill={SKIN_D}/>
-      <path d="M70,64 L92,72 L82,90 L66,81Z" fill="none" stroke="#9c8560" strokeWidth="1.4"/>
-      <path d="M74,66 L78,85 M82,69 L86,87 M68,72 L90,80" stroke="#9c8560" strokeWidth=".9"/>
+      <path d="M70,64 L92,72 L82,90 L66,81Z" fill="none" stroke="#241b10" strokeWidth="1.4"/>
+      <path d="M74,66 L78,85 M82,69 L86,87 M68,72 L90,80" stroke="#241b10" strokeWidth=".9"/>
     </g>);
     return null;
   };
@@ -18959,12 +18993,12 @@ const Fighter = React.memo(function Fighter({ kit, pose, wounds, scars, fallen, 
   const mainArm = ()=>{
     const grip = (()=>{
       if(wArt==="spear") return (<g>
-        <rect x="58" y="46.4" width="62" height="3.8" rx="1.9" fill="#6b4a22" stroke="#4a3216" strokeWidth=".6"/>
+        <rect x="58" y="46.4" width="62" height="3.8" rx="1.9" fill="#0e0a06" stroke="#070402" strokeWidth=".6"/>
         <rect x="116" y="45" width="5" height="6.6" rx="1.4" fill={BLADE_D}/>
         <path d="M120,43.2 L137,48.3 L120,53.4Z" fill={BLADE} stroke={BLADE_D} strokeWidth=".8"/>
       </g>);
       if(wArt==="trident") return (<g>
-        <rect x="56" y="46.4" width="52" height="4" rx="2" fill="#6b4a22" stroke="#4a3216" strokeWidth=".6"/>
+        <rect x="56" y="46.4" width="52" height="4" rx="2" fill="#0e0a06" stroke="#070402" strokeWidth=".6"/>
         <rect x="106" y="38" width="3.6" height="22" rx="1.5" fill={BLADE} stroke={BLADE_D} strokeWidth=".6"/>
         <path d="M109,40 L122,40 M109,48.4 L122,48.4 M109,57 L122,57" stroke={BLADE} strokeWidth="3" strokeLinecap="butt"/>
         <path d="M121,38 L129,40 L121,42Z M121,46.4 L129,48.4 L121,50.4Z M121,55 L129,57 L121,59Z" fill={BLADE} stroke={BLADE_D} strokeWidth=".5"/>
@@ -18986,7 +19020,7 @@ const Fighter = React.memo(function Fighter({ kit, pose, wounds, scars, fallen, 
          side and sweeps out to a crescent edge. That is what makes it legible in
          profile: the haft is a line, and the weight is all under it. */
       if(wArt==="axe") return (<g>
-        <rect x="58" y="46" width="45" height="4.2" rx="1.9" fill="#6b4a22" stroke="#4a3216" strokeWidth=".6"/>
+        <rect x="58" y="46" width="45" height="4.2" rx="1.9" fill="#0e0a06" stroke="#070402" strokeWidth=".6"/>
         {/* the poll — the blunt back of the head, inside the haft's own height so it does
             not read as a lump sitting on top of the shaft */}
         <rect x="93" y="46.4" width="4.5" height="3.6" rx="1" fill={BLADE_D}/>
@@ -19062,23 +19096,41 @@ const Fighter = React.memo(function Fighter({ kit, pose, wounds, scars, fallen, 
         <path d="M50,62 Q56,64 62,62 M50,69 Q56,71 62,69" stroke={SKIN_D} strokeWidth=".9" fill="none" opacity=".5"/>
       </g>)}
       {hasChest && (<g>
-        <path d="M45,41 Q56,37 67,41 L65,68 Q56,72 47,68Z" fill={gilt? "var(--gold-line)":"var(--line-4)"} stroke={gilt? "var(--gold-deep)":"var(--line-4)"} strokeWidth="1.2"/>
-        {gilt && <path d="M50,47 Q56,51 62,47 M50,57 Q56,61 62,57" stroke="#8a6520" strokeWidth="1" fill="none"/>}
+        <path d="M45,41 Q56,37 67,41 L65,68 Q56,72 47,68Z" fill={gilt? "#241a0b":"#100b06"} stroke={gilt? "#161004":"#100b06"} strokeWidth="1.2"/>
+        {gilt && <path d="M50,47 Q56,51 62,47 M50,57 Q56,61 62,57" stroke="#4a381f" strokeWidth="1" fill="none"/>}
       </g>)}
-      {gilt && <ellipse cx="64" cy="42" rx="8" ry="5" fill="#d9a842" stroke="#8a6520" strokeWidth="1"/>}
+      {gilt && <ellipse cx="64" cy="42" rx="8" ry="5" fill="#201609" stroke="#4a381f" strokeWidth="1"/>}
       <path d="M46,76 L66,76 L69,95 Q56,99 43,95Z" fill={LEATHER}/>
-      <rect x="43" y="72" width="26" height="6" rx="2" fill={gilt? "var(--gold-deep)":LEATHER_D}/>
+      <rect x="43" y="72" width="26" height="6" rx="2" fill={gilt? "#161004":LEATHER_D}/>
       {shieldOrNet()}
       {offBlade()}
       {mainArm()}
       {helm()}
+      {/* ---- THE ONLY COLOUR ON HIM ----
+           Everything above this line is shadow. What follows is the whole of the palette: a
+           cut he took tonight, and one that closed. They are drawn LAST so nothing overlaps
+           them — on a silhouette the blood is the picture, and it must never be behind a
+           shield. A closed scar is the same mark gone dark and dry; a fresh one is wet, and
+           runs. */}
       {(scars||[]).map((s,i)=>(
-        <path key={`s${i}`} d={`M${s.x-4},${s.y+3} L${s.x+4},${s.y-3}`} stroke="#7d4a3c" strokeWidth={s.big?2.6:1.7} strokeLinecap="round" opacity=".8"/>
+        <g key={`s${i}`}>
+          <path d={`M${s.x-4},${s.y+3} L${s.x+4},${s.y-3}`} stroke="#8a2a1c"
+            strokeWidth={s.big?3:1.9} strokeLinecap="round" opacity=".92"/>
+          <path d={`M${s.x-3.4},${s.y+2.4} L${s.x+3.4},${s.y-2.4}`} stroke="#ab4632"
+            strokeWidth={s.big?1.1:.7} strokeLinecap="round" opacity=".7"/>
+        </g>
       ))}
       {wounds.map((w,i)=>(
-        <path key={i} d={`M${w.x-4},${w.y-3} L${w.x+4},${w.y+3}`} stroke="#8f1a12" strokeWidth={w.big?3.2:2} strokeLinecap="round" opacity=".92"/>
+        <g key={i}>
+          <path d={`M${w.x-4},${w.y-3} L${w.x+4},${w.y+3}`} stroke="#e0140a"
+            strokeWidth={w.big?3.6:2.2} strokeLinecap="round"/>
+          {/* it runs. A cut on a shadow is only legible because it moves down him. */}
+          <path d={`M${w.x+1},${w.y+2} L${w.x-1},${w.y + (w.big?17:9)}`} stroke="#b41008"
+            strokeWidth={w.big?2.2:1.3} strokeLinecap="round" opacity=".8"/>
+          {w.big && <ellipse cx={w.x-1} cy={w.y+19} rx="2.4" ry="3" fill="#e0140a" opacity=".85"/>}
+        </g>
       ))}
-      {dead && <ellipse cx="58" cy="136" rx="26" ry="4.5" fill="rgba(126,20,12,.5)"/>}
+      {dead && <ellipse cx="58" cy="136" rx="30" ry="5.5" fill="rgba(160,14,8,.62)"/>}
     </svg>
   );
 });
@@ -19554,9 +19606,15 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
     }
   },[i, beats]);
 
+  /* ---- EVERY CUT STAYS ----
+     Seven, and the eighth pushed the first off him — so a bout that ran long showed a man
+     with the same seven marks he had in round four, and the blood stopped being a record of
+     anything. On a silhouette the cuts ARE the picture: they are the only colour on the plate
+     and the only thing that says this bout went badly. They all stay now. Twenty-four is the
+     ceiling and nothing has ever reached it: the longest bout in the tally lands eleven. */
   const woundsFor = side => beats.slice(0,i+1)
     .filter(x=>(x.kind==="hit"||x.kind==="crit") && x.actor && x.actor!==side && x.tx!=null)
-    .map(x=>({ x:x.tx, y:x.ty, big:x.kind==="crit" })).slice(-7);
+    .map(x=>({ x:x.tx, y:x.ty, big:x.kind==="crit" })).slice(-24);
 
   const downSide = ["fall","appeal","spared","death"].includes(b.kind) ? b.actor : null;
   const poseFor = side => {
@@ -22321,10 +22379,16 @@ function Morning({ D, close }){
    The four helpers the rooms shared are module scope too. `scnSay` and `scnName` are pure; the two
    components take what they need. Nothing about the drawing changed in this split — the geometry
    and the words are the same, which is what `scene`'s two new measurements hold it to. */
-const scnSay = (x,y,t,anchor) => <text x={x} y={y} textAnchor={anchor||"middle"} fontSize="10.5"
-  fill="#b09b7d" fontStyle="italic" fontFamily="Georgia,serif">{t}</text>;
-const scnName = (x,y,t) => <text x={x} y={y} fontSize="10" letterSpacing="3" fill="#8a6a2c"
-  fontFamily="'Cinzel',serif">{t}</text>;
+/* ---- TEXT ON A LIT GROUND IS CUT INTO IT, NOT LAID ON IT ----
+   Both of these were written for a dark yard: ochre letters glowing on near-black. The yard
+   takes the light now, so the same ochre sits at almost exactly the sand's own value and the
+   room names disappeared. They are dark by default and pass `lit` only where they still fall
+   on something dark — the villa's face, the square's floor, the road. Which ground a label is
+   on is a fact about the drawing, so it is written at the call site rather than guessed. */
+const scnSay = (x,y,t,anchor,lit) => <text x={x} y={y} textAnchor={anchor||"middle"} fontSize="10.5"
+  fill={lit ? "#b09b7d" : "#2e2113"} fontStyle="italic" fontFamily="Georgia,serif">{t}</text>;
+const scnName = (x,y,t,lit) => <text x={x} y={y} fontSize="10" letterSpacing="3"
+  fill={lit ? "#8a6a2c" : "#241a0e"} fontFamily="'Cinzel',serif">{t}</text>;
 /* ---- ONE SUN FOR THE WHOLE DRAWING ----
    Every building was a near-black rect with a thin outline, so against the new ground they read as
    holes cut in the sand rather than as things standing on it. There is one light now — from above
@@ -22332,7 +22396,7 @@ const scnName = (x,y,t) => <text x={x} y={y} fontSize="10" letterSpacing="3" fil
    top course and throws a soft shadow at its foot. Two helpers, used by every room, which is what
    keeps the lighting from drifting room to room. */
 const scnLit  = (x,y,w,h) => <rect x={x} y={y} width={w} height={h||5} fill="#42341e" opacity=".9"/>;
-const scnFoot = (cx,y,rx) => <ellipse cx={cx} cy={y} rx={rx} ry="6" fill="#14100c" opacity=".5"/>;
+const scnFoot = (cx,y,rx) => <ellipse cx={cx} cy={y} rx={rx} ry="6" fill="#14100c" opacity=".38"/>;
 const scnWorst = list => list.reduce((m,a)=>Math.max(m,a.urgency||1), 0);
 const ScnBadge = ({x,y,list}) => !list.length ? null : (
   <g aria-hidden="true">
@@ -22344,9 +22408,13 @@ const ScnBadge = ({x,y,list}) => !list.length ? null : (
 const ScnMan = ({x,y,g,tone,row,openMan}) => (
   <g className="scn" role="button" tabIndex={0} aria-label={`${g.name} the ${g.cls}`}
     onClick={()=>openMan(g.id)} onKeyDown={e=>{ if(e.key==="Enter") openMan(g.id); }}>
-    <circle cx={x} cy={y} r="7" fill="#241c12" stroke={g.injury?"#a8705f":tone} strokeWidth="1.3"/>
+    {/* a shadow on the lit sand, and the ONE thing that is ever coloured on him is the wound
+         he is carrying — the same rule the bout runs on */}
+    <circle cx={x} cy={y} r="7" fill="#150e08" stroke="#0b0704" strokeWidth="1"/>
     <path d={`M${x} ${y+8} q-9 3 -10 27 l5 0 q1 -11 5 -14 q4 3 5 14 l5 0 q-1 -24 -10 -27 Z`}
-      fill="#241c12" stroke={g.injury?"#a8705f":tone} strokeWidth="1.3"/>
+      fill="#150e08" stroke="#0b0704" strokeWidth="1"/>
+    {g.injury && <path d={`M${x-5} ${y+14} L${x+4} ${y+22}`} stroke="#e0140a" strokeWidth="2.4" strokeLinecap="round"/>}
+    {!g.injury && tone && <path d={`M${x-4} ${y+2} q4 -3 8 0`} fill="none" stroke="#3a2c18" strokeWidth="1"/>}
     {scnSay(x, y+48+(row?14:0), g.name.slice(0,12))}
   </g>);
 
@@ -22354,7 +22422,7 @@ const ScnVilla = ({ S, at, go, houseLit }) => (<>
 {/* THE VILLA — travels; its callers are the villa-panel documents */}
 <g className="scn" role="button" tabIndex={0} aria-label="The villa — the house's own business"
   onClick={()=>go("villa")} onKeyDown={e=>{ if(e.key==="Enter") go("villa"); }}>
-  {scnName(26, 34, "THE VILLA")}
+  {scnName(26, 34, "THE VILLA", true)}
   {scnFoot(195, 110, 168)}
   <path d="M28 108 L28 62 L195 30 L362 62 L362 108 Z" fill="url(#scn-stone)" stroke="#33271a"/>
   {/* the roofline takes the light, which is what makes it a roof and not an outline */}
@@ -22418,16 +22486,16 @@ const ScnSquare = ({ S, at, openDoc }) => (<>
   {scnName(26, 216, "THE TRAINING SQUARE")}
   {/* a laid floor, so it keeps its plane — but it sits ON the ground now, with the shadow the
        wall throws across its near edge, instead of floating as an outlined rectangle */}
-  <rect x="24" y="226" width="270" height="96" fill="#2a2013"/>
-  <path d="M24 226 L294 226 L294 322 L24 322 Z" fill="none" stroke="#3d2f1b" strokeWidth="1" opacity=".8"/>
-  <rect x="24" y="226" width="270" height="9" fill="#14100c" opacity=".5"/>
+  <rect x="24" y="226" width="270" height="96" fill="#a37c38"/>
+  <path d="M24 226 L294 226 L294 322 L24 322 Z" fill="none" stroke="#5c4622" strokeWidth="1" opacity=".7"/>
+  <rect x="24" y="226" width="270" height="9" fill="#14100c" opacity=".42"/>
   <ellipse cx="159" cy="326" rx="142" ry="7" fill="#14100c" opacity=".45"/>
   {/* the largest floor in the drawing and it held ONE post — three shapes for 270x96, against
        seventeen for the cells. A palus is a row of posts and a floor that has been walked on;
        both are drawn now. The posts stop at y=306 so neither label can land on one. */}
-  <path d="M34 296 q52 -9 104 -2" fill="none" stroke="#332714" strokeWidth="1"/>
-  <path d="M150 302 q62 -8 132 -3" fill="none" stroke="#332714" strokeWidth="1"/>
-  <path d="M40 262 q40 -7 82 -3" fill="none" stroke="#2f2412" strokeWidth="1"/>
+  <path d="M34 296 q52 -9 104 -2" fill="none" stroke="#7a5c2a" strokeWidth="1"/>
+  <path d="M150 302 q62 -8 132 -3" fill="none" stroke="#7a5c2a" strokeWidth="1"/>
+  <path d="M40 262 q40 -7 82 -3" fill="none" stroke="#815f2b" strokeWidth="1"/>
   {/* ---- FOUR POSTS, IN A HOUSE THAT HAS BUILT NOTHING AND IN A SCHOOL INSIDE A SCHOOL ----
        The palus is a BUILDING with four levels and the game already writes what each one looks
        like: level 0 is "Three posts in bare dirt", level 3 is "three yards ... and every
@@ -22438,15 +22506,15 @@ const ScnSquare = ({ S, at, openDoc }) => (<>
     /* laid either side of the doctore's ground at x=132, and never on it */
     const xs = [60, 88, 250, 276, 222, 34].slice(0, n);
     return xs.map(x=>(<g key={x}>
-      <rect x={x} y="240" width="7" height="66" rx="2" fill="#3a2c18" stroke="#241c12"/>
-      <rect x={x-3} y="238" width="13" height="5" rx="2" fill="#33271a"/>
+      <rect x={x} y="240" width="7" height="66" rx="2" fill="#181008" stroke="#0d0805"/>
+      <rect x={x-3} y="238" width="13" height="5" rx="2" fill="#1e1409"/>
     </g>)); })()}
-  {bLevel(S, "palus") >= 2 && <ellipse cx="192" cy="288" rx="22" ry="9" fill="#241c12"
-    stroke="#332714" strokeWidth=".8" opacity=".9"/>}
+  {bLevel(S, "palus") >= 2 && <ellipse cx="192" cy="288" rx="22" ry="9" fill="#3a2a14"
+    stroke="#6b5024" strokeWidth=".8" opacity=".9"/>}
   {S.doctore && <g>
-    <circle cx="132" cy="252" r="7" fill="#241c12" stroke="#c99a4b" strokeWidth="1.3"/>
-    <path d="M132 260 q-9 3 -10 27 l5 0 q1 -11 5 -14 q4 3 5 14 l5 0 q-1 -24 -10 -27 Z" fill="#241c12" stroke="#c99a4b" strokeWidth="1.3"/>
-    <line x1="145" y1="242" x2="145" y2="290" stroke="#8a6a2c" strokeWidth="2"/>
+    <circle cx="132" cy="252" r="7" fill="#150e08" stroke="#0b0704" strokeWidth="1"/>
+    <path d="M132 260 q-9 3 -10 27 l5 0 q1 -11 5 -14 q4 3 5 14 l5 0 q-1 -24 -10 -27 Z" fill="#150e08" stroke="#0b0704" strokeWidth="1"/>
+    <line x1="145" y1="242" x2="145" y2="290" stroke="#120c06" strokeWidth="2.4"/>
     {scnSay(132, 314, S.doctore.name.slice(0,12))}
   </g>}
   {/* this sat at y=280, straight through the palus posts the moment there was more than one
@@ -22474,9 +22542,12 @@ const ScnYard = ({ S, go, openMan, men }) => (<>
          room. What is left is trodden earth: a scuffed floor darker where it is walked, and the
          wall's shadow falling across the back of it. */}
     <rect x="24" y="366" width="342" height="100" fill="transparent"/>
-    <ellipse cx="195" cy="424" rx="170" ry="48" fill="#2a2114" opacity=".55"/>
-    <ellipse cx="195" cy="430" rx="132" ry="34" fill="#241c12" opacity=".45"/>
-    <path d="M24 372 q86 -7 171 -3 q86 4 171 -2" fill="none" stroke="#3d2f1b" strokeWidth="1" opacity=".7"/>
+    {/* trodden earth was drawn by DARKENING the ground, which worked when the ground was
+         near-black and reads as a blot now that it is lit — and it put the men's own names on
+         the one dark patch in the yard. Ground that has been walked is scuffed PALER. */}
+    <ellipse cx="195" cy="424" rx="170" ry="48" fill="#c69a48" opacity=".38"/>
+    <ellipse cx="195" cy="430" rx="132" ry="34" fill="#d3a851" opacity=".30"/>
+    <path d="M24 372 q86 -7 171 -3 q86 4 171 -2" fill="none" stroke="#5c4622" strokeWidth="1" opacity=".55"/>
   </g>
   {/* six slots, not seven-and-a-collision: a real house carries names like Boduognatas and
        Diophantos, and at 46px spacing they wrote over each other — caught on the first big
@@ -22658,7 +22729,7 @@ const ScnRoad = ({ S, go, roadWord, roadOn, roadFit }) => (<>
   <rect x="272" y="694" width="8" height="20" rx="3" fill="#2e2416" stroke="#3e2f1f" strokeWidth=".8"/>
   <line x1="274" y1="700" x2="278" y2="700" stroke="#5b471f" strokeWidth="1"/>
   <line x1="274" y1="705" x2="278" y2="705" stroke="#5b471f" strokeWidth="1"/>
-  {scnSay(195, 713, roadWord)}
+  {scnSay(195, 713, roadWord, null, true)}
 </g>
 </>);
 
@@ -22716,12 +22787,18 @@ function Scene({ S, agenda, openDoc, openMan, go }){
              So: sky above the roofline, sand below it, and the sand lightens toward the FRONT, which
              is how an open yard reads under a low sun. The horizon sits at the villa's base. */}
         <linearGradient id="scn-sky" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#241d18"/><stop offset="0.55" stopColor="#38291b"/>
-          <stop offset="1" stopColor="#5a4423"/>
+          <stop offset="0" stopColor="#100c09"/><stop offset="0.55" stopColor="#2a1f14"/>
+          <stop offset="1" stopColor="#54401f"/>
         </linearGradient>
+        {/* ---- VMBRA: THE YARD IS LIT AND THE MEN ARE SHADOWS ON IT ----
+             The sand ran #2a2115 to #3e301b and the men were drawn as ochre outlines ON it —
+             lighter than the ground they stood on, which is the exact inverse of the bout. The
+             sand takes the light now, the same warm wall the arena burns behind its fighters,
+             and every man in the yard is a silhouette. One light for the whole game: the ludus
+             by day and the sand by night are the same picture seen from two sides. */}
         <linearGradient id="scn-sand" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#2a2115"/><stop offset="0.45" stopColor="#332818"/>
-          <stop offset="1" stopColor="#3e301b"/>
+          <stop offset="0" stopColor="#4e3c1f"/><stop offset="0.42" stopColor="#8a6a2c"/>
+          <stop offset="1" stopColor="#b98f42"/>
         </linearGradient>
         {/* the wall is masonry seen from inside, so its lit face is the top of each course */}
         <linearGradient id="scn-wall" x1="0" y1="0" x2="1" y2="0">
@@ -26277,9 +26354,7 @@ export default function App(){
                 </div>
               ); })()}
             {gView==="kit" && (<>
-            <div style={{position:"relative",height:176,borderRadius:10,overflow:"hidden",
-              border:"1px solid var(--line-4)",marginBottom:10,
-              background:"linear-gradient(#100c08 0%,#241a0e 22%,#6d5531 66%,#9a7844 100%)"}}>
+            <div className="umbra" style={{height:176,marginBottom:10}}>
               <div style={{position:"absolute",left:"50%",bottom:10,transform:"translateX(-50%)"}}>
                 <Fighter col={S.crest} fem={isF(selG)} kit={selG.kit || defaultKit(selG.cls)} scars={selG.scars} pose="idle" wounds={[]}/>
               </div>
