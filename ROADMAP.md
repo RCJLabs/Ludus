@@ -4461,6 +4461,75 @@ wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
 
+### v3.144.0 — what a man has done reaches his drawing, and the yard stopped floating
+
+**The deferred half of v3.141.0.** That release made the six classes six shapes and put fatigue,
+injury and scars back on the figure, and left one axis where it found it: `vocab` measured a man's
+RECORD at **one distinct drawing**. His wins, his renown and the men he had killed changed nothing
+about how he looked, in the picture a player studies every week of the game.
+
+**WHERE THE BANDS GO WAS MEASURED FIRST, and the measurement changed the design.** `test/probes/palm.mjs`
+walked 16 houses week by week and recorded every active man every week — **14,934 man-weeks**:
+
+| term | p50 | p75 | p90 | p97 | max | |
+|---|---|---|---|---|---|---|
+| wins | 0 | 1 | 4 | 8 | 40 | **66.4%** of man-weeks are a man with none |
+| renown | 0 | 22 | 74 | 177 | 585 | **74.5%** under 20, tail four times the rudis gate |
+| kills | 0 | 0 | 1 | 2 | 9 | **86.8%** have never killed anybody |
+
+Two things fell out of that and neither was guessable. The ladder is **five bands, not six**: a top
+band at 12+ wins — which is `MASTERY_GATE`, the obvious place to put it — is **1.0%** of all
+man-weeks, a step nobody would ever see. Folded into 7+, every band is at least 4.8%. And renown
+cannot be read linearly: median 0 against a tail of 585 would put five men in six on the floor and
+the sixth off the drawing.
+
+This is #206's lesson applied before the fact rather than after. `TELLS.cold` is written, read, and
+cannot fire, because `formOf(o)` is 0 for every opponent the game generates. **A band placed above
+where men actually stand is that same bug with a picture on it.**
+
+**THE PALM.** A Roman victor was handed a palma and a gladiator's record was counted in them, so it
+is the mark: nothing at zero wins, then a frond at 9 / 13 / 18 / 23 px across the five bands. Two
+thirds of the yard therefore carries nothing at all, which is the point — the first bout a man wins
+puts something on the drawing that was not there before. It rises from behind his shield shoulder,
+where all six class silhouettes are empty, and its stem runs down to his fist. The first cut sprayed
+the frond both ways from the stem and the short bands landed the whole thing **on his head**; a
+9px frond tops out at exactly head height, so the fan opens outward only.
+
+**AND THE MEN HAD NO SHADOW AT ALL.** Rooms get `scnFoot`; the six figures you look at every week
+had nothing under them — the same "holes cut in the sand rather than things standing on it" the
+villa's own note describes, fixed for the buildings and still true of the men. One ellipse grounds
+them and carries the other two readings, because they are the same fact — what the crowd knows him
+for. **How far it reaches** is his renown, on `sqrt(pfame/RUDIS_FAME)` saturating at the gate.
+**How dark it is** is the men he has killed. A green man is a faint smudge; a named killer stands in
+a black pool.
+
+It is deliberately **not blood**. Blood on a man in this game is his own — a scar that closed, a
+wound still open — and that rule is the clearest thing in the drawing. Borrowing it for what he did
+to somebody else would have cost more than it bought.
+
+**`vocab` grew from four axes to seven** — wins 5, renown 3, kills 3, at the band floors and at
+values off that same distribution rather than off taste. Two faults in the instrument came out with
+it. Its key was **blind to `opacity`**, so the kills reading would have been reported absent while
+working — the inverse of the fatigue bug the check was written for and just as invisible. And
+`genGladiator` hands back a man **with renown already on him**; left unzeroed, the class, fatigue,
+injury and scar sweeps would have inherited random renown and passed on its back rather than their
+own. The record is flattened first and exactly one term put back. The probe of the same name was
+sweeping **`g.fame`, which is not a field on a gladiator** — the house carries `fame`, the man
+carries `pfame` — so two thirds of its record axis had been setting a property nothing reads, and
+it reported "1 distinct drawing": the right answer for the wrong reason, and one that would have
+stayed right after the drawing was fixed.
+
+Negative-tested by neutering all three readings at once — no palm, fixed reach, fixed darkness:
+**wins 5→1, renown 3→1, kills 3→1, and the other four axes unmoved**, which is what proves each
+axis reads its own mark and nothing else's. `umbra` unchanged at 5.0:1 and 5.3:1 in the drawn
+yard, `scene` 0 collisions on a full eight-man roster, `bulk` 264/264 with no allowance raised.
+
+**Suite 109/109 green in 16.7 min, first run.** No check was added — `vocab` grew instead, which
+is the cheaper move when the new readings belong to a question already being asked. The two probes
+are instruments and not in the suite: `test/probes/palm.mjs` is new, and `test/probes/vocab.mjs`
+now reports the record axis at **6 distinct drawings** where it read 1, and the whole figure at
+**22** across every axis at once, up from 17.
+
 ### v3.143.0 — one ground, and it is the dark: the collapse was right, the direction was not
 
 **v3.142.0 collapsed the game's two grounds onto one. It picked the wrong one.** Reported from real
@@ -16986,4 +17055,4 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.143.0 — one ground, and it is the dark; the two drawings are lit pictures in it*
+*Last updated: v3.144.0 — a man's record reaches his drawing; the palm, and the pool at his feet*
