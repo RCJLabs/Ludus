@@ -81,4 +81,5 @@
 {"v":"3.132.0","checks":103,"failed":["houses"]},
 {"v":"3.132.0","checks":103,"failed":[]},
 {"v":"3.133.0","checks":104,"failed":[]},
-{"v":"3.134.0","checks":105,"failed":[]}]
+{"v":"3.134.0","checks":105,"failed":[]},
+{"v":"3.135.0","checks":106,"failed":[]}]
