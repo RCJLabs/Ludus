@@ -121,10 +121,20 @@ export async function run({ p, errors }){
   }
 
   /* ---- AND THE SHEETS, WHICH IS WHERE IT WAS REPORTED FROM ----
-     The Houses of Capua is a record sheet behind a section on the ludus tab, and no check
-     had ever opened one. That is where "House Glaber…" and "247…" were. */
-  await tab(p, "ludus");
-  await p.waitForTimeout(260);
+     The Houses of Capua is a record sheet behind a section on the VILLA tab, and no check had ever
+     opened one. That is where "House Glaber…" and "247…" were. The shelf lived on the ludus tab
+     until v3.151.0 and moved with the reasoning written at its new home; this route moved with it,
+     and the run that found the move was this check refusing to pass on zero sheets rather than
+     reporting nine clean ones it had never opened. */
+  await tab(p, "villa");
+  await p.waitForTimeout(320);
+  await clearAll(p, 6);
+  /* THE VILLA HAS THREE FACES and remembers which one it was left on, so arriving at the tab is
+     not the same as arriving at the shelf — the sweep above visits every tab and can leave this
+     one on Standing, where the section does not render at all. The face is pressed by name. */
+  await p.evaluate(()=>{ const c=[...document.querySelectorAll("button")]
+    .find(x=>/^the house$/i.test((x.innerText||"").trim())); if(c) c.click(); });
+  await p.waitForTimeout(340);
   await p.evaluate(()=>{ const d=[...document.querySelectorAll("details.sect")]
     .find(x=>/records\s*&\s*annals/i.test((x.querySelector("summary")||{}).textContent||"")); if(d) d.open = true; });
   await p.waitForTimeout(320);

@@ -24944,7 +24944,7 @@ export default function App(){
               </div>
             </div>
           )}
-          {SECT.annals(S, SX)}
+          {/* the records shelf moved to the villa in v3.151.0 — see the note at its new home */}
           {S.week<=2 && (
             <div className="panel" style={{padding:13}}>
               <div className="tag tag-gold" style={{marginBottom:6}}>The lanista's first lessons</div>
@@ -25955,6 +25955,17 @@ export default function App(){
           {SECT.blood(S, SX)}
           {SECT.houseName(S, SX)}
           {SECT.colours(S, SX)}
+          {/* ---- THE RECORDS SHELF BELONGS TO THE HOUSE, NOT TO THE YARD ----
+               Twelve tiles — the lanista, the houses, the book, the roll, the chronicle — sat at the
+               foot of the LUDUS tab, under the drawn scene. The ludus tab is the yard: a picture of
+               the place and the men in it, and what a player goes there to do is look at his men.
+               None of those twelve is about a man. They are what the HOUSE knows about itself, which
+               is what the villa is for and what the drawn villa's own label already says: "the
+               house's own business".
+               It sits at the FOOT of the House face on purpose. Everything above it is something to
+               do this week — the feast, the tournament, walking the cells — and a reference shelf
+               above the week's work is a reference shelf a player scrolls past every time. */}
+          {SECT.annals(S, SX)}
 
           {/* ---- THE CELLS WERE A WHOLE FACE FOR ONE PANEL ----
                `The Cells` carried a single section — one chip on the villa's row, one tap, and 971px of

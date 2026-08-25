@@ -4461,6 +4461,32 @@ wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
 
+### v3.151.0 — the records shelf belongs to the house, not to the yard
+
+Reported from real play. Twelve tiles — the lanista, the houses, the book, the roll, the chronicle,
+the record book — sat at the foot of the **ludus** tab, under the drawn scene.
+
+The ludus tab is the yard: a picture of the place and the men in it, and what a player goes there to
+do is look at his men. **None of those twelve is about a man.** They are what the house knows about
+itself, which is what the villa is for — and what the drawn villa's own label has always said:
+*"the house's own business"*.
+
+It sits at the **foot** of the villa's House face on purpose, under the three sections that say what
+this house IS (its blood, its name, its colours). Everything above it is something to do this week —
+the feast, the tournament, walking the cells — and a reference shelf above the week's work is a
+reference shelf a player scrolls past every time.
+
+**`surface` caught the move, and caught it the right way round.** It reaches nine record sheets to
+measure them for cut-off text, and it reached them through the ludus tab. After the move it reported
+**"0 of 9 record sheets read — the screen the truncation was reported from was not measured"** and
+FAILED, rather than passing on nine sheets it had never opened. Its route moved with the shelf, and
+needed one thing the ludus tab never did: **the villa has three faces and remembers which one it was
+left on**, so arriving at the tab is not the same as arriving at the shelf — the sweep that visits
+every tab can leave this one on Standing, where the section does not render at all. The face is
+pressed by name now. Back to 9 of 9.
+
+**Suite 113/113 green in 16.5 min**, with no check added — the move is a move.
+
 ### v3.150.0 — the backslash the page never sees
 
 **The one fault in this project with no guard at all, and it had bitten four times.**
@@ -17489,4 +17515,4 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.150.0 — the backslash trap has a guard; the queue is empty*
+*Last updated: v3.151.0 — the records shelf moved to the villa, where the house's own business is*
