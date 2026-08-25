@@ -4461,6 +4461,63 @@ wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
 
+### v3.136.0 — #205: the bribe had never once changed an opponent
+
+**The last of the v3.115.0 audit's successors, and the model it was supposed to reuse did not exist.**
+
+#205 says the only way to influence the editor is to bribe him, and that `d.flags.editorBought` and
+the `EDITORS` table mean *"the model is there"*. Read against the file:
+
+| | |
+|---|---|
+| `EDITORS` | five names, used **once**, to sign a booking line. No editor entity, no standing relationship, nothing that persists between cards. |
+| `editorBought` | a 12-week flag with **exactly one reader**, and it was on the `!pool.length` **fallback** of `pickAnyOpp` — the branch taken only when the circuit has nobody at all in the tier band. |
+
+## And that branch is never taken
+
+`probes/editor.mjs`, 8 houses × 300 weeks an arm: the circuit is empty in a tier band on **0 of 7,236
+lookups.** Not rarely — never. It holds sixteen men on a pyramid covering every band.
+
+So `GAMBITS.bribe` — 300 + fame×0.9 denarii, twelve points of heat, fourteen of a rival's grudge, and
+a winning line that promises *"for the next few months your men are matched softly"* — **has never
+once changed an opponent.** A player bribing every four weeks held the flag for **5.67% of his weeks**
+and got nothing at all for it.
+
+## What shipped
+
+**The bribe does what its own line says.** A bought editor draws from a band one rung lower on the
+ordinary path, not only when the game has to invent a man. Measured over 600 draws at tier 2: the
+opponent's average stat goes **55.6 → 54.0**. The fallback is still there for the case it was written
+for, and the check drives an empty circuit to prove it.
+
+**And then the legitimate half, which is what #205 actually asked for.** `PETITIONS` — three requests
+about *this week's card*, which is what separates them from a gambit: a gambit buys a standing
+condition, a petition changes one offer in front of you.
+
+- **Ask for an easier man** — the bill is redrawn a rung lower, and the purse comes down with him.
+- **Ask for a better purse** — +28%.
+- **Ask for the appeal to stand** — a sine missione card becomes an ordinary bout, at the purse.
+
+Paid in **favour**, not coin: the editor is not being bought, he is being asked by somebody whose
+patrons he would rather not annoy. Odds rise with `d.favor`, with fame, and with a friendly aedile,
+and fall with a hostile one. **He can refuse**, and the asking costs standing either way, because it
+was done in public. A house with no patrons is told plainly that it has nobody behind it.
+
+## `open.mjs` is byte-identical
+
+The reference player neither bribes nor petitions, and with the flag clear the rewritten picker
+resolves to exactly the old expression.
+
+## The instrument fault worth keeping
+
+The check drove each petition 400 times looking for a grant and reported all three as **"never
+granted — unreachable writing"** against a table that grants two times in three. `newGameState` seeds
+the generator from its seed string, so rebuilding the house from one seed made every iteration
+identical: **four hundred tries were one try repeated four hundred times.** The seed varies per call
+now, which is the only thing that makes a loop a sample.
+
+`bulk`: App 5,754 → **5,757** of 5,786. No allowance raised.
+
 ### v3.135.0 — #204: the house has three memories and the reader saw one of them
 
 #204 says `d.freed`, `d.fallen`, the Record Book and the Annals exist and *"nothing mechanical reads
@@ -15569,7 +15626,7 @@ the claim that nothing reads them — `voice.mjs`'s method would settle it in an
 already showed the freed population is one man per house per 420 weeks, which may make this an item
 about the input rather than the reader.
 
-### #205 — the only way to influence the editor is to bribe him.
+### #205 — CLOSED in v3.136.0. The only way to influence the editor is to bribe him.
 `d.flags.editorBought` and the `EDITORS` table exist, so the model is there; the player's single route
 to it is `bribe`, one of the four illegal gambits. The legitimate version — ask for a different
 opponent, a bigger purse, softer stakes, at the cost of favour and standing, and he can refuse.
@@ -16414,4 +16471,4 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.135.0 — a man who left free is remembered, whichever way he left*
+*Last updated: v3.136.0 — the ten are closed; the bribe works and there is an honest way to ask*

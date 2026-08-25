@@ -74,6 +74,7 @@ Run them straight:
     node test/probes/refuse.mjs 8 300 SEED   # #201; who sits down, and whether the game could have said so
     node test/probes/medicus.mjs 8 300 SEED  # #203; the four care options against each other, which nothing had run
     node test/probes/annals.mjs 8 420 SEED   # #204; the house's three memory lists, and which of them anything reads
+    node test/probes/editor.mjs 8 300 SEED   # #205; how often a bought editor can change anything at all
 
 ## HOW MANY HOUSES A FIGURE NEEDS — read this before quoting one
 
@@ -758,6 +759,13 @@ player uses neither — **0.00 men a house** — so six entries of `FREEDMEN` an
 acclaim term were unreachable; while **`d.retired` is fed 13.25 a house** by a player who presses the
 button, sits ripe on 92.6% of weeks, and was read by nothing at all. Three arms: control, `free:true`
 (#190's lever) and `retire:true` (added here, because `retireG` has one caller in the game).
+
+**`editor.mjs`** — what buying the editor buys. `d.flags.editorBought` had **one reader in the file**
+and it sat on the `!pool.length` fallback of `pickAnyOpp`. Measured: the circuit is empty in a tier
+band on **0 of 7,236 lookups** — the branch is unreachable, so `GAMBITS.bribe` had never once changed
+an opponent, while a player bribing every four weeks held the flag 5.67% of his weeks. It also
+disproved #205's "the model is there": `EDITORS` is five names used once to sign a booking line.
+The probe reads the pool test off the game's own bands without drawing, so it costs no RNG.
 
 **`scroll.mjs`** — where the vertical pixels go, per place, as the page ARRIVES versus with every fold
 thrown open. The second is what `reach` necessarily measures and it is 40% taller than the first.
