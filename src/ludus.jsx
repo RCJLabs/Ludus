@@ -8243,12 +8243,26 @@ function circuitRecord(d, f, g, youWon, died){
   meetRecord(d, g, live, { fid:live.id, house:live.house }, youWon, !!died, false);
   if(died){ const i=(d.circuit||[]).indexOf(live); if(i>=0) d.circuit[i] = makeCircuitMan(d, CIRCUIT_MIX[i % CIRCUIT_MIX.length]); }
 }
-/* the whole card is drawn from men who exist */
+/* ---- #205: THE BRIBE HAD NEVER ONCE CHANGED AN OPPONENT ----
+   `GAMBITS.bribe` costs 300 + fame*0.9 denarii, twelve points of heat and fourteen of a rival's
+   grudge, and its winning line promises *"for the next few months your men are matched softly"*. It
+   sets `d.flags.editorBought`, which had **exactly one reader in the whole file** — and that reader
+   was the `!pool.length` FALLBACK below, the branch taken only when the circuit has nobody at all in
+   the tier band.
+
+   MEASURED (probes/editor.mjs, 8 houses x 300 weeks an arm): the circuit is empty in a tier band on
+   **0 of 7,236 lookups**. Not rarely. Never. The circuit holds sixteen men on a pyramid that covers
+   every band, so the fallback is unreachable and the one thing a bribe buys was bought never — while
+   a player bribing every four weeks held the flag for 5.67% of his weeks and got nothing for it.
+
+   The fix is the line the writing already promised: a bought editor draws your opponent from a band
+   one rung lower, on the ordinary path and not only when the game has to invent a man. */
 function pickAnyOpp(d, tier){
   const bands = [[22,46],[38,60],[54,76],[66,99]];
   const avg = f => STATS.reduce((s,k)=>s+f[k],0)/6;
-  const pool = (d.circuit||[]).filter(f=>{ const a=avg(f); return a>=bands[tier][0]-12 && a<=bands[tier][1]+12; });
-  if(!pool.length) return { opp: genOpponent(editorBought(d) ? Math.max(0, tier-1) : tier, undefined, d), ref:null, known:false };
+  const t = editorBought(d) ? Math.max(0, tier-1) : tier;
+  const pool = (d.circuit||[]).filter(f=>{ const a=avg(f); return a>=bands[t][0]-12 && a<=bands[t][1]+12; });
+  if(!pool.length) return { opp: genOpponent(t, undefined, d), ref:null, known:false };
   /* somebody with a score to settle turns up more often */
   const grudged = pool.filter(f=>f.beatYou>0 || f.lostToYou>0);
   const f = (grudged.length && R()<0.55) ? pick(grudged) : pick(pool);
@@ -12920,6 +12934,82 @@ function runGambit(d, k, houseName){
 }
 const editorBought = d => !!(d.flags.editorBought && d.week < d.flags.editorBought);
 
+/* ---- #205: AND THE LEGITIMATE HALF, ONCE THERE WAS A MODEL TO ATTACH IT TO ----
+   The item asked for the honest counterpart to the bribe: ask for a different opponent, a bigger
+   purse, softer stakes, at the cost of favour and standing, and he can refuse. It said "the model is
+   there". Measured, it was not — five names used once to sign a booking line, and a flag whose only
+   reader had never fired. The fix above gives the flag a real effect for the first time; these give
+   the player a way to reach the same man without breaking the law.
+
+   THEY ACT ON THIS WEEK'S CARD, which is what makes them different from a gambit: a gambit buys a
+   standing condition, a petition changes one offer in front of you. Each is paid for in FAVOUR and
+   standing rather than coin — the editor is not being bought, he is being asked by somebody whose
+   patrons he would rather not annoy — and each can be refused, more readily by a house with nothing
+   behind it. A refusal costs the asking and nothing else. */
+const PETITION_COOL = 5;
+const PETITIONS = {
+  soften: { name:"Ask for an easier man", w:1,
+    blurb:"Not a favour, exactly. A word that the house has had a hard season and could use a kinder afternoon.",
+    fav:6, fame:0,
+    need:(d,o)=>!!o && !!o.opp && !o.booking && !o.challenge,
+    run:(d,o)=>{ const pr = pickAnyOpp(d, Math.max(0, (o.tier||0) - 1));
+      if(!pr || !pr.opp) return null;
+      o.opp = pr.opp; o.oppRef = pr.ref; o.watched = null; o.softened = true;
+      o.purse = rnd((o.purse||0) * 0.86);
+      return `The bill is redrawn. ${o.opp.name} is not the man who was on it this morning, and the purse has come down with him.`; } },
+  purse:  { name:"Ask for a better purse", w:1,
+    blurb:"The house draws a crowd and both of you know it. It is not impudent to say so out loud.",
+    fav:9, fame:0,
+    need:(d,o)=>!!o,
+    run:(d,o)=>{ const was = o.purse||0; o.purse = rnd(was * 1.28); o.raised = true;
+      return `He looks at the ledger, and at you, and adds ${o.purse - was} denarii to the line without saying anything about it.`; } },
+  mercy:  { name:"Ask for the appeal to stand", w:1,
+    blurb:"A sine missione card with your man on it. You would rather the editor kept his thumb free.",
+    fav:12, fame:4,
+    need:(d,o)=>!!o && o.stakes === "sine",
+    run:(d,o)=>{ o.stakes = "standard"; o.purse = rnd((o.purse||0) / 1.8); o.eased = true;
+      return `The card is re-read out as an ordinary bout. The purse goes with it, which is the whole of what you have traded.`; } },
+};
+const PET_KEYS = Object.keys(PETITIONS);
+const petitionReady = d => !d.flags.petitionWeek || d.week - d.flags.petitionWeek >= PETITION_COOL;
+/* a man with patrons behind him is heard; a man with none is a lanista asking a magistrate for a
+   favour in a public place. `aedileOn` moves it either way, which is what an aedile is for. */
+const petitionOdds = (d, k) => {
+  const P = PETITIONS[k]; if(!P) return 0;
+  const a = aedileOn(d);
+  return clamp(0.34 + (d.favor||0)/100*0.40 + Math.min(0.12, (d.fame||0)/4000)
+    + (a ? (a.friendly ? 0.12 : a.hostile ? -0.14 : 0) : 0) - P.fav*0.012, 0.05, 0.92);
+};
+const petitionWhy = (d, k, offer) => {
+  const P = PETITIONS[k]; if(!P) return "There is no such request.";
+  if(!petitionReady(d)) return `Not for ${PETITION_COOL - (d.week - (d.flags.petitionWeek||0))} weeks — you have asked once already.`;
+  if(!offer) return "There is no card in front of him to talk about.";
+  try { if(!P.need(d, offer)) return k === "mercy" ? "This one already carries an appeal." : "Not on this card."; } catch(e){ return "Not on this card."; }
+  if(!patronsOf(d).length) return "You have nobody behind you, and a lanista with nobody behind him is not asking, he is begging.";
+  return null;
+};
+function runPetition(d, k, offerId){
+  const P = PETITIONS[k]; if(!P) return null;
+  const offer = ((d.games && d.games.offers) || []).find(o=>o.id === offerId);
+  if(petitionWhy(d, k, offer)) return null;
+  d.flags.petitionWeek = d.week;
+  const won = R() < petitionOdds(d, k);
+  /* the asking costs whether or not he says yes — you spent the standing to ask */
+  patronsOf(d).forEach(p=>{ p.favor = clamp(p.favor - (won ? P.fav : P.fav*0.4), 0, 100); });
+  recomputeFavor(d);
+  if(!won){
+    d.fame = Math.max(0, d.fame - 2);
+    chron(d, `You put it to the editor and he hears you out, and does not move. The card stands as it was written.`, "info");
+    return { k, won:false };
+  }
+  if(P.fame) d.fame = Math.max(0, d.fame - P.fame);
+  let line = null;
+  try { line = P.run(d, offer); } catch(e){ line = null; }
+  if(!line){ chron(d, `The request goes nowhere — there was nothing on the card he could move.`, "info"); return { k, won:false }; }
+  chron(d, line, "good");
+  return { k, won:true, line };
+}
+
 /* ---- #198: FOUR WAYS TO WRECK A HOUSE AND NOT ONE TO WARM ONE ----
    `GAMBITS` is poach, bribe, poison and word — four, all hostile. Against them, `warm` runs 0-100
    with four `RIVAL_BEATS` gated on it, and MEASURED (probes/warm.mjs, 8 houses x 360 weeks an arm,
@@ -13009,6 +13099,45 @@ const overtureWhy = (d, k) => {
    button per rival. So the row moved out here and renders either table, which pays for the new
    panel and leaves App smaller than it was. The two differ in exactly three things and they are
    arguments: the colour, whether the confirmation is a warning, and the line under the odds. */
+/* ---- #205: THE OTHER WAY TO REACH THE EDITOR ----
+   The gambit panel buys a standing condition from a man you are breaking the law with. This asks him
+   for one thing about one card, in front of witnesses, and he can say no. It quotes the same odds
+   `runPetition` rolls — #150 — and it names the reason a row is dark, because measured, the common
+   reason is having no patrons at all and that is worth saying out loud. */
+function PetitionPanel({ S, offer, ask }){
+  if(!offer) return null;
+  const live = PET_KEYS.filter(k=>!petitionWhy(S, k, offer));
+  const shown = PET_KEYS.filter(k=>{ try { return PETITIONS[k].need(S, offer); } catch(e){ return false; } });
+  if(!shown.length) return null;
+  return (
+    <div className="panel" style={{padding:10,marginTop:8,background:"var(--panel)",borderColor:"var(--gold-edge)"}}>
+      <div className="flex items-center justify-between" style={{marginBottom:3}}>
+        <span className="tag tag-gold">A word with the editor</span>
+        <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>
+          {petitionReady(S) ? "one request a month" : `not for ${PETITION_COOL - (S.week - (S.flags.petitionWeek||0))} weeks`}
+        </span>
+      </div>
+      {shown.map(k=>{ const P = PETITIONS[k], why = petitionWhy(S, k, offer), p = petitionOdds(S, k);
+        return (
+          <div key={k} style={{borderTop:"1px dotted var(--line)",paddingTop:6,marginTop:6}}>
+            <div className="flex items-center justify-between gap-2">
+              <span className="rowname" style={{fontSize:"var(--fs-md)"}}>{P.name}</span>
+              <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>−{P.fav} favour</span>
+            </div>
+            <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:1}}>{P.blurb}</div>
+            <div style={{fontSize:"var(--fs-sm)",marginTop:2,color:p>=0.55?"var(--laurel)":p>=0.35?"var(--gold)":"var(--blood)"}}>
+              about {Math.round(p*100)} in a hundred he hears you
+            </div>
+            {why
+              ? <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:4,fontStyle:"italic"}}>{why}</div>
+              : <button className="btn btn-ghost" style={{width:"100%",marginTop:5,fontSize:"var(--fs-sm)"}}
+                  onClick={()=>ask(k, P, p)}>Put it to him</button>}
+          </div>
+        ); })}
+      {!live.length && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:5,fontStyle:"italic"}}>Nothing is spent on a request he will not hear.</div>}
+    </div>
+  );
+}
 function QuietRow({ S, k, name, cost, blurb, odds, note, why, rivals, tone, danger, ask, run }){
   const p = odds;
   return (
@@ -27815,6 +27944,9 @@ export default function App(){
               {/* #200 — a demand you cannot see before you fight is not a demand. Printed on the
                   offer, with what it is worth and what flouting it costs, because both are real. */}
               <AppetiteLine offer={o} />
+              <PetitionPanel S={S} offer={o} ask={(k,P,pp)=>setAsk({ title:P.name, confirm:`Put it to him · −${P.fav} favour`,
+                text:`${P.blurb} About ${Math.round(pp*100)} in a hundred he hears you, and a refusal costs the asking and nothing else.`,
+                run:()=>mut(d=>{ runPetition(d, k, o.id); }) })} />
               {me && (()=>{ const w=metWord(liveFoe(S,o),me); return w?<div style={{fontSize:"var(--fs-md)",marginTop:2,color:"var(--gold)"}}>{w}</div>:null; })()}
               {(()=>{ if(!me) return null;
                 const tr = theirRead(S, me, o);
@@ -28402,7 +28534,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     paragonOf, paragonReach, makeParagon, paragonWeek, paragonExpire, PARAGONS,
     PARAGON_REACH, PARAGON_GAP, PARAGON_ODDS, marketWeek,
     buyGearItem, sellGearOne, equipOne, stripAll, mendKitOf, forgeForMan, armHimOff, armAllOff,
-    buildUp, setCrestTo, setCareOf, CARE, CARE_KEYS, careWhy, surgeonOK, surgeonFee, retireEligible, FREEDMEN, FM_KEYS, freedWeek, acclaimTerms,
+    buildUp, setCrestTo, setCareOf, editorBought, EDITORS, PETITIONS, PET_KEYS, runPetition, petitionOdds, petitionWhy, petitionReady, PETITION_COOL, pickAnyOpp, CARE, CARE_KEYS, careWhy, surgeonOK, surgeonFee, retireEligible, FM_KEYS, freedWeek,
     teachSigTo, makeMasterOf, startSecond, switchStyle,
     setPupilTo, beginRetrain, endRetrain, hireDoctore, dismissDoctore, takeDoctoreOffer, makeDoctore, docSecond, onSquare, squareMen, squareWord, squareWeek, squareTook, squareTie, SQUARE_WEAR, SQUARE_TIE, doctoreWeek, docLesson, DOC_LESSONS, tieBetween, tieWord, addTie,   /* #197 — the square's second seat, and the tie words the arena panel already uses */
     hireStaffMember, letStaffGoOf, setEarTo,
