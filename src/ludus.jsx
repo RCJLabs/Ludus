@@ -9981,7 +9981,12 @@ const blessHeal  = d => blessOf(d)==="aesculapius" ? 1.4 : 1;
 const blessPurse = d => blessOf(d)==="victoria" ? 1.10 : 1;
 const blessFame  = d => blessOf(d)==="victoria" ? 1.15 : 1;
 const pietyOf   = d => clamp(d.piety==null ? 30 : d.piety, 0, 100);
-const pietyWord = p => p>=80 ? "devout" : p>=60 ? "pious" : p>=38 ? "observant" : p>=18 ? "lax" : "godless";
+/* the shrine SAYS one of five things and DREW one of two — a lit altar or an unlit one. It carries
+   the band in its shapes now (votives on the step, one per band), and #150's rule says the picture
+   and the word have to be the same function, so both are this one. */
+const PIETY_WORDS = ["godless","lax","observant","pious","devout"];
+const pietyRank = p => p>=80 ? 4 : p>=60 ? 3 : p>=38 ? 2 : p>=18 ? 1 : 0;
+const pietyWord = p => PIETY_WORDS[pietyRank(p)];
 const OFFERING_COOL = 3;
 const offeringReady = d => (d.week - (d.lastOffering==null ? -9 : d.lastOffering)) >= OFFERING_COOL;
 function makeOffering(d, god){
@@ -22320,6 +22325,14 @@ const scnSay = (x,y,t,anchor) => <text x={x} y={y} textAnchor={anchor||"middle"}
   fill="#b09b7d" fontStyle="italic" fontFamily="Georgia,serif">{t}</text>;
 const scnName = (x,y,t) => <text x={x} y={y} fontSize="10" letterSpacing="3" fill="#8a6a2c"
   fontFamily="'Cinzel',serif">{t}</text>;
+/* ---- ONE SUN FOR THE WHOLE DRAWING ----
+   Every building was a near-black rect with a thin outline, so against the new ground they read as
+   holes cut in the sand rather than as things standing on it. There is one light now — from above
+   and a little in front, the same one the wall's coping catches — so every solid thing takes a lit
+   top course and throws a soft shadow at its foot. Two helpers, used by every room, which is what
+   keeps the lighting from drifting room to room. */
+const scnLit  = (x,y,w,h) => <rect x={x} y={y} width={w} height={h||5} fill="#42341e" opacity=".9"/>;
+const scnFoot = (cx,y,rx) => <ellipse cx={cx} cy={y} rx={rx} ry="6" fill="#14100c" opacity=".5"/>;
 const scnWorst = list => list.reduce((m,a)=>Math.max(m,a.urgency||1), 0);
 const ScnBadge = ({x,y,list}) => !list.length ? null : (
   <g aria-hidden="true">
@@ -22342,7 +22355,11 @@ const ScnVilla = ({ S, at, go, houseLit }) => (<>
 <g className="scn" role="button" tabIndex={0} aria-label="The villa — the house's own business"
   onClick={()=>go("villa")} onKeyDown={e=>{ if(e.key==="Enter") go("villa"); }}>
   {scnName(26, 34, "THE VILLA")}
+  {scnFoot(195, 110, 168)}
   <path d="M28 108 L28 62 L195 30 L362 62 L362 108 Z" fill="url(#scn-stone)" stroke="#33271a"/>
+  {/* the roofline takes the light, which is what makes it a roof and not an outline */}
+  <path d="M28 62 L195 30 L362 62" fill="none" stroke="#4a3a22" strokeWidth="2.5"/>
+  <path d="M32 66 L195 35 L358 66" fill="none" stroke="#2a2114" strokeWidth="1"/>
   <path d="M20 64 L195 26 L370 64 L370 58 L195 18 L20 58 Z" fill="#2e2416" stroke="#3e2f1f"/>
   {/* two courses down the roof, so the mass reads as tile and not as a wedge */}
   <path d="M46 56 L195 23 L344 56" fill="none" stroke="#3e2f1f" strokeWidth="1"/>
@@ -22366,7 +22383,7 @@ const ScnVilla = ({ S, at, go, houseLit }) => (<>
 </g>
 </>);
 
-const ScnShrine = ({ S, at, openDoc, shrineWord, shrineFire }) => (<>
+const ScnShrine = ({ S, at, openDoc, shrineWord, shrineFire, shrineRank }) => (<>
 {/* THE SHRINE */}
 <g className="scn" role="button" tabIndex={0} aria-label="The shrine — the temple"
   onClick={()=>openDoc({ label:"The Temple", sub:"the gods, and what they are owed", doc:"temple", dest:"villa:standing", tab:"villa" })}
@@ -22378,10 +22395,14 @@ const ScnShrine = ({ S, at, openDoc, shrineWord, shrineFire }) => (<>
   <rect x="303" y="150" width="50" height="6" fill="#33271a" stroke="#3e2f1f" strokeWidth=".7"/>
   <rect x="308" y="156" width="7" height="22" fill="#2e2416" stroke="#3e2f1f" strokeWidth=".7"/>
   <rect x="341" y="156" width="7" height="22" fill="#2e2416" stroke="#3e2f1f" strokeWidth=".7"/>
-  {shrineFire && <circle cx="328" cy="164" r="13" fill="url(#scn-torch)"/>}
-  <ellipse cx="328" cy="166" rx="4" ry="7" fill={shrineFire?"#e0bd72":"#8a6a2c"}
-    opacity={shrineFire?".85":".45"}/>
+  {shrineFire && <circle cx="328" cy="164" r={9 + shrineRank*2} fill="url(#scn-torch)"/>}
+  <ellipse cx="328" cy="166" rx={3 + shrineRank*0.4} ry={4.5 + shrineRank*1.3}
+    fill={shrineFire?"#e0bd72":shrineRank?"#8a6a2c":"#3a2f22"}
+    opacity={shrineFire?".85":shrineRank?".45":".7"}/>
   <rect x="302" y="178" width="52" height="4" fill="#33271a"/>
+  {/* what the house has laid on the step. Nothing at all when it is godless. */}
+  {Array.from({length:shrineRank}).map((_,i)=>(
+    <circle key={i} cx={318 + i*7} cy="181" r="2.4" fill="#3a2c18" stroke="#6b5330" strokeWidth=".7"/>))}
   <rect x="297" y="182" width="62" height="4" fill="#2e2416"/>
   {scnSay(328, 198, shrineWord)}
   <ScnBadge x={358} y={136} list={at("shrine")}/>
@@ -22395,17 +22416,33 @@ const ScnSquare = ({ S, at, openDoc }) => (<>
   onClick={()=>openDoc({ label:"The training square", sub:S.doctore?`${S.doctore.name} · ${S.doctore.wage}d a week`:"no doctore — you run it", doc:"square", scene:true, tab:"ludus" })}
   onKeyDown={e=>{ if(e.key==="Enter") openDoc({ label:"The training square", doc:"square", scene:true, tab:"ludus" }); }}>
   {scnName(26, 216, "THE TRAINING SQUARE")}
-  <rect x="24" y="226" width="270" height="96" fill="#2a2013" stroke="#33271a"/>
+  {/* a laid floor, so it keeps its plane — but it sits ON the ground now, with the shadow the
+       wall throws across its near edge, instead of floating as an outlined rectangle */}
+  <rect x="24" y="226" width="270" height="96" fill="#2a2013"/>
+  <path d="M24 226 L294 226 L294 322 L24 322 Z" fill="none" stroke="#3d2f1b" strokeWidth="1" opacity=".8"/>
+  <rect x="24" y="226" width="270" height="9" fill="#14100c" opacity=".5"/>
+  <ellipse cx="159" cy="326" rx="142" ry="7" fill="#14100c" opacity=".45"/>
   {/* the largest floor in the drawing and it held ONE post — three shapes for 270x96, against
        seventeen for the cells. A palus is a row of posts and a floor that has been walked on;
        both are drawn now. The posts stop at y=306 so neither label can land on one. */}
   <path d="M34 296 q52 -9 104 -2" fill="none" stroke="#332714" strokeWidth="1"/>
   <path d="M150 302 q62 -8 132 -3" fill="none" stroke="#332714" strokeWidth="1"/>
   <path d="M40 262 q40 -7 82 -3" fill="none" stroke="#2f2412" strokeWidth="1"/>
-  {[60,88,250,276].map(x=>(<g key={x}>
-    <rect x={x} y="240" width="7" height="66" rx="2" fill="#3a2c18" stroke="#241c12"/>
-    <rect x={x-3} y="238" width="13" height="5" rx="2" fill="#33271a"/>
-  </g>))}
+  {/* ---- FOUR POSTS, IN A HOUSE THAT HAS BUILT NOTHING AND IN A SCHOOL INSIDE A SCHOOL ----
+       The palus is a BUILDING with four levels and the game already writes what each one looks
+       like: level 0 is "Three posts in bare dirt", level 3 is "three yards ... and every
+       apparatus in Italy, twice over". The square drew the same four posts at every level. It
+       draws 3 + the level now, with a sand pit from level 2 — the same reading the racks and the
+       cells take, off a number the building panel already shows you. */}
+  {(()=>{ const lvl = bLevel(S, "palus"), n = 3 + lvl;
+    /* laid either side of the doctore's ground at x=132, and never on it */
+    const xs = [60, 88, 250, 276, 222, 34].slice(0, n);
+    return xs.map(x=>(<g key={x}>
+      <rect x={x} y="240" width="7" height="66" rx="2" fill="#3a2c18" stroke="#241c12"/>
+      <rect x={x-3} y="238" width="13" height="5" rx="2" fill="#33271a"/>
+    </g>)); })()}
+  {bLevel(S, "palus") >= 2 && <ellipse cx="192" cy="288" rx="22" ry="9" fill="#241c12"
+    stroke="#332714" strokeWidth=".8" opacity=".9"/>}
   {S.doctore && <g>
     <circle cx="132" cy="252" r="7" fill="#241c12" stroke="#c99a4b" strokeWidth="1.3"/>
     <path d="M132 260 q-9 3 -10 27 l5 0 q1 -11 5 -14 q4 3 5 14 l5 0 q-1 -24 -10 -27 Z" fill="#241c12" stroke="#c99a4b" strokeWidth="1.3"/>
@@ -22430,7 +22467,16 @@ const ScnYard = ({ S, go, openMan, men }) => (<>
   {scnName(26, 356, "THE YARD")}
   <g className="scn" role="button" tabIndex={0} aria-label="The yard — the familia"
     onClick={()=>go("men")} onKeyDown={e=>{ if(e.key==="Enter") go("men"); }}>
-    <rect x="24" y="366" width="342" height="100" fill="#191309" stroke="#33271a"/>
+    {/* ---- THE YARD IS THE GROUND, NOT A BOX ON IT ----
+         A filled rect with a stroke, which is what made the drawing read as a form: the one room
+         that IS open sand was drawn as a container sitting on top of the sand. The fill is gone and
+         the rect stays transparent because it is the hotspot — a room you cannot press is not a
+         room. What is left is trodden earth: a scuffed floor darker where it is walked, and the
+         wall's shadow falling across the back of it. */}
+    <rect x="24" y="366" width="342" height="100" fill="transparent"/>
+    <ellipse cx="195" cy="424" rx="170" ry="48" fill="#2a2114" opacity=".55"/>
+    <ellipse cx="195" cy="430" rx="132" ry="34" fill="#241c12" opacity=".45"/>
+    <path d="M24 372 q86 -7 171 -3 q86 4 171 -2" fill="none" stroke="#3d2f1b" strokeWidth="1" opacity=".7"/>
   </g>
   {/* six slots, not seven-and-a-collision: a real house carries names like Boduognatas and
        Diophantos, and at 46px spacing they wrote over each other — caught on the first big
@@ -22452,13 +22498,35 @@ const ScnCells = ({ S, at, openDoc }) => (<>
   onClick={()=>openDoc({ label:"The cells at night", sub:unrestWord(S.unrest).toLowerCase(), doc:"cellsNight", scene:true, tab:"ludus" })}
   onKeyDown={e=>{ if(e.key==="Enter") openDoc({ label:"The cells at night", doc:"cellsNight", scene:true, tab:"ludus" }); }}>
   {scnName(26, 496, "THE CELLS")}
-  <rect x="24" y="506" width="200" height="58" fill="url(#scn-stone)" stroke="#33271a"/>
-  {[44,92,140,188].map(x=><g key={x}>
-    <rect x={x} y={518} width="26" height="20" fill="#0b0906"/>
-    <line x1={x+7} y1={518} x2={x+7} y2={538} stroke="#3e2f1f" strokeWidth="1.3"/>
-    <line x1={x+14} y1={518} x2={x+14} y2={538} stroke="#3e2f1f" strokeWidth="1.3"/>
-    <line x1={x+21} y1={518} x2={x+21} y2={538} stroke="#3e2f1f" strokeWidth="1.3"/>
-  </g>)}
+  {scnFoot(124, 566, 100)}
+  <rect x="24" y="506" width="200" height="58" fill="url(#scn-stone)"/>
+  {scnLit(24, 506, 200)}
+  <rect x="24" y="511" width="200" height="53" fill="none" stroke="#33271a"/>
+  {/* ---- FOUR BLACK WINDOWS, AND THE SAME FOUR IN AN EMPTY HOUSE ----
+       The cells are the door to unrest and they carried it: a torch at 40 and a caption in four
+       bands. What they did NOT carry is who is in them — though the collegium line has said
+       `N of M cells filled` since v2.63.0, and the block's own Sect says `N in the cells`.
+
+       The first cut lit a FRACTION of four windows, and that reading collapses: three men in a
+       founding's eight cells and six in a risen house's ten both round to two lit of four, so the
+       two houses drew the identical block. Capacity is 8 to 14 — a countable number — so the
+       block is drawn one window per cell, exactly the racks' treatment. The COUNT of windows is
+       the house's cells, which grow with its rank; the LIT ones are the men in them. */}
+  {(()=>{ const cap = Math.max(1, cellsCap(S)), men = Math.min(cap, activeG(S).length);
+    const pitch = 188 / cap, bw = pitch - 3, bars = bw >= 18 ? 3 : bw >= 12 ? 2 : 1;
+    return Array.from({length:cap}).map((_,i)=>{ const x = 30 + i*pitch, on = i < men;
+      return (<g key={i}>
+        {/* every opening is framed, or the empty ones run together into one long grate and the
+             block stops reading as cells you can count */}
+        <rect x={+x.toFixed(1)} y={518} width={+bw.toFixed(1)} height="20" rx="1"
+          fill={on?"#241a0e":"#0b0906"} stroke="#372a1a" strokeWidth=".8"/>
+        {/* at ten pixels by twenty a drawn man is a blob and a glow is a keyhole. What an
+             occupied cell has and an empty one does not is a lamp, and what you see of a lamp
+             from the yard is the light under the door. */}
+        {on && <rect x={+(x+0.6).toFixed(1)} y={534} width={+(bw-1.2).toFixed(1)} height="3.2" fill="#8a6a2c" opacity=".55"/>}
+        {Array.from({length:bars}).map((_,b)=>{ const bx = +(x + bw*(b+1)/(bars+1)).toFixed(1);
+          return <line key={b} x1={bx} y1={519} x2={bx} y2={537} stroke="#3e2f1f" strokeWidth="1.2"/>; })}
+      </g>); }); })()}
   {S.unrest >= 40 && <circle cx="120" cy="512" r="16" fill="url(#scn-torch)"/>}
   {scnSay(124, 580, S.rebellion
     ? ["","whispers after dark","steel is missing","the spark is lit"][S.rebellion.stage] || "the cells are turning"
@@ -22475,12 +22543,29 @@ const ScnRacks = ({ S, at, go }) => (<>
 <g className="scn" role="button" tabIndex={0} aria-label="The racks — the armoury"
   onClick={()=>go("men:armory")} onKeyDown={e=>{ if(e.key==="Enter") go("men:armory"); }}>
   {scnName(248, 496, "THE RACKS")}
-  <rect x="244" y="506" width="122" height="58" fill="#191309" stroke="#33271a"/>
+  {scnFoot(305, 566, 61)}
+  <rect x="244" y="506" width="122" height="58" fill="#191309"/>
+  {scnLit(244, 506, 122)}
+  <rect x="244" y="511" width="122" height="53" fill="none" stroke="#33271a"/>
   <line x1="254" y1="552" x2="356" y2="552" stroke="#3a2c18" strokeWidth="4"/>
-  <g stroke="#8a6a2c" strokeWidth="1.6" fill="none">
-    <line x1="266" y1="516" x2="266" y2="550"/><line x1="288" y1="518" x2="288" y2="550"/>
-    <path d="M310 516 q5 9 0 34"/><rect x="326" y="518" width="14" height="26" rx="6"/>
-  </g>
+  {/* ---- THE RACK DRAWS WHAT THE CAPTION SAYS ----
+       Four glyphs at fixed points — a line, a line, a curve and a rounded rect — which read as
+       `| | ) 0` and said the same thing whether the house held eight pieces or none, while the
+       caption underneath said "8 of 36 on the racks". Ten pegs now, filled to the fraction the
+       armoury actually carries. Ten rather than thirty-six because 122px cannot hold thirty-six
+       and a rack you can count is worth less than a rack you can read at a glance; the exact
+       number is in the line below it, where an exact number belongs. */}
+  {(()=>{ const u = rackUsed(S), c = Math.max(1, rackCap(S));
+    const on = Math.round(clamp(u/c, 0, 1) * 10);
+    return Array.from({length:10}).map((_,i)=>{ const x = 254 + i*11;
+      return i < on
+        ? <g key={i} stroke="#8a6a2c" strokeWidth="1.5" fill="none">
+            {i%3===0 ? <path d={`M${x+3} 518 q4 8 0 32`}/>
+             : i%3===1 ? <line x1={x+3} y1="516" x2={x+3} y2="550"/>
+             : <rect x={x-1} y="520" width="9" height="24" rx="4"/>}
+          </g>
+        : <line key={i} x1={x+3} y1="540" x2={x+3} y2="550" stroke="#2c2214" strokeWidth="1.5"/>;
+    }); })()}
   {(()=>{ const u = rackUsed(S), c = rackCap(S), over = rackOver(S);
     /* the same number the armoury reads, and what it means: full racks strain, and
        an empty rack is worth saying out loud because house issue is not steel. */
@@ -22496,6 +22581,22 @@ const ScnGate = ({ S, go }) => (<>
 <g className="scn" role="button" tabIndex={0} aria-label="The gate — the block and the road out"
   onClick={()=>go("market")} onKeyDown={e=>{ if(e.key==="Enter") go("market"); }}>
   {scnName(26, 610, "THE GATE")}
+  {/* ---- THE MEN AT THE BLOCK, WHO WERE ONLY EVER A CAPTION ----
+       The gate was five shapes and the same five in every house: an arch and four bars, with the
+       number waiting on the block written underneath it. Measured across a founding and a house of
+       260 weeks, it came back 100% byte-identical — one of four rooms that did. They stand at it
+       now, up to five of them, in the shadow outside the arch where a slaver's line would wait. */}
+  {/* they stand ON the gate's own ground line (y=640), in the strip between the name and the
+       arch — the first cut put their heads at y=612, which is the name's own baseline, so four
+       men stood inside the word THE GATE. */}
+  {(S.market||[]).length > 0 && <ellipse cx={124} cy="641"
+    rx={9 + Math.min(5,(S.market||[]).length)*5} ry="4.5" fill="#14100c" opacity=".5"/>}
+  {(S.market||[]).slice(0,5).map((m,i)=>{ const x = 105 + i*10;
+    return (<g key={i} aria-hidden="true" opacity={marketFresh(S) ? ".9" : ".55"}>
+      <circle cx={x} cy="623" r="3.2" fill="#241c12" stroke="#6b5330" strokeWidth="1"/>
+      <path d={`M${x} 627 q-3.8 1 -4.3 13 l8.6 0 q-.5 -12 -4.3 -13 Z`} fill="#241c12" stroke="#6b5330" strokeWidth="1"/>
+    </g>); })}
+  {scnFoot(195, 641, 52)}
   <path d="M150 640 L150 604 Q195 582 240 604 L240 640 Z" fill="#0f0c08" stroke="#6d5426" strokeWidth="1.4"/>
   <line x1="167" y1="640" x2="167" y2="598" stroke="#241c12" strokeWidth="3"/>
   <line x1="184" y1="640" x2="184" y2="592" stroke="#241c12" strokeWidth="3"/>
@@ -22518,7 +22619,7 @@ const ScnGate = ({ S, go }) => (<>
 </g>
 </>);
 
-const ScnRoad = ({ S, go, roadWord }) => (<>
+const ScnRoad = ({ S, go, roadWord, roadOn, roadFit }) => (<>
 {/* THE ROAD — the arena's door */}
 <g className="scn" role="button" tabIndex={0} aria-label="The road — to the sand"
   onClick={()=>go("arena")} onKeyDown={e=>{ if(e.key==="Enter") go("arena"); }}>
@@ -22537,6 +22638,22 @@ const ScnRoad = ({ S, go, roadWord }) => (<>
   {[[92,44],[70,32],[298,44],[320,32]].map(([x,h])=>(
     <path key={x} d={`M${x} ${714} q-6 -${Math.round(h*0.45)} 0 -${h} q6 ${Math.round(h*0.55)} 0 ${h} Z`}
       fill="#22200f" stroke="#312c18" strokeWidth=".7"/>))}
+  {/* ---- AND WHO IS WALKING DOWN IT ----
+       The road was the best-drawn room in the ludus and one of four that came back 100% identical
+       between a founding and a house of 260 weeks: cypresses, a milestone, ruts and flagstones, and
+       not one of them knew whether anything was booked. The men going out today walk it now — up to
+       three, smaller as they go, in the near lane — so the road says what the caption under it says.
+       Nobody walks it when there is no card, or when there is nobody fit to send. */}
+  {roadOn > 0 && [[176,690,1],[208,678,.82],[189,667,.66]].slice(0,Math.min(3, roadFit)).map(([x,y,k],i)=>{
+    /* the first cut walked them straight down the crown of the road, 16px apart and 5px to the
+       left each time, which reads as one man photographed three times. They are spread across the
+       carriageway now and stopped above y=703, because the state line sits at 713. */
+    return (<g key={i} aria-hidden="true" opacity={0.9 - i*0.18}>
+      <ellipse cx={x} cy={y+13*k} rx={6*k} ry={2*k} fill="#14100c" opacity=".5"/>
+      <circle cx={x} cy={y} r={3.6*k} fill="#2a2114" stroke="#8a6a2c" strokeWidth="1"/>
+      <path d={`M${x} ${y+4.4*k} q-4.6 1.4 -5.2 ${13*k} l${10.4*k} 0 q-.6 -${11.6*k} -5.2 -${13*k} Z`}
+        fill="#2a2114" stroke="#8a6a2c" strokeWidth="1"/>
+    </g>); })}
   {/* the milestone, which is what a road out of a town actually carries */}
   <rect x="272" y="694" width="8" height="20" rx="3" fill="#2e2416" stroke="#3e2f1f" strokeWidth=".8"/>
   <line x1="274" y1="700" x2="278" y2="700" stroke="#5b471f" strokeWidth="1"/>
@@ -22570,6 +22687,7 @@ function Scene({ S, agenda, openDoc, openMan, go }){
     : S.vow ? `a vow stands · ${vowLeft}w`
     : `the gods find you ${pietyWord(pietyOf(S))}`;
   const shrineFire = !!(bless || S.vow);
+  const shrineRank = pietyRank(pietyOf(S));
   const fitToGo  = men.filter(g=>canFight(g) && g.lastFought < S.week).length;
   const onCard   = (S.games && (S.games.offers||[]).length) || 0;
   const roadWord = S.rome ? "the road runs to Rome"
@@ -22584,27 +22702,101 @@ function Scene({ S, agenda, openDoc, openMan, go }){
     <svg viewBox="0 0 390 720" style={{display:"block",width:"100%",height:"auto"}} role="group"
       aria-label="The ludus — every room opens its own business">
       <defs>
-        <linearGradient id="scn-dawn" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#2b2115"/><stop offset="1" stopColor="#14100c"/>
-        </linearGradient>
         <linearGradient id="scn-stone" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#241c12"/><stop offset="1" stopColor="#1a1410"/>
         </linearGradient>
         <radialGradient id="scn-torch"><stop offset="0" stopColor="#c99a4b" stopOpacity=".5"/>
           <stop offset="1" stopColor="#c99a4b" stopOpacity="0"/></radialGradient>
+        {/* ---- THE GROUND, AND WHY THE DRAWING NEEDED ONE ----
+             The whole 390x720 was ONE vertical gradient running dark-to-darker, so every room was a
+             rectangle floating on the same flat brown at the same depth: a form with labels, not a
+             place. Measured a founding against a house of 260 weeks and 82% of the drawing came back
+             byte-identical, four of the eight rooms at 100% — but the flatness is the part you see
+             first, before any of that.
+             So: sky above the roofline, sand below it, and the sand lightens toward the FRONT, which
+             is how an open yard reads under a low sun. The horizon sits at the villa's base. */}
+        <linearGradient id="scn-sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#241d18"/><stop offset="0.55" stopColor="#38291b"/>
+          <stop offset="1" stopColor="#5a4423"/>
+        </linearGradient>
+        <linearGradient id="scn-sand" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#2a2115"/><stop offset="0.45" stopColor="#332818"/>
+          <stop offset="1" stopColor="#3e301b"/>
+        </linearGradient>
+        {/* the wall is masonry seen from inside, so its lit face is the top of each course */}
+        <linearGradient id="scn-wall" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#3a2e1d"/><stop offset="0.5" stopColor="#241c12"/>
+          <stop offset="1" stopColor="#191309"/>
+        </linearGradient>
+        <linearGradient id="scn-wallR" x1="1" y1="0" x2="0" y2="0">
+          <stop offset="0" stopColor="#3a2e1d"/><stop offset="0.5" stopColor="#241c12"/>
+          <stop offset="1" stopColor="#191309"/>
+        </linearGradient>
+        {/* distance: the back of the yard sits in its own haze rather than in the same black */}
+        <linearGradient id="scn-haze" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#14100c" stopOpacity=".85"/>
+          <stop offset="1" stopColor="#14100c" stopOpacity="0"/>
+        </linearGradient>
       </defs>
-      <rect width="390" height="720" fill="url(#scn-dawn)"/>
-      <rect x="0" y="16" width="12" height="624" fill="url(#scn-stone)"/>
-      <rect x="378" y="16" width="12" height="624" fill="url(#scn-stone)"/>
+      <rect width="390" height="720" fill="url(#scn-sky)"/>
+      <rect y="108" width="390" height="612" fill="url(#scn-sand)"/>
+      {/* the horizon. A hard 5px bar read as a stripe ACROSS the villa rather than as ground
+           meeting sky behind it — the villa's base is y=108 and the bar landed on it. It is a soft
+           band now, and the haze under it is what puts the back of the compound in the distance. */}
+      <rect y="106" width="390" height="3" fill="#0f0c08" opacity=".45"/>
+      <rect y="109" width="390" height="44" fill="url(#scn-haze)"/>
+      {/* ---- THE WALL, WHICH WAS TWO GREY STRIPS ----
+           12px of flat `scn-stone` down each edge. It is a compound wall now: a coping course
+           along the top that catches the light, a shaded inner face, and the courses ruled across
+           it. Sixteen wide instead of twelve, because a wall you can read as masonry is worth the
+           four pixels and the rooms already sit inside 24. */}
+      <rect x="0" y="16" width="16" height="624" fill="url(#scn-wall)"/>
+      <rect x="374" y="16" width="16" height="624" fill="url(#scn-wallR)"/>
+      <rect x="0" y="16" width="16" height="7" fill="#4a3a22"/>
+      <rect x="374" y="16" width="16" height="7" fill="#4a3a22"/>
+      <g aria-hidden="true" stroke="#0f0c08" strokeWidth=".8" opacity=".55">
+        {Array.from({length:11}).map((_,i)=>(<g key={i}>
+          <line x1="0" y1={70+i*52} x2="16" y2={70+i*52}/>
+          <line x1="374" y1={70+i*52} x2="390" y2={70+i*52}/>
+        </g>))}
+      </g>
+      {/* ---- THE COURTYARD, WHICH WAS NINETY PIXELS OF NOTHING ----
+           Between the villa's caption and the training square's name lay a band 90px deep carrying
+           one small shrine on the right and, across the other three hundred pixels, nothing at all.
+           It is the largest empty space in the drawing and it is exactly where a ludus keeps its
+           courtyard, so it holds the portico that runs from the house down toward the square.
+
+           IT IS SCENERY, NOT A ROOM. `aria-hidden`, no hotspot, no label — the drawing has eight
+           rooms before this and eight after, which is what `scene` counts. What it adds is depth:
+           the columns stand in the haze at half the contrast of anything in front of them, so the
+           villa reads as the back of a compound rather than as the top of a list. */}
+      <g aria-hidden="true" opacity=".62">
+        <ellipse cx="150" cy="194" rx="132" ry="9" fill="#14100c" opacity=".5"/>
+        {/* the recess FIRST: eight columns drawn on open ground read as eight stripes, because
+             there is nothing behind them for them to stand in front of. A portico is a dark
+             covered walk with a lit floor at its foot, and the columns are what interrupts it. */}
+        <rect x="26" y="135" width="250" height="56" fill="#171208"/>
+        <rect x="26" y="184" width="250" height="7" fill="#231b10"/>
+        <rect x="26" y="132" width="250" height="5" fill="#2e2416"/>
+        <rect x="26" y="132" width="250" height="2" fill="#42341e" opacity=".8"/>
+        {Array.from({length:8}).map((_,i)=>{ const x = 32 + i*33;
+          return (<g key={i}>
+            <rect x={x} y="137" width="8" height="52" fill="#2a2114"/>
+            <rect x={x} y="137" width="2.5" height="52" fill="#3a2c18"/>
+            <rect x={x-2} y="134" width="12" height="4" fill="#33271a"/>
+            <rect x={x-2} y="189" width="12" height="4" fill="#241c12"/>
+          </g>); })}
+        <rect x="26" y="193" width="250" height="3" fill="#1a1410"/>
+      </g>
 
       <ScnVilla  S={S} at={at} go={go} houseLit={houseLit}/>
-      <ScnShrine S={S} at={at} openDoc={openDoc} shrineWord={shrineWord} shrineFire={shrineFire}/>
+      <ScnShrine S={S} at={at} openDoc={openDoc} shrineWord={shrineWord} shrineFire={shrineFire} shrineRank={shrineRank}/>
       <ScnSquare S={S} at={at} openDoc={openDoc}/>
       <ScnYard   S={S} go={go} openMan={openMan} men={men}/>
       <ScnCells  S={S} at={at} openDoc={openDoc}/>
       <ScnRacks  S={S} at={at} go={go}/>
       <ScnGate   S={S} go={go}/>
-      <ScnRoad   S={S} go={go} roadWord={roadWord}/>
+      <ScnRoad   S={S} go={go} roadWord={roadWord} roadOn={onCard} roadFit={fitToGo}/>
     </svg>
   );
 }

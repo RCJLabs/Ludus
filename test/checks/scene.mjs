@@ -264,7 +264,20 @@ export async function run({ p, errors }){
      twice. So the second house here is deliberately different in every axis a room reads. */
   const roomWords = () => p.evaluate(`(()=>{
     const svg = document.querySelector('svg[aria-label^="The ludus"]'); if(!svg) return null;
-    return [...svg.querySelectorAll(":scope > g")].map(g=>({
+    /* A ROOM IS A GROUP YOU CAN PRESS, NOT EVERY GROUP IN THE DRAWING. This enumerated every
+       direct g child and labelled an unlabelled one "the yard". The art pass added two groups of
+       SCENERY - the wall courses and the courtyard colonnade - which are aria-hidden, carry no
+       label and open nothing, and the count went 8 rooms to 10 with two phantom "yards" that of
+       course said the same thing in both houses. The check was right to fail; it was counting the
+       wrong things. (No backticks in here: this note lives inside a template literal, and the
+       first one closed the string.)
+       AND THE FALLBACK NAME BELOW IS NOT DEAD CODE. Filtering to groups that carry a label dropped
+       the count to 7, because the YARD is a wrapper: its labelled hotspot is nested inside an
+       unlabelled group that holds the men and their names. That wrapper is a room and the fallback
+       is what names it. Only the hidden scenery is skipped. */
+    return [...svg.querySelectorAll(":scope > g")]
+      .filter(g=>g.getAttribute("aria-hidden") !== "true")
+      .map(g=>({
       lab: g.getAttribute("aria-label") || "the yard",
       says: [...g.querySelectorAll("text")].filter(t=>!t.closest("[aria-hidden='true']"))
               .map(t=>(t.textContent||"").trim()).filter(Boolean).join(" | ") }));
