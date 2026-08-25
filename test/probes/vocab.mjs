@@ -43,7 +43,7 @@ async function yardShapes(build, arg){
         let k = ["d","points","x1","y1","x2","y2","cx","cy","x","y"].map(num).join("|");
         /* translate to the man's own origin so two men in different slots compare equal */
         k = k.replace(/-?\\d+(\\.\\d+)?/g, (m)=>{ const n=parseFloat(m); return String(Math.round(n*10)/10); });
-        return t+"#"+k+"#"+(e.getAttribute("fill")||"")+"#"+(e.getAttribute("stroke")||"")+"#"+(e.getAttribute("stroke-width")||e.getAttribute("strokeWidth")||"");
+        return t+"#"+k+"#"+(e.getAttribute("fill")||"")+"#"+(e.getAttribute("stroke")||"")+"#"+(e.getAttribute("stroke-width")||e.getAttribute("strokeWidth")||"")+"#"+(e.getAttribute("opacity")||"");
       }).join("~");
       out.push({ lab, d });
     }
@@ -80,7 +80,8 @@ const ONE = (A, R, a) => {
     g.scars = Array.from({length:a.i}).map((_,k)=>({ part:["flank","arm","head","thigh","brow"][k%5],
       x:50+k*4, y:60+k*6, big:k%2===0 }));
   if(a.axis === "sex") g.sex = a.i % 2 ? "f" : "m";
-  if(a.axis === "record"){ g.wins = a.i*7; g.fame = a.i*180; g.morale = 20+a.i*15; }
+  g.wins = 0; g.losses = 0; g.kills = 0; g.pfame = 0;
+  if(a.axis === "record"){ g.wins = [0,1,2,4,7,14][a.i]; g.pfame = [0,12,40,90,180,300][a.i]; g.kills = [0,0,0,1,2,5][a.i]; }
   d.gladiators.push(g);
   return d;
 };
@@ -104,6 +105,6 @@ console.log(`  ${"axis".padEnd(10)} ${"men drawn".padStart(10)} ${"distinct draw
 for(const r of runs)
   console.log(`  ${r.axis.padEnd(10)} ${String(r.drawn).padStart(10)} ${String(r.distinct).padStart(19)}${r.distinct<=1?"   <-- says nothing":""}`);
 console.log(`\n  ACROSS EVERY AXIS AT ONCE: ${seen.size} distinct drawings.`);
-console.log(`  He carries a class (${CLS.length}), a kit, scars, an injury, fatigue, wins, fame, morale,`);
+console.log(`  He carries a class (${CLS.length}), a kit, scars, an injury, fatigue, wins, renown, kills,`);
 console.log(`  a sex and an origin (${AXES.origins}). A silhouette has no colour, no texture and no face,`);
 console.log(`  so shape is the whole of what it can say — and this is how much of him it says.`);

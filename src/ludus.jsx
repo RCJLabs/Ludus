@@ -22442,6 +22442,49 @@ const SCN_KIT = {
   Retiarius:    { shield:"net",   weap:"trident",helm:"bare"  },
   Dimachaerus:  { shield:"none",  weap:"twin",   helm:"tall"  },
 };
+/* ---- AND WHAT HE HAS DONE DOES NOT GO ON HIS BODY ----
+   His body carries what was done TO him — the scars that closed, the wound still open — and what
+   he IS: his class, and whether he is spent. His RECORD is a different kind of fact, it belongs to
+   the house rather than to him, and it reached the drawing nowhere: `vocab` measured the yard
+   figure at ONE distinct drawing across wins, renown and the men he has killed.
+
+   WHERE THE BANDS GO WAS MEASURED, NOT GUESSED. `test/probes/palm.mjs` walked 16 houses week by
+   week and recorded every active man every week — 14,934 man-weeks — because #206 is what happens
+   when that step is skipped: `TELLS.cold` is written, read, and cannot fire, since `formOf(o)` is
+   0 for every opponent the game makes. A band placed above where men actually stand is that same
+   bug with a picture on it. What the yard is actually made of:
+
+     wins    p50 0   p75 1   p90 4   p97 8    max 40    — 66.4% of all man-weeks are a man with NONE
+     pfame   p50 0   p75 22  p90 74  p97 177  max 585   — 74.5% under 20, and a tail four times the gate
+     kills   p50 0   p90 1   p97 2   max 9              — 86.8% have never killed anybody
+
+   So the ladder is five bands and not six: 12+ wins, which is `MASTERY_GATE`, is 1.0% of man-weeks
+   and would have been a step nobody ever saw. Folded into 7+, every band is at least 4.8%. And
+   nothing at all at zero wins, which is two thirds of the yard — so the first bout a man wins puts
+   something on the drawing that was not there before, which is the one moment worth drawing.
+
+   THE PALM is the mark because it is the mark: a Roman victor was handed a palma, and a man's
+   record was counted in them. It rises from behind his shield shoulder, where the drawing is
+   empty for all six classes. */
+const PALM_BANDS = [[7,23],[4,18],[2,13],[1,9]];
+const palmOf = w => { for(const [need,h] of PALM_BANDS) if((w||0) >= need) return h; return 0; };
+/* ---- AND THE OTHER TWO GO INTO THE GROUND HE STANDS ON ----
+   A man in the yard threw NO shadow at all. Buildings get `scnFoot`; the six figures you look at
+   every week of the game had nothing under them, which is the same "holes cut in the sand rather
+   than things standing on it" the villa's own note describes — still true of the men after it was
+   fixed for the rooms. One ellipse grounds them, and it carries two readings at once because they
+   are the same fact: what the crowd knows him for.
+
+   HOW FAR IT REACHES is his renown, on a compressed scale. Renown's median is 0 and its tail runs
+   to 585, four times the rudis gate — linear would put five men in six on the floor and the sixth
+   off the drawing, so it is the root of his share of the gate, saturating there.
+   HOW DARK IT IS is the men he has killed. Rare, and it compounds: a green man is a faint smudge,
+   a named killer stands in a black pool. It is deliberately NOT blood. Blood on a man in this game
+   is his own — a scar that closed or a wound still open — and that rule is the clearest thing in
+   the drawing. Borrowing it for what he did to somebody else would cost more than it bought. */
+const umbraOf = g => ({
+  rx: Math.round((7 + 6*Math.min(1, Math.sqrt((g.pfame||0)/RUDIS_FAME)))*100)/100,
+  op: Math.round((0.2 + 0.06*Math.min(4, g.kills||0))*100)/100 });
 const ScnMan = ({x,y,g,tone,row,openMan}) => {
   const K = SCN_KIT[g.cls] || SCN_KIT.Murmillo;
   const spent = (g.fatigue||0) > 55;          /* the reading `tone` was carrying and lost */
@@ -22452,9 +22495,12 @@ const ScnMan = ({x,y,g,tone,row,openMan}) => {
   /* where a wound lands on him, so five parts are five marks rather than one slash */
   const PART_Y = { head:-4, brow:-4, eye:-4, arm:12, hand:16, shoulder:8, flank:18, gut:20, thigh:26, knee:29, leg:29 };
   const at = pt => hy + (PART_Y[pt] == null ? 18 : PART_Y[pt]);
+  const U = umbraOf(g), ph = palmOf(g.wins), px = x+13, pb = hy+4;
   return (
   <g className="scn" role="button" tabIndex={0} aria-label={`${g.name} the ${g.cls}`}
     onClick={()=>openMan(g.id)} onKeyDown={e=>{ if(e.key==="Enter") openMan(g.id); }}>
+    {/* the ground remembers him: how far it reaches is his name, how dark it is who he has killed */}
+    <ellipse cx={x} cy={hy+36} rx={U.rx} ry="3" fill="#100b06" opacity={U.op}/>
     {/* what he hides behind */}
     {K.shield==="tower" && <rect x={x+7} y={hy+5} width="9" height="22" rx="1.5" fill="#0a0603" stroke={SEAM} strokeWidth=".9"/>}
     {K.shield==="oval"  && <ellipse cx={x+11} cy={hy+15} rx="5" ry="9" fill="#0a0603" stroke={SEAM} strokeWidth=".9"/>}
@@ -22476,6 +22522,20 @@ const ScnMan = ({x,y,g,tone,row,openMan}) => {
     {K.weap==="trident" && (<g>{L(`M${x-11} ${ay+8} L${x-6} ${hy-13}`, 2)}
       {L(`M${x-9} ${hy-10} L${x-6} ${hy-16} M${x-6} ${hy-13} L${x-6} ${hy-18} M${x-3} ${hy-10} L${x-6} ${hy-16}`, 1.4)}</g>)}
     {K.weap==="twin"    && (<g>{L(`M${x-8} ${ay} L${x-15} ${ay-7}`)}{L(`M${x+8} ${ay+3} L${x+15} ${ay-4}`)}</g>)}
+    {/* WHAT HE WAS HANDED FOR WINNING — nothing at all until the first one.
+         Two things here were found by looking at it rather than by reasoning about it. THE FAN
+         OPENS OUTWARD ONLY: sprayed both ways from the stem, the short bands put the whole frond
+         ON HIS HEAD, because 9px is exactly where head height is — and the fix cannot be a taller
+         palm, which runs into the yard's own label. THE STEM RUNS DOWN TO HIS FIST: cut off at the
+         frond's own base it floated in mid-air beside him and read as scenery rather than as
+         something he is holding. On the four classes that carry one it crosses the shield, which
+         is near-black on near-black, so it reads as held behind it. */}
+    {ph > 0 && (<g>
+      {L(`M${px+1} ${hy+17} L${px} ${pb} q1.5 ${-ph*0.55} 0 ${-ph}`, 1.5)}
+      {[0,1,2,3].map(k=>{ const ly = pb - ph + k*ph*0.15, sp = 6.4 - k*1.1;
+        return <g key={k}>{L(`M${px+0.4} ${ly} q${sp*0.8} 0.4 ${sp} 3.4`, 1.2)}
+          {L(`M${px+0.4} ${ly} q${-sp*0.28} 0.4 ${-sp*0.34} 2.2`, 1.1)}</g>; })}
+    </g>)}
     {/* THE ONLY COLOUR ON HIM, and the same rule the bout runs on: a cut he is carrying, where he
          carries it, and the ones that closed */}
     {(g.scars||[]).slice(0,4).map((sc,i)=>(
