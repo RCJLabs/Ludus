@@ -4461,6 +4461,87 @@ wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
 
+### v3.146.0 — the arena's own fighter learns who he is
+
+**The centrepiece of the game knew less about a man than the 35px figure in the yard did.**
+
+`test/probes/vocab.mjs` has claimed since it was written that it counts the arena's `Fighter` the
+same way it counts the yard man, "because the two should not be measured by different rules." That
+sentence was aspirational for four releases — the probe measured the yard and nothing else. Making
+it true is what found this:
+
+| axis | yard | arena |
+|---|---|---|
+| class | 6 | 6 |
+| fatigue | 2 | **1 — says nothing** |
+| injury | 6 | **1 — says nothing** |
+| scars | 5 | 6 |
+| sex | 2 | 2 |
+| record | 6 | **1 — says nothing** |
+| **whole figure** | **22** | **12** |
+
+Bout state was never the gap. Seventeen poses, live wounds, wear and aim all work and always have.
+What the drawing had no route to was **the man**, because the arena is handed a snapshot —
+`{name, nick, cls, origin, sub, kit, scars, fem}` — built fresh at **eight** sites, and not one of
+them carried what he walked in with. `boreOf(g)` is that route: one field rather than three, so the
+eight sites take one edit each.
+
+**HE DOES NOT ARRIVE FRESH.** `wearOf` in the arena is bout stamina, and bout stamina starts at his
+own maximum whatever week he has had — `smA = 55 + A.end*0.6`, with no fatigue term anywhere in it.
+A man sent out at fatigue 90 was drawn identical to a rested one until the bout wore him down
+itself. His fatigue is a floor under the existing sag now, at 0.55 weight so a hard week leans him
+without spending the range the bout still needs.
+
+**HE DOES NOT ARRIVE WHOLE.** `canFight` has no injury term — the game says so in its own note at
+the surgeon — so a worked-through man can be sent to the sand, and when he got there he was drawn
+untouched. He is **bound where he is hurt** now: linen over the part, which is the one thing on him
+that is neither shadow nor blood, and the mark under it in the register between a scar that has
+closed and a cut he is taking now. Drawn from `TARGETS`, the same table the blows themselves choose
+from, so the binding lands exactly where the wound that caused it landed.
+
+**AND THE POOL AT HIS FEET WAS A CONSTANT.** `rx="17"` and one opacity for every man who ever stood
+there. It is v3.144.0's reading at the arena's size now — how far it reaches is his renown, how dark
+it is is the men he has killed — through the *same two functions* at two sizes, so the yard man and
+the arena man say the same thing the same way. That is the point of having a visual language rather
+than two drawings that happen to share a palette.
+
+**Wins deliberately does not reach him, and its floor in the check is 1 rather than an oversight.**
+What he was handed for winning is a palm, and a man does not carry a palm into a fight.
+
+**`vocab` now measures both figures off the SAME planted man** — one plant, read twice — so the two
+can never be compared across two different men. **Arena figure 12 → 27 distinct drawings**, now
+ahead of the yard's 22, which is right: he is four times the size and has the room.
+
+**THREE FIXTURE FAULTS CAME OUT WITH IT, all the same shape — a test planting states the game
+cannot produce.** The check built scars as `{part, big}` by hand, and the arena figure draws a scar
+at `s.x, s.y` — coordinates only `scarMark` puts on one — so every scar in that sweep would have
+been drawn at NaN,NaN on the fighter while reading fine in the yard, which is the exact fault the
+note over `scarMark` already records. Both the check and the probe swept an injury part of `"head"`,
+which **the game has no such target for**: `injuryFor` sets `part: target` and every target comes
+from `TARGETS` — arm, shoulder, thigh, flank, brow, hand. The yard tolerated it only because
+`PART_Y` happens to carry aliases. Both go through the game's own constructors now.
+
+And the drawing was made to fail loudly rather than quietly: an unresolved part falls back to the
+trunk, `TARGETS[3]`, which is precisely what `scarMark` falls back to. An exact lookup that missed
+drew a hurt man **whole** — this release's own fault, one level down.
+
+The check's key was blind the same way `opacity` was until v3.144.0: **the sag is on the svg's own
+style and on no child**, so a key built from child attributes alone reports fatigue as absent while
+it is working. The root's computed transform is part of the drawing and is read.
+
+Negative-tested by cutting the one route: `boreOf` returning null takes the fighter's **fatigue,
+injury, renown and kills all to 1** while class and scars — which arrive by other props — and every
+yard axis stay green. That is what proves the route rather than the marks.
+
+**`bulk` went red on the first full run and the allowance was NOT raised.** `Fighter` had grown
+322 lines against the 298 it is allowed. The binding lifted out whole — it closes over nothing but
+its own coordinates — and the fatigue reasoning moved up beside `boreOf`, where the thing it
+explains lives. **298/298, no raise**, which is the rule the check's own note states: an allowance
+that only ever rises is not a ceiling.
+
+**Suite 110/110 green in 17.3 min.** No check added — `vocab` grew to cover both figures, which
+is the cheaper move when the new readings belong to a question already being asked.
+
 ### v3.145.0 — the words in the drawing, against what is actually behind them
 
 **Reported from real play:** *"The road to the sand text is a bit tough to read."* It was, and it
@@ -16309,6 +16390,9 @@ numbers check out.
    grew in v3.144.0, taking the yard figure from **2 distinct drawings to 22** across class,
    fatigue, injury, scars, wins, renown and kills. **The arena `Fighter` has never been measured
    the same way** — `test/probes/vocab.mjs` counts it and nothing asserts on it.
+   **CLOSED in v3.146.0.** The probe was made to actually count him (its header had claimed so for
+   four releases), the arena figure went **12 -> 27 distinct drawings**, and `vocab` now measures
+   both men off the same planted man so neither can fall behind the other again.
 2. **`towns known`, `men on the books`, `rivals met` and `patrons`** read UNTESTED in `asks` — no
    arm moves them, so nothing is known either way. An untested quantity is not a silent one and
    should not be filed as either.
@@ -17118,4 +17202,4 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.145.0 — the drawing's ink is read off the ground it sits on, not set by hand*
+*Last updated: v3.146.0 — both drawn men speak the same language; the arena figure went 12 to 27*
