@@ -4526,6 +4526,7 @@ than passing quietly.
   read a roster row and reported the panel as saying nothing.
 
 `bulk`: App 5,780 → **5,754** of 5,786. No allowance raised.
+Suite **105/105 green** in 14.5 min, first run, no reds.
 
 ### v3.133.0 — #201: defiance ambushed you, and half of the item was wrong
 
