@@ -3723,9 +3723,21 @@ const isGone = g => GONE.includes(g.status);
    a famous old fighter is exactly what a rival house wants for its own gate. */
 const gladName = g => (g.pfame||0)*9 + fansOf(g)*6 + (g.legend?350:0)
   + ((g.scars||[]).length)*22 + ((g.traits||[]).length)*28 + (g.nick?120:0);
+/* ---- A PRICE THAT CAN RETURN NaN IS A LANDMINE, AND THIS ONE WENT OFF ----
+   `g.potential` and `g.age` are set by `genGladiator` and by `makeRivalFighter` and NOT by
+   `genOpponent`, so `gladValue` on an arena opponent computed `undefined * 1.8` and returned NaN.
+   No real call site passes one today — this reads player men, market men and rival-house fighters —
+   but what NaN COST when it was reached is the point: `rudisCost` inherited it, `grantRudis`'s old
+   guard was `if(d.gold < fee)` and `50000 < NaN` is false, so it fell through to `d.gold -= NaN`
+   and **set the treasury to NaN**. `careers` drove that exact path on a genOpponent man every run
+   and passed, because it checked that the man was freed and never looked at the gold.
+
+   Guarding here rather than adding the fields to `genOpponent`: that is the hot path and a new
+   `ri()` draw in it would re-phase every seeded house in the project, which is the cost #206 was
+   opened over. A total function costs nothing. `quote` holds every price to being finite now. */
 const gladValue = g=>rnd(
-  (90 + STATS.reduce((s,k)=>s+g[k],0)*1.1 + g.potential*1.8 + g.wins*14) * agePrice(g.age)
-  + gladName(g) * Math.max(0.88, agePrice(g.age)));
+  (90 + STATS.reduce((s,k)=>s+(g[k]||0),0)*1.1 + (g.potential||0)*1.8 + (g.wins||0)*14) * agePrice(g.age||24)
+  + gladName(g) * Math.max(0.88, agePrice(g.age||24)));
 
 /* ---- AGE ----
    A man grows into his body, holds it a few years, then loses it a piece at a time.
@@ -7991,7 +8003,7 @@ const loanWeeks = d => d.loan ? d.week - d.loan.taken : 0;
 const loanLender = d => d.loan ? LENDERS[d.loan.who] : null;
 function borrow(d, who, amount){
   const L = LENDERS[who]; if(!L) return false;
-  if(d.loan) return false;
+  if(!canBorrow(d)) return false;
   const take = Math.min(amount, L.cap);
   d.gold += take;
   d.loan = { who, principal:take, owed:take, taken:d.week, missed:0, warned:0 };
@@ -8065,6 +8077,9 @@ function loanWeek(d){
     d.over = { kind:"foreclosed", lender:L.name, owed:owes(d), name:d.name };
   }
 }
+/* the one place the rule is written. It was defined here, called nowhere, and `borrow` carried its
+   own slightly different copy — `if(d.loan) return false` and no `!d.over` — so the predicate and
+   the door disagreed about whether a finished house may borrow. Named once, read by the door. */
 const canBorrow = d => !d.loan && !d.over;
 /* ---- WHAT THE MONEY ACTUALLY COSTS, ON THE PANEL WHERE IT IS TAKEN — #163 ----
    The panel gave the rate, the cap, the patience and whether he collects in men, and left the player
@@ -18599,9 +18614,20 @@ const rudisCost = (d, g) => !g ? 0 : Math.max(40, Math.round(
   gladValue(g) * RUDIS_TAX
   + 90 * (1 + riseOf(d) * 0.6)
   + acclaimOf(d) * 3));
+/* likewise: defined, called nowhere, while the rule it names was written out twice more — inline in
+   `grantRudis` and again on the card as `can = S.gold >= fee`. Both read it now. */
 const canAffordRudis = (d, gid) => { const g = d.gladiators.find(x=>x.id===gid);
   return !!g && d.gold >= rudisCost(d, g); };
 function grantRudis(d, gid){
+  /* ---- HE IS CHECKED BEFORE HE IS CHARGED, WHICH IS NOT WHERE THIS STARTED ----
+     `rudisEligible` was asked at the BOTTOM, twenty lines after the fee had been taken, the
+     chronicle had said "the manumission is written and paid for", his plan had been cleared and
+     the favour loss applied. On a man who did not qualify the player paid and the man stayed:
+     measured at **206 denarii taken, granted:false, still active** (`probes/quote.mjs`). The card's
+     own gate is `can = S.gold >= fee` and tests affordability ONLY, so nothing but the button's
+     placement was keeping that path shut. The question comes first now. */
+  { const ge = d.gladiators.find(x=>x.id===gid);
+    if(!ge || !rudisEligible(ge)) return false; }
   { const gc = d.gladiators.find(x=>x.id===gid);
     if(gc){ const fee = rudisCost(d, gc);
       /* ---- AND IT HAS TO SAY WHEN IT DID NOT HAPPEN ----
@@ -18610,7 +18636,7 @@ function grantRudis(d, gid){
          anyway", and the man's own card. A priced action that silently does nothing while the screen
          says otherwise is the exact fault this audit has spent a dozen releases finding, and it took
          about ten minutes to introduce one. It returns false now and both callers read it. */
-      if(d.gold < fee){
+      if(!canAffordRudis(d, gid)){
         chron(d, `${fullName(gc)} has earned the rudis and this house cannot pay for it — ${fee} denarii for the manumission, and the strongbox holds ${rnd(d.gold)}. He stays, which he will understand and not forgive.`, "bad");
         return false;
       }
@@ -18623,7 +18649,7 @@ function grantRudis(d, gid){
       const o = d.gladiators.find(x=>x.id===(t.a===gid?t.b:t.a));
       if(o && o.status==="active") remember(d, o, "freedKin"); }); }
   const g = d.gladiators.find(x=>x.id===gid);
-  if(!g || !rudisEligible(g)) return false;
+  if(!g) return false;
   g.status = "freed";
   d.freed.push({ name:fullName(g), week:d.week, wins:g.wins||0, cls:g.cls, regardAt:rnd(regardOf(g)) });
   d.fame += 60;
@@ -20511,10 +20537,29 @@ function scoutBlockMan(d, gid){ const g = d.market.find(x=>x.id===gid); if(!g ||
   return true; }
 
 /* --- the armoury --- */
-function buyGearItem(d, id){ const it=GEAR[id]; if(!it || d.gold<it.price) return false;
-  d.gold-=gearPrice(d,it.price,it.slot); d.gear[id]=(d.gear[id]||0)+1;
+/* ---- THREE PRICES IN THREE LINES AND TWO OF THEM WERE WRONG ----
+   The guard tested `it.price` — the LIST price — while the charge took `gearPrice`, which is the
+   list price after the armamentarium, the armourer, the doctrine, the steel perk and the festival.
+   Every one of those multipliers is <= 1, so the guard was uniformly TOO STRICT: a player whose
+   gold sat anywhere in [gearPrice, it.price) was refused a purchase he could pay for. Measured
+   with `probes/quote.mjs` over every item at every level: **140 of 210 combinations**, with the
+   refusal window reaching **3,990d on a 9,500d item**. Upgrading the armoury to make steel cheaper
+   made the cheaper price unbuyable.
+
+   And it was silent. `armWith` calls this and then `equipOne` regardless of the answer — `equipOne`
+   checks ownership so nothing was given away free, but the player tapped "arm him with this", paid
+   nothing, and got no man armed and no sentence about why. That is the fault `grantRudis`'s own
+   note names: a priced action that quietly does nothing while the screen says otherwise.
+
+   The third price was the chronicle's. It reported `it.price` while `gearPrice` left the strongbox,
+   so the one line telling the player what he had just spent named a number he had not spent. One
+   function, one call, one number now — #150's rule. */
+function buyGearItem(d, id){ const it=GEAR[id]; if(!it) return false;
+  const fee = gearPrice(d, it.price, it.slot);
+  if(d.gold < fee) return false;
+  d.gold -= fee; d.gear[id]=(d.gear[id]||0)+1;
   d.gearCond = d.gearCond || {}; (d.gearCond[id] = d.gearCond[id] || []).push(100);
-  chron(d, `The armourer delivers: ${it.name} (${it.price}d).`); return true; }
+  chron(d, `The armourer delivers: ${it.name} (${fee}d).`); return true; }
 
 function sellGearOne(d, id){ const paid = sellGear(d, id);
   if(paid) chron(d, `${GEAR[id].name} goes back out the door for ${paid} denarii. The armoury is a room, not a warehouse.`, "info");
@@ -23612,7 +23657,7 @@ export default function App(){
   /* the price is on the button, because a confirm that does not name what it costs is the one thing
      the vow's own note in this file warns about — see #100 */
   const freeG = id => { const g=S.gladiators.find(x=>x.id===id); if(!g) return;
-    const fee = rudisCost(S, g), can = S.gold >= fee;
+    const fee = rudisCost(S, g), can = canAffordRudis(S, id);
     setAsk({ title:"Grant the Rudis", confirm: can ? `Give him the wooden sword · ${fee}d` : `${fee}d — you do not have it`,
       text:`${fullName(g)} has earned his freedom in blood. Hand him the rudis before the crowd and he walks out a free man — and every man still in your cells will watch him go.`
         + ` The manumission costs ${fee} denarii: the state's cut on what he is assessed at, and what you settle on him so he does not walk out of the gate with nothing.`

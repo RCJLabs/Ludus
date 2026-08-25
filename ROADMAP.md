@@ -4461,6 +4461,91 @@ wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
 
+### v3.149.0 — the money cluster: he can afford exactly what he is quoted
+
+**The audit's last unmeasured item.** Eleven functions — `gearPrice`, `rudisCost`, `canAffordRudis`,
+`pitPurse`, `cityPurse`, `cityMissio`, `owedTotal`, `loanLender`, `canBorrow`, `lanVig`,
+`gladValue` — are every price the player is quoted, and **no check asserted on one of them**.
+
+The useless version of that check asks whether they return positive numbers. The useful one asks
+#150's question: **is the number on the button the number that leaves the strongbox?** A priced
+action carries three numbers, written in three different places — the QUOTE the panel renders, the
+GUARD the affordability test compares gold against, and the CHARGE actually subtracted — and nothing
+held them to each other. Both faults that found were live.
+
+**`buyGearItem` guarded on the LIST price and charged the DISCOUNTED one.**
+
+```js
+function buyGearItem(d, id){ const it=GEAR[id]; if(!it || d.gold<it.price) return false;
+  d.gold-=gearPrice(d,it.price,it.slot); ...
+  chron(d, `The armourer delivers: ${it.name} (${it.price}d).`); return true; }
+```
+
+`gearPrice` applies the armamentarium, the armourer, the doctrine, the steel perk and the festival,
+and **every one of those multipliers is <= 1** — so the guard was uniformly TOO STRICT. Measured
+over every item at every level with `probes/quote.mjs`: **140 of 210 combinations refused a purchase
+the player could pay for**, the refusal window reaching **3,990d on a 9,500d item**. Upgrading the
+armoury to make steel cheaper made the cheaper price unbuyable.
+
+And it was silent. `armWith` calls it and then `equipOne` regardless of the answer — `equipOne`
+checks ownership, so nothing was given away free, but the player tapped "arm him with this", paid
+nothing, and got no man armed and no sentence about why. That is the fault `grantRudis`'s own note
+names: *a priced action that quietly does nothing while the screen says otherwise*. The chronicle
+was the third wrong number, reporting the list price while the discounted one left the purse.
+
+**`grantRudis` charged before it validated.** `rudisEligible` was asked at the BOTTOM, twenty lines
+after the fee had been taken, the chronicle had said "the manumission is written and paid for", his
+plan had been cleared and the favour loss applied. On a man who did not qualify: **206 denarii taken,
+granted false, still active.** The card's own gate is `can = S.gold >= fee` and tests affordability
+ONLY, so nothing but the button's placement was holding that path shut. The question comes first now.
+
+**And two of the eleven were dead writing, in the shape #206 just closed.** `canAffordRudis` and
+`canBorrow` were defined and called nowhere, while the rules they name were written out again
+elsewhere — and `canBorrow` and `borrow` DISAGREED: the predicate refuses a finished house, the door
+only checked `d.loan`. Both are now the single site their rule is written at.
+
+**AND A THIRD FAULT CAME OUT OF FIXING THE SECOND, which is the one that mattered most.** With the
+eligibility question moved above the fee, `careers` went red: *"a twelve-win, two-hundred-renown man
+was refused the rudis."* He was eligible. What refused him was `rudisCost` returning **NaN**.
+
+`gladValue` reads `g.potential` and `g.age`. `genGladiator` sets both and `makeRivalFighter` sets
+both; **`genOpponent` sets neither**, so on an arena opponent it computed `undefined * 1.8`.
+`rudisCost` inherited the NaN — and the OLD guard was `if(d.gold < fee)`, where `50000 < NaN` is
+**false**. So it fell through, ran `d.gold -= NaN`, and **set the treasury to NaN**. `careers` drove
+that exact path on a `genOpponent` man every single run and passed, because it checked that the man
+was freed and never looked at the gold.
+
+No real call site passes a `genOpponent` man to `gladValue` today — it reads player men, market men
+and rival-house fighters — so this was one call site away rather than live. But a price function
+that can silently return NaN into a `d.gold -=` reaches through EVERY guard, since every comparison
+against NaN is false. `gladValue` is total now. The fields are not added to `genOpponent` instead
+because that is the hot path and a new `ri()` draw in it would re-phase every seeded house in the
+project, which is the cost #206 was opened over; a total function costs nothing.
+
+**`quote` is the new check** and states the contract as one sentence a player would recognise: *he
+can afford exactly what he is quoted, and not a denarius less.* Set his gold to the quote and the
+action must go through and leave nothing; set it a denarius short and it must refuse and take
+nothing. Both directions, because a guard can be wrong by being too strict or too lax and only
+running both tells them apart. It drives the real mutators rather than re-deriving prices — a check
+that recomputes the price it is checking proves nothing about the code that charges it. **351 priced
+actions, 280 of them discounted below list.**
+
+It runs at **every armamentarium level**, and that is not thoroughness for its own sake: at level 0
+the multiplier is exactly 1, so quote === list and all 210 items pass while the game is broken at
+every other level. A check run only at the default would have reported clean.
+
+It also holds every price to being **finite**, handed a man from each of the three man-makers,
+which is the assertion that would have caught the NaN before it could ever reach a purse.
+
+Negative-tested on all three faults at once: caught as **"280 of 351 refused with EXACTLY their own
+quote, worst a 3,990d window"**, **"took 159 denarii and left him a slave"** and **"a second loan
+while the first still stands"**. The first cut of the reporting pushed one entry per failing item,
+and 280 gear instances crowded the two money-taking faults out of the reported reason entirely — it
+is one entry per FAULT now, because a check that finds three things must say three things.
+
+**Suite 111 -> 112 checks green in 16.8 min.** `quote` is the new one; `probes/quote.mjs` is the
+instrument the faults were found with and is not in the suite.
+
 ### v3.148.0 — #206 closed, and not by either repair the item proposed
 
 **`TELLS.cold` read `formOf(o) <= -30`, and `form` is only ever written on your own men.**
@@ -16531,6 +16616,17 @@ numbers check out.
    it is the interesting shape: `gearPrice`, `rudisCost`, `canAffordRudis`, `pitPurse`, `cityPurse`,
    `cityMissio`, `owedTotal`, `loanLender`, `canBorrow`, `lanVig`, `gladValue` — every price the
    player is quoted, and no check asserts on one.
+   **THE MONEY CLUSTER IS CLOSED in v3.149.0**, and it was not empty: `buyGearItem` guarded on the
+   list price and charged the discounted one (**140 of 210 item-and-level combinations refused a
+   purchase the player could pay for**, up to a 3,990d window), `grantRudis` took the fee twenty
+   lines before it asked whether the man qualified (**206d for nothing**), and `canAffordRudis` and
+   `canBorrow` were dead writing whose rules were re-written elsewhere — `canBorrow` disagreeing
+   with the door it was meant to be. Fixing the second exposed a third: `gladValue` returned **NaN**
+   on a `genOpponent` man (it reads `potential` and `age`, which that maker alone does not set), and
+   the old `if(d.gold < fee)` guard is false against NaN — so it fell through to `d.gold -= NaN` and
+   **set the treasury to NaN**, on a path `careers` drove every run while passing.
+   `quote` holds all 351 priced actions to their own quotes now, and every price to being finite.
+   The rest of the 101 remain uncalled.
 
 ### Standing decisions, not work
 - **#47 — one tap to the obvious bout.** Declined; the multi-tap arena is intended.
@@ -17333,4 +17429,4 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.148.0 — #206 closed; every tell fires and none of them on everybody*
+*Last updated: v3.149.0 — the money cluster held to its own quotes; the audit queue is empty*
