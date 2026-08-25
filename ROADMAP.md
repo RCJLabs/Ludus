@@ -4461,6 +4461,66 @@ wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
 
+### v3.148.0 — #206 closed, and not by either repair the item proposed
+
+**`TELLS.cold` read `formOf(o) <= -30`, and `form` is only ever written on your own men.**
+`formShift` is called from the bout resolutions; `formWeek` walks `d.gladiators`. It was **0 for
+every opponent a player will ever meet** — measured over 3,818 real offers, **zero firings**, against
+`green` at 21.6%. One of nine readings the player pays to scout a man for, written, read, and dead.
+
+**The item named two games. `probes/cold.mjs` measured both of them dead.**
+
+The thing it said to check first was whether the opponent handed to `when()` carries a route to his
+house. He does not — **but the offer does**: `pickRivalOpp` returns a `ref` and the card stores it as
+`oppRef:{house,fid}`, `null` for a generated man. And **86% of the men on the card come from a live
+house**, which is far more than the item assumed. The route was real. The reading was not:
+
+| | fires | where `green` is silent |
+|---|---|---|
+| his personal `form` — today | **0.0%** | — |
+| his HOUSE's form, at the written -30 | 0.2% | 0.2% |
+| his HOUSE's form, at `houseFortune`'s own word "struggling" (-18) | 2.9% | — |
+| a MAINTAINED personal form, modelled offline | 1.2% | 0.3% |
+| **his own record: 3+ losses and more losses than wins** | **12.9%** | **4.8%** |
+
+Rival houses sit in form -17..17 for **75.5%** of the game — `h.form*0.94 + dv` with a season floor
+keeps them near zero — so no threshold over house form makes a tell. And the third reading the item
+did not consider, *maintaining* a personal form through the win/loss counters rival fighters already
+carry (which is arithmetic, not a draw, so it re-phases nothing), is dead too at 1.2%.
+
+**What was not dead was the record he already has.** `f.losses` is incremented at four sites and
+`pickRivalOpp` clones the fighter, so it arrives on the opp intact: **no new state, no new draw,
+nothing maintained.** Three losses and not two is measured as well — at two it fires 16.0% and adds
+*exactly the same* 4.8% of unique coverage, so the whole extra 3.1% is men `green` already names.
+
+The key keeps the name `cold`: a save holds watched tell keys and renaming would crash on load, and
+a man on a losing run is what cold means anyway. The sentence changed with the predicate, because a
+tell that says one thing and tests another is the fault under half this file.
+
+**`tells` is the new check, and it caught a second one on its first run.** Both failure modes have
+already happened here: `cold` never fired, and `veteran`'s own note records a hand re-band away from
+`wins>=9` because it "fired on practically everyone the bay ever put up". So it holds every tell
+inside a band — 1% floor, 80% ceiling, deliberately wide so re-pitching a tell stays a design
+decision and does not need the check edited.
+
+**AND THE FIRST RUN'S SECOND FINDING WAS THE INSTRUMENT'S, NOT THE GAME'S.** At 260 weeks it called
+`veteran` dead at 0.9%. It is not dead, it is LATE: its gate is `wins>=14` and only 3.8% of the men
+a mature house is offered have got there, while a young one is shown nobody who has. The temptation
+was to re-band `veteran` until the check went green — fitting the game to the test. The horizon went
+to 440 weeks instead, so the run contains the population the tell is about, and **`veteran` needed no
+change at all**. Wins on the card, across the eras: 0-2 21.6% · 3-5 33.5% · 6-8 27.7% · 9-10 7.2% ·
+11-13 6.3% · 14+ 3.8%.
+
+All nine now: green 20.9% · quick 16.1% · strong 13.2% · **cold 11.8%** · tires 9.1% · open 7.0% ·
+showman 4.1% · reach 3.2% · veteran 1.1%.
+
+Negative-tested at both ends at once — `cold` put back to `formOf` and `veteran` opened to
+`wins>=0`: **caught as "0 times, written, read and dead" and "100.0%, hands the plan away free"**,
+each with its own diagnosis.
+
+**Suite 110 -> 111 checks green in 18.2 min.** `tells` is the new one; `probes/cold.mjs` is the
+instrument the decision was made on and is not in the suite.
+
 ### v3.147.0 — the hunt is a shadow play too
 
 **Asked whether any art item was left, and there was one.** v3.138.0 made the bout a shadow play and
@@ -16419,7 +16479,7 @@ to it is `bribe`, one of the four illegal gambits. The legitimate version — as
 opponent, a bigger purse, softer stakes, at the cost of favour and standing, and he can refuse.
 *Reuses `EDITORS`, `favor`, patrons, `aedileOn`.*
 
-### #206 — MEASURED, not proposed. `TELLS.cold` cannot fire.
+### #206 — CLOSED in v3.148.0, and by neither repair it proposed. `TELLS.cold` could not fire.
 `cold` reads `formOf(o) <= -30` and names the `press` plan. **`form` is only ever written on rival
 HOUSES** — `h.form`, in the weekly house sweep — and never on a generated fighter, so `formOf(o)` is 0
 for every opponent a player will ever meet. Measured over **1,347 named opponents** across 8 played
@@ -16431,6 +16491,15 @@ to your man and not to his, so giving opponents a form would not move the fight 
 `cold` should read the man's HOUSE form, which exists and is maintained. Two different games.
 **To check first**: whether an opponent carries any route to his house's record at the point `TELLS`
 sees him — `pickRivalOpp` returns a `ref`, but the `opp` handed to `when()` may not carry it.
+
+**CLOSED in v3.148.0.** The check-first was right and the route is real — the offer carries
+`oppRef:{house,fid}` and **86% of the men on the card come from a live house**. But `probes/cold.mjs`
+measured BOTH proposed repairs dead: house form fires **0.2%** at the written threshold (houses sit
+in -17..17 for 75.5% of the game), and a maintained personal form **1.2%**. What works is the record
+he already carries — **3+ losses and more losses than wins, 12.9% of offers**, 4.8% of them where
+`green` is silent, with no new state, no new draw and nothing maintained. `tells` is the new check
+and holds all nine inside a band; it caught a second apparent fault on its first run which turned
+out to be its own horizon rather than the game.
 
 **Cheapest three**: #199 (pure reuse, and it shrinks the interface), #201 (surfacing an existing
 number), #203 (one more option on an existing row). **Richest three**: #196, #198 and #205 — each
@@ -17264,4 +17333,4 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.147.0 — the beast is a shadow too, and all six are held to it*
+*Last updated: v3.148.0 — #206 closed; every tell fires and none of them on everybody*

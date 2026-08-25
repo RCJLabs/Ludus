@@ -7324,8 +7324,30 @@ const TELLS = {
     say:o=>`${o.name} plays to the tiers between exchanges more than a man of his ability needs to. It costs him a breath each time.` },
   green:   { plan:"press", when:o=>(o.wins||0)<=2,
     say:o=>`${o.name} has almost no bouts behind him. Whatever he does under pressure, he has not done it often.` },
-  cold:    { plan:"press", when:o=>formOf(o) <= -30,
-    say:o=>`${o.name} has had a bad month and it is on him. He starts slowly now, and he did not used to.` },
+  /* ---- #206: THIS TELL COULD NOT FIRE, AND THE REPAIR IS NOT THE ONE THE ITEM PROPOSED ----
+     It read `formOf(o) <= -30`. **`form` is only ever written on your own men** — `formShift` is
+     called from the bout resolutions and `formWeek` walks `d.gladiators` — so it was 0 for every
+     opponent a player will ever meet. Measured over 3,818 real offers: **0 firings**, against
+     green at 21.6%.
+
+     The item weighed two repairs and `probes/cold.mjs` measured both dead:
+
+       read the man's HOUSE form   0.2% of offers at the written -30, 2.9% at houseFortune's
+                                   own word for it — houses sit in -17..17 for 75.5% of the game
+       MAINTAIN a personal form    1.2%, modelled offline off the win/loss counters rival
+                                   fighters already carry
+
+     Neither is a tell. What is: HIS OWN RECORD, which needs no new state, no new draw and nothing
+     maintained — `f.losses` is incremented at four sites and `pickRivalOpp` clones the fighter, so
+     it arrives here intact. **12.9% of offers**, which is the band the working tells live in, and
+     4.8% of offers where `green` is silent, which is the part that buys new plan-coverage.
+
+     THREE LOSSES AND NOT TWO, and that is measured too: at two it fires 16.0% and adds *exactly the
+     same* 4.8% of unique coverage, so the whole extra 3.1% is men green already names. The key
+     keeps the name `cold` — a save holds watched tell keys and renaming would crash on load, and a
+     man on a losing run is what "cold" means anyway. */
+  cold:    { plan:"press", when:o=>(o.losses||0) >= 3 && (o.losses||0) > (o.wins||0),
+    say:o=>`${o.name} has lost more of these than he has won, and not long ago. A man carrying that record already knows what the way out looks like, and he starts looking for it early.` },
   /* and a long career is only a tell when he is BUILT to spend it — nine bouts fired
      on practically everyone the bay ever put up, which handed the plan away free */
   veteran: { plan:"outlast", when:o=>(o.wins||0)>=14 && ((o.end||50) - statMean(o)) >= 1,
