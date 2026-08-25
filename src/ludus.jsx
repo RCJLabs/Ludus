@@ -43,7 +43,7 @@ const CSS = `
    is named: ink, gold, blood, laurel, and the grounds and lines they sit on. Change a colour
    here and it moves everywhere. What is NOT named here stays literal on purpose -- the drawn
    ludus and the fighter figures are paintings, not chrome, and a painting does not re-theme. */
-.lr{--ink-hi:#e8d092;--ink:#e8d9b8;--ink-2:#cfc0a0;--ink-dim:#b09b7d;--ink-dim2:#b9a37c;--ink-faint:#8d7e65;--gold:#d8ac5f;--gold-hi:#e0bd72;--gold-line:#c99a4b;--gold-edge:#6d5426;--gold-deep:#75581c;--blood:#e0503c;--blood-hi:#ef6d57;--blood-str:#e0140a;--blood-edge:#8a1c12;--laurel:#e8cf94;--laurel-hi:#fbeec6;--laurel-lt:#f2e2ae;--laurel-edge:#8a7440;--laurel-edge2:#7d6a44;--ground:#171210;--panel:#1c1610;--panel-2:#241c12;--raise:#2b2115;--line:#33271a;--line-2:#3e2f1f;--line-3:#4a3a24;--azure:#cdc0a4;--azure-edge:#6f6350;--violet:#e6c079;--violet-edge:#8a6a2c;--line-4:#4e3c26;--bar-fade:rgba(23,18,16,.96);--fs-micro:11.5px;--fs-sm:12.5px;--fs-base:13.5px;--fs-md:14.5px;
+.lr{--ink-hi:#e8d092;--ink:#e8d9b8;--ink-2:#cfc0a0;--ink-dim:#b09b7d;--ink-dim2:#b9a37c;--ink-faint:#8d7e65;--gold:#d8ac5f;--gold-hi:#e0bd72;--gold-line:#c99a4b;--gold-edge:#6d5426;--gold-deep:#75581c;--blood:#e0503c;--blood-hi:#ef6d57;--blood-str:#e0140a;--blood-edge:#8a1c12;--laurel:#e8cf94;--laurel-hi:#fbeec6;--laurel-lt:#f2e2ae;--laurel-edge:#8a7440;--laurel-edge2:#7d6a44;--ground:#171210;--panel:#1c1610;--panel-2:#241c12;--raise:#2b2115;--line:#33271a;--line-2:#3e2f1f;--line-3:#4a3a24;--azure:#cdc0a4;--azure-edge:#6f6350;--violet:#e6c079;--violet-edge:#8a6a2c;--line-4:#4e3c26;--bar-fade:rgba(23,18,16,.96);--lit:inset 0 1px 0 rgba(224,189,114,.20);--sunk:inset 0 -1px 0 rgba(0,0,0,.46);--foot:0 5px 13px -6px rgba(0,0,0,.62);--cut:5px;--fs-micro:11.5px;--fs-sm:12.5px;--fs-base:13.5px;--fs-md:14.5px;
     --fs-lg:15.5px;--fs-xl:17px;--fs-xxl:19px;--fs-display:46px;
     --tap:44px;
     overflow-x:clip;max-width:100%;background:var(--ground);background-image:radial-gradient(1100px 560px at 50% -8%, var(--raise) 0%, var(--ground) 62%);color:var(--ink);font-family:'Cormorant Garamond',Georgia,serif;min-height:100vh;font-size:17px;line-height:1.45}
@@ -56,14 +56,16 @@ const CSS = `
 .lr.cb{--blood:#f0518f;--blood-hi:#ff7aa8;--blood-str:#ff2f7a;--blood-edge:#a01050;--laurel:#dce6e0;--laurel-hi:#f2f8f4}
 
 .disp{font-family:'Cinzel',serif;letter-spacing:.1em}
-.panel{background:linear-gradient(165deg,var(--raise),var(--panel));border:1px solid var(--line-2);border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.35)}
-.btn{font-family:'Cinzel',serif;letter-spacing:.07em;font-size:var(--fs-sm);text-transform:uppercase;padding:11px 14px;min-height:var(--tap);display:inline-flex;align-items:center;justify-content:center;border-radius:8px;border:1px solid var(--gold-edge);background:linear-gradient(180deg,var(--line),var(--panel-2));color:var(--gold-hi);cursor:pointer;transition:filter .15s}
+/* ONE LIGHT FOR THE CHROME TOO -- --lit/--sunk/--foot above. Nothing is outlined, because a shadow
+   has an edge where the light STOPS; radii come in, because a puppet is cut. (No backticks.) */
+.panel{background:linear-gradient(180deg,var(--raise),var(--panel));border:0;border-radius:var(--cut);box-shadow:var(--lit),var(--sunk),var(--foot)}
+.btn{font-family:'Cinzel',serif;letter-spacing:.07em;font-size:var(--fs-sm);text-transform:uppercase;padding:11px 14px;min-height:var(--tap);display:inline-flex;align-items:center;justify-content:center;border-radius:var(--cut);border:0;background:linear-gradient(180deg,var(--line-2),var(--panel-2));color:var(--gold-hi);cursor:pointer;transition:filter .15s;box-shadow:var(--lit),var(--sunk),var(--foot)}
 .btn:hover{filter:brightness(1.18)}
 .btn:disabled{opacity:.38;cursor:not-allowed}
-.btn-blood{border-color:var(--blood-edge);background:linear-gradient(180deg,var(--blood-edge),var(--blood-edge));color:var(--blood-hi)}
-.btn-ghost{background:transparent;border-color:var(--line-3);color:var(--ink-dim2)}
+.btn-blood{background:linear-gradient(180deg,#a02216,var(--blood-edge));color:#ffe6df;box-shadow:inset 0 1px 0 rgba(255,150,130,.30),var(--sunk),var(--foot)}
+.btn-ghost{background:transparent;color:var(--ink-dim2);box-shadow:inset 0 0 0 1px var(--line-3)}
 .gold{color:var(--gold)}.blood{color:var(--blood)}.laurel{color:var(--laurel)}.dim{color:var(--ink-dim)}
-.tag{display:inline-block;font-family:'Cinzel',serif;font-size:var(--fs-micro);letter-spacing:.09em;text-transform:uppercase;padding:2px 7px;border:1px solid var(--line-3);border-radius:99px;color:var(--ink-dim2)}
+.tag{display:inline-block;font-family:'Cinzel',serif;font-size:var(--fs-micro);letter-spacing:.09em;text-transform:uppercase;padding:2px 7px;border:1px solid var(--line-3);border-radius:2px;color:var(--ink-dim2)}
 .tag-blood{border-color:var(--blood-edge);color:var(--blood-hi)}
 .tag-gold{border-color:var(--gold-deep);color:var(--gold-hi)}
 .track{height:7px;border-radius:99px;background:var(--ground);border:1px solid var(--line);overflow:hidden}
@@ -72,18 +74,18 @@ const CSS = `
 .tabbtn{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 2px;min-height:56px;color:var(--ink-faint);font-family:'Cinzel',serif;font-size:var(--fs-micro);letter-spacing:.04em;text-transform:uppercase;background:none;border:none;cursor:pointer;border-top:2px solid transparent;overflow:hidden;white-space:nowrap}
 .tabbtn.on{color:var(--gold-hi);border-top-color:var(--gold-line)}
 .modalwrap{position:fixed;inset:0;background:rgba(10,7,5,.84);display:flex;align-items:flex-end;justify-content:center;z-index:50}
-.modal{width:100%;max-width:560px;box-sizing:border-box;max-height:92vh;overflow-y:auto;background:linear-gradient(170deg,var(--raise),var(--panel));border:1px solid var(--line-4);border-radius:14px 14px 0 0;padding:18px}
+.modal{width:100%;max-width:560px;box-sizing:border-box;max-height:92vh;overflow-y:auto;background:linear-gradient(180deg,var(--raise),var(--panel));border:0;border-radius:var(--cut) var(--cut) 0 0;padding:18px;box-shadow:var(--lit),0 -8px 30px -8px rgba(0,0,0,.7)}
 @media(min-width:640px){.modalwrap{align-items:center}.modal{border-radius:14px}}
 .tickline{padding:4px 0;border-bottom:1px dotted var(--line);animation:tick .35s ease-out}
 @keyframes tick{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 .sel{background:var(--panel);border:1px solid var(--line-3);color:var(--ink);border-radius:7px;padding:9px 10px;min-height:var(--tap);font-family:'Cormorant Garamond',Georgia,serif;font-size:var(--fs-lg)}
-.chip{font-family:'Cinzel',serif;font-size:var(--fs-micro);letter-spacing:.07em;text-transform:uppercase;padding:7px 11px;min-height:38px;display:inline-flex;align-items:center;justify-content:center;border-radius:99px;border:1px solid var(--line-3);background:none;color:var(--ink-dim2);cursor:pointer}
+.chip{font-family:'Cinzel',serif;font-size:var(--fs-micro);letter-spacing:.07em;text-transform:uppercase;padding:7px 11px;min-height:38px;display:inline-flex;align-items:center;justify-content:center;border-radius:3px;border:1px solid var(--line-3);background:none;color:var(--ink-dim2);cursor:pointer}
 .chip.on{border-color:var(--gold-line);color:var(--gold-hi);background:var(--raise)}
 .focusbtn{font-family:'Cinzel',serif;font-size:var(--fs-sm);letter-spacing:.04em;min-height:46px;padding:8px 4px;
-  border-radius:8px;border:1px solid var(--line-3);background:var(--panel);color:var(--ink-dim2);cursor:pointer;
+  border-radius:var(--cut);border:0;background:var(--panel);color:var(--ink-dim2);cursor:pointer;box-shadow:var(--lit),var(--sunk);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;line-height:1.15;transition:border-color .15s}
-.focusbtn:hover{border-color:var(--gold-edge)}
-.focusbtn.on{border-color:var(--gold-line);color:var(--ink-hi);background:linear-gradient(180deg,var(--line),var(--panel-2))}
+.focusbtn:hover{box-shadow:inset 0 0 0 1px var(--gold-edge),var(--lit)}
+.focusbtn.on{color:var(--ink-hi);background:linear-gradient(180deg,var(--line-3),var(--line));box-shadow:inset 0 1px 0 rgba(224,189,114,.42),var(--sunk)}
 .focusbtn .sub{font-family:'Cormorant Garamond',Georgia,serif;font-size:var(--fs-micro);letter-spacing:0;opacity:.75}
 /* VMBRA: every venue ran dark sky down to lit sand, which puts the light behind the VIEWER and
    makes the men objects in a diorama. Each is a wall now, brightest at a standing man's head.
@@ -92,7 +94,7 @@ const CSS = `
   background:linear-gradient(#090705 0%,#1d150c 12%,#7a5c2c 30%,#c99a4b 44%,#8a6a2c 64%,#241a0f 88%,#0d0906 100%)}
 .v-pit{background:linear-gradient(#070605 0%,#140f0a 13%,#463523 30%,#6d5531 45%,#402f1c 65%,#140f0a 89%,#070605 100%)!important;border-color:var(--line-2)!important}
 .v-yard{background:linear-gradient(#0a0a09 0%,#1c1a17 12%,#7c786e 30%,#cdc9bb 44%,#86837a 64%,#26241f 88%,#0d0d0b 100%)!important;border-color:var(--ink-faint)!important}
-.v-field{background:linear-gradient(#070906 0%,#141a0f 12%,#4b6130 30%,#7d9a4c 44%,#4e6030 64%,#161c10 88%,#080a07 100%)!important;border-color:var(--laurel-edge)!important}
+.v-field{background:linear-gradient(#070806 0%,#171810 12%,#5c5c34 30%,#9c9a5e 44%,#5e5c34 64%,#191a11 88%,#080806 100%)!important;border-color:var(--laurel-edge)!important}
 .v-amphi{background:linear-gradient(#090705 0%,#1e1509 12%,#8a682c 30%,#e0b25a 44%,#96742f 64%,#281d0e 88%,#0c0805 100%)!important;border-color:var(--gold-edge)!important}
 .v-imperial{background:linear-gradient(#0a0806 0%,#241a0e 11%,#a8823a 29%,#f4cf7e 43%,#ae8a3e 63%,#33260f 87%,#0e0a06 100%)!important;border-color:var(--gold-line)!important}
 .v-harbour{background:linear-gradient(#06080a 0%,#131b22 12%,#586a70 30%,#9fb0ae 44%,#5c6a68 64%,#181f22 88%,#080a0c 100%)!important;border-color:var(--ink-faint)!important}
@@ -154,14 +156,14 @@ const CSS = `
   font-family:'Cormorant Garamond',Georgia,serif;font-size:15px;text-align:left;cursor:pointer;transition:border-color .15s}
 .selbtn:hover{border-color:var(--gold-edge)}
 .optrow{width:100%;text-align:left;padding:12px;min-height:var(--tap);margin-bottom:7px;cursor:pointer;color:inherit;font:inherit;
-  background:linear-gradient(165deg,var(--raise),var(--panel));border:1px solid var(--line-2);border-radius:10px}
-.optrow.on{border-color:var(--gold-line);background:linear-gradient(165deg,var(--line),var(--panel-2))}
+  background:linear-gradient(180deg,var(--raise),var(--panel));border:0;border-radius:var(--cut);box-shadow:var(--lit),var(--sunk)}
+.optrow.on{background:linear-gradient(180deg,var(--line-3),var(--line));box-shadow:inset 0 1px 0 rgba(224,189,114,.42),var(--sunk),var(--foot)}
 .reduce-motion *,.reduce-motion *::before,.reduce-motion *::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
 .lr.large-text{font-size:19.5px}
 /* colourblind-friendly: the confusable pair here is "good" green vs "bad" red — remap green to a blue that reads clear against the red for red-green colour vision */
-.lr.cb .laurel{color:#5aa9e6}
-.lr.cb .dot-good{background:#5aa9e6}
-.sect{border:1px solid var(--line-2);border-radius:10px;background:linear-gradient(165deg,var(--panel-2),var(--panel));overflow:hidden}
+.lr.cb .laurel{color:#2f6b58}
+.lr.cb .dot-good{background:#2f6b58}
+.sect{border:0;border-radius:var(--cut);background:linear-gradient(180deg,var(--panel-2),var(--panel));overflow:hidden;box-shadow:var(--lit),var(--sunk),var(--foot)}
 .sect>summary{list-style:none;cursor:pointer;padding:12px 13px;display:flex;align-items:center;justify-content:space-between;gap:8px;
   font-family:'Cinzel',serif;font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--gold)}
 .sect>summary::-webkit-details-marker{display:none}
@@ -182,10 +184,10 @@ const CSS = `
   --ink:#33291b;--ink-hi:#1e1710;--ink-2:#4a3d29;--ink-dim:#6b5c44;--ink-dim2:#6b5c44;--ink-faint:#675941;
   --gold:#7a5518;--gold-hi:#6d4d16;--gold-line:#765a1c;--gold-edge:#bda471;--gold-deep:#8a6a2c;
   --blood:#9a2f22;--blood-hi:#7e2418;--blood-str:#8f2a1c;--blood-edge:#b5745f;
-  --laurel:#4a5a24;--laurel-hi:#3d4a1c;--laurel-lt:#55682c;--laurel-edge:#93a06a;--laurel-edge2:#93a06a;
-  --line:#c2ad80;--line-2:#b39c6d;--line-3:#a89165;--azure:#245a72;--azure-edge:#7f9aa8;--violet:#553a63;--violet-edge:#9d86ab;--line-4:#9c855a;--bar-fade:rgba(226,212,176,.96);
+  --laurel:#4a3410;--laurel-hi:#3a2809;--laurel-lt:#5c4418;--laurel-edge:#a88c4e;--laurel-edge2:#a88c4e;
+  --line:#c2ad80;--line-2:#b39c6d;--line-3:#a89165;--azure:#6b5a3c;--azure-edge:#9c8a68;--violet:#7a5518;--violet-edge:#a88c4e;--line-4:#9c855a;--bar-fade:rgba(226,212,176,.96);
   color:var(--ink)}
-.lr.cb[data-place]:not([data-place="ludus"]), .lr.cb .modal{--laurel:#1d5c86;--laurel-hi:#17486a}
+.lr.cb[data-place]:not([data-place="ludus"]), .lr.cb .modal{--blood:#a8145e;--blood-hi:#8c0d4c;--blood-str:#b01060;--laurel:#1d4a3c;--laurel-hi:#153a2e}
 /* the sheet: a warm ground, a little foxing, and a shadow at the head and foot where a
    bound page darkens. No image is fetched for any of it. */
 .lr[data-place]:not([data-place="ludus"]), .lr .modal{
@@ -194,12 +196,12 @@ const CSS = `
     radial-gradient(circle at 13% 16%, rgba(146,116,68,.13), transparent 42%),
     radial-gradient(circle at 86% 61%, rgba(146,116,68,.11), transparent 38%),
     radial-gradient(circle at 44% 91%, rgba(132,104,62,.10), transparent 40%),
-    linear-gradient(180deg, rgba(116,88,46,.17), rgba(116,88,46,0) 13%, rgba(116,88,46,0) 87%, rgba(116,88,46,.19))}
+    linear-gradient(180deg, rgba(116,88,46,.17), rgba(116,88,46,0) 13%, rgba(116,88,46,0) 87%, rgba(116,88,46,.19));--lit:inset 0 1px 0 rgba(255,250,235,.62);--sunk:inset 0 -1px 0 rgba(96,72,38,.26);--foot:0 3px 9px -5px rgba(78,58,30,.26)}
 /* a panel on paper is a BLOCK OF ENTRIES, not a raised card: the box shadow and the heavy
    rounding go, and a ruled line does the separating that a border used to do. */
 .lr[data-place]:not([data-place="ludus"]) .panel, .lr .modal .panel{
-  background:linear-gradient(165deg,rgba(255,250,235,.34),rgba(190,166,118,.16));
-  border-color:var(--line-3);border-radius:3px;box-shadow:none}
+  background:linear-gradient(180deg,rgba(255,250,235,.36),rgba(190,166,118,.14));
+  border:0;border-radius:3px;box-shadow:var(--lit),var(--sunk)}
 .lr[data-place]:not([data-place="ludus"]) .btn, .lr .modal .btn{
   background:linear-gradient(180deg,#e2d3a8,#d2bf90);border-color:var(--gold-deep);color:#3b2c12}
 .lr[data-place]:not([data-place="ludus"]) .btn-ghost, .lr .modal .btn-ghost{
@@ -215,7 +217,6 @@ const CSS = `
 .lr[data-place]:not([data-place="ludus"]) .track, .lr .modal .track{
   background:rgba(120,94,52,.22);border-color:var(--line-3)}
 .lr[data-place]:not([data-place="ludus"]) .sel, .lr .modal .sel{background:rgba(255,250,235,.40)}
-.lr[data-place]:not([data-place="ludus"]) .modal{border-color:var(--line-4)}
 /* the steward's own hand, kept to the places a man actually writes by hand: what the doctore
    says, and the notes in the margin. Body text stays set in the book face -- a script at
    13px on a phone is a tax paid on every line, and this game is mostly lines.
@@ -290,7 +291,7 @@ const CSS = `
 let CB_ON = false;
 /* the helpers hand literals to inline styles, so the pref has to reach those too. These are the
    lit tones, moved cool, matching what `.lr.cb` does to the named ones a rule away. */
-const CB_GREEN = { "#e8cf94":"#dce6e0", "#8a9a5b":"#b8c6c0", "#fbeec6":"#f2f8f4" };
+const CB_GREEN = { "#e8cf94":"#dce6e0", "#fbeec6":"#f2f8f4" };
 const cbc = c => (CB_ON && typeof c==="string" && CB_GREEN[c.toLowerCase()]) || c;
 
 const STATS = ["str","agi","end","tec","sho","dis"];
@@ -19407,7 +19408,9 @@ const BEAT_SFX = { clash:"clash", graze:"graze", hit:"hit", crit:"crit", fall:"f
   death:"death", spared:"spared", salute:"horn", end:"horn" };
 
 /* the stands are four constituencies and they do not sit together */
-const FAC_TINT = { parm:"#7d6a9c", scut:"#8a6a3c", mob:"#8c4438", front:"#5c6f4a" };
+/* a faction is not a hue in a shadow play -- it is how brightly its bank of the crowd is
+   lit. Four steps of the same light, plus the mob, which is the one that carries blood. */
+const FAC_TINT = { parm:"#e0bd72", scut:"#a8813a", mob:"#b8402c", front:"#6d5426" };
 /* ---- THE PLAN OF THE HOUSE ----
    A ludus was a square of cells around a yard. The game's subject has been pure
    abstraction for ninety versions. This is the place, drawn, changing as it is
@@ -19479,13 +19482,13 @@ function LudusPlan({ S }){
       {/* baths along the south */}
       <rect x="86" y="180" width={has("baths") ? 128 : 74} height="26" rx="2"
         fill={lvl("balneae", lit)} stroke={stone} strokeWidth="1"/>
-      {B("balneae")>0 && <ellipse cx={has("baths")?150:123} cy="193" rx={has("baths")?42:22} ry="8" fill="#3d5560" opacity="0.7"/>}
+      {B("balneae")>0 && <ellipse cx={has("baths")?150:123} cy="193" rx={has("baths")?42:22} ry="8" fill="#4a4a3c" opacity="0.7"/>}
       {label(has("baths")?150:123, 197, `BALNEAE ${B("balneae")||""}`, B("balneae")>0)}
 
       {/* the great works stand where they were built */}
       {has("chapel") && (<g>
-        <rect x="22" y="22" width="34" height="34" rx="1.5" fill="#3f3a2a" stroke="#8a9a5b" strokeWidth="1.2"/>
-        <path d="M 32 46 L 39 30 L 46 46 Z" fill="#8a9a5b" opacity="0.8"/>
+        <rect x="22" y="22" width="34" height="34" rx="1.5" fill="#3f3a2a" stroke="#b8a05c" strokeWidth="1.2"/>
+        <path d="M 32 46 L 39 30 L 46 46 Z" fill="#b8a05c" opacity="0.8"/>
       </g>)}
       {has("school") && (<g>
         <rect x="244" y="22" width="34" height="34" rx="1.5" fill="#3f3629" stroke="#c99a4b" strokeWidth="1.2"/>
@@ -21393,7 +21396,7 @@ const SECT = {
                      {Array.from({length:YEAR_WEEKS}).map((_,i)=>{ const w=i+1;
                        const f=CALENDAR.find(x=>x.w===w), cur=w===yearWeek(S);
                        const sn = SEASONS.slice().reverse().find(x=>w>=x.at) || SEASONS[0];
-                       const base = sn.key==="winter"?"#2a3238" : sn.key==="summer"?"#33291a" : sn.key==="autumn"?"#2f2617" : "#25301f";
+                       const base = sn.key==="winter"?"#2b2b28" : sn.key==="summer"?"#33291a" : sn.key==="autumn"?"#2f2617" : "#2b2a1e";
                        return <div key={i} title={f?f.name:sn.name} style={{flex:1,height:cur?9:6,borderRadius:2,
                          background: cur ? "var(--ink-hi)" : f ? (f.rest? "var(--laurel-edge)":"var(--gold-deep)") : base}}/>;
                      })}
@@ -21951,7 +21954,14 @@ const SECT = {
           <button key={hex} aria-label={nm} title={nm} onClick={()=>setCrest({c1:hex})}
             /* a thirty-pixel swatch is a thirty-pixel miss. Seven still fit a row
                at the full forty-four, so there is no reason to be under it. */
-            style={{width:44,height:44,borderRadius:8,background:hex,cursor:"pointer",padding:0,
+            /* ---- THE SWATCH TELLS THE TRUTH ABOUT ITSELF ----
+               The heraldry keeps its colours: a house's shield is what hangs on a wall, and the
+               wall is lit. The SAND is not — a man on it is a silhouette, and all his colours
+               buy him is how much light gets through the crest. A flat swatch of Legion green
+               therefore promised something the bout does not deliver. Each one is split now:
+               the colour on the left, what the sand makes of it on the right. */
+            style={{width:44,height:44,borderRadius:4,cursor:"pointer",padding:0,
+              background:`linear-gradient(100deg, ${hex} 0 52%, ${toUmbra(hex,.09)} 52% 100%)`,
               border:(S.crest&&S.crest.c1===hex)?"2px solid var(--ink-hi)":"1px solid var(--line-2)"}}/>
         ))}
       </div>
@@ -21961,7 +21971,8 @@ const SECT = {
           <button key={hex} aria-label={nm} title={nm} onClick={()=>setCrest({c2:hex})}
             /* a thirty-pixel swatch is a thirty-pixel miss. Seven still fit a row
                at the full forty-four, so there is no reason to be under it. */
-            style={{width:44,height:44,borderRadius:8,background:hex,cursor:"pointer",padding:0,
+            style={{width:44,height:44,borderRadius:4,cursor:"pointer",padding:0,
+              background:`linear-gradient(100deg, ${hex} 0 52%, ${toUmbra(hex,.05)} 52% 100%)`,
               border:(S.crest&&S.crest.c2===hex)?"2px solid var(--ink-hi)":"1px solid var(--line-2)"}}/>
         ))}
       </div>
@@ -23729,7 +23740,7 @@ export default function App(){
     {name:S.name, fame:S.fame, you:true} ].sort((a,b)=>b.fame-a.fame);
 
   const MARKS = [
-    ["Gladiatrix", "#c8aad4", "A woman on the sand. She fights as anyone does; the difference is at the gate, where the novelty draws a bigger crowd and better fame, and in the boxes, where the senator disapproves and the noblewoman does not."],
+    ["Gladiatrix", "#e6c98a", "A woman on the sand. She fights as anyone does; the difference is at the gate, where the novelty draws a bigger crowd and better fame, and in the boxes, where the senator disapproves and the noblewoman does not."],
     ["Auctoratus · N left", "var(--azure)", "A free man who sold himself to the arena. Paid up front and by the week rather than bought, contracted for a set number of bouts, and gone when they are served. He cannot be sold, the rudis means nothing to him, and he will not rise with the others."],
     ["✦ Primus of Capua", "var(--ink-hi)", "There is one man in this city the whole city can name, and for now he is yours. Worth fame every week — and a queue of challengers on nearly every card."],
     ["✦ rare fire", "var(--ink-hi)", "Something in this one the arena has not seen yet. A ceiling far above the block price, and usually a temper to match."],

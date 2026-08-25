@@ -4461,6 +4461,67 @@ wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
 
+### v3.139.0 — one light for the chrome, and the hues that survived the last release
+
+**v3.138.0 said blood was the only colour in the game. It was true on one of the two grounds.**
+
+The palette is declared twice — once on `.lr` for the night ground the drawn ludus keeps, and once
+again on `.lr[data-place]:not([data-place="ludus"])` for the paper every door opens on. Last release
+retired green, blue and purple from the first block and **left the second one exactly as it was**, so
+every sheet, every record and every man's page still had a green morale bar on it. That is the whole
+shape of the miss: a token retired in one place and alive in the other, invisible from either side
+because you only ever see one ground at a time.
+
+**So this release counts them rather than trusting them.** Every six-digit literal in the file, run
+through HLS, dropped if it is a neutral or a near-black, dropped if it sits in the warm ramp the
+light is made of or in blood's own arc — and whatever is left is a hue that should not be there.
+Before: **35 distinct, 41 uses.** After: **19 distinct, 22 uses**, and every one of the survivors is
+accounted for:
+
+| what | how many | why it stays |
+|---|---|---|
+| the colourblind pref | 10 | it exists to introduce separation the default palette does not need |
+| house heraldry | 5 | a shield is what hangs on a wall, and a wall is lit |
+| the harbour's cool light | 3 | a temperature, not a hue |
+| the field's olive light | — | folded into the ramp; it was a green light and is a warm-cool one now |
+
+What the sweep actually found, past the paper block: the four crowd **factions** were tinted purple,
+ochre, red and green — a faction is not a hue in a shadow play, it is how brightly its bank of the
+crowd is lit. **Winter and spring** were a blue-grey and a green. A class tag read **lavender**. The
+chapel on the villa map was the last green in a diagram rather than a painting. And `CB_GREEN` still
+carried a key for a colour that no longer exists anywhere in the file, so it could never have matched.
+
+**The crest picker was promising something the sand does not deliver.** Twelve 44px swatches of
+Legion green and Imperial purple, for a value whose entire effect on a bout is now *how much light
+gets through the crest*. The heraldry keeps its colours — that is the right call, a house's shield is
+an object on a lit wall — but each swatch is **split** now: the colour on the left, what the sand
+makes of it on the right. The screen tells the truth about itself.
+
+## And the chrome took the drawn ludus's light
+
+The scene has had one light since v3.137.0: a lit top course on every mass, a soft shadow at its
+foot, in two helpers used by every room. **The chrome had a different one in every rule** — a
+`165deg` gradient with no light direction in it, a 1px outline all the way round, and a drop shadow
+that only panels carried.
+
+It is the same light now, named once as `--lit` / `--sunk` / `--foot` and used by panels, sects,
+buttons, option rows, focus buttons and modals. **Nothing is outlined**, because a shadow has an edge
+where the light stops and not because a line was drawn round it. The radii come in from 10px to a
+shared `--cut` of 5, because a shadow-puppet is cut from hide rather than moulded — and the pill
+shapes go, since a pill is the one form a cut cannot make.
+
+**The paper ground takes the same three names with paper values**, which is the point of naming them:
+the light comes from the same place on both grounds and only its colour changes.
+
+**It cost nothing.** Removing the borders left three rules setting `border-color` on things that no
+longer had a border — two of them silently doing nothing since the moment the border went, one
+deletable outright. The stylesheet came back to **264 lines, exactly its ceiling**, with no raise.
+
+`palette` holds: every text run on every ground still clears 4:1. `backdrop` holds: nine venues,
+closest pair **ΔE 5.3**.
+
+Suite **107/107 green in 14.2 min**, first run, no reds.
+
 ### v3.138.0 — Vmbra: the game is a shadow play, and blood is the only colour in it
 
 **The bout is the centrepiece and it was drawn as a lit diorama.** Ten directions were mocked up
@@ -16652,4 +16713,4 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.138.0 — the game is a shadow play; blood is the only colour left in it*
+*Last updated: v3.139.0 — the chrome takes the same light, and the hues are counted rather than trusted*
