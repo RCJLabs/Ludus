@@ -4461,6 +4461,66 @@ wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
 
+### v3.141.0 — the drawn man says which man he is: 2 drawings became 17
+
+**A silhouette has no colour, no texture and no face.** Shape is the whole of what it can say — and
+since v3.138.0 the six men in the yard are the drawing a player looks at every week of the game.
+
+`vocab` renders that yard over every axis a man carries and counts how many **distinct drawings**
+come out. The answer was **two**: hurt, or whole.
+
+| axis | before | after |
+|---|---|---|
+| class | 1 — *says nothing* | **6** |
+| where he is hurt | 2 | **6** |
+| scars | 1 — *says nothing* | **5** |
+| fatigue | 1 — *says nothing* | **2** |
+| sex | 1 — *says nothing* | **2** |
+| record — wins, fame, morale | 1 | 1 — *still says nothing* |
+| **all axes at once** | **2** | **17** |
+
+**Six classes are six shapes now**: what he holds, what he hides behind, and what is on his head. A
+retiarius carries a net and no helmet; a murmillo is a tower shield with a crest over it; a
+hoplomachus's spear stands above his own head. At thirty-five pixels those are not subtle. The
+shields take the **lit seam** the arena figure already uses — light leaking through the join where
+two thicknesses of hide overlap — because a scutum drawn in the body's own value is a shadow inside
+a shadow. Five parts of a man now take five different wounds where there was one slash for all of
+them, and the scars he is carrying are on him.
+
+## And fatigue had stopped being drawn, in a way no check could see
+
+`ScnMan` was handed `tone` — one of two colours, by whether he was spent — and drew his outline in
+it. **v3.138.0 made every man a silhouette**, so the outline became a fixed near-black and all
+`tone` was left gating was a small arc drawn in a literal that did not depend on it.
+
+The prop was still passed. The value was still computed. The reading was gone — and **a source check
+could not have caught it**, because the source still read `tone`. Nothing anywhere had ever asked
+whether two different men are drawn differently.
+
+`vocab` asks exactly that, behaviourally, and is validated against this bug: restoring it turns the
+check red with *"2 men differing only in fatigue produce 1 distinct drawing — the yard cannot tell
+them apart, so that reading is not reaching the picture."*
+
+**Both the probe's own faults are worth keeping**, because they are the same fault twice.
+`newGameState` **seeds a familia**, so the first cut planted one man, read the yard's first slot, and
+measured one of the *starting* men — every axis came back "1 distinct drawing", including injury,
+which plainly does draw. Then the `sex` sweep varied the **class** as well, so a two-valued axis
+reported six distinct drawings with the class doing all the work. A planted population read against
+an unplanted one, then an axis that was not the axis it claimed. Both are named in the probe.
+
+The check has a third of its own: the first cut planted six men at once and normalised away their
+slots by subtracting each man's x from any number within 40 of it. The body is a **relative** path,
+`q-9 3 -10 27`, and for the man in slot 0 the number 27 falls inside that window while for every
+other man it does not — six men at two fatigue values came back as **four** distinct drawings. One
+man per render puts every variant in the same slot, so there is nothing to normalise and nothing to
+leak.
+
+**What is still not drawn, named rather than half-built.** A man's record — his wins, his fame, his
+morale — reaches the picture nowhere. Stance is the obvious channel for it and stance is already
+carrying fatigue, so it wants its own idea rather than a second thing bolted onto the same one.
+
+Suite **109/109 green in 16.3 min**, first run, no reds — the suite is 109 checks now.
+
 ### v3.140.0 — the bout, watched: 64% of every fight was a dark shape on a dark wall
 
 **I shipped the centrepiece of the game twice without once looking at it.** v3.138.0 made the bout a
@@ -16800,4 +16860,4 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.140.0 — a man can be seen standing on all nine walls, and a check says so*
+*Last updated: v3.141.0 — the drawn man says which man he is: two drawings became seventeen*

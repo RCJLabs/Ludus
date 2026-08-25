@@ -785,6 +785,17 @@ claimed a fixture with *"the road busy"* that `makeGames` returned null for outs
 so the road's busy branch was never drawn in EITHER house — a fixture that did not do what its own
 sentence said.
 
+**`vocab.mjs`** — how many different men the drawing can draw. Renders the real yard over every axis
+a man carries — class, fatigue, injury, scars, sex, record — one man per house so every variant lands
+in the same slot, and counts DISTINCT SVG. **2 distinct drawings before v3.141.0, 17 after.**
+
+Two of its own faults are worth the space, and both are the same fault. `newGameState` **seeds a
+familia**, so planting one man and reading the yard's first slot measured one of the starting men —
+every axis came back "1 distinct drawing", including injury, which plainly does draw. And the `sex`
+sweep varied the CLASS as well, so a two-valued axis reported six distinct drawings with the class
+doing all the work. A planted population read against an unplanted one, then an axis that was not
+the axis it claimed.
+
 **`scroll.mjs`** — where the vertical pixels go, per place, as the page ARRIVES versus with every fold
 thrown open. The second is what `reach` necessarily measures and it is 40% taller than the first.
 

@@ -22424,18 +22424,66 @@ const ScnBadge = ({x,y,list}) => !list.length ? null : (
     </circle>
     <text x={x} y={y+4} textAnchor="middle" fontSize="11" fontWeight="bold" fill="#14100c">{list.length}</text>
   </g>);
-const ScnMan = ({x,y,g,tone,row,openMan}) => (
+/* ---- SIX MEN, ONE SHAPE ----
+   Measured over every axis a man carries — class, fatigue, injury, scars, sex, record — the yard
+   figure came back at TWO distinct drawings: hurt, or whole. Nothing else reached the picture at
+   all, and after v3.138.0 not even fatigue did: `tone` was still handed in, but the stroke it used
+   to colour became a fixed value and all `tone` gated was an arc drawn the same either way.
+
+   A silhouette has no colour, no texture and no face. Shape is the whole of what it can say, so
+   the six classes are six shapes: what he holds, what he hides behind, and what is on his head.
+   A retiarius carries a net and no helmet; a murmillo is a tower shield with a crest over it. At
+   thirty-five pixels those are not subtle. */
+const SCN_KIT = {
+  Murmillo:     { shield:"tower", weap:"short",  helm:"crest" },
+  Thraex:       { shield:"small", weap:"sica",   helm:"tall"  },
+  Hoplomachus:  { shield:"round", weap:"spear",  helm:"crest" },
+  Secutor:      { shield:"oval",  weap:"short",  helm:"smooth"},
+  Retiarius:    { shield:"net",   weap:"trident",helm:"bare"  },
+  Dimachaerus:  { shield:"none",  weap:"twin",   helm:"tall"  },
+};
+const ScnMan = ({x,y,g,tone,row,openMan}) => {
+  const K = SCN_KIT[g.cls] || SCN_KIT.Murmillo;
+  const spent = (g.fatigue||0) > 55;          /* the reading `tone` was carrying and lost */
+  const dy = spent ? 3 : 0;                   /* a spent man stands lower and his guard drops */
+  const hy = y + dy, ay = y + 14 + dy*2;      /* his head, and the hand he holds it in */
+  const INK = "#150e08", EDGE = "#0b0704", SEAM = "#4a381f";
+  const L = (d, w) => <path d={d} fill="none" stroke={INK} strokeWidth={w||2.4} strokeLinecap="round"/>;
+  /* where a wound lands on him, so five parts are five marks rather than one slash */
+  const PART_Y = { head:-4, brow:-4, eye:-4, arm:12, hand:16, shoulder:8, flank:18, gut:20, thigh:26, knee:29, leg:29 };
+  const at = pt => hy + (PART_Y[pt] == null ? 18 : PART_Y[pt]);
+  return (
   <g className="scn" role="button" tabIndex={0} aria-label={`${g.name} the ${g.cls}`}
     onClick={()=>openMan(g.id)} onKeyDown={e=>{ if(e.key==="Enter") openMan(g.id); }}>
-    {/* a shadow on the lit sand, and the ONE thing that is ever coloured on him is the wound
-         he is carrying — the same rule the bout runs on */}
-    <circle cx={x} cy={y} r="7" fill="#150e08" stroke="#0b0704" strokeWidth="1"/>
-    <path d={`M${x} ${y+8} q-9 3 -10 27 l5 0 q1 -11 5 -14 q4 3 5 14 l5 0 q-1 -24 -10 -27 Z`}
-      fill="#150e08" stroke="#0b0704" strokeWidth="1"/>
-    {g.injury && <path d={`M${x-5} ${y+14} L${x+4} ${y+22}`} stroke="#e0140a" strokeWidth="2.4" strokeLinecap="round"/>}
-    {!g.injury && tone && <path d={`M${x-4} ${y+2} q4 -3 8 0`} fill="none" stroke="#3a2c18" strokeWidth="1"/>}
+    {/* what he hides behind */}
+    {K.shield==="tower" && <rect x={x+7} y={hy+5} width="9" height="22" rx="1.5" fill="#0a0603" stroke={SEAM} strokeWidth=".9"/>}
+    {K.shield==="oval"  && <ellipse cx={x+11} cy={hy+15} rx="5" ry="9" fill="#0a0603" stroke={SEAM} strokeWidth=".9"/>}
+    {K.shield==="round" && <circle cx={x+11} cy={hy+14} r="5.5" fill="#0a0603" stroke={SEAM} strokeWidth=".9"/>}
+    {K.shield==="small" && <rect x={x+8} y={hy+9} width="7" height="8" rx="1" fill="#0a0603" stroke={SEAM} strokeWidth=".9"/>}
+    {K.shield==="net"   && <path d={`M${x-16} ${hy+8} q8 12 2 20 q-9 -4 -2 -20 Z`} fill={INK} opacity=".75"/>}
+    {/* the body, and the head he keeps on it */}
+    <path d={`M${x} ${hy+8} q-9 3 -10 27 l5 0 q1 -11 5 -14 q4 3 5 14 l5 0 q-1 -24 -10 -27 Z`}
+      fill={INK} stroke={EDGE} strokeWidth="1"/>
+    {isF(g) && <path d={`M${x-6} ${hy+16} q6 4 12 0`} fill="none" stroke={SEAM} strokeWidth="1.2"/>}
+    <circle cx={x} cy={hy} r="7" fill={INK} stroke={EDGE} strokeWidth="1"/>
+    {K.helm==="crest"  && L(`M${x-5} ${hy-6} q5 -7 10 0`, 3)}
+    {K.helm==="tall"   && L(`M${x} ${hy-7} L${x-1} ${hy-14}`, 3)}
+    {K.helm==="smooth" && <circle cx={x} cy={hy-1} r="7.6" fill="none" stroke={SEAM} strokeWidth="1"/>}
+    {/* and what he holds */}
+    {K.weap==="short"   && L(`M${x-8} ${ay} L${x-15} ${ay-7}`)}
+    {K.weap==="sica"    && L(`M${x-8} ${ay} q-8 -3 -7 -11`)}
+    {K.weap==="spear"   && L(`M${x-11} ${ay+9} L${x-4} ${hy-15}`, 2)}
+    {K.weap==="trident" && (<g>{L(`M${x-11} ${ay+8} L${x-6} ${hy-13}`, 2)}
+      {L(`M${x-9} ${hy-10} L${x-6} ${hy-16} M${x-6} ${hy-13} L${x-6} ${hy-18} M${x-3} ${hy-10} L${x-6} ${hy-16}`, 1.4)}</g>)}
+    {K.weap==="twin"    && (<g>{L(`M${x-8} ${ay} L${x-15} ${ay-7}`)}{L(`M${x+8} ${ay+3} L${x+15} ${ay-4}`)}</g>)}
+    {/* THE ONLY COLOUR ON HIM, and the same rule the bout runs on: a cut he is carrying, where he
+         carries it, and the ones that closed */}
+    {(g.scars||[]).slice(0,4).map((sc,i)=>(
+      <path key={i} d={`M${x-4+((i*3)%7)} ${at(sc.part)-3} l5 4`} stroke="#a8321f" strokeWidth={sc.big?2:1.4} strokeLinecap="round"/>))}
+    {g.injury && <path d={`M${x-5} ${at(g.injury.part)} L${x+4} ${at(g.injury.part)+7}`}
+      stroke="#e0140a" strokeWidth="2.4" strokeLinecap="round"/>}
     {scnSay(x, y+48+(row?14:0), g.name.slice(0,12))}
-  </g>);
+  </g>); };
 
 const ScnVilla = ({ S, at, go, houseLit }) => (<>
 {/* THE VILLA — travels; its callers are the villa-panel documents */}
