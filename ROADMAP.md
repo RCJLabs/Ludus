@@ -4461,6 +4461,66 @@ wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
 
+### v3.145.0 — the words in the drawing, against what is actually behind them
+
+**Reported from real play:** *"The road to the sand text is a bit tough to read."* It was, and it
+was the eleventh-worst label in the drawing.
+
+`test/probes/legible.mjs` (new) composites the real stack under every glyph — walking a grid across
+each label, taking the whole `elementsFromPoint` stack, resolving gradients at that exact point and
+blending layers bottom-up by their own opacity. **Eleven of nineteen labels were under the 4.0:1
+that `palette` holds the rest of the app's text to:**
+
+| label | was | shape of the failure |
+|---|---|---|
+| "a keeper of slaves" | **1.03:1** | dark ink on the dark top of the drawing — not faint, gone |
+| "THE ROAD — TO THE SAND" | **1.39:1** | 3.63:1 down the middle, 1.39:1 at both ends |
+| "the gods find you lax" | 2.15:1 | |
+| "4 on the block" | 2.48:1 | |
+| "THE TRAINING SQUARE" | 2.61:1 | |
+| "THE GATE" · "quiet tonight" · "bare — house issue only" | 2.88–2.90:1 | |
+| "THE VILLA" · "THE CELLS" · "THE RACKS" | 3.93:1 | |
+
+The road is a **wedge**, 107px across at the height its 181px label sits, so 47% of that label hangs
+off the road and over open sand while being painted in the colour picked for the dark road. That is
+what "tough to read" looked like from the inside — and it is why the worst SAMPLE is what this
+measures rather than the mean, which would have averaged the two grounds into a comfortable number
+nobody sees.
+
+**THE CAUSE WAS A HAND-SET FLAG.** Both scene text helpers took a `lit` boolean chosen per call
+site, under a note saying which ground a label falls on is a fact about the drawing and should be
+written down rather than guessed. That was right, and it drifted anyway: **the sand has been
+re-aimed twice since those flags were set** — v3.141.0 lit the yard, v3.143.0 took the whole app
+dark — and a boolean written against the old gradient cannot know either happened.
+
+So nothing is guessed now. `SCN_SAND` names the sand's stops once, **the gradient is rendered from
+that table and the ink is chosen from it**: a label takes whichever of the two inks wins against the
+sand at its own y. Aim the sand somewhere else a third time and every label follows. The two inks
+went to `#14100c` and `#f2e4bf` — the app's own `--ink-hi`, not a new white — and the crossover
+lands where the drawing's own light does, so the middle of the picture stays *carved into lit sand*
+and only the shadowed top and foot are written in light.
+
+**Every label now clears 4.27:1, worst to worst, up from 1.03:1.** The road reads 5.54:1 at its
+faintest and 14.4:1 over the road itself, without being moved or shortened.
+
+**`legible` is the new check**, and two instrument faults are built into its guards because the
+first two runs of it were confidently wrong in the direction that looks like success. `elementsFromPoint`
+is a viewport query: at the phone's 844px the drawing is mostly scrolled off, every sample landed
+outside the window, and it printed **"99.00:1, 0 under floor" for all nineteen labels** — a clean
+bill of health that was the absence of any measurement at all. Then the colour parser tested only
+LENGTH, so `hex("rgb(28, 22, 16)")` parsed `"rg"`, `"b("`, `"28"` and returned `[NaN,NaN,NaN]` —
+truthy, so the rgb() fallback never ran, every ratio was NaN, and since `NaN < 99` is false the
+worst case stayed at its initial value. A label nothing sampled now FAILS, and non-finite numbers
+are refused rather than read as clean. Verified independently by hand: "THE YARD" computes to
+4.35:1 off the gradient stops with a pencil, and the instrument says 4.34.
+
+Negative-tested by putting the old inks back: **road caught as SPLIT** (1.39:1 at 2% across,
+3.63:1 elsewhere on the same label), plus five more under floor. `palette` 0 text runs under 4.0:1
+across all four places, `umbra` unchanged at 5.0:1/5.3:1, `scene` 0 collisions, `bulk` 264/264.
+
+**Suite 109 -> 110 checks green in 16.9 min, first run.** `legible` is the new one; `test/probes/legible.mjs`
+is the instrument it was promoted from and is not in the suite.
+
 ### v3.144.0 — what a man has done reaches his drawing, and the yard stopped floating
 
 **The deferred half of v3.141.0.** That release made the six classes six shapes and put fatigue,
@@ -16245,7 +16305,10 @@ numbers check out.
 
 1. **The fighter figures** — the other half of lead 4. `scene` holds geometry and the two-house
    diff; nothing has asked whether the drawn man says anything about THIS man beyond his class and
-   kit. #193 did the backdrops.
+   kit. #193 did the backdrops. **HALF ANSWERED for the yard**: `vocab` was written in v3.141.0 and
+   grew in v3.144.0, taking the yard figure from **2 distinct drawings to 22** across class,
+   fatigue, injury, scars, wins, renown and kills. **The arena `Fighter` has never been measured
+   the same way** — `test/probes/vocab.mjs` counts it and nothing asserts on it.
 2. **`towns known`, `men on the books`, `rivals met` and `patrons`** read UNTESTED in `asks` — no
    arm moves them, so nothing is known either way. An untested quantity is not a silent one and
    should not be filed as either.
@@ -17055,4 +17118,4 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.144.0 — a man's record reaches his drawing; the palm, and the pool at his feet*
+*Last updated: v3.145.0 — the drawing's ink is read off the ground it sits on, not set by hand*
