@@ -4461,6 +4461,60 @@ wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
 
+### v3.135.0 — #204: the house has three memories and the reader saw one of them
+
+#204 says `d.freed`, `d.fallen`, the Record Book and the Annals exist and *"nothing mechanical reads
+it"*. **Measured against the file, that is false.** Eleven places read `d.freed` or `d.fallen` — the
+`FREEDMEN` table, the `legends` acclaim term, the vow's `deaths0`, `buried20`, a rite that needs your
+own dead, the burial counsel, the killer's name, the kin who come looking. The dead are plentiful too:
+**38.5 a house, on the books 98.3% of weeks.**
+
+The live clause is the item's own: *"this may be an item about the input rather than the reader."*
+
+## Three lists, and only one of them works
+
+`probes/annals.mjs`, 8 houses × 420 weeks an arm:
+
+| list | control | `free:true` | `retire:true` | read by |
+|---|---|---|---|---|
+| `d.fallen` | 38.5/house | 34.1 | 31.3 | seven mechanics |
+| `d.freed` | **0.00** | 1.50 | 0.00 | `FREEDMEN`, and `legends` |
+| `d.retired` | 0.00 | 0.00 | **13.25** | **nothing but the Annals' list** |
+
+`d.freed` has exactly two sources — `grantRudis` behind the strict gate #190 measured, and `sagaFree`,
+which has one caller inside an event — so **the reference player puts nobody at all on it**, six
+entries of writing are unreachable, and the `legends` acclaim term is permanently zero.
+
+And `d.retired` is fed **nine times as richly** by a player who presses the button, with a ripe
+candidate standing there on **92.6% of weeks** — and nothing had ever looked at him. `retireG` has one
+caller in the whole game, the same shape as `setPupilTo` (#189) and `setCareOf` (#203).
+
+## What shipped
+
+`freedWeek` reads both lists, and `legends` counts both. A man released from the sacramentum *"walks
+out with his scars and his name"* — every line in `FREEDMEN` is about a man making his way outside the
+house, and none of it is specific to manumission rather than release. `retireG` now stores `cls` so
+the two records are the same shape.
+
+**Measured after: 91 freedman events in 8 of 8 houses, against 0.** Six entries of writing that no
+measured policy could reach are now reachable by the ordinary act of letting an old man go.
+
+## `open.mjs` is byte-identical
+
+Both lists are empty for the reference player, so `freedWeek` still returns on its third line and
+takes no draw. The check asserts it: five hundred calls on a house with both lists empty must leave
+the seed exactly where they found it.
+
+## The check's vacuity guard earned its place twice
+
+`annals` is the 106th. Its screen assertion first went to the villa, found no Roll of the House, and
+**passed** — a screen test that never fires is a check proving nothing, which is `scene`'s lesson from
+v3.127.0. Made to fail instead, it then failed honestly on all five places: the Annals are a `Sect`,
+and a `Sect` is a **fold**, and `innerText` does not report what is shut inside one. #201 lost a
+placement to exactly that. It opens every fold and reads "3 remembered" on the ludus page.
+
+`bulk`: unchanged. No allowance raised.
+
 ### v3.134.0 — #203: the fifth option already existed, so the measurement is the release
 
 #203 asked for a fifth care option: declare a hurt man fit, he takes the card, nobody outside knows.
@@ -15506,7 +15560,7 @@ fighting wounded. The missing option is declaring a hurt man fit — he takes th
 knows, and the risk is `graveLasting`. *Reuses `agonyWear`, `checkLasting`.* A fourth option on a row
 that has three.
 
-### #204 — the house's dead and freed do nothing.
+### #204 — CLOSED in v3.135.0, and its premise corrected. The house's dead and freed do nothing.
 `d.freed`, `d.fallen`, `annalsClose`, the Record Book and the Annals all exist, so the house has a
 memory and nothing mechanical reads it. A man trained by a freedman of the house, or carrying a dead
 man's kit, or fighting the week one died. *Reuses `d.freed`, `RITES`, `remember`.* **To check first**:
@@ -16359,4 +16413,4 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.134.0 — the fifth option was already there, and measured it is a trap*
+*Last updated: v3.135.0 — a man who left free is remembered, whichever way he left*

@@ -2470,7 +2470,7 @@ function acclaimTarget(d){
 function acclaimTerms(d){
   const men = activeG(d).map(g=>g.pfame||0).sort((a,b)=>b-a);
   const top3 = (men[0]||0)*0.5 + (men[1]||0)*0.28 + (men[2]||0)*0.16;   // your famous few
-  const legends = (d.freed||[]).filter(f=>(f.wins||0)>=10).length;
+  const legends = (d.freed||[]).concat(d.retired||[]).filter(f=>(f.wins||0)>=10).length;   /* #204 */
   const walls = activeG(d).filter(g=>g.graffiti).length;
   return [
     { k:"men",     name:"Your famous few",     v:Math.min(46, top3*0.5), top:46,
@@ -13109,10 +13109,35 @@ const FREEDMEN = {
       return `He signs for ${g.auctor.bouts} bouts at ${g.auctor.wage} a week. Every man in that block watches a free man choose this on purpose.` } },
 };
 const FM_KEYS = Object.keys(FREEDMEN);
+/* ---- #204: THE HOUSE HAS THREE MEMORIES AND THIS READ ONE OF THEM ----
+   The item says the dead and the freed "do nothing". Measured against the file, that is false:
+   **eleven places read `d.freed` or `d.fallen`** — this table, the `legends` acclaim term, the vow,
+   `buried20`, a rite, the burial counsel, the killer's name, the kin who come looking. The dead are
+   plentiful too: 38.5 a house, on the books 98.3% of weeks.
+
+   What is TRUE is narrower and it is about the third list. Measured over 8 houses x 420 weeks an arm
+   (probes/annals.mjs):
+
+     list         control          free:true        retire:true      read by
+     d.fallen     38.5 a house     34.1             31.3             seven mechanics
+     d.freed      **0.00**         1.50             0.00             this table, and `legends`
+     d.retired    0.00             0.00             **13.25**        NOTHING but the Annals' list
+
+   `d.freed` has exactly two sources — `grantRudis` behind the strict gate #190 measured, and
+   `sagaFree`, which has one caller — so the reference player puts **nobody at all** on it and six
+   entries of writing are unreachable. `d.retired` is fed nine times as richly by a player who
+   presses the button, and a ripe candidate stands there on **92.6% of weeks**, and nothing has ever
+   looked at him.
+
+   A man released from the sacramentum walked out with his name and his scars, which is what every
+   line in this table is about — none of it is specific to manumission rather than release. So the
+   reader reads both lists. Nothing here draws a number while both are empty, which is why the
+   reference player's signature does not move. */
 function freedWeek(d){
   if(d.over || d.rome || d.city || d.travel || d.pendingEvent) return;
-  /* a man who was freed here outranks the week's random draw */
-  const pool = (d.freed||[]).filter(f=>!f.became && d.week - f.week >= 5);
+  /* a man who left this house free outranks the week's random draw — freed by the rudis, or
+     released from the oath at the end of a long career; the yard remembers both the same way */
+  const pool = (d.freed||[]).concat(d.retired||[]).filter(f=>!f.became && d.week - f.week >= 5);
   if(!pool.length) return;
   if(R() > 0.11) return;
   const f = pick(pool);
@@ -18456,7 +18481,8 @@ function retireG(d, gid){
   if(!g || isGone(g) || !retireEligible(g)) return;
   g.status = "retired";
   d.retired = d.retired || [];
-  d.retired.push({ name:fullName(g), week:d.week, age:g.age, wins:g.wins, scars:(g.scars||[]).length });
+  /* `cls` so the record is the same shape as a freed man's — `FREEDMEN` reads both lists now */
+  d.retired.push({ name:fullName(g), week:d.week, age:g.age, wins:g.wins, cls:g.cls, scars:(g.scars||[]).length });
   d.fame += 12;
   addRep(d, "mercy", 10);
   d.unrest = clamp(d.unrest-9, 0, 100);
@@ -28376,7 +28402,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     paragonOf, paragonReach, makeParagon, paragonWeek, paragonExpire, PARAGONS,
     PARAGON_REACH, PARAGON_GAP, PARAGON_ODDS, marketWeek,
     buyGearItem, sellGearOne, equipOne, stripAll, mendKitOf, forgeForMan, armHimOff, armAllOff,
-    buildUp, setCrestTo, setCareOf, CARE, CARE_KEYS, careWhy, surgeonOK, surgeonFee,
+    buildUp, setCrestTo, setCareOf, CARE, CARE_KEYS, careWhy, surgeonOK, surgeonFee, retireEligible, FREEDMEN, FM_KEYS, freedWeek, acclaimTerms,
     teachSigTo, makeMasterOf, startSecond, switchStyle,
     setPupilTo, beginRetrain, endRetrain, hireDoctore, dismissDoctore, takeDoctoreOffer, makeDoctore, docSecond, onSquare, squareMen, squareWord, squareWeek, squareTook, squareTie, SQUARE_WEAR, SQUARE_TIE, doctoreWeek, docLesson, DOC_LESSONS, tieBetween, tieWord, addTie,   /* #197 — the square's second seat, and the tie words the arena panel already uses */
     hireStaffMember, letStaffGoOf, setEarTo,
