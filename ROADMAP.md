@@ -580,7 +580,7 @@ It forges the widest line the game can compose — the longest class against the
 
 **So it had been passing on the wrong fixture some of the time** — the vacuous pass this audit exists to catch, in the check that had never once gone red. Write and reload at once, the way `sheet`, `arm` and `guards` do, and the rope comes back "Convictolitavis, the Beast of Capua" on every row, four runs out of four.
 
-Still open on the drawing: the villa and the training square report nothing about the house, and the road nothing about what is booked. Those want the art pass rather than more captions — the shapes are placeholder-grade, and hanging more text on them is not the same as drawing a ludus that shows its own condition.
+Still open on the drawing at the time: the villa and the training square report nothing about the house, and the road nothing about what is booked. Those want the art pass rather than more captions — the shapes are placeholder-grade, and hanging more text on them is not the same as drawing a ludus that shows its own condition.
 
 **The fixture audit (v3.103.0).** `room`'s red raised a question the check audit had not asked: `guards` tests the harness's contract, but nothing tested whether a check's FIXTURE actually landed before it measured anything. A bisect caught `room`, not a guard.
 
@@ -611,14 +611,14 @@ Measured and argued in v3.99.0's brainstorm; ordered by expected value, not by e
 4. **Return to the list, not the room.** Acting from a row should strike it through and leave you on the sheet. Half-arrived already: a row's own deed leaves the sheet standing. The other half — travelling and coming back — is open.
 5. ~~Fold the armoury into the man~~ — v3.100.0.
 6. ~~Deadlines on a clock~~ — v3.102.0.
-7. ~~Make the scene report state~~ — v3.102.0 (the numbers; the art pass is still open).
+7. ~~Make the scene report state~~ — v3.102.0 (the numbers), v3.137.0 (the shapes; the fighter figures remain).
 8. ~~Land on the morning, don't dismiss it~~ — v3.100.0.
 9. **Set the week's work in one place.** Assignments are per-man, per-card; a yard-level board matches how a lanista thinks.
 10. **A "what you can do here" strip per face.** 81% of actions sit below the first 844px and `villa · The House` carries 2,440px of dead section above its last action.
 
 Items 2, 6 and 9 change what the game ASKS of the player, not merely where the buttons are — those want a measurement of whether the pacing improves, not just a build.
 
-Still open in this arc: the art pass (the rooms are placeholder-grade silhouettes); the fonts, still an external Google Fonts fetch that will not load offline (pre-existing, but the ledger leans on type harder than the night ground did); and whatever real play on a big house turns up next — its first two screenshots each found something no fixture had.
+Still open in this arc: the fighter figures, which take 4 visually distinct states against everything a man carries (the rooms themselves were drawn in v3.137.0 — 82.0% of the drawing was the same drawing whatever the house was, now 49.1%); and whatever real play on a big house turns up next — its first two screenshots each found something no fixture had.
 
 ### Seeded runs
 Every roll came out of `Math.random`, so no house could be handed to anybody else and no measurement could be repeated. There is one **mulberry32** behind the same `R()` that everything already called, so nothing else in the codebase changed.
@@ -4460,6 +4460,105 @@ about a quarter and it is the cost of this repair**; `MISSIO_MAN` is one line to
 wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
+
+### v3.137.0 — the art pass: the drawing did not know which house it was
+
+**The item has been open since v3.102.0 with the same sentence against it** — *"the rooms are
+placeholder-grade silhouettes"*, and *"hanging more text on them is not the same as drawing a ludus
+that shows its own condition"*. `scene` has proved since v3.126.0 that the rooms' WORDS differ
+between a founding and a house of 260 weeks; it fails any room that says the same thing twice.
+Nothing had ever asked the same question of the SHAPES.
+
+`figure` asks it. It renders the landing scene for a house at week 1 and for a house at week 260 —
+great familia, a doctore, built facilities, an armoury, a rebellion brewing and its own munus on
+the card — and diffs it element by element, on geometry, colour and opacity. **Every element that is
+byte-identical between those two houses is an element that is not drawing THIS house.**
+
+The reading before the pass: **82.0% identical.** Four rooms of eight came back at **100%** — the
+shrine, the racks, the gate and the road drew the same shapes in a founding and in a great house,
+with a caption underneath saying otherwise.
+
+| room | before | after |
+|---|---|---|
+| the cells at night | 94% | **10%** |
+| the yard | 23% | **38%** |
+| the gate | 100% | **47%** |
+| the training square | 81% | **58%** |
+| the road | 100% | **59%** |
+| the shrine | 100% | **64%** |
+| the racks | 100% | **73%** |
+| the villa | 82% | 84% |
+| **the whole drawing** | **82.0%** | **49.1%** |
+
+**The villa is the one room that went the wrong way** — 82% to 84% — and it is worth saying why
+rather than leaving it in the table unexplained: it gained a lit roofline and a shadow at its foot,
+which are three shapes that are the same in every house. The lighting is what makes it read as a
+building instead of a hole cut in the sand, and it costs exactly that. Its state is still the two
+lamps for the household, which is what it had.
+
+**Four rooms now draw a number the game already states, and the game already stated all four.**
+
+- The **cells** drew four black windows in every house, though the collegium line has read
+  `N of M cells filled` since v2.63.0. One window per cell now — the COUNT is `cellsCap`, which
+  grows with the house's rank, and the LIT ones are the men in them, with the lamp showing under
+  the door. A founding draws three lit of eight; a risen house six of ten. You can count both.
+- The **racks** drew four fixed glyphs reading `| | ) 0` whether the house held eight pieces or
+  none. Ten pegs, filled to `rackUsed/rackCap`.
+- The **training square** drew four posts at every level of a FOUR-LEVEL building whose own text
+  says level 0 is *"Three posts in bare dirt"* and level 3 is *"every apparatus in Italy, twice
+  over"*. It draws `3 + bLevel(S,"palus")` posts now, and a sand pit from level 2.
+- The **shrine** said one of five things — godless, lax, observant, pious, devout — and drew one of
+  two, a lit altar or an unlit one. It carries the band in its shapes now, one votive on the step
+  per band. #150's rule says the picture and the word must be the same function, so `pietyWord` was
+  rewritten in terms of the `pietyRank` the drawing reads; they cannot disagree.
+
+**The gate and the road were 100% because nobody was in them.** The gate was an arch and four bars
+with *"4 on the block"* written under it; the men stand at it now, up to five, dimmed when the block
+is not fresh. The road was the best-drawn room in the ludus — cypresses, a milestone, ruts,
+flagstones — and not one of those shapes knew whether anything was booked. The men going out today
+walk it, up to three, smaller as they go.
+
+**And the picture had to become a place before any of that could read.** The scene was rooms
+floating on a flat ground with a 90px dead band through the middle of it. It now has a sky and a
+horizon with haze at the base of it, a masonry wall down both sides with a lit coping and eleven
+courses, and a courtyard colonnade in the dead band. All of that is `aria-hidden` scenery: no
+hotspot, no label, and both `scene` and `figure` skip it, because **the drawing has eight rooms
+before it and eight after**, and counting scenery answers the wrong question — the first cut of
+`figure` counted it and the figure went UP to 88.8%, which reads as the drawing having become less
+house-specific when what it had become was more drawn.
+
+**Two mistakes are worth keeping, because both were the metric lying and being caught by the eye.**
+
+The cells' first cut lit a *fraction* of four windows. Three men in a founding's eight cells and six
+in a risen house's ten both round to two lit of four: the two houses drew the identical block, and
+the room's score got WORSE (95% → 96%) while the code got longer. Fractions are scale-free and the
+question was about scale.
+
+And the gate scored 100% when it was already different — `marketFresh` dims the whole line of men,
+and `figure`'s key read geometry and colour but not opacity. **The instrument was wrong, not the
+drawing.** Fixed, and the baseline re-measured from `HEAD` with the corrected key against the same
+fixture: still exactly 82.0%, so the before/after is one instrument end to end.
+
+Both are the same fault this project keeps finding in itself: *suspect the instrument first*, and
+*a set built from a filtered population cannot be compared against an unfiltered one*.
+
+**Still not drawn, named rather than half-built.** A drawn man takes **4 visually distinct states** —
+tired or fresh, hurt or whole — against a class (6 of them), a kit, scars, fame, morale, a standing
+style and a sex. The figures are the same silhouette in every room. That is the next release of this
+work and it is not this one.
+
+**It is a display-only change and it is proved as one.** `open.mjs` — 60 headless houses — returns a
+**byte-identical SIG line** against the build before it, house for house. The one model-adjacent edit
+is `pietyWord`, rewritten in terms of `pietyRank`; the five bands and their thresholds are unchanged,
+which is why the houses are.
+
+Suite **107/107 green in 18.3 min**, `scene` included with its room count unmoved at 8 and its own
+text-collision assertions holding (0 collisions, 0 labels on a post, 0 outside the frame).
+
+`survive` needed its second draw: the first read **(1,3)** and tripped the conjunction bar, the second
+read **(3,6)** and tripped nothing. Both are in the tally, per #175 — where 9 of 9 such draws came back
+clean when re-run by hand — and the byte-identical SIG above is the independent proof that no house
+executes a different path on this build.
 
 ### v3.136.0 — #205: the bribe had never once changed an opponent
 
@@ -16484,4 +16583,4 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.136.0 — the ten are closed; the bribe works and there is an honest way to ask*
+*Last updated: v3.137.0 — the drawing knows which house it is: 82.0% of it was the same in every ludus, now 49.1%*

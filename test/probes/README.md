@@ -767,6 +767,24 @@ an opponent, while a player bribing every four weeks held the flag 5.67% of his 
 disproved #205's "the model is there": `EDITORS` is five names used once to sign a booking line.
 The probe reads the pool test off the game's own bands without drawing, so it costs no RNG.
 
+**`figure.mjs`** — how much of the landing drawing is a drawing of THIS house. Renders the scene for a
+founding and for a house of 260 weeks and diffs it element by element on geometry, colour and opacity;
+anything byte-identical is an element that is not drawing this house. **82.0% before v3.137.0's art
+pass, with four rooms of eight at a flat 100%; 49.1% after, with none.** It skips `aria-hidden`
+scenery, exactly as `scene` does when it counts rooms — the first cut counted the wall courses and the
+colonnade and the figure went UP to 88.8%, which reads as the drawing having become less
+house-specific when what it had become was more drawn. It also counts the FIGURES: a drawn man takes
+**4 visually distinct states** against everything he carries, which is the half of the queue's fourth
+lead still open.
+
+Two of its own faults are worth the space. Its key read geometry and colour and NOT opacity, so it
+scored the gate 100% identical when `marketFresh` was already dimming the whole line of men — the
+instrument was wrong, not the drawing, and the baseline had to be re-measured from `HEAD` with the
+corrected key (it came back at exactly 82.0%, so the before/after is one instrument). And its header
+claimed a fixture with *"the road busy"* that `makeGames` returned null for outside a festival week,
+so the road's busy branch was never drawn in EITHER house — a fixture that did not do what its own
+sentence said.
+
 **`scroll.mjs`** — where the vertical pixels go, per place, as the page ARRIVES versus with every fold
 thrown open. The second is what `reach` necessarily measures and it is 40% taller than the first.
 
