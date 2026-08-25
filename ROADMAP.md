@@ -4461,6 +4461,68 @@ wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
 
+### v3.147.0 — the hunt is a shadow play too
+
+**Asked whether any art item was left, and there was one.** v3.138.0 made the bout a shadow play and
+said so in `Fighter`'s own header: *every man is backlit, and the ONLY colour anywhere on him is what
+comes out of him.* `Beast` never got the message. **No check had ever touched it.** Measured against
+the man it is drawn beside:
+
+| | colour | luminance | vs. the man |
+|---|---|---|---|
+| the man | `UMBRA_BODY` | 0.0034 | — |
+| **fresh blood — the ceiling** | `#e0140a` | **0.1637** | **4.0:1** |
+| leopard coat | `#c2963f` | 0.3364 | **7.2:1 — brighter than blood** |
+| lion coat | `#b98a44` | 0.2891 | **6.4:1 — brighter than blood** |
+| tusks | `#e6ded0` | **0.7328** | near white — the brightest thing in the game |
+| horns | `#ded4c2` | 0.6591 | |
+| bull coat | `#2f2822` | 0.0224 | 1.4:1 — the opposite fault: it vanished into him |
+| bear coat | `#4a3a2c` | 0.0466 | 1.8:1 |
+
+**The palette broke the rule in both directions at once.** In a venatio the player watched a
+near-black silhouette fight a tawny animal, and on a cat or a lion the beast — not the blood — was
+the loudest thing on the plate.
+
+The coats go through **`toUmbra`**, which exists for exactly this and was written for house colours:
+a hue cannot survive a shadow play, but *how much light gets through* can. A leopard stays
+fractionally lighter than a bull, so the animal survives as a value rather than as a colour. All six
+now land between 0.0041 and 0.0160, well under blood.
+
+**The seam is what keeps it off him.** Two near-blacks overlapping is one blob — `Fighter`'s own note
+says so, which is why his sword carries a lit join. At these values the beast reads **1.3:1** against
+the man, so the body takes a lit edge in `UMBRA_SEAM` and that outline is the whole of what separates
+them. It is the same register the fighter already works in: seam against body is **1.76:1** there.
+
+Its blades are drawn as blades: tusks and horns go to `UMBRA_DEEP`, the darkest rung, with a seam
+edge so they still read. A dappled coat became **light coming through it** rather than a darker patch
+on it — at these values a dark spot on a near-black body is invisible, which is how the leopard lost
+the one thing that names it. And the eye is the single lit point on the animal, which is what a
+shadow beast should have.
+
+**THE CHECK'S FIRST CUT PASSED A DELIBERATE SABOTAGE.** Breaking the leopard went straight through:
+the hunt that week drew a different animal, so the broken palette was never on screen. A check whose
+coverage depends on which beast the editor happened to offer reports clean for five of the six. The
+rendered pass stays — it is what proves the table reaches the screen, and it is the only thing that
+sees the inline literals — but `BEAST_ART` is exported and **all six are held to the rule underneath
+it**, which is the half luck cannot dodge. The rendered line now names which beast it saw, so the
+coverage of that half is visible rather than assumed.
+
+It is asserted inside **`sand`** rather than in a check of its own because the plate is already up:
+`sand` walks all five bout kinds into the arena, so the hunt is on screen for free. Scoped to the two
+figure svgs and not the plate, because the venue behind them is a lit picture on purpose — that is
+`umbra`'s question and a different one.
+
+**`DoctoreBust` was looked at and deliberately NOT converted.** It is a procedural portrait in five
+flesh tones, and the first measurement of it here compared those against `UMBRA_BODY` — which is the
+wrong yardstick: the bust is a 56px face in the chrome, not a figure on the sand, and one value would
+make it a blob rather than a face. The rule it is under is `palette`'s, and it passes that. The one
+part that genuinely sits oddly is its oxblood tunic `#8d3b2c`, a red that is not blood in a game where
+red means blood; noted rather than changed.
+
+**Suite 110/110 green in 19.9 min.** No check added — the assertion went into `sand`, which already
+walks all five bout kinds into the arena, so the hunt was on screen for free. It reported `all six
+beast coats under blood (12 values, ceiling 0.1637)` and `the beast drawn was boar`.
+
 ### v3.146.0 — the arena's own fighter learns who he is
 
 **The centrepiece of the game knew less about a man than the 35px figure in the yard did.**
@@ -17202,4 +17264,4 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.146.0 — both drawn men speak the same language; the arena figure went 12 to 27*
+*Last updated: v3.147.0 — the beast is a shadow too, and all six are held to it*

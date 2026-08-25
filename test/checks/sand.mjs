@@ -212,6 +212,7 @@ export async function run({ p, errors }){
     await clearAll(p, 14);
   };
 
+  let tableDone = false;
   for(const [label, rowRe, men] of WANT){
     await restock();
     await tab(p, "arena"); await p.waitForTimeout(320); await settle(p); /* the page turn is 420ms and the wait above is shorter — see settle() */
@@ -295,6 +296,91 @@ export async function run({ p, errors }){
 
     /* ---- THE SAND ---- */
     const onSand = await p.evaluate(()=>!!document.querySelector(".momtrack"));
+    /* ---- AND WHILE THE PLATE IS UP: BLOOD IS THE ONLY COLOUR ON IT ----
+       v3.138.0 made the bout a shadow play and said so in `Fighter`'s own header: every man is
+       backlit and the only colour anywhere on him is what comes out of him. `Beast` never got the
+       message and nothing could tell, because no check had ever touched it. Measured against the
+       man it is drawn beside, the leopard read **7.2:1** and the lion **6.4:1** — brighter than
+       fresh blood at 4.0:1 — and the tusks were `#e6ded0`, near white, the brightest thing in the
+       game. The bull went the other way at **1.4:1** and vanished into him. One rule broken in
+       both directions at once.
+
+       This is asserted HERE rather than in a check of its own because the plate is already up:
+       `sand` walks all five bout kinds into the arena, so the hunt is on screen for free and a
+       separate check would have to drive the whole wizard again to see it.
+
+       Scoped to the two FIGURE svgs and not the plate, because the venue behind them is a lit
+       picture on purpose — that is `umbra`'s question, and it is a different one. */
+    if(onSand){
+      const over = await p.evaluate(()=>{
+        const chan = c => { c/=255; return c<=.03928 ? c/12.92 : Math.pow((c+.055)/1.055, 2.4); };
+        const lum = ([r,g,b]) => .2126*chan(r) + .7152*chan(g) + .0722*chan(b);
+        const CEIL = lum([224,20,10]);                 /* fresh blood, #e0140a — the brightest allowed */
+        const parse = v => { const q = String(v||"").trim();
+          let m = q.match(/^#([0-9a-f]{3})$/i); if(m) return [0,1,2].map(i=>parseInt(m[1][i]+m[1][i],16));
+          m = q.match(/^#([0-9a-f]{6})/i);      if(m) return [0,1,2].map(i=>parseInt(m[1].slice(i*2,i*2+2),16));
+          m = q.match(/rgba?\(([^)]+)\)/i);
+          if(m){ const n = m[1].split(",").map(parseFloat); return [n[0],n[1],n[2]]; }
+          return null; };
+        /* blood is red-dominant; nothing else in the shadow play is allowed to be bright */
+        const isBlood = ([r,g,b]) => r > g*1.6 && r > b*1.6;
+        const out = [];
+        for(const svg of document.querySelectorAll('svg[viewBox="0 0 128 146"], svg[viewBox="0 0 160 146"]')){
+          const who = svg.getAttribute("viewBox") === "0 0 128 146" ? "the man" : "the beast";
+          for(const e of svg.querySelectorAll("*")){
+            for(const attr of ["fill","stroke"]){
+              const c = parse(e.getAttribute(attr)); if(!c || c.some(v=>!Number.isFinite(v))) continue;
+              const L = lum(c);
+              if(L > CEIL && !isBlood(c))
+                out.push({ who, tag:e.tagName, attr, col:e.getAttribute(attr), L:+L.toFixed(4) });
+            } }
+        }
+        return out;
+      });
+      /* ---- AND ALL SIX, NOT JUST THE ONE THAT TURNED UP ----
+         The first cut asserted only on the rendered plate, and a deliberate sabotage of the
+         LEOPARD went straight through: the hunt that week drew a different animal, so the broken
+         palette was never on screen. A check whose coverage depends on which beast the editor
+         happened to offer is a check that reports clean for five of the six. The rendered pass
+         stays — it is what proves the table reaches the screen and it is the only thing that sees
+         the inline literals, the tusks and horns and the eye — and the table is held to the same
+         rule underneath it, which is the half that cannot be dodged by luck. */
+      const table = tableDone ? { bad:[], n:0, skip:true } : await p.evaluate(()=>{
+        const A = window.__LVDVS; if(!A || !A.BEAST_ART) return { missing:true };
+        const chan = c => { c/=255; return c<=.03928 ? c/12.92 : Math.pow((c+.055)/1.055, 2.4); };
+        const lum = ([r,g,b]) => .2126*chan(r) + .7152*chan(g) + .0722*chan(b);
+        const CEIL = lum([224,20,10]);
+        const hex = q => { const m = String(q||"").match(/^#([0-9a-f]{6})/i);
+          return m ? [0,1,2].map(i=>parseInt(m[1].slice(i*2,i*2+2),16)) : null; };
+        const bad = [], seen = [];
+        for(const [name, a] of Object.entries(A.BEAST_ART))
+          for(const k of ["coat","dark"]){
+            const c = hex(a[k]); if(!c) continue;
+            const L = lum(c); seen.push(`${name}.${k} ${a[k]} ${L.toFixed(4)}`);
+            if(L > CEIL) bad.push({ name, k, col:a[k], L:+L.toFixed(4) });
+          }
+        return { bad, n:seen.length, ceil:+CEIL.toFixed(4) };
+      });
+      tableDone = true;
+      if(table.missing) bad.push("__LVDVS does not export BEAST_ART — all six beasts are unheld");
+      else if(!table.skip){
+        for(const t of table.bad.slice(0,3))
+          bad.push(`the ${t.name}'s ${t.k} is ${t.col} at luminance ${t.L} — over blood's ${table.ceil}, `
+            + `so the animal is the brightest thing on a plate where only blood may be`);
+        if(!table.bad.length)
+          lines.push(`  all six beast coats under blood (${table.n} values, ceiling ${table.ceil})`);
+      }
+      for(const o of over.slice(0,4))
+        bad.push(`${label}: ${o.who} carries ${o.attr}="${o.col}" on a <${o.tag}> at luminance ${o.L} — `
+          + `brighter than blood (0.1637) and not blood, so it is the loudest thing on a plate where `
+          + `the only colour is meant to be what comes out of him`);
+      if(!over.length){
+        const who = await p.evaluate(()=>{ const b = document.querySelector('svg[viewBox="0 0 160 146"]');
+          return b ? ((document.body.innerText||"").match(/\b(wolves|boar|leopard|bear|bull|lion)\b/i)||[null])[0] : null; });
+        lines.push(`  ${label}: nothing on either figure is brighter than blood`
+          + (who ? ` (the beast drawn was ${who})` : ""));
+      }
+    }
     if(!onSand){ bad.push(`${label}: "${sent}" did not put anybody on the sand`); await clearAll(p, 10); continue; }
     const scene = await p.evaluate(()=>{
       const t = (document.body.innerText||"").replace(/\s+/g," ");
