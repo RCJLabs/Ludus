@@ -19241,15 +19241,41 @@ function Crest({ crest, size=22 }){
 
 /* A beast for the morning hunt. One quadruped, six sets of bones.
    Drawn facing RIGHT like the fighter; the arena mirrors it. */
+/* ---- AND THE HUNT WAS STILL LIT ----
+   v3.138.0 made every man a shadow and said the only colour anywhere is what comes out of him.
+   Two components never got the message, and the venatio is where it showed: a near-black
+   silhouette fighting a TAWNY ANIMAL. Measured against the man he is drawn beside:
+
+     the man  UMBRA_BODY  luminance 0.0034
+     BLOOD    #e0140a     luminance 0.1637   — 4.0:1 against him, and the brightest thing allowed
+     leopard  #c2963f     luminance 0.3364   — 7.2:1, BRIGHTER THAN BLOOD
+     lion     #b98a44     luminance 0.2891   — 6.4:1, BRIGHTER THAN BLOOD
+     tusks    #e6ded0     luminance 0.7328   — near white, the brightest thing in the game
+     bull     #2f2822     luminance 0.0224   — 1.4:1, the opposite fault: it vanished into him
+
+   So the palette broke the rule in both directions at once, and nothing could tell: no check has
+   ever touched `Beast`. The coats go through `toUmbra`, which exists for exactly this and was
+   written for house colours — a hue cannot survive a shadow play, but HOW MUCH LIGHT GETS THROUGH
+   can, so a leopard stays fractionally lighter than a bull and the animal survives as a value
+   rather than as a colour.
+
+   THE SEAM IS WHAT KEEPS IT OFF HIM. Two near-blacks overlapping is one blob — the fighter's own
+   note says so, which is why his sword has a lit join. The beast is drawn with a lit edge for the
+   same reason and it is not decoration: at these values the beast reads 1.3:1 against the man, and
+   the outline is the whole of what separates them.
+
+   The table is out here rather than inside the component so `shade` can read the palette the
+   drawing actually uses instead of a copy of it — the rule `SCN_SAND` set in v3.145.0. */
+const BEAST_ART = {
+  wolf: { len:78, ht:34, leg:30, coat:toUmbra("#6e6152",.05), dark:toUmbra("#4b4139",.02), head:"lean",  tail:"brush", ear:"prick" },
+  boar: { len:74, ht:38, leg:22, coat:toUmbra("#4e4036",.05), dark:toUmbra("#332a22",.02), head:"snout", tail:"tuft",  ear:"small", tusk:true, hump:true },
+  cat:  { len:84, ht:33, leg:32, coat:toUmbra("#c2963f",.05), dark:toUmbra("#8a6a24",.02), head:"round", tail:"long",  ear:"round", spots:true },
+  bear: { len:80, ht:48, leg:28, coat:toUmbra("#4a3a2c",.05), dark:toUmbra("#31261c",.02), head:"round", tail:"tuft",  ear:"round", hump:true, bulk:true },
+  bull: { len:96, ht:50, leg:34, coat:toUmbra("#2f2822",.05), dark:toUmbra("#1d1815",.02), head:"blunt", tail:"long",  ear:"small", horns:true, hump:true },
+  lion: { len:88, ht:38, leg:32, coat:toUmbra("#b98a44",.05), dark:toUmbra("#8a6224",.02), head:"round", tail:"long",  ear:"round", mane:true },
+};
 function Beast({ art, pose, wounds, dead }){
-  const A = {
-    wolf: { len:78, ht:34, leg:30, coat:"#6e6152", dark:"#4b4139", head:"lean", tail:"brush", ear:"prick" },
-    boar: { len:74, ht:38, leg:22, coat:"#4e4036", dark:"#332a22", head:"snout", tail:"tuft",  ear:"small", tusk:true, hump:true },
-    cat:  { len:84, ht:33, leg:32, coat:"#c2963f", dark:"#8a6a24", head:"round", tail:"long",  ear:"round", spots:true },
-    bear: { len:80, ht:48, leg:28, coat:"#4a3a2c", dark:"#31261c", head:"round", tail:"tuft",  ear:"round", hump:true, bulk:true },
-    bull: { len:96, ht:50, leg:34, coat:"#2f2822", dark:"#1d1815", head:"blunt", tail:"long",  ear:"small", horns:true, hump:true },
-    lion: { len:88, ht:38, leg:32, coat:"#b98a44", dark:"#8a6224", head:"round", tail:"long",  ear:"round", mane:true },
-  }[art] || {};
+  const A = BEAST_ART[art] || {};
   /* ---- WHAT A BEAST CAN DO ----
      Six animals were drawn with a coat, a head, ears, a tail, tusks, a mane, a hump
      and a bulk apiece — and then animated with four poses against the fighter's
@@ -19285,9 +19311,10 @@ function Beast({ art, pose, wounds, dead }){
       <path d={`M34,${bodyY+A.ht} Q30,${bodyY+6} 46,${bodyY+2}
         Q${A.hump?70:64},${bodyY-(A.hump?9:2)} ${noseX-16},${bodyY+4}
         Q${noseX+2},${bodyY+10} ${noseX-6},${bodyY+A.ht-6}
-        Q60,${bodyY+A.ht+6} 34,${bodyY+A.ht}Z`} fill={A.coat}/>
+        Q60,${bodyY+A.ht+6} 34,${bodyY+A.ht}Z`} fill={A.coat}
+        stroke={UMBRA_SEAM} strokeWidth="1.1" strokeOpacity=".55"/>
       {A.bulk && <ellipse cx="62" cy={bodyY+14} rx="26" ry="13" fill={A.coat}/>}
-      {A.spots && <g fill={A.dark} opacity=".65">
+      {A.spots && <g fill={UMBRA_SEAM} opacity=".38">
         <circle cx="52" cy={bodyY+12} r="3"/><circle cx="64" cy={bodyY+9} r="2.6"/><circle cx="74" cy={bodyY+14} r="3"/>
         <circle cx="58" cy={bodyY+22} r="2.4"/><circle cx="70" cy={bodyY+24} r="2.8"/><circle cx="84" cy={bodyY+18} r="2.4"/>
       </g>}
@@ -19307,18 +19334,21 @@ function Beast({ art, pose, wounds, dead }){
         {A.head==="blunt" && <rect x={noseX-20} y={bodyY+2} width="30" height="22" rx="7" fill={A.coat}/>}
         {(A.head==="round"||!A.head) && <ellipse cx={noseX-4} cy={bodyY+12} rx="16" ry="13" fill={A.coat}/>}
         {/* eye */}
-        <circle cx={noseX-2} cy={bodyY+8} r="2" fill="#120c07"/>
+        <circle cx={noseX-2} cy={bodyY+8} r="2" fill={UMBRA_SEAM} opacity=".75"/>
         {/* ears */}
         {A.ear==="prick" && <path d={`M${noseX-16},${bodyY+1} L${noseX-11},${bodyY-9} L${noseX-6},${bodyY+2}Z`} fill={A.dark}/>}
         {A.ear==="round" && <circle cx={noseX-14} cy={bodyY+1} r="4.5" fill={A.dark}/>}
         {A.ear==="small" && <ellipse cx={noseX-15} cy={bodyY+4} rx="4" ry="3" fill={A.dark}/>}
-        {A.tusk && <g><path d={`M${noseX+8},${bodyY+18} Q${noseX+16},${bodyY+14} ${noseX+13},${bodyY+7}`} stroke="#e6ded0" strokeWidth="3" fill="none" strokeLinecap="round"/></g>}
-        {A.horns && <g stroke="#ded4c2" strokeWidth="4.5" fill="none" strokeLinecap="round">
+        {A.tusk && <g><path d={`M${noseX+8},${bodyY+18} Q${noseX+16},${bodyY+14} ${noseX+13},${bodyY+7}`}
+          stroke={UMBRA_DEEP} strokeWidth="3.4" fill="none" strokeLinecap="round"/>
+          <path d={`M${noseX+8},${bodyY+18} Q${noseX+16},${bodyY+14} ${noseX+13},${bodyY+7}`}
+          stroke={UMBRA_SEAM} strokeWidth="1" fill="none" strokeLinecap="round" opacity=".7"/></g>}
+        {A.horns && <g stroke={UMBRA_DEEP} strokeWidth="4.5" fill="none" strokeLinecap="round">
           <path d={`M${noseX-16},${bodyY+2} Q${noseX-24},${bodyY-14} ${noseX-6},${bodyY-12}`}/>
           <path d={`M${noseX+4},${bodyY+2} Q${noseX+14},${bodyY-14} ${noseX+2},${bodyY-16}`}/>
         </g>}
         {/* jaws */}
-        <path d={`M${noseX+2},${bodyY+16} L${noseX+12},${bodyY+15} L${noseX+11},${bodyY+19} L${noseX+2},${bodyY+19}Z`} fill="#2a1410"/>
+        <path d={`M${noseX+2},${bodyY+16} L${noseX+12},${bodyY+15} L${noseX+11},${bodyY+19} L${noseX+2},${bodyY+19}Z`} fill={UMBRA_DEEP}/>
       </g>
       {(wounds||[]).map((w,i)=>(
         <path key={i} d={`M${44+i*14},${bodyY+10+ (i%2)*10} l8,7`} stroke="#8f1a12" strokeWidth={w.big?3.2:2} strokeLinecap="round" opacity=".9"/>
@@ -29185,6 +29215,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     missioScore, missioOdds, missioAccount, ACCLAIM_TIERS, ACCLAIM_MISSIO, MISSIO_CAP, MISSIO_MID,
     /* where a mark sits on a body, and the seller's undisclosed one */
     addScar, scarMark, TARGETS, FLAWS, injuryFor, INJ_BY_TARGET, INJURIES, HURT_BAR,   /* #191 — every wound comes through injuryFor */
+    BEAST_ART,                       /* v3.147.0 — so `sand` can hold ALL SIX to the rule, not just the one that turned up */
     /* helpers */
     activeG, defaultKit, kitMods, statCap, fullName, yearOf, YEAR_WEEKS, rudisEligible,
     /* the price of freedom, and whether the house can meet it — see the note over grantRudis */
