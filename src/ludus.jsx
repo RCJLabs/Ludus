@@ -43,7 +43,7 @@ const CSS = `
    is named: ink, gold, blood, laurel, and the grounds and lines they sit on. Change a colour
    here and it moves everywhere. What is NOT named here stays literal on purpose -- the drawn
    ludus and the fighter figures are paintings, not chrome, and a painting does not re-theme. */
-.lr{--ink-hi:#e8d092;--ink:#e8d9b8;--ink-2:#cfc0a0;--ink-dim:#b09b7d;--ink-dim2:#b9a37c;--ink-faint:#8d7e65;--gold:#d8ac5f;--gold-hi:#e0bd72;--gold-line:#c99a4b;--gold-edge:#6d5426;--gold-deep:#75581c;--blood:#e0503c;--blood-hi:#ef6d57;--blood-str:#e0140a;--blood-edge:#8a1c12;--laurel:#e8cf94;--laurel-hi:#fbeec6;--laurel-lt:#f2e2ae;--laurel-edge:#8a7440;--laurel-edge2:#7d6a44;--ground:#171210;--panel:#1c1610;--panel-2:#241c12;--raise:#2b2115;--line:#33271a;--line-2:#3e2f1f;--line-3:#4a3a24;--azure:#cdc0a4;--azure-edge:#6f6350;--violet:#e6c079;--violet-edge:#8a6a2c;--line-4:#4e3c26;--bar-fade:rgba(23,18,16,.96);--lit:inset 0 1px 0 rgba(224,189,114,.20);--sunk:inset 0 -1px 0 rgba(0,0,0,.46);--foot:0 5px 13px -6px rgba(0,0,0,.62);--cut:5px;--fs-micro:11.5px;--fs-sm:12.5px;--fs-base:13.5px;--fs-md:14.5px;
+.lr{--ink-hi:#e8d092;--ink:#e8d9b8;--ink-2:#cfc0a0;--ink-dim:#b09b7d;--ink-dim2:#b9a37c;--ink-faint:#8d7e65;--gold:#d8ac5f;--gold-hi:#e0bd72;--gold-line:#c99a4b;--gold-edge:#6d5426;--gold-deep:#75581c;--blood:#e8604a;--blood-hi:#f2836e;--blood-str:#f77461;--blood-edge:#8a1c12;--laurel:#e8cf94;--laurel-hi:#fbeec6;--laurel-lt:#f2e2ae;--laurel-edge:#8a7440;--laurel-edge2:#7d6a44;--ground:#171210;--panel:#1c1610;--panel-2:#241c12;--raise:#2b2115;--line:#33271a;--line-2:#3e2f1f;--line-3:#4a3a24;--azure:#cdc0a4;--azure-edge:#6f6350;--violet:#e6c079;--violet-edge:#8a6a2c;--line-4:#4e3c26;--bar-fade:rgba(23,18,16,.96);--lit:inset 0 1px 0 rgba(224,189,114,.20);--sunk:inset 0 -1px 0 rgba(0,0,0,.46);--foot:0 5px 13px -6px rgba(0,0,0,.62);--cut:5px;--fs-micro:11.5px;--fs-sm:12.5px;--fs-base:13.5px;--fs-md:14.5px;
     --fs-lg:15.5px;--fs-xl:17px;--fs-xxl:19px;--fs-display:46px;
     --tap:44px;
     overflow-x:clip;max-width:100%;background:var(--ground);background-image:radial-gradient(1100px 560px at 50% -8%, var(--raise) 0%, var(--ground) 62%);color:var(--ink);font-family:'Cormorant Garamond',Georgia,serif;min-height:100vh;font-size:17px;line-height:1.45}
@@ -104,7 +104,7 @@ const CSS = `
    arena he stands on this -- the same backlit wall, aimed at his head. It also REPLACES the
    inline gradient that was written at his page's call site, which is why the file is shorter. */
 .umbra{position:relative;overflow:hidden;border-radius:10px;border:1px solid var(--line-4);
-  background:linear-gradient(#0c0906 0%,#4e3a1c 12%,#c99a4b 26%,#a37f3a 44%,#6d5426 64%,#241a0f 86%,#0d0906 100%)}
+  background:linear-gradient(#0a0705 0%,#3e2e16 12%,#a07c33 26%,#82642a 44%,#573f1c 64%,#1c1409 86%,#0a0705 100%)}
 .wound{position:absolute;border-radius:50%;background:var(--blood-edge);pointer-events:none}
 .arenashake{animation:shk .3s}
 @keyframes shk{0%,100%{transform:translate(0,0)}20%{transform:translate(-4px,2px)}40%{transform:translate(4px,-2px)}60%{transform:translate(-3px,-1px)}80%{transform:translate(3px,1px)}}
@@ -180,43 +180,43 @@ const CSS = `
    Letters and sheets take the paper everywhere, home included -- a letter is paper wherever it
    is read, and the desk documents were already written as letters. */
 .lr{
-  --ground:#e6d9b8;--panel:#ddcea6;--panel-2:#d6c69b;--raise:#cfbe90;--well:#c9b787;
-  --ink:#33291b;--ink-hi:#1e1710;--ink-2:#453824;--ink-dim:#584a34;--ink-dim2:#584a34;--ink-faint:#554832;
-  --gold:#7a5518;--gold-hi:#6d4d16;--gold-line:#765a1c;--gold-edge:#bda471;--gold-deep:#8a6a2c;
-  --blood:#9a2f22;--blood-hi:#7e2418;--blood-str:#8f2a1c;--blood-edge:#b5745f;
-  --laurel:#4a3410;--laurel-hi:#3a2809;--laurel-lt:#5c4418;--laurel-edge:#a88c4e;--laurel-edge2:#a88c4e;
-  --line:#c2ad80;--line-2:#b39c6d;--line-3:#a89165;--azure:#6b5a3c;--azure-edge:#9c8a68;--violet:#7a5518;--violet-edge:#a88c4e;--line-4:#9c855a;--bar-fade:rgba(226,212,176,.96);
+  --ground:#1c1610;--panel:#241c12;--panel-2:#2b2115;--raise:#33271a;--well:#171210;
+  --ink:#e8d9b8;--ink-hi:#f2e4bf;--ink-2:#cfc0a0;--ink-dim:#a8927a;--ink-dim2:#b09b7d;--ink-faint:#8d7e65;
+  --gold:#d8ac5f;--gold-hi:#e0bd72;--gold-line:#c99a4b;--gold-edge:#6d5426;--gold-deep:#8a6a2c;
+  --blood:#e8604a;--blood-hi:#f2836e;--blood-str:#f77461;--blood-edge:#8a1c12;
+  --laurel:#e8cf94;--laurel-hi:#fbeec6;--laurel-lt:#f2e2ae;--laurel-edge:#8a7440;--laurel-edge2:#7d6a44;
+  --line:#33271a;--line-2:#3e2f1f;--line-3:#4a3a24;--azure:#cdc0a4;--azure-edge:#6f6350;--violet:#e6c079;--violet-edge:#8a6a2c;--line-4:#5a4630;--bar-fade:rgba(28,22,16,.96);
   color:var(--ink)}
 .lr.cb{--blood:#a8145e;--blood-hi:#8c0d4c;--blood-str:#b01060;--laurel:#1d4a3c;--laurel-hi:#153a2e}
-/* the sheet: a warm ground, a little foxing, a shadow where a bound page darkens. No image. */
+/* the ground: dark warm stone, lifted where the light falls and sinking at the head and foot. */
 .lr{
-  background-color:#e6d9b8;
+  background-color:#1c1610;
   background-image:
-    radial-gradient(circle at 13% 16%, rgba(146,116,68,.13), transparent 42%),
-    radial-gradient(circle at 86% 61%, rgba(146,116,68,.11), transparent 38%),
-    radial-gradient(circle at 44% 91%, rgba(132,104,62,.10), transparent 40%),
-    linear-gradient(180deg, rgba(116,88,46,.17), rgba(116,88,46,0) 13%, rgba(116,88,46,0) 87%, rgba(116,88,46,.19));--lit:inset 0 1px 0 rgba(255,250,235,.62);--sunk:inset 0 -1px 0 rgba(96,72,38,.26);--foot:0 3px 9px -5px rgba(78,58,30,.26)}
+    radial-gradient(circle at 13% 16%, rgba(122,94,48,.13), transparent 42%),
+    radial-gradient(circle at 86% 61%, rgba(122,94,48,.10), transparent 38%),
+    radial-gradient(circle at 44% 91%, rgba(104,80,42,.09), transparent 40%),
+    linear-gradient(180deg, rgba(0,0,0,.30), rgba(0,0,0,0) 13%, rgba(0,0,0,0) 87%, rgba(0,0,0,.34));--lit:inset 0 1px 0 rgba(224,189,114,.20);--sunk:inset 0 -1px 0 rgba(0,0,0,.46);--foot:0 5px 13px -6px rgba(0,0,0,.62)}
 /* a panel on paper is a BLOCK OF ENTRIES, not a raised card: the box shadow and the heavy
    rounding go, and a ruled line does the separating that a border used to do. */
 .lr .panel{
-  background:linear-gradient(180deg,rgba(255,250,235,.36),rgba(190,166,118,.14));
+  background:linear-gradient(180deg,rgba(224,189,114,.09),rgba(0,0,0,.16));
   border:0;border-radius:3px;box-shadow:var(--lit),var(--sunk)}
 .lr .btn{
-  background:linear-gradient(180deg,#e2d3a8,#d2bf90);border-color:var(--gold-deep);color:#3b2c12}
+  background:linear-gradient(180deg,#3a2c1a,#241c12);color:var(--gold-hi)}
 .lr .btn-ghost{
   background:transparent;border-color:var(--line-4);color:var(--ink-2)}
 /* blood is the only hue left, so the one control painted in it must command; it was a pink wash */
 .lr .btn-blood{background:linear-gradient(180deg,#a8281a,#8a1c12);color:#ffe8e2;
   box-shadow:inset 0 1px 0 rgba(255,180,160,.35),var(--sunk),var(--foot)}
 .lr .focusbtn{
-  background:rgba(255,250,235,.30);border-color:var(--line-3);color:var(--ink-2)}
+  background:rgba(224,189,114,.06);box-shadow:inset 0 0 0 1px var(--line-3);color:var(--ink-2)}
 .lr .focusbtn.on{
-  background:linear-gradient(180deg,#e2d3a8,#d2bf90);border-color:var(--gold-deep);color:#3b2c12}
+  background:linear-gradient(180deg,#3a2c1a,#241c12);color:var(--gold-hi)}
 .lr .tabbtn{color:var(--ink-dim)}
 .lr .tabbtn.on{color:var(--gold-hi)}
 .lr .track{
-  background:rgba(120,94,52,.22);border-color:var(--line-3)}
-.lr .sel{background:rgba(255,250,235,.40)}
+  background:rgba(0,0,0,.34);box-shadow:inset 0 0 0 1px var(--line-2)}
+.lr .sel{background:rgba(224,189,114,.16)}
 /* the steward's own hand, kept to the places a man actually writes by hand: what the doctore
    says, and the notes in the margin. Body text stays set in the book face -- a script at
    13px on a phone is a tax paid on every line, and this game is mostly lines.
@@ -22553,7 +22553,7 @@ const ScnSquare = ({ S, at, openDoc }) => (<>
   {scnName(26, 216, "THE TRAINING SQUARE")}
   {/* a laid floor, so it keeps its plane — but it sits ON the ground now, with the shadow the
        wall throws across its near edge, instead of floating as an outlined rectangle */}
-  <rect x="24" y="226" width="270" height="96" fill="#a37c38"/>
+  <rect x="24" y="226" width="270" height="96" fill="#a07c33"/>
   <path d="M24 226 L294 226 L294 322 L24 322 Z" fill="none" stroke="#5c4622" strokeWidth="1" opacity=".7"/>
   <rect x="24" y="226" width="270" height="9" fill="#14100c" opacity=".42"/>
   <ellipse cx="159" cy="326" rx="142" ry="7" fill="#14100c" opacity=".45"/>
@@ -22612,8 +22612,8 @@ const ScnYard = ({ S, go, openMan, men }) => (<>
     {/* trodden earth was drawn by DARKENING the ground, which worked when the ground was
          near-black and reads as a blot now that it is lit — and it put the men's own names on
          the one dark patch in the yard. Ground that has been walked is scuffed PALER. */}
-    <ellipse cx="195" cy="424" rx="170" ry="48" fill="#c69a48" opacity=".38"/>
-    <ellipse cx="195" cy="430" rx="132" ry="34" fill="#d3a851" opacity=".30"/>
+    <ellipse cx="195" cy="424" rx="170" ry="48" fill="#a8813a" opacity=".34"/>
+    <ellipse cx="195" cy="430" rx="132" ry="34" fill="#b58e42" opacity=".26"/>
     <path d="M24 372 q86 -7 171 -3 q86 4 171 -2" fill="none" stroke="#5c4622" strokeWidth="1" opacity=".55"/>
   </g>
   {/* six slots, not seven-and-a-collision: a real house carries names like Boduognatas and
@@ -22854,8 +22854,8 @@ function Scene({ S, agenda, openDoc, openMan, go }){
              So: sky above the roofline, sand below it, and the sand lightens toward the FRONT, which
              is how an open yard reads under a low sun. The horizon sits at the villa's base. */}
         <linearGradient id="scn-sky" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#100c09"/><stop offset="0.55" stopColor="#2a1f14"/>
-          <stop offset="1" stopColor="#54401f"/>
+          <stop offset="0" stopColor="#0c0906"/><stop offset="0.55" stopColor="#1e1610"/>
+          <stop offset="1" stopColor="#3e2f17"/>
         </linearGradient>
         {/* ---- VMBRA: THE YARD IS LIT AND THE MEN ARE SHADOWS ON IT ----
              The sand ran #2a2115 to #3e301b and the men were drawn as ochre outlines ON it —
@@ -22864,8 +22864,9 @@ function Scene({ S, agenda, openDoc, openMan, go }){
              and every man in the yard is a silhouette. One light for the whole game: the ludus
              by day and the sand by night are the same picture seen from two sides. */}
         <linearGradient id="scn-sand" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#4e3c1f"/><stop offset="0.42" stopColor="#8a6a2c"/>
-          <stop offset="1" stopColor="#b98f42"/>
+          <stop offset="0" stopColor="#46351a"/><stop offset="0.30" stopColor="#96742f"/>
+          <stop offset="0.50" stopColor="#a8813a"/><stop offset="0.78" stopColor="#82642a"/>
+          <stop offset="1" stopColor="#5e4720"/>
         </linearGradient>
         {/* the wall is masonry seen from inside, so its lit face is the top of each course */}
         <linearGradient id="scn-wall" x1="0" y1="0" x2="1" y2="0">

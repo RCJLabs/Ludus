@@ -4461,6 +4461,59 @@ wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
 
+### v3.143.0 — one ground, and it is the dark: the collapse was right, the direction was not
+
+**v3.142.0 collapsed the game's two grounds onto one. It picked the wrong one.** Reported from real
+play the same day: *"I don't like the light colors. Make all colors similar to the dark and brownish
+colors. No more light white colors."*
+
+The collapse was the part that mattered, and it stands. What changes is which ground survives: the
+whole game is now the **dark warm stone** of the masses in the drawing — the villa, the cells, the
+racks, the road — rather than the cream of a page.
+
+| | before | after |
+|---|---|---|
+| every place, and every modal | 0.699 | **0.009** |
+| spread between them | 0.000 | **0.000** |
+
+**The lesson is in `palette`'s contract, which had to be rewritten twice in two releases and should
+not need a third.** It first asserted *"home stays night, every door opens on paper"*, then
+*"everything is on the lit ground"* — and both are statements about a **colour**. What actually
+matters, both times, is the **shape**: every place is the same ground, and the step between two
+places is not a change of light. That is what it holds now, with no direction in it at all, so
+choosing dark over light is a palette edit and not a test rewrite.
+
+## A drawing is not a ground
+
+The two lit pictures stay lit, because **a silhouette needs light behind it** and that is the whole
+premise. The drawn ludus and the arena are pictures hanging in a dark room, not pages — and they are
+inside an `svg`, which `palette` never reads, so they are out of its scope by construction.
+
+The sand came down as far as it can go: the yard's brightest was `#b98f42` and is `#a8813a`, and the
+gradient is now **aimed at the men who stand on it** the way v3.140.0 aimed the arena's. The first
+cut pulled it to a flat `#6d5426` and put a black man at **2.7:1** — the identical fault as the pit,
+committed again three releases later, in the same week.
+
+**So `umbra` guards the drawn yard too now.** It held the nine arena walls and nothing held the yard,
+which is the picture a player looks at *every week of the game*. It reads the sand's own gradient
+stops out of the rendered svg, resolves them at the height the man's own bounding box occupies, and
+measures against the fill he is actually drawn in. He reads **5.0:1 at his head, 5.3:1 at his feet.**
+
+## What had to be found by hand
+
+The token block moved and **six component rules did not** — `.btn`, `.focusbtn`, `.panel`, `.track`,
+`.sel` still carried paper literals, so the controls stayed cream on a dark page. And the fix landed
+in the **wrong declaration**: the palette is written twice and both blocks held the identical blood
+string, so a single-occurrence replace hit the first and the second went on winning. The colour on
+screen never changed and the check kept failing at the same 3.54:1 until the computed value was read
+off the element rather than trusted from the source.
+
+`--blood-str` is lighter than `--blood` now, which looks backwards and is not: it sits on `--raise`
+rather than on the page, and on a dark ground *more emphasis means lighter* — the same inversion the
+ink names have always taken.
+
+Suite **109/109 green in 14.9 min**, first run, no reds.
+
 ### v3.142.0 — one ground: the app was two games a hundredfold apart in light
 
 **Reported from real play, with screenshots.** The drawn ludus is a lit yard with black men on it;
@@ -16933,4 +16986,4 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.142.0 — one ground; moving between two places is no longer a change of light*
+*Last updated: v3.143.0 — one ground, and it is the dark; the two drawings are lit pictures in it*

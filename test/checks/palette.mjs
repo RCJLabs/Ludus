@@ -84,11 +84,17 @@ export async function run({ p, errors }){
      which is what a player actually reported as jarring and which no check could see, because
      each ground was legible on its own terms and this asked nothing about the step between them.
 
-     v3.142.0 put the whole game on the lit ground, because the silhouette is the baseline and a
-     silhouette needs light behind it. So the bar inverts, and it is a stricter one: every place
-     must be the SAME ground, within a tolerance narrow enough that a surface which failed to
-     convert shows up as the outlier it is. */
-  const GROUND_MIN = 0.55, GROUND_SPREAD = 0.12;
+     v3.142.0 collapsed the two onto the LIT one and v3.143.0 collapsed them onto the DARK one,
+     which is the house the game is actually set in. Both times the thing that mattered was the
+     collapse, not the direction — so what this holds is the shape rather than a colour: every
+     place is the SAME ground, within a tolerance narrow enough that a surface which failed to
+     convert shows up as the outlier it is.
+
+     A DRAWING IS NOT A GROUND. The drawn ludus and the arena are lit, because a silhouette needs
+     light behind it and those two are pictures hanging in a dark room rather than pages. They are
+     inside an svg and this only ever reads element backgrounds, so they are out of scope here by
+     construction; `umbra` is the check that holds their light. */
+  const GROUND_SPREAD = 0.12;
   await tab(p, "ludus"); await dismiss(); await p.waitForTimeout(200); await settle(p); /* the page turn is 420ms and the wait above is shorter — see settle() */
   const home = await p.evaluate(KIT + `(()=>{
     const sh = document.querySelector("[data-place]");
@@ -96,8 +102,7 @@ export async function run({ p, errors }){
   })()`);
   const grounds = [{ place:"ludus", L:home.L }];
   lines.push(`the ludus: ground luminance ${home.L.toFixed(3)}`);
-  if(home.L < GROUND_MIN)
-    fails.push(`home is still on the night ground (luminance ${home.L.toFixed(3)}) — the game is one lit ground now, and a silhouette drawn on a dark one is not a silhouette`);
+
 
   for(const place of ["men","arena","market","villa"]){
     if(!await tab(p, place)) { fails.push(`could not reach ${place}`); continue; }
@@ -122,7 +127,10 @@ export async function run({ p, errors }){
         for(const m of String(cs.backgroundImage).matchAll(/rgba?\\([^)]+\\)/g)){
           const c = parse(m[0]); if(c && alphaOf(m[0]) >= 0.6) cols.push(c);
         }
-        for(const c of cols) if(lum(c) < 0.20){
+        /* on a dark ground the question inverts: what is left standing is a surface far from the
+           ground in EITHER direction that nobody can read on. Distance from the ground, not a
+           fixed luminance, is what "the palette never reached this" actually means. */
+        for(const c of cols) if(Math.abs(lum(c) - ground) > 0.34){
           /* ---- A DARK CONTROL IS NOT A DARK LEFT STANDING ----
              The question this asks is whether a surface was MISSED by the palette, and a surface
              whose own words are legible on it plainly was not. One deep-blood control on a lit
@@ -164,7 +172,6 @@ export async function run({ p, errors }){
 
     lines.push(`${place.padEnd(7)} ground ${r.ground} · ${r.n} text runs, ${r.thin} under 4.0:1 · worst ${r.worst.ratio}:1 "${r.worst.text}"`);
     grounds.push({ place, L: parseFloat(r.ground) });
-    if(r.ground < GROUND_MIN) fails.push(`${place} did not open on the lit ground (luminance ${r.ground})`);
     if(r.nDark){
       for(const d of r.darks) lines.push(`    dark left standing: ${d.tag}.${d.cls} ${d.w}x${d.h} luminance ${d.L}`);
       fails.push(`${place} has ${r.nDark} dark surface${r.nDark===1?"":"s"} the palette never reached`);
