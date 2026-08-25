@@ -26,10 +26,10 @@
    asserted, the way `backdrop` prints its dE, so tuning the light does not turn this red. What
    turns it red is a wall that cannot hold a man.
 */
-import { found, clearAll } from "../harness.mjs";
+import { found, clearAll, tab, settle } from "../harness.mjs";
 
 export const name = "umbra";
-export const describe = "every venue can hold a silhouette, at the height a man actually stands";
+export const describe = "every lit picture can hold a silhouette, at the height a man actually stands";
 
 const FLOOR = 4.5;
 /* and a floor for the rest of him. A silhouette is not a head — the first cut of this measured
@@ -40,6 +40,7 @@ export async function run({ p, errors }){
   const bad = [], lines = [];
   await found(p, { seed:"UMBRA" });
   await clearAll(p);
+  await tab(p, "ludus"); await p.waitForTimeout(320); await settle(p);
 
   const out = await p.evaluate(`(()=>{
     const A = window.__LVDVS;
@@ -127,6 +128,52 @@ export async function run({ p, errors }){
     const w = out.rows.filter(x=>!x.dead).reduce((m,r)=>Math.min(m,r.head), 99);
     lines.push(`worst wall: ${w.toFixed(1)}:1 against a floor of ${FLOOR}:1`);
   }
+  /* ---- AND THE OTHER PLACE A MAN IS DRAWN AS A SHADOW ----
+     The arena is not the only lit picture in a dark room: the drawn ludus is one too, and its yard
+     holds six men every week of the game. v3.143.0 put the app on a dark ground and pulled the
+     yard's sand down with it, which is exactly the move that took the pit to 2.7:1 — so the same
+     question gets asked of the sand a man actually stands on. Read off the rendered svg rather
+     than the stylesheet, because the sand is a gradient inside a drawing. */
+  const yard = await p.evaluate(`(()=>{
+    const svg = document.querySelector('svg[aria-label^="The ludus"]'); if(!svg) return null;
+    const man = [...svg.querySelectorAll('g[role="button"]')].find(g=>{
+      const l = g.getAttribute("aria-label") || ""; return / the /.test(l) && !/^The /.test(l); });
+    if(!man) return { none:true };
+    const box = man.getBBox(), vb = svg.viewBox.baseVal;
+    /* the sand's own stops, resolved at the height his head and his feet occupy */
+    const grad = svg.querySelector("#scn-sand");
+    if(!grad) return { nograd:true };
+    const stops = [...grad.querySelectorAll("stop")].map(s=>({
+      o: parseFloat(s.getAttribute("offset")),
+      c: (s.getAttribute("stop-color")||"").replace("#","") }));
+    /* the sand runs from the horizon to the foot of the drawing */
+    const TOP = 108, H = vb.height - TOP;
+    const at = y => { const t = Math.max(0, Math.min(1, (y - TOP) / H));
+      for(let i=0;i<stops.length-1;i++){
+        if(t >= stops[i].o && t <= stops[i+1].o){
+          const k = (t - stops[i].o) / (stops[i+1].o - stops[i].o || 1);
+          return [0,1,2].map(j => Math.round(
+            parseInt(stops[i].c.slice(j*2,j*2+2),16)*(1-k) + parseInt(stops[i+1].c.slice(j*2,j*2+2),16)*k));
+        } }
+      return [0,1,2].map(j => parseInt(stops[stops.length-1].c.slice(j*2,j*2+2),16)); };
+    /* and what he is drawn in */
+    const body = man.querySelector("path,circle");
+    const hex = h => { const q=String(h).replace("#",""); return [0,1,2].map(i=>parseInt(q.slice(i*2,i*2+2),16)); };
+    const chan = c => { c/=255; return c<=.03928 ? c/12.92 : Math.pow((c+.055)/1.055, 2.4); };
+    const lum = ([r,g,b]) => .2126*chan(r) + .7152*chan(g) + .0722*chan(b);
+    const ratio = (a,b) => { const x=lum(a), y=lum(b); return (Math.max(x,y)+.05)/(Math.min(x,y)+.05); };
+    const him = hex(body.getAttribute("fill") || "#150e08");
+    return { head: ratio(at(box.y + 6), him), feet: ratio(at(box.y + box.height - 20), him) };
+  })()`);
+  if(!yard || yard.none || yard.nograd){
+    bad.push("could not read the drawn yard's sand — the scene, its men or the sand gradient have moved");
+  } else {
+    lines.push(`the drawn yard: a man reads ${yard.head.toFixed(1)}:1 at his head and ${yard.feet.toFixed(1)}:1 at his feet`);
+    for(const [where, v] of [["head", yard.head], ["feet", yard.feet]])
+      if(v < FLOOR) bad.push(`a man standing in the drawn yard is ${v.toFixed(1)}:1 against the sand at his ${where} — `
+        + `under the ${FLOOR}:1 a silhouette needs, so the yard you look at every week is shapes on nothing`);
+  }
+
   if(errors.length) bad.push(`${errors.length} page errors`);
   if(!bad.length) lines.push("every wall can hold a man, at his head and down his body, and the crowd reads on all nine");
   return { pass: bad.length === 0, why: bad.slice(0,4).join("; ") || null, lines };
