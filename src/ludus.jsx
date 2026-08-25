@@ -74,7 +74,7 @@ const CSS = `
 .tabbtn{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 2px;min-height:56px;color:var(--ink-faint);font-family:'Cinzel',serif;font-size:var(--fs-micro);letter-spacing:.04em;text-transform:uppercase;background:none;border:none;cursor:pointer;border-top:2px solid transparent;overflow:hidden;white-space:nowrap}
 .tabbtn.on{color:var(--gold-hi);border-top-color:var(--gold-line)}
 .modalwrap{position:fixed;inset:0;background:rgba(10,7,5,.84);display:flex;align-items:flex-end;justify-content:center;z-index:50}
-.modal{width:100%;max-width:560px;box-sizing:border-box;max-height:92vh;overflow-y:auto;background:linear-gradient(180deg,var(--raise),var(--panel));border:0;border-radius:var(--cut) var(--cut) 0 0;padding:18px;box-shadow:var(--lit),0 -8px 30px -8px rgba(0,0,0,.7)}
+.modal{width:100%;max-width:560px;box-sizing:border-box;max-height:92vh;overflow-y:auto;background:var(--ground);border:0;border-radius:var(--cut) var(--cut) 0 0;padding:18px;box-shadow:var(--lit),0 -8px 30px -8px rgba(0,0,0,.45)}
 @media(min-width:640px){.modalwrap{align-items:center}.modal{border-radius:14px}}
 .tickline{padding:4px 0;border-bottom:1px dotted var(--line);animation:tick .35s ease-out}
 @keyframes tick{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
@@ -179,18 +179,17 @@ const CSS = `
    and the direction belongs to the surface.
    Letters and sheets take the paper everywhere, home included -- a letter is paper wherever it
    is read, and the desk documents were already written as letters. */
-.lr[data-place]:not([data-place="ludus"]), .lr .modal{
+.lr{
   --ground:#e6d9b8;--panel:#ddcea6;--panel-2:#d6c69b;--raise:#cfbe90;--well:#c9b787;
-  --ink:#33291b;--ink-hi:#1e1710;--ink-2:#4a3d29;--ink-dim:#6b5c44;--ink-dim2:#6b5c44;--ink-faint:#675941;
+  --ink:#33291b;--ink-hi:#1e1710;--ink-2:#453824;--ink-dim:#584a34;--ink-dim2:#584a34;--ink-faint:#554832;
   --gold:#7a5518;--gold-hi:#6d4d16;--gold-line:#765a1c;--gold-edge:#bda471;--gold-deep:#8a6a2c;
   --blood:#9a2f22;--blood-hi:#7e2418;--blood-str:#8f2a1c;--blood-edge:#b5745f;
   --laurel:#4a3410;--laurel-hi:#3a2809;--laurel-lt:#5c4418;--laurel-edge:#a88c4e;--laurel-edge2:#a88c4e;
   --line:#c2ad80;--line-2:#b39c6d;--line-3:#a89165;--azure:#6b5a3c;--azure-edge:#9c8a68;--violet:#7a5518;--violet-edge:#a88c4e;--line-4:#9c855a;--bar-fade:rgba(226,212,176,.96);
   color:var(--ink)}
-.lr.cb[data-place]:not([data-place="ludus"]), .lr.cb .modal{--blood:#a8145e;--blood-hi:#8c0d4c;--blood-str:#b01060;--laurel:#1d4a3c;--laurel-hi:#153a2e}
-/* the sheet: a warm ground, a little foxing, and a shadow at the head and foot where a
-   bound page darkens. No image is fetched for any of it. */
-.lr[data-place]:not([data-place="ludus"]), .lr .modal{
+.lr.cb{--blood:#a8145e;--blood-hi:#8c0d4c;--blood-str:#b01060;--laurel:#1d4a3c;--laurel-hi:#153a2e}
+/* the sheet: a warm ground, a little foxing, a shadow where a bound page darkens. No image. */
+.lr{
   background-color:#e6d9b8;
   background-image:
     radial-gradient(circle at 13% 16%, rgba(146,116,68,.13), transparent 42%),
@@ -199,24 +198,25 @@ const CSS = `
     linear-gradient(180deg, rgba(116,88,46,.17), rgba(116,88,46,0) 13%, rgba(116,88,46,0) 87%, rgba(116,88,46,.19));--lit:inset 0 1px 0 rgba(255,250,235,.62);--sunk:inset 0 -1px 0 rgba(96,72,38,.26);--foot:0 3px 9px -5px rgba(78,58,30,.26)}
 /* a panel on paper is a BLOCK OF ENTRIES, not a raised card: the box shadow and the heavy
    rounding go, and a ruled line does the separating that a border used to do. */
-.lr[data-place]:not([data-place="ludus"]) .panel, .lr .modal .panel{
+.lr .panel{
   background:linear-gradient(180deg,rgba(255,250,235,.36),rgba(190,166,118,.14));
   border:0;border-radius:3px;box-shadow:var(--lit),var(--sunk)}
-.lr[data-place]:not([data-place="ludus"]) .btn, .lr .modal .btn{
+.lr .btn{
   background:linear-gradient(180deg,#e2d3a8,#d2bf90);border-color:var(--gold-deep);color:#3b2c12}
-.lr[data-place]:not([data-place="ludus"]) .btn-ghost, .lr .modal .btn-ghost{
+.lr .btn-ghost{
   background:transparent;border-color:var(--line-4);color:var(--ink-2)}
-.lr[data-place]:not([data-place="ludus"]) .btn-blood, .lr .modal .btn-blood{
-  background:linear-gradient(180deg,#cf9b8c,#bd8272);border-color:var(--blood);color:#3d1410}
-.lr[data-place]:not([data-place="ludus"]) .focusbtn, .lr .modal .focusbtn{
+/* blood is the only hue left, so the one control painted in it must command; it was a pink wash */
+.lr .btn-blood{background:linear-gradient(180deg,#a8281a,#8a1c12);color:#ffe8e2;
+  box-shadow:inset 0 1px 0 rgba(255,180,160,.35),var(--sunk),var(--foot)}
+.lr .focusbtn{
   background:rgba(255,250,235,.30);border-color:var(--line-3);color:var(--ink-2)}
-.lr[data-place]:not([data-place="ludus"]) .focusbtn.on, .lr .modal .focusbtn.on{
+.lr .focusbtn.on{
   background:linear-gradient(180deg,#e2d3a8,#d2bf90);border-color:var(--gold-deep);color:#3b2c12}
-.lr[data-place]:not([data-place="ludus"]) .tabbtn, .lr .modal .tabbtn{color:var(--ink-dim)}
-.lr[data-place]:not([data-place="ludus"]) .tabbtn.on, .lr .modal .tabbtn.on{color:var(--gold-hi)}
-.lr[data-place]:not([data-place="ludus"]) .track, .lr .modal .track{
+.lr .tabbtn{color:var(--ink-dim)}
+.lr .tabbtn.on{color:var(--gold-hi)}
+.lr .track{
   background:rgba(120,94,52,.22);border-color:var(--line-3)}
-.lr[data-place]:not([data-place="ludus"]) .sel, .lr .modal .sel{background:rgba(255,250,235,.40)}
+.lr .sel{background:rgba(255,250,235,.40)}
 /* the steward's own hand, kept to the places a man actually writes by hand: what the doctore
    says, and the notes in the margin. Body text stays set in the book face -- a script at
    13px on a phone is a tax paid on every line, and this game is mostly lines.
