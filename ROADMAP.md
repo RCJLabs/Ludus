@@ -4461,6 +4461,66 @@ wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
 
+### v3.150.0 — the backslash the page never sees
+
+**The one fault in this project with no guard at all, and it had bitten four times.**
+
+This codebase writes browser code inside template literals and hands it to `p.evaluate()`. Inside an
+UNTAGGED template literal JavaScript drops the backslash from every sequence that is not one of its
+own escapes, so a regex written there arrives at the page meaning something else:
+
+| written | reaches the page as | |
+|---|---|---|
+| `` `/rgba?\([^)]+\)/` `` | `/rgba?([^)]+)/` | an escaped paren became a **capture group** |
+| `` `/\d+/` `` | `/d+/` | digits became the letter d |
+| `` `/\bword\b/` `` | `/<BS>word<BS>/` | `\b` **is** an escape — it becomes U+0008 |
+
+None of it throws. The regex compiles and matches the wrong thing, and the run reports a number that
+is confidently wrong. Its worst outing here: `groundOf` measured a blood button's text at **1.19:1
+against an actual 7:1**, because `/rgba?\(/` had quietly become a group.
+
+**THE TREE IS CLEAN — all four were fixed as they were found — so this check exists entirely to stop
+the fifth, and its whole value is in the failing case.** That made the sabotage the important half of
+shipping it rather than a formality: three of them, each caught with the file, the line, the sequence
+and the fix. Un-doubling `legible`'s `rgba` matcher, which is bug number four put back verbatim.
+Writing a raw `\b` in a template, caught as *"a word boundary reaches the page as a backspace"*.
+And blinding the scanner, caught by the coverage floor.
+
+**IT TOKENIZES RATHER THAN GREPS**, because a backslash is only eaten inside the LITERAL part of a
+template — inside a `${ }` you are back in ordinary JavaScript and `\d` is correct there. Grep would
+report every regex in the repository. It tracks line and block comments, quoted strings, template
+literals with `${}` nesting to a depth, regex literals told apart from division, and `String.raw`,
+which is the one tag that keeps its backslashes: nothing uses it today, and the exception is written
+down so the day somebody does, the check does not have to be argued with.
+
+**THE FIRST SCANNER WAS CONFIDENTLY WRONG, which is precisely the hazard it exists to find.** It
+reported **143 sequences across 25 files**, among them `.replace(/\bhimself\b/g, "herself")` in
+`src/ludus.jsx` — ordinary code with no template within a hundred lines. Two faults, both classic:
+
+· **the stack was popped twice** — on `${` it left template mode, but on the matching `}` it popped
+  the whole template off, so the real closing backtick popped the one below it and every backtick
+  after that meant the opposite of what it should;
+· **a regex after a keyword read as division** — the heuristic looked only at the previous
+  character, and after `return` that is `n`, which looks like a value, so `return /x/` was scanned as
+  division, its body read as code, and one apostrophe inside it desynced the rest of the file.
+
+Both produce the same symptom: the scanner believes it is inside a template when it is not.
+
+**And the opposite failure is worse, because it looks like success.** A scanner that never enters
+template state reports zero and cannot be told from a clean tree — which is exactly what "0 exposed
+sequences" would have meant. So coverage is asserted rather than assumed: the run reports **7,821
+template literals and 583,413 characters read inside one**, and fails under a floor. It is the same
+guard `legible` needed in v3.145.0 after printing "99:1, 0 under floor" for nineteen labels it had
+never sampled, and the same one `tells` needed for its horizon.
+
+The probe imports the check's scanner rather than keeping a copy: a tokenizer in two places is two
+tokenizers within a release, and this one already had two faults worth not fixing twice.
+
+**No game code changed in this release.** `src/ludus.jsx` is untouched.
+
+**Suite 112 -> 113 checks green in 16.6 min.** `slash` is the new one, and it costs 2 seconds — it
+reads files and never opens the browser.
+
 ### v3.149.0 — the money cluster: he can afford exactly what he is quoted
 
 **The audit's last unmeasured item.** Eleven functions — `gearPrice`, `rudisCost`, `canAffordRudis`,
@@ -17429,4 +17489,4 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.149.0 — the money cluster held to its own quotes; the audit queue is empty*
+*Last updated: v3.150.0 — the backslash trap has a guard; the queue is empty*
