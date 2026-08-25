@@ -87,19 +87,19 @@ const CSS = `
 .focusbtn:hover{box-shadow:inset 0 0 0 1px var(--gold-edge),var(--lit)}
 .focusbtn.on{color:var(--ink-hi);background:linear-gradient(180deg,var(--line-3),var(--line));box-shadow:inset 0 1px 0 rgba(224,189,114,.42),var(--sunk)}
 .focusbtn .sub{font-family:'Cormorant Garamond',Georgia,serif;font-size:var(--fs-micro);letter-spacing:0;opacity:.75}
-/* VMBRA: every venue ran dark sky down to lit sand, which puts the light behind the VIEWER and
-   makes the men objects in a diorama. Each is a wall now, brightest at a standing man's head.
-   Nine temperatures of light; the backdrop check holds them apart. (No backticks in here.) */
+/* VMBRA: v3.138.0 aimed the wall by GUESSING and peaked at 44%. Measured on a live bout a man
+   spans 27%-94%, so the light sat behind his waist and his head was dark, and the crowd row -- the
+   top 56px -- was black. Lit at 18% for the crowd, brightest at 31%. (No backticks.) */
 .arena{position:relative;overflow:hidden;border-radius:10px;border:1px solid var(--line-4);height:232px;
-  background:linear-gradient(#090705 0%,#1d150c 12%,#7a5c2c 30%,#c99a4b 44%,#8a6a2c 64%,#241a0f 88%,#0d0906 100%)}
-.v-pit{background:linear-gradient(#070605 0%,#140f0a 13%,#463523 30%,#6d5531 45%,#402f1c 65%,#140f0a 89%,#070605 100%)!important;border-color:var(--line-2)!important}
-.v-yard{background:linear-gradient(#0a0a09 0%,#1c1a17 12%,#7c786e 30%,#cdc9bb 44%,#86837a 64%,#26241f 88%,#0d0d0b 100%)!important;border-color:var(--ink-faint)!important}
-.v-field{background:linear-gradient(#070806 0%,#171810 12%,#5c5c34 30%,#9c9a5e 44%,#5e5c34 64%,#191a11 88%,#080806 100%)!important;border-color:var(--laurel-edge)!important}
-.v-amphi{background:linear-gradient(#090705 0%,#1e1509 12%,#8a682c 30%,#e0b25a 44%,#96742f 64%,#281d0e 88%,#0c0805 100%)!important;border-color:var(--gold-edge)!important}
-.v-imperial{background:linear-gradient(#0a0806 0%,#241a0e 11%,#a8823a 29%,#f4cf7e 43%,#ae8a3e 63%,#33260f 87%,#0e0a06 100%)!important;border-color:var(--gold-line)!important}
-.v-harbour{background:linear-gradient(#06080a 0%,#131b22 12%,#586a70 30%,#9fb0ae 44%,#5c6a68 64%,#181f22 88%,#080a0c 100%)!important;border-color:var(--ink-faint)!important}
-.v-bowl{background:linear-gradient(#070708 0%,#17171a 12%,#63626a 30%,#a9a7a4 44%,#67655f 64%,#1c1b1c 88%,#0a0a0b 100%)!important;border-color:var(--ink-faint)!important}
-.v-greek{background:linear-gradient(#080706 0%,#1c1913 12%,#7c7154 30%,#d8c894 44%,#8a7d5c 64%,#241f16 88%,#0a0908 100%)!important;border-color:var(--ink-dim2)!important}
+  background:linear-gradient(#0d0906 0%,#2f2413 7%,#b69049 15%,#e0b25a 30%,#c29a4e 52%,#8c6e38 74%,#372b17 92%,#0d0906 100%)}
+.v-pit{background:linear-gradient(#060403 0%,#281e10 7%,#b28644 15%,#dda754 30%,#bf9049 52%,#876634 74%,#312513 92%,#060403 100%)!important;border-color:var(--line-2)!important}
+.v-yard{background:linear-gradient(#0d0d0b 0%,#2e2e29 7%,#b4b1a3 15%,#dedac9 30%,#c1bdae 52%,#8a887d 74%,#373631 92%,#0d0d0b 100%)!important;border-color:var(--ink-faint)!important}
+.v-field{background:linear-gradient(#080806 0%,#262518 7%,#9d9a61 15%,#c2bf78 30%,#a8a568 52%,#78764a 74%,#2d2d1d 92%,#080806 100%)!important;border-color:var(--laurel-edge)!important}
+.v-amphi{background:linear-gradient(#0c0805 0%,#312615 7%,#c49e54 15%,#f2c468 30%,#d2aa5a 52%,#967940 74%,#3a2e19 92%,#0c0805 100%)!important;border-color:var(--gold-edge)!important}
+.v-imperial{background:linear-gradient(#0e0a06 0%,#342c1c 7%,#ccb276 15%,#fbdc92 30%,#dabf7e 52%,#9c885a 74%,#3d3422 92%,#0e0a06 100%)!important;border-color:var(--gold-line)!important}
+.v-harbour{background:linear-gradient(#080a0c 0%,#25292a 7%,#98a4a2 15%,#bccbc8 30%,#a3b0ae 52%,#747e7d 74%,#2c3132 92%,#080a0c 100%)!important;border-color:var(--ink-faint)!important}
+.v-bowl{background:linear-gradient(#0a0a0b 0%,#282728 7%,#9f9d9a 15%,#c4c2be 30%,#aaa8a5 52%,#7a7876 74%,#2f2f2f 92%,#0a0a0b 100%)!important;border-color:var(--ink-faint)!important}
+.v-greek{background:linear-gradient(#0a0908 0%,#2e2a22 7%,#bdb088 15%,#eadaa8 30%,#cbbd92 52%,#908668 74%,#373328 92%,#0a0908 100%)!important;border-color:var(--ink-dim2)!important}
 /* a silhouette on a dark panel is a missing element, so anywhere a figure is drawn outside the
    arena he stands on this -- the same backlit wall, aimed at his head. It also REPLACES the
    inline gradient that was written at his page's call site, which is why the file is shorter. */
@@ -18828,7 +18828,10 @@ function Band({lo, hi, exact, color, label}){
    thicker the stack of hide the light has to cross, the darker it lands. Body first, kit over
    it, the blade darkest of all — and a lit seam where two pieces meet, which is the light
    leaking through the join and the only thing that keeps a sword from melting into a shoulder. */
-const UMBRA_BODY = "#170f08", UMBRA_KIT = "#0e0905", UMBRA_DEEP = "#050302", UMBRA_SEAM = "#4a381f";
+const UMBRA_BODY = "#100a05", UMBRA_KIT = "#0a0603", UMBRA_DEEP = "#040202", UMBRA_SEAM = "#4a381f";
+/* the drawn man's own box, named so the check that measures where his head falls on the wall
+   reads it from here rather than from a number somebody typed into a test. */
+const FIG_W = 118, FIG_H = 146;
 const SKIN=UMBRA_BODY, SKIN_D="#191108", LEATHER=UMBRA_KIT, LEATHER_D=UMBRA_DEEP,
       STEEL="#1c1309", STEEL_D=UMBRA_DEEP, BRASS="#2b1f11", BRASS_D="#150e07", CLOTH=UMBRA_KIT,
       BLADE="#120c06", BLADE_D=UMBRA_DEEP, GRIP=UMBRA_DEEP;
@@ -18856,12 +18859,12 @@ const Fighter = React.memo(function Fighter({ kit, pose, wounds, scars, fallen, 
   const hasManica  = aArt==="manica" || aArt==="gilded" || aArt==="padded";
   const hasGreaves = aArt==="greaves" || aArt==="gilded";
   const hasChest   = aArt==="padded" || aArt==="gilded";
-  const MET = gilt ? "#201609" : BRASS, MET_D = gilt ? "#120c05" : BRASS_D;
+  const MET = gilt ? "#160f06" : BRASS, MET_D = gilt ? "#0d0804" : BRASS_D;
   /* house colours: your men fight in the house's chosen colours, the other house in slate —
      and in a shadow play those are not hues, they are how much light the crest lets through.
      Yours reads a shade lighter than his, which is the whole of "that one is mine" at a glance. */
-  const PLUME = foe ? "#0c0905" : toUmbra(col && col.c1 ? col.c1 : CLOTH, .09);
-  const FACE  = gilt ? "#1d1409" : (foe ? "#0b0704" : toUmbra(col && col.c2 ? col.c2 : "#58241b", .05));
+  const PLUME = foe ? "#080604" : toUmbra(col && col.c1 ? col.c1 : CLOTH, .09);
+  const FACE  = gilt ? "#140e06" : (foe ? "#080503" : toUmbra(col && col.c2 ? col.c2 : "#3e1913", .05));
 
   const POSES = {
     idle:    { x:0,  y:0,  rot:0,  arm:0,   armRot:0 },
@@ -18904,46 +18907,46 @@ const Fighter = React.memo(function Fighter({ kit, pose, wounds, scars, fallen, 
   const helm = ()=>{
     if(hArt==="bare") return (<g>
       <circle cx="56" cy="26" r="11" fill={SKIN}/>
-      <path d="M45,23 Q54,10 66,20 Q60,16 54,17 Q48,18 45,23Z" fill="#0a0704"/>
-      {fem && <path d="M46,24 Q40,30 43,38 Q48,34 48,28Z" fill="#0a0704"/>}
-      <circle cx="64" cy="27" r="1.7" fill="#0a0704"/>
+      <path d="M45,23 Q54,10 66,20 Q60,16 54,17 Q48,18 45,23Z" fill="#070503"/>
+      {fem && <path d="M46,24 Q40,30 43,38 Q48,34 48,28Z" fill="#070503"/>}
+      <circle cx="64" cy="27" r="1.7" fill="#070503"/>
       <path d="M66,30 Q69,32 66,34" stroke={SKIN_D} strokeWidth="1.3" fill="none"/>
     </g>);
     if(hArt==="smooth") return (<g>
       <ellipse cx="56" cy="25" rx="12" ry="14" fill={STEEL}/>
       <path d="M66,20 Q71,25 66,31Z" fill={STEEL_D}/>
       <ellipse cx="56" cy="25" rx="12" ry="14" fill="none" stroke={STEEL_D} strokeWidth="1.4"/>
-      <circle cx="64" cy="22" r="2.2" fill="#0a0704"/><circle cx="57" cy="22" r="2.2" fill="#0a0704"/>
+      <circle cx="64" cy="22" r="2.2" fill="#070503"/><circle cx="57" cy="22" r="2.2" fill="#070503"/>
       <path d="M46,31 Q56,37 67,31" stroke={STEEL_D} strokeWidth="1.4" fill="none"/>
     </g>);
     if(hArt==="brim") return (<g>
       <ellipse cx="56" cy="26" rx="12" ry="13" fill={BRASS}/>
       <path d="M56,12 Q62,3 70,2 Q63,9 61,14Z" fill={PLUME}/>
       <rect x="42" y="30" width="32" height="3.4" rx="1.5" fill={BRASS_D}/>
-      <rect x="55" y="20" width="12" height="4.8" rx="1.5" fill="#0a0704"/>
+      <rect x="55" y="20" width="12" height="4.8" rx="1.5" fill="#070503"/>
       <path d="M67,25 L71,27 L67,30Z" fill={BRASS_D}/>
     </g>);
     if(hArt==="griffin") return (<g>
       <ellipse cx="56" cy="26" rx="12" ry="13.5" fill={BRASS}/>
       <path d="M49,13 Q56,0 64,13 Q56,8 49,13Z" fill={PLUME}/>
       <path d="M64,12 Q72,8 73,16" stroke={BRASS_D} strokeWidth="2.4" fill="none"/>
-      <rect x="55" y="21" width="12" height="4.8" rx="1.5" fill="#0a0704"/>
+      <rect x="55" y="21" width="12" height="4.8" rx="1.5" fill="#070503"/>
       <path d="M67,26 L71,28 L67,31Z" fill={BRASS_D}/>
     </g>);
     if(hArt==="silver") return (<g>
-      <ellipse cx="56" cy="26" rx="12.5" ry="14" fill="#130d07"/>
+      <ellipse cx="56" cy="26" rx="12.5" ry="14" fill="#0d0905"/>
       <path d="M47,11 Q56,-4 66,11 Q56,6 47,11Z" fill={PLUME}/>
       <path d="M66,9 Q75,5 77,14" stroke={PLUME} strokeWidth="2.6" fill="none"/>
-      <rect x="41" y="31" width="34" height="3.6" rx="1.6" fill="#0d0904"/>
-      <rect x="55" y="21" width="12" height="5" rx="1.5" fill="#080604"/>
-      <path d="M67,26 L72,28 L67,32Z" fill="#0d0904"/>
+      <rect x="41" y="31" width="34" height="3.6" rx="1.6" fill="#090603"/>
+      <rect x="55" y="21" width="12" height="5" rx="1.5" fill="#060403"/>
+      <path d="M67,26 L72,28 L67,32Z" fill="#090603"/>
       <path d="M45,20 Q56,16 67,20" stroke="#4a381f" strokeWidth="1.1" fill="none"/>
     </g>);
     return (<g>
       <ellipse cx="56" cy="26" rx="12.5" ry="14" fill={STEEL}/>
       <path d="M48,12 Q56,-2 65,12 Q56,7 48,12Z" fill={PLUME}/>
       <rect x="41" y="31" width="34" height="3.6" rx="1.6" fill={STEEL_D}/>
-      <rect x="55" y="21" width="12" height="5" rx="1.5" fill="#0a0704"/>
+      <rect x="55" y="21" width="12" height="5" rx="1.5" fill="#070503"/>
       <path d="M67,26 L72,28 L67,32Z" fill={STEEL_D}/>
     </g>);
   };
@@ -18967,8 +18970,8 @@ const Fighter = React.memo(function Fighter({ kit, pose, wounds, scars, fallen, 
     if(oArt==="net") return (<g style={offT} opacity=".9">
       <path d="M50,54 L60,58 L64,66 L56,68Z" fill={SKIN}/>
       <circle cx="67" cy="66" r="4.4" fill={SKIN_D}/>
-      <path d="M70,64 L92,72 L82,90 L66,81Z" fill="none" stroke="#241b10" strokeWidth="1.4"/>
-      <path d="M74,66 L78,85 M82,69 L86,87 M68,72 L90,80" stroke="#241b10" strokeWidth=".9"/>
+      <path d="M70,64 L92,72 L82,90 L66,81Z" fill="none" stroke="#19130b" strokeWidth="1.4"/>
+      <path d="M74,66 L78,85 M82,69 L86,87 M68,72 L90,80" stroke="#19130b" strokeWidth=".9"/>
     </g>);
     return null;
   };
@@ -18994,12 +18997,12 @@ const Fighter = React.memo(function Fighter({ kit, pose, wounds, scars, fallen, 
   const mainArm = ()=>{
     const grip = (()=>{
       if(wArt==="spear") return (<g>
-        <rect x="58" y="46.4" width="62" height="3.8" rx="1.9" fill="#0e0a06" stroke="#070402" strokeWidth=".6"/>
+        <rect x="58" y="46.4" width="62" height="3.8" rx="1.9" fill="#0a0704" stroke="#050301" strokeWidth=".6"/>
         <rect x="116" y="45" width="5" height="6.6" rx="1.4" fill={BLADE_D}/>
         <path d="M120,43.2 L137,48.3 L120,53.4Z" fill={BLADE} stroke={BLADE_D} strokeWidth=".8"/>
       </g>);
       if(wArt==="trident") return (<g>
-        <rect x="56" y="46.4" width="52" height="4" rx="2" fill="#0e0a06" stroke="#070402" strokeWidth=".6"/>
+        <rect x="56" y="46.4" width="52" height="4" rx="2" fill="#0a0704" stroke="#050301" strokeWidth=".6"/>
         <rect x="106" y="38" width="3.6" height="22" rx="1.5" fill={BLADE} stroke={BLADE_D} strokeWidth=".6"/>
         <path d="M109,40 L122,40 M109,48.4 L122,48.4 M109,57 L122,57" stroke={BLADE} strokeWidth="3" strokeLinecap="butt"/>
         <path d="M121,38 L129,40 L121,42Z M121,46.4 L129,48.4 L121,50.4Z M121,55 L129,57 L121,59Z" fill={BLADE} stroke={BLADE_D} strokeWidth=".5"/>
@@ -19021,7 +19024,7 @@ const Fighter = React.memo(function Fighter({ kit, pose, wounds, scars, fallen, 
          side and sweeps out to a crescent edge. That is what makes it legible in
          profile: the haft is a line, and the weight is all under it. */
       if(wArt==="axe") return (<g>
-        <rect x="58" y="46" width="45" height="4.2" rx="1.9" fill="#0e0a06" stroke="#070402" strokeWidth=".6"/>
+        <rect x="58" y="46" width="45" height="4.2" rx="1.9" fill="#0a0704" stroke="#050301" strokeWidth=".6"/>
         {/* the poll — the blunt back of the head, inside the haft's own height so it does
             not read as a lump sitting on top of the shaft */}
         <rect x="93" y="46.4" width="4.5" height="3.6" rx="1" fill={BLADE_D}/>
@@ -19064,7 +19067,7 @@ const Fighter = React.memo(function Fighter({ kit, pose, wounds, scars, fallen, 
   };
 
   return (
-    <svg width="118" height="146" viewBox="0 0 128 146" style={{ overflow:"visible",
+    <svg width={FIG_W} height={FIG_H} viewBox="0 0 128 146" style={{ overflow:"visible",
       opacity: dead?0.85:1, filter: dead? "grayscale(.55) brightness(.68)":"none",
       /* a man on his last legs stands like it, all the way down rather than at one step */
       /* and a man on his knee is shorter. The origin is already at his feet, so a
@@ -19097,12 +19100,12 @@ const Fighter = React.memo(function Fighter({ kit, pose, wounds, scars, fallen, 
         <path d="M50,62 Q56,64 62,62 M50,69 Q56,71 62,69" stroke={SKIN_D} strokeWidth=".9" fill="none" opacity=".5"/>
       </g>)}
       {hasChest && (<g>
-        <path d="M45,41 Q56,37 67,41 L65,68 Q56,72 47,68Z" fill={gilt? "#241a0b":"#100b06"} stroke={gilt? "#161004":"#100b06"} strokeWidth="1.2"/>
+        <path d="M45,41 Q56,37 67,41 L65,68 Q56,72 47,68Z" fill={gilt? "#191208":"#0b0804"} stroke={gilt? "#0f0b03":"#0b0804"} strokeWidth="1.2"/>
         {gilt && <path d="M50,47 Q56,51 62,47 M50,57 Q56,61 62,57" stroke="#4a381f" strokeWidth="1" fill="none"/>}
       </g>)}
-      {gilt && <ellipse cx="64" cy="42" rx="8" ry="5" fill="#201609" stroke="#4a381f" strokeWidth="1"/>}
+      {gilt && <ellipse cx="64" cy="42" rx="8" ry="5" fill="#160f06" stroke="#4a381f" strokeWidth="1"/>}
       <path d="M46,76 L66,76 L69,95 Q56,99 43,95Z" fill={LEATHER}/>
-      <rect x="43" y="72" width="26" height="6" rx="2" fill={gilt? "#161004":LEATHER_D}/>
+      <rect x="43" y="72" width="26" height="6" rx="2" fill={gilt? "#0f0b03":LEATHER_D}/>
       {shieldOrNet()}
       {offBlade()}
       {mainArm()}
@@ -19408,9 +19411,13 @@ const BEAT_SFX = { clash:"clash", graze:"graze", hit:"hit", crit:"crit", fall:"f
   death:"death", spared:"spared", salute:"horn", end:"horn" };
 
 /* the stands are four constituencies and they do not sit together */
-/* a faction is not a hue in a shadow play -- it is how brightly its bank of the crowd is
-   lit. Four steps of the same light, plus the mob, which is the one that carries blood. */
-const FAC_TINT = { parm:"#e0bd72", scut:"#a8813a", mob:"#b8402c", front:"#6d5426" };
+/* ---- THE CROWD IS ON THE WALL, NOT IN FRONT OF IT ----
+   These were pale because the top of the arena was black and a dark head had nothing to be seen
+   against; v3.139.0 then made them paler still, reading a faction as "how brightly its bank is
+   lit". The wall reaches the crowd row now, so they are what they always were: heads in
+   silhouette. A faction cannot be a hue up there either, so it is DENSITY -- how much of the
+   light a bank blocks -- and only the mob carries any blood in it. */
+const FAC_TINT = { parm:"#2a2016", scut:"#191209", mob:"#3a1610", front:"#0e0a06" };
 /* ---- THE PLAN OF THE HOUSE ----
    A ludus was a square of cells around a yard. The game's subject has been pure
    abstraction for ninety versions. This is the place, drawn, changing as it is
@@ -19535,7 +19542,8 @@ const CrowdRow = React.memo(function CrowdRow({ level, factions, venue }){
           <div key={i} className="chead" style={{
             height: 11 + (i%4)*2.5,
             background: FAC_TINT[b.k],
-            opacity: Math.min(1, bright * warm * (0.5 + (i%3)*0.22)),
+            /* a full house blocks more light than an empty one, so heat reads as SOLIDITY */
+            opacity: Math.min(1, 0.42 + bright * warm * 0.55 * (0.72 + (i%3)*0.14)),
             animation:`bob ${(dur/(0.75+b.v/200)).toFixed(2)}s ease-in-out ${(i%7)*0.13}s infinite`
           }}/>
         );
@@ -28808,6 +28816,9 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        one and therefore still counts in the other. A predicate that decides whether a man has left
        the house is exactly the kind of thing a check should be able to read. */
     GONE, isGone, onTheBooks,
+    /* the shadow ladder every figure is drawn from. The umbra check reads these rather than a
+       copy of them, so a man cannot be re-lit without the check that guards him moving too. */
+    UMBRA_BODY, UMBRA_KIT, UMBRA_DEEP, UMBRA_SEAM, FIG_W, FIG_H,
     /* the best man you will ever be offered, and what taking the house apart raises */
     paragonOf, paragonReach, makeParagon, paragonWeek, paragonExpire, PARAGONS,
     PARAGON_REACH, PARAGON_GAP, PARAGON_ODDS, marketWeek,

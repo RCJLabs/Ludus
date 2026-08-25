@@ -4461,6 +4461,93 @@ wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
 
+### v3.140.0 — the bout, watched: 64% of every fight was a dark shape on a dark wall
+
+**I shipped the centrepiece of the game twice without once looking at it.** v3.138.0 made the bout a
+shadow play and v3.139.0 built the chrome around it; both were verified through checks, a man's page
+and mounted backdrops. Neither was verified by driving the arena wizard to a live fight and looking
+at the screen. When I finally did, the checks were all green on something that does not work.
+
+| venue | at his head, before |
+|---|---|
+| **pit** | **2.7:1** — and `backdrop`'s own notes record `.v-pit` as **64% of every bout** |
+| field | 6.5:1 |
+| forum | 7.4:1 |
+| … | … |
+| imperial | 12.7:1 |
+
+Two faults, and both are mine.
+
+**The light was aimed by guessing.** v3.138.0 put the bright band at 44% of the stage on the reasoning
+that a standing man's head sits around there. Measured on a live bout: `.fig` puts him at **27% to 94%**,
+so on all nine venues the light sat behind his waist and his head — the one part of a silhouette that
+has to read — was in the dark. **And the crowd row is the top 56px**, which was black, so fourteen
+heads had nothing to be seen against and had to be painted *pale* to exist at all. A lit crowd in
+front of a dark wall is the exact inverse of the thing this direction is.
+
+**And the dimmest venue could not hold a man at all.** The pit peaked at `#6d5531` — 2.7:1 against a
+figure at `#170f08`. A pit should be dim; that is its character. So it did not get a broader wall, it
+got a **narrower, brighter pool**, which is what a few torches actually make. It reads 8.4:1 now and
+is still the darkest place in the game.
+
+## The check that would have caught it
+
+`umbra` — *"every venue can hold a silhouette, at the height a man actually stands"*. It exists
+because of a gap between two checks that both passed:
+
+- **`backdrop`** proves every venue differs FROM THE OTHERS. It is a check about telling Puteoli from
+  Capua, and it passes just as happily on nine equally unreadable walls.
+- **`palette`** proves TEXT clears 4:1, and exempts the venue backdrops by name because they are
+  paintings.
+
+Between *"these nine differ"* and *"the type is legible"* sat the question neither asks: **can a man
+be seen standing in front of this?**
+
+It does not measure the gradient's peak — the peak is wherever the author put it, and putting it in
+the wrong place is the exact bug it exists for. It measures at the height a man **actually is**, taken
+from the real CSS: `.arena`'s height, `.fig`'s offset and the figure's own box, all read off the page.
+The browser's own gradient interpolation resolves the wall at his head, at his body and at the crowd
+row, and each goes through WCAG luminance against the shadow ladder **the game now exports**, so a man
+cannot be re-lit without the check that guards him moving too.
+
+**Its first run found the half of the bug I had not fixed.** Head contrast was clean on all nine and
+six venues failed anyway, because the light peaked behind his crown and fell away behind his torso:
+his body was at **1.5:1** on the pit. A silhouette is not a head. The pool covers him crown to feet now,
+built from one shape and two colours per venue rather than nine hand-tuned stop lists.
+
+Validated by sabotage, per the standing rule: restoring the wall that shipped in v3.138.0 turns it red
+with *"a man's head against `.v-pit` is 2.1:1 — under the 4.5:1 a silhouette needs, so he is a dark
+shape on a dark wall"*, and names the body and the crowd faults beside it.
+
+| | before | after |
+|---|---|---|
+| worst wall, at his head | **2.7:1** | **8.4:1** |
+| worst wall, at his body | 1.5:1 | **5.2:1** |
+| worst crowd row | 1.1:1 | **6.4:1** |
+
+The crowd went back to being what it always was — heads in silhouette. A faction cannot be a hue up
+there any more than anywhere else, so it is **density**: how much of the light a bank blocks, and a
+full house blocks more than an empty one. The figure was crushed another 30% to hold its shape
+against the brighter wall.
+
+`backdrop` still holds: nine venues, closest pair ΔE 4.6. `bulk` unchanged at 264/264, no raise.
+
+## The suite went red, and it was not this release
+
+First full run: **107/108**, with **`styles`** — a combat-balance check, red for the first time in its
+life — in a release that changed colour literals, CSS gradients, one export and a new check file.
+
+It does not reproduce. `styles` runs on **fixed seeds** and comes back **spread 12.7, PASS** on three
+consecutive standalone runs and again alongside four other checks. And the decisive proof that it
+cannot be this release: `open.mjs` over 60 headless houses returns a **byte-identical SIG line**
+against `HEAD`, house for house — no house executes a different path on this build, so nothing here
+can have moved a win rate.
+
+Recorded in the tally rather than explained away, per #175. Three runs are on the record for this
+version: one red and **two clean**.
+
+Suite **108/108 green in 15.0 min** on the confirming run — the suite is 108 checks now.
+
 ### v3.139.0 — one light for the chrome, and the hues that survived the last release
 
 **v3.138.0 said blood was the only colour in the game. It was true on one of the two grounds.**
@@ -16713,4 +16800,4 @@ check the version whenever a number moves for no reason.*
 
 ---
 
-*Last updated: v3.139.0 — the chrome takes the same light, and the hues are counted rather than trusted*
+*Last updated: v3.140.0 — a man can be seen standing on all nine walls, and a check says so*
