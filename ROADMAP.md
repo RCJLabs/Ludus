@@ -4514,6 +4514,7 @@ and a `Sect` is a **fold**, and `innerText` does not report what is shut inside 
 placement to exactly that. It opens every fold and reads "3 remembered" on the ludus page.
 
 `bulk`: unchanged. No allowance raised.
+Suite **106/106 green** in 14.6 min, first run, no reds.
 
 ### v3.134.0 — #203: the fifth option already existed, so the measurement is the release
 
