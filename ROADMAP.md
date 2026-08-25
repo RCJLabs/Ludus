@@ -4517,6 +4517,19 @@ identical: **four hundred tries were one try repeated four hundred times.** The 
 now, which is the only thing that makes a loop a sample.
 
 `bulk`: App 5,754 → **5,757** of 5,786. No allowance raised.
+Suite **107/107 green** in 14.4 min, first run, no reds.
+
+## And that closes the queue
+
+**#196–#205 are all shipped, in v3.127.0 through v3.136.0.** Four of the ten did not survive contact
+with their own measurement and the releases say so: **#202**'s missing verb already existed (the arm
+met `beside` 28.3% of the time), **#199**'s per-man default would have been a standing loss on four
+bouts in five, **#203**'s fifth option was already `through` and measured a trap, and **#204**'s
+premise — that nothing reads the house's memory — was false in eleven places. Each became a better
+item than it was filed as.
+
+One remains open and it arrived measured rather than proposed: **#206**, `TELLS.cold`, which cannot
+fire because `formOf(o)` is 0 for every generated opponent.
 
 ### v3.135.0 — #204: the house has three memories and the reader saw one of them
 
