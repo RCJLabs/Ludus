@@ -22404,10 +22404,47 @@ function Morning({ D, close }){
    room names disappeared. They are dark by default and pass `lit` only where they still fall
    on something dark — the villa's face, the square's floor, the road. Which ground a label is
    on is a fact about the drawing, so it is written at the call site rather than guessed. */
-const scnSay = (x,y,t,anchor,lit) => <text x={x} y={y} textAnchor={anchor||"middle"} fontSize="10.5"
-  fill={lit ? "#b09b7d" : "#2e2113"} fontStyle="italic" fontFamily="Georgia,serif">{t}</text>;
-const scnName = (x,y,t,lit) => <text x={x} y={y} fontSize="10" letterSpacing="3"
-  fill={lit ? "#8a6a2c" : "#241a0e"} fontFamily="'Cinzel',serif">{t}</text>;
+/* ---- AND A HAND-SET FLAG IS A FLAG THAT DRIFTS ----
+   Both helpers took a `lit` boolean, set by hand at each of the seventeen call sites, and the note
+   above said which ground a label sits on is a fact about the drawing so it should be written down
+   rather than guessed. That was right, and it still drifted: the sand has been RE-AIMED TWICE since
+   those flags were set — v3.141.0 lit the yard, v3.143.0 took the whole app dark — and a boolean
+   written against the old gradient cannot know either happened.
+
+   Measured with `test/probes/legible.mjs`, which composites the real stack under every glyph:
+   ELEVEN OF NINETEEN LABELS were under the 4.0:1 the chrome holds itself to in `palette`, and the
+   worst was not the one anybody noticed. "a keeper of slaves" sat at 1.03:1 — dark ink on the dark
+   top of the drawing, invisible rather than faint. The road's own label was 1.39:1 across the 47%
+   of its width that hangs off the road and over open sand.
+
+   SO NOTHING IS GUESSED NOW. The sand's stops are named once and BOTH the gradient and the ink are
+   read off them: the label takes whichever of the two inks wins against the sand at its own y. Aim
+   the sand somewhere else a third time and every label follows it, which is the only version of
+   this that survives the next art pass. */
+const SCN_SAND = [[0,"#46351a"],[0.30,"#96742f"],[0.50,"#a8813a"],[0.78,"#82642a"],[1,"#5e4720"]];
+const SCN_TOP = 108, SCN_SPAN = 612;          /* the sand rect, which the gradient is measured over */
+const SCN_INK = "#14100c", SCN_LIT = "#f2e4bf";
+const scnHex = h => [0,1,2].map(i=>parseInt(h.replace("#","").slice(i*2,i*2+2),16));
+const scnLum = c => { const f = v => { v/=255; return v <= 0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055, 2.4); };
+  return 0.2126*f(c[0]) + 0.7152*f(c[1]) + 0.0722*f(c[2]); };
+/* the channels are mixed and THEN read, because that is what the gradient does — luminance is not
+   linear in sRGB, so mixing two luminances gives a colour the screen never shows */
+const scnSandAt = y => {
+  const t = Math.max(0, Math.min(1, (y - SCN_TOP) / SCN_SPAN));
+  let lo = SCN_SAND[0], hi = SCN_SAND[SCN_SAND.length-1];
+  for(let i=0;i<SCN_SAND.length-1;i++)
+    if(t >= SCN_SAND[i][0] && t <= SCN_SAND[i+1][0]){ lo = SCN_SAND[i]; hi = SCN_SAND[i+1]; break; }
+  const k = (hi[0]-lo[0]) ? (t-lo[0])/(hi[0]-lo[0]) : 0;
+  const a = scnHex(lo[1]), b = scnHex(hi[1]);
+  return [0,1,2].map(i => a[i]*(1-k) + b[i]*k); };
+const scnRatio = (a,b) => { const x = scnLum(a), y = scnLum(b);
+  return (Math.max(x,y)+0.05)/(Math.min(x,y)+0.05); };
+const scnInk = y => { const g = scnSandAt(y);
+  return scnRatio(scnHex(SCN_INK), g) >= scnRatio(scnHex(SCN_LIT), g) ? SCN_INK : SCN_LIT; };
+const scnSay = (x,y,t,anchor) => <text x={x} y={y} textAnchor={anchor||"middle"} fontSize="10.5"
+  fill={scnInk(y)} fontStyle="italic" fontFamily="Georgia,serif">{t}</text>;
+const scnName = (x,y,t) => <text x={x} y={y} fontSize="10" letterSpacing="3"
+  fill={scnInk(y)} fontFamily="'Cinzel',serif">{t}</text>;
 /* ---- ONE SUN FOR THE WHOLE DRAWING ----
    Every building was a near-black rect with a thin outline, so against the new ground they read as
    holes cut in the sand rather than as things standing on it. There is one light now — from above
@@ -22549,7 +22586,7 @@ const ScnVilla = ({ S, at, go, houseLit }) => (<>
 {/* THE VILLA — travels; its callers are the villa-panel documents */}
 <g className="scn" role="button" tabIndex={0} aria-label="The villa — the house's own business"
   onClick={()=>go("villa")} onKeyDown={e=>{ if(e.key==="Enter") go("villa"); }}>
-  {scnName(26, 34, "THE VILLA", true)}
+  {scnName(26, 34, "THE VILLA")}
   {scnFoot(195, 110, 168)}
   <path d="M28 108 L28 62 L195 30 L362 62 L362 108 Z" fill="url(#scn-stone)" stroke="#33271a"/>
   {/* the roofline takes the light, which is what makes it a roof and not an outline */}
@@ -22824,7 +22861,13 @@ const ScnRoad = ({ S, go, roadWord, roadOn, roadFit }) => (<>
   <path d="M150 640 L112 720 L278 720 L240 640 Z" fill="#1a1410" stroke="#241c12"/>
   {/* the name first, in the narrow end where the road leaves the gate, then the flagstone
        courses widening toward the viewer, then the two ruts that were already here */}
-  <text x="195" y="658" textAnchor="middle" fontSize="10" letterSpacing="3" fill="#8a6a2c"
+  {/* THE ONE ROOM NAME THAT IS NOT A ROOM NAME — centred rather than left-aligned, so it does not
+       go through scnName. Its ink comes off the same rule anyway. The road is a WEDGE, 107px across
+       at this height against a 181px label, so half of it hangs over open sand: at the old ink that
+       was 3.63:1 down the middle and 1.39:1 at both ends, which is what "tough to read" looked like.
+       The lit ink clears BOTH grounds — 5.4:1 on the sand, 14:1 on the road — so the label does not
+       have to be moved or shortened to stop being split. */}
+  <text x="195" y="658" textAnchor="middle" fontSize="10" letterSpacing="3" fill={scnInk(658)}
     fontFamily="'Cinzel',serif">THE ROAD — TO THE SAND</text>
   <path d="M141 672 L249 672" stroke="#241c12" strokeWidth="1"/>
   <path d="M134 688 L256 688" stroke="#221b12" strokeWidth="1"/>
@@ -22856,7 +22899,7 @@ const ScnRoad = ({ S, go, roadWord, roadOn, roadFit }) => (<>
   <rect x="272" y="694" width="8" height="20" rx="3" fill="#2e2416" stroke="#3e2f1f" strokeWidth=".8"/>
   <line x1="274" y1="700" x2="278" y2="700" stroke="#5b471f" strokeWidth="1"/>
   <line x1="274" y1="705" x2="278" y2="705" stroke="#5b471f" strokeWidth="1"/>
-  {scnSay(195, 713, roadWord, null, true)}
+  {scnSay(195, 713, roadWord)}
 </g>
 </>);
 
@@ -22923,10 +22966,10 @@ function Scene({ S, agenda, openDoc, openMan, go }){
              sand takes the light now, the same warm wall the arena burns behind its fighters,
              and every man in the yard is a silhouette. One light for the whole game: the ludus
              by day and the sand by night are the same picture seen from two sides. */}
+        {/* rendered from SCN_SAND, which is also what scnInk reads — one table, so the ground and
+             the ink on it cannot say different things about where the light is */}
         <linearGradient id="scn-sand" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#46351a"/><stop offset="0.30" stopColor="#96742f"/>
-          <stop offset="0.50" stopColor="#a8813a"/><stop offset="0.78" stopColor="#82642a"/>
-          <stop offset="1" stopColor="#5e4720"/>
+          {SCN_SAND.map(([o,c])=><stop key={o} offset={o} stopColor={c}/>)}
         </linearGradient>
         {/* the wall is masonry seen from inside, so its lit face is the top of each course */}
         <linearGradient id="scn-wall" x1="0" y1="0" x2="1" y2="0">
