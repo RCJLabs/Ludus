@@ -4461,6 +4461,97 @@ wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
 
+### v3.152.0 — every room its own picture, and the ledger has to be paid for
+
+The first of the page overhauls, on the **arena** — the face the density measurement named worst at
+**612 words over 2,214 pixels**.
+
+**THE PLATE.** Each page now opens on a picture of the place it is about: the arena on the road to
+the sand, the villa on the villa. It is not a second drawing. `Scene` takes a `crop` and renders the
+*same* drawing through a narrower `viewBox`, so the picture at the top of a page and the room you
+tapped to get there cannot drift apart — the rule `SCN_SAND` set for the ground and its ink. Cropped
+it is a picture and not a menu, so nothing in it is pressable and it is `aria-hidden`; the map is
+still the only way to a room.
+
+It **folds**: 158px on arrival, 44px once you scroll, sticking under the header at `--hdr-h`. The
+phone gives a page 599 of its 844 pixels once the header, the report bar and the tab bar are paid
+for, so a picture that did not fold would cost a quarter of the page for as long as you were on it.
+The fold is driven off a ref writing one data attribute — a scroll listener calling `setState` would
+re-render seventeen controls on every frame of a flick.
+
+**THE CIRCUIT'S LEDGER.** Choosing a town is a comparison of three numbers — how far, what it pays,
+what mercy costs there — and they were spread across three paragraphs, so making the comparison meant
+holding nine figures in your head while scrolling. They are a column now. `bayWorth` is the same
+function the sentences called, so the table cannot disagree with the engine any more than they did.
+
+**AND THE MISTAKE THAT IS THE REST OF THIS RELEASE.** Measured after all of that, the arena had gone
+from 612 words to **642**. The ledger had not replaced anything. Every figure in it was still sitting
+in the paragraph underneath — `1wk · purses ×1.20` on each town header, and *"a man of yours put down
+there is spared about 43 in a hundred, against 76 at home"* three times over. It was a fourth place
+to read the same thing, and it looked like progress from inside the diff: the new panel is visible,
+the old prose is untouched so it never appears in the review.
+
+So the prose gave those figures up and kept what prose is for — what each town is *like*. The arena
+is **567 words**, down 45 from 612. It is also **2,386 pixels, up 172**, and that is the trade and
+not a miss: forty-five words left and a picture arrived. Height was never the complaint.
+
+**`dense` is the new check, and it exists because of that mistake.** A written word-ceiling per face
+that ratchets one way, in `bulk`'s idiom — lower it when a face sheds words, raise it only with a
+sentence saying what arrived and why nothing could be removed to pay for it. Both arms were proved
+by putting the fault back, and the negative test found something worth writing down: the whole
+regression trips the ceiling (642 against 590), but restoring **only** the town header's purse figure
+lands at 579 and **passes** — a duplication small enough to fit in the slack a stable ceiling needs is
+invisible to it, and three of those are a paragraph. So the two phrases the paragraphs printed are
+named guards as well. The totals catch drift; the names catch the specific thing coming back.
+
+Ceilings set off four seeds twelve weeks apart: ludus 142, familia 105, villa 306, market 384,
+arena 567. The ludus and the villa read identically on every seed.
+
+**AND THE CROP TABLE WAS GUESSED, WHICH IS ITS OWN SMALL LESSON.** It shipped seven rooms read off
+the source by eye. Rendered side by side into plate-sized boxes, three were wrong: `racks` was a
+byte-for-byte copy of `cells`, and `gate` framed the same picture as `road`. Measuring the drawing
+instead — `getBBox` on each room's group — explains all three. The cells and the racks **share a
+band and split on x, not y**, so no full-width crop tells them apart. The gate and the road are
+**one scene**: the gate is the arch the road runs out through, and three framings were rendered
+before accepting that. And 390 wide at the plate's aspect is **158 tall**, not the 172 they were
+written at — `slice` was quietly rendering the middle 158 of each, so the road's "0 548 390 172"
+was really 555–713 and only the comment thought otherwise. Four measured entries now, each saying
+what it renders.
+
+**AND `scroll` CAUGHT THE PLATE, WHICH IS HOW THE SAME FAULT TURNED UP IN AN OLD CHECK.** The arena
+went past its 3.0-screen ceiling. Measured on the release before this one it was **2.8 screens** —
+against a ceiling of 3.0 with *"2.2 measured"* written beside it. The arena had crept 0.6 screens,
+about six hundred pixels, across an unknown number of releases, and every run of that check passed
+in silence, because **a ceiling only speaks when it is crossed**. The written figure went stale and
+the output gave no way to tell.
+
+So `scroll` now carries `saw` — the pixels it last recorded — and prints the drift on every run,
+pass or fail. A page that grows 40px says so while it is still one panel. The arena's ceiling is
+raised 3.0 → 3.2 with the reason, and the reason is a picture: 2,332px before, 2,618 after, the
+plate is 286 of it, and the new ceiling sits 84px above that rather than the 675px of silent
+headroom the old one turned out to be carrying.
+
+**AND `bulk` CAUGHT THE FIX FOR IT.** The plate's explanation was written *beside its rules* — four
+lines of prose inside the `CSS` template literal, which is prose this sweep measures and prose the
+browser is sent. CSS went to 279 against the 275 the release had already raised it to. The note sits
+above `const CSS` now, where the @font-face note has said such things go for many releases, and the
+allowance lands at **274 — one line tighter than the raise this release asked for**, because the
+rules alone are ten lines and nothing should carry silent headroom.
+
+*(A second lesson in the same corner: writing the check's name in backticks beside the rule broke
+the build. The stylesheet is a template literal and a backtick anywhere inside ends it. The error
+reads `Expected ";" but found "surface"` — a syntax error in the JavaScript, caused by a quote in a
+CSS comment. The v3.150.0 backslash trap's sibling, and now written down next to it.)*
+
+**`surface` CAUGHT THE LABEL IN THE SAME RUN.** The plate's caption was written at a literal `10px`
+— one text node on the arena under the **11.4px** every other word in the app clears. A picture's
+caption is text a player reads, and the scale it reads at is the one the app sets, so it is
+`var(--fs-micro)` now. Two existing checks, two real faults in the new furniture, neither visible
+by looking at it.
+
+Only the road is wired, on purpose: a plate on a page whose prose has not been paid for is the same
+mistake this release just caught, one page over.
+
 ### v3.151.0 — the records shelf belongs to the house, not to the yard
 
 Reported from real play. Twelve tiles — the lanista, the houses, the book, the roll, the chronicle,
