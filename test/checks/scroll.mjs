@@ -27,15 +27,32 @@ export const describe = "no room costs more screens to read than it is allowed";
    armoury measures the ARMOURY under the name "men" — 17 entry rows and 2.5 screens, which is
    the rack's figure wearing the roster's label. Each room now names its face, clicks it, and
    asserts it landed. */
+/* ---- AND `saw`, ADDED IN v3.152.0, BECAUSE A CEILING ALONE HID SIX HUNDRED PIXELS ----
+   The arena's line said "2.2 measured" against a ceiling of 3.0. It was 2.8 when v3.152.0 opened
+   it — 0.6 screens of creep that every run passed silently, because a ceiling only speaks when it
+   is crossed and 2.8 is under 3.0. The written figure had been stale for an unknown number of
+   releases and the output gave no way to tell.
+
+   `saw` is the pixels this check last recorded, printed as a drift on every run whether or not
+   anything failed. A page that grows 40px now says so in a passing run, which is the only place
+   creep can be caught while it is still one panel and not six hundred pixels. Update it when a
+   room legitimately changes size; the ceiling is what stops it, this is what shows it moving. */
 const ROOMS = [
-  { key:"armory", face:/armoury/i,  maxBtn:20, max:3.0, why:"a ledger page of racks; 2.4 measured at v3.96.0, was 5.7" },
-  { key:"arena",  face:null,        maxBtn:14, max:3.0, why:"three towns and the pits; 2.2 measured" },
+  { key:"armory", face:/armoury/i,  maxBtn:20, max:3.0, saw:1132, why:"a ledger page of racks; 2.4 measured at v3.96.0, was 5.7" },
+  /* RAISED 3.0 -> 3.2 IN v3.152.0, and the reason is a picture rather than prose. The arena opens
+     on a plate — the road to the sand, cropped out of the drawn ludus — and it is 158px at rest,
+     44px once you scroll. That is a deliberate addition and the only one on this page: the same
+     release CUT 45 words from the circuit by making the town paragraphs give up the figures the
+     new ledger prints, and `dense` holds the arena to 590 words so it cannot come back as text.
+     2,332px before, 2,618 after: the picture is 286 of it and the ceiling is 84px above that,
+     not the 675px of silent headroom the old 3.0 turned out to be carrying. */
+  { key:"arena",  face:null,        maxBtn:14, max:3.2, saw:2618, why:"three towns, the pits and the plate; 3.1 measured at v3.152.0, 2.8 before it" },
   /* EARNED DOWN, the way bulk's allowances are. This was 4.4 when a man on the block was 490px
      and four of them were two thirds of the page. The row put his six numbers on the line and
      the rest behind it: 2.1 measured. Leaving 4.4 would hand the page two screens of silent
      headroom and this ceiling would stop meaning anything. */
-  { key:"market", face:null,        maxBtn:14, max:2.9, why:"the block, the staff and the slavers; 2.1 measured at v3.97.0, was 3.5 here and 4.6 on a played house" },
-  { key:"villa",  face:/the house/i,maxBtn:12, max:3.0, why:"2.0 measured; its length is collapsibles, which are already folded" },
+  { key:"market", face:null,        maxBtn:14, max:2.9, saw:1668, why:"the block, the staff and the slavers; 2.1 measured at v3.97.0, was 3.5 here and 4.6 on a played house" },
+  { key:"villa",  face:/the house/i,maxBtn:12, max:3.0, saw:1730, why:"2.0 measured; its length is collapsibles, which are already folded" },
   /* ---- AND THIS CEILING WAS SET FROM A NUMBER THAT WAS NEVER THE ROSTER'S ----
      6.2 came from "5.8 screens measured on a played yard", and that measurement was the ARMOURY
      wearing the roster's name — the sticky-face fault this check now guards against, recorded
@@ -45,7 +62,7 @@ const ROOMS = [
      ceiling has to cover a full house: 174px a man against the cells' cap, plus the page's own
      chrome. 4.5 screens holds a dozen men with room to spare, and a card stays a card, because a
      card is what a man IS here. */
-  { key:"men",    face:/roster/i,   max:4.5, why:"one card per man at 174px; 1.3 screens on a founding's three, 2.1 on a played six. The old 6.2 was the armoury's figure mislabelled" },
+  { key:"men",    face:/roster/i,   max:4.5, saw:1120, why:"one card per man at 174px; 1.3 screens on a founding's three, 2.1 on a played six. The old 6.2 was the armoury's figure mislabelled" },
 ];
 const SCREEN = 844;
 
@@ -124,8 +141,10 @@ export async function run({ p, errors }){
     }
 
     const screens = m.px / SCREEN;
+    const drift = r.saw == null ? null : m.px - r.saw;
     lines.push(`${r.key.padEnd(7)} ${String(m.px).padStart(5)}px = ${screens.toFixed(1)} screens (max ${r.max.toFixed(1)}) · ${m.buttons} buttons on screen`
-      + (m.entries ? ` · ${m.entries} entry rows, ${m.entriesOpen} open` : ""));
+      + (m.entries ? ` · ${m.entries} entry rows, ${m.entriesOpen} open` : "")
+      + (drift == null ? "" : drift === 0 ? " · as recorded" : ` · ${drift > 0 ? "+" : ""}${drift}px since it was recorded`));
     /* ---- AND A SECOND CEILING, ON CHOICES ----
        Screens are not the only way a page crowds. The villa was TWO screens and carried
        FIFTY-FIVE buttons, forty-seven of them colour swatches, because its sections opened

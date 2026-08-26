@@ -19,6 +19,22 @@ import { FONT_CINZEL, FONT_CORMORANT, FONT_CORMORANT_ITALIC, FONT_IMFELL_ITALIC 
    at 17.5, and neither makes the palette tighter than it already was — the closest pair in the set
    is still `amphi`/`imperial` at 9.5, which predates this. A first cut of `bowl` came in at 6.0
    from `harbour` and a second at 9.2, both closer than anything that existed; this one clears it. */
+/* ---- .plate, .plate-lbl ----
+   The room's own picture at the top of its page (see ROOM_PLATE for the crops). It FOLDS: 158px on
+   arrival, 44px once you scroll, sticking under the header at --hdr-h. Chrome already takes 245 of
+   the phone's 844, so a picture that did not fold would cost a quarter of the page for as long as
+   you were on it. Nothing in it is pressable — it is a picture, and the drawn ludus is the menu.
+
+   THE CAPTION IS var(--fs-micro), NOT A LITERAL. It was written at 10px and the surface check
+   caught it: one text node on the arena under the 11.4 every other word in the app clears. A
+   picture's caption is text a player reads, and the scale it reads at is the one the app sets.
+
+   And the reason this note is out here rather than beside the rules is the one already written
+   over the @font-face block below — prose inside the template literal is measured by bulk and
+   shipped to the browser. It is also the only safe place for it: the CSS is a template literal
+   and a backtick anywhere inside ENDS IT. Writing `surface` with its backticks beside the rule
+   broke the build with "Expected ; but found surface", which reads like a syntax error in the
+   stylesheet and is really a quote in a comment. */
 const CSS = `
 /* The three faces, embedded. They were an at-import that never loaded once — it must precede
    every other rule and sat under the box-sizing line below, so every browser dropped it silently.
@@ -105,6 +121,16 @@ const CSS = `
    inline gradient that was written at his page's call site, which is why the file is shorter. */
 .umbra{position:relative;overflow:hidden;border-radius:10px;border:1px solid var(--line-4);
   background:linear-gradient(#0a0705 0%,#3e2e16 12%,#a07c33 26%,#82642a 44%,#573f1c 64%,#1c1409 86%,#0a0705 100%)}
+/* THE PLATE — the room's own picture; folds 158 to 44 on scroll. Note above const CSS. */
+.plate{position:sticky;top:var(--hdr-h);z-index:6;height:158px;overflow:hidden;
+  border-bottom:1px solid var(--line);background:var(--ground);
+  transition:height .28s cubic-bezier(.3,.9,.3,1)}
+.plate[data-fold="1"]{height:44px}
+.plate>svg{pointer-events:none;position:absolute;inset:0}.plate svg text{display:none}
+.plate-lbl{position:absolute;top:0;left:0;font-family:'Cinzel',Georgia,serif;
+  font-size:var(--fs-micro);letter-spacing:.2em;text-transform:uppercase;color:var(--ink-hi);
+  padding:6px 16px 6px 12px;background:linear-gradient(90deg,rgba(10,7,5,.86) 60%,rgba(10,7,5,0))}
+@media (prefers-reduced-motion:reduce){.plate{transition:none}}
 .wound{position:absolute;border-radius:50%;background:var(--blood-edge);pointer-events:none}
 .arenashake{animation:shk .3s}
 @keyframes shk{0%,100%{transform:translate(0,0)}20%{transform:translate(-4px,2px)}40%{transform:translate(4px,-2px)}60%{transform:translate(-3px,-1px)}80%{transform:translate(3px,1px)}}
@@ -23061,7 +23087,124 @@ const ScnRoad = ({ S, go, roadWord, roadOn, roadFit }) => (<>
 </g>
 </>);
 
-function Scene({ S, agenda, openDoc, openMan, go }){
+/* `crop` turns the whole drawing into ONE ROOM: same component, same coordinates, a narrower
+   viewBox. That is the point of the plate — the picture at the top of a page is never a second
+   drawing to keep in step with this one, it IS this one, which is also why pinching out could
+   return you to the map. Cropped it is a picture and not a menu, so nothing in it is pressable. */
+/* Where each room sits in the drawing. Named once so the plate and the map cannot disagree about
+   where a room is, the same rule `SCN_SAND` set for the ground and its ink in v3.145.0. */
+/* FULL WIDTH, AND AT THE PLATE'S OWN ASPECT. The first cut cropped tight around each room — the
+   road was 198 units wide — and the svg then scaled up to fill, magnifying the drawing about two
+   and a half times: the road's own label came out at twenty-odd points across the whole band and
+   the wedge lost its perspective. A crop the same shape as the box it goes in (roughly 390x172)
+   renders the drawing at the size it was drawn. */
+/* EVERY BOX HERE WAS MEASURED OFF THE RENDERED DRAWING, not read off the source and not guessed,
+   because the first seven were guessed and three of them were wrong: `racks` was a byte-for-byte
+   copy of `cells`, and `gate` framed the same picture as `road`. Rendered side by side that is
+   obvious in a second and invisible in the diff. The rooms' real boxes are
+
+       villa 18-126 · square 206-333 · yard 346-472 · cells 486-582 (x 24-224)
+       racks 486-582 (x 244-366) · gate 590-647 · road 640-720
+
+   and the three facts that fall out of them are why this table is four entries and not seven:
+   · 390 wide at the plate's aspect is 158 TALL, so every box here is 158 and says what it renders.
+     `slice` scales to cover and centres, so the 172 these were first written at rendered as the
+     middle 158 of itself — the road's "0 548 390 172" was really 555-713 and only the comment
+     thought otherwise. Same picture, honest number.
+   · THE CELLS AND THE RACKS SHARE A BAND and split on x, not y. No full-width crop tells them
+     apart, and neither is a page, so neither gets a guessed box here.
+   · THE GATE AND THE ROAD ARE ONE SCENE — the gate is the arch the road runs out through. Three
+     framings were rendered (540, 562, 548) and all three are the same picture. One entry, and it
+     is the road, because the road is the page.
+
+   Only `road` is WIRED, and that is the point rather than an oversight. A plate is an ADDITION to
+   a page, and this release's own measurement showed what happens when a page is only added to: the
+   arena went 612 words to 642 before its prose was made to pay for the ledger over it. Putting the
+   picture on four more faces would be that mistake four more times in one release. `dense` holds
+   the ceiling each of those pages has to come in under when its turn comes. */
+const ROOM_PLATE = {
+  villa:  { box:"0 0 390 158",   label:"The villa" },
+  square: { box:"0 190 390 158", label:"The training square" },
+  yard:   { box:"0 330 390 158", label:"The yard" },
+  road:   { box:"0 555 390 158", label:"The road — to the sand" },
+};
+/* THE FOLD IS DRIVEN OFF A REF, NOT OFF STATE. A scroll listener that calls setState re-renders the
+   whole tab on every frame of a scroll — on the arena that is seventeen controls and eighteen prose
+   blocks. It writes one data attribute on one node instead, and the CSS does the rest. */
+/* ---- THE COMPARISON, BEFORE THE PROSE ----
+   Choosing a town is a comparison of three numbers — how far, what it pays, and what mercy costs
+   there — and they were spread across the three town paragraphs, so making the comparison meant
+   holding nine figures in your head while scrolling. The same numbers in a column read at a glance.
+
+   AND THE PROSE GAVE THEM UP. A ledger that only ADDS is not an overhaul, it is a fourth place to
+   read the same thing: the first cut of this measured the arena at 642 words against 612 before,
+   because every figure in this table was still sitting in the paragraph under it. So the town
+   header lost "1wk · purses ×1.20" and both towns lost their "spared about N in a hundred, against
+   M at home" — three sentences of about twenty words each. What is left below is what each town is
+   LIKE, which is the part prose is actually for, and the arena came out at 567.
+
+   THE PAGE IS STILL TALLER, and that is the trade and not a miss: 2,214px before, 2,386 once the
+   plate has folded. Forty-five words left and a picture arrived. Height was never the complaint.
+
+   `bayWorth` is the same function those sentences called, so the table cannot disagree with the
+   engine any more than they did — #150's rule. And it lives out here rather than inside App because
+   App is at its line allowance and `bulk`'s rule is to split before asking for more room. */
+function CircuitLedger({ S }){
+  const cell = { display:"grid", gridTemplateColumns:"1fr auto auto", gap:10, alignItems:"baseline" };
+  const home = bayWorth(S, CITY_KEYS[0]);
+  return (
+    <div className="panel" style={{padding:"8px 10px",marginBottom:8}}>
+      <div style={{...cell, fontSize:"var(--fs-micro)", letterSpacing:".08em", textTransform:"uppercase",
+        color:"var(--ink-faint)", borderBottom:"1px solid var(--line)", paddingBottom:4}}>
+        <span>Town</span><span>Purse</span><span>Spared</span>
+      </div>
+      {CITY_KEYS.map(k=>{ const c = CITIES[k], w = bayWorth(S,k);
+        return (
+          <div key={k} style={{...cell, padding:"5px 0", borderBottom:"1px solid var(--line)"}}>
+            <span className="disp" style={{fontSize:"var(--fs-base)",
+              color:knownIn(S,k)?"var(--ink-hi)":"var(--ink)"}}>{c.name}
+              <span className="dim" style={{fontSize:"var(--fs-sm)"}}> · {c.travel}wk</span></span>
+            <span className="rowval" style={{fontSize:"var(--fs-md)"}}>×{c.purse.toFixed(2)}</span>
+            <span className="rowval" style={{fontSize:"var(--fs-md)",
+              color:(w.mercyHere!=null && w.mercyHere < 60) ? "var(--blood)" : "var(--ink-2)"}}>
+              {w.mercyHere==null ? "—" : w.mercyHere}</span>
+          </div>); })}
+      {home.mercyHome != null ? (
+        <div style={{...cell, padding:"5px 0", color:"var(--ink-dim)"}}>
+          <span className="disp" style={{fontSize:"var(--fs-base)",color:"var(--ink-dim)"}}>Capua
+            <span className="dim" style={{fontSize:"var(--fs-sm)"}}> · at home</span></span>
+          <span className="rowval" style={{fontSize:"var(--fs-md)"}}>×1.00</span>
+          <span className="rowval" style={{fontSize:"var(--fs-md)"}}>{home.mercyHome}</span>
+        </div>
+      ) : (
+        <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",paddingTop:5}}>
+          No man in the yard yet to say what mercy would cost down there.
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Plate({ S, room }){
+  const R = ROOM_PLATE[room]; const ref = React.useRef(null);
+  React.useEffect(()=>{
+    const el = ref.current; if(!el) return;
+    let deep = null;
+    const on = () => { const want = (window.scrollY || 0) > 18;
+      if(want !== deep){ deep = want; el.dataset.fold = want ? "1" : "0"; } };
+    on(); window.addEventListener("scroll", on, { passive:true });
+    return ()=> window.removeEventListener("scroll", on);
+  }, []);
+  if(!R) return null;
+  return (
+    <div className="plate" ref={ref} data-fold="0">
+      <Scene S={S} agenda={[]} crop={R.box} openDoc={()=>{}} openMan={()=>{}} go={()=>{}}/>
+      <span className="plate-lbl">{R.label}</span>
+    </div>
+  );
+}
+
+function Scene({ S, agenda, openDoc, openMan, go, crop }){
   const A = agenda || [];
   const at = room => A.filter(a=>a.doc && SCENE_ROOM[a.doc]===room);
   const men = activeG(S);
@@ -23098,8 +23241,11 @@ function Scene({ S, agenda, openDoc, openMan, go }){
     /* 700 -> 720: the road was 60px of drawing carrying two lines of text and a name in Cinzel,
        so its state line landed under the gate's arch and its name sat on the bottom edge. The
        twenty pixels are all BELOW the walls, which is where the road already was. */
-    <svg viewBox="0 0 390 720" style={{display:"block",width:"100%",height:"auto"}} role="group"
-      aria-label="The ludus — every room opens its own business">
+    <svg viewBox={crop || "0 0 390 720"}
+      preserveAspectRatio={crop ? "xMidYMid slice" : undefined}
+      style={crop ? {display:"block",width:"100%",height:"100%"} : {display:"block",width:"100%",height:"auto"}}
+      role={crop ? "img" : "group"} aria-hidden={crop ? true : undefined}
+      aria-label={crop ? undefined : "The ludus — every room opens its own business"}>
       <defs>
         <linearGradient id="scn-stone" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#241c12"/><stop offset="1" stopColor="#1a1410"/>
@@ -25282,6 +25428,7 @@ export default function App(){
         </div>)}
 
         {tab==="arena" && (<div className="flex flex-col gap-3">
+          <Plate S={S} room="road"/>
           {S.nemHouse && (()=>{ const n = S.nemHouse; const L = lanistaOf(n.house).name;
             const grudgeLive = (S.deadlines||[]).some(x=>x.kind==="challenge" && x.nem && !x.met);
             const stageWord = grudgeLive ? "The grudge match is set — answer it on the sand"
@@ -25490,6 +25637,7 @@ export default function App(){
                 <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>
                   Three towns down the bay who have never heard of you. Nothing you have built in Capua travels — but neither do your grudges.
                 </div>
+                <CircuitLedger S={S}/>
                 {bayHolder(S) && (
                   <div className="panel" style={{padding:10,marginBottom:8,background:"var(--blood-edge)",borderColor:"var(--blood-edge)"}}>
                     <div className="tag tag-blood" style={{marginBottom:3}}>House {bayHolder(S)} has the bay</div>
@@ -25504,10 +25652,7 @@ export default function App(){
                 {CITY_KEYS.map(k=>{ const c = CITIES[k];
                   return (
                     <div key={k} style={{borderTop:"1px dotted var(--line)",paddingTop:9,marginTop:9}}>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="disp" style={{fontSize:"var(--fs-base)",color:knownIn(S,k)?"var(--ink-hi)":"var(--ink-dim)"}}>{c.name}</span>
-                        <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{c.travel}wk · purses ×{c.purse.toFixed(2)}</span>
-                      </div>
+                      <div className="disp" style={{fontSize:"var(--fs-base)",color:knownIn(S,k)?"var(--ink-hi)":"var(--ink-dim)"}}>{c.name}</div>
                       <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:2}}>{c.blurb}</div>
                       {/* the town's own politics: who runs its games, what it wants, whose sand it is */}
                       {(()=>{ const P = (S.bayPol||{})[k], CU = CITY_CUSTOM[k]; if(!CU) return null;
@@ -25530,12 +25675,12 @@ export default function App(){
                           </div>
                         ); })()}
                       {knownIn(S,k)>0 ? (<>
-                        <div className="dim" style={{fontSize:"var(--fs-base)"}}>They know you there: {Math.round(knownIn(S,k))}/100 — tier {cityTier(S,k)} cards.{(()=>{ const w = bayWorth(S,k); return w.mercyHere == null ? "" : ` A man of yours put down there is spared about ${w.mercyHere} in a hundred, against ${w.mercyHome} at home.`; })()}</div>
+                        <div className="dim" style={{fontSize:"var(--fs-base)"}}>They know you there: {Math.round(knownIn(S,k))}/100 — tier {cityTier(S,k)} cards.</div>
                         {!S.city && !S.travel && <div style={{fontSize:"var(--fs-base)",color:"var(--gold)"}}>
                           Bleeding away at {BAY_DECAY.toFixed(2)} a week while you are not in it.
                         </div>}
                       </>) : (
-                        <div className="dim" style={{fontSize:"var(--fs-base)"}}>{(()=>{ const w = bayWorth(S,k); return w.mercyHere == null ? "A stranger there, and no man in the yard to say what that would cost." : `A stranger there. A man of yours put down on that sand is spared about ${w.mercyHere} times in a hundred, against ${w.mercyHome} at home.`; })()}</div>
+                        <div className="dim" style={{fontSize:"var(--fs-base)"}}>A stranger there.</div>
                       )}
                       <button className="btn" style={{width:"100%",marginTop:6}} disabled={!!S.rome} onClick={()=>takeRoad(k)}>Take the road · {c.travel} week{c.travel>1?"s":""}</button>
                     </div>
