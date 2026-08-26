@@ -51,7 +51,12 @@ const ROOMS = [
      and four of them were two thirds of the page. The row put his six numbers on the line and
      the rest behind it: 2.1 measured. Leaving 4.4 would hand the page two screens of silent
      headroom and this ceiling would stop meaning anything. */
-  { key:"market", face:null,        maxBtn:14, max:2.9, saw:1668, why:"the block, the staff and the slavers; 2.1 measured at v3.97.0, was 3.5 here and 4.6 on a played house" },
+  /* 1,668 -> 1,832 IN v3.154.0: the plate, and it is the whole of the difference. The market is
+     the one page of the five with no prose block to pay for it — its length is four man-cards, and
+     what came out of them was two CONSTANTS rather than a paragraph: "Not yet sworn" on every row
+     (0 of 3,524 men on the block over 960 played weeks was sworn) and the price repeated in a
+     button four lines under the price. Eight words, and eight words do not buy 158 pixels. */
+  { key:"market", face:null,        maxBtn:14, max:2.9, saw:1832, why:"the block, the staff and the slavers, and the plate; 2.2 measured at v3.154.0, 2.0 before the picture" },
   /* 1,730 -> 1,900 IN v3.153.0: the plate. A picture of the villa at the top of the villa, 158px
      at rest and 44 once you scroll, the same furniture the arena took in v3.152.0. Recorded rather
      than left drifting, because a `saw` that stays stale prints "+170px" on every run forever and

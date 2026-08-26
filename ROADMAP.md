@@ -4461,6 +4461,77 @@ wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
 
+### v3.154.0 — the gate gets a picture, and a sentence that had been lying since v3.151.0
+
+The market's turn, and the two things it needed were not the two things the arena and the villa
+needed.
+
+**THE GATE, WHICH TOOK SIX FRAMINGS.** v3.152.0 dropped this crop because every attempt came back
+as the road's picture — the gate is the arch the road runs out through, so anything centred on the
+gate's own box (590–647) carries the wedge and the cypresses with it. The answer was to stop
+centring on it. **`0 500 390 158` ends at 658**, above the road's widest point, and takes in the
+cells and the racks above instead: what it shows is the barred block with the arch and the men
+standing at it in the lower third, and no road at all. Rendered beside the arena's `0 555 390 158`
+the two read as different places, which is the only test that was ever going to settle it. Four of
+five pages have their picture now.
+
+**AND THE SENTENCE THAT HAD BEEN WRONG FOR THREE RELEASES.** The market's staff panel said:
+
+> *Raise either in the **Ludus tab's** House sheet — under Records & Annals*
+
+**v3.151.0 moved that shelf to the villa.** That release measured the move, updated `surface`'s
+route to it, and wrote the entry above — and left this sentence pointing at the tab the shelf had
+just left. It shipped wrong through v3.152.0 and v3.153.0, and a hundred and fourteen checks ran on
+every one of those releases without one of them looking.
+
+This sentence has now been wrong **twice, in opposite directions**. v3.1.0 shipped it saying "build
+either on the villa's House page" when the wings were on the Ludus tab; v3.3.0's fold probe happened
+to walk past it. Both times it was found by accident, because copy that points somewhere is a claim
+that no instrument here was checking. `dense` counts its words, `surface` measures its type size,
+`legible` its contrast, `reach` how many taps to it — **all of them pass on a sentence that is
+beautifully set, perfectly legible and a lie.**
+
+**`pointer` is the new check.** It sweeps every face of every tab for section titles, reads the copy,
+and holds three things: the sentence is *there* (a reworded pointer is not a pointer that passed),
+the tab it names *holds* the thing, and **nowhere else does** — the third arm being what catches a
+move and what makes the failure useful. Put the stale pointer back and it says:
+
+> *sends a player to the ludus tab, and Records & Annals is on villa instead. The copy went stale
+> when the section moved*
+
+That is the message that would have saved three releases.
+
+**Its own first two versions were both wrong, and instructively.** The vacuity guard failed every
+run on a *true* reading — the ludus tab has zero sections and is supposed to, since v3.151.0 took
+its twelve tiles away (measured: sect 0, details 0, panels 2). A bare tab is reported now, and the
+guard moved to where the claim actually rests. And the arms ran in the wrong order: against the real
+stale pointer the first cut failed with *"names the ludus tab and NOTHING was read there"* — true,
+useless, and the same cost as the good message. Where-it-is is computed first now.
+
+**THE MARKET'S OWN DENSITY BARELY MOVED, and that is the honest result.** 384 words to **379**. It
+is the one page of the five with no prose block: its length is four man-cards, and what came out of
+them was two **constants** rather than a paragraph.
+
+*"Not yet sworn"* stood on every row. Measured over **960 played weeks across twelve houses: 3,524
+men stood at the block, 148 of them sold on by other houses, and not one was sworn.** A mark on
+every row tells four men apart from nothing — the shape *"Vow · 154d"* had on the altar, four rows
+instead of five. The block's own panel says it once now. And the buy button read *"Buy for 312
+denarii"* with `312d` set in gold four lines above it in the same row, both on screen at once; it
+says "Buy him". The contested label keeps its figure, because `contested.ceiling` is a *different*
+number from the price — what it would take to outbid — and a number the row does not otherwise carry
+is not a duplicate.
+
+Eight words do not buy 158 pixels, so the market is **2.2 screens against 2.0**, and the picture is
+the whole of the difference. Not every page has a paragraph to sell.
+
+**AND `bulk` MADE THE RELEASE PAY FOR ITS OWN COMMENTS.** Three of them went inside `App` — why "not
+yet sworn" is a fact about the block rather than a tag on a man, why the buy button stopped
+repeating a price set four lines above it, and the history of the sentence `pointer` exists for —
+and App went to **5,792 against the 5,786 it is allowed**. The rule is split before raising, so
+`BlockMan` came out: one man's card, with its own read level, tags, six stats and act, which had
+been sitting inside the largest function in the file for no reason but that it was written there.
+**App is 5,667 — 104 lines below where this release found it, and no allowance moved.**
+
 ### v3.153.0 — the altar as a ledger, and the four faces nothing was looking at
 
 The villa's turn at the overhaul, and it began by finding that **`dense` was measuring five of the
