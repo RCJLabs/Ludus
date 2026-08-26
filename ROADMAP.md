@@ -4461,6 +4461,56 @@ wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
 
+### v3.155.0 — the last picture, and a button whose only outcome was the sentence beside it
+
+The familia, and with it **every page in the game opens on a picture of the place it is about** —
+the yard, the villa, the road, the gate, and the drawn ludus that is the map to all of them. Four
+releases, one component, one crop table, and `Scene` rendering the same drawing through five
+different viewBoxes so a page and its room can never disagree about what a room looks like.
+
+**AND THE FAMILIA DID NOT NEED AN OVERHAUL, WHICH IS THE FINDING.** Its three faces measure 107, 140
+and 163 words — the three lightest places in the game, all of them under half the arena. They each
+gained exactly **+2 words**: the plate's label, *"The yard"*, and not a word besides. The releases
+before this one took 45 words off the arena, 83 off the villa's Standing face and 5 off the market,
+each time by finding something the page was saying twice. This one looked and there was nothing
+worth cutting. A release that invented surgery for a page this size would be the exact failure
+`dense` exists to catch, pointed the other way.
+
+**Two things were wrong, and neither was density.**
+
+**A LIVE BUTTON WHOSE ONLY OUTCOME WAS THE SENTENCE BESIDE IT.** The armoury's *"Arm the whole
+line"* panel says, when nobody is short, *"Everyone is carrying the best of what the house owns."*
+Next to it sat **Go down the line**, enabled. `armAllOff` re-arms whoever it can and then writes a
+chronicle line, and with nobody short that line reads *"Everyone is already carrying the best of
+what the house owns"* — the sentence to the LEFT of the button, already on screen. Pressing it spent
+a tap to be told again. The strip button in the panel above has always been disabled in its own
+empty state; this is that rule applied to the control it sits beside, and the count that decides the
+label now decides the enabling too — #150's rule about a figure and the roll behind it.
+
+**AND `pointer` GREW A SECOND ENTRY, WHICH IS WHEN IT STARTED CHECKING A CLASS.** The doctore's
+board, with no doctore, says *"Hire one from the Ludus"*. It is **right** — `openDoc` tags that sheet
+`tab:"ludus"` and it opens off the training square in the drawing. Which is exactly why it is worth
+pinning: a check with one entry guards a string, a check with two guards the rule. What this one
+protects against is the day the square moves and nobody greps.
+
+It also forced the check to be honest about what a *destination* is. The first version looked only
+for section titles, and **the training square is not a section** — it is a hotspot in the drawn
+ludus that opens a document. The ludus tab has zero sections and eleven hotspots; a check that only
+knew about sections would say it holds nothing and be wrong about every sentence pointing at it.
+
+**AND THE PLATE BROKE THAT ARM THE MOMENT IT WAS WRITTEN.** Every page now renders a cropped copy of
+the same drawing, so `.scn` matches eleven hotspots on *every* tab — and the first run duly reported
+the training square as living on all five, failing with *"the sentence can only name one of them"*.
+A plate is a picture: `aria-hidden`, no pointer events, nothing in it opens anything. The decorative
+copy is excluded by where it sits, and removing that one filter puts the failure straight back.
+Worth knowing for every other instrument in this repo that reaches for `.scn` globally.
+
+Three arms proved by breaking something: the doctore sentence pointed at the villa (*"sends a player
+to the villa tab, and /training square/ is on ludus instead"*), the plate exclusion removed (*"is on
+ludus and familia and arena and market and villa"*), and the face left unpressed — the copy lives on
+one of the familia's three faces, and a tab remembers the face it was left on, which is the lesson
+`dense` paid for in v3.153.0 arriving in a second check.
+
 ### v3.154.0 — the gate gets a picture, and a sentence that had been lying since v3.151.0
 
 The market's turn, and the two things it needed were not the two things the arena and the villa

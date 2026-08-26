@@ -38,7 +38,7 @@ export const describe = "no room costs more screens to read than it is allowed";
    creep can be caught while it is still one panel and not six hundred pixels. Update it when a
    room legitimately changes size; the ceiling is what stops it, this is what shows it moving. */
 const ROOMS = [
-  { key:"armory", face:/armoury/i,  maxBtn:20, max:3.0, saw:1132, why:"a ledger page of racks; 2.4 measured at v3.96.0, was 5.7" },
+  { key:"armory", face:/armoury/i,  maxBtn:20, max:3.0, saw:1302, why:"a ledger page of racks, and the plate; 1.5 measured at v3.155.0; 2.4 measured at v3.96.0, was 5.7" },
   /* RAISED 3.0 -> 3.2 IN v3.152.0, and the reason is a picture rather than prose. The arena opens
      on a plate — the road to the sand, cropped out of the drawn ludus — and it is 158px at rest,
      44px once you scroll. That is a deliberate addition and the only one on this page: the same
@@ -71,7 +71,7 @@ const ROOMS = [
      ceiling has to cover a full house: 174px a man against the cells' cap, plus the page's own
      chrome. 4.5 screens holds a dozen men with room to spare, and a card stays a card, because a
      card is what a man IS here. */
-  { key:"men",    face:/roster/i,   max:4.5, saw:1120, why:"one card per man at 174px; 1.3 screens on a founding's three, 2.1 on a played six. The old 6.2 was the armoury's figure mislabelled" },
+  { key:"men",    face:/roster/i,   max:4.5, saw:1290, why:"one card per man at 174px, plus the plate; 1.3 screens on a founding's three, 2.1 on a played six. The old 6.2 was the armoury's figure mislabelled" },
   /* ---- AND THREE PLACES THIS CHECK HAD NEVER LOOKED AT, added in v3.153.0 ----
      `dense` found the same hole in itself the same week: a tab with faces was being measured on
      whichever face it happened to be showing, so three of the nine places in the game had no
@@ -87,7 +87,7 @@ const ROOMS = [
     why:"your standing, the patrons and the altar; 2.6 measured at v3.153.0, 2.5 before the plate" },
   { key:"villa", label:"vil/coin",  face:/coin & council/i, maxBtn:14, max:1.9, saw:1298,
     why:"the week's cost, the collegium and the moneylenders; 1.5 measured at v3.153.0" },
-  { key:"men",   label:"board",     face:/doctore/i,        maxBtn:16, max:1.9, saw:1187,
+  { key:"men",   label:"board",     face:/doctore/i,        maxBtn:16, max:1.9, saw:1357,
     why:"one drill row per man; 1.4 measured at v3.153.0 on a played six" },
 ];
 const SCREEN = 844;
