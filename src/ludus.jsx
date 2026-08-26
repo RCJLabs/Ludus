@@ -10035,18 +10035,23 @@ const PIETY_TOP = 1600;
 const pietyFame = d => Math.min((d && d.fame) || 0, PIETY_TOP);
 const GODS = {
   mars:     { name:"Mars", of:"the soldier's god", weeks:5, cost:d=>rnd(180 + pietyFame(d)*0.6),
+    gift:"nerve in the cold weeks",
     boon:"Your men fight with a soldier's steadiness — heart in the cold weeks, and no flinching at the post.",
     ask:"To Mars, that the house keep its nerve." },
   fortuna:  { name:"Fortuna", of:"who turns the wheel", weeks:4, cost:d=>rnd(220 + pietyFame(d)*0.8),
+    gift:"the finger goes up for him",
     boon:"The wheel turns your man's way in the box. When the finger goes up, it goes up for him.",
     ask:"To Fortuna, that the wheel run kind." },
   aesculapius:{ name:"Aesculapius", of:"the healer", weeks:6, cost:d=>rnd(160 + pietyFame(d)*0.5),
+    gift:"wounds close faster",
     boon:"Wounds close faster than they have any right to. The medicus takes the credit; you know better.",
     ask:"To Aesculapius, that the hurt mend clean." },
   victoria: { name:"Victoria", of:"victory herself", weeks:4, cost:d=>rnd(260 + pietyFame(d)*0.9),
+    gift:"a fatter purse, a louder name",
     boon:"A win under her eye is a richer, louder thing — the purse fatter, the name carried further.",
     ask:"To Victoria, that the wins be great ones." },
   jupiter:  { name:"Jupiter", of:"Best and Greatest", weeks:5, cost:d=>rnd(300 + pietyFame(d)*1.0),
+    gift:"patrons warm, crowds kind",
     boon:"The house stands in the light of the greatest god, and Capua's better sort feel it — patrons warm, crowds kind.",
     ask:"To Jupiter, that the house be seen to be favoured." },
 };
@@ -21289,33 +21294,7 @@ const SECT = {
                  ) : (
                    <div className="dim" style={{fontSize:"var(--fs-sm)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:6}}>An offering, or a vow</div>
                  )}
-                 {GOD_KEYS.map(k=>{ const G = GODS[k], cost = G.cost(S), ready = offeringReady(S), afford = S.gold>=cost;
-                   return (
-                     <div key={k} className="panel" style={{padding:9,marginBottom:6,background:"var(--panel)"}}>
-                       <div className="flex items-center justify-between gap-2">
-                         <span className="disp" style={{fontSize:"var(--fs-base)",color:"var(--ink-hi)"}}>{G.name} <span className="dim" style={{fontWeight:400}}>· {G.of}</span></span>
-                         <span className="rowval gold" style={{fontSize:"var(--fs-sm)"}}>{cost}d</span>
-                       </div>
-                       <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2}}>{G.boon}</div>
-                       <div className="flex gap-2" style={{marginTop:6}}>
-                         <button className="btn" style={{flex:1}} disabled={!ready || !afford} onClick={()=>offerTo(k)}>
-                           {!ready ? `Altar rests · ${OFFERING_COOL-(S.week-S.lastOffering)}w` : !afford ? "Not enough coin" : `Offer · ${G.weeks}w blessing`}
-                         </button>
-                         {/* the label read "Vow ·  stake" — a figure that was never
-                             interpolated, so the one button in the game that asks a player to
-                             pledge coin never said how much */}
-                         {!S.vow && <button className="btn btn-ghost" style={{flex:1}} disabled={S.gold < stake}
-                           onClick={()=>setAsk({ title:`A Vow to ${G.name}`, confirm:`Swear it · ${stake}d`,
-                             /* "the coin returns doubled in goodwill" was a rosy description of
-                                a bet a young house loses more often than it wins: measured over
-                                200 vows, a house under fame 300 keeps 46% of them. It says what
-                                it is betting on now, in the house's own recent dead. */
-                             text:`You pledge ${stake} denarii to ${G.name} and swear that not a man of this house will fall in the month to come. What comes back depends on what you risked in it — nothing ventured, your pledge and a polite word; a month of hard cards kept clean, the coin with interest and a markedly more pious house. A blessing is bought at the altar, not won here. Break it — bury a man before it is out — and the coin is forfeit and the gods turn cold.${buried20(S) ? ` You have buried ${buried20(S)} in the last twenty weeks.` : ` You have buried nobody in twenty weeks.`}`,
-                             run:()=>vowTo(k) })}>{S.gold < stake ? "Not enough to pledge" : `Vow · ${stake}d`}</button>}
-                       </div>
-                     </div>
-                   );
-                 })}
+                 <AltarLedger S={S} offerTo={offerTo} setAsk={setAsk} vowTo={vowTo}/>
                  <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",marginTop:4}}>
                    One blessing rides with the house at a time; a fresh offering takes the last one's place. The gods keep their own counsel about which houses they favour.
                  </div>
@@ -23131,6 +23110,82 @@ const ROOM_PLATE = {
 /* THE FOLD IS DRIVEN OFF A REF, NOT OFF STATE. A scroll listener that calls setState re-renders the
    whole tab on every frame of a scroll — on the arena that is seventeen controls and eighteen prose
    blocks. It writes one data attribute on one node instead, and the CSS does the rest. */
+/* ---- THE ALTAR, AS A LEDGER ----
+   Five gods, five prices, and choosing between them is a comparison — which is the shape the
+   circuit's towns had in v3.152.0 and the same answer works here. What it replaces was five
+   stacked panels, each carrying its own name, its own twenty-word boon and its own PAIR of
+   full-width buttons: 231 words and 970px, the biggest section on the villa.
+
+   THE DUPLICATION WAS IN THE BUTTONS AND IT WAS EXACT. `vowStake` does not take a god — the pledge
+   is the same figure whatever you swear to — so "Vow · 154d" was one number rendered FIVE TIMES,
+   under five identical-looking controls that differed only in which god they named. The offer
+   buttons repeated the word "blessing" five times for the same reason. Ten controls where the
+   choice is which of five rows you are on, plus what you then do about it.
+
+   So: five rows carrying the comparison — the god, what he gives in four words, how long it rides
+   and what it costs — and ONE pair of controls under them, acting on the row you are on. The
+   selected god's full boon sits above those controls, so nothing is deleted; it is moved to where
+   a player is when the sentence matters. The pledge is stated once because it is one figure.
+
+   `GODS[k].cost(S)` is the same function `offerTo` charges, and `vowStake(S)` the same one `vowTo`
+   pledges — #150's rule, and the reason the column cannot drift from the button beneath it. */
+function AltarLedger({ S, offerTo, setAsk, vowTo }){
+  const [pick, setPick] = React.useState(GOD_KEYS[0]);
+  const stake = vowStake(S), ready = offeringReady(S);
+  const G = GODS[pick], cost = G.cost(S), afford = S.gold >= cost;
+  const cell = { display:"grid", gridTemplateColumns:"1fr auto auto", gap:10, alignItems:"baseline" };
+  return (
+    <div className="panel" style={{padding:"8px 10px",marginBottom:8}}>
+      <div style={{...cell, fontSize:"var(--fs-micro)", letterSpacing:".08em", textTransform:"uppercase",
+        color:"var(--ink-faint)", borderBottom:"1px solid var(--line)", paddingBottom:4}}>
+        <span>The altar</span><span>Rides</span><span>Offering</span>
+      </div>
+      {/* A RADIOGROUP, NOT A TABLIST. These rows pick one of five, which is what a radio group is;
+          `role="tab"` would say they switch between panels of content and they do not. It is also
+          the role this project's own instruments key off to find a page's FACE switcher, so five
+          gods wearing it would be five faces of the villa as far as anything looking is concerned. */}
+      <div role="radiogroup" aria-label="Which god the offering is made to">
+      {GOD_KEYS.map(k=>{ const g = GODS[k], c = g.cost(S), on = k === pick;
+        return (
+          <button key={k} role="radio" aria-checked={on} onClick={()=>setPick(k)}
+            aria-label={`${g.name}, ${g.of} — ${g.gift}, ${g.weeks} weeks, ${c} denarii`}
+            style={{...cell, width:"100%", textAlign:"left", padding:"7px 4px", background:on?"var(--raise)":"none",
+              border:"none", borderBottom:"1px solid var(--line)", borderLeft:`2px solid ${on?"var(--gold-line)":"transparent"}`,
+              cursor:"pointer", font:"inherit", color:"inherit"}}>
+            <span>
+              <span className="disp" style={{fontSize:"var(--fs-base)",color:on?"var(--ink-hi)":"var(--ink)"}}>{g.name}</span>
+              <span className="dim" style={{fontSize:"var(--fs-sm)",display:"block"}}>{g.gift}</span>
+            </span>
+            <span className="rowval" style={{fontSize:"var(--fs-md)",color:"var(--ink-2)"}}>{g.weeks}w</span>
+            <span className="rowval gold" style={{fontSize:"var(--fs-md)",
+              color: S.gold >= c ? "var(--gold)" : "var(--ink-faint)"}}>{c}d</span>
+          </button>); })}
+      </div>
+      {/* THE ROW'S GOLD EDGE SAYS WHICH ROW YOU ARE ON; THIS SAYS WHICH GOD THE BUTTONS MEAN.
+          With five buttons there was no question — each named its own god. With one pair there is,
+          and "Offer · 184d" only answers it if you happen to be matching the figure back up the
+          column. It also puts the epithet back: the rows carry the gift instead, which is the
+          thing being compared, and `of` is who he is. */}
+      <div className="tag tag-gold" style={{marginTop:8}}>{G.name} · {G.of}</div>
+      <div className="dim" style={{fontSize:"var(--fs-base)",margin:"4px 0 6px"}}>{G.boon}</div>
+      <div className="flex gap-2">
+        <button className="btn" style={{flex:1}} disabled={!ready || !afford} onClick={()=>offerTo(pick)}>
+          {!ready ? `Altar rests · ${OFFERING_COOL-(S.week-S.lastOffering)}w` : !afford ? "Not enough coin" : `Offer · ${cost}d`}
+        </button>
+        {/* the label read "Vow ·  stake" — a figure that was never interpolated, so the one button
+            in the game that asks a player to pledge coin never said how much */}
+        {!S.vow && <button className="btn btn-ghost" style={{flex:1}} disabled={S.gold < stake}
+          onClick={()=>setAsk({ title:`A Vow to ${G.name}`, confirm:`Swear it · ${stake}d`,
+            /* "the coin returns doubled in goodwill" was a rosy description of a bet a young house
+               loses more often than it wins: measured over 200 vows, a house under fame 300 keeps
+               46% of them. It says what it is betting on now, in the house's own recent dead. */
+            text:`You pledge ${stake} denarii to ${G.name} and swear that not a man of this house will fall in the month to come. What comes back depends on what you risked in it — nothing ventured, your pledge and a polite word; a month of hard cards kept clean, the coin with interest and a markedly more pious house. A blessing is bought at the altar, not won here. Break it — bury a man before it is out — and the coin is forfeit and the gods turn cold.${buried20(S) ? ` You have buried ${buried20(S)} in the last twenty weeks.` : ` You have buried nobody in twenty weeks.`}`,
+            run:()=>vowTo(pick) })}>{S.gold < stake ? "Not enough to pledge" : `Vow · ${stake}d`}</button>}
+      </div>
+    </div>
+  );
+}
+
 /* ---- THE COMPARISON, BEFORE THE PROSE ----
    Choosing a town is a comparison of three numbers — how far, what it pays, and what mercy costs
    there — and they were spread across the three town paragraphs, so making the comparison meant
@@ -25925,6 +25980,7 @@ export default function App(){
         </div>)}
 
         {tab==="villa" && (<div className="flex flex-col gap-3">
+          <Plate S={S} room="villa"/>
           <div className="flex gap-1" role="tablist" aria-label="Villa sections"
             style={{flexWrap:"wrap",borderBottom:"1px solid var(--line)",paddingBottom:8}}>
             {[["house","The House"],["standing","Standing"],["council","Coin & Council"]].map(([k,l])=>{
@@ -25988,8 +26044,15 @@ export default function App(){
                       {fit === all ? `${all} in the yard` : `${fit} fit of ${all}`}
                     </span>; })()}
                 </div>
+                {/* ---- WHAT THE HEADER IS ALREADY SAYING, 150 PIXELS ABOVE THIS ----
+                    Coin, Fame and Standing sat here as three of six cells, and all three are in the
+                    app header on EVERY tab — it is sticky, so on this face they were on screen at
+                    the same moment, twice. `yard` is what made it matter: with the plate on the
+                    villa the first thing a player can PRESS on the House face fell to y=896 on an
+                    844px phone, so the week's work was under the fold and the top of the page was a
+                    readout of numbers already visible. What is left is the three the header does
+                    NOT carry — what the week costs, what comes in without a bout, and the record. */}
                 <div className="grid grid-cols-3 gap-2" style={{marginBottom:9}}>
-                  <Stat label="Coin" val={`${rnd(S.gold)}d`} colour={S.gold<0?"var(--blood)":"var(--gold-hi)"}/>
                   <Stat label="Upkeep" val={`−${upkeepEst}d/wk`} colour="var(--blood-hi)"/>
                   {/* what arrives without a bout being fought. The stipend a received
                       house draws was the largest number in the ledger and was written
@@ -25998,16 +26061,14 @@ export default function App(){
                     return inWk > 0
                       ? <Stat label="Coming in" val={`+${inWk}d/wk`} colour="var(--laurel)"/>
                       : <Stat label="Owed you" val={`${owedIn}d`} colour="var(--ink-2)"/>; })()}
-                  <Stat label="Fame" val={rnd(S.fame)} colour="#d8c08a"/>
-                  <Stat label="Standing" val={rnd(S.favor)} colour="var(--violet)"/>
                   <Stat label="Record" val={`${REC.w}\u2013${REC.l}`} colour="var(--ink-2)"/>
                 </div>
-                {/* the two readings that do not fit a number: what the town calls you,
-                    and how close the cells are to ending the run */}
-                <div className="flex items-center justify-between gap-2" style={{fontSize:"var(--fs-sm)",marginBottom:5}}>
-                  <span className="dim" style={{textTransform:"uppercase",letterSpacing:".06em",fontSize:"var(--fs-micro)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>The name</span>
-                  <span style={{color:"var(--gold-hi)",flexShrink:0}}>{acclaimWord(acclaimOf(S))}</span>
-                </div>
+                {/* AND "THE NAME" SAID THE SAME WORDS AS THE SECTION FIVE ROWS BELOW IT. This row
+                    printed `acclaimWord(acclaimOf(S))` — "unknown to the street" — and The House As
+                    A Name carries the identical string as its note, on the same face, unscrolled.
+                    One reading, in the place that can also explain it. What is left here is the
+                    one that does not fit a number and has nowhere else to be: how close the cells
+                    are to ending the run. */}
                 <div className="flex items-center justify-between gap-2" style={{fontSize:"var(--fs-sm)",marginBottom:3}}>
                   <span className="dim" style={{textTransform:"uppercase",letterSpacing:".06em",fontSize:"var(--fs-micro)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>Unrest — ends a run</span>
                   <span style={{color: S.unrest>=68?"var(--blood)":S.unrest>=45?"var(--gold)":"var(--laurel)",flexShrink:0}}>{unrestWord(S.unrest)}</span>

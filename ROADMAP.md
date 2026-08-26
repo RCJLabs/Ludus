@@ -4461,6 +4461,96 @@ wrong trade. `street` holds the four bars, negative-tested.
 
 ## Changelog (shipped)
 
+### v3.153.0 — the altar as a ledger, and the four faces nothing was looking at
+
+The villa's turn at the overhaul, and it began by finding that **`dense` was measuring five of the
+nine places in the game.**
+
+**THE FACES NOTHING WAS LOOKING AT.** `dense` shipped in v3.152.0 walking the five *tabs* and
+reading whatever face each happened to be showing. Three tabs keep their sections behind a chip row,
+and a tab remembers the face it was left on — so what it actually measured was five arbitrary places
+out of nine, and for the villa it was the **lightest** of its three. The House reads 308 words.
+**Standing read 456** — the second densest place in the game after the arena, and the one this
+overhaul was for. The check called the villa comfortable on every run without once looking at it.
+
+That is this project's most-repeated fault wearing a new hat: `surface` reporting nine record sheets
+it had never opened, `legible` scoring nineteen labels nothing had sampled, `sand` passing a broken
+beast that was never drawn. **A measurement that quietly covers less than it claims reads exactly
+like a clean bill of health.** `dense` walks places now — every face of every tab, pressed by name
+and asserted to have landed before its number is believed. `scroll` had the same hole and got the
+same fix: three more rows, and the villa's Standing face has a pixel ceiling for the first time.
+
+**THE ALTAR.** Five gods, and choosing between them is a comparison — the shape the circuit's towns
+had. What it replaced was five stacked panels, each with its own name, its own twenty-word boon and
+its own **pair** of full-width buttons.
+
+**And the duplication was exact.** `vowStake` does not take a god — the pledge is the same figure
+whatever you swear to — so *"Vow · 154d"* was **one number rendered five times**, under five
+controls that differed only in which god they named. Ten buttons where the choice is which of five
+rows you are on, and then what you do about it.
+
+So: five rows carrying the comparison — the god, what he gives in four words, how long it rides,
+what it costs — and **one pair of controls** under them, acting on the row you are on. The selected
+god's full boon sits above those controls, so nothing is deleted; it moves to where a player is when
+the sentence matters. The pledge is stated once because it is one figure.
+
+| villa · Standing | before | after |
+|---|---:|---:|
+| words | 456 | **373** |
+| pixels | 2,151 | 2,230 |
+| controls on the altar | 10 | **7** |
+
+The plate went on the villa in the same release and costs 158px, so the altar paid for the picture
+and 130px besides.
+
+**AND THE NEW GUARD PASSED ITS OWN SABOTAGE, which is the finding worth keeping.** `dense` now holds
+the altar to one Vow button and one Offer button — a *count*, not a phrase, because five identical
+three-word buttons are far too small for any word ceiling to feel. Putting the five back took the
+face to 383 words and **passed**, 383 being under 400. The named guard was supposed to catch it and
+did not: it matched `startsWith("Vow ·")` against `innerText`, and `.btn` uppercases in CSS —
+`innerText` returns the **rendered** text, so every button came back `"VOW · 154D"` and nothing ever
+matched. **A guard that cannot fail reads exactly like a guard that found nothing wrong.** The
+comparison is case-folded now, and a count of zero is a failure too, so renaming the button makes
+the check say it has gone blind instead of quietly matching nothing.
+
+Three arms, each proved by breaking something: five vow buttons restored (caught, 6 where 1 is
+allowed), the vow button renamed (caught as blindness), and a face asked for that does not exist
+(caught, and *"only 8 of 9 places were read"*).
+
+**`scroll`'s drift column earned itself in one release.** Added in v3.152.0, it reported
+*"villa +170px since it was recorded"* on a **passing** run — the plate, exactly as expected, made
+visible without a failure. Recorded now, because a signal that never returns to zero is one nobody
+reads.
+
+**AND THE GATE CAUGHT TWO MORE THINGS, ONE OF THEM DELICIOUS.**
+
+`scene` went red with *"tapping Firmus the Secutor opened The Temple"*, and nothing about the scene
+was broken. Its `shut()` helper closed a document by finding the first button in the modal whose
+text matched `/put it down|close/i` — **anywhere in the text**. That held for as long as every button
+in this game carried a short label. The altar's rows are buttons carrying a line of copy each, and
+Aesculapius's says **"wounds close faster"**. It sits above the real control in DOM order, so `shut`
+found it first, clicked it, *selected a god*, and left the document standing — after which the next
+tap in the drawn yard landed on a scene behind an open modal. A substring matcher against body copy,
+waiting since the day it was written for someone to put a sentence in a button. Anchored to the whole
+trimmed label now.
+
+The rows also carried **`role="tab"`, which was simply wrong** — they pick one of five, which is a
+radiogroup, not a set of panels. It is also the role this project's own instruments key off to find
+a page's face switcher, so five gods wearing it were five faces of the villa as far as anything
+looking was concerned.
+
+`yard` went red with *"villa · The House puts its first pressable thing at 896px on an 844px
+phone"* — the plate, pushing the week's work under the fold. **The fix was to stop printing what
+the sticky header prints.** Coin, Fame and Standing sat in the villa's opening grid and all three
+are in the header on every tab, on screen at the same moment, 150px apart. *"The name"* went with
+them: it printed `acclaimWord` — "unknown to the street" — and The House As A Name carries the
+identical string as its note, five rows below, unscrolled. The first press is at **826** now, and
+the House face is **296 words against 306 before the plate went on it**.
+
+That is the release's own thesis arriving from the other direction. v3.152.0 said a page that is
+only added to gets longer. This one says: when a picture pushes the work off the screen, the thing
+to remove is whatever the page was saying twice.
+
 ### v3.152.0 — every room its own picture, and the ledger has to be paid for
 
 The first of the page overhauls, on the **arena** — the face the density measurement named worst at
