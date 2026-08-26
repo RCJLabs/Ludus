@@ -76,8 +76,18 @@ export async function run({ p, errors }){
     return { title:((w.querySelector(".disp")||{}).innerText||"").slice(0,40), dets:dets.length,
       open:dets.filter(d=>d.open).length,
       seeIt: [...w.querySelectorAll("button")].some(b=>/see it in the house/i.test(b.innerText||"")) }; });
+  /* ---- THE MATCHER WAS A SUBSTRING AND A BUTTON GREW PROSE ----
+     This read `/put it down|close/i.test(innerText)` — anywhere in the text, any button in the
+     modal. It worked for as long as every button in this game carried a SHORT LABEL. v3.153.0 made
+     the altar a ledger whose rows are buttons carrying a line of copy each, and Aesculapius's row
+     says "wounds close faster". It sits above the real control in DOM order, so `shut` found it
+     first, clicked it, SELECTED A GOD, and left the modal standing — after which the next tap in
+     the drawn yard landed on a scene behind an open document and this check reported "tapping
+     Firmus the Secutor opened The Temple". Nothing about the scene was broken.
+     Anchored to the whole trimmed label now. The close control in this game says one of two
+     things and both are exact; a button that merely CONTAINS the word close is body copy. */
   const shut = () => p.evaluate(()=>{ const b=[...document.querySelectorAll(".modalwrap button")]
-    .find(x=>/put it down|close/i.test(x.innerText||"")); if(b) b.click(); });
+    .find(x=>/^(put it down|close)$/i.test((x.innerText||"").trim())); if(b) b.click(); return !!b; });
 
   for(const [lab, wantFooter, must] of [["training square", false, /training square/i],
                                         ["cells at night", false, /cells at night/i],
