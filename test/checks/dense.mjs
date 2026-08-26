@@ -56,12 +56,16 @@ export const slow = true;   /* reads the rendered text of every face in a real b
 
    The two that move are the ones whose length is a fact about the SAVE — the roster and the
    doctore's board are one row per man. */
+/* THE FAMILIA'S THREE ARE +2 EACH IN v3.155.0 AND NOTHING ELSE MOVED — the plate's label, "The
+   yard", and not a word besides. It is the lightest place in the game on all three faces and it did
+   not need a paragraph taken out of it; the release that pretended otherwise would be the one this
+   check exists to catch, pointed the other way. */
 const PLACES = [
   { tab:"ludus",   face:null,                  max:160, min:60,  saw:142 },
   { tab:"arena",   face:null,                  max:590, min:250, saw:567 },
-  { tab:"familia", face:"THE ROSTER",          max:150, min:50,  saw:105 },
-  { tab:"familia", face:"THE DOCTORE'S BOARD", max:210, min:60,  saw:138 },
-  { tab:"familia", face:"THE ARMOURY",         max:205, min:60,  saw:161 },
+  { tab:"familia", face:"THE ROSTER",          max:150, min:50,  saw:107 },
+  { tab:"familia", face:"THE DOCTORE'S BOARD", max:210, min:60,  saw:140 },
+  { tab:"familia", face:"THE ARMOURY",         max:205, min:60,  saw:163 },
   /* 379 in v3.154.0, and the small number is the honest one: the market has no prose to cut. Its
      length is four man-cards, and what came out of them was two constants — "Not yet sworn", true
      of 3,524 of 3,524 men measured over 960 played weeks, and the price printed in a button four

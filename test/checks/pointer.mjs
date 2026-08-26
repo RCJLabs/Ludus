@@ -48,8 +48,27 @@ const POINTERS = [
     on:   "market",
     say:  /Raise either in the (\w+)\s*tab/i,
     at:   "villa",
-    face: "THE HOUSE",
     holds:/records\s*&\s*annals/i,
+  },
+  /* ---- A SECOND POINTER, AND A DIFFERENT KIND OF DESTINATION, ADDED IN v3.155.0 ----
+     The doctore's board, with no doctore, says "Hire one from the Ludus". It is RIGHT — `openDoc`
+     tags that sheet `tab:"ludus"` and it opens off the training square in the drawing. Which is
+     exactly why it is worth pinning: a check with one entry guards a string, and a check with two
+     guards the class. This one is the sentence that is currently true, so what it protects against
+     is the day the square moves and nobody greps.
+
+     It also made the check honest about what a DESTINATION is. The first version looked only for
+     section titles, and the training square is not a section — it is a hotspot in the drawn ludus
+     that opens a document. A tab holds what a player can get to from it, so `.scn` labels count
+     too, and a pointer says which kind it means. */
+  {
+    what: "the doctore's board, on where a doctore is hired",
+    on:   "familia",
+    face: "THE DOCTORE'S BOARD",
+    say:  /Hire one from the (\w+)/i,
+    at:   "ludus",
+    holds:/training square/i,
+    kind: "scene",
   },
 ];
 
@@ -73,6 +92,18 @@ export async function run({ p, errors }){
       out.push((s.innerText||"").replace(/\s+/g," ").trim());
     return out;
   });
+  /* AND WHAT THE DRAWING ON THIS TAB OPENS. A tab holds what a player can reach from it, and the
+     ludus tab holds nothing BUT this — zero sections, and the training square, the cells, the
+     shrine and the rest are hotspots that open documents. A check that only knew about sections
+     would say the ludus tab holds nothing and be wrong about every sentence pointing at it. */
+  /* NOT THE ONES INSIDE A PLATE. From v3.152.0 each page opens on a cropped copy of the SAME
+     drawing, so `.scn` matches eleven hotspots on every tab that has a picture — and the first run
+     of this arm duly reported the training square as living on all five. A plate is a picture: its
+     svg is `aria-hidden`, it takes no pointer events, and nothing in it opens anything. A tab holds
+     what a player can REACH from it, so the decorative copy is excluded by where it sits. */
+  const hotspots = () => p.evaluate(()=>
+    [...document.querySelectorAll(".scn")].filter(x=>!x.closest(".plate"))
+      .map(x=>(x.getAttribute("aria-label")||"").trim()).filter(Boolean));
   const faces = () => p.evaluate(()=>{
     const l = [...document.querySelectorAll('[role=tablist]')]
       .find(x => /sections\s*$/i.test(x.getAttribute("aria-label")||""));
@@ -88,24 +119,25 @@ export async function run({ p, errors }){
   }, n);
 
   /* ---- WHERE EVERY SECTION ACTUALLY IS, swept once, before any claim is judged ---- */
-  const where = {};   /* tab -> [titles across all its faces] */
+  const where = {};   /* tab -> [section titles across all its faces] */
+  const scene = {};   /* tab -> [what its drawing opens] */
   for(const t of TABS){
     if(!await tab(p, t)){ bad.push(`could not reach the ${t} tab — this sweep is incomplete`); continue; }
     await p.waitForTimeout(360); await clearAll(p, 8);
     await tab(p, t); await p.waitForTimeout(360);
     const fs = await faces();
-    const all = [];
+    const all = [], scn = await hotspots();
     if(!fs.length) all.push(...await titles());
     else for(const f of fs){
       if(!await press(f)) continue;
       await p.waitForTimeout(380); await clearAll(p, 6);
       all.push(...await titles());
     }
-    where[t] = all;
+    where[t] = all; scene[t] = scn;
   }
   const swept = Object.keys(where).length;
-  lines.push(`swept ${swept} tabs for section titles: `
-    + TABS.map(t=>`${t} ${(where[t]||[]).length}`).join(" · "));
+  lines.push(`swept ${swept} tabs: `
+    + TABS.map(t=>`${t} ${(where[t]||[]).length} sections${(scene[t]||[]).length?` + ${scene[t].length} in the drawing`:""}`).join(" · "));
   if(swept < TABS.length)
     bad.push(`only ${swept} of ${TABS.length} tabs were swept — "nowhere else holds it" proves nothing`);
   /* A TAB WITH NO SECTIONS IS USUALLY A TAB THAT WAS NOT READ, and `where` full of empty arrays
@@ -115,9 +147,10 @@ export async function run({ p, errors }){
      tiles it used to carry went to the villa in v3.151.0. Measured: sect 0, details 0, panels 2.
      So a bare tab is REPORTED rather than failed, and the vacuity guard is put where the claim
      actually rests — nothing read anywhere, or nothing read on the tab a pointer names. */
-  const bare = TABS.filter(t => (where[t]||[]).length === 0);
+  const held = t => [...(where[t]||[]), ...(scene[t]||[])];
+  const bare = TABS.filter(t => held(t).length === 0);
   if(bare.length) lines.push(`  no sections at all on: ${bare.join(", ")} — nothing there can hold anything`);
-  if(TABS.every(t => (where[t]||[]).length === 0))
+  if(TABS.every(t => held(t).length === 0))
     bad.push(`ZERO section titles on every tab — nothing was read anywhere, so "nowhere else holds it"`
       + ` is being asserted about nothing`);
 
@@ -126,6 +159,17 @@ export async function run({ p, errors }){
     if(!await tab(p, P.on)){ bad.push(`could not reach the ${P.on} tab to read ${P.what}`); continue; }
     await p.waitForTimeout(360); await clearAll(p, 8);
     await tab(p, P.on); await p.waitForTimeout(360);
+    /* THE SENTENCE MAY BE ON A FACE. `dense` learned this the hard way in v3.153.0 — a tab with a
+       chip row shows whichever face it was left on, so reading a tab is not reading its pages. The
+       doctore's board is one of the familia's three and the copy lives only there. */
+    if(P.face){
+      if(!await press(P.face)){
+        bad.push(`${P.what}: the "${P.face}" face of the ${P.on} tab is not there to press, so the`
+          + ` sentence could not be read at all`);
+        continue;
+      }
+      await p.waitForTimeout(420); await clearAll(p, 6);
+    }
     const text = await p.evaluate(()=>((document.querySelector("main")||document.body).innerText||"")
       .replace(/\s+/g," ").trim());
     const m = text.match(P.say);
@@ -151,7 +195,8 @@ export async function run({ p, errors }){
        villa*. A check that fails for a true-but-secondary reason costs the same run and teaches
        less. Where-it-is is computed first now, and the vacuity arm only speaks when nothing was
        found anywhere, which is the one case where it IS the finding. */
-    const holders = TABS.filter(t => (where[t]||[]).some(x => P.holds.test(x)));
+    const look = P.kind === "scene" ? (t => scene[t]||[]) : (t => where[t]||[]);
+    const holders = TABS.filter(t => look(t).some(x => P.holds.test(x)));
     lines.push(`  ${P.holds} is on: ${holders.length ? holders.join(", ") : "NO TAB AT ALL"}`);
     if(!holders.length){
       bad.push(`${P.what}: nothing matching ${P.holds} was found on ANY tab, so the sentence points`

@@ -25309,6 +25309,7 @@ export default function App(){
         </div>)}
 
         {tab==="men" && (<div className="flex flex-col gap-3">
+          <Plate S={S} room="yard"/>
           {/* what the men themselves are asking for, where the men are */}
           {(()=>{ const MEN = agenda(S).filter(a=>a.tab==="men"); if(!MEN.length) return null;
             return (
@@ -25574,21 +25575,28 @@ export default function App(){
             </div>
           )}
 
-          {activeG(S).length>0 && (
+          {activeG(S).length>0 && (()=>{ const short = activeG(S).filter(g=>kitFaults(S,g).length).length; return (
             <div className="panel" style={{padding:11}}>
               <div className="flex items-center justify-between gap-2">
                 <div style={{minWidth:0}}>
                   <div className="disp" style={{fontSize:"var(--fs-base)",color:"var(--ink-hi)"}}>Arm the whole line</div>
                   <div className="dim" style={{fontSize:"var(--fs-base)"}}>
-                    {(()=>{ const n = activeG(S).filter(g=>kitFaults(S,g).length).length;
-                      return n ? `${n} man${n===1?" is":"men are"} carrying less than the racks can give ${n===1?"him":"them"}.`
-                        : "Everyone is carrying the best of what the house owns."; })()}
+                    {short ? `${short} man${short===1?" is":"men are"} carrying less than the racks can give ${short===1?"him":"them"}.`
+                      : "Everyone is carrying the best of what the house owns."}
                   </div>
                 </div>
-                <button className="btn" style={{whiteSpace:"nowrap"}} onClick={armAll}>Go down the line</button>
+                {/* ---- A LIVE BUTTON WHOSE ONLY OUTCOME WAS THE SENTENCE BESIDE IT ----
+                    `armAllOff` re-arms whoever it can and then writes a chronicle line; with nobody
+                    short that line is "Everyone is already carrying the best of what the house
+                    owns", which is the sentence to the LEFT of this button, already on screen. So
+                    pressing it spent a tap to be told again. The strip button in the panel above
+                    has always been disabled in its own empty state — this is that rule, applied to
+                    the control it sits beside. `short` is hoisted so the label and the enabling
+                    come off one count, which is #150's rule about a figure and the roll behind it. */}
+                <button className="btn" style={{whiteSpace:"nowrap"}} disabled={!short} onClick={armAll}>Go down the line</button>
               </div>
             </div>
-          )}
+          ); })()}
 
           {(()=>{ const open = masterOpen(S), keep = gearUpkeep(S);
             const owned = Object.keys(S.gear||{}).filter(id=>isMaster(id)).reduce((n,id)=>n+(S.gear[id]||0),0);
