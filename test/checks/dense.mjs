@@ -62,7 +62,11 @@ const PLACES = [
   { tab:"familia", face:"THE ROSTER",          max:150, min:50,  saw:105 },
   { tab:"familia", face:"THE DOCTORE'S BOARD", max:210, min:60,  saw:138 },
   { tab:"familia", face:"THE ARMOURY",         max:205, min:60,  saw:161 },
-  { tab:"market",  face:null,                  max:410, min:180, saw:384 },
+  /* 379 in v3.154.0, and the small number is the honest one: the market has no prose to cut. Its
+     length is four man-cards, and what came out of them was two constants — "Not yet sworn", true
+     of 3,524 of 3,524 men measured over 960 played weeks, and the price printed in a button four
+     lines below the price. The block's panel says the sworn fact once now. */
+  { tab:"market",  face:null,                  max:410, min:180, saw:379 },
   /* RATCHETED DOWN 330 -> 320 IN v3.153.0. `yard` found the plate had pushed the House face's
      first pressable thing to y=896 on an 844px phone, and the fix was to stop printing what the
      sticky header prints: Coin, Fame and Standing were on screen twice, 150px apart. "The name"

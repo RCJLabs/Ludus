@@ -23105,11 +23105,161 @@ const ROOM_PLATE = {
   villa:  { box:"0 0 390 158",   label:"The villa" },
   square: { box:"0 190 390 158", label:"The training square" },
   yard:   { box:"0 330 390 158", label:"The yard" },
+  /* THE GATE, AND IT TOOK RENDERING SIX FRAMINGS TO FIND. v3.152.0 dropped this entry because
+     every crop tried came back as the road's picture — the gate is the arch the road runs out
+     through, so anything centred on the gate's own box (590-647) carries the wedge and the
+     cypresses with it. The answer was to stop centring on it. This crop ENDS at 658, above the
+     road's widest point, and takes in the cells and the racks above instead: what it shows is the
+     barred block with the arch and the men standing at it in the lower third. Nothing of the road.
+     Rendered beside the arena's "0 555 390 158" the two read as different places, which is the
+     only test that was ever going to settle it. */
+  gate:   { box:"0 500 390 158", label:"The gate" },
   road:   { box:"0 555 390 158", label:"The road — to the sand" },
 };
 /* THE FOLD IS DRIVEN OFF A REF, NOT OFF STATE. A scroll listener that calls setState re-renders the
    whole tab on every frame of a scroll — on the arena that is seventeen controls and eighteen prose
    blocks. It writes one data attribute on one node instead, and the CSS does the rest. */
+/* ---- ONE MAN ON THE BLOCK, LIFTED OUT OF App IN v3.154.0 ----
+   127 lines of it, and the reason is `bulk` rather than taste: this release put three comments
+   inside App — why "Not yet sworn" is a fact about the block and not a tag on a man, why the buy
+   button stopped repeating a price set four lines above it, and why a sentence pointing at the
+   Ludus tab had been wrong since v3.151.0 — and App went to 5,792 against the 5,786 it is allowed.
+
+   The rule here is SPLIT BEFORE RAISING, and this was the obvious thing to split: a card for one
+   man, with its own read level, its own tags, its own six stats and its own act, sitting inside
+   the largest function in the file for no reason but that it was written there. App is 5,667 now
+   — 104 lines BELOW where this release found it (5,771), and no allowance moved.
+
+   `bidFor` and `scout` are App's own closures and come in as props; everything else it calls is
+   module scope already. */
+function BlockMan({ S, g, bidFor, scout }){
+  /* lvl was computed in an IIFE halfway down the card; the summary needs it too, so it
+     is hoisted to the row and the IIFE is gone. */
+  const lvl = readLevel(S, g), src2 = lvl>=1 ? g : (g.shown || g);
+  return (
+            <details className="entry card panel" style={{padding:12,borderColor:g.contested?"var(--gold-deep)":isAuctor(g)?"var(--azure-edge)":g.legend?"var(--gold-deep)":undefined}}>
+              <summary>
+              <div className="flex items-center justify-between">
+                <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700}}>{g.name}</div>
+                <span className="gold" style={{fontSize:"var(--fs-lg)"}}>{g.price}d</span>
+              </div>
+              <div className="flex items-center gap-1" style={{flexWrap:"wrap",margin:"5px 0"}}>
+                <span className="tag">{g.cls}</span><span className="tag">{g.origin}</span>
+                {isF(g) && <span className="tag" style={{borderColor:"var(--violet-edge)",color:"var(--violet)"}}>Gladiatrix</span>}
+                {favourOf(g)>=40 && <span className="tag" style={{borderColor:favColour(favourOf(g)),color:favColour(favourOf(g))}}>{favWord(favourOf(g))}</span>}
+                {masterOf(g) && g.mastery.cls===g.cls && <span className="tag tag-gold">✦ {MASTERY[g.mastery.cls].name}</span>}
+                {g.benched && g.benched.weeks>0 && <span className="tag" style={{borderColor:"var(--gold-edge)",color:"var(--gold)"}}>Kept apart · {g.benched.weeks}w</span>}
+                {g.learning && <span className="tag" style={{borderColor:"var(--gold-edge)",color:"var(--gold)"}}>At the far post · {g.learning.weeks}w</span>}
+                {g.second && <span className="tag">Two trades</span>}
+                {lastingOf(g).length>0 && <span className="tag tag-blood">{LASTING[lastingOf(g)[0]].name}</span>}
+                {g.yardName && <span className="tag" style={{borderColor:"var(--laurel-edge2)",color:"var(--laurel)"}}>"{g.yardName}"</span>}
+                {/* "NOT YET SWORN" IS NOT A TAG ON THE BLOCK, IT IS A FACT ABOUT THE BLOCK.
+                    Measured over 960 played weeks across twelve houses: 3,524 men stood here,
+                    148 of them sold on by other houses, and NOT ONE was sworn. A mark that is on
+                    every row tells four men apart from nothing — it is the shape "Vow · 154d" had
+                    on the altar, four rows instead of five. The block's own panel says it once.
+                    It stays on a man's own card, where he can be sworn or not. */}
+                {isDamn(g) && <span className="tag" style={{borderColor:"var(--blood-edge)",color:"var(--blood-hi)"}}>Condemned · {damnLeft(g)} to serve</span>}
+                {isAuctor(g) && <span className="tag" style={{borderColor:"var(--azure-edge)",color:"var(--azure)"}}>Auctoratus · free</span>}
+                {g.warCaptive && <span className="tag tag-blood">Taken in the south</span>}
+                {g.contested && <span className="tag tag-gold">✦ House {g.contested.house} is bidding</span>}
+                {g.soldBy && <span className="tag">Sold on by House {g.soldBy}</span>}
+                {g.soldOn && <span className="tag tag-gold">✦ A finished man · {g.wins}–{g.losses}</span>}
+                {g.slaver && <span className="tag" style={{borderColor:"var(--laurel-edge2)",color:"var(--laurel)"}}>{slaverOf(g.slaver).name}</span>}
+                <span className="tag" style={{borderColor:g.age>31?"var(--blood-edge)":g.age<=PRIME[1]?"var(--laurel-edge)":undefined,
+                  color:g.age>31?"var(--blood-hi)":g.age<=PRIME[1]?"var(--laurel-hi)":undefined}}>{ageTag(g.age)} · {g.age}</span>
+                {(g.scars||[]).length>0 && <span className="tag">{g.scars.length} scar{g.scars.length>1?"s":""}</span>}
+              </div>
+                {/* the six numbers, on the line, because this is what one man is chosen over
+                    another BY. The class's own stats are the gold ones. */}
+                <div className="statstrip">
+                  {STATS.map(k=>{ const [lo,hi] = bandOf(src2[k], lvl);
+                    const key = CLASSES[g.cls].key.includes(k);
+                    return (
+                      <div key={k}>
+                        <div className="k dim">{STAT_NAMES[k].slice(0,3)}</div>
+                        <div className="v" style={{color: key ? "var(--gold)" : (lvl>=2 ? "var(--ink)" : "var(--ink-2)")}}>
+                          {lvl>=2 ? rnd(g[k]) : `${lo}–${hi}`}
+                        </div>
+                        <Band lo={lo} hi={hi} exact={lvl>=2 ? g[k] : null}
+                          label={STAT_NAMES[k]} color={key?BRONZE:"var(--line-4)"}/>
+                      </div>
+                    ); })}
+                </div>
+                {/* the act sits with the sum. preventDefault, or buying a man would also toggle
+                    the row he is standing in — a button inside a summary still opens it. */}
+                {(()=>{ const cost = g.contested ? g.contested.ceiling : g.price;
+                  return (
+                    <button className="btn" style={{width:"100%",marginTop:8, ...(g.contested?{borderColor:"var(--gold-line)"}:{})}}
+                      disabled={S.gold<cost || rosterFull(S)}
+                      onClick={e=>{ e.preventDefault(); e.stopPropagation(); bidFor(g); }}>
+                      {/* THE FIGURE STAYS WHERE IT IS THE ONLY ONE OF ITS KIND. `g.price` is set in
+                          gold at the top of this very row, four lines up and on screen at the same
+                          moment, so a button repeating it is the market's "purses ×1.20". The
+                          CONTESTED label keeps its number because `g.contested.ceiling` is a
+                          DIFFERENT figure from the price above — what it would take to outbid, not
+                          what he is marked at — and a number the row does not otherwise carry is
+                          not a duplicate. */}
+                      {rosterFull(S)? "The cells are full" : S.gold<cost ? "Not enough coin"
+                        : g.contested ? `Outbid House ${g.contested.house} — ${cost} denarii`
+                        : isAuctor(g) ? "Take his oath" : "Buy him"}
+                    </button>
+                  ); })()}
+              </summary>
+              <div>
+              {g.story && STORIES[g.story] && (
+                <div className="hand" style={{fontSize:"var(--fs-base)",color:"var(--violet)",marginBottom:3}}>They say {PR(g).he} is {STORIES[g.story].line}.</div>
+              )}
+                  {g.pitch && !g.scouted && (
+                    <div className="dim hand" style={{fontSize:"var(--fs-base)",marginBottom:3}}>{g.pitch}</div>
+                  )}
+                  {/* what a great house comes down here for: somebody else's finished man */}
+                  {g.soldOn && (
+                    <div style={{fontSize:"var(--fs-base)",marginBottom:3,color:"var(--gold)"}}>
+                      Out of {g.soldOn} — {g.wins} wins behind him and {rnd(g.pfame)} renown that came with him.
+                      <span className="dim"> There is very little left to teach a man of {g.age}; what you are buying is the years somebody else spent.</span>
+                    </div>
+                  )}
+                  <div className="hand" style={{fontSize:"var(--fs-md)",color:g.legend?"var(--gold-hi)":"var(--ink-2)"}}>
+                    {g.legend ? "There is something in this one's eyes the arena has not yet seen."
+                     : lvl>=2 ? `Assessed: ${potentialWord(g.potential,g)}. At ${g.age}, ${ageWord(g.age,g)}.`
+                     : lvl>=1 ? `Your doctore walks round ${PR(g).him} once. ${potentialWord(g.potential,g)}, he thinks. At ${g.age}, ${ageWord(g.age,g)}.`
+                     : `The seller talks ${PR(g).him} up and up. At ${g.age}, ${ageWord(g.age,g)}.`}
+                  </div>
+                  {/* THE GRID IS THE STRIP NOW, and there is still only one of them. v3.53.0
+                      removed a second row of bars from this panel for drawing six stats twice;
+                      the same rule retires the grid rather than letting it sit under the strip. */}
+                  {lvl<2 && (
+                    <div className="dim hand" style={{fontSize:"var(--fs-base)"}}>
+                      {lvl>=1
+                        ? (g.flaw ? `${FLAWS[g.flaw].hint} Your doctore would want a closer look.` : "Your doctore finds nothing to object to, which is not the same as a guarantee.")
+                        : `Nobody here has looked at ${PR(g).him} properly. The numbers are the seller's.`}
+                    </div>
+                  )}
+                  {lvl>=2 && (
+                    <div className="panel" style={{padding:9,marginTop:6,background:"var(--panel)",
+                      borderColor: g.flaw ? "var(--blood-edge)" : "var(--laurel-edge)"}}>
+                      {g.flaw
+                        ? <><span className="blood" style={{fontSize:"var(--fs-md)"}}>{FLAWS[g.flaw].name}.</span>
+                            <span className="dim" style={{fontSize:"var(--fs-md)"}}> {PR(g).He} {FLAWS[g.flaw].tell}.</span></>
+                        : <span className="laurel" style={{fontSize:"var(--fs-md)"}}>Nothing hidden. {PR(g).He} is what {PR(g).he} appears to be.</span>}
+                    </div>
+                  )}
+                  {!g.scouted && !isAuctor(g) && (()=>{ const fee = SCOUT_FEE(S,g);
+                    return <button className="btn btn-ghost" style={{width:"100%",marginTop:7}}
+                      disabled={S.gold<fee} onClick={()=>scout(g.id)}>
+                      {`Have ${PR(g).him} looked over · ${fee}d`}
+                    </button>; })()}
+              {isAuctor(g) && (
+                <div className="panel" style={{padding:9,marginTop:6,background:"var(--panel)",borderColor:"var(--azure-edge)"}}>
+                  <div style={{fontSize:"var(--fs-md)"}}>Not for sale — {PR(g).he} is free, and offering. {g.auctor.fee}d in hand, {g.auctor.wage}d a week, {g.auctor.bouts} bouts, then {PR(g).he} walks.</div>
+                  <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>{g.auctor.why}</div>
+                </div>
+              )}
+              </div>
+            </details>
+  );
+}
 /* ---- THE ALTAR, AS A LEDGER ----
    Five gods, five prices, and choosing between them is a comparison — which is the shape the
    circuit's towns had in v3.152.0 and the same answer works here. What it replaces was five
@@ -25745,6 +25895,7 @@ export default function App(){
         </div>)}
 
         {tab==="market" && (<div className="flex flex-col gap-3">
+          <Plate S={S} room="gate"/>
           {/* ---- TWO SECTIONS THAT SAID THE SAME SENTENCE ----
                A house with neither the infirmary nor the armoury built got two `details` on the market
                tab — measured at 63 and 61 characters — and both said "build the room first". A player
@@ -25757,14 +25908,21 @@ export default function App(){
                 <span className="tag">The staff</span>
                 <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>no rooms for them yet</span>
               </div>
-              {/* ---- AND THE COPY THIS PANEL SHIPPED WITH IN v3.1.0 WAS WRONG ----
-                   It said "build either on the villa's House page". The villa's House face is the crest,
-                   the motto, the name and the family — the WINGS are in the House sheet, behind Records
-                   & Annals on the Ludus tab, which is three taps from here and not where I sent anybody.
-                   Measured with the fold probe in v3.3.0, which is the only reason it was caught. */}
+              {/* ---- THIS SENTENCE HAS NOW BEEN WRONG TWICE, IN OPPOSITE DIRECTIONS ----
+                   v3.1.0 said "build either on the villa's House page"; the wings were behind Records &
+                   Annals on the LUDUS tab, three taps away and not where anybody was sent. v3.3.0's fold
+                   probe caught it and the sentence was corrected to name the Ludus tab.
+
+                   Then v3.151.0 MOVED THE SHELF — the whole of Records & Annals went to the villa's House
+                   face, because what the house knows about itself is the villa's business — and this
+                   sentence went stale in the same commit that moved it. Nothing caught that, because
+                   nothing in this project had ever checked that a piece of copy telling a player where to
+                   go names the place the thing is actually at. `pointer` does now: it finds the tab that
+                   really renders Records & Annals and fails if this sentence names a different one. A
+                   sentence that points somewhere is a claim, and claims get checked. */}
               <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
-                A medicus wants an infirmary and an armourer wants an armoury. Raise either in the Ludus
-                tab's House sheet — under Records &amp; Annals — and whoever is looking for a place will be here.
+                A medicus wants an infirmary and an armourer wants an armoury. Raise either in the Villa
+                tab&apos;s House face — under Records &amp; Annals — and whoever is looking for a place will be here.
               </div>
             </div>
           ) : STAFF_KEYS.map(k => SECT.staff(S, SX, k))}
@@ -25792,7 +25950,8 @@ export default function App(){
                     : `Room for ${room} more · ${canBuy} of ${(S.market||[]).length} within your coin · cheapest ${cheapest}d.`}
                 </div>
                 <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:3}}>
-                  Fresh stock every third week. What the seller tells you about a man is what the seller wants.
+                  Fresh stock every third week. Nobody here is sworn — that comes after you buy him.
+                  What the seller tells you about a man is what the seller wants.
                 </div>
               </div>
             ); })()}
@@ -25862,121 +26021,8 @@ export default function App(){
                 </button>
               </div>
             ); })()}
-          {S.market.filter(g=>!g.paragon).map(g=>{
-            /* lvl was computed in an IIFE halfway down the card; the summary needs it too, so it
-               is hoisted to the row and the IIFE is gone. */
-            const lvl = readLevel(S, g), src2 = lvl>=1 ? g : (g.shown || g);
-            return (
-            <details key={g.id} className="entry card panel" style={{padding:12,borderColor:g.contested?"var(--gold-deep)":isAuctor(g)?"var(--azure-edge)":g.legend?"var(--gold-deep)":undefined}}>
-              <summary>
-              <div className="flex items-center justify-between">
-                <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700}}>{g.name}</div>
-                <span className="gold" style={{fontSize:"var(--fs-lg)"}}>{g.price}d</span>
-              </div>
-              <div className="flex items-center gap-1" style={{flexWrap:"wrap",margin:"5px 0"}}>
-                <span className="tag">{g.cls}</span><span className="tag">{g.origin}</span>
-                {isF(g) && <span className="tag" style={{borderColor:"var(--violet-edge)",color:"var(--violet)"}}>Gladiatrix</span>}
-                {favourOf(g)>=40 && <span className="tag" style={{borderColor:favColour(favourOf(g)),color:favColour(favourOf(g))}}>{favWord(favourOf(g))}</span>}
-                {masterOf(g) && g.mastery.cls===g.cls && <span className="tag tag-gold">✦ {MASTERY[g.mastery.cls].name}</span>}
-                {g.benched && g.benched.weeks>0 && <span className="tag" style={{borderColor:"var(--gold-edge)",color:"var(--gold)"}}>Kept apart · {g.benched.weeks}w</span>}
-                {g.learning && <span className="tag" style={{borderColor:"var(--gold-edge)",color:"var(--gold)"}}>At the far post · {g.learning.weeks}w</span>}
-                {g.second && <span className="tag">Two trades</span>}
-                {lastingOf(g).length>0 && <span className="tag tag-blood">{LASTING[lastingOf(g)[0]].name}</span>}
-                {g.yardName && <span className="tag" style={{borderColor:"var(--laurel-edge2)",color:"var(--laurel)"}}>"{g.yardName}"</span>}
-                {!g.sworn && <span className="tag" style={{borderColor:"var(--gold-edge)",color:"var(--gold)"}}>Not yet sworn</span>}
-                {isDamn(g) && <span className="tag" style={{borderColor:"var(--blood-edge)",color:"var(--blood-hi)"}}>Condemned · {damnLeft(g)} to serve</span>}
-                {isAuctor(g) && <span className="tag" style={{borderColor:"var(--azure-edge)",color:"var(--azure)"}}>Auctoratus · free</span>}
-                {g.warCaptive && <span className="tag tag-blood">Taken in the south</span>}
-                {g.contested && <span className="tag tag-gold">✦ House {g.contested.house} is bidding</span>}
-                {g.soldBy && <span className="tag">Sold on by House {g.soldBy}</span>}
-                {g.soldOn && <span className="tag tag-gold">✦ A finished man · {g.wins}–{g.losses}</span>}
-                {g.slaver && <span className="tag" style={{borderColor:"var(--laurel-edge2)",color:"var(--laurel)"}}>{slaverOf(g.slaver).name}</span>}
-                <span className="tag" style={{borderColor:g.age>31?"var(--blood-edge)":g.age<=PRIME[1]?"var(--laurel-edge)":undefined,
-                  color:g.age>31?"var(--blood-hi)":g.age<=PRIME[1]?"var(--laurel-hi)":undefined}}>{ageTag(g.age)} · {g.age}</span>
-                {(g.scars||[]).length>0 && <span className="tag">{g.scars.length} scar{g.scars.length>1?"s":""}</span>}
-              </div>
-                {/* the six numbers, on the line, because this is what one man is chosen over
-                    another BY. The class's own stats are the gold ones. */}
-                <div className="statstrip">
-                  {STATS.map(k=>{ const [lo,hi] = bandOf(src2[k], lvl);
-                    const key = CLASSES[g.cls].key.includes(k);
-                    return (
-                      <div key={k}>
-                        <div className="k dim">{STAT_NAMES[k].slice(0,3)}</div>
-                        <div className="v" style={{color: key ? "var(--gold)" : (lvl>=2 ? "var(--ink)" : "var(--ink-2)")}}>
-                          {lvl>=2 ? rnd(g[k]) : `${lo}–${hi}`}
-                        </div>
-                        <Band lo={lo} hi={hi} exact={lvl>=2 ? g[k] : null}
-                          label={STAT_NAMES[k]} color={key?BRONZE:"var(--line-4)"}/>
-                      </div>
-                    ); })}
-                </div>
-                {/* the act sits with the sum. preventDefault, or buying a man would also toggle
-                    the row he is standing in — a button inside a summary still opens it. */}
-                {(()=>{ const cost = g.contested ? g.contested.ceiling : g.price;
-                  return (
-                    <button className="btn" style={{width:"100%",marginTop:8, ...(g.contested?{borderColor:"var(--gold-line)"}:{})}}
-                      disabled={S.gold<cost || rosterFull(S)}
-                      onClick={e=>{ e.preventDefault(); e.stopPropagation(); bidFor(g); }}>
-                      {rosterFull(S)? "The cells are full" : S.gold<cost ? "Not enough coin"
-                        : g.contested ? `Outbid House ${g.contested.house} — ${cost} denarii`
-                        : isAuctor(g) ? `Take his oath — ${g.price} denarii` : `Buy for ${g.price} denarii`}
-                    </button>
-                  ); })()}
-              </summary>
-              <div>
-              {g.story && STORIES[g.story] && (
-                <div className="hand" style={{fontSize:"var(--fs-base)",color:"var(--violet)",marginBottom:3}}>They say {PR(g).he} is {STORIES[g.story].line}.</div>
-              )}
-                  {g.pitch && !g.scouted && (
-                    <div className="dim hand" style={{fontSize:"var(--fs-base)",marginBottom:3}}>{g.pitch}</div>
-                  )}
-                  {/* what a great house comes down here for: somebody else's finished man */}
-                  {g.soldOn && (
-                    <div style={{fontSize:"var(--fs-base)",marginBottom:3,color:"var(--gold)"}}>
-                      Out of {g.soldOn} — {g.wins} wins behind him and {rnd(g.pfame)} renown that came with him.
-                      <span className="dim"> There is very little left to teach a man of {g.age}; what you are buying is the years somebody else spent.</span>
-                    </div>
-                  )}
-                  <div className="hand" style={{fontSize:"var(--fs-md)",color:g.legend?"var(--gold-hi)":"var(--ink-2)"}}>
-                    {g.legend ? "There is something in this one's eyes the arena has not yet seen."
-                     : lvl>=2 ? `Assessed: ${potentialWord(g.potential,g)}. At ${g.age}, ${ageWord(g.age,g)}.`
-                     : lvl>=1 ? `Your doctore walks round ${PR(g).him} once. ${potentialWord(g.potential,g)}, he thinks. At ${g.age}, ${ageWord(g.age,g)}.`
-                     : `The seller talks ${PR(g).him} up and up. At ${g.age}, ${ageWord(g.age,g)}.`}
-                  </div>
-                  {/* THE GRID IS THE STRIP NOW, and there is still only one of them. v3.53.0
-                      removed a second row of bars from this panel for drawing six stats twice;
-                      the same rule retires the grid rather than letting it sit under the strip. */}
-                  {lvl<2 && (
-                    <div className="dim hand" style={{fontSize:"var(--fs-base)"}}>
-                      {lvl>=1
-                        ? (g.flaw ? `${FLAWS[g.flaw].hint} Your doctore would want a closer look.` : "Your doctore finds nothing to object to, which is not the same as a guarantee.")
-                        : `Nobody here has looked at ${PR(g).him} properly. The numbers are the seller's.`}
-                    </div>
-                  )}
-                  {lvl>=2 && (
-                    <div className="panel" style={{padding:9,marginTop:6,background:"var(--panel)",
-                      borderColor: g.flaw ? "var(--blood-edge)" : "var(--laurel-edge)"}}>
-                      {g.flaw
-                        ? <><span className="blood" style={{fontSize:"var(--fs-md)"}}>{FLAWS[g.flaw].name}.</span>
-                            <span className="dim" style={{fontSize:"var(--fs-md)"}}> {PR(g).He} {FLAWS[g.flaw].tell}.</span></>
-                        : <span className="laurel" style={{fontSize:"var(--fs-md)"}}>Nothing hidden. {PR(g).He} is what {PR(g).he} appears to be.</span>}
-                    </div>
-                  )}
-                  {!g.scouted && !isAuctor(g) && (()=>{ const fee = SCOUT_FEE(S,g);
-                    return <button className="btn btn-ghost" style={{width:"100%",marginTop:7}}
-                      disabled={S.gold<fee} onClick={()=>scout(g.id)}>
-                      {`Have ${PR(g).him} looked over · ${fee}d`}
-                    </button>; })()}
-              {isAuctor(g) && (
-                <div className="panel" style={{padding:9,marginTop:6,background:"var(--panel)",borderColor:"var(--azure-edge)"}}>
-                  <div style={{fontSize:"var(--fs-md)"}}>Not for sale — {PR(g).he} is free, and offering. {g.auctor.fee}d in hand, {g.auctor.wage}d a week, {g.auctor.bouts} bouts, then {PR(g).he} walks.</div>
-                  <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:3}}>{g.auctor.why}</div>
-                </div>
-              )}
-              </div>
-            </details>
-          );})}
+          {S.market.filter(g=>!g.paragon).map(g=>
+            <BlockMan key={g.id} S={S} g={g} bidFor={bidFor} scout={scout}/>)}
         </div>)}
 
         {tab==="villa" && (<div className="flex flex-col gap-3">
