@@ -14,6 +14,7 @@ Run them straight:
     node test/probes/quiet.mjs 10 420      # the week's shape, and the fast-forward button
     node test/probes/handle.mjs            # player actions no check can reach (no houses to play)
     node test/probes/dark.mjs 8 320        # and whether those actions ever open, and ever do anything
+    node test/probes/survey.mjs 16 420     # the design survey: endings, careers, arcs, what a long run engages
     node test/probes/nemesis.mjs 10 420    # #134; add `silent` for the arm that never replies
     node test/probes/season.mjs 24 40 bench # seeds, tail, and `bench` to keep the trainee off the card
     node test/probes/coast.mjs 24 320      # #133; controlled pairs, stay-at-home vs tour-and-return

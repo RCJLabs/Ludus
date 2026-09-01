@@ -2378,6 +2378,202 @@ The hardest fact from last session still stands, verified on four seeds, **288 h
 exceptions**: every room, all ~15 feats, the doctore, the doctrine, the collegium, the aedile and the
 wife were gained hundreds of times between them and lost **zero** times.
 
+### THE DESIGN AUDIT — twenty-five recommendations in five ledgers, #207–#231
+
+Asked for as five ledgers — gameplay, graphics, depth, story, mechanics — five items each. Not a
+defect hunt: the question this time is what a player *meets*. Measured with the new `survey` probe
+(**16 houses × 420 weeks, 3,961 house-weeks, 1,046 men**, under the reference lanista), a follow-up
+arc count (12 × 360, 3,629 weeks), a re-run of `dark` (8 × 320, 1,942 weeks, 1,849 bouts),
+`coverage`, and a screenshot pass over a founding house, a fought bout, and a forged year-27 house.
+Where a figure depends on the reference player's *policy* rather than the game, the item says
+**(rope)** — a system the rope does not pursue reads dark without being dark, and acting on one of
+those begins with one more probe, not with code.
+
+**THE FRAME, before the items — how sixteen long houses actually went.** Endings: **7 in debt, 3 to
+rebellion, 1 to ruin, 5 survived** to week 420; the dead died at a median of about year 3. Median
+gold by era: **991 → 4,163 → 4,361 → 3,480** — flat after year four. Median fame: **145 → 1,727 →
+3,053 → 3,848** — climbing forever. Of 1,046 men who ever stood in the cells, **the median career
+is one bout and zero wins** (p90 ten bouts); 470 died, 45%. A feud stood on **79% of all weeks**.
+The saga reached its finale **0 times in 13 tellings**. Rome was offered **0 times**. The
+chronicle's most-told sentence was told **616 times — 15.6% of every week the sixteen houses
+lived**.
+
+#### THE GAMEPLAY LEDGER
+
+**#207 — The difficulty curve is upside down: the hardest week is around week 30 and the easiest is
+week 300.** Debt is the game's dominant death — 7 of 16 houses, median about year 3 — while the
+survivors coast on a flat ~4,000d median from year 4 onward with nothing pressing them. The young
+house's squeeze is the game working as designed; the old house's calm is not. Recommend moving
+pressure late rather than softening it early: a famous house should be *billed* like one — expected
+to stage games, touched for liturgies (the liturgy exists), leaned on by the aedile — so the ledger
+stays a live instrument after year four instead of a solved one.
+
+**#208 — The median man fights once and wins nothing.** p50 career: 1 bout, 0 wins; p90: 10. 45% of
+every man who ever entered the cells died there or on the sand. Buying is the loop and fighting is
+the point, yet half the roster never really reaches it. Partly the rope buying fodder **(rope)** —
+but the economy makes fodder optimal, which is the finding. Recommend a designed novice road:
+survivable debut formats (exhibition, wooden-sword cards — the yard tournament already exists as
+furniture for this) so a bought man's second bout is the norm and his death means something when it
+comes.
+
+**#209 — The entrance is the strongest unpriced button in the game.** Measured by the earlier
+handle audit and still true: `boxes` is worth **+10 missio into the engine and +2 favour with every
+patron, every bout** — a standing engine nobody prices — and showman/grim carry real fight effects.
+The UI offers the four as flavour chips and never reports what one did. Recommend the settlement
+name it: "the boxes remembered" / "the grim entrance put a flinch in him" — same rule as #150, a
+lever a player pulls should show its work.
+
+**#210 — The fast-forward carries you past the one thing the game called urgent.** `skipWeeks`
+breaks on events, endings, successions, Rome, a doctore, re-signings and cards — and **not on a
+deadline coming due**, while deadlines are what the agenda raises at urgency 3. The rope used the
+skip on 5% of its weeks (99 of 1,942). Recommend it break on any deadline inside the skip window
+and say so up front: "stops at the levy, three weeks in."
+
+**#211 — The late game asks more and shows the same.** Prior audit's measurement, unchanged in
+design since: demand grows **7.85 → 11.85 items a week (+51%)** across a run and urgency-2 items
+double, but the shown block stays ~4.6 slots and **75% of what fills it is chosen for being new
+against 3% for being urgent**. Recommend a late-game posture for the morning report: once a house
+is past (say) year five, urgency outranks novelty in the shown block.
+
+#### THE GRAPHICS LEDGER
+
+**#212 — The drawing does not know the house got great.** Screenshot pair: a forged **year-27
+house, 21,000 fame, every wing at level 4** renders near-identical to week one — same villa, same
+square, same modest cells; only the palus posts count up. The game's most distinctive surface never
+registers its own campaign. Recommend stature in the drawing: built wings drawn taller or dressed,
+trophies on the villa at fame bands, the era title lettered onto the plate — `ROOM_PLATE` and the
+crop machinery make every one of these appear on the page tops for free.
+
+**#213 — The crowd is one static row while CROWD is a number the engine rolls.** In the fight, the
+crowd renders as a fixed rank of heads over a gradient band; the crowd meter (and the missio it
+feeds) lives as text below. Recommend the drawn crowd track the number — thin at 20, packed and
+agitated at 80, standing at the balance — using the eight venue backdrops that already exist to
+carry venue tier.
+
+**#214 — The roster is text while the game owns a 22-state figure.** A man's own drawing (fatigue,
+injury, record, kit — the v3.144.0–v3.146.0 work) lives on his page only. The roster rows and the
+block are name + tags + bars. Recommend the small figure on every roster and block row — a glance
+at the familia should look like a yard, and an infirmary row should *look* hurt.
+
+**#215 — Seasons are mechanical and invisible.** Winter, summer, festivals move purses, training,
+fatigue and healing (the chips on The Year say so) — and the ludus is drawn in the same golden
+afternoon all year. The v3.145.0 machinery (`SCN_SAND`'s stop table with derived ink) makes a
+per-season grade cheap and safe: a paler low winter sun, lamps at Saturnalia, the same table, the
+same contrast guarantee from `legible`.
+
+**#216 — Your men have faces; the opponent is a class.** The pre-fight card reads him well (school,
+record, "would be second best") but on the sand he is a bare class silhouette, whatever his fame.
+The bearing/ornament machinery built for our men in v3.146.0 (`boreOf`, fame rings, kill marks)
+never applies to him. Recommend the opponent's figure carry his record — a 9–0 man from the Suessan
+school should *stand* like one before a sword is raised.
+
+#### THE DEPTH LEDGER
+
+**#217 — Gold has nowhere to go after year four.** Median era gold 991 → 4,163 → 4,361 → 3,480,
+and the two big sinks — public works and monuments — engaged **0 times in 16 runs** **(rope)**. The
+shelf exists and nothing pulls a house toward it. Recommend the works become the named late-game
+ladder: agenda items when the box can afford one, rivals racing you to them, the census noticing.
+
+**#218 — Rome never happens.** **0 offers in 16 houses over eight-plus years each.** The gate:
+fame past `romeBar`, `romeProved`, at least two men — *and a senator patron at favour ≥ 70*, which
+is the term a competent house fails silently **(rope)**. Nothing in the game teaches that road.
+Recommend an agenda whisper when every other term is met: "Rome does not know your name. A senator
+would have to say it" — the mechanic exists; it is the *road* that is dark.
+
+**#219 — The temple is furniture.** Blessed on 2.3% of weeks, vows never taken **(rope)**, while
+the altar ledger (v3.153.0) made the shop legible. The gods' effects are real but arrive unsigned —
+a blessed win reads exactly like an ordinary one. Recommend outcomes name the god when a blessing
+worked (Fortuna's finger, Aesculapius at the bedside), so piety visibly earns its denarii and the
+2.3% has a reason to rise.
+
+**#220 — A shelf of systems a long run never meets: gambits 0, courts 0, pacts 1, prisoner lots 2 —
+in sixteen runs.** Some of that is policy **(rope)**, but a system reachable only off-policy for
+eight years is dark by construction. Recommend wiring them into the arc that is always on — the
+feud (79% of weeks): the rival's schemes should *offer* the gambit, the court case, the pact as
+answers, instead of those living parallel and untouched.
+
+**#221 — Man-depth is gated behind careers nobody has.** Tells need history, sagas need renown,
+mastery needs wins — and the median career is one bout (#208), so most men never touch any
+man-system. Recommend early texture that fires on bout one: a debut tell, an annals line for a
+first blooding, the doctore's one-sentence read after a first loss — depth the median man actually
+lives to see.
+
+#### THE STORY LEDGER
+
+**#222 — The saga never lands.** 13 of 16 houses started one; 12 reached stage 2; **5 reached "his
+reckoning is set"; 0 reached the finale** — across 6,720 possible weeks, the game's built-in hero
+story has never once paid off. Recommend the reckoning be guaranteed to schedule within a named
+window of stage 3, and a *loss* close the story too (a fallen champion is an ending, not a reset to
+stage 2) — a story that cannot end is a meter.
+
+**#223 — The chronicle repeats itself.** 6,274 lines over 16 runs, 1,408 distinct — but the top of
+the table is boilerplate: the mercy line **616 times (15.6% of all weeks)**, festival announcements
+~1,215 combined, "the bench where he sat is empty" 230. The story organ's most common sentences are
+its least story-like. Recommend variant pools keyed to the man and the count — the third mercy in a
+month is a *reputation*, and the line should know it.
+
+**#224 — Death is bulk.** 470 dead across 16 runs — a death every 8.4 weeks somewhere — and the
+funeral rites were performed **0 times against 164 men standing unburied** (12-house arm; the act
+is **(rope)**, the neglect pressure is not). The game owns the machinery for death to become story
+— rites, the collegium's stone, the annals — and the common case is a generic bench line and a pit.
+Recommend the graveside week auto-offer the rite with the man's record in the offer, and the
+chronicle's death lines draw on his career (his nickname, his best afternoon, who he was paired
+with).
+
+**#225 — The feud is weather, not story.** A feud stood on **79% of all weeks**; 22 declared and
+**6 ever won** across 12 houses, and a new one re-declares soon after any resolution. Always-on and
+rarely-resolving reads as climate. Recommend feuds with shapes and true endings — ruin them, absorb
+them, marry into them — and a real quiet between feuds, so a declaration is news and a resolution
+is a chapter, not a respawn.
+
+**#226 — Generations are the rarest story in a game about a house.** 3 successions in 16 runs, and
+the heir arrives as a mechanic at the death. The domus (wife, children, next of kin) exists from
+week one and stays procedural. Recommend seeding the generation early — the heir as a named
+character in years 1–3 (at the rail during a card, a first opinion, a falling-out) — so succession
+lands as an arc's end rather than a modal.
+
+#### THE MECHANICS LEDGER
+
+**#227 — Fame climbs forever and buys almost nothing.** Median fame 3,848 by era four and linear
+throughout; titles cap out and nothing consumes it. Meanwhile the munus — staging your own games,
+the era-appropriate fame *sink* — was held **0 times** **(rope)**. Recommend fame become spendable
+standing: staging games, endowing works (#217), backing candidates — with era bands that expect it
+of a great house (#207's other half).
+
+**#228 — Two of the four fight engines carry 1.2% of play.** Of 1,849 rope bouts: **1,658 single
+(89.7%), 168 pair (9.1%), 13 melee (0.7%), 10 venatio (0.5%)**. The melee engine (18 rounds) and
+the hunt (14 rounds, six beast drawings, the Vmbra coats of v3.147.0) are the game's most
+expensive, least-met content. Recommend the calendar force variety: festival cards that *are*
+melees and hunts (the Venationes exist historically for exactly this), so the year's shape rotates
+the engines.
+
+**#229 — The game's most common death has its instrument buried three taps deep.** Debt killed 7 of
+16, and the runway readout — "the box would carry this house N more weeks" — lives on the villa's
+*Coin & Council* face, the least-visited place in the game (176 words, third face in). Recommend
+the runway surface itself where the player lives when it turns short: in the header or the morning
+report at under eight weeks, in blood under four. The number exists; its placement assumes a player
+who already knows he is dying.
+
+**#230 — Fourteen bouts fought at the wrong stakes.** The rope's own counters, kept since v3.116.0
+precisely because refusals were legible and ignorable, report **14 of 1,849 bouts (0.8%) fought at
+stakes other than the ones asked for**. Small, real, and exactly the class #150 exists for — the
+card promised one thing and the sand rolled another. This one is an *investigation*, not a design:
+one probe to find which path drops the stakes, then the fix.
+
+**#231 — The wager asks for exact coin against a read given in words.** The pre-fight card offers
+**50d / 150d / 400d** stakes beside a judgement like "would be second best" or "even, near enough"
+— a bet priced in denarii against odds priced in prose, on the same panel where the engine holds a
+real number. Recommend the doctore's read price the wager the way the missio line already prices
+mercy ("if he falls now — 13 in the hundred"): the same figure the roll uses, shown before coin
+goes down, per the house rule that a displayed number and the roll behind it are the same function.
+
+**What this audit did not open.** Rebellion (3 deaths in 16 runs — working as a threat), the
+circuit (43 trips, 9.3% of weeks away — healthy), patrons (3.8 a house — universal), the war (8
+seen, 6 resolved), elections/laws/doctrines/collegium (13–16 of 16 — all engaged). The systems the
+last two hundred releases tuned are the ones the survey found alive.
+
+---
+
 ### THE AUDIT — ten items, and the four candidates it killed on the way
 
 Swept with `coverage`, `handle.mjs`, `dark.mjs`, a re-run of `late.mjs`, and two fresh probes. Every
