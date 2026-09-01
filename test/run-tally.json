@@ -109,4 +109,5 @@
 {"v":"3.153.0","checks":114,"failed":[]},
 {"v":"3.154.0","checks":115,"failed":["bulk"]},
 {"v":"3.154.0","checks":115,"failed":[]},
-{"v":"3.155.0","checks":115,"failed":[]}]
+{"v":"3.155.0","checks":115,"failed":[]},
+{"v":"3.156.0","checks":116,"failed":[]}]

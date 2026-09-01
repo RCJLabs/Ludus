@@ -2378,7 +2378,66 @@ The hardest fact from last session still stands, verified on four seeds, **288 h
 exceptions**: every room, all ~15 feats, the doctore, the doctrine, the collegium, the aedile and the
 wife were gained hundreds of times between them and lost **zero** times.
 
+### v3.156.0 — #207: the bill was missing two salaries, and the jaws now say what they take
+
+The first audit item taken up, and it went the way this project's items usually go: **half of #207
+refuted by its own follow-up measurement, and a real bug found under the other half.**
+
+**THE REFUTATION FIRST.** #207 opened claiming the late game coasts. Measured properly (the same 16
+houses, reading `liturgy` and the weekly net): the liturgy — the game's own counterweight, which
+#207 recommended inventing — **already engages on 64% of all weeks** (2,445 of 3,849), taking
+345,190d across the sixteen runs against the stipend's 640,344d, and the median weekly net runs
+**−23 → −58 → −68 → −126 by era**. The late game is a treadmill the sand has to feed. What
+survives of the item: **deaths still cluster at years 1–4** (8 of the survey's 11), exactly where
+the net turns twice as red while the buffer is thin — and every step that puts it there was priced
+as an increment.
+
+**THE BUG: `weeklyBill` WAS MISSING THE MEDICUS AND THE ARMOURER.** Their wages were charged in
+`staffWeek`, straight off the gold, and the bill — the number behind the House face's Upkeep
+readout, the Coin & Council runway, **`creditLine`** (the figure a run *ends* on), the merchant
+patron's season, and every reserve the reference player holds — never carried them. The doctore
+was in the bill all along, which is what gave it away: three hires, one counted. A staffed house
+read a rosier week than it lived — its runway overstated, its credit shorter than its visible
+spending deserved. One charge now, in `ludusLedger` beside the doctore's wage (deliberately after
+the merchant's carry zeroes the week: he stands the *house*, not your hires — `merchantCarry`
+subtracts the same `staffWages`, so his favour pays exactly what it always paid).
+
+**THE JAWS.** Every commitment that raises the week now says the week it makes, before the coin
+goes down: *"The week becomes −51d · the box then carries ~38w"* — under the wings' build buttons,
+the doctore's hire card, the collegium's founding, both staff rows, the household, and both works
+panels. Seven sites, one line, and **one function**: `billIf` predicts by asking `weeklyBill`
+itself, handed a shallow copy with the one field the commitment would change — never a second
+formula that could drift. #150's rule, applied to the future.
+
+**`jaws` is the new check, three arms, each proved by sabotage.** Prediction against deed for all
+six commitment kinds, driven through the real actions on clones (a kind with no fixture FAILS —
+this check must be able to say it asked all six questions); the two wages held in the bill (put
+the old omission back: *"hiring staff with 30d of wages moved the bill by 0d"*); and the seven
+call sites counted in the source plus one rendered figure matched against `billIf` on the live
+save. Lying by one building level, dropping the wages term, and deleting one call site each turned
+it red with the right sentence.
+
+**AND THE HONEST LEDGER CHANGED THE REFERENCE PLAYER'S FORTUNES, which is worth writing down.**
+Re-surveyed twice on fresh seeds after the fix: endings drifted more debt-heavy (**debt 8 and 9 of
+16, against 7 before; survivors 3 and 2 against 5**). The game charges nothing it did not charge
+before — the same wages, moved between two functions in the same week — but `creditLine` and the
+rope's own reserves now read a truer, larger bill, and the rope plays more conservatively against
+it: fewer men fielded, fewer purses, more debt. Sixteen houses is inside noise for any one arm,
+but two arms leaning the same way is the thesis of #207 arriving from an unexpected side:
+**information changes behaviour**. A player who sees the true jaws will hold a truer reserve — and
+the game may genuinely be a notch harder when its numbers stop flattering you. #229 (surfacing the
+runway when it turns short) is the counterpart and stays queued.
+
 ### THE DESIGN AUDIT — twenty-five recommendations in five ledgers, #207–#231
+
+**THE QUEUE.** All twenty-five stand open. Struck through as they ship, with the release that did:
+
+> **Gameplay** ~~#207~~ (v3.156.0 — half-refuted, and the bill was missing two salaries) · #208 · #209 · #210 · #211
+> **Graphics** #212 · #213 · #214 · #215 · #216
+> **Depth** #217 · #218 · #219 · #220 · #221
+> **Story** #222 · #223 · #224 · #225 · #226
+> **Mechanics** #227 · #228 · #229 · #230 · #231
+
 
 Asked for as five ledgers — gameplay, graphics, depth, story, mechanics — five items each. Not a
 defect hunt: the question this time is what a player *meets*. Measured with the new `survey` probe
@@ -2400,8 +2459,12 @@ lived**.
 
 #### THE GAMEPLAY LEDGER
 
-**#207 — The difficulty curve is upside down: the hardest week is around week 30 and the easiest is
-week 300.** Debt is the game's dominant death — 7 of 16 houses, median about year 3 — while the
+**#207 — SHIPPED v3.156.0, HALF-REFUTED on its own follow-up.** The liturgy already engages on 64%
+of weeks and the median weekly net runs −23/−58/−68/−126 by era — the late game is a treadmill, not
+a coast. What survived: deaths cluster at years 1–4 where step-costs grow undisclosed, and under it
+a real bug — `weeklyBill` was missing the medicus's and armourer's wages. See the v3.156.0 entry.
+*As opened:* The difficulty curve is upside down: the hardest week is around week 30 and the easiest is
+week 300. Debt is the game's dominant death — 7 of 16 houses, median about year 3 — while the
 survivors coast on a flat ~4,000d median from year 4 onward with nothing pressing them. The young
 house's squeeze is the game working as designed; the old house's calm is not. Recommend moving
 pressure late rather than softening it early: a famous house should be *billed* like one — expected

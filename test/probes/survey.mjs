@@ -16,12 +16,12 @@
    pursues reads as dark and that is a fact about the policy, not the game. The audit marks those
    rows (rope). */
 import { serve, open, clearAll, found, installRope } from "../harness.mjs";
-const H = +(process.argv[2] || 16), W = +(process.argv[3] || 420);
+const H = +(process.argv[2] || 16), W = +(process.argv[3] || 420), SEED = process.argv[4] || "SURVEY";
 const { server, port } = await serve({ page:"dist/test.html" });
 const { browser, p } = await open(port);
 await found(p); await clearAll(p, 20); await installRope(p);
 
-const out = await p.evaluate(([H, W])=>{
+const out = await p.evaluate(([H, W, SEED])=>{
   const A = window.__LVDVS, R = window.__ROPE;
   const ERA = w => Math.min(3, Math.floor(w / (W/4)));
   const sum = { houses:H, weeks:0, endings:{}, endedAt:[],
@@ -38,7 +38,7 @@ const out = await p.evaluate(([H, W])=>{
   sum.feud = { weeks:0, declared:0, won:0 }; sum.rites = { honoured:0, unburied:0 }; sum.mercyLine = 0;
 
   for(let h=0; h<H; h++){
-    const d = A.newGameState("SURVEY-"+h);
+    const d = A.newGameState(SEED+"-"+h);
     const seenMen = new Set(); let wasAway = false; let hadLoan = false; let lastNem = null;
     let sawSaga = false, sagaMax = 0;
     for(let w=0; w<W; w++){
@@ -126,6 +126,6 @@ const out = await p.evaluate(([H, W])=>{
   const top = Object.entries(sum.chron.distinct).sort((a,b)=>b[1]-a[1]).slice(0,12);
   sum.chron.top = top; delete sum.chron.distinct;
   return sum;
-}, [H, W]);
+}, [H, W, SEED]);
 console.log(JSON.stringify(out, null, 1));
 await browser.close(); server.close();
