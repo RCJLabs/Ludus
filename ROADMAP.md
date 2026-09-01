@@ -2428,6 +2428,59 @@ but two arms leaning the same way is the thesis of #207 arriving from an unexpec
 the game may genuinely be a notch harder when its numbers stop flattering you. #229 (surfacing the
 runway when it turns short) is the counterpart and stays queued.
 
+### v3.159.0 — #211 refuted, and the dead function that wrote three audit items
+
+The fifth item and the last of the gameplay ledger. **All five were at least half wrong**, and this
+one explains why more of them were wrong than chance allows: they were reading a comment that had
+been false for a hundred releases.
+
+**`agendaTop` HAS NO CALL SITES IN THE GAME.** It read:
+
+> *what a player is shown before he asks for the rest: everything urgent, and everything new*
+> ```js
+> const agendaTop = list => list.filter(a => a.urgency >= 3 || a.age <= AG_FRESH);
+> ```
+
+Six mentions in the source, **zero of them a call**. Nor is `agWord` called, nor `agAge`;
+`agendaRanked` — the age-aware sort — is reached only from the suite. The novelty layer is an
+*instrument* the checks reason with (`rank`, `week` and `tally` all use it and earn their keep), and
+no player has ever met it. That sentence is where #145's "both of the game's attention channels
+filter on novelty" came from, where #187's framing came from, and where the whole of #211 came
+from — a recommendation to make urgency outrank novelty in a screen that has never once consulted
+age.
+
+**WHAT THE PLAYER IS ACTUALLY SHOWN**, measured over 2,382 weeks:
+
+- the **morning report** — every row, grouped 3 / 2 / 1 and sorted by when. No cap, no filter, and
+  the report bar badges the full count.
+- the **ludus panel** — `agenda(S)` minus the men's rows, `.slice(0, 7)`. And `agenda` ends
+  `A.sort((a,b) => b.urgency - a.urgency)`, so those seven are the seven most urgent. No age term
+  anywhere on the path.
+
+**What survives of #145 is the growth, and it is real:** demand climbs **8.39 → 13.39 rows a week**
+across a run and urgency-2 **more than doubles, 2.11 → 5.04**. What does not survive is the
+conclusion. Urgency-3 stays flat near **1.5 a week**, the panel overflows on **20% of early weeks
+and 57% of late ones** — the cap bites constantly — and an urgent row fell off the end **0 times in
+2,382 weeks**. What the cap cuts is urgency-1 furniture, which is the design.
+
+**THE SHIP IS A CORRECTION AND A GUARD.** The comment is rewritten at both sites to say what is
+true and to name the three items it misled. And `attend` now holds the invariant, which rested
+entirely on a sort that nothing tested: `agenda` comes back urgency-ordered, no urgency-3 row sits
+outside the panel's seven, **and the cap was actually exercised** — the third arm existing because
+arm two passing on a cap that never bit is the same vacuity that let #211 stand for a hundred
+releases. Proved by removing the sort: `agenda` returns 2,017 readings out of order and **12
+urgency-3 rows fall off the panel**, which is exactly the fault #211 feared and did not find.
+
+**THE GAMEPLAY LEDGER, CLOSED: 5 of 5 at least half refuted.** #207 half (the liturgy already
+engages on 64% of weeks) · #208 whole (the survey's own artifact) · #209 half (already shipped in
+#166) · #210 whole (three protections, none of them guarded) · #211 whole (a dead filter).
+**Three of the five produced real work anyway, all of it residue rather than the item**: two
+salaries missing from the weekly bill, a promise the verdict never kept, and now two invariants —
+the fast-forward's and the panel's — that were correct, load-bearing and completely unguarded.
+The lesson for the four ledgers still open is the one this ledger paid five times to learn: an item
+written from an aggregate, or from reading a function without following it to the screen, is a
+hypothesis about the code and not an observation of the game.
+
 ### v3.158.0 — #210 refuted, and the guard that keeps it refuted
 
 The fourth audit item, and **the fourth to be at least half wrong.** #210 read `skipWeeks` and found
@@ -2568,7 +2621,7 @@ never doing the thing the item accused it of.
 
 **THE QUEUE.** All twenty-five stand open. Struck through as they ship, with the release that did:
 
-> **Gameplay** ~~#207~~ (v3.156.0 — half-refuted, and the bill was missing two salaries) · ~~#208~~ (closed — refuted, the survey's own artifact; true median 4–5 bouts) · ~~#209~~ (v3.157.0 — half already shipped in #166; the verdict now names the salute) · ~~#210~~ (v3.158.0 — refuted; three protections found, and now guarded) · #211
+> **Gameplay** ~~#207~~ (v3.156.0 — half-refuted, and the bill was missing two salaries) · ~~#208~~ (closed — refuted, the survey's own artifact; true median 4–5 bouts) · ~~#209~~ (v3.157.0 — half already shipped in #166; the verdict now names the salute) · ~~#210~~ (v3.158.0 — refuted; three protections found, and now guarded) · ~~#211~~ (v3.159.0 — refuted; `agendaTop` has no call sites) — **ledger closed, 5 of 5 refuted**
 > **Graphics** #212 · #213 · #214 · #215 · #216
 > **Depth** #217 · #218 · #219 · #220 · #221
 > **Story** #222 · #223 · #224 · #225 · #226
@@ -2638,7 +2691,11 @@ deadline coming due**, while deadlines are what the agenda raises at urgency 3. 
 skip on 5% of its weeks (99 of 1,942). Recommend it break on any deadline inside the skip window
 and say so up front: "stops at the levy, three weeks in."
 
-**#211 — The late game asks more and shows the same.** Prior audit's measurement, unchanged in
+**#211 — REFUTED v3.159.0.** Written off a comment on `agendaTop`, which has no call sites in the
+game. The player sees the report (everything, grouped by urgency, uncapped) and the ludus panel (the
+seven most urgent). Demand does grow 8.39 → 13.39 rows a week, but urgency-3 stays flat near 1.5 and
+an urgent row fell off the panel 0 times in 2,382 weeks. Guarded by `attend`. *As opened:* The late
+game asks more and shows the same. Prior audit's measurement, unchanged in
 design since: demand grows **7.85 → 11.85 items a week (+51%)** across a run and urgency-2 items
 double, but the shown block stays ~4.6 slots and **75% of what fills it is chosen for being new
 against 3% for being urgent**. Recommend a late-game posture for the morning report: once a house

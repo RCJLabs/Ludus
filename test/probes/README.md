@@ -19,6 +19,7 @@ Run them straight:
     node test/probes/debut.mjs 16 420      # careers and the per-bout death hazard: #208's refutation
     node test/probes/salute.mjs 14 200     # what the entrance buys, and the salute's counterfactual: #209
     node test/probes/hurry.mjs 12 300      # what the fast-forward carries you past: #210's refutation
+    node test/probes/attend.mjs 16 420     # what the player is actually shown, by era: #211's refutation
     node test/probes/nemesis.mjs 10 420    # #134; add `silent` for the arm that never replies
     node test/probes/season.mjs 24 40 bench # seeds, tail, and `bench` to keep the trainee off the card
     node test/probes/coast.mjs 24 320      # #133; controlled pairs, stay-at-home vs tour-and-return
