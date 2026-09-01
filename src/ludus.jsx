@@ -22818,6 +22818,54 @@ const ScnMan = ({x,y,g,tone,row,openMan}) => {
     {scnSay(x, y+48+(row?14:0), g.name.slice(0,12))}
   </g>); };
 
+/* ---- THE TWO GREAT WORKS THAT NEEDED THEIR OWN GROUND — audit item #212 ----
+   `baths` and `school` are the only works whose text does not put them inside a room that is
+   already drawn — the spina is on the square's floor, the chapel IS the shrine, the tomb and the
+   colossus are on the road. These two are buildings in their own right, so they are drawn in the
+   two places the compound still has: the strip beside the training square, and the portico.
+
+   THEY ARE SCENERY, NOT ROOMS, on the rule the portico set in v3.145.0 — `aria-hidden`, no
+   hotspot, no label. The drawing has eight rooms before this and eight after, which is what
+   `scene` counts, and a bath house that opened the drill sheet would be a worse lie than a bath
+   house nobody can press. */
+const ScnBaths = ({ S }) => !workDone(S, "baths") ? null : (
+<g aria-hidden="true">
+  {/* "Not the plunge in the corner. Hot rooms, a masseur, and the kind of place a man will talk
+       in." A Roman bath sat beside the palaestra, which is where the strip is. */}
+  <ellipse cx="336" cy="310" rx="38" ry="8" fill="#14100c" opacity=".5"/>
+  <rect x="304" y="264" width="64" height="45" fill="url(#scn-stone)" stroke="#33271a"/>
+  <rect x="302" y="259" width="68" height="6" fill="#2e2416" stroke="#3e2f1f" strokeWidth=".7"/>
+  {/* THE DOME IS THE SHAPE. A first cut gave this a shallow barrel roof and a stack and it
+       rendered as a cottage with a chimney — the one silhouette in Roman building that says
+       "baths" from across a yard is a dome on a drum, so that is what it is. */}
+  <rect x="318" y="247" width="34" height="13" fill="#2a2114" stroke="#3e2f1f" strokeWidth=".7"/>
+  <path d="M318 248 a17 17 0 0 1 34 0 Z" fill="#33271a" stroke="#4a3a22" strokeWidth=".8"/>
+  {/* the flue over the furnace — the fire is the whole difference between baths worth the name
+       and a cold plunge in a corner, so it is the part that is lit */}
+  <rect x="356" y="245" width="7" height="19" fill="#241c12" stroke="#3e2f1f" strokeWidth=".7"/>
+  <circle cx="359" cy="243" r="10" fill="url(#scn-torch)"/>
+  <path d="M328 309 L328 287 a8 8 0 0 1 16 0 L344 309 Z" fill="#0f0c08" stroke="#6d5426" strokeWidth=".9"/>
+  <rect x="309" y="275" width="11" height="9" fill="#39290f" stroke="#3e2f1f" strokeWidth=".7"/>
+  <rect x="352" y="275" width="11" height="9" fill="#39290f" stroke="#3e2f1f" strokeWidth=".7"/>
+</g>);
+
+/* "Boys sent to you to be trained and sent back. It is not a ludus, it is a reputation with a
+   roof." The roof it needs is already drawn: the portico is the largest covered walk in the
+   compound and it has stood empty since it went up. The boys stand in the gaps BETWEEN the
+   columns — 32 + i*33, eight of them, so the gaps run 52, 85, 118, 151, 184 — and at the same
+   .62 the portico takes, because they are in the same haze as the columns they stand under. */
+const ScnSchool = ({ S }) => !workDone(S, "school") ? null : (
+<g aria-hidden="true" opacity=".62">
+  {[52, 85, 118, 151, 184].map(x=>(<g key={x}>
+    <circle cx={x} cy="168" r="2.6" fill="#1a1410" stroke="#3a2c18" strokeWidth=".7"/>
+    <path d={`M${x} 171 q-3 1 -3.4 12 l6.8 0 q-.4 -11 -3.4 -12 Z`} fill="#1a1410" stroke="#3a2c18" strokeWidth=".7"/>
+  </g>))}
+  {/* and the man they were sent to, with his rod, who is not one of the boys */}
+  <circle cx="217" cy="162" r="3.2" fill="#150e08" stroke="#4a3a22" strokeWidth=".8"/>
+  <path d="M217 166 q-4 1.4 -4.4 17 l8.8 0 q-.4 -15.6 -4.4 -17 Z" fill="#150e08" stroke="#4a3a22" strokeWidth=".8"/>
+  <line x1="223" y1="158" x2="223" y2="183" stroke="#3a2c18" strokeWidth="1.5"/>
+</g>);
+
 const ScnVilla = ({ S, at, go, houseLit }) => (<>
 {/* THE VILLA — travels; its callers are the villa-panel documents */}
 <g className="scn" role="button" tabIndex={0} aria-label="The villa — the house's own business"
@@ -22851,7 +22899,17 @@ const ScnVilla = ({ S, at, go, houseLit }) => (<>
 </g>
 </>);
 
-const ScnShrine = ({ S, at, openDoc, shrineWord, shrineFire, shrineRank }) => (<>
+/* ---- THE SHRINE THE MEN BUILT, AND THE ONE YOU PAID FOR — audit item #212 ----
+   `chapel` is 5,500 denarii for "Nemesis in stone, with a priest who comes on the right days. The
+   men built one themselves out of nothing; this is the answer to that." It bought a line in a
+   panel, a perk, and NOT ONE PIXEL: the shrine drew the same pediment on the same two columns in
+   the founding week and in the week the stone went up, which is the whole of #212 in one room.
+   It is a temple front when the work stands — the pediment carried out to the full width on four
+   columns, with a third course of step under it. The altar and what is laid on it do not move:
+   the god was always there, and what the money bought is the housing. */
+const ScnShrine = ({ S, at, openDoc, shrineWord, shrineFire, shrineRank }) => {
+  const stone = workDone(S, "chapel");
+  return (<>
 {/* THE SHRINE */}
 <g className="scn" role="button" tabIndex={0} aria-label="The shrine — the temple"
   onClick={()=>openDoc({ label:"The Temple", sub:"the gods, and what they are owed", doc:"temple", dest:"villa:standing", tab:"villa" })}
@@ -22859,23 +22917,27 @@ const ScnShrine = ({ S, at, openDoc, shrineWord, shrineFire, shrineRank }) => (<
   {/* two shapes before this — a pentagon and a blob — for the room that holds every god the
        house owes. Steps, columns, a pediment, and an altar that BURNS when something is
        actually owed or granted, which is the only part of it that is state. */}
-  <path d="M300 150 L328 130 L356 150 Z" fill="#2e2416" stroke="#3e2f1f"/>
-  <rect x="303" y="150" width="50" height="6" fill="#33271a" stroke="#3e2f1f" strokeWidth=".7"/>
-  <rect x="308" y="156" width="7" height="22" fill="#2e2416" stroke="#3e2f1f" strokeWidth=".7"/>
-  <rect x="341" y="156" width="7" height="22" fill="#2e2416" stroke="#3e2f1f" strokeWidth=".7"/>
+  <path d={stone ? "M292 148 L328 122 L364 148 Z" : "M300 150 L328 130 L356 150 Z"}
+    fill={stone?"#33271a":"#2e2416"} stroke={stone?"#4a3a22":"#3e2f1f"}/>
+  {stone && <path d="M297 146 L328 124 L359 146" fill="none" stroke="#42341e" strokeWidth="1"/>}
+  <rect x={stone?294:303} y={stone?148:150} width={stone?68:50} height={stone?8:6}
+    fill="#33271a" stroke="#3e2f1f" strokeWidth=".7"/>
+  {(stone ? [297, 308, 341, 352] : [308, 341]).map(x=>(
+    <rect key={x} x={x} y="156" width="7" height="22" fill="#2e2416" stroke="#3e2f1f" strokeWidth=".7"/>))}
   {shrineFire && <circle cx="328" cy="164" r={9 + shrineRank*2} fill="url(#scn-torch)"/>}
   <ellipse cx="328" cy="166" rx={3 + shrineRank*0.4} ry={4.5 + shrineRank*1.3}
     fill={shrineFire?"#e0bd72":shrineRank?"#8a6a2c":"#3a2f22"}
     opacity={shrineFire?".85":shrineRank?".45":".7"}/>
-  <rect x="302" y="178" width="52" height="4" fill="#33271a"/>
+  <rect x={stone?298:302} y="178" width={stone?60:52} height="4" fill="#33271a"/>
   {/* what the house has laid on the step. Nothing at all when it is godless. */}
   {Array.from({length:shrineRank}).map((_,i)=>(
     <circle key={i} cx={318 + i*7} cy="181" r="2.4" fill="#3a2c18" stroke="#6b5330" strokeWidth=".7"/>))}
-  <rect x="297" y="182" width="62" height="4" fill="#2e2416"/>
+  <rect x={stone?293:297} y="182" width={stone?70:62} height="4" fill="#2e2416"/>
+  {stone && <rect x="288" y="186" width="80" height="4" fill="#241c12"/>}
   {scnSay(328, 198, shrineWord)}
   <ScnBadge x={358} y={136} list={at("shrine")}/>
 </g>
-</>);
+</>); };
 
 const ScnSquare = ({ S, at, openDoc }) => (<>
 {/* THE TRAINING SQUARE — opens the square as a document */}
@@ -22896,6 +22958,21 @@ const ScnSquare = ({ S, at, openDoc }) => (<>
   <path d="M34 296 q52 -9 104 -2" fill="none" stroke="#7a5c2a" strokeWidth="1"/>
   <path d="M150 302 q62 -8 132 -3" fill="none" stroke="#7a5c2a" strokeWidth="1"/>
   <path d="M40 262 q40 -7 82 -3" fill="none" stroke="#815f2b" strokeWidth="1"/>
+  {/* ---- THE SPINA, WHICH THE GAME ALREADY TOLD YOU WAS HERE — #212 ----
+       "A stone spine down the middle of the training square, the way the real ones have. They will
+       fight around it every day for the rest of their lives." Seven thousand denarii, +4 crowd on
+       every bout forever, and nothing down the middle of the training square. It is drawn BEFORE
+       the posts so the palus stands in front of it, and it is laid between the posts at x=88 and
+       x=222 — the only stretch of this floor that is clear at every level of the building. */}
+  {workDone(S, "spina") && (<g aria-hidden="true">
+    <ellipse cx="159" cy="279" rx="56" ry="3.5" fill="#14100c" opacity=".4"/>
+    <path d="M108 277 L210 277 L214 268 L104 268 Z" fill="#2a2114" stroke="#3e2f1f" strokeWidth=".7"/>
+    <rect x="104" y="263" width="110" height="5.5" fill="#33271a"/>
+    <rect x="104" y="262" width="110" height="1.6" fill="#4a3a22" opacity=".8"/>
+    {/* a turning post at each end, which is what makes it a spina and not a kerb */}
+    <path d="M106 263 q3 -14 5 -18 q2 4 5 18 Z" fill="#2e2416" stroke="#3e2f1f" strokeWidth=".7"/>
+    <path d="M202 263 q3 -14 5 -18 q2 4 5 18 Z" fill="#2e2416" stroke="#3e2f1f" strokeWidth=".7"/>
+  </g>)}
   {/* ---- FOUR POSTS, IN A HOUSE THAT HAS BUILT NOTHING AND IN A SCHOOL INSIDE A SCHOOL ----
        The palus is a BUILDING with four levels and the game already writes what each one looks
        like: level 0 is "Three posts in bare dirt", level 3 is "three yards ... and every
@@ -23110,6 +23187,55 @@ const ScnRoad = ({ S, go, roadWord, roadOn, roadFit }) => (<>
   <path d="M126 704 L264 704" stroke="#221b12" strokeWidth="1"/>
   <line x1="177" y1="676" x2="169" y2="700" stroke="#241c12" strokeWidth="3"/>
   <line x1="213" y1="676" x2="221" y2="700" stroke="#241c12" strokeWidth="3"/>
+  {/* ---- THE TOMB OF THE HOUSE, WHEN IT STANDS — audit item #212 ----
+       Measured before this was written: moving a house from nothing to NINE GREAT WORKS STANDING
+       added exactly ZERO elements to the drawn ludus, and moving it from no wings to twenty
+       wing-levels added nine — all of them palus posts, so four of the five buildings draw nothing
+       either. The most expensive things a house can build put no mark on the one surface that is
+       supposed to be the house.
+
+       The tomb is the first of them drawn, and it is drawn here because this is where the game
+       already said it was: "Not a plot. A tomb, on the road out, with room for every man who ever
+       wore your colours and space for the names to be cut." Roman tombs lined the roads out of a
+       city, and this road already has its verges — the cypresses stand at x=70 and 92, so the near
+       left verge below x=62 is open ground at this depth.
+
+       Vmbra: a near-black silhouette on the lit sand, the same treatment the cypresses take. It is
+       not pressable and carries no text — the road's own label is already split across two grounds
+       (see `scnInk`) and a second string at this depth would be a third contrast problem. */}
+  {workDone(S, "tomb") && (
+    <g aria-hidden="true">
+      <rect x="28" y="694" width="34" height="22" fill="#1a1410" stroke="#312c18" strokeWidth=".7"/>
+      <path d="M26 694 L45 684 L64 694 Z" fill="#1a1410" stroke="#312c18" strokeWidth=".7"/>
+      <rect x="36" y="701" width="18" height="9" fill="#241c12" stroke="#3a3220" strokeWidth=".5"/>
+      <rect x="24" y="714" width="42" height="3" fill="#150e08"/>
+    </g>
+  )}
+  {/* ---- AND THE BRONZE, WHEN THERE IS ONE ----
+       `colossus` costs thirty thousand denarii and its own text says where it goes: "on the road
+       where everyone coming into Capua must pass under it ... he stands over the road now, and men
+       who never saw him fight point him out to their sons." So it stands on the road, on the far
+       verge from the tomb, and it is the one thing in the compound taller than the cypresses —
+       which is the whole point of a colossus and the reason it is worth what it costs.
+       It takes the light on its edges rather than reading as a silhouette: everything else at this
+       depth is stone or timber and this is polished bronze. */}
+  {workDone(S, "colossus") && (
+    <g aria-hidden="true">
+      <ellipse cx="348" cy="716" rx="18" ry="4" fill="#14100c" opacity=".55"/>
+      <rect x="336" y="700" width="24" height="16" fill="#1a1410" stroke="#332a18" strokeWidth=".7"/>
+      <rect x="333" y="696" width="30" height="5" fill="#241c12" stroke="#3a3220" strokeWidth=".5"/>
+      <circle cx="348" cy="660" r="5" fill="#241c12" stroke="#8a6a2c" strokeWidth="1.1"/>
+      <path d="M348 665 q-7 2 -8 31 l16 0 q-1 -29 -8 -31 Z" fill="#241c12" stroke="#8a6a2c" strokeWidth="1.1"/>
+      {/* the shield arm down and the sword up, so it is a fighter and not a magistrate. The first
+           cut put both arms up and it read as a man cheering; a bronze of the best fighter the
+           house ever raised is in his guard, not celebrating. */}
+      <path d="M341 671 l-7 10" stroke="#8a6a2c" strokeWidth="1.5" fill="none"/>
+      <circle cx="332" cy="685" r="4.5" fill="#241c12" stroke="#8a6a2c" strokeWidth="1.1"/>
+      <path d="M355 671 l7 -10" stroke="#8a6a2c" strokeWidth="1.5" fill="none"/>
+      <path d="M357 660 l10 0" stroke="#8a6a2c" strokeWidth="1.3" fill="none"/>
+      <path d="M362 661 l0 -15" stroke="#8a6a2c" strokeWidth="1.6" fill="none"/>
+    </g>
+  )}
   {/* cypresses at the verges — every road out of Capua had them, and the road was three
        shapes: a wedge and two ruts. They stand OUTSIDE the carriageway at this depth. */}
   {[[92,44],[70,32],[298,44],[320,32]].map(([x,h])=>(
@@ -23658,7 +23784,9 @@ function Scene({ S, agenda, openDoc, openMan, go, crop }){
         <rect x="26" y="193" width="250" height="3" fill="#1a1410"/>
       </g>
 
+      <ScnSchool S={S}/>
       <ScnVilla  S={S} at={at} go={go} houseLit={houseLit}/>
+      <ScnBaths  S={S}/>
       <ScnShrine S={S} at={at} openDoc={openDoc} shrineWord={shrineWord} shrineFire={shrineFire} shrineRank={shrineRank}/>
       <ScnSquare S={S} at={at} openDoc={openDoc}/>
       <ScnYard   S={S} go={go} openMan={openMan} men={men}/>
