@@ -939,7 +939,8 @@ const rackStrain= d => { const o = rackOver(d); return o ? 1 + Math.min(0.75, o*
 const rackRent  = d => rackOver(d) * 4;
 /* ---- #145: A CONDITION THAT IS GETTING WORSE IS NEWS AGAIN ----
    `agKey` flattens every digit to "#", so "1 past what it holds" and "22 past" were one key and one
-   age — and BOTH of the game's attention channels filter on novelty (`agendaTop` on age, the tab
+   age — and both of the game's attention channels were believed to filter on novelty (`agendaTop`
+   on age, the tab — see the correction over `agendaTop`, which has no call sites at all; the tab
    mark on `fresh`, which its own comment says was made the whole test so a standing item could not
    keep the badge lit). So this was announced for three weeks and then went silent for the rest of
    the run, however far it ran and however much it cost.
@@ -3330,7 +3331,26 @@ function agendaRanked(d){
   return items.map(a=>Object.assign({}, a, { age: agAgeBy(d, agId(a)) }))
     .sort((x,y)=> (y.urgency - x.urgency) || (x.age - y.age));
 }
-/* what a player is shown before he asks for the rest: everything urgent, and everything new */
+/* ---- NOT WHAT A PLAYER IS SHOWN, and this comment said it was for a hundred releases ----
+   It read "what a player is shown before he asks for the rest: everything urgent, and everything
+   new", and three audit items were written off that sentence — #145's "both of the game's attention
+   channels filter on novelty", #187's framing, and #211's whole recommendation that urgency should
+   outrank novelty in the late game.
+
+   `agendaTop` HAS NO CALL SITES IN THE GAME, and neither do `agWord` or `agAge`; `agendaRanked`,
+   the age-aware sort, is called only by the suite. Counted at v3.159.0: six mentions of
+   `agendaTop` in this file, zero of them a call. The novelty layer is an INSTRUMENT the checks
+   reason with — `rank`, `week` and `tally` all use it, and it earns its keep there.
+
+   WHAT THE PLAYER IS ACTUALLY SHOWN, measured over 2,382 weeks:
+     · the ludus panel — `agenda(S)`, which ends `sort((a,b) => b.urgency - a.urgency)`, minus the
+       men's rows, cut to `.slice(0, 7)`. The seven most urgent. No age term anywhere on the path.
+     · the morning report — every row, grouped 3 / 2 / 1 and sorted by when. No cap, no filter.
+   So urgency already outranks novelty, and the late game shows MORE rather than the same: demand
+   grows 8.39 -> 13.39 rows a week across a run and urgency-2 more than doubles (2.11 -> 5.04),
+   while urgency-3 stays flat near 1.5. The panel overflows on 57% of late weeks and what it cuts
+   is urgency-1 furniture — an urgent row fell off the end on 0 of 2,382 weeks. `attend` holds
+   that, because it holds only while `agenda` stays sorted. */
 const AG_FRESH = 3;                 /* three weeks is new; past that it is furniture */
 const agendaTop = list => list.filter(a=>a.urgency >= 3 || a.age <= AG_FRESH);
 const agWord = age => age <= 0 ? "new this week" : age <= AG_FRESH ? `${age} week${age===1?"":"s"} now`
