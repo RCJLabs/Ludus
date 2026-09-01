@@ -111,4 +111,6 @@
 {"v":"3.154.0","checks":115,"failed":[]},
 {"v":"3.155.0","checks":115,"failed":[]},
 {"v":"3.156.0","checks":116,"failed":[]},
-{"v":"3.157.0","checks":117,"failed":[]}]
+{"v":"3.157.0","checks":117,"failed":[]},
+{"v":"3.158.0","checks":118,"failed":["hurry","survive"]},
+{"v":"3.158.0","checks":118,"failed":[]}]
