@@ -2428,6 +2428,52 @@ but two arms leaning the same way is the thesis of #207 arriving from an unexpec
 the game may genuinely be a notch harder when its numbers stop flattering you. #229 (surfacing the
 runway when it turns short) is the counterpart and stays queued.
 
+### v3.157.0 — #209: the boxes remembered, and now they say so
+
+The third audit item, and the first whose recommendation survived contact — though only half of
+it, because **the other half had already shipped in #166.**
+
+**WHAT WAS ALREADY THERE.** #209 opened saying the four entrances are "offered as flavour chips"
+and never priced. They are not: #166 built `ENT_TERM` and `entranceSays`, and every non-cosmetic
+term names itself on the arena panel *before* the bout — *"+1 momentum into the first exchange"*,
+*"the other man starts 8 shaken — doubled, because he has barely fought"*, *"+9 with the editor if
+he goes down, outside the box's cap"*. The item was reading a panel it had not opened.
+
+**WHAT WAS MISSING IS THE OTHER END.** `boxes` promises a *moment* — "when he is on the ground
+looking up, they remember it" — and when that moment came, nothing said the salute had been in the
+answer. The man was spared; the player never learned why. A promise kept in silence is not kept.
+
+**So the verdict says it now**, whether he lived or died:
+
+> *He gave the boxes their due on the way in, and the boxes remembered: 16 of those hundred were
+> the salute.*
+> *He had given the boxes their due on the way in. It was worth 5 in the hundred, and it was not
+> enough.*
+
+The figure is a **counterfactual**, and it is computed the only way this project allows a shown
+number to be computed: `saluteWorth` asks the same pair the verdict asked —
+`missioOdds(missioScore(…))` — twice, with `ctx.day` set and cleared. Not a second formula. #150's
+rule, on the hardest kind of number to hold to it.
+
+**AND THE MEASUREMENT FOUND THE REASON IT WAS WORTH SHIPPING.** Over 288 asks — real men across
+four fame bands and nine accounts — the salute is worth **+8.4 points of spare odds to a man under
+fame 25 and +2.5 to one past 300**, carrying a green man across the even line in 4.4% of asks. It
+is the **novice's insurance**, and it runs exactly counter to the fame protection #208 measured
+(12.3% death under fame 25 falling to 7.5% past 100). The one entrance that most helps the man with
+no name was the one whose help he could never see. `salute` holds that direction as a check arm:
+if the salute ever becomes worth more to the famed man than the green one, it has stopped being
+what the panel says it is.
+
+**THE INSTRUMENT FAULT, recorded because it nearly shipped a false finding.** The probe's first cut
+seeded per-arm and reported `showman` at **26.1% win rate against `none`'s 41.3%** — a catastrophe,
+and flatly against #166's paired finding that showman is the entrance that *pays*. Four different
+sets of houses. Sharing seeds put it at 33.4% against 36.2%, with its death rate *below* `none`'s.
+Even shared-seed career arms diverge the moment one bout resolves differently and fight different
+numbers of bouts, so they are read for the one thing they replicate independently — the salute
+lowers death-of-downs, **17.1% → 14.1%** here against #166's 19.31% → 12.85% — and #166's
+mirrored-card measurement remains the authority on win rate. Written into the probe's header so the
+next reader does not re-derive the catastrophe.
+
 ### #208 closed — REFUTED BY ITS OWN INSTRUMENT, and the correction is the ship
 
 The second audit item taken up, and it did not survive its first follow-up measurement: **"the
@@ -2462,7 +2508,7 @@ never doing the thing the item accused it of.
 
 **THE QUEUE.** All twenty-five stand open. Struck through as they ship, with the release that did:
 
-> **Gameplay** ~~#207~~ (v3.156.0 — half-refuted, and the bill was missing two salaries) · ~~#208~~ (closed — refuted, the survey's own artifact; true median 4–5 bouts) · #209 · #210 · #211
+> **Gameplay** ~~#207~~ (v3.156.0 — half-refuted, and the bill was missing two salaries) · ~~#208~~ (closed — refuted, the survey's own artifact; true median 4–5 bouts) · ~~#209~~ (v3.157.0 — half already shipped in #166; the verdict now names the salute) · #210 · #211
 > **Graphics** #212 · #213 · #214 · #215 · #216
 > **Depth** #217 · #218 · #219 · #220 · #221
 > **Story** #222 · #223 · #224 · #225 · #226
@@ -2512,7 +2558,11 @@ survivable debut formats (exhibition, wooden-sword cards — the yard tournament
 furniture for this) so a bought man's second bout is the norm and his death means something when it
 comes.
 
-**#209 — The entrance is the strongest unpriced button in the game.** Measured by the earlier
+**#209 — SHIPPED v3.157.0, half already done.** The pre-bout pricing exists since #166
+(`entranceSays`); what was missing was the settlement. The verdict now names what the salute
+bought, off the roll's own call — and the measurement found it is worth +8.4 points to a man under
+fame 25 against +2.5 past 300, the novice's insurance. *As opened:* The entrance is the strongest
+unpriced button in the game.** Measured by the earlier
 handle audit and still true: `boxes` is worth **+10 missio into the engine and +2 favour with every
 patron, every bout** — a standing engine nobody prices — and showman/grim carry real fight effects.
 The UI offers the four as flavour chips and never reports what one did. Recommend the settlement

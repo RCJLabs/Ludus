@@ -9110,6 +9110,27 @@ function missioScore(A, ctx, crowd, account, endured, own){
     - (ctx.tier===0?9:0) - ((ctx.hostile && own!==false)?16:0) - (ctx.strange||0);
 }
 const missioAccount = vB => clamp(100 - clamp(vB, 0, 100), 0, 100);
+/* ---- WHAT THE SALUTE WAS WORTH, ON THE ROLL'S OWN ARITHMETIC — audit item #209 ----
+   `boxes` promises a moment: "when he is on the ground looking up, they remember it." The moment
+   arrives, the editor is asked, and until v3.157.0 nothing ever told the player the salute had been
+   in the answer. #166 put every entrance term on the panel BEFORE the bout; this is the other end.
+
+   It is a counterfactual and it is computed the only way this project allows a shown number to be
+   computed: by asking the SAME pair of functions the verdict asked, twice, with `day` set and
+   cleared. Not a second formula, not a stored constant — #150's rule. The day allowance sits
+   outside the editor's cap (v3.59.0), so clearing it genuinely removes its whole contribution
+   rather than freeing room under a ceiling.
+
+   MEASURED over 360 asks — ten real men across four fame bands and nine accounts — the salute is
+   worth +4.7 points of spare odds on average, and it is worth most exactly where the game is
+   least merciful: +8.2 points to a man under fame 25 against +2.45 to one past 300, carrying a
+   green man across the even line in 4.4% of asks. It is the novice's insurance, and it was silent. */
+const saluteWorth = (A, ctx, crowd, account, endured) => {
+  if(!ctx || !(ctx.day > 0)) return 0;
+  const full = missioOdds(missioScore(A, ctx, crowd, account, endured, true));
+  const bare = missioOdds(missioScore(A, Object.assign({}, ctx, { day:0 }), crowd, account, endured, true));
+  return full - bare;
+};
 const missioOdds = sc => clamp(1/(1 + Math.exp(-(sc - MISSIO_MID)/MISSIO_SLOPE)), 0.03, 0.97);
 const missioWord = p => p>=0.86 ? "he would be spared" : p>=0.66 ? "he would most likely be spared"
   : p>=0.42 ? "it would be close" : p>=0.20 ? "the thumb would probably turn" : "the thumb would turn";
@@ -9626,6 +9647,8 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
          blood he drew. This is what makes fighting to survive a real choice. */
       const stand = tA==="defensive" ? 10 : tA==="aggressive" ? -6 : 0;
       const odds = missioOdds(missioScore(A, ctx, crowd, missioAccount(vB), round*3.2 + stand));
+      /* what he bought on the way in, priced off the same call — see `saluteWorth` */
+      const salute = Math.round(saluteWorth(A, ctx, crowd, missioAccount(vB), round*3.2 + stand) * 100);
       push("appeal", `${A.name} raises two fingers — the appeal. ${round} round${round===1?"":"s"}, and the arena holds its breath — ${missioWord(odds)}.`,
         {actor:"A", odds:Math.round(odds*100)});
       if(R() < odds){
@@ -9637,8 +9660,10 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
           ? `${pat.name} raises a hand from the editor's box before the crowd has finished deciding. MISSIO — ${prA.he} is spared, and every lanista in Capua saw who spoke for you.`
           : street >= ACCLAIM_MISSIO*0.7
           ? `The top tiers are on their feet and will not sit down, and they are not asking. MISSIO — ${prA.he} is spared, because the city that plays at being your house did not intend to watch him die.`
-          : `MISSIO. The editor's hand opens. ${prA.He} is spared — carried bleeding from the sand.`, {actor:"A"}); }
-      else { aDies=true; push("death", `The thumb turns. The blow falls true. ${A.name} dies as gladiators die — on the sand, before the crowd.`, {actor:"A"}); }
+          : `MISSIO. The editor's hand opens. ${prA.He} is spared — carried bleeding from the sand.`, {actor:"A"});
+        if(salute >= 1) push("boxes", `${prA.He} gave the boxes their due on the way in, and the boxes remembered: ${salute} of those hundred were the salute.`, {actor:"A"}); }
+      else { aDies=true; push("death", `The thumb turns. The blow falls true. ${A.name} dies as gladiators die — on the sand, before the crowd.`, {actor:"A"});
+        if(salute >= 1) push("boxes", `${prA.He} had given the boxes their due on the way in. It was worth ${salute} in the hundred, and it was not enough.`, {actor:"A"}); }
     } else {
       push("appeal", `${B.name} raises two fingers in appeal...`, {actor:"B"});
       if(crowd>62 && R()<0.55){ bDies=true; push("death", `The crowd howls for blood, and the editor grants it. ${A.name} sends ${prB.him} across the river.`, {actor:"B"}); }
@@ -29363,7 +29388,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        `actions` derives the list now instead of holding a hand-written one, so a future action that
        forgets this line fails a check rather than going quietly dark. */
     answerNem, nemCallOut, callFavour, favourWorth, nobleStory, senatorName, merchantCarry, repay, sellDebt, runGambit, backCandidate, swearIn, OVERTURES, OV_KEYS, runOverture, overtureReady, overtureOdds, overtureWhy, OVERTURE_COOL, LEND_WEEKS, docLent, bestLendable, docTrain, docCalm, docInjuryGuard,   /* #198 — the friendly counterpart, and everything a lent doctore stops paying */
-    applyRefusal, skipWeeks, charterSkip, firstBuyWarn, ENTRANCES, ENTRANCE_KEYS, deadlines, entranceSays, entDread, oppGreen, ENT_MISSIO, ENT_TERM_KEYS, ENT_TERM, BREATHER_BACK,
+    applyRefusal, skipWeeks, charterSkip, firstBuyWarn, ENTRANCES, ENTRANCE_KEYS, deadlines, entranceSays, entDread, oppGreen, ENT_MISSIO, ENT_TERM_KEYS, ENT_TERM, BREATHER_BACK, saluteWorth,
     favMissio, veteranGuard, riseFav, blessMercy, favourOf, MISSIO_MID, MISSIO_SLOPE, missioWord, MISSIO_MAN,
     saveKit, applyKit, dropKit, watchField, startPlan, breakPlan, clearWatch,
     /* ---- AND THE HALF THAT MAKES THEM DRIVEABLE, v3.24.0 ----
