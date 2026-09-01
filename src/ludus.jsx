@@ -19764,31 +19764,88 @@ function LudusPlan({ S }){
   );
 }
 
-const CrowdRow = React.memo(function CrowdRow({ level, factions, venue }){
+/* ---- WHAT THE CROWD ROW DRAWS, AS ONE FUNCTION — audit item #213 ----
+   This arithmetic lived inside `CrowdRow`'s render, which meant nothing outside the browser could
+   ask what the drawing does at a given crowd — and the item was written on the belief that it does
+   nothing. It is #150's rule in its own place: the number the engine rolls and the picture drawn
+   from it come out of ONE function, so a check can hold the picture to the roll.
+
+   Measured over 400 real bouts before this was written: the level spans the WHOLE range — 5th
+   percentile 5, median 51, 95th percentile 100 — and swings a median of 48 points INSIDE one bout,
+   crossing a median of 6 of the memo's buckets. So the row was never static; what it never did was
+   change how many people are in it. */
+const CROWD_SEATS = 30;      /* a full house at the top tier, and the most this row can hold */
+const crowdLook = (level, venue, factions, standing) => {
   const V = VEN(venue||"forum");
-  const heads = V.crowd <= -16 ? 14 : V.crowd <= -9 ? 20 : 30;
-  const dur = 2.4 - (level/100)*1.5;
-  const bright = 0.25 + (level/100)*0.75;
+  const lv = clamp(level==null ? 40 : level, 0, 100);
+  const up = !!standing;
+  /* THE HOUSE THE VENUE CAN HOLD — the seats that exist, before anyone decides to come */
+  const seats = V.crowd <= -16 ? 14 : V.crowd <= -9 ? 20 : CROWD_SEATS;
+  /* ---- AND HOW MANY OF THEM ARE ON THEIR FEET, which is the part that was missing ----
+     A cold crowd did not thin, it only dimmed: 30 heads at a crowd of 5 and 30 heads at 100, and
+     the tints are near-black, so the whole of "the mob is not with you" was a few points of alpha
+     on #0e0a06. The row empties now — a third of the house at nothing, all of it past 80 — and the
+     count is what a player reads first. It never goes below a third: an empty band would read as a
+     drawing that failed to load rather than as a thin crowd. */
+  const filled = Math.max(Math.round(seats/3), Math.round(seats * (0.34 + (lv/100)*0.66)));
+  /* ---- AND WHICH SEATS, WHICH IS NOT THE SAME QUESTION ----
+     Filling `i < filled` empties the row from one END, so a cold house read as a crowd that had
+     all shuffled left rather than a thin one. They fill from the MIDDLE out, by distance from the
+     centre of the tier: the seats over the fighting floor go first, the ends go last, and a seat
+     once taken stays taken as the crowd grows — so nobody teleports when the level moves. */
+  const mid = (seats - 1) / 2;
+  const rank = i => Math.round(Math.abs(i - mid) * 2) + (i < mid ? 0 : 1);
+  const taken = i => rank(i) <= filled;
+  const dur = 2.4 - (lv/100)*1.5;
+  const bright = 0.25 + (lv/100)*0.75;
   /* each block of seats is a faction, warmer ones lit brighter */
   const blocks = FAC_KEYS.map(k=>({ k, v: factions ? (factions[k]==null?40:factions[k]) : 40 }));
+  /* ---- AN EMPTY SEAT CATCHES THE LIGHT; A HEAD BLOCKS IT ----
+     The first cut drew an empty seat as the faction's own tint at low alpha, which at the pit is
+     near-black on near-black: emptying the row changed the band by ΔE 2.21 against a
+     just-noticeable difference of 2.3, so the thinning was invisible at exactly the venue with the
+     fewest people in it. A bench with nobody on it is LIT STONE. Filling the row now darkens it
+     and emptying it lightens it, which is what a stand full of people actually does to a tier. */
+  const bench = "#6b5330";
+  return { seats, filled, dur, bright, blocks, level:lv, standing:up, taken, bench,
+    head: i => { const b = blocks[Math.floor(i / (seats/blocks.length)) % blocks.length];
+      const warm = 0.45 + (b.v/100)*0.75;
+      /* ---- AND ON THEIR FEET AT THE BALANCE ----
+         The one moment in a bout the crowd exists FOR — a man down, two fingers up, the editor
+         being asked — and the row went on bobbing at whatever rate the last exchange left it.
+         Standing is the whole house taller, brighter and twitching: no new rule in the stylesheet,
+         because the row was already drawn from inline values and this is three of them. */
+      const seat = 11 + (i%4)*2.5;
+      return { fac:b.k, tint:FAC_TINT[b.k], height: up ? seat + 5 : seat,
+        /* a full house blocks more light than an empty one, so heat reads as SOLIDITY */
+        opacity: Math.min(1, (up ? 0.22 : 0) + 0.42 + bright * warm * 0.55 * (0.72 + (i%3)*0.14)),
+        bob: +((up ? dur*0.42 : dur)/(0.75+b.v/200)).toFixed(2), delay: +((i%7)*0.13).toFixed(2) }; } };
+};
+
+const CrowdRow = React.memo(function CrowdRow({ level, factions, venue, standing }){
+  const L = crowdLook(level, venue, factions, standing);
   return (
-    <div className="crowdrow" aria-hidden="true">
-      {Array.from({length:heads}).map((_,i)=>{
-        const b = blocks[Math.floor(i / (heads/blocks.length)) % blocks.length];
-        const warm = 0.45 + (b.v/100)*0.75;
+    <div className={"crowdrow" + (standing ? " onfeet" : "")} aria-hidden="true">
+      {Array.from({length:L.seats}).map((_,i)=>{
+        const h = L.head(i);
+        /* ---- THE EMPTY SEATS ARE STILL DRAWN, and that is deliberate ----
+           Dropping the element would reflow the row and slide every remaining head sideways every
+           time the crowd moved eight points — six times a bout, measured. The seat keeps its place
+           and loses its occupant, which is what an emptying stand actually looks like. */
+        const on = L.taken(i);
         return (
-          <div key={i} className="chead" style={{
-            height: 11 + (i%4)*2.5,
-            background: FAC_TINT[b.k],
-            /* a full house blocks more light than an empty one, so heat reads as SOLIDITY */
-            opacity: Math.min(1, 0.42 + bright * warm * 0.55 * (0.72 + (i%3)*0.14)),
-            animation:`bob ${(dur/(0.75+b.v/200)).toFixed(2)}s ease-in-out ${(i%7)*0.13}s infinite`
+          <div key={i} className={"chead" + (on ? "" : " empty")} style={{
+            height: on ? h.height : 3,
+            background: on ? h.tint : L.bench,
+            opacity: on ? h.opacity : 0.3,
+            animation: on ? `bob ${h.bob}s ease-in-out ${h.delay}s infinite` : "none"
           }}/>
         );
       })}
     </div>
   );
-}, (a,b)=> Math.round(a.level/8)===Math.round(b.level/8) && a.venue===b.venue && a.factions===b.factions);
+}, (a,b)=> Math.round(a.level/8)===Math.round(b.level/8) && a.venue===b.venue
+  && a.factions===b.factions && !a.standing===!b.standing);
 
 function HPBar({ label, v, s, cls, flip }){
   return (
@@ -20003,7 +20060,10 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
         )}
         <div className={`arena v-${fight.venue||"forum"} ${shaking? "arenashake":""}`}
           role="img" aria-label={b && b.text ? b.text : "The arena"}>
-          <CrowdRow level={b.crowd} factions={fight.factions} venue={fight.venue}/>
+          {/* `appeal` is two fingers raised and the editor being asked; `crux` is the sim held at
+               the balance for a word from the box. Those are the two beats a crowd stands for. */}
+          <CrowdRow level={b.crowd} factions={fight.factions} venue={fight.venue}
+            standing={b.kind==="appeal" || b.kind==="crux"}/>
           <div className="roar" style={{opacity: b.crowd/130}}/>
           <div className="dust"/>
           {isMelee ? (<>
@@ -29631,6 +29691,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* every action a lanista can take, none of them needing a rendered screen */
     rewardMan, whipMan, sellMan, sellPrice, retireG, grantRudis,
     setFocusOf, setRegimenOf, setSparOf, setTeachOf, stopTeachOf, setDrillTo, APPETITES, APP_KEYS, appetiteOf, appetiteAfter, appHash, APP_SHARE, VENUES, VEN, styleOf, styleFrom, styleWord, setStyle, STYLE_KEYS, suggestedPlan, PLAN_READ,   /* #199 — his standing style, and the reading the plan grid pre-fills from */
+    /* #213 — what the crowd row draws, so the picture and the roll behind it are one function */
+    crowdLook, CROWD_SEATS, FAC_TINT, FAC_KEYS,
     boardMen, restWornMen, allToPalus, pairTheYard,
     scoutBlockMan, buyLot, sellTheHouse,
     /* ---- AND WHETHER A MAN IS STILL ON THE BOOKS, added in v2.92.0 ----

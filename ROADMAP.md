@@ -2428,6 +2428,102 @@ but two arms leaning the same way is the thesis of #207 arriving from an unexpec
 the game may genuinely be a notch harder when its numbers stop flattering you. #229 (surfacing the
 runway when it turns short) is the counterpart and stays queued.
 
+### v3.161.0 — #213 half-refuted, and the crowd that was invisible below the eye's own threshold
+
+The second item of the graphics ledger. Half of what it asked for was already shipped, the half it
+was right about was right for a reason it did not give, and the real fault was one nobody had
+stated — the drawing had been reading the number all along and saying it **below the threshold at
+which a human eye can tell two colours apart.**
+
+**WHAT THE ITEM SAID.** *"The crowd renders as a fixed rank of heads over a gradient band … the
+drawn crowd should track the number — thin at 20, packed and agitated at 80 — using the eight venue
+backdrops that already exist to carry venue tier."*
+
+**`CrowdRow` ALREADY TOOK THE LEVEL.** Three lines of it:
+
+```js
+const heads  = V.crowd <= -16 ? 14 : V.crowd <= -9 ? 20 : 30;   // by VENUE, not by level
+const dur    = 2.4 - (level/100)*1.5;                           // bob speed  <- level
+const bright = 0.25 + (level/100)*0.75;                         // opacity    <- level
+```
+
+Measured over **400 real bouts** before anything was touched (`probes/mob.mjs`):
+
+| | |
+|---|---|
+| the level's range | 5th percentile **5**, median **51**, 95th percentile **100** — the whole scale |
+| its swing inside ONE bout | median **48 points** |
+| distinct renderings per bout | median **6** (the memo buckets at 8 points) |
+
+So the row was never static: it re-drew six times a bout across half the scale. And the venue
+already changed the count, and the backdrop already carried the tier. Three of the item's four
+claims were describing work that shipped in v3.89.0 and v3.138.0.
+
+**WHAT WAS TRUE: the seat count never moved with the crowd.** Thirty heads at a crowd of 5 and
+thirty at 100, six of the nine venues sharing the same thirty. And nothing marked **the balance** —
+the one moment a crowd exists for, a man down and the editor being asked.
+
+**AND THE FAULT NOBODY HAD STATED.** The four faction tints are `#2a2016`, `#191209`, `#3a1610` and
+`#0e0a06` — every one within a few points of black. So the whole of *"the mob is not with you"* was
+a swing in **alpha on near-black**. Composited over each venue's own backdrop, by the browser's own
+gradient interpolation, and measured as CIE76 ΔE:
+
+| | empty house vs full | empty vs HALF full |
+|---|---|---|
+| the pit | **1.17** | 0.59 |
+| the forum | **1.90** | 0.94 |
+| the imperial sand | **2.47** | 1.22 |
+
+**A just-noticeable difference is 2.3, and ΔE below 1.0 is invisible to anyone.** An empty house
+against a half-full one was under 1.0 at every venue in the game. The item said the drawing ignored
+the number. The drawing read the number and whispered it.
+
+**WHAT SHIPPED.**
+
+1. **`crowdLook` — one function.** The arithmetic came out of the render, so the picture and the
+   roll behind it are now the same function and a check can hold one to the other. #150's rule, in
+   the one place it had never been applied.
+2. **The seats empty.** A third of the house at nothing, all of it past 80 — and they fill **from
+   the middle of the tier outward**, so the seats over the fighting floor go first and the ends go
+   last. A first cut filled `i < filled` and emptied the row from one end, which read as a crowd
+   that had all shuffled left rather than a thin one.
+3. **An empty seat catches the light.** The first cut drew it as the faction's own tint at low
+   alpha, which at the pit is near-black on near-black: the thinning came to ΔE **2.21**, still
+   under the threshold, at exactly the venue with the fewest people in it. A bench with nobody on
+   it is lit stone. Filling the row darkens it and emptying it lightens it, which is what a stand
+   full of people actually does to a tier.
+4. **The house stands at the balance.** On `appeal` and `crux` every head is taller, brighter and
+   twitching at 0.43s against 1.03s. No new stylesheet rule — the row was already drawn from inline
+   values and this is three more of them, which matters because `CSS` sits **exactly on its
+   274-line cap** and the rule here is to split before raising.
+
+| ΔE, empty house against a full one | was | now |
+|---|---|---|
+| the pit | 1.17 | **8.31** |
+| the forum | 1.90 | **8.88** |
+| the imperial sand | 2.47 | **9.35** |
+
+and empty against half-full, which used to be invisible at every venue: **0.59 → 2.93**,
+**0.94 → 3.87**, **1.22 → 4.14**. All nine venues now clear the just-noticeable difference; the
+worst is 8.36.
+
+**NEW CHECK — `mob`** (120 → 121). Five arms, over every one of the nine venues:
+
+1. the check reads `crowdLook`'s own output and never its arithmetic
+2. **more crowd is never fewer people** — monotone across 0–100 in steps of 5
+3. **and the row actually thins** — empty to full must move by at least a third of the house, or
+   arm 2 passes on a fill that shifts by one seat
+4. **it is visible** — ΔE over the venue's real backdrop must clear 2.3. *This is the arm the
+   original fault would have failed*, and it is the whole point of the check
+5. **and it stands at the balance** — taller and faster on `appeal` and `crux`
+
+Sabotaged before shipping: pinning `filled = seats` (which is exactly what v3.160.0 drew) fails
+with *"at pit an empty house draws 14 of 14 and a howling one 14 — a swing of 0 where a third of
+the house (5) is the least that reads"*, at all nine venues.
+
+**The seats are never dropped from the DOM, only emptied** — removing them reflows the row and
+slides every remaining head sideways, six times a bout.
+
 ### v3.160.0 — #212: what 336,500 denarii buys, and what it used to show
 
 The first item of the graphics ledger, and **the first audit item this round that measured true on
@@ -2724,7 +2820,7 @@ never doing the thing the item accused it of.
 **THE QUEUE.** All twenty-five stand open. Struck through as they ship, with the release that did:
 
 > **Gameplay** ~~#207~~ (v3.156.0 — half-refuted, and the bill was missing two salaries) · ~~#208~~ (closed — refuted, the survey's own artifact; true median 4–5 bouts) · ~~#209~~ (v3.157.0 — half already shipped in #166; the verdict now names the salute) · ~~#210~~ (v3.158.0 — refuted; three protections found, and now guarded) · ~~#211~~ (v3.159.0 — refuted; `agendaTop` has no call sites) — **ledger closed, 5 of 5 refuted**
-> **Graphics** ~~#212~~ (v3.160.0 — TRUE; six of the nine great works now stand in the drawing, 0 → 51 elements) · #213 · #214 · #215 · #216
+> **Graphics** ~~#212~~ (v3.160.0 — TRUE; six of the nine great works now stand in the drawing, 0 → 51 elements) · ~~#213~~ (v3.161.0 — half-refuted; the row already tracked the level, and did it at ΔE 1.17–2.47 against a just-noticeable 2.3) · #214 · #215 · #216
 > **Depth** #217 · #218 · #219 · #220 · #221
 > **Story** #222 · #223 · #224 · #225 · #226
 > **Mechanics** #227 · #228 · #229 · #230 · #231
@@ -2813,6 +2909,8 @@ square, same modest cells; only the palus posts count up. The game's most distin
 registers its own campaign. Recommend stature in the drawing: built wings drawn taller or dressed,
 trophies on the villa at fame bands, the era title lettered onto the plate — `ROOM_PLATE` and the
 crop machinery make every one of these appear on the page tops for free.
+
+**#213 — HALF-REFUTED, shipped v3.161.0.** The row was never static: measured over 400 bouts it re-drew a median of **6 times a bout** across a median **48-point** swing, and the venue already set the count. What was true is that the SEAT COUNT never moved — and the fault nobody had stated is that the tracking it did do came to **ΔE 1.17–2.47** against a just-noticeable difference of 2.3, i.e. below the threshold of human vision. Now 8.31–9.35. See the release note.
 
 **#213 — The crowd is one static row while CROWD is a number the engine rolls.** In the fight, the
 crowd renders as a fixed rank of heads over a gradient band; the crowd meter (and the missio it
