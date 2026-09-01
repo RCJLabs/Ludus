@@ -2428,6 +2428,108 @@ but two arms leaning the same way is the thesis of #207 arriving from an unexpec
 the game may genuinely be a notch harder when its numbers stop flattering you. #229 (surfacing the
 runway when it turns short) is the counterpart and stays queued.
 
+### v3.160.0 — #212: what 336,500 denarii buys, and what it used to show
+
+The first item of the graphics ledger, and **the first audit item this round that measured true on
+the first ask.** Five gameplay items in a row were at least half wrong; this one was right.
+
+Rendered a founding house against a house of 260 weeks with every wing at level 4, every great work
+standing and 21,000 fame, and diffed the drawn ludus element by element:
+
+| moved, one field at a time | new elements in the drawing |
+|---|---|
+| 0 → 20 wing-levels | **9** — every one of them a palus post |
+| 0 → 9 great works standing | **0** |
+| fame 5 → fame 21,000 | **0** |
+
+Nine works cost **336,500 denarii between them** — more than the rest of the game costs put
+together — and the surface that is supposed to *be* the house drew the same picture on the week
+they were paid for as on the week the doors opened. Four of the five buildings drew nothing either.
+
+The item's own phrasing — "only the palus posts count up" — was right about the wings and slightly
+unfair to the rest: a great house does gain lit windows in the villa, a doctore in the square, and
+a title that changes from *a keeper of slaves* to *a giver of games*. But that title moves on
+`riseRank`, not on fame, and **not one of the nine things a lanista actually spends his fortune on
+put a mark on the drawing.** Of the founding house's 318 elements, 254 came back identical.
+
+**Six of the nine stand in the drawing now, each where the game's own text already put it.** None
+of them is invented placement; every one is a sentence the works panel has been printing for
+fifty releases:
+
+| work | what the game says | where it is drawn |
+|---|---|---|
+| `spina` | *a stone spine down the middle of the training square* | down the middle of the training square, between the two posts that are clear at every level of the palus, drawn **behind** the posts so the drill stands in front of it |
+| `baths` | *hot rooms, a masseur* | the strip beside the square — where a Roman bath sat, next to the palaestra. A dome on a drum, an arched door, and a **lit flue**, because the fire is the whole difference between baths worth the name and a plunge in the corner |
+| `chapel` | *Nemesis in stone … the men built one themselves out of nothing; this is the answer to that* | the shrine itself, rebuilt: the pediment carried out to full width on **four columns instead of two**, three courses of step. The altar and what is laid on it do not move — the god was always there; what the money bought is the housing |
+| `school` | *boys sent to you to be trained and sent back … a reputation with a roof* | the roof it needs was already drawn. Five boys and the man they were sent to stand in the gaps between the portico's columns, at the same `.62` the portico takes, in the same haze |
+| `tomb` | *a tomb, on the road out* | the road's left verge, on the open ground below the cypress at x=70 |
+| `colossus` | *on the road where everyone coming into Capua must pass under it* | the far verge from the tomb, and **the only thing in the compound taller than the cypresses** — which is the point of a colossus and the reason it costs 30,000 |
+
+Measured after, on one played house with each work planted **alone**:
+
+| work | cost | new elements |
+|---|---|---|
+| `school` | 12,000 | **+13** |
+| `baths` | 9,500 | **+10** |
+| `colossus` | 30,000 | **+10** |
+| `chapel` | 5,500 | **+8** |
+| `spina` | 7,000 | **+6** |
+| `tomb` | 8,500 | **+4** |
+| `endow` · `arena` · `capua` | 264,000 | 0 — see below |
+
+**All nine standing: 0 new elements before, 51 after.** A house that has built nothing draws
+**exactly** what it drew at v3.159.0 — proved by dumping every element of the drawn ludus on one
+seeded house before and after the change and diffing: 412 elements, byte-identical. Everything here
+is behind `workDone`.
+
+**THE THREE THAT ARE NOT DRAWN, AND WHY THAT IS NOT A SHORTCUT.** `endow` is a fund, not a
+building — "games that hold themselves, funded out of a sum so large the interest alone pays for
+blood every year after you are gone" is a bequest, and there is no honest object for it on your own
+ground. `arena` and `capua` are amphitheatres, and they want a **horizon this frame does not have**:
+the villa fills the top band edge to edge from x=20 to x=370 and the sky above its roofline is two
+corner triangles under the sticky header. Rendered and looked at, not assumed. Giving the drawing a
+horizon is a real item and a bigger one than this; the `stature` check asks for six and passes
+unchanged the day somebody draws a seventh.
+
+**THE SHAPES WERE RENDERED, NOT REASONED ABOUT — twice.** The first cut of the baths had a shallow
+barrel roof and a stack and came out as **a cottage with a chimney**; the one silhouette in Roman
+building that says *baths* from across a yard is a dome on a drum, so that is what it is now. The
+first cut of the colossus put both arms up and read as **a man cheering** — a bronze of the best
+fighter the house ever raised is in his guard, so the shield arm came down and the sword went up.
+Neither fault is visible in a diff and both are obvious in a second on screen. This is the same
+lesson v3.152.0's crop table learned when three of seven guessed boxes framed the wrong room.
+
+**AND THE FIXTURE LIED ONCE, WHICH IS THE REAL FINDING.** Two separate measuring runs during this
+work reported **the drawing unchanged** — and both were reading a **founding week**. Roughly one
+reload in four across this release's measuring runs lands on the app's own new game instead of the
+planted save, so a run that compared
+a founding house against a founding house would have reported *0 new elements* and called it a
+pass: the identical vacuity that let #212 itself stand. Every arm of the new check now goes through
+`forge`, which throws if the planted house does not survive the load, and the probe prints the save
+the app is actually reading beside every reading.
+
+**NEW CHECK — `stature`** (119 → 120). Four arms, and the third is what keeps the first honest:
+
+1. **Each of the six draws**, planted **alone** on one played house — so a work that stops drawing
+   names itself and its price, instead of hiding inside an aggregate.
+2. **Against the same house with `works` empty**, so a shape that was always on screen cannot be
+   counted as something the money bought.
+3. **At least six of the nine must move the drawing.** Without this the check passes on one
+   surviving work — non-zero says nothing about what is in it.
+4. **Nine standing adds at least 40 elements.** Measured 51.
+
+Sabotaged before shipping: guarding out the spina and the school fails the check with
+*"`spina` standing adds 0 elements to the drawn ludus (it added 6 at v3.160.0) — the house paid
+7,000 denarii for something nobody can see"*, and arm 3 fires alongside it.
+
+**`stature` is also a probe** (`test/probes/stature.mjs`), which is where the tables above come
+from: it diffs a founding house against a great one element by element, and runs one controlled arm
+per work with the plant-took guard printed on every line.
+
+**Still open from #212's own recommendation:** wings drawn taller or dressed (four of five
+buildings still draw nothing), trophies on the villa at fame bands, and the era title on the plate.
+Fame moving **zero** elements is the loudest remaining number in the table above.
+
 ### v3.159.0 — #211 refuted, and the dead function that wrote three audit items
 
 The fifth item and the last of the gameplay ledger. **All five were at least half wrong**, and this
@@ -2622,7 +2724,7 @@ never doing the thing the item accused it of.
 **THE QUEUE.** All twenty-five stand open. Struck through as they ship, with the release that did:
 
 > **Gameplay** ~~#207~~ (v3.156.0 — half-refuted, and the bill was missing two salaries) · ~~#208~~ (closed — refuted, the survey's own artifact; true median 4–5 bouts) · ~~#209~~ (v3.157.0 — half already shipped in #166; the verdict now names the salute) · ~~#210~~ (v3.158.0 — refuted; three protections found, and now guarded) · ~~#211~~ (v3.159.0 — refuted; `agendaTop` has no call sites) — **ledger closed, 5 of 5 refuted**
-> **Graphics** #212 · #213 · #214 · #215 · #216
+> **Graphics** ~~#212~~ (v3.160.0 — TRUE; six of the nine great works now stand in the drawing, 0 → 51 elements) · #213 · #214 · #215 · #216
 > **Depth** #217 · #218 · #219 · #220 · #221
 > **Story** #222 · #223 · #224 · #225 · #226
 > **Mechanics** #227 · #228 · #229 · #230 · #231
@@ -2702,6 +2804,8 @@ against 3% for being urgent**. Recommend a late-game posture for the morning rep
 is past (say) year five, urgency outranks novelty in the shown block.
 
 #### THE GRAPHICS LEDGER
+
+**#212 — TRUE, and half-shipped v3.160.0.** Measured: nine great works standing added **0 elements**; fame 5 → 21,000 added **0**; twenty wing-levels added **9**, all palus posts. Six of the nine works are drawn now (0 → 51 elements), each where the game's own text already put it. The wings, the fame bands and the plate's title are still open — see the release note.
 
 **#212 — The drawing does not know the house got great.** Screenshot pair: a forged **year-27
 house, 21,000 fame, every wing at level 4** renders near-identical to week one — same villa, same
