@@ -4179,7 +4179,9 @@ function serveWants(d, ev){
    said so — which is what it is for */
 const nobleStory   = (h, a, b) => Math.min(h.fame||0, rnd(Math.max(60 + a*40, (h.fame||0)*(0.18 + b*0.12))));
 const senatorName  = r => rnd(45 + r*35);
-const merchantCarry = d => Math.max(0, weeklyBill(d) - (d.doctore ? docWage(d.doctore) : 0)) * 10;
+/* less the doctore AND the staff: he stands the house, not your hires — and with `staffWages` now
+   inside the bill, subtracting them here keeps his favour at exactly the figure it always paid */
+const merchantCarry = d => Math.max(0, weeklyBill(d) - (d.doctore ? docWage(d.doctore) : 0) - staffWages(d)) * 10;
 const FAVOURS = {
   magistrate: { title:"A word with the other house", cost:30, wait:22,
     ask:"He knows every lanista in Campania and has leverage on most of them. He will make one of them let a thing drop.",
@@ -5454,11 +5456,16 @@ const medicusGuard = d => staffSkill(d,"medicus")/100 * 0.55;   // keeps a wound
 const armourerCut  = d => 1 - staffSkill(d,"armourer")/100 * 0.18;
 const armourerWear = d => 1 - staffSkill(d,"armourer")/100 * 0.25;
 const armourerMend = d => 1 + staffSkill(d,"armourer")/100 * 1.1;
+/* what the medicus and the armourer cost a week, as one function, because these two wages spent
+   years being charged OUTSIDE the bill — see the note over `weeklyBill` */
+const staffWages = d => STAFF_KEYS.reduce((n,k)=> n + (d[k] ? d[k].wage : 0), 0);
 function staffWeek(d){
   for(const k of STAFF_KEYS){
     const s = d[k]; if(!s) continue;
     s.weeks++;
-    d.gold -= s.wage;
+    /* the wage is charged in `ludusLedger` beside the doctore's since v3.156.0 — one charge,
+       and the same `staffWages` the bill quotes. This loop keeps what is not coin: tenure,
+       quitting, and being poached. */
     /* he has somewhere else to be */
     if(s.weeks > 6 && STAFF[k].quitOn(d) && R()<0.06){
       chron(d, STAFF[k].quitLine(s.name), "bad");
@@ -10621,9 +10628,18 @@ const liturgy = d => { const r = riseOf(d);
 /* what a week reliably costs this house, the same sum the ledger takes and the
    home page estimates — men and their season, the buildings, the stone, the racks,
    the city's call, the society, the household, and the doctore's wage */
+/* ---- THE BILL WAS MISSING TWO SALARIES, found under audit item #207 ----
+   The medicus and the armourer were paid in `staffWeek`, straight off the gold, and this sum — the
+   one the House face prints as Upkeep, the one the runway divides by, the one `creditLine`
+   multiplies and the reference player reserves against — never carried them. A staffed house read
+   a rosier week than it lived: its runway overstated, its credit line understated, the merchant's
+   season mispriced, every reserve short by two wages. The doctore was in the bill all along, which
+   is what gave it away — three hires, one counted. One charge now, in `ludusLedger`, of the same
+   `staffWages` quoted here. */
 const weeklyBill = d => Math.round(
   activeG(d).reduce((n,g)=> n + (10 + seasonUpkeep(d)) * pit(d,"upkeep") + (isAuctor(g)? g.auctor.wage : 0), 0)
-  + bUpkeep(d) + workUpkeep(d) + gearUpkeep(d) + liturgy(d) + collDues(d) + hhUpkeep(d) + (d.doctore? docWage(d.doctore) : 0));
+  + bUpkeep(d) + workUpkeep(d) + gearUpkeep(d) + liturgy(d) + collDues(d) + hhUpkeep(d)
+  + (d.doctore? docWage(d.doctore) : 0) + staffWages(d));
 /* ---- WHAT THE CREDITORS WILL CARRY ----
    The run ended at gold below −250 (−420 with a loan open) — constants from the
    v0.1 economy, when a house's whole week cost about fifty denarii and the line
@@ -18228,7 +18244,13 @@ function ludusLedger(d, men){
     } }
   upkeep += collDues(d);
   if(d.flags.underwritten > 0){ d.flags.underwritten--; upkeep = 0; }
+  /* the doctore and the staff are charged AFTER the merchant's carry zeroes the week, on purpose:
+     `merchantCarry` prices his favour at the bill LESS these wages — he stands the house, not
+     your hires. The doctore has always sat here; the medicus and armourer join him in v3.156.0,
+     having been charged in `staffWeek` since the day they were written — a real cost the bill
+     never quoted (see over `weeklyBill`). */
   if(d.doctore){ upkeep += docWage(d.doctore); d.doctore.weeks = (d.doctore.weeks||0)+1; }
+  upkeep += staffWages(d);
   d.gold -= upkeep;
   const act = activeG(d);
   const bound = act.filter(g=>!isAuctor(g));
@@ -21056,6 +21078,7 @@ const SECT = {
                              <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2}}>
                                {c.skill>=68?"Very good, and knows it." : c.skill>=50?"Sound enough." : "Cheap, and it will show."} · skill {c.skill}
                              </div>
+                             <Jaws S={S} fee={c.fee} kind="staff" arg={{kind:k, cand:c}}/>
                            </button>
                          ))}
                    </>)}
@@ -21729,6 +21752,7 @@ const SECT = {
         <button className="btn" style={{width:"100%",marginTop:8}} disabled={S.gold<COLL_FEE} onClick={joinCollegium}>
           {S.gold<COLL_FEE ? `Found it · ${COLL_FEE}d — not enough coin` : `Found it · ${COLL_FEE}d, then ${COLL_DUES}d a man each week`}
         </button>
+        <Jaws S={S} fee={COLL_FEE} kind="collegium"/>
       </>) : S.collegium.lapsed ? (
         <div>
           <div className="blood" style={{fontSize:"var(--fs-lg)"}}>The dues stopped in week {S.collegium.lapsed}.</div>
@@ -21882,6 +21906,7 @@ const SECT = {
               onClick={()=>mut(d=>{ hireFolk(d, k); })}>
               {k==="wife" ? "She has always been here" : `Take her on · ${fee}d`}
             </button>}
+            {!f && <Jaws S={S} fee={k==="wife"?0:fee} kind="folk" arg={k}/>}
           </div>
         ); })}
     </Sect>
@@ -21904,14 +21929,15 @@ const SECT = {
             <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:2}}>{done ? W.done : W.blurb}</div>
             {done && <div className="laurel" style={{fontSize:"var(--fs-base)",marginTop:3}}>{W.say}</div>}
             {on && <Bar v={100 - on.left/(W.years*YEAR_WEEKS)*100} label="" color="linear-gradient(90deg,var(--line-3),var(--gold-line))"/>}
-            {!done && !on && (
+            {!done && !on && (<>
               <button className="btn btn-ghost" style={{width:"100%",marginTop:6}}
                 disabled={S.gold < Math.ceil(W.cost*WORK_DEPOSIT)} onClick={()=>mut(d=>{ beginWork(d, k); })}>
                 {S.gold < Math.ceil(W.cost*WORK_DEPOSIT)
                   ? `${Math.ceil(W.cost*WORK_DEPOSIT)}d down — not yet`
                   : `Begin it · ${Math.ceil(W.cost*WORK_DEPOSIT)}d down, ${workWeekly(W)}d a week`}
               </button>
-            )}
+              <Jaws S={S} fee={Math.ceil(W.cost*WORK_DEPOSIT)} kind="work" arg={k}/>
+            </>)}
           </div>
         ); })}
     </Sect>
@@ -21940,6 +21966,7 @@ const SECT = {
                   {S.gold < Math.ceil(W.cost*WORK_DEPOSIT)
                     ? `${Math.ceil(W.cost*WORK_DEPOSIT)}d down — not yet`
                     : `Begin it · ${Math.ceil(W.cost*WORK_DEPOSIT)}d down, ${workWeekly(W)}d a week`}
+                  <Jaws S={S} fee={Math.ceil(W.cost*WORK_DEPOSIT)} kind="work" arg={k}/>
                 </button>
               : <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:6,fontStyle:"italic"}}>
                   {/* ONE SENTENCE FOR TWO DIFFERENT GATES. The three tier-2 monuments are
@@ -22316,6 +22343,7 @@ const SECT = {
             <button className="btn" style={{width:"100%",marginTop:7}} disabled={S.gold<c.fee} onClick={()=>hireDoc(c.id)}>
               {S.gold<c.fee ? "Not enough coin" : `Take him on — ${c.fee}d`}
             </button>
+            <Jaws S={S} fee={c.fee} kind="doctore" arg={c}/>
           </div>
         ))}
       </div>)}
@@ -23258,6 +23286,45 @@ function BlockMan({ S, g, bidFor, scout }){
               )}
               </div>
             </details>
+  );
+}
+/* ---- WHAT THIS COMMITMENT DOES TO THE WEEK, SAID BEFORE THE COIN GOES DOWN ----
+   Audit item #207's residue. The mid-game is where houses die — 8 of the survey's 11 deaths by
+   year 4.3, most of them debt — and it is also where the weekly bill grows in STEPS: a doctore, a
+   wing, the collegium, a medicus, each priced on its button as a fee and an increment, never as
+   the week it makes. The runway readout exists, one sheet away, describing the week you had
+   before you pressed.
+
+   `billIf` predicts through `weeklyBill` ITSELF, handed a shallow copy with the one field the
+   commitment would change — never through a second formula that could drift (#150's rule: the
+   shown number and the roll are the same function). Every recurring-cost reader in the bill
+   (`bUpkeep`, `docWage`, `collDues`, `hhUpkeep`, `staffWages`, `workUpkeep`) reads plain state,
+   so a one-field spread is the real question asked of the real arithmetic. The `jaws` check holds
+   each prediction to the bill measured after genuinely doing the thing. */
+function billIf(d, kind, arg){
+  switch(kind){
+    case "wing":      return weeklyBill(Object.assign({}, d, { buildings: Object.assign({}, d.buildings||{}, { [arg]: bLevel(d,arg)+1 }) }));
+    case "doctore":   return weeklyBill(Object.assign({}, d, { doctore: arg }));
+    case "collegium": return weeklyBill(Object.assign({}, d, { collegium: { lapsed:false } }));
+    case "staff":     return weeklyBill(Object.assign({}, d, { [arg.kind]: arg.cand }));
+    case "folk":      return weeklyBill(Object.assign({}, d, { household: Object.assign({}, houseFolk(d), { [arg]: { hired:true } }) }));
+    case "work":      return weeklyBill(Object.assign({}, d, { works: Object.assign({}, worksOf(d), { [arg]: { left: 0 } }) }));
+    default:          return weeklyBill(d);
+  }
+}
+/* the one line, under the button: the week it makes, and how long the box then lasts. Rendered
+   only when the commitment actually moves the bill — a wing whose next level adds no upkeep has
+   no jaws to disclose. */
+function Jaws({ S, fee, kind, arg }){
+  const now = weeklyBill(S), after = billIf(S, kind, arg);
+  if(!(after > now)) return null;
+  const left = Math.max(0, Math.round(S.gold - (fee||0)));
+  const runs = after > 0 ? Math.floor(left / after) : null;
+  return (
+    <div className="dim" style={{fontSize:"var(--fs-sm)", marginTop:4}}>
+      The week becomes <span style={{color:"var(--blood-hi)"}}>−{after}d</span>
+      {runs != null && runs < 40 && <> · the box then carries <span style={{color: runs < 8 ? "var(--blood-hi)" : "var(--ink-2)"}}>~{runs}w</span></>}
+    </div>
   );
 }
 /* ---- THE ALTAR, AS A LEDGER ----
@@ -24914,11 +24981,12 @@ export default function App(){
         <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
           {L ? B.levels[L-1] : B.desc}
         </div>
-        {next!=null ? (
+        {next!=null ? (<>
           <button className="btn" style={{width:"100%",marginTop:7}} disabled={S.gold<next} onClick={()=>build(k)}>
             {S.gold<next ? `${L? "Improve":"Build"} · ${next}d — not enough coin` : `${L? "Improve":"Build"} · ${next}d`}
           </button>
-        ) : <div className="tag tag-gold" style={{marginTop:6}}>As good as any in Capua</div>}
+          <Jaws S={S} fee={next} kind="wing" arg={k}/>
+        </>) : <div className="tag tag-gold" style={{marginTop:6}}>As good as any in Capua</div>}
       </div>
     );
   })}
@@ -29462,7 +29530,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* the week in phases, so a check can run one without running all of them */
     menWeek, ludusLedger, heldQuestions, weekReckoning, boutAftermath,
     RISE_RANKS, riseOf, riseRank, riseNext, riseNeed, canClaimRise, riseWeek,
-    riseStipend, riseFav, risePurse, liturgy, riseFee, RISE_ADMIT, weeklyBill, creditLine,
+    riseStipend, riseFav, risePurse, liturgy, riseFee, RISE_ADMIT, weeklyBill, creditLine, billIf, staffWages,
     CENSUS_TOP, CREDIT_WEEKS, FAME_TIERS, FAME_WARM_AT, fameWarm, acclaimIdx, feastFresh, AMB_COOL,
     /* and the patrons the climb rests on */
     patronWeek, serveWants, recomputeFavor, patronsOf, WANTS, RANKS,

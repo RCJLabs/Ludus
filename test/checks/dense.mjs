@@ -81,7 +81,11 @@ const PLACES = [
      twenty-word boon and their own PAIR of full-width buttons; `vowStake` does not take a god, so
      "Vow · 154d" was one figure rendered five times. Five rows and one pair of controls: 373. */
   { tab:"villa",   face:"STANDING",            max:400, min:150, saw:373 },
-  { tab:"villa",   face:"COIN & COUNCIL",      max:200, min:80,  saw:178 },
+  /* 178 -> 188 IN v3.156.0: the Jaws line under the collegium's founding button — "The week
+     becomes −Nd · the box then carries ~Mw". Ten words, deliberately, and they are the audit item
+     (#207): the mid-game dies of step-costs priced as increments, and this face is where the
+     first recurring commitment a young house takes gets offered. The ceiling holds at 200. */
+  { tab:"villa",   face:"COIN & COUNCIL",      max:200, min:80,  saw:188 },
 ];
 
 /* ---- THE NAMED GUARDS, because the ceiling above is NOT enough on its own ----
