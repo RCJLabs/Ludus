@@ -16,6 +16,7 @@ Run them straight:
     node test/probes/dark.mjs 8 320        # and whether those actions ever open, and ever do anything
     node test/probes/survey.mjs 16 420     # the design survey: endings, careers, arcs, what a long run engages
     node test/probes/rise.mjs              # the rise ladder and the liturgy: #207's half-refutation
+    node test/probes/debut.mjs 16 420      # careers and the per-bout death hazard: #208's refutation
     node test/probes/nemesis.mjs 10 420    # #134; add `silent` for the arm that never replies
     node test/probes/season.mjs 24 40 bench # seeds, tail, and `bench` to keep the trainee off the card
     node test/probes/coast.mjs 24 320      # #133; controlled pairs, stay-at-home vs tour-and-return

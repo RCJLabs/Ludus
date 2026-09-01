@@ -2428,11 +2428,41 @@ but two arms leaning the same way is the thesis of #207 arriving from an unexpec
 the game may genuinely be a notch harder when its numbers stop flattering you. #229 (surfacing the
 runway when it turns short) is the counterpart and stays queued.
 
+### #208 closed — REFUTED BY ITS OWN INSTRUMENT, and the correction is the ship
+
+The second audit item taken up, and it did not survive its first follow-up measurement: **"the
+median man fights once and wins nothing" was an artifact of the survey's own career counting.**
+
+A dead man does not leave `d.gladiators` and does not carry `g.dead` — he stays in place with
+`status:"dead"` and his real record, while `d.fallen` receives a *summary*: `{name, week}`, no wins
+field, and sometimes not even a gladiator (the lanista goes in there in a revolt). The survey read
+`g.dead` (always undefined) and pushed a career of `(g.wins||0)+(g.losses||0)` for every summary —
+**470 phantom zero-bout careers dragging the median from five to one.** The new `debut` probe's own
+first two runs then counted **zero deaths across 8,000 weeks** in a game that buries a man every
+nine — reading the same wrong field — before it was pointed at `status`. A probe that finds nothing
+has found something about itself first, for the fifth time in this project's records.
+
+**What is actually true, measured twice (16 and 32 houses × 420 weeks, 375 and 743 sand deaths):**
+
+- the dead man's median career is **4–5 bouts** (p90 14–16), not one
+- **88–90% of debut men survive their first bout** — the second bout already *is* the norm, which
+  is the thing #208 recommended designing
+- the per-bout death hazard is **flat at 10–15% from bout 1 to bout 11** — experience buys no
+  safety; risk is matched, the debut is not a trap
+- the First Lessons' claim that *"famed men are far more likely to be spared"* is **TRUE**: hazard
+  12.3% under fame 25 → 8.5% at 25–99 → **7.5% at 100–299** — a third off — saturating there
+  (300+ reads 8.5% on 212 bouts; the smaller arm's apparent reversal did not survive doubling)
+- ~9% of deaths happen off the sand, mostly the infirmary in the week after a wound
+
+**Shipped:** the survey's career block corrected (one man, one row, from the roster, on `status`);
+`debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
+never doing the thing the item accused it of.
+
 ### THE DESIGN AUDIT — twenty-five recommendations in five ledgers, #207–#231
 
 **THE QUEUE.** All twenty-five stand open. Struck through as they ship, with the release that did:
 
-> **Gameplay** ~~#207~~ (v3.156.0 — half-refuted, and the bill was missing two salaries) · #208 · #209 · #210 · #211
+> **Gameplay** ~~#207~~ (v3.156.0 — half-refuted, and the bill was missing two salaries) · ~~#208~~ (closed — refuted, the survey's own artifact; true median 4–5 bouts) · #209 · #210 · #211
 > **Graphics** #212 · #213 · #214 · #215 · #216
 > **Depth** #217 · #218 · #219 · #220 · #221
 > **Story** #222 · #223 · #224 · #225 · #226
@@ -2471,7 +2501,10 @@ pressure late rather than softening it early: a famous house should be *billed* 
 to stage games, touched for liturgies (the liturgy exists), leaned on by the aedile — so the ledger
 stays a live instrument after year four instead of a solved one.
 
-**#208 — The median man fights once and wins nothing.** p50 career: 1 bout, 0 wins; p90: 10. 45% of
+**#208 — CLOSED, REFUTED: the figure was the survey's own artifact** (470 fallen summaries counted
+as zero-bout careers). True: dead-median 4–5 bouts, 88–90% debut survival, flat 10–15% per-bout
+hazard, fame protection real and saturating. See the close above the audit. *As opened:* The median
+man fights once and wins nothing.** p50 career: 1 bout, 0 wins; p90: 10. 45% of
 every man who ever entered the cells died there or on the sand. Buying is the loop and fighting is
 the point, yet half the roster never really reaches it. Partly the rope buying fodder **(rope)** —
 but the economy makes fodder optimal, which is the finding. Recommend a designed novice road:

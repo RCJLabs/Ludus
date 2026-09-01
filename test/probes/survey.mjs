@@ -99,20 +99,28 @@ const out = await p.evaluate(([H, W, SEED])=>{
     sum.court += d.court ? 1 : 0;
     sum.pacts += d.pact ? 1 : 0;
     sum.powLot += d.powLot ? 1 : 0;
-    /* careers: every man the run ever held */
+    /* ---- CAREERS, CORRECTED UNDER AUDIT ITEM #208, and the correction indicts this file's own first figures ----
+       The audit's "median career: ONE bout, zero wins" came from here, and it was an artifact.
+       A dead man does not leave `d.gladiators` and does not carry `g.dead` — he stays, with
+       `status:"dead"` and his real record — while `d.fallen` receives a SUMMARY: `{name, week}`,
+       no wins field, and sometimes not even a gladiator (the lanista goes in there in a revolt).
+       The first cut read `g.dead` (always undefined, so `died` undercounted the roster's dead to
+       zero and took `d.fallen.length` instead) and pushed a career of `(g.wins||0)+(g.losses||0)`
+       for every summary — 470 phantom zero-bout careers dragging the median from FIVE to one.
+       Measured on the same frame with `debut.mjs` on the true fields: the dead man's median
+       career is 5 bouts (p90 16), and the per-bout hazard is flat at 10-14%. One man, one row,
+       from the roster, on `status`. */
     for(const g of d.gladiators){
       sum.men.seen++;
       sum.men.bouts.push((g.wins||0)+(g.losses||0));
       sum.men.wins.push(g.wins||0);
-      if(g.dead) sum.men.died++;
-      else if(g.sold) sum.men.sold++;
-      else if(g.freed) sum.men.freed++;
-      else if(g.fled) sum.men.fled++;
-      else if(g.retired) sum.men.retired++;
+      if(g.status === "dead") sum.men.died++;
+      else if(g.status === "sold") sum.men.sold++;
+      else if(g.status === "freed") sum.men.freed++;
+      else if(g.status === "escaped") sum.men.fled++;
+      else if(g.status === "retired" || g.status === "departed") sum.men.retired++;
       else sum.men.survivedRun++;
     }
-    for(const g of (d.fallen||[])){ sum.men.seen++; sum.men.died++;
-      sum.men.bouts.push((g.wins||0)+(g.losses||0)); sum.men.wins.push(g.wins||0); }
   }
 
   /* squash arrays to quartiles so the wire stays small */
