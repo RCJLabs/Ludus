@@ -2428,6 +2428,66 @@ but two arms leaning the same way is the thesis of #207 arriving from an unexpec
 the game may genuinely be a notch harder when its numbers stop flattering you. #229 (surfacing the
 runway when it turns short) is the counterpart and stays queued.
 
+### v3.158.0 — #210 refuted, and the guard that keeps it refuted
+
+The fourth audit item, and **the fourth to be at least half wrong.** #210 read `skipWeeks` and found
+it breaks on seven things — a pending event, an ending, a succession, Rome, a doctore, a re-signing,
+a card — and not on a **deadline coming due**, which is the only kind of thing in this game that
+must be done by a particular week. The reading of the function is correct. The conclusion was not,
+because the function is not the path.
+
+**THREE THINGS STAND IN FRONT OF IT**, and it took three cuts of a new probe to see them:
+
+1. `weekWeight` adds **2 to the load** for any deadline due within two weeks, and the fast-forward
+   is offered only on a `quiet` week — which requires a load of **zero**. When a named day is close
+   the button is not on the screen at all.
+2. `weeksToSomething` looks ahead over its whole window and returns a count that stops **short** of
+   the nearest due week.
+3. `runOn` is the **only caller** of `skipWeeks` in the program, and it passes that count.
+
+**AND THE PROBE WAS WRONG TWICE ON THE WAY, in the same direction each time — toward confirming the
+item.** Cut one called `skipWeeks(c, near+2)`, a want no player can choose, and reported 25 clean
+overruns with 10 feuds knocked back. Cut two pressed `weeksToSomething(d, 6)` instead — the value
+the real caller passes — and reported **203 overruns of 965, with 189 real misses**: a convincing,
+publishable, entirely false result, because it never asked whether the button was on the screen.
+Cut three asks that too. Measured 12 × 300 weeks: a deadline stands on **44% of weeks**; on the
+weeks where one stood **and** the fast-forward was offered, the offer stopped short **28 times out
+of 28** and **not one deadline was missed.**
+
+**THE SHIP IS THE GUARD.** Nothing in the game changed; the three protections were unguarded, spread
+across three functions, and any one could be removed by someone who did not know the other two were
+load-bearing. `hurry` plants a levy at every distance from 0 to 8 on a real played house — rather
+than waiting for twenty-eight qualifying weeks in three thousand — and asserts the button is hidden
+inside two weeks, that the offer lands short of the day outside them, and that pressing the offer
+leaves the day standing. **Both protections were proved load-bearing by removing them**: delete the
+load term and the table reads *"due in 0w · button SHOWN · the day WAS MISSED"* — the exact fault
+#210 opened, made real; break the lookahead and the offer runs to six weeks against a day three out.
+
+**AND THE CHECK ITSELF TOOK THREE CUTS, for the same reason the probe did — the fixture kept being
+the thing under test.** Cut one cleared four state fields and the house still read load 3 from a
+card: the button hidden at every distance, every arm passing on nothing, caught by the vacuity
+guard. Cut two tried more seeds and drew a house reading load 1 from `canMaster` — a term that
+cannot be cleared from the state without breaking the men it is about. Chasing eleven terms to
+isolate one is the wrong shape. The invariant is a **difference** — *what does the day add?* — so it
+is measured as one, `weekWeight` with the day against `weekWeight` without it, and is then immune to
+whatever else the house carries. The final table runs on a house with a base load of 3 and reads
+`the day adds 2` at every close distance and `adds 0` at every far one.
+
+**Two gate failures on the way, both explained rather than waved past.** `hurry`'s own fixture died
+(houses do; the fixture tries eight seeds and takes the first living one now). And `survive` went red
+with *"1 of 5 houses standing"* on **both** draws — its own note calls that a 1.3% coincidence and
+therefore the build. It was not: `git diff origin/main -- src/ludus.jsx` is empty for this release,
+and the only candidate mechanism — v3.157.0's new call inside the verdict shifting the RNG stream —
+is ruled out because `missioScore` contains no `R()` and `missioOdds` is a pure logistic. Re-run
+alone on the same build, `survive` passes. A 12%-per-draw check will do this.
+
+**FOUR ITEMS, FOUR PARTIAL REFUTATIONS — the gameplay ledger is the audit's weakest, and now that is
+measured rather than suspected.** #207 half (the liturgy already engages on 64% of weeks), #208
+whole (the survey's own artifact), #209 half (already shipped in #166), #210 whole. What the four
+have in common is that each was written from an aggregate or from reading a function, and each
+dissolved on contact with the path a player actually walks. The three items that produced real work
+did so as *residue*: a missing salary, a silent promise, an unguarded invariant.
+
 ### v3.157.0 — #209: the boxes remembered, and now they say so
 
 The third audit item, and the first whose recommendation survived contact — though only half of
@@ -2508,7 +2568,7 @@ never doing the thing the item accused it of.
 
 **THE QUEUE.** All twenty-five stand open. Struck through as they ship, with the release that did:
 
-> **Gameplay** ~~#207~~ (v3.156.0 — half-refuted, and the bill was missing two salaries) · ~~#208~~ (closed — refuted, the survey's own artifact; true median 4–5 bouts) · ~~#209~~ (v3.157.0 — half already shipped in #166; the verdict now names the salute) · #210 · #211
+> **Gameplay** ~~#207~~ (v3.156.0 — half-refuted, and the bill was missing two salaries) · ~~#208~~ (closed — refuted, the survey's own artifact; true median 4–5 bouts) · ~~#209~~ (v3.157.0 — half already shipped in #166; the verdict now names the salute) · ~~#210~~ (v3.158.0 — refuted; three protections found, and now guarded) · #211
 > **Graphics** #212 · #213 · #214 · #215 · #216
 > **Depth** #217 · #218 · #219 · #220 · #221
 > **Story** #222 · #223 · #224 · #225 · #226
@@ -2569,7 +2629,10 @@ The UI offers the four as flavour chips and never reports what one did. Recommen
 name it: "the boxes remembered" / "the grim entrance put a flinch in him" — same rule as #150, a
 lever a player pulls should show its work.
 
-**#210 — The fast-forward carries you past the one thing the game called urgent.** `skipWeeks`
+**#210 — REFUTED v3.158.0.** True of `skipWeeks` in isolation; unreachable in play. `weekWeight`
+hides the button while a day is within two weeks, `weeksToSomething` stops short of it, and `runOn`
+is the only caller. Measured: 28 of 28 offers stopped short, no day missed. The guard shipped as
+`hurry`. *As opened:* The fast-forward carries you past the one thing the game called urgent. `skipWeeks`
 breaks on events, endings, successions, Rome, a doctore, re-signings and cards — and **not on a
 deadline coming due**, while deadlines are what the agenda raises at urgency 3. The rope used the
 skip on 5% of its weeks (99 of 1,942). Recommend it break on any deadline inside the skip window
