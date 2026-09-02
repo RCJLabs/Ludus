@@ -2428,6 +2428,128 @@ but two arms leaning the same way is the thesis of #207 arriving from an unexpec
 the game may genuinely be a notch harder when its numbers stop flattering you. #229 (surfacing the
 runway when it turns short) is the counterpart and stays queued.
 
+### v3.167.0 — #224: the dominant option was not on the list
+
+The third item of the story ledger. The item's headline number was its own artifact — and the
+thing underneath it is a decision whose best answer was to not answer.
+
+**THE ITEM CONCEDED HALF OF ITSELF.** *"The funeral rites were performed 0 times against 164 men
+standing unburied (12-house arm; **the act is (rope)**, the neglect pressure is not)."* `holdMunera`
+is a player action and the reference player takes none, so "0 rites" measures the rope — the shape
+#208 died of. What is not an artifact is what the game did to a house that never answered, and the
+source says it before any measuring:
+
+| | cost | unrest | regard | |
+|---|---|---|---|---|
+| `none` | **0** | **+4** | **−6** | *"He goes into the ground and the week goes on."* |
+| `rite` | 70+ | −7 | +5 | a fire at the gate |
+| `games` | 320+ | −19 | +14 | a card in his name |
+
+**Three answers, and the cheapest one costs you.** `unhonoured` is a six-week window; the agenda
+nags inside it — *"after this nobody can put it right"* — and **when the window closed, nothing
+fired.** The row disappeared and the man stayed on the list for ever, unanswerable and unpaid for.
+
+Measured over 3,235 weeks (`probes/grave.mjs`): **288 men marked unburied, 276 of them — 96% —
+fell out of the window unanswered.** One house, one dead man, four futures, against a control of
+the same nine weeks with nobody dead:
+
+| | unrest | regard |
+|---|---|---|
+| choosing the pit | **+4** | **−7** |
+| **never answering** | **−14** | **+1** |
+
+**Silence left the house better off than the control.** So the dominant option was not on the list,
+and the game punished a player for using the screen, on the second-commonest event it has.
+
+**WHAT SHIPPED — `riteLapse`.** The window closing *is* the answer now, and it is the pit's answer,
+because that is what it was. It gets its own line: the men can tell the difference between a lanista
+who chose the ground and one who never mentioned it.
+
+**AND WHERE NEGLECT BELONGS IS NOT THE UNREST BUDGET, which the suite taught me twice.** The first
+cut applied the pit's full unrest (+4) on every lapse — 96% of dead men lapse, so that is +4 every
+eight weeks for the life of every house, a background tax rather than a consequence. `chair` caught
+it three steps downstream: the extra unrest pushed `STAFF.medicus.quitOn`'s `d.unrest > 72` clause
+over in **every** arm, so the butcher's surgeon and the showman's walked out at the same rate and
+the reputation clause stopped separating them. Halving it did not fix it either. **The lapse costs
+no unrest at all**, and costs the men's **regard** instead, which is where an opinion about the man
+who owns you belongs and leaves the unrest budget exactly as it was tuned.
+
+**AND THEN THE FIX PUT THE FAULT BACK ON, wearing the fix's clothes.** With the unrest gone, the
+weight went onto the men who knew him — his brothers at 2.25× the pit's rate, the rest of the yard a
+token 0.4× — on the reasoning that the whole familia should not pay for a stranger. Measured across
+the house, that came out **cheaper than the pit on both axes**: regard −5.56 against −6.52, and no
+unrest. That is #224's own finding, one release later, in the code meant to fix it. **And `grave`
+passed it**, because its domination arm compared unrest with `>=` on both sides — which reads
+*"silence adds more unrest than the pit"*, the opposite of the thing it guards. No build could have
+tripped it. It is written both ways round now, and the first thing the corrected arm did was fail
+the build I was about to ship, naming the numbers.
+
+So the silence is **the pit's price with a surcharge on it**: −6.9 across the yard against the pit's
+−6, −14.4 to the men who called him brother, and no unrest at all. Neither answer is cheaper than
+the other on both axes, which is the whole of what makes it a decision — a house with unrest at 68
+should let it lapse; a house of brittle men should click.
+
+| after | unrest | regard | |
+|---|---|---|---|
+| choosing the pit | +4 | −7.6 | a decision the house *heard* you make |
+| never answering | **0** | **−8.6** | isolated: one state, the window pushed past, no weeks played |
+
+**AND THE THING THAT NEARLY KILLED IT WAS NONE OF THAT — it was three points of morale.** Raising
+the yard's share of the regard also raised its **morale** hit from 1 to 3, on every man, on 96% of
+deaths. Six reference houses went from **1,508 played weeks to 1,060**, four of six dead in **debt**,
+and `tells` lost the `veteran` reading outright: **1.8% of offers to 0.34%**, because a house that
+folds at week 177 is never shown a man with fourteen wins. The suspect was the regard and it was
+not: mean regard read 47 at week 60 against a baseline 60 and had recovered by week 120, while
+morale feeds performance and performance feeds the purse. **An opinion of you is not a wage** — it
+belongs in `regard`, and taking it out of morale as well was charging twice for it. At a yard morale
+of 1 the same six houses run **1,612 weeks**, longer than the baseline, and `veteran` reads 1.4%.
+
+**And the regard has a bottom**, as a rail rather than a rescue: a man already at contempt cannot be
+told anything new by another unmarked grave, so the silence walks him down to 20 — 8 for his
+brothers, who have further to fall — and no further. Measured, it rarely binds.
+
+**AND THE LINES READ HIS RECORD**, which is #224's second ask. `markUnburied` has been storing his
+renown, his wins and the men who called him brother since it was written; the three rite lines used
+his **name** and nothing else. A man with thirty wins is not buried in the same sentence as a man
+with none, and a man with brothers in the cells is not buried as though he had none.
+
+**A CHECK OF OUR OWN HAD TO BE CORRECTED, and it was wrong before this release.** `chair` compared
+the butcher's surgeon losses to the showman's as **raw counts**, and the arms do not get comparable
+budgets: the blood arm holds its name for around 90 weeks while the showman's holds for 300 and the
+craftsman's for 370, because "blood" is the hardest of the four to earn and the houses that chase it
+die young. `repStyle(d)==="blood"` can only fire on a week the name is held, so **one quit in 92
+held weeks is four times the rate of one in 304** — and the raw comparison called that a tie. It had
+been sitting on the edge for several releases, reading 2-v-2, 1-v-3 and 1-v-1 across three
+consecutive builds while nothing in `quitOn` changed. It compares rates now, and the butcher comes
+in at **1.09 per hundred held weeks against the showman's 0.33**.
+
+**AND A SECOND CHECK HAD TO BE CORRECTED — `feats`.** Its imperial arm says *"the summit is not
+winnable by a house built to win it"*, and the house it built was not one. The loop re-asserts the
+gold, the stats, the injuries, the fatigue and the roster every week and left one input rotting:
+`romeReady` wants a **senator at favour 70**, and patron favour decays about 0.35 a week unless the
+house is winning. So a fixture that drops its first imperial bout never gets a second trip, and the
+arm quietly stops measuring winnability and starts measuring *did it win early enough to keep its
+patron* — on men who take roughly one imperial bout in seven. It read 3 trips and 7 bouts when the
+early bout fell one way and 1 trip and 3 bouts when it fell the other. The fixture keeps its senator
+warm now, and the arm gets as many chances as its 400 weeks allow.
+
+**NEW CHECK — `grave`** (126 → 127). Five arms: the window closing is an answer · it costs · neither
+answer dominates on both axes · it speaks, and the rite lines differ by his record · and men
+actually died and lapsed, or the first three passed on an empty list.
+
+Sabotaged before shipping twice, once by accident. Removing the `riteLapse` call fails three arms,
+and the second one prints the original fault exactly — *"letting the window close moved the men's
+regard by **+3.63** against a control of the same weeks with nobody dead — silence is free, and the
+cheapest answer on the screen costs −6.96."* And the corrected arm 3, run against the kin-weighted
+build that was ready to ship, failed it on the spot: *"silence costs less than choosing the pit on
+**both** regard (−5.56 against −6.52) and unrest (0 against 4) — the dominant option is not on the
+list, which is #224."*
+
+**What this does not do:** the item's first recommendation was that the graveside week *auto-offer*
+the rite. It is not built — the agenda already raises the row at urgency 2, rising to 3 in the last
+two weeks, and adding a modal on top of a working row is a different item. What is fixed is that
+ignoring the row is now a choice with a price rather than the cheapest thing on the board.
+
 ### v3.166.0 — #223: the two commonest sentences in the game, and neither was the one the item named
 
 The second item of the story ledger. **The direction is right and the ranking is not**, and the
@@ -3248,7 +3370,7 @@ never doing the thing the item accused it of.
 > **Gameplay** ~~#207~~ (v3.156.0 — half-refuted, and the bill was missing two salaries) · ~~#208~~ (closed — refuted, the survey's own artifact; true median 4–5 bouts) · ~~#209~~ (v3.157.0 — half already shipped in #166; the verdict now names the salute) · ~~#210~~ (v3.158.0 — refuted; three protections found, and now guarded) · ~~#211~~ (v3.159.0 — refuted; `agendaTop` has no call sites) — **ledger closed, 5 of 5 refuted**
 > **Graphics** ~~#212~~ (v3.160.0 — TRUE; six of the nine great works now stand in the drawing, 0 → 51 elements) · ~~#213~~ (v3.161.0 — half-refuted; the row already tracked the level, and did it at ΔE 1.17–2.47 against a just-noticeable 2.3) · ~~#214~~ (v3.162.0 — TRUE; the 22-state figure had ONE call site, now on every roster and block row) · ~~#215~~ (v3.163.0 — TRUE; four graded suns and Saturnalia's lamps, at zero ink flips and 4.13:1 worst) · ~~#216~~ (v3.164.0 — half-refuted; the machinery applied, his scars were 0 on 481 of 481, and one snapshot door passed no `bore` at all) — **ledger closed, 5 of 5**
 > **Depth** #217 · #218 · #219 · #220 · #221
-> **Story** ~~#222~~ (v3.165.0 — headline right, diagnosis wrong; a healing wound deleted 67% of sagas, third act 28% → 64%) · ~~#223~~ (v3.166.0 — direction right, ranking wrong; the top sentence was the medicus table, not mercy. Top-10 share 21.6% → 13.6%) · #224 · #225 · #226
+> **Story** ~~#222~~ (v3.165.0 — headline right, diagnosis wrong; a healing wound deleted 67% of sagas, third act 28% → 64%) · ~~#223~~ (v3.166.0 — direction right, ranking wrong; the top sentence was the medicus table, not mercy. Top-10 share 21.6% → 13.6%) · ~~#224~~ (v3.167.0 — the headline was the rope's artifact; the real fault was that never answering beat every answer on the list) · #225 · #226
 > **Mechanics** #227 · #228 · #229 · #230 · #231
 
 
@@ -3415,6 +3537,8 @@ the table is boilerplate: the mercy line **616 times (15.6% of all weeks)**, fes
 ~1,215 combined, "the bench where he sat is empty" 230. The story organ's most common sentences are
 its least story-like. Recommend variant pools keyed to the man and the count — the third mercy in a
 month is a *reputation*, and the line should know it.
+
+**#224 — HEADLINE AN ARTIFACT, REAL FAULT WORSE. Shipped v3.167.0.** "0 rites" measured the rope, which the item conceded. Underneath: three answers where the cheapest one costs you (`none` = unrest +4, regard −6) and **never answering cost nothing at all** — measured, letting the window close left a house **better off than a control with nobody dead**. 96% of dead men lapsed that way. The window closing is now the pit's own answer — the pit's regard price with a surcharge on it, no unrest at all, and lines that read his record. Two of the three wrong turns are worth keeping: a version that put the whole weight on his kin came out **cheaper than the pit house-wide**, the fault wearing the fix's clothes, and `grave` passed it because its domination arm compared unrest the wrong way round; and what nearly killed the release was three points of **morale**, not the regard — it cost six reference houses a third of their lives and cost `tells` the `veteran` reading. See the release note.
 
 **#224 — Death is bulk.** 470 dead across 16 runs — a death every 8.4 weeks somewhere — and the
 funeral rites were performed **0 times against 164 men standing unburied** (12-house arm; the act

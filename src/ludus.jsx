@@ -7013,16 +7013,38 @@ function applyRefusal(d, g, method){
    Funeral games were exactly that: combat staged at a rich man's tomb by his heirs.
    Holding them for a dead gladiator inverts the whole institution, which is the point.
    It costs real coin and returns nothing you can spend. */
+/* ---- AND THE LINE KNOWS WHO HE WAS — audit item #224's second ask ----
+   "the chronicle's death lines draw on his career". `markUnburied` has been storing his renown,
+   his wins and the men who called him brother since it was written; the three rite lines used his
+   NAME and nothing else. They read the record now: a man with thirty wins is not buried in the
+   same sentence as a man with none, and a man with brothers in the cells is not buried as though
+   he had none. `sayOf` keys them on the man, so his burial does not re-word itself on a re-render
+   and does not draw on the simulation's stream — see the note over `sayOf`. */
+const riteKin = m => (m.kin||[]).length;
 const RITES = {
   none:   { key:"none", name:"Nothing", cost:()=>0, unrest:4, regard:-6, fame:0, mercy:0,
     desc:"He goes into the ground and the week goes on. Nobody says anything about it, which is how you know.",
-    line:(d,m)=>`${m.name} is buried without ceremony. The yard trains at the usual hour.` },
+    line:(d,m)=>sayOf([
+      `${m.name} is buried without ceremony. The yard trains at the usual hour.`,
+      m.wins >= 12 ? `${m.name} won ${m.wins} times for this house and goes into the ground without a word said over him. The yard trains at the usual hour and does not look at the gate.`
+        : riteKin(m) ? `${m.name} is buried without ceremony. The ${riteKin(m)===1?"man who called him brother stands":"men who called him brother stand"} at the wall for a while afterward, not saying anything.`
+        : `${m.name} goes into the ground quietly. Nobody argues about it, which is not the same as nobody minding.`,
+    ], sayKey(d, null) + (m.gid||0)) },
   rite:   { key:"rite", name:"A rite at the gate", cost:m=>rnd(70 + m.pfame*1.1), unrest:-7, regard:5, fame:2, mercy:5,
     desc:"Wine, a fire, his name said aloud, and the familia stood down for the afternoon. No crowd, no card.",
-    line:(d,m)=>`They burn a fire at the gate for ${m.name} and every man in the house is stood down to watch it. It is not much. It is done properly.` },
+    line:(d,m)=>sayOf([
+      `They burn a fire at the gate for ${m.name} and every man in the house is stood down to watch it. It is not much. It is done properly.`,
+      m.wins >= 12 ? `A fire at the gate for ${m.name}, and his ${m.wins} victories said out loud in front of the whole familia. It is not the card he earned. It is what this house can do.`
+        : riteKin(m) ? `They burn a fire at the gate for ${m.name}. The ${riteKin(m)===1?"man who called him brother says":"men who called him brother say"} the words, because you let ${riteKin(m)===1?"him":"them"}.`
+        : `A fire at the gate, his name said aloud, and the familia stood down for the afternoon. ${m.name} did not have long here and this is all of it.`,
+    ], sayKey(d, null) + (m.gid||0)) },
   games:  { key:"games", name:"Games in his name", cost:m=>rnd(320 + m.pfame*3.4 + m.wins*22), unrest:-19, regard:14, fame:11, mercy:14,
     desc:"A card at your own expense with his name on the bill — the thing free men are given. Capua will come and Capua will talk.",
-    line:(d,m)=>`Munera for ${m.name}, paid for out of the house, with his name on the bill where the dead man's usually goes. Capua turns out for it, half of them to see whether you would really do it.` },
+    line:(d,m)=>sayOf([
+      `Munera for ${m.name}, paid for out of the house, with his name on the bill where the dead man's usually goes. Capua turns out for it, half of them to see whether you would really do it.`,
+      m.wins >= 12 ? `Munera for ${m.name} — ${m.wins} wins on the bill under his name, paid out of your own strongbox. Capua came for the spectacle and stayed because it was not one.`
+        : `Munera for ${m.name}, at your expense, for a man who won ${m.wins} time${m.wins===1?"":"s"} and was owned by you. Capua turns out anyway. That is the whole point of doing it.`,
+    ], sayKey(d, null) + (m.gid||0)) },
 };
 const RITE_KEYS = ["none","rite","games"];
 const RITE_WINDOW = 6;
@@ -7035,6 +7057,86 @@ function markUnburied(d, g){
       .map(t=>t.a===g.id?t.b:t.a) });
   if(d.unburied.length > 14) d.unburied = d.unburied.slice(-14);
 }
+/* ---- SILENCE IS AN ANSWER — audit item #224 ----
+   Three rites, and the cheapest of them COSTS YOU: `none` is free in coin and takes unrest +4 and
+   regard -6, because putting a man in the ground without a word is a thing the cells notice. What
+   nothing at all cost was NOTHING. `unhonoured` is a six-week window, the agenda nags inside it —
+   "after this nobody can put it right" — and when the window closed the row simply disappeared.
+
+   Measured over 3,235 weeks (`probes/grave.mjs`): 288 men were marked unburied and **276 of them,
+   96%, fell out of the window unanswered.** One house, one dead man, four futures:
+
+       "Nothing"          unrest +4   regard -7      the interface's cheapest answer
+       a rite at the gate unrest  0   regard +8      70 denarii
+       games in his name  unrest  0   regard +19     320 denarii
+       NEVER ANSWERING    unrest  0   regard -1      free
+
+   So the game punished a player for using the screen and rewarded him for ignoring it, on the
+   commonest event in the game after a bout. That is not "death is bulk" — it is a decision with a
+   dominant option that is not on the list.
+
+   The window closing IS the answer now, and it is the same answer as the pit, because that is what
+   it was. It gets its own line: the men can tell the difference between a lanista who chose the
+   ground and one who never mentioned it. */
+  /* ---- WHERE NEGLECT BELONGS, and it is not the unrest budget ----
+     The first cut applied the pit's full unrest (+4) on every lapse. 96% of dead men lapse, so
+     that is +4 every eight weeks for the life of every house — a background tax, not a
+     consequence — and `chair` caught it three steps downstream: the extra unrest pushed
+     `STAFF.medicus.quitOn`'s `d.unrest > 72` clause over in EVERY arm, so the butcher's surgeon
+     and the showman's walked out at the same rate and the reputation clause stopped separating
+     them.
+
+     SO THE LAPSE COSTS NO UNREST AT ALL, and costs REGARD instead — which is where an opinion
+     about the man who owns you belongs, and it leaves the unrest budget exactly as it was tuned.
+
+     AND IT HAS TO BE THE PIT'S PRICE OR MORE, or the pit's row on the screen is dead. A cut of
+     this put the whole weight on the kin and left the yard a token of 0.4, and it made SILENCE
+     CHEAPER THAN THE PIT ACROSS THE HOUSE — 5.56 against 6.52 on the mean, with no unrest — which
+     is #224's own fault wearing the fix's clothes. `grave`'s domination arm sat green through it
+     because that arm compared unrest the wrong way round and could not fire.
+
+     AND THE MORALE WAS THE PART THAT NEARLY KILLED IT, which took three wrong diagnoses to see.
+     Raising the yard's share also raised the yard's MORALE hit from 1 to 3 — three points off
+     every man in the house on 96% of deaths, about one every twelve weeks — and six reference
+     houses went from 1,508 played weeks to 1,060, four of six dead in DEBT, with `tells` losing
+     the `veteran` reading outright: 1.8% of offers to 0.34%, because a house that folds at week
+     177 is never shown a man with fourteen wins. The suspect was regard, and it was not: mean
+     regard at week 60 read 47 against a baseline 60 and recovered by week 120, while morale feeds
+     performance and performance feeds the purse. At a yard morale of 1 the same six houses run
+     1,612 weeks, longer than the baseline, and the regard surcharge costs nothing it should not.
+     An opinion of you is not a wage: it belongs in `regard`, and taking it out of morale as well
+     was charging twice for it.
+
+     AND THE REGARD HAS A BOTTOM, as a rail rather than a rescue. A man already at contempt cannot
+     be told anything new by another unmarked grave, so the silence walks him down to a floor and
+     no further — 20 for the yard, 8 for the men who called him brother, who have further to fall.
+     It rarely binds: measured, the yard sits near 50 and climbs back between graves.
+
+     The two answers are a real trade with neither dominating: the pit is unrest +4 and regard -6
+     across the house, and it is a decision the house HEARD you make; silence is no unrest at all,
+     a steeper regard — 6.9 across the yard, 14.4 to his brothers — and a floor it walks you down
+     to. `markUnburied` has been storing his kin since it was written. */
+function riteLapse(d){
+  for(const m of (d.unburied||[])){
+    if(m.done || m.lapsed) continue;
+    if(d.week - m.week <= RITE_WINDOW) continue;
+    m.lapsed = true; m.done = "none";
+    const M = RITES.none;
+    const KIN_NEGLECT = 2.4, YARD_NEGLECT = 1.15, KIN_BOTTOM = 8, YARD_BOTTOM = 20;
+    activeG(d).forEach(g=>{
+      const close = (m.kin||[]).includes(g.id), was = regardOf(g);
+      const bottom = Math.min(was, close ? KIN_BOTTOM : YARD_BOTTOM);
+      g.regard = clamp(Math.max(was + M.regard*(close ? KIN_NEGLECT : YARD_NEGLECT), bottom), 0, 100);
+      g.morale = clamp(g.morale - (close?9:1), 0, 100);
+    });
+    chron(d, sayOf([
+      `Nobody ever said what was to be done about ${m.name}, and the week the question could still be asked has gone by. He is in the ground. The cells worked out the answer for themselves.`,
+      `The window on ${m.name} closed without a word from the villa. That is its own kind of answer and the men have taken it as one.`,
+      `${m.name} went into the ground while the house was thinking about something else. Nobody in the cells has mentioned it since, which is how you know they have not forgotten.`,
+    ], sayKey(d, null) + m.gid), "bad");
+  }
+}
+
 function holdMunera(d, gid, key){
   const M = RITES[key]; if(!M) return false;
   const m = (d.unburied||[]).find(x=>x.gid===gid);
@@ -18780,6 +18882,7 @@ function endWeek(d){
     } else auctorDepart(d, g);
   });
   deadlineWeek(d);
+  riteLapse(d);        /* #224 — the burial window closing is itself an answer */
   listenWeek(d);
   loanWeek(d);
   for(const g of d.gladiators) if(g.benched && g.benched.weeks>0 && --g.benched.weeks<=0) g.benched = null;
@@ -29930,7 +30033,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        `d.honoured` read 0 across every measurement this project has taken. `weekWeight` decides
        whether the week is quiet, which is the only gate on the "Let it run" fast-forward, and it
        was not reachable either — so nothing could see that the two disagree about the window. */
-    weekWeight, weeksToSomething, unhonoured, holdMunera, markUnburied, RITES, RITE_KEYS, RITE_WINDOW,
+    weekWeight, weeksToSomething, unhonoured, holdMunera, markUnburied, RITES, RITE_KEYS, RITE_WINDOW, riteLapse,
     /* ---- NINETEEN MORE THE SWEEP FOUND, v3.23.0 ----
        `test/probes/handle.mjs` differences every function the UI calls inside a `mut(d => …)`
        closure — which IS the definition of a player action — against this object. Sixteen of these
