@@ -2428,6 +2428,90 @@ but two arms leaning the same way is the thesis of #207 arriving from an unexpec
 the game may genuinely be a notch harder when its numbers stop flattering you. #229 (surfacing the
 runway when it turns short) is the counterpart and stays queued.
 
+### v3.172.0 — #228: the card was never the reason
+
+The second item of the mechanics ledger. Its numbers are the reference player's array order — which
+the item marks **(rope)** — and the one recommendation it makes that is not already built was worth
+building.
+
+**THE FIGURES ARE `pool[0]`, AND THIS FILE SAID SO BEFORE THE ITEM WAS WRITTEN.** `takeBout` filters
+the bill by stakes and takes `pool[0]`; `makeGames` pushes every single before it adds a pair, a
+melee or a hunt. #202 wrote it down for the pair — *"the reference player's pair count over a played
+house is a fact about **array order**, not about the game"* — and the sentence covers the other two
+engines without a word changed.
+
+**AND THE BILL WAS ALREADY VARIED.** Measured over 669 cards (`probes/bill.mjs`), before this
+release:
+
+| | offered | cards carrying one | what `pool[0]` took |
+|---|---|---|---|
+| single | 69.9% | 100% | **98.4%** |
+| venatio | 13.1% | **52.5%** | **0.5%** |
+| pair | 8.4% | 33.6% | 0.2% |
+| melee | 7.5% | **29.1%** | 0.8% |
+| naumachia | 1.1% | 4.5% | 0.0% |
+
+**A hunt was on the card on more than half of all cards and the reference player fought one on a
+bout in two hundred.** That gap is the whole of the item. The bill itself had already been fixed
+once — `makeGames` carries the note: *"add() was called up to eight times per card and each of the
+other three engines got one roll at thirty to fifty per cent … Measured over 495 cards: 89% single,
+venatio 4%, pair 3%, melee 2%."* The duplicate helpings went; the rolls stand at pair 0.60, melee
+0.46, hunt 0.62.
+
+**AND BOTH ENGINES HOLD UP WHEN SOMEBODY FINALLY USES THEM.** 159 melees and 391 hunts driven
+through the real doors on played houses: **0 threw**. `checks/engines.mjs` already holds all four at
+n=3000 and holds them on **hand-built** men; this is the first time either has run inside a house.
+
+**WHAT WAS GENUINELY MISSING IS THE ITEM'S OWN RECOMMENDATION.** *"Recommend the calendar force
+variety: festival cards that ARE melees and hunts (the Venationes exist historically for exactly
+this), so the year's shape rotates the engines."* `forceHunt` and `forceNaum` **already existed** —
+and **nothing in the calendar set either**. They were reachable only from the player's own munus, so
+six festivals came and went and the bill's shape never once turned on which one it was.
+
+`forceMelee` is the third of them, and the four festivals that hold games each carry the engine
+their day is actually for:
+
+| | before | after | |
+|---|---|---|---|
+| the Quinquatria | melee on 31% of its cards | **80%** | Minerva's schools, arms on show |
+| the Floralia | hunt on 61% | **92%** | a mob that wants a spectacle, not a funeral |
+| the Ludi Apollinares | hunt on 57% | **93%** | Apollo's summer games |
+| the Ludi Romani | melee on 29% | **79%** | everything at once, for Jupiter |
+
+against 42% and 67% on an ordinary week. The fame and roster requirements stay — a card cannot force
+what the house cannot field.
+
+**NEW CHECK — `bill`** (131 → 132). Five arms: the card holds all four engines on a real share of
+cards · the year turns them over, each forcing festival putting its engine up far more often than an
+ordinary week · the reference player's share is array order, shown by asking the same door for the
+other engines and getting them · both engines run at volume without throwing · and on a real bill.
+
+Sabotaged twice. Stripping the calendar flags reports *"no festival in the calendar forces an engine
+— `forceHunt` and `forceNaum` existed and nothing set them"*; cutting the hunt out of `makeGames`
+reports *"a hunt is on 2.4% of cards"* and names the two festivals that promise one and carry none.
+That second sabotage was verified rather than inferred — the first grep for its verdict missed the
+line, and "the number moved past the floor so the arm must have fired" is the shape of reasoning
+this suite has been bitten by.
+
+**And one arm had to be corrected before it meant anything.** The volume arm passed a picker that
+returned **null** when the card held no hunt, so the house fought nothing on those weeks — and a
+house that only ever sends a man at a beast is insolvent by about week nineteen. It read 6 hunts in
+56 asks against the probe's 302 in 1,353, and reported the engine untested when what had died was
+the fixture. It prefers the engine and takes the ordinary bout otherwise now, which is `pairPick`'s
+shape and what a `hunt:` policy would actually be.
+
+**One measurement was deleted rather than corrected.** An earlier cut of the probe counted cruxes
+and deaths off the returned result and reported 0 of each across 550 bouts, which looked like a
+finding. `doVenatio` and `doMelee` return `crux:true` only on their *unfinished* branch, and
+`takeBout` answers that branch itself and hands back the resolved object — so the counter was
+reading the bout after the crux it wanted to count had been dealt with. `sand` drives that path
+properly in a browser and sees them. A number nobody can stand behind is worse than no number.
+
+**What this does not do:** it does not change `takeBout`. `pool[0]` is the reference player's rule
+and the suite's figures rest on it; a rope that picks its engines is a different instrument and
+would re-base every bout-count in the audit. What the item's numbers describe is that rule, and this
+release says so rather than tuning the game to flatter it.
+
 ### v3.171.0 — #227: fame was the wall, and the sink was a source
 
 The first item of the mechanics ledger, and every limb of it is wrong except the zero — which the
@@ -3832,7 +3916,7 @@ never doing the thing the item accused it of.
 > **Graphics** ~~#212~~ (v3.160.0 — TRUE; six of the nine great works now stand in the drawing, 0 → 51 elements) · ~~#213~~ (v3.161.0 — half-refuted; the row already tracked the level, and did it at ΔE 1.17–2.47 against a just-noticeable 2.3) · ~~#214~~ (v3.162.0 — TRUE; the 22-state figure had ONE call site, now on every roster and block row) · ~~#215~~ (v3.163.0 — TRUE; four graded suns and Saturnalia's lamps, at zero ink flips and 4.13:1 worst) · ~~#216~~ (v3.164.0 — half-refuted; the machinery applied, his scars were 0 on 481 of 481, and one snapshot door passed no `bore` at all) — **ledger closed, 5 of 5**
 > **Depth** ~~#217~~ (v3.170.0 — the pull was already there on 75.9% of weeks; the census refused to count the stone and priced a builder at a third of a hoarder) · #218 · #219 · #220 · #221
 > **Story** ~~#222~~ (v3.165.0 — headline right, diagnosis wrong; a healing wound deleted 67% of sagas, third act 28% → 64%) · ~~#223~~ (v3.166.0 — direction right, ranking wrong; the top sentence was the medicus table, not mercy. Top-10 share 21.6% → 13.6%) · ~~#224~~ (v3.167.0 — the headline was the rope's artifact; the real fault was that never answering beat every answer on the list) · ~~#225~~ (v3.168.0 — headline right, diagnosis blamed the respawn; the fault was that a feud could not be LOST. 77.1% of weeks → 36.3%, six grudge matches a feud → one) · ~~#226~~ (v3.169.0 — right, and the heir was a son the house had never had: `heirEligible` read the lanista's age and never his household. Family beats 25 → 103) — **the story ledger is closed, 5 of 5**
-> **Mechanics** ~~#227~~ (v3.171.0 — every limb refuted: fame is the ladder's commonest wall at 30.3%, and the "fame sink" pays fame out) · #228 · #229 · #230 · #231
+> **Mechanics** ~~#227~~ (v3.171.0 — every limb refuted: fame is the ladder's commonest wall at 30.3%, and the "fame sink" pays fame out) · ~~#228~~ (v3.172.0 — the figures are `pool[0]`; a hunt was already on 52.5% of cards. The calendar now forces the engines it never could) · #229 · #230 · #231
 
 
 Asked for as five ledgers — gameplay, graphics, depth, story, mechanics — five items each. Not a
@@ -4041,7 +4125,9 @@ the era-appropriate fame *sink* — was held **0 times** **(rope)**. Recommend f
 standing: staging games, endowing works (#217), backing candidates — with era bands that expect it
 of a great house (#207's other half).
 
-**#228 — Two of the four fight engines carry 1.2% of play.** Of 1,849 rope bouts: **1,658 single
+**#228 — THE FIGURES ARE THE ROPE. Shipped v3.172.0.** `takeBout` takes `pool[0]` and `makeGames` pushes every single first, which #202 already wrote down for the pair: "a fact about ARRAY ORDER, not about the game." Measured over 669 cards, a **hunt was on 52.5% of them and a melee on 29.1%** while the reference player fought 0.5% and 0.8% — and both engines ran 550 times through the real doors without throwing. What was genuinely missing was the item's own recommendation: `forceHunt` and `forceNaum` existed and **nothing in the calendar set either**. Four festivals now carry the engine their day is for. See the release note.
+
+**#228 (as filed) — Two of the four fight engines carry 1.2% of play.** Of 1,849 rope bouts: **1,658 single
 (89.7%), 168 pair (9.1%), 13 melee (0.7%), 10 venatio (0.5%)**. The melee engine (18 rounds) and
 the hunt (14 rounds, six beast drawings, the Vmbra coats of v3.147.0) are the game's most
 expensive, least-met content. Recommend the calendar force variety: festival cards that *are*
