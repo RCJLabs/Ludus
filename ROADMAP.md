@@ -2428,6 +2428,100 @@ but two arms leaning the same way is the thesis of #207 arriving from an unexpec
 the game may genuinely be a notch harder when its numbers stop flattering you. #229 (surfacing the
 runway when it turns short) is the counterpart and stays queued.
 
+### v3.170.0 — #217: the census would not look at the stone
+
+The first item of the depth ledger, and the measurement turns it round: the pull the item asks for
+was already there, three weeks in four, and the fault is on the other side of the transaction.
+
+**"NOTHING PULLS A HOUSE TOWARD IT" IS MEASURABLY FALSE.** Over 2,829 weeks of reference play
+(`probes/works.mjs`), a work was commissionable — open, unstarted, and the deposit affordable — on
+**75.9% of all weeks**, and the agenda named one *and said why* on the same 75.9%. #138 built that
+line; #141 taught it to name the work this house's own state argues for, reading unrest, sulking men
+and worn men through `workNeed`. The item's first recommendation predates the item by two releases.
+
+**AND THE "(rope)" IS THE WHOLE OF THE ZERO.** `beginWork` had two callers — both villa buttons —
+until #138 gave the reference player a `works:true` policy, and that policy was made **opt-in on the
+record**: *"switching it on re-bases what a long-lived house owns and earns (five perk streams), and
+flipping the default is its own release with every affected figure re-measured."* So every gold
+figure in this audit was taken from a player that never builds. Switched on, the same twelve houses
+commission **33** works and **finish 28** — spina 10, chapel 8, tomb 4, baths 3, school 3.
+
+**WHAT WAS ACTUALLY WRONG IS THE THIRD RECOMMENDATION, and the file had already written down why it
+was missing.** `censusWorth` counts the box, the debts owed to the house, the racks at half what the
+steel cost, the men at `gladValue`, and the wings at what they were built for. Its own note says the
+works were *"left out **deliberately**, because the measurement below was taken without them and a
+term nobody has measured is a term nobody should ship."* Measured at last, on the same twelve houses
+and the same seeds:
+
+| | census worth |
+|---|---|
+| the house that built | **10,150** |
+| the same house that did not | **26,075** |
+| stone standing, uncounted | median 12,500, max 42,500 |
+
+**A house that used the game's one late-game sink was counted at a third of the house that sat on
+its coin.** The standing ladder punished the shelf: every denarius put into a spina, a shrine, or a
+tomb for the house's dead vanished from what Capua would count a man worth, while the wings beside
+them counted in full. The panel has always read *"The census counts what you have; it does not take
+it"*, and stone is the most obviously **had** thing a house owns — four men high, on the road,
+where everyone coming into Capua must pass under it.
+
+It counts now, by what has actually been paid: a half-built spina is worth its deposit and its
+instalments and no more, and a save from before the instalment repricing carries no `owed` figure
+and counts in full, because it was bought outright. **34,535 against 13,231**, and at the ninetieth
+percentile 99,631 against 48,016 — which is the apex the top rung's own blurb describes, reachable
+by a house that spent twenty years putting up stone.
+
+**AND THE ONE RECOMMENDATION WITH NOTHING BEHIND IT — rivals racing you.** A rival house is
+`{ name, fame, grudge, form, formTier, star, fighters }` and has never owned a building, a villa or
+a denarius. They build the same five works now, at the same prices, on the same clock; a house
+starts one when its good years have put real fame behind it, Capua turns out when it is finished,
+and it is worth real fame to him. Finishing one you are still paying instalments on is its own line,
+because being second to a spina is a different thing from not having one.
+
+The rate was measured rather than guessed. A rival's fame runs a median 648 across a run and 1,399
+by week 190, so **43.7% of all rival-weeks already clear the fame bar** — the bar was never what
+made this rare, the odds were. At the first rate tried the bay put up one work per house per fifteen
+years, which is not a ladder anybody can see they are on; at the shipped rate a house that has had
+its good years builds about one every nine, and the bay finished **10 over 1,010 played weeks**.
+
+**AND THE GATE FOUND A BROKEN INSTRUMENT THAT WAS NOT THIS RELEASE'S.** `stature` failed three runs
+out of three — on this branch and at HEAD alike — with `forge(): the planted house did not survive
+the load`. `forge` builds a fixture and writes it to every save slot inside ONE synchronous
+evaluate, then reloads; the app autosaves on a 500 ms timer that cannot run while that evaluate
+holds the thread but is very likely to be **due the moment it lets go**. So the app's own state
+landed on top of the plant in the gap between the write and the reload. `stature` builds its fixture
+by playing forty weeks in the builder, which is what made it the one that always lost the race.
+
+The blob is written a second time immediately before the reload now — after the autosave has had its
+turn, which is the only moment that cannot be overtaken. It is a harness fix, so all
+**thirty-eight** checks that plant a fixture get it. Verified by running every one of them.
+
+**AND ONE FINDING RECORDED RATHER THAN FIXED.** In the same sweep `sand` reported the bout verdict's
+momentum row cut off — *"MOMENTUM / CROWD 100" is cut off, 15px hidden* — on the run where the crowd
+reached three digits. `sand` draws a different bill on every run, so it is not reproducible on
+demand, and it is nothing to do with #217. It is written down here with its exact message rather
+than patched blind against markup no reproduction has pointed at.
+
+**NEW CHECK — `works`** (129 → 130). Five arms: the census counts it, by what has been paid and not
+a denarius more · the rung's own coin gate moves with it · the door is open and the house is told,
+over real play — the arm that refutes the item, and it must keep refuting it · the bay builds too ·
+and being second is said out loud.
+
+**Arm 4 is split in two on purpose.** A rival puts up stone about once in nine of his good years, so
+a check-sized run finishes one or two — asserting a *rate* on that is a coin flip wearing an
+assertion's clothes, which has cost this suite four false reds in four releases. A bench drives
+`rivalStone` directly and holds the mechanism; a second arm holds the **wiring** at a bar the rate
+cannot flip — the bay commissions about twelve over a run this size and all that is asked is one.
+Sabotaged: cutting the works out of `censusWorth` fails three arms with the exact numbers, and
+deleting the call in `rivalWeekly` leaves the bench reading 1 and 1 while the campaign reads 0 and 0,
+which is precisely the split the two arms exist to tell apart.
+
+**What this does not do:** it does not flip the reference player's `works:true` default. That is the
+release #138 described — "every affected figure re-measured" — and it would re-base five perk
+streams under every figure in the suite. This release measures both sides of that switch and leaves
+it where it is.
+
 ### v3.169.0 — #226: a son you did not have
 
 The fifth and last item of the story ledger. The item is right, and the sharpest thing in it is a
@@ -3633,7 +3727,7 @@ never doing the thing the item accused it of.
 
 > **Gameplay** ~~#207~~ (v3.156.0 — half-refuted, and the bill was missing two salaries) · ~~#208~~ (closed — refuted, the survey's own artifact; true median 4–5 bouts) · ~~#209~~ (v3.157.0 — half already shipped in #166; the verdict now names the salute) · ~~#210~~ (v3.158.0 — refuted; three protections found, and now guarded) · ~~#211~~ (v3.159.0 — refuted; `agendaTop` has no call sites) — **ledger closed, 5 of 5 refuted**
 > **Graphics** ~~#212~~ (v3.160.0 — TRUE; six of the nine great works now stand in the drawing, 0 → 51 elements) · ~~#213~~ (v3.161.0 — half-refuted; the row already tracked the level, and did it at ΔE 1.17–2.47 against a just-noticeable 2.3) · ~~#214~~ (v3.162.0 — TRUE; the 22-state figure had ONE call site, now on every roster and block row) · ~~#215~~ (v3.163.0 — TRUE; four graded suns and Saturnalia's lamps, at zero ink flips and 4.13:1 worst) · ~~#216~~ (v3.164.0 — half-refuted; the machinery applied, his scars were 0 on 481 of 481, and one snapshot door passed no `bore` at all) — **ledger closed, 5 of 5**
-> **Depth** #217 · #218 · #219 · #220 · #221
+> **Depth** ~~#217~~ (v3.170.0 — the pull was already there on 75.9% of weeks; the census refused to count the stone and priced a builder at a third of a hoarder) · #218 · #219 · #220 · #221
 > **Story** ~~#222~~ (v3.165.0 — headline right, diagnosis wrong; a healing wound deleted 67% of sagas, third act 28% → 64%) · ~~#223~~ (v3.166.0 — direction right, ranking wrong; the top sentence was the medicus table, not mercy. Top-10 share 21.6% → 13.6%) · ~~#224~~ (v3.167.0 — the headline was the rope's artifact; the real fault was that never answering beat every answer on the list) · ~~#225~~ (v3.168.0 — headline right, diagnosis blamed the respawn; the fault was that a feud could not be LOST. 77.1% of weeks → 36.3%, six grudge matches a feud → one) · ~~#226~~ (v3.169.0 — right, and the heir was a son the house had never had: `heirEligible` read the lanista's age and never his household. Family beats 25 → 103) — **the story ledger is closed, 5 of 5**
 > **Mechanics** #227 · #228 · #229 · #230 · #231
 
@@ -3755,7 +3849,9 @@ school should *stand* like one before a sword is raised.
 
 #### THE DEPTH LEDGER
 
-**#217 — Gold has nowhere to go after year four.** Median era gold 991 → 4,163 → 4,361 → 3,480,
+**#217 — PULL ALREADY THERE, CENSUS BLIND. Shipped v3.170.0.** "Nothing pulls a house toward it" is measurably false: a work was commissionable on **75.9% of reference-play weeks** and the agenda named one and said why on the same 75.9% — #138 and #141 built that two releases before the item. The "0 engagements **(rope)**" is the whole of the zero: `beginWork`'s `works:true` policy is opt-in on the record, so every gold figure in this audit came from a player that never builds; switched on, twelve houses commission 33 and finish 28. The real fault was the third recommendation, and `censusWorth` had already written down why it was missing — the works were "left out **deliberately**, because the measurement was taken without them". Measured: a house that built was counted at **10,150 against 26,075** for the same house that did not, holding a median 12,500 of uncounted stone. **The ladder punished the only late-game sink the game has.** Stone counts now, by what has been paid — 34,535 against 13,231 — and the bay builds too. See the release note.
+
+**#217 (as filed) — Gold has nowhere to go after year four.** Median era gold 991 → 4,163 → 4,361 → 3,480,
 and the two big sinks — public works and monuments — engaged **0 times in 16 runs** **(rope)**. The
 shelf exists and nothing pulls a house toward it. Recommend the works become the named late-game
 ladder: agenda items when the box can afford one, rivals racing you to them, the census noticing.
