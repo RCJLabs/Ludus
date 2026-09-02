@@ -7978,7 +7978,10 @@ function deadlineWeek(d){
           ? `You named ${x.foe||"him"} in public and ${x.name} was not on the sand on the day. House ${x.house} did not have to do anything at all — the town worked out on its own whose word it was.`
           : `${x.name} did not answer ${x.lan}'s challenge. House ${x.house} says nothing about it publicly, which is how they say the most.`, "bad");
         if(x.nem && d.nemHouse){ d.nemHouse.stage = 2; d.nemHouse.heat = clamp(d.nemHouse.heat-20, 25, 100); d.flags.nemCool = d.week; }
-        if(x.saga && d.saga){ d.saga.stage = 2; d.saga.renown = clamp(d.saga.renown-30, 30, 100); }
+        /* #222 — AN UNANSWERED RECKONING IS AN ENDING, NOT A RESET. It sent the story back to
+           stage 2 to be told again, and a story that cannot end is a meter. The crowd was told a
+           day and a name; nobody came. That is the third of the three ways this ends. */
+        if(x.saga && d.saga && d.saga.gid === x.gid) endSaga(d, null, "unanswered");
       }
       dropDeadline(d, x.id);
     } else if(x.kind==="levy"){
@@ -11852,18 +11855,66 @@ function sagaFree(d, g){
   chron(d, `${fullName(g)} takes the wooden sword in front of a Capua that has come only to see it. He does not weep and he does not gloat; he raises the rudis once, the way he raised the gladius a hundred times, and walks out of your house a free man. They will tell this for years, and every telling is your house's name.`, "good");
   offerDoctore(d, g, "rudis");
 }
-function endSaga(d, g){
+/* ---- THE THREE WAYS A STORY CLOSES — #222 ----
+   This spoke on exactly one of them: the champion's death. Every other ending — and 69% of them
+   were a healing WOUND before v3.165.0 — nulled `d.saga` in silence, so the house's hero story
+   stopped mid-sentence with nothing in the chronicle to say it had. A story that ends without a
+   line was never a story. `why` names which close it was, and every one of them is spoken.
+
+   AND "beaten" IS A CLOSE, WHICH IT WAS NOT. Losing the reckoning reset the story to stage 2 at
+   renown-25 so the whole third act could be played again — that is what made the saga a meter with
+   a setback rather than a story with an end. A man the crowd named your equal beating your
+   champion in front of the whole city IS the ending, and it is the commoner of the two. Same for
+   "unanswered": a crowd told a day and a name, and nobody came. */
+function endSaga(d, g, why, foe){
   if(!d.saga) return;
   const nm = d.saga.name;
   d.flags.sagaCool = d.week;
-  if(g && g.status==="dead") chron(d, `The story the crowd was telling about ${nm} ends the way half of them always do — on the sand, mid-sentence. They will finish it for him, and it will not be true, and it will not matter.`, "bad");
+  const line = (g && g.status==="dead")
+    ? `The story the crowd was telling about ${nm} ends the way half of them always do — on the sand, mid-sentence. They will finish it for him, and it will not be true, and it will not matter.`
+    : why === "beaten"
+    ? `${nm} met ${foe||"the man the crowd named his equal"} in front of the whole of Capua and lost it. That is the end of the story: not every road runs to the rudis, and the ones that do not are the ones people actually remember being there for.`
+    : why === "unanswered"
+    ? `The reckoning was named and dated and ${nm} did not stand on the sand for it. The story does not resume — a crowd that has been made to wait once goes and finds another one.`
+    : why === "gone"
+    ? `${nm} is off the books, and the story that was being told about him goes with him. Capua will want another champion by spring.`
+    : null;
+  if(line) chron(d, line, "bad");
+  if(line) sagaLog(d, `The road of ${nm} ends here.`);
   d.saga = null;
 }
+/* ---- A WOUND IS NOT AN ENDING — audit item #222 ----
+   This read `if(!g || g.status!=="active") endSaga(d, g)`, and "not active" includes INJURED. So a
+   gashed shoulder — four weeks on the tables and then back to the palus — DELETED the house's hero
+   story: `d.saga` nulled, an 18-week cooldown set, and not one line of chronicle, because
+   `endSaga` only speaks when the man is dead.
+
+   Measured over 3,732 weeks and 39 sagas before this was written: **27 of them, 69%, ended on the
+   champion going injured.** Six more ended on his death, three on his leaving the books, and ONE
+   reached the reckoning without something taking him first. A saga lived a median of THREE WEEKS.
+   The item read the failure as the reckoning never being scheduled; the reckoning was never the
+   problem — the story was being deleted by a wound that heals.
+
+   He is set aside now, not written off. The story waits while he is on the tables or away, his
+   renown slipping the way a name does when the crowd has not seen you, and picks up where it left
+   off when he walks back into the yard. Only death, sale, freedom or the books ending it does. */
+const sagaHalt = g => !g || isGone(g) || g.status === "dead";
 function sagaWeek(d){
   const s = d.saga;
   if(!s){ if(R()<0.5) igniteSaga(d); return; }
   const g = d.gladiators.find(x=>x.id===s.gid);
-  if(!g || g.status!=="active"){ endSaga(d, g); return; }
+  if(sagaHalt(g)){ endSaga(d, g, g && g.status==="dead" ? "dead" : "gone"); return; }
+  if(g.status !== "active"){
+    /* hurt, or out of town. The crowd does not forget him in a month, but it does cool: renown
+       slips, and it cannot slip below the stage he has already reached, so a long convalescence
+       costs him the momentum and never the story. */
+    const floor = s.stage >= 3 ? 70 : s.stage >= 2 ? 42 : 22;
+    s.renown = clamp(s.renown - 0.9, floor, 100);
+    if(!s.paused){ s.paused = d.week;
+      sagaLog(d, `${s.name} is off the sand. The story waits for him.`); }
+    return;
+  }
+  if(s.paused) s.paused = 0;
   if(s.stage>=4) return;   // reckoning won — the freedom fork is scheduled and fires with priority via fireArc
   if(R()<0.22) sagaBeat(d);
   if(s.stage<2 && s.renown>=42) nameRival(d);
@@ -16890,8 +16941,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
         if(win){ d.saga.stage = 4; d.saga.renown = 100; scheduleArc(d, "sagaFreedom", ri(1,2), {});
           sum.push(`${g.name} has beaten the man the crowd named his equal. There is only one thing left they will accept.`);
           chron(d, `${g.name} put ${x.foe} down in front of all of Capua. The chant that went up was not his name. It was one word, over and over: the rudis.`, "good"); }
-        else { d.saga.stage = 2; d.saga.renown = clamp(d.saga.renown-25, 30, 100);
-          chron(d, `${g.name} met ${x.foe} and did not win it. The story does not end here — the crowd will want it told again — but tonight it belongs to the other man.`, "bad"); }
+        else endSaga(d, g, "beaten", x.foe);   /* #222 — a loss is an ending; see `endSaga` */
       } } }
   if(win) formShift(d, g, offer.tier>=2 ? 24 : 18, `beat ${offer.opp.name}`);
   else formShift(d, g, res.aDies ? 0 : -22, `lost to ${offer.opp.name}`);
@@ -29887,6 +29937,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     crowdLook, CROWD_SEATS, FAC_TINT, FAC_KEYS,
     /* #216 — what the drawing is told about a man, and where an opponent comes from */
     boreOf, SPENT_SAG, umbraRx, umbraOp, marksOf, FOE_SCAR_RATE, FOE_SCAR_CAP, SCAR_CROWD,
+    /* #222 — the house hero story: its week, its endings, and what closes it */
+    sagaWeek, endSaga, igniteSaga, issueReckoning,
     /* #215 — what month the drawing thinks it is */
     seasonOf, SEASONS, SCN_GRADE, SCN_KEYS, scnSandOf, scnInk, scnSandAt, festivalNow,
     boardMen, restWornMen, allToPalus, pairTheYard,

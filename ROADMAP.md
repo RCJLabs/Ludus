@@ -2428,6 +2428,85 @@ but two arms leaning the same way is the thesis of #207 arriving from an unexpec
 the game may genuinely be a notch harder when its numbers stop flattering you. #229 (surfacing the
 runway when it turns short) is the counterpart and stays queued.
 
+### v3.165.0 — #222: the hero story that a healing wound deleted
+
+The first item of the story ledger. **The headline is right and the diagnosis is not**, and the
+real fault was three lines above where the item was looking.
+
+**WHAT THE ITEM SAID.** *"13 of 16 houses started one; 12 reached stage 2; 5 reached 'his reckoning
+is set'; 0 reached the finale — the game's built-in hero story has never once paid off. Recommend
+the reckoning be guaranteed to schedule within a named window, and a loss close the story too."*
+
+**`sagaWeek` READ THIS:**
+
+```js
+if(!g || g.status !== "active"){ endSaga(d, g); return; }
+```
+
+**and "not active" includes INJURED.** A gashed shoulder — four weeks on the tables and then back
+to the palus — **deleted the house's hero story**: `d.saga` nulled, an eighteen-week cooldown set,
+and not one line in the chronicle, because `endSaga` only ever spoke when the man was dead.
+
+Measured over **9,750 weeks and 103 sagas** across 40 houses (`probes/saga.mjs`):
+
+| how the story stopped | |
+|---|---|
+| the champion went **injured** | **69 of 103 — 67%** |
+| his death | 19 |
+| off the books | 10 |
+| a saga's life | **median 3 weeks** |
+
+The reckoning was never the problem. The story was being deleted by a wound that heals, three
+weeks in, and the item read the wreckage at the wrong end.
+
+**WHAT SHIPPED.**
+
+1. **A wound sets the story aside; it does not end it.** He is off the sand, so his renown slips
+   the way a name does when the crowd has not seen you — but never below the floor of the stage he
+   has already reached, so a long convalescence costs him momentum and never the story. Only
+   death, sale, freedom or leaving the books ends it.
+2. **A loss and an unanswered reckoning CLOSE the story**, which is the item's own second
+   recommendation. A loss used to reset to stage 2 at renown−25 so the whole third act could be
+   played again; that is what made the saga a meter with a setback rather than a story with a
+   close. A man the crowd named your equal beating your champion in front of the whole city **is**
+   the ending, and it is the commoner of the two.
+3. **Every close speaks.** `endSaga` had one line for five ways to stop. It has four now — the
+   sand, the other man's night, the crowd that was made to wait, and the man who left the books —
+   and a story that stops with nothing in the chronicle was never a story.
+
+| 40 houses, same seeds | before | after |
+|---|---|---|
+| sagas ignited | 103 | 64 |
+| reached stage 2, a rival named | 75 (**73%**) | 59 (**92%**) |
+| reached stage 3, the reckoning | 29 (**28%**) | 41 (**64%**) |
+| median life | **3 weeks** | **15 weeks** |
+| ended on a healing wound | **67%** | — |
+
+Fewer ignite because they now *live* rather than churn: a story that survives its champion's first
+wound occupies the slot the next one used to get eighteen weeks later.
+
+**WHAT THIS RELEASE DOES NOT CLAIM.** The finale is still rare — **1 saga in 64 took the wooden
+sword, against 1 in 103 before.** The item's "0 in 6,720 weeks" was a small-sample reading of
+something that happens about once in a hundred sagas, not something impossible. Half of all
+reckonings are still unanswered (20 of 41), and the win only advances the story if the champion
+himself fights it. What this fixes is that the story now **survives to its third act** and **closes
+as a story** when it closes. Making the finale common is a different item.
+
+**NEW CHECK — `saga`** (124 → 125). Five arms: a wound does not end it · death still does · every
+close speaks · the third act is reached often enough to be a feature · and enough sagas ignited to
+mean it. Sabotaged before shipping: restoring the old `g.status !== "active"` rule fails arm 1 and
+drags the third-act rate from 67% to **35%**, firing arm 4 as well.
+
+**Two instrument faults, both in the same arm, both worth recording.** The check's "every ending
+speaks" arm first read `d.chronicle` — a field that does not exist — and reported all four endings
+silent while all four were speaking. Corrected to `log.length + kept.length`, it reported the same
+thing, because that total is **flat by construction**: `chron` unshifts one line and pops one off
+the end, which is either discarded or moved to `kept`. A new line is a different object at the head
+of the log, and that is what it reads now. And the probe briefly reported "the reckoning's bout was
+on the bill in only 16 of 41 weeks" — which was the probe reading `d.games.offers` on the wrong
+side of the week boundary. That sub-arm was **deleted rather than corrected**: a number nobody can
+stand behind is worse than no number.
+
 ### v3.164.0 — #216: the man across the sand, and the eighth door that dropped him
 
 The last item of the graphics ledger. **Half wrong, half worse than it says, and it turned up a
@@ -3092,7 +3171,7 @@ never doing the thing the item accused it of.
 > **Gameplay** ~~#207~~ (v3.156.0 — half-refuted, and the bill was missing two salaries) · ~~#208~~ (closed — refuted, the survey's own artifact; true median 4–5 bouts) · ~~#209~~ (v3.157.0 — half already shipped in #166; the verdict now names the salute) · ~~#210~~ (v3.158.0 — refuted; three protections found, and now guarded) · ~~#211~~ (v3.159.0 — refuted; `agendaTop` has no call sites) — **ledger closed, 5 of 5 refuted**
 > **Graphics** ~~#212~~ (v3.160.0 — TRUE; six of the nine great works now stand in the drawing, 0 → 51 elements) · ~~#213~~ (v3.161.0 — half-refuted; the row already tracked the level, and did it at ΔE 1.17–2.47 against a just-noticeable 2.3) · ~~#214~~ (v3.162.0 — TRUE; the 22-state figure had ONE call site, now on every roster and block row) · ~~#215~~ (v3.163.0 — TRUE; four graded suns and Saturnalia's lamps, at zero ink flips and 4.13:1 worst) · ~~#216~~ (v3.164.0 — half-refuted; the machinery applied, his scars were 0 on 481 of 481, and one snapshot door passed no `bore` at all) — **ledger closed, 5 of 5**
 > **Depth** #217 · #218 · #219 · #220 · #221
-> **Story** #222 · #223 · #224 · #225 · #226
+> **Story** ~~#222~~ (v3.165.0 — headline right, diagnosis wrong; a healing wound deleted 67% of sagas, third act 28% → 64%) · #223 · #224 · #225 · #226
 > **Mechanics** #227 · #228 · #229 · #230 · #231
 
 
@@ -3243,6 +3322,8 @@ first blooding, the doctore's one-sentence read after a first loss — depth the
 lives to see.
 
 #### THE STORY LEDGER
+
+**#222 — HEADLINE TRUE, DIAGNOSIS WRONG. Shipped v3.165.0.** `sagaWeek` ended the story on `g.status !== "active"`, and that includes **injured**: a wound that heals deleted **69 of 103 sagas (67%)**, silently, with an 18-week cooldown. Median saga life was **3 weeks**. A wound now sets the story aside; a loss or an unanswered reckoning closes it; every close speaks. Third act reached 28% → 64%. The finale is still rare (1 in 64, against 1 in 103 — the item's "0" was small-sample). See the release note.
 
 **#222 — The saga never lands.** 13 of 16 houses started one; 12 reached stage 2; **5 reached "his
 reckoning is set"; 0 reached the finale** — across 6,720 possible weeks, the game's built-in hero
