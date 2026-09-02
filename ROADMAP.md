@@ -2482,6 +2482,19 @@ alive.
 | told to start building, under 8 | 57.1% | **0.4%** |
 | weeks between the runway going short and the first word | median 0, max 10 | **0 and 0** |
 
+**AND `bulk` MADE THE RELEASE BETTER, which is what it is for.** `agenda` was sitting exactly on its
+210-line cap, so the one line this release wanted to add put it over. The rule in this project is
+that the allowances only ever ratchet the wrong way — split before raising — and there is precedent
+in the same function: `workNeed` was pulled out of `agenda` for this, with the note *"the right
+answer to that is a named concept rather than a bigger allowance."*
+
+Two extractions came out of it. The runway warning moved into `runwayWord`, and then — still one
+line over — **both money lines** moved into `moneyRow`: the slide toward the creditors' line and the
+approach to it, in the order they take precedence. They are mutually exclusive by construction and
+that construction was previously spread across thirteen lines and two blocks of `agenda` with the
+relationship between them implicit. It is one function now and `agenda` carries one line instead of
+thirteen, comfortably back under its cap.
+
 **NEW CHECK — `runway`** (132 → 133). Five arms: it is one function and the face quotes it, read out
 of a real browser · the agenda says it before the box is empty, in blood under four · and everywhere
 it is short, with no silent band · and does not tell a dying house to build · on houses that
