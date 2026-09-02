@@ -58,7 +58,7 @@ export async function run({ p, errors }){
        is used; only if none of them lives is there nothing to measure. */
     let base = null;
     for(const tag of ["A","B","C","D","E","F"]){
-      const d = A.newGameState("HURRY-FIX-"+tag);
+      const d = A.newGameState("Hurry", "clean", "HURRY-FIX-"+tag, null);
       for(let w=0; w<40; w++){ if(d.over) break; try { R.lanista(d); } catch(e){ break; } }
       if(!d.over && A.activeG(d).length >= 1){ base = d; break; }
     }

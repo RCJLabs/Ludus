@@ -42,9 +42,22 @@ export async function run({ p, errors }){
     const miss = ["saluteWorth","missioScore","missioOdds","ENT_MISSIO","newGameState"].filter(k=>A[k]==null);
     if(miss.length) return { miss };
 
-    /* ---- arms 1-3: the helper against the primitives ---- */
-    const d0 = A.newGameState("SALUTE-CF");
-    for(let w=0; w<60; w++){ if(d0.over) break; try { R.lanista(d0); } catch(e){ break; } }
+    /* ---- arms 1-3: the helper against the primitives ----
+       THE FIXTURE WAS NEVER PINNED, and this file has been non-deterministic since it was written.
+       `A.newGameState("SALUTE-CF")` passes a NAME and nothing else, and `newGameState(name, scen,
+       seed, pitch)` falls back to `newSeedWord()` when the seed is missing — a fresh random house
+       every run. So every green this check ever produced was luck-weighted and none of its numbers
+       were reproducible; when the random house happened to die inside sixty weeks the vacuity guard
+       below fired, which it did on two consecutive release gates while passing in isolation.
+       A named seed, and a search across several for one that keeps a man alive — the same shape the
+       other campaign fixtures in this suite use, and for the same reason. */
+    let d0 = null;
+    for(const t of ["A","B","C","D","E","F","G","H"]){
+      const c = A.newGameState("Salute", "clean", "SALUTE-CF"+t, null);
+      for(let w=0; w<60; w++){ if(c.over) break; try { R.lanista(c); } catch(e){ break; } }
+      if(c.gladiators.some(g=>g.status!=="dead")){ d0 = c; break; }
+    }
+    if(!d0) return { noPool:true };
     const pool = d0.gladiators.filter(g=>g.status!=="dead");
     if(!pool.length) return { noPool:true };
 
@@ -74,7 +87,7 @@ export async function run({ p, errors }){
     for(const k of Object.keys(band)) band[k].pts = band[k].n ? +(band[k].s/band[k].n*100).toFixed(2) : null;
 
     /* ---- arm 4: a real verdict ---- */
-    const d = A.newGameState("SALUTE-RUN");
+    const d = A.newGameState("Salute", "clean", "SALUTE-RUN", null);
     for(let w=0; w<40; w++){ if(d.over) break; try { R.lanista(d); } catch(e){ break; } }
     let verdicts = 0, mismatched = 0, sample = null, appeals = 0;
     for(let i=0; i<400 && verdicts < 6; i++){
