@@ -49,7 +49,7 @@ export async function run({ p, errors }){
 
     const sum = { weeks:0, rows:0, u3:0, over:0, hidden:0, unsorted:0, worst:0, sample:null, houses:0 };
     for(let h=0; h<6; h++){
-      const d = A.newGameState("ATTEND-RUN-"+h);
+      const d = A.newGameState("Attend", "clean", "ATTEND-RUN-"+h, null);
       sum.houses++;
       for(let w=0; w<220; w++){
         if(d.over) break;

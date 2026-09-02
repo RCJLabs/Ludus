@@ -2483,6 +2483,30 @@ to 92%, while the apex moved from 0 weeks to 2 and its worth term did not move a
 that loosens the part of the ladder nobody said was tight, and misses the part that is, is not a
 fix.** The apex wants the coin economy looked at, and that is a different item.
 
+**AND THE GATE ITSELF WAS PARTLY UNPINNED.** `salute` went red on two consecutive release gates and
+passed in isolation both times, and the cause was not the release. Its fixture read
+
+```js
+const d0 = A.newGameState("SALUTE-CF");
+```
+
+and the signature is `newGameState(name, scen, seed, pitch)` — with no seed it falls back to
+`newSeedWord()`. **A fresh random house every run.** So every green that check ever produced was
+luck-weighted, none of its numbers were reproducible, and when the random house happened to die
+inside sixty weeks its own vacuity guard fired and reported "the counterfactual house held no living
+man", which was the guard doing its job on a fixture that should never have been random.
+
+Sweeping the suite for the same shape found **four more sites in the release gate** — `attend`,
+`hurry`, `jaws`, and `salute`'s own second fixture — all of which appear in the run tally's history
+of intermittent reds. All five are pinned to named seeds now, and `salute` additionally searches
+several for a house that keeps a man alive, which is the shape the other campaign fixtures already
+use. It ran three times in a row green after the change; it had never been able to promise that
+before.
+
+That is the second reliability defect this pair of releases has turned up in the instruments rather
+than the game — after `forge` losing its plant to the app's own autosave — and both had been sitting
+under intermittent reds that were easy to re-run away.
+
 **NEW CHECK — `fame`** (130 → 131). Five arms: the munus pays fame and costs coin, which is the
 item's factual error held as an invariant · the reference player can stage one, or arm 1's campaign
 half measures the harness again · fame is still a wall over real play — if that goes quiet, somebody

@@ -60,7 +60,7 @@ export async function run({ p, errors }){
 
     /* a house with fixtures for every kind: rooms for staff, coin for everything, markets stocked.
        Weeks are played only until the two markets fill — the fixtures must be the game's own. */
-    const base = A.newGameState("JAWS-FIX");
+    const base = A.newGameState("Jaws", "clean", "JAWS-FIX", null);
     base.gold = 50000; base.fame = 3000;
     base.buildings = { valetudinarium:1, armamentarium:1, palus:1, carceres:1, balneae:1 };
     let guard = 0;
