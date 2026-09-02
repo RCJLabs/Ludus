@@ -11109,6 +11109,31 @@ function riseWeek(d){
    pay a quarter to be received. What standing then costs you is the liturgy,
    every week, for as long as you are somebody — and that was already built. */
 const RISE_ADMIT = 0.25;
+/* ---- WHAT FAME IS ACTUALLY SHORT OF, AND WHAT IT IS NOT — audit item #227 ----
+   The item says "fame climbs forever and buys almost nothing" and asks that fame become spendable
+   standing. Measured (`probes/fame.mjs`, twelve houses played to year sixteen, building), both
+   halves are wrong, and the way they are wrong is worth leaving here so nobody fixes it again.
+
+   FAME IS NOT SPARE. Counting each of a rung's four terms independently — the ordered "first
+   failing term" reading files every fame shortfall under fame and reads as "fame is the wall" by
+   construction, which is how the first cut of the probe got it backwards — a house short of the
+   last rung is short of FAME on 54% of those weeks. It is short of favour on 30%, of census worth
+   on 91%, and OF THIS FEE ON 100%. Making fame a currency a player burns would have made the one
+   wall it genuinely holds worse.
+
+   AND THE APEX IS NOT THE WORK OF YEARS, IT IS DECORATION: Amicus Caesaris had all four terms
+   satisfied at once on **0 of 959 weeks**. The wall is coin, and #154 predicted it in this file
+   before anybody measured it — "favour is bought at the table and the table is the coin" — because
+   the rung wants 20,000 in the box on the same week as 80,000 of property and a favour of 90 that
+   was bought out of the same box.
+
+   A FAME DISCOUNT ON THIS FEE WAS BUILT AND THROWN AWAY. Letting surplus name pay up to half the
+   reception is good fiction and it does not fix what it was aimed at: any real house is many
+   multiples over the LOW bars and barely over the top one, so it took Eques from claimable on 57%
+   of weeks to 91% and Known in Rome from 54% to 92%, while the apex went from 0 weeks to 2 and its
+   worth term did not move at all. A change that loosens the part of the ladder nobody said was
+   tight, and misses the part that is, is not a fix. The apex needs the coin economy looked at, and
+   that is not this item. */
 const riseFee = nx => Math.ceil((nx.cost||0) * RISE_ADMIT);
 /* ---- A CENSUS COUNTS PROPERTY, AND THIS ONE COUNTED THE CASH BOX — #154 ----
    The note above already made the right argument — "Nobody took 400,000 sesterces off an eques; he
