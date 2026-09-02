@@ -2428,6 +2428,78 @@ but two arms leaning the same way is the thesis of #207 arriving from an unexpec
 the game may genuinely be a notch harder when its numbers stop flattering you. #229 (surfacing the
 runway when it turns short) is the counterpart and stays queued.
 
+### v3.173.0 — #229: the agenda was telling a dying house to go shopping
+
+The third item of the mechanics ledger. It is right, and it understates the fault by a factor of
+thirty.
+
+**THE NUMBER WAS NOT A FUNCTION.** The runway — *"the box would carry this house N more weeks"* —
+was computed inside the Coin & Council render:
+
+```js
+const weeks = bill > 0 ? Math.floor((S.gold + owed) / bill) : null;
+```
+
+inside a JSX closure, on the third face of the villa. **Nothing else in the program could read it**,
+so nothing else could say it. The placement was not a choice about where to put the number; there
+was no number to put anywhere.
+
+**AND THE AGENDA WAS POINTING THE OTHER WAY.** Measured over 4,109 weeks and sixteen houses
+(`probes/runway.mjs`), on the 995 weeks a house held under eight weeks of coin in the box:
+
+| | |
+|---|---|
+| the agenda warned it was running out | **1.7%** |
+| the agenda told it to **start building** | **57.1%** |
+
+and on the 436 weeks under four: 3.9% against 24.1%. The only line about running out is
+`if(d.gold < 0)` — *"Nd under, and Nd ends it"* — a sentence for a house that is **already past
+empty**. The line that did fire is the works nag, which reads `d.gold` and has no idea what the week
+costs. **A house three weeks from insolvency was told to put a deposit on a spina twenty-four times
+more often than it was told it was three weeks from insolvency**, and debt is the commonest death in
+the game.
+
+That nag is one I shipped two releases ago, in #217, and praised for naming the work a house needs
+and saying why. It names the work correctly. It had no idea whether the house could afford to be
+alive.
+
+**WHAT SHIPPED.**
+
+- **`runway(d)`**, one function, read by the Coin & Council face, by the agenda, and by the works
+  nag. The face quotes what it returns — held out of a real browser, because #150 is exactly the
+  rule a number computed in a render closure breaks.
+- **The agenda says it before the box is empty**: urgency 2 under eight weeks, **3 under four**,
+  naming the number and pointing at the face that explains it. It fires wherever the debt line does
+  not, so the two never double up and there is no band between them — an earlier cut gated on
+  `d.gold >= 0` and left 2.4% of short weeks with nothing said at all.
+- **And the works nag shuts up under ten weeks of coin.** A work is a weekly draw for two to three
+  years; it is not something to start with a fortnight in hand.
+
+| over the same houses | before | after |
+|---|---|---|
+| warned, under 8 weeks of coin | 1.7% | **100%** |
+| warned, under 4 | 3.9% | **100%** |
+| told to start building, under 8 | 57.1% | **0.4%** |
+| weeks between the runway going short and the first word | median 0, max 10 | **0 and 0** |
+
+**NEW CHECK — `runway`** (132 → 133). Five arms: it is one function and the face quotes it, read out
+of a real browser · the agenda says it before the box is empty, in blood under four · and everywhere
+it is short, with no silent band · and does not tell a dying house to build · on houses that
+actually ran short.
+
+Sabotaged three ways. Deleting the agenda line takes the warned share from 100% to **3.8%** and the
+silence from 0 weeks to never; restoring the works nag's old `d.gold` gate takes the build advice
+from 0.4% back to **41.8%** — both reproducing the pre-release measurement. Making the face compute
+its own figure again reads *"the face says 7 more weeks and `runway()` returns 5"*.
+
+**Two of my own instruments were wrong first, and both were caught by a number being too clean.**
+The probe read agenda rows as `.title`/`.note` when they are `.label`/`.sub`, so it reported the
+agenda silent on **0 of 4,109 weeks** — including four houses that died of debt with the money line
+standing. And the check's bench expected a warning at nine weeks because it keyed on its own list of
+depths rather than on `RUNWAY_WARN`, and tested whether the warning quoted its own figure with a
+regex built from a string that had one level of escaping too many and compiled to a literal
+backslash-b. A run of zeroes across thousands of weeks is the instrument until proved otherwise.
+
 ### v3.172.0 — #228: the card was never the reason
 
 The second item of the mechanics ledger. Its numbers are the reference player's array order — which
@@ -3916,7 +3988,7 @@ never doing the thing the item accused it of.
 > **Graphics** ~~#212~~ (v3.160.0 — TRUE; six of the nine great works now stand in the drawing, 0 → 51 elements) · ~~#213~~ (v3.161.0 — half-refuted; the row already tracked the level, and did it at ΔE 1.17–2.47 against a just-noticeable 2.3) · ~~#214~~ (v3.162.0 — TRUE; the 22-state figure had ONE call site, now on every roster and block row) · ~~#215~~ (v3.163.0 — TRUE; four graded suns and Saturnalia's lamps, at zero ink flips and 4.13:1 worst) · ~~#216~~ (v3.164.0 — half-refuted; the machinery applied, his scars were 0 on 481 of 481, and one snapshot door passed no `bore` at all) — **ledger closed, 5 of 5**
 > **Depth** ~~#217~~ (v3.170.0 — the pull was already there on 75.9% of weeks; the census refused to count the stone and priced a builder at a third of a hoarder) · #218 · #219 · #220 · #221
 > **Story** ~~#222~~ (v3.165.0 — headline right, diagnosis wrong; a healing wound deleted 67% of sagas, third act 28% → 64%) · ~~#223~~ (v3.166.0 — direction right, ranking wrong; the top sentence was the medicus table, not mercy. Top-10 share 21.6% → 13.6%) · ~~#224~~ (v3.167.0 — the headline was the rope's artifact; the real fault was that never answering beat every answer on the list) · ~~#225~~ (v3.168.0 — headline right, diagnosis blamed the respawn; the fault was that a feud could not be LOST. 77.1% of weeks → 36.3%, six grudge matches a feud → one) · ~~#226~~ (v3.169.0 — right, and the heir was a son the house had never had: `heirEligible` read the lanista's age and never his household. Family beats 25 → 103) — **the story ledger is closed, 5 of 5**
-> **Mechanics** ~~#227~~ (v3.171.0 — every limb refuted: fame is the ladder's commonest wall at 30.3%, and the "fame sink" pays fame out) · ~~#228~~ (v3.172.0 — the figures are `pool[0]`; a hunt was already on 52.5% of cards. The calendar now forces the engines it never could) · #229 · #230 · #231
+> **Mechanics** ~~#227~~ (v3.171.0 — every limb refuted: fame is the ladder's commonest wall at 30.3%, and the "fame sink" pays fame out) · ~~#228~~ (v3.172.0 — the figures are `pool[0]`; a hunt was already on 52.5% of cards. The calendar now forces the engines it never could) · ~~#229~~ (v3.173.0 — true, and understated: the agenda warned a dying house on 1.7% of its short weeks and told it to go building on 57.1%) · #230 · #231
 
 
 Asked for as five ledgers — gameplay, graphics, depth, story, mechanics — five items each. Not a
@@ -4134,7 +4206,9 @@ expensive, least-met content. Recommend the calendar force variety: festival car
 melees and hunts (the Venationes exist historically for exactly this), so the year's shape rotates
 the engines.
 
-**#229 — The game's most common death has its instrument buried three taps deep.** Debt killed 7 of
+**#229 — TRUE, AND UNDERSTATED BY A FACTOR OF THIRTY. Shipped v3.173.0.** The runway was not a function at all — it was computed inside the Coin & Council render, so nothing else in the program could read it or say it. And the agenda was pointing the other way: measured over 4,109 weeks, on the 995 a house held under eight weeks of coin it was **warned on 1.7%** of them and **told to start building on 57.1%**. The only "running out" line was `if(d.gold < 0)`, a sentence for a house already past empty; the line that fired was the works nag from #217, which reads `d.gold` and has no idea what the week costs. Now `runway(d)` is one function read by the face, the agenda and the nag: warned **100%**, told to build **0.4%**, silence 10 weeks → 0. See the release note.
+
+**#229 (as filed) — The game's most common death has its instrument buried three taps deep.** Debt killed 7 of
 16, and the runway readout — "the box would carry this house N more weeks" — lives on the villa's
 *Coin & Council* face, the least-visited place in the game (176 words, third face in). Recommend
 the runway surface itself where the player lives when it turns short: in the header or the morning

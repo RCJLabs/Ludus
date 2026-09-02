@@ -3634,7 +3634,12 @@ function agenda(d){
        (57-62%), measured over three seeds x 24 houses. The line's gate is beginWork's own. */
     const buildable = pool.filter(k=>!workDone(d,k) && workOpen(d,k) && d.gold >= Math.ceil(workDef(k).cost*WORK_DEPOSIT));
     const anyOn = pool.some(k=>workOn(d,k));
-    if(!anyOn && buildable.length){
+    /* #229 — AND NOT WHILE THE BOX IS SHORT. This gated on `d.gold` alone, which knows the pile and
+       not what the week costs, so it fired on 57.1% of the weeks a house held under eight weeks of
+       coin — the deposit was affordable and the house was dying. A work is a weekly draw for two to
+       three years; it is not something to start with a fortnight in hand. */
+    const rw = runway(d);
+    if(!anyOn && buildable.length && (rw == null || rw >= RUNWAY_BUILD)){
       const big = buildable.map(k=>workDef(k)).sort((a,b)=>b.cost-a.cost)[0];
       const monu = MONU_KEYS.some(k=>buildable.includes(k));
       /* #141: name the work this house needs and say why — the rule and the measurement behind it
@@ -3652,6 +3657,23 @@ function agenda(d){
       `${d.flags.litDue} week${d.flags.litDue===1?"":"s"} behind — your standing is bleeding for it`);
   if(liquid(d) < 120 && owedTotal(d) >= 250)
     add(2, "villa:council:owed", `${owedTotal(d)}d owed to you and ${Math.round(liquid(d))} in the box`, "rich on paper is not rich");
+  /* ---- AND BEFORE THAT, THE WEEKS LEFT IN THE BOX — #229 ----
+     The line below is for a house already past empty. This one is for the approach, which is where
+     the death actually happens: measured, a house under eight weeks of coin was warned on 1.7% of
+     those weeks and told to start building on 57.1%. It says the same number the Coin & Council
+     face says, because it calls the same function. */
+  { const rw = runway(d);
+    /* The line below speaks only past a depth of the creditors' line, so gating this one on
+       `d.gold >= 0` left a band — a box just under empty, not yet deep enough for that one — with
+       nothing said at all. Measured, that band was 2.4% of the short weeks. This fires wherever the
+       other does not, and the two never double up in the same list. */
+    const deep = d.gold < 0 && clamp(d.gold / creditLine(d), 0, 1) >= DEBT_STAGE[0];
+    if(rw != null && rw < RUNWAY_WARN && !deep)
+      add(rw < RUNWAY_BAD ? 3 : 2, "villa:council",
+        rw <= 0 ? `The box is empty and the week still costs ${weeklyBill(d)}d`
+          : `The box would carry this house ${rw} more week${rw===1?"":"s"}`,
+        rw < RUNWAY_BAD ? "at what the week costs, that is the whole of it"
+          : `${weeklyBill(d)}d a week goes out whatever happens`); }
   /* the slide toward the creditors' line, which is the one number that ends a run
      without anybody deciding anything */
   if(d.gold < 0){
@@ -11074,6 +11096,34 @@ const CREDIT_WEEKS = 2.5;
 /* how far down the line the trades begin to notice, to talk, and to stop being polite */
 const DEBT_STAGE = [0.35, 0.65, 0.85];
 const creditLine = d => -Math.round(Math.max(250, weeklyBill(d) * CREDIT_WEEKS) * (d.loan ? 1.68 : 1));
+/* ---- HOW MANY WEEKS ARE LEFT IN THE BOX — audit item #229 ----
+   "The game's most common death has its instrument buried three taps deep." Debt kills more houses
+   than anything else, and the number that describes it — "the box would carry this house N more
+   weeks" — was computed INSIDE the Coin & Council render:
+
+       const weeks = bill > 0 ? Math.floor((S.gold + owed) / bill) : null;
+
+   in a JSX closure, on the third face of the villa. Nothing else in the program could read it, so
+   nothing else could say it, which is why the placement is the way it is.
+
+   AND THE AGENDA WAS POINTING THE OTHER WAY. Measured over 4,109 weeks and sixteen houses
+   (`probes/runway.mjs`), on the 995 weeks a house held under eight weeks of coin:
+
+       the agenda warned it was running out      1.7% of them
+       the agenda told it to START BUILDING     57.1% of them
+
+   and under four weeks — 436 of them — 3.9% against 24.1%. The only line about running out is
+   `if(d.gold < 0)`, which is a sentence for a house already past empty; the line that did fire was
+   the works nag, which reads `d.gold` and has no idea what the week costs. A house three weeks from
+   insolvency was told to put a deposit on a spina twenty-four times more often than it was told it
+   was three weeks from insolvency.
+
+   One function now, read by the face, by the agenda, and by the works nag that has to shut up. */
+const RUNWAY_WARN = 8;    /* the agenda starts saying it here */
+const RUNWAY_BAD  = 4;    /* and says it in blood here */
+const RUNWAY_BUILD = 10;  /* and does not suggest stone under this */
+const runway = d => { const bill = weeklyBill(d);
+  return bill > 0 ? Math.floor(((d.gold||0) + owedTotal(d)) / bill) : null; };
 /* how close you are to being received at the next rung */
 function riseWeek(d){
   if(d.over || d.succession) return;
@@ -27340,8 +27390,9 @@ export default function App(){
                carries the coin in hand on every tab; what only this face knows is what the week costs and
                who is holding money either way. */}
           {(()=>{ const bill = weeklyBill(S), owed = owedTotal(S), debt = S.loan ? owes(S) : 0;
-            const weeks = bill > 0 ? Math.floor((S.gold + owed) / bill) : null;
-            const tight = weeks != null && weeks < 6;
+            /* #229 — the same function the agenda reads, so the face and the warning cannot drift */
+            const weeks = runway(S);
+            const tight = weeks != null && weeks < RUNWAY_WARN;
             return (
               <div className="panel" style={{padding:12,borderColor: debt ? "var(--gold-edge)" : tight ? "var(--blood-edge)" : "var(--line-2)"}}>
                 <div className="flex items-center justify-between" style={{marginBottom:3}}>
@@ -30539,7 +30590,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* the week in phases, so a check can run one without running all of them */
     menWeek, ludusLedger, heldQuestions, weekReckoning, boutAftermath,
     RISE_RANKS, riseOf, riseRank, riseNext, riseNeed, canClaimRise, riseWeek,
-    riseStipend, riseFav, risePurse, liturgy, riseFee, RISE_ADMIT, weeklyBill, creditLine, billIf, staffWages,
+    riseStipend, riseFav, risePurse, liturgy, riseFee, RISE_ADMIT,
+    runway, RUNWAY_WARN, RUNWAY_BAD, RUNWAY_BUILD, weeklyBill, creditLine, billIf, staffWages,
     CENSUS_TOP, CREDIT_WEEKS, FAME_TIERS, FAME_WARM_AT, fameWarm, acclaimIdx, feastFresh, AMB_COOL,
     /* and the patrons the climb rests on */
     patronWeek, serveWants, recomputeFavor, patronsOf, WANTS, RANKS,
