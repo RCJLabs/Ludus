@@ -2428,6 +2428,111 @@ but two arms leaning the same way is the thesis of #207 arriving from an unexpec
 the game may genuinely be a notch harder when its numbers stop flattering you. #229 (surfacing the
 runway when it turns short) is the counterpart and stays queued.
 
+### v3.164.0 — #216: the man across the sand, and the eighth door that dropped him
+
+The last item of the graphics ledger. **Half wrong, half worse than it says, and it turned up a
+dead half of the crowd roll on the way.**
+
+**WHAT THE ITEM SAID.** *"On the sand he is a bare class silhouette, whatever his fame. The
+bearing/ornament machinery built for our men in v3.146.0 (`boreOf`, fame rings, kill marks) never
+applies to him."*
+
+**IT APPLIES.** Measured over 481 real opponents through all four doors (`probes/foe.mjs`):
+
+| what the drawing was handed | |
+|---|---|
+| his renown | **77 distinct values**, p50 22, max 106 |
+| his kills | **5 distinct values**, p50 1 |
+| his fatigue | **one value** — 0 on all 481 · he arrives fresh, which is right |
+| **his scars** | **one value — 0 on 481 of 481** |
+
+So three of `boreOf`'s four fields reach him and one is dead. **A man the pre-fight card describes
+as sixteen bouts deep walked onto the sand without a mark on him.**
+
+**AND THE HALF NOBODY HAD NOTICED.** `simulateFight` opens the crowd on
+
+```js
++ ((A.scars?A.scars.length:0) + (B.scars?B.scars.length:0)) * 1.2
+```
+
+a term that sums **both** sides and whose second half has been structurally zero on every bout this
+game has ever played. Two scarred men make a better show — the game says so, and it has only ever
+counted one of them. This is the `TELLS.cold` / `agendaTop` fault class again: a written term that
+cannot fire.
+
+**WHAT SHIPPED — `marksOf`.** His marks are **derived from his record, not stored**, and each part
+of that was forced:
+
+- **Derived**, because an opponent's record grows in **seven** places — the circuit week, the
+  rivals' own bouts, the bouts he fights against you, Rome's card — and a `giveHimScars()` call at
+  each is seven chances to forget one. That is the fault `glance`'s own header describes and
+  refuses. A pure function of his record and his id cannot fall behind him, and it is stable across
+  renders and reloads because nothing in it rolls.
+- **It does not touch his stats.** Our men's scars are real history: each was cut by a blow the sim
+  rolled, and `addScar` docks a stat for it. An opponent's stats were rolled to his tier *already
+  weathered*, so his marks are a record of what he survived rather than a debt laid on top — the
+  same shape, arrived at from the other end.
+- **`house` tells them apart.** Every opponent has one and no man of yours ever does, so `marksOf`
+  returns your own men's scars untouched — verified as an arm, not assumed.
+- **The rate was measured, not chosen.** Our men scar at roughly one mark per four bouts fought
+  (p50 1 scar against p50 4 wins). A rate of 0.38 put the opponent at **p50 3 against our p50 1** —
+  the man off the circuit more weathered than the man you have been sending out for a year, which
+  is backwards. At **0.26** he sits one mark above ours, which is what a career on the circuit buys.
+
+| | before | after |
+|---|---|---|
+| his marks | 1 distinct value, **100% unmarked** | 5 distinct, p50 2, max 4, **0.8% unmarked** |
+| your own men | p50 1, 25.8% unmarked | **unchanged** |
+| the crowd term | half of it structurally zero | his marks add **+1.25** to the opening crowd |
+
+**AND THE BEST THING THE ITEM FOUND, WHICH IT DID NOT SAY.** Seven of the eight sites that build an
+arena snapshot pass `bore: boreOf(...)` for side B. **The eighth passes none** — and it is a singles
+path, one of the game's main doors. Through it the man across the sand really did arrive with no
+renown, no kills and no wear: *a bare class silhouette whatever his fame*, which is #216 word for
+word, true of one door rather than of everywhere.
+
+It was invisible to reading because the *other* singles path a few hundred lines up does pass it,
+so any grep that stopped at the first hit came back yes. **The check's second arm reads the object
+the fight modal actually renders from, on real bouts** — and it reported *"as the arena is handed
+him: 95% unmarked"* while the helper itself was perfect. That is the whole reason it is written
+that way rather than testing `marksOf` in isolation.
+
+**NEW CHECK — `foe`** (123 → 124). Five arms:
+
+1. **he is marked, and by his own record** — several distinct values over real play, non-zero on
+   nearly all of them
+2. **and it is the arena that gets them** — the `B` snapshot the fight modal renders from, off real
+   bouts, must carry both the marks and a `bore`. *This is the arm that found the eighth door*
+3. **our men are untouched** — `marksOf` returns one of your own men's scars exactly, never invents
+   one. Inventing a scar is a lie about a man you have watched bleed
+4. **it is stable** — the same man asked twice gives the same marks, and two men with the same
+   record but different ids do not, so every 9–3 man in the game is not the same man
+5. **and his stats are not docked** — deriving a mark must not move a single one
+
+Sabotaged before shipping: dropping the `house` branch fails arms 1 and 2 together with *"100% of
+opponents walk on unmarked — the pre-fight card describes a career and the sand shows a clean
+body."*
+
+**AND THE COEFFICIENT HAD TO COME DOWN WITH IT, which the suite caught and I did not predict.**
+The scar term is `(A.scars + B.scars) * 1.2` and it has only ever had one side, so **1.2 was tuned
+against a mean of ~1.3 marks when the design intended ~3.5.** Giving him his marks and leaving the
+weight alone raised every bout's opening crowd by 2.56 — and **`chair` caught what that does three
+steps downstream**: a warmer crowd grants more missio, fewer men die, and a house going after the
+butcher's name takes far longer to earn it. The blood arm fell from losing the surgeon in 9 houses
+of 10 to **0 of 6**. The weight is **0.6** now, named once as `SCAR_CROWD`: the intent is unchanged
+and the coefficient matches the input it was always meant to have. His marks are worth **+1.25** to
+the opening crowd, against +1.6 for our man's alone before.
+
+`bulk` caught the second half of the same lesson — the note explaining all this pushed `doFight`
+from 357 lines to 365. It sits above the function now, outside the measured body, which is where
+the stylesheet's own explanation went for the same reason.
+
+**THE GRAPHICS LEDGER IS CLOSED: 5 of 5.** #212 true, #213 half-refuted, #214 true, #215 true,
+#216 half-refuted. Against the gameplay ledger's 5 of 5 at least half wrong, the graphics items
+were written by someone looking at the screen rather than at an aggregate — and the two that were
+half wrong were both wrong in the same direction, claiming a machine did not exist when what was
+missing was the data going into it.
+
 ### v3.163.0 — #215: four suns over one ground, and the week the year turns over
 
 The fourth item of the graphics ledger, **true on both halves** — and the half it did not state is
@@ -2985,7 +3090,7 @@ never doing the thing the item accused it of.
 **THE QUEUE.** All twenty-five stand open. Struck through as they ship, with the release that did:
 
 > **Gameplay** ~~#207~~ (v3.156.0 — half-refuted, and the bill was missing two salaries) · ~~#208~~ (closed — refuted, the survey's own artifact; true median 4–5 bouts) · ~~#209~~ (v3.157.0 — half already shipped in #166; the verdict now names the salute) · ~~#210~~ (v3.158.0 — refuted; three protections found, and now guarded) · ~~#211~~ (v3.159.0 — refuted; `agendaTop` has no call sites) — **ledger closed, 5 of 5 refuted**
-> **Graphics** ~~#212~~ (v3.160.0 — TRUE; six of the nine great works now stand in the drawing, 0 → 51 elements) · ~~#213~~ (v3.161.0 — half-refuted; the row already tracked the level, and did it at ΔE 1.17–2.47 against a just-noticeable 2.3) · ~~#214~~ (v3.162.0 — TRUE; the 22-state figure had ONE call site, now on every roster and block row) · ~~#215~~ (v3.163.0 — TRUE; four graded suns and Saturnalia's lamps, at zero ink flips and 4.13:1 worst) · #216
+> **Graphics** ~~#212~~ (v3.160.0 — TRUE; six of the nine great works now stand in the drawing, 0 → 51 elements) · ~~#213~~ (v3.161.0 — half-refuted; the row already tracked the level, and did it at ΔE 1.17–2.47 against a just-noticeable 2.3) · ~~#214~~ (v3.162.0 — TRUE; the 22-state figure had ONE call site, now on every roster and block row) · ~~#215~~ (v3.163.0 — TRUE; four graded suns and Saturnalia's lamps, at zero ink flips and 4.13:1 worst) · ~~#216~~ (v3.164.0 — half-refuted; the machinery applied, his scars were 0 on 481 of 481, and one snapshot door passed no `bore` at all) — **ledger closed, 5 of 5**
 > **Depth** #217 · #218 · #219 · #220 · #221
 > **Story** #222 · #223 · #224 · #225 · #226
 > **Mechanics** #227 · #228 · #229 · #230 · #231
@@ -3097,6 +3202,8 @@ fatigue and healing (the chips on The Year say so) — and the ludus is drawn in
 afternoon all year. The v3.145.0 machinery (`SCN_SAND`'s stop table with derived ink) makes a
 per-season grade cheap and safe: a paler low winter sun, lamps at Saturnalia, the same table, the
 same contrast guarantee from `legible`.
+
+**#216 — HALF-REFUTED, shipped v3.164.0.** The bearing machinery *does* apply: his renown came back at **77 distinct values** and his kills at 5 over 481 real opponents. His SCARS came back at **one value, 0 on 481 of 481** — and `simulateFight`'s crowd term sums both sides' scars, so half of it has been structurally zero on every bout ever played. One of the eight arena snapshot sites passed **no `bore` at all**, found by the check reading what the modal renders from. See the release note.
 
 **#216 — Your men have faces; the opponent is a class.** The pre-fight card reads him well (school,
 record, "would be second best") but on the sand he is a bare class silhouette, whatever his fame.

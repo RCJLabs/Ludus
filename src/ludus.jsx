@@ -3912,6 +3912,54 @@ function addScar(g, target, severe){
   g.lastCheck = target;
   return prior>0;
 }
+/* ---- WHAT HE HAS SURVIVED, WRITTEN ON HIM — audit item #216 ----
+   The item said the bearing machinery "never applies" to the man across the sand. It does: every
+   one of the eight sites that builds an arena snapshot passes `bore: boreOf(...)` for side B too,
+   and measured over 481 real opponents his renown came back at 77 distinct values and his kills at
+   5. What came back at ONE distinct value, on 481 of 481, was his SCARS. A man the pre-fight card
+   describes as sixteen bouts deep walked onto the sand without a mark on him.
+
+   AND THE HALF NOBODY HAD NOTICED. `simulateFight` opens the crowd on
+   `((A.scars?A.scars.length:0) + (B.scars?B.scars.length:0)) * 1.2` — a term that sums both sides
+   and whose second half has been structurally zero on every bout this game has ever played. Two
+   scarred men make a better show, the game says so, and it has only ever counted one of them.
+
+   DERIVED, NOT STORED, and that is deliberate. An opponent's record grows in seven places — the
+   circuit week, the rivals' own bouts, the bouts he fights against you, Rome's card — and a
+   `giveHimScars()` call at each is seven chances to forget one. That is the fault `glance`'s own
+   header describes and refuses: freshness derived from state rather than a `touch()` at every
+   arrival. This is a pure function of his record and his id, so it cannot fall behind him, and it
+   is stable across renders and reloads because nothing in it rolls.
+
+   IT DOES NOT TOUCH HIS STATS, and that is the difference between his marks and ours. Our men's
+   scars are real history: each was cut by a blow the sim rolled, and `addScar` docked a stat for
+   it. An opponent's stats were rolled to his tier ALREADY WEATHERED — the marks are a record of
+   what he survived, not a debt laid on top. The same shape, arrived at from the other end.
+
+   `house` is what tells the two apart: every opponent has one and no man of yours ever does. */
+/* 0.26 was measured, not chosen. Our own men scar at roughly one mark per four bouts fought
+   (p50 1 scar against p50 4 wins), and a rate of 0.38 put the opponent at p50 3 against our p50 1 —
+   the man from the circuit more weathered than the man you have been sending out for a year, which
+   is backwards. At 0.26 he sits one mark above ours, which is what a career on the circuit buys. */
+const FOE_SCAR_RATE = 0.26, FOE_SCAR_CAP = 6, FOE_SCAR_DEEP = 0.22;
+/* what one mark is worth to the opening crowd, named once so the sim and anything measuring it
+   read the same number — see the note at the crowd roll for why it halved when B started counting */
+const SCAR_CROWD = 0.6;
+const foeHash = (a, b) => { let h = (((a|0)*2654435761) ^ ((b|0)*40503)) >>> 0;
+  h ^= h >>> 13; h = (h * 1274126177) >>> 0; return (h >>> 8) / 16777216; };
+const marksOf = g => {
+  if(!g) return [];
+  if(!g.house) return g.scars || [];                       /* one of yours — his scars are his own */
+  if(Array.isArray(g.scars) && g.scars.length) return g.scars;
+  const fought = (g.wins||0) + (g.losses||0);
+  const n = Math.max(0, Math.min(FOE_SCAR_CAP, Math.round(fought * FOE_SCAR_RATE)));
+  const id = (g.id||0) + 1, out = [];
+  for(let i=0;i<n;i++){
+    const t = TARGETS[Math.floor(foeHash(id, i) * TARGETS.length) % TARGETS.length] || TARGETS[3];
+    out.push(scarMark(t[0], foeHash(id, i+64) < FOE_SCAR_DEEP));
+  }
+  return out;
+};
 const retireEligible = g => g.age>=31 || scarBurden(g)>=20;
 
 /* ---- THE BODY REMEMBERS ----
@@ -9269,7 +9317,15 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
   A.mods = kitMods(A.kit, A.cls, A); B.mods = kitMods(B.kit, B.cls, B);
   const smA = 55+A.end*0.6, smB = 55+B.end*0.6;
   let crowd = R0 ? R0.crowd : clamp(12 + (A.sho+B.sho)/8 + (hasT(A,"Showman")?8:0) + (hasT(B,"Showman")?8:0) + (A.mods.sho+B.mods.sho)*22
-    + ((A.scars?A.scars.length:0) + (B.scars?B.scars.length:0))*1.2
+    /* ---- 1.2 -> 0.6, BECAUSE THE TERM NOW GETS BOTH MEN — #216 ----
+       This sums both sides and has only ever had one: B's scars were 0 on 481 of 481 measured
+       opponents, so the 1.2 was tuned against a mean of ~1.3 marks when the design intended ~3.5.
+       Giving him his marks and leaving the weight alone raised every bout's opening crowd by 2.56,
+       and `chair` caught what that does three steps downstream: a warmer crowd grants more missio,
+       fewer men die, and a house going after the butcher's name takes far longer to earn it — the
+       blood arm fell from 9-in-10 losing the surgeon to 0 of 6. The intent is unchanged and the
+       weight comes down to match the input it was always meant to have. */
+    + (marksOf(A).length + marksOf(B).length)*SCAR_CROWD
     + (isF(A)?9:0) + (isF(B)?6:0) + (ctx.repShow||0), 0, 100);
   let vA = R0 ? R0.vA : 100, vB = R0 ? R0.vB : 100;
   let sA = R0 ? R0.sA : smA, sB = R0 ? R0.sB : smB, mom = R0 ? R0.mom : 0;
@@ -15989,7 +16045,7 @@ function doPairFight(d, ids, offer, tactic, pending, choice){
     return { pending:{ ids, offer, tactic, crux:res.crux, pair:true },
       beats:res.beats, crux:true, pair:true, tier:offer.tier, stakes:offer.stakes, festival:offer.festival,
       A:clones.map(c=>({ name:c.name, nick:c.nick, cls:c.cls, kit:c.kit, scars:c.scars||[], sub:"your house", fem:isF(c), bore:boreOf(c) })),
-      B:opps.map(o=>({ name:o.name, nick:o.nick, cls:o.cls, kit:o.kit, scars:o.scars||[], sub:o.house?`House ${o.house}`:"the pits", fem:isF(o), bore:boreOf(o) })) };
+      B:opps.map(o=>({ name:o.name, nick:o.nick, cls:o.cls, kit:o.kit, scars:marksOf(o), sub:o.house?`House ${o.house}`:"the pits", fem:isF(o), bore:boreOf(o) })) };
   }
 
   const sum = [`Appearance fees: ${t.app*2} denarii.`];
@@ -16100,7 +16156,7 @@ function doPairFight(d, ids, offer, tactic, pending, choice){
   return { beats:res.beats, sum:sum.map(x=>herOwn(d,x)), win:res.win, dead:res.dead.A.some(Boolean), crowd:rnd(res.crowd), venue:offer.venue, factions:d.factions,
     pair:true, tier:offer.tier, stakes:offer.stakes, festival:offer.festival,
     A:clones.map((c,i)=>({ name:c.name, nick:c.nick, cls:c.cls, kit:c.kit, scars:c.scars||[], sub:"your house", fem:isF(c), bore:boreOf(c) })),
-    B:opps.map(o=>({ name:o.name, nick:o.nick, cls:o.cls, kit:o.kit, scars:o.scars||[], sub:o.house?`House ${o.house}`:"the pits", fem:isF(o), bore:boreOf(o) })) };
+    B:opps.map(o=>({ name:o.name, nick:o.nick, cls:o.cls, kit:o.kit, scars:marksOf(o), sub:o.house?`House ${o.house}`:"the pits", fem:isF(o), bore:boreOf(o) })) };
 }
 
 /* ---- PAIR BOUTS ----
@@ -16127,7 +16183,7 @@ function simulatePair(As, Bs, tA, stakes, ctx, opts){
   const down = R0 ? { A:[...R0.dnA], B:[...R0.dnB] } : { A:[false,false], B:[false,false] };
   const dead = R0 ? { A:[...R0.ddA], B:[...R0.ddB] } : { A:[false,false], B:[false,false] };
   let crowd = R0 ? R0.crowd : clamp(10 + (As[0].sho+As[1].sho+Bs[0].sho+Bs[1].sho)/18
-    + (As.reduce((s,f)=>s+(f.scars?f.scars.length:0),0))*0.9, 0, 100);
+    + (As.reduce((s,f)=>s+marksOf(f).length,0))*0.9, 0, 100);
   let mom = R0 ? R0.mom : 0, round = R0 ? R0.round : 0, ended = false;
   const lead = s => { const arr = down[s]; return arr[0] ? (arr[1] ? -1 : 1) : 0; };
   const mate = s => { const l = lead(s); if(l<0) return -1; const o = 1-l; return down[s][o] ? -1 : o; };
@@ -16534,6 +16590,15 @@ function boutAftermath(d, g, gid, offer, res, win, F, sum){
    to: 601 of 601 men who go down in a melee and 487 of 487 in a pairing are under vitality 40,
    at medians of 11 and 2. This was the one thing inflating it, and it was a bug. */
 const HURT_BAR = 45;      // won and came off under it -> the light wound; lost past it -> the heavy one
+/* ---- THE EIGHTH DOOR — audit item #216 ----
+   Of the eight sites that build an arena snapshot, this one's `B` passed NO `bore` at all, so the
+   man across the sand came through one of the game's main paths drawn as a bare class silhouette
+   whatever his renown, his kills or his wear. That is #216 word for word, true of one door rather
+   than of everywhere. It was invisible to reading because the other singles path does pass it, so
+   any grep that stopped at the first hit came back yes: `foe`'s second arm reads the object the
+   fight modal actually renders from, on real bouts, which is why it found this and reading did not.
+   The note is out here rather than at the line because `doFight` sits on its `bulk` allowance and
+   the rule is to split before raising — the same place the stylesheet's own explanation went. */
 function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   const g = d.gladiators.find(x=>x.id===gid);
   const t = TIERS[offer.tier];
@@ -16609,7 +16674,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
       beats: res.beats, crux:true, tier:offer.tier, stakes:offer.stakes, festival:offer.festival, venue:offer.venue, factions:d.factions,
       A:{ name:g.name, nick:g.nick, cls:g.cls, origin:g.origin, sub:"your house", kit:gc.kit, scars:gc.scars||[], fem:isF(g), bore:boreOf(g) },
       B:{ name:offer.opp.name, nick:offer.opp.nick, cls:offer.opp.cls, origin:offer.opp.origin,
-          sub:offer.opp.house? `House ${offer.opp.house}`:"the pits", kit:oc.kit, scars:oc.scars||[], fem:isF(offer.opp), bore:boreOf(offer.opp) } };
+          sub:offer.opp.house? `House ${offer.opp.house}`:"the pits", kit:oc.kit, scars:marksOf(offer.opp), fem:isF(offer.opp), bore:boreOf(offer.opp) } };
   }
   if(imperial){
     res.beats.splice(1, 0, Object.assign({}, res.beats[0], { kind:"intro", actor:null,
@@ -16888,7 +16953,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
     } }
   return { beats:res.beats, sum:sum.map(x=>herOwn(d,x)), reading:why, win, dead:!!res.aDies, crowd:rnd(res.crowd), name:g.name, venue:offer.venue, factions:d.factions,
     A:{ name:g.name, nick:g.nick, cls:g.cls, origin:g.origin, sub:"your house", kit:gc.kit, scars:gc.scars||[], fem:isF(g), bore:boreOf(g) },
-    B:{ name:offer.opp.name, nick:offer.opp.nick, cls:offer.opp.cls, origin:offer.opp.origin, sub:offer.opp.house? `House ${offer.opp.house}`:"the pits", kit:oc.kit, scars:oc.scars||[], fem:isF(offer.opp) },
+    B:{ name:offer.opp.name, nick:offer.opp.nick, cls:offer.opp.cls, origin:offer.opp.origin, sub:offer.opp.house? `House ${offer.opp.house}`:"the pits", kit:oc.kit, scars:marksOf(offer.opp), fem:isF(offer.opp), bore:boreOf(offer.opp) },
     tier:offer.tier, stakes:offer.stakes, festival:offer.festival };
 }
 
@@ -29820,6 +29885,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     setFocusOf, setRegimenOf, setSparOf, setTeachOf, stopTeachOf, setDrillTo, APPETITES, APP_KEYS, appetiteOf, appetiteAfter, appHash, APP_SHARE, VENUES, VEN, styleOf, styleFrom, styleWord, setStyle, STYLE_KEYS, suggestedPlan, PLAN_READ,   /* #199 — his standing style, and the reading the plan grid pre-fills from */
     /* #213 — what the crowd row draws, so the picture and the roll behind it are one function */
     crowdLook, CROWD_SEATS, FAC_TINT, FAC_KEYS,
+    /* #216 — what the drawing is told about a man, and where an opponent comes from */
+    boreOf, SPENT_SAG, umbraRx, umbraOp, marksOf, FOE_SCAR_RATE, FOE_SCAR_CAP, SCAR_CROWD,
     /* #215 — what month the drawing thinks it is */
     seasonOf, SEASONS, SCN_GRADE, SCN_KEYS, scnSandOf, scnInk, scnSandAt, festivalNow,
     boardMen, restWornMen, allToPalus, pairTheYard,
