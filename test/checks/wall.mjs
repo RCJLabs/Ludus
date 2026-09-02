@@ -103,10 +103,24 @@ export async function run({ p, errors }){
        number nobody will ever see */
     const climb = [];
     let reached = 0;
+    const held = (()=>{ const f = at(w).f; return f ? JSON.parse(JSON.stringify(f)) : null; })();
+    /* ---- THE TARGET IS HELD ON HIS CARD, AND THE FIXTURE FORGOT THE SECOND HALF OF THAT ----
+       `prepLive` drops the drill when the man leaves the rival's roster OR the reading goes stale,
+       and this loop only ever kept the reading fresh. The roster ages men out from 33 and sells,
+       poaches and buries them besides, so the arm was asking "can a drill reach PREP_MAX" and
+       measuring "did this particular rival happen to keep this particular man for six weeks" —
+       which this file's own note puts at 50%. It went red in v3.168.0 on a release that touched no
+       drill: a new `ri()` roll in the rival growth loop reordered the seeded stream and a different
+       man aged off the card. Both halves of "held on his card" are held by hand now, the same way
+       and for the same reason. */
     for(let k=0; k<A.PREP_MAX + 3; k++){
-      const st = at(w); if(st.f) st.f.seen = w.week;        /* the reading kept fresh by hand */
+      const st = at(w);
+      if(st.f){ st.f.seen = w.week; st.f.age = Math.min(st.f.age||24, 28); st.f.injury = null; }
       w.pendingEvent = null;
       try { A.endWeek(w); } catch(e){ climb.push("the week threw: "+(e.message||e)); break; }
+      /* and if the world took him anyway, put him back — the arm is about the scale, not his luck */
+      { const st2 = at(w);
+        if(st2.h && !st2.f && held) st2.h.fighters.push(JSON.parse(JSON.stringify(held))); }
       const pr = A.prepOf(w.gladiators.find(x=>x.id===g1.id));
       climb.push(pr ? String(pr.weeks) : "lapsed");
       if(!pr) break;
