@@ -2572,19 +2572,19 @@ function resolveLicence(d, i){
 const CALENDAR = [
   { w:2,  key:"quinquatria", name:"the Quinquatria", month:"March",
     blurb:"Minerva's five days. The schools of Capua put their arms on show and every doctore in the city is watching.",
-    purse:0.9, fame:1.0, tier:0, offers:2, train:1.35 },
+    purse:0.9, fame:1.0, tier:0, offers:2, train:1.35, forceMelee:true },
   { w:5,  key:"floralia", name:"the Floralia", month:"May",
     blurb:"Flowers, drink and theatre. The mob wants a show, not a funeral — and will not forgive one.",
-    purse:1.1, fame:1.25, tier:0, offers:2, noSine:true, crowd:14, deathCost:2.2 },
+    purse:1.1, fame:1.25, tier:0, offers:2, noSine:true, crowd:14, deathCost:2.2, forceHunt:true },
   { w:8,  key:"apollinares", name:"the Ludi Apollinares", month:"July",
     blurb:"Apollo's games, and the first serious money of the summer.",
-    purse:1.15, fame:1.1, tier:0, offers:3 },
+    purse:1.15, fame:1.1, tier:0, offers:3, forceHunt:true },
   { w:11, key:"vulcanalia", name:"the Vulcanalia", month:"August",
     blurb:"Vulcan's day. Fires in the street, and every armourer in Campania cutting his price to be seen.",
     purse:1.0, fame:1.05, tier:0, offers:2, gear:0.75, fineBonus:true },
   { w:14, key:"romani", name:"the Ludi Romani", month:"September",
     blurb:"The great games. Fifteen days for Jupiter, the whole city in the stands, and editors who can afford whoever they want.",
-    purse:1.6, fame:1.5, tier:1, offers:4 },
+    purse:1.6, fame:1.5, tier:1, offers:4, forceMelee:true },
   { w:17, key:"saturnalia", name:"the Saturnalia", month:"December",
     blurb:"The world turned over. No games are held, the familia is served at your own table, and for one week nobody is anybody's property.",
     purse:0, fame:0, tier:0, offers:0, rest:true },
@@ -6188,7 +6188,18 @@ function makeGames(d){
   else if(d.primus && !d.primus.mine && activeG(d).some(primusEligible) && d.fame>=TIERS[2].fame && R()<0.6){
     const o = makePrimusOffer(d, 3); if(o) offers.push(o);
   }
-  if(d.fame>=TIERS[1].fame && activeG(d).length>=2 && R()<0.46){
+  /* ---- AND THE YEAR ROTATES THE ENGINES — audit item #228 ----
+     "Recommend the calendar force variety: festival cards that ARE melees and hunts (the
+     Venationes exist historically for exactly this), so the year's shape rotates the engines."
+     `forceHunt` and `forceNaum` already existed and NOTHING IN THE CALENDAR SET EITHER — they were
+     reachable only from the player's own munus, so six festivals came and went and the bill's shape
+     never once turned on which one it was. `forceMelee` is the third of them, and the four
+     festivals that hold games now each carry the engine their day is actually for: Minerva's
+     schools putting their arms on show together, the Floralia's beast-show for a mob that wants a
+     spectacle and not a funeral, Apollo's summer games, and everything at once for Jupiter.
+     The fame and roster requirements stay — a melee still wants a house the editors would put five
+     men against, and a card cannot force what the house cannot field. */
+  if(d.fame>=TIERS[1].fame && activeG(d).length>=2 && (F.forceMelee || R()<0.46)){
     const tier = d.fame>=TIERS[2].fame ? 2 : 1;
     const size = ri(4,5);
     const field = [];
