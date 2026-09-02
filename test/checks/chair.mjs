@@ -210,9 +210,27 @@ export async function run({ p }){
       if(b && b.medHired && b.medQuit === 0)
         bad.push(`the butcher kept his surgeon in all ${b.medHired} houses — measured, he walks out `
           + `of 9 in 10 at median week 12, and repStyle(d)==="blood" is half of STAFF.medicus.quitOn`);
-      if(b && s && b.medHired && s.medHired && b.medQuit <= s.medQuit)
-        bad.push(`the butcher lost his surgeon ${b.medQuit} times and the showman ${s.medQuit} — `
-          + `the butcher must lose him MORE, or the blood clause in quitOn is doing nothing`);
+      /* ---- PER NAMED WEEK, NOT PER HOUSE — corrected in v3.167.0 ----
+         This compared raw counts, and the arms do not get comparable budgets: the blood arm holds
+         its name for around 90 weeks while the showman's holds for 300 and the craftsman's for 370,
+         because "blood" is the hardest of the four to earn and the houses that chase it die young.
+         `repStyle(d) === "blood"` can only fire on a week the name is HELD, so one quit in 92 held
+         weeks is four times the rate of one in 304 — and the raw comparison called that a tie.
+
+         It had been sitting on the edge for several releases, passing and failing on which way a
+         reshuffle fell rather than on anything about the surgeon: measured at 2-v-2, 1-v-3 and
+         1-v-1 across three consecutive builds while nothing in `quitOn` changed. A bar that flips
+         on an unrelated RNG shift is not measuring what its message says it is. */
+      const rate = (a, k) => (a && a.held && a.held[k]) ? a.medQuit / a.held[k] : null;
+      const rb = rate(b, "blood"), rs = rate(s, "show");
+      if(b && s && b.medHired && s.medHired && (rb == null || rs == null))
+        bad.push(`one of the two arms never held the name it was steered to, so the rate has no `
+          + `denominator and this arm measured nothing`);
+      else if(b && s && b.medHired && s.medHired && rb <= rs)
+        bad.push(`the butcher lost his surgeon ${b.medQuit} time${b.medQuit===1?"":"s"} in ${b.held.blood} `
+          + `weeks holding "blood" (${(rb*100).toFixed(2)} per hundred) and the showman ${s.medQuit} in `
+          + `${s.held.show} weeks holding "show" (${(rs*100).toFixed(2)}) — the butcher must lose him `
+          + `FASTER, or the blood clause in quitOn is doing nothing`);
     }
 
     return { bad, lines };

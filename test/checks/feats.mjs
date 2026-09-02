@@ -196,8 +196,19 @@ export async function run({ p, errors }){
       /* one man built to survive the imperial bill — Rome draws its man at 100+ */
       for(const g of A.activeG(d)) for(const k of A.STATS) g[k] = Math.min(A.statCap(g,k), 96);
       let bouts = 0, won = 0, trips = 0, offered = 0;
+      /* ---- AND THE SENATOR STAYS WARM, which this fixture forgot ----
+         `romeReady` wants a senator at favour 70, and favour DECAYS about 0.35 a week unless the
+         house is winning — so a house that drops its first imperial bout gets no second trip, and
+         the arm silently stops measuring "is the summit winnable" and starts measuring "did the
+         house win early enough to keep its patron". Measured at v3.167.0: 3 trips and 7 bouts when
+         the early bout fell one way, 1 trip and 3 bouts when it fell the other, against a fixture
+         whose men take roughly one imperial bout in seven. That is a coin flip wearing an
+         assertion's clothes. This loop already re-asserts the gold, the stats, the injuries, the
+         fatigue and the roster every week; the patron was the one input it left rotting. */
       for(let w=0; w<400 && !A.hasFeat(d,"rome"); w++){
         d.gold = Math.max(d.gold, 30000);
+        for(const pt of (d.patrons||[])) pt.favor = 85;
+        A.recomputeFavor(d);
         for(const g of A.activeG(d)){ g.injury=null; g.fatigue=0; g.lastFought=-9;
           if(g.status!=="active") continue; }
         while(A.activeG(d).length < 4){ const m = A.genGladiator(d, 90); m.id=d.nextId++;
