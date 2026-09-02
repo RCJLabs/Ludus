@@ -2428,6 +2428,83 @@ but two arms leaning the same way is the thesis of #207 arriving from an unexpec
 the game may genuinely be a notch harder when its numbers stop flattering you. #229 (surfacing the
 runway when it turns short) is the counterpart and stays queued.
 
+### v3.166.0 — #223: the two commonest sentences in the game, and neither was the one the item named
+
+The second item of the story ledger. **The direction is right and the ranking is not**, and the
+pattern the item recommends was already in the file, used once.
+
+**HOW A LINE HAS TO BE COUNTED.** Not by its text — "Gannicus is spared" and "Spiculus is spared"
+are two strings and one sentence, and counting strings reports a healthy 1,408 distinct while
+missing the whole item. Counted by **shape**, with names, numbers and places stripped, over
+**24,907 lines across 3,176 played weeks** (`probes/tongue.mjs`):
+
+| | | |
+|---|---|---|
+| **1,010** | **4.1%** | `<name> rises from the medicus' table, whole.` |
+| **967** | **3.9%** | `<name> was beaten at <venue>.` |
+| 517 | 2.1% | `The man you let up is still alive somewhere...` ← *the item's own example, third* |
+| 507 | 2.0% | `<name> took victory at <venue> (+<n>d).` |
+
+**The two commonest things in this game are a bout ending and a man coming off the medicus' table,
+and each had one sentence.** The bout result — the record of the thing the whole game is about —
+knew *nothing*: not the crowd, not whether he was let up off the ground, not whether he walked off
+it or was carried. 1,684 lines, **6.8% of everything a player ever reads**, saying "he lost".
+
+**AND THE GAME ALREADY OWNED THE PATTERN.** `AFTERS.triumph` picks from four variants. It was the
+only one of seven `AFTERS` entries that did — so "variant pools keyed to the man and the count" was
+not a new idea to import but an existing house style applied in one place out of dozens.
+
+**WHAT SHIPPED — three pools, on the three families the measurement actually named.**
+
+- **`boutLine`** — keyed to what the sim rolled: `res.crowd` (the tiers still up, or forty people),
+  `res.spared` (he went down and was let up — *"he walks back into your cells owing somebody his
+  life"*), `res.vA` (nothing left in him, helped to the cart), and whether he killed or died. It
+  lives at top level rather than inside `doFight`, which sits on its `bulk` allowance.
+- **`tableLine`** — keyed to the count, which is what the item asked for. **His scars are the
+  count** — no new state, nothing to keep in step — so a man on his fifth trip gets *"they have put
+  him back together so often the medicus knows which side he favours before he asks"* and a man on
+  his first gets *"it is his first, and he keeps finding it with his hand."*
+- **`AFTERS.spared`** — #223's own sentence: *"the third mercy in a month is a reputation, and the
+  line should know it."* `d.rep.mercy` was already being kept; the line simply never read it. Three
+  bands now, and the top one is a house Capua has an opinion about: *"reputations get quoted at you
+  when the purse is being agreed."*
+
+| same seeds, same scale | before | after |
+|---|---|---|
+| distinct shapes | 923 | **1,043** |
+| the 10 commonest, as a share of everything read | **21.6%** | **13.8%** |
+| the 50 commonest | 49.7% | **42.3%** |
+| the single commonest sentence | **4.1%** | **1.8%** |
+
+The families are the same size — a bout still ends as often as it did, and the medicus family is
+6.8% of the chronicle against 7.3%. What changed is how many sentences they are spread across.
+
+**AND THE MEASURE ITSELF HAD TO BE REPLACED.** "How many lines repeat" reads 99.3% before and 99.2%
+after: at 25,000 lines over 900-odd shapes nearly everything repeats eventually, so that number is
+true of any game and says nothing. What a reader feels is **concentration** — how much of a week is
+the same handful of sentences — and that is what the probe and the check both measure now.
+
+
+**AND THE POOLS MUST NOT DRAW ON THE GAME'S OWN RNG, which the suite caught and I did not predict.**
+`pick` is `a[Math.floor(R()*a.length)]` — the simulation's seeded stream. Built with it, every
+chronicle sentence would shift every roll that came after: **the words a house writes would change
+which men it loses.** It showed immediately — the first cut moved `chair`'s butcher arm onto a tie
+(2 against the showman's 2) with nothing about the surgeon changed, purely from the reshuffle.
+
+`sayOf` keys on the week and the man instead. Deterministic, stable across renders and reloads, and
+the simulation is **byte-identical to main**: the same 16 houses run 3,176 weeks and write 24,907
+lines before and after. Prose is downstream of the game and never upstream of it, and the check now
+proves it by reading the RNG's own state across twelve hundred calls to every pool.
+
+**NEW CHECK — `tongue`** (125 → 126). Six arms: the bout result is a pool · so is the medicus
+table, and its bands differ by the count · the mercy line reads `rep.mercy` · **prose leaves the simulation's RNG untouched** · **no single
+sentence is more than 3% of everything read** · and enough was read to mean it.
+
+Sabotaged before shipping: restoring the old one-line bout result fails the fourth arm on real
+play, naming the sentence — *"one sentence is 3.8% of everything a player reads ('N was beaten at
+the pits.')"*. The first arm does not fire on that sabotage and should not: it tests the pool,
+which is still there. The fourth tests the call site.
+
 ### v3.165.0 — #222: the hero story that a healing wound deleted
 
 The first item of the story ledger. **The headline is right and the diagnosis is not**, and the
@@ -3171,7 +3248,7 @@ never doing the thing the item accused it of.
 > **Gameplay** ~~#207~~ (v3.156.0 — half-refuted, and the bill was missing two salaries) · ~~#208~~ (closed — refuted, the survey's own artifact; true median 4–5 bouts) · ~~#209~~ (v3.157.0 — half already shipped in #166; the verdict now names the salute) · ~~#210~~ (v3.158.0 — refuted; three protections found, and now guarded) · ~~#211~~ (v3.159.0 — refuted; `agendaTop` has no call sites) — **ledger closed, 5 of 5 refuted**
 > **Graphics** ~~#212~~ (v3.160.0 — TRUE; six of the nine great works now stand in the drawing, 0 → 51 elements) · ~~#213~~ (v3.161.0 — half-refuted; the row already tracked the level, and did it at ΔE 1.17–2.47 against a just-noticeable 2.3) · ~~#214~~ (v3.162.0 — TRUE; the 22-state figure had ONE call site, now on every roster and block row) · ~~#215~~ (v3.163.0 — TRUE; four graded suns and Saturnalia's lamps, at zero ink flips and 4.13:1 worst) · ~~#216~~ (v3.164.0 — half-refuted; the machinery applied, his scars were 0 on 481 of 481, and one snapshot door passed no `bore` at all) — **ledger closed, 5 of 5**
 > **Depth** #217 · #218 · #219 · #220 · #221
-> **Story** ~~#222~~ (v3.165.0 — headline right, diagnosis wrong; a healing wound deleted 67% of sagas, third act 28% → 64%) · #223 · #224 · #225 · #226
+> **Story** ~~#222~~ (v3.165.0 — headline right, diagnosis wrong; a healing wound deleted 67% of sagas, third act 28% → 64%) · ~~#223~~ (v3.166.0 — direction right, ranking wrong; the top sentence was the medicus table, not mercy. Top-10 share 21.6% → 13.6%) · #224 · #225 · #226
 > **Mechanics** #227 · #228 · #229 · #230 · #231
 
 
@@ -3330,6 +3407,8 @@ reckoning is set"; 0 reached the finale** — across 6,720 possible weeks, the g
 story has never once paid off. Recommend the reckoning be guaranteed to schedule within a named
 window of stage 3, and a *loss* close the story too (a fallen champion is an ending, not a reset to
 stage 2) — a story that cannot end is a meter.
+
+**#223 — DIRECTION RIGHT, RANKING WRONG. Shipped v3.166.0.** Counted by SHAPE rather than text, the mercy line was **third**. The top two were `<name> rises from the medicus' table, whole.` (4.1%) and `<name> was beaten at <venue>.` (3.9%) — the two commonest events in the game, one sentence each, and the bout result knew nothing about the bout. The pattern the item recommends (`pick([...])`) was already in `AFTERS.triumph`, used in one of seven entries. Three pools now; top-10 share **21.6% → 13.6%**, commonest sentence **4.1% → 1.8%**. See the release note.
 
 **#223 — The chronicle repeats itself.** 6,274 lines over 16 runs, 1,408 distinct — but the top of
 the table is boilerplate: the mercy line **616 times (15.6% of all weeks)**, festival announcements

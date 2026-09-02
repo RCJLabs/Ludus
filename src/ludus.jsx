@@ -10957,8 +10957,21 @@ const AFTERS = {
   flat:   { w:1, when:(d,m)=>m.bouts>=2 && m.crowdBest < 30 && d.fame >= 120 && R()<0.25,
     say:(d,m)=>`Nobody has said anything about last week's card, which is its own kind of review.`,
     hit:(d,m)=>{ d.fame = Math.max(0, d.fame-3); FAC_KEYS.forEach(k=>facMove(d,k,-1.5)); } },
+  /* #223 NAMED THIS ONE: "the third mercy in a month is a REPUTATION, and the line should know
+     it." `d.rep.mercy` is that count and it was already being kept — the line simply never read
+     it. Six shapes across three bands, and the top one is a house Capua has an opinion about. */
   spared: { w:7, when:(d,m)=>m.spared>0,
-    say:(d,m)=>`The man you let up is still alive somewhere, and every man in your cells knows exactly how that decision was made.`,
+    say:(d,m)=>{ const r = (d.rep && d.rep.mercy) || 0, K = sayKey(d, null);
+      return r >= 34 ? sayOf([
+        `Another one let up. Capua has stopped calling it softness and started calling it the way this house does things.`,
+        `The man you let up is still alive somewhere, and so are the others. That is a reputation now, and reputations get quoted at you when the purse is being agreed.`,
+      ], K) : r >= 14 ? sayOf([
+        `You let another one up. The men have noticed it is not an accident, and they are working out what it is worth to them.`,
+        `The man you let up is still alive somewhere. So is the last one. The cells have begun to keep count.`,
+      ], K) : sayOf([
+        `The man you let up is still alive somewhere, and every man in your cells knows exactly how that decision was made.`,
+        `You turned your thumb the other way. Nobody in the cells said anything about it, which is how you know it landed.`,
+      ], K); },
     hit:(d,m)=>{ activeG(d).forEach(g=>{ g.regard = clamp(regardOf(g)+2,0,100); }); d.unrest = clamp(d.unrest-1.5,0,100); } },
   carried:{ w:9, when:(d,m)=>m.hurt>0,
     say:(d,m)=>`${m.hurtName} is in the infirmary and the yard works around the space where he usually stands.`,
@@ -16641,6 +16654,97 @@ function boutAftermath(d, g, gid, offer, res, win, F, sum){
    to: 601 of 601 men who go down in a melee and 487 of 487 in a pairing are under vitality 40,
    at medians of 11 and 2. This was the one thing inflating it, and it was a bug. */
 const HURT_BAR = 45;      // won and came off under it -> the light wound; lost past it -> the heavy one
+/* ---- A SENTENCE MUST NOT CHANGE THE GAME — audit item #223 ----
+   `pick` draws from the simulation's own seeded stream. Pooling the commonest lines with it would
+   make every chronicle sentence shift every roll that came after — the WORDS a house writes would
+   change which men it loses. That is not a determinism bug (the seed still fixes everything) but it
+   is the wrong dependency, and it showed: the first cut of this release moved `chair`'s butcher arm
+   onto a tie purely by reshuffling, with nothing about the surgeon changed.
+
+   These pools draw from a hash of the week and the man instead. Deterministic, stable across
+   renders and reloads, and it costs the simulation nothing: prose is downstream of the game and
+   never upstream of it. */
+const sayOf = (list, seed) => list[Math.floor(foeHash(seed|0, list.length) * list.length) % list.length];
+const sayKey = (d, g) => (d && d.week ? d.week : 0) * 977 + ((g && g.id) || 0);
+
+/* ---- AND THE SECOND-MOST — audit item #223 ----
+   "<name> rises from the medicus' table, whole." was written 1,010 times in 24,907 lines, and its
+   sibling "He will carry the mark" 429 more: 5.8% of the chronicle, one event, two sentences.
+
+   THE COUNT IS THE STORY, which is exactly what the item asked for. A man's first time off that
+   table is not his fifth. The scars he already carries are the count — no new state, nothing to
+   keep in step — so the line knows how many times this house has patched him up before. */
+const tableLine = (d, g, whole) => {
+  const K = sayKey(d, g);
+  const n = (g.scars||[]).length;
+  if(whole) return sayOf([
+    `${g.name} rises from the medicus' table, whole.`,
+    n >= 4 ? `${g.name} is off the table again, whole again. The medicus has stopped saying he was lucky.`
+      : n >= 2 ? `${g.name} rises from the table with nothing new on him. He knows how rare that is by now.`
+      : `${g.name} is up and back in the yard by the end of the week, unmarked.`,
+    n >= 4 ? `They have put ${g.name} back together so often the medicus knows which side he favours before he asks.`
+      : `Whatever ${g.name} took, it closed clean. He was at the palus on Thursday.`,
+  ], K);
+  return sayOf([
+    `${g.name} rises from the medicus' table. ${PR(g).He} will carry the mark.`,
+    n >= 4 ? `Another one for ${g.name}. There is not much of him left that is not a record of something.`
+      : n >= 2 ? `${g.name} leaves the table with one more than he came in with, and does not look at it.`
+      : `${g.name} comes off the table marked. It is his first, and he keeps finding it with his hand.`,
+    `The medicus is done with ${g.name}. What he did not fix is now part of him.`,
+  ], K);
+};
+
+/* ---- THE MOST-WRITTEN SENTENCE IN THE GAME — audit item #223 ----
+   Measured over 24,907 chronicle lines across 3,176 played weeks (`probes/tongue.mjs`), the four
+   shapes this ONE line can take account for 1,684 of them — 6.8% of everything a player ever
+   reads, and the top of the whole table:
+
+       967  <name> was beaten at <venue>.
+       507  <name> took victory at <venue> (+<n>d).
+       210  <name> died on the sand at <venue>.
+
+   It knew nothing. Not the crowd, not whether he was let up off the ground, not whether he walked
+   off it or was carried. A bout is the thing this game is about and its record of one was a
+   scoreboard entry.
+
+   THE ITEM ASKED FOR "variant pools keyed to the man and the count", AND THE GAME ALREADY OWNS
+   THAT PATTERN — `AFTERS.triumph` picks from four. It was used in one of seven entries. This is
+   the same shape, keyed to what the sim actually rolled: `res.crowd`, `res.spared`, `res.aDies`,
+   `res.bDies` and how much of him was left (`res.vA`). The coin is still stated, because that is
+   the one part of the line a player is reading for a number. */
+const boutLine = (d, g, offer, res, win, coin, where) => {
+  const K = sayKey(d, g);
+  const him = (offer.opp && offer.opp.name) || "the other man";
+  const paid = `(+${coin}d)`;
+  const loud = (res.crowd||0) >= 78, dead = (res.crowd||0) <= 26;
+  const bare = (res.vA||100) <= 22;                 /* he had almost nothing left */
+  if(res.aDies) return sayOf([
+    `${g.name} died on the sand at ${where}. ${him} was better on the day and the day was the only one that counted.`,
+    `${g.name} was killed at ${where}. The house went out with a man and came back with a purse and a name to cut.`,
+    loud ? `${g.name} died at ${where} in front of a crowd that had come to see him win, and stayed to see the rest.`
+         : `${g.name} died at ${where}. Not many were there. He is just as dead.`,
+  ], K);
+  if(win) return sayOf([
+    res.bDies ? `${g.name} killed ${him} at ${where} ${paid}.` : `${g.name} took victory at ${where} ${paid}.`,
+    res.bDies ? `${g.name} put ${him} down for good at ${where} ${paid}. Nobody asked him for a word afterward.`
+      : loud ? `${g.name} won it at ${where} and the tiers were still up when he walked off ${paid}.`
+      : bare ? `${g.name} won it at ${where} with nothing left in him ${paid}. It was closer than the result says.`
+      : dead ? `${g.name} beat ${him} at ${where}, to about forty people ${paid}.`
+      : `${g.name} beat ${him} at ${where} ${paid}.`,
+    bare ? `${g.name} came off ${where} the winner and had to be helped to the cart ${paid}.`
+         : `${g.name} had the better of ${him} at ${where} ${paid}.`,
+  ], K);
+  return sayOf([
+    res.spared ? `${g.name} went down at ${where} and was let up. He walks back into your cells owing somebody his life.`
+      : `${g.name} was beaten at ${where}.`,
+    loud ? `${g.name} lost it at ${where}, and the crowd did not hold it against him — it was the better half of a good afternoon.`
+      : dead ? `${g.name} lost at ${where}. Almost nobody saw it, which is the only mercy in it.`
+      : `${g.name} was beaten at ${where} by ${him}.`,
+    bare ? `${g.name} was on the ground at ${where} before he understood he was losing.`
+         : `${him} had the better of ${g.name} at ${where}.`,
+  ], K);
+};
+
 /* ---- THE EIGHTH DOOR — audit item #216 ----
    Of the eight sites that build an arena snapshot, this one's `B` passed NO `bore` at all, so the
    man across the sand came through one of the game's main paths drawn as a bare class silhouette
@@ -16895,8 +16999,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   const why = readBout(d, wasG, offer, { win, crowd:res.crowd },
     { plan:{ right:PE.right, label: PLANS[planKey] && PLANS[planKey].name } });
   boutAccount(d, g, offer, res, { win, died:!!res.aDies, killed:!!res.bDies, purse: win ? purse + t.app : t.app, why });
-  chron(d, win? `${g.name} ${res.bDies?"killed "+offer.opp.name:"took victory"} at ${where} (+${purse+t.app}d).` :
-    res.aDies? `${g.name} died on the sand at ${where}.` : `${g.name} was beaten at ${where}.`, win?"good":"bad");
+  chron(d, boutLine(d, g, offer, res, win, purse + t.app, where), win?"good":"bad");   /* #223 */
   if(d.games) d.games.offers = d.games.offers.filter(o=>o.id!==offer.id);
   if(offer.imperial && d.rome){
     d.rome.fought++;
@@ -18245,10 +18348,10 @@ function menWeek(d, fest){
           chron(d, repeat
             ? `${g.name} leaves the medicus' table. That ${SCAR_WORD[part]||"wound"} has been opened twice now, and it will not come back all the way.`
             : lasted ? `${g.name} leaves the table alive. Not every part of him came with him.`
-            : `${g.name} rises from the medicus' table. ${PR(g).He} will carry the mark.`);
+            : tableLine(d, g, false));
         } else if(part && sev && graveLasting(d, g, part, care)){
           /* no fresh scar, but a grave wound left its own quiet ruin */
-        } else chron(d, `${g.name} rises from the medicus' table, whole.`);
+        } else chron(d, tableLine(d, g, true));
       }
     } else if(g.status==="active"){
       if(g.injury && g.injury.care==="through"){
@@ -29939,6 +30042,10 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     boreOf, SPENT_SAG, umbraRx, umbraOp, marksOf, FOE_SCAR_RATE, FOE_SCAR_CAP, SCAR_CROWD,
     /* #222 — the house hero story: its week, its endings, and what closes it */
     sagaWeek, endSaga, igniteSaga, issueReckoning,
+    /* #223 — the pools behind the two commonest sentences in the game */
+    boutLine, tableLine, AFTERS, sayOf, sayKey,
+    /* #223 — the simulation's own stream, so a check can prove prose never draws on it */
+    rngPeek: () => RNG,
     /* #215 — what month the drawing thinks it is */
     seasonOf, SEASONS, SCN_GRADE, SCN_KEYS, scnSandOf, scnInk, scnSandAt, festivalNow,
     boardMen, restWornMen, allToPalus, pairTheYard,
