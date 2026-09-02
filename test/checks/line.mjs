@@ -55,9 +55,19 @@ export async function run({ p, errors }){
     {
       const young = house(); young.lanista.age = 34;
       const old   = house();
+      /* ---- AND A SON HE ACTUALLY HAS — the gate changed in v3.169.0 ----
+         This asked for "son" on a lanista of 44 and got it, because `heirEligible` read HIS age and
+         never the household's. Measured for #226, that let seven of fourteen played houses name "A
+         son" in week two, one of them a house that never had a child at all — while `HEIRS.son`
+         describes a boy "they have watched since he was nine". The pair is held both ways round now:
+         a man of 44 with no children may NOT, and the same man with a boy of ten may. */
+      const withSon = house();
+      { const dm = A.domusOf(withSon);
+        dm.wife = { name:"Vettia", family:"Vettius", married:1, age:26, from:"merchant" };
+        dm.children = [{ id:9001, name:"Aulus", sex:"m", born: withSon.week - 10*A.YEAR_WEEKS }]; }
       const withDoc = house(); withDoc.doctore = { name:"Oenomaus", skill:80, spec:"tec", wage:10, fee:0, fromHouse:true, weeks:20 };
       const hiredDoc = house(); hiredDoc.doctore = { name:"Hired", skill:70, spec:"str", wage:22, fee:500, fromHouse:false, weeks:5 };
-      R.eligible = { young: A.heirEligible(young), old: A.heirEligible(old),
+      R.eligible = { young: A.heirEligible(young), old: A.heirEligible(old), withSon: A.heirEligible(withSon),
         freedDoctore: A.heirEligible(withDoc), hiredDoctore: A.heirEligible(hiredDoc) };
     }
 
@@ -114,7 +124,9 @@ export async function run({ p, errors }){
 
   const lines = [], fails = [];
   const e = out.eligible;
-  lines.push(`may be named — at 34: ${e.young.join("/")} · at 44: ${e.old.join("/")} · with a freed doctore: ${e.freedDoctore.join("/")} · with a hired one: ${e.hiredDoctore.join("/")}`);
+  lines.push(`may be named — at 34: ${e.young.join("/")} · at 44 childless: ${e.old.join("/")}`
+    + ` · at 44 with a son of ten: ${e.withSon.join("/")} · with a freed doctore: ${e.freedDoctore.join("/")}`
+    + ` · with a hired one: ${e.hiredDoctore.join("/")}`);
   for(const r of out.rows)
     lines.push(`  ${r.kind.padEnd(8)} fame ${r.gotFame}/${r.expectFame} · standing ${r.gotFavor}/${r.expectFavor} · ` +
       `${r.goldGain>=0?"+":""}${r.goldGain}d · unrest ${r.unrestWas}→${r.unrestNow} (HEIRS says ${r.expectUnrest>=0?"+":""}${r.expectUnrest}) · ` +
@@ -123,7 +135,11 @@ export async function run({ p, errors }){
 
   /* ---- the gates on naming ---- */
   if(e.young.includes("son")) fails.push("a lanista of 34 may name a son — the age gate is open");
-  if(!e.old.includes("son")) fails.push("a lanista of 44 may not name a son");
+  if(e.old.includes("son")) fails.push("a lanista of 44 with no children at all may name a son — "
+    + "`heirEligible` is reading his age and not his household, and `HEIRS.son` describes a boy "
+    + "\"they have watched since he was nine\"");
+  if(!e.withSon.includes("son")) fails.push("a lanista of 44 with a son of ten may NOT name him — the "
+    + "gate has been taken away from the men who actually have one");
   if(!e.old.includes("nephew")) fails.push("nobody may name a nephew — that road is always supposed to be open");
   if(!e.freedDoctore.includes("doctore")) fails.push("a freed doctore of your own may not be named");
   if(e.hiredDoctore.includes("doctore")) fails.push("a hired doctore may be named heir — only your own freed men should be");
