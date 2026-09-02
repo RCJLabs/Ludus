@@ -2428,6 +2428,95 @@ but two arms leaning the same way is the thesis of #207 arriving from an unexpec
 the game may genuinely be a notch harder when its numbers stop flattering you. #229 (surfacing the
 runway when it turns short) is the counterpart and stays queued.
 
+### v3.163.0 — #215: four suns over one ground, and the week the year turns over
+
+The fourth item of the graphics ledger, **true on both halves** — and the half it did not state is
+the one that decided how it was built.
+
+**The drawn ludus contained ZERO references to `seasonOf`, `CALENDAR` or anything else about the
+time of year.** Checked across the whole scene. Meanwhile winter alone moves training ×0.88,
+healing ×1.35, the pits ×0.45, upkeep +4, unrest +0.55 and the crowd −7. The year had weather with
+opinions and the picture was one golden afternoon.
+
+And the item was right that the machinery was already there: `SCN_SAND` is one stop table,
+`scnSandAt` interpolates it, `scnInk` derives every label's ink from the sand at that y, and
+`legible` composites the real stack under every glyph and fails under 4.0:1.
+
+**WHAT IT DID NOT SAY.** `scnInk(y)` takes only a y. A season-aware ink means threading the season
+through `scnSay`, `scnName` and every label in the drawing — twenty call sites, each one a chance
+to leave a label reading against the wrong ground. The ink can stay season-blind **only if no label
+ever wants a different ink in a different month**, and that is not free. Measured
+(`probes/year.mjs`), a straightforward four-season grade:
+
+| | ink flips | worst label |
+|---|---|---|
+| first cut — winter dimmed toward mid-tone | **8 of 15** | **3.02:1** |
+| winter lifted and greyed instead | 1 of 15 | 3.64:1 |
+| the same, softened by a third | 1 of 15 | 3.85:1 |
+
+The bar is 4.0:1. **Every flip comes from moving the DARK ENDS of the gradient** — the haze at the
+top of the compound and the ground at the player's feet are what make pale ink win there, and a
+season that lifts or dims them inverts the polarity the whole ink rule rests on.
+
+**So the grade is weighted by where the light falls**, fading to nothing by t=0.82 and at t=0. The
+sun changes what the sun lights; the shadow at the top of the drawing and the ground under your
+feet are the same in every month, which is also true of a real one. Measured that way:
+
+| falloff | ink flips | worst label | ground moves (ΔE) |
+|---|---|---|---|
+| `sin(πt)` | 1 | 3.84 | 11.4–13.7 |
+| `sin(πt)²` | 0 | 4.00 | 11.4–13.7 |
+| **out by t=0.82** | **0** | **4.13** | **11.0–13.1** |
+| out by t=0.74 | 0 | 4.19 | 9.8–12.0 |
+
+**Zero ink flips, worst label 4.13:1, and the ground still moves ΔE 11–13 at the sand's midpoint —
+five times the just-noticeable difference.** Not one call site changed, and the contrast guarantee
+got *stronger*: `scnInk` now picks the ink that wins in the **worst month** rather than in today's,
+so a future re-grade cannot quietly leave a label readable for nine months and gone for three.
+
+| season | the sand's five stops | ΔE from spring |
+|---|---|---|
+| spring | `#46351a #96742f #a8813a #82642a #5e4720` | — |
+| summer | `#46351a #aa7d24 #be8b2d #856528 #5e4720` | **13.08** |
+| autumn | `#46351a #9f6a21 #b27529 #836228 #5e4720` | **12.09** |
+| winter | `#46351a #927a44 #a28650 #82652d #5e4720` | **11.03** |
+
+Summer is bleached with the blue burnt out of it; autumn is a low sun with the ground gone red;
+winter is pale, grey and flat — wet sand under cloud. The first cut made winter *darker*, which is
+the intuitive reading and the wrong one: a low sun on a wet square is flat-bright, not dim, and
+darkening it is exactly what flipped eight labels.
+
+**AND THE WEEK THE YEAR TURNS OVER.** Saturnalia is the one entry in `CALENDAR` with
+`purse:0, fame:0, offers:0, rest:true` — *"no games are held, the familia is served at your own
+table, and for one week nobody is anybody's property."* The strongest week in the game's own
+writing, and the drawing said nothing. Seven lamps hang in the portico now, with one over the
+villa's door and one over the gate's arch. **Where they go was constrained, not chosen:** `legible`
+composites everything under a label, so a warm glow behind a room name is a contrast fault with a
+pleasant explanation. Every lamp sits in a band that carries no text.
+
+**NEW CHECK — `season`** (122 → 123). Five arms:
+
+1. **four seasons, four grounds** — each must differ from spring by more than the eye's threshold
+2. **and readable in every one** — every label that sits on the sand clears 4.0:1 in all four
+   months. **This is the arm `legible` cannot reach**, because it plays one house and therefore
+   sees one month
+3. **the ink never flips** — the invariant the whole design rests on
+4. **the dark ends are the same in every month** — the *mechanism* behind arm 3, asserted directly
+   so a re-grade that breaks it fails here naming the cause rather than three releases later
+5. **Saturnalia lights the lamps**, and no ordinary week does
+
+Sabotaged before shipping: dropping the weighting (`scnLight = 1`) fails all three of arms 2–4 at
+once, and the third message says *"summer moves the ends of the gradient (#543c11/#6e4f16 against
+spring's #46351a/#5e4720) — the dark top and the near foreground are what make pale ink win there,
+and moving them is what makes the ink flip."*
+
+**One instrument fault worth recording.** The check's first cut read every `<text>` in the scene
+and reported the caller badge at y=238 as the tightest label in the drawing, at 4.02:1. Badges sit
+on their **own painted disc** — a gold circle — not on the ground, so measuring them against the
+sand measures a stack they are not in. It reads `text[font-family]` now: `scnSay` and `scnName` are
+the two helpers that put a word on the sand and both name a family, and nothing else in the scene
+does. With the false reading gone the true worst is 4.13:1.
+
 ### v3.162.0 — #214: the twenty-two-state figure that had one call site
 
 The third item of the graphics ledger, and **true as written — worse than written, in fact.**
@@ -2896,7 +2985,7 @@ never doing the thing the item accused it of.
 **THE QUEUE.** All twenty-five stand open. Struck through as they ship, with the release that did:
 
 > **Gameplay** ~~#207~~ (v3.156.0 — half-refuted, and the bill was missing two salaries) · ~~#208~~ (closed — refuted, the survey's own artifact; true median 4–5 bouts) · ~~#209~~ (v3.157.0 — half already shipped in #166; the verdict now names the salute) · ~~#210~~ (v3.158.0 — refuted; three protections found, and now guarded) · ~~#211~~ (v3.159.0 — refuted; `agendaTop` has no call sites) — **ledger closed, 5 of 5 refuted**
-> **Graphics** ~~#212~~ (v3.160.0 — TRUE; six of the nine great works now stand in the drawing, 0 → 51 elements) · ~~#213~~ (v3.161.0 — half-refuted; the row already tracked the level, and did it at ΔE 1.17–2.47 against a just-noticeable 2.3) · ~~#214~~ (v3.162.0 — TRUE; the 22-state figure had ONE call site, now on every roster and block row) · #215 · #216
+> **Graphics** ~~#212~~ (v3.160.0 — TRUE; six of the nine great works now stand in the drawing, 0 → 51 elements) · ~~#213~~ (v3.161.0 — half-refuted; the row already tracked the level, and did it at ΔE 1.17–2.47 against a just-noticeable 2.3) · ~~#214~~ (v3.162.0 — TRUE; the 22-state figure had ONE call site, now on every roster and block row) · ~~#215~~ (v3.163.0 — TRUE; four graded suns and Saturnalia's lamps, at zero ink flips and 4.13:1 worst) · #216
 > **Depth** #217 · #218 · #219 · #220 · #221
 > **Story** #222 · #223 · #224 · #225 · #226
 > **Mechanics** #227 · #228 · #229 · #230 · #231
@@ -3000,6 +3089,8 @@ carry venue tier.
 injury, record, kit — the v3.144.0–v3.146.0 work) lives on his page only. The roster rows and the
 block are name + tags + bars. Recommend the small figure on every roster and block row — a glance
 at the familia should look like a yard, and an infirmary row should *look* hurt.
+
+**#215 — TRUE, shipped v3.163.0.** The scene held **zero** references to `seasonOf` or `CALENDAR`. Four graded suns now, weighted by where the light falls so the ink stays season-blind — an unweighted grade flips the ink on **8 of 15 labels** and drops the worst to **3.02:1**. Shipped at zero flips, worst 4.13:1, ground moving ΔE 11–13. Saturnalia lights the portico. See the release note.
 
 **#215 — Seasons are mechanical and invisible.** Winter, summer, festivals move purses, training,
 fatigue and healing (the chips on The Year say so) — and the ludus is drawn in the same golden
