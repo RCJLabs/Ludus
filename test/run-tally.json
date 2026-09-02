@@ -134,4 +134,5 @@
 {"v":"3.168.0","checks":128,"failed":["wall","grave"]},
 {"v":"3.168.0","checks":128,"failed":[]},
 {"v":"3.169.0","checks":129,"failed":["line"]},
-{"v":"3.169.0","checks":129,"failed":["stature"]}]
+{"v":"3.169.0","checks":129,"failed":["stature"]},
+{"v":"3.170.0","checks":130,"failed":["salute","stature"]}]

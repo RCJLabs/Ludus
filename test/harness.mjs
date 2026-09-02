@@ -1322,6 +1322,16 @@ export async function forge(p, build, arg = null){
     if(!keys.length) return { __forge:"no ludus slot to write into — found() has not run" };
     const blob = JSON.stringify(d);
     for(const k of keys) localStorage.setItem(k, blob);
+    /* ---- AND KEPT, TO BE WRITTEN AGAIN ON THE WAY OUT ----
+       The write and the reload are two round trips, and the app autosaves on a 500ms timer that
+       cannot run while this evaluate holds the thread but is very likely to be DUE the moment it
+       lets go. So the app's own state lands on top of the plant in the gap between them, and the
+       token check below then reports the plant as lost. Measured: `stature` builds its fixture by
+       playing forty weeks in this builder and failed on three runs out of three on a loaded
+       machine, at HEAD as well as on the branch. The blob is re-written immediately before the
+       reload, after the autosave has had its turn, which is the only moment that cannot be
+       overtaken. */
+    window.__forgeBlob = blob; window.__forgeKeys = keys;
     const rest = {}; for(const key of Object.keys(res)) if(key !== "plant") rest[key] = res[key];
     return Object.assign(rest, { __planted:true });
   }, [build.toString(), token, arg]);
@@ -1329,6 +1339,9 @@ export async function forge(p, build, arg = null){
   if(out && out.__forge) throw new Error(`forge(): ${out.__forge}`);
   if(!out || !out.__planted) return out;     /* the builder chose not to plant */
 
+  /* the second write: after the app's autosave timer has fired, and immediately before the reload */
+  await p.evaluate(()=>{ const b = window.__forgeBlob, ks = window.__forgeKeys || [];
+    if(b) for(const k of ks) localStorage.setItem(k, b); });
   await p.reload({ waitUntil:"domcontentloaded" });
   await p.waitForTimeout(1100);
   await p.evaluate(()=>{ const b=[...document.querySelectorAll("button")]

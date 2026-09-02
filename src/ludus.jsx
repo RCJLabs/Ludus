@@ -6583,6 +6583,58 @@ function rivalTurn(d){
   chron(d, line, "info");
 }
 
+/* ---- STONE IN THE BAY, AND SOMEBODY ELSE PUTTING IT UP — audit item #217 ----
+   "Recommend the works become the named late-game ladder: agenda items when the box can afford
+   one, RIVALS RACING YOU TO THEM, the census noticing." Two of those three were already answered —
+   the agenda by #138 and #141, the census by this release. This is the third, and it was the only
+   one with nothing at all behind it: a rival house is `{ name, fame, grudge, form, formTier, star,
+   fighters }` and has never owned a building, a villa or a denarius.
+
+   Measured (`probes/works.mjs`), a work was commissionable on 75.9% of the reference player's weeks
+   and the agenda nagged about it on 75.9% — the pull the item asks for was already there, three
+   weeks in four. What was not there was anybody else on the ladder. Stone you are the only man in
+   the bay putting up is a purchase; stone the house across the town is also putting up is a race,
+   and the item's word for what the works should be is "ladder".
+
+   A rival builds the same five works you do, at the same prices, on the same clock. He is slower —
+   he pays for it out of the same fame that buys his men — and he only starts one when the bay has
+   made him rich enough to. When he finishes, Capua says so and it is worth real fame to him; if he
+   finishes one you are still paying instalments on, the line says that too, because being second to
+   a spina is a different thing from not having one. */
+const RIV_WORK_BAR = 900;     /* the fame a house wants behind it before it puts up stone */
+/* Measured (`probes/works.mjs`): a rival's fame runs a median 648 across a run and 1,399 by week
+   190, so 43.7% of all rival-weeks already clear the bar — the bar is not what makes this rare, the
+   odds are. At 0.006 the bay put up one work per house per fifteen years, which is not a ladder
+   anybody can see they are on. At 0.014 a house that has had its good years builds about one every
+   nine, and the three of them together keep something standing in the town most of a long game. */
+const RIV_WORK_ODDS = 0.014;
+const RIV_WORK_FAME = { spina:26, baths:30, chapel:22, school:44, tomb:28 };
+function rivalStone(d, h){
+  if(h.retired) return;
+  if(h.work){
+    if(--h.work.left > 0) return;
+    const W = workDef(h.work.k); const k = h.work.k; h.work = null;
+    if(!W) return;
+    (h.built = h.built || []).push(k);
+    h.fame += RIV_WORK_FAME[k] || 24;
+    const mine = worksOf(d)[k];
+    const racing = !!(mine && mine.left > 0);
+    chron(d, racing
+      ? `${W.name} is finished across the town, at House ${h.name}'s expense, and yours is still scaffolding and a bill. ${lanistaOf(h.name).name} did not have to say anything about that and did not.`
+      : workDone(d, k)
+      ? `House ${h.name} has put up ${W.name.toLowerCase()} of its own. Capua notes that yours was first, which is the sort of thing Capua notes for about a season.`
+      : `House ${h.name} has finished ${W.name.toLowerCase()}. ${lanistaOf(h.name).name} had the town out to see it, and the men in your yard have heard about nothing else all week.`,
+      racing ? "bad" : "info");
+    return;
+  }
+  if((h.fame||0) < RIV_WORK_BAR) return;
+  if(R() >= RIV_WORK_ODDS) return;
+  const open = WORK_KEYS.filter(k=>!(h.built||[]).includes(k));
+  if(!open.length) return;
+  const k = pick(open), W = workDef(k);
+  h.work = { k, left: W.years * YEAR_WEEKS, began: d.week };
+  chron(d, `Word from the bay: House ${h.name} has masons in. ${lanistaOf(h.name).name} is building ${W.name.toLowerCase()}, and means everyone to know it before it is finished.`, "info");
+}
 function rivalWeekly(d){
   if(!d.rivals) return;
   /* the standard of the age, read once — it is the same city for all three houses */
@@ -6593,6 +6645,7 @@ function rivalWeekly(d){
   d.rivals.forEach(h=>{
     const L = lanistaOf(h.name);
     h.grudge = clamp(h.grudge - 1*L.grudgeDecay, 0, 100);
+    rivalStone(d, h);        /* #217 — somebody else on the ladder */
     /* the one they are building. A house has one set of good years, one doctore and
        one best pair of hands, and they go into a man — not spread evenly over four.
        Letting the whole roster climb put every man in the bay at 99 inside three
@@ -11100,7 +11153,26 @@ const censusWorth = d => Math.round((d.gold||0) + owedTotal(d)
   + Object.entries(d.gear||{}).reduce((n,[id,c])=> n + (wears(GEAR[id]) ? GEAR[id].price*0.5*(c||0) : 0), 0)
   + activeG(d).reduce((n,g)=> n + gladValue(g), 0)
   + BKEYS.reduce((n,k)=>{ const L = bLevel(d,k), c = BUILDINGS[k].cost||[];
-      let t = 0; for(let i=0;i<L;i++) t += c[i]||0; return n + t; }, 0));
+      let t = 0; for(let i=0;i<L;i++) t += c[i]||0; return n + t; }, 0)
+  /* ---- AND THE STONE, WHICH THE CENSUS REFUSED TO SEE — audit item #217 ----
+     The note above left the works out on purpose and said why: "the measurement below was taken
+     without them and a term nobody has measured is a term nobody should ship." It is measured now.
+
+     Twelve houses, the same seeds, played with the reference player's `works:true` policy off and
+     on (`probes/works.mjs`). A house that built read a census worth of 10,150 against 26,075 for
+     the same house that did not, while holding a median 12,500 of finished stone and up to 42,500.
+     So the ladder's own coin gate PUNISHED the only late-game sink the game has: every denarius a
+     man put into a spina or a shrine or a tomb for his dead vanished from what Capua would count
+     him worth, and the wings beside them counted in full. "The census counts what you have; it does
+     not take it" is written on the panel, and stone is the most obviously HAD thing a house owns —
+     four men high, on the road, where everyone coming into Capua must pass under it.
+
+     A work counts what has actually been paid on it, so a half-built spina is worth its deposit and
+     its instalments and no more. A save from before the instalment repricing carries no `owed`
+     figure and was bought outright, so it counts in full, which is what it cost. */
+  + ALL_WORK_KEYS.reduce((n,k)=>{ const W = workDef(k), w = worksOf(d)[k];
+      if(!w || !W) return n;
+      return n + (w.owed > 0 ? Math.max(0, W.cost - w.owed) : W.cost); }, 0));
 const riseNeed = d => {
   const nx = riseNext(d); if(!nx) return null;
   const worth = censusWorth(d), fee = riseFee(nx);
@@ -30232,6 +30304,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        `d.honoured` read 0 across every measurement this project has taken. `weekWeight` decides
        whether the week is quiet, which is the only gate on the "Let it run" fast-forward, and it
        was not reachable either — so nothing could see that the two disagree about the window. */
+    rivalStone, RIV_WORK_BAR, RIV_WORK_FAME,
     weekWeight, weeksToSomething, unhonoured, holdMunera, markUnburied, RITES, RITE_KEYS, RITE_WINDOW, riteLapse,
     /* ---- NINETEEN MORE THE SWEEP FOUND, v3.23.0 ----
        `test/probes/handle.mjs` differences every function the UI calls inside a `mut(d => …)`
