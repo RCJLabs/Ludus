@@ -7782,9 +7782,24 @@ const HEIRS = {
     line:"You raised him for this — in this yard, under your own eye. Capua knows whose son he is, and the cells know they half-raised him too. Almost nothing is lost in the handover.",
     took:n=>`${n} takes the house his father built and raised him to keep. There is no scramble, no doubt, no season of testing — the men knew him as a boy and follow him as a man. The thing simply continues, which is the rarest thing a ludus does.` },
 };
+/* ---- A SON YOU HAVE, NOT A SON YOU ARE OLD ENOUGH TO HAVE — audit item #226 ----
+   This offered "A son" on the LANISTA'S OWN AGE and never once asked whether he had a child.
+   `HEIRS.son` reads "He has grown up in this yard. He knows what the men are called and which of
+   them lie about their fatigue, and they have watched him do it since he was nine" — about a boy
+   the house may never have had. Measured over 3,497 weeks and fourteen played houses
+   (`probes/scion.mjs`), every one of them named an heir in WEEK TWO and seven of them named a son;
+   one of those seven went to its grave 95 weeks later having never had a child at all.
+
+   That is #226's whole thesis in one line of code: the heir was a mechanic you picked off a list
+   before you married, and the real boy — born in week 92, raised at seven and twelve, taking the
+   toga at sixteen — arrived to find the job filled. The toga fired 3 times in those 3,497 weeks.
+
+   A man with no son names his brother's boy, which is what `nephew` has always been for. */
+const SON_AGE = 9;     /* "they have watched him do it since he was nine" — HEIRS.son, verbatim */
 const heirEligible = d => {
   const out = [];
-  if(d.lanista && d.lanista.age >= 40) out.push("son");
+  if(d.lanista && d.lanista.age >= 40
+     && livingKids(d).some(c=>c.sex === "m" && childAge(d, c) >= SON_AGE)) out.push("son");
   out.push("nephew");
   if(d.doctore && d.doctore.fromHouse) out.push("doctore");
   return out;
@@ -8015,6 +8030,53 @@ function resolveDaughter(d, ev, i){
 }
 
 /* the family, week by week: a match, a birth, a child coming of age */
+/* ---- THE YEARS BETWEEN THE GATES — audit item #226 ----
+   "The domus exists from week one and stays procedural. Recommend seeding the generation early —
+   the heir as a named character in years 1-3 (at the rail during a card, a first opinion, a
+   falling-out) — so succession lands as an arc's end rather than a modal."
+
+   The arc has three gates and they are all late. `YEAR_WEEKS` is 18, so `raising` wants 126 weeks
+   after the birth, its second stage 216, and the toga 288. Measured over 3,497 weeks and fourteen
+   played houses (`probes/scion.mjs`): every house married, 41 children were born, and the chronicle
+   spent a MEDIAN OF THREE LINES on the whole family across a house's life. The longest stretch with
+   nothing said about the blood of the house ran a median of 91 weeks and a maximum of 199 — five to
+   eleven years in which a man's children are a field on the save and never a person.
+
+   So the boy has years now, not just gates. They are on a CLOCK rather than a roll: a child is
+   noticed at three, at five, at nine and at fourteen, which sits in the gaps at seven, twelve and
+   sixteen and asks nothing of the player. No question is raised, no state is decided, and the
+   simulation's stream is untouched — the wording is keyed on the child through `sayOf`, for the
+   reason written over it. What the line says is drawn on the house he is actually growing up in:
+   the man winning most in the yard, the last one carried out of it, the house they are feuding
+   with, the man who took to him at the post. He is at the rail during a card at three, has an
+   opinion at five, falls out with you at nine, and at fourteen he is nearly somebody. */
+const CHILD_YEARS = [3, 5, 9, 14];
+function childYear(d, c, age){
+  const men = activeG(d);
+  const top = men.slice().sort((a,b)=>(b.wins||0)-(a.wins||0))[0];
+  const lost = (d.fallen||[])[(d.fallen||[]).length-1];
+  const foe = d.nemHouse && d.nemHouse.house;
+  const K = sayKey(d, null) + (c.id||0)*13 + age*31;
+  const him = c.sex === "m" ? "him" : "her", he = c.sex === "m" ? "he" : "she";
+  const lines = age === 3 ? [
+      `${c.name} is three and gets everywhere. ${top ? `${top.name} has taken to carrying ${him} on one shoulder at the rail, which the doctore has given up objecting to.` : `The cells have a name for ${him} already, and it is not the one you chose.`}`,
+      `${c.name} was at the rail for the whole card today, held up to see, and did not once look away. ${men.length} men in this yard and every one of them noticed.`,
+      `You find ${c.name} asleep in the armoury again, in among the straw and the iron. Nobody has the heart to move ${him} and nobody says why.`,
+    ] : age === 5 ? [
+      `${c.name} asked today why ${lost ? lost.name : "the man on the boards"} did not come back, and would not take the short answer. ${he === "he" ? "He" : "She"} is five, and this is the house ${he} is growing up in.`,
+      `${c.name} has picked a favourite: ${top ? top.name : "the biggest man in the yard"}, on no evidence at all, and will hear nothing against ${top ? "him" : "the man"}. The choice is made with the whole of a five-year-old's certainty.`,
+      `${c.name} has worked out what the cards are for. ${he === "he" ? "He" : "She"} asked which of them you would sell, and you had not expected the question this early.`,
+    ] : age === 9 ? [
+      `${c.name} is nine and has stopped agreeing with you. ${foe ? `The row was about House ${foe}, and about whether a thing is worth doing because a man says it in the forum.` : `The row was about a man you sold, and ${he} was not entirely wrong.`}`,
+      `${c.name} would not eat at the table tonight. ${lost ? `${lost.name} went into the ground this month and nobody said much about it, and ${he} has noticed that nobody said much about it.` : `Something in the yard has got at ${him} and ${he} will not say what.`}`,
+      `${c.name} told you to your face that you do not watch the bouts, you watch the box. ${he === "he" ? "He" : "She"} is nine. It was not said kindly and it was not said wrongly.`,
+    ] : [
+      `${c.name} is fourteen and has the trade in ${him}, whether you meant it or not. ${c.mentorName ? `${c.mentorName} says so, and ${c.mentorName} does not say much.` : `${top ? `${top.name} defers to ${him} now on which of the new men will last, and is usually right to.` : `The men have started asking ${him} things instead of you.`}`}`,
+      `${c.name} kept the book for a whole card this week without being asked, and kept it better than you do. ${he === "he" ? "He" : "She"} is fourteen and the house is two years from finding out what that is worth.`,
+      `${c.name} watched a man die today and did not go quiet afterward, which is worse. Fourteen, and this yard has already told ${him} what it is.`,
+    ];
+  chron(d, sayOf(lines, K), "info");
+}
 function familyWeek(d){
   if(d.over || d.rome || d.city || d.travel || d.pendingEvent) return;
   const dmm = domusOf(d);
@@ -8055,6 +8117,10 @@ function familyWeek(d){
   for(const c of dmm.children){
     if(c.wed || c.dead) continue;
     const age = childAge(d, c);
+    /* #226 — the years between the gates. A note, not a question: it falls through to them. */
+    if(CHILD_YEARS.includes(age) && !(c.years||{})[age]){
+      (c.years = c.years || {})[age] = d.week; childYear(d, c, age);
+    }
     if(c.sex==="m"){
       if(age>=16 && !c.grown && (c.togaTil==null || d.week>=c.togaTil)){ d.pendingEvent = togaEvent(d,c); return; }
       if(age>=12 && !c.up2){ d.pendingEvent = raiseEvent(d,c,2); return; }
@@ -30347,7 +30413,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        `resolveDaughter` and the heir traits that come out of how a boy is brought up, all hang off
        this one function, and none of them had ever fired in any measured house. It was not on the
        handle, so no check could ask it directly whether its gates open. */
-    familyWeek, childAge, livingKids, marryReady,
+    familyWeek, childAge, livingKids, marryReady, childYear, CHILD_YEARS, heirEligible, SON_AGE,
     /* ---- AND THE TWO THAT DECIDE A FEUD, added for #225 ----
        Both `resolveMatch` and `resolveDaughter` carry a "rival" branch whose whole promise is that
        a wedding ends a feud — "a feud older than either of you is folded up and put away". Neither

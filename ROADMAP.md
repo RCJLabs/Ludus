@@ -2428,6 +2428,101 @@ but two arms leaning the same way is the thesis of #207 arriving from an unexpec
 the game may genuinely be a notch harder when its numbers stop flattering you. #229 (surfacing the
 runway when it turns short) is the counterpart and stays queued.
 
+### v3.169.0 — #226: a son you did not have
+
+The fifth and last item of the story ledger. The item is right, and the sharpest thing in it is a
+line of code it does not name.
+
+**WHAT `checks/domus.mjs` DELIBERATELY DOES NOT ASK.** The family arc already had a check, and that
+check says in its own words that it is a bench: hand-built states, each branch driven directly,
+"because that is what the claim is — one function, six branches". It proves every gate fires. It
+asks nothing about whether a played house ever reaches one, which is the whole of #226.
+
+**MEASURED over 3,497 weeks and fourteen played houses** (`probes/scion.mjs`):
+
+| | |
+|---|---|
+| houses that married | 14 of 14, median week 32 |
+| children born | 41 |
+| the age a child ever reached | median **5**, max 21 |
+| `raising` at seven / at twelve | 10 / 8 |
+| **the toga**, the only road to a scion heir | **3** |
+| successions | 2 |
+
+**AND THE HEIR WAS A MECHANIC IN THE MOST LITERAL WAY THE FILE ALLOWS.**
+
+```js
+const heirEligible = d => {
+  const out = [];
+  if(d.lanista && d.lanista.age >= 40) out.push("son");
+  …
+```
+
+It offered *"A son"* on **the lanista's own age** and never once asked whether he had a child.
+`HEIRS.son` describes him: *"He has grown up in this yard. He knows what the men are called and
+which of them lie about their fatigue, and they have watched him do it since he was nine."* About a
+boy the house may never have had. Every one of the fourteen houses named an heir in **week two**;
+**seven named a son**; one of those seven went to its grave 95 weeks later **having never had a
+child at all**. The real son — born in week 92, raised at seven and twelve, taking the toga 288
+weeks after that — arrived to find the job filled.
+
+That is #226's thesis compressed into one clause. A man with no son names his brother's boy, which
+is what `nephew` has always been for; all fourteen houses name one now.
+
+**AND BETWEEN THE GATES, NOTHING.** `YEAR_WEEKS` is 18, so a child's three beats land 126, 216 and
+288 weeks after his birth. The longest stretch with nothing said about the blood of the house ran a
+**median of 91 weeks and a maximum of 199** — five to eleven years in which a man's children are a
+field on the save and never a person. The item asks for exactly this and names the beats it wants:
+*"at the rail during a card, a first opinion, a falling-out."*
+
+**So the boy has years now, not only gates.** He is noticed at three, five, nine and fourteen —
+sitting in the gaps at seven, twelve and sixteen. On a **clock rather than a roll**: no question is
+raised, no state is decided, and the simulation's stream is untouched, with the wording keyed on the
+child through `sayOf` for the reason written over it. What the line says is drawn on the house he is
+actually growing up in — the man winning most in the yard, the last one carried out of it, the house
+they are feuding with, the man who took to him at the post. He is at the rail during a card at
+three, has an opinion at five, falls out with you at nine, and at fourteen he is nearly somebody.
+
+| over the same fourteen houses | before | after |
+|---|---|---|
+| family beats a house ever saw | 25 total | **103** |
+| the longest silence | median 91 weeks, max 199 | **median 57, max 84** |
+| houses offered a son they do not have | 7 of 14 | **0** |
+
+**AND AN EXISTING CHECK WAS ASSERTING THE FAULT.** `line` — "the house outlives its lanista, four
+different ways" — held the old rule as a bar: *"a lanista of 44 may not name a son"*, on a fixture
+with no children in it. It was not wrong to hold something there; it was holding the wrong half. The
+pair is held both ways round now, on two fixtures: a man of 44 with no children may **not**, and the
+same man with a boy of ten **may**. A check that encodes a gate should say what the gate is for.
+
+**NEW CHECK — `scion`** (128 → 129). Five arms: a son you do not have is not on the list and one you
+do have is · every kind the list offers is a kind `HEIRS` actually has · the boy has years, and the
+silence is bounded · they are his years — the line differs by child and by age and does not move the
+simulation's stream · and the road still reaches its end.
+
+**Arm 5 is a bench on purpose, and says so.** The toga lands 288 weeks after a birth around week 92,
+against a median house life of 224 — it fires 3 times in fourteen houses. Asserting on that in a
+seven-house run is a coin flip wearing an assertion's clothes, which is the shape that has cost this
+suite three false reds in three releases. What the arm owes is that the road is *walkable*, so it
+walks it: a boy of sixteen, the event raised, the first door taken, and a scion heir with his `cid`
+on it or not.
+
+Sabotaged twice. Restoring the age-only clause fails three arms at once — the phantom son, the boy
+of four, and (with a bogus kind added alongside) *"`heirEligible` offers cousin, which `HEIRS` does
+not have — a kind on the list and not in the table is an heir a player can choose and the game
+cannot deliver"*. Removing the between-gate years reports *"not one between-gate year fired across
+12 children"* and the longest silence goes back to 113 weeks.
+
+One thing the probe had to stop measuring: it counted surviving chronicle lines that name a child.
+`d.log` is a rolling buffer that drops its tail, so that number is *how recently* the family was
+mentioned wearing the label *how often* — it read 2.3 lines a house on a build with 25 family beats
+and 2.8 on one with 103. It counts the beats, at the week they land.
+
+**What this does not do:** it does not make the scion common. Three togas in fourteen houses is the
+arithmetic of a sixteen-year boy in a game whose houses live four years, and this release does not
+claim to have changed it. What it changes is that the years before the toga are years somebody
+lived, and that the option to skip them by naming a son out of thin air is gone.
+
 ### v3.168.0 — #225: there was no way to lose a feud
 
 The fourth item of the story ledger, and the second time this audit has found #222's fault wearing
@@ -3539,7 +3634,7 @@ never doing the thing the item accused it of.
 > **Gameplay** ~~#207~~ (v3.156.0 — half-refuted, and the bill was missing two salaries) · ~~#208~~ (closed — refuted, the survey's own artifact; true median 4–5 bouts) · ~~#209~~ (v3.157.0 — half already shipped in #166; the verdict now names the salute) · ~~#210~~ (v3.158.0 — refuted; three protections found, and now guarded) · ~~#211~~ (v3.159.0 — refuted; `agendaTop` has no call sites) — **ledger closed, 5 of 5 refuted**
 > **Graphics** ~~#212~~ (v3.160.0 — TRUE; six of the nine great works now stand in the drawing, 0 → 51 elements) · ~~#213~~ (v3.161.0 — half-refuted; the row already tracked the level, and did it at ΔE 1.17–2.47 against a just-noticeable 2.3) · ~~#214~~ (v3.162.0 — TRUE; the 22-state figure had ONE call site, now on every roster and block row) · ~~#215~~ (v3.163.0 — TRUE; four graded suns and Saturnalia's lamps, at zero ink flips and 4.13:1 worst) · ~~#216~~ (v3.164.0 — half-refuted; the machinery applied, his scars were 0 on 481 of 481, and one snapshot door passed no `bore` at all) — **ledger closed, 5 of 5**
 > **Depth** #217 · #218 · #219 · #220 · #221
-> **Story** ~~#222~~ (v3.165.0 — headline right, diagnosis wrong; a healing wound deleted 67% of sagas, third act 28% → 64%) · ~~#223~~ (v3.166.0 — direction right, ranking wrong; the top sentence was the medicus table, not mercy. Top-10 share 21.6% → 13.6%) · ~~#224~~ (v3.167.0 — the headline was the rope's artifact; the real fault was that never answering beat every answer on the list) · ~~#225~~ (v3.168.0 — headline right, diagnosis blamed the respawn; the fault was that a feud could not be LOST. 77.1% of weeks → 36.3%, six grudge matches a feud → one) · #226
+> **Story** ~~#222~~ (v3.165.0 — headline right, diagnosis wrong; a healing wound deleted 67% of sagas, third act 28% → 64%) · ~~#223~~ (v3.166.0 — direction right, ranking wrong; the top sentence was the medicus table, not mercy. Top-10 share 21.6% → 13.6%) · ~~#224~~ (v3.167.0 — the headline was the rope's artifact; the real fault was that never answering beat every answer on the list) · ~~#225~~ (v3.168.0 — headline right, diagnosis blamed the respawn; the fault was that a feud could not be LOST. 77.1% of weeks → 36.3%, six grudge matches a feud → one) · ~~#226~~ (v3.169.0 — right, and the heir was a son the house had never had: `heirEligible` read the lanista's age and never his household. Family beats 25 → 103) — **the story ledger is closed, 5 of 5**
 > **Mechanics** #227 · #228 · #229 · #230 · #231
 
 
@@ -3734,6 +3829,8 @@ the heir arrives as a mechanic at the death. The domus (wife, children, next of 
 week one and stays procedural. Recommend seeding the generation early — the heir as a named
 character in years 1–3 (at the rail during a card, a first opinion, a falling-out) — so succession
 lands as an arc's end rather than a modal.
+
+**#226 — RIGHT, AND THE FAULT IS ONE CLAUSE. Shipped v3.169.0.** `heirEligible` offered "A son" on `d.lanista.age >= 40` and **never asked whether he had a child** — measured, all fourteen played houses named an heir in week two, seven named a son, and one of those seven died 95 weeks later having never had a child at all, while `HEIRS.son` describes a boy "they have watched since he was nine". The real son, born week 92 and taking the toga 288 weeks after, arrived to find the job filled: 3 togas in 41 children. And between the gates at 7, 12 and 16 the house heard nothing about its own blood for a median of 91 weeks. The son has to exist now, and the boy is noticed at three, five, nine and fourteen — family beats 25 → 103, longest silence 91 → 57. `line` was corrected: it had been asserting the fault. See the release note.
 
 #### THE MECHANICS LEDGER
 
