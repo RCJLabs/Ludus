@@ -2428,6 +2428,85 @@ but two arms leaning the same way is the thesis of #207 arriving from an unexpec
 the game may genuinely be a notch harder when its numbers stop flattering you. #229 (surfacing the
 runway when it turns short) is the counterpart and stays queued.
 
+### v3.171.0 — #227: fame was the wall, and the sink was a source
+
+The first item of the mechanics ledger, and every limb of it is wrong except the zero — which the
+item itself marks **(rope)**.
+
+**FAME IS NOT SPARE. IT IS THE COMMONEST WALL ON THE LADDER.** Measured over 992 played weeks
+(`probes/fame.mjs`), on every week a house is short of its next rung, the term holding is:
+
+| | |
+|---|---|
+| **fame** | **30.3%** |
+| census worth | 29.5% |
+| nothing — the rung is claimable | 26.6% |
+| favour | 10.1% |
+| the admission fee | 3.3% |
+
+The item recommends *"fame become spendable standing"*. Fame is already the thing most often
+standing between a house and its next title; a currency the player burns would have made the one
+wall it holds worse. **This is an item whose recommendation its own numbers refute.**
+
+**AND THE "SINK" IS A SOURCE.** The item names the munus *"the era-appropriate fame **sink**"*.
+`stageMunus` takes **coin** and **pays fame** — the three scales gate on fame at 120 / 300 / 600 and
+hand back 14 / 32 / 64 of it, for 500 / 1,600 / 4,200 denarii. It is the fame engine the game
+already has, and the item names it as the drain.
+
+**THE ZERO IS EXACT AND TOTAL, and now it is measured.** `stageMunus` had no caller in the reference
+player at all — so *"held 0 times"* measured the harness and nothing else, the same shape #138 found
+for the works and #224 conceded for the rites. It has a policy now (`munus:true`, opt-in for the
+reason `works` is, because it moves fame, favour, the factions and the box at once). Given it, the
+same eight houses:
+
+| | without | staging munera |
+|---|---|---|
+| median end fame | 672 | **3,210** |
+| median end rung | 3 | **6** |
+| peak fame | 4,509 | 7,209 |
+| fame's share of the binding | 30.3% | **12.7%** |
+| weeks a house survived | 992 | 1,302 |
+
+**WHAT IS ACTUALLY UNREACHABLE IS THE APEX, AND THE WALL THERE IS COIN.** Counting each of a rung's
+terms independently — and the ordered "first failing term" reading files every fame shortfall under
+fame and reads as *"fame is the wall"* by construction, which is how the first cut of the probe got
+it backwards — Amicus Caesaris is short of fame on 54% of the weeks a house reaches for it, favour
+30%, **census worth 91%** and **the admission fee 100%**. All four satisfied at once: **0 of 959
+weeks**, in every arm measured. #154 predicted it in this file before anybody had the number:
+*"favour is bought at the table and the table is the coin."*
+
+**A FIX WAS BUILT AND THROWN AWAY**, and the reason is recorded over `riseFee`. Letting surplus name
+pay up to half the reception is good fiction — half of Capua wants to be seen at that feast — and it
+does not fix what it was aimed at. Any real house is many multiples over the *low* bars and barely
+over the top one, so it took Eques from claimable on 57% of weeks to 91% and Known in Rome from 54%
+to 92%, while the apex moved from 0 weeks to 2 and its worth term did not move at all. **A change
+that loosens the part of the ladder nobody said was tight, and misses the part that is, is not a
+fix.** The apex wants the coin economy looked at, and that is a different item.
+
+**NEW CHECK — `fame`** (130 → 131). Five arms: the munus pays fame and costs coin, which is the
+item's factual error held as an invariant · the reference player can stage one, or arm 1's campaign
+half measures the harness again · fame is still a wall over real play — if that goes quiet, somebody
+has made fame spendable · every term the ladder names is actually consulted, each taken away in turn
+· and the fee the panel quotes is the fee that leaves the box, which is #150.
+
+Sabotaged four ways, each firing with its own message: reversing the munus reports *"staging a
+modest munus moved the house's fame by −14"*; deleting the policy reports *"staged 0 in 602 weeks
+with `munus:true` on"*; dropping `favorOk` from `canClaimRise` reads *"refused without … favor
+**false**"*; and adding 7 to what `claimRise` takes reads *"the fee quoted 300 · taken 307"*.
+
+Two fixtures had to be corrected before the arms meant anything. A house handed 999,999 of fame,
+favour and coin could not claim a rung at all, because `canClaimRise` wants a **fifth** term the
+panel does not name — `d.rise.standing >= 100`, a meter that fills over weeks — and because
+`d.favor` is recomputed *from* the patrons, so setting the field and then calling `recomputeFavor`
+sets it straight back to zero. And the take-each-term-away arm ran from rung 0, where the next rung
+is Man of Means and `favor: 0`, and duly reported *"favour is decoration"*. It is not; that rung does
+not ask for it. It starts one rung up now, at the first that names all four.
+
+**What this does not do:** it does not flip the `munus:true` default, for the reason #138 gave for
+`works` and this release repeats — it moves four systems at once and re-basing every figure in the
+suite is its own release. And it builds no new fame sink, because the measurement says the game does
+not want one.
+
 ### v3.170.0 — #217: the census would not look at the stone
 
 The first item of the depth ledger, and the measurement turns it round: the pull the item asks for
@@ -3729,7 +3808,7 @@ never doing the thing the item accused it of.
 > **Graphics** ~~#212~~ (v3.160.0 — TRUE; six of the nine great works now stand in the drawing, 0 → 51 elements) · ~~#213~~ (v3.161.0 — half-refuted; the row already tracked the level, and did it at ΔE 1.17–2.47 against a just-noticeable 2.3) · ~~#214~~ (v3.162.0 — TRUE; the 22-state figure had ONE call site, now on every roster and block row) · ~~#215~~ (v3.163.0 — TRUE; four graded suns and Saturnalia's lamps, at zero ink flips and 4.13:1 worst) · ~~#216~~ (v3.164.0 — half-refuted; the machinery applied, his scars were 0 on 481 of 481, and one snapshot door passed no `bore` at all) — **ledger closed, 5 of 5**
 > **Depth** ~~#217~~ (v3.170.0 — the pull was already there on 75.9% of weeks; the census refused to count the stone and priced a builder at a third of a hoarder) · #218 · #219 · #220 · #221
 > **Story** ~~#222~~ (v3.165.0 — headline right, diagnosis wrong; a healing wound deleted 67% of sagas, third act 28% → 64%) · ~~#223~~ (v3.166.0 — direction right, ranking wrong; the top sentence was the medicus table, not mercy. Top-10 share 21.6% → 13.6%) · ~~#224~~ (v3.167.0 — the headline was the rope's artifact; the real fault was that never answering beat every answer on the list) · ~~#225~~ (v3.168.0 — headline right, diagnosis blamed the respawn; the fault was that a feud could not be LOST. 77.1% of weeks → 36.3%, six grudge matches a feud → one) · ~~#226~~ (v3.169.0 — right, and the heir was a son the house had never had: `heirEligible` read the lanista's age and never his household. Family beats 25 → 103) — **the story ledger is closed, 5 of 5**
-> **Mechanics** #227 · #228 · #229 · #230 · #231
+> **Mechanics** ~~#227~~ (v3.171.0 — every limb refuted: fame is the ladder's commonest wall at 30.3%, and the "fame sink" pays fame out) · #228 · #229 · #230 · #231
 
 
 Asked for as five ledgers — gameplay, graphics, depth, story, mechanics — five items each. Not a
@@ -3930,7 +4009,9 @@ lands as an arc's end rather than a modal.
 
 #### THE MECHANICS LEDGER
 
-**#227 — Fame climbs forever and buys almost nothing.** Median fame 3,848 by era four and linear
+**#227 — REFUTED ON EVERY LIMB. Shipped v3.171.0.** Fame is not spare: on every week a house is short of its next rung it is the term holding on **30.3%** of them, ahead of census worth, favour and the fee — so "fame become spendable" would have made the one wall it holds worse. The munus is not a sink: `stageMunus` takes coin and **pays** fame (gates 120/300/600, pays 14/32/64). The "0 times **(rope)**" is exact and total — `stageMunus` had no caller in the reference player at all; given one, median end fame goes 672 → **3,210** and median end rung 3 → **6**. What *is* unreachable is the apex: Amicus Caesaris had all four terms satisfied at once on **0 of 959 weeks**, short of census worth on 91% and the admission fee on 100%, which is coin and not fame. A fame discount on the fee was built and thrown away for loosening the mid-ladder while missing the apex. See the release note.
+
+**#227 (as filed) — Fame climbs forever and buys almost nothing.** Median fame 3,848 by era four and linear
 throughout; titles cap out and nothing consumes it. Meanwhile the munus — staging your own games,
 the era-appropriate fame *sink* — was held **0 times** **(rope)**. Recommend fame become spendable
 standing: staging games, endowing works (#217), backing candidates — with era bands that expect it

@@ -459,6 +459,31 @@ export async function installRope(p){
          at a time (the agenda's `anyOn` rule), the cheapest open work first because finishing is
          what opens the monument tier, and the deposit paid from spare() like every other
          discretionary coin — the weekly draw is what the instalment design already tolerates. */
+      /* ---- THE MUNUS, WHICH NO POLICY OF MINE HAS EVER STAGED — #227 ----
+         #227 calls the munus "the era-appropriate fame SINK" and reports it held 0 times, marking
+         the zero "(rope)". The concession is exact and total: `stageMunus` had no caller here at
+         all, so that zero measured this file and nothing else — the same shape #138 found for the
+         works and #224 conceded for the rites.
+         It is also not a fame sink. `stageMunus` takes COIN and PAYS fame: the scales gate on fame
+         (120/300/600) and hand back 14/32/64 of it. So a policy that stages munera is a policy that
+         converts gold into name, and what it is worth is a thing to measure rather than assume.
+         OPT-IN, for the reason `works` is: it moves fame, favour, the factions and the box at once.
+         `munus:true` stages the grandest card the house can afford, on the plainest occasion, with
+         its own coin — no hunt, no sine missione, no brokering somebody else's bill. */
+      if(o.munus === true && typeof A.stageMunus === "function" && fin(A.munusReady,[d]) === true){
+        const scales = Object.entries(A.MUNUS_SCALES||{})
+          .filter(([,S])=>(d.fame||0) >= (S.gate||0))
+          .sort((a,b)=>(b[1].cost||0)-(a[1].cost||0));
+        const occ = Object.keys(A.MUNUS_OCCASIONS||{})[0];
+        for(const [key] of scales){
+          const plan = { occasion:occ, scale:key, hunt:false, sine:false, sell:false, spectacle:null };
+          const c = fin(A.munusCost,[plan]);
+          if(typeof c === "number" && c > 0 && c <= spare()){
+            if(fin(A.stageMunus,[d, plan])) bump("staged");
+            break;
+          }
+        }
+      }
       if(o.works === true && typeof A.beginWork === "function"){
         const anyOn = (A.ALL_WORK_KEYS||[]).some(k=>A.workOn(d,k));
         if(!anyOn){
