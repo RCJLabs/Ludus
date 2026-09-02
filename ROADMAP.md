@@ -2428,6 +2428,82 @@ but two arms leaning the same way is the thesis of #207 arriving from an unexpec
 the game may genuinely be a notch harder when its numbers stop flattering you. #229 (surfacing the
 runway when it turns short) is the counterpart and stays queued.
 
+### v3.162.0 — #214: the twenty-two-state figure that had one call site
+
+The third item of the graphics ledger, and **true as written — worse than written, in fact.**
+
+**`ScnMan` had exactly ONE call site in the whole program.** Twenty-two distinct drawings after
+v3.144.0 — class as six silhouettes, scars where the cuts landed, the wound still open, a spent man
+standing lower, a palm for his wins, a shadow whose reach is his renown and whose darkness is the
+men he has killed — and it was reachable only from the yard band of the drawn ludus, **capped at
+six men**. A house of nine had three men the drawing had no room for.
+
+Measured on a nine-man house at week 71 (`probes/familia.mjs`):
+
+| the roster page, before | |
+|---|---|
+| rows | 9 |
+| tags | **51** |
+| words | **190** |
+| bars | 4 a row |
+| **drawn shapes** | **0** |
+
+**The case for drawing him was never that the information was missing.** Every axis the figure
+carries already had a tag: `HOPLOMACHUS`, `GLADIATRIX`, `4 SCARS`, `PAST PEAK · 31`, a Fatigue bar,
+the record in the corner. That is exactly the shape of #207 and #211 — a recommendation for
+something the game already serves by another route — and it is the reason this one had to be
+argued rather than assumed. **The answer is that twenty tags is not a glance.** Nine rows of small
+caps look identical at arm's length; nine men do not.
+
+**WHAT SHIPPED.** The same figure, in its own box, on every roster row and every block row.
+
+- **`ManGlyph`** — the drawing in a 48×68 viewBox. The box was measured off the drawing, not
+  guessed: he spans x−17 (a retiarius's net) to x+16 (a dimachaerus's second sword), and hy−19 (a
+  trident's tines, or a seven-win palm) to hy+39 (the far edge of his shadow), so at x=24, y=22
+  every one of the twenty-two drawings sits inside it with nothing clipped.
+- **`bare`** drops the name label and the hotspot. In a row the ROW is the button and the name is
+  already its heading; a second `.scn` inside a `<button>` is a control inside a control, and
+  `scene` counts those.
+- **The cost is seven pixels a row.** The page went 3,003 → 3,066px on a nine-man house and **the
+  median row did not move at all** — the glyph is a fixed left column and the row's own text flows
+  beside it, and rows were already 143–219px tall.
+
+**AND THE PART THAT NEEDED CARE, WHICH THE ITEM DID NOT MENTION.** The item asks for the figure on
+the block. On the block you are looking at a man you have not bought and may not have scouted, and
+`readLevel` is the whole design of that page: his stats come through `bandOf` as ranges until you
+pay to know better. But the figure draws **his renown as the reach of his shadow, the men he has
+killed as its darkness, and his wins as the palm over his shoulder** — three facts that are not
+yours to know about a stranger. Shipped naively, this release would have put a scouting report on
+every row of the market for free.
+
+`noRec` drops all three and flattens the shadow to a constant. A block man draws his class, his
+sex and his scars — exactly what the row's own tags already print — and nothing else. The rule is
+written down in the source: **the glyph shows what the row shows.** A finished man (`soldOn`),
+whose record the row prints itself, gets his palm back.
+
+**NEW CHECK — `familia`** (121 → 122). Five arms, and the third is a matched pair:
+
+1. every roster row and every block row draws a man with real shapes in it
+2. **and the glyphs are not all the same picture** — 11 of 11 roster rows came back distinct
+3. **the block does not leak.** The same man is planted twice, on both pages, differing only in
+   wins (0 vs 40), kills (0 vs 9) and renown (0 vs 585). On the **roster** the two must draw
+   DIFFERENTLY; on the **block** they must draw BYTE-IDENTICALLY. The paired assertion is what
+   stops the block half passing because the glyph ignores the record everywhere
+4. no control inside a control — `aria-hidden`, nothing focusable, no `.scn`
+5. and enough rows were rendered to mean any of it
+
+Sabotaged before shipping: passing `record` unconditionally on the block fails with *"ON THE BLOCK
+a man's wins, kills and renown are IN HIS DRAWING — that is past `readLevel`, which is the whole
+design of that page, and it is information the player has not bought."*
+
+**Two fixture faults found on the way, both the same fault.** The first cut of the probe ran its
+seed search inside `forge`'s own builder — five hundred weeks between the write and the reload, and
+the app's 500ms autosave lands in that window and overwrites the plant; `forge` threw, which is
+what it is for. The second measured a page with **a lesson modal sitting over the whole roster**,
+because `clearAll` ran before the plant and the reload raised a new one. And the check's first cut
+looked for `Twin1` in text that `.disp` renders CSS-uppercased — the same `innerText` trap that let
+`dense`'s named guard pass its own sabotage.
+
 ### v3.161.0 — #213 half-refuted, and the crowd that was invisible below the eye's own threshold
 
 The second item of the graphics ledger. Half of what it asked for was already shipped, the half it
@@ -2820,7 +2896,7 @@ never doing the thing the item accused it of.
 **THE QUEUE.** All twenty-five stand open. Struck through as they ship, with the release that did:
 
 > **Gameplay** ~~#207~~ (v3.156.0 — half-refuted, and the bill was missing two salaries) · ~~#208~~ (closed — refuted, the survey's own artifact; true median 4–5 bouts) · ~~#209~~ (v3.157.0 — half already shipped in #166; the verdict now names the salute) · ~~#210~~ (v3.158.0 — refuted; three protections found, and now guarded) · ~~#211~~ (v3.159.0 — refuted; `agendaTop` has no call sites) — **ledger closed, 5 of 5 refuted**
-> **Graphics** ~~#212~~ (v3.160.0 — TRUE; six of the nine great works now stand in the drawing, 0 → 51 elements) · ~~#213~~ (v3.161.0 — half-refuted; the row already tracked the level, and did it at ΔE 1.17–2.47 against a just-noticeable 2.3) · #214 · #215 · #216
+> **Graphics** ~~#212~~ (v3.160.0 — TRUE; six of the nine great works now stand in the drawing, 0 → 51 elements) · ~~#213~~ (v3.161.0 — half-refuted; the row already tracked the level, and did it at ΔE 1.17–2.47 against a just-noticeable 2.3) · ~~#214~~ (v3.162.0 — TRUE; the 22-state figure had ONE call site, now on every roster and block row) · #215 · #216
 > **Depth** #217 · #218 · #219 · #220 · #221
 > **Story** #222 · #223 · #224 · #225 · #226
 > **Mechanics** #227 · #228 · #229 · #230 · #231
@@ -2917,6 +2993,8 @@ crowd renders as a fixed rank of heads over a gradient band; the crowd meter (an
 feeds) lives as text below. Recommend the drawn crowd track the number — thin at 20, packed and
 agitated at 80, standing at the balance — using the eight venue backdrops that already exist to
 carry venue tier.
+
+**#214 — TRUE, shipped v3.162.0.** `ScnMan` had **one call site** in the program — the yard band, capped at six men. The roster page measured **9 rows, 51 tags, 190 words, 0 drawn shapes**. The figure is now on every roster and block row at a cost of seven pixels a row, with `noRec` keeping a stranger's record off the block. See the release note.
 
 **#214 — The roster is text while the game owns a 22-state figure.** A man's own drawing (fatigue,
 injury, record, kit — the v3.144.0–v3.146.0 work) lives on his page only. The roster rows and the

@@ -22818,7 +22818,21 @@ const palmOf = w => { for(const [need,h] of PALM_BANDS) if((w||0) >= need) retur
    the drawing. Borrowing it for what he did to somebody else would cost more than it bought. */
 /* the same two functions the arena fighter reads, at the yard figure's size — see `boreOf` */
 const umbraOf = g => ({ rx: umbraRx(g.pfame, 7, 13), op: umbraOp(g.kills, 0.2) });
-const ScnMan = ({x,y,g,tone,row,openMan}) => {
+/* ---- `bare` AND `noRec`, FOR THE ROWS — audit item #214 ----
+   This figure had exactly ONE call site in the whole program: the yard band of the drawn ludus,
+   capped at six men. Twenty-two distinct drawings, reachable only by looking at the ludus screen,
+   while the roster page that IS the familia drew a man as name + tags + bars and nothing else —
+   measured at 9 rows, 51 tags, 190 words and ZERO drawn shapes.
+
+   `bare` drops the name label and the hotspot, because in a row the ROW is the button and the name
+   is already its heading; a second `.scn` inside a `<button>` would be a control inside a control,
+   and `scene` counts those.
+
+   `noRec` drops the palm and flattens the shadow. On the block you are looking at a man you have
+   not bought and may not have scouted: his wins, his renown and who he has killed are not yours to
+   know, and a glyph that drew them would leak past `readLevel` — the one thing the block's whole
+   design is built on. The rule is that the glyph shows exactly what the row's own tags show. */
+const ScnMan = ({x,y,g,tone,row,openMan,bare,noRec}) => {
   const K = SCN_KIT[g.cls] || SCN_KIT.Murmillo;
   const spent = (g.fatigue||0) > 55;          /* the reading `tone` was carrying and lost */
   const dy = spent ? 3 : 0;                   /* a spent man stands lower and his guard drops */
@@ -22828,10 +22842,12 @@ const ScnMan = ({x,y,g,tone,row,openMan}) => {
   /* where a wound lands on him, so five parts are five marks rather than one slash */
   const PART_Y = { head:-4, brow:-4, eye:-4, arm:12, hand:16, shoulder:8, flank:18, gut:20, thigh:26, knee:29, leg:29 };
   const at = pt => hy + (PART_Y[pt] == null ? 18 : PART_Y[pt]);
-  const U = umbraOf(g), ph = palmOf(g.wins), px = x+13, pb = hy+4;
+  const U = noRec ? { rx:9, op:0.2 } : umbraOf(g), ph = noRec ? 0 : palmOf(g.wins), px = x+13, pb = hy+4;
+  const W = bare ? { "aria-hidden":true } : { className:"scn", role:"button", tabIndex:0,
+    "aria-label":`${g.name} the ${g.cls}`,
+    onClick:()=>openMan(g.id), onKeyDown:e=>{ if(e.key==="Enter") openMan(g.id); } };
   return (
-  <g className="scn" role="button" tabIndex={0} aria-label={`${g.name} the ${g.cls}`}
-    onClick={()=>openMan(g.id)} onKeyDown={e=>{ if(e.key==="Enter") openMan(g.id); }}>
+  <g {...W}>
     {/* the ground remembers him: how far it reaches is his name, how dark it is who he has killed */}
     <ellipse cx={x} cy={hy+36} rx={U.rx} ry="3" fill="#100b06" opacity={U.op}/>
     {/* what he hides behind */}
@@ -22875,8 +22891,25 @@ const ScnMan = ({x,y,g,tone,row,openMan}) => {
       <path key={i} d={`M${x-4+((i*3)%7)} ${at(sc.part)-3} l5 4`} stroke="#a8321f" strokeWidth={sc.big?2:1.4} strokeLinecap="round"/>))}
     {g.injury && <path d={`M${x-5} ${at(g.injury.part)} L${x+4} ${at(g.injury.part)+7}`}
       stroke="#e0140a" strokeWidth="2.4" strokeLinecap="round"/>}
-    {scnSay(x, y+48+(row?14:0), g.name.slice(0,12))}
+    {!bare && scnSay(x, y+48+(row?14:0), g.name.slice(0,12))}
   </g>); };
+
+/* ---- THE SAME MAN, IN A ROW — #214 ----
+   The figure drawn once, in its own box, so a roster row and a block row can carry him. The box
+   was measured off the drawing rather than guessed: he spans x-17 (a retiarius's net) to x+16 (a
+   dimachaerus's second sword), and hy-19 (a trident's tines, or a seven-win palm) to hy+39 (the
+   far edge of his shadow) — so at x=24, y=22 the whole of every one of the twenty-two drawings
+   sits inside 48 x 68 with nothing clipped.
+
+   `aria-hidden`, because the row it sits in already says his name, his class and everything the
+   glyph draws. A screen reader gets the row; an eye gets the man. */
+const MAN_GLYPH = { w:48, h:68, x:24, y:22 };
+const ManGlyph = ({ g, record, size }) => (
+  <svg className="manglyph" viewBox={`0 0 ${MAN_GLYPH.w} ${MAN_GLYPH.h}`} aria-hidden="true" focusable="false"
+    width={size||44} height={Math.round((size||44) * MAN_GLYPH.h / MAN_GLYPH.w)}
+    style={{display:"block",flex:"0 0 auto",overflow:"visible"}}>
+    <ScnMan x={MAN_GLYPH.x} y={MAN_GLYPH.y} g={g} bare noRec={!record}/>
+  </svg>);
 
 /* ---- THE TWO GREAT WORKS THAT NEEDED THEIR OWN GROUND — audit item #212 ----
    `baths` and `school` are the only works whose text does not put them inside a room that is
@@ -23398,6 +23431,13 @@ function BlockMan({ S, g, bidFor, scout }){
   return (
             <details className="entry card panel" style={{padding:12,borderColor:g.contested?"var(--gold-deep)":isAuctor(g)?"var(--azure-edge)":g.legend?"var(--gold-deep)":undefined}}>
               <summary>
+              {/* HIM, ON THE BLOCK — #214, and `record` is false unless he is a finished man whose
+                  wins the row is already printing. A glyph drawn from his true record would put
+                  his renown and the men he has killed on the screen for a man you have not
+                  scouted, straight past `readLevel`, which is the whole design of this page. */}
+              <div className="flex items-center gap-2">
+                <ManGlyph g={g} record={!!g.soldOn} size={40}/>
+                <div style={{minWidth:0,flex:"1 1 auto"}}>
               <div className="flex items-center justify-between">
                 <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700}}>{g.name}</div>
                 <span className="gold" style={{fontSize:"var(--fs-lg)"}}>{g.price}d</span>
@@ -23428,6 +23468,8 @@ function BlockMan({ S, g, bidFor, scout }){
                 <span className="tag" style={{borderColor:g.age>31?"var(--blood-edge)":g.age<=PRIME[1]?"var(--laurel-edge)":undefined,
                   color:g.age>31?"var(--blood-hi)":g.age<=PRIME[1]?"var(--laurel-hi)":undefined}}>{ageTag(g.age)} · {g.age}</span>
                 {(g.scars||[]).length>0 && <span className="tag">{g.scars.length} scar{g.scars.length>1?"s":""}</span>}
+              </div>
+                </div>
               </div>
                 {/* the six numbers, on the line, because this is what one man is chosen over
                     another BY. The class's own stats are the gold ones. */}
@@ -25664,6 +25706,14 @@ export default function App(){
           {roster.length===0 && <div className="panel dim" style={{padding:16,textAlign:"center",fontStyle:"italic"}}>The cells stand empty. The market has men, if you have coin.</div>}
           {roster.map(g=>(
             <button key={g.id} className="panel" style={{width:"100%",textAlign:"left",padding:12,cursor:"pointer",color:"inherit",font:"inherit",borderColor:g.legend?"var(--gold-deep)":undefined}} onClick={()=>setSelId(g.id)}>
+              {/* HIM, BEFORE HIS NAME — #214. The glyph is a fixed left column and the row's own
+                  text flows beside it, so a row that was already 143-219px tall barely moves:
+                  measured on a nine-man house the MEDIAN ROW DID NOT MOVE AT ALL and the page grew
+                  3,003 -> 3,066px, seven pixels a row. A glance down the familia is nine men
+                  standing rather than nine blocks of small caps. */}
+              <div className="flex items-center gap-2">
+                <ManGlyph g={g} record/>
+                <div style={{minWidth:0,flex:"1 1 auto"}}>
               <div className="flex items-center justify-between gap-2">
                 <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700}}>{g.name}{g.nick?<span style={{color:"var(--gold-hi)"}}>, {g.nick}</span>:null}</div>
                 <span className="dim" style={{fontSize:"var(--fs-base)",whiteSpace:"nowrap"}}>{g.wins}–{g.losses}{g.kills?` · ${g.kills} kills`:""}</span>
@@ -25693,6 +25743,8 @@ export default function App(){
                 {kinOf(S,g.id,"brother").length>0 && <span className="tag" style={{borderColor:"var(--laurel-edge)",color:"var(--laurel-hi)"}}>{kinOf(S,g.id,"brother").length} brother{kinOf(S,g.id,"brother").length>1?"s":""}</span>}
                 {kinOf(S,g.id,"rival").length>0 && <span className="tag tag-blood">bad blood</span>}
                 {isFavourite(g) && <span className="tag tag-gold">♦ crowd favourite</span>}
+              </div>
+                </div>
               </div>
               {g.status==="active" && <div className="dim" style={{fontSize:"var(--fs-base)",marginBottom:5}}>{regimenWord(S,g)}</div>}
               <div className="flex gap-3" style={{fontSize:"var(--fs-sm)"}}>
