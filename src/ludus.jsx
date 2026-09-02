@@ -22724,20 +22724,63 @@ const SCN_INK = "#14100c", SCN_LIT = "#f2e4bf";
 const scnHex = h => [0,1,2].map(i=>parseInt(h.replace("#","").slice(i*2,i*2+2),16));
 const scnLum = c => { const f = v => { v/=255; return v <= 0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055, 2.4); };
   return 0.2126*f(c[0]) + 0.7152*f(c[1]) + 0.0722*f(c[2]); };
+/* ---- FOUR SUNS, ONE GROUND — audit item #215 ----
+   The drawn ludus held ZERO references to `seasonOf`, `CALENDAR` or anything else about the time of
+   year, while winter moves training 0.88, healing 1.35, the pits 0.45 and the crowd −7. The whole
+   year was one golden afternoon.
+
+   A SEASON IS THE SAME GROUND UNDER A DIFFERENT SUN, so it is the base table's own stops moved,
+   per channel, rather than four sets of colours to keep in step. Multiply and add, so a season can
+   be cooler or warmer as well as brighter or dimmer, which is the whole of what a low sun does.
+
+   AND IT IS WEIGHTED BY WHERE THE LIGHT FALLS, which is not decoration — it is what makes the
+   whole thing free. `scnInk(y)` takes only a y; threading a season through it means threading it
+   through `scnSay` and `scnName` and every label in the drawing, twenty call sites, each one a
+   chance to leave a label reading against the wrong ground. The ink can stay season-blind ONLY if
+   no label ever wants a different ink in a different month — and measured (`probes/year.mjs`), an
+   unweighted grade flips the ink on 8 of the 15 labels and drops the worst to 3.02:1 against a bar
+   of 4.0. The flips all come from moving the DARK ENDS of the gradient: the haze at the top of the
+   compound and the ground at the player's feet are what make pale ink win there.
+
+   So the grade fades to nothing by t=0.82 and at t=0. The sun changes what the sun lights; the
+   shadow at the top and the near foreground are the same in every month, which is also true of a
+   real one. Measured that way: ZERO ink flips, worst label 4.13:1, and the ground still moves
+   ΔE 11.0–13.1 at the sand's midpoint — five times the just-noticeable difference. */
+const SCN_GRADE = {
+  spring: { mul:[1.00,1.00,1.00], add:[  0,  0,  0] },   /* a mild dry morning — the base table */
+  summer: { mul:[1.09,1.05,0.84], add:[  8,  4, -5] },   /* bleached, the blue burnt out of it */
+  autumn: { mul:[1.02,0.92,0.78], add:[  7, -2, -5] },   /* a low sun, the ground gone red */
+  winter: { mul:[0.88,0.92,1.06], add:[ 14, 16, 20] },   /* pale, grey and flat — wet sand under cloud */
+};
+const SCN_KEYS = Object.keys(SCN_GRADE);
+const scnLight = t => (t <= 0 || t >= 0.82) ? 0 : Math.sin(Math.PI * t / 0.82);
+const scnClamp = v => Math.max(0, Math.min(255, Math.round(v)));
+const scnTables = {};
+const scnSandOf = key => scnTables[key] || (scnTables[key] = (()=>{
+  const G = SCN_GRADE[key] || SCN_GRADE.spring;
+  return SCN_SAND.map(([at, h]) => { const w = scnLight(at);
+    return [at, "#" + scnHex(h).map((v,i)=>scnClamp(v*(1 + (G.mul[i]-1)*w) + G.add[i]*w)
+      .toString(16).padStart(2,"0")).join("")]; });
+})());
 /* the channels are mixed and THEN read, because that is what the gradient does — luminance is not
    linear in sRGB, so mixing two luminances gives a colour the screen never shows */
-const scnSandAt = y => {
+const scnSandAt = (y, key) => {
+  const T = scnSandOf(key || "spring");
   const t = Math.max(0, Math.min(1, (y - SCN_TOP) / SCN_SPAN));
-  let lo = SCN_SAND[0], hi = SCN_SAND[SCN_SAND.length-1];
-  for(let i=0;i<SCN_SAND.length-1;i++)
-    if(t >= SCN_SAND[i][0] && t <= SCN_SAND[i+1][0]){ lo = SCN_SAND[i]; hi = SCN_SAND[i+1]; break; }
+  let lo = T[0], hi = T[T.length-1];
+  for(let i=0;i<T.length-1;i++)
+    if(t >= T[i][0] && t <= T[i+1][0]){ lo = T[i]; hi = T[i+1]; break; }
   const k = (hi[0]-lo[0]) ? (t-lo[0])/(hi[0]-lo[0]) : 0;
   const a = scnHex(lo[1]), b = scnHex(hi[1]);
   return [0,1,2].map(i => a[i]*(1-k) + b[i]*k); };
 const scnRatio = (a,b) => { const x = scnLum(a), y = scnLum(b);
   return (Math.max(x,y)+0.05)/(Math.min(x,y)+0.05); };
-const scnInk = y => { const g = scnSandAt(y);
-  return scnRatio(scnHex(SCN_INK), g) >= scnRatio(scnHex(SCN_LIT), g) ? SCN_INK : SCN_LIT; };
+/* THE INK IS CHOSEN FOR THE WORST MONTH, not for today's. It comes out the same as it did before
+   #215 — that is the point, and `year` is what proves it — but written this way a future re-grade
+   cannot quietly leave one label unreadable for three months of the year and readable for nine. */
+const scnInk = y => {
+  const worst = ink => Math.min(...SCN_KEYS.map(k => scnRatio(scnHex(ink), scnSandAt(y, k))));
+  return worst(SCN_INK) >= worst(SCN_LIT) ? SCN_INK : SCN_LIT; };
 const scnSay = (x,y,t,anchor) => <text x={x} y={y} textAnchor={anchor||"middle"} fontSize="10.5"
   fill={scnInk(y)} fontStyle="italic" fontFamily="Georgia,serif">{t}</text>;
 const scnName = (x,y,t) => <text x={x} y={y} fontSize="10" letterSpacing="3"
@@ -22957,6 +23000,32 @@ const ScnSchool = ({ S }) => !workDone(S, "school") ? null : (
   <circle cx="217" cy="162" r="3.2" fill="#150e08" stroke="#4a3a22" strokeWidth=".8"/>
   <path d="M217 166 q-4 1.4 -4.4 17 l8.8 0 q-.4 -15.6 -4.4 -17 Z" fill="#150e08" stroke="#4a3a22" strokeWidth=".8"/>
   <line x1="223" y1="158" x2="223" y2="183" stroke="#3a2c18" strokeWidth="1.5"/>
+</g>);
+
+/* ---- THE WEEK THE YEAR TURNS OVER — audit item #215 ----
+   Saturnalia is the one entry in `CALENDAR` with `purse:0, fame:0, offers:0, rest:true`: "no games
+   are held, the familia is served at your own table, and for one week nobody is anybody's
+   property." It is the strongest week in the game's own writing and the drawing said nothing about
+   it. Every lamp in the compound is lit — the portico first, because that is where a household
+   would hang them, then the door of the house and the arch of the gate.
+
+   WHERE THEY GO WAS CONSTRAINED, NOT CHOSEN. `legible` composites the entire stack under every
+   label and fails under 4.0:1, so a warm glow behind a room name is a contrast fault with a
+   pleasant explanation. Every lamp here sits in a band that carries no text: the portico's
+   architrave at y=150 (the villa's line is at 124 and the shrine's at 198), over the villa door at
+   x=195 (its line is at x=120), and over the gate's arch at x=195 (the gate's name is at x=26 and
+   the block's caption at x=300). */
+const ScnLamps = ({ on }) => !on ? null : (
+<g aria-hidden="true">
+  {[52, 85, 118, 151, 184, 217, 250].map(x=>(<g key={x}>
+    <line x1={x} y1="137" x2={x} y2="147" stroke="#3a2c18" strokeWidth=".8"/>
+    <circle cx={x} cy="151" r="9" fill="url(#scn-torch)"/>
+    <ellipse cx={x} cy="151" rx="3" ry="2.3" fill="#e0bd72" opacity=".9"/>
+  </g>))}
+  <circle cx="195" cy="60" r="13" fill="url(#scn-torch)"/>
+  <ellipse cx="195" cy="60" rx="3.2" ry="2.5" fill="#e0bd72" opacity=".9"/>
+  <circle cx="195" cy="596" r="14" fill="url(#scn-torch)"/>
+  <ellipse cx="195" cy="596" rx="3.4" ry="2.6" fill="#e0bd72" opacity=".9"/>
 </g>);
 
 const ScnVilla = ({ S, at, go, houseLit }) => (<>
@@ -23768,6 +23837,11 @@ function Scene({ S, agenda, openDoc, openMan, go, crop }){
      These three readouts live here, not in their rooms, because they are the only state the split
      below does not hand a room for free. */
   const houseLit = !!(domusOf(S).wife || livingKids(S).length || HH_KEYS.some(k=>hasFolk(S,k)));
+  /* ---- WHAT MONTH IT IS — #215 ----
+     The one fact the drawing never carried, while the season moves training, healing, purses, the
+     pits and the crowd. `sky` grades the ground; `lamps` is the week the year turns over. */
+  const sky   = seasonOf(S).key;
+  const lamps = (festivalNow(S) || {}).key === "saturnalia";
   const bless    = blessOf(S);
   const vowLeft  = S.vow ? Math.max(0, S.vow.until - S.week) : 0;
   const shrineWord = bless ? `${(GODS[bless]||{}).name || bless} rides with the house`
@@ -23815,10 +23889,10 @@ function Scene({ S, agenda, openDoc, openMan, go, crop }){
              sand takes the light now, the same warm wall the arena burns behind its fighters,
              and every man in the yard is a silhouette. One light for the whole game: the ludus
              by day and the sand by night are the same picture seen from two sides. */}
-        {/* rendered from SCN_SAND, which is also what scnInk reads — one table, so the ground and
-             the ink on it cannot say different things about where the light is */}
+        {/* rendered from the season's own table, which is also what scnInk reads — one table, so
+             the ground and the ink on it cannot say different things about where the light is */}
         <linearGradient id="scn-sand" x1="0" y1="0" x2="0" y2="1">
-          {SCN_SAND.map(([o,c])=><stop key={o} offset={o} stopColor={c}/>)}
+          {scnSandOf(sky).map(([o,c])=><stop key={o} offset={o} stopColor={c}/>)}
         </linearGradient>
         {/* the wall is masonry seen from inside, so its lit face is the top of each course */}
         <linearGradient id="scn-wall" x1="0" y1="0" x2="1" y2="0">
@@ -23887,6 +23961,7 @@ function Scene({ S, agenda, openDoc, openMan, go, crop }){
       </g>
 
       <ScnSchool S={S}/>
+      <ScnLamps  on={lamps}/>
       <ScnVilla  S={S} at={at} go={go} houseLit={houseLit}/>
       <ScnBaths  S={S}/>
       <ScnShrine S={S} at={at} openDoc={openDoc} shrineWord={shrineWord} shrineFire={shrineFire} shrineRank={shrineRank}/>
@@ -29745,6 +29820,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     setFocusOf, setRegimenOf, setSparOf, setTeachOf, stopTeachOf, setDrillTo, APPETITES, APP_KEYS, appetiteOf, appetiteAfter, appHash, APP_SHARE, VENUES, VEN, styleOf, styleFrom, styleWord, setStyle, STYLE_KEYS, suggestedPlan, PLAN_READ,   /* #199 — his standing style, and the reading the plan grid pre-fills from */
     /* #213 — what the crowd row draws, so the picture and the roll behind it are one function */
     crowdLook, CROWD_SEATS, FAC_TINT, FAC_KEYS,
+    /* #215 — what month the drawing thinks it is */
+    seasonOf, SEASONS, SCN_GRADE, SCN_KEYS, scnSandOf, scnInk, scnSandAt, festivalNow,
     boardMen, restWornMen, allToPalus, pairTheYard,
     scoutBlockMan, buyLot, sellTheHouse,
     /* ---- AND WHETHER A MAN IS STILL ON THE BOOKS, added in v2.92.0 ----
