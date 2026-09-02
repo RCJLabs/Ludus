@@ -2428,6 +2428,175 @@ but two arms leaning the same way is the thesis of #207 arriving from an unexpec
 the game may genuinely be a notch harder when its numbers stop flattering you. #229 (surfacing the
 runway when it turns short) is the counterpart and stays queued.
 
+### v3.168.0 — #225: there was no way to lose a feud
+
+The fourth item of the story ledger, and the second time this audit has found #222's fault wearing
+different clothes.
+
+**THE HEADLINE IS RIGHT AND THE DIAGNOSIS BLAMES THE WRONG HALF.** Measured over 2,822 weeks across
+twelve played houses (`probes/feud.mjs`), a feud stood on **77.1%** of them — the item's 79%, near
+enough. But the item blames the respawn — *"a new one re-declares soon after any resolution"* — and
+the respawn is fine: `declareNemHouse` holds a twenty-week cooldown and the measured quiet between
+feuds was a **median of 23 weeks**. There were only six of them in 2,822 weeks, and that is the
+actual fault.
+
+**FEUDS DID NOT END.** Eighteen declared, and how they stopped:
+
+| | |
+|---|---|
+| the player's house fell, feud still standing | **10** |
+| he sold up | 5 |
+| still running at the horizon | 2 |
+| you won the grudge match | 1 |
+
+Not one ended by losing. `settleNemHouse(d, false)` wrote `n.stage = 2` and left `d.nemHouse`
+standing; a missed grudge match did the same. **There was no way to lose a feud, only ways not to
+have won it yet** — which is exactly what v3.165.0 found in the saga, in a different arc, three
+releases ago.
+
+**SO IT NAMED ITS FINAL DAY OVER AND OVER.** 179 grudge matches across 18 feuds — a **median of six
+each, and a maximum of thirty-five** — every one announced in the chronicle as *"the one the season
+has been walking toward"*. Ninety of the 179 went unanswered and not one of them ended anything. The
+feud's own clock always said one season: heat starts near 55, climbs 1.4 a week, and names the day
+at 72, which is about fifteen weeks. The reset loop is the only reason it read as climate.
+
+**AND IT OUTLIVED THE ANGER THAT STARTED IT.** `declareNemHouse` wants `h.grudge >= 45`, and nothing
+ever read it again — while `h.grudge` decays every week and `n.heat` only climbs. On **74.1% of all
+feud-weeks the rival's grudge was under 45**, median 20. Three weeks in four, the feud was running on
+a house not angry enough to have started one.
+
+**AND THE ENDING THE ITEM ASKS FOR WAS ALREADY WRITTEN, AND DID NOTHING.** *"Marry into them"* is
+the third of the item's three recommendations, and both `resolveMatch` and `resolveDaughter` have
+carried a `rival` branch for many releases:
+
+> *"a feud older than either of you is folded up and put away"*
+> *"it will hold longer than any truce you could buy"*
+
+Both moved `h.grudge`. Both set `h.kin = true`. **Neither mentioned `d.nemHouse`.** Measured on a
+state with a feud standing: the line printed, the grudge went 5 to 0, `kin` came back true — and the
+feud was still on the next week, escalating with the house you had just married into. `h.kin` was
+written in three places in the file and **read in none**.
+
+**WHAT SHIPPED — four endings and a read.**
+
+- **Losing it ends it.** He named the day, he took it, Capua watched: that is a season decided. His
+  grudge drops rather than climbs, because he got what he wanted, and he can come for you again
+  later as a *new* feud — which is a declaration, and therefore news.
+- **Not standing on the day ends it too**, and costs more in standing than losing does.
+- **A wedding ends it**, from both branches, and `declareNemHouse` will not pick a house you are kin
+  to. The flag is read at last, by the one function whose answer it changes.
+- **A feud nobody is carrying goes cold** and stops on its own, before the day is named — the fourth
+  ending, and the only one with nothing at stake.
+
+**AND THE BOUT HAD TO BE MADE WINNABLE FIRST, which is the finding this release turns on.** All three
+challenges in the game — the rival call-out, the grudge match, the saga's reckoning — name **your
+most famous man** and then ask `houseChampion` for theirs, and that handed back the rival's **star**,
+whoever it was matched against. Fame is not strength; a famous veteran is often well past it; the
+bout resolves on stats. Measured across 39 grudge matches:
+
+| your man's stat mean minus his | |
+|---|---|
+| median | **−26.3** |
+| worst | −53.1 |
+| **best** | **+2.5** |
+
+**Not one house in the sample was ever favoured in the bout its whole season was walking toward**,
+and the reference player answered 23 of them and won one. That was survivable while a loss merely
+reset the feud and handed you six more tries. The moment a loss *ends* it, "the one the season has
+been walking toward" becomes a scheduled defeat with a date on it — and shipping the ending without
+the fix would have been strictly worse than leaving it a meter. The fix is drawn on where the day is *forced* on you.
+`offerChallenge` fills `d.askChallenge` — a question you may decline — and a rival calling out your
+best man with his own best man is exactly what that question should be, so it keeps its star. The
+grudge match and the reckoning are scheduled and now final, so those two get a contest: the rival
+names a man to match yours, with the edge his way because he chose the day, and his star still gets
+it when the star is near the weight. Median **−7.0**, best **+10.8**, and the reference player's record went from 1 in 23 to 7 in
+27. The saga's reckoning is the same bout, so #222's third act gets the same repair.
+
+**AFTER, over the same twelve houses:**
+
+| | before | after |
+|---|---|---|
+| weeks with a feud standing | 77.1% | **36.3%** |
+| feuds declared | 18 | 59 |
+| a feud's life | median 93 weeks | **median 17** |
+| grudge matches per feud | median 6, max 35 | **median 1, max 1** |
+| times it fell back a stage | median 6, max 34 | **0** |
+| the quiet between them | median 23 (6 of them) | median 21 (47 of them) |
+
+**THE ENDINGS ARE THE ROPE'S ENDINGS, and this release says so rather than claiming otherwise.** Of
+57 resolved feuds the reference player lost 24 and failed to stand for 20, because it wins 26% of
+the bouts it fights and skips half the days it is named for. That distribution is a fact about the
+reference player as much as about the game — the shape #208 died of and #224 conceded. What is *not*
+a rope artifact is that the feud now resolves at all, once, on its own clock.
+
+**AND THE GATE FOUND A DEFECT THAT HAD NOTHING TO DO WITH FEUDS.** `tells` went red on a release
+that touched no tell: `veteran` had fallen to **0.32% of offers** against a 1% floor. The population
+was not the problem — 125 of 2,219 offers carried fourteen wins or more — and **118 of those 125
+failed on one clause**, `o.end - statMean(o) >= 1`. The men the card showed most often read
+**99/99/99/99/99/99**, and **97.86825 six times**, and **98.40375 six times**. A rival house's growth
+loop climbed every stat toward the *same* ceiling:
+
+```js
+const ceil = top ? 99 : 92;
+for(const k of STATS) f[k] = clamp(f[k] + rate*(…), 5, ceil);
+```
+
+So its long-serving men saturated into one number repeated six times — and the aging term below then
+took all six down together, so they stayed identical for the rest of their lives. **A man who is one
+number cannot be built for anything**, which is why the reading pitched at the top of a career died
+on exactly the population it is about. And it died *harder the longer houses lived*: 1.8% of offers
+when the reference house folded at week 251, 0.32% once #224 and #225 had it living past 330. Every
+release that made the game kinder pushed that file nearer the floor and told nobody why.
+
+A rival's man keeps the frame he was rolled with now — a ceiling of his own, drawn once, 9 to 27
+points above where he started — so a strong slow man trains up into a stronger slow man. `veteran`
+came back to **3.0%**, and the median stat spread on the card is 20 points against a measured 1.5%
+of men who are flat. Fighters loaded from an older save derive theirs from where they already stand:
+a man already flattened stays flat, which is his history.
+
+**And `tells` can say this itself now.** It could report a dead tell and never the reason; it
+measures the spread of the men on the card as well, so the next collapse names its own cause.
+Sabotaged: restoring the shared ceiling fails it twice — the tell, and *"35.1% of the men with
+fourteen wins or more are one number repeated — the veterans flatten first, because they have
+trained longest"*.
+
+**AND TWO MORE INSTRUMENTS HAD TO BE CORRECTED, both of them mine, both under-powered in the same
+way.** `grave`, shipped one release ago, went red on its own successor: the floor #224 put under the
+neglect penalty was written as a plain bottom, so on a house whose men were already near it the
+surcharge stopped while the pit's flat −6 kept going — silence cost 5.52 against the pit's 6.00, and
+the domination arm fired on the release note that introduced it. **A bound on how bad a thing gets
+must not become a reason to do it.** The price is whichever is worse for the man now — the pit's
+own, or the floored surcharge — so silence is never cheaper than the pit for anybody, by
+construction rather than by tuning. It reads −6.96 against −5.88.
+
+And `wall` went red on a release that touched no drill. `prepLive` drops a drill when the man leaves
+the rival's roster **or** the reading goes stale, and the climb arm only ever kept the reading fresh
+by hand — so "a drill on a man **kept on his card**" was measuring whether that rival happened to
+keep that man for six weeks, which this file's own note puts at **50%**. A new `ri()` roll in the
+growth loop reordered the seeded stream and a different man aged off. Both halves of "held on his
+card" are held by hand now. That is the third fixture in three releases — after `feats`' senator and
+`chair`'s raw counts — that re-asserted every input but one and called the leftover an assertion.
+
+**NEW CHECK — `feud`** (127 → 128). Five arms: losing ends it and says so · so does not standing ·
+so does a wedding, from both branches, and family is not declared at again · it names its day once
+over real play and is not always on · and the day is a contest.
+
+Sabotaged three ways before shipping. Restoring the stage-2 reset fails arms 1 and 2 — *"losing the
+grudge match leaves the feud standing"* and *"the day came, nobody stood, and the feud is still
+on"*. Unwiring the weddings fails arm 3 twice and, with `houseChampion` restored alongside it,
+prints the original matchup exactly: *"your man was the weaker in all 20 grudge matches (best −1.3
+stat points, median −41)"*. Removing the `!h.kin` read declares a house you married into as your
+nemesis.
+
+One arm had to be corrected before it could be trusted: it asserted "the house is sometimes
+favoured" on whatever seven bouts the fixture happened to name, where the best draw was −1.3 against
+a measured best of +10.8 over 45. A bar a correct build fails one run in three is noise wearing an
+assertion's clothes. The median carries the arm; the best case joins it past twelve named days.
+
+**What this does not do:** *"absorb them"* is the one recommendation of the three with nothing
+behind it, and it is not built here — taking a broken rival's men and name onto your own books is a
+market and roster change, not a feud change. Ruin already existed; the other two now work.
+
 ### v3.167.0 — #224: the dominant option was not on the list
 
 The third item of the story ledger. The item's headline number was its own artifact — and the
@@ -3370,7 +3539,7 @@ never doing the thing the item accused it of.
 > **Gameplay** ~~#207~~ (v3.156.0 — half-refuted, and the bill was missing two salaries) · ~~#208~~ (closed — refuted, the survey's own artifact; true median 4–5 bouts) · ~~#209~~ (v3.157.0 — half already shipped in #166; the verdict now names the salute) · ~~#210~~ (v3.158.0 — refuted; three protections found, and now guarded) · ~~#211~~ (v3.159.0 — refuted; `agendaTop` has no call sites) — **ledger closed, 5 of 5 refuted**
 > **Graphics** ~~#212~~ (v3.160.0 — TRUE; six of the nine great works now stand in the drawing, 0 → 51 elements) · ~~#213~~ (v3.161.0 — half-refuted; the row already tracked the level, and did it at ΔE 1.17–2.47 against a just-noticeable 2.3) · ~~#214~~ (v3.162.0 — TRUE; the 22-state figure had ONE call site, now on every roster and block row) · ~~#215~~ (v3.163.0 — TRUE; four graded suns and Saturnalia's lamps, at zero ink flips and 4.13:1 worst) · ~~#216~~ (v3.164.0 — half-refuted; the machinery applied, his scars were 0 on 481 of 481, and one snapshot door passed no `bore` at all) — **ledger closed, 5 of 5**
 > **Depth** #217 · #218 · #219 · #220 · #221
-> **Story** ~~#222~~ (v3.165.0 — headline right, diagnosis wrong; a healing wound deleted 67% of sagas, third act 28% → 64%) · ~~#223~~ (v3.166.0 — direction right, ranking wrong; the top sentence was the medicus table, not mercy. Top-10 share 21.6% → 13.6%) · ~~#224~~ (v3.167.0 — the headline was the rope's artifact; the real fault was that never answering beat every answer on the list) · #225 · #226
+> **Story** ~~#222~~ (v3.165.0 — headline right, diagnosis wrong; a healing wound deleted 67% of sagas, third act 28% → 64%) · ~~#223~~ (v3.166.0 — direction right, ranking wrong; the top sentence was the medicus table, not mercy. Top-10 share 21.6% → 13.6%) · ~~#224~~ (v3.167.0 — the headline was the rope's artifact; the real fault was that never answering beat every answer on the list) · ~~#225~~ (v3.168.0 — headline right, diagnosis blamed the respawn; the fault was that a feud could not be LOST. 77.1% of weeks → 36.3%, six grudge matches a feud → one) · #226
 > **Mechanics** #227 · #228 · #229 · #230 · #231
 
 
@@ -3548,11 +3717,17 @@ Recommend the graveside week auto-offer the rite with the man's record in the of
 chronicle's death lines draw on his career (his nickname, his best afternoon, who he was paired
 with).
 
-**#225 — The feud is weather, not story.** A feud stood on **79% of all weeks**; 22 declared and
-**6 ever won** across 12 houses, and a new one re-declares soon after any resolution. Always-on and
-rarely-resolving reads as climate. Recommend feuds with shapes and true endings — ruin them, absorb
-them, marry into them — and a real quiet between feuds, so a declaration is news and a resolution
-is a chapter, not a respawn.
+**#225 — HEADLINE RIGHT, DIAGNOSIS BLAMED THE WRONG HALF. Shipped v3.168.0.** ~~The feud is weather,
+not story.~~ Measured 77.1% of weeks, near the item's 79% — but the respawn it blames is fine (a
+twenty-week cooldown, a median 23-week quiet). **Feuds did not END:** of 18, ten stopped only
+because the player's house fell with the feud still standing, and not one ended by losing —
+`settleNemHouse(d,false)` wrote `n.stage = 2`, which is #222's fault in a second arc. So it named
+its final day a median of six times each, 179 across 18. Two of the three endings the item asks for
+were already written: ruin worked, and **marrying into them did nothing at all** — both wedding
+branches said the feud was "folded up and put away", moved `h.grudge`, set `h.kin = true`, and never
+mentioned `d.nemHouse`; `h.kin` was written in three places and read in none. Four endings now, and
+the climactic bout had to be made winnable first: it was named on a median **−26.3** stat points
+with a best case of **+2.5**. See the release note.
 
 **#226 — Generations are the rarest story in a game about a house.** 3 successions in 16 runs, and
 the heir arrives as a mechanic at the death. The domus (wife, children, next of kin) exists from

@@ -55,6 +55,7 @@ export async function run({ p, errors }){
     const fired = {}; for(const k of A.TELL_KEYS) fired[k] = 0;
     const threw = {};
     let offers = 0, houses = 0, weeks = 0;
+    const spread = [], vetSpread = [];   /* max stat minus min, per man on the card */
     for(let h=0; h<H; h++){
       const d = A.newGameState("T"+h, "clean", `TELLS-${h}`, null);
       houses++;
@@ -66,6 +67,19 @@ export async function run({ p, errors }){
         for(const off of ((d.games && d.games.offers) || [])){
           const o = off.opp; if(!o) continue;
           offers++;
+          /* ---- AND WHETHER THE MAN STILL HAS A SHAPE ----
+             Added in v3.168.0, after this file went red for a reason it could not name. `veteran`
+             wants `o.end - statMean(o) >= 1` — a man BUILT to last — and it had fallen to 0.32% of
+             offers. The population was fine: 125 offers carried fourteen wins or more. 118 of them
+             failed on that one clause, because a rival house's growth loop climbed every stat
+             toward the SAME ceiling, so its long-serving men saturated into six identical numbers —
+             99/99/99/99/99/99, 97.86825 six times — and a man who is one number repeated cannot be
+             built for anything. It got worse the longer houses lived, so every release that made
+             the game kinder pushed this file nearer the floor and told nobody why.
+             The spread is measured here now, so the next time it collapses this check says so. */
+          const vals = A.STATS.map(k=>+o[k]||0);
+          spread.push(+(Math.max(...vals) - Math.min(...vals)).toFixed(1));
+          if((o.wins||0) >= 14) vetSpread.push(spread[spread.length-1]);
           for(const k of A.TELL_KEYS){
             try { if(A.TELLS[k].when(o)) fired[k]++; }
             catch(e){ threw[k] = (threw[k]||0) + 1; }
@@ -73,7 +87,11 @@ export async function run({ p, errors }){
         }
       }
     }
+    const q = a => { if(!a.length) return null; const z=a.slice().sort((x,y)=>x-y);
+      return { n:z.length, p10:z[Math.floor(z.length*.1)], p50:z[Math.floor(z.length*.5)],
+        flat:+(a.filter(v=>v < 1).length/a.length*100).toFixed(1) }; };
     return { fired, threw, offers, houses, weeks, keys:A.TELL_KEYS,
+             spread:q(spread), vetSpread:q(vetSpread),
              plans: Object.fromEntries(A.TELL_KEYS.map(k=>[k, A.TELLS[k].plan])) };
   }, [HOUSES, WEEKS]);
 
@@ -102,7 +120,28 @@ export async function run({ p, errors }){
       bad.push(`${r.k} fired on ${(r.r*100).toFixed(1)}% of every man offered — it names ${r.plan} for `
         + `practically everybody, which hands the plan away free and is not intelligence about anyone`);
   }
+  /* ---- AND THE MEN ON THE CARD ARE STILL MEN ----
+     A dead tell has two possible causes and this file could only ever report one of them. The
+     spread is `max stat - min stat` on each opponent offered: a real man is a shape, and a man
+     whose six stats are one number is a rival house's growth loop having climbed all of them into
+     the same ceiling. `veteran` is the tell that dies of it first — it asks for endurance above the
+     man's own mean, which a flat man can never have — but `strong`, `quick`, `tires` and `reach`
+     all read one stat against another and all of them go quiet together. */
+  const sp = out.spread, vsp = out.vetSpread;
+  if(sp) lines.push(`  the men themselves: stat spread p10 ${sp.p10} · median ${sp.p50} · ${sp.flat}% are one `
+    + `number repeated` + (vsp ? `  ·  at 14+ wins, median ${vsp.p50} and ${vsp.flat}% flat (${vsp.n})` : ""));
+  if(!sp) bad.push(`no opponent's stats were read, so the arm that checks they are still shapes measured nothing`);
+  else {
+    if(sp.flat > 12)
+      bad.push(`${sp.flat}% of the men on the card have six identical stats — a rival house's growth loop `
+        + `climbs every stat toward one ceiling, and a man who is one number repeated is not somebody a `
+        + `reading can be about. It was 0% at v3.168.0 and it is what killed \`veteran\``);
+    if(vsp && vsp.n >= 20 && vsp.flat > 30)
+      bad.push(`${vsp.flat}% of the men with fourteen wins or more are one number repeated — the veterans `
+        + `flatten first, because they have trained longest, and they are the exact population the `
+        + `\`veteran\` reading is about`);
+  }
   if(errors.length) bad.push(`${errors.length} page errors`);
-  if(!bad.length) lines.push(`all ${out.keys.length} tells fire, and none of them on everybody`);
+  if(!bad.length) lines.push(`all ${out.keys.length} tells fire, none of them on everybody, and the men are still shapes`);
   return { pass: bad.length === 0, why: bad.slice(0,3).join("; ") || null, lines };
 }

@@ -6438,6 +6438,7 @@ function bayStandard(d){
   (d.rivals||[]).forEach(h=>(h.fighters||[]).forEach(f=>{ best = Math.max(best, mean(f)); }));
   return clamp((best-24)/0.52, 25, 99);        // back onto the quality scale, conservatively
 }
+const FRAME_ROOM = [9, 27];   /* how far past the frame he was rolled with a rival's man can train */
 function makeRivalFighter(d, house, quality){
   const origin = pick(Object.keys(ORIGINS));
   const cls = pick(Object.keys(CLASSES));
@@ -6613,11 +6614,32 @@ function rivalWeekly(d){
       const young = f.age <= (PRIME[1] + (h.doctore?3:0));
       const top = star && star.id===f.id;
       const ceil = top ? 99 : 92;
+      /* ---- AND HE KEEPS THE FRAME HE CAME WITH — found gating #225 ----
+         Every stat climbed toward the SAME ceiling, so a rival's long-serving man saturated at it
+         in all six and stopped being a shape: measured on the reference houses, the men the card
+         shows most often read 99/99/99/99/99/99, 97.86825 six times, 98.40375 six times. Not a
+         rounding artifact — the clamp is the flattener, and the aging term below then takes all six
+         down by the same amount a week, so they stay identical for the rest of his life.
+
+         It surfaces as a dead tell. `TELLS.veteran` fires on `(o.end - statMean(o)) >= 1` — a man
+         BUILT to still be there at the end — and a man whose six stats are one number can never
+         satisfy it. Measured, 125 of 2,219 offers carried fourteen wins or more, from 21 distinct
+         men, and 118 of the 125 failed on that clause alone. The tell dies on exactly the
+         population it is about, and it dies HARDER the longer houses live: 1.8% of offers when the
+         reference house folded at week 251, 0.32% once #224 and #225 had it living past 330.
+
+         A man's ceiling is his own now, drawn once off the frame he was rolled with, so a strong
+         slow man trains up into a stronger slow man. Fighters loaded from a save before this get
+         theirs derived from where they already stand — a man already flattened stays flat, which is
+         his history, and every man made since has a shape to keep. */
+      const cap = f.cap || (f.cap = Object.fromEntries(
+        STATS.map(k=>[k, clamp((f[k]||40) + ri(FRAME_ROOM[0], FRAME_ROOM[1]), 30, 99)])));
       if(f.injury){ f.injury.weeks--; if(f.injury.weeks<=0) f.injury=null; }
       else if(young){
         const rate = (0.25 + f.potential/300)*L.train*(h.doctore?1.3:1)
           * (top ? 1 + 0.55*(1 + clamp((h.form||0)/120, -0.3, 0.4)) : 1);
-        for(const k of STATS) f[k] = clamp(f[k] + rate*(CLASSES[f.cls].key.includes(k)?1:0.45), 5, ceil);
+        for(const k of STATS) f[k] = clamp(f[k] + rate*(CLASSES[f.cls].key.includes(k)?1:0.45),
+          5, Math.min(ceil, cap[k]));
       }
       /* past the top of the hill a man goes the other way, the same as yours do */
       if(f.age > 30) for(const k of STATS) f[k] = Math.max(8, f[k] - 0.045*(1 + (f.age-30)*0.35));
@@ -6692,9 +6714,45 @@ const fortuneColour = h => { const f=h.form||0; return f>=18?"var(--laurel)" : f
 const STAR_GATE = 52;
 const houseStar = h => { const s = (h.fighters||[]).filter(f=>!f.injury).sort((a,b)=>(b.pfame||0)-(a.pfame||0))[0]; return s && (s.pfame||0)>=STAR_GATE ? s : null; };
 /* who a rival sends to a grudge — its named star if it has one, so "you will meet him one day" comes true */
-const houseChampion = (h, exceptName) => {
+/* ---- WHO HE PUTS UP, AND AGAINST WHOM — audit item #225 ----
+   Three places name a man across the sand for a challenge: the ordinary rival call-out, the feud's
+   grudge match, and the saga's reckoning. All three pick YOUR most FAMOUS man and then ask this
+   for theirs, and this handed back the rival's STAR every time. Fame is not strength — a famous
+   veteran is often well past it — and the bout resolves on stats.
+
+   MEASURED over 39 grudge matches (`probes/feud.mjs`): your named man's stat mean minus his came
+   out at a median of -26.3, a worst of -53.1, AND A BEST OF +2.5. Not one house in the sample was
+   ever favoured in the bout its whole season was walking toward. The reference player answered 23
+   of them and won ONE. That did not show while a loss merely reset the feud and handed you six
+   more tries; the moment a loss ENDS it, "the one the season has been walking toward" becomes a
+   scheduled defeat with a date on it. It is the same reason #222's reckoning is still unanswered
+   half the time and its finale still rare: the saga's third act is this bout too.
+
+   SO IT MATTERS WHERE THE DAY IS FORCED ON YOU AND WHERE IT IS NOT, and that line is what the fix
+   is drawn on. `offerChallenge` fills `d.askChallenge` — a question, which you may decline — and a
+   rival calling out your best man with his own best man is exactly what that question should be.
+   It keeps the star. The grudge match and the saga's reckoning are SCHEDULED: the deadline stands
+   whether you like it or not, and losing them now ends the arc. Those two get a contest — the
+   rival names a man to match yours, with the edge his way because he chose the day, and his star
+   still gets it when the star is near the weight.
+
+   The first cut matched all three, and `tells` caught the difference three steps downstream: the
+   `veteran` reading fires on an opponent with fourteen wins, the star is usually the only man a
+   rival house has who owns that many, and the call-out is by far the commonest of the three. Taking
+   his star out of it dropped that tell from 1.4% of offers to 0.47% — through the floor of the one
+   check that asks whether a scouting reading a player can pay for is ever shown to him. */
+const CHAMP_EDGE = 4;      /* he fancies his man, and that is all he gets */
+const CHAMP_STAR = 8;      /* and the star takes the day if he is this close to it */
+const houseChampion = (h, exceptName, mark) => {
   const fit = (h.fighters||[]).filter(x=>!x.injury && x.name!==exceptName);
   if(!fit.length) return null;
+  if(mark){
+    const av = g => STATS.reduce((n,k)=>n+(g[k]||0),0)/6;
+    const want = av(mark) + CHAMP_EDGE;
+    const near = fit.slice().sort((a,b)=>Math.abs(av(a)-want) - Math.abs(av(b)-want));
+    const st = h.star && near.find(x=>x.id===h.star.id);
+    return (st && Math.abs(av(st) - want) <= CHAMP_STAR) ? st : near[0];
+  }
   if(h.star){ const st = fit.find(x=>x.id===h.star.id); if(st) return st; }
   return fit.sort((a,b)=>(b.pfame||0)-(a.pfame||0))[0];
 };
@@ -7125,8 +7183,18 @@ function riteLapse(d){
     const KIN_NEGLECT = 2.4, YARD_NEGLECT = 1.15, KIN_BOTTOM = 8, YARD_BOTTOM = 20;
     activeG(d).forEach(g=>{
       const close = (m.kin||[]).includes(g.id), was = regardOf(g);
+      /* ---- AND THE FLOOR IS NEVER A DISCOUNT ON THE PIT — corrected in v3.168.0 ----
+         The floor above was written as a plain bottom, and on a house whose men were already near
+         it the surcharge stopped while the pit's flat -6 kept going: measured on a fixture at
+         v3.168.0, silence cost 5.52 across the house and the pit cost 6.00, and `grave`'s
+         domination arm fired on its own release note. A bound on how bad it gets must not turn into
+         a reason to say nothing. So the price is whichever is WORSE for him: the pit's own, or the
+         floored surcharge. Silence is never cheaper than the pit for any man, by construction
+         rather than by tuning, and is strictly worse for every man above the floor. */
       const bottom = Math.min(was, close ? KIN_BOTTOM : YARD_BOTTOM);
-      g.regard = clamp(Math.max(was + M.regard*(close ? KIN_NEGLECT : YARD_NEGLECT), bottom), 0, 100);
+      const pitTo  = was + M.regard*(close ? 1.8 : 1);
+      const softTo = Math.max(was + M.regard*(close ? KIN_NEGLECT : YARD_NEGLECT), bottom);
+      g.regard = clamp(Math.min(pitTo, softTo), 0, 100);
       g.morale = clamp(g.morale - (close?9:1), 0, 100);
     });
     chron(d, sayOf([
@@ -7832,7 +7900,9 @@ function resolveMatch(d, ev, i){
   if(c.fame) d.fame += c.fame;
   if(d.lanista) d.lanista.health = clamp(d.lanista.health + 4, 0, 100);
   d.unrest = clamp(d.unrest - 3, 0, 100);
-  if(c.kind==="rival" && c.house){ const h=(d.rivals||[]).find(x=>x.name===c.house); if(h){ h.grudge = clamp((h.grudge||0) - 40, 0, 100); h.kin = true; } }
+  if(c.kind==="rival" && c.house){ const h=(d.rivals||[]).find(x=>x.name===c.house);
+    if(h) h.grudge = clamp((h.grudge||0) - 40, 0, 100);
+    weddingEndsFeud(d, c.house);   /* #225 — the line says the feud is folded up; now it is */ }
   chron(d, c.kind==="rival"
     ? `${c.who} of ${c.family} comes into the house as your wife, and a feud older than either of you is folded up and put away. The bay does not know what to make of it.`
     : `${c.who} of ${c.family} comes into the house as your wife — ${c.dowry} denarii in dowry, and a settledness the cells feel within the week.`, "good");
@@ -7935,7 +8005,10 @@ function resolveDaughter(d, ev, i){
   if(o.kind==="patron"){ const p = patronsOf(d).find(x=>x.id===o.pid) || patronsOf(d)[0];
     if(p){ p.favor = clamp(p.favor+22,0,100); p.kin = true; } recomputeFavor(d); d.fame += 8;
     return `${c.name} is married to ${o.name}. A patron is not the same as kin — but this is close, and it will not cool the way bought favor does.`; }
-  if(o.kind==="rival"){ const h=(d.rivals||[]).find(x=>x.name===o.house); if(h){ h.grudge = clamp((h.grudge||0)-45,0,100); h.kin = true; } d.fame += 12;
+  if(o.kind==="rival"){ const h=(d.rivals||[]).find(x=>x.name===o.house);
+    if(h) h.grudge = clamp((h.grudge||0)-45,0,100);
+    weddingEndsFeud(d, o.house);   /* #225 — "it will hold longer than any truce you could buy" */
+    d.fame += 12;
     return `${c.name} is married into House ${o.house}, and two houses that hated each other for a generation stand together at the wedding, being scrupulously polite. It will hold longer than any truce you could buy.`; }
   const dowry = rnd(600 + d.fame*1.4 + R()*400); d.gold += dowry;
   return `${c.name} is married to a merchant house, and ${dowry} denarii comes back into yours with her. Not romantic. Useful.`;
@@ -8044,7 +8117,7 @@ function offerChallenge(d){
   const men = activeG(d).filter(g=>g.pfame>=20);
   if(!men.length) return null;
   const g = men.reduce((m,x)=>x.pfame>m.pfame?x:m, men[0]);
-  const f = houseChampion(h, g.name);
+  const f = houseChampion(h, g.name)   /* #225 — he names his STAR here, and you may say no; see `houseChampion` */;
   if(!f) return null;
   return { house:h.name, lan:lanistaOf(h.name).name, gid:g.id, name:g.name, fid:f.id, foe:f.name,
     star: !!(h.star && h.star.id===f.id), due: d.week + ri(3,5), purse: rnd(500 + R()*500) };
@@ -8079,7 +8152,19 @@ function deadlineWeek(d){
           : x.mine
           ? `You named ${x.foe||"him"} in public and ${x.name} was not on the sand on the day. House ${x.house} did not have to do anything at all — the town worked out on its own whose word it was.`
           : `${x.name} did not answer ${x.lan}'s challenge. House ${x.house} says nothing about it publicly, which is how they say the most.`, "bad");
-        if(x.nem && d.nemHouse){ d.nemHouse.stage = 2; d.nemHouse.heat = clamp(d.nemHouse.heat-20, 25, 100); d.flags.nemCool = d.week; }
+        /* #225 — AND NOT STANDING IS AN ENDING TOO. This sent the feud back to stage 2 to demand
+           the same day again; measured, 90 of 179 grudge matches went unanswered and not one of
+           them ended anything. He named the day in front of Capua and your house did not come.
+           There is nothing left for him to prove and no version of this he still has to win. */
+        if(x.nem && d.nemHouse && d.nemHouse.house === x.house){
+          const rh = houseOf(d, x.house);
+          if(rh){ rh.grudge = clamp(rh.grudge-30,0,100); rh.fame += 18; }
+          d.fame = Math.max(0, d.fame-16); d.unrest = clamp(d.unrest+7,0,100);
+          activeG(d).forEach(g=>{ g.morale = clamp(g.morale-6,0,100); g.regard = clamp(regardOf(g)-4,0,100); });
+          nemLog(d, `The day came and your house was not on the sand. House ${x.house} did not have to win it.`);
+          d.flags.nemUnanswered = (d.flags.nemUnanswered||0)+1;
+          d.flags.nemCool = d.week; d.nemHouse = null;
+        }
         /* #222 — AN UNANSWERED RECKONING IS AN ENDING, NOT A RESET. It sent the story back to
            stage 2 to be told again, and a story that cannot end is a meter. The crowd was told a
            day and a name; nobody came. That is the third of the three ways this ends. */
@@ -11670,6 +11755,8 @@ function nemesisSettled(d, killed){
    chronicle, drags a shared prospect between you, and comes to a head in a named
    grudge match you build toward. Its own state (d.nemHouse), separate from the
    single fighter-nemesis (d.nemesis). */
+const NEM_COLD = 16;      /* under this the rival is not carrying it any more — see `nemHouseWeek` */
+const NEM_MIN_RUN = 18;   /* and a feud gets a season before it is allowed to go quiet on its own */
 const NEM_BEATS = {
   low: [
     (L,h)=>`${L} let it be known at the baths that your house fights above its station and below its weight.`,
@@ -11704,13 +11791,33 @@ function declareNemHouse(d){
   if(d.nemHouse || !d.rivals) return;
   if(d.week < 14 || d.fame < 40) return;
   if(d.flags.nemCool && d.week - d.flags.nemCool < 20) return;
-  const cand = d.rivals.filter(h=>!h.retired && (h.grudge>=45 || h.fighters.some(f=>(f.killedYours||0)>0 || (f.beatYou||0)>=2)));
+  const cand = d.rivals.filter(h=>!h.retired && !h.kin
+    && (h.grudge>=45 || h.fighters.some(f=>(f.killedYours||0)>0 || (f.beatYou||0)>=2)));
   if(!cand.length) return;
   const h = cand.sort((a,b)=>b.grudge-a.grudge)[0];
   const L = lanistaOf(h.name).name;
   d.nemHouse = { house:h.name, heat: clamp(h.grudge*0.5+22, 20, 55), stage:1, since:d.week };
   chron(d, `It has a name now. Whatever it was between your house and House ${h.name}, ${L} said the thing in public this week that cannot be taken back — and Capua has settled in to watch which of you is standing at the end of the season.`, "bad");
   nemLog(d, `House ${h.name} is your house's declared rival. ${L} means to end you.`);
+}
+/* ---- A WEDDING IS AN ENDING, AND IT WAS WRITTEN AS ONE — audit item #225 ----
+   Both `resolveMatch` and `resolveDaughter` carry a "rival" branch, and both say so out loud: "a
+   feud older than either of you is folded up and put away", "it will hold longer than any truce
+   you could buy". Both moved `h.grudge`, both set `h.kin = true`, and NEITHER MENTIONED
+   `d.nemHouse`. Measured, on a state with a feud standing: the line printed, the grudge went 5 to
+   0, `kin` came back true — and the feud was still on the following week, escalating with the
+   house you had just married into. `h.kin` was written in three places in this file and read in
+   none, which is how a promise that big went unnoticed.
+
+   It ends the feud now, drops the day if one is named, and `declareNemHouse` will not pick a house
+   you are kin to — the flag is read at last, and by the one function whose answer it changes. */
+function weddingEndsFeud(d, hName){
+  const h = houseOf(d, hName); if(h) h.kin = true;
+  if(!(d.nemHouse && d.nemHouse.house === hName)) return false;
+  (d.deadlines||[]).forEach(x=>{ if(x.kind==="challenge" && x.nem && x.house===hName) x.met = true; });
+  nemLog(d, `The feud with House ${hName} is family business now, and family business is not fought on the sand.`);
+  d.nemHouse = null; d.flags.nemCool = d.week;
+  return true;
 }
 function issueGrudgeMatch(d){
   const n = d.nemHouse; if(!n) return false;
@@ -11719,7 +11826,7 @@ function issueGrudgeMatch(d){
   const men = activeG(d).filter(g=>g.pfame>=18);
   if(!men.length) return false;
   const g = men.reduce((m,x)=>x.pfame>m.pfame?x:m, men[0]);
-  const f = houseChampion(h, g.name);
+  const f = houseChampion(h, g.name, g);
   if(!f) return false;
   const L = lanistaOf(h.name).name;
   addDeadline(d, { kind:"challenge", nem:true, star: !!(h.star && h.star.id===f.id), gid:g.id, name:g.name, house:h.name, lan:L,
@@ -11752,21 +11859,35 @@ function settleNemHouse(d, won){
       nemLog(d, `The grudge with House ${n.house} is settled — your way.`);
     }
   } else {
-    if(h) h.grudge = clamp(h.grudge+10,0,100);
+    /* ---- LOSING IS AN ENDING — audit item #225, and it is #222's fault in a second arc ----
+       This wrote `n.stage = 2` and left `d.nemHouse` standing, so the only way a feud could stop
+       was for you to WIN it. Measured over 2,822 weeks (`probes/feud.mjs`): 18 feuds declared, 6
+       ended — every one of them a win — and the other 12 ended only because the run did, ten of
+       them with the player's house dead and the feud still on. A feud lived a median 93 weeks and
+       named its final day, the one "the season has been walking toward", a MEDIAN OF SIX TIMES:
+       179 grudge matches across 18 feuds, of which 90 went unanswered.
+
+       He named the day, he took it, and Capua watched. That is a season decided. It ends here —
+       and he can come for you again later, as a NEW feud, which is a declaration and therefore
+       news. The grudge drops on his side too, because he got what he wanted; leaving it climbing
+       was the thing that kept the machine hot on a house whose anger had already gone. */
     d.gladiators.forEach(g=>{ if(g.status==="active") g.morale=clamp(g.morale-8,0,100); });
     if(edge <= -2){
       /* he out-schemed you all season and won the day too — it is a rout */
       d.fame = Math.max(0, d.fame-24); d.unrest = clamp(d.unrest+11,0,100);
       const g = activeG(d).sort((a,b)=>gladValue(b)-gladValue(a))[0];
       if(g){ g.morale = clamp(g.morale-20,0,100); g.defiance = clamp(g.defiance+14,0,100); }
-      n.heat = clamp(n.heat-20, 30, 100); n.stage = 2;
-      chron(d, `${L} took the grudge match, and he had spent the whole season taking everything else besides. This was not close, and Capua saw that it was not. Your house is still standing — but only just, and only for now.`, "bad");
+      if(h){ h.grudge = clamp(h.grudge-30,0,100); h.fame += 26; }
+      chron(d, `${L} took the grudge match, and he had spent the whole season taking everything else besides. This was not close, and Capua saw that it was not. It is finished, and it is finished his way: House ${n.house} has nothing left to prove against yours, and everybody in the bay watched them prove it.`, "bad");
+      nemLog(d, `House ${n.house} took the season and the day. It is over, and it was theirs.`);
     } else {
       d.unrest = clamp(d.unrest+5,0,100);
-      n.heat = clamp(n.heat-30, 25, 100); n.stage = 2;   // not over; they will come again
-      chron(d, `${L} got what he named the day for. House ${n.house} took the grudge match, and there is no pretending otherwise. It is not finished — but tonight it is theirs.`, "bad");
+      if(h){ h.grudge = clamp(h.grudge-38,0,100); h.fame += 14; }
+      chron(d, `${L} got what he named the day for. House ${n.house} took the grudge match, and there is no pretending otherwise. It is finished. He has stopped saying your name, which is the part that stings.`, "bad");
+      nemLog(d, `The grudge with House ${n.house} is settled — his way.`);
     }
-    d.flags.nemCool = d.week;
+    d.flags.nemLost = (d.flags.nemLost||0)+1;
+    d.flags.nemCool = d.week; d.nemHouse = null;
   }
 }
 function nemHouseWeek(d){
@@ -11775,6 +11896,18 @@ function nemHouseWeek(d){
   const h = houseOf(d, n.house);
   if(!h || h.retired){
     chron(d, `Whatever it was going to be between you and House ${n.house}, it will not be. ${!h?"They folded and sold up before it came to blood.":`${lanistaOf(n.house).name} has gone to a farm near Nola, and the grudge with him.`} The cells are almost disappointed.`, "info");
+    d.nemHouse = null; d.flags.nemCool = d.week; return;
+  }
+  /* ---- AND IT DOES NOT OUTLIVE THE ANGER — audit item #225 ----
+     `declareNemHouse` wants `h.grudge >= 45` to start one, and nothing ever read it again.
+     Measured over 2,176 feud-weeks (`probes/feud.mjs`): on 74.1% OF THEM THE RIVAL'S GRUDGE WAS
+     UNDER 45, median 20, because `h.grudge` decays every week while `n.heat` only climbs. Three
+     weeks in four the feud was running on a house not angry enough to have started it. So a feud
+     nobody is carrying any more goes out — quietly, before the day is named, which is the fourth
+     way this ends and the only one with nothing at stake. */
+  if(n.stage < 3 && h.grudge < NEM_COLD && d.week - n.since >= NEM_MIN_RUN){
+    chron(d, `Whatever there was between your house and House ${n.house} has gone out of it. ${lanistaOf(n.house).name} has other things on his mind this season, and so, it turns out, have you. Nobody announces the end of a thing like that. It is just not there one morning.`, "info");
+    nemLog(d, `The feud with House ${n.house} has gone cold. Nobody called it off; nobody is carrying it.`);
     d.nemHouse = null; d.flags.nemCool = d.week; return;
   }
   if(n.stage>=3){ if(R()<0.20) nemBeat(d); return; }   /* the day is named; no more scheming, only the sand */
@@ -11941,7 +12074,7 @@ function issueReckoning(d){
   const h = houseOf(d, s.foe.house);
   if(!h){ s.stage = 1; s.foe = null; return false; }   // the rival's house folded; his story finds another equal
   let f = h.fighters.find(x=>x.id===s.foe.fid && !x.injury);
-  if(!f) f = houseChampion(h, g.name);
+  if(!f) f = houseChampion(h, g.name, g);
   if(!f) return false;
   s.foe = { fid:f.id, house:h.name, name:f.name };
   addDeadline(d, { kind:"challenge", saga:true, gid:g.id, name:g.name, house:h.name, lan:lanistaOf(h.name).name,
@@ -30059,6 +30192,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* #150: the panel quotes `gambitDone` and the engine rolls `gambitStale`, and the two differ by
        whatever the town has had time to forget. Both come out here so a probe can print the gap
        rather than recompute either of them. */
+    /* the feud itself: declared, escalated, and settled — #225 measures all three */
+    declareNemHouse, nemHouseWeek, settleNemHouse, issueGrudgeMatch, weddingEndsFeud, NEM_COLD, NEM_MIN_RUN,
     nemAnswerReady, nemAnswerCost, nemCanCallOut, nemEdge, favourReady, gambitReady, gambitStale, gambitDone, gambitOdds,
     GAM_KEYS, GAM_FORGET, seasonOfMan,
     /* the fighter-nemesis (d.nemesis, not the arch-rival house above) — #137 found every
@@ -30213,6 +30348,12 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        this one function, and none of them had ever fired in any measured house. It was not on the
        handle, so no check could ask it directly whether its gates open. */
     familyWeek, childAge, livingKids, marryReady,
+    /* ---- AND THE TWO THAT DECIDE A FEUD, added for #225 ----
+       Both `resolveMatch` and `resolveDaughter` carry a "rival" branch whose whole promise is that
+       a wedding ends a feud — "a feud older than either of you is folded up and put away". Neither
+       was reachable from the handle, so nothing could ask whether it does. `domusOf` comes with
+       them because a daughter has to exist before she can be married. */
+    domusOf, matchEvent, resolveMatch, daughterEvent, resolveDaughter,
     /* the bookmakers' price, which is how the panel actually tells a player what he is walking into */
     oddsFor, oddsWord, betChance, VIG, lanVig, bookEye, bookEyeWord, settleBet,
     REP_ORDER, REP_KINDS,
