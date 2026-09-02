@@ -2428,6 +2428,91 @@ but two arms leaning the same way is the thesis of #207 arriving from an unexpec
 the game may genuinely be a notch harder when its numbers stop flattering you. #229 (surfacing the
 runway when it turns short) is the counterpart and stays queued.
 
+### v3.174.0 — #230: the counter could not see the thing the item described
+
+The fourth item of the mechanics ledger, filed as an investigation — *"one probe to find which path
+drops the stakes, then the fix"* — and the probe found something better than the number it was sent
+after.
+
+**READ THE COUNTER BEFORE TRUSTING IT.** `R.wrongStakes` increments on
+
+```js
+const got = pref ? offer.stakes === pref : null;
+```
+
+which compares **which card was taken** against what was asked for. It says nothing whatever about
+whether the bout was fought at the stakes the card carried — so *"the card promised one thing and
+the sand rolled another"*, the sentence the item writes under it, is not a sentence that counter can
+write. It measures the reference player taking a different card.
+
+**AND TWO OF THE THREE PATHS THAT DO THAT ARE WRITTEN DOWN AS DOING IT.** `preferStakes` — which is
+what the old name `stakes:` means — filters the bill and, finding nothing, takes the bill anyway;
+that is its documented contract against `wantStakes`, added in v3.0.0 because the strict reading put
+4 of 5 houses into debt. And the town's card *"does not take an order for stakes"*, verbatim, at the
+line that does it.
+
+**THE ONE REAL FAULT IS THAT THE TOWN BROKE THE STRICT OPTION.** `wantStakes` is documented *"only
+these stakes, and refuse the week otherwise"*, and the town branch fought the bout regardless.
+Measured (`probes/stakes.mjs`), it was the only path that did:
+
+| asking strictly for | bouts | at other stakes | by way of |
+|---|---|---|---|
+| sine | 259 | 7 | the town |
+| standard | 1,565 | 18 | the town |
+| blood | 1,461 | **146** | the town |
+
+**9% of the bouts of a caller who had asked for none of them.** No check uses the strict option
+today, so this was a trap set for its first caller rather than a live fault — which is the honest
+size of #230. It refuses now: **0 of all three**, on every path, and `preferStakes` keeps its
+fallback untouched.
+
+**AND THE SAND HONOURS THE CARD — 175 sine cards, 0 sparings, 153 deaths**, against 1,046 standard
+cards and 725 sparings. The item's own sentence is false.
+
+## But chasing it found the sentence one function down
+
+`spareOdds()` returns null at sine, and the comment over it read *"the same verdict the appeal will
+use, read a beat at a time, so the box is never a surprise"*. It was the same verdict **by retyping
+it**. The appeal computed
+
+```js
+const stand = tA==="defensive" ? 10 : tA==="aggressive" ? -6 : 0;
+const odds  = missioOdds(missioScore(A, ctx, crowd, missioAccount(vB), round*3.2 + stand));
+```
+
+character for character what `spareOdds` computed, and nothing held the two together. They agreed,
+so nothing was wrong; either one edited alone would have made the box a liar about the roll behind
+it, silently. That is #150, and it is what #174 found when `rnd(160 + d.fame*0.5)` turned out to be
+written six times. One raw figure now — the box rounds it, the appeal rolls against it.
+
+**`copies` does not catch this class and says why.** It reads the source for a price written on both
+sides of the App boundary, and *deliberately does not fail on engine-internal repeats*, on the
+argument that those have "no observer between them". That argument is right in general and wrong
+here: both copies were inside `simulateFight`, but one of them fed the box a player reads. **An
+engine-internal repeat still has an observer when one copy is a display.** The guard for it is
+behavioural rather than textual — every beat already carries `spp`, what the box was showing, and
+the appeal beat carries the `odds` it rolled, so the two can be compared on the same beat at the
+same round. 281 appeals, 281 matches.
+
+## And one sabotage that moved nothing taught the most
+
+Removing the `stakes==="sine" ? null` from `spareOdds` changed **no outcome at all** — 0 sparings
+before and after. `spareOdds()` is only the readout; the sparing is decided in the aftermath, where
+`if(stakes==="sine")` kills the man who fell without an appeal ever being raised. The check said
+`spareOdds()` was the mechanism until that sabotage proved it was not, and it names the right branch
+now. A sabotage that fails to break anything is a finding about the thing you thought you were
+testing.
+
+**NEW CHECK — `stakes`** (133 → 134). Five arms: a requirement refuses, on every path · a preference
+settles and reports `gotWanted:false` rather than billing the bout as what it wanted · the sand
+honours the card, no sparing on a sine one · the box's number is the number that was rolled · and on
+enough sine cards to mean it.
+
+Sabotaged four ways, each verified by reading the verdict rather than inferring it from a moved
+number: reverting the town takes `wantStakes:blood` to 40 wrong of 550; adding 3 to the box's
+percentage reports *"281 of 281 appeals rolled against odds the box was not showing"*; and cutting
+the aftermath's sine branch reports *"13 of 92 bouts on a SINE MISSIONE card ended in a sparing"*.
+
 ### v3.173.0 — #229: the agenda was telling a dying house to go shopping
 
 The third item of the mechanics ledger. It is right, and it understates the fault by a factor of
@@ -4001,7 +4086,7 @@ never doing the thing the item accused it of.
 > **Graphics** ~~#212~~ (v3.160.0 — TRUE; six of the nine great works now stand in the drawing, 0 → 51 elements) · ~~#213~~ (v3.161.0 — half-refuted; the row already tracked the level, and did it at ΔE 1.17–2.47 against a just-noticeable 2.3) · ~~#214~~ (v3.162.0 — TRUE; the 22-state figure had ONE call site, now on every roster and block row) · ~~#215~~ (v3.163.0 — TRUE; four graded suns and Saturnalia's lamps, at zero ink flips and 4.13:1 worst) · ~~#216~~ (v3.164.0 — half-refuted; the machinery applied, his scars were 0 on 481 of 481, and one snapshot door passed no `bore` at all) — **ledger closed, 5 of 5**
 > **Depth** ~~#217~~ (v3.170.0 — the pull was already there on 75.9% of weeks; the census refused to count the stone and priced a builder at a third of a hoarder) · #218 · #219 · #220 · #221
 > **Story** ~~#222~~ (v3.165.0 — headline right, diagnosis wrong; a healing wound deleted 67% of sagas, third act 28% → 64%) · ~~#223~~ (v3.166.0 — direction right, ranking wrong; the top sentence was the medicus table, not mercy. Top-10 share 21.6% → 13.6%) · ~~#224~~ (v3.167.0 — the headline was the rope's artifact; the real fault was that never answering beat every answer on the list) · ~~#225~~ (v3.168.0 — headline right, diagnosis blamed the respawn; the fault was that a feud could not be LOST. 77.1% of weeks → 36.3%, six grudge matches a feud → one) · ~~#226~~ (v3.169.0 — right, and the heir was a son the house had never had: `heirEligible` read the lanista's age and never his household. Family beats 25 → 103) — **the story ledger is closed, 5 of 5**
-> **Mechanics** ~~#227~~ (v3.171.0 — every limb refuted: fame is the ladder's commonest wall at 30.3%, and the "fame sink" pays fame out) · ~~#228~~ (v3.172.0 — the figures are `pool[0]`; a hunt was already on 52.5% of cards. The calendar now forces the engines it never could) · ~~#229~~ (v3.173.0 — true, and understated: the agenda warned a dying house on 1.7% of its short weeks and told it to go building on 57.1%) · #230 · #231
+> **Mechanics** ~~#227~~ (v3.171.0 — every limb refuted: fame is the ladder's commonest wall at 30.3%, and the "fame sink" pays fame out) · ~~#228~~ (v3.172.0 — the figures are `pool[0]`; a hunt was already on 52.5% of cards. The calendar now forces the engines it never could) · ~~#229~~ (v3.173.0 — true, and understated: the agenda warned a dying house on 1.7% of its short weeks and told it to go building on 57.1%) · ~~#230~~ (v3.174.0 — the counter measures which CARD was taken, not what the sand rolled; the real fault was the town breaking `wantStakes`) · #231
 
 
 Asked for as five ledgers — gameplay, graphics, depth, story, mechanics — five items each. Not a
@@ -4228,7 +4313,9 @@ the runway surface itself where the player lives when it turns short: in the hea
 report at under eight weeks, in blood under four. The number exists; its placement assumes a player
 who already knows he is dying.
 
-**#230 — Fourteen bouts fought at the wrong stakes.** The rope's own counters, kept since v3.116.0
+**#230 — THE COUNTER COULD NOT SEE THE THING THE ITEM DESCRIBED. Shipped v3.174.0.** `R.wrongStakes` compares which CARD was taken against what was asked for, so "the card promised one thing and the sand rolled another" is not a sentence it can write. The sand honours the card: **175 sine cards, 0 sparings**. Two of the three mismatching paths are documented as doing it; the one real fault is that the **town** broke the strict `wantStakes` contract — 146 of 1,461 bouts (9%) for a blood caller — a trap for its first caller, since no check uses the strict option. Now 0 on every path. And chasing it found the item's own sentence one function down: `spareOdds()` and the appeal's roll were **two retyped copies of one expression**, agreeing by luck. See the release note.
+
+**#230 (as filed) — Fourteen bouts fought at the wrong stakes.** The rope's own counters, kept since v3.116.0
 precisely because refusals were legible and ignorable, report **14 of 1,849 bouts (0.8%) fought at
 stakes other than the ones asked for**. Small, real, and exactly the class #150 exists for — the
 card promised one thing and the sand rolled another. This one is an *investigation*, not a design:

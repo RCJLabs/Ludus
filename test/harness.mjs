@@ -245,9 +245,17 @@ export async function installRope(p){
         A.makeCityGames(d);
         const town = ((d.games && d.games.offers) || []).filter(x=>
           !(x.melee && men.length < 3) && !(x.pair && men.length < 2));
-        /* the town's card is the town's card; it does not take an order for stakes, so a caller that
-           asked for one gets `gotWanted:false` rather than a bout quietly billed as what it wanted */
-        offer = town.length ? town[0] : null;
+        /* ---- THE TOWN WAS THE ONE PATH THAT BROKE `wantStakes` — #230 ----
+           The town's card is the town's card and does not take an order for stakes, and reporting
+           `gotWanted:false` was honest about that. But `wantStakes` is documented STRICT — "only
+           these stakes, and refuse the week otherwise" — and this branch FOUGHT the bout anyway.
+           Measured (`probes/stakes.mjs`), it was the only path that did: under `wantStakes` the
+           town accounted for every mismatch, 7 of 259 asking for sine, 18 of 1,565 for standard and
+           146 of 1,461 for blood — 9% of the bouts of a caller who had asked for none of them.
+           No check uses the strict option today, so this was a trap set for its first caller rather
+           than a live fault. A preference still takes what the town has; a requirement refuses. */
+        const townPool = want ? town.filter(x=>x.stakes === want) : town;
+        offer = townPool.length ? townPool[0] : null;
       }
       if(!offer) return no(want ? `no ${want} bout to be had` : "no offer");
       /* which ENGINE the week actually reached. `say()` reported bouts and refusals and nothing

@@ -9694,9 +9694,30 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
      so the box can be read a beat at a time, and the player can see what the crowd is buying */
   /* the same verdict the appeal will use, read a beat at a time, so the box is
      never a surprise — you can watch the number move as he wins the crowd back */
-  const spareOdds = () => stakes==="sine" ? null
-    : Math.round(missioOdds(missioScore(A, ctx, crowd, missioAccount(vB),
-        round*3.2 + (tA==="defensive" ? 10 : tA==="aggressive" ? -6 : 0))) * 100);
+  /* ---- THE BOX'S NUMBER AND THE ROLL, WHICH WERE TWO COPIES — audit item #230 ----
+   #230 said "the card promised one thing and the sand rolled another" and pointed at a counter that
+   cannot see the sand: it compares which CARD the reference player took against what it asked for.
+   The sand does honour the card — 175 sine cards and 0 sparings, measured — but chasing that turned
+   up the thing the item's sentence actually describes, one function down.
+
+   The comment over this read "the same verdict the appeal will use, read a beat at a time, so the
+   box is never a surprise", and it was the same verdict by RETYPING it. The appeal below computed
+
+       const stand = tA==="defensive" ? 10 : tA==="aggressive" ? -6 : 0;
+       const odds  = missioOdds(missioScore(A, ctx, crowd, missioAccount(vB), round*3.2 + stand));
+
+   character for character what this expression computed, and nothing held the two together. They
+   agreed, so nothing was wrong today; either one edited alone would have made the box a liar about
+   the roll behind it, silently, which is #150 and is what #174 found when `rnd(160 + d.fame*0.5)`
+   turned out to be written six times.
+
+   One raw figure now, and the two readings of it: the box rounds it to a percentage, the appeal
+   rolls against it. `spareOdds()` is still null at sine because there is no appeal there — that is
+   decided in the aftermath below, not here. */
+  const standOf  = () => tA==="defensive" ? 10 : tA==="aggressive" ? -6 : 0;
+  const spareRaw = () => stakes==="sine" ? null
+    : missioOdds(missioScore(A, ctx, crowd, missioAccount(vB), round*3.2 + standOf()));
+  const spareOdds = () => { const p = spareRaw(); return p == null ? null : Math.round(p * 100); };
   const spareRead = () => { const p = spareOdds(); return p==null ? null : p>=66 ? 2 : p>=42 ? 1 : 0; };
   /* a beat that names only one of them belongs to that one, and turns for her */
   const oneOf = t => { if(!t) return t;
@@ -10038,8 +10059,8 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
          them work for every step is spared oftener than one who threw everything
          at it and was flattened in six — the account he gave is not only the
          blood he drew. This is what makes fighting to survive a real choice. */
-      const stand = tA==="defensive" ? 10 : tA==="aggressive" ? -6 : 0;
-      const odds = missioOdds(missioScore(A, ctx, crowd, missioAccount(vB), round*3.2 + stand));
+      const stand = standOf();
+      const odds = spareRaw();   /* #230 — the number the box has been showing, not a copy of it */
       /* what he bought on the way in, priced off the same call — see `saluteWorth` */
       const salute = Math.round(saluteWorth(A, ctx, crowd, missioAccount(vB), round*3.2 + stand) * 100);
       push("appeal", `${A.name} raises two fingers — the appeal. ${round} round${round===1?"":"s"}, and the arena holds its breath — ${missioWord(odds)}.`,
