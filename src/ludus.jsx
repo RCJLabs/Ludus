@@ -3580,7 +3580,7 @@ function agenda(d){
   if(d.games && d.games.offers && d.games.offers.length && activeG(d).some(g=>canFight(g) && g.lastFought<d.week))
     add(2, "arena", d.games.festival, `${d.games.offers.length} on the card`);
   agendaCrown(d, add); agendaLedger(d, add);
-  { const pg = poachedMan(d); if(pg) add(2, "men", `${pg.name} is being talked to`, `House ${d.poach.house}`); }
+  { const ar = answerRow(d); if(ar) add(ar.urgency, ar.tab, ar.label, ar.sub); }   /* #220 — see `answerRow` */
   if(d.court) add(1, "men", `${d.court.name} of House ${d.court.house} is being talked to`, `${d.court.weeks}w — your word, their wall`);
   if(d.loan && owes(d) > d.loan.principal*2) add(2, "villa", `${loanLender(d).name} is owed ${owes(d)}d`, "and it is getting away from you");
   if(d.reSignOffer) add(2, "men", "A contract is up", "he can re-sign or walk");
@@ -13897,6 +13897,70 @@ const gambitReady = d => !d.flags.gambitWeek || d.week - d.flags.gambitWeek >= 6
    stops it happening again, and it is what `workNeed` and `rackKey` are for on their own systems. */
 const gambitOdds = (d,k) => { const G = GAMBITS[k]; if(!G) return 0;
   return clamp(G.odds(d) - gambitStale(d,k)*0.07, 0.12, 0.86); };
+/* ---- THE FOUR ANSWERS NOTHING EVER MENTIONED — audit item #220 ----
+   The item: "a shelf of systems a long run never meets: gambits 0, courts 0, pacts 1, prisoner
+   lots 2 in sixteen runs... a system reachable only off-policy for eight years is dark by
+   construction. Recommend wiring them into the arc that is always on — the feud (79% of weeks)."
+
+   FOUR NUMBERS, FOUR DIFFERENT CAUSES. Measured (`probes/shelf.mjs`, 16 houses x 300 weeks), asking
+   three questions the item's single count cannot tell apart — how many weeks the thing was
+   AVAILABLE, how many the game SURFACED it, and how many it was TAKEN:
+
+     gambit   available 94.2% of weeks · surfaced **0%** · taken 0 (the rope's `gambit` lever is off)
+     court    available 49.2%           · surfaced 15.1%  · taken 0 (the rope has no lever at all)
+     pact     available  8.9%           · surfaced  1.2%  · **taken 34** across 16 houses
+     lot      available  6.2%           · surfaced  6.2%  · taken 0 (no lever; a war is on 12.1%)
+
+   So three of the four are not dark. The pact arrives on its own as a `pendingEvent` — the loudest
+   thing in the game — and was taken twice a house, against the item's "1 in sixteen runs". The
+   court is already offered by `agendaCan`, on the gap v2.63.1 chose. The lot is surfaced on every
+   single week it exists. Their zeroes are the ROPE's missing buttons, not the game's missing doors.
+
+   ONE OF THE FOUR IS EXACTLY WHAT THE ITEM SAYS. A gambit is affordable and off cooldown on 94.2%
+   of weeks and **nothing in the game has ever pointed at one** — no agenda row, no event, no mark.
+   It is reachable only by a player who goes looking on the arena tab.
+
+   AND THE ARC THE ITEM WANTS TO HANG IT ON IS NOT 79%. Counted apart: a named nemesis FIGHTER
+   stands on 93.3% of weeks, a named house feud on 33%, a rival keeping a grudge of 65 on 6.4%, and
+   a rival with money in front of one of your men on **2.6%**. Hanging a door on the 93% arc is the
+   permanent nag #229 was opened against. The door goes on the ACT: a house that has moved on you,
+   and then a house keeping a real account. */
+const GAM_ACCOUNT = 65;      /* the grudge at which a house is keeping a real account of you */
+const answerRow = d => {
+  const pg = poachedMan(d);
+  /* THE WARNING FIRST AND UNCONDITIONALLY. A man being bought is news whether or not the house
+     buying him can be found, whether or not the box will stand an answer, and whether or not you
+     are away — `glance`'s fixture plants a poach by a house that is not on the board, which the
+     first draft of this returned nothing for, and the warning it replaced had never needed the
+     house object at all. Everything below only ever ADDS to this line. */
+  const plain = pg ? { urgency:2, tab:"men",
+    label:`${pg.name} is being talked to`, sub:`House ${d.poach.house}` } : null;
+  if(d.over || d.city || d.travel || d.rome) return plain;
+  const live = (d.rivals||[]).filter(h=>!h.retired);
+  const h = pg ? live.find(x=>x.name === d.poach.house)
+    : live.filter(x=>(x.grudge||0) >= GAM_ACCOUNT).sort((a,b)=>(b.grudge||0)-(a.grudge||0))[0];
+  if(!h) return plain;
+  /* the best trick the box will actually stand, priced off `gambitOdds` — the shared function
+     #150 put there so the panel and the roll cannot quote different numbers */
+  const bill = weeklyBill(d);
+  const best = gambitReady(d) ? GAM_KEYS.map(k=>({ k, G:GAMBITS[k], cost:GAMBITS[k].cost(d), odds:gambitOdds(d,k) }))
+    .filter(x=>x.cost + bill <= d.gold).sort((a,b)=>b.odds - a.odds)[0] : null;
+  const price = (h.grudge||0) >= 25 ? peacePrice(d, h) : null;
+  const peace = (price != null && price + bill <= d.gold) ? price : null;
+  const answers = [ best && `${best.G.name.toLowerCase()} — ${best.cost}d at ${Math.round(best.odds*100)} in the hundred`,
+                    peace && `${peace}d buys the quiet` ].filter(Boolean).join(" · or ");
+  /* a man being bought is news whether or not you can afford to answer it — that line predates
+     this one and must not be lost when the box is empty */
+  /* the named trick and its price ride on the row, so a check reads what the row MEANS rather
+     than parsing the prose it prints — and the two cannot drift */
+  const meant = { house:h.name, gambit: best ? best.k : null,
+    cost: best ? best.cost : null, odds: best ? best.odds : null, peace };
+  if(pg) return Object.assign({}, plain, answers
+    ? { tab:"arena", sub:`House ${d.poach.house} — ${answers}` } : null, meant);
+  if(!answers) return plain;
+  return Object.assign({ urgency:1, tab:"arena",
+    label:`House ${h.name} is keeping an account of you`, sub:answers }, meant);
+};
 function runGambit(d, k, houseName){
   const G = GAMBITS[k]; if(!G || !gambitReady(d)) return null;
   const h = (d.rivals||[]).find(x=>x.name===houseName); if(!h) return null;
@@ -30695,7 +30759,9 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        the exact fault that made #132's first three answers wrong.
        So the rule is three parts, not one: the action, the table it reads, and the gate that opens
        it. Everything here was found by asking what the nineteen above actually reference. */
-    GAMBITS, SWEARING, PLANSEASON, FAVOURS,
+    GAMBITS, SWEARING, PLANSEASON, FAVOURS, answerRow, GAM_ACCOUNT, peacePrice, poachedMan, startPoach,
+    /* the shelf #220 counts: the pacts, the lot, and the court's own price */
+    PACTS, PACT_KEYS, pactOf, pactLeft, pactOwed, pactPace, offerPact, takePact, buyLot,
     /* #150: the panel quotes `gambitDone` and the engine rolls `gambitStale`, and the two differ by
        whatever the town has had time to forget. Both come out here so a probe can print the gap
        rather than recompute either of them. */
