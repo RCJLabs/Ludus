@@ -4386,6 +4386,56 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.180.0 — #237, started: the named son is the real boy the house raised
+
+The first phase built from the phase queue above — item #237, "The Heir You Actually Have" — taken
+straight through: measured against the live source, fixed, checked, sabotage-verified, gated.
+
+**THE DEFECT.** `heirEligible` has checked for a real, specific boy since #226 (v3.169.0): a lanista
+of 40+ with a living son at `childAge(d,c) >= SON_AGE` (9). But `nameHeir(d,"son")` never consulted
+him — it drew a name from `PRAENOMINA`/`NOMINA`/`COGNOMINA`, the identical fabrication branch used
+for `"nephew"`, a kind for which no real candidate has ever existed in game state (confirmed: no
+nephew/brother NPC is tracked anywhere in the file, so `nephew` fabricating a name is correct, not a
+bug). `"son"` is the one kind that promises a real person — years of `raiseEvent`/`resolveRaise`
+up-bringing, a mentor bond, `heirTraitsFromUp` — and delivered a stranger with none of it, while
+`resolveToga` a few hundred lines away had already been building the correct object (`{cid, traits,
+mentorId}`) for the `"scion"` path all along. `line.mjs` (#226's own check) holds the eligibility
+gate both ways round but calls `nameHeir` on a fresh, childless house for every kind including
+`"son"` in its payout-check loop — so it has run green through every release since without once
+exercising the identity path with a real boy behind it.
+
+**THE FIX.** `eligibleSons(d)` is the real candidate list now — the same age/sex/living filter,
+oldest first — and `nameHeir(d, "son", cid)` installs the actual boy: his name, his `cid`, the
+traits his up-bringing already earned, his mentor bond, defaulting to the eldest eligible son when
+no `cid` is given, and falling back to a fabricated stranger only when no real candidate exists at
+all (the one case `line.mjs`'s own childless fixture was already exercising — held here as a
+deliberate fallback, not a silent regression). `HEIRS.son`'s numbers are untouched: an early
+handover under duress stays mechanically rougher than a patient toga-at-16, on purpose — only the
+identity was wrong, not the price. Two bonuses came free with the fix: the "blood of the house"
+panel's `S.heir.cid===c.id` highlight and `succeed()`'s mentor-bonus block both already read
+`d.heir.cid`/`d.heir.mentorId` with no kind gate, so a son heir now lights up correctly on his own
+row and his real mentor gets the same succession bonus a scion's does — neither line of code had to
+change for either.
+
+**THE CHOOSER.** The House sheet's single generic "A son" button is now one row per real eligible
+boy — reusing the name/age pattern the "blood of the house" panel's `kids.map` already renders — so
+a house with two never has to guess which one the button meant, and a house with one sees his actual
+name instead of a placeholder.
+
+New check `heir` (139 → 140), five arms: a single real son named by his own identity, not a
+stranger's; two eligible sons — named by `cid`, and the no-`cid` default resolving to the elder;
+a stale `cid` degrading to the default rather than to a fabricated name; succession carrying the
+identity through (`tookHouse` stamped on the real record, the mentor bonus firing, the payout
+staying son-scale rather than drifting toward scion's); and the one real fallback held, for a
+childless-or-too-young house. Sabotaged five ways, each verified by reading the verdict.
+
+Gate: **140/140.**
+
+**Queued next**, per item #237's own phase breakdown: a passed-over eligible son currently still
+vanishes into `d.forebears`' bare child count rather than carrying a name and a low-probability
+grudge hook forward, and the age-aware flavor-text pass for a son named well before sixteen. Neither
+shipped this release — the identity fix stands on its own and needed nothing from them.
+
 ### THE PHASE QUEUE — ten proposals for what comes after the audit, #232–#241
 
 **NOT AUDIT ITEMS — and must not be filed as though they were.** The bar this project holds itself to
@@ -4496,7 +4546,7 @@ Give rivalTurn a cheap read of the player before retrain/buy choose a class, and
 
 **Verify first.** (1) Baseline collision: uniform retrain already lands on the specific counter-class ~20% of the time (1 of 5 non-current classes) by chance alone. Measure whether the biased version pushes high-train houses meaningfully past that floor (target ballpark ≥40%) while low-train houses (Glaber 0.75, Pollio 0.85) stay close to baseline — if they don't diverge, the "sharper lanista" premise is cosmetic. (2) Tell frequency: rivalTurn only acts on 30% of weeks (`if(R()>0.7) return`) and retrain/buy are two of nine weighted moves in RM_KEYS — run the file's own kind of measured simulation (it already cites "measured across 900 bouts" at 6417 and a probes/works.mjs precedent at 6599) to count how many counter-motivated retrain/buy events actually reach d.rivalLog per campaign; if it's roughly one every 40+ weeks the tell reads as a fluke, not a pattern. (3) Win-rate delta: quantify how much the biased buy/retrain moves the player's bout win% against a house that's had several stable weeks to react, and compare that shift's magnitude against the existing CLS_EDGE (1.15/0.91) and power() (1.045) counter effects already tuned into every bout — the new pressure must stay additive-and-survivable, not stack into something CLS_EDGE alone doesn't already produce. (4) Cheapest signal first: check whether lastFought-recency-weighting the class tally actually changes the dominant-class answer often enough to justify the extra complexity over a plain activeG(d) tally by .cls — only keep the recency weighting if a player benching a class without retraining it away is a common enough case to matter.
 
-**#237 — The Heir You Actually Have** *(overhaul)*
+**#237 — The Heir You Actually Have** *(overhaul)* — **STARTED in v3.180.0.** The identity fix (`eligibleSons`, `nameHeir` carrying a real `cid`, the multi-son chooser) shipped; the passed-over-son consequence and the age-aware flavor pass are still queued.
 heirEligible already checks a real, named boy's age before it lets you pick "A son" — livingKids(d).some(c=&gt;c.sex==="m" &amp;&amp; childAge(d,c)&gt;=9) — but nameHeir("son") never looks him up; it hands you a stranger pulled from PRAENOMINA/NOMINA/COGNOMINA, the identical fabrication branch used for "nephew," an heir kind for which no real candidate has ever existed in game state. Meanwhile the toga-at-16 "scion" path already builds the correct object — {cid, traits, mentorId} — by calling straight into d.domus.children; nameHeir just never learned the trick.
 
 heirEligible (HELPERS, next to the HEIRS table) gates the "son" option correctly: `d.lanista.age>=40 && livingKids(d).some(c=>c.sex==="m" && childAge(d,c)>=SON_AGE)`, SON_AGE=9, against a real child object living in d.domus.children with its own id, born week, and up:{palus,rhetor,box} raising counters accrued by raiseEvent at ages 7 and 12. That boy is real, simulated, and already producing chronicle beats through childYear() at 3/5/9/14. But nameHeir(d,kind) — the only function that ever turns a chosen kind into d.heir — resolves the name for "son" through the exact same line as "nephew": `kind==="doctore" && d.doctore ? d.doctore.name : `${pick(PRAENOMINA)} ${pick(NOMINA)} ${pick(COGNOMINA)}``. It writes no cid, no traits, no mentorId. One correction to the brief: "nephew" fabricating a name is not a bug — grepping the whole file for brother/nephew state turns up no tracked NPC anywhere (ties, kin, rivals, patrons); there is no real nephew to consult, so nameHeir("nephew") is working exactly as intended. "son" is the one kind that promises a real person and delivers a stranger. A second correction, in nameHeir/succeed()'s favor: the brief worried succeed() itself would need surgery, but succeed() already reads d.heir.cid/mentorId/traits/palusRaised generically (mentor morale+regard bump, tookHouse stamp on the matching child) — that block was written for the "scion" kind (set directly by resolveToga, which builds `{kind:"scion", cid:c.id, traits:heirTraitsFromUp(up), mentorId, mentorName}` and never even calls nameHeir — heirEligible(d) never returns "scion", so nameHeir is in practice invoked only for son/nephew/doctore, exclusively from chooseHeir(kind)=>mut(d=>nameHeir(d,kind)) on the House sheet's button row). succeed() needs zero changes: the entire gap is that nameHeir("son") never builds the object shape resolveToga already builds. Downstream, succeed() unconditionally archives d.domus (`fam = {wife, children: domus.children.slice()}` whenever a wife or any children exist, regardless of d.heir.kind) and resets it to {wife:null, children:[], nextKin:1}; the only trace kept in d.forebears is `children: fam.children.length` — a bare integer, not even names. The single per-child fact that survives is c.tookHouse=d.week, set only for the child matching d.heir.cid — and "son" heirs, uniquely among the four kinds, never set a cid, so the real boy who made the option eligible in the first place is stamped exactly like his unnamed siblings and disappears into a headcount. A further concrete case beyond the brief: a 16-year-old who answered togaEvent's "Not yet — let him prove himself first" keeps c.grown=false and c.togaTil set, but he still satisfies heirEligible's blunter age>=9 "son" check the whole time he's on that cooldown — so a fully raised, mentor-bonded boy the game is actively narrating can be discarded for a random stranger with one click on the House sheet, while his own toga event is still pending.
