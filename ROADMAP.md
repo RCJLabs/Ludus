@@ -2428,6 +2428,67 @@ but two arms leaning the same way is the thesis of #207 arriving from an unexpec
 the game may genuinely be a notch harder when its numbers stop flattering you. #229 (surfacing the
 runway when it turns short) is the counterpart and stays queued.
 
+### v3.179.0 — #221: the premise was dead, the claim was worse than it said
+
+The last item of the twenty-five, and the last of the depth ledger.
+
+**ITS PREMISE IS A FIGURE THIS SAME AUDIT ALREADY KILLED.** #221 rests on *"the median career is one
+bout (#208)"*. #208 was closed **refuted**: that median was the survey's own artifact — 470 fallen
+summaries counted as zero-bout careers — and the corrected figure is **4–5 bouts with 88–90% debut
+survival**. Measured again here (`probes/green.mjs`, 10 houses over 1,731 weeks, 278 men who ever
+stood in the cells): median **4 bouts, 1 win**.
+
+**AND TWO OF THE THREE GATES IT NAMES ARE NOT WHAT IT SAYS.** `manTells` bands the six stats, an
+injury, an age and a kill count, and answers on a man who has never fought — the reading is dull,
+not absent. `masterOpen` is a **house** gate (`bLevel(armamentarium) >= 2 && acclaim >= 32`) with
+nothing to do with a man's wins.
+
+**THE CLAIM SURVIVES IN A CORRECTED FORM, AND IT IS WORSE THAN THE ITEM'S VERSION.**
+
+| how far a man gets | share of 278 |
+|---|---|
+| fought once | 85.3% |
+| fought twice | 73% |
+| won once | 60.8% |
+| **5 wins — a nickname** | **16.5%** |
+| **6 wins — a signature** | **14.7%** |
+| **8 wins — a saga's gate** | **9.7%** |
+
+Five men in six never cross a single career gate. And the first bout bought almost nothing —
+chronicle lines naming a man, by how far he got:
+
+    0 bouts 1.3     1 bout 1.4     2-3 bouts 2.5     4-7 bouts 3.3     8+ bouts 5.4
+
+**Fighting once was worth a tenth of a line over never fighting at all.**
+
+**SO THE DEBUT IS A NIGHT.** The fifth, kept like the sparing because a man has exactly one, written
+in all four engines and drawn on his page under *What he is known for* — the only entry there that
+a man who fought once and died can have. His first blooding speaks, and so does his first defeat:
+the doctore's read is a **read**, banded on `missioAccount(res.vB)`, the account he gave, which is
+the same figure the editor weighed when deciding whether to let him up.
+
+> *"He was not outfought, he was outlasted — 12 left in him at the horn and nothing behind it."*
+> *"He never landed. Whatever he does at the post he did not do out there, and it is not the post's fault."*
+
+After: **78.4%** of men carry a first afternoon, against 14.7% for the next-lowest man-system, and
+the one-bout band moved 1.4 → 1.6 lines with 2–3 bouts moving 2.5 → 3.0.
+
+**AND A FOURTH ZERO THAT WAS THE INSTRUMENT.** The signature is reachable by the 14.7% who make six
+wins and was reached by **0 of 278 men** — no rope in this suite has ever had a button for it, so
+the whole arc read dark. `signature` is a lever now, opt-in like `court`, `lot` and `rites`, and
+teaches nine men across three houses.
+
+**TWO FAULTS THE WORK FOUND IN ITSELF.** The first draft called `firstBlood` before
+`boutAftermath`, which is where `g.kills` moves — so the first blooding could never once have
+fired. And it was written only into `doFight`, so a man whose debut was a melee, a pair or a hunt
+got nothing; the played sweep was too thin to notice, and the check holds all four call sites off
+the source instead. `doFight` was at its `bulk` allowance either way, so the call lives at the end
+of the aftermath, which is where it belonged.
+
+New check `first` (138 → 139), five arms, sabotaged seven ways.
+
+**THE AUDIT IS CLOSED.** Twenty-five items, five ledgers, twenty-five releases.
+
 ### v3.178.0 — #220: four numbers, four different causes, and one of them was the item
 
 The depth ledger's third. The item counts four systems at once — *"gambits 0, courts 0, pacts 1,
@@ -4331,7 +4392,7 @@ never doing the thing the item accused it of.
 
 > **Gameplay** ~~#207~~ (v3.156.0 — half-refuted, and the bill was missing two salaries) · ~~#208~~ (closed — refuted, the survey's own artifact; true median 4–5 bouts) · ~~#209~~ (v3.157.0 — half already shipped in #166; the verdict now names the salute) · ~~#210~~ (v3.158.0 — refuted; three protections found, and now guarded) · ~~#211~~ (v3.159.0 — refuted; `agendaTop` has no call sites) — **ledger closed, 5 of 5 refuted**
 > **Graphics** ~~#212~~ (v3.160.0 — TRUE; six of the nine great works now stand in the drawing, 0 → 51 elements) · ~~#213~~ (v3.161.0 — half-refuted; the row already tracked the level, and did it at ΔE 1.17–2.47 against a just-noticeable 2.3) · ~~#214~~ (v3.162.0 — TRUE; the 22-state figure had ONE call site, now on every roster and block row) · ~~#215~~ (v3.163.0 — TRUE; four graded suns and Saturnalia's lamps, at zero ink flips and 4.13:1 worst) · ~~#216~~ (v3.164.0 — half-refuted; the machinery applied, his scars were 0 on 481 of 481, and one snapshot door passed no `bore` at all) — **ledger closed, 5 of 5**
-> **Depth** ~~#217~~ (v3.170.0 — the pull was already there on 75.9% of weeks; the census refused to count the stone and priced a builder at a third of a hoarder) · ~~#218~~ (v3.176.0 — Rome happens: 14 letters to 9 of 16 houses at the item's own horizon. The senator was the last term standing on 0 of 1,347 shut weeks; `romeProved` is the wall, and the agenda was the dark thing) · ~~#219~~ (v3.177.0 — the 2.3% was the rope's own lever reading a field that is never cleared, so its first offering was its last; a working rope is blessed on 43.6% of weeks. The unsigned half was exact: 0 of 2,582 beats named a god) · ~~#220~~ (v3.178.0 — three of the four are surfaced already and the pact is taken twice a house; the gambit is the one that was dark, 0% of 94.2% available weeks, and the arc to hang it on is 2.6%, not 79%) · #221
+> **Depth** ~~#217~~ (v3.170.0 — the pull was already there on 75.9% of weeks; the census refused to count the stone and priced a builder at a third of a hoarder) · ~~#218~~ (v3.176.0 — Rome happens: 14 letters to 9 of 16 houses at the item's own horizon. The senator was the last term standing on 0 of 1,347 shut weeks; `romeProved` is the wall, and the agenda was the dark thing) · ~~#219~~ (v3.177.0 — the 2.3% was the rope's own lever reading a field that is never cleared, so its first offering was its last; a working rope is blessed on 43.6% of weeks. The unsigned half was exact: 0 of 2,582 beats named a god) · ~~#220~~ (v3.178.0 — three of the four are surfaced already and the pact is taken twice a house; the gambit is the one that was dark, 0% of 94.2% available weeks, and the arc to hang it on is 2.6%, not 79%) · ~~#221~~ (v3.179.0 — the premise was #208's dead median; the claim survives corrected and worse: five men in six never cross a career gate, and a first bout was worth a tenth of a chronicle line)
 > **Story** ~~#222~~ (v3.165.0 — headline right, diagnosis wrong; a healing wound deleted 67% of sagas, third act 28% → 64%) · ~~#223~~ (v3.166.0 — direction right, ranking wrong; the top sentence was the medicus table, not mercy. Top-10 share 21.6% → 13.6%) · ~~#224~~ (v3.167.0 — the headline was the rope's artifact; the real fault was that never answering beat every answer on the list) · ~~#225~~ (v3.168.0 — headline right, diagnosis blamed the respawn; the fault was that a feud could not be LOST. 77.1% of weeks → 36.3%, six grudge matches a feud → one) · ~~#226~~ (v3.169.0 — right, and the heir was a son the house had never had: `heirEligible` read the lanista's age and never his household. Family beats 25 → 103) — **the story ledger is closed, 5 of 5**
 > **Mechanics** ~~#227~~ (v3.171.0 — every limb refuted: fame is the ladder's commonest wall at 30.3%, and the "fame sink" pays fame out) · ~~#228~~ (v3.172.0 — the figures are `pool[0]`; a hunt was already on 52.5% of cards. The calendar now forces the engines it never could) · ~~#229~~ (v3.173.0 — true, and understated: the agenda warned a dying house on 1.7% of its short weeks and told it to go building on 57.1%) · ~~#230~~ (v3.174.0 — the counter measures which CARD was taken, not what the sand rolled; the real fault was the town breaking `wantStakes`) · ~~#231~~ (v3.175.0 — three limbs already answered; the fourth it did not name: the word banded `rateMan` and the sand rolls `winChance`, so "even, near enough" was a bout lost two times in three)
 
@@ -4497,11 +4558,18 @@ front of your man on **2.6%**, and a door on the 93% arc is the nag #229 was ope
 hangs on the act, folded into the poach line that was already there: 5.8% of weeks, 90.2% of the
 weeks a house has moved, 0 of 1,335 where nobody has. See the release note.
 
-**#221 — Man-depth is gated behind careers nobody has.** Tells need history, sagas need renown,
-mastery needs wins — and the median career is one bout (#208), so most men never touch any
-man-system. Recommend early texture that fires on bout one: a debut tell, an annals line for a
-first blooding, the doctore's one-sentence read after a first loss — depth the median man actually
-lives to see.
+**#221 — THE PREMISE WAS DEAD, THE CLAIM WAS WORSE THAN IT SAID. Shipped v3.179.0.** It rests on
+#208's "median career is one bout", which #208 was **closed refuted** for: that median was the
+survey's own artifact and the true figure is 4–5 bouts. Two of the three gates it names are wrong
+too — `manTells` answers a man who has never fought, and `masterOpen` is a house gate. But the
+claim holds in corrected form and is worse: 85.3% of men fight and 60.8% win, while only **16.5%
+reach a nickname's five wins, 14.7% a signature's six, 9.7% a saga's eight** — five men in six
+never cross a career gate — and **fighting once was worth a tenth of a chronicle line** over never
+fighting at all. The debut is a night now, the fifth, written in all four engines and drawn on his
+page; his first blooding speaks; and the doctore's read on his first defeat is banded on the
+account he gave. **78.4%** of men carry one. And a fourth zero was the instrument: the signature,
+reachable by 14.7%, had been taught to 0 of 278 men because no rope had a button for it. See the
+release note.
 
 #### THE STORY LEDGER
 

@@ -292,6 +292,7 @@ export async function installRope(p){
        `lanista(d, opts)` plays one week and RETURNS WHAT IT DID, so a caller can assert on behaviour
        rather than intent. Every part can be switched off through `opts` for a control arm:
          cells, buy, doctore, build, census, staff, school, heir, rome, bout  (all default true)
+         signature     (default OFF, #221 — no rope had ever taught one, so the arc read dark)
          court, lot    (default OFF, #220 — the rope had no way to accept a court or buy a war lot,
                         so both read 0 in every sweep and the count was filed as a design fault)
          rites         (default OFF, #219 — it read `d.blessing`, which is never cleared, so the
@@ -852,6 +853,19 @@ export async function installRope(p){
       }
       if(o.lot && typeof A.buyLot === "function" && d.powLot && d.powLot.price <= spare()
          && fin(A.buyLot,[d])) bump("lot");
+      /* ---- AND A THIRD, FOR THE SAME REASON (#221) ----
+         The signature is reachable by a man at six wins and 14.7% of men get there — and across
+         278 men over 1,731 weeks this rope taught **none**, because there was no button. It is the
+         same shape as `court` and `lot`, and opt-in for the same reason. */
+      if(o.signature && typeof A.teachSigTo === "function" && typeof A.canLearnSig === "function"){
+        const fee = fin(A.sigFee,[d]) || 0;
+        const man = A.activeG(d).filter(g=>A.canLearnSig(d, g))
+          .sort((a,b)=>(b.wins||0)-(a.wins||0))[0];
+        if(man && fee > 0 && fee <= spare()){
+          const keys = (fin(A.techsFor,[man.cls]) || []).map(t=>t.key || t);
+          for(const k of keys) if(fin(A.teachSigTo,[d, man.id, k])){ bump("signature"); break; }
+        }
+      }
       if(o.gambit && typeof A.runGambit === "function"){
         const every = typeof o.gambit === "number" ? Math.max(1, o.gambit) : 6;
         if(d.week % every === 0){
