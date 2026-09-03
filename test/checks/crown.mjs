@@ -183,13 +183,28 @@ export async function run({ p, errors }){
     }
     if(A.MENACE_WORDS.length < 5)
       bad.push(`there are only ${A.MENACE_WORDS.length} words for the whole range of men in the game`);
-    /* and the paid reading must be better than the free one, which is the bargain */
+    /* ---- AND THE PAID READING MUST BE BETTER THAN THE FREE ONE, WHICH IS THE BARGAIN ----
+       This asked `blind.word === told.word`, and the two draw from disjoint sets — the fog says
+       "no read" / "has the shape for him" / "gives him the match-up" and nothing else, the paid
+       reading says one of `READ_CUT`'s and nothing else — so the guard could never fire. It sat
+       green through every release since it was written and would have sat green through #231,
+       which rewrote the whole of what the paid reading returns. It holds the bargain itself now:
+       the paid reading carries a FIGURE and the free one does not, and the free one is one of the
+       three fog words. */
     const foe = A.genOpponent(3, 82);
     const blind = A.readMatch(me, foe, false), told = A.readMatch(me, foe, true);
+    const FOG = ["no read","has the shape for him","gives him the match-up"];
     if(!blind || !told) bad.push(`readMatch returned nothing`);
-    else if(blind.word === told.word && Math.abs(told.edge) > 0.14)
-      bad.push(`a man nobody has watched reads the same as one you have paid for `
-        + `("${blind.word}") on a match-up with an edge of ${told.edge.toFixed(2)}`);
+    else {
+      if(told.pc == null) bad.push(`a reading you have paid for carries no figure — "${told.word}" `
+        + `and nothing else, which is the judgement-in-words #231 closed`);
+      if(blind.pc != null) bad.push(`a man nobody has watched is priced at ${blind.pc} in a hundred `
+        + `for free, and the scouting is sold on that being withheld`);
+      if(!FOG.includes(blind.word)) bad.push(`a man nobody has watched reads "${blind.word}", which `
+        + `is a paid reading's word`);
+      if(blind.word === told.word) bad.push(`the free reading and the paid one say the same thing `
+        + `("${blind.word}")`);
+    }
 
     return { bad, note, quote, took, tries, deaths, seeded, asked,
       gate:A.PRIMUS_GATE, ask:A.PRIMUS_ASK, gap:A.PRIMUS_ASK_GAP,
