@@ -4386,6 +4386,87 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.183.0 — #232 phase 2: you watch the yard duel now, and you can speak into it
+
+The piece the item was actually pitched on. v3.182.0 built the engine and gave it a real call site,
+but the duel still resolved headlessly and reported itself in a paragraph — `simulateSpar` produced
+a full beats array every time it ran and exactly one line of it was ever read. Now the fight is
+handed to the same beat-viewer the other four engines use, and it stops once for a word.
+
+**THE HANDOFF.** An event answer returns a string; a bout returns beats. Bridging those without a
+second viewer is the whole of this phase. `EVENTS.feud`'s i===0 branch no longer resolves anything:
+it sets `d.pendingSpar` and stands back, and `chooseEv` — which until now always ended in
+`setEvResult(msg)` — reads that marker and hands the two men to `doSpar` through the identical
+`{pending, beats, crux}` handshake `doFight` already uses. `speak()` gains one branch. No new
+surface, no second modal, and the aftermath moved with the fight into `doSpar` where it belongs:
+nothing lands until the bout is actually over.
+
+**THE ONE WORD IS THE SPAR'S OWN.** Every engine here gets its own vocabulary at the crux — the
+melee's finish/pullone/pullall, the hunt's handlers — and nothing on the single bout's menu fits a
+training square: there is no editor to appeal to, no cloth to throw, no missio, because nobody in
+here can die. `SPAR_CRUX` is three things a man at the rail actually has. **Let them have it out**
+resumes untouched. **Tell them to stop dancing** puts `SPAR_PRESS` on every remaining blow, under
+the same ceiling as everything else, so it settles sooner and the beaten man wears more of it —
+measured, it leaves him on 41.4 against 46.8. **Get between them** ends it there: nobody yields,
+nobody is hurt, and the grudge stays exactly where it was, which is the price of the option and is
+paid in code rather than written off in the text.
+
+**AND THE HAZARD THE ITEM PREDICTED WAS REAL.** Its verify-first said to confirm the viewer's
+`solo` flag could take a fourth branch "without the downstream uses picking up fight.spar by
+accident." It could not. `solo` was written as `!melee && !venatio && !pair` — *none of the other
+three* — so a fifth engine inherits the single sand's entire menu by default. Left alone, a
+wooden-sword training bout between two of your own men would have offered `cloth`: an appeal, to an
+editor who is not there, in a fight with no death to be spared from. Also `finish` with its
+SIGNATURES lookup, `legs`, `breather`, `milk`, `rouse`. The rule is now two named functions,
+`cruxSolo` and `cruxMenuFor`, sitting beside the tables they choose between — and `cruxWords` with
+them, because `bulk` was right a second time that the viewer should not also carry every engine's
+copy. What was an untestable inline ternary is now asserted directly.
+
+Check `spar` grows from five arms to eight: the feud answer hands the duel over rather than
+resolving it (300/300) and comes to the balance in 93.7% of duels, with the aftermath verified as
+NOT landing while the bout is still held; the menu and the words are the spar's own and the single
+bout keeps all ten of its entries; and getting between them injures nobody while leaving the grudge
+standing 183/183. Sabotaged six ways — the old `solo` flag restored, the stop settling the grudge
+anyway, the press doing nothing, the crux never firing, the played beats dropped on resume, and the
+event resolving directly again — each verified by reading the verdict.
+
+**AND THE GATE ASKED A QUESTION WORTH ANSWERING.** `orders` — audit #169's check, which holds that
+every function branching on `res.crux` either sends a man out (and puts the week's orders down
+first) or resumes one (and must not) — failed on `chooseEv`, correctly: it had just become a sixth
+crux-brancher and fitted neither category. The answer is that it is a third thing. The six orders
+are what a man is told before he goes out to a CARD: a tactic, a plan, an entrance, a stake. A spar
+reads none of them — `doSpar` passes `"measured"` itself and takes no plan, no bet, no entrance — so
+there is nothing to spend, and spending them anyway would quietly clear the chips the player had set
+for the card he was actually preparing, which is #194 pointing the other way. `NOSPEND` is named in
+the check alongside `SENDERS` and `RESUMER`, and because an exemption is only honest while its
+premise holds, the premise is asserted too: the check now reads `doSpar`'s body and fails if it ever
+starts reading `tactic`, `stake`, `entrance`, `planNow`, `styleNow`, `makeBet`, `mplan` or
+`pitPick` — at which point `chooseEv` must move to `SENDERS`. Both halves sabotage-verified.
+
+**AND A REGRESSION THAT WAS ENTIRELY MINE.** Handing the duel to a viewer quietly made the fight
+contingent on there being one. The rope every probe and half the checks run on answers a question by
+calling `EVENTS[id].run` and clearing `pendingEvent` itself — it has never heard of `chooseEv`. So in
+every headless path the branch set `d.pendingSpar`, nothing read it, and the duel simply did not
+happen: no winner, no aftermath, no grudge settled, and the marker left sitting on the save waiting
+for a UI that was never coming. Found because `survive` failed again on this build and the honest
+thing was to check whether the diff had moved anything in headless play rather than reach for the
+previous release's variance finding a second time. It had.
+
+The fix belongs in the engine, not the harness: `endWeek` resolves any duel the box did not, running
+it the way it runs when nobody speaks from the rail. The presenter gets first refusal; it does not
+get to cancel the bout. Arm 8 holds it on the rope's exact path — run the event, clear the question,
+turn the week, no viewer anywhere — and asserts on the duel's own chronicle line rather than on
+morale, because a week moves morale for a dozen reasons and the sabotage proved that assertion was
+measuring nothing.
+
+Gate: **142/142.**
+
+**Queued**, and now the only things left in #232: `holdTourney`'s final, which still crowns a
+champion off `score()` with an `R()*24` noise term having fought nobody (Phase 4) — and beside it
+the primacy challenge found during v3.182.0, which settles the house's own title between two of
+your men on the same `power()`-coin the feud branch has now retired twice over. Phase 5's hooks
+remain what the item always said they were: speculative extensions, not fudge-replacements.
+
 ### v3.182.0 — #232, started: the fifth engine, and a yard duel that is actually fought
 
 Phases 1 and 3 of item #232, "The Training-Square Duel" — the resolver, and the first of the two
@@ -4611,7 +4692,7 @@ arc; a political analogue of `d.nemesis`; a cooperative venatio mode; and, in th
 votes from any of the three curators, an anytime, generated-not-written Almanac extending the glossary sheet's
 own proven idiom.
 
-**#232 — The Training-Square Duel** *(new system)* — **STARTED in v3.182.0.** `simulateSpar` (the fifth engine, structurally unable to kill: no appeal/missio block, damage capped after every multiplier, a hard floor of `SPAR_YIELD - SPAR_CAP`) and the `EVENTS.feud` rewiring shipped, with the odds measured against the branch they replace and held to 1.4 points. The beat-viewer wiring (Phase 2), `holdTourney`'s final (Phase 4) and Phase 5's hooks are still queued.
+**#232 — The Training-Square Duel** *(new system)* — **STARTED in v3.182.0, phase 2 in v3.183.0.** `simulateSpar` (the fifth engine, structurally unable to kill: no appeal/missio block, damage capped after every multiplier, a hard floor of `SPAR_YIELD - SPAR_CAP`) and the `EVENTS.feud` rewiring shipped, with the odds measured against the branch they replace and held to 1.4 points. The beat-viewer wiring shipped in v3.183.0 with `SPAR_CRUX`'s own three orders — and confirmed the item's own predicted hazard, that the viewer's `solo` flag would hand a spar the single sand's whole menu. `holdTourney`'s final (Phase 4), the primacy challenge found beside it, and Phase 5's hooks are still queued.
 The only round-by-round fight resolver in the game (simulateFight, plus doFight's pause/resume) has never been pointed at a fight inside the walls: EVENTS.feud's i===0 branch settles a named duel between two of your own men with one power() call per side scaled by an independent 0.8–1.3 roll and a flat 16% injury check, and holdTourney (line 1452) ranks the whole eligible roster by a score() formula and crowns a yard-tournament winner having fought zero rounds. A trimmed sibling resolver — simulateSpar, built the way simulatePair was explicitly built "apart from simulateFight on purpose" (line 17077) — gives the two scenes the game's own prose already stages as a stopped-yard spectacle an actual animated bout, with no missio-to-death path.
 
 Two moments in the game already narrate the whole familia stopping to watch two of your own men fight, and neither one calls the fight engine. EVENTS.feud (the "In The Yard" pendingEvent set up by feudWeek, line 1297) has a run(d,ev,i) with four branches; the i===0 branch, reached when the player picks "put them on the sand" (line 18403–18419), resolves it as: `pa = power(...,"measured",...)`, `pb = power(...,"measured",...)`, `aWins = pa*(0.8+R()*0.5) > pb*(0.8+R()*0.5)`, then a flat `R()<0.16` roll against `INJURIES[ri(0,2)]` for the loser. No rounds, no beats, no crux, no appeal — the text says "with wooden swords and the doctore counting," and none of that is simulated. holdTourney (line 1452) is worse in one respect: it never even simulates a single pairing. `score(g)` sums weighted class stats, raw STR/AGI/TEC/DIS, regardOf(g), wins, and an R()*24 noise term; the roster is sorted by that score and `ranked[0]` is simply declared the winner. The flavor text ("wooden swords, no editor, every man with something to prove") describes a tournament that is entirely arithmetic. Meanwhile simulateFight (line 9730) and doFight (line 17612) are the most developed system in the codebase — a 12-round beat loop, a crux stop/resume contract (`res.unfinished` → `{pending:{...crux:res.crux}, beats, crux:true}`), missio odds, appeal, marks/tells — and it is reserved entirely for bouts against outside houses. The two places the design already treats an internal fight as a named event get the least mechanical attention of anything in the file.
