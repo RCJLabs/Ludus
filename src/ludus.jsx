@@ -1449,7 +1449,7 @@ const TOURNEY_COOL = 10;
 const tourneyReady = d => !d.rome && !d.city && !d.travel && !d.over
   && (d.week - (d.flags && d.flags.tourneyWk!=null ? d.flags.tourneyWk : -99) >= TOURNEY_COOL)
   && activeG(d).filter(g=>canFight(g)).length >= 4;
-function holdTourney(d){
+function holdTourney(d, watch){
   const men = activeG(d).filter(g=>canFight(g));
   if(men.length < 4 || !tourneyReady(d)) return null;
   d.flags.tourneyWk = d.week;
@@ -1457,16 +1457,29 @@ function holdTourney(d){
     + (g.str+g.agi+g.tec+g.dis)*0.2 + regardOf(g)*0.2 + (g.wins||0)*0.7 + R()*24;
   const ranked = men.map(g=>({ g, s:score(g) })).sort((a,b)=>b.s-a.s);
   const win = ranked[0].g, second = ranked[1].g;
-  win.morale = clamp(win.morale+10, 0, 100);
-  win.pfame  = clamp((win.pfame||0)+ri(3,6), 0, 200);
-  win.fans   = clamp((win.fans||0)+ri(3,7), 0, 100);
-  win.regard = clamp(regardOf(win)+4, 0, 100);
-  win.fatigue= clamp(win.fatigue+12, 0, 100);
-  men.forEach(g=>{ if(g.id!==win.id){ g.morale = clamp(g.morale+3, 0, 100); g.fatigue = clamp(g.fatigue+8, 0, 100); } });
-  d.unrest = clamp(d.unrest-3, 0, 100);
-  if(second && R()<0.5) addTie(d, win.id, second.id, R()<0.55 ? "rival" : "brother");
-  chron(d, `You set the whole yard against itself for an afternoon — wooden swords, no editor, every man with something to prove to the men he eats beside. ${win.name} came out on top of the lot, and walks the cells tonight like a man told the thing he already suspected.`, "good");
-  return { win:win.name, second: second? second.name : null };
+  /* ---- AND THE LAST TWO ACTUALLY FIGHT — phase queue #232, phase 4 ----
+     This used to end here: `ranked[0]` was declared champion and paid out, having fought nobody at
+     all. `score()` sums weighted class stats, the four raw stats, regard and wins, adds `R()*24`,
+     sorts, and takes the top — an afternoon of "wooden swords, no editor, every man with something
+     to prove" settled by arithmetic. The formula still SEEDS the bracket, and the earlier rounds
+     stay abstracted by it, which is the item's own stated scope cut rather than an oversight. What
+     changes is that the final is a bout: the top two go into the square and `doSpar` pays the
+     champion's purse to whoever comes out of it, which is not always the man the formula ranked
+     first. That is the entire point of holding it. */
+  chron(d, `You set the whole yard against itself for an afternoon — wooden swords, no editor, every man with something to prove to the men he eats beside. It comes down to ${win.name} and ${second.name}.`, "info");
+  d.pendingSpar = { aid:win.id, bid:second.id, kind:"tourney" };
+  /* `watch` is the UI saying "I will put this in front of the player myself" — it takes the seeded
+     bracket and hands the final to the beat-viewer. EVERYBODY ELSE gets a tournament that has
+     actually been held: a function called holdTourney that leaves the last bout unfought and the
+     champion uncrowned is a trap for every caller that is not the one screen expecting it, and
+     `street` caught exactly that by calling it and finding nobody had won anything. The marker is
+     still cleared here, so nothing is left for `endWeek` to sweep up twice. */
+  if(watch) return { win:win.name, second:second.name, seeded:true };
+  const p = d.pendingSpar; d.pendingSpar = null;
+  let res = doSpar(d, p.aid, p.bid, null, null, p.kind);
+  if(res && res.crux){ res.pending.beats = res.beats; res = doSpar(d, p.aid, p.bid, res.pending, "run"); }
+  const champ = res && res.beats ? (d.gladiators.find(g=>g.id===p.aid) || win) : win;
+  return { win: (res && res.win === false) ? null : champ.name, second:second.name, fought:true };
 }
 /* a man with two styles takes whichever the card needs */
 const stylesOf = g => g ? [g.cls, g.second && g.second.cls].filter(Boolean) : [];
@@ -17323,9 +17336,45 @@ function simulateSpar(A, B, tA, ctx, opts){
    eight events, where length is content. A fight belongs beside the engine that resolves it, and
    the branch is a call. The aftermath is deliberately unchanged — the same morale, form, fatigue,
    unrest, craft-rep and tie removal the branch has always paid. Only the fight is new. */
-function doSpar(d, aid, bid, pending, choice){
+/* ---- WHAT AN AFTERNOON OF IT IS WORTH, PAID TO WHOEVER ACTUALLY WON ----
+   The tournament's own payout, lifted out of `holdTourney` because it can no longer be handed out
+   at the moment the bracket is drawn — the last two have to fight first. Every number here is the
+   one `holdTourney` always paid; what changed is who receives it. The formula seeds, the sand
+   decides, and on a stopped final nobody is champion at all, which is a thing a lanista is now
+   allowed to do to his own tournament. */
+function tourneyEnd(d, a, b, res, sum, face){
+  const men = activeG(d).filter(g=>canFight(g));
+  if(res.stopped){
+    men.forEach(g=>{ g.morale = clamp(g.morale+3, 0, 100); g.fatigue = clamp(g.fatigue+8, 0, 100); });
+    d.unrest = clamp(d.unrest+4, 0, 100);
+    sum.push(`No champion. The yard spent an afternoon on it and goes in without an answer, which is worse than either man winning.`);
+    chron(d, `You stopped the final before either of them had it. The yard had spent the whole afternoon getting to that bout and does not get to see it finished, and they will remember whose word that was.`, "bad");
+    return { beats:res.beats, sum:sum.map(x=>herOwn(d,x)), win:false, dead:false, crowd:0,
+      spar:true, tourney:true, stopped:true, stakes:"spar", venue:null, factions:d.factions, A:face(a), B:face(b) };
+  }
+  const win = res.winner==="A" ? a : b, second = res.winner==="A" ? b : a;
+  win.morale = clamp(win.morale+10, 0, 100);
+  win.pfame  = clamp((win.pfame||0)+ri(3,6), 0, 200);
+  win.fans   = clamp((win.fans||0)+ri(3,7), 0, 100);
+  win.regard = clamp(regardOf(win)+4, 0, 100);
+  win.fatigue= clamp(win.fatigue+12, 0, 100);
+  men.forEach(g=>{ if(g.id!==win.id){ g.morale = clamp(g.morale+3, 0, 100); g.fatigue = clamp(g.fatigue+8, 0, 100); } });
+  d.unrest = clamp(d.unrest-3, 0, 100);
+  if(second && R()<0.5) addTie(d, win.id, second.id, R()<0.55 ? "rival" : "brother");
+  sum.push(res.yielded
+    ? `${second.name}'s hands went up in the ${res.rounds===1?"first":res.rounds===2?"second":res.rounds===3?"third":res.rounds===4?"fourth":res.rounds===5?"fifth":"sixth"}.`
+    : `Six exchanges in the final and the doctore called it on what landed.`);
+  sum.push(`${win.name} takes the yard.`);
+  chron(d, `${win.name} came out on top of the lot, and walks the cells tonight like a man told the thing he already suspected.`, "good");
+  return { beats:res.beats, sum:sum.map(x=>herOwn(d,x)), win:true, dead:false, crowd:0,
+    spar:true, tourney:true, stakes:"spar", venue:null, factions:d.factions, A:face(a), B:face(b) };
+}
+function doSpar(d, aid, bid, pending, choice, kind){
   const a = d.gladiators.find(x=>x.id===aid), b = d.gladiators.find(x=>x.id===bid);
   if(!a || !b) return null;
+  /* which afternoon this is. It rides on the pending so a resumed bout still knows what it was
+     when the player spoke into it, and so the headless path in `endWeek` can carry it too. */
+  const K = (pending && pending.kind) || kind || "feud";
   const t = tieBetween(d, a.id, b.id);
   const others = () => d.gladiators.filter(o=>o.status==="active" && o.id!==a.id && o.id!==b.id);
   const ac = clone(a), bc = clone(b);
@@ -17353,11 +17402,12 @@ function doSpar(d, aid, bid, pending, choice){
      as a short beat list rather than a crash inside the engine. */
   if(pending) res.beats = (pending.beats || []).concat(res.beats);
   if(res.unfinished)
-    return { pending:{ aid, bid, crux:res.crux, spar:true }, beats:res.beats, crux:true, spar:true,
-      stakes:"spar", venue:null, factions:d.factions, A:face(a), B:face(b) };
+    return { pending:{ aid, bid, kind:K, crux:res.crux, spar:true }, beats:res.beats, crux:true, spar:true,
+      tourney:K==="tourney", stakes:"spar", venue:null, factions:d.factions, A:face(a), B:face(b) };
 
   [a,b].forEach(g=>{ g.fatigue = clamp(g.fatigue+20,0,100); });
   const sum = [];
+  if(K === "tourney") return tourneyEnd(d, a, b, res, sum, face);
   if(res.stopped){
     /* nothing is settled: the tie STAYS, which is the point. A yard that wanted this finished
        watched you not finish it, and the two of them still have it to do. */
@@ -19951,7 +20001,7 @@ function endWeek(d){
      bout. Nobody spoke from the rail, so it runs the way it runs when nobody does. */
   if(d.pendingSpar){
     const p = d.pendingSpar; d.pendingSpar = null;
-    const first = doSpar(d, p.aid, p.bid, null, null);
+    const first = doSpar(d, p.aid, p.bid, null, null, p.kind);
     if(first && first.crux){ first.pending.beats = first.beats; doSpar(d, p.aid, p.bid, first.pending, "run"); }
   }
   /* Last week's question is closed at the START of the week, not a hundred lines
@@ -25721,7 +25771,7 @@ export default function App(){
        engines already use — no second viewer, no new surface. */
     if(d.pendingSpar){
       const p = d.pendingSpar; d.pendingSpar = null;
-      const res = doSpar(d, p.aid, p.bid, null, null);
+      const res = doSpar(d, p.aid, p.bid, null, null, p.kind);
       if(res){
         if(res.crux){ setHeld({ base:d, res }); setFight(res); return; }
         setS(d); setFight(res); return;
@@ -25944,7 +25994,22 @@ export default function App(){
   const feast = ()=> mut(d=>{ throwFeast(d); });
   const offerTo = god => mut(d=>{ makeOffering(d, god); });
   const vowTo = god => mut(d=>{ swearVow(d, god); });
-  const doTourney = () => mut(d=>{ holdTourney(d); });
+  /* ---- AND YOU WATCH THE FINAL — #232 phase 4 ----
+     `holdTourney` seeds the bracket and hands the last two to the sand; the champion is whoever
+     comes out of the bout, so nothing can be committed until it has been fought. Same handshake as
+     `chooseEv`: no orders are spent, because a tournament takes none. */
+  const doTourney = () => {
+    const d = clone(S);
+    if(!holdTourney(d, true)) return;
+    const p = d.pendingSpar; d.pendingSpar = null;
+    const res = p ? doSpar(d, p.aid, p.bid, null, null, p.kind) : null;
+    d.rngState = rngGet();
+    if(res){
+      if(res.crux){ setHeld({ base:d, res }); setFight(res); return; }
+      setS(d); setFight(res); return;
+    }
+    setS(d);
+  };
   const walkCells = () => mut(d=>{ walkTheCells(d); });
 
   if(screen==="loading") return <div className="lr" style={{display:"flex",alignItems:"center",justifyContent:"center"}}><style>{CSS}</style><div className="disp dim">Lighting the torches...</div></div>;

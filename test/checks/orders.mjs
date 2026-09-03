@@ -60,8 +60,9 @@ const ALLOWED = [/onClick=/, /const goPick = /, /setArenaWiz\(false\)/];
 const SENDERS = ["fightOffer", "fightPit", "meleeGo", "huntOffer", "fightPair"];
 const RESUMER = "speak";
 /* ---- AND ONE THAT LAUNCHES A BOUT AND SPENDS NOTHING — #232 phase 2 ----
-   `chooseEv` became a sixth crux-brancher when the yard duel started going through the viewer: an
-   event answer can now put two of your own men on the sand. It is a launcher, but it is NOT a
+   `chooseEv` became a sixth crux-brancher when the yard duel started going through the viewer, and
+   `doTourney` a seventh when the tournament's final did: both can now put two of your own men on
+   the sand. It is a launcher, but it is NOT a
    SENDER, and the difference is the whole reason this check exists. The six orders are what a man
    is told before he goes out to a CARD — a tactic, a plan, an entrance, a stake. A spar reads none
    of them: `doSpar` passes "measured" itself and takes no plan, no bet and no entrance. So there
@@ -69,7 +70,7 @@ const RESUMER = "speak";
    had set for the card he was actually preparing, which is #194 pointing the other way.
    The exemption is only honest while the premise holds, so the premise is asserted below: if
    `doSpar` ever starts reading the week's orders, this must become a SENDER. */
-const NOSPEND = ["chooseEv"];
+const NOSPEND = ["chooseEv", "doTourney"];
 
 export async function run(){
   const lines = [], fails = [];

@@ -4386,6 +4386,71 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.184.0 — #232 phase 4: the tournament's final is fought, and the seed does not always win it
+
+The last phase of item #232, and the end of the item.
+
+**THE DEFECT.** `holdTourney` never simulated a single pairing. `score(g)` sums the weighted class
+stats, the four raw stats, `regardOf(g)` and wins, adds an `R()*24` noise term, sorts the roster and
+declares `ranked[0]` the champion — then pays him morale, pfame, fans, regard and a tie with the
+runner-up, having fought nobody at all. Over it sits "wooden swords, no editor, every man with
+something to prove to the men he eats beside": an afternoon the whole yard spends on itself,
+resolved by arithmetic. It is the third and last of the fudge points #232 named, and the only one
+left after v3.182.0 and v3.183.0.
+
+**THE FIX.** The formula still seeds the bracket — the earlier rounds stay abstracted by it, which
+is the item's own stated scope cut and not an oversight — but the last two now go into the square.
+`holdTourney` draws the bracket, says who it came down to, and hands the final to `doSpar`; the
+champion's purse is paid by `tourneyEnd` to whoever comes out of the bout. Measured over 220
+tournaments, **the formula's top seed loses the final 38.6% of the time**, which is the entire
+point: a bout that never overturns its own ranking is decoration, and the check asserts against
+that in both directions — all-seed-wins fails, all-seed-loses fails.
+
+The payout is the one `holdTourney` always paid, moved rather than rewritten, so nothing about an
+afternoon's worth changed except who receives it. What is genuinely new is that a lanista can now
+get between his own last two and end the tournament with no champion at all: the yard spends the
+day on it and goes in without an answer, unrest up rather than down, and a chronicle line that says
+whose word that was. `SPAR_CRUX` needed no new entry for that — "get between them" already meant it.
+
+Threading it took one small change to the engine's door: `doSpar` carries a `kind` on its pending,
+so a resumed bout still knows which afternoon it is and the headless path in `endWeek` carries it
+too. `doTourney` follows `chooseEv`'s handshake exactly, and joins it in the `orders` check's
+`NOSPEND` list for the same reason — a tournament, like a spar, reads none of the week's orders.
+
+Check `spar` grows to nine arms. Sabotaged three more ways — the kind dropped (the tournament pays
+the feud's aftermath and crowns nobody), the purse paid to the seed rather than the winner (the
+top seed wins all 220 finals, caught by the assertion written for exactly that), and the final never
+handed over at all. One of those first failed as a crash rather than a verdict, and the arm was
+hardened until it failed cleanly.
+
+**AND THE GATE CAUGHT A TRAP I HAD SET FOR EVERY OTHER CALLER.** Seeding the bracket and handing the
+final away left `holdTourney` a function that no longer held a tournament: it drew the last two, set
+the marker and returned, trusting somebody downstream to fight it. That is true of the one screen
+that opts in and false of everyone else, and `street` — which calls `holdTourney(d)` and reads the
+champion's renown straight afterwards — found it immediately: *"crowned Rholes and his renown went
+0→0 and his fans 0→0 — an afternoon nobody gains anything from is not a reward."* Correct, and the
+right fix is not to teach that check the new dance. `holdTourney(d)` fights its own final and
+crowns somebody, the way its name says; `holdTourney(d, true)` is the UI saying it will put the bout
+in front of the player itself. The default is the correct one, and opting into watching is the
+special case rather than the other way round. Arm 9 now holds both entries — 220 watched and 220
+plain — and the sabotage that reverts the default leaves 0 of 220 crowned and 220 finals pending.
+
+Gate: **142/142.**
+
+**#232 is closed.** Three fudge points named, three retired: the feud duel (v3.182.0), watched and
+coachable (v3.183.0), and the tournament final (here). Phase 5's hooks — gating mastery on a won
+spar, choosing a pair's lead by sparring the candidates — remain what the item always called them:
+speculative extensions, not fudge-replacements, and neither has a defect behind it.
+
+**One thing found and deliberately not done.** The primacy challenge (`EVENTS.primacy`, i===0) still
+settles the house's own title between two of your men with `power()*(0.8+R()*0.5)` — the same coin
+this engine retired three times over. It was tempting to make it four. It is not a spar: it is a
+public bout in the arena, worth `d.fame += 14` and six of show-rep, and the wooden-sword resolver
+would be the wrong instrument for it. The right one is `simulateFight`, and pointing that at two of
+your own men newly allows you to kill your own champion in a bout that has never been able to — a
+change to what the primacy challenge IS, not a fix to how it resolves. That is a design decision,
+not a defect, so it is written down here rather than made quietly.
+
 ### v3.183.0 — #232 phase 2: you watch the yard duel now, and you can speak into it
 
 The piece the item was actually pitched on. v3.182.0 built the engine and gave it a real call site,
@@ -4692,7 +4757,7 @@ arc; a political analogue of `d.nemesis`; a cooperative venatio mode; and, in th
 votes from any of the three curators, an anytime, generated-not-written Almanac extending the glossary sheet's
 own proven idiom.
 
-**#232 — The Training-Square Duel** *(new system)* — **STARTED in v3.182.0, phase 2 in v3.183.0.** `simulateSpar` (the fifth engine, structurally unable to kill: no appeal/missio block, damage capped after every multiplier, a hard floor of `SPAR_YIELD - SPAR_CAP`) and the `EVENTS.feud` rewiring shipped, with the odds measured against the branch they replace and held to 1.4 points. The beat-viewer wiring shipped in v3.183.0 with `SPAR_CRUX`'s own three orders — and confirmed the item's own predicted hazard, that the viewer's `solo` flag would hand a spar the single sand's whole menu. `holdTourney`'s final (Phase 4), the primacy challenge found beside it, and Phase 5's hooks are still queued.
+**#232 — The Training-Square Duel** *(new system)* — **SHIPPED, v3.182.0 + v3.183.0 + v3.184.0.** `simulateSpar` (the fifth engine, structurally unable to kill: no appeal/missio block, damage capped after every multiplier, a hard floor of `SPAR_YIELD - SPAR_CAP`) and the `EVENTS.feud` rewiring shipped, with the odds measured against the branch they replace and held to 1.4 points. The beat-viewer wiring shipped in v3.183.0 with `SPAR_CRUX`'s own three orders — and confirmed the item's own predicted hazard, that the viewer's `solo` flag would hand a spar the single sand's whole menu. `holdTourney`'s final shipped in v3.184.0 — the seed loses it 38.6% of the time — closing the item. Phase 5's hooks were never fudge-replacements and stay unbuilt; the primacy challenge found beside Phase 4 is written up in that release note as a design decision rather than a defect, because fixing it properly means letting you kill your own champion.
 The only round-by-round fight resolver in the game (simulateFight, plus doFight's pause/resume) has never been pointed at a fight inside the walls: EVENTS.feud's i===0 branch settles a named duel between two of your own men with one power() call per side scaled by an independent 0.8–1.3 roll and a flat 16% injury check, and holdTourney (line 1452) ranks the whole eligible roster by a score() formula and crowns a yard-tournament winner having fought zero rounds. A trimmed sibling resolver — simulateSpar, built the way simulatePair was explicitly built "apart from simulateFight on purpose" (line 17077) — gives the two scenes the game's own prose already stages as a stopped-yard spectacle an actual animated bout, with no missio-to-death path.
 
 Two moments in the game already narrate the whole familia stopping to watch two of your own men fight, and neither one calls the fight engine. EVENTS.feud (the "In The Yard" pendingEvent set up by feudWeek, line 1297) has a run(d,ev,i) with four branches; the i===0 branch, reached when the player picks "put them on the sand" (line 18403–18419), resolves it as: `pa = power(...,"measured",...)`, `pb = power(...,"measured",...)`, `aWins = pa*(0.8+R()*0.5) > pb*(0.8+R()*0.5)`, then a flat `R()<0.16` roll against `INJURIES[ri(0,2)]` for the loser. No rounds, no beats, no crux, no appeal — the text says "with wooden swords and the doctore counting," and none of that is simulated. holdTourney (line 1452) is worse in one respect: it never even simulates a single pairing. `score(g)` sums weighted class stats, raw STR/AGI/TEC/DIS, regardOf(g), wins, and an R()*24 noise term; the roster is sorted by that score and `ranked[0]` is simply declared the winner. The flavor text ("wooden swords, no editor, every man with something to prove") describes a tournament that is entirely arithmetic. Meanwhile simulateFight (line 9730) and doFight (line 17612) are the most developed system in the codebase — a 12-round beat loop, a crux stop/resume contract (`res.unfinished` → `{pending:{...crux:res.crux}, beats, crux:true}`), missio odds, appeal, marks/tells — and it is reserved entirely for bouts against outside houses. The two places the design already treats an internal fight as a named event get the least mechanical attention of anything in the file.
