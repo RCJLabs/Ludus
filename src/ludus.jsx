@@ -9514,6 +9514,52 @@ const saluteWorth = (A, ctx, crowd, account, endured) => {
   const bare = missioOdds(missioScore(A, Object.assign({}, ctx, { day:0 }), crowd, account, endured, true));
   return full - bare;
 };
+/* ---- AND WHAT THE GODDESS WAS WORTH, ON THE SAME ARITHMETIC — audit item #219 ----
+   Fortuna's boon reads "when the finger goes up, it goes up for him", and it is real: `blessMercy`
+   puts 9 into `ctx.fav`, which is inside the editor's box. Measured over 48 asks across four fame
+   bands, four accounts and three crowds she is worth **+2.0 points of spare odds on average and up
+   to +12.4**, and until now a bout she decided read exactly like one she did not — 0 of 2,582 bout
+   beats and 0 of 606 chronicle lines written under a blessing named a god. Same counterfactual as
+   the salute: the same pair of functions, twice, with her share in and out. */
+const blessWorth = (A, ctx, crowd, account, endured) => {
+  if(!ctx || !(ctx.bless > 0)) return 0;
+  const full = missioOdds(missioScore(A, ctx, crowd, account, endured, true));
+  const bare = missioOdds(missioScore(A, Object.assign({}, ctx, { fav:(ctx.fav||0) - ctx.bless }),
+    crowd, account, endured, true));
+  return full - bare;
+};
+/* ---- THE TWO SIGNATURES THE APPEAL LEAVES, OUT OF THE STATE MACHINE ----
+   `simulateFight` is the file's largest function and `bulk`'s rule is split before raising, so the
+   lines the boxes and the goddess leave are built here and pushed there. Both are priced by
+   differencing the engine's own pair of functions — never a second formula (#150) — and both speak
+   whether the man lived or not, because a blessed loss reading like an ordinary one is the same
+   fault as a blessed win (#209, #219). */
+const askSigns = (A, ctx, crowd, account, endured, prA) => {
+  const salute = Math.round(saluteWorth(A, ctx, crowd, account, endured) * 100);
+  const wheel  = Math.round(blessWorth(A, ctx, crowd, account, endured) * 100);
+  return spared => {
+    const out = [];
+    if(salute >= 1) out.push(["boxes", spared
+      ? `${prA.He} gave the boxes their due on the way in, and the boxes remembered: ${salute} of those hundred were the salute.`
+      : `${prA.He} had given the boxes their due on the way in. It was worth ${salute} in the hundred, and it was not enough.`,
+      { actor:"A" }]);
+    if(wheel >= 1) out.push(["wheel", spared
+      ? `And the wheel was already turning his way. ${wheel} of those hundred were Fortuna's, bought at her altar and paid out here.`
+      : `Fortuna had her hand on it — ${wheel} in the hundred of it — and the wheel turned the other way regardless. She turns it for nobody twice.`,
+      { actor:"A", wheel }]);
+    return out;
+  };
+};
+/* and what the gods put into a whole bout, banked on the blessing so the temple can show a
+   receipt. Victoria's share is the purse minus the purse without her multiplier — the same
+   multiplier the purse was already paid at. */
+const blessBout = (d, res, purse) => {
+  for(const b of ((res && res.beats) || [])) if(b.kind === "wheel") blessAdd(d, "fortuna", b.wheel || 0);
+  const m = blessPurse(d), hers = (purse > 0 && m > 1) ? purse - rnd(purse / m) : 0;
+  if(hers >= 1){ blessAdd(d, "victoria", hers);
+    return `Victoria had her eye on it: ${hers} of those denarii were hers.`; }
+  return null;
+};
 const missioOdds = sc => clamp(1/(1 + Math.exp(-(sc - MISSIO_MID)/MISSIO_SLOPE)), 0.03, 0.97);
 const missioWord = p => p>=0.86 ? "he would be spared" : p>=0.66 ? "he would most likely be spared"
   : p>=0.42 ? "it would be close" : p>=0.20 ? "the thumb would probably turn" : "the thumb would turn";
@@ -10060,7 +10106,7 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
       const stand = standOf();
       const odds = spareRaw();   /* #230 — the number the box has been showing, not a copy of it */
       /* what he bought on the way in, priced off the same call — see `saluteWorth` */
-      const salute = Math.round(saluteWorth(A, ctx, crowd, missioAccount(vB), round*3.2 + stand) * 100);
+      const signs = askSigns(A, ctx, crowd, missioAccount(vB), round*3.2 + stand, prA);
       push("appeal", `${A.name} raises two fingers — the appeal. ${round} round${round===1?"":"s"}, and the arena holds its breath — ${missioWord(odds)}.`,
         {actor:"A", odds:Math.round(odds*100)});
       if(R() < odds){
@@ -10073,9 +10119,9 @@ function simulateFight(A, B, tA, stakes, ctx, opts){
           : street >= ACCLAIM_MISSIO*0.7
           ? `The top tiers are on their feet and will not sit down, and they are not asking. MISSIO — ${prA.he} is spared, because the city that plays at being your house did not intend to watch him die.`
           : `MISSIO. The editor's hand opens. ${prA.He} is spared — carried bleeding from the sand.`, {actor:"A"});
-        if(salute >= 1) push("boxes", `${prA.He} gave the boxes their due on the way in, and the boxes remembered: ${salute} of those hundred were the salute.`, {actor:"A"}); }
+        for(const x of signs(true)) push(x[0], x[1], x[2]); }
       else { aDies=true; push("death", `The thumb turns. The blow falls true. ${A.name} dies as gladiators die — on the sand, before the crowd.`, {actor:"A"});
-        if(salute >= 1) push("boxes", `${prA.He} had given the boxes their due on the way in. It was worth ${salute} in the hundred, and it was not enough.`, {actor:"A"}); }
+        for(const x of signs(false)) push(x[0], x[1], x[2]); }
     } else {
       push("appeal", `${B.name} raises two fingers in appeal...`, {actor:"B"});
       if(crowd>62 && R()<0.55){ bDies=true; push("death", `The crowd howls for blood, and the editor grants it. ${A.name} sends ${prB.him} across the river.`, {actor:"B"}); }
@@ -10481,25 +10527,46 @@ const GODS = {
   mars:     { name:"Mars", of:"the soldier's god", weeks:5, cost:d=>rnd(180 + pietyFame(d)*0.6),
     gift:"nerve in the cold weeks",
     boon:"Your men fight with a soldier's steadiness — heart in the cold weeks, and no flinching at the post.",
+    tally:n => n >= 12 ? `${rnd(n)} points of heart put back into the yard` : null,
     ask:"To Mars, that the house keep its nerve." },
   fortuna:  { name:"Fortuna", of:"who turns the wheel", weeks:4, cost:d=>rnd(220 + pietyFame(d)*0.8),
     gift:"the finger goes up for him",
     boon:"The wheel turns your man's way in the box. When the finger goes up, it goes up for him.",
+    tally:n => n >= 1 ? `${rnd(n)} points of spare odds handed to men on the ground` : null,
     ask:"To Fortuna, that the wheel run kind." },
   aesculapius:{ name:"Aesculapius", of:"the healer", weeks:6, cost:d=>rnd(160 + pietyFame(d)*0.5),
     gift:"wounds close faster",
     boon:"Wounds close faster than they have any right to. The medicus takes the credit; you know better.",
+    tally:n => n >= 1 ? `${rnd(n)} week${rnd(n)===1?"":"s"} taken off the mending` : null,
     ask:"To Aesculapius, that the hurt mend clean." },
   victoria: { name:"Victoria", of:"victory herself", weeks:4, cost:d=>rnd(260 + pietyFame(d)*0.9),
     gift:"a fatter purse, a louder name",
     boon:"A win under her eye is a richer, louder thing — the purse fatter, the name carried further.",
+    tally:n => n >= 1 ? `${rnd(n)} denarii added to the purses` : null,
     ask:"To Victoria, that the wins be great ones." },
   jupiter:  { name:"Jupiter", of:"Best and Greatest", weeks:5, cost:d=>rnd(300 + pietyFame(d)*1.0),
     gift:"patrons warm, crowds kind",
     boon:"The house stands in the light of the greatest god, and Capua's better sort feel it — patrons warm, crowds kind.",
+    tally:n => n >= 1 ? `${(Math.round(n*10)/10)} of the patrons' warmth` : null,
     ask:"To Jupiter, that the house be seen to be favoured." },
 };
 const GOD_KEYS = Object.keys(GODS);
+/* ---- WHAT THE BLESSING HAS ACTUALLY DONE, KEPT ON THE BLESSING — audit item #219 ----
+   The item: "the gods' effects are real but arrive unsigned — a blessed win reads exactly like an
+   ordinary one." Measured, and it was not close: **0 of 2,582 bout beats and 0 of 606 chronicle
+   lines** written while a blessing rode named one of the five gods. The offering line at the altar
+   was the only place any of them was ever mentioned, and that is the receipt, not the goods.
+   Three of the five now sign the moment they change — Fortuna at the appeal, Aesculapius at the
+   table, Victoria on the purse — and all five keep a running count of what they have done, which
+   the temple panel prints under the boon. Mars and Jupiter move standing numbers a little every
+   week and have no moment to sign, so the count is the whole of their signature and it says so. */
+const blessAdd = (d, god, n) => {
+  if(!(n > 0) || blessOf(d) !== god) return;
+  d.blessing.did = (d.blessing.did || 0) + n;
+};
+const blessDid  = d => (blessOf(d) && d.blessing.did > 0) ? d.blessing.did : 0;
+const blessTold = d => { const g = blessOf(d);
+  return g && GODS[g].tally ? GODS[g].tally(blessDid(d)) : null; };
 const blessOf   = d => (d.blessing && d.week < d.blessing.until) ? d.blessing.god : null;
 const blessLeft = d => (d.blessing && d.week < d.blessing.until) ? d.blessing.until - d.week : 0;
 const blessMercy = d => blessOf(d)==="fortuna" ? 9 : 0;      // rides into simCtx.fav
@@ -10591,8 +10658,12 @@ function templeWeek(d){
   /* piety drifts back to the middling reverence of an ordinary house */
   d.piety = clamp(d.piety + (30 - d.piety)*0.03, 0, 100);
   const bg = blessOf(d);
-  if(bg==="mars") d.gladiators.forEach(g=>{ if(g.status==="active"){ g.morale=clamp(g.morale+3,0,100); g.defiance=clamp(g.defiance-1,0,100); } });
-  if(bg==="jupiter"){ patronsOf(d).forEach(p=>{ p.favor=clamp(p.favor+0.5,0,100); }); recomputeFavor(d); }
+  if(bg==="mars") d.gladiators.forEach(g=>{ if(g.status==="active"){
+    const was = g.morale;
+    g.morale=clamp(g.morale+3,0,100); g.defiance=clamp(g.defiance-1,0,100);
+    blessAdd(d, "mars", g.morale - was); } });     /* what he actually put in, not what he offered */
+  if(bg==="jupiter"){ patronsOf(d).forEach(p=>{ const was = p.favor;
+    p.favor=clamp(p.favor+0.5,0,100); blessAdd(d, "jupiter", p.favor - was); }); recomputeFavor(d); }
   const pi = pietyOf(d);
   if(pi>=65){ patronsOf(d).forEach(p=>{ p.favor=clamp(p.favor+0.25,0,100); }); recomputeFavor(d); }
   else if(pi<=20){ d.unrest = clamp(d.unrest+0.5,0,100); }
@@ -11517,6 +11588,9 @@ function missioPlace(d, city){
     aedile:   away ? cityMissio(d, city) : aedileMissio(d),
     strange:  away ? Math.max(0, 19 - knownIn(d, city)*0.19) * docStrange(d) : 0,
     fav:      (away ? 0 : riseFav(d)) + blessMercy(d) + pit(d, "mercy", 0),
+    /* her share of that sum, carried separately so `blessWorth` can take it back out — the same
+       trick `day` plays for the salute, and for the same reason (#219/#209) */
+    bless:    blessMercy(d),
   };
 }
 /* ONE STATED AFTERNOON, so the two numbers are comparable and neither is an average of nothing:
@@ -17737,6 +17811,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
       nemesisCheck(d, { name:f.house, grudge:0, fighters:d.circuit }, f); }
     if(f && win && d.nemesis && d.nemesis.fid===f.id) nemesisSettled(d, !!res.bDies).forEach(l=>sum.push(l));
   }
+  { const l = blessBout(d, res, purse); if(l) sum.push(l); }   /* #219 — see `blessBout` */
   const betLines = settleBet(d, g, offer, bet, win, res);
   betLines.forEach(l=>sum.push(l));
   serveWants(d, { type:"fight", gid, win, oppDied:!!res.bDies, spared:!!res.spared,
@@ -18980,11 +19055,19 @@ function menWeek(d, fest){
       const rate = (g.injury.care==="surgeon" ? healSpeed(d,g)*1.6 : g.injury.care==="convalesce" ? healSpeed(d,g)*0.72 : healSpeed(d,g))
         * (hasT(g,"Iron Hide") ? 1.45 : 1);
       g.injury.weeks -= rate * seasonHeal(d);
+      /* the healer's share of that, on the same rate rather than a second formula — #219/#150.
+         Kept on the wound as well as on the blessing, so the table can name him for THIS man. */
+      { const bh = blessHeal(d);
+        if(bh > 1){ const his = (rate - rate/bh) * seasonHeal(d);
+          g.injury.godHelp = (g.injury.godHelp||0) + his; blessAdd(d, "aesculapius", his); } }
       if(g.injury.care==="convalesce") g.morale = clamp(g.morale+3, 0, 100);   // rest of the spirit as well as the body
       g.fatigue=clamp(g.fatigue-22,0,100);
       if(g.injury.weeks<=0){
         const part = g.injury.part, care = g.injury.care, sev = (g.injury.pen>=8);
+        const godWeeks = rnd(g.injury.godHelp || 0);
         g.injury=null; g.status="active";
+        if(godWeeks >= 1) chron(d, `${g.name} is up off the table ${godWeeks} week${godWeeks===1?"":"s"} `
+          + `before he had any business being. Aesculapius at the bedside; the medicus may keep the credit.`, "good");
         const careGuard = care==="surgeon" ? 0.6 : care==="convalesce" ? 0.4 : 1;
         const guard = scarGuard(d) * careGuard * (hasT(g,"Iron Hide") ? 0.55 : 1);
         if(part && R() < (sev ? 0.75 : 0.45) * guard){
@@ -22257,6 +22340,12 @@ const SECT = {
                        <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{blessLeft(S)}w left</span>
                      </div>
                      <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:3}}>{GODS[bg].boon}</div>
+                     {/* what it has done so far, so a blessing is a thing with a receipt rather
+                         than a mood — #219. Mars and Jupiter have no moment to sign, so this is
+                         the whole of their signature. */}
+                     {blessTold(S) && <div style={{fontSize:"var(--fs-base)",marginTop:4,color:"var(--gold-hi)"}}>
+                       So far: {blessTold(S)}.
+                     </div>}
                    </div>
                  )}
                  {illLuck(S) && !bg && <div className="blood" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:8}}>
@@ -30737,6 +30826,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     PIETY_TOP, pietyFame, vowStake, healSpeed, vowReturn, vowRisked, buried20,
     VOW_BOUTS_FULL, VOW_EARNT_AT,
     blessMercy, blessHeal, blessPurse, blessFame,
+    /* #219 — what a blessing is worth at the appeal, and the receipt it keeps */
+    blessWorth, blessAdd, blessDid, blessTold,
     seekMatchNow, openLicenceNow, takeUpTheHouse, endTheLine, claimRise, succeed,
     /* the nineteen things a house is remembered for, and the gates on each of them */
     FEATS, FEAT_KEYS, hasFeat, featWeek, featNear, recordCloth,
