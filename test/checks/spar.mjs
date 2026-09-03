@@ -13,7 +13,7 @@
    constants put a hard floor under every man who walks into the square — `SPAR_YIELD - SPAR_CAP`,
    and nothing in the function can go below it.
 
-   EIGHT ARMS:
+   NINE ARMS:
    1 · IT CANNOT KILL: across 1,200 spars at the most reckless tactic there is, no death/fall/appeal
        beat is ever emitted, no man is left below the arithmetic floor, and the result carries no
        `dead` field for anyone to read.
@@ -33,6 +33,15 @@
        inherits the single sand's entire menu by default — `cloth` (an appeal, to an editor who is
        not there, in a fight nobody can die in), `finish`, `legs`, `breather`. The item's own
        verify-first predicted this exact hazard. Held here against the rule, not the JSX.
+   9 · THE TOURNAMENT'S FINAL IS FOUGHT: `holdTourney` ranked the roster by a `score()` formula with
+       an `R()*24` noise term and declared `ranked[0]` champion having fought nobody at all. The
+       formula seeds the bracket now and the last two go into the square, so the purse is paid to
+       whoever comes out of the bout — and the seed does not always. If it always did, the bout
+       would be decorating a ranking it never overturns, which is the thing #232 set out to fix, so
+       that is asserted in both directions. Held BOTH ways in, too: the screen opts into watching
+       the final, and every other caller gets a tournament that has actually been held — `street`
+       calls `holdTourney(d)` and reads the champion's renown straight afterwards, and caught this
+       when the seeding half shipped on its own.
    8 · AND IT HAPPENS WITH NOBODY WATCHING: the rope answers events by calling `EVENTS[id].run`
        and clearing `pendingEvent` itself — it has never heard of a viewer. Handing the duel to one
        therefore meant that in every headless path (every probe, half the checks) the fight simply
@@ -258,7 +267,55 @@ export async function run({ p, errors }){
       if(settled !== n) bad.push(`${n-settled} of ${n} headless duels never settled the grudge — without a viewer the fight simply did not happen`);
       if(moraleMoved !== n) bad.push(`${n-moraleMoved} of ${n} headless duels wrote no duel line to the chronicle — doSpar never ran for them`); }
 
-    return { bad, arm12, arm3, arm4, arm5, arm6, arm7, arm8 };
+    /* ---- 9. the tournament's final is fought, both ways in, and the seed does not always win ---- */
+    let arm9 = null;
+    { let n = 0, seeded = 0, upsets = 0, paid = 0, dangling = 0, championFought = 0;
+      let plainN = 0, plainPaid = 0, plainDangling = 0;
+      const house = seed => { const dd = A.newGameState("Tour", "clean", seed, null);
+        for(let k=0;k<5;k++){ const g = A.genGladiator(dd, 45+k*12); g.id = dd.nextId++;
+          g.status="active"; g.mine=true; g.kit=A.defaultKit(g.cls); g.morale=50; g.fans=0; dd.gladiators.push(g); }
+        dd.flags = dd.flags || {}; dd.flags.tourneyWk = -99; return dd; };
+
+      for(let i=0;i<220;i++){
+        /* (a) the way the screen takes it: seeded, handed over, watched, then resumed */
+        const dd = house(`TOUR-${i}`);
+        const r = A.holdTourney(dd, true);
+        if(!r) continue;
+        n++;
+        if(r.seeded && dd.pendingSpar && dd.pendingSpar.kind==="tourney") seeded++;
+        const p = dd.pendingSpar; dd.pendingSpar = null;
+        if(!p) continue;   /* nothing handed over — the seeded assertion below is the verdict */
+        if(dd.gladiators.some(g=>g.fans > 0)) bad.push(`the tournament paid its champion before the final was fought`);
+        let res = A.doSpar(dd, p.aid, p.bid, null, null, p.kind);
+        if(res && res.crux){ res.pending.beats = res.beats; res = A.doSpar(dd, p.aid, p.bid, res.pending, "run"); }
+        if(dd.pendingSpar) dangling++;
+        const champ = dd.gladiators.find(g=>g.fans > 0);
+        if(champ){ paid++;
+          if(champ.id===p.aid || champ.id===p.bid) championFought++;
+          if(champ.id !== p.aid) upsets++;   /* the formula's top seed lost the final */
+        }
+
+        /* (b) and the way EVERY other caller takes it: hold it, and it is held. `street` calls it
+           exactly like this, and a holdTourney that leaves the last bout unfought fails them all. */
+        const ee = house(`TOURP-${i}`);
+        const r2 = A.holdTourney(ee);
+        if(r2){ plainN++;
+          if(ee.pendingSpar) plainDangling++;
+          if(ee.gladiators.some(g=>(g.fans||0) > 0)) plainPaid++;
+        }
+      }
+      arm9 = { n, seeded, paid, championFought, upsets, dangling, plainN, plainPaid, plainDangling,
+        upsetPct:+(upsets/Math.max(1,paid)*100).toFixed(1) };
+      if(seeded !== n) bad.push(`${n-seeded} of ${n} watched tournaments failed to hand their final to the sand`);
+      if(dangling) bad.push(`${dangling} tournaments left d.pendingSpar behind`);
+      if(paid !== n) bad.push(`${n-paid} of ${n} watched tournaments crowned nobody — the final was fought and the purse went unpaid`);
+      if(championFought !== paid) bad.push(`${paid-championFought} tournaments paid a champion who was not in the final`);
+      if(upsets === 0) bad.push(`the formula's top seed won all ${paid} finals — the bout is decorating a ranking it never overturns, which is what #232 set out to fix`);
+      if(upsets === paid) bad.push(`the top seed lost all ${paid} finals — the seeding is inverted`);
+      if(plainPaid !== plainN) bad.push(`${plainN-plainPaid} of ${plainN} plain holdTourney(d) calls crowned nobody — a tournament nobody opted to WATCH must still be HELD`);
+      if(plainDangling) bad.push(`${plainDangling} plain holdTourney(d) calls left the final pending on the save for somebody else to fight`); }
+
+    return { bad, arm12, arm3, arm4, arm5, arm6, arm7, arm8, arm9 };
   });
 
   bad.push(...r.bad);
@@ -280,6 +337,10 @@ export async function run({ p, errors }){
 
   lines.push(`arm 8 — ${r.arm8.n} duels answered headlessly (the rope's path, no viewer): `
     + `${r.arm8.dangling} left a dangling marker · grudge settled ${r.arm8.settled}/${r.arm8.n} · the duel's own line written ${r.arm8.moraleMoved}/${r.arm8.n}`);
+
+  lines.push(`arm 9 — ${r.arm9.n} watched tournaments: handed to the sand ${r.arm9.seeded} · champion paid ${r.arm9.paid} `
+    + `(all in the final: ${r.arm9.championFought===r.arm9.paid}) · the top seed lost it ${r.arm9.upsets} times (${r.arm9.upsetPct}%) `
+    + `· and ${r.arm9.plainPaid}/${r.arm9.plainN} plain holdTourney(d) calls crowned somebody with ${r.arm9.plainDangling} left pending`);
 
   return { pass: bad.length === 0 && !errors.length, why: bad.slice(0, 3).join("; ") || null, lines };
 }
