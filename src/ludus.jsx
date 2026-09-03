@@ -7956,6 +7956,7 @@ function succeed(d){
   if(!H) return false;
   const old = d.lanista;
   const nm = d.heir.name;
+  const heirCid = d.heir.cid || null;   /* so a passed-over sibling can be told apart from the one who took the house, below */
   /* a handover from a living man is not a handover from a dead one, and the two say different
      things — see the note on the retirement branch of `lanistaWeek` */
   const retire = !!(d.succession && d.succession.retire);
@@ -7991,15 +7992,23 @@ function succeed(d){
      the annals can still show it, and the new man starts his own. */
   const fam = d.domus && (d.domus.wife || (d.domus.children||[]).length)
     ? { wife:d.domus.wife, children:(d.domus.children||[]).slice() } : null;
+  /* ---- THE BOY BEHIND THE GATE, phase 4 ----
+     The one who took the house is already shown as the new lanista everywhere else, so he is left
+     out of his own passed-over list; everyone else who was `old`'s blood and did not get it is
+     named here — in the chronicle if there is anyone to name, and on the forebear record either
+     way. This used to be `children: fam.children.length`: a son or daughter had a name right up
+     until the week their father died, and then they were a number nobody could read back. */
+  const passedOver = fam ? fam.children.filter(c=>c.id!==heirCid).map(c=>c.name) : [];
   if(fam){
     d.domus = { wife:null, children:[], nextKin:1 };
     chron(d, fam.wife
       ? `${fam.wife.name} keeps her rooms and her authority and is nobody's wife now. The household knows the difference before ${nm} does.`
       : `The old master's people keep their rooms. The house is ${nm}'s and the family in it is not.`, "info");
+    if(passedOver.length) chron(d, `${passedOver.join(", ")} did not get the house. That was never the whole of what ${old.name} leaves behind — the ledger keeps the rest of his blood too, named, not counted.`, "info");
   }
   d.forebears = [...(d.forebears||[]), { name:old.name, age:old.age, traits:old.traits.slice(),
     from:old.since||1, to:d.week, gen:d.generation-1, retired:retire,
-    wife: fam && fam.wife ? fam.wife.name : null, children: fam ? fam.children.length : 0 }];
+    wife: fam && fam.wife ? fam.wife.name : null, children: passedOver }];
   chron(d, `${H.took(nm)} ${retire
     ? `${old.name} keeps his rooms and the ledger, and comes down to the square when the mood takes him, which is less often than he tells himself.`
     : `${old.name} is carried out of a gate he came in through forty years ago, and the week's training goes ahead because it was always going to.`}`, "event");
@@ -8112,9 +8121,18 @@ function resolveRaise(d, ev, i){
 }
 
 function togaEvent(d, c){
+  /* #237, phase 4 — a boy can now be named "son" heir by his real identity years before
+     sixteen, and this trigger doesn't know that: it fired the same "name him" text and choices
+     whether or not the house already had. Fixed by asking first. */
+  const already = d.heir && d.heir.kind==="son" && d.heir.cid===c.id;
   return { id:"toga", title:"The Toga Virilis",
-    text:`${c.name} puts off the boy's clothes and puts on a man's. He is of age now, and he is yours — raised in this house, under your eye, for this. Name him your heir and the succession is not a scramble after you are gone. It is a handover.`,
-    choices:[`Name ${c.name} your heir and successor`, "Not yet — let him prove himself first"], data:{ cid:c.id } };
+    text: already
+      ? `${c.name} puts off the boy's clothes and puts on a man's. You named him yours years ago, when a name on a scrap of paper was the most you could give him — now he can stand in the forum and be seen wearing it. Confirm him before witnesses and nothing is left for anyone to contest.`
+      : `${c.name} puts off the boy's clothes and puts on a man's. He is of age now, and he is yours — raised in this house, under your eye, for this. Name him your heir and the succession is not a scramble after you are gone. It is a handover.`,
+    choices: already
+      ? [`Confirm ${c.name} as heir before witnesses`, "Let the day pass — he stays your heir as he is"]
+      : [`Name ${c.name} your heir and successor`, "Not yet — let him prove himself first"],
+    data:{ cid:c.id } };
 }
 function heirTraitsFromUp(up){
   up = up || {}; const p=up.palus||0, r=up.rhetor||0, b=up.box||0;
@@ -8124,7 +8142,10 @@ function heirTraitsFromUp(up){
 }
 function resolveToga(d, ev, i){
   const c = domusOf(d).children.find(x=>x.id===ev.data.cid); if(!c) return "The moment passes.";
-  if(i!==0){ c.togaTil = d.week + ri(8,14); return `${c.name} is a man now, but not yet named. There is time — you hope.`; }
+  const already = d.heir && d.heir.kind==="son" && d.heir.cid===c.id;
+  if(i!==0){ c.togaTil = d.week + ri(8,14);
+    return already ? `${c.name} is a man now, and stays your heir exactly as he was named. The toga can wait for a day that suits you both better.`
+      : `${c.name} is a man now, but not yet named. There is time — you hope.`; }
   c.grown = true;
   const up = c.up || {}, p=up.palus||0, r=up.rhetor||0, b=up.box||0;
   const mentor = c.mentorId ? d.gladiators.find(g=>g.id===c.mentorId && g.status==="active") : null;
@@ -8133,7 +8154,9 @@ function resolveToga(d, ev, i){
     mentorId: mentor ? mentor.id : null, mentorName: (mentor&&mentor.name) || c.mentorName || null };
   if(mentor){ mentor.morale = clamp(mentor.morale+8, 0, 100); mentor.regard = clamp(regardOf(mentor)+6, 0, 100);
     return `${c.name} takes the toga a man grown — and the whole yard turns to ${mentor.name}, who taught him to hold a sword before he could hold a cup. The boy he raised is the heir now. Name him, and the house passes not to a stranger but to one of your own, with your best man's hand already on him.`; }
-  return `${c.name} is your named heir — a son you raised for this. When the day comes, the house will not skip a beat.`;
+  return already
+    ? `${c.name} is confirmed heir before witnesses — a title he has carried quietly for years, made public now. When the day comes, the house will not skip a beat.`
+    : `${c.name} is your named heir — a son you raised for this. When the day comes, the house will not skip a beat.`;
 }
 
 function daughterEvent(d, c){
@@ -25973,6 +25996,12 @@ export default function App(){
 
     lanista: { title:"THE LANISTA", body:()=>{ const L = S.lanista; if(!L) return null;
       const got = LAN_KEYS.filter(k=>hasLT(S,k));
+      /* forebears written before #237 phase 4 hold `children` as a bare count; ones written after
+         hold the passed-over children's actual names. Both read fine — the sheet just has to know
+         which it has, the same way it already does for `retired`, above. */
+      const kidsText = f => Array.isArray(f.children)
+        ? (f.children.length ? ` · ${f.children.join(", ")} of his blood` : "")
+        : (f.children ? ` · ${f.children} child${f.children===1?"":"ren"} of his blood` : "");
       return (<>
         <div className="disp" style={{fontSize:"var(--fs-xl)",fontWeight:700,color:"var(--ink-hi)"}}>{L.name}</div>
         <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:9}}>
@@ -26083,8 +26112,8 @@ export default function App(){
               </div>
               {f.traits.length>0 && <div className="dim" style={{fontSize:"var(--fs-base)"}}>{f.traits.map(t=>LAN_TRAITS[t].name).join(", ")}</div>}
               {/* the family goes with the man now, so it is here or it is nowhere */}
-              {(f.wife || f.children) && <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>
-                {f.wife ? `${f.wife} was his wife` : "no wife"}{f.children ? ` · ${f.children} child${f.children===1?"":"ren"} of his blood` : ""}</div>}
+              {(f.wife || (Array.isArray(f.children) ? f.children.length : f.children)) && <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>
+                {f.wife ? `${f.wife} was his wife` : "no wife"}{kidsText(f)}</div>}
             </div>
           ))}
         </>)}
@@ -30907,6 +30936,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     regardRefuse,
     /* the line of the house: who may be named, naming him, and taking it up */
     nameHeir, heirEligible, eligibleSons, HEIRS, houseRecord, censusWorth,   /* #154 */
+    togaEvent,   /* #237 phase 4/5 — so a check can drive the toga trigger against an already-named son */
     /* the summit: the gate, the letter, the bar, and the trip's own clock */
     romeReady, romeProved, offerRome, romeBar, ROME_BOUTS, ROME_WEEKS_PER_BOUT, ROME_RANK,
     /* the one ladder the gate, the sheet and the week's list all read — #218 */

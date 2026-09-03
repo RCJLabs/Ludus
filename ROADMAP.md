@@ -4386,6 +4386,74 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.181.0 — #237, finished: a passed-over son is still a son, and a named one stays named
+
+Phases 4 and 5 of item #237, closing out the phase queue's first build entirely.
+
+**THE GAP.** Two, found scoping the same code. First: `succeed()` folded the outgoing lanista's
+whole family onto the forebear record for the annals, and wrote `children: fam.children.length` — a
+bare count. Every child but the one who took the house had a name right up until the week their
+father died or stepped back, and then they were a number nobody could read back — the same "field on
+a save, never a person" problem #226 named for the heir himself, still true of his siblings. Second,
+found while scoping the first: `familyWeek`'s toga trigger — `age>=16 && !c.grown` — has no idea a
+son can now be named heir by real identity years before sixteen (v3.180.0), because manual naming
+never sets `c.grown`. Before that fix this was moot — `"son"` always drew a fabricated stranger, so
+no real child's `c.grown` flag was ever at stake. Now it is a live boy, and the toga fired the
+identical "Name him your heir and successor" text whether or not the house had already named him
+three years earlier — fresh-news phrasing for a decision already made — and declining it read as
+"not yet named" for a boy who plainly was.
+
+**THE FIX.** `succeed()`'s forebear record now carries `children` as the passed-over children's
+actual names — sons and daughters both, the one who took the house excluded since he's already shown
+as the new lanista everywhere else — and fires a chronicle line naming them at the moment of
+succession, so the loss is said once where a player actually reads the stream, not just buried in a
+sheet nobody has to open. `togaEvent`/`resolveToga` now check first whether the boy in front of them
+is already `d.heir`: an already-named son gets a confirmation ("Confirm him before witnesses") on
+offer, and — on both answers — text that doesn't call him unnamed. Accepting still upgrades him from
+`"son"` to the fuller `"scion"` terms exactly as before (an informal early pick staying mechanically
+rougher than a patient toga-at-16 was always the point, not a bug); declining now leaves the existing
+`"son"` naming completely untouched — not reverted, not silently re-opened — rather than implying it
+needs to happen again.
+
+The originally-scoped "low-probability grudge hook" for a passed-over son is deliberately left out of
+this release: nothing in the game reads such a hook today, and shipping a write-only flag would be
+exactly the dead-state fault this project's own checks spend their time hunting down (`g.flags`, the
+original `nameHeir` bug itself — a field with no reader is not a feature, it's the next bug report).
+The age-aware `HEIRS.son.line`/`.took` text variants aren't a separate pass either: the chooser row
+already prints the boy's age next to his line, and the one place the "named early vs. clean toga at
+sixteen" distinction actually plays out is the toga moment itself — which is what got fixed.
+
+New check `blood` (140 → 141), three arms: a passed-over son and daughter both named in the forebear
+record and the chronicle, with the heir himself excluded from his own passed-over list; an only son
+who takes the house leaving an empty list and firing no false line; and the toga trigger reading
+differently for an already-named son on both the offer and both answers, with `c.grown` left alone on
+decline so the event can still ask again. Sabotaged six ways, each verified by reading the verdict.
+
+Gate: **141/141** on the second full run; the first went 140/141, and the miss was chased down
+rather than waved through before that second run was asked to settle it. `survive` draws 5 fresh
+houses through 26 weeks twice when the first draw trips a bar, and both draws tripped one on the
+first run (1 standing/1 man, then 0/0) — its own text called that "the build, not the draw" at
+roughly a 1.3% coincidence and pointed at `test/probes/open.mjs`. That probe runs 60 houses on
+fixed seeds against a fixed policy specifically so two builds can be compared exactly rather than
+argued about: run against this diff and against the commit before it, the two 60-house signatures
+came back byte-identical — same week, men, gold and ending house for every one of the sixty, the
+same proof the file already trusts for v3.33.0's (0,4) (comment at `test/probes/open.mjs:1`). Diff
+touches `succeed()`, `togaEvent`/`resolveToga` and one House-sheet panel; none of it sits anywhere
+near gladiator generation, week resolution or the fight engine `survive`/`open` exercise, so an
+untouched signature is exactly what should happen, not a surprise. A fresh solo re-run of `survive`
+then passed clean on one draw (2 standing, 2 men — no bar tripped, no second draw needed), and the
+full second run's `survive` passed too, the ordinary way this check is built to: a first draw (0,0)
+tripped the bar, a second (2,3) didn't — "the first was the tail, not the build," in the check's own
+words. Three runs, one double-trip: that's the tally's own background rate showing up, not this
+diff's — its own math puts one house's odds at a coin flip and all five falling together at ~3.2% a
+draw, so a single trip now and then is expected, and the one run that tripped twice in a row
+(~1.3%) is exactly the coincidence its own text named it as. Noise in an unrelated system, not a
+regression, and this diff shipped clean behind a second full run regardless; the
+pooled tally (`test/survive-tally.json`) keeps every draw on the record either way.
+
+Item #237, "The Heir You Actually Have," is now fully shipped — identity in v3.180.0, record and
+toga-moment honesty in this one.
+
 ### v3.180.0 — #237, started: the named son is the real boy the house raised
 
 The first phase built from the phase queue above — item #237, "The Heir You Actually Have" — taken
@@ -4546,7 +4614,7 @@ Give rivalTurn a cheap read of the player before retrain/buy choose a class, and
 
 **Verify first.** (1) Baseline collision: uniform retrain already lands on the specific counter-class ~20% of the time (1 of 5 non-current classes) by chance alone. Measure whether the biased version pushes high-train houses meaningfully past that floor (target ballpark ≥40%) while low-train houses (Glaber 0.75, Pollio 0.85) stay close to baseline — if they don't diverge, the "sharper lanista" premise is cosmetic. (2) Tell frequency: rivalTurn only acts on 30% of weeks (`if(R()>0.7) return`) and retrain/buy are two of nine weighted moves in RM_KEYS — run the file's own kind of measured simulation (it already cites "measured across 900 bouts" at 6417 and a probes/works.mjs precedent at 6599) to count how many counter-motivated retrain/buy events actually reach d.rivalLog per campaign; if it's roughly one every 40+ weeks the tell reads as a fluke, not a pattern. (3) Win-rate delta: quantify how much the biased buy/retrain moves the player's bout win% against a house that's had several stable weeks to react, and compare that shift's magnitude against the existing CLS_EDGE (1.15/0.91) and power() (1.045) counter effects already tuned into every bout — the new pressure must stay additive-and-survivable, not stack into something CLS_EDGE alone doesn't already produce. (4) Cheapest signal first: check whether lastFought-recency-weighting the class tally actually changes the dominant-class answer often enough to justify the extra complexity over a plain activeG(d) tally by .cls — only keep the recency weighting if a player benching a class without retraining it away is a common enough case to matter.
 
-**#237 — The Heir You Actually Have** *(overhaul)* — **STARTED in v3.180.0.** The identity fix (`eligibleSons`, `nameHeir` carrying a real `cid`, the multi-son chooser) shipped; the passed-over-son consequence and the age-aware flavor pass are still queued.
+**#237 — The Heir You Actually Have** *(overhaul)* — **SHIPPED, v3.180.0 + v3.181.0.** The identity fix (`eligibleSons`, `nameHeir` carrying a real `cid`, the multi-son chooser), the passed-over son's name surviving into the forebear record and a chronicle line, and the toga trigger recognizing an already-named son all landed. Phase 4's low-probability grudge hook was deliberately dropped — nothing reads it, and a write-only flag is exactly the dead-state fault this project's checks hunt down. Phase 5 landed as toga-moment awareness rather than static `HEIRS.son` text variants — the chooser row already prints the boy's age, and the toga is the one place the distinction actually plays out.
 heirEligible already checks a real, named boy's age before it lets you pick "A son" — livingKids(d).some(c=&gt;c.sex==="m" &amp;&amp; childAge(d,c)&gt;=9) — but nameHeir("son") never looks him up; it hands you a stranger pulled from PRAENOMINA/NOMINA/COGNOMINA, the identical fabrication branch used for "nephew," an heir kind for which no real candidate has ever existed in game state. Meanwhile the toga-at-16 "scion" path already builds the correct object — {cid, traits, mentorId} — by calling straight into d.domus.children; nameHeir just never learned the trick.
 
 heirEligible (HELPERS, next to the HEIRS table) gates the "son" option correctly: `d.lanista.age>=40 && livingKids(d).some(c=>c.sex==="m" && childAge(d,c)>=SON_AGE)`, SON_AGE=9, against a real child object living in d.domus.children with its own id, born week, and up:{palus,rhetor,box} raising counters accrued by raiseEvent at ages 7 and 12. That boy is real, simulated, and already producing chronicle beats through childYear() at 3/5/9/14. But nameHeir(d,kind) — the only function that ever turns a chosen kind into d.heir — resolves the name for "son" through the exact same line as "nephew": `kind==="doctore" && d.doctore ? d.doctore.name : `${pick(PRAENOMINA)} ${pick(NOMINA)} ${pick(COGNOMINA)}``. It writes no cid, no traits, no mentorId. One correction to the brief: "nephew" fabricating a name is not a bug — grepping the whole file for brother/nephew state turns up no tracked NPC anywhere (ties, kin, rivals, patrons); there is no real nephew to consult, so nameHeir("nephew") is working exactly as intended. "son" is the one kind that promises a real person and delivers a stranger. A second correction, in nameHeir/succeed()'s favor: the brief worried succeed() itself would need surgery, but succeed() already reads d.heir.cid/mentorId/traits/palusRaised generically (mentor morale+regard bump, tookHouse stamp on the matching child) — that block was written for the "scion" kind (set directly by resolveToga, which builds `{kind:"scion", cid:c.id, traits:heirTraitsFromUp(up), mentorId, mentorName}` and never even calls nameHeir — heirEligible(d) never returns "scion", so nameHeir is in practice invoked only for son/nephew/doctore, exclusively from chooseHeir(kind)=>mut(d=>nameHeir(d,kind)) on the House sheet's button row). succeed() needs zero changes: the entire gap is that nameHeir("son") never builds the object shape resolveToga already builds. Downstream, succeed() unconditionally archives d.domus (`fam = {wife, children: domus.children.slice()}` whenever a wife or any children exist, regardless of d.heir.kind) and resets it to {wife:null, children:[], nextKin:1}; the only trace kept in d.forebears is `children: fam.children.length` — a bare integer, not even names. The single per-child fact that survives is c.tookHouse=d.week, set only for the child matching d.heir.cid — and "son" heirs, uniquely among the four kinds, never set a cid, so the real boy who made the option eligible in the first place is stamped exactly like his unnamed siblings and disappears into a headcount. A further concrete case beyond the brief: a 16-year-old who answered togaEvent's "Not yet — let him prove himself first" keeps c.grown=false and c.togaTil set, but he still satisfies heirEligible's blunter age>=9 "son" check the whole time he's on that cooldown — so a fully raised, mentor-bonded boy the game is actively narrating can be discarded for a random stranger with one click on the House sheet, while his own toga event is still pending.
