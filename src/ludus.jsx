@@ -17162,6 +17162,59 @@ const SPAR_YIELD  = 44;     /* hands up. The edged bout is still standing at 20 
 const SPAR_CAP    = 26;     /* the most one wooden blow can take, applied after every multiplier */
 const SPAR_SWING  = 1.06;   /* the per-round draw, sized in probes/spar.mjs to hold the old curve */
 const SPAR_HURT   = 0.28;   /* and the injury coefficient sized the same way — see the feud branch */
+const SPAR_SPEAK  = 3;      /* the one round you get a word in. Six is short; four would be the end */
+const SPAR_PRESS  = 1.4;    /* what "stop dancing" is worth, under the same ceiling as everything else */
+/* ---- SPAR_CRUX — its own three, not the sand's ----
+   Every engine in this file gets its own vocabulary at the crux rather than borrowing the single
+   bout's (see MELEE_CRUX's finish/pullone/pullall). Nothing on the sand's menu fits a training
+   square: there is no editor to appeal to, no cloth to throw, and no missio, because nobody in
+   here can die. What a lanista actually has is the three things a man watching two of his own go
+   at each other has — let it run, push it to a finish, or get between them. */
+/* ---- WHICH MENU A BOUT GETS, WHERE A CHECK CAN REACH IT ----
+   This was two inline expressions in the viewer — `solo = !melee && !venatio && !pair`, and a
+   ternary picking the table off it. Written as "none of the other three", it hands any engine
+   added later the single bout's entire menu by default, which for a spar means an appeal to an
+   editor who is not there in a fight nobody can die in. The item's own verify-first predicted
+   exactly that. Named functions instead, so the rule is one thing in one place and `spar` can
+   assert it directly rather than hoping the JSX still reads the way it did. */
+const cruxSolo = fight => !!fight && !fight.melee && !fight.venatio && !fight.pair && !fight.spar;
+function cruxMenuFor(fight){
+  if(!fight) return {};
+  if(fight.melee) return MELEE_CRUX;
+  if(fight.spar)  return SPAR_CRUX;
+  if(cruxSolo(fight)) return CRUX;
+  return { press:CRUX.press, cover:CRUX.cover, cloth:CRUX.cloth };
+}
+/* and the words that go around it. Same argument as the menu: this is per-engine copy, which
+   belongs beside the per-engine menu rather than as three nested ternaries inside the viewer —
+   `bulk` is right that the modal is long enough without carrying every engine's vocabulary too. */
+function cruxWords(fight){
+  const solo = cruxSolo(fight);
+  if(fight && fight.spar) return { head:"FROM THE RAIL",
+    lead:"Both of them are yours, and both of them can hear you.",
+    foot:"Nobody dies in the square — the swords are wood and the doctore is standing in it. What you are deciding is whether the thing between them gets settled today, and what it costs to settle it." };
+  return { head: solo ? "FROM THE BOX" : "ONE WORD FROM THE BOX",
+    lead: solo ? "He can hear you between the exchanges. Say the word and watch it land."
+      : "He can hear you from here, and he will only hear you once.",
+    foot: fight && fight.melee
+      ? "Pulling a man off the sand costs you his share and nothing else — and if he was your second, the editor has nobody left to make him fight."
+      : fight && fight.venatio
+      ? "There is no editor in a hunt and no appeal to make. The handlers come only if you call them, and only you can."
+      : fight && fight.pair
+      ? "Whatever you say, you say to both of them."
+      : "Whatever you call, he answers for the next exchange or two — then the crowd looks to your box again." };
+}
+const SPAR_CRUX = {
+  run:   { label:"Let them have it out",
+    desc:"Say nothing. Whatever is between them gets said with the swords, and you find out what it was.",
+    line:(a,b)=>`You say nothing at all, and the two of them take that for the permission it is.` },
+  press: { label:"Tell them to stop dancing", order:{ press:true },
+    desc:"Both of them, harder. It settles quicker and somebody wears more of it going home.",
+    line:(a,b)=>`One word from you and they stop circling. Whatever this was, it is being finished now.` },
+  stop:  { label:"Get between them", order:{ stop:true },
+    desc:"Call it here. Nobody yields, nobody is hurt — and nothing whatever is settled.",
+    line:(a,b)=>`You call it, and the doctore is between them before the word is finished.` },
+};
 function simulateSpar(A, B, tA, ctx, opts){
   const O = opts || {}, C = ctx || {};
   /* both men fight measured: this is the doctore's square, not a card, and nobody is
@@ -17170,13 +17223,25 @@ function simulateSpar(A, B, tA, ctx, opts){
   const tB = O.foeTac || "measured";
   const swing = O.swing || SPAR_SWING;
   const beats = [];
+  /* ---- THE ONE WORD, IN A SQUARE WHERE BOTH MEN ARE YOURS — phase 2 ----
+     The same stop/resume contract the other four engines carry: `stopAtCrux` breaks the loop and
+     hands its whole state out as `crux`, `from` puts it back. What is different here is that the
+     order is not advice to your man — it is a word to BOTH of them, because both of them are
+     yours, which is why `SPAR_CRUX` is its own three and not CRUX.press/cover borrowed. */
+  const R0 = O.from || null;
+  const order = O.order || null;
+  const press = !!(R0 && R0.press) || !!(order && order.press);
   A.mods = kitMods(A.kit, A.cls, A); B.mods = kitMods(B.kit, B.cls, B);
   const smA = 55 + (A.end||50)*0.6, smB = 55 + (B.end||50)*0.6;
-  let vA = 100, vB = 100, sA = smA, sB = smB, mom = 0, round = 0;
+  let vA = R0 ? R0.vA : 100, vB = R0 ? R0.vB : 100;
+  let sA = R0 ? R0.sA : smA, sB = R0 ? R0.sB : smB;
+  let mom = R0 ? R0.mom : 0, round = R0 ? R0.round : 0;
   let winner = null, yielded = false;
   /* the worst each man wore, and where — so the caller's injury roll can follow the fight that
      actually happened instead of the flat 16% coin the feud branch used to toss */
-  const worst = { A:{ dmg:0, target:null }, B:{ dmg:0, target:null } };
+  const worst = R0 && R0.worst
+    ? { A:Object.assign({}, R0.worst.A), B:Object.assign({}, R0.worst.B) }
+    : { A:{ dmg:0, target:null }, B:{ dmg:0, target:null } };
   const push = (kind, text, extra) => beats.push(Object.assign({
     kind, text, actor:null, round,
     vA:clamp(vA,0,100), vB:clamp(vB,0,100),
@@ -17184,8 +17249,14 @@ function simulateSpar(A, B, tA, ctx, opts){
     mom:clamp(mom,-3,3), crowd:0, spar:true
   }, extra||{}));
 
-  push("intro", `${A.name} and ${B.name} take the square with wooden swords, and the yard stops what it is doing to watch.`);
-  for(let r=1; r<=SPAR_ROUNDS && !winner; r++){
+  if(R0) push("crux", O.resumeLine || `They hear you, and it changes.`);
+  else push("intro", `${A.name} and ${B.name} take the square with wooden swords, and the yard stops what it is doing to watch.`);
+  /* the square is short, so there is exactly one moment to speak into: after the third, while
+     there is still enough fight left for a word to be worth anything */
+  const startR = R0 ? R0.round : 0;
+  for(let r=startR+1; r<=SPAR_ROUNDS && !winner; r++){
+    if(O.stopAtCrux && r > SPAR_SPEAK)
+      return { beats, crux:{ vA, vB, sA, sB, mom, round:r-1, worst, press }, unfinished:true, spar:true };
     round = r;
     const drawA = 1 - swing/2 + R()*swing, drawB = 1 - swing/2 + R()*swing;
     const pA = power(A, tA, B.cls,  mom, 0.97+R()*0.06) * gasOf(A, sA, smA) * Math.max(0.05, drawA);
@@ -17210,6 +17281,9 @@ function simulateSpar(A, B, tA, ctx, opts){
        real floor. A man cannot be taken below yield-minus-one-blow, so the worst anyone walks out
        of this square on is SPAR_YIELD - SPAR_CAP, and that is arithmetic, not flavour. */
     let dmg = (4 + diff/11 + (hit.str||50)/22) * tgt[2] * (1 + hit.mods.atk*0.4) * (1 - took.mods.def*0.6);
+    /* told to stop dancing, they stop dancing. It settles sooner and the loser wears more of it —
+       and the ceiling still holds, so "harder" can never mean "fatal" in here. */
+    if(press) dmg *= SPAR_PRESS;
     dmg = clamp(dmg, 2, SPAR_CAP);
     const wore = isA ? "B" : "A";
     if(dmg > worst[wore].dmg) worst[wore] = { dmg, target:tgt[0] };
@@ -17249,13 +17323,57 @@ function simulateSpar(A, B, tA, ctx, opts){
    eight events, where length is content. A fight belongs beside the engine that resolves it, and
    the branch is a call. The aftermath is deliberately unchanged — the same morale, form, fatigue,
    unrest, craft-rep and tie removal the branch has always paid. Only the fight is new. */
-function yardDuel(d, a, b, t, others){
-  const res = simulateSpar(clone(a), clone(b), "measured", { d }, {});
+function doSpar(d, aid, bid, pending, choice){
+  const a = d.gladiators.find(x=>x.id===aid), b = d.gladiators.find(x=>x.id===bid);
+  if(!a || !b) return null;
+  const t = tieBetween(d, a.id, b.id);
+  const others = () => d.gladiators.filter(o=>o.status==="active" && o.id!==a.id && o.id!==b.id);
+  const ac = clone(a), bc = clone(b);
+  const C = choice ? SPAR_CRUX[choice] : null;
+  const face = g => ({ name:g.name, nick:g.nick, cls:g.cls, origin:g.origin, sub:"your house",
+    kit:g.kit||defaultKit(g.cls), scars:g.scars||[], fem:isF(g), bore:boreOf(g) });
+  let res;
+  if(choice === "stop"){
+    /* you got between them. There is no winner to find and nothing is settled — which is the
+       whole cost of the option, and it is paid below rather than written off in the text. */
+    res = { beats:[Object.assign({}, pending.crux, { kind:"end", actor:null, spar:true, crowd:0,
+      text:`${SPAR_CRUX.stop.line(a,b)} They are pulled apart with the thing still standing between them, and every man at the rail can see that it is.` })],
+      winner:null, stopped:true, rounds:pending.crux.round, yielded:false,
+      vA:pending.crux.vA, vB:pending.crux.vB, worst:pending.crux.worst };
+  } else {
+    res = simulateSpar(ac, bc, "measured", { d },
+      pending ? { from:pending.crux, resumeLine: C ? C.line(a, b) : undefined, order: C ? C.order : null }
+              : { stopAtCrux:true });
+  }
+  /* the viewer attaches the beats it has already played to the pending before resuming — see
+     `speak`. Tolerant of a caller that has not, so a missing handoff loses nothing and shows up
+     as a short beat list rather than a crash inside the engine. */
+  /* the viewer attaches the beats it has already played to the pending before resuming — see
+     `speak`. Tolerant of a caller that has not, so a missing handoff loses nothing and shows up
+     as a short beat list rather than a crash inside the engine. */
+  if(pending) res.beats = (pending.beats || []).concat(res.beats);
+  if(res.unfinished)
+    return { pending:{ aid, bid, crux:res.crux, spar:true }, beats:res.beats, crux:true, spar:true,
+      stakes:"spar", venue:null, factions:d.factions, A:face(a), B:face(b) };
+
+  [a,b].forEach(g=>{ g.fatigue = clamp(g.fatigue+20,0,100); });
+  const sum = [];
+  if(res.stopped){
+    /* nothing is settled: the tie STAYS, which is the point. A yard that wanted this finished
+       watched you not finish it, and the two of them still have it to do. */
+    [a,b].forEach(g=>{ g.morale = clamp(g.morale-6,0,100); g.defiance = clamp(g.defiance+4,0,100); });
+    d.unrest = clamp(d.unrest+3,0,100);
+    addRep(d, "mercy", 3);
+    sum.push(`Nobody yielded and nobody was carried off. Whatever is between ${a.name} and ${b.name} is exactly where it was this morning.`);
+    chron(d, `You stopped it before either of them put his hands up. ${a.name} and ${b.name} go back to opposite ends of the yard with it still between them, and the block noticed which way you went.`, "info");
+    return { beats:res.beats, sum:sum.map(x=>herOwn(d,x)), win:false, dead:false, crowd:0,
+      spar:true, stopped:true, stakes:"spar", venue:null, factions:d.factions, A:face(a), B:face(b) };
+  }
+
   const [w, l] = res.winner==="A" ? [a,b] : [b,a];
   const wore = res.winner==="A" ? res.worst.B : res.worst.A;
   const vL   = res.winner==="A" ? res.vB : res.vA;
   if(t) d.ties = tieList(d).filter(x=>x!==t);
-  [a,b].forEach(g=>{ g.fatigue = clamp(g.fatigue+20,0,100); });
   w.morale = clamp(w.morale+16,0,100); w.pfame += 4; formShift(d, w, 10, `settled it with ${l.name}`);
   l.morale = clamp(l.morale-18,0,100); l.defiance = clamp(l.defiance+7,0,100); formShift(d, l, -12, `lost to ${w.name} in the yard`);
   /* SPAR_HURT was sized in probes/spar.mjs to hold the flat 16% this replaces — measured 15.6%
@@ -17266,19 +17384,18 @@ function yardDuel(d, a, b, t, others){
     const inj = injuryFor(wore.target || "flank", false);
     l.injury = { name:inj.name, weeks:Math.max(1, Math.round(inj.weeks*0.6)), pen:inj.pen, part:inj.part };
     l.status="injured"; l.sparWith=null; l.regimen="palus";
+    sum.push(`${l.name} was carried off it: ${inj.name.toLowerCase()}, ${l.injury.weeks} week${l.injury.weeks>1?"s":""} to mend.`);
   }
   d.unrest = clamp(d.unrest-5,0,100);
   others().forEach(o=>{ o.morale = clamp(o.morale+4,0,100); });
   addRep(d, "craft", 4);
-  /* the hardest thing that landed, in the fight's own words, so the answer the player reads is
-     the bout that was fought and not a summary of one */
-  const big = res.beats.filter(x=>x.kind==="hit").sort((x,y)=>(y.dmg||0)-(x.dmg||0))[0];
-  return `You put them on the sand in front of everybody with wooden swords and the doctore counting. `
-    + (big ? `${big.text} ` : "")
-    + (res.yielded
-        ? `${res.rounds} exchange${res.rounds===1?"":"s"} in, ${l.name}'s hands go up.`
-        : `Six exchanges and neither would give it up, so the doctore called it on what landed.`)
-    + ` ${w.name} has the better of it. Whatever it was is finished, in the only way this trade knows how to finish anything.`;
+  sum.push(res.yielded
+    ? `${res.rounds} exchange${res.rounds===1?"":"s"} in, ${l.name}'s hands went up.`
+    : `Six exchanges and neither would give it up, so the doctore called it on what landed.`);
+  sum.push(`${w.name} has the better of it. Whatever it was is finished, in the only way this trade knows how to finish anything.`);
+  chron(d, `You put ${a.name} and ${b.name} on the sand in front of everybody with wooden swords and the doctore counting, and ${w.name} had the better of it.`, "info");
+  return { beats:res.beats, sum:sum.map(x=>herOwn(d,x)), win:true, dead:false, crowd:0,
+    spar:true, stakes:"spar", venue:null, factions:d.factions, A:face(a), B:face(b) };
 }
 
 /* ---- PAIR BOUTS ----
@@ -18610,7 +18727,14 @@ const EVENTS = {
       const t = tieBetween(d, a.id, b.id);
       const others = () => d.gladiators.filter(o=>o.status==="active" && o.id!==a.id && o.id!==b.id);
 
-      if(i===0) return yardDuel(d, a, b, t, others);
+      /* ---- AND YOU WATCH IT NOW — phase queue #232, phase 2 ----
+         The branch does not resolve the duel any more; it puts it on the sand and stands back.
+         `d.pendingSpar` is read by `chooseEv` the moment this answer is given, which hands the
+         two of them to the same beat-viewer every other engine uses — so the answer to "put them
+         on the sand" is the bout, not a paragraph describing one you were not shown. The whole
+         aftermath moved with it, into `doSpar`, where the fight that decides it lives. */
+      if(i===0){ d.pendingSpar = { aid:a.id, bid:b.id };
+        return `You put them on the sand in front of everybody, with wooden swords and the doctore counting.`; }
 
       if(i===1){
         b.benched = { weeks:4, why:`kept apart from ${a.name}` };
@@ -19817,6 +19941,19 @@ function sectTick(d){
 }
 
 function endWeek(d){
+  /* ---- AND THE DUEL IS FOUGHT WHETHER ANYBODY WATCHED IT OR NOT — #232 phase 2 ----
+     `chooseEv` hands a yard duel to the beat-viewer and clears this marker on the way past, so in
+     play this is already null by the time the week turns. Anything that answers an event WITHOUT a
+     viewer does not: the rope every probe and half the checks run on calls `EVENTS[id].run` and
+     clears `pendingEvent` itself, and knew nothing about this. Left alone, the fight simply never
+     happened — no winner, no aftermath, no grudge settled, and a field sitting on the save waiting
+     for a UI that was never coming. The presenter gets first refusal; it does not get to cancel the
+     bout. Nobody spoke from the rail, so it runs the way it runs when nobody does. */
+  if(d.pendingSpar){
+    const p = d.pendingSpar; d.pendingSpar = null;
+    const first = doSpar(d, p.aid, p.bid, null, null);
+    if(first && first.crux){ first.pending.beats = first.beats; doSpar(d, p.aid, p.bid, first.pending, "run"); }
+  }
   /* Last week's question is closed at the START of the week, not a hundred lines
      into it. It used to be cleared just above the block that decides the week's
      one decision — which meant every system that runs earlier and politely checks
@@ -21478,23 +21615,23 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
 
         {done && fight.crux && onSpeak && (()=>{
           /* solo human bouts get the full, contextual set of orders and can be coached
-             more than once; hunts, pairs and melees keep the single old three. */
-          const solo = !fight.melee && !fight.venatio && !fight.pair;
+             more than once; hunts, pairs and melees keep the single old three.
+             ---- AND A SPAR IS NOT A SOLO BOUT — #232 phase 2 ----
+             This flag was written as "none of the other three", so a fifth engine walks straight
+             into it and inherits the sand's whole menu: `cloth` (an appeal, to an editor who is
+             not there, in a fight nobody can die in), `finish` with its SIGNATURES lookup, `legs`,
+             `breather`. The item's own verify-first named this exact hazard before a line was
+             written. Spar is named here, and gets its own three below. */
+          const solo = cruxSolo(fight);
           const cx = beats[beats.length-1] || {};
-          const base = fight.melee ? MELEE_CRUX
-            : solo ? CRUX
-            : { press:CRUX.press, cover:CRUX.cover, cloth:CRUX.cloth };
+          const base = cruxMenuFor(fight);
+          const W = cruxWords(fight);
           const entries = Object.entries(base).filter(([k,c]) => !c.when || c.when(cx));
           const sig = solo && fight.A ? SIGNATURES[fight.A.cls] : null;
           return (
           <div className="panel" style={{marginTop:8,padding:12,borderColor:"var(--gold-line)"}}>
-            <div className="disp" style={{fontSize:"var(--fs-base)",fontWeight:700,letterSpacing:".1em",marginBottom:4,color:"var(--ink-hi)"}}>
-              {solo ? "FROM THE BOX" : "ONE WORD FROM THE BOX"}
-            </div>
-            <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:9}}>
-              {solo ? "He can hear you between the exchanges. Say the word and watch it land."
-                : "He can hear you from here, and he will only hear you once."}
-            </div>
+            <div className="disp" style={{fontSize:"var(--fs-base)",fontWeight:700,letterSpacing:".1em",marginBottom:4,color:"var(--ink-hi)"}}>{W.head}</div>
+            <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:9}}>{W.lead}</div>
             {entries.map(([k,c])=>{
               const label = (k==="cloth" && fight.venatio) ? "Call the handlers in"
                 : (k==="cloth" && fight.pair) ? "Throw in the cloth for both"
@@ -21509,13 +21646,7 @@ function FightModal({ fight, onClose, startMuted, onMute, onSpeak, houseCol }){
               );
             })}
             <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:solo?4:0}}>
-              {fight.melee
-                ? "Pulling a man off the sand costs you his share and nothing else — and if he was your second, the editor has nobody left to make him fight."
-                : fight.venatio
-                ? "There is no editor in a hunt and no appeal to make. The handlers come only if you call them, and only you can."
-                : fight.pair
-                ? "Whatever you say, you say to both of them."
-                : "Whatever you call, he answers for the next exchange or two — then the crowd looks to your box again."}
+              {W.foot}
             </div>
           </div>
           );
@@ -25584,6 +25715,18 @@ export default function App(){
     const msg = EVENTS[ev.id].run(d, ev, i);
     d.pendingEvent = null;
     chron(d, msg, "event");
+    /* ---- AN ANSWER MAY PUT TWO OF YOURS ON THE SAND — #232 phase 2 ----
+       When it does, the answer is the bout. `doSpar` returns the same {pending, beats, crux}
+       contract doFight does, so this is the identical held/setFight handshake the other four
+       engines already use — no second viewer, no new surface. */
+    if(d.pendingSpar){
+      const p = d.pendingSpar; d.pendingSpar = null;
+      const res = doSpar(d, p.aid, p.bid, null, null);
+      if(res){
+        if(res.crux){ setHeld({ base:d, res }); setFight(res); return; }
+        setS(d); setFight(res); return;
+      }
+    }
     setS(d); setEvResult(msg);
   };
 
@@ -25641,6 +25784,7 @@ export default function App(){
     const res = p.melee ? doMelee(d, p.ids, p.offer, p, choice)
       : p.venatio ? doVenatio(d, p.gid, p.offer, p.tactic, p, choice)
       : p.pair ? doPairFight(d, p.ids, p.offer, p.tactic, p, choice)
+      : p.spar ? doSpar(d, p.aid, p.bid, p, choice)
       : doFight(d, p.gid, p.offer, p.tactic, p.bet, p, choice);
     /* the bout may come to the balance again — keep it held so the next word lands too */
     if(res.crux){ setHeld({ base:d, res }); setFight(res); return; }
@@ -31110,7 +31254,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     romePrize, ROME_PRIZES, ROME_TURNS, RT_KEYS, ROME_FAME, ROME_COOLDOWN,
     /* the four engines and the four ways into them */
     simulateFight, simulatePair, simulateMelee, simulateVenatio,
-    simulateSpar, SPAR_ROUNDS, SPAR_YIELD, SPAR_CAP, SPAR_SWING,   /* the fifth engine — #232 */
+    simulateSpar, doSpar, SPAR_CRUX, cruxMenuFor, cruxSolo, cruxWords, SPAR_ROUNDS, SPAR_YIELD, SPAR_CAP, SPAR_SWING, SPAR_SPEAK, SPAR_PRESS,   /* the fifth engine — #232 */
     doFight, doPairFight, doMelee, doVenatio,
     /* the week, and what it writes down */
     endWeek, bookBout, bookOf, newBook, chron, chronAll, bookSays,

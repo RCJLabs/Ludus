@@ -59,6 +59,17 @@ const ALLOWED = [/onClick=/, /const goPick = /, /setArenaWiz\(false\)/];
 /* the five that send a man out, and the one that brings him back */
 const SENDERS = ["fightOffer", "fightPit", "meleeGo", "huntOffer", "fightPair"];
 const RESUMER = "speak";
+/* ---- AND ONE THAT LAUNCHES A BOUT AND SPENDS NOTHING — #232 phase 2 ----
+   `chooseEv` became a sixth crux-brancher when the yard duel started going through the viewer: an
+   event answer can now put two of your own men on the sand. It is a launcher, but it is NOT a
+   SENDER, and the difference is the whole reason this check exists. The six orders are what a man
+   is told before he goes out to a CARD — a tactic, a plan, an entrance, a stake. A spar reads none
+   of them: `doSpar` passes "measured" itself and takes no plan, no bet and no entrance. So there
+   is nothing to put down, and putting them down anyway would quietly clear the chips the player
+   had set for the card he was actually preparing, which is #194 pointing the other way.
+   The exemption is only honest while the premise holds, so the premise is asserted below: if
+   `doSpar` ever starts reading the week's orders, this must become a SENDER. */
+const NOSPEND = ["chooseEv"];
 
 export async function run(){
   const lines = [], fails = [];
@@ -80,7 +91,7 @@ export async function run(){
   const cruxAt = [];
   src.forEach((c, i) => { if(/if\(res\.crux\)/.test(c)) cruxAt.push({ i, fn: fnOf(i) }); });
   const fns = [...new Set(cruxAt.map(x => x.fn))].sort();
-  const known = [...SENDERS, RESUMER].sort();
+  const known = [...SENDERS, RESUMER, ...NOSPEND].sort();
   lines.push(`${cruxAt.length} crux branches across ${fns.length} functions: ${fns.join(", ")}`);
   const strangers = fns.filter(f => !known.includes(f));
   if(strangers.length)
@@ -110,6 +121,32 @@ export async function run(){
       if(spends) fails.push("`speak` puts the orders down — it resumes a bout that already spent them, so this clears the NEXT bout's chips a word early");
     } }
 
+  /* the spendless launchers must NOT put them down either — and must still deserve the exemption */
+  for(const fn of NOSPEND){
+    const head = at(new RegExp(`^  const ${fn}\\s*=`));
+    const first = cruxAt.find(x => x.fn === fn);
+    if(head == null || !first) continue;
+    const spends = src.slice(head, first.i).some(c => c.includes("spendOrders()"));
+    lines.push(`  ${fn.padEnd(11)} head ${head+1} · crux ${first.i+1} · spendOrders before it: ${spends} (must be false)`);
+    if(spends) fails.push(`\`${fn}\` puts the orders down — it launches a bout that reads none of them, so this clears the chips the player set for the card he was actually preparing`);
+  }
+  /* and the premise the exemption rests on: the spar takes no order the week set */
+  { const s = src.findIndex(c => /^function doSpar\(/.test(c));
+    if(s < 0) fails.push("`doSpar` is gone — NOSPEND's exemption has nothing left to rest on");
+    else {
+      let depth = 0, end = s;
+      for(let i = s; i < src.length; i++){
+        depth += (src[i].match(/\{/g)||[]).length - (src[i].match(/\}/g)||[]).length;
+        if(i > s && depth <= 0){ end = i; break; }
+      }
+      const body = src.slice(s, end+1).join("\n");
+      /* whole identifiers only — the payload's own `stakes:"spar"` field is not the week's stake */
+      const reads = ["tactic", "planNow", "styleNow", "makeBet", "entrance", "stake", "mplan", "pitPick"]
+        .filter(k => new RegExp(`\\b${k}\\b`).test(body));
+      lines.push(`  doSpar reads none of the week's orders: ${reads.length===0} ${reads.length?`(found ${reads.join(", ")})`:""}`);
+      if(reads.length) fails.push(`\`doSpar\` reads ${reads.join(", ")} — it consumes the week's orders now, so \`chooseEv\` must move from NOSPEND to SENDERS and call spendOrders first`);
+    } }
+
   /* ---- 4. nothing else puts an order down ---- */
   const stray = [];
   src.forEach((c, i) => {
@@ -123,6 +160,6 @@ export async function run(){
   lines.push(`order setters outside spendOrders, the chips and the two change-your-mind handlers: ${stray.length}`);
   if(stray.length) fails.push(`an order is put down away from spendOrders — ${stray.slice(0,3).join("; ")} — that is a sixth place deciding when a bout is finished`);
 
-  if(!fails.length) lines.push("one place puts them down, all five senders call it before the branch, and speak does not");
+  if(!fails.length) lines.push("one place puts them down, all five senders call it before the branch, and neither speak nor the spendless launcher does");
   return { pass: fails.length === 0, why: fails.slice(0, 3).join("; ") || null, lines };
 }
