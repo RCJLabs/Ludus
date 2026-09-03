@@ -151,4 +151,6 @@
 {"v":"3.180.0","checks":140,"failed":["survive"]},
 {"v":"3.180.0","checks":140,"failed":[]},
 {"v":"3.181.0","checks":141,"failed":["survive"]},
-{"v":"3.181.0","checks":141,"failed":[]}]
+{"v":"3.181.0","checks":141,"failed":[]},
+{"v":"3.182.0","checks":142,"failed":["bulk","first"]},
+{"v":"3.182.0","checks":142,"failed":[]}]

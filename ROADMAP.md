@@ -4386,6 +4386,90 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.182.0 — #232, started: the fifth engine, and a yard duel that is actually fought
+
+Phases 1 and 3 of item #232, "The Training-Square Duel" — the resolver, and the first of the two
+places that needed it. Phase 2 (the beat-viewer wiring) and Phase 4 (holdTourney's final) are
+deliberately not in this release; see the end of this note.
+
+**THE DEFECT.** Two moments in this game stop the whole familia to watch two of your own men fight,
+and neither one called a fight engine. `EVENTS.feud`'s i===0 branch — the one you reach by choosing
+to put them on the sand — was three lines: two `power()` calls, a comparison against a pair of
+independent `0.8+R()*0.5` rolls, and a flat `R()<0.16` injury coin on the loser. Over it sat the
+line *"with wooden swords and the doctore counting,"* describing rounds that were never simulated.
+`holdTourney` is worse in one respect: it ranks the roster by a `score()` formula with an `R()*24`
+noise term and declares `ranked[0]` champion having fought nobody at all. Meanwhile the twelve-round
+beat loop next door — crux, missio, appeal, marks, tells — is the most developed code in the file
+and has only ever been pointed at other people's houses.
+
+**THE FIFTH ENGINE.** `simulateSpar` follows the precedent `simulatePair` sets in its own comment,
+written *"apart from simulateFight on purpose — the single bout is the most tested code in the game
+and does not need touching."* It is a sibling, not a parameter. What makes it a spar is not the
+flavour but the arithmetic: there is no `fell`/appeal/missio block in it to reach, no `stakes` to
+pass, damage is capped at `SPAR_CAP` **after** every multiplier rather than before, and a man's
+hands go up at `SPAR_YIELD`. Those two constants put a hard floor under everyone who walks into the
+square — `SPAR_YIELD - SPAR_CAP` = 18 — and the measured worst any man reached across 1,200 reckless
+spars was exactly 18.0. It cannot kill because of what it is, not because of what the prose says.
+
+**AND THE ODDS ARE THE SAME ODDS.** The item's own verify-first asked for this first, and it was
+worth asking: six rounds of averaging sharpen a contest on their own, so a rounds-based resolver
+will silently make the better man a heavier favourite than a single roll did unless somebody checks.
+`probes/spar.mjs` measured the branch being replaced across 20,000 pairings — the better man wins
+51% at a 1.00 power ratio, 66% at 1.10, 76% at 1.15, 81% at 1.20, 91% at 1.30, 96% at 1.40 — then
+swept the new resolver's per-round draw against that curve. At `SPAR_SWING` 0.50 the new fight
+missed by 10.2 points a bucket; at 1.06 it misses by **1.4**. The yard duel is shown now; it is not
+re-priced, and the check holds the band so it cannot drift into being.
+
+**THE LOSER CARRIES OUT WHAT HE ACTUALLY WORE.** The flat 16% is gone, replaced by a roll keyed on
+how far he was driven, through `injuryFor(target, false)` on the part the hardest blow of the fight
+actually landed on, at reduced weeks because the swords are wooden. `SPAR_HURT` was sized the same
+way as the swing: measured **15.6%** aggregate against the flat 16% it replaces — the same danger,
+but now 17.9% when a man's hands went up against 12.2% when it went to the doctore's count. The rest
+of the branch is deliberately untouched: the same morale, form, fatigue, unrest, craft-rep and tie
+removal it always paid. Only the fight is new. The answer the player reads now quotes the hardest
+blow in the bout's own words, so the scene reports the fight that happened rather than summarising
+one that didn't.
+
+**AND THE GATE FOUND TWO BUGS THAT WERE NOT MINE.** The new resolver shifts the RNG stream, which
+handed `first` — the check #221 left behind, asserting every man who fights and walks off has a
+debut on his page — a population it had never drawn before, and it failed on a man called Bithus who
+had fought nine times and had nothing. Two independent instances of one fault, both pre-existing and
+both in code this release never touched. `firstBlood` marks the debut on `wins + losses === 1`, so
+the bout has to be on the record before it is asked — and two engines asked first. **The hunt**: a
+losing venatio put the loss on above the call, but a winning one put `g.wins++` below it, so a man
+who killed his first beast could never have a first afternoon while a man who failed at one always
+did. **The melee**: the win and the forfeit-losses go on at the top of the payout block, but the
+loss a man takes by being *carried off* is written in the casualty pass underneath, so a debut in a
+melee you were carried out of was asked with a blank record. In both, the window is `=== 1` and
+shuts for good: by the man's second bout the count is two and nothing reopens it. Both are fixed by
+moving the counter above the call — the surgical direction, so no summary line, injury, morale or
+chronicle changes position. Bithus now has his afternoon, and the sweep went from "1 walked off
+without one" to **0**.
+
+New check `spar` (141 → 142), five arms: it cannot kill (no death/fall/appeal beat in 1,200
+aggressive spars, no `dead` field, nobody under the floor); the floor is arithmetic (the biggest
+blow measured is exactly `SPAR_CAP`); the odds are the odds (a dead-level pair is a coin, a 1.28–1.45
+edge wins 78–98% — a band the swing sabotage blows straight through at 99.8%); the fight is real and
+agrees with its own HP; and the feud branch genuinely goes through the engine — caught by the fact
+that every injury now carries a `part`, a field the old flat `INJURIES[ri(0,2)]` roll never set.
+Sabotaged six ways, each verified by reading the verdict. Worth noting: reverting the injury path
+alone still measured 15.5% aggregate, so the rate assertion would **not** have caught it — the
+structural `part` fingerprint is what does.
+
+Gate: **142/142.**
+
+Also found and **not** fixed, because it is scope rather than a blocker: the primacy challenge
+(`EVENTS.primacy`'s i===0 branch) resolves two of your own men — with the title of the house on it —
+by the identical `power()*(0.8+R()*0.5)` coin this release just retired from the feud. It is a third
+fudge point the item never named, and the natural companion to Phase 4.
+
+**Queued**, per the item's own phases: `doSpar` and the beat-viewer wiring (Phase 2), so the duel is
+watched rather than reported; `holdTourney`'s final pairing (Phase 4), which still crowns its
+champion off `score()` alone; and Phase 5's speculative hooks, which the item already flags as
+extensions rather than fudge-replacements. The resolver ships with a real call site rather than
+waiting for the viewer, because a resolver nothing calls is exactly the dead code this project's
+checks spend their time hunting.
+
 ### v3.181.0 — #237, finished: a passed-over son is still a son, and a named one stays named
 
 Phases 4 and 5 of item #237, closing out the phase queue's first build entirely.
@@ -4527,7 +4611,7 @@ arc; a political analogue of `d.nemesis`; a cooperative venatio mode; and, in th
 votes from any of the three curators, an anytime, generated-not-written Almanac extending the glossary sheet's
 own proven idiom.
 
-**#232 — The Training-Square Duel** *(new system)*
+**#232 — The Training-Square Duel** *(new system)* — **STARTED in v3.182.0.** `simulateSpar` (the fifth engine, structurally unable to kill: no appeal/missio block, damage capped after every multiplier, a hard floor of `SPAR_YIELD - SPAR_CAP`) and the `EVENTS.feud` rewiring shipped, with the odds measured against the branch they replace and held to 1.4 points. The beat-viewer wiring (Phase 2), `holdTourney`'s final (Phase 4) and Phase 5's hooks are still queued.
 The only round-by-round fight resolver in the game (simulateFight, plus doFight's pause/resume) has never been pointed at a fight inside the walls: EVENTS.feud's i===0 branch settles a named duel between two of your own men with one power() call per side scaled by an independent 0.8–1.3 roll and a flat 16% injury check, and holdTourney (line 1452) ranks the whole eligible roster by a score() formula and crowns a yard-tournament winner having fought zero rounds. A trimmed sibling resolver — simulateSpar, built the way simulatePair was explicitly built "apart from simulateFight on purpose" (line 17077) — gives the two scenes the game's own prose already stages as a stopped-yard spectacle an actual animated bout, with no missio-to-death path.
 
 Two moments in the game already narrate the whole familia stopping to watch two of your own men fight, and neither one calls the fight engine. EVENTS.feud (the "In The Yard" pendingEvent set up by feudWeek, line 1297) has a run(d,ev,i) with four branches; the i===0 branch, reached when the player picks "put them on the sand" (line 18403–18419), resolves it as: `pa = power(...,"measured",...)`, `pb = power(...,"measured",...)`, `aWins = pa*(0.8+R()*0.5) > pb*(0.8+R()*0.5)`, then a flat `R()<0.16` roll against `INJURIES[ri(0,2)]` for the loser. No rounds, no beats, no crux, no appeal — the text says "with wooden swords and the doctore counting," and none of that is simulated. holdTourney (line 1452) is worse in one respect: it never even simulates a single pairing. `score(g)` sums weighted class stats, raw STR/AGI/TEC/DIS, regardOf(g), wins, and an R()*24 noise term; the roster is sorted by that score and `ranked[0]` is simply declared the winner. The flavor text ("wooden swords, no editor, every man with something to prove") describes a tournament that is entirely arithmetic. Meanwhile simulateFight (line 9730) and doFight (line 17612) are the most developed system in the codebase — a 12-round beat loop, a crux stop/resume contract (`res.unfinished` → `{pending:{...crux:res.crux}, beats, crux:true}`), missio odds, appeal, marks/tells — and it is reserved entirely for bouts against outside houses. The two places the design already treats an internal fight as a named event get the least mechanical attention of anything in the file.

@@ -16735,6 +16735,18 @@ function doMelee(d, ids, offer, pending, choice, tactic){
      not a draw whatever the sand says about a winner. */
   const drewIt = !won && !res.forfeit && res.winner < 0
     && res.ents.some(e=>e.mine && !e.out);
+  /* ---- AND THE MAN CARRIED OFF A MELEE HAD NO FIRST AFTERNOON EITHER ----
+     The same fault as the hunt above, in the other direction. `firstBlood` marks the debut on
+     `wins + losses === 1`, so the bout has to be on his record before it is asked. The melee puts
+     the WIN on at the top of the payout block and the forfeit losses with it — but the loss a man
+     takes by being carried off is written in the casualty pass BELOW this, so a man whose first
+     card was a melee he was carried out of was asked "is this your first?" with a blank record,
+     and by his second bout the window had shut. Found by `first` on v3.182.0's gate: Bithus, house
+     0 of the sweep, carried off a lost melee at Pompeii in week 105 and still had no first
+     afternoon nine bouts later. The counter moves up here; the casualty pass below keeps the
+     injury, the morale and the line it writes. */
+  res.ents.forEach(e=>{ if(!e.mine || !e.out || e.dead) return;
+    const g = d.gladiators.find(x=>x.id===e.gid); if(g) g.losses++; });
   { const where = nightWhere(d, offer, offer.spectacle==="naumachia" ? "the flooded sand" : `${(offer.field||[]).length} others`);
     for(const e of (res.ents||[])){
       if(!e.mine) continue;
@@ -16806,7 +16818,7 @@ function doMelee(d, ids, offer, pending, choice, tactic){
       else sum.push(`${g.name} is dead.`);
       if(steadier) chron(d, `${steadier.name} keeps the block together the night they carry ${g.name}'s kit back in.`, "info");
     } else if(e.out){
-      g.losses++;
+      /* his loss went on the record above, before firstBlood was asked — see the note there */
       const inj = injuryFor(pick(TARGETS)[0], true);
       g.injury = inj; g.status = "injured"; weekMark(d, "hurt", 1, fullName(g));
       g.morale = clamp(g.morale-6,0,100);
@@ -16880,6 +16892,18 @@ function doVenatio(d, gid, offer, tactic, pending, choice){
      column has been short by every man an animal ever killed. Found by the check
      that fills the book's worst-night slot, which noticed a house that had buried
      somebody and had no bad night on record to show for it. */
+  /* ---- THE MAN WHO KILLED HIS FIRST BEAST HAD NO FIRST AFTERNOON ----
+     `firstBlood` marks the debut on `(g.wins||0) + (g.losses||0) === 1`, so it has to be told
+     AFTER the bout is on his record. Every other engine does that — the melee increments at the
+     top of its payout block and the pair and the single bout both settle before the aftermath
+     calls in. The hunt was the one that did not: the loss went on at the forfeit branch, above,
+     but the WIN went on below, in the purse block, so a man who killed his first beast was asked
+     "is this your first?" while his record still read nothing, and by his second bout the window
+     had shut for good. A losing debut got its night; a winning one never could.
+     Found by `first` on v3.182.0's gate — the check has been right since #221 and the seed had
+     simply never handed it a man whose debut was a hunt. The increment moves up; nothing else
+     changes, and the purse block below reads the same either way. */
+  if(res.killed) g.wins++;
   { const where = nightWhere(d, offer, B.name);
     markNight(g, "roar", Object.assign({ crowd:rnd(res.crowd) }, where));
     if(!res.aDies && res.vA <= BRINK_LEFT) markNight(g, "brink", Object.assign({ left:Math.max(0, rnd(res.vA)) }, where));
@@ -16896,7 +16920,7 @@ function doVenatio(d, gid, offer, tactic, pending, choice){
   if(res.killed){
     const purse = offer.purse;
     d.gold += purse;
-    g.wins++;
+    /* his win went on the record above, before firstBlood was asked — see the note there */
     const fg = rnd((t.fameGain*1.35 + res.crowd/14) * B.fear * kitShow(kitMods(g.kit, g.cls, g)));
     d.fame += fg;
     g.pfame += rnd(fg*0.35);            // the crowd cheers the kill, not the man
@@ -17108,6 +17132,153 @@ function doPairFight(d, ids, offer, tactic, pending, choice){
     pair:true, tier:offer.tier, stakes:offer.stakes, festival:offer.festival,
     A:clones.map((c,i)=>({ name:c.name, nick:c.nick, cls:c.cls, kit:c.kit, scars:c.scars||[], sub:"your house", fem:isF(c), bore:boreOf(c) })),
     B:opps.map(o=>({ name:o.name, nick:o.nick, cls:o.cls, kit:o.kit, scars:marksOf(o), sub:o.house?`House ${o.house}`:"the pits", fem:isF(o), bore:boreOf(o) })) };
+}
+
+/* ---- THE TRAINING SQUARE — phase queue #232 ----
+   Two moments in this game already stop the whole yard to watch two of your own men fight, and
+   until now neither called a fight engine. `EVENTS.feud`'s "put them on the sand" branch settled a
+   named duel with one `power()` call a side, a comparison, and a flat 16% injury roll on the
+   loser — "with wooden swords and the doctore counting," said the text, and none of that was
+   simulated. `holdTourney` is worse in one respect: it ranks the roster by a `score()` formula
+   with an `R()*24` noise term and declares `ranked[0]` the winner having fought nobody at all.
+   Meanwhile the twelve-round beat loop next door is the most developed code in the file and has
+   only ever been pointed at other people's houses.
+
+   This is the fifth resolver, and — following the precedent `simulatePair` sets in the comment
+   just below, written "apart from simulateFight on purpose" — it is a sibling, not a parameter on
+   the single bout. What makes it a spar is not the flavour. It is STRUCTURALLY unable to kill:
+   there is no `fell`/appeal/missio block here to reach, no `stakes` to pass, and a man stops when
+   his hands come up at a floor far above the one an edged bout ends on. The worst he carries out
+   of this square is a limp, and that is a property of the code, not a promise in the prose.
+
+   THE ODDS ARE NOT NEW. Measured against the branch it replaces (`probes/spar.mjs`, 20,000
+   pairings): the old single roll made the better man a 60% favourite at a 1.10 power ratio, 75%
+   at 1.15, 90% at 1.30, and a dead-level pair a coin. Six rounds of averaging sharpen a contest
+   on their own — the sum of six draws is far more reliable than one — so `SPAR_SWING` is sized
+   wide, against that measured curve, to land back on it. The fight is shown now; it is not
+   re-priced. */
+const SPAR_ROUNDS = 6;      /* half of simulateFight's twelve, and no appeal at the end of them */
+const SPAR_YIELD  = 44;     /* hands up. The edged bout is still standing at 20 and dying at it */
+const SPAR_CAP    = 26;     /* the most one wooden blow can take, applied after every multiplier */
+const SPAR_SWING  = 1.06;   /* the per-round draw, sized in probes/spar.mjs to hold the old curve */
+const SPAR_HURT   = 0.28;   /* and the injury coefficient sized the same way — see the feud branch */
+function simulateSpar(A, B, tA, ctx, opts){
+  const O = opts || {}, C = ctx || {};
+  /* both men fight measured: this is the doctore's square, not a card, and nobody is
+     being paid to press. `opts.foeTac`/`opts.swing` exist for the probe that sized the
+     swing against the old branch's curve — never set in play. */
+  const tB = O.foeTac || "measured";
+  const swing = O.swing || SPAR_SWING;
+  const beats = [];
+  A.mods = kitMods(A.kit, A.cls, A); B.mods = kitMods(B.kit, B.cls, B);
+  const smA = 55 + (A.end||50)*0.6, smB = 55 + (B.end||50)*0.6;
+  let vA = 100, vB = 100, sA = smA, sB = smB, mom = 0, round = 0;
+  let winner = null, yielded = false;
+  /* the worst each man wore, and where — so the caller's injury roll can follow the fight that
+     actually happened instead of the flat 16% coin the feud branch used to toss */
+  const worst = { A:{ dmg:0, target:null }, B:{ dmg:0, target:null } };
+  const push = (kind, text, extra) => beats.push(Object.assign({
+    kind, text, actor:null, round,
+    vA:clamp(vA,0,100), vB:clamp(vB,0,100),
+    sA:clamp(sA/smA*100,0,100), sB:clamp(sB/smB*100,0,100),
+    mom:clamp(mom,-3,3), crowd:0, spar:true
+  }, extra||{}));
+
+  push("intro", `${A.name} and ${B.name} take the square with wooden swords, and the yard stops what it is doing to watch.`);
+  for(let r=1; r<=SPAR_ROUNDS && !winner; r++){
+    round = r;
+    const drawA = 1 - swing/2 + R()*swing, drawB = 1 - swing/2 + R()*swing;
+    const pA = power(A, tA, B.cls,  mom, 0.97+R()*0.06) * gasOf(A, sA, smA) * Math.max(0.05, drawA);
+    const pB = power(B, tB, A.cls, -mom, 0.97+R()*0.06) * gasOf(B, sB, smB) * Math.max(0.05, drawB);
+    sA -= TAC_WIND(tA) * (1 - A.mods.spd*0.5);
+    sB -= TAC_WIND(tB) * (1 - B.mods.spd*0.5);
+    const isA = pA >= pB;
+    const hit = isA ? A : B, took = isA ? B : A;
+    const diff = Math.abs(pA - pB);
+    /* the board still turns a wooden blade, and the quick man is still not there when it lands */
+    const covD = (took.mods && took.mods.cover) || 0;
+    const turned = diff < 6 || R() < covD*0.16 + (1-covD)*(0.02 + clamp(((took.agi||50)-30)/100, 0, 0.7)*0.08);
+    if(turned){
+      mom = mom>0 ? mom-1 : mom<0 ? mom+1 : 0;
+      push("graze", `${took.name} turns it aside, and the two of them come back to the middle.`, { actor:isA?"B":"A" });
+      continue;
+    }
+    const tgt = pick(TARGETS), move = pick(ATTACKS[hit.cls]);
+    /* wooden swords: a bruise, not a wound. The edged bout's own damage line starts at 5 and runs
+       out through signature multipliers with nothing above it; this one has no signature and a
+       hard ceiling applied LAST, after the target and the kit — which is what makes SPAR_YIELD a
+       real floor. A man cannot be taken below yield-minus-one-blow, so the worst anyone walks out
+       of this square on is SPAR_YIELD - SPAR_CAP, and that is arithmetic, not flavour. */
+    let dmg = (4 + diff/11 + (hit.str||50)/22) * tgt[2] * (1 + hit.mods.atk*0.4) * (1 - took.mods.def*0.6);
+    dmg = clamp(dmg, 2, SPAR_CAP);
+    const wore = isA ? "B" : "A";
+    if(dmg > worst[wore].dmg) worst[wore] = { dmg, target:tgt[0] };
+    if(isA){ vB = clamp(vB-dmg, 0, 100); mom = clamp(mom+1,-3,3); }
+    else   { vA = clamp(vA-dmg, 0, 100); mom = clamp(mom-1,-3,3); }
+    push(dmg>=14?"hit":"graze", `${hit.name} ${move[1]} and ${took.name} wears it on the ${tgt[0]}.`,
+      { actor:isA?"A":"B", target:tgt[0], tx:tgt[1][0], ty:tgt[1][1], dmg:rnd(dmg) });
+    if(vA<=SPAR_YIELD || vB<=SPAR_YIELD){
+      yielded = true;
+      winner = vA<=SPAR_YIELD ? (vB<=SPAR_YIELD ? (vA>=vB?"A":"B") : "B") : "A";
+      const w = winner==="A"?A:B, l = winner==="A"?B:A;
+      push("yield", `${l.name} puts his hands up, and the doctore steps in before anybody's blood is up enough to argue. ${w.name} has the better of it.`,
+        { actor:winner });
+    }
+  }
+  if(!winner){
+    /* nobody's hands came up, so it goes on the count — the thing the doctore was there for */
+    winner = vA===vB ? (R()<0.5?"A":"B") : (vA>vB ? "A" : "B");
+    const w = winner==="A"?A:B, l = winner==="A"?B:A;
+    push("yield", `Six exchanges and neither man will give it up, so the doctore calls it himself: ${w.name}, on what he did with the ones that landed. ${l.name} does not agree and knows better than to say so.`,
+      { actor:winner });
+  }
+  return { beats, winner, rounds:round, yielded, vA:clamp(vA,0,100), vB:clamp(vB,0,100),
+    worst, hardest:rnd(Math.max(worst.A.dmg, worst.B.dmg)), spar:true };
+}
+
+/* ---- AND NOW SOMEBODY ACTUALLY FIGHTS IT — phase queue #232 ----
+   `EVENTS.feud`'s "put them on the sand" branch was the whole duel: two power() calls, one
+   comparison against a pair of independent 0.8-1.3 rolls, and a flat 16% coin on the loser — under
+   a line of prose about wooden swords and the doctore counting that described none of it. It goes
+   through the fifth engine now: six rounds, a real yield, and a loser who carries out an injury
+   keyed to the blow he actually wore and where it landed. Measured (probes/spar.mjs) it lands
+   within 1.4 points of the odds it replaces at every power ratio. The scene was always written;
+   now it happens.
+
+   It lives HERE rather than in the table because `bulk` is right about what that table is: fifty-
+   eight events, where length is content. A fight belongs beside the engine that resolves it, and
+   the branch is a call. The aftermath is deliberately unchanged — the same morale, form, fatigue,
+   unrest, craft-rep and tie removal the branch has always paid. Only the fight is new. */
+function yardDuel(d, a, b, t, others){
+  const res = simulateSpar(clone(a), clone(b), "measured", { d }, {});
+  const [w, l] = res.winner==="A" ? [a,b] : [b,a];
+  const wore = res.winner==="A" ? res.worst.B : res.worst.A;
+  const vL   = res.winner==="A" ? res.vB : res.vA;
+  if(t) d.ties = tieList(d).filter(x=>x!==t);
+  [a,b].forEach(g=>{ g.fatigue = clamp(g.fatigue+20,0,100); });
+  w.morale = clamp(w.morale+16,0,100); w.pfame += 4; formShift(d, w, 10, `settled it with ${l.name}`);
+  l.morale = clamp(l.morale-18,0,100); l.defiance = clamp(l.defiance+7,0,100); formShift(d, l, -12, `lost to ${w.name} in the yard`);
+  /* SPAR_HURT was sized in probes/spar.mjs to hold the flat 16% this replaces — measured 15.6%
+     aggregate — while making WHICH duels hurt somebody mean something: 17.9% when a man's hands
+     went up, 12.2% when it went to the doctore's count. Wooden swords, so the weeks come down;
+     the part of him it lands on is the part the fight actually found. */
+  if(R() < clamp((100-vL)/100 * SPAR_HURT, 0.03, 0.34)){
+    const inj = injuryFor(wore.target || "flank", false);
+    l.injury = { name:inj.name, weeks:Math.max(1, Math.round(inj.weeks*0.6)), pen:inj.pen, part:inj.part };
+    l.status="injured"; l.sparWith=null; l.regimen="palus";
+  }
+  d.unrest = clamp(d.unrest-5,0,100);
+  others().forEach(o=>{ o.morale = clamp(o.morale+4,0,100); });
+  addRep(d, "craft", 4);
+  /* the hardest thing that landed, in the fight's own words, so the answer the player reads is
+     the bout that was fought and not a summary of one */
+  const big = res.beats.filter(x=>x.kind==="hit").sort((x,y)=>(y.dmg||0)-(x.dmg||0))[0];
+  return `You put them on the sand in front of everybody with wooden swords and the doctore counting. `
+    + (big ? `${big.text} ` : "")
+    + (res.yielded
+        ? `${res.rounds} exchange${res.rounds===1?"":"s"} in, ${l.name}'s hands go up.`
+        : `Six exchanges and neither would give it up, so the doctore called it on what landed.`)
+    + ` ${w.name} has the better of it. Whatever it was is finished, in the only way this trade knows how to finish anything.`;
 }
 
 /* ---- PAIR BOUTS ----
@@ -18439,23 +18610,7 @@ const EVENTS = {
       const t = tieBetween(d, a.id, b.id);
       const others = () => d.gladiators.filter(o=>o.status==="active" && o.id!==a.id && o.id!==b.id);
 
-      if(i===0){
-        /* the only honest answer this trade has */
-        const pa = power(Object.assign(clone(a),{mods:kitMods(a.kit,a.cls,a)}),"measured",b.cls,0,1);
-        const pb = power(Object.assign(clone(b),{mods:kitMods(b.kit,b.cls,b)}),"measured",a.cls,0,1);
-        const aWins = pa*(0.8+R()*0.5) > pb*(0.8+R()*0.5);
-        const [w, l] = aWins ? [a,b] : [b,a];
-        if(t) d.ties = tieList(d).filter(x=>x!==t);
-        [a,b].forEach(g=>{ g.fatigue = clamp(g.fatigue+20,0,100); });
-        w.morale = clamp(w.morale+16,0,100); w.pfame += 4; formShift(d, w, 10, `settled it with ${l.name}`);
-        l.morale = clamp(l.morale-18,0,100); l.defiance = clamp(l.defiance+7,0,100); formShift(d, l, -12, `lost to ${w.name} in the yard`);
-        if(R()<0.16){ const inj = INJURIES[ri(0,2)];
-          l.injury={name:inj[0],weeks:inj[1],pen:inj[2]}; l.status="injured"; l.sparWith=null; l.regimen="palus"; }
-        d.unrest = clamp(d.unrest-5,0,100);
-        others().forEach(o=>{ o.morale = clamp(o.morale+4,0,100); });
-        addRep(d, "craft", 4);
-        return `You put them on the sand in front of everybody with wooden swords and the doctore counting. ${w.name} has the better of it. Whatever it was is finished, in the only way this trade knows how to finish anything.`;
-      }
+      if(i===0) return yardDuel(d, a, b, t, others);
 
       if(i===1){
         b.benched = { weeks:4, why:`kept apart from ${a.name}` };
@@ -30955,6 +31110,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     romePrize, ROME_PRIZES, ROME_TURNS, RT_KEYS, ROME_FAME, ROME_COOLDOWN,
     /* the four engines and the four ways into them */
     simulateFight, simulatePair, simulateMelee, simulateVenatio,
+    simulateSpar, SPAR_ROUNDS, SPAR_YIELD, SPAR_CAP, SPAR_SWING,   /* the fifth engine — #232 */
     doFight, doPairFight, doMelee, doVenatio,
     /* the week, and what it writes down */
     endWeek, bookBout, bookOf, newBook, chron, chronAll, bookSays,
