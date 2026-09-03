@@ -2428,6 +2428,71 @@ but two arms leaning the same way is the thesis of #207 arriving from an unexpec
 the game may genuinely be a notch harder when its numbers stop flattering you. #229 (surfacing the
 runway when it turns short) is the counterpart and stays queued.
 
+### v3.177.0 — #219: the first half was the instrument, the second half was exactly right
+
+The depth ledger's second. The item makes two claims and they came apart in opposite directions.
+
+**"BLESSED ON 2.3% OF WEEKS, VOWS NEVER TAKEN (ROPE)."** The rope's own `rites` lever read
+
+```js
+if(!d.blessing && spare() > 3500) …
+```
+
+and `d.blessing` is **never cleared** — it holds `{god, until}`, and `blessOf(d)` compares that
+week against the field, which is why every panel in the game reads the function and not the field.
+So the first offering a rope ever made was also its last, for the life of the house. Measured
+(`probes/temple.mjs`): 10 houses over 1,637 weeks under `rites:true` made **0 offerings and swore 0
+vows**, and were indistinguishable from a rope with the lever off at ~2% blessed weeks. That is the
+item's 2.3%, and it is a sentence about the lever.
+
+Fixed — and the floors with it, which asked 3,500 spare for an offering and **nine thousand** for a
+vow at a shop whose cheapest god wants about 300 — the same rope is blessed on **43.6%** of weeks
+with a vow standing on **38.8%**; a policy that prays on every cooldown reaches **70.6%**. `temple`'s
+own note has said the same thing since v2.52.0: "a policy that keeps the rites reaches 31.6%
+blessing uptime". The temple was never furniture.
+
+**And it is opt-in now.** No check in the suite passes `rites`, so this was a trap rather than a
+live fault — #230's `wantStakes` exactly. A dead lever that starts working silently changes 136
+checks: blessings mend wounds half again as fast, fatten purses and buy mercy, and every check in
+the suite was written against a rope that made no offerings.
+
+**"THE GODS' EFFECTS ARRIVE UNSIGNED."** True, and it was not close. Across 160 weeks with a
+blessing kept riding: **0 of 2,582 bout beats and 0 of 606 chronicle lines** named one of the five
+gods. The offering line at the altar was the only place any of them was ever mentioned, and that is
+the receipt for the purchase, not the goods.
+
+Three of the five sign the moment they change something now, each priced by differencing the
+engine's own function rather than by a second formula:
+
+| god | the moment | the price |
+|---|---|---|
+| Fortuna | the appeal, spared **and** killed | `blessWorth` — `saluteWorth`'s counterfactual with her 9 points of `ctx.fav` taken back out |
+| Aesculapius | the table, when a man gets up | the healer's share of the week's mending rate, banked on the wound |
+| Victoria | the result's own summary | the purse minus the purse without her multiplier |
+
+Measured, Fortuna is worth **+2.0 points of spare odds on average and up to +12.4** — the salute,
+measured the same way for #209, is +4.7 — so she is a real term and she was silent.
+
+**AND ALL FIVE KEEP A RECEIPT.** `blessAdd` banks what a blessing has actually DONE — not what it
+offered — and the temple panel prints it under the boon: *"So far: 5 weeks taken off the mending."*
+Mars and Jupiter move standing numbers a little every week and have no moment to sign, so the
+receipt is the whole of their signature. It counts the clamp honestly: Jupiter against patrons
+already devoted adds nothing and claims nothing, and an arm holds that.
+
+After: 3 of 2,585 beats, 11 of 610 chronicle lines and 12 of 395 result lines name a god — on the
+bouts and the weeks where one actually did something.
+
+**A SABOTAGE THAT PASSED, AND WHAT IT EARNED.** Silencing only the *spared* branch of Fortuna's
+beat walked straight past the first draft of the check, which took any wheel beat at all. A blessed
+LOSS reading like an ordinary one is the same fault as a blessed win, so both branches are held
+now, separately — and both sabotages fail.
+
+`simulateFight` and `doFight` both went over their `bulk` allowances, and the rule is split before
+raising: the appeal's two signatures are built in `askSigns` and the bout's two banked in
+`blessBout`, which leaves both functions smaller than they started.
+
+New check `altar` (136 → 137), five arms, sabotaged eight ways.
+
 ### v3.176.0 — #218: Rome happens, and the term the item named is not the one that shuts it
 
 The depth ledger, first of the four still queued. The item has a headline, a diagnosis and a
@@ -4216,7 +4281,7 @@ never doing the thing the item accused it of.
 
 > **Gameplay** ~~#207~~ (v3.156.0 — half-refuted, and the bill was missing two salaries) · ~~#208~~ (closed — refuted, the survey's own artifact; true median 4–5 bouts) · ~~#209~~ (v3.157.0 — half already shipped in #166; the verdict now names the salute) · ~~#210~~ (v3.158.0 — refuted; three protections found, and now guarded) · ~~#211~~ (v3.159.0 — refuted; `agendaTop` has no call sites) — **ledger closed, 5 of 5 refuted**
 > **Graphics** ~~#212~~ (v3.160.0 — TRUE; six of the nine great works now stand in the drawing, 0 → 51 elements) · ~~#213~~ (v3.161.0 — half-refuted; the row already tracked the level, and did it at ΔE 1.17–2.47 against a just-noticeable 2.3) · ~~#214~~ (v3.162.0 — TRUE; the 22-state figure had ONE call site, now on every roster and block row) · ~~#215~~ (v3.163.0 — TRUE; four graded suns and Saturnalia's lamps, at zero ink flips and 4.13:1 worst) · ~~#216~~ (v3.164.0 — half-refuted; the machinery applied, his scars were 0 on 481 of 481, and one snapshot door passed no `bore` at all) — **ledger closed, 5 of 5**
-> **Depth** ~~#217~~ (v3.170.0 — the pull was already there on 75.9% of weeks; the census refused to count the stone and priced a builder at a third of a hoarder) · ~~#218~~ (v3.176.0 — Rome happens: 14 letters to 9 of 16 houses at the item's own horizon. The senator was the last term standing on 0 of 1,347 shut weeks; `romeProved` is the wall, and the agenda was the dark thing) · #219 · #220 · #221
+> **Depth** ~~#217~~ (v3.170.0 — the pull was already there on 75.9% of weeks; the census refused to count the stone and priced a builder at a third of a hoarder) · ~~#218~~ (v3.176.0 — Rome happens: 14 letters to 9 of 16 houses at the item's own horizon. The senator was the last term standing on 0 of 1,347 shut weeks; `romeProved` is the wall, and the agenda was the dark thing) · ~~#219~~ (v3.177.0 — the 2.3% was the rope's own lever reading a field that is never cleared, so its first offering was its last; a working rope is blessed on 43.6% of weeks. The unsigned half was exact: 0 of 2,582 beats named a god) · #220 · #221
 > **Story** ~~#222~~ (v3.165.0 — headline right, diagnosis wrong; a healing wound deleted 67% of sagas, third act 28% → 64%) · ~~#223~~ (v3.166.0 — direction right, ranking wrong; the top sentence was the medicus table, not mercy. Top-10 share 21.6% → 13.6%) · ~~#224~~ (v3.167.0 — the headline was the rope's artifact; the real fault was that never answering beat every answer on the list) · ~~#225~~ (v3.168.0 — headline right, diagnosis blamed the respawn; the fault was that a feud could not be LOST. 77.1% of weeks → 36.3%, six grudge matches a feud → one) · ~~#226~~ (v3.169.0 — right, and the heir was a son the house had never had: `heirEligible` read the lanista's age and never his household. Family beats 25 → 103) — **the story ledger is closed, 5 of 5**
 > **Mechanics** ~~#227~~ (v3.171.0 — every limb refuted: fame is the ladder's commonest wall at 30.3%, and the "fame sink" pays fame out) · ~~#228~~ (v3.172.0 — the figures are `pool[0]`; a hunt was already on 52.5% of cards. The calendar now forces the engines it never could) · ~~#229~~ (v3.173.0 — true, and understated: the agenda warned a dying house on 1.7% of its short weeks and told it to go building on 57.1%) · ~~#230~~ (v3.174.0 — the counter measures which CARD was taken, not what the sand rolled; the real fault was the town breaking `wantStakes`) · ~~#231~~ (v3.175.0 — three limbs already answered; the fourth it did not name: the word banded `rateMan` and the sand rolls `winChance`, so "even, near enough" was a bout lost two times in three)
 
@@ -4358,11 +4423,17 @@ silent on the 94% that are a multi-year climb. And the one lever the game sells 
 shut it: the senator's favour costs 34 against a bar of 70 and a cap of 100, so calling it from
 the bar always drops him under it — **816 of 816**. See the release note.
 
-**#219 — The temple is furniture.** Blessed on 2.3% of weeks, vows never taken **(rope)**, while
-the altar ledger (v3.153.0) made the shop legible. The gods' effects are real but arrive unsigned —
-a blessed win reads exactly like an ordinary one. Recommend outcomes name the god when a blessing
-worked (Fortuna's finger, Aesculapius at the bedside), so piety visibly earns its denarii and the
-2.3% has a reason to rise.
+**#219 — THE FIRST HALF WAS THE INSTRUMENT, THE SECOND HALF WAS EXACTLY RIGHT. Shipped v3.177.0.**
+The rope's `rites` lever read `d.blessing` — a field that is never cleared, which is why every
+panel reads `blessOf(d)` instead — so the first offering a rope ever made was its last. Measured:
+**0 offerings and 0 vows in 1,637 weeks** under `rites:true`, indistinguishable from the lever
+being off. That is the item's 2.3%. Fixed (and made opt-in, since no check passes `rites` and a
+dead lever that starts working changes 136 of them), the same rope is blessed on **43.6%** of weeks
+with a vow standing on 38.8%. The temple was never furniture. The unsigned half was exact: **0 of
+2,582 bout beats and 0 of 606 chronicle lines** named a god. Fortuna now signs the appeal both ways
+round — priced at **+2.0 points of spare odds on average, up to +12.4**, by the same counterfactual
+#209 used for the salute — Aesculapius signs the table, Victoria the purse, and all five keep a
+receipt of what they have actually done on the temple panel. See the release note.
 
 **#220 — A shelf of systems a long run never meets: gambits 0, courts 0, pacts 1, prisoner lots 2 —
 in sixteen runs.** Some of that is policy **(rope)**, but a system reachable only off-policy for

@@ -291,7 +291,11 @@ export async function installRope(p){
 
        `lanista(d, opts)` plays one week and RETURNS WHAT IT DID, so a caller can assert on behaviour
        rather than intent. Every part can be switched off through `opts` for a control arm:
-         cells, buy, doctore, build, rites, census, staff, school, heir, rome, bout  (all default true)
+         cells, buy, doctore, build, census, staff, school, heir, rome, bout  (all default true)
+         rites         (default OFF, #219 — it read `d.blessing`, which is never cleared, so the
+                        first offering a rope made was its last and the lever measured nothing.
+                        Fixed and made opt-in: a working rope that prays changes wounds, purses
+                        and mercy, and the suite was written against one that did not.)
          protect       (one man fed the whole card and nobody else on it, sticky until he is freed,
                         sold or buried. #190's own falsifier, which had never been run: the item
                         claims `wins >= 10` is out of reach of a three-bout median career, and this
@@ -505,11 +509,36 @@ export async function installRope(p){
           if(pick && fin(A.beginWork,[d,pick.k]) === true) bump("commissioned");
         }
       }
-      if(on("rites")){
-        if(!d.blessing && spare() > 3500)
-          for(const gd of Object.keys(A.GODS||{})) if(fin(A.makeOffering,[d,gd])){ bump("offering"); break; }
-        if(!d.vow && spare() > 9000)
-          for(const gd of Object.keys(A.GODS||{})) if(fin(A.swearVow,[d,gd])){ bump("vow"); break; }
+      /* ---- A LEVER THAT DISABLED ITSELF AFTER ONE USE, AND NOTHING HAD EVER PULLED IT (#219) ----
+         `d.blessing` is never cleared — it holds `{god, until}` and `blessOf` compares `until`
+         against the week, which is why every panel in the game reads `blessOf(d)` and not the
+         field. This read the FIELD, so the first offering a rope ever made was also its last,
+         for the life of the house. Measured before the fix: 10 houses over 1,637 weeks under
+         `rites:true` made **0 offerings and swore 0 vows** and were indistinguishable from the
+         default rope at 2.5% blessed weeks — which is most of what "the temple is furniture"
+         was measuring. No check in the suite passes `rites`, so it was a trap rather than a live
+         fault, the same shape as #230's `wantStakes`.
+         The floors went with it: 3,500 spare for an offering and NINE THOUSAND for a vow, over a
+         reserve, on a shop whose cheapest god asks about 300. They are the altar's own price and
+         the vow's own stake now, so the lever measures the temple rather than the floor. */
+      /* AND IT IS OPT-IN NOW, like `favours`. A dead lever that starts working is a lever that
+         silently changes every measurement in the suite: blessings mend wounds half again as
+         fast, fatten purses and buy mercy, and 136 checks were written against a rope that made
+         zero offerings. `rites:true` asks for it; nothing else gets it. */
+      if(o.rites){
+        const blessed = typeof A.blessOf === "function" ? A.blessOf(d) : d.blessing;
+        if(!blessed && (!A.offeringReady || A.offeringReady(d))){
+          /* not `Object.keys(...)[0]`, which is Mars and only ever Mars — walk from a different
+             god each week so a sweep prices the five apart instead of one of them five times */
+          const gods = Object.keys(A.GODS||{});
+          for(let i = 0; i < gods.length; i++){
+            const gd = gods[(d.week + i) % gods.length];
+            if((A.GODS[gd].cost(d)) <= spare() && fin(A.makeOffering,[d,gd])){ bump("offering"); break; }
+          }
+        }
+        if(!d.vow && typeof A.vowStake === "function" && A.vowStake(d) <= spare()
+           && fin(A.swearVow,[d, Object.keys(A.GODS||{})[(d.week) % Object.keys(A.GODS||{}).length]]))
+          bump("vow");
       }
       /* the census must be CLAIMED — `riseWeek` only fills the meter, and this is one of the two
          gates on Rome. No policy of mine called it until v2.93.0, which is why every earlier sweep
