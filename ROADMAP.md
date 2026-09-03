@@ -2428,6 +2428,72 @@ but two arms leaning the same way is the thesis of #207 arriving from an unexpec
 the game may genuinely be a notch harder when its numbers stop flattering you. #229 (surfacing the
 runway when it turns short) is the counterpart and stays queued.
 
+### v3.175.0 — #231: the read was a rating and the sand rolls a probability
+
+The last item of the mechanics ledger, and three of its four limbs were already answered in the
+source before a probe was written.
+
+**WHAT THE ITEM ASKED FOR, AND WHAT WAS ALREADY THERE.** The stakes are not 50 / 150 / 400 —
+`stakesFor(d)` scales them off the purse and `STAKES_MIN` is a **floor**, so those three are what a
+broke house sees. The wager panel is not "odds priced in prose": it prints
+`oddsWord(oddsFor(S, betChance(...)))`, and the note over `betChance` records the release that made
+the panel and `makeBet` take that probability from one place. And the read is not beside the
+stakes at all — the word is drawn at arena step 1, the stake chips at step 2.
+
+**THE LIMB THE ITEM DID NOT NAME IS THE ONE THAT MATTERED.** `readMatch` banded `rateMan` — its own
+comment calls it *"the crude rating behind every 'who would be favoured' line — power() without a
+bout around it"*: six stats on fixed weights, an injury penalty, a flat 1.12/0.9 for a counter. The
+sand rolls `winChance`, which has morale, fatigue, footing, kit, showmanship, regard, the real
+1.045 counter, the tactic, `FOE_EDGE`, and an odds-scale sharpening fitted to measured outcomes.
+Two different functions — and the map between them is **steep**, so a band four points wide on the
+rating was forty-five points wide on the roll.
+
+Measured (`probes/read.mjs`, 8 houses over 676 weeks, 37,217 pairings), the median win chance under
+each word:
+
+| the word the panel gave | median win chance |
+|---|---|
+| would be favoured | 87.7% |
+| has a little the better of it | 56.2% |
+| even, near enough | **31.0%** |
+| would be second best | 10.7% |
+| is overmatched | 2.5% |
+
+**The whole scale sat about one band low, and it flattered.** "Even, near enough" was a bout the
+sand loses two times in three; **429 of 526** of them on the card fell outside 42–58. "Would be
+second best" was a one-in-eight slaughter. The roll calls a bout even at a `rateMan` edge of
+**0.018**, not 0. Levelling one input at a time on the 849 pairings off `winChance`'s own 2%–98%
+clamp: morale, fatigue, footing and regard move the roll a median **5.3** points (p90 19.4), kit
+**4.3** (p90 15), the tactic 1.4, showmanship 1.6 — none of it visible to `rateMan`.
+
+**AND THE WORD IS NOT DECORATION.** `matchAgainst` sorts on that number and the foe's file prints
+its top five under "Against your house" — the panel that answers *who do I send*. On **1,009 of
+5,382 foes (18.7%)** that list was headed by a man who was not the best man by the roll, throwing
+away a median 4.6 points of win chance and up to **57.9**.
+
+**THE FIX.** The word bands the roll's own probability, on cuts symmetric about even
+(0.38 / 0.46 / 0.54 / 0.62), and every panel that prints it prints the figure beside it — through
+one component, `<ReadVal/>`, so none of them can print the word without the number. The chooser
+passes the same prep and the same tactic the sine warning three lines below it quotes, so the two
+figures on one row are one call. After: **0 of 37,217** readings point the other way from the roll,
+"even, near enough" runs 46 to 54, and the watched list heads with the best man on 5,382 of 5,382.
+
+**THE BLIND RANKING STAYS ON `rateMan`, ON PURPOSE.** `rateMan(foe)` is one number across your whole
+yard, so the order it gives depends on your men and his class — both public — and gives nothing
+away about a man nobody has paid to watch. `winChance` would order by his real stats and quietly
+hand over the reading the scouting is sold for. The list is still wrong-ordered behind the fog on
+18.7% of foes, and the panel says so in as many words: *"Style is all you have to go on until he
+has been watched."* That is the fog working, not the fault.
+
+**AND A GUARD THAT COULD NEVER FIRE.** `crown`'s arm on the same function asked
+`blind.word === told.word` — and the two draw from disjoint sets, the fog saying one of three words
+and the paid reading one of `READ_CUT`'s. It could not fire, sat green through every release since
+it was written, and would have sat green through this one, which rewrote the whole of what the paid
+reading returns. It holds the bargain itself now: the paid reading carries a figure, the free one
+does not.
+
+New check `read` (134 → 135), five arms, sabotaged six ways.
+
 ### v3.174.0 — #230: the counter could not see the thing the item described
 
 The fourth item of the mechanics ledger, filed as an investigation — *"one probe to find which path
@@ -4086,7 +4152,7 @@ never doing the thing the item accused it of.
 > **Graphics** ~~#212~~ (v3.160.0 — TRUE; six of the nine great works now stand in the drawing, 0 → 51 elements) · ~~#213~~ (v3.161.0 — half-refuted; the row already tracked the level, and did it at ΔE 1.17–2.47 against a just-noticeable 2.3) · ~~#214~~ (v3.162.0 — TRUE; the 22-state figure had ONE call site, now on every roster and block row) · ~~#215~~ (v3.163.0 — TRUE; four graded suns and Saturnalia's lamps, at zero ink flips and 4.13:1 worst) · ~~#216~~ (v3.164.0 — half-refuted; the machinery applied, his scars were 0 on 481 of 481, and one snapshot door passed no `bore` at all) — **ledger closed, 5 of 5**
 > **Depth** ~~#217~~ (v3.170.0 — the pull was already there on 75.9% of weeks; the census refused to count the stone and priced a builder at a third of a hoarder) · #218 · #219 · #220 · #221
 > **Story** ~~#222~~ (v3.165.0 — headline right, diagnosis wrong; a healing wound deleted 67% of sagas, third act 28% → 64%) · ~~#223~~ (v3.166.0 — direction right, ranking wrong; the top sentence was the medicus table, not mercy. Top-10 share 21.6% → 13.6%) · ~~#224~~ (v3.167.0 — the headline was the rope's artifact; the real fault was that never answering beat every answer on the list) · ~~#225~~ (v3.168.0 — headline right, diagnosis blamed the respawn; the fault was that a feud could not be LOST. 77.1% of weeks → 36.3%, six grudge matches a feud → one) · ~~#226~~ (v3.169.0 — right, and the heir was a son the house had never had: `heirEligible` read the lanista's age and never his household. Family beats 25 → 103) — **the story ledger is closed, 5 of 5**
-> **Mechanics** ~~#227~~ (v3.171.0 — every limb refuted: fame is the ladder's commonest wall at 30.3%, and the "fame sink" pays fame out) · ~~#228~~ (v3.172.0 — the figures are `pool[0]`; a hunt was already on 52.5% of cards. The calendar now forces the engines it never could) · ~~#229~~ (v3.173.0 — true, and understated: the agenda warned a dying house on 1.7% of its short weeks and told it to go building on 57.1%) · ~~#230~~ (v3.174.0 — the counter measures which CARD was taken, not what the sand rolled; the real fault was the town breaking `wantStakes`) · #231
+> **Mechanics** ~~#227~~ (v3.171.0 — every limb refuted: fame is the ladder's commonest wall at 30.3%, and the "fame sink" pays fame out) · ~~#228~~ (v3.172.0 — the figures are `pool[0]`; a hunt was already on 52.5% of cards. The calendar now forces the engines it never could) · ~~#229~~ (v3.173.0 — true, and understated: the agenda warned a dying house on 1.7% of its short weeks and told it to go building on 57.1%) · ~~#230~~ (v3.174.0 — the counter measures which CARD was taken, not what the sand rolled; the real fault was the town breaking `wantStakes`) · ~~#231~~ (v3.175.0 — three limbs already answered; the fourth it did not name: the word banded `rateMan` and the sand rolls `winChance`, so "even, near enough" was a bout lost two times in three)
 
 
 Asked for as five ledgers — gameplay, graphics, depth, story, mechanics — five items each. Not a
@@ -4321,12 +4387,18 @@ stakes other than the ones asked for**. Small, real, and exactly the class #150 
 card promised one thing and the sand rolled another. This one is an *investigation*, not a design:
 one probe to find which path drops the stakes, then the fix.
 
-**#231 — The wager asks for exact coin against a read given in words.** The pre-fight card offers
-**50d / 150d / 400d** stakes beside a judgement like "would be second best" or "even, near enough"
-— a bet priced in denarii against odds priced in prose, on the same panel where the engine holds a
-real number. Recommend the doctore's read price the wager the way the missio line already prices
-mercy ("if he falls now — 13 in the hundred"): the same figure the roll uses, shown before coin
-goes down, per the house rule that a displayed number and the roll behind it are the same function.
+**#231 — THREE LIMBS ALREADY ANSWERED, AND THE FOURTH WAS THE ONE IT DID NOT NAME. Shipped
+v3.175.0.** The stakes are not 50/150/400 — `stakesFor` scales them off the purse and those three
+are a floor. The wager panel already prints a real number, struck on the probability `makeBet`
+places the bet on. The read is not beside the stakes: the word is at arena step 1, the chips at
+step 2. What was wrong is that `readMatch` banded **`rateMan`** — six stats on fixed weights — while
+the sand rolls **`winChance`**, which has morale, fatigue, kit, showmanship, the real counter, the
+tactic and an odds-scale sharpening. The map between them is steep, so the whole scale sat a band
+low and flattered: **"even, near enough" had a median win chance of 31 in a hundred**, and 429 of
+526 of them on the card fell outside 42–58. And `matchAgainst` sorts on that number — **1,009 of
+5,382 foes (18.7%)** got a "Against your house" list headed by the wrong man, a median 4.6 points
+of win chance thrown away and up to 57.9. The word bands the roll now and the figure is printed
+beside it. See the release note.
 
 **What this audit did not open.** Rebellion (3 deaths in 16 runs — working as a threat), the
 circuit (43 trips, 9.3% of weeks away — healthy), patrons (3.8 a house — universal), the war (8

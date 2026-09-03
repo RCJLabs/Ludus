@@ -12686,23 +12686,65 @@ function manTells(d, f){
 }
 /* One pairing, read the same way wherever it is asked: on his file, on the picker,
    on the way to the sand. Without a reading it can only talk about style. */
-function readMatch(g, foe, seen){
+/* ---- THE WORD IS BANDED ON THE ROLL NOW, AND COMES WITH THE NUMBER — #231 ----
+   The item asked for the wager to be priced against a read given in words. Three quarters of it
+   was already answered: `stakesFor` scales the stakes off the purse (50/150/400 is the floor a
+   broke house sees), the wager row prints `oddsWord(oddsFor(S, betChance(...)))` from the same
+   probability `makeBet` places the bet on, and the read is not beside the stakes at all — the
+   word is at arena step 1, the chips at step 2.
+
+   THE QUARTER IT DID NOT NAME IS THE ONE THAT MATTERED. This banded `rateMan` — "power() without
+   a bout around it": six stats on fixed weights, an injury penalty, a flat 1.12/0.9 for a counter.
+   The sand rolls `winChance`, which has morale, fatigue, footing, kit, showmanship, regard, the
+   real 1.045 counter, the tactic, FOE_EDGE, and an odds-scale sharpening fitted to measured
+   outcomes. Two different functions, and the map between them is STEEP, so a band four points
+   wide on the rating was forty-five points wide on the roll. Measured, 8 houses over 676 weeks,
+   37,217 pairings — the median win chance under each word:
+
+     would be favoured              87.7%          rateMan edge  0.14 ..  99   →  87.7%
+     has a little the better of it  56.2%                        0.04 ..  0.14 →  56.2%
+     even, near enough              31.0%                       -0.04 ..  0.04 →  31.0%
+     would be second best           10.7%                       -0.14 .. -0.04 →  10.7%
+     is overmatched                  2.5%                         -99 .. -0.14 →   2.5%
+
+   The whole scale sits about one band low: "even, near enough" was a bout the sand loses two
+   times in three, and 429 of 526 of them on the card fell outside 42–58. The roll calls a bout
+   even at a rateMan edge of 0.018, not 0. And it is not decoration — `matchAgainst` sorts on this
+   number and the foe's file prints its top five under "Against your house": on 1,009 of 5,382
+   foes (18.7%) that list named a man who was not the best man by the roll, a median 4.6 points of
+   win chance thrown away and up to 57.9.
+
+   So the word bands the roll's own probability, symmetric about even, and the panel prints the
+   figure beside it the way the sine line and the missio line already print theirs.
+
+   THE BLIND RANKING STAYS ON `rateMan`, on purpose. `rateMan(foe)` is one number across your
+   whole yard, so the ORDER it gives depends on your men and his class — both public — and gives
+   nothing away about a man nobody has paid to watch. `winChance` would order by his real stats
+   and quietly hand over the reading the scouting is sold for. */
+const READ_CUT = [[0.62, "would be favoured",             "var(--laurel)"],
+                  [0.54, "has a little the better of it", "var(--laurel)"],
+                  [0.46, "even, near enough",             "var(--ink-2)"],
+                  [0.38, "would be second best",          "var(--blood)"],
+                  [0,    "is overmatched",                "var(--blood)"]];
+const readBand = p => READ_CUT.find(b => p >= b[0]) || READ_CUT[READ_CUT.length-1];
+function readMatch(g, foe, seen, prep, tac){
   if(!g || !foe) return null;
   const counter = !!(COUNTERS[g.cls] && COUNTERS[g.cls]===foe.cls);
   const against = !!(COUNTERS[foe.cls] && COUNTERS[foe.cls]===g.cls);
   const rf = rateMan(foe);
   const rg = rateMan(g) * (counter?1.12:1) * (against?0.9:1);
-  const edge = (rg - rf) / Math.max(1, rf);
-  const word = !seen
-    ? (counter ? "has the shape for him" : against ? "gives him the match-up" : "no read")
-    : edge >  0.14 ? "would be favoured"
-    : edge >  0.04 ? "has a little the better of it"
-    : edge > -0.04 ? "even, near enough"
-    : edge > -0.14 ? "would be second best"
-    : "is overmatched";
-  const colour = !seen ? (counter?"var(--laurel)":against?"var(--blood-hi)":"var(--ink-dim)")
-    : edge>0.04 ? "var(--laurel)" : edge>-0.04 ? "var(--ink-2)" : "var(--blood)";
-  return { word, colour, edge, counter, against };
+  const rank = (rg - rf) / Math.max(1, rf);
+  /* `chance` is the roll and is always here — the sine warning quotes it whether or not anybody
+     has been watched, because a man walking into that is owed it. `pc` is what a PANEL may print,
+     and it is null until the reading is paid for. */
+  const raw = winChance(g, foe, prep || 0, tac || styleOf(g));
+  const chance = Number.isFinite(raw) ? raw : null;
+  if(!seen || chance == null) return {
+    word: counter ? "has the shape for him" : against ? "gives him the match-up" : "no read",
+    colour: counter ? "var(--laurel)" : against ? "var(--blood-hi)" : "var(--ink-dim)",
+    edge: rank, chance, pc: null, counter, against };
+  const b = readBand(chance);
+  return { word:b[1], colour:b[2], edge: chance - 0.5, chance, pc: Math.round(chance*100), counter, against };
 }
 /* how your house reads against him — vaguer until you have had him watched */
 function matchAgainst(d, f){
@@ -12710,6 +12752,22 @@ function matchAgainst(d, f){
   return activeG(d).filter(g=>canFight(g))
     .map(g=>Object.assign({ g }, readMatch(g, f, seen)))
     .sort((a,b)=>b.edge-a.edge);
+}
+/* ---- THE READING AND THE NUMBER THAT MADE IT, IN ONE PLACE — #231 ----
+   Five panels print this word: the foe's file, the two lists under it (name him, drill for him),
+   the arena chooser and the pits. A panel that printed the word without the figure would be back
+   where the item found it, so there is one component and it cannot do that.
+   It WRAPS rather than clipping: `.rowval` was fixed to wrap once already and an inline
+   nowrap-and-ellipsis overrode it two panels down, which is the note at the pits' venue row. */
+function ReadVal({ read, size }){
+  if(!read) return null;
+  return (
+    <span className="rowval" style={{fontSize:size||"var(--fs-sm)",minWidth:0,textAlign:"right",
+      whiteSpace:"normal",overflowWrap:"anywhere"}}>
+      {read.pc != null && <span className="gold">{read.pc} in a hundred · </span>}
+      <span style={{color:read.colour}}>{read.word}</span>
+    </span>
+  );
 }
 /* whether you can read the man on the other side of this particular card: a paid
    reading on his file counts, and so does an afternoon spent watching this bout. */
@@ -28670,7 +28728,7 @@ export default function App(){
                         <span className="rowname" style={{fontSize:"var(--fs-base)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                           {m.g.name}<span className="dim" style={{fontSize:"var(--fs-sm)"}}> · {m.g.cls}</span>
                         </span>
-                        <span className="rowval" style={{fontSize:"var(--fs-sm)",color:m.colour,flexShrink:0}}>{m.word}</span>
+                        <ReadVal read={m}/>
                       </div>
                     ))}
                 {!seen && <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",marginTop:6,lineHeight:1.35}}>
@@ -28720,7 +28778,7 @@ export default function App(){
                               <span style={{fontSize:"var(--fs-md)",color:"var(--ink)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                                 {m.g.name}<span className="dim" style={{fontSize:"var(--fs-sm)"}}> · {m.g.cls}</span>
                               </span>
-                              <span className="rowval" style={{fontSize:"var(--fs-sm)",color:m.colour}}>{m.word}</span>
+                              <ReadVal read={m}/>
                             </div>
                           </button>
                         ))}
@@ -28756,7 +28814,7 @@ export default function App(){
                               <span style={{fontSize:"var(--fs-md)",color:"var(--ink)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                                 {m.g.name}<span className="dim" style={{fontSize:"var(--fs-sm)"}}> · {m.g.cls}</span>
                               </span>
-                              <span className="rowval" style={{fontSize:"var(--fs-sm)",color:m.colour}}>{m.word}</span>
+                              <ReadVal read={m}/>
                             </div>
                             {busy && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>
                               {busy.fid===f.id ? `already on him · ${prepWord(m.g)}` : `would come off ${busy.name}`}
@@ -29659,7 +29717,9 @@ export default function App(){
                 : pick.kind==="melee" ? fieldAverage(o && o.field)
                 : pick.kind==="pair" ? fieldAverage(o && o.opps) : null;
               const seen = pick.kind==="single" ? foeSeen(S, o) : !!(o && o.watched);
-              const read = foe ? readMatch(g, foe, seen) : null;
+              /* the same prep and the same tactic the sine warning three lines down quotes, so
+                 the two numbers on one row are one call — #231/#150 */
+              const read = foe ? readMatch(g, foe, seen, prepFor(S, g, o), styleNow(g)) : null;
               const mate = x => { if(!multi || pick.kind!=="pair") return null; const oid = pairSel.find(i=>i!==x.id); return oid ? S.gladiators.find(y=>y.id===oid) : null; };   /* #202 — who is already picked; the marks table is at ROW_MARKS */
               return (
                 <button key={g.id} className={`optrow ${on?"on":""}`} style={{marginBottom:6,width:"100%"}}
@@ -29672,7 +29732,7 @@ export default function App(){
                     <span className="dim" style={{fontSize:"var(--fs-base)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                       {g.cls} · {GEAR[kit.weapon]?GEAR[kit.weapon].name:"unarmed"}{GEAR[kit.offhand]&&GEAR[kit.offhand].art!=="none"?` & ${GEAR[kit.offhand].name}`:""}
                     </span>
-                    {read && <span className="rowval" style={{fontSize:"var(--fs-sm)",color:read.colour,flexShrink:0}}>{read.word}</span>}
+                    {read && <ReadVal read={read}/>}
                   </div>
                   {rowMarks(S, g, o, mate(g)).map(m=><div key={m.key} style={{fontSize:"var(--fs-sm)",marginTop:3,color:m.colour}}>✦ {m.text}</div>)}
                   {pick.kind==="single" && (()=>{ const w=metWord(liveFoe(S,pick.o),g); return w?<div style={{fontSize:"var(--fs-base)",marginTop:2,color:"var(--gold)"}}>{w}</div>:null; })()}
@@ -29687,8 +29747,11 @@ export default function App(){
                   {o && o.stakes==="sine" && foe && (()=>{
                     /* and the number has to be a number. A field's average man is priced from
                        averages, and one missing field used to make the whole quote NaN — so the
-                       warning stands on its own when there is no figure to put in it. */
-                    const lose = Math.round((1 - winChance(g, foe, prepFor(S,g,o), styleNow(g))) * 100);
+                       warning stands on its own when there is no figure to put in it.
+                       It reads the figure off the row's own reading now (#231): `readMatch`
+                       carries `chance` whether or not the man has been watched, precisely so this
+                       warning — which is owed free — cannot drift from the word above it. */
+                    const lose = read && read.chance != null ? Math.round((1 - read.chance) * 100) : null;
                     const ok = Number.isFinite(lose);
                     return (<div style={{fontSize:"var(--fs-sm)",marginTop:3,color:"var(--blood)"}}>
                       {ok
@@ -29873,7 +29936,7 @@ export default function App(){
                           </div>
                           {read && <div className="flex items-center justify-between gap-2" style={{marginTop:2}}>
                             <span className="dim" style={{fontSize:"var(--fs-sm)"}}>against {me.name}</span>
-                            <span className="rowval" style={{fontSize:"var(--fs-sm)",color:read.colour}}>{read.word}</span>
+                            <ReadVal read={read}/>
                           </div>}
                           {mw && <div style={{fontSize:"var(--fs-sm)",marginTop:2,color:"var(--gold)",textAlign:"left"}}>{mw}</div>}
                         </button>
@@ -30470,7 +30533,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     makePrimusOffer, makeDefenceOffer, PRIMUS_ASK, PRIMUS_ASK_GAP,
     primusMine, primusEligible, primusWeek, PRIMUS_GATE, seedPrimus,
     /* the top rung's own reading, and the word a player is given for nothing */
-    menace, MENACE_WORDS, readMatch, fieldAverage, foeSeen, primusTake, primusLose,
+    menace, MENACE_WORDS, readMatch, matchAgainst, READ_CUT, readBand, fieldAverage, foeSeen, primusTake, primusLose,
     /* the word-scales a player reads and acts on, so a check can walk each one */
     formWord, formOf, FORM_TELL, formShift, formPower, wearWord, houseWord, warmth,
     patronWord, strainWord, favWord, favourOf, fanWord, fansOf, demeanor,
