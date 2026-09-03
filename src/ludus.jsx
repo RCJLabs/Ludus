@@ -7916,19 +7916,35 @@ const HEIRS = {
 
    A man with no son names his brother's boy, which is what `nephew` has always been for. */
 const SON_AGE = 9;     /* "they have watched him do it since he was nine" — HEIRS.son, verbatim */
+/* ---- THE BOY BEHIND THE GATE — phase queue #237 ----
+   `heirEligible` already checked for a real, specific son before offering "son" — but `nameHeir`
+   never consulted him: it drew a stranger's name from the same fabrication branch as "nephew", an
+   heir kind for which no real candidate has ever existed in game state. `eligibleSons` is the real
+   candidate list (not just a boolean), oldest first for a deterministic single-boy default, and
+   `nameHeir` below now installs the actual boy — his mentor bond and up-bringing traits included —
+   the same way `resolveToga` already does for "scion". HEIRS.son's numbers are untouched: an early
+   handover stays mechanically rougher than a patient one, on purpose. Only the identity was wrong. */
+const eligibleSons = d => (d.lanista && d.lanista.age >= 40)
+  ? livingKids(d).filter(c=>c.sex==="m" && childAge(d,c) >= SON_AGE).sort((a,b)=>a.born-b.born)
+  : [];
 const heirEligible = d => {
   const out = [];
-  if(d.lanista && d.lanista.age >= 40
-     && livingKids(d).some(c=>c.sex === "m" && childAge(d, c) >= SON_AGE)) out.push("son");
+  if(eligibleSons(d).length) out.push("son");
   out.push("nephew");
   if(d.doctore && d.doctore.fromHouse) out.push("doctore");
   return out;
 };
-function nameHeir(d, kind){
+function nameHeir(d, kind, cid){
   if(!HEIRS[kind]) return false;
-  const nm = kind==="doctore" && d.doctore ? d.doctore.name
-    : `${pick(PRAENOMINA)} ${pick(NOMINA)} ${pick(COGNOMINA)}`;
-  d.heir = { kind, name:nm, named:d.week };
+  let nm = null, extra = {};
+  if(kind==="doctore" && d.doctore) nm = d.doctore.name;
+  else if(kind==="son"){
+    const c = (cid ? domusOf(d).children.find(x=>x.id===cid) : null) || eligibleSons(d)[0];
+    if(c){ nm = c.name;
+      extra = { cid:c.id, traits:heirTraitsFromUp(c.up), mentorId:c.mentorId||null, mentorName:c.mentorName||null }; }
+  }
+  if(nm == null) nm = `${pick(PRAENOMINA)} ${pick(NOMINA)} ${pick(COGNOMINA)}`;
+  d.heir = Object.assign({ kind, name:nm, named:d.week }, extra);
   chron(d, kind==="doctore"
     ? `You put it in writing that ${nm} takes the house if you do not. He reads it twice and says nothing at all.`
     : `You put ${nm}'s name to the house in the event of your death. It is a small piece of paper and it changes what this place is.`, "good");
@@ -25566,7 +25582,7 @@ export default function App(){
   const teachSecond = (gid,to) => mut(d=>{ startSecond(d,gid,to); });
   const teachSig = (gid, key) => mut(d=>{ teachSigTo(d, gid, key); });
   const useStyle = (gid,to) => mut(d=>{ switchStyle(d,gid,to); });
-  const chooseHeir = kind => mut(d=>{ nameHeir(d, kind); });
+  const chooseHeir = (kind, cid) => mut(d=>{ nameHeir(d, kind, cid); });
   const seekMatch = () => { mut(d=>{ seekMatchNow(d); }); setSheet(null); };
   const openLicence = () => mut(d=>{ openLicenceNow(d); });
   const takeUpHouse = () => mut(d=>{ takeUpTheHouse(d); });
@@ -25992,7 +26008,9 @@ export default function App(){
           <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:7}}>
             Name nobody and this house is sold off in pieces the morning after you die. Name somebody and it goes on without you, carrying its men, its debts and none of your reputation.
           </div>
-          {heirEligible(S).map(k=>(
+          {/* "son" is a real, specific boy now, not a generic slot — one row per eligible son,
+              named and aged, so a house with two never has to guess which one the button meant */}
+          {heirEligible(S).flatMap(k => k!=="son" ? [(
             <button key={k} className="optrow" style={{marginBottom:6,padding:10}} onClick={()=>chooseHeir(k)}>
               <div className="flex items-center justify-between gap-2">
                 <span className="disp" style={{fontSize:"var(--fs-base)",color:"var(--ink-hi)"}}>{HEIRS[k].name}</span>
@@ -26002,7 +26020,17 @@ export default function App(){
               </div>
               <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2}}>{HEIRS[k].line}</div>
             </button>
-          ))}
+          )] : eligibleSons(S).map(c=>(
+            <button key={`son-${c.id}`} className="optrow" style={{marginBottom:6,padding:10}} onClick={()=>chooseHeir("son", c.id)}>
+              <div className="flex items-center justify-between gap-2">
+                <span className="disp" style={{fontSize:"var(--fs-base)",color:"var(--ink-hi)"}}>{c.name}</span>
+                <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>
+                  {childAge(S,c)} yr · keeps {Math.round(HEIRS.son.fameKeep*100)}% fame · {Math.round(HEIRS.son.favorKeep*100)}% standing
+                </span>
+              </div>
+              <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2}}>{HEIRS.son.line}</div>
+            </button>
+          )))}
         </>)}
 
         {(()=>{ const dm = domusOf(S), w = dm.wife, kids = dm.children.filter(c=>!c.dead);
@@ -30878,7 +30906,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        through it, and a probe that writes `regardOf(g) <= 18` reconstructs the gate instead */
     regardRefuse,
     /* the line of the house: who may be named, naming him, and taking it up */
-    nameHeir, heirEligible, HEIRS, houseRecord, censusWorth,   /* #154 */
+    nameHeir, heirEligible, eligibleSons, HEIRS, houseRecord, censusWorth,   /* #154 */
     /* the summit: the gate, the letter, the bar, and the trip's own clock */
     romeReady, romeProved, offerRome, romeBar, ROME_BOUTS, ROME_WEEKS_PER_BOUT, ROME_RANK,
     /* the one ladder the gate, the sheet and the week's list all read — #218 */
