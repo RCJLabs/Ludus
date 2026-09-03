@@ -3538,21 +3538,12 @@ function agenda(d){
     else if(fit <= 1 && all > fit) add(fit<=0?3:2, "men",
       fit<=0 ? "Nobody in this house can stand" : "One man is all you can send",
       `${all-fit} of ${all} are hurt, kept in, or at the far post`); }
-  /* ---- THE DOOR TO ROME, CLOSING QUIETLY ----
-     romeReady wants a senator at 70 and patron favour decays every week you do not
-     feed it. Measured over 120 weeks it slid from 70 to 2 — and the road simply shut,
-     with no line anywhere saying which of the three rungs had come undone or why. A
-     man's favour falling through the number that opens the capital is worth a word. */
-  if(!d.rome && !d.romeOffer && !d.over && romeProved(d)){   /* either proof, not only the sand */
-    const sen = patronsOf(d).filter(p=>p.rank==="senator").sort((a,b)=>b.favor-a.favor)[0];
-    const fameOk = d.fame >= romeBar(d);
-    if(sen && fameOk && sen.favor < 70)
-      add(2, "villa", `${sen.name.split(" ").pop()}'s favour has fallen below what Rome asks`,
-        `${rnd(sen.favor)} of 70 — the road is shut until he warms again`);
-    else if(sen && fameOk && sen.favor < 78)
-      add(1, "villa", `${sen.name.split(" ").pop()} is cooling, and Rome is watching him`,
-        `${rnd(sen.favor)} of 70 — feed it before it slips`);
-  }
+  /* ---- THE DOOR TO ROME, AND WHICH RUNG OF IT IS UNDONE ----
+     This was eleven lines that fired only for a senator ALREADY HELD who had cooled, and the
+     agenda spoke about Rome on 1 of 1,373 shut weeks as a result. `romeRow` walks the whole
+     ladder — the same one `romeReady` is now defined from — and decides which rung is worth a
+     line. See the note over `romeGap`. */
+  { const rr = romeRow(d); if(rr) add(rr.urgency, rr.tab, rr.label, rr.sub); }
   { const made = activeG(d).filter(g=>isMade(g) && !isMentored(g));
     const green = activeG(d).some(g=>canLearn(g));
     const tail = green ? " — put him on one of the green ones" : " — the palus is finished with them";
@@ -4331,9 +4322,16 @@ function favourWorth(d, p){
       + ((h.fame||0) > (d.fame||0) ? " — they are ahead of you" : "");
   }
   if(d.flags && d.flags.romeEarly) return "He has already said it. A name is only news in Rome once.";
-  const gap = Math.round(romeBar(d) - (d.fame||0));
+  const gap = romeShort(d);
+  /* ---- AND WHAT IT COSTS HIM, WHICH THIS LINE SOLD WITHOUT ---- #218
+     The favour is the one lever the game gives a lanista for Rome, and calling it takes 34 of the
+     patron's own favour — where the letter wants a senator at 70. So the box that says "150 off
+     Rome's bar" could be describing the act that shuts the road for the next year. It says both
+     now, and only when the number is actually about to do it. */
+  const shuts = !d.rome && p.favor >= 70 && p.favor - F.cost < 70;
   return `${senatorName(0)} to ${senatorName(1)} of name, and 150 off Rome's bar`
-    + (d.rome ? "" : gap > 0 ? ` — you are ${gap} short of it` : " — and Rome is already within reach");
+    + (d.rome ? "" : gap > 0 ? ` — you are ${gap} short of it` : " — and Rome is already within reach")
+    + (shuts ? ` · but it takes ${F.cost} of his own favour, and Rome will not take a name from a senator under 70` : "");
 }
 
 function patronWeek(d){
@@ -10716,12 +10714,21 @@ const FEATS = {
        short" while the thing actually missing was a senator who would put its name
        forward. The letter has five conditions and the sheet should name the one in
        the way rather than the one it is easiest to count. */
-    near:d=>d.rome ? `${d.rome.won} of ${ROME_BOUTS} won on the imperial sand`
-      : d.romeOffer ? "the letter is on the table"
-      : !romeProved(d) ? "Rome has not heard of you — the primacy, or the fourth rung, and it will"
-      : d.fame < romeBar(d) ? `${Math.round(romeBar(d) - d.fame).toLocaleString()} fame short of the letter`
-      : !patronsOf(d).some(p=>p.rank==="senator" && p.favor>=70) ? "past the bar, and no senator warm enough to put your name forward"
-      : "past the bar, proved, and spoken for — the letter comes when Rome is minded" },
+    /* off `romeGap` now, which is the ladder `romeReady` itself is defined from — this was a
+       hand-written second copy of the same five terms and it lumped three states into one
+       ("no senator warm enough" covered no senator, a cold one, and a house waiting out the
+       cooldown), which is how the agenda came to whisper about the wrong term entirely (#218) */
+    near:d=>{ const g = romeGap(d); if(!g) return null;
+      return g.key==="there" ? `${d.rome.won} of ${ROME_BOUTS} won on the imperial sand`
+        : g.key==="letter" ? "the letter is on the table"
+        : g.key==="proved" ? "Rome has not heard of you — the primacy, or the fourth rung, and it will"
+        : g.key==="fame" ? `${g.short.toLocaleString()} fame short of the letter`
+        : g.key==="nosenator" ? "past the bar, and no senator to put your name forward"
+        : g.key==="cold" ? `past the bar, and ${g.favor} of the 70 favour Rome asks of a senator`
+        : g.key==="forgetting" ? `past the bar — Rome forgets you for ${g.weeks} more weeks`
+        : g.key==="men" ? "past the bar and spoken for, and not two men fit to send"
+        : g.cooling ? `past the bar and spoken for, and he is cooling — ${g.favor} of 70`
+        : "past the bar, proved, and spoken for — the letter comes when Rome is minded"; } },
 };
 const FEAT_KEYS = Object.keys(FEATS);
 const hasFeat = (d,k) => !!(d.feats && d.feats[k]);
@@ -13358,12 +13365,108 @@ const romeBar = d => ROME_FAME + romeRuns(d)*300 - (d.flags.romeEarly?150:0) - r
    they had both actually reached. */
 const ROME_RANK = 4;
 const romeProved = d => (d.flags.primusHeld||0) >= 1 || riseOf(d) >= ROME_RANK;
-const romeReady = d => !d.rome && !d.romeOffer && !d.over && d.fame >= romeBar(d)
-  && romeProved(d)                                                         // the sand, or the census
-  && (!d.flags.romeDeclined || d.week - d.flags.romeDeclined >= 30)
-  && (!d.flags.romeReturned || d.week - d.flags.romeReturned >= ROME_COOLDOWN)
-  && patronsOf(d).some(p=>p.rank==="senator" && p.favor>=70)
-  && activeG(d).length >= 2;
+/* ---- WHICH OF ROME'S TERMS IS THE ONE IN THE WAY — #218 ----
+   The item: "Rome never happens. 0 offers in 16 houses over eight-plus years each. The gate: fame
+   past romeBar, romeProved, at least two men — and a senator patron at favour >= 70, WHICH IS THE
+   TERM A COMPETENT HOUSE FAILS SILENTLY. Nothing in the game teaches that road."
+
+   NEITHER HALF OF THAT SURVIVED MEASUREMENT (probes/rome.mjs, 16 houses on the default rope).
+   At the item's own horizon — eight years each — the road opens: **14 letters, 9 of 16 houses go
+   to Rome, 66 weeks spent on the imperial sand.** Run them to 420 weeks and it is 26 letters and
+   10 of 16; under a rope that calls its patrons' favours, 49 and 14 of 16.
+
+   AND THE SENATOR IS NOT THE TERM THAT FAILS. Attributing every week before a house's first letter
+   to the term or terms that shut it, and asking which was the LAST ONE STANDING:
+
+     term       unmet on   the last mile
+     proved       94.4%    65 weeks  (4.8% of shut weeks)
+     fame         95.2%    61        (4.5%)
+     senator      80.4%     0        (0%)
+     men          15.6%     0
+     cooldown        0%     0        (it cannot trip before a first letter)
+
+   13 of 16 houses warmed a senator to 100. The senator was the last term standing on ZERO of 1,347
+   shut weeks. What actually shuts the road is `romeProved` — the primacy or the fourth rung — and
+   the feats sheet has been saying exactly that all along, on 1,271 of the 1,301 weeks it spoke.
+
+   WHAT DID SURVIVE IS THE LAST SENTENCE. The agenda said anything at all about Rome on **1 of
+   1,373 shut weeks (0.1%)**: the one block it had fires only for a senator ALREADY HELD who has
+   cooled, so a house with no senator, or short on fame, or unproved, hears nothing. The road is
+   dark on the week's list, and it is the road rather than the mechanic — which is the item's own
+   phrase, arriving at a different term than the one it named.
+
+   SO THERE IS ONE LADDER NOW AND THREE PANELS READ IT. `romeReady` is `romeGap(d).key === "ready"`
+   rather than a second copy of the same five terms; the feats sheet renders every rung of it; and
+   `romeRow` puts the rung that is in the way on the week's list — quiet where the answer is a
+   multi-year campaign, and speaking where it is something a lanista can do this week. */
+const romeShort   = d => Math.round(romeBar(d) - (d.fame||0));
+const romeSenator = d => patronsOf(d).filter(p=>p.rank==="senator").sort((a,b)=>b.favor-a.favor)[0] || null;
+const ROME_WARM = 78;    /* warm enough that the road is not about to shut under you */
+const ROME_NEAR = 400;   /* the fame gap inside which the road is worth a line on the week's list */
+const ROME_SOON = 6;     /* and how near the end of the cooldown before saying it is nearly over */
+function romeGap(d){
+  if(!d || d.over) return null;
+  if(d.rome) return { key:"there" };
+  if(d.romeOffer) return { key:"letter" };
+  if(!romeProved(d)) return { key:"proved" };
+  if(romeShort(d) > 0) return { key:"fame", short:romeShort(d) };
+  const sen = romeSenator(d);
+  if(!sen) return { key:"nosenator" };
+  if(sen.favor < 70) return { key:"cold", sen, favor:rnd(sen.favor) };
+  /* `!= null`, not truthiness: a week is a number and 0 is a real one — the gate this replaces
+     wrote `!d.flags.romeReturned ||` and would have read a week-0 return as no return at all */
+  const F = d.flags || {};
+  const wait = Math.max(
+    F.romeDeclined != null ? 30 - (d.week - F.romeDeclined) : 0,
+    F.romeReturned != null ? ROME_COOLDOWN - (d.week - F.romeReturned) : 0);
+  if(wait > 0) return { key:"forgetting", weeks:wait };
+  if(activeG(d).length < 2) return { key:"men" };
+  /* COOLING IS NOT A RUNG. The letter asks for 70 and nothing more, so a senator at 74 opens the
+     road — `romeReady` is this key and a state that read "cooling" there would have SHUT a gate
+     that was open, which is what the check's first arm caught the moment it was written. It rides
+     on the open state as a warning instead. */
+  return { key:"ready", sen, favor:rnd(sen.favor), cooling: sen.favor < ROME_WARM };
+}
+const romeReady = d => (romeGap(d) || {}).key === "ready";
+/* and the same ladder as one line for the week's list, or nothing */
+const romeRow = d => {
+  const g = romeGap(d);
+  if(!g) return null;
+  const sen = g.sen ? g.sen.name.split(" ").pop() : null;
+  switch(g.key){
+    /* the letter and the trip already carry their own lines, louder than these */
+    case "letter": case "there": return null;
+    /* unproved AND unknown is a campaign rather than a to-do — 94% of the weeks the road is shut
+       are that, and a row there would be the permanent nag #229 was opened against. Unproved with
+       the fame already in hand is the one state where a line teaches something. */
+    case "proved": return romeShort(d) > 0 ? null
+      : { urgency:1, tab:"ludus", label:"Rome has the name it asks for and has still not heard of you",
+          sub:"the primacy, or the fourth rung of the census — either carries it there" };
+    case "fame": return g.short > ROME_NEAR ? null
+      : { urgency:1, tab:"ludus", label:`${g.short} fame short of what Rome asks`,
+          sub:"the proof is done — it is the name that is short" };
+    case "nosenator": return { urgency:2, tab:"villa",
+      label:"Rome does not know your name",
+      sub:"a senator would have to say it, and none sits at your table" };
+    case "cold": return { urgency:2, tab:"villa",
+      label:`${sen}'s favour has fallen below what Rome asks`,
+      sub:`${g.favor} of 70 — the road is shut until he warms again` };
+    /* "Nobody in this house can stand" is already the loudest line on the list */
+    case "men": return null;
+    /* the cooldown runs 45 weeks and a countdown that repeats every one of them is the permanent
+       nag again — measured, 66 of 522 played weeks. It speaks as the road is about to reopen. */
+    case "forgetting": return g.weeks > ROME_SOON ? null
+      : { urgency:1, tab:"ludus",
+          label:`Rome hears your name again in ${g.weeks} week${g.weeks===1?"":"s"}`,
+          sub:"the senator wants keeping warm until it does" };
+    case "ready": return g.cooling
+      ? { urgency:1, tab:"villa", label:`${sen} is cooling, and Rome is watching him`,
+          sub:`${g.favor} of 70 — feed it before it slips` }
+      : { urgency:2, tab:"villa", label:"Rome asks nothing more of you",
+          sub:"the letter comes when the city is minded — keep him warm until it does" };
+  }
+  return null;
+};
 
 /* ---- WHAT THEY ASK YOU FOR ----
    They remember, they refuse, they form ties and they carry ambitions, and in ninety
@@ -30545,6 +30648,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     nameHeir, heirEligible, HEIRS, houseRecord, censusWorth,   /* #154 */
     /* the summit: the gate, the letter, the bar, and the trip's own clock */
     romeReady, romeProved, offerRome, romeBar, ROME_BOUTS, ROME_WEEKS_PER_BOUT, ROME_RANK,
+    /* the one ladder the gate, the sheet and the week's list all read — #218 */
+    romeGap, romeRow, romeShort, romeSenator, ROME_WARM, ROME_NEAR, ROME_SOON,
     /* ---- AND THE MAN WHO IS ACTUALLY ON THAT BILL, in v2.90.0 ----
        Everything above is the road to Rome. None of it is the bout, so the summit could be
        reached by a probe and never once measured: the card itself, what it asks of a house, and
@@ -30683,7 +30788,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     runway, moneyRow, RUNWAY_WARN, RUNWAY_BAD, RUNWAY_BUILD, weeklyBill, creditLine, billIf, staffWages,
     CENSUS_TOP, CREDIT_WEEKS, FAME_TIERS, FAME_WARM_AT, fameWarm, acclaimIdx, feastFresh, AMB_COOL,
     /* and the patrons the climb rests on */
-    patronWeek, serveWants, recomputeFavor, patronsOf, WANTS, RANKS,
+    patronWeek, serveWants, recomputeFavor, patronsOf, makePatron, favourWorth, WANTS, RANKS,
     feastCost, feastReach, FEAST_BASE, FEAST_HEAD, FEAST_STANDING, RETRAIN_FEE, FORGE_FEE, BUILDINGS, PARTY, STAFF,
     /* loading an old save */
     /* gearPrice is on the handle so a probe can ask what a piece COSTS rather than what its table

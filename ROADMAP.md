@@ -2428,6 +2428,72 @@ but two arms leaning the same way is the thesis of #207 arriving from an unexpec
 the game may genuinely be a notch harder when its numbers stop flattering you. #229 (surfacing the
 runway when it turns short) is the counterpart and stays queued.
 
+### v3.176.0 — #218: Rome happens, and the term the item named is not the one that shuts it
+
+The depth ledger, first of the four still queued. The item has a headline, a diagnosis and a
+recommendation, and the measurement went three for three against it — the last one in its favour.
+
+**THE HEADLINE DOES NOT REPRODUCE.** *"0 offers in 16 houses over eight-plus years each."* Measured
+(`probes/rome.mjs`) at the item's own house count, horizon and rope: **14 letters, 9 of 16 houses go
+to Rome, 66 weeks on the imperial sand.** Run the same houses to 420 weeks and it is 25 letters and
+10 of 16; under a rope that calls its patrons' favours, 47 letters and 14 of 16. I could not
+recover the instrument that reported zero, and none of the Rome gate's terms have moved since
+v2.59.0 widened the proof to the fourth rung — so this is a number that should be read as
+unreproduced rather than as a regression that has since been fixed.
+
+**AND THE DIAGNOSIS NAMES THE WRONG TERM.** Attributing every week *before a house's first letter*
+to the term or terms that shut the road, and asking which was the last one standing — out of 1,347
+shut weeks:
+
+| term | unmet on | the last one standing |
+|---|---|---|
+| `romeProved` | 94.4% | **65 weeks (4.8%)** |
+| fame past `romeBar` | 95.2% | 61 (4.5%) |
+| a senator at favour ≥ 70 | 80.4% | **0** |
+| two men fit to send | 15.6% | 0 |
+| the cooldown | 0% | 0 (it cannot trip before a first letter) |
+
+The item calls the senator *"the term a competent house fails silently."* **13 of 16 houses warmed
+one to 100**, and the senator was the last term standing on zero weeks of 1,347. What actually
+shuts the road is `romeProved` — the primacy, or the fourth rung of the census — and the feats
+sheet had been saying exactly that all along, on 1,271 of the 1,301 weeks it spoke.
+
+**THE LAST SENTENCE IS THE TRUE ONE, AND IT IS THE WHOLE ITEM.** *"Nothing in the game teaches that
+road."* The agenda said anything at all about Rome on **1 of 1,373 shut weeks — 0.1%**. Its one
+block fired only for a senator *already held* who had cooled, so a house with no senator, or short
+on fame, or unproved, heard nothing.
+
+**ONE LADDER, AND THREE PANELS READ IT.** `romeGap(d)` names the rung in the way, and:
+
+- `romeReady` is now `romeGap(d).key === "ready"` rather than a second hand-written copy of the
+  same five terms;
+- the feats sheet renders every rung of it — it used to lump three states ("no senator warm
+  enough" covered *no senator*, *a cold one*, and *a house waiting out the cooldown*);
+- `romeRow` puts the rung on the week's list, quiet where the answer is a multi-year campaign and
+  speaking where it is something a lanista can do this week.
+
+The agenda speaks on **11.4%** of shut weeks now against 0.1%, and stays silent on the 94% that are
+the long climb. On a full played sweep it is 41 weeks of 522: thirteen "Rome has the name it asks
+for and has still not heard of you", thirteen "N fame short", nine "Rome asks nothing more of you",
+six "Rome hears your name again in N weeks" — and quiet on all 401 unproved weeks and on the first
+39 weeks of every cooldown.
+
+**AND THE LEVER FOR ROME ALWAYS SHUT THE ROAD TO ROME.** `FAVOURS.senator` — *"A name dropped in
+Rome"*, the one thing a lanista can spend to get there — costs **34** of the patron's own favour.
+The letter wants a senator at **70**. Favour caps at **100**. So calling it from anywhere at or
+above the bar leaves him under it, always: measured, **816 of 816** weeks where it was ready to
+call with him at 70+. The box selling it said only "150 off Rome's bar". It says both now, and only
+on the weeks where the number is actually about to do it.
+
+**TWO THINGS THE NEW CHECK CAUGHT BEFORE THEY SHIPPED.** The first draft of `romeGap` returned a
+`cooling` rung for a senator at 74 — and since `romeReady` is defined from the ladder, that
+**narrowed the gate**: a house the letter would have taken at 74 would no longer have been invited.
+Cooling is not a rung; it rides on the open state as a flag. And the cooldown guard was written
+`d.flags.romeReturned ? …`, inherited from the gate it replaced — a week is a number and 0 is a
+real one.
+
+New check `letter` (135 → 136), five arms, sabotaged six ways.
+
 ### v3.175.0 — #231: the read was a rating and the sand rolls a probability
 
 The last item of the mechanics ledger, and three of its four limbs were already answered in the
@@ -4150,7 +4216,7 @@ never doing the thing the item accused it of.
 
 > **Gameplay** ~~#207~~ (v3.156.0 — half-refuted, and the bill was missing two salaries) · ~~#208~~ (closed — refuted, the survey's own artifact; true median 4–5 bouts) · ~~#209~~ (v3.157.0 — half already shipped in #166; the verdict now names the salute) · ~~#210~~ (v3.158.0 — refuted; three protections found, and now guarded) · ~~#211~~ (v3.159.0 — refuted; `agendaTop` has no call sites) — **ledger closed, 5 of 5 refuted**
 > **Graphics** ~~#212~~ (v3.160.0 — TRUE; six of the nine great works now stand in the drawing, 0 → 51 elements) · ~~#213~~ (v3.161.0 — half-refuted; the row already tracked the level, and did it at ΔE 1.17–2.47 against a just-noticeable 2.3) · ~~#214~~ (v3.162.0 — TRUE; the 22-state figure had ONE call site, now on every roster and block row) · ~~#215~~ (v3.163.0 — TRUE; four graded suns and Saturnalia's lamps, at zero ink flips and 4.13:1 worst) · ~~#216~~ (v3.164.0 — half-refuted; the machinery applied, his scars were 0 on 481 of 481, and one snapshot door passed no `bore` at all) — **ledger closed, 5 of 5**
-> **Depth** ~~#217~~ (v3.170.0 — the pull was already there on 75.9% of weeks; the census refused to count the stone and priced a builder at a third of a hoarder) · #218 · #219 · #220 · #221
+> **Depth** ~~#217~~ (v3.170.0 — the pull was already there on 75.9% of weeks; the census refused to count the stone and priced a builder at a third of a hoarder) · ~~#218~~ (v3.176.0 — Rome happens: 14 letters to 9 of 16 houses at the item's own horizon. The senator was the last term standing on 0 of 1,347 shut weeks; `romeProved` is the wall, and the agenda was the dark thing) · #219 · #220 · #221
 > **Story** ~~#222~~ (v3.165.0 — headline right, diagnosis wrong; a healing wound deleted 67% of sagas, third act 28% → 64%) · ~~#223~~ (v3.166.0 — direction right, ranking wrong; the top sentence was the medicus table, not mercy. Top-10 share 21.6% → 13.6%) · ~~#224~~ (v3.167.0 — the headline was the rope's artifact; the real fault was that never answering beat every answer on the list) · ~~#225~~ (v3.168.0 — headline right, diagnosis blamed the respawn; the fault was that a feud could not be LOST. 77.1% of weeks → 36.3%, six grudge matches a feud → one) · ~~#226~~ (v3.169.0 — right, and the heir was a son the house had never had: `heirEligible` read the lanista's age and never his household. Family beats 25 → 103) — **the story ledger is closed, 5 of 5**
 > **Mechanics** ~~#227~~ (v3.171.0 — every limb refuted: fame is the ladder's commonest wall at 30.3%, and the "fame sink" pays fame out) · ~~#228~~ (v3.172.0 — the figures are `pool[0]`; a hunt was already on 52.5% of cards. The calendar now forces the engines it never could) · ~~#229~~ (v3.173.0 — true, and understated: the agenda warned a dying house on 1.7% of its short weeks and told it to go building on 57.1%) · ~~#230~~ (v3.174.0 — the counter measures which CARD was taken, not what the sand rolled; the real fault was the town breaking `wantStakes`) · ~~#231~~ (v3.175.0 — three limbs already answered; the fourth it did not name: the word banded `rateMan` and the sand rolls `winChance`, so "even, near enough" was a bout lost two times in three)
 
@@ -4279,11 +4345,18 @@ and the two big sinks — public works and monuments — engaged **0 times in 16
 shelf exists and nothing pulls a house toward it. Recommend the works become the named late-game
 ladder: agenda items when the box can afford one, rivals racing you to them, the census noticing.
 
-**#218 — Rome never happens.** **0 offers in 16 houses over eight-plus years each.** The gate:
-fame past `romeBar`, `romeProved`, at least two men — *and a senator patron at favour ≥ 70*, which
-is the term a competent house fails silently **(rope)**. Nothing in the game teaches that road.
-Recommend an agenda whisper when every other term is met: "Rome does not know your name. A senator
-would have to say it" — the mechanic exists; it is the *road* that is dark.
+**#218 — ROME HAPPENS, AND THE TERM IT NAMED IS NOT THE ONE THAT SHUTS THE ROAD. Shipped
+v3.176.0.** The headline does not reproduce: at the item's own 16 houses and eight-year horizon on
+the default rope, **14 letters, 9 of 16 houses go to Rome**. The diagnosis names the wrong term —
+attributing 1,347 pre-letter shut weeks, the senator was the **last term standing on zero of
+them** and 13 of 16 houses warmed one to 100, while `romeProved` was unmet on 94.4% and last
+standing on 65. What survived is the item's last sentence: the agenda spoke about Rome on **1 of
+1,373 shut weeks (0.1%)**, because its one block fired only for a senator already held who had
+cooled. There is one ladder now (`romeGap`), `romeReady` is defined from it, the feats sheet
+renders every rung, and the week's list carries the rung in the way — 11.4% of shut weeks, and
+silent on the 94% that are a multi-year climb. And the one lever the game sells for Rome always
+shut it: the senator's favour costs 34 against a bar of 70 and a cap of 100, so calling it from
+the bar always drops him under it — **816 of 816**. See the release note.
 
 **#219 — The temple is furniture.** Blessed on 2.3% of weeks, vows never taken **(rope)**, while
 the altar ledger (v3.153.0) made the shop legible. The gods' effects are real but arrive unsigned —
