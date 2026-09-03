@@ -2428,6 +2428,56 @@ but two arms leaning the same way is the thesis of #207 arriving from an unexpec
 the game may genuinely be a notch harder when its numbers stop flattering you. #229 (surfacing the
 runway when it turns short) is the counterpart and stays queued.
 
+### v3.178.0 — #220: four numbers, four different causes, and one of them was the item
+
+The depth ledger's third. The item counts four systems at once — *"gambits 0, courts 0, pacts 1,
+prisoner lots 2 — in sixteen runs"* — and a single count cannot tell **"the game never mentions
+this"** from **"the rope has no button for it"**. So `probes/shelf.mjs` asks three questions of
+each: how many weeks it was AVAILABLE, how many the game SURFACED it, and how many it was TAKEN.
+16 houses × 300 weeks, the default rope:
+
+| system | available | surfaced | taken |
+|---|---|---|---|
+| gambit | 94.2% of weeks | **0%** | 0 |
+| court | 49.2% | 15.1% | 0 |
+| pact | 8.9% | 1.2% | **34 across 16 houses** |
+| lot | 6.2% | **6.2% — every week it exists** | 0 |
+
+**THREE OF THE FOUR ARE NOT DARK.** The pact arrives on its own as a `pendingEvent` — the loudest
+thing in the game — and was taken **twice a house**, against the item's "1 in sixteen runs". The
+court is already offered by `agendaCan`, on the gap v2.63.1 deliberately chose over "a rival's man
+is better than yours" (a condition that stood in 36% of weeks). The lot is marked on the market tab
+on **100% of the weeks it exists**; its rarity is the war's rarity, 12.1% of weeks.
+
+Their zeroes were this suite's rope having no way to say yes. `court`, `lot` and `gambit` are levers
+now — opt-in, like `rites` and `favours` — and land **94 courts, 4 lots and 135 gambits** when
+asked. The lot's own count reproduces (4 in 16 houses against the item's 2) and the diagnosis still
+does not: a thing surfaced every week it exists is not dark, it is rare.
+
+**ONE OF THE FOUR IS EXACTLY WHAT THE ITEM SAYS.** A gambit is affordable and off cooldown on
+**94.2%** of weeks and nothing in the game had ever pointed at one — no agenda row, no event, no
+mark. It was reachable only by a player who went looking on the arena tab.
+
+**AND THE ARC IT WANTED TO HANG IT ON IS NOT 79%.** Counted apart: a named nemesis *fighter* stands
+on **93.3%** of weeks, a named house feud on **33%**, a rival holding a grudge of 65 on **6.4%**,
+and a rival with money in front of one of your men on **2.6%**. A door on the 93% arc is the
+permanent nag #229 was opened against — sabotaging the new row onto it puts it on 857 of 1,335
+quiet weeks, and the check fails.
+
+So the door goes on the **act**: a house that has moved on you, and only then a house keeping a real
+account. And it folds into the poach line that was already there rather than adding a second row
+about the same injury, so a player hears about the man being bought and what can be done about it in
+one line. Measured after: the list offers an answer on **5.8%** of weeks, 90.2% of the weeks a house
+has actually moved, and **0 of 1,335** weeks where nobody has.
+
+The row names the best trick the box will stand, at `gambitOdds` — the shared function #150 put
+there after the rivals panel and `runGambit` were found quoting different numbers on 990 of 6,448
+rows — and the price of peace beside it when the grudge will take it. The named trick, its cost and
+its odds ride on the row as fields, so the check reads what the row *means* rather than parsing the
+prose it prints.
+
+New check `answer` (137 → 138), five arms, sabotaged seven ways.
+
 ### v3.177.0 — #219: the first half was the instrument, the second half was exactly right
 
 The depth ledger's second. The item makes two claims and they came apart in opposite directions.
@@ -4281,7 +4331,7 @@ never doing the thing the item accused it of.
 
 > **Gameplay** ~~#207~~ (v3.156.0 — half-refuted, and the bill was missing two salaries) · ~~#208~~ (closed — refuted, the survey's own artifact; true median 4–5 bouts) · ~~#209~~ (v3.157.0 — half already shipped in #166; the verdict now names the salute) · ~~#210~~ (v3.158.0 — refuted; three protections found, and now guarded) · ~~#211~~ (v3.159.0 — refuted; `agendaTop` has no call sites) — **ledger closed, 5 of 5 refuted**
 > **Graphics** ~~#212~~ (v3.160.0 — TRUE; six of the nine great works now stand in the drawing, 0 → 51 elements) · ~~#213~~ (v3.161.0 — half-refuted; the row already tracked the level, and did it at ΔE 1.17–2.47 against a just-noticeable 2.3) · ~~#214~~ (v3.162.0 — TRUE; the 22-state figure had ONE call site, now on every roster and block row) · ~~#215~~ (v3.163.0 — TRUE; four graded suns and Saturnalia's lamps, at zero ink flips and 4.13:1 worst) · ~~#216~~ (v3.164.0 — half-refuted; the machinery applied, his scars were 0 on 481 of 481, and one snapshot door passed no `bore` at all) — **ledger closed, 5 of 5**
-> **Depth** ~~#217~~ (v3.170.0 — the pull was already there on 75.9% of weeks; the census refused to count the stone and priced a builder at a third of a hoarder) · ~~#218~~ (v3.176.0 — Rome happens: 14 letters to 9 of 16 houses at the item's own horizon. The senator was the last term standing on 0 of 1,347 shut weeks; `romeProved` is the wall, and the agenda was the dark thing) · ~~#219~~ (v3.177.0 — the 2.3% was the rope's own lever reading a field that is never cleared, so its first offering was its last; a working rope is blessed on 43.6% of weeks. The unsigned half was exact: 0 of 2,582 beats named a god) · #220 · #221
+> **Depth** ~~#217~~ (v3.170.0 — the pull was already there on 75.9% of weeks; the census refused to count the stone and priced a builder at a third of a hoarder) · ~~#218~~ (v3.176.0 — Rome happens: 14 letters to 9 of 16 houses at the item's own horizon. The senator was the last term standing on 0 of 1,347 shut weeks; `romeProved` is the wall, and the agenda was the dark thing) · ~~#219~~ (v3.177.0 — the 2.3% was the rope's own lever reading a field that is never cleared, so its first offering was its last; a working rope is blessed on 43.6% of weeks. The unsigned half was exact: 0 of 2,582 beats named a god) · ~~#220~~ (v3.178.0 — three of the four are surfaced already and the pact is taken twice a house; the gambit is the one that was dark, 0% of 94.2% available weeks, and the arc to hang it on is 2.6%, not 79%) · #221
 > **Story** ~~#222~~ (v3.165.0 — headline right, diagnosis wrong; a healing wound deleted 67% of sagas, third act 28% → 64%) · ~~#223~~ (v3.166.0 — direction right, ranking wrong; the top sentence was the medicus table, not mercy. Top-10 share 21.6% → 13.6%) · ~~#224~~ (v3.167.0 — the headline was the rope's artifact; the real fault was that never answering beat every answer on the list) · ~~#225~~ (v3.168.0 — headline right, diagnosis blamed the respawn; the fault was that a feud could not be LOST. 77.1% of weeks → 36.3%, six grudge matches a feud → one) · ~~#226~~ (v3.169.0 — right, and the heir was a son the house had never had: `heirEligible` read the lanista's age and never his household. Family beats 25 → 103) — **the story ledger is closed, 5 of 5**
 > **Mechanics** ~~#227~~ (v3.171.0 — every limb refuted: fame is the ladder's commonest wall at 30.3%, and the "fame sink" pays fame out) · ~~#228~~ (v3.172.0 — the figures are `pool[0]`; a hunt was already on 52.5% of cards. The calendar now forces the engines it never could) · ~~#229~~ (v3.173.0 — true, and understated: the agenda warned a dying house on 1.7% of its short weeks and told it to go building on 57.1%) · ~~#230~~ (v3.174.0 — the counter measures which CARD was taken, not what the sand rolled; the real fault was the town breaking `wantStakes`) · ~~#231~~ (v3.175.0 — three limbs already answered; the fourth it did not name: the word banded `rateMan` and the sand rolls `winChance`, so "even, near enough" was a bout lost two times in three)
 
@@ -4435,11 +4485,17 @@ round — priced at **+2.0 points of spare odds on average, up to +12.4**, by th
 #209 used for the salute — Aesculapius signs the table, Victoria the purse, and all five keep a
 receipt of what they have actually done on the temple panel. See the release note.
 
-**#220 — A shelf of systems a long run never meets: gambits 0, courts 0, pacts 1, prisoner lots 2 —
-in sixteen runs.** Some of that is policy **(rope)**, but a system reachable only off-policy for
-eight years is dark by construction. Recommend wiring them into the arc that is always on — the
-feud (79% of weeks): the rival's schemes should *offer* the gambit, the court case, the pact as
-answers, instead of those living parallel and untouched.
+**#220 — FOUR NUMBERS, FOUR DIFFERENT CAUSES, AND ONE OF THEM WAS THE ITEM. Shipped v3.178.0.**
+Asked apart — available, surfaced, taken — three of the four are not dark: the **pact** arrives on
+its own as a `pendingEvent` and was **taken 34 times across 16 houses**, against "1 in sixteen
+runs"; the **court** is already offered by `agendaCan` on 15.1% of weeks; the **lot** is marked on
+the market tab on **100% of the weeks it exists**, and its rarity is the war's, 12.1%. Their zeroes
+were the rope having no button, and `court`, `lot` and `gambit` are levers now. The **gambit** is
+the one the item had right: affordable on **94.2%** of weeks and surfaced on **0**. And the arc to
+hang it on is not 79% — a nemesis *fighter* stands on 93.3% of weeks but a rival with money in
+front of your man on **2.6%**, and a door on the 93% arc is the nag #229 was opened against. It
+hangs on the act, folded into the poach line that was already there: 5.8% of weeks, 90.2% of the
+weeks a house has moved, 0 of 1,335 where nobody has. See the release note.
 
 **#221 — Man-depth is gated behind careers nobody has.** Tells need history, sagas need renown,
 mastery needs wins — and the median career is one bout (#208), so most men never touch any
