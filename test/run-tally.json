@@ -143,4 +143,5 @@
 {"v":"3.173.0","checks":133,"failed":["bulk"]},
 {"v":"3.173.0","checks":133,"failed":[]},
 {"v":"3.174.0","checks":134,"failed":[]},
-{"v":"3.175.0","checks":135,"failed":[]}]
+{"v":"3.175.0","checks":135,"failed":[]},
+{"v":"3.176.0","checks":136,"failed":[]}]
