@@ -7356,11 +7356,72 @@ const rememberAll = (d, kind, mult) => activeG(d).forEach(g=>remember(d, g, kind
 /* what the book has to have been quoting for a win to be a story, and what a man
    has to have left at the horn for it to have been close. */
 const UPSET_ODDS = 42, BRINK_LEFT = 30;
+/* ---- WHAT A MAN GETS FOR HIS FIRST AFTERNOON — audit item #221 ----
+   The item: "man-depth is gated behind careers nobody has... the median career is one bout (#208),
+   so most men never touch any man-system. Recommend early texture that fires on bout one."
+
+   ITS PREMISE IS A FIGURE THIS AUDIT ALREADY KILLED. #208's "median career is one bout" was the
+   survey's own artifact — 470 fallen summaries counted as zero-bout careers — and the corrected
+   number is 4-5 bouts with 88-90% debut survival. Two of the three gates it names are not what it
+   says either: `manTells` bands the six stats and answers on a man who has never fought, and
+   `masterOpen` is a HOUSE gate on the armoury and acclaim, nothing to do with a man's wins.
+
+   BUT THE CLAIM SURVIVES IN A CORRECTED FORM, and it is worse than the item's version. Measured
+   (`probes/green.mjs`, 10 houses over 1,731 weeks, 278 men who ever stood in the cells): the
+   median career is 4 bouts and 1 win, 85.3% fight at least once and 60.8% win at least once — but
+   only **16.5% reach the five wins a nickname wants, 14.7% the six a signature wants, and 9.7%
+   the eight a saga wants.** Five men in six never cross a single career gate.
+
+   AND THE FIRST BOUT WAS WORTH ALMOST NOTHING. Chronicle lines naming a man, by how far he got:
+
+     0 bouts  1.3 lines     2-3 bouts  2.5     8+ bouts  5.4
+     1 bout   1.4 lines     4-7 bouts  3.3
+
+   Fighting once bought him **a tenth of a line** over never fighting at all. So the debut is a
+   night now — the fifth, kept like the sparing because a man has exactly one — and it speaks, as
+   does his first blooding and his first defeat. The doctore's read is a READ: it is banded on
+   `missioAccount(res.vB)`, the account he gave, which is the same figure the editor weighed when
+   deciding whether to let him up. */
+const GREEN_HARD = 55, GREEN_POOR = 25;   /* the account that says outlasted, and the one that says outclassed */
+/* THE NUMBERS ARE PASSED IN AND NOT DUG OUT OF `res`, because the four engines return four
+   different shapes and only the single sand has a `vB` to take an account from. A melee has
+   `ents`, a pair has `down.A[i]`, a hunt has a beast. So each caller hands over what it HAS, and
+   a line with no figure to put in it stands on its own — the rule the sine warning is written to
+   (`he loses about NaN in a hundred` shipped once already). It runs AFTER the aftermath, because
+   `g.kills` is incremented there and a first blooding read before it can never fire. */
+function firstBlood(d, g, where, won, num, sum){
+  const bouts = (g.wins||0) + (g.losses||0);
+  const say = l => { chron(d, her(l, g), won ? "good" : "info"); if(sum) sum.push(l); };
+  const n = num || {};
+  const account = Number.isFinite(n.account) ? rnd(n.account) : null;
+  const left = Number.isFinite(n.left) ? Math.max(0, rnd(n.left)) : null;
+  const crowd = Number.isFinite(n.crowd) ? rnd(n.crowd) : null;
+  const voice = d.doctore ? "The doctore" : "The old man who keeps the gate";
+  if(bouts === 1 && g.status !== "dead"){
+    markNight(g, "first", Object.assign({ won:!!won, account, crowd, left }, where || {}));
+    say(`${fullName(g)} has been on the sand now, and walked off it ${won ? "a winner" : "beaten"}.`
+      + (account != null ? ` ${account} in the hundred of what was in front of him came off on his account,` : "")
+      + (crowd != null ? ` ${crowd} in the seats.` : "")
+      + ` Whatever he was in the cells, he is something else in the morning.`);
+  }
+  if((g.kills||0) === 1 && n.killed)
+    say(`${g.name} has killed a man. He was told it would happen and he has found out what being `
+      + `told is worth. The block will be careful with him for a week, and then it will not.`);
+  if(!won && (g.losses||0) === 1 && g.status !== "dead")
+    say(`${g.name} has lost his first. ` + (account != null && account >= GREEN_HARD
+      ? `${voice} says he was not outfought, he was outlasted${left != null ? ` — ${left} left in him at the horn and nothing behind it` : ""}. Wind, then, and the palus can give him that.`
+      : account != null && account <= GREEN_POOR
+      ? `${voice} is blunt about it: he never landed. Whatever he does at the post he did not do out there, and it is not the post's fault.`
+      : `${voice} says it was close enough to learn from, which from him is a compliment and a warning in the same breath.`));
+}
 const NIGHTS = {
   roar:   { keep:(was,now)=> now.crowd > was.crowd },
   upset:  { keep:(was,now)=> now.odds < was.odds },
   spared: { keep:()=> false },
   brink:  { keep:(was,now)=> now.left < was.left },
+  /* ---- AND THE FIRST ONE — audit item #221 ----
+     A man has exactly one debut and it keeps itself, like the sparing. */
+  first:  { keep:()=> false },
 };
 function markNight(g, kind, rec){
   if(!g || !NIGHTS[kind] || !rec) return false;
@@ -16641,6 +16702,7 @@ function doMelee(d, ids, offer, pending, choice, tactic){
       const x = d.gladiators.find(y=>y.id===e.gid); if(!x) continue;
       markNight(x, "roar", Object.assign({ crowd:rnd(res.crowd) }, where));
       if(e.out && !e.dead) markNight(x, "spared", Object.assign({}, where));
+      firstBlood(d, x, where, !!won, { crowd:res.crowd }, sum);   /* #221 — a scrum is a debut too */
     } }
   /* a melee is somebody's afternoon too. Vigour here is what share of yours were
      still on their feet at the horn — the nearest thing a scrum has to "well done". */
@@ -16784,6 +16846,7 @@ function doVenatio(d, gid, offer, tactic, pending, choice){
     if(!res.aDies && res.vA <= BRINK_LEFT) markNight(g, "brink", Object.assign({ left:Math.max(0, rnd(res.vA)) }, where));
     if(res.killed && (offer.beast==="lion" || offer.beast==="aurochs"))
       markNight(g, "upset", Object.assign({ odds:34, beast:true }, where));
+    firstBlood(d, g, where, !!res.killed, { left:res.vA, crowd:res.crowd }, sum);   /* #221 */
   }
   bookBout(d, { win:!!res.killed, died:!!res.aDies, killed:!!res.killed, purse: res.killed ? offer.purse : 0, stake:offer.purse,
     fell: res.aDies ? fullName(g) : null,
@@ -16937,6 +17000,7 @@ function doPairFight(d, ids, offer, tactic, pending, choice){
       const where = nightWhere(d, offer, foe);
       markNight(x, "roar", Object.assign({ crowd:rnd(res.crowd), beside: gs[1-i] && gs[1-i].name }, where));
       if(res.down.A[i] && !res.dead.A[i]) markNight(x, "spared", Object.assign({ beside: gs[1-i] && gs[1-i].name }, where));
+      firstBlood(d, x, where, !!res.win, { crowd:res.crowd }, sum);   /* #221 — beside somebody, but his own first */
     }); }
   // opponents killed
   const kills = res.dead.B.filter(Boolean).length;
@@ -17353,6 +17417,11 @@ function recordCloth(d, men){
    eleven of the enclosing function's locals and assigns a twelfth, and pulling it
    out would mean a signature longer than the code in it — which is not a smaller
    function, it is the same function with a worse door. */
+/* ---- AND HIS FIRST ONE IS WRITTEN HERE — #221 ----
+   The aftermath is where a bout's consequences are written and, more to the point, where
+   `g.kills` moves — a first blooding read before this point can never fire, which is how the
+   first draft shipped it. `doFight` is at its `bulk` allowance, so the single sand's shape is
+   folded in here rather than adding a line there. */
 function boutAftermath(d, g, gid, offer, res, win, F, sum){
   if(res.bDies){
     g.kills++; g.pfame += 6; d.fame += 4;
@@ -17397,6 +17466,8 @@ function boutAftermath(d, g, gid, offer, res, win, F, sum){
     g.injury = inj; g.status = "injured"; weekMark(d, "hurt", 1, fullName(g));
     sum.push(`Victory, but not unmarked: ${inj.name.toLowerCase()}, ${inj.weeks} week${inj.weeks>1?"s":""} to mend.`);
   }
+  firstBlood(d, g, nightWhere(d, offer, offer.opp ? offer.opp.name : null), win,
+    { account: missioAccount(res.vB), left: res.vA, crowd: res.crowd, killed: !!res.bDies }, sum);
 }
 
 /* ---- THE ORDER YOU GAVE WAS NEVER SHOWN HAPPENING (#169) ----
@@ -28459,6 +28530,11 @@ export default function App(){
                 `${at(N.spared)}${N.spared.opp?` — ${N.spared.opp} had ${PR(selG).him}`:""}${N.spared.beside?`, with ${N.spared.beside} beside ${PR(selG).him}`:""}. ${PR(selG).He} went down and the crowd let ${PR(selG).him} get up again.`]);
               if(N.brink) rows.push(["The one he nearly did not walk off",
                 `${at(N.brink)}${N.brink.opp?` — ${N.brink.opp}`:""}. ${PR(selG).He} finished it with ${N.brink.left} left in ${PR(selG).him} and walked out on ${PR(selG).his} own feet, which was more than anybody in the seats expected.`]);
+              /* the fifth, and the only one every man who ever fought has — #221 */
+              if(N.first) rows.push(["The first afternoon",
+                `${at(N.first)}${N.first.opp?` — against ${N.first.opp}`:""}. ${PR(selG).He} `
+                + `${N.first.won?"won it":"lost it"}, took ${N.first.account} in the hundred out of the `
+                + `man in front of ${PR(selG).him}, and came off with ${N.first.left} left.`]);
               if(!rows.length) return null;
               return (
                 <div className="panel" style={{padding:11,marginBottom:9,background:"var(--ground)",borderColor:"var(--line-4)"}}>
@@ -30792,6 +30868,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     primusMine, primusEligible, primusWeek, PRIMUS_GATE, seedPrimus,
     /* the top rung's own reading, and the word a player is given for nothing */
     menace, MENACE_WORDS, readMatch, matchAgainst, READ_CUT, readBand, fieldAverage, foeSeen, primusTake, primusLose,
+    /* the man-systems #221 counts: what his own yard says, and the three career gates */
+    manTells, SIG_GATE, annalsSync, annalsClose, igniteSaga, freshNick, giveAmbition, AMBITIONS,
     /* the word-scales a player reads and acts on, so a check can walk each one */
     formWord, formOf, FORM_TELL, formShift, formPower, wearWord, houseWord, warmth,
     patronWord, strainWord, favWord, favourOf, fanWord, fansOf, demeanor,
@@ -30876,7 +30954,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     PARAGON_REACH, PARAGON_GAP, PARAGON_ODDS, marketWeek,
     buyGearItem, sellGearOne, equipOne, stripAll, mendKitOf, forgeForMan, armHimOff, armAllOff,
     buildUp, setCrestTo, setCareOf, editorBought, EDITORS, PETITIONS, PET_KEYS, runPetition, petitionOdds, petitionWhy, petitionReady, PETITION_COOL, pickAnyOpp, CARE, CARE_KEYS, careWhy, surgeonOK, surgeonFee, retireEligible, FM_KEYS, freedWeek,
-    teachSigTo, makeMasterOf, startSecond, switchStyle,
+    teachSigTo, makeMasterOf, startSecond, switchStyle, techsFor, sigFee, sigOf, TECHNIQUES,
     setPupilTo, beginRetrain, endRetrain, hireDoctore, dismissDoctore, takeDoctoreOffer, makeDoctore, docSecond, onSquare, squareMen, squareWord, squareWeek, squareTook, squareTie, SQUARE_WEAR, SQUARE_TIE, doctoreWeek, docLesson, DOC_LESSONS, tieBetween, tieWord, addTie,   /* #197 — the square's second seat, and the tie words the arena panel already uses */
     hireStaffMember, letStaffGoOf, setEarTo,
     haveWatchedOffer, stopPrepFor, buyFromHouse, startCourt, setPrep, nameHim, scoutMan, makePeace,
@@ -30936,7 +31014,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     REP_ORDER, REP_KINDS,
     REP_SETTLE, REP_KEEP, REP_TAKE, REP_FLOOR, REP_CAP, REP_DECAY, REP_CAP_RATE, REP_EFFECTS, repShareOf,
     /* the lanista's climb: the rungs, the gates, and what standing pays and costs */
-    /* the four nights a man is known for */
+    /* the nights a man is known for, and the one every man who fought at all has (#221) */
+    firstBlood, GREEN_HARD, GREEN_POOR, missioAccount,
     markNight, NIGHTS, nightWhere,
     /* the week in phases, so a check can run one without running all of them */
     menWeek, ludusLedger, heldQuestions, weekReckoning, boutAftermath,

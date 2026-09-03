@@ -43,6 +43,8 @@ export async function run({ p, errors }){
     say("and does not lose it to a shorter price", two("upset", { odds:11, week:1 }, { odds:38, week:2 }).week, 1);
     say("the brink keeps the closer call",   two("brink", { left:24, week:1 }, { left:6,  week:2 }).week, 2);
     say("the sparing keeps the first",       two("spared",{ week:1 }, { week:2 }).week, 1);
+    /* #221 — and so does the debut, for the same reason: a man has exactly one */
+    say("the first afternoon keeps the first", two("first", { week:1, account:70 }, { week:2, account:90 }).week, 1);
 
     /* 2. and they fill from the sand */
     const av = f => (f.str+f.agi+f.end+f.tec+f.sho+f.dis)/6;
@@ -52,7 +54,7 @@ export async function run({ p, errors }){
     const fin=(fn,a,re)=>{ let x=fn(...a); let n=0;
       while(x&&x.crux&&n++<4){const pd=x.pending;pd.beats=x.beats;x=fn(...re(pd));}
       return (x&&!x.crux)?x:null; };
-    const kinds = { roar:0, upset:0, spared:0, brink:0 };
+    const kinds = { roar:0, upset:0, spared:0, brink:0, first:0 };
     const engines = new Set();
     let men = 0, withAny = 0, bad = [];
     const houses = [];
@@ -103,6 +105,10 @@ export async function run({ p, errors }){
           if(k==="roar" && !(n.crowd >= 0 && n.crowd <= 100)) bad.push(`${g.name} drew a crowd of ${n.crowd}`);
           if(k==="upset" && !(n.odds > 0 && n.odds <= 50)) bad.push(`${g.name}'s upset was priced at ${n.odds} in a hundred — that is not an upset`);
           if(k==="brink" && !(n.left >= 0 && n.left <= 30)) bad.push(`${g.name} walked off the brink with ${n.left} left in him`);
+          /* the fifth, #221: it carries what the afternoon was worth, and a scrum has no account */
+          if(k==="first" && typeof n.won !== "boolean") bad.push(`${g.name}'s first afternoon does not say whether he won it`);
+          if(k==="first" && n.account != null && !(n.account >= 0 && n.account <= 100))
+            bad.push(`${g.name} took ${n.account} in the hundred out of the man in front of him`);
         }
       }
       houses.push({ week:d.week, roster:(d.gladiators||[]).length });
