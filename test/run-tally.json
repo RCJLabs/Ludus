@@ -162,4 +162,5 @@
 {"v":"3.185.0","checks":143,"failed":["card","crown","feats","grudge","feud","stature"]},
 {"v":"3.185.0","checks":143,"failed":["tells","bill","saga"]},
 {"v":"3.185.0","checks":143,"failed":["feud"]},
-{"v":"3.185.0","checks":143,"failed":[]}]
+{"v":"3.185.0","checks":143,"failed":[]},
+{"v":"3.186.0","checks":144,"failed":[]}]
