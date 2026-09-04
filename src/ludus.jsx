@@ -4622,6 +4622,26 @@ function mournKin(d, deadId, deadName, opts){
     steadier = activeG(d).filter(x=>x.id!==deadId && regardOf(x)>=64).sort((a,b)=>regardOf(b)-regardOf(a))[0] || null;
     if(steadier) d.unrest = clamp(d.unrest - 3, 0, 100);
   }
+  /* ---- AND THE ONE THE HOUSE CANNOT MOURN — #239 phase 5 ----
+     A lanista who says yes to `ASKS.woman` grants the only thing in this game that exists outside
+     the wall, and the game then did NOTHING with it: `g.flags = 1` was written once, read by that
+     ask's own gate, and by nothing else anywhere. The man died and the grant died with him,
+     silently, which made it the cheapest generous decision on the board.
+
+     This is the bill. It is deliberately not a stat: the house has already been charged -22 morale
+     and +12 defiance a man for the brothers, and charging it twice for the same death would be
+     paying for the fiction instead of reading it. What it costs is that somebody has to go and say
+     it. There are exactly five doors a man of yours can die through — `boutAftermath` (the ordinary
+     card and the sine one), `doMelee`, `doVenatio`, `doPairFight` and `doPrimacy` — and every one of
+     them already calls this function, so one line covers all five. `checks/outside.mjs` drives each
+     door to a real corpse rather than trusting that sentence. */
+  const gone = d.gladiators.find(x=>x.id===deadId);
+  if(gone && gone.family){
+    const held = d.week - (gone.family.since==null ? d.week : gone.family.since);
+    chron(d, held >= 20
+      ? `Somebody has to go into the town and tell ${gone.family.name} that ${short} is not coming on the quiet days any more. He had ${held} weeks of them, and you are the one who gave them to him.`
+      : `There is a woman in the town called ${gone.family.name} who does not know yet. You gave ${short} leave to see her ${held <= 1 ? "last week" : `${held} weeks ago`} and there is nobody to send but you.`, "bad");
+  }
   return { grieving, short, steadier };
 }
 
@@ -7727,6 +7747,11 @@ const REGARD = {
   mastered:  { n: 12, say:"You kept him on the sand long enough to become a master of it." },
   taught:    { n: 16, say:"You paid to have him taught a second trade at an age when nobody bothers." },
   sided:     { n: 14, say:"There was a thing in the yard and you took his part in front of everybody." },
+  /* #239 — `woman` was the only one of the five ASKS whose branches never called `remember`. It
+     applied its regard by hand, so the one thing in this game that admits a man has a life past the
+     gate left no trace in the man's own memory of the house. Same numbers, on the record now. */
+  leave:     { n: 18, say:"You let him out of the gate on the quiet days, to somebody who is not this house." },
+  walled:    { n:-12, say:"He asked for the one thing outside the wall and you kept him behind it.", bad:true },
   against:   { n:-21, say:"There was a thing in the yard and you took the other man's part in front of everybody.", bad:true },
   watched:   { n:-11, say:"Two men went at each other in the square and you stood there and let it run.", bad:true },
   heard:     { n: 17, say:"You sat down on the boards with him and listened." },
@@ -14155,13 +14180,42 @@ const ASKS = {
     no:(d,g)=>{ activeG(d).forEach(x=>{ x.regard = clamp(regardOf(x)-5,0,100); });
       d.unrest = clamp(d.unrest+6,0,100);
       return `Not this year. He nods, and goes back to the yard, and tells them, and you do not hear about it again in words.`; } },
-  woman:   { w:6, need:(d,g)=>g.wins >= 6 && regardOf(g) >= 55 && !g.flags,
+  /* ---- A LIFE OUTSIDE THE WALL — phase queue #239, phases 1 and 5 only ----
+     `g.flags = 1` was the whole of it: one write, one read, and that read was this gate. The object
+     replaces it at identical numbers. THE ITEM'S OTHER THREE PHASES WERE MEASURED AND REFUSED, and
+     the numbers are in `probes/outside.mjs`:
+
+       THE ASK FIRES ONCE IN 2,672 PLAYED WEEKS — 0.1 times per house across 16 houses. `askWeek`
+       rolls on 6% of weeks, picks ONE man, and marks him in `d.flags.asked`, so every man gets at
+       most one ask in his life about anything. `woman` is the lowest-weighted of the five (w:6) AND
+       has the strictest gate, so it is rarely even in the running: burial 12, brother 10, match 9,
+       woman 1.
+
+       A CHILD COULD NEVER GROW UP. A man lasts a median of 17 weeks after he first passes this gate
+       (p75 36, max 55). A child would need something like 250 weeks to reach the gate himself.
+       Phase 3's walk-on recruit is dead weight by a factor of fifteen, and phase 2 has seventeen
+       weeks to narrate a childhood in.
+
+       AND THE GUARDRAIL CANNOT BE BUILT WHERE THE ITEM PUT IT. Phase 4 wanted the family to make a
+       man a sharper POACH target. `poachTarget` takes `defiance >= 45 && !regardLoyal(g)`, and
+       `regardLoyal` is `regardOf(g) >= 70`. This ask pays +18 regard — measured, that puts **100%
+       of takers at or past 70**, out of every poach pool in the game. Saying yes does not make him
+       easier to take away; it makes him permanently impossible to take away. So the item's own
+       liability hook is contradicted by the reward it is attached to, and phases 2-4 are not built:
+       its risk section is explicit that 2 and 3 must not ship without 4.
+
+     What ships is the object, the memory the other four asks already write, and the death line the
+     brief said to ship even if nothing else did. */
+  woman:   { w:6, need:(d,g)=>g.wins >= 6 && regardOf(g) >= 55 && !g.family && !g.flags,
     say:(d,g)=>({ text:`There is a woman in the town. ${fullName(g)} would like leave to see her on the days he is not fighting, which is not a thing a man in his position is owed and he knows that too.`,
       choices:["Let him go","He stays behind the wall"] }),
-    yes:(d,g)=>{ g.flags = 1; g.regard = clamp(regardOf(g)+18,0,100); g.morale = clamp(g.morale+14,0,100);
+    yes:(d,g)=>{ g.family = { name:pick(HH_NAMES), since:d.week };
+      remember(d, g, "leave");                       /* the +18, on the record instead of by hand */
+      g.morale = clamp(g.morale+14,0,100);
       g.defiance = clamp(g.defiance+6,0,100);
-      return `He goes on the quiet days and comes back every time. He now has a reason to want to live through this, which cuts both ways and you knew that when you said yes.`; },
-    no:(d,g)=>{ g.regard = clamp(regardOf(g)-12,0,100); g.morale = clamp(g.morale-14,0,100);
+      return `He goes on the quiet days and comes back every time. Her name is ${g.family.name}. He now has a reason to want to live through this, which cuts both ways and you knew that when you said yes.`; },
+    no:(d,g)=>{ remember(d, g, "walled");
+      g.morale = clamp(g.morale-14,0,100);
       return `He stays behind the wall. It is the correct decision for a lanista and you are not required to feel any particular way about it.`; } },
 };
 const ASK_KEYS = Object.keys(ASKS);
@@ -23380,6 +23434,10 @@ const SECT = {
                              </div>
                              ); })}
                          </div>}
+                     {/* the grant has to be legible while he is alive, or the death line names a
+                         stranger. It is the only thing on this card that is not about you. */}
+                     {selG.family && <div style={{fontSize:"var(--fs-base)",marginTop:5,color:"var(--ink-2)"}}>
+                       He has leave into the town on the quiet days. Her name is {selG.family.name}.</div>}
                      {regardLoyal(selG) && <div className="laurel" style={{fontSize:"var(--fs-base)",marginTop:5}}>No other house's coin will move him.</div>}
                      {regardRefuse(selG) && <div className="blood" style={{fontSize:"var(--fs-base)",marginTop:5}}>He does what he is told and not one thing more.</div>}
                      {/* ---- AND THE CONVERSATION YOU START — #196 ----
@@ -32367,6 +32425,9 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        `voice` requires it here, and it is free to sit on its own line now that `bulk` ends App at
        its own closing brace instead of at the end of the file. */
     WORDS, WORD_KEYS, WORD_COOL, wordReady, wordWhy, haveWordWith, askWeek, ASK_KEYS,
+    /* #239 — the ask that grants a life outside the wall, the table its two answers are now on the
+       record through, and the grief hook every one of the five doors a man can die through calls */
+    REGARD, remember, mournKin, HH_NAMES,
     /* ---- AND WHETHER THE WEEK'S NUDGE POINTS AT THE BIGGEST LEVER ----
        #117 measured working the cells as the largest lever in the game. The agenda offers the feast
        at unrest 35 and never mentions walking the cells at all — see `agendaCan`. #119. */

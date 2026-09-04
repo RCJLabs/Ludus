@@ -4389,6 +4389,75 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.193.0 — #239: a life outside the wall, and the bill when it ends
+
+Item #239, "A Life Outside The Wall". Five phases asked for; **two shipped and three refused**, and
+the refusals came out of the measurement the item itself asked for first.
+
+**THE DEFECT WAS ONE LINE LONG.** `ASKS.woman` is the only place in this game where a lanista grants
+a man something that exists past the gate: leave into the town on the days he is not fighting. What
+the grant *was*, in full, was `g.flags = 1`. One write. That field was read in exactly one place in
+thirty-two thousand lines — this ask's own gate, to stop asking twice — and nowhere else in the
+source. The man then died and the grant died with him, in silence. It was the cheapest generous
+decision on the board, and the most consequential thing a player could say yes to was the one thing
+the game had no memory of at all.
+
+**WHAT THE MEASUREMENT SAID** (`probes/outside.mjs`, 16 houses × 400 weeks, 2,672 played weeks):
+
+- **the ask fires once in 2,672 weeks.** 33 asks of any kind — one every 81 weeks, reaching 7.4% of
+  the 447 men who ever stood in the cells — and by kind, *asks actually fired*: burial 12,
+  brother 10, match 9, **woman 1**. `askWeek` rolls at 6%, picks one man, and stamps
+  `d.flags.asked`, so **a man gets at most one ask in his life about anything**; `woman` is the
+  lowest-weighted of the five (weights: brother 10, match 9, year 8, burial 7, **woman 6**) *and*
+  carries the strictest gate, so it loses the draw twice over.
+- **a child could not grow up in time.** Of the 33 men who ever passed this gate, the weeks they
+  survived after passing it: p25 5, **median 17**, p75 36, p90 45, max 55. A child would need
+  something near **250 weeks** to reach the gate himself — a factor of fifteen. Phase 3's walk-on
+  recruit never arrives, and phase 2 has seventeen weeks to narrate a childhood in.
+- **and phase 4's guardrail cannot be built where the item put it.** It wanted the family to make a
+  man a sharper POACH target, so the grant carried a liability. `poachTarget` requires
+  `defiance >= 45 && !regardLoyal(g)`, and `regardLoyal` is `regardOf(g) >= 70`. The ask pays **+18
+  regard**: measured at the moment of the grant, that puts **100% of takers at or past 70**, out of
+  every poach pool in the game. Saying yes does not make a man easier to take away — it makes him
+  **permanently impossible** to take away. The item's own risk section says phases 2 and 3 must not
+  ship without 4, so none of the three ships.
+
+**WHAT SHIPPED** is phase 1 and phase 5 — the latter being what the brief itself called "the
+smallest phase and the one the whole brief is actually chasing" — plus the record-keeping that makes
+the first legible:
+
+| | |
+|---|---|
+| the object | `g.family = { name, since }` replaces `g.flags = 1`, at identical numbers |
+| the memory | both answers route through `remember`, as the other four asks always did |
+| the name | on his card while he is alive, or the death line would name a stranger |
+| the bill | `mournKin` chronicles who has to be told, at every door he can die through |
+
+**The bill is deliberately not a stat.** The house is already charged −22 morale and +12 defiance a
+man for the brothers; charging it twice for the same death would be paying for the fiction instead
+of reading it. What it costs is that somebody has to go and say it, and the line says how long he
+had her: *"Somebody has to go into the town and tell Vibia that Antiochos is not coming on the quiet
+days any more. He had 30 weeks of them, and you are the one who gave them to him."*
+
+**And "every door calls the same function" is a claim, so it is driven rather than asserted.** There
+are exactly five resolvers a man of yours can die through — `boutAftermath` (the ordinary card and
+the sine one), `doMelee`, `doVenatio`, `doPairFight` and `doPrimacy`. `checks/outside.mjs` opens each
+one with a real fatal bout and reads the chronicle: **32 real corpses across five doors, 32 told
+her.** Unhooking the melee door reports "6 of 6 deaths at the melee door said NOTHING about the woman
+waiting for him".
+
+**Eight arms, nine sabotages, all nine caught.** Deleting the line, dropping its `family` guard,
+ignoring `since`, reverting the memory to a hand-applied number, retuning `REGARD.leave` from 18 to
+12, hiding the name on the card, letting the gate ask a granted man twice, unhooking one door, and
+failing to stamp the week — each reports the fault it is. The DOM arm opens the card, unfolds *What
+He Makes Of You*, and reads both new rows, because #234 shipped a button that was never wired and
+eight headless arms walked straight past it. And a first draft of arm 4 crashed under one of these
+sabotages instead of reporting — both of its calls are held now.
+
+**One thing the sabotage run found in the check rather than the game.** The refusal sub-arm seated a
+man at 60 regard, took the ask's −12, and then reported "a no is being stored as a yes" — he was at
+48 against a gate of 55. That is the ask's own gate working. The arm seats him at 85 and says why.
+
 ### v3.192.0 — the one surface in this game that was not the game
 
 The square's picker shipped in v3.189.0 as two native `<select>` elements. On a phone that is not a
