@@ -4389,6 +4389,80 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.188.0 — the primacy of Capua is decided on the sand, and it can cost you your champion
+
+The open design decision left beside #232 phase 4, answered: **a real bout.**
+
+**THE DEFECT.** `EVENTS.primacy`'s "Make the match" branch — one of your own men asking for the title
+against the man who sleeps four doors down — was two `power()` calls against a pair of independent
+0.8-1.3 rolls, a comparison, and a paragraph describing a bout nobody was shown. It was the last
+marquee moment in the game decided by a coin. It was raised as a decision rather than a defect
+because fixing it properly means the house can lose its best man to its own second, and that is not
+a thing to do to a save file without being asked.
+
+**WHAT SHIPPED.** `doPrimacy`, a sibling to `doSpar`, on the same `{pending, beats, crux}` contract
+every other engine uses — but through `simulateFight` at **standard stakes with the appeal live**,
+where the yard duel goes through `simulateSpar`, which has no fell/appeal/missio block to reach and
+a hard floor under every man in it. That difference is the whole point: the square cannot kill and
+this is not the square.
+
+**MEASURED** (`probes/title.mjs`, 400-500 bouts a cell, on two men whose power measured 314.1
+against 313.1):
+
+| the order from the box | challenger takes it | somebody dies |
+|---|---|---|
+| say nothing | 53.5% | 2.8% |
+| tell the holder to press | 50.5% | 4.5% |
+| tell the holder to cover | 54.8% | 4.5% |
+| throw the cloth | — 316 of 400 stopped before a result — | |
+
+`PRIMUS_GATE` says the challenger is the holder's equal and the sand agrees — he takes it about half
+the time, which the old coin did too. That is not the change. **The change is that somebody dies.**
+
+**THE BOX HAS ONE VOICE, AND THAT IS THE DECISION.** `simulateFight` carries one tactic per side and
+on a resume the one it already had, so an order given at the crux can only ever reach A. Everywhere
+else in the game that is invisible because B belongs to somebody else. Here it is the point: both
+men are yours, you can speak to exactly one of them, and the one you speak to is the one holding the
+title. Saying nothing is a decision about the challenger.
+
+**ONE ASYMMETRY CORRECTED AT THE WRAPPER, NOT IN THE ENGINE.** `simulateFight` reads A's appeal off
+the full missio machinery and gives B a flat `crowd>62 && R()<0.55` — right for an opponent from
+another house nobody in the seats has a feeling about, wrong for the second-best man in yours.
+`doPrimacy` re-decides that one roll against the figure the holder would have been read at and
+rewrites the beat, rather than editing the single sand, which `simulatePair` was written apart from
+on purpose. It is not a small correction: measured over 600 bouts, the engine condemned **140
+challengers and the house's own missio spared 135 of them**.
+
+**A CLAIM THAT LOOKED TRUE AND IS NOT MEASURABLE THAT WAY.** "A great house buries its champion less
+often" read 25 against 8 holder deaths on one run of 500 bouts and **15 against 16 on another of
+400**. Deaths here are too rare to compare at any N this suite can afford, and an arm built on them
+is a coin dressed as a gate. The appeal's own arithmetic is asked directly instead — and it has to
+be asked at an afternoon the editor is actually thinking about, because `missioOdds` clamps at 0.97
+and at the game's own `MERCY_CASE` a house of fame 100 and one of fame 3000 both read **97%**. At a
+veteran of modest renown who gave a poor account before a thin crowd, the house is worth **18%
+spared against 38%**.
+
+**AND IT IS RARE.** Over 1,887 played weeks in 10 rope-driven houses: somebody in Capua held the
+primacy on 1,708 of them, **this house on 28**, and only 2 of 10 houses ever held it at all. Two men
+past `PRIMUS_GATE` on 207 weeks — so the roster is not the gate; holding the title is.
+`EVENTS.primacy.make` returned an offer on **zero** of those weeks. The bout is real now and a
+played house is almost never offered it. That is a separate finding about the primacy's
+reachability, recorded here rather than fixed, because it is not what was asked for.
+
+**TWO BUGS THE CHECK FOUND IN MY OWN WORK.** `endWeek`'s headless resolver resumed the bout once —
+copied from the spar's, which gets away with it because `simulateSpar` runs six rounds with a single
+narrow crux window. The single sand is handed `stopAtCrux` on the resume too, so **23 of 40 headless
+title bouts settled nothing at all**, the fight stopping in the middle with no winner, no aftermath
+and the title untouched. And `PRIMACY_CRUX.press` shipped its first draft as `order:{press:true}` —
+`simulateSpar`'s vocabulary, meaningless to the single sand — which moved the sampled death rate by
+0.3 points on 400 bouts, i.e. not at all.
+
+**Shipped:** `doPrimacy`, `PRIMACY_CRUX` (say nothing / press / cover / throw the cloth), the crux
+menu and words branches, the event handing the match to the sand, `endWeek`'s headless resolver,
+`chooseEv`'s and `speak`'s handshakes. `checks/title.mjs` — 7 arms, **14 sabotages, 14 caught**;
+four of them only after the arms stopped sampling and started reading what the wrapper reports it
+did. `probes/title.mjs` kept as the standing instrument.
+
 ### v3.187.0 — #235: the loan is not a fuse, taking the maximum is
 
 Item #235, "The Fuse, or the Tool" — and the thing it asked me to build, I measured and did not
@@ -5093,7 +5167,7 @@ arc; a political analogue of `d.nemesis`; a cooperative venatio mode; and, in th
 votes from any of the three curators, an anytime, generated-not-written Almanac extending the glossary sheet's
 own proven idiom.
 
-**#232 — The Training-Square Duel** *(new system)* — **SHIPPED, v3.182.0 + v3.183.0 + v3.184.0.** `simulateSpar` (the fifth engine, structurally unable to kill: no appeal/missio block, damage capped after every multiplier, a hard floor of `SPAR_YIELD - SPAR_CAP`) and the `EVENTS.feud` rewiring shipped, with the odds measured against the branch they replace and held to 1.4 points. The beat-viewer wiring shipped in v3.183.0 with `SPAR_CRUX`'s own three orders — and confirmed the item's own predicted hazard, that the viewer's `solo` flag would hand a spar the single sand's whole menu. `holdTourney`'s final shipped in v3.184.0 — the seed loses it 38.6% of the time — closing the item. Phase 5's hooks were never fudge-replacements and stay unbuilt; the primacy challenge found beside Phase 4 is written up in that release note as a design decision rather than a defect, because fixing it properly means letting you kill your own champion.
+**#232 — The Training-Square Duel** *(new system)* — **SHIPPED, v3.182.0 + v3.183.0 + v3.184.0.** `simulateSpar` (the fifth engine, structurally unable to kill: no appeal/missio block, damage capped after every multiplier, a hard floor of `SPAR_YIELD - SPAR_CAP`) and the `EVENTS.feud` rewiring shipped, with the odds measured against the branch they replace and held to 1.4 points. The beat-viewer wiring shipped in v3.183.0 with `SPAR_CRUX`'s own three orders — and confirmed the item's own predicted hazard, that the viewer's `solo` flag would hand a spar the single sand's whole menu. `holdTourney`'s final shipped in v3.184.0 — the seed loses it 38.6% of the time — closing the item. Phase 5's hooks were never fudge-replacements and stay unbuilt; the primacy challenge found beside Phase 4 was written up as a design decision rather than a defect, because fixing it properly means letting you kill your own champion — **decided and shipped in v3.188.0**: it goes through `simulateFight` at standard stakes with the appeal live, and somebody dies in 2.8-4.5% of them.
 The only round-by-round fight resolver in the game (simulateFight, plus doFight's pause/resume) has never been pointed at a fight inside the walls: EVENTS.feud's i===0 branch settles a named duel between two of your own men with one power() call per side scaled by an independent 0.8–1.3 roll and a flat 16% injury check, and holdTourney (line 1452) ranks the whole eligible roster by a score() formula and crowns a yard-tournament winner having fought zero rounds. A trimmed sibling resolver — simulateSpar, built the way simulatePair was explicitly built "apart from simulateFight on purpose" (line 17077) — gives the two scenes the game's own prose already stages as a stopped-yard spectacle an actual animated bout, with no missio-to-death path.
 
 Two moments in the game already narrate the whole familia stopping to watch two of your own men fight, and neither one calls the fight engine. EVENTS.feud (the "In The Yard" pendingEvent set up by feudWeek, line 1297) has a run(d,ev,i) with four branches; the i===0 branch, reached when the player picks "put them on the sand" (line 18403–18419), resolves it as: `pa = power(...,"measured",...)`, `pb = power(...,"measured",...)`, `aWins = pa*(0.8+R()*0.5) > pb*(0.8+R()*0.5)`, then a flat `R()<0.16` roll against `INJURIES[ri(0,2)]` for the loser. No rounds, no beats, no crux, no appeal — the text says "with wooden swords and the doctore counting," and none of that is simulated. holdTourney (line 1452) is worse in one respect: it never even simulates a single pairing. `score(g)` sums weighted class stats, raw STR/AGI/TEC/DIS, regardOf(g), wins, and an R()*24 noise term; the roster is sorted by that score and `ranked[0]` is simply declared the winner. The flavor text ("wooden swords, no editor, every man with something to prove") describes a tournament that is entirely arithmetic. Meanwhile simulateFight (line 9730) and doFight (line 17612) are the most developed system in the codebase — a 12-round beat loop, a crux stop/resume contract (`res.unfinished` → `{pending:{...crux:res.crux}, beats, crux:true}`), missio odds, appeal, marks/tells — and it is reserved entirely for bouts against outside houses. The two places the design already treats an internal fight as a named event get the least mechanical attention of anything in the file.
