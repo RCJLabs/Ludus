@@ -4389,51 +4389,56 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
-### Measured, no code changed — the late game is a treadmill, and the survivor cannot afford the ladder either
+### Measured, no code changed — the sand stops paying the bill, and the ladder above it is priced for a different game
 
-Not a release. `probes/strongbox.mjs` is the standing instrument and this is what it found.
+Not a release. `probes/strongbox.mjs` is the standing instrument. **The conclusion moved twice under
+its own instruments and ended up the opposite of where it started**, so the corrections are kept.
 
-**THE QUESTION.** Two findings from the phase queue pointed at each other and disagreed. #207
-measured the ledger and called the late game a **treadmill** — median weekly net −23/−58/−68/−126 by
-era, gold flat at about 4,000 from year four. #241 measured the late-game **sink** and found it
-unreachable: 1 colossus, 1 endow, 0 arena, 0 capua across 96 campaign runs. But #241 also found that
-**15 of 16 houses died in every arm it ran**, and a population median over a population that is 90%
-dead is a statement about dying, not about the late game. So: does a house that *survives* still fail
-to afford the ladder (the prices are wrong), or does it afford it fine and the tier is simply behind
-a mortality wall (a completely different item)? Everything below is conditioned on survival.
+**THE QUESTION.** #207 called the late game a **treadmill**; #241 found the late-game **sink**
+unreachable (1 colossus, 1 endow, 0 arena, 0 capua across 96 runs) but also found 15 of 16 houses
+dying in every arm — and a population median over a population that is 90% dead is a statement about
+dying, not about the late game. Does a house that *survives* still fail to afford the ladder, or is
+the tier merely behind a mortality wall? Those need opposite fixes. **Four seeds × three arms × 16
+houses = 192 campaigns of up to 520 weeks, everything conditioned on survival.**
 
-**Four seeds × three arms × 16 houses = 192 campaigns of up to 520 weeks. It is income, not
-mortality — which refutes the hypothesis this was written to test.**
+**1 · About 10% survive** to week 520 (19 of 192), dying of debt, rebellion and ruin.
 
-- **About 10% survive** to week 520 (19 of 192), dying of debt, rebellion and ruin at a median last
-  week of 79–249.
-- **The mature week loses money in every arm of every seed.** Nine arm-medians for the weekly change
-  in the box over weeks 271–520, survivors only: **−172, −100, −84, −72, −65, −61, −48, −45, −14**.
-  Not one is positive. #207's treadmill is confirmed, and confirmed *for the houses that live* —
-  which is the separation that had never been made.
-- **And a survivor still cannot afford the ladder.** Peak gold of all 19 survivors:
-  `14776 15110 15274 15488 15596 17143 18079 18106 18509 19836 20430 21015 21471 22199 22483 24548
-  26921 | 79949 92365`. **Seventeen of nineteen peak between 14,776 and 26,921** — against 42,500
-  for the five works and 72,500 for the cheapest monument.
-- **The gate is not what stops them.** In seed D, **3 of 3 surviving builders finished all five works
-  and built zero monuments**. They cleared 42,500 over two decades and had nothing left for the
-  30,000 that comes next. `monuReady` works exactly as designed; there is simply no money on the
-  other side of it.
+**2 · The mature house is at equilibrium, not bleeding — and the first reading of this got it
+backwards.** By the MEDIAN week the late net is −14 to −172 in every arm of every seed, which reads
+as a steady bleed. It is not: purse income is spiky, the median week wins nothing, and only the mean
+decides whether the box fills. By the mean the late net is **−47, +58, −10, +17, +23, −29, +24, −15**
+— hovering at zero. A treadmill in exactly the sense #207 named, and not a decline.
 
-**The two outliers, and the story they nearly bought.** Two `saver` houses peaked at 79,949 and
-92,365 — one holding a *median* of 70,734 across weeks 181–270 — and both drained back to about
-4,000 by week 520. On the first two seeds that read as a finding: the ladder is affordable exactly
-once, at a peak around year 15, and nothing tells the player the window is open. **Seeds C and D
-refused it** — their best saver survivor peaked at 26,921. Two houses in nineteen is an outlier, and
-it is recorded as one because it was very nearly written up as a mechanic. (Loans cannot explain
-them: `LENDERS` caps at 900–2,400.)
+**3 · The sand stops paying the bill, and this is the term.** Bouts fought per week is **flat at
+0.74–0.94 for a house's whole life**. What collapses is how often it wins — weeks carrying a winning
+purse fall from 54%/31% in the first era to **6–20%** in the last, while the fixed bill goes 156 → 505
+and 73 → 530. Late arena income runs about **360/week against a bill of 505–735**, and the gap is
+filled by the residual (+268 to +580): patrons, merch, the brand, sales. **The core loop covers about
+two thirds of the house's costs by year 15.**
 
-**What this implies, and what it costs.** The four monument prices (30,000 / 44,000 / 70,000 /
-150,000) and the 42,500 of works beneath them are priced for an economy roughly three times richer
-than the one that reaches them. Correcting that is either a price cut or a late-income change, and
-**either one re-bases every figure in this file measured under the current curve** — the endings mix,
-the debt death rate, #207's era nets, #241's own reachability numbers. That is the cost of the fix
-and the reason it is written down here rather than done in passing.
+**4 · And a survivor still cannot afford the ladder.** Peak gold of all 19 survivors:
+`14776 15110 15274 15488 15596 17143 18079 18106 18509 19836 20430 21015 21471 22199 22483 24548
+26921 | 79949 92365`. **Seventeen of nineteen peak between 14,776 and 26,921** — against 42,500 for
+the five works and 72,500 for the cheapest monument. In seed D, **3 of 3 surviving builders finished
+all five works and built zero monuments**: they cleared 42,500 over two decades and had nothing for
+the 30,000 that comes next.
+
+**SO THE RECOMMENDATION FLIPPED.** The obvious reading of (3) is that late income is broken and
+should be raised. It is not broken. The appearance fee is paid on **every** bout, win or lose
+(`d.gold += t.app`, before the branch), and it scales 10 → 30 → 60 → 150 → 400 across the tiers. A
+falling win rate against a rising bill is what #207 asked for in as many words — *"a famous house
+should be **billed** like one"* — and the house it produces sits at equilibrium rather than dying.
+The income curve is doing its job. **What is inconsistent is the ladder above it**: the monuments
+assume a house that accumulates, and the economy is deliberately built for one that does not. The
+open question is therefore a price question, not an income one — and it is left open rather than
+answered in passing, because choosing the new numbers is a balance decision and re-bases every figure
+in this file measured under the current curve.
+
+**Two things this nearly published**, both caught by checking rather than reasoning: that the ladder
+is affordable exactly once at a year-15 peak (built on two saver houses at 79,949 and 92,365; seeds C
+and D refused it, best saver survivor 26,921 — two in nineteen is an outlier, and `LENDERS` caps at
+900–2,400 so loans cannot explain them); and that the appearance fee the defeat line promises does
+not exist (it does, twenty lines above the branch that names it).
 
 ### v3.195.0 — #241: the endowment stages no games, and the tick it does pay is the strongest in the table
 

@@ -35,36 +35,52 @@
          86,500 the cheapest interesting monument sits behind, counted only over survivors.
      4 · AND WHAT THE LADDER WOULD COST IN TIME at the rate a survivor actually banks.
 
-   WHAT IT ANSWERED — four seeds x three arms x 16 houses = 192 campaigns of up to 520 weeks.
-   **The hypothesis this was written to test is refuted: it is not mortality, it is income.**
+   WHAT IT ANSWERED — four seeds x three arms x 16 houses = 192 campaigns of up to 520 weeks,
+   everything conditioned on survival. The answer moved twice under its own instruments.
 
-     1 · ABOUT 10% SURVIVE to week 520 (19 of 192). The rest die of debt, rebellion and ruin, at a
-         median last week of 79 to 249 depending on arm and seed.
-     2 · THE MATURE WEEK LOSES MONEY IN EVERY ARM OF EVERY SEED. Nine arm-medians for the weekly
-         change in the box over weeks 271-520, conditioned on survival:
-             -172 · -100 · -84 · -72 · -65 · -61 · -48 · -45 · -14
-         Not one is positive. #207's "treadmill" is confirmed, and confirmed for the houses that
-         LIVE — which is the part that had never been separated out.
-     3 · AND A SURVIVOR STILL CANNOT AFFORD THE LADDER. Peak gold of all 19 survivors, sorted:
+     1 · ABOUT 10% SURVIVE to week 520 (19 of 192), dying of debt, rebellion and ruin at a median
+         last week of 79 to 249.
+
+     2 · THE MATURE HOUSE IS AT EQUILIBRIUM, NOT BLEEDING — and the first reading of this probe got
+         that backwards. Quoting the MEDIAN week, the late net is -14 to -172 in every arm of every
+         seed, which reads as a steady bleed. It is not: purse income is spiky, the median week wins
+         nothing at all, and the mean is what decides whether the box fills (the mean of the weekly
+         change over a window IS gold-at-the-end minus gold-at-the-start over weeks). By the mean,
+         the late net across the four seeds is **-47, +58, -10, +17, +23, -29, +24, -15** — hovering
+         at zero. A treadmill in the exact sense #207 named, and not a decline.
+
+     3 · THE SAND STOPS PAYING THE BILL, and this is the term. Bouts fought per week is FLAT at
+         0.74-0.94 for a house's whole life. What collapses is how often it wins: the share of weeks
+         carrying a winning purse falls from 54%/31% in the first era to 6-20% in the last, while
+         the fixed bill goes 156 -> 505 and 73 -> 530. Arena income late runs about 360 a week
+         against a bill of 505-735, and the gap is filled by the RESIDUAL (+268 to +580) — patrons,
+         merch, the brand, sales. The core loop of the game covers roughly two thirds of the house's
+         costs by year 15 and the rest comes from everywhere else.
+
+     4 · AND A SURVIVOR STILL CANNOT AFFORD THE LADDER. Peak gold of all 19 survivors:
              14776 15110 15274 15488 15596 17143 18079 18106 18509 19836
              20430 21015 21471 22199 22483 24548 26921 | 79949 92365
          Seventeen of nineteen peak between 14,776 and 26,921 — against 42,500 for the five works
-         and 72,500 for the cheapest monument. So the tier is not merely hidden behind mortality;
-         the price is wrong against the economy that reaches it.
-     4 · AND THE GATE IS NOT WHAT STOPS THEM. In seed D, 3 of 3 surviving BUILDERS finished all five
-         works (5/5/5) and built ZERO monuments. They cleared 42,500 over two decades and had
-         nothing left for the 30,000 that comes next.
+         and 72,500 for the cheapest monument. In seed D, 3 of 3 surviving builders finished ALL
+         FIVE works and built ZERO monuments: they cleared 42,500 over two decades and had nothing
+         for the 30,000 that comes next. `monuReady` works exactly as designed; there is no money on
+         the other side of it.
 
-   THE TWO OUTLIERS, AND THE STORY THEY NEARLY BOUGHT. Two saver houses peaked at 79,949 and 92,365
-   — one holding a MEDIAN of 70,734 across weeks 181-270 — and both then drained back to about 4,000
-   by week 520. On the first two seeds that looked like a finding: the ladder is affordable exactly
-   once, at a peak around year 15, and nothing tells the player the window is open. Seeds C and D
-   refused it. Their best saver survivor peaked at 26,921 and the other saver arm produced no
-   survivor at all. Two houses in nineteen is an outlier, not a window, and it is written down here
-   as an outlier because it was very nearly written up as a mechanic.
+   SO THE CONCLUSION FLIPPED. The obvious reading of (3) is that late income is broken and should be
+   raised. It is not broken: the appearance fee is paid on EVERY bout, win or lose (`d.gold += t.app`
+   before the branch), and it scales 10 -> 30 -> 60 -> 150 -> 400 across the tiers. A falling win
+   rate against a rising bill is what #207 asked for in as many words — "a famous house should be
+   BILLED like one" — and the house it produces sits at equilibrium rather than dying. The income
+   curve is doing its job. What is inconsistent is the LADDER ABOVE IT: the monuments assume a house
+   that accumulates, and the economy is designed for one that does not.
 
-   (Loans cannot explain the two: `LENDERS` caps at 900-2,400 denarii, and seed B's figure is a
-   MEDIAN over ninety weeks rather than a spike.)
+   TWO THINGS THIS PROBE NEARLY PUBLISHED, both caught by checking rather than by reasoning:
+     · "the ladder is affordable exactly once, at a peak around year 15, and nothing signals the
+       window" — built on two saver houses that peaked at 79,949 and 92,365 on the first two seeds.
+       Seeds C and D refused it; their best saver survivor peaked at 26,921. Two in nineteen is an
+       outlier. (Loans cannot explain them either: `LENDERS` caps at 900-2,400.)
+     · "the appearance fee the defeat line promises does not exist" — it does, and it is paid
+       unconditionally twenty lines above the branch that names it.
 
    Run: node test/probes/strongbox.mjs [houses] [weeks] [seed] */
 import { serve, open } from "../harness.mjs";
@@ -83,7 +99,7 @@ const out = await p.evaluate(([H,W,SEED])=>{
     for(let h=0; h<H; h++){
       const d = A.newGameState("Lt"+h, "capua", `${SEED}-${h}`);
       const row = { h, weeks:0, over:null, end:0, peak:0, works:0, monu:0, ready:null,
-        gold:{}, net:{}, bill:{}, trail:[] };
+        gold:{}, net:{}, bill:{}, purse:{}, resid:{}, fame:{}, men:{}, bouts:{}, won:{}, trail:[] };
       let prev = d.gold || 0;
       for(let w=0; w<W && !d.over; w++){
         try { R.lanista(d, opts); } catch(e){ break; }
@@ -96,9 +112,25 @@ const out = await p.evaluate(([H,W,SEED])=>{
         const dlt = g - prev; prev = g;
         const era = ERAS.findIndex(([a,b])=>d.week>=a && d.week<=b);
         if(era >= 0){
-          (row.net[era] = row.net[era] || []).push(dlt);
-          (row.gold[era] = row.gold[era] || []).push(g);
-          (row.bill[era] = row.bill[era] || []).push(A.weeklyBill(d));
+          /* THE THREE-WAY SPLIT. `d.after` is last week's ledger — `afterWeek` moves `d.mark` into
+             it and starts a fresh one — and `purse` there is what the house WON (weekMark fires on
+             the win branch), which is the dominant income term. `weeklyBill` is the fixed outflow
+             exactly. What is left over is everything else in and out: other income against every
+             discretionary purchase. Three terms, none of them inferred from the other two. */
+          const bill = A.weeklyBill(d);
+          const won = (d.after && d.after.purse) || 0;
+          (row.net[era]   = row.net[era]   || []).push(dlt);
+          (row.gold[era]  = row.gold[era]  || []).push(g);
+          (row.bill[era]  = row.bill[era]  || []).push(bill);
+          (row.purse[era] = row.purse[era] || []).push(won);
+          (row.resid[era] = row.resid[era] || []).push(dlt - won + bill);
+          (row.fame[era]  = row.fame[era]  || []).push(Math.round(d.fame||0));
+          (row.men[era]   = row.men[era]   || []).push(A.activeG(d).length);
+          /* AND WHETHER FLAT PURSE INCOME IS A FLAT PURSE OR A FALLING WIN RATE. `d.after.purse`
+             is winnings only, so the two are indistinguishable in it — and they need opposite
+             fixes. `bouts` is every bout fought that week, won or not. */
+          (row.bouts[era] = row.bouts[era] || []).push((d.after && d.after.bouts) || 0);
+          (row.won[era]   = row.won[era]   || []).push(won > 0 ? 1 : 0);
         }
         if(row.ready == null && A.monuReady(d)) row.ready = d.week;
       }
@@ -128,6 +160,13 @@ const out = await p.evaluate(([H,W,SEED])=>{
 
 const med = a => { const v=[...a].filter(x=>x!=null).sort((x,y)=>x-y);
   return v.length ? Math.round(v[Math.floor(v.length/2)]) : null; };
+/* MEAN FOR THE FLOWS, MEDIAN FOR THE STOCKS, and both for the net. Purse income is spiky — a house
+   wins on some weeks and not others — so the MEDIAN week's purse is 0 and the median week's net is
+   negative even in a house that is getting richer. Only the mean decides whether the box fills: the
+   mean of the weekly change over a window IS (gold at the end - gold at the start) / weeks. The
+   first reading of this probe quoted the median and called the late game a bleed on that basis. */
+const mean = a => { const v=[...a].filter(x=>x!=null);
+  return v.length ? Math.round(v.reduce((s,x)=>s+x,0)/v.length) : null; };
 const pc = (a,b) => b ? `${(100*a/b).toFixed(0)}%` : "-";
 const flat = (rows, field, era) => rows.flatMap(r=>r[field][era]||[]);
 
@@ -152,12 +191,21 @@ for(const A2 of out.arms){
   console.log(`\n=== 2. WHAT A SURVIVOR EARNS (${surv.length} house${surv.length===1?"":"s"} still standing at ${W}) ===`);
   if(!surv.length) console.log(`  none survived — every figure below would be a statement about dying`);
   else {
-    console.log(`  era          median gold   median weekly net   median fixed bill`);
+    console.log(`  era        gold~   NET(mean)  net(med)   purses  bill  residual    fame  men  bouts/wk  paidwk  d/bout`);
     out.eras.forEach(([a,b], i)=>{
-      const g = flat(surv,"gold",i), nt = flat(surv,"net",i), bl = flat(surv,"bill",i);
+      const g = flat(surv,"gold",i);
       if(!g.length) return;
-      console.log(`  w${String(a).padStart(3)}-${String(b).padStart(3)}   ${String(med(g)).padStart(11)}   ${String(med(nt)).padStart(17)}   ${String(med(bl)).padStart(17)}`);
+      const m = (f,w) => String(mean(flat(surv,f,i))).padStart(w);
+      console.log(`  w${String(a).padStart(3)}-${String(b).padStart(3)} ${String(med(g)).padStart(7)}`
+        + `${m("net",11)}${String(med(flat(surv,"net",i))).padStart(10)}`
+        + `${m("purse",9)}${m("bill",6)}${m("resid",10)}`
+        + `${String(med(flat(surv,"fame",i))).padStart(8)}${String(med(flat(surv,"men",i))).padStart(5)}`
+        + `${(flat(surv,"bouts",i).reduce((s2,x)=>s2+x,0)/Math.max(1,flat(surv,"bouts",i).length)).toFixed(2).padStart(10)}`
+        + `${(100*flat(surv,"won",i).reduce((s2,x)=>s2+x,0)/Math.max(1,flat(surv,"won",i).length)).toFixed(0).padStart(7)}%`
+        + `${String(Math.round(flat(surv,"purse",i).reduce((s2,x)=>s2+x,0) / Math.max(1, flat(surv,"bouts",i).reduce((s2,x)=>s2+x,0)))).padStart(8)}`);
     });
+    console.log(`    all flows are MEANS except net(med) — purse is spiky, so the median week wins nothing`);
+    console.log(`    net = purses - bill + residual · residual is every other income against every purchase`);
     console.log(`  peak gold, survivors only: ${surv.map(r=>r.peak).sort((x,y)=>x-y).join(" · ")}`);
     console.log(`  reached monuReady: ${surv.filter(r=>r.ready).length} of ${surv.length}`
       + ` · works finished ${surv.map(r=>r.works).join("/")} of 5 · monuments ${surv.map(r=>r.monu).join("/")} of 4`);
@@ -167,16 +215,16 @@ for(const A2 of out.arms){
   out.eras.forEach(([a,b], i)=>{
     const g = flat(R2,"gold",i), nt = flat(R2,"net",i);
     if(!g.length) return;
-    console.log(`  w${String(a).padStart(3)}-${String(b).padStart(3)}   ${String(med(g)).padStart(11)}   ${String(med(nt)).padStart(17)}`);
+    console.log(`  w${String(a).padStart(3)}-${String(b).padStart(3)} ${String(med(g)).padStart(7)}${String(mean(nt)).padStart(11)}${String(med(nt)).padStart(10)}`);
   });
 
   console.log(`\n=== 3 + 4. COULD A SURVIVOR EVER PAY? ===`);
   if(surv.length){
     const late = surv.flatMap(r=>[...(r.net[3]||[]), ...(r.net[4]||[])]);
-    const rate = med(late);
+    const rate = mean(late);
     const need = out.prices.works + out.prices.monu[0].cost;
     /* a short run has no late era at all, and "NEVER" on a null is a verdict the data did not give */
-    console.log(`  a mature survivor banks a median ${rate == null ? "(no late era in this run)" : `${rate} a week`}`);
+    console.log(`  a mature survivor banks a MEAN ${rate == null ? "(no late era in this run)" : `${rate} a week`} (median week: ${med(late)})`);
     console.log(`  the cheapest monument is ${need}d deep from nothing`);
     if(rate != null)
       console.log(`    at that rate: ${rate > 0 ? `${Math.round(need/rate)} weeks — ${(need/rate/18).toFixed(0)} years of banking every denarius` : `NEVER — the median week loses money`}`);
