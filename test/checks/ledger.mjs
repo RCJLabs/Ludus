@@ -157,8 +157,19 @@ export async function run({ p, errors }){
   if(out.lines.loan !== -420) fails.push(`a shed carrying paper folds at ${out.lines.loan}d — it has always been −420`);
   if(!(out.lines.palace < out.lines.shed * 3))
     fails.push(`a palace is carried to ${out.lines.palace}d against a shed's ${out.lines.shed}d — the line does not follow the house's own bill`);
-  /* ---- and the stone stays the largest thing in the game ---- */
-  if(out.stoneTotal < 300000)
+  /* ---- and the stone stays the largest thing in the game ----
+     THE BAR WAS 300,000 AND IT DID ITS JOB. v3.196.0 cut the ladder to 96,000, and this line
+     refused the build until the repricing was written down — which is exactly what "without a word"
+     was there to demand, and the header above says the values are what a repricing is allowed to
+     move. The word, then: measured over 192 campaigns (`probes/strongbox.mjs`), the old ladder
+     produced 1 colossus, 1 endow, 0 arena and 0 capua, and seventeen of nineteen surviving houses
+     peaked between 14,776 and 26,921 against a cheapest monument sitting 72,500 deep. The new bar
+     is 80,000: still the largest thing a house can buy by a distance — four times the peak gold of
+     a typical survivor — and low enough that the tier is climbed rather than admired. Upkeep did
+     NOT move with it; the invariant above ("a finished, idle house must be under water") is what
+     caught the first draft of that retune, which had cut upkeep too and put the idle house at
+     +130d a week. */
+  if(out.stoneTotal < 80000)
     fails.push(`the works and monuments come to ${out.stoneTotal} denarii — the late-game sink has been repriced downward without a word`);
   /* ---- the slide is heard, at every size of house ---- */
   for(const s of out.slides){

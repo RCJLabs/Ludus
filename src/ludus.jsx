@@ -15914,24 +15914,76 @@ function skipWeeks(d, want){
    The entire buildable game costs 26,580d, so a house past week 100 has more money
    than uses for it and nothing new arrives. These are things only a rich, old house
    can do, and each one costs more than everything else put together. */
+/* ---- THE LADDER WAS PRICED FOR A HOUSE THAT DOES NOT EXIST ----
+   Measured (`probes/strongbox.mjs`, four seeds x three arms x 16 houses = 192 campaigns of up to
+   520 weeks, everything conditioned on survival). The prices below are the second answer, not the
+   first: the measurement refuted its own headline twice, and the retune's own first draft was
+   refused by `checks/ledger.mjs`.
+
+   ABOUT 10% OF HOUSES SURVIVE to week 520, and the ones that do sit at EQUILIBRIUM: the mean weekly
+   net across the four seeds' late eras is -47, +58, -10, +17, +23, -29, +24, -15. Not a bleed — a
+   treadmill, in exactly the sense #207 named and asked for. (The first reading quoted the MEDIAN
+   week, which wins nothing because purse income is spiky, and called it a decline. It is not.)
+
+   SO PEAK GOLD IS THE BUDGET, and there is no saving on top of it. Peak gold of all 19 survivors:
+      14776 15110 15274 15488 15596 17143 18079 18106 18509 19836
+      20430 21015 21471 22199 22483 24548 26921 | 79949 92365
+   Seventeen of nineteen between 14,776 and 26,921. Against that the five works cost 42,500 between
+   them and the cheapest monument sat 72,500 deep. Across 192 campaigns the tier produced 1 colossus,
+   1 endow, 0 arena, 0 capua — and in one seed 3 of 3 surviving BUILDERS finished all five works and
+   built ZERO monuments, having cleared 42,500 over two decades with nothing left for the 30,000 that
+   came next.
+
+   THE INCOME CURVE IS NOT THE FAULT, and that was checked before these numbers moved. The
+   appearance fee is paid on every bout, win or lose, and scales 10/30/60/150/400 by tier; bouts
+   fought per week is flat at 0.74-0.94 for a house's whole life; what falls is the WIN rate, from
+   ~50% of weeks paying to 6-20%, against a bill that goes 156 -> 505. That is #207's design working.
+   What was inconsistent was this table, which assumed a house that accumulates.
+
+   SO THE LADDER IS SIZED TO THE MEASURED BUDGET: the five works at 11,000 between them, and the
+   monuments at 8,000 / 12,000 / 20,000 / 45,000.
+
+   AND THE UPKEEP DOES NOT MOVE, which the first draft of this retune got wrong. It cut upkeep by the
+   same factor, reasoning that making the tier reachable and then making it fatal to have reached is
+   not a fix. `checks/ledger.mjs` refused that in one line — "a finished house nets +130d a week
+   doing nothing — the strongbox refills itself and the endgame has no floor" — and it is right: that
+   check holds the SHAPE of the standing economy while explicitly allowing its values to be repriced,
+   and "a finished, idle house must be under water" is the shape. The reasoning was wrong as well as
+   the number, because the burden scales with what a house actually built: the 472 a week that
+   worried me is the bill for all nine, which is the one-in-five house, while a builder who puts up
+   the works and two monuments carries 138. The prices come down; the stone is still looked after.
+
+   RE-MEASURED ON THE SAME FOUR SEEDS, upkeep and all, and the ladder grades the way it reads:
+     the reference builder (cheapest open work first) — **10 of 10 surviving builders reach the tier
+       and finish all five works**, against a p50 of 3 of 5 before, and 9 of the 10 put up ONE or TWO
+       monuments. Across the whole 192-campaign sweep before the retune the tier produced one
+       colossus and one endow;
+     a builder who wants the top of it — works first, then the DEAREST monument he can carry —
+       finished ALL FOUR in one seed, capua included, and had arena going up in another;
+     and it costs him: the ambitious arm leaves 0-1 houses of 16 standing at week 520 against the
+       plain builder's 1-3, because the deposits, the weekly draw and the upkeep are all real.
+   So a builder gets the works and a monument or two, and about one house in four ever cuts its name
+   over Capua's gate — which is what its own note asks for. The non-building arms come back
+   byte-identical to their pre-retune runs, which is the check that this moved what it meant to move
+   and nothing else. */
 const WORKS = {
-  spina:   { name:"A spina for the yard", cost:7000, upkeep:14, years:2,
+  spina:   { name:"A spina for the yard", cost:2000, upkeep:14, years:2,
     blurb:"A stone spine down the middle of the training square, the way the real ones have. They will fight around it every day for the rest of their lives.",
     done:"The men train around stone now, and the first time one of them goes out to a venue with a spina he does not have to think about it.",
     perk:"crowd", n:4, say:"+4 crowd on every bout, forever." },
-  baths:   { name:"Baths worth the name", cost:9500, upkeep:22, years:2,
+  baths:   { name:"Baths worth the name", cost:2500, upkeep:22, years:2,
     blurb:"Not the plunge in the corner. Hot rooms, a masseur, and the kind of place a man will talk in.",
     done:"They come out of it different. Whatever the medicus does, this does the other half.",
     perk:"rest", n:6, say:"Six more fatigue shed every week, on top of everything else." },
-  chapel:  { name:"A proper shrine", cost:5500, upkeep:9, years:1,
+  chapel:  { name:"A proper shrine", cost:1500, upkeep:9, years:1,
     blurb:"Nemesis in stone, with a priest who comes on the right days. The men built one themselves out of nothing; this is the answer to that.",
     done:"Somebody who is not you decided the house was worth a god, and then you agreed with him in stone.",
     perk:"calm", n:1.1, say:"Unrest falls 1.1 a week, forever." },
-  school:  { name:"A school under your name", cost:12000, years:3,
+  school:  { name:"A school under your name", cost:3000, years:3,
     blurb:"Boys sent to you to be trained and sent back. It is not a ludus, it is a reputation with a roof, and Capua has not had one in thirty years.",
     done:"There are men in three towns who learned it here, and they say so.",
     perk:"fame", n:3, say:"+3 fame a week, and the block hears about it." },
-  tomb:    { name:"A tomb for the house", cost:8500, upkeep:11, years:2,
+  tomb:    { name:"A tomb for the house", cost:2000, upkeep:11, years:2,
     blurb:"Not a plot. A tomb, on the road out, with room for every man who ever wore your colours and space for the names to be cut.",
     done:"Every man in that block has now seen exactly where he is going, and it is not a ditch.",
     /* ---- #140: THIS LINE NAMED THE WRONG PARTY ----
@@ -15950,7 +16002,7 @@ const WORK_KEYS = Object.keys(WORKS);
    once the men and the yard are as good as they will get. They cost a fortune and
    pay the house back in the coin the very top of the game runs on: name and acclaim. */
 const MONUMENTS = {
-  colossus: { name:"A colossus of your champion", cost:30000, upkeep:48, years:2, tier:2,
+  colossus: { name:"A colossus of your champion", cost:8000, upkeep:48, years:2, tier:2,
     blurb:"A bronze the height of four men, of the best fighter your house ever raised, on the road where everyone coming into Capua must pass under it.",
     done:"He stands over the road now, and men who never saw him fight point him out to their sons.",
     perk:"fame", n:6, say:"+6 fame a week, forever — the thing is the size of a house." },
@@ -15967,13 +16019,15 @@ const MONUMENTS = {
      the other six use. Measured first (`probes/endow.mjs`, three arms over two seeds, 96 campaign
      runs of up to 520 weeks) and the item's own falsifier for that work fires:
 
-       ENDOW IS 86,500 DENARII DEEP — the five WORKS cost 42,500 between them and `monuReady` gates
-       the whole monument tier behind finishing all five, and then this asks 44,000 more. A house
-       that builds NOTHING AT ALL peaks at a median 16,200 and an all-seeds maximum of 49,728.
-       Across 96 campaign runs the four monuments were finished 1 colossus, 1 endow, 0 arena,
-       0 capua — and `capua`, which this file calls "the last sentence in the book", has never been
-       built by anything. An arm that commissions endow the moment it can found the tier open on
-       377 house-weeks and the money there on ONE of them.
+       ENDOW WAS 86,500 DENARII DEEP when this was written — the five WORKS cost 42,500 between
+       them, `monuReady` gates the whole tier behind finishing all five, and endow then asked 44,000
+       more. Across 96 campaign runs the four monuments were finished 1 colossus, 1 endow, 0 arena,
+       0 capua, and an arm that commissions endow the moment it can found the tier open on 377
+       house-weeks with the money there on ONE of them. **Those prices were cut in v3.196.0** — the
+       ladder is 11,000 of works and 8,000/12,000/20,000/45,000 of monuments now, sized to the
+       measured survivor peak; see the banner over `WORKS`. The reasoning below is unchanged by
+       that: the festival was refused because nobody reached the content, and the fix chosen for
+       that was the price, not a festival nobody would have seen either.
 
      So the festival is not written: it is content nobody reaches. What is corrected is the text,
      which is #140's fix applied to the entry three rows down.
@@ -15985,11 +16039,11 @@ const MONUMENTS = {
      32 points. Measured on played houses it holds a gap of **+30 (p50)**, worth +44 points of plain
      acclaim. That is the strongest perk in this table by a distance, and acclaim has some twenty
      live readers — the missio, the crowd, the stall, patrons, the census, Rome. The number stays. */
-  endow:    { name:"Games endowed in your name", cost:44000, upkeep:34, years:3, tier:2,
+  endow:    { name:"Games endowed in your name", cost:12000, upkeep:34, years:3, tier:2,
     blurb:"A sum settled on the city, and the interest spent every year on games you will never stage and never see. Not your card, not your men, not your afternoon — the aediles hold the money and the herald reads your name out over it, whether you are alive to hear it or not.",
     done:"The first of them was held without you. You were not consulted about the bill, you did not know one man on it, and your name was read out twice before the gates opened. There is nothing left for you to do about it, now or ever, which is the whole of what you bought.",
     perk:"acclaim", n:1.1, say:"Your name climbs 1.1 acclaim a week, forever — measured, that holds a house about thirty points of the street's love above what its deeds alone would earn, and it outlives you." },
-  arena:    { name:"A stone arena of your own", cost:70000, upkeep:130, years:3, tier:2,
+  arena:    { name:"A stone arena of your own", cost:20000, upkeep:130, years:3, tier:2,
     blurb:"Your own amphitheatre, in stone, on your own ground. No other lanista in Campania has ever owned the floor his men fight on. The largest sum a house can spend on anything.",
     done:"You fight in a house the city now calls by your name, and the tiers are full every time the gates open.",
     perk:"crowd", n:10, say:"+10 crowd on every bout — the floor itself is yours." },
@@ -16001,7 +16055,7 @@ const MONUMENTS = {
      men's bodies, pays to have Capua's own amphitheatre pulled down and raised
      again in stone with his name cut over the gate. It takes four years and it is
      the last sentence in the book. */
-  capua:    { name:"The amphitheatre of Capua, in your name", cost:150000, upkeep:190, years:4, tier:3,
+  capua:    { name:"The amphitheatre of Capua, in your name", cost:45000, upkeep:190, years:4, tier:3,
     blurb:"Not your floor — the city's. Pulled down and raised again in stone at your expense, with your name cut over the gate in letters a man can read from the road. Capua has never let a lanista do this. Capua has also never been offered this much money.",
     done:"They cut the name over the gate on a Tuesday, with no ceremony, because the ceremony is the building. Every man who walks into those tiers for the next four hundred years walks in under you.",
     perk:"fame", n:14, say:"+14 fame a week, forever, and the city itself carries your name. Nothing in Campania is above it." },

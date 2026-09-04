@@ -4389,6 +4389,116 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.196.0 — the ladder was priced for a house that does not exist
+
+Acting on the finding below. The monument tier produced **1 colossus, 1 endow, 0 arena, 0 capua
+across 192 campaigns**; `capua`, which the source calls "the last sentence in the book", had never
+been built by anything. The prices are cut to the economy that actually reaches them.
+
+**THE BUDGET IS PEAK GOLD, AND THERE IS NO SAVING ON TOP OF IT.** A surviving house sits at
+equilibrium — the mean late weekly net across four seeds is −47, +58, −10, +17, +23, −29, +24, −15 —
+so what it can commit over its whole life is roughly what it has at its peak. Seventeen of nineteen
+survivors peak between **14,776 and 26,921**. Against that the five works cost 42,500 and the
+cheapest monument sat 72,500 deep.
+
+| | was | now | | was | now |
+|---|---|---|---|---|---|
+| spina | 7,000 | **2,000** | colossus | 30,000 | **8,000** |
+| baths | 9,500 | **2,500** | endow | 44,000 | **12,000** |
+| chapel | 5,500 | **1,500** | arena | 70,000 | **20,000** |
+| school | 12,000 | **3,000** | capua | 150,000 | **45,000** |
+| tomb | 8,500 | **2,000** | | | |
+| **five works** | **42,500** | **11,000** | | | |
+
+**Upkeep does NOT move, and the first draft of this retune got that wrong.** It cut upkeep by the
+same factor, reasoning that making the tier reachable and then making it fatal to have reached is not
+a fix. `checks/ledger.mjs` refused the build in one line — *"a finished house nets +130d a week doing
+nothing — the strongbox refills itself and the endgame has no floor"* — and it is right: that check
+holds the **shape** of the standing economy while explicitly allowing its values to be repriced, and
+"a finished, idle house must be under water" is the shape. The reasoning was wrong as well as the
+number: the burden scales with what a house actually built, so the 472/week that worried me is the
+bill for **all nine**, which is the one-in-five house, while a builder who puts up the works and two
+monuments carries 138. With upkeep restored the idle finished house is back at **−196/week**.
+
+That check also carries a `stoneTotal < 300000` tripwire whose message is *"repriced downward without
+a word"*. The word is now in the check: the bar is **80,000**, chosen so the stone stays the largest
+thing a house can buy by a distance — four times a typical survivor's peak gold — while letting the
+tier be climbed rather than admired.
+
+**RE-MEASURED ON THE SAME FOUR SEEDS**, and the ladder grades:
+
+- the reference builder (cheapest open work first) — **10 of 10 surviving builders reach the tier and
+  finish all five works**, against a p50 of 3 of 5 before, and 9 of the 10 put up **one or two**
+  monuments. Across the whole 192-campaign sweep before the retune the tier produced one colossus and
+  one endow;
+- a builder who wants the top of it — works first, then the dearest monument he can carry — finished
+  **all four in one seed, capua included**, and had arena going up in another;
+- and it costs him: the ambitious arm leaves 0–1 houses of 16 standing at week 520 against the plain
+  builder's 1–3, because the deposits, the weekly draw and the upkeep are all real.
+
+So a builder gets the works and a monument or two, and about **one house in four** ever cuts its name
+over Capua's gate — which is what its own note asks for. **The non-building arms come back
+byte-identical to their pre-retune runs**, which is the check that this moved what it meant to move
+and nothing else.
+
+**Three instrument faults on the way here, all caught before they became findings.** An "ambitious"
+arm that left the rope's builder switched on, so the rope took the cheapest thing the instant a site
+freed and the arm never saw an idle week (it reported 0 of 0 and said so). A second draft of the same
+arm that was never actually inserted into the file, so it came back byte-identical to `builder`
+because its options *were* `builder`'s. And, earlier, the median-versus-mean error that made a house
+at equilibrium read as a house bleeding out.
+
+### Measured, no code changed — the sand stops paying the bill, and the ladder above it is priced for a different game
+
+Not a release. `probes/strongbox.mjs` is the standing instrument. **The conclusion moved twice under
+its own instruments and ended up the opposite of where it started**, so the corrections are kept.
+
+**THE QUESTION.** #207 called the late game a **treadmill**; #241 found the late-game **sink**
+unreachable (1 colossus, 1 endow, 0 arena, 0 capua across 96 runs) but also found 15 of 16 houses
+dying in every arm — and a population median over a population that is 90% dead is a statement about
+dying, not about the late game. Does a house that *survives* still fail to afford the ladder, or is
+the tier merely behind a mortality wall? Those need opposite fixes. **Four seeds × three arms × 16
+houses = 192 campaigns of up to 520 weeks, everything conditioned on survival.**
+
+**1 · About 10% survive** to week 520 (19 of 192), dying of debt, rebellion and ruin.
+
+**2 · The mature house is at equilibrium, not bleeding — and the first reading of this got it
+backwards.** By the MEDIAN week the late net is −14 to −172 in every arm of every seed, which reads
+as a steady bleed. It is not: purse income is spiky, the median week wins nothing, and only the mean
+decides whether the box fills. By the mean the late net is **−47, +58, −10, +17, +23, −29, +24, −15**
+— hovering at zero. A treadmill in exactly the sense #207 named, and not a decline.
+
+**3 · The sand stops paying the bill, and this is the term.** Bouts fought per week is **flat at
+0.74–0.94 for a house's whole life**. What collapses is how often it wins — weeks carrying a winning
+purse fall from 54%/31% in the first era to **6–20%** in the last, while the fixed bill goes 156 → 505
+and 73 → 530. Late arena income runs about **360/week against a bill of 505–735**, and the gap is
+filled by the residual (+268 to +580): patrons, merch, the brand, sales. **The core loop covers about
+two thirds of the house's costs by year 15.**
+
+**4 · And a survivor still cannot afford the ladder.** Peak gold of all 19 survivors:
+`14776 15110 15274 15488 15596 17143 18079 18106 18509 19836 20430 21015 21471 22199 22483 24548
+26921 | 79949 92365`. **Seventeen of nineteen peak between 14,776 and 26,921** — against 42,500 for
+the five works and 72,500 for the cheapest monument. In seed D, **3 of 3 surviving builders finished
+all five works and built zero monuments**: they cleared 42,500 over two decades and had nothing for
+the 30,000 that comes next.
+
+**SO THE RECOMMENDATION FLIPPED.** The obvious reading of (3) is that late income is broken and
+should be raised. It is not broken. The appearance fee is paid on **every** bout, win or lose
+(`d.gold += t.app`, before the branch), and it scales 10 → 30 → 60 → 150 → 400 across the tiers. A
+falling win rate against a rising bill is what #207 asked for in as many words — *"a famous house
+should be **billed** like one"* — and the house it produces sits at equilibrium rather than dying.
+The income curve is doing its job. **What is inconsistent is the ladder above it**: the monuments
+assume a house that accumulates, and the economy is deliberately built for one that does not. The
+open question is therefore a price question, not an income one — and it is left open rather than
+answered in passing, because choosing the new numbers is a balance decision and re-bases every figure
+in this file measured under the current curve.
+
+**Two things this nearly published**, both caught by checking rather than reasoning: that the ladder
+is affordable exactly once at a year-15 peak (built on two saver houses at 79,949 and 92,365; seeds C
+and D refused it, best saver survivor 26,921 — two in nineteen is an outlier, and `LENDERS` caps at
+900–2,400 so loans cannot explain them); and that the appearance fee the defeat line promises does
+not exist (it does, twenty lines above the branch that names it).
+
 ### v3.195.0 — #241: the endowment stages no games, and the tick it does pay is the strongest in the table
 
 Item #241, "Endow, Actually". Its premise is **confirmed**, its engine is **refused on its own
