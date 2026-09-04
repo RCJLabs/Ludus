@@ -4389,6 +4389,30 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.192.0 — the one surface in this game that was not the game
+
+The square's picker shipped in v3.189.0 as two native `<select>` elements. On a phone that is not a
+menu — it is the operating system's own sheet, grey on grey with radio buttons and the platform
+font, thrown over a game that has spent every other screen refusing to look like a browser. Reported
+from a real handset with a screenshot of the Android dialog beside the parchment it interrupted.
+
+**It is the arena's own control now.** The game has picked men by tapping `optrow` since v3.3.0 —
+`togglePair`, two slots, a `Check` when a man is on — and the square uses the same class, the same
+two-slot toggle and the same row shape: name in the display face, his class and whether he has
+proved it, his worth on the right, the gold gradient and check when he is chosen.
+
+**And the sweep says it was the only one.** Every `<input>` in the file carries the game's own `sel`
+class and is a text field, which opens a keyboard rather than a picker; every `<summary>` sets
+`list-style:none` and `::-webkit-details-marker{display:none}`, so the native disclosure triangle
+has never been visible. There is no `<dialog>`, no `<datalist>`, no `showPicker`, and no
+`alert`/`confirm`/`prompt` anywhere in the source. The `<select>` was the single native popup in the
+game and there is now none.
+
+**Held so it cannot come back.** `checks/prove.mjs` arm 7 asserted on `<select>` elements; it asserts
+on `button.optrow` now, requires the tapped row to light, and **fails if a native `<select>` appears
+anywhere on the page** — verified by putting one back, which reports "1 native `<select>` on the
+page". A future picker written the quick way trips the gate rather than shipping.
+
 ### v3.191.0 — #238: a sentence fought out is worth something, and it is still not freedom
 
 Item #238, "Damnatio Ad Ludum Doesn't End In Freedom" — its premise confirmed, its diagnosis moved

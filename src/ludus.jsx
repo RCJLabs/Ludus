@@ -23263,25 +23263,20 @@ function endTheLine(d){
    155 lines and the reason `bulk` exists. It needs two men and nothing else, and it says what it
    is for before it is used: the square is where a man proves he is a master of his style, and the
    card is expected to answer the number rather than grey a button out. */
+/* ---- AND IT IS PICKED THE WAY EVERY OTHER MAN IN THIS GAME IS PICKED ----
+   The first draft used two `<select>` elements. On a phone that is not a menu, it is the operating
+   system's own list — a grey sheet with radio buttons and the platform's font, thrown over a game
+   that has spent every other screen refusing to look like a browser. The arena has picked men by
+   tapping `optrow` since v3.3.0 (`togglePair`, two slots, a `Check` when a man is on); this is the
+   same control, the same class, the same two-slot toggle. Nothing in the game opens a system
+   dialog now. */
 function SquareBox({ S, go }){
   const men = activeG(S).filter(g=>g.status==="active");
-  const [a, setA] = React.useState(null);
-  const [b, setB] = React.useState(null);
+  const [sel, setSel] = React.useState([]);
   if(men.length < 2) return null;
-  const A = men.find(g=>g.id===a) || null, B = men.find(g=>g.id===b) || null;
-  const why = squareWhy(S, A, B);
-  const opt = (g, other) => (
-    <option key={g.id} value={g.id} disabled={other === g.id}>
-      {g.name}{g.nick? `, ${g.nick}`:""} — {g.wins||0}-{g.losses||0} · worth {gladValue(g)}d{g.proved? " ✦ proved":""}
-    </option>
-  );
-  const sel = (val, set, other) => (
-    <select className="btn btn-ghost" style={{width:"100%",padding:"6px 4px"}} value={val==null?"":val}
-      onChange={e=>set(e.target.value===""?null:+e.target.value)}>
-      <option value="">— nobody —</option>
-      {men.map(g=>opt(g, other))}
-    </select>
-  );
+  const toggle = id => setSel(v => v.includes(id) ? v.filter(x=>x!==id) : (v.length>=2 ? [v[1], id] : [...v, id]));
+  const A = men.find(g=>g.id===sel[0]) || null, B = men.find(g=>g.id===sel[1]) || null;
+  const why = sel.length < 2 ? "two men" : squareWhy(S, A, B);
   return (
     <div style={{borderTop:"1px dotted var(--line)",paddingTop:9,marginTop:9}}>
       <div className="disp" style={{fontSize:"var(--fs-base)",color:"var(--ink-hi)"}}>INTO THE SQUARE</div>
@@ -23290,7 +23285,22 @@ function SquareBox({ S, go }){
         house prices at or above him has proved the thing the doctore will not otherwise say out loud,
         and that is what a master of the style is made of.
       </div>
-      <div className="grid grid-cols-2 gap-2" style={{marginTop:6}}>{sel(a, setA, b)}{sel(b, setB, a)}</div>
+      <div style={{marginTop:7}}>
+        {men.map(g=>{ const i = sel.indexOf(g.id), on = i >= 0;
+          return (
+            <button key={g.id} className={`optrow ${on?"on":""}`} onClick={()=>toggle(g.id)}>
+              <div className="flex items-center justify-between gap-2">
+                <span className="disp" style={{fontSize:"var(--fs-base)",color:on?"var(--ink-hi)":"var(--ink)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{fullName(g)}</span>
+                {on ? <Check size={15} style={{color:"var(--gold-line)",flexShrink:0}}/>
+                    : <span className="dim" style={{fontSize:"var(--fs-base)",flexShrink:0}}>{g.wins||0}–{g.losses||0}</span>}
+              </div>
+              <div className="flex items-center justify-between gap-2" style={{marginTop:2}}>
+                <span className="dim" style={{fontSize:"var(--fs-base)"}}>{g.cls}{g.proved ? " · has proved it" : ""}</span>
+                <span className="dim" style={{fontSize:"var(--fs-base)",flexShrink:0}}>worth {gladValue(g)}d</span>
+              </div>
+            </button>
+          ); })}
+      </div>
       {A && B && (
         <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:4}}>
           {A.name} is worth {gladValue(A)}d, {B.name} {gladValue(B)}d — {gladValue(A) === gladValue(B)
@@ -23301,7 +23311,7 @@ function SquareBox({ S, go }){
         </div>
       )}
       <button className="btn" style={{width:"100%",marginTop:7}} disabled={!!why}
-        onClick={()=>{ if(!why){ go(a, b); setA(null); setB(null); } }}>
+        onClick={()=>{ if(!why){ go(sel[0], sel[1]); setSel([]); } }}>
         {why ? `Wants ${why}` : `Put them in the square`}
       </button>
     </div>

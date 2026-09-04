@@ -40,8 +40,12 @@
    6 · AND THE SQUARE STILL CANNOT KILL: the player's door leads to the same `simulateSpar` that
        #232 built with no fell/appeal/missio block in it, so opening it cannot open a way to lose a
        man — only to hurt one.
-   7 · IT IS ON THE SCREEN: the picker renders in the training square, prices both men, and the
-       button says what it wants when it cannot be pressed. */
+   7 · IT IS ON THE SCREEN, AND IT IS THE GAME'S OWN CONTROL: the picker renders in the training
+       square, prices the men, lights the row that was tapped, and the button says what it wants
+       when it cannot be pressed. It shipped first with two native `<select>` elements — which on a
+       phone is the operating system's grey sheet, radio buttons and platform font, over a game that
+       refuses to look like a browser on every other screen. It is the arena's `optrow` now, and
+       this arm fails if a native one ever appears anywhere on the page. */
 import { found, clearAll, installRope, forge, tab, settle } from "../harness.mjs";
 
 export const name = "prove";
@@ -211,28 +215,44 @@ export async function run({ p, errors }){
   });
   await settle(p);
   const ui = await p.evaluate(()=>{
-    /* the SMALLEST element that holds the heading AND the lists. Sorting on text length alone
-       returns the heading <div> itself, which has no selects in it — reported as "0 lists of -1
-       men" by the first draft of this arm. */
+    /* THE SMALLEST ELEMENT THAT HOLDS THE HEADING AND THE ROWS. Sorting on text length alone
+       returns the heading <div> itself, which holds no rows — reported as "0 lists of -1 men" by
+       the first draft of this arm.
+       AND IT LOOKS FOR `optrow`, NOT `<select>`. The picker shipped with two native selects, which
+       on a phone is the operating system's own grey sheet thrown over a game that refuses to look
+       like a browser everywhere else. It is the arena's own control now — tap a man, tap a second,
+       a Check when he is on. This arm asserts the game's control and NOT a native one, so the
+       system dialog cannot come back without failing here. */
     const els = [...document.querySelectorAll("*")].filter(el=>/INTO THE SQUARE/.test(el.textContent||"")
-      && el.querySelectorAll("select").length >= 2 && (el.textContent||"").length < 4000);
+      && el.querySelectorAll("button.optrow").length >= 2 && (el.textContent||"").length < 6000);
     els.sort((a,b)=>a.textContent.length-b.textContent.length);
     const box = els[0];
-    if(!box) return { found:false };
-    const sels = [...box.querySelectorAll("select")];
-    const btn = [...box.querySelectorAll("button")][0];
-    return { found:true, selects:sels.length, options:sels[0] ? sels[0].options.length : 0,
-      btn: btn ? (btn.textContent||"").trim() : null,
-      prices: /worth \d+d/.test(box.textContent||"") };
+    if(!box) return { found:false, natives: document.querySelectorAll("select").length };
+    const rows = [...box.querySelectorAll("button.optrow")];
+    const go = [...box.querySelectorAll("button")].filter(b=>!b.classList.contains("optrow")).pop();
+    rows[0].dispatchEvent(new MouseEvent("click", { bubbles:true }));
+    return { found:true, rows:rows.length,
+      natives: document.querySelectorAll("select").length,
+      btn: go ? (go.textContent||"").trim() : null,
+      prices: /worth \d+d/.test(box.textContent||""),
+      names: rows.slice(0,2).map(r=>(r.textContent||"").trim().slice(0,24)) };
   });
-  lines.push(`on the screen: the picker ${ui.found ? `renders with ${ui.selects} lists of ${ui.options-1} men` : "DID NOT RENDER"}${ui.found?` · button "${ui.btn}" · prices the men ${ui.prices}`:""}`);
+  await settle(p);
+  const after = await p.evaluate(()=>{
+    const on = [...document.querySelectorAll("button.optrow.on")];
+    return { lit:on.length, checks: document.querySelectorAll("button.optrow.on svg").length };
+  });
+  lines.push(`on the screen: the picker ${ui.found ? `renders ${ui.rows} tappable rows` : "DID NOT RENDER"}`
+    + `${ui.found?` · button "${ui.btn}" · prices the men ${ui.prices} · first rows [${ui.names.join(" | ")}]`:""}`);
+  lines.push(`  and it is the game's own control: ${ui.natives} native <select> anywhere on the page · tapping a row lit ${after.lit} of them`);
   if(!ui.found) bad.push(`the training square offers no way into it — the whole of phase 5 is that the door exists`);
   else {
-    if(ui.selects !== 2) bad.push(`the picker offers ${ui.selects} lists, not two`);
-    if(ui.options < 3) bad.push(`the picker's list holds ${ui.options-1} men`);
+    if(ui.rows < 2) bad.push(`the picker offers ${ui.rows} rows`);
     if(!ui.prices) bad.push(`the picker does not price the men, so the player cannot see which of them has anything to prove`);
     if(!ui.btn) bad.push(`the picker has no button`);
+    if(after.lit !== 1) bad.push(`tapping one row lit ${after.lit} — the two-slot toggle is the arena's own, and it selects exactly what was tapped`);
   }
+  if(ui.natives) bad.push(`${ui.natives} native <select> on the page — on a phone that opens the operating system's own list, which is the one surface in this game that is not the game`);
 
   return { pass: bad.length === 0 && !errors.length, why: bad.slice(0, 3).join("; ") || null, lines };
 }
