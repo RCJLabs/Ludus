@@ -1222,6 +1222,14 @@ export async function installRope(p){
            which is the thing being controlled for. `bayCall`'s second door is "Write back that you
            are needed here", and it is the only road out of Capua a player is ever offered. */
         if(ev.id === "bayCall" && !on("road")) i = 1;
+        /* ---- AND IT DOES NOT FREE EVERY VETERAN WHO ASKS — #233 ----
+           `stash`'s first door frees the man. Taking it every time is not "the way a solvent
+           player would": it is a policy of losing your best man the moment he has saved the
+           state's twentieth of himself, and it measured as one — saga stage 3 fell from 67% to 32%
+           because the arcs are ABOUT long-career men and the rope was retiring each of them on
+           sight. The neutral answer is the third: he keeps his money, he stays, nothing is spent.
+           An arm that wants the other doors passes its own `answer`, as the falsifier run does. */
+        if(ev.id === "stash") i = 2;
         /* ---- AND AN ARM THAT IS PURSUING ONE PARTICULAR ENDING ----
            #147 asked which of the twelve endings the source can set are unreachable and which are
            merely declined, and the only honest test of "declined" is an arm that declines the other

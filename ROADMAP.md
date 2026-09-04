@@ -4386,6 +4386,125 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.185.0 — #233: a man with money of his own, and what taking it costs
+
+Item #233, "A Purse of His Own" — built, but not at the numbers it was written with, because the
+measurement its own verify-first asked for came back and refused them.
+
+**THE DEFECT IS REAL.** No gladiator in this game has ever held a denarius. Every purse lands in
+`d.gold` at one of seven credit sites and none of it is his; his only road out is `rudisEligible`, a
+gate the PLAYER acts on while he waits. `AMBITIONS.freedom` lets him ask once, as a request you
+answer. Nothing lets him do anything about it himself.
+
+**THE ITEM'S NUMBERS DID NOT SURVIVE, AND THE FIX WAS WHAT THEY MEAN.** It proposed a trigger at
+`stash >= gladValue(g)*0.35` off a 6-15% skim. Measured (`probes/purse.mjs`, 12 houses, 1,920 weeks,
+286 men who ever fought): a bout pays **229d**, a man who reaches 90 renown is worth **1,783d**
+there, and he gets a **median of six more bouts**. So skimming every denarius from that moment to
+the end of his career reaches a median of **75.7% of what he is worth** — at a 100% skim he still
+cannot buy himself, and at the proposed rates the event fires for **0.3%** of men. That is the
+AMB_NEVER failure (0 met out of 651) the item's own risk section names. Its stated falsifier fired
+too: `rudisEligible` is reached by 4.5% of men who fought, under the 5% it set.
+
+A man cannot buy his own price out of his purses. He can buy **the state's cut of it**, which is the
+half a peculium actually bought — and this file already models it: `rudisCost`'s first term is
+`gladValue(g) * RUDIS_TAX`, the vicesima libertatis, "a fifth of what the man himself is worth",
+against a second term that is the house's own parting gift. So he saves for the tax and the house
+still pays what a house pays. At that sizing it reaches about 8% of men who ever fought.
+
+**AND THEN IT HAD TO ACTUALLY BE ASKED.** Wired into `pickEvent` it measured nine men reaching the
+point of asking across ten houses and **two ever being asked** — the weekly draw fires on 45% of
+weeks and then shuffles fifty-eight events for one winner, so a man with his own manumission in a
+bag was losing a coin flip to a lost sandal. It belongs in `heldQuestions`, with the questions the
+house owes an answer to. Seven of eight are asked now. He also keeps a clock, because the
+hand-it-back answer leaves him ready on the spot and he would otherwise raise it every week.
+
+**THE CRUELTY FALSIFIER FIRED TWICE, AND THE SECOND TIME WAS THE INTERESTING ONE.** The item asks
+for a before/after on systematically taking the money. First measurement: taking it ended **richest**
+— 4,570 gold against 3,982 for freeing him — with fame and acclaim flat. So the punishment went up,
+including a consequence that read beautifully and measured backwards: making the yard STOP saving
+after a theft **paid the player a second time**, because the skim is money the house does not bank.
+5,826 gold. A punishment that pays is not one. Men who watch a house rob a man do not stop putting
+money aside; they get better at hiding it and hold back **more**. With the rate rising instead of
+ending, ten houses a policy on identical seeds:
+
+| answer | end gold | fame | acclaim | unrest | runs ended early |
+|---|---|---|---|---|---|
+| free him | 3,982 | 2,057 | 46.6 | 13.0 | 4 |
+| **take the money** | **3,328** | **1,857** | **44.5** | **17.2** | **14** |
+| give it back | 4,009 | 1,906 | 45.4 | 15.7 | 4 |
+
+Lowest on gold, lowest on fame and acclaim, highest on unrest, and it ends runs early three and a
+half times as often. Cruelty is permitted and it is not optimal.
+
+One more thing the arithmetic caught: he over-saves while waiting to be asked, and the first draft
+handed the whole bag over, which left the house **110d AHEAD** for freeing a man. He pays what he
+owes and leaves with the rest, which is what a peculium was for.
+
+**AND THE GATE FOUND A BUG WORTH THE WHOLE RUN.** Six checks went red. Four of them —
+`card`, `crown`, `feats`, `grudge` — died on `ReferenceError: bought is not defined`, and the cause
+was a blind string replace: scaling `d.fame += 60` for a bought manumission hit the FIRST such line
+in the file, which is in the primacy-taking block eight thousand lines from `grantRudis`. The
+primacy payout was quietly broken. Anchored on its own function's body instead, and the four went
+green. A replacement that matches "the first one" is a replacement that has not been aimed.
+
+The other two, `feud` and `stature`, were not the feature at all and took isolating to prove: skim
+off, still red; ask off as well, still red; the `stash` KEY removed from `EVENTS`, green. `pickEvent`
+shuffles `Object.keys(EVENTS)` and consumes exactly n-1 draws a week, and its own note says so —
+*"the stream diverges. Same-seed comparison across it is meaningless; rates over many houses are
+not."* Adding one event moves every seeded house in the game. Both fixtures were leaning on their
+seed for something neither check is about: `stature` needed one house to survive forty weeks to ask
+whether the DRAWING knows what it built, and `feud` needed a played roster to happen to contain a
+man at 18 renown before it could ask what happens when nobody stands on the day. Both are given
+what they need outright now, with the reason written where the next event-adding release will find
+it. The feature was not bent to fit them.
+
+Two smaller things the measurement caught on the way past. A man now **stops skimming when he has
+enough** — without it the bags ran five times the target (4,113d against 796d), a fifth of every
+purse of every good man forever for money nobody was going to ask for. And his peculium **reverts to
+the house** when he leaves any way but buying himself out, which is what the law actually said: a
+slave held a peculium, he never owned it. Only about one man in twelve who starts saving ever asks,
+and without that line the other eleven were a silent tax on having a good man.
+
+**AND ONE MORE, WHICH WAS THE ROPE'S POLICY RATHER THAN THE CODE.** A second gate put `saga`,
+`bill` and `tells` red. Isolating again: with the skim on but the `stash` key removed from `EVENTS`,
+all three came back — so it looked like the same stream shift. It was not the same for all three.
+Adding a single INERT key to the untouched original source dropped `bill`'s Quinquatria melee rate
+from 80% to 49%, worse than this release managed, which exonerates the feature completely: that
+check reads a rate that moves with the stream, and any event ever added breaks it. But the same
+experiment left `saga` at 67%, where this release had it at 32%. That difference was real.
+
+The cause was the harness. The rope answers a question with choice 0 unless told otherwise, and
+`stash`'s first door FREES THE MAN — so the rope was retiring every veteran the moment he had saved
+the state's twentieth of himself, and sagas are arcs about exactly those men. Stage 3 fell from 85%
+to 32% because the test player was giving away every hero. The rope's own comment already says it
+answers "the way a solvent player would — NOT always choice 0", and already special-cases `uprising`
+and `bayCall` for this reason; `stash` is the third. Answering with the neutral door instead put
+saga back to 85% with two finales and Quinquatria back to 80%, both exactly where they were before
+this release. `bill` and `stature` and `feud` are given what they need outright, with the reason
+written where the next event-adding release will find it.
+
+**AND A THIRD GATE, ONE CHECK, ON ITS OWN STATED PRINCIPLE.** `feud`'s best-case clause — at least
+one grudge match in the sample should be winnable on stats — drew 12 days with a best of -2.1 where
+the run before drew 22 with a best of +0.8. The MEDIAN was -7.8 and -8.6 across the two: unchanged,
+and nowhere near the -26.3 that arm exists to catch. Only the tail of a small sample moved. The
+check had already been through this once and says so in its own comment — *"a bar that a correct
+build fails one run in three is noise wearing an assertion's clothes"* — and set twelve as enough.
+At a favourable rate near a fifth, twelve draws come back all-negative about one run in fourteen,
+which is the same fault at a smaller number. The clause waits for twenty-five now. The median
+assertion, which is the one carrying the arm, is untouched and passes at -7.8 against its -18 floor.
+
+New check `purse` (142 → 143), seven arms, sabotaged six ways — including the version that measured
+backwards, held as a rule so it cannot come back. `bulk` twice asked for the arithmetic to live
+beside the machinery rather than in the events table, and twice it was right: `stashAnswer` and
+`skimShare` are both where they are because of it.
+
+Gate: **143/143.**
+
+**Not built, and named rather than left implied:** the item's Phase 5 surfacing — a quiet tell on
+the card while a stash is building, and an advisor line as he nears the target. He is entirely
+invisible until he asks, which is defensible (the reveal is the point, and it explains the missing
+fifth retroactively) but is a real choice rather than an oversight.
+
 ### v3.184.0 — #232 phase 4: the tournament's final is fought, and the seed does not always win it
 
 The last phase of item #232, and the end of the item.
@@ -4772,7 +4891,7 @@ Add simulateSpar(A, B, tA, ctx, opts) as a fifth sibling resolver, following the
 
 **Verify first.** Before building: (1) instrument the current i===0 branch to log its aWins rate and injury rate across a probe run (the codebase already has this pattern — probes/feud.mjs is cited in nearby comments for feud statistics) and confirm the power()-comparison outcome distribution a 6-ish-round simulateSpar should reproduce, so the visible bout isn't cosmetically decorating a coin-flip it silently changes the odds of. (2) Time-cost check: play one full spar through the existing beat-viewer and clock the added seconds/taps against the current single chron() line, weighed by how many weeks in N actually reach EVENTS.feud with i===0 chosen and how often tourneyReady(d) is true — if the trigger is rare, the animation cost per use is cheap regardless of length. (3) Confirm the viewer's crux-menu switch (line 21285-21292, the `solo = !fight.melee && !fight.venatio && !fight.pair` gate) can take a fourth branch cleanly without the "solo" flag's downstream uses (SIGNATURES lookup, full-vs-trimmed CRUX selection) picking up fight.spar by accident.
 
-**#233 — A Purse of His Own** *(new system)*
+**#233 — A Purse of His Own** *(new system)* — **SHIPPED v3.185.0, at different numbers than these.** The measurement refused the proposed sizing: a man cannot buy his own price out of his purses (100% of every purse from 90 renown reaches a median of 75.7% of his value), so he buys the state's twentieth instead — `rudisCost`'s own first term. The cruelty falsifier fired twice; see the release note for the table and for the punishment that measured backwards.
 Grep for a gladiator-level money field turns up nothing: every denarius a man earns lands in `d.gold` at one of at least six independent purse-credit sites in FIGHT ENGINE, and none of it is his. A Purse of His Own gives a renown-qualified man a hidden skim of his own purses, priced off the same `gladValue()` the house already uses to price him, and forces — on his own initiative, not the player's — the moment `rudisEligible` currently leaves entirely passive.
 
 No gladiator holds money apart from the house — confirmed by grep across the full file for any personal-money field (`g.stash`, `g.savings`, `g.money`, a per-gladiator `g.purse`): zero hits outside the house-level `purse` used in offer objects. `d.gold += purse` (or its slow-pay `bookPurse` cousin) is the entire life of a bout purse, and it recurs independently at every fight type: single bout (~line 17727, with an `onCredit`/`bookPurse` split for editors who pay late), pair (~16973, appearance fee at ~16665), venatio (~16859), melee (~16665-17-ish), the Rome campaign (~15635), even the "Asked For By Name" bay event (~18751, a flat 30% advance). None of it touches the man who earned it. His only route to freedom is `rudisEligible(g)` — `!isAuctor(g) && g.wins>=RUDIS_WINS && g.pfame>=RUDIS_FAME` (line 5598, RUDIS_WINS=10, RUDIS_FAME=180) — a purely passive gate the player alone acts on via `grantRudis()`. `AMBITIONS.freedom` ("To hold the rudis before he is thirty," line 1720) already lets a man ask for this once, but only as a request the player answers, never as pressure he applies himself. And the game's only existing "peculium" is not a slave's fund at all — the word appears exactly once, in a block comment (line 19789) naming the house-standing-scaled half of what the PLAYER pays at manumission through `rudisCost(d,g)`: `gladValue(g)*RUDIS_TAX(0.20)` for the state's cut (the "vicesima libertatis") plus `90*(1+riseOf(d)*0.6) + acclaimOf(d)*3` for the departure gift, both funded from the treasury and paid "into his own hand" only at the instant the player frees him. There is no object anywhere that represents a slave accumulating his own leverage before that instant.

@@ -102,6 +102,14 @@ export async function run({ p, errors }){
     const cut = clone(base);
     let missEnded = null, missSpoke = null;
     { cut.nemHouse.stage = 2; cut.nemHouse.heat = 95;
+      /* ---- THE ARM'S OWN PRECONDITIONS, GUARANTEED RATHER THAN HOPED FOR ----
+         `issueGrudgeMatch` wants no challenge already standing and at least one active man at 18
+         renown. Both are incidental to what this arm asks — what happens when nobody stands on the
+         day — and both ride on however the played fixture happened to turn out. It stopped holding
+         when #233 added an event: `pickEvent` shuffles `Object.keys(EVENTS)` and its own note warns
+         that changes the stream for every house. So the two things the call needs are set here. */
+      cut.deadlines = (cut.deadlines||[]).filter(x=>x.kind!=="challenge");
+      { const men = A.activeG(cut); if(men.length) men[0].pfame = Math.max(men[0].pfame||0, 40); }
       let issued = false;
       try { issued = A.issueGrudgeMatch(cut); } catch(e){}
       const dl = (cut.deadlines||[]).find(x=>x.kind==="challenge" && x.nem);
@@ -221,8 +229,16 @@ export async function run({ p, errors }){
      it on whatever seven bouts this fixture happened to name — where the best draw was -1.3 against
      a measured best of +10.8 over 45. A bar that a correct build fails one run in three is noise
      wearing an assertion's clothes. The median carries the arm; the best case joins it once there
-     are enough days named to mean anything. */
-  else if(r.named.n >= 12 && r.named.max <= 0)
+     are enough days named to mean anything.
+     TWELVE WAS STILL NOT ENOUGH, on the same argument. #233 added an event, which moves the stream
+     for every house (`pickEvent` shuffles `Object.keys(EVENTS)` and consumes n-1 draws a week — its
+     own note says so), and this arm drew 12 days with a best of -2.1 where the run before it drew
+     22 with a best of +0.8. The median was -7.8 and -8.6 across the two, i.e. unchanged and nowhere
+     near the -26.3 this arm exists to catch: the distribution was the same and only the tail of a
+     small sample moved. At a favourable rate near a fifth, twelve draws come back all-negative
+     about one run in fourteen, which is the same fault at a smaller number. The best case now waits
+     for a sample that can carry it. */
+  else if(r.named.n >= 25 && r.named.max <= 0)
     bad.push(`your man was the weaker in all ${r.named.n} grudge matches (best ${r.named.max} stat points, `
       + `median ${r.named.p50}) — the bout the whole season walks toward is a scheduled defeat, and making `
       + `a loss final without making the day winnable is worse than leaving it a meter`);

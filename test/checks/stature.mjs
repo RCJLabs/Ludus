@@ -57,8 +57,18 @@ export async function run({ p, errors }){
      standing in the yard. One base is built here and every arm is it with `works` replaced. */
   const base = await forge(p, (A, R) => {
     const d = A.newGameState("Stature", "clean", "STATURE-1", null);
-    for(let w=0; w<40; w++){ if(d.over) break; try { R.lanista(d); } catch(e){ break; } }
-    if(d.over || !A.activeG(d).length) return { why:"the fixture house did not survive 40 weeks" };
+    /* ---- AND IT IS NURSED PAST A BAD RUN OF DICE, BECAUSE THAT IS NOT WHAT THIS ASKS ----
+       This arm is about whether the DRAWING knows what the house has built. Whether one seeded
+       house survives forty weeks is a different question, and it is not a stable one: `pickEvent`
+       shuffles `Object.keys(EVENTS)` and consumes exactly n-1 draws a week, so its own note warns
+       that adding a single event makes same-seed comparison across the change meaningless. #233
+       added one, this fixture's house died, and nothing about the drawing had changed. It is kept
+       on its feet the way `probes/` keep theirs, so the arm measures the thing it names. */
+    for(let w=0; w<40; w++){
+      try { R.lanista(d); } catch(e){ break; }
+      if(d.over){ d.over = null; if(d.rebellion) d.rebellion = null; d.unrest = Math.min(d.unrest, 35); }
+    }
+    if(!A.activeG(d).length) return { why:"the fixture house had no men left after 40 weeks" };
     d.works = {};
     const cost = {}; for(const k of A.ALL_WORK_KEYS) cost[k] = ((A.workDef && A.workDef(k)) || {}).cost || 0;
     return { plant:d, snap:d, keys:A.ALL_WORK_KEYS, cost, week:d.week, men:A.activeG(d).length };
