@@ -4386,6 +4386,120 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.186.0 — #234: a seat a lanista can sit in, and the games he then has to pay for
+
+Item #234, "Standing for Office" — phases 1 and 2, plus the cost its own **Risk** section demands,
+because the measurement showed that shipping 1 and 2 without it would have shipped a dominant
+strategy.
+
+**THE DEFECT IS REAL.** `d.aedile` was the one title in this game the player could never hold. Its
+object carried `{name, plat, friendly, hostile, since, until}` and **no `mine` branch anywhere in
+the file** — `grep -n "aedile" src/ludus.jsx | grep -c "mine"` returned `0` — while `d.primus`, the
+game's *other* held title, has carried `mine/since/defences` for releases. The office was NPC-held
+by construction rather than by any decision anybody wrote down, and `RISE_RANKS` rung 3 narrates the
+climb toward exactly it — "Friend of the Magistracy", *"The magistrates take your calls"*, *"Standing
+pays its own rents"* — without that standing ever converting into the chair.
+
+**THE POPULATION IS THERE.** The item's first falsifier was that eligibility might be rare enough to
+make this dead weight. Measured (`probes/office.mjs`, 14 houses × 220 weeks): **10 of 14 (71.4%)
+reach rung 3, median week 80**, and see **65 elections between them** afterwards against 55 seen
+while still unqualified. Not dead weight.
+
+**THE SECOND FALSIFIER FIRED, AND IT CHANGED THE DESIGN.** Scored through `resolveElection`'s own
+arithmetic over **67 real elections a real house could have entered**:
+
+| standing at | nothing spent | 180d | 520d | 1300d |
+|---|---|---|---|---|
+| rung 3 | 52.8% | 73.9% | 93.0% | **100.0%** |
+| rung 4 | 75.7% | 90.9% | 98.9% | **100.0%** |
+| rung 5 | 72.5% | 91.9% | 99.6% | **100.0%** |
+| rung 6 | 69.0% | 93.2% | 100.0% | **100.0%** |
+
+The top tier won **100.0% at every rung, minimum 99.4%** — the chair bought outright for 1300d,
+which is **20–37% of what a qualified house has in the strongbox**. That is the exact dominance the
+item's risk section names, and it happens because `makeCandidate` seeds every NPC at `ri(28,52)`
+forever while `standBase` climbs with the house.
+
+**THE OBVIOUS FIX WAS WRONG, AND THE SWEEP SAID SO.** Growing the NPC field with the player's rung
+*punishes climbing* — the free win rate **fell from 28.5% at rung 3 to 8.6% at rung 6** — and still
+left 1300d at 96–100%. Two changes shaped like machinery already here worked instead:
+
+- **the other houses answer.** `standForOffice` runs `callElection`'s own 55%-per-house rival loop,
+  aimed at anybody but him. Measured: the field's mean base moves 137 → 154, 351 of 400 candidacies
+  draw an answer, and **0 of 400 land on the candidate who provoked it** — the unaimed loop would
+  have funded him.
+- **a man's own money buys `SELF_BACK` (0.45) of the odds column,** because everybody can see whose
+  name is on the subscription list. The same 1300d credits **44 behind another man and 20 behind
+  your own**, at the same price.
+
+Together: **37% / 49% / 63% / 77% at the qualifying rung**, and never past 92% at any rung.
+
+**AND THE CHAIR HAD TO COST SOMETHING BACKING DOESN'T.** Played three ways on 16 shared seeds
+(`probes/chair.mjs`, 240 weeks each):
+
+| | median gold | fame | rung | buried | terms held |
+|---|---|---|---|---|---|
+| never stands | 1,961d | 2,236 | 5 | 14 | — |
+| stands, spends nothing | **3,219d** | 2,455 | **6** | 11 | 2 of 4 candidacies |
+| stands, empties the strongbox | **81d** | 2,507 | 5 | 11 | 4 of 4 |
+
+Standing free is a modest, real civic play. Buying the ballot every time ends **1,880d poorer than
+never standing at all**, having spent 5,200d on ballots and 3,576d on games, and ends 13 of 16
+houses against 9. `AEDILE_GAMES` (64d/week, **1,152d a term against 1,300d to buy the seat once**)
+rides `liturgy` — the city's call — rather than taking a charge of its own, so `ludusLedger` takes
+it, `weeklyBill` quotes it, the Upkeep line prints it, the runway divides by it, `creditLine`
+multiplies it, `merchantCarry` prices against it, and the reference player reserves for it, with no
+new plumbing. The fit is exact at the other end too: a bill this house cannot meet already sends the
+clerk away with a promise and costs four points of `d.rise.standing` a week, and *an aedile who
+cannot pay for his own games losing standing* is the same sentence. It sits **outside** the `r < 4`
+gate on purpose — the chair is reachable at rung 3, where the city's call is otherwise zero, and an
+office that only charged rung 4 and up would be free for exactly the house that can least afford it.
+
+**A CRASH THE PLATFORM MAPPING WAS HIDING.** `resolveElection` scores with
+`PLATFORMS.find(p => p.key === c.plat).likes(d)` and no guard, so the first draft's `plat:"mine"`
+was a `TypeError` that took the whole vote down. `standPlat` maps him onto a real platform by what
+Capua already calls him — blood/show → `blood`, mercy → `people`, unnamed → `order` — which also
+makes the +9 mean something: a house the town has named runs on that name; one it has not made up
+its mind about runs on a quiet town and gets the nine only if the town *is* quiet.
+
+**THE GUARDRAIL THE ITEM ASKS FOR, HELD AS AN ASSERTION.** Incumbency must never feed the score that
+defends the same seat. `standBase` reads `riseOf`/`favor`/`fame` and nothing the office grants;
+held at 59 with the chair and 59 without it. And `PACTS.exclusive` — a bargain struck *with* the
+aedile, whose two endings write `d.aedile.friendly`/`.hostile` directly — stops being offered for
+the term rather than letting a broken pact make the player hostile to himself. Proved with a
+control, not an absence: **151 exclusives to an unseated house against 0 to a seated one**, from
+283 and 290 draws under otherwise identical conditions.
+
+**THE FIXTURE THAT COULD NOT FAIL.** `R()` is one global mulberry32 counter that `newGameState`
+reseeds from the seed string, so the check's first draft — which named the same seed every time —
+did not run 400 elections, it ran **one, four hundred times**: 100.0% at every cell with the rival
+answer firing **0 times in 1,200 draws**. Not a bug in the feature, and it would have been published
+as one. The seed moves now, and the note is in the check.
+
+**AND THE BUTTON WAS DEAD.** `standNow` was written beside `backHim` and never added to `SX`, so
+`SECT.aedileship` destructured `undefined`, React rendered `onClick={undefined}`, and the button
+drew, took the click, and did nothing. Eight headless arms passed straight over it because every one
+of them calls `standForOffice` directly, and `actions`' derived sweep cannot see it either — that
+sweep asks whether a swept `mut(d=>…)` closure is on the handle, and this one was. Only a browser
+pressing the button found it, so arm 9 is a browser pressing the button: it opens the panel by its
+own tab, presses the wall, requires the ballot to change, then backs his own name through that row's
+own 1300d button and requires the panel to report it as his own. The same wiring gap can exist one
+function down, which is why the second half is there. Sixteen sabotages across the release, sixteen
+caught — four of them only after this arm existed.
+
+**Shipped:** `STAND_RANK`/`standReady`/`standBase`/`standPlat`/`standForOffice`; `SELF_BACK` in
+`backCandidate`; the aimed rival answer; `resolveElection`'s `mine` and stood-and-lost branches;
+`AEDILE_GAMES` on the city's call; the `PACTS.exclusive` guard at the offer filter and both run
+branches; the held-seat panel, the second-person candidate row, and a stand button that names the
+price before you press it. `checks/office.mjs` — 9 arms, **16 sabotages, 16 caught** (three only after
+the first pass walked through them: a `0`-valued constant satisfied every delta assertion, the
+exclusive counter read a field that does not exist, and nothing at all pressed the button). `probes/office.mjs` and `probes/chair.mjs` kept
+as the standing instruments.
+
+**Not built:** phase 3 (one dial the holder can turn, gated by the winning platform), phase 4 (the
+rival-backing loop aimed specifically at the held seat at re-election), phase 5 (weeks in the chair
+counting toward `d.rise.standing` in `riseWeek`).
+
 ### v3.185.0 — #233: a man with money of his own, and what taking it costs
 
 Item #233, "A Purse of His Own" — built, but not at the numbers it was written with, because the
@@ -4926,6 +5040,8 @@ Winning writes d.aedile.mine=true with friendly=true/hostile=false for the term 
 **Risk.** The read-sites the office already grants are a flat, always-on stack (+0.16 debt-pay odds, +0.05 discount rate, +1 offer slot, 1.14x home purse, +9 missio, +0.14 bribe odds, +0.12 petition odds) that today costs the player at most 1300d once, indirectly, via someone else's candidacy. If standing yourself only adds "you get to be the friendly aedile" without the seat costing more than that per term — continuous public spend, a guaranteed contested re-election, a rival's grudge that compounds — it becomes a strictly dominant version of backCandidate's top tier and the arena-is-antagonist/cruelty-not-optimal balance the office's numbers already lean on (mercy platforms, PLATFORMS.likes bonuses tied to repStyle) gets bypassed by a house rich enough to just buy the chair outright. Guardrail: incumbency's automatic Phase-1 bonuses (purse, slots, missio) must never feed back into the score resolveElection uses to defend the SAME seat — only PLATFORMS.likes and fresh backCandidate spend should move that number — so the office pays out in gladiator-facing currency but never discounts the cost of keeping itself.
 
 **Verify first.** Before building: measure how many simulated houses ever clear riseOf(d)>=3 (censusWorth >= 3000 plus fame>=250/favor>=55 plus a full d.rise.standing bar) by, say, week 150-200 across a batch of seeded runs — if eligibility is rare, this is dead weight for most playthroughs and belongs later in the rung ladder or gated lower. Separately, before pricing any term-effect, compute today's resolveElection score spread (base 28-52, +backing up to 44, +9 platform-likes, +ri(0,22) roll — roughly a 75-point swing) against a fame/favor-seeded player base, to confirm a player standing themselves at eligibility isn't already near-guaranteed to win off seeding alone, before a single denarius of Phase-1 campaign spend is added on top.
+
+**#234 — Standing for Office** *(new system)* — **SHIPPED v3.186.0, phases 1-2 plus the cost its risk section demanded.** Both of the item's verify-first questions were answered before a constant was written and the second one changed the design: 71.4% of houses reach rung 3 (median week 80), but the vote as specified was not a contest — the top backing tier won 100.0% at every rung, exactly the dominance the risk section names. The field-growth fix was measured and rejected for punishing the climb; what shipped is an aimed rival answer and `SELF_BACK`, plus `AEDILE_GAMES` on the city's call so a term costs about what buying the seat once costs. Phases 3-5 unbuilt; see the release note.
 
 **#235 — The Fuse, or the Tool: Rework What Debt Actually Survives** *(overhaul)*
 ROADMAP.md tells the player, in "The moneylenders," that debt is "entirely survivable if you pay it down — a few hundred a week clears it inside a month." Four hundred lines later, its own v3.50.0 changelog entry — sourced from `test/probes/fuse.mjs`, which still exists and which a fresh rerun still confirms — says a policy that borrows only when short and repays from surplus lives roughly 2.5x shorter under the cheapest lender than a house that never borrows at all, and gets there mostly by hitting the hard lender's clock, not the balance. The two passages describe the same mechanism and can't both be true; the fix already shipped closed one literal bug in the clock's gate and didn't move that ratio.

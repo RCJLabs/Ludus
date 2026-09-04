@@ -5427,6 +5427,64 @@ function makeCandidate(d, plat){
   return { id:d.nextId++, name:`${pick(PRAENOMINA)} ${pick(NOMINA)} ${pick(COGNOMINA)}`,
     plat:plat.key, say:plat.say, base:ri(28,52), backing:0, rival:null };
 }
+/* ---- STANDING FOR OFFICE — phase queue #234 ----
+   `d.aedile` is the one title in this game the player can never hold. Its object — {name, plat,
+   friendly, hostile, since, until} — has no `mine` branch anywhere in the file (grepped: zero),
+   while `d.primus`, the game's OTHER held title, has carried mine/since/defences for releases. The
+   office is NPC-held by construction rather than by any decision anybody wrote down, and the
+   ladder narrates the player climbing toward exactly it: RISE_RANKS' rung 3 is "Friend of the
+   Magistracy", it reads "The magistrates take your calls", and it pays "Standing pays its own
+   rents" — without that standing ever converting into the chair.
+
+   So he can stand. The gate is that same rung, whose own 3,000d cost already exceeds the top
+   backing tier, so a house that qualifies has proved it can outspend a campaign. What he is worth
+   on the walls is what the city actually knows of him — the ladder, who owes him, and what it has
+   heard — against the ri(28,52) an unknown gets. He is folded into the same `cands` array, which
+   means the rival-backing loop above can already spend against him with no new code, and
+   `backCandidate` can already take his money for his own name.
+
+   BOTH OF THOSE TURNED OUT TO BE HALF TRUE, and the measurement is what said so. `callElection`'s
+   rival loop runs BEFORE anybody stands, and its `pick(cands)` would as happily have funded the
+   lanista as opposed him — so the answer below is its own aimed pass, run when he enters. And
+   `backCandidate` taking his money at the unmodified odds column bought the chair outright: 100.0%
+   at every rung for 1300d. See `SELF_BACK` at that function, and test/probes/office.mjs. */
+const STAND_RANK = 3;                  /* Friend of the Magistracy, and the rung's own claim */
+const SELF_BACK  = 0.45;               /* of backLevels' odds column, when the name is your own */
+const standReady = d => riseOf(d) >= STAND_RANK && !!d.election && !d.election.done
+  && !d.election.cands.some(c=>c.mine);
+/* What a known man starts at, against the 28-52 a stranger draws. The cap is not what makes it a
+   contest — measured, a capped 62 still won 69-76% free and 100% bought, because the NPC field is
+   seeded at ri(28,52) forever while this number climbs. What makes it a contest is the answer below
+   and SELF_BACK. The cap's job is narrower: it stops the ladder's top rungs from turning the ballot
+   into a formality on seeding alone, and it is the one term here the office must never move — see
+   the guardrail in checks/office.mjs, arm 7. */
+const standBase = d => clamp(20
+  + Math.min(16, Math.round(riseOf(d) * 4))
+  + Math.min(14, Math.round((d.favor || 0) * 0.16))
+  + Math.min(12, Math.round(Math.sqrt(Math.max(0, d.fame || 0)) * 0.55)), 20, 62);
+/* he stands on what the town already knows him for, which is also the only shape `resolveElection`
+   can score: it reads `PLATFORMS.find(p=>p.key===c.plat).likes(d)` with no guard, so a candidate
+   carrying a key that is not in the table is a TypeError that takes the whole vote down. Writing
+   the mapping instead of a guard also makes the +9 mean something — a house Capua has already
+   named runs on that name, and one it has not yet made up its mind about runs on a quiet town and
+   gets the nine only if the town IS quiet. */
+const standPlat = d => { const r = repStyle(d);
+  return (r === "blood" || r === "show") ? "blood" : r === "mercy" ? "people" : "order"; };
+function standForOffice(d){
+  if(!standReady(d)) return false;
+  d.election.cands.push({ id:d.nextId++, name:`${d.name}`, plat:standPlat(d), mine:true,
+    say:"are standing yourself, which the walls have opinions about", base:standBase(d), backing:0, rival:null });
+  d.election.stood = d.week;
+  /* the other houses do not want a lanista in that chair, and answer with the same money and the
+     same 55%-per-house reach `callElection` already gives them — aimed, this time, at anybody but
+     him. Without it the vote measured 53-76% free and 100% at the top tier: not a contest. */
+  (d.rivals||[]).forEach(h=>{ if(R() < 0.55){
+    const other = d.election.cands.filter(c=>!c.mine);
+    if(!other.length) return;
+    const c = pick(other); c.base += ri(5,14); c.rival = c.rival || h.name; } });
+  chron(d, `Your own name goes up on the wall beside the others. A lanista standing for aedile is not unheard of in Capua, but it is not usual, and by the evening everybody has a view about it.`, "event");
+  return true;
+}
 function callElection(d){
   const pool = shuffled(PLATFORMS).slice(0,3);
   const cands = pool.map(p=>makeCandidate(d,p));
@@ -5449,7 +5507,14 @@ function backCandidate(d, cid, level){
   d.gold -= L.n;
   E.backed = cid; E.spent = L.n; E.level = level;
   const c = E.cands.find(x=>x.id===cid);
-  if(c) c.backing = L.odds;
+  /* #234 — money on your own name buys less than the same money behind another man's, because
+     everybody can see it. Measured (test/probes/office.mjs, 67 real elections a real house could
+     have entered): at the full odds column the top tier won 97.8-100.0% at every rung, which is
+     the exact dominance the item's own risk section names — the chair bought outright for 1300d,
+     20-37% of a qualified house's strongbox. At 0.45 the four stops read 37/49/63/77% at the
+     qualifying rung and never pass 92% at any rung, so every tier moves the number and none of
+     them settles it. */
+  if(c) c.backing = c.mine ? Math.round(L.odds * SELF_BACK) : L.odds;
   if(L.n >= 520) addRep(d, "show", 5);
   chron(d, L.n===0
     ? `You stay out of it.`
@@ -5464,9 +5529,24 @@ function resolveElection(d){
   const won = scored[0].c;
   const backedHim = E.backed === won.id;
   const backedAny = E.backed != null;
-  d.aedile = { name:won.name, plat:won.plat, friendly: backedHim, hostile: backedAny && !backedHim,
+  /* #234 — the office favours this house by construction when this house IS the office, so
+     `friendly` is true and `hostile` false, and all seven existing read-sites (owedWeek,
+     discountRate, aedileOffers, aedilePurse, missioPlace's ctx.aedile, the bribe gambit's odds,
+     petitionOdds) fire unmodified. One field added to the object resolveElection already built. */
+  d.aedile = { name:won.name, plat:won.plat, mine: !!won.mine,
+    friendly: won.mine ? true : backedHim, hostile: won.mine ? false : (backedAny && !backedHim),
     since:d.week, until:d.week + YEAR_WEEKS };
-  if(backedHim){
+  if(won.mine){
+    patronsOf(d).forEach(p=>{ if(p.rank==="magistrate") p.favor = clamp(p.favor+12,0,100); }); recomputeFavor(d);
+    d.fame += 34;
+    addRep(d, "show", 6);
+    chron(d, `The vote is counted and it is your name. For the next year the man who decides whose men are on the card, what they are paid and whether he leans forward when one of them is down is you, and every house in Capua now has to come to your door to ask.`, "good");
+  } else if(E.cands.some(c=>c.mine)){
+    /* he stood in the forum with his name on a wall and the town chose somebody else */
+    d.fame = Math.max(0, d.fame - 18);
+    patronsOf(d).forEach(p=>{ if(p.rank==="magistrate") p.favor = clamp(p.favor-10,0,100); }); recomputeFavor(d);
+    chron(d, `${won.name} takes the aedileship. Your name was on the wall beside his and the town read both and chose him, which is a thing that will be mentioned to you at dinners for a year.`, "bad");
+  } else if(backedHim){
     patronsOf(d).forEach(p=>{ if(p.rank==="magistrate") p.favor = clamp(p.favor+18,0,100); }); recomputeFavor(d);
     d.fame += 14;
     chron(d, `${won.name} takes the aedileship, and he took it with your money. For the next year the man who decides who is on the card owes you a favour he has not forgotten yet.`, "good");
@@ -11416,9 +11496,26 @@ const riseStipend = d => riseOf(d) >= 3
    on a portico and answer when the magistrates come round — none of which it may
    decline and stay received. It is the counterweight to the stipend, and it grows
    faster than the stipend does. */
+/* ---- WHAT THE CHAIR COSTS — phase queue #234 ----
+   The aedile put on the games and paid for them: that is what the office was for in the towns that
+   elected one, and it is the only thing that stops holding it from being a strictly better version
+   of backing somebody else's candidacy. It rides the city's call rather than taking a charge of its
+   own, so that every reader of that number carries it with no new plumbing — `ludusLedger` takes
+   it, `weeklyBill` quotes it, the Upkeep line on the House face prints it, the runway divides by
+   it, `creditLine` multiplies it, `merchantCarry` prices his favour against it, and the reference
+   player reserves for it. The fit is exact at the other end too: a bill this house cannot meet
+   already sends the clerk away with a promise and costs `d.rise.standing` four points a week, and
+   an aedile who cannot pay for his own games losing standing is the same sentence.
+
+   It sits OUTSIDE the r<4 gate on purpose. The chair is reachable at rung 3, where the city's call
+   is still zero, and an office that only charged rung 4 and up would be free for exactly the house
+   that can least afford it. */
+const AEDILE_GAMES = 64;
 const liturgy = d => { const r = riseOf(d);
-  if(r < 4 || d.over) return 0;
-  return Math.round((r-3)*26 + Math.min(d.fame, CENSUS_TOP)*0.012*(r-3) + acclaimOf(d)*0.6); };
+  if(d.over) return 0;
+  const chair = (aedileOn(d) && d.aedile.mine) ? AEDILE_GAMES : 0;
+  if(r < 4) return chair;
+  return chair + Math.round((r-3)*26 + Math.min(d.fame, CENSUS_TOP)*0.012*(r-3) + acclaimOf(d)*0.6); };
 /* what a week reliably costs this house, the same sum the ledger takes and the
    home page estimates — men and their season, the buildings, the stone, the racks,
    the city's call, the society, the household, and the doctore's wage */
@@ -14702,8 +14799,11 @@ const PACTS = {
     kept:"He is re-elected largely on the back of afternoons your men gave him, and he knows it.",
     broke:"He does not need to do anything. The aedile's office simply stops answering.",
     exclusive:true,
-    keptRun:d=>{ d.fame += 55; if(d.aedile) d.aedile.friendly = true; lawOf(d).heat = clamp(lawOf(d).heat-20,0,100); },
-    brokeRun:d=>{ d.fame = Math.max(0, d.fame-60); if(d.aedile){ d.aedile.friendly=false; d.aedile.hostile=true; }
+    /* the two endings write the office's view of this house, so they leave it alone when this
+       house IS the office — a pact struck before the election does not get to unseat its own
+       holder's standing with himself. See the note on the offer filter. */
+    keptRun:d=>{ d.fame += 55; if(d.aedile && !d.aedile.mine) d.aedile.friendly = true; lawOf(d).heat = clamp(lawOf(d).heat-20,0,100); },
+    brokeRun:d=>{ d.fame = Math.max(0, d.fame-60); if(d.aedile && !d.aedile.mine){ d.aedile.friendly=false; d.aedile.hostile=true; }
       lawOf(d).heat = clamp(lawOf(d).heat+25,0,100); } },
   debt:    { name:"A debt paid in men", weeks:30, need:8,
     blurb:d=>`He forgives what you owe and you owe him eight afternoons instead. It is a worse rate than coin and it is available when coin is not.`,
@@ -14728,7 +14828,13 @@ function offerPact(d){
   if(d.week < 20 || d.fame < 55) return;
   if((d.flags.pactsSeen||0) >= 3) return;
   if(R() > 0.045) return;
-  const fit = PACT_KEYS.filter(k=>k !== "debt" || (d.loan && d.loan.owed > 0));
+  /* ---- AND YOU CANNOT MAKE AN EXCLUSIVE WITH YOURSELF — #234 ----
+     `exclusive` is a bargain struck WITH the aedile: he buys the right to say your house is his,
+     and its two endings reach into `d.aedile` and set `friendly` or `hostile` directly. Once the
+     player holds the chair those endings are incoherent — breaking it would make him hostile to
+     himself — and the bargain has no counterparty. It stops being offered for the term. */
+  const fit = PACT_KEYS.filter(k=>(k !== "debt" || (d.loan && d.loan.owed > 0))
+    && (k !== "exclusive" || !(aedileOn(d) && aedileOn(d).mine)));
   const k = pick(fit); if(!k) return;
   const P = PACTS[k];
   d.flags.pactsSeen = (d.flags.pactsSeen||0) + 1;
@@ -23582,10 +23688,12 @@ const SECT = {
   aedile: (S, X) => {
     return (
     <Sect live={sectFresh(S,"aedile")} sid="aedile" title="The aedile"
-      note={`${S.aedile.friendly ? "he owes you" : S.aedile.hostile ? "he is against you" : "no view of you"} · ${S.aedile.until - S.week}w left`}>
-      <div className="disp" style={{fontSize:"var(--fs-md)",color:"var(--ink-hi)"}}>{S.aedile.name}</div>
+      note={`${S.aedile.mine ? "you hold it" : S.aedile.friendly ? "he owes you" : S.aedile.hostile ? "he is against you" : "no view of you"} · ${S.aedile.until - S.week}w left`}>
+      <div className="disp" style={{fontSize:"var(--fs-md)",color:"var(--ink-hi)"}}>{S.aedile.mine ? `${S.name}, aedile of Capua` : S.aedile.name}</div>
       <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:3}}>
-        {S.aedile.friendly
+        {S.aedile.mine
+          ? `You are the man who decides whose gladiators are on the card. One extra bout on every card, purses a seventh higher, and nobody overrules you when one of yours is down. The games are yours to pay for: ${AEDILE_GAMES}d a week rides the city's call for as long as you hold the chair.`
+          : S.aedile.friendly
           ? "He took the office with your money and has not forgotten it. One extra bout on every card, purses a seventh higher, and he leans forward when one of yours is down."
           : S.aedile.hostile
           ? "He knows whose name was on the other man's list. One fewer bout on every card, purses a ninth lighter, and he does not look your way when a decision is being made."
@@ -23593,7 +23701,7 @@ const SECT = {
       </div>
     </Sect>
     ); },
-  aedileship: (S, X) => { const { backHim } = X;
+  aedileship: (S, X) => { const { backHim, standNow } = X;
     return (
     <Sect title="The aedileship" note={`${Math.max(0, 3-(S.week-S.election.week))}w to the vote`} open>
       <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>
@@ -23604,12 +23712,12 @@ const SECT = {
         return (
           <div key={c.id} style={{borderTop:"1px dotted var(--line)",paddingTop:9,marginTop:9}}>
             <div className="flex items-center justify-between gap-2">
-              <span className="disp" style={{fontSize:"var(--fs-base)",color:mine?"var(--ink-hi)":undefined}}>{c.name}</span>
+              <span className="disp" style={{fontSize:"var(--fs-base)",color:(mine||c.mine)?"var(--ink-hi)":undefined}}>{c.name}{c.mine?" — you":""}</span>
               {c.rival && <span className="tag tag-blood">House {c.rival} is behind him</span>}
             </div>
-            <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:2}}>He {c.say}.</div>
+            <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:2}}>{c.mine ? `You ${c.say}.` : `He ${c.say}.`}</div>
             {mine ? (
-              <div className="laurel" style={{fontSize:"var(--fs-base)",marginTop:5}}>Your money is on him — {S.election.spent}d.</div>
+              <div className="laurel" style={{fontSize:"var(--fs-base)",marginTop:5}}>{c.mine ? "Your money is on your own name" : "Your money is on him"} — {S.election.spent}d{c.mine ? `, and everybody can see it: ${c.backing} of the ${backLevels[S.election.level||0].odds} the same purse would buy behind another man` : ""}.</div>
             ) : S.election.backed ? null : (
               <div className="grid grid-cols-3 gap-2" style={{marginTop:6}}>
                 {[1,2,3].map(l=>(
@@ -23620,6 +23728,21 @@ const SECT = {
             )}
           </div>
         ); })}
+      {standReady(S) && (<>
+        <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:11,borderTop:"1px dotted var(--line)",paddingTop:9}}>
+          Nothing is owed for standing. The chair, if you take it, puts on the games at its own
+          expense — {AEDILE_GAMES}d a week on the city's call for the year — and a name read off
+          the wall and passed over is remembered longer than one that was never on it.
+        </div>
+        <button className="btn" style={{width:"100%",marginTop:7}} onClick={standNow}>
+          Put your own name on the wall
+        </button>
+      </>)}
+      {riseOf(S) < STAND_RANK && !S.election.cands.some(c=>c.mine) && (
+        <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginTop:7}}>
+          A man stands for the aedileship on what the magistracy already thinks of him. Reach {RISE_RANKS[STAND_RANK].name} and the walls will carry your name too.
+        </div>
+      )}
       {!S.election.backed && (
         <button className="btn" style={{width:"100%",marginTop:9}} onClick={()=>backHim(null,0)}>
           Stay out of it
@@ -26173,6 +26296,7 @@ export default function App(){
   const forgetKit = kid => mut(d=>{ dropKit(d, kid); });
   const declare = key => mut(d=>{ declareDoctrine(d, key); });
   const backHim = (cid, lvl) => mut(d=>{ backCandidate(d, cid, lvl); });
+  const standNow = () => mut(d=>{ standForOffice(d); });   /* #234 */
   const doRite = (gid, key) => mut(d=>{ holdMunera(d, gid, key); });
   const joinCollegium = () => mut(d=>{ foundCollegium(d); });
   const stopCollegium = () => mut(d=>{ lapseCollegium(d, true); });
@@ -27169,7 +27293,7 @@ export default function App(){
     takeRise:  { verb: () => "Take the rung",                     run: takeRise },
   };
 
-  const SX = { askFavour, backHim, buyGear, carryOut, rackFilt, setAnnals, setAsk, setRackFilt, setSheet, setShowChron, declare, dismissDoc, doRite, doTourney, feast, hireDoc, hireStaff, host, joinCollegium, letStaffGo, mut, offerTo, openLicence, roster, seekMatch, selG, sellOne, setCrest, setDrill, setEar, setPupil, standings, stopCollegium, stopRetrain, takeRise, vowTo, walkCells };
+  const SX = { askFavour, backHim, standNow, buyGear, carryOut, rackFilt, setAnnals, setAsk, setRackFilt, setSheet, setShowChron, declare, dismissDoc, doRite, doTourney, feast, hireDoc, hireStaff, host, joinCollegium, letStaffGo, mut, offerTo, openLicence, roster, seekMatch, selG, sellOne, setCrest, setDrill, setEar, setPupil, standings, stopCollegium, stopRetrain, takeRise, vowTo, walkCells };
 
   return (
     <div data-place={tab} className={`lr shell${prefs.reduceMotion?" reduce-motion":""}${prefs.largeText?" large-text":""}${prefs.colorblind?" cb":""}`}>
@@ -27327,8 +27451,8 @@ export default function App(){
             if(S.saga){ const sg = S.gladiators.find(x=>x.id===S.saga.gid);
               if(sg) bnr("var(--gold-line)", sg.name, S.saga.stage>=3?"his reckoning is set":"the crowd's champion", S.saga.stage>=3,
                 `${sg.name} has caught the crowd. A saga is building around him bout by bout, toward a reckoning the whole town will come to see. Keep winning and the story — and his fame — grows.`); }
-            if(aedileOn(S)) bnr(S.aedile.friendly?"var(--laurel-edge)":S.aedile.hostile?"var(--blood-edge)":"var(--line-2)", "The aedile", S.aedile.friendly?"owes you":S.aedile.hostile?"knows whose list":"neutral", S.aedile.hostile,
-              `The aedile is the magistrate who puts on Capua's games and enforces its law. ${S.aedile.friendly?"This one owes you — he bends the editor's box and the purse your way.":S.aedile.hostile?"This one has you on his list — expect the law to fall harder on your house.":"This one is neutral, watching which kind of house you turn out to be."} Win his election with your standing and games, or lose it to a rival.`);
+            if(aedileOn(S)) bnr(S.aedile.friendly?"var(--laurel-edge)":S.aedile.hostile?"var(--blood-edge)":"var(--line-2)", S.aedile.mine?"The aedileship":"The aedile", S.aedile.mine?"you hold it":S.aedile.friendly?"owes you":S.aedile.hostile?"knows whose list":"neutral", S.aedile.hostile,
+              `The aedile is the magistrate who puts on Capua's games and enforces its law. ${S.aedile.mine?`It is you. Nobody overrules you on the card, the purse or a man who is down — and the games are yours to pay for, at ${AEDILE_GAMES}d a week on the city's call until the term runs out.`:S.aedile.friendly?"This one owes you — he bends the editor's box and the purse your way.":S.aedile.hostile?"This one has you on his list — expect the law to fall harder on your house.":"This one is neutral, watching which kind of house you turn out to be."} Win his election with your standing and games, or lose it to a rival.`);
             if(S.city) bnr("var(--gold-edge)", CITIES[S.city].name, "you are on the circuit", false,
               `You are fighting away from Capua, in ${CITIES[S.city].name}, down the bay. Win here and the town comes to know your name. A house known the length of the whole bay — Pompeii, Neapolis, Puteoli — carries word all the way to Rome, and shortens its road there.`);
             if(S.travel) bnr("var(--gold-edge)", "On the road", `${S.travel.weeks}w`, false,
@@ -31445,7 +31569,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        exercised — but never as the player's own action.
        `actions` derives the list now instead of holding a hand-written one, so a future action that
        forgets this line fails a check rather than going quietly dark. */
-    answerNem, nemCallOut, callFavour, favourWorth, nobleStory, senatorName, merchantCarry, repay, sellDebt, runGambit, backCandidate, swearIn, OVERTURES, OV_KEYS, runOverture, overtureReady, overtureOdds, overtureWhy, OVERTURE_COOL, LEND_WEEKS, docLent, bestLendable, docTrain, docCalm, docInjuryGuard,   /* #198 — the friendly counterpart, and everything a lent doctore stops paying */
+    answerNem, nemCallOut, callFavour, favourWorth, nobleStory, senatorName, merchantCarry, repay, sellDebt, runGambit, backCandidate, standForOffice, standReady, standBase, standPlat, STAND_RANK, SELF_BACK, AEDILE_GAMES, callElection, resolveElection, makeCandidate, PLATFORMS, backLevels,   /* #234 — the whole election, so a check can run one end to end (ELECTION_WEEK and aedileOn are already on the handle below) */
+    swearIn, OVERTURES, OV_KEYS, runOverture, overtureReady, overtureOdds, overtureWhy, OVERTURE_COOL, LEND_WEEKS, docLent, bestLendable, docTrain, docCalm, docInjuryGuard,   /* #198 — the friendly counterpart, and everything a lent doctore stops paying */
     applyRefusal, skipWeeks, charterSkip, firstBuyWarn, ENTRANCES, ENTRANCE_KEYS, deadlines, entranceSays, entDread, oppGreen, ENT_MISSIO, ENT_TERM_KEYS, ENT_TERM, BREATHER_BACK, saluteWorth,
     favMissio, veteranGuard, riseFav, blessMercy, favourOf, MISSIO_MID, MISSIO_SLOPE, missioWord, MISSIO_MAN,
     saveKit, applyKit, dropKit, watchField, startPlan, breakPlan, clearWatch,
