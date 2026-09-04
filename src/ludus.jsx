@@ -8864,6 +8864,25 @@ const canBorrow = d => !d.loan && !d.over;
    lender and servicing the debt live 62 weeks with 3 standing and 30 foreclosed, and the other two
    lenders read 42 weeks with 0 and 1. **The loan is not a tool under any lender**, which is a fair
    thing for a game to contain and an unfair thing for it to hide.
+
+   ---- AND THAT LAST SENTENCE WAS TOO BIG A CLAIM, #235 ----
+   It was measured on ONE policy, which borrowed `99999` — the lender's whole cap — every time it was
+   short, and then generalised to the mechanism. Re-run with the size as a lever and nothing else
+   changed (72 houses x 420w x 3 seeds, current source): the cap foreclosed 102 of 216 houses, 700d
+   foreclosed 73, 300d foreclosed 57 — 7.9% / 4.6% / 2.8% per loan, monotone in every seed. The loan
+   is not a fuse. Taking the maximum is. What the panel never said, and now does, is that the
+   countdown printed above is the same length whatever you take, so the only lever the player has
+   over it is the sum — which is exactly the one the screen was silent about.
+
+   TWO GOOD-STANDING MECHANICS WERE MEASURED AND NOT SHIPPED, and both failed #235's own falsifier.
+   Extending the hard clock for a borrower who had cleared this lender before: with the clock lifted
+   entirely (`probes/standing.mjs`) only 7/7/9 of the 35/29/35 loans it kills ever get back under
+   principal at all, because at the clock the median loan owes 1.87x what it took and is climbing —
+   a +44-week extension rescues a fifth. Loosening the clock's other half, `owes > principal`, to
+   twice principal: paired A/B on the same seeds moved foreclosures 43/32/27 to 41/28/26, seven
+   houses in 216, against a control seed spread of about 70 weeks on this instrument. Cutting the
+   cap for a good-standing borrower DID move it (43 to 32 on one seed) — because a smaller loan is a
+   smaller fuse, which is the finding above and not a reward for anything.
    Both numbers are derived rather than written: the fuse is ln4/ln(1+rate), which is the gate above
    solved for weeks, and the hard lender's clock is his own `patience + 30`. */
 const loanFuse = M => M ? Math.ceil(Math.log(4) / Math.log(1 + M.rate)) : 0;
@@ -28616,12 +28635,30 @@ export default function App(){
                       <div style={{fontSize:"var(--fs-base)",marginTop:2,color:"var(--blood-hi)"}}>
                         Left unpaid it is four times what you took by week {loanFuse(M)}, and he takes the house
                         {M.hard ? ` — or at ${loanClock(M)} weeks regardless, if you still owe more than you borrowed` : ""}.
+                        <span className="dim"> That week is the same length whatever you take. What the sum changes is the interest under it.</span>
                       </div>
+                      {/* ---- AND THE COUNTDOWN IS THE SAME LENGTH WHATEVER YOU TAKE — #235 ----
+                           `loanFuse` is ln4/ln(1+rate). It does not mention the principal, because
+                           four times a small number arrives on the same week as four times a big
+                           one. So the line above says the identical thing about 300d and about the
+                           whole cap, and a player reads that as "the size does not matter".
+                           MEASURED (probes/credit.mjs, 72 houses x 420w x 3 seeds, one policy
+                           throughout — borrow when gold falls under twelve weeks of obligations,
+                           repay everything above it): taking the cap foreclosed 102 of 216 houses,
+                           taking 700d foreclosed 73, taking 300d foreclosed 57. Per loan, 7.9% /
+                           4.6% / 2.8%. Monotone in every seed. The size is the single biggest thing
+                           the player controls here and the panel was silent about it.
+                           What it can honestly show is the weekly interest at each amount, because
+                           that is the sum that has to come out of the same purse as the bill. */}
                       <div className="grid grid-cols-3 gap-2" style={{marginTop:6}}>
                         {[300,700,M.cap].filter((v,i,a)=>a.indexOf(v)===i && v<=M.cap).map(v=>(
-                          <button key={v} className="btn btn-ghost" onClick={()=>takeLoan(k,v)}>{v}d</button>
+                          <button key={v} className="btn btn-ghost" style={{lineHeight:1.25,padding:"7px 4px"}} onClick={()=>takeLoan(k,v)}>
+                            {v}d
+                            <div className="dim" style={{fontSize:"var(--fs-sm)"}}>{Math.round(v*M.rate)}d a week</div>
+                          </button>
                         ))}
                       </div>
+
                     </div>
                   ); })}
               </Sect>
@@ -31837,6 +31874,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        term before anything can be fixed; these go on the handle so `test/probes/finish.mjs` can call
        the game's own `need` and count the terms beside it rather than keeping a copy of either. */
     borrow, LENDERS, LEND_KEYS, owes, loanLender, canBorrow, loanWeeks, loanFuse, loanClock, EMPTY_LIMIT,   /* #163 */
+    loanWeek,   /* #235 — the escalation ladder is read off its own source by checks/debt.mjs */
     RUINS, RUIN_KEYS, facOf, lawOf, inBreach,
     COUNSEL, WHISPERS, YARD, LATE, NIGHT, ASKS, REFUSE_REASONS, RIVAL_MOVES, FREEDMEN, AFTERS, FEUD_CAUSES, griefStricken, isAuctor, refuseCandidate, refuseWeek, endRefusal, refusing, canFight, refuseOdds, refuseRisk, REF_KEYS,   /* #201 — everything the refusal gate reads */   /* #186 — eleven registers no probe could reach; the account is in checks/voice.mjs */
     /* #196 — the conversation the player starts. WORDS is a register like the eleven above, so
