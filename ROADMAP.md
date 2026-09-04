@@ -4389,6 +4389,155 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.198.0 — the age that opened retirement was the age that killed him
+
+Acting on the finding below. `lanistaWeek`'s retirement door wants `L.age >= 62 && L.health >= 45`,
+so the design plainly intends a healthy sixty-two-year-old to exist. The age drain made him
+impossible: 0.045 a week per year over **42**, with no ceiling — linear in rate, and therefore
+quadratic in cumulative cost. A man ageing 43 → 62 pays about **170 points** of health against a mend
+of 0.06 a week (21 over the same span) from a start of `ri(78,92)`. He is at zero long before he is
+sixty-two.
+
+**MEASURED** (`probes/heirs.mjs`, 16 houses × 520 weeks, before and after):
+
+| arm | gate held (weeks) | of those who reached 62, handed on | health floor |
+|---|---|---|---|
+| reference, onset 42 | 11 | 2 of 2 | 68.5 |
+| started at 58, onset 42 | **24** | 10 of 12 | **0.0** |
+| started at 58, onset 52 | **196** | **12 of 12** | 57.7 |
+
+The middle row is the fault: **881 weeks of being sixty-two-or-over and the gate holding on
+twenty-four of them**, because by the time he is old enough his health has collapsed. The two terms
+of one gate pulled against each other — and the successions that did happen came through the **death**
+door, the lanista dropping dead, rather than the retirement the design wrote for it, where `oldAge`
+lives as *"an ending you choose rather than one that is chosen for you"*.
+
+The note in `lanistaWeek` records this being found once already — *"succeed, takeUpTheHouse, the
+forebear record and the whole second generation were unreachable in ordinary play, by arithmetic
+rather than by bad luck"* — and fixed by making retirement a second door. **The door was added;
+nothing made it passable.**
+
+**SO THE YEARS START TO TELL AT FIFTY-TWO.** `LAN_AGE_FROM` is the whole change: the coefficient, the
+mend, the unrest and rebellion drains and the baths are untouched, so a lanista running a cruel or
+mutinous house still goes down at the same rate for it (measured: 42.0 against a calm house's 69.6
+over sixty weeks).
+
+**What it does NOT do, stated rather than glossed.** It does not make more lanistae reach sixty-two.
+Under the reference player he still ends at a median age of **47** because the *house* dies at week
+180, and the rate is **2 of 16 either way**. How long a house lives is a different question and a
+different item. What changed is that a man who gets there can now take the door, and the second
+generation arrives by choice instead of by his heart giving out.
+
+**A cap was tried first and went too far.** Ceiling the weekly drain at 0.18 got the same 196 weeks —
+and also put the drain permanently under what a man out-mends at 0.06 plus baths, so his health never
+fell below 71 and he became effectively immortal, shutting the death door and the `lanistaDied`
+ending behind it. Arm 3 of the check is that sabotage, standing. (Checked before worrying: the
+pre-change survey's endings carry no `lanistaDied` and no `oldAge` at all, so the death-by-age ending
+was already dark under the reference player and this did not darken it.)
+
+**Held by `checks/tenure.mjs` — six arms, eight sabotages, all eight caught.** The invariant is arm 2:
+age a lanista from each end of his starting band to 62 in a quiet house and he must still hold 45.
+Arm 3 requires that the years still end him (aged to 77, health 0). Arm 4 requires the *other* drains
+untouched. Arm 5 drives both doors and the no-heir ending. Arm 6 completes a handover and requires
+`fameKeep` applied and a forebear recorded.
+
+**And one fixture fault caught rather than published**: the retirement arm asked for 300 rolls at 6%
+and got one roll three hundred times, because `newGameState` reseeds the one global `R()` from the
+seed word and the fixture named the same seed each iteration. It reported a door that never opens on
+a build where it opens fine. The seed moves now.
+
+### Measured — a fresh survey after this session's changes, and the next item it found
+
+Not a release. The design survey that generated the #207–#231 audit was last run before twelve
+releases, a repriced monument ladder and a redrawn bay. Re-run at 16 × 420 (3,293 played weeks) to
+check this session's own changes in the round and to see what a player now meets.
+
+**THE SESSION'S CHANGES SHOW UP AS INTENDED.** Gold p50 by era 1,243 / 5,013 / 3,647 / 4,849 against
+the old 991 / 4,163 / 4,361 / 3,480; fame p50 201 / 2,042 / 3,689 / 5,201 against 145 / 1,727 /
+3,053 / 3,848 — richer and more famous, which is what a climbable monument ladder buys. And older
+fixes hold: the feud stands on **32.6%** of weeks against #225's pre-fix 79%; the mercy line is told
+on **8.1%** against #223's 16%; the saga reaches its finale **2 of 10** times against #222's 0 of 13.
+
+**ONE DEAD COUNTER IN THE SURVEY ITSELF**, found while reading its zeros. `arcs.rebellion.any` was
+incremented once per WEEK and `arcs.rebellion.ended` was never written at all — so "rebellion 3,
+ended 0" read as three arcs that failed to conclude when the 3 was three house-weeks and the 0 was a
+counter nothing incremented. Both are honest now (rising edge = a rebellion, falling edge = an
+ending, plus a separate week count), and the fix immediately surfaced a question worth asking:
+**7 rebellions across 14 campaigns, observed on exactly 7 house-weeks, 0 ending any way but the house
+dying — and rebellion is the second commonest ending, 5 of 14.** Whether the three-stage arc actually
+plays out across weeks, or is only ever seen the week it ends the run, is open and not asserted here.
+
+**AND THE ITEM THE SURVEY FOUND: the second generation.** `succession: 0` over 420 weeks. Measured
+properly at 520 (`probes/heirs.mjs`, 16 houses):
+
+- The lanista ends at **p50 age 47**, and the retirement door wants **62**. `makeLanista` starts him
+  at `ri(34,46)`, so reaching it takes 16–28 years against a median house that dies at week 180.
+- **The death door never opens either**: his health never fell below **68.5** in 16 campaigns, against
+  a door at 0.
+- He was 62+ on **11 of 3,075 weeks**; the retirement gate's terms all held on those same 11 →
+  0.66 expected retirements. **2 of 16 houses ever succeeded.**
+- Started at 58 instead, he is 62+ on **881** weeks — and the gate still holds on only **24** of them,
+  because `health >= 45` fails: health decays at `(age−42) × 0.045` a week, so at 62 he loses 0.9 a
+  week against a +0.06 mend. **The age that opens retirement is the age that kills him.** 10 of 16
+  then succeed, almost all through the death door.
+- **And every heir named is a `nephew` — 16 of 16.** The `son` and `scion` paths, which #226 and #237
+  built the multi-son chooser and the toga arc for, are never reached by a played house.
+
+This has been found once before: the note at `lanistaWeek` ~11730 records "succeed, takeUpTheHouse,
+the forebear record and the whole second generation were unreachable in ordinary play, by arithmetic
+rather than by bad luck", and the fix was to make retirement a second door. The measurement says that
+door is nearly as narrow as the first, and for a reason the fix did not address — the two gate terms
+pull against each other.
+
+**Left open deliberately**: which lever moves is a balance decision with three different shapes (the
+age gate, the health curve, or making sons reachable), and the last such call was put to the owner
+rather than taken in passing.
+
+### Measured, no code changed — the one conversation in the game, and four hypotheses that all died
+
+Not a release. `probes/ask.mjs` is the standing instrument. **Four hypotheses went in and all four
+came out refuted**, including the one this investigation was opened on.
+
+`askWeek` is the only place a gladiator speaks to the lanista on his own initiative — five things he
+can raise (a brother, a match he lost, his year, a burial, a woman in the town), each with a `need`,
+a weight and two written answers. Two seeds × 16 houses × 420 weeks, 5,302 played weeks:
+
+**THE RATE.** It fires once every **70–72 weeks** (1.39–1.44% of weeks) and reaches **8.6–8.8%** of
+the ~430 men who ever stand in the cells. P(an ask fires | the week is *open*) is **1.98–2.11%**,
+against the 6% roll that caps it.
+
+**AND THE LIMIT IS THREE ROUGHLY EQUAL THIRDS**, not one thing:
+
+| | |
+|---|---|
+| the pool | mean **1.09–1.31** men qualify at all (regard 45, three bouts), and only **65–68%** of them have any of the five that fits |
+| the mark | costs 0.76–0.88 points — **27.7–29.5%** of the openings |
+| being shut out | **30.2–32.1%** — `askWeek` sits at line 21028, behind eight systems that can raise the week's event first |
+
+- **Refuted #1: "the one-ask-per-man rule is the constraint."** It is under a third of it. (A 4-house
+  smoke reported the mark costing *nothing*, −0.01 points; that was small-sample noise, and the scale
+  run is what settled it — in the other direction.)
+- **Refuted #2, the interesting one.** `year` has fired **zero** times in 5,302 weeks. The suspicion
+  was the mark — that a man with a career long enough to earn the wooden sword has already been spent
+  on one of the four asks that want much less of him. Measured at the moment each man first satisfied
+  `year`'s need: **10 of 15 were still free.** Not the mark.
+- **Refuted #3: "the rudis bar is unreachable, so `year` is downstream of #238."** The source's own
+  figure is that `rudisEligible` is crossed by **14.1%** of every man who draws breath. Not the bar.
+- **Refuted #4: "the contention is a defect."** Every weekly event-raiser guards on `d.pendingEvent`
+  properly — `edictWeek` even pays a consolation (+6 heat) when it is shut out. It is a priority
+  order, and the ask is last in it by design.
+
+**So why `year` never fires, plainly:** only **15 men in 2,655 weeks** ever satisfy its need at all —
+about one per campaign — each has a narrow window, and inside it he must also be the one man `pick`
+lands on during a 6% week *and* win a weighted draw in which he weighs 8 against a brother's 10, a
+match's 9 and a burial's 7, all of which also fit a veteran. Zero is arithmetic, not a bug.
+
+**The one design observation left standing, and deliberately not acted on:** the weighted draw does
+not prefer the *rarer* conversation, so the rarest state a man can be in is usually spent on the
+commonest thing he could be asked. Whether that should change is a design call, not something the
+measurement forces, and after four refutations in a row on one item the disciplined answer was to
+write it down rather than invent a fifth fix.
+
 ### v3.197.0 — three of the nine, and it was the same three every game
 
 `LANISTAE` holds **nine** rival lanistae. Each is written the way the founders are — a name, a

@@ -179,4 +179,6 @@
 {"v":"3.196.0","checks":152,"failed":["ledger"]},
 {"v":"3.196.0","checks":152,"failed":[]},
 {"v":"3.197.0","checks":153,"failed":["altar","careers","domus"]},
-{"v":"3.197.0","checks":153,"failed":[]}]
+{"v":"3.197.0","checks":153,"failed":[]},
+{"v":"3.198.0","checks":154,"failed":["domus"]},
+{"v":"3.198.0","checks":154,"failed":[]}]
