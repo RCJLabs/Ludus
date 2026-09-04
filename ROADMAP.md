@@ -852,7 +852,7 @@ Three named men will put coin on your table this afternoon, and choosing between
 | **Titus Murena** | 5.8%/wk | 2400d | 20 wks | dear and unhurried, and **never takes a man** |
 | **Scaeva** | 8.2%/wk | 900d | 8 wks | lends to anyone at a price that says so — **collects in men** |
 
-Interest **compounds weekly**, so 800d untouched becomes 1,053d by week eight and 1,827d by week twenty-four. It is entirely survivable if you pay it down — a few hundred a week clears it inside a month — and fatal if you look away.
+Interest **compounds weekly**, so 800d untouched becomes 1,053d by week eight and 1,827d by week twenty-four. **What decides it is how much you take, not which of them you ask.** Measured over 72 houses x 420 weeks x 3 seeds on one policy throughout — borrow when gold falls under twelve weeks of obligations, repay everything above it — taking Gratus's whole 1,400d cap foreclosed **102 of 216 houses**; taking 700d, **73**; taking 300d, **57**. Per loan that is 7.9% / 4.6% / 2.8%, and it is monotone in every seed. A few hundred really is survivable. The cap is not, and the panel's countdown — `ln4/ln(1+rate)`, which never mentions the principal — says the same week number for both.
 
 **The escalation is the feature.** He is quiet for exactly as long as he said: his man appears at the gate at his patience limit and does not come in; eight weeks later word is round Capua that you are carrying his paper, which costs 12 fame and 8 with every patron; eight weeks after that a hard lender **takes a gladiator against the debt** at 70% of his value, with nobody asking you first. At **4× the principal** he stops discussing it, and the ending is `foreclosed`.
 
@@ -2169,7 +2169,10 @@ one at last. `board` is the 68th check, negative-tested both ways. Suite green a
 v3.50.0 — #163 closed, and its clause did NOT falsify: with a rope that
 borrows when short and repays everything above its reserve, **the loan is a fuse under every lender**
 — never borrowing lives a median **156w with 16 of 72 alive at 420**, against 62w/3 (Gratus), 42w/1
-(Scaeva) and 42w/0 (Murena), with 30-52 of 72 foreclosed. So the panel says so now: each lender's row
+(Scaeva) and 42w/0 (Murena), with 30-52 of 72 foreclosed. *(Corrected in v3.187.0: that rope asked
+for `99999` and took each lender's whole cap every time, so "under every lender" was one POLICY
+generalised to the mechanism. Re-measured with the size as a lever, the cap foreclosed 102 of 216
+houses, 700d foreclosed 73, and 300d foreclosed 57. The loan is not a fuse; taking the maximum is.)* So the panel says so now: each lender's row
 carries the week his debt reaches four times what you took (`loanFuse` = ln4/ln(1+rate) — weeks 41, 25
 and 18) and the hard lenders their own clock. One real fault fixed: the hard clock consulted `owes`
 not at all, so it seized houses that had paid the debt below what they borrowed — it reads the same
@@ -4386,6 +4389,106 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.187.0 — #235: the loan is not a fuse, taking the maximum is
+
+Item #235, "The Fuse, or the Tool" — and the thing it asked me to build, I measured and did not
+build, because the measurement said it would not work. What shipped instead is the finding, the
+panel line that finding demands, and the corrected record in three places.
+
+**THE CONTRADICTION IS REAL.** ROADMAP told the player, under "The moneylenders," that debt is
+"entirely survivable if you pay it down — a few hundred a week clears it inside a month." Four
+hundred lines later its own v3.50.0 note concluded, from `probes/fuse.mjs`, that **"the loan is not a
+tool under any lender."** Both were in the repository and they cannot both be true.
+
+**THE FRESH BASELINE, AT THE PROJECT'S OWN SCALE FOR THIS SYSTEM.** 72 houses × 420 weeks × 3 seeds
+against current source, not the 130-commit-old numbers:
+
+| | median life | fame | foreclosed of 72 |
+|---|---|---|---|
+| never borrows | 187 / 167 / 189w | 2642 / 2432 / 2534 | 0 |
+| Gratus, serviced from surplus | 143 / 108 / 125w | 1945 / 1668 / 1751 | 28 / 31 / 37 |
+
+The problem is still live, and the gap is **1.3–1.55×**, not the 2.5× the item cites — the game has
+moved. And the death is precisely located: **83 of those 96 foreclosures land at a loan age of
+exactly 43**, which is `patience + 30` plus the tick. Not the balance. The clock. (Scaeva splits
+between the two, 18 and 39; Murena, soft and clockless, is pure balance and never before age 25,
+which is ln4/ln1.058. Three lenders, three different deaths, exactly as the probe's header claims.)
+
+**THE ITEM'S OWN FIX WAS MEASURED AND DOES NOT WORK.** It proposed extending that hard clock for a
+borrower who had cleared the lender before. `probes/standing.mjs` lifts the clock entirely and
+follows the loans it kills. Of 35 / 29 / 35 such loans across three seeds, only **7 / 7 / 9 ever get
+back under principal at all** — and a +44-week extension, more than doubling the clock, rescues a
+fifth of them. A realistic +12 rescues an eighth. The reason is in the same run: at the clock the
+median loan owes **1.87 / 1.35 / 2.08 times what it took and is still climbing**. These houses are
+servicing the debt and the surplus is smaller than the interest. More weeks do not rescue a house
+that is losing ground; they move the funeral.
+
+**THE OTHER HALF OF THE SAME GATE FAILED THE ITEM'S OWN FALSIFIER.** The clock's escape condition is
+`owes(d) > principal`, and where that line sits does decide who dies: off the same loans, 1.0×
+spares 31/41/27%, 2.0× spares 55/65/46%, 3.0× spares 76/80/73%. It looked like the real lever. Built
+and A/B'd on paired seeds it was not — foreclosures went 43/32/27 → **41/28/26, seven houses in
+216**, against a control seed spread of about 70 weeks on this instrument. The item is explicit:
+keep it only if the gain is clearly larger than that spread. Reverted.
+
+Cutting the cap for a good-standing borrower *did* move it (43 → 32 on one seed). That is not a
+reward for anything — a smaller loan is a smaller fuse, which is the finding below — and shipping it
+dressed as good standing would have told the player he was being rewarded while the mechanism was
+simply that he was allowed to borrow less.
+
+**AND THEN THE THING NOBODY HAD TESTED.** Every number in #163 came from a rope that asked `borrow`
+for `99999` and took each lender's whole cap. ROADMAP's own claim is about *a few hundred*. Given a
+size lever and nothing else changed, same seeds, same policy:
+
+| what it takes | median life | fame | foreclosed of 216 | per loan |
+|---|---|---|---|---|
+| never borrows | 202 / 161 / 231w | 2459 / 1915 / 2723 | **0** | — |
+| the whole cap (1400d) | 168 / 202 / 141w | 2232 / 2612 / 1743 | **102** | 7.9% |
+| 700d | 192 / 155 / 189w | 2586 / 1748 / 2390 | **73** | 4.6% |
+| 300d | 189 / 170 / 212w | 2396 / 2267 / 2773 | **57** | 2.8% |
+
+Monotone in every seed. **The loan is not a fuse. Taking the maximum is.** ROADMAP's first passage
+was right; the changelog's conclusion was one policy generalised to a mechanism. (Median life is too
+noisy at this scale to claim a life effect — the control alone swings 161–231w — so the claim here
+is about foreclosure risk, which is clean.)
+
+**AND THE PANEL WAS COMPLICIT, WHICH IS WHAT THIS RELEASE CHANGES.** `loanFuse` is
+`ln4/ln(1+rate)`. It does not mention the principal, because four times a small number falls due the
+same week as four times a big one — so the screen printed **week 41 for 300d and week 41 for
+1400d**. The one lever the player actually has over his own survival was the one thing the borrowing
+panel did not talk about. Every borrow button now carries the weekly interest at that size (300d →
+11d a week, 1400d → 49d a week under Gratus), and a line under them says the countdown is the same
+length whatever you take and what the sum changes is the week.
+
+**Shipped:** the panel's per-amount pricing and its size line; the corrected passage under "The
+moneylenders"; a correction stamped on the v3.50.0 changelog entry; the same correction at
+`loanFuse`'s own comment block in source, where the overgeneralised sentence was written.
+`checks/debt.mjs` — 4 arms, **9 sabotages, 9 caught**. `probes/standing.mjs` and `probes/credit.mjs`
+kept as standing instruments, and the rope gained two levers with no constants in them: `payoff`
+(settle outright whenever what is owed still leaves a week's own bill) and `loanSize`.
+
+**AND A CHECK THAT HAD BEEN UNDERCOUNTING FOR AS LONG AS THE PANEL EXISTED.** Pricing the buttons
+tripped `reach`'s three-tap budget at 13 against a cap of 12 — but nothing moved and nothing was
+added. That check dedups actions by label, keeping the shallowest, which is right for one action
+reachable from several places and wrong for several actions that share a word. The moneylenders
+panel has always carried **nine** borrow buttons — three lenders × [300, 700, his cap] — and five
+distinct labels, because "300d" and "700d" appear on all three men. Giving each its own weekly cost
+stopped the labels colliding and the same nine buttons were counted as nine. `DEEP_CAP` goes to 13
+with that written at the constant; the number to beat is now 13, not a licence to drift.
+
+**A vacuous check caught by its own sabotage run.** `checks/debt.mjs`'s ladder arm first read the
+escalation off `String(A.loanWeek)` and asserted five things about it. All five were vacuous: the
+test handle wraps every exported function in a call-counting proxy and hands back the wrapper's
+body, so the regexes matched nothing on a build with the ladder fully intact. It drives each step on
+its own fixture now — warned at patience, the reputation hit at +8, a man taken at +16 with 257d off
+the debt, the house at +30, the 4× balance fuse — and both of #163's rescue clauses are held from
+the other side: a house paid below principal is taken by neither the clock nor the reputation step.
+
+**Not built:** the whole good-standing tier — phases 1–4 of the item. `d.flags.everBorrowed` remains
+a write-only flag. The measurement above is the reason, and it is recorded here so the next person
+does not re-derive it: within the item's own guardrail — that good standing may buy survival and
+never money — there is no lever large enough to matter, because what kills these houses is the
+compounding and not the deadline.
+
 ### v3.186.0 — #234: a seat a lanista can sit in, and the games he then has to pay for
 
 Item #234, "Standing for Office" — phases 1 and 2, plus the cost its own **Risk** section demands,
@@ -5063,6 +5166,8 @@ Rework the escalation so debt that is genuinely being serviced earns a real, bou
 **Risk.** The failure this item can cause is the one its own design-fit note names: a good-standing tier that pays for itself economically — more effective capital, cheaper money, forgiven interest — makes disciplined borrowing the correct way to fund a purchase instead of a real trade-off, turning the loan from a fuse into a bank. That is the same reversal "cruelty is permitted, never optimal" forbids for brutality, applied to credit. Guardrail: every benefit in phases 2-3 is stated in survival terms only — a longer clock, bought with either a smaller next loan or a fee/rate bump on the current one — never a lower rate, forgiven interest, or a bigger cap. The balance fuse and the man-seizure step stay live at their current constants for any loan not in good standing, so a house that never pays down debt is exactly as exposed as it is today. Phase 5's paired measurement is the check on this specifically: if the good-standing arm comes out ahead of a save-only rope on fame, rung, or gold — not just surviving as long as one — the constants have crossed from fuse to bank and need to shrink before shipping, not after.
 
 **Verify first.** Before phases 2-4 ship: (1) rerun test/probes/fuse.mjs fresh at the project's own scale for this system — 72 houses x 3+ seeds, matching the #163 commit's own convention — rather than trusting either the #163 numbers (130+ commits old) or my 12x300x1-seed spot check; (2) confirm the fresh baseline still shows Gratus foreclosures clustering at loan age patience+30(+1) rather than the 4x-balance fuse, the way my rerun did (5 of 5 at loan age 43) — that gap is what GOOD_STANDING_EXTRA has to close, and its size should come off that measurement, not be picked in advance; (3) after implementing, the phase-5 falsifier: paired seeds, same lender, first loan vs. good-standing second loan, median life — not worth keeping unless the improvement is clearly larger than the 95w/248w/209w spread the control itself showed across three seeds in the #163 commit, which is the noise floor this exact instrument already has on record.
+
+**#235 — The Fuse, or the Tool** *(overhaul)* — **ANSWERED v3.187.0, and the answer is not the one it asked for.** Both proposed mechanics were built, measured and reverted against the item's own falsifier: extending the hard clock rescues a fifth of the loans it kills even at +44 weeks (at the clock the median loan owes 1.87x what it took and is climbing), and loosening its escape line to 2x moved 7 houses in 216 against a ~70w control spread. What the item never tested is that every number in #163 came from a rope that always borrowed the lender's whole cap: given a size lever, the cap foreclosed 102 of 216 houses, 700d foreclosed 73, 300d foreclosed 57, monotone in every seed. The loan is not a fuse; taking the maximum is. The panel now prices each amount, and three stale passages are corrected. The good-standing tier is not built and the release note says why.
 
 **#236 — Rivals Roll Dice; They Don't Read Your Roster** *(overhaul)*
 RIVAL_MOVES.retrain (src/ludus.jsx:6511-6517) sends a man to one of the five classes he isn't already with a bare pick() — a 20% floor on landing anywhere in particular. RIVAL_MOVES.buy (6478-6493) always lifts whoever tops gladValue() off the block, full stop. Both run inside an engine whose whole identity is a six-class cycle (COUNTERS, line 384) worth a real 1.15/0.91 damage multiplier (CLS_EDGE, line 387, spent at 10067 and 17214) — and across every rival-house system in the file, nothing has ever once looked at what the player is actually fielding to decide which way to lean.

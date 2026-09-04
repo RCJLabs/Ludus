@@ -361,6 +361,11 @@ export async function installRope(p){
                         falls below `LAN.reserve(d)` and pays the debt down from everything above the
                         reserve every week after. Both triggers are the rope's own reserve, so there
                         is no threshold in it. Nothing in the suite borrows without this)
+         payoff        (default FALSE, #235 — with `loan`, also SETTLE the debt outright whenever what
+                        is owed still leaves a week's own bill on the table. The servicing rule alone
+                        never reaches zero for a house under sustained pressure, and zero is the only
+                        tick `repay` writes `d.flags.clearedWith` on, so the good-standing arm needs
+                        this or it measures a house that never earned any)
          party         (default TRUE — host whenever spare allows. `party:"rung"` hosts only while
                         favour is SHORT of what the next census rung asks, and banks otherwise: the
                         target is the game's own gate rather than a number somebody chose, so it
@@ -730,10 +735,25 @@ export async function installRope(p){
       if(o.loan && typeof A.borrow === "function"){
         const res = LAN.reserve(d);
         if(A.canBorrow && A.canBorrow(d) && d.gold < res){
-          if(fin(A.borrow,[d, o.loan, 99999])) bump("borrowed");
-        } else if(d.loan && d.gold > res){
-          const paid = fin(A.repay,[d, Math.floor(d.gold - res)]);
-          if(paid > 0) bump("repaid");
+          /* #235 — `99999` takes the lender's whole cap, which is one policy and not the only one.
+             ROADMAP's claim about the loan being survivable is about "a few hundred a week", so the
+             size has to be a lever or the measurement is about borrowing the maximum rather than
+             about borrowing. `loanSize:300` takes three hundred. Default is unchanged. */
+          if(fin(A.borrow,[d, o.loan, o.loanSize || 99999])) bump("borrowed");
+        } else if(d.loan){
+          /* ---- #235: FINISHING A LOAN IS A DIFFERENT POLICY FROM SERVICING ONE ----
+             The rule above pays down everything above the reserve and never a denarius more, which
+             is the disciplined servicer the fuse was written to price. `payoff:true` adds the second
+             rule, and it has no constant in it either: settle outright whenever what is owed still
+             leaves a week's bill on the table, `weeklyBill` being the game's own idea of what a week
+             costs. It matters because `repay` writes `d.flags.clearedWith` only on the tick the
+             balance reaches zero, so an arm meant to measure GOOD STANDING has to be able to reach
+             it deliberately rather than by luck. With payoff off, every number this lever produces
+             is bit-for-bit what it produced before the option existed. */
+          const owed = A.owes(d);
+          const finish = o.payoff && owed > 0 && owed <= d.gold - A.weeklyBill(d);
+          const want = finish ? owed : (d.gold > res ? Math.floor(d.gold - res) : 0);
+          if(want > 0){ const paid = fin(A.repay,[d, want]); if(paid > 0) bump(finish ? "cleared" : "repaid"); }
         }
       }
       /* ---- #167: THE FOUR FAVOURS, WHICH NOTHING HAD EVER CALLED ----

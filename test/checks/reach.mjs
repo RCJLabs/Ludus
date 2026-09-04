@@ -58,7 +58,17 @@ export const name = "reach";
 export const describe = "nothing a player does is more than three taps from the tab bar";
 export const slow = true;   /* walks every face of every tab in a real browser */
 
-const MAX_TAPS = 3, DEEP_CAP = 12, FOLD = 844;
+/* ---- DEEP_CAP 12 -> 13, AND THE POPULATION DID NOT GROW — #235, v3.187.0 ----
+   `best` below dedups by `r.label.toLowerCase()`, keeping the shallowest occurrence, which is right
+   for one action reachable from several places and wrong for several actions that happen to share a
+   word. The moneylenders panel has always carried NINE borrow buttons — three lenders x [300, 700,
+   his cap] — and five distinct labels, because "300d" and "700d" appear on all three men. The check
+   counted five. When v3.187.0 put the weekly interest on each button ("300d / 11d a week" against
+   "300d / 25d a week") the labels stopped colliding and the same nine buttons were counted as nine.
+   Hence +4 with nothing moved and nothing added: the panel's own line reads THE MONEYLENDERS x9.
+   The bar is a shrinking budget and this is not a licence to drift — it is one correction of an
+   undercount, and the number to beat is now 13. */
+const MAX_TAPS = 3, DEEP_CAP = 13, FOLD = 844;
 
 /* a thing that CHANGES the house, as against a thing that shows you something. The record sheets and
    the per-man rows are openers and sit at the bottom of the ludus tab on purpose; counting them as
