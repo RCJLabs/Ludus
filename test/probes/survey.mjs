@@ -28,7 +28,7 @@ const out = await p.evaluate(([H, W, SEED])=>{
     era: [0,1,2,3].map(()=>({ gold:[], fame:[], roster:[], fit:[] })),
     men: { seen:0, died:0, sold:0, freed:0, fled:0, retired:0, bouts:[], wins:[], survivedRun:0 },
     modes: {}, sys: {}, did: {}, arcs: { saga:{started:0,st2:0,st3:0,st4:0}, nem:{houses:0,men:0},
-      rebellion:{any:0,ended:0}, war:{seen:0,done:0}, rome:{offered:0,gone:0}, succession:0 },
+      rebellion:{any:0,ended:0,weeks:0}, war:{seen:0,done:0}, rome:{offered:0,gone:0}, succession:0 },
     chron: { lines:0, distinct:{}, byKind:{} },
     events: {}, patrons:[], piety:{ offerings:0, vows:0, blessedWeeks:0 },
     circuit:{ trips:0, weeksAway:0 }, works:0, monuments:0, collegium:0, household:[], loans:0,
@@ -40,7 +40,7 @@ const out = await p.evaluate(([H, W, SEED])=>{
   for(let h=0; h<H; h++){
     const d = A.newGameState(SEED+"-"+h);
     const seenMen = new Set(); let wasAway = false; let hadLoan = false; let lastNem = null;
-    let sawSaga = false, sagaMax = 0;
+    let sawSaga = false, sagaMax = 0, wasRebel = false;
     for(let w=0; w<W; w++){
       if(d.over){ break; }
       let did;
@@ -78,7 +78,12 @@ const out = await p.evaluate(([H, W, SEED])=>{
     mark(sum.endings, K); if(d.over) sum.endedAt.push(Math.round(d.week/ (52/12) / 12 * 10)/10);
     if(sagaMax>=2) sum.arcs.saga.st2++; if(sagaMax>=3) sum.arcs.saga.st3++; if(sagaMax>=4) sum.arcs.saga.st4++;
     if(d.nemHouse) sum.arcs.nem.houses++; if(d.nemesis) sum.arcs.nem.men++;
-    if(d.rebellion) sum.arcs.rebellion.any++;
+    /* PER WEEK, NOT PER REBELLION — and `ended` was never written at all, so the survey has been
+       reporting "rebellion 3 / ended 0" as if three arcs had failed to conclude when the 3 was three
+       house-WEEKS with `d.rebellion` set and the 0 was a counter nothing incremented. Both are
+       counted properly now: a rising edge is a rebellion, and its falling edge is an ending. */
+    if(d.rebellion){ sum.arcs.rebellion.weeks++; if(!wasRebel){ sum.arcs.rebellion.any++; wasRebel = true; } }
+    else if(wasRebel){ sum.arcs.rebellion.ended++; wasRebel = false; }
     if(d.war){ sum.arcs.war.seen++; if(d.war.done) sum.arcs.war.done++; }
     if(d.rome) sum.arcs.rome.gone++; if(d.romeOffer || (d.flags&&d.flags.romeOffered)) sum.arcs.rome.offered++;
     if((d.forebears||[]).length) sum.arcs.succession += d.forebears.length;

@@ -4389,6 +4389,53 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### Measured — a fresh survey after this session's changes, and the next item it found
+
+Not a release. The design survey that generated the #207–#231 audit was last run before twelve
+releases, a repriced monument ladder and a redrawn bay. Re-run at 16 × 420 (3,293 played weeks) to
+check this session's own changes in the round and to see what a player now meets.
+
+**THE SESSION'S CHANGES SHOW UP AS INTENDED.** Gold p50 by era 1,243 / 5,013 / 3,647 / 4,849 against
+the old 991 / 4,163 / 4,361 / 3,480; fame p50 201 / 2,042 / 3,689 / 5,201 against 145 / 1,727 /
+3,053 / 3,848 — richer and more famous, which is what a climbable monument ladder buys. And older
+fixes hold: the feud stands on **32.6%** of weeks against #225's pre-fix 79%; the mercy line is told
+on **8.1%** against #223's 16%; the saga reaches its finale **2 of 10** times against #222's 0 of 13.
+
+**ONE DEAD COUNTER IN THE SURVEY ITSELF**, found while reading its zeros. `arcs.rebellion.any` was
+incremented once per WEEK and `arcs.rebellion.ended` was never written at all — so "rebellion 3,
+ended 0" read as three arcs that failed to conclude when the 3 was three house-weeks and the 0 was a
+counter nothing incremented. Both are honest now (rising edge = a rebellion, falling edge = an
+ending, plus a separate week count), and the fix immediately surfaced a question worth asking:
+**7 rebellions across 14 campaigns, observed on exactly 7 house-weeks, 0 ending any way but the house
+dying — and rebellion is the second commonest ending, 5 of 14.** Whether the three-stage arc actually
+plays out across weeks, or is only ever seen the week it ends the run, is open and not asserted here.
+
+**AND THE ITEM THE SURVEY FOUND: the second generation.** `succession: 0` over 420 weeks. Measured
+properly at 520 (`probes/heirs.mjs`, 16 houses):
+
+- The lanista ends at **p50 age 47**, and the retirement door wants **62**. `makeLanista` starts him
+  at `ri(34,46)`, so reaching it takes 16–28 years against a median house that dies at week 180.
+- **The death door never opens either**: his health never fell below **68.5** in 16 campaigns, against
+  a door at 0.
+- He was 62+ on **11 of 3,075 weeks**; the retirement gate's terms all held on those same 11 →
+  0.66 expected retirements. **2 of 16 houses ever succeeded.**
+- Started at 58 instead, he is 62+ on **881** weeks — and the gate still holds on only **24** of them,
+  because `health >= 45` fails: health decays at `(age−42) × 0.045` a week, so at 62 he loses 0.9 a
+  week against a +0.06 mend. **The age that opens retirement is the age that kills him.** 10 of 16
+  then succeed, almost all through the death door.
+- **And every heir named is a `nephew` — 16 of 16.** The `son` and `scion` paths, which #226 and #237
+  built the multi-son chooser and the toga arc for, are never reached by a played house.
+
+This has been found once before: the note at `lanistaWeek` ~11730 records "succeed, takeUpTheHouse,
+the forebear record and the whole second generation were unreachable in ordinary play, by arithmetic
+rather than by bad luck", and the fix was to make retirement a second door. The measurement says that
+door is nearly as narrow as the first, and for a reason the fix did not address — the two gate terms
+pull against each other.
+
+**Left open deliberately**: which lever moves is a balance decision with three different shapes (the
+age gate, the health curve, or making sons reachable), and the last such call was put to the owner
+rather than taken in passing.
+
 ### Measured, no code changed — the one conversation in the game, and four hypotheses that all died
 
 Not a release. `probes/ask.mjs` is the standing instrument. **Four hypotheses went in and all four
