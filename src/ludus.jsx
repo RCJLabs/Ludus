@@ -17485,11 +17485,12 @@ const SPAR_PRESS  = 1.4;    /* what "stop dancing" is worth, under the same ceil
    editor who is not there in a fight nobody can die in. The item's own verify-first predicted
    exactly that. Named functions instead, so the rule is one thing in one place and `spar` can
    assert it directly rather than hoping the JSX still reads the way it did. */
-const cruxSolo = fight => !!fight && !fight.melee && !fight.venatio && !fight.pair && !fight.spar;
+const cruxSolo = fight => !!fight && !fight.melee && !fight.venatio && !fight.pair && !fight.spar && !fight.primacy;
 function cruxMenuFor(fight){
   if(!fight) return {};
   if(fight.melee) return MELEE_CRUX;
   if(fight.spar)  return SPAR_CRUX;
+  if(fight.primacy) return PRIMACY_CRUX;
   if(cruxSolo(fight)) return CRUX;
   return { press:CRUX.press, cover:CRUX.cover, cloth:CRUX.cloth };
 }
@@ -17498,6 +17499,9 @@ function cruxMenuFor(fight){
    `bulk` is right that the modal is long enough without carrying every engine's vocabulary too. */
 function cruxWords(fight){
   const solo = cruxSolo(fight);
+  if(fight && fight.primacy) return { head:"FROM THE BOX",
+    lead:"Both of them are yours, and the whole city is watching which one you would rather keep.",
+    foot:"This is not the square. The swords are steel, the editor is in his box, and if one of them goes down the appeal is real — which means the man you do not speak for can die on this sand." };
   if(fight && fight.spar) return { head:"FROM THE RAIL",
     lead:"Both of them are yours, and both of them can hear you.",
     foot:"Nobody dies in the square — the swords are wood and the doctore is standing in it. What you are deciding is whether the thing between them gets settled today, and what it costs to settle it." };
@@ -17741,6 +17745,169 @@ function doSpar(d, aid, bid, pending, choice, kind){
   chron(d, `You put ${a.name} and ${b.name} on the sand in front of everybody with wooden swords and the doctore counting, and ${w.name} had the better of it.`, "info");
   return { beats:res.beats, sum:sum.map(x=>herOwn(d,x)), win:true, dead:false, crowd:0,
     spar:true, stakes:"spar", venue:null, factions:d.factions, A:face(a), B:face(b) };
+}
+
+/* ---- THE PRIMACY IS DECIDED ON THE SAND ----
+   `EVENTS.primacy` — one of your own men asking for the title against the man who sleeps four
+   doors down — resolved on two `power()` calls with independent 0.8-1.3 noise and a paragraph
+   about what happened. It was the last brancher in the game that decided a marquee bout without
+   fighting one, and it was noticed while #232 was giving the yard duel a real engine: the two are
+   the same shape, two of yours on the sand, and only one of them had a fight in it.
+
+   The difference between them is the whole point. The square cannot kill — `simulateSpar` has no
+   fell/appeal/missio block to reach and a hard floor under every man in it. This is not the
+   square. It is the one bout in Capua that means anything, on the city's card, at standard
+   stakes, and it goes through `simulateFight` with the appeal live. **A house can lose its
+   champion to its own second man here**, which is a thing the game could not do before and is the
+   reason this was raised as a design decision rather than a defect.
+
+   AND ONE ASYMMETRY HAD TO BE ANSWERED AT THIS LEVEL RATHER THAN IN THE ENGINE. `simulateFight`
+   gives A's appeal the full missio machinery — `missioScore` against the box, the patron, the
+   street, what he endured — and gives B a flat `crowd>62 && R()<0.55`. That is right when B is an
+   opponent from another house that nobody in the seats has any feeling about, and wrong when B is
+   the second-best man in YOUR house. Rather than edit the single sand — the most tested code in
+   the game, which `simulatePair` was written apart from on purpose — the wrapper re-decides that
+   one roll against the same figure the holder would have been read at, and rewrites the beat. */
+/* AND THE BOX HAS ONE VOICE, WHICH IS THE WHOLE OF THE DECISION. `simulateFight` carries one
+   tactic per side and reads the other man's off how he is built — and on a resume it carries the
+   one it already had, so an order given at the crux can only ever reach A. In every other bout in
+   the game that is invisible, because B belongs to somebody else. Here it is the point: both men
+   are yours, the man in the box can speak to exactly one of them, and the one he speaks to is the
+   one holding the title. Saying nothing is a decision about the challenger.
+   (The first draft of this table gave `press` an `order:{press:true}`, which is `simulateSpar`'s
+   vocabulary and means nothing to the single sand — it moved the death rate from 4.0% to 4.3% on
+   400 bouts, i.e. not at all. `press` is a TACTIC there, and CRUX has said so since v3.0.) */
+const PRIMACY_CRUX = {
+  run:   { label:"Say nothing",
+    desc:"They asked for this bout. Let them have the whole of it, and find out what you have.",
+    line:(h,r)=>`You do not move and you do not speak, and both of them understand exactly what that means.` },
+  press: { label:"Tell the holder to put him down", tactic:"aggressive",
+    desc:"Front foot, and finish it. He hits harder and takes more doing it — and it is your second-best man he is hitting.",
+    line:(h,r)=>`Your voice goes across the sand and ${h.name} goes forward, and ${r.name} hears whose name you called.` },
+  cover: { label:"Tell the holder to cover up", tactic:"defensive",
+    desc:"Behind the guard. He wins less of it and comes home more of it.",
+    line:(h,r)=>`${h.name} hears you and gets everything behind the guard. So does the crowd.` },
+  cloth: { label:"Throw the cloth", stop:true,
+    desc:"End it here. The title stays where it is, nobody is settled, and the city watches you stop a bout it came to see.",
+    line:(h,r)=>`The cloth goes over the rail. The editor's man is between them before it lands.` },
+};
+function doPrimacy(d, hid, rid, pending, choice){
+  const h = d.gladiators.find(x=>x.id===hid), r = d.gladiators.find(x=>x.id===rid);
+  if(!h || !r) return null;
+  const hc = clone(h), rc = clone(r);
+  hc.kit = h.kit || defaultKit(h.cls); rc.kit = r.kit || defaultKit(r.cls);
+  const C = choice ? PRIMACY_CRUX[choice] : null;
+  const face = g => ({ name:g.name, nick:g.nick, cls:g.cls, origin:g.origin, sub:"your house",
+    kit:g.kit||defaultKit(g.cls), scars:marksOf(g)||[], fem:isF(g), bore:boreOf(g) });
+  const PLACE = missioPlace(d, null);
+  const ctx = { plan:0, ...PLACE, fav:PLACE.fav, man: favMissio(h) + veteranGuard(h),
+    footing:1, footingB:1, sky:1, skyB:1, venue:0, favor:PLACE.favor, tier:2,
+    hostile:false, patron:(()=>{ const p = topPatron(d); return p ? {name:p.name, favor:p.favor} : null; })(),
+    /* the city turns out for this one whoever is in it */
+    repShow: 14 + (repStyle(d)==="show" ? 8 : 0) + acclaimCrowd(d), guarded:false };
+  /* named once and reported on the way out. The order from the box is a TACTIC in the single sand,
+     and a wrapper that quietly dropped it would leave a menu whose entries do nothing — held by
+     checks/title.mjs against this field rather than against a sampled death rate, which is far too
+     noisy to gate on (the same two houses measured 25 v 8 holder deaths on one run of 500 and
+     15 v 16 on another of 400). */
+  const tacticNow = (C && C.tactic) ? C.tactic : "measured";
+  let res;
+  if(choice === "cloth"){
+    recordCloth(d, h);
+    res = { beats:[Object.assign({}, pending.crux, { kind:"end", actor:null, text:
+      `${PRIMACY_CRUX.cloth.line(h,r)} The crowd came to see one of them beaten and is told it may not, and it makes the noise a crowd makes about that. Both of them walk off the sand on their own legs and neither of them looks at you.`,
+      vA:pending.crux.vA, vB:pending.crux.vB, sA:100, sB:100, crowd:pending.crux.crowd, mom:0 })],
+      winner:null, crowd:pending.crux.crowd, fell:false, vA:pending.crux.vA, vB:pending.crux.vB,
+      aDies:false, bDies:false, lastTarget:"flank", spared:false, stopped:true };
+  } else {
+    res = simulateFight(hc, rc, tacticNow, "standard", ctx,
+      pending ? { from:pending.crux, resumeLine: C ? C.line(h, r) : undefined, stopAtCrux:true, order: C ? C.order : null }
+              : { stopAtCrux:true });
+  }
+  if(pending) res.beats = (pending.beats || []).concat(res.beats);
+  if(res.unfinished)
+    return { pending:{ hid, rid, crux:res.crux, primacy:true }, beats:res.beats, crux:true, primacy:true,
+      tactic:tacticNow, stakes:"standard", tier:2, venue:null, factions:d.factions, A:face(h), B:face(r) };
+
+  /* ---- the challenger's appeal, read the way the holder's would have been ---- */
+  let reread = 0, saved = 0;
+  if(res.bDies){
+    reread = 1;
+    const odds = missioOdds(missioScore(rc, Object.assign({}, ctx, { man: favMissio(r) + veteranGuard(r) }),
+      res.crowd, missioAccount(res.vA), (res.beats.length ? Math.max(...res.beats.map(b=>b.round||0)) : 1) * 3.2));
+    if(R() < odds){
+      saved = 1;
+      res.bDies = false; res.spared = true;
+      const i = res.beats.findIndex(b=>b.kind==="death" && b.actor==="B");
+      const fix = { kind:"spared", actor:"B", text:`The thumb does not turn. ${r.name} is spared — the city knows exactly whose house he is, and that is the whole of what saved him.` };
+      if(i >= 0) res.beats[i] = Object.assign({}, res.beats[i], fix);
+      else res.beats.push(Object.assign({}, res.beats[res.beats.length-1] || {}, fix));
+    }
+  }
+
+  const sum = [];
+  [h,r].forEach(g=>{ g.fatigue = clamp(g.fatigue+26,0,100); remember(d, g, "duel"); });
+  const t = tieBetween(d, h.id, r.id);
+  if(t) d.ties = tieList(d).filter(x=>x!==t);
+  const others = () => d.gladiators.filter(o=>o.status==="active" && o.id!==h.id && o.id!==r.id);
+
+  if(res.stopped){
+    d.fame = Math.max(0, d.fame - 9);
+    addRep(d, "mercy", 6);
+    [h,r].forEach(g=>{ g.morale = clamp(g.morale-10,0,100); g.defiance = clamp(g.defiance+8,0,100); });
+    d.unrest = clamp(d.unrest+6,0,100);
+    sum.push(`No result. ${h.name} keeps the primacy because nobody took it off him, which is not the same thing and every man in the yard knows it.`);
+    chron(d, `You stopped the primacy bout. ${h.name} still holds it and ${r.name} still wants it, and now the city has an opinion about your house as well.`, "bad");
+    return { beats:res.beats, sum:sum.map(x=>herOwn(d,x)), win:false, dead:false, crowd:res.crowd,
+      primacy:true, stopped:true, tactic:tacticNow, place:PLACE, reread, saved, stakes:"standard", tier:2, venue:null, factions:d.factions, A:face(h), B:face(r) };
+  }
+
+  const challengerWon = res.winner === "B";
+  const [w, l] = challengerWon ? [r,h] : [h,r];
+  const lDies = challengerWon ? res.aDies : res.bDies;
+  addRep(d, "show", 8);
+  d.fame += 22;
+  w.wins = (w.wins||0) + 1; w.pfame += 16;
+  if(!lDies){ l.losses = (l.losses||0) + 1; l.pfame += 4; }
+  formShift(d, w, 12, `took the primacy bout from ${l.name}`);
+  sum.push(`${res.fell ? `${l.name} went down in the ${(res.beats.length?Math.max(...res.beats.map(b=>b.round||0)):1)}th` : "It went the distance and the editor read it"}${res.fell ? " round" : ""}.`);
+
+  if(lDies){
+    l.status = "dead"; firstDeathWord(d, fullName(l));
+    recordFallen(d, l, "bout", { name:w.name, house:d.name, cls:w.cls, fid:w.id });
+    if(d.lanista) d.lanista.health = clamp(d.lanista.health - 2.4*collSoften(d)/docHealth(d), 0, 100);
+    favourLost(d, l, "dead"); loseFavourite(d, l, "dead"); weekMark(d, "deaths");
+    retireSteel(d, l); collBury(d, l); markUnburied(d, l);
+    w.kills = (w.kills||0) + 1;
+    const { grieving } = mournKin(d, l.id, fullName(l), {});
+    kinReact(d, l.id, "rival", 3, 0);
+    /* the yard did not lose a man to another house. It lost one to the man in the next cell,
+       and it was watching. Twice what an ordinary death costs, on purpose. */
+    d.gladiators.forEach(o=>{ if(o.status==="active"){ o.morale=clamp(o.morale-16,0,100); o.defiance=clamp(o.defiance+7,0,100); } });
+    d.unrest = clamp(d.unrest + 11 + grieving.length*3, 0, 100);
+    w.morale = clamp(w.morale-18,0,100); w.defiance = clamp(w.defiance+6,0,100);
+    addRep(d, "blood", 7);
+    sum.push(`${l.name} is dead, and the man who killed him eats in the same room tomorrow.`);
+    chron(d, `${w.name} took the primacy of Capua off ${l.name} and ${l.name} did not get up. They came out of the same gate. Nobody in the cells says anything at all that evening.`, "bad");
+  } else {
+    l.morale = clamp(l.morale-22,0,100); l.defiance = clamp(l.defiance+9,0,100);
+    formShift(d, l, -14, `lost the primacy bout to ${w.name}`);
+    w.morale = clamp(w.morale+18,0,100);
+    others().forEach(o=>{ o.morale = clamp(o.morale+3,0,100); });
+    if(res.spared) sum.push(`${l.name} was spared, in front of a city that had already decided it did not mind either way.`);
+  }
+
+  if(challengerWon){
+    d.primus = { mine:true, gid:r.id, name:r.name, nick:r.nick, cls:r.cls, since:d.week, defences:0 };
+    sum.push(`The primacy stays in this house. It has changed cells.`);
+    if(!lDies) chron(d, `${r.name} takes the primacy off ${h.name} in front of the whole city, and neither of them can go back to how the yard was on Monday.`, "event");
+  } else {
+    if(d.primus) d.primus.defences++;
+    sum.push(`${h.name} keeps it, and ${lDies ? "the man who asked for it is dead" : `${r.name} has his answer and has to live in the same building as it`}.`);
+    if(!lDies) chron(d, `${h.name} put ${r.name} down in front of the whole city and helped him up, which is worse.`, "event");
+  }
+  return { beats:res.beats, sum:sum.map(x=>herOwn(d,x)), win:true, dead:lDies, crowd:res.crowd,
+    primacy:true, tactic:tacticNow, place:PLACE, reread, saved, stakes:"standard", tier:2, venue:null, factions:d.factions, A:face(h), B:face(r) };
 }
 
 /* ---- PAIR BOUTS ----
@@ -19032,28 +19199,17 @@ const EVENTS = {
       const rival = d.gladiators.find(x=>x.id===ev.data.rid);
       if(!holder || !rival) return "The moment passes.";
       if(i===0){
-        /* two of yours, and the title only fits one head */
-        const pa = power(Object.assign(clone(holder),{mods:kitMods(holder.kit,holder.cls,holder)}),"measured",rival.cls,0,1);
-        const pb = power(Object.assign(clone(rival),{mods:kitMods(rival.kit,rival.cls,rival)}),"measured",holder.cls,0,1);
-        const challengerWins = pb*(0.8+R()*0.5) > pa*(0.8+R()*0.5);
-        addRep(d, "show", 6);
-        d.fame += 14;
-        const t = tieBetween(d, holder.id, rival.id);
-        if(t) d.ties = tieList(d).filter(x=>x!==t);
-        holder.fatigue = clamp(holder.fatigue+22,0,100); rival.fatigue = clamp(rival.fatigue+22,0,100);
-        remember(d, holder, "duel"); remember(d, rival, "duel");
-        if(challengerWins){
-          d.primus = { mine:true, gid:rival.id, name:rival.name, nick:rival.nick, cls:rival.cls, since:d.week, defences:0 };
-          holder.morale = clamp(holder.morale-24,0,100); holder.defiance = clamp(holder.defiance+10,0,100);
-          rival.morale = clamp(rival.morale+22,0,100); rival.pfame += 20;
-          return `${rival.name} takes it off ${holder.name} in front of the whole city, and neither of them can go back to how the yard was on Monday. The primacy stays in this house. It has changed cells.`;
-        }
-        rival.morale = clamp(rival.morale-16,0,100); rival.defiance = clamp(rival.defiance+9,0,100);
-        holder.morale = clamp(holder.morale+12,0,100); holder.pfame += 10;
-        if(d.primus) d.primus.defences++;
-        return `${holder.name} puts him down and helps him up, which is worse. ${rival.name} has his answer and will have to live in the same building as it.`;
-      }
-      if(i===1){
+        /* ---- AND YOU WATCH IT NOW, AND IT CAN KILL ONE OF THEM ----
+           This branch was two `power()` calls against a pair of independent 0.8-1.3 rolls and a
+           paragraph describing a bout nobody was shown — the last marquee moment in the game
+           decided by a coin. It hands the two of them to the sand instead, on the same
+           {pending, beats, crux} contract every other engine uses. `doPrimacy` owns the whole
+           aftermath now, including the one this branch could never have: the title bout is at
+           standard stakes with the appeal live, so the loser can die, and the man who killed him
+           eats in the same room tomorrow. */
+        d.pendingPrimacy = { hid:holder.id, rid:rival.id };
+        return `You make the match. The city hears about it before the day is out, and the two of them stop speaking to each other entirely.`;
+      }      if(i===1){
         rival.morale = clamp(rival.morale-20,0,100);
         rival.defiance = clamp(rival.defiance+16,0,100);
         d.unrest = clamp(d.unrest+5,0,100);
@@ -20325,6 +20481,24 @@ function endWeek(d){
     const p = d.pendingSpar; d.pendingSpar = null;
     const first = doSpar(d, p.aid, p.bid, null, null, p.kind);
     if(first && first.crux){ first.pending.beats = first.beats; doSpar(d, p.aid, p.bid, first.pending, "run"); }
+  }
+  /* and the title bout, for the same reason and by the same route — the rope calls EVENTS.run
+     directly and has never heard of a viewer, so a primacy match made headlessly has to be fought
+     headlessly or the answer "make the match" means nothing at all */
+  if(d.pendingPrimacy){
+    const p = d.pendingPrimacy; d.pendingPrimacy = null;
+    /* RESUMED TO THE END, not once. `simulateFight` is handed `stopAtCrux` on the resume too — the
+       viewer's `speak` keeps the bout held for exactly that reason — so a single resume abandons
+       any bout that comes to the balance twice. Measured on the first draft of this loop: 23 of 40
+       headless title bouts settled nothing at all, the fight simply stopping in the middle with no
+       winner, no aftermath and the title untouched. The spar's resolver above gets away with one
+       because `simulateSpar` runs six rounds with a single narrow crux window; the single sand does
+       not. The guard is a guard, not a limit: the engine ends inside sixteen rounds. */
+    let res = doPrimacy(d, p.hid, p.rid, null, null);
+    for(let n = 0; res && res.crux && n < 20; n++){
+      res.pending.beats = res.beats;
+      res = doPrimacy(d, p.hid, p.rid, res.pending, "run");
+    }
   }
   /* Last week's question is closed at the START of the week, not a hundred lines
      into it. It used to be cleared just above the block that decides the week's
@@ -26120,6 +26294,14 @@ export default function App(){
         setS(d); setFight(res); return;
       }
     }
+    if(d.pendingPrimacy){
+      const p = d.pendingPrimacy; d.pendingPrimacy = null;
+      const res = doPrimacy(d, p.hid, p.rid, null, null);
+      if(res){
+        if(res.crux){ setHeld({ base:d, res }); setFight(res); return; }
+        setS(d); setFight(res); return;
+      }
+    }
     setS(d); setEvResult(msg);
   };
 
@@ -26178,6 +26360,7 @@ export default function App(){
       : p.venatio ? doVenatio(d, p.gid, p.offer, p.tactic, p, choice)
       : p.pair ? doPairFight(d, p.ids, p.offer, p.tactic, p, choice)
       : p.spar ? doSpar(d, p.aid, p.bid, p, choice)
+      : p.primacy ? doPrimacy(d, p.hid, p.rid, p, choice)
       : doFight(d, p.gid, p.offer, p.tactic, p.bet, p, choice);
     /* the bout may come to the balance again — keep it held so the next word lands too */
     if(res.crux){ setHeld({ base:d, res }); setFight(res); return; }
@@ -31649,6 +31832,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        through a release that changed the number it reads */
     makeMarket, makeDoctoreMarket, makeStaffMarket, liquidate, SLAVERS, bandOf, readLevel, gladValue,
     makePrimusOffer, makeDefenceOffer, PRIMUS_ASK, PRIMUS_ASK_GAP,
+    doPrimacy, PRIMACY_CRUX,   /* the title bout is a bout now — primusEligible/PRIMUS_GATE are already on the handle */
     primusMine, primusEligible, primusWeek, PRIMUS_GATE, seedPrimus,
     /* the top rung's own reading, and the word a player is given for nothing */
     menace, MENACE_WORDS, readMatch, matchAgainst, READ_CUT, readBand, fieldAverage, foeSeen, primusTake, primusLose,
