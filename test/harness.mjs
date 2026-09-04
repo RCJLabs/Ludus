@@ -1118,9 +1118,10 @@ export async function installRope(p){
             else safePick = pool => pool.slice().sort((a,b)=>ch(b) - ch(a))[0];
           }
         }
-        /* the primacy first when it is up — a purse-maximising pick passes it over, and it is the
-           other gate on Rome. At Rome, take whatever card is there: the imperial bill is sine
-           missione 54% of the time and refusing it lapses the trip. */
+        /* the default picker, which `housePick` below is: the primacy first when it is up, because
+           a purse-maximising pick passes it over and it is the other gate on Rome. At Rome, take
+           whatever card is there — the imperial bill is sine missione 54% of the time and refusing
+           it lapses the trip. */
         /* ---- AND THE THIRD TIME THIS OPTION HAS BEEN DROPPED ON THE FLOOR ----
            `takeBout` above documents two honest readings — `wantStakes` STRICT, `preferStakes` take
            it if the bill has it — and then this line collapsed every one of them into a strict
@@ -1132,7 +1133,28 @@ export async function installRope(p){
            work with does not produce zero divergence; the lever was not connected.
            The default is untouched on purpose: with neither option given this is still
            `wantStakes:"standard"`, which is what every figure in this project was measured on. */
-        const t = takeBout(d, { men, pick: safePick || pairPick,
+        /* ---- THE FIFTH OPTION THIS ROPE DROPPED ON THE FLOOR, AND THE FIRST ONE JAVASCRIPT ATE ----
+           `stakes`, `wantStakes`, `preferStakes` and `entrance` were each passed by a caller and
+           never forwarded; the notes for all four are in this function. This one is worse, because
+           it was not forgotten — it was WRITTEN TWICE. This object literal carried `pick:` here AND
+           `pick:` again forty lines down, and in a JavaScript object literal the last key wins. So
+           from v3.128.0, when #202 added `pick: safePick || pairPick` above a `pick:` that had been
+           sitting at the bottom since v3.96.0, BOTH the `protect` option's safe pick and the
+           `pairs` option's pair pick have been silently discarded, along with any picker a caller
+           passed. Nothing warned: esbuild flags duplicate keys and it never sees this file.
+           Found the way the four notes above say to find these — #240 wanted an arm that courts one
+           rival house by taking its card whenever the bill carries it, and the arm reported 0 bills
+           seen and 0 offers examined over 300 weeks in which bouts were plainly being fought.
+           ONE picker now, with the priority written down instead of decided by line order:
+             a caller's `pick`   wins outright — it is the whole reason the option exists
+             `protect`'s safe pick / `pairs`' pair pick  next
+             and the default     the primacy first when it is up, else the biggest purse — which is
+                                 the behaviour every figure in this project was measured on, and it
+                                 is unchanged for every caller that passes none of the three.
+           `probe.mjs` fails the suite if a second `pick:` ever appears in this literal again. */
+        const housePick = us => { const pr = us.filter(x=>x.primus); return (pr.length ? pr : us)
+          .sort((a,b)=>(b.purse||0)-(a.purse||0))[0]; };
+        const t = takeBout(d, { men, pick: o.pick || safePick || pairPick || housePick,
           wantStakes:   d.rome ? null : (o.wantStakes || (o.preferStakes ? null : (o.stakes || "standard"))),
           preferStakes: d.rome ? null : (o.preferStakes || null),
           /* ---- THE CRUX ANSWER WAS A CONSTANT NOBODY CHOSE, AND IT WAS THE LETHAL ONE — #185 ----
@@ -1165,9 +1187,7 @@ export async function installRope(p){
              came back byte-identical — 1787 bouts and 345 deaths in all four, which is what an
              unconnected lever looks like every time. */
           entrance: o.entrance || null,
-          bet: o.bet || null, betAgainst: !!o.betAgainst,
-          pick: us => { const pr = us.filter(x=>x.primus); return (pr.length ? pr : us)
-            .sort((a,b)=>(b.purse||0)-(a.purse||0))[0]; } });
+          bet: o.bet || null, betAgainst: !!o.betAgainst });
         if(t && t.ran !== false){
           bump("bout");
           if(t.offer && t.offer.primus) bump("primusBout");

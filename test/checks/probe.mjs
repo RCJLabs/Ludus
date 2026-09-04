@@ -33,6 +33,20 @@
    So the rope lives in `harness.mjs` and is installed on every page by `open()`. This check fails any
    check that reaches for an engine without resolving to exhaustion.
 
+   ---- FAULT THREE: A LEVER THAT CANNOT ARRIVE ----
+   The rope's own options are the other half of the instrument, and five of them have now been found
+   inert AFTER being measured through: `stakes` reached only the pit, `wantStakes` was never wired,
+   `preferStakes` was collapsed into it, `entrance` was honoured by `run` and not forwarded by
+   `lanista`, and `pick` was written TWICE into the same object literal — where JavaScript keeps the
+   last one and silently drops the first. That last one killed the `protect` and `pairs` options
+   from v3.128.0 onward and nothing said a word, because esbuild flags duplicate keys and esbuild
+   never sees `harness.mjs`.
+   The signature of all five is identical and it is the most expensive result there is: an arm comes
+   back indistinguishable from its control, and the null gets published as a finding about the game.
+   Three of the five are only findable by measuring; the fifth is a duplicate key, which is
+   mechanically detectable, so it is detected here — every object literal the rope hands to its own
+   inner functions is parsed for a key written twice.
+
    ---- FAULT TWO: THE BILL THAT IS SHUT, AND WHY IT IS REPORTED AND NOT ASSERTED ----
    `d.games.offers` is the arena bill and it does not open until fame 25. A probe that reads only
    that fights almost nothing: the first drafts of both `ends` and `steel` managed **2 to 5 bouts in
@@ -203,6 +217,54 @@ export async function run(){
     + `and a held bout has moved nothing at all in 721 of 721 cases`);
   for(const [k,v] of Object.entries(ALLOWED))
     if(rows.some(r=>r.name===k)) lines.push(`   allowed — ${k}: ${v.rope || v.bill}`);
+
+  /* ---- FAULT THREE: THE ROPE'S OWN OPTION LITERALS ----
+     Only the literals the rope passes to its own inner functions, and only where a CALL opens one:
+     `takeBout(d, {` and `run(d, offer, ids, {`. Two things the first draft of this got wrong and
+     both were caught by it reporting a key called `null`:
+       · it matched the DEFINITION (`const takeBout = (d, opts) => {`) and scanned the function body;
+       · and it read every ternary's `:` as a key, so `d.rome ? null : (...)` was a key called `null`.
+     Ternaries are tracked by counting unmatched `?` at depth 0, and keys are only counted there, so
+     a nested object's own keys are not confused with the outer literal's. */
+  const H = fs.readFileSync(path.join(ROOT, "test", "harness.mjs"), "utf8")
+    .replace(/\/\*[\s\S]*?\*\//g, "");
+  const dupes = [];
+  for(const rx of [/\btakeBout\(\s*d\s*,\s*\{/g, /\brun\(\s*d\s*,[^;{]*?,\s*\{/g]){
+    let m;
+    while((m = rx.exec(H)) !== null){
+      const b = m.index + m[0].length - 1;        /* the "{" itself */
+      let depth = 0, end2 = -1;
+      for(let j = b; j < H.length; j++){
+        const c = H[j];
+        if(c === "{") depth++;
+        else if(c === "}"){ depth--; if(!depth){ end2 = j; break; } }
+      }
+      if(end2 < 0) continue;
+      const body = H.slice(b + 1, end2);
+      const seen = {};
+      let d2 = 0, tern = 0;
+      for(let j = 0; j < body.length; j++){
+        const c = body[j];
+        if(c === "{" || c === "(" || c === "[") d2++;
+        else if(c === "}" || c === ")" || c === "]") d2--;
+        else if(d2 === 0 && c === "?") tern++;
+        else if(d2 === 0 && c === ":" && tern > 0) tern--;
+        else if(d2 === 0 && tern === 0){
+          const m2 = /^([A-Za-z_$][\w$]*)\s*:/.exec(body.slice(j));
+          if(m2 && (j === 0 || /[\s,]/.test(body[j-1]))){
+            seen[m2[1]] = (seen[m2[1]] || 0) + 1;
+            j += m2[0].length - 2;                /* leave the ":" for the ternary counter */
+          }
+        }
+      }
+      for(const [k, n] of Object.entries(seen))
+        if(n > 1) dupes.push(`${m[0].slice(0, m[0].indexOf("("))}(…) names \`${k}\` ${n} times`);
+    }
+  }
+  lines.push(`the rope's own option literals: ${dupes.length ? dupes.join(" · ") : "no key written twice"}`);
+  for(const x of dupes)
+    bad.push(`the harness ${x} — JavaScript keeps the LAST one, so the earlier lever is dropped `
+      + `without a word. That is how \`protect\` and \`pairs\` went inert from v3.128.0 to v3.194.0`);
 
   return { pass: bad.length === 0, why: bad.slice(0,3).join("; ") || null, lines };
 }
