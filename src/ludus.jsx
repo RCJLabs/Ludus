@@ -15954,10 +15954,41 @@ const MONUMENTS = {
     blurb:"A bronze the height of four men, of the best fighter your house ever raised, on the road where everyone coming into Capua must pass under it.",
     done:"He stands over the road now, and men who never saw him fight point him out to their sons.",
     perk:"fame", n:6, say:"+6 fame a week, forever — the thing is the size of a house." },
+  /* ---- #241: THE SECOND CLAIM IN THIS TABLE THAT THE STATE DID NOT HOLD ----
+     Three lines above this, the tomb's blurb credited an effect to the cells that `collSoften`
+     produces — flagged in-source by #140 as "a claim about the state that the state does not hold"
+     — and it was corrected. This entry's was worse and outlived it: it did not misattribute an
+     effect, it advertised a MECHANISM THAT DOES NOT EXIST. "Games that hold themselves, funded out
+     of a sum so large the interest alone pays for blood every year after you are gone." Grep the
+     whole file for the string "endow" and there is one hit — this entry. It never calls
+     `festivalNow`, never touches `CALENDAR`, never calls `makeGames`. No game has ever been staged.
+
+     #241 asked for the game to be built: a seventh house-owned CALENDAR entry through the pipeline
+     the other six use. Measured first (`probes/endow.mjs`, three arms over two seeds, 96 campaign
+     runs of up to 520 weeks) and the item's own falsifier for that work fires:
+
+       ENDOW IS 86,500 DENARII DEEP — the five WORKS cost 42,500 between them and `monuReady` gates
+       the whole monument tier behind finishing all five, and then this asks 44,000 more. A house
+       that builds NOTHING AT ALL peaks at a median 16,200 and an all-seeds maximum of 49,728.
+       Across 96 campaign runs the four monuments were finished 1 colossus, 1 endow, 0 arena,
+       0 capua — and `capua`, which this file calls "the last sentence in the book", has never been
+       built by anything. An arm that commissions endow the moment it can found the tier open on
+       377 house-weeks and the money there on ONE of them.
+
+     So the festival is not written: it is content nobody reaches. What is corrected is the text,
+     which is #140's fix applied to the entry three rows down.
+
+     AND THE ITEM'S PHASE 3 IS BACKWARDS, which only the measurement shows. It proposed dropping or
+     shrinking this flat tick as over-valued. `acclaimWeek` drags `d.acclaim` toward
+     `acclaimTarget(d)` — 10% of the gap up, 3% down, less a 0.15 drift — so a flat +1.1 is not
+     banked, it is held against a spring, and the fixed point is where 1.1 = 0.03*gap + 0.15, about
+     32 points. Measured on played houses it holds a gap of **+30 (p50)**, worth +44 points of plain
+     acclaim. That is the strongest perk in this table by a distance, and acclaim has some twenty
+     live readers — the missio, the crowd, the stall, patrons, the census, Rome. The number stays. */
   endow:    { name:"Games endowed in your name", cost:44000, upkeep:34, years:3, tier:2,
-    blurb:"Not games you hold — games that hold themselves, funded out of a sum so large the interest alone pays for blood every year after you are gone.",
-    done:"There are games in your name now that will run when your grandsons are old, and the mob knows exactly whose coin buys the spectacle.",
-    perk:"acclaim", n:1.1, say:"Your name climbs 1.1 acclaim a week, forever. The mob does not forget a house that feeds it." },
+    blurb:"A sum settled on the city, and the interest spent every year on games you will never stage and never see. Not your card, not your men, not your afternoon — the aediles hold the money and the herald reads your name out over it, whether you are alive to hear it or not.",
+    done:"The first of them was held without you. You were not consulted about the bill, you did not know one man on it, and your name was read out twice before the gates opened. There is nothing left for you to do about it, now or ever, which is the whole of what you bought.",
+    perk:"acclaim", n:1.1, say:"Your name climbs 1.1 acclaim a week, forever — measured, that holds a house about thirty points of the street's love above what its deeds alone would earn, and it outlives you." },
   arena:    { name:"A stone arena of your own", cost:70000, upkeep:130, years:3, tier:2,
     blurb:"Your own amphitheatre, in stone, on your own ground. No other lanista in Campania has ever owned the floor his men fight on. The largest sum a house can spend on anything.",
     done:"You fight in a house the city now calls by your name, and the tiers are full every time the gates open.",
