@@ -14,14 +14,16 @@
 
    MEASURED (`probes/endow.mjs`, three arms over two seeds, 96 campaign runs of up to 520 weeks):
 
-     ENDOW IS 86,500 DENARII DEEP. The five WORKS cost 42,500 between them, `monuReady` gates the
-     monument tier behind finishing all five, and endow then asks 44,000 more. A house that builds
-     NOTHING peaks at a median 16,200 and an all-seeds maximum of 49,728. Across the 96 runs the
-     four monuments were finished **1 colossus, 1 endow, 0 arena, 0 capua** — and `capua`, which
-     this file calls "the last sentence in the book", has never been built by anything at all. An
-     arm that commissions endow the moment it can found the tier open on **377 house-weeks** and the
-     money there on **one** of them. So the festival is content nobody reaches, and the item's own
-     falsifier for phases 2-4 fires.
+     ENDOW WAS 86,500 DENARII DEEP when #241 was measured. The five WORKS cost 42,500 between
+     them, `monuReady` gates the monument tier behind finishing all five, and endow then asked
+     44,000 more. Across the 96 runs the four monuments were finished **1 colossus, 1 endow,
+     0 arena, 0 capua** — and `capua`, which the source calls "the last sentence in the book", had
+     never been built by anything at all. An arm that commissions endow the moment it can found the
+     tier open on **377 house-weeks** and the money there on **one** of them. So the festival was
+     content nobody reached, and the item's own falsifier for phases 2-4 fired.
+     THOSE PRICES WERE CUT IN v3.196.0 — 11,000 of works and 8,000/12,000/20,000/45,000 of
+     monuments, sized to the measured survivor peak. This check reads every cost off the table, so
+     it follows the retune rather than pinning the old numbers.
 
      AND ITS PHASE 3 IS BACKWARDS. It proposed dropping or shrinking the flat `acclaim 1.1` as
      over-valued. `acclaimWeek` drags `d.acclaim` toward `acclaimTarget(d)` — 10% of the gap up, 3%
@@ -163,7 +165,8 @@ export async function run({ p, errors }){
     /* ---- 6: AND IT OUTLIVES YOU, which is the half of the old blurb that was true ---- */
     { const d = A.newGameState("Heir", "capua", "EN-heir");
       d.week = 220; d.fame = 2600; d.gold = 12000;
-      d.works = { endow: { left:0, owed:0, paid:44000 }, colossus: { left:20, owed:9000, paid:12000 } };
+      const EC = A.MONUMENTS.endow.cost;
+      d.works = { endow: { left:0, owed:0, paid:EC }, colossus: { left:20, owed:3000, paid:4000 } };
       const gen0 = d.generation;
       let threw = null;
       try { d.heir = { kind:"son", name:"Lucius Verres", traits:[] }; A.succeed(d, "son"); }

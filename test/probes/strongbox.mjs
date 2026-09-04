@@ -96,12 +96,34 @@ const out = await p.evaluate(([H,W,SEED])=>{
 
   const arm = (label, opts) => {
     const rows = [];
+    const amb = { chance:0, afford:0, began:0, goldSeen:[] };
     for(let h=0; h<H; h++){
       const d = A.newGameState("Lt"+h, "capua", `${SEED}-${h}`);
       const row = { h, weeks:0, over:null, end:0, peak:0, works:0, monu:0, ready:null,
         gold:{}, net:{}, bill:{}, purse:{}, resid:{}, fame:{}, men:{}, bouts:{}, won:{}, trail:[] };
       let prev = d.gold || 0;
       for(let w=0; w<W && !d.over; w++){
+        /* ---- THE AMBITIOUS BUILDER, and it is the test before cutting a price twice ----
+           The rope's `works:true` takes the CHEAPEST open work first, so once the tier opens it
+           buys colossus then endow and the campaign ends. "Nobody builds arena or capua" under that
+           policy is a fact about a SORT ORDER, not about the prices. Two drafts of this arm failed
+           before it worked and both said so rather than reporting a null: the first left the rope's
+           builder on, so the rope commissioned the cheapest thing the instant a site freed and this
+           branch never saw an idle week; the second was never inserted into the file at all, and
+           the arm came back byte-identical to `builder` because its opts were `builder`'s. It
+           drives the whole build itself now — works cheapest-first to open the tier, then the
+           DEAREST monument it can carry, which is what a lanista who wants the amphitheatre does. */
+        if(label === "ambitious" && !A.ALL_WORK_KEYS.some(k=>A.workOn(d,k))){
+          const carry = W2 => Math.ceil(W2.cost*A.WORK_DEPOSIT) + A.workWeekly(W2)*12 <= (d.gold||0);
+          const ready = A.monuReady(d);
+          if(ready){ amb.chance++; if(amb.goldSeen.length < 400) amb.goldSeen.push(Math.round(d.gold||0)); }
+          const pool = (ready ? A.MONU_KEYS : A.WORK_KEYS)
+            .filter(k=>!A.workDone(d,k) && A.workOpen(d,k))
+            .map(k=>({ k, W:A.workDef(k) })).filter(x=>carry(x.W));
+          pool.sort((a,b)=> ready ? b.W.cost - a.W.cost : a.W.cost - b.W.cost);
+          if(pool[0]){ if(ready) amb.afford++;
+            try { if(A.beginWork(d, pool[0].k) === true && ready) amb.began++; } catch(e){} }
+        }
         try { R.lanista(d, opts); } catch(e){ break; }
         row.weeks++;
         const g = d.gold || 0;
@@ -138,9 +160,13 @@ const out = await p.evaluate(([H,W,SEED])=>{
       row.end = d.week;
       row.works = A.WORK_KEYS.filter(k=>A.workDone(d,k)).length;
       row.monu  = A.MONU_KEYS.filter(k=>A.workDone(d,k)).length;
+      /* WHICH ones. A count cannot tell "everyone finished the two cheapest" from "the ladder is
+         being climbed", and those are different verdicts on a retune. */
+      row.built = A.MONU_KEYS.filter(k=>A.workDone(d,k));
+      row.onNow = A.MONU_KEYS.filter(k=>A.workOn(d,k));
       rows.push(row);
     }
-    return { label, rows };
+    return { label, rows, amb };
   };
 
   return {
@@ -151,7 +177,7 @@ const out = await p.evaluate(([H,W,SEED])=>{
        reference does not, the late game is a spending problem. If neither banks, the income does
        not cover the bill and the treadmill is real. */
     arms: [ arm("reference", {}), arm("saver", { build:false, school:false }),
-            arm("builder", { works:true }) ],
+            arm("builder", { works:true }), arm("ambitious", {}) ],
     eras: ERAS,
     prices: { works: A.WORK_KEYS.reduce((n,k)=>n+A.workDef(k).cost,0),
       monu: A.MONU_KEYS.map(k=>({ k, cost:A.workDef(k).cost })) },
@@ -209,6 +235,11 @@ for(const A2 of out.arms){
     console.log(`  peak gold, survivors only: ${surv.map(r=>r.peak).sort((x,y)=>x-y).join(" · ")}`);
     console.log(`  reached monuReady: ${surv.filter(r=>r.ready).length} of ${surv.length}`
       + ` · works finished ${surv.map(r=>r.works).join("/")} of 5 · monuments ${surv.map(r=>r.monu).join("/")} of 4`);
+    if(A2.label === "ambitious"){ const M = A2.amb;
+      const gs = [...M.goldSeen].sort((x,y)=>x-y);
+      console.log(`  the ambitious lever: ${M.chance} weeks with the tier open and no site going, ${M.afford} affordable, ${M.began} commissioned`);
+      console.log(`    gold on those weeks: p50 ${gs.length?gs[Math.floor(gs.length/2)]:"-"} · max ${gs.length?gs[gs.length-1]:"-"} — against deposit+12wk of arena ${Math.ceil(20000*0.25)+278*12} and capua ${Math.ceil(45000*0.25)+469*12}`); }
+    console.log(`  which monuments: ${surv.map(r=>`[${(r.built||[]).join(",")||"-"}${(r.onNow||[]).length?` +building ${r.onNow.join(",")}`:""}]`).join(" ")}`);
   }
   /* and the same numbers over EVERYBODY, which is what a population median hides */
   console.log(`\n  (the whole population, for contrast — 94% of it is dying)`);
