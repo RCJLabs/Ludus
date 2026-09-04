@@ -85,7 +85,7 @@ export async function run({ p, errors }){
 
     /* ---- 2. a fixture per rung ---- */
     const build = k => {
-      const d = A.newGameState(`LETTER-${k}`, "capua", `LETTER-${k}`);
+      const d = A.newGameState(`LETTER-${k}`, "clean", `LETTER-${k}`);
       d.flags.primusHeld = 1;                      /* proved by the sand */
       d.fame = A.romeBar(d) + 500;
       d.patrons = (d.patrons||[]).filter(x=>x.rank!=="senator");
@@ -152,7 +152,7 @@ export async function run({ p, errors }){
     const seen = { weeks:0, shut:0, spoke:0, byKey:{}, spokeByKey:{}, agendaHit:0, agendaMiss:0 };
     let letters = 0, lettered = 0, trips = 0;
     for(let h = 0; h < 5; h++){
-      const d = A.newGameState(`LETTER-P${h}`, "capua", `LETTER-P${h}`);
+      const d = A.newGameState(`LETTER-P${h}`, "clean", `LETTER-P${h}`);
       let was = false, got = false;
       for(let w = 0; w < 150 && !d.over; w++){
         seen.weeks++;

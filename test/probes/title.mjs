@@ -96,7 +96,7 @@ const out = await p.evaluate(([N,SEED])=>{
   const life = (()=>{ let offers = 0, weeks = 0, houses = 0, held = 0, anyPrimus = 0;
     let twoEligible = 0, heldAndTwo = 0, heldTwoAndAged = 0, everHeld = 0, everOffered = 0;
     for(let h=0; h<10; h++){
-      const d = A.newGameState("Life"+h, "capua", `${SEED}-life-${h}`);
+      const d = A.newGameState("Life"+h, "clean", `${SEED}-life-${h}`);
       houses++; let sawHeld = false, sawOffer = false;
       for(let w=0; w<300 && !d.over; w++){
         try { R.lanista(d, {}); } catch(e){ break; }

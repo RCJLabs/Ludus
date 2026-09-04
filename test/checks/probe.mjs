@@ -218,6 +218,31 @@ export async function run(){
   for(const [k,v] of Object.entries(ALLOWED))
     if(rows.some(r=>r.name===k)) lines.push(`   allowed — ${k}: ${v.rope || v.bill}`);
 
+  /* ---- FAULT FOUR: A SCENARIO THAT DOES NOT EXIST ----
+     `newGameState(name, scen, seed)` resolves `SCENARIOS[scen] || SCENARIOS.clean`, so a key that is
+     not one of the five comes back as `clean` WITHOUT A WORD. The source already carries a note about
+     this trap — "a check that invents a scenario key gets `clean` back without a word, which is how
+     four fifths of one check's coverage went missing" — and 55 call sites across 30 files were still
+     in it, every one of them passing "capua", which is a city and not an opening. Their numbers were
+     never wrong; they were measured under `clean` and labelled as something else, which is the sort
+     of thing that becomes wrong the moment somebody trusts the label. Detected here so it stays gone. */
+  { const SC = new Set(["clean","inherited","champion","veterans","castoffs"]);
+    const bad2 = [];
+    for(const dir of ["checks", "probes"]){
+      const dd = path.join(ROOT, "test", dir);
+      for(const f of fs.readdirSync(dd).filter(x=>x.endsWith(".mjs"))){
+        const src = fs.readFileSync(path.join(dd, f), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+        for(const m of src.matchAll(/newGameState\([^,)]+,\s*"([A-Za-z]+)"/g))
+          if(!SC.has(m[1])) bad2.push(`${dir}/${f} opens the scenario "${m[1]}"`);
+      }
+    }
+    const uniq = [...new Set(bad2)];
+    lines.push(`scenario keys: ${uniq.length ? uniq.length + " call site(s) name an opening that does not exist" : "every one names a real opening"}`);
+    for(const x of uniq.slice(0, 4))
+      bad.push(`${x} — there are five (clean, inherited, champion, veterans, castoffs) and anything else `
+        + `silently returns \`clean\`, so the measurement is labelled as something it is not`);
+  }
+
   /* ---- FAULT THREE: THE ROPE'S OWN OPTION LITERALS ----
      Only the literals the rope passes to its own inner functions, and only where a CALL opens one:
      `takeBout(d, {` and `run(d, offer, ids, {`. Two things the first draft of this got wrong and

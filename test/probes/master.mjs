@@ -33,7 +33,7 @@ const out = await p.evaluate(([H,W,SEED])=>{
   let sparDoors = 0, feudDoors = 0, tourneyDoors = 0;
 
   for(let h=0; h<H; h++){
-    const d = A.newGameState("Ms"+h, "capua", `${SEED}-${h}`);
+    const d = A.newGameState("Ms"+h, "clean", `${SEED}-${h}`);
     const row = { h, weeks:0, men:0, eligible:0, mastered:0, everEligible:new Set(),
       firstAt:null, aliveAtGate:0, deadBefore:0, twoUp:0, opened:0, feudSeen:0 };
     const seen = new Set(), mark = new Set();
@@ -97,7 +97,7 @@ const out = await p.evaluate(([H,W,SEED])=>{
      many weeks that takes, played out on real houses, and how much of the roster it costs. */
   const proving = (()=>{ const rows = [];
     for(let h=0; h<8; h++){
-      const d = A.newGameState("Pr"+h, "capua", `${SEED}-pr-${h}`);
+      const d = A.newGameState("Pr"+h, "clean", `${SEED}-pr-${h}`);
       let tries = 0, proved = 0, hurt = 0, mastered = 0, firstProve = null, firstMaster = null;
       for(let w=0; w<W && !d.over; w++){
         try { R.lanista(d, {}); } catch(e){ break; }

@@ -121,7 +121,7 @@ const out = await p.evaluate(([H,W,SEED])=>{
   };
 
   for(let h=0; h<H; h++){
-    const d = A.newGameState("Ak"+h, "capua", `${SEED}-${h}`);
+    const d = A.newGameState("Ak"+h, "clean", `${SEED}-${h}`);
     const seenMen = new Set(), eligAt = new Map(), askedHere = new Set(), yrSeen = new Set();
     let lastAsked = 0;
     for(let w=0; w<W && !d.over; w++){

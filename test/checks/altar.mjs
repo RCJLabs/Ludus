@@ -75,7 +75,7 @@ export async function run({ p, errors }){
        strength is unaffected either way — `makeRivalFighter` reads only the tier's quality band and
        never the lanista — so pinning the names changes nothing about difficulty and makes this
        fixture independent of that draw, and of the next one. */
-    const house = (tag, wk) => { const d = A.newGameState(tag, "capua", tag);
+    const house = (tag, wk) => { const d = A.newGameState(tag, "clean", tag);
       d.rivals.forEach((r, i)=>{ r.name = ["Solonius","Vettius","Tullius"][i] || r.name; });
       for(let w = 0; w < (wk||10) && !d.over; w++) R.lanista(d, {});
       if(!A.activeG(d).length){ const g = A.genGladiator(d, 60); g.id = d.nextId++;
@@ -225,7 +225,7 @@ export async function run({ p, errors }){
     /* ---- 5. and the lever is not dead again ---- */
     const lever = { weeks:0, blessed:0, offerings:0, vowWeeks:0 };
     { for(let h = 0; h < 3; h++){
-        const d = A.newGameState(`ALTAR-L${h}`, "capua", `ALTAR-L${h}`);
+        const d = A.newGameState(`ALTAR-L${h}`, "clean", `ALTAR-L${h}`);
         let had = null;
         for(let w = 0; w < 90 && !d.over; w++){
           lever.weeks++;

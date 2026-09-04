@@ -98,7 +98,7 @@ const out = await p.evaluate(([H,W,SEED])=>{
     const rows = [];
     const amb = { chance:0, afford:0, began:0, goldSeen:[] };
     for(let h=0; h<H; h++){
-      const d = A.newGameState("Lt"+h, "capua", `${SEED}-${h}`);
+      const d = A.newGameState("Lt"+h, "clean", `${SEED}-${h}`);
       const row = { h, weeks:0, over:null, end:0, peak:0, works:0, monu:0, ready:null,
         gold:{}, net:{}, bill:{}, purse:{}, resid:{}, fame:{}, men:{}, bouts:{}, won:{}, trail:[] };
       let prev = d.gold || 0;

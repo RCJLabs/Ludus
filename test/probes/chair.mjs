@@ -37,7 +37,7 @@ const out = await p.evaluate(()=>{
   for(const arm of ["never","stand","buy"]){
     for(let h = 0; h < H; h++){
       const seed = `CHAIR-${h}`;
-      const d = A.newGameState(seed, "capua", seed);
+      const d = A.newGameState(seed, "clean", seed);
       let terms = 0, stood = 0, held = 0, litPaid = 0, lastAed = null;
       for(let w = 0; w < WEEKS && !d.over; w++){
         if(arm !== "never" && A.standReady(d)){

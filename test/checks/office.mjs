@@ -308,7 +308,7 @@ export async function run({ p, errors }){
     const A = window.__LVDVS, R = window.__ROPE;
     const errs = []; let stood = 0, won = 0, lost = 0, weeks = 0, held = 0, billSeen = 0;
     for(let h = 0; h < 6; h++){
-      const d = A.newGameState(`OFF-P${h}`, "capua", `OFF-P${h}`);
+      const d = A.newGameState(`OFF-P${h}`, "clean", `OFF-P${h}`);
       let pend = false;
       for(let w = 0; w < 200 && !d.over; w++){
         try {

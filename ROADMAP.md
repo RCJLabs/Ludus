@@ -4389,6 +4389,40 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.199.0 — the rising was always three stages; the instrument was counting houses
+
+**A correction to a finding this session published, and the two instrument faults under it.** No game
+code changed.
+
+**THE CLAIM I MADE WAS WRONG.** Reading the survey's zeros I found `arcs.rebellion.ended` was never
+written and `arcs.rebellion.any` counted per week, fixed both, and reported *"7 rebellions across 14
+campaigns, observed on exactly 7 house-weeks, 0 ending any way but the house dying"* — with the
+question of whether the three-stage arc plays out left open. **The line sat outside the week loop.**
+It ran once per house, so "3" never meant three risings or three weeks: it meant three of fourteen
+houses had a rising *standing* on the night their run ended. I diagnosed the dead counter correctly
+and then made the repair in the same wrong scope, and published the result.
+
+**THE ARC PLAYS OUT EXACTLY AS DESIGNED.** `probes/rising.mjs` traces every rising week by week —
+over 2,878 played weeks, **18 risings, a median of NINE weeks each, longest 22**, stage 1 reached by
+all 18, stage 2 by 15, **stage 3 by 11**; 13 cooled back to nothing and 5 took the house. Sequences
+like `11111222111111111` and `1111222333333333333333333` show the machine climbing, falling back a
+stage when the heat drops, and climbing again — which is what `updateRebellion`'s three up-gates
+(50/65/78) and three down-gates (40/55/68) were written to do. With the count moved into the week
+the survey now agrees: **23 risings, 18 defused, 286 rebellion-weeks, stages 147 / 107 / 32.**
+
+**AND A WIDER FAULT IT EXPOSED: fifty-five call sites named an opening that does not exist.**
+`newGameState(name, scen, seed)` resolves `SCENARIOS[scen] || SCENARIOS.clean`, so an unknown key
+comes back as `clean` **without a word** — a trap the source already carries a note about ("a check
+that invents a scenario key gets `clean` back without a word, which is how four fifths of one check's
+coverage went missing"). Every one of the 55 passed **"capua"**, which is a city and not an opening,
+across 30 files — including five probes written earlier in this session. Their numbers were never
+wrong: they were measured under `clean` and labelled as something else, which becomes wrong the
+moment somebody trusts the label. All 55 now name the opening they actually get.
+
+**`probe.mjs` gains a fourth rule** so it cannot recur: any scenario key passed to `newGameState`
+that is not one of the five fails the suite. Verified by putting a single `"capua"` back — it reports
+the file, the key, and the five that exist.
+
 ### v3.198.0 — the age that opened retirement was the age that killed him
 
 Acting on the finding below. `lanistaWeek`'s retirement door wants `L.age >= 62 && L.health >= 45`,
@@ -4462,10 +4496,10 @@ on **8.1%** against #223's 16%; the saga reaches its finale **2 of 10** times ag
 incremented once per WEEK and `arcs.rebellion.ended` was never written at all — so "rebellion 3,
 ended 0" read as three arcs that failed to conclude when the 3 was three house-weeks and the 0 was a
 counter nothing incremented. Both are honest now (rising edge = a rebellion, falling edge = an
-ending, plus a separate week count), and the fix immediately surfaced a question worth asking:
-**7 rebellions across 14 campaigns, observed on exactly 7 house-weeks, 0 ending any way but the house
-dying — and rebellion is the second commonest ending, 5 of 14.** Whether the three-stage arc actually
-plays out across weeks, or is only ever seen the week it ends the run, is open and not asserted here.
+ending, plus a separate week count), and the fix was made in the WRONG SCOPE and published a
+false finding — "7 rebellions across 14 campaigns, observed on exactly 7 house-weeks, 0 ending any
+way but the house dying". **That is corrected in v3.199.0 below: the line sat outside the week loop,
+so it was counting houses, not weeks, and the arc plays out exactly as designed.**
 
 **AND THE ITEM THE SURVEY FOUND: the second generation.** `succession: 0` over 420 weeks. Measured
 properly at 520 (`probes/heirs.mjs`, 16 houses):

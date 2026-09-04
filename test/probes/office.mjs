@@ -40,7 +40,7 @@ const out = await p.evaluate(()=>{
 
   for(let h = 0; h < H; h++){
     const seed = `OFFICE-${h}`;
-    const d = A.newGameState(seed, "capua", seed);
+    const d = A.newGameState(seed, "clean", seed);
     const row = { h, rank3: null, rank3Fame: 0, elecBefore: 0, elecAfter: 0, top: 0, ended: 0 };
     let sawElection = null, stoodAt = null, lastPurse = 0;
     for(let w = 0; w < WEEKS && !d.over; w++){

@@ -58,7 +58,7 @@ const out = await p.evaluate(([H,W,SEED])=>{
   let overlapNow = 0, qualifiedNow = 0, wouldLoyal = 0;
 
   for(let h=0; h<H; h++){
-    const d = A.newGameState("Ot"+h, "capua", `${SEED}-${h}`);
+    const d = A.newGameState("Ot"+h, "clean", `${SEED}-${h}`);
     const seen = new Set(), qualAt = new Map(), lastSeen = new Map();
     for(let w=0; w<W && !d.over; w++){
       const askedWas = (d.flags.asked||[]).length;

@@ -39,7 +39,7 @@ const out = await p.evaluate(()=>{
   let bouts = 0, purse = 0, weeks = 0;
 
   for(let h = 0; h < H; h++){
-    const d = A.newGameState(`Purse${h}`, "capua", `PURSE-${h}`, null);
+    const d = A.newGameState(`Purse${h}`, "clean", `PURSE-${h}`, null);
     /* per-man high-water marks, sampled every week so a crossing can be dated */
     const seen = new Map();
     for(let w = 0; w < WEEKS && !d.over; w++){
@@ -120,7 +120,7 @@ const out = await p.evaluate(()=>{
     stashSeen:[], target:[], houseGold:[], bestStash:0, bestTarget:0,
     skimSet:new Set(), stashSet:new Set(), readySet:new Set() };
   for(let h = 0; h < 10; h++){
-    const d = A.newGameState(`Live${h}`, "capua", `LIVE-${h}`, null);
+    const d = A.newGameState(`Live${h}`, "clean", `LIVE-${h}`, null);
     const seen = new Set();
     live.houses++;
     for(let w = 0; w < 160 && !d.over; w++){
@@ -158,7 +158,7 @@ const out = await p.evaluate(()=>{
   for(const [name, pick] of [["free him", 0], ["take the money", 1], ["give it back", 2]]){
     let gold = 0, fame = 0, unrest = 0, acclaim = 0, ended = 0, runs = 0;
     for(let h = 0; h < 10; h++){
-      const d = A.newGameState(`Arm${h}`, "capua", `LIVE-${h}`, null);
+      const d = A.newGameState(`Arm${h}`, "clean", `LIVE-${h}`, null);
       for(let w = 0; w < 160 && !d.over; w++){
         try { R.lanista(d, { answer:(ev)=> ev && ev.id === "stash" ? pick : null }); } catch(e){ break; }
         if(d.over){ ended++; d.over = null; if(d.rebellion) d.rebellion = null; d.unrest = Math.min(d.unrest, 35); }

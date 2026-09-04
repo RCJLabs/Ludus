@@ -47,7 +47,7 @@ const out = await p.evaluate(([H,W])=>{
     const a = arms[key] = { weeks:0, blessed:0, vowWeeks:0, vows:0, offerings:0, byGod:{},
       piety:[], spent:0, houses:0 };
     for(let h = 0; h < H; h++){
-      const d = A.newGameState(`TEMPLE-${h}`, "capua", `TEMPLE-${h}`);
+      const d = A.newGameState(`TEMPLE-${h}`, "clean", `TEMPLE-${h}`);
       a.houses++;
       for(let w = 0; w < W && !d.over; w++){
         a.weeks++;
@@ -85,7 +85,7 @@ const out = await p.evaluate(([H,W])=>{
   {
     /* a house, not a survivor: thirty weeks of rope left the first draft with an empty roster and
        the arm silently measured nothing, which is the vacuity this project keeps finding */
-    const d = A.newGameState("TEMPLE-FORT", "capua", "TEMPLE-FORT");
+    const d = A.newGameState("TEMPLE-FORT", "clean", "TEMPLE-FORT");
     for(let w = 0; w < 12; w++) R.lanista(d, {});
     let g = A.activeG(d).slice().sort((a,b)=>(b.pfame||0)-(a.pfame||0))[0];
     if(!g){ g = A.genGladiator(d, 60); g.id = d.nextId++; g.status = "active"; g.mine = true;
@@ -113,7 +113,7 @@ const out = await p.evaluate(([H,W])=>{
 
   /* AESCULAPIUS is a rate on the mend, so ask the rate */
   let heal = null;
-  { const d = A.newGameState("TEMPLE-HEAL", "capua", "TEMPLE-HEAL");
+  { const d = A.newGameState("TEMPLE-HEAL", "clean", "TEMPLE-HEAL");
     for(let w = 0; w < 20; w++) R.lanista(d, {});
     const g = A.activeG(d)[0];
     const bare = A.healSpeed(d, g);
@@ -128,7 +128,7 @@ const out = await p.evaluate(([H,W])=>{
                  wheel:0, wheelPts:0, tallied:{}, sums:0, sumsNamed:0 };
   {
     for(let h = 0; h < 4; h++){
-      const d = A.newGameState(`TEMPLE-S${h}`, "capua", `TEMPLE-S${h}`);
+      const d = A.newGameState(`TEMPLE-S${h}`, "clean", `TEMPLE-S${h}`);
       let seenLog = 0;
       for(let w = 0; w < 160 && !d.over; w++){
         /* keep a blessing riding so the question is about the SIGN and not the rate */

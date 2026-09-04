@@ -60,7 +60,7 @@ const out = await p.evaluate(([H,W])=>{
     for(const k of KEYS){ a.have[k] = 0; a.said[k] = 0; a.took[k] = 0; }
 
     for(let h = 0; h < H; h++){
-      const d = A.newGameState(`SHELF-${h}`, "capua", `SHELF-${h}`);
+      const d = A.newGameState(`SHELF-${h}`, "clean", `SHELF-${h}`);
       a.houses++;
       let hadPact = null, hadCourt = null, gamCount = 0, lotSeen = 0;
       for(let w = 0; w < W && !d.over; w++){

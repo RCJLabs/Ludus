@@ -163,7 +163,7 @@ export async function run({ p, errors }){
     }
 
     /* ---- 6: AND IT OUTLIVES YOU, which is the half of the old blurb that was true ---- */
-    { const d = A.newGameState("Heir", "capua", "EN-heir");
+    { const d = A.newGameState("Heir", "clean", "EN-heir");
       d.week = 220; d.fame = 2600; d.gold = 12000;
       const EC = A.MONUMENTS.endow.cost;
       d.works = { endow: { left:0, owed:0, paid:EC }, colossus: { left:20, owed:3000, paid:4000 } };

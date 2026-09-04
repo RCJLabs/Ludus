@@ -64,7 +64,7 @@ const out = await p.evaluate(([H,W,SEED])=>{
   let weeks = 0, atFloor = 0, liveSum = 0;
 
   for(let h=0; h<H; h++){
-    const d = A.newGameState("Nn"+h, "capua", `${SEED}-${h}`);
+    const d = A.newGameState("Nn"+h, "clean", `${SEED}-${h}`);
     const mine = new Set(), myFought = new Set();
     for(let w=0; w<W && !d.over; w++){
       try { R.lanista(d, {}); } catch(e){ break; }

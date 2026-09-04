@@ -70,7 +70,7 @@ export async function run({ p, errors }){
     for(const [opts, houses, weeks] of [[{}, 5, 160], [{ court:true, lot:true }, 4, 160],
                                         [{ gambit:6 }, 3, 140]]){
       for(let h = 0; h < houses; h++){
-        const d = A.newGameState(`ANSWER-${JSON.stringify(opts).length}-${h}`, "capua",
+        const d = A.newGameState(`ANSWER-${JSON.stringify(opts).length}-${h}`, "clean",
           `ANSWER-${JSON.stringify(opts).length}-${h}`);
         let court = null, gam = 0, lots = 0, pact = null;
         for(let w = 0; w < weeks && !d.over; w++){
@@ -166,7 +166,7 @@ export async function run({ p, errors }){
        up while its offer is still out — and the line it replaced never needed the house object.
        The first draft of `answerRow` returned nothing there, and `glance` caught it. Held here too,
        at the function rather than three panels away. */
-    { const d = A.newGameState("ANSWER-GHOST", "capua", "ANSWER-GHOST");
+    { const d = A.newGameState("ANSWER-GHOST", "clean", "ANSWER-GHOST");
       for(let w = 0; w < 8 && !d.over; w++) R.lanista(d, {});
       const v = A.activeG(d)[0];
       if(v){
@@ -185,7 +185,7 @@ export async function run({ p, errors }){
        eleven weeks of a seven-hundred-week sweep. Holding the lever on that is holding a coin
        toss, so the lot is planted and the rope asked to take it. */
     let lot = null;
-    { const d = A.newGameState("ANSWER-LOT", "capua", "ANSWER-LOT");
+    { const d = A.newGameState("ANSWER-LOT", "clean", "ANSWER-LOT");
       for(let w = 0; w < 10 && !d.over; w++) R.lanista(d, {});
       /* room in the cells and coin well over any reserve */
       while(A.activeG(d).length > 2) A.activeG(d).slice(2).forEach(g=>{ g.status = "dead"; });
@@ -200,7 +200,7 @@ export async function run({ p, errors }){
           + `house with 60,000d and empty cells was left standing (took ${lot.took}, `
           + `${lot.gained} men)`);
       /* and it must not fire when the box cannot stand it */
-      const e = A.newGameState("ANSWER-LOT2", "capua", "ANSWER-LOT2");
+      const e = A.newGameState("ANSWER-LOT2", "clean", "ANSWER-LOT2");
       for(let w = 0; w < 10 && !e.over; w++) R.lanista(e, {});
       e.gold = 10; e.powLot = { n:3, price:4000 };
       R.lanista(e, { lot:true });

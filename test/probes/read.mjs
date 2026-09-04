@@ -67,7 +67,7 @@ const out = await p.evaluate(([H,W])=>{
     return o; };
 
   for(let h = 0; h < H; h++){
-    let d = A.newGameState(`READ-${h}`, "capua", `READ-${h}`);
+    let d = A.newGameState(`READ-${h}`, "clean", `READ-${h}`);
     houses++;
     for(let w = 0; w < W && !d.over; w++){
       weeks++;
@@ -136,7 +136,7 @@ const out = await p.evaluate(([H,W])=>{
   /* ---- a positive control on the fog: does having a man watched turn the reading on? ---- */
   let fog = null;
   {
-    const d = A.newGameState("READ-FOG", "capua", "READ-FOG");
+    const d = A.newGameState("READ-FOG", "clean", "READ-FOG");
     let o = null;
     for(let i=0;i<60 && !o;i++){ R.lanista(d, {});
       o = ((d.games && d.games.offers) || []).find(x=>x.opp && x.oppRef && x.oppRef.house) || null; }

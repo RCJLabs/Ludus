@@ -62,7 +62,7 @@ export async function run({ p, errors }){
     /* a bay with a real relationship in it, about to lose a house */
     const seat = (how, opts) => {
       opts = opts || {};
-      const d = A.newGameState("Bay", "capua", `DY-${tick++}`);
+      const d = A.newGameState("Bay", "clean", `DY-${tick++}`);
       d.week = 60; d.gold = 5000;
       const h = d.rivals[0];
       d.metHouse = { [h.name]: { met:31, beaten:4, lost:3, seen:[] } };
@@ -174,7 +174,7 @@ export async function run({ p, errors }){
        not needed and this proves it: a house retired the way every build before this one retired
        them — a bare `h.retired = true`, no lineage — must produce a plain stranger, exactly as it
        always did, rather than a crash or a claimed inheritance. */
-    { const d = A.newGameState("Old", "capua", `DY-old-${tick++}`);
+    { const d = A.newGameState("Old", "clean", `DY-old-${tick++}`);
       d.week = 60;
       d.rivals[0].retired = true;                 /* the pre-#240 shape, verbatim */
       let threw = null, got = null;
@@ -223,7 +223,7 @@ export async function run({ p, errors }){
      A record nothing renders is the same dead-state fault one layer up, and this project has
      shipped a button that was never wired and walked eight headless arms straight past it. */
   await forge(p, (A) => {
-    const d = A.newGameState("Verres", "capua", "DYN-UI", null);
+    const d = A.newGameState("Verres", "clean", "DYN-UI", null);
     d.week = 60; d.gold = 5000;
     const h = d.rivals[0];
     d.metHouse = { [h.name]: { met:31, beaten:4, lost:3, seen:[] } };
