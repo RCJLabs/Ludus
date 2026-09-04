@@ -4389,6 +4389,64 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.195.0 — #241: the endowment stages no games, and the tick it does pay is the strongest in the table
+
+Item #241, "Endow, Actually". Its premise is **confirmed**, its engine is **refused on its own
+falsifier**, and its balance recommendation is **inverted by the measurement it asked for**.
+
+**THE DEFECT IS REAL AND IT IS THE SECOND OF ITS KIND IN THIS TABLE.** `MONUMENTS.endow` costs
+44,000 denarii and three years, and its blurb promised *"games that hold themselves, funded out of a
+sum so large the interest alone pays for blood every year after you are gone"* — a recurring,
+self-staging festival. Grep the whole 32,000-line source for the string `endow` and there is **one
+hit**: the table entry. It never calls `festivalNow`, never touches `CALENDAR`, never calls
+`makeGames`. No game has ever been staged. Three rows above it, the tomb's blurb was corrected by
+#140 for crediting an effect to the cells that `collSoften` produces — *"a claim about the state that
+the state does not hold"*. This one did not misattribute an effect; it advertised a mechanism that
+does not exist.
+
+**WHAT THE MEASUREMENT SAID** (`probes/endow.mjs`, three arms over two seeds — 96 campaign runs of
+up to 520 weeks):
+
+- **Nobody builds it.** Endow is **86,500 denarii deep**: the five `WORKS` cost 42,500 between them,
+  `monuReady` gates the whole monument tier behind finishing all five, and endow then asks 44,000
+  more. A house that builds **nothing at all** peaks at a median **16,200** and an all-seeds maximum
+  of **49,728**. Across the 96 runs the four monuments were finished **1 colossus, 1 endow, 0 arena,
+  0 capua** — and `capua`, which this file itself calls *"the last sentence in the book"*, has never
+  been built by anything. An arm that commissions endow the moment it can found the tier open on
+  **377 house-weeks** and the money there on **one** of them. The item's own falsifier for phases 2-4
+  fires: a festival card here is content nobody reaches.
+- **And phase 3 is backwards.** It proposed dropping or shrinking the flat `acclaim 1.1` as
+  over-valued. But acclaim is a **spring, not a bank**: `acclaimWeek` drags `d.acclaim` toward
+  `acclaimTarget(d)` at 10% of the gap up and 3% down, less a 0.15 drift, so a flat tick holds a
+  *gap* rather than accumulating. The fixed point the constants imply is `(1.1 − 0.15) / 0.03 ≈ 32`
+  points, and measured on played houses it holds **+30 (p50)**, worth **+44 points of plain
+  acclaim** — with some twenty live readers downstream (the missio, the crowd, the stall, patrons,
+  the census, Rome). It is the strongest perk in the table by a distance. The number stays.
+- **12 of 18 weeks are free** and no two festivals collide, so phase 1's seam would have worked. It
+  is not built, because there is nothing to put through it.
+- **And the one promise the item doubted is true.** `succeed()` never touches `d.works`: a finished
+  monument, one still going up, and the perk all cross the handover — verified by running the
+  succession, not by reading it.
+
+**WHAT SHIPS is the text** — #140's fix applied one entry down. The blurb, the done-line and the say
+now describe what the purchase is: a sum settled on the city, spent every year on games you will
+never stage and never see, with the herald reading your name over them whether you are alive to hear
+it or not. The say states the measured effect instead of promising a festival.
+
+**Held by `checks/endow.mjs` — six arms, nine sabotages, all nine caught.** The arms guard the half
+of a claim like this that can silently drift: every `say` in `WORKS` and `MONUMENTS` must state its
+own number (digits or spelled) and name its own quantity — a retune that moves `n` and forgets the
+sentence trips it. Plus: every declared perk is readable through `workPerk`; the endowment may only
+promise a recurring festival if `CALENDAR` carries one (restoring the original blurb fails the
+suite); no two festivals share a week; the acclaim spring pulls in both directions, because a flat
+perk against no spring would simply bank; and the monument survives the succession.
+
+**One thing recorded and not fixed.** The monument tier is very nearly unreachable — 1 colossus and
+1 endow finished across 96 campaign runs, `arena` and `capua` never. That is a finding about the
+late-game economy rather than about this item, and retuning four prices on the strength of it would
+invalidate every figure in this file measured under the current curve. It is written down here for
+whoever opens it.
+
 ### v3.194.0 — #240: a yard in Capua remembers whose it was, and the rope had a lever nobody could pull
 
 Item #240, "A Rival House Is a Family, Not a Slot". Five phases asked for; **one ships, four are
