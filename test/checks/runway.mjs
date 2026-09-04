@@ -121,6 +121,21 @@ export async function run({ p, errors }){
         const A = window.__LVDVS, R = window.__ROPE;
         const d = A.newGameState("Runway", "clean", "RUNWAY-F", null);
         for(let w=0; w<50; w++){ if(d.over) break; try { R.lanista(d); } catch(e){ break; } }
+        /* ---- THE FIXTURE HAS TO HAVE A BILL, AND FIFTY PLAYED WEEKS DO NOT GUARANTEE ONE ----
+           `runway` divides by `weeklyBill`, and returns null when that is zero — which is what an
+           EMPTIED house has. This fixture played fifty weeks on one seed and took whatever came
+           out, so any change anywhere that moves the RNG stream can bury the last man and leave
+           the face with nothing to say and this check reporting it as a missing sentence. It did
+           exactly that on v3.190.0, where the only edit was to how a rival house picks a class.
+           The house is restocked if the weeks emptied it: the claim under test is that the FACE
+           quotes the FUNCTION, and it needs a house with men in it to be about anything. */
+        d.over = null;
+        if(!A.activeG(d).some(g=>g.status === "active")){
+          for(let i=0;i<4;i++){
+            const g = A.genGladiator(d, 55); g.id = d.nextId++; g.status = "active"; g.mine = true;
+            g.kit = A.defaultKit(g.cls); d.gladiators.push(g);
+          }
+        }
         d.gold = A.weeklyBill(d) * 5; d.owed = [];
         return d;
       }) });

@@ -167,4 +167,7 @@
 {"v":"3.187.0","checks":145,"failed":["reach"]},
 {"v":"3.187.0","checks":145,"failed":[]},
 {"v":"3.188.0","checks":146,"failed":[]},
-{"v":"3.189.0","checks":147,"failed":["bulk","orders"]}]
+{"v":"3.189.0","checks":147,"failed":["bulk","orders"]},
+{"v":"3.190.0","checks":147,"failed":["altar","tells","runway"]},
+{"v":"3.190.0","checks":147,"failed":[]},
+{"v":"3.190.0","checks":148,"failed":[]}]
