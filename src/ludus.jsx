@@ -1597,11 +1597,59 @@ function damnArrive(d, g){
   d.unrest = clamp(d.unrest+4, 0, 100);
   chron(d, `${fullName(g)} is delivered to the gate by two of the magistrate's men and a piece of paper. ${g.damnatus.note} He owes the sand ${g.damnatus.bouts} bouts. The cells watch him carried in and nobody moves to make room.`, "info");
 }
+/* ---- AND THE PAPER IS WORTH SOMETHING WHEN IT IS DISCHARGED — phase queue #238 ----
+   The banner over this feature says a man who "survived his term earned the rudis out of it".
+   `damnCheck` fired, gave him regard and morale, and left `g.status` at "active" — the discharge
+   the feature is named for was mechanically identical to doing nothing. Freedom runs through
+   `grantRudis`, gated on `rudisEligible`: ten wins and 180 renown, a bar that does not exempt him
+   from anything. The two counters do not even measure the same thing — a sentence is 10-18 BOUTS
+   FOUGHT, win or lose, and the rudis wants ten WINS.
+
+   MEASURED FIRST (`probes/served.mjs`), and it moved the fix a layer down from where the item put
+   it. Over 6,537 played weeks with a lanista deliberately working men's sentences off — the
+   softest bout on the bill, fought defensively, every week he is fit — **82 men arrived under a
+   paper and 12 were discharged alive (14.6%); 45 died under it.** It took a median of 59 weeks. At
+   the moment the paper cleared they held a median of **2 wins and 49 renown against a bar of 10
+   and 180**, and **0 of 12 ever crossed it**. Under the reference player, who does not work at it,
+   1 of 45 was discharged at all. The promise has essentially never been paid.
+
+   AND THE ITEM'S PROPOSED CURVE IS BACKWARDS, which only the measurement shows. It scales the
+   reward by his win rate over the sentence. But the play that gets a condemned man to his
+   discharge is the soft bout fought defensively — surviving and winning are OPPOSED here, and the
+   measured rates say so: p25 0.063, median 0.125, p75 0.30, max 0.500. Grading chiefly on wins
+   would reward the strategy that buries him. So the term itself is the achievement — 10 to 18
+   bouts at 55% mortality — and it carries most of the discount; how well he fought adds to it.
+
+   THE ROAD IS SHORTENED, NEVER OPENED. He still goes through `rudisEligible` and `grantRudis`,
+   still costs `rudisCost`, still has to fight and win — the gate moves, the channel does not
+   change. That is the item's own reason for preferring this to an outright grant, which would make
+   damnatio the cheapest route to the `closed` ending's `freed>=5` and undercut the calibration the
+   code measured at 19533. */
+const DISCH_BASE = 0.35;    /* what surviving the term alone takes off his own bar */
+const DISCH_RATE = 0.50;    /* and what fighting well through it adds */
+const dischargeCut = g => {
+  const n = (g.wins||0) + (g.losses||0);
+  const rate = n ? (g.wins||0) / n : 0;
+  return clamp(DISCH_BASE + rate * DISCH_RATE, 0, 0.85);
+};
+/* what THIS man's rudis asks, which is never more than what everybody's asks */
+const rudisBar = g => {
+  const o = g && g.rudisDischarge;
+  return { wins: Math.min(RUDIS_WINS, (o && o.wins) != null ? o.wins : RUDIS_WINS),
+           fame: Math.min(RUDIS_FAME, (o && o.fame) != null ? o.fame : RUDIS_FAME) };
+};
 /* and when the paper is finished with, so is the sentence */
 function damnCheck(d, g){
   if(!isDamn(g) || g.status!=="active") return false;
   if(damnLeft(g) > 0) return false;
   const w = g.damnatus.bouts;
+  const cut = dischargeCut(g);
+  const rate = ((g.wins||0) + (g.losses||0)) ? (g.wins||0)/((g.wins||0)+(g.losses||0)) : 0;
+  /* named once and used, rather than written and read back: the line below quotes these numbers,
+     and a field read back is a field that can be undefined */
+  const bar = { wins: Math.max(1, Math.round(RUDIS_WINS * (1 - cut))),
+    fame: Math.max(1, Math.round(RUDIS_FAME * (1 - cut))), rate:+rate.toFixed(2), term:w };
+  g.rudisDischarge = bar;
   g.damnatus = null;
   g.regard = clamp(regardOf(g)+26, 0, 100);
   g.morale = clamp(g.morale+24, 0, 100);
@@ -1609,7 +1657,11 @@ function damnCheck(d, g){
   d.gladiators.forEach(o=>{ if(o.status==="active" && o.id!==g.id) o.morale = clamp(o.morale+4,0,100); });
   d.unrest = clamp(d.unrest-6, 0, 100);
   addRep(d, "mercy", 6);
-  chron(d, `${fullName(g)} has fought out his sentence — ${w} bouts, every one of them survived. The paper is discharged and he is a gladiator of this house like any other, which is a sentence of a different kind and he knows it.`, "good");
+  chron(d, rate >= 0.45
+    ? `${fullName(g)} has fought out his sentence — ${w} bouts, and he won a great many of them. The paper is discharged. Men who came in free have done less with the same years, and the whole yard knows what his rudis would cost now: ${bar.wins} wins and ${bar.fame} renown, not ${RUDIS_WINS} and ${RUDIS_FAME}.`
+    : rate >= 0.2
+    ? `${fullName(g)} has fought out his sentence — ${w} bouts, and he gave a fair account of more than a few. The paper is discharged, and the road out is shorter for him than for a bought man: ${bar.wins} wins and ${bar.fame} renown.`
+    : `${fullName(g)} has fought out his sentence — ${w} bouts, every one of them survived and most of them lost. The paper is discharged. He is a gladiator of this house now and not a condemned man, and what is owed for his rudis has come down to ${bar.wins} wins and ${bar.fame} renown.`, "good");
   return true;
 }
 
@@ -5717,7 +5769,11 @@ const unrestWord = u=> u<25?"Docile": u<45?"Restless": u<65?"Simmering": u<80?"M
    The literals were inline in three places and a fourth wanted them, which is how a screen and a
    gate drift apart. They are named once and read everywhere, `ambPool`'s rule from #189. */
 const RUDIS_WINS = 10, RUDIS_FAME = 180, RUDIS_AGE = 30;
-const rudisEligible = g=> !isAuctor(g) && g.wins>=RUDIS_WINS && g.pfame>=RUDIS_FAME;
+/* #238 — the bar is the house's, unless a discharged sentence bought him a shorter one. `rudisBar`
+   is defined beside `damnCheck`, which is the only thing that ever writes the override, and it
+   floors at the standard bar so a per-man read can never ask MORE of him than of anybody else. */
+const rudisEligible = g=> { if(!g || isAuctor(g)) return false;
+  const b = rudisBar(g); return g.wins >= b.wins && g.pfame >= b.fame; };
 
 /* ---- A PURSE OF HIS OWN — phase queue #233, sized against `probes/purse.mjs` ----
    No gladiator in this game has ever held a denarius. Every purse lands in `d.gold` at one of seven
@@ -5877,6 +5933,14 @@ function skimStash(d, g, purse){
 const rudisWord = g => {
   const st = rudisStanding(g);
   if(!st) return `Rudis: ${RUDIS_WINS} wins, ${RUDIS_FAME} renown`;
+  /* a man who fought out a sentence is asked for less, and the card says whose bar it is quoting */
+  if(st.served && !st.clear){
+    const bits = [];
+    if(st.wins) bits.push(`${st.wins} more win${st.wins===1?"":"s"}`);
+    if(st.fame) bits.push(`${st.fame} more renown`);
+    return `Rudis, on his paper: ${bits.join(", ")} (${st.bar.wins}/${st.bar.fame}, not ${RUDIS_WINS}/${RUDIS_FAME})`;
+  }
+  if(st.served && st.clear) return "Rudis: earned, on the sentence he served";
   const bits = [];
   if(st.wins) bits.push(`${st.wins} more win${st.wins===1?"":"s"}`);
   if(st.fame) bits.push(`${st.fame} more renown`);
@@ -5884,9 +5948,11 @@ const rudisWord = g => {
 };
 function rudisStanding(g){
   if(!g || isGone(g)) return null;
-  const wins = Math.max(0, RUDIS_WINS - (g.wins||0));
-  const fame = Math.max(0, RUDIS_FAME - (g.pfame||0));
+  const b = rudisBar(g);
+  const wins = Math.max(0, b.wins - (g.wins||0));
+  const fame = Math.max(0, b.fame - (g.pfame||0));
   return { wins, fame, auctor: isAuctor(g), late: (g.age||0) >= RUDIS_AGE,
+           served: !!g.rudisDischarge, bar: b,
            clear: !wins && !fame && !isAuctor(g) };
 }
 const fullName = g=> g.nick? `${g.name}, ${g.nick}` : g.name;
@@ -32314,6 +32380,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     activeG, defaultKit, kitMods, statCap, fullName, yearOf, YEAR_WEEKS, rudisEligible,
     /* the price of freedom, and whether the house can meet it — see the note over grantRudis */
     rudisCost, canAffordRudis, RUDIS_TAX, gladValue,
+    isDamn, damnLeft, damnCheck, makeDamnatus, damnArrive, CRIMES,   /* #238 */
+    rudisBar, dischargeCut, DISCH_BASE, DISCH_RATE,   /* #238 — the shortened road */
     skimStash, skimReady, stashReady, stashTarget, SKIM_FAME, SKIM_WINS, SKIM_CUT, STASH_TRUST, STASH_HIDE, skimRate,   /* #233 */
     RUDIS_WINS, RUDIS_FAME, RUDIS_AGE, rudisStanding, rudisWord,   /* #190 — the three terms, and the distance to them */
   };

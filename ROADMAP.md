@@ -4389,6 +4389,82 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.191.0 — #238: a sentence fought out is worth something, and it is still not freedom
+
+Item #238, "Damnatio Ad Ludum Doesn't End In Freedom" — its premise confirmed, its diagnosis moved
+one layer down, and its proposed curve **inverted**, all by the measurement it asked for first.
+
+**THE DEFECT IS REAL AND THE CODE SAYS SO ITSELF.** The banner over the feature promises that a man
+condemned to the ludus who "survived his term earned the rudis out of it". `damnCheck` fired when
+the term cleared, gave him +26 regard and +24 morale, and left `g.status` at `"active"`. Freedom
+runs through `grantRudis`, gated on `rudisEligible` — ten wins and 180 renown — which exempted him
+from nothing. The two counters never measured the same thing: a sentence is **10-18 bouts fought**,
+win or lose; the rudis wants **ten wins**. A man who lost one bout of a ten-bout term was already
+short the day his paper was discharged.
+
+**THE ITEM SAID THE DISCHARGE DOESN'T PAY. THE MEASUREMENT SAYS IT BARELY HAPPENS.** Under the
+reference player, over 2,889 played weeks: **45 men arrived under a paper, 1 was discharged**, 22
+died under it and 22 were still serving. They got a median of **2 bouts against a sentence of
+10-18**.
+
+**AND MY FIRST ATTEMPT AT "DELIBERATE PLAY" WAS WRONG, WHICH IS WORTH RECORDING.** Fielding the man
+at `bill[0]` — the first offer, whatever its tier — got 0 of 38 discharged. That measures a careless
+lanista, not a determined one. Done properly (softest bout on the bill, fought defensively, every
+week he is fit), over 6,537 weeks:
+
+| | |
+|---|---|
+| arrived under a paper | 82 |
+| **discharged alive** | **12 (14.6%)** |
+| died under it | 45 |
+| still serving at the cutoff | 20 |
+| median weeks to work one off | 59 |
+| **at discharge** | **median 2 wins, 49 renown** — against a bar of 10 and 180 |
+| **ever crossed that bar** | **0 of 12** |
+
+So the item's falsifiable outcome **(b)** holds, with the gap quantified: short by a median of nine
+wins and 135 renown.
+
+**AND THE ITEM'S PROPOSED CURVE IS BACKWARDS.** It scales the reward by win rate over the sentence.
+But the play that gets a condemned man to his discharge is the soft bout fought defensively —
+**surviving and winning are opposed here**, and the measured rates say so: p25 0.063, median 0.125,
+p75 0.30, max 0.500. Grading chiefly on wins would reward the strategy that buries him. So the term
+carries most of the discount (`DISCH_BASE` 0.35) and how well he fought adds to it (`DISCH_RATE`
+0.50), clamped at 0.85.
+
+**REPLAYED AGAINST THE TWELVE REAL DISCHARGES:**
+
+| at discharge | rate | asks now | |
+|---|---|---|---|
+| 0w / 0 renown | 0 | 7 / 117 | still owes seven wins |
+| 1w / 31 | 0.077 | 6 / 110 | five more wins |
+| 2w / 49 | 0.143 | 6 / 104 | four more wins |
+| 3w / 125 | 0.30 | 5 / 90 | two more wins |
+| 6w / 156 | 0.50 | 4 / 72 | **clear at once** |
+| 7w / 329 | 0.50 | 4 / 72 | **clear at once** |
+
+Two of twelve walk where none could before; the middle band needs four or five more wins; the men
+who won nothing still owe seven. Surviving alone is worth a third off the bar and no more.
+
+**THE ROAD IS SHORTENED, NEVER OPENED.** He still goes through `rudisEligible` and `grantRudis`,
+still costs `rudisCost`, still records `fate:"freed"` and still feeds `d.freed` and the `closed`
+ending. `rudisBar` floors at the house's own bar, so a per-man read can never ask MORE of him than
+of anybody else. That is the item's own reason for preferring this to an outright grant, which would
+have made damnatio the cheapest route to `freed>=5` and undercut the calibration measured at 19533.
+
+**Not built, with the reason.** Phase 5's retune of `CRIMES.bouts`. The term length is what makes the
+discharge an achievement — 14.6% under determined play, ~2% under default, at 55% mortality.
+Shortening it would make the payoff common rather than earned, and the measurement gives no reason
+to think the current 10-18 is wrong; it is what a sentence costs.
+
+**Shipped:** `DISCH_BASE`/`DISCH_RATE`, `dischargeCut`, `rudisBar` and `g.rudisDischarge`;
+`rudisEligible`/`rudisStanding`/`rudisWord` threaded through the per-man bar, with the card naming
+whose bar it quotes ("Rudis, on his paper: 4 more wins, 55 more renown (6/104, not 10/180)"); three
+rate-banded discharge lines in place of the one fixed sentence. `checks/served.mjs` — 7 arms,
+**13 sabotages, 13 caught**, three only after the check was fixed: a floor asserted against what
+`damnCheck` happens to produce rather than against the guard itself, an ordering test that a flat
+curve satisfied, and two arms that crashed where they should have reported.
+
 ### v3.190.0 — #236: the houses across town look at your card, and the shrewd ones act on it
 
 Item #236, "Rivals Roll Dice; They Don't Read Your Roster" — built, calibrated against its own four
@@ -5443,7 +5519,7 @@ Give nameHeir a cid the same way resolveToga already does, and stop treating "so
 
 **Verify first.** Instrument nameHeir/resolveToga to log d.heir.kind on every call and re-run the existing probes/scion.mjs-style harness (already referenced in the #226 audit comment) across a large sample of simulated houses/weeks to get a real number for how often the currently-broken "son" branch is actually chosen versus players simply waiting for the toga to fire on its own — a low hit-rate doesn't invalidate the coherence argument (the brief's own "men are not units" standard doesn't need volume to be violated), but it sizes this against the other nine survey items. Same harness should confirm, with a number, whether the togaTil-cooldown overlap case (a real 16-year-old eligible via "son" while his own toga event is pending) occurs in practice at nonzero frequency, and what fraction of houses ever have 2+ sons simultaneously eligible — if multi-son households are vanishingly rare, phase 3's per-boy chooser row may be overbuilt against a simpler single-name substitution.
 
-**#238 — Damnatio Ad Ludum Doesn't End In Freedom** *(overhaul, discretionary)*
+**#238 — Damnatio Ad Ludum Doesn't End In Freedom** *(overhaul, discretionary)* — **SHIPPED v3.191.0.** Its premise held and its diagnosis moved a layer down: the discharge does not merely fail to pay, it barely happens — 1 of 45 under the reference player, 12 of 82 (14.6%) under determined play, and 0 of those 12 ever crossed the rudis bar. Its proposed curve was inverted by the data: surviving and winning are opposed strategies here, so the term carries most of the discount and how well he fought adds to it. Phase 5's retune of CRIMES declined with the reason. See the release note.
 The game's own banner comment over the feature states its whole point: a man condemned to the ludus who "survived his term earned the rudis out of it." `damnCheck` fires when that term clears, gives him a regard/morale bump — and leaves `g.status` at `"active"`. Its own chronicle line even says so out loud: he is "a gladiator of this house like any other, which is a sentence of a different kind and he knows it." The discharge the feature is named for is mechanically identical to doing nothing.
 
 `isDamn`/`damnLeft`/`makeDamnatus`/`damnArrive`/`damnCheck` (src/ludus.jsx 1536-1572) run the sentence: `damnLeft(g) = g.damnatus.bouts - (g.wins+g.losses)`, counted in total bouts fought, not wins. The six `CRIMES` (1528-1535) carry terms of 10-18 bouts. When `damnLeft(g)<=0`, `damnCheck` clears `g.damnatus`, adds +26 regard/+24 morale/+6 mercy-rep/-6 unrest, logs a `"servedOut"` memory (flavor-only, weight 18, no further mechanical effect), and returns — `g.status` is never touched. He is still owned, still sellable the instant he's discharged (`sellG`'s only guard is `isDamn(g)`, 25505), still subject to everything a bought man is.
