@@ -4389,6 +4389,51 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### Measured, no code changed — the one conversation in the game, and four hypotheses that all died
+
+Not a release. `probes/ask.mjs` is the standing instrument. **Four hypotheses went in and all four
+came out refuted**, including the one this investigation was opened on.
+
+`askWeek` is the only place a gladiator speaks to the lanista on his own initiative — five things he
+can raise (a brother, a match he lost, his year, a burial, a woman in the town), each with a `need`,
+a weight and two written answers. Two seeds × 16 houses × 420 weeks, 5,302 played weeks:
+
+**THE RATE.** It fires once every **70–72 weeks** (1.39–1.44% of weeks) and reaches **8.6–8.8%** of
+the ~430 men who ever stand in the cells. P(an ask fires | the week is *open*) is **1.98–2.11%**,
+against the 6% roll that caps it.
+
+**AND THE LIMIT IS THREE ROUGHLY EQUAL THIRDS**, not one thing:
+
+| | |
+|---|---|
+| the pool | mean **1.09–1.31** men qualify at all (regard 45, three bouts), and only **65–68%** of them have any of the five that fits |
+| the mark | costs 0.76–0.88 points — **27.7–29.5%** of the openings |
+| being shut out | **30.2–32.1%** — `askWeek` sits at line 21028, behind eight systems that can raise the week's event first |
+
+- **Refuted #1: "the one-ask-per-man rule is the constraint."** It is under a third of it. (A 4-house
+  smoke reported the mark costing *nothing*, −0.01 points; that was small-sample noise, and the scale
+  run is what settled it — in the other direction.)
+- **Refuted #2, the interesting one.** `year` has fired **zero** times in 5,302 weeks. The suspicion
+  was the mark — that a man with a career long enough to earn the wooden sword has already been spent
+  on one of the four asks that want much less of him. Measured at the moment each man first satisfied
+  `year`'s need: **10 of 15 were still free.** Not the mark.
+- **Refuted #3: "the rudis bar is unreachable, so `year` is downstream of #238."** The source's own
+  figure is that `rudisEligible` is crossed by **14.1%** of every man who draws breath. Not the bar.
+- **Refuted #4: "the contention is a defect."** Every weekly event-raiser guards on `d.pendingEvent`
+  properly — `edictWeek` even pays a consolation (+6 heat) when it is shut out. It is a priority
+  order, and the ask is last in it by design.
+
+**So why `year` never fires, plainly:** only **15 men in 2,655 weeks** ever satisfy its need at all —
+about one per campaign — each has a narrow window, and inside it he must also be the one man `pick`
+lands on during a 6% week *and* win a weighted draw in which he weighs 8 against a brother's 10, a
+match's 9 and a burial's 7, all of which also fit a veteran. Zero is arithmetic, not a bug.
+
+**The one design observation left standing, and deliberately not acted on:** the weighted draw does
+not prefer the *rarer* conversation, so the rarest state a man can be in is usually spent on the
+commonest thing he could be asked. Whether that should change is a design call, not something the
+measurement forces, and after four refutations in a row on one item the disciplined answer was to
+write it down rather than invent a fifth fix.
+
 ### v3.197.0 — three of the nine, and it was the same three every game
 
 `LANISTAE` holds **nine** rival lanistae. Each is written the way the founders are — a name, a
