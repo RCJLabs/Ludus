@@ -1381,8 +1381,23 @@ const legacyRegard = d => legacyEarned(d.legacy,"freed") ? 6 : 0;
    getting bigger and starts getting particular. */
 const MASTERY_GATE = { wins:12, pfame:55 };
 const masterOf = g => (g && g.mastery) || null;
+/* ---- AND HE HAS TO HAVE PROVED IT — #232 phase 5 ----
+   The gate was twelve wins and fifty-five renown, both of which a man collects by not dying. The
+   third clause is the one the doctore would actually want: he has beaten somebody in the square
+   that the house prices at least as highly as him. `proved` is written by `doSpar` and read here;
+   the square is now a door the player can open, which is what makes this a gate and not a wall —
+   measured, spars arrived by chance once in seventy weeks before phase 5. */
 const canMaster = (d,g) => g && g.status==="active" && !g.mastery && !g.learning
-  && g.wins>=MASTERY_GATE.wins && g.pfame>=MASTERY_GATE.pfame;
+  && g.wins>=MASTERY_GATE.wins && g.pfame>=MASTERY_GATE.pfame && provedIt(g);
+/* what he is still short of, for the card to say it rather than grey a button out */
+const masterNeed = (d,g) => {
+  if(!g || g.mastery) return null;
+  const want = [];
+  if((g.wins||0) < MASTERY_GATE.wins) want.push(`${MASTERY_GATE.wins - (g.wins||0)} more wins`);
+  if((g.pfame||0) < MASTERY_GATE.pfame) want.push(`${Math.ceil(MASTERY_GATE.pfame - (g.pfame||0))} more renown`);
+  if(!provedIt(g)) want.push("a man beaten in the square who is worth as much as he is");
+  return want.length ? want : null;
+};
 const MASTERY = {
   Murmillo:    { name:"The Wall", say:"Nobody has moved him off a mark in three years. He does not so much win as refuse to lose." },
   Thraex:      { name:"The Gap", say:"He has stopped looking for openings and started making them, which is a different trade entirely." },
@@ -17668,6 +17683,68 @@ function tourneyEnd(d, a, b, res, sum, face){
   return { beats:res.beats, sum:sum.map(x=>herOwn(d,x)), win:true, dead:false, crowd:0,
     spar:true, tourney:true, stakes:"spar", venue:null, factions:d.factions, A:face(a), B:face(b) };
 }
+/* ---- THE SQUARE IS A DOOR THE PLAYER CAN OPEN — phase queue #232, phase 5 ----
+   #232 built a fifth engine for the yard duel and then left it reachable by two accidents:
+   `EVENTS.feud`'s first answer, which arrives when the yard decides it has a grudge, and
+   `holdTourney`'s final, which is a UI-only action. Measured over 2,815 played weeks in 14 houses
+   (`probes/master.mjs`): **40 spars, every one of them from a feud, none from a tournament**, and
+   10 of 14 houses saw one at all — roughly one square every seventy weeks, none of them asked for.
+   `regimen:"spar"` is not a third door; it is a weekly training pairing that never fights.
+
+   So the lanista can send two of his own into the square because he wants to. It costs what the
+   square already costs — `doSpar` puts 20 fatigue into both men and rolls `SPAR_HURT` on the beaten
+   one — plus the week: one afternoon like this per week, because the yard has other work.
+
+   AND IT IS WHAT MAKES PHASE 5's OTHER HALF POSSIBLE. Gating mastery on a won spar against a game
+   where spars arrive by chance once in seventy weeks would not deepen mastery, it would delete it:
+   15 of 435 men (3.4%) ever clear MASTERY_GATE as it is. */
+const squareWhy = (d, a, b) => {
+  if(!a || !b) return "two men";
+  if(a.id === b.id) return "two different men";
+  for(const g of [a,b]){
+    if(g.status !== "active") return `${g.name} is not fit to stand in it`;
+    if(g.benched) return `${g.name} is kept out of the yard`;
+  }
+  if(d.over) return "a house";
+  if(d.pendingSpar || d.pendingPrimacy) return "the square to be empty";
+  if(d.flags && d.flags.squareWeek === d.week) return "another week — the yard has had its afternoon";
+  return null;
+};
+const squareReady = (d, a, b) => squareWhy(d, a, b) == null;
+/* ---- AND THE BOUT ITSELF, AT MODULE SCOPE ----
+   The same handshake `chooseEv` and `doTourney` use: the marker is set, the bout is fought, and it
+   comes to the balance for a word like every other engine. It lives out here rather than inside the
+   click handler because `bulk` caps App's length and this release put it one line over — which is
+   what that cap is for. No orders are spent; an afternoon in the yard is not a card, and
+   `checks/orders.mjs` classifies it NOSPEND beside `doTourney` and `chooseEv`. */
+function squareBout(d, aid, bid){
+  if(!challengeSquare(d, aid, bid)) return null;
+  const p = d.pendingSpar; d.pendingSpar = null;
+  return p ? doSpar(d, p.aid, p.bid, null, null, p.kind) : null;
+}
+function challengeSquare(d, aid, bid){
+  const a = d.gladiators.find(x=>x.id===aid), b = d.gladiators.find(x=>x.id===bid);
+  if(!squareReady(d, a, b)) return false;
+  d.flags = d.flags || {};
+  d.flags.squareWeek = d.week;
+  d.pendingSpar = { aid, bid, kind:"feud" };
+  return true;
+}
+/* ---- AND WHAT A MAN PROVES IN IT ----
+   `canMaster` wanted twelve wins and fifty-five renown and nothing else: a man became a master of
+   his style by surviving long enough at it. He proves it now, against somebody worth beating —
+   and "worth beating" is not a constant, it is `gladValue`, the game's own price on a man. Beat
+   one the house values at least as highly as you and it is written down.
+   MEASURED (`probes/master.mjs`, 1,500 spars): a man beats his equal 49.4% of the time and one
+   worth 15% more 29.3%, so this is a couple of afternoons' work for a man who is ready and a wall
+   for one who is not — which is the whole difference between a gate and a delay. */
+const provedIt = g => !!(g && g.proved);
+function proveInSquare(d, w, l){
+  if(!w || !l || provedIt(w)) return false;
+  if(gladValue(l) < gladValue(w)) return false;
+  w.proved = { week:d.week, foe:fullName(l), worth:Math.round(gladValue(l)) };
+  return true;
+}
 function doSpar(d, aid, bid, pending, choice, kind){
   const a = d.gladiators.find(x=>x.id===aid), b = d.gladiators.find(x=>x.id===bid);
   if(!a || !b) return null;
@@ -17724,6 +17801,10 @@ function doSpar(d, aid, bid, pending, choice, kind){
   const vL   = res.winner==="A" ? res.vB : res.vA;
   if(t) d.ties = tieList(d).filter(x=>x!==t);
   w.morale = clamp(w.morale+16,0,100); w.pfame += 4; formShift(d, w, 10, `settled it with ${l.name}`);
+  /* #232 phase 5 — and if the man he beat was worth at least as much as he is, that is the thing
+     the doctore will not say out loud until he has seen it. See `proveInSquare`. */
+  if(proveInSquare(d, w, l))
+    sum.push(`${w.name} took it off a man the house prices above him. The doctore watched the whole of it and said nothing, which from him is a verdict.`);
   l.morale = clamp(l.morale-18,0,100); l.defiance = clamp(l.defiance+7,0,100); formShift(d, l, -12, `lost to ${w.name} in the yard`);
   /* SPAR_HURT was sized in probes/spar.mjs to hold the flat 16% this replaces — measured 15.6%
      aggregate — while making WHICH duels hurt somebody mean something: 17.9% when a man's hands
@@ -23023,6 +23104,55 @@ function endTheLine(d){
    Once every section is out here, ordering is a one-line array edit instead of surgery.
    It also takes lines OUT of App, which `bulk` holds at 7,200 and which is sitting at exactly
    7,200 — so this refactor buys the room the rest of the work needs. */
+/* ---- THE SQUARE'S OWN PICKER — #232 phase 5 ----
+   Written at module scope with its own state rather than inside `SECT.square`, which is already
+   155 lines and the reason `bulk` exists. It needs two men and nothing else, and it says what it
+   is for before it is used: the square is where a man proves he is a master of his style, and the
+   card is expected to answer the number rather than grey a button out. */
+function SquareBox({ S, go }){
+  const men = activeG(S).filter(g=>g.status==="active");
+  const [a, setA] = React.useState(null);
+  const [b, setB] = React.useState(null);
+  if(men.length < 2) return null;
+  const A = men.find(g=>g.id===a) || null, B = men.find(g=>g.id===b) || null;
+  const why = squareWhy(S, A, B);
+  const opt = (g, other) => (
+    <option key={g.id} value={g.id} disabled={other === g.id}>
+      {g.name}{g.nick? `, ${g.nick}`:""} — {g.wins||0}-{g.losses||0} · worth {gladValue(g)}d{g.proved? " ✦ proved":""}
+    </option>
+  );
+  const sel = (val, set, other) => (
+    <select className="btn btn-ghost" style={{width:"100%",padding:"6px 4px"}} value={val==null?"":val}
+      onChange={e=>set(e.target.value===""?null:+e.target.value)}>
+      <option value="">— nobody —</option>
+      {men.map(g=>opt(g, other))}
+    </select>
+  );
+  return (
+    <div style={{borderTop:"1px dotted var(--line)",paddingTop:9,marginTop:9}}>
+      <div className="disp" style={{fontSize:"var(--fs-base)",color:"var(--ink-hi)"}}>INTO THE SQUARE</div>
+      <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:2}}>
+        Wooden swords and the doctore counting. Nobody dies in it — but a man who beats somebody the
+        house prices at or above him has proved the thing the doctore will not otherwise say out loud,
+        and that is what a master of the style is made of.
+      </div>
+      <div className="grid grid-cols-2 gap-2" style={{marginTop:6}}>{sel(a, setA, b)}{sel(b, setB, a)}</div>
+      {A && B && (
+        <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:4}}>
+          {A.name} is worth {gladValue(A)}d, {B.name} {gladValue(B)}d — {gladValue(A) === gladValue(B)
+            ? "an even match, and either of them proves it by winning"
+            : gladValue(A) > gladValue(B)
+            ? `${B.name} proves it by winning; ${A.name} has nothing to gain but the afternoon`
+            : `${A.name} proves it by winning; ${B.name} has nothing to gain but the afternoon`}.
+        </div>
+      )}
+      <button className="btn" style={{width:"100%",marginTop:7}} disabled={!!why}
+        onClick={()=>{ if(!why){ go(a, b); setA(null); setB(null); } }}>
+        {why ? `Wants ${why}` : `Put them in the square`}
+      </button>
+    </div>
+  );
+}
 const SECT = {
   wants: (S, X) => { const { selG } = X;
     return (
@@ -24280,7 +24410,7 @@ const SECT = {
       </div>
     </Sect>
     ); },
-  square: (S, X) => { const { dismissDoc, hireDoc, setDrill, setPupil, stopRetrain } = X;
+  square: (S, X) => { const { dismissDoc, hireDoc, setDrill, setPupil, stopRetrain, intoSquare } = X;
     return (
     <Sect live={sectFresh(S,"square")} sid="square" title="The training square" note={S.doctore ? `${S.doctore.name} · ${S.doctore.wage}d/wk` : "no doctore — you run it"}>
       {S.doctore ? (<div>
@@ -24433,6 +24563,7 @@ const SECT = {
           </div>
         ))}
       </div>)}
+      <SquareBox S={S} go={intoSquare}/>
     </Sect>
     ); },
   annals: (S, X) => { const { carryOut, setAnnals, setSheet, setShowChron, standings } = X;
@@ -26538,6 +26669,11 @@ export default function App(){
     setS(d);
   };
   const walkCells = () => mut(d=>{ walkTheCells(d); });
+  const intoSquare = (aid, bid) => {
+    const d = clone(S); const res = squareBout(d, aid, bid); d.rngState = rngGet();
+    if(res && res.crux){ setHeld({ base:d, res }); setFight(res); return; }
+    setS(d); if(res) setFight(res);
+  };
 
   if(screen==="loading") return <div className="lr" style={{display:"flex",alignItems:"center",justifyContent:"center"}}><style>{CSS}</style><div className="disp dim">Lighting the torches...</div></div>;
 
@@ -27495,7 +27631,7 @@ export default function App(){
     takeRise:  { verb: () => "Take the rung",                     run: takeRise },
   };
 
-  const SX = { askFavour, backHim, standNow, buyGear, carryOut, rackFilt, setAnnals, setAsk, setRackFilt, setSheet, setShowChron, declare, dismissDoc, doRite, doTourney, feast, hireDoc, hireStaff, host, joinCollegium, letStaffGo, mut, offerTo, openLicence, roster, seekMatch, selG, sellOne, setCrest, setDrill, setEar, setPupil, standings, stopCollegium, stopRetrain, takeRise, vowTo, walkCells };
+  const SX = { askFavour, backHim, standNow, intoSquare, buyGear, carryOut, rackFilt, setAnnals, setAsk, setRackFilt, setSheet, setShowChron, declare, dismissDoc, doRite, doTourney, feast, hireDoc, hireStaff, host, joinCollegium, letStaffGo, mut, offerTo, openLicence, roster, seekMatch, selG, sellOne, setCrest, setDrill, setEar, setPupil, standings, stopCollegium, stopRetrain, takeRise, vowTo, walkCells };
 
   return (
     <div data-place={tab} className={`lr shell${prefs.reduceMotion?" reduce-motion":""}${prefs.largeText?" large-text":""}${prefs.colorblind?" cb":""}`}>
@@ -31925,6 +32061,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     buyGearItem, sellGearOne, equipOne, stripAll, mendKitOf, forgeForMan, armHimOff, armAllOff,
     buildUp, setCrestTo, setCareOf, editorBought, EDITORS, PETITIONS, PET_KEYS, runPetition, petitionOdds, petitionWhy, petitionReady, PETITION_COOL, pickAnyOpp, CARE, CARE_KEYS, careWhy, surgeonOK, surgeonFee, retireEligible, FM_KEYS, freedWeek,
     teachSigTo, makeMasterOf, startSecond, switchStyle, techsFor, sigFee, sigOf, TECHNIQUES,
+    canMaster, makeMaster, MASTERY_GATE, MASTERY, masterOf, masterNeed,   /* #232 phase 5 — masterOpen/MASTER_ACCLAIM are already on the handle */
+    challengeSquare, squareReady, squareWhy, provedIt, proveInSquare,   /* #232 phase 5 — the square as a door */
     setPupilTo, beginRetrain, endRetrain, hireDoctore, dismissDoctore, takeDoctoreOffer, makeDoctore, docSecond, onSquare, squareMen, squareWord, squareWeek, squareTook, squareTie, SQUARE_WEAR, SQUARE_TIE, doctoreWeek, docLesson, DOC_LESSONS, tieBetween, tieWord, addTie,   /* #197 — the square's second seat, and the tie words the arena panel already uses */
     hireStaffMember, letStaffGoOf, setEarTo,
     haveWatchedOffer, stopPrepFor, buyFromHouse, startCourt, setPrep, nameHim, scoutMan, makePeace,

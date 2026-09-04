@@ -4389,6 +4389,72 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.189.0 — #232 phase 5: the square is a door the player can open, and mastery is earned through it
+
+Phase queue item #232's deferred "optional stretch", built — and built in the order the measurement
+demanded rather than the order the item wrote it in, because its first half has a missing
+prerequisite the item does not mention.
+
+**WHAT PHASE 5 ASKS FOR.** "Require a won spar to convert `g.teaching`/`g.learning` into a granted
+technique or `g.mastery` (currently pure wins/pfame + time/fee thresholds)." And: "let the player
+spar two candidates to decide `pairSel` order for a pair bout."
+
+**THERE WAS NO WAY TO SPAR ON PURPOSE.** `d.pendingSpar` was written in exactly two places —
+`EVENTS.feud`'s first answer, which arrives when the yard decides it has a grudge, and
+`holdTourney`'s final, which is a UI-only action the rope never calls. `regimen:"spar"` is a weekly
+*training pairing* that never fights. Measured over 2,815 played weeks in 14 houses
+(`probes/master.mjs`): **40 spars, every one of them from a feud, none from a tournament**, in 10 of
+14 houses. About one square every seventy weeks, and not one of them asked for.
+
+**AND MASTERY WAS ALREADY THIN.** `canMaster` wants twelve wins and fifty-five renown, and **15 of
+435 men (3.4%)** ever clear it — first at week 27, in 9 of 14 houses. Gating a 3.4% achievement
+behind a once-in-seventy-weeks accident would not have deepened mastery, it would have deleted it.
+So phase 5 is two things and the order matters: **open the square, then put the gate behind it.**
+
+**THE DOOR.** `challengeSquare(d, aid, bid)` puts any two fit men of the house on the sand because
+the lanista says so, through the same `{pending, beats, crux}` handshake `chooseEv` and `doTourney`
+use. It costs what the square already costs — `doSpar` puts 20 fatigue into both and rolls
+`SPAR_HURT` on the beaten one — plus the week: one afternoon like this, because the yard has other
+work. `squareWhy` names the refusal rather than greying a button out.
+
+**THE GATE.** `canMaster` gains a third clause: he has beaten somebody in the square that the house
+prices at or above him. The bar is not a new constant — it is `gladValue`, the game's own price on a
+man. Measured over 1,500 spars: a man beats his equal **49.5%** of the time and one worth 15% more
+**31.0%**. A couple of afternoons for a man who is ready and a wall for one who is not, which is the
+difference between a gate and a delay.
+
+**AND IT IS PRICED.** Played out on 8 houses, one afternoon a week whenever there was a matchup
+worth having: **500 afternoons, 97 men proved it, 10 became masters — and 82 of those afternoons
+(16.4%) ended with a man off the roster**, which is `SPAR_HURT` doing exactly what #232 measured it
+at. Making a master costs you the risk of injuring him and the best man you can put in front of him,
+twice over.
+
+**THREE MEASUREMENT FAULTS IN MY OWN INSTRUMENT, ALL IN THE SAME NUMBER.** `probes/master.mjs`
+reported "0 spars in 2,815 played weeks" three times before it was right. First the marker: `endWeek`
+resolves `d.pendingSpar` inside the same `lanista` call, so watching the field after the week sees
+nothing. Then the wrong chronicle text — the tournament's line is in `sum`, not `chron`. Then the
+real one: **`chron` unshifts**, so the newest line is at index 0, and slicing from the old length
+reads the oldest entries. The true figure is 40.
+
+**AND THE GATE CAUGHT TWO MORE.** `bulk` failed at **App 5,787 lines against 5,786 allowed** — one
+line over, from the click handler — so the bout's body moved to module scope as `squareBout`, which
+is exactly what that cap is for and not a reason to raise it. And `orders` refused to let a new
+`res.crux` brancher go unclassified: `intoSquare` joins `chooseEv` and `doTourney` as NOSPEND,
+because an afternoon in the yard is not a card.
+
+**Shipped:** `challengeSquare`/`squareReady`/`squareWhy`; `squareBout`; `provedIt`/`proveInSquare` and `g.proved`;
+`canMaster`'s third clause and `masterNeed`, which names what a man is short of; `SquareBox`, written
+at module scope with its own state because `SECT.square` is already 155 lines and that is what `bulk`
+is for. `checks/prove.mjs` — 7 arms, **11 sabotages, 11 caught**. `checks/careers.mjs` failed
+correctly on the new clause and now covers it from both sides — refused before the square, and
+beating a cheaper man is not proof.
+
+**Not built, with the reason.** The pair-lead half. With the square open the player can already spar
+two candidates before a pair bout, and `pairSel` order is his to choose by clicking — so "spar to
+decide the lead" would take a decision away rather than add one, and the square already tells him
+which of them is better. The item called these speculative and this half does not survive contact
+with the door the other half needed.
+
 ### v3.188.0 — the primacy of Capua is decided on the sand, and it can cost you your champion
 
 The open design decision left beside #232 phase 4, answered: **a real bout.**
@@ -5167,7 +5233,7 @@ arc; a political analogue of `d.nemesis`; a cooperative venatio mode; and, in th
 votes from any of the three curators, an anytime, generated-not-written Almanac extending the glossary sheet's
 own proven idiom.
 
-**#232 — The Training-Square Duel** *(new system)* — **SHIPPED, v3.182.0 + v3.183.0 + v3.184.0.** `simulateSpar` (the fifth engine, structurally unable to kill: no appeal/missio block, damage capped after every multiplier, a hard floor of `SPAR_YIELD - SPAR_CAP`) and the `EVENTS.feud` rewiring shipped, with the odds measured against the branch they replace and held to 1.4 points. The beat-viewer wiring shipped in v3.183.0 with `SPAR_CRUX`'s own three orders — and confirmed the item's own predicted hazard, that the viewer's `solo` flag would hand a spar the single sand's whole menu. `holdTourney`'s final shipped in v3.184.0 — the seed loses it 38.6% of the time — closing the item. Phase 5's hooks were never fudge-replacements and stay unbuilt; the primacy challenge found beside Phase 4 was written up as a design decision rather than a defect, because fixing it properly means letting you kill your own champion — **decided and shipped in v3.188.0**: it goes through `simulateFight` at standard stakes with the appeal live, and somebody dies in 2.8-4.5% of them.
+**#232 — The Training-Square Duel** *(new system)* — **SHIPPED, v3.182.0 + v3.183.0 + v3.184.0.** `simulateSpar` (the fifth engine, structurally unable to kill: no appeal/missio block, damage capped after every multiplier, a hard floor of `SPAR_YIELD - SPAR_CAP`) and the `EVENTS.feud` rewiring shipped, with the odds measured against the branch they replace and held to 1.4 points. The beat-viewer wiring shipped in v3.183.0 with `SPAR_CRUX`'s own three orders — and confirmed the item's own predicted hazard, that the viewer's `solo` flag would hand a spar the single sand's whole menu. `holdTourney`'s final shipped in v3.184.0 — the seed loses it 38.6% of the time — closing the item. **Phase 5 shipped in v3.189.0** — its mastery half, after the measurement showed its prerequisite was missing: there was no way to spar on purpose (40 spars in 2,815 played weeks, all from feuds) and mastery was already thin (15 of 435 men). The square is a door the player opens now, and `canMaster` wants a man beaten in it who the house prices at or above him. The pair-lead half was declined with a reason. Phase 5's hooks were never fudge-replacements; the primacy challenge found beside Phase 4 was written up as a design decision rather than a defect, because fixing it properly means letting you kill your own champion — **decided and shipped in v3.188.0**: it goes through `simulateFight` at standard stakes with the appeal live, and somebody dies in 2.8-4.5% of them.
 The only round-by-round fight resolver in the game (simulateFight, plus doFight's pause/resume) has never been pointed at a fight inside the walls: EVENTS.feud's i===0 branch settles a named duel between two of your own men with one power() call per side scaled by an independent 0.8–1.3 roll and a flat 16% injury check, and holdTourney (line 1452) ranks the whole eligible roster by a score() formula and crowns a yard-tournament winner having fought zero rounds. A trimmed sibling resolver — simulateSpar, built the way simulatePair was explicitly built "apart from simulateFight on purpose" (line 17077) — gives the two scenes the game's own prose already stages as a stopped-yard spectacle an actual animated bout, with no missio-to-death path.
 
 Two moments in the game already narrate the whole familia stopping to watch two of your own men fight, and neither one calls the fight engine. EVENTS.feud (the "In The Yard" pendingEvent set up by feudWeek, line 1297) has a run(d,ev,i) with four branches; the i===0 branch, reached when the player picks "put them on the sand" (line 18403–18419), resolves it as: `pa = power(...,"measured",...)`, `pb = power(...,"measured",...)`, `aWins = pa*(0.8+R()*0.5) > pb*(0.8+R()*0.5)`, then a flat `R()<0.16` roll against `INJURIES[ri(0,2)]` for the loser. No rounds, no beats, no crux, no appeal — the text says "with wooden swords and the doctore counting," and none of that is simulated. holdTourney (line 1452) is worse in one respect: it never even simulates a single pairing. `score(g)` sums weighted class stats, raw STR/AGI/TEC/DIS, regardOf(g), wins, and an R()*24 noise term; the roster is sorted by that score and `ranked[0]` is simply declared the winner. The flavor text ("wooden swords, no editor, every man with something to prove") describes a tournament that is entirely arithmetic. Meanwhile simulateFight (line 9730) and doFight (line 17612) are the most developed system in the codebase — a 12-round beat loop, a crux stop/resume contract (`res.unfinished` → `{pending:{...crux:res.crux}, beats, crux:true}`), missio odds, appeal, marks/tells — and it is reserved entirely for bouts against outside houses. The two places the design already treats an internal fight as a named event get the least mechanical attention of anything in the file.

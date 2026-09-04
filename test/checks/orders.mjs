@@ -70,7 +70,9 @@ const RESUMER = "speak";
    had set for the card he was actually preparing, which is #194 pointing the other way.
    The exemption is only honest while the premise holds, so the premise is asserted below: if
    `doSpar` ever starts reading the week's orders, this must become a SENDER. */
-const NOSPEND = ["chooseEv", "doTourney"];
+/* #232 phase 5 — `intoSquare` joins them for the same reason: an afternoon in the yard is not a
+   card, so no order is spent putting two of your own men in the square. */
+const NOSPEND = ["chooseEv", "doTourney", "intoSquare"];
 
 export async function run(){
   const lines = [], fails = [];
