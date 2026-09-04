@@ -11692,10 +11692,39 @@ function makeLanista(d){
     traits: [], since: 1, wonBets: 0, quietStanding: 0, styleRun: 0, styleWas: null };
 }
 /* the job, week by week */
+/* the age at which the years start to tell. It was 42, and the toll from there is quadratic in
+   cumulative cost, which is what made a healthy sixty-two-year-old impossible. */
+const LAN_AGE_FROM = 52;
 function lanistaWeek(d){
   const L = d.lanista; if(!L || d.over) return;
   let h = L.health;
-  if(L.age > 42) h -= (L.age-42)*0.045;
+  /* ---- THE AGE THAT OPENS RETIREMENT WAS THE AGE THAT KILLED HIM ----
+     The retirement door below wants `age >= 62 && health >= 45`, so the design plainly intends a
+     healthy sixty-two-year-old to exist. This line made him impossible. The drain was linear in age
+     with no ceiling — 0.045 a year over 42 — which is QUADRATIC in cumulative cost: a man aging from
+     43 to 62 pays 0.81 x 210 = about 170 points of health against a mend of 0.06 a week (21 over the
+     same span) from a start of `ri(78,92)`. He is at zero long before he is sixty-two.
+
+     MEASURED (`probes/heirs.mjs`, 16 houses x 520 weeks). Under the reference player the lanista
+     ends at a median age of 47 and his health never falls below 68.5 — the house dies first, so
+     neither door opens and 2 of 16 campaigns ever see a second generation. Started at 58 so that he
+     DOES reach the age, he is 62-or-over on 881 weeks and the retirement gate holds on **24 of
+     them**, because by then his health has collapsed. The two terms of the same gate pull against
+     each other.
+
+     THE NOTE BELOW RECORDS THIS BEING FOUND ONCE ALREADY and fixed by making retirement a second
+     door. The door was added; nothing made it passable.
+
+     SO THE YEARS START TO TELL AT FIFTY-TWO INSTEAD OF FORTY-TWO, and that is the whole change:
+     the coefficient, the mend, the unrest and rebellion drains and the baths are all untouched, so a
+     lanista who runs a cruel or mutinous house still goes down at the same rate for it.
+
+     A CAP WAS TRIED FIRST AND WENT TOO FAR. Ceiling the weekly drain at 0.18 made the 58-start arm's
+     retirement gate hold on 196 weeks against 24 — but it also put the drain permanently below what
+     a man could out-mend at 0.06 a week plus baths, so his health never fell below 71 and he became
+     effectively immortal: the DEATH door, and the `lanistaDied` ending under it, went dark. Moving
+     the onset keeps both doors — he is sound into his early sixties and then goes down properly. */
+  if(L.age > LAN_AGE_FROM) h -= (L.age-LAN_AGE_FROM)*0.045;
   if(d.unrest > 60) h -= 0.16;
   if(d.rebellion && d.rebellion.stage >= 2) h -= 0.3;
   if(bLevel(d,"balneae")) h += bLevel(d,"balneae")*0.09;
@@ -32523,6 +32552,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* the word from the box — the three or four things a crux will take */
     CRUX, forgeReady, PLANS, PLAN_KEYS, TELLS, TELL_KEYS, planEffect,
     /* the man in the chair: what the job does to him, and what it makes of him */
+    LAN_AGE_FROM,   /* #the tenure: the age at which the years start to tell */
     lanistaWeek, LAN_TRAITS, LAN_KEYS, hasLT, repStyle, addRep, makeLanista,
     /* ---- AND THE NAME CAPUA SETTLES ON, which is the input to all of the above ----
        `repStyle` is what earns `hard` and `merciful`, and it is one of the two things that

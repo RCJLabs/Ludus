@@ -41,7 +41,7 @@ const out = await p.evaluate(([H,W,SEED])=>{
      DOES reach the age, does the door open and does the handover work? He is started at 58. */
   const arm = (label, old) => {
     const rows = [];
-    let succ = 0, retired = 0, died = 0, heirWeeks = 0, gateWeeks = 0, ageOK = 0, weeks = 0;
+    let succ = 0, retired = 0, died = 0, heirWeeks = 0, gateWeeks = 0, ageOK = 0, weeks = 0, zeroed = 0;
     for(let h=0; h<H; h++){
       const d = A.newGameState("Hr"+h, "capua", `${SEED}-${h}`);
       if(old && d.lanista) d.lanista.age = 58;
@@ -53,6 +53,7 @@ const out = await p.evaluate(([H,W,SEED])=>{
         if(L){ row.peakAge = Math.max(row.peakAge, L.age||0);
           row.minHealth = Math.min(row.minHealth, L.health==null?100:L.health);
           if((L.age||0) >= 62) ageOK++;
+          if((L.health||0) <= 0) zeroed++;
           if(d.heir){ heirWeeks++;
             if((L.age||0) >= 62 && (L.health||0) >= 45 && (Math.floor((d.week-1)/18)+1) >= 6) gateWeeks++; }
         }
@@ -64,7 +65,12 @@ const out = await p.evaluate(([H,W,SEED])=>{
       if(row.succ) succ++;
       rows.push(row);
     }
-    return { label, rows, succ, weeks, heirWeeks, gateWeeks, ageOK };
+    return { label, rows, succ, weeks, heirWeeks, gateWeeks, ageOK, zeroed,
+      diedOfAge: rows.filter(r=>r.minHealth <= 0).length,
+      /* THE MEASURE THAT MATTERS: is the door PASSABLE for a man who reaches it? Making more
+         lanistae reach 62 is a question about how long houses live, and a different item. */
+      got62: rows.filter(r=>r.peakAge >= 62).length,
+      got62Succ: rows.filter(r=>r.peakAge >= 62 && r.succ).length };
   };
   return { arms: [arm("reference", false), arm("a lanista who starts at 58", true)],
     start: { age:"ri(34,46)", health:"ri(78,92)" } };
@@ -80,6 +86,8 @@ for(const A2 of out.arms){
   console.log(`  weeks with an heir named:      ${A2.heirWeeks} of ${A2.weeks}  ·  weeks he was 62+: ${A2.ageOK}`);
   console.log(`  weeks the retirement gate's terms ALL held (bar the 6% roll): ${A2.gateWeeks}`);
   console.log(`    → expected retirements at 6%: ${(A2.gateWeeks*0.06).toFixed(2)}`);
+  console.log(`  the DEATH door: houses where his health ever hit 0: ${A2.diedOfAge} of ${n} — it must not go dark either`);
+  console.log(`  of the ${A2.got62} houses whose lanista REACHED 62, ${A2.got62Succ} handed the house on — this is the door's own rate`);
   console.log(`  HOUSES THAT EVER SUCCEEDED:    ${A2.succ} of ${n}`);
   const kinds = {}; for(const r of R2) kinds[r.heir||"(none)"] = (kinds[r.heir||"(none)"]||0)+1;
   console.log(`  heirs named, by kind: ${Object.entries(kinds).map(([k,v])=>`${k} ${v}`).join(" · ")}`);

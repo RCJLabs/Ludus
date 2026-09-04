@@ -133,7 +133,13 @@ export async function run({ p }){
         const d = A.newGameState("Ds", "clean", tag, null);
         d.week = 300; d.gold = 30000; d.fame = 900;
         if(!d.lanista) d.lanista = A.makeLanista(d);
-        d.lanista.age = 52;
+        /* SIXTY, NOT FIFTY-TWO. This fixture drives the death door by setting health to 0 and
+           letting `lanistaWeek` catch it — but that check runs AFTER the week's mend, so it only
+           catches a man who is actually declining. At 52 he was declining because the age drain
+           started at 42; v3.198.0 moved the onset to 52 itself, so a fifty-two-year-old now mends
+           off zero and escapes. The fixture wanted a failing lanista and named an age instead of a
+           condition; it names an age that is still failing. */
+        d.lanista.age = 60;
         d.domus = { wife:{ name:"Tullia", family:"Sergia", married: 300 - YW*20, age:24, from:"merchant" },
           children:[], nextKin:1 };
         for(const [age, sex] of [[22,"m"],[17,"m"],[19,"f"]])
