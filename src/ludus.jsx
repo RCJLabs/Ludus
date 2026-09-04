@@ -2335,7 +2335,7 @@ const RIVAL_BEATS = {
     hit:(d,h)=>{ warmMove(d,h,16); d.fame += 8; } },
   end:     { need:c=>c.met>=26 && c.years>=11 && c.warm>=52, w:30,
     say:(L,c)=>`${L.name} is not at the games. He is not at the next one either. A letter comes eventually — he has sold up and gone to a farm near Nola, and the last line asks you to look in on his doctore, who is too old to place anywhere.`,
-    hit:(d,h)=>{ const r=houseOf(d,h); if(r) r.retired = true; warmMove(d,h,10); d.fame += 10; } },
+    hit:(d,h)=>{ const r=houseOf(d,h); if(r) closeHouse(d, r, "fond"); warmMove(d,h,10); d.fame += 10; } },
 };
 const RB_KEYS = Object.keys(RIVAL_BEATS);
 function rivalArc(d){
@@ -4582,6 +4582,35 @@ function addTie(d, a, b, kind, strength){
   return t;
 }
 const dropTies = (d,id) => { d.ties = tieList(d).filter(t=>t.a!==id && t.b!==id); };
+
+/* ---- A YARD IN CAPUA REMEMBERS WHOSE IT WAS — phase queue #240, phase 4 ----
+   A house leaves play through exactly two doors — `RIVAL_BEATS.end`, where he sells up fond of you,
+   and `settleNemHouse`'s decisive win, where you finish him — and both wrote one word: `retired`.
+   `bayRefill` then sold the empty yard to a stranger who arrived knowing nothing, opening at
+   `grudge: ri(0,12)` and no warmth, so eighteen weeks of a declared feud or a decade of drinking at
+   the same table were discarded the moment the man who held them walked away.
+
+   #240 wanted a SON to inherit that. Measured (`probes/dynasty.mjs`, 64 campaigns, 12,551 played
+   weeks, four cells) a house leaves play **0.58 times per multi-decade campaign** — so behind the
+   item's own guardrail roll the son would be met by about one player in five, once, and the item's
+   own falsifier calls that off. What the same measurement found is that the HANDOVER is not wasted:
+   the campaign runs a median 90 weeks longer after a retirement and the stranger who takes the yard
+   is actually fought in 10 of 16 cases. So the succession ships and the dynasty does not.
+
+   This stamps the two doors. It is called for its side effects and returns the record it wrote. */
+function closeHouse(d, h, how){
+  if(!h || h.retired) return null;
+  h.retired = true;
+  h.endedAs = how;                    /* "fond" — he sold up · "broken" — you finished him */
+  h.retiredAt = d.week;
+  h.lineage = { name: lanistaOf(h.name).name, house: h.name, fame: Math.round(h.fame||0),
+    endedAs: how, week: d.week, met: ((d.metHouse||{})[h.name]||{}).met || 0,
+    warm: Math.round(warmth(d, h.name)), grudge: Math.round(h.grudge||0), kin: !!h.kin };
+  return h.lineage;
+}
+/* the yard that most recently went dark, and has not yet been sold on */
+const lastDark = d => (d.rivals||[]).filter(h=>h.retired && h.lineage && !h.lineage.sold)
+  .sort((a,b)=>(b.retiredAt||0) - (a.retiredAt||0))[0] || null;
 
 /* Brothers feel what happens to each other. Returns the men who reacted. */
 function kinReact(d, id, kind, moraleDelta, defianceDelta){
@@ -7353,11 +7382,34 @@ function bayRefill(d){
   const N = pick(opts);
   const q = clamp(bayStandard(d) - ri(6, 18), 28, 96);
   const fameRef = live.length ? live.reduce((s,h)=>s+h.fame,0)/live.length : Math.max(70, d.fame*0.30);
+  /* ---- AND WHOSE YARD IT WAS — #240 phase 4 ----
+     He is a stranger, and he is not a stranger to the STORY. The yard he has bought is the one that
+     went dark, the trade told him how it went dark, and a man who buys the yard of somebody you
+     broke does not walk in at `grudge: ri(0,12)` with no opinion. This is the item's continuity
+     without the item's dynasty: no heir, no identity-override layer, no name generated — the new
+     lanista is his own `LANISTAE` record exactly as before, and what he inherits is a POSITION.
+        broken   he bought it cheap off a man you ruined, and he has heard the story
+        fond     he bought it from a friend of yours, who put in a word
+     `kin` carries too: a wedding that folded a feud stays folded across the handover, which is the
+     one place `weddingEndsFeud`'s flag was silently discarded before this. */
+  const dark = lastDark(d);
+  const L = dark ? dark.lineage : null;
   const h = { name:N.key, fame: Math.max(40, rnd(fameRef * (0.55 + R()*0.55))),
     grudge: ri(0,12), form: ri(-10,10), formTier:0, star:null, opened:d.week,
     fighters: Array.from({length: ri(3,4)}, ()=>makeRivalFighter(d, N.key, clamp(q + ri(-8,10), 25, 99))) };
+  if(L){
+    dark.lineage.sold = d.week;
+    h.after = L;                                   /* whose yard this was, and how it ended */
+    if(L.endedAs === "broken"){ h.grudge = clamp(h.grudge + ri(16, 30), 0, 100); }
+    else { h.warm = clamp((h.warm||0) + ri(10, 20), 0, 100); h.grudge = clamp(h.grudge - 6, 0, 100); }
+    if(L.kin) h.kin = true;
+  }
   d.rivals.push(h);
   chron(d, N.line(h), "info");
+  if(L) chron(d, L.endedAs === "broken"
+    ? `It is ${L.name}'s yard he has bought, and he did not pay much for it. Everybody who sold him anything that week told him how it came to be empty, and whose doing that was. He has not said a word about it to you, which is its own kind of saying something.`
+    : `It is ${L.name}'s yard he has bought. There was a letter from Nola in the sale, and your name was in it — not as a warning. Whatever ${L.name} thought of you, this one has been told it before he ever laid eyes on you.`,
+    L.endedAs === "broken" ? "bad" : "good");
 }
 
 /* ---- THE LEAGUE OF CAPUA ----
@@ -12766,7 +12818,7 @@ function settleNemHouse(d, won){
     d.flags.nemCool = d.week; d.nemHouse = null;
     if(edge >= 1 && h){
       /* you won the cold war and the match — you do not just beat him, you finish him */
-      h.retired = true; d.fame += 55;
+      closeHouse(d, h, "broken"); d.fame += 55;
       patronsOf(d).forEach(p=>{ p.favor = clamp(p.favor+5,0,100); }); recomputeFavor(d);
       chron(d, `It is finished, and so is he. House ${n.house} was beaten on the sand it chose, after a season in which you answered ${L} for every blow and landed more of your own. Within the month he sells up and takes the road to Nola. There is one fewer house in the bay, and everyone knows whose doing that was.`, "good");
       nemLog(d, `House ${n.house} is broken — folded, gone. Your way, and decisively.`);
@@ -27517,6 +27569,13 @@ export default function App(){
                 {riv && bookH && bookH.n>=1 && <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:1,fontStyle:"italic"}}>
                   {bookH.n} card{bookH.n>1?"s":""} against him — you {bookH.w}–{bookH.n-bookH.w}
                 </div>}
+                {/* #240 — the yard has a history and the man standing in it knows it */}
+                {riv && riv.after && <div style={{fontSize:"var(--fs-sm)",marginTop:1,fontStyle:"italic",
+                  color: riv.after.endedAs==="broken" ? "var(--blood-hi)" : "var(--laurel)"}}>
+                  {riv.after.endedAs==="broken"
+                    ? `He holds ${riv.after.name}'s yard — the one you emptied.`
+                    : `He holds ${riv.after.name}'s yard, and was spoken well of to him.`}
+                </div>}
                 {h.you && i===0 && <div className="laurel" style={{fontSize:"var(--fs-sm)",marginTop:1,fontStyle:"italic"}}>the first house of the city</div>}
               </div>
             );
@@ -27529,7 +27588,8 @@ export default function App(){
             return (
               <div style={{borderTop:"1px dotted var(--line)",marginTop:8,paddingTop:7}}>
                 {gone.length>0 && <div className="dim" style={{fontSize:"var(--fs-base)"}}>
-                  <span style={{color:"var(--ink-dim)"}}>Folded</span> · {gone.map(h=>`House ${h.name}`).join(", ")} — sold up and gone out of the trade.
+                  <span style={{color:"var(--ink-dim)"}}>Folded</span> · {gone.map(h=>`House ${h.name}${
+                    h.endedAs==="broken" ? " (you finished him)" : h.endedAs==="fond" ? " (sold up, on good terms)" : ""}`).join(", ")} — gone out of the trade.
                 </div>}
                 {live.length < BAY_FLOOR && <div style={{fontSize:"var(--fs-base)",marginTop:3,color:"var(--gold)"}}>
                   {live.length===0
@@ -32428,6 +32488,9 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* #239 — the ask that grants a life outside the wall, the table its two answers are now on the
        record through, and the grief hook every one of the five doors a man can die through calls */
     REGARD, remember, mournKin, HH_NAMES,
+    /* #240 — the two doors a rival house leaves play through, what they now write, and the refill
+       that reads it. None of the bay machinery was on the handle; nothing had ever probed it. */
+    closeHouse, lastDark, bayRefill, liveRivals, BAY_FLOOR, NEW_HOUSES, RIVAL_SEED, LANISTAE,
     /* ---- AND WHETHER THE WEEK'S NUDGE POINTS AT THE BIGGEST LEVER ----
        #117 measured working the cells as the largest lever in the game. The agenda offers the feast
        at unrest 35 and never mentions walking the cells at all — see `agendaCan`. #119. */

@@ -4389,6 +4389,91 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.194.0 — #240: a yard in Capua remembers whose it was, and the rope had a lever nobody could pull
+
+Item #240, "A Rival House Is a Family, Not a Slot". Five phases asked for; **one ships, four are
+refused**, and the verify-first found a defect in the instrument on the way.
+
+**THE DEFECT IS REAL AND IT IS ONE WORD LONG.** A rival house leaves play through exactly two doors —
+`RIVAL_BEATS.end`, where he sells up fond of you and takes the road to Nola, and `settleNemHouse`'s
+decisive win, where you finish him — and both wrote `h.retired = true` and nothing else. `bayRefill`
+then sold the empty yard to a stranger who opened at `grudge: ri(0,12)` with no warmth and no
+reference to the identity he replaced. Eighteen weeks of a declared feud, a decade of drinking at the
+same table, and `weddingEndsFeud`'s `h.kin` — the flag that says a marriage folded this feud for good
+— were all discarded the moment the man holding them walked away.
+
+**WHAT THE MEASUREMENT SAID** (`probes/dynasty.mjs`, four cells across two seeds — 64 campaigns,
+12,551 played weeks — and nothing in this repo had ever probed `bayRefill` or `NEW_HOUSES` at all):
+
+- **a house leaves play 0.58 times per multi-decade campaign.** 37 retirements in 64 campaigns, one
+  every ~425 weeks: **32 through the broken door, 5 through the fond one.** The item's own falsifier
+  says an event firing "only in single digits across an entire multi-decade campaign" does not earn
+  the two engine phases. Behind its own guardrail roll — "a fraction of retirements, not a coin
+  flip" — a son would be met by about **one player in five, once.** The falsifier fires.
+- **and phase 2 is dearer than the item prices it.** `lanistaOf(key)` is a bare-string lookup into a
+  module constant at **80 call sites**, with no `d` in scope at any of them. An `h.heir` override it
+  could read means threading `d` through all eighty, or module-level mutable state — and the save is
+  `JSON.stringify(d)`, so anything parked in `LANISTAE` vanishes on reload and leaks into the next
+  game started in the same tab. The falsifier names that layer specifically.
+- **but the handover is not wasted**, which the item does not ask and which decides the shape of what
+  ships. After a retirement the campaign runs a **median 90 more weeks**, and the stranger who takes
+  the yard is actually fought in **10 of 16** cases. The moment has an audience; only the dynasty
+  does not pay for itself.
+
+**SO THE SUCCESSION SHIPS AND THE DYNASTY DOES NOT.** `closeHouse` stamps both doors with how the
+house ended and what the relationship was worth when it shut — the lanista's name, the cards fought,
+the warmth, the grudge, `kin`. `bayRefill` reads it. The new man is still his own `LANISTAE` record —
+no heir, no override layer, no generated name — and what he inherits is a **position**:
+
+| | |
+|---|---|
+| broken | he bought the yard cheap off a man you ruined, and the trade told him how it came to be empty — he opens hostile |
+| fond | he bought it from a friend of yours, and there was a letter from Nola in the sale with your name in it — he opens warm |
+| either | `h.kin` carries across, so a wedding that folded a feud stays folded through the handover |
+
+**And phase 5's migration is not needed** — a house folded before this release has no `lineage`, and
+that absence is the correct answer. The check drives that case: the yard is sold to a plain stranger,
+exactly as it always was.
+
+---
+
+**AND THE ROPE HAD A LEVER NOBODY COULD PULL.** The measurement wanted an arm that courts one rival
+house — take that house's card whenever the bill carries it — and it reported **0 bills seen and 0
+offers examined** over 300 weeks in which bouts were plainly being fought. `takeBout` documents
+`o.pick`; `lanista` was passing its own picker. The first fix did not work either, and the reason is
+worse than a forgotten forward:
+
+> The options literal `lanista` hands `takeBout` carried **`pick:` twice** — once at the top since
+> v3.128.0, once at the bottom since v3.96.0 — and in a JavaScript object literal the last key wins.
+> So from v3.128.0 the `protect` option's safe pick and the `pairs` option's pair pick have both been
+> **silently discarded**, along with any picker a caller passed. Nothing warned: esbuild flags
+> duplicate keys, and esbuild never sees `harness.mjs`.
+
+That is the **fifth** rope option found inert after being measured through — after `stakes`,
+`wantStakes`, `preferStakes` and `entrance` — and the first one JavaScript ate rather than a
+programmer forgot. One picker now, with the priority written down instead of decided by line order:
+a caller's `pick`, then `protect`/`pairs`, then the house default (the primacy when it is up, else the
+biggest purse) — which is unchanged for every caller passing none of the three, so no published
+figure moves.
+
+**What the restored lever changes.** No release check passes `protect` or `pairs`, so the gate is
+untouched. `probes/beside.mjs` (#202's own) does: re-run with the lever connected, the pairs arm
+takes **240 pair bouts against the control's 157**, where before it got its pairs only incidentally,
+through the purse-maximising default favouring the 1.7× pair purse. #202's conclusion survives the
+correction and its direction is unchanged — the arm meets `beside` on the sand 43.5% against the
+control's 30.6%, so the item still shrinks to signposting. `protect` had no such accidental proxy and
+was fully inert as a picker; nothing in the suite passes it.
+
+**`probe.mjs` now fails the suite on a key written twice** in any literal the rope hands its own inner
+functions — ternaries and nested objects excluded, both of which the first draft of the scanner got
+wrong and announced by reporting a key called `null`. Verified by putting the original duplicate back
+(reports `takeBout(…) names \`pick\` 2 times`) and by duplicating a different key.
+
+**Held by `checks/dynasty.mjs` — ten arms, ten sabotages, all ten caught.** Two of them escaped the
+first draft: arms that called `closeHouse` by hand passed happily while both doors were cut back to a
+bare `h.retired = true`, which is the likeliest way this ever regresses. `RIVAL_BEATS.end` and
+`settleNemHouse` are opened for real now.
+
 ### v3.193.0 — #239: a life outside the wall, and the bill when it ends
 
 Item #239, "A Life Outside The Wall". Five phases asked for; **two shipped and three refused**, and
