@@ -2693,7 +2693,7 @@ sand rolls `winChance`, which has morale, fatigue, footing, kit, showmanship, re
 Two different functions — and the map between them is **steep**, so a band four points wide on the
 rating was forty-five points wide on the roll.
 
-Measured (`probes/read.mjs`, 8 houses over 676 weeks, 37,217 pairings), the median win chance under
+Measured (`probes/roster.mjs`, 8 houses over 676 weeks, 37,217 pairings), the median win chance under
 each word:
 
 | the word the panel gave | median win chance |
@@ -4389,6 +4389,110 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.190.0 — #236: the houses across town look at your card, and the shrewd ones act on it
+
+Item #236, "Rivals Roll Dice; They Don't Read Your Roster" — built, calibrated against its own four
+verify-first checks, and shipped with the one it **fails** written down rather than tuned around.
+
+**THE DEFECT IS REAL.** `RIVAL_MOVES.retrain` sent a man to one of the five classes he was not with
+a bare `pick()`. `RIVAL_MOVES.buy` lifted whoever topped `gladValue` off the block. Neither had ever
+looked at what the player fields — while `COUNTERS` and `CLS_EDGE` make the six-class cycle worth a
+real 1.15/0.91 in every bout he fights.
+
+**FOUR THINGS MEASURED BEFORE ANY OF IT WAS WRITTEN** (`probes/roster.mjs`), two of which changed the
+design and one of which changed what this release claims:
+
+1. **The cycle is worth pressing on.** On 700 even bouts a side the countering class wins **59.4%**,
+   neutral 48.3%, countered 41.9%. Eleven points over neutral. Real pressure, not flavour.
+2. **The uniform floor is 15.8%, not the 20% the item assumed.** `filter(c=>c!==was)` drops the
+   retrainer's own class, and sometimes that is the very class that would counter the player.
+3. **Half the time there is nothing to read.** 717 of 1,548 weeks with a roster of 3+ (**46.3%**)
+   had a *tie* at the top, and the median top class holds only 40% of the roster. That is the
+   guardrail the item asked for, arriving for free: diversify and you cannot be read.
+4. **Recency weighting earns its code, on the narrow question.** It disagrees with a plain tally on
+   37.7% of weeks — but 46.3% of weeks are ties, where disagreement is a coin broken differently. On
+   the **831 weeks with an unambiguous top class it still changed the answer 209 times (25.2%)**.
+   And it is the truthful read besides: a rival watches the games, so he sees who you put on the
+   sand, not who is in your cells.
+
+**THE CALIBRATION.** `readSharp` turns a lanista's existing `train`/`bid` into sight — the same
+fields that already decide how often he retrains and buys at all — clamped at `READ_CAP` 0.5 so the
+shrewdest man alive is a strong bias and never a certainty.
+
+| lanista | train | sight | lands on the counter | says so |
+|---|---|---|---|---|
+| Tullius | 1.55 | 0.50 | **60.4%** | 51.1% |
+| Rufinus | 1.50 | 0.50 | **61.3%** | 51.7% |
+| Marcellus | 1.40 | 0.40 | **50.9%** | 39.7% |
+| Cossutius | 1.30 | 0.30 | **47.6%** | 31.2% |
+| Varro | 1.05 | 0.05 | 24.6% | 5.2% |
+| Solonius / Pollio / Glaber | ≤1.0 | 0 | 19–22% | 0% |
+
+The item's target for a shrewd house was 40%; four clear it, and the ones who do not sit at the
+uniform floor. The gap between "lands on it" and "says so" is exactly the uniform floor times the
+unbiased share — a house that lands on the counter by luck does not claim to have aimed.
+
+**AND THE TWO AXES ARE DIFFERENT HOUSES, which was already in the data and unused.** Sharp on the
+card: Tullius, Rufinus, Marcellus, Cossutius. Sharp on the block: Tullius, **Glaber** (bid 1.7),
+**Pollio** (bid 1.8), Varro. The two men who cannot retrain their way to a counter will buy one.
+
+**THE CHECK IT FAILS, AND WHY IT IS NOT TUNED AROUND.** The item asks that a counter-motivated move
+reach the log more often than once every forty weeks or "the tell reads as a fluke". Measured in
+play: **one every 92 weeks**. The cause is not the read. `RIVAL_SEED` is a hardcoded three —
+Solonius, Vettius, Tullius — and across 24 games those three appeared 24, 24 and 24 times while
+**four of the nine lanistae appeared never**. Of the three, only Tullius has train or bid above
+baseline. So exactly one house in Capua reads you, and the ceiling is set by the rival roster:
+Tullius retrains about once in 39 weeks, aims 61% of those, and can only aim on the 58% of weeks
+with a readable roster — 1/85 predicted against 1/92 measured. The arithmetic is closed. Widening
+`RIVAL_SEED` is a different item; this one does not move its constants to reach a threshold another
+system owns.
+
+**AND IT IS SURVIVABLE, which was the risk.** Paired seeds, 14 houses × 300 weeks, the read on and
+off: the player's bout win rate went **37.49% → 37.66%**, median life 189w → 194w. +0.17 points. The
+item's guardrail was that the new pressure must not stack into something `CLS_EDGE` does not already
+produce, and it does not — it is characterisation with teeth, not a difficulty change.
+
+**AND THE GATE CHARGED FOR A DIE NOBODY COULD LOSE.** The first full run came back 144/147 with
+`altar`, `tells` and `runway` red — three checks with nothing to do with rival houses. The cause was
+`R()`. It is one global stream, and the first draft rolled for every house on every retrain and
+every buy: `read && read.want && R() < readSharp(h, "train")`. Two of the three houses `RIVAL_SEED`
+actually fields read at exactly **0**, so those draws were spending the stream on a question with
+one answer, and every later roll in the week moved. Checking the sight *before* the die —
+`readSharp` is deterministic — restored `altar` and `tells` outright. Worth stating plainly because
+the obvious diagnosis was wrong twice: neutralising `READ_CAP` to 0 did **not** clear them (the
+draws still happened), and a single inert `R()` added to untouched source did **not** break them, so
+neither "it is my logic" nor "any stream shift does this" was true. It was these draws, at these
+sites, at this frequency.
+
+**`runway` was a fragile fixture and is one no longer.** It played fifty weeks on one seed and took
+whatever came out, then divided by `weeklyBill` — which is zero for an emptied house, making
+`runway` null and the face silent. A change to how a rival picks a class buried its last man. The
+fixture restocks the yard if the weeks emptied it; the claim under test is that the face quotes the
+function, and that needs a house with men in it to be about anything.
+
+**Shipped:** `rivalReadOf` (recency-weighted, tie-guarded, three-man minimum), `readSharp`,
+`READ_WARM`/`READ_GAIN`/`READ_CAP`/`BUY_BAND`; the retrain bias and the buy tilt, each with its tell
+in the same `run()` so there is no commit where a house out-counters you off-screen — the item's own
+structural guardrail against #230's shape of bug. `checks/read.mjs` — 7 arms, **12 sabotages, 12
+caught**, three only after the arms were fixed: a thin roster that was also a tie (so the tie guard
+masked the length guard), a buy arm that watched only the sharp house, and a value-band assertion
+that priced the fighter the market man *becomes* rather than the man on the block.
+
+**AND ONE MISTAKE OF MINE THAT THE CHECK COUNT ALMOST HID.** The new check and probe were first
+written to `test/checks/read.mjs` and `test/probes/read.mjs` — both of which **already existed**, as
+audit item #231's work on the doctore's read, a different meaning of the same word. They were
+overwritten. The gate then reported 147/147 exactly as it had the release before, because a
+destroyed check and a new one net to zero, and green stayed green. It surfaced only on `git status`,
+where the two files showed as modified rather than new. Both originals are restored untouched and
+this release's pair is `roster.mjs`. The lesson is the plain one: look at the target before writing
+to it, and treat an unchanged check count across a release that adds a check as a fact to explain
+rather than a coincidence.
+
+**Recorded, not fixed:** six of nine lanista personalities are near-unreachable, because
+`RIVAL_SEED` names three houses and the other six only arrive through rare events. `d.rivalLog` is
+also a shared channel — `nemLog` and `sagaLog` write to it too — which is worth knowing before
+anyone counts rival moves by reading it.
+
 ### v3.189.0 — #232 phase 5: the square is a door the player can open, and mastery is earned through it
 
 Phase queue item #232's deferred "optional stretch", built — and built in the order the measurement
@@ -5309,7 +5413,7 @@ Rework the escalation so debt that is genuinely being serviced earns a real, bou
 
 **#235 — The Fuse, or the Tool** *(overhaul)* — **ANSWERED v3.187.0, and the answer is not the one it asked for.** Both proposed mechanics were built, measured and reverted against the item's own falsifier: extending the hard clock rescues a fifth of the loans it kills even at +44 weeks (at the clock the median loan owes 1.87x what it took and is climbing), and loosening its escape line to 2x moved 7 houses in 216 against a ~70w control spread. What the item never tested is that every number in #163 came from a rope that always borrowed the lender's whole cap: given a size lever, the cap foreclosed 102 of 216 houses, 700d foreclosed 73, 300d foreclosed 57, monotone in every seed. The loan is not a fuse; taking the maximum is. The panel now prices each amount, and three stale passages are corrected. The good-standing tier is not built and the release note says why.
 
-**#236 — Rivals Roll Dice; They Don't Read Your Roster** *(overhaul)*
+**#236 — Rivals Roll Dice; They Don't Read Your Roster** *(overhaul)* — **SHIPPED v3.190.0.** Three of its four verify-first checks passed and the fourth failed for a reason outside the item: `RIVAL_SEED` names three fixed houses, only one of which (Tullius) has train or bid above baseline, so an aimed move reaches the log once every 92 weeks against the item's 40-week target. Recorded rather than tuned around. The read itself is calibrated — four houses past the 40% landing target, the rest at the uniform floor — and the win-rate delta is +0.17 points. See the release note.
 RIVAL_MOVES.retrain (src/ludus.jsx:6511-6517) sends a man to one of the five classes he isn't already with a bare pick() — a 20% floor on landing anywhere in particular. RIVAL_MOVES.buy (6478-6493) always lifts whoever tops gladValue() off the block, full stop. Both run inside an engine whose whole identity is a six-class cycle (COUNTERS, line 384) worth a real 1.15/0.91 damage multiplier (CLS_EDGE, line 387, spent at 10067 and 17214) — and across every rival-house system in the file, nothing has ever once looked at what the player is actually fielding to decide which way to lean.
 
 Verified against source: RIVAL_MOVES.retrain.run (6511-6517) does `const to = pick(Object.keys(CLASSES).filter(c=>c!==was))` — uniform over the five other classes, no argument passed in that could see the player's roster. RIVAL_MOVES.buy.run (6478-6493) does `d.market.filter(g=>!isAuctor(g)).sort((a,b)=>gladValue(b)-gladValue(a))[0]` — pure value sort, class untouched. Both fire out of rivalTurn (6571-6590), which only reads d.rivals and d.market. The nearby poaching system was the other candidate for "reads the player's men" and it does read them (poachTarget, 12600-12604) — but only g.defiance and gladValue, never g.cls. No classMix/classCounts-style helper exists anywhere in the file (grepped, zero hits). So the brief's claim holds exactly: the six-class cycle that CLS_EDGE and power()'s smaller 1.045 counter-nudge (9448) make real and mechanical in every player bout is invisible to the two rival moves — and to the house-selection weighting around them — that would need to see it to press on it. A house can grind at you for 300 weeks without ever having built the one class that would hurt you specifically.

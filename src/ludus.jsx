@@ -6741,16 +6741,88 @@ function makeRivals(d){
 /* ---- WHAT THE OTHER HOUSES DID ----
    They have been training, poaching and buying invisibly for forty versions. Once
    a week one of them does something you can watch, and it is reported. */
+/* ---- THE RIVALS READ YOUR CARD — phase queue #236 ----
+   `RIVAL_MOVES.retrain` sent a man to one of the five classes he was not with a bare `pick()`, and
+   `RIVAL_MOVES.buy` lifted whoever topped `gladValue` off the block. Neither had ever looked at
+   what the player fields — while `COUNTERS` and `CLS_EDGE` make the six-class cycle worth a real
+   1.15/0.91 in every bout he fights. A house could grind at you for three hundred weeks without
+   once building the class that would hurt you specifically.
+
+   WHAT THE MEASUREMENT SAID BEFORE ANY OF THIS WAS WRITTEN (`probes/roster.mjs`, 12 houses x 300
+   weeks), and two of the four answers changed the design:
+
+   THE CYCLE IS WORTH PRESSING ON. On 700 even bouts a side, the countering class wins 59.4% against
+   48.3% neutral and 41.9% countered. Eleven points. This is real pressure, not flavour.
+
+   THE UNIFORM FLOOR IS 15.8%, NOT 20%. `filter(c=>c!==was)` drops the retrainer's CURRENT class
+   from the five, and sometimes the class that would counter the player is the one he already is —
+   so uniform retrain lands on it slightly less often than one in five. Measured over 139 retrains
+   with a nameable counter: 22.
+
+   AND HALF THE TIME THERE IS NOTHING TO READ. On 1,548 weeks with a roster of three or more, **717
+   (46.3%) had no single dominant class at all** — a tie at the top — and the median top class holds
+   only 40% of the roster. That is not a defect to work around, it is the guardrail the item asked
+   for, arriving for free: a house can only read a house that has a pattern. Diversify and you
+   cannot be read.
+
+   THE RECENCY WEIGHTING EARNS ITS CODE, on the narrow question rather than the flattering one. It
+   disagrees with a plain tally on 37.7% of weeks — but 46.3% of weeks are ties, where disagreement
+   is a coin broken differently. On the 831 weeks that DID have an unambiguous top class it still
+   changed the answer 209 times (25.2%). And it is the truthful read besides: a rival lanista
+   watches the games. He sees who you put on the sand, not who is in your cells. */
+const READ_WARM = 12;              /* a man fought inside this many weeks is one the bay has seen */
+const READ_GAIN = 1.0;             /* how much of a lanista's train/bid above baseline becomes sight */
+const READ_CAP  = 0.5;             /* and never more than half — a strong bias, never a certainty */
+const BUY_BAND  = 0.8;             /* a counter he buys must still be worth this much of the best man there */
+function rivalReadOf(d){
+  const men = activeG(d).filter(g => g.status === "active");
+  if(men.length < 3) return null;
+  const t = {};
+  for(const g of men){
+    const seen = g.lastFought && (d.week - g.lastFought) <= READ_WARM;
+    t[g.cls] = (t[g.cls] || 0) + (seen ? 2 : 1);
+  }
+  const ks = Object.keys(t).sort((a,b) => t[b] - t[a]);
+  if(!ks.length) return null;
+  if(ks.length > 1 && t[ks[0]] === t[ks[1]]) return null;   /* a tie is not a pattern */
+  const dom = ks[0];
+  return { dom, want: Object.keys(COUNTERS).find(k => COUNTERS[k] === dom) || null,
+    share: +(t[dom] / Object.values(t).reduce((a,b)=>a+b, 0)).toFixed(2), n: men.length };
+}
+/* how sharply this particular lanista reads, off the field that already decides how OFTEN he acts.
+   Tullius (train 1.55) and Rufinus (1.50) retrain with their eyes open; Glaber (0.75) and Pollio
+   (0.85) do not. And it is a different set of houses on the block: Pollio bids 1.8 and Glaber 1.7,
+   so the two who cannot retrain their way to a counter will buy one. */
+const readSharp = (h, k) => clamp(((lanistaOf(h.name)[k] || 1) - 1) * READ_GAIN, 0, READ_CAP);
 const RIVAL_MOVES = {
   buy: { weight:h=>1 + (lanistaOf(h.name).bid-1)*2, when:(d,h)=>h.fighters.length<7 && d.market.length,
     run(d,h){ const L=lanistaOf(h.name);
-      const best = d.market.filter(g=>!isAuctor(g)).sort((a,b)=>gladValue(b)-gladValue(a))[0];
+      const pool = d.market.filter(g=>!isAuctor(g)).sort((a,b)=>gladValue(b)-gladValue(a));
+      let best = pool[0];
       if(!best) return null;
+      /* #236 — and he may buy the answer instead of training it. A SOFT preference: only among men
+         already worth BUY_BAND of the best on the block, so the bias never strips the market of the
+         one man the player was saving for on a class he was not going to buy anyway. */
+      const sharpB = readSharp(h, "bid");
+      const read = sharpB > 0 ? rivalReadOf(d) : null;
+      let aimed = false;
+      if(read && read.want && R() < sharpB){
+        const floor = gladValue(best) * BUY_BAND;
+        const fit = pool.find(g => g.cls === read.want && gladValue(g) >= floor);
+        if(fit && fit.id !== best.id){ best = fit; aimed = true; }
+        else if(fit) aimed = true;
+      }
       d.market = d.market.filter(g=>g.id!==best.id);
       const f = makeRivalFighter(d, h.name, 55);
       ["str","agi","end","tec","sho","dis","potential"].forEach(k=>{ f[k]=best[k]; });
       f.name = best.name; f.origin = best.origin; f.cls = best.cls; f.sex = best.sex;
       h.fighters.push(f);
+      if(aimed) return pick([
+        `${L.name} buys ${best.name} off the block — a ${best.cls.toLowerCase()}, which is what you buy when the other man's yard is full of ${read.dom.toLowerCase()}s.`,
+        `${best.name} goes to House ${h.name}. He is a ${best.cls.toLowerCase()}, and there is only one house in Capua that makes him worth the money.`,
+        `${L.name} took a ${best.cls.toLowerCase()} off the block this morning and did not haggle. Consider what a ${best.cls.toLowerCase()} is for.`,
+        `Word comes up from the market: ${best.name} is bought by ${L.name}. Nobody wanted a ${best.cls.toLowerCase()} this week except the man who has been watching your card.`,
+      ]);
       return pick([
         `${L.name} buys ${best.name} off the block. He was standing where you could see him this morning.`,
         `${best.name} goes to House ${h.name}. You had looked at him twice and thought about it once.`,
@@ -6778,9 +6850,25 @@ const RIVAL_MOVES = {
   retrain: { weight:h=>lanistaOf(h.name).train, when:(d,h)=>h.fighters.length>0,
     run(d,h){ const L=lanistaOf(h.name);
       const f = pick(h.fighters); const was = f.cls;
-      const to = pick(Object.keys(CLASSES).filter(c=>c!==was));
+      /* #236 — he may have been watching. The bias and the line that names it are in the same
+         function on purpose: there is no commit where a house out-counters you off-screen, which
+         is the item's own structural guardrail against #230's shape of bug. */
+      /* THE SIGHT IS CHECKED BEFORE THE DIE, and that is not a micro-optimisation. `R()` is one
+         global stream; a draw taken where the shipped game took none moves every later roll in the
+         week. Two of the three houses `RIVAL_SEED` actually fields — Solonius and Vettius — read at
+         exactly 0, so rolling for them was spending the stream on a question with one answer. */
+      const sharp = readSharp(h, "train");
+      const read = sharp > 0 ? rivalReadOf(d) : null;
+      const aimed = !!(read && read.want && read.want !== was && R() < sharp);
+      const to = aimed ? read.want : pick(Object.keys(CLASSES).filter(c=>c!==was));
       f.cls = to; f.kit = kitFor(to, 2);
       for(const k of CLASSES[to].key) f[k] = clamp(f[k]+4, 8, 96);
+      if(aimed) return pick([
+        `${L.name} has taken ${f.name} off the card and put him back on it as a ${to.toLowerCase()}. Your yard is full of ${read.dom.toLowerCase()}s. He will have noticed that before you did.`,
+        `${f.name} comes back onto House ${h.name}'s card a ${to.toLowerCase()}. There is one thing a ${to.toLowerCase()} is for, and you are fielding it.`,
+        `${L.name} retrains ${f.name} to the ${to.toLowerCase()}. He did not ask anybody which way to jump, and he did not need to.`,
+        `Word from House ${h.name}: ${f.name} is a ${to.toLowerCase()} now. He went in a ${was.toLowerCase()}, and the change is aimed at somebody.`,
+      ]);
       return `${L.name} has taken ${f.name} off the card for a month and put him back on it as a ${to.toLowerCase()}. He went in a ${was.toLowerCase()}.`; } },
   free: { weight:()=>0.7, when:(d,h)=>h.fighters.some(f=>f.wins>=9),
     run(d,h){ const L=lanistaOf(h.name);
@@ -32154,7 +32242,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        are the only large moves it has, and every one of them is gated on `met`, on years, or
        on the warmth it is supposed to produce — see `houses`. */
     warmMove, metHouse, rivalArc, RIVAL_BEATS, RB_KEYS,
-    makeRivalFighter, HOUSES,
+    makeRivalFighter, rivalTurn, rivalReadOf, readSharp, READ_WARM, READ_GAIN, READ_CAP, BUY_BAND, lanistaOf, LANISTAE,   /* #236 — RIVAL_MOVES is already on the handle */ HOUSES,
     /* ---- WHAT A BOUT TAKES OUT OF WHAT HE CARRIES ----
        #114 measured `gearCond` and found steel that never wore, but `gearCond` is the pool of
        pieces ON THE SHELF — worn condition lives in `g.wear[slot]`, which is what `wearOf` reads
