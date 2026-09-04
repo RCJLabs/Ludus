@@ -171,4 +171,5 @@
 {"v":"3.190.0","checks":147,"failed":["altar","tells","runway"]},
 {"v":"3.190.0","checks":147,"failed":[]},
 {"v":"3.190.0","checks":148,"failed":[]},
-{"v":"3.191.0","checks":149,"failed":[]}]
+{"v":"3.191.0","checks":149,"failed":[]},
+{"v":"3.192.0","checks":149,"failed":[]}]
