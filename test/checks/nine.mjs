@@ -81,7 +81,7 @@ export async function run({ p, errors }){
     { const seat = {}, byTier = {};
       const N = 400;
       for(let i=0;i<N;i++){
-        const d = A.newGameState("Nn", "capua", `NINE-seat-${i}`);
+        const d = A.newGameState("Nn", "clean", `NINE-seat-${i}`);
         const nm = (d.rivals||[]).map(x=>x.name);
         if(new Set(nm).size !== nm.length) bad.push(`a fresh bay holds the same house twice: ${nm.join(", ")}`);
         if(nm.length !== 3) bad.push(`a fresh bay opens with ${nm.length} houses, not three — the bay's size is not what this change was allowed to move`);
@@ -107,7 +107,7 @@ export async function run({ p, errors }){
       lines.push(`tiering: ${highest} never opens soft, ${lowest} never opens hard`);
 
       /* AND THE OPENING CURVE IS UNCHANGED — soft, middling, hard by fame, whoever fills the seats */
-      const d0 = A.newGameState("Curve", "capua", "NINE-curve");
+      const d0 = A.newGameState("Curve", "clean", "NINE-curve");
       const fames = (d0.rivals||[]).map(x=>x.fame);
       if(!(fames[0] < fames[1] && fames[1] < fames[2]))
         bad.push(`a fresh bay opens at fames ${fames.join(", ")} — the soft/middling/hard shape is gone`);
@@ -135,7 +135,7 @@ export async function run({ p, errors }){
        once per lanista held back, so every one of the nine is seen to come through the door. */
     { const arrived = new Set();
       for(let i=0;i<40 && arrived.size < keys.length;i++){
-        const d = A.newGameState("Rf", "capua", `NINE-rf-${i}`);
+        const d = A.newGameState("Rf", "clean", `NINE-rf-${i}`);
         d.week = 60; d.gold = 5000;
         d.rivals[0].retired = true;
         const before = new Set(d.rivals.map(x=>x.name));
@@ -151,7 +151,7 @@ export async function run({ p, errors }){
 
     /* ---- 6: the bay's SIZE is untouched — this change was allowed to move who, not how many ---- */
     { if(A.BAY_FLOOR !== 3) bad.push(`BAY_FLOOR is ${A.BAY_FLOOR} — the bay's size is not what this change was allowed to move`);
-      const d = A.newGameState("Sz", "capua", "NINE-size");
+      const d = A.newGameState("Sz", "clean", "NINE-size");
       if(A.liveRivals(d).length !== 3) bad.push(`a fresh bay holds ${A.liveRivals(d).length} live houses`);
     }
 

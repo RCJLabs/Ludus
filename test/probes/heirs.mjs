@@ -43,7 +43,7 @@ const out = await p.evaluate(([H,W,SEED])=>{
     const rows = [];
     let succ = 0, retired = 0, died = 0, heirWeeks = 0, gateWeeks = 0, ageOK = 0, weeks = 0, zeroed = 0;
     for(let h=0; h<H; h++){
-      const d = A.newGameState("Hr"+h, "capua", `${SEED}-${h}`);
+      const d = A.newGameState("Hr"+h, "clean", `${SEED}-${h}`);
       if(old && d.lanista) d.lanista.age = 58;
       const row = { h, endAge:0, peakAge:0, minHealth:100, endHealth:0, heir:null, succ:0, end:0 };
       for(let w=0; w<W && !d.over; w++){

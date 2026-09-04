@@ -49,7 +49,7 @@ const out = await p.evaluate(([H,W,SEED])=>{
   let hasFought = 0, rosterN = 0;
 
   for(let h=0; h<H; h++){
-    const d = A.newGameState("Rd"+h, "capua", `${SEED}-${h}`);
+    const d = A.newGameState("Rd"+h, "clean", `${SEED}-${h}`);
     let rt = 0, by = 0, mv = 0, hit = 0;
     for(let w=0; w<W && !d.over; w++){
       const logWas = (d.rivalLog||[]).length ? (d.rivalLog[0].week + "|" + d.rivalLog[0].text.slice(0,30)) : null;
@@ -119,7 +119,7 @@ const out = await p.evaluate(([H,W,SEED])=>{
        state in which the feature does anything. */
     let base = null, read = null;
     for(let t=0; t<40 && !read; t++){
-      const d = A.newGameState("Cal"+t, "capua", `${SEED}-cal-${t}`);
+      const d = A.newGameState("Cal"+t, "clean", `${SEED}-cal-${t}`);
       for(let w=0; w<90 && !d.over; w++){
         try { R.lanista(d, {}); } catch(e){ break; }
         const r = A.rivalReadOf(d);

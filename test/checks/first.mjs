@@ -70,7 +70,7 @@ export async function run({ p, errors }){
     const reads = {};
     for(const [band, account] of [["outlasted", A.GREEN_HARD + 8], ["close", 40],
                                   ["outclassed", A.GREEN_POOR - 8]]){
-      const d = A.newGameState(`FIRST-${band}`, "capua", `FIRST-${band}`);
+      const d = A.newGameState(`FIRST-${band}`, "clean", `FIRST-${band}`);
       const g = A.genGladiator(d, 55); g.id = d.nextId++; g.status = "active"; g.mine = true;
       g.wins = 0; g.losses = 1; g.kills = 0; d.gladiators.push(g);
       const sum = [];
@@ -93,7 +93,7 @@ export async function run({ p, errors }){
     }
 
     /* ---- 4. one first, and a second bout does not take it ---- */
-    { const d = A.newGameState("FIRST-ONCE", "capua", "FIRST-ONCE");
+    { const d = A.newGameState("FIRST-ONCE", "clean", "FIRST-ONCE");
       const g = A.genGladiator(d, 55); g.id = d.nextId++; g.status = "active"; g.mine = true;
       g.wins = 1; g.losses = 0; d.gladiators.push(g);
       A.firstBlood(d, g, A.nightWhere(d, { festival:"the pits" }, "one"), true,
@@ -117,7 +117,7 @@ export async function run({ p, errors }){
     const engines = new Set();
     const play = { men:0, fought:0, night:0, off:0, died:0 };
     for(let h = 0; h < 3; h++){
-      const d = A.newGameState(`FIRST-P${h}`, "capua", `FIRST-P${h}`);
+      const d = A.newGameState(`FIRST-P${h}`, "clean", `FIRST-P${h}`);
       for(let w = 0; w < 130 && !d.over; w++){
         try { R.lanista(d, {}); } catch(e){ break; }
         if(d.over){ d.over = null; if(d.rebellion) d.rebellion = null;
@@ -145,7 +145,7 @@ export async function run({ p, errors }){
     if(!play.night) bad.push(`not one first afternoon was written across ${play.men} men`);
 
     /* every engine writes it, driven the way `nights` drives them */
-    { const d = A.newGameState("FIRST-ENG", "capua", "FIRST-ENG");
+    { const d = A.newGameState("FIRST-ENG", "clean", "FIRST-ENG");
       const fin = (f, a) => { try { return f(...a); } catch(e){ return null; } };
       for(let w = 0; w < 160 && !d.over; w++){
         const fit = A.activeG(d).filter(g=>A.canFight(g));
@@ -173,7 +173,7 @@ export async function run({ p, errors }){
        source, the way `read` holds its five panels. */
 
     /* ---- 5. the gates the item names ---- */
-    const gates = (()=>{ const d = A.newGameState("FIRST-G", "capua", "FIRST-G");
+    const gates = (()=>{ const d = A.newGameState("FIRST-G", "clean", "FIRST-G");
       const g = A.genGladiator(d, 55); g.wins = 0; g.losses = 0; g.kills = 0; g.pfame = 0;
       const t = A.manTells(d, g);
       if(!t.length) bad.push(`a man with no bouts gets no reading at all — the item says tells need `
@@ -182,7 +182,7 @@ export async function run({ p, errors }){
       return { tells:t.length, first:t[0], master:typeof house === "boolean", sigWins:A.SIG_GATE.wins }; })();
     /* and the signature has a button now */
     let sig = 0;
-    { const d = A.newGameState("FIRST-SIG", "capua", "FIRST-SIG");
+    { const d = A.newGameState("FIRST-SIG", "clean", "FIRST-SIG");
       const seen = new Set();
       for(let w = 0; w < 190 && !d.over; w++){
         for(const g of A.activeG(d)) if(g.signature || g.teaching) seen.add(g.id);

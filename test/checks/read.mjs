@@ -84,7 +84,7 @@ export async function run({ p, errors }){
     let weeks = 0;
 
     for(let h = 0; h < 4; h++){
-      const d = A.newGameState(`READ-C${h}`, "capua", `READ-C${h}`);
+      const d = A.newGameState(`READ-C${h}`, "clean", `READ-C${h}`);
       for(let w = 0; w < 45 && !d.over; w++){
         weeks++;
         const mine = A.activeG(d).filter(g=>A.canFight(g));

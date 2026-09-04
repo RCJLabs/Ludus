@@ -40,7 +40,7 @@ const out = await p.evaluate(([H,W])=>{
   const men = new Map();     /* id -> { bouts, wins, nick, sig, saga, lines, firstLineAt, fate } */
   let weeks = 0, houses = 0;
   for(let h = 0; h < H; h++){
-    const d = A.newGameState(`GREEN-${h}`, "capua", `GREEN-${h}`);
+    const d = A.newGameState(`GREEN-${h}`, "clean", `GREEN-${h}`);
     houses++;
     let logSeen = 0;
     for(let w = 0; w < W && !d.over; w++){
@@ -99,7 +99,7 @@ const out = await p.evaluate(([H,W])=>{
     return { n:v.length, lines: v.length ? Math.round(v.reduce((s,m)=>s+m.lines,0)/v.length*10)/10 : 0 }; };
 
   /* ---- 3: is a tell really history-gated? ---- */
-  const green = (()=>{ const d = A.newGameState("GREEN-T", "capua", "GREEN-T");
+  const green = (()=>{ const d = A.newGameState("GREEN-T", "clean", "GREEN-T");
     const g = A.genGladiator(d, 55); g.wins = 0; g.losses = 0; g.kills = 0; g.pfame = 0;
     const t = A.manTells(d, g);
     const veteran = A.genGladiator(d, 55); veteran.wins = 12; veteran.losses = 4; veteran.kills = 3;
@@ -110,7 +110,7 @@ const out = await p.evaluate(([H,W])=>{
   /* ---- 4: the signature, which no rope had ever taught ---- */
   let sig = { men:0, taught:0 };
   { for(let h = 0; h < 3; h++){
-      const d = A.newGameState(`GREEN-S${h}`, "capua", `GREEN-S${h}`);
+      const d = A.newGameState(`GREEN-S${h}`, "clean", `GREEN-S${h}`);
       const seen = new Set();
       for(let w = 0; w < 200 && !d.over; w++){
         for(const g of A.activeG(d)) if(g.signature || g.teaching) seen.add(g.id);

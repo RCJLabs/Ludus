@@ -41,7 +41,7 @@ const out = await p.evaluate(([H,W,SEED])=>{
   const unfinished = {}, stillOwed = [], boutsGot = [];
 
   for(let h=0; h<H; h++){
-    const d = A.newGameState("Sv"+h, "capua", `${SEED}-${h}`);
+    const d = A.newGameState("Sv"+h, "clean", `${SEED}-${h}`);
     houses++;
     const wasDamn = new Set();      /* everyone who ever arrived under a paper */
     const atDischarge = new Map();  /* gid -> snapshot the week the paper cleared */

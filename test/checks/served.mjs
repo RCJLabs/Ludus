@@ -210,7 +210,7 @@ export async function run({ p, errors }){
     const A = window.__LVDVS, R = window.__ROPE;
     let arrived = 0, discharged = 0, withBar = 0, overBar = 0, threw = null;
     for(let h=0; h<8; h++){
-      const d = A.newGameState("SvP"+h, "capua", `SVP-${h}`);
+      const d = A.newGameState("SvP"+h, "clean", `SVP-${h}`);
       const seen = new Set();
       for(let w=0; w<260 && !d.over; w++){
         try { R.lanista(d, {}); } catch(e){ if(!threw) threw = String(e).slice(0,150); break; }

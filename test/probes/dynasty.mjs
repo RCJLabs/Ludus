@@ -113,7 +113,7 @@ const arm = async (label) => { const r = await p.evaluate(([H,W,SEED,label])=>{
   const gate = { warm:0, met:0, yr:0, wm:0, all:0, pairs:0, everAll:0, everWM:0, hw:0 };
 
   for(let h=0; h<H; h++){
-    const d = A.newGameState("Dy"+h, "capua", `${SEED}-${h}`);
+    const d = A.newGameState("Dy"+h, "clean", `${SEED}-${h}`);
     const was = new Map();        /* name -> retired flag last week */
     const born = new Map();       /* name -> week it appeared in d.rivals */
     const peak = new Map();       /* name -> highest warmth seen */

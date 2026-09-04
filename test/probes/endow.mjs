@@ -88,7 +88,7 @@ const out = await p.evaluate(([H,W,SEED])=>{
          the seed string, so "builder" and "wanted" were different POPULATIONS — one reported 5 of
          16 reaching the tier against the other's 1 of 16, and the whole of that gap was which
          houses the RNG happened to hand each arm. Paired now. */
-      const d = A.newGameState("En"+h, "capua", `${SEED}-${h}`);
+      const d = A.newGameState("En"+h, "clean", `${SEED}-${h}`);
       const row = { h, weeks:0, ready:null, peakGold:0, done:{}, began:{}, over:null,
         acc:0, accN:0, works:0 };
       for(let w=0; w<W && !d.over; w++){
@@ -133,7 +133,7 @@ const out = await p.evaluate(([H,W,SEED])=>{
      the thing the 44,000 denarii actually buys, and it is measured on the same house either way. */
   const worth = (()=>{
     const run = (withIt, n) => {
-      const d = A.newGameState("Acc", "capua", `${SEED}-acc-${n}`);
+      const d = A.newGameState("Acc", "clean", `${SEED}-acc-${n}`);
       d.week = 200; d.fame = 2200; d.gold = 9000;
       if(withIt){ d.works = d.works || {}; d.works.endow = { left:0, owed:0, paid:44000 }; }
       const gaps = [], lvl = [];
@@ -159,7 +159,7 @@ const out = await p.evaluate(([H,W,SEED])=>{
 
   /* ---- 4: does a monument survive the handover ---- */
   const heir = (()=>{
-    const d = A.newGameState("Heir", "capua", `${SEED}-heir`);
+    const d = A.newGameState("Heir", "clean", `${SEED}-heir`);
     d.week = 220; d.fame = 2600; d.gold = 12000;
     d.works = d.works || {};
     d.works.endow = { left:0, owed:0, paid:44000 };          /* finished */
@@ -206,7 +206,7 @@ for(const A2 of out.arms){
   if(A2.label === "wanted"){ const L = A2.lever;
     console.log(`  the arm's own lever: the tier was open to endow on ${L.open} weeks, it could afford the deposit on ${L.afford}, and commissioned it ${L.began} time(s)`);
     console.log(`    (identical rows to "builder" with lever.open at 0 would mean an INERT arm, not a null result)`); }
-  for(const k of ["colossus","endow","arena","capua"]){
+  for(const k of ["colossus","endow","arena","clean"]){
     const beg = R2.filter(x=>x.began[k]).length, fin = R2.filter(x=>x.done[k]).length;
     console.log(`    ${k.padEnd(9)} commissioned by ${beg} of ${n}, FINISHED by ${fin}`);
   }

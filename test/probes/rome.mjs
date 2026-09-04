@@ -45,7 +45,7 @@ const out = await p.evaluate(([H,W])=>{
     for(const t of TERMS){ a.unmet[t] = 0; a.only[t] = 0; }
 
     for(let h = 0; h < H; h++){
-      const d = A.newGameState(`ROME-${h}`, "capua", `ROME-${h}`);
+      const d = A.newGameState(`ROME-${h}`, "clean", `ROME-${h}`);
       a.houses++;
       let sawProved = false, sawFame = false, sawSen = false, sawWarm = false;
       let topSen = 0, topRise = 0, topFame = 0, hadLetter = false, wasOffer = false;
