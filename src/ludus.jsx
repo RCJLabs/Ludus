@@ -6788,7 +6788,55 @@ function stageMunus(d, plan){
 
 /* ================= RIVAL HOUSES ================= */
 
-const RIVAL_SEED = [["Solonius",60,[30,50]],["Vettius",150,[42,62]],["Tullius",330,[58,80]]];
+/* ---- THREE OF THE NINE, AND IT WAS THE SAME THREE EVERY GAME ----
+   `LANISTAE` holds nine rival lanistae. Each is written the way the founders are — a name, a trait,
+   a blurb — and each carries seven dials that are read all over the file: `poach` at 36 sites, `bid`
+   at 18, `train` at 11, plus `bribe`, `sabotage`, `grudgeDecay` and `stature`. They are not
+   decoration. Computed off `RIVAL_MOVES`' own weights, Pollio buys on 25% of his weeks against
+   Cossutius's 6.5% — **3.9 times as often** — while Tullius and Cossutius drill twice as hard as
+   Pollio and Glaber; the hostile dials span 0.7-2.2 on poach, 0.5-2.0 on bribe, 0.5-1.9 on sabotage.
+
+   And this line named three of them, forever. The only other door into the bay is `bayRefill`, which
+   fires when `liveRivals` drops under `BAY_FLOOR` — after a retirement, measured at 0.58 times per
+   multi-decade campaign (`probes/dynasty.mjs`). Measured over 16 campaigns and 3,923 played weeks
+   (`probes/nine.mjs`):
+
+       Solonius, Vettius, Tullius   in the bay 16/16, FOUGHT 16/16 — every game, all three
+       the other six                in the bay 1-3 of 16, fought 0-3; Rufinus and Pollio never once
+       distinct lanistae fought per campaign   THREE, of nine
+
+   So two thirds of the written opposition was behind a door that opens once every other campaign.
+
+   THE BAY IS STILL THREE HOUSES. What changes is which three: they are drawn per campaign, and then
+   sorted by their own `stature` — the share of your fame each house is pulled toward (`rivalWeek`,
+   ~line 7210) — so the one that opens biggest is the one written biggest, and the opening still runs
+   soft/middling/hard exactly as it always did. Nothing else in the file names these three: `grep`
+   finds them in this line and in one comment, and every check that uses a name forges it. */
+const SEED_TIERS = [[60,[30,50]], [150,[42,62]], [330,[58,80]]];
+/* ---- AND IT DRAWS ON A STREAM OF ITS OWN ----
+   `R()` is ONE global mulberry32, reseeded per campaign from the seed word, so ANY draw taken here
+   shifts every later roll in the game and re-bases every seeded figure in this repo. The first
+   draft of this used `pick()` and the gate said so immediately: three checks that turn on a
+   particular seeded outcome failed — a blessed loss, an ask's cooldown, and the whole domus child
+   arc — none of them broken, all of them simply looking at a different game. So the bay is drawn
+   from a SECOND stream keyed off the same seed word: deterministic per campaign, reproducible, and
+   invisible to `R()`. Every figure measured before this release still stands. */
+const seedNames = (sw) => {
+  let t = (seedToNum(String(sw || "LVDVS")) ^ 0x9E3779B9) >>> 0;
+  const nxt = () => { t = (t + 0x6D2B79F5) >>> 0;
+    let x = Math.imul(t ^ (t >>> 15), 1 | t);
+    x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x;
+    return ((x ^ (x >>> 14)) >>> 0) / 4294967296; };
+  const keys = Object.keys(LANISTAE);
+  const drawn = [];
+  while(drawn.length < SEED_TIERS.length && drawn.length < keys.length){
+    const pool = keys.filter(x=>!drawn.includes(x));
+    drawn.push(pool[Math.min(pool.length - 1, Math.floor(nxt() * pool.length))]);
+  }
+  /* biggest stature takes the top tier, so a house opens at the size its own record says it is */
+  return drawn.sort((a,b)=>(lanistaOf(a).stature||0.4) - (lanistaOf(b).stature||0.4));
+};
+const RIVAL_SEED = SEED_TIERS.map((t,i)=>[["Solonius","Vettius","Tullius"][i], t[0], t[1]]);
 const grudgeWord = g => g<15?"Cordial": g<40?"Cool": g<70?"Bitter":"Blood feud";
 
 /* ---- THE CEILING NOBODY ELSE COULD REACH ----
@@ -6848,9 +6896,13 @@ function makeRivalFighter(d, house, quality){
   return f;
 }
 
-function makeRivals(d){
-  return RIVAL_SEED.map(seed=>({ name:seed[0], fame:seed[1]+ri(-10,15), grudge:ri(0,10), form:ri(-12,12), formTier:0, star:null,
-    fighters: Array.from({length:4}, ()=>makeRivalFighter(d, seed[0], ri(seed[2][0], seed[2][1]))) }));
+function makeRivals(d, sw){
+  /* `newGameState` hands the seed word in directly, because `d.seed` is not set yet at that
+     point; the migrate/repair path at `rivals: S=>makeRivals(S)` has it on the loaded save. */
+  const names = seedNames(sw || (d && d.seed) || (d && d.name) || "LVDVS");
+  return SEED_TIERS.map((t, i)=>{ const nm = names[i] || RIVAL_SEED[i][0];
+    return { name:nm, fame:t[0]+ri(-10,15), grudge:ri(0,10), form:ri(-12,12), formTier:0, star:null,
+      fighters: Array.from({length:4}, ()=>makeRivalFighter(d, nm, ri(t[1][0], t[1][1]))) }; });
 }
 
 /* ---- WHAT THE OTHER HOUSES DID ----
@@ -7360,6 +7412,18 @@ const NEW_HOUSES = [
     line:h=>`Vedius Pollio is buying in the bay. He pays over the odds and he does not ask what is wrong with them, which tells you what he expects them to be worth in a year. Nobody in the trade likes him. Everybody in the trade sells to him.` },
   { key:"Varro",
     line:h=>`Titus Varro has spent twenty years auctioning other men's fighters and has finally bought his own. He knows to the denarius what every man in Campania is worth, including yours.` },
+  /* ---- AND THE THREE FOUNDERS, WHO COULD NOT ARRIVE ----
+     `RIVAL_SEED` used to name Solonius, Vettius and Tullius and this list held the other six, so the
+     two sets never overlapped and neither needed the other's prose. The bay is drawn from all nine
+     now, which means any of the nine can be the one who is NOT in it at week one — and a lanista who
+     cannot be seeded and cannot arrive is simply gone. These three had a record and a voice and no
+     way through the gate; now they have both. */
+  { key:"Solonius",
+    line:h=>`Marcus Solonius has taken the empty yard, and the first anyone hears of it is a note to the editor putting three of his men on a card that was already full. He was very pleasant about it. Somebody else's name came off.` },
+  { key:"Vettius",
+    line:h=>`Quintus Vettius Bassus has bought the yard on the far side of the bay. He has been in the trade before, somewhere north, and he arrived with a ledger already open and ${h.fighters.length} men whose names are written in it.` },
+  { key:"Tullius",
+    line:h=>`Gaius Tullius Rufus has opened up, and the bay has taken about a week to work out what that means. No feast, no announcement, no grudges. His men are simply better drilled than they have any business being in a yard this new.` },
 ];
 const liveRivals = d => (d.rivals||[]).filter(h=>!h.retired);
 const BAY_FLOOR = 3;
@@ -9731,7 +9795,7 @@ function newGameState(name, scen, seed, pitch){
     seed: null, rngState: 0,
     lastParty:-9, lastFeast:-9, over:null, milestone600:false, flags:{learned:{}}, escaped:[], rebellion:null, gear:{}, retired:[],
     doctore:null, doctoreMarket:[], doctoreOffer:null, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, court:null, defected:[], nemesis:null, nemHouse:null, saga:null, arcs:[], crest:{ c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" }, primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], works:{}, slavers:{}, pact:null, gambits:{}, pendingLesson:null, law:null, doctrine:null, kits:[], deadSteel:[], bay:null, mark:null, after:null, metHouse:{}, owed:[], household:{}, yardSeen:0, yardMissed:0, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, domus:{ wife:null, children:[], nextKin:1 }, acclaim:0, brand:{ licensed:false, decided:false, tier:0, earned:0 }, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, repName:null, askBooking:null, askChallenge:null, pitSeat:0, departed:[], reSignOffer:null, annals:[], rise:{ rank:0, standing:0 }, munusLast:-99, league:{ first:null, since:1, held:0, best:99, year:1, snap:null }, piety:30, blessing:null, vow:null, lastOffering:-9, powLot:null, seen:{} };
-  d.rivals = makeRivals(d);
+  d.rivals = makeRivals(d, sw);
   const solo = S.men.length === 1;
   S.men.forEach((band,i)=>{
     const g = genGladiator(d, ri(band[0], band[1]));
