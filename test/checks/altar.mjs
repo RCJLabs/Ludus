@@ -66,7 +66,17 @@ export async function run({ p, errors }){
     const NAMES = A.GOD_KEYS.map(k=>A.GODS[k].name);
     const namesAGod = t => NAMES.filter(n=>String(t||"").includes(n));
 
+    /* ---- THE BAY IS PINNED, BECAUSE THIS CHECK IS ABOUT GODS AND NOT ABOUT RIVALS ----
+       v3.197.0 draws the three seed houses from all nine `LANISTAE` instead of naming the same
+       three, and each lanista's dials drive a different weekly move from week one — so the whole
+       game diverges on which bay a seed happens to hand you. This check hunts for MOMENTS (a
+       blessed win, a blessed death) inside a fixed window, and it stopped finding two of them: not
+       because a god went quiet, but because the fixture landed in a different game. The men's
+       strength is unaffected either way — `makeRivalFighter` reads only the tier's quality band and
+       never the lanista — so pinning the names changes nothing about difficulty and makes this
+       fixture independent of that draw, and of the next one. */
     const house = (tag, wk) => { const d = A.newGameState(tag, "capua", tag);
+      d.rivals.forEach((r, i)=>{ r.name = ["Solonius","Vettius","Tullius"][i] || r.name; });
       for(let w = 0; w < (wk||10) && !d.over; w++) R.lanista(d, {});
       if(!A.activeG(d).length){ const g = A.genGladiator(d, 60); g.id = d.nextId++;
         g.status = "active"; g.mine = true; d.gladiators.push(g); }

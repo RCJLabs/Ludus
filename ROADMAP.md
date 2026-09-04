@@ -4389,6 +4389,70 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.197.0 — three of the nine, and it was the same three every game
+
+`LANISTAE` holds **nine** rival lanistae. Each is written the way the founders are — a name, a
+distinguishing trait, a blurb — and each carries seven dials that are read all over the file: `poach`
+at 36 sites, `bid` at 18, `train` at 11, plus `bribe`, `sabotage`, `grudgeDecay` and `stature`.
+
+**They are not decoration**, and that is the first thing this measured. Computed off `RIVAL_MOVES`'
+own weights (pure functions of the house, so this is exact rather than sampled): **Pollio buys on 25%
+of his weeks against Cossutius's 6.5% — 3.9 times as often**; Tullius and Cossutius drill twice as
+hard as Pollio and Glaber; the hostile dials span 0.7–2.2 on poach, 0.5–2.0 on bribe, 0.5–1.9 on
+sabotage. Meeting one is a different game from meeting another.
+
+**And `RIVAL_SEED` named three of them, forever.** The only other door into the bay was `bayRefill`,
+which fires when `liveRivals` drops under `BAY_FLOOR` — after a retirement, measured at 0.58 times
+per multi-decade campaign. Over 16 campaigns and 3,923 played weeks (`probes/nine.mjs`):
+
+| | in the bay | ever fought |
+|---|---|---|
+| Solonius, Vettius, Tullius | **16/16** | **16/16** |
+| the other six | 1–3 of 16 | 0–3 of 16 |
+| Rufinus, Pollio | 1–2 of 16 | **never, in sixteen campaigns** |
+
+Distinct lanistae fought per campaign: **three, of nine, every time.** Two thirds of the written
+opposition sat behind a door that opens once every other campaign.
+
+**WHAT SHIPPED.** The bay is still three houses — `BAY_FLOOR` does not move, and the opening still
+runs soft/middling/hard on the same fame and quality bands. What changes is **which** three: they are
+drawn per campaign and then sorted by their own `stature` — the share of your fame each house is
+pulled toward — so the house that opens biggest is the one written biggest, and Tullius never opens
+soft while Cossutius never opens hard. Nothing else in the file named the three: `grep` finds them in
+that one line and in one comment, and every check that uses a name forges it.
+
+**And `NEW_HOUSES` gained arrival prose for the three founders**, who previously could not arrive at
+all. The two sets never overlapped, so neither needed the other's lines — but once the bay is drawn
+from nine, any of the nine can be the one who is *not* in it at week one, and a lanista who cannot be
+seeded and cannot arrive is simply gone.
+
+**Re-measured: every one of the nine is now in the bay in 19–56% of campaigns and fought in 19–56%**,
+against three at 100% and two at 0% before. The draw is even — 115 to 153 seats each over 400 fresh
+bays, against an even 133.
+
+**AND IT DRAWS ON A STREAM OF ITS OWN.** `R()` is one global mulberry32, reseeded per campaign from
+the seed word, so any draw taken in `makeRivals` shifts every later roll in the game and re-bases
+every seeded figure in this repo. The first draft used `pick()` and the gate said so at once: three
+checks that turn on a particular seeded outcome failed — a blessed loss, an ask's cooldown, and the
+whole domus child arc — none broken, all simply looking at a different game. The bay is drawn from a
+**second** stream keyed off the same seed word: deterministic per campaign, reproducible, invisible
+to `R()`. Two of the three recovered immediately.
+
+**The third was `altar`, and it was fixture fragility rather than balance drift** — established
+rather than assumed. It hunts for moments (a blessed win, a blessed death) inside a fixed window and
+stopped finding two of them, because the whole game diverges on which bay a seed hands you: each
+lanista drives a different weekly move from week one. Widening its sampling from 160 bouts to 900 did
+not help, which is what ruled sampling out. Difficulty is *not* affected — `makeRivalFighter` reads
+only the tier's quality band and never the lanista, so week one is identical whoever fills a seat —
+so the fixture pins its own bay now, and is independent of that draw and of the next one.
+
+**Held by `checks/nine.mjs` — seven arms, eight sabotages, all eight caught.** It guards the thing
+that would make the other six worthless if it drifted: that the dials stay *differentiated* (a
+flattened table reports "the nine buy at 14.4%–14.4% of their weeks — they are one opponent in nine
+coats"), that every lanista can be both seated and delivered through `bayRefill` (driven to a real
+arrival, all nine seen), that the draw never repeats a name, and that the bay's **size** and opening
+curve are untouched — this change was allowed to move who, not how many.
+
 ### v3.196.0 — the ladder was priced for a house that does not exist
 
 Acting on the finding below. The monument tier produced **1 colossus, 1 endow, 0 arena, 0 capua
