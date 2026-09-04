@@ -48,7 +48,22 @@ export async function run({ p, errors }){
     for(let i=0;i<6 && !vet.signature;i++) week();
     const signature = !!vet.signature;
 
-    /* 2. mastery — the gate refuses the green man and passes the veteran */
+    /* 2. mastery — the gate refuses the green man and passes the veteran.
+       #232 PHASE 5 ADDED A THIRD CLAUSE and this fixture caught it: wins and renown are things a
+       man collects by not dying, and `canMaster` now also wants him to have beaten somebody in the
+       square the house prices at or above him. So the veteran has to prove it, and the proof is
+       taken through the game's own `proveInSquare` rather than by writing the field — a fixture
+       that sets state the engine owns stops testing the engine. It is called directly instead of
+       through a spar because the spar's winner is a roll and this check is not a coin. */
+    const masBefore = A.makeMasterOf(d, vet.id);        /* refused: he has proved nothing yet */
+    const proved = A.proveInSquare(d, vet, green.gladValue ? green : green);
+    const provedBad = A.provedIt(vet);                  /* green is worth LESS, so this must refuse */
+    const worthy = A.activeG(d).find(g=>g.id!==vet.id && A.gladValue(g) >= A.gladValue(vet)) || null;
+    if(worthy) A.proveInSquare(d, vet, worthy);
+    else { /* nobody in the yard prices above him — lift one so the ladder can be walked */
+      const lift = A.activeG(d).find(g=>g.id!==vet.id && g.id!==green.id);
+      if(lift){ lift.pfame = (vet.pfame||0) + 300; lift.wins = (vet.wins||0) + 10;
+        A.proveInSquare(d, vet, lift); } }
     const masGreen = A.makeMasterOf(d, green.id);
     A.makeMasterOf(d, vet.id);
     const mastery = !!vet.mastery;
@@ -112,7 +127,7 @@ export async function run({ p, errors }){
       return { eligibleAtOnce, mutePlease, fired, firstAt, weeks:80 };
     })();
 
-    return { sigGreen, sigOk, sigFeePaid, signature, masGreen, mastery,
+    return { sigGreen, sigOk, sigFeePaid, signature, masGreen, mastery, masBefore, provedBad,
       secOk, second, swOk, switched, rudisGreen, rudisOk, retVet, retired, ask,
       vetLine: `${vet.name}: ${from} master, ${to} in his hands` };
   }, TECH1);
@@ -121,12 +136,16 @@ export async function run({ p, errors }){
   lines.push(`the signature cost ${out.sigFeePaid}d and took: ${out.signature}`);
   lines.push(out.vetLine);
   lines.push(`gates refused the green man: signature ${!out.sigGreen}, mastery ${!out.masGreen}, rudis ${!out.rudisGreen}`);
+  lines.push(`and mastery now wants it proved: refused before the square ${!out.masBefore} · beating a cheaper man is not proof ${!out.provedBad}`);
   lines.push(`the man four doors down asked ${out.ask.fired} time${out.ask.fired===1?"":"s"} in ${out.ask.weeks} weeks of holding${out.ask.firstAt!=null?`, first in week ${out.ask.firstAt}`:""}`);
 
   if(out.sigGreen) fails.push("a two-win man was taught a signature — the six-win gate is open");
   if(!out.sigOk || !(out.sigFeePaid > 0)) fails.push("the veteran could not be taught his signature, or it cost nothing");
   if(!out.signature) fails.push("the far post never finished the signature — teaching does not progress through the week");
   if(out.masGreen) fails.push("a two-win man was made a master — the twelve-win gate is open");
+  /* #232 phase 5 — the third clause, from both sides */
+  if(out.masBefore) fails.push("a man who had proved nothing in the square was made a master — canMaster wants more than wins and renown now");
+  if(out.provedBad) fails.push("beating a man the house prices BELOW him counted as proof — the bar is gladValue, at or above");
   if(!out.mastery) fails.push("a fourteen-win, ninety-renown man could not be made a master");
   if(!out.secOk) fails.push("a master with a doctore and the fee could not start a second trade");
   if(!out.second) fails.push("eight weeks at the post did not finish the second trade");
