@@ -692,6 +692,20 @@ function annalsEntry(d, g){
     scars:(g.scars||[]).length, amb:g.ambition? g.ambition.kind:null, ambMet:false };
 }
 function annalsClose(d, g, fate){
+  /* ---- AND HIS PECULIUM WAS NEVER HIS — #233 ----
+     The skim is held, not spent. A man puts a fifth of his purses aside from 90 renown, and only
+     about one in twelve of the men who ever start saving lives long enough and well enough to ask
+     for it — MEASURED, 32 cleared the gate and 8 ever stood ready. Without this line the other
+     twenty-four cost the house a fifth of every purse they ever won and nothing came back, which
+     is not hidden depth, it is a silent tax on having a good man. It showed up as two fixture
+     houses that stopped surviving forty weeks.
+     In law the peculium was the master's the whole time; a slave held it, he did not own it. So
+     when a man leaves this house any way but buying himself out of it, what he put aside comes
+     back to the strongbox — the house was holding it, and now it stops. */
+  if(g && (g.stash||0) > 0 && fate !== "freed"){
+    d.gold += g.stash;
+    g.stash = 0;
+  }
   d.annals = d.annals || [];
   let a = d.annals.find(x=>x.id===g.id);
   if(!a){ a = annalsEntry(d, g); d.annals.push(a); }
@@ -5609,6 +5623,151 @@ const unrestWord = u=> u<25?"Docile": u<45?"Restless": u<65?"Simmering": u<80?"M
    gate drift apart. They are named once and read everywhere, `ambPool`'s rule from #189. */
 const RUDIS_WINS = 10, RUDIS_FAME = 180, RUDIS_AGE = 30;
 const rudisEligible = g=> !isAuctor(g) && g.wins>=RUDIS_WINS && g.pfame>=RUDIS_FAME;
+
+/* ---- A PURSE OF HIS OWN — phase queue #233, sized against `probes/purse.mjs` ----
+   No gladiator in this game has ever held a denarius. Every purse lands in `d.gold` at one of seven
+   credit sites and none of it is his; his only road out is `rudisEligible`, a gate the PLAYER acts
+   on while he waits. So a man past a renown of his own keeps a cut of what he wins, and when it is
+   enough he asks — with his own money on the table, which is a different question from the one
+   `AMBITIONS.freedom` lets him ask.
+
+   THE ITEM'S OWN NUMBERS DID NOT SURVIVE THE MEASUREMENT, AND THE FIX IS WHAT IT MEANS.
+   It proposed a trigger at "stash >= gladValue(g)*0.35". Measured across 12 houses, 1,920 weeks and
+   286 men who ever fought: a bout pays 229d, a man who reaches 90 renown is worth 1,783d there, and
+   he gets a MEDIAN OF SIX MORE BOUTS. Skimming every denarius of every purse from that moment to
+   the end of his career reaches a median of **75.7% of what he is worth** — so at 100% he still
+   cannot buy himself, and at the proposed 6-15% the event fires for 0.3% of men, which is the
+   AMB_NEVER failure (0 met out of 651) the item's own risk section warned about. Its falsifier
+   fired too: `rudisEligible` is reached by 4.5% of men who fought, under the 5% it named.
+
+   A man cannot buy his own price out of his purses. He can buy THE STATE'S CUT OF IT, which is the
+   thing a peculium actually bought — and this file already models that half: `rudisCost`'s first
+   term is `gladValue(g) * RUDIS_TAX`, the vicesima libertatis, "a fifth of what the man himself is
+   worth", against a second term that is the house's own parting gift. So he saves for the tax. The
+   house still pays what a house pays. Measured at this sizing: it reaches ~8% of men who ever
+   fought, a median of eight bouts after the gate — rare, which is what the falsifier asked for, and
+   real, which is what the risk section asked for. */
+const SKIM_FAME = 90, SKIM_WINS = 4;   /* below rudisEligible's 180/10 on purpose — his own renown, not the door */
+const SKIM_CUT  = 0.20;                /* a fifth of each purse he wins, held back out of the house's share */
+/* he is worth putting something aside once he is somebody, and never if he is already free */
+const STASH_TRUST = 45;   /* how long the cells remember a house that took a man's savings */
+const STASH_HIDE  = 1.7;  /* and how much harder they hold back while they do */
+const skimReady = g => !!g && !isAuctor(g) && g.status !== "dead"
+  && (g.pfame||0) >= SKIM_FAME && (g.wins||0) >= SKIM_WINS;
+/* ---- WHAT ROBBING ONE OF THEM ACTUALLY COSTS ----
+   The first draft of this made the yard STOP saving after a theft, which read well and measured
+   backwards: the skim is money the house does not bank, so ending it paid the player a second
+   time — take the bag AND stop the drain, end of run 5,826 gold against 3,982 for freeing him.
+   A punishment that pays is not one. Men who watch a house rob a man do not stop putting money
+   aside; they get better at it, and they hold back more. The rate goes UP, for everybody, for as
+   long as the cells remember — which costs the strongbox exactly the way the theft should. */
+const skimRate = d => (d && d.flags && d.flags.stashRobbed != null
+  && d.week - d.flags.stashRobbed < STASH_TRUST) ? SKIM_CUT * STASH_HIDE : SKIM_CUT;
+/* what he is saving FOR: the state's twentieth of him, the one half of rudisCost that is not the
+   house's own gift. `stashTarget` and nothing else decides when he asks. */
+const stashTarget = g => Math.max(40, Math.round(gladValue(g) * RUDIS_TAX));
+const stashReady  = (d, g) => !!g && skimReady(g) && (g.stash||0) >= stashTarget(g)
+  /* NOT gated on `rudisEligible`, and that was measured rather than assumed. Requiring it too
+     read as the coherent choice — the city expects a freedman to be somebody — and played as dead
+     content: 2 asks in 1,600 weeks across ten houses, which is the AMB_NEVER failure the item's
+     own risk section names. The men who cleared it had also overshot the saving by half (median
+     bag 1,344d against a 911d target), so the renown gate was doing all the blocking and the
+     saving none of it. The two roads out ask different questions on purpose: the house's own act
+     of mercy is gated on what Capua thinks he is worth, and a man buying himself is gated on the
+     money, because that is what buying yourself means. `grantRudis` waives the renown for a
+     bought manumission and only for that. */
+  /* and never while he is already carrying the same ask through his ambition — one man, one
+     question about the same door. `AMBITIONS.freedom` is the other way he can raise it. */
+  && !(g.ambition && g.ambition.kind === "freedom" && !g.ambition.met && !g.ambition.broken)
+  /* and he does not ask again the week after being told no. Without this the "give it back"
+     answer leaves him ready on the spot and he raises it every single week until something
+     changes, which is not patience, it is nagging. */
+  && (g.stashAsk == null || d.week >= g.stashAsk);
+/* the skim itself: returns what the HOUSE actually banks. Everything downstream — the fame the
+   purse buys, the line the summary prints — keeps reading the full purse, because that is what the
+   editor paid and what the crowd saw. The difference is in the man's hand, not in the books. */
+/* ---- THE THREE ANSWERS TO A MAN WITH HIS OWN MONEY ----
+   Lifted out of the EVENTS table for the reason `bulk` gives about that table: it is fifty-eight
+   events, where length is content, and the arithmetic of a manumission is not content. This is
+   also where the item's own falsifier is answered — see the note on the middle branch. */
+function stashAnswer(d, ev, i){ const g = d.gladiators.find(x=>x.id===ev.data.gid);
+    if(!g) return "The moment passes.";
+    const his = g.stash||0, fee = rudisCost(d, g), yours = Math.max(0, fee - his);
+    if(i===0){
+      if(d.gold < yours){ g.stashAsk = d.week + ri(6,10);
+        return `You do not have the ${yours} denarii, and he stands there while you find that out. The bag goes back under his arm.`; }
+      /* his bag goes in and `grantRudis` takes the whole fee out, so the house is down exactly
+         the difference and the manumission is written by the one function that knows how. No
+         second pricing path to drift from the first. */
+      /* he pays what he owes, not everything he has. He tends to overshoot while he waits to be
+         asked, and a house that pockets the surplus is being paid to free him — measured at
+         -110d, i.e. the strongbox came out ahead. What he does not owe leaves with him, which
+         is what a peculium was for. */
+      const owed = Math.min(his, fee);
+      d.gold += owed; g.stash = his - owed;
+      /* his own money did the work, so the house does not get the credit it gets for `grantRudis`
+         — that one is an act of the player's mercy and pays fame+60, every patron +4, unrest-12
+         and mercy-rep 16. This is a man buying himself with the coin you did not know he had. */
+      const freed = grantRudis(d, g.id, true);
+      if(!freed){ d.gold -= owed; g.stash = his; g.stashAsk = d.week + ri(10,16);   /* put it back exactly as it was */
+        return `It cannot be written — he is short of what Capua requires of a freedman, whatever is in the bag.`; }
+      addRep(d, "mercy", 6);
+      return `You take what the state wants of it${his > owed ? `, leave him the ${his-owed} over` : ""}, put the rest to it yourself, and the manumission is written that afternoon. ${g.name} counts nothing and says less. He has been paying for this since before you noticed he was, and the only thing you did was not say no.`;
+    }
+    if(i===1){
+      d.gold += his; g.stash = 0;
+      remember(d, g, "tookStash");
+      g.morale = clamp(g.morale-26, 0, 100);
+      g.defiance = clamp(g.defiance+32, 0, 100);
+      activeG(d).forEach(o=>{ if(o.id!==g.id){ o.morale = clamp(o.morale-9,0,100); o.defiance = clamp(o.defiance+11,0,100); } });
+      d.unrest = clamp(d.unrest+16, 0, 100);
+      addRep(d, "blood", 8);
+      /* ---- AND IT HAS TO COST MORE THAN IT PAYS — the item's own falsifier ----
+         MEASURED, ten houses a policy on identical seeds: always taking the bag ended on 4,570
+         gold against 3,982 for always freeing him and 4,009 for handing it back, with fame and
+         acclaim flat and only unrest showing at all. That is the "cruelty is efficient" failure
+         the risk section names, and it is worse than it looks, because taking the bag ALSO ends
+         the skim — the house recovers his savings and stops paying the fifth in the same act.
+         So the cost is put where it can be felt: Capua hears about it (fame and every patron's
+         favour, both of which price the purses this house is offered), and every other man in
+         the yard starts holding back half again as much, because they all watched what happened
+         to the one who saved openly. */
+      d.fame = Math.max(0, d.fame - 70);
+      patronsOf(d).forEach(p=>{ p.favor = clamp(p.favor-14, 0, 100); }); recomputeFavor(d);
+      d.flags.stashRobbed = d.week;
+      return `You take the bag and keep it, and tell him the answer is no. ${his} denarii goes into the house's coin. He does not argue and he does not look away, and by the evening every man in the cells knows exactly what happened and exactly what it is worth to save.`;
+    }
+    g.stashAsk = d.week + ri(12,20);
+    remember(d, g, "keptStash");
+    g.morale = clamp(g.morale+12, 0, 100);
+    g.defiance = clamp(g.defiance-6, 0, 100);
+    activeG(d).forEach(o=>{ if(o.id!==g.id) o.morale = clamp(o.morale+3,0,100); });
+    addRep(d, "mercy", 5);
+    return `You push the bag back across the table and tell him not yet. He takes it, which costs him something, and puts it away again. He is still yours and he is still saving, and both of you know how this ends if he lives long enough.`;
+}
+/* a purse paid to several men at once is several men's purses: each keeps his cut of his own
+   share, and the house banks what is left of the whole. */
+function skimShare(d, ents, share, stood){
+  const each = Math.floor(share / Math.max(1, stood));
+  let kept = 0;
+  (ents||[]).forEach(e=>{ if(!e.mine || e.out) return;
+    const x = d.gladiators.find(y=>y.id===e.gid); if(x) kept += each - skimStash(d, x, each); });
+  return share - kept;
+}
+function skimStash(d, g, purse){
+  if(!g || !(purse > 0) || !skimReady(g)) return purse;
+  /* ---- AND HE STOPS WHEN HE HAS ENOUGH ----
+     He is saving for a number, not hoarding. Without this he skims for the whole rest of his
+     career and the measured bags ran five times what he was saving for — 4,113d against a target
+     of 796d — which is a fifth of every purse of every good man in the house, forever, for money
+     nobody was ever going to ask for. That drag is what stopped two fixture houses surviving
+     forty weeks. He takes a cut until the state's twentieth of him is covered and then he leaves
+     the purses alone; if he grows more valuable, the target moves and he starts again. */
+  if((g.stash||0) >= stashTarget(g)) return purse;
+  const cut = Math.max(1, Math.round(purse * skimRate(d)));
+  g.stash = (g.stash || 0) + cut;
+  return Math.max(0, purse - cut);
+}
 /* what stands between him and the thing he asked for, in his own units. Returns null when the
    question does not apply, so a caller cannot render an answer to a question nobody asked. */
 /* ---- THE ONE PLACE THE GAME STATED THE TERMS, AND IT STATED THEM WRONG ----
@@ -7330,6 +7489,11 @@ const REGARD = {
   hurt:      { n:-16, say:"You sent him out on a wound that had not closed.", bad:true },
   sine:      { n: -9, say:"You put him on a card with no mercy in it.", bad:true },
   refused:   { n:-13, say:"He asked you for the one thing he wanted and you said no.", bad:true },
+  /* #233 — refusing a man who put the money on the table himself is not the same act as refusing
+     a man who asked. He did the saving; taking it is a theft he watched happen, and it is priced
+     below `refused` on purpose. Handing it back is the other end of the same moment. */
+  tookStash: { n:-24, say:"He saved for his own freedom and you took the money.", bad:true },
+  keptStash: { n: 14, say:"He put his own money on the table and you let him keep it." },
   duel:      { n:-26, say:"You left him on the sand until he had to finish a man from his own cells.", bad:true },
   lapsed:    { n:-12, say:"You stopped the burial dues after men had gone into the ground under them.", bad:true },
   grief:     { n:  0, say:"A man he called brother died beside him.", bad:true },
@@ -9081,7 +9245,7 @@ const MAN_FIELDS  = { memory:()=>[], formLog:()=>[], scars:()=>[], scarCap:()=>(
   sex:()=>"m", kit:g=>defaultKit(g.cls), traits:()=>[], lasting:()=>[],
   focus:g=>(CLASSES[g.cls] ? CLASSES[g.cls].key[0] : "str") };
 const MAN_NUMBERS = { regard:()=>ri(38,54), form:()=>0, fans:()=>0, strain:()=>0,
-  weeksAged:()=>0, age:()=>ri(20,28) };
+  weeksAged:()=>0, age:()=>ri(20,28), stash:()=>0 };   /* #233 — what he has put aside of his own */
 
 /* ---- THE REPAIRS ----
    These change what is already there, so they are not defaults and cannot be a
@@ -16714,7 +16878,8 @@ function doMelee(d, ids, offer, pending, choice, tactic){
      it did NOT win, so the book read nought per cent at melees forever */
   let mPurse = 0;
   if(won){
-    d.gold += offer.purse; mPurse = offer.purse;
+    d.gold += skimStash(d, d.gladiators.find(g=>g.id===winnerGid), offer.purse);   /* #233 */
+    mPurse = offer.purse;
     const fg = rnd((t.fameGain*2 + res.crowd/12) * kitShow(avgKitMods(gs)));
     d.fame += fg;
     const w = d.gladiators.find(g=>g.id===winnerGid);
@@ -16736,7 +16901,8 @@ function doMelee(d, ids, offer, pending, choice, tactic){
       if(x && !isGone(x)) formShift(d, x, e.out ? -14 : 20, e.out ? "went down in the melee" : "stood at the end of the melee"); });
     if(stood){
       const share = rnd(offer.purse*0.22*stood);
-      d.gold += share; mPurse = share;
+      d.gold += skimShare(d, res.ents, share, stood);   /* #233 */
+      mPurse = share;
       d.fame += rnd(t.fameGain*0.5);
       res.ents.forEach(e=>{ if(e.mine && !e.out){ const g=d.gladiators.find(x=>x.id===e.gid); if(g) g.pfame += rnd(t.fameGain*0.4); } });
       sum.push(`${stood===1?"One of yours was still upright":"Your men were still upright"} at the end — a survivor's share of ${share} denarii.`);
@@ -16932,7 +17098,7 @@ function doVenatio(d, gid, offer, tactic, pending, choice){
   if(res.killed && offer.beast==="lion") d.flags.killedLion = 1;
   if(res.killed){
     const purse = offer.purse;
-    d.gold += purse;
+    d.gold += skimStash(d, g, purse);   /* #233 */
     /* his win went on the record above, before firstBlood was asked — see the note there */
     const fg = rnd((t.fameGain*1.35 + res.crowd/14) * B.fear * kitShow(kitMods(g.kit, g.cls, g)));
     d.fame += fg;
@@ -17046,7 +17212,11 @@ function doPairFight(d, ids, offer, tactic, pending, choice){
      now, with the purse set to what the house actually took. */
   let pPurse = 0, pWin = false, pDrawn = false;
   if(res.win){
-    const purse = rnd(offer.purse * (d.city?1:facPurse(d))); d.gold += purse;
+    const purse = rnd(offer.purse * (d.city?1:facPurse(d)));
+    /* #233 — two men, so each keeps his cut of his own half */
+    { const half = Math.floor(purse/2); let kept = 0;
+      gs.forEach(g2=>{ kept += half - skimStash(d, g2, half); });
+      d.gold += purse - kept; }
     pPurse = purse; pWin = true;
     gs.forEach(x=>formShift(d, x, 16, "took a pair bout"));
     const fg = rnd((t.fameGain*1.6 + res.crowd/14) * kitShow(avgKitMods(gs)));
@@ -18097,11 +18267,12 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
     purse = rnd(offer.purse * (away?cityPurse(d,offer.city):facPurse(d)) * (away?1:aedilePurse(d)) * docPurse(d) * W.purse * favPurse(g) * femPurse(g) * fanPurse(g) * risePurse(d) * (away?1:leaguePurse(d)) * (away?1:nemPurse(d)) * blessPurse(d) * pit(d,"purse"));
     /* the pits pay out of a bag at the rope. an editor pays when his clerk gets to it. */
     const onCredit = offer.imperial ? "imperial" : offer.city ? "city" : offer.booking ? "booking" : offer.festival ? "games" : null;
-    if(onCredit && purse >= 140){
-      const now = rnd(purse * 0.35);
+    const take = skimStash(d, g, purse);   /* #233 — his cut, off the house's share */
+    if(onCredit && take >= 140){
+      const now = rnd(take * 0.35);
       d.gold += now;
-      bookPurse(d, purse - now, offer.editor || (offer.festival ? `the editor of ${offer.festival}` : "the editor"), onCredit);
-    } else d.gold += purse;
+      bookPurse(d, take - now, offer.editor || (offer.festival ? `the editor of ${offer.festival}` : "the editor"), onCredit);
+    } else d.gold += take;
     weekMark(d,"purse",purse); g.wins++;
     const fineKit = F && F.fineBonus && GEAR[gc.kit.weapon] && GEAR[gc.kit.weapon].price>0;
     const fg = rnd((t.fameGain + res.crowd/18 + (offer.stakes==="sine"?6:0)) * (offer.stakes==="blood"?0.55:1)
@@ -19179,6 +19350,24 @@ const EVENTS = {
       d.fame = Math.max(0, d.fame-10);
       patronsOf(d).forEach(p=>{ p.favor = clamp(p.favor-13,0,100); }); recomputeFavor(d);
       return `You refuse. He does not argue. He simply writes, and everybody in the room understands that the writing is the point.`; } },
+
+
+  /* ---- A PURSE OF HIS OWN — phase queue #233 ----
+     He has covered the state's twentieth of himself out of his own winnings. That is not the whole
+     of `rudisCost` — the house's parting gift is the other half, and the house still pays it — but
+     it is the half that is his to pay, and he has paid it. Three answers, and the middle one is
+     the one the item's risk section is about: taking his money has to be worse for you than saying
+     no to a man who merely asked, or cruelty is efficient. */
+  stash: {
+    make(d){ const g = activeG(d).filter(x=>stashReady(d, x))
+        .sort((a,b)=>(b.stash||0)-(a.stash||0))[0];
+      if(!g) return null;
+      const fee = rudisCost(d, g), his = g.stash||0, yours = Math.max(0, fee - his);
+      return { id:"stash", title:"A Purse of His Own",
+        text:`${g.name} asks to be heard and then puts a bag on the table. It is ${his} denarii, and he has been a long time about it — a cut of every purse he has won, held back out of what came to you, and you never once counted it. It is the state's twentieth of him, which is the part a man is allowed to pay himself. The rest of the manumission is ${yours} denarii and it is yours to find.`,
+        choices:[`Take it and free him — ${yours}d from the house`, "Take the money and tell him no", "Give it back, and tell him no"],
+        data:{ gid:g.id, his, yours } }; },
+    run(d,ev,i){ return stashAnswer(d, ev, i); } },
   warWord: {
     make(d){ if(!d.war || d.war.done || warIdx(d)!==1 || d.flags.hadWord) return null;
       const free = activeG(d).filter(g=>!isAuctor(g));
@@ -19815,6 +20004,14 @@ function heldQuestions(d){
         : ["Take up the work again"],
       data:{ won:pr.won, triumph:pr.triumph } };
   }
+  /* ---- A MAN STANDING THERE WITH THE BAG IS NOT A RAFFLE TICKET — #233 ----
+     `pickEvent` draws on 45% of weeks and then shuffles fifty-eight events for a single winner, so
+     a man who has saved his own manumission was competing with a lost sandal every week and losing
+     on most of them. MEASURED before this line existed: across ten houses and 1,600 weeks, nine men
+     reached the point of asking and only TWO were ever asked. The saving is a long, deliberate act
+     and the ask is the end of it; it belongs with the questions the house owes an answer to, not in
+     the weekly lottery. */
+  if(!d.pendingEvent){ const st = EVENTS.stash.make(d); if(st) d.pendingEvent = st; }
   if(d.pendingCourt && !d.pendingEvent){ const pc = d.pendingCourt; d.pendingCourt = null;
     d.pendingEvent = pc.caught
       ? { id:"courted", title:"He Knows", text:`${lanistaOf(pc.house).name} sends word, and the word is civil, which is worse. He knows what your man was doing at his wall. ${pc.name} stays where he is, your purse is lighter, and House ${pc.house} has a reason now that it did not have before.`, choices:["That is the risk"], data:{} }
@@ -20180,7 +20377,7 @@ const rudisCost = (d, g) => !g ? 0 : Math.max(40, Math.round(
    `grantRudis` and again on the card as `can = S.gold >= fee`. Both read it now. */
 const canAffordRudis = (d, gid) => { const g = d.gladiators.find(x=>x.id===gid);
   return !!g && d.gold >= rudisCost(d, g); };
-function grantRudis(d, gid){
+function grantRudis(d, gid, bought){
   /* ---- HE IS CHECKED BEFORE HE IS CHARGED, WHICH IS NOT WHERE THIS STARTED ----
      `rudisEligible` was asked at the BOTTOM, twenty lines after the fee had been taken, the
      chronicle had said "the manumission is written and paid for", his plan had been cleared and
@@ -20189,7 +20386,9 @@ function grantRudis(d, gid){
      own gate is `can = S.gold >= fee` and tests affordability ONLY, so nothing but the button's
      placement was keeping that path shut. The question comes first now. */
   { const ge = d.gladiators.find(x=>x.id===gid);
-    if(!ge || !rudisEligible(ge)) return false; }
+    /* #233 — a bought manumission answers the question with money instead of renown. Everything
+       else about it, the fee included, is unchanged; this waives the ONE gate the coin replaces. */
+    if(!ge || (!bought && !rudisEligible(ge))) return false; }
   { const gc = d.gladiators.find(x=>x.id===gid);
     if(gc){ const fee = rudisCost(d, gc);
       /* ---- AND IT HAS TO SAY WHEN IT DID NOT HAPPEN ----
@@ -20214,7 +20413,9 @@ function grantRudis(d, gid){
   if(!g) return false;
   g.status = "freed";
   d.freed.push({ name:fullName(g), week:d.week, wins:g.wins||0, cls:g.cls, regardAt:rnd(regardOf(g)) });
-  d.fame += 60;
+  /* #233 — half the credit when the coin was his: the street can tell the difference between a
+     house that freed a man and a house that took a man's own money and let him go. */
+  d.fame += bought ? 30 : 60;
   patronsOf(d).forEach(p=>{ p.favor = clamp(p.favor+4,0,100); });
   recomputeFavor(d);
   d.unrest = clamp(d.unrest-12, 0, 100);
@@ -20224,7 +20425,7 @@ function grantRudis(d, gid){
     d.unrest=clamp(d.unrest-15,0,100);
     chron(d, "The fire goes out of the cells — the man they would have followed walks free, and hope does what the whip could not.", "good");
   }
-  addRep(d, "mercy", 16);
+  addRep(d, "mercy", bought ? 8 : 16);
   if(g.ambition && g.ambition.kind==="freedom" && g.age<RUDIS_AGE) ambitionMet(d, g);
   kinReact(d, gid, "brother", 14, -8);
   dropTies(d, gid);
@@ -31540,6 +31741,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     activeG, defaultKit, kitMods, statCap, fullName, yearOf, YEAR_WEEKS, rudisEligible,
     /* the price of freedom, and whether the house can meet it — see the note over grantRudis */
     rudisCost, canAffordRudis, RUDIS_TAX, gladValue,
+    skimStash, skimReady, stashReady, stashTarget, SKIM_FAME, SKIM_WINS, SKIM_CUT, STASH_TRUST, STASH_HIDE, skimRate,   /* #233 */
     RUDIS_WINS, RUDIS_FAME, RUDIS_AGE, rudisStanding, rudisWord,   /* #190 — the three terms, and the distance to them */
   };
   /* ---- WHAT THE CHECKS NEVER REACH ----
