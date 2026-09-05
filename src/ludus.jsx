@@ -19779,6 +19779,13 @@ const EVENTS = {
       const rival = activeG(d).filter(x=>x.id!==d.primus.gid && primusEligible(x))
         .sort((a,b)=>b.pfame-a.pfame)[0];
       if(!holder || !rival || d.week - d.primus.since < 6) return null;
+      /* ---- THE GAP LIVED IN THE CHANNEL AND NOT IN THE MAKE — found by #245 phase 2 ----
+         `primusWeek` asks once and then leaves it PRIMUS_ASK_GAP weeks ("a long reign is asked two
+         or three times rather than every fortnight"), but this make() never read `asked`. At one
+         ticket among fourteen the die almost never reached it; at eight it asked a holder ten times
+         in eighty weeks (`checks/careers.mjs`). The gap is the event's, whichever door raises it. */
+      if(d.primus.asked && d.week - d.primus.asked < PRIMUS_ASK_GAP) return null;
+      d.primus.asked = d.week;
       return { id:"primacy", title:"He Wants the Bout",
         text:`${rival.name} has as many wins as ${holder.name} had when you sent him for the primacy, and he has been counting. He is not asking to leave. He is asking for the one bout in this city that means anything, against the man who sleeps four doors down.`,
         choices:["Make the match", "Tell him the title stays where it is", "Tell him to wait"],
