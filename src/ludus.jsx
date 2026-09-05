@@ -14550,23 +14550,51 @@ function haveWordWith(d, gid){
     text: her(ex.text, g), choices: (ex.choices||[]).map(c=>her(c, g)), data:{ k, gid, ex } };
   return true;
 }
+/* ---- THE ASKS THROUGH THE SAME DOOR — second phase queue #245, phase 4 ----
+   This picked a never-asked man at random and THEN filtered the five by what he fits, drawing by
+   the weights written on the table — brother 10 · match 9 · year 8 · burial 7 · woman 6, the rarest
+   lightest. So a conversation only one man in the yard fits was raised only on the weeks the random
+   man was him. Measured (`probes/heard.mjs`, 16 x 420, two seed sets): `woman` fit some eligible man
+   on 4.8% and 8.7% of home weeks and was raised ONCE in each run of forty; `year` fit 1.5% and 3.7%
+   and was raised twice and never; a house heard two of the five at the median, and seven of
+   thirty-two heard none. The written weights were never the lever: the man-first draw was.
+
+   The draw is one pool now — every (never-asked eligible man, conversation he fits) pair — drawn by
+   `askPick` with tickets set from each conversation's measured reach the way `EV_DIE` sets the die's,
+   a conversation this house has never heard weighing ASK_FRESH times more (`flags.askLast` is the
+   record), and the next pair tried when one has nothing to say. The 6% roll, the eligibility of a
+   man, and once-in-his-life all stay. ASKS[k].w is left on the table as the record of what it was. */
+const ASK_DIE = { brother:{w:1}, match:{w:1}, burial:{w:2}, woman:{w:3}, year:{w:4} };
+const ASK_FRESH = 3;
+const askPool = d => {
+  const men = activeG(d).filter(g=>regardOf(g) >= 45 && ((g.wins||0)+(g.losses||0)) >= 3 && !(d.flags.asked||[]).includes(g.id));
+  const out = [];
+  for(const g of men) for(const k of ASK_KEYS){ let ok = false; try { ok = !!ASKS[k].need(d, g); } catch(e){}
+    if(ok) out.push({ gid:g.id, k }); }
+  return out;
+};
+const askWeight = (d, x) => ((ASK_DIE[x.k] && ASK_DIE[x.k].w) || 1) * ((d.flags && d.flags.askLast && d.flags.askLast[x.k] != null) ? 1 : ASK_FRESH);
+const askPick = (pool, d) => { let sum = 0; for(const x of pool) sum += askWeight(d, x);
+  let r = R() * sum, i = 0;
+  for(; i < pool.length - 1; i++){ r -= askWeight(d, pool[i]); if(r < 0) break; }
+  return pool.splice(i, 1)[0]; };
 function askWeek(d){
   if(d.over || d.rome || d.city || d.travel || d.pendingEvent) return;
-  const men = activeG(d).filter(g=>regardOf(g) >= 45 && ((g.wins||0)+(g.losses||0)) >= 3 && !(d.flags.asked||[]).includes(g.id));
-  if(!men.length) return;
+  const pool = askPool(d);
+  if(!pool.length) return;
   if(R() > 0.06) return;
-  const g = pick(men);
-  const fit = ASK_KEYS.filter(k=>{ try { return ASKS[k].need(d, g); } catch(e){ return false; } });
-  if(!fit.length) return;
-  const tot = fit.reduce((n,k)=>n + ASKS[k].w, 0);
-  let x = R()*tot, k = fit[0];
-  for(const c of fit){ x -= ASKS[c].w; if(x<=0){ k=c; break; } }
-  let ex = null;
-  try { ex = ASKS[k].say(d, g); } catch(e){ return; }
-  if(!ex) return;
-  d.flags.asked = [...(d.flags.asked||[]), g.id];
-  d.pendingEvent = { id:"ask", title: isF(g) ? "She Wants A Word" : "He Wants A Word", text:her(ex.text, g),
-    choices:(ex.choices||[]).map(c=>her(c, g)), data:{ k, gid:g.id, ex } };
+  while(pool.length){
+    const { gid, k } = askPick(pool, d);
+    const g = d.gladiators.find(x=>x.id===gid); if(!g) continue;
+    let ex = null;
+    try { ex = ASKS[k].say(d, g); } catch(e){ continue; }
+    if(!ex) continue;                                   /* nothing to say does not spend the week */
+    d.flags.asked = [...(d.flags.asked||[]), g.id];
+    (d.flags.askLast = d.flags.askLast || {})[k] = d.week;
+    d.pendingEvent = { id:"ask", title: isF(g) ? "She Wants A Word" : "He Wants A Word", text:her(ex.text, g),
+      choices:(ex.choices||[]).map(c=>her(c, g)), data:{ k, gid:g.id, ex } };
+    return;
+  }
 }
 
 /* ---- WAYS TO BE FINISHED ----
@@ -32690,6 +32718,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     calendarRows, CAL_TONE, YearWheel, CalRow,   /* #255 — the year as a wheel, and the rows it pins */
     heirOfAge, HEIR_AGE, yearsAtHead,   /* #253 — a boy's age is his own */
     EV_DIE, EV_DRAWN, evTune, evPool, evPick, EV_FRESH, evWeight,   /* #245 phases 2-3 — the weighted, cooled, fresh die */
+    ASK_DIE, ASK_FRESH, askPool, askWeight, askPick,   /* #245 phase 4 — the asks through the same door */
     togaEvent,   /* #237 phase 4/5 — so a check can drive the toga trigger against an already-named son */
     /* the summit: the gate, the letter, the bar, and the trip's own clock */
     romeReady, romeProved, offerRome, romeBar, ROME_BOUTS, ROME_WEEKS_PER_BOUT, ROME_RANK,

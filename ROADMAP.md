@@ -4389,6 +4389,56 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.206.0 — #245, phase 4: the asks through the same door
+
+**The last phase, and the written weights were never the lever.** `askWeek` picked a never-asked man
+at random and *then* filtered the five conversations by what he fits, drawing one by the weights on
+the table — brother 10 · match 9 · year 8 · burial 7 · woman 6, the rarest lightest. The queue's
+phase said "with `woman` and `burial` weighted up, not down". Measured first (`probes/heard.mjs`,
+16 × 420, two seed sets): **`woman` fit some eligible man on 4.8% and 8.7% of home weeks and was
+raised once in each run of forty**; `year` fit 1.5% and 3.7% and was raised twice and never; a house
+heard **two of the five** at the median and seven of thirty-two heard none. Not the weights — the
+man-first draw: a conversation only one man in the yard fits was raised only on the weeks the random
+man was him. And no roll was ever wasted on a silent `say()` (0 of 81), which the queue had guessed
+at too.
+
+**The draw is one pool now** — every (never-asked eligible man, conversation he fits) pair — drawn by
+`askPick` with tickets set from each conversation's measured reach the way `EV_DIE` sets the die's
+(brother 1 · match 1 · burial 2 · woman 3 · year 4), a conversation this house has never heard
+weighing `ASK_FRESH` (3) times more with `flags.askLast` as the record, and the next pair tried when
+one has nothing to say. The 6% roll, a man's eligibility and once-in-his-life all stay; `ASKS[k].w`
+stays on the table as the record of what it was.
+
+**Measured after, same instrument, same seeds (re-phased — rates, not houses):**
+
+| | AUDIT before → after | AUDIT2 before → after |
+|---|---|---|
+| asks per hundred weeks | 1.57 → 1.55 | 1.17 → 1.59 |
+| `woman` raised | **1 → 9** | **1 → 3** |
+| `year` raised | 2 → 3 | 0 → 1 |
+| `brother` · `match` · `burial` | 17→17 · 9→15 · 11→11 | 13→7 · 15→15 · 12→10 |
+| distinct conversations per house, p50 (max) | 2 → 3 (4 → **5**) | 2 → 2 (3 → 4) |
+
+The rate is the roll's and did not move; the rare conversation is heard now, and one house heard all
+five.
+
+**`checks/asked.mjs`, six arms.** The pool is every pair and an asked man is in none; the draw is
+joint — one man fitting `woman` against three fitting `match` comes out by tickets to 1.1%, not one
+man in four; an unheard conversation's share tracks `ASK_FRESH` to 0.3%; nothing to say does not spend
+the week — with `brother` forced silent on a house where he fits every man, three thousand rolls raise
+as many asks as with him speaking (ratio 1.14, bar 0.75 — a draw that returned on silence reads about
+half); a man asks once and the kind is stamped; and the rare tier is raised at all on six seeded
+houses. Sabotage-verified three ways: every ticket one and freshness off (arm 3), a pick that ignores
+the tickets (arm 2 at 49.6% off), a silent `say()` spending the week (arm 4 at 0.64). The check's
+first draft wrote "five men" into a fixture the clean opening gives three, and failed on itself; every
+expectation derives from the pool now.
+
+**#245 is closed — four phases, v3.203.0 to v3.206.0.** What it leaves behind: `pace-tally.json` with
+every drawn event's reach per build and an exposure-aware floor under it; `EV_DIE`, `EV_FRESH`,
+`ASK_DIE`, `ASK_FRESH` as the four numbers a designer turns; and the finding under all of it, that
+the die can lift a rare event only on the weeks it is eligible — reach is the ceiling, tickets are
+not — which hands the late game back to #248.
+
 ### v3.205.0 — #245, phase 3: an event this house has never met weighs more
 
 **One constant and one weight function, no new state.** `flags.evLast[k]` — the record phase 2 keeps
@@ -6534,7 +6584,7 @@ caps it at one debtor.
 
 ---
 
-**#245 — One Die for Sixty-One Events** *(overhaul · large · 4 phases)* — **PHASES 1–3 SHIPPED, v3.203.0 – v3.205.0.** Phase 3 (v3.205.0) is freshness: an event the house has never met has its tickets multiplied by `EV_FRESH` (3), read off `flags.evLast` so nothing new is saved. Measured: a house meets a median of **13 → 23** of the thirty-six on the seed set where houses die young, 25 → 26 where they live long — but the last quarter's first-time rate did not rise, because the die has thirty-six cards and freshness deals them sooner; the late-game rate is #248's to raise. **Phase 4 (the asks through the same door) is open.** Phase 2 is the weighted, cooled die: `EV_DIE` gives each drawn event tickets set from its measured reach and a quiet after asking; the ORDER is weighted, not the outcome, so every make() keeps its gates. Measured at the die on two seed sets: the four-ticket-and-up tier from ~11% to ~16% of draws, `thugs` 1→6 and 2→14, `poached` 0→3 and 0→3, the draw rate unchanged. The lifespan swing between the two runs went opposite ways on the two seed sets — re-phasing, not the die. Phases 3 (freshness) and 4 (the asks) are open. Phase 1 was shipped v3.203.0 as an instrument with no game change: `checks/pace.mjs` reads the draw's eligible set every week of a seeded reference run (p50 **14**, four or more on 100% of weeks), keeps every drawn event's reach as a number in `pace-tally.json`, and holds two floors — reach may not fall to zero between builds, and the raised events must still be raised. It also corrected the item's own count: **36 of the 61 are drawn by the die; 25 are raised by their own systems** and never see it. **Phases 2–4 are the re-basing decision** (a weighted draw re-phases every seeded fixture in the suite) and wait on it.
+**#245 — One Die for Sixty-One Events** *(overhaul · large · 4 phases)* — **SHIPPED, ALL FOUR PHASES, v3.203.0–v3.206.0.** Phase 4 (v3.206.0): the asks draw from one pool of every (man, conversation) pair by weight, the unheard first — `woman` raised 1 → 9 and 1 → 3 on two seed sets with the asking rate untouched. **PHASES 1–3 SHIPPED, v3.203.0 – v3.205.0.** Phase 3 (v3.205.0) is freshness: an event the house has never met has its tickets multiplied by `EV_FRESH` (3), read off `flags.evLast` so nothing new is saved. Measured: a house meets a median of **13 → 23** of the thirty-six on the seed set where houses die young, 25 → 26 where they live long — but the last quarter's first-time rate did not rise, because the die has thirty-six cards and freshness deals them sooner; the late-game rate is #248's to raise. **Phase 4 (the asks through the same door) is open.** Phase 2 is the weighted, cooled die: `EV_DIE` gives each drawn event tickets set from its measured reach and a quiet after asking; the ORDER is weighted, not the outcome, so every make() keeps its gates. Measured at the die on two seed sets: the four-ticket-and-up tier from ~11% to ~16% of draws, `thugs` 1→6 and 2→14, `poached` 0→3 and 0→3, the draw rate unchanged. The lifespan swing between the two runs went opposite ways on the two seed sets — re-phasing, not the die. Phases 3 (freshness) and 4 (the asks) are open. Phase 1 was shipped v3.203.0 as an instrument with no game change: `checks/pace.mjs` reads the draw's eligible set every week of a seeded reference run (p50 **14**, four or more on 100% of weeks), keeps every drawn event's reach as a number in `pace-tally.json`, and holds two floors — reach may not fall to zero between builds, and the raised events must still be raised. It also corrected the item's own count: **36 of the 61 are drawn by the die; 25 are raised by their own systems** and never see it. **Phases 2–4 are the re-basing decision** (a weighted draw re-phases every seeded fixture in the suite) and wait on it.
 
 `pickEvent(d)` is `for(k of shuffled(Object.keys(EVENTS))){ const ev = EVENTS[k].make(d); if(ev) return
 ev; }`. **Measured (`probes/pace.mjs`, 12 × 420): thirteen events are eligible on the median week** (p10
