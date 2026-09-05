@@ -26412,6 +26412,120 @@ function CircuitLedger({ S }){
   );
 }
 
+/* ---- ONE ROW OF THE YEAR, lifted out of App for #255 ----
+   The calendar's row markup lived inside the modal's `byWeek.map`; the wheel below needs to render
+   the same rows for a tapped spoke, and App is at its line allowance — `bulk`'s rule is to split
+   before asking for more room. `where` is for the counting check: the list's rows and the spoke's
+   rows are the same component, and only one of them is the list. */
+function CalRow({ r, go, where }){
+  const inner = (<>
+    <div className="flex items-center justify-between gap-2">
+      <span style={{fontSize:"var(--fs-md)",color:r.tone,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.title}</span>
+      {r.tab && <span className="rowval dim" style={{fontSize:"var(--fs-sm)",color:"var(--gold-deep)"}}>{TAB_NAMES[r.tab]||r.tab} ›</span>}
+    </div>
+    {r.sub && <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2,lineHeight:1.35}}>{r.sub}</div>}
+  </>);
+  return r.tab
+    ? <button data-calrow={where||"list"} className="optrow" style={{padding:"9px 10px",marginBottom:5,borderLeft:`3px solid ${r.tone}`}} onClick={()=>go(r.tab)}>{inner}</button>
+    : <div data-calrow={where||"list"} className="panel" style={{padding:"9px 10px",marginBottom:5,borderLeft:`3px solid ${r.tone}`}}>{inner}</div>;
+}
+
+/* ---- THE YEAR IS A WHEEL — second phase queue #255 ----
+   The year is eighteen weeks, four seasons, six festivals each carrying its engine, and everything
+   dated — bookings, challenges, levies, a pact's `until`, a loan's fuse, the election, `bayDue`, the
+   toga, a vow's bouts. #215 drew the suns; nobody drew the calendar. The list `calendarRows` feeds is
+   right for reading and wrong for seeing where in the year you stand and how the dated things stack.
+
+   This is that list as a wheel: one spoke per week of the YEAR (not of the span — the wheel is
+   stable and the pointer moves round it, which is the reading the list cannot give), the four
+   seasons as a band shaded from the same `SCN_GRADE` tables the suns are graded by, the festivals
+   as marks on the band with their engine's glyph, and every row the list shows as a pin on its
+   spoke — one element per row, stacked outward, so a check can count them against the list. A row
+   that falls on the same week next year is a hollow pin on this week's spoke. Tapping a spoke lists
+   that week's rows under the wheel, and those are the same `CalRow`s that route through `goTo`.
+
+   The viewBox is 320 wide so that on a 340px modal the numbers render above `--fs-micro`, and the
+   season names sit in `SCN_INK` on the sand band — the one ground in this drawing whose contrast
+   the scene already proved. Colours from the palette go through `style`, not the attribute, because
+   `var()` does not resolve in a presentation attribute and the file has never pretended it does. */
+function YearWheel({ S, rows, go }){
+  const [pick, setPick] = React.useState(null);
+  /* the band is 28 deep on purpose: the festival glyphs take its inner third and the season names its
+     outer third, because at 22 the two collided ("III SPRING") and the names ran under --fs-micro */
+  const N = YEAR_WEEKS, CX = 160, CY = 128, R0 = 44, RB = [78, 106], RG = 86, RL = 99, RN = 120;
+  const ang = i => (-90 + i * (360 / N)) * Math.PI / 180;
+  const at  = (i, r) => [CX + Math.cos(ang(i)) * r, CY + Math.sin(ang(i)) * r];
+  const arc = (a, b, r1, r2) => { const [x1,y1] = at(a, r2), [x2,y2] = at(b, r2), [x3,y3] = at(b, r1), [x4,y4] = at(a, r1);
+    const big = (b - a) * (360 / N) > 180 ? 1 : 0;
+    return `M${x1} ${y1}A${r2} ${r2} 0 ${big} 1 ${x2} ${y2}L${x3} ${y3}A${r1} ${r1} 0 ${big} 0 ${x4} ${y4}Z`; };
+  const now = yearWeek(S), spoke = w => ((w - 1) % N);
+  /* the rows by spoke — this year's on the spoke, next year's same week hollow on the same spoke */
+  const bySpoke = Array.from({length:N}, ()=>[]);
+  for(const r of rows) bySpoke[spoke(r.week)].push(r);
+  const picked = pick == null ? null : bySpoke[spoke(pick)];
+  const glyph = (F, x, y) => {
+    const ink = { fill:SCN_INK, stroke:SCN_INK, strokeWidth: (F.tier||0) >= 1 ? 2 : 1.3, strokeLinecap:"round" };
+    const eng = F.rest ? "rest" : F.forceMelee ? "melee" : F.forceHunt ? "hunt" : "single";
+    const k = { "data-fest":F.key, "data-engine":eng, "data-tier":F.tier||0 };
+    if(eng === "rest")  return <g {...k}><path d={`M${x-4} ${y-3}h8l-2 6h-4z`} style={{fill:"none",stroke:ink.stroke,strokeWidth:ink.strokeWidth}}/><path d={`M${x-3} ${y+3}h6`} style={ink}/></g>;
+    if(eng === "melee") return <g {...k}>{[-4,0,4].map(dx=><path key={dx} d={`M${x+dx} ${y-4}v9`} style={ink}/>)}</g>;
+    if(eng === "hunt")  return <g {...k}>{[[-3,-2],[0,-4],[3,-2]].map(([dx,dy],i)=><circle key={i} cx={x+dx} cy={y+dy} r={1.4} style={{fill:ink.fill}}/>)}<circle cx={x} cy={y+2.5} r={2.6} style={{fill:ink.fill}}/></g>;
+    return <g {...k}><path d={`M${x} ${y-5}v10`} style={ink}/><path d={`M${x-3} ${y+1}h6`} style={ink}/></g>;
+  };
+  return (
+    <div className="panel" style={{padding:"8px 8px 6px",marginBottom:11,background:"var(--panel)",borderColor:"var(--line-3)"}}>
+      <svg data-wheel="1" viewBox="0 0 320 256" width="100%" role="img"
+        aria-label={`The year as a wheel — week ${now} of ${N}, ${rows.length} thing${rows.length===1?"":"s"} with a date`}
+        style={{display:"block",maxWidth:400,margin:"0 auto"}}>
+        {/* the four seasons, graded from the same table as the suns */}
+        {SEASONS.map((s,i)=>{ const a = s.at - 1, b = (SEASONS[i+1] ? SEASONS[i+1].at - 1 : N);
+          const [lx,ly] = at((a + b) / 2, RL);
+          return (<g key={s.key} data-season={s.key}>
+            <path d={arc(a, b, RB[0], RB[1])} style={{fill:scnSandOf(s.key)[2][1],stroke:SCN_INK,strokeWidth:0.6,strokeOpacity:0.5}}/>
+            <text x={lx} y={ly+3.8} textAnchor="middle" style={{fill:SCN_INK,fontSize:11,letterSpacing:".06em",fontWeight:700}}>{s.name.toUpperCase()}</text>
+          </g>); })}
+        {/* the spokes: the week's number on the rim, and a wedge you can tap */}
+        {Array.from({length:N}, (_,i)=>{ const [nx,ny] = at(i, RN), [ix,iy] = at(i, R0 - 8), [ox,oy] = at(i, RB[0] - 2);
+          const has = bySpoke[i].length, on = pick != null && spoke(pick) === i, cur = i === now - 1;
+          return (<g key={i} data-spoke={i+1}>
+            <path d={`M${ix} ${iy}L${ox} ${oy}`} style={{stroke:"var(--line)",strokeWidth:0.8}}/>
+            <text x={nx} y={ny+3.5} textAnchor="middle" fill="currentColor" className={cur ? "" : "dim"}
+              style={{fontSize:11,fontWeight:cur?800:500,color:cur?"var(--gold-hi)":undefined}}>{i+1}</text>
+            <path d={arc(i - 0.5, i + 0.5, R0 - 10, RN + 8)} role="button" tabIndex={0}
+              aria-label={`week ${i+1} of the year${has ? ` — ${has} thing${has===1?"":"s"} with a date` : ""}`}
+              onClick={()=>setPick(on ? null : S.week + ((i - (now - 1) + N) % N))}
+              onKeyDown={e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); setPick(on ? null : S.week + ((i - (now - 1) + N) % N)); } }}
+              style={{fill: on ? "var(--gold-line)" : "transparent", fillOpacity: on ? 0.18 : 1, cursor:"pointer"}}/>
+          </g>); })}
+        {/* the festivals, on the band, each with the glyph of the engine its day is for */}
+        {CALENDAR.map(F=>{ const [x,y] = at(F.w - 1, RG); return <g key={F.key}>{glyph(F, x, y)}</g>; })}
+        {/* the pins: one per row, stacked outward from the hub; next year's hollow */}
+        {bySpoke.map((rs,i)=>rs.map((r,k)=>{ const [x,y] = at(i, R0 + Math.min(k, 3) * 9), wrap = r.week >= S.week + N;
+          /* the pin names its own spoke and takes no taps, so a tap on it falls through to the wedge */
+          return <circle key={`${i}-${k}`} data-pin="1" data-spoke={i+1} data-week={r.week} data-wrap={wrap?"1":"0"} cx={x} cy={y} r={3.6}
+            style={ wrap ? { fill:"var(--panel)", stroke:r.tone, strokeWidth:1.4, pointerEvents:"none" } : { fill:r.tone, stroke:"var(--panel)", strokeWidth:0.8, pointerEvents:"none" } }/>; }))}
+        {/* the pointer: this week */}
+        <path data-pointer="1" data-week={now} d={arc(now - 1.5, now - 0.5, R0 - 12, RB[1] + 4)}
+          style={{fill:"var(--gold-hi)",fillOpacity:0.13,stroke:"var(--gold-hi)",strokeWidth:1.2}}/>
+        <circle cx={CX} cy={CY} r={R0 - 14} style={{fill:"var(--panel)",stroke:"var(--line-3)",strokeWidth:1}}/>
+        <text x={CX} y={CY-2} textAnchor="middle" fill="currentColor" style={{fontSize:11,fontWeight:800,color:"var(--ink-hi)"}}>year {yearOf(S)}</text>
+        <text x={CX} y={CY+11} textAnchor="middle" fill="currentColor" className="dim" style={{fontSize:10}}>week {now}</text>
+      </svg>
+      {pick != null && (
+        <div style={{marginTop:6}}>
+          <div className="flex items-center justify-between gap-2" style={{marginBottom:4}}>
+            <span className="tag tag-gold">week {spoke(pick)+1} of the year</span>
+            <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>{pick===S.week ? "this week" : `in ${pick - S.week} week${pick-S.week===1?"":"s"}`}{picked.some(r=>r.week>=S.week+N) ? " · and the same week next year" : ""}</span>
+          </div>
+          {picked.length
+            ? picked.map((r,i)=><CalRow key={i} r={r} go={go} where="spoke"/>)
+            : <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:5}}>Nothing is written down for that week.</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Plate({ S, room }){
   const R = ROOM_PLATE[room]; const ref = React.useRef(null);
   React.useEffect(()=>{
@@ -31097,6 +31211,7 @@ export default function App(){
                     </div>
                   </div>
                 ); })()}
+              <YearWheel S={S} rows={rows} go={go}/>
               {byWeek.length===0 ? (
                 <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
                   Nothing is written down between here and next year. That will not last.
@@ -31109,18 +31224,7 @@ export default function App(){
                       week {((g.week-1) % YEAR_WEEKS)+1} of year {Math.floor((g.week-1)/YEAR_WEEKS)+1}
                     </span>
                   </div>
-                  {g.rows.map((r,i)=>{
-                    const inner = (<>
-                      <div className="flex items-center justify-between gap-2">
-                        <span style={{fontSize:"var(--fs-md)",color:r.tone,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.title}</span>
-                        {r.tab && <span className="rowval dim" style={{fontSize:"var(--fs-sm)",color:"var(--gold-deep)"}}>{TAB_NAMES[r.tab]||r.tab} ›</span>}
-                      </div>
-                      {r.sub && <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2,lineHeight:1.35}}>{r.sub}</div>}
-                    </>);
-                    return r.tab
-                      ? <button key={i} className="optrow" style={{padding:"9px 10px",marginBottom:5,borderLeft:`3px solid ${r.tone}`}} onClick={()=>go(r.tab)}>{inner}</button>
-                      : <div key={i} className="panel" style={{padding:"9px 10px",marginBottom:5,borderLeft:`3px solid ${r.tone}`}}>{inner}</div>;
-                  })}
+                  {g.rows.map((r,i)=><CalRow key={i} r={r} go={go} where="list"/>)}
                 </div>
               ))}
               <button className="btn" style={{width:"100%",marginTop:4}} onClick={()=>setCal(false)}>Close</button>
@@ -32492,6 +32596,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     regardRefuse,
     /* the line of the house: who may be named, naming him, and taking it up */
     nameHeir, heirEligible, heirChoices, eligibleSons, HEIRS, houseRecord, censusWorth,   /* #154 */
+    calendarRows, CAL_TONE, YearWheel, CalRow,   /* #255 — the year as a wheel, and the rows it pins */
     togaEvent,   /* #237 phase 4/5 — so a check can drive the toga trigger against an already-named son */
     /* the summit: the gate, the letter, the bar, and the trip's own clock */
     romeReady, romeProved, offerRome, romeBar, ROME_BOUTS, ROME_WEEKS_PER_BOUT, ROME_RANK,

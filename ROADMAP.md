@@ -4389,6 +4389,49 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.201.0 — #255: the year is a wheel
+
+**The second phase queue's first item taken up — the single-step UI one — and it shipped as
+specified.** The year is eighteen weeks, four `SEASONS`, six `CALENDAR` festivals each carrying its
+engine, and everything dated: bookings, challenges, levies, a pact's `until`, the election, the toga,
+a vow's bouts. #215 drew the suns and nobody drew the calendar. The list `calendarRows` feeds was
+right for reading and wrong for seeing where in the year you stand and how the dated things stack.
+
+**`YearWheel`, at module scope beside `CircuitLedger`** — App is at its line allowance and `bulk`'s
+rule is to split before asking for more room. One spoke per week **of the year, not of the span**: the
+wheel is stable and the pointer moves round it, which is the reading the list cannot give. The four
+seasons are a band shaded from the same `SCN_GRADE` tables the suns are graded by (`scnSandOf(key)`'s
+midpoint stop — the one ground in this drawing whose contrast the scene already proved, so the season
+names sit on it in `SCN_INK`). The festivals are marks on the band with the glyph of the engine their
+day is for — three strokes for `forceMelee`, a paw for `forceHunt`, a cup for the Saturnalia's `rest`,
+one blade otherwise, the great games drawn heavier. **Every row the list shows is a pin on its spoke —
+one element per row, stacked outward from the hub**, so a check can count them against the list; a row
+that falls on the same week next year is a hollow pin on this week's spoke. Tapping a spoke lists that
+week's rows under the wheel, and those are the same `CalRow`s that route through `goTo`.
+
+**The row markup moved out of App to do it.** `CalRow` is the calendar's row as a component, used by
+the list and by the tapped spoke alike — and lifting it *shrank* App from 5,784 lines to **5,774**,
+paying for the wheel's one line with room to spare.
+
+**Two things the count could not see, and the screenshot did.** The first band was 22 deep with the
+season names and the festival glyphs on the same radius, and they collided — *"III SPRING"* — with the
+names at 9.5 units, under `--fs-micro` once the viewBox scaled. The band is 28 deep now: the glyphs
+take its inner third and the names its outer third, at 11 units. And `var()` does not resolve in an
+SVG presentation attribute — the file had zero `fill="var(--…)"` sites, and now has zero still: every
+palette colour on the wheel goes through `style`.
+
+**`checks/wheel.mjs`, five arms**, on a forged house with a booking, a levy, a waiting patron, a pact,
+a hurt man, and one levy due on the same week next year so the hollow pin is exercised and not just
+allowed: eighteen spokes, four seasons, the pointer on the house's week · **18 pins against 18 rows,
+none on the wrong spoke, one hollow** · six festival marks with the right engine, the Ludi Romani
+marked great · a tapped spoke lists exactly its two rows and the booking's row shuts the calendar and
+lands on the Arena (`[data-place]`, the harness's own authority) · `calendarRows` — on the handle now —
+says 18, the list showed 18, the wheel pinned 18. Sabotage-verified four ways: pins shifted a spoke
+(arm 2), the pointer a week out (arm 1), the melee and hunt glyphs swapped (arm 3), a tapped spoke
+listing nothing (arm 4). Two faults in the check's first drafts, both the check's: it looked for a
+pin's spoke with `closest()` when the pins are their own group, and then counted the pins as spokes
+once they carried the attribute.
+
 ### v3.200.0 — the will you could not rewrite
 
 **The heir was named once, in week two, before the house had a family, and could never be changed.**
