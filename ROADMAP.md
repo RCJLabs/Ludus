@@ -4389,6 +4389,54 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.203.0 — #245, phase 1: every event's reach is a number
+
+**No game code changed.** The first phase of *One Die for Sixty-One Events* is the instrument the
+item said it needed before any weight moves, kept as a check so the figure cannot drift back to
+"nobody knows" — and the phase that decides whether the other three are worth doing.
+
+**The count in the item was wrong, and the instrument corrected it.** `pickEvent` shuffles all 61
+keys, but **only 36 have a `make()` that can return anything**. The other 25 — `feud`, `refusal`,
+`ask`, `booking`, `leagueYear`, `match`, `raising`, `toga`, `edict`, `inspector`, the arcs — carry
+`make(){ return null; }` and are raised by their own systems (`feudWeek`, `refuseWeek`, `askWeek`,
+`fireArc`), so the die never sees them and no draw could ever be "unfair" to them. The split is read
+off `make.toString()` at run time rather than written down, so a new event lands in the right column
+by itself. The die governs thirty-six, and it is still one die: **fourteen eligible on the median week,
+ten at p10, seventeen at p90, four or more on 100% of weeks** (`grain` 100%, `bribe` 99.7%, `fever` /
+`bodyguard` / `rivalOffer` 95.4%, `affair` 91.5% — against `roomFire` 3.8%, `poached` 2.3%, `thugs`
+1.1%, `stash` 0.7%, `primacy` and `uprising` 0.2%).
+
+**Two floors, and why the obvious one was wrong.** The first draft held an absolute floor — every
+drawn event eligible at least once — and failed seven: `owedLife` wants a cloth the reference player
+never throws, `whispers` and `stolenSteel` are one-shot beats of a rising at stage 1 and 2, the four
+`war*` events want the revolt arc these seeds never started, `primacy` wants the primus held.
+State-gated, not dead — the standing caveat of `dark.mjs`. What *can* be held is that reach does not
+fall to zero between builds: an event reachable at 1% or more on the last recorded run and never
+eligible now is a gate somebody shut. And the 25 raised events get the floor that fits them: the common
+four (`refusal`, `leagueYear`, `booking`, `ask` — 280 / 184 / 113 / 45 firings in 3,616 weeks) must
+fire at all, because a zero there is a broken raise site, not variance.
+
+**Two faults in the instrument, both the instrument's.** It skipped every week with a standing
+question — which, at the top of the loop, is three weeks in four, since last week's draw is still
+pending — and scanned 230 weeks of 871; it scans every home week now, on a clone with the question
+cleared. And `make()` on a clone still draws from the one global `R()`, so a scan of thirty-six makes a
+week **re-phased the run it was measuring** — 871 weeks played with 230 scans, 757 with 610. The
+stream is put back after every scan (`rngGet`/`rngSet`), so the run is the reference run, the same on
+the same seeds across builds, and the tally compares like with like. `probes/pace.mjs` carried both
+faults and is corrected the same way.
+
+**`test/pace-tally.json`** is append-only, one row per run: the median set, the top six, the reachable
+floor, the never-eligible set, and every drawn event's rate, so phase 2 has its *before*.
+Sabotage-verified two ways with a clean run on record: `grain`'s gate shut — *"reach fell to zero on
+grain — eligible on the last recorded run and never in 680 weeks now"*; `refuseWeek`'s raise cut —
+*"refusal: a broken raise site, not variance"*. A `primacy` that flipped 0.2% → never on the sabotaged
+run correctly did **not** trip the floor: that is the ≥1% tolerance doing its job.
+
+**What this does not do, and why.** It does not touch the draw. Phase 2 — `EVENTS[k].w` and a weighted
+pick over the eligible set — re-phases every seeded fixture in the suite, the v3.197.0 lesson, and the
+choice between a second stream keyed off the seed word and one re-basing release is not one to take
+without asking. The numbers above are the case for it.
+
 ### v3.202.0 — #253: a boy of ten takes the chair
 
 **The queue's smallest item, and its diagnosis did not survive the first trace.** #253 was written off
@@ -6352,7 +6400,7 @@ caps it at one debtor.
 
 ---
 
-**#245 — One Die for Sixty-One Events** *(overhaul · large · 4 phases)*
+**#245 — One Die for Sixty-One Events** *(overhaul · large · 4 phases)* — **PHASE 1 SHIPPED v3.203.0** as an instrument with no game change: `checks/pace.mjs` reads the draw's eligible set every week of a seeded reference run (p50 **14**, four or more on 100% of weeks), keeps every drawn event's reach as a number in `pace-tally.json`, and holds two floors — reach may not fall to zero between builds, and the raised events must still be raised. It also corrected the item's own count: **36 of the 61 are drawn by the die; 25 are raised by their own systems** and never see it. **Phases 2–4 are the re-basing decision** (a weighted draw re-phases every seeded fixture in the suite) and wait on it.
 
 `pickEvent(d)` is `for(k of shuffled(Object.keys(EVENTS))){ const ev = EVENTS[k].make(d); if(ev) return
 ev; }`. **Measured (`probes/pace.mjs`, 12 × 420): thirteen events are eligible on the median week** (p10

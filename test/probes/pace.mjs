@@ -38,10 +38,14 @@ const out = await p.evaluate(([H,W,SEED])=>{
       if(d.over) break;
       const e = Math.min(3, Math.floor(w/(W/4)));
       /* 1 · eligibility, on a clone, before the week runs */
-      if(!d.pendingEvent && !d.rome && !d.city && !d.travel){
+      if(!d.rome && !d.city && !d.travel){
+        /* every home week, on a clone with the standing question cleared, and the stream put back
+           afterwards — see checks/pace.mjs for both faults this first draft carried */
+        const st = A.rngGet(); const base = clone(d); base.pendingEvent = null;
         let n = 0;
-        for(const k of EK){ let ev = null; try { ev = A.EVENTS[k].make(clone(d)); } catch(x){}
+        for(const k of EK){ let ev = null; try { ev = A.EVENTS[k].make(clone(base)); } catch(x){}
           if(ev){ n++; elig.per[k] = (elig.per[k]||0)+1; } }
+        A.rngSet(st);
         elig.sizes.push(n); elig.weeks++;
       }
       /* 2 · aggression availability */
