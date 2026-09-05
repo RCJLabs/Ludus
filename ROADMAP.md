@@ -6097,6 +6097,489 @@ vanishes into `d.forebears`' bare child count rather than carrying a name and a 
 grudge hook forward, and the age-aware flavor-text pass for a son named well before sixteen. Neither
 shipped this release — the identity fix stands on its own and needed nothing from them.
 
+### THE SECOND PHASE QUEUE — fifteen proposals after the first ten closed, #242–#256
+
+**NOT AUDIT ITEMS, and the same rule as the first queue applies:** nothing below is a numbered item
+until it has a measured number and a falsifier. What is different from the first queue is that every
+diagnosis here **was measured before it was written**, on seeded instruments, because this session
+spent seven releases learning that the instrument is wrong more often than the game. The method:
+
+- a seeded baseline of the design survey (`probes/survey.mjs`, 16 × 420, seed AUDIT — reproducible for
+  the first time, see v3.200.0), the sixteen driven actions (`probes/dark.mjs`, 8 × 320: **all nineteen
+  change the save when their gate is open** — nothing dark among the verbs), and a new four-question
+  instrument written for this survey, **`probes/pace.mjs`** (12 × 420): event eligibility per week,
+  rival aggression, novelty by era, the ending curve;
+- the design banner above every content table read and diffed against what the mechanism under it
+  does — the way every closed item in this file was found;
+- every lead checked against the live source before it was allowed on the list, and **six were killed
+  on the way** (below), two of them after I had drafted the item.
+
+**THE BASELINE, so the numbers below have a frame.** 16 × 420 seeded: endings **debt 6 · rebellion 7 ·
+banned 1 · survived 2** · gold p50 by era 1,451 / 4,074 / 4,925 / 6,191 · 479 men seen, **361 died** (0
+sold, 0 freed — the rope) · careers p50 4 bouts / p90 15, wins **p50 1 / p90 7** · 29 risings, 21 defused
+· saga stage 4 reached by 1 of 15 · feud standing on 35% of weeks · circuit 34 trips / 295 weeks away ·
+events that fired most: refusal 280, leagueYear 184, ambition 183, ludusNight 183, booking 113 · **never
+fired: owedLife, owedBack, sagaFreedom, poached, courted, word, freedman** (three of those the rope's).
+
+#### The six leads this survey KILLED, which is the part worth reading first
+
+- **"The trade book is display-only."** LEGACIES carries six boons as strings on the title screen and I
+  had written the item — then found `applyLegacy(d0, legacy)` at the found-house call, applying five of
+  them, with `legacyPrice`/`legacyRegard` carrying the sixth. **Applied, not decorative.** Killed.
+- **"Retired men vanish where freed men return."** `FREEDMEN`'s pool is `(d.freed).concat(d.retired)`
+  since #204. Killed.
+- **"The gladiatrix is a man with different pronouns."** 10% of generated fighters are women;
+  `femCrowd` +12, `femPurse` ×1.15, two crowd terms in the sim, an edict, a court flag. Mechanics, not
+  plumbing. Killed.
+- **"Refusal is the commonest event in the game"** — 280 of 3,616 weeks, and `applyRefusal` is open on
+  23% of them. True and the rope's: the reference player puts a man on the sand every week. Killed.
+- **"The season plan never finishes."** `breakPlan` has one caller and it is the player's own button;
+  `planWeek` pauses on injury. A plan finishes unless you stop it. Killed.
+- **"Two of the four engines are never fought"** — 3 melees and 4 hunts in 1,805 reference bouts, with
+  a venatio on 62% of cards and a melee on 46%. The rope's picker takes singles. Killed.
+
+And one instrument fault found on the way: the survey's `did.events` accumulator was summing objects
+with `+`, so its event column had read `[object Object]` since it was written. Folded in by key now.
+
+---
+
+**#242 — Buy the Yard** *(new system · large · 5 phases)*
+
+A rival house that dies has exactly one door out and the player is on the wrong side of it.
+`bayRefill` — the only function that touches a dark yard — does `NEW_HOUSES.filter(x=>!taken.has(x.key))`,
+`pick(opts)`, and `if(!opts.length) return;`: the yard goes to a stranger, always, and when the nine
+strangers are used up it stays dark for the rest of the run. `closeHouse` retires the house with
+`h.fighters` still on its record and nobody sells them; `RIVAL_BEATS.end` (need `met>=26 && years>=11
+&& warm>=52`) has a friend of eleven years sell up "and gone to a farm near Nola" — to nobody you know;
+`settleNemHouse` breaks a house and the walls sit there. The player's verbs toward a rival are: buy one
+man (Treat → *His men*), make peace, court a man in secret, four gambits, three overtures. Never the
+house. #240 made the yard remember whose it was; this is the yard being *yours*.
+
+*Phases:* 1) **the yard as a thing with a price** — `lastDark(d).lineage` gains what the yard was worth
+(fame, the men's `gladValue` sum, the walls at `bayStandard`), and the dark-yard week raises a `bayCall`-
+shaped letter naming it. 2) **buying it** — coin and a magistrate's favour; the men come to your cells
+as they stood at `closeHouse`, willing or not by `lineage.endedAs` (a house you broke does not come
+gladly), and the yard's `metHouse` record and its grudges become yours. 3) **the second yard as a
+building** — one more `cellsCap`, a post the doctore can be sent to (`docLent` already models a doctore
+away for a season), a weekly bill on the upkeep line. 4) **the bay's answer** — `BAY_NEWS`/`NEW_HOUSES`
+arrival lines for a house that ate another, and the brake that already exists in the file:
+`EDICTS.numbers`, *"On the keeping of armed men"*, is the law a second yard is about. 5) **letting it go**
+— selling a yard back to the bay, or the yard as an heir's portion at succession.
+
+*Reuses:* closeHouse, lastDark, bayRefill, NEW_HOUSES, cellsCap, docLent, metHouse, BAY_NEWS,
+EDICTS.numbers, gladValue, bayStandard.
+
+**Verify first.** Over 16 × 420: how many yards go dark and when (`h.retired`, `flags.bayDue`), what the
+men on them were worth at closing, and how often the nine-name pool empties — if yards go dark twice a
+run at week 200+, this is late content and belongs beside #248; if the pool empties, the "stays dark
+forever" edge is a defect on its own.
+
+**Risk.** A second roster on a phone. Cap it at one extra yard, fold its men into the one roster view
+with a house tag, and let the numbers edict be the ceiling the design already wrote.
+
+---
+
+**#243 — The Mistress of the House** *(overhaul · medium–large · 4 phases)*
+
+`resolveMatch` writes `dmm.wife = { name, family, married, age, from }`. After that line **nothing reads
+`wife.from` or `wife.family`** except the card that prints them. The dowry is paid once, the favour
+once; `bearChild` reads `wifeAge < 40`; `domusWeek` gives "a house with a mistress in it" +0.4 morale,
+−0.3 unrest and +0.15 lanista health a week, flat. `wife = null` is never written outside `succeed`'s
+domus reset — she cannot sicken, die, or be widowed, and the widowed branch #226 wrote in `domusWeek` is
+reachable only through a succession. The three families — a merchant's daughter, a magistrate's niece, a
+rival's daughter that folds a feud — are one sentence each and then furniture. She is the second most
+consequential person in the villa and she has two events, the wedding and the birth line.
+
+*Phases:* 1) **her family as a standing tie** — merchant: a `bargain`-shaped yearly call on the block
+through `SLAVERS`; magistrate: `inspector` heat softened and a patron who is family; rival: the folded
+feud is a hostage — put her brother's man down *sine missione* and `weddingEndsFeud` unfolds. 2) **a
+life** — `wifeAge` is already computed; add the `fever` shape, death, and widowhood re-opening
+`marryReady` (which wants the slot empty). 3) **her own asks** — two or three `ASKS`-shaped
+conversations with the mistress: a man she wants sold or spared, the household, the daughter's match
+(the son's upbringing is `raiseEvent` already). 4) **the widow as regent** — a lanista who dies with a
+wife and a boy under `SON_AGE` gets a `succession` variant where she holds the house until he is of age:
+the one door v3.200.0 measured and could not open, because the boy needs 162 weeks.
+
+*Reuses:* domusOf, wifeAge, marryReady, HH_NAMES, ASKS, raiseEvent, weddingEndsFeud, SLAVERS, patrons,
+succession.
+
+**Verify first.** Over 16 × 520: weeks with a wife (`probes/boy.mjs` already rows `wifeWeeks`), the age
+she would reach at the house's end, and how many houses would have a widow-and-minor on the lanista's
+death — phase 4 is worth building only if that number is not zero.
+
+**Risk.** A second card to manage. She lives on the domus sheet and in the ask channel and nowhere else.
+
+---
+
+**#244 — Lend, Not Only Borrow** *(new system · medium · 3 phases)*
+
+`LENDERS` — Gratus 3.5% / patience 12 / cap 1,400, Murena 5.8% / 20 / 2,400, Scaeva 8.2% / 8 / 900 — is
+one-way. The nearest thing to lending, `OVERTURES.coin` ("Send coin against a bad season"), is a **gift**:
+`win` does `h.fame += 8; d.fame += 3` and nothing is owed back. And there is nothing for a rival to owe
+*with*: a rival house has no purse (#256). The first queue's runner-up list called this "the new-system
+curator's own top pick" and did not open it because the model was missing. #256 is the model.
+
+*Phases:* 1) **a purse to lend against** — #256 in its minimal form, `h.purse` from fame and stature.
+2) **the loan** — `lendTo(d, house, sum)` mirroring `borrow`: your rate against their standing, their
+patience read from `lanistaOf().stature`, repaid weekly out of `h.purse`; on default the men (a
+`PACTS.debt`-shaped "paid in men rather than coin" already exists) or the yard (#242). 3) **the bay's
+opinion** — `warmMove` on repayment, `grudge` on foreclosure, and a `RIVAL_BEATS` beat for a house you
+carried through a bad season and that is still standing.
+
+*Reuses:* LENDERS shape, borrow/loanWeek/loanFuse, warmMove, PACTS.debt, RIVAL_BEATS, closeHouse.
+
+**Verify first.** Demand: count the weeks a rival's `form` falls a third in a season — the `sell` move's
+trigger — over 16 × 420. If no house is ever short, nobody borrows.
+
+**Risk.** The player as the bay's bank. `OVERTURE_COOL`'s rule — one move on another house at a time —
+caps it at one debtor.
+
+---
+
+**#245 — One Die for Sixty-One Events** *(overhaul · large · 4 phases)*
+
+`pickEvent(d)` is `for(k of shuffled(Object.keys(EVENTS))){ const ev = EVENTS[k].make(d); if(ev) return
+ev; }`. **Measured (`probes/pace.mjs`, 12 × 420): thirteen events are eligible on the median week** (p10
+10, p90 16, max 21), four or more on 99.9% of weeks — so the week's event is a uniform draw among a dozen.
+Eligibility by event: grain **100%** of weeks, bribe 97, fever 95, bodyguard 95, rivalOffer 95, affair 87,
+sacramentum 81, damnatio 81 … uprising 2.3, warWord 1.7, bribedEditor 1.5, poached 1.2, **thugs 0.8**.
+An event eligible one week in a hundred must *also* win a 1-in-13 shuffle: about one firing in 1,600
+weeks. The source already wrote this arithmetic down, beside `GRUDGE_SABOTAGE`: *"thugs sat at the
+ninety-ninth for one pass and still never landed: pickEvent shuffles every event and takes the first that
+returns, so a state present in one week in a hundred has to win that shuffle against thirty others as
+well"* — and fixed one threshold. Four of 61 events carry any cooldown (`foundlingCool`, `ambLast`,
+`owedDone`, `sagaCool`). The survey's fire counts are the consequence: the common six take ~2% of weeks
+each (fever 81, bodyguard 80, grain 72, bribe 70, affair 65, rivalOffer 63 of 3,616) while thugs 1,
+primacy 1, toga 1, poached 0, courted 0. The `ASKS` draw has the same shape one level down — weights
+10 / 9 / 8 / 7 / 6 with the rarest conversation lightest — which is the design observation v3.199.0
+recorded and deliberately left standing.
+
+*Phases:* 1) **the instrument as a check** — eligibility per event per week, so any event's reach is a
+number (`probes/pace.mjs` is the draft; a floor per band). 2) **a weighted draw** — `EVENTS[k].w`
+(rarity as a first-class field, default 1) and `EVENTS[k].cool` (a per-event quiet after firing), the
+`shuffled` loop replaced by a weighted pick over the eligible set — tuned against the current fire table
+so the common six thin rather than vanish. 3) **freshness** — an event this house has never seen weighs
+more; the novelty curve is the target (0.57 → 0.14 new shapes a week; the fourth quarter should not be a
+fifth of the first — see #248). 4) **the asks through the same door**, with `woman` and `burial` weighted
+up, not down.
+
+*Reuses:* shuffled, fireArc/scheduleArc (arcs already jump the queue), the four `flags.*Cool`, ASKS.w.
+
+**Verify first.** The eligibility table above, re-run after every phase; and the survey's `events`
+column, honest for the first time this session.
+
+**Risk.** A global draw is a global retune: every seeded fixture in the suite re-phases (v3.197.0's
+lesson). Either a second stream keyed off the seed word, as `seedNames` does, or one re-basing release.
+
+---
+
+**#246 — The Grudge Does Something** *(overhaul · medium–large · 4 phases)*
+
+`RIVAL_MOVES` is nine moves — buy, sell, retrain, free, doctore, tour, won, boast, lost — **every one
+about the rival himself, none at you.** Aggression toward the player is `startPoach` (7% × eager, only
+when a rival holds `grudge >= 35` *and* `poachTarget` finds a man with `defiance >= 45` who is not
+`regardLoyal`), the three `GRUDGE_SABOTAGE 26 / BRIBE 38 / THUGS 44` gates, and `courted`/`defected`.
+**Measured (`probes/pace.mjs`, 3,133 weeks): a rival held grudge ≥ 35 on 107 weeks; `poachTarget`
+returned a man on 0 of 3,133; hostile acts landed 28 times** — stolenSteel 11, sabotage 7, defected 7,
+bribedEditor 2, poached 1 — one act every 112 weeks. The `poached` event (match their offer / irons /
+watch him) is a dead branch; `LANISTAE`'s `poach`/`bribe`/`sabotage` multipliers, written for exactly
+this, scale the odds of events that never win the shuffle (#245). #236 made rivals *read* your roster to
+match against it. Nobody made them *act* on it.
+
+*Phases:* 1) **the instrument** — grudge-weeks against hostile acts, and the poach gate's two terms
+separately. 2) **hostile moves in RIVAL_MOVES itself** — poach, bribeEditor, sabotage, thugs as moves
+with `weight: h => grudge × lanistaOf().poach/bribe/sabotage`, so the multipliers finally drive
+something. 3) **the poach targets want, not defiance** — a man whose `ambition` is `champion`/`freedom`
+and unmet, or whose `stash` is near his price, is the man another house puts money in front of;
+`poachTarget` rewritten against AMBITIONS and the purse. 4) **your answer set** — `poached`'s three
+doors, `answerNem`-shaped calling out, and the `ear`/`WHISPERS` telling you first.
+
+*Reuses:* startPoach/poachTarget, LANISTAE multipliers, GRUDGE_* gates, WHISPERS, AMBITIONS, stash,
+answerNem.
+
+**Verify first.** The poach gate's two terms over 16 × 420 under the reference player *and* under a
+`party:false` arm (feasts off). If `defiance >= 45` appears under the second arm only, the gate is
+honest and the reference player is merely careful; if under neither, the term is a wall.
+
+**Risk.** Rivals that act make the game about defence. One open hostile act per house at a time, all
+of it routed through grudge so a warm bay stays warm.
+
+---
+
+**#247 — The Ending Curve** *(overhaul · large · verify-first heavy · 3 phases)*
+
+Fourteen of sixteen houses end, and the two endings that take them are the strongbox and the cells:
+**debt 6, rebellion 7**, banned 1, survived 2 (16 × 420, seeded). The instrument's twelve show three
+shapes — **debt at weeks 56, 64, 151, 224** with era-one gold p50 463–1,528 (opening insolvency takes a
+quarter of houses before the ladder is in sight); **rebellion at 105** from an era-one unrest p50 of 13
+(a rising from a calm median) and 185; and a **late climb** — ruin at 359 and banned at 317 with unrest
+3 → 24 → 63 → 89 across eras, nothing arresting it. v3.196.0 cut the ladder's prices for the survivors;
+nothing has been done for the houses that never reach it. v3.198.0 wrote *"how long a house lives is a
+different question and a different item."* It is this one.
+
+*Phases:* 1) **the instrument** — per house: gold and unrest trajectories, the first negative `runway`
+(#229), the first stage-1 rising, and the cause of death read from the state at death (`over.kind` plus
+the last twelve chron lines, classified); 32 × 420 so each shape has thirty deaths behind it. 2) **the
+opening** — whichever of `SCENARIOS.clean`'s gold, `KEEP_FLOOR`, and the first card's purse the era-one
+deaths hinge on (the #207 appearance fee is the lever already in the file). 3) **the late climb** —
+unrest inflow by source per era (hook the `d.unrest` deltas by system: feud, refusal, the unburied, law),
+and whichever source grows with the house is the item. **Not proposed:** touching the rising itself —
+v3.199.0 established it plays exactly as designed.
+
+*Reuses:* runway, ludusLedger, updateRebellion's gates, chron kinds, probes/pace.mjs, ledger.mjs.
+
+**Verify first.** The three-shape split with counts, before any constant moves. This item may resolve
+into three small ones, and the instrument decides which.
+
+**Risk.** This is the difficulty curve. Every retune re-phases `survive-tally.json`, and the guard is
+the one v3.196.0 met — `ledger.mjs`'s floor on a finished house netting coin doing nothing.
+
+---
+
+**#248 — The Second Decade** *(content · medium–large · 3 phases)*
+
+`LATE` — *"things that only a house with a decade behind it can be offered"* — is four one-shot events:
+memoir (year ≥ 8), boy (≥ 6), rival (≥ 7), tired (≥ 9), each fired seven or eight times across sixteen
+houses. **Measured novelty (`probes/pace.mjs`): first-time chronicle shapes per week 0.57 / 0.26 / 0.19
+/ 0.14 by quarter; first-time event ids 319 / 69 / 17 / 13.** The last quarter of a run meets a new
+sentence once a week and a new event once in thirty-six. The LATE banner's own diagnosis — *"first-time
+events fall from 86 in the opening thirty weeks to zero past week 150"* — holds after LATE shipped,
+because four events cannot carry a hundred weeks. And the survivors are exactly the houses now reaching
+the ladder (v3.196.0), the second generation (v3.198.0, v3.200.0) and the dark yards' successors (#240).
+
+*Phases:* 1) **LATE doubles and gains arcs** — each of the four gets a `scheduleArc` consequence: the man
+from Rome writes the book (an `annals` entry the town reads); the boy at the gate grows into
+`FREEDMEN.doctore`'s shape; the rival's offer is a `PACTS`-shaped season; the tired morning is the
+retirement door's overture, which v3.198.0 made passable. 2) **the forebear as a presence** —
+`forebears[]` read by the chronicle (the men who knew him), by the bay (`h.after`-style memory of the
+father), by the patrons (`PATRON_HEIR`). 3) **late-only systems** — the house's own book (`memoir` as a
+sheet: the annals turned into prose by the chronicle's own shapes), and an in-run "what this house is
+known for" the `stand` sheet reads, in `LEGACIES`' idiom.
+
+*Reuses:* LATE, scheduleArc, forebears, annals, FREEDMEN, PACTS, PATRON_HEIR, chron shapes, LEGACIES.
+
+**Verify first.** The novelty curve is the KPI, re-measured per phase: the fourth quarter above 0.25 new
+shapes a week without the first quarter rising.
+
+**Risk.** Content for the two in sixteen. Worth building only alongside #247 — which is why they are
+listed together.
+
+---
+
+**#249 — The Bay Has No Face** *(UI · medium · 3 phases)*
+
+`crest` — c1/c2/sym/motto, `HOUSE_COLOURS`, `CREST_SYMS` — exists for the player only: four `c1:` sites
+in the file, all yours. `LANISTAE` carries a trait, a blurb and six multipliers; no colours, no mark, no
+age. **The only figures drawn anywhere in the game are fighters** (`Fighter`, `MAN_GLYPH`, the umbra) —
+the doctore, the medicus, the armourer, the patrons, the wife, the children and every rival lanista are
+text. THE HOUSES OF CAPUA is a league table of names and fame with a *Treat* button; `metHouse`
+(met / beaten / lost / seen, per house) is written every card and **read by no panel** — the record
+book's per-house line is the only rivalry record a player sees.
+
+*Phases:* 1) **every house has colours and a mark** — `LANISTAE[k].crest`, nine hand-set entries in the
+same c1/c2/sym idiom, drawn on the league row, on the pre-bout card beside #216's opponent face, and on
+`rivalLog` lines. 2) **the lanista as an umbra** — one shadow-figure per LANISTAE record: the `.umbra`
+surface (v3.138.0) is *"used anywhere a figure is drawn outside the arena"* and today that is gladiators
+only; the doctore, medicus and armourer get the same three-quarter figure on the staff panel. 3) **the
+rivalry ledger on the Treat sheet** — `metHouse` surfaced (met N, beaten N, lost N, the men you have
+seen) and `h.after` (whose yard this was, #240).
+
+*Reuses:* the crest machinery, Umbra, Fighter's kit drawing, metHouse, rivalLog, LANISTAE, the #216 card.
+
+**Verify first.** `content.mjs`'s door rule for the new panel, and a screenshot pair per the #212
+method; `reach`/`surface` already police the rest.
+
+**Risk.** Art cost. Nine crests is a table; nine umbrae is a pose set. Stay inside the glyph vocabulary
+the figure already has.
+
+---
+
+**#250 — A Map of Campania** *(UI · medium · single step)*
+
+The circuit is three towns — `CITIES` pompeii / neapolis / puteoli, each with travel weeks, a purse
+multiplier, a taste and a missio bias — plus Rome and the small houses, with `known[city]` decaying at
+`BAY_DECAY` 0.55 a week you are not standing there, `welcomeOf` wearing, `bayCall` letters and
+`theRoad`. It is presented as `CircuitLedger`: a table with a plate, whose own note records the words it
+shed. **Nothing spatial exists** — thirty mentions of Campania, no drawing. The reference player toured
+34 times and spent 295 weeks away; a player choosing where to go reads three rows.
+
+*Single step:* one drawn map in the scene's ink idiom, season-graded like #215's suns — Capua at the
+centre, the three towns at their travel distance, Rome off the edge; each town carrying its `known` as
+a lit or rusting mark and a standing letter as a pin; tapping a town opens the ledger row it already
+has.
+
+*Reuses:* CircuitLedger, bayWorth, knownIn, welcomeOf, SCN ink and grade, Plate.
+
+**Verify first.** None beyond the screenshot pair — the numbers are the ledger's (#150's rule).
+
+**Risk.** A map on a 390px phone is a thumbnail with five points on it. If it cannot read at that size
+it is decoration, and `legible.mjs` is the judge.
+
+---
+
+**#251 — The Doctore Is a Man** *(overhaul · medium · 3 phases)*
+
+`makeDoctore` writes name, origin, skill, spec, creed, past, fee and wage — **no age, and no clock.**
+`d.doctore = null` is written in two places: the heir being the doctore, and `dismissDoctore`. He cannot
+leave, age, sicken or die; he is never hired away (`RIVAL_MOVES.doctore` hires *"a doctore out of
+Ravenna"* — `h.doctore = true`, a boolean — never yours); the STAFF banner's *"men can be bought away or
+simply leave"* is about the medicus and the armourer. He carries the drill, the lessons, the creed, the
+square, the mentor bond and two overtures, so he is the most consequential named person in the house
+after the lanista, and he is furniture with a wage.
+
+*Phases:* 1) **an age and a term** — `doctore.age` read off his `past` ("N years on the sand"), the
+`LAN_AGE_FROM` pattern as a drain on skill, and a retirement door (`FREEDMEN.doctore` models the
+arriving, not the leaving). 2) **he can be taken** — a RIVAL_MOVES move against *your* doctore weighted
+by `lanistaOf().train` (the multiplier exists and drives nothing of the kind), with a `reSignOffer`-
+shaped counter (the machinery is there for gladiators). 3) **succession from inside** — a veteran of
+your own (`offerDoctore` on rudis or retirement) or the boy's mentor (`c.mentorId`, #237) steps up when
+the old man goes, at a skill read from his record.
+
+*Reuses:* makeDoctore, offerDoctore, doctoreFromGladiator, FREEDMEN.doctore, reSignOffer, LAN_AGE_FROM,
+RIVAL_MOVES.
+
+**Verify first.** Doctore tenure under the reference player (weeks on one `doctore.id`), and how many
+houses ever change doctore for any reason but dismissal — if it is none, every drill and lesson in the
+game has been taught by one man.
+
+**Risk.** Losing him mid-plan. `planWeek` already pauses on injury; pause on an empty post rather than
+break.
+
+---
+
+**#252 — Mastery Is Above the Ninetieth Percentile** *(gameplay · medium · 2 phases)*
+
+`MASTERY_GATE = { wins:12, pfame:55 }` plus `provedIt` (#232 phase 5); `SIG_GATE = { wins:6 }`. The
+seeded survey's careers: **bouts p50 4 / p90 15; wins p50 1 / p90 7.** A technique wants a man at about
+the 85th percentile of wins; a mastery wants one above the 90th, then a proof in the square, then a fee
+and four weeks. #232 phase 5's own note measured mastery at *"15 of 435 men"* before its door opened —
+the door was the square, and the gate is the arithmetic. The top of a career — six named MASTERY forms,
+twelve TECHNIQUES, the second style — is content for one man in thirty, and he is the man most exposed
+to a per-bout hazard of 10–14% (`debut.mjs`).
+
+*Phases:* 1) **the instrument** — of every man who ever fought: the share reaching 6 wins, 12 wins, a
+signature, a mastery, a second style, by era; as a check with a floor. 2) **either the gates or the
+career moves, and the instrument decides which** — gates scaled by the house's tier (a twelve-win man of
+the pits and of the amphitheatre are not one man), or the hazard in the 6–12-win band (`WATCH_KEEPS` /
+`BOUTS_KEPT` already sample it) if that is where careers end.
+
+*Reuses:* MASTERY_GATE, SIG_GATE, canMaster/masterNeed, canLearnSig, provedIt, debut.mjs.
+
+**Verify first.** Phase 1.
+
+**Risk.** Cheapening mastery. `provedIt` stays as the human gate; only the arithmetic moves.
+
+---
+
+**#253 — The Boy Behind the Second Gate** *(gameplay · small–medium · single step)*
+
+`eligibleSons = d => (d.lanista.age >= 40) ? livingKids(d).filter(male, age >= SON_AGE) : []`. `succeed`
+installs the new lanista at `ri(22,31)` (nephew) or `ri(18,24)` (scion), clears `d.heir`, and keeps
+`d.domus.children` — the previous lanista's sons. **v3.200.0 measured it:** of the eight houses whose son
+reached nine, two were in their second generation and the boy was shut out again by the age term, on a
+man who is not his father. The term was written for the first generation (#226: *"a son you are old
+enough to have"*); in the second it reads the wrong man.
+
+*Single step:* the term becomes *old enough to have him **or** he is a forebear's son* — `c.of` (the
+lanista's id at `bearChild`) and `eligibleSons` reading it; `HEIRS.son`'s line ("they have watched him do
+it since he was nine") already fits a brother or cousin who grew up in the yard. And the other half of
+`succeed`'s domus reset: today the children survive it and the wife does not.
+
+*Reuses:* eligibleSons, succeed, forebears, bearChild, checks/boy.mjs.
+
+**Verify first.** `probes/boy.mjs` arm 1's two second-generation rows flip from nephew to son.
+
+**Risk.** None worth naming. It is one clause.
+
+---
+
+**#254 — The Editor Remembers** *(overhaul · medium · 3 phases)*
+
+`EDITORS` is five strings — Aulus Vibius, Publius Sittius, the aedile Norbanus, Marcus Blossius, the
+younger Calavius — and a booking is `editor: pick(EDITORS)`: **a name drawn per line with no record
+behind it.** The name is carried into the booking's chron lines, the *A Name on the Bill* event and
+`PACTS.season` (`offer.editor !== p.editor`), so the game already treats him as a person for one season
+and then forgets him. The PETITIONS banner found the same thing a release earlier — *"five names used
+once to sign a booking line, and a flag whose only reader had never fired"* — and fixed the flag; the men
+stayed strings. `SLAVERS` is the model in the same file: four dealers who remember *"exactly how the
+last four went."* An editor who has seen you not show (`x.editor takes back twice what he advanced`),
+flop a spectacle, or win his festival three years running is the person a booking, a petition, a pact
+and a bribe should attach to.
+
+*Phases:* 1) **`d.editors[name]` records** — a taste (an `APPETITES` key), the festivals he puts on
+(`CALENDAR` ownership), and a ledger (bookings honoured / broken, purses paid, flops). 2) **the record
+read** — bookings from an editor who trusts you come with the advance up and the balance certain;
+`petitionOdds` reads his ledger instead of favour alone; `bribedEditor` is a man you have bought before.
+3) **his voice** — the pre-card line says who is putting these games on and what he wants, in
+`SLAVERS.say`'s idiom.
+
+*Reuses:* EDITORS, APPETITES, PETITIONS, PACTS.season, editorBought, SLAVERS' record shape, CALENDAR.
+
+**Verify first.** Distinct editors met per run and bookings signed by each (`booking` fired 113 times
+over sixteen houses — about twenty-three a name), and the honoured / broken ratio per house, so the
+ledger has something to hold.
+
+**Risk.** A sixth memory system. Keep it inside the arena's bill, where the editor already speaks.
+
+---
+
+**#255 — The Year Is a Wheel** *(UI · medium · single step)*
+
+The year is eighteen weeks, four `SEASONS`, a `CALENDAR` of festivals each carrying its engine (#215
+drew the suns; nobody drew the calendar), and everything dated: `DL` deadlines (booking / challenge /
+levy), a pact's `until`, a loan's fuse, `ELECTION_WEEK` 13, `bayDue`, `WORK_DEPOSIT`, the toga's
+`togaTil`, a vow's bouts. The calendar the player opens (`cal`, `calendarRows`) is a modal list grouped
+by week — *this week / next week / in N weeks* — right for reading and wrong for seeing where in the year
+you stand and how the dated things stack.
+
+*Single step:* one drawn wheel of eighteen spokes, season-shaded, festivals as marks with their engine's
+glyph, dated things as pins on their week, the current week as the pointer; tapping a pin routes through
+`goTo` exactly as the rows already do.
+
+*Reuses:* calendarRows, CALENDAR, SEASONS, deadlines, goTo, SCN ink.
+
+**Verify first.** A counting check in `sheet`/`glance`'s shape: every row the list shows is a pin on the
+wheel.
+
+**Risk.** #250's — legibility at 390px. Eighteen spokes read; thirty pins do not; collapse per week the
+way the list already groups.
+
+---
+
+**#256 — The Bay Has No Strongbox** *(overhaul · medium · 3 phases)*
+
+`makeRivals` writes `{ name, fame, grudge, form, formTier, star, fighters }` — **a rival house has no
+purse.** `RIVAL_MOVES.buy/sell/retrain/doctore/tour` cost nothing and are weighted by fame and the
+`LANISTAE` multipliers; a rival "hires a doctore out of Ravenna at a price people are talking about" with
+no price; your gambits cost you coin and him nothing; a poach (#246) *"puts money in front of his best
+man"* from a strongbox that does not exist; a loan (#244) has nothing to lend against; and #240's lineage
+records what the yard was famous for but not what it was worth. Every economic verb toward a rival is
+one-sided because only one side has an economy.
+
+*Phases:* 1) **`h.purse`** — seeded from fame and stature, moved weekly by the same purses your bouts
+pay (their men on the cards you fought earn their share — `t.app` and the purse are computed per bout
+already) and by their moves' costs; a `RUINS`-shaped consequence when it empties (sell men, then the
+doctore, then dark — a third `endedAs` for `closeHouse`: *broke*). 2) **their moves read it** — buy when
+flush, sell when short, tour when a season is thin. 3) **it shows** — the league row carries *flush /
+stretched / selling* the way `NORMS` words your own numbers; `lastDark`'s lineage records what the yard
+was worth, for #242's price.
+
+*Reuses:* makeRivals, RIVAL_MOVES, closeHouse/lineage, NORMS, RUINS, the bout's own purse arithmetic.
+
+**Verify first.** The scale is the rope's own ledger (gold p50 by era 1,451 / 4,074 / 4,925 / 6,191); the
+item's first number is what a rival at the same fame would have earned from the same cards.
+
+**Risk.** Simulating nine economies. One number per house, no ledger.
+
+---
+
+**Shape of the fifteen.** New systems: #242, #244. Overhauls: #243, #245, #246, #247, #251, #254, #256.
+Gameplay: #252, #253. Content: #248. UI: #249, #250, #255. Large: #242, #245, #247. Medium–large: #243,
+#246, #248. Single-step: #250, #253, #255. Two pairs are meant to be taken together — #247 with #248,
+and #256 before #244 or #246. **The recommended order, if asked:** #253 (one clause, already measured),
+#245 (the draw underneath four other items), #247 (the curve underneath everything), then #256 → #246 →
+#244 as one rivals arc, with #249/#250/#255 as the UI releases between them.
+
 ### THE PHASE QUEUE — ten proposals for what comes after the audit, #232–#241
 
 **NOT AUDIT ITEMS — and must not be filed as though they were.** The bar this project holds itself to

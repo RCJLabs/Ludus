@@ -46,7 +46,11 @@ const out = await p.evaluate(([H, W, SEED])=>{
       let did;
       try { did = R.lanista(d); } catch(e){ mark(sum.sys, "lanistaThrew"); break; }
       sum.weeks++;
-      for(const k of Object.keys(did||{})) mark(sum.did, k, did[k]);
+      /* `did.events` is an object of per-event counts, not a number — summing it with `+` made a
+         string of "[object Object]"s and the audit's event column read as noise. Folded in by key. */
+      for(const k of Object.keys(did||{})){
+        if(k === "events"){ sum.events = sum.events || {}; for(const e of Object.keys(did.events||{})) mark(sum.events, e, did.events[e]); }
+        else mark(sum.did, k, did[k]); }
       const e = ERA(w);
       sum.era[e].gold.push(Math.round(d.gold));
       sum.era[e].fame.push(Math.round(d.fame));
