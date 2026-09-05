@@ -4457,7 +4457,8 @@ rewritten to stop. Its tally shows it: men-between-them reached 16 at 3.99.0 and
 **The build was cleared by the check's own named confirmation** — `probes/open.mjs`, sixty headless
 houses, on v3.201.0 and on v3.202.0: **standing 49 of 60, men 183, and the per-house signature
 byte-identical.** No path a new house executes differs. The price is read from the row the button
-stands in now, which is where the game put it.
+stands in now, which is where the game put it — and re-run, the same check scores **(3,8) on its first
+draw, every house "2 bought"**: the first time its men-between-them has passed six since 3.152.0.
 
 ### v3.201.0 — #255: the year is a wheel
 
