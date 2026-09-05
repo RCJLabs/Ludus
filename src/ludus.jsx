@@ -8530,6 +8530,24 @@ const heirEligible = d => {
    two eligible sons gets two rows — with whoever is already named filtered out, by `cid` where
    there is one so the boy who took the toga is not offered back as a worse version of himself. It
    is a function of the save at module scope, so a check can drive the whole card without the DOM. */
+/* ---- A BOY OF TEN TAKES THE CHAIR — second phase queue #253, as it turned out to be ----
+   Traced (`probes/handover.mjs`, the v3.200.0 run, 16 x 520): three successions, and two of them
+   were a son of TEN and of ELEVEN — both through the retirement door, a man of sixty-two handing on
+   by choice to a child because `d.heir` was set, and `succeed` rolling the boy `ri(22,31)` on the
+   way in. #237 named the real boy years before sixteen on purpose; nothing downstream ever read how
+   old he actually was. Three things, one clause each:
+     · the boy's age is his own — `succeed` reads `childAge` for a son or scion with a `cid`;
+     · a father does not retire onto a minor — the retirement branch wants `heirOfAge`;
+     · and a boy is not offered a wife — `marryReady` wants eighteen.
+   The death door is not gated: a man can still die with a boy of ten named, and then the boy takes
+   the chair at ten, and the chronicle says so instead of saying he "has been in this yard his whole
+   life and the men are not sure yet whether that is reassuring". `HEIR_AGE` is the toga's year. */
+const HEIR_AGE = 16;
+const heirOfAge = d => { const h = d && d.heir; if(!h) return false; if(!h.cid) return true;
+  const c = domusOf(d).children.find(x=>x.id===h.cid); return !c || childAge(d, c) >= HEIR_AGE; };
+/* years at the head of THIS house, which `yearOf` is not once anybody has succeeded: the sheet read
+   "27 years old · 22 years at the head" for a nephew who arrived last spring */
+const yearsAtHead = (d, L) => Math.max(1, Math.floor((d.week - ((L && L.since) || 1)) / YEAR_WEEKS) + 1);
 const heirChoices = d => {
   const cur = d.heir || null;
   const out = [];
@@ -8573,6 +8591,8 @@ function succeed(d){
   const old = d.lanista;
   const nm = d.heir.name;
   const heirCid = d.heir.cid || null;   /* so a passed-over sibling can be told apart from the one who took the house, below */
+  const kid = heirCid && d.domus ? (d.domus.children||[]).find(x=>x.id===heirCid) : null;
+  const kidAge = kid ? childAge(d, kid) : null;      /* his own age, read before the domus goes to the record */
   /* a handover from a living man is not a handover from a dead one, and the two say different
      things — see the note on the retirement branch of `lanistaWeek` */
   const retire = !!(d.succession && d.succession.retire);
@@ -8585,7 +8605,7 @@ function succeed(d){
   d.gladiators.forEach(g=>{ if(g.status==="active") g.morale = clamp(g.morale + H.morale, 0, 100); });
   /* he starts with nothing Capua can hold against him, and nothing it credits him for —
      unless you raised him yourself, in which case he starts as the man you made */
-  d.lanista = { name:nm, age: d.heir.kind==="doctore" ? ri(34,44) : d.heir.kind==="scion" ? ri(18,24) : ri(22,31),
+  d.lanista = { name:nm, age: kidAge != null ? kidAge : d.heir.kind==="doctore" ? ri(34,44) : d.heir.kind==="scion" ? ri(18,24) : ri(22,31),
     health: ri(84,95), traits:(d.heir.traits||[]).slice(), since:d.week, wonBets:0, quietStanding:0, styleRun:0, styleWas:null };
   if(d.heir.kind==="doctore") d.doctore = null;
   if(d.heir.kind==="scion" && d.heir.palusRaised){ d.gladiators.forEach(g=>{ if(g.status==="active") g.morale = clamp(g.morale+8,0,100); }); d.unrest = clamp(d.unrest-6,0,100); }
@@ -8625,7 +8645,8 @@ function succeed(d){
   d.forebears = [...(d.forebears||[]), { name:old.name, age:old.age, traits:old.traits.slice(),
     from:old.since||1, to:d.week, gen:d.generation-1, retired:retire,
     wife: fam && fam.wife ? fam.wife.name : null, children: passedOver }];
-  chron(d, `${H.took(nm)} ${retire
+  const minor = kidAge != null && kidAge < HEIR_AGE;
+  chron(d, `${minor ? `${nm} is ${kidAge} years old and the house is his. The doctore gives the orders and the boy signs what he is told to, and everybody in the cells knows which of those two things is the real one.` : H.took(nm)} ${retire
     ? `${old.name} keeps his rooms and the ledger, and comes down to the square when the mood takes him, which is less often than he tells himself.`
     : `${old.name} is carried out of a gate he came in through forty years ago, and the week's training goes ahead because it was always going to.`}`, "event");
   d.over = null;
@@ -8643,7 +8664,7 @@ function succeed(d){
 const domusOf = d => d.domus || (d.domus = { wife:null, children:[], nextKin:1 });
 const childAge = (d,c) => Math.floor((d.week - c.born) / YEAR_WEEKS);
 const livingKids = d => domusOf(d).children.filter(c=>!c.wed && !c.dead);
-const marryReady = d => !!d.lanista && !domusOf(d).wife && d.lanista.age < 56 && (riseOf(d) >= 1 || d.fame >= 60);
+const marryReady = d => !!d.lanista && !domusOf(d).wife && d.lanista.age >= 18 && d.lanista.age < 56 && (riseOf(d) >= 1 || d.fame >= 60);
 
 function matchEvent(d){
   if(!marryReady(d)) return null;
@@ -11812,12 +11833,12 @@ function lanistaWeek(d){
      So retirement raises the SAME succession that death does, and the choice is the player's: take
      up the house, or let it end here — which is where `oldAge` still lives, as an ending you choose
      rather than one that is chosen for you. */
-  if(L.age >= 62 && L.health >= 45 && d.heir && yearOf(d) >= 6 && R() < 0.06){
+  if(L.age >= 62 && L.health >= 45 && d.heir && heirOfAge(d) && yearOf(d) >= 6 && R() < 0.06){
     d.succession = { lan:L.name, age:L.age, heir:d.heir.name, kind:d.heir.kind, retire:true,
-      years:yearOf(d) };
+      years:yearsAtHead(d, L) };
   } else if(L.health <= 0){
     if(d.heir && HEIRS[d.heir.kind]) d.succession = { lan:L.name, age:L.age, heir:d.heir.name, kind:d.heir.kind };
-    else d.over = { kind:"lanistaDied", name:d.name, lan:L.name, age:L.age, years:yearOf(d) };
+    else d.over = { kind:"lanistaDied", name:d.name, lan:L.name, age:L.age, years:yearsAtHead(d, L) };
   }
 }
 const lanTrain  = d => hasLT(d,"ailing") ? 0.92 : 1;
@@ -27647,7 +27668,7 @@ export default function App(){
       return (<>
         <div className="disp" style={{fontSize:"var(--fs-xl)",fontWeight:700,color:"var(--ink-hi)"}}>{L.name}</div>
         <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:9}}>
-          {L.age} years old · {yearOf(S)} year{yearOf(S)===1?"":"s"} at the head of this house
+          {L.age} years old · {yearsAtHead(S, L)} year{yearsAtHead(S, L)===1?"":"s"} at the head of this house
         </div>
         <div className="flex items-center justify-between" style={{fontSize:"var(--fs-md)",marginBottom:9}}>
           <span>Rank</span><span style={{color:riseOf(S)>0?"var(--ink-hi)":"var(--ink-2)"}}>{riseName(S)}{riseNext(S)?"":" · the top rung"}</span>
@@ -32597,6 +32618,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* the line of the house: who may be named, naming him, and taking it up */
     nameHeir, heirEligible, heirChoices, eligibleSons, HEIRS, houseRecord, censusWorth,   /* #154 */
     calendarRows, CAL_TONE, YearWheel, CalRow,   /* #255 — the year as a wheel, and the rows it pins */
+    heirOfAge, HEIR_AGE, yearsAtHead,   /* #253 — a boy's age is his own */
     togaEvent,   /* #237 phase 4/5 — so a check can drive the toga trigger against an already-named son */
     /* the summit: the gate, the letter, the bar, and the trip's own clock */
     romeReady, romeProved, offerRome, romeBar, ROME_BOUTS, ROME_WEEKS_PER_BOUT, ROME_RANK,
