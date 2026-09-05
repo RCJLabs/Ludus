@@ -4389,6 +4389,85 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.204.0 — #245, phase 2: one die for thirty-six events, weighted and cooled
+
+**The re-basing release.** `pickEvent` no longer shuffles thirty-six keys and takes the first that
+returns; it draws them by weight, and an event that fired stays out of the pool for a while. **The
+order is weighted, not the outcome** — `make()` is still asked first-eligible, so every gate and every
+roll inside a make keeps exactly its meaning; what changed is whose make() is asked first. `EV_DIE` is
+the table: one ticket for the ten events eligible four weeks in five (and a month's quiet after
+asking), two for the middle tier (and a month's quiet, after the first draft let `ludusNight` inherit
+22% of a run's draws the moment the ten were cooling), four for the events under a tenth, eight for
+the ones under a fiftieth and for the state-gated ones that should win the week they are eligible at
+all. `EV_DRAWN` leaves the 25 raised events out of the pool by reading the function, not a list.
+`flags.evLast` is the record, saved with the house.
+
+**Measured at the die, not at the answers.** The survey's events column counts every question the
+rope answered, and for many keys that is two things added together — `stash` fired 44 times in 3,616
+weeks at 0.7% eligibility, raised by the purse, not drawn. The die is one caller: it calls make(),
+and no raised event does. So `probes/dice.mjs` wraps every make() and counts the calls that return a
+question, on either build, seeded. Two seed sets, 16 × 420 each, the build before against this one:
+
+| | AUDIT before → after | AUDIT2 before → after |
+|---|---|---|
+| die draws per hundred weeks | 31.1 → 32.8 | 32.8 → 32.1 |
+| four-ticket-and-up share of draws | **11.5% → 15.8%** | **10.5% → 16.5%** |
+| eight-ticket share | 10.5% → 11.9% | 9.2% → 13.2% |
+| `thugs` · `poached` · `bribedEditor` · `roomFire` | 1→6 · 0→3 · 2→8 · 6→7 | 2→14 · 0→3 · 2→18 · 7→17 |
+| the common ten (`fever`, `bodyguard`, `grain`…) | thinned, none vanished | thinned, none vanished |
+
+The draw rate is untouched — the die redistributes, it does not ask more. **And the lifespan question
+answered itself:** AUDIT's houses lived 3,616 weeks before and 2,077 after; AUDIT2's lived 3,074 and
+then 4,414. Opposite directions on the two seed sets is what re-phasing looks like, and it is why the
+second set was run before anything was concluded from the first.
+
+**What the flat die was actually giving the rare tier.** I had written "2.3%" from the survey's
+column; measured at the die it was ~11%, because there are fifteen events in that tier and each won
+its 1-in-14 like everyone else when eligible. The weighted die lifts the tier by four to six points,
+and the reason it is not more is the thing the queue said: those events are eligible rarely, and the
+die can only lift them on the weeks they are. Their reach is the ceiling; the tickets are not.
+
+**`checks/die.mjs`, six arms** — the table is sound and drawn + raised is every key; the sampler is
+proportional (four real keys at 1 / 2 / 4 / 8 tickets come out first within 4% of their shares over
+twenty thousand draws); equal weights are still fair (1.09× spread, the #108 property kept); a cooled
+event is out of the pool and back the week its quiet ends; on a real house every eligible event is
+still drawn and every draw stamps `evLast`; **and the rare tier is reached** — the same six seeded
+houses run weighted and then flat (every ticket one, every cooldown nought, restored after): **14.5%
+against 10.3%, a lift of 4.2 points**, both fixed numbers on this build, with the floor between them.
+Sabotage-verified three ways: a flat table (arms 2, 4, 6), a sampler that ignores the tickets (arm 2
+at 281% off, and arm 6's lift floor at 1.6 — cooldowns alone move it a little), a draw that does not
+stamp (arm 5). Three faults in the check's drafts, all the check's: it did not put the rope back after
+`found()`; it counted the flat run's rare tier while every weight was one and read 0.0%; and its first
+floor was set from a number that was not the die's. `draw.mjs` (#108) stays as written — its first two
+arms test `shuffled`, which is untouched and used in nine other places; its third still holds.
+
+**The cost, paid — and it was smaller than the fear, and one of the two was not a re-pin at all.**
+One R() per attempt where the Fisher-Yates spent sixty a week, so every seeded figure in the suite
+re-phases across this line. The first gate came back **157 of 159**:
+
+- **`careers` caught a regression the weights exposed, in the game.** `EVENTS.primacy.make()` gated
+  only on `week − since < 6`, while its own raise channel enforces `PRIMUS_ASK_GAP` — thirty weeks,
+  *"a long reign is asked two or three times rather than every fortnight"*. At one ticket among
+  fourteen the die almost never reached it; at eight it asked a holder **ten times in eighty weeks.**
+  The gap is the event's now, whichever door raises it, and the make stamps `asked`. Sabotaged back
+  out: ten askings again. That is what the weighted die is *for* — a gate that only ever lived in the
+  raise channel had been protected by the die's own blindness.
+- **`chair`'s surgeon bar flipped on a sample where it could not hold** — the butcher's six houses
+  held "blood" for 88 weeks between them and lost one surgeon, a tie at 1.14 against 1.17 per hundred
+  where the game's 6%-a-week roll expects two or three; the check's own note records it flipping on
+  three earlier builds while nothing in `quitOn` changed. The rate is a report now; the clause is
+  hammered where the sample is, the way `tenure` tests a door: **18 of 300** forged butchers lose the
+  surgeon, **0 of 300** forged showmen, `quitOn` true and false. The hammer was first placed after the
+  arm that read it and reported itself missing; that was the check's.
+
+The second gate, on the final tree: **158 of 159**, the one red being `stature`'s forged fixture losing
+to the app's autosave in the gap before the reload — the race the harness's own note beside `forge`
+already describes ("failed on three runs out of three on a loaded machine") and mitigated with a
+last-moment second write. It passed alone at 52s. `forge` tries once more now when the token check
+still fails: the plant is the same bytes, a second attempt costs one reload, and nothing yields
+between that write and its reload either, which is the whole of the rule `fixtures` holds. No
+seeded figure in any other check moved.
+
 ### v3.203.0 — #245, phase 1: every event's reach is a number
 
 **No game code changed.** The first phase of *One Die for Sixty-One Events* is the instrument the
@@ -6400,7 +6479,7 @@ caps it at one debtor.
 
 ---
 
-**#245 — One Die for Sixty-One Events** *(overhaul · large · 4 phases)* — **PHASE 1 SHIPPED v3.203.0** as an instrument with no game change: `checks/pace.mjs` reads the draw's eligible set every week of a seeded reference run (p50 **14**, four or more on 100% of weeks), keeps every drawn event's reach as a number in `pace-tally.json`, and holds two floors — reach may not fall to zero between builds, and the raised events must still be raised. It also corrected the item's own count: **36 of the 61 are drawn by the die; 25 are raised by their own systems** and never see it. **Phases 2–4 are the re-basing decision** (a weighted draw re-phases every seeded fixture in the suite) and wait on it.
+**#245 — One Die for Sixty-One Events** *(overhaul · large · 4 phases)* — **PHASES 1–2 SHIPPED, v3.203.0 and v3.204.0.** Phase 2 is the weighted, cooled die: `EV_DIE` gives each drawn event tickets set from its measured reach and a quiet after asking; the ORDER is weighted, not the outcome, so every make() keeps its gates. Measured at the die on two seed sets: the four-ticket-and-up tier from ~11% to ~16% of draws, `thugs` 1→6 and 2→14, `poached` 0→3 and 0→3, the draw rate unchanged. The lifespan swing between the two runs went opposite ways on the two seed sets — re-phasing, not the die. Phases 3 (freshness) and 4 (the asks) are open. Phase 1 was shipped v3.203.0 as an instrument with no game change: `checks/pace.mjs` reads the draw's eligible set every week of a seeded reference run (p50 **14**, four or more on 100% of weeks), keeps every drawn event's reach as a number in `pace-tally.json`, and holds two floors — reach may not fall to zero between builds, and the raised events must still be raised. It also corrected the item's own count: **36 of the 61 are drawn by the die; 25 are raised by their own systems** and never see it. **Phases 2–4 are the re-basing decision** (a weighted draw re-phases every seeded fixture in the suite) and wait on it.
 
 `pickEvent(d)` is `for(k of shuffled(Object.keys(EVENTS))){ const ev = EVENTS[k].make(d); if(ev) return
 ev; }`. **Measured (`probes/pace.mjs`, 12 × 420): thirteen events are eligible on the median week** (p10

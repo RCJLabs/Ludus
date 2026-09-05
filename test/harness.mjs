@@ -1512,9 +1512,25 @@ export async function forge(p, build, arg = null){
     .find(x=>/take up the keys/i.test(x.innerText||"")); if(b) b.click(); });
   await p.waitForTimeout(1100);
 
-  const got = await slot(p);
+  let got = await slot(p);
+  /* ---- AND ONCE MORE IF THE TIMER STILL WON — v3.204.0 ----
+     The second write is the last moment that cannot be overtaken by the autosave, and on a loaded
+     gate it was overtaken anyway: `stature` lost its plant once in 159 checks and passed alone at
+     52s. The plant is the same bytes every time, so a second attempt costs one reload and changes
+     nothing about what is measured. Nothing yields between this write and its reload either, which
+     is the whole of the rule `fixtures` holds. */
+  if(!got || !got.flags || got.flags.__forge !== token){
+    await p.evaluate(()=>{ const b = window.__forgeBlob, ks = window.__forgeKeys || [];
+      if(b) for(const k of ks) localStorage.setItem(k, b); });
+    await p.reload({ waitUntil:"domcontentloaded" });
+    await p.waitForTimeout(1100);
+    await p.evaluate(()=>{ const b=[...document.querySelectorAll("button")]
+      .find(x=>/take up the keys/i.test(x.innerText||"")); if(b) b.click(); });
+    await p.waitForTimeout(1100);
+    got = await slot(p);
+  }
   if(!got || !got.flags || got.flags.__forge !== token)
-    throw new Error("forge(): the planted house did not survive the load — the app's own save is "
+    throw new Error("forge(): the planted house did not survive the load — twice — the app's own save is "
       + "on screen instead, so everything measured after this would be another house. Check that "
       + "nothing yields between the write and the reload (see the `fixtures` check).");
   const rest = {}; for(const k of Object.keys(out)) if(k !== "__planted") rest[k] = out[k];

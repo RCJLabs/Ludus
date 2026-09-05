@@ -202,6 +202,18 @@ export async function run({ p }){
       bad.push(`the mercy arm threw 0 cloths in ${res.mercy.weeks} weeks — it is not sparing anybody, `
         + `so whatever it is measuring is not the act the charter's tenth step teaches`);
 
+    /* the hammer for arm 4 — see the note there */
+    if(A.staffWeek && A.STAFF && A.STAFF.medicus){
+      let tick = 0;
+      const forge = (name, unrest) => { const d = A.newGameState("Ch", "clean", `CHAIR-H-${name}-${tick++}`, null);
+        d.week = 40; d.unrest = unrest; d.repName = name ? { key:name } : null;
+        d.medicus = { name:"Galenus", skill:60, wage:12, weeks:8 };   /* past the 6-week floor, under the 10-week poach */
+        return d; };
+      let blood = 0, show = 0;
+      for(let i=0;i<300;i++){ const d = forge("blood", 30); try { A.staffWeek(d); } catch(e){} if(!d.medicus) blood++; }
+      for(let i=0;i<300;i++){ const d = forge("show", 30);  try { A.staffWeek(d); } catch(e){} if(!d.medicus) show++; }
+      res.hammer = { blood, show, clauseBlood: !!A.STAFF.medicus.quitOn(forge("blood", 30)), clauseShow: !!A.STAFF.medicus.quitOn(forge("show", 30)) };
+    }
     /* ---- 4. #112: THE BUTCHER LOSES HIS SURGEON AND THE SHOWMAN DOES NOT ----
        `quitOn` is `d.unrest > 72 || repStyle(d) === "blood"`, and the pair of arms brackets it:
        both play hard, only one is called butchers */
@@ -223,14 +235,24 @@ export async function run({ p }){
          on an unrelated RNG shift is not measuring what its message says it is. */
       const rate = (a, k) => (a && a.held && a.held[k]) ? a.medQuit / a.held[k] : null;
       const rb = rate(b, "blood"), rs = rate(s, "show");
-      if(b && s && b.medHired && s.medHired && (rb == null || rs == null))
-        bad.push(`one of the two arms never held the name it was steered to, so the rate has no `
-          + `denominator and this arm measured nothing`);
-      else if(b && s && b.medHired && s.medHired && rb <= rs)
-        bad.push(`the butcher lost his surgeon ${b.medQuit} time${b.medQuit===1?"":"s"} in ${b.held.blood} `
-          + `weeks holding "blood" (${(rb*100).toFixed(2)} per hundred) and the showman ${s.medQuit} in `
-          + `${s.held.show} weeks holding "show" (${(rs*100).toFixed(2)}) — the butcher must lose him `
-          + `FASTER, or the blood clause in quitOn is doing nothing`);
+      /* ---- AND THE RATE IS A REPORT NOW, NOT A BAR — v3.204.0 ----
+         The per-named-week rate still flipped: on the re-basing release the butcher's six houses
+         held "blood" for 88 weeks between them (they die young) and lost one surgeon — 1.14 per
+         hundred against the showman's 1.17, a tie on a sample where the game's own 6%-a-week roll
+         expects two or three. The clause is deterministic and the roll is the game's, so the clause
+         is tested where the sample is: three hundred forged butchers and three hundred forged showmen,
+         one staff week each on a moving seed, the way `tenure` tests a door. */
+      if(b && s && b.medHired && s.medHired && rb != null && rs != null)
+        lines.push(`  surgeon quits per hundred named weeks (reported): butcher ${(rb*100).toFixed(2)} · showman ${(rs*100).toFixed(2)}`);
+      if(res.hammer){
+        lines.push(`  the clause, hammered: butcher lost his surgeon in ${res.hammer.blood} of 300 staff weeks · showman in ${res.hammer.show} of 300 · quitOn on a butcher ${res.hammer.clauseBlood}, on a showman ${res.hammer.clauseShow}`);
+        if(!res.hammer.clauseBlood || res.hammer.clauseShow)
+          bad.push(`STAFF.medicus.quitOn reads ${res.hammer.clauseBlood} on a butcher and ${res.hammer.clauseShow} on a calm showman — the blood clause is not the blood clause`);
+        if(res.hammer.blood < 1)
+          bad.push(`three hundred staff weeks on a butcher with a surgeon of eight weeks' tenure and he never once walked out — the 6% roll behind the clause is not being rolled`);
+        if(res.hammer.show > 0)
+          bad.push(`a calm showman lost his surgeon ${res.hammer.show} time(s) in 300 staff weeks — quitOn fired with unrest under 72 and no "blood" name`);
+      } else bad.push(`the hammer arm did not run — staffWeek or STAFF is not on the handle`);
     }
 
     return { bad, lines };
