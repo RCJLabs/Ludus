@@ -192,4 +192,5 @@
 {"v":"3.204.0","checks":159,"failed":["stature"]},
 {"v":"3.205.0","checks":159,"failed":["pace"]},
 {"v":"3.206.0","checks":160,"failed":["altar","stall","week","bill"]},
-{"v":"3.206.0","checks":160,"failed":[]}]
+{"v":"3.206.0","checks":160,"failed":[]},
+{"v":"3.207.0","checks":161,"failed":[]}]
