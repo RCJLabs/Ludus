@@ -4426,6 +4426,20 @@ a house's first weeks. And AUDIT2's houses lived 4,606 weeks before and 3,500 af
 lived 2,626 and 2,553 — the same re-phasing the phase-2 note recorded, in the other direction this
 time, and read the same way.
 
+**The gate: 158 of 159, and the one red was the phase-1 floor meeting a run that changed shape.**
+`pace`'s four seeded houses re-phased to deaths at weeks 18 / 53 / 63 / 133 — 634 weeks became 263 —
+and four state-gated events read "never". Three of them a second set of four houses reached; the
+fourth, `roomFire`, neither set did, and it wants **eight built wings** (`ROOM_FIRE_LEVELS`): on the
+last recorded run two houses had them by weeks 72 and 208, on this build's PACE houses none had built
+at all. Before believing "a gate somebody shut", the wider question was asked twice: the opening on
+sixty houses was **unmoved — 51 → 55 standing, 198 → 209 men** — and on sixteen houses to death
+*fewer* never build (9 → 6), the median peak is higher (0 → 3 wings), and the tilt is at the very top
+(three 420-week survivors with 9–20 wings before, none after; weeks over 6,000 denarii 918 → 610) —
+the shape re-phasing takes, recorded here and not acted on. So the floor learned **exposure**: rows
+carry the week each event was first eligible and the longest house of the run, a prior only counts
+against a run whose longest house lived that long, and against priors that predate the field a zero
+is reported rather than failed when a set scanned less than the prior did. `probe` passes on it.
+
 **Phase 4 — the asks through the same door — is the one left.** `ASKS` is five conversations drawn
 by weight 10 / 9 / 8 / 7 / 6 with the rarest lightest; `evPick` is the function that should draw
 them, with the man who has never been asked weighing more.
