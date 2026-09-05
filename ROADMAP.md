@@ -4389,6 +4389,114 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.207.0 — #247, phase 1: the ending curve, measured
+
+**Verify first, and the verifying changed the item.** #247 was written off sixteen houses and said two
+endings take almost all of them, the strongbox and the cells. `probes/ending.mjs` — new, and the whole
+of this release's game-facing work is one export — asks the same question of **eighty-eight seeded
+houses** (32 + 32 in the probe, 24 more in the check) and the answer is **three shapes, not two**:
+
+| | debt | the cells | ruin | still standing | emptied | banned |
+|---|---|---|---|---|---|---|
+| 88 houses × 420 weeks | **35** | **29** | **11** | 12 | 1 | **0** |
+
+`banned` did not fire once. `ruin` — the yard that cannot field a man and cannot buy one — is not a
+rounding error at the bottom of the table, it is the third shape, and it dies of something else
+entirely. The instrument reports each house's gold, unrest, roster and `runway` every week, the first
+week each of eleven markers the game already owns reads true, and the last twelve chronicle lines of
+every death. Nothing in it classifies a death by reading prose: it prints frequencies, and the reading
+below was done by a person.
+
+**1 · THE DEBT DEATH IS A CLIFF, NOT A SLOPE.** Indexed on death — the median of each figure this many
+weeks before the end, which is the thing an era median cannot show:
+
+| gold p50, weeks before the end | −40 | −20 | −10 | −5 | −1 | at the end |
+|---|---|---|---|---|---|---|
+| set A (10 debt deaths) | 2,610 | 3,219 | 4,359 | 4,043 | **991** | −1,538 |
+| set B (14 debt deaths) | 2,610 | 3,040 | 2,105 | 2,627 | **684** | −1,203 |
+
+A house dying of debt is carrying two to four thousand denarii **ten weeks out** and about a thousand
+one week out. The whole fall happens inside the last week or two. And the two instruments that exist
+for it both miss: the `debtStage` ladder fired before **16 of the 35** deaths (2 of 10, 6 of 14, 8 of
+11 — a rate that swings harder by seed than any retune could move it), and #229's `runway` went under
+`RUNWAY_WARN` for **88 houses of 88**, survivors included, at a median week of 18 to 26. A marker that
+fires for every house that has ever lived is not a warning. **The fault is the approach, not the
+difficulty** — nothing tells a solvent-looking house that it is one bad week from the creditors' line.
+
+**2 · THE RISING IS HEARD, AT LENGTH, AND ANSWERED BY NOBODY.** The opposite shape:
+
+| unrest p50, weeks before the end | −40 | −20 | −10 | −5 | −1 | at the end |
+|---|---|---|---|---|---|---|
+| set A (10) | 18 | 39 | 59 | 59 | 76 | 85 |
+| set B (9) | 15 | 27 | 40 | 64 | 72 | 82 |
+
+Every one of the 29 climbed all three rungs in order — whispers at 50, blades at 65, the night at 78 —
+and the first rung stood a median of **96, 80 and 30 weeks** before the end. The house is told, three
+times, for a hundred weeks, and dies anyway. **Standing caveat, and it is the whole of phase 3's
+work:** these are the REFERENCE PLAYER's weeks. A lever the rope never pulls reads exactly like a
+lever that does not exist (dark.mjs's rule), and separating those two is the measurement phase 3 has
+to make before a constant moves.
+
+**3 · RUIN IS LATE ATTRITION.** roster p50 at −40/−20/−10/−5/−1: **5 · 5 · 2 · 2 · 1 → 0** (set A) and
+2 · 5 · 2 · 2 · 1 → 0 (set B), with gold 5,426 → 100 on both. The men go faster than they are replaced
+and the box empties replacing them. Its last words are its own: *"The cells are empty"* (5 of 7 deaths)
+and *"The bench where he sat is empty and nobody has moved along to fill it"* (5 of 7).
+
+**4 · AND THE OPENING DOES NOT DISCRIMINATE, WHICH RETIRES PHASE 2 AS WRITTEN.** A quarter to a third
+of houses die in era one (21.9% and 31.3%) — the item's premise, confirmed. But gold p50 by week:
+
+| | w1 | w4 | w8 | w12 | w16 | w20 | w26 | w32 |
+|---|---|---|---|---|---|---|---|---|
+| set A · died inside era one (7) | 800 | 742 | 778 | 624 | 689 | 763 | 954 | 1,012 |
+| set A · everyone else (25) | 800 | 872 | 839 | 774 | 947 | 826 | 1,036 | 1,234 |
+| set B · died inside era one (10) | 800 | 770 | 851 | 463 | 689 | 656 | 973 | 1,517 |
+| set B · everyone else (22) | 800 | 791 | 822 | 894 | 802 | 809 | 987 | 1,063 |
+
+The two curves are inside each other's noise through week 26 on both sets. The houses that die early
+are **not poorer at week 8 or week 16** than the houses that live. So `SCENARIOS.clean`'s gold,
+`KEEP_FLOOR` and the first card's purse — the three levers phase 2 was written to move — are not what
+kills them, and moving any of them would be a retune fitted to a difference that is not there. (Read
+the w40 and w52 columns of the era-one rows as survivorship and nothing else: only the houses still
+alive at w40 can contribute to them.)
+
+**`checks/ending.mjs`, five arms, 24 houses × 420 weeks, 14 seconds.** Every ending is a kind
+`OVER_TEXT` can render — the end screen indexes that table directly, so an unwritten kind is a crash
+on the last screen of a run. Every rebellion death climbs the whole ladder, one rung a week, which is
+what `updateRebellion` itself allows. `runway` is never NaN on a living house and never null while
+there is a bill. No ending shape may vanish: `ending-tally.json` keeps the distribution and a kind
+three or more houses reached on the last recorded build may not fall to none — a regression floor, not
+an absolute one, because this is a curve and every retune re-phases it. And the two debt figures are
+REPORTED, not held, because of how far they moved between seed sets; phase 2 will turn them into bars
+once it has something to hold. Sabotage-verified four ways: an `over.kind` with no text, a `runway`
+that returns NaN under water, a house that jumps from calm to the uprising in one week, and the debt
+door shut. The ladder arm needed the sabotage twice — its first draft asked only that stage 1 had been
+reached, and the one-week jump walked past it, because the week it jumped was a week `stage >= 1` read
+true.
+
+**What #247 becomes.** The item asked to be split if the instrument said so, and it does — into three
+that share nothing but the word "ending":
+
+- **#247a — the debt cliff has no approach.** The warning ladder fires for half the deaths and the
+  runway fires for everyone. This is a UI-and-signal item, not an economy retune.
+- **#247b — the rising is heard and not answered.** A hundred weeks of warning and no house survives
+  it. Measure the rope against a policy that DOES act on unrest before touching a constant.
+- **#247c — the yard that empties.** Men out faster than in, and the box spent replacing them.
+
+Phase 2 as written is retired: the opening endowment is not the lever.
+
+**And the patrons have a sex, which their own prose did not know.** Found by the instrument's
+last-words readout, which printed *"Claudia Rufina has let it be known — twice — that **he** has not
+been to your villa"* and *"Claudia Maior asked, and you did not answer. **He** has stopped asking."*
+`makePatron` builds the noble as a woman — `RANKS.noble` is "Noblewoman", her blurb says "She has
+favourites", her name comes from `FEM_NOMINA` — and then every line in `WANTS` called her "he". The
+table was wrong the other way too: `mercy` is wanted by the noble AND the senator and its receipt read
+"she was watching you when it did". `PP(p)` reads the pronoun off the rank, `done` became a function
+like `ask` so it can use it, and the two lines that are about the FIGHTER rather than the patron now
+take hers — a gladiatrix was being sold with "would like to own him". Two `label`s went with them,
+because the agenda prints the label directly under the patron's name ("Claudia Tertia is still
+waiting" / "a man sold to him"), so they are the same fault in four words instead of forty. No draw
+changes, so nothing re-phases.
+
 ### v3.206.0 — #245, phase 4: the asks through the same door
 
 **The last phase, and the written weights were never the lever.** `askWeek` picked a never-asked man
@@ -6624,7 +6732,7 @@ caps it at one debtor.
 
 ---
 
-**#245 — One Die for Sixty-One Events** *(overhaul · large · 4 phases)* — **SHIPPED, ALL FOUR PHASES, v3.203.0–v3.206.0.** Phase 4 (v3.206.0): the asks draw from one pool of every (man, conversation) pair by weight, the unheard first — `woman` raised 1 → 9 and 1 → 3 on two seed sets with the asking rate untouched. **PHASES 1–3 SHIPPED, v3.203.0 – v3.205.0.** Phase 3 (v3.205.0) is freshness: an event the house has never met has its tickets multiplied by `EV_FRESH` (3), read off `flags.evLast` so nothing new is saved. Measured: a house meets a median of **13 → 23** of the thirty-six on the seed set where houses die young, 25 → 26 where they live long — but the last quarter's first-time rate did not rise, because the die has thirty-six cards and freshness deals them sooner; the late-game rate is #248's to raise. **Phase 4 (the asks through the same door) is open.** Phase 2 is the weighted, cooled die: `EV_DIE` gives each drawn event tickets set from its measured reach and a quiet after asking; the ORDER is weighted, not the outcome, so every make() keeps its gates. Measured at the die on two seed sets: the four-ticket-and-up tier from ~11% to ~16% of draws, `thugs` 1→6 and 2→14, `poached` 0→3 and 0→3, the draw rate unchanged. The lifespan swing between the two runs went opposite ways on the two seed sets — re-phasing, not the die. Phases 3 (freshness) and 4 (the asks) are open. Phase 1 was shipped v3.203.0 as an instrument with no game change: `checks/pace.mjs` reads the draw's eligible set every week of a seeded reference run (p50 **14**, four or more on 100% of weeks), keeps every drawn event's reach as a number in `pace-tally.json`, and holds two floors — reach may not fall to zero between builds, and the raised events must still be raised. It also corrected the item's own count: **36 of the 61 are drawn by the die; 25 are raised by their own systems** and never see it. **Phases 2–4 are the re-basing decision** (a weighted draw re-phases every seeded fixture in the suite) and wait on it.
+**#245 — One Die for Sixty-One Events** *(overhaul · large · 4 phases)* — **SHIPPED, ALL FOUR PHASES, v3.203.0–v3.206.0.** Phase 4 (v3.206.0): the asks draw from one pool of every (man, conversation) pair by weight, the unheard first — `woman` raised 1 → 9 and 1 → 3 on two seed sets with the asking rate untouched. **PHASES 1–3 SHIPPED, v3.203.0 – v3.205.0.** Phase 3 (v3.205.0) is freshness: an event the house has never met has its tickets multiplied by `EV_FRESH` (3), read off `flags.evLast` so nothing new is saved. Measured: a house meets a median of **13 → 23** of the thirty-six on the seed set where houses die young, 25 → 26 where they live long — but the last quarter's first-time rate did not rise, because the die has thirty-six cards and freshness deals them sooner; the late-game rate is #248's to raise. Phase 2 is the weighted, cooled die: `EV_DIE` gives each drawn event tickets set from its measured reach and a quiet after asking; the ORDER is weighted, not the outcome, so every make() keeps its gates. Measured at the die on two seed sets: the four-ticket-and-up tier from ~11% to ~16% of draws, `thugs` 1→6 and 2→14, `poached` 0→3 and 0→3, the draw rate unchanged. The lifespan swing between the two runs went opposite ways on the two seed sets — re-phasing, not the die. Phase 1 was shipped v3.203.0 as an instrument with no game change: `checks/pace.mjs` reads the draw's eligible set every week of a seeded reference run (p50 **14**, four or more on 100% of weeks), keeps every drawn event's reach as a number in `pace-tally.json`, and holds two floors — reach may not fall to zero between builds, and the raised events must still be raised. It also corrected the item's own count: **36 of the 61 are drawn by the die; 25 are raised by their own systems** and never see it. **Phases 2–4 were the re-basing decision** (a weighted draw re-phases every seeded fixture in the suite), taken at phase 2.
 
 `pickEvent(d)` is `for(k of shuffled(Object.keys(EVENTS))){ const ev = EVENTS[k].make(d); if(ev) return
 ev; }`. **Measured (`probes/pace.mjs`, 12 × 420): thirteen events are eligible on the median week** (p10
@@ -6694,7 +6802,18 @@ of it routed through grudge so a warm bay stays warm.
 
 ---
 
-**#247 — The Ending Curve** *(overhaul · large · verify-first heavy · 3 phases)*
+**#247 — The Ending Curve** *(overhaul · large · verify-first heavy · 3 phases)* — **PHASE 1 SHIPPED,
+v3.207.0, AND IT SPLIT THE ITEM.** Measured on 88 seeded houses (`probes/ending.mjs`, `checks/ending.mjs`):
+**three** shapes, not two — debt 35, the cells 29, ruin 11, still standing 12, `banned` 0. The debt
+death is a CLIFF (gold p50 4,359 and 2,105 ten weeks out, ~1,000 one week out) whose warnings both
+miss — `debtStage` fired before 16 of 35, `runway` went short for 88 of 88 including every survivor.
+The rebellion is the opposite: all 29 climbed the whole ladder, the first rung standing 96/80/30 weeks
+before the end, and the house dies anyway (rope caveat: phase 3 must separate "no lever" from "the
+rope never pulls it"). Ruin is late attrition — roster 5 → 2 → 1 → 0 over the last forty weeks. **And
+the opening does not discriminate**: the era-one dead are not poorer at week 8 or 16 than the houses
+that live, on both sets, which retires phase 2 as written — the endowment is not the lever. The item
+is now **#247a** (the debt cliff has no approach — signal, not economy), **#247b** (the rising is heard
+and not answered), **#247c** (the yard that empties). Original text follows.
 
 Fourteen of sixteen houses end, and the two endings that take them are the strongbox and the cells:
 **debt 6, rebellion 7**, banned 1, survived 2 (16 × 420, seeded). The instrument's twelve show three

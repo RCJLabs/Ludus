@@ -354,6 +354,16 @@ const PR = g => (g && g.sex==="f")
   ? { he:"she", him:"her", his:"her", He:"She", Him:"Her", His:"Her", man:"woman", Man:"Woman" }
   : { he:"he", him:"him", his:"his", He:"He", Him:"Him", His:"His", man:"man", Man:"Man" };
 const isF = g => !!g && g.sex==="f";
+/* ---- AND THE PATRONS HAVE A SEX TOO, WHICH THEIR OWN PROSE DID NOT KNOW ----
+   `makePatron` builds a noble as a woman — `RANKS.noble` is called "Noblewoman", her blurb says
+   "She has favourites" and she draws her name from FEM_NOMINA — and then every line the WANTS
+   table writes about her said "he". Found by #247's instrument, which prints the last twelve
+   chronicle lines of a dying house and put two of them on screen: "Claudia Rufina has let it be
+   known — twice — that HE has not been to your villa" and "Claudia Maior asked, and you did not
+   answer. HE has stopped asking." The table is wrong the other way as well: `mercy` is wanted by
+   the noble AND the senator and its receipt says "she was watching you when it did", which the
+   senator is not. The rank is the sex, so the pronoun comes off the rank. */
+const PP = p => PR({ sex: p && p.rank === "noble" ? "f" : "m" });
 /* Most of the house's prose was written for a man, because most of the sand is men.
    A gladiatrix is not a special case in the rules and should not be one in the telling:
    where a line is about one fighter and nobody else, this turns it over to her.
@@ -4259,25 +4269,27 @@ const patronOld = d => (patronsOf(d).length >= 2 && d.lanista && (d.lanista.age|
 const WANTS = {
   blood: { label:"a death on the sand", weeks:4, gain:14, loss:11,
     ask:(d,p)=>`${p.name} wants a death at the next games. Not a bout — a death.`,
-    done:"He got what he came for. He will remember that you provided it." },
+    done:(d,p)=>`${PP(p).He} got what ${PP(p).he} came for. ${PP(p).He} will remember that you provided it.` },
   spectacle: { label:"a bout Capua will talk about", weeks:4, gain:12, loss:8,
-    ask:(d,p)=>`${p.name} is bored. He wants a bout the city will still be talking about next month — a crowd on its feet.`,
-    done:"The roar reached his box, and he stood with the rest of them." },
+    ask:(d,p)=>`${p.name} is bored. ${PP(p).He} wants a bout the city will still be talking about next month — a crowd on its feet.`,
+    done:(d,p)=>`The roar reached ${PP(p).his} box, and ${PP(p).he} stood with the rest of them.` },
   mercy: { label:"a beaten man spared", weeks:5, gain:13, loss:9,
     ask:(d,p)=>`${p.name} has grown sick of the killing. Show the crowd a beaten man spared and it will be noticed.`,
-    done:"The thumb turned up, and she was watching you when it did." },
-  win: { label:"a victory he has money on", weeks:4, gain:11, loss:8,
+    done:(d,p)=>`The thumb turned up, and ${PP(p).he} was watching you when it did.` },
+  win: { label:"a victory with money on it", weeks:4, gain:11, loss:8,
     ask:(d,p)=>`${p.name} has money on your house at the coming games. See that it is not wasted.`,
-    done:"He collected. That is the only kind of gratitude this one has." },
+    done:(d,p)=>`${PP(p).He} collected. That is the only kind of gratitude this one has.` },
   party: { label:"an invitation to your table", weeks:5, gain:12, loss:9,
-    ask:(d,p)=>`${p.name} has let it be known — twice — that he has not been to your villa in some time.`,
-    done:"He came, he drank your wine, and he left in a better humour than he arrived." },
-  sell: { label:"a man sold to him", weeks:5, gain:16, loss:10,
-    ask:(d,p,g)=>`${p.name} has taken an interest in ${g?fullName(g):"one of your men"} and would like to own him.`,
-    done:"The man was delivered. Coin and goodwill both." },
+    ask:(d,p)=>`${p.name} has let it be known — twice — that ${PP(p).he} has not been to your villa in some time.`,
+    done:(d,p)=>`${PP(p).He} came, ${PP(p).he} drank your wine, and ${PP(p).he} left in a better humour than ${PP(p).he} arrived.` },
+  sell: { label:"one of your men, bought", weeks:5, gain:16, loss:10,
+    ask:(d,p,g)=>`${p.name} has taken an interest in ${g?fullName(g):"one of your men"} and would like to own ${g?PR(g).him:"him"}.`,
+    done:(d,p,g)=>`The ${g?PR(g).man:"man"} was delivered. Coin and goodwill both.` },
   showman: { label:"your showiest man on the card", weeks:4, gain:13, loss:9,
-    ask:(d,p,g)=>`${p.name} asks after ${g?g.name:"your showiest man"} by name. She would like to see him fight.`,
-    done:"He fought, she watched, and half of Capua watched her watching." },
+    ask:(d,p,g)=>`${p.name} asks after ${g?g.name:"your showiest man"} by name. ${PP(p).He} would like to see ${g?PR(g).him:"him"} fight.`,
+    /* named rather than pronouned, because a gladiatrix in front of the noblewoman put three
+       different "she"s in one sentence and none of them knew which was which */
+    done:(d,p,g)=>`${g?g.name:"He"} fought, ${PP(p).he} watched, and half of Capua watched ${PP(p).him} watching.` },
 };
 
 function askWant(d, p){
@@ -4310,7 +4322,8 @@ function serveWants(d, ev){
     if(!hit) continue;
     p.favor = clamp(p.favor + WANTS[w.kind].gain, 0, 100);
     p.served++; p.want = null;
-    chron(d, `${p.name}: ${WANTS[w.kind].done}`, "good");
+    { const D = WANTS[w.kind].done, g = w.gid ? d.gladiators.find(x=>x.id===w.gid) : null;
+      chron(d, `${p.name}: ${typeof D === "function" ? D(d, p, g) : D}`, "good"); }
   }
   recomputeFavor(d);
 }
@@ -4462,7 +4475,7 @@ function patronWeek(d){
       if(p.want.weeks<=0){
         p.favor = clamp(p.favor - WANTS[p.want.kind].loss, 0, 100);
         p.slighted++;
-        chron(d, `${p.name} asked, and you did not answer. He has stopped asking.`, "bad");
+        chron(d, `${p.name} asked, and you did not answer. ${PP(p).He} has stopped asking.`, "bad");
         p.want = null;
       }
     } else if(!d.city && !d.travel && R()<0.09) askWant(d, p);
@@ -32876,6 +32889,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     RISE_RANKS, riseOf, riseRank, riseNext, riseNeed, canClaimRise, riseWeek,
     riseStipend, riseFav, risePurse, liturgy, riseFee, RISE_ADMIT,
     runway, moneyRow, RUNWAY_WARN, RUNWAY_BAD, RUNWAY_BUILD, weeklyBill, creditLine, billIf, staffWages,
+    OVER_TEXT, DEBT_STAGE,   /* #247 — the end screen's own table, so a check can ask whether a kind can be shown */
     CENSUS_TOP, CREDIT_WEEKS, FAME_TIERS, FAME_WARM_AT, fameWarm, acclaimIdx, feastFresh, AMB_COOL,
     /* and the patrons the climb rests on */
     patronWeek, serveWants, recomputeFavor, patronsOf, makePatron, favourWorth, WANTS, RANKS,

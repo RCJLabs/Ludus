@@ -15,6 +15,7 @@ Run them straight:
     node test/probes/handle.mjs            # player actions no check can reach (no houses to play)
     node test/probes/dark.mjs 8 320        # and whether those actions ever open, and ever do anything
     node test/probes/survey.mjs 16 420     # the design survey: endings, careers, arcs, what a long run engages
+    node test/probes/ending.mjs 32 420     # #247: how a house dies — the markers, the approach indexed on death, the last words
     node test/probes/rise.mjs              # the rise ladder and the liturgy: #207's half-refutation
     node test/probes/debut.mjs 16 420      # careers and the per-bout death hazard: #208's refutation
     node test/probes/salute.mjs 14 200     # what the entrance buys, and the salute's counterfactual: #209
