@@ -4450,6 +4450,21 @@ he does not — so it named a nephew and `!d.heir` shut the gate for the rest of
 early insurance and then takes the better name the week it appears, which is what the card now
 permits.
 
+**AND THE TAB HAD TO LEARN TO LIGHT AGAIN.** `TAB_SIG.villa` carried `d.heir ? "heir" : ...`, which
+was honest while the card shut behind the first naming — once somebody stood there, nothing about the
+succession could change. With the card reopened that line goes deaf: it would report `"heir"` for the
+rest of the run and never mark the villa when the boy became namable. The birth already moved the
+signature (`children.length`); the boy turning nine moved nothing. It reads `heirChoices` now, so who
+stands and who else could both move it, and it is constant while nothing changes — `joinSig` marks on
+change, not on presence, so this does not light the villa every week. A fix the game never surfaces
+is half a fix.
+
+**`bulk` refused the first draft.** `App` was sitting at 5,786 of 5,786, so the four-line comment
+explaining the card inside the component put it one line over. The ceiling was not raised: the prose
+moved up to the `heirChoices` banner, where the file's own note on this says such things go — *"the
+plate's explanation was written BESIDE THE RULES, which is four lines of prose measured by this sweep
+and shipped to the browser"* — leaving a one-line pointer. App is at 5,784.
+
 **AND THE INSTRUMENT FAULT THIS TURNED UP: five fixtures named a seed and were not seeded.**
 `newGameState(name, scen, seed, pitch)` — the seed is the **third** argument, and a missing one falls
 back to `newSeedWord()`, off `Math.random()`. A fixture passing its seed first gets a house *named*
@@ -4474,11 +4489,14 @@ bracket, so `` newGameState(`${SEED}-${h}`) `` ran off the end of the file and c
 to look seeded; backticks and quotes toggle now. Sabotage-verified on all three shapes — bare
 identifier, template literal, quoted string.
 
-**`checks/boy.mjs`, six arms.** Five drive `heirChoices` at module scope; the sixth opens the lanista
-sheet on a forged house that has both an heir and an eligible son and reads the buttons, because
-arms 1–5 all pass on a build where the JSX still reads `S.heir ? <panel> : <buttons>` — that ternary
-is the whole defect and it is not a function of the save. Sabotage-verified three ways: the ternary
-put back (arm 6), the `cid` filter removed (arms 3 and 4), the replacement line reverted (arm 5).
+**`checks/boy.mjs`, seven arms.** Five drive `heirChoices` at module scope, one drives `tabSig`, and
+the seventh opens the lanista sheet on a forged house that has both an heir and an eligible son and
+reads the buttons — because arms 1–6 all pass on a build where the JSX still reads
+`S.heir ? <panel> : <buttons>`. That ternary is the whole defect and it is not a function of the
+save. Sabotage-verified four ways: the ternary put back (arm 7), the `cid` filter removed (arms 3
+and 4), the replacement line reverted (arm 5), the deaf signature restored (arm 6). Arm 2 failed on
+its own fixture first — it raised its boy at the palus and then asserted a trait, and the yard's mark
+is `palusRaised`, not a trait.
 
 **What this does NOT do.** It does not make the **scion** reachable. The toga is 288 weeks past a
 birth at week 84, so it wants a house alive past week 372 against a median that ends at 268 — 1 of 16

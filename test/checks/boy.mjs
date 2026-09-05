@@ -19,7 +19,7 @@
    took the toga is not offered back to you as a worse version of himself. The card renders it in
    both branches now, and the panel showing who stands sits above it instead of replacing it.
 
-   SIX ARMS:
+   SEVEN ARMS:
    1 · THE LIST IS THE SAME PEOPLE `heirEligible` and `eligibleSons` already offer, with a row per
        boy — a house with two sons gets two rows, not one button called "A son".
    2 · THE DOOR REOPENS: a nephew named in week two does not close the son off. `nameHeir` replaces
@@ -29,7 +29,9 @@
    4 · TWO SONS: naming one leaves the other on the card and takes the named one off it.
    5 · THE CHRONICLE SAYS A WILL WAS REWRITTEN, not that one was written — a name came off the
        paper and somebody is going to find out he is not the one any more.
-   6 · AND THE CARD ACTUALLY RENDERS THEM WITH AN HEIR STANDING. Arms 1-5 would all pass on a build
+   6 · THE VILLA TAB LIGHTS WHEN THE BOY TURNS NINE. `TAB_SIG.villa` reported "heir" forever once
+       anybody was named, which was honest while the card shut and is deaf now that it reopens.
+   7 · AND THE CARD ACTUALLY RENDERS THEM WITH AN HEIR STANDING. Arms 1-5 would all pass on a build
        where the JSX still reads `S.heir ? <panel> : <buttons>`, because that ternary is the whole
        defect and it is not a function of the save. This one opens the lanista sheet on a forged
        house that has both an heir and an eligible son, and reads the buttons. */
@@ -45,7 +47,7 @@ export async function run({ p, errors }){
 
   const r = await p.evaluate(()=>{
     const A = window.__LVDVS;
-    const miss = ["heirChoices","heirEligible","eligibleSons","nameHeir","domusOf","HEIRS","SON_AGE","YEAR_WEEKS"]
+    const miss = ["heirChoices","heirEligible","eligibleSons","nameHeir","domusOf","HEIRS","SON_AGE","YEAR_WEEKS","tabSig"]
       .filter(k=>A[k]==null);
     if(miss.length) return { miss };
     const out = { arms:[], notes:[] };
@@ -133,6 +135,21 @@ export async function run({ p, errors }){
         `the second naming ${second === firstLine ? "reuses the first line" : "is its own line"}; `
         + `names the man replaced ${second.includes(nephewName)}, names the new one ${second.includes(boy.name)}`); }
 
+    /* ---- 6a: and the villa tab has to LIGHT for him ----
+       `TAB_SIG.villa` read `d.heir ? "heir" : heirEligible(d).join("")`, which was honest while the
+       card shut behind the first naming — once somebody stood there nothing could change again. With
+       the card reopened, the boy turning nine is news the tab never reported. */
+    { const d = mk(); const boy = addSon(d, "Lucius Minor", 8);   /* a year short of SON_AGE */
+      A.nameHeir(d, "nephew");
+      const before = A.tabSig(d, "villa");
+      const quiet = A.tabSig(d, "villa") === before;
+      boy.born -= A.YEAR_WEEKS;                                    /* he turns nine */
+      const after = A.tabSig(d, "villa");
+      out.notes.push(`villa sig with an heir standing: ${before.slice(0,58)} -> ${after.slice(0,58)}`);
+      say(quiet && before !== after && A.eligibleSons(d).length === 1,
+        `a standing heir and the boy turning nine: the signature ${before === after ? "does NOT move" : "moves"}, `
+        + `and it is steady while nothing changes (${quiet})`); }
+
     return out;
   });
 
@@ -141,7 +158,7 @@ export async function run({ p, errors }){
   r.arms.forEach((a, i)=>{ lines.push(`${i+1}. ${a.ok ? "held" : "FAILED"} — ${a.why}`);
     if(!a.ok) bad.push(`arm ${i+1}: ${a.why}`); });
 
-  /* ---- 6: the card itself, with an heir standing ---- */
+  /* ---- 7: the card itself, with an heir standing ---- */
   const planted = await forge(p, (A)=>{
     const d = A.newGameState("Boy", "clean", "BOY-CARD");
     d.week = 260; d.lanista.age = 46;
@@ -152,7 +169,7 @@ export async function run({ p, errors }){
     A.nameHeir(d, "nephew");
     return { plant:d, heir:d.heir.name, boy:"Lucius Minor" };
   });
-  if(planted && planted.__forge) bad.push(`arm 6 could not be set up: ${planted.__forge}`);
+  if(planted && planted.__forge) bad.push(`arm 7 could not be set up: ${planted.__forge}`);
   else {
     /* the records shelf sits at the FOOT of the villa's House face, not on the ludus tab — see the
        note above `SECT.annals`. Go there first, or the row is not on the page to click. */
@@ -167,7 +184,7 @@ export async function run({ p, errors }){
       row.click();
       return { why:null };
     });
-    if(card.why) bad.push(`arm 6: ${card.why}`);
+    if(card.why) bad.push(`arm 7: ${card.why}`);
     else {
       await p.waitForTimeout(320);
       const seen = await p.evaluate(()=>{
@@ -181,13 +198,13 @@ export async function run({ p, errors }){
       });
       const boyRow = seen.rows.find(t=>/Lucius Minor/.test(t));
       const nephewRow = seen.rows.find(t=>/^A nephew/.test(t));
-      lines.push(`6. the sheet offers ${seen.rows.length} heir row(s) with an heir standing: `
+      lines.push(`7. the sheet offers ${seen.rows.length} heir row(s) with an heir standing: `
         + seen.rows.map(t=>t.slice(0,44)).join(" | "));
-      if(!seen.after) bad.push(`arm 6: the lanista sheet did not open — no "After you" on the page`);
-      else if(!boyRow) bad.push(`arm 6: an heir stands and the son the house raised is NOT on the card — `
+      if(!seen.after) bad.push(`arm 7: the lanista sheet did not open — no "After you" on the page`);
+      else if(!boyRow) bad.push(`arm 7: an heir stands and the son the house raised is NOT on the card — `
         + `this is the ternary the whole item is about, back again`);
-      else if(nephewRow) bad.push(`arm 6: the standing nephew is offered again as an alternative to himself`);
-      else lines.push(`6. held — the boy is offered and the standing nephew is not`);
+      else if(nephewRow) bad.push(`arm 7: the standing nephew is offered again as an alternative to himself`);
+      else lines.push(`7. held — the boy is offered and the standing nephew is not`);
     }
   }
 

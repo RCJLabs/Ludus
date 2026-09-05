@@ -3210,7 +3210,17 @@ const TAB_SIG = {
     patronsOf(d).map(p=>`${p.id}${p.want?":"+p.want.kind:""}`).join(","),
     d.romeOffer ? "letter" : "",
     d.election && !d.election.done ? "vote" : "",
-    d.heir ? "heir" : (heirEligible(d)||[]).join(""),
+    /* ---- AND A SIGNATURE THAT WENT DEAF THE MOMENT ANYBODY WAS NAMED ----
+       This read `d.heir ? "heir" : ...`, which was right while the card shut behind the first
+       naming: once somebody stood there, nothing about the succession could change again. The card
+       reopens now, so the boy turning nine IS news — and this line would have reported "heir" for
+       the rest of the run and never lit the tab for him. The birth already moves the signature
+       (`children.length`, below); nothing moved when the child became NAMABLE. `heirChoices` is the
+       card's own contents, so who stands and who else could both move it. It is constant while
+       nothing changes — a nephew is always on the list — and `joinSig` marks on change, not on
+       presence, so this does not light the villa every week. */
+    d.heir ? `heir:${d.heir.kind}${d.heir.cid || ""}` : "",
+    heirChoices(d).map(o=>o.cid ? `s${o.cid}` : o.kind).join(""),
     blessOf(d) || (offeringReady(d) ? "altar" : ""),
     d.vow ? "vow" : "",
     (d.domus && d.domus.children || []).length,
@@ -27552,10 +27562,7 @@ export default function App(){
             <div className="dim" style={{fontSize:"var(--fs-md)",marginTop:3}}>{HEIRS[S.heir.kind].line}</div>
           </div>
         )}
-        {/* THE CARD USED TO SHUT. This was `S.heir ? <panel> : <buttons>`, so the one decision the
-            whole succession turns on was taken once, before the house had a family, and could never
-            be revisited — see the note above `heirChoices`. The panel and the alternatives now sit
-            together: who stands, and who else could. */}
+        {/* it used to be `S.heir ? <panel> : <buttons>` — the note above `heirChoices` says why not */}
         {!S.heir && (
           <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:7}}>
             Name nobody and this house is sold off in pieces the morning after you die. Name somebody and it goes on without you, carrying its men, its debts and none of your reputation.
