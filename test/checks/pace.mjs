@@ -44,7 +44,7 @@ export async function run({ p, errors }){
   await clearAll(p, 12);
   await installRope(p);      /* found() reloads the page; the rope is injected, not built in */
 
-  const r = await p.evaluate(([H, W])=>{
+  const measure = (SEEDP) => p.evaluate(([H, W, SEEDP])=>{
     const A = window.__LVDVS, R = window.__ROPE;
     if(!A.EVENTS || !R || typeof R.lanista !== "function") return { why:"no EVENTS table or no rope on the handle" };
     const clone = x => JSON.parse(JSON.stringify(x));
@@ -55,7 +55,7 @@ export async function run({ p, errors }){
     const elig = {}, fired = {}, sizes = [];
     let scanned = 0, weeks = 0;
     for(let h=0; h<H; h++){
-      const d = A.newGameState("Pace", "clean", `PACE-${h}`, null);
+      const d = A.newGameState("Pace", "clean", `${SEEDP}-${h}`, null);
       for(let w=0; w<W; w++){
         if(d.over) break;
         /* every week at home is scanned, on a clone with the standing question cleared: at the top
@@ -86,7 +86,8 @@ export async function run({ p, errors }){
       size: sizes.length ? { p10:at(.1), p50:at(.5), p90:at(.9), max:s[s.length-1] } : null,
       atLeast4: sizes.length ? Math.round(1000 * sizes.filter(n=>n>=4).length / sizes.length) / 10 : 0,
       table, never: drawn.filter(k=>!(elig[k]>0)), fired };
-  }, [4, 220]);
+  }, [4, 220, SEEDP]);
+  const r = await measure("PACE");
   if(r.why) return { pass:false, why:r.why, lines };
 
   lines.push(`${r.keys} events: ${r.drawn} drawn by the die, ${r.raised} raised by their own systems · ${r.weeks} weeks played, ${r.scanned} scanned`);
@@ -106,9 +107,23 @@ export async function run({ p, errors }){
      six hundred, and a legitimate re-phasing of the run flips that to zero by luck, not by a gate */
   const prior = readTally().filter(x=>x && x.pass && Array.isArray(x.reach)).slice(-1)[0] || null;
   const wasReachable = prior ? new Set(prior.reach.filter(([k,v])=>v >= 1).map(([k])=>k)) : null;
-  const shut = wasReachable ? r.never.filter(k=>wasReachable.has(k)) : [];
+  let shut = wasReachable ? r.never.filter(k=>wasReachable.has(k)) : [];
+  /* ---- AND A SECOND DRAW BEFORE CALLING IT — v3.205.0 ----
+     The floor assumed the reference run keeps its shape across builds. It does not: on the phase-3
+     release the four PACE houses re-phased to deaths at weeks 18 / 53 / 63 / 133 (634 weeks became
+     263), and four state-gated events — poached, roomFire, bribedEditor, thugs — read "never" because
+     no house lived long enough to hold the grudge, the booking or the purse they wait on. The opening
+     measured on sixty houses was unmoved (51 → 55 standing). A gate somebody shut is shut on every
+     seed; a run that never got there is not. So a tripped floor takes a second set of four houses,
+     the way `survive` takes a second draw, and fails only on what is unreachable on both. */
+  let second = null;
+  if(shut.length){
+    second = await measure("PACE2");
+    if(!second.why){ const stillShut = shut.filter(k => second.never.includes(k));
+      lines.push(`2. the floor tripped on ${shut.join(", ")} — a second set of four houses (${second.weeks} weeks played, ${second.scanned} scanned) ${stillShut.length ? `agrees on ${stillShut.join(", ")}` : "reaches every one of them"}`);
+      shut = stillShut; } }
   lines.push(`2. never eligible under the reference player (${r.never.length}): ${r.never.join(", ") || "none"}${prior ? ` — against the last recorded run, ${shut.length} of them were reachable then` : " — no prior run to compare against"}`);
-  if(shut.length) bad.push(`arm 2: reach fell to zero on ${shut.join(", ")} — eligible on the last recorded run (${prior.v}) and never in ${r.scanned} weeks now: a gate somebody shut`);
+  if(shut.length) bad.push(`arm 2: reach fell to zero on ${shut.join(", ")} on two seed sets — eligible on the last recorded run (${prior.v}) and never in ${r.scanned}${second && !second.why ? ` + ${second.scanned}` : ""} weeks now: a gate somebody shut`);
   /* 3 */
   const COMMON = ["refusal","leagueYear","booking","ask"];
   const dead = COMMON.filter(k=>!(r.fired[k]>0));
