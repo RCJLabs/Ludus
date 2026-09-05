@@ -4389,6 +4389,77 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.202.0 — #253: a boy of ten takes the chair
+
+**The queue's smallest item, and its diagnosis did not survive the first trace.** #253 was written off
+three columns of `probes/boy.mjs`: two houses in their second generation whose eligible son ended as a
+nephew, explained as `eligibleSons`' `age >= 40` term "shutting the boy out again, on a man who is not
+his father". Before building it I read `succeed`: it moves the whole family to the forebear record
+("the family goes with the man … and the new man starts his own" — a deliberate fix, since 8 of 8
+successions had once handed the new lanista his predecessor's widow). After a succession there is no
+boy in `livingKids` for any gate to shut out. The sentence in v3.200.0 is corrected in place above.
+
+**What the trace found instead** (`probes/handover.mjs`, the same 16 × 520 run): three successions —
+and **two of them were a son of ten and a son of eleven**, both through the *retirement* door
+(v3.198.0's door, working: a man of sixty-two handing on by choice, because `d.heir` was set), both
+rolled `ri(22,31)` by `succeed` on the way in, the chronicle saying each "takes his father's chair. He
+has been in this yard his whole life and the men are not sure yet whether that is reassuring." #237
+named the real boy years before sixteen on purpose. Nothing downstream had ever read how old he was.
+
+**Three things, one clause each.** The boy's age is his own — `succeed` reads `childAge` for a son or
+scion with a `cid`, before the domus goes to the record. A father does not retire onto a minor — the
+retirement branch wants `heirOfAge(d)`, sixteen being the toga's year. A boy is not offered a wife —
+`marryReady` wants eighteen. The death door is *not* gated: a man can still die with a boy of ten named,
+and then the boy takes the chair at ten, and the chronicle says so — *"is ten years old and the house is
+his. The doctore gives the orders and the boy signs what he is told to, and everybody in the cells
+knows which of those two things is the real one."* The widow as regent is #243's fourth phase, not this.
+
+**And one adjacent fault found by reading the same sheet:** it printed *"27 years old · 22 years at the
+head of this house"* for a nephew who arrived last spring, because "years at the head" was `yearOf` —
+the run's year, not the man's. `yearsAtHead(d, L)` reads `L.since`; the sheet, the retirement record
+and the `lanistaDied` ending all use it now.
+
+**Measured, before and after, the same seeds:**
+
+| | before | after |
+|---|---|---|
+| successions | 3 — son 10 (wk 384, retired), son 11 (wk 347, retired), nephew (wk 375) | 2 — **scion 16 (wk 459, retired)**, nephew (wk 375) |
+| minors taking the chair | **2** | **0** |
+| age given on the way in | 10 → 23, 11 → 23 | 16 → 16 |
+
+House 2's father waited: the boy took the toga at sixteen and the father retired onto a **scion** —
+`HEIRS.scion`, *"the thing simply continues, which is the rarest thing a ludus does"*, reached under the
+reference player for the first time in this seed, through the door v3.198.0 opened. House 1's father did
+not retire onto his ten-year-old, and the house ended before the boy was of age: **one succession lost,
+stated.** That is the cost of the rule and it is the right cost.
+
+**`checks/minor.mjs`, seven arms** — the boy's age his own and the line saying a boy; a scion's age his
+own; a nephew still rolled `ri(22,31)`; the retirement door 0 of 300 onto a boy of ten and open onto a
+boy of seventeen, the death door still handing on; no wife at eleven, a wife at eighteen; years at the
+head at module scope and on the sheet itself. Sabotage-verified four ways. **The first draft's arm 5 was
+inert** — it never named the son, so `die()` ended the run instead of seating the boy, and `marryReady`
+came back false for a sixty-year-old with no health: the right answer for the wrong man. Found because
+sabotaging the guard out *passed*, which is the only way an inert arm ever announces itself. The arm
+proves the boy is in the chair before it asks now.
+
+**THE GATE CAME BACK 156/157, AND THE ONE WAS AN INSTRUMENT INERT FOR FORTY-EIGHT RELEASES.**
+`survive` — the oldest check in the suite, five real houses through five real browsers for twenty-six
+weeks — tripped its bar on both draws, (1,1) then (1,1), and its own lines said why: *"0 bought"* in
+every house. And *"0 bought"* in every house of the two gates before it. v3.154.0 took the price out of
+the block's buy button on purpose (*"a button repeating it is the market's purses ×1.20"*); the button
+has read *"Buy him"* since, with the price a `.gold` span in the row's summary. `survive`'s parser read
+the button, got Infinity for every man, filtered every candidate out, and bought nobody — so the check
+that exists to catch "an economy change that quietly bankrupted every opening" has been running houses
+of three that never went to the block, which is the exact starvation its own header says it was
+rewritten to stop. Its tally shows it: men-between-them reached 16 at 3.99.0 and never passed 6 after
+3.154.0, and it passed on the luck of second draws for forty-eight gates until this one.
+
+**The build was cleared by the check's own named confirmation** — `probes/open.mjs`, sixty headless
+houses, on v3.201.0 and on v3.202.0: **standing 49 of 60, men 183, and the per-house signature
+byte-identical.** No path a new house executes differs. The price is read from the row the button
+stands in now, which is where the game put it — and re-run, the same check scores **(3,8) on its first
+draw, every house "2 bought"**: the first time its men-between-them has passed six since 3.152.0.
+
 ### v3.201.0 — #255: the year is a wheel
 
 **The second phase queue's first item taken up — the single-step UI one — and it shipped as
@@ -4483,9 +4554,11 @@ differently from a written one.
 Five of sixteen houses now hand on to the boy they raised. **Nothing else moved a digit** — the
 patient and forced arms are identical before and after, which is the check that the change draws
 nothing from the RNG stream. Of the eight houses whose son reached nine, five switch, one goes
-further and takes the scion at the toga, and **two are already in their second generation**, where
-`succeed` installs a lanista of `ri(22,31)` and `eligibleSons`' own `age >= 40` gate shuts the boy
-out again. That is stated, not fixed: it is the same gate doing its job on a different man.
+further and takes the scion at the toga, and two were in their second generation. ~~"where `succeed`
+installs a lanista of `ri(22,31)` and `eligibleSons`' own `age >= 40` gate shuts the boy out again"~~
+— **that explanation was wrong, and v3.202.0 says how:** `succeed` moves the whole family to the
+forebear record, so there is no boy in `livingKids` for any gate to shut out. Traced, those two houses
+were the SON taking the chair — at ten and at eleven.
 
 **The reference player was doing what the card forced.** The rope took `heirEligible(d)[0]` under
 `!d.heir` — and `heirEligible` puts `"son"` first only when a son already exists, which in week two
@@ -6514,7 +6587,7 @@ the pits and of the amphitheatre are not one man), or the hazard in the 6–12-w
 
 ---
 
-**#253 — The Boy Behind the Second Gate** *(gameplay · small–medium · single step)*
+**#253 — The Boy Behind the Second Gate** *(gameplay · small–medium · single step)* — **SHIPPED v3.202.0, AND THE DIAGNOSIS WAS WRONG.** The item below says a son is shut out by the age gate after a succession; `succeed` resets the domus, so after a succession there is no son to shut out. Traced (`probes/handover.mjs`), the two houses it was written off were a son of TEN and of ELEVEN taking the chair — through the retirement door, rolled to twenty-three on the way in. What shipped: the boy's age is his own, a father does not retire onto a minor, a boy is not offered a wife, and the sheet counts years at the head from `L.since`. The queue text is left as written, as the record of what a three-column inference looks like next to a trace.
 
 `eligibleSons = d => (d.lanista.age >= 40) ? livingKids(d).filter(male, age >= SON_AGE) : []`. `succeed`
 installs the new lanista at `ri(22,31)` (nephew) or `ri(18,24)` (scion), clears `d.heir`, and keeps
@@ -6566,7 +6639,7 @@ ledger has something to hold.
 
 ---
 
-**#255 — The Year Is a Wheel** *(UI · medium · single step)*
+**#255 — The Year Is a Wheel** *(UI · medium · single step)* — **SHIPPED v3.201.0**, as specified: `YearWheel` at module scope, eighteen spokes of the year with the pointer moving round them, the seasons banded from `SCN_GRADE`, the six festivals as engine glyphs, every `calendarRows` row a pin on its spoke (hollow for next year's same week), a tapped spoke listing its rows through the same `CalRow` that routes. Lifting the row markup out of App shrank it 5,784 → 5,774. `checks/wheel.mjs`, five arms, sabotage-verified four ways; the screenshot pair caught the two things the count could not (glyphs colliding with season names, names under `--fs-micro`).
 
 The year is eighteen weeks, four `SEASONS`, a `CALENDAR` of festivals each carrying its engine (#215
 drew the suns; nobody drew the calendar), and everything dated: `DL` deadlines (booking / challenge /
