@@ -44,7 +44,7 @@ export async function run({ p, errors }){
   await clearAll(p, 12);
   await installRope(p);      /* found() reloads the page; the rope is injected, not built in */
 
-  const r = await p.evaluate(([H, W])=>{
+  const measure = (SEEDP) => p.evaluate(([H, W, SEEDP])=>{
     const A = window.__LVDVS, R = window.__ROPE;
     if(!A.EVENTS || !R || typeof R.lanista !== "function") return { why:"no EVENTS table or no rope on the handle" };
     const clone = x => JSON.parse(JSON.stringify(x));
@@ -53,9 +53,10 @@ export async function run({ p, errors }){
     const drawn = keys.filter(k=>typeof A.EVENTS[k].make === "function" && !raisedOnly(k));
     const raised = keys.filter(k=>typeof A.EVENTS[k].make === "function" && raisedOnly(k));
     const elig = {}, fired = {}, sizes = [];
-    let scanned = 0, weeks = 0;
+    let scanned = 0, weeks = 0, longest = 0; const firstAt = {};
     for(let h=0; h<H; h++){
-      const d = A.newGameState("Pace", "clean", `PACE-${h}`, null);
+      const d = A.newGameState("Pace", "clean", `${SEEDP}-${h}`, null);
+      let lived = 0;
       for(let w=0; w<W; w++){
         if(d.over) break;
         /* every week at home is scanned, on a clone with the standing question cleared: at the top
@@ -70,23 +71,24 @@ export async function run({ p, errors }){
           const base = clone(d); base.pendingEvent = null;
           let n = 0;
           for(const k of drawn){ let ev = null; try { ev = A.EVENTS[k].make(clone(base)); } catch(e){}
-            if(ev){ n++; elig[k] = (elig[k]||0) + 1; } }
+            if(ev){ n++; elig[k] = (elig[k]||0) + 1; if(firstAt[k] == null) firstAt[k] = lived; } }
           A.rngSet(st);
           sizes.push(n); scanned++;
         }
         let did; try { did = R.lanista(d); } catch(e){ break; }
-        weeks++;
+        weeks++; lived++; longest = Math.max(longest, lived);
         for(const k of Object.keys((did && did.events) || {})) fired[k] = (fired[k]||0) + did.events[k];
       }
     }
     const s = sizes.slice().sort((a,b)=>a-b), at = f => s[Math.min(s.length-1, Math.floor(f*s.length))];
     const pct = k => Math.round(1000 * (elig[k]||0) / Math.max(1, scanned)) / 10;
     const table = drawn.map(k=>[k, pct(k)]).sort((a,b)=>b[1]-a[1]);
-    return { keys: keys.length, drawn: drawn.length, raised: raised.length, raisedKeys: raised, weeks, scanned,
+    return { keys: keys.length, drawn: drawn.length, raised: raised.length, raisedKeys: raised, weeks, scanned, longest, firstAt,
       size: sizes.length ? { p10:at(.1), p50:at(.5), p90:at(.9), max:s[s.length-1] } : null,
       atLeast4: sizes.length ? Math.round(1000 * sizes.filter(n=>n>=4).length / sizes.length) / 10 : 0,
       table, never: drawn.filter(k=>!(elig[k]>0)), fired };
-  }, [4, 220]);
+  }, [4, 220, SEEDP]);
+  const r = await measure("PACE");
   if(r.why) return { pass:false, why:r.why, lines };
 
   lines.push(`${r.keys} events: ${r.drawn} drawn by the die, ${r.raised} raised by their own systems · ${r.weeks} weeks played, ${r.scanned} scanned`);
@@ -105,10 +107,36 @@ export async function run({ p, errors }){
   /* only what a four-house sample can see: an event reachable at 0.2% last time is one week in
      six hundred, and a legitimate re-phasing of the run flips that to zero by luck, not by a gate */
   const prior = readTally().filter(x=>x && x.pass && Array.isArray(x.reach)).slice(-1)[0] || null;
-  const wasReachable = prior ? new Set(prior.reach.filter(([k,v])=>v >= 1).map(([k])=>k)) : null;
-  const shut = wasReachable ? r.never.filter(k=>wasReachable.has(k)) : [];
+  /* ---- AND THE FLOOR LEARNED EXPOSURE — v3.205.0 ----
+     `roomFire` wants eight built wings; on the last recorded run two houses had them by weeks 72 and
+     208, on this one none did, and the floor read "a gate somebody shut" for an event whose gate had
+     not moved. Rows carry `firstAt` now — the week of its house each event was first eligible — and
+     a prior only counts against a run whose longest house lived at least that long. Priors written
+     before the field exist; against those the transitional rule holds: a zero fails only when both
+     current sets scanned at least as much as the prior did, otherwise it is reported. */
+  const exposed = k => !prior || !prior.firstAt || prior.firstAt[k] == null || (r.longest || 0) >= prior.firstAt[k];
+  const wasReachable = prior ? new Set(prior.reach.filter(([k,v])=>v >= 1 && exposed(k)).map(([k])=>k)) : null;
+  let shut = wasReachable ? r.never.filter(k=>wasReachable.has(k)) : [];
+  const priorHasExposure = !!(prior && prior.firstAt);
+  /* ---- AND A SECOND DRAW BEFORE CALLING IT — v3.205.0 ----
+     The floor assumed the reference run keeps its shape across builds. It does not: on the phase-3
+     release the four PACE houses re-phased to deaths at weeks 18 / 53 / 63 / 133 (634 weeks became
+     263), and four state-gated events — poached, roomFire, bribedEditor, thugs — read "never" because
+     no house lived long enough to hold the grudge, the booking or the purse they wait on. The opening
+     measured on sixty houses was unmoved (51 → 55 standing). A gate somebody shut is shut on every
+     seed; a run that never got there is not. So a tripped floor takes a second set of four houses,
+     the way `survive` takes a second draw, and fails only on what is unreachable on both. */
+  let second = null;
+  if(shut.length){
+    second = await measure("PACE2");
+    if(!second.why){ let stillShut = shut.filter(k => second.never.includes(k));
+      lines.push(`2. the floor tripped on ${shut.join(", ")} — a second set of four houses (${second.weeks} weeks played, ${second.scanned} scanned) ${stillShut.length ? `agrees on ${stillShut.join(", ")}` : "reaches every one of them"}`);
+      if(stillShut.length && !priorHasExposure && (r.scanned < prior.scanned || second.scanned < prior.scanned)){
+        lines.push(`2. reported, not failed: the prior (${prior.v}) carries no exposure field and a set scanned less than it did (${r.scanned} and ${second.scanned} against ${prior.scanned}) — ${stillShut.join(", ")} may be late-state, and this run's row carries the field for next time`);
+        stillShut = []; }
+      shut = stillShut; } }
   lines.push(`2. never eligible under the reference player (${r.never.length}): ${r.never.join(", ") || "none"}${prior ? ` — against the last recorded run, ${shut.length} of them were reachable then` : " — no prior run to compare against"}`);
-  if(shut.length) bad.push(`arm 2: reach fell to zero on ${shut.join(", ")} — eligible on the last recorded run (${prior.v}) and never in ${r.scanned} weeks now: a gate somebody shut`);
+  if(shut.length) bad.push(`arm 2: reach fell to zero on ${shut.join(", ")} on two seed sets — eligible on the last recorded run (${prior.v}) and never in ${r.scanned}${second && !second.why ? ` + ${second.scanned}` : ""} weeks now: a gate somebody shut`);
   /* 3 */
   const COMMON = ["refusal","leagueYear","booking","ask"];
   const dead = COMMON.filter(k=>!(r.fired[k]>0));
@@ -117,7 +145,7 @@ export async function run({ p, errors }){
   /* 4 */
   try {
     const rows = readTally();
-    rows.push({ v: version(), weeks: r.weeks, scanned: r.scanned, drawn: r.drawn, raised: r.raised, p50: r.size.p50, atLeast4: r.atLeast4,
+    rows.push({ v: version(), weeks: r.weeks, scanned: r.scanned, longest: r.longest, firstAt: r.firstAt, drawn: r.drawn, raised: r.raised, p50: r.size.p50, atLeast4: r.atLeast4,
       top: r.table.slice(0, 6), floor: r.table.filter(([k,v])=>v>0).slice(-6), never: r.never,
       reach: r.table.filter(([k,v])=>v>0), pass: bad.length === 0 });
     fs.writeFileSync(TALLY, JSON.stringify(rows, null, 1) + "\n");

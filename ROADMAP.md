@@ -4389,6 +4389,61 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.205.0 — #245, phase 3: an event this house has never met weighs more
+
+**One constant and one weight function, no new state.** `flags.evLast[k]` — the record phase 2 keeps
+of when the die last raised each event — being unset *is* "never drawn here", so an unseen event's
+tickets are multiplied by `EV_FRESH` (3) and nothing else is saved. It is a multiplier on the tickets,
+not a lane of its own: a never-seen `grain` at three tickets still loses to a never-seen `thugs` at
+twenty-four. The check's ticket arms measure on a house that has met everything, so they stay
+freshness-blind (1.03× spread); a seventh arm holds the multiplier itself — an unseen key comes out
+first **2.94×** as often as a seen one against a constant of 3, and with the constant sabotaged to 1
+it reads 1.00× and fails.
+
+**Measured, and it is not the target the queue wrote — it is the thing under it.** The queue said
+*"the novelty curve is the target (0.57 → 0.14 new shapes a week; the fourth quarter should not be a
+fifth of the first)"*. `probes/dice.mjs` now records, per house, the quarter of the run each first
+die draw falls in and how many distinct events the die ever gave it. Two seed sets, 16 × 420, the
+build before against this one:
+
+| | AUDIT before → after | AUDIT2 before → after |
+|---|---|---|
+| distinct die events met per house, p50 (of 36) | **13 → 23** | 25 → 26 |
+| first-time die events, per 100 weeks, by quarter | 19.7 / 3.7 / 3.2 / 1.3 → 18.6 / 6.3 / 5.8 / 0.0 | 15.7 / 6.0 / 3.3 / 1.3 → 19.7 / 7.0 / 1.5 / 1.5 |
+| first-time counts by quarter | 210 / 23 / 18 / 5 → 247 / 55 / 20 / 0 | 244 / 81 / 31 / 10 → 282 / 75 / 10 / 5 |
+
+Freshness **front-loads**: a house meets more of the deck, and meets it sooner — ten more distinct
+events in a life, on the seed set where houses die young; one more where they already lived long
+enough to meet most of it anyway. **The fourth quarter's first-time rate did not rise, and cannot:**
+the die has thirty-six cards, and a draw that deals them earlier deals them out earlier. The late-game
+rate the queue named is a fact about how much *content* the second decade has, which is #248's item
+and not a property any draw can supply. Written here rather than tuned toward — a bigger constant
+would front-load harder and exhaust sooner, so 3 stays.
+
+**Two things the instrument said on the side.** The four-ticket-and-up share dipped half a point on
+both sets (13.1 → 12.6, 16.0 → 15.6): freshness lifts every unseen event, common ones included, in
+a house's first weeks. And AUDIT2's houses lived 4,606 weeks before and 3,500 after while AUDIT's
+lived 2,626 and 2,553 — the same re-phasing the phase-2 note recorded, in the other direction this
+time, and read the same way.
+
+**The gate: 158 of 159, and the one red was the phase-1 floor meeting a run that changed shape.**
+`pace`'s four seeded houses re-phased to deaths at weeks 18 / 53 / 63 / 133 — 634 weeks became 263 —
+and four state-gated events read "never". Three of them a second set of four houses reached; the
+fourth, `roomFire`, neither set did, and it wants **eight built wings** (`ROOM_FIRE_LEVELS`): on the
+last recorded run two houses had them by weeks 72 and 208, on this build's PACE houses none had built
+at all. Before believing "a gate somebody shut", the wider question was asked twice: the opening on
+sixty houses was **unmoved — 51 → 55 standing, 198 → 209 men** — and on sixteen houses to death
+*fewer* never build (9 → 6), the median peak is higher (0 → 3 wings), and the tilt is at the very top
+(three 420-week survivors with 9–20 wings before, none after; weeks over 6,000 denarii 918 → 610) —
+the shape re-phasing takes, recorded here and not acted on. So the floor learned **exposure**: rows
+carry the week each event was first eligible and the longest house of the run, a prior only counts
+against a run whose longest house lived that long, and against priors that predate the field a zero
+is reported rather than failed when a set scanned less than the prior did. `probe` passes on it.
+
+**Phase 4 — the asks through the same door — is the one left.** `ASKS` is five conversations drawn
+by weight 10 / 9 / 8 / 7 / 6 with the rarest lightest; `evPick` is the function that should draw
+them, with the man who has never been asked weighing more.
+
 ### v3.204.0 — #245, phase 2: one die for thirty-six events, weighted and cooled
 
 **The re-basing release.** `pickEvent` no longer shuffles thirty-six keys and takes the first that
@@ -6479,7 +6534,7 @@ caps it at one debtor.
 
 ---
 
-**#245 — One Die for Sixty-One Events** *(overhaul · large · 4 phases)* — **PHASES 1–2 SHIPPED, v3.203.0 and v3.204.0.** Phase 2 is the weighted, cooled die: `EV_DIE` gives each drawn event tickets set from its measured reach and a quiet after asking; the ORDER is weighted, not the outcome, so every make() keeps its gates. Measured at the die on two seed sets: the four-ticket-and-up tier from ~11% to ~16% of draws, `thugs` 1→6 and 2→14, `poached` 0→3 and 0→3, the draw rate unchanged. The lifespan swing between the two runs went opposite ways on the two seed sets — re-phasing, not the die. Phases 3 (freshness) and 4 (the asks) are open. Phase 1 was shipped v3.203.0 as an instrument with no game change: `checks/pace.mjs` reads the draw's eligible set every week of a seeded reference run (p50 **14**, four or more on 100% of weeks), keeps every drawn event's reach as a number in `pace-tally.json`, and holds two floors — reach may not fall to zero between builds, and the raised events must still be raised. It also corrected the item's own count: **36 of the 61 are drawn by the die; 25 are raised by their own systems** and never see it. **Phases 2–4 are the re-basing decision** (a weighted draw re-phases every seeded fixture in the suite) and wait on it.
+**#245 — One Die for Sixty-One Events** *(overhaul · large · 4 phases)* — **PHASES 1–3 SHIPPED, v3.203.0 – v3.205.0.** Phase 3 (v3.205.0) is freshness: an event the house has never met has its tickets multiplied by `EV_FRESH` (3), read off `flags.evLast` so nothing new is saved. Measured: a house meets a median of **13 → 23** of the thirty-six on the seed set where houses die young, 25 → 26 where they live long — but the last quarter's first-time rate did not rise, because the die has thirty-six cards and freshness deals them sooner; the late-game rate is #248's to raise. **Phase 4 (the asks through the same door) is open.** Phase 2 is the weighted, cooled die: `EV_DIE` gives each drawn event tickets set from its measured reach and a quiet after asking; the ORDER is weighted, not the outcome, so every make() keeps its gates. Measured at the die on two seed sets: the four-ticket-and-up tier from ~11% to ~16% of draws, `thugs` 1→6 and 2→14, `poached` 0→3 and 0→3, the draw rate unchanged. The lifespan swing between the two runs went opposite ways on the two seed sets — re-phasing, not the die. Phases 3 (freshness) and 4 (the asks) are open. Phase 1 was shipped v3.203.0 as an instrument with no game change: `checks/pace.mjs` reads the draw's eligible set every week of a seeded reference run (p50 **14**, four or more on 100% of weeks), keeps every drawn event's reach as a number in `pace-tally.json`, and holds two floors — reach may not fall to zero between builds, and the raised events must still be raised. It also corrected the item's own count: **36 of the 61 are drawn by the die; 25 are raised by their own systems** and never see it. **Phases 2–4 are the re-basing decision** (a weighted draw re-phases every seeded fixture in the suite) and wait on it.
 
 `pickEvent(d)` is `for(k of shuffled(Object.keys(EVENTS))){ const ev = EVENTS[k].make(d); if(ev) return
 ev; }`. **Measured (`probes/pace.mjs`, 12 × 420): thirteen events are eligible on the median week** (p10

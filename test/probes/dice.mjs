@@ -20,12 +20,19 @@ const out = await p.evaluate(([H,W,SEED])=>{
   for(const k of Object.keys(A.EVENTS)){ const f = A.EVENTS[k].make; if(typeof f !== "function") continue; raw[k] = f;
     A.EVENTS[k].make = function(d){ const ev = f.call(this, d); if(ev) drew[k] = (drew[k]||0) + 1; return ev; }; }
   const endings = {}; let weeks = 0; const ends = [];
+  /* #245 phase 3 — freshness is about WHEN a house first meets an event, so per house: the quarter
+     of the run each first die draw fell in, and how many distinct events the die ever gave it */
+  const firsts = [0,0,0,0], distinct = [], byQuarterWeeks = [0,0,0,0];
   for(let h=0; h<H; h++){ const d = A.newGameState("Dice"+h, "clean", `${SEED}-${h}`, null);
-    for(let w=0; w<W; w++){ if(d.over) break; try { R.lanista(d); } catch(e){ break; } weeks++; }
+    const seen = new Set(); let before = {};
+    for(let w=0; w<W; w++){ if(d.over) break; before = { ...drew }; try { R.lanista(d); } catch(e){ break; } weeks++;
+      const q = Math.min(3, Math.floor(w / (W/4))); byQuarterWeeks[q]++;
+      for(const k of Object.keys(drew)) if((drew[k]||0) > (before[k]||0) && !seen.has(k)){ seen.add(k); firsts[q]++; } }
+    distinct.push(seen.size);
     const K = d.over ? d.over.kind : "survived"; endings[K] = (endings[K]||0) + 1; ends.push(d.week); }
   for(const k of Object.keys(raw)) A.EVENTS[k].make = raw[k];
   const W8 = (A.EV_DIE && Object.fromEntries(Object.entries(A.EV_DIE).map(([k,v])=>[k,v.w]))) || null;
-  return { weeks, endings, endAt: ends.sort((a,b)=>a-b), drew, tiers: W8 };
+  return { weeks, endings, endAt: ends.sort((a,b)=>a-b), drew, tiers: W8, firsts, byQuarterWeeks, distinct: distinct.sort((a,b)=>a-b) };
 }, [H,W,SEED]);
 console.log(JSON.stringify(out));
 await browser.close(); server.close();

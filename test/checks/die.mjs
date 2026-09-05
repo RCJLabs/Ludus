@@ -6,7 +6,7 @@
    and it cools: an event that fired stays out of the pool for `cool` weeks. The ORDER is weighted,
    not the outcome: make() is still asked first-eligible, so every gate keeps its meaning.
 
-   SIX ARMS:
+   SEVEN ARMS:
    1 · THE TABLE IS SOUND — every drawn event has a finite weight of one or more and a cooldown of
        zero or more; the raised events (make() is `return null`) are not in the pool at all; and the
        two lists together are every key in EVENTS.
@@ -19,7 +19,9 @@
        draw stamps the event's week on `flags.evLast`.
    6 · AND THE RARE TIER IS REACHED — over seeded reference play, events holding four tickets or
        more take a share of the drawn firings that the flat die never gave them. The floor is set
-       from the measured share, and the number is written beside it. */
+       from the measured share, and the number is written beside it.
+   7 · AND AN EVENT THE HOUSE HAS NEVER MET WEIGHS MORE — phase 3. `flags.evLast[k]` unset is
+       "never drawn here"; the unseen key comes out first EV_FRESH times as often as a seen one. */
 import { found, clearAll, installRope } from "../harness.mjs";
 
 /* MEASURED on this build's own seeds (six houses, 260 weeks): the four-ticket-and-up tier takes 14.5% of
@@ -38,7 +40,7 @@ export async function run({ p, errors }){
   await installRope(p);          /* found() reloads the page; the rope has to be put back for arm 6 */
   const r = await p.evaluate((DIE_FLOOR)=>{
     const A = window.__LVDVS, R = window.__ROPE;
-    const miss = ["EV_DIE","EV_DRAWN","evTune","evPool","evPick","pickEvent","EVENTS","clone","rngGet","rngSet"].filter(k=>A[k]==null);
+    const miss = ["EV_DIE","EV_DRAWN","EV_FRESH","evTune","evPool","evPick","pickEvent","EVENTS","clone","rngGet","rngSet"].filter(k=>A[k]==null);
     if(miss.length) return { miss };
     const out = { arms:[], notes:[] }; const say = (ok, why) => out.arms.push({ ok, why });
     const KEYS = Object.keys(A.EVENTS);
@@ -52,13 +54,17 @@ export async function run({ p, errors }){
       say(!badW.length && !leak.length && union.size === KEYS.length && A.EV_DRAWN.length + raised.length === KEYS.length,
         `${badW.length} drawn event(s) with a bad weight or cooldown; ${leak.length} raised event(s) in the pool; drawn + raised = ${A.EV_DRAWN.length + raised.length} of ${KEYS.length} keys`); }
 
+    /* a house that has met every drawn event, so arms 2 and 3 measure the tickets alone — freshness
+       (arm 7) is measured on its own */
+    const jaded = (()=>{ const d = A.newGameState("Jd", "clean", "DIE-JADED", null); d.week = 200;
+      d.flags.evLast = {}; for(const k of A.EV_DRAWN) d.flags.evLast[k] = 1; return d; })();
     /* 2 */
     { const pick = w => A.EV_DRAWN.find(k => A.evTune(k).w === w);
       const pool = [1,2,4,8].map(pick).filter(Boolean);
       if(pool.length < 4) say(false, `could not find one drawn event at each of the four weights`);
       else {
         const N = 20000, first = {}; for(const k of pool) first[k] = 0;
-        for(let i=0;i<N;i++) first[A.evPick(pool.slice())]++;
+        for(let i=0;i<N;i++) first[A.evPick(pool.slice(), jaded)]++;
         const sum = pool.reduce((s,k)=>s+A.evTune(k).w, 0);
         const off = pool.map(k => { const want = A.evTune(k).w / sum, got = first[k] / N; return { k, w:A.evTune(k).w, want:+(want*100).toFixed(1), got:+(got*100).toFixed(1), rel: got / want }; });
         const worst = Math.max(...off.map(o => Math.abs(o.rel - 1)));
@@ -68,7 +74,7 @@ export async function run({ p, errors }){
     /* 3 */
     { const six = A.EV_DRAWN.filter(k => A.evTune(k).w === 1).slice(0, 6);
       const N = 20000, first = {}; for(const k of six) first[k] = 0;
-      for(let i=0;i<N;i++) first[A.evPick(six.slice())]++;
+      for(let i=0;i<N;i++) first[A.evPick(six.slice(), jaded)]++;
       const ps = six.map(k => first[k] / N * 100), sp = Math.max(...ps) / Math.max(0.001, Math.min(...ps));
       say(six.length === 6 && sp <= 1.15, `six one-ticket keys come out first ${ps.map(x=>x.toFixed(1)+"%").join(" / ")} — ${sp.toFixed(2)}x spread (bar 1.15)`); }
 
@@ -130,6 +136,20 @@ export async function run({ p, errors }){
       out.rare = { weighted:+(Wd.share*100).toFixed(1), flat:+(Fl.share*100).toFixed(1), lift:+((Wd.share-Fl.share)*100).toFixed(1) };
       say(Wd.total >= 100 && Fl.total >= 100 && Wd.share >= DIE_FLOOR.abs && Wd.share - Fl.share >= DIE_FLOOR.lift,
         `the rare tier takes ${(Wd.share*100).toFixed(1)}% of die draws weighted and ${(Fl.share*100).toFixed(1)}% flat on the same seeds — a lift of ${((Wd.share-Fl.share)*100).toFixed(1)} points (floor: ${(DIE_FLOOR.abs*100).toFixed(0)}% absolute, +${(DIE_FLOOR.lift*100).toFixed(0)} lift)`); }
+    /* 7 — #245 phase 3: an event this house has never met weighs more.
+       `flags.evLast[k]` unset IS "never drawn here", so no new state. From a pool of six one-ticket
+       keys with exactly one of them unseen, the unseen one must come out first about EV_FRESH times
+       as often as any seen one; and a house that has met them all draws them evenly (arm 3). */
+    { const six = A.EV_DRAWN.filter(k => A.evTune(k).w === 1).slice(0, 6);
+      const d = A.newGameState("Fr", "clean", "DIE-FRESH", null); d.week = 200; d.flags.evLast = {};
+      for(const k of six.slice(1)) d.flags.evLast[k] = 1;          /* six[0] is the one it has never met */
+      const N = 20000, first = {}; for(const k of six) first[k] = 0;
+      for(let i=0;i<N;i++) first[A.evPick(six.slice(), d)]++;
+      const unseen = first[six[0]] / N, seen = six.slice(1).reduce((s,k)=>s+first[k], 0) / N / 5;
+      const ratio = seen ? unseen / seen : 0, want = A.EV_FRESH || 1;
+      out.notes.push(`freshness: the unseen key first ${(unseen*100).toFixed(1)}% · a seen key ${(seen*100).toFixed(1)}% · ratio ${ratio.toFixed(2)} against EV_FRESH ${want}`);
+      say(Number.isFinite(want) && want > 1 && Math.abs(ratio / want - 1) < 0.12,
+        `an event the house has never met comes out first ${ratio.toFixed(2)}× as often as one it has (EV_FRESH ${want}, bar within 12%)`); }
     return out;
   }, DIE_FLOOR);
   if(r.miss) return { pass:false, why:`the handle is missing ${r.miss.join(", ")}`, lines };
