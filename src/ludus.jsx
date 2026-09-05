@@ -20531,8 +20531,9 @@ const EV_DIE = {
   affair:{w:1,cool:6}, damnatio:{w:1,cool:6}, bargain:{w:1,cool:6}, sacramentum:{w:1,cool:6}, auctoratus:{w:1,cool:6},
   /* eligible about half the time */
   omen:{w:1,cool:3}, foundling:{w:1,cool:3}, bayCall:{w:1,cool:3}, plea:{w:1,cool:3}, ambition:{w:1,cool:3},
-  /* a tenth to two fifths */
-  ludusNight:{w:2,cool:0}, patronGone:{w:2,cool:0}, escape:{w:2,cool:0}, mentor:{w:2,cool:0}, sabotage:{w:2,cool:0}, doctore:{w:2,cool:0},
+  /* a tenth to two fifths — two tickets, and a month's quiet too, or the one of these that is
+     eligible inherits every week the ten above are cooling (measured: ludusNight 22% of a run's draws) */
+  ludusNight:{w:2,cool:4}, patronGone:{w:2,cool:4}, escape:{w:2,cool:4}, mentor:{w:2,cool:4}, sabotage:{w:2,cool:4}, doctore:{w:2,cool:4},
   /* under a tenth */
   crowdCalls:{w:4,cool:0}, bribedEditor:{w:4,cool:0}, roomFire:{w:4,cool:0}, poached:{w:4,cool:0},
   /* under a fiftieth, and the state-gated ones that should win the week they are eligible at all */

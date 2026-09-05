@@ -22,7 +22,12 @@
        from the measured share, and the number is written beside it. */
 import { found, clearAll, installRope } from "../harness.mjs";
 
-const DIE_FLOOR = 0.04;   /* set from the measurement in ROADMAP v3.204.0 — provisional until it is */
+/* MEASURED on this build's own seeds (six houses, 260 weeks): the four-ticket-and-up tier takes 14.5% of
+   die draws weighted and 10.3% flat — a lift of 4.2 points; at 16 x 420 on two seed sets the surveys
+   gave +4.3 and +6.0. Both runs are seeded, so both figures are fixed numbers on a given build and the
+   floor sits between them: a flat die reads 10.3% and +0.0 and fails both terms. Re-pin with a reason
+   if the game re-phases; never by raising the die. */
+const DIE_FLOOR = { abs:0.12, lift:0.02 };
 export const name = "die";
 export const describe = "the week's question is drawn by weight and cools after asking, and the rare tier is reached";
 
@@ -91,26 +96,40 @@ export async function run({ p, errors }){
       say(eligible.length >= 3 && missed.length === 0 && stamped === Object.values(won).reduce((a,b)=>a+b,0),
         `${eligible.length} eligible, ${drawn.length} drawn, ${missed.length} eligible never drawn (${missed.join(", ")||"none"}); every draw stamped evLast (${stamped})`); }
 
-    /* 6 — the rare tier over seeded reference play, counted at the die itself.
-       `did.events` counts every question the rope answered, and for many keys that is two things
-       added together — `stash` fired 44 times in 3,616 survey weeks at 0.7% eligibility, raised by
-       the purse, not drawn. The die is one caller: it calls make(), and no raised event does. So
-       every make() is wrapped for the run and the calls that return a question are the die's draws. */
-    { const H = 4, W = 220; const drew = {}; const raw = {}; let weeks = 0;
+    /* 6 — the rare tier over seeded reference play, counted at the die itself — and against a FLAT die
+       on the same seeds. `did.events` counts every question the rope answered, and for many keys that
+       is two things added together (`stash` fired 44 times in 3,616 survey weeks at 0.7% eligibility —
+       raised by the purse, not drawn). The die is one caller: it calls make(), and no raised event
+       does, so every make() is wrapped and the calls that return a question are the die's draws.
+       The run is seeded, so each figure is a fixed number on a given build: the weighted share and the
+       flat share (every weight one, every cooldown nought, restored after). The floor is the LIFT
+       between them plus an absolute, both set from the measurement written in ROADMAP v3.204.0 — a
+       flat die is what a regression looks like, and it is what the sabotage restores. */
+    const runDie = (label) => {
+      const H = 6, W = 260; const drew = {}; const raw = {}; let weeks = 0;
       for(const k of A.EV_DRAWN){ const f = A.EVENTS[k].make; raw[k] = f;
         A.EVENTS[k].make = function(d){ const ev = f.call(this, d); if(ev) drew[k] = (drew[k]||0) + 1; return ev; }; }
       try {
         for(let h=0; h<H; h++){ const d = A.newGameState("Die"+h, "clean", `DIE-RUN-${h}`, null);
-          for(let w=0; w<W; w++){ if(d.over) break; try { R.lanista(d); } catch(e){ out.notes.push(`rope threw at week ${w} of house ${h}: ${e && e.message || e}`); break; } weeks++; } }
+          for(let w=0; w<W; w++){ if(d.over) break; try { R.lanista(d); } catch(e){ out.notes.push(`${label}: rope threw at week ${w} of house ${h}: ${e && e.message || e}`); break; } weeks++; } }
       } finally { for(const k of Object.keys(raw)) A.EVENTS[k].make = raw[k]; }
-      const total = Object.values(drew).reduce((a,b)=>a+b, 0);
-      const byTier = w => Object.keys(drew).filter(k=>A.evTune(k).w >= w).reduce((s,k)=>s+drew[k], 0);
-      const rare = byTier(4), share = total ? rare / total : 0;
-      out.notes.push(`${weeks} weeks · ${total} die draws · four-ticket-and-up: ${rare} (${(share*100).toFixed(1)}%) · ` + Object.entries(drew).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k} ${v}`).join(" · "));
-      out.rare = { total, rare, share:+(share*100).toFixed(1), weeks };
-      /* FLOOR — see the note in ROADMAP v3.204.0: measured on this build's seeded run and set with room
-         under it; the flat die's own figure on the same instrument is beside it there. */
-      say(total >= 40 && share >= DIE_FLOOR, `the rare tier took ${(share*100).toFixed(1)}% of ${total} die draws over ${weeks} weeks (floor ${(DIE_FLOOR*100).toFixed(0)}%)`); }
+      return { weeks, drew, top: Object.entries(drew).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([k,v])=>`${k} ${v}`).join(" · ") };
+    };
+    /* shares are computed AFTER the weights are back, against the real tiers — the first draft
+       counted the flat run's rare tier while every weight was one, and read 0.0% */
+    const shareOf = (run, rareKeys) => { const total = Object.values(run.drew).reduce((a,b)=>a+b, 0);
+      const rare = rareKeys.reduce((s,k)=>s+(run.drew[k]||0), 0); return { total, rare, share: total ? rare/total : 0 }; };
+    { const weighted = runDie("weighted");
+      /* the same seeds on a flat die: every ticket one, every cooldown nought — the v3.203.0 draw */
+      const keep = {}; for(const k of Object.keys(A.EV_DIE)){ keep[k] = { ...A.EV_DIE[k] }; A.EV_DIE[k].w = 1; A.EV_DIE[k].cool = 0; }
+      let flat; try { flat = runDie("flat"); } finally { for(const k of Object.keys(keep)) Object.assign(A.EV_DIE[k], keep[k]); }
+      const rareKeys = A.EV_DRAWN.filter(k=>A.evTune(k).w >= 4);
+      const Wd = shareOf(weighted, rareKeys), Fl = shareOf(flat, rareKeys);
+      out.notes.push(`weighted: ${weighted.weeks} weeks · ${Wd.total} die draws · four-ticket-and-up ${Wd.rare} (${(Wd.share*100).toFixed(1)}%) · ${weighted.top}`);
+      out.notes.push(`flat:     ${flat.weeks} weeks · ${Fl.total} die draws · the same events ${Fl.rare} (${(Fl.share*100).toFixed(1)}%) · ${flat.top}`);
+      out.rare = { weighted:+(Wd.share*100).toFixed(1), flat:+(Fl.share*100).toFixed(1), lift:+((Wd.share-Fl.share)*100).toFixed(1) };
+      say(Wd.total >= 100 && Fl.total >= 100 && Wd.share >= DIE_FLOOR.abs && Wd.share - Fl.share >= DIE_FLOOR.lift,
+        `the rare tier takes ${(Wd.share*100).toFixed(1)}% of die draws weighted and ${(Fl.share*100).toFixed(1)}% flat on the same seeds — a lift of ${((Wd.share-Fl.share)*100).toFixed(1)} points (floor: ${(DIE_FLOOR.abs*100).toFixed(0)}% absolute, +${(DIE_FLOOR.lift*100).toFixed(0)} lift)`); }
     return out;
   }, DIE_FLOOR);
   if(r.miss) return { pass:false, why:`the handle is missing ${r.miss.join(", ")}`, lines };
