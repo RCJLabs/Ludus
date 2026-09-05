@@ -4442,6 +4442,23 @@ came back false for a sixty-year-old with no health: the right answer for the wr
 sabotaging the guard out *passed*, which is the only way an inert arm ever announces itself. The arm
 proves the boy is in the chair before it asks now.
 
+**THE GATE CAME BACK 156/157, AND THE ONE WAS AN INSTRUMENT INERT FOR FORTY-EIGHT RELEASES.**
+`survive` — the oldest check in the suite, five real houses through five real browsers for twenty-six
+weeks — tripped its bar on both draws, (1,1) then (1,1), and its own lines said why: *"0 bought"* in
+every house. And *"0 bought"* in every house of the two gates before it. v3.154.0 took the price out of
+the block's buy button on purpose (*"a button repeating it is the market's purses ×1.20"*); the button
+has read *"Buy him"* since, with the price a `.gold` span in the row's summary. `survive`'s parser read
+the button, got Infinity for every man, filtered every candidate out, and bought nobody — so the check
+that exists to catch "an economy change that quietly bankrupted every opening" has been running houses
+of three that never went to the block, which is the exact starvation its own header says it was
+rewritten to stop. Its tally shows it: men-between-them reached 16 at 3.99.0 and never passed 6 after
+3.154.0, and it passed on the luck of second draws for forty-eight gates until this one.
+
+**The build was cleared by the check's own named confirmation** — `probes/open.mjs`, sixty headless
+houses, on v3.201.0 and on v3.202.0: **standing 49 of 60, men 183, and the per-house signature
+byte-identical.** No path a new house executes differs. The price is read from the row the button
+stands in now, which is where the game put it.
+
 ### v3.201.0 — #255: the year is a wheel
 
 **The second phase queue's first item taken up — the single-step UI one — and it shipped as
