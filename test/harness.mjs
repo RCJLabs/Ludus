@@ -585,9 +585,23 @@ export async function installRope(p){
          under 30, and "The house has no head" at urgency 3 once the succession is open. The reference
          player now takes both, which is what a player following his own advice would do, and it is the
          only route to a second generation. */
-      if(on("heir") && !d.heir && !d.succession){
-        const opts = fin(A.heirEligible,[d]) || [];
-        if(Array.isArray(opts) && opts.length && fin(A.nameHeir,[d, opts[0]])) bump("namedHeir");
+      /* ---- AND IT TOOK THE FIRST NAME ON THE LIST AND NEVER LOOKED AGAIN ----
+         This was `!d.heir && ...nameHeir(d, opts[0])`. `heirEligible` puts "son" first only when a
+         son already exists, and in week two there is none — so the reference player named a NEPHEW
+         in week two, twelve of twelve, and `!d.heir` then shut the gate for the whole run. Eleven
+         of twelve died with that nephew standing (`probes/boy.mjs`), which read as a fact about the
+         game and was a fact about this line: it is the behaviour the card used to force, because
+         the card's buttons rendered only while nobody was named. The card can be rewritten now, so
+         the rope does what a player does — takes the insurance early, and takes the better name the
+         week it appears. `heirChoices` is the alternatives with whoever stands filtered out. */
+      if(on("heir") && !d.succession){
+        if(!d.heir){
+          const opts = fin(A.heirEligible,[d]) || [];
+          if(Array.isArray(opts) && opts.length && fin(A.nameHeir,[d, opts[0]])) bump("namedHeir");
+        } else if(d.heir.kind !== "son" && d.heir.kind !== "scion"){
+          const better = (fin(A.heirChoices,[d]) || []).find(o=>o.kind === "son");
+          if(better && fin(A.nameHeir,[d, "son", better.cid])) bump("renamedHeir");
+        }
       }
       if(on("heir") && d.succession && fin(A.takeUpTheHouse,[d])) bump("tookUpHouse");
       /* ---- THE STEEL, WHICH NO POLICY OF MINE HAS EVER BOUGHT ----

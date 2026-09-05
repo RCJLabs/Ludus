@@ -38,7 +38,7 @@ const out = await p.evaluate(([H, W, SEED])=>{
   sum.feud = { weeks:0, declared:0, won:0 }; sum.rites = { honoured:0, unburied:0 }; sum.mercyLine = 0;
 
   for(let h=0; h<H; h++){
-    const d = A.newGameState(SEED+"-"+h);
+    const d = A.newGameState("Survey", "clean", SEED+"-"+h);
     const seenMen = new Set(); let wasAway = false; let hadLoan = false; let lastNem = null;
     let sawSaga = false, sagaMax = 0, wasRebel = false;
     for(let w=0; w<W; w++){

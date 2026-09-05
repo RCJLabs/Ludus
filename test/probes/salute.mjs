@@ -50,7 +50,7 @@ const out = await p.evaluate(([H,W])=>{
          the four houses identical; they diverge only from the word. (Not mirrored: the RNG stream
          parts as soon as a bout resolves differently, which is why #166's paired-card measurement
          remains the authority on win rate and this arm is read only for the death rate.) */
-      const d = A.newGameState(`SAL-${h}`);
+      const d = A.newGameState("Salute", "clean", `SAL-${h}`);
       for(let w=0; w<W; w++){
         if(d.over) break;
         try { R.lanista(d, { entrance: ent, singlesOnly: true }); } catch(e){ break; }
@@ -68,7 +68,7 @@ const out = await p.evaluate(([H,W])=>{
   /* ---- THE COUNTERFACTUAL, on the game's own pair of functions ----
      A spread of real fallen men against a spread of real accounts, asked twice. */
   const cf = { asked:0, flipped:0, spared:0, deltaSum:0, byFame:{} };
-  const d0 = A.newGameState("SAL-CF");
+  const d0 = A.newGameState("Salute", "clean", "SAL-CF");
   for(let w=0; w<80; w++){ if(d0.over) break; try { R.lanista(d0); } catch(e){ break; } }
   const pool = d0.gladiators.filter(g=>g.status!=="dead");
   if(!pool.length) return { arms, cfNone:"the counterfactual house held no living man" };
