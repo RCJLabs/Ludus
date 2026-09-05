@@ -3754,7 +3754,7 @@ function agenda(d){
       `${d.flags.litDue} week${d.flags.litDue===1?"":"s"} behind — your standing is bleeding for it`);
   if(liquid(d) < 120 && owedTotal(d) >= 250)
     add(2, "villa:council:owed", `${owedTotal(d)}d owed to you and ${Math.round(liquid(d))} in the box`, "rich on paper is not rich");
-  { const w = moneyRow(d); if(w) add(w.urgency, w.tab, w.label, w.sub); }
+  { const w = moneyRow(d); if(w) add(w.urgency, w.tab, w.label, w.sub, w.key); }   /* the key too — v3.206.0 */
   { const bad = owedList(d).filter(x=>d.week - x.due >= 4);
     if(bad.length) add(1, "villa", `${bad[0].from} has stopped paying`, `${bad[0].amount}d, ${d.week - bad[0].due} weeks late`); }
   if(bayHolder(d)) add(2, "arena", `House ${bayHolder(d)} has the bay`, `${baySince(d)} weeks and Capua has noticed`);
@@ -6972,9 +6972,15 @@ function rivalReadOf(d){
    so the two who cannot retrain their way to a counter will buy one. */
 const readSharp = (h, k) => clamp(((lanistaOf(h.name)[k] || 1) - 1) * READ_GAIN, 0, READ_CAP);
 const RIVAL_MOVES = {
-  buy: { weight:h=>1 + (lanistaOf(h.name).bid-1)*2, when:(d,h)=>h.fighters.length<7 && d.market.length,
+  /* ---- NOT THE PARAGON — v3.206.0 ----
+     `gladValue` puts him at the top of any block he stands on, so the first rival to roll a buy
+     took him: measured on seed PGSURV, shown at week 60 and gone by the ordinary buy line inside
+     the first week, `paragonDone` never set. He is advertised as three weeks to decide, and
+     `marketWeek` already leaves him alone for the same reason — his going is `paragonExpire`'s,
+     in front of people, and it says who paid. */
+  buy: { weight:h=>1 + (lanistaOf(h.name).bid-1)*2, when:(d,h)=>h.fighters.length<7 && d.market.some(g=>!isAuctor(g) && !g.paragon),
     run(d,h){ const L=lanistaOf(h.name);
-      const pool = d.market.filter(g=>!isAuctor(g)).sort((a,b)=>gladValue(b)-gladValue(a));
+      const pool = d.market.filter(g=>!isAuctor(g) && !g.paragon).sort((a,b)=>gladValue(b)-gladValue(a));
       let best = pool[0];
       if(!best) return null;
       /* #236 — and he may buy the answer instead of training it. A SOFT preference: only among men
@@ -12024,7 +12030,10 @@ const moneyRow = d => {
   /* AND THE APPROACH, wherever that one does not speak */
   const rw = runway(d);
   if(rw == null || rw >= RUNWAY_WARN) return null;
-  return { urgency: rw < RUNWAY_BAD ? 3 : 2, tab:"villa:council", weeks: rw,
+  /* keyed, because the sentence flips between "# more week", "# more weeks" and "the box is empty"
+     as the runway crosses 1 and 0 — and every flip was a new key, an age of 0, and NEW AGAIN on
+     the agenda: 24% of the 29 weeks it stood over, in v3.206.0's gate (checks/week, #144's rule) */
+  return { key:"runway", urgency: rw < RUNWAY_BAD ? 3 : 2, tab:"villa:council", weeks: rw,
     label: rw <= 0 ? `The box is empty and the week still costs ${weeklyBill(d)}d`
       : `The box would carry this house ${rw} more week${rw===1?"":"s"}`,
     sub: rw < RUNWAY_BAD ? "at what the week costs, that is the whole of it"
@@ -14550,23 +14559,51 @@ function haveWordWith(d, gid){
     text: her(ex.text, g), choices: (ex.choices||[]).map(c=>her(c, g)), data:{ k, gid, ex } };
   return true;
 }
+/* ---- THE ASKS THROUGH THE SAME DOOR — second phase queue #245, phase 4 ----
+   This picked a never-asked man at random and THEN filtered the five by what he fits, drawing by
+   the weights written on the table — brother 10 · match 9 · year 8 · burial 7 · woman 6, the rarest
+   lightest. So a conversation only one man in the yard fits was raised only on the weeks the random
+   man was him. Measured (`probes/heard.mjs`, 16 x 420, two seed sets): `woman` fit some eligible man
+   on 4.8% and 8.7% of home weeks and was raised ONCE in each run of forty; `year` fit 1.5% and 3.7%
+   and was raised twice and never; a house heard two of the five at the median, and seven of
+   thirty-two heard none. The written weights were never the lever: the man-first draw was.
+
+   The draw is one pool now — every (never-asked eligible man, conversation he fits) pair — drawn by
+   `askPick` with tickets set from each conversation's measured reach the way `EV_DIE` sets the die's,
+   a conversation this house has never heard weighing ASK_FRESH times more (`flags.askLast` is the
+   record), and the next pair tried when one has nothing to say. The 6% roll, the eligibility of a
+   man, and once-in-his-life all stay. ASKS[k].w is left on the table as the record of what it was. */
+const ASK_DIE = { brother:{w:1}, match:{w:1}, burial:{w:2}, woman:{w:3}, year:{w:4} };
+const ASK_FRESH = 3;
+const askPool = d => {
+  const men = activeG(d).filter(g=>regardOf(g) >= 45 && ((g.wins||0)+(g.losses||0)) >= 3 && !(d.flags.asked||[]).includes(g.id));
+  const out = [];
+  for(const g of men) for(const k of ASK_KEYS){ let ok = false; try { ok = !!ASKS[k].need(d, g); } catch(e){}
+    if(ok) out.push({ gid:g.id, k }); }
+  return out;
+};
+const askWeight = (d, x) => ((ASK_DIE[x.k] && ASK_DIE[x.k].w) || 1) * ((d.flags && d.flags.askLast && d.flags.askLast[x.k] != null) ? 1 : ASK_FRESH);
+const askPick = (pool, d) => { let sum = 0; for(const x of pool) sum += askWeight(d, x);
+  let r = R() * sum, i = 0;
+  for(; i < pool.length - 1; i++){ r -= askWeight(d, pool[i]); if(r < 0) break; }
+  return pool.splice(i, 1)[0]; };
 function askWeek(d){
   if(d.over || d.rome || d.city || d.travel || d.pendingEvent) return;
-  const men = activeG(d).filter(g=>regardOf(g) >= 45 && ((g.wins||0)+(g.losses||0)) >= 3 && !(d.flags.asked||[]).includes(g.id));
-  if(!men.length) return;
+  const pool = askPool(d);
+  if(!pool.length) return;
   if(R() > 0.06) return;
-  const g = pick(men);
-  const fit = ASK_KEYS.filter(k=>{ try { return ASKS[k].need(d, g); } catch(e){ return false; } });
-  if(!fit.length) return;
-  const tot = fit.reduce((n,k)=>n + ASKS[k].w, 0);
-  let x = R()*tot, k = fit[0];
-  for(const c of fit){ x -= ASKS[c].w; if(x<=0){ k=c; break; } }
-  let ex = null;
-  try { ex = ASKS[k].say(d, g); } catch(e){ return; }
-  if(!ex) return;
-  d.flags.asked = [...(d.flags.asked||[]), g.id];
-  d.pendingEvent = { id:"ask", title: isF(g) ? "She Wants A Word" : "He Wants A Word", text:her(ex.text, g),
-    choices:(ex.choices||[]).map(c=>her(c, g)), data:{ k, gid:g.id, ex } };
+  while(pool.length){
+    const { gid, k } = askPick(pool, d);
+    const g = d.gladiators.find(x=>x.id===gid); if(!g) continue;
+    let ex = null;
+    try { ex = ASKS[k].say(d, g); } catch(e){ continue; }
+    if(!ex) continue;                                   /* nothing to say does not spend the week */
+    d.flags.asked = [...(d.flags.asked||[]), g.id];
+    (d.flags.askLast = d.flags.askLast || {})[k] = d.week;
+    d.pendingEvent = { id:"ask", title: isF(g) ? "She Wants A Word" : "He Wants A Word", text:her(ex.text, g),
+      choices:(ex.choices||[]).map(c=>her(c, g)), data:{ k, gid:g.id, ex } };
+    return;
+  }
 }
 
 /* ---- WAYS TO BE FINISHED ----
@@ -32690,6 +32727,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     calendarRows, CAL_TONE, YearWheel, CalRow,   /* #255 — the year as a wheel, and the rows it pins */
     heirOfAge, HEIR_AGE, yearsAtHead,   /* #253 — a boy's age is his own */
     EV_DIE, EV_DRAWN, evTune, evPool, evPick, EV_FRESH, evWeight,   /* #245 phases 2-3 — the weighted, cooled, fresh die */
+    ASK_DIE, ASK_FRESH, askPool, askWeight, askPick,   /* #245 phase 4 — the asks through the same door */
     togaEvent,   /* #237 phase 4/5 — so a check can drive the toga trigger against an already-named son */
     /* the summit: the gate, the letter, the bar, and the trip's own clock */
     romeReady, romeProved, offerRome, romeBar, ROME_BOUTS, ROME_WEEKS_PER_BOUT, ROME_RANK,

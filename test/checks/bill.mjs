@@ -51,6 +51,11 @@ export const slow = true;   /* plays houses and drives the two big engines */
 
 const MELEE_FLOOR = 0.15;   /* measured on 40.2% of cards; under 15% it is a rounding error again */
 const HUNT_FLOOR  = 0.30;   /* measured 56.7% */
+/* a forced engine is deterministic once the house can field it, less the one trim `makeGames` makes
+   after the fact — an EXCLUSIVE pact cuts the card to its first offer, a single. Measured with the
+   melee's floor over fieldable cards: 89-96% on the four forcing days against 41-64% on ordinary
+   weeks, and a bar of 0.90 flipped on the Floralia between two phases of the same code. — v3.206.0 */
+const FORCE_FLOOR = 0.80;
 
 export async function run({ p, errors }){
   const lines = [], bad = [];
@@ -79,8 +84,10 @@ export async function run({ p, errors }){
           for(const o of bill){ const k = kindOf(o); offered[k] = (offered[k]||0)+1; seen.add(k); }
           for(const k of seen) cardHas[k] = (cardHas[k]||0)+1;
           const fk = (d.games && d.games.fest) || "—";
-          const f = byFest[fk] = byFest[fk] || { cards:0 };
+          const f = byFest[fk] = byFest[fk] || { cards:0, able:0 };
           f.cards++; for(const k of seen) f[k] = (f[k]||0)+1;
+          /* and the cards the house could FIELD a melee on — `makeGames` wants two active men */
+          if(A.activeG(d).length >= 2){ f.able++; for(const k of seen) f["able:"+k] = (f["able:"+k]||0)+1; }
         }
         let t; try { t = R.takeBout(d, {}); } catch(e){ t = null; }
         if(t && t.ran !== false && t.offer){ const k = kindOf(t.offer); took[k] = (took[k]||0)+1; }
@@ -125,7 +132,8 @@ export async function run({ p, errors }){
         want: f.forceMelee ? "melee" : f.forceHunt ? "venatio" : "naumachia" }));
     const q = a => { if(!a.length) return null; const s=a.slice().sort((x,y)=>x-y);
       return { n:s.length, min:s[0], p50:s[Math.floor(s.length/2)], max:s[s.length-1] }; };
-    return { weeks, cards, offered, took, cardHas, byFest, forcing,
+    const cal = A.CALENDAR.map(f=>({ key:f.key, name:f.name, forceMelee:!!f.forceMelee, forceHunt:!!f.forceHunt, forceNaum:!!f.forceNaum }));
+    return { weeks, cards, offered, took, cardHas, byFest, forcing, cal,
       vol: Object.fromEntries(Object.entries(vol).map(([k,v])=>[k,
         { asked:v.asked, ran:v.ran, threw:v.threw, rounds:q(v.rounds) }])) };
   });
@@ -139,11 +147,36 @@ export async function run({ p, errors }){
     + ["single","pair","melee","venatio","naumachia"].map(k=>`${k} ${(share(k)*100).toFixed(1)}%`).join(" · "));
   lines.push(`  what \`pool[0]\` takes off them: `
     + Object.entries(r.took).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k} ${(v/totTook*100).toFixed(1)}%`).join(" · "));
-  for(const f of r.forcing){
-    const b = r.byFest[f.key];
-    const other = Object.entries(r.byFest).filter(([k])=>k !== f.key && k !== "—")
-      .reduce((acc,[,v])=>({ n:acc.n+(v.cards||0), k:acc.k+(v[f.want]||0) }), { n:0, k:0 });
+  /* ---- THE YEAR'S TURN IS PINNED, NOT READ OFF THE DATA IT IS TESTING ----
+     `forcing` was derived from the calendar's own flags, so a festival that lost its flag simply
+     left the list and was never measured: a sabotage that turned the Quinquatria's `forceMelee` off
+     walked past the floor untouched (v3.206.0). The four days #228 gave an engine are named here;
+     the calendar has to still say so, and the cards have to still show it. Anything the calendar
+     forces beyond these is measured as well. */
+  const PINNED = [["quinquatria","melee"], ["floralia","venatio"], ["apollinares","venatio"], ["romani","melee"]];
+  const wantOf = f => f.forceMelee ? "melee" : f.forceHunt ? "venatio" : f.forceNaum ? "naumachia" : null;
+  const forcing = PINNED.map(([key, want]) => { const f = r.cal.find(c=>c.key === key) || { name:key };
+    return { key, name:f.name, want, declared: wantOf(f) === want }; });
+  for(const f of r.cal) if(wantOf(f) && !forcing.some(x=>x.key === f.key))
+    forcing.push({ key:f.key, name:f.name, want:wantOf(f), declared:true });
+  for(const x of forcing) if(!x.declared)
+    bad.push(`the calendar no longer forces a ${x.want} at ${x.name} — the turn of the year #228 asked for has been taken out`);
+
+  /* ---- A CARD CANNOT FORCE A MELEE THE HOUSE CANNOT FIELD ----
+     `makeGames` puts the melee up only when `activeG(d).length >= 2` (the fame gate is met by every
+     card, because no card is built under it). The reference rope runs thin — down to one man for
+     whole seasons — and this floor read the Quinquatria's melee over EVERY card: 55% on v3.206.0's
+     re-phased run against a bar of 0.55, when the other 45% were weeks the house had one man and
+     no card could have carried one. The forced engines are stated over the cards the house could
+     field them on; the raw share stays in the report. A hunt and a sea-battle are forced outright. */
+  const fieldable = (v, want) => want === "melee"
+    ? { n:(v && v.able)||0, k:(v && v["able:melee"])||0 } : { n:(v && v.cards)||0, k:(v && v[want])||0 };
+  const restOf = f => Object.entries(r.byFest).filter(([k])=>k !== f.key && k !== "—")
+    .reduce((acc,[,v])=>{ const x = fieldable(v, f.want); return { n:acc.n+x.n, k:acc.k+x.k }; }, { n:0, k:0 });
+  for(const f of forcing){
+    const b = r.byFest[f.key], me = fieldable(b, f.want), other = restOf(f);
     lines.push(`  ${f.name.padEnd(22)} ${f.want} on ${b ? ((b[f.want]||0)/b.cards*100).toFixed(0) : "—"}% of its cards`
+      + (f.want === "melee" ? ` (${me.n ? (me.k/me.n*100).toFixed(0) : "—"}% of the ${me.n} it could field one on)` : "")
       + ` · ${other.n ? (other.k/other.n*100).toFixed(0) : "—"}% on everyone else's`);
   }
   lines.push(`  asked for one through the same door: `
@@ -158,19 +191,18 @@ export async function run({ p, errors }){
       + `release, so more than half of all cards carried one while the rope fought 0.5%`);
   if(!r.cardHas.pair) bad.push(`no card in ${r.cards} carried a pair`);
   /* 2 — and the year turns them over */
-  if(!r.forcing.length)
+  if(!forcing.some(x=>x.declared))
     bad.push(`no festival in the calendar forces an engine — \`forceHunt\` and \`forceNaum\` existed and `
       + `nothing set them, so six festivals came and went and the bill's shape never turned on which `
       + `one it was, which is #228's recommendation verbatim`);
-  for(const f of r.forcing){
+  for(const f of forcing){
     const b = r.byFest[f.key];
     if(!b || !b.cards){ bad.push(`${f.name} never came up, so its forcing was not measured`); continue; }
-    const mine = (b[f.want]||0)/b.cards;
-    const other = Object.entries(r.byFest).filter(([k])=>k !== f.key && k !== "—")
-      .reduce((acc,[,v])=>({ n:acc.n+(v.cards||0), k:acc.k+(v[f.want]||0) }), { n:0, k:0 });
-    const rest = other.n ? other.k/other.n : 0;
-    if(mine < 0.55)
-      bad.push(`${f.name} forces a ${f.want} and carries one on only ${(mine*100).toFixed(0)}% of its cards`);
+    const me = fieldable(b, f.want), other = restOf(f);
+    if(me.n < 8){ bad.push(`${f.name} came up on only ${me.n} cards the house could field a ${f.want} on — nothing was measured`); continue; }
+    const mine = me.k/me.n, rest = other.n ? other.k/other.n : 0;
+    if(mine < FORCE_FLOOR)
+      bad.push(`${f.name} forces a ${f.want} and carries one on only ${(mine*100).toFixed(0)}% of the ${me.n} cards the house could field one on`);
     else if(mine <= rest)
       bad.push(`${f.name} forces a ${f.want} and puts one up no more often than an ordinary week `
         + `(${(mine*100).toFixed(0)}% against ${(rest*100).toFixed(0)}%) — the year does not turn`);

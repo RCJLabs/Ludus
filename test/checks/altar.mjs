@@ -123,6 +123,7 @@ export async function run({ p, errors }){
 
     /* ---- 2 and 4. every god signs, and signs what happened ---- */
     const receipts = {}, moments = {}, wheelSides = { spared:null, died:null };
+    let driven = null;
     for(const god of A.GOD_KEYS){
       const d = house(`ALTAR-${god}`, 14);
       bless(d, god);
@@ -141,8 +142,10 @@ export async function run({ p, errors }){
         /* ---- SHE SIGNS WHETHER OR NOT HE LIVED ----
            A blessed LOSS reading like an ordinary one is the same fault as a blessed win, and the
            first draft of this arm took any wheel beat at all — a sabotage that silenced only the
-           spared branch walked straight past it. Both sides are held. */
-        for(let i = 0; i < 160 && !(wheelSides.spared && wheelSides.died); i++){
+           spared branch walked straight past it. Both sides are held.
+           The played bouts are for the RECEIPT (the temple banks what the wheel paid out through
+           `blessBout`) and the moment; they stop at the first wheel line. */
+        for(let i = 0; i < 60 && !moments.fortuna; i++){
           bless(d, "fortuna");
           const t = R.takeBout(d, {});
           const beats = (t && t.res && t.res.beats) || [];
@@ -158,6 +161,64 @@ export async function run({ p, errors }){
           if(!A.activeG(d).length){ const m = A.genGladiator(d, 60); m.id = d.nextId++;
             m.status = "active"; m.mine = true; d.gladiators.push(m); }
         }
+        /* ---- BOTH SIDES, ON THE ENGINE'S OWN CURVE ----
+           Played bouts cannot be ASKED for a blessed death at odds where she counted. `missioOdds` is
+           clamped to [0.03, 0.97] and her nine points move a clamped verdict by nothing, so a man
+           the thumb was always going to turn on dies with no wheel line — correctly: measured on this
+           house, 25 appeals ended in death and every one of them stood at the floor of the curve.
+           The old 160-bout loop met one blessed death at open odds in v3.205.0's phase and none in
+           v3.206.0's, and read the second as the fault it exists to catch. It was the sample.
+           The rule is stated from the curve instead. `askSigns` prices her share off the SAME
+           `missioScore` the appeal rolled on (`spareRaw`), and at MISSIO_SLOPE 14 nine points are
+           worth two in the hundred or more at any recorded odds from 5 to 95 — so every appeal in
+           that band carries her line, whichever way the thumb went, and one that does not is the
+           item. Driven straight through `simulateFight`: a weak man of ours put down by a strong one
+           at standard stakes, the box walked across the curve by `ctx.aedile`.
+           AND UNDER THE CAP. `missioScore` caps the editor's box at MISSIO_CAP, and her nine points
+           ride inside it with the house's favour and the rise: this house stood at favour 94 and a
+           rise of 18 by the time the drive ran, the box was over the cap with or without her, and
+           `blessWorth` — the same difference, rightly — came to nothing 106 times out of 106. That
+           is arm 4's rule (a boon spent against a clamp claims nothing), not a fault, so the drive
+           holds the box open: her share alone in `fav`, and a favour of ten. */
+        const drive = { appeals:0, inBand:0, missing:0, spared:0, died:0, offBand:0, crux:0 };
+        { const me = A.genGladiator(d, 30); me.id = d.nextId++; me.kit = me.kit || A.defaultKit(me.cls);
+          const foe = A.genGladiator(d, 88); foe.id = d.nextId++; foe.kit = foe.kit || A.defaultKit(foe.cls);
+          bless(d, "fortuna");
+          const PLACE = A.missioPlace(d, null);
+          const enough = () => wheelSides.spared && wheelSides.died && drive.inBand >= 30;
+          for(const off of [-30, -15, 0, 15, 30]){
+            for(let i = 0; i < 40 && !enough(); i++){
+              const ctx = Object.assign({ plan:null }, PLACE, { fav:PLACE.bless, favor:10, man:0, footing:1,
+                footingB:1, sky:1, skyB:1, venue:0, tier:1, hostile:false, patron:null, repShow:0,
+                guarded:false, aedile:(PLACE.aedile||0) + off });
+              let res = null;
+              try { res = A.simulateFight(JSON.parse(JSON.stringify(me)), JSON.parse(JSON.stringify(foe)),
+                "measured", "standard", ctx, {}); }
+              catch(e){ bad.push(`simulateFight threw under Fortuna: ${e.message}`); break; }
+              if(!res || res.crux){ drive.crux++; continue; }
+              const beats = res.beats || [];
+              const ap = beats.find(b=>b.kind === "appeal" && b.actor === "A");
+              if(!ap) continue;
+              drive.appeals++;
+              const fell = beats.some(b=>b.kind === "spared" && b.actor === "A");
+              const dead = beats.some(b=>b.kind === "death" && b.actor === "A");
+              const wheel = beats.find(b=>b.kind === "wheel");
+              if(wheel && !(wheel.wheel > 0)) bad.push(`the wheel beat carries no figure`);
+              if(wheel) moments.fortuna = moments.fortuna || wheel.text;
+              if(ap.odds >= 5 && ap.odds <= 95){
+                drive.inBand++;
+                if(!wheel) drive.missing++;
+                else { if(fell){ drive.spared++; wheelSides.spared = wheelSides.spared || wheel.text; }
+                       if(dead){ drive.died++;   wheelSides.died   = wheelSides.died   || wheel.text; } }
+              } else drive.offBand++;
+            }
+          }
+        }
+        driven = drive;
+        if(!drive.inBand) bad.push(`no appeal at open odds in ${drive.appeals} driven appeals — the sweep `
+          + `never reached the curve, so nothing was measured`);
+        if(drive.missing) bad.push(`${drive.missing} of ${drive.inBand} appeals at open odds carried no wheel `
+          + `line — her nine points were in the verdict and nobody said so`);
         if(!wheelSides.spared) bad.push(`a man Fortuna helped spare is never told she was in it`);
         if(!wheelSides.died) bad.push(`a man Fortuna could not save dies without her being named — `
           + `a blessed loss reads exactly like an ordinary one, which is the item`);
@@ -243,7 +304,7 @@ export async function run({ p, errors }){
       bad.push(`a rope keeping the rites is blessed on `
         + `${Math.round(lever.blessed/Math.max(1,lever.weeks)*1000)/10}% of weeks`);
 
-    return { bad, wheelSides, worth:{ asks:worth.asks, mean:Math.round(worth.mean*1000)/10,
+    return { bad, wheelSides, driven, worth:{ asks:worth.asks, mean:Math.round(worth.mean*1000)/10,
       max:Math.round(worth.max*1000)/10 }, receipts, moments, clamped, clean, lever };
   });
 
@@ -256,6 +317,9 @@ export async function run({ p, errors }){
   for(const [g, t] of Object.entries(r.receipts)) lines.push(`   ${g.padEnd(13)} ${t}`);
   lines.push(`and the moment three of them sign:`);
   for(const [g, m] of Object.entries(r.moments)) lines.push(`   ${g.padEnd(13)} ${String(m).slice(0, 96)}`);
+  if(r.driven){ const v = r.driven;
+    lines.push(`Fortuna, driven: ${v.appeals} appeals, ${v.inBand} at open odds (5-95) of which ${v.spared} spared `
+      + `and ${v.died} died under her line, ${v.missing} without it · ${v.offBand} at the clamp, ${v.crux} held at a crux`); }
   lines.push(`and she signs both ways round — spared: ${r.wheelSides.spared ? "yes" : "NO"}, `
     + `killed anyway: ${r.wheelSides.died ? "yes" : "NO"}`);
   lines.push(`Jupiter against devoted patrons: credited ${r.clamped.did}, receipt ${r.clamped.told || "(none)"}`);
