@@ -435,8 +435,20 @@ async function playOne(p){
         /* the block writes "BUY FOR 234 DENARII"; elsewhere the game writes "· 333D".
            The first draft matched only the second, so every price came back null,
            every candidate was filtered out, and five houses ran twenty-six weeks
-           with `0 bought` while the check reported the opening as gutted. */
-        const price = b => { const m=(b.innerText||"").match(/([\d,]+)\s*(?:denarii|d)\b/i);
+           with `0 bought` while the check reported the opening as gutted.
+           ---- AND THEN IT HAPPENED AGAIN, FOR FORTY-EIGHT RELEASES ----
+           v3.154.0 took the figure OUT of the button on purpose — "a button repeating it is
+           the market's purses ×1.20" — and the button has read "Buy him" since, with the
+           price a `.gold` span in the row's summary. So this read Infinity for every man,
+           bought nobody, and the oldest check in the suite ran forty-eight gates on houses of
+           three that never went to the block: its tally's men-between-them fell from 16 at
+           3.99.0 to a ceiling of 6, and it passed on the luck of second draws until the
+           v3.202.0 gate, where both draws came in at (1,1) and `open.mjs` proved the opening
+           byte-identical to the build before. The price is read from the ROW the button
+           stands in now, which is where the game put it. */
+        const price = b => { const row = b.closest("details.entry, .entry, .panel") || b;
+          const g = row.querySelector(".gold"); const t = ((g && g.innerText) || row.innerText || "");
+          const m = t.match(/([\d,]+)\s*(?:denarii|d)\b/i);
           return m ? +m[1].replace(/,/g,"") : Infinity; };
         const purse = (()=>{ for(const k of Object.keys(localStorage)) if(/ludus-slot-\d/.test(k)){
           try{ const s=JSON.parse(localStorage.getItem(k)); if(s&&s.gladiators) return s.gold; }catch(e){} } return 0; })();
