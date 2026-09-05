@@ -6566,7 +6566,7 @@ ledger has something to hold.
 
 ---
 
-**#255 — The Year Is a Wheel** *(UI · medium · single step)*
+**#255 — The Year Is a Wheel** *(UI · medium · single step)* — **SHIPPED v3.201.0**, as specified: `YearWheel` at module scope, eighteen spokes of the year with the pointer moving round them, the seasons banded from `SCN_GRADE`, the six festivals as engine glyphs, every `calendarRows` row a pin on its spoke (hollow for next year's same week), a tapped spoke listing its rows through the same `CalRow` that routes. Lifting the row markup out of App shrank it 5,784 → 5,774. `checks/wheel.mjs`, five arms, sabotage-verified four ways; the screenshot pair caught the two things the count could not (glyphs colliding with season names, names under `--fs-micro`).
 
 The year is eighteen weeks, four `SEASONS`, a `CALENDAR` of festivals each carrying its engine (#215
 drew the suns; nobody drew the calendar), and everything dated: `DL` deadlines (booking / challenge /
