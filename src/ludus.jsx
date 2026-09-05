@@ -20500,10 +20500,63 @@ const EVENTS = {
    Note for anyone comparing runs across this change: the old line consumed an unpredictable
    number of R() calls per week and this one consumes exactly n-1, so the stream diverges.
    Same-seed comparison across it is meaningless; rates over many houses are not. */
+/* ---- ONE DIE FOR THIRTY-SIX EVENTS — second phase queue #245, phase 2 ----
+   Phase 1 (v3.203.0) measured the die: fourteen events eligible on the median week, four or more on
+   every week, `grain` eligible on 100% of weeks and `thugs` on 1.1% — and the shuffle above gave each
+   of them one ticket. An event eligible one week in a hundred had to ALSO win a 1-in-14 shuffle: the
+   arithmetic the note beside GRUDGE_SABOTAGE wrote down and worked around one threshold at a time.
+
+   The die is weighted now, and it cools. `EV_DIE` gives each drawn event a weight — the tickets it
+   holds in the shuffle — set from its measured reach (`pace-tally.json`, v3.203.0): one for the
+   ten that are eligible four weeks in five, two for the middle, four for the events under a tenth,
+   eight for the ones under a fiftieth and for the state-gated ones that are never eligible under
+   the reference player but should win the week they are. And a `cool`: weeks after firing in which
+   the event stays out of the pool, so the ever-eligible ten cannot ask the same question twice in a
+   month. `evLast` on the flags is the record, saved with the house.
+
+   THE ORDER IS WEIGHTED, NOT THE OUTCOME. `evPick` draws a key from the pool with probability
+   proportional to its weight, `make()` is called on it, and if it returns nothing the next key is
+   drawn — the same first-eligible contract as before, so every make()'s own gates and rolls keep
+   exactly their meaning. What changed is whose make() gets asked first. It consumes one R() per
+   attempt where the Fisher-Yates consumed sixty per week, so the stream re-phases across this
+   change: same-seed comparison is meaningless, rates over many houses are not — as the note above
+   already says about v3.85.0's change to the same line.
+
+   The 25 events whose make() is `return null` are raised by their own systems and never see the
+   die; `EV_DRAWN` leaves them out of the pool by reading the function rather than by a list that
+   would drift. `checks/die.mjs` holds the contract; `checks/pace.mjs` holds the reach. */
+const EV_DIE = {
+  /* eligible four weeks in five — one ticket, and a month's quiet after asking */
+  grain:{w:1,cool:6}, bribe:{w:1,cool:6}, fever:{w:1,cool:6}, bodyguard:{w:1,cool:6}, rivalOffer:{w:1,cool:6},
+  affair:{w:1,cool:6}, damnatio:{w:1,cool:6}, bargain:{w:1,cool:6}, sacramentum:{w:1,cool:6}, auctoratus:{w:1,cool:6},
+  /* eligible about half the time */
+  omen:{w:1,cool:3}, foundling:{w:1,cool:3}, bayCall:{w:1,cool:3}, plea:{w:1,cool:3}, ambition:{w:1,cool:3},
+  /* a tenth to two fifths */
+  ludusNight:{w:2,cool:0}, patronGone:{w:2,cool:0}, escape:{w:2,cool:0}, mentor:{w:2,cool:0}, sabotage:{w:2,cool:0}, doctore:{w:2,cool:0},
+  /* under a tenth */
+  crowdCalls:{w:4,cool:0}, bribedEditor:{w:4,cool:0}, roomFire:{w:4,cool:0}, poached:{w:4,cool:0},
+  /* under a fiftieth, and the state-gated ones that should win the week they are eligible at all */
+  thugs:{w:8,cool:0}, stash:{w:8,cool:0}, primacy:{w:8,cool:0}, uprising:{w:8,cool:0},
+  owedLife:{w:8,cool:0}, warTax:{w:8,cool:0}, warLevy:{w:8,cool:0}, warWord:{w:8,cool:0}, theRoad:{w:8,cool:0},
+  whispers:{w:8,cool:0}, stolenSteel:{w:8,cool:0},
+};
+const evTune = k => EV_DIE[k] || { w:1, cool:0 };
+const EV_DRAWN = Object.keys(EVENTS).filter(k => typeof EVENTS[k].make === "function"
+  && !/^\s*make\s*\(\s*\)\s*\{\s*return\s+null;?\s*\}\s*$/.test(String(EVENTS[k].make)));
+/* the keys the die may try this week: the drawn ones, less those still cooling */
+const evPool = d => { const last = (d.flags && d.flags.evLast) || {};
+  return EV_DRAWN.filter(k => { const c = evTune(k).cool; return !(c > 0 && last[k] != null && d.week - last[k] < c); }); };
+/* one weighted draw without replacement — the key comes out of the pool it was drawn from */
+const evPick = pool => { let sum = 0; for(const k of pool) sum += evTune(k).w;
+  let x = R() * sum, i = 0;
+  for(; i < pool.length - 1; i++){ x -= evTune(pool[i]).w; if(x < 0) break; }
+  return pool.splice(i, 1)[0]; };
 function pickEvent(d){
-  for(const k of shuffled(Object.keys(EVENTS))){
+  const pool = evPool(d);
+  while(pool.length){
+    const k = evPick(pool);
     const ev = EVENTS[k].make(d);
-    if(ev) return ev;
+    if(ev){ d.flags = d.flags || {}; (d.flags.evLast = d.flags.evLast || {})[k] = d.week; return ev; }
   }
   return null;
 }
@@ -32619,6 +32672,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     nameHeir, heirEligible, heirChoices, eligibleSons, HEIRS, houseRecord, censusWorth,   /* #154 */
     calendarRows, CAL_TONE, YearWheel, CalRow,   /* #255 — the year as a wheel, and the rows it pins */
     heirOfAge, HEIR_AGE, yearsAtHead,   /* #253 — a boy's age is his own */
+    EV_DIE, EV_DRAWN, evTune, evPool, evPick,   /* #245 phase 2 — the weighted, cooled die */
     togaEvent,   /* #237 phase 4/5 — so a check can drive the toga trigger against an already-named son */
     /* the summit: the gate, the letter, the bar, and the trip's own clock */
     romeReady, romeProved, offerRome, romeBar, ROME_BOUTS, ROME_WEEKS_PER_BOUT, ROME_RANK,
