@@ -4439,6 +4439,46 @@ every drawn event's reach per build and an exposure-aware floor under it; `EV_DI
 the die can lift a rare event only on the weeks it is eligible — reach is the ceiling, tickets are
 not — which hands the late game back to #248.
 
+**The gate's four, and what they were.** The only source change re-phases every seeded run from
+its first ask week, and 156 of 160 held. The four that did not split evenly, which is the die's
+lesson again: two were the game, two were the instrument.
+
+- **`stall` — the paragon was bought out from under the house.** `RIVAL_MOVES.buy` lifted whoever
+  topped `gladValue` off the block, and on any block he stands on that is the paragon. Seed PGSURV:
+  shown at week 60, gone by the ordinary buy line inside the first week, `paragonDone` never set —
+  so the cap-of-two accounting never knew he had been. Two of three seeds. `marketWeek` already
+  left him alone; the buy's pool and its `when` do now, and his going is `paragonExpire`'s, in
+  front of people, after the three weeks he is advertised as.
+- **`week` — the runway line had no key.** Its sentence flips between "# more week", "# more
+  weeks" and "The box is empty…" as the runway crosses 1 and 0, and each flip was a new key, an
+  age of 0 and NEW AGAIN: 24% of 29 held-over weeks against #144's bar of 20%. Fixed twice over,
+  because the first fix alone still read 22%: `key:"runway"` on the row, and `agenda`'s call site
+  forwarding it — it passed `w.urgency, w.tab, w.label, w.sub` and dropped the key on the floor.
+  The residual 16% of 43 was traced week by week: every remaining fresh reading had the item
+  absent at the rope's own mid-iteration tick and back at the next (the check's loop ends two
+  weeks per read, the rope's and its own). Presence flickering on a two-week cadence, not an
+  identity rotating. Left as it is.
+- **`bill` — the floor counted cards the house could not field.** `makeGames` puts the forced
+  melee up only with two active men, the rope's house runs thin, and the Quinquatria's melee read
+  55% of every card against 0.55 — 19 of its 31 cards were fieldable, and 95% of those carried
+  one. Stated over fieldable cards now, and the bar is 0.80 rather than the deterministic 0.90,
+  because an exclusive pact trims the card to its first offer after the fact: 89-96% on the four
+  forcing days against 41-64% on ordinary weeks, and 0.90 flipped on the Floralia between two
+  phases of the same code. The sabotage found the worse fault: the check read its list of forcing
+  festivals off the calendar it was testing, so the Quinquatria with `forceMelee` off simply left
+  the list and was never measured. The four days #228 gave an engine are pinned in the check —
+  declared and measured, and the sabotage now fails both ways (40% of 35).
+- **`altar` — Fortuna's blessed death was a sample.** The arm hunted a blessed death with the
+  wheel line in 160 played bouts on one house. `missioOdds` is clamped to [0.03, 0.97] and her nine
+  points move a clamped verdict by nothing, so all 25 appeal-deaths on that house stood at the
+  floor of the curve and read — correctly — no wheel line; v3.205.0's phase had happened to meet
+  one at open odds. The arm drives `simulateFight` directly now: a weak man of ours put down at
+  standard stakes, the box swept across the curve by `ctx.aedile` and held open under `MISSIO_CAP`
+  — the house's favour of 94 and rise of 18 had capped the box with or without her, and 106 of 106
+  in-band appeals were rightly silent, which is arm 4's own rule. At open odds (5-95, where nine
+  points are worth two in the hundred or more) 30 appeals, 11 spared and 19 died under her line,
+  none without. With the death branch's `signs(false)` removed: 52 of 161 missing, failed.
+
 ### v3.205.0 — #245, phase 3: an event this house has never met weighs more
 
 **One constant and one weight function, no new state.** `flags.evLast[k]` — the record phase 2 keeps

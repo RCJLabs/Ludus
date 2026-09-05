@@ -3754,7 +3754,7 @@ function agenda(d){
       `${d.flags.litDue} week${d.flags.litDue===1?"":"s"} behind — your standing is bleeding for it`);
   if(liquid(d) < 120 && owedTotal(d) >= 250)
     add(2, "villa:council:owed", `${owedTotal(d)}d owed to you and ${Math.round(liquid(d))} in the box`, "rich on paper is not rich");
-  { const w = moneyRow(d); if(w) add(w.urgency, w.tab, w.label, w.sub); }
+  { const w = moneyRow(d); if(w) add(w.urgency, w.tab, w.label, w.sub, w.key); }   /* the key too — v3.206.0 */
   { const bad = owedList(d).filter(x=>d.week - x.due >= 4);
     if(bad.length) add(1, "villa", `${bad[0].from} has stopped paying`, `${bad[0].amount}d, ${d.week - bad[0].due} weeks late`); }
   if(bayHolder(d)) add(2, "arena", `House ${bayHolder(d)} has the bay`, `${baySince(d)} weeks and Capua has noticed`);
@@ -6972,9 +6972,15 @@ function rivalReadOf(d){
    so the two who cannot retrain their way to a counter will buy one. */
 const readSharp = (h, k) => clamp(((lanistaOf(h.name)[k] || 1) - 1) * READ_GAIN, 0, READ_CAP);
 const RIVAL_MOVES = {
-  buy: { weight:h=>1 + (lanistaOf(h.name).bid-1)*2, when:(d,h)=>h.fighters.length<7 && d.market.length,
+  /* ---- NOT THE PARAGON — v3.206.0 ----
+     `gladValue` puts him at the top of any block he stands on, so the first rival to roll a buy
+     took him: measured on seed PGSURV, shown at week 60 and gone by the ordinary buy line inside
+     the first week, `paragonDone` never set. He is advertised as three weeks to decide, and
+     `marketWeek` already leaves him alone for the same reason — his going is `paragonExpire`'s,
+     in front of people, and it says who paid. */
+  buy: { weight:h=>1 + (lanistaOf(h.name).bid-1)*2, when:(d,h)=>h.fighters.length<7 && d.market.some(g=>!isAuctor(g) && !g.paragon),
     run(d,h){ const L=lanistaOf(h.name);
-      const pool = d.market.filter(g=>!isAuctor(g)).sort((a,b)=>gladValue(b)-gladValue(a));
+      const pool = d.market.filter(g=>!isAuctor(g) && !g.paragon).sort((a,b)=>gladValue(b)-gladValue(a));
       let best = pool[0];
       if(!best) return null;
       /* #236 — and he may buy the answer instead of training it. A SOFT preference: only among men
@@ -12024,7 +12030,10 @@ const moneyRow = d => {
   /* AND THE APPROACH, wherever that one does not speak */
   const rw = runway(d);
   if(rw == null || rw >= RUNWAY_WARN) return null;
-  return { urgency: rw < RUNWAY_BAD ? 3 : 2, tab:"villa:council", weeks: rw,
+  /* keyed, because the sentence flips between "# more week", "# more weeks" and "the box is empty"
+     as the runway crosses 1 and 0 — and every flip was a new key, an age of 0, and NEW AGAIN on
+     the agenda: 24% of the 29 weeks it stood over, in v3.206.0's gate (checks/week, #144's rule) */
+  return { key:"runway", urgency: rw < RUNWAY_BAD ? 3 : 2, tab:"villa:council", weeks: rw,
     label: rw <= 0 ? `The box is empty and the week still costs ${weeklyBill(d)}d`
       : `The box would carry this house ${rw} more week${rw===1?"":"s"}`,
     sub: rw < RUNWAY_BAD ? "at what the week costs, that is the whole of it"
