@@ -3210,7 +3210,17 @@ const TAB_SIG = {
     patronsOf(d).map(p=>`${p.id}${p.want?":"+p.want.kind:""}`).join(","),
     d.romeOffer ? "letter" : "",
     d.election && !d.election.done ? "vote" : "",
-    d.heir ? "heir" : (heirEligible(d)||[]).join(""),
+    /* ---- AND A SIGNATURE THAT WENT DEAF THE MOMENT ANYBODY WAS NAMED ----
+       This read `d.heir ? "heir" : ...`, which was right while the card shut behind the first
+       naming: once somebody stood there, nothing about the succession could change again. The card
+       reopens now, so the boy turning nine IS news — and this line would have reported "heir" for
+       the rest of the run and never lit the tab for him. The birth already moves the signature
+       (`children.length`, below); nothing moved when the child became NAMABLE. `heirChoices` is the
+       card's own contents, so who stands and who else could both move it. It is constant while
+       nothing changes — a nephew is always on the list — and `joinSig` marks on change, not on
+       presence, so this does not light the villa every week. */
+    d.heir ? `heir:${d.heir.kind}${d.heir.cid || ""}` : "",
+    heirChoices(d).map(o=>o.cid ? `s${o.cid}` : o.kind).join(""),
     blessOf(d) || (offeringReady(d) ? "altar" : ""),
     d.vow ? "vow" : "",
     (d.domus && d.domus.children || []).length,
@@ -8501,6 +8511,40 @@ const heirEligible = d => {
   if(d.doctore && d.doctore.fromHouse) out.push("doctore");
   return out;
 };
+/* ---- THE WILL YOU CANNOT CHANGE ----
+   `heirEligible` is the list of KINDS available now. It was consumed in exactly one place, inside
+   `if(S.heir ? <the named panel> : <the buttons>)` — so the buttons rendered only while nobody was
+   named, and `d.heir` has three write sites in the whole file: here, `succeed` (clearing it at a
+   generation), and `resolveToga`. Naming an heir was IRREVERSIBLE, and the card's own italic line
+   pushes you to do it at once: "Name nobody and this house is sold off in pieces the morning after
+   you die." Before you have a wife — median week 31 — the only thing on offer is a nephew.
+
+   Measured (`probes/boy.mjs`, 12 houses x 520 weeks): the reference player named a nephew in WEEK
+   TWO, twelve of twelve, and eleven of twelve died with that nephew still standing. His own son was
+   eligible at a median of week 246 — `SON_AGE` 9 x `YEAR_WEEKS` 18 = 162 weeks past a birth that
+   lands at a median of week 84 — and the card had been shut for two hundred and forty weeks by
+   then. #226 gave "son" a real boy behind it and #237 gave `nameHeir` his actual identity, mentor
+   bond and upbringing traits; a player who took the sensible early insurance could reach neither.
+
+   `heirChoices` is the same list as one row per NAMABLE PERSON rather than per kind — a house with
+   two eligible sons gets two rows — with whoever is already named filtered out, by `cid` where
+   there is one so the boy who took the toga is not offered back as a worse version of himself. It
+   is a function of the save at module scope, so a check can drive the whole card without the DOM. */
+const heirChoices = d => {
+  const cur = d.heir || null;
+  const out = [];
+  for(const k of heirEligible(d)){
+    if(k === "son"){
+      for(const c of eligibleSons(d)){
+        if(cur && cur.cid === c.id) continue;      /* he is already the heir, as son or as scion */
+        out.push({ kind:"son", cid:c.id, name:c.name, age:childAge(d, c) });
+      }
+    } else if(!(cur && cur.kind === k && !cur.cid)){
+      out.push({ kind:k, cid:null, name:HEIRS[k].name });
+    }
+  }
+  return out;
+};
 function nameHeir(d, kind, cid){
   if(!HEIRS[kind]) return false;
   let nm = null, extra = {};
@@ -8511,8 +8555,13 @@ function nameHeir(d, kind, cid){
       extra = { cid:c.id, traits:heirTraitsFromUp(c.up), mentorId:c.mentorId||null, mentorName:c.mentorName||null }; }
   }
   if(nm == null) nm = `${pick(PRAENOMINA)} ${pick(NOMINA)} ${pick(COGNOMINA)}`;
+  const prev = d.heir;
   d.heir = Object.assign({ kind, name:nm, named:d.week }, extra);
-  chron(d, kind==="doctore"
+  /* a will rewritten is not a will written — the paper already had a name on it, and somebody is
+     going to find out he is not the one any more */
+  chron(d, prev && prev.name !== nm
+    ? `${prev.name}'s name comes off the paper and ${nm}'s goes on. It takes about as long as it sounds, and it is the largest thing you will do this week.`
+    : kind==="doctore"
     ? `You put it in writing that ${nm} takes the house if you do not. He reads it twice and says nothing at all.`
     : `You put ${nm}'s name to the house in the event of your death. It is a small piece of paper and it changes what this place is.`, "good");
   return true;
@@ -27504,7 +27553,7 @@ export default function App(){
           Age, a house on the edge of fire, and every man you bury take something out of you. Feasts, a bath house and an ordinary quiet week put a little back.
         </div>
         <div className="tag tag-gold" style={{margin:"0 0 4px"}}>After you</div>
-        {S.heir ? (
+        {S.heir && (
           <div className="panel" style={{padding:9,marginBottom:10,background:"var(--panel)",borderColor:"var(--laurel-edge)"}}>
             <div className="flex items-center justify-between gap-2">
               <span className="disp" style={{fontSize:"var(--fs-base)",color:"var(--ink-hi)"}}>{S.heir.name}</span>
@@ -27512,33 +27561,33 @@ export default function App(){
             </div>
             <div className="dim" style={{fontSize:"var(--fs-md)",marginTop:3}}>{HEIRS[S.heir.kind].line}</div>
           </div>
-        ) : (<>
+        )}
+        {/* it used to be `S.heir ? <panel> : <buttons>` — the note above `heirChoices` says why not */}
+        {!S.heir && (
           <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:7}}>
             Name nobody and this house is sold off in pieces the morning after you die. Name somebody and it goes on without you, carrying its men, its debts and none of your reputation.
           </div>
+        )}
+        {heirChoices(S).length > 0 && (<>
+          {S.heir && (
+            <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:7}}>
+              A will is a piece of paper, and paper can be written on twice. Put another name to the house and the old one comes off it.
+            </div>
+          )}
           {/* "son" is a real, specific boy now, not a generic slot — one row per eligible son,
               named and aged, so a house with two never has to guess which one the button meant */}
-          {heirEligible(S).flatMap(k => k!=="son" ? [(
-            <button key={k} className="optrow" style={{marginBottom:6,padding:10}} onClick={()=>chooseHeir(k)}>
+          {heirChoices(S).map(o=>(
+            <button key={o.cid ? `son-${o.cid}` : o.kind} className="optrow" style={{marginBottom:6,padding:10}}
+              onClick={()=>chooseHeir(o.kind, o.cid)}>
               <div className="flex items-center justify-between gap-2">
-                <span className="disp" style={{fontSize:"var(--fs-base)",color:"var(--ink-hi)"}}>{HEIRS[k].name}</span>
+                <span className="disp" style={{fontSize:"var(--fs-base)",color:"var(--ink-hi)"}}>{o.name}</span>
                 <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>
-                  keeps {Math.round(HEIRS[k].fameKeep*100)}% fame · {Math.round(HEIRS[k].favorKeep*100)}% standing
+                  {o.cid ? `${o.age} yr · ` : ""}keeps {Math.round(HEIRS[o.kind].fameKeep*100)}% fame · {Math.round(HEIRS[o.kind].favorKeep*100)}% standing
                 </span>
               </div>
-              <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2}}>{HEIRS[k].line}</div>
+              <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2}}>{HEIRS[o.kind].line}</div>
             </button>
-          )] : eligibleSons(S).map(c=>(
-            <button key={`son-${c.id}`} className="optrow" style={{marginBottom:6,padding:10}} onClick={()=>chooseHeir("son", c.id)}>
-              <div className="flex items-center justify-between gap-2">
-                <span className="disp" style={{fontSize:"var(--fs-base)",color:"var(--ink-hi)"}}>{c.name}</span>
-                <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>
-                  {childAge(S,c)} yr · keeps {Math.round(HEIRS.son.fameKeep*100)}% fame · {Math.round(HEIRS.son.favorKeep*100)}% standing
-                </span>
-              </div>
-              <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:2}}>{HEIRS.son.line}</div>
-            </button>
-          )))}
+          ))}
         </>)}
 
         {(()=>{ const dm = domusOf(S), w = dm.wife, kids = dm.children.filter(c=>!c.dead);
@@ -32442,7 +32491,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        through it, and a probe that writes `regardOf(g) <= 18` reconstructs the gate instead */
     regardRefuse,
     /* the line of the house: who may be named, naming him, and taking it up */
-    nameHeir, heirEligible, eligibleSons, HEIRS, houseRecord, censusWorth,   /* #154 */
+    nameHeir, heirEligible, heirChoices, eligibleSons, HEIRS, houseRecord, censusWorth,   /* #154 */
     togaEvent,   /* #237 phase 4/5 — so a check can drive the toga trigger against an already-named son */
     /* the summit: the gate, the letter, the bar, and the trip's own clock */
     romeReady, romeProved, offerRome, romeBar, ROME_BOUTS, ROME_WEEKS_PER_BOUT, ROME_RANK,

@@ -4389,6 +4389,120 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.200.0 — the will you could not rewrite
+
+**The heir was named once, in week two, before the house had a family, and could never be changed.**
+
+`probes/heirs.mjs` recorded it as a footnote to the tenure item — *every heir named is a `nephew`, 16
+of 16* — and it turned out to be one fault in the game and one in the reference player, sitting on
+top of each other.
+
+**THE GAME'S HALF.** `d.heir` has three write sites in the whole file: `nameHeir`, `succeed`
+(clearing it at a generation), and `resolveToga`. `nameHeir` was reachable from exactly one place —
+two buttons on the lanista sheet, rendered inside `S.heir ? <the named panel> : <the buttons>`. The
+card **shut** the moment anybody was named. And its own italic line pushes you to name somebody at
+once: *"Name nobody and this house is sold off in pieces the morning after you die."* Before there is
+a wife in the house — median week 31 — the only thing on offer is a nephew.
+
+So the one decision the whole succession turns on was taken in week two, under a warning, from a list
+with one name on it, and was irreversible. #226 gave `"son"` a real boy behind it and #237 wired
+`nameHeir` to install his actual identity, mentor bond and upbringing traits; a player who took the
+sensible early insurance could reach neither.
+
+**THE ARITHMETIC UNDERNEATH** (`probes/boy.mjs`, 16 houses × 520 weeks, seed BOY):
+
+| | |
+|---|---|
+| married | 16 of 16, p50 **week 31** |
+| bore a son | 13 of 16, p50 **week 84** |
+| son eligible (`SON_AGE` 9 × `YEAR_WEEKS` 18 = **162 weeks** past birth) | 8 of 16, p50 **week 235** |
+| reached the toga (288 weeks past birth) | **1 of 16**, week 326 |
+| house ends | p50 **week 268** |
+
+The card had been closed for two hundred and thirty weeks by the time the boy was old enough.
+
+**THE FIX.** `heirChoices(d)` is the card as a function of the save — one row per NAMABLE PERSON
+rather than per kind, so a house with two sons gets two rows, with whoever already stands filtered
+out **by `cid` where there is one**, so the boy who took the toga is not offered back as a worse
+version of himself. The card renders it in both branches; the panel showing who stands now sits
+*above* the alternatives instead of replacing them. `nameHeir` chronicles a rewritten will
+differently from a written one.
+
+**MEASURED, same probe, same seed, old build against new:**
+
+| | before | after |
+|---|---|---|
+| first heir named | nephew ×16, **week 2** | nephew ×16, week 2 |
+| **heir standing at the end** | **nephew 15 · scion 1** | **nephew 10 · son 5 · scion 1** |
+| married / bore / reached nine / reached toga | 16 / 13 / 8 / 1 | 16 / 13 / 8 / 1 |
+| houses that succeeded · house ends p50 | 3 · 268 | 3 · 268 |
+
+Five of sixteen houses now hand on to the boy they raised. **Nothing else moved a digit** — the
+patient and forced arms are identical before and after, which is the check that the change draws
+nothing from the RNG stream. Of the eight houses whose son reached nine, five switch, one goes
+further and takes the scion at the toga, and **two are already in their second generation**, where
+`succeed` installs a lanista of `ri(22,31)` and `eligibleSons`' own `age >= 40` gate shuts the boy
+out again. That is stated, not fixed: it is the same gate doing its job on a different man.
+
+**The reference player was doing what the card forced.** The rope took `heirEligible(d)[0]` under
+`!d.heir` — and `heirEligible` puts `"son"` first only when a son already exists, which in week two
+he does not — so it named a nephew and `!d.heir` shut the gate for the rest of the run. It takes the
+early insurance and then takes the better name the week it appears, which is what the card now
+permits.
+
+**AND THE TAB HAD TO LEARN TO LIGHT AGAIN.** `TAB_SIG.villa` carried `d.heir ? "heir" : ...`, which
+was honest while the card shut behind the first naming — once somebody stood there, nothing about the
+succession could change. With the card reopened that line goes deaf: it would report `"heir"` for the
+rest of the run and never mark the villa when the boy became namable. The birth already moved the
+signature (`children.length`); the boy turning nine moved nothing. It reads `heirChoices` now, so who
+stands and who else could both move it, and it is constant while nothing changes — `joinSig` marks on
+change, not on presence, so this does not light the villa every week. A fix the game never surfaces
+is half a fix.
+
+**`bulk` refused the first draft.** `App` was sitting at 5,786 of 5,786, so the four-line comment
+explaining the card inside the component put it one line over. The ceiling was not raised: the prose
+moved up to the `heirChoices` banner, where the file's own note on this says such things go — *"the
+plate's explanation was written BESIDE THE RULES, which is four lines of prose measured by this sweep
+and shipped to the browser"* — leaving a one-line pointer. App is at 5,784.
+
+**AND THE INSTRUMENT FAULT THIS TURNED UP: five fixtures named a seed and were not seeded.**
+`newGameState(name, scen, seed, pitch)` — the seed is the **third** argument, and a missing one falls
+back to `newSeedWord()`, off `Math.random()`. A fixture passing its seed first gets a house *named*
+after the seed and a different campaign every run. This was caught by the first before/after
+comparison in this item moving numbers in an arm whose rope had not changed; running the probe twice
+on one build settled it — **different output, same seed**. The first comparison was worthless and is
+not in this entry.
+
+`checks/salute.mjs` had already found it, in itself, and written it down: *"this file has been
+non-deterministic since it was written … every green this check ever produced was luck-weighted and
+none of its numbers were reproducible; when the random house happened to die inside sixty weeks the
+vacuity guard below fired, which it did on two consecutive release gates while passing in
+isolation."* Then it fixed only itself. Four more sites were still in it, `probes/survey.mjs` — the
+instrument the whole #207–#241 audit was written off — and `probes/salute.mjs`, the probe that check
+came from, among them. **No survey figure in this file was ever reproducible run to run**, which
+does not make the distributions wrong and does mean no survey number can be compared before and
+after a change. All five now pass the seed third.
+
+**`probe.mjs` gains a fifth rule:** any `newGameState` call with fewer than three arguments, in a
+file that names a seed at all, fails the suite. The first scanner counted a backtick as an opening
+bracket, so `` newGameState(`${SEED}-${h}`) `` ran off the end of the file and counted enough commas
+to look seeded; backticks and quotes toggle now. Sabotage-verified on all three shapes — bare
+identifier, template literal, quoted string.
+
+**`checks/boy.mjs`, seven arms.** Five drive `heirChoices` at module scope, one drives `tabSig`, and
+the seventh opens the lanista sheet on a forged house that has both an heir and an eligible son and
+reads the buttons — because arms 1–6 all pass on a build where the JSX still reads
+`S.heir ? <panel> : <buttons>`. That ternary is the whole defect and it is not a function of the
+save. Sabotage-verified four ways: the ternary put back (arm 7), the `cid` filter removed (arms 3
+and 4), the replacement line reverted (arm 5), the deaf signature restored (arm 6). Arm 2 failed on
+its own fixture first — it raised its boy at the palus and then asserted a trait, and the yard's mark
+is `palusRaised`, not a trait.
+
+**What this does NOT do.** It does not make the **scion** reachable. The toga is 288 weeks past a
+birth at week 84, so it wants a house alive past week 372 against a median that ends at 268 — 1 of 16
+either way. `HEIRS.scion` is still the best handover in the game and still the rarest thing in it.
+How long a house lives is the item under all of this, and it is still not this one.
+
 ### v3.199.0 — the rising was always three stages; the instrument was counting houses
 
 **A correction to a finding this session published, and the two instrument faults under it.** No game

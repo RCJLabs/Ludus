@@ -40,7 +40,7 @@ const out = await p.evaluate(([H,W,SEED,SURVEYWAY])=>{
        one argument, so the scenario falls back to `clean` and the seed word is random. Note that
        "capua" is NOT a scenario key either — `SCENARIOS[scen] || SCENARIOS.clean` returns clean
        without a word, which 32 probe call sites in this repo are quietly relying on. */
-    const d = SURVEYWAY ? A.newGameState(`${SEED}-${h}`) : A.newGameState("Rs"+h, "clean", `${SEED}-${h}`);
+    const d = SURVEYWAY ? A.newGameState("Survey", "clean", `${SEED}-${h}`) : A.newGameState("Rs"+h, "clean", `${SEED}-${h}`);
     let cur = null, hiUnrest = 0;
     for(let w=0; w<W && !d.over; w++){
       try { R.lanista(d, {}); } catch(e){ break; }

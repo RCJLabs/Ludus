@@ -243,6 +243,55 @@ export async function run(){
         + `silently returns \`clean\`, so the measurement is labelled as something it is not`);
   }
 
+  /* ---- FAULT FIVE: A FIXTURE THAT NAMES A SEED AND IS NOT SEEDED ----
+     `newGameState(name, scen, seed, pitch)` — the seed is the THIRD argument, and when it is missing
+     the function falls back to `newSeedWord()`, which draws from `Math.random()`. So a fixture that
+     passes its seed FIRST gets a house named after the seed and a different campaign every run, and
+     nothing about it is reproducible.
+
+     `checks/salute.mjs` found this in itself and wrote it down — "this file has been non-deterministic
+     since it was written ... every green this check ever produced was luck-weighted and none of its
+     numbers were reproducible; when the random house happened to die inside sixty weeks the vacuity
+     guard below fired, which it did on two consecutive release gates while passing in isolation" —
+     and then fixed only itself. Four more sites were still in it, including `probes/survey.mjs`, the
+     instrument the whole #207-#241 audit was written off, and `probes/salute.mjs`, the probe that
+     check came from. The rule is general now so the note does not have to stay local again.
+
+     A call with three or more arguments is seeded by construction, so only short calls are read, and
+     only in a file that names a seed at all — a fixture that genuinely wants a random house does not
+     have a SEED to pass. */
+  { const bad3 = [];
+    for(const dir of ["checks", "probes"]){
+      const dd = path.join(ROOT, "test", dir);
+      for(const f of fs.readdirSync(dd).filter(x=>x.endsWith(".mjs"))){
+        const src2 = fs.readFileSync(path.join(dd, f), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+        if(!/\bseed\b/i.test(src2)) continue;
+        for(const m of src2.matchAll(/newGameState\(/g)){
+          /* a backtick TOGGLES, it does not nest — counting it as an opener the way the first draft
+             did left `newGameState(`${SEED}-${h}`)` unclosed, ran the scan to the end of the file and
+             counted enough commas to look seeded. Quotes toggle too, so a comma inside a name is not
+             an argument. Verified by sabotage: each shape put back, each one reported. */
+          let i = m.index + m[0].length, depth = 0, args = 1, seen = false, q = null;
+          for(; i < src2.length; i++){
+            const ch = src2[i];
+            if(q){ if(ch === q && src2[i-1] !== "\\") q = null; seen = true; continue; }
+            if(ch === "`" || ch === '"' || ch === "'"){ q = ch; seen = true; continue; }
+            if("([{".includes(ch)) depth++;
+            else if(")]}".includes(ch)){ if(depth === 0) break; depth--; }
+            else if(ch === "," && depth === 0) args++;
+            if(!/\s/.test(ch)) seen = true;
+          }
+          if(seen && args < 3) bad3.push(`${dir}/${f}`);
+        }
+      }
+    }
+    const uniq3 = [...new Set(bad3)];
+    lines.push(`seeded fixtures: ${uniq3.length ? uniq3.length + " file(s) open a house without a seed" : "every fixture that names a seed passes one"}`);
+    for(const x of uniq3.slice(0, 4))
+      bad.push(`${x} calls newGameState with fewer than three arguments — the seed is the THIRD one, `
+        + `so this house is drawn from \`newSeedWord()\` off \`Math.random()\` and the run is not reproducible`);
+  }
+
   /* ---- FAULT THREE: THE ROPE'S OWN OPTION LITERALS ----
      Only the literals the rope passes to its own inner functions, and only where a CALL opens one:
      `takeBout(d, {` and `run(d, offer, ids, {`. Two things the first draft of this got wrong and
