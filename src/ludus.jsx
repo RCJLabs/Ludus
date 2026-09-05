@@ -20549,20 +20549,29 @@ const EV_DIE = {
   whispers:{w:8,cool:0}, stolenSteel:{w:8,cool:0},
 };
 const evTune = k => EV_DIE[k] || { w:1, cool:0 };
+/* ---- AND AN EVENT THIS HOUSE HAS NEVER MET WEIGHS MORE — #245 phase 3 ----
+   Measured before this (`probes/dice.mjs`, 16 x 420, two seed sets): first-time die events per
+   hundred weeks fell 19.7 / 3.7 / 3.2 / 1.3 and 15.7 / 6.0 / 3.3 / 1.3 by quarter, and a house met a
+   median of 13 and 25 of the thirty-six in its whole life. `flags.evLast[k]` unset IS "never drawn
+   here" — the record phase 2 already keeps — so an unseen event's tickets are multiplied by
+   EV_FRESH and nothing new is saved. It is a multiplier on the tickets, not a lane of its own: a
+   never-seen `grain` at three tickets still loses to a never-seen `thugs` at twenty-four. */
+const EV_FRESH = 3;
+const evWeight = (d, k) => evTune(k).w * ((d && d.flags && d.flags.evLast && d.flags.evLast[k] != null) ? 1 : EV_FRESH);
 const EV_DRAWN = Object.keys(EVENTS).filter(k => typeof EVENTS[k].make === "function"
   && !/^\s*make\s*\(\s*\)\s*\{\s*return\s+null;?\s*\}\s*$/.test(String(EVENTS[k].make)));
 /* the keys the die may try this week: the drawn ones, less those still cooling */
 const evPool = d => { const last = (d.flags && d.flags.evLast) || {};
   return EV_DRAWN.filter(k => { const c = evTune(k).cool; return !(c > 0 && last[k] != null && d.week - last[k] < c); }); };
 /* one weighted draw without replacement — the key comes out of the pool it was drawn from */
-const evPick = pool => { let sum = 0; for(const k of pool) sum += evTune(k).w;
+const evPick = (pool, d) => { let sum = 0; for(const k of pool) sum += evWeight(d, k);
   let x = R() * sum, i = 0;
-  for(; i < pool.length - 1; i++){ x -= evTune(pool[i]).w; if(x < 0) break; }
+  for(; i < pool.length - 1; i++){ x -= evWeight(d, pool[i]); if(x < 0) break; }
   return pool.splice(i, 1)[0]; };
 function pickEvent(d){
   const pool = evPool(d);
   while(pool.length){
-    const k = evPick(pool);
+    const k = evPick(pool, d);
     const ev = EVENTS[k].make(d);
     if(ev){ d.flags = d.flags || {}; (d.flags.evLast = d.flags.evLast || {})[k] = d.week; return ev; }
   }
@@ -32680,7 +32689,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     nameHeir, heirEligible, heirChoices, eligibleSons, HEIRS, houseRecord, censusWorth,   /* #154 */
     calendarRows, CAL_TONE, YearWheel, CalRow,   /* #255 — the year as a wheel, and the rows it pins */
     heirOfAge, HEIR_AGE, yearsAtHead,   /* #253 — a boy's age is his own */
-    EV_DIE, EV_DRAWN, evTune, evPool, evPick,   /* #245 phase 2 — the weighted, cooled die */
+    EV_DIE, EV_DRAWN, evTune, evPool, evPick, EV_FRESH, evWeight,   /* #245 phases 2-3 — the weighted, cooled, fresh die */
     togaEvent,   /* #237 phase 4/5 — so a check can drive the toga trigger against an already-named son */
     /* the summit: the gate, the letter, the bar, and the trip's own clock */
     romeReady, romeProved, offerRome, romeBar, ROME_BOUTS, ROME_WEEKS_PER_BOUT, ROME_RANK,
