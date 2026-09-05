@@ -4441,9 +4441,32 @@ stamp (arm 5). Three faults in the check's drafts, all the check's: it did not p
 floor was set from a number that was not the die's. `draw.mjs` (#108) stays as written — its first two
 arms test `shuffled`, which is untouched and used in nine other places; its third still holds.
 
-**The cost, paid.** One R() per attempt where the Fisher-Yates spent sixty a week, so every seeded
-figure in the suite re-phases across this line — the note beside `pickEvent` said the same of
-v3.85.0's change to it. The gate below re-pins what moved, each with its reason.
+**The cost, paid — and it was smaller than the fear, and one of the two was not a re-pin at all.**
+One R() per attempt where the Fisher-Yates spent sixty a week, so every seeded figure in the suite
+re-phases across this line. The first gate came back **157 of 159**:
+
+- **`careers` caught a regression the weights exposed, in the game.** `EVENTS.primacy.make()` gated
+  only on `week − since < 6`, while its own raise channel enforces `PRIMUS_ASK_GAP` — thirty weeks,
+  *"a long reign is asked two or three times rather than every fortnight"*. At one ticket among
+  fourteen the die almost never reached it; at eight it asked a holder **ten times in eighty weeks.**
+  The gap is the event's now, whichever door raises it, and the make stamps `asked`. Sabotaged back
+  out: ten askings again. That is what the weighted die is *for* — a gate that only ever lived in the
+  raise channel had been protected by the die's own blindness.
+- **`chair`'s surgeon bar flipped on a sample where it could not hold** — the butcher's six houses
+  held "blood" for 88 weeks between them and lost one surgeon, a tie at 1.14 against 1.17 per hundred
+  where the game's 6%-a-week roll expects two or three; the check's own note records it flipping on
+  three earlier builds while nothing in `quitOn` changed. The rate is a report now; the clause is
+  hammered where the sample is, the way `tenure` tests a door: **18 of 300** forged butchers lose the
+  surgeon, **0 of 300** forged showmen, `quitOn` true and false. The hammer was first placed after the
+  arm that read it and reported itself missing; that was the check's.
+
+The second gate, on the final tree: **158 of 159**, the one red being `stature`'s forged fixture losing
+to the app's autosave in the gap before the reload — the race the harness's own note beside `forge`
+already describes ("failed on three runs out of three on a loaded machine") and mitigated with a
+last-moment second write. It passed alone at 52s. `forge` tries once more now when the token check
+still fails: the plant is the same bytes, a second attempt costs one reload, and nothing yields
+between that write and its reload either, which is the whole of the rule `fixtures` holds. No
+seeded figure in any other check moved.
 
 ### v3.203.0 — #245, phase 1: every event's reach is a number
 
