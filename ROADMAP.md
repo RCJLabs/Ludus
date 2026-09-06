@@ -4389,6 +4389,98 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.208.0 — #247a: the money row speaks on exposure, not on shortness
+
+**#247 phase 1 split the item; this is the first of the three.** The agenda's approach line spoke
+whenever `runway < RUNWAY_WARN`. Scored over **every** house-week of two seeded sets of 32 houses ×
+420 weeks (`probes/cliff.mjs`, new), against whether the house died of debt inside ten weeks:
+
+| the line speaks on | weeks | right | dying houses reached | median warning |
+|---|---|---|---|---|
+| `runway < WARN` — **as shipped** | 1,535 / 1,348 | **7.9% / 8.2%** | all | 10 / 9 |
+| exposure alone | 402 / 434 | **17.2% / 18.0%** | 14 of 15, 14 of 14 | 6 / 6 |
+| `runway < BAD` | 664 / 668 | 12.7% / 13.0% | all | 7 / 8 |
+| **exposure or `runway < BAD`** — shipped now | 692 / 706 | **12.4% / 12.5%** | all | 7 / 8 |
+
+Half the alarms, half again as often right, every house that dies still reached, and seven or eight
+weeks of warning. Exposure alone is the sharpest of the four and was **not** taken: it missed a house
+that died in one of the two sets, and again in the check's own third set under sabotage. A warning
+that never reaches a house it was written for is not a sharper warning, it is a narrower one.
+
+**What exposure is, and why it is the right question.** `runway` is the box over the BILL, and the
+villa panel says so in as many words — *"the box would carry this house N more weeks if nothing came
+in"*. It is the runway of a house that has stopped earning, and no house has: it was true for all 88
+houses of v3.207.0's run, survivors included, from a median week of 18. The reason it cannot do
+better is in the per-house tails, and it is the same reason v3.207.0's "cliff" reading was wrong: a
+house near the end does not slide, it **swings** — hundreds or thousands a week in both directions, on
+a purse, a levy, a man bought — and the fall that kills it is one of those swings going the wrong way.
+The gap the final week actually had to cross was a median of **0.7 and 1.3 weeks of the house's own
+bill** for a house under a 150d bill, **4.1 and 2.9** for one over it: well inside an ordinary week
+either way. So the question worth asking is not "how many weeks of bill are in the box" but *is there
+enough in the box to take an ordinary week going the wrong way*. `swingOf(d)` is the mean absolute
+weekly change, kept as one exponentially-weighted number rather than a history, and the row now says
+plainly: **"An ordinary week moves 640d and there is 210d in the box."** A statement of fact about
+exposure, not a prophecy, which is the only honest thing a house in this position can be told.
+
+**Two corrections to v3.207.0, both written into its own entry above.** The indexed-on-death table is
+a median of LEVELS over a population whose bills run 20d to 576d; the median of each house's own
+CHANGE over its last five weeks is −354 and −325, not −3,000, and only 2 of 15 and 3 of 14 lost most
+of it in the final week. And the `debtStage` ladder is not silent — read at the moment of death it is
+set on **29 of 29** — it is *simultaneous*: for most of these houses stage 1 is first set in the very
+week they die, which no sample taken before that week can see.
+
+**And the swing is measured at the top of the week, not off the digest.** The first cut read
+`weekDigest`'s `dl.gold`, which is what `endWeek` moved — the bill and the purses — and not what the
+WEEK moved: everything the player spends between weeks happens in `mut()` and is invisible to it. The
+swing collapsed onto the bill, `gold < swing` became `runway < 1`, and the row measured what the
+runway already did. Taken week-over-week off a mark at the top of `endWeek`, it reads **2.1× the
+bill** at the median where the collapsed version reads 0.95.
+
+**Six candidate signals were scored and four were killed by the measurement,** which is the point of
+scoring them: `cashShort` (the runway with the paper taken out — the leading hypothesis going in)
+reads true on 100% of both populations, lift 1.00, because when the runway is short the cash runway
+is short too, always. `paperHeavy` fires on 2% and 1%. `sinking` (gold below its own 4- and 8-week
+marks) reads 79% against 61%, lift 1.3. `goingBad` never fires at all, and that one is the
+instrument's fault rather than the game's — the window it asks about is three weeks wide by the time
+`owedWeek` has filtered the list. What survived: `deep` (already under water) at lift 10.5 and 7.0 but
+only 9 of 15 and 9 of 14 houses, `cannotSell` at 6.4 and 7.1 on 5 of each, and `oneBadWeek` at 2.6 and
+2.5 on 14 of 15 and 14 of 14 — coverage is what decided it.
+
+**One key for both sentences.** The exposure line and the runway line are the same item wearing two
+sentences, and which speaks turns on a boundary a swinging house crosses in both directions — so both
+carry `key:"money"`. Two keys would have been #144's rotating identity again, one release after
+v3.207.0 gave this very row its key for that exact reason.
+
+**And #229's own check had to be restated, which is the part of this worth being careful about.**
+`checks/runway.mjs` (v3.173.0) held that a house under eight weeks of coin is warned on **95%** of
+those weeks. That bar is the behaviour this release removed, and the gate failed on it — correctly.
+It was not relaxed to let the change through: the band it holds moved to the row's own trigger (in
+blood, or exposed), where the measured figure is **100% of 151 weeks**, with the under-eight number
+kept on screen because it is the number that moved (46.6%, from about 100%). #229's promise is not
+weakened by this — `checks/cliff.mjs` holds its strongest form directly, that every death by debt
+heard the row inside its last ten weeks, which the old bar never asked for at all. Two of the check's
+own faults came out with it: its `WARN` pattern did not know the new sentence, so it read a speaking
+agenda as silent; and its `SPEND` pattern was `/in the box/i`, which the new warning matches word for
+word, so the row that warns would have counted as the works nag telling a dying house to build. Both
+now name what they mean. Sabotage-verified after the restatement: the row silenced entirely (6% of
+the danger band) and the urgency flattened.
+
+**And one defect of my own, caught by that check's bench.** The exposure line took its urgency from
+the swing alone, so a house holding one week of bill (exposed, urgency 2) ranked BELOW one holding
+three (not exposed, urgency 3) — the row got quieter as the box got smaller. Whichever sentence
+speaks, the blood threshold is the blood threshold.
+
+**`checks/cliff.mjs`, four arms, 16 houses × 420 weeks, 12 seconds.** The row's precision is held as a
+RATIO against bare shortness on the same run — 1.75× measured, bar 1.25 — because the absolute rate
+moves with the seed and the ratio does not, and because the shipped-before behaviour scores exactly
+1.00 by construction. Every death by debt must have heard the row inside its last ten weeks. The row
+may not speak on more than a fifth of all weeks (it spoke on 21.4% before, 9.8% now). And the swing
+must read materially above the bill. Sabotage-verified three ways: the row reverted to shortness
+(1.00× and 21.4%, fails two arms), the row narrowed to exposure alone (one house of six deaf — the
+design decision, reproduced), and the swing fed from the bill (0.95×). The swing arm needed its
+sabotage twice: its first draft asked whether the swing EQUALLED the bill, and an exponentially-
+weighted mean of a bill that moves never equals the bill it is chasing.
+
 ### v3.207.0 — #247, phase 1: the ending curve, measured
 
 **Verify first, and the verifying changed the item.** #247 was written off sixteen houses and said two
@@ -4416,9 +4508,22 @@ weeks before the end, which is the thing an era median cannot show:
 | set B (14 debt deaths) | 2,610 | 3,040 | 2,105 | 2,627 | **684** | −1,203 |
 
 A house dying of debt is carrying two to four thousand denarii **ten weeks out** and about a thousand
-one week out. The whole fall happens inside the last week or two. And the two instruments that exist
-for it both miss: the `debtStage` ladder fired before **16 of the 35** deaths (2 of 10, 6 of 14, 8 of
-11 — a rate that swings harder by seed than any retune could move it), and #229's `runway` went under
+one week out.
+
+> **CORRECTED IN v3.208.0, and the correction is methodological.** This table is the median of the
+> LEVEL at each offset, and the medians at −5 and −1 are taken over different orderings of a
+> population whose houses run from a 20d bill to a 576d one. The median of each house's own CHANGE
+> over its last five weeks is −354 and −325, not −3,000, and only 2 of 15 and 3 of 14 debt deaths
+> lost more than three fifths of their five-week fall in the final week. "The whole fall happens
+> inside the last week or two" was wrong. What is true, and sharper, is in v3.208.0: the house
+> SWINGS — hundreds or thousands a week in both directions — and the fall that kills it is one of
+> those swings going the wrong way. The finding this table was written to support (that the house
+> looks solvent shortly before it dies, and nothing tells it otherwise) survives intact.
+
+And the two instruments that exist for it both miss: the `debtStage` ladder fired before **16 of the 35** deaths (2 of 10, 6 of 14, 8 of
+11 — and v3.208.0 explains the spread: read at the moment of death the flag is set on 29 of 29, so
+the ladder is not silent, it is SIMULTANEOUS — for most of these houses stage 1 was first set in the
+very week they died, which no weekly sample taken before that week can see), and #229's `runway` went under
 `RUNWAY_WARN` for **88 houses of 88**, survivors included, at a median week of 18 to 26. A marker that
 fires for every house that has ever lived is not a warning. **The fault is the approach, not the
 difficulty** — nothing tells a solvent-looking house that it is one bad week from the creditors' line.
@@ -6812,8 +6917,11 @@ before the end, and the house dies anyway (rope caveat: phase 3 must separate "n
 rope never pulls it"). Ruin is late attrition — roster 5 → 2 → 1 → 0 over the last forty weeks. **And
 the opening does not discriminate**: the era-one dead are not poorer at week 8 or 16 than the houses
 that live, on both sets, which retires phase 2 as written — the endowment is not the lever. The item
-is now **#247a** (the debt cliff has no approach — signal, not economy), **#247b** (the rising is heard
-and not answered), **#247c** (the yard that empties). Original text follows.
+is now **#247a** (the debt cliff has no approach — signal, not economy) — **SHIPPED v3.208.0**: the
+money row speaks on exposure (what an ordinary week of this house moves against what is in the box)
+or a runway already in blood, which halves the alarms, raises precision from 7.9/8.2% to 12.4/12.5%,
+reaches every house that dies and gives seven or eight weeks — **#247b** (the rising is heard and not
+answered), **#247c** (the yard that empties). Original text follows.
 
 Fourteen of sixteen houses end, and the two endings that take them are the strongbox and the cells:
 **debt 6, rebellion 7**, banned 1, survived 2 (16 × 420, seeded). The instrument's twelve show three

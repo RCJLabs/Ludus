@@ -12019,6 +12019,38 @@ const RUNWAY_BAD  = 4;    /* and says it in blood here */
 const RUNWAY_BUILD = 10;  /* and does not suggest stone under this */
 const runway = d => { const bill = weeklyBill(d);
   return bill > 0 ? Math.floor(((d.gold||0) + owedTotal(d)) / bill) : null; };
+/* ---- WHAT AN ORDINARY WEEK MOVES — #247a ----
+   `runway` is the box over the BILL, and the panel says as much in as many words: "the box would
+   carry this house N more weeks if nothing came in". It is the runway of a house that has stopped
+   earning, and no house has. MEASURED (`probes/cliff.mjs`, two seed sets of 32 houses x 420 weeks):
+   `runway < RUNWAY_WARN` was true on 1,535 and 1,348 house-weeks, of which 122 and 111 were inside
+   ten weeks of a death by debt. **A warning on shortness alone is right eight times in a hundred**,
+   and it fires for every house that has ever lived — all 88 of v3.207.0's, survivors included.
+
+   The reason it cannot do better is in the tails: a house near the end does not slide, it SWINGS.
+   Its box moves by hundreds or thousands a week in both directions, on a purse, a levy, a man
+   bought, and the fall that kills it is one of those swings going the wrong way at the wrong time.
+   The gap the final week actually had to cross was a median of 0.7 and 1.3 weeks of the house's own
+   bill for a small house, 4.1 and 2.9 for a large one — well inside one ordinary week either way.
+
+   So the question worth asking is not "how many weeks of bill are in the box" but "is there enough
+   in the box to take an ordinary week going the wrong way". `swingOf` is the mean absolute weekly
+   change, kept as one exponentially-weighted number rather than a history. Measured, `gold < swing`
+   reads true on 56% and 68% of the fatal short weeks against 21% and 27% of the rest — a lift of
+   2.6 and 2.5 where the shipped runway's is 1.0 — on 14 of 15 and 14 of 14 of the houses that die,
+   a median of six weeks before the end. It is not a prophecy and it is not sold as one: it is a
+   statement of fact about exposure, which is the only honest thing a house in this position can be
+   told. */
+const SWING_KEEP = 8;
+const swingOf = d => Math.max(1, Math.round((d.flags && d.flags.swing) || weeklyBill(d)));
+const exposed = d => d.gold < swingOf(d);
+const rwNow = d => { const r = runway(d); return r == null ? Infinity : r; };
+/* run once a week off the digest's own figure, so nothing is measured twice */
+function swingWeek(d, moved){
+  if(!d.flags) d.flags = {};
+  const was = d.flags.swing == null ? Math.abs(moved) : d.flags.swing;
+  d.flags.swing = was * (SWING_KEEP - 1) / SWING_KEEP + Math.abs(moved) / SWING_KEEP;
+}
 /* ---- AND WHAT THE AGENDA SAYS ABOUT IT ----
    The debt line in `agenda` is for a house already past empty. This is for the approach, which is
    where the death actually happens. It lives here rather than inside `agenda` because `bulk` caught
@@ -12035,22 +12067,52 @@ const moneyRow = d => {
      anybody deciding anything. It was already here and it is unchanged. */
   const line = creditLine(d), depth = d.gold < 0 ? clamp(d.gold / line, 0, 1) : 0;
   if(depth >= DEBT_STAGE[0])
-    return { urgency: depth >= DEBT_STAGE[2] ? 3 : 2, tab:"villa",
+    return { key:"debt", urgency: depth >= DEBT_STAGE[2] ? 3 : 2, tab:"villa",
       label:`${rnd(-d.gold)}d under, and ${rnd(-line)}d ends it`,
       sub: depth >= DEBT_STAGE[2] ? "a week or two, no more"
         : depth >= DEBT_STAGE[1] ? "the trades have started asking first"
         : "take a purse, sell the paper, or sell a man" };
-  /* AND THE APPROACH, wherever that one does not speak */
+  /* ---- AND THE EXPOSURE, WHICH IS THE THING THAT ACTUALLY KILLS — #247a ----
+     Before the runway, because the runway is right eight times in a hundred and this is right
+     twenty-one. Stated as the fact it is rather than a prediction: what is in the box against what
+     an ordinary week of this house moves. */
+  if(exposed(d) && d.gold >= 0)
+    /* ONE KEY FOR BOTH APPROACH LINES. They are the same item wearing two sentences — which of
+       them speaks turns on whether the box is under an ordinary week — and a house whose coin
+       swings will cross that boundary in both directions. Two keys would be #144's rotating
+       identity all over again, three weeks after v3.207.0 gave this very row its key. */
+    /* IN BLOOD WHEN THE RUNWAY IS TOO, or the row went quieter as the box got smaller: the first
+       cut read urgency off the swing alone, so a house holding one week of bill (exposed, urgency
+       2) ranked BELOW one holding three (not exposed, urgency 3). Whichever sentence speaks, the
+       blood threshold is the blood threshold. */
+    return { key:"money", urgency: (d.gold < swingOf(d) / 2 || rwNow(d) < RUNWAY_BAD) ? 3 : 2, tab:"villa:council",
+      label:`An ordinary week moves ${swingOf(d)}d and there is ${rnd(d.gold)}d in the box`,
+      sub: "one going the wrong way is the whole of it" };
+  /* ---- AND THE APPROACH, wherever those do not speak ----
+     At RUNWAY_BAD, not RUNWAY_WARN. Scored over every house-week of two seeded sets of 32 houses,
+     against whether the house died of debt inside ten weeks (`probes/cliff.mjs`):
+
+       the line speaks on          weeks    right   dying houses reached   lead
+       runway < WARN  (shipped)  1535/1348  7.9/8.2%        all           10/9
+       exposure alone             402/ 434 17.2/18.0%   14 of 15, 14 of 14  6/6
+       runway < BAD               664/ 668 12.7/13.0%        all            7/8
+       EXPOSURE OR runway < BAD   736/ 745 11.7/12.2%        all            7/8   <- this
+
+     Half the alarms of the shipped line, half again as often right, every house that dies still
+     reached, and seven or eight weeks of warning. Exposure alone is the sharpest of them and it is
+     not taken: it missed a house that died in one of the two sets, and a warning that never reaches
+     a house it was written for is not a sharper warning, it is a narrower one. The WARN band keeps
+     its meaning everywhere else — the villa panel still prints the honest "if nothing came in"
+     figure, and `RUNWAY_BUILD` still holds the stone back — it just stops being an alarm. */
   const rw = runway(d);
-  if(rw == null || rw >= RUNWAY_WARN) return null;
+  if(rw == null || rw >= RUNWAY_BAD) return null;
   /* keyed, because the sentence flips between "# more week", "# more weeks" and "the box is empty"
      as the runway crosses 1 and 0 — and every flip was a new key, an age of 0, and NEW AGAIN on
      the agenda: 24% of the 29 weeks it stood over, in v3.206.0's gate (checks/week, #144's rule) */
-  return { key:"runway", urgency: rw < RUNWAY_BAD ? 3 : 2, tab:"villa:council", weeks: rw,
+  return { key:"money", urgency: 3, tab:"villa:council", weeks: rw,
     label: rw <= 0 ? `The box is empty and the week still costs ${weeklyBill(d)}d`
       : `The box would carry this house ${rw} more week${rw===1?"":"s"}`,
-    sub: rw < RUNWAY_BAD ? "at what the week costs, that is the whole of it"
-      : `${weeklyBill(d)}d a week goes out whatever happens` };
+    sub: "at what the week costs, that is the whole of it" };
 };
 /* how close you are to being received at the next rung */
 function riseWeek(d){
@@ -21219,6 +21281,16 @@ function endWeek(d){
   d.pendingEvent = null;
   const digestMark = (d.log && d.log[0]) || null;
   const digestBefore = { gold:d.gold, fame:d.fame, favor:d.favor, unrest:d.unrest, roster:activeG(d).length };
+  /* ---- WHAT AN ORDINARY WEEK MOVES — #247a, and it is measured HERE and not off the digest ----
+     `weekDigest`'s `dl.gold` is the change `endWeek` itself made, which is the week's bill and its
+     purses and nothing else. Everything the player does — a man bought, steel, a work begun, a debt
+     sold — happens in `mut()` between one week and the next and is invisible to it. The first cut
+     read the digest and produced a swing that tracked the bill, so `gold < swing` collapsed into
+     `runway < 1` and the agenda row it fed measured the same thing the runway already did. Taken
+     week-over-week at the top of the week, this is the whole movement, which is what the player
+     experiences and what the measurement in `swingOf`'s note was made on. */
+  swingWeek(d, d.gold - (d.flags.goldMark == null ? d.gold : d.flags.goldMark));
+  d.flags.goldMark = d.gold;
   const fest = d.rome ? null : festivalNow(d);
   repairSpar(d);
   d.gladiators.forEach(g=>{ if(g.status==="away" && d.week+1>=g.returnWeek){ g.status="active"; chron(d, `${g.name} returns from ${PR(g).his} post at the noble's villa.`); } });
@@ -32890,6 +32962,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     riseStipend, riseFav, risePurse, liturgy, riseFee, RISE_ADMIT,
     runway, moneyRow, RUNWAY_WARN, RUNWAY_BAD, RUNWAY_BUILD, weeklyBill, creditLine, billIf, staffWages,
     OVER_TEXT, DEBT_STAGE,   /* #247 — the end screen's own table, so a check can ask whether a kind can be shown */
+    swingOf, exposed, swingWeek, SWING_KEEP,   /* #247a — what an ordinary week of this house moves */
     CENSUS_TOP, CREDIT_WEEKS, FAME_TIERS, FAME_WARM_AT, fameWarm, acclaimIdx, feastFresh, AMB_COOL,
     /* and the patrons the climb rests on */
     patronWeek, serveWants, recomputeFavor, patronsOf, makePatron, favourWorth, WANTS, RANKS,
