@@ -292,6 +292,61 @@ export async function run(){
         + `so this house is drawn from \`newSeedWord()\` off \`Math.random()\` and the run is not reproducible`);
   }
 
+  /* ---- FAULT SIX: AN INSTRUMENT THAT CALLS A NAME THE HANDLE DOES NOT CARRY ----
+     `probes/handle.mjs` opens by listing four systems that read as dead content because the function
+     behind them was not on `__LVDVS` — `setOut`/`comeHome`, `nameHeir`, `makeMarket`, `holdMunera` —
+     and says each time the cost was a confident wrong finding published first. `poachTarget` is the
+     fifth and the worst of them: `probes/pace.mjs` called `A.poachTarget(...)` inside a try/catch
+     every week of a 3,133-week run, the TypeError was swallowed, the catch left the answer false,
+     and **"a rival could take one of your men on 0 of 3,133 weeks" went into #246 as the item's
+     headline** — the stated reason its poach branch was called a dead one. Measured with the
+     function actually exported: **65.2% and 66.3%**.
+
+     Every one of those was invisible to `coverage` (which only sees what is already on the handle)
+     and to `actions` (whose list is hand-written, so it can catch a name that goes missing but never
+     one that was never added). This reads the instruments themselves: every `A.name(` any check or
+     probe calls has to be a name the handle exports. It is derived, so the next one is caught
+     without anybody remembering to write it down.
+
+     Read off the export block rather than a running browser, because a name can be missing there and
+     present on `window` by accident of scope, and the export block is the contract. */
+  { const src3 = fs.readFileSync(path.join(ROOT, "src", "ludus.jsx"), "utf8");
+    const at = src3.indexOf("if (process.env.LVDVS_TEST");
+    const block = at >= 0 ? src3.slice(at) : "";
+    const exported = new Set();
+    for(const m of block.matchAll(/(?:^|[\s,{])([A-Za-z_$][\w$]*)\s*(?=[,}\n])/g)) exported.add(m[1]);
+    for(const m of block.matchAll(/([A-Za-z_$][\w$]*)\s*:/g)) exported.add(m[1]);
+    const wanted = {};
+    for(const dir of ["checks", "probes"]){
+      const dd = path.join(ROOT, "test", dir);
+      for(const f of fs.readdirSync(dd).filter(x=>x.endsWith(".mjs"))){
+        const t = fs.readFileSync(path.join(dd, f), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+        for(const m of t.matchAll(/\bA\.([A-Za-z_$][\w$]*)\s*\(/g)){
+          const k = m[1];
+          /* ---- A GUARDED CALL IS THE CURE, NOT THE DISEASE ----
+             `A.palmOf ? A.palmOf(g.wins) : Math.min(4, g.wins||0)` names the risk and carries a
+             fallback; seven calls in this suite do exactly that and every one of them is right. The
+             fault is the UNGUARDED call — `A.poachTarget(d, h)` with nothing testing whether the
+             name is there, wrapped (as everything here is) in a try/catch that turns the TypeError
+             into a false. So a name is only reported where the file never mentions it except to
+             call it: no `A.name ?`, no `A.name &&`, and not named as a string in a `miss` list. */
+          const bare = new RegExp("A\\." + k + "\\s*(?:\\?|&&|\\|\\||\\)|,|;|=[^=])");
+          const named = new RegExp("[\"'`]" + k + "[\"'`]");
+          if(bare.test(t) || named.test(t)) continue;
+          (wanted[k] = wanted[k] || new Set()).add(`${dir}/${f}`);
+        }
+      }
+    }
+    const ghosts = Object.keys(wanted).filter(k=>!exported.has(k)).sort();
+    lines.push(`the handle's surface: ${Object.keys(wanted).length} names called by an instrument `
+      + `WITHOUT a guard, ${ghosts.length ? `${ghosts.length} of them NOT exported` : "every one of them exported"}`);
+    for(const g of ghosts.slice(0, 5))
+      bad.push(`${[...wanted[g]].slice(0,2).join(", ")} calls \`A.${g}(\` and \`${g}\` is not in the test `
+        + `handle's export block — the call throws, and every instrument in this suite wraps its calls `
+        + `in a try/catch, so a missing export does not read as an error. It reads as a MEASUREMENT: `
+        + `\`poachTarget\` was absent for the whole of #246's audit and its zero became the item`);
+  }
+
   /* ---- FAULT THREE: THE ROPE'S OWN OPTION LITERALS ----
      Only the literals the rope passes to its own inner functions, and only where a CALL opens one:
      `takeBout(d, {` and `run(d, offer, ids, {`. Two things the first draft of this got wrong and

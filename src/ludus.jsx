@@ -13592,9 +13592,13 @@ function poachTarget(d, h){
   if(!act.length) return null;
   return act.reduce((m,g)=> (g.defiance + gladValue(g)/60) > (m.defiance + gladValue(m)/60) ? g : m, act[0]);
 }
+/* the grudge a house needs before it will put money in front of one of your men — a bare 35 at
+   both gates below, and a third copy of it in `probes/pace.mjs`, until #246's instrument needed to
+   read the figure the gate reads rather than a number that matched it by hand */
+const GRUDGE_POACH = 35;
 function startPoach(d){
   if(d.poach || !d.rivals) return;
-  const cands = d.rivals.filter(x=>x.grudge>=35);
+  const cands = d.rivals.filter(x=>x.grudge>=GRUDGE_POACH);
   if(!cands.length) return;
   const h = cands.sort((a,b)=>(b.grudge*lanistaOf(b.name).poach)-(a.grudge*lanistaOf(a.name).poach))[0];
   const g = poachTarget(d, h);
@@ -13655,7 +13659,7 @@ function poachWeek(d){
     if(d.poach.weeks<=0) defect(d, d.poach);
     return;
   }
-  const eager = (d.rivals||[]).reduce((m,h)=>Math.max(m, h.grudge>=35 ? lanistaOf(h.name).poach : 0), 0);
+  const eager = (d.rivals||[]).reduce((m,h)=>Math.max(m, h.grudge>=GRUDGE_POACH ? lanistaOf(h.name).poach : 0), 0);
   if(R() < 0.07*Math.max(1,eager)) startPoach(d);
 }
 
@@ -32935,6 +32939,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        the exact fault that made #132's first three answers wrong.
        So the rule is three parts, not one: the action, the table it reads, and the gate that opens
        it. Everything here was found by asking what the nineteen above actually reference. */
+    poachTarget, regardLoyal, GRUDGE_POACH,   /* #246 — the poach gate's two terms, readable apart */
     GAMBITS, SWEARING, PLANSEASON, FAVOURS, answerRow, GAM_ACCOUNT, peacePrice, poachedMan, startPoach,
     /* the shelf #220 counts: the pacts, the lot, and the court's own price */
     PACTS, PACT_KEYS, pactOf, pactLeft, pactOwed, pactPace, offerPact, takePact, buyLot,

@@ -1503,9 +1503,26 @@ export async function forge(p, build, arg = null){
   if(out && out.__forge) throw new Error(`forge(): ${out.__forge}`);
   if(!out || !out.__planted) return out;     /* the builder chose not to plant */
 
+  /* ---- AND THEN THE DOOR IS SHUT, WHICH IS THE PART THAT WAS MISSING — v3.214.0 ----
+     Everything above out-RACES the autosave, and the race was still being lost: `stature` threw on
+     the v3.214.0 gate having lost the plant on BOTH attempts, and passed alone at 54s. Racing
+     harder is not a fix — the retry below is one more coin, and a loaded gate flips it badly.
+
+     The app does not touch `localStorage` at all. Every save goes through `window.storage.set`,
+     the shim `build.js` stamps into the head, which prefixes `lvdvs:` and writes from a promise.
+     So the write does not have to be out-run; it can be SHUT. Slot writes become a resolved no-op
+     in the same evaluate as the plant — nothing yields in between, which is the whole of the rule
+     `fixtures` holds — and the patch dies with the document on reload, so it cannot leak into what
+     is measured afterwards. Prefs and every other key still go through untouched. */
+  const shut = ()=>{ const b = window.__forgeBlob, ks = window.__forgeKeys || [];
+    if(b) for(const k of ks) localStorage.setItem(k, b);
+    const st = window.storage;
+    if(st && !st.__forgeShut){ const real = st.set.bind(st);
+      st.set = (k, v) => /ludus-slot-\d/.test(k) ? Promise.resolve({ key:k, value:v }) : real(k, v);
+      st.__forgeShut = true; } };
+
   /* the second write: after the app's autosave timer has fired, and immediately before the reload */
-  await p.evaluate(()=>{ const b = window.__forgeBlob, ks = window.__forgeKeys || [];
-    if(b) for(const k of ks) localStorage.setItem(k, b); });
+  await p.evaluate(shut);
   await p.reload({ waitUntil:"domcontentloaded" });
   await p.waitForTimeout(1100);
   await p.evaluate(()=>{ const b=[...document.querySelectorAll("button")]
@@ -1520,8 +1537,7 @@ export async function forge(p, build, arg = null){
      nothing about what is measured. Nothing yields between this write and its reload either, which
      is the whole of the rule `fixtures` holds. */
   if(!got || !got.flags || got.flags.__forge !== token){
-    await p.evaluate(()=>{ const b = window.__forgeBlob, ks = window.__forgeKeys || [];
-      if(b) for(const k of ks) localStorage.setItem(k, b); });
+    await p.evaluate(shut);
     await p.reload({ waitUntil:"domcontentloaded" });
     await p.waitForTimeout(1100);
     await p.evaluate(()=>{ const b=[...document.querySelectorAll("button")]
@@ -1530,9 +1546,11 @@ export async function forge(p, build, arg = null){
     got = await slot(p);
   }
   if(!got || !got.flags || got.flags.__forge !== token)
-    throw new Error("forge(): the planted house did not survive the load — twice — the app's own save is "
-      + "on screen instead, so everything measured after this would be another house. Check that "
-      + "nothing yields between the write and the reload (see the `fixtures` check).");
+    throw new Error("forge(): the planted house did not survive the load — twice, with the slot "
+      + "writes shut — the app's own save is on screen instead, so everything measured after this "
+      + "would be another house. The autosave is no longer the suspect it was: check that nothing "
+      + "yields between the write and the reload (see the `fixtures` check), and that `window.storage` "
+      + "is still the only path to a slot.");
   const rest = {}; for(const k of Object.keys(out)) if(k !== "__planted") rest[k] = out[k];
   return rest;
 }
