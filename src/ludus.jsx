@@ -32963,6 +32963,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     runway, moneyRow, RUNWAY_WARN, RUNWAY_BAD, RUNWAY_BUILD, weeklyBill, creditLine, billIf, staffWages,
     OVER_TEXT, DEBT_STAGE,   /* #247 — the end screen's own table, so a check can ask whether a kind can be shown */
     swingOf, exposed, swingWeek, SWING_KEEP,   /* #247a — what an ordinary week of this house moves */
+    docCalm, cellCalm, perkCalm, lanCalm, collOn, docUnrest, pit,   /* #247b — the terms of the weekly drift */
     CENSUS_TOP, CREDIT_WEEKS, FAME_TIERS, FAME_WARM_AT, fameWarm, acclaimIdx, feastFresh, AMB_COOL,
     /* and the patrons the climb rests on */
     patronWeek, serveWants, recomputeFavor, patronsOf, makePatron, favourWorth, WANTS, RANKS,
