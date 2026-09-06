@@ -112,30 +112,65 @@ export async function run({ p, errors }){
        between them plus an absolute, both set from the measurement written in ROADMAP v3.204.0 — a
        flat die is what a regression looks like, and it is what the sabotage restores. */
     const runDie = (label) => {
-      const H = 6, W = 260; const drew = {}; const raw = {}; let weeks = 0;
+      const H = 18, W = 260; const drew = {}; const raw = {}; let weeks = 0;
+      /* ---- PER HOUSE AND PER WEEK, so the two dice can be compared over the same span ----
+         This pooled every draw and divided. The two runs do not live equally long — the houses die,
+         and a different die re-phases WHEN — so v3.211.0 read 954 weighted weeks against 1,147 flat
+         on one build and 819 against 1,155 on the next, while the rare tier is late-game (`warTax`,
+         `theRoad`, `primacy`, `stash`). The lift then moves with the LIFESPANS rather than with the
+         weighting: 9.1 points became 0.7 on a release that added no draws at all. Each draw is kept
+         with its house and week now, and the shares are taken over the span BOTH runs reached. */
+      const perHouse = Array.from({length:H}, ()=>({ weeks:0, draws:[] }));
+      let cur = null;
       for(const k of A.EV_DRAWN){ const f = A.EVENTS[k].make; raw[k] = f;
-        A.EVENTS[k].make = function(d){ const ev = f.call(this, d); if(ev) drew[k] = (drew[k]||0) + 1; return ev; }; }
+        A.EVENTS[k].make = function(d){ const ev = f.call(this, d);
+          if(ev){ drew[k] = (drew[k]||0) + 1; if(cur) cur.draws.push({ k, w:d.week }); } return ev; }; }
       try {
         for(let h=0; h<H; h++){ const d = A.newGameState("Die"+h, "clean", `DIE-RUN-${h}`, null);
-          for(let w=0; w<W; w++){ if(d.over) break; try { R.lanista(d); } catch(e){ out.notes.push(`${label}: rope threw at week ${w} of house ${h}: ${e && e.message || e}`); break; } weeks++; } }
-      } finally { for(const k of Object.keys(raw)) A.EVENTS[k].make = raw[k]; }
-      return { weeks, drew, top: Object.entries(drew).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([k,v])=>`${k} ${v}`).join(" · ") };
+          cur = perHouse[h];
+          for(let w=0; w<W; w++){ if(d.over) break; try { R.lanista(d); } catch(e){ out.notes.push(`${label}: rope threw at week ${w} of house ${h}: ${e && e.message || e}`); break; } weeks++; cur.weeks++; } }
+      } finally { cur = null; for(const k of Object.keys(raw)) A.EVENTS[k].make = raw[k]; }
+      return { weeks, drew, perHouse, top: Object.entries(drew).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([k,v])=>`${k} ${v}`).join(" · ") };
     };
     /* shares are computed AFTER the weights are back, against the real tiers — the first draft
        counted the flat run's rare tier while every weight was one, and read 0.0% */
     const shareOf = (run, rareKeys) => { const total = Object.values(run.drew).reduce((a,b)=>a+b, 0);
       const rare = rareKeys.reduce((s,k)=>s+(run.drew[k]||0), 0); return { total, rare, share: total ? rare/total : 0 }; };
+    /* the same two runs, counted only over the weeks BOTH of them reached on each seed */
+    const matched = (run, other, rareKeys) => { const RK = new Set(rareKeys);
+      let total = 0, rare = 0, span = 0;
+      for(let h = 0; h < run.perHouse.length; h++){
+        const cap = Math.min(run.perHouse[h].weeks, (other.perHouse[h] || { weeks:0 }).weeks);
+        span += cap;
+        for(const x of run.perHouse[h].draws) if(x.w <= cap){ total++; if(RK.has(x.k)) rare++; }
+      }
+      return { total, rare, span, share: total ? rare/total : 0 }; };
     { const weighted = runDie("weighted");
       /* the same seeds on a flat die: every ticket one, every cooldown nought — the v3.203.0 draw */
       const keep = {}; for(const k of Object.keys(A.EV_DIE)){ keep[k] = { ...A.EV_DIE[k] }; A.EV_DIE[k].w = 1; A.EV_DIE[k].cool = 0; }
       let flat; try { flat = runDie("flat"); } finally { for(const k of Object.keys(keep)) Object.assign(A.EV_DIE[k], keep[k]); }
       const rareKeys = A.EV_DRAWN.filter(k=>A.evTune(k).w >= 4);
-      const Wd = shareOf(weighted, rareKeys), Fl = shareOf(flat, rareKeys);
-      out.notes.push(`weighted: ${weighted.weeks} weeks · ${Wd.total} die draws · four-ticket-and-up ${Wd.rare} (${(Wd.share*100).toFixed(1)}%) · ${weighted.top}`);
-      out.notes.push(`flat:     ${flat.weeks} weeks · ${Fl.total} die draws · the same events ${Fl.rare} (${(Fl.share*100).toFixed(1)}%) · ${flat.top}`);
+      const Wd = matched(weighted, flat, rareKeys), Fl = matched(flat, weighted, rareKeys);
+      const Wpool = shareOf(weighted, rareKeys).share;
+      { const Wr = shareOf(weighted, rareKeys), Fr = shareOf(flat, rareKeys);
+        out.notes.push(`(pooled and unmatched: weighted ${Wr.rare}/${Wr.total} = ${(Wr.share*100).toFixed(1)}% over `
+          + `${weighted.weeks} weeks · flat ${Fr.rare}/${Fr.total} = ${(Fr.share*100).toFixed(1)}% over ${flat.weeks} — `
+          + `the matched figures below are what the floor is held on)`); }
+      out.notes.push(`weighted: ${Wd.span} matched weeks · ${Wd.total} die draws · four-ticket-and-up ${Wd.rare} (${(Wd.share*100).toFixed(1)}%) · ${weighted.top}`);
+      out.notes.push(`flat:     ${Fl.span} matched weeks · ${Fl.total} die draws · the same events ${Fl.rare} (${(Fl.share*100).toFixed(1)}%) · ${flat.top}`);
       out.rare = { weighted:+(Wd.share*100).toFixed(1), flat:+(Fl.share*100).toFixed(1), lift:+((Wd.share-Fl.share)*100).toFixed(1) };
-      say(Wd.total >= 100 && Fl.total >= 100 && Wd.share >= DIE_FLOOR.abs && Wd.share - Fl.share >= DIE_FLOOR.lift,
-        `the rare tier takes ${(Wd.share*100).toFixed(1)}% of die draws weighted and ${(Fl.share*100).toFixed(1)}% flat on the same seeds — a lift of ${((Wd.share-Fl.share)*100).toFixed(1)} points (floor: ${(DIE_FLOOR.abs*100).toFixed(0)}% absolute, +${(DIE_FLOOR.lift*100).toFixed(0)} lift)`); }
+      /* ---- EACH FLOOR ON THE STATISTIC IT WAS SET ON ----
+         `DIE_FLOOR.abs` (12%) was calibrated in v3.204.0 on the POOLED share of a six-house run.
+         Matching the spans is the right way to read the LIFT — it removes the lifespan confound
+         that turned 9.1 points into 0.7 on a release with no new draws — but it also systematically
+         lowers the absolute share, because it caps each seed at the shorter of the two runs and the
+         rare tier lives late. Measured on eighteen houses: pooled 13.4% weighted against 8.6% flat,
+         matched 10.4% against 7.5%. Holding a pooled floor against a matched number would be
+         comparing two different statistics, so the lift is held matched and the absolute pooled.
+         The house count went 6 to 18 in the same repair: at six, the matched rare counts were 8 and
+         11 draws, which cannot carry a two-point bar either way. */
+      say(Wd.total >= 100 && Fl.total >= 100 && Wpool >= DIE_FLOOR.abs && Wd.share - Fl.share >= DIE_FLOOR.lift,
+        `the rare tier takes ${(Wd.share*100).toFixed(1)}% of matched die draws weighted and ${(Fl.share*100).toFixed(1)}% flat (pooled ${(Wpool*100).toFixed(1)}%) on the same seeds — a lift of ${((Wd.share-Fl.share)*100).toFixed(1)} points (floor: ${(DIE_FLOOR.abs*100).toFixed(0)}% absolute, +${(DIE_FLOOR.lift*100).toFixed(0)} lift)`); }
     /* 7 — #245 phase 3: an event this house has never met weighs more.
        `flags.evLast[k]` unset IS "never drawn here", so no new state. From a pool of six one-ticket
        keys with exactly one of them unseen, the unseen one must come out first about EV_FRESH times

@@ -4389,6 +4389,107 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.211.0 — #256, phase 1: the bay has a strongbox
+
+**A rival house had no purse.** `makeRivals` wrote `{ name, fame, grudge, form, formTier, star,
+fighters }`, `RIVAL_MOVES.buy/sell/retrain/doctore/tour` cost nothing, and a rival *"hires a doctore
+out of Ravenna at a price people are talking about"* with no price. Every economic verb pointed at
+the bay was one-sided because only one side had an economy.
+
+**Measured first as a shadow ledger** (`probes/coffer.mjs`, new — two seeded sets of 16 houses × 420
+weeks, 96 rival-lives, run beside the game without touching it):
+
+| per rival house, over a life | set A | set B |
+|---|---|---|
+| what would have come in (the tier's own app and purse) | 17,934d | 21,404d |
+| what the moves would have cost | 10,017d | 8,796d |
+| the men's keep at the player's own rate | 14,196d | 12,864d |
+| the purse **without** a bill, by era | 2,180 / 8,206 / 16,740 / 11,806 | 2,453 / 8,891 / 16,285 / 32,988 |
+| the same purse **paying** that bill | 10 / −3,917 / −1,342 / −9,998 | 82 / −1,667 / −2,390 / +8,261 |
+
+The player's own box runs 1,451 / 4,074 / 4,925 / 6,191, so a rival's economy is not a rounding error
+beside his — it is the same size. Once the men are fed it sits near zero with a wide swing: **79% and
+83% of houses would go under water at some point, for a median of 76 and 82 weeks.** That is the
+number the design was written on, and it is why an empty purse is answered by a **ladder** and not a
+death: four houses in five dipping under would empty the bay inside a generation, while four in five
+having to sell a man to make the week is the drama the item asked for. A third of a rival's fighting
+is invisible to the player besides — 347 and 369 cards taken out of town against 700 and 740 meetings
+on his own sand — and `RIVAL_MOVES.won`, the most heavily weighted move in the table, is exactly that
+card. It paid fame and nothing else.
+
+**What shipped.** `h.purse`, seeded lazily from fame and stature so that a save written before this
+opens with a box. Fed by the appearance fee for every man of theirs on a card and the tier's purse
+when he is the one who walks off — the player's card and the ones out of town alike. Spent on the
+men's keep, the doctore's wage, the wagons when they are out, and every move the table makes: the
+block's asking price for a buy, `RETRAIN_FEE` for a retrain, the price people are talking about for a
+doctore, and the block's cut credited on a sale. And when it empties, a **`RUINS`-shaped ladder**: the
+least valuable man goes first, then the man who trains them, and only a house with neither left and
+nothing coming in goes dark — `broke`, a third `endedAs` beside `fond` and `broken`, which the sale
+line and the bay's own sheet both tell apart.
+
+**The standing cost was swept, not solved.** Charged only for its men, a rival ended era three holding
+**31,574d against the player's 6,191** — five times richer, because its income rises with its fame
+while feeding four men does not, and a purse that never binds is a purse phase 2 has nothing to read.
+The player's bill carries the half a rival has no line for — the yard, the steel, the city, the
+household — and all of it scales with the house:
+
+| `RIVAL_STANDING` | the bay's purse p50 by era | |
+|---|---|---|
+| 0.05 | 690 / 3,621 / 17,076 / 18,770 | still running away |
+| 0.20 | 596 / 1,673 / 1,758 / 506 | broken; the tenth percentile under water by era three |
+| **0.12** | **614 / 4,116 / 6,494 / 3,964** | on his own curve, tenth percentile solvent |
+
+**Nothing in it draws — and that is not the same as nothing re-phasing.** No `R()`, no `ri()`, no
+`pick()` on any path this adds: the seed is arithmetic on fame and stature, the man sold to make the
+week is the least valuable rather than a random one, and the ladder is fixed. The check holds that
+directly, because a single bare `R()` added to the weekly tick moved the stream *and* threw the bay's
+whole curve out of band. **But the consequences re-phase anyway**, and the gate said so: a house that
+sells a man has a different roster, which changes which `RIVAL_MOVES` are available, which changes
+what `pick(bag)` returns and how many draws the chosen move makes. Not drawing keeps the arithmetic
+honest; it does not buy a suite that reads identically. Three checks failed on that and none of them
+was a regression — the section below is what they were.
+
+**`checks/coffer.mjs`, five arms, 12 houses × 420 weeks, 9 seconds.** Every house has a purse and it
+moves both ways (20 ended richer than they opened, 16 poorer). It sits on the player's own scale —
+held as an order of magnitude, [0.2, 6] of his median by era, because a curve fitted tighter than
+that is a constant fitted to one seed. A card pays the other side. And the ladder's three rungs are
+**driven** rather than waited for, because the lower two are rare by design — 190 sales in 420 weeks
+of play against no dismissals and no dark houses — and a rung nobody reaches is a rung nobody has
+tested. Sabotage-verified four ways: the card's payment removed (0.2× and 0.1×), the first rung
+disabled, `RIVAL_STANDING` set to zero (6.2×), and one bare draw added to the weekly tick.
+
+**And three checks failed on the re-phasing, all of them thin arms rather than regressions.** Each
+was strengthened rather than relaxed, and the diagnosis in every case was a comparison against the
+previous build's own output:
+
+- **`chair`** — the butcher's surgeon walked out 3 times before and 0 after, on *identical* runs:
+  the same 88/88 named weeks and the same 6/6 houses. At a measured 3.4% a week over 88 weeks, a
+  silent build is a one-in-twenty draw. The clause is already hammered three hundred times on forged
+  states in the same check — a butcher loses his surgeon 18 times in 300, a calm showman never, and
+  `quitOn` reads true on one and false on the other — so the play arm now **reports** and the hammer
+  carries the promise it always carried.
+- **`steel`** — "not one of 6 bouts wore the man's kit once the crux was answered", against 2 of 6
+  on the build before. The arm required `g.status === "active"` after the resume, and a man held at
+  the balance is by definition on the ground: most of the sample dies there. The promise is that
+  ANSWERING makes the bout happen, and the steel wears on the man who died in it exactly as on the
+  man who walked. Condition dropped: **6 of 6**.
+- **`die`** — arm 6's lift fell from 9.1 points to 0.7, which looked like the weighted die had
+  stopped working. It had not: the arm pooled each run's draws and divided, and the two runs do not
+  live equally long. It read 954 weighted weeks against 1,147 flat on one build and 819 against
+  1,155 on the next, while the rare tier is late-game (`warTax`, `theRoad`, `primacy`, `stash`), so
+  the lift moved with the LIFESPANS. Each draw is now kept with its house and week and the shares
+  are taken over the span both runs of a seed reached — and the house count went 6 to 18, because at
+  six the matched rare counts were 8 and 11 draws, which cannot carry a two-point bar either way.
+  Measured on eighteen: **pooled 13.4% weighted against 8.6% flat, matched 10.4% against 7.5%, a
+  lift of +2.9**. The two floors now sit on the statistics they were each calibrated on — the lift
+  matched, the absolute pooled — and the flat-die sabotage still fails the arm.
+
+**Two instrument faults on the way.** The rope's bout result carries `win` — the player's verdict —
+and not `winner`, so the first shadow ledger scored a rival's man at **zero wins in 224 meetings**. And
+the first ledger had income and purchases and no weekly bill at all, which is not a ledger; adding it
+turned a comfortable 2,180 → 11,806 curve into one that spends four fifths of its life under water,
+and that is the finding.
+
 ### v3.210.0 — #247c, phase 1: the yard that empties is never forced to
 
 **The last of #247's three, and it was filed as "men out faster than in". It is not.**
@@ -7317,7 +7418,15 @@ way the list already groups.
 
 ---
 
-**#256 — The Bay Has No Strongbox** *(overhaul · medium · 3 phases)*
+**#256 — The Bay Has No Strongbox** *(overhaul · medium · 3 phases)* — **PHASE 1 SHIPPED v3.211.0.**
+`h.purse` exists, seeded from fame and stature, fed by the tier's appearance fee and purse from every
+card their men fight (the player's and the third of their fighting he never sees), spent on the men,
+the standing, the doctore, the wagons and every move the table makes — and answered when empty by a
+`RUINS`-shaped ladder: a man, then the doctore, then dark as `broke`. Measured as a shadow ledger
+first: a rival's economy is the same size as the player's, and once the men are fed **79-83% of
+houses spend part of their life under water**. `RIVAL_STANDING` was swept to 0.12, which puts the
+bay's purse at 614 / 4,116 / 6,494 / 3,964 against his 1,451 / 4,074 / 4,925 / 6,191. Nothing in it
+draws. **Phases 2 (their moves read it) and 3 (it shows) are open.**
 
 `makeRivals` writes `{ name, fame, grudge, form, formTier, star, fighters }` — **a rival house has no
 purse.** `RIVAL_MOVES.buy/sell/retrain/doctore/tour` cost nothing and are weighted by fame and the

@@ -6984,6 +6984,103 @@ function rivalReadOf(d){
    (0.85) do not. And it is a different set of houses on the block: Pollio bids 1.8 and Glaber 1.7,
    so the two who cannot retrain their way to a counter will buy one. */
 const readSharp = (h, k) => clamp(((lanistaOf(h.name)[k] || 1) - 1) * READ_GAIN, 0, READ_CAP);
+/* ---- THE BAY HAS NO STRONGBOX — #256 phase 1 ----
+   `makeRivals` wrote `{ name, fame, grudge, form, formTier, star, fighters }` and no purse, so every
+   economic verb pointed at a rival was one-sided: the moves below bought, sold, retrained and hired
+   for nothing, a poach put money in front of a man from a box that did not exist, and a rival "hires
+   a doctore out of Ravenna at a price people are talking about" with no price.
+
+   MEASURED FIRST (`probes/coffer.mjs`, two seeded sets of 16 houses x 420 weeks, 96 rival-lives),
+   as a shadow ledger run beside the game without touching it:
+
+     what would have come in over a life   17,934d and 21,404d   (the tier's own app and purse)
+     what the moves would have cost         10,017d and  8,796d
+     the men's keep at the player's rate    14,196d and 12,864d
+     the purse without a bill, by era       2,180 / 8,206 / 16,740 / 11,806
+     the same purse paying that bill        10 / -3,917 / -1,342 / -9,998
+
+   The player's own box runs 1,451 / 4,074 / 4,925 / 6,191. So a rival's economy is not a rounding
+   error beside his — it is the same size, and once the men are fed it sits near zero with a wide
+   swing: **79% and 83% of houses would go under water at some point, for a median of 76 and 82
+   weeks.** That is the number this phase was written on, and it is why the answer to an empty purse
+   is a LADDER and not a death: four houses in five dipping under would empty the bay inside a
+   generation, while four in five having to sell a man to make the week is the drama the item wants.
+
+   A third of a rival's fighting is invisible to the player besides — 347 and 369 cards taken out of
+   town against 700 and 740 meetings on his own sand — and `RIVAL_MOVES.won`, the most heavily
+   weighted move in the table, is exactly that card. It pays fame and, now, a purse.
+
+   NOTHING HERE DRAWS. No `R()`, no `ri()`, no `pick()` on any path this adds — the seed is
+   arithmetic on fame and stature, the man sold to make the week is the least valuable rather than a
+   random one, and the ladder is fixed. A rival economy that re-phased every seeded fixture in the
+   suite would have cost more to verify than it is worth. */
+const RIVAL_KEEP = 10;          /* a man of theirs eats what a man of yours eats, less the buildings */
+const RIVAL_DOC = 26;           /* and a doctore out of Ravenna is paid every week he is kept */
+const RIVAL_TOUR = 40;          /* wagons, road and lodging, for every week the wagons are out */
+/* ---- AND WHAT STANDING COSTS, which the first build left out and the purse ran away without ----
+   Charged only the men, a rival ended era three holding 31,574d against the player's 6,191 — five
+   times richer, because its income rises with its fame (the tier's purse) while feeding four men
+   does not. A purse that never binds is a purse phase 2 has nothing to read. The player's own bill
+   carries the half a rival has no line for — the yard, the steel, the city, the household — and all
+   of it scales with the house. So does this: measured against rival fame of 249 / 770 / 1,616 /
+   2,255 by era, the figure was swept rather than solved: 0.05 left the purse still running away
+   (690 / 3,621 / 17,076 / 18,770 by era), 0.20 broke it (596 / 1,673 / 1,758 / 506, with the tenth
+   percentile under water by era three), and **0.12 lands it on the player's own curve** — 614 /
+   4,116 / 6,494 / 3,964 against his 1,451 / 4,074 / 4,925 / 6,191, tenth percentile still solvent. */
+const RIVAL_STANDING = 0.12;
+const PURSE_SEED = h => Math.round((h.fame || 0) * 12 * ((lanistaOf(h.name).stature || 0.4) + 0.6));
+/* lazily, because every save written before this has no purse and must not start at nothing */
+const rivalPurse = h => { if(h && h.purse == null) h.purse = PURSE_SEED(h); return (h && h.purse) || 0; };
+const rivalPay = (h, n) => { if(h) h.purse = rivalPurse(h) + Math.round(n); };
+/* what a house of this standing takes for showing a man, and for winning with him */
+const rivalTier = h => { const f = h.fame || 0; let t = 0;
+  for(let i = 0; i < TIERS.length; i++) if(f >= TIERS[i].fame) t = i; return t; };
+const rivalFee = h => TIERS[rivalTier(h)].app;
+const rivalWin = h => Math.round(TIERS[rivalTier(h)].purse[0] + TIERS[rivalTier(h)].purse[1] * 0.5);
+
+/* ---- AND WHAT AN EMPTY ONE DOES, which is the half that cannot be inferred ----
+   `RUINS`-shaped and graded, because the measurement says the dip is common and the death should
+   not be: a man goes first, then the man who trains them, and only a house with neither left and
+   nothing coming in goes dark. `broke` is a third `endedAs` beside `fond` and `broken`. */
+const RIVAL_DARK = 12;          /* weeks under water with nothing left to sell */
+function rivalShort(d, h){
+  if(!h || h.retired || rivalPurse(h) >= 0) { if(h) h.under = 0; return; }
+  h.under = (h.under || 0) + 1;
+  const men = h.fighters || [];
+  if(men.length > 2){
+    const worst = men.slice().sort((a,b)=>gladValue(a) - gladValue(b))[0];
+    h.fighters = men.filter(f=>f.id !== worst.id);
+    rivalPay(h, Math.round(gladValue(worst) * 0.7));
+    /* ---- ONCE PER HOUSE, NOT EVERY TIME ----
+       The first cut spoke on every sale — 190 of them in a 420-week run — and `chronicle`'s cap on
+       any one shape (1% of the log, six shapes allowed over it) caught it at seven. A house selling
+       a man to make the week is news the first time it happens and its own business afterwards. */
+    if(!h.soldToLive){ h.soldToLive = d.week;
+      chron(d, `${lanistaOf(h.name).name} sells ${worst.name} out of Capua and does not say to whom. A house that is selling men it has not finished with is a house with a reason.`, "info"); }
+    return;
+  }
+  if(h.doctore){ h.doctore = false; rivalPay(h, RIVAL_DOC * 8);
+    chron(d, `The doctore House ${h.name} brought from Ravenna is on the road again. Nobody at that gate is saying why, which is how everybody knows.`, "info");
+    return; }
+  if(h.under >= RIVAL_DARK){
+    closeHouse(d, h, "broke");
+    chron(d, `House ${h.name} is finished — not beaten, spent. ${lanistaOf(h.name).name} could not make the week and there was nothing left in the yard to sell to make it.`, "info");
+  }
+}
+/* what the other side of the player's card is worth to the house that sent the man: the tier's
+   appearance fee for showing him, and its purse as well when he is the one who walks off. Named
+   rather than inline because `doFight` is at its `bulk` cap and three more lines put it over. */
+const rivalCardPay = (h, playerWon) => rivalPay(h, rivalFee(h) + (playerWon ? 0 : rivalWin(h)));
+/* run once a week beside `rivalTurn`: the men eat whether or not anybody fought */
+function rivalPurseWeek(d){
+  for(const h of (d.rivals || [])){
+    if(h.retired) continue;
+    rivalPay(h, -RIVAL_KEEP * (h.fighters || []).length - RIVAL_STANDING * (h.fame || 0));
+    if(h.doctore) rivalPay(h, -RIVAL_DOC);
+    if(h.away) rivalPay(h, -RIVAL_TOUR);
+    rivalShort(d, h);
+  }
+}
 const RIVAL_MOVES = {
   /* ---- NOT THE PARAGON — v3.206.0 ----
      `gladValue` puts him at the top of any block he stands on, so the first rival to roll a buy
@@ -7009,6 +7106,7 @@ const RIVAL_MOVES = {
         else if(fit) aimed = true;
       }
       d.market = d.market.filter(g=>g.id!==best.id);
+      rivalPay(h, -(best.price || 0));                    /* #256 — he pays what you would have */
       const f = makeRivalFighter(d, h.name, 55);
       ["str","agi","end","tec","sho","dis","potential"].forEach(k=>{ f[k]=best[k]; });
       f.name = best.name; f.origin = best.origin; f.cls = best.cls; f.sex = best.sex;
@@ -7037,6 +7135,7 @@ const RIVAL_MOVES = {
       g.price = rnd(gladValue(g)*0.85);
       g.shown = sellerSays(g); g.scouted = false; g.soldBy = h.name;
       d.market.push(g);
+      rivalPay(h, Math.round((g.price || 0) * 0.85));     /* #256 — less the block's cut */
       return pick([
         `${L.name} puts ${worst.name} on the block. Whatever the reason, it is on the block now and you can look at it.`,
         `${worst.name} is out of House ${h.name} and standing in the market with a price on him. Nobody says why.`,
@@ -7045,6 +7144,7 @@ const RIVAL_MOVES = {
       ]); } },
   retrain: { weight:h=>lanistaOf(h.name).train, when:(d,h)=>h.fighters.length>0,
     run(d,h){ const L=lanistaOf(h.name);
+      rivalPay(h, -RETRAIN_FEE);                          /* #256 */
       const f = pick(h.fighters); const was = f.cls;
       /* #236 — he may have been watching. The bias and the line that names it are in the same
          function on purpose: there is no commit where a house out-counters you off-screen, which
@@ -7080,6 +7180,7 @@ const RIVAL_MOVES = {
       ]); } },
   doctore: { weight:h=>lanistaOf(h.name).train, when:(d,h)=>!h.doctore,
     run(d,h){ const L=lanistaOf(h.name); h.doctore = true;
+      rivalPay(h, -RIVAL_DOC * 10);                       /* #256 — the price people are talking about */
       return `${L.name} has hired a doctore out of Ravenna at a price people are talking about. His men will be better in a month.`; } },
   tour: { weight:()=>0.8, when:(d,h)=>!h.away,
     run(d,h){ const L=lanistaOf(h.name); h.away = ri(3,6);
@@ -7087,6 +7188,7 @@ const RIVAL_MOVES = {
   won: { weight:()=>1.6, when:(d,h)=>h.fighters.length>0,
     run(d,h){ const L=lanistaOf(h.name); const f = pick(h.fighters);
       f.wins++; f.pfame += ri(4,9); h.fame += ri(5,11);
+      rivalPay(h, rivalFee(h) + rivalWin(h));             /* #256 — a third of their fighting is here */
       if(!f.nick && f.wins>=5) f.nick = freshNick(d);
       { const town = pick(["Nola","Cales","Suessa","Atella","Teanum"]);
         return pick([
@@ -7494,12 +7596,15 @@ function bayRefill(d){
     dark.lineage.sold = d.week;
     h.after = L;                                   /* whose yard this was, and how it ended */
     if(L.endedAs === "broken"){ h.grudge = clamp(h.grudge + ri(16, 30), 0, 100); }
+    else if(L.endedAs === "broke"){ /* #256 — nobody's doing but his own: no grudge, no warmth */ }
     else { h.warm = clamp((h.warm||0) + ri(10, 20), 0, 100); h.grudge = clamp(h.grudge - 6, 0, 100); }
     if(L.kin) h.kin = true;
   }
   d.rivals.push(h);
   chron(d, N.line(h), "info");
-  if(L) chron(d, L.endedAs === "broken"
+  if(L && L.endedAs === "broke")
+    chron(d, `It is ${L.name}'s yard he has bought, and he bought it from the creditors. There was nothing in the sale but the walls — whatever ${L.name} had, he had spent before the end.`, "info");
+  else if(L) chron(d, L.endedAs === "broken"
     ? `It is ${L.name}'s yard he has bought, and he did not pay much for it. Everybody who sold him anything that week told him how it came to be empty, and whose doing that was. He has not said a word about it to you, which is its own kind of saying something.`
     : `It is ${L.name}'s yard he has bought. There was a letter from Nola in the sale, and your name was in it — not as a warning. Whatever ${L.name} thought of you, this one has been told it before he ever laid eyes on you.`,
     L.endedAs === "broken" ? "bad" : "good");
@@ -19344,7 +19449,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
   if(offer.oppRef && d.rivals){
     const h = d.rivals.find(x=>x.name===offer.oppRef.house);
     const f = h ? h.fighters.find(x=>x.id===offer.oppRef.fid) : null;
-    if(h && f){
+    if(h && f){ rivalCardPay(h, win);        /* #256 — the other side of the card is somebody's week */
       const wasNem = d.nemesis && d.nemesis.fid===f.id;
       /* both books, before he is taken off the card or off the sand */
       f.met = f.met || {};
@@ -21327,6 +21432,7 @@ function endWeek(d){
   householdWeek(d);
   owedWeek(d);
   rivalArc(d);
+  rivalPurseWeek(d);      /* #256 — the men eat whether or not anybody fought */
   bayWeek(d);
   favourWeek(d);
   formWeek(d);
@@ -28125,9 +28231,12 @@ export default function App(){
                 </div>}
                 {/* #240 — the yard has a history and the man standing in it knows it */}
                 {riv && riv.after && <div style={{fontSize:"var(--fs-sm)",marginTop:1,fontStyle:"italic",
-                  color: riv.after.endedAs==="broken" ? "var(--blood-hi)" : "var(--laurel)"}}>
+                  color: riv.after.endedAs==="broken" ? "var(--blood-hi)"
+                    : riv.after.endedAs==="broke" ? "var(--ink-dim)" : "var(--laurel)"}}>
                   {riv.after.endedAs==="broken"
                     ? `He holds ${riv.after.name}'s yard — the one you emptied.`
+                    : riv.after.endedAs==="broke"
+                    ? `He holds ${riv.after.name}'s yard. Nobody emptied it; it ran out.`
                     : `He holds ${riv.after.name}'s yard, and was spoken well of to him.`}
                 </div>}
                 {h.you && i===0 && <div className="laurel" style={{fontSize:"var(--fs-sm)",marginTop:1,fontStyle:"italic"}}>the first house of the city</div>}
@@ -32988,6 +33097,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        are the only large moves it has, and every one of them is gated on `met`, on years, or
        on the warmth it is supposed to produce — see `houses`. */
     warmMove, metHouse, rivalArc, RIVAL_BEATS, RB_KEYS,
+    rivalPurse, rivalPay, rivalPurseWeek, rivalShort, PURSE_SEED, rivalFee, rivalWin, rivalTier,
+    RIVAL_KEEP, RIVAL_DOC, RIVAL_TOUR, RIVAL_DARK, RIVAL_STANDING, rivalCardPay,   /* #256 — the bay's own strongbox */
     makeRivalFighter, rivalTurn, rivalReadOf, readSharp, READ_WARM, READ_GAIN, READ_CAP, BUY_BAND, lanistaOf, LANISTAE,   /* #236 — RIVAL_MOVES is already on the handle */ HOUSES,
     /* ---- WHAT A BOUT TAKES OUT OF WHAT HE CARRIES ----
        #114 measured `gearCond` and found steel that never wore, but `gearCond` is the pool of

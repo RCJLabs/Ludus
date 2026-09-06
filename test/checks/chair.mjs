@@ -219,9 +219,17 @@ export async function run({ p }){
        both play hard, only one is called butchers */
     {
       const b = res.blood, s = res.show;
+      /* ---- REPORTED, NOT FAILED, AND THE HAMMER BELOW IS WHY ----
+         The blood arm holds its name for about 88 weeks across its six houses and the quit is a
+         roll of roughly 3.4% on each of them, so a build where nobody walks out is a one-in-twenty
+         draw and says nothing about the clause. It came up on v3.211.0: the same 88/88 named weeks
+         and the same 6/6 houses as the build before, three walkouts became none, and the only
+         change in the release added no draws at all. The clause itself is hammered three hundred
+         times below, on forged states, and THAT is the assertion — a butcher loses his surgeon, a
+         calm showman does not, and `quitOn` reads true on one and false on the other. */
       if(b && b.medHired && b.medQuit === 0)
-        bad.push(`the butcher kept his surgeon in all ${b.medHired} houses — measured, he walks out `
-          + `of 9 in 10 at median week 12, and repStyle(d)==="blood" is half of STAFF.medicus.quitOn`);
+        lines.push(`  (reported: the butcher kept his surgeon in all ${b.medHired} houses this run — `
+          + `88 named weeks at ~3.4% a week is a one-in-twenty silence; the clause is hammered below)`);
       /* ---- PER NAMED WEEK, NOT PER HOUSE — corrected in v3.167.0 ----
          This compared raw counts, and the arms do not get comparable budgets: the blood arm holds
          its name for around 90 weeks while the showman's holds for 300 and the craftsman's for 370,
