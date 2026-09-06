@@ -4389,6 +4389,82 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.217.0 — #244's verify-first: there is no lending market, and the ladder never ended
+
+**#244 asks for a loan and names what has to be true first** — *"Demand: count the weeks a rival's
+`form` falls a third in a season. If no house is ever short, nobody borrows."* Its phase 1, a purse
+to lend against, shipped as #256, so `probes/lend.mjs` (new, four arms) could ask that of the money
+instead of of `form` standing in for it. It found a bug underneath the question first.
+
+**`rivalWeekly` refills every rival to a floor of four fighters, free, every week. `rivalShort` sells
+a house's least valuable man to make the week. They were in direct contradiction and the ladder
+lost.** The sale was undone the same week by a free recruit the house then had to feed at
+`RIVAL_KEEP` — so each turn of the cycle left it *worse* — the roster never fell to the two the
+doctore rung waits for, `h.under` climbed for ever, and `closeHouse(d, h, "broke")`, an ending #256
+shipped three releases ago, was **unreachable through play: 0 firings in 3,146 weeks.** `coffer`
+passed throughout, because it calls `closeHouse` itself rather than waiting for the ladder to arrive
+at it. Traced on House Rufinus:
+
+    w311  purse   -35   men 5  doctore  under 2      ← sells one
+    w312  purse  -318   men 4  doctore  under 3
+    w313  purse  -590   men 4  doctore  under 4      ← and stays at four for sixteen weeks
+    ...
+    w328  purse -3776   men 4  doctore  under 19
+
+Men left rival rosters 297 times in that run and joined **341** times. One clause — a house that
+cannot make the week does not go to market — and the ladder terminates:
+
+| | before | after |
+|---|---|---|
+| weeks a house spends underwater | median 8, **max 46** | median 2, **max 11** |
+| how deep it gets | median −1,150, max −7,334 | median −239 |
+| house-weeks with a purse below zero | 1.7% | **0.4%** |
+| houses closed broke, in play | **0** | 1 |
+
+**And with the debt bounded, the item's own question answers itself: there is no lending market.**
+
+| what a loan would be written against | seed A | seed B |
+|---|---|---|
+| moments a house went under, in ~3,100 weeks | 9 | 5 |
+| **the debt itself** | median **54d**, max 270 | median **36d**, max 44 |
+| that plus eight weeks of air | median 7,588 | median 4,278 |
+| the player's box at that moment | median 605 | median 2,311 |
+
+The gap a house actually has is **fifty denarii and two weeks**, and it closes it by selling a man.
+The sum that would change its trajectory is a hundred times that — because `rivalOutgo` is
+`0.12 x fame` a week and a famous house spends near a thousand of it — and that is not a loan
+against a bad season, it is an endowment against a standing cost. **The two sides of the bay are
+priced alike**, so this is not a tuning fault to be corrected into existence: a rival's week costs a
+median 147 at a median fame of 516, the player's 228 at 1,276.
+
+**And the item's own proxy is the thing that misled it.** `form` falls by a third across a season on
+**33.2% and 34.7%** of rival-seasons — demand looks abundant by that measure and is not, because
+`form` and the purse have nothing to do with each other. The item was reduced to `form` precisely
+because the money model did not exist when it was written; #256 built it, and it says no.
+
+**So phase 2 is not built.** A `lendTo` mirroring `borrow` would be a system whose demand is five to
+nine moments in three thousand weeks, for fifty denarii, against a hole the borrower closes himself
+in a fortnight. What #244 was reaching for is real — a house in trouble the player can carry — but
+the trouble it would have to carry is structural and permanent, not a season, and that is a design
+decision about `RIVAL_STANDING` and not a loan. Written down, not built.
+
+**`checks/lend.mjs`, three arms, 12 x 420, 10 seconds.** The clause both ways — a house underwater
+held at two men gains nobody over a week of `rivalWeekly`, and the same house with coin in the purse
+fills back to four, because the first without the second is a bay that never recruits at all; the
+longest any house is left underwater (cap 26, measured 4 here and 11 on the probe's seeds, 46
+before); and that `rivalShort` is still selling, so the bound is met by the ladder working rather
+than by nothing ever going wrong. Sabotage-verified both ways: the clause removed (2 → 4 men
+underwater) and the clause made absolute (2 → 2 with a full purse).
+
+**Two faults in this release's own instrument, both caught before it shipped.** The check first read
+the spell length off the PURSE and got 0 spells over 1,997 weeks while `h.under` was reaching 4 —
+`rivalPurseWeek` charges the week and `rivalShort` answers it inside the same call, so a purse
+sampled from outside is almost never seen below zero; it reads `under` now, and the depth is left to
+the probe, which reads it from within. And the probe's first draft reported one figure for the hole,
+`-purse + outgo x 8`, which came out near 7,000 for every house — the air swamped the debt and the
+number said more about the house's fame than about what it owed. The debt is what a loan clears and
+the air is what it buys; they are different sums and #244's answer turns on telling them apart.
+
 ### v3.216.0 — #246, phase 4: the offer arrives — and #246 closes
 
 **Everything phase 4 asks for was already written, and the first of it almost never reached the
@@ -7469,7 +7545,16 @@ death — phase 4 is worth building only if that number is not zero.
 
 ---
 
-**#244 — Lend, Not Only Borrow** *(new system · medium · 3 phases)*
+**#244 — Lend, Not Only Borrow** *(new system · medium · 3 phases)* — **VERIFY-FIRST ANSWERED
+v3.217.0, AND IT SAYS NO.** Phase 1 shipped as #256. With the money model in place the demand is
+**five to nine moments in ~3,100 weeks, for a debt of fifty denarii the house closes itself in two
+weeks**; the sum that would change its trajectory is a hundred times that and is an endowment
+against `RIVAL_STANDING`, not a loan against a season. The item's own proxy — `form` falling a third
+in a season, 33-35% of rival-seasons — has nothing to do with the purse, which is why it looked
+abundant. **Phase 2 is not built, deliberately.** On the way it found that `rivalWeekly`'s free
+refill to four fighters undid `rivalShort`'s sale every week, so the ladder never reached its third
+rung and `closeHouse(d, h, "broke")` fired **0 times in 3,146 weeks** — fixed, and the debt is
+bounded now. Original text follows.
 
 `LENDERS` — Gratus 3.5% / patience 12 / cap 1,400, Murena 5.8% / 20 / 2,400, Scaeva 8.2% / 8 / 900 — is
 one-way. The nearest thing to lending, `OVERTURES.coin` ("Send coin against a bad season"), is a **gift**:

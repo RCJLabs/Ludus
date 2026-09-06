@@ -23,6 +23,7 @@ Run them straight:
     node test/probes/poach.mjs 16 420      # #246: the poach gate's two terms apart, under three policies
     node test/probes/spite.mjs 16 420      # #246 phase 2: the grudge as a quantity, its ledger, and what a weight on it buys
     node test/probes/doors.mjs 24 420      # #246 phase 4: whether the answer set ever reaches the player
+    node test/probes/lend.mjs 16 420       # #244: whether anybody is ever short enough to borrow
     node test/probes/rise.mjs              # the rise ladder and the liturgy: #207's half-refutation
     node test/probes/debut.mjs 16 420      # careers and the per-bout death hazard: #208's refutation
     node test/probes/salute.mjs 14 200     # what the entrance buys, and the salute's counterfactual: #209

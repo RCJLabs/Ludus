@@ -7564,7 +7564,21 @@ function rivalWeekly(d){
          only got better. A city that has watched a great man fight does not forget
          what one looks like; it goes on training for him, and lets go of it slowly. */
       const reach = clamp(((h.fame||0)-30)/70, 0, 0.7);
-      while(h.fighters.length<4){
+      /* ---- BUT NOT WHILE HE CANNOT MAKE THE WEEK — #244's verify-first ----
+         This floor and `rivalShort` were in direct contradiction, and the ladder lost. A house
+         underwater sells its least valuable man to make the week; this line handed one straight
+         back, free, the same week — so the roster never fell to the two that the doctore rung waits
+         for, `h.under` climbed for ever, and `closeHouse(d, h, "broke")` was UNREACHABLE THROUGH
+         PLAY: 0 firings in 3,146 weeks, while `coffer` passed because it calls `closeHouse` itself
+         rather than waiting for the ladder to arrive. Traced on House Rufinus: sold a man at week
+         312 and then sat at four men and a doctore for the next sixteen weeks while the purse went
+         from -35 to -3,776 at about a thousand a week. Each turn of that cycle made it worse, not
+         better — it lost a man worth 0.7 of his value and gained one it had to feed at RIVAL_KEEP.
+         Men left rival rosters 297 times in that run and joined 341 times.
+         A house that cannot pay does not go to market. That is the whole of the fix, and it is what
+         makes the third rung reachable and the debt bounded — which #244 needs before a loan against
+         it can mean anything. */
+      while(h.fighters.length<4 && rivalPurse(h) >= 0){
         const own = rnd(h.fame/4)+ri(15,35);
         /* a good house recruits well below the best man alive and trains the gap up;
            reaching all the way to him made the whole bay a wall inside three years */
@@ -33074,6 +33088,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     poachTarget, regardLoyal, GRUDGE_POACH,   /* #246 — the poach gate's two terms, readable apart */
     HOSTILE_MOVES,                           /* #246 phase 2 — `voice` holds that a table gating a written line is reachable */
     earOn, earInside,                        /* #246 phase 4 — whether anything is listening, and whether it is inside */
+    rivalWeekly,                             /* #244 — the recruiter, so its one clause can be read a week at a time */
     GAMBITS, SWEARING, PLANSEASON, FAVOURS, answerRow, GAM_ACCOUNT, peacePrice, poachedMan, startPoach,
     /* the shelf #220 counts: the pacts, the lot, and the court's own price */
     PACTS, PACT_KEYS, pactOf, pactLeft, pactOwed, pactPace, offerPact, takePact, buyLot,
