@@ -5,7 +5,7 @@
          on a clone, before the week runs) and each event's eligibility rate. Measured 12 x 420:
          13 eligible on the median week (p10 10, p90 16, max 21); four or more on 99.9% of weeks.
          grain is eligible on 100% of weeks, bribe 97, fever 95 ... thugs 0.8, poached 1.2.
-     2 · RIVAL AGGRESSION. Weeks a rival holds grudge >= 35 · weeks `poachTarget` would return a
+     2 · RIVAL AGGRESSION. Weeks a rival holds grudge >= `GRUDGE_POACH` · weeks `poachTarget` would return a
          man · both · and the hostile events actually raised. Measured: 107 / 0 / 0 of 3,133, and
          28 hostile acts in all — one every 112 weeks.
      3 · NOVELTY BY ERA. First-time chronicle shapes and first-time event ids per quarter of the
@@ -26,7 +26,10 @@ const out = await p.evaluate(([H,W,SEED])=>{
   const q = a => { if(!a.length) return null; const s=a.slice().sort((x,y)=>x-y); const at=f=>s[Math.min(s.length-1,Math.floor(f*s.length))]; return { n:a.length, p10:at(.1), p50:at(.5), p90:at(.9), max:s[s.length-1] }; };
   const EK = Object.keys(A.EVENTS).filter(k=>typeof A.EVENTS[k].make === "function");
   const elig = { sizes:[], per:{}, weeks:0 };
-  const agg = { grudge:0, target:0, both:0, weeks:0, hostile:{} };
+  const agg = { grudge:0, target:0, both:0, weeks:0, threw:0, hostile:{} };
+  const missing = ["poachTarget"].filter(k=>typeof A[k] !== "function");
+  /* the gate's own figure, not a copy of it — `GRUDGE_POACH` is exported so this cannot drift */
+  const GP = A.GRUDGE_POACH != null ? A.GRUDGE_POACH : 35;
   const HOSTILE = new Set(["poached","sabotage","bribedEditor","thugs","stolenSteel","courted","defected"]);
   const nov = { shapes:[0,0,0,0], events:[0,0,0,0], weeks:[0,0,0,0] };
   const houses = [];
@@ -49,8 +52,15 @@ const out = await p.evaluate(([H,W,SEED])=>{
         elig.sizes.push(n); elig.weeks++;
       }
       /* 2 · aggression availability */
-      { const g = (d.rivals||[]).some(x=>!x.retired && (x.grudge||0) >= 35);
-        let t = false; try { t = !!A.poachTarget(d, (d.rivals||[]).find(x=>!x.retired) || {}); } catch(x){}
+      { const g = (d.rivals||[]).some(x=>!x.retired && (x.grudge||0) >= GP);
+        /* ---- A MISSING EXPORT IS NOT A GAME FACT — corrected in v3.214.0 ----
+           `poachTarget` was never on the test handle. This line called `undefined(...)`, the catch
+           swallowed the TypeError, `t` stayed false, and the probe reported "a rival could take a
+           man on 0 of 3,133 weeks" — which went into #246 as the item's headline and was the reason
+           its poach branch was called dead. Re-run with the name exported, this arm reads 1,854 of
+           2,803 weeks: 66.1%, and `checks/poach.mjs` gets 65-71% on its own seeds. The handle is
+           checked once, up front, and a probe that cannot see what it is measuring says so. */
+        let t = false; try { t = !!A.poachTarget(d, (d.rivals||[]).find(x=>!x.retired) || {}); } catch(x){ agg.threw++; }
         agg.weeks++; if(g) agg.grudge++; if(t) agg.target++; if(g && t) agg.both++; }
       let did; try { did = R.lanista(d); } catch(x){ break; }
       for(const k of Object.keys((did&&did.events)||{})){ if(HOSTILE.has(k)) agg.hostile[k] = (agg.hostile[k]||0)+did.events[k];
@@ -69,7 +79,12 @@ const out = await p.evaluate(([H,W,SEED])=>{
   return { events: EK.length, elig: { weeks: elig.weeks, size: q(elig.sizes),
       atLeast2: Math.round(1000*elig.sizes.filter(n=>n>=2).length/elig.sizes.length)/10,
       atLeast4: Math.round(1000*elig.sizes.filter(n=>n>=4).length/elig.sizes.length)/10, per },
-    agg, nov, houses };
+    agg: Object.assign({}, agg, { missing }), nov, houses };
 }, [H,W,SEED]);
+if(out.agg && out.agg.missing && out.agg.missing.length)
+  console.log(`!! THE HANDLE IS MISSING ${out.agg.missing.join(", ")} — arm 2's target column is not a `
+    + `measurement, it is a swallowed TypeError. This is how "0 of 3,133" reached #246.`);
+if(out.agg && out.agg.threw)
+  console.log(`!! poachTarget threw on ${out.agg.threw} of ${out.agg.weeks} weeks`);
 console.log(JSON.stringify(out, null, 1));
 await browser.close(); server.close();

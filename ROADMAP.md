@@ -4389,6 +4389,86 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.214.0 — #246, phase 1: the item's headline was a swallowed TypeError
+
+**#246 was filed on a number that was never measured.** Its premise: *"a rival held grudge ≥ 35 on
+107 weeks; `poachTarget` returned a man on 0 of 3,133"* — and the second half of that is why the item
+calls its poach branch dead and why phase 3 was written to replace `poachTarget` wholesale.
+
+`poachTarget` **was never on the test handle.** `probes/pace.mjs` called `A.poachTarget(...)` inside a
+try/catch on every one of those 3,133 weeks, the `TypeError: A.poachTarget is not a function` was
+swallowed by the catch, the answer stayed false, and the zero went into the queue as a fact about the
+game. Measured with the function exported (`probes/poach.mjs`, new — two seeded sets of 16 × 420):
+
+| under the reference player | set A | set B |
+|---|---|---|
+| a man the other house could take | **65.2%** of weeks | **66.3%** |
+| a rival at `GRUDGE_POACH` | 3.2% | 4.5% |
+| **both at once** | 2.5% | 3.2% |
+| a poach actually began | 8 | 3 |
+| hostile acts landed | 57 in 3,937 weeks | 49 in 2,967 |
+
+**The gate's second term is wide open; the scarce one is the grudge.** And the whole hostile surface —
+the poach, the sabotage, the bribed editor, the thugs, the stolen steel, the whispers, a defection —
+fires about **once every 65 weeks**, not the once in 112 the item recorded.
+
+**What that does to the item.** Its direction survives: a rival still acts at the player rarely, and
+phase 2 (hostile moves inside `RIVAL_MOVES`, weighted by grudge × the `LANISTAE` multipliers that
+today drive nothing) is still the right move — better motivated now, because the grudge is the scarce
+resource and the multipliers should be what spends it. Phase 3 does not: *"the poach targets want,
+not defiance"* was written because no man qualified, and men qualify on two weeks in three. It
+survives only as a design preference — an unmet ambition is better fiction than raw defiance — and it
+is no longer a bug fix. Phase 4 is untouched.
+
+**Why the man filter is not the wall it was taken for**, clause by clause, over 17,031 and 14,728
+man-weeks: `defiance < 45` fails 58.0% and 52.4% of men, the contract 0.1% and 0.5%, `regardLoyal`
+9.0% and 17.9% — leaving **33.0% and 29.2% takeable at any moment**. And the control the item asked
+for holds exactly as it predicted: a house that never fights makes no grudge at all — 0.0% at all four
+thresholds, top grudge 10, not one hostile act.
+
+**`checks/probe.mjs` gains FAULT SIX, which is the release's real deliverable.** `probes/handle.mjs`
+opens by listing four systems that read as dead content because the function behind them was not on
+`__LVDVS` — `setOut`/`comeHome`, `nameHeir`, `makeMarket`, `holdMunera` — and says each time the cost
+was a confident wrong finding published first. `poachTarget` is the fifth, and the first to reach a
+queue item's headline. `coverage` cannot see this class (it only reads what is already on the handle)
+and `actions` cannot either (its list is hand-written, so it catches a name that goes missing and
+never one that was never added). The new rule reads the instruments themselves: **every `A.name(` any
+check or probe calls has to be a name the export block carries.** It is derived, so the next one is
+caught without anybody remembering.
+
+A guarded call is exempt, and that distinction is the rule's substance rather than a loophole:
+`A.palmOf ? A.palmOf(g.wins) : Math.min(4, g.wins||0)` names the risk and carries a fallback, and
+seven calls in this suite do exactly that. The fault is the UNGUARDED call wrapped — as everything
+here is — in a try/catch that turns a missing name into a `false`. Verified by restoring the exact
+historical shape: `pace.mjs`'s old line with `poachTarget` un-exported, and the rule names the file,
+the call and the consequence.
+
+**`checks/poach.mjs`, four arms, 8 houses × 300 weeks, 11 seconds.** A takeable man on at least a
+fifth of weeks (measured 70.8% on its own seeds); a grudged rival, and the two coinciding; the hostile
+surface landing at least once every two hundred weeks (measured one every 26); and the control — a
+house that never fights is never hated — which is what makes the other three mean anything.
+Sabotage-verified three ways: the man filter walled at defiance 145 (0.0%), `GRUDGE_POACH` raised to
+200, and rivals born resentful (the peaceful house resented on 63.8% of weeks, 31 acts).
+
+**And `forge()` stops racing the autosave, because on this release's first gate it lost.** `stature`
+threw — *"the planted house did not survive the load — twice"* — and passed alone at 54s. The helper
+already wrote the plant twice and retried the whole reload once, both added in v3.204.0 for this
+exact failure; a loaded gate beat all of it. Racing harder was never going to be the fix, and the
+retry is one more coin.
+
+The app does not touch `localStorage`. Every save goes through `window.storage.set` — the shim
+`build.js` stamps into the head, which prefixes `lvdvs:` — so the write does not have to be out-run,
+it can be **shut**. Slot writes become a resolved no-op in the same evaluate as the plant (nothing
+yields in between, which is the whole of the rule `fixtures` holds), and the patch dies with the
+document on reload, so it cannot reach anything measured afterwards. Prefs and every other key go
+through untouched. Measured against the race directly — play twelve weeks in the builder so the
+autosave is genuinely due, plant, return, hold the page open 1.5s, read the slot back:
+
+| the plant, after the autosave has had its turn | survived | lost |
+|---|---|---|
+| shut | **6 of 6** | 0 |
+| not shut (the control) | 0 | **6 of 6** |
+
 ### v3.213.0 — #256, phase 3: it shows — and #256 closes
 
 **The last of the three.** A rival had a purse and its moves read it; nothing on screen said so. The
@@ -7232,7 +7312,14 @@ lesson). Either a second stream keyed off the seed word, as `seedNames` does, or
 
 ---
 
-**#246 — The Grudge Does Something** *(overhaul · medium–large · 4 phases)*
+**#246 — The Grudge Does Something** *(overhaul · medium–large · 4 phases)* — **PHASE 1 SHIPPED
+v3.214.0, AND IT REFUTED THE ITEM'S HEADLINE.** *"`poachTarget` returned a man on 0 of 3,133 weeks"*
+was a swallowed TypeError: the function was never on the test handle. Measured with it exported, a
+takeable man exists on **65.2% and 66.3%** of weeks; the scarce term is the GRUDGE (3.2% / 4.5%),
+both coincide on 2.5% / 3.2%, and the hostile surface fires once every ~65 weeks rather than 112.
+Phase 2 stands and is better motivated. **Phase 3 is retired as a bug fix** — men qualify on two
+weeks in three — and survives only as a design preference. `checks/probe.mjs` FAULT SIX now catches
+the whole class. Original text follows.
 
 `RIVAL_MOVES` is nine moves — buy, sell, retrain, free, doctore, tour, won, boast, lost — **every one
 about the rival himself, none at you.** Aggression toward the player is `startPoach` (7% × eager, only
