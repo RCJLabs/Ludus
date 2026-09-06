@@ -4389,6 +4389,112 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.216.0 — #246, phase 4: the offer arrives — and #246 closes
+
+**Everything phase 4 asks for was already written, and the first of it almost never reached the
+player.** The item's last phase: *"your answer set — `poached`'s three doors, `answerNem`-shaped
+calling out, and the `ear`/`WHISPERS` telling you first."* All three exist. The three doors do real
+work — match the offer, a week in irons, say nothing and watch him. `answerNem` is a paid,
+cooldown-gated strike at `160 + fame/2`. `WHISPERS` carries a `deep` line for `d.poach`. So
+`probes/doors.mjs` (new, four arms) asked the only question left: does any of it ever ARRIVE.
+
+**The three doors were a lottery ticket.** `d.poach.weeks` is 3, and inside those three weeks the
+card has to win a 45%-a-week draw against thirty-six others. Measured over 24 × 420 on two seeds,
+with everything else in this release already in place and only the plant missing:
+
+| a poach that begins | before | after |
+|---|---|---|
+| poaches begun | 32 | 41 |
+| **put in front of the player** | **4 — 12.5%** | **35 — 85.4%** |
+| took a man | 18 (56.3%) | 11 (26.8%) |
+| ...having **never been offered a card** | **18 of 18** | 5 of 11 |
+| ...offered, and lost anyway | 0 | 6 of 11 |
+
+**Every poach the player was shown, the player answered and kept the man; every man lost was one the
+house was never told about.** Phase 1 had already refuted the item's reason for calling this branch
+dead — `poachTarget` was missing from the handle, not returning nothing. The branch was never dead.
+It was unreachable, which reads the same from outside and is a different fault.
+
+**The fix is the machinery that already exists for it.** `scheduleArc` plants a beat and `fireArc`
+raises it AHEAD of the week's random event; `poached` gains a three-word `build` that returns the
+card its `make` returns, and `startPoach` plants the beat for the following week — so the offer lands
+with two of the three weeks still to run. Nothing about the card changes, and the die can still draw
+it. A loss with a door in front of it is a different thing from a man walking out of a house that was
+never told: six of the eleven losses after the change are men the player was offered and lost anyway,
+because the coin was not there when the week came.
+
+**And a second reader disagreeing with itself, which is this arc's third one.** `earOn` checks the
+informer is an ACTIVE man. `earInside` did not. And `yardWeek` asked neither — it read `d.ear`
+straight and paid `who==="man"` the inside rate of 0.85 against a gate's 0.55 and nobody's 0.3. So an
+informer who had died, been freed or been sold went on hearing everything in the yard, while
+`listenWeek`, correctly guarded by `earOn`, reported that nobody was listening at all. Caught by the
+instrument reading `anyEarPc` **0.0%** against `deepEarPc` **62.2%** on the same weeks — two numbers
+that cannot both be true. Same shape as the house that had gone dark and went on acting (v3.215.0):
+state that outlives the thing it points at.
+
+**`probes/doors.mjs` also had to force an ear on, because the reference player never buys one** —
+`anyEarPc` read 0.0% over 5,492 weeks on the first run. `dark.mjs`'s rule, for the seventh time in
+this queue: a system the rope never reaches reads as dark, and the zero is a fact about the policy.
+Half the houses put a man in the cells now. With the deepest ear the game sells, the poach whisper is
+said on **26.1%** of poach-weeks — `listenWeek` draws three or four from a large deep pool, so paying
+for a man inside buys you the warning one time in four.
+
+**And one claim of the item's the instrument would not support.** Its phrase "no recourse" does not
+survive reading: every hostile card already carries an answering door — the thugs are answered in
+kind, the editor outbid, the watchmen posted. What the player cannot do is INITIATE against a house
+that is not the declared nemesis: `answerNem` and `nemCallOut` both read `d.nemHouse` alone, and a
+nemesis exists on 32.8% of weeks, so **64.8%** of hostile acts come from a house you can only ever
+answer. That is a real gap and a smaller one than the item states, and it is left as a proposal
+rather than built, because it wants a player action and a panel affordance and `bulk` holds App at
+its cap. The arm's first draft called it "no recourse" and was corrected before it shipped.
+
+**`checks/doors.mjs`, four arms, 24 × 380, 18 seconds.** The offer arrives (floor 55%, measured 80.0
+on its own seeds); the losses are not ALL silent, which is the one thing about the old state that
+cannot recur quietly; the planted card and the drawn card are the same offer, because half the
+poaches in a run come through each path and nothing else in the suite compares them; and an ear whose
+man has been carried out reads as off on both predicates. **The loss RATE is reported and not
+asserted** — it reads 27.3% and 25.0% now against 65.0% and 41.7% before, and those straddle, so no
+ceiling drawn through them separates a broken build from a quiet seed. That is v3.215.0's `houses`
+lesson applied before the gate rather than after it. Sabotage-verified four ways: the beat not
+planted (6.7% shown), the `build` removed (6.7%), `earInside` back to not checking he is alive (dead
+and still inside), and a `build` that returns a two-door card (caught as drift).
+
+**And the gate turned up a false absolute that had been passing for eight releases.**
+`checks/cliff.mjs` arm 2 asserts that EVERY house dying of debt heard the money row inside its last
+ten weeks — #247a's own promise, written on the probe reaching 15 of 15 and 14 of 14. This release
+re-phased the fixture, a seventh house died of debt, and it had not heard it. Run at 56 houses on two
+builds differing by one line: **19 of 21 and 18 of 19.** The row reaches about 93% of them and never
+did reach all; the absolute passed because 16 houses yield about six deaths a run and a clean one was
+simply the likely outcome. The two it missed died at weeks 241 and 226, while deaths at weeks 12, 25,
+43 and 63 all heard it, so no early-death exclusion restores it.
+
+So the arm takes 56 houses and a floor of 80% — **and its own bluntness is now written into it**,
+because that was worth finding out too. Cutting the runway alarm from `< RUNWAY_BAD` to `< 0` — the
+severe version of exactly what the arm exists to catch, since a pickier row scores BETTER on arm 1 —
+takes reach only from 90.5% to 76.2%, and to 80.8% at 80 houses. The floor sits on top of that, so it
+catches that sabotage about half the time. The lead is no better a signal (10 weeks honest against 8
+sabotaged) because `DEAD_IN` truncates it at ten by construction. Arm 1's ratio is what actually
+holds this design; arm 2 notices a collapse and nothing finer, and it says so now instead of
+implying otherwise. **The change to the money row is none — nothing in the game moved here.**
+
+**And a second gate run turned up a third instrument fault, this one honestly inconclusive.**
+`checks/seller.mjs` failed with *"paid for a man and no panel on the block moved to read level 2 — the
+fee was taken and the assessment never appeared"*, on a build whose game code differed from the
+previously passing gate by COMMENT TEXT ONLY — so it was never a regression from this release. It
+then passed four times of four alone and once under four-way concurrent load. **It is not
+reproduced, and the fix below is not claimed to be its proven cause.** What is wrong regardless: the
+read after the click waited a fixed 240ms after a tab, while the sibling call site thirteen lines
+above carries `settle()` and a comment saying the page turn is 420ms and a shorter wait is not
+enough. That line settles and then POLLS for the assessment rather than reading once — polling
+cannot return later than the truth, and a fee genuinely taken for nothing still fails, three seconds
+later.
+
+**#246 closes.** Phase 1 refuted its headline, phase 2 refuted its remedy and found a dead house
+still acting, phase 3 was retired as a bug fix, and phase 4 found the answer set unreachable rather
+than dead. Three of the four phases changed what the item said, which is what a verify-first queue is
+for. Two things are written down and not built: **the grudge's own arithmetic** (0.90 in against 1.30
+out — a difficulty decision), and **initiating against a house that is not your nemesis**.
+
 ### v3.215.0 — #246, phase 2: the multipliers drive something, and a dead house stops acting
 
 **The item's phase 2 was right about the disease and wrong about the cure, and the instrument found
@@ -7425,8 +7531,15 @@ lesson). Either a second stream keyed off the seed word, as `seedNames` does, or
 
 ---
 
-**#246 — The Grudge Does Something** *(overhaul · medium–large · 4 phases)* — **PHASES 1 AND 2
-SHIPPED; ONLY PHASE 4 REMAINS.** *Phase 2, v3.215.0:* the multipliers really did drive nothing
+**#246 — The Grudge Does Something** *(overhaul · medium–large · 4 phases)* — **CLOSED v3.216.0.**
+*Phase 4:* everything the phase asks for was already written and the first of it almost never
+arrived — a poach was put in front of the player on **4 of 32** cases, and **all 18 men lost went
+without a card ever being offered.** `startPoach` plants the beat now and `fireArc` raises it ahead
+of the week's draw: **35 of 41 shown**, and six of the eleven remaining losses are men the player was
+offered and lost anyway. Also fixed: an informer who had died went on hearing the yard at the inside
+rate while `listenWeek` reported silence. Left written down, not built: the grudge's own arithmetic,
+and initiating against a house that is not your nemesis. Three of the four phases changed what the
+item said. *Phase 2, v3.215.0:* *Phase 2, v3.215.0:* the multipliers really did drive nothing
 (`evWeight` reads no lanista — the same three numbers for every bay), the four hostile moves are in
 `RIVAL_MOVES` weighted by grudge x multiplier x the card's own die weight, and `rivalTurn` now picks
 its house by spite instead of uniformly. Measured on four 32 x 420 sets, **the rate does not move**
