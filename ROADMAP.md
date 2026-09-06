@@ -4389,6 +4389,79 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.209.0 — #247b, phase 1: the rising is answerable, and the answer costs what the house earns
+
+**The item asked which of two things was true and the answer is neither.** v3.207.0 found the cells
+take 29 of 88 seeded houses, that every one of them climbed all three rungs in order, and that the
+first rung stood a median of 96, 80 and 30 weeks before the end — the house is told, three times, for
+a hundred weeks, and dies anyway. That left two possibilities, and `dark.mjs`'s standing rule forbids
+guessing between them: either no lever answers a rising, or one does and the reference player never
+pulls it. `probes/cells.mjs` (new) ran the same 48 seeds under six policies.
+
+**It is answerable, completely** — and that is not the good news.
+
+| policy | rebellion | debt | ruin | survived | unrest p50 by era |
+|---|---|---|---|---|---|
+| the reference player | **7** | 17 | 9 | **11** | 3/19/21/19 · 4/18/22/20 |
+| free every man who earned the rudis | 10 | 18 | 8 | 9 | 3/18/11/5 · 3/20/19/8 |
+| free, keep the rites, build | 6 | 17 | 9 | **16** | 1/5/2/5 · 0/5/2/14 |
+| buy the calm (a doctore, and feasts at 26 unrest) | 6 | 24 | 4 | 11 | 2/18/5/2 · 2/12/9/1 |
+| **kept sweet** — feast, walk, doctore, every week it can | **3** | 23 | 13 | 7 | **0/0/0/0 · 0/0/0/0** |
+| **everything** — all of it together | **0** | 30 | 13 | **2** | **0/0/0/0 · 0/0/0/0** |
+
+A policy that takes the three things a lanista can do for his men whenever they are available holds
+unrest at a **median of zero in every era of both seed sets**, against 19–22 for the reference player
+from era one onward. Rebellion deaths fall from 7 of 48 to 3, and to **none at all in 48 houses** for
+the policy that also frees, keeps the rites and builds.
+
+**And it costs 101 to 131 denarii a week, for ever.** The same policy takes the median box in the
+last era from 4,929 and 5,649 down to 3,370 and 2,178, and the deaths do not go away — they move:
+debt 17 → 23, ruin 9 → 13, survivors **11 of 48 → 7**, and for `everything`, 30 dead of debt and
+**2 survivors in 48**. The lever is not missing. It is priced at about what the house earns, and what
+it offers the player is a choice of which death. **That is a different item from the one that was
+filed**, and #247b is restated on it.
+
+**Where the unrest actually comes from** — the weekly drift's own terms, per week, per era (set A):
+
+| era | defiance | base | doctore | cells | auctors | perk | lanista | collegium | season | = drift | events |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 0 | +0.24 | −0.60 | −0.30 | 0.00 | −0.11 | −0.28 | −0.05 | −0.09 | +0.20 | −0.99 | −0.45 |
+| 1 | +2.38 | −0.60 | −0.40 | −0.27 | −0.07 | −0.44 | −0.07 | −0.32 | +0.21 | +0.42 | −1.12 |
+| 2 | +2.45 | −0.60 | −0.40 | −0.50 | −0.08 | −0.45 | −0.11 | −0.38 | +0.21 | +0.14 | −0.84 |
+| 3 | +2.60 | −0.60 | −0.40 | −0.67 | −0.05 | −0.45 | −0.19 | −0.40 | +0.20 | +0.05 | −1.24 |
+
+Two things fall out of it. The climb is **the drift, not events**: everything the week throws at a
+house is on net *calming* (−0.45 to −1.24), because the rope already throws a feast at unrest 30 —
+the reference player is not passive, it is outspent. And the whole of the inflow is one term: the
+mean defiance of the bound men, which crosses 34 in era one and never comes back.
+
+**The going-in hypothesis was wrong and the probe killed it.** Defiance has a weekly rule that adds
+**+1.5 for a man who is `rudisEligible`** — who has earned the wooden sword and not been given it —
+and a house that fights well makes those men, so the late rising looked like unfreed veterans. It is
+not: they are **2.4%, 3.2%, 2.1% and 1.7%** of bound men by era, and freeing every one of them made
+the rebellions *worse* (7 → 10 of 48). What actually climbs is morale falling — mean morale 60 → 55 →
+49 → 45, with the share under 40 going 15% → 21% → 30% → 38% — and the Defiant trait's share of the
+roster, 23% → 24% → 31% → 23%.
+
+**`checks/cells.mjs`, three arms, 8 houses × 300 weeks, 11 seconds.** The answer still works: under
+the calming policy unrest holds a p50 at or under 2 and a p90 under 35, while the reference player
+sits at least 5 above it. It is still not free: over 20d a week on feasts alone. And every calming
+term the drift subtracts is connected — `docCalm`, `cellCalm`, `lanCalm` held, `perkCalm` and the
+collegium reported. Sabotage-verified three ways: free feasts (0d a week), `docCalm` unplugged, and
+the whole answer removed — the feast's and the walk's unrest, morale and defiance, all three
+channels. **That last one needed the arm tightened twice.** With every channel of the answer gone the
+policy still read a p50 of 4 against the reference's 12 and passed a bar of 10, because a doctore of
+its own is worth −1.2 a week on the drift by itself. What separated them was the tail: p90 **16
+honest against 51 sabotaged**, and 50 is where the whispers start. A policy that answers the rising
+does not arrive at the rung the rising fires from.
+
+**What #247b becomes.** Not "find the lever" — the lever is there and it works. The item is the
+**price curve**: a calm that costs about what the house earns converts one death into another and
+leaves the player choosing between them, which is why a hundred weeks of warning changes nothing. Any
+phase 2 is a retune of what the feast and the walk cost against what they buy, and it is an economy
+change with the blast radius v3.196.0 met — so it waits on a design decision rather than being
+inferred from this measurement.
+
 ### v3.208.0 — #247a: the money row speaks on exposure, not on shortness
 
 **#247 phase 1 split the item; this is the first of the three.** The agenda's approach line spoke
@@ -6921,7 +6994,13 @@ is now **#247a** (the debt cliff has no approach — signal, not economy) — **
 money row speaks on exposure (what an ordinary week of this house moves against what is in the box)
 or a runway already in blood, which halves the alarms, raises precision from 7.9/8.2% to 12.4/12.5%,
 reaches every house that dies and gives seven or eight weeks — **#247b** (the rising is heard and not
-answered), **#247c** (the yard that empties). Original text follows.
+answered) — **PHASE 1 SHIPPED v3.209.0, AND IT RESTATED THE ITEM**: the rising is completely
+answerable (a policy that feasts, walks and keeps a doctore holds unrest at a median of 0 in every
+era of both seed sets, and rebellion deaths go 7 of 48 → 3, → 0 with the rites and the stone), and it
+costs 101–131 denarii a week — which converts rebellions into debt and ruin and takes survivors from
+11 of 48 to 7, to 2. The lever is not missing, it is priced at what the house earns; phase 2 is a
+price curve and waits on a design decision — **#247c** (the yard that empties). Original text
+follows.
 
 Fourteen of sixteen houses end, and the two endings that take them are the strongbox and the cells:
 **debt 6, rebellion 7**, banned 1, survived 2 (16 × 420, seeded). The instrument's twelve show three
