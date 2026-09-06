@@ -4389,6 +4389,59 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.218.0 — #249, phase 1: the bay gets colours, and the eye finds two faults the tests could not
+
+**The heraldry existed and only the player could use it.** `crest` — c1/c2/sym/motto, with
+`HOUSE_COLOURS` (fourteen named colours), `CREST_SYMS` (six marks) and a colour-picker to set them —
+was built for the player: every `c1:` site in the file was the player's own. `LANISTAE` carried a
+name, a trait, a blurb and six behavioural multipliers and **no colours at all**, so THE HOUSES OF
+CAPUA was nine rows of text and the only way to tell Vettius from Varro at a glance was to read.
+
+Nine hand-set crests in the same idiom the player's own uses, so `Crest` draws them with no new
+machinery, at the three sites the item names: the league row, the `rivalLog` lines, and the pre-bout
+card beside the opponent's house.
+
+**And then the screenshot found what nothing else could.** This is the first release in this run
+whose deliverable is visual, and the gate's grip on it is weak by construction — `reach`, `surface`,
+`content` and `palette` police structure, doors, hit-targets and grounds, and not one of them can
+see that two houses look the same. Two faults, both caught by looking:
+
+1. **The first cut made the league row a flex container** so the crest could sit beside the name,
+   and the row's text stopped flowing: *"House Glaber"* wrapped onto two lines and *"Cordial"* broke
+   as *"Cordi al"*. That is the row's own recorded failure — its head says *"on a phone there was not
+   room: 'House Glaber…', a lanista truncated to 'who bought i'"* — reintroduced by the change meant
+   to improve it. An inline-block mark takes its 14px and the sentence wraps around it as before.
+2. **Tullius on deep blue `#3a5668` and Varro on slate `#3f5f74` were one shield twice.** At 14px
+   the SYMBOL is barely legible and the ground is the whole of what the eye gets, so a palette that
+   reads as nine colours in a swatch reads as seven in a table.
+
+**So the set is solved rather than eyeballed**, on a green-weighted RGB distance, holding the
+thematic anchors fixed — the soldier keeps legion green, the ledger-keeper iron, the freedman
+bronze, the man who says nothing at all black, and Glaber, who bought it all at once, keeps the one
+bright GROUND in the set rather than a bright mark. **Solving it caught two more the eye had not:**
+the fallback was iron, which is Vettius's ground EXACTLY — distance **0.0**, so an unnamed house
+would have worn a named one's colours — and Pollio on blood sat **45.1** from the player's own
+oxblood, the closest real pair in the table. Pollio takes wine, the fallback takes a blank silver,
+and the minimum separation across all eleven grounds is **50.2**.
+
+**`checks/crest.mjs`, four arms, 11 seconds.** Every house has a crest and draws it from the
+vocabulary that already exists (a colour in `HOUSE_COLOURS`, a symbol in `CREST_SYMS` — `Crest`
+silently falls back to a gladius for anything it does not know); no two grounds closer than 45
+(measured 50.2); nobody wears the player's own oxblood-and-gold gladius whatever the distances say;
+and the rendered league actually draws one shield per row, read off the DOM rather than off the
+table it came from, with more than one fill on screen — because crests that render but do not read
+their house look exactly like the feature working. Sabotage-verified four ways: Varro back on slate
+(28.4, caught), the fallback back on iron (0.0, caught), a house given the player's colours (caught),
+and the league row's `<Crest>` removed (4 of 4 rows bare, caught).
+
+**What the check cannot hold** is stated rather than implied: arm 2 is arithmetic on the ground
+colour and knows nothing about whether a laurel reads as a laurel at 14px. The `rivalLog` site is
+verified by DOM — three shields beside three lanistae's names — and the pre-bout card's site is not
+verified at all, because a card with a rival's man on it needs a games week and a fit roster and
+neither the screenshot harness nor the check could construct one in reasonable time. That site is
+one line of JSX beside a line the suite already renders, and it is written down here as untested
+rather than counted as done.
+
 ### v3.217.0 — #244's verify-first: there is no lending market, and the ladder never ended
 
 **#244 asks for a loan and names what has to be true first** — *"Demand: count the weeks a rival's
@@ -7757,7 +7810,15 @@ listed together.
 
 ---
 
-**#249 — The Bay Has No Face** *(UI · medium · 3 phases)*
+**#249 — The Bay Has No Face** *(UI · medium · 3 phases)* — **PHASE 1 SHIPPED v3.218.0.** Nine
+hand-set crests on `LANISTAE`, drawn on the league row and the `rivalLog` lines (the pre-bout card's
+site ships untested — see the entry). The set is SOLVED on colour distance, not eyeballed: at 14px
+the symbol is barely legible and the ground is all the eye gets, and the first cut had Tullius and
+Varro on one shield twice, the fallback on Vettius's iron exactly, and Pollio 45.1 from the player's
+own oxblood. Minimum separation is now 50.2 and `checks/crest.mjs` holds it. A screenshot also
+caught the league row's text breaking — *"Cordi al"* — which is the row's own recorded failure
+reintroduced by the change meant to help it. Phases 2 (the lanista as an umbra) and 3 (the rivalry
+ledger on the Treat sheet, where `metHouse` is still written and read by no panel) remain.
 
 `crest` — c1/c2/sym/motto, `HOUSE_COLOURS`, `CREST_SYMS` — exists for the player only: four `c1:` sites
 in the file, all yours. `LANISTAE` carries a trait, a blurb and six multipliers; no colours, no mark, no
