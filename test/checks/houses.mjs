@@ -63,7 +63,32 @@ export async function run({ p }){
        5-house run cost a release two diagnoses and a control build before the sample was suspected.
        `card.mjs` learned exactly this in v3.26.0 and its note says the cure is more houses rather
        than a nudged bar; 24 costs eight seconds against three, which is nothing. */
-    const HOUSES = 24, WEEKS = 170;
+    /* ---- AND 24 WAS NOT ENOUGH EITHER, found in v3.215.0 ----
+       The note above raised this from 5 to 24 because "one house dying to a rebellion at week 88
+       drags the median through the floor". The same thing happened again one level up, and it took
+       a release to spot because it only shows when something re-phases the fixture.
+
+       PEAK WARMTH IS BIMODAL. A house whose grudge stays under 30 warms 1.1 a meeting and has its
+       grudge pulled down 0.44 by the same call, so it runs away to the cap; a house whose grudge
+       crosses 30 early has that term switched off and never warms at all. At n=64 the quartiles are
+       **p25 16.2 and p75 100** around a median of 66.8 — there is almost nothing in the middle, so
+       the median is not measuring a central tendency, it is reporting which hump got the 32nd house.
+
+       #246 phase 2 changed which events fire and re-phased the fixture. At n=24 the median read
+       **31.6 with the four hostile moves in and 83.3 with them out**, and turning them off one at a
+       time gave 42.9, 55.9, 76.7 and 78.9 — a spread wider than the whole distance to the bar, from
+       changes that do not compose. At n=64 the same comparison is **66.8 against 67.9**. There was
+       no regression; there was a statistic that could not tell one from a reseed.
+
+       So: 64 houses. THAT is the fix — at this n the median is steady, and the four-way spread above
+       collapses to a point. The SHARE over the bar is asserted beside it, and the honest account of
+       why is not that it survives a reseed better (at n=64 both do) but that the two fail at
+       different distances: cutting the familiarity term from 1.1 to 0.25 puts the median on 33 and
+       trips it, and leaves the share on 50%. The median is the sensitive one and sits close to its
+       bar; the share is the blunt one that cannot be argued with when the arc has actually gone.
+       Measured on healthy builds at n=64: share 59.4%, 68.8%, 65.6%. */
+    const HOUSES = 64, WEEKS = 170;
+    const SHARE_FLOOR = 35;   /* per cent of houses clearing 34; measured 59.4 and 68.8 */
     const rows = [];
     let threw = 0, firstThrow = null;
 
@@ -155,6 +180,12 @@ export async function run({ p }){
         bad.push(`no house working one rivalry for ${WEEKS} weeks got past warmth ${best.toFixed(1)} `
           + `— "on good terms" starts at 50 and "thick as thieves" at 75, and #113 was refuted by a `
           + `median peak of 76.8 over 20 such houses. Two of the four words have gone unreachable again`);
+      { const share = Math.round(1000*peaks.filter(x=>x>=34).length/peaks.length)/10;
+        lines.push(`   ${share}% of houses cleared 34 [floor ${SHARE_FLOOR}%, measured 59.4 / 68.8 / 65.6 at this n] — `
+          + `the blunt half of the pair: the median sits near its bar and moves first, this one only moves when the arc has gone`);
+        if(share < SHARE_FLOOR)
+          bad.push(`only ${share}% of houses reached warmth 34 [floor ${SHARE_FLOOR}%] — on a distribution with `
+            + `p25 16 and p75 100 the median reports which hump got the middle house, and this does not`); }
       if(q(peaks,0.5) < 34)
         bad.push(`the median house peaked at warmth ${q(peaks,0.5)}, under the 34 that the first `
           + `large beat needs — the familiarity term is 1.1 a meeting and only while the grudge is `

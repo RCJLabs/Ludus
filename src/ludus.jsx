@@ -7274,7 +7274,92 @@ const RIVAL_MOVES = {
       const beat = f.beatYou ? ` He had beaten this house ${f.beatYou===1?"once":f.beatYou+" times"}.` : "";
       return `${f.name} of House ${h.name} was killed on somebody else's sand this week.${beat}`; } },
 };
+/* ---- AND FOUR THAT ARE ABOUT YOU — #246 phase 2 ----
+   The nine above are a house running itself. The item's charge was that not one of them is aimed
+   at the player, that everything hostile runs through the event die instead, and that `LANISTAE`'s
+   `poach`/`bribe`/`sabotage` multipliers — written for exactly this — drive nothing.
+
+   The last of those is measured and true (`probes/spite.mjs`): `evWeight` reads no lanista, and it
+   is the same number for every bay in the game. But the same instrument refuted the obvious
+   remedy. The grudge is **0 on 64.4% of house-weeks** and under the lowest gate on 95.4% of them;
+   it leaves zero on 3.4% of its zero-weeks and lands at a median of **4**, against a nearest gate
+   of 26; and on the weeks it is above zero it takes in 0.90 a week against a drain of 1.30 (decay
+   0.94, everything else 0.36). A weight multiplying that quantity multiplies nothing. Shadow-
+   ledgered before any of this was written: the item's literal `grudge x mult` turns a hot house's
+   bag **88.7% hostile** — the item's own stated risk, a house that hates you doing nothing else —
+   and still buys only one act every 82 weeks, because the hot house is so rarely the one picked.
+
+   So the weight is normalised — `grudge/GATE x mult`, worth exactly one move at the gate — and the
+   thing that was actually blocking it is fixed instead: **`rivalTurn` picked its house uniformly**,
+   so a house at grudge 60 took the week's turn exactly as often as two houses at 0. It now picks
+   by spite, and a house below the lowest gate weighs exactly 1 — which is every house on 95.4% of
+   house-weeks, so on those weeks the draw resolves to the same index it always did.
+
+   Each move RAISES THE CARD THE DIE WOULD HAVE RAISED, for itself, rather than inventing a payload
+   beside it: `rivalTurn` runs before the week's event draw and that draw stands down when something
+   is already pending, exactly as `fireArc` relies on. The cooldown is stamped as `pickEvent` stamps
+   it, so a card taken this way is not offered again next week. The player's three doors are the
+   ones already written, which is what phase 4 is for. */
+const HOSTILE_MOVES = {
+  poach: { gate:()=>GRUDGE_POACH, mul:"poach", die:4,
+    when:(d,h)=>!d.poach && h.grudge >= GRUDGE_POACH && !!poachTarget(d,h),
+    run(d,h){ startPoach(d, h); return null; } },      /* startPoach writes its own chron line */
+  sabotage: { gate:()=>GRUDGE_SABOTAGE, mul:"sabotage", card:"sabotage",
+    when:(d,h)=>h.grudge >= GRUDGE_SABOTAGE && !d.pendingEvent && cardReady(d,"sabotage") && activeG(d).length > 0 },
+  bribe: { gate:()=>GRUDGE_BRIBE, mul:"bribe", card:"bribedEditor",
+    when:(d,h)=>h.grudge >= GRUDGE_BRIBE && !d.pendingEvent && cardReady(d,"bribedEditor") && !(d.flags && d.flags.editorBribed) },
+  thugs: { gate:()=>GRUDGE_THUGS, mul:"poach", card:"thugs",
+    when:(d,h)=>h.grudge >= GRUDGE_THUGS && !d.pendingEvent && cardReady(d,"thugs") && activeG(d).length > 0 },
+};
+/* ---- AND NOT THE SAME CARD AGAIN NEXT WEEK ----
+   `EV_DIE` gives sabotage a four-week cooldown and `pickEvent` honours it. A move that raises the
+   card by hand has to honour it too, or the one register the die was told to space out becomes the
+   one a grudged house can play every week — which is the item's own risk note ("one open hostile
+   act per house at a time") arriving from the direction nobody was watching. */
+const cardReady = (d, k) => { const c = evTune(k).cool, last = d.flags && d.flags.evLast && d.flags.evLast[k];
+  return !(c > 0 && last != null && d.week - last < c); };
+const spiteMul = (h, k) => { const L = lanistaOf(h.name); return (L && L[k] != null) ? L[k] : 1; };
+/* ---- AND THE DIE STILL SAYS WHICH — #246 phase 2 ----
+   The first cut weighted these on the grudge and the multiplier alone, and it wrecked the mix.
+   Sabotage's gate is 26 against the bribe's 38 and the thugs' 44, so it is eligible on far more
+   hot weeks than either; and a move that raises a card takes the week's event slot, so the cards
+   the die would have raised do not draw. Measured over four 32 x 420 sets, the surface held its
+   rate — 8.8 per hundred hot house-weeks against 9.5 — and its COMPOSITION went sabotage 37% ->
+   69%, thugs 29% -> 10%, the bribed editor 27% -> 16%. A bay that only ever poisons grain is worse
+   fiction than the one this item complained about.
+
+   `EV_DIE` already carries how often each card should appear against the others — thugs 8, the
+   editor 4, sabotage 2 — and that judgement is not the thing #246 disputes. So the grudge and the
+   lanista decide WHETHER a house reaches for something, and the die's own weight still decides
+   WHICH. Divided by 4 so the middle card is worth one move. */
+const spiteWeight = (h, M) => ((h.grudge||0) / M.gate()) * spiteMul(h, M.mul)
+  * ((M.card ? evTune(M.card).w : M.die) / 4);
+for(const key of Object.keys(HOSTILE_MOVES)){
+  const M = HOSTILE_MOVES[key];
+  RIVAL_MOVES[key] = { hostile:true, when:M.when, weight:h=>spiteWeight(h, M),
+    run(d,h){
+      if(M.run) return M.run(d,h);
+      const ev = EVENTS[M.card].make(d, h);
+      if(!ev) return null;
+      d.pendingEvent = ev;
+      d.flags = d.flags || {}; (d.flags.evLast = d.flags.evLast || {})[M.card] = d.week;
+      return null;                                     /* the card is the telling; no chron line */
+    } };
+}
 const RM_KEYS = Object.keys(RIVAL_MOVES);
+/* ---- WHO TAKES THE WEEK — #246 phase 2 ----
+   One draw, as `pick` takes one. A house under the lowest gate weighs exactly 1, and with every
+   weight at 1 this returns the same index `a[Math.floor(R()*a.length)]` returns, so the 95.4% of
+   house-weeks with no live grudge anywhere in the bay are untouched. Above the gate a house climbs
+   at its own multiplier's rate: a schemer at grudge 100 takes the turn about seven times as often
+   as a cold house, which is what "he has not forgotten" is supposed to look like from outside. */
+const spiteTurn = h => 1 + Math.max(0, (h.grudge||0) - GRUDGE_SABOTAGE) / GRUDGE_SABOTAGE * spiteMul(h, "poach");
+function pickSpiteful(arr){
+  let sum = 0; for(const h of arr) sum += spiteTurn(h);
+  let x = R() * sum;
+  for(let i=0; i<arr.length-1; i++){ x -= spiteTurn(arr[i]); if(x < 0) return arr[i]; }
+  return arr[arr.length-1];
+}
 function rivalTurn(d){
   if(!d.rivals || !d.rivals.length || d.rome) return;
   d.rivals.forEach(h=>{ if(h.away){ h.away--;
@@ -7284,7 +7369,19 @@ function rivalTurn(d){
          die faster. One card's worth at the house's own tier, for the weeks it was gone. */
       rivalPay(h, rivalFee(h) + rivalWin(h)); } } });
   if(R() > 0.7) return;
-  const h = pick(d.rivals.filter(x=>!x.away).length ? d.rivals.filter(x=>!x.away) : d.rivals);
+  /* ---- AND NOT A HOUSE THAT IS ALREADY DARK — #246 phase 2 ----
+     `closeHouse` sets `retired` and leaves the house in `d.rivals`, which is right: the bay keeps
+     its dead so `lastDark` can sell the yard on and the annals can name the man. Everything else
+     that walks that array knows to step over them (`h.retired` is skipped at the warmth roll and
+     at the league table); the bay's own turn never did. Measured before the fix, over 4,481 weeks:
+     dark houses were **2,068 of 14,343** slots in the pool this line picks from, and **268 of the
+     3,110 moves that ran — 8.6% — were made by a house that no longer exists.** House Vettius
+     closed on week 200 and went on loading its wagons for the coast, selling men in the market and
+     winning at Atella. It is one filter, and it is the same one the rest of the file already uses. */
+  const live = d.rivals.filter(x=>!x.retired);
+  if(!live.length) return;
+  const free = live.filter(x=>!x.away);
+  const h = pickSpiteful(free.length ? free : live);
   const bag = [];
   for(const k of RM_KEYS){ const M = RIVAL_MOVES[k];
     let ok = false; try { ok = M.when(d,h); } catch(e){ ok = false; }
@@ -13596,11 +13693,16 @@ function poachTarget(d, h){
    both gates below, and a third copy of it in `probes/pace.mjs`, until #246's instrument needed to
    read the figure the gate reads rather than a number that matched it by hand */
 const GRUDGE_POACH = 35;
-function startPoach(d){
+/* `forced` is the house that CHOSE to do this — #246 phase 2. Called with nothing, as `poachWeek`
+   has always called it, the bay is sorted and the angriest schemer is taken, exactly as before. */
+function startPoach(d, forced){
   if(d.poach || !d.rivals) return;
-  const cands = d.rivals.filter(x=>x.grudge>=GRUDGE_POACH);
-  if(!cands.length) return;
-  const h = cands.sort((a,b)=>(b.grudge*lanistaOf(b.name).poach)-(a.grudge*lanistaOf(a.name).poach))[0];
+  let h = forced;
+  if(!h){
+    const cands = d.rivals.filter(x=>x.grudge>=GRUDGE_POACH && !x.retired);
+    if(!cands.length) return;
+    h = cands.sort((a,b)=>(b.grudge*lanistaOf(b.name).poach)-(a.grudge*lanistaOf(a.name).poach))[0];
+  }
   const g = poachTarget(d, h);
   if(!g) return;
   d.poach = { house:h.name, gid:g.id, weeks:3 };
@@ -20650,9 +20752,16 @@ const EVENTS = {
         return `${g.name} swears the sacramentum with everyone else's words — burned, bound, beaten, slain — and means every one of them, which the men in the cells find harder to watch than they expected.`;
       }
       return `You send him back down the road. There will be another one; there always is.`; } },
+  /* ---- `forced` — #246 phase 2 ----
+     Three cards that the die raises and a sort then attributes. Measured (`probes/spite.mjs`):
+     `evWeight` is `EV_DIE[k].w` times a freshness bonus and reads no lanista at all, so the
+     multipliers these sorts apply choose WHOSE COLOURS the cook saw and never once whether the
+     cook saw anybody — identical for every bay in the game. Passing the house makes the card the
+     act of a lanista who decided on it. Called with nothing, as the die still calls it, the sort
+     runs and the behaviour is what it always was. */
   sabotage: {
-    make(d){ if(!d.rivals || !activeG(d).length) return null;
-      const h = d.rivals.filter(x=>x.grudge>=GRUDGE_SABOTAGE).sort((a,b)=>(b.grudge*(lanistaOf(b.name).sabotage||1))-(a.grudge*(lanistaOf(a.name).sabotage||1)))[0];
+    make(d, forced){ if(!d.rivals || !activeG(d).length) return null;
+      const h = forced || d.rivals.filter(x=>x.grudge>=GRUDGE_SABOTAGE && !x.retired).sort((a,b)=>(b.grudge*(lanistaOf(b.name).sabotage||1))-(a.grudge*(lanistaOf(a.name).sabotage||1)))[0];
       if(!h) return null;
       return { id:"sabotage", title:"A Rat in the Granary", text:`Your cook swears the grain was tampered with — and that he saw a man in House ${h.name}'s colors near the stores after dark.`,
         choices:["Post paid watchmen — 80 denarii","Let it lie"], data:{house:h.name} }; },
@@ -20664,8 +20773,8 @@ const EVENTS = {
           return `${t.name} doubles over at morning drills — poison, the medicus says. House ${ev.data.house} sends no apology.`; } }
       return "Days pass. Nothing comes of it. This time."; } },
   bribedEditor: {
-    make(d){ if(!d.rivals || d.fame<TIERS[1].fame) return null;
-      const h = d.rivals.filter(x=>x.grudge>=GRUDGE_BRIBE).sort((a,b)=>(b.grudge*lanistaOf(b.name).bribe)-(a.grudge*lanistaOf(a.name).bribe))[0];
+    make(d, forced){ if(!d.rivals || d.fame<TIERS[1].fame) return null;
+      const h = forced || d.rivals.filter(x=>x.grudge>=GRUDGE_BRIBE && !x.retired).sort((a,b)=>(b.grudge*lanistaOf(b.name).bribe)-(a.grudge*lanistaOf(a.name).bribe))[0];
       if(!h) return null;
       return { id:"bribedEditor", title:"The Editor's New Rings", text:`Word from the baths: House ${h.name} has been generous with the editor of the coming games. If one of your men falls, the thumb may already be turned.`,
         choices:["Outbid them — 150 denarii","Let them waste their coin"], data:{house:h.name} }; },
@@ -20673,8 +20782,8 @@ const EVENTS = {
       d.flags.editorBribed = ev.data.house;
       return "You keep your purse shut. Pray your men keep their feet."; } },
   thugs: {
-    make(d){ if(!d.rivals) return null;
-      const h = d.rivals.find(x=>x.grudge>=GRUDGE_THUGS); const c=activeG(d);
+    make(d, forced){ if(!d.rivals) return null;
+      const h = forced || d.rivals.find(x=>x.grudge>=GRUDGE_THUGS && !x.retired); const c=activeG(d);
       if(!h || !c.length) return null; const t=pick(c);
       return { id:"thugs", title:"Blood in the Street", text:`${t.name} returns from an errand bloodied — three men with clubs, professional about it. The tavern keeper says they drank on House ${h.name}'s coin.`,
         choices:["Answer in kind — send your own men","Bind his wounds and bide your time"], data:{house:h.name, tid:t.id} }; },
@@ -32940,6 +33049,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        So the rule is three parts, not one: the action, the table it reads, and the gate that opens
        it. Everything here was found by asking what the nineteen above actually reference. */
     poachTarget, regardLoyal, GRUDGE_POACH,   /* #246 — the poach gate's two terms, readable apart */
+    HOSTILE_MOVES,                           /* #246 phase 2 — `voice` holds that a table gating a written line is reachable */
     GAMBITS, SWEARING, PLANSEASON, FAVOURS, answerRow, GAM_ACCOUNT, peacePrice, poachedMan, startPoach,
     /* the shelf #220 counts: the pacts, the lot, and the court's own price */
     PACTS, PACT_KEYS, pactOf, pactLeft, pactOwed, pactPace, offerPact, takePact, buyLot,
