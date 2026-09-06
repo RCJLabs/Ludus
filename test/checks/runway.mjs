@@ -28,10 +28,21 @@
    going short and the first word about it is zero weeks, from a maximum of ten.
 
    FIVE ARMS:
+   ---- AND #247a MOVED THE BAND THIS CHECK HOLDS, ON A MEASUREMENT (v3.208.0) ----
+
+   The arms below used to require a warning on every week under RUNWAY_WARN. Scored over every
+   house-week of two seeded sets of 32 houses x 420 weeks, that band is 1,535 and 1,348 weeks of
+   alarm which the house dies of debt inside ten weeks of on 7.9% and 8.2% — and it was true of all
+   88 houses of v3.207.0's run, survivors included, from a median week of 18. The row speaks on
+   EXPOSURE or a runway already in blood now: 692 and 706 weeks, right 12.4% and 12.5%, every house
+   that dies of debt still reached, seven and eight weeks of warning. #229's promise is unchanged and
+   `checks/cliff.mjs` holds its strongest form — every death by debt heard the row inside its last
+   ten weeks — while the arms here hold it over the band that means something.
+
    1 · IT IS ONE FUNCTION, and the Coin & Council face quotes what it returns — read out of a real
        browser, because "the number exists" was always the half of this item that was true.
-   2 · THE AGENDA SAYS IT BEFORE THE BOX IS EMPTY, in blood under four weeks.
-   3 · AND EVERYWHERE IT IS SHORT — over real play, with no silent band left between the two lines.
+   2 · THE AGENDA SAYS IT WHERE IT MEANS IT, and everything it says now goes in blood.
+   3 · AND EVERYWHERE THE TRIGGER HOLDS — over real play, with no silent band left.
    4 · AND IT DOES NOT TELL A DYING HOUSE TO BUILD.
    5 · ON HOUSES THAT ACTUALLY RAN SHORT, or every arm above passed on a rich one. */
 import { found, clearAll, installRope, forge, tab, settle } from "../harness.mjs";
@@ -55,8 +66,14 @@ export async function run({ p, errors }){
     const clone = x => JSON.parse(JSON.stringify(x));
     const rowsOf = d => { try { return A.agenda(d) || []; } catch(e){ return []; } };
     const txt = r => String(r.label||"") + " " + String(r.sub||"");
-    const WARN = /under, and .*ends it|would carry this house|box is empty/i;
-    const SPEND = /in the box/i;
+    /* ---- THE SENTENCES, AND #247a GAVE THE ROW A THIRD ONE ----
+       The exposure line — "An ordinary week moves Nd and there is Md in the box" — is a warning and
+       this regex did not know it, so v3.208.0's gate reported a silent agenda on benches where the
+       row was speaking. And `SPEND` was `/in the box/i`, which the new warning matches word for
+       word: it is meant for the WORKS NAG ("Nd sitting in the box", "Nd in the box, and the spina
+       unbuilt"), so it names what that line actually says instead. */
+    const WARN = /under, and .*ends it|would carry this house|box is empty|ordinary week moves/i;
+    const SPEND = /sitting in the box|unbuilt|start building|down of \d+d/i;
 
     /* 2 — a bench: one house, its box walked down, and what the agenda says at each depth */
     const base = A.newGameState("Runway", "clean", "RUNWAY-K", null);
@@ -69,6 +86,8 @@ export async function run({ p, errors }){
       const rw = A.runway(s), rows = rowsOf(s);
       const w = rows.find(x=>WARN.test(txt(x)));
       bench.push({ want, rw, said: !!w, urgency: w ? w.urgency : null,
+        exposed: (()=>{ try { return !!A.exposed(s); } catch(e){ return false; } })(),
+        swing: (()=>{ try { return A.swingOf(s); } catch(e){ return null; } })(),
         dest: w ? (w.dest||w.tab) : null,
         /* the number itself, in the sentence. Written as a RegExp built from a string this had one
            level of escaping too many and compiled to a literal backslash-b, so it reported every
@@ -80,6 +99,7 @@ export async function run({ p, errors }){
 
     /* 3, 4 and 5 — over real play */
     let weeks = 0, short8 = 0, short4 = 0, warned8 = 0, warned4 = 0, told8 = 0, spokeNull = 0;
+    let danger = 0, warnedD = 0;
     const gaps = [];
     for(let h=0; h<6; h++){
       const d = A.newGameState("Runway", "clean", "RUNWAY-R"+h, null);
@@ -92,11 +112,16 @@ export async function run({ p, errors }){
         const didWarn = rows.some(x=>WARN.test(txt(x)));
         if(didWarn && spoke == null) spoke = d.week;
         if(rw == null){ if(didWarn) spokeNull++; continue; }
+        let expo = false; try { expo = !!A.exposed(d); } catch(e){}
         if(rw < A.RUNWAY_WARN){
           short8++; if(didWarn) warned8++;
           if(rows.some(x=>SPEND.test(txt(x)))) told8++;
-          if(first == null) first = d.week;
         }
+        /* the silence is measured from the row's OWN trigger, not from the WARN band. #247a stopped
+           the row speaking between four and eight weeks on purpose, so a gap anchored on the eight
+           would now be measuring the design rather than a fault. */
+        if((rw < A.RUNWAY_BAD || expo) && first == null) first = d.week;
+        if(rw < A.RUNWAY_BAD || expo){ danger++; if(didWarn) warnedD++; }
         if(rw < A.RUNWAY_BAD){ short4++; if(didWarn) warned4++; }
       }
       if(first != null) gaps.push(spoke == null ? 9999 : Math.max(0, spoke - first));
@@ -104,7 +129,8 @@ export async function run({ p, errors }){
 
     const q = a => { if(!a.length) return null; const s=a.slice().sort((x,y)=>x-y);
       return { n:s.length, p50:s[Math.floor(s.length/2)], max:s[s.length-1] }; };
-    return { bench, bill, weeks, short8, short4, told8, gaps:q(gaps),
+    return { bench, bill, weeks, short8, short4, told8, gaps:q(gaps), danger,
+      warnD: danger ? +(warnedD/danger*100).toFixed(1) : null,
       warnAt: A.RUNWAY_WARN, badAt: A.RUNWAY_BAD,
       warn8: short8 ? +(warned8/short8*100).toFixed(1) : null,
       warn4: short4 ? +(warned4/short4*100).toFixed(1) : null,
@@ -157,6 +183,8 @@ export async function run({ p, errors }){
   lines.push(`  over ${r.weeks} played weeks: ${r.short8} under ${r.warnAt} and ${r.short4} under ${r.badAt}`);
   lines.push(`    warned on ${r.warn8}% and ${r.warn4}% · told to build on ${r.tell8}%`
     + ` · the silence ${JSON.stringify(r.gaps)} weeks`);
+  lines.push(`    and on the ${r.danger} weeks the row's own trigger held (in blood, or under one `
+    + `ordinary week of movement): warned on ${r.warnD}%`);
   lines.push(`  the Coin & Council face says: ${faceSaid ? `"${faceSaid}"` : "NOTHING"}`
     + ` · the function says ${plant.rw}`);
 
@@ -173,21 +201,44 @@ export async function run({ p, errors }){
     /* the bar is `RUNWAY_WARN`, and the first cut of this loop expected a warning at NINE weeks
        because it keyed on the `want` list rather than on the constant the game reads. Nine is over
        the bar and correctly silent; the arm was asserting its own arithmetic. */
-    if(b.rw >= r.warnAt){ if(b.said) bad.push(`a house with ${b.rw} weeks of coin is warned it is running out`); continue; }
-    if(!b.said){ bad.push(`a house with ${b.rw} weeks left in the box gets no word of it on the agenda — `
-      + `the only money line was \`d.gold < 0\`, which is a sentence for a house already past empty`); continue; }
-    if(!b.quotes) bad.push(`the agenda warns at ${b.rw} weeks and does not say the number`);
-    const wantU = b.rw < r.badAt ? 3 : 2;
-    if(b.urgency !== wantU)
-      bad.push(`the warning at ${b.rw} weeks is urgency ${b.urgency} and should be ${wantU} — under four `
-        + `weeks it goes in blood, which is what #229 asks for`);
+    /* ---- THE BAND MOVED, AND IT MOVED ON A MEASUREMENT — #247a ----
+       This expected a warning at every depth under RUNWAY_WARN. v3.208.0 measured what that band is
+       worth: over every house-week of two seeded sets of 32 houses, `runway < WARN` was true on
+       1,535 and 1,348 weeks and the house died of debt inside ten weeks on 7.9% and 8.2% of them —
+       and it was true of all 88 houses of v3.207.0's run, survivors included, from a median week of
+       18. A warning every house hears always is not one. The row speaks on EXPOSURE (the box against
+       what an ordinary week of this house moves) or a runway already in blood: 692 and 706 weeks at
+       12.4% and 12.5%, every house that dies of debt still reached, seven or eight weeks of warning.
+       So the expectation here is the row's own trigger. #229's promise — that a house running out is
+       told where it lives — is not weakened by this; it is held over the band that means it, and
+       `checks/cliff.mjs` holds the stronger form directly: every death by debt heard the row inside
+       its last ten weeks, on pain of failure. */
+    const shouldSpeak = b.rw < r.badAt || b.exposed;
+    if(!shouldSpeak){ if(b.said) bad.push(`a house with ${b.rw} weeks of coin and ${b.swing}d of ordinary `
+      + `week is warned it is running out — neither trigger holds and it is one of the 92% of short `
+      + `weeks that are nothing`); continue; }
+    if(!b.said){ bad.push(`a house with ${b.rw} weeks left in the box${b.exposed ? ` and less in it than `
+      + `an ordinary week (${b.swing}d)` : ""} gets no word of it on the agenda — the only money line `
+      + `was \`d.gold < 0\`, which is a sentence for a house already past empty`); continue; }
+    /* the exposure sentence quotes the swing and the box rather than the runway, so the
+       number-in-the-sentence rule applies to the line that carries the runway */
+    if(!b.exposed && !b.quotes) bad.push(`the agenda warns at ${b.rw} weeks and does not say the number`);
+    if(b.urgency !== 3)
+      bad.push(`the warning at ${b.rw} weeks is urgency ${b.urgency} and should be 3 — everything the `
+        + `row now speaks on is at or inside the blood threshold, and the first cut of #247a let a `
+        + `house holding one week of bill rank BELOW one holding three`);
   }
   /* 3 — and everywhere it is short */
   if(!r.short8) bad.push(`no house ran short of coin in ${r.weeks} weeks — arms 3 and 4 measured nothing`);
   else {
-    if(r.warn8 < 95)
-      bad.push(`a house under eight weeks of coin was warned on ${r.warn8}% of those weeks — it was 1.7% `
-        + `before v3.173.0, and anything under 95% is a band where nothing speaks`);
+    /* the 95% bar is over the band the row speaks on, which #247a narrowed from "under eight weeks"
+       to "in blood or exposed" — see the note in arm 2. The under-eight figure stays on screen
+       because it is the number that moved and somebody will want it. */
+    if(r.warnD != null && r.warnD < 95)
+      bad.push(`a house in real danger — under ${r.badAt} weeks of coin, or holding less than an `
+        + `ordinary week of its own movement — was warned on ${r.warnD}% of those weeks. Before `
+        + `v3.173.0 the whole short band was warned on 1.7%, and anything under 95% here is a band `
+        + `where nothing speaks`);
     if(r.warn4 < 95) bad.push(`a house under four weeks of coin was warned on ${r.warn4}% of those weeks`);
     if(r.gaps && r.gaps.max > 2)
       bad.push(`a house went ${r.gaps.max} weeks between its runway going short and the first word `
