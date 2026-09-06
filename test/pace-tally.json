@@ -5113,5 +5113,447 @@
    ]
   ],
   "pass": true
+ },
+ {
+  "v": "3.215.0",
+  "weeks": 421,
+  "scanned": 378,
+  "longest": 138,
+  "firstAt": {
+   "ludusNight": 0,
+   "fever": 0,
+   "bodyguard": 0,
+   "bargain": 0,
+   "rivalOffer": 0,
+   "bribe": 0,
+   "affair": 0,
+   "grain": 0,
+   "doctore": 0,
+   "damnatio": 0,
+   "auctoratus": 0,
+   "foundling": 2,
+   "sacramentum": 4,
+   "ambition": 4,
+   "omen": 7,
+   "bayCall": 19,
+   "plea": 29,
+   "mentor": 29,
+   "crowdCalls": 57,
+   "stash": 62,
+   "sabotage": 65,
+   "escape": 70,
+   "bribedEditor": 70,
+   "uprising": 80,
+   "patronGone": 90,
+   "roomFire": 108,
+   "thugs": 119,
+   "poached": 30,
+   "primacy": 97
+  },
+  "drawn": 36,
+  "raised": 25,
+  "p50": 13,
+  "atLeast4": 98.7,
+  "top": [
+   [
+    "grain",
+    100
+   ],
+   [
+    "fever",
+    97.4
+   ],
+   [
+    "bodyguard",
+    97.4
+   ],
+   [
+    "rivalOffer",
+    97.4
+   ],
+   [
+    "affair",
+    96.8
+   ],
+   [
+    "bribe",
+    92.1
+   ]
+  ],
+  "floor": [
+   [
+    "thugs",
+    9.5
+   ],
+   [
+    "poached",
+    2.6
+   ],
+   [
+    "roomFire",
+    2.6
+   ],
+   [
+    "stash",
+    2.4
+   ],
+   [
+    "primacy",
+    0.8
+   ],
+   [
+    "uprising",
+    0.8
+   ]
+  ],
+  "never": [
+   "owedLife",
+   "warTax",
+   "warLevy",
+   "warWord",
+   "theRoad",
+   "whispers",
+   "stolenSteel"
+  ],
+  "reach": [
+   [
+    "grain",
+    100
+   ],
+   [
+    "fever",
+    97.4
+   ],
+   [
+    "bodyguard",
+    97.4
+   ],
+   [
+    "rivalOffer",
+    97.4
+   ],
+   [
+    "affair",
+    96.8
+   ],
+   [
+    "bribe",
+    92.1
+   ],
+   [
+    "bayCall",
+    74.1
+   ],
+   [
+    "sacramentum",
+    72.5
+   ],
+   [
+    "damnatio",
+    69
+   ],
+   [
+    "omen",
+    63.8
+   ],
+   [
+    "plea",
+    61.1
+   ],
+   [
+    "bargain",
+    58.5
+   ],
+   [
+    "auctoratus",
+    56.6
+   ],
+   [
+    "foundling",
+    47.1
+   ],
+   [
+    "ambition",
+    46
+   ],
+   [
+    "doctore",
+    36.8
+   ],
+   [
+    "ludusNight",
+    34.9
+   ],
+   [
+    "sabotage",
+    31.2
+   ],
+   [
+    "mentor",
+    21.7
+   ],
+   [
+    "bribedEditor",
+    20.6
+   ],
+   [
+    "crowdCalls",
+    11.9
+   ],
+   [
+    "patronGone",
+    11.4
+   ],
+   [
+    "escape",
+    11.1
+   ],
+   [
+    "thugs",
+    9.5
+   ],
+   [
+    "poached",
+    2.6
+   ],
+   [
+    "roomFire",
+    2.6
+   ],
+   [
+    "stash",
+    2.4
+   ],
+   [
+    "primacy",
+    0.8
+   ],
+   [
+    "uprising",
+    0.8
+   ]
+  ],
+  "pass": true
+ },
+ {
+  "v": "3.215.0",
+  "weeks": 421,
+  "scanned": 378,
+  "longest": 138,
+  "firstAt": {
+   "ludusNight": 0,
+   "fever": 0,
+   "bodyguard": 0,
+   "bargain": 0,
+   "rivalOffer": 0,
+   "bribe": 0,
+   "affair": 0,
+   "grain": 0,
+   "doctore": 0,
+   "damnatio": 0,
+   "auctoratus": 0,
+   "foundling": 2,
+   "sacramentum": 4,
+   "ambition": 4,
+   "omen": 7,
+   "bayCall": 19,
+   "plea": 29,
+   "mentor": 29,
+   "crowdCalls": 57,
+   "stash": 62,
+   "sabotage": 65,
+   "escape": 70,
+   "bribedEditor": 70,
+   "uprising": 80,
+   "patronGone": 90,
+   "roomFire": 108,
+   "thugs": 119,
+   "poached": 30,
+   "primacy": 97
+  },
+  "drawn": 36,
+  "raised": 25,
+  "p50": 13,
+  "atLeast4": 98.7,
+  "top": [
+   [
+    "grain",
+    100
+   ],
+   [
+    "fever",
+    97.4
+   ],
+   [
+    "bodyguard",
+    97.4
+   ],
+   [
+    "rivalOffer",
+    97.4
+   ],
+   [
+    "affair",
+    96.8
+   ],
+   [
+    "bribe",
+    92.1
+   ]
+  ],
+  "floor": [
+   [
+    "thugs",
+    9.5
+   ],
+   [
+    "poached",
+    2.6
+   ],
+   [
+    "roomFire",
+    2.6
+   ],
+   [
+    "stash",
+    2.4
+   ],
+   [
+    "primacy",
+    0.8
+   ],
+   [
+    "uprising",
+    0.8
+   ]
+  ],
+  "never": [
+   "owedLife",
+   "warTax",
+   "warLevy",
+   "warWord",
+   "theRoad",
+   "whispers",
+   "stolenSteel"
+  ],
+  "reach": [
+   [
+    "grain",
+    100
+   ],
+   [
+    "fever",
+    97.4
+   ],
+   [
+    "bodyguard",
+    97.4
+   ],
+   [
+    "rivalOffer",
+    97.4
+   ],
+   [
+    "affair",
+    96.8
+   ],
+   [
+    "bribe",
+    92.1
+   ],
+   [
+    "bayCall",
+    74.1
+   ],
+   [
+    "sacramentum",
+    72.5
+   ],
+   [
+    "damnatio",
+    69
+   ],
+   [
+    "omen",
+    63.8
+   ],
+   [
+    "plea",
+    61.1
+   ],
+   [
+    "bargain",
+    58.5
+   ],
+   [
+    "auctoratus",
+    56.6
+   ],
+   [
+    "foundling",
+    47.1
+   ],
+   [
+    "ambition",
+    46
+   ],
+   [
+    "doctore",
+    36.8
+   ],
+   [
+    "ludusNight",
+    34.9
+   ],
+   [
+    "sabotage",
+    31.2
+   ],
+   [
+    "mentor",
+    21.7
+   ],
+   [
+    "bribedEditor",
+    20.6
+   ],
+   [
+    "crowdCalls",
+    11.9
+   ],
+   [
+    "patronGone",
+    11.4
+   ],
+   [
+    "escape",
+    11.1
+   ],
+   [
+    "thugs",
+    9.5
+   ],
+   [
+    "poached",
+    2.6
+   ],
+   [
+    "roomFire",
+    2.6
+   ],
+   [
+    "stash",
+    2.4
+   ],
+   [
+    "primacy",
+    0.8
+   ],
+   [
+    "uprising",
+    0.8
+   ]
+  ],
+  "pass": true
  }
 ]

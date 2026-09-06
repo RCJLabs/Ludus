@@ -4389,6 +4389,119 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.215.0 — #246, phase 2: the multipliers drive something, and a dead house stops acting
+
+**The item's phase 2 was right about the disease and wrong about the cure, and the instrument found
+a third thing on the way.** `probes/spite.mjs` (new, six arms) was written to size a weight before
+writing one. It settled three things, all measured on the pre-release build over 16 x 420:
+
+**One — the multipliers really did drive nothing.** `evWeight(d,k)` is `EV_DIE[k].w` times a
+freshness bonus and reads no lanista at all: sabotage 2, the bribed editor 4, the thugs 8, **the
+same three numbers for every bay in the game**, checked against a state founded under each of the
+nine. The sorts inside `sabotage.make` and its two sisters choose *whose colours the cook saw*, and
+never once whether the cook saw anybody.
+
+**Two — but a weight on the grudge multiplies almost nothing, because the grudge is empty.**
+
+| the grudge over 13,316 house-weeks | |
+|---|---|
+| p50 / p90 / p99 | **0** / 17 / 57 |
+| sitting at exactly zero | **64.4%** of house-weeks |
+| under the lowest gate (26) | **95.4%** |
+| leaves zero on | 3.4% of its zero-weeks, landing at a median of **4** |
+| above zero: in, decay, everything else | **0.90** a week against **0.94 + 0.36** |
+
+It is a bathtub whose drain outruns its tap, refilled in four-point splashes, with the nearest gate
+at 26. Shadow-ledgered before anything was written: the item's literal `grudge x L.mult` turns a hot
+house's bag **88.7% hostile** — a house that hates you doing nothing else, which is the item's own
+stated risk — and the normalised `grudge/GATE x L.mult` gives 31.1%.
+
+**Three — and a house that had already gone dark was doing all of it.** `closeHouse` sets `retired`
+and leaves the house in `d.rivals` on purpose, so `lastDark` can sell the yard on and the annals can
+name the man; every other walker of that array steps over them. The bay's own turn did not, and
+neither did any of the four hostile gates. Over 4,481 weeks:
+
+| | |
+|---|---|
+| the pool `rivalTurn` picks from | **2,068 of 14,343 slots were dark houses (14.4%)** |
+| ordinary rival moves made by one | **268 of 3,110 — 8.6%** |
+| hostile acts charged to one | **28 of 88 — 31.8%** |
+
+House Vettius closed on week 200 and was still poisoning the grain at 202, 204 and 206 — and still
+loading its wagons for the coast, selling men in the market, and winning at Atella. One filter, the
+one the rest of the file already uses, in five places.
+
+**What shipped.** The four moves the item asks for, marked `hostile` in `RIVAL_MOVES`, each raising
+the card the die would have raised — `rivalTurn` runs before the week's event draw and that draw
+stands down when something is already pending, exactly as `fireArc` relies on — so the player's
+three doors are the ones already written, which is what phase 4 is for. And the thing that was
+actually blocking them: **`rivalTurn` picked its house uniformly**, so a house at grudge 60 took the
+week's turn exactly as often as two houses at 0. It picks by spite now, and a house below the lowest
+gate weighs exactly 1 — which is every house on 95.4% of house-weeks, and with equal weights the
+single draw resolves to the index `pick()` always returned.
+
+**What it bought, measured honestly on four 32 x 420 sets against the same seeds on the old build.**
+Calendar-week rates are not comparable here — the fixture re-phases and the runs end at different
+weeks — so the measure is acts per hundred house-weeks that actually held a grudge:
+
+| per 100 hot house-weeks | SPA | SPB | SPC | SPD | mean |
+|---|---|---|---|---|---|
+| before | 7.9 | 10.0 | 9.5 | 7.8 | **8.8** |
+| after | 9.1 | 9.2 | 9.3 | 9.3 | **9.2** |
+
+**The rate does not move, and that is the finding.** The channel was never the constraint; the
+grudge is. What the moves change is the AUTHORSHIP — hostility is now the act of the house that
+holds the grudge, reached for at its own character's rate, instead of a die that cannot see a
+lanista.
+
+**And the first cut of it was wrong in a way worth keeping.** Weighted on the grudge and the
+multiplier alone, the mix went **sabotage 37% -> 69%, thugs 29% -> 10%, the bribed editor 27% ->
+16%**: sabotage's gate is 26 against 38 and 44, so it is eligible on far more hot weeks, and a move
+that raises a card takes the week's event slot from the cards the die rates higher. `EV_DIE` already
+carries which card should appear how often and that judgement is not what #246 disputes, so the
+grudge and the lanista decide WHETHER a house reaches for something and the die's own weight still
+decides WHICH. Shipped mix: **56 / 20 / 21 / 3**. Sabotage stays over-represented against its old
+37% because no weight fixes a gate twelve points below the next one, and that is stated rather than
+tuned away.
+
+**`checks/spite.mjs`, four arms, 8 x 320, 9 seconds.** Arm 1 is the one that matters — a dark house
+made 0 of 945 moves and took 0 of 16 charges, against 8.6% and 31.8% before — and it refuses to pass
+on a run where nothing went dark, because that arm needs a corpse. Then: the four moves exist and
+weigh exactly 0 at grudge 0; the schemer reaches for the poach harder than the man with no theatre
+(3.77 against 1.37) and the house that forgets nothing sabotages harder than the house rated 0.5
+(2.19 against 0.58); the die's order survives (thugs 4.55 over sabotage 3.65); and a floor under the
+surface so the channel cannot go quietly dead the way the poach branch was said to have. Sabotage-
+verified three ways: the dark filter reverted (38 moves and 1 act caught), the die term dropped
+(2.27 against 7.31, inverted), and the multiplier dropped (1.71 against 1.71).
+
+**And the gate found the release's second instrument fault.** `checks/houses.mjs` failed at median
+peak warmth **31.6** against its bar of 34, and its own message blamed the grudge shutting the
+familiarity term off. It was not that. Turning the four moves off gave **83.3**; turning them off one
+at a time gave 42.9, 55.9, 76.7 and 78.9 — a spread wider than the whole distance to the bar, from
+changes that do not compose. Peak warmth is BIMODAL: a house under grudge 30 warms 1.1 a meeting and
+has its grudge pulled down 0.44 by the same call so it runs away to the cap, and a house that crosses
+30 early has the term switched off and never warms at all. At n=64 the quartiles are **p25 16.2 and
+p75 100** around a median of 66.8, so the median is not reporting a central tendency — it is
+reporting which hump got the 32nd house. Re-measured at n=64: **66.8 with the moves against 67.9
+without.** There was no regression; there was a statistic that could not tell one from a reseed.
+
+The check's own head already records being raised from 5 houses to 24 for this exact reason. It goes
+to **64** now, keeps the median and its bar, and asserts the SHARE over the bar beside it — and the
+honest account of why is not that a share survives a reseed better (at this n both do) but that the
+two fail at different distances: cutting the familiarity term from 1.1 to 0.25 puts the median on 33
+and trips it while the share is still 50%. One sensitive, one blunt. Measured healthy: 59.4 / 68.8 /
+65.6. `checks/voice.mjs` caught the other one, which was the rule it exists for — `HOSTILE_MOVES`
+gates written lines and was not on the test handle. And the cards now honour their own cooldown when
+a move raises them: `EV_DIE` gives sabotage four weeks and `pickEvent` respects it, so a move that
+raised it by hand every week would have turned the one register the die was told to space out into
+the one a grudged house can play constantly — the item's risk note arriving from the direction
+nobody was watching.
+
+**What is left of the item.** Phase 3 was retired in v3.214.0. Phase 4 — your answer set — is
+untouched and now has four authored acts to answer rather than a die. And the phase-2 instrument
+names the real lever for whoever wants it: **the grudge's own arithmetic**, 0.90 in against 1.30
+out, which is a difficulty decision and not a bug.
+
 ### v3.214.0 — #246, phase 1: the item's headline was a swallowed TypeError
 
 **#246 was filed on a number that was never measured.** Its premise: *"a rival held grudge ≥ 35 on
@@ -7312,8 +7425,16 @@ lesson). Either a second stream keyed off the seed word, as `seedNames` does, or
 
 ---
 
-**#246 — The Grudge Does Something** *(overhaul · medium–large · 4 phases)* — **PHASE 1 SHIPPED
-v3.214.0, AND IT REFUTED THE ITEM'S HEADLINE.** *"`poachTarget` returned a man on 0 of 3,133 weeks"*
+**#246 — The Grudge Does Something** *(overhaul · medium–large · 4 phases)* — **PHASES 1 AND 2
+SHIPPED; ONLY PHASE 4 REMAINS.** *Phase 2, v3.215.0:* the multipliers really did drive nothing
+(`evWeight` reads no lanista — the same three numbers for every bay), the four hostile moves are in
+`RIVAL_MOVES` weighted by grudge x multiplier x the card's own die weight, and `rivalTurn` now picks
+its house by spite instead of uniformly. Measured on four 32 x 420 sets, **the rate does not move**
+— 8.8 hostile acts per hundred hot house-weeks before, 9.2 after — because the channel was never
+the constraint: the grudge is 0 on 64.4% of house-weeks and under the lowest gate on 95.4%, taking
+in 0.90 a week against a drain of 1.30. What changed is the authorship. **And the instrument found a
+bug worth more than the phase:** a house that had gone dark was still making 8.6% of all rival moves
+and taking 31.8% of the hostile charges. *Phase 1, v3.214.0, REFUTED THE ITEM'S HEADLINE.* *"`poachTarget` returned a man on 0 of 3,133 weeks"*
 was a swallowed TypeError: the function was never on the test handle. Measured with it exported, a
 takeable man exists on **65.2% and 66.3%** of weeks; the scarce term is the GRUDGE (3.2% / 4.5%),
 both coincide on 2.5% / 3.2%, and the hostile surface fires once every ~65 weeks rather than 112.
