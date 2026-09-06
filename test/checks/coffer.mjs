@@ -34,7 +34,7 @@ const HOUSES = 12, WEEKS = 420;
 const SCALE_LO = 0.2, SCALE_HI = 6;   /* the bay's median may sit between a fifth and six times his */
 
 export const name = "coffer";
-export const describe = "a rival house has a purse, its moves read it, and an empty one costs it a man before it costs it the yard";
+export const describe = "a rival house has a purse, its moves read it, the league row says what it is doing, and an empty one costs it a man before it costs it the yard";
 
 export async function run({ p, errors }){
   const lines = [], bad = [];
@@ -159,6 +159,48 @@ export async function run({ p, errors }){
       return { byState, gate, road, sellArm };
     })();
 
+    /* ---- 7, phase 3: it shows ---- */
+    const shows = (()=>{
+      /* how often each word stands on a league row, over seeded play */
+      const w = { selling:0, stretched:0, flush:0, none:0 }; let n = 0;
+      for(let h=0; h<6; h++){
+        const d = A.newGameState("Sw"+h, "clean", `COFSHOW-${h}`);
+        for(let k=0; k<300; k++){
+          if(d.over) break;
+          for(const r of (d.rivals || [])){ if(r.retired) continue; n++;
+            const pw = A.rivalWord(d, r); w[pw ? pw.word : "none"]++; }
+          try { R.lanista(d); } catch(e){ break; }
+        }
+      }
+      /* and the word against the arithmetic, driven — one house walked across the bands */
+      const at = (weeks, soldAgo) => { const e = A.newGameState("Wb", "clean", "COFWORD");
+        const r = e.rivals[0]; r.doctore = false; r.away = 0;
+        const out = A.rivalOutgo(r);
+        r.purse = Math.round(out * weeks);
+        if(soldAgo != null){ e.week = 100; r.soldToLive = 100 - soldAgo; }
+        const pw = A.rivalWord(e, r); return pw ? pw.word : "none"; };
+      const driven = { empty: at(0), one: at(0.5), five: at(5), twenty: at(20), rich: at(100),
+        soldLately: at(30, 3), soldLongAgo: at(30, 60) };
+      /* the outgo the row reads is the outgo the week actually takes */
+      /* ---- WITH A DOCTORE AND ON THE ROAD, or the arm cannot see what it guards ----
+         The fixture had neither, so both of those terms were zero and a sabotage that re-inlined
+         the week's arithmetic WITHOUT them still balanced. What this arm exists to catch is exactly
+         that re-inlining, so the house it drives has to be paying for everything a house can pay for. */
+      const tick = (()=>{ const e = A.newGameState("Tk", "clean", "COFTICK");
+        const r = e.rivals[0]; r.purse = 100000;            /* far from the ladder, so nothing else moves it */
+        r.doctore = true; r.away = 3;
+        const out = A.rivalOutgo(r), was = A.rivalPurse(r);
+        A.rivalPurseWeek(e);
+        return { out: Math.round(out), fell: Math.round(was - A.rivalPurse(r)) }; })();
+      /* and the lineage carries what the yard was worth */
+      const dark = (()=>{ const e = A.newGameState("Dk", "clean", "COFDARK");
+        const r = e.rivals[0]; r.purse = 1234;
+        const L = A.closeHouse(e, r, "broke");
+        return { purse: L ? L.purse : null, men: L ? L.men : null, endedAs: L ? L.endedAs : null }; })();
+      return { n, pct: Object.fromEntries(Object.entries(w).map(([k,v])=>[k, +(100*v/(n||1)).toFixed(1)])),
+        driven, tick, dark };
+    })();
+
     /* ---- 5, driven: the week's tick must not touch the stream ---- */
     const draws = (()=>{
       const d = A.newGameState("Rn", "clean", "COFRNG");
@@ -173,7 +215,7 @@ export async function run({ p, errors }){
       const h = d.rivals[0]; const seed = A.PURSE_SEED(h);
       return { seed, read: A.rivalPurse({ name:h.name, fame:h.fame }) }; })();
     return { era: era.map(a=>q(a)), gold: gold.map(a=>q(a)), noPurse, unseeded, fresh, moved, richer, poorer,
-      lives, dark, card, rung, draws, reading };
+      lives, dark, card, rung, draws, reading, shows };
   }, [HOUSES, WEEKS]);
 
   if(r.why) return { pass:false, why:r.why, lines };
@@ -267,6 +309,40 @@ export async function run({ p, errors }){
     if(!(RD.now > RD.was))
       bad.push(`a house came home from the road no richer than it left (${RD.was}d → ${RD.now}d) — phase 1 charged `
         + `for the wagons and never credited them, which made "tour when short" a way to die faster`);
+  }
+
+  /* 7 — phase 3: it shows */
+  { const S = r.shows, P = S.pct;
+    lines.push(`  the word on a league row over ${S.n} rival-weeks: selling ${P.selling}% · stretched ${P.stretched}% · `
+      + `flush ${P.flush}% · nothing at all ${P.none}%`);
+    for(const k of ["selling","stretched","flush","none"]){
+      if(P[k] < 4) bad.push(`"${k}" stands on ${P[k]}% of league rows — a state a player never sees is not a state, `
+        + `and #256 phase 3 is four of them he can tell apart at a glance`);
+      if(P[k] > 60) bad.push(`"${k}" stands on ${P[k]}% of league rows — a word that is on nearly every row is the `
+        + `default, and says nothing about the house it is next to`);
+    }
+    const D = S.driven;
+    lines.push(`  driven: empty box "${D.empty}" · half a week "${D.one}" · five weeks "${D.five}" · `
+      + `twenty "${D.twenty}" · a hundred "${D.rich}" · sold three weeks ago "${D.soldLately}" · sixty ago "${D.soldLongAgo}"`);
+    if(D.empty !== "selling" || D.one !== "selling")
+      bad.push(`a house with under a week in the box reads "${D.empty}"/"${D.one}" and not "selling"`);
+    if(D.five !== "stretched")
+      bad.push(`a house with five weeks of its own week in the box reads "${D.five}" — the band is the PLAYER'S `
+        + `RUNWAY_WARN, because the bay is running the same arithmetic he is`);
+    if(D.twenty !== "none") bad.push(`a house with twenty weeks in the box reads "${D.twenty}" — the middle says nothing`);
+    if(D.rich !== "flush") bad.push(`a house with a hundred weeks in the box reads "${D.rich}" and not "flush"`);
+    if(D.soldLately !== "selling")
+      bad.push(`a house that sold a man three weeks ago reads "${D.soldLately}" — selling to make the week is the `
+        + `state, whatever the box says afterwards`);
+    if(D.soldLongAgo === "selling") bad.push(`a house that sold a man sixty weeks ago still reads "selling"`);
+    lines.push(`  the row's outgo is the week's: reads ${S.tick.out}d, the week took ${S.tick.fell}d`);
+    if(S.tick.out !== S.tick.fell)
+      bad.push(`the league row prices a rival's week at ${S.tick.out}d and the week actually takes ${S.tick.fell}d — `
+        + `a shown number and the roll behind it are the same call (#150), and \`rivalOutgo\` exists so that they are`);
+    lines.push(`  a yard that went dark: ${S.dark.purse}d and ${S.dark.men} men on the lineage (${S.dark.endedAs})`);
+    if(S.dark.purse == null || S.dark.men == null)
+      bad.push(`a house that went dark left no record of what its yard was worth — #242 buys that yard, and the price `
+        + `has to come from somewhere`);
   }
 
   if(errors.length) bad.push(`${errors.length} page errors`);

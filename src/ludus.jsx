@@ -4627,6 +4627,8 @@ function closeHouse(d, h, how){
   h.endedAs = how;                    /* "fond" — he sold up · "broken" — you finished him */
   h.retiredAt = d.week;
   h.lineage = { name: lanistaOf(h.name).name, house: h.name, fame: Math.round(h.fame||0),
+    /* #256 phase 3 — and what the yard was worth when it went dark, which is #242's price */
+    purse: Math.round(rivalPurse(h)), men: (h.fighters || []).length,
     endedAs: how, week: d.week, met: ((d.metHouse||{})[h.name]||{}).met || 0,
     warm: Math.round(warmth(d, h.name)), grudge: Math.round(h.grudge||0), kin: !!h.kin };
   return h.lineage;
@@ -7082,13 +7084,37 @@ function rivalShort(d, h){
    appearance fee for showing him, and its purse as well when he is the one who walks off. Named
    rather than inline because `doFight` is at its `bulk` cap and three more lines put it over. */
 const rivalCardPay = (h, playerWon) => rivalPay(h, rivalFee(h) + (playerWon ? 0 : rivalWin(h)));
+/* ---- WHAT A WEEK COSTS THEM, ONCE — #256 phase 3 ----
+   The weekly tick spent this inline and the league row needs the same figure to say anything about
+   a house, so it is one function and both read it (#150: a displayed number and the roll behind it
+   are the same call). */
+const rivalOutgo = h => RIVAL_KEEP * ((h.fighters || []).length) + RIVAL_STANDING * (h.fame || 0)
+  + (h.doctore ? RIVAL_DOC : 0) + (h.away ? RIVAL_TOUR : 0);
+/* and how many of its own weeks are in the box — their `runway`, on the same arithmetic as yours */
+const rivalWeeks = h => { const out = rivalOutgo(h); return out > 0 ? rivalPurse(h) / out : null; };
+/* ---- AND THE WORD FOR IT, in `NORMS`' idiom ----
+   Measured over 10,431 rival-weeks: the runway runs p10 1.4 · p25 4.4 · p50 12.9 · p75 32.0 · p90
+   59.8, and a house has sold a man to make the week inside the last twelve on 4.7% of them. The
+   bands are the PLAYER'S OWN — `RUNWAY_WARN` for stretched, and under one week or a recent sale for
+   selling — because the bay is running the same arithmetic he is and should be read in the same
+   words. That comes out at roughly selling 9% of rows, stretched 30%, nothing at all 42%, flush 20%:
+   four states a player can tell apart at a glance, none of them the default. */
+const RIVAL_FLUSH_WEEKS = 40, RIVAL_SOLD_RECENT = 12;
+function rivalWord(d, h){
+  if(!h || h.retired) return null;
+  const w = rivalWeeks(h);
+  if(w == null) return null;
+  if(w < 1 || (h.soldToLive && d.week - h.soldToLive <= RIVAL_SOLD_RECENT))
+    return { word:"selling", colour:"var(--blood)", weeks:w };
+  if(w < RUNWAY_WARN) return { word:"stretched", colour:"var(--gold)", weeks:w };
+  if(w >= RIVAL_FLUSH_WEEKS) return { word:"flush", colour:"var(--laurel)", weeks:w };
+  return null;
+}
 /* run once a week beside `rivalTurn`: the men eat whether or not anybody fought */
 function rivalPurseWeek(d){
   for(const h of (d.rivals || [])){
     if(h.retired) continue;
-    rivalPay(h, -RIVAL_KEEP * (h.fighters || []).length - RIVAL_STANDING * (h.fame || 0));
-    if(h.doctore) rivalPay(h, -RIVAL_DOC);
-    if(h.away) rivalPay(h, -RIVAL_TOUR);
+    rivalPay(h, -rivalOutgo(h));
     rivalShort(d, h);
   }
 }
@@ -28240,6 +28266,9 @@ export default function App(){
                   {i===0 && <span style={{color:"var(--gold-hi)",marginRight:4}}>✦</span>}
                   {riv && riv.away>0 && <span className="dim" style={{fontSize:"var(--fs-sm)"}}>away · </span>}
                   {riv && riv.doctore && <span className="laurel" style={{fontSize:"var(--fs-sm)"}}>doctore · </span>}
+                  {/* #256 phase 3 — what the box is doing, in the same words the player's own is read in */}
+                  {(()=>{ const pw = riv ? rivalWord(S, riv) : null; return pw
+                    ? <span style={{fontSize:"var(--fs-sm)",color:pw.colour}}>{pw.word} · </span> : null; })()}
                   {h.name}
                   {riv && (warmth(S,h.raw)>=25
                     ? <span style={{fontSize:"var(--fs-sm)",marginLeft:7,fontStyle:"italic",color:warmth(S,h.raw)>=50?"var(--laurel)":"var(--ink-dim)"}}>{houseWord(warmth(S,h.raw))}</span>
@@ -28269,7 +28298,7 @@ export default function App(){
                   {riv.after.endedAs==="broken"
                     ? `He holds ${riv.after.name}'s yard — the one you emptied.`
                     : riv.after.endedAs==="broke"
-                    ? `He holds ${riv.after.name}'s yard. Nobody emptied it; it ran out.`
+                    ? `He holds ${riv.after.name}'s yard. Nobody emptied it; it ran out — ${riv.after.purse != null ? `${rnd(riv.after.purse)}d and ${riv.after.men} men` : "nothing"} left in it at the end.`
                     : `He holds ${riv.after.name}'s yard, and was spoken well of to him.`}
                 </div>}
                 {h.you && i===0 && <div className="laurel" style={{fontSize:"var(--fs-sm)",marginTop:1,fontStyle:"italic"}}>the first house of the city</div>}
@@ -33133,6 +33162,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     rivalPurse, rivalPay, rivalPurseWeek, rivalShort, PURSE_SEED, rivalFee, rivalWin, rivalTier,
     RIVAL_KEEP, RIVAL_DOC, RIVAL_TOUR, RIVAL_DARK, RIVAL_STANDING, rivalCardPay,   /* #256 — the bay's own strongbox */
     rivalFlush, rivalBroke, rivalCan, PURSE_FLUSH, PURSE_SHORT,   /* #256 phase 2 — what the moves read off it */
+    rivalOutgo, rivalWeeks, rivalWord, RIVAL_FLUSH_WEEKS, RIVAL_SOLD_RECENT,   /* #256 phase 3 — and the word for it */
     makeRivalFighter, rivalTurn, rivalReadOf, readSharp, READ_WARM, READ_GAIN, READ_CAP, BUY_BAND, lanistaOf, LANISTAE,   /* #236 — RIVAL_MOVES is already on the handle */ HOUSES,
     /* ---- WHAT A BOUT TAKES OUT OF WHAT HE CARRIES ----
        #114 measured `gearCond` and found steel that never wore, but `gearCond` is the pool of
