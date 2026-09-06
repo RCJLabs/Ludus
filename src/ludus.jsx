@@ -22493,6 +22493,65 @@ function Crest({ crest, size=22 }){
   );
 }
 
+/* ---- WHAT HAS PASSED BETWEEN THE TWO OF YOU — audit item #249, phase 3 ----
+   `metHouse` is written on every card a rival's man appears on — met, and a `seen` list of which of
+   `RIVAL_BEATS`' eight have happened between the houses — and until now it was **read by no panel at
+   all**. The league row surfaces the record book's per-house line and `h.after`; the Treat sheet,
+   which is the one screen that is ABOUT a single house, showed his men, his grudge word and a price,
+   and nothing whatever about the years you have spent against him.
+
+   The beats are the part with no other home. They are the arc — the drink after the games, the
+   respect that comes only from having beaten each other three times each, the warning, the offer,
+   the bitterness — and each fires once per house for ever. A rivalry that has produced four of them
+   is a different thing from one that has produced none, and the player had no way to know which he
+   was in. Labelled here rather than in `RIVAL_BEATS` because that table's own `say` is a paragraph
+   and this wants three words.
+
+   Written as a component outside `App` because `App` is at its `bulk` cap — the same reason
+   `nemAnswerCost`'s note sits away from the button it prices. */
+/* ---- NOUNS, BECAUSE THE EIGHT DO NOT SHARE A SUBJECT ----
+   The first cut wrote them as verbs behind "You have …", which reads correctly for the mutual ones
+   and not at all for the rest: `warning` is HIM finding you before the card goes up, `loan` is HIM
+   sending four hundred denarii with a note, `offer` is HIM asking for one of your men — so the line
+   came out "You have drunk together, come to respect him, warned you, grown old together." Named as
+   things that have passed rather than things you did, and the frame stops caring who did them. */
+const BEAT_WORD = { drink:"a table shared after the games", respect:"a respect neither of you says out loud",
+  loan:"four hundred denarii when you needed it", warning:"a word before the card went up",
+  offer:"an offer for one of your men", bitter:"a pleasantness across the editor's table",
+  old:"the years", end:"a peace, at the end" };
+function HouseLedger({ S, h }){
+  /* ---- ONE SOURCE FOR THE RECORD, WHICH IS #150'S RULE ----
+     The first cut read the card COUNT off `metHouse.met` and the win-loss off the record book's
+     `house[name]`, and put them on one line — two counters from two systems, side by side, inviting
+     a reader to subtract one from the other. They track together for a named house today and there
+     is no rule that says they must: `metHouse` counts every card an opponent's house is named on,
+     the book records only houses in `LANISTAE`. The book owns the record and says both numbers.
+     `metHouse` is here for the thing nothing else has: which of the eight beats have happened. */
+  const m = (S.metHouse || {})[h.name] || { met:0, seen:[] };
+  const bk = (S.book && S.book.house && S.book.house[h.name]) || null;
+  const beats = (m.seen || []).filter(k => BEAT_WORD[k]);
+  const watched = (h.fighters || []).filter(f => scoutLive(S, f)).length;
+  if(!bk || !bk.n) return (
+    <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:9}}>
+      You have never had a man on the same card as his. Whatever is between you, it is not from the sand.
+    </div>);
+  return (
+    <div className="panel" style={{padding:10,marginBottom:9}}>
+      <div className="flex items-center justify-between gap-2">
+        <span style={{fontSize:"var(--fs-md)"}}>{bk.n} card{bk.n===1?"":"s"} against him</span>
+        <span className="rowval" style={{fontSize:"var(--fs-md)",color:bk.w*2>bk.n?"var(--laurel)":"var(--ink-2)"}}>
+          you {bk.w}–{bk.n-bk.w}</span>
+      </div>
+      <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>
+        {watched} of {(h.fighters||[]).length} of his men watched
+      </div>
+      {beats.length>0 && <div style={{fontSize:"var(--fs-sm)",marginTop:4,fontStyle:"italic",color:"var(--ink-2)",overflowWrap:"anywhere"}}>
+        Between you: {beats.map(k=>BEAT_WORD[k]).join(", ")}.
+      </div>}
+    </div>
+  );
+}
+
 /* A beast for the morning hunt. One quadruped, six sets of bones.
    Drawn facing RIGHT like the fighter; the arena mirrors it. */
 /* ---- AND THE HUNT WAS STILL LIT ----
@@ -31242,6 +31301,7 @@ export default function App(){
               <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:8}}>
                 {L.name}{L.trait?` — ${L.trait}`:""}. {grudgeWord(h.grudge)}{feud?" You are in a feud with this house.":""}
               </div>
+              <HouseLedger S={S} h={h}/>{/* #249 phase 3 — what has passed between the two of you */}
               {dealMsg && <div className="panel" style={{padding:10,marginBottom:9,background:"var(--panel)",borderColor:"var(--gold-edge)",fontSize:"var(--fs-md)"}}>{dealMsg}</div>}
 
               <div className="flex items-center justify-between gap-2" style={{marginBottom:5}}>
@@ -33143,6 +33203,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     earOn, earInside,                        /* #246 phase 4 — whether anything is listening, and whether it is inside */
     rivalWeekly,                             /* #244 — the recruiter, so its one clause can be read a week at a time */
     crestOf, HOUSE_COLOURS, CREST_SYMS,      /* #249 phase 1 — the bay's colours, and the vocabulary they must come from */
+    BEAT_WORD,                               /* #249 phase 3 — the eight beats' short names, so a check can hold the table complete */
     GAMBITS, SWEARING, PLANSEASON, FAVOURS, answerRow, GAM_ACCOUNT, peacePrice, poachedMan, startPoach,
     /* the shelf #220 counts: the pacts, the lot, and the court's own price */
     PACTS, PACT_KEYS, pactOf, pactLeft, pactOwed, pactPace, offerPact, takePact, buyLot,
