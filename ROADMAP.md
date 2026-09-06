@@ -4389,6 +4389,59 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.219.0 — #249, phase 3: the rivalry that was written down and never shown
+
+**`metHouse` was written on every card and read by no panel at all.** It carries `met` and a `seen`
+list of which of `RIVAL_BEATS`' eight have happened between the two houses, and nothing anywhere
+rendered it. The league row surfaces the record book's per-house line and `h.after` — both of which
+shipped earlier, so the item's phase-3 list was partly done before it was read — but the **Treat
+sheet**, which is the one screen in the game that is ABOUT a single house, showed his men, his grudge
+word and a price, and nothing whatever about the years you had spent against him.
+
+**The beats are the part with no other home.** Each of the eight fires once per house for ever: a
+table shared after the games, a respect that comes only from having beaten each other three times
+each, four hundred denarii sent with a note, a word before the card goes up, an offer for one of your
+men, a pleasantness across the editor's table, the years, and a peace at the end. A rivalry that has
+produced four of them is a different thing from one that has produced none, and the player had no way
+to know which he was in. Now, on Glaber's sheet:
+
+    21 cards against him                                    you 12–9
+    0 of 4 of his men watched
+    Between you: a table shared after the games, a respect neither of you says
+    out loud, a word before the card went up, the years.
+
+**Three faults in it, all caught by looking at the thing rather than by any test.**
+
+**One — two counters from two systems on one line.** The first cut took the card COUNT from
+`metHouse.met` and the win-loss from the record book's `house[name]`, and set them side by side for a
+reader to subtract. They track together for a named house today and no rule says they must:
+`metHouse` counts every card an opponent's house is named on, the book records only houses in
+`LANISTAE`. The book owns the record and says both numbers — #150's rule. `metHouse` is on the panel
+for the one thing nothing else has.
+
+**Two — the eight beats do not share a subject.** Written as verbs behind "You have …", the line came
+out *"You have drunk together, come to respect him, warned you, grown old together."* `warning` is
+HIM finding you before the card goes up; `loan` is HIM sending the money; `offer` is HIM asking for
+one of your men. They are named as things that have passed now, and the frame stops caring who did
+them.
+
+**Three — the warmth word was already in the header.** The ledger repeated it two lines below the
+lanista's name. Cut.
+
+**`checks/treat.mjs`, three arms, 13 seconds.** Every key in `RIVAL_BEATS` has a name in `BEAT_WORD`
+and vice versa — the panel filters the seen list against that table, so a missing label drops a beat
+that genuinely happened and reads exactly like a rivalry that never had it; no label may start with a
+past participle, which is fault two coming back; and the rendered sheet, opened on a house with a
+planted history, carries the card count, the win-loss and all four planted beats by name.
+Sabotage-verified four ways: a beat stripped of its name, the labels put back to verbs, the ledger
+taken off the sheet, and the beats line dropped while the record stayed.
+
+**And `App` never grew.** It is at its `bulk` cap, so the ledger is a component beside `Crest` and the
+sheet gains one line — the same reason `nemAnswerCost`'s note sits away from the button it prices.
+
+**#249's phase 2 is what remains** — the lanista as an umbra, which is the pose set and the one part
+of this item with real art cost.
+
 ### v3.218.0 — #249, phase 1: the bay gets colours, and the eye finds two faults the tests could not
 
 **The heraldry existed and only the player could use it.** `crest` — c1/c2/sym/motto, with
@@ -7810,7 +7863,13 @@ listed together.
 
 ---
 
-**#249 — The Bay Has No Face** *(UI · medium · 3 phases)* — **PHASE 1 SHIPPED v3.218.0.** Nine
+**#249 — The Bay Has No Face** *(UI · medium · 3 phases)* — **PHASES 1 AND 3 SHIPPED; ONLY PHASE 2
+REMAINS.** *Phase 3, v3.219.0:* `metHouse` was written on every card and read by no panel at all —
+its `seen` list of which of `RIVAL_BEATS`' eight have happened is the one thing no other screen
+carries, and it is on the Treat sheet now with the record book's card count and win-loss. Three
+faults caught by looking: two counters from two systems on one line (#150), beat labels written as
+verbs when the eight do not share a subject, and a warmth word already in the header. `h.after` and
+the per-house record line, which phase 3 also asked for, had already shipped. *Phase 1, v3.218.0:* Nine
 hand-set crests on `LANISTAE`, drawn on the league row and the `rivalLog` lines (the pre-bout card's
 site ships untested — see the entry). The set is SOLVED on colour distance, not eyeballed: at 14px
 the symbol is barely legible and the ground is all the eye gets, and the first cut had Tullius and
