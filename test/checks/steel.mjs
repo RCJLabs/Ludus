@@ -306,7 +306,14 @@ export async function run({ p }){
                 const pd = r.pending; pd.beats = r.beats;
                 r = fin(A.doFight, [d, pd.gid, pd.offer, pd.tactic, pd.bet, pd, null]);
               }
-              if(g.status === "active" && wOf(g,"weapon") !== was) mutatedAfter++;
+              /* ---- WHETHER OR NOT HE GOT UP ----
+                 This required `g.status === "active"`, and a man held at the balance is by
+                 definition on the ground: most of the sample dies there. Measured, that condition
+                 counted 2 of 6 answered bouts before v3.211.0 and 0 of 6 after a re-phasing —
+                 a 33% base rate asserted to be non-zero on six samples, which fails about one
+                 build in eleven for nothing. The promise is that ANSWERING makes the bout happen,
+                 and the steel wears on the man who died in it exactly as on the man who walked. */
+              if(wOf(g,"weapon") !== was) mutatedAfter++;
             }
           }
         }
