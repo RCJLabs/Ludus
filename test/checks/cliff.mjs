@@ -17,10 +17,33 @@
        `runway < RUNWAY_WARN` on the SAME run — a ratio, because the absolute rates move with the
        seed (7.9 and 8.2 on the two probe sets) and a ratio does not. Measured 1.57 and 1.52; the
        bar is 1.25, and the shipped-before behaviour scores exactly 1.00 by construction.
-   2 · AND IT STILL REACHES EVERY HOUSE THAT DIES OF IT. Precision bought by dropping houses is not
-       precision. Every death by debt must have heard the row inside its last ten weeks — the probe
-       reached 15 of 15 and 14 of 14, where exposure alone (the sharper design, 17-18%) missed one
-       and was not taken for that reason.
+   2 · AND IT STILL REACHES ALMOST EVERY HOUSE THAT DIES OF IT. Precision bought by dropping houses
+       is not precision. This arm asked for EVERY death by debt to have heard the row inside its
+       last ten weeks, on the strength of the probe reaching 15 of 15 and 14 of 14 — where exposure
+       alone (the sharper design, 17-18%) missed one and was not taken for that reason.
+
+       THAT ABSOLUTE IS NOT TRUE, and it took v3.216.0 to find out, because at 16 houses this
+       fixture yields about six deaths and a run with no miss was simply the likely outcome. Run at
+       56 houses on two builds that differ by one line: **19 of 21 and 18 of 19** — the row reaches
+       about 93% of them, and never did reach all. The two it missed died at weeks 241 and 226,
+       while deaths at weeks 12, 25, 43 and 63 all heard it, so there is no early-death exclusion
+       that would restore the absolute; the misses are simply houses the row did not speak for
+       inside their last ten weeks.
+
+       So: 56 houses, and a FLOOR of 80% rather than an absolute. And the honest character of this
+       arm, measured rather than asserted: IT IS A COLLAPSE DETECTOR, NOT A DISCRIMINATOR. Cutting
+       the runway alarm from `< RUNWAY_BAD` to `< 0` — a severe narrowing, and exactly the change
+       this arm exists to catch, since a pickier row scores BETTER on arm 1 — takes reach only from
+       90.5% to 76.2% at this n, and to 80.8% at 80 houses. The floor sits on top of that, so it
+       catches that sabotage about half the time. It is not sharper than that and cannot be made so:
+       a dying house reaches the row down two clauses, and the lead is no better a signal (10 weeks
+       honest against 8 sabotaged) because `DEAD_IN` truncates it at ten by construction.
+
+       ARM 1 IS WHAT HOLDS THIS DESIGN. It is a ratio for the reason stated there, and a row that
+       bought precision by abandoning houses would have to keep clearing it. This arm's job is the
+       narrower one of noticing if reach falls off a cliff, and 80% is where it does that without
+       tripping on a quiet seed — at 21 deaths and a true miss rate near 7%, roughly one run in
+       fifty by chance alone.
    3 · AND IT IS NOT A KLAXON. The row may speak on at most a fifth of all house-weeks. It spoke on
        21% before and about 11% now; a fifth is the line back to what it was.
    4 · THE SWING IS MEASURED AT ALL. `swingOf` reads the exponentially-weighted mean absolute weekly
@@ -33,7 +56,8 @@
        of a bill that moves never equals the bill it is chasing, so the sabotage walked past it. */
 import { found, clearAll, installRope } from "../harness.mjs";
 
-const HOUSES = 16, WEEKS = 420, DEAD_IN = 10;
+const HOUSES = 56, WEEKS = 420, DEAD_IN = 10;
+const REACH_FLOOR = 0.80;   /* measured 90.5% and 94.7% at this n — see arm 2's head for the bar */
 const WORTH = 1.25;    /* the row must be this many times as precise as bare shortness */
 const KLAXON = 0.20;   /* and must not speak on more of the year than this */
 const SWING_OVER_BILL = 1.25;   /* a real week moves 1.4-3x the bill; one collapsed onto it reads 1 */
@@ -101,9 +125,11 @@ export async function run({ p, errors }){
   /* 2 */
   const deaf = r.deaths.filter(x=>!x.heard);
   const leads = r.deaths.filter(x=>x.lead != null).map(x=>x.lead).sort((a,b)=>a-b);
-  lines.push(`  every death by debt heard it: ${r.deaths.length - deaf.length} of ${r.deaths.length}, `
+  lines.push(`  every death by debt heard it: ${r.deaths.length - deaf.length} of ${r.deaths.length} `
+    + `[floor ${Math.round(REACH_FLOOR*100)}%, measured 90.5 and 94.7; the absolute this arm used to assert `
+    + `is not true and passed for eight releases on six deaths a run, and see its head for how blunt it is], `
     + `median ${leads.length ? leads[Math.floor(leads.length/2)] : "—"} weeks of warning`);
-  if(deaf.length)
+  if(r.deaths.length && (r.deaths.length - deaf.length) / r.deaths.length < REACH_FLOOR)
     bad.push(`${deaf.length} of ${r.deaths.length} houses died of debt without the money row speaking `
       + `once in their last ${DEAD_IN} weeks — precision bought by dropping the houses it was written `
       + `for is not precision, which is why exposure alone was not taken`);

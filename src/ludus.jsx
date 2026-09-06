@@ -2130,7 +2130,7 @@ function yardWeek(d){
   try { line = YARD[k].run(d); } catch(e){ return; }
   if(!line) return;
   /* it happened either way. whether you learn of it depends on who is listening. */
-  const hears = d.ear ? (d.ear.who==="man" ? 0.85 : 0.55) : 0.3;
+  const hears = earInside(d) ? 0.85 : (earOn(d) ? 0.55 : 0.3);
   d.yardSeen = (d.yardSeen||0) + 1;
   if(R() < hears) chron(d, line, k==="theft" || k==="grief" ? "bad" : "info");
   else d.yardMissed = (d.yardMissed||0) + 1;
@@ -9344,7 +9344,15 @@ function deadlineWeek(d){
    to be listening for you, and there are only two kinds of somebody. */
 const EAR_FEE = 14;
 const earOn = d => !!(d.ear && (d.ear.who==="gate" || d.gladiators.some(g=>g.id===d.ear.gid && g.status==="active")));
-const earInside = d => !!(d.ear && d.ear.who==="man");
+/* ---- AND HE HAS TO STILL BE THERE — #246 phase 4 ----
+   `earOn` checks the informer is an active man; this did not, and `yardWeek` reads neither — it
+   asks `d.ear` directly for "who is listening" and pays a dead man's 0.85 against a gate's 0.55 and
+   nobody's 0.3. So a man who has died, been freed or been sold went on hearing everything in the
+   yard while `listenWeek`, correctly guarded, reported that nobody was listening at all. Two readers
+   of one piece of state disagreeing about whether anybody is there — the same shape as the house
+   that had gone dark and went on acting, found one release ago. */
+const earInside = d => !!(d.ear && d.ear.who==="man"
+  && d.gladiators.some(g=>g.id===d.ear.gid && g.status==="active"));
 /* every fragment is drawn from something actually true */
 const WHISPERS = [
   { deep:false, when:d=>activeG(d).some(g=>g.defiance>=62),
@@ -13707,6 +13715,20 @@ function startPoach(d, forced){
   if(!g) return;
   d.poach = { house:h.name, gid:g.id, weeks:3 };
   chron(d, `${g.name} was seen at the wall after dark, talking to a man in ${lanistaOf(h.name).name}'s colours. ${PR(g).He} did not come to you about it.`, "bad");
+  /* ---- AND THE OFFER IS PLANTED, NOT DRAWN — #246 phase 4 ----
+     (Written here rather than beside `EVENTS.poached`, which `bulk` holds at 1,092 lines and which
+     is at the cap — the same reason `nemAnswerCost`'s note sits away from its button.)
+     Measured (`probes/doors.mjs`, 24 x 420, two seeds): 32 poaches began, the card was shown on
+     FOUR, and of the eighteen that took a man NOT ONE had been shown. Every poach the player was
+     offered, the player answered and kept the man; every man lost was one the house was never told
+     about. The three doors were never a dead branch — phase 1 refuted that — they were a lottery
+     ticket: `weeks` is 3, and inside those three weeks the card had to win a 45%-a-week draw against
+     thirty-six others. `fireArc` raises a planted beat AHEAD of the week's random event, which is
+     what that machinery is for, and `poached` carries a `build` so it can be named by one. The
+     offer now lands with two of the three weeks still to run: 35 of 41 shown, and six of the eleven
+     remaining losses are men the player was offered and lost anyway, because the coin was not there
+     when the week came. The die can still draw it; nothing about the card changed. */
+  scheduleArc(d, "poached", 1);
 }
 function defect(d, p){
   const g = d.gladiators.find(x=>x.id===p.gid);
@@ -20129,6 +20151,7 @@ const EVENTS = {
       d.gladiators.forEach(o=>{ if(o.status==="active") o.morale=clamp(o.morale-3,0,100); });
       return `You let ${nm} go south to House ${houseName}. He is good, and now he is theirs — and your men noted that you decided he was not worth the fight. It will be answered on the sand.`; } },
   poached: {
+    build(d){ return this.make(d); },      /* #246 phase 4 — planted, not drawn; see `startPoach` */
     make(d){ if(!d.poach) return null;
       const g = d.gladiators.find(x=>x.id===d.poach.gid);
       if(!g || g.status!=="active") return null;
@@ -33050,6 +33073,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        it. Everything here was found by asking what the nineteen above actually reference. */
     poachTarget, regardLoyal, GRUDGE_POACH,   /* #246 — the poach gate's two terms, readable apart */
     HOSTILE_MOVES,                           /* #246 phase 2 — `voice` holds that a table gating a written line is reachable */
+    earOn, earInside,                        /* #246 phase 4 — whether anything is listening, and whether it is inside */
     GAMBITS, SWEARING, PLANSEASON, FAVOURS, answerRow, GAM_ACCOUNT, peacePrice, poachedMan, startPoach,
     /* the shelf #220 counts: the pacts, the lot, and the court's own price */
     PACTS, PACT_KEYS, pactOf, pactLeft, pactOwed, pactPace, offerPact, takePact, buyLot,
