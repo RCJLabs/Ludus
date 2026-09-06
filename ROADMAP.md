@@ -4389,6 +4389,68 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.220.0 — #250: the bay, drawn — and a pin the item asked for that does not exist
+
+**Thirty mentions of Campania in the file and nothing spatial.** The circuit is three towns with
+travel weeks, a purse multiplier, a taste, a missio bias, a magistrate, a house that has always had
+the sand, and a standing that bleeds `BAY_DECAY` a week you are not there — presented as a table
+with a plate. The reference player toured 34 times and spent 295 weeks away; a player choosing where
+to go read three rows.
+
+**The item asked for a pin that does not exist.** Its single step says "each town carrying its
+`known` as a lit or rusting mark and **a standing letter as a pin**" — and `bayCall` is an event
+card, made and answered and gone, with no persistent invitation anywhere in the state to draw. What
+IS persistent is better: `bayPol[k]` carries the magistrate, the house that has always had that town
+and its grudge, and `bayHolder` carries a rival working the whole coast while your wagons stand in
+the yard. Those are the pins. The rest of the sketch survives intact.
+
+**Drawn in `YearWheel`'s idiom**, because that is the file's one drawn-diagram precedent: an SVG at
+viewBox 320 so labels clear `--fs-micro` on a 340px panel, `SCN_INK` for the line, the ground graded
+from `scnSandOf` off the season the way #215's suns are, palette colours through `style` and not the
+attribute, `data-*` on everything a check counts, and tap targets that are real buttons with key
+handlers. **The geography is the real one**: Rome off the top edge on its road, Capua inland and
+north, Neapolis on the coast below it, Puteoli west along the shore, Pompeii south-east under the
+mountain. Puteoli is the two-week crossing and it is the furthest by road, which the map now says
+without a number.
+
+**Two faults, both caught by looking at it.**
+
+1. **The sea was drawn as a hill.** The first cut filled the bay as an arc bulging UP from the bottom
+   edge, and it read as a landmass with Puteoli sitting on its shoulder. Water is the region OUTSIDE
+   the coastline: the fill runs from the line to the bottom of the frame now, and three wave strokes
+   settle what it is.
+2. **"Whose sand it is" was a flag, and it ran through the town's name.** At 11px a six-pixel pennant
+   beside six letters is a stray stroke, and on Pompeii it read as one. It is a property of the town,
+   so it is drawn as one — a broken ring around the mark, which cannot be mistaken for a letter or
+   for the coast, and which sits in the same vocabulary as the solid ring that means you are standing
+   there.
+
+**And it REPLACES the ledger rather than sitting above it — which the gate decided, not me.** Added
+as well as the table, the arena came to **3.4 screens against `scroll`'s allowance of 3.2**, and that
+allowance had already been raised once (3.0 → 3.2, v3.152.0, for the plate). Raising it a second time
+to fit a second picture is moving the bar to suit the change. The table was this item's own complaint
+— *"presented as `CircuitLedger`: a table with a plate"* — and the row under the map carries
+everything its three columns did (purse multiplier, spared figure, travel weeks) plus the tier, the
+magistrate and whose sand it is. Capua is tappable for the same reason: the table had a home row with
+`mercyHome` in it, and a replacement that drops a number is not a replacement. `CircuitLedger` is
+deleted rather than left unused, and `dense`'s rule against writing "spared about" in prose — which
+was justified by *"the circuit ledger's Spared column already carries that figure"* — now points at
+the map instead. **The cost is real and worth naming: three towns could be compared side by side and
+now they are read one at a time.**
+
+**`checks/map.mjs`, four arms, 12 seconds.** The map exists and carries all of `CITY_KEYS` plus Capua
+(which is not a stop on the circuit but the thing you leave); **every mark's `data-known` equals
+`knownIn` rounded**, because the fill is driven off that number and a mark lit by anything else is a
+drawing that has come loose from the game; the contested ring is drawn exactly where
+`bayPol[k].grudge >= 45`, the same gate the panel's own "wants you off this sand" line uses, and not
+a second opinion about it; and tapping a town opens a row carrying the travel weeks, the purse
+multiplier and the standing **from `CITIES` and `knownIn`** rather than a second copy of them.
+Sabotage-verified four ways: `data-known` pinned to 42 (caught), the contested gate raised to 200
+(caught), the row printing its own ×1.00 (caught), and the map taken off the panel (caught).
+
+Two of those arms are #150's rule, which is what a map most needs: a number on the screen and the
+roll behind it are the same call.
+
 ### v3.219.0 — #249, phase 3: the rivalry that was written down and never shown
 
 **`metHouse` was written on every card and read by no panel at all.** It carries `met` and a `seen`
@@ -7905,7 +7967,14 @@ the figure already has.
 
 ---
 
-**#250 — A Map of Campania** *(UI · medium · single step)*
+**#250 — A Map of Campania** *(UI · medium · single step)* — **SHIPPED v3.220.0.** One drawn map in
+the scene's ink idiom, season-graded, in `YearWheel`'s vocabulary: Rome off the edge, Capua inland,
+the three towns at their real positions, the sea below the coast, each mark lit by `knownIn` and
+tapping one opening the ledger row it already has. **The item's "standing letter as a pin" does not
+exist** — `bayCall` is an event card with no persistent state — so the pins are `bayPol[k]`'s
+contested sand and `bayHolder`. Two faults caught by looking: the sea drawn as a hill, and the
+contested flag running through Pompeii's name. `checks/map.mjs` holds `data-known` against `knownIn`
+and the tapped row against `CITIES` (#150).
 
 The circuit is three towns — `CITIES` pompeii / neapolis / puteoli, each with travel weeks, a purse
 multiplier, a taste and a missio bias — plus Rome and the small houses, with `known[city]` decaying at

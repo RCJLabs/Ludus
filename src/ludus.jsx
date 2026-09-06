@@ -27012,36 +27012,131 @@ function AltarLedger({ S, offerTo, setAsk, vowTo }){
    `bayWorth` is the same function those sentences called, so the table cannot disagree with the
    engine any more than they did — #150's rule. And it lives out here rather than inside App because
    App is at its line allowance and `bulk`'s rule is to split before asking for more room. */
-function CircuitLedger({ S }){
-  const cell = { display:"grid", gridTemplateColumns:"1fr auto auto", gap:10, alignItems:"baseline" };
-  const home = bayWorth(S, CITY_KEYS[0]);
+/* ---- A MAP OF CAMPANIA — audit item #250 ----
+   The circuit is three towns with travel weeks, a purse multiplier, a taste, a missio bias, a
+   magistrate, a house that has always had the sand, and a standing that bleeds `BAY_DECAY` a week
+   you are not there. Thirty mentions of Campania in the file and **nothing spatial** — it is a
+   table with a plate, and a player choosing where to go reads three rows. The reference player
+   toured 34 times and spent 295 weeks away.
+
+   THE ITEM ASKED FOR A PIN THAT DOES NOT EXIST. Its sketch says "a standing letter as a pin", but
+   `bayCall` is an event card — made, answered and gone — and there is no persistent invitation
+   anywhere in the state to draw. What IS persistent, and is better, is whose sand it is: `bayPol[k]`
+   carries the magistrate, the house that has always had that town, and its grudge, and `bayHolder`
+   carries a rival working the whole coast while your wagons stand in the yard. Those are the pins.
+
+   Drawn in `YearWheel`'s idiom because that is the one drawn-diagram precedent in the file: an SVG
+   at viewBox 320 so the labels clear `--fs-micro` on a 340px panel, `SCN_INK` for the line, the
+   ground graded from `scnSandOf` off the season the way #215's suns are, palette colours through
+   `style` and not the attribute (`var()` does not resolve in a presentation attribute), `data-*` on
+   everything a check needs to count, and a tap target that is a real button with a key handler.
+
+   THE GEOGRAPHY IS THE REAL ONE. Rome off the top edge on its road; Capua inland and north; Neapolis
+   on the coast below it; Puteoli west along the shore; Pompeii south-east under the mountain; the bay
+   itself cut into the bottom-left. Puteoli is the two-week crossing and it is the furthest by road,
+   which the map now says without a number.
+
+   A town's mark is lit by what they know of you — `knownIn` runs 0 to 100 and drives the fill from
+   the sand's own dark to `SCN_LIT`, so a town you have never worked reads as an empty ring and one
+   you own reads as a filled one. Tapping a town puts its row under the map, built from the same
+   calls the numbers come from (#150).
+
+   AND IT REPLACES `CircuitLedger` RATHER THAN SITTING ABOVE IT. Added as well as the table, the
+   arena came to 3.4 screens against `scroll`'s allowance of 3.2 — and that allowance had already
+   been raised once, 3.0 to 3.2 in v3.152.0, for the plate. Raising it a second time to fit a second
+   picture is moving the bar to suit the change. The table was this item's own complaint — "presented
+   as `CircuitLedger`: a table with a plate" — and the row under this map carries everything its
+   three columns did (the purse multiplier, the spared figure, the travel weeks) plus the tier, the
+   magistrate and whose sand it is. Capua is tappable for the same reason: the table had a home row
+   with `mercyHome` in it, and a replacement that drops a number is not a replacement. */
+const MAP_AT = { capua:[170,56], neapolis:[142,126], puteoli:[62,138], pompeii:[236,140] };
+function CampaniaMap({ S, onPick }){
+  const [pick, setPick] = React.useState(null);
+  const sand = scnSandOf(seasonOf(S))[2][1];
+  const here = S.city || null, road = S.travel || null;
+  const lit = k => { const v = Math.max(0, Math.min(100, knownIn(S,k))) / 100;
+    return v <= 0 ? "none" : `color-mix(in srgb, ${SCN_LIT} ${Math.round(18 + v*82)}%, ${sand})`; };
+  const town = (k) => {
+    const [x,y] = MAP_AT[k], C = CITIES[k], P = (S.bayPol||{})[k];
+    const on = pick === k, mine = here === k, going = road && road.to === k;
+    const held = bayHolder(S) === (P && P.house) && !!bayHolder(S);
+    return (
+      <g key={k} data-town={k} data-known={Math.round(knownIn(S,k))}>
+        <path d={`M${MAP_AT.capua[0]} ${MAP_AT.capua[1]}L${x} ${y}`}
+          style={{stroke:SCN_INK,strokeWidth:going?2.2:1,strokeOpacity:going?0.9:0.35,strokeDasharray:going?"none":"4 3"}}/>
+        <circle cx={x} cy={y} r={9} style={{fill:lit(k),stroke:SCN_INK,strokeWidth:mine?2.6:1.4}}/>
+        {mine && <circle cx={x} cy={y} r={13} style={{fill:"none",stroke:SCN_INK,strokeWidth:1,strokeOpacity:0.55}}/>}
+        {/* ---- WHOSE SAND IT IS, AS A RING AND NOT A GLYPH ----
+             The first cut drew this as a small flag above the mark and it ran straight through the
+             town's name — at 11px a six-pixel pennant beside six letters is just a stray stroke, and
+             on Pompeii it read as one. It is a property of the town, so it is drawn as one: a broken
+             ring around the mark, which cannot be mistaken for a letter or for the coast, and which
+             sits in the same vocabulary as the solid ring that means you are standing there. */}
+        {(P && P.grudge >= 45) && <circle data-pin={k} cx={x} cy={y} r={15}
+          style={{fill:"none",stroke:SCN_INK,strokeWidth:1.3,strokeOpacity:0.8,strokeDasharray:"3 3"}}/>}
+        {held && <circle data-held={k} cx={x+13} cy={y+11} r={2.6} style={{fill:SCN_INK}}/>}
+        <text x={x} y={y-14} textAnchor="middle" style={{fill:SCN_INK,fontSize:11,fontWeight:on?800:600,letterSpacing:".04em"}}>{C.name}</text>
+        <circle cx={x} cy={y} r={20} role="button" tabIndex={0}
+          aria-label={`${C.name} — ${C.travel} week${C.travel===1?"":"s"} away, they know you ${Math.round(knownIn(S,k))} of 100`}
+          onClick={()=>{ const n = on ? null : k; setPick(n); if(onPick) onPick(n); }}
+          onKeyDown={e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); const n = on ? null : k; setPick(n); if(onPick) onPick(n); } }}
+          style={{fill:on?SCN_INK:"transparent",fillOpacity:on?0.1:1,cursor:"pointer"}}/>
+      </g>);
+  };
+  const home = pick === "capua";
+  const P = (pick && !home) ? (S.bayPol||{})[pick] : null;
+  const W = pick ? bayWorth(S, home ? CITY_KEYS[0] : pick) : null;
   return (
-    <div className="panel" style={{padding:"8px 10px",marginBottom:8}}>
-      <div style={{...cell, fontSize:"var(--fs-micro)", letterSpacing:".08em", textTransform:"uppercase",
-        color:"var(--ink-faint)", borderBottom:"1px solid var(--line)", paddingBottom:4}}>
-        <span>Town</span><span>Purse</span><span>Spared</span>
-      </div>
-      {CITY_KEYS.map(k=>{ const c = CITIES[k], w = bayWorth(S,k);
-        return (
-          <div key={k} style={{...cell, padding:"5px 0", borderBottom:"1px solid var(--line)"}}>
-            <span className="disp" style={{fontSize:"var(--fs-base)",
-              color:knownIn(S,k)?"var(--ink-hi)":"var(--ink)"}}>{c.name}
-              <span className="dim" style={{fontSize:"var(--fs-sm)"}}> · {c.travel}wk</span></span>
-            <span className="rowval" style={{fontSize:"var(--fs-md)"}}>×{c.purse.toFixed(2)}</span>
-            <span className="rowval" style={{fontSize:"var(--fs-md)",
-              color:(w.mercyHere!=null && w.mercyHere < 60) ? "var(--blood)" : "var(--ink-2)"}}>
-              {w.mercyHere==null ? "—" : w.mercyHere}</span>
-          </div>); })}
-      {home.mercyHome != null ? (
-        <div style={{...cell, padding:"5px 0", color:"var(--ink-dim)"}}>
-          <span className="disp" style={{fontSize:"var(--fs-base)",color:"var(--ink-dim)"}}>Capua
-            <span className="dim" style={{fontSize:"var(--fs-sm)"}}> · at home</span></span>
-          <span className="rowval" style={{fontSize:"var(--fs-md)"}}>×1.00</span>
-          <span className="rowval" style={{fontSize:"var(--fs-md)"}}>{home.mercyHome}</span>
-        </div>
-      ) : (
-        <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",paddingTop:5}}>
-          No man in the yard yet to say what mercy would cost down there.
+    <div className="panel" style={{padding:"8px 8px 6px",marginBottom:8,background:"var(--panel)",borderColor:"var(--line-3)"}}>
+      <svg data-map="1" viewBox="0 0 320 220" width="100%" role="img"
+        aria-label={`Campania — Capua and the three towns of the bay${here?`, you are at ${CITIES[here].name}`:""}`}
+        style={{display:"block",maxWidth:400,margin:"0 auto"}}>
+        <rect x="0" y="0" width="320" height="220" style={{fill:sand}}/>
+        {/* ---- THE SEA IS BELOW THE COAST, WHICH THE FIRST CUT GOT BACKWARDS ----
+             It drew the bay as a filled arc bulging UP from the bottom edge and it read as a hill:
+             a landmass with Puteoli sitting on its shoulder. Water is the region outside the
+             coastline, so the fill runs from the line to the bottom of the frame, and three wave
+             strokes settle what it is. */}
+        <path d="M0 168 Q54 150 104 168 Q168 190 214 172 Q268 156 320 176 L320 220 L0 220 Z"
+          style={{fill:SCN_INK,fillOpacity:0.16}}/>
+        <path d="M0 168 Q54 150 104 168 Q168 190 214 172 Q268 156 320 176"
+          style={{fill:"none",stroke:SCN_INK,strokeWidth:1.2,strokeOpacity:0.55}}/>
+        {[[26,196],[122,204],[236,198]].map(([wx,wy],i)=>(
+          <path key={i} d={`M${wx} ${wy}q7 -4 14 0t14 0`} style={{fill:"none",stroke:SCN_INK,strokeWidth:1,strokeOpacity:0.3}}/>))}
+        {/* the mountain, because Pompeii sits under it */}
+        <path d="M264 132 l13 -19 l13 19 z" style={{fill:"none",stroke:SCN_INK,strokeWidth:1.1,strokeOpacity:0.5}}/>
+        {/* the road to Rome, off the top edge */}
+        <path d={`M${MAP_AT.capua[0]} ${MAP_AT.capua[1]}L84 14`} style={{stroke:SCN_INK,strokeWidth:1.2,strokeOpacity:0.45,strokeDasharray:"5 4"}}/>
+        <text x="76" y="18" textAnchor="end" style={{fill:SCN_INK,fontSize:10,letterSpacing:".1em",opacity:0.7}}>ROME</text>
+        {/* Capua, which is not a stop on the circuit — it is the thing you leave. Tappable like the
+            rest, because the ledger this map replaced had a home row and the map has to carry it. */}
+        <g data-town="capua">
+          <rect x={MAP_AT.capua[0]-8} y={MAP_AT.capua[1]-8} width="16" height="16"
+            style={{fill:here?"none":SCN_LIT,stroke:SCN_INK,strokeWidth:here?1.4:2.4}}/>
+          <text x={MAP_AT.capua[0]} y={MAP_AT.capua[1]-15} textAnchor="middle"
+            style={{fill:SCN_INK,fontSize:11,fontWeight:800,letterSpacing:".06em"}}>CAPUA</text>
+          <circle cx={MAP_AT.capua[0]} cy={MAP_AT.capua[1]} r={18} role="button" tabIndex={0}
+            aria-label="Capua — home, where your standing is your own"
+            onClick={()=>{ const n = pick === "capua" ? null : "capua"; setPick(n); if(onPick) onPick(n); }}
+            onKeyDown={e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); const n = pick === "capua" ? null : "capua"; setPick(n); if(onPick) onPick(n); } }}
+            style={{fill:pick==="capua"?SCN_INK:"transparent",fillOpacity:pick==="capua"?0.1:1,cursor:"pointer"}}/>
+        </g>
+        {CITY_KEYS.map(town)}
+      </svg>
+      {pick && (
+        <div className="panel" data-mappick={pick} style={{padding:"7px 9px",marginTop:6,background:"var(--raise)",borderColor:"var(--line-2)"}}>
+          <div className="flex items-center justify-between gap-2">
+            <span className="disp" style={{fontSize:"var(--fs-base)"}}>{home ? "Capua" : CITIES[pick].name}
+              <span className="dim" style={{fontSize:"var(--fs-sm)"}}> · {home ? "at home · ×1.00" : `${CITIES[pick].travel}wk · ×${CITIES[pick].purse.toFixed(2)}`}</span></span>
+            {!home && <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>known {Math.round(knownIn(S,pick))}/100</span>}
+          </div>
+          <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>
+            {home
+              ? (W && W.mercyHome!=null ? `They spare at ${W.mercyHome} on your own sand.` : "No man in the yard yet to say what mercy would cost.")
+              : <>tier {cityTier(S,pick)} cards{W && W.mercyHere!=null?` · they spare at ${W.mercyHere}`:""}
+                  {P?` · ${P.mag} puts on the games`:" · you have never set foot in it"}</>}
+          </div>
+          {P && P.grudge >= 45 && <div style={{fontSize:"var(--fs-sm)",marginTop:2,color:"var(--blood)"}}>House {P.house} wants you off this sand.</div>}
         </div>
       )}
     </div>
@@ -29718,7 +29813,7 @@ export default function App(){
                 <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:8}}>
                   Three towns down the bay who have never heard of you. Nothing you have built in Capua travels — but neither do your grudges.
                 </div>
-                <CircuitLedger S={S}/>
+                <CampaniaMap S={S}/>{/* #250 — the bay, drawn. It REPLACES `CircuitLedger`: see its head */}
                 {bayHolder(S) && (
                   <div className="panel" style={{padding:10,marginBottom:8,background:"var(--blood-edge)",borderColor:"var(--blood-edge)"}}>
                     <div className="tag tag-blood" style={{marginBottom:3}}>House {bayHolder(S)} has the bay</div>

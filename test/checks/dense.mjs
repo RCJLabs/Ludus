@@ -100,7 +100,7 @@ const PLACES = [
 const GONE = {
   /* the circuit's ledger prints both of these; the town paragraphs used to print them again */
   arena: [
-    { find:"spared about", why:"the circuit ledger's Spared column already carries that figure" },
+    { find:"spared about", why:"the map's tapped row already carries that figure — it was the circuit ledger's Spared column until #250 replaced the table with the drawing" },
     { find:"purses ×",     why:"the circuit ledger's Purse column already carries that figure" },
   ],
 };
