@@ -18,6 +18,7 @@ Run them straight:
     node test/probes/ending.mjs 32 420     # #247: how a house dies — the markers, the approach indexed on death, the last words
     node test/probes/cliff.mjs 32 420      # #247a: every house-week scored — which warning is worth saying, and what it is worth
     node test/probes/cells.mjs 24 420      # #247b: where the unrest comes from, and the same seeds under six policies
+    node test/probes/thin.mjs 24 420       # #247c: why a thin house buys nobody — the block, the purse, the law, the policy
     node test/probes/rise.mjs              # the rise ladder and the liturgy: #207's half-refutation
     node test/probes/debut.mjs 16 420      # careers and the per-bout death hazard: #208's refutation
     node test/probes/salute.mjs 14 200     # what the entrance buys, and the salute's counterfactual: #209

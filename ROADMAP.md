@@ -4389,6 +4389,77 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.210.0 — #247c, phase 1: the yard that empties is never forced to
+
+**The last of #247's three, and it was filed as "men out faster than in". It is not.**
+`probes/thin.mjs` (new) counted every week the reference player was thin — fewer than the five fit
+men its own policy keeps — and asked why it bought nobody, over two seeded sets of 24 houses × 420
+weeks (5,607 thin weeks):
+
+| why nobody was bought | set A | set B |
+|---|---|---|
+| nothing on the block at all | **0%** | **0%** |
+| could not afford the cheapest man at any reserve | **4%** | **3%** |
+| an edict had capped the cells | 39% | 45% |
+| could have bought him, and the RESERVE said no | **44%** | **42%** |
+
+**The block is never empty and the house is almost never too poor.** What stops the buying is the
+reference player's own rule: it holds twelve weeks of bill in reserve (`LAN.reserve`) and spends at
+most half of what is over it. And on the houses that actually died of ruin that line is **67% and
+78%** of their thin weeks, against 30% and 34% for the survivors. By `dark.mjs`'s rule that makes
+#247c as filed a claim about the policy and not about the game — the third time in this item that a
+system read as broken and turned out to be a system nobody was using.
+
+**The other half is the law, and it is not a fault either.** `CELLS_BY_RANK` starts at **eight**, so
+the measured cap of 4.0 and 4.1 men on those weeks is an edict: one bit on 65% and 67% of thin weeks,
+holding the house to a mean of 4.4 and 4.2 men **where the reference player wants five**. A policy
+that keeps more men than the law allows is thin by its own definition for as long as the edict
+stands. Survivors spend 59% and 55% of their thin weeks there, which is what a rich house at its
+legal cap looks like.
+
+**Two hypotheses died in the measuring, and one of them was a fault in the instrument.** The first
+was that the cells being full meant an infirmary full of injured men — it reads 5%. The second was
+that reading at all: `rosterFull` counts `rosterCount`, every man not GONE, while `activeG` counts
+only those whose status is "active", so a man in the infirmary is on the books and not in the yard.
+Counting `act.filter(g => g.injury)` was 5% of the wrong denominator. Read by status, a cells-full
+week is 4.3 men on the books against a cap of 4.1 — 3.8 in the yard, 0.4 in the infirmary, none away.
+A third went the same way in v3.209.0 and a fourth in v3.208.0; the discipline is earning its keep.
+
+**The counterfactual cannot settle it, and says so.** Ruin is 4 of 48 under the reference player and
+2, 3 and 4 under the three buying policies — too few deaths to separate. What it does show without
+ambiguity is the trade, now measured for the **third independent time in this item**: buying the
+roster up (p50 4/5/4/4 → 7/6/6/9) takes deaths by debt from 16 of 48 to **29 of 48**.
+
+| policy | ruin | debt | roster p50 by era | bought |
+|---|---|---|---|---|
+| the reference player | 4 | 16 | 5/5/4/4 · 4/5/4/4 | — |
+| keep six rather than five | 2 | 21 | 6/5/4/4 · 4/5/4/4 | — |
+| spend to the last denarius when thin | 3 | 27 | 5/6/5/6 · 6/7/5/4 | 472 for 294,671d |
+| take the cheapest man, not the dearest | 4 | **29** | 5/6/6/5 · 7/6/6/9 | 400 for 104,742d |
+
+**And that is #247's real finding, across all three of its parts.** #247a: the debt warning fires for
+every house always. #247b: the rising is answerable and the answer costs what the house earns. #247c:
+the yard is never forced to empty. Every remedy the game offers converts one death into a money
+death, and the money death is the one with no approach. The three sub-items are three views of one
+economy, which is a larger claim than any of them was filed as and is what a phase 2 has to answer.
+
+**And I overwrote two existing files writing this one, which is worth recording because the file I
+destroyed carries a note about the same mistake.** `probes/yard.mjs` and `checks/yard.mjs` both
+already existed — the probe is `keep.mjs`'s seam, the check is the Doctore's Board — and the check's
+own head comment opens by explaining that it was itself written over `board.mjs` and caught only
+because the suite reported 83 checks after an 84th was supposedly added. The tell this time was
+`git status` reporting both as MODIFIED rather than new, before anything was committed; both were
+restored byte-identical from HEAD and this item's files are `thin.mjs`. **Check the name before
+writing the file** — twice now the count or the status line has been the only thing standing between
+a new instrument and the silent deletion of an old one.
+
+**`checks/thin.mjs`, two arms, 10 houses × 320 weeks, 8 seconds.** It holds the part that is about
+the game rather than the policy: a thin house always has somebody on the block (measured 0.0% empty
+over 5,607 weeks; bar 5%) and can afford him (3–4% broke; bar 15%). If either stops being true, ruin
+stops being a choice the player made and becomes unavoidable, and #247c becomes a real item.
+Sabotage-verified two ways: the block stripped to nothing (84.3% empty) and the market's prices
+multiplied sixty-fold (65.9% broke).
+
 ### v3.209.0 — #247b, phase 1: the rising is answerable, and the answer costs what the house earns
 
 **The item asked which of two things was true and the answer is neither.** v3.207.0 found the cells
@@ -6999,8 +7070,14 @@ answerable (a policy that feasts, walks and keeps a doctore holds unrest at a me
 era of both seed sets, and rebellion deaths go 7 of 48 → 3, → 0 with the rites and the stone), and it
 costs 101–131 denarii a week — which converts rebellions into debt and ruin and takes survivors from
 11 of 48 to 7, to 2. The lever is not missing, it is priced at what the house earns; phase 2 is a
-price curve and waits on a design decision — **#247c** (the yard that empties). Original text
-follows.
+price curve and waits on a design decision — **#247c** (the yard that empties) —
+**PHASE 1 SHIPPED v3.210.0, AND IT WAS NOT WHAT WAS FILED**: over 5,607 thin weeks the block was
+empty on 0% and the house too poor on 3-4%; what stops the buying is the reference player's own
+reserve rule (44%/42%, and **67%/78%** on the houses that die of ruin) and an edict capping the cells
+below the five men the policy keeps (`CELLS_BY_RANK` starts at 8). The yard is never FORCED to empty.
+**And all three parts of #247 land on one thing:** every remedy converts a death into a money death,
+and the money death is the one with no approach — which is the claim a phase 2 has to answer.
+Original text follows.
 
 Fourteen of sixteen houses end, and the two endings that take them are the strongbox and the cells:
 **debt 6, rebellion 7**, banned 1, survived 2 (16 × 420, seeded). The instrument's twelve show three
