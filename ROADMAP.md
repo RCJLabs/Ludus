@@ -4389,6 +4389,62 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.212.0 — #256, phase 2: the moves read it
+
+**Phase 1 gave the bay a purse; this is what its moves do with one.** Measured before the gates were
+written — 16 houses × 420 weeks, every live rival every week — the purse runs p10 153 · p50 1,347 ·
+p90 14,610 against a cheapest man on the block of 142 · 236 · 417. A gate at the price of the thing
+being bought therefore binds on **15.8% of rival-weeks for a buy, 15.8% for a doctore, 14.9% for a
+retrain and 10.4% for the road**: about one week in seven, which is a constraint rather than either a
+rubber stamp or a freeze. `PURSE_FLUSH` (2,000) and `PURSE_SHORT` (400) are set off the same
+distribution — flush is the p90 shoulder, short is under two ordinary men.
+
+**What the moves do now, by the state of the house that makes them** (16 houses × 420 weeks):
+
+| the house is | buy | sell | doctore |
+|---|---|---|---|
+| flush (1,082 moves) | **14%** | 11% | 2.0% |
+| middling (604) | 14% | 13% | 3.8% |
+| broke (323) | **4.6%** | **19%** | 1.9% |
+
+That is the item's own sentence — *buy when flush, sell when short* — landing as a measurement,
+and it falls out of the gates alone: none of the four moves that cost coin will open on an empty
+purse, so a house with nothing sells because selling is what it is still allowed to do.
+
+**The weights were tried and taken out again, which is the finding of the release.** The first cut
+also weighted the moves by the state of the box — buy ×1.6 flush and ×0.3 broke, sell ×3 broke, the
+road ×1.6 broke — and it worked: the separation sharpened to buy 2% broke against 21% flush, and sell
+36% against 10%. **It also failed six checks** — `altar`, `heir`, `cells`, `cliff`, `bill` and
+`styles` — every one of them a thin fixture reading a rare event, because a weight changes which move
+every rival makes every week and that re-phases the whole suite. Measured with the weights out and
+the gates left in, all six pass and the behaviour survives. The weights bought a nuance — a short
+house *reaching* for the sale rather than merely being left with it — at the price of six fixtures,
+and that is not a trade worth making. The gate is the mechanism; the weight was decoration.
+
+**And the road pays now, which phase 1 got wrong.** Phase 1 charged `RIVAL_TOUR` for every week the
+wagons were out and credited nothing on their return, so "tour when short" was a way to die faster.
+A house comes home with one card's worth at its own tier — the same `rivalFee + rivalWin` the rest of
+its fighting earns — and only then is going out to earn a policy rather than a mistake.
+
+**The player is not collateral, and the first reading said he was.** On 16 seeds his deaths by debt
+went 6 → 11 and his survivors 4 → 1, which would have been a difficulty change smuggled in under a
+rivals item. It was noise: on **32 seeds** the same comparison reads debt 15 → 17 and survivors 6 → 4
+over 6,933 against 6,929 weeks of play — two deaths on identical total play. The market the player
+buys from is unchanged besides (p50 four men on the block, p90 four, before and after; median price
+435 against 440), so the bay's new thrift does not reach his own box.
+
+**`checks/coffer.mjs` gains three arms** (now eight, 13 seconds). The shares above, held as an
+ordering rather than a level. Every move that costs coin shut on an empty purse. The road paying on
+the way home. Sabotage-verified: the doctore's gate removed, the road's payment removed, and `sell`
+put back to its phase-1 floor.
+
+**That last sabotage passed the first time, and the reason is worth keeping.** With `buy`, `doctore`,
+`retrain` and the road all shut on an empty purse, a broke house sells more *simply because nothing
+else is open to it* — so the share table cannot see whether `sell` itself reads the purse at all. It
+is driven now: a broke house of three men will part with one and a rich house of three will not, the
+floor being four when the box is fine and three when it is not. That is a `when` rather than a
+weight, so it changes what is POSSIBLE rather than what is likely, and it costs the suite nothing.
+
 ### v3.211.0 — #256, phase 1: the bay has a strongbox
 
 **A rival house had no purse.** `makeRivals` wrote `{ name, fame, grudge, form, formTier, star,
@@ -7426,7 +7482,13 @@ the standing, the doctore, the wagons and every move the table makes — and ans
 first: a rival's economy is the same size as the player's, and once the men are fed **79-83% of
 houses spend part of their life under water**. `RIVAL_STANDING` was swept to 0.12, which puts the
 bay's purse at 614 / 4,116 / 6,494 / 3,964 against his 1,451 / 4,074 / 4,925 / 6,191. Nothing in it
-draws. **Phases 2 (their moves read it) and 3 (it shows) are open.**
+draws. **PHASE 2 SHIPPED v3.212.0**: the moves read it — a purse gate on every move that costs coin
+(binding on one rival-week in seven), buy 14% of a flush house's moves against 4.6% of a broke one's,
+sell 11% against 19%, and the road credited on the way home where phase 1 only charged for it. The
+weights that would have sharpened that were measured, found to re-phase six checks for a nuance, and
+taken out again. The
+player is not collateral: on 32 seeds his deaths move by two on identical total play. **Phase 3 (it
+shows — the league row carrying flush / stretched / selling) is open.**
 
 `makeRivals` writes `{ name, fame, grudge, form, formTier, star, fighters }` — **a rival house has no
 purse.** `RIVAL_MOVES.buy/sell/retrain/doctore/tour` cost nothing and are weighted by fame and the

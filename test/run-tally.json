@@ -199,4 +199,6 @@
 {"v":"3.209.0","checks":163,"failed":[]},
 {"v":"3.210.0","checks":164,"failed":[]},
 {"v":"3.211.0","checks":165,"failed":["bulk","chair","chronicle","die","steel"]},
-{"v":"3.211.0","checks":165,"failed":[]}]
+{"v":"3.211.0","checks":165,"failed":[]},
+{"v":"3.212.0","checks":165,"failed":["altar","careers","cells","cliff","bill","first"]},
+{"v":"3.212.0","checks":165,"failed":[]}]

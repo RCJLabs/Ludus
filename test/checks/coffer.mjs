@@ -34,7 +34,7 @@ const HOUSES = 12, WEEKS = 420;
 const SCALE_LO = 0.2, SCALE_HI = 6;   /* the bay's median may sit between a fifth and six times his */
 
 export const name = "coffer";
-export const describe = "a rival house has a purse, on the player's own scale, and an empty one costs it a man before it costs it the yard";
+export const describe = "a rival house has a purse, its moves read it, and an empty one costs it a man before it costs it the yard";
 
 export async function run({ p, errors }){
   const lines = [], bad = [];
@@ -111,6 +111,54 @@ export async function run({ p, errors }){
       return out;
     })();
 
+    /* ---- 6, phase 2: the moves read the purse ---- */
+    const reading = (()=>{
+      /* what each move is worth to a house in each state, over the same seeded play */
+      const byState = { flush:{ n:0 }, mid:{ n:0 }, broke:{ n:0 } };
+      const raw = {};
+      for(const k of Object.keys(A.RIVAL_MOVES)){ const M = A.RIVAL_MOVES[k]; raw[k] = M.run;
+        M.run = function(dd, hh){
+          let st = "mid"; try { st = A.rivalFlush(hh) ? "flush" : A.rivalBroke(hh) ? "broke" : "mid"; } catch(e){}
+          const o = raw[k].call(this, dd, hh);
+          if(o != null){ byState[st][k] = (byState[st][k] || 0) + 1; byState[st].n++; }
+          return o; }; }
+      try {
+        for(let h=0; h<8; h++){ const d = A.newGameState("Rd"+h, "clean", `COFREAD-${h}`);
+          for(let w=0; w<320; w++){ if(d.over) break; try { R.lanista(d); } catch(e){ break; } } }
+      } finally { for(const k of Object.keys(raw)) A.RIVAL_MOVES[k].run = raw[k]; }
+      /* and a house with nothing may make no move that costs anything */
+      const d = A.newGameState("Br", "clean", "COFBROKE");
+      const h = d.rivals[0]; h.purse = 0; h.doctore = false; h.away = 0;
+      const gate = {};
+      for(const k of ["buy","doctore","retrain","tour"]){
+        let ok = true; try { ok = !!A.RIVAL_MOVES[k].when(d, h); } catch(e){ ok = "threw"; }
+        gate[k] = ok;
+      }
+      /* ---- AND `sell` ITSELF, DRIVEN ----
+         The shares above cannot test the sell response on their own: with `buy`, `doctore`,
+         `retrain` and the road all shut on an empty purse, a broke house sells more simply because
+         nothing else is open to it, and a sabotage that put `sell` back to its phase-1 weight and
+         floor walked straight past the ordering. What phase 2 actually changed is two things — a
+         short house will part with a man it would otherwise have kept (three, not four), and it
+         reaches for the sale sooner (weight) — so both are driven on forged houses. */
+      const sellArm = (()=>{
+        const mk = (purse, men) => { const e = A.newGameState("Sl", "clean", `COFSELL-${purse}-${men}`);
+          const r = e.rivals[0]; r.fighters = r.fighters.slice(0, men); r.purse = purse;
+          e.market = []; return { e, r }; };
+        const three = mk(0, 3), threeRich = mk(50000, 3), four = mk(0, 4);
+        const can = ({e, r}) => { try { return !!A.RIVAL_MOVES.sell.when(e, r); } catch(x){ return "threw"; } };
+        const wt = ({r}) => { try { return A.RIVAL_MOVES.sell.weight(r); } catch(x){ return null; } };
+        return { brokeThree: can(three), richThree: can(threeRich), brokeFour: can(four),
+          wBroke: wt(three), wRich: wt(threeRich) };
+      })();
+      /* the road pays on the way home, or nobody would ever load the wagons */
+      const road = (()=>{ const e = A.newGameState("Rd", "clean", "COFROAD");
+        const r = e.rivals[0]; r.away = 1; const was = A.rivalPurse(r);
+        try { A.rivalTurn(e); } catch(x){}
+        return { was, now: A.rivalPurse(r), away: r.away }; })();
+      return { byState, gate, road, sellArm };
+    })();
+
     /* ---- 5, driven: the week's tick must not touch the stream ---- */
     const draws = (()=>{
       const d = A.newGameState("Rn", "clean", "COFRNG");
@@ -125,7 +173,7 @@ export async function run({ p, errors }){
       const h = d.rivals[0]; const seed = A.PURSE_SEED(h);
       return { seed, read: A.rivalPurse({ name:h.name, fame:h.fame }) }; })();
     return { era: era.map(a=>q(a)), gold: gold.map(a=>q(a)), noPurse, unseeded, fresh, moved, richer, poorer,
-      lives, dark, card, rung, draws };
+      lives, dark, card, rung, draws, reading };
   }, [HOUSES, WEEKS]);
 
   if(r.why) return { pass:false, why:r.why, lines };
@@ -180,7 +228,48 @@ export async function run({ p, errors }){
       + `every seeded fixture in this suite re-phases off that, and #256 was built to be arithmetic `
       + `for exactly this reason`);
 
+  /* 6 — phase 2: the moves read it */
+  { const B = r.reading.byState, share = (st, k) => B[st].n ? (B[st][k] || 0) / B[st].n : 0;
+    const sh = (st, k) => `${(100*share(st,k)).toFixed(0)}%`;
+    lines.push(`  what the moves are, by the house's state: flush (${B.flush.n}) buy ${sh("flush","buy")} sell ${sh("flush","sell")} · `
+      + `mid (${B.mid.n}) buy ${sh("mid","buy")} sell ${sh("mid","sell")} · broke (${B.broke.n}) buy ${sh("broke","buy")} sell ${sh("broke","sell")}`);
+    if(B.broke.n < 20 || B.flush.n < 20)
+      bad.push(`only ${B.broke.n} moves were made broke and ${B.flush.n} flush — too few to say the purse is read at all`);
+    else {
+      if(share("broke","sell") <= share("flush","sell"))
+        bad.push(`a house with nothing sells on ${sh("broke","sell")} of its moves and a flush one on ${sh("flush","sell")} — `
+          + `"sell when short" is the whole of #256 phase 2 and the purse is not reaching \`sell\``);
+      if(share("broke","buy") >= share("flush","buy"))
+        bad.push(`a house with nothing buys on ${sh("broke","buy")} of its moves against a flush one's ${sh("flush","buy")} — `
+          + `"buy when flush" is not reaching \`buy\``);
+    }
+    const G = r.reading.gate;
+    lines.push(`  a house with an empty purse: ` + Object.entries(G).map(([k,v])=>`${k} ${v ? "STILL OPEN" : "shut"}`).join(" · "));
+    for(const [k, open] of Object.entries(G))
+      if(open) bad.push(`a rival with nothing in the purse can still \`${k}\` — every one of these costs coin, and a move `
+        + `made from an empty box is the one-sided economy #256 exists to end`);
+    const SA = r.reading.sellArm;
+    lines.push(`  \`sell\` driven: a broke house of three ${SA.brokeThree ? "will sell" : "WILL NOT"} · `
+      + `a rich house of three ${SA.richThree ? "WILL SELL" : "will not"} · a broke house of four ${SA.brokeFour ? "will sell" : "WILL NOT"}`
+      + ` (the weight is 1 either way by design — see the note)`);
+    if(!SA.brokeThree)
+      bad.push(`a rival with nothing and three men will not sell one — phase 2's "sell when short" is `
+        + `exactly that man: the floor is four when the box is fine and three when it is not`);
+    if(SA.richThree)
+      bad.push(`a rival with fifty thousand denarii and three men sells one anyway — the extra man is `
+        + `supposed to be what SHORTNESS buys, not the standing rule`);
+    /* the WEIGHT is not held, and that is deliberate: #256 phase 2 tried weighting the moves by the
+       state of the box and it re-phased six checks off thin fixtures while adding nothing the gates
+       do not already give. What is held is the `when` — the man a short house will part with and a
+       rich one will not — because it changes what is possible rather than what is likely. */
+    const RD = r.reading.road;
+    lines.push(`  and the road pays on the way home: ${RD.was}d → ${RD.now}d (away ${RD.away})`);
+    if(!(RD.now > RD.was))
+      bad.push(`a house came home from the road no richer than it left (${RD.was}d → ${RD.now}d) — phase 1 charged `
+        + `for the wagons and never credited them, which made "tour when short" a way to die faster`);
+  }
+
   if(errors.length) bad.push(`${errors.length} page errors`);
-  if(!bad.length) lines.push(`the bay has a strongbox, on his own scale, and an empty one costs a man before it costs the yard`);
+  if(!bad.length) lines.push(`the bay has a strongbox, the moves read it, and an empty one costs a man before it costs the yard`);
   return { pass: bad.length === 0, why: bad.slice(0, 2).join("; ") || null, lines };
 }
