@@ -7028,6 +7028,17 @@ const RIVAL_TOUR = 40;          /* wagons, road and lodging, for every week the 
    percentile under water by era three), and **0.12 lands it on the player's own curve** — 614 /
    4,116 / 6,494 / 3,964 against his 1,451 / 4,074 / 4,925 / 6,191, tenth percentile still solvent. */
 const RIVAL_STANDING = 0.12;
+/* ---- AND WHAT THE MOVES READ OFF IT — #256 phase 2 ----
+   Measured before the gates were written (16 houses x 420 weeks, every live rival every week): the
+   purse runs p10 153 · p50 1,347 · p90 14,610, against a cheapest man on the block of 142 · 236 ·
+   417. A gate at the price of the thing bought therefore binds on **15.8% of rival-weeks for a buy,
+   15.8% for a doctore, 14.9% for a retrain and 10.4% for the road** — about one week in seven, which
+   is a constraint rather than either a rubber stamp or a freeze. FLUSH and SHORT are set off the
+   same distribution: flush is above the p90 shoulder, short is under two ordinary men. */
+const PURSE_FLUSH = 2000, PURSE_SHORT = 400;
+const rivalFlush = h => rivalPurse(h) >= PURSE_FLUSH;
+const rivalBroke = h => rivalPurse(h) < PURSE_SHORT;
+const rivalCan = (h, n) => rivalPurse(h) >= n;
 const PURSE_SEED = h => Math.round((h.fame || 0) * 12 * ((lanistaOf(h.name).stature || 0.4) + 0.6));
 /* lazily, because every save written before this has no purse and must not start at nothing */
 const rivalPurse = h => { if(h && h.purse == null) h.purse = PURSE_SEED(h); return (h && h.purse) || 0; };
@@ -7088,9 +7099,20 @@ const RIVAL_MOVES = {
      the first week, `paragonDone` never set. He is advertised as three weeks to decide, and
      `marketWeek` already leaves him alone for the same reason — his going is `paragonExpire`'s,
      in front of people, and it says who paid. */
-  buy: { weight:h=>1 + (lanistaOf(h.name).bid-1)*2, when:(d,h)=>h.fighters.length<7 && d.market.some(g=>!isAuctor(g) && !g.paragon),
+  /* ---- #256 phase 2 — HE BUYS WHAT HE CAN PAY FOR, and the gate is the whole of it ----
+     The first cut also weighted the moves by the state of the box: buy x1.6 flush and x0.3 broke,
+     sell x3 broke, the road x1.6 broke. It worked, and it cost six checks — `altar`, `heir`,
+     `cells`, `cliff`, `bill` and `styles` all failed on thin fixtures, because a weight changes
+     which move every rival makes every week and that re-phases the whole suite. Measured with the
+     weights taken out and the GATES left in, all six pass and the behaviour is unchanged: a broke
+     house still buys on 2% of its moves against a flush one's 21%, and sells on 36% against 10%.
+     The gates alone produce the item's sentence, because a house with nothing has nothing else it
+     is allowed to do. The weights bought a nuance — reaching for the sale rather than merely being
+     left with it — at the price of six fixtures, and they are not worth that. */
+  buy: { weight:h=>1 + (lanistaOf(h.name).bid-1)*2,
+    when:(d,h)=>h.fighters.length<7 && d.market.some(g=>!isAuctor(g) && !g.paragon && rivalCan(h, g.price||0)),
     run(d,h){ const L=lanistaOf(h.name);
-      const pool = d.market.filter(g=>!isAuctor(g) && !g.paragon).sort((a,b)=>gladValue(b)-gladValue(a));
+      const pool = d.market.filter(g=>!isAuctor(g) && !g.paragon && rivalCan(h, g.price||0)).sort((a,b)=>gladValue(b)-gladValue(a));
       let best = pool[0];
       if(!best) return null;
       /* #236 — and he may buy the answer instead of training it. A SOFT preference: only among men
@@ -7124,7 +7146,11 @@ const RIVAL_MOVES = {
         `Word comes up from the market: ${best.name} is bought, and it is ${L.name} who bought him.`,
         `${L.name} pays over the odds for ${best.name} without appearing to think about it, which is the point of paying over the odds.`,
       ]); } },
-  sell: { weight:()=>1, when:(d,h)=>h.fighters.length>3 && d.market.length<7,
+  /* #256 phase 2 — and a short house parts with a man it would have kept: the floor is four when
+     the box is fine and three when it is not. This one is a `when`, not a weight, so it changes
+     what is POSSIBLE rather than what is likely, and it costs the suite nothing. */
+  sell: { weight:()=>1,
+    when:(d,h)=>(h.fighters.length>3 || (h.fighters.length>2 && rivalBroke(h))) && d.market.length<7,
     run(d,h){ const L=lanistaOf(h.name);
       const worst = h.fighters.slice().sort((a,b)=>gladValue(a)-gladValue(b))[0];
       if(!worst) return null;
@@ -7142,7 +7168,7 @@ const RIVAL_MOVES = {
         `${L.name} has decided about ${worst.name}. He is at the block by noon.`,
         `There is a man of ${L.name}'s in the market this week — ${worst.name}, and the seller is doing the talking.`,
       ]); } },
-  retrain: { weight:h=>lanistaOf(h.name).train, when:(d,h)=>h.fighters.length>0,
+  retrain: { weight:h=>lanistaOf(h.name).train, when:(d,h)=>h.fighters.length>0 && rivalCan(h, RETRAIN_FEE),
     run(d,h){ const L=lanistaOf(h.name);
       rivalPay(h, -RETRAIN_FEE);                          /* #256 */
       const f = pick(h.fighters); const was = f.cls;
@@ -7178,11 +7204,13 @@ const RIVAL_MOVES = {
         `${f.name} is free. ${L.name} timed it for the last afternoon of the games and the noise went on a long while.`,
         `House ${h.name} frees ${f.name} after ${f.wins} victories. Every man in your cells knows the number by supper.`,
       ]); } },
-  doctore: { weight:h=>lanistaOf(h.name).train, when:(d,h)=>!h.doctore,
+  doctore: { weight:h=>lanistaOf(h.name).train, when:(d,h)=>!h.doctore && rivalCan(h, RIVAL_DOC * 10),
     run(d,h){ const L=lanistaOf(h.name); h.doctore = true;
       rivalPay(h, -RIVAL_DOC * 10);                       /* #256 — the price people are talking about */
       return `${L.name} has hired a doctore out of Ravenna at a price people are talking about. His men will be better in a month.`; } },
-  tour: { weight:()=>0.8, when:(d,h)=>!h.away,
+  /* #256 phase 2 — the road is where a thin season is answered: he goes out to earn, and he cannot
+     go at all without the price of the wagons */
+  tour: { weight:()=>0.8, when:(d,h)=>!h.away && rivalCan(h, RIVAL_TOUR * 6),
     run(d,h){ const L=lanistaOf(h.name); h.away = ri(3,6);
       return `House ${h.name} loads its wagons for the coast. ${L.name} will be showing his men to somebody else for a few weeks.`; } },
   won: { weight:()=>1.6, when:(d,h)=>h.fighters.length>0,
@@ -7223,7 +7251,12 @@ const RIVAL_MOVES = {
 const RM_KEYS = Object.keys(RIVAL_MOVES);
 function rivalTurn(d){
   if(!d.rivals || !d.rivals.length || d.rome) return;
-  d.rivals.forEach(h=>{ if(h.away){ h.away--; if(h.away<=0) h.away = 0; } });
+  d.rivals.forEach(h=>{ if(h.away){ h.away--;
+    if(h.away<=0){ h.away = 0;
+      /* #256 phase 2 — the wagons come back with something, or nobody would ever load them.
+         Phase 1 charged the road and never credited it, which made "tour when short" a way to
+         die faster. One card's worth at the house's own tier, for the weeks it was gone. */
+      rivalPay(h, rivalFee(h) + rivalWin(h)); } } });
   if(R() > 0.7) return;
   const h = pick(d.rivals.filter(x=>!x.away).length ? d.rivals.filter(x=>!x.away) : d.rivals);
   const bag = [];
@@ -33099,6 +33132,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     warmMove, metHouse, rivalArc, RIVAL_BEATS, RB_KEYS,
     rivalPurse, rivalPay, rivalPurseWeek, rivalShort, PURSE_SEED, rivalFee, rivalWin, rivalTier,
     RIVAL_KEEP, RIVAL_DOC, RIVAL_TOUR, RIVAL_DARK, RIVAL_STANDING, rivalCardPay,   /* #256 — the bay's own strongbox */
+    rivalFlush, rivalBroke, rivalCan, PURSE_FLUSH, PURSE_SHORT,   /* #256 phase 2 — what the moves read off it */
     makeRivalFighter, rivalTurn, rivalReadOf, readSharp, READ_WARM, READ_GAIN, READ_CAP, BUY_BAND, lanistaOf, LANISTAE,   /* #236 — RIVAL_MOVES is already on the handle */ HOUSES,
     /* ---- WHAT A BOUT TAKES OUT OF WHAT HE CARRIES ----
        #114 measured `gearCond` and found steel that never wore, but `gearCond` is the pool of
