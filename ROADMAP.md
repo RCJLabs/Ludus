@@ -4389,6 +4389,63 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.213.0 — #256, phase 3: it shows — and #256 closes
+
+**The last of the three.** A rival had a purse and its moves read it; nothing on screen said so. The
+league row now carries the word, in the same idiom `NORMS` uses for the player's own numbers, and a
+yard that goes dark records what it was worth.
+
+**The band is the player's own, because the bay is running his arithmetic.** `rivalWeeks(h)` is the
+purse over `rivalOutgo(h)` — their runway, on the same division as his. Measured over **10,431
+rival-weeks**: p10 1.4 · p25 4.4 · p50 12.9 · p75 32.0 · p90 59.8, with a house having sold a man to
+make the week inside the last twelve on 4.7% of them. So `stretched` is `RUNWAY_WARN`, the same eight
+weeks his own box is read at; `selling` is under one week or a recent sale; `flush` is forty weeks and
+up. What that comes out at, over 10,332 rows:
+
+| the row says | share |
+|---|---|
+| selling | 9.7% |
+| stretched | 23.9% |
+| flush | 25.6% |
+| nothing at all | 40.8% |
+
+Four states a player can tell apart at a glance and none of them the default — which is the whole
+test of a word like this. It sits beside the `away ·` and `doctore ·` the row already carries.
+
+**`rivalOutgo` is one function and both sides call it.** The weekly tick spent the same arithmetic
+inline, and a shown number and the roll behind it have to be the same call (#150). That is held: the
+check drives a house that has a doctore AND is on the road, reads what the row prices its week at,
+runs the week, and requires the fall to match to the denarius.
+
+**And a dark yard is worth something.** `closeHouse`'s lineage records the purse and the roster at the
+end, so the sale line reads *"He holds Vettius's yard. Nobody emptied it; it ran out — 1,234d and 4
+men left in it at the end."* #242 buys that yard; the price now exists.
+
+**`checks/coffer.mjs` gains four arms** (twelve now, 17 seconds): the distribution above, each word
+between 4% and 60% of rows; the word driven across the bands — an empty box, half a week, five weeks,
+twenty, a hundred, and a sale three weeks ago against sixty; the row's outgo against the week's own
+take; and the lineage carrying the worth. Sabotage-verified three ways — one word for every house
+(90.5% stretched, 0% flush), the lineage's worth removed, and the week's arithmetic re-inlined.
+
+**That last sabotage passed twice before it caught anything, and both reasons are the same reason.**
+First, changing `rivalOutgo` itself cannot break the match — *both* sides call it, which is the point
+of factoring it, so the arm was untestable that way. The real failure mode is somebody re-inlining
+the tick, so that is the sabotage. It passed too: the fixture house had no doctore and was not on the
+road, so the two terms the re-inlining dropped were both zero and the sum still balanced. A fixture
+has to be paying for everything the thing it guards can pay for.
+
+**#256 is closed — three phases, v3.211.0 to v3.213.0.** What it leaves: a bay with its own economy on
+the player's scale, whose houses buy when they can and sell when they cannot, whose troubles are
+legible on the league table, and whose dead yards have a price. #244's loan has something to lend
+against and #246's poach has a box to put money on the table from — which is why the queue asked for
+this one first.
+
+**A note on what was not verified by eye.** The render is a two-line addition to a row that already
+draws two identical sibling spans, and `probes/faces.mjs` walks fourteen faces and twenty-eight
+sections with **0 page errors**; `bulk` puts App at 5,780 of its allowed 5,786. But the standings
+sheet itself is behind a navigation this session could not drive headlessly in reasonable time, so
+the word was confirmed structurally and by its own arithmetic rather than in a screenshot.
+
 ### v3.212.0 — #256, phase 2: the moves read it
 
 **Phase 1 gave the bay a purse; this is what its moves do with one.** Measured before the gates were
@@ -7487,8 +7544,11 @@ draws. **PHASE 2 SHIPPED v3.212.0**: the moves read it — a purse gate on every
 sell 11% against 19%, and the road credited on the way home where phase 1 only charged for it. The
 weights that would have sharpened that were measured, found to re-phase six checks for a nuance, and
 taken out again. The
-player is not collateral: on 32 seeds his deaths move by two on identical total play. **Phase 3 (it
-shows — the league row carrying flush / stretched / selling) is open.**
+player is not collateral: on 32 seeds his deaths move by two on identical total play. **PHASE 3 SHIPPED v3.213.0 AND #256 IS CLOSED**: the league
+row carries the word — selling 9.7% of rows, stretched 23.9%, flush 25.6%, nothing 40.8%, banded on
+the player's own `RUNWAY_WARN` because the bay runs his arithmetic — and a yard that goes dark records
+what it was worth, which is #242's price. #244 and #246 now have something to lend against and
+something to put money on the table from.
 
 `makeRivals` writes `{ name, fame, grudge, form, formTier, star, fighters }` — **a rival house has no
 purse.** `RIVAL_MOVES.buy/sell/retrain/doctore/tour` cost nothing and are weighted by fame and the
