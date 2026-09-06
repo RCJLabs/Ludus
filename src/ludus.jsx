@@ -2016,37 +2016,85 @@ const ambWord = g => g && g.ambition ? her(AMBITIONS[g.ambition.kind].line(g), g
 const LANISTAE = {
   Solonius: { name:"Marcus Solonius", trait:"the schemer",
     blurb:"Smiles first, pays second, and has never once been in the room when it happened.",
-    grudgeDecay:1.6, poach:2.2, bribe:1.8, train:1.0, bid:1.0, stature:0.42 },
+    grudgeDecay:1.6, poach:2.2, bribe:1.8, train:1.0, bid:1.0, stature:0.42,
+    crest:{ c1:"#5c4a6b", c2:"#c0c0c8", sym:"star" } },
   Vettius: { name:"Quintus Vettius Bassus", trait:"who forgets nothing",
     blurb:"Keeps a ledger of slights and settles it a year late, when you have stopped watching.",
-    grudgeDecay:0.35, poach:1.0, bribe:1.0, train:1.0, bid:1.1, sabotage:1.9, stature:0.5 },
+    grudgeDecay:0.35, poach:1.0, bribe:1.0, train:1.0, bid:1.1, sabotage:1.9, stature:0.5,
+    crest:{ c1:"#4a4a52", c2:"#8a6a2c", sym:"bars" } },
   Tullius: { name:"Gaius Tullius Rufus", trait:"who is simply better at this",
     blurb:"No theatre and no grudges. His men are drilled harder than yours and he can outbid you whenever he likes.",
-    grudgeDecay:1.0, poach:0.8, bribe:1.2, train:1.55, bid:1.6, stature:0.62 },
+    grudgeDecay:1.0, poach:0.8, bribe:1.2, train:1.55, bid:1.6, stature:0.62,
+    crest:{ c1:"#3a5668", c2:"#c99a4b", sym:"laurel" } },
   /* the men who buy a yard when one comes up — see bayRefill. Each is written the
      way the three founders are, because a house that arrives at year nine and is
      called "House Glaber" by a fallback string is not a rival, it is a placeholder. */
   Glaber: { name:"Publius Glaber", trait:"who bought it all at once",
     blurb:"A magistrate's nephew with a great deal of money and no trade. He pays for what he cannot do, and he can pay for a very great deal.",
-    grudgeDecay:1.3, poach:1.6, bribe:2.0, train:0.75, bid:1.7, stature:0.46 },
+    grudgeDecay:1.3, poach:1.6, bribe:2.0, train:0.75, bid:1.7, stature:0.46,
+    crest:{ c1:"#c99a4b", c2:"#6b1f2a", sym:"star" } },
   Cossutius: { name:"Numerius Cossutius", trait:"who was one of them",
     blurb:"Bought his own freedom fifteen years ago and saved every denarius since. His men eat what he eats and they know it.",
-    grudgeDecay:0.7, poach:0.9, bribe:0.6, train:1.30, bid:0.8, stature:0.38 },
+    grudgeDecay:0.7, poach:0.9, bribe:0.6, train:1.30, bid:0.8, stature:0.38,
+    crest:{ c1:"#6d5426", c2:"#c99a4b", sym:"gladius" } },
   Marcellus: { name:"Aulus Marcellus", trait:"the soldier",
     blurb:"Twenty-six years in the legions and a pension put into a ludus. He has never trained a gladiator; he has trained a great many men, which he considers the same problem.",
-    grudgeDecay:1.1, poach:0.7, bribe:0.5, train:1.40, bid:0.9, sabotage:0.5, stature:0.44 },
+    grudgeDecay:1.1, poach:0.7, bribe:0.5, train:1.40, bid:0.9, sabotage:0.5, stature:0.44,
+    crest:{ c1:"#2f5e4a", c2:"#c0c0c8", sym:"chevron" } },
   Rufinus: { name:"Sextus Rufinus", trait:"who says nothing at all",
     blurb:"Opened without a feast and without a word. The first the bay heard of it was his men on a card, better drilled than they had any right to be.",
-    grudgeDecay:0.9, poach:1.0, bribe:1.0, train:1.50, bid:1.1, sabotage:1.4, stature:0.52 },
+    grudgeDecay:0.9, poach:1.0, bribe:1.0, train:1.50, bid:1.1, sabotage:1.4, stature:0.52,
+    crest:{ c1:"#2c2c30", c2:"#c0c0c8", sym:"laurel" } },
   Pollio: { name:"Vedius Pollio", trait:"who is not careful with them",
     blurb:"Pays over the odds and never asks what is wrong with them. Nobody in the trade likes him. Everybody in the trade sells to him.",
-    grudgeDecay:1.5, poach:2.0, bribe:1.6, train:0.85, bid:1.8, stature:0.48 },
+    grudgeDecay:1.5, poach:2.0, bribe:1.6, train:0.85, bid:1.8, stature:0.48,
+    crest:{ c1:"#6b1f2a", c2:"#8a6a2c", sym:"trident" } },
   Varro: { name:"Titus Varro", trait:"who knows what everyone is worth",
     blurb:"Twenty years auctioning other men's fighters before he bought his own. He can price your best man to the denarius and he has.",
-    grudgeDecay:1.0, poach:1.5, bribe:1.3, train:1.05, bid:1.5, stature:0.45 },
+    grudgeDecay:1.0, poach:1.5, bribe:1.3, train:1.05, bid:1.5, stature:0.45,
+    crest:{ c1:"#b0603a", c2:"#2c2c30", sym:"bars" } },
 };
 const lanistaOf = h => LANISTAE[h] || { name:"House "+h, trait:"", blurb:"",
-  grudgeDecay:1, poach:1, bribe:1, train:1, bid:1, stature:0.4 };
+  grudgeDecay:1, poach:1, bribe:1, train:1, bid:1, stature:0.4,
+  crest:{ c1:"#c0c0c8", c2:"#2c2c30", sym:"gladius" } };
+/* ---- AND A HOUSE YOU CAN PICK OUT OF A TABLE — audit item #249, phase 1 ----
+   `crest` — c1/c2/sym/motto, `HOUSE_COLOURS`, `CREST_SYMS` — was built for the player and used by
+   nobody else: every `c1:` site in the file was yours. `LANISTAE` carried a name, a trait, a blurb
+   and six multipliers and no colours at all, so THE HOUSES OF CAPUA was nine rows of text and the
+   only way to tell Vettius from Varro at a glance was to read.
+   Nine hand-set entries in the same idiom the player's own crest uses, so `Crest` draws them with
+   no new machinery. The colours are the house's character rather than a spread: the ledger-keeper
+   gets ruled lines, the soldier a rank mark, the freedman a plain sword and nothing borrowed. Six
+   symbols across nine houses means three are shared, and each of those pairs is put as far apart in
+   colour as the palette allows — purple-and-silver against wine-and-gold, iron against slate, deep
+   blue against black. No rival is given the player's own oxblood-and-gold gladius, and the fallback
+   above is deliberately the plainest thing in the set: an unnamed house should look unnamed.
+
+   AND THE GROUND HAS TO DO THE WORK, which the first cut got wrong. At the size these are drawn in
+   the league row — 14px, beside a name — the SYMBOL is barely legible and the colour is the whole
+   of what the eye gets. Screenshotted as a set, Tullius on deep blue `#3a5668` and Varro on slate
+   `#3f5f74` were one shield twice.
+
+   So the set is SOLVED rather than eyeballed, on a green-weighted RGB distance, and `checks/crest.mjs`
+   holds the answer to a floor of 45. Two more faults fell out of measuring it that the eye had not
+   caught: the fallback was iron, which is Vettius's ground EXACTLY — distance 0.0, so an unnamed
+   house would have worn a named one's colours — and Pollio on blood sat 45.1 from the player's own
+   oxblood, the closest real pair in the table. Pollio takes wine and the fallback takes silver, and
+   the minimum separation over all eleven grounds is **50.2**.
+
+   AND THE MARK GOES IN INLINE, WHICH IS NOT A DETAIL. The league row's own head records what it
+   costs to crowd that line — "on a phone there was not room: 'House Glaber…', a lanista truncated
+   to 'who bought i'" — and the first cut of this reintroduced it exactly, by making the name a
+   flex container so its text stopped flowing: "House Glaber" wrapped onto two lines and "Cordial"
+   broke as "Cordi al". An inline-block mark takes its 14px of the line and the sentence wraps
+   around it as it always did. Caught by looking at it, which is the only thing that catches it.
+
+   The thematic anchors are held fixed and the solver works around them, because they are the point:
+   the soldier keeps legion green, Glaber — who bought it all at once — keeps the one bright GROUND
+   in the set rather than a bright mark, the ledger-keeper keeps iron, the freedman bronze, and the
+   man who says nothing at all keeps black. The fallback is silver and blank, which is what an
+   unnamed house should look like. */
+const crestOf = h => lanistaOf(h).crest || { c1:"#4a4a52", c2:"#c0c0c8", sym:"gladius" };
 
 /* ---- WHAT THEY DO UNWATCHED ----
    The cells whisper and the ear reports. But nothing actually happens down there
@@ -24904,9 +24952,10 @@ const SECT = {
       <Sect title="The other houses" open={forceOpen}
         note={`${fresh? `${fresh} this month · ` : ""}${away? `${away} away` : "all in Capua"}`}>
         {(S.rivalLog||[]).slice(0,5).map((r,i)=>(
-          <div key={i} style={{borderTop:i?"1px dotted var(--line)":"none",padding:"6px 0"}}>
-            <div style={{fontSize:"var(--fs-md)"}}>{r.text}</div>
-            <div className="dim" style={{fontSize:"var(--fs-sm)"}}>week {r.week}</div>
+          <div key={i} className="flex gap-2" style={{borderTop:i?"1px dotted var(--line)":"none",padding:"6px 0",alignItems:"flex-start"}}>
+            {r.house && <div style={{marginTop:2}}><Crest crest={crestOf(r.house)} size={14}/></div>}{/* #249 — whose week it was */}
+            <div style={{minWidth:0}}><div style={{fontSize:"var(--fs-md)"}}>{r.text}</div>
+              <div className="dim" style={{fontSize:"var(--fs-sm)"}}>week {r.week}</div></div>
           </div>
         ))}
       </Sect>
@@ -28412,6 +28461,8 @@ export default function App(){
                 ...(h.you?{background:"var(--panel)",borderRadius:6,padding:"6px 8px"}:{})}}>
                 <div className="flex items-start justify-between gap-2" style={{flexWrap:"wrap"}}>
                 <div className="rowname" style={{fontSize:"var(--fs-lg)", color:h.you?"var(--ink-hi)":undefined, minWidth:0, flex:"1 1 60%"}}>
+                  {/* #249 — inline-block and NOT a flex child; see `crestOf`'s head for why */}
+                  <span style={{display:"inline-block",verticalAlign:"-3px",marginRight:5}}><Crest crest={h.you ? S.crest : crestOf(h.raw)} size={14}/></span>
                   <span className="dim" style={{marginRight:7,fontSize:"var(--fs-base)"}}>{i+1}</span>
                   {i===0 && <span style={{color:"var(--gold-hi)",marginRight:4}}>✦</span>}
                   {riv && riv.away>0 && <span className="dim" style={{fontSize:"var(--fs-sm)"}}>away · </span>}
@@ -32571,7 +32622,9 @@ export default function App(){
               </div>
               <div style={{fontSize:"var(--fs-lg)"}}>{me?me.name:"—"} <span className="dim">against</span> {o.opp.nick?`${o.opp.name}, ${o.opp.nick}`:o.opp.name}</div>
               <div className="dim" style={{fontSize:"var(--fs-md)"}}>{o.opp.cls} · {o.opp.origin}{o.opp.wins!=null?` · ${o.opp.wins}–${o.opp.losses}${o.opp.kills?` · ${o.opp.kills} kills`:""}`:""} · looks {menace(o.opp).toLowerCase()}</div>
-              {o.opp.house && <div className="dim" style={{fontSize:"var(--fs-base)"}}>{o.opp.house.startsWith("the")||o.opp.house.startsWith("no")?o.opp.house:"House "+o.opp.house}</div>}
+              {o.opp.house && <div className="dim flex items-center gap-1" style={{fontSize:"var(--fs-base)"}}>{/* #249 — the colours he stands in */}
+                {!(o.opp.house.startsWith("the")||o.opp.house.startsWith("no")) && <Crest crest={crestOf(o.opp.house)} size={13}/>}
+                <span>{o.opp.house.startsWith("the")||o.opp.house.startsWith("no")?o.opp.house:"House "+o.opp.house}</span></div>}
               {(()=>{ /* if he is a real man in a real house, his file is one tap away */
                 const rf = o.oppRef && o.oppRef.house;
                 const hh = rf ? (S.rivals||[]).find(x=>x.name===o.oppRef.house) : null;
@@ -33089,6 +33142,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     HOSTILE_MOVES,                           /* #246 phase 2 — `voice` holds that a table gating a written line is reachable */
     earOn, earInside,                        /* #246 phase 4 — whether anything is listening, and whether it is inside */
     rivalWeekly,                             /* #244 — the recruiter, so its one clause can be read a week at a time */
+    crestOf, HOUSE_COLOURS, CREST_SYMS,      /* #249 phase 1 — the bay's colours, and the vocabulary they must come from */
     GAMBITS, SWEARING, PLANSEASON, FAVOURS, answerRow, GAM_ACCOUNT, peacePrice, poachedMan, startPoach,
     /* the shelf #220 counts: the pacts, the lot, and the court's own price */
     PACTS, PACT_KEYS, pactOf, pactLeft, pactOwed, pactPace, offerPact, takePact, buyLot,

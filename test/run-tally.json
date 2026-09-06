@@ -210,4 +210,5 @@
 {"v":"3.216.0","checks":168,"failed":["bulk","cliff"]},
 {"v":"3.216.0","checks":168,"failed":["seller"]},
 {"v":"3.216.0","checks":168,"failed":[]},
-{"v":"3.217.0","checks":169,"failed":[]}]
+{"v":"3.217.0","checks":169,"failed":[]},
+{"v":"3.218.0","checks":170,"failed":[]}]
