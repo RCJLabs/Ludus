@@ -23,7 +23,7 @@
        where the man-first draw raised woman once in sixteen houses (ROADMAP v3.206.0). */
 import { found, clearAll, installRope } from "../harness.mjs";
 
-const HEARD_FLOOR = 1;   /* the rare tier raised at all on six seeded houses — set from the measurement in ROADMAP v3.206.0 */
+const HEARD_FLOOR = 3;   /* raised with the arm's houses 6 -> 24; it reads 8 there, and a floor of 1 on 24 houses would no longer catch a collapse */
 export const name = "asked";
 export const describe = "the week's conversation is drawn from every man and every thing he could raise, by weight, the unheard first";
 
@@ -116,7 +116,13 @@ export async function run({ p, errors }){
         say(inAsked && stamped && !later, `the man who asked is in flags.asked (${inAsked}), the kind is stamped on askLast (${stamped}), and he is in no later pool (${!later})`); } }
 
     /* 6 — the house hears more of the five, on seeded reference play */
-    { const H = 6, W = 260; const heard = []; const fired = {};
+    /* ---- SIX HOUSES WAS NEVER ENOUGH FOR A FLOOR OF ONE ----
+       `rare` counts two conversations that fire a handful of times in a lifetime, and this arm read
+       3 across six houses when it was written. v3.224.0 re-phased the fixture and it read 0 — not a
+       regression in the draw (arms 2 and 3 hold the weighting to within 1.1% on thousands of
+       trials), just a floor standing on a number too small to stand on. Four times the houses, and
+       the floor moves with it: same idiom as `cliff` 16 -> 56 and `houses` 24 -> 64. */
+    { const H = 24, W = 260; const heard = []; const fired = {};
       const raw = {}; let cur = new Set();
       for(const k of A.ASK_KEYS){ const f = A.ASKS[k].say; raw[k] = f; A.ASKS[k].say = function(d,g){ const r = f.call(this,d,g); if(r){ fired[k]=(fired[k]||0)+1; cur.add(k); } return r; }; }
       try { for(let h=0; h<H; h++){ const d = A.newGameState("Ah"+h, "clean", `ASKED-RUN-${h}`, null); cur = new Set();

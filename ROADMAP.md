@@ -4389,6 +4389,96 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.224.0 — #246 phase 5: a house you have just fought does not forget at the rate of one you have not — and #246 closes
+
+**The third shape the phase was tried in, and the first that works.** `rivalWeekly` forgot at a flat
+`1 × L.grudgeDecay` every week for ever — **0.960 a house-week measured, 74% of the whole grudge's
+outflow** — so a blood feud faded at exactly the rate of a slight, and last week's bout faded at the
+rate of one from two years ago. Two releases established this was the only lever left: v3.222.0
+found the hostile surface to be an elastic function of the grudge's mean (the four gates sit far out
+on its tail), and v3.223.0 found the intake could not be bought from the bill at any sane price.
+
+**Four rules were measured before one was written** (`probes/fade.mjs`, 2 seeds × 96 houses × 420
+weeks, ~120,000 house-weeks an arm), and **the point of three of them was to fail**:
+
+| | held/hw | at 0 | >26 | >35 | >44 | act every |
+|---|---|---|---|---|---|---|
+| as it shipped | 0.000 | 66.5% | 4.00% | 1.85% | 1.00% | 39.7 wk |
+| `feud` — hold more the higher the grudge | 0.004 | 66.7% | 4.39% | 2.25% | 1.35% | 35.8 wk |
+| `flat13` — hold 13% everywhere | 0.045 | 64.2% | 4.90% | 2.60% | 1.50% | 35.2 wk |
+| `fresh8` — hold 65% for 8 weeks after a card | 0.099 | 61.6% | 6.25% | 3.30% | 2.00% | 28.4 wk |
+| **`fresh16` — the one built** | 0.160 | 57.6% | 9.00% | 5.05% | 3.10% | 21.7 wk |
+| *target: `servo.mjs`'s `seek` arm* | — | *56.9%* | *8.09%* | *4.54%* | *2.89%* | *23 wk* |
+
+**`feud` is the obvious reading and it is worth 0.004 a house-week** — it can only act on the 4% of
+house-weeks already above the lowest gate. That is precisely the trap the grudge premium fell into
+one release earlier: a term that bites only where the quantity already is, on a quantity that is
+almost never there. Naming it once and showing it inert was cheaper than falling in twice.
+`flat13` holds nearly half of what the built rule holds and buys a quarter of the effect, because
+holding uniformly mostly benefits houses sitting at nought, where there is nothing to hold. What
+works acts on the **body** — the houses you have just fought, the only ones with anything to keep.
+
+**And the arm predicted the ship**, which is the part that makes the method worth keeping. Re-run
+against the real build on the same seeds:
+
+| | at 0 | >26 | >35 | >44 | p99 | act every |
+|---|---|---|---|---|---|---|
+| the `fresh16` arm predicted | 57.6% | 9.00% | 5.05% | 3.10% | 69.0 | 21.7 wk |
+| **the shipped game measures** | **57.8%** | **8.75%** | **4.85%** | **3.00%** | **67.6** | **21.0 wk** |
+
+Within a quarter of a point on every statistic. The weekly forgetting is now **0.607 a house-week**
+against 0.960, with the window open on 43% of them.
+
+**What shipped.** `GRUDGE_FRESH` 16 weeks — most of a year — and `GRUDGE_HOLD` 0.65, as a share of
+the lanista's own rate so the nine of them keep their order: Vettius at 0.35 still nurses a thing
+three times as long as Solonius at 1.6. The window is `metHouse.last`, which is also the migration:
+**a save written before this has no `last`, no house is fresh, and the game decays exactly as it did
+until the next card.** `checks/fade.mjs` holds five arms, the last of them the item's own falsifier
+from both sides — the mass above `GRUDGE_SABOTAGE` must stay clear of the 4.0% the flat decay sat at
+(a rule that stops working is a silent revert) and must not run away into a permanent siege, which
+the phase's own note calls worse than doing nothing.
+
+**And it is said out loud.** A rule the player cannot see is half a rule, so `HouseLedger` — the
+panel that exists to say what has passed between the two of you — now carries *"You stood across
+from him 3 weeks ago, and he has not put it down yet"*, drawn only where there is something to hold
+(under `grudgeWord`'s first band the house is cordial and the line would be about nothing).
+`checks/treat.mjs` gains the arm and holds the week count against `metHouse.last` (#150).
+
+**Three checks went red, none of them a regression, and one of them was wrong for four releases.**
+The gate is the first thing in this run to re-phase a seeded fixture, and it went 171/174. Since the
+change adds no `R()` draws, setting `GRUDGE_HOLD` to 0 is an exact A/B on the constant alone — all
+three passed at 0 and failed at 0.65, so each was diagnosed rather than re-based:
+
+- **`coffer` asserted something the game deliberately does not do.** It required a broke house to
+  `sell` on a higher SHARE of its moves than a flush one; `RIVAL_MOVES.sell` is `weight:()=>1`, and
+  the note three lines below that assertion in the same file says so — *"a `when`, not a weight, so
+  it changes what is POSSIBLE rather than what is likely."* It had passed since v3.212.0 on 12%
+  against 12%, a coincidence of rounding over 175 and 476 moves. Removed, with the reasoning; the
+  `when` arm and the `buy` inequality (12% flush against 9% broke) carry phase 2 as they always did.
+- **`cells` was a census reporting the rope's luck as the game's reach.** `cellCalm` is
+  `bLevel(d,"carceres")*0.5` and the arm counted it wherever the two policies happened to meet it —
+  201 of 3,180 house-weeks when written, 0 of 2,267 after the re-phase. That is the harness's own
+  #189 confusion ("the game cannot" against "the policy did not"). The claim is DRIVEN now: the
+  term climbs 0 / 0.5 / 1 / 1.5 / 2 with the building, and a week at unrest 50 lands at **47.474
+  with no cells against 45.474 with four**, read off `ludusLedger` rather than off the term's own
+  formula. The census stays as a note. *And the first cut of that arm called `A.cellWeek`, which
+  does not exist* — inert, in the arm written to replace a census for being inert. Caught by
+  grepping the handle before trusting a green.
+- **`asked` arm 6 stood a floor of 1 on six houses.** The rare tier reads 3 there and read 0 after
+  the re-phase, while arms 2 and 3 hold the same draw's weighting to within 1.1% over thousands of
+  trials. Four times the houses — the `cliff` 16→56 and `houses` 24→64 idiom — where it reads **8**,
+  and the floor moves to 3 so it still catches a collapse.
+
+**And the difficulty curve was checked rather than assumed**, because two small arms disagreed about
+it: `cells` showed its houses dying 29% sooner and `ending`'s tally showed them living longer.
+Paired on the same seeds, 96 houses × 420 weeks (`probes/ending.mjs`), the answer is that the bay
+being hotter does not make the game harder — survivors **17 → 18**, debt deaths arrive at week
+**128 → 155** and rebellions at **147 → 162**, and late-attrition ruin deaths fall **16 → 9**.
+`cells`'s 29% was its own eight-house noise.
+
+**#246 closes for real**, five phases and four releases after it opened. Four of the five changed
+what the item said.
+
 ### v3.223.0 — #246 phase 5's verify-first: the price is a null, and the elasticity is the finding
 
 **The phase opened yesterday and this release declines to build it, with the numbers.** v3.222.0
@@ -7973,7 +8063,16 @@ lesson). Either a second stream keyed off the seed word, as `seedNames` does, or
 
 ---
 
-**#246 — The Grudge Does Something** *(overhaul · medium–large · 4 phases)* — **CLOSED v3.216.0.**
+**#246 — The Grudge Does Something** *(overhaul · medium–large · 5 phases)* — **CLOSED v3.224.0.**
+*Phase 5, v3.224.0, on the third shape it was tried in:* the grudge's outflow was 74% one flat
+`1 × L.grudgeDecay` running every week for ever, so a blood feud faded at the rate of a slight.
+`GRUDGE_HOLD` 0.65 now holds back that share of the week's forgetting for `GRUDGE_FRESH` 16 weeks
+after a card against the house — measured against three rules built to fail, including the obvious
+"hold more the higher the grudge", which is worth 0.004 a house-week because it can only act on the
+4% of house-weeks already above the gate. House-weeks above `GRUDGE_SABOTAGE` go **4.00% → 8.75%**
+and a hostile act lands every **21 weeks against 40**, landing on the target `servo.mjs` set. The
+credit-back arm predicted the shipped build within a quarter of a point on every statistic. Said out
+loud on the Treat sheet, and silent on saves written before it.
 *Verify-first afterword, v3.222.0, and it opens a fifth phase.* Phase 2's
 95.4%-under-the-lowest-gate had an obvious culprit — `metHouse` taking 0.44 off any grudge under 30,
 three points above `GRUDGE_SABOTAGE`, on every card. `probes/servo.mjs` says no: the term is **1.6%

@@ -51,7 +51,7 @@ export async function run({ p, errors }){
 
   const r = await p.evaluate(([H, W])=>{
     const A = window.__LVDVS, R = window.__ROPE;
-    const miss = ["newGameState","activeG","throwFeast","walkTheCells","hireDoctore",
+    const miss = ["newGameState","activeG","throwFeast","walkTheCells","hireDoctore","ludusLedger",
                   "docCalm","cellCalm","perkCalm","lanCalm","collOn"].filter(k=>A[k]==null);
     if(miss.length || !R || typeof R.lanista !== "function") return { why:`the handle is missing ${miss.join(", ") || "the rope"}` };
     const terms = { doctore:0, cells:0, perk:0, lanista:0, collegium:0 };
@@ -87,7 +87,30 @@ export async function run({ p, errors }){
         weeks, spent: Math.round(spent), feasts, walks, ends };
     };
     const ref = run1(false), kept = run1(true);
-    return { ref, kept, terms };
+    /* ---- AND EVERY TERM IS REACHED FOR, RATHER THAN WAITED FOR ----
+       The census above counts each calming term wherever the two policies happen to meet it, and
+       `cellCalm` is `bLevel(d,"carceres")*0.5` — it needs a building the rope only puts up if the
+       run goes well enough for long enough. It read 201 of 3,180 house-weeks when this arm was
+       written and 0 of 2,267 after v3.224.0 re-phased the fixture, which is the census reporting
+       the rope's luck and calling it the game's reach. That is the exact confusion the harness's
+       own #189 note exists for — "the game cannot" against "the policy did not" — so the claim is
+       DRIVEN here: the term is put in a state where it must be alive, and its effect on the drift
+       is read off the drift itself rather than from the term's own formula. The census stays as a
+       note, because a term the reference player never meets is still worth saying out loud. */
+    const driven = {};
+    { const d = A.newGameState("Cd", "clean", "CELLSDRIVE");
+      d.buildings = Object.assign({}, d.buildings || {});
+      const step = lvl => { d.buildings.carceres = lvl; return A.cellCalm(d); };
+      driven.byLevel = [0,1,2,3,4].map(step);
+      /* and the drift SUBTRACTS it, read off the week rather than off the term's own formula.
+         `ludusLedger` is the line that moves `d.unrest`; the first cut of this called `A.cellWeek`,
+         which does not exist, so `ran` was false and the whole assertion below was inert — the
+         FAULT SIX shape, in the arm written to replace a census for being one. */
+      const unrestAfter = lvl => { const e = A.newGameState("Cd", "clean", "CELLSDRIVE");
+        e.buildings = Object.assign({}, e.buildings || {}, { carceres:lvl });
+        e.unrest = 50; A.ludusLedger(e, A.activeG(e)); return Math.round(e.unrest*1000)/1000; };
+      driven.drift = { none:unrestAfter(0), full:unrestAfter(4), ran:typeof A.ludusLedger === "function" }; }
+    return { ref, kept, terms, driven };
   }, [HOUSES, WEEKS]);
 
   if(r.why) return { pass:false, why:r.why, lines };
@@ -125,13 +148,23 @@ export async function run({ p, errors }){
       + `101 to 131 when #247b was measured, and the item is the PRICE. A calm that costs nothing is `
       + `not a trade and the finding above no longer describes the game`);
   /* 3 */
-  const dead = Object.entries(r.terms).filter(([k,n])=>!n && k !== "perk" && k !== "collegium");
-  lines.push(`  the drift's calming terms, over ${r.ref.weeks + r.kept.weeks} house-weeks: `
-    + Object.entries(r.terms).map(([k,n])=>`${k} ${n}`).join(" · "));
-  if(dead.length)
-    bad.push(`${dead.map(([k])=>k).join(", ")} never once read as calming in `
-      + `${r.ref.weeks + r.kept.weeks} house-weeks — a term the drift subtracts that is always zero is `
-      + `a lever unplugged rather than balanced`);
+  lines.push(`  the drift's calming terms met by the two policies, over ${r.ref.weeks + r.kept.weeks} house-weeks: `
+    + Object.entries(r.terms).map(([k,n])=>`${k} ${n}`).join(" · ")
+    + ` [a census of what the rope MET, not of what the game reaches — see the note]`);
+  { const D = r.driven;
+    lines.push(`  driven: cellCalm by carceres level ${D.byLevel.join(" / ")}`
+      + `${D.drift.ran ? ` · a week at unrest 50 lands at ${D.drift.none} with no cells and ${D.drift.full} with four` : ""}`);
+    if(!(D.byLevel[0] === 0))
+      bad.push(`a house with no carceres still reads ${D.byLevel[0]} of cell calm — the term is not the building`);
+    if(!D.byLevel.slice(1).every((v,i,a)=>v > 0 && (i === 0 || v > a[i-1])))
+      bad.push(`cellCalm does not climb with the carceres (${D.byLevel.join(" / ")}) — a term the drift `
+        + `subtracts that cannot be made to move is a lever unplugged rather than balanced`);
+    if(!D.drift.ran)
+      bad.push(`the drift half of this arm did not run — \`ludusLedger\` is not on the handle, and an arm that `
+        + `cannot move reads exactly like a game that is fine`);
+    if(D.drift.ran && !(D.drift.full < D.drift.none))
+      bad.push(`a week at unrest 50 ends at ${D.drift.full} with four levels of carceres and ${D.drift.none} with none — `
+        + `\`cellCalm\` is a number nothing subtracts, which is the same fault one layer down`); }
 
   if(errors.length) bad.push(`${errors.length} page errors`);
   if(!bad.length) lines.push(`the cells can be quieted, and quieting them still costs the house its box`);
