@@ -11,7 +11,14 @@
    or a runway already in blood. Measured the same way: 692 and 706 weeks, right 12.4% and 12.5%,
    every dying house still reached, seven and eight weeks of median warning.
 
-   FOUR ARMS, seeded, 16 houses x 420 weeks under the reference player.
+   FIVE ARMS — four seeded over 16 houses x 420 weeks under the reference player, and one driven.
+
+   Arm 5 is #247 PHASE 2. The row told a house under the line to "sell the paper, or sell a man" and
+   never said what that would raise, while `liquidate` had computed exactly that figure all along.
+   Measured (`probes/brink.mjs`, 85 debt deaths): at the week the final red run begins the house is
+   short a median of 763d and 445d and could raise 2,666d and 1,451d, covering the gap in 81% of
+   deaths. The row carries the figure now, and this holds it against `liquidate` on the same state —
+   #150's rule — by PARSING THE ROW'S OWN TEXT, so what is asserted is what a player reads.
 
    1 · IT IS WORTH MORE THAN SHORTNESS. The row's precision against the precision of the bare
        `runway < RUNWAY_WARN` on the SAME run — a ratio, because the absolute rates move with the
@@ -73,7 +80,8 @@ export async function run({ p, errors }){
 
   const r = await p.evaluate(([H, W, DEAD_IN])=>{
     const A = window.__LVDVS, R = window.__ROPE;
-    const miss = ["newGameState","moneyRow","runway","RUNWAY_WARN","swingOf","exposed","weeklyBill"].filter(k=>A[k]==null);
+    const miss = ["newGameState","moneyRow","runway","RUNWAY_WARN","swingOf","exposed","weeklyBill",
+                  "liquidate","creditLine"].filter(k=>A[k]==null);
     if(miss.length || !R || typeof R.lanista !== "function") return { why:`the handle is missing ${miss.join(", ") || "the rope"}` };
     let weeks = 0, said = 0, saidFatal = 0, short = 0, shortFatal = 0;
     const deaths = [], swings = [];
@@ -101,7 +109,34 @@ export async function run({ p, errors }){
         deaths.push({ h, week:d.week, heard:heard.length, lead: heard.length ? d.week - heard[0].week : null });
       }
     }
-    return { weeks, said, saidFatal, short, shortFatal, deaths, swings };
+    /* 5 · the figure the row appends when the house is under, driven rather than waited for: a
+       state put below the credit line with something spare to sell, and the same state with
+       nothing. The row's own text is parsed for the number, so what is asserted is what a player
+       would read, not what an internal call returns. */
+    const figure = (()=>{
+      const mk = (spare) => { const d = A.newGameState("Cf", "clean", "CLIFFFIG");
+        d.week = 120;
+        if(!spare){ d.gear = {}; d.owed = [];
+          /* one man only: `liquidate` sells every man BUT one, so a house of one has no men to sell */
+          d.gladiators = d.gladiators.filter(g=>g.status === "active").slice(0, 1); }
+        d.gold = Math.round(A.creditLine(d) * 0.6);          /* under the line, inside DEBT_STAGE[0] */
+        return d; };
+      const d = mk(true), L = A.liquidate(d);
+      const row = A.moneyRow(d);
+      const num = row && row.sub ? (String(row.sub).match(/(\d+)d stands/) || [])[1] : null;
+      const bare = mk(false), bareRow = A.moneyRow(bare), bareL = A.liquidate(bare);
+      return { sub: row ? row.sub : "(no row at all)", key: row ? row.key : null,
+        said: num == null ? null : +num, want: Math.round(L.total),
+        steel:Math.round(L.steel), debt:Math.round(L.debt), men:Math.round(L.men),
+        /* the negative arm, and it must not be allowed to skip itself: if stripping the house did
+           not actually leave it with nothing to sell, `clean` used to come back null and the
+           assertion below simply did not run — a guard that reads exactly like a passing test. The
+           bare total is reported so an inert arm is visible, and asserted so it is a failure. */
+        bareTotal: Math.round(bareL.total),
+        clean: /stands in spare steel/.test(String((bareRow||{}).sub || "")),
+        cleanSub: bareRow ? bareRow.sub : null };
+    })();
+    return { weeks, said, saidFatal, short, shortFatal, deaths, swings, figure };
   }, [HOUSES, WEEKS, DEAD_IN]);
 
   if(r.why) return { pass:false, why:r.why, lines };
@@ -156,7 +191,29 @@ export async function run({ p, errors }){
       + `is read off \`weekDigest\`'s \`dl.gold\`: that is what endWeek moved, not what the week did, `
       + `and everything the player buys between weeks is invisible to it`);
 
+  /* 5 · AND WHEN IT IS UNDER, IT SAYS WHAT THE HOUSE COULD RAISE */
+  { const F = r.figure;
+    lines.push(`  under the line: "${F.sub}" — the row says ${F.said == null ? "no figure" : F.said + "d"}`
+      + ` and \`liquidate\` computes ${F.want}d (steel ${F.steel} · paper ${F.debt} · men ${F.men});`
+      + ` a stripped house liquidates for ${F.bareTotal}d and its row reads "${F.cleanSub}"`);
+    if(F.want <= 0)
+      bad.push(`the planted house has nothing to liquidate (${F.want}d), so this arm asserted nothing — `
+        + `it needs spare steel or a second man to have anything to say`);
+    else if(F.said == null)
+      bad.push(`the money row says "${F.sub}" and never says what selling would raise, while \`liquidate\` `
+        + `computes ${F.want}d on this very state — the row tells a player to sell a man without telling `
+        + `him it would be enough, which is the whole of #247 phase 2`);
+    else if(F.said !== F.want)
+      bad.push(`the money row says ${F.said}d stands in spare steel and men and \`liquidate\` says ${F.want}d — `
+        + `the number on the screen and the call behind it have to be the same call (#150)`);
+    if(F.bareTotal !== 0)
+      bad.push(`the stripped house still liquidates for ${F.bareTotal}d, so the negative half of this arm `
+        + `tested nothing — an arm that cannot fail reads exactly like a passing one`);
+    else if(F.clean)
+      bad.push(`a house with nothing spare still had a figure appended ("${F.cleanSub}") — the line is for a `
+        + `house that has something to sell, and 0d of remedy is not a remedy`); }
+
   if(errors.length) bad.push(`${errors.length} page errors`);
-  if(!bad.length) lines.push(`the row speaks on exposure, half as often and half again as well`);
+  if(!bad.length) lines.push(`the row speaks on exposure, half as often and half again as well, and says what the house is sitting on`);
   return { pass: bad.length === 0, why: bad.slice(0, 2).join("; ") || null, lines };
 }

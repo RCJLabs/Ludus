@@ -12503,12 +12503,35 @@ const moneyRow = d => {
   /* THE SLIDE TOWARD THE CREDITORS' LINE first, which is the one number that ends a run without
      anybody deciding anything. It was already here and it is unchanged. */
   const line = creditLine(d), depth = d.gold < 0 ? clamp(d.gold / line, 0, 1) : 0;
-  if(depth >= DEBT_STAGE[0])
+  /* ---- AND WHAT THE HOUSE IS SITTING ON, WHICH IT WAS NEVER TOLD — #247 phase 2 ----
+     The row already said "sell the paper, or sell a man". It never said what that would RAISE, and
+     `liquidate` has computed exactly that figure since long before this row existed — spare steel
+     at the resale rate, the paper at the discount, and every man but one at 55%.
+
+     Measured (`probes/brink.mjs`, 2 seeds x 96 houses x 420 weeks, 85 debt deaths): at the week the
+     final red run begins — a median of 5 to 6 weeks before the end, which is #247a's window
+     reproduced from the other side — the house is short a median of 763d and 445d, and what it
+     could raise by selling is 2,666d and 1,451d. **The remedy is worth two to three and a half
+     times the gap and covers it in 81% of deaths**, and the player is told to sell a man without
+     ever being told it would be enough.
+
+     THE SPLIT IS THE FINDING, though, and it is why this is a line and not a system: 95% of BUILT
+     houses could have covered it (they die at week ~223 sitting on 3,800-4,900d of sellable house)
+     against 67.6% of BARE ones, which die at week 25-41 short 287d with 416d to their name. The
+     approach exists and it belongs to the house that has something to sell.
+
+     `liquidate` draws no randomness — `rnd` is `Math.round` and every rate it reads is
+     deterministic — so this call cannot re-phase a seeded fixture, which is the only reason it can
+     live on a row the agenda renders every week. */
+  if(depth >= DEBT_STAGE[0]){
+    const L = liquidate(d);
+    const say = depth >= DEBT_STAGE[2] ? "a week or two, no more"
+      : depth >= DEBT_STAGE[1] ? "the trades have started asking first"
+      : "take a purse, sell the paper, or sell a man";
     return { key:"debt", urgency: depth >= DEBT_STAGE[2] ? 3 : 2, tab:"villa",
       label:`${rnd(-d.gold)}d under, and ${rnd(-line)}d ends it`,
-      sub: depth >= DEBT_STAGE[2] ? "a week or two, no more"
-        : depth >= DEBT_STAGE[1] ? "the trades have started asking first"
-        : "take a purse, sell the paper, or sell a man" };
+      sub: L.total > 0 ? `${say} — ${rnd(L.total)}d stands in spare steel and men` : say };
+  }
   /* ---- AND THE EXPOSURE, WHICH IS THE THING THAT ACTUALLY KILLS — #247a ----
      Before the runway, because the runway is right eight times in a hundred and this is right
      twenty-one. Stated as the fact it is rather than a prediction: what is in the box against what
@@ -33653,6 +33676,9 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     RISE_RANKS, riseOf, riseRank, riseNext, riseNeed, canClaimRise, riseWeek,
     riseStipend, riseFav, risePurse, liturgy, riseFee, RISE_ADMIT,
     runway, moneyRow, RUNWAY_WARN, RUNWAY_BAD, RUNWAY_BUILD, weeklyBill, creditLine, billIf, staffWages,
+    /* #247 phase 2 — the bill's own lines, so an instrument can ask which of them a house can stop
+       paying rather than reconstruct the total from outside and call the residual "buildings" */
+    bUpkeep, docWage, seasonUpkeep, isAuctor, CREDIT_WEEKS,
     OVER_TEXT, DEBT_STAGE,   /* #247 — the end screen's own table, so a check can ask whether a kind can be shown */
     swingOf, exposed, swingWeek, SWING_KEEP,   /* #247a — what an ordinary week of this house moves */
     docCalm, cellCalm, perkCalm, lanCalm, collOn, docUnrest, pit,   /* #247b — the terms of the weekly drift */

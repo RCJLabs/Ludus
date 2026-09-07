@@ -4389,6 +4389,73 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.225.0 — #247 phase 2: the money death has an approach, and it belongs to the house that least looks like it needs one
+
+**The claim all three parts of #247 landed on** was *"every remedy converts a death into a money
+death, and the money death is the one with no approach."* #247a had already given it a SIGNAL — the
+money row speaks on exposure, reaches every house that dies, and gives seven or eight weeks. What
+had never been measured is whether the signal is worth anything: whether a house that hears it has
+an ACTION, which is the question #247b answered for the rising and answered yes.
+
+**The death is arithmetic, so the question can be asked exactly.** `d.over = {kind:"debt"}` fires at
+`d.gold < creditLine(d)` — 2.5 weeks of the house's own bill below nought — so the only two remedies
+are earning more or owing less. Reading `weeklyBill`'s nine lines for an action that stops each:
+
+| stoppable | no action exists |
+|---|---|
+| men (`liquidate`, the market) · gear (`sellGearOne`) · the doctore (`dismissDoctore`) · staff (`letStaffGo`) · the collegium (`stopCollegium`) | **buildings · works · liturgy · household** |
+
+So the bill has a **locked floor**, and the phase turned on whether that floor outruns what a dying
+house can earn. `probes/brink.mjs` follows every house week by week and, on the debt deaths, reads
+the moment the final unbroken red run begins — 2 seeds × 96 houses × 420 weeks, **85 debt deaths**:
+
+| | seed 1 | seed 2 |
+|---|---|---|
+| debt deaths | 49 | 36 |
+| the money row reached them | 43 (88%) | 34 (94%) |
+| weeks from the red run to death (p50 / p75) | 5 / 7 | 6 / 8 |
+| short by, at that week (p50) | 763d | 445d |
+| what selling would raise (p50) | 2,666d | 1,451d |
+| **could have covered the gap** | **83.7%** | **79.4%** |
+
+That the window comes out at 5–8 weeks is #247a's "seven or eight" **reproduced from the other
+side**, by a probe that measures it differently and was written for a different question.
+
+**So the claim is refuted — and then the split says something better.** Pooling hid two populations,
+and they are almost exactly half and half:
+
+| | **bare** — no locked costs | **built** — carrying buildings, works, a liturgy, a household |
+|---|---|---|
+| n | 37 | 40 |
+| died at week (p50) | 25–41 | 221–225 |
+| short by (p50) | 287d | 1,735–1,959d |
+| could raise (p50) | 416–526d | 3,803–4,911d |
+| **could have covered** | **67.6%** | **95.0%** |
+
+**The built house — the one the item assumed was trapped — is the one with the approach.** It dies
+at week ~223 sitting on three to five thousand denarii of sellable house against a gap of under two.
+It is the young house at week 25–41, short 287 denarii with 416 to its name, that has nothing. And
+the remedy is a fire-sale, not a fix: the locked floor alone beats what a built house nets in a week
+in **95%** of these deaths, so selling buys weeks and then the yard empties — which is `ruin`, the
+third shape phase 1 found, and the mechanism by which one death becomes another.
+
+**What shipped is one line, because that is what the measurement supports.** The money row already
+said *"take a purse, sell the paper, or sell a man"* and never said what that would raise, while
+`liquidate` had computed exactly that figure all along — spare steel at the resale rate, the paper
+at the discount, every man but one at 55%. It now reads *"…sell a man — 3,802d stands in spare steel
+and men"*. `liquidate` draws no randomness (`rnd` is `Math.round` and every rate it reads is
+deterministic), which is the only reason it can live on a row the agenda renders weekly without
+re-phasing a single fixture. `checks/cliff.mjs` gains a fifth arm holding the figure against
+`liquidate` by **parsing the row's own text**, so what is asserted is what a player reads (#150) —
+with a driven negative half, made non-inert after the first cut let itself skip when the stripped
+house still had something to sell.
+
+**Not built, and written down instead:** a way to shed the locked floor (mothball a building,
+abandon a work, step down a rank), and the young house's death at week 25–41, which is #247's
+original phase 2 — *the opening* — that phase 1 retired on the grounds that the era-one dead are no
+poorer than the era-one living. Both can be true: being poor early does not predict death, but a
+young house that does tip has nothing to sell. That is a different item and it is not opened here.
+
 ### v3.224.0 — #246 phase 5: a house you have just fought does not forget at the rate of one you have not — and #246 closes
 
 **The third shape the phase was tried in, and the first that works.** `rivalWeekly` forgot at a flat
@@ -8180,6 +8247,17 @@ reserve rule (44%/42%, and **67%/78%** on the houses that die of ruin) and an ed
 below the five men the policy keeps (`CELLS_BY_RANK` starts at 8). The yard is never FORCED to empty.
 **And all three parts of #247 land on one thing:** every remedy converts a death into a money death,
 and the money death is the one with no approach — which is the claim a phase 2 has to answer.
+**PHASE 2 ANSWERED IT, v3.225.0, AND IT IS REFUTED.** `probes/brink.mjs`, 85 debt deaths: the money
+row reaches 88-94% of them a median of 5-6 weeks out (#247a's window, reproduced from the other
+side), the house is short 445-763d at that moment and could raise 1,451-2,666d by selling, and
+**81% of debt deaths were coverable**. The pooled figure hid two populations: **95%** of BUILT houses
+could have covered it (dying at week ~223 on 3,800-4,900d of sellable house) against **67.6%** of
+BARE ones (dying at week 25-41, short 287d with 416d to their name). The approach belongs to the
+house that least looks like it needs one. It is a fire-sale rather than a fix — the locked floor
+(buildings, works, liturgy, household, none of which any action stops) beats a built house's weekly
+net in 95% of these deaths — which is how a debt death becomes a `ruin`. Shipped: the money row
+carries `liquidate`'s figure, which it had never said. **Left open:** shedding the locked floor, and
+the young house's death, which is this item's original phase 2 under a different diagnosis.
 Original text follows.
 
 Fourteen of sixteen houses end, and the two endings that take them are the strongbox and the cells:
