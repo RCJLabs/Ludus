@@ -23,6 +23,11 @@
        one of your men. The first cut wrote them behind "You have …" and produced "You have drunk
        together, come to respect him, warned you, grown old together." A label starting with a past
        participle is that fault coming back.
+   4 · AND IT SAYS WHETHER IT IS STILL FRESH. #246 phase 5 holds back 65% of a house's weekly
+       forgetting for `GRUDGE_FRESH` weeks after a card against it, and that rule moves a number the
+       player never sees. The line belongs on this panel — it is the one that exists to say what has
+       passed between the two of you — and it has to say the same week count `metHouse.last` does,
+       which is #150's rule applied to a sentence.
    3 · AND THE SHEET SHOWS THE RECORD. Opened on a house with a planted history: the card count and
        the win-loss, both from the record book — ONE source, which is #150's rule; the first cut took
        the count from `metHouse.met` and the record from the book and put two systems' counters on
@@ -74,7 +79,10 @@ export async function run({ p, errors }){
     const live = (d.rivals||[]).filter(x=>!x.retired)[0];
     if(!live) return null;
     d.metHouse = d.metHouse || {};
-    d.metHouse[live.name] = { met:21, beaten:0, lost:0, seen:["drink","respect","warning","old"] };
+    /* `last` and a grudge worth mentioning, for arm 4 — #246 phase 5's hold is invisible without a
+       line, and a line nobody checks is the same as no line */
+    d.metHouse[live.name] = { met:21, beaten:0, lost:0, seen:["drink","respect","warning","old"], last:d.week - 3 };
+    live.grudge = 55;
     d.book = d.book || {}; d.book.house = d.book.house || {};
     d.book.house[live.name] = { n:21, w:12, d:0 };
     const keys = Object.keys(localStorage).filter(q=>/ludus-slot-\d/.test(q));
@@ -122,6 +130,19 @@ export async function run({ p, errors }){
     for(const k of ["drink","respect","warning","old"])
       if(t.words[k] && !sheet.includes(t.words[k]))
         bad.push(`the beat \`${k}\` was planted on this rivalry and its name ("${t.words[k]}") is not on the sheet`);
+    /* 4 · the freshness line, planted three weeks back with a grudge of 55 */
+    const fresh = await p.evaluate(()=>{ const el = document.querySelector("[data-fresh]");
+      return el ? { house:el.getAttribute("data-fresh"), text:(el.textContent||"").replace(/\s+/g," ").trim() } : null; });
+    if(!fresh)
+      bad.push(`House ${want} was fought three weeks ago with a grudge of 55 and the sheet says nothing about it — `
+        + `#246 phase 5 holds back 65% of this house's weekly forgetting and a rule the player cannot see is half a rule`);
+    else {
+      lines.push(`  the hold is said: "${fresh.text}"`);
+      if(fresh.house !== want) bad.push(`the freshness line is drawn for ${fresh.house} on ${want}'s sheet`);
+      if(!/3 weeks ago/.test(fresh.text))
+        bad.push(`the freshness line reads "${fresh.text}" and \`metHouse.last\` was stamped three weeks back — `
+          + `the sentence and the number behind it have to be the same call (#150)`);
+    }
   }
 
   if(errors.length) bad.push(`${errors.length} page errors`);

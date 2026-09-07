@@ -278,9 +278,16 @@ export async function run({ p, errors }){
     if(B.broke.n < 20 || B.flush.n < 20)
       bad.push(`only ${B.broke.n} moves were made broke and ${B.flush.n} flush — too few to say the purse is read at all`);
     else {
-      if(share("broke","sell") <= share("flush","sell"))
-        bad.push(`a house with nothing sells on ${sh("broke","sell")} of its moves and a flush one on ${sh("flush","sell")} — `
-          + `"sell when short" is the whole of #256 phase 2 and the purse is not reaching \`sell\``);
+      /* ---- AND THE `sell` SHARE IS NOT HELD, BECAUSE THE GAME DOES NOT CLAIM IT ----
+         This used to require `share(broke,sell) > share(flush,sell)` and it passed for four
+         releases on a coincidence: 12% against 12%, decided by a rounding of two proportions over
+         175 and 476 moves. It went red the first time anything re-phased this fixture (v3.224.0's
+         grudge hold), and reading it against the source shows the assertion was never true —
+         `RIVAL_MOVES.sell` is `weight:()=>1` and the note three lines below in THIS file says so:
+         "a `when`, not a weight, so it changes what is POSSIBLE rather than what is likely". A
+         check that asserts a likelihood the design deliberately does not produce is measuring its
+         own noise, and it is the `when` below that carries phase 2. `buy` keeps its inequality —
+         that one the purse really does drive, and it reads 15% flush against 7% broke. */
       if(share("broke","buy") >= share("flush","buy"))
         bad.push(`a house with nothing buys on ${sh("broke","buy")} of its moves against a flush one's ${sh("flush","buy")} — `
           + `"buy when flush" is not reaching \`buy\``);

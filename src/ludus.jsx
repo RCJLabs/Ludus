@@ -2473,6 +2473,7 @@ function metHouse(d, h){
   d.metHouse = d.metHouse || {};
   const m = d.metHouse[h] || { met:0, beaten:0, lost:0, seen:[] };
   m.met++;
+  m.last = d.week;                 /* #246 phase 5 — what `fadeRate` reads; see the note over `rivalWeekly` */
   d.metHouse[h] = m;
   /* familiarity by itself, once the grudge is not in the way — worth 1.6% of its outflow, measured */
   const r = houseOf(d, h);
@@ -7561,6 +7562,48 @@ function rivalStone(d, h){
   h.work = { k, left: W.years * YEAR_WEEKS, began: d.week };
   chron(d, `Word from the bay: House ${h.name} has masons in. ${lanistaOf(h.name).name} is building ${W.name.toLowerCase()}, and means everyone to know it before it is finished.`, "info");
 }
+/* ---- A GRUDGE WITH SOMETHING RECENT BEHIND IT DOES NOT FADE LIKE AN OLD ONE ----
+   #246 phase 5, and the third shape the phase was tried in. The line below used to read
+   `h.grudge = clamp(h.grudge - 1*L.grudgeDecay, 0, 100)` unconditionally, every week, for ever:
+   **0.960 a house-week measured, which is 74% of the whole grudge's outflow.** So a blood feud
+   faded at exactly the rate of a slight, and a grudge from last week's bout faded at the rate of
+   one from two years ago. Two releases established that this is the only lever left worth pulling —
+   `servo.mjs` (v3.222.0) found the hostile surface to be an elastic function of the grudge's mean,
+   because the four gates sit far out on its tail, and `facing.mjs` (v3.223.0) found the intake
+   could not be bought from the bill at any sane price.
+
+   FOUR RULES WERE MEASURED BEFORE THIS ONE WAS WRITTEN (`probes/fade.mjs`, 2 seeds x 96 houses x
+   420 weeks, ~120,000 house-weeks an arm), and the point of three of them was to fail:
+
+                held/hw   at 0    >26     >35     >44    an act every
+     shipped     0.000    66.5%   4.00%   1.85%   1.00%   39.7 wk
+     `feud`      0.004    66.7%   4.39%   2.25%   1.35%   35.8 wk    <- inert, as predicted
+     `flat13`    0.045    64.2%   4.90%   2.60%   1.50%   35.2 wk
+     `fresh8`    0.099    61.6%   6.25%   3.30%   2.00%   28.4 wk
+     THIS        0.160    57.6%   9.00%   5.05%   3.10%   21.7 wk
+     the target  --       56.9%   8.09%   4.54%   2.89%   23   wk
+
+   `feud` is the OBVIOUS reading — hold back more of the decay the higher the grudge — and it is
+   worth 0.004 a house-week, because it can only act on the 4% of house-weeks already above the
+   lowest gate. That is the same trap the grudge premium fell into one release earlier: a term that
+   only bites where the quantity already is, on a quantity that is almost never there. `flat13`
+   holds nearly half of what this rule holds and buys a quarter of the effect, because holding
+   uniformly mostly benefits houses sitting at nought, where there is nothing to hold.
+
+   What works acts on the BODY: the houses you have just fought, which are the only ones with
+   anything to keep. The target is `servo.mjs`'s `seek` arm — what the bay looks like if you fight
+   your three rivals on 23% of bouts instead of 15% — and this lands on it within a hair, from the
+   other side, without touching the bill or asking the player to play differently.
+
+   The hold is a SHARE of the lanista's own rate, so the nine of them keep their order: Vettius at
+   0.35 still nurses a thing three times as long as Solonius at 1.6. And the window is `metHouse`'s
+   own `last`, so a save written before this has no `last`, no house is fresh, and the game decays
+   exactly as it did until the next card. */
+const GRUDGE_FRESH = 16;      /* weeks a card against a house keeps it from forgetting — most of a year */
+const GRUDGE_HOLD  = 0.65;    /* the share of that week's forgetting it holds back */
+const metLast = (d, h) => { const m = (d.metHouse||{})[h]; return m && m.last != null ? m.last : null; };
+const grudgeFresh = (d, h) => { const t = metLast(d, h); return t != null && (d.week - t) < GRUDGE_FRESH; };
+const fadeRate = (d, h) => 1 * (lanistaOf(h.name).grudgeDecay || 1) * (grudgeFresh(d, h.name) ? 1 - GRUDGE_HOLD : 1);
 function rivalWeekly(d){
   if(!d.rivals) return;
   /* the standard of the age, read once — it is the same city for all three houses */
@@ -7570,7 +7613,7 @@ function rivalWeekly(d){
   const era = Math.max(now, d.flags.bayPeak*0.93);
   d.rivals.forEach(h=>{
     const L = lanistaOf(h.name);
-    h.grudge = clamp(h.grudge - 1*L.grudgeDecay, 0, 100);
+    h.grudge = clamp(h.grudge - fadeRate(d, h), 0, 100);   /* #246 phase 5 — see the note above */
     rivalStone(d, h);        /* #217 — somebody else on the ladder */
     /* the one they are building. A house has one set of good years, one doctore and
        one best pair of hands, and they go into a man — not spread evenly over four.
@@ -22608,6 +22651,16 @@ function HouseLedger({ S, h }){
       <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:2}}>
         {watched} of {(h.fighters||[]).length} of his men watched
       </div>
+      {/* ---- AND WHETHER IT IS STILL FRESH, BECAUSE THE RULE IS INVISIBLE OTHERWISE ----
+           #246 phase 5 holds back 65% of a house's weekly forgetting for `GRUDGE_FRESH` weeks after
+           a card, and a rule a player cannot see is half a rule. It goes here rather than in the
+           header because this panel is the one that exists to say what has passed between the two
+           of you, and it is said only where there is something to hold — under `grudgeWord`'s first
+           band the house is cordial and "he has not forgotten" would be a line about nothing. */}
+      {m.last != null && grudgeFresh(S, h.name) && (h.grudge||0) >= 15 && (
+        <div data-fresh={h.name} style={{fontSize:"var(--fs-sm)",marginTop:3,fontStyle:"italic",color:"var(--blood)"}}>
+          {S.week - m.last === 0 ? "You stood across from him this week" : `You stood across from him ${S.week - m.last} week${S.week - m.last===1?"":"s"} ago`}, and he has not put it down yet.
+        </div>)}
       {beats.length>0 && <div style={{fontSize:"var(--fs-sm)",marginTop:4,fontStyle:"italic",color:"var(--ink-2)",overflowWrap:"anywhere"}}>
         Between you: {beats.map(k=>BEAT_WORD[k]).join(", ")}.
       </div>}
@@ -33627,6 +33680,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        are the only large moves it has, and every one of them is gated on `met`, on years, or
        on the warmth it is supposed to produce — see `houses`. */
     warmMove, metHouse, rivalArc, RIVAL_BEATS, RB_KEYS,
+    GRUDGE_FRESH, GRUDGE_HOLD, metLast, grudgeFresh, fadeRate,   /* #246 phase 5 — the weekly forgetting, and what holds it */
     rivalPurse, rivalPay, rivalPurseWeek, rivalShort, PURSE_SEED, rivalFee, rivalWin, rivalTier,
     RIVAL_KEEP, RIVAL_DOC, RIVAL_TOUR, RIVAL_DARK, RIVAL_STANDING, rivalCardPay,   /* #256 — the bay's own strongbox */
     rivalFlush, rivalBroke, rivalCan, PURSE_FLUSH, PURSE_SHORT,   /* #256 phase 2 — what the moves read off it */
