@@ -4389,6 +4389,58 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.221.0 — #249, phase 2: every man who does not fight — and #249 closes
+
+**Two of the item's claims did not survive reading the file, and the third is the release.** Phase 2
+says *"the doctore, the medicus, the armourer, the patrons, the wife, the children and every rival
+lanista are text"*, and asks for a shadow-figure apiece off the `.umbra` surface.
+
+**The doctore was not text.** `DoctoreBust` had drawn him at two sites since it was written — a
+seeded head-and-shoulders in the same flat SVG as the fighters. This is the third phase running in
+this item whose premise was partly already built: phase 3's `h.after` and per-house record line had
+shipped, and now this. What the item is right about is that it stopped there — the medicus and the
+armourer stood in rooms of their own with nothing but a name, and nine rival lanistae had a trait, a
+blurb, six multipliers and (since phase 1) a crest, and no face.
+
+**And a lanista is not a shadow.** `.umbra` is a LIT GROUND for a shadow to be a shadow on, and what
+it carries is `Fighter` — a man in kit, in a pose, on the sand. Giving that silhouette to the medicus
+would say he fights. The vocabulary for a man who does *not* fight already existed, and the item's
+own risk note asks for exactly it: *"stay inside the glyph vocabulary the figure already has"*. So
+the bust is generalised rather than a pose set drawn, and **the item's stated risk — "nine umbrae is
+a pose set" — does not arise at all.**
+
+`DoctoreBust` becomes `Bust`, taking the house's colour and the odds of a scar, and two things it had
+hardcoded come out:
+
+- **The shoulders were the player's own oxblood**, which is right for your man and wrong for the
+  lanista across the town. A rival wears the crest ground phase 1 gave him — Vettius in iron, Glaber
+  in the gold he bought — and the fold is a black wash at 28% so it works on gold as well as on iron.
+  On the player's oxblood that wash computes to `#662a20` against the old literal `#6f2c20`, a
+  difference of nine points in one channel: **the doctore is unchanged, and the check proves it
+  rather than the arithmetic.**
+- **The scar fired on 60% of men**, which is true of somebody who came off the sand and is not true
+  of a medicus. It is a prop now, and only the doctore is passed the sand's odds.
+
+**`checks/faces.mjs`, four arms, 15 seconds.** The lanista has a face and its shoulders are filled
+with `crestOf(house).c1` — the one thing on that panel checkable against the model rather than
+against taste, and what ties this phase to phase 1; the medicus and the armourer have one, in the
+house's oxblood, because they are your hires; the doctore still has his, in the same oxblood; and two
+men do not draw the same amount of ink, because the whole figure is seeded off the name and if that
+comes loose every man in the game becomes one man and nothing else would notice. Sabotage-verified
+four ways: the lanista's colours forced to oxblood, the staff busts removed, the seed pinned to a
+constant, and the default ground changed.
+
+**And one inert arm caught in this release's own check.** The doctore's panel is not in any list — it
+is a hotspot in the DRAWN ludus, a `role="button"` on `ScnSquare` — so the first draft swept the tabs
+for his bust, never found it, printed "his panel was not reached" and **passed, asserting nothing**.
+That is the structural-zero shape this suite has found four times now. The arm opens the square and
+bites.
+
+**#249 closes.** Phase 1 gave the bay colours and found two faults by eye that no check could see;
+phase 3 surfaced a rivalry that had been written down and never shown, and found two of its three
+asks already done; phase 2 found the doctore already drawn and the shadow-figure the wrong
+vocabulary. **All three phases changed what the item said.**
+
 ### v3.220.0 — #250: the bay, drawn — and a pin the item asked for that does not exist
 
 **Thirty mentions of Campania in the file and nothing spatial.** The circuit is three towns with
@@ -7925,8 +7977,13 @@ listed together.
 
 ---
 
-**#249 — The Bay Has No Face** *(UI · medium · 3 phases)* — **PHASES 1 AND 3 SHIPPED; ONLY PHASE 2
-REMAINS.** *Phase 3, v3.219.0:* `metHouse` was written on every card and read by no panel at all —
+**#249 — The Bay Has No Face** *(UI · medium · 3 phases)* — **CLOSED v3.221.0.** *Phase 2:* the
+doctore was NOT text — `DoctoreBust` had drawn him at two sites all along — and a lanista is not a
+shadow: `.umbra` carries `Fighter`, a man in kit on the sand, and giving that to the medicus would
+say he fights. The bust is generalised instead (`Bust`, taking the house's colour and the scar's
+odds), so the item's stated risk — "nine umbrae is a pose set" — does not arise. The medicus, the
+armourer and every rival lanista have a face now, and a rival's shoulders wear the crest ground
+phase 1 gave him. All three phases changed what the item said. *Phase 3, v3.219.0:* `metHouse` was written on every card and read by no panel at all —
 its `seen` list of which of `RIVAL_BEATS`' eight have happened is the one thing no other screen
 carries, and it is on the Treat sheet now with the record book's card count and win-loss. Three
 faults caught by looking: two counters from two systems on one line (#150), beat labels written as

@@ -23489,7 +23489,29 @@ function decodeSave(txt){
 /* A portrait bust for the doctore — a grizzled man off the sand, drawn in the
    same flat SVG as the fighters. Seeded off his name so a given doctore always
    wears the same face, and every doctore is his own man. */
-function DoctoreBust({ name, size=56 }){
+/* ---- AND EVERY MAN WHO DOES NOT FIGHT — audit item #249, phase 2 ----
+   The item says "the doctore, the medicus, the armourer, the patrons, the wife, the children and
+   every rival lanista are text", and asks for a shadow-figure apiece off the `.umbra` surface. Two
+   corrections, one factual and one about the vocabulary.
+
+   THE DOCTORE WAS NOT TEXT. This bust has drawn him at two sites since it was written — a seeded
+   head-and-shoulders in the same flat SVG as the fighters. What the item is right about is that it
+   stopped there: the medicus and the armourer stand in rooms of their own with nothing but a name,
+   and nine rival lanistae have a trait, a blurb, six multipliers and now a crest, and no face.
+
+   AND A LANISTA IS NOT A SHADOW. `.umbra` is a LIT GROUND for a shadow to be a shadow on, and the
+   figure it carries is `Fighter` — a man in kit, in a pose, on the sand. Giving that silhouette to
+   the medicus would say he fights. The vocabulary for a man who does NOT fight already exists and
+   is this bust, which is what the item's own risk note asks for: "stay inside the glyph vocabulary
+   the figure already has". So it is generalised rather than a pose set drawn, and the item's stated
+   risk — "nine umbrae is a pose set" — does not arise.
+
+   TWO THINGS IT HARDCODED. The shoulders were the player's own oxblood, which is right for your man
+   and wrong for the lanista across the town — a rival wears the crest phase 1 gave him, and the
+   fold is a black wash at low opacity so it works on gold as well as on iron. And the scar fired on
+   60% of men, which is true of somebody who came off the sand and is not true of a medicus: it is a
+   prop now, and only the doctore is passed the sand's odds. */
+function Bust({ name, size=56, c1="#8d3b2c", scar=0.6 }){
   let h = 2166136261 >>> 0;
   const s = name || "doctore";
   for(let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
@@ -23500,13 +23522,13 @@ function DoctoreBust({ name, size=56 }){
   const hair  = pick(["#2a1b0f","#3a2c1c","#5b4a38","#8a8076","#9a938a"]);   // last two grey — old men
   const beard = rnd() < 0.8;
   const bald  = rnd() < 0.24;
-  const scar  = rnd() < 0.6;
+  const mark  = rnd() < scar;
   return (
     <svg viewBox="0 0 100 100" width={size} height={size} style={{display:"block"}} aria-hidden="true">
       <rect x="0" y="0" width="100" height="100" fill="#1c1610"/>
-      {/* shoulders and the oxblood of the house */}
-      <path d="M14,100 Q17,73 34,67 L66,67 Q83,73 86,100 Z" fill="#8d3b2c"/>
-      <path d="M40,69 Q50,79 60,69 L60,67 L40,67 Z" fill="#6f2c20"/>
+      {/* shoulders, in whatever house's colours he stands in */}
+      <path d="M14,100 Q17,73 34,67 L66,67 Q83,73 86,100 Z" fill={c1}/>
+      <path d="M40,69 Q50,79 60,69 L60,67 L40,67 Z" fill="#000" opacity="0.28"/>
       {/* neck */}
       <rect x="43" y="55" width="14" height="16" rx="4" fill={skinD}/>
       {/* ears, head */}
@@ -23527,10 +23549,20 @@ function DoctoreBust({ name, size=56 }){
         ? <path d="M35,49 Q37,66 50,68 Q63,66 65,49 Q58,58 50,58 Q42,58 35,49 Z" fill={hair}/>
         : <path d="M44,54 Q50,57 56,54" stroke={skinD} strokeWidth="1.6" fill="none"/>}
       {/* a mark the sand left on him */}
-      {scar && <path d="M60,28 L67,47" stroke="#9a4a3a" strokeWidth="1.7" fill="none"/>}
+      {mark && <path d="M60,28 L67,47" stroke="#9a4a3a" strokeWidth="1.7" fill="none"/>}
     </svg>
   );
 }
+
+/* The bust in its round frame, with whatever the panel wants to say beside it. Two call sites want
+   the same three lines of wrapper — the staff panels and the Treat sheet — and both `App` and `SECT`
+   are at their `bulk` allowance, so it is a component rather than three lines twice. */
+const Faced = ({ name, size=44, c1, scar=0.15, children }) => (
+  <div className="flex gap-3" style={{alignItems:"center"}}>
+    <div style={{flex:"0 0 auto",width:size,height:size,borderRadius:"50%",overflow:"hidden",border:"1px solid var(--line-3)"}}>
+      <Bust name={name} size={size} c1={c1} scar={scar}/></div>
+    <div style={{minWidth:0}}>{children}</div>
+  </div>);
 
 /* A collapsible section. Uncontrolled <details> so the browser owns the
    open/closed state and it survives the game's frequent re-renders; the
@@ -24382,7 +24414,8 @@ const SECT = {
                        You have no {ST.room==="valetudinarium"?"infirmary":"armoury"} for him to work in. Build the room first.
                      </div>
                    ) : s ? (<>
-                     <div className="disp" style={{fontSize:"var(--fs-lg)",color:"var(--ink-hi)"}}>{s.name} <span className="dim" style={{fontSize:"var(--fs-base)"}}>of {s.origin}</span></div>
+                     <Faced name={s.name}>{/* #249 phase 2 — he has a face now */}
+                       <span className="disp" style={{fontSize:"var(--fs-lg)",color:"var(--ink-hi)"}}>{s.name} <span className="dim" style={{fontSize:"var(--fs-base)"}}>of {s.origin}</span></span></Faced>
                      <Bar v={s.skill} label="skill" color="linear-gradient(90deg,var(--line-3),var(--gold-line))"/>
                      <div className="dim" style={{fontSize:"var(--fs-md)",marginTop:4}}>
                        {k==="medicus"
@@ -25553,7 +25586,7 @@ const SECT = {
       {S.doctore ? (<div>
         <div className="flex gap-3" style={{alignItems:"center",marginBottom:6}}>
           <div style={{flex:"0 0 auto",width:60,height:60,borderRadius:"50%",overflow:"hidden",border:"1px solid var(--gold-edge)"}}>
-            <DoctoreBust name={S.doctore.name} size={60}/>
+            <Bust name={S.doctore.name} size={60}/>
           </div>
           <div style={{minWidth:0}}>
             <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,color:"var(--ink-hi)"}}>
@@ -31393,9 +31426,8 @@ export default function App(){
                 <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:900,letterSpacing:".08em",color:"var(--ink-hi)"}}>HOUSE {h.name.toUpperCase()}</div>
                 <button className="btn btn-ghost" style={{padding:"8px 10px"}} aria-label="Close" onClick={close}><X size={14}/></button>
               </div>
-              <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",marginBottom:8}}>
-                {L.name}{L.trait?` — ${L.trait}`:""}. {grudgeWord(h.grudge)}{feud?" You are in a feud with this house.":""}
-              </div>
+              <div style={{marginBottom:8}}><Faced name={L.name} size={52} c1={crestOf(h.name).c1}>{/* #249 phase 2 */}
+                <span className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic"}}>{L.name}{L.trait?` — ${L.trait}`:""}. {grudgeWord(h.grudge)}{feud?" You are in a feud with this house.":""}</span></Faced></div>
               <HouseLedger S={S} h={h}/>{/* #249 phase 3 — what has passed between the two of you */}
               {dealMsg && <div className="panel" style={{padding:10,marginBottom:9,background:"var(--panel)",borderColor:"var(--gold-edge)",fontSize:"var(--fs-md)"}}>{dealMsg}</div>}
 
@@ -31772,7 +31804,7 @@ export default function App(){
                     <div style={{borderTop:"1px dotted var(--line-4)",marginTop:8,paddingTop:8}}>
                       <div className="flex gap-2" style={{alignItems:"flex-start"}}>
                         {S.doctore && <div style={{flex:"0 0 auto",width:46,height:46,borderRadius:"50%",overflow:"hidden",border:"1px solid var(--laurel-edge2)"}}>
-                          <DoctoreBust name={S.doctore.name} size={46}/>
+                          <Bust name={S.doctore.name} size={46}/>
                         </div>}
                         <div style={{minWidth:0}}>
                           <span className="tag" style={{borderColor:"var(--laurel-edge2)",color:"var(--laurel)"}}>The doctore</span>
