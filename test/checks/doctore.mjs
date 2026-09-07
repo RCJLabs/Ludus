@@ -56,7 +56,9 @@ export async function run({ p }){
     const A = window.__LVDVS;
     const miss = ["newGameState","makeDoctore","makeDoctoreMarket","docAgeOf","docBirthday",
                   "retireDoctore","doctoreWeek","hireDoctore","ludusLedger",
-                  "DOC_AGE_FROM","DOC_RETIRE","DOC_SKILL_END","DOC_DECAY","WEEKS_PER_YEAR"]
+                  "DOC_AGE_FROM","DOC_RETIRE","DOC_SKILL_END","DOC_DECAY","WEEKS_PER_YEAR",
+                  "HOSTILE_MOVES","startDocOffer","answerDocOfferWith","loseDoctoreTo","docKeepFee",
+                  "GRUDGE_DOCTORE","DOC_OFFER_WEEKS","lanistaOf","activeG","spiteWeight"]
       .filter(k=>A[k]==null);
     if(miss.length) return { why:`the handle is missing ${miss.join(", ")}` };
     const K = { FROM:A.DOC_AGE_FROM, RET:A.DOC_RETIRE, END:A.DOC_SKILL_END,
@@ -135,7 +137,7 @@ export async function run({ p }){
         d.gold = 99999; A.hireDoctore(d, c.id);
         const doc = d.doctore;
         doc.age = 40; doc.skill = 60;
-        doc.pupil = (A.activeG(d)[0]||{}).id || 1; doc.second = null; doc.retrainTo = "murmillo"; doc.retrainLeft = 3;
+        doc.pupil = (A.activeG(d)[0]||{}).id || 1; doc.second = null; doc.retrainTo = "Murmillo"; doc.retrainLeft = 3;
         if(how === "age") doc.age = K.RET; else { doc.age = K.FROM + 2; doc.skill = K.END; }
         if(how === "green"){ doc.age = K.FROM - 8; doc.skill = K.END; }
         if(how === "lent"){ doc.age = K.RET; d.flags.docLent = d.week + 20; }
@@ -147,6 +149,64 @@ export async function run({ p }){
           pupilCleared: !d.doctore || !d.doctore.pupil };
       };
       r.arms.doors = { age: door("age"), eye: door("eye"), lent: door("lent"), green: door("green") };
+    }
+    /* 6 · #251 phase 2 — the move is HOSTILE, and weighted the item's way inside that machinery */
+    { const M = A.HOSTILE_MOVES && A.HOSTILE_MOVES.doctore;
+      const d = A.newGameState("Doc","clean","DOC-MOVE");
+      A.makeDoctoreMarket(d); const c=(d.doctoreMarket||[])[0];
+      d.gold = 99999; A.hireDoctore(d, c.id); d.doctore.weeks = 40; d.doctore.age = 44;
+      const h = (d.rivals||[])[0];
+      /* the weight is read off LANISTAE through spiteWeight, not restated here: two houses at the
+         same grudge whose lanistae train differently must weigh differently, or `mul:"train"` is
+         a decoration and the item's stated weighting never arrived */
+      let lo = null, hi = null;
+      if(h){ h.grudge = 60;
+        const rows = (d.rivals||[]).map(x=>({ train:(A.lanistaOf(x.name)||{}).train || 1,
+          /* `spiteWeight(h, M)` is the real function the generated RIVAL_MOVES entry closes over —
+             HOSTILE_MOVES carries the source shape and no `weight` of its own, so asking it for one
+             throws. Reading the function rather than restating its arithmetic is fade.mjs's rule. */
+          w:(()=>{ const g = x.grudge; x.grudge = 60; const v = M ? A.spiteWeight(x, M) : 0; x.grudge = g; return v; })() }))
+          .sort((a,b)=>a.train-b.train);
+        lo = rows[0]; hi = rows[rows.length-1];
+      }
+      const gate = M ? M.gate() : null;
+      /* the refusals, one at a time from one eligible base */
+      const eligible = () => { try { return !!M.when(d, h); } catch(x){ return "threw"; } };
+      const base = eligible();
+      const noDoc = (()=>{ const k=d.doctore; d.doctore=null; const v=eligible(); d.doctore=k; return v; })();
+      const green = (()=>{ const w=d.doctore.weeks; d.doctore.weeks=4; const v=eligible(); d.doctore.weeks=w; return v; })();
+      const lent  = (()=>{ d.flags.docLent = d.week+20; const v=eligible(); d.flags.docLent=0; return v; })();
+      const cold  = (()=>{ const g=h.grudge; h.grudge=gate-1; const v=eligible(); h.grudge=g; return v; })();
+      const busy  = (()=>{ d.docOffer={house:h.name,weeks:3,fee:1,name:"x"}; const v=eligible(); d.docOffer=null; return v; })();
+      /* NOT gated on the rival already having one — 54 of 58 rival houses do by the end of a run,
+         so a `!h.doctore` gate (which `RIVAL_MOVES.doctore` uses) would have made this near-dark */
+      const hasOwn = (()=>{ const o=h.doctore; h.doctore=true; const v=eligible(); h.doctore=o; return v; })();
+      r.arms.move = { exists: !!M, mul: M && M.mul, gate, base, noDoc, green, lent, cold, busy, hasOwn,
+        lo, hi };
+    }
+
+    /* 7 · the counter, both ways, driven through the real functions */
+    { const mk = () => { const d = A.newGameState("Doc","clean","DOC-KEEP");
+        A.makeDoctoreMarket(d); const c=(d.doctoreMarket||[])[0];
+        d.gold = 99999; A.hireDoctore(d, c.id); d.doctore.weeks = 40; d.doctore.age = 44;
+        const g = (A.activeG(d)[0]||{}).id || 1;
+        d.doctore.pupil = g; d.doctore.retrainTo = "Murmillo"; d.doctore.retrainLeft = 2;
+        A.startDocOffer(d, (d.rivals||[])[0]); return d; };
+      const paid = mk(); const fee = paid.docOffer.fee, wage0 = paid.doctore.wage, gold0 = paid.gold;
+      const okPaid = A.answerDocOfferWith(paid, true);
+      const walk = mk(); const rivalName = walk.docOffer.house;
+      const okWalk = A.answerDocOfferWith(walk, false);
+      const rival = (walk.rivals||[]).find(x=>x.name===rivalName);
+      const late = mk(); let ticks = 0;
+      while(late.doctore && late.docOffer && ticks++ < 8) A.doctoreWeek(late);
+      /* and a house that cannot pay must not silently keep him */
+      const broke = mk(); broke.gold = 0; const okBroke = A.answerDocOfferWith(broke, true);
+      r.arms.keep = {
+        fee, okPaid, stayed: !!paid.doctore, spent: gold0 - paid.gold, wageUp: paid.doctore ? paid.doctore.wage - wage0 : 0,
+        offerCleared: !paid.docOffer, pupilKept: !!(paid.doctore && paid.doctore.pupil),
+        okWalk, gone: !walk.doctore, rivalHas: !!(rival && rival.doctore), market:(walk.doctoreMarket||[]).length,
+        expired: !late.doctore, ticks,
+        brokeKept: okBroke === false && !!broke.doctore && !!broke.docOffer };
     }
     return r;
   });
@@ -209,6 +269,47 @@ export async function run({ p }){
   lines.push(`lent (#198): ${A5.lent.gone ? "HE LEFT ANOTHER HOUSE'S YARD" : "held"}`);
   if(A5.lent.gone) bad.push(`a doctore over the age door retired while lent out (#198) — he is standing `
     + `in somebody else's yard and cannot hand back one he is not in`);
+
+  const A6 = out.arms.move, A7 = out.arms.keep;
+  lines.push(`the move: ${A6.exists ? `HOSTILE_MOVES.doctore, mul "${A6.mul}", gate ${A6.gate}` : "MISSING"} `
+    + `· eligible ${A6.base} · refuses no-doctore ${A6.noDoc===false} · a green man ${A6.green===false} `
+    + `· lent ${A6.lent===false} · under the gate ${A6.cold===false} · an offer already out ${A6.busy===false}`);
+  if(!A6.exists) bad.push(`there is no \`HOSTILE_MOVES.doctore\` — the move a rival makes for your `
+    + `doctore is the whole of #251 phase 2`);
+  if(A6.mul !== "train") bad.push(`HOSTILE_MOVES.doctore weighs on \`${A6.mul}\` and the item asks for `
+    + `\`lanistaOf().train\` — that weighting is the half of the item that is not the arc`);
+  if(A6.base !== true) bad.push(`the move is not eligible against a grudged rival with a settled doctore `
+    + `in the post — the base case of the whole phase does not fire`);
+  for(const [k, why] of [["noDoc","there is no doctore to take"],["green","he has been in the post four weeks"],
+      ["lent","he is at another house's post (#198)"],["cold","the rival is under the grudge gate"],
+      ["busy","an offer is already standing"]])
+    if(A6[k] !== false) bad.push(`the move is still eligible when ${why} — that refusal is not being made`);
+  if(A6.hasOwn !== true) bad.push(`the move refuses a rival who already HAS a doctore. 54 of 58 rival `
+    + `houses do by the end of a run, so that gate (which \`RIVAL_MOVES.doctore\` uses, correctly, for `
+    + `a house shopping for one) would make this move near-dark. This one is spite, not an upgrade`);
+  if(A6.lo && A6.hi){
+    lines.push(`weighted off LANISTAE: train ${A6.lo.train} weighs ${Math.round(A6.lo.w*100)/100} · `
+      + `train ${A6.hi.train} weighs ${Math.round(A6.hi.w*100)/100}, at one grudge`);
+    if(!(A6.hi.w > A6.lo.w)) bad.push(`two rivals at the same grudge whose lanistae train differently `
+      + `weigh the same (${A6.lo.w} against ${A6.hi.w}) — \`mul:"train"\` is not reaching spiteWeight, `
+      + `which is the signature of the four inert levers probe.mjs's FAULT THREE was written for`);
+  }
+  lines.push(`the counter: ${A7.fee}d asked · paid → stayed ${A7.stayed}, spent ${A7.spent}, wage +${A7.wageUp}, `
+    + `lesson kept ${A7.pupilKept} · refused → gone ${A7.gone}, the rival has him ${A7.rivalHas}, market ${A7.market} `
+    + `· unanswered for ${A7.ticks} weeks → gone ${A7.expired} · a broke house keeps him ${!A7.brokeKept ? "WRONGLY" : "no"}`);
+  if(!(A7.fee > 0)) bad.push(`the offer asks nothing to match, so the question has no cost and no answer`);
+  if(!A7.stayed || A7.spent !== A7.fee) bad.push(`paying the offer did not keep him, or took `
+    + `${A7.spent} rather than the ${A7.fee} it asked`);
+  if(!A7.offerCleared) bad.push(`the offer is still standing after it was answered — it would be asked again`);
+  if(!A7.pupilKept) bad.push(`keeping him lost the lesson he was in the middle of`);
+  if(!A7.gone || !A7.rivalHas) bad.push(`letting him go did not empty the post, or did not put him at the `
+    + `rival's — \`h.doctore\` is the boolean \`rivalWeekly\` reads for its 1.3x training, so the man `
+    + `leaving has to arrive somewhere`);
+  if(A7.gone && !A7.market) bad.push(`he went across and left no market behind him`);
+  if(!A7.expired) bad.push(`an offer left unanswered for ${A7.ticks} weeks never resolved — the three `
+    + `weeks are the question, and a question that never closes is not one`);
+  if(!A7.brokeKept) bad.push(`a house with no coin kept its doctore by answering yes — the fee is not `
+    + `being checked, so the counter is free`);
 
   return { pass: bad.length === 0, why: bad.slice(0,3).join("; ") || null, lines };
 }

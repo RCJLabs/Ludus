@@ -64,14 +64,31 @@ export async function run({ p, errors }){
     const clone = x => JSON.parse(JSON.stringify(x));
     const shape = t => String(t||"").replace(/\d+/g,"#").replace(/\b[A-Z][a-z]{2,}\b/g,"N").replace(/\s+/g," ").trim();
 
-    /* a living, solvent house — every rite is refused when `d.gold < cost`, including the free one */
-    let base = null;
+    /* A living, solvent house — every rite is refused when `d.gold < cost`, including the free one.
+       ---- AND ONE WHOSE MEN ARE OFF THE REGARD FLOOR, WHICH ARM 3 DEPENDS ON AND DID NOT SAY ----
+       `riteLapse` prices silence as `min(pitTo, softTo)` where `softTo` is floored at 20 for a man
+       who is not kin. For a man already at or under that floor, `softTo` collapses to his own
+       regard and the price becomes the pit's flat -6 exactly — v3.168.0 built it that way on
+       purpose, so that silence is never CHEAPER than the pit. But arm 3 asks for more than "never
+       cheaper": it asks that neither answer dominate, and at the floor the two tie on regard while
+       the pit alone takes unrest, so silence dominates.
+       This picked the FIRST base that was alive and solvent, and on v3.234.0's stream that became
+       one with six of its seven men at 13 or under — where the surcharge cannot exist. The seeds
+       after it (C, E, G) are all alive, solvent and well clear.
+       The bar is derived, not chosen: the surcharge is `was - 6.9` against a floor of 20, so it
+       only bites above 26.9. A man under that is a fine man for the game to have and a useless one
+       to measure this comparison on. The floor's own behaviour is a real finding about #224 and is
+       written up there rather than papered over here. */
+    let base = null, skipped = [];
     for(const t of ["A","B","C","D","E","F","G","H"]){
       const b = A.newGameState("Grave", "clean", "GRAVE-K"+t, null);
       for(let w=0; w<60; w++){ if(b.over) break; try { R.lanista(b); } catch(e){ break; } }
-      if(!b.over && b.gold > 600 && A.activeG(b).length >= 2){ base = b; break; }
+      const men = A.activeG(b);
+      if(b.over || b.gold <= 600 || men.length < 2){ skipped.push(`${t}:${b.over?b.over.kind:"thin"}`); continue; }
+      if(!men.every(g=>A.regardOf(g) > 26.9)){ skipped.push(`${t}:at the regard floor`); continue; }
+      base = b; break;
     }
-    if(!base) return { noBase:true };
+    if(!base) return { noBase:true, skipped };
     const victim = A.activeG(base)[1] || A.activeG(base)[0];
 
     const seed = clone(base);

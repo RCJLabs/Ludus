@@ -3795,6 +3795,7 @@ function agenda(d){
   if(d.court) add(1, "men", `${d.court.name} of House ${d.court.house} is being talked to`, `${d.court.weeks}w — your word, their wall`);
   if(d.loan && owes(d) > d.loan.principal*2) add(2, "villa", `${loanLender(d).name} is owed ${owes(d)}d`, "and it is getting away from you");
   if(d.reSignOffer) add(2, "men", "A contract is up", "he can re-sign or walk");
+  if(d.docOffer) add(1, "men", `${d.docOffer.name} has been offered a post elsewhere`, `${d.docOffer.weeks}w — ${d.docOffer.fee}d to keep him`);
   { const worn = activeG(d).filter(g=>strainOf(g) > 62);
     if(worn.length===1) add(1, "men", `${worn[0].name} is worked past what he has`, strainWord(strainOf(worn[0])));
     else if(worn.length>1) add(1, "men", `${worn.length} men are worked past what they have`, worn.map(g=>g.name).join(", ")); }
@@ -5223,6 +5224,8 @@ function doctoreWeek(d){
     retireDoctore(d);
     return;
   }
+  /* the three weeks run down here, where the post's own week is — an unanswered offer is an answer */
+  if(doc && d.docOffer && --d.docOffer.weeks <= 0){ loseDoctoreTo(d, d.docOffer.house); return; }
   /* the second seat empties itself the same way the first does, and a retrain clears it outright */
   if(doc && doc.second){
     const s2 = d.gladiators.find(x=>x.id===doc.second);
@@ -5385,6 +5388,84 @@ function docBirthday(d){
     chron(d, `${doc.name} is ${doc.age}. He gets through the morning and takes the afternoon sitting `
       + `down, and the yard has started working around him.`, "bad");
 }
+/* ---- AND SOMEBODY ELSE CAN COME FOR HIM — #251 phase 2 ----
+   The item asked for "a RIVAL_MOVES move against your doctore weighted by `lanistaOf().train`",
+   and the verify-first corrected it twice.
+
+   FIRST, `train` is not the inert multiplier the item took it for. It already weights
+   `RIVAL_MOVES.retrain` and `RIVAL_MOVES.doctore`, and `rivalWeekly` improves a rival's fighters at
+   `(0.25 + potential/300) * L.train * (h.doctore ? 1.3 : 1)` — so the boolean 54 of 58 rival houses
+   carry IS read, it just has no person behind it. What was missing is anything aimed at yours.
+
+   SECOND, a move against YOU is a `HOSTILE_MOVES` entry, not a plain one. #246 phase 2 built
+   `spiteWeight` — grudge over the gate, times the lanista's own multiplier, times the die's weight
+   — and weighting this by `train` alone would route around the whole grudge system. It is a hostile
+   move whose `mul` is `train`, which is both: a rival who trains hard and has a grudge is the one
+   who comes for your doctore, and the item's stated weighting arrives intact inside the machinery
+   that already decides whether a house reaches for anything at all.
+
+   THE GATE IS THE ONE THAT MEASURABLY FIRES. `staffWeek` is the only staff turnover in the game and
+   its two doors are wildly uneven: measured over 3,629 house-weeks, the quit condition held on 1.3%
+   of the medicus's weeks and 0.8% of the armourer's, while the poach gate — a rival at grudge 40
+   with warmth under 45 — was open on 11.5%, and did nearly all of the ten losses. So this takes the
+   poach gate's 40 and not the `quitOn` that is shut ninety-nine weeks in a hundred.
+
+   AND IT IS NOT GATED ON `!h.doctore`, which `RIVAL_MOVES.doctore` uses and which would have made
+   this nearly dark: 54 of 58 rival houses have one by the end of a run. He is not upgrading. It is
+   spite, which is what a hostile move is, and it is priced as spite — the man is taken because it
+   costs YOU him. */
+const GRUDGE_DOCTORE  = 40;   /* the staff poach gate, the one that measures open */
+const DOC_OFFER_WEEKS = 3;    /* the same three weeks `startPoach` gives a man to be talked to */
+/* What it costs to keep him: a slice of what he was worth on the market plus a season of his wage,
+   read off the man himself so a better doctore is dearer to hold — the same shape `reSignOffer`
+   uses, and read from his own fields rather than a number of this function's own. */
+const docKeepFee = doc => doc ? rnd(doc.fee * 0.55 + doc.wage * 12) : 0;
+
+function startDocOffer(d, h){
+  const doc = d.doctore;
+  if(!doc || d.docOffer) return false;
+  d.docOffer = { house:h.name, weeks:DOC_OFFER_WEEKS, fee:docKeepFee(doc), name:doc.name };
+  chron(d, `${doc.name} was kept talking a long while at the gate by a man in `
+    + `${lanistaOf(h.name).name}'s colours. He came and told you about it himself, which is `
+    + `not the same as telling you he is staying.`, "bad");
+  return true;
+}
+/* He goes across. `h.doctore` is the boolean the rival side already carries and `rivalWeekly`
+   already reads for its 1.3x — so the man leaving your yard makes that house train better, which
+   is the whole point of it being him and not a purse. */
+function loseDoctoreTo(d, houseName){
+  const doc = d.doctore;
+  if(!doc) return false;
+  const h = (d.rivals||[]).find(x=>x.name===houseName);
+  if(h) h.doctore = true;
+  chron(d, `${doc.name} is gone. He is at ${h ? lanistaOf(h.name).name : "another house"}'s post `
+    + `by the end of the week and the men he was drilling find out from somebody else.`, "bad");
+  doc.pupil = null; doc.second = null; doc.retrainTo = null; doc.retrainLeft = 0;
+  d.doctore = null; d.docOffer = null;
+  d.flags.docTaken = (d.flags.docTaken||0) + 1;
+  makeDoctoreMarket(d);
+  return true;
+}
+/* The counter, shaped like `answerReSignWith` because it is the same question about a different
+   man: pay and he stays, or say nothing and watch him leave. Declining is not free and not silent
+   — it is the leaving, now, rather than a quiet expiry three weeks later. */
+function answerDocOfferWith(d, accept){
+  const o = d.docOffer;
+  if(!o) return false;
+  if(!accept) return loseDoctoreTo(d, o.house);
+  if(d.gold < o.fee) return false;
+  d.gold -= o.fee;
+  d.docOffer = null;
+  const doc = d.doctore;
+  if(doc){
+    doc.wage = rnd(doc.wage * 1.15);
+    doc.kept = (doc.kept||0) + 1;
+    chron(d, `${doc.name} stays. It cost ${o.fee} denarii and a rise he did not have to ask for `
+      + `out loud, and both of you know what the rise was for.`, "good");
+  }
+  return true;
+}
+
 /* He goes. The two doors that emptied the post before this were both the player's hand — the heir
    taking it and `dismissDoctore` — and `FREEDMEN.doctore` models a man ARRIVING at an empty post,
    never one leaving it. This is the leaving. It clears the pupil and the retrain the way
@@ -6010,6 +6091,40 @@ const docGuardPc = c => Math.round(c.skill/200 * 100);
    gates on, which is #150's rule met in one field. Defined here rather than inside `SECT` because
    `bulk.mjs` caps that function's length and it was at 1482 of 1483: the first cut inlined this at
    both sites, put SECT on 1490, and the cap caught it. `data-doc-age` is what a DOM arm would read. */
+/* #251 phase 2 — the question. At module scope for the same reason `DocYears` is: `bulk` holds
+   SECT at 1,483 lines, so the whole of this had to cost the render one line.
+
+   ---- AND IT IS NOT A MODAL, WHICH IS WHAT IT SHIPPED AS FIRST ----
+   Written as a `modalwrap` sibling of the re-sign question, which it resembles. But `.modalwrap` is
+   `position:fixed; inset:0` — a full-screen overlay — and this offer stands for THREE WEEKS, so the
+   first cut froze the entire game for the duration of a question whose own text says he has three
+   weeks to decide in. Two checks caught it and neither knows this feature exists: `faces` reported
+   the doctore's square "would not open" and no busts anywhere, and `treat` that House Cossutius's
+   sheet "did not open". Both were clicking through an overlay. The re-sign modal is a fair
+   precedent for a question answered NOW; a standing offer is a panel, and the agenda row carries it
+   when the player is on another page. */
+const DocOfferPanel = ({ S, onAnswer }) => (
+  <div className="panel" role="group" aria-label="A rival has offered your doctore a post"
+       style={{padding:9,marginTop:7,background:"var(--panel)",borderColor:"var(--gold-deep)"}}>
+    <div>
+      <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,letterSpacing:".1em",marginBottom:8,color:"var(--ink-hi)"}}>THEY HAVE ASKED HIM</div>
+      <div style={{fontSize:"var(--fs-xl)"}}>
+        House {S.docOffer.house} has offered {S.docOffer.name} a post. He has not said yes and he has
+        not said no, and he has {S.docOffer.weeks} week{S.docOffer.weeks===1?"":"s"} to decide in.
+        Match it — {S.docOffer.fee} denarii and a rise — and he stays.
+      </div>
+      <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginTop:8}}>
+        Every drill, every lesson and both seats of the square are his. There is nobody behind him.
+      </div>
+      <button className="btn" data-doc-keep="1" style={{width:"100%",marginTop:12,borderColor:"var(--gold-line)",color:"var(--ink-hi)"}}
+        disabled={S.gold<S.docOffer.fee} onClick={()=>onAnswer(true)}>
+        {S.gold<S.docOffer.fee ? "Not enough coin" : `Keep him — ${S.docOffer.fee}d`}
+      </button>
+      <button className="btn btn-ghost" data-doc-let="1" style={{width:"100%",marginTop:8}} onClick={()=>onAnswer(false)}>Let him go</button>
+    </div>
+  </div>
+);
+
 const DocYears = ({ c, tail }) => (!c || c.age == null) ? null
   : (<>, and he is <span data-doc-age={c.age}>{c.age}</span>
       {c.age > DOC_AGE_FROM && (<span data-doc-old="1"> — {tail}</span>)}</>);
@@ -7533,6 +7648,14 @@ const HOSTILE_MOVES = {
     when:(d,h)=>h.grudge >= GRUDGE_BRIBE && !d.pendingEvent && cardReady(d,"bribedEditor") && !(d.flags && d.flags.editorBribed) },
   thugs: { gate:()=>GRUDGE_THUGS, mul:"poach", card:"thugs",
     when:(d,h)=>h.grudge >= GRUDGE_THUGS && !d.pendingEvent && cardReady(d,"thugs") && activeG(d).length > 0 },
+  /* #251 phase 2 — and the man who teaches them. `mul:"train"` is the item's own weighting, sitting
+     inside `spiteWeight` so the grudge still decides whether the house reaches at all. He must have
+     been in the post a while (`staffWeek` wants 10 weeks before its poach door too), he cannot be
+     taken from another house's yard (#198), and the rival has to be able to pay a doctore's keep. */
+  doctore: { gate:()=>GRUDGE_DOCTORE, mul:"train", die:2,
+    when:(d,h)=>!!d.doctore && !d.docOffer && !(d.flags && d.flags.docLent)
+      && (d.doctore.weeks||0) > 10 && h.grudge >= GRUDGE_DOCTORE && rivalCan(h, RIVAL_DOC * 10),
+    run(d,h){ startDocOffer(d, h); return null; } },
 };
 /* ---- AND NOT THE SAME CARD AGAIN NEXT WEEK ----
    `EV_DIE` gives sabotage a four-week cooldown and `pickEvent` honours it. A move that raises the
@@ -10276,7 +10399,7 @@ const SAVE_FIELDS = {
   scenario:      ()=>"clean",
   trainMult:     ()=>1,
 };
-const SAVE_MAYBE = ["doctore","doctoreOffer","nemHouse","saga","rome","poach","court",
+const SAVE_MAYBE = ["doctore","doctoreOffer","docOffer","nemHouse","saga","rome","poach","court",
   "nemesis","primus","city","travel","collegium","war","loan","ear","doctrine","mark",
   "after","pact","pendingLesson","medicus","armourer","election","aedile","blessing",
   "vow","powLot","heir","succession","reSignOffer","romeOffer","rebellion","repName",
@@ -10431,7 +10554,7 @@ function newGameState(name, scen, seed, pitch){
     gladiators:[], market:[], games:null, pendingEvent:null, log:[], fallen:[], freed:[],
     seed: null, rngState: 0,
     lastParty:-9, lastFeast:-9, over:null, milestone600:false, flags:{learned:{}}, escaped:[], rebellion:null, gear:{}, retired:[],
-    doctore:null, doctoreMarket:[], doctoreOffer:null, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, court:null, defected:[], nemesis:null, nemHouse:null, saga:null, arcs:[], crest:{ c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" }, primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], works:{}, slavers:{}, pact:null, gambits:{}, pendingLesson:null, law:null, doctrine:null, kits:[], deadSteel:[], bay:null, mark:null, after:null, metHouse:{}, owed:[], household:{}, yardSeen:0, yardMissed:0, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, domus:{ wife:null, children:[], nextKin:1 }, acclaim:0, brand:{ licensed:false, decided:false, tier:0, earned:0 }, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, repName:null, askBooking:null, askChallenge:null, pitSeat:0, departed:[], reSignOffer:null, annals:[], rise:{ rank:0, standing:0 }, munusLast:-99, league:{ first:null, since:1, held:0, best:99, year:1, snap:null }, piety:30, blessing:null, vow:null, lastOffering:-9, powLot:null, seen:{} };
+    doctore:null, doctoreMarket:[], doctoreOffer:null, docOffer:null, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, court:null, defected:[], nemesis:null, nemHouse:null, saga:null, arcs:[], crest:{ c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" }, primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], works:{}, slavers:{}, pact:null, gambits:{}, pendingLesson:null, law:null, doctrine:null, kits:[], deadSteel:[], bay:null, mark:null, after:null, metHouse:{}, owed:[], household:{}, yardSeen:0, yardMissed:0, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, domus:{ wife:null, children:[], nextKin:1 }, acclaim:0, brand:{ licensed:false, decided:false, tier:0, earned:0 }, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, repName:null, askBooking:null, askChallenge:null, pitSeat:0, departed:[], reSignOffer:null, annals:[], rise:{ rank:0, standing:0 }, munusLast:-99, league:{ first:null, since:1, held:0, best:99, year:1, snap:null }, piety:30, blessing:null, vow:null, lastOffering:-9, powLot:null, seen:{} };
   d.rivals = makeRivals(d, sw);
   const solo = S.men.length === 1;
   S.men.forEach((band,i)=>{
@@ -26072,7 +26195,7 @@ const SECT = {
       </div>
     </Sect>
     ); },
-  square: (S, X) => { const { dismissDoc, hireDoc, setDrill, setPupil, stopRetrain, intoSquare } = X;
+  square: (S, X) => { const { dismissDoc, hireDoc, setDrill, setPupil, stopRetrain, intoSquare, mut } = X;
     return (
     <Sect live={sectFresh(S,"square")} sid="square" title="The training square" note={S.doctore ? `${S.doctore.name} · ${S.doctore.wage}d/wk` : "no doctore — you run it"}>
       {S.doctore ? (<div>
@@ -26092,6 +26215,7 @@ const SECT = {
           </div>
         </div>
         <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>{S.doctore.past}<DocYears c={S.doctore} tail="the years have started to tell" />.</div>
+        {S.docOffer && <DocOfferPanel S={S} onAnswer={a=>mut(d=>{ answerDocOfferWith(d, a); })} />}
         {S.doctore.tag && (<>
           <div style={{fontSize:"var(--fs-md)",marginTop:5,color:"var(--ink-2)"}}>
             <span className="laurel">{S.doctore.name}, {S.doctore.tag}.</span> {S.doctore.pastLine}
@@ -33974,6 +34098,9 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     prepOf, prepFor, prepEdge, prepPlans, PREP_MAX, PREP_DRAG, scoutLive, SCOUT_KEEPS, scoutCost, ROW_MARKS, rowMarks, venueFor, skyFor,   /* #202 — the marks table and the two the chooser's fixture needs */
     courtCost, courtWeek, rateMan, houseOf,
     answerReSignWith, answerRomeWith,
+    /* #251 phase 2 — a rival comes for the doctore, and the counter that keeps him */
+    startDocOffer, answerDocOfferWith, loseDoctoreTo, docKeepFee, GRUDGE_DOCTORE, DOC_OFFER_WEEKS,
+    HOSTILE_MOVES, spiteWeight, RIVAL_DOC, rivalCan,
     hostParty, throwFeast, walkTheCells, holdTourney, stageMunus,
     /* the gods: five of them, four real boons, and nothing had ever called either action */
     GODS, GOD_KEYS, makeOffering, swearVow, resolveVow, templeWeek,

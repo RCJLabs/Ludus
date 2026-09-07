@@ -71,10 +71,18 @@ export async function run({ p, errors }){
   await found(p, { seed:"TREAT-1" });
   await clearAll(p, 10);
   await installRope(p);
-  const want = await p.evaluate(()=>{
+  const res0 = await p.evaluate(()=>{
     const A = window.__LVDVS, R = window.__ROPE;
     const d = A.newGameState("Treat", "clean", "TREATCHK");
     for(let w=0; w<120; w++){ if(d.over) break; try { R.lanista(d); } catch(e){ break; } }
+    /* ---- THE SAVE MUST BE A LIVING HOUSE, AND THAT WAS ASSUMED RATHER THAN ARRANGED ----
+       Same silent dependency `faces` carried and for the same reason: this saves the state and
+       RELOADS into it, and a dead house loads to the records screen where there is no rival sheet
+       to open. Arm 3's subject is what a Treat sheet says about a house you have met twenty-one
+       times; whether your own house outlived the meeting is not part of it. Cleared, and the
+       ending is reported so the dependency is visible the next time the stream moves. */
+    const died = d.over ? d.over.kind : null;
+    d.over = null;
     d.gold = Math.max(d.gold, 5000);
     const live = (d.rivals||[]).filter(x=>!x.retired)[0];
     if(!live) return null;
@@ -89,9 +97,13 @@ export async function run({ p, errors }){
     const b = JSON.stringify(d); for(const k of keys) localStorage.setItem(k, b);
     const st = window.storage; if(st && !st.__treatShut){ const real = st.set.bind(st);
       st.set = (k,v)=>/ludus-slot-\d/.test(k)?Promise.resolve({key:k,value:v}):real(k,v); st.__treatShut = true; }
-    return live.name;
+    return { name:live.name, died };
   });
-  if(!want) return { pass:false, why:"the played house has no live rival to treat with", lines };
+  if(!res0) return { pass:false, why:"the played house has no live rival to treat with", lines };
+  const want = res0.name;
+  if(res0.died) lines.push(`the fixture: the played house ended in ${res0.died} inside its 120 weeks `
+    + `and the ending was cleared — a dead save reloads to the records screen, where there is no `
+    + `rival sheet to open, and arm 3 is about the sheet rather than about surviving`);
 
   await p.reload({ waitUntil:"domcontentloaded" });
   await p.waitForTimeout(1100);

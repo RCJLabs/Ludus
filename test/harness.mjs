@@ -293,6 +293,11 @@ export async function installRope(p){
        rather than intent. Every part can be switched off through `opts` for a control arm:
          cells, buy, doctore, build, census, staff, school, heir, rome, bout  (all default true)
          signature     (default OFF, #221 — no rope had ever taught one, so the arc read dark)
+         docKeep       (default OFF, #251 phase 2 — a rival can take the doctore, and an unanswered
+                        offer is the leaving. Without this the keep branch is never exercised and
+                        13 of 13 offers ended in a loss. `docKeep:true` matches the offer whenever
+                        the box can stand it, and counts `docKeepBroke` when it cannot, so the two
+                        reasons a doctore stays or goes are told apart)
          mastery       (default OFF, #252 — the SAME fault one rung up, found four items later. The
                         gate's readers (`canMaster`, `masterNeed`, `provedIt`) were on the handle
                         and the two VERBS were not, so nothing in this project had ever made a
@@ -413,6 +418,19 @@ export async function installRope(p){
       }
       for(const g of A.activeG(d)) fin(A.setRegimenOf,[d, g.id, (g.fatigue||0) > 55 ? "rest" : "palus"]);
 
+      /* ---- #251 phase 2: THE COUNTER, WHICH NOTHING WOULD EVER HAVE ANSWERED ----
+         A rival can take your doctore now, and the reference player has no opinion about it: on the
+         first measurement the move fired 13 times in 3,891 house-weeks and the answer was taken 13
+         times out of 13, because an unanswered offer IS the leaving. That is a fact about the
+         policy and not the game — `dark.mjs`'s rule — but it also means the KEEP branch would ship
+         measured by nothing at all, which is how `signature` and `mastery` came to read dark one
+         item at a time. OPT-IN, because keeping him costs real coin and changes what the house can
+         afford for the rest of the run. */
+      if(o.docKeep === true && d.docOffer){
+        const fee = d.docOffer.fee || 0;
+        if(spare() >= fee && fin(A.answerDocOfferWith,[d, true])) bump("docKeep");
+        else bump("docKeepBroke");
+      }
       if(on("doctore") && !d.doctore){
         if(!(d.doctoreMarket||[]).length) fin(A.makeStaffMarket,[d]);
         const c = (d.doctoreMarket||[]).filter(x=>x.fee <= spare()*0.5).sort((a,b)=>b.fee-a.fee)[0];

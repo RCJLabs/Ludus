@@ -181,18 +181,28 @@ export async function run({ p, errors }){
       const house = A.masterOpen(d);
       return { tells:t.length, first:t[0], master:typeof house === "boolean", sigWins:A.SIG_GATE.wins }; })();
     /* and the signature has a button now */
-    let sig = 0;
+    let sig = 0; let sigWeeks = 0;
     { const d = A.newGameState("FIRST-SIG", "clean", "FIRST-SIG");
       const seen = new Set();
-      for(let w = 0; w < 190 && !d.over; w++){
+      let ran = 0;
+      /* ---- THE HOUSE HAS TO LAST LONG ENOUGH TO REACH SIX WINS ----
+         This broke on `d.over` and kept whatever it had. The two arms above already clear the
+         ending and cap the unrest for exactly this reason, and this one was written without it: on
+         v3.234.0's stream the run ended early, the arm saw a fraction of its 190 weeks, no man
+         reached the six wins a signature wants, and it reported the arc DARK — the same conclusion
+         #221 was filed on, from the same kind of instrument fault rather than from the game. The
+         subject is whether the rope can teach one at all; surviving is the other arms' subject. */
+      for(let w = 0; w < 190; w++){
         for(const g of A.activeG(d)) if(g.signature || g.teaching) seen.add(g.id);
         try { R.lanista(d, { signature:true }); } catch(e){ break; }
+        ran = w + 1;
+        if(d.over){ d.over = null; if(d.rebellion) d.rebellion = null; d.unrest = Math.min(d.unrest, 35); }
       }
-      sig = seen.size;
-      if(!sig) bad.push(`the rope taught no signature in 190 weeks with the lever on — the arc reads `
+      sig = seen.size; sigWeeks = ran;
+      if(!sig) bad.push(`the rope taught no signature in ${ran} weeks with the lever on — the arc reads `
         + `dark for want of a button, which is what #221's zeroes were`); }
 
-    return { bad, reads, play, engines:[...engines], gates, sig };
+    return { bad, reads, play, engines:[...engines], gates, sig, sigWeeks };
   });
 
   if(r.miss) return { pass:false, why:`handle is missing ${r.miss.join(", ")}`, lines:[] };
