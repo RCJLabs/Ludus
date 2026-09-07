@@ -220,4 +220,5 @@
 {"v":"3.223.0","checks":173,"failed":[]},
 {"v":"3.224.0","checks":174,"failed":["asked","cells","coffer"]},
 {"v":"3.224.0","checks":174,"failed":[]},
-{"v":"3.225.0","checks":174,"failed":[]}]
+{"v":"3.225.0","checks":174,"failed":[]},
+{"v":"3.226.0","checks":175,"failed":[]}]
