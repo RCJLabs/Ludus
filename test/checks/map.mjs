@@ -26,7 +26,16 @@
        multiplier and the standing from `CITIES` and `knownIn` — not a second copy of them.
    4 · AND THE CONTESTED RING IS THE MODEL'S, NOT A MOOD. It is drawn exactly where
        `bayPol[k].grudge >= 45`, which is the same gate the panel's own "wants you off this sand"
-       line uses. */
+       line uses.
+   5 · AND THE PURSE IS BESIDE THE NAME, NOT ONLY BEHIND A TAP. The ledger this map replaced put
+       three numbers on a row; the drawing kept `known` (the mark's fill) and the weeks (the road)
+       and buried the purse multiplier — the one number a player compares the three towns ON — one
+       tap down. It is back on the label, and it must say what `CITIES[k].purse` says, in the same
+       two-decimal shape the tapped row uses, because #150's rule is that one number has one shape.
+       AND THE LABELS MUST NOT TOUCH. v3.220.0's own recorded failure was a six-pixel pennant drawn
+       through Pompeii's name; a second glyph on the same line is the same risk with a different
+       shape, so the three name labels' real bounding boxes are measured and required to be
+       disjoint. A check that only asserted the text is present would have passed that pennant. */
 import { found, clearAll, installRope, tab, settle } from "../harness.mjs";
 
 export const name = "map";
@@ -78,7 +87,13 @@ export async function run({ p, errors }){
     drawn = await p.evaluate(()=>{ const m = document.querySelector('svg[data-map="1"]'); if(!m) return null;
       const towns = [...m.querySelectorAll("g[data-town]")].map(g=>({ k:g.getAttribute("data-town"),
         known:g.getAttribute("data-known"), pin:!!g.querySelector("[data-pin]"), taps:g.querySelectorAll('[role="button"]').length }));
-      return { towns, tab:null }; });
+      const labels = [...m.querySelectorAll("g[data-town] text")].map(x=>{
+        const b = x.getBBox();
+        return { t:(x.textContent||"").replace(/\s+/g," ").trim(),
+          purse:(x.querySelector("[data-purse]")||{}).textContent || null,
+          k:(x.querySelector("[data-purse]")||{}).getAttribute ? x.querySelector("[data-purse]").getAttribute("data-purse") : null,
+          x:Math.round(b.x*10)/10, y:Math.round(b.y*10)/10, w:Math.round(b.width*10)/10, h:Math.round(b.height*10)/10 }; });
+      return { towns, labels, tab:null }; });
     if(drawn){ drawn.tab = t; break; }
   }
   if(!drawn) return { pass:false, why:"no map is drawn on any tab — #250's whole deliverable is one drawing", lines };
@@ -108,6 +123,27 @@ export async function run({ p, errors }){
   if(pinned.join() !== model.contested.slice().sort().join())
     bad.push(`the map rings ${pinned.join(", ")||"nothing"} as contested and \`bayPol[k].grudge >= 45\` holds for `
       + `${model.contested.join(", ")||"nothing"} — the ring is supposed to BE that gate, not a second opinion about it`);
+
+  /* 5 · the purse beside the name, and three labels that do not touch */
+  const labs = (drawn.labels || []).filter(l=>l.k);
+  lines.push(`  labels: ${(drawn.labels||[]).map(l=>`${l.t} [${l.x},${l.y} ${l.w}x${l.h}]`).join(" · ")}`);
+  for(const k of model.keys){
+    const l = labs.find(x=>x.k === k);
+    if(!l){ bad.push(`${model.name[k]}'s label carries no purse multiplier — the map dropped the one number `
+      + `a player compares the three towns on, and a tap is not a side-by-side`); continue; }
+    if(l.purse !== `×${model.purse[k].toFixed(2)}`)
+      bad.push(`${model.name[k]}'s label says ${l.purse} and \`CITIES.${k}.purse\` is ×${model.purse[k].toFixed(2)} — `
+        + `the drawing has come loose from the table, and the tapped row says the second one`);
+    if(!l.t.startsWith(model.name[k]))
+      bad.push(`${model.name[k]}'s label reads "${l.t}" — the name has to come first or the number is not beside anything`);
+  }
+  for(let i=0; i<labs.length; i++) for(let j=i+1; j<labs.length; j++){
+    const a = labs[i], b = labs[j];
+    const over = a.x < b.x+b.w && b.x < a.x+a.w && a.y < b.y+b.h && b.y < a.y+a.h;
+    if(over) bad.push(`${a.t} and ${b.t} overlap on the map — [${a.x},${a.y} ${a.w}x${a.h}] against `
+      + `[${b.x},${b.y} ${b.w}x${b.h}]. v3.220.0 already drew one glyph through a town's name; `
+      + `a second one on the same line is the same fault wearing a number`);
+  }
 
   /* 3 · tap one and read the row */
   const want = model.keys[0];
