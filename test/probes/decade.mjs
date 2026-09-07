@@ -60,7 +60,8 @@ const out = await p.evaluate(([H, W, SEED])=>{
   const shapeOf = t => ((t||"")+"").replace(/[A-Z][a-z]+/g,"_").slice(0,40);
 
   const nov = { shapes:[0,0,0,0], events:[0,0,0,0], weeks:[0,0,0,0] };
-  const reach = { gates:{}, seenN:[], lived:[], sawAny:0, houses:0, whenSeen:{} };
+  const reach = { gates:{}, seenN:[], lived:[], sawAny:0, houses:0, whenSeen:{},
+    gen:[], fore:[], everFore:0, foreWeek:[] };
   const late = { weeks:0, chronKinds:{}, evIds:{}, chronN:0, newShapes:0, newEvents:0, evN:0, agN:0, agWeeks:0 };
   const LATEK = ["memoir","boy","rival","tired"];
   /* the gates as WEEKS, since `yearOf` is not on the handle: years 6/7/8/9 at 18 weeks to the year */
@@ -70,7 +71,7 @@ const out = await p.evaluate(([H, W, SEED])=>{
   for(let h=0; h<H; h++){
     const d = A.newGameState("De"+h, "clean", `${SEED}-${h}`);
     const seenShape = new Set(), seenEv = new Set();       /* PER HOUSE — the claim is about a player */
-    let lastLate = [];
+    let lastLate = [], foreAt = null;
     for(let w=0; w<W; w++){
       if(d.over) break;
       const e = Math.min(3, Math.floor(w / (W/4)));
@@ -99,6 +100,7 @@ const out = await p.evaluate(([H, W, SEED])=>{
           late.chronKinds[c.kind || "none"] = (late.chronKinds[c.kind||"none"]||0) + 1;
           if(fresh) late.newShapes++; } }
       /* 2 · the LATE keys, off the state the game writes */
+      if(foreAt == null && ((d.forebears||[]).length)) foreAt = d.week;
       const ls = (d.flags && d.flags.lateSeen) || [];
       if(ls.length !== lastLate.length){
         for(const k of ls) if(!lastLate.includes(k)) reach.whenSeen[k] = (reach.whenSeen[k]||[]).concat(d.week);
@@ -106,6 +108,16 @@ const out = await p.evaluate(([H, W, SEED])=>{
     }
     reach.houses++;
     reach.lived.push(d.week);
+    /* ---- AND WHETHER THE HOUSE EVER HAS A FOREBEAR — #248 phase 2's gating question ----
+       `d.forebears` is written by `succeed` and read by two UI sheets and nothing else: not the
+       chronicle, not the bay, not the patrons. Phase 2 is "the forebear as a presence", and before
+       any of that is worth writing, the question is whether the state exists at all and WHEN — a
+       presence that arrives in the second decade is exactly what v3.226.0 said the KPI needs, and
+       one that almost never arrives is another `LATE` doubling. */
+    reach.gen.push(d.generation || 1);
+    reach.fore.push(((d.forebears||[]).length));
+    if((d.forebears||[]).length) reach.everFore++;
+    if(foreAt != null) reach.foreWeek.push(foreAt);
     const ls = (d.flags && d.flags.lateSeen) || [];
     reach.seenN.push(ls.length);
     if(ls.length) reach.sawAny++;
@@ -126,7 +138,10 @@ const out = await p.evaluate(([H, W, SEED])=>{
       howManyOfFour: q(reach.seenN),
       sawNone: pc(reach.seenN.filter(n=>n===0).length, reach.houses),
       sawAllFour: pc(reach.seenN.filter(n=>n===4).length, reach.houses),
-      whenSeen: Object.fromEntries(Object.entries(reach.whenSeen).map(([k,a])=>[k, { n:a.length, ...(q(a)||{}) }])) },
+      whenSeen: Object.fromEntries(Object.entries(reach.whenSeen).map(([k,a])=>[k, { n:a.length, ...(q(a)||{}) }])),
+      /* #248 phase 2 */
+      generation:q(reach.gen), everHadAForebear: pc(reach.everFore, reach.houses),
+      forebearsPerHouse:q(reach.fore), firstForebearWeek:q(reach.foreWeek) },
     /* 3 · what the late weeks are made of */
     late: { weeks:late.weeks,
       chronPerWeek: late.weeks ? Math.round(1000*late.chronN/late.weeks)/1000 : 0,

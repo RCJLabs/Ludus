@@ -16266,6 +16266,60 @@ const LATE = {
       return `You give him an hour of pleasant nothing and send him off with it. He will work most of it out anyway, more slowly and at somebody's expense.` } },
 };
 const LATE_KEYS = Object.keys(LATE);
+
+/* ---- THE MAN WHOSE HOUSE THIS WAS — #248 phase 2 ----
+   `succeed` writes `d.forebears` and TWO UI SHEETS read it. Nothing else does: not the chronicle,
+   not the bay, not the patrons. A house that has buried its master carries a list of his name, his
+   age, his traits, the years he held the place and the children who did not get it — and the world
+   he left behind never mentions him again.
+
+   MEASURED FIRST (`probes/decade.mjs`, 2 seeds x 96 houses x 420 weeks), because v3.226.0's whole
+   finding was that #248's content has been landing in the wrong quarter:
+
+     houses that ever have a forebear      7.3% and 8.3%      (nobody reaches a third generation)
+     the week the first one arrives        p10 342 · p50 381-383 · max 416
+
+   So it is EXACTLY the gate the fourth quarter wants — every one of the fifteen arrived after week
+   315 — and it reaches one house in twelve. That is worth saying plainly: **this cannot move the
+   item's KPI and is not built as though it could.** Q4 across 96 houses is ~2,300 weeks and the bar
+   wants ~240 new shapes; eight houses with a forebear have ~500 Q4 weeks between them, which would
+   need half a new shape every week from each of them. What it is for is the eight houses: a second
+   generation is the biggest thing that happens to a ludus, and the old master should not vanish
+   from the record the week after he is buried.
+
+   RECURRING RATHER THAN ONE-SHOT, and on a FIXED CADENCE rather than a roll. `LATE` fires once per
+   key and is spent; this comes back. And it takes no `R()` draw — a new one in the weekly path
+   re-phases every seeded fixture in the project, which is a real cost for a line of prose — so the
+   cadence is the calendar and the variety is indexed off it. Each line is a shape the house has not
+   seen before the first time it lands. */
+const FORE_EVERY = 14;                 /* about once a season, for as long as anyone remembers him */
+const servedUnder = (d, f) => (d.annals||[])
+  .filter(a => a && !a.left && a.joined != null && f && a.joined < (f.to||0))
+  .map(a => a.name);
+const FORE_LINES = [
+  (d,f,who)=>`${who[0]} still calls the place ${f.name}'s yard when he is not thinking about it. Nobody corrects him and nobody quite likes hearing it either.`,
+  (d,f,who)=>`Somebody has been keeping the old master's corner of the colonnade swept. ${who.length>1?`${who[0]} and ${who[1]} both deny it.`:`${who[0]} denies it.`}`,
+  (d,f)=>`${f.name} held this house for ${Math.max(1, Math.round((f.to-f.from)/WEEKS_PER_YEAR))} years and the doctore still runs the morning the way he liked it. Nobody has decided to keep doing that; it is simply how the morning goes.`,
+  (d,f,who)=>`An argument in the cells about how ${f.name} would have handled the week. It is settled the way these are settled, which is not at all, and ${who[0]} has the last word because he was actually there.`,
+  (d,f)=>`A trader asks after ${f.name} by name, having been away some years, and takes the news standing in the doorway with his list still in his hand.`,
+  (d,f,who)=>`${who[0]} was bought by ${f.name} and has now served two masters in this house, which he mentions about once a season and did again today.`,
+];
+function foreWeek(d){
+  if(d.over || d.rome || d.city || d.travel || d.pendingEvent) return;
+  const F = (d.forebears||[]);
+  if(!F.length) return;
+  const f = F[F.length-1];
+  if(!f || f.to == null) return;
+  const since = d.week - f.to;
+  if(since <= 0 || since % FORE_EVERY !== 0) return;
+  const who = servedUnder(d, f);
+  const i = Math.floor(since / FORE_EVERY) - 1;
+  /* the lines that name a man need one; when the last of them has gone the house says the other
+     kind, which is the point — the men who knew him run out before the memory does */
+  const pool = who.length ? FORE_LINES : FORE_LINES.filter(fn => fn.length < 3);
+  if(!pool.length || i >= pool.length) return;
+  chron(d, pool[i](d, f, who), "info");
+}
 function lateWeek(d){
   if(d.over || d.rome || d.city || d.travel || d.pendingEvent) return;
   d.flags.lateSeen = d.flags.lateSeen || [];
@@ -21934,6 +21988,7 @@ function endWeek(d){
   charterWeek(d);
   yardWeek(d);
   lateWeek(d);
+  foreWeek(d);      /* #248 phase 2 — the man whose house this was */
   offerPact(d);
   pactWeek(d);
   edictWeek(d);
@@ -33891,7 +33946,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     borrow, LENDERS, LEND_KEYS, owes, loanLender, canBorrow, loanWeeks, loanFuse, loanClock, EMPTY_LIMIT,   /* #163 */
     loanWeek,   /* #235 — the escalation ladder is read off its own source by checks/debt.mjs */
     RUINS, RUIN_KEYS, facOf, lawOf, inBreach,
-    COUNSEL, WHISPERS, YARD, LATE, LATE_KEYS, lateWeek, NIGHT, ASKS, REFUSE_REASONS, RIVAL_MOVES, FREEDMEN, AFTERS, FEUD_CAUSES, griefStricken, isAuctor, refuseCandidate, refuseWeek, endRefusal, refusing, canFight, refuseOdds, refuseRisk, REF_KEYS,   /* #201 — everything the refusal gate reads */   /* #186 — eleven registers no probe could reach; the account is in checks/voice.mjs */
+    COUNSEL, WHISPERS, YARD, LATE, LATE_KEYS, lateWeek, foreWeek, FORE_LINES, FORE_EVERY, servedUnder, NIGHT, ASKS, REFUSE_REASONS, RIVAL_MOVES, FREEDMEN, AFTERS, FEUD_CAUSES, griefStricken, isAuctor, refuseCandidate, refuseWeek, endRefusal, refusing, canFight, refuseOdds, refuseRisk, REF_KEYS,   /* #201 — everything the refusal gate reads */   /* #186 — eleven registers no probe could reach; the account is in checks/voice.mjs */
     /* #196 — the conversation the player starts. WORDS is a register like the eleven above, so
        `voice` requires it here, and it is free to sit on its own line now that `bulk` ends App at
        its own closing brace instead of at the end of the file. */

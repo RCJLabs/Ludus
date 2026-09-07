@@ -82,6 +82,46 @@ export async function run({ p, errors }){
         catch(e){ return `threw: ${e.message}`; } });
     }
 
+    /* 5 · the forebear — driven, because 7-8% of houses ever have one and a run would not reach it */
+    const fore = (()=>{
+      const mk = (withMen) => {
+        const d = A.newGameState("Fo", "clean", "FORECHK");
+        d.week = 400;
+        d.forebears = [{ name:"Aulus Varius", age:61, traits:[], from:20, to:360, gen:1,
+          retired:false, wife:null, children:[] }];
+        d.annals = A.activeG(d).map((g,i)=>({ id:g.id, name:g.name,
+          joined: (withMen && i === 0) ? 200 : 380, left:null }));
+        return d; };
+      /* ---- READ THE LINE BY ITS WEEK, NOT BY THE LOG'S LENGTH ----
+         `chron` UNSHIFTS: the newest entry is at the front. The first cut of this arm took
+         `log.slice(before)` and so captured the log's OLDEST entry six times over — the scenario's
+         own opening line — and reported "the forebear said the same thing every time". The game was
+         doing exactly the right thing and the arm was reading the wrong end of the array. */
+      const atWeek = (x, wk) => (x.log||[]).filter(l=>l && l.week === wk).map(l=>l.text);
+      const said = [], offCadence = [];
+      const d = mk(true);
+      for(let w=1; w<=A.FORE_EVERY*8; w++){
+        d.week = 360 + w; d.pendingEvent = null;
+        A.foreWeek(d);
+        const add = atWeek(d, d.week);
+        if(w % A.FORE_EVERY === 0) said.push(...add); else offCadence.push(...add);
+      }
+      const e = mk(false), noMen = [];
+      for(let w=1; w<=A.FORE_EVERY*8; w++){
+        e.week = 360 + w; e.pendingEvent = null;
+        A.foreWeek(e);
+        noMen.push(...atWeek(e, e.week));
+      }
+      const n = A.newGameState("Fo", "clean", "FORECHK"); n.forebears = [];
+      let none = 0;
+      for(let w=0; w<A.FORE_EVERY*4; w++){ n.week = 400 + w; A.foreWeek(n); none += atWeek(n, n.week).length; }
+      const g = mk(true); const rngBefore = A.rngGet ? A.rngGet() : null;
+      for(let w=1; w<=A.FORE_EVERY*8; w++){ g.week = 360 + w; g.pendingEvent = null; A.foreWeek(g); }
+      const rngAfter = A.rngGet ? A.rngGet() : null;
+      return { said, offCadence, noMen, none, lines:A.FORE_LINES.length, every:A.FORE_EVERY,
+        rngSame: rngBefore != null && rngBefore === rngAfter, rngRead: rngBefore != null };
+    })();
+
     /* 4 · one-shot: force a key, then hammer `lateWeek` and see whether it comes round again */
     for(const k of KEYS){
       const d = deep();
@@ -92,7 +132,7 @@ export async function run({ p, errors }){
         if(d.pendingEvent && d.pendingEvent.data && d.pendingEvent.data.k === k){ again = true; break; } }
       once[k] = !again;
     }
-    return { keys:KEYS, shape, ran, reach, once };
+    return { keys:KEYS, shape, ran, reach, once, fore };
   });
   if(out.why) return { pass:false, why:out.why, lines };
 
@@ -117,6 +157,35 @@ export async function run({ p, errors }){
   lines.push(`  reachable: ${out.keys.filter(k=>out.reach[k]).length}/${out.keys.length} · `
     + `choices returning a line: ${out.keys.reduce((n,k)=>n+(out.ran[k]||[]).filter(r=>r==="ok").length,0)}`
     + `/${out.keys.reduce((n,k)=>n+(out.ran[k]||[]).length,0)} · one-shot: ${out.keys.filter(k=>out.once[k]).length}/${out.keys.length}`);
+
+  /* 5 · the forebear */
+  { const F = out.fore;
+    if(!F){ bad.push(`the forebear arm returned nothing — it computed and was never reported, which is the `
+      + `inert-arm shape this file already holds LATE against`); }
+    else {
+    const uniq = [...new Set(F.said)];
+    lines.push(`  the forebear: ${F.said.length} lines on the ${F.every}-week cadence (${uniq.length} distinct `
+      + `of ${F.lines} written), ${F.offCadence.length} off it, ${F.noMen.length} with nobody left who served `
+      + `under him, ${F.none} in a house with no forebear${F.rngRead ? ` · stream ${F.rngSame ? "unmoved" : "MOVED"}` : ""}`);
+    if(!F.said.length)
+      bad.push(`\`foreWeek\` said nothing in eight cadences on a house with a forebear and a man who served `
+        + `under him — the phase is a line of prose and this is whether it is there at all`);
+    if(F.offCadence.length)
+      bad.push(`${F.offCadence.length} lines landed OFF the ${F.every}-week cadence — it is about once a season, not whenever`);
+    if(uniq.length < 2)
+      bad.push(`the forebear said the same thing every time (${uniq.length} distinct line) — recurring content that `
+        + `repeats itself is worse than one-shot content, which is the trap phase 1 fell into`);
+    for(const t of [...F.said, ...F.noMen])
+      if(/undefined|NaN|\[object/.test(String(t)))
+        bad.push(`a forebear line rendered a hole: "${String(t).slice(0,90)}"`);
+    if(F.noMen.length >= F.said.length)
+      bad.push(`with nobody left who served under him the house still said as much (${F.noMen.length} against `
+        + `${F.said.length}) — the lines that name a man drop out, and the men who knew him run out before the memory does`);
+    if(F.none)
+      bad.push(`a house with no forebear at all said ${F.none} things about one`);
+    if(F.rngRead && !F.rngSame)
+      bad.push(`\`foreWeek\` consumed the random stream — a new draw in the weekly path re-phases every seeded `
+        + `fixture in this project, which is not a price a line of prose gets to charge`); } }
 
   if(errors.length) bad.push(`${errors.length} page errors`);
   if(!bad.length) lines.push(`all ${out.keys.length} arrive, all their choices answer, and none comes round twice`);
