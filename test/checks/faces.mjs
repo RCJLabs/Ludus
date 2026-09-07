@@ -49,7 +49,19 @@ export async function run({ p, errors }){
     const miss = ["newGameState","crestOf","lanistaOf","bLevel"].filter(k=>A[k]==null);
     if(miss.length) return { why:`the handle is missing ${miss.join(", ")}` };
     const d = A.newGameState("Faces", "clean", "FACESCHK");
-    for(let w=0; w<120; w++){ if(d.over) break; try { R.lanista(d); } catch(e){ break; } }
+    let ranTo = 0;
+    for(let w=0; w<120; w++){ if(d.over) break; try { R.lanista(d); } catch(e){ break; } ranTo = w+1; }
+    /* ---- THE HOUSE DOES NOT HAVE TO SURVIVE, AND ASSUMING IT DID WAS A SILENT DEPENDENCY ----
+       This played 120 weeks and saved whatever came out. On v3.234.0's stream seed FACESCHK ended
+       in rebellion at week 90, so the save was a DEAD house — which loads to the records screen,
+       where there is no ludus, no staff room and no square. The whole check then reported "0 busts"
+       and "the square would not open", which reads like the drawn faces are missing and is really
+       the fixture never arriving. The subject here is whether the men who do not fight have faces;
+       survival is not part of it, and the medicus and armourer below are hand-placed anyway. So the
+       ending is cleared and `ranTo` is reported, which makes the dependency visible instead of
+       fatal the next time the stream moves under it. */
+    const died = d.over ? d.over.kind : null;
+    d.over = null;
     d.gold = 9000;
     d.buildings = Object.assign({}, d.buildings, { valetudinarium:2, armamentarium:2 });
     d.medicus  = { id:9001, name:"Philon", origin:"Kos",   skill:71, wage:16, fee:180, weeks:24 };
@@ -60,7 +72,7 @@ export async function run({ p, errors }){
     const st = window.storage; if(st && !st.__facesShut){ const real = st.set.bind(st);
       st.set = (k,v)=>/ludus-slot-\d/.test(k)?Promise.resolve({key:k,value:v}):real(k,v); st.__facesShut = true; }
     return live ? { house:live.name, lanista:A.lanistaOf(live.name).name, ground:A.crestOf(live.name).c1,
-      doctore: d.doctore ? d.doctore.name : null } : null;
+      doctore: d.doctore ? d.doctore.name : null, ranTo, died } : null;
   });
   if(!want) return { pass:false, why:(want && want.why) || "the played house has no live rival", lines };
   if(want.why) return { pass:false, why:want.why, lines };
@@ -70,6 +82,12 @@ export async function run({ p, errors }){
   await p.evaluate(()=>{ const b=[...document.querySelectorAll("button")].find(x=>/take up the keys/i.test(x.innerText||"")); if(b) b.click(); });
   await p.waitForTimeout(1100);
   await clearAll(p, 10);
+
+  lines.push(`the fixture: ${want.ranTo} weeks played`
+    + `${want.died ? ` (the house ended in ${want.died} and the ending was cleared — this arm is about faces, not survival)` : ""}`
+    + `${want.doctore ? ` · doctore ${want.doctore}` : " · NO DOCTORE"}`);
+  if(!want.doctore) bad.push(`the fixture reached the staff rooms with no doctore at all, so the `
+    + `square's own face cannot be measured — that is the fixture failing, not the drawing`);
 
   /* every bust on a page, with the name it sits beside and the colour of its shoulders */
   const readBusts = () => p.evaluate(()=>[...document.querySelectorAll('svg[viewBox="0 0 100 100"]')].map(v=>{

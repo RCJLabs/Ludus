@@ -6091,12 +6091,22 @@ const docGuardPc = c => Math.round(c.skill/200 * 100);
    gates on, which is #150's rule met in one field. Defined here rather than inside `SECT` because
    `bulk.mjs` caps that function's length and it was at 1482 of 1483: the first cut inlined this at
    both sites, put SECT on 1490, and the cap caught it. `data-doc-age` is what a DOM arm would read. */
-/* #251 phase 2 — the question, shaped like the re-sign modal it is a sibling of. At module scope
-   for the same reason `DocYears` is: `bulk` holds App at 5,786 lines and it is at 5,784, so the
-   whole of this had to cost the render one line. */
-const DocOfferModal = ({ S, Z, onAnswer }) => (
-  <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.contract}}>
-    <div className="modal" tabIndex={-1} style={{borderColor:"var(--gold-deep)"}}>
+/* #251 phase 2 — the question. At module scope for the same reason `DocYears` is: `bulk` holds
+   SECT at 1,483 lines, so the whole of this had to cost the render one line.
+
+   ---- AND IT IS NOT A MODAL, WHICH IS WHAT IT SHIPPED AS FIRST ----
+   Written as a `modalwrap` sibling of the re-sign question, which it resembles. But `.modalwrap` is
+   `position:fixed; inset:0` — a full-screen overlay — and this offer stands for THREE WEEKS, so the
+   first cut froze the entire game for the duration of a question whose own text says he has three
+   weeks to decide in. Two checks caught it and neither knows this feature exists: `faces` reported
+   the doctore's square "would not open" and no busts anywhere, and `treat` that House Cossutius's
+   sheet "did not open". Both were clicking through an overlay. The re-sign modal is a fair
+   precedent for a question answered NOW; a standing offer is a panel, and the agenda row carries it
+   when the player is on another page. */
+const DocOfferPanel = ({ S, onAnswer }) => (
+  <div className="panel" role="group" aria-label="A rival has offered your doctore a post"
+       style={{padding:9,marginTop:7,background:"var(--panel)",borderColor:"var(--gold-deep)"}}>
+    <div>
       <div className="disp" style={{fontSize:"var(--fs-lg)",fontWeight:700,letterSpacing:".1em",marginBottom:8,color:"var(--ink-hi)"}}>THEY HAVE ASKED HIM</div>
       <div style={{fontSize:"var(--fs-xl)"}}>
         House {S.docOffer.house} has offered {S.docOffer.name} a post. He has not said yes and he has
@@ -6114,6 +6124,7 @@ const DocOfferModal = ({ S, Z, onAnswer }) => (
     </div>
   </div>
 );
+
 const DocYears = ({ c, tail }) => (!c || c.age == null) ? null
   : (<>, and he is <span data-doc-age={c.age}>{c.age}</span>
       {c.age > DOC_AGE_FROM && (<span data-doc-old="1"> — {tail}</span>)}</>);
@@ -26184,7 +26195,7 @@ const SECT = {
       </div>
     </Sect>
     ); },
-  square: (S, X) => { const { dismissDoc, hireDoc, setDrill, setPupil, stopRetrain, intoSquare } = X;
+  square: (S, X) => { const { dismissDoc, hireDoc, setDrill, setPupil, stopRetrain, intoSquare, mut } = X;
     return (
     <Sect live={sectFresh(S,"square")} sid="square" title="The training square" note={S.doctore ? `${S.doctore.name} · ${S.doctore.wage}d/wk` : "no doctore — you run it"}>
       {S.doctore ? (<div>
@@ -26204,6 +26215,7 @@ const SECT = {
           </div>
         </div>
         <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>{S.doctore.past}<DocYears c={S.doctore} tail="the years have started to tell" />.</div>
+        {S.docOffer && <DocOfferPanel S={S} onAnswer={a=>mut(d=>{ answerDocOfferWith(d, a); })} />}
         {S.doctore.tag && (<>
           <div style={{fontSize:"var(--fs-md)",marginTop:5,color:"var(--ink-2)"}}>
             <span className="laurel">{S.doctore.name}, {S.doctore.tag}.</span> {S.doctore.pastLine}
@@ -32713,7 +32725,6 @@ export default function App(){
         );
       })()}
 
-      {S.docOffer && !fight && <DocOfferModal S={S} Z={Z} onAnswer={a=>mut(d=>{ answerDocOfferWith(d, a); })} />}
       {S.reSignOffer && !fight && (
         <div className="modalwrap" role="dialog" aria-modal="true" style={{zIndex:Z.contract}}>
           <div className="modal" tabIndex={-1} style={{borderColor:"var(--gold-deep)"}}>

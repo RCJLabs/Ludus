@@ -4451,6 +4451,48 @@ that house train better — the boolean was always read, it just never meant any
 `bulk` holds App at 5,786 lines and it was at 5,784, so the whole modal had to cost the render **one
 line**. It does; App is at 5,785 and SECT is untouched at 1,482.
 
+**THE GATE WENT 172/177, AND ONLY ONE OF THE FIVE WAS A DEFECT.** Adding a hostile move changes
+`pick(bag)` on every week it is eligible — 14.2% of them — so this release re-phased far more than
+v3.233.0 did, and four of the five reds are seeded fixtures arriving somewhere new.
+
+- **`spite`** — *"carries 5 moves marked `hostile`, not the four #246 asks for"*. Correct, and the
+  literal `!== 4` was the fault: the substance of that arm is that every hostile move refuses a house
+  at grudge 0 and allows one at its gate, which runs over whatever is in the table. It counts against
+  `Object.keys(HOSTILE_MOVES).length` now, with a floor of 4 so the channel still cannot quietly
+  empty.
+- **`faces` and `treat`** — *"the square would not open"*, *"the sheet did not open"*, and neither is
+  a UI fault. Both build a house, **save it, reload, and load it back**; both played 120 weeks and
+  saved whatever came out. On this stream `FACESCHK` ended in rebellion at week 90, and **a dead save
+  loads to the records screen**, where there is no ludus, no staff room and no rival sheet. The check
+  then reports "0 busts" — which reads exactly like the drawn faces being missing. Neither arm is
+  about survival, so the ending is cleared and the run length reported, making the dependency visible
+  instead of fatal. I first guessed the new modal was blocking the page, changed it, and re-ran: it
+  still failed. The guess was wrong; the change was right anyway, for its own reason (below).
+- **`first`** — *"the rope taught no signature in 190 weeks"*. Its signature arm broke on `d.over` and
+  kept what it had; the two arms above it in the same file already clear the ending and cap the
+  unrest for precisely this reason. On a short run no man reaches the six wins a signature wants, and
+  the arm reported the arc **dark** — which is the conclusion #221 was filed on, from the same kind of
+  instrument fault rather than from the game.
+- **`grave`** — *"silence costs less than choosing the pit on BOTH regard and unrest"*, and this one
+  is a **real gap in #224 that this release only exposed**. `riteLapse` prices silence as
+  `min(pitTo, softTo)` with `softTo` floored at 20 for a man who is not kin. For a man already under
+  that floor `softTo` collapses to his own regard and the price becomes the pit's flat -6 exactly —
+  which is v3.168.0's construction working as designed, guaranteeing silence is never *cheaper* on
+  regard. But arm 3 asks for more than that: it asks that neither answer **dominate**, and at the
+  floor the two tie on regard while the pit alone takes unrest, so **silence dominates**. The fixture
+  took the first alive-and-solvent base and that became one with six of its seven men at 13 regard or
+  under. It now also screens for the condition the arm measures, on a bar that is derived rather than
+  picked — the surcharge is `was - 6.9` against a floor of 20, so it only bites above **26.9**. The
+  arm reads silence -6.9 against the pit -6.0 again. **The floor's own behaviour is recorded against
+  #224 rather than fixed here**; it is that item's, not this one's.
+
+**And the question shipped as a modal first, which was wrong on its own terms.** `.modalwrap` is
+`position:fixed; inset:0` — a full-screen overlay — and this offer stands for **three weeks**, so the
+first cut froze the whole game for the duration of a question whose own text says he has three weeks
+to decide in. It is a panel in the square's own section now, with the agenda row carrying it when the
+player is elsewhere. That moved it from App to SECT: App is back to 5,784 of 5,786 and SECT sits at
+1,483 of 1,483, exactly at its cap.
+
 **Four faults caught in my own work before anything was read off it.** A `str.replace` in the probe
 had a whitespace-mismatched target and silently did nothing, leaving `sum.taken` undefined — no
 assertion guarded it, which is the same inert-edit shape this suite keeps finding; every replace in
@@ -9675,6 +9717,17 @@ the table is boilerplate: the mercy line **616 times (15.6% of all weeks)**, fes
 ~1,215 combined, "the bench where he sat is empty" 230. The story organ's most common sentences are
 its least story-like. Recommend variant pools keyed to the man and the count — the third mercy in a
 month is a *reputation*, and the line should know it.
+
+**#224 — AND ONE GAP IS STILL OPEN, FOUND v3.234.0.** `riteLapse`'s silence is priced
+`min(pitTo, softTo)` with `softTo` floored at 20 for a man who is not kin, so v3.168.0's correction
+guarantees silence is never CHEAPER than the pit on regard. For a man at or under that floor it is
+never *dearer* either — the two tie exactly — and the pit alone takes unrest, so **on a house whose
+men are at the regard floor, saying nothing strictly dominates choosing the pit**, which is the thing
+#224 was filed about. It is reachable: a base drawn at random in v3.234.0's stream had six of seven
+men at 13 regard or under. `checks/grave.mjs` now screens its fixture above the bar where the
+surcharge bites (regard > 26.9, derived from `was - 6.9` against the floor of 20) so its arm measures
+the comparison it claims — the floor case is unmeasured, not fixed. A fix would be either a floor
+that scales rather than clamps, or a small unrest cost on the lapse so the two axes cannot both tie.
 
 **#224 — HEADLINE AN ARTIFACT, REAL FAULT WORSE. Shipped v3.167.0.** "0 rites" measured the rope, which the item conceded. Underneath: three answers where the cheapest one costs you (`none` = unrest +4, regard −6) and **never answering cost nothing at all** — measured, letting the window close left a house **better off than a control with nobody dead**. 96% of dead men lapsed that way. The window closing is now the pit's own answer — the pit's regard price with a surcharge on it, no unrest at all, and lines that read his record. Two of the three wrong turns are worth keeping: a version that put the whole weight on his kin came out **cheaper than the pit house-wide**, the fault wearing the fix's clothes, and `grave` passed it because its domination arm compared unrest the wrong way round; and what nearly killed the release was three points of **morale**, not the regard — it cost six reference houses a third of their lives and cost `tells` the `veteran` reading. See the release note.
 

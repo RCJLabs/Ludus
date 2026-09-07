@@ -113,11 +113,11 @@ export async function run({ p, errors }){
     wt.dieThugs = A.RIVAL_MOVES.thugs.weight(at("Vettius", 100));
     wt.dieSabot = A.RIVAL_MOVES.sabotage.weight(at("Vettius", 100));
     wt.evThugs = A.evTune("thugs").w; wt.evSabot = A.evTune("sabotage").w;
-    return { t, HOT, gate, wt };
+    return { t, HOT, gate, wt, WANT: Object.keys(A.HOSTILE_MOVES || {}).length };
   }, [HOUSES, WEEKS]);
 
   if(r.why) return { pass:false, why:r.why, lines };
-  const { t, HOT, gate, wt } = r;
+  const { t, HOT, gate, wt, WANT } = r;
   const per100 = t.hotWeeks ? Math.round(1000*t.acts/t.hotWeeks)/10 : 0;
 
   lines.push(`${t.weeks} weeks · ${t.moves} rival moves · ${t.acts} hostile acts charged to a house `
@@ -125,7 +125,7 @@ export async function run({ p, errors }){
     + `over ${t.hotWeeks} hot house-weeks — ${per100} per 100`);
   lines.push(`  ${t.sawDark} of ${HOUSES} runs saw a house go dark (${t.darkWeeks} weeks with one in the bay): `
     + `${t.movesByDark} moves and ${t.actsByDark} acts came from one [both must be 0; before the fix, 8.6% and 31.8%]`);
-  lines.push(`  the four: ${HOT.map(k=>`${k} at ${gate[k].g} (cold ${gate[k].coldOK} → hot ${gate[k].hotOK}, `
+  lines.push(`  the ${HOT.length}: ${HOT.map(k=>`${k} at ${gate[k].g} (cold ${gate[k].coldOK} → hot ${gate[k].hotOK}, `
     + `w ${Math.round(100*gate[k].wCold)/100} → ${Math.round(100*gate[k].wHot)/100})`).join(" · ")}`);
   lines.push(`  at one grudge: the schemer's poach ${wt.poachSchemer.toFixed(2)} against ${wt.poachPlain.toFixed(2)}; `
     + `the ledger-keeper's sabotage ${wt.sabVettius.toFixed(2)} against ${wt.sabMarcellus.toFixed(2)}; `
@@ -141,8 +141,16 @@ export async function run({ p, errors }){
     bad.push(`no house went dark in ${HOUSES} runs of ${WEEKS} weeks, so arm 1 proved nothing — it is the `
       + `only arm here that can catch a house acting from beyond the end of it, and it needs a corpse`);
   /* 2 */
-  if(HOT.length !== 4)
-    bad.push(`\`RIVAL_MOVES\` carries ${HOT.length} moves marked \`hostile\`, not the four #246 asks for`);
+  /* ---- COUNTED AGAINST THE TABLE, NOT AGAINST A NUMBER THIS FILE REMEMBERS ----
+     This read `!== 4`, and v3.234.0 added a fifth hostile move (#251 phase 2's doctore) and turned
+     it red for being right. The substance of this arm is the sentence under it — every hostile move
+     refuses a house at grudge 0 and allows one at its own gate — and that runs over whatever is in
+     the table. The census belongs to `HOSTILE_MOVES`, so it is read from there, with a floor so the
+     channel still cannot quietly empty out. */
+  if(HOT.length !== WANT || HOT.length < 4)
+    bad.push(`\`RIVAL_MOVES\` carries ${HOT.length} moves marked \`hostile\` against the `
+      + `${WANT} in \`HOSTILE_MOVES\` (floor 4) — every entry in that table is supposed to be `
+      + `generated into a hostile move, and one that is not is a move nothing can ever pick`);
   for(const k of HOT){
     if(gate[k].coldOK !== false)
       bad.push(`the ${k} move is open to a house at grudge 0 (\`when\` said ${gate[k].coldOK}) — the grudge is `
