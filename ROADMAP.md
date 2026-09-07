@@ -4389,6 +4389,58 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.230.0 — #248 phase 2: the forebear was a list of names on a sheet — and the right quarter is not the same as enough houses
+
+**Dark state, confirmed by reading before anything was built.** `succeed` writes `d.forebears` —
+the old master's name, age, traits, the years he held the house, the children who did not get it —
+and **two UI sheets read it. Nothing in the simulation does**: not the chronicle, not the bay, not
+the patrons. The phase's premise holds exactly as filed.
+
+**And then the reach, which is the half that decides how it gets built.** v3.226.0's finding was
+that #248's content keeps landing in the wrong quarter, so that was measured first
+(`probes/decade.mjs`, 2 seeds × 96 houses × 420 weeks):
+
+| | seed 1 | seed 2 |
+|---|---|---|
+| houses that **ever** have a forebear | **7.3%** | **8.3%** |
+| the week the first one arrives | p10 342 · **p50 383** · max 414 | p10 342 · **p50 381** · max 416 |
+| generation reached (max) | 2 | 2 |
+
+**This is exactly the gate the fourth quarter wants** — Q4 of a 420-week run begins at week 315 and
+every one of the fifteen forebears arrived after it. It is also **one house in twelve**, and nobody
+reaches a third generation.
+
+**So it cannot move the item's KPI, and it is not built as though it could.** Q4 across 96 houses is
+~2,300 weeks and the bar wants ~240 new shapes; eight houses with a forebear have ~500 Q4 weeks
+between them, which needs **0.48 new shapes every week from each of them** — against `LATE`
+delivering about two shapes *per firing*. Saying that plainly is the point: v3.226.0 found phase 1's
+content had reach but fired in Q2, and phase 2's has the quarter but not the reach. **The KPI is a
+rate over ALL Q4 house-weeks, so it cannot be moved by content that is rare, however well-timed, nor
+by content with reach that fires once.** Phase 3 needs both, and that is now written down as its
+requirement rather than discovered a third time.
+
+**Built on its own terms, for the houses that get there.** A second generation is the largest thing
+that happens to a ludus and the old master should not vanish from the record the week after he is
+buried. `foreWeek` gives him a presence in the chronicle: six lines drawing on real state — the
+years he held the place, the men still in the yard who were bought by him, the corner of the
+colonnade somebody keeps sweeping — **recurring on a fixed cadence rather than fired once**, which
+is the shape phase 1 lacked. The lines that name a man drop out once nobody who served under him is
+left, so the men who knew him run out before the memory does.
+
+**And it takes no `R()` draw.** A new one in the weekly path re-phases every seeded fixture in this
+project — a real cost, and not one a line of prose gets to charge — so the cadence is the calendar
+(`FORE_EVERY` 14, about once a season) and the variety is indexed off it. `checks/decade.mjs` arm 5
+holds all of it, including that the random stream is unmoved.
+
+**Two faults in that check, both mine, both caught before the gate.** It computed the whole arm and
+never asserted on it — the inert-arm shape this very file holds `LATE` against. And once wired up it
+reported *"the forebear said the same thing every time"*: `chron` UNSHIFTS, so reading
+`log.slice(before)` captured the log's **oldest** entry six times over — the scenario's own opening
+line. The game was right and the arm was reading the wrong end of the array.
+
+**Shipped:** `foreWeek`, `FORE_LINES`, `FORE_EVERY`, `servedUnder`, all on the handle;
+`checks/decade.mjs` arm 5; `probes/decade.mjs` gains the forebear reach measurement.
+
 ### v3.229.0 — #252 phase 2: "worth beating" stops meaning "priced as high", because the world contains nobody priced as high
 
 **The gate's own note names its standard**, and v3.227.0 measured the code failing it: *"a couple of
@@ -8549,6 +8601,15 @@ answering on every choice. **And Q4 novelty went 0.156 → 0.136 and 0.146 → 0
 boundary is 105) and seven of the eight are spent by the third. One-shot content gated at year 6
 cannot raise a fourth-quarter rate — which is also why #245 phase 3's freshness multiplier could
 not. Phases 2 and 3 need gates in the second DECADE, or content that is not one-shot.
+*Phase 2 SHIPPED v3.230.0, and it sharpens that requirement to BOTH.* `d.forebears` was written by
+`succeed` and read by two UI sheets and nothing else. Measured: **7.3% and 8.3%** of houses ever
+have a forebear, arriving at **median week 381-383** — entirely inside Q4, which is the right gate —
+but one house in twelve, and nobody reaches a third generation. Content hung on it would need 0.48
+new shapes a week from each of those eight houses to move the KPI, so **it cannot**, and it was
+built for the houses that reach it rather than for the number: `foreWeek`, six lines on a 14-week
+cadence, recurring rather than one-shot, with no `R()` draw so nothing re-phases. **The KPI is a
+rate over ALL Q4 house-weeks: phase 1 had reach but fired in Q2, phase 2 has the quarter but not the
+reach, and phase 3 needs both.**
 
 `LATE` — *"things that only a house with a decade behind it can be offered"* — is four one-shot events:
 memoir (year ≥ 8), boy (≥ 6), rival (≥ 7), tired (≥ 9), each fired seven or eight times across sixteen
