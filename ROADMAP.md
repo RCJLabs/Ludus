@@ -4389,6 +4389,89 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.222.0 — #246's verify-first: the grudge's servo is 1.6% of its outflow, and the real answer is the bill
+
+**A mechanism with the right shape, the right numbers and the wrong size.** #246 phase 2 left one
+figure standing as the reason the four hostile moves fire as rarely as they do: the grudge is **0 on
+64.4% of house-weeks and under the lowest gate on 95.4%** of them. Reading the file afterwards
+turned up what looked exactly like the cause —
+
+```
+function metHouse(d, h){ ... if(r && (r.grudge||0) < 30) warmMove(d, h, 1.1); }
+function warmMove(d, h, n){ ... if(n > 0) r.grudge = clamp(r.grudge - n*0.4, 0, 100); }
+```
+
+— every card against a rival house taking 0.44 off its grudge, gated at 30, three points above
+`GRUDGE_SABOTAGE`. A servo: fighting a house that is climbing toward the gates pushes it back under
+them. It explains the 95.4% exactly, which is what made it worth distrusting.
+
+**`probes/servo.mjs` — five arms on the same seeds, ~236,000 house-weeks each.** Three are the game
+as it ships against that move's grudge half credited back weekly and against half of it; the last
+two swap the PLAYER, taking a rival's card whenever the standard bill carries one instead of
+`housePick`'s biggest purse.
+
+| per house-week, or as marked | ship | half | nomet | seek | seek-nomet |
+|---|---|---|---|---|---|
+| the term fires on (% of house-weeks) | 4.8% | 4.8% | 4.8% | 7.3% | 7.3% |
+| and takes | 0.021 | 0.021 | 0.021 | 0.032 | 0.032 |
+| `grudgeDecay` takes | 0.972 | — | — | 0.981 | — |
+| other outflows | 0.348 | — | — | 0.440 | — |
+| the grudge is fed | 0.892 | — | — | **1.015** | — |
+| **so the term is, of the outflow** | **1.6%** | — | — | **2.3%** | — |
+| grudge exactly 0 | 64.9% | 62.7% | 62.1% | 56.9% | 53.7% |
+| above `GRUDGE_SABOTAGE` 26 | 4.28% | 4.24% | 4.79% | **8.09%** | 7.89% |
+| above `GRUDGE_POACH` 35 | 2.09% | 1.95% | 2.39% | **4.54%** | 4.38% |
+| above `GRUDGE_THUGS` 44 | 1.09% | 0.95% | 1.29% | **2.89%** | 2.77% |
+| a hostile act every | 37 wk | 38 wk | 35 wk | **23 wk** | 23 wk |
+| rivals fought on (% of bouts) | 15.2% | 15.3% | 15.3% | 23.0% | 22.8% |
+
+**Part one: it is not a servo.** At 1.6% of the grudge's outflow — 2.3% for the player it fires
+most often against — deleting its grudge half moves nothing outside the spread between two seeds of
+the same arm, in a cold bay or a hot one. What it does is park houses at zero, worth about two
+points of that, monotone in the credit. That is the whole of it. **No constant was touched.**
+
+**Part two is worth more than part one, and it is not in that function.** Read the two halves of
+the table against each other: *nothing about the game differs between them.* Who the player fights
+differs — and that one change was worth more than every constant in the grudge put together. The
+intake goes 0.892 to 1.015 a house-week, the time above every hostile gate very nearly doubles, and
+a hostile act lands every 23 weeks instead of every 37. **#246's 95.4% is the decay AND the bill.**
+
+**And the room left is larger than the arm used.** Counted off the bill itself over 48 x 420: it names one of the
+three rivals on **52.5% of its offers** and carries at least one such card on **75% of weeks** —
+56.5% once narrowed to the standard stakes the reference player accepts, so the stakes filter is
+not what drops them. That player fights one on **14.8%** of his bouts and the arm that *prefers*
+them reaches only **21.7%**. The first draft of this note blamed `housePick`'s purse sort; the seek
+arm overrides that sort entirely and still lands nowhere near what is on offer, so most of the loss
+is elsewhere in `takeBout`'s filtering — the men-count filter on pairs and melees is the obvious
+suspect and the probe has not chased it. **The cause is left open and labelled open**, because the
+figure worth quoting is the one measured. What the table argues for is a phase — a card worth
+taking against a house that hates you — and it is written into the queue rather than smuggled into
+this release.
+
+**Three faults in the instrument, all caught before the finding was written.** The first cut read
+`d.offers`, which does not exist — the bill is `d.games.offers` — and printed a flat 0 through
+3,447 bouts: FAULT SIX, in the file written to hold that line. The second put "63.8% of the bill
+names a house" beside "15.2% of bouts fire `metHouse`" as though they were the same number; they
+are not, because `offer.opp.house` is set for circuit men, town men and the named houses of
+`HOUSES`, and only a house in `d.rivals` has a grudge for `houseOf` to find. Both counters are
+split and labelled now. **The third was caught by scale:** at 48 houses the hostile rate ordered
+ship > half > nomet on three seeds out of three, which reads like a result; four times the sample
+scrambled it. The finding rests on the ledger, which is arithmetic, and on the seek arms, which
+move things by more than the noise — not on the credit-back arms, which are independent worlds.
+
+**And the map's lost purse, restored.** v3.220.0's map replaced `CircuitLedger`, whose rows carried
+three numbers apiece. The drawing kept two of them — `known` is the mark's own fill and the weeks
+are the road — and put the purse multiplier, the one number a player compares the three towns ON,
+one tap down. It is back beside each town's name, at zero cost to `scroll`'s arena budget because
+the frame is a fixed viewBox, in the same two-decimal shape the tapped row uses (#150). The aria
+label carries it too. `checks/map.mjs` gains the arm, and it measures the three labels' real
+bounding boxes and requires them disjoint: v3.220.0's own recorded failure was a six-pixel pennant
+drawn through Pompeii's name, and a second glyph on the same line is that fault wearing a number.
+
+**Shipped:** `probes/servo.mjs`; the finding recorded at `metHouse` so the servo story cannot be
+re-invented from the same reading; the purse multiplier on the map and in its aria label; a fifth
+arm on `checks/map.mjs`. No game constant changed.
+
 ### v3.221.0 — #249, phase 2: every man who does not fight — and #249 closes
 
 **Two of the item's claims did not survive reading the file, and the third is the release.** Phase 2
@@ -7774,7 +7857,10 @@ in a season, 33-35% of rival-seasons — has nothing to do with the purse, which
 abundant. **Phase 2 is not built, deliberately.** On the way it found that `rivalWeekly`'s free
 refill to four fighters undid `rivalShort`'s sale every week, so the ladder never reached its third
 rung and `closeHouse(d, h, "broke")` fired **0 times in 3,146 weeks** — fixed, and the debt is
-bounded now. Original text follows.
+bounded now. *And `RIVAL_STANDING` stays as it is, v3.222.0:* the cost was measured proportionate to
+the player's own bill — a rival pays 147 a week at fame 516 where the player pays 228 at fame 1,276 —
+so the endowment the demand pointed at is not answering a mistuned number. #244 died because a loan
+is the wrong instrument for a standing cost, not because the cost is wrong. Original text follows.
 
 `LENDERS` — Gratus 3.5% / patience 12 / cap 1,400, Murena 5.8% / 20 / 2,400, Scaeva 8.2% / 8 / 900 — is
 one-way. The nearest thing to lending, `OVERTURES.coin` ("Send coin against a bad season"), is a **gift**:
@@ -7837,7 +7923,21 @@ lesson). Either a second stream keyed off the seed word, as `seedNames` does, or
 ---
 
 **#246 — The Grudge Does Something** *(overhaul · medium–large · 4 phases)* — **CLOSED v3.216.0.**
-*Phase 4:* everything the phase asks for was already written and the first of it almost never
+*Verify-first afterword, v3.222.0, and it opens a fifth phase.* Phase 2's
+95.4%-under-the-lowest-gate had an obvious culprit — `metHouse` taking 0.44 off any grudge under 30,
+three points above `GRUDGE_SABOTAGE`, on every card. `probes/servo.mjs` says no: the term is **1.6%
+of the grudge's outflow** (0.021 a house-week against a decay of 0.972 and other outflows of 0.348),
+and deleting its grudge half moves nothing outside the between-seed spread. **What the same probe
+found instead is the bill.** The reference player fights his three rivals on **14.8% of bouts while
+the bill names one on 52.5% of its offers** and carries one on 75% of weeks (56.5% at the standard
+stakes he accepts, so the stakes filter is not what drops them; where the rest goes is left open).
+An arm that takes a rival's card whenever the standard bill carries one, and changes nothing else,
+reaches 21.7% and moves the intake 0.892 → 1.015 a house-week, house-weeks above `GRUDGE_SABOTAGE`
+**4.28% → 8.09%**, above `GRUDGE_POACH` 2.09% → 4.54%, and hostile acts from one every 37 weeks to
+one every 23. *Phase 5, written down and not built:* **a card worth taking against
+a house that hates you** — the grudge belongs on the purse or the standing of the offer, so that
+choosing to fight the man who hates you is a decision with a price rather than something the bill
+does to you while you maximise the gate. Nothing was changed in v3.222.0. *Phase 4:* everything the phase asks for was already written and the first of it almost never
 arrived — a poach was put in front of the player on **4 of 32** cases, and **all 18 men lost went
 without a card ever being offered.** `startPoach` plants the beat now and `fireArc` raises it ahead
 of the week's draw: **35 of 41 shown**, and six of the eleven remaining losses are men the player was
@@ -8031,7 +8131,11 @@ tapping one opening the ledger row it already has. **The item's "standing letter
 exist** — `bayCall` is an event card with no persistent state — so the pins are `bayPol[k]`'s
 contested sand and `bayHolder`. Two faults caught by looking: the sea drawn as a hill, and the
 contested flag running through Pompeii's name. `checks/map.mjs` holds `data-known` against `knownIn`
-and the tapped row against `CITIES` (#150).
+and the tapped row against `CITIES` (#150). *Follow-up, v3.222.0:* the ledger's rows carried three
+numbers and the map kept two — the purse multiplier went behind a tap, and it is the one a player
+compares the three towns ON. It is beside each name now at zero cost to `scroll` (the frame is a
+fixed viewBox), and the check measures the three labels' bounding boxes and requires them disjoint,
+because a second glyph on the name line is the pennant fault wearing a number.
 
 The circuit is three towns — `CITIES` pompeii / neapolis / puteoli, each with travel weeks, a purse
 multiplier, a taste and a missio bias — plus Rome and the small houses, with `known[city]` decaying at

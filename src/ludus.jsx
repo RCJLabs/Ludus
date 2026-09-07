@@ -2420,13 +2420,61 @@ function rivalArc(d){
   }
 }
 /* every card against a house is a meeting */
+/* ---- AND THIS LINE WAS ACCUSED OF BEING A SERVO, AND IT IS NOT ONE ----
+   #246 phase 2 measured the grudge at **0 on 64.4% of house-weeks and under the lowest hostile
+   gate on 95.4%** of them, which is why the four hostile moves fire as rarely as they do. Reading
+   the file afterwards turned up an obvious culprit: below, `warmMove(d, h, 1.1)` takes `1.1 x 0.4`
+   off the grudge, and its gate is 30 — three points over `GRUDGE_SABOTAGE`. So fighting a house
+   that is climbing toward the gates pushes it back under them. A servo, stated as a mechanism, with
+   the right shape and the right numbers.
+
+   `probes/servo.mjs` says no, and then says what the real answer is. Five arms over ~236,000
+   house-weeks each — the game as it ships, this move's grudge half credited back weekly, half of
+   it, and the last two under a player who takes a rival's card whenever the standard bill carries
+   one instead of the biggest purse:
+
+                             ship     half    nomet  |    seek   seek-nomet
+     `metHouse` fires on    4.8%     4.8%     4.8%   |    7.3%      7.3%   of house-weeks
+     and takes             0.021    0.021    0.021   |   0.032     0.032   a house-week
+     `grudgeDecay` takes   0.972                     |   0.981
+     other outflows        0.348                     |   0.440
+     ---------------------------------------------------------------------
+     so this line is        1.6%                     |    2.3%   OF THE OUTFLOW
+
+     grudge exactly 0      64.9%    62.7%    62.1%   |   56.9%     53.7%
+     above SABOTAGE 26      4.28%    4.24%    4.79%  |    8.09%     7.89%
+     above POACH 35         2.09%    1.95%    2.39%  |    4.54%     4.38%
+     above THUGS 44         1.09%    0.95%    1.29%  |    2.89%     2.77%
+     a hostile act every   37 wk    38 wk    35 wk   |   23 wk     23 wk
+
+   TWO THINGS FALL OUT OF THAT TABLE. The first is that this line is not the servo: at 1.6% of the
+   outflow — 2.3% for the player it fires most often against — deleting its grudge half moves
+   nothing outside the spread between two seeds of the same arm, in either world. It parks houses at
+   zero, worth about two points of that, and it is done.
+
+   THE SECOND IS THE ANSWER #246 WAS ACTUALLY LOOKING FOR, AND IT IS NOT IN THIS FUNCTION. Read the
+   two halves of the table against each other: nothing about the game changed between them. WHO YOU
+   FIGHT changed, and it was worth more than every constant in the grudge put together — the intake
+   goes 0.892 to 1.015 a house-week, time above every hostile gate very nearly doubles, and a
+   hostile act lands every 23 weeks instead of every 37.
+
+   And the room left is larger than the arm used. The bill names one of the three rivals on **52.5%
+   of its offers** and carries at least one such card on **75% of weeks** — 56.5% of weeks once it
+   is narrowed to the standard stakes the reference player accepts — while that player fights one on
+   **15%** of his bouts and the arm that prefers them reaches only **22%**. Something between the
+   bill and the bout is dropping most of them, and this probe did not chase it; the figure it is
+   safe to quote is the one it measured, not a cause it inferred. What the table argues for is a
+   card worth taking against a house that hates you — a phase, not a constant, and it is written
+   into the queue rather than smuggled in here.
+
+   Nothing here is changed on the strength of a probe written to test something else. */
 function metHouse(d, h){
   if(!h) return;
   d.metHouse = d.metHouse || {};
   const m = d.metHouse[h] || { met:0, beaten:0, lost:0, seen:[] };
   m.met++;
   d.metHouse[h] = m;
-  /* familiarity by itself, once the grudge is not in the way */
+  /* familiarity by itself, once the grudge is not in the way — worth 1.6% of its outflow, measured */
   const r = houseOf(d, h);
   if(r && (r.grudge||0) < 30) warmMove(d, h, 1.1);
 }
@@ -27108,9 +27156,18 @@ function CampaniaMap({ S, onPick }){
         {(P && P.grudge >= 45) && <circle data-pin={k} cx={x} cy={y} r={15}
           style={{fill:"none",stroke:SCN_INK,strokeWidth:1.3,strokeOpacity:0.8,strokeDasharray:"3 3"}}/>}
         {held && <circle data-held={k} cx={x+13} cy={y+11} r={2.6} style={{fill:SCN_INK}}/>}
-        <text x={x} y={y-14} textAnchor="middle" style={{fill:SCN_INK,fontSize:11,fontWeight:on?800:600,letterSpacing:".04em"}}>{C.name}</text>
+        {/* ---- AND WHAT THE SAND PAYS, WHICH THE DRAWING DROPPED ----
+             The ledger this map replaced carried three numbers a row: travel weeks, the purse
+             multiplier, and what the town knows of you. The map kept two of them — `known` is the
+             mark's own fill and the weeks are the road — and put the purse behind a tap, which is
+             the one number a player compares the three towns ON. It goes back beside the name,
+             where a side-by-side costs nothing: the frame is a fixed viewBox, so a second glyph
+             inside it is free, and `scroll`'s arena budget never sees it. Two decimals because the
+             tapped row says `×1.40` and #150's rule is that one number has one shape. */}
+        <text x={x} y={y-14} textAnchor="middle" style={{fill:SCN_INK,fontSize:11,fontWeight:on?800:600,letterSpacing:".04em"}}>{C.name}
+          <tspan data-purse={k} dx="3" style={{fontSize:9,letterSpacing:0,fillOpacity:0.7,fontWeight:600}}>×{C.purse.toFixed(2)}</tspan></text>
         <circle cx={x} cy={y} r={20} role="button" tabIndex={0}
-          aria-label={`${C.name} — ${C.travel} week${C.travel===1?"":"s"} away, they know you ${Math.round(knownIn(S,k))} of 100`}
+          aria-label={`${C.name} — ${C.travel} week${C.travel===1?"":"s"} away, pays ×${C.purse.toFixed(2)}, they know you ${Math.round(knownIn(S,k))} of 100`}
           onClick={()=>{ const n = on ? null : k; setPick(n); if(onPick) onPick(n); }}
           onKeyDown={e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); const n = on ? null : k; setPick(n); if(onPick) onPick(n); } }}
           style={{fill:on?SCN_INK:"transparent",fillOpacity:on?0.1:1,cursor:"pointer"}}/>
