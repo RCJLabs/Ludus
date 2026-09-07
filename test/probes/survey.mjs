@@ -12,6 +12,30 @@
    Rome offers 0 · blessed weeks 2.3% · feud standing on 79% of weeks (12 x 360 arm) · rites
    honoured 0 against 164 unburied · the mercy line told on 16% of ALL weeks.
 
+   ---- THE CHRONICLE ROWS ABOVE WERE READ THROUGH A FILTER THAT SELECTED, v3.232.0 ----
+   Every chronicle figure this file has ever published came off `if(c.week !== d.week) continue`.
+   `chron` UNSHIFTS, so the comment that stood here was right that length cannot count new lines and
+   wrong about the cure: `endWeek` runs `lateWeek`, `foreWeek` and `bookWeek` BEFORE `ludusLedger`
+   does `d.week++`, so a line's stamp says which SIDE of the increment wrote it, not whether it is
+   new. Counted by identity instead — walk the log from the front until the object that was at the
+   front last week — the same 16 x 420 frame reads **22,288 lines against the filter's 4,944**, and
+   **9,951 distinct shapes against 1,305**. The filter saw 22% of the corpus and 13% of its variety.
+
+   AND IT IS NOT A SAMPLE, WHICH IS THE PART WORTH KEEPING. Per shape the filter is BINARY — of the
+   twelve commonest lines, six survive at 100% and six at 0%, nothing in between — because a shape
+   is written at a fixed point in `endWeek` and that point decides it. So the survivors skew by kind
+   (good 33%, info 19%, event 16%, bad 15%) and "how often the chronicle repeats itself", the
+   question this file was built to answer, was measured on a subset chosen by authorship order. The
+   ONE chronicle row above that is unharmed is the mercy line, which is written after the increment
+   and so counts 232 either way; that it now reads 8.0% of weeks rather than 16% is the game moving
+   under ten releases, not this fault. Nothing outside `chron` and `mercyLine` reads the log, so the
+   endings, coin, career, arc and rites rows are untouched by it.
+
+   TODAY'S FRAME, same seed and shape (16 x 420, 2,890 house-weeks, 467 men): endings debt 8 /
+   rebellion 5 / ruin 2 / survived 1 · gold p50 999 / 4,452 / 5,447 / 3,787 · fame p50 164 / 1,770 /
+   3,398 / 4,817 · career p50 3 bouts (p90 14) · saga finales 2 of 14 · Rome offers still 0 · rites
+   honoured still 0, against 189 unburied · 7.7 chronicle lines a week.
+
    STANDING CAVEAT, from dark.mjs: these are the ROPE's weeks. A system the reference player never
    pursues reads as dark and that is a fact about the policy, not the game. The audit marks those
    rows (rope). */
@@ -44,6 +68,7 @@ const out = await p.evaluate(([H, W, SEED])=>{
     for(let w=0; w<W; w++){
       if(d.over){ break; }
       let did;
+      const wasFront = (d.log||[])[0] || null;
       try { did = R.lanista(d); } catch(e){ mark(sum.sys, "lanistaThrew"); break; }
       sum.weeks++;
       /* `did.events` is an object of per-event counts, not a number — summing it with `+` made a
@@ -57,11 +82,13 @@ const out = await p.evaluate(([H, W, SEED])=>{
       const live = A.activeG(d);
       sum.era[e].roster.push(live.length);
       for(const g of d.gladiators) seenMen.add(g.id);
-      /* the chronicle is the story the game actually tells */
-      /* d.log is a rolling buffer, unshifted at the head and popped at LOG_ROLL — so new lines are
-         AT THE FRONT and length alone cannot say how many arrived. Count by week stamp instead. */
-      const ch = d.log || [];
-      for(const c of ch){ if(!c || c.week !== d.week) continue;
+      /* the chronicle is the story the game actually tells. `chron` unshifts, so this week's lines
+         are the ones in front of the object that led the log last week — identity, not the week
+         stamp, which only says whether `ludusLedger` had incremented yet (see the header). If a
+         single week ever wrote LOG_ROLL lines the sentinel would be gone and the walk would take
+         the whole buffer; it writes single digits. */
+      const fresh = []; for(const c of (d.log||[])){ if(c === wasFront) break; fresh.push(c); }
+      for(const c of fresh){ if(!c) continue;
         sum.chron.lines++;
         mark(sum.chron.distinct, ((c.text||"")+"").slice(0,34));
         if(c.kind) mark(sum.chron.byKind, c.kind);
@@ -75,7 +102,7 @@ const out = await p.evaluate(([H, W, SEED])=>{
       if(d.nemHouse){ sum.feud.weeks++;
         if(lastNem !== d.nemHouse.house){ sum.feud.declared++; lastNem = d.nemHouse.house; } }
       else lastNem = null;
-      for(const c of (d.log||[])) if(c && c.week===d.week && /still alive somewhere/.test(c.text||"")) sum.mercyLine++;
+      for(const c of fresh) if(c && /still alive somewhere/.test(c.text||"")) sum.mercyLine++;
       /* ---- IT WAS COUNTED ONCE PER HOUSE, OUTSIDE THIS LOOP ----
          `if(d.rebellion) sum.arcs.rebellion.any++` sat down in the end-of-run block, so "rebellion 3"
          never meant three risings or three weeks — it meant three of fourteen houses had one STANDING
