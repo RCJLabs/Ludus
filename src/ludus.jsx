@@ -16163,6 +16163,107 @@ const LATE = {
       if(d.lanista) d.lanista.health = clamp(d.lanista.health+14,0,100);
       d.unrest = clamp(d.unrest+5,0,100); d.fame = Math.max(0, d.fame-6);
       return `You sit in the sun until the afternoon and nothing at all falls over. It turns out the house does not need you every single day, which is either a relief or the other thing.` } },
+
+  /* ---- FOUR MORE, AND WHY THESE FOUR — #248 phase 1 ----
+     Measured before any of this was written (`probes/decade.mjs`, 2 seeds x 96 houses x 420 weeks),
+     because the item's own premise was four releases old and three items in this run have had
+     premises that did not survive being re-read. This one did, exactly:
+
+       new chronicle shapes a week, by quarter   0.600 / 0.245 / 0.187 / 0.156
+                                                 0.594 / 0.263 / 0.192 / 0.146
+       the item said                             0.57  / 0.26  / 0.19  / 0.14
+
+     Four releases and a whole event-die overhaul later and the curve has not moved — which #245
+     phase 3 predicted in as many words ("the late-game rate is #248's to raise"). Past week 150 a
+     house meets **0.045 new events and 0.19 new shapes a week** while facing **12.97 agenda rows**
+     — the item guessed seven, and it was understating its own case. So the late game asks more and
+     gives less, as filed.
+
+     WHAT DID NOT SURVIVE IS THE RISK NOTE. "Content for the two in sixteen" was written when the
+     late game was reached by almost nobody; **63.5% and 66.7% of houses now see at least one of
+     these, the median house sees two of four, and 16.7% and 18.8% see all four.** Survival moved
+     under it — v3.196.0's ladder prices, the second generation, #240's successors. Ten in sixteen
+     is a different investment case from two, and it is the reason these are written at all.
+
+     They are chosen against what a decade actually leaves a house that a young one has not got: a
+     column of dead men, a doctore who has grown old in the yard, a name the bay uses without
+     asking, and somebody else's ruin to be wise about. `FREEDMEN` already covers the man who comes
+     back, so none of them is that.
+
+     AND THE DOUBLING DID NOT MOVE THE ITEM'S KPI, WHICH IS THE FINDING WORTH MORE THAN THE
+     CONTENT. Re-measured on the same seeds with eight entries instead of four:
+
+       new shapes a week, Q4    0.156 -> 0.136      and      0.146 -> 0.138      (the bar is 0.25)
+       houses seeing any LATE   63.5% -> 63.5%               66.7% -> 66.7%
+
+     The content lands — a house that lives sees SEVEN of the eight at p90, and the four new ones
+     fire 37 to 46 times per 96 houses. It cannot move that number, and the reason is structural
+     rather than a matter of volume:
+
+       every gate opens in the run's SECOND quarter.  Years 6-10 is weeks 108-180; the quarter
+       boundary of a 420-week run is 105. Measured median firing weeks: boy 107-115, rival 154-206,
+       memoir 158-174, ashes 165-174, name 164-175, greybeard 208-224, tired 245-252. Seven of the
+       eight are SPENT by the third quarter. The KPI measures weeks 315-420.
+
+     So one-shot content gated at year 6 cannot raise a fourth-quarter novelty rate however many
+     entries this table has — and that is also why #245 phase 3's freshness multiplier did not raise
+     it: dealing the existing thirty-six sooner leaves the fourth quarter emptier, not fuller. A
+     phase that wants the KPI needs gates in the second DECADE rather than the second quarter, or
+     content that is not one-shot. `newcomer` is the only one of the eight that lands in Q4 at all,
+     and only because `lastDark` takes a decade to become true. */
+  ashes:   { need:d=>yearOf(d) >= 8 && houseRecord(d).lost >= 10, w:8,
+    title:"The Ones In The Ground",
+    text:d=>{ const R2 = houseRecord(d);
+      return `${R2.lost} of them are in the ground outside the west wall and not one of those plots has a name on it. Nobody has said this to you directly. It has been said near you, twice, by men who stopped talking when you came round the corner.`; },
+    choices:["Buy the stone and have the names cut", "Let the men raise it themselves", "The dead do not eat"],
+    run:(d,i)=>{ const R2 = houseRecord(d);
+      if(i===0){ d.gold -= 350; d.unrest = clamp(d.unrest-7,0,100);
+        activeG(d).forEach(g=>{ g.morale = clamp(g.morale+7,0,100); g.regard = clamp(regardOf(g)+6,0,100); });
+        addRep(d, "mercy", 8); d.fame += 12;
+        return `The mason cuts ${R2.lost} names and gets two of them wrong, and the men correct him themselves, out loud, from memory.`; }
+      if(i===1){ d.unrest = clamp(d.unrest-3,0,100);
+        activeG(d).forEach(g=>{ g.morale = clamp(g.morale+3,0,100); });
+        return `They put in what they have, which is not much and takes a season. The stone that goes up is smaller than the one you could have bought and it is theirs.`; }
+      d.unrest = clamp(d.unrest+9,0,100);
+      activeG(d).forEach(g=>{ g.regard = clamp(regardOf(g)-7,0,100); });
+      addRep(d, "blood", 6);
+      return `You say no and you are not unkind about it. The grass grows over the west wall the way it was always going to, and the men stop mentioning it, which is worse than the mentioning.` } },
+  greybeard:{ need:d=>yearOf(d) >= 9 && !!d.doctore && (d.doctore.weeks||0) >= 150, w:7,
+    title:"The Doctore's Hands",
+    text:d=>`${d.doctore.name} has not held a palus properly in a year. He runs the yard on what he remembers and the men cover for him without being asked, which is how you found out.`,
+    choices:["Say nothing. He has earned the yard", "Give him the square and a boy to bring on", "Let him go, with a purse"],
+    run:(d,i)=>{ const nm = d.doctore ? d.doctore.name : "The doctore";
+      if(i===0){ activeG(d).forEach(g=>{ g.morale = clamp(g.morale+6,0,100); g.regard = clamp(regardOf(g)+4,0,100); });
+        if(d.doctore) d.doctore.tag = "who has been here longer than any of them";
+        return `Nothing is said. ${nm} goes on running the yard and the men go on covering for him, and now everybody knows that you know.`; }
+      if(i===1){ activeG(d).forEach(g=>{ g.morale = clamp(g.morale+8,0,100); g.regard = clamp(regardOf(g)+5,0,100); });
+        addRep(d, "craft", 8); d.fame += 6;
+        return `He teaches from a stool with a stick and a boy to demonstrate on, and it turns out that is what he was always for.`; }
+      d.gold -= 200; try { dismissDoctore(d); } catch(e){}
+      d.fame += 8;
+      return `${nm} takes the purse and does not count it in front of you. He is gone before the week's end and the yard is very quiet on the morning after.` } },
+  name:    { need:d=>yearOf(d) >= 8 && (d.fame||0) >= 700, w:7,
+    title:"Your Colours On Somebody Else's Gate",
+    text:d=>`There is a school on the Nola road with your house's name painted over the door. Two men and a shed. He is not pretending to be you exactly; he is letting people who cannot read very well arrive at it themselves.`,
+    choices:["Send four men to have a word", "Put it in front of the magistrate", "Let it stand"],
+    run:(d,i)=>{ if(i===0){ lawOf(d).heat = clamp(lawOf(d).heat + 14, 0, 100);
+        d.fame += 10; addRep(d, "blood", 6);
+        return `The paint is off the door inside a week. So is the door. Nobody has laid a charge and nobody is going to, and the whole road knows why.`; }
+      if(i===1){ d.gold -= 150; lawOf(d).heat = clamp(lawOf(d).heat - 6, 0, 100); d.fame += 4;
+        return `It takes three visits and a clerk's fee and it is settled properly, in writing, which is the correct way to do it and satisfies nobody at all.`; }
+      d.fame += 25; addRep(d, "show", 8);
+      return `You let it stand. Within a month there are two more, and a man in the market explains to you, patiently, that there are several of your houses now.` } },
+  newcomer:{ need:d=>yearOf(d) >= 10 && !!lastDark(d), w:6,
+    title:"A Young Man Asks How It Is Done",
+    text:d=>{ const L2 = lastDark(d);
+      return `Somebody has taken on ${L2.house ? `House ${L2.house}'s` : "a dead man's"} yard and the men in it, and he has come to ask you how any of this is done. He is perhaps twenty-six. He has the money and the buildings and no idea at all what he has bought.`; },
+    choices:["Tell him everything you know", "Tell him what it costs", "Tell him nothing worth having"],
+    run:(d,i)=>{ if(i===0){ d.fame += 15; addRep(d, "craft", 8);
+        return `You talk until it is dark and he writes none of it down, which is either the best sign or the worst. He will find out which himself.`; }
+      if(i===1){ d.fame += 8; addRep(d, "mercy", 6); d.unrest = clamp(d.unrest-2,0,100);
+        return `You tell him about the burials and the ledger and the mornings, and he goes away thinner in the face than he arrived. He does not sell up.`; }
+      d.fame = Math.max(0, d.fame - 4); addRep(d, "blood", 4);
+      return `You give him an hour of pleasant nothing and send him off with it. He will work most of it out anyway, more slowly and at somebody's expense.` } },
 };
 const LATE_KEYS = Object.keys(LATE);
 function lateWeek(d){
@@ -33678,7 +33779,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     runway, moneyRow, RUNWAY_WARN, RUNWAY_BAD, RUNWAY_BUILD, weeklyBill, creditLine, billIf, staffWages,
     /* #247 phase 2 — the bill's own lines, so an instrument can ask which of them a house can stop
        paying rather than reconstruct the total from outside and call the residual "buildings" */
-    bUpkeep, docWage, seasonUpkeep, isAuctor, CREDIT_WEEKS,
+    bUpkeep, docWage, seasonUpkeep, CREDIT_WEEKS,   /* `isAuctor` is already on this handle further down */
     OVER_TEXT, DEBT_STAGE,   /* #247 — the end screen's own table, so a check can ask whether a kind can be shown */
     swingOf, exposed, swingWeek, SWING_KEEP,   /* #247a — what an ordinary week of this house moves */
     docCalm, cellCalm, perkCalm, lanCalm, collOn, docUnrest, pit,   /* #247b — the terms of the weekly drift */
@@ -33755,7 +33856,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     borrow, LENDERS, LEND_KEYS, owes, loanLender, canBorrow, loanWeeks, loanFuse, loanClock, EMPTY_LIMIT,   /* #163 */
     loanWeek,   /* #235 — the escalation ladder is read off its own source by checks/debt.mjs */
     RUINS, RUIN_KEYS, facOf, lawOf, inBreach,
-    COUNSEL, WHISPERS, YARD, LATE, NIGHT, ASKS, REFUSE_REASONS, RIVAL_MOVES, FREEDMEN, AFTERS, FEUD_CAUSES, griefStricken, isAuctor, refuseCandidate, refuseWeek, endRefusal, refusing, canFight, refuseOdds, refuseRisk, REF_KEYS,   /* #201 — everything the refusal gate reads */   /* #186 — eleven registers no probe could reach; the account is in checks/voice.mjs */
+    COUNSEL, WHISPERS, YARD, LATE, LATE_KEYS, lateWeek, NIGHT, ASKS, REFUSE_REASONS, RIVAL_MOVES, FREEDMEN, AFTERS, FEUD_CAUSES, griefStricken, isAuctor, refuseCandidate, refuseWeek, endRefusal, refusing, canFight, refuseOdds, refuseRisk, REF_KEYS,   /* #201 — everything the refusal gate reads */   /* #186 — eleven registers no probe could reach; the account is in checks/voice.mjs */
     /* #196 — the conversation the player starts. WORDS is a register like the eleven above, so
        `voice` requires it here, and it is free to sit on its own line now that `bulk` ends App at
        its own closing brace instead of at the end of the file. */

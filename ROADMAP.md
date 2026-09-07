@@ -4389,6 +4389,67 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.226.0 — #248 phase 1: the second decade doubles — and the item's own KPI turns out to be unreachable from this table
+
+**The premise held and the risk note did not.** #248 was written off a measurement four releases old,
+and three items in this run have had premises that did not survive being re-read, so
+`probes/decade.mjs` re-took it first — 2 seeds × 96 houses × 420 weeks:
+
+| new chronicle shapes a week, by quarter | Q1 | Q2 | Q3 | Q4 |
+|---|---|---|---|---|
+| measured, seed 1 | 0.600 | 0.245 | 0.187 | 0.156 |
+| measured, seed 2 | 0.594 | 0.263 | 0.192 | 0.146 |
+| **the item said** | **0.57** | **0.26** | **0.19** | **0.14** |
+
+Four releases and a whole event-die overhaul later, the curve has not moved — which #245 phase 3
+predicted in as many words (*"the late-game rate is #248's to raise"*). Past week 150 a house meets
+**0.045 new events and 0.19 new shapes a week** while facing **12.97 agenda rows** — the item guessed
+seven and was understating its own case.
+
+**What did not survive is the risk note.** *"Content for the two in sixteen"* was written when
+almost nobody reached the late game. Measured now: **63.5% and 66.7% of houses see at least one**
+LATE event, the median house sees two of four, and **16.7% and 18.8% see all four**. Survival moved
+under it — v3.196.0's ladder prices, the second generation, #240's successors, v3.224.0's longer
+lives. Ten in sixteen is a different investment case from two, and it is why the content was written.
+
+**So `LATE` doubles.** Four new one-shot events, chosen against what a decade leaves a house that a
+young one has not got — `ashes` (the column of dead men outside the west wall), `greybeard` (the
+doctore whose hands have gone, whom the men cover for), `name` (a school on the Nola road trading on
+yours), `newcomer` (a young man who has bought a yard you outlived, asking how it is done).
+`FREEDMEN` already covers the man who comes back, so none of them is that. `checks/decade.mjs` holds
+the contract the doubling put at risk: **8/8 reachable on a driven ten-year house, 23/23 choices
+returning a line, 8/8 firing once.**
+
+**And it did not move the KPI. That is the finding, and it is worth more than the content.**
+Re-measured on the same seeds with eight entries instead of four:
+
+| | seed 1 | seed 2 |
+|---|---|---|
+| Q4 new shapes a week (bar 0.25) | 0.156 → **0.136** | 0.146 → **0.138** |
+| houses seeing any LATE | 63.5% → 63.5% | 66.7% → 66.7% |
+
+The content *lands* — a house that lives sees **seven of the eight** at p90, and the four new ones
+fire 37 to 46 times per 96 houses. It cannot move that number, and the reason is structural rather
+than a matter of volume:
+
+> **Every gate opens in the run's second quarter.** Years 6–10 is weeks 108–180; the quarter
+> boundary of a 420-week run is 105. Measured median firing weeks: `boy` 107–115, `rival` 154–206,
+> `memoir` 158–174, `ashes` 165–174, `name` 164–175, `greybeard` 208–224, `tired` 245–252. **Seven
+> of the eight are spent by the third quarter. The KPI measures weeks 315–420.**
+
+One-shot content gated at year 6 cannot raise a fourth-quarter novelty rate however many entries the
+table has. It is also why #245 phase 3's freshness multiplier did not raise it: dealing the existing
+thirty-six sooner leaves the fourth quarter emptier, not fuller. `newcomer` is the only one of the
+eight that lands in Q4 at all, and only because `lastDark` takes a decade to become true.
+
+**What phase 2 and 3 need, stated from the measurement:** gates in the second DECADE rather than the
+second quarter, or content that is not one-shot. The item's phases 2 (*the forebear as a presence*)
+and 3 (*late-only systems*) are both closer to the second than phase 1 was, and neither is opened
+here.
+
+**Shipped:** `probes/decade.mjs`; four new `LATE` entries; `checks/decade.mjs`; `lateWeek` and
+`LATE_KEYS` on the handle. Also removed a duplicate `isAuctor` export introduced in v3.225.0.
+
 ### v3.225.0 — #247 phase 2: the money death has an approach, and it belongs to the house that least looks like it needs one
 
 **The claim all three parts of #247 landed on** was *"every remedy converts a death into a money
@@ -8288,7 +8349,17 @@ the one v3.196.0 met — `ledger.mjs`'s floor on a finished house netting coin d
 
 ---
 
-**#248 — The Second Decade** *(content · medium–large · 3 phases)*
+**#248 — The Second Decade** *(content · medium–large · 3 phases)* — **PHASE 1 SHIPPED v3.226.0, AND
+IT PROVED ITS OWN KPI UNREACHABLE FROM THIS TABLE.** The premise re-measured exactly (novelty
+0.600/0.245/0.187/0.156 against the filed 0.57/0.26/0.19/0.14; 12.97 agenda rows a week past week
+150 against the item's guess of seven). **The risk note is retired:** 63.5-66.7% of houses now see a
+LATE event and 16.7-18.8% see all four, not "two in sixteen" — survival moved under it. `LATE`
+doubled to eight (`ashes`, `greybeard`, `name`, `newcomer`), all eight reachable, one-shot and
+answering on every choice. **And Q4 novelty went 0.156 → 0.136 and 0.146 → 0.138 against a bar of
+0.25**, because every gate opens in the run's SECOND quarter (years 6-10 = weeks 108-180; the
+boundary is 105) and seven of the eight are spent by the third. One-shot content gated at year 6
+cannot raise a fourth-quarter rate — which is also why #245 phase 3's freshness multiplier could
+not. Phases 2 and 3 need gates in the second DECADE, or content that is not one-shot.
 
 `LATE` — *"things that only a house with a decade behind it can be offered"* — is four one-shot events:
 memoir (year ≥ 8), boy (≥ 6), rival (≥ 7), tired (≥ 9), each fired seven or eight times across sixteen
