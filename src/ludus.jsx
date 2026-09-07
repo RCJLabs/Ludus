@@ -6629,6 +6629,21 @@ function makeGames(d){
       for(let i=0;i<3;i++){ const alt = pickRivalOpp(d, ot); if(avg(alt.opp) > avg(pr.opp)) pr = alt; }
       if(!pr.opp.nick) pr.opp.nick = freshNick(d, onCard());              /* nobody unnamed is on that bill */
     }
+    /* ---- AND A GRUDGE PREMIUM THAT BELONGS HERE AND IS NOT BUILT, WITH THE MEASUREMENT ----
+       `rematch?1.25` prices a card with a story, so the obvious next line is the same idea for a
+       house that hates you — the editor knows a feud fills the tiers — and it is the shape #246
+       phase 5 was opened as. `probes/facing.mjs` refused it, 64 houses x 420 weeks:
+
+         a rival's card is in the pool on             2,921 weeks
+         and ALREADY pays the most on                  66.0% of them   <- the picker is not the fault
+         where it loses, the winner pays            p50 1.61x  p75 2.41x
+         and the grudge on those lost cards is      p50 0      p90 18
+
+       So the cards that lose, lose by a TIER, and they lose while carrying no grudge at all: a term
+       of `1 + grudge/100 x K` flips 2.0% of them at K=0.45 and 6.2% at K=1.5. Buying a real share
+       needs +50% FLAT on every rival's card — a subsidy on half the bill, not a grudge mechanic.
+       The reference player already takes the rival's card exactly when it pays most, which is
+       correct play against a correctly built bill. There is no fault here, so there is no line. */
     offers.push({ id:d.nextId++, tier, festival, opp:pr.opp, oppRef:pr.ref, rematch:pr.rematch, grudgeM:pr.grudgeM,
       stakes:sine?"sine":"standard",
       purse: rnd((t.purse[0]+R()*t.purse[1]) * (sine?1.8:1) * (pr.rematch?1.25:1) * (F.purse||1) * seasonPurse(d)

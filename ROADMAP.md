@@ -4389,6 +4389,57 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.223.0 — #246 phase 5's verify-first: the price is a null, and the elasticity is the finding
+
+**The phase opened yesterday and this release declines to build it, with the numbers.** v3.222.0
+measured that a player who fights his three rivals at 23% of bouts instead of 15% nearly doubles the
+time their houses spend above every hostile gate and takes a hostile act from one every 37 weeks to
+one every 23 — and left one thing open: the bill names a rival on 48% of its offers and the
+reference player fights one on 15% of his bouts, and nothing then knew where the rest went.
+`probes/facing.mjs` reconstructs `takeBout`'s filtering stage by stage and follows them.
+
+**The funnel — two constraints, cleanly separated.** 64 houses × 420 weeks:
+
+| | default | seek |
+|---|---|---|
+| weeks the arena bill is up at all | 33.4% | 33.7% |
+| weeks a rival is named on it | 30.3% | 31.4% |
+| weeks a rival survives to the standard pool | 22.7% | 23.2% |
+| **taken when available** | **64.9%** | **100%** |
+| rivals fought, share of bouts | **15.1%** | **23.7%** |
+
+The ceiling is ~23% and it is **supply**: the arena bill is up a third of weeks and the pit fills
+the rest, where there is no house and no grudge. Two hypotheses died here — the men-count filter
+costs the rival cards nothing (all 10,647 rival offers were singles), and nothing is lost after the
+pool either (under `seek`, a rival card that reaches the pool is taken 100% of the time).
+
+**And then the price, which is what decided the phase — against it.** On the 2,921 weeks a rival's
+card was in the pool:
+
+- it **already pays the most on 66.0%** of them — the picker is not the fault;
+- where it loses, the winner pays **1.61× at the median**, 2.41× at p75, 3.16× at p90;
+- and the grudge on those lost cards is **0 at the median**, 5 at p75, 18 at p90.
+
+So the cards that lose, lose **by a tier**, and they lose while carrying no grudge at all. A term of
+`1 + grudge/100 × K` — the natural sibling of the `rematch ? 1.25` already on that line — flips
+**2.0% at K=0.45** and 6.2% at K=1.5. Buying a real share means **+50% flat on every rival's card**,
+which is a subsidy on half the bill and not a grudge mechanic. The reference player is already
+taking the rival's card exactly when it pays most, which is correct play against a correctly built
+bill. **There is no fault here, so there is no line** — and the refusal is written at the purse
+formula with the measurement beside it, in the shape v3.195.0 set.
+
+**What the file found instead is an elasticity, and it is worth more than the phase was.** The
+`seek` arm lifts the grudge's intake 0.892 → 1.015 a house-week — **+14%** — and that doubles the
+mass above `GRUDGE_SABOTAGE` (4.28% → 8.09%) and takes the hostile interval from 37 weeks to 23.
+The gates sit far out on the grudge's tail, so a small move in its mean is a large move in the only
+thing #246 cares about. **Fourteen per cent of the intake is what the entire bill is worth.** The
+grudge's own arithmetic — which #246 phase 4 left written down and unbuilt, and which v3.222.0
+declined to touch on a probe written to test something else — is a smaller change with a much bigger
+lever on it, and it now has a measured target and a falsifier.
+
+**Shipped:** `probes/facing.mjs`; the refused premium recorded at the purse formula. No game
+constant changed, and no phase built.
+
 ### v3.222.0 — #246's verify-first: the grudge's servo is 1.6% of its outflow, and the real answer is the bill
 
 **A mechanism with the right shape, the right numbers and the wrong size.** #246 phase 2 left one
@@ -7934,10 +7985,23 @@ stakes he accepts, so the stakes filter is not what drops them; where the rest g
 An arm that takes a rival's card whenever the standard bill carries one, and changes nothing else,
 reaches 21.7% and moves the intake 0.892 → 1.015 a house-week, house-weeks above `GRUDGE_SABOTAGE`
 **4.28% → 8.09%**, above `GRUDGE_POACH` 2.09% → 4.54%, and hostile acts from one every 37 weeks to
-one every 23. *Phase 5, written down and not built:* **a card worth taking against
-a house that hates you** — the grudge belongs on the purse or the standing of the offer, so that
-choosing to fight the man who hates you is a decision with a price rather than something the bill
-does to you while you maximise the gate. Nothing was changed in v3.222.0. *Phase 4:* everything the phase asks for was already written and the first of it almost never
+one every 23. *Phase 5 was opened as a price and REFUSED at its verify-first,
+v3.223.0.* `probes/facing.mjs` followed the bill through `takeBout` stage by stage: the ceiling is
+~23% of bouts and it is supply (the arena bill is up a third of weeks; the pit fills the rest), a
+rival card that reaches the pool is taken 100% of the time under a preferring picker, and on the
+2,921 contested weeks the rival's card **already pays the most on 66%**. Where it loses it loses by
+a tier — the winner pays 1.61× at the median — while carrying a grudge of **0 at the median**, so
+`1 + grudge/100 × K` flips 2.0% at K=0.45 and 6.2% at K=1.5, and a real share needs +50% flat on
+every rival card. No line was written. *What replaces it:* the ELASTICITY the same probe found —
++14% of grudge intake doubles the mass above `GRUDGE_SABOTAGE` and takes the hostile interval 37 wk
+→ 23 wk, because the gates sit far out on the tail. **Phase 5, re-specified and not built: the
+grudge's own arithmetic** — the outflow is 74% one unconditional `grudgeDecay` of 0.972 a house-week
+that runs forever at the same rate whatever the house has to forgive, and a blood feud that fades as
+fast as a slight is the thing the item was always about. Two shapes are open and they differ in
+kind: **(a) legibility** — the bill never marks a rival's card as a rival's, so a player has no way
+to know that fighting him is a choice with a consequence (small, safe, and unmeasurable by this
+suite by construction, since the rope maximises purse); **(b) the decay curve** — slowing it at high
+grudge, or flooring it once a house has a real reason. Nothing was changed in v3.222.0 or v3.223.0. *Phase 4:* everything the phase asks for was already written and the first of it almost never
 arrived — a poach was put in front of the player on **4 of 32** cases, and **all 18 men lost went
 without a card ever being offered.** `startPoach` plants the beat now and `fireArc` raises it ahead
 of the week's draw: **35 of 41 shown**, and six of the eleven remaining losses are men the player was
