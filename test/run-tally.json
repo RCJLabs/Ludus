@@ -228,4 +228,5 @@
 {"v":"3.229.0","checks":176,"failed":[]},
 {"v":"3.230.0","checks":176,"failed":[]},
 {"v":"3.231.0","checks":176,"failed":[]},
-{"v":"3.232.0","checks":176,"failed":[]}]
+{"v":"3.232.0","checks":176,"failed":[]},
+{"v":"3.233.0","checks":177,"failed":["bulk","die","square"]}]

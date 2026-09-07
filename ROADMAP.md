@@ -4463,6 +4463,30 @@ read `d.houses`, which does not exist, and returned `0/0/0` that looked exactly 
 has a doctore" — it is `d.rivals`, and **54 of 58 rival houses have one, as the boolean `true`**,
 which is phase 2's subject stated as a number.
 
+**THE GATE WENT 174/177, AND ALL THREE WERE WORTH THE TIME.**
+
+- **`bulk`** — SECT had grown to 1490 lines past its 1483 cap, because the age was inlined at both
+  render sites. That cap exists precisely to catch this. The fragment is now a `DocYears` component
+  at module scope, both sites are one line again, and SECT is back to 1482.
+- **`square`** — *"only 363 of 400 paired weeks tired BOTH men"*, and this one was a real fault in the
+  release. Its fixture builds `makeDoctore(d, 99)`, which came out at `44 + sand` and so landed on
+  **exactly 58** — `DOC_RETIRE` — for every seed that drew a 14. My `docAgeOf` clamped to 70 while the
+  door sat at 58: two constants set independently that did not agree, so **the market could sell you a
+  man already finished**, and 37 of 400 fixture weeks retired him instead of running the square (9.25%
+  against the 8.3% of draws that a 14 is). The clamp is `DOC_RETIRE - 3` now — a hire always has years
+  left in him. It is the same fault as the ungated eye door, in the other constant. Restored to
+  400/400 with the lesson, tie and potential counts byte-identical to the v3.232.0 baseline.
+- **`die` arm 6** — *"a lift of 1.6 points, floor +2"*, and this one was **not** the release. The arm
+  holds a two-point bar on a single seed base, and v3.233.0 re-phased that base's stream (a retiring
+  doctore redraws his market). Measured on the shipped build across five bases, the lift reads
+  **1.6 · 8.1 · 6.6 · 5.1 · 5.6** — `DIE-RUN` alone is the outlier, and what is odd about it is its
+  FLAT arm at 16.4% against 8.3-12.3% everywhere else. The weighting mechanism was never damaged. The
+  check's own header already records this shape once, as *"9.1 points became 0.7 on a release that
+  added no draws at all"*, and its own earlier repair was to widen the sample (six houses to eighteen)
+  rather than move the bar. Same repair, a level up: **the bar is unchanged at +2 and the sample is
+  three bases pooled, reading 5.4.** The arm now prints its per-base spread, so the next time one base
+  wanders it is visible rather than fatal. Cost: 18s to 38s.
+
 **`checks/doctore.mjs`** (name verified free in *both* directories first), six arms. Arm 4 is a
 regression guard for this release's own fault, and it is anchored to the man the game actually makes
 — the market's best candidate by fee, which is what the rope takes — rather than to a bound of the

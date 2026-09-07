@@ -111,7 +111,7 @@ export async function run({ p, errors }){
        flat share (every weight one, every cooldown nought, restored after). The floor is the LIFT
        between them plus an absolute, both set from the measurement written in ROADMAP v3.204.0 — a
        flat die is what a regression looks like, and it is what the sabotage restores. */
-    const runDie = (label) => {
+    const runDie = (label, base) => {
       const H = 18, W = 260; const drew = {}; const raw = {}; let weeks = 0;
       /* ---- PER HOUSE AND PER WEEK, so the two dice can be compared over the same span ----
          This pooled every draw and divided. The two runs do not live equally long — the houses die,
@@ -126,7 +126,7 @@ export async function run({ p, errors }){
         A.EVENTS[k].make = function(d){ const ev = f.call(this, d);
           if(ev){ drew[k] = (drew[k]||0) + 1; if(cur) cur.draws.push({ k, w:d.week }); } return ev; }; }
       try {
-        for(let h=0; h<H; h++){ const d = A.newGameState("Die"+h, "clean", `DIE-RUN-${h}`, null);
+        for(let h=0; h<H; h++){ const d = A.newGameState("Die"+h, "clean", `${base}-${h}`, null);
           cur = perHouse[h];
           for(let w=0; w<W; w++){ if(d.over) break; try { R.lanista(d); } catch(e){ out.notes.push(`${label}: rope threw at week ${w} of house ${h}: ${e && e.message || e}`); break; } weeks++; cur.weeks++; } }
       } finally { cur = null; for(const k of Object.keys(raw)) A.EVENTS[k].make = raw[k]; }
@@ -145,13 +145,38 @@ export async function run({ p, errors }){
         for(const x of run.perHouse[h].draws) if(x.w <= cap){ total++; if(RK.has(x.k)) rare++; }
       }
       return { total, rare, span, share: total ? rare/total : 0 }; };
-    { const weighted = runDie("weighted");
-      /* the same seeds on a flat die: every ticket one, every cooldown nought — the v3.203.0 draw */
-      const keep = {}; for(const k of Object.keys(A.EV_DIE)){ keep[k] = { ...A.EV_DIE[k] }; A.EV_DIE[k].w = 1; A.EV_DIE[k].cool = 0; }
-      let flat; try { flat = runDie("flat"); } finally { for(const k of Object.keys(keep)) Object.assign(A.EV_DIE[k], keep[k]); }
-      const rareKeys = A.EV_DRAWN.filter(k=>A.evTune(k).w >= 4);
-      const Wd = matched(weighted, flat, rareKeys), Fl = matched(flat, weighted, rareKeys);
-      const Wpool = shareOf(weighted, rareKeys).share;
+    /* ---- AND ONE SEED BASE CANNOT CARRY A TWO-POINT BAR EITHER ----
+       The same repair as the 6-to-18 houses one below, a level up. This arm held its floor on the
+       single base `DIE-RUN`, and v3.233.0 re-phased that base's stream (the doctore can retire now,
+       which redraws his market) and took its lift from 3.8 to 1.6. The mechanism was fine: measured
+       on the same build across five bases the lift read 1.6 · 8.1 · 6.6 · 5.1 · 5.6 — `DIE-RUN`
+       alone is the outlier, and its FLAT arm is what is odd about it at 16.4% against 8.3-12.3%
+       everywhere else. A statistic whose seed-to-seed spread is six points cannot be held to two on
+       one draw of it; the check's own header already records this shape once, as 9.1 points becoming
+       0.7 "on a release that added no draws at all". So the bar is unchanged and the sample is
+       three bases pooled, which reads 5.4. */
+    { const BASES = ["DIE-RUN", "DIE-ALT1", "DIE-ALT2"];
+      const rareKeys0 = () => A.EV_DRAWN.filter(k=>A.evTune(k).w >= 4);
+      let wRare = 0, wTot = 0, fRare = 0, fTot = 0, wSpan = 0, fSpan = 0, poolRare = 0, poolTot = 0;
+      let weighted = null, flat = null, perBase = [];
+      for(const base of BASES){
+        const wRun = runDie("weighted", base);
+        /* the same seeds on a flat die: every ticket one, every cooldown nought — the v3.203.0 draw */
+        const keep = {}; for(const k of Object.keys(A.EV_DIE)){ keep[k] = { ...A.EV_DIE[k] }; A.EV_DIE[k].w = 1; A.EV_DIE[k].cool = 0; }
+        let fRun; try { fRun = runDie("flat", base); } finally { for(const k of Object.keys(keep)) Object.assign(A.EV_DIE[k], keep[k]); }
+        const rk = rareKeys0();
+        const w = matched(wRun, fRun, rk), f = matched(fRun, wRun, rk);
+        wRare += w.rare; wTot += w.total; wSpan += w.span;
+        fRare += f.rare; fTot += f.total; fSpan += f.span;
+        const ps = shareOf(wRun, rk); poolRare += ps.rare; poolTot += ps.total;
+        perBase.push(`${base} ${((w.share-f.share)*100).toFixed(1)}`);
+        if(!weighted){ weighted = wRun; flat = fRun; }
+      }
+      const rareKeys = rareKeys0();
+      const Wd = { total:wTot, rare:wRare, span:wSpan, share: wTot ? wRare/wTot : 0 };
+      const Fl = { total:fTot, rare:fRare, span:fSpan, share: fTot ? fRare/fTot : 0 };
+      const Wpool = poolTot ? poolRare/poolTot : 0;
+      out.notes.push(`lift per seed base: ${perBase.join(" · ")} (pooled is what the floor is held on)`);
       { const Wr = shareOf(weighted, rareKeys), Fr = shareOf(flat, rareKeys);
         out.notes.push(`(pooled and unmatched: weighted ${Wr.rare}/${Wr.total} = ${(Wr.share*100).toFixed(1)}% over `
           + `${weighted.weeks} weeks · flat ${Fr.rare}/${Fr.total} = ${(Fr.share*100).toFixed(1)}% over ${flat.weeks} — `

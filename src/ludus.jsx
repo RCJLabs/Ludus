@@ -5327,8 +5327,16 @@ const DOC_SKILL_END = 32;   /* or his eye has gone, whichever comes first */
 const DOC_DECAY    = 0.35;  /* skill a year, per year he is over — see docBirthday on why not 1 */
 /* He went to the sand young, fought the years his own past line claims, and has been teaching since
    — the better he is, the longer that has been. #150's rule: the years the card prints and the years
-   the drain reads are the same number. */
-const docAgeOf = (sand, quality) => clamp(20 + sand + rnd(clamp(quality,30,82)/3.4), 34, 70);
+   the drain reads are the same number.
+
+   THE UPPER CLAMP IS `DOC_RETIRE` MINUS THREE, AND THE FIRST CUT'S 70 WAS INCOHERENT. Set against a
+   door at 58, a clamp at 70 lets the market sell you a man who is already finished: `checks/square.mjs`
+   builds its fixture with `makeDoctore(d, 99)`, which came out at 44 + sand and so landed on 58 for
+   every seed that drew a 14 — and 37 of its 400 paired weeks retired the man instead of running the
+   square, which is 9.25% against the 8.3% of draws that a 14 is. A hire always has years left in him
+   now. It is the same fault as the ungated eye door two functions down: a man who arrives finished is
+   not a man who has gone. */
+const docAgeOf = (sand, quality) => clamp(20 + sand + rnd(clamp(quality,30,82)/3.4), 34, DOC_RETIRE - 3);
 
 function makeDoctore(d, quality){
   const origin = pick(Object.keys(ORIGINS));
@@ -5361,8 +5369,9 @@ function makeDoctore(d, quality){
    past where a 250-week run ever reaches and the drain goes dark, which is the opposite failure.
 
    So the shape is kept and the coefficient is not 1: he loses `DOC_DECAY` per year for each year he
-   is over, so the decline still accelerates and a full post costs him single digits. He only SAYS
-   anything when the word for him changes,
+   is over, so the decline still accelerates while the median post costs him single digits — -7.4
+   measured, against -19.25 for the full walk from the onset to the door, which is the worst case and
+   is what `checks/doctore.mjs` arm 4 holds. He only SAYS anything when the word for him changes,
    because `docWord` is what the yard actually reads, and a line every single year is the receipt
    mistake `ludusLedger` already learned (21% of one chronicle, one sentence). */
 function docBirthday(d){
@@ -5997,6 +6006,13 @@ const DOC_WORTH = [
 const docShare = c => Math.round((c.skill/100) * 0.32 * 100);
 const docPupilShare = c => Math.round((c.skill/100) * 0.85 * 100);
 const docGuardPc = c => Math.round(c.skill/200 * 100);
+/* #251 phase 1 — his years, printed from the same field `docBirthday` writes and `doctoreWeek`
+   gates on, which is #150's rule met in one field. Defined here rather than inside `SECT` because
+   `bulk.mjs` caps that function's length and it was at 1482 of 1483: the first cut inlined this at
+   both sites, put SECT on 1490, and the cap caught it. `data-doc-age` is what a DOM arm would read. */
+const DocYears = ({ c, tail }) => (!c || c.age == null) ? null
+  : (<>, and he is <span data-doc-age={c.age}>{c.age}</span>
+      {c.age > DOC_AGE_FROM && (<span data-doc-old="1"> — {tail}</span>)}</>);
 
 function makeDoctoreMarket(d){
   if(d.doctore) { d.doctoreMarket = []; return; }
@@ -26075,12 +26091,7 @@ const SECT = {
             </div>
           </div>
         </div>
-        {/* #251 phase 1 — #150's rule: the age the drain reads is the age the panel prints, one
-            field, one number. The `data-doc-age` tell is what `checks/doctore.mjs` reads. */}
-        <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
-          {S.doctore.past}{S.doctore.age != null && (<>, and he is <span data-doc-age={S.doctore.age}>{S.doctore.age}</span></>)}
-          {S.doctore.age != null && S.doctore.age > DOC_AGE_FROM && (<span data-doc-old="1"> — the years have started to tell</span>)}.
-        </div>
+        <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>{S.doctore.past}<DocYears c={S.doctore} tail="the years have started to tell" />.</div>
         {S.doctore.tag && (<>
           <div style={{fontSize:"var(--fs-md)",marginTop:5,color:"var(--ink-2)"}}>
             <span className="laurel">{S.doctore.name}, {S.doctore.tag}.</span> {S.doctore.pastLine}
@@ -26200,10 +26211,7 @@ const SECT = {
               <span className="tag">{docWord(c.skill)}</span>
               <span className="tag tag-gold">{STAT_NAMES[c.spec]}</span>
             </div>
-            <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
-              {c.past}{c.age != null && (<>, and he is <span data-doc-age={c.age}>{c.age}</span></>)}
-              {c.age != null && c.age > DOC_AGE_FROM && (<span data-doc-old="1"> — you would be buying his last few years</span>)}.
-            </div>
+            <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>{c.past}<DocYears c={c} tail="you would be buying his last few years" />.</div>
             <div className="flex gap-1" style={{flexWrap:"wrap",marginTop:5}}>
               <span className="chip" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",borderColor:"var(--laurel-edge2)",color:"var(--laurel)"}}>The yard +{docShare(c)}%</span>
               <span className="chip" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",borderColor:"var(--laurel-edge2)",color:"var(--laurel)"}}>One pupil +{docPupilShare(c)}%</span>
