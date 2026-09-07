@@ -18943,9 +18943,39 @@ function challengeSquare(d, aid, bid){
    worth 15% more 29.3%, so this is a couple of afternoons' work for a man who is ready and a wall
    for one who is not — which is the whole difference between a gate and a delay. */
 const provedIt = g => !!(g && g.proved);
+/* ---- AND "WORTH BEATING" HAD TO STOP MEANING "PRICED AS HIGH" — #252 phase 2 ----
+   The note above is right that the bar should be the game's own measure of a man rather than a
+   number somebody chose. It picked the wrong measure. `gladValue` is CAREER-ACCUMULATED — wins x14,
+   and `gladName` on top of it is pfame x9 plus fans, scars, traits and a nick — so a man at twelve
+   wins and fifty-five renown is priced above anyone who has done less, which by construction is
+   everyone. The gate asked him to beat somebody the world does not contain.
+
+   MEASURED (`probes/rungs.mjs`, 2 seeds x 96 houses x 420 weeks, on the ~2,250 weeks a man who had
+   cleared both arithmetic terms wanted an afternoon):
+
+     somebody PRICED at or above him, in his own yard      4.5% / 3.1%   of those weeks
+     somebody PRICED at or above him, on the week's bill   1.1% / 0.4%
+     somebody as GOOD as him, in his own yard             32.5% / 29.5%
+     somebody as GOOD as him, on the week's bill          33.5% / 35.3%
+
+   The bill is WORSE than the yard on price, so this was never a matter of looking further afield;
+   and relaxing the price bar does not reach it either — at 80% of his price the yard supplies one
+   on 13.1% and 8.7% of weeks, because the best other man is worth under 60% of him on 72-81% of
+   them. It is the basis, not the threshold.
+
+   So the comparison is on what a man CAN DO rather than what he HAS DONE, which is the same six
+   numbers the arena fights him on. A ready man now gets his afternoon about every third week
+   instead of every twenty-second — "a couple of afternoons' work for a man who is ready and a wall
+   for one who is not", which is what the note above says it was always for.
+
+   It also dissolves an ordering fault rather than papering over it: `doSpar` credits the winner
+   `pfame += 4` BEFORE calling this, and at 9d a point that inflated him ~36d against the man he had
+   just beaten — so a peer who was dearer before the bout could be cheaper by the time he was
+   measured. Renown does not enter the comparison any more, so the order stopped mattering. */
+const fightQual = g => g ? STATS.reduce((n,k)=>n+(g[k]||0),0) / STATS.length : 0;
 function proveInSquare(d, w, l){
   if(!w || !l || provedIt(w)) return false;
-  if(gladValue(l) < gladValue(w)) return false;
+  if(fightQual(l) < fightQual(w)) return false;
   w.proved = { week:d.week, foe:fullName(l), worth:Math.round(gladValue(l)) };
   return true;
 }
@@ -33605,7 +33635,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        `masterNeed` and `provedIt` were on this handle; the two VERBS that grant a mastery and a
        second style were not, so no probe or check in this project has ever made a master. Same
        shape as #221's signature, #220's court and lot, and #219's rites. */
-    makeMasterOf, canSecond, startSecond, secondFee, SECOND_WEEKS, MASTERY, squareBout,
+    makeMasterOf, canSecond, startSecond, secondFee, SECOND_WEEKS, MASTERY, squareBout, fightQual, proveInSquare,
     /* what is new, and where — the marks the tab bar and the folded panels wear */
     tabMarks, tabSig, tabFresh, tabQuiet, markSeen, TAB_KEYS, TAB_SIG, TAB_QUIET, TAB_NAMES,
     sectMark, SECT_MARK, MARK_URG, faceMark, FACE_SECTS, agendaAsk, seenOf,

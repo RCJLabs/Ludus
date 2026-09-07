@@ -223,4 +223,6 @@
 {"v":"3.225.0","checks":174,"failed":[]},
 {"v":"3.226.0","checks":175,"failed":[]},
 {"v":"3.227.0","checks":176,"failed":[]},
-{"v":"3.228.0","checks":176,"failed":[]}]
+{"v":"3.228.0","checks":176,"failed":[]},
+{"v":"3.229.0","checks":176,"failed":["careers"]},
+{"v":"3.229.0","checks":176,"failed":[]}]

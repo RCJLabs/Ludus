@@ -939,16 +939,61 @@ export async function installRope(p){
             .sort((a,b)=>(b.wins||0)-(a.wins||0))[0];
           if(want){
             const mine = A.gladValue(want);
-            /* the CHEAPEST man worth at least as much as he is — `proveInSquare` wants
-               `gladValue(loser) >= gladValue(winner)`, and the cheapest such partner is the one he
-               is likeliest to beat */
-            const mate = men.filter(g=>g.id !== want.id && !g.injury && !g.benched && A.gladValue(g) >= mine)
-              .sort((a,b)=>A.gladValue(a) - A.gladValue(b))[0];
+            /* the man `proveInSquare` will accept, and the WEAKEST of them — from v3.229.0 the gate
+               compares fighting quality rather than price (see the note over `proveInSquare`), so
+               the partner is chosen on the same basis the gate reads and the least good qualifying
+               one is the one the candidate is likeliest to beat. */
+            const qual = A.fightQual || (g => (A.STATS||[]).reduce((n,k)=>n+(g[k]||0),0)/Math.max(1,(A.STATS||[]).length));
+            const myQ = qual(want);
+            const mate = men.filter(g=>g.id !== want.id && !g.injury && !g.benched && qual(g) >= myQ)
+              .sort((a,b)=>qual(a) - qual(b))[0];
             /* ---- AND THE COUNT THAT EXPLAINS THE GATE ----
                `proveInSquare` wants the man he beats to be worth AT LEAST AS MUCH as he is. A man
                with twelve wins and fifty-five renown is, by construction, near the top of his own
                house — so the partner the gate demands frequently does not exist in the yard at all.
                That is a different failure from losing the bout, and the two are counted apart. */
+            /* ---- AND WHAT A DIFFERENT BAR WOULD HAVE FOUND — #252 phase 2's counterfactual ----
+               The gate's own note calls the proof "a couple of afternoons' work for a man who is
+               ready and a wall for one who is not". v3.227.0 measured it as a wall for the READY
+               man: no partner worth as much existed on 95-97% of the weeks one was wanted. These
+               count, without changing anything, how often each candidate bar WOULD have found a
+               partner on the same weeks — so the rule is chosen from a measurement rather than from
+               a plausible sentence. */
+            { const others = men.filter(g=>g.id !== want.id && !g.injury && !g.benched);
+              const best = others.reduce((m,g)=> (!m || A.gladValue(g) > A.gladValue(m)) ? g : m, null);
+              if(others.length) bump("wantedPeer");
+              if(others.some(g=>A.gladValue(g) >= mine)) bump("peerAt100");
+              if(others.some(g=>A.gladValue(g) >= mine*0.9)) bump("peerAt90");
+              if(others.some(g=>A.gladValue(g) >= mine*0.8)) bump("peerAt80");
+              if(best) bump("peerBestOther");
+              /* ---- AND WHETHER THE BILL COULD SUPPLY WHAT THE YARD CANNOT ----
+                 A generic `genOpponent` man cannot be priced against a player's — `potential` and
+                 `age` are not set on him and `gladValue` guards rather than computes (see the note
+                 over it; adding the fields would re-phase every seeded house). A RIVAL HOUSE's man
+                 is built by `makeRivalFighter`, which does set them, so he is comparable. This
+                 counts how often the week's own card carried one worth at least as much as the
+                 candidate — the question of whether the proof could come from the sand. */
+              /* ---- AND ON FIGHTING QUALITY RATHER THAN ON PRICE ----
+                 `gladValue` is career-accumulated: wins x14, pfame x9, plus scars, traits and a
+                 nick. A man at twelve wins and fifty-five renown has more career than anyone in
+                 the world by construction, so a bar set on his PRICE can never be met. His stat
+                 average is what he can do rather than what he has done, and it is the obvious
+                 alternative basis — measured here before it is proposed. */
+              const av = g => (A.STATS||[]).reduce((n,k)=>n+(g[k]||0),0) / Math.max(1,(A.STATS||[]).length);
+              const myAv = av(want);
+              if(others.some(g=>av(g) >= myAv)) bump("qualPeerYard");
+              if(others.some(g=>av(g) >= myAv*0.95)) bump("qualPeerYard95");
+              const bill = (d.games && d.games.offers) || [];
+              const named = bill.filter(o=>o && o.oppRef && o.oppRef.house && o.opp);
+              if(bill.length) bump("billUp");
+              if(named.length) bump("billNamed");
+              if(named.some(o=>A.gladValue(o.opp) >= mine)) bump("billPeer100");
+              if(named.some(o=>A.gladValue(o.opp) >= mine*0.9)) bump("billPeer90");
+              if(bill.some(o=>o && o.opp && av(o.opp) >= myAv)) bump("qualPeerBill");
+              if(bill.some(o=>o && o.opp && av(o.opp) >= myAv*0.95)) bump("qualPeerBill95");
+              if(best) { const r = A.gladValue(best) / Math.max(1, mine);
+                bump(r >= 1 ? "bestRatio100" : r >= 0.9 ? "bestRatio90" : r >= 0.8 ? "bestRatio80"
+                  : r >= 0.6 ? "bestRatio60" : "bestRatioUnder60"); } }
             if(!mate) bump("noPeer");
             else if(!A.squareReady || fin(A.squareReady,[d, want, mate])){
               let res = fin(A.squareBout,[d, want.id, mate.id]);
