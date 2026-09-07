@@ -4389,6 +4389,72 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.231.0 — #248 phase 3: the item's KPI was never failing — the instrument was reading a fifth of the chronicle
+
+**Phase 3 set out to build a ladder of milestone lines and found two faults in the measurement
+instead, the second of which invalidates the item's premise and two of this run's own releases.**
+
+**The first fault: the KPI counts arithmetic as writing.** Its shape function strikes proper nouns
+and KEEPS DIGITS, reading only the first forty characters — so a line carrying a changing figure
+near its start reads as a brand new shape every time it appears. Measured with digits struck out
+too, the inflation grows through the run and is worst exactly where the item lives:
+
+| new shapes a week | Q1 | Q2 | Q3 | Q4 |
+|---|---|---|---|---|
+| as the KPI defines it | 0.600 | 0.254 | 0.190 | 0.136 |
+| digits struck out too | 0.551 | 0.220 | 0.143 | 0.090 |
+| **so arithmetic is** | 8% | 13% | 25% | **34–36%** |
+
+That alone killed the obvious phase 3. A ladder of milestones — *the three hundredth bout, the
+fiftieth man buried* — would have hit the bar by adding exactly that arithmetic, without a single
+new sentence anybody wants to read.
+
+**The second fault is the release.** `endWeek` opens with `lateWeek`, `foreWeek` and `bookWeek` and
+only later reaches `ludusLedger`, which does `d.week++`. Everything written in the first half of the
+week therefore carries the OLD week number — and the novelty loop's filter was `c.week === d.week`,
+which **drops all of it**. A run whose whole log held 68 book lines showed **zero** through that
+filter. Counted properly — by identity, since `chron` unshifts and the log rolls — the same run
+reads:
+
+| | Q1 | Q2 | Q3 | Q4 |
+|---|---|---|---|---|
+| by the week stamp (what the item was filed on) | 0.598 | 0.229 | 0.198 | **0.143** |
+| **by identity** | **3.470** | **1.809** | **1.238** | **1.044** |
+| and with digits struck out too | 2.936 | 1.211 | 0.666 | **0.415** |
+
+**The week stamp was dropping 20,628 of 26,041 lines — 79% of the chronicle.** `probes/pace.mjs`,
+which measures the same quantity independently and is where the item's figure came from, agrees once
+corrected: **3.33 / 1.92 / 1.29 / 1.12** on its own 24 × 420 run. Nothing forced those two to land
+together. The item's bar is
+**0.25 new shapes a week in the fourth quarter**. The true figure is **1.044**, or **0.415** after
+striking the digits. **It was met all along, by four times over, and by 1.7× even on the strict
+measure.**
+
+**What this invalidates, stated plainly.** #248's headline — *"first-time events fall from 86 in the
+opening thirty weeks to zero past week 150"* — and its filed curve 0.57 / 0.26 / 0.19 / 0.14, which
+the broken filter reproduces to two decimals. v3.226.0's conclusion that doubling `LATE` "did
+nothing": it was measured through the same filter, and `LATE`'s lines are written in `lateWeek`, the
+first call in `endWeek` — invisible to it. v3.230.0's arithmetic about the forebear, for the same
+reason. And `probes/pace.mjs`'s novelty arm, which produced the original numbers and which #245
+phase 3 also read. All corrected here.
+
+**What still shipped, as content rather than as a fix.** `bookWeek` — the item's phase 3 read as
+chronicle rather than as a sheet: the house's own book, its dead remembered out loud by the yard
+that outlived them. Seven lines drawing on the annals — a man's record, how long he has been in the
+ground, the bench his name is still cut into — on a nine-week cadence, recurring, gated on a book
+worth remembering (`BOOK_MIN` 12 buried, which every house that lives reaches). It carries no
+leading figure, so it is novelty under the strict measure too, and it takes no `R()` draw for the
+reason `foreWeek` does not.
+
+**`checks/decade.mjs` arm 6 holds the fault itself**, which is the durable part: it counts the same
+run BOTH ways and fails if the week stamp ever finds as much as identity does. A filter fault cannot
+be caught by a floor on the number it corrupts — only by measuring it against the thing it should
+agree with.
+
+**Shipped:** `bookWeek`, `BOOK_LINES`, `BOOK_EVERY`, `BOOK_MIN`, `bookDead` on the handle;
+`checks/decade.mjs` arm 6; the corrected novelty count in `probes/decade.mjs` and `probes/pace.mjs`;
+a strict (digit-struck) curve reported alongside the KPI's own.
+
 ### v3.230.0 — #248 phase 2: the forebear was a list of names on a sheet — and the right quarter is not the same as enough houses
 
 **Dark state, confirmed by reading before anything was built.** `succeed` writes `d.forebears` —
@@ -8590,8 +8656,18 @@ the one v3.196.0 met — `ledger.mjs`'s floor on a finished house netting coin d
 
 ---
 
-**#248 — The Second Decade** *(content · medium–large · 3 phases)* — **PHASE 1 SHIPPED v3.226.0, AND
-IT PROVED ITS OWN KPI UNREACHABLE FROM THIS TABLE.** The premise re-measured exactly (novelty
+**#248 — The Second Decade** *(content · medium–large · 3 phases)* — **CLOSED v3.231.0, AND ITS
+PREMISE WAS AN INSTRUMENT FAULT.** Phase 3 found that the novelty loop filtered chronicle lines by
+`c.week === d.week`, while `endWeek` writes half its chronicle — `lateWeek`, `foreWeek`, `bookWeek`
+— BEFORE `ludusLedger` does `d.week++`. **It was dropping 20,628 of 26,041 lines, 79% of the log.**
+The item's filed curve 0.57/0.26/0.19/0.14 is what that filter produces; counted by identity the
+same run reads **3.470 / 1.809 / 1.238 / 1.044**, against the item's own bar of **0.25 in the fourth
+quarter** — met four times over, and 1.7× over even after striking digits (which are worth 34-36% of
+Q4's score on their own, a second fault found on the way). So phases 1 and 2 did not fail; they were
+measured by something that could not see them. `LATE` doubled anyway (v3.226.0), the forebear has a
+presence (v3.230.0) and the house's book is read aloud (v3.231.0) — all kept as content. Original
+text follows, and its premise does not survive.
+*Phase 1 shipped v3.226.0:* The premise re-measured exactly (novelty
 0.600/0.245/0.187/0.156 against the filed 0.57/0.26/0.19/0.14; 12.97 agenda rows a week past week
 150 against the item's guess of seven). **The risk note is retired:** 63.5-66.7% of houses now see a
 LATE event and 16.7-18.8% see all four, not "two in sixteen" — survival moved under it. `LATE`
@@ -8609,7 +8685,11 @@ new shapes a week from each of those eight houses to move the KPI, so **it canno
 built for the houses that reach it rather than for the number: `foreWeek`, six lines on a 14-week
 cadence, recurring rather than one-shot, with no `R()` draw so nothing re-phases. **The KPI is a
 rate over ALL Q4 house-weeks: phase 1 had reach but fired in Q2, phase 2 has the quarter but not the
-reach, and phase 3 needs both.**
+reach, and phase 3 needs both.** *(CORRECTED v3.231.0: the reasoning above is sound and the
+NUMBER it rests on was not. The novelty loop dropped every chronicle line written before
+`ludusLedger` does `d.week++` — 79% of the log — so phases 1 and 2 were measured as doing nothing by
+an instrument that could not see them. Counted properly the fourth quarter reads 1.044 against the
+item's bar of 0.25. #248's KPI was never failing.)*
 
 `LATE` — *"things that only a house with a decade behind it can be offered"* — is four one-shot events:
 memoir (year ≥ 8), boy (≥ 6), rival (≥ 7), tired (≥ 9), each fired seven or eight times across sixteen

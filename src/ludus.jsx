@@ -16304,6 +16304,57 @@ const FORE_LINES = [
   (d,f)=>`A trader asks after ${f.name} by name, having been away some years, and takes the news standing in the doorway with his list still in his hand.`,
   (d,f,who)=>`${who[0]} was bought by ${f.name} and has now served two masters in this house, which he mentions about once a season and did again today.`,
 ];
+/* ---- THE HOUSE'S OWN BOOK — #248 phase 3 ----
+   The item asks for "the annals turned into prose by the chronicle's own shapes", as a SHEET. A
+   sheet is a place to read and adds nothing to a week, and phases 1 and 2 both failed this item's
+   KPI for want of exactly that — reach without the quarter, then the quarter without reach. What
+   has both is the book itself: every house that lives keeps burying men, and by the fourth quarter
+   it has **45 to 60 who ever served and 31 to 46 in the ground** (`probes/decade.mjs`), still
+   moving by ten or twelve across the quarter. So the dead are remembered out loud, on a cadence,
+   by the yard that outlived them.
+
+   AND NOT AS A COUNT, WHICH IS THE TRAP THIS PHASE WAS NEARLY BUILT INTO. The obvious version is a
+   ladder of milestones — the three hundredth bout, the fiftieth man buried — and it would have hit
+   the bar without adding a sentence anybody wants to read. The KPI's shape function strikes proper
+   nouns and KEEPS DIGITS, and only reads the first forty characters, so a line carrying a changing
+   figure counts as brand new every time it appears. Measured, with digits struck out too:
+
+     new shapes a week      Q1      Q2      Q3      Q4
+     the KPI as defined    0.600   0.254   0.190   0.136
+     digits struck too     0.551   0.220   0.143   0.090
+     so arithmetic is         8%     13%     25%    34-36%
+
+   A third of what the fourth quarter scores is a number changing, not writing — and the effect is
+   worst exactly where the item lives. So these lines carry no leading figure and are counted the
+   strict way. They vary by the MAN and by the SENTENCE, which is the only kind of novelty worth
+   having, and they take no `R()` draw for the reason `foreWeek` does not. */
+const BOOK_EVERY = 9;             /* the yard talks about the dead more often than about the master */
+const BOOK_MIN = 12;              /* a book worth remembering out loud, not a young house's first losses */
+const bookDead = d => (d.annals||[]).filter(a => a && a.left != null
+  && ["dead","beasts","revolt"].includes(a.fate));
+const BOOK_LINES = [
+  (d,a,ago)=>`Somebody says ${a.name}'s name in the yard, in an argument about something else entirely, as a way of settling it. He has been dead ${ago} years and he is still the example.`,
+  (d,a,ago)=>`${a.name} won ${a.wins} times for this house and the men who are here now have only heard about him. One of them has the story wrong and is not corrected.`,
+  (d,a)=>`The doctore stops in the middle of a drill because somebody has done a thing exactly the way ${a.name} used to do it, badly, and it has taken him ${a.age ? "years" : "a while"} to see it again.`,
+  (d,a,ago)=>`A woman comes to the gate asking after ${a.name}, who has been in the ground ${ago} years. Nobody has the heart to make her say what she wanted, and she goes away with it unsaid.`,
+  (d,a)=>`${a.name}'s name is still cut into the underside of the bench at the far end. It has been painted over twice and it is still there, because whoever paints it knows it is there.`,
+  (d,a)=>`Two of the men are arguing about whether ${a.name} was any good. Neither of them ever saw him fight. The argument is not really about him.`,
+  (d,a,ago)=>`${ago} years on, and the block still calls that corner of the yard by ${a.name}'s name. The men who do it could not tell you who he was.`,
+];
+function bookWeek(d){
+  if(d.over || d.rome || d.city || d.travel || d.pendingEvent) return;
+  if(d.week % BOOK_EVERY !== 0) return;
+  const dead = bookDead(d);
+  if(dead.length < BOOK_MIN) return;
+  const turn = Math.floor(d.week / BOOK_EVERY);
+  const i = turn % BOOK_LINES.length;
+  /* a different man each time, walked deterministically through the book so nobody is picked twice
+     running and no draw is taken */
+  const a = dead[(turn * 7) % dead.length];
+  if(!a || !a.name) return;
+  const ago = Math.max(1, Math.round((d.week - a.left) / WEEKS_PER_YEAR));
+  chron(d, BOOK_LINES[i](d, a, ago), "info");
+}
 function foreWeek(d){
   if(d.over || d.rome || d.city || d.travel || d.pendingEvent) return;
   const F = (d.forebears||[]);
@@ -21989,6 +22040,7 @@ function endWeek(d){
   yardWeek(d);
   lateWeek(d);
   foreWeek(d);      /* #248 phase 2 — the man whose house this was */
+  bookWeek(d);      /* #248 phase 3 — and the men it buried */
   offerPact(d);
   pactWeek(d);
   edictWeek(d);
@@ -33946,7 +33998,8 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     borrow, LENDERS, LEND_KEYS, owes, loanLender, canBorrow, loanWeeks, loanFuse, loanClock, EMPTY_LIMIT,   /* #163 */
     loanWeek,   /* #235 — the escalation ladder is read off its own source by checks/debt.mjs */
     RUINS, RUIN_KEYS, facOf, lawOf, inBreach,
-    COUNSEL, WHISPERS, YARD, LATE, LATE_KEYS, lateWeek, foreWeek, FORE_LINES, FORE_EVERY, servedUnder, NIGHT, ASKS, REFUSE_REASONS, RIVAL_MOVES, FREEDMEN, AFTERS, FEUD_CAUSES, griefStricken, isAuctor, refuseCandidate, refuseWeek, endRefusal, refusing, canFight, refuseOdds, refuseRisk, REF_KEYS,   /* #201 — everything the refusal gate reads */   /* #186 — eleven registers no probe could reach; the account is in checks/voice.mjs */
+    COUNSEL, WHISPERS, YARD, LATE, LATE_KEYS, lateWeek, foreWeek, FORE_LINES, FORE_EVERY, servedUnder,
+    bookWeek, BOOK_LINES, BOOK_EVERY, BOOK_MIN, bookDead, NIGHT, ASKS, REFUSE_REASONS, RIVAL_MOVES, FREEDMEN, AFTERS, FEUD_CAUSES, griefStricken, isAuctor, refuseCandidate, refuseWeek, endRefusal, refusing, canFight, refuseOdds, refuseRisk, REF_KEYS,   /* #201 — everything the refusal gate reads */   /* #186 — eleven registers no probe could reach; the account is in checks/voice.mjs */
     /* #196 — the conversation the player starts. WORDS is a register like the eleven above, so
        `voice` requires it here, and it is free to sit on its own line now that `bulk` ends App at
        its own closing brace instead of at the end of the file. */
