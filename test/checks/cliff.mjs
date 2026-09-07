@@ -11,7 +11,12 @@
    or a runway already in blood. Measured the same way: 692 and 706 weeks, right 12.4% and 12.5%,
    every dying house still reached, seven and eight weeks of median warning.
 
-   FIVE ARMS — four seeded over 16 houses x 420 weeks under the reference player, and one driven.
+   SIX ARMS — four seeded over 16 houses x 420 weeks under the reference player, one driven, and one
+   over the OPENING, where #247's original phase 2 finally looked. That phase asked whether a young
+   house could be warned earlier and the answer is that it is already warned better: over 512 houses
+   the row scores 18.6-19.3% precision inside weeks <= 45 — higher than the 12.4% it manages over a
+   whole run — and reaches 78-88% of the young debt deaths with nine weeks of lead, against four
+   candidate earlier alarms that scored 4.8% to 9.3%. Arm 6 is the guard on that.
 
    Arm 5 is #247 PHASE 2. The row told a house under the line to "sell the paper, or sell a man" and
    never said what that would raise, while `liquidate` had computed exactly that figure all along.
@@ -136,7 +141,32 @@ export async function run({ p, errors }){
         clean: /stands in spare steel/.test(String((bareRow||{}).sub || "")),
         cleanSub: bareRow ? bareRow.sub : null };
     })();
-    return { weeks, said, saidFatal, short, shortFatal, deaths, swings, figure };
+    /* 6 · the opening window, on its own short runs — #247's original phase 2 measured the money
+       row here at 18.6-19.3% precision and 78-88% reach against four candidate earlier alarms that
+       scored 4.8-9.3%, so this is the guard on the thing that beat them. */
+    const opening = (()=>{
+      const OPEN_TO = 45, HORIZON = 12;
+      let lit = 0, hit = 0, deaths = 0, reached = 0;
+      /* 96 houses rather than 40: at 40 this arm saw six debt deaths, and a reach floor standing on
+         six is a bar one death either way moves by sixteen points — which is the shape v3.224.0
+         found in `asked` and `coffer` and had to widen after the fact. The window closes by week 60,
+         so the houses are worth more than the weeks. */
+      for(let h=0; h<96; h++){
+        const d = A.newGameState("Cl"+h, "clean", `CLIFFOPEN-${h}`);
+        const weeks = [];
+        for(let w=0; w<75; w++){ if(d.over) break;
+          if(d.week <= OPEN_TO){ let on = false; try { on = !!A.moneyRow(d); } catch(e){}
+            if(on) weeks.push(d.week); }
+          try { R.lanista(d); } catch(e){ break; } }
+        const died = !!(d.over && d.over.kind === "debt" && d.week <= 60);
+        lit += weeks.length;
+        for(const w of weeks) if(died && d.week - w <= HORIZON && d.week >= w) hit++;
+        if(died){ deaths++; if(weeks.length && d.week - weeks[weeks.length-1] <= HORIZON) reached++; }
+      }
+      return { lit, deaths, precision: lit ? Math.round(1000*hit/lit)/10 : 0,
+        reached: deaths ? Math.round(1000*reached/deaths)/10 : 0, FLOOR:10, RFLOOR:50, MIN_DEATHS:8 };
+    })();
+    return { weeks, said, saidFatal, short, shortFatal, deaths, swings, figure, opening };
   }, [HOUSES, WEEKS, DEAD_IN]);
 
   if(r.why) return { pass:false, why:r.why, lines };
@@ -190,6 +220,23 @@ export async function run({ p, errors }){
       + `houses [bar ${SWING_OVER_BILL}] — it has collapsed onto the bill, which is what happens when it `
       + `is read off \`weekDigest\`'s \`dl.gold\`: that is what endWeek moved, not what the week did, `
       + `and everything the player buys between weeks is invisible to it`);
+
+  /* 6 · AND IT IS AT ITS BEST ON THE YOUNG HOUSE, WHICH IS WHERE #247's LAST PHASE LOOKED */
+  { const O = r.opening;
+    lines.push(`  in the opening (weeks <= 45): lit ${O.lit} weeks, precision ${O.precision}% [floor ${O.FLOOR}], `
+      + `reached ${O.reached}% of the young debt deaths [floor ${O.RFLOOR}] over ${O.deaths} of them`);
+    if(O.deaths < O.MIN_DEATHS)
+      bad.push(`only ${O.deaths} houses died of debt inside the opening [need ${O.MIN_DEATHS}] — the floors below `
+        + `stand on too few deaths to mean anything, which is a fault in this arm rather than in the row`);
+    else {
+      if(O.precision < O.FLOOR)
+        bad.push(`the money row's precision in the opening is ${O.precision}% [floor ${O.FLOOR}] — measured 18.6-19.3%, `
+          + `which is BETTER than its 12.4% over a whole run. #247's last phase tried four earlier alarms against `
+          + `this and every one scored 4.8-9.3%; if this falls, the thing that beat them is gone`);
+      if(O.reached < O.RFLOOR)
+        bad.push(`the row reached only ${O.reached}% of the debt deaths inside the opening [floor ${O.RFLOOR}] — `
+          + `measured 78-88% with nine weeks of lead, and reach is the half that cannot be bought back by firing less`);
+    } }
 
   /* 5 · AND WHEN IT IS UNDER, IT SAYS WHAT THE HOUSE COULD RAISE */
   { const F = r.figure;

@@ -4389,6 +4389,63 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.228.0 — #247's original phase 2, answered and closed: the opening does discriminate, and the row already says so better than anything else could
+
+**The last unresolved thread in #247.** Phase 1 retired this phase in one sentence — *"the opening
+does not discriminate: the era-one dead are not poorer at week 8 or 16 than the houses that live"* —
+and v3.225.0 reopened it from the other side, finding that half of all debt deaths are BARE houses
+dying at week 25-41, short 287d with 416-526d to their name. Both can be true, so the question left
+was: if not the gold, then what? `probes/opening.mjs` snapshots every house at weeks 8, 16, 24 and
+32 and classifies it by what happens next — **512 houses × 120 weeks × 2 seeds, 98 debt deaths.**
+
+**Phase 1's finding is confirmed at week 8 and does not survive at week 16.** The separation
+statistic is the share of (dier, survivor) pairs where the survivor is higher; 50 means the quantity
+knows nothing.
+
+| at week | gold (the control) | best man | total wins |
+|---|---|---|---|
+| 8 | **54.0 / 52.7** | 61.7 / 56.6 | 59.2 / 59.4 |
+| 16 | **66.9 / 60.6** | 63.9 / 63.8 | 65.1 / 66.8 |
+| 24 | 66.0 / 71.2 | 65.6 / 70.0 | — |
+| 32 | 60.3 / 80.9 | 65.0 / — | 66.0 / — |
+
+At week 8 the gold is flat, exactly as filed — *the endowment is not the lever*, and an instrument
+that could not reproduce that known negative would not be worth trusting on anything else. By week
+16 it is 60.6-66.9, which is real separation; phase 1 measured 88 houses and ~35 debt deaths and
+called it flat, and at 98 deaths it is not. **And the earliest signal is not the box at all** — at
+week 8 the leaders are the value of the house's best man and its total wins. A young house dies
+because its men do not win, and the gold reports it a fortnight later.
+
+**So: warn earlier? No — and this is the part that decides the phase.** Four candidate alarms were
+evaluated exactly as `cliff.mjs` judges the incumbent (every week lit in weeks ≤ 45: was the house
+dead of debt within twelve, and of the deaths, how many heard it):
+
+| alarm | precision | reached | lead |
+|---|---|---|---|
+| **the money row, as it ships** | **19.3% / 18.6%** | **87.5% / 78%** | 9 wk |
+| thin roster and short runway | 8.0 / 6.7 | 77 / 68 | 16 / 26 |
+| not winning by week 12 | 4.8 / 4.9 | 85 / 94 | 15 / 26 |
+| not winning **and** short | 9.3 / 8.6 | 83 / 84 | 11 / 18 |
+| no man worth 600d, short | 7.3 / 7.0 | 81 / 72 | 16 / 25 |
+
+**Every candidate that fires earlier is two to four times worse**, which is #247a's own trade run
+backwards — that release bought precision 7.9% → 12.4% by firing LESS. And the row is at its best
+exactly here: **18.6-19.3% inside the opening against 12.4% over a whole run.**
+
+**A correction to this release's own first reading.** The money row is lit at week 16 for only
+22-34% of the houses that go on to die, and that looked like a gap. It is not: these houses die at
+week 30-38 and are correctly warned at week 24-30. Across the opening the row reaches 78-88% of them
+with nine weeks of lead. The point-in-time figure was measuring the wrong thing.
+
+**Nothing is built, and #247's original phase 2 closes.** Its proposed levers — `SCENARIOS.clean`'s
+gold, `KEEP_FLOOR`, the first card's purse — were retired by phase 1 and are not resurrected by
+this; the "warn earlier" alternative is refuted on its own numbers. `checks/cliff.mjs` gains a sixth
+arm holding what beat them: the row's precision and reach **inside the opening**, on 96 houses so
+the floor stands on fourteen deaths rather than the six a smaller arm gave (the fragile-bar lesson
+from v3.224.0, applied before the fact this time).
+
+**Shipped:** `probes/opening.mjs`; `checks/cliff.mjs` arm 6. **No game code changed.**
+
 ### v3.227.0 — #252 phase 1: nothing in this project had ever made a master, and the gate that stops them is not the one the item names
 
 **The instrument the item asked for, and it could not be built until the game got four new buttons.**
@@ -8363,6 +8420,16 @@ price curve and waits on a design decision — **#247c** (the yard that empties)
 empty on 0% and the house too poor on 3-4%; what stops the buying is the reference player's own
 reserve rule (44%/42%, and **67%/78%** on the houses that die of ruin) and an edict capping the cells
 below the five men the policy keeps (`CELLS_BY_RANK` starts at 8). The yard is never FORCED to empty.
+**#247's ORIGINAL PHASE 2 — the opening — CLOSED v3.228.0.** `probes/opening.mjs`, 512 houses x 120
+weeks x 2 seeds, 98 debt deaths: at week 8 gold separates the dead from the living at **54.0 and
+52.7** on 100 (50 = knows nothing), confirming phase 1's retirement of the endowment; by week 16 it
+is **66.9 and 60.6**, which phase 1's 88 houses could not see. The earliest signal is the house's
+best man and its total wins, not its box — a young house dies because its men do not win, and the
+gold reports it a fortnight later. **But nothing should be built**: four candidate earlier alarms
+scored 4.8-9.3% precision against the money row's **19.3% and 18.6%** in the same window, and the
+row already reaches **78-88%** of these deaths with nine weeks of lead — it is BETTER on young
+houses than the 12.4% it manages over a whole run. `checks/cliff.mjs` arm 6 guards that.
+
 **And all three parts of #247 land on one thing:** every remedy converts a death into a money death,
 and the money death is the one with no approach — which is the claim a phase 2 has to answer.
 **PHASE 2 ANSWERED IT, v3.225.0, AND IT IS REFUTED.** `probes/brink.mjs`, 85 debt deaths: the money
