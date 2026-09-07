@@ -4389,6 +4389,65 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.232.0 — the same filter was in the design survey, and it does not sample the chronicle, it selects it
+
+**v3.231.0 found a week-stamp filter reading a fifth of the chronicle in `pace` and `decade`, and
+that fault had already opened a queue item. So before opening another item, the question was whether
+it lived anywhere else. It did — in `survey.mjs`, the design census the whole #207–#231 audit was
+written off.** Two sites: the chronicle census itself, and the mercy-line count.
+
+Most of the tree's `week === d.week` comparisons are legitimate freshness tests on a single record
+(`d.pitCard.week`, `d.games.week`). The fault is narrower and only looks like those: using the stamp
+as the **selector over `d.log`**. `chron` unshifts, so length cannot count new lines — every
+instrument that reads the chronicle worked that out — but `endWeek` runs `lateWeek`, `foreWeek` and
+`bookWeek` **before** `ludusLedger` does `d.week++`, so a line's stamp records which side of the
+increment wrote it.
+
+**Measured on survey's own 16 x 420 frame, counted both ways in one run:**
+
+| | by identity | by week stamp | seen |
+|---|---|---|---|
+| chronicle lines | 22,288 | 4,944 | 22.2% |
+| distinct shapes | 9,951 | 1,305 | 13.1% |
+| lines per week | 7.71 | 1.71 | |
+
+**The part worth keeping is that it is not a sample.** Per shape the filter is binary — of the twelve
+commonest lines, **six survive at 100% and six at 0%**, nothing in between — because a shape is
+written at one fixed point in `endWeek` and that point decides it. So the survivors skew by kind
+(good 33%, info 19%, event 16%, bad 15%), and "how often does the chronicle repeat itself", the
+question this file exists to answer, was measured on a subset chosen by authorship order. The null it
+produces is clean, stable and entirely wrong; re-running does not move it.
+
+**The blast radius is bounded and worth stating.** Nothing outside `chron` and `mercyLine` reads the
+log, so the survey's endings, coin, fame, career, arc and rites rows are untouched. And the mercy
+line is the one chronicle row the filter never harmed — it is written after the increment, so it
+counts **232 either way**. That it now reads 8.0% of weeks against the header's published 16% is the
+game moving under ten releases, not this fault; it is recorded as unexplained rather than attributed.
+
+**Shipped:**
+
+- `probes/survey.mjs` corrected at both sites, by the identity walk `pace` and `decade` already use.
+  Its header keeps the audit's original numbers as the record of what the audit was written from, and
+  now carries the correction beside them plus today's frame (2,890 house-weeks, 467 men, 7.7
+  chronicle lines a week, saga finales 2 of 14 where the audit read 0 of 13).
+- **FAULT SEVEN in `checks/probe.mjs`**, so the pattern is caught structurally rather than by anyone
+  remembering. It scans checks *and* probes, resolves names assigned from `d.log`, and handles the
+  `for`-of and array-callback forms with braced and braceless bodies — the braceless one-liner is how
+  survey wrote its mercy count, and a rule matching only blocks would have missed it. Paren depth is
+  counted rather than regexed, because `for(const c of (d.log||[]))` has two and a lazy match stops at
+  the wrong one and hands the body scan the wrong offset — the first draft did exactly that and found
+  three of the four sites.
+- **Verified against the fault, not just against a clean tree:** rebuilt from git, the pre-fix tree
+  flags 4 of 4 real sites (`pace`, `decade`, `survey` twice); the live tree flags 0 of 176 checks and
+  every probe.
+- **No exemption was needed for the deliberate case.** `checks/decade.mjs` arm 6 counts a run both
+  ways on purpose and fails if the stamp finds as much as identity — it passes the new rule untouched,
+  because it selects by identity *first* and only then asks about the stamp. That is the whole
+  distinction the rule draws, and that it falls out without an `ALLOWED` entry is the evidence the
+  rule is cut at the right seam.
+
+No game code touched. `probe.mjs`'s header count corrected from two rules to seven.
+
 ### v3.231.0 — #248 phase 3: the item's KPI was never failing — the instrument was reading a fifth of the chronicle
 
 **Phase 3 set out to build a ladder of milestone lines and found two faults in the measurement
@@ -8667,6 +8726,11 @@ Q4's score on their own, a second fault found on the way). So phases 1 and 2 did
 measured by something that could not see them. `LATE` doubled anyway (v3.226.0), the forebear has a
 presence (v3.230.0) and the house's book is read aloud (v3.231.0) — all kept as content. Original
 text follows, and its premise does not survive.
+*And the filter was not confined to this item's instruments.* v3.232.0 swept for it and found the
+same two lines in `probes/survey.mjs`, the census the whole #207-#231 audit was written off, where it
+read 22% of the corpus and 13% of its distinct shapes — and, per shape, selected rather than sampled:
+six of the twelve commonest lines survive it at 100% and six at 0%. It is now caught structurally by
+FAULT SEVEN in `checks/probe.mjs`, so an item cannot be opened on it a second time.
 *Phase 1 shipped v3.226.0:* The premise re-measured exactly (novelty
 0.600/0.245/0.187/0.156 against the filed 0.57/0.26/0.19/0.14; 12.97 agenda rows a week past week
 150 against the item's guess of seven). **The risk note is retired:** 63.5-66.7% of houses now see a

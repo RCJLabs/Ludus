@@ -8,8 +8,10 @@
    validated a constant against itself, and a rebellion blamed on travel that was really a manager
    who never went down to the cells.
 
-   Prose in a README does not stop any of that happening again. This does, for the two faults that
-   are mechanically detectable in a check's own source.
+   Prose in a README does not stop any of that happening again. This does, for the seven faults that
+   are mechanically detectable in an instrument's own source. Every one of them was written AFTER the
+   fault it describes had already published a finding — the newest, FAULT SEVEN, after a single
+   mis-chosen filter opened a queue item on a number that was five times low.
 
    ---- FAULT ONE: THE UNANSWERED BALANCE ----
    `doFight` and its three sister engines return at `res.unfinished` — the balance, where the box is
@@ -345,6 +347,88 @@ export async function run(){
         + `handle's export block — the call throws, and every instrument in this suite wraps its calls `
         + `in a try/catch, so a missing export does not read as an error. It reads as a MEASUREMENT: `
         + `\`poachTarget\` was absent for the whole of #246's audit and its zero became the item`);
+  }
+
+  /* ---- FAULT SEVEN: THE CHRONICLE READ THROUGH ITS WEEK STAMP ----
+     `chron` UNSHIFTS, so the log's new lines are at the FRONT and its length cannot say how many
+     arrived — every instrument that reads the chronicle worked that much out, and three of them
+     reached for the same wrong cure: `for(const c of d.log){ if(c.week !== d.week) continue; ... }`.
+     But `endWeek` runs `lateWeek`, `foreWeek` and `bookWeek` BEFORE `ludusLedger` does `d.week++`,
+     so a line's stamp says which SIDE of the increment wrote it. It is not a freshness test.
+
+     The bill for that one filter, measured: #248 was filed on a novelty curve of
+     0.57/0.26/0.19/0.14 — **the item existed because of this line**. Counted by identity `pace`
+     re-reads it at 3.33/1.92/1.29/1.12 (24 x 420) and `decade`, which measures it independently, at
+     3.47/1.81/1.24/1.04 (96 x 420); the bar the item set itself was 0.25 in the fourth quarter. `survey`, the audit's own design census, read
+     **4,944 of 22,288 lines and 1,305 of 9,951 distinct shapes**: 22% of the corpus, 13% of its
+     variety, and its "how often does the chronicle repeat itself" row came off that.
+
+     WHAT MAKES IT WORTH A RULE RATHER THAN THREE FIXES is that it does not read as noise. Per shape
+     the filter is BINARY — of survey's twelve commonest lines six survive at 100% and six at 0%,
+     because a shape is written at one fixed point in `endWeek` and that point decides it. So the
+     survivors skew by kind (good 33%, info 19%, event 16%, bad 15%) and the null is a clean, stable,
+     entirely wrong number that no amount of re-running moves.
+
+     Flagged: the stamp used as the SELECTOR over the raw log. Comparing a stamp is fine and one arm
+     of `checks/decade.mjs` does it on purpose — it counts a run BOTH ways and fails if the stamp
+     finds as much as identity — and it passes this rule with no exemption, because it selects by
+     identity first and only then asks about the stamp. That is the whole distinction. The cure is to
+     walk from the front to the object that led the log last week:
+       `const wasFront = (d.log||[])[0] || null;` before the week runs, then
+       `const fresh = []; for(const c of (d.log||[])){ if(c === wasFront) break; fresh.push(c); }` */
+  { const closer = (t, open) => { let n = 0;
+      for(let j = open; j < t.length; j++){ const c = t[j];
+        if("([{".includes(c)) n++; else if(")]}".includes(c)){ n--; if(!n) return j; } }
+      return -1; };
+    /* the body of a loop or callback starting at `i` — braced or the braceless one-liner, which is
+       how `survey` wrote its mercy-line count and how a rule that only matched blocks would miss it */
+    const span = (t, i) => { while(i < t.length && /\s/.test(t[i])) i++;
+      if(t[i] === "{"){ const e = closer(t, i); return e < 0 ? t.slice(i) : t.slice(i, e+1); }
+      let n = 0;
+      for(let j = i; j < t.length; j++){ const c = t[j];
+        if("([{".includes(c)) n++;
+        else if(")]}".includes(c)){ if(n === 0) return t.slice(i, j); n--; }
+        else if(c === ";" && n === 0) return t.slice(i, j); }
+      return t.slice(i); };
+    const stamped = [];
+    for(const dir of ["checks", "probes"]){
+      const dd = path.join(ROOT, "test", dir);
+      for(const f of fs.readdirSync(dd).filter(x=>x.endsWith(".mjs")).sort()){
+        const t = fs.readFileSync(path.join(dd, f), "utf8")
+          .replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+        /* the log by its own name and by anything assigned from it on one line */
+        const alias = new Set(["d.log"]);
+        for(const m of t.matchAll(/(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=[^;\n]*\bd\.log\b/g)) alias.add(m[1]);
+        const isLog = x => [...alias].some(a =>
+          new RegExp("(?:^|[^\\w$.])" + a.replace(".", "\\.") + "\\b").test(" " + x));
+        const sites = [];
+        for(const m of t.matchAll(/\bfor\s*\(\s*(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s+of\s+/g)){
+          /* count parens rather than regex the ")" — `for(const c of (d.log||[]))` has two, and a
+             lazy `[^)]*` stops at the wrong one and hands the body scan the wrong offset */
+          const end = closer(t, m.index + m[0].indexOf("("));
+          if(end > 0 && isLog(t.slice(m.index + m[0].length, end))) sites.push([m[1], end + 1]);
+        }
+        for(const m of t.matchAll(/\.\s*(?:filter|forEach|some|every|map|find|findIndex|flatMap)\s*\(\s*\(?\s*([A-Za-z_$][\w$]*)/g)){
+          if(!isLog(t.slice(Math.max(0, m.index - 60), m.index))) continue;
+          const arrow = t.indexOf("=>", m.index);
+          if(arrow > 0 && arrow - m.index < 60) sites.push([m[1], arrow + 2]);
+        }
+        for(const [v, at] of sites){
+          const body = span(t, at);
+          if(new RegExp("\\b"+v+"\\.week\\s*[!=]==\\s*d\\.week|d\\.week\\s*[!=]==\\s*"+v+"\\.week").test(body))
+            stamped.push(`${dir}/${f}`);
+        }
+      }
+    }
+    const uniq7 = [...new Set(stamped)];
+    lines.push(`the chronicle's selector: ${uniq7.length ? uniq7.length + " instrument(s) pick log lines by week stamp"
+      : "every instrument that walks the log selects by identity"}`);
+    for(const x of uniq7.slice(0, 4))
+      bad.push(`${x} selects chronicle lines with \`c.week === d.week\` — \`endWeek\` writes through `
+        + `\`lateWeek\`, \`foreWeek\` and \`bookWeek\` BEFORE \`ludusLedger\` increments the week, so that `
+        + `stamp is not a freshness test and the lines it keeps are chosen by where in \`endWeek\` they `
+        + `were written. It read 22% of the log for \`survey\` and opened #248 on a novelty curve that `
+        + `was 5x low. Walk from the front to last week's front object instead`);
   }
 
   /* ---- FAULT THREE: THE ROPE'S OWN OPTION LITERALS ----
