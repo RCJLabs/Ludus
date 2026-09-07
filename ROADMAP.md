@@ -4389,6 +4389,87 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.233.0 — #251 phase 1: the doctore had no clock, and building him one reproduced the fault the release before it had just written down
+
+**The verify-first confirmed the item in the strongest form available, and two of its zeros were
+promoted off the source rather than left as measurements.** `probes/doctore.mjs`, 16 houses x 420,
+3,502 house-weeks: the doctore's id changed **zero times** in any house on any week; every house that
+hired one ended the run still holding him (median **203 weeks** on the post, longest 399); the age
+field never existed; his skill was identical from hire to the last week on all fifteen. The two that
+matter are facts about the game rather than the reference player — **`doctore.skill` had no
+assignment anywhere in the program and `doctore.age` had no reference at all.** He did not decline
+because nothing could make him decline. So: every drill and every lesson in the game had been taught
+by one man.
+
+The rest was split per `dark.mjs`. `d.doctore` has five writers: the heir taking the post and
+`dismissDoctore` empty it (both the player's hand, both dark under the rope); `hireDoctore` and
+`FREEDMEN.doctore` are gated on `!d.doctore` and can only fill an *empty* post; and exactly one
+function can replace a sitting man — `takeDoctoreOffer` — which the rope never calls. **Phase 3's
+"succession from inside" is therefore half-built already.**
+
+**What shipped, at zero new `R()` draws.** `R()` is one stream and a draw added at house creation
+re-phases every seeded fixture in the suite, so the whole clock is deterministic, the way
+`LAN_AGE_FROM`'s drain already is:
+
+- **An age derived, not rolled.** `docAgeOf(sand, quality)` reads the years his own past line claims
+  — the `ri(3,14)` that was already being drawn to write that string — and his quality. The draw
+  stays in its exact position as the last one `makeDoctore` makes; hoisting it above the picks would
+  have re-phased everything, so `past` became a derived assignment instead.
+- **A birthday off a counter that was already ticking.** `ludusLedger` has incremented
+  `doctore.weeks` beside his wage since v3.156.0 and **nothing had ever read it** except the
+  greybeard event's `>= 150` gate. His birthday is that counter against `WEEKS_PER_YEAR`, two lines
+  from where the lanista has his — and it is his weeks *in the post*, so a man hired in week 200 has
+  not lived two hundred weeks of them.
+- **A decline, and two doors.** Past `DOC_AGE_FROM` (48) the years cost him skill; at `DOC_RETIRE`
+  (58), or when his eye has gone, he puts the vine staff against the wall. Retirement clears the
+  pupil, the second and the retrain and says so — an abandoned lesson vanishing without a word is the
+  same fault as a pupil who does — and refills the market. `docLent` (#198) holds both doors shut: a
+  man cannot hand back a yard he is not standing in.
+
+**AND THE FIRST CUT REPRODUCED THE FAULT `tenure.mjs` HAD WRITTEN DOWN ONE RELEASE EARLIER.** It took
+one point the first year past the onset, two the next, and so on — linear in rate and therefore
+quadratic in cumulative cost, which is the exact sentence in that file's header about the lanista's
+health. The measurement caught it:
+
+| | coefficient 1 | with `DOC_DECAY` 0.35 |
+|---|---|---|
+| median skill lost per man | **−21** | **−7.4** |
+| departures by the age door | 3 | **6** |
+| departures by the skill floor | **13** | 1 |
+| median departure age (door is 58) | 55 | **58** |
+| retirements / houses | 17 / 9 | 7 / 7 |
+
+He was not retiring old; he was being broken in seven years and the age door was decoration. The
+lanista's onset sits nine years above his starting age and the doctore is *hired at* his (median 47
+against 48), so he has no grace at all and the coefficient has to carry the whole difference —
+moving the onset up instead, the fix that worked for the lanista, puts it past where any run reaches
+and the drain goes dark, which is the opposite failure.
+
+**A second fault caught before it shipped, by reading the door rather than running it.**
+`makeDoctore` floors skill at 30 and `DOC_SKILL_END` is 32, so an eye door gated on skill alone
+retires a cheap hire **the week he arrives** — a man who was never good rather than one who has gone.
+It is gated on the years as well, and `checks/doctore.mjs` carries an arm that fails if it stops
+being.
+
+**After, on the same frame (3,629 house-weeks):** 13 of 15 houses see the years tell (1,876 weeks, 52%
+of the run); tenure closes for the first time at a median **180 weeks**; 7 retirements across 7
+houses, 6 by age and 1 by eye at a median age of exactly 58; the post is empty 33 weeks in total.
+
+**Two faults in my own instrument, caught before anything was read off them.** `skillSpan` compared
+the first hire's skill to whoever was in post at the end, so it read a *replacement* as a decline —
+now measured per man, against himself. And `retire.atAge`, `byAge` and `byEye` were declared and
+never written: three inert arms that would have reported a clean zero. Earlier still, the rivals arm
+read `d.houses`, which does not exist, and returned `0/0/0` that looked exactly like "no rival ever
+has a doctore" — it is `d.rivals`, and **54 of 58 rival houses have one, as the boolean `true`**,
+which is phase 2's subject stated as a number.
+
+**`checks/doctore.mjs`** (name verified free in *both* directories first), six arms. Arm 4 is a
+regression guard for this release's own fault, and it is anchored to the man the game actually makes
+— the market's best candidate by fee, which is what the rope takes — rather than to a bound of the
+check's own: the first draft picked 16 out of the air and failed on the honest worst case of 19.25.
+The header states what it does not cover: the panel and the market card print `data-doc-age` from the
+same field the drain writes, and nothing here renders them.
+
 ### v3.232.0 — the same filter was in the design survey, and it does not sample the chronicle, it selects it
 
 **v3.231.0 found a week-stamp filter reading a fifth of the chronicle in `pace` and `decade`, and
@@ -8864,7 +8945,19 @@ it is decoration, and `legible.mjs` is the judge.
 
 ---
 
-**#251 — The Doctore Is a Man** *(overhaul · medium · 3 phases)*
+**#251 — The Doctore Is a Man** *(overhaul · medium · 3 phases)* — **PHASE 1 SHIPPED v3.233.0, AND
+THE VERIFY-FIRST CONFIRMED THE ITEM OUTRIGHT.** Over 3,502 house-weeks the doctore's id changed
+**zero** times in any house; the age field never existed; his skill was byte-identical from hire to
+the last week on all fifteen houses that had one. Two of those were promoted off the source rather
+than the zero: `doctore.skill` had no assignment anywhere in the program and `doctore.age` had no
+reference at all. Every drill and every lesson in the game had been taught by one man, exactly as the
+item guessed. He now has an age derived from the years his own past line claims, a birthday off the
+`doctore.weeks` counter `ludusLedger` has ticked since v3.156.0 and nothing ever read, an
+accelerating decline past 48, and two doors at 58 — all at zero new `R()` draws. *Phase 2's subject,
+measured on the way past:* **54 of 58 rival houses have a doctore and on every one of them it is the
+boolean `true`.** *Phase 3 is half-built:* `takeDoctoreOffer` is the one function that can replace a
+sitting man, and the rope has never called it. See the release note.
+
 
 `makeDoctore` writes name, origin, skill, spec, creed, past, fee and wage — **no age, and no clock.**
 `d.doctore = null` is written in two places: the heir being the doctore, and `dismissDoctore`. He cannot

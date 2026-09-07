@@ -5213,6 +5213,16 @@ function doctoreWeek(d){
     d.flags.docLent = 0;
     chron(d, `${doc.name} comes back from his season away. He has picked something up over there and he is not going to say what.`, "good");
   }
+  /* #251 phase 1 — the years, or the eye. Not while he is at another house's post (#198): a man
+     cannot hand back a yard he is not standing in, and `docLent` returns above on those weeks. */
+  /* The eye door is gated on the YEARS as well as the skill, and that is not belt-and-braces:
+     `makeDoctore` floors skill at 30 and `DOC_SKILL_END` is 32, so an ungated eye door retires a
+     cheap hire the week he arrives — a man who was never good rather than a man who has gone. */
+  if(doc && doc.age != null &&
+     (doc.age >= DOC_RETIRE || (doc.age > DOC_AGE_FROM && doc.skill <= DOC_SKILL_END))){
+    retireDoctore(d);
+    return;
+  }
   /* the second seat empties itself the same way the first does, and a retrain clears it outright */
   if(doc && doc.second){
     const s2 = d.gladiators.find(x=>x.id===doc.second);
@@ -5295,15 +5305,98 @@ function docSays(d){
   if(!opts.length) opts.push(`Nothing to report from the yard, which from him is a good week.`);
   return pick(opts);
 }
+/* ---- THE DOCTORE'S CLOCK — #251 phase 1 ----
+   `probes/doctore.mjs` measured what he was: over 3,502 house-weeks the doctore's id changed ZERO
+   times in any house, every house that hired one ended the run still holding him (median 203 weeks
+   on the post, longest 399), and his skill was identical from hire to the last week on all fifteen.
+   Two of those were confirmed off the source rather than the zero — `doctore.skill` had no
+   assignment anywhere in the program and `doctore.age` had no reference at all. He did not decline
+   because nothing could make him decline.
+
+   THE PATTERN IS THE LANISTA'S, deliberately: `LAN_AGE_FROM` is a deterministic drain with no roll
+   behind it, and so is this. That matters beyond tidiness — `R()` is one stream, and a draw added
+   here would re-phase every seeded fixture in the suite. The years cost him skill on a birthday and
+   nothing is rolled for it.
+
+   AND THE COUNTER WAS ALREADY TICKING. `ludusLedger` has incremented `d.doctore.weeks` beside his
+   wage since v3.156.0 and nothing ever read it except the greybeard event's `>= 150` gate. His
+   birthday is that counter against `WEEKS_PER_YEAR`, two lines from where the lanista has his. */
+const DOC_AGE_FROM = 48;    /* the age at which the years start to tell on him */
+const DOC_RETIRE   = 58;    /* he puts the vine staff down */
+const DOC_SKILL_END = 32;   /* or his eye has gone, whichever comes first */
+const DOC_DECAY    = 0.35;  /* skill a year, per year he is over — see docBirthday on why not 1 */
+/* He went to the sand young, fought the years his own past line claims, and has been teaching since
+   — the better he is, the longer that has been. #150's rule: the years the card prints and the years
+   the drain reads are the same number. */
+const docAgeOf = (sand, quality) => clamp(20 + sand + rnd(clamp(quality,30,82)/3.4), 34, 70);
+
 function makeDoctore(d, quality){
   const origin = pick(Object.keys(ORIGINS));
   const skill = clamp(quality + ri(-8,8), 30, 82);
   const P = pick(DOC_PASTS);
-  return { id:d.nextId++, name:pick(ORIGINS[origin].names), origin, fromHouse:false,
+  /* `sand` sits where the `past` string's own `ri(3,14)` sat, and is still the last draw this
+     function makes — hoisting it above the picks would have re-phased every fixture in the suite. */
+  const c = { id:d.nextId++, name:pick(ORIGINS[origin].names), origin, fromHouse:false,
     spec: pick(STATS), skill, weeks:0, drill:"none",
     creed: pick(DOC_CREED_KEYS), tag:P.tag, pastLine:P.line,
     fee: rnd(skill*7 + 60), wage: rnd(8 + skill*0.22),
-    past: `${ri(3,14)} years on the sand, and the scars to argue it` };
+    sand: ri(3,14) };
+  c.past = `${c.sand} years on the sand, and the scars to argue it`;
+  c.age  = docAgeOf(c.sand, quality);
+  return c;
+}
+/* A birthday, and what it takes.
+
+   ---- THE FIRST CUT REPRODUCED THE FAULT `tenure.mjs` WAS WRITTEN ABOUT ----
+   It took a full point the first year past the onset, two the next, and so on, which is linear in
+   rate and therefore QUADRATIC in cumulative cost — the exact sentence in `tenure.mjs`'s header
+   about the lanista's health, written the release before this one. Measured: the median doctore lost
+   **21 skill** over his post and **13 of 16 departures were the skill floor against 3 by age**, at a
+   median departure age of 55 against a door set at 58. He was not retiring old, he was being broken
+   in seven years and the age door was decoration.
+
+   The lanista's onset sits nine years above his starting age; the doctore is HIRED at the onset
+   (median 48 against `DOC_AGE_FROM` 48), so he has no grace at all and the coefficient has to carry
+   the whole difference. Moving the onset up instead — the fix that worked for the lanista — puts it
+   past where a 250-week run ever reaches and the drain goes dark, which is the opposite failure.
+
+   So the shape is kept and the coefficient is not 1: he loses `DOC_DECAY` per year for each year he
+   is over, so the decline still accelerates and a full post costs him single digits. He only SAYS
+   anything when the word for him changes,
+   because `docWord` is what the yard actually reads, and a line every single year is the receipt
+   mistake `ludusLedger` already learned (21% of one chronicle, one sentence). */
+function docBirthday(d){
+  const doc = d.doctore;
+  if(!doc || doc.age == null) return;
+  doc.age++;
+  if(doc.age <= DOC_AGE_FROM) return;
+  const was = doc.skill;
+  doc.skill = clamp(doc.skill - (doc.age - DOC_AGE_FROM) * DOC_DECAY, 8, 82);
+  if(docWord(doc.skill) !== docWord(was))
+    chron(d, `${doc.name} is ${doc.age}. He gets through the morning and takes the afternoon sitting `
+      + `down, and the yard has started working around him.`, "bad");
+}
+/* He goes. The two doors that emptied the post before this were both the player's hand — the heir
+   taking it and `dismissDoctore` — and `FREEDMEN.doctore` models a man ARRIVING at an empty post,
+   never one leaving it. This is the leaving. It clears the pupil and the retrain the way
+   `doctoreWeek` clears them when a pupil is lost, because an abandoned lesson that vanishes without
+   a word is the same fault in the other direction. */
+function retireDoctore(d){
+  const doc = d.doctore;
+  if(!doc) return false;
+  const old = doc.age >= DOC_RETIRE;
+  if(doc.pupil || doc.retrainTo)
+    chron(d, `${doc.name} leaves a lesson half-taught. Whoever comes next will have to start it again.`, "bad");
+  chron(d, old
+    ? `${doc.name} puts the vine staff against the wall and says he is ${doc.age} and that is the whole of it. `
+      + `He has had the yard for ${Math.floor((doc.weeks||0)/WEEKS_PER_YEAR)} years.`
+    : `${doc.name} stands in the yard all morning without correcting anybody, and comes to you himself `
+      + `to say his eye has gone. He is not asking to be argued with.`, "bad");
+  doc.pupil = null; doc.second = null; doc.retrainTo = null; doc.retrainLeft = 0;
+  d.doctore = null;
+  d.flags.docRetired = (d.flags.docRetired||0) + 1;
+  makeDoctoreMarket(d);
+  return true;
 }
 /* ---- FORM ----
    Morale is how he lives. Momentum is inside one bout. This is the four weeks
@@ -5915,6 +6008,8 @@ function doctoreFromGladiator(d, g, kind){
   const skill = clamp(rnd(35 + g.wins*2 + g.pfame*0.15 + (g.tec+g.dis)/8), 34, 96);
   return { id:d.nextId++, name:g.name, nick:g.nick, origin:g.origin, cls:g.cls, fromHouse:true,
     spec, skill, weeks:0, fee:0, wage: rnd((8 + skill*0.22)*0.5), kind,
+    /* he is not a stranger with a past line — he is a man of yours and the house knows his age */
+    age: g.age || 34, sand: Math.max(1, rnd((g.wins + g.losses) / 3)),
     past: kind==="rudis"
       ? `${g.wins} victories and the wooden sword to show for them`
       : `${g.wins} victories, and released before the sand could take him` };
@@ -15669,6 +15764,7 @@ const FREEDMEN = {
     say:(d,f)=>`${f.name} is at the gate with nothing to say for himself except that he has been three months at a trade he is not good at, and he knows this yard.`,
     run:(d,f)=>{ const doc = makeDoctore(d, clamp(40 + f.wins*2.2, 40, 82));
       doc.name = f.name.split(",")[0]; doc.fromHouse = true; doc.fee = 0;
+      if(f.age) doc.age = f.age;                          /* #251 — his years are his own, not the market's */
       doc.tag = "who was freed here"; doc.pastLine = `Fought ${f.wins} times under your colours and was given the wooden sword for it. He does not need telling how any of this works.`;
       d.doctore = doc;
       activeG(d).forEach(g=>{ g.morale = clamp(g.morale+9,0,100); g.regard = clamp(regardOf(g)+7,0,100); });
@@ -21728,6 +21824,9 @@ function ludusLedger(d, men){
   d.unrest = clamp(d.unrest + (avgDef-34)/9 - 0.6 - docCalm(d) - cellCalm(d) - auctors*0.35 - perkCalm(d) - lanCalm(d) - (collOn(d)?0.4:0) + (seasonOf(d).unrest + docUnrest(d)) * pit(d,"unrest"), 0, 100);
   if(d.fame>60) d.fame -= 1;
   d.week++;
+  /* #251 phase 1 — the doctore has a birthday too, off `doctore.weeks`, which this function has
+     incremented a few lines up since v3.156.0 and nothing has ever read but the greybeard's gate. */
+  if(d.doctore && (d.doctore.weeks||0) > 0 && (d.doctore.weeks||0) % WEEKS_PER_YEAR === 0) docBirthday(d);
   if(d.lanista && (d.week-1) % WEEKS_PER_YEAR === 0){
     d.lanista.age++;
     if([50,60,70].includes(d.lanista.age))
@@ -25976,7 +26075,12 @@ const SECT = {
             </div>
           </div>
         </div>
-        <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>{S.doctore.past}.</div>
+        {/* #251 phase 1 — #150's rule: the age the drain reads is the age the panel prints, one
+            field, one number. The `data-doc-age` tell is what `checks/doctore.mjs` reads. */}
+        <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
+          {S.doctore.past}{S.doctore.age != null && (<>, and he is <span data-doc-age={S.doctore.age}>{S.doctore.age}</span></>)}
+          {S.doctore.age != null && S.doctore.age > DOC_AGE_FROM && (<span data-doc-old="1"> — the years have started to tell</span>)}.
+        </div>
         {S.doctore.tag && (<>
           <div style={{fontSize:"var(--fs-md)",marginTop:5,color:"var(--ink-2)"}}>
             <span className="laurel">{S.doctore.name}, {S.doctore.tag}.</span> {S.doctore.pastLine}
@@ -26096,7 +26200,10 @@ const SECT = {
               <span className="tag">{docWord(c.skill)}</span>
               <span className="tag tag-gold">{STAT_NAMES[c.spec]}</span>
             </div>
-            <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>{c.past}.</div>
+            <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>
+              {c.past}{c.age != null && (<>, and he is <span data-doc-age={c.age}>{c.age}</span></>)}
+              {c.age != null && c.age > DOC_AGE_FROM && (<span data-doc-old="1"> — you would be buying his last few years</span>)}.
+            </div>
             <div className="flex gap-1" style={{flexWrap:"wrap",marginTop:5}}>
               <span className="chip" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",borderColor:"var(--laurel-edge2)",color:"var(--laurel)"}}>The yard +{docShare(c)}%</span>
               <span className="chip" style={{fontSize:"var(--fs-micro)",padding:"2px 7px",borderColor:"var(--laurel-edge2)",color:"var(--laurel)"}}>One pupil +{docPupilShare(c)}%</span>
@@ -33881,6 +33988,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     CRUX, forgeReady, PLANS, PLAN_KEYS, TELLS, TELL_KEYS, planEffect,
     /* the man in the chair: what the job does to him, and what it makes of him */
     LAN_AGE_FROM,   /* #the tenure: the age at which the years start to tell */
+    DOC_AGE_FROM, DOC_RETIRE, DOC_SKILL_END, DOC_DECAY, docAgeOf, docBirthday, retireDoctore, WEEKS_PER_YEAR,   /* #251 phase 1 — the doctore's clock */
     lanistaWeek, LAN_TRAITS, LAN_KEYS, hasLT, repStyle, addRep, makeLanista,
     /* ---- AND THE NAME CAPUA SETTLES ON, which is the input to all of the above ----
        `repStyle` is what earns `hard` and `merciful`, and it is one of the two things that
