@@ -15,10 +15,12 @@
    Reads no chronicle, so nothing here goes through the week-stamp trap of v3.232.0. */
 import { serve, open } from "../harness.mjs";
 const H = +(process.argv[2] || 16), W = +(process.argv[3] || 420), SEED = process.argv[4] || "DOCTORE";
+/* pass `keep` as the fifth argument to run the arm where the house answers the rival's offer */
+const ROPE = process.argv[5] === "keep" ? { docKeep:true } : {};
 const { server, port } = await serve({ page:"dist/test.html" });
 const { browser, p } = await open(port);
 
-const out = await p.evaluate(([H, W, SEED])=>{
+const out = await p.evaluate(([H, W, SEED, ROPE])=>{
   const A = window.__LVDVS, R = window.__ROPE;
   const q = a => { if(!a.length) return null; const s = a.slice().sort((x,y)=>x-y);
     const at = f => s[Math.min(s.length-1, Math.floor(f*s.length))];
@@ -46,6 +48,10 @@ const out = await p.evaluate(([H, W, SEED])=>{
        themselves near-dark then mirroring them onto the doctore builds a dark feature. */
     staff:{ medicus:{ held:0, hired:0, lost:0, spells:[] }, armourer:{ held:0, hired:0, lost:0, spells:[] },
       quitGateOpen:{ medicus:0, armourer:0 }, poachGateOpen:0, weeks:0 },
+    /* #251 phase 2 as built: how often the hostile move is ELIGIBLE, how often it fires, and how
+       the three weeks end. A move that is never eligible and one that is never drawn look the same
+       in a fire count and want different fixes — the same reason the staff arms count both gates. */
+    taken:{ gateOpen:0, offers:0, kept:0, lost:0, houses:0, feeAsked:[] },
     miss:[]
   };
   for(const k of ["hireDoctore","dismissDoctore","makeDoctore","doctoreWeek","warmth"])
@@ -57,12 +63,13 @@ const out = await p.evaluate(([H, W, SEED])=>{
     let curId = null, since = 0, hadOne = false, changed = false, emptyHere = false;
     let retired = 0, retiredHere = false, pastOnset = false, hireAge = null;
     let spellSkill0 = null, spellSkillN = null, spellAgeN = null;
+    let sawOffer = false, taken = 0, offerHere = false;
     const staffId = { medicus:null, armourer:null }, staffSince = { medicus:0, armourer:0 };
     let firstSkill = null, lastSkill = null, firstWeeks = null, lastWeeks = null;
     const offered = new Set();
     for(let w=0; w<W; w++){
       if(d.over) break;
-      try { R.lanista(d); } catch(x){ break; }
+      try { R.lanista(d, ROPE); } catch(x){ break; }
       sum.weeks++;
       const doc = d.doctore || null;
       const id = doc ? doc.id : null;
@@ -108,6 +115,19 @@ const out = await p.evaluate(([H, W, SEED])=>{
         if(d[k] && (d[k].weeks||0) > 6 && A.STAFF && A.STAFF[k] && A.STAFF[k].quitOn(d)) sum.staff.quitGateOpen[k]++;
       }
       if((d.rivals||[]).some(h=>h.grudge>=40 && A.warmth && A.warmth(d,h.name)<45)) sum.staff.poachGateOpen++;
+      /* eligibility, evaluated exactly as `rivalWeekly` would: the move's own `when` against a
+         rival that clears its gate — read off HOSTILE_MOVES rather than restated here */
+      if(A.HOSTILE_MOVES && A.HOSTILE_MOVES.doctore){
+        const M = A.HOSTILE_MOVES.doctore;
+        if((d.rivals||[]).some(h=>{ try { return !h.retired && M.when(d,h); } catch(x){ return false; } }))
+          sum.taken.gateOpen++;
+      }
+      if(d.docOffer && !sawOffer){ sum.taken.offers++; sawOffer = true; sum.taken.feeAsked.push(d.docOffer.fee); offerHere = true; }
+      /* an offer that clears WITHOUT the post emptying is one the house paid off — told apart from
+         the loss by the doctore still being there, not by trusting a counter the rope may not set */
+      if(!d.docOffer){ if(sawOffer && d.doctore) sum.taken.kept++; sawOffer = false; }
+      const tk = (d.flags||{}).docTaken || 0;
+      if(tk > taken){ sum.taken.lost += tk - taken; taken = tk; }
       const rt = (d.flags||{}).docRetired || 0;
       if(rt > retired){ sum.retire.events += rt - retired; retired = rt; retiredHere = true; }
       /* the market he was picked from, and everyone in it he was picked over */
@@ -129,6 +149,7 @@ const out = await p.evaluate(([H, W, SEED])=>{
     if(d.doctore && d.doctore.age != null) sum.clock.ageAtEnd.push(d.doctore.age);
     if(pastOnset) sum.clock.everPastOnset++;
     if(retiredHere) sum.retire.houses++;
+    if(offerHere) sum.taken.houses++;
     sum.market.distinctOffered.push(offered.size);
     /* the rivals live on `d.rivals` — the first cut read `d.houses`, which does not exist, and the
        arm came back a clean 0/0/0 that looked exactly like a finding. That is FAULT SIX's shape in
@@ -150,8 +171,9 @@ const out = await p.evaluate(([H, W, SEED])=>{
   sum.retire.atAge = q(sum.retire.atAge);
   sum.market.distinctOffered = q(sum.market.distinctOffered);
   for(const k of ["medicus","armourer"]) sum.staff[k].spells = q(sum.staff[k].spells);
+  sum.taken.feeAsked = q(sum.taken.feeAsked);
   return sum;
-}, [H, W, SEED]);
+}, [H, W, SEED, ROPE]);
 
 console.log(JSON.stringify(out, null, 1));
 await browser.close(); server.close();

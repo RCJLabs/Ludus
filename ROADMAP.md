@@ -4389,6 +4389,77 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.234.0 — #251 phase 2: a rival comes for the doctore, and the verify-first corrected the item twice before a line was written
+
+**The item asked for "a `RIVAL_MOVES` move against your doctore weighted by `lanistaOf().train`",
+and measuring first changed both halves of that sentence.**
+
+**First, `train` is not the inert multiplier the item took it for.** It already weights
+`RIVAL_MOVES.retrain` and `RIVAL_MOVES.doctore`, and `rivalWeekly` improves a rival's fighters at
+`(0.25 + potential/300) * L.train * (h.doctore ? 1.3 : 1)` — so the boolean that **54 of 58 rival
+houses** carry IS read; it simply has no person behind it. What was missing is anything aimed at
+yours.
+
+**Second, a move against YOU is a `HOSTILE_MOVES` entry, not a plain one.** #246 phase 2 built
+`spiteWeight` — grudge over the gate, times the lanista's own multiplier, times the die's weight —
+and weighting this by `train` alone would have routed around the entire grudge system. It ships as a
+hostile move whose `mul` is `"train"`, which is both at once: the item's stated weighting arrives
+intact, inside the machinery that decides whether a house reaches for anything at all. The check
+asserts it off `LANISTAE` rather than a constant of its own — at one grudge, **train 0.85 weighs
+0.64 and train 1.55 weighs 1.16**.
+
+**And the rate is anchored to the door that measurably fires.** `staffWeek` is the only staff
+turnover in the game, and its two doors are wildly uneven — measured over 3,629 house-weeks, the
+quit condition held on **1.3%** of the medicus's weeks and **0.8%** of the armourer's, because
+`quitOn` wants `unrest>72` or `gold < -120`; the poach gate (a rival at grudge 40, warmth under 45)
+was open on **11.5%** and did nearly all of the ten losses. So this takes the poach gate's 40, not
+the `quitOn` that is shut ninety-nine weeks in a hundred. A door that never opens and a door whose
+roll never lands look identical in a turnover count and want opposite fixes, which is why the probe
+counts both.
+
+**It is deliberately NOT gated on `!h.doctore`,** which `RIVAL_MOVES.doctore` uses — correctly, for a
+house shopping for one. 54 of 58 rivals have one by the end of a run, so that gate would have made
+this near-dark. He is not being upgraded; he is being taken because it costs you him. The check
+carries an arm that fails if that gate ever appears.
+
+**Measured on the shipped build, 16 x 420:**
+
+| | offers | kept | lost | retirements |
+|---|---|---|---|---|
+| the rope does not answer | 13 | 0 | **13** | 4 |
+| `docKeep` on | 10 | **7** | 3 | 7 |
+
+One loss per 299 house-weeks against the staff door's one per 363 — the rate landed where it was
+anchored. The two doors trade off coherently: a house that pays the ~489d median keeps its man and
+then loses him to age instead, which is why retirements go back to 7.
+
+**And the keep branch would have shipped measured by nothing.** The reference player has no opinion
+about the offer, so on the first measurement it was taken **13 times out of 13** — an unanswered
+offer *is* the leaving. That is a fact about the policy and not the game (`dark.mjs`'s rule), but it
+is also exactly how `signature` and `mastery` came to read dark one item at a time. `harness.mjs`
+gains **`docKeep`** (default OFF, opt-in because keeping him costs real coin and changes what the
+house can afford for the rest of the run), which counts `docKeepBroke` separately so the two reasons
+a doctore stays or goes are told apart.
+
+**Shipped:** `HOSTILE_MOVES.doctore`; `startDocOffer`, `loseDoctoreTo` and `answerDocOfferWith`
+(shaped like `answerReSignWith`, because it is the same question about a different man); the three
+weeks running down inside `doctoreWeek` beside the retirement door; an agenda row; and the question
+itself as a modal. `h.doctore` is set on the rival when he goes, so the man leaving your yard makes
+that house train better — the boolean was always read, it just never meant anybody.
+
+**Both new components live at module scope, and that is a constraint rather than a preference.**
+`bulk` holds App at 5,786 lines and it was at 5,784, so the whole modal had to cost the render **one
+line**. It does; App is at 5,785 and SECT is untouched at 1,482.
+
+**Four faults caught in my own work before anything was read off it.** A `str.replace` in the probe
+had a whitespace-mismatched target and silently did nothing, leaving `sum.taken` undefined — no
+assertion guarded it, which is the same inert-edit shape this suite keeps finding; every replace in
+the repair carries one now. The check asked `HOSTILE_MOVES.doctore` for a `weight` it does not have
+(the generated `RIVAL_MOVES` entry closes over `spiteWeight`; the source shape carries `mul`), and
+reading the real function is the better anchor anyway. Its fixtures used `"murmillo"` where
+`CLASSES` is keyed `Murmillo`, which throws in the retrain completion. And the kept/lost split is
+read off *whether the post is still filled* rather than off a counter the rope may not set.
+
 ### v3.233.0 — #251 phase 1: the doctore had no clock, and building him one reproduced the fault the release before it had just written down
 
 **The verify-first confirmed the item in the strongest form available, and two of its zeros were
@@ -8977,9 +9048,11 @@ than the zero: `doctore.skill` had no assignment anywhere in the program and `do
 reference at all. Every drill and every lesson in the game had been taught by one man, exactly as the
 item guessed. He now has an age derived from the years his own past line claims, a birthday off the
 `doctore.weeks` counter `ludusLedger` has ticked since v3.156.0 and nothing ever read, an
-accelerating decline past 48, and two doors at 58 — all at zero new `R()` draws. *Phase 2's subject,
-measured on the way past:* **54 of 58 rival houses have a doctore and on every one of them it is the
-boolean `true`.** *Phase 3 is half-built:* `takeDoctoreOffer` is the one function that can replace a
+accelerating decline past 48, and two doors at 58 — all at zero new `R()` draws. *Phase 2 SHIPPED v3.234.0* as a `HOSTILE_MOVES` entry with `mul:"train"` — the item's stated
+weighting, inside the grudge machinery it would otherwise have routed around — gated at the staff
+poach door's grudge 40 and deliberately NOT on `!h.doctore`, since **54 of 58 rival houses have one
+and on every one of them it is the boolean `true`**, which `rivalWeekly` reads for its 1.3x. One
+doctore lost per 299 house-weeks; with the counter answered, 7 of 10 offers are paid off.* *Phase 3 is half-built:* `takeDoctoreOffer` is the one function that can replace a
 sitting man, and the rope has never called it. See the release note.
 
 
