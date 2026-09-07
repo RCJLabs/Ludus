@@ -4389,6 +4389,63 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.227.0 — #252 phase 1: nothing in this project had ever made a master, and the gate that stops them is not the one the item names
+
+**The instrument the item asked for, and it could not be built until the game got four new buttons.**
+`MASTERY_GATE`'s READERS — `canMaster`, `masterNeed`, `provedIt` — were on the test handle. Its
+VERBS were not: `makeMasterOf`, `startSecond`, `squareBout`. So no probe or check in this project
+had ever made a master, and a census of the career ladder returned **0% at the top**. That is the
+fourth time this exact shape has been found — #219 rites, #220 court and lot, #221 the signature,
+#246 phase 1's `poachTarget` — and reporting it as "the top of the game is dead" is the mistake
+#246 phase 1 actually made. Exported, given a rope lever (`mastery:true`, opt-in in #221's idiom),
+and `checks/rungs.mjs` written so it is the last time.
+
+**The census**, 2 seeds × 96 houses × 420 weeks, ~2,300–2,700 men who ever fought per arm. `climb`
+is the same reference player with the three levers on — it teaches the signature, takes the mastery
+the week it is offered, buys the second style, and stages square bouts for a man who needs proving:
+
+| of every man who ever fought | reference | climb |
+|---|---|---|
+| 6 wins (`SIG_GATE`) | 14.2% / 13.5% | 14.7% / 12.9% |
+| **has a signature** | **0% / 0%** | 10.6% / 9.2% |
+| 12 wins (`MASTERY_GATE`) | 4.9% / 4.2% | 5.9% / 4.5% |
+| proved in the square | 2.5% / 2.7% | 4.3% / 3.5% |
+| **has a mastery** | **0% / 0%** | **1.2% / 0.6%** |
+| has a second style | 0% / 0% | 0.9% / 0.4% |
+
+**Four findings, and the third is the item's answer.**
+
+1. **The reference player never touches any of it.** 0% signatures and 0% masteries is a fact about
+   the policy, not the game — the distinction this project keeps having to re-learn.
+2. **The arithmetic gate is one term, not two.** Every man who reaches 12 wins already has 55
+   renown — the two columns are identical to the decimal — so `MASTERY_GATE` is effectively "twelve
+   wins", cleared by **4.2–5.9%** of men who ever fought. That is the ~95th percentile, not the
+   90th the item names.
+3. **The binding term is the PROOF, and the reason is structural.** Of the men clearing both
+   arithmetic terms, only **12.3–20.5%** are ever proved *even when the rope deliberately stages
+   square bouts for them*. `proveInSquare` wants the beaten man worth **at least as much** as the
+   winner — and a man at twelve wins and fifty-five renown is, by construction, the most valuable
+   man in his own house. Measured: on **95.5% and 96.9%** of the weeks a candidate wanted a proving
+   bout, **no eligible peer existed in the yard at all**. Not "he lost" — there was nobody to fight.
+4. **Nothing above the gate is broken.** Once all three terms clear, the mastery follows **100%** of
+   the time, and 67–75% of masters go on to a second style.
+
+**So phase 2's question — "either the gates or the career moves" — is answered: the gate, and
+specifically the proof's peer requirement.** Not the win count the item proposed scaling by tier.
+
+**Two ordering facts found on the way, both reported rather than fixed here.** `doSpar` credits the
+winner `pfame += 4` **before** calling `proveInSquare`, and `gladName` prices renown at 9d a point —
+so winning inflates the candidate by ~36d before the "was he worth as much as me" test is made, and
+a peer who was dearer before the afternoon can be cheaper by the time he is measured. And a spar can
+return `{crux:true}` that `squareBout` hands straight back; a caller that drops it has staged a bout
+that never resolved. **This release's own first measurement made that mistake** — 60 bouts ran in
+the check and none proved anybody, and the rope lever reported 7 and 2 masters where answering the
+crux gives **36 and 17**. Every number above is post-fix.
+
+**Shipped:** `probes/rungs.mjs`; `checks/rungs.mjs` (four driven arms plus census floors);
+`makeMasterOf`, `canSecond`, `startSecond`, `secondFee`, `SECOND_WEEKS`, `MASTERY` and `squareBout`
+on the handle; a `mastery` rope lever. **No game constant changed.**
+
 ### v3.226.0 — #248 phase 1: the second decade doubles — and the item's own KPI turns out to be unreachable from this table
 
 **The premise held and the risk note did not.** #248 was written off a measurement four releases old,
@@ -8500,7 +8557,21 @@ break.
 
 ---
 
-**#252 — Mastery Is Above the Ninetieth Percentile** *(gameplay · medium · 2 phases)*
+**#252 — Mastery Is Above the Ninetieth Percentile** *(gameplay · medium · 2 phases)* — **PHASE 1
+SHIPPED v3.227.0, AND IT NAMES PHASE 2's TARGET.** The verbs (`makeMasterOf`, `startSecond`,
+`squareBout`) were never on the test handle, so nothing here had ever made a master and the census
+read 0% at the top — the fourth instance of #219/#220/#221/#246's shape. With them exported and a
+rope lever added: mastery reaches **1.2% and 0.6%** of every man who ever fought, about one man in a
+hundred against the item's one in thirty. **12 wins and 55 renown are perfectly nested** (every
+12-win man already has the renown), so the arithmetic gate is one term at the ~95th percentile — and
+it is not the binding one. **The proof is:** of men clearing both arithmetic terms only **12.3-20.5%**
+are ever proved even with square bouts staged for them, because `proveInSquare` wants a beaten man
+worth at least as much and the candidate is by construction the most valuable man in his own yard —
+**no eligible peer existed on 95.5% and 96.9% of the weeks one was wanted.** Above the gate nothing
+is broken: all three terms clear → mastery 100% of the time, and 67-75% take a second style. *Phase
+2 is therefore the proof's peer requirement, not the win count.* Two ordering facts recorded for it:
+`doSpar` credits the winner +4 renown (~36d of price) BEFORE testing whether the man he beat was
+worth as much, and an unanswered spar `crux` never resolves.
 
 `MASTERY_GATE = { wins:12, pfame:55 }` plus `provedIt` (#232 phase 5); `SIG_GATE = { wins:6 }`. The
 seeded survey's careers: **bouts p50 4 / p90 15; wins p50 1 / p90 7.** A technique wants a man at about

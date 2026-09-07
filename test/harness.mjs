@@ -293,6 +293,14 @@ export async function installRope(p){
        rather than intent. Every part can be switched off through `opts` for a control arm:
          cells, buy, doctore, build, census, staff, school, heir, rome, bout  (all default true)
          signature     (default OFF, #221 — no rope had ever taught one, so the arc read dark)
+         mastery       (default OFF, #252 — the SAME fault one rung up, found four items later. The
+                        gate's readers (`canMaster`, `masterNeed`, `provedIt`) were on the handle
+                        and the two VERBS were not, so nothing in this project had ever made a
+                        master or a second style and the top of a career read as unreachable when it
+                        was merely unpressed. `mastery:true` makes a master the week a man clears
+                        `canMaster`, and starts a second style when `canSecond` holds and the fee
+                        clears the reserve. Opt-in, because a house of masters is not the reference
+                        player and every figure in this directory was measured without one)
          court, lot    (default OFF, #220 — the rope had no way to accept a court or buy a war lot,
                         so both read 0 in every sweep and the count was filed as a design fault)
          rites         (default OFF, #219 — it read `d.blessing`, which is never cleared, so the
@@ -898,6 +906,77 @@ export async function installRope(p){
         if(man && fee > 0 && fee <= spare()){
           const keys = (fin(A.techsFor,[man.cls]) || []).map(t=>t.key || t);
           for(const k of keys) if(fin(A.teachSigTo,[d, man.id, k])){ bump("signature"); break; }
+        }
+      }
+      /* ---- AND THE RUNG ABOVE IT, FOR THE FOURTH TIME (#252) ----
+         `makeMasterOf` and `startSecond` are the game's own buttons and neither was reachable from
+         a test until v3.227.0. A census of the career ladder run without this reports 0% masteries
+         and calls the top of the game dead, which is the mistake #246 phase 1 made with
+         `poachTarget` and #221 made with the signature. The mastery itself is FREE — the cost is
+         the twelve wins, the renown and the man beaten in the square — so it is taken whenever it
+         is offered; the second style has a fee and waits on the reserve like every other spend. */
+      if(o.mastery && typeof A.makeMasterOf === "function"){
+        /* ---- AND THE THIRD TERM, WHICH IS THE ONE THAT ACTUALLY BINDS ----
+           `MASTERY_GATE` is twelve wins AND fifty-five renown AND `provedIt` — a man beaten in the
+           square worth at least as much as he is. Measured before this line existed: men clearing
+           the first two terms were proved 0% of the time, because the only proving that happened at
+           all was incidental yard feuds landing on somebody else. A rope that takes the mastery but
+           cannot aim at the square answers "is the gate reachable" with a policy artifact. So the
+           candidate is PAIRED: the cheapest partner worth at least as much as he is (the gate's own
+           `gladValue` test), both set to spar, and the week resolves it. He still has to win —
+           `probes/master.mjs` measured a man beating his equal 49.4% of the time — so this buys an
+           attempt, not a mastery. */
+        if(typeof A.squareBout === "function" && typeof A.gladValue === "function"){
+          /* THE FIRST CUT AIMED AT THE WRONG SYSTEM. `regimen:"spar"` with `setSparOf` is HARD
+             SPARRING, a training week; the square is `squareBout(d, a, b)` — the player's own "put
+             these two in the yard this afternoon", gated one per week by `squareReady`. Only the
+             second resolves through `doSpar`, and only `doSpar` calls `proveInSquare`. The training
+             arm read 0% proved and would have been reported as the game refusing the gate. */
+          const men = A.activeG(d);
+          const want = men.filter(g=>!g.mastery && !g.proved && !g.injury
+            && (g.wins||0) >= (A.MASTERY_GATE||{wins:12}).wins
+            && (g.pfame||0) >= (A.MASTERY_GATE||{pfame:55}).pfame)
+            .sort((a,b)=>(b.wins||0)-(a.wins||0))[0];
+          if(want){
+            const mine = A.gladValue(want);
+            /* the CHEAPEST man worth at least as much as he is — `proveInSquare` wants
+               `gladValue(loser) >= gladValue(winner)`, and the cheapest such partner is the one he
+               is likeliest to beat */
+            const mate = men.filter(g=>g.id !== want.id && !g.injury && !g.benched && A.gladValue(g) >= mine)
+              .sort((a,b)=>A.gladValue(a) - A.gladValue(b))[0];
+            /* ---- AND THE COUNT THAT EXPLAINS THE GATE ----
+               `proveInSquare` wants the man he beats to be worth AT LEAST AS MUCH as he is. A man
+               with twelve wins and fifty-five renown is, by construction, near the top of his own
+               house — so the partner the gate demands frequently does not exist in the yard at all.
+               That is a different failure from losing the bout, and the two are counted apart. */
+            if(!mate) bump("noPeer");
+            else if(!A.squareReady || fin(A.squareReady,[d, want, mate])){
+              let res = fin(A.squareBout,[d, want.id, mate.id]);
+              /* AND THE AFTERNOON HAS TO FINISH. `doSpar` can come back `{crux:true, pending}` and
+                 `squareBout` hands that straight back; a caller that drops it has staged a bout
+                 that never resolved, so `proveInSquare` is never reached and the lever reports
+                 attempts it did not really make. Same handshake as `answer` above. */
+              let guard = 0;
+              while(res && res.crux && guard++ < 4){
+                const pd = res.pending; pd.beats = res.beats;
+                res = fin(A.doSpar,[d, pd.aid, pd.bid, pd, "run"]);
+              }
+              if(res) bump("proving");
+            } else bump("squareShut");
+          }
+        }
+        for(const g of A.activeG(d)){
+          let ok = false; try { ok = !!A.canMaster(d, g); } catch(e){ ok = false; }
+          if(ok && fin(A.makeMasterOf,[d, g.id])) bump("mastered");
+        }
+        if(typeof A.startSecond === "function" && typeof A.canSecond === "function"){
+          const man = A.activeG(d).filter(g=>{ try { return !!A.canSecond(d, g); } catch(e){ return false; } })
+            .sort((a,b)=>(b.wins||0)-(a.wins||0))[0];
+          if(man){ const fee = fin(A.secondFee,[d, man]) || 0;
+            if(fee > 0 && fee <= spare()){
+              const to = Object.keys(A.CLASSES || {}).filter(c=>c !== man.cls)[0];
+              if(to && fin(A.startSecond,[d, man.id, to])) bump("second");
+            } }
         }
       }
       if(o.gambit && typeof A.runGambit === "function"){

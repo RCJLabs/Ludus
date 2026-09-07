@@ -33601,6 +33601,11 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     /* the five openings BY NAME — a check that invents a scenario key gets `clean` back
        without a word, which is how four fifths of one check's coverage went missing */
     SCENARIOS, SC_KEYS, BKEYS, bLevel, masterOpen, canLearnSig,
+    /* #252 phase 1 — the top of the ladder had no button a test could press. `canMaster`,
+       `masterNeed` and `provedIt` were on this handle; the two VERBS that grant a mastery and a
+       second style were not, so no probe or check in this project has ever made a master. Same
+       shape as #221's signature, #220's court and lot, and #219's rites. */
+    makeMasterOf, canSecond, startSecond, secondFee, SECOND_WEEKS, MASTERY, squareBout,
     /* what is new, and where — the marks the tab bar and the folded panels wear */
     tabMarks, tabSig, tabFresh, tabQuiet, markSeen, TAB_KEYS, TAB_SIG, TAB_QUIET, TAB_NAMES,
     sectMark, SECT_MARK, MARK_URG, faceMark, FACE_SECTS, agendaAsk, seenOf,
