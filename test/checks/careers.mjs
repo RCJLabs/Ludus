@@ -34,6 +34,15 @@ export async function run({ p, errors }){
       m.fatigue = 0; m.lastFought = -9; Object.assign(m, over||{}); d.gladiators.push(m); return m; };
     const vet   = mk({ wins:14, pfame:90 });            // the man who walks the ladder
     const green = mk({ wins:2,  pfame:10 });            // and the man the gates refuse
+    /* ---- AND "NOT A REAL TEST" HAD TO STOP MEANING "CHEAPER" — v3.229.0 ----
+       `mk` builds every man at the same quality and separates them by WINS and RENOWN, which was
+       enough while `proveInSquare` compared `gladValue`: the veteran's fourteen wins and ninety
+       renown priced him above the green man on career alone. The gate compares FIGHTING QUALITY
+       now, and on that the two were identical — so beating the green man proved the veteran and
+       this arm went red. It was right to: a green man built to the same six numbers IS a real test,
+       and the arm means "a man who is plainly worse must not prove him". So he is made plainly
+       worse at the thing the gate actually reads. */
+    (A.STATS||[]).forEach(k=>{ green[k] = Math.max(5, Math.round((green[k]||30) * 0.45)); });
     const elder = mk({ wins:9,  pfame:60, age:34 });
     const hero  = mk({ wins:12, pfame:200 });
     const week = () => { d.pendingEvent = null;
@@ -57,12 +66,14 @@ export async function run({ p, errors }){
        through a spar because the spar's winner is a roll and this check is not a coin. */
     const masBefore = A.makeMasterOf(d, vet.id);        /* refused: he has proved nothing yet */
     const proved = A.proveInSquare(d, vet, green.gladValue ? green : green);
-    const provedBad = A.provedIt(vet);                  /* green is worth LESS, so this must refuse */
-    const worthy = A.activeG(d).find(g=>g.id!==vet.id && A.gladValue(g) >= A.gladValue(vet)) || null;
+    const provedBad = A.provedIt(vet);                  /* green is plainly worse, so this must refuse */
+    const worthy = A.activeG(d).find(g=>g.id!==vet.id && A.fightQual(g) >= A.fightQual(vet)) || null;
     if(worthy) A.proveInSquare(d, vet, worthy);
-    else { /* nobody in the yard prices above him — lift one so the ladder can be walked */
+    else { /* nobody in the yard is his equal — lift one so the ladder can be walked. The lift is on
+              the SIX NUMBERS, because that is what the gate reads from v3.229.0; lifting renown and
+              wins moved a price the gate no longer looks at. */
       const lift = A.activeG(d).find(g=>g.id!==vet.id && g.id!==green.id);
-      if(lift){ lift.pfame = (vet.pfame||0) + 300; lift.wins = (vet.wins||0) + 10;
+      if(lift){ (A.STATS||[]).forEach(k=>{ lift[k] = Math.min(99, (vet[k]||50) + 5); });
         A.proveInSquare(d, vet, lift); } }
     const masGreen = A.makeMasterOf(d, green.id);
     A.makeMasterOf(d, vet.id);
@@ -136,7 +147,7 @@ export async function run({ p, errors }){
   lines.push(`the signature cost ${out.sigFeePaid}d and took: ${out.signature}`);
   lines.push(out.vetLine);
   lines.push(`gates refused the green man: signature ${!out.sigGreen}, mastery ${!out.masGreen}, rudis ${!out.rudisGreen}`);
-  lines.push(`and mastery now wants it proved: refused before the square ${!out.masBefore} · beating a cheaper man is not proof ${!out.provedBad}`);
+  lines.push(`and mastery now wants it proved: refused before the square ${!out.masBefore} · beating a worse man is not proof ${!out.provedBad}`);
   lines.push(`the man four doors down asked ${out.ask.fired} time${out.ask.fired===1?"":"s"} in ${out.ask.weeks} weeks of holding${out.ask.firstAt!=null?`, first in week ${out.ask.firstAt}`:""}`);
 
   if(out.sigGreen) fails.push("a two-win man was taught a signature — the six-win gate is open");
@@ -145,7 +156,8 @@ export async function run({ p, errors }){
   if(out.masGreen) fails.push("a two-win man was made a master — the twelve-win gate is open");
   /* #232 phase 5 — the third clause, from both sides */
   if(out.masBefore) fails.push("a man who had proved nothing in the square was made a master — canMaster wants more than wins and renown now");
-  if(out.provedBad) fails.push("beating a man the house prices BELOW him counted as proof — the bar is gladValue, at or above");
+  if(out.provedBad) fails.push("beating a man plainly WORSE at fighting counted as proof — from v3.229.0 the bar "
+    + "is `fightQual`, at or above, and a man who is no test must not clear it");
   if(!out.mastery) fails.push("a fourteen-win, ninety-renown man could not be made a master");
   if(!out.secOk) fails.push("a master with a doctore and the fee could not start a second trade");
   if(!out.second) fails.push("eight weeks at the post did not finish the second trade");

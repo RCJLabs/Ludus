@@ -72,7 +72,11 @@ const out = await p.evaluate(([H, W, SEED])=>{
          game with nothing at the top of it, and this file has now aimed at the wrong system once
          (the training regimen instead of the square) and would have reported it as a finding. */
       let did = null; try { did = R.lanista(d, opts); } catch(e){ break; }
-      for(const k of ["proving","noPeer","squareShut","mastered","second","signature"])
+      for(const k of ["proving","noPeer","squareShut","mastered","second","signature","wantedPeer",
+                      "peerAt100","peerAt90","peerAt80","peerBestOther",
+                      "bestRatio100","bestRatio90","bestRatio80","bestRatio60","bestRatioUnder60",
+                      "billUp","billNamed","billPeer100","billPeer90",
+                      "qualPeerYard","qualPeerYard95","qualPeerBill","qualPeerBill95"])
         if(did && did[k]) T.bumps[k] = (T.bumps[k]||0) + did[k];
       for(const g of (d.gladiators||[]))
         if(firstFought[g.id] == null && ((g.wins||0) + (g.losses||0)) > 0) firstFought[g.id] = d.week;

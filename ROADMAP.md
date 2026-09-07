@@ -4389,6 +4389,71 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.229.0 — #252 phase 2: "worth beating" stops meaning "priced as high", because the world contains nobody priced as high
+
+**The gate's own note names its standard**, and v3.227.0 measured the code failing it: *"a couple of
+afternoons' work for a man who is ready and a wall for one who is not — which is the whole
+difference between a gate and a delay."* It was a wall for the READY man. `proveInSquare` asks him
+to beat somebody `gladValue` prices at or above him, and no such man existed on **95.5% and 96.9%**
+of the weeks he wanted one.
+
+**Three candidate fixes were measured before one was written**, on the ~2,250 weeks a man who had
+cleared both arithmetic terms wanted an afternoon:
+
+| would a partner have existed? | seed 1 | seed 2 |
+|---|---|---|
+| **priced ≥ him, in his own yard (ships)** | **4.5%** | **3.1%** |
+| priced ≥ him, on the week's arena bill | 1.1% | 0.4% |
+| priced ≥ 90% of him, in the yard | 8.4% | 4.8% |
+| priced ≥ 80% of him, in the yard | 13.1% | 8.7% |
+| **as GOOD as him, in his own yard** | **32.5%** | **29.5%** |
+| as good as him, on the bill | 33.5% | 35.3% |
+
+**Looking further afield does not work** — the bill is *worse* than the yard. **Relaxing the
+threshold does not work either**: at 80% of his price the yard supplies one on 13.1% and 8.7% of
+weeks, because **the best other man in the yard is worth under 60% of the candidate on 72.3% and
+80.8%** of them. He is not marginally the best man there; he is in a different class.
+
+**So it is the basis, not the threshold.** `gladValue` is career-accumulated — wins ×14, and
+`gladName` on top is pfame ×9 plus fans, scars, traits and a nick — so a man at twelve wins and
+fifty-five renown is priced above anyone who has done less, which by construction is everyone. The
+gate asked him to beat somebody the world does not contain. `proveInSquare` compares **fighting
+quality** now: the same six numbers the arena fights him on, what he *can do* rather than what he
+*has done*.
+
+**Measured on the same seeds after the change:**
+
+| | before | after |
+|---|---|---|
+| proving afternoons staged | 102 / 70 | **190 / 172** |
+| masters made | 36 / 17 | **45 / 44** |
+| mastery, of every man who ever fought | 1.2% / 0.6% | **1.6% / 1.3%** |
+| of the men who cleared both arithmetic terms | 20.3% / 13.3% | **25.4% / 28.9%** |
+
+**And an ordering fault dissolves rather than being papered over.** `doSpar` credits the winner
+`pfame += 4` *before* calling `proveInSquare`, and at 9d a point that inflated him ~36d against the
+man he had just beaten — so a peer who was dearer before the afternoon could be cheaper by the time
+he was measured. Renown does not enter the comparison any more, so the order stopped mattering.
+
+**What this does not do, stated plainly:** it does not reach the item's "one man in thirty". Mastery
+is one man in 63–77 who ever fought, up from one in 83–167. The remaining shortfall is survival — a
+ready man has to live long enough to get his afternoon and win it — and that is **#252's own other
+phase-2 option**, *"the hazard in the 6–12-win band if that is where careers end"*, which is not
+opened here.
+
+**One check went red, and it was right to.** `careers` builds its four men at the same quality and
+separates them by wins and renown, then asserts that beating the green man does not prove the
+veteran — which held while the bar was a price, because fourteen wins and ninety renown priced the
+veteran above him on career alone. On fighting quality the two were identical, so the green man IS a
+real test and the arm failed honestly. Its intent is unchanged and its fixture moved to the quantity
+the gate now reads: the green man is made plainly worse at the six numbers, and the arm's own "lift
+a man so the ladder can be walked" fallback lifts stats rather than renown.
+
+**Shipped:** `proveInSquare` on `fightQual`; `fightQual` and `proveInSquare` on the handle; the rope
+lever picks its partner on the same basis the gate reads; `checks/rungs.mjs` arm 3 rebuilt as a
+regression test — its partner is of equal quality and **worth 428d against the candidate's 1,226d**,
+so it goes red if the gate ever reads a price again; `checks/careers.mjs` moved to the same basis.
+
 ### v3.228.0 — #247's original phase 2, answered and closed: the opening does discriminate, and the row already says so better than anything else could
 
 **The last unresolved thread in #247.** Phase 1 retired this phase in one sentence — *"the opening
@@ -8636,9 +8701,17 @@ are ever proved even with square bouts staged for them, because `proveInSquare` 
 worth at least as much and the candidate is by construction the most valuable man in his own yard —
 **no eligible peer existed on 95.5% and 96.9% of the weeks one was wanted.** Above the gate nothing
 is broken: all three terms clear → mastery 100% of the time, and 67-75% take a second style. *Phase
-2 is therefore the proof's peer requirement, not the win count.* Two ordering facts recorded for it:
-`doSpar` credits the winner +4 renown (~36d of price) BEFORE testing whether the man he beat was
-worth as much, and an unanswered spar `crux` never resolves.
+2 SHIPPED v3.229.0.* Three fixes were measured first: looking to the arena bill is WORSE than the
+yard (1.1%/0.4% against 4.5%/3.1%) and relaxing the price bar barely helps (13.1%/8.7% at 80%),
+because the best other man in the yard is worth under 60% of the candidate on 72-81% of those weeks.
+It is the BASIS, not the threshold — `gladValue` is career-accumulated, so a bar on his price can
+never be met by anyone who has done less. `proveInSquare` compares **fighting quality** now: partner
+availability 4.5%/3.1% → **32.5%/29.5%**, proving afternoons 102/70 → **190/172**, masters 36/17 →
+**45/44**, mastery **1.2%/0.6% → 1.6%/1.3%** of every man who ever fought and 20.3%/13.3% →
+**25.4%/28.9%** of the men who cleared both arithmetic terms. The +4-renown ordering fault dissolves
+with it, since renown no longer enters the comparison. **It does not reach the item's "one man in
+thirty"** — one in 63-77, up from one in 83-167 — and the shortfall is survival, which is this
+item's own other phase-2 option (the hazard in the 6-12-win band), still unopened.
 
 `MASTERY_GATE = { wins:12, pfame:55 }` plus `provedIt` (#232 phase 5); `SIG_GATE = { wins:6 }`. The
 seeded survey's careers: **bouts p50 4 / p90 15; wins p50 1 / p90 7.** A technique wants a man at about

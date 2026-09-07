@@ -45,7 +45,7 @@ export async function run({ p, errors }){
   const out = await p.evaluate(([W6, W12])=>{
     const A = window.__LVDVS, R = window.__ROPE;
     const miss = ["newGameState","MASTERY_GATE","SIG_GATE","canMaster","masterNeed","provedIt",
-                  "makeMasterOf","canSecond","startSecond","secondFee","squareBout","gladValue","doSpar",
+                  "makeMasterOf","canSecond","startSecond","secondFee","squareBout","gladValue","doSpar","fightQual","STATS",
                   "activeG","CLASSES"].filter(k=>A[k]==null);
     if(miss.length) return { why:`the handle is missing ${miss.join(", ")}` };
     const MG = A.MASTERY_GATE;
@@ -89,39 +89,32 @@ export async function run({ p, errors }){
     { const cheap = yard(); const c = cheap.men[1];
       if(c){ /* make the stablemate plainly cheaper */
         c.wins = 0; c.losses = 6; c.pfame = 0;
-        A.STATS && A.STATS.forEach(s=>{ c[s] = Math.max(5, Math.round((c[s]||30) * 0.4)); }); }
+        A.STATS && A.STATS.forEach(k=>{ c[k] = Math.max(5, Math.round((cheap.g[k]||30) * 0.4)); }); }
       cheap.g.proved = null;
       r.peer = { mineValue:Math.round(A.gladValue(cheap.g)),
         cheapValue: c ? Math.round(A.gladValue(c)) : null };
       if(c){ A.squareBout(cheap.d, cheap.g.id, c.id);
         r.peer.provedByCheaper = !!A.provedIt(cheap.g); }
 
-      /* ---- AND THE PEER HAS TO BE BEATABLE, WHICH THE FIRST CUT FORGOT ----
-         `proveInSquare` wants the beaten man worth at least as much AND wants the candidate to WIN.
-         Making the peer enormously better (all stats 95, forty wins, 5,213d against 1,226d) tests
-         neither: the candidate simply loses, forty afternoons running, and the arm reported the
-         game's one path to the third term as closed when it was the fixture that was wrong. The
-         peer is the candidate's own equal plus one win — `gladValue` counts a win at 14d, so he is
-         dearer by a hair and the afternoon is even, which is the band the gate actually describes. */
+      /* ---- AND THE PARTNER HAS TO BE AS GOOD, AND CHEAPER, WHICH IS THE WHOLE POINT ----
+         From v3.229.0 the gate reads FIGHTING QUALITY, not price. So the partner is built with the
+         candidate's own six numbers — as good as him — and deliberately left with no wins and no
+         renown, which makes him plainly CHEAPER in `gladValue` terms. That is what makes this arm a
+         regression test: under the old price rule he would be refused, and the arm goes red if the
+         gate ever goes back to reading a price.
+         He also has to be BEATABLE. An earlier cut made the peer enormously better (all stats 95,
+         5,213d against 1,226d) and the candidate simply lost sixty afternoons running, which the
+         arm reported as the game refusing to prove anybody. Equal quality is an even afternoon. */
       const rich = yard(); const b = rich.men[1];
       rich.g.proved = null;
-      if(b){ (A.STATS||[]).forEach(s=>{ b[s] = rich.g[s]; });
+      if(b){ (A.STATS||[]).forEach(k=>{ b[k] = rich.g[k]; });
         b.potential = rich.g.potential; b.age = rich.g.age;
-        b.losses = rich.g.losses; b.pfame = rich.g.pfame; b.wins = rich.g.wins||0;
-        /* raise him a win at a time until the game's own price puts him at or above the candidate,
-           rather than picking a number: `gladValue` reads a nick and an age as well as the wins,
-           so "his equal plus one win" came out 14d SHORT and the gate correctly refused it */
-        /* ---- AND THE MARGIN HAS TO CLEAR WHAT THE WIN ITSELF PAYS ----
-           `doSpar` credits the winner `w.pfame += 4` BEFORE it calls `proveInSquare`, and
-           `gladName` prices renown at 9d a point — so winning inflates the candidate by about 36d
-           before the "was he worth as much as me" test is made. A peer dearer by 7d was dearer
-           before the afternoon and cheaper by the time he was measured, and sixty bouts ran without
-           one proof. The fixture clears that margin deliberately; the fact that it has to is
-           reported to #252 phase 2 rather than papered over here. */
-        for(let i=0; i<80 && A.gladValue(b) < A.gladValue(rich.g) + 120; i++) b.wins++; }
+        b.losses = rich.g.losses; b.pfame = 0; b.wins = 0; b.nick = null; b.scars = []; b.traits = []; }
       r.peer.dearValue = b ? Math.round(A.gladValue(b)) : null;
-      r.peer.dearIsDearer = !!(b && A.gladValue(b) >= A.gladValue(rich.g));
-      r.peer.winPaysRenown = 4; r.peer.renownPrice = 9;
+      r.peer.qualMine = Math.round(A.fightQual(rich.g)*10)/10;
+      r.peer.qualPeer = b ? Math.round(A.fightQual(b)*10)/10 : null;
+      r.peer.dearIsDearer = !!(b && A.fightQual(b) >= A.fightQual(rich.g));
+      r.peer.peerIsCheaper = !!(b && A.gladValue(b) < A.gladValue(rich.g));
       /* he still has to WIN, so try until the square gives him one — a couple of afternoons */
       let got = false, ran = 0, whys = {};
       if(b) for(let i=0; i<60 && !got; i++){
@@ -180,15 +173,19 @@ export async function run({ p, errors }){
   /* 3 */
   { const P = out.peer;
     lines.push(`  the proof wants a peer: he is worth ${P.mineValue}d — a cheaper man (${P.cheapValue}d) `
-      + `${P.provedByCheaper ? "PROVED him" : "did not"}, a dearer one (${P.dearValue}d) ${P.provedByDearer ? "did" : "DID NOT"}`
+      + `${P.provedByCheaper ? "PROVED him" : "did not"}, one as good (quality ${P.qualPeer} v ${P.qualMine}, worth ${P.dearValue}d) ${P.provedByDearer ? "did" : "DID NOT"}`
       + ` — ${P.boutsRan} bouts ran${Object.keys(P.refusals||{}).length ? `, refused: ${JSON.stringify(P.refusals)}` : ""}`);
     if(P.provedByCheaper)
       bad.push(`beating a stablemate worth ${P.cheapValue}d proved a man worth ${P.mineValue}d — \`proveInSquare\` `
         + `requires the beaten man to be worth at least as much, and without that the gate is only "win once"`);
     if(!P.dearIsDearer)
-      bad.push(`the fixture could not build a peer worth as much as the candidate (${P.dearValue}d against `
-        + `${P.mineValue}d), so the second half of this arm tested nothing — an arm that cannot pass reads `
+      bad.push(`the fixture could not build a partner as GOOD as the candidate (quality ${P.qualPeer} against `
+        + `${P.qualMine}), so the second half of this arm tested nothing — an arm that cannot pass reads `
         + `exactly like a game that refuses`);
+    else if(!P.peerIsCheaper)
+      bad.push(`the partner built as good as the candidate is also worth MORE than him (${P.dearValue}d against `
+        + `${P.mineValue}d), so this arm would pass under the old price rule too and cannot catch a `
+        + `regression back to it`);
     else if(!P.provedByDearer)
       bad.push(`forty afternoons against a man worth ${P.dearValue}d never proved a man worth ${P.mineValue}d — `
         + `the one path to the third term does not close, and the mastery is unreachable in play`); }
