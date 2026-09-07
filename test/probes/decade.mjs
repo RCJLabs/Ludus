@@ -58,10 +58,23 @@ const out = await p.evaluate(([H, W, SEED])=>{
     return { n:a.length, p10:at(.1), p50:at(.5), p90:at(.9), max:s[s.length-1] }; };
   const pc = (v, n) => n ? Math.round(1000*v/n)/10 : 0;
   const shapeOf = t => ((t||"")+"").replace(/[A-Z][a-z]+/g,"_").slice(0,40);
+  /* ---- AND THE SAME SHAPE WITH THE DIGITS STRUCK OUT TOO ----
+     The KPI's shape function replaces proper nouns and keeps NUMBERS, and only looks at the first
+     forty characters. So a line that carries a changing figure near its start — "the 330th bout on
+     this sand", a purse, a count of the dead — reads as a brand new shape every single time it
+     appears. Before #248 phase 3 builds a ladder of milestone lines, which is precisely that shape,
+     it is worth knowing how much of the novelty already being measured is writing and how much is
+     arithmetic. Both curves are reported; the strict one strikes digits as well. */
+  const shapeStrict = t => ((t||"")+"").replace(/[A-Z][a-z]+/g,"_").replace(/\d+/g,"#").slice(0,40);
 
-  const nov = { shapes:[0,0,0,0], events:[0,0,0,0], weeks:[0,0,0,0] };
+  const nov = { shapes:[0,0,0,0], strict:[0,0,0,0], events:[0,0,0,0], weeks:[0,0,0,0],
+    book:[0,0,0,0], bookNew:[0,0,0,0] };
+  /* #248 phase 3 — is the book's line reaching the novelty loop at all, and is it counted as new? */
+  const BOOKMARK = /still calls that corner|name in the yard, in an argument|for this house and the men|stops in the middle of a drill|comes to the gate asking after|cut into the underside|are arguing about whether/;
   const reach = { gates:{}, seenN:[], lived:[], sawAny:0, houses:0, whenSeen:{},
     gen:[], fore:[], everFore:0, foreWeek:[] };
+  const QSTART = Math.floor(W * 0.75) + 1;      /* the quarter the KPI measures */
+  const q4 = [];
   const late = { weeks:0, chronKinds:{}, evIds:{}, chronN:0, newShapes:0, newEvents:0, evN:0, agN:0, agWeeks:0 };
   const LATEK = ["memoir","boy","rival","tired"];
   /* the gates as WEEKS, since `yearOf` is not on the handle: years 6/7/8/9 at 18 weeks to the year */
@@ -70,12 +83,29 @@ const out = await p.evaluate(([H, W, SEED])=>{
 
   for(let h=0; h<H; h++){
     const d = A.newGameState("De"+h, "clean", `${SEED}-${h}`);
-    const seenShape = new Set(), seenEv = new Set();       /* PER HOUSE — the claim is about a player */
+    const seenShape = new Set(), seenEv = new Set(), seenStrict = new Set();   /* PER HOUSE */
     let lastLate = [], foreAt = null;
+    const ledger = { start:null, end:null };
     for(let w=0; w<W; w++){
       if(d.over) break;
       const e = Math.min(3, Math.floor(w / (W/4)));
+      /* ---- AND THE WEEK A LINE IS STAMPED WITH IS NOT ALWAYS THE WEEK IT IS READ IN ----
+         `endWeek` opens with `lateWeek`, `foreWeek` and `bookWeek` and only later calls
+         `ludusLedger`, which does `d.week++`. So everything written in the first half of the week is
+         stamped with the OLD number, and a filter of `c.week === d.week` — which is what this loop
+         and `pace.mjs` both used — DROPS IT. That is not a small slice: it is `LATE`, the forebear
+         and the book, which is to say every piece of content #248 has added. Sixty-eight book lines
+         were found by scanning a run's whole log and ZERO by this loop. Both ends of the week are
+         taken now. */
+      /* EXACTLY the lines this week added. Accepting two week numbers (see the note above) also
+         re-reads the previous week's, which double-counts anything the `seen` sets do not absorb.
+         `chron` UNSHIFTS, so the new entries are the ones in front of whatever was in front before —
+         walk from index 0 until that same object, and stop. Identity, not week, not length: the log
+         rolls at `LOG_ROLL` and a length diff goes wrong the moment it does. */
+      const wasFront = (d.log||[])[0] || null;
       let did; try { did = R.lanista(d); } catch(x){ break; }
+      const fresh = [];
+      for(const c of (d.log||[])){ if(c === wasFront) break; fresh.push(c); }
       /* ---- ONE PASS, BECAUSE TWO PASSES CANNOT SEE THE SAME THING ----
          The first cut counted novelty here and then asked, in a second loop below, whether the late
          week's shapes were new. They never were: the first loop had already put every one of them
@@ -93,14 +123,29 @@ const out = await p.evaluate(([H, W, SEED])=>{
         if(isLate){ late.evN += did.events[k];
           late.evIds[k] = (late.evIds[k]||0) + did.events[k];
           if(fresh) late.newEvents++; } }
-      for(const c of (d.log||[])){ if(!c || c.week !== d.week) continue;
+      for(const c of fresh){ if(!c) continue;
         const s = shapeOf(c.text), fresh = !seenShape.has(s);
+        { const st = shapeStrict(c.text);
+          const isBook = BOOKMARK.test(c.text||"");
+          if(isBook) nov.book[e]++;
+          if(!seenStrict.has(st)){ seenStrict.add(st); nov.strict[e]++; if(isBook) nov.bookNew[e]++; } }
         if(fresh){ seenShape.add(s); nov.shapes[e]++; }
         if(isLate){ late.chronN++;
           late.chronKinds[c.kind || "none"] = (late.chronKinds[c.kind||"none"]||0) + 1;
           if(fresh) late.newShapes++; } }
       /* 2 · the LATE keys, off the state the game writes */
       if(foreAt == null && ((d.forebears||[]).length)) foreAt = d.week;
+      /* ---- WHAT A HOUSE HAS ACCUMULATED, AT THE FOURTH QUARTER'S TWO ENDS — #248 phase 3 ----
+         Phases 1 and 2 failed the KPI for opposite reasons: reach without the quarter, then the
+         quarter without reach. What has BOTH is the house's own record — every surviving house
+         accumulates, and it keeps accumulating. So the question is what those counts are worth: how
+         far they move between week 315 and the end, which is what decides whether a ladder of
+         milestones on them can produce new lines at the rate the bar wants. */
+      if(d.week === QSTART || (d.week === W && !ledger.end)){
+        let R2 = null; try { R2 = A.houseRecord(d); } catch(e){}
+        if(R2){ const row = { served:R2.served, bouts:(R2.w||0)+(R2.l||0), wins:R2.w||0,
+          kills:R2.k||0, buried:R2.lost||0, freed:R2.freed||0, years:R2.years||0 };
+          if(d.week === QSTART) ledger.start = row; else ledger.end = row; } }
       const ls = (d.flags && d.flags.lateSeen) || [];
       if(ls.length !== lastLate.length){
         for(const k of ls) if(!lastLate.includes(k)) reach.whenSeen[k] = (reach.whenSeen[k]||[]).concat(d.week);
@@ -118,6 +163,11 @@ const out = await p.evaluate(([H, W, SEED])=>{
     reach.fore.push(((d.forebears||[]).length));
     if((d.forebears||[]).length) reach.everFore++;
     if(foreAt != null) reach.foreWeek.push(foreAt);
+    /* the house reached Q4 if it was still standing at the boundary; the end row is its last week */
+    if(ledger.start){ if(!ledger.end){ let R3=null; try { R3 = A.houseRecord(d); } catch(e){}
+        if(R3) ledger.end = { served:R3.served, bouts:(R3.w||0)+(R3.l||0), wins:R3.w||0,
+          kills:R3.k||0, buried:R3.lost||0, freed:R3.freed||0, years:R3.years||0 }; }
+      if(ledger.end) q4.push({ start:ledger.start, end:ledger.end, weeks:d.week - QSTART }); }
     const ls = (d.flags && d.flags.lateSeen) || [];
     reach.seenN.push(ls.length);
     if(ls.length) reach.sawAny++;
@@ -128,6 +178,9 @@ const out = await p.evaluate(([H, W, SEED])=>{
     houses:reach.houses,
     /* 1 · the KPI */
     novelty: { shapesPerWeek: nov.shapes.map((n,i)=>nov.weeks[i] ? Math.round(1000*n/nov.weeks[i])/1000 : 0),
+      strictPerWeek: nov.strict.map((n,i)=>nov.weeks[i] ? Math.round(1000*n/nov.weeks[i])/1000 : 0),
+      rawShapes: nov.shapes.slice(), rawStrict: nov.strict.slice(), rawWeeks: nov.weeks.slice(),
+      bookLinesByQuarter: nov.book.slice(), bookNewByQuarter: nov.bookNew.slice(),
       newEventsPerQuarter: nov.events, weeks: nov.weeks,
       itemSaid: { shapes:[0.57,0.26,0.19,0.14], events:[319,69,17,13] } },
     /* 2 · the reach */
@@ -143,6 +196,15 @@ const out = await p.evaluate(([H, W, SEED])=>{
       generation:q(reach.gen), everHadAForebear: pc(reach.everFore, reach.houses),
       forebearsPerHouse:q(reach.fore), firstForebearWeek:q(reach.foreWeek) },
     /* 3 · what the late weeks are made of */
+    /* #248 phase 3 — the house's own record at the fourth quarter's two ends */
+    q4Ledger: { qStart:QSTART, housesReachingQ4: q4.length,
+      weeksInQ4: q(q4.map(x=>x.weeks)),
+      atStart: Object.fromEntries(["served","bouts","wins","kills","buried","freed","years"]
+        .map(k=>[k, q(q4.map(x=>x.start[k]))])),
+      atEnd: Object.fromEntries(["served","bouts","wins","kills","buried","freed","years"]
+        .map(k=>[k, q(q4.map(x=>x.end[k]))])),
+      moved: Object.fromEntries(["served","bouts","wins","kills","buried","freed","years"]
+        .map(k=>[k, q(q4.map(x=>x.end[k]-x.start[k]))])) },
     late: { weeks:late.weeks,
       chronPerWeek: late.weeks ? Math.round(1000*late.chronN/late.weeks)/1000 : 0,
       eventsPerWeek: late.weeks ? Math.round(1000*late.evN/late.weeks)/1000 : 0,

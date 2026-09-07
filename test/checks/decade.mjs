@@ -82,6 +82,34 @@ export async function run({ p, errors }){
         catch(e){ return `threw: ${e.message}`; } });
     }
 
+    /* 6 · the novelty curve, counted BOTH ways on one run so the filter fault cannot come back */
+    const nov = (()=>{
+      const W2 = 420, H2 = 16, FLOOR = 0.5;
+      const shp = t => ((t||"")+"").replace(/[A-Z][a-z]+/g,"_").slice(0,40);
+      const idN = [0,0,0,0], wkN = [0,0,0,0], wks = [0,0,0,0];
+      let dropped = 0, total = 0;
+      for(let h=0; h<H2; h++){
+        const d = A.newGameState("Nv"+h, "clean", `DECNOV-${h}`);
+        const seenId = new Set(), seenWk = new Set();
+        for(let w=0; w<W2; w++){
+          if(d.over) break;
+          const e = Math.min(3, Math.floor(w / (W2/4)));
+          const wasFront = (d.log||[])[0] || null;
+          try { R.lanista(d); } catch(x){ break; }
+          const fresh = []; for(const c of (d.log||[])){ if(c === wasFront) break; fresh.push(c); }
+          wks[e]++;
+          for(const c of fresh){ total++;
+            const k = shp(c.text);
+            if(!seenId.has(k)){ seenId.add(k); idN[e]++; }
+            if(c.week === d.week){ if(!seenWk.has(k)){ seenWk.add(k); wkN[e]++; } }
+            else dropped++;
+          }
+        }
+      }
+      const rate = a => a.map((n,i)=>wks[i] ? Math.round(1000*n/wks[i])/1000 : 0);
+      return { byIdentity:rate(idN), byWeek:rate(wkN), dropped, total, FLOOR };
+    })();
+
     /* 5 · the forebear — driven, because 7-8% of houses ever have one and a run would not reach it */
     const fore = (()=>{
       const mk = (withMen) => {
@@ -132,7 +160,7 @@ export async function run({ p, errors }){
         if(d.pendingEvent && d.pendingEvent.data && d.pendingEvent.data.k === k){ again = true; break; } }
       once[k] = !again;
     }
-    return { keys:KEYS, shape, ran, reach, once, fore };
+    return { keys:KEYS, shape, ran, reach, once, fore, nov };
   });
   if(out.why) return { pass:false, why:out.why, lines };
 
@@ -157,6 +185,32 @@ export async function run({ p, errors }){
   lines.push(`  reachable: ${out.keys.filter(k=>out.reach[k]).length}/${out.keys.length} · `
     + `choices returning a line: ${out.keys.reduce((n,k)=>n+(out.ran[k]||[]).filter(r=>r==="ok").length,0)}`
     + `/${out.keys.reduce((n,k)=>n+(out.ran[k]||[]).length,0)} · one-shot: ${out.keys.filter(k=>out.once[k]).length}/${out.keys.length}`);
+
+  /* 6 · the novelty curve, and the filter that hid it */
+  { const N = out.nov;
+    lines.push(`  novelty per week by quarter, counted by IDENTITY: ${N.byIdentity.join(" · ")} `
+      + `[bar ${N.FLOOR} in Q4] · counted by the old week stamp: ${N.byWeek.join(" · ")} `
+      + `· lines the week stamp drops: ${N.dropped} of ${N.total}`);
+    if(!N.total)
+      bad.push(`no chronicle lines were written at all in this arm, so nothing below asserted anything`);
+    else {
+      if(N.byIdentity[3] < N.FLOOR)
+        bad.push(`the fourth quarter meets ${N.byIdentity[3]} new chronicle shapes a week [bar ${N.FLOOR}] — `
+          + `#248's whole premise is that the late game gives less, and the corrected measurement put it at `
+          + `1.01 against the item's bar of 0.25`);
+      if(!(N.byIdentity[0] > N.byIdentity[3]))
+        bad.push(`novelty does not fall across the run (${N.byIdentity.join(" · ")}) — the curve is the one `
+          + `thing about #248 that was never in doubt, and a flat one means this arm has stopped measuring`);
+      /* the regression guard: the bug was a filter, and it is the filter this holds */
+      if(N.dropped === 0)
+        bad.push(`the week-stamp filter dropped nothing, so this arm cannot tell the two counting methods `
+          + `apart — it exists because \`endWeek\` writes half its chronicle BEFORE \`ludusLedger\` does `
+          + `\`d.week++\`, and a run where that is untrue has stopped exercising the fault`);
+      if(N.byWeek[3] >= N.byIdentity[3])
+        bad.push(`counting by the week stamp found as much as counting by identity (${N.byWeek[3]} against `
+          + `${N.byIdentity[3]}) — that filter dropped every line \`lateWeek\`, \`foreWeek\` and \`bookWeek\` `
+          + `write, which is how #248 was opened on a curve six times too low`);
+    } }
 
   /* 5 · the forebear */
   { const F = out.fore;

@@ -9,7 +9,11 @@
          man · both · and the hostile events actually raised. Measured: 107 / 0 / 0 of 3,133, and
          28 hostile acts in all — one every 112 weeks.
      3 · NOVELTY BY ERA. First-time chronicle shapes and first-time event ids per quarter of the
-         run. Measured: 0.57 / 0.26 / 0.19 / 0.14 new shapes a week; 319 / 69 / 17 / 13 new events.
+         run. CORRECTED v3.231.0 — the old filter read only the lines stamped with the post-increment
+         week and so dropped everything `endWeek` writes before `ludusLedger`. It measured
+         0.57 / 0.26 / 0.19 / 0.14; counted properly THIS file reads **3.33 / 1.92 / 1.29 / 1.12**
+         (24 x 420) and `probes/decade.mjs`, which measures it independently, reads 3.47 / 1.81 /
+         1.24 / 1.04 (96 x 420). #248 was opened on the old figure.
      4 · THE ENDING CURVE. Per house: ending, week, unrest p50 and gold p50 by era.
 
    Seeded (the seed is the THIRD argument of newGameState — see probe.mjs's fifth rule), so a
@@ -62,12 +66,24 @@ const out = await p.evaluate(([H,W,SEED])=>{
            checked once, up front, and a probe that cannot see what it is measuring says so. */
         let t = false; try { t = !!A.poachTarget(d, (d.rivals||[]).find(x=>!x.retired) || {}); } catch(x){ agg.threw++; }
         agg.weeks++; if(g) agg.grudge++; if(t) agg.target++; if(g && t) agg.both++; }
+      /* ---- THE WEEK A LINE IS STAMPED WITH IS NOT THE WEEK IT IS READ IN ----
+         `endWeek` opens with `lateWeek`, `foreWeek` and `bookWeek` and only later reaches
+         `ludusLedger`, which does `d.week++`. Everything written in the first half of the week
+         carries the OLD number, and the filter below was `c.week !== d.week` — so it dropped all of
+         it. That is not a slice, it is every piece of late-game content this project has added: a
+         run whose whole log held 68 book lines showed ZERO through that filter, and #248's headline
+         curve (0.57 / 0.26 / 0.19 / 0.14) was taken through it. Corrected here and in
+         `probes/decade.mjs`, the same run reads 3.42 / 1.89 / 1.36 / 1.01.
+         `chron` UNSHIFTS, so the week's new entries are the ones in front of whatever was in front
+         before. Identity, not week and not length — the log rolls at `LOG_ROLL`. */
+      const wasFront = (d.log||[])[0] || null;
       let did; try { did = R.lanista(d); } catch(x){ break; }
+      const fresh = []; for(const c of (d.log||[])){ if(c === wasFront) break; fresh.push(c); }
       for(const k of Object.keys((did&&did.events)||{})){ if(HOSTILE.has(k)) agg.hostile[k] = (agg.hostile[k]||0)+did.events[k];
         if(!seenEv.has(k)){ seenEv.add(k); nov.events[e]++; } }
       /* 3 · novelty */
       nov.weeks[e]++;
-      for(const c of (d.log||[])){ if(!c || c.week !== d.week) continue;
+      for(const c of fresh){ if(!c) continue;
         const shape = ((c.text||"")+"").replace(/[A-Z][a-z]+/g,"_").slice(0,40);
         if(!seenShape.has(shape)){ seenShape.add(shape); nov.shapes[e]++; } }
       era.unrest[e].push(Math.round(d.unrest)); era.gold[e].push(Math.round(d.gold));
