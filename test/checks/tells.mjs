@@ -43,7 +43,26 @@ const FLOOR = 0.01, CEIL = 0.80;
 
    The temptation was to re-band `veteran` until this file went green, which would be fitting the
    game to the test. The run goes long enough to contain the population the tell is about instead. */
-const HOUSES = 6, WEEKS = 440;
+/* ---- AND SIX HOUSES IS NOT A BAY — the horizon repair below, one dimension over ----
+   v3.244.0 re-phased the stream (#243 phase 2 rolls a fever every wife-week) and this file reported
+   `showman` at **9 of 1,019 offers, 0.88%** — under the floor, "written, read, and dead". It is not.
+   Measured on BOTH builds at six houses and then at twenty-four:
+
+                      6 houses            24 houses
+     v3.243.0        50 / 1,344  3.7%    142 / 5,136  2.8%
+     v3.244.0         9 / 1,019  0.9%    156 / 4,633  3.4%
+
+   The new build is HIGHER at the wider sample, and every other tell moved by a point or two either
+   way. What the six-house run caught was between-house variance: the men on a house's card come out
+   of its own bay and its own circuit, and one bay can genuinely be short of `sho`-seamed fighters —
+   the same six seeds gave 9 firings while the other eighteen gave 147.
+
+   This is the `veteran` repair recorded above, one dimension over. That one said a horizon which
+   stops before any house reaches `wins>=14` measures the horizon rather than the tell; this one says
+   a sample of six bays measures the draw rather than the tell. The bar is UNCHANGED — re-banding a
+   tell to make this file green would be fitting the game to the test — and the run is widened until
+   it contains the population the tell is about. */
+const HOUSES = 24, WEEKS = 440;
 
 export async function run({ p, errors }){
   const bad = [], lines = [];

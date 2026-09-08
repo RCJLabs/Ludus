@@ -4444,8 +4444,30 @@ line on `match`/`toga`/`daughter`'s own pattern — `make(){return null}` so the
 and a `run` delegating to `resolveWifeIll` beside `familyWeek`) and `SECT` 1484 → 1485 (the panel
 gains one row for a widower).
 
+**And the re-phase turned two checks red, and both were the same fault: a sample too small to carry
+its own bar.** Each was diagnosed by running the check on BOTH builds, not by reasoning about it.
+
+| | 8 or 6 houses | widened |
+|---|---|---|
+| `tells` · `showman` | v3.243.0 **3.7%**, v3.244.0 **0.9%** (under the 1% floor) | at 24 houses: **2.8%** and **3.4%** — the new build HIGHER |
+| `cells` · the gap | ref unrest p50 **12** then **4** (bar 5) | at 32 houses: **13** and **9** |
+
+`showman` fires when `sho` is a man's seam, and the men on a house's card come out of its own bay and
+its own circuit — one bay can genuinely be short of them, and the same six seeds gave 9 firings while
+the other eighteen gave 147. `cells` was one building: at eight houses the reference player happened
+to build the carceres in one build and not the other (the census reads **10 against 290**), and at
+thirty-two the two are within a fifth of each other. **Neither bar moved** — re-banding a tell or a
+gap to make a file green is fitting the game to the test, and both files say so in their own headers.
+The samples are widened until they contain the thing being measured, which is the `veteran`-horizon
+repair `checks/tells.mjs` already records, one dimension over.
+
+**One thing recorded to watch rather than asserted:** `cells`'s `GAP` was written when *"the
+reference player sits at 19-22 from era one"*, and he is at 9-13 now. The bar has not moved and the
+reference has, so the headroom under that arm is a third of what it was. The next failure there will
+not be a sample and should not be answered with a wider one.
+
 **Shipped:** `checks/fever.mjs` (six arms, 8s), `probes/mistress.mjs` extended with her life and the
-paid/skimped pair, the life in `src`. **#243 now stands at phases 1 and 2 shipped, phase 4 declined
+paid/skimped pair, `checks/tells.mjs` 6 → 24 houses and `checks/cells.mjs` 8 → 32, the life in `src`. **#243 now stands at phases 1 and 2 shipped, phase 4 declined
 on v3.242.0's measurement**, with phase 3 — her own asks — still open.
 
 ### v3.243.0 — #243 phase 1: her family is a standing tie, and the folded feud is a hostage

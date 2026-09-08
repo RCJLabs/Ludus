@@ -34,7 +34,27 @@
        `perkCalm` and the collegium are late and optional and are reported, not held. */
 import { found, clearAll, installRope } from "../harness.mjs";
 
-const HOUSES = 8, WEEKS = 300;
+/* ---- AND EIGHT HOUSES CANNOT CARRY A GAP OF FIVE ----
+   v3.244.0 re-phased the stream (#243 phase 2 rolls a fever every wife-week) and this arm reported
+   the reference player at unrest p50 **4** against the calming policy's 0 — a gap of 4 under a bar
+   of 5, which reads as "the calming stopped working or the reference player started doing it".
+   Measured on BOTH builds at eight houses and then at thirty-two:
+
+                    8 houses                        32 houses
+     v3.243.0      ref p50 12 · cells met    10    ref p50 13 · cells met 1,213
+     v3.244.0      ref p50  4 · cells met   290    ref p50  9 · cells met 1,045
+
+   The eight-house run was a draw, not a regression: at eight houses the reference player happened
+   to build the carceres in one build and not the other (the `cells` census, 10 against 290), and
+   that one building is most of the difference. At thirty-two the two builds sit at 13 and 9 and the
+   census terms are within a fifth of each other. THE BAR IS UNCHANGED — the sample is widened until
+   the two policies can be told apart, which is what the arm's own sentence asks for.
+
+   AND ONE THING WORTH WATCHING RATHER THAN ASSERTING: `GAP` was written when "the reference player
+   sits at 19-22 from era one", and he is at 9-13 now. The bar has not moved and the reference has,
+   so the headroom under this arm is a third of what it was. If it keeps falling, the next failure
+   here will not be a sample and should not be answered with a wider one. */
+const HOUSES = 32, WEEKS = 300;
 const CALM_BAR = 2;       /* the calming policy measured a p50 of 0 in every era of both probe sets */
 const NEAR_RUNG = 35;     /* and a p90 of 16 — it does not get near the whispers at 50 */
 const GAP = 5;            /* while the reference player sits at 19-22 from era one */
