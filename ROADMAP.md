@@ -4389,6 +4389,64 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.242.0 — #243's verify-first: the widow phase 4 wanted cannot be made, because the lanista does not die
+
+**The item gates its fourth phase on one number and says so:** *"how many houses would have a
+widow-and-minor on the lanista's death — phase 4 is worth building only if that number is not zero."*
+
+**MEASURED** (`probes/widow.mjs`, three arms, 48 houses, **10,927 played weeks**): **it is zero, and
+there are no deaths to have one.** Not one lanista died in a played house. Fifteen handovers, and
+**fifteen of fifteen were RETIREMENTS** at a median age of 63 — a living man keeping his rooms.
+
+**The item guessed the wrong reason.** It blames the boy's 162 weeks (`SON_AGE` 9 × `YEAR_WEEKS` 18).
+The boy is not the binding constraint:
+
+| | reference | heir:false | started at 58 |
+|---|---|---|---|
+| houses married | 15/16, p50 week 35 | 12/16, p50 week 27 | 9/16, p50 week 116 |
+| a wife stands | **85.1%** of played weeks | 80.6% | 57.0% |
+| her age at the house's end | p50 **32**, max 42 | p50 32, max 55 | p50 34, max 49 |
+| the man at the end | age p50 51, **health p50 100** | age p50 46, health p50 99 | age p50 50, health p50 100 |
+| handed on ALIVE | 2 | 3 | 10 |
+| **died** | **0** | **0** | **0** |
+
+- **The house ends first.** The reference player's dies at week 260 with the man at *full health* —
+  ten of sixteen on the ledger (`debt`), four on a rising. He is nowhere near the door.
+- **And where he does reach sixty-two well, `lanistaWeek` routes him out alive, on purpose.** That is
+  the trade v3.219.0 made moving `LAN_AGE_FROM` 42 → 52, in its own words: at the old onset *"the
+  successions that did happen came through the death door, the lanista dropping dead, rather than the
+  retirement the design wrote for it"*. At the new one he is sound at 62, the retirement gate opens at
+  6% a week, and health 0 is fifteen years further on. Driven with every term of the gate satisfied,
+  **80 of 80 handed on alive, after a median of eleven weeks**.
+
+**So phase 4 is declined, and not on a tuning number.** It would need a lanista's death to be an
+ordinary end of a house again — the thing v3.219.0 measured and traded away deliberately. The refusal
+is recorded in `src` beside the death branch itself, where the trigger would have had to live.
+
+**Nothing here says the death door is shut, and the arms prove it is not.** `checks/tenure.mjs`
+already ages a man to health 0 and drives both doors; `checks/widow.mjs` drives this one with a widow
+and a boy of three standing and reads both of them at the death — because a zero from a detector that
+cannot fire is not a measurement.
+
+**Two instrument faults, both caught by controls rather than by luck.**
+- The first detector watched `d.forebears` grow, which is `succeed` running — and the rope takes the
+  house up on the week *after* `lanistaWeek` raises the succession. The control fixture reported
+  `detector SILENT` on a death that plainly happened (`succession=true`, generation still 1).
+  `d.succession`'s own `retire` flag, read at the raise, is the signal.
+- Then identity was the guard, and **neither branch checks `!d.succession` before writing one**, so a
+  succession nobody answers is overwritten with a fresh literal every week the 6% roll lands. It
+  counted ten retirements in an arm that reached generation 2 **zero** times. The transition is the
+  event: falsy → truthy, once.
+
+**And a stale note corrected.** `checks/policy.mjs` carries *"12 seeds of 900 weeks: naming an heir
+took `lanistaDied` from 4 of 12 to NONE"* — measured under `LAN_AGE_FROM` **42**, before the onset
+moved. Re-run at 16 × 900 the window makes no difference at all: the reference arm plays 4,211 weeks
+against 4,131 at 520, because the houses are long dead by either mark.
+
+**Shipped:** `probes/widow.mjs` (four arms including the read-path control), `checks/widow.mjs` (five
+arms, 8s), the refusal recorded in `src`. **No game code touched** — the measurement refused the
+build, and #243's phases 1–3 are the item.
+
 ### v3.241.0 — #242 phase 4: the bay answers, and the brake it asks for was already on
 
 **Phase 4 has two limbs and the measurement built one and refused the other.**
@@ -9104,7 +9162,8 @@ with a house tag, and let the numbers edict be the ceiling the design already wr
 
 ---
 
-**#243 — The Mistress of the House** *(overhaul · medium–large · 4 phases)*
+**#243 — The Mistress of the House** *(overhaul · medium–large · 4 phases)* — **VERIFY-FIRST
+ANSWERED v3.242.0. PHASE 4 DECLINED; phases 1–3 stand.**
 
 `resolveMatch` writes `dmm.wife = { name, family, married, age, from }`. After that line **nothing reads
 `wife.from` or `wife.family`** except the card that prints them. The dowry is paid once, the favour
@@ -9127,6 +9186,17 @@ the one door v3.200.0 measured and could not open, because the boy needs 162 wee
 
 *Reuses:* domusOf, wifeAge, marryReady, HH_NAMES, ASKS, raiseEvent, weddingEndsFeud, SLAVERS, patrons,
 succession.
+
+**VERIFY-FIRST ANSWERED v3.242.0, AND PHASE 4 IS DECLINED.** Over 48 houses and 10,927 played weeks
+(`probes/widow.mjs`): a wife stands on **85% of played weeks**, 15 of 16 houses marry at a median of
+week 35, and she reaches a median age of **32** at the house's end — so phases 1–3 have their person.
+The fourth number is **zero, and there are no deaths to have one**: not one lanista died in a played
+house, and 15 of 15 handovers were RETIREMENTS at a median age of 63. The boy's 162 weeks are not the
+constraint — the house ends first (week 260, the man aged 51 at **health 100**), and a man who does
+reach sixty-two well is routed out ALIVE by the `LAN_AGE_FROM` 42 → 52 trade of v3.219.0 (driven,
+80 of 80 retire, median 11 weeks). Phase 4 would need a lanista's death to be an ordinary end of a
+house again, which is a different item. Held by `checks/widow.mjs`; refusal recorded in `src` beside
+the death branch. Original text follows.
 
 **Verify first.** Over 16 × 520: weeks with a wife (`probes/boy.mjs` already rows `wifeWeeks`), the age
 she would reach at the house's end, and how many houses would have a widow-and-minor on the lanista's
