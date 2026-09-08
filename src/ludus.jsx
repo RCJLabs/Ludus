@@ -5769,6 +5769,31 @@ const APPETITES = {
     lost:"They had asked for him to be spared. He was not. That is the sort of thing a town keeps." },
 };
 const APP_KEYS = Object.keys(APPETITES);
+/* ---- HIS VOICE — #254 phase 3 ----
+   Who is putting these games on, what he wants, and where you stand with him. Module scope for the
+   same reason `AppetiteLine` and `PetitionPanel` are: `bulk` holds App at 5,786 lines and it sits
+   at 5,784, so the whole of this had to cost the render ONE line.
+   It says what he wants BECAUSE that is now true — his taste weights the mood of his own card
+   (`appetiteOf`) — rather than as flavour beside a field nothing reads. */
+function EditorLine({ S, offer }){
+  const key = offer && offer.fest;
+  if(!key) return null;
+  const k = editorFor(key);
+  const E = EDITORS[k];
+  if(!E || E.owns !== key) return null;
+  const A = APPETITES[E.taste];
+  return (
+    <div className="panel" data-editor={k} style={{padding:8,marginTop:6,background:"var(--panel)",borderColor:"var(--laurel-edge2)"}}>
+      <div className="flex items-center justify-between" style={{marginBottom:2}}>
+        <span className="laurel" style={{fontSize:"var(--fs-md)"}}>{E.name} is putting these on</span>
+        {A && <span className="tag" style={{fontSize:"var(--fs-micro)"}}>{A.name}</span>}
+      </div>
+      <div className="dim" style={{fontSize:"var(--fs-base)",fontStyle:"italic",lineHeight:1.35}}>
+        {E.line} He <span data-editor-word>{editorWord(S, k)}</span>.
+      </div>
+    </div>
+  );
+}
 function AppetiteLine({ offer }){
   const k = appetiteOf(offer);
   if(!k) return null;
@@ -5792,6 +5817,7 @@ function appHash(offer){
   return (h >>> 0);
 }
 const APP_SHARE = 0.30;         /* not every card has a mood, or a mood stops being one */
+const EDITOR_PULL = 4;          /* #254 phase 3 — extra tickets for the editor's taste on his own day */
 function appetiteOf(offer){
   if(!offer || offer.melee || offer.venatio || offer.pair || offer.imperial) return null;
   if(!offer.opp) return null;
@@ -5799,6 +5825,18 @@ function appetiteOf(offer){
   if((h % 1000) / 1000 >= APP_SHARE) return null;
   const bag = [];
   for(const k of APP_KEYS) for(let i=0;i<APPETITES[k].w;i++) bag.push(k);
+  /* ---- HIS DAY, HIS CROWD — #254 phase 3 ----
+     Phase 1 gave every editor a `taste` and phase 2 read his LEDGER and not that, so `taste` was a
+     dark field for two releases — the second one I have shipped in this item. The man putting the
+     games on fills the tiers with the people who come to what he books, so his taste gets a hand of
+     extra tickets in the bag on his own festival.
+     Derived from `offer.fest` INSIDE this function rather than passed in, because `appetiteOf` is
+     called once by the panel that PRINTS the mood and once by `appetiteAfter` which JUDGES it, and
+     a signature that let those two disagree would be #150's rule broken by construction: the mood
+     shown and the mood paid have to be the same call. */
+  const ek = offer.fest ? editorFor(offer.fest) : null;
+  const ed = ek && EDITORS[ek] && EDITORS[ek].owns === offer.fest ? EDITORS[ek] : null;
+  if(ed && APPETITES[ed.taste]) for(let i=0;i<EDITOR_PULL;i++) bag.push(ed.taste);
   return bag[(h >>> 10) % bag.length] || null;
 }
 /* judged where the bout resolves, on the fields the result already carries */
@@ -6931,7 +6969,7 @@ function makeGames(d){
        needs +50% FLAT on every rival's card — a subsidy on half the bill, not a grudge mechanic.
        The reference player already takes the rival's card exactly when it pays most, which is
        correct play against a correctly built bill. There is no fault here, so there is no line. */
-    offers.push({ id:d.nextId++, tier, festival, opp:pr.opp, oppRef:pr.ref, rematch:pr.rematch, grudgeM:pr.grudgeM,
+    offers.push({ id:d.nextId++, tier, festival, fest:F.key, opp:pr.opp, oppRef:pr.ref, rematch:pr.rematch, grudgeM:pr.grudgeM,
       stakes:sine?"sine":"standard",
       purse: rnd((t.purse[0]+R()*t.purse[1]) * (sine?1.8:1) * (pr.rematch?1.25:1) * (F.purse||1) * seasonPurse(d)
         * (st==="craft" ? 1.18 : 1) * fameEdge(d)) });
@@ -9721,6 +9759,18 @@ const EDITOR_ZERO = { signed:0, kept:0, broken:0, paid:0, bought:0 };
    the term has to mean something across a range that wide without making the honest player rich.
    `bought` is counted apart, because buying an ear is not the same as keeping your word. */
 const EDITOR_PATIENCE = 4;
+/* ---- WHERE YOU STAND WITH HIM, SAID IN FIVE WORDS — #254 phase 3 ----
+   `slaverWord` is the shape: a short phrase read straight off the record, not a number. A dealer
+   "will not meet your eye" or "has your measure"; an editor is the same idea about a different
+   trade. Deliberately not a percentage — the ledger is the mechanism and this is the sentence. */
+const editorWord = (d, k) => { const r = editorRec(d, k);
+  if(r.broken >= 3 && r.kept === 0) return "has stopped expecting you";
+  if(r.broken > r.kept + 1)         return "has been made to look foolish once too often";
+  if(r.kept >= 4 && r.broken === 0) return "would put your name on anything";
+  if(r.kept >= 2)                   return "has found you good for it";
+  if(r.bought > 0 && !r.signed)     return "has taken your money and remembers it";
+  if(r.signed > 0)                  return "has had dealings with you";
+  return "does not know your house from any other"; };
 const editorTrust = (d, k) => { const r = editorRec(d, k);
   return clamp((r.kept - r.broken) / Math.max(EDITOR_PATIENCE, r.signed), -1, 1); };
 /* the day kept, written from one place because `bulk` holds `doFight` at 357 lines and the first
@@ -33609,6 +33659,7 @@ export default function App(){
               {/* #200 — a demand you cannot see before you fight is not a demand. Printed on the
                   offer, with what it is worth and what flouting it costs, because both are real. */}
               <AppetiteLine offer={o} />
+              <EditorLine S={S} offer={o} />
               <PetitionPanel S={S} offer={o} ask={(k,P,pp)=>setAsk({ title:P.name, confirm:`Put it to him · −${P.fav} favour`,
                 text:`${P.blurb} About ${Math.round(pp*100)} in a hundred he hears you, and a refusal costs the asking and nothing else.`,
                 run:()=>mut(d=>{ runPetition(d, k, o.id); }) })} />
@@ -34248,6 +34299,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     offerBooking, takeBooking, failBooking, bookedFor,
     EDITOR_KEYS, editorOf, editorFor, editorKeyOf, editorRec, editorMark, editorKept,   /* #254 phase 1 */
     editorTrust, cardEditor, EDITOR_PATIENCE,   /* #254 phase 2 — the record read */
+    editorWord, EDITOR_PULL, appetiteOf, APPETITES, APP_KEYS,   /* #254 phase 3 — his voice, and his taste on his own card */
     buildUp, setCrestTo, setCareOf, editorBought, EDITORS, PETITIONS, PET_KEYS, runPetition, petitionOdds, petitionWhy, petitionReady, PETITION_COOL, pickAnyOpp, CARE, CARE_KEYS, careWhy, surgeonOK, surgeonFee, retireEligible, FM_KEYS, freedWeek,
     teachSigTo, makeMasterOf, startSecond, switchStyle, techsFor, sigFee, sigOf, TECHNIQUES,
     canMaster, makeMaster, MASTERY_GATE, MASTERY, masterOf, masterNeed,   /* #232 phase 5 — masterOpen/MASTER_ACCLAIM are already on the handle */

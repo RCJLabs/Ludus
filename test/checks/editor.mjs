@@ -246,6 +246,73 @@ export async function run({ p, errors }){
     if(!rd.townNull) fails.push(`a town's card has an editor — the five names put on Capua's festivals`);
   }
 
+  /* ---- #254 phase 3: HIS TASTE IS ON HIS OWN CARD, AND IT WAS DARK FOR TWO RELEASES ----
+     Phase 1 gave every editor a `taste` and phase 2 read his ledger and not that, so the field sat
+     unread — the second dark field shipped inside this one item. The man putting the games on fills
+     the tiers with the people who come to what he books, so his taste gets extra tickets in
+     `appetiteOf`'s bag on his own festival. Asserted against a CONTROL — the same offer with its
+     `fest` removed — so what comes back is the editor's pull and not the shape of the bag. */
+  const vo = await p.evaluate(()=>{
+    const A = window.__LVDVS;
+    const miss = ["appetiteOf","APP_KEYS","APPETITES","editorWord","EDITOR_PULL","CALENDAR"]
+      .filter(k=>A[k]==null);
+    if(miss.length) return { why:`the handle is missing ${miss.join(", ")}` };
+    const fests = (A.CALENDAR||[]).filter(f=>!f.rest).map(f=>f.key);
+    const rows = [], control = {}; let cN = 0;
+    for(const k of A.APP_KEYS) control[k] = 0;
+    const dist = {}; for(const fk of fests){ dist[fk] = {}; for(const k of A.APP_KEYS) dist[fk][k] = 0; }
+    for(let i=0;i<12000;i++){
+      const fk = fests[i % fests.length];
+      const o = { id:9000+i, venue:"forum", tier:1, festival:"f", purse:200+(i%97), opp:{name:"x"}, fest:fk };
+      const got = A.appetiteOf(o); if(got) dist[fk][got]++;
+      const o2 = Object.assign({}, o); delete o2.fest;
+      const g2 = A.appetiteOf(o2); cN++; if(g2) control[g2]++;
+    }
+    const tot = x => Object.values(x).reduce((a,b)=>a+b,0);
+    const cT = tot(control);
+    for(const fk of fests){ const ek = A.editorFor(fk); const E = A.editorOf(ek);
+      if(E.owns !== fk) continue;
+      const t = tot(dist[fk]);
+      rows.push({ fk, ek, taste:E.taste, mine: t ? dist[fk][E.taste]/t : 0,
+        base: cT ? control[E.taste]/cT : 0 }); }
+    /* #150 — the mood PRINTED and the mood JUDGED are the same call, so it must be stable */
+    const o3 = { id:4242, venue:"forum", tier:1, festival:"f", purse:333, opp:{name:"x"}, fest:fests[0] };
+    const stable = A.appetiteOf(o3) === A.appetiteOf(o3) && A.appetiteOf(o3) === A.appetiteOf({ ...o3 });
+    /* the word, off the record */
+    const d = A.newGameState("W","clean","W-1"); const k0 = A.EDITOR_KEYS[0];
+    const word = rec => { d.editors = { [k0]: Object.assign({signed:0,kept:0,broken:0,paid:0,bought:0}, rec) };
+      return A.editorWord(d, k0); };
+    const words = { none:word({}), dealt:word({signed:2}), good:word({signed:3,kept:2}),
+      loyal:word({signed:5,kept:5}), burned:word({signed:4,broken:4}), bought:word({bought:1}) };
+    return { rows, stable, words, pull:A.EDITOR_PULL };
+  });
+  if(vo.why) fails.push(`the phase 3 arm could not run: ${vo.why}`);
+  else {
+    for(const r of vo.rows)
+      lines.push(`  ${r.fk.padEnd(13)} ${r.ek} wants ${r.taste} → ${(r.mine*100).toFixed(1)}% of his `
+        + `card's moods against ${(r.base*100).toFixed(1)}% baseline`);
+    if(vo.rows.length !== 5) fails.push(`${vo.rows.length} festivals have an owner, not 5`);
+    for(const r of vo.rows){
+      if(!(r.mine > r.base * 1.2)) fails.push(`${r.ek} wants ${r.taste} and it is ${(r.mine*100).toFixed(1)}% `
+        + `of his own card's moods against a baseline of ${(r.base*100).toFixed(1)}% — his taste is not `
+        + `reaching \`appetiteOf\`, which makes it the dark field it was for two releases`);
+      if(r.mine > 0.75) fails.push(`${r.ek}'s taste is ${(r.mine*100).toFixed(1)}% of his card's moods — `
+        + `the tiers are a crowd he draws, not an instrument he plays, and a card whose mood is a `
+        + `foregone conclusion is not a mood`);
+    }
+    if(!vo.stable) fails.push(`\`appetiteOf\` gave two answers for one offer — the panel PRINTS the mood `
+      + `and \`appetiteAfter\` JUDGES it through this same call, so an unstable answer pays a house for `
+      + `a demand it was never shown (#150's rule)`);
+    const w = vo.words, uniq = new Set(Object.values(w));
+    lines.push(`  his word: none "${w.none}" · dealt "${w.dealt}" · loyal "${w.loyal}" · burned "${w.burned}"`);
+    if(uniq.size < 5) fails.push(`\`editorWord\` gives ${uniq.size} distinct phrases across six records — `
+      + `a standing that reads the same whatever you have done is \`slaverWord\`'s shape without its point`);
+    if(w.none === w.loyal || w.loyal === w.burned) fails.push(`the word does not tell a house he trusts `
+      + `from one he has never met, or from one that has burned him`);
+    if(/\d/.test(w.loyal + w.burned)) fails.push(`the word quotes a number — the ledger is the mechanism `
+      + `and this is the sentence; \`slaverWord\` says "has your measure", not a percentage`);
+  }
+
   const readers = [...src.matchAll(/editorBought\(d\)/g)].length;
   lines.push(`editorBought has ${readers} reader(s) in the file`);
   if(/if\(!pool\.length\) return \{ opp: genOpponent\(editorBought\(d\)/.test(src))
