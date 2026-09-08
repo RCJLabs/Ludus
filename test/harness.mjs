@@ -294,7 +294,13 @@ export async function installRope(p){
       /* and the named man is the point of a booking: honouring it means HE stands, not whoever
          `fit()` happened to sort first — `boutAftermath` sets `met` off the offer, but the bill's
          own `bookedGid` is what the contract was written on */
-      const bookMan = offer.booking != null && men.some(g=>g.id === offer.bookedGid) ? offer.bookedGid : null;
+      /* GATED ON THE LEVER, and the first cut was not. Without `o.booking === true` this fielded the
+         booked man whenever the rope HAPPENED onto a booked offer — which it does about fourteen
+         times in a hundred and twenty-two, because `housePick` sorts by purse — so an opt-in lever
+         silently changed the default player, and `tells` caught it: the `veteran` tell fell to 0.71%
+         of offers, under its floor, on a release whose game code was an export block. */
+      const bookMan = o.booking === true && offer.booking != null
+        && men.some(g=>g.id === offer.bookedGid) ? offer.bookedGid : null;
       const ids = offer.melee ? men.slice(0,3).map(g=>g.id)
                 : offer.pair  ? men.slice(0,2).map(g=>g.id)
                 :               [bookMan != null ? bookMan : men[0].id];

@@ -4431,8 +4431,9 @@ the advance moves the box by what it says, the deadline carries its editor and n
 `bookedFor` finds it for its own festival key — without which `makeGames` could never put the bout
 up and the day could not be kept at all — and missing the day costs the advance again and the fame.
 
-**THREE FAULTS IN MY OWN INSTRUMENTS, AND EACH ONE HID THE NEXT.** They are worth the space because
-the third was one commit from being published as a fact about the game.
+**FOUR FAULTS IN MY OWN INSTRUMENTS, AND EACH ONE HID THE NEXT.** They are worth the space because
+the third was one commit from being published as a fact about the game, and the fourth was an
+opt-in lever that was not opt-in.
 
 1. **The lever was not forwarded.** `takeBout` builds a fresh options literal inside `lanista` and
    reads only what that line hands it, so `booking:true` sat in `o` and never arrived. The arm came
@@ -4450,6 +4451,17 @@ the third was one commit from being published as a fact about the game.
    never see the flag set. That reported **0 honoured in BOTH arms** — including the one where 32 of
    32 booked bouts marked their contract — and *"0 of 124 honoured, so the ledger has only one side"*
    was written and nearly shipped. Honour is attributed by id from inside the week now.
+
+4. **The lever changed the default player.** The line choosing WHICH man fights read
+   `offer.booking != null && men.some(...)` with no reference to the lever at all, so on the roughly
+   fourteen occasions in a hundred and twenty-two that the rope happens onto a booked offer — it
+   does, because `housePick` sorts the bill by purse — it fielded the man the contract named instead
+   of the one `fit()` sorted first. An opt-in lever that quietly moves the reference player is worse
+   than a broken one, because nothing about it looks wrong. **`tells` caught it**: its `veteran`
+   reading fell to 0.71% of offers, under the floor that says a tell a player can never see is
+   written, read and dead — on a release whose only game-code change was an export block. That is
+   the whole argument for a suite this size: the arm I was watching said what I wanted, and a check
+   about scouting reports three items away said the reference player had moved.
 
 **And the sweep that led here came back mostly clean, which is worth recording too.** `charter`'s two
 `n >= 20 && ... === 0` bars are sound — standard bouts reach a crux about 60% of the time, so a
