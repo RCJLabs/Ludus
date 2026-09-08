@@ -4435,6 +4435,20 @@ the market branch — a house with a man of its own at the gate should not be me
 him to the stalls. Without it the refill still comes off the market, which is the reference player's
 policy and not the game's.
 
+**THE GATE WENT 176/177, AND THE ONE RED WAS A BAR SIZED OFF A RATE THAT WAS WRONG BY FOUR TIMES.**
+`feud`'s fifth arm fails if your man is the weaker in EVERY named grudge match once at least 25 are
+drawn, and v3.235.0 drew exactly 25 with a best of -1.8. Its own header has widened that sample
+twice already (7 to 12 to 25) and states the principle it was widened on: *"a bar that a correct
+build fails one run in three is noise wearing an assertion's clothes."* The 25 was sized off a
+favourable rate "near a fifth". Measured on this build over four independent seed bases — 105 named
+days — **the real rate is 5 of 105, 4.8%**, at which a 25-draw sample comes back all-negative
+**29.5% of the time**. And the distribution had not moved: medians of **-10.9 / -5.9 / -8.5 / -7.1**
+across the four bases, against the -7.8 and -8.6 the header records for correct builds and the -26.3
+the arm exists to catch, with one base carrying a best of **+12.4**. So the houses go 9 to 30 rather
+than the bar moving — at 4.8% that is about 1.4% of correct builds failing instead of a third of
+them — and the arm reads 92 named days at 17s against 10s. The player's men are not weaker; the
+sample was too small for a rate four times lower than the one it was cut for.
+
 **#251 is closed.** All three phases shipped; every one of them found the item's diagnosis right and
 its stated mechanism wrong in some particular that only measuring first would have caught.
 

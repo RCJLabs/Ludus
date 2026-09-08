@@ -138,7 +138,17 @@ export async function run({ p, errors }){
     let weeks = 0, onWeeks = 0, feuds = 0, matches = 0, ended = 0, stopped = 0;
     const gaps = [], gapAt = []; const named = [];
     const av = g => A.STATS.reduce((n,k)=>n+(g[k]||0),0)/6;
-    for(let h=0; h<9; h++){
+    /* ---- AND TWENTY-FIVE WAS NOT ENOUGH EITHER, FOR THE SAME REASON, ON A RATE THAT WAS WRONG ----
+       The note below sized the best-case bar off a favourable rate "near a fifth". Measured on
+       v3.235.0 over four independent seed bases — 105 named days — the real rate is **5 of 105,
+       4.8%**, four times lower. At 4.8% a 25-draw sample comes back all-negative **29.5% of the
+       time**, which is the "fails one run in three" the note itself calls noise wearing an
+       assertion's clothes, and v3.235.0 duly drew 25 and failed on a best of -1.8. The DISTRIBUTION
+       had not moved at all: medians of -10.9 / -5.9 / -8.5 / -7.1 across the four, against the
+       -7.8 and -8.6 recorded below and the -26.3 this arm exists to catch, and one of the four
+       carried a best of +12.4. So the houses go 9 to 30 rather than the bar moving: at 4.8% that
+       is about 1.4% of correct builds failing instead of a third of them. */
+    for(let h=0; h<30; h++){
       const d = A.newGameState("Feud", "clean", "FEUD-R"+h, null);
       let cur = null, endedAt = null; const seen = new Set();
       for(let w=0; w<360; w++){
