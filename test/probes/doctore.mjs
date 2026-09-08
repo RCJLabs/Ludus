@@ -52,6 +52,15 @@ const out = await p.evaluate(([H, W, SEED, ROPE])=>{
        the three weeks end. A move that is never eligible and one that is never drawn look the same
        in a fire count and want different fixes — the same reason the staff arms count both gates. */
     taken:{ gateOpen:0, offers:0, kept:0, lost:0, houses:0, feeAsked:[] },
+    /* #251 phase 3's verify-first — "succession from inside". `offerDoctore` has three callers (a
+       rudis twice, a retirement once) and sets `d.doctoreOffer`; `takeDoctoreOffer` is the only
+       function that can replace a SITTING doctore. Phases 1 and 2 made the post able to empty for
+       the first time, so the question is whether the inside route is reachable and whether it
+       connects to the emptying at all. `stood` measures how long an offer waits: nothing in the
+       program clears `d.doctoreOffer` except the player answering it, and the agenda says "he will
+       not wait long". */
+    inside:{ offers:0, whileFilled:0, whileEmpty:0, stood:[], standingAtEnd:0, houses:0,
+      fills:{ market:0, freed:0, offer:0, none:0 }, freedReady:0 },
     miss:[]
   };
   for(const k of ["hireDoctore","dismissDoctore","makeDoctore","doctoreWeek","warmth"])
@@ -64,6 +73,7 @@ const out = await p.evaluate(([H, W, SEED, ROPE])=>{
     let retired = 0, retiredHere = false, pastOnset = false, hireAge = null;
     let spellSkill0 = null, spellSkillN = null, spellAgeN = null;
     let sawOffer = false, taken = 0, offerHere = false;
+    let offerSince = 0, insideHere = false, hadDoc = false;
     const staffId = { medicus:null, armourer:null }, staffSince = { medicus:0, armourer:0 };
     let firstSkill = null, lastSkill = null, firstWeeks = null, lastWeeks = null;
     const offered = new Set();
@@ -126,6 +136,14 @@ const out = await p.evaluate(([H, W, SEED, ROPE])=>{
       /* an offer that clears WITHOUT the post emptying is one the house paid off — told apart from
          the loss by the doctore still being there, not by trusting a counter the rope may not set */
       if(!d.docOffer){ if(sawOffer && d.doctore) sum.taken.kept++; sawOffer = false; }
+      /* an offer arriving, and how long it then stands */
+      if(d.doctoreOffer && !offerSince){ sum.inside.offers++; offerSince = w; insideHere = true;
+        if(d.doctore) sum.inside.whileFilled++; else sum.inside.whileEmpty++; }
+      if(!d.doctoreOffer && offerSince){ sum.inside.stood.push(w - offerSince); offerSince = 0; }
+      /* when the post refills, say by WHAT — the market man carries a fee and no `fromHouse` */
+      if(d.doctore && !hadDoc){ const dc = d.doctore;
+        sum.inside.fills[dc.fromHouse ? (dc.kind ? "offer" : "freed") : "market"]++; }
+      hadDoc = !!d.doctore;
       const tk = (d.flags||{}).docTaken || 0;
       if(tk > taken){ sum.taken.lost += tk - taken; taken = tk; }
       const rt = (d.flags||{}).docRetired || 0;
@@ -150,6 +168,9 @@ const out = await p.evaluate(([H, W, SEED, ROPE])=>{
     if(pastOnset) sum.clock.everPastOnset++;
     if(retiredHere) sum.retire.houses++;
     if(offerHere) sum.taken.houses++;
+    if(insideHere) sum.inside.houses++;
+    if(d.doctoreOffer) sum.inside.standingAtEnd++;
+    if((d.departed||[]).concat(d.retired||[]).some(f=>(f.wins||0) >= 8)) sum.inside.freedReady++;
     sum.market.distinctOffered.push(offered.size);
     /* the rivals live on `d.rivals` — the first cut read `d.houses`, which does not exist, and the
        arm came back a clean 0/0/0 that looked exactly like a finding. That is FAULT SIX's shape in
@@ -172,6 +193,7 @@ const out = await p.evaluate(([H, W, SEED, ROPE])=>{
   sum.market.distinctOffered = q(sum.market.distinctOffered);
   for(const k of ["medicus","armourer"]) sum.staff[k].spells = q(sum.staff[k].spells);
   sum.taken.feeAsked = q(sum.taken.feeAsked);
+  sum.inside.stood = q(sum.inside.stood);
   return sum;
 }, [H, W, SEED, ROPE]);
 
