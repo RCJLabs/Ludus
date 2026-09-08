@@ -9710,6 +9710,13 @@ const editorFor = key => EDITOR_KEYS.find(k=>EDITORS[k].owns === key) || EDITOR_
 const editorKeyOf = name => EDITOR_KEYS.find(k=>EDITORS[k].name === name) || null;
 /* the ledger, shaped like `dealings`/`dealt` because it is the same idea about a different trade */
 const EDITOR_ZERO = { signed:0, kept:0, broken:0, paid:0 };
+/* the day kept, written from one place because `bulk` holds `doFight` at 357 lines and the first
+   cut of this spent two of them inline */
+function editorKept(d, x){
+  const ek = (x && (x.editorKey || editorKeyOf(x.editor))) || null;
+  editorMark(d, ek, "kept");
+  editorMark(d, ek, "paid", (x && x.balance) || 0);
+}
 const editorRec = (d, k) => Object.assign({}, EDITOR_ZERO, (d.editors && d.editors[k]) || {});
 function editorMark(d, k, field, n){
   if(!k || !EDITORS[k]) return false;
@@ -10478,6 +10485,7 @@ const SAVE_FIELDS = {
   household:     ()=>({}),
   works:         ()=>({}),
   slavers:       ()=>({}),
+  editors:       ()=>({}),   /* #254 phase 1 — `saves` caught this missing on a ver-1 load */
   gambits:       ()=>({}),
   gamWhen:       ()=>({}),
   law:           ()=>({ cap:99, tax:0, women:false, sineFee:0, damnati:false, edicts:[], heat:0, fines:0 }),
@@ -20490,9 +20498,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
     } else sum.push(`He does not take it. The title stays where it was.`);
   }
   if(offer.booking){ const x = (d.deadlines||[]).find(y=>y.id===offer.booking);
-    if(x){ x.met = true; d.fame += 10;
-      { const ek = x.editorKey || editorKeyOf(x.editor);
-        editorMark(d, ek, "kept"); editorMark(d, ek, "paid", x.balance || 0); }
+    if(x){ x.met = true; d.fame += 10; editorKept(d, x);   /* #254 — his ledger, at no line cost */
       patronsOf(d).forEach(p=>{ p.favor = clamp(p.favor+5,0,100); }); recomputeFavor(d);
       sum.push(`The booking is honoured. ${x.editor} pays the balance without being asked.`); } }
   if(offer.challenge){ const x = (d.deadlines||[]).find(y=>y.id===offer.challenge);
@@ -34202,7 +34208,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        `failBooking` were on no export, so the one contract the game asks a player to keep had never
        been asserted end to end. The handle is the contract (probe.mjs, FAULT SIX). */
     offerBooking, takeBooking, failBooking, bookedFor,
-    EDITOR_KEYS, editorOf, editorFor, editorKeyOf, editorRec, editorMark,   /* #254 phase 1 */
+    EDITOR_KEYS, editorOf, editorFor, editorKeyOf, editorRec, editorMark, editorKept,   /* #254 phase 1 */
     buildUp, setCrestTo, setCareOf, editorBought, EDITORS, PETITIONS, PET_KEYS, runPetition, petitionOdds, petitionWhy, petitionReady, PETITION_COOL, pickAnyOpp, CARE, CARE_KEYS, careWhy, surgeonOK, surgeonFee, retireEligible, FM_KEYS, freedWeek,
     teachSigTo, makeMasterOf, startSecond, switchStyle, techsFor, sigFee, sigOf, TECHNIQUES,
     canMaster, makeMaster, MASTERY_GATE, MASTERY, masterOf, masterNeed,   /* #232 phase 5 — masterOpen/MASTER_ACCLAIM are already on the handle */

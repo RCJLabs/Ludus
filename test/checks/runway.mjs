@@ -223,10 +223,34 @@ export async function run({ p, errors }){
     /* the exposure sentence quotes the swing and the box rather than the runway, so the
        number-in-the-sentence rule applies to the line that carries the runway */
     if(!b.exposed && !b.quotes) bad.push(`the agenda warns at ${b.rw} weeks and does not say the number`);
-    if(b.urgency !== 3)
-      bad.push(`the warning at ${b.rw} weeks is urgency ${b.urgency} and should be 3 — everything the `
-        + `row now speaks on is at or inside the blood threshold, and the first cut of #247a let a `
-        + `house holding one week of bill rank BELOW one holding three`);
+  }
+  /* ---- IT MUST NOT GO QUIETER AS THE BOX GETS SMALLER, WHICH IS THE FAULT #247a NAMES ----
+     This asserted a flat `urgency === 3` on every band that speaks, and that is more than the
+     design says. The exposure sentence is `(gold < swing/2 || rwNow < RUNWAY_BAD) ? 3 : 2` on
+     purpose: a house that is exposed but not yet in blood is a 2, and the source comment beside it
+     says so. The flat bar only ever held because this bench happened never to land in that case —
+     v3.237.0's re-phasing put it there (swing 405d against 390d in the box at six weeks) and the
+     arm fired on a correct build.
+     The real claim is the one the #247a note makes: the first cut "let a house holding one week of
+     bill rank BELOW one holding three". That is MONOTONICITY, and it is asserted directly here
+     rather than by restating the urgency formula — a check that recomputes the rule it is checking
+     is the constant-validated-against-itself fault, and this file has one of those in its history
+     already (see arm 1's note). The bench runs 20, 9, 6, 3, 1 weeks, so urgency may only climb. */
+  { const spoke = r.bench.filter(b=>b.said && b.urgency != null);
+    for(let i=1;i<spoke.length;i++)
+      if(spoke[i].urgency < spoke[i-1].urgency)
+        bad.push(`the money row is urgency ${spoke[i-1].urgency} at ${spoke[i-1].rw} weeks and drops to `
+          + `${spoke[i].urgency} at ${spoke[i].rw} — it goes QUIETER as the box gets smaller, which is `
+          + `exactly what #247a was filed on: a house holding one week of bill ranking below one `
+          + `holding three`);
+    const blood = spoke.filter(b=>b.rw < r.badAt);
+    for(const b of blood)
+      if(b.urgency !== 3)
+        bad.push(`a house at ${b.rw} weeks is inside the blood threshold (${r.badAt}) and its money row `
+          + `is urgency ${b.urgency} — whichever sentence speaks, the blood threshold is the blood `
+          + `threshold`);
+    lines.push(`  urgency down the bench: ${spoke.map(b=>`${b.rw}w→${b.urgency}`).join(" · ")} `
+      + `(blood at under ${r.badAt})`);
   }
   /* 3 — and everywhere it is short */
   if(!r.short8) bad.push(`no house ran short of coin in ${r.weeks} weeks — arms 3 and 4 measured nothing`);

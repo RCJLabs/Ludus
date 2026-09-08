@@ -4428,6 +4428,45 @@ fixture re-phases**, which is the price of the name meaning something.
 The counts are uneven **because the ownership works** — a man's signings track how often his day
 comes round, which under a draw they could not.
 
+**THE GATE WENT 173/177. TWO WERE OMISSIONS OF MINE, TWO WERE CHECKS ASSERTING MORE THAN THE
+DESIGN SAYS.**
+
+- **`saves`** — *"ver 1: 1 missing (editors)"*. Exactly right: `d.editors` is new state and I added
+  it to `newGameState` without adding it to the defaults map, so a ver-1 save loaded without one.
+  `editors: ()=>({})` now sits beside `slavers: ()=>({})`, its own model.
+- **`bulk`** — `doFight` at 359 against its 357. The honour write was two inline lines; it is
+  `editorKept(d, x)` at module scope now, folded onto an existing line, and `doFight` is back to 357
+  exactly.
+- **`runway`** — *"the warning at 6 weeks is urgency 2 and should be 3"*, and the **game is right**.
+  The exposure sentence is `(gold < swing/2 || rwNow < RUNWAY_BAD) ? 3 : 2` on purpose, and the
+  comment beside it says so: a house that is exposed but not yet in blood is a 2. The check asserted
+  a flat 3 on every band that speaks, which is more than the design says, and it only ever held
+  because the bench never landed in that case — this release's re-phasing put it there (405d of
+  ordinary week against 390d in the box at six weeks). Its real claim is the one #247a was filed on,
+  that the row must not go QUIETER as the box gets smaller, so it asserts **monotonicity** now, plus
+  urgency 3 for every band inside the blood threshold. Not by recomputing the urgency formula: a
+  check that restates the rule it is checking is the constant-validated-against-itself fault, and
+  this file already carries one of those in its history. It reads **6w→2 · 3w→3 · 1w→3**.
+- **`crest`** — *"the league panel is not on screen"*, which is the third check found with the
+  save-and-reload shape after `faces` and `treat`. `CRESTCHK` went to ruin at week 34 of its 70, and
+  a dead save loads to the records screen where there is no villa, no houses sheet and no League
+  panel. Cleared, as the other two were.
+
+**AND THAT THIRD ONE EARNED A RULE. `probe.mjs` gains FAULT EIGHT.** A check that plays a house,
+breaks its loop on `d.over`, and writes the result into a `ludus-slot-` key must clear the ending
+first — because the failure it produces otherwise reads exactly like a broken feature ("0 busts",
+"the sheet did not open", "the league panel is not on screen") and the seed that decides it moves
+whenever an unrelated release re-phases the stream.
+
+**Its first cut had a false positive and was tightened rather than exempted.** It asked only that a
+file name a slot, stringify something and break on `.over`, and it flagged `jaws` — which READS an
+existing save with `getItem` and already guards `!s.over`, the correct handling. `scene` was the
+same. A rule with a false positive on a check that is doing the right thing teaches the next reader
+to add an exemption without thinking, which is what FAULT TWO was demoted for; so the shape is a
+`setItem` INTO a slot, because this fault is about writing a dead house rather than touching
+storage. It then flagged a fourth genuine one — **`map`**, which was passing only because its seed
+happened to live — and that is fixed too.
+
 **`checks/editor.mjs` gains the ledger arm, and `kept` is driven through the rope rather than
 asserted against the helper that writes it.** `signed` and `broken` come off `takeBooking` and
 `failBooking` directly; `kept` needs a run in which a booking is actually honoured — 4 of them over

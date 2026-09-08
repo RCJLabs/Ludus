@@ -431,6 +431,55 @@ export async function run(){
         + `was 5x low. Walk from the front to last week's front object instead`);
   }
 
+  /* ---- FAULT EIGHT: A SAVE-AND-RELOAD FIXTURE THAT ASSUMES THE HOUSE LIVED ----
+     Three checks were found with the same shape in three releases — `faces` and `treat` in
+     v3.234.0, `crest` in v3.237.0. Each plays a house for a fixed number of weeks, writes
+     `JSON.stringify(d)` into every `ludus-slot-` key, reloads the page and loads it back, so that
+     the arm runs against a real save in a real browser. Each breaks its play loop on `d.over` and
+     then saves whatever came out.
+
+     A DEAD SAVE LOADS TO THE RECORDS SCREEN. There is no ludus, no staff room, no villa, no rival
+     sheet and no League panel, so the arm reports exactly what a broken feature reports: `faces`
+     said "0 busts" and "the square would not open", `treat` said the sheet "did not open", `crest`
+     said "the league panel is not on screen". None of the three was about survival, and none of
+     them said it depended on it. What decides whether the fixture arrives is the seed: `FACESCHK`
+     went to rebellion at week 90 of 120, `CRESTCHK` to ruin at week 34 of 70 — and a stream that
+     re-phases under an unrelated release moves them without warning.
+
+     So: a check that plays a house and saves it into a slot must either clear the ending before it
+     saves, or not break on it. Clearing is the honest one, because the arm can then say what it
+     played and how the run ended, which is what all three do now. */
+  { const bad8 = [];
+    for(const f of files){
+      const t = fs.readFileSync(path.join(dir, f), "utf8");
+      const code8 = t.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+      /* ---- IT MUST WRITE THE SLOT, NOT MERELY MENTION ONE ----
+         The first cut asked only that the file name `ludus-slot-`, stringify something and break on
+         `.over`, and it flagged `jaws` — which READS an existing save with `getItem` and already
+         guards `!s.over`, the correct handling. A rule with a false positive on a check that is
+         doing the right thing teaches the next reader to add an exemption without thinking, which
+         FAULT TWO below was demoted for. So the shape is a `setItem` INTO a slot: this fault is
+         about writing a dead house, not about touching storage. */
+      if(!/ludus-slot-/.test(code8)) continue;
+      if(!/setItem\s*\(/.test(code8)) continue;
+      if(!/JSON\.stringify\(\s*[A-Za-z_$][\w$]*\s*\)/.test(code8)) continue;
+      if(!/if\(\s*[A-Za-z_$][\w$]*\.over\s*\)\s*break|&&\s*![A-Za-z_$][\w$]*\.over/.test(code8)) continue;
+      /* cleared anywhere in the file is enough — the three that were fixed all clear it right
+         before the save, and a check that guards it some other way still has to name `.over` */
+      if(/\.over\s*=\s*null/.test(code8)) continue;
+      bad8.push(f.replace(/\.mjs$/, ""));
+    }
+    lines.push(`save-and-reload fixtures: ${bad8.length ? bad8.length + " play a house, save it and never clear the ending"
+      : "every one that saves a played house clears its ending first"}`);
+    for(const x of bad8.slice(0, 4))
+      bad.push(`${x} plays a house, breaks its loop on \`d.over\`, and writes the result into a save `
+        + `slot to reload — but a DEAD save loads to the records screen, where none of the panels its `
+        + `arms want exist. The arm then reports the feature missing when the fixture never arrived. `
+        + `\`faces\`, \`treat\` and \`crest\` all did this; the seeds that decide it move whenever an `
+        + `unrelated release re-phases the stream. Clear \`d.over\` before saving, and say what the `
+        + `run played and how it ended`);
+  }
+
   /* ---- FAULT THREE: THE ROPE'S OWN OPTION LITERALS ----
      Only the literals the rope passes to its own inner functions, and only where a CALL opens one:
      `takeBout(d, {` and `run(d, offer, ids, {`. Two things the first draft of this got wrong and
