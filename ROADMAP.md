@@ -4389,6 +4389,54 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.237.0 — #254 phase 1: the editor stops being a name drawn per line, and the festival is his
+
+**`EDITORS` was five strings and `pick(EDITORS)` signed a booking with one of them.** The name was
+then carried into the booking's chron lines, the *A Name on the Bill* card and `PACTS.season`'s
+`offer.editor !== p.editor` — so the game already treated him as a person for one season and then
+forgot him. `SLAVERS` in the same file has been the model all along: four dealers, a static table of
+who they are, and `d.slavers[k]` remembering exactly how the last four went.
+
+**The verify-first (v3.236.0) said the memory has something to sit on.** A house meets a median of
+**four** distinct editors, signs with the same man a median of **three** times and as many as eight,
+a median of **52 weeks apart**; and the ledger has two sides — 122 signed against 14 kept under the
+reference player, 73 of 118 once it is given a policy for keeping them.
+
+**Shipped, on the `SLAVERS` shape.** `EDITORS` is a keyed table: a name, a `line` in `SLAVERS`'
+idiom, a **taste** that is an `APPETITES` key, and the **festival he owns** as a `CALENDAR` key.
+`d.editors[k]` is the ledger — `signed`, `kept`, `broken`, `paid` — written by `takeBooking`, by the
+honour site in `doFight`, and by `failBooking`, with `editorRec`/`editorMark` shaped exactly like
+`dealings`/`dealt` because it is the same idea about a different trade.
+
+**And the festival is HIS, which is what stops phase 1 being a dark field.** There are five editors
+and five festivals that are not a rest day, so each man owns one and the booking's editor is now the
+man whose day it is instead of a draw. A record nobody reads is decoration; an editor who is drawn
+fresh every time can never come back for the same reason, and the ledger could not mean anything.
+The cost is one `R()` call — `pick(EDITORS)` was a draw and a lookup is not — so **every seeded
+fixture re-phases**, which is the price of the name meaning something.
+
+**Measured on the shipped build (16 x 420, 4,049 house-weeks):**
+
+| editor | owns | taste | signed | kept | broken | paid |
+|---|---|---|---|---|---|---|
+| the aedile Norbanus | romani | mercy | 30 | 4 | 26 | 1,302d |
+| Marcus Blossius | floralia | quick | 30 | 3 | 27 | 976d |
+| Publius Sittius | vulcanalia | blood | 25 | 2 | 22 | 631d |
+| the younger Calavius | quinquatria | blood | 21 | 1 | 20 | 135d |
+| Aulus Vibius | apollinares | long | 19 | 1 | 18 | 275d |
+
+The counts are uneven **because the ownership works** — a man's signings track how often his day
+comes round, which under a draw they could not.
+
+**`checks/editor.mjs` gains the ledger arm, and `kept` is driven through the rope rather than
+asserted against the helper that writes it.** `signed` and `broken` come off `takeBooking` and
+`failBooking` directly; `kept` needs a run in which a booking is actually honoured — 4 of them over
+260 roped weeks with `booking:true`, 1,388 denarii of balances recorded. A record checked against
+`editorMark` would be the constant-validated-against-itself fault this suite has shipped before. The
+arm also holds the table's shape: every taste a real `APPETITES` key, every day a real `CALENDAR`
+key, and five distinct owners for five editors — two men on one day would mean one of them is never
+the editor of anything.
+
 ### v3.236.0 — the reference player signs every booking and keeps one in nine, and it has been billing every measurement in this directory
 
 **#254's verify-first went looking for whether an editor's ledger would have two sides to hold, and
@@ -9344,7 +9392,17 @@ it since he was nine") already fits a brother or cousin who grew up in the yard.
 
 ---
 
-**#254 — The Editor Remembers** *(overhaul · medium · 3 phases)*
+**#254 — The Editor Remembers** *(overhaul · medium · 3 phases)* — **PHASE 1 SHIPPED v3.237.0.**
+`EDITORS` is a keyed table now — a taste that is an `APPETITES` key, the `CALENDAR` festival he owns,
+and a `line` in `SLAVERS`' idiom — with `d.editors[k]` holding `signed`/`kept`/`broken`/`paid` off
+`takeBooking`, the honour site in `doFight`, and `failBooking`. The booking's editor is **the man
+whose festival it is** rather than a draw, which is what stops the record being decoration: an editor
+drawn fresh every time can never come back for the same reason. Measured after: 125 signings spread
+19-30 across the five, unevenly, because a man's signings now track how often his day comes round.
+*Phases 2 and 3 remain* — the record read (`petitionOdds` off his ledger rather than favour alone,
+the advance up for a house he trusts, `bribedEditor` a man you have bought before), and his voice on
+the pre-card line.
+
 
 `EDITORS` is five strings — Aulus Vibius, Publius Sittius, the aedile Norbanus, Marcus Blossius, the
 younger Calavius — and a booking is `editor: pick(EDITORS)`: **a name drawn per line with no record

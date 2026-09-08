@@ -43,7 +43,7 @@ export async function run({ p, errors }){
   const bk = await p.evaluate(()=>{
     const A = window.__LVDVS;
     const miss = ["newGameState","offerBooking","takeBooking","failBooking","bookedFor","EDITORS",
-                  "makeGames","activeG","deadlines"].filter(k=>A[k]==null);
+                  "makeGames","activeG","deadlines","EDITOR_KEYS","editorOf","editorRec"].filter(k=>A[k]==null);
     if(miss.length) return { why:`the handle is missing ${miss.join(", ")}` };
     /* a house famous enough to be asked, with a man famous enough to be wanted */
     const mk = () => { const d = A.newGameState("Book","clean","BOOK-1");
@@ -58,7 +58,12 @@ export async function run({ p, errors }){
     const dl = (d.deadlines||[]).find(x=>x.kind==="booking");
     const signed = { advance:o.advance, paid:d.gold - gold0, editor:o.editor,
       onList:!!dl, carriesEditor:!!(dl && dl.editor), named:!!(dl && dl.gid === o.gid),
-      knownEditor: (A.EDITORS||[]).includes(o.editor) };
+      /* EDITORS is a keyed table since #254 phase 1, and the booking is signed by the man whose
+         festival it is rather than by a draw — so this checks BOTH that he is one of the five and
+         that he is the right one of the five */
+      knownEditor: (A.EDITOR_KEYS||[]).some(k=>A.editorOf(k).name === o.editor),
+      ownsIt: !!(o.editorKey && A.editorOf(o.editorKey).owns === o.festKey),
+      key:o.editorKey, festKey:o.festKey };
     /* the day kept: the booked bout is on the bill for the festival it names */
     const found = A.bookedFor(d, o.festKey);
     /* the day missed: what the default costs */
@@ -85,6 +90,10 @@ export async function run({ p, errors }){
       + `is the only thing a ledger could ever be keyed on, and #254 is about that ledger`);
     if(!bk.signed.knownEditor) fails.push(`the booking is signed by "${bk.signed.editor}", who is not `
       + `in EDITORS — the five names are the whole cast`);
+    if(!bk.signed.ownsIt) fails.push(`${bk.signed.festKey} was signed by ${bk.signed.key || "nobody"}, `
+      + `who does not own that day. #254 phase 1 makes the booking's editor the man whose festival it `
+      + `is instead of a draw — if it is a draw again the table is decoration and the ledger cannot `
+      + `mean anything, because the same man never comes back for the same reason`);
     if(!bk.signed.named) fails.push(`the deadline does not name the man the editor asked for by name`);
     if(!bk.bookedForFound) fails.push(`\`bookedFor\` cannot find the booking for its own festival key, `
       + `so \`makeGames\` will never put the bout on the bill and the day cannot be kept at all`);
@@ -95,6 +104,58 @@ export async function run({ p, errors }){
       + `advance itself, and that arithmetic is what makes an unkept booking hurt`);
     if(!(bk.broke.fame < 0)) fails.push(`missing the day cost no fame, and the story going round `
       + `Capua ahead of you is the half of it that is not coin`);
+  }
+
+  /* ---- #254 phase 1: AND THE LEDGER IS WRITTEN BY THE GAME, NOT BY THIS CHECK ----
+     `signed` and `broken` come off `takeBooking` and `failBooking` directly. `kept` is driven
+     through the ROPE with `booking:true` rather than by calling `editorMark` here, because a record
+     asserted against the helper that writes it is the "constant validated against itself" fault
+     this suite has shipped before — the only honest proof that the honour site writes the ledger is
+     a run in which a booking is honoured. */
+  const led = await p.evaluate(()=>{
+    const A = window.__LVDVS, R = window.__ROPE;
+    if(!A.editorRec || !A.EDITOR_KEYS) return { why:"the handle is missing the editor ledger" };
+    /* signed and broken, off the real functions */
+    const d = A.newGameState("Led","clean","LED-1"); d.fame = 400; d.gold = 6000;
+    for(const g of A.activeG(d)){ g.pfame = 60; g.wins = 9; }
+    let o = null; for(let i=0;i<400 && !o;i++){ d.week++; o = A.offerBooking(d); }
+    if(!o) return { why:"no booking offered" };
+    A.takeBooking(d, o);
+    const afterSign = A.editorRec(d, o.editorKey);
+    A.failBooking(d, (d.deadlines||[]).find(x=>x.kind==="booking"));
+    const afterFail = A.editorRec(d, o.editorKey);
+    /* kept, through a real run that honours one */
+    let kept = 0, paid = 0, ran = 0;
+    for(let h=0; h<6 && !kept; h++){
+      const e = A.newGameState("Kept","clean","LED-K"+h);
+      for(let w=0; w<260 && !e.over; w++){ try { R.lanista(e, { booking:true }); } catch(x){ break; } ran++; }
+      for(const k of Object.keys(e.editors||{})){ kept += (e.editors[k].kept||0); paid += (e.editors[k].paid||0); }
+    }
+    return { key:o.editorKey, afterSign, afterFail, kept, paid, ran,
+      owns: A.editorOf(o.editorKey).owns, festKey:o.festKey,
+      taste: A.editorOf(o.editorKey).taste,
+      tastesReal: (A.EDITOR_KEYS||[]).every(k=>!!(A.APPETITES||{})[A.editorOf(k).taste]),
+      ownsReal: (A.EDITOR_KEYS||[]).every(k=>(A.CALENDAR||[]).some(f=>f.key === A.editorOf(k).owns)),
+      distinctOwners: new Set((A.EDITOR_KEYS||[]).map(k=>A.editorOf(k).owns)).size,
+      n: (A.EDITOR_KEYS||[]).length };
+  });
+  if(led.why) fails.push(`the ledger arm could not run: ${led.why}`);
+  else {
+    lines.push(`the ledger: ${led.key} signed ${led.afterSign.signed} → broken ${led.afterFail.broken} `
+      + `· over ${led.ran} roped weeks, ${led.kept} booking(s) kept and ${led.paid}d of balances recorded`);
+    lines.push(`  the table: ${led.n} editors, ${led.distinctOwners} distinct festivals owned, `
+      + `every taste a real APPETITE ${led.tastesReal}, every day a real CALENDAR key ${led.ownsReal}`);
+    if(led.afterSign.signed !== 1) fails.push(`signing a booking did not write \`signed\` on its editor `
+      + `(${led.afterSign.signed}) — the ledger #254 is about is not being kept`);
+    if(led.afterFail.broken !== 1) fails.push(`breaking a booking did not write \`broken\` on its editor `
+      + `(${led.afterFail.broken}) — the side of the record that costs you is the one that has to be there`);
+    if(!(led.kept > 0)) fails.push(`no booking was kept in ${led.ran} roped weeks with the honouring `
+      + `lever on, so the \`kept\` half of the ledger is written by nothing and is a dark field`);
+    if(!(led.paid > 0)) fails.push(`balances paid recorded nothing across ${led.kept} kept booking(s)`);
+    if(!led.tastesReal) fails.push(`an editor's taste is not an APPETITES key, so phase 2 has nothing to read`);
+    if(!led.ownsReal) fails.push(`an editor owns a festival that is not in CALENDAR, so his day never comes`);
+    if(led.distinctOwners !== led.n) fails.push(`${led.n} editors own ${led.distinctOwners} distinct `
+      + `festivals — two men on one day means one of them is never the editor of anything`);
   }
 
   const readers = [...src.matchAll(/editorBought\(d\)/g)].length;

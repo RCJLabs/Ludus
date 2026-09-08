@@ -86,7 +86,7 @@ const ledgerArm = (ROPE) => inside(p, ([H, W, SEED, ROPE]) => {
   const A = window.__LVDVS, R = window.__ROPE;
   R.reset();
   const T = { houses:0, weeks:0, signed:0, honoured:0, broken:0, stillOpen:0,
-              paidBack:0, fameLost:0, billHad:0, billChecked:0, manFit:0,
+              paidBack:0, fameLost:0, billHad:0, billChecked:0, manFit:0, ledgerHouses:0,
               perEditor:{}, distinctPerHouse:[], maxRepeat:[], gaps:[], names:{} };
   for(let h=0; h<H; h++){
     const d = A.newGameState("Led","clean",SEED+"-L"+h, null); T.houses++;
@@ -134,12 +134,20 @@ const ledgerArm = (ROPE) => inside(p, ([H, W, SEED, ROPE]) => {
       }
     }
     T.stillOpen += Object.keys(open).length;
+    if(d.editors && Object.keys(d.editors).length){ T.ledgerHouses++;
+      for(const k of Object.keys(d.editors)){ const r = d.editors[k];
+        if(!T.ledgerAcc) T.ledgerAcc = {};
+        const a = T.ledgerAcc[k] = T.ledgerAcc[k] || { signed:0, kept:0, broken:0, paid:0 };
+        for(const f of ["signed","kept","broken","paid"]) a[f] += (r[f]||0); } }
     T.distinctPerHouse.push(Object.keys(mine).length);
     T.maxRepeat.push(Object.values(mine).reduce((a,b)=>Math.max(a,b), 0));
   }
   const q = a => { if(!a.length) return null; const s=a.slice().sort((x,y)=>x-y);
     return { n:a.length, p50:s[Math.floor(s.length/2)], max:s[s.length-1] }; };
   T.distinctPerHouse = q(T.distinctPerHouse); T.maxRepeat = q(T.maxRepeat); T.gaps = q(T.gaps);
+  /* #254 phase 1 — what the ledger actually holds after a run, read off the state rather than
+     recomputed here, so a record that is written and never filled cannot read as a full one */
+  T.ledger = T.ledgerAcc || {}; delete T.ledgerAcc;
   /* the lever's OWN reach, before anything is concluded about the game from its result */
   /* ---- THROUGH `stats()`, BECAUSE THE HANDLE IS NOT THE COUNTER STORE ----
      The rope's counters live on an inner `R` and the object on `window.__ROPE` carries only the
@@ -167,6 +175,10 @@ console.log(`  the bill carried the booked bout ${ledger.billHad} of ${ledger.bi
   + `(the booked man active on ${ledger.manFit} of them)`);
 console.log(`  what breaking them cost: ${ledger.paidBack}d paid back and ${ledger.fameLost} fame across ${ledger.houses} houses `
   + `= ${Math.round(ledger.paidBack/ledger.houses)}d and ${Math.round(ledger.fameLost/ledger.houses)} fame a house`);
+console.log(`  the record on disk (${ledger.ledgerHouses} of ${ledger.houses} houses hold one):`);
+for(const [k,r] of Object.entries(ledger.ledger||{}))
+  console.log(`    ${k.padEnd(9)} signed ${String(r.signed).padStart(3)} · kept ${String(r.kept).padStart(3)} `
+    + `· broken ${String(r.broken).padStart(3)} · paid ${r.paid}d`);
 console.log(`  by name: ${Object.entries(ledger.perEditor).map(([k,v])=>`${k} ${v}`).join(" · ") || "(none)"}`);
 console.log(`\n  ---- AND WITH THE ROPE HONOURING WHAT IT SIGNS (booking:true) ----`);
 console.log(`  signed ${kept.signed} · honoured ${kept.honoured} · broken ${kept.broken}`);
