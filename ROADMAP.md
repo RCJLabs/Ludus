@@ -4389,6 +4389,54 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.239.0 — #254 phase 3 closes the item: his voice, and the taste that was dark for two releases
+
+**Phase 1 gave every editor a `taste` and phase 2 read his LEDGER and not that, so the field sat
+unread through two releases of this item.** That is the second dark field I shipped inside #254, and
+it is the same fault as phase 1's — a record written and never read — caught the same way, by asking
+what actually reads it before writing the next phase. The item scopes phase 3 as *"his voice"*, and
+a voice that describes a field nothing uses is decoration twice over. So it makes the taste true
+first and then says it.
+
+**HIS DAY, HIS CROWD.** The man putting the games on fills the tiers with the people who come to
+what he books, so his taste gets `EDITOR_PULL` extra tickets in `appetiteOf`'s bag on his own
+festival. Measured over 12,000 synthetic offers against a control that is the same offer with its
+`fest` removed — so what comes back is the editor's pull and not the shape of the bag:
+
+| festival | editor | wants | his card | baseline |
+|---|---|---|---|---|
+| quinquatria | calavius | blood | 39.4% | 21.5% |
+| floralia | blossius | quick | 38.3% | 21.8% |
+| apollinares | vibius | long | 44.9% | 29.2% |
+| vulcanalia | sittius | blood | 42.1% | 21.5% |
+| romani | norbanus | mercy | 42.2% | 27.4% |
+
+A lift of 1.5x to 1.9x, and nowhere near dominant — the tiers are a crowd he draws, not an
+instrument he plays, and the check fails if any editor's taste passes 75% of his own card.
+
+**DERIVED INSIDE `appetiteOf`, NOT PASSED IN, and that is #150's rule rather than tidiness.** That
+function is called once by the panel which PRINTS the mood and once by `appetiteAfter` which JUDGES
+it. A signature that let a caller supply the editor would let those two disagree by construction,
+and a house would be paid for a demand it was never shown. The offer carries `fest` now and the
+function looks the editor up itself; the check asserts the answer is stable across calls.
+
+**AND THE VOICE, in `slaverWord`'s shape.** `slaverWord` is the model the item actually points at —
+a dealer "will not meet your eye" or "has your measure", a phrase read straight off the record and
+never a number. `editorWord` is the same idea about a different trade: *"does not know your house
+from any other"*, *"has had dealings with you"*, *"has found you good for it"*, *"would put your
+name on anything"*, *"has been made to look foolish once too often"*, *"has stopped expecting you"*.
+The check fails if it ever quotes a digit — the ledger is the mechanism and this is the sentence.
+
+`EditorLine` sits at module scope beside `AppetiteLine` and `PetitionPanel`, for the reason those
+two do: `bulk` holds App at 5,786 lines and it was at 5,784, so the whole of this had to cost the
+render **one line**. It does. What it does not cover is stated rather than implied: the panel is not
+rendered by any arm here, and its `data-editor` and `data-editor-word` tells are there for the DOM
+check that would.
+
+**#254 is closed.** The editor was five strings drawn per booking line. He has a day, a taste that
+shapes the crowd on it, a record that changes what he offers and how a word with him lands, and a
+sentence that says where you stand.
+
 ### v3.238.0 — #254 phase 2: the record is read, which for one release it was not
 
 **Phase 1 shipped `d.editors` and NOTHING read it.** The whole program held exactly two readers and
@@ -9493,7 +9541,12 @@ drawn fresh every time can never come back for the same reason. Measured after: 
 `EDITOR_PATIENCE`; a house he trusts gets 2.6x the advance and a 27% better purse, and the odds of a
 word with him swing 0.305 to 0.625 where favour alone had made every editor the same man. The bribe
 marks the man whose day is next and `petitionOdds` reads it — the first live reader that flag has
-ever had. *Phase 3 remains:* his voice on the pre-card line, in `SLAVERS.say`'s idiom.
+ever had. *Phase 3 SHIPPED v3.239.0 and CLOSES THE ITEM.* His taste had been dark for two
+releases — the second such field inside this item — so phase 3 makes it true before saying it: the
+editor's taste weights the mood of his own festival (1.5x-1.9x over a same-offer control, never
+dominant), derived inside `appetiteOf` so the mood PRINTED and the mood JUDGED stay one call.
+`editorWord` gives the standing in `slaverWord`'s idiom, and `EditorLine` says who is putting the
+games on and what he wants.
 
 
 `EDITORS` is five strings — Aulus Vibius, Publius Sittius, the aedile Norbanus, Marcus Blossius, the
