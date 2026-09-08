@@ -9709,7 +9709,20 @@ const editorOf = k => EDITORS[k] || EDITORS[EDITOR_KEYS[0]];
 const editorFor = key => EDITOR_KEYS.find(k=>EDITORS[k].owns === key) || EDITOR_KEYS[0];
 const editorKeyOf = name => EDITOR_KEYS.find(k=>EDITORS[k].name === name) || null;
 /* the ledger, shaped like `dealings`/`dealt` because it is the same idea about a different trade */
-const EDITOR_ZERO = { signed:0, kept:0, broken:0, paid:0 };
+const EDITOR_ZERO = { signed:0, kept:0, broken:0, paid:0, bought:0 };
+/* ---- WHAT HE THINKS OF YOU — #254 phase 2 ----
+   Phase 1 shipped the record and NOTHING read it: `d.editors` had exactly two readers in the whole
+   program and both were the accessors that write it. A ledger nobody reads is the dark field this
+   project keeps finding in other people's work, and it was mine for one release.
+
+   The standing runs -1 to +1 and is deliberately slow to earn: the denominator never falls below
+   `EDITOR_PATIENCE`, so one kept booking out of one does not make a man who trusts you. Measured
+   before building: the reference player keeps 14 of 122 and a house that tries keeps 73 of 118, so
+   the term has to mean something across a range that wide without making the honest player rich.
+   `bought` is counted apart, because buying an ear is not the same as keeping your word. */
+const EDITOR_PATIENCE = 4;
+const editorTrust = (d, k) => { const r = editorRec(d, k);
+  return clamp((r.kept - r.broken) / Math.max(EDITOR_PATIENCE, r.signed), -1, 1); };
 /* the day kept, written from one place because `bulk` holds `doFight` at 357 lines and the first
    cut of this spent two of them inline */
 function editorKept(d, x){
@@ -9750,8 +9763,14 @@ function offerBooking(d){
   const tier = d.fame>=TIERS[2].fame ? 2 : 1;
   const total = rnd((TIERS[tier].purse[0] + R()*TIERS[tier].purse[1]) * 1.5);
   const ek = editorFor(f.key);
+  /* #254 phase 2 — a man who has been let down twice does not put much money down in front. The
+     advance share moves with his standing and the purse a little with it; both are scaled off the
+     total that was already drawn, so this adds no call to `R()`. */
+  const tr = editorTrust(d, ek);
+  const paid = rnd(total * (1 + tr * 0.12));
+  const share = clamp(0.35 + tr * 0.12, 0.2, 0.5);
   return { editor: editorOf(ek).name, editorKey: ek, gid:g.id, name:g.name, festKey:f.key, festName:f.name,
-    due, advance: rnd(total*0.35), balance: rnd(total*0.65), tier };
+    due, advance: rnd(paid*share), balance: rnd(paid*(1-share)), tier, trust:+tr.toFixed(2) };
 }
 function takeBooking(d, o){
   d.gold += o.advance;
@@ -15626,6 +15645,8 @@ const GAMBITS = {
     blurb:"He decides who is matched against whom. He is not well paid and he has expensive habits.",
     odds:d=>0.58 + (aedileOn(d) && d.aedile.friendly ? 0.14 : 0) - lawOf(d).heat*0.0025,
     win:(d,h)=>{ d.flags.editorBought = d.week + 12; h.grudge = clamp(h.grudge + 14, 0, 100);
+      /* #254 phase 2 — the ear you bought belongs to somebody: the man whose day is next. */
+      { const nx = (nextFestivals(d, 1) || [])[0]; if(nx) editorMark(d, editorFor(nx.key), "bought"); }
       return `For the next few months your men are matched softly and House ${h.name}'s are not. Nobody says a word about it because everybody does it.`; },
     lose:(d,h)=>{ d.fame = Math.max(0, d.fame - 22); lawOf(d).heat = clamp(lawOf(d).heat + 14, 0, 100);
       return `He takes the money and mentions it at dinner to somebody who mentions it to the aedile.`; },
@@ -15804,11 +15825,28 @@ const PET_KEYS = Object.keys(PETITIONS);
 const petitionReady = d => !d.flags.petitionWeek || d.week - d.flags.petitionWeek >= PETITION_COOL;
 /* a man with patrons behind him is heard; a man with none is a lanista asking a magistrate for a
    favour in a public place. `aedileOn` moves it either way, which is what an aedile is for. */
+/* ---- WHOSE CARD IT IS — #254 phase 2 ----
+   The editor of the day in front of you, or null. Gated on him actually OWNING that festival: the
+   imperial card and a town's card carry no `fest` at all, and `editorFor` falls back to the first
+   key rather than drawing, so without this test a petition at Rome would read a Capuan's ledger.
+   Measured: 55.6% of the 1,206 card weeks in a 12 x 420 run are on a festival an editor owns; the
+   other 23.2% are at Rome or in a city. */
+const cardEditor = d => { const key = d.games && d.games.fest;
+  if(!key) return null;
+  const k = editorFor(key);
+  return editorOf(k).owns === key ? k : null; };
 const petitionOdds = (d, k) => {
   const P = PETITIONS[k]; if(!P) return 0;
   const a = aedileOn(d);
+  /* #254 phase 2 — favour alone made every editor the same man. He is not: a house that has kept
+     its bookings with him is asking a friend, and one that has broken three is asking somebody who
+     has been made to look foolish in front of Capua. `bought` is worth less than a kept word and is
+     the FIRST live reader the bribe has ever had — #205 measured its only other one firing on
+     0.00% of lookups. */
+  const ek = cardEditor(d);
+  const ed = ek ? editorTrust(d, ek) * 0.16 + (editorRec(d, ek).bought > 0 ? 0.08 : 0) : 0;
   return clamp(0.34 + (d.favor||0)/100*0.40 + Math.min(0.12, (d.fame||0)/4000)
-    + (a ? (a.friendly ? 0.12 : a.hostile ? -0.14 : 0) : 0) - P.fav*0.012, 0.05, 0.92);
+    + (a ? (a.friendly ? 0.12 : a.hostile ? -0.14 : 0) : 0) - P.fav*0.012 + ed, 0.05, 0.92);
 };
 const petitionWhy = (d, k, offer) => {
   const P = PETITIONS[k]; if(!P) return "There is no such request.";
@@ -34209,6 +34247,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        been asserted end to end. The handle is the contract (probe.mjs, FAULT SIX). */
     offerBooking, takeBooking, failBooking, bookedFor,
     EDITOR_KEYS, editorOf, editorFor, editorKeyOf, editorRec, editorMark, editorKept,   /* #254 phase 1 */
+    editorTrust, cardEditor, EDITOR_PATIENCE,   /* #254 phase 2 — the record read */
     buildUp, setCrestTo, setCareOf, editorBought, EDITORS, PETITIONS, PET_KEYS, runPetition, petitionOdds, petitionWhy, petitionReady, PETITION_COOL, pickAnyOpp, CARE, CARE_KEYS, careWhy, surgeonOK, surgeonFee, retireEligible, FM_KEYS, freedWeek,
     teachSigTo, makeMasterOf, startSecond, switchStyle, techsFor, sigFee, sigOf, TECHNIQUES,
     canMaster, makeMaster, MASTERY_GATE, MASTERY, masterOf, masterNeed,   /* #232 phase 5 — masterOpen/MASTER_ACCLAIM are already on the handle */
