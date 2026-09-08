@@ -54,6 +54,10 @@ export async function run({ p, errors }){
     if(miss.length) return { why:`the handle is missing ${miss.join(", ")}` };
     const d = A.newGameState("Map", "clean", "MAPCHK");
     for(let w=0; w<160; w++){ if(d.over) break; try { R.lanista(d); } catch(e){ break; } }
+    /* #254/FAULT EIGHT — a dead save loads to the records screen, where none of the panels
+       this arm wants exist, and the arm then reports the feature missing when the fixture
+       never arrived. The subject here is not survival. */
+    d.over = null;
     d.gold = Math.max(d.gold, 4000); d.city = null; d.travel = null;
     /* one town certainly worked and one certainly not, so arm 2 has both ends to tell apart */
     d.known = d.known || {};

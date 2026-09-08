@@ -9672,7 +9672,60 @@ function familyWeek(d){
 /* ---- DEADLINES ----
    Nothing in this house has ever had to be done by a particular week. Five things
    do now, and the calendar stops being scenery. */
-const EDITORS = ["Aulus Vibius","Publius Sittius","the aedile Norbanus","Marcus Blossius","the younger Calavius"];
+/* ---- THE EDITOR IS A PERSON, NOT A NAME DRAWN PER LINE — #254 phase 1 ----
+   `EDITORS` was five strings and `pick(EDITORS)` signed a booking with one of them. The name was
+   then carried into the booking's chron lines, the *A Name on the Bill* card and `PACTS.season`'s
+   `offer.editor !== p.editor` — so the game already treated him as a person for one season and
+   then forgot him. `SLAVERS` in this same file is the model and has been all along: four dealers,
+   a static table of who they are, and `d.slavers[k]` remembering exactly how the last four went.
+
+   MEASURED FIRST (v3.236.0, `probes/editor.mjs`, 4,049 house-weeks): a house meets a median of
+   FOUR distinct editors, signs with the same man a median of THREE times and as many as eight, a
+   median of 52 weeks apart. So there is repeat contact for a memory to sit on. And the ledger has
+   two sides to hold: 122 signed against 14 kept under the reference player, 73 of 118 once it is
+   given a policy for keeping them.
+
+   THE FESTIVAL IS HIS, WHICH IS WHAT MAKES THE TABLE MATTER TODAY rather than in phase 2. There
+   are five editors and five festivals that are not a rest day, so each man owns one and the
+   booking's editor is now the man whose day it is instead of a draw. That costs one `R()` call —
+   `pick(EDITORS)` was a draw and a lookup is not — so every seeded fixture re-phases, which is the
+   price of the name meaning something. His taste is an `APPETITES` key and reads in phase 2. */
+const EDITORS = {
+  calavius: { name:"the younger Calavius", owns:"quinquatria", taste:"blood",
+    line:"New to the work, and putting on the sort of afternoon that gets a young man talked about." },
+  blossius: { name:"Marcus Blossius", owns:"floralia", taste:"quick",
+    line:"Runs the flower games and will not have them turned into a funeral. Keeps it moving." },
+  vibius:   { name:"Aulus Vibius", owns:"apollinares", taste:"long",
+    line:"Pays properly and expects an afternoon for it. He has sat through a great many of these." },
+  sittius:  { name:"Publius Sittius", owns:"vulcanalia", taste:"blood",
+    line:"August, the forge month, and a card to match it. He does not book a man twice by accident." },
+  norbanus: { name:"the aedile Norbanus", owns:"romani", taste:"mercy",
+    line:"A magistrate first. The games are a step on a ladder and he wants no ugliness on the day." },
+};
+const EDITOR_KEYS = Object.keys(EDITORS);
+const editorOf = k => EDITORS[k] || EDITORS[EDITOR_KEYS[0]];
+/* whose day it is. A festival nobody owns (Saturnalia rests, and any future day) falls to the man
+   whose key sorts first rather than to a draw, so this function never touches `R()`. */
+const editorFor = key => EDITOR_KEYS.find(k=>EDITORS[k].owns === key) || EDITOR_KEYS[0];
+const editorKeyOf = name => EDITOR_KEYS.find(k=>EDITORS[k].name === name) || null;
+/* the ledger, shaped like `dealings`/`dealt` because it is the same idea about a different trade */
+const EDITOR_ZERO = { signed:0, kept:0, broken:0, paid:0 };
+/* the day kept, written from one place because `bulk` holds `doFight` at 357 lines and the first
+   cut of this spent two of them inline */
+function editorKept(d, x){
+  const ek = (x && (x.editorKey || editorKeyOf(x.editor))) || null;
+  editorMark(d, ek, "kept");
+  editorMark(d, ek, "paid", (x && x.balance) || 0);
+}
+const editorRec = (d, k) => Object.assign({}, EDITOR_ZERO, (d.editors && d.editors[k]) || {});
+function editorMark(d, k, field, n){
+  if(!k || !EDITORS[k]) return false;
+  d.editors = d.editors || {};
+  const x = Object.assign({}, EDITOR_ZERO, d.editors[k]);
+  x[field] = (x[field]||0) + (n == null ? 1 : n);
+  d.editors[k] = x;
+  return true;
+}
 const DL = {
   booking:   { name:"A booking", colour:"var(--gold-line)" },
   challenge: { name:"A challenge", colour:"var(--blood)" },
@@ -9696,17 +9749,21 @@ function offerBooking(d){
   const due = d.week + weeksUntil(d, f);
   const tier = d.fame>=TIERS[2].fame ? 2 : 1;
   const total = rnd((TIERS[tier].purse[0] + R()*TIERS[tier].purse[1]) * 1.5);
-  return { editor: pick(EDITORS), gid:g.id, name:g.name, festKey:f.key, festName:f.name,
+  const ek = editorFor(f.key);
+  return { editor: editorOf(ek).name, editorKey: ek, gid:g.id, name:g.name, festKey:f.key, festName:f.name,
     due, advance: rnd(total*0.35), balance: rnd(total*0.65), tier };
 }
 function takeBooking(d, o){
   d.gold += o.advance;
+  const ek = o.editorKey || editorKeyOf(o.editor);
+  editorMark(d, ek, "signed");
   addDeadline(d, { kind:"booking", gid:o.gid, name:o.name, festKey:o.festKey, festName:o.festName,
-    due:o.due, advance:o.advance, balance:o.balance, tier:o.tier, editor:o.editor, met:false });
+    due:o.due, advance:o.advance, balance:o.balance, tier:o.tier, editor:o.editor, editorKey:ek, met:false });
   chron(d, `${o.editor} contracts ${o.name} for ${o.festName} — ${o.advance} down and ${o.balance} on the day. The name is on the bill now and bills get read.`, "good");
 }
 function failBooking(d, x){
   const back = x.advance * 2;
+  editorMark(d, x.editorKey || editorKeyOf(x.editor), "broken");
   d.gold -= back;
   d.fame = Math.max(0, d.fame - 22);
   patronsOf(d).forEach(p=>{ p.favor = clamp(p.favor-9,0,100); }); recomputeFavor(d);
@@ -10428,6 +10485,7 @@ const SAVE_FIELDS = {
   household:     ()=>({}),
   works:         ()=>({}),
   slavers:       ()=>({}),
+  editors:       ()=>({}),   /* #254 phase 1 — `saves` caught this missing on a ver-1 load */
   gambits:       ()=>({}),
   gamWhen:       ()=>({}),
   law:           ()=>({ cap:99, tax:0, women:false, sineFee:0, damnati:false, edicts:[], heat:0, fines:0 }),
@@ -10614,7 +10672,7 @@ function newGameState(name, scen, seed, pitch){
     gladiators:[], market:[], games:null, pendingEvent:null, log:[], fallen:[], freed:[],
     seed: null, rngState: 0,
     lastParty:-9, lastFeast:-9, over:null, milestone600:false, flags:{learned:{}}, escaped:[], rebellion:null, gear:{}, retired:[],
-    doctore:null, doctoreMarket:[], doctoreOffer:null, docOffer:null, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, court:null, defected:[], nemesis:null, nemHouse:null, saga:null, arcs:[], crest:{ c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" }, primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], works:{}, slavers:{}, pact:null, gambits:{}, pendingLesson:null, law:null, doctrine:null, kits:[], deadSteel:[], bay:null, mark:null, after:null, metHouse:{}, owed:[], household:{}, yardSeen:0, yardMissed:0, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, domus:{ wife:null, children:[], nextKin:1 }, acclaim:0, brand:{ licensed:false, decided:false, tier:0, earned:0 }, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, repName:null, askBooking:null, askChallenge:null, pitSeat:0, departed:[], reSignOffer:null, annals:[], rise:{ rank:0, standing:0 }, munusLast:-99, league:{ first:null, since:1, held:0, best:99, year:1, snap:null }, piety:30, blessing:null, vow:null, lastOffering:-9, powLot:null, seen:{} };
+    doctore:null, doctoreMarket:[], doctoreOffer:null, docOffer:null, editors:{}, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, court:null, defected:[], nemesis:null, nemHouse:null, saga:null, arcs:[], crest:{ c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" }, primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], works:{}, slavers:{}, pact:null, gambits:{}, pendingLesson:null, law:null, doctrine:null, kits:[], deadSteel:[], bay:null, mark:null, after:null, metHouse:{}, owed:[], household:{}, yardSeen:0, yardMissed:0, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, domus:{ wife:null, children:[], nextKin:1 }, acclaim:0, brand:{ licensed:false, decided:false, tier:0, earned:0 }, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, repName:null, askBooking:null, askChallenge:null, pitSeat:0, departed:[], reSignOffer:null, annals:[], rise:{ rank:0, standing:0 }, munusLast:-99, league:{ first:null, since:1, held:0, best:99, year:1, snap:null }, piety:30, blessing:null, vow:null, lastOffering:-9, powLot:null, seen:{} };
   d.rivals = makeRivals(d, sw);
   const solo = S.men.length === 1;
   S.men.forEach((band,i)=>{
@@ -20440,7 +20498,7 @@ function doFight(d, gid, offer, tactic, bet, pending, choice, plan){
     } else sum.push(`He does not take it. The title stays where it was.`);
   }
   if(offer.booking){ const x = (d.deadlines||[]).find(y=>y.id===offer.booking);
-    if(x){ x.met = true; d.fame += 10;
+    if(x){ x.met = true; d.fame += 10; editorKept(d, x);   /* #254 — his ledger, at no line cost */
       patronsOf(d).forEach(p=>{ p.favor = clamp(p.favor+5,0,100); }); recomputeFavor(d);
       sum.push(`The booking is honoured. ${x.editor} pays the balance without being asked.`); } }
   if(offer.challenge){ const x = (d.deadlines||[]).find(y=>y.id===offer.challenge);
@@ -34150,6 +34208,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        `failBooking` were on no export, so the one contract the game asks a player to keep had never
        been asserted end to end. The handle is the contract (probe.mjs, FAULT SIX). */
     offerBooking, takeBooking, failBooking, bookedFor,
+    EDITOR_KEYS, editorOf, editorFor, editorKeyOf, editorRec, editorMark, editorKept,   /* #254 phase 1 */
     buildUp, setCrestTo, setCareOf, editorBought, EDITORS, PETITIONS, PET_KEYS, runPetition, petitionOdds, petitionWhy, petitionReady, PETITION_COOL, pickAnyOpp, CARE, CARE_KEYS, careWhy, surgeonOK, surgeonFee, retireEligible, FM_KEYS, freedWeek,
     teachSigTo, makeMasterOf, startSecond, switchStyle, techsFor, sigFee, sigOf, TECHNIQUES,
     canMaster, makeMaster, MASTERY_GATE, MASTERY, masterOf, masterNeed,   /* #232 phase 5 — masterOpen/MASTER_ACCLAIM are already on the handle */

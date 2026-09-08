@@ -90,7 +90,17 @@ export async function run({ p, errors }){
   await installRope(p);
   await p.evaluate(()=>{ const A = window.__LVDVS, R = window.__ROPE;
     const d = A.newGameState("Crest", "clean", "CRESTCHK");
-    for(let w=0; w<70; w++){ if(d.over) break; try { R.lanista(d); } catch(e){ break; } }
+    let ranTo = 0;
+    for(let w=0; w<70; w++){ if(d.over) break; try { R.lanista(d); } catch(e){ break; } ranTo = w+1; }
+    /* ---- THE HOUSE DOES NOT HAVE TO SURVIVE, AND ASSUMING IT DID WAS A SILENT DEPENDENCY ----
+       The third check found with this exact shape, after `faces` and `treat` in v3.234.0: play a
+       house, SAVE it, reload, and load it back. A dead save loads to the records screen, where
+       there is no villa, no houses sheet and no League panel — so the arm reports "the league panel
+       is not on screen", which reads like the panel being gone and is really the fixture never
+       arriving. On v3.237.0's stream CRESTCHK went to ruin at week 34, 33 of its 70 weeks in.
+       The subject here is what the League panel draws; surviving is not part of it. */
+    window.__crestRanTo = ranTo; window.__crestDied = d.over ? d.over.kind : null;
+    d.over = null;
     const keys = Object.keys(localStorage).filter(q=>/ludus-slot-\d/.test(q));
     const b = JSON.stringify(d); for(const k of keys) localStorage.setItem(k, b);
     const st = window.storage; if(st && !st.__crestShut){ const real = st.set.bind(st);
