@@ -29,6 +29,74 @@ export async function run({ p, errors }){
   const fails = [], lines = [];
   const src = fs.readFileSync(path.join(ROOT, "src/ludus.jsx"), "utf8");
 
+  /* ---- THE ONE CONTRACT THE GAME ASKS A PLAYER TO KEEP, NEVER ONCE ASSERTED ----
+     `offerBooking`, `takeBooking` and `failBooking` were on no export, so nothing in this suite
+     could drive a booking end to end and neither side of it had ever been checked. Measured over
+     4,049 house-weeks before this: the reference player signs EVERY booking it is offered — the ask
+     is a `pendingEvent` and this rope answers events with choice 0, which is "Sign for it" — and
+     honoured 14 of 122, entirely by accident, because `housePick` sorts the bill by purse and a
+     booking's balance is sometimes the biggest thing on it. The other 107 cost `advance x 2`, 22
+     fame, 9 patron favour and 6 faction apiece: 2,273 denarii and 147 fame a house, sitting inside
+     every figure this project has ever taken. With the rope's new `booking` lever on, 73 of 118.
+
+     So both sides are asserted here: the day kept, and the day missed. */
+  const bk = await p.evaluate(()=>{
+    const A = window.__LVDVS;
+    const miss = ["newGameState","offerBooking","takeBooking","failBooking","bookedFor","EDITORS",
+                  "makeGames","activeG","deadlines"].filter(k=>A[k]==null);
+    if(miss.length) return { why:`the handle is missing ${miss.join(", ")}` };
+    /* a house famous enough to be asked, with a man famous enough to be wanted */
+    const mk = () => { const d = A.newGameState("Book","clean","BOOK-1");
+      d.fame = 400; d.gold = 6000;
+      for(const g of A.activeG(d)){ g.pfame = 60; g.wins = 9; }
+      return d; };
+    let d = mk(), o = null;
+    for(let i=0;i<400 && !o;i++){ d.week++; o = A.offerBooking(d); }
+    if(!o) return { why:"no booking was offered in 400 tries on a famous house" };
+    const gold0 = d.gold;
+    A.takeBooking(d, o);
+    const dl = (d.deadlines||[]).find(x=>x.kind==="booking");
+    const signed = { advance:o.advance, paid:d.gold - gold0, editor:o.editor,
+      onList:!!dl, carriesEditor:!!(dl && dl.editor), named:!!(dl && dl.gid === o.gid),
+      knownEditor: (A.EDITORS||[]).includes(o.editor) };
+    /* the day kept: the booked bout is on the bill for the festival it names */
+    const found = A.bookedFor(d, o.festKey);
+    /* the day missed: what the default costs */
+    const f = mk(); f.week = o.due; const g0 = f.gold, fa0 = f.fame;
+    A.takeBooking(f, o);
+    const adv = f.gold - g0;
+    A.failBooking(f, (f.deadlines||[]).find(x=>x.kind==="booking"));
+    return { signed, bookedForFound: !!found && found.festKey === o.festKey,
+      broke:{ advance:adv, gold: f.gold - g0, fame: f.fame - fa0 } };
+  });
+  if(bk.why) fails.push(`the booking arm could not run: ${bk.why}`);
+  else {
+    lines.push(`a booking: ${bk.signed.editor} advances ${bk.signed.advance}d (box moved `
+      + `${bk.signed.paid}) · on the deadline list ${bk.signed.onList} · it carries the editor `
+      + `${bk.signed.carriesEditor} · and the man it names ${bk.signed.named} · `
+      + `bookedFor finds it ${bk.bookedForFound}`);
+    lines.push(`  missing the day: took ${bk.broke.advance}d and gave back ${-bk.broke.gold} net, `
+      + `${-bk.broke.fame} fame`);
+    if(!(bk.signed.advance > 0)) fails.push(`a booking advances nothing, so there is no contract to keep`);
+    if(bk.signed.paid !== bk.signed.advance) fails.push(`signing paid ${bk.signed.paid} against an `
+      + `advance of ${bk.signed.advance}`);
+    if(!bk.signed.onList) fails.push(`a signed booking leaves no deadline, so nothing can come due`);
+    if(!bk.signed.carriesEditor) fails.push(`the booking deadline does not carry its editor — the name `
+      + `is the only thing a ledger could ever be keyed on, and #254 is about that ledger`);
+    if(!bk.signed.knownEditor) fails.push(`the booking is signed by "${bk.signed.editor}", who is not `
+      + `in EDITORS — the five names are the whole cast`);
+    if(!bk.signed.named) fails.push(`the deadline does not name the man the editor asked for by name`);
+    if(!bk.bookedForFound) fails.push(`\`bookedFor\` cannot find the booking for its own festival key, `
+      + `so \`makeGames\` will never put the bout on the bill and the day cannot be kept at all`);
+    if(!(bk.broke.gold < 0)) fails.push(`missing the day left the box no worse off (${bk.broke.gold}) — `
+      + `the advance is supposed to come back doubled`);
+    if(bk.broke.gold !== -bk.signed.advance) fails.push(`missing the day cost ${-bk.broke.gold} net `
+      + `against an advance of ${bk.signed.advance} — taking one and paying back two is a net of the `
+      + `advance itself, and that arithmetic is what makes an unkept booking hurt`);
+    if(!(bk.broke.fame < 0)) fails.push(`missing the day cost no fame, and the story going round `
+      + `Capua ahead of you is the half of it that is not coin`);
+  }
+
   const readers = [...src.matchAll(/editorBought\(d\)/g)].length;
   lines.push(`editorBought has ${readers} reader(s) in the file`);
   if(/if\(!pool\.length\) return \{ opp: genOpponent\(editorBought\(d\)/.test(src))
