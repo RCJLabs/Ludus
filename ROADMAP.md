@@ -4389,6 +4389,45 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.241.0 — #242 phase 4: the bay answers, and the brake it asks for was already on
+
+**Phase 4 has two limbs and the measurement built one and refused the other.**
+
+**THE BRAKE WAS ALREADY ON.** The item names `EDICTS.numbers` — *"On the keeping of armed men"* — as
+*"the law a second yard is about"*. Measured over 3,888 house-weeks: an edict stands on **80.4%** of
+weeks, `numbers` on **2,560 of them (65.8%)**, and on **every single one** of those 2,560 its cap
+sits below what the house's rank would otherwise allow. `cellsCap` honours it and phase 2's purchase
+already respects `cellsCap` — the overflow goes on at the gate for half. There is no ceiling to add,
+and building a second one would have been machinery on top of a brake that is on two weeks in three.
+So the check ASSERTS it rather than replacing it, and would fail if the law ever stopped being
+honoured.
+
+**AND THAT MEASUREMENT ONLY CAME OUT BECAUSE THE FIRST ONE CONTRADICTED ITSELF.** The first cut read
+`d.law.name`, which is never set: `lawOf` lazily builds `{cap:99, tax:0, …, edicts:[]}` and the
+edicts in force live in that ARRAY. It reported *"a law in force: 0 weeks"* while also reporting a
+roster cap on all 3,888 — two numbers that cannot both be true, which is what gave it away. `EDICTS`
+was not on the handle either, so nothing in this suite could have named the brake it was measuring.
+It is exported now.
+
+**THE BAY'S ANSWER, which is the half that is built.** #240 phase 4 already put continuity on the
+arrival: a newcomer knows whose yard he bought and how it went dark. What he could not know is that
+the man across the street has been buying yards — which is the first thing anybody taking a gate on
+this street would be told. A newcomer arriving after you have eaten a yard comes in at grudge **17
+against 5**, carries a `watchful` tell, and the bay says so: *"He asked, before he signed anything,
+how many gates on this street have your colours on them."*
+
+**Two fixture faults of my own, both caught by the arm failing on a correct build.** The brake arm
+first stocked eleven men, so the edict duly capped at ten — above the eight the house's rank allows —
+and the law was honoured while the arm still failed. Then, separated into two claims, it demanded
+the cap sit below a roster of three, ignoring the edict's own `max(4, …)` floor: a house keeping
+three is capped at four and is deliberately not in breach. The honouring and the arithmetic are
+asserted apart now, and the arithmetic is tested at seven men, which is where the 2,560 binding weeks
+actually live.
+
+**#242 now stands at phases 1, 2 and 4 shipped, with 3 and 5 declined on the measurement** — a second
+yard as a building with its own upkeep and doctore post, then selling it back or willing it to an
+heir, is a great deal of machinery for a set-piece that fires once a run.
+
 ### v3.240.0 — #242 phases 1 and 2: the yard has a price, and it is a distressed one because the first price was a taunt
 
 **The item makes the measurement the gate on whether to build, and the measurement answered both of
@@ -9023,8 +9062,12 @@ own upkeep and doctore post — plus selling it back or willing it to an heir �
 machinery for something that fires once. Phases 1 and 2 shipped together because a price with no door
 is the dark field #254 shipped twice. See the release note, including the first price, which was a
 taunt: 10,586d asked against 5,064d in the box, refused 15 times out of 15.
-*Phase 4 (BAY_NEWS arrival lines for a house that ate another, and `EDICTS.numbers` as the ceiling)
-remains open and is small.*
+*Phase 4 SHIPPED v3.241.0, half built and half refused.* The bay answers — a newcomer arriving after
+you have eaten a yard comes in at grudge 17 against 5, carries a `watchful` tell, and says so. The
+`EDICTS.numbers` ceiling was **already on**: an edict stands on 80.4% of weeks, `numbers` on 65.8%,
+and on every one of those its cap sits below what rank allows. `cellsCap` honours it and phase 2
+already respects `cellsCap`, so the check asserts the brake rather than adding a second one. **#242
+is done at phases 1, 2 and 4;** 3 and 5 stay declined on the measurement.
 
 
 A rival house that dies has exactly one door out and the player is on the wrong side of it.

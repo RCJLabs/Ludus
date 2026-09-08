@@ -39,7 +39,13 @@ const out = await p.evaluate(([H, W, SEED, ROPE])=>{
     lastDarkWeeks:[], soldOn:0, miss:[],
     /* #242 phases 1-2 as built: was the question ever put, and what came of it */
     asked:0, bought:0, boughtPrice:[], menCame:[], soldToStranger:0, worthKept:0,
-    askGold:[], askFavor:[], askPrice:[], couldAfford:0, shortCoin:0, shortFavour:0, shortBoth:0 };
+    askGold:[], askFavor:[], askPrice:[], couldAfford:0, shortCoin:0, shortFavour:0, shortBoth:0,
+    /* #242 phase 4's verify-first: the brake the item says is already in the file. `EDICTS.numbers`
+       caps the roster BELOW what you are keeping (`max(4, roster - ri(1,3))`) and `cellsCap` honours
+       it — but a brake that never comes on is not a ceiling, and this project has shipped several
+       of those. `bayNews` is the other limb: the arrival lines a house that ate another would join. */
+    law:{ anyWeeks:0, byEdict:{}, capWeeks:0, capBinds:0, capVsRank:[], rosterAtCap:[] },
+    news:{ weeks:0 } };
   for(const k of ["newGameState","closeHouse","lastDark","gladValue","NEW_HOUSES","BAY_FLOOR","liveRivals"])
     if(A[k] == null) T.miss.push(k);
 
@@ -66,6 +72,20 @@ const out = await p.evaluate(([H, W, SEED, ROPE])=>{
         if(b){ T.worth.push(Math.round(b.worth)); T.men.push(b.men); T.fame.push(b.fame); }
         if(r.lineage) T.purse.push(r.lineage.purse || 0);
       }
+      /* ---- THE LAW, READ OFF `d.law.edicts` AND NOT OFF A FIELD THAT DOES NOT EXIST ----
+         The first cut asked for `d.law.name`, which is never set: `lawOf` lazily builds
+         `{cap:99, tax:0, ..., edicts:[]}` and the edicts in force live in that ARRAY. It reported
+         "a law in force: 0 weeks" while also reporting a cap on all 3,888 — two numbers that cannot
+         both be true, which is what gave it away. `EDICTS` was not on the handle either, so nothing
+         here could have named the brake it was measuring. */
+      const law = d.law;
+      if(law && (law.edicts||[]).length){ T.law.anyWeeks++;
+        for(const k of law.edicts) T.law.byEdict[k] = (T.law.byEdict[k] || 0) + 1; }
+      if(law && law.cap != null){
+        const byRank = A.cellsCap(Object.assign({}, d, { law:null }));
+        if(law.cap < 99) T.law.capWeeks++;
+        T.law.capVsRank.push(law.cap - byRank);
+        if(law.cap < byRank){ T.law.capBinds++; T.law.rosterAtCap.push(A.activeG(d).length); } }
       const live = A.liveRivals(d) || [];
       T.liveAt.push(live.length);
       if(live.length < A.BAY_FLOOR) T.darkWeeks++;
@@ -97,6 +117,7 @@ const out = await p.evaluate(([H, W, SEED, ROPE])=>{
   T.purse = q(T.purse); T.men = q(T.men); T.fame = q(T.fame); T.liveAt = q(T.liveAt);
   T.lastDarkWeeks = T.lastDarkWeeks.length; T.boughtPrice = q(T.boughtPrice);
   T.askGold = q(T.askGold); T.askFavor = q(T.askFavor); T.askPrice = q(T.askPrice);
+  T.law.capVsRank = q(T.law.capVsRank); T.law.rosterAtCap = q(T.law.rosterAtCap);
   return T;
 }, [H, W, SEED, ROPE]);
 
