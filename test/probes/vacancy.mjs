@@ -19,11 +19,13 @@
      node test/probes/vacancy.mjs [houses] [weeks] [seed] */
 import { serve, open, found, clearAll, installRope } from "../harness.mjs";
 const H = +(process.argv[2] || 16), W = +(process.argv[3] || 420), SEED = process.argv[4] || "VACANCY";
+/* pass `buy` as the fifth argument to run the arm where the house takes the yard it is offered */
+const ROPE = process.argv[5] === "buy" ? { yard:true } : {};
 const { server, port } = await serve({ page:"dist/test.html" });
 const { browser, p } = await open(port);
 await found(p); await clearAll(p, 10); await installRope(p);
 
-const out = await p.evaluate(([H, W, SEED])=>{
+const out = await p.evaluate(([H, W, SEED, ROPE])=>{
   const A = window.__LVDVS, R = window.__ROPE;
   const q = a => { if(!a.length) return null; const s = a.slice().sort((x,y)=>x-y);
     const at = f => s[Math.min(s.length-1, Math.floor(f*s.length))];
@@ -34,7 +36,10 @@ const out = await p.evaluate(([H, W, SEED])=>{
     /* the pool, and the dark stretch */
     poolEmpty:0, poolEmptyHouses:0, darkWeeks:0, liveAt:[], refills:0,
     /* the doors the item says are shut */
-    lastDarkWeeks:[], soldOn:0, miss:[] };
+    lastDarkWeeks:[], soldOn:0, miss:[],
+    /* #242 phases 1-2 as built: was the question ever put, and what came of it */
+    asked:0, bought:0, boughtPrice:[], menCame:[], soldToStranger:0, worthKept:0,
+    askGold:[], askFavor:[], askPrice:[], couldAfford:0, shortCoin:0, shortFavour:0, shortBoth:0 };
   for(const k of ["newGameState","closeHouse","lastDark","gladValue","NEW_HOUSES","BAY_FLOOR","liveRivals"])
     if(A[k] == null) T.miss.push(k);
 
@@ -50,7 +55,7 @@ const out = await p.evaluate(([H, W, SEED])=>{
         before.set(r.name, { men:(r.fighters||[]).length,
           worth: (r.fighters||[]).reduce((n,f)=>{ try { return n + A.gladValue(f); } catch(e){ return n; } }, 0),
           fame: Math.round(r.fame||0) });
-      try { R.lanista(d); } catch(e){ break; }
+      try { R.lanista(d, ROPE); } catch(e){ break; }
       T.weeks++;
       for(const r of (d.rivals||[])){
         if(!r.retired || seen.has(r.name)) continue;
@@ -69,16 +74,31 @@ const out = await p.evaluate(([H, W, SEED])=>{
       if(!(A.NEW_HOUSES||[]).filter(x=>!taken.has(x.key)).length){ T.poolEmpty++; emptyHere = true; }
       const ld = A.lastDark(d);
       if(ld) T.lastDarkWeeks.push(1);
+      if(ld && ld.lineage && ld.lineage.asked && !ld.lineage.counted){ ld.lineage.counted = 1; T.asked++;
+        if(ld.lineage.worth != null) T.worthKept++;
+        /* WHY it was not taken, at the moment it was put — "could not afford it" is a claim and
+           this is the number behind it, rather than the assumption that fits */
+        const price = A.yardPrice(ld.lineage);
+        T.askGold.push(Math.round(d.gold)); T.askFavor.push(Math.round(d.favor||0));
+        T.askPrice.push(price);
+        if(d.gold >= price && (d.favor||0) >= A.YARD_FAVOUR) T.couldAfford++;
+        else if(d.gold >= price) T.shortFavour++;
+        else if((d.favor||0) >= A.YARD_FAVOUR) T.shortCoin++;
+        else T.shortBoth++; }
     }
     T.perHouse.push(mine);
     if(emptyHere) T.poolEmptyHouses++;
-    for(const r of (d.rivals||[])) if(r.lineage && r.lineage.sold) T.soldOn++;
+    for(const r of (d.rivals||[])){ if(!r.lineage || !r.lineage.sold) continue;
+      T.soldOn++;
+      if(r.lineage.sold === "you"){ T.bought++; T.boughtPrice.push(A.yardPrice(r.lineage)); }
+      else T.soldToStranger++; }
   }
   T.closedAt = q(T.closedAt); T.perHouse = q(T.perHouse); T.worth = q(T.worth);
   T.purse = q(T.purse); T.men = q(T.men); T.fame = q(T.fame); T.liveAt = q(T.liveAt);
-  T.lastDarkWeeks = T.lastDarkWeeks.length;
+  T.lastDarkWeeks = T.lastDarkWeeks.length; T.boughtPrice = q(T.boughtPrice);
+  T.askGold = q(T.askGold); T.askFavor = q(T.askFavor); T.askPrice = q(T.askPrice);
   return T;
-}, [H, W, SEED]);
+}, [H, W, SEED, ROPE]);
 
 console.log(JSON.stringify(out, null, 1));
 await browser.close(); server.close();

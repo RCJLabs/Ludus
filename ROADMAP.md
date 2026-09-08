@@ -4389,6 +4389,65 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.240.0 — #242 phases 1 and 2: the yard has a price, and it is a distressed one because the first price was a taunt
+
+**The item makes the measurement the gate on whether to build, and the measurement answered both of
+its decision rules.** `probes/vacancy.mjs`, 16 x 420, 4,081 house-weeks:
+
+| | |
+|---|---|
+| yards going dark, per house | p50 **1** (p90 1, max 2) |
+| when | p50 week **185** (p10 39, p90 366) |
+| the men on them at closing | p50 **6**, worth **7,567d** (p90 10,497) |
+| the nine-name pool empties | **0 weeks, 0 houses** |
+| weeks a dark yard stands unsold | 114 of 4,081 — about **seven a house** |
+
+Not "twice a run at week 200+", so the rule that would have sent this beside #248 does not fire; and
+the "stays dark for the rest of the run" edge the item calls *a defect on its own* is **not reachable
+in 420 weeks** — all 13 yards were refilled, every one to a stranger. Saying that is worth more than
+fixing it.
+
+**SO IT IS A ONCE-A-RUN SET-PIECE WITH A SEVEN-WEEK WINDOW, and phases 1 and 2 are shipped together
+because phase 1 alone is a price nothing can pay.** That is the dark-field fault this project keeps
+finding, and #254 shipped it twice in three releases — a ledger nothing read, then a taste nothing
+read. A yard with a price and no door is the same thing again. **Phases 3 and 5 are declined and
+recorded, not built:** a second yard as a building with its own upkeep and doctore post, then selling
+it back or willing it to an heir, is a great deal of machinery for something that fires once a run.
+
+**Phase 1.** `closeHouse` kept a man COUNT and left the fighters where they lay, so by the week a
+player could act there was no way to say what was standing in the yard — the probe had to read
+`gladValue` over `h.fighters` BEFORE the week ran to measure the price at all. The lineage now keeps
+`worth`, `walls` (priced against `bayStandard`, so a yard in a Capua full of good schools is dearer)
+and a named `roster`.
+
+**Phase 2.** A `bayCall`-shaped letter, and it does **not** roll for it: `offerBooking` and
+`offerChallenge` sit behind `R()<0.10` and `R()<0.06` because they can come round again, and a dark
+yard cannot. Rolled at a tenth a week it would be missed on better than half the windows it exists
+for. Raised on the first eligible week, once per yard, at no cost to the draw stream. `bayRefill`
+holds while the question stands — handing the yard to a stranger in the week he is deciding would
+make the letter a taunt.
+
+**AND THE FIRST PRICE WAS EXACTLY THAT TAUNT.** Priced at what the men were worth plus the walls, it
+came to a median of **10,586 denarii against a median of 5,064 in the box** on the week the question
+was put: short of coin on **15 of 15**, every time, by about half. The worth is not the lie to fix —
+it is what the men are worth and the item asks for that. What was wrong is treating a dark yard as a
+market sale: nobody is paying those men, the walls are empty, and the bay wants it off its hands. At
+`YARD_DISCOUNT` the median is about 5,300 against that same 5,064, and it reads **7 of 15 taken, 8
+to a stranger** — a coin-flip, which is what a once-a-run chance should be.
+
+**`YARD_FAVOUR` is stated exactly rather than made to look balanced.** At 18 it never once bound
+(favour at the ask runs p10 29, p50 95). At 30 it co-binds on 2 of 15 and has still never shut on its
+own, because coin was short on both. Coin is the gate; the favour is the item's *"and a magistrate's
+favour"* kept honest at the price of being nearly always open.
+
+**The men come as they stood, willing or not by `lineage.endedAs`** — a house that sold up sends them
+at morale 66 and defiance 15, one you finished at 38 and 39 — and `cellsCap` is the honest limit, so
+the overflow is sold on at the gate for half and the coin said plainly rather than quietly dropped.
+`harness.mjs` gains **`yard`** (default OFF, on `bayCall`'s precedent): choice 0 is *Take the yard*,
+and a reference player that spent a season's coin whenever the box happened to be full would put a
+one-off purchase inside every figure this project takes — which is what the booking default was
+caught doing in v3.236.0.
+
 ### v3.239.0 — #254 phase 3 closes the item: his voice, and the taste that was dark for two releases
 
 **Phase 1 gave every editor a `taste` and phase 2 read his LEDGER and not that, so the field sat
@@ -8954,7 +9013,19 @@ with `+`, so its event column had read `[object Object]` since it was written. F
 
 ---
 
-**#242 — Buy the Yard** *(new system · large · 5 phases)*
+**#242 — Buy the Yard** *(new system · large · 5 phases)* — **PHASES 1 AND 2 SHIPPED v3.240.0;
+PHASES 3 AND 5 DECLINED ON THE MEASUREMENT.** The verify-first answered both of the item's own
+decision rules: yards go dark a median of ONCE a house at a median of week 185 (not "twice a run at
+week 200+", so this does not go beside #248), and the nine-name pool never emptied in 420 weeks, so
+the "stays dark for ever" edge is not reachable and is recorded rather than fixed. A dark yard stands
+unsold about SEVEN weeks. That is a once-a-run set-piece, and a second yard as a building with its
+own upkeep and doctore post — plus selling it back or willing it to an heir — is a great deal of
+machinery for something that fires once. Phases 1 and 2 shipped together because a price with no door
+is the dark field #254 shipped twice. See the release note, including the first price, which was a
+taunt: 10,586d asked against 5,064d in the box, refused 15 times out of 15.
+*Phase 4 (BAY_NEWS arrival lines for a house that ate another, and `EDICTS.numbers` as the ceiling)
+remains open and is small.*
+
 
 A rival house that dies has exactly one door out and the player is on the wrong side of it.
 `bayRefill` — the only function that touches a dark yard — does `NEW_HOUSES.filter(x=>!taken.has(x.key))`,

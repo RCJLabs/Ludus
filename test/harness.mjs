@@ -329,6 +329,9 @@ export async function installRope(p){
        rather than intent. Every part can be switched off through `opts` for a control arm:
          cells, buy, doctore, build, census, staff, school, heir, rome, bout  (all default true)
          signature     (default OFF, #221 — no rope had ever taught one, so the arc read dark)
+         yard          (default OFF, #242 — a dark yard is offered once a run and costs what the
+                        men on it are worth, a median of 7,567d. `yard:true` takes it when the coin
+                        and the standing are there)
          booking       (default OFF, #254 — this player signs every booking it is offered and has
                         honoured none: 124 of 124 broken over 4,242 house-weeks, costing 2,647
                         denarii and 171 fame a house. `booking:true` takes the booked bout off the
@@ -1478,6 +1481,14 @@ export async function installRope(p){
            which is the thing being controlled for. `bayCall`'s second door is "Write back that you
            are needed here", and it is the only road out of Capua a player is ever offered. */
         if(ev.id === "bayCall" && !on("road")) i = 1;
+        /* ---- #242: AND IT DOES NOT BUY A YARD BY DEFAULT ----
+           Choice 0 on the yard question is "Take the yard", and this rope answers events with
+           choice 0. A dark yard costs the men on it — a median of 7,567 denarii, p90 10,497 — and
+           it arrives once a run; a reference player that spent that whenever the box happened to be
+           full would put a one-off purchase the size of a season inside every figure this project
+           takes, which is exactly what the booking default was found doing in v3.236.0. Declined by
+           default and opt-in through `yard:true`, on `bayCall`'s precedent directly above. */
+        if(ev.id === "yard" && o.yard !== true) i = 1;
         /* ---- AND IT DOES NOT FREE EVERY VETERAN WHO ASKS — #233 ----
            `stash`'s first door frees the man. Taking it every time is not "the way a solvent
            player would": it is a policy of losing your best man the moment he has saved the
