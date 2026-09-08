@@ -44,10 +44,32 @@ const out = await p.evaluate(([H,W,SEED])=>{
     const row = { weeks:0, card:0, offered:null, took:null, wedAt:null, from:null,
       atCard:null, atCard2:null, atCardWk:null, topGrudge:0, wk30:null, shapes:{}, lateCards:0, lateRival:0,
       heat:[], inspector:0, bargain:0, bought:0, scouted:0, burned:0,
-      patrons:0, kinPatrons:0, rivalAlive:null, rivalKin:null, nemBack:0, events:{} };
+      patrons:0, kinPatrons:0, rivalAlive:null, rivalKin:null, nemBack:0, events:{},
+      /* ---- HER LIFE, for phase 2 ----
+         "add the `fever` shape, death, and widowhood re-opening `marryReady` (which wants the slot
+         empty)". Three numbers decide whether that is worth building: how many WIFE-WEEKS there are
+         to put a hazard on, what AGE she is across them (a hazard has to be a curve, and childbirth
+         is the one the game already has a moment for), and whether the lanista is still under 56 —
+         `marryReady`'s own ceiling — when a plausible death would land. A widowhood that re-opens
+         nothing is a loss with no second act. */
+      wifeWeeks:0, herAges:[], hisAges:[], hisWhenOld:[], births:[], kidsAtEnd:0, bornWeeks:[],
+      /* phase 2, once it is built: the fever card, who dies of what, and whether the slot re-opening
+         leads anywhere. `widowWeeks` split by whether her children are still in the house is the
+         tie's own half-life. */
+      illCards:0, illAnswer:{}, deaths:0, how:{}, diedAt:[], herDeathAge:[], hisDeathAge:[],
+      weds:0, remarried:false, widowWeeks:0, halfWeeks:0, noTieWeeks:0, reWedAt:null };
     /* the card is answered here, and the card is also READ here — the only place the candidate
        list exists is the event object, and it is thrown away the moment it is run */
     const answer = (ev) => {
+      if(ev.id === "wifeIll"){
+        row.illCards++;
+        const keys = (ev.data && ev.data.keys) || ["pass"];
+        /* `pay` is the reference player — this rope answers 0, and 0 is the physician. `skimp`
+           takes the last door, which is always "herbs, rest, and what the household knows". */
+        const i = want === "skimp" ? keys.length - 1 : 0;
+        row.illAnswer[keys[i]] = (row.illAnswer[keys[i]]||0) + 1;
+        return i;
+      }
       if(ev.id !== "match") return null;
       const kinds = ((ev.data && ev.data.cands) || []).map(c=>c.kind);
       /* EVERY card, not the first — `row.offered` was the first card's shape and the summary line
@@ -65,8 +87,9 @@ const out = await p.evaluate(([H,W,SEED])=>{
          whether the third family is unreachable or merely early */
       if(row.wk30 != null){ row.lateCards++; if(kinds.includes("rival")) row.lateRival++; }
       if(want === "none") return kinds.length;             /* "Not now" is past the last candidate */
-      const i = kinds.indexOf(want);
-      if(i >= 0){ row.took = want; return i; }
+      const kind = (want === "pay" || want === "skimp") ? "merchant" : want;
+      const i = kinds.indexOf(kind);
+      if(i >= 0){ row.took = kind; return i; }
       row.took = kinds.length ? kinds[0] : null;           /* the branch was not on the card */
       return 0;
     };
@@ -80,6 +103,23 @@ const out = await p.evaluate(([H,W,SEED])=>{
       for(const [k,n] of Object.entries((did && did.events) || {})) row.events[k] = (row.events[k]||0)+n;
       const dm = A.domusOf(d);
       if(dm.wife && row.wedAt == null){ row.wedAt = d.week; row.from = dm.wife.from; }
+      /* the death is read off `dm.widowed`, which `wifeDies` stamps and nothing else writes */
+      const wd = dm.widowed || null;
+      if(wd && wd.died != null && !row.seenDeath){ row.seenDeath = wd.died; row.deaths++;
+        row.how[wd.how||"?"] = (row.how[wd.how||"?"]||0)+1; row.diedAt.push(wd.died);
+        row.herDeathAge.push(wd.age); if(d.lanista) row.hisDeathAge.push(d.lanista.age); }
+      if(wd && dm.wife && dm.wife.married > wd.died && !row.remarried){
+        row.remarried = true; row.weds = 2; row.reWedAt = dm.wife.married; }
+      if(wd && !dm.wife){ row.widowWeeks++;
+        if(A.kinTie(d)) row.halfWeeks++; else row.noTieWeeks++; }
+      if(dm.wife){
+        row.wifeWeeks++;
+        const her = (dm.wife.age||24) + Math.floor((d.week - (dm.wife.married||1))/A.WEEKS_PER_YEAR);
+        row.herAges.push(her);
+        if(d.lanista){ row.hisAges.push(d.lanista.age); if(her >= 40) row.hisWhenOld.push(d.lanista.age); }
+        const kids = (dm.children||[]).length;
+        if(kids > row.births.length) for(let n=row.births.length; n<kids; n++){ row.births.push(1); row.bornWeeks.push(d.week); }
+      }
       /* the feud coming BACK is what a hostage would have to bite on */
       const top = Math.max(0, ...(d.rivals||[]).filter(h=>!h.retired).map(h=>h.grudge||0));
       if(top > row.topGrudge) row.topGrudge = Math.round(top);
@@ -102,12 +142,13 @@ const out = await p.evaluate(([H,W,SEED])=>{
       const h = (d.rivals||[]).find(x=>x.kin);
       row.rivalAlive = !!(h && !h.retired); row.rivalKin = !!h;
     }
+    row.kidsAtEnd = ((A.domusOf(d).children)||[]).filter(c=>!c.dead).length;
     row.heatQ = q(row.heat); delete row.heat; delete row.events;
     return row;
   };
 
   const arms = {};
-  for(const want of ["merchant","magistrate","rival","none"]){
+  for(const want of ["merchant","magistrate","rival","none","pay","skimp"]){
     const rows = [];
     for(let i=0;i<H;i++) rows.push(run(SEED+"-"+i, want));
     const wed = rows.filter(r=>r.from);
@@ -131,6 +172,27 @@ const out = await p.evaluate(([H,W,SEED])=>{
       topGrudge:q(rows.map(r=>r.topGrudge)),
       wk30:q(rows.filter(r=>r.wk30!=null).map(r=>r.wk30)), reach30:rows.filter(r=>r.wk30!=null).length,
       rivalAlive:rows.filter(r=>r.rivalAlive).length, rivalKin:rows.filter(r=>r.rivalKin).length,
+      /* her life */
+      wifeWeeks:rows.reduce((a,r)=>a+r.wifeWeeks,0), wifeWeeksQ:q(rows.map(r=>r.wifeWeeks)),
+      herAge:q(rows.flatMap(r=>r.herAges)),
+      herAtEnd:q(rows.filter(r=>r.herAges.length).map(r=>r.herAges[r.herAges.length-1])),
+      hisAge:q(rows.flatMap(r=>r.hisAges)),
+      hisUnder56:(()=>{ const a = rows.flatMap(r=>r.hisAges); return a.length ? +(100*a.filter(x=>x<56).length/a.length).toFixed(1) : 0; })(),
+      hisWhenOld:q(rows.flatMap(r=>r.hisWhenOld)),
+      oldUnder56:(()=>{ const a = rows.flatMap(r=>r.hisWhenOld); return a.length ? +(100*a.filter(x=>x<56).length/a.length).toFixed(1) : 0; })(),
+      births:rows.reduce((a,r)=>a+r.births.length,0), birthsQ:q(rows.map(r=>r.births.length)),
+      bornAt:q(rows.flatMap(r=>r.bornWeeks)),
+      kidsAtEnd:q(rows.map(r=>r.kidsAtEnd)), withKids:rows.filter(r=>r.kidsAtEnd>0).length,
+      /* phase 2 */
+      illCards:rows.reduce((a,r)=>a+r.illCards,0),
+      illAnswer:rows.reduce((m,r)=>{ for(const [k,n] of Object.entries(r.illAnswer)) m[k]=(m[k]||0)+n; return m; },{}),
+      deaths:rows.filter(r=>r.deaths).length,
+      how:rows.reduce((m,r)=>{ for(const [k,n] of Object.entries(r.how)) m[k]=(m[k]||0)+n; return m; },{}),
+      diedAt:q(rows.flatMap(r=>r.diedAt)), herDeathAge:q(rows.flatMap(r=>r.herDeathAge)),
+      hisDeathAge:q(rows.flatMap(r=>r.hisDeathAge)),
+      remarried:rows.filter(r=>r.remarried).length, reWedAt:q(rows.filter(r=>r.reWedAt!=null).map(r=>r.reWedAt)),
+      widowWeeks:rows.reduce((a,r)=>a+r.widowWeeks,0),
+      halfWeeks:rows.reduce((a,r)=>a+r.halfWeeks,0), noTieWeeks:rows.reduce((a,r)=>a+r.noTieWeeks,0),
     };
   }
   return arms;
@@ -148,6 +210,14 @@ for(const [k,a] of Object.entries(out)){
   console.log(`  THE MAGISTRATE'S — heat p50 across weeks ${f(a.heat)}, its p90 ${f(a.heatTop)} · \`inspector\` ${a.inspector}x, per house ${f(a.inspQ)} · patrons ${f(a.patrons)}, kin ${a.kinPatrons}`);
   console.log(`  THE RIVAL'S — a nemesis house raised ${f(a.nemBack)} times a house · married-in house still standing ${a.rivalAlive}/${a.rivalKin} kin-marked`);
   console.log(`  THE THIRD FAMILY'S GATE — top grudge ON THE WEEK THE CARD CAME (${f(a.atCardWk)}): ${f(a.atCard)}`);
-  console.log(`     · a grudge of 30 is reached in ${a.reach30}/${a.houses} houses, at ${f(a.wk30)} · highest ever ${f(a.topGrudge)}\n`);
+  console.log(`     · a grudge of 30 is reached in ${a.reach30}/${a.houses} houses, at ${f(a.wk30)} · highest ever ${f(a.topGrudge)}`);
+  console.log(`  HER LIFE (phase 2) — wife-weeks ${a.wifeWeeks} total, per house ${f(a.wifeWeeksQ)}`);
+  console.log(`     · her age across those weeks ${f(a.herAge)} · at the house's end ${f(a.herAtEnd)}`);
+  console.log(`     · HIS age across them ${f(a.hisAge)} — under 56 (marryReady's ceiling) on ${a.hisUnder56}% of wife-weeks`);
+  console.log(`     · once she is 40+: his age ${f(a.hisWhenOld)}, under 56 on ${a.oldUnder56}%`);
+  console.log(`     · births ${a.births} total, per house ${f(a.birthsQ)} at ${f(a.bornAt)} · houses with a living child at the end ${a.withKids}/${a.houses}, count ${f(a.kidsAtEnd)}`);
+  console.log(`  AND SHE HAS A LIFE — the fever came ${a.illCards}x, answered ${Object.entries(a.illAnswer).map(([k,n])=>`${k} ${n}`).join(" · ")||"—"}`);
+  console.log(`     · SHE DIED in ${a.deaths}/${a.houses} houses (${Object.entries(a.how).map(([k,n])=>`${k} ${n}`).join(" · ")||"—"}) at week ${f(a.diedAt)}, aged ${f(a.herDeathAge)}; he was ${f(a.hisDeathAge)}`);
+  console.log(`     · he married again in ${a.remarried}/${a.deaths||0} of them, at ${f(a.reWedAt)} · widowed weeks ${a.widowWeeks} — tie at half ${a.halfWeeks}, gone ${a.noTieWeeks}\n`);
 }
 await browser.close(); server.close();

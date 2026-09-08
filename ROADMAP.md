@@ -4389,6 +4389,65 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.244.0 — #243 phase 2: she has a life, and what you answer when the fever comes is worth four houses in sixteen
+
+`wife = null` was never written outside `succeed`'s domus reset. She could not sicken, die, or be
+widowed, and the widowed branch #226 wrote into `familyWeek` was reachable only through a succession
+— which is to say, only by handing the house to somebody else.
+
+**MEASURED FIRST** (`probes/mistress.mjs`, 16 × 420), because the shape a hazard should take is a
+fact about where she actually is:
+
+- there are wife-weeks to put one on — a median of **135** a house, p90 312;
+- **but she is young.** Her age across those weeks reads p10 20, p50 **26**, p90 33, max 39, and in
+  the reference arm she never once reaches forty. A hazard rising with age would essentially never
+  fire, so old age is not the shape. **Childbirth is** — a median of three births a house at a median
+  of week 105 — and the game already has the moment.
+- and widowhood re-opens something real: he is under 56, `marryReady`'s own ceiling, on **89.7%** of
+  wife-weeks, and 11 of 16 houses have a living child at the end.
+
+**The fever is a question, not a die roll**, which is what "the `fever` shape" means: `EVENTS.fever`
+is a card with a price on one door and a consequence on the other, and this is that card with his
+wife on the table. Three doors — the physician from Neapolis at a price, the medicus you already pay
+(only when there is one, and better the better he is), and herbs and rest. Measured on the **same
+seeds**, differing only in which door the rope takes:
+
+| | the fever came | she died |
+|---|---|---|
+| paid (the physician, choice 0) | 14× | **1 of 16 houses** |
+| skimped (herbs and rest) | 12× | **4 of 16** |
+
+and of the widowers, 2 of 3 and 3 of 4 **married again**, at a median of week 168 and 175. The
+widowed weeks split 164 with her people still counting his children as theirs and 32 with nothing of
+hers left in the house.
+
+**Her family's three ties do not die with her, quite.** Phase 1's ties are hers, so `kinTie` decides
+what survives: a house with her children in it is still her family's blood and the tie stands at
+**half** (the block charges a widower 0.965 against 0.930 with her alive and 1.000 for a stranger); a
+house with nothing of hers left in it is one they have no reason to call on, and it lapses to the
+stranger's price exactly. Her own personal letter — `bargain` arriving as *"Her People Send Word"* —
+stays keyed on the living wife, because that one is hers rather than her family's.
+
+**AND A NUMBER I NEARLY SHIPPED AS THREE SAMPLES AGREEING.** The physician's door read 0.052–0.058
+against its constant of 0.040 over three runs. That is not three samples: the fixture names
+`FEV-<tick>` and `newGameState` reseeds the one global `R()` from the seed word, so **every run
+replays the same thousand rolls**. The first suspicion was a reseed artefact — that a roll taken
+immediately after `newGameState` samples mulberry32's first output over a sequentially-hashed seed
+set rather than the stream. **Tested, and it was not that:** burning four draws first moved the three
+doors to 0.054 / 0.065 / 0.309, a different sample and not a correction. A second, genuinely disjoint
+thousand reads **0.036**, and the two pooled give 0.044 against 0.040. The check carries both samples
+and the note, because the mirror of this fault — one seed rolled three hundred times — is already
+recorded in `checks/tenure.mjs`, and this is the other half of it.
+
+**Two caps raised by one line each, with notes.** `EVENTS` 1093 → 1094 (`wifeIll` is one registry
+line on `match`/`toga`/`daughter`'s own pattern — `make(){return null}` so the die never draws it,
+and a `run` delegating to `resolveWifeIll` beside `familyWeek`) and `SECT` 1484 → 1485 (the panel
+gains one row for a widower).
+
+**Shipped:** `checks/fever.mjs` (six arms, 8s), `probes/mistress.mjs` extended with her life and the
+paid/skimped pair, the life in `src`. **#243 now stands at phases 1 and 2 shipped, phase 4 declined
+on v3.242.0's measurement**, with phase 3 — her own asks — still open.
+
 ### v3.243.0 — #243 phase 1: her family is a standing tie, and the folded feud is a hostage
 
 `resolveMatch` wrote `dmm.wife = { name, family, married, age, from }` and **nothing read `from`**.
@@ -9247,8 +9306,14 @@ with a house tag, and let the numbers edict be the ceiling the design already wr
 
 ---
 
-**#243 — The Mistress of the House** *(overhaul · medium–large · 4 phases)* — **PHASE 1 SHIPPED
-v3.243.0. VERIFY-FIRST ANSWERED v3.242.0 AND PHASE 4 DECLINED; phases 2 and 3 stand.**
+**#243 — The Mistress of the House** *(overhaul · medium–large · 4 phases)* — **PHASES 1 AND 2
+SHIPPED v3.243.0 and v3.244.0. VERIFY-FIRST ANSWERED v3.242.0 AND PHASE 4 DECLINED; phase 3 stands.**
+*Phase 2 (v3.244.0):* she can take a fever and she can die of childbed. The fever is a card with
+three doors and the answer is worth **1 of 16 houses against 4 of 16** on the same seeds; the
+childbed is where the measurement said she actually is (age p50 26, three births a house). `wifeDies`
+is the only write to the wife slot outside `succeed`, and the empty slot re-opens `marryReady` after
+a twenty-week mourning — 2 of 3 and 3 of 4 widowers married again. Her family's tie stands at half
+while her children are in the house and lapses to nothing when they are not.
 *Phase 1 (v3.243.0):* `wife.from` is read now — the merchant is a standing seven points off
 `slaverPrice` with the clamp floor moved to match, plus `bargain` branching as her family's yearly
 call; the magistrate is `lawWeek`'s cool ×1.9 and the eye ×0.55 plus a patron who is family; and the

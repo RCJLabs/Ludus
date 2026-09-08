@@ -6737,8 +6737,9 @@ function dealt(d, k, field, n){
 /* he remembers, and it shows in the price */
 const slaverPrice = (d,k) => { const x = dealings(d,k);
   /* #243 phase 1 — a merchant's daughter is worth a standing seven points at every block in Capua,
-     and it moves the floor with it so a long-standing customer is not capped out of it */
-  const kin = wifeFrom(d) === "merchant" ? WIFE_BLOCK : 0;
+     and it moves the floor with it so a long-standing customer is not capped out of it. Phase 2:
+     read through `kinOf`, so it stands at half for a widower with her children in the house. */
+  const t = famTie(d, "merchant"); const kin = t ? WIFE_BLOCK * t.full : 0;
   return clamp(1 - x.bought*0.022 + x.burned*0.05 - kin, 0.82 - kin, 1.2); };
 const slaverWord = (d,k) => { const x = dealings(d,k);
   const n = x.bought;
@@ -9628,8 +9629,10 @@ const wifeYears = d => { const w = wifeOf(d); return w ? Math.floor((d.week - (w
    and put away", and put away is not the same as gone. */
 function kinFeudBroken(d, hName){
   if(!hName) return false;
-  const w = wifeOf(d);
-  if(!w || w.from !== "rival" || w.house !== hName) return false;
+  /* phase 2 — a widower's children are still her family's blood, so the hostage outlives her */
+  const t = famTie(d, "rival");
+  if(!t || t.house !== hName) return false;
+  const w = { name: kinName(d) || "your wife" };
   const h = houseOf(d, hName);
   if(!h || !h.kin || h.retired) return false;
   h.kin = false;
@@ -9647,7 +9650,14 @@ const WIFE_WORD = {
       : h && h.kin ? `The feud with House ${nm} is family business now — and it stays folded only while her people keep coming home from your sand.`
       : `House ${nm} was family until your house put one of them in the ground. It is a feud again, and a worse one than it was.`; },
 };
-const wifeWord = d => { const k = wifeFrom(d); return k && WIFE_WORD[k] ? WIFE_WORD[k](d) : ``; };
+const wifeWord = d => { const dm = domusOf(d);
+  if(dm.wife){ const k = wifeFrom(d); return k && WIFE_WORD[k] ? WIFE_WORD[k](d) : ``; }
+  const wd = dm.widowed; if(!wd) return ``;
+  const yrs = Math.floor((d.week - (wd.died||d.week)) / YEAR_WEEKS);
+  const since = yrs < 1 ? `not a year` : yrs === 1 ? `a year` : `${yrs} years`;
+  return kinTie(d)
+    ? `${wd.name} has been ${since} in the ground, and her people still count her children as theirs — the tie stands at half of what it was.`
+    : `${wd.name} has been ${since} in the ground and there is nothing of hers left in the house. Her family has no reason to call here now.`; };
 /* ---- THE MERCHANT TIE'S YEARLY CALL, built as the card that already exists ----
    The item wants "a `bargain`-shaped yearly call on the block through `SLAVERS`". `EVENTS.bargain`
    IS that card and it already fires about twice a house, so this is a branch on it rather than a
@@ -9657,6 +9667,106 @@ const wifeWord = d => { const k = wifeFrom(d); return k && WIFE_WORD[k] ? WIFE_W
 
    The strings live out here for the reason `checks/bulk.mjs` gives on EVENTS' own cap: only `make`
    and a one-line `run` belong in that table, and the answers go beside the machinery they use. */
+/* ---- AND SHE HAS A LIFE — #243 phase 2 ----
+   `wife = null` was never written outside `succeed`'s domus reset: she could not sicken, die, or be
+   widowed, and the widowed branch #226 wrote into `familyWeek` was reachable only through a
+   succession. The item asks for "the `fever` shape, death, and widowhood re-opening `marryReady`".
+
+   MEASURED FIRST (`probes/mistress.mjs`, 16 x 420), because the shape a hazard should take is a
+   fact about where she actually is:
+
+     · there are WIFE-WEEKS to put one on — a median of 135 a house, p90 312;
+     · but SHE IS YOUNG. Her age across those weeks is p10 20, p50 26, p90 33, max 39 — in the
+       reference arm she never once reaches forty. So a hazard rising with age would essentially
+       never fire, and old age is not the shape. Childbirth is: a median of THREE births a house,
+       at a median of week 105, and the game already has the moment.
+     · and widowhood re-opens something real. He is under 56 — `marryReady`'s own ceiling — on
+       **89.7%** of wife-weeks, so a widower can marry again; and 11 of 16 houses have a living
+       child at the end, so the house he is left with is not empty.
+
+   THE FEVER IS A QUESTION, NOT A DIE ROLL, which is what "the `fever` shape" means: `EVENTS.fever`
+   is a card with a price on one door and a consequence on the other, and this is the same card with
+   his wife on the table. What you answer moves the odds by a factor of seven. */
+const WIFE_ILL_FROM = 26;      /* a fever does not find her in the wedding season */
+const WIFE_ILL_RATE = 0.010;   /* a week's chance after that — about one visit a marriage */
+const WIFE_ILL_COOL = 40;      /* and it does not come back the month after */
+const WIFE_ILL_DIE  = { physician:0.04, medicus:0.14, pass:0.30 };
+const WIFE_CHILDBED = 0.045;   /* a birth she may not come back from */
+const WIFE_MOURN    = 20;      /* the matchmakers do not call the week after a funeral */
+const WIFE_KIN_HALF = 0.5;     /* her people keep half of it while her children are in the house */
+/* ---- AND HER PEOPLE DO NOT FORGET THE CHILDREN ----
+   Phase 1's three ties are HERS, so when she is gone the question is whether they go with her. Not
+   quite: a house with her children in it is still her family's blood and the tie stands at half. A
+   house with nothing of hers left in it is one they have no reason to call on at all. Every reader
+   of the tie goes through here; `wifeFrom` stays what it says it is — the LIVING wife's kind — and
+   is what the personal half (her own letter to the block) is still keyed on. */
+const kinTie = d => { const dm = domusOf(d);
+  if(dm.wife) return { from: dm.wife.from || "merchant", house: dm.wife.house || null, full:1, alive:true };
+  const wd = dm.widowed;
+  if(wd && (dm.children||[]).some(c=>!c.dead))
+    return { from: wd.from || "merchant", house: wd.house || null, full:WIFE_KIN_HALF, alive:false };
+  return null; };
+const famTie  = (d, kind) => { const t = kinTie(d); return t && t.from === kind ? t : null; };
+const kinName = d => { const dm = domusOf(d); return dm.wife ? dm.wife.name : (dm.widowed ? dm.widowed.name : null); };
+const widowOf = d => domusOf(d).widowed || null;
+const wifeAgeNow = (d, w) => w ? (w.age||24) + Math.floor((d.week - (w.married||1)) / YEAR_WEEKS) : null;
+/* the card, on `EVENTS.fever`'s own shape: a price on one door, a consequence on the other */
+function wifeIllEvent(d){
+  const w = wifeOf(d); if(!w) return null;
+  const fee = rnd(200 + d.fame*0.4);
+  const keys = ["physician"]; if(d.medicus) keys.push("medicus"); keys.push("pass");
+  return { id:"wifeIll", title:"The Fever Finds the Villa",
+    text:`${w.name} has taken a fever, and it is not the kind that breaks in a day. The household has gone quiet in the way households do. The cells know before you have told anybody, because the kitchen knows.`,
+    choices: keys.map(k => k === "physician" ? `Send to Neapolis for the physician · ${fee}d`
+      : k === "medicus" ? `${d.medicus.name} leaves the infirmary and attends her`
+      : `Herbs, rest, and what the household already knows`),
+    data:{ keys, fee } };
+}
+function resolveWifeIll(d, ev, i){
+  const w = wifeOf(d); if(!w) return "The fever has gone out of the house.";
+  const dm = domusOf(d);
+  dm.illTil = d.week + WIFE_ILL_COOL;
+  const keys = (ev.data && ev.data.keys) || ["pass"];
+  let k = keys[Math.min(Math.max(i|0, 0), keys.length - 1)] || "pass";
+  let short = false;
+  if(k === "physician"){
+    const fee = (ev.data && ev.data.fee) || 0;
+    if(d.gold < fee){ k = "pass"; short = true; } else d.gold -= fee;
+  }
+  let odds = WIFE_ILL_DIE[k] != null ? WIFE_ILL_DIE[k] : WIFE_ILL_DIE.pass;
+  if(k === "medicus") odds = clamp(odds - staffSkill(d,"medicus")/100 * 0.09, 0.03, 1);
+  const nm = w.name;
+  if(R() < odds){ wifeDies(d, "fever");
+    return short ? `The rider you cannot pay for does not go. ${nm} is dead within the fortnight.`
+      : k === "physician" ? `The physician comes, and is honest with you on the second day. ${nm} is dead by the fifth.`
+      : k === "medicus" ? `${d.medicus ? d.medicus.name : "The medicus"} does not leave her side and it makes no difference. ${nm} is dead within the week.`
+      : `${nm} is dead within the week, and the herbs are still on the sill.`; }
+  return short ? `There is not the coin for a rider to Neapolis. ${nm} comes through it anyway, thinner and quieter, and nobody in the house says the other thing out loud.`
+    : k === "physician" ? `The man from Neapolis is worth what he charges. ${nm} is sitting up inside the week and asking what it cost.`
+    : k === "medicus" ? `${d.medicus.name} sits with her four nights running and she comes through it. The men notice he was not in the infirmary and think better of you for where he was.`
+    : `The fever breaks on its own, the way they sometimes do. You do not say out loud what you were counting on.`;
+}
+/* ---- AND THE SLOT IS EMPTY AGAIN, WHICH IS THE POINT ----
+   `marryReady` wants the wife slot empty and nothing but a succession ever emptied it. This is the
+   only other write to it in the file, and `familyWeek`'s `if(!dmm.wife)` branch — the one #226 moved
+   the child loop OUT of, so a widower's children still grow up — takes the house from here. The
+   mourning is `flags.matchCool`, which the match's own gate already reads. */
+function wifeDies(d, how){
+  const dm = domusOf(d), w = dm.wife; if(!w) return false;
+  const age = wifeAgeNow(d, w);
+  dm.wife = null;
+  dm.widowed = { name:w.name, family:w.family, from:w.from || "merchant", house:w.house || null,
+    married:w.married || 1, died:d.week, age, how };
+  d.flags.matchCool = Math.max(d.flags.matchCool || 0, d.week + WIFE_MOURN);
+  activeG(d).forEach(g=>{ g.morale = clamp(g.morale - 5, 0, 100); });
+  d.unrest = clamp(d.unrest + 4, 0, 100);
+  if(d.lanista) d.lanista.health = clamp(d.lanista.health - 6, 0, 100);
+  const kids = (dm.children||[]).filter(c=>!c.dead).length;
+  chron(d, how === "childbed"
+    ? `${w.name} is dead at ${age}, delivered of a living child and gone within the day. The house has a cradle in it and a body in it, and the familia does not know which way to look.`
+    : `${w.name} is dead at ${age}. The villa is very quiet and the yard is not, because the yard was always going to go on. ${kids ? `Her children are in the house and the house is still hers in every way that is not the ledger.` : `There is nothing of hers left in these rooms but the rooms.`}`, "bad");
+  return true;
+}
 const kinBlock = d => wifeFrom(d) === "merchant" ? wifeOf(d) : null;
 const KIN_BARGAIN = {
   title: "Her People Send Word",
@@ -9915,8 +10025,21 @@ function familyWeek(d){
       chron(d, `${c.name} has lost his hand at the post — ${nm} is gone from the yard, and the boy is at the wall on his own now.`, "bad"); }
   }
   const wifeAge = (dmm.wife.age||24) + Math.floor((d.week - dmm.wife.married)/YEAR_WEEKS);
+  /* #243 phase 2 — and a fever finds the villa as well as the cells. Gated off the wedding season
+     and cooled after each visit, so it is about one question a marriage rather than a drumbeat. */
+  if(d.week - (dmm.wife.married||1) >= WIFE_ILL_FROM && (dmm.illTil == null || d.week >= dmm.illTil)
+     && R() < WIFE_ILL_RATE){
+    dmm.illTil = d.week + WIFE_ILL_COOL;      /* set before the card, so a run that throws cannot loop */
+    d.pendingEvent = wifeIllEvent(d);
+    if(d.pendingEvent) return;
+  }
   if(livingKids(d).length < 3 && wifeAge < 40 && (d.week - (dmm.lastBorn!=null?dmm.lastBorn:dmm.wife.married)) >= 6 && R()<0.06){
-    dmm.lastBorn = d.week; bearChild(d); return;
+    dmm.lastBorn = d.week; bearChild(d);
+    /* the birth is the moment she is most likely not to come back from, and it is the moment the
+       game already has. Measured at a median of THREE births a house, so this is the larger of the
+       two hazards over a marriage even at a fortieth of the fever's per-question odds. */
+    if(R() < WIFE_CHILDBED) wifeDies(d, "childbed");
+    return;
   }
   }
   /* ---- AND THE CHILDREN ARE RAISED EITHER WAY, from v2.95.0 ----
@@ -17351,13 +17474,13 @@ function lawWeek(d){
   /* #243 phase 1 — the office forgets a house it is related to faster, and sends its man round
      less often. Measured before building: `inspector` fires a median of ONE to THREE times a house
      and heat sits at p50 0 across weeks, so the tie is two multipliers rather than a system. */
-  const kinLaw = wifeFrom(d) === "magistrate";
-  const cool = (0.9 - Math.min(L.heat, 90) * 0.006) * (kinLaw ? WIFE_LAW : 1);   /* 0.9 at nothing, 0.36 at ninety */
+  const kinLaw = (famTie(d, "magistrate") || { full:0 }).full;   /* #243 phase 2 — half for a widower */
+  const cool = (0.9 - Math.min(L.heat, 90) * 0.006) * (1 + (WIFE_LAW - 1) * kinLaw);   /* 0.9 at nothing, 0.36 at ninety */
   L.heat = clamp(L.heat + (breach.length ? breach.length*1.6 : -cool), 0, 100);
   if(d.pendingEvent) return;
   const known = (breach.length ? 0.03 + L.heat*0.0012
     : (L.heat >= 45 ? (L.heat - 45) * 0.0016 : 0))       /* about once in eleven weeks at 100 */
-    * (kinLaw ? WIFE_EYE : 1);
+    * (1 - (1 - WIFE_EYE) * kinLaw);
   if(known <= 0 || R() > known) return;
   const fine = rnd((160 + d.fame*0.6) * Math.max(1, breach.length));
   d.pendingEvent = { id:"inspector", title:"He Did Not Send Word",
@@ -20952,6 +21075,7 @@ const EVENTS = {
     run(d,ev,i){ const sit = ev.data && ev.data.sit; if(!sit || !NIGHT[sit.kind]) return "The night passes.";
       try { return NIGHT[sit.kind].run(d, sit, i) || "The night passes."; } catch(e){ return "The night passes."; } } },
   match:    { make(){ return null; }, run(d,ev,i){ try { return resolveMatch(d,ev,i); } catch(e){ return "The matchmakers move on."; } } },
+  wifeIll:  { make(){ return null; }, run(d,ev,i){ try { return resolveWifeIll(d,ev,i); } catch(e){ return "The fever goes out of the house."; } } },
   raising:  { make(){ return null; }, run(d,ev,i){ try { return resolveRaise(d,ev,i); } catch(e){ return "The years go on regardless."; } } },
   toga:     { make(){ return null; }, run(d,ev,i){ try { return resolveToga(d,ev,i); } catch(e){ return "He is a man now, whatever you decide."; } } },
   daughter: { make(){ return null; }, run(d,ev,i){ try { return resolveDaughter(d,ev,i); } catch(e){ return "The match is left for another day."; } } },
@@ -25988,6 +26112,7 @@ const SECT = {
                      ); })}
                    <div className="dim" style={{fontSize:"var(--fs-sm)",fontStyle:"italic",marginTop:7}}>A house with a wife in it runs a shade warmer, and a son raised in this yard becomes an heir worth more than whoever is left when you die.</div>
                  </>) : marryReady(S) ? (<>
+                   {wifeWord(S) && <div className="dim" style={{fontSize:"var(--fs-sm)",marginBottom:6}}>{wifeWord(S)}</div>}
                    <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic",marginBottom:7}}>
                      A man alone at the head of a ludus leaves nothing behind but a ledger. Take a wife, and the house can make an heir of its own blood.
                    </div>
@@ -34653,6 +34778,10 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     familyWeek, childAge, livingKids, marryReady, childYear, CHILD_YEARS, heirEligible, SON_AGE,
     /* #243 phase 1 — her family as a standing tie, and the hostage the rival wedding is */
     wifeOf, wifeFrom, wifeKin, wifeYears, wifeWord, kinFeudBroken, WIFE_WORD,
+    /* #243 phase 2 — she has a life, and losing her re-opens the slot */
+    kinTie, famTie, kinName, widowOf, wifeAgeNow, wifeIllEvent, resolveWifeIll, wifeDies,
+    WIFE_ILL_FROM, WIFE_ILL_RATE, WIFE_ILL_COOL, WIFE_ILL_DIE, WIFE_CHILDBED, WIFE_MOURN, WIFE_KIN_HALF,
+    staffSkill, makeStaff, bearChild, familyWeek,
     WIFE_BLOCK, WIFE_LAW, WIFE_EYE, WIFE_KIN_BACK, slaverPrice, dealings, dealt, meetRecord, lawWeek, kinBlock, KIN_BARGAIN,
     /* ---- AND THE TWO THAT DECIDE A FEUD, added for #225 ----
        Both `resolveMatch` and `resolveDaughter` carry a "rival" branch whose whole promise is that
