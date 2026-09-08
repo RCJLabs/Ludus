@@ -4389,6 +4389,70 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.245.0 — #243 phase 3: the mistress has two conversations of her own, and where she stands is worth something
+
+**MEASURED FIRST** (`probes/mistress.mjs`, 16 × 420), because an ask is only worth writing if it has
+a subject to be about and a slot to be heard in:
+
+- **The slot is there.** `askWeek` is the only conversation in the game and it is the men's: a house
+  hears a median of **two to four** asks in its whole life, and its pool is non-empty on only **909
+  of 3,491 weeks**. The channel is idle three weeks in four, so hers is not competing for a busy one.
+- **The household is there.** Folk are hired in **16 of 16** houses, a median of four at once — which
+  is all of them — standing 3,219 weeks: cook 2,277w, nurse 2,555w, keeper 2,467w.
+- **And the daughter is there, which is why her third ask is NOT built.** 18 girls born across 11 of
+  16 houses and **8 of them reached fifteen** — unlike phase 4's widow-and-minor, this door opens.
+  But it is already a card: `daughterEvent` **is** the daughter's match, and it fired on exactly
+  those 8 girls. A second conversation about the same decision is two cards for one choice. So two
+  are built and the third is declined, and `checks/hers.mjs` arm 7 holds `daughterEvent` — a decline
+  that rests on something existing has to check that it still does.
+
+**She cannot be in `askPool`**, which walks `activeG` and pairs every man with every conversation he
+fits. Her channel is `womanWeek` beside `askWeek` — the same shape (a gate, a cool, the unheard
+conversation first, one `pendingEvent`) for somebody who is not on the roster.
+
+**`spare`** is a man she would keep: the one her child follows about when there is a boy with a
+mentor, and the longest-serving man otherwise. It reuses `flags.noSell`, which is `ASKS.brother`'s
+own machinery. **`house`** is the women who keep the villa: she has counted what they are paid
+against a week of steel, and paying them properly costs a lump and makes every one of them better at
+it. Both move **her mood**, which is the state the item's own risk line asks for — she lives on the
+domus sheet and in the ask channel and nowhere else. `wifeWarm` is **exactly 1.0 at the mood she
+starts on**, so a house that never hears her ask for anything is precisely where it was.
+
+Measured on the same seeds, differing only in which door the rope takes:
+
+| | asks | her mood across wife-weeks | at the house's end |
+|---|---|---|---|
+| giving | 11 (house 6, spare 5) | p50 60, p90 74, max 86 | p90 86 · 2 men kept off the block |
+| refusing | 15 (house 8, spare 7) | **p10 32** | **p10 20** |
+
+**The check found two faults in the build before it shipped, and three in itself.**
+
+- **The free slot made the fee nothing.** `HOUSEHOLD.wife` is a household-STAFF slot — *"The
+  lanista's wife"*, wage 0, no fee, and **not the mistress at all**; it stands in 3,219 of 3,219
+  folk-weeks precisely because it is free. Reading `hasFolk` alone made the fee `rnd(0 × 12)` = **0**:
+  she asked you to pay them properly and it cost nothing. Caught by a fixture built to be too poor to
+  pay. `herFolk` wants wages now.
+- **A tie that was always the same one.** With both conversations unheard, a stable sort handed it to
+  whichever is declared first — and a house hears a **median of ONE** ask in its life, so half of all
+  houses would only ever hear `spare`. From fresh it was **24 of 24**. A free rotation on the week
+  fixes it: house 6 / spare 5 in play.
+- And three in the fixture: a `raise` helper that advanced the week between tries, which walks a
+  two-week marriage straight past `HER_FROM` and a cooled house past `herTil` — it reported **both
+  gates open on a build where both hold**; a sheet read off a house whose mood had already been
+  walked to the ceiling; and a "too poor to pay" house created poor, which hires only the free slot
+  and is never offered the ask at all.
+
+**Recorded, not fixed:** `HOUSEHOLD.wife` and `d.domus.wife` are two different women, one of them
+called "The lanista's wife" in the household panel, and a married house has both. That collision
+predates #243 and fixing it is not this phase.
+
+**`EVENTS` 1094 → 1095**, one registry line for `herAsk` on `wifeIll`'s own pattern. `SECT` is
+unchanged — the mood goes into `wifeWord`, which is domain code the panel only prints.
+
+**Shipped:** `checks/hers.mjs` (seven arms, 6s), `probes/mistress.mjs` extended with her asks and the
+giving/refusing pair, the conversations in `src`. **#243 now stands at phases 1, 2 and 3 shipped and
+phase 4 declined on v3.242.0's measurement — the item is closed.**
+
 ### v3.244.0 — #243 phase 2: she has a life, and what you answer when the fever comes is worth four houses in sixteen
 
 `wife = null` was never written outside `succeed`'s domus reset. She could not sicken, die, or be
@@ -9328,8 +9392,14 @@ with a house tag, and let the numbers edict be the ceiling the design already wr
 
 ---
 
-**#243 — The Mistress of the House** *(overhaul · medium–large · 4 phases)* — **PHASES 1 AND 2
-SHIPPED v3.243.0 and v3.244.0. VERIFY-FIRST ANSWERED v3.242.0 AND PHASE 4 DECLINED; phase 3 stands.**
+**#243 — The Mistress of the House** *(overhaul · medium–large · 4 phases)* — **CLOSED. PHASES 1, 2
+AND 3 SHIPPED v3.243.0 – v3.245.0; PHASE 4 DECLINED ON ITS OWN VERIFY-FIRST, v3.242.0.**
+*Phase 3 (v3.245.0):* `womanWeek` beside `askWeek` — she cannot be in `askPool`, which walks
+`activeG`. Two conversations: a man she would keep (her child's mentor, or the longest-serving man;
+reuses `flags.noSell`) and the women who keep the villa (a lump, and every one of them better at it).
+Both move her mood, which scales the warmth she already gives and reads exactly 1.0 where she starts.
+The third ask is declined because `daughterEvent` already IS the daughter's match, measured firing on
+8 of the 8 girls who reached fifteen.
 *Phase 2 (v3.244.0):* she can take a fever and she can die of childbed. The fever is a card with
 three doors and the answer is worth **1 of 16 houses against 4 of 16** on the same seeds; the
 childbed is where the measurement said she actually is (age p50 26, three births a house). `wifeDies`
