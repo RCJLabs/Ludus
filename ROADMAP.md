@@ -4447,9 +4447,32 @@ gained one row that `wifeWord` builds in the domain code and the panel only prin
 0 on the card, and the rope answers 0), so `slaverPrice` moves for him, and a different price is a
 different purchase is a different draw.
 
-**Shipped:** `probes/mistress.mjs` (four arms), `checks/mistress.mjs` (five arms, 6s), the tie in
-`src`. **#243 now stands at phase 1 shipped, phase 4 declined on v3.242.0's measurement**, with
-phases 2 and 3 — a life, and her own asks — still open.
+**And the re-phase turned `die` arm 6 red, which took a paired experiment rather than a guess.**
+The rare tier's lift fell 3.4 → 0.4 on the arm's three bases. That arm's own header already records
+this shape twice — *"9.1 points became 0.7 on a release that added no draws at all"* — so the
+question was the usual one: the build, or three draws of a statistic with a six-point spread?
+`probes/tiers.mjs` was written to answer it and ran **the same six bases on both builds**:
+
+| | weighted | flat | lift | per-base |
+|---|---|---|---|---|
+| v3.242.0 | 16.3% | **12.6%** | 3.7 | 2.0 … 6.7, all six positive |
+| v3.243.0 | 16.4% | **15.4%** | 1.0 | −0.5 … 3.3 |
+
+**The weighted arm did not move.** The FLAT baseline rose, and key by key it is two events: `stash`
+193 → 272 and `poached` 147 → 200 across the six bases — 132 of the ~140 draws the flat rare tier
+gained, with the other thirteen keys level. Both are **roster-size** events (a veteran with savings;
+a rival who wants your man), and cheaper men on the block is a bigger roster. So the tier is reached
+*more*, not less: the pooled absolute went **18.4% → 19.2%**, and that absolute is what the arm's own
+sentence claims. What fell is a difference against a baseline that moves with how often the tier is
+ELIGIBLE — a fact about the house, not the die. The weighting itself is held directly and
+unconfounded by arms 2 and 3, both green. So the absolute floor stands at 12%, the sample goes to
+**six** bases (three read 0.4 where six read 1.0), and the lift bar becomes **+0.5** — enough to
+catch a die whose weighting has stopped working, which is what the arm is for.
+
+**Shipped:** `probes/mistress.mjs` (four arms), `checks/mistress.mjs` (five arms, 6s),
+`probes/tiers.mjs` (the lift instrument, any number of bases), `checks/die.mjs` arm 6 re-based, the
+tie in `src`. **#243 now stands at phase 1 shipped, phase 4 declined on v3.242.0's measurement**,
+with phases 2 and 3 — a life, and her own asks — still open.
 
 ### v3.242.0 — #243's verify-first: the widow phase 4 wanted cannot be made, because the lanista does not die
 
