@@ -9651,7 +9651,9 @@ const WIFE_WORD = {
       : `House ${nm} was family until your house put one of them in the ground. It is a feud again, and a worse one than it was.`; },
 };
 const wifeWord = d => { const dm = domusOf(d);
-  if(dm.wife){ const k = wifeFrom(d); return k && WIFE_WORD[k] ? WIFE_WORD[k](d) : ``; }
+  if(dm.wife){ const k = wifeFrom(d), base = k && WIFE_WORD[k] ? WIFE_WORD[k](d) : ``;
+    const m = moodWord(wifeMood(d));
+    return m ? `${base} She is ${m}.` : base; }
   const wd = dm.widowed; if(!wd) return ``;
   const yrs = Math.floor((d.week - (wd.died||d.week)) / YEAR_WEEKS);
   const since = yrs < 1 ? `not a year` : yrs === 1 ? `a year` : `${yrs} years`;
@@ -9766,6 +9768,134 @@ function wifeDies(d, how){
     ? `${w.name} is dead at ${age}, delivered of a living child and gone within the day. The house has a cradle in it and a body in it, and the familia does not know which way to look.`
     : `${w.name} is dead at ${age}. The villa is very quiet and the yard is not, because the yard was always going to go on. ${kids ? `Her children are in the house and the house is still hers in every way that is not the ledger.` : `There is nothing of hers left in these rooms but the rooms.`}`, "bad");
   return true;
+}
+/* ---- AND SHE HAS SOMETHING TO SAY — #243 phase 3 ----
+   "Two or three `ASKS`-shaped conversations with the mistress: a man she wants sold or spared, the
+   household, the daughter's match (the son's upbringing is `raiseEvent` already)."
+
+   MEASURED FIRST (`probes/mistress.mjs`, 16 x 420), because an ask is only worth writing if it has
+   a subject to be about and a slot to be heard in:
+
+     THE SLOT IS THERE. `askWeek` is the only conversation in the game and it is the men's: a house
+     hears a median of TWO to FOUR asks in its life, and its pool is NON-EMPTY ON ONLY 909 OF 3,491
+     WEEKS — the channel is idle three weeks in four. Hers does not compete for a busy slot.
+
+     THE HOUSEHOLD IS THERE. Folk are hired in 16 of 16 houses, a median of FOUR AT ONCE (which is
+     all of them), standing 3,219 weeks — cook 2,277w, nurse 2,555w, keeper 2,467w. Her ask about
+     the women who keep the villa has a subject on nearly every wife-week she has.
+
+     AND THE DAUGHTER IS THERE, WHICH IS WHY HER ASK ABOUT ONE IS NOT BUILT. 18 girls born across 11
+     of 16 houses, and 8 of them reached fifteen in 6 houses — so unlike phase 4's widow-and-minor
+     this door does open. It is already a card: `daughterEvent` IS the daughter's match, and it
+     fired 8 times on exactly those 8 girls. A second conversation about the same decision is two
+     cards for one choice, so the third ask is declined and the two with no card are built.
+
+   HER MOOD is the state the item's own risk line asks for — "she lives on the domus sheet and in
+   the ask channel and nowhere else". It starts at HER_MOOD, her asks move it, the sheet says where
+   it stands, and it scales the weekly warmth she already gives: `wifeWarm` is 1.0 at the mood she
+   starts on, so a house that never hears her is exactly where it was. */
+const HER_FROM = 30;      /* she does not start asking in the wedding season */
+const HER_RATE = 0.012;   /* a week's chance after that */
+const HER_COOL = 34;      /* and she does not ask again the month after */
+const HER_MOOD = 60;      /* where she starts, and the mood at which `wifeWarm` is exactly 1 */
+const wifeMood = d => { const w = wifeOf(d); return w ? (w.mood == null ? HER_MOOD : w.mood) : null; };
+const moveMood = (d, n) => { const w = wifeOf(d); if(!w) return;
+  w.mood = clamp((w.mood == null ? HER_MOOD : w.mood) + n, 0, 100); };
+const wifeWarm = d => { const m = wifeMood(d); return m == null ? 0 : 0.4 + m * 0.01; };
+const moodWord = m => m == null ? "" : m >= 84 ? "content with how the house is run"
+  : m >= 62 ? "settled" : m >= 40 ? "holding her tongue about several things"
+  : m >= 20 ? "not saying much to you at present" : "done asking";
+/* the man she would keep: the one her child follows about, and failing that the one who has been
+   here longest — both read off state that already exists and neither needs a new field */
+const mentorKid = d => (domusOf(d).children||[]).find(c=>!c.dead && !c.wed && c.mentorId
+  && d.gladiators.some(g=>g.id===c.mentorId && g.status==="active")) || null;
+function herSpareMan(d){
+  const kept = d.flags.noSell || [];
+  const c = mentorKid(d);
+  if(c){ const m = d.gladiators.find(g=>g.id===c.mentorId && g.status==="active");
+    if(m && !kept.includes(m.id)) return m; }
+  const men = activeG(d).filter(g=>!kept.includes(g.id));
+  if(!men.length) return null;
+  return men.reduce((m,g)=>((g.weeksHere||g.wins||0) > (m.weeksHere||m.wins||0) ? g : m), men[0]);
+}
+/* ---- AND THE HANDS SHE IS ASKING ABOUT HAVE TO BE PAID ONES ----
+   `HOUSEHOLD.wife` is a household-STAFF slot ("The lanista's wife", wage 0, no fee) and it is not
+   the mistress at all — a naming collision that predates this item. Measured, it stands in 3,219 of
+   3,219 folk-weeks precisely because it is free, and reading `hasFolk` alone made the fee
+   `rnd(0 * 12)` = 0: she asked you to pay them properly and it cost nothing, which `checks/hers.mjs`
+   caught on a fixture built to be too poor to pay. The ask is about wages, so it wants wages. */
+const herFolk = d => HH_KEYS.filter(k=>hasFolk(d,k) && hhWage(d,k) > 0);
+const HER_ASKS = {
+  spare: {
+    need:d=>!!herSpareMan(d),
+    say:d=>{ const g = herSpareMan(d), w = wifeOf(d), c = mentorKid(d);
+      const boy = c && g && c.mentorId === g.id ? c : null;
+      return { gid:g.id, gname:g.name,
+        text: boy
+          ? `${w.name} asks that ${g.name} is not sold. ${boy.name} has been at his shoulder since before he could be trusted with anything sharp, and she has watched what that has made of the boy, and she is not really asking about the man.`
+          : `${w.name} asks that ${g.name} is not sold. He has been in this house longer than she has, she has decided that means something, and she would like you to decide it too.`,
+        choices:["Give her your word","Promise nothing"] }; },
+    yes:(d,ex)=>{ d.flags.noSell = [...(d.flags.noSell||[]), ex.gid]; moveMood(d, 14);
+      const g = d.gladiators.find(x=>x.id===ex.gid); if(g) g.regard = clamp(regardOf(g)+8,0,100);
+      return `You give it. She does not thank you, because she does not think she asked for a favour, and ${ex.gname} is told by somebody who is not you.`; },
+    no:(d,ex)=>{ moveMood(d, -16);
+      return `You promise nothing. She says that is fair and goes to see about the evening, and the house is a degree colder for a month.`; } },
+  house: {
+    need:d=>herFolk(d).length > 0,
+    say:d=>{ const w = wifeOf(d), ks = herFolk(d);
+      const fee = rnd(ks.reduce((n,k)=>n+hhWage(d,k), 0) * 12);
+      const f = houseFolk(d)[ks[0]];
+      return { fee, n:ks.length,
+        text: `${w.name} has counted what this house pays the women who keep it standing, and then what it pays for one week of steel, and she would like you to look at the two numbers next to each other. ${f ? `${f.name} has been here ${f.weeks} weeks` : `They have been here for years`} and has never once asked you for anything.`,
+        choices:[`Pay them properly · ${fee}d`, "The ledger does not stretch to it"] }; },
+    yes:(d,ex)=>{ if(d.gold < (ex.fee||0)){ moveMood(d, -8);
+        return `You mean to, and there is not the coin in the box this week, and she watches you find that out. She does not say anything, which is the answer.`; }
+      d.gold -= ex.fee; moveMood(d, 12);
+      const hh = houseFolk(d);
+      for(const k of Object.keys(hh)) hh[k].skill = clamp((hh[k].skill||55) + 5, 0, 92);
+      d.unrest = clamp(d.unrest - 2, 0, 100);
+      return `It is paid, quietly, without a speech. The villa runs differently within the month and you would be hard put to say which part of it changed.`; },
+    no:(d)=>{ moveMood(d, -12);
+      return `The ledger does not stretch to it. She agrees that it does not, in the tone she uses for things she has already decided about you.`; } },
+};
+const HER_KEYS = Object.keys(HER_ASKS);
+/* ---- HER CHANNEL, WHICH IS NOT `askWeek` ----
+   `askPool` walks `activeG` and pairs every man with every conversation he fits, so the mistress
+   cannot be in it: she is not a gladiator and never will be. This is the same SHAPE — a gate, a
+   cool, once through a weighted-by-freshness order, one `pendingEvent` — beside it rather than
+   inside it, which is what "ASKS-shaped" has to mean for somebody who is not on the roster. */
+function womanWeek(d){
+  if(d.over || d.rome || d.city || d.travel || d.pendingEvent) return;
+  const w = wifeOf(d); if(!w) return;
+  const dm = domusOf(d);
+  if(d.week - (w.married || 1) < HER_FROM) return;
+  if(dm.herTil != null && d.week < dm.herTil) return;
+  if(R() >= HER_RATE) return;
+  const last = dm.herLast || {};
+  /* ---- THE UNHEARD CONVERSATION FIRST, AND A TIE IS NOT ALWAYS THE SAME ONE ----
+     `ASK_FRESH`'s idea without a second weighted draw. But a house hears a MEDIAN OF ONE ask in its
+     life, and with both conversations unheard a stable sort hands the tie to whichever is declared
+     first — so half of all houses would only ever hear `spare`. The rotation is free and the sort
+     below is stable, so it survives into the unheard group. */
+  const off = d.week % HER_KEYS.length;
+  const order = HER_KEYS.slice(off).concat(HER_KEYS.slice(0, off))
+    .sort((a,b)=>(last[a] == null ? 0 : 1) - (last[b] == null ? 0 : 1));
+  for(const k of order){
+    let ok = false; try { ok = !!HER_ASKS[k].need(d); } catch(e){}
+    if(!ok) continue;
+    let ex = null; try { ex = HER_ASKS[k].say(d); } catch(e){ continue; }
+    if(!ex) continue;
+    dm.herTil = d.week + HER_COOL;
+    (dm.herLast = dm.herLast || {})[k] = d.week;
+    d.pendingEvent = { id:"herAsk", title:"She Wants A Word", text:ex.text,
+      choices:ex.choices || [], data:{ k, ex } };
+    return;
+  }
+}
+function resolveHerAsk(d, ev, i){
+  const k = ev.data && ev.data.k, ex = (ev.data && ev.data.ex) || {};
+  const A = HER_ASKS[k]; if(!A) return "It is left where it is.";
+  try { return i === 0 ? A.yes(d, ex) : A.no(d, ex); } catch(e){ return "It is left where it is."; }
 }
 const kinBlock = d => wifeFrom(d) === "merchant" ? wifeOf(d) : null;
 const KIN_BARGAIN = {
@@ -10013,9 +10143,12 @@ function familyWeek(d){
     }
   } else {
   /* a house with a mistress in it runs a shade warmer every week — the domestic half, kept */
-  activeG(d).forEach(g=>{ g.morale = clamp(g.morale + 0.4, 0, 100); });
-  d.unrest = clamp(d.unrest - 0.3, 0, 100);
-  if(d.lanista) d.lanista.health = clamp(d.lanista.health + 0.15, 0, 100);
+  /* #243 phase 3 — scaled by where she stands. `wifeWarm` is exactly 1 at the mood she starts on,
+     so a house that has never heard her ask for anything is exactly where it was. */
+  { const warm = wifeWarm(d);
+    activeG(d).forEach(g=>{ g.morale = clamp(g.morale + 0.4 * warm, 0, 100); });
+    d.unrest = clamp(d.unrest - 0.3 * warm, 0, 100);
+    if(d.lanista) d.lanista.health = clamp(d.lanista.health + 0.15 * warm, 0, 100); }
   /* the boy shadowing a veteran keeps that man proud — and if the man is gone, the boy loses his hand */
   for(const c of dmm.children){
     if(c.wed || c.dead || !c.mentorId) continue;
@@ -21076,6 +21209,7 @@ const EVENTS = {
       try { return NIGHT[sit.kind].run(d, sit, i) || "The night passes."; } catch(e){ return "The night passes."; } } },
   match:    { make(){ return null; }, run(d,ev,i){ try { return resolveMatch(d,ev,i); } catch(e){ return "The matchmakers move on."; } } },
   wifeIll:  { make(){ return null; }, run(d,ev,i){ try { return resolveWifeIll(d,ev,i); } catch(e){ return "The fever goes out of the house."; } } },
+  herAsk:   { make(){ return null; }, run(d,ev,i){ try { return resolveHerAsk(d,ev,i); } catch(e){ return "It is left where it is."; } } },
   raising:  { make(){ return null; }, run(d,ev,i){ try { return resolveRaise(d,ev,i); } catch(e){ return "The years go on regardless."; } } },
   toga:     { make(){ return null; }, run(d,ev,i){ try { return resolveToga(d,ev,i); } catch(e){ return "He is a man now, whatever you decide."; } } },
   daughter: { make(){ return null; }, run(d,ev,i){ try { return resolveDaughter(d,ev,i); } catch(e){ return "The match is left for another day."; } } },
@@ -22902,6 +23036,7 @@ function endWeek(d){
   edictWeek(d);
   lawWeek(d);
   askWeek(d);
+  womanWeek(d);     /* #243 phase 3 — the other conversation in the house */
   ruinWeek(d);
   paragonWeek(d);
   paragonExpire(d);
@@ -34780,6 +34915,9 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
     wifeOf, wifeFrom, wifeKin, wifeYears, wifeWord, kinFeudBroken, WIFE_WORD,
     /* #243 phase 2 — she has a life, and losing her re-opens the slot */
     kinTie, famTie, kinName, widowOf, wifeAgeNow, wifeIllEvent, resolveWifeIll, wifeDies,
+    /* #243 phase 3 — her own asks, and the mood they move */
+    HER_ASKS, HER_KEYS, HER_FROM, HER_RATE, HER_COOL, HER_MOOD, wifeMood, moveMood, wifeWarm,
+    moodWord, mentorKid, herSpareMan, herFolk, womanWeek, resolveHerAsk,
     WIFE_ILL_FROM, WIFE_ILL_RATE, WIFE_ILL_COOL, WIFE_ILL_DIE, WIFE_CHILDBED, WIFE_MOURN, WIFE_KIN_HALF,
     staffSkill, makeStaff, bearChild, familyWeek,
     WIFE_BLOCK, WIFE_LAW, WIFE_EYE, WIFE_KIN_BACK, slaverPrice, dealings, dealt, meetRecord, lawWeek, kinBlock, KIN_BARGAIN,
