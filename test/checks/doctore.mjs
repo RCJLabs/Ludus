@@ -58,7 +58,8 @@ export async function run({ p }){
                   "retireDoctore","doctoreWeek","hireDoctore","ludusLedger",
                   "DOC_AGE_FROM","DOC_RETIRE","DOC_SKILL_END","DOC_DECAY","WEEKS_PER_YEAR",
                   "HOSTILE_MOVES","startDocOffer","answerDocOfferWith","loseDoctoreTo","docKeepFee",
-                  "GRUDGE_DOCTORE","DOC_OFFER_WEEKS","lanistaOf","activeG","spiteWeight"]
+                  "GRUDGE_DOCTORE","DOC_OFFER_WEEKS","lanistaOf","activeG","spiteWeight",
+                  "succeedDoctore","docSuccessor","DOC_INSIDE_WINS","offerDoctore","takeDoctoreOffer"]
       .filter(k=>A[k]==null);
     if(miss.length) return { why:`the handle is missing ${miss.join(", ")}` };
     const K = { FROM:A.DOC_AGE_FROM, RET:A.DOC_RETIRE, END:A.DOC_SKILL_END,
@@ -208,6 +209,58 @@ export async function run({ p }){
         expired: !late.doctore, ticks,
         brokeKept: okBroke === false && !!broke.doctore && !!broke.docOffer };
     }
+    /* 8 · #251 phase 3 — the vacancy looks inside, the mentor comes first, and the offer waits */
+    { const mk = (opts) => {
+        const d = A.newGameState("Doc","clean","DOC-SUCC");
+        A.makeDoctoreMarket(d); const c=(d.doctoreMarket||[])[0];
+        d.gold = 99999; A.hireDoctore(d, c.id); d.doctore.weeks = 40;
+        /* two veterans who have left the sand — `survey.mjs` established they stay on the roster
+           with their status and their record, which is why they are still askable */
+        const men = A.activeG(d).slice(0, 2);
+        const vets = men.map((g,i)=>{ g.status = i ? "retired" : "freed"; g.wins = 9 + i*5; return g; });
+        if(opts && opts.mentor) d.heir = Object.assign({}, d.heir||{}, { mentorId: vets[0].id });
+        if(opts && opts.nobody) for(const g of vets) g.wins = 1;
+        return { d, vets };
+      };
+      /* the taking empties the post, which is phase 2's door — so this also proves the two phases
+         are joined rather than each working alone */
+      const a = mk(); a.d.doctore.age = 44;
+      A.loseDoctoreTo(a.d, ((a.d.rivals||[])[0]||{}).name);
+      const off = a.d.doctoreOffer;
+      /* the mentor is preferred over the better record: vets[1] has 14 wins to vets[0]'s 9 */
+      const b = mk({ mentor:true });
+      A.loseDoctoreTo(b.d, ((b.d.rivals||[])[0]||{}).name);
+      const mentorPicked = b.d.doctoreOffer && b.d.doctoreOffer.name === b.vets[0].name;
+      const bestByWins = a.d.doctoreOffer && a.d.doctoreOffer.name === a.vets[1].name;
+      /* nobody good enough: no offer, and the market still has to be there */
+      const c2 = mk({ nobody:true });
+      A.loseDoctoreTo(c2.d, ((c2.d.rivals||[])[0]||{}).name);
+      /* and it waits, but not for ever */
+      const e = mk(); A.loseDoctoreTo(e.d, ((e.d.rivals||[])[0]||{}).name);
+      const had = !!e.d.doctoreOffer; let ticks = 0;
+      while(e.d.doctoreOffer && ticks++ < 10){ e.d.week++; A.doctoreWeek(e.d); }
+      /* taking him fills the post from inside */
+      const f = mk(); A.loseDoctoreTo(f.d, ((f.d.rivals||[])[0]||{}).name);
+      const nm = f.d.doctoreOffer && f.d.doctoreOffer.name;
+      const tookIt = A.takeDoctoreOffer(f.d, true);
+      r.arms.succ = {
+        raised: !!off, inside: !!(off && off.inside), until: off ? off.offerUntil : null,
+        week: a.d.week, market:(a.d.doctoreMarket||[]).length, bestByWins,
+        mentorPicked, noneWhenThin: !c2.d.doctoreOffer, thinMarket:(c2.d.doctoreMarket||[]).length,
+        had, expiredAfter: ticks, cleared: !e.d.doctoreOffer,
+        tookIt, filled: !!f.d.doctore, filledWith: f.d.doctore ? f.d.doctore.name : null, wanted: nm,
+        fromHouse: !!(f.d.doctore && f.d.doctore.fromHouse) };
+    }
+
+    /* 9 · every offer carries a window, not just the succession one */
+    { const d = A.newGameState("Doc","clean","DOC-WIN");
+      const g = A.activeG(d)[0];
+      let tries = 0, got = null;
+      while(tries++ < 60 && !got){ d.doctoreOffer = null; d.unrest = 10;
+        if(g){ g.morale = 90; g.wins = 12; }
+        A.offerDoctore(d, g, "rudis"); got = d.doctoreOffer; }
+      r.arms.window = { got: !!got, until: got ? got.offerUntil : null, week: d.week, tries };
+    }
     return r;
   });
 
@@ -310,6 +363,41 @@ export async function run({ p }){
     + `weeks are the question, and a question that never closes is not one`);
   if(!A7.brokeKept) bad.push(`a house with no coin kept its doctore by answering yes — the fee is not `
     + `being checked, so the counter is free`);
+
+  const A8 = out.arms.succ, A9 = out.arms.window;
+  lines.push(`the vacancy looks inside: raised ${A8.raised} (inside ${A8.inside}, waits until week `
+    + `${A8.until} from ${A8.week}) · the market is there too (${A8.market}) · best record taken `
+    + `${A8.bestByWins} · the heir's mentor preferred ${A8.mentorPicked} · nobody good enough → no `
+    + `offer ${A8.noneWhenThin} (market still ${A8.thinMarket})`);
+  if(!A8.raised) bad.push(`the post was emptied by a rival with two veterans of the house standing `
+    + `there and nobody was asked — that is the whole of phase 3, and it is what the verify-first `
+    + `measured: 32 of 32 refills off the market, 0 offers at an empty post`);
+  if(A8.raised && !A8.inside) bad.push(`the succession offer does not carry \`inside\`, so nothing `
+    + `downstream can tell a man of your own from a stranger the market sent`);
+  if(A8.raised && !(A8.until > A8.week)) bad.push(`the succession offer carries no future \`offerUntil\` `
+    + `— it would stand for the rest of the run under an agenda row saying "he will not wait long"`);
+  if(!A8.market) bad.push(`looking inside replaced the market rather than preceding it — the house `
+    + `must still be able to buy a stranger if it would rather`);
+  if(!A8.bestByWins) bad.push(`with two veterans free the house asked the lesser record and no mentor `
+    + `was named to override it`);
+  if(!A8.mentorPicked) bad.push(`the heir's mentor was passed over for a better record. A house that `
+    + `has already trusted him with the boy (#237's \`mentorId\`) has said who it trusts with the young`);
+  if(!A8.noneWhenThin) bad.push(`an offer was raised from men who have never won ${out.K ? "" : ""}enough `
+    + `— DOC_INSIDE_WINS is not gating the pool`);
+  if(!A8.thinMarket) bad.push(`a house with nobody inside it got no offer AND no market, so the post `
+    + `cannot be filled at all`);
+  lines.push(`and it does not wait for ever: cleared after ${A8.expiredAfter} week(s) ${A8.cleared}`);
+  if(A8.had && !A8.cleared) bad.push(`the succession offer never expired in ${A8.expiredAfter} weeks`);
+  lines.push(`taking him: ${A8.tookIt} → the post holds ${A8.filledWith} (wanted ${A8.wanted}), `
+    + `a man of the house ${A8.fromHouse}`);
+  if(!A8.filled || A8.filledWith !== A8.wanted) bad.push(`accepting the offer did not put that man in `
+    + `the post`);
+  if(A8.filled && !A8.fromHouse) bad.push(`the man who took the square is not marked \`fromHouse\`, `
+    + `which is what the panel and \`docSecond\`'s odds read to know he wore their chains`);
+  lines.push(`an ordinary offer's window: ${A9.got ? `until week ${A9.until} from ${A9.week}` : "no offer in "+A9.tries+" tries"}`);
+  if(A9.got && !(A9.until > A9.week)) bad.push(`\`offerDoctore\` raises an offer with no window, so a `
+    + `rudis or a retirement leaves a standing note at urgency 2 for the rest of the run. Measured `
+    + `before this: both offers in a 3,891-week run were still standing at the end`);
 
   return { pass: bad.length === 0, why: bad.slice(0,3).join("; ") || null, lines };
 }

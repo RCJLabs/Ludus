@@ -16,7 +16,9 @@
 import { serve, open } from "../harness.mjs";
 const H = +(process.argv[2] || 16), W = +(process.argv[3] || 420), SEED = process.argv[4] || "DOCTORE";
 /* pass `keep` as the fifth argument to run the arm where the house answers the rival's offer */
-const ROPE = process.argv[5] === "keep" ? { docKeep:true } : {};
+const ROPE = process.argv[5] === "keep"   ? { docKeep:true }
+          : process.argv[5] === "inside" ? { docInside:true }
+          : process.argv[5] === "both"   ? { docKeep:true, docInside:true } : {};
 const { server, port } = await serve({ page:"dist/test.html" });
 const { browser, p } = await open(port);
 

@@ -293,6 +293,10 @@ export async function installRope(p){
        rather than intent. Every part can be switched off through `opts` for a control arm:
          cells, buy, doctore, build, census, staff, school, heir, rome, bout  (all default true)
          signature     (default OFF, #221 — no rope had ever taught one, so the arc read dark)
+         docInside     (default OFF, #251 phase 3 — the post can empty three ways now and every
+                        refill measured came off the market, because no rope has ever answered a
+                        doctore's offer. `docInside:true` takes the man of your own who comes to
+                        the gate when the square is empty)
          docKeep       (default OFF, #251 phase 2 — a rival can take the doctore, and an unanswered
                         offer is the leaving. Without this the keep branch is never exercised and
                         13 of 13 offers ended in a loss. `docKeep:true` matches the offer whenever
@@ -430,6 +434,15 @@ export async function installRope(p){
         const fee = d.docOffer.fee || 0;
         if(spare() >= fee && fin(A.answerDocOfferWith,[d, true])) bump("docKeep");
         else bump("docKeepBroke");
+      }
+      /* ---- #251 phase 3: THE MAN AT THE GATE, WHOM NOTHING WOULD EVER HAVE LET IN ----
+         The post can empty three ways now and all 32 refills in the verify-first came from the
+         MARKET, because this player buys and has never once called `takeDoctoreOffer`. Answering
+         an offer is opt-in for the same reason `docKeep` is: it changes who teaches the house for
+         the rest of the run. Taken BEFORE the market branch below, because a house that has a man
+         of its own at the gate should not be measured walking past him to the stalls. */
+      if(o.docInside === true && d.doctoreOffer && !d.doctore){
+        if(fin(A.takeDoctoreOffer,[d, true])) bump("docInside");
       }
       if(on("doctore") && !d.doctore){
         if(!(d.doctoreMarket||[]).length) fin(A.makeStaffMarket,[d]);
