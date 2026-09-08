@@ -4719,6 +4719,111 @@ const dropTies = (d,id) => { d.ties = tieList(d).filter(t=>t.a!==id && t.b!==id)
    is actually fought in 10 of 16 cases. So the succession ships and the dynasty does not.
 
    This stamps the two doors. It is called for its side effects and returns the record it wrote. */
+/* ---- BUYING THE YARD — #242 phases 1 and 2 ----
+   MEASURED FIRST (`probes/vacancy.mjs`, 16 x 420, 4,081 house-weeks), because the item makes the
+   measurement the gate on whether to build at all:
+
+     · 13 yards went dark — a median of ONE a house, p90 one, max two. Not the "twice a run" the
+       item's own decision rule names, and at a median of week 185 with a p10 of 39 it is not late
+       content either, so the rule that would have sent this beside #248 does not fire.
+     · The men on a closing yard: a median of 6 worth 7,567d, p90 10,497, max 13,182 — against a
+       median mid-game purse near 4,400. A real price for a real thing.
+     · The nine-name pool NEVER emptied: 0 weeks across 0 houses. The "stays dark for the rest of
+       the run" edge the item calls a defect on its own is not reachable in 420 weeks. Saying so is
+       worth more than fixing it.
+     · The bay is under `BAY_FLOOR` on 114 of 4,081 weeks and a dark yard stands unsold for exactly
+       those 114 — about SEVEN weeks a house, then `bayRefill` hands it to a stranger. All 13 went
+       that way.
+
+   SO IT IS A ONCE-A-RUN SET-PIECE WITH A SEVEN-WEEK WINDOW, and phases 1 and 2 are what fits it.
+   Phases 3 and 5 — a second yard as a building with its own upkeep and doctore post, then selling
+   it back or willing it to an heir — are a great deal of machinery for something that fires once,
+   and that is recorded rather than built.
+
+   THE LETTER DOES NOT ROLL FOR IT. `offerBooking` and `offerChallenge` sit behind `R()<0.10` and
+   `R()<0.06` because they can come round again; a dark yard cannot. Rolled at a tenth a week it
+   would be missed on better than half the windows it exists for, so it is raised on the first week
+   it is eligible and never again for that yard. That also costs the stream no draw. */
+/* ---- AND IT SELLS AT A DISTRESSED PRICE, WHICH THE FIRST CUT DID NOT ----
+   Priced at what the men were worth plus the walls, it came to a median of 10,586 denarii against a
+   median of 5,064 in the box on the week the question was put — short of coin on 15 of 15, every
+   time, by about half. A letter offering a thing nobody can ever buy is the taunt this file warns
+   against two functions down, and I had written it.
+   The worth is not the lie to fix: it is what the men are worth and the item asks for exactly that.
+   What was wrong is treating a dark yard as a market sale. Nobody is paying those men, the walls
+   are empty, and the bay wants it off its hands — so it goes at `YARD_DISCOUNT`, which puts the
+   median at about 5,300 against that same 5,064. A real stretch, out of reach as often as not, and
+   never a formality.
+   `YARD_FAVOUR` was 18 and never once bound: favour at the ask runs p10 29, p50 95. A gate that
+   cannot shut is decoration, so it is 30 — and it should be said exactly: at 30 it co-binds on 2 of
+   15 asks and has still never shut on its own, because coin was short on both of those too. Coin is
+   the gate; the favour is the item's "and a magistrate's favour" kept honest at the price of being
+   nearly always open. After: 7 of 15 taken, 8 to a stranger, gold at the ask p50 5,188 against a
+   price of 5,073 — a coin-flip, which is what a once-a-run chance should be. */
+const YARD_FAVOUR = 30;         /* a magistrate has to be willing to see the transfer done */
+const YARD_DISCOUNT = 0.5;      /* a dark yard with nobody paying for the men is a distressed sale */
+const yardWalls = d => rnd(400 + bayStandard(d) * 22);
+const yardPrice = lin => Math.round(((lin && lin.worth || 0) + (lin && lin.walls || 0)) * YARD_DISCOUNT);
+/* the yard that is dark, unsold, and has not already been put to you */
+function offerYard(d){
+  if(d.over || d.rome || d.city || d.travel || d.succession) return null;
+  const h = lastDark(d);
+  if(!h || !h.lineage || h.lineage.sold || h.lineage.asked) return null;
+  h.lineage.asked = d.week;
+  const price = yardPrice(h.lineage);
+  return { house:h.name, lan:h.lineage.name, price, favour:YARD_FAVOUR,
+    men:h.lineage.men || 0, worth:h.lineage.worth || 0, walls:h.lineage.walls || 0,
+    endedAs:h.lineage.endedAs };
+}
+/* ---- AND TAKING IT ----
+   The men come as they stood at `closeHouse`, which is what `lineage.roster` is for, and they come
+   WILLING OR NOT by `endedAs`: a house you broke does not send you glad men. Capacity is the honest
+   limit — `cellsCap` is 8 to 14 and a closing yard holds a median of six, so some of them will not
+   fit. Phase 3 would be the second yard that holds them; without it they are sold on at the gate
+   and the coin comes back, said plainly rather than quietly dropped. */
+/* `offer` comes from the event's own data: `endWeek` clears `d.askYard` in the same pass that
+   raises the question, so a version of this that read only the state would refuse every answer. */
+function buyYard(d, accept, offer){
+  const o = offer || d.askYard;
+  if(!o) return false;
+  d.askYard = null;
+  const h = (d.rivals||[]).find(x=>x.name === o.house);
+  if(!accept || !h || !h.lineage || h.lineage.sold){
+    if(h && h.lineage && !h.lineage.sold)
+      chron(d, `You let ${o.lan}'s yard go. Somebody will have it by the spring.`, "info");
+    return true;
+  }
+  if(d.gold < o.price || d.favor < YARD_FAVOUR) return false;
+  d.gold -= o.price;
+  d.favor = clamp(d.favor - YARD_FAVOUR, 0, 100);
+  h.lineage.sold = "you"; h.lineage.soldAt = d.week;
+  const broke = o.endedAs === "broken";
+  let came = 0, soldOn = 0, back = 0;
+  for(const f of (h.fighters || [])){
+    if(rosterFull(d)){ soldOn++; back += Math.round(gladValue(f) * 0.5); continue; }
+    const g = genGladiator(d, 40);
+    ["str","agi","end","tec","sho","dis","potential"].forEach(k=>{ g[k] = f[k]; });
+    g.name = f.name; g.nick = f.nick; g.cls = f.cls; g.origin = f.origin; g.sex = f.sex || "m";
+    g.age = f.age || 26; g.kit = f.kit || defaultKit(f.cls);
+    g.wins = f.wins||0; g.losses = f.losses||0; g.kills = f.kills||0; g.pfame = f.pfame||0;
+    g.heart = f.heart||50; g.status = "active"; g.lastFought = -9; g.price = 0;
+    /* a house you finished sends you men who watched you finish it */
+    g.morale = clamp((g.morale||50) + (broke ? -22 : 6), 0, 100);
+    g.defiance = clamp((g.defiance||30) + (broke ? 20 : -4), 0, 100);
+    g.fromYard = h.name;
+    d.gladiators.push(g); came++;
+  }
+  h.fighters = [];
+  if(back) d.gold += back;
+  d.unrest = clamp(d.unrest + (broke ? 6 : 0), 0, 100);
+  /* the bay notices a house that ate another */
+  for(const r of (d.rivals||[])) if(!r.retired) r.grudge = clamp((r.grudge||0) + 5, 0, 100);
+  chron(d, `${o.lan}'s yard is yours. ${o.price} denarii and a word in the right ear, and the gate `
+    + `at the end of the street has your colours on it. ${came} of his men walked up the hill to your `
+    + `cells${broke ? ` — and not one of them has forgotten who finished the house they came from` : ``}.`
+    + (soldOn ? ` ${soldOn} more would not fit and went on at the gate for ${back}d.` : ``), broke ? "bad" : "good");
+  return true;
+}
 function closeHouse(d, h, how){
   if(!h || h.retired) return null;
   h.retired = true;
@@ -4727,6 +4832,16 @@ function closeHouse(d, h, how){
   h.lineage = { name: lanistaOf(h.name).name, house: h.name, fame: Math.round(h.fame||0),
     /* #256 phase 3 — and what the yard was worth when it went dark, which is #242's price */
     purse: Math.round(rivalPurse(h)), men: (h.fighters || []).length,
+    /* ---- #242 phase 1: THE MEN, NOT A COUNT OF THEM ----
+       This kept `men` and the fighters were left where they lay, so by the week a player could act
+       on a dark yard there was no way to say what was standing in it. `probes/vacancy.mjs` had to
+       read `gladValue` over `h.fighters` BEFORE the week ran to measure the price at all — over
+       4,081 house-weeks a closing yard held a median of 6 men worth 7,567d, p90 10,497, and that
+       is the number this line exists to keep. The walls are priced against `bayStandard`, so a yard
+       in a Capua full of good schools is dearer than one in an empty city. */
+    worth: Math.round((h.fighters || []).reduce((n,f)=>n + gladValue(f), 0)),
+    walls: yardWalls(d),
+    roster: (h.fighters || []).map(f=>({ name:f.name, cls:f.cls, wins:f.wins||0, worth:Math.round(gladValue(f)) })),
     endedAs: how, week: d.week, met: ((d.metHouse||{})[h.name]||{}).met || 0,
     warm: Math.round(warmth(d, h.name)), grudge: Math.round(h.grudge||0), kin: !!h.kin };
   return h.lineage;
@@ -8226,6 +8341,9 @@ function bayRefill(d){
     d.flags.bayDue = d.week + (live.length===0 ? ri(2,5) : live.length===1 ? ri(3,7) : ri(5,11));
     return; }
   if(d.week < d.flags.bayDue) return;
+  /* #242 — and not while the question is in front of the player. The window measured seven weeks a
+     house; handing the yard to a stranger in the week he is deciding would make the letter a taunt. */
+  if(d.askYard || (d.pendingEvent && d.pendingEvent.id === "yard")) return;
   d.flags.bayDue = 0;
   const taken = new Set((d.rivals||[]).map(h=>h.name));
   const opts = NEW_HOUSES.filter(x=>!taken.has(x.key));
@@ -9920,6 +10038,9 @@ function deadlineWeek(d){
        and the week's question is not settled until a hundred lines further down, where
        pendingEvent is reset — anything raised now is thrown away before anybody sees it.
        So the offer is set aside and put into the queue at the place it is decided. */
+    /* #242 — a dark yard cannot come round again, so it is not rolled for and does not queue
+       behind the two that are. Set aside here and raised where `pendingEvent` is decided. */
+    if(!d.askYard && !d.askBooking && !d.askChallenge){ const y = offerYard(d); if(y) d.askYard = y; }
     if(R()<0.10){ const o = offerBooking(d); if(o) d.askBooking = o; }
     else if(R()<0.06){ const c = offerChallenge(d); if(c) d.askChallenge = c; }
     else if(R()<0.07){ const l = offerLevy(d); if(l){ addDeadline(d, Object.assign({kind:"levy"}, l));
@@ -10590,7 +10711,7 @@ const SAVE_MAYBE = ["doctore","doctoreOffer","docOffer","nemHouse","saga","rome"
   "nemesis","primus","city","travel","collegium","war","loan","ear","doctrine","mark",
   "after","pact","pendingLesson","medicus","armourer","election","aedile","blessing",
   "vow","powLot","heir","succession","reSignOffer","romeOffer","rebellion","repName",
-  "games","pendingEvent","over","askBooking","askChallenge"];
+  "games","pendingEvent","over","askBooking","askChallenge","askYard"];
 const SAVE_NUMBERS = { yardSeen:0, yardMissed:0, piety:30, lastOffering:-9,
   honoured:0, acclaim:0, munusLast:-99,
   favor:0, unrest:0, lastParty:-9, lastFeast:-9 };
@@ -10741,7 +10862,7 @@ function newGameState(name, scen, seed, pitch){
     gladiators:[], market:[], games:null, pendingEvent:null, log:[], fallen:[], freed:[],
     seed: null, rngState: 0,
     lastParty:-9, lastFeast:-9, over:null, milestone600:false, flags:{learned:{}}, escaped:[], rebellion:null, gear:{}, retired:[],
-    doctore:null, doctoreMarket:[], doctoreOffer:null, docOffer:null, editors:{}, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, court:null, defected:[], nemesis:null, nemHouse:null, saga:null, arcs:[], crest:{ c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" }, primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], works:{}, slavers:{}, pact:null, gambits:{}, pendingLesson:null, law:null, doctrine:null, kits:[], deadSteel:[], bay:null, mark:null, after:null, metHouse:{}, owed:[], household:{}, yardSeen:0, yardMissed:0, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, domus:{ wife:null, children:[], nextKin:1 }, acclaim:0, brand:{ licensed:false, decided:false, tier:0, earned:0 }, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, repName:null, askBooking:null, askChallenge:null, pitSeat:0, departed:[], reSignOffer:null, annals:[], rise:{ rank:0, standing:0 }, munusLast:-99, league:{ first:null, since:1, held:0, best:99, year:1, snap:null }, piety:30, blessing:null, vow:null, lastOffering:-9, powLot:null, seen:{} };
+    doctore:null, doctoreMarket:[], doctoreOffer:null, docOffer:null, editors:{}, askYard:null, ties:[], patrons:[], rome:null, romeOffer:null, poach:null, court:null, defected:[], nemesis:null, nemHouse:null, saga:null, arcs:[], crest:{ c1:"#8d3b2c", c2:"#c99a4b", sym:"gladius", motto:"" }, primus:null, city:null, travel:null, known:{}, feats:{}, lanista:null, collegium:null, war:null, circuit:[], factions:{parm:40,scut:40,mob:40,front:40}, loan:null, ear:null, heard:[], works:{}, slavers:{}, pact:null, gambits:{}, pendingLesson:null, law:null, doctrine:null, kits:[], deadSteel:[], bay:null, mark:null, after:null, metHouse:{}, owed:[], household:{}, yardSeen:0, yardMissed:0, deadlines:[], rivalLog:[], unburied:[], honoured:0, book:null, medicus:null, armourer:null, staffMarket:{}, election:null, aedile:null, heir:null, succession:null, domus:{ wife:null, children:[], nextKin:1 }, acclaim:0, brand:{ licensed:false, decided:false, tier:0, earned:0 }, generation:1, forebears:[], buildings:{}, gearCond:{}, forged:[], rep:{blood:0,show:0,craft:0,mercy:0}, repName:null, askBooking:null, askChallenge:null, pitSeat:0, departed:[], reSignOffer:null, annals:[], rise:{ rank:0, standing:0 }, munusLast:-99, league:{ first:null, since:1, held:0, best:99, year:1, snap:null }, piety:30, blessing:null, vow:null, lastOffering:-9, powLot:null, seen:{} };
   d.rivals = makeRivals(d, sw);
   const solo = S.men.length === 1;
   S.men.forEach((band,i)=>{
@@ -20909,6 +21030,11 @@ const EVENTS = {
         return `You tell him to come back when he has something to say rather than something to feel. He grins — not the answer you expected — and goes.`; }
       d.gladiators.forEach(o=>{ if(o.status==="active") o.regard = clamp(regardOf(o)+3,0,100); });
       return `You send him off, his thanks unspent. The cells hear that a lanista who spares a man is remembered for it, which is worth more down there than whatever he was carrying.`; } },
+  yard: {                                     /* #242 — raised by `offerYard`, never drawn by the die */
+    make(){ return null; },
+    run(d,ev,i){ const y = ev.data && ev.data.y; const took = i===0 && buyYard(d, true, y);
+      if(i!==0){ buyYard(d, false, y); return `You let it go. The bay will find somebody.`; }
+      return took ? `The gate at the end of the street is yours.` : `The coin or the standing is not there, and the moment goes by.`; } },
   owedBack: {
     make(){ return null; },
     build(d, data){
@@ -22248,6 +22374,15 @@ function heldQuestions(d){
   }
   /* the two that ask for a named man on a named day. Rolled at the top of the week,
      raised here — ahead of the week's random beat, because a date is worth more than one. */
+  if(!d.pendingEvent && d.askYard){ const y = d.askYard;
+    d.pendingEvent = { id:"yard",
+      title:"The Gate at the End of the Street",
+      text:`${y.lan}'s yard has been dark since he ${y.endedAs === "broken" ? "was finished" : "sold up"}, and the bay has not yet found anybody for it. `
+        + `${y.men} of his men are still in those cells with nobody paying for them — ${y.worth} denarii of fighting men by any reckoning — and the walls are put at ${y.walls}. `
+        + `The bay wants it off its hands and will take ${y.price} for the whole of it. `
+        + `${y.price} denarii and ${y.favour} of your standing with the magistrate, and the gate has your colours on it. `
+        + `${y.endedAs === "broken" ? "They watched you finish that house. They will not come up the hill glad." : "He asked that they go somewhere they would be fed."}`,
+      choices:[`Take the yard — ${y.price}d`, "Let the bay have it"], data:{ y } }; }
   if(!d.pendingEvent && d.askBooking){ const o = d.askBooking;
     d.pendingEvent = { id:"booking",
       title:"A Name on the Bill", text:`${o.editor} is putting on ${o.festName} and wants ${o.name} specifically, by name, on the bill. ${o.advance} denarii now and ${o.balance} on the day. If ${o.name} is not standing on that sand in ${o.due-d.week} weeks, the advance comes back doubled and the story goes round Capua ahead of you.`,
@@ -22258,7 +22393,7 @@ function heldQuestions(d){
       title:"Named in Public", text:`${c.lan} has named ${c.name} in front of the editors and half of Capua — his ${c.foe} against your man, inside ${c.due-d.week} weeks, for a purse of ${c.purse}. He did it loudly and on purpose. Everyone is now waiting to see whether you answer.`,
       note: promiseRead(d, c.gid, c.due),
       choices:["Accept it", "Let it pass"], data:{ c } }; }
-  d.askBooking = null; d.askChallenge = null;
+  d.askBooking = null; d.askChallenge = null; d.askYard = null;
   if(!d.pendingEvent && !d.rome && R()<0.14){ const ev=EVENTS.ambition.make(d); if(ev) d.pendingEvent=ev; }
 }
 
@@ -34297,6 +34432,7 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        `failBooking` were on no export, so the one contract the game asks a player to keep had never
        been asserted end to end. The handle is the contract (probe.mjs, FAULT SIX). */
     offerBooking, takeBooking, failBooking, bookedFor,
+    offerYard, buyYard, yardPrice, yardWalls, YARD_FAVOUR, YARD_DISCOUNT, lastDark, closeHouse, liveRivals, BAY_FLOOR, NEW_HOUSES, bayStandard,   /* #242 phases 1-2 */
     EDITOR_KEYS, editorOf, editorFor, editorKeyOf, editorRec, editorMark, editorKept,   /* #254 phase 1 */
     editorTrust, cardEditor, EDITOR_PATIENCE,   /* #254 phase 2 — the record read */
     editorWord, EDITOR_PULL, appetiteOf, APPETITES, APP_KEYS,   /* #254 phase 3 — his voice, and his taste on his own card */
