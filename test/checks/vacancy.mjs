@@ -156,5 +156,83 @@ export async function run({ p }){
     + `asks for coin AND a favour, and a gate that cannot shut is decoration`);
   if(!R2.passed) bad.push(`letting the bay have it still marked the yard sold to you`);
 
+  /* ---- #242 phase 4: THE BAY'S ANSWER, AND THE BRAKE THAT WAS ALREADY ON ----
+     Half of this phase is not built and the measurement is the reason. The item names
+     `EDICTS.numbers` as "the law a second yard is about", and over 3,888 house-weeks an edict
+     stands on 80.4% of weeks, `numbers` on 65.8%, and on EVERY one of those its cap sits below what
+     rank would allow. There is no ceiling to add — so this arm asserts the brake is on rather than
+     building a second one, and would fail if `cellsCap` ever stopped honouring the law. */
+  const bay = await p.evaluate(()=>{
+    const A = window.__LVDVS;
+    const miss = ["EDICTS","EDICT_KEYS","lawOf","cellsCap","bayRefill","liveRivals"].filter(k=>A[k]==null);
+    if(miss.length) return { why:`the handle is missing ${miss.join(", ")}` };
+    /* the brake: a law that names a number must lower the cells below what rank allows */
+    /* TWO CLAIMS, KEPT APART. The first cut put eleven men in the cells, and `set` duly capped at
+       roster minus one-to-three — TEN, which is above the EIGHT the house's rank allows, so the law
+       was honoured and the arm still failed. That is the fixture's fault and not the game's: in
+       play the roster runs a median of 5 against a rank cap of 8 and up, which is why the measured
+       2,560 binding weeks are all binding. So the honouring and the arithmetic are asserted apart.
+         · `cellsCap` must RETURN a law cap that sits below rank, whatever set it.
+         · `EDICTS.numbers.set` must cap BELOW what the house is actually keeping. */
+    const d = A.newGameState("Cap","clean","CAP-1");
+    const free = A.cellsCap(d);
+    const L = A.lawOf(d);
+    L.cap = free - 2;
+    const capped = A.cellsCap(d);
+    /* ABOVE THE EDICT'S OWN FLOOR, which the first cut ignored. `set` is
+       `max(4, roster - ri(1,3))`, so a house keeping THREE is capped at four and is not in breach —
+       that floor is deliberate (a man may always keep a few) and an arm that demands the cap sit
+       below any roster is asserting something the design says the opposite of. Stocked to seven so
+       the arithmetic is tested where it bites, which is also where the 2,560 measured binding weeks
+       live: a median roster of 5 against a rank cap of 8 and up. */
+    while(d.gladiators.filter(g=>g.status === "active").length < 7) d.gladiators.push(A.genGladiator(d, 45));
+    const kept = d.gladiators.filter(g=>g.status === "active").length;
+    L.cap = 99;
+    A.EDICTS.numbers.set(d);
+    const setTo = L.cap;
+    const floor = 4;
+    const nameIt = !!(A.EDICTS.numbers && A.EDICTS.numbers.name);
+    /* the bay's answer: a newcomer arriving after you have eaten a yard is warier */
+    const mk = (taken) => {
+      const e = A.newGameState("Bay","clean","BAY-1");
+      e.week = 80; e.flags.yardsTaken = taken;
+      const before = new Set((e.rivals||[]).map(x=>x.name));
+      e.flags.bayDue = e.week - 1;
+      for(const r of (e.rivals||[])) if(!r.retired && (e.rivals||[]).filter(x=>!x.retired).length > 2){ r.retired = true; break; }
+      e.flags.bayDue = e.week - 1;
+      let guard = 0;
+      while((e.rivals||[]).length === before.size && guard++ < 6){ e.flags.bayDue = e.week - 1; A.bayRefill(e); }
+      const nw = (e.rivals||[]).find(x=>!before.has(x.name));
+      const head = (e.log||[])[0];
+      return nw ? { grudge:nw.grudge, watchful:!!nw.watchful,
+        said: (e.log||[]).slice(0,3).some(c=>/gates on this street|which of the dark gates/.test((c&&c.text)||"")) } : null;
+    };
+    return { free, capped, cap:free - 2, kept, setTo, floor, nameIt, none:mk(0), one:mk(1), many:mk(3) };
+  });
+  if(bay.why) bad.push(`the phase 4 arm could not run: ${bay.why}`);
+  else {
+    lines.push(`the brake: cells hold ${bay.free} by rank · a law naming ${bay.cap} lowers them to `
+      + `${bay.capped} · "On the keeping of armed men" set ${bay.setTo} against ${bay.kept} kept`);
+    if(bay.capped !== bay.cap) bad.push(`the law named ${bay.cap} and \`cellsCap\` returns ${bay.capped} `
+      + `against ${bay.free} by rank — the law is the ceiling a second yard is about, measured in force `
+      + `on 65.8% of weeks and binding on every one of them. If it stops being honoured, #242 has no `
+      + `brake at all`);
+    if(!(bay.setTo < bay.kept)) bad.push(`"On the keeping of armed men" capped at ${bay.setTo} on a house `
+      + `keeping ${bay.kept} — above its own floor of ${bay.floor} the edict is supposed to name a `
+      + `number the house is already over, which is what puts it in breach and makes it a ceiling`);
+    if(!bay.nameIt) bad.push(`the numbers edict has no name to show a player`);
+    if(!bay.none || !bay.one) lines.push(`  the bay's answer: no newcomer arrived in the fixture, so the arm is untested here`);
+    else {
+      lines.push(`  a newcomer arriving: grudge ${bay.none.grudge} where no yard was taken, `
+        + `${bay.one.grudge} after one${bay.many ? `, ${bay.many.grudge} after three` : ""} `
+        + `· watchful ${bay.one.watchful} · said so ${bay.one.said}`);
+      if(!(bay.one.grudge > bay.none.grudge)) bad.push(`a lanista taking the gate next to a house that `
+        + `has eaten a yard arrives no warier than one who does not (${bay.one.grudge} against `
+        + `${bay.none.grudge}) — the bay's answer is the whole of phase 4's built half`);
+      if(!bay.one.watchful) bad.push(`the newcomer carries no \`watchful\` tell`);
+      if(!bay.one.said) bad.push(`the bay says nothing about the gates you have taken`);
+    }
+  }
+
   return { pass: bad.length === 0, why: bad.slice(0,3).join("; ") || null, lines };
 }

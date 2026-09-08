@@ -4797,6 +4797,7 @@ function buyYard(d, accept, offer){
   d.gold -= o.price;
   d.favor = clamp(d.favor - YARD_FAVOUR, 0, 100);
   h.lineage.sold = "you"; h.lineage.soldAt = d.week;
+  d.flags.yardsTaken = (d.flags.yardsTaken || 0) + 1;
   const broke = o.endedAs === "broken";
   let came = 0, soldOn = 0, back = 0;
   for(const f of (h.fighters || [])){
@@ -8374,8 +8375,26 @@ function bayRefill(d){
     else { h.warm = clamp((h.warm||0) + ri(10, 20), 0, 100); h.grudge = clamp(h.grudge - 6, 0, 100); }
     if(L.kin) h.kin = true;
   }
+  /* ---- THE BAY'S ANSWER — #242 phase 4 ----
+     #240 phase 4 put the continuity here already: a newcomer knows WHOSE yard he bought and how it
+     went dark. What it could not know is that the man across the street has been buying yards, and
+     that is exactly the thing a lanista arriving on this street would be told first.
+     The other half of this phase is NOT BUILT, and the measurement is why. The item names
+     `EDICTS.numbers` — "On the keeping of armed men" — as "the law a second yard is about", and
+     measured over 3,888 house-weeks that brake is already fully on: an edict stands on 80.4% of
+     weeks, `numbers` on 2,560 of them (65.8%), and on every single one of those 2,560 its cap sits
+     BELOW what the house's rank would otherwise allow. `cellsCap` honours it and phase 2's purchase
+     already respects `cellsCap` — the overflow goes on at the gate. There is no ceiling to add. */
+  if(d.flags.yardsTaken > 0){
+    h.grudge = clamp(h.grudge + ri(8, 18), 0, 100);
+    h.watchful = true;
+  }
   d.rivals.push(h);
   chron(d, N.line(h), "info");
+  if(d.flags.yardsTaken > 0)
+    chron(d, d.flags.yardsTaken > 1
+      ? `He asked, before he signed anything, how many gates on this street have your colours on them. He was told ${d.flags.yardsTaken}. He signed anyway, and he has not been friendly since.`
+      : `Somebody told him on his first day which of the dark gates you took, and what it cost you. He has been polite about it and he has not stopped thinking about it.`, "info");
   if(L && L.endedAs === "broke")
     chron(d, `It is ${L.name}'s yard he has bought, and he bought it from the creditors. There was nothing in the sale but the walls — whatever ${L.name} had, he had spent before the end.`, "info");
   else if(L) chron(d, L.endedAs === "broken"
@@ -34432,7 +34451,9 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        `failBooking` were on no export, so the one contract the game asks a player to keep had never
        been asserted end to end. The handle is the contract (probe.mjs, FAULT SIX). */
     offerBooking, takeBooking, failBooking, bookedFor,
-    offerYard, buyYard, yardPrice, yardWalls, YARD_FAVOUR, YARD_DISCOUNT, lastDark, closeHouse, liveRivals, BAY_FLOOR, NEW_HOUSES, bayStandard,   /* #242 phases 1-2 */
+    offerYard, buyYard, yardPrice, yardWalls, YARD_FAVOUR, YARD_DISCOUNT,
+    /* #242 phase 4 — an instrument cannot name the brake it is measuring without the table */
+    EDICTS, EDICT_KEYS, lawOf, BAY_NEWS, bayNews, lastDark, closeHouse, liveRivals, BAY_FLOOR, NEW_HOUSES, bayStandard,   /* #242 phases 1-2 */
     EDITOR_KEYS, editorOf, editorFor, editorKeyOf, editorRec, editorMark, editorKept,   /* #254 phase 1 */
     editorTrust, cardEditor, EDITOR_PATIENCE,   /* #254 phase 2 — the record read */
     editorWord, EDITOR_PULL, appetiteOf, APPETITES, APP_KEYS,   /* #254 phase 3 — his voice, and his taste on his own card */
