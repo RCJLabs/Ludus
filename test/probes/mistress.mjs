@@ -1,0 +1,153 @@
+/* HER FAMILY, WHICH IS THREE SENTENCES AND THEN FURNITURE — #243 phase 1's measurement
+
+   `resolveMatch` writes `dmm.wife = { name, family, married, age, from }`. **Nothing reads `from`.**
+   The dowry is paid once, the favour once, `weddingEndsFeud` fires once for the rival, and after that
+   week the three families are the same wife. Phase 1 makes each of them a standing tie:
+
+     merchant     a `bargain`-shaped yearly call on the block, through `SLAVERS`
+     magistrate   `inspector` heat softened, and a patron who is family
+     rival        the folded feud as a HOSTAGE — put her brother's man down `sine missione`
+                  and `weddingEndsFeud` unfolds
+
+   Three ties, three different systems, and none of them worth building into a branch nobody takes.
+   So, before any of it: WHICH FAMILY DOES A HOUSE ACTUALLY GET, AND HOW MUCH TRAFFIC IS THERE ON
+   THE HOOK EACH TIE WOULD HANG FROM.
+
+   The rope answers `pendingEvent` with choice 0, and choice 0 on the match card is the MERCHANT
+   every time — so the reference player's answer is known before it is measured, and measuring it is
+   the point: it says what the default house sees. The `answer` lever drives the other two.
+
+     1 · MERCHANT    choice 0, which is also what the reference player does unaided
+     2 · MAGISTRATE  choice 1
+     3 · RIVAL       choice 2 when it is offered at all — and whether it IS offered is the first
+                     number this probe owes, because the rival candidate needs a house at grudge 30
+                     on the week the matchmakers call, and they call at a median of week 35
+     4 · NOT NOW     the decline, as the control on the marriage being what moves these numbers
+
+   Run: node test/probes/mistress.mjs [houses] [weeks] [seed] */
+import { serve, open } from "../harness.mjs";
+const H = +(process.argv[2] || 16), W = +(process.argv[3] || 420);
+const SEED = process.argv[4] || "MIST";
+
+const { server, port } = await serve({ page:"dist/test.html" });
+const { browser, p } = await open(port);
+
+const out = await p.evaluate(([H,W,SEED])=>{
+  const A = window.__LVDVS, R = window.__ROPE;
+  const q = a => { if(!a.length) return null; const s=a.slice().sort((x,y)=>x-y);
+    const at = f => s[Math.min(s.length-1, Math.floor(f*s.length))];
+    return { n:a.length, p10:at(.1), p50:at(.5), p90:at(.9), max:s[s.length-1] }; };
+  const sum = o => Object.values(o||{}).reduce((a,b)=>a+(b||0),0);
+
+  const run = (seed, want) => {
+    const d = A.newGameState("Mist", "clean", seed);
+    const row = { weeks:0, card:0, offered:null, took:null, wedAt:null, from:null,
+      atCard:null, atCard2:null, atCardWk:null, topGrudge:0, wk30:null, shapes:{}, lateCards:0, lateRival:0,
+      heat:[], inspector:0, bargain:0, bought:0, scouted:0, burned:0,
+      patrons:0, kinPatrons:0, rivalAlive:null, rivalKin:null, nemBack:0, events:{} };
+    /* the card is answered here, and the card is also READ here — the only place the candidate
+       list exists is the event object, and it is thrown away the moment it is run */
+    const answer = (ev) => {
+      if(ev.id !== "match") return null;
+      const kinds = ((ev.data && ev.data.cands) || []).map(c=>c.kind);
+      /* EVERY card, not the first — `row.offered` was the first card's shape and the summary line
+         read "offered: merchant+magistrate 13" over an arm that had dealt FIFTY-THREE of them. A
+         tally that answers a narrower question than its label is the fault this project keeps
+         finding; the label here is "what does the card ever offer". */
+      row.card++; row.shapes[kinds.join("+")] = (row.shapes[kinds.join("+")]||0)+1;
+      if(row.offered == null) row.offered = kinds.join("+");
+      /* THE THIRD FAMILY'S GATE, read on the week the matchmakers call: the rival candidate wants a
+         house at grudge 30 and the card calls at a median of week 39. This is the number that says
+         whether "three families are willing" is a promise the card can keep. */
+      const gs = (d.rivals||[]).filter(h=>!h.retired).map(h=>Math.round(h.grudge||0)).sort((a,b)=>b-a);
+      if(row.atCard == null){ row.atCard = gs[0]||0; row.atCard2 = gs[1]||0; row.atCardWk = d.week; }
+      /* and the cards dealt AFTER the feud has had time to arrive, which is the honest test of
+         whether the third family is unreachable or merely early */
+      if(row.wk30 != null){ row.lateCards++; if(kinds.includes("rival")) row.lateRival++; }
+      if(want === "none") return kinds.length;             /* "Not now" is past the last candidate */
+      const i = kinds.indexOf(want);
+      if(i >= 0){ row.took = want; return i; }
+      row.took = kinds.length ? kinds[0] : null;           /* the branch was not on the card */
+      return 0;
+    };
+    let nemWas = null;
+    for(let w=0; w<W; w++){
+      if(d.over) break;
+      row.weeks++;
+      const L = A.lawOf ? A.lawOf(d) : null; if(L) row.heat.push(Math.round(L.heat||0));
+      let did = null;
+      try { did = R.lanista(d, { answer }); } catch(e){ break; }
+      for(const [k,n] of Object.entries((did && did.events) || {})) row.events[k] = (row.events[k]||0)+n;
+      const dm = A.domusOf(d);
+      if(dm.wife && row.wedAt == null){ row.wedAt = d.week; row.from = dm.wife.from; }
+      /* the feud coming BACK is what a hostage would have to bite on */
+      const top = Math.max(0, ...(d.rivals||[]).filter(h=>!h.retired).map(h=>h.grudge||0));
+      if(top > row.topGrudge) row.topGrudge = Math.round(top);
+      if(row.wk30 == null && top >= 30) row.wk30 = d.week;
+      const nem = d.nemHouse ? d.nemHouse.house : null;
+      if(nem && nem !== nemWas) row.nemBack++;
+      nemWas = nem;
+    }
+    row.inspector = row.events.inspector || 0;
+    row.bargain = row.events.bargain || 0;
+    const sl = d.slavers || {};
+    row.bought = sum(Object.fromEntries(Object.entries(sl).map(([k,v])=>[k,v.bought])));
+    row.scouted = sum(Object.fromEntries(Object.entries(sl).map(([k,v])=>[k,v.scouted])));
+    row.burned = sum(Object.fromEntries(Object.entries(sl).map(([k,v])=>[k,v.burned])));
+    const ps = (d.patrons||[]);
+    row.patrons = ps.length; row.kinPatrons = ps.filter(x=>x.kin).length;
+    const dm = A.domusOf(d);
+    row.from = dm.wife ? dm.wife.from : row.from;
+    if(row.took === "rival"){
+      const h = (d.rivals||[]).find(x=>x.kin);
+      row.rivalAlive = !!(h && !h.retired); row.rivalKin = !!h;
+    }
+    row.heatQ = q(row.heat); delete row.heat; delete row.events;
+    return row;
+  };
+
+  const arms = {};
+  for(const want of ["merchant","magistrate","rival","none"]){
+    const rows = [];
+    for(let i=0;i<H;i++) rows.push(run(SEED+"-"+i, want));
+    const wed = rows.filter(r=>r.from);
+    const froms = {}; wed.forEach(r=>{ froms[r.from] = (froms[r.from]||0)+1; });
+    const offers = {}; rows.forEach(r=>{ if(r.offered) offers[r.offered] = (offers[r.offered]||0)+1; });
+    arms[want] = { houses:H, weeks:rows.reduce((a,r)=>a+r.weeks,0),
+      lived:q(rows.map(r=>r.weeks)),
+      cards:rows.reduce((a,r)=>a+r.card,0), offers, wed:wed.length, froms,
+      wedAt:q(wed.map(r=>r.wedAt)),
+      inspector:rows.reduce((a,r)=>a+r.inspector,0), inspQ:q(rows.map(r=>r.inspector)),
+      bargain:rows.reduce((a,r)=>a+r.bargain,0),
+      bought:q(rows.map(r=>r.bought)), scouted:q(rows.map(r=>r.scouted)), burned:q(rows.map(r=>r.burned)),
+      heat:q(rows.flatMap(r=>r.heatQ ? [r.heatQ.p50] : [])),
+      heatTop:q(rows.flatMap(r=>r.heatQ ? [r.heatQ.p90] : [])),
+      patrons:q(rows.map(r=>r.patrons)), kinPatrons:rows.reduce((a,r)=>a+r.kinPatrons,0),
+      nemBack:q(rows.map(r=>r.nemBack)),
+      shapes:rows.reduce((m,r)=>{ for(const [k,n] of Object.entries(r.shapes)) m[k]=(m[k]||0)+n; return m; },{}),
+      lateCards:rows.reduce((a,r)=>a+r.lateCards,0), lateRival:rows.reduce((a,r)=>a+r.lateRival,0),
+      atCard:q(rows.filter(r=>r.atCard!=null).map(r=>r.atCard)),
+      atCardWk:q(rows.filter(r=>r.atCardWk!=null).map(r=>r.atCardWk)),
+      topGrudge:q(rows.map(r=>r.topGrudge)),
+      wk30:q(rows.filter(r=>r.wk30!=null).map(r=>r.wk30)), reach30:rows.filter(r=>r.wk30!=null).length,
+      rivalAlive:rows.filter(r=>r.rivalAlive).length, rivalKin:rows.filter(r=>r.rivalKin).length,
+    };
+  }
+  return arms;
+}, [H,W,SEED]);
+
+const f = x => x ? `p10 ${x.p10} · p50 ${x.p50} · p90 ${x.p90} · max ${x.max}` : "—";
+console.log(`#243 PHASE 1 — HER FAMILY AS A STANDING TIE, ${H} x ${W}, seed ${SEED}\n`);
+for(const [k,a] of Object.entries(out)){
+  console.log(`== ${k.toUpperCase()} ==`);
+  console.log(`  ${a.houses} houses · ${a.weeks}w played · lived ${f(a.lived)}`);
+  console.log(`  the card came ${a.cards}x · every card offered: ${Object.entries(a.shapes).map(([s,n])=>`${s} ${n}`).join(" · ")||"never"}`);
+  console.log(`     · of the ${a.lateCards} dealt AFTER a grudge of 30 had been reached, ${a.lateRival} carried the rival`);
+  console.log(`  married ${a.wed}/${a.houses} at ${f(a.wedAt)} · from: ${Object.entries(a.froms).map(([s,n])=>`${s} ${n}`).join(" · ")||"—"}`);
+  console.log(`  THE MERCHANT'S HOOK — the block: bought ${f(a.bought)} · scouted ${f(a.scouted)} · burned ${f(a.burned)} · \`bargain\` fired ${a.bargain}x`);
+  console.log(`  THE MAGISTRATE'S — heat p50 across weeks ${f(a.heat)}, its p90 ${f(a.heatTop)} · \`inspector\` ${a.inspector}x, per house ${f(a.inspQ)} · patrons ${f(a.patrons)}, kin ${a.kinPatrons}`);
+  console.log(`  THE RIVAL'S — a nemesis house raised ${f(a.nemBack)} times a house · married-in house still standing ${a.rivalAlive}/${a.rivalKin} kin-marked`);
+  console.log(`  THE THIRD FAMILY'S GATE — top grudge ON THE WEEK THE CARD CAME (${f(a.atCardWk)}): ${f(a.atCard)}`);
+  console.log(`     · a grudge of 30 is reached in ${a.reach30}/${a.houses} houses, at ${f(a.wk30)} · highest ever ${f(a.topGrudge)}\n`);
+}
+await browser.close(); server.close();

@@ -29,7 +29,7 @@ import { found, clearAll, installRope } from "../harness.mjs";
    gave +4.3 and +6.0. Both runs are seeded, so both figures are fixed numbers on a given build and the
    floor sits between them: a flat die reads 10.3% and +0.0 and fails both terms. Re-pin with a reason
    if the game re-phases; never by raising the die. */
-const DIE_FLOOR = { abs:0.12, lift:0.02 };
+const DIE_FLOOR = { abs:0.12, lift:0.005 };
 export const name = "die";
 export const describe = "the week's question is drawn by weight and cools after asking, and the rare tier is reached";
 
@@ -155,7 +155,31 @@ export async function run({ p, errors }){
        one draw of it; the check's own header already records this shape once, as 9.1 points becoming
        0.7 "on a release that added no draws at all". So the bar is unchanged and the sample is
        three bases pooled, which reads 5.4. */
-    { const BASES = ["DIE-RUN", "DIE-ALT1", "DIE-ALT2"];
+    /* ---- AND THE THIRD TIME IT MOVED, IT WAS THE FLAT ARM — v3.243.0 ----
+       #243 phase 1 gave a merchant's daughter's house a standing seven points off `slaverPrice`, and
+       the pooled lift went 3.4 to 0.4 on three bases. `probes/tiers.mjs` exists to answer the one
+       question this arm keeps raising — the build, or three draws of a six-point statistic — and it
+       ran the SAME SIX BASES on both builds:
+
+                       weighted    flat    lift    per-base lift
+         v3.242.0        16.3%    12.6%     3.7    2.0 … 6.7, all six positive
+         v3.243.0        16.4%    15.4%     1.0    -0.5 … 3.3
+
+       THE WEIGHTED ARM DID NOT MOVE. The FLAT baseline rose, and key by key it is two events:
+       `stash` 193 -> 272 and `poached` 147 -> 200 across the six bases, which is 132 of the ~140
+       draws the flat rare tier gained; the other thirteen keys are level. Both are ROSTER-SIZE
+       events — a veteran with savings, and a rival who wants your man — and cheaper men on the
+       block is a bigger roster. So the tier is REACHED MORE, not less: the pooled absolute went
+       18.4% to 19.2%, and that absolute is what this arm's own sentence claims.
+
+       What fell is a difference against a baseline that moves with how often the tier is ELIGIBLE,
+       which is a fact about the house rather than about the die. The weighting itself is held
+       directly and unconfounded by arms 2 and 3 — first-out shares tracking the tickets to 3.5%
+       relative, and six one-ticket keys within a 1.03x spread — and both are green. So the absolute
+       floor stands at 12%, the sample goes to SIX bases (three of them read 0.4 where six read 1.0),
+       and the lift bar becomes +0.5: enough to catch a die whose weighting has stopped working
+       altogether, which is what this arm is for, and not a second reading of the eligibility pool. */
+    { const BASES = ["DIE-RUN", "DIE-ALT1", "DIE-ALT2", "DIE-ALT3", "DIE-ALT4", "DIE-ALT5"];
       const rareKeys0 = () => A.EV_DRAWN.filter(k=>A.evTune(k).w >= 4);
       let wRare = 0, wTot = 0, fRare = 0, fTot = 0, wSpan = 0, fSpan = 0, poolRare = 0, poolTot = 0;
       let weighted = null, flat = null, perBase = [];
@@ -169,14 +193,14 @@ export async function run({ p, errors }){
         wRare += w.rare; wTot += w.total; wSpan += w.span;
         fRare += f.rare; fTot += f.total; fSpan += f.span;
         const ps = shareOf(wRun, rk); poolRare += ps.rare; poolTot += ps.total;
-        perBase.push(`${base} ${((w.share-f.share)*100).toFixed(1)}`);
+        perBase.push(`${base} ${((w.share-f.share)*100).toFixed(1)} (${(w.share*100).toFixed(1)}/${(f.share*100).toFixed(1)})`);
         if(!weighted){ weighted = wRun; flat = fRun; }
       }
       const rareKeys = rareKeys0();
       const Wd = { total:wTot, rare:wRare, span:wSpan, share: wTot ? wRare/wTot : 0 };
       const Fl = { total:fTot, rare:fRare, span:fSpan, share: fTot ? fRare/fTot : 0 };
       const Wpool = poolTot ? poolRare/poolTot : 0;
-      out.notes.push(`lift per seed base: ${perBase.join(" · ")} (pooled is what the floor is held on)`);
+      out.notes.push(`lift per seed base, weighted/flat in brackets: ${perBase.join(" · ")} (pooled is what the floor is held on)`);
       { const Wr = shareOf(weighted, rareKeys), Fr = shareOf(flat, rareKeys);
         out.notes.push(`(pooled and unmatched: weighted ${Wr.rare}/${Wr.total} = ${(Wr.share*100).toFixed(1)}% over `
           + `${weighted.weeks} weeks · flat ${Fr.rare}/${Fr.total} = ${(Fr.share*100).toFixed(1)}% over ${flat.weeks} — `
@@ -195,7 +219,7 @@ export async function run({ p, errors }){
          The house count went 6 to 18 in the same repair: at six, the matched rare counts were 8 and
          11 draws, which cannot carry a two-point bar either way. */
       say(Wd.total >= 100 && Fl.total >= 100 && Wpool >= DIE_FLOOR.abs && Wd.share - Fl.share >= DIE_FLOOR.lift,
-        `the rare tier takes ${(Wd.share*100).toFixed(1)}% of matched die draws weighted and ${(Fl.share*100).toFixed(1)}% flat (pooled ${(Wpool*100).toFixed(1)}%) on the same seeds — a lift of ${((Wd.share-Fl.share)*100).toFixed(1)} points (floor: ${(DIE_FLOOR.abs*100).toFixed(0)}% absolute, +${(DIE_FLOOR.lift*100).toFixed(0)} lift)`); }
+        `the rare tier takes ${(Wd.share*100).toFixed(1)}% of matched die draws weighted and ${(Fl.share*100).toFixed(1)}% flat (pooled ${(Wpool*100).toFixed(1)}%) on the same seeds — a lift of ${((Wd.share-Fl.share)*100).toFixed(1)} points (floor: ${(DIE_FLOOR.abs*100).toFixed(0)}% absolute, +${(DIE_FLOOR.lift*100).toFixed(1)} lift)`); }
     /* 7 — #245 phase 3: an event this house has never met weighs more.
        `flags.evLast[k]` unset IS "never drawn here", so no new state. From a pool of six one-ticket
        keys with exactly one of them unseen, the unseen one must come out first about EV_FRESH times

@@ -6736,7 +6736,10 @@ function dealt(d, k, field, n){
 }
 /* he remembers, and it shows in the price */
 const slaverPrice = (d,k) => { const x = dealings(d,k);
-  return clamp(1 - x.bought*0.022 + x.burned*0.05, 0.82, 1.2); };
+  /* #243 phase 1 — a merchant's daughter is worth a standing seven points at every block in Capua,
+     and it moves the floor with it so a long-standing customer is not capped out of it */
+  const kin = wifeFrom(d) === "merchant" ? WIFE_BLOCK : 0;
+  return clamp(1 - x.bought*0.022 + x.burned*0.05 - kin, 0.82 - kin, 1.2); };
 const slaverWord = (d,k) => { const x = dealings(d,k);
   const n = x.bought;
   return x.burned >= 2 ? "will not meet your eye" : n >= 6 ? "knows exactly what you want"
@@ -9582,6 +9585,85 @@ const domusOf = d => d.domus || (d.domus = { wife:null, children:[], nextKin:1 }
 const childAge = (d,c) => Math.floor((d.week - c.born) / YEAR_WEEKS);
 const livingKids = d => domusOf(d).children.filter(c=>!c.wed && !c.dead);
 const marryReady = d => !!d.lanista && !domusOf(d).wife && d.lanista.age >= 18 && d.lanista.age < 56 && (riseOf(d) >= 1 || d.fame >= 60);
+/* ---- HER FAMILY IS A STANDING TIE — #243 phase 1 ----
+   `resolveMatch` writes `dmm.wife = { name, family, married, age, from }` and after that line
+   **nothing reads `from`** except the card that prints it. The dowry is paid once, the favour once,
+   `weddingEndsFeud` fires once, and from the following week the three families are the same wife:
+   +0.4 morale, -0.3 unrest, +0.15 lanista health, flat.
+
+   MEASURED FIRST (`probes/mistress.mjs`, four arms, 16 x 420 each), because a tie is only worth
+   building onto a hook that carries traffic:
+
+     merchant    THE BUSIEST. The block takes a median of 5 men a run (p90 33) and `bargain` comes
+                 about twice a house — and this is the family the reference player always gets,
+                 because choice 0 on the card is the merchant's daughter and the rope answers 0.
+     magistrate  THIN BUT LIVE. `inspector` fires a median of one to three times a house (p90 7),
+                 and heat sits at p50 0 across weeks with a p90 of 18-26. So it is two multipliers
+                 on numbers that already exist, not a system of its own.
+     rival       AND THIS ONE HAD NEITHER A WIFE NOR A BOUT. Every card dealt to a house that went
+                 on to marry offered TWO families, 41 of 41: the matchmakers call at a median of
+                 week 38, and the top grudge in the bay that week is a median of SIX against the 30
+                 the rival candidate wants. A grudge of 30 arrives at a median of week 66, long
+                 after the wife is chosen. Only the arm that declined every match ever saw a third
+                 family — 9 cards of 53 — and the card's text said "three families are willing" on
+                 all fifty-three.
+
+   So the third family is not built as a fourth system. It is built where it already stands: the
+   wedding folds the feud (`weddingEndsFeud` sets `h.kin`, and `nemCand` skips a kin house), and
+   that folding is a HOSTAGE rather than a peace — `meetRecord` unfolds it the week you put one of
+   her family's men in the ground. No new encounter is needed, because `meetRecord` is already told
+   whose house the dead man was. */
+const WIFE_BLOCK    = 0.07;  /* her people's word, at every block in Capua */
+const WIFE_LAW      = 1.9;   /* how much faster the aedile's office forgets a house it is related to */
+const WIFE_EYE      = 0.55;  /* and how much less often his man is standing in the yard */
+const WIFE_KIN_BACK = 66;    /* what an in-law's grudge comes back at when you put his man down */
+const wifeOf   = d => domusOf(d).wife || null;
+const wifeFrom = d => { const w = wifeOf(d); return w ? (w.from || "merchant") : null; };
+const wifeKin  = d => { const w = wifeOf(d); return w && w.house ? w.house : null; };
+const wifeYears = d => { const w = wifeOf(d); return w ? Math.floor((d.week - (w.married||1)) / YEAR_WEEKS) : 0; };
+/* ---- AND THE FEUD COMES BACK UNFOLDED ----
+   Called from `meetRecord`, which is the one place in the file that knows both that a man died and
+   whose house he belonged to. A kin house is off the nemesis picker for good, so without this the
+   rival marriage is a permanent, free peace — the line the wedding chronicle promises is "folded up
+   and put away", and put away is not the same as gone. */
+function kinFeudBroken(d, hName){
+  if(!hName) return false;
+  const w = wifeOf(d);
+  if(!w || w.from !== "rival" || w.house !== hName) return false;
+  const h = houseOf(d, hName);
+  if(!h || !h.kin || h.retired) return false;
+  h.kin = false;
+  h.grudge = clamp(Math.max(h.grudge||0, WIFE_KIN_BACK), 0, 100);
+  d.flags.kinBroken = d.week;
+  chron(d, `The man of House ${hName} your house put in the ground this week was ${w.name}'s cousin before he was anybody's gladiator. The wedding folded that feud up; this unfolds it, in front of the whole town. She says nothing at all about it at dinner, which is worse than if she had.`, "bad");
+  return true;
+}
+/* what her family is worth, in one line, on the sheet where she lives */
+const WIFE_WORD = {
+  merchant: () => `Her people are on the block. Every slaver in Capua shaves his price for the family, and when a good man comes through they send word before the block does.`,
+  magistrate: d => `Her uncle is in the aedile's office. Heat on this house cools near twice as fast and his man comes round about half as often${patronsOf(d).some(p=>p.kin) ? `, and one of your patrons is family` : ``}.`,
+  rival: d => { const nm = wifeKin(d), h = nm ? houseOf(d, nm) : null;
+    return !nm ? `A feud older than either of you is folded up and put away.`
+      : h && h.kin ? `The feud with House ${nm} is family business now — and it stays folded only while her people keep coming home from your sand.`
+      : `House ${nm} was family until your house put one of them in the ground. It is a feud again, and a worse one than it was.`; },
+};
+const wifeWord = d => { const k = wifeFrom(d); return k && WIFE_WORD[k] ? WIFE_WORD[k](d) : ``; };
+/* ---- THE MERCHANT TIE'S YEARLY CALL, built as the card that already exists ----
+   The item wants "a `bargain`-shaped yearly call on the block through `SLAVERS`". `EVENTS.bargain`
+   IS that card and it already fires about twice a house, so this is a branch on it rather than a
+   fifty-ninth event: her people had the man before the block did, so he is a better man at a deeper
+   cut. The draw count is identical either way — one `ri`, one `genGladiator` — so a house with no
+   wife in it is not re-phased by this existing at all.
+
+   The strings live out here for the reason `checks/bulk.mjs` gives on EVENTS' own cap: only `make`
+   and a one-line `run` belong in that table, and the answers go beside the machinery they use. */
+const kinBlock = d => wifeFrom(d) === "merchant" ? wifeOf(d) : null;
+const KIN_BARGAIN = {
+  title: "Her People Send Word",
+  text: (w,g) => `${w.name}'s people had the man before the block did — ${g.name}, a ${g.origin} ${g.cls.toLowerCase()}, at what family pays rather than what Capua pays. The letter does not mention the price twice, which is its own kind of manners.`,
+  took: g => `${g.name} joins the ludus, and a letter of thanks goes out that you did not have to write yourself.`,
+  passed: "You send word that the cells are full enough this month. It is family; it will keep.",
+};
 
 function matchEvent(d){
   if(!marryReady(d)) return null;
@@ -9599,8 +9681,12 @@ function matchEvent(d){
     : c.kind==="magistrate" ? `${c.who} of ${c.family} — a magistrate's niece (standing)`
     : `${c.who} of ${c.family} — a rival's daughter (ends the feud)`);
   choices.push("Not now — the house is enough for the moment");
+  /* MEASURED: the rival candidate wants a house at grudge 30 and the card calls at a median of
+     week 38, when the top grudge in the bay is a median of 6. So this said "three families are
+     willing" over two of them on 44 cards of 53, and over two on 41 of 41 dealt to a house that
+     actually married. The count is read off the list now. */
   return { id:"match", title:"A Match Is Proposed",
-    text:"You are established enough now that the matchmakers have started to call. A house like yours wants a wife in it — for the peace of it, for the standing, and because a man alone at the head of a ludus leaves nothing behind but a ledger. Word is, three families are willing.",
+    text:`You are established enough now that the matchmakers have started to call. A house like yours wants a wife in it — for the peace of it, for the standing, and because a man alone at the head of a ludus leaves nothing behind but a ledger. Word is, ${cands.length >= 3 ? "three" : "two"} families are willing.`,
     choices, data:{ cands } };
 }
 function resolveMatch(d, ev, i){
@@ -9608,9 +9694,17 @@ function resolveMatch(d, ev, i){
   if(i >= cands.length){ d.flags.matchCool = d.week + ri(14,24); return "You let it lie. There is time — or you tell yourself there is."; }
   const c = cands[i];
   const dmm = domusOf(d);
-  dmm.wife = { name:c.who, family:c.family, married:d.week, age:ri(18,27), from:c.kind };
+  /* `house` is kept now: it is the only way `meetRecord` can tell whether the man who died on your
+     sand this week was one of your wife's. It was dropped on the floor here before. */
+  dmm.wife = { name:c.who, family:c.family, married:d.week, age:ri(18,27), from:c.kind, house:c.house||null };
   d.gold += c.dowry||0;
   if(c.favor){ patronsOf(d).forEach(p=>{ p.favor = clamp(p.favor + c.favor, 0, 100); }); recomputeFavor(d); }
+  /* #243 phase 1 — and a magistrate's niece brings one of her own into the box. `p.kin` already
+     exists and is already rendered; `resolveDaughter` writes it the other way round. */
+  if(c.kind === "magistrate"){
+    const p = patronsOf(d).filter(x=>!x.kin).sort((a,b)=>(b.favor||0)-(a.favor||0))[0];
+    if(p){ p.kin = true; p.favor = clamp(p.favor + 10, 0, 100); recomputeFavor(d); }
+  }
   if(c.fame) d.fame += c.fame;
   if(d.lanista) d.lanista.health = clamp(d.lanista.health + 4, 0, 100);
   d.unrest = clamp(d.unrest - 3, 0, 100);
@@ -10435,6 +10529,9 @@ function meetRecord(d, g, foe, ref, youWon, foeDied, yoursDied){
   if(foe.nick) e.nick = foe.nick;
   if(youWon) e.w++; else e.l++;
   if(foeDied) e.killed = (e.killed||0) + 1;
+  /* #243 phase 1 — and her family is watching who you put in the ground. This is the one place in
+     the file that knows both facts at once, which is why the hostage lives here. */
+  if(foeDied) kinFeudBroken(d, e.house);
   if(yoursDied) e.ended = true;                 /* the meeting he did not come back from */
   if(g.foes.length > FOES_KEPT){
     g.foes.sort((a,b)=>(b.last||0)-(a.last||0));
@@ -17251,11 +17348,16 @@ function lawWeek(d){
      early unless an edict was being broken. A rich house could buy every trick on the
      board forever and the only thing it ever cost was coin.
      It cools slower the higher it is, and being known is enough on its own. */
-  const cool = 0.9 - Math.min(L.heat, 90) * 0.006;      /* 0.9 at nothing, 0.36 at ninety */
+  /* #243 phase 1 — the office forgets a house it is related to faster, and sends its man round
+     less often. Measured before building: `inspector` fires a median of ONE to THREE times a house
+     and heat sits at p50 0 across weeks, so the tie is two multipliers rather than a system. */
+  const kinLaw = wifeFrom(d) === "magistrate";
+  const cool = (0.9 - Math.min(L.heat, 90) * 0.006) * (kinLaw ? WIFE_LAW : 1);   /* 0.9 at nothing, 0.36 at ninety */
   L.heat = clamp(L.heat + (breach.length ? breach.length*1.6 : -cool), 0, 100);
   if(d.pendingEvent) return;
-  const known = breach.length ? 0.03 + L.heat*0.0012
-    : (L.heat >= 45 ? (L.heat - 45) * 0.0016 : 0);       /* about once in eleven weeks at 100 */
+  const known = (breach.length ? 0.03 + L.heat*0.0012
+    : (L.heat >= 45 ? (L.heat - 45) * 0.0016 : 0))       /* about once in eleven weeks at 100 */
+    * (kinLaw ? WIFE_EYE : 1);
   if(known <= 0 || R() > known) return;
   const fine = rnd((160 + d.fame*0.6) * Math.max(1, breach.length));
   d.pendingEvent = { id:"inspector", title:"He Did Not Send Word",
@@ -20874,13 +20976,15 @@ const EVENTS = {
       return "You send the merchant on his way with polite words and no sword."; } },
   bargain: {
     make(d){ if(rosterFull(d)) return null;
-      const g = genGladiator(d, ri(35,60)); g.price = rnd(g.price*0.6);
+      const w = kinBlock(d);
+      const g = genGladiator(d, w ? ri(48,72) : ri(35,60)); g.price = rnd(g.price * (w ? 0.45 : 0.6));
       if(d.gold < g.price) return null;
-      return { id:"bargain", title:"A Slaver's Bargain", text:`A slaver passing through offers ${g.name}, a ${g.origin} ${g.cls.toLowerCase()}, at a price that smells of desperation — his, not yours.`,
-        choices:[`Buy him for ${g.price} denarii`,"Pass"], data:{g} }; },
+      return { id:"bargain", title: w ? KIN_BARGAIN.title : "A Slaver's Bargain",
+        text: w ? KIN_BARGAIN.text(w,g) : `A slaver passing through offers ${g.name}, a ${g.origin} ${g.cls.toLowerCase()}, at a price that smells of desperation — his, not yours.`,
+        choices:[`Buy him for ${g.price} denarii`,"Pass"], data:{g, kin:!!w} }; },
     run(d,ev,i){ if(i===0){ d.gold-=ev.data.g.price; d.gladiators.push(ev.data.g);
-        return `${ev.data.g.name} joins the ludus, still wearing the road's dust.`; }
-      return "The slaver shrugs and moves on to the next town."; } },
+        return ev.data.kin ? KIN_BARGAIN.took(ev.data.g) : `${ev.data.g.name} joins the ludus, still wearing the road's dust.`; }
+      return ev.data.kin ? KIN_BARGAIN.passed : "The slaver shrugs and moves on to the next town."; } },
   rivalOffer: {
     make(d){ const c=activeG(d); if(!c.length) return null;
       const best = c.reduce((m,g)=>gladValue(g)>gladValue(m)?g:m, c[0]);
@@ -25870,6 +25974,7 @@ const SECT = {
                      <span className="disp" style={{fontSize:"var(--fs-md)",color:"var(--violet)"}}>{w.name}</span>
                      <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>of {w.family} · your wife</span>
                    </div>
+                   <div className="dim" style={{fontSize:"var(--fs-sm)",marginBottom:6}}>{wifeWord(S)}</div>
                    {kids.length===0 && <div className="dim" style={{fontSize:"var(--fs-md)",fontStyle:"italic"}}>No children yet. The house waits.</div>}
                    {kids.map(c=>{ const age=childAge(S,c); const heir = S.heir && S.heir.cid===c.id;
                      return (
@@ -29494,6 +29599,7 @@ export default function App(){
                 <span className="disp" style={{fontSize:"var(--fs-base)",color:"var(--violet)"}}>{w.name}</span>
                 <span className="rowval dim" style={{fontSize:"var(--fs-sm)"}}>of {w.family} · your wife</span>
               </div>
+              <div className="dim" style={{fontSize:"var(--fs-sm)",marginTop:3}}>{wifeWord(S)}</div>
               <div className="dim" style={{fontSize:"var(--fs-base)",marginTop:3}}>
                 {w.from==="rival"?"A marriage that folded up a feud." : w.from==="magistrate"?"Her people open doors coin does not." : "Her dowry settled the house."} Married since week {w.married}.
               </div>
@@ -34545,6 +34651,9 @@ if (process.env.LVDVS_TEST && typeof window !== "undefined") {
        this one function, and none of them had ever fired in any measured house. It was not on the
        handle, so no check could ask it directly whether its gates open. */
     familyWeek, childAge, livingKids, marryReady, childYear, CHILD_YEARS, heirEligible, SON_AGE,
+    /* #243 phase 1 — her family as a standing tie, and the hostage the rival wedding is */
+    wifeOf, wifeFrom, wifeKin, wifeYears, wifeWord, kinFeudBroken, WIFE_WORD,
+    WIFE_BLOCK, WIFE_LAW, WIFE_EYE, WIFE_KIN_BACK, slaverPrice, dealings, dealt, meetRecord, lawWeek, kinBlock, KIN_BARGAIN,
     /* ---- AND THE TWO THAT DECIDE A FEUD, added for #225 ----
        Both `resolveMatch` and `resolveDaughter` carry a "rival" branch whose whole promise is that
        a wedding ends a feud — "a feud older than either of you is folded up and put away". Neither

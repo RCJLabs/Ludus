@@ -4389,6 +4389,91 @@ has found something about itself first, for the fifth time in this project's rec
 `debut.mjs` kept as the standing career-and-hazard instrument; no game code touched — the game was
 never doing the thing the item accused it of.
 
+### v3.243.0 — #243 phase 1: her family is a standing tie, and the folded feud is a hostage
+
+`resolveMatch` wrote `dmm.wife = { name, family, married, age, from }` and **nothing read `from`**.
+The dowry was paid once, the favour once, `weddingEndsFeud` fired once — and from the following week
+a merchant's daughter, a magistrate's niece and a rival's daughter were the same wife: +0.4 morale,
+−0.3 unrest, +0.15 lanista health, flat.
+
+**MEASURED FIRST** (`probes/mistress.mjs`, four arms of 16 × 420), because a tie is only worth
+building onto a hook that carries traffic:
+
+| family | the hook it would hang from | measured |
+|---|---|---|
+| merchant | the block, through `SLAVERS` | **the busiest** — a median of 5 men bought a run (p90 33), `bargain` about twice a house |
+| magistrate | `inspector` heat, patrons | **thin but live** — the eye fires a median of 1–3 times a house (p90 7), heat sits at p50 0 |
+| rival | the folded feud | **neither a wife nor a bout** — see below |
+
+**Built to those sizes.** The merchant is a standing seven points off `slaverPrice` at every block in
+Capua *and the clamp floor moves with it*, so the long-standing customer who has earned the discount
+is not capped away from it (1.00 → 0.93 new, 0.82 → 0.75 at forty men bought). Her people's yearly
+call is `EVENTS.bargain` **branching**, not a fifty-ninth event — the card already fires twice a
+house, and with her in it the man is better and the cut deeper, at an identical draw count either
+way. The magistrate is two multipliers on numbers that already exist — heat from 80 falls to 62.2 in
+twenty quiet weeks against 71.1, and the aedile's man came 20 times in 400 against 42 — plus her
+uncle taking a patron seat as family, which is `p.kin`, a field `resolveDaughter` already writes and
+the box already renders.
+
+**THE RIVAL HAD NEITHER A WIFE NOR A BOUT, and both halves are answered.** 41 of 41 cards dealt to a
+house that went on to marry offered **two** families: the matchmakers call at a median of week 38 and
+the top grudge in the bay that week is a median of **six**, against the 30 the rival candidate wants;
+a grudge of 30 arrives at a median of week 66, long after the wife is chosen. Only the arm that
+declined every match ever saw a third family — **9 cards of 53**. And the card said *"three families
+are willing"* on all fifty-three; it counts the list now.
+
+**The bar is not lowered, and that is deliberate.** `nemCand` wants grudge **45** before a house is a
+nemesis at all, so the match card's 30 is already the generous end — offering "ends the feud" at 26
+would be the same lie the candidate count was telling, over a house that has no feud. So the third
+family stays a choice for a man who is unmarried when a real grudge arrives, the reference player
+never sees it, and the check drives it rather than pretending a campaign reaches it.
+
+**And the folded feud is a HOSTAGE.** `weddingEndsFeud` sets `h.kin`, and `nemCand`'s `!h.kin` filter
+then takes that house off the sand for good — a permanent, free peace, where the chronicle only ever
+promised the feud was *"folded up and put away"*. Put away is not gone. `meetRecord` is the one place
+in the file that knows both that a man died and whose house he was, so the unfolding lives there and
+needs no new encounter: kill one of her family's men and `h.kin` comes off, the grudge comes back at
+`WIFE_KIN_BACK` (66, and never *lowered* — a house at 95 comes back at 95), and the chronicle says
+why. A defeat without a death keeps it folded; another house's dead man does nothing; a merchant's
+wife carries no hostage at all. `resolveMatch` keeps `wife.house` now — it was dropped on the floor,
+and it is the only way `meetRecord` can tell whose cousin just died.
+
+**Two caps raised by one line each, with the note the check asks for.** `EVENTS` 1092 → 1093 and
+`SECT` 1483 → 1484: `bargain`'s four kin strings were lifted out to `KIN_BARGAIN` beside the wife's
+own block (which is precisely what EVENTS' existing note says this check asks for), and the panel
+gained one row that `wifeWord` builds in the domain code and the panel only prints.
+
+**This re-phases every seeded fixture** — the reference player marries a merchant's daughter (choice
+0 on the card, and the rope answers 0), so `slaverPrice` moves for him, and a different price is a
+different purchase is a different draw.
+
+**And the re-phase turned `die` arm 6 red, which took a paired experiment rather than a guess.**
+The rare tier's lift fell 3.4 → 0.4 on the arm's three bases. That arm's own header already records
+this shape twice — *"9.1 points became 0.7 on a release that added no draws at all"* — so the
+question was the usual one: the build, or three draws of a statistic with a six-point spread?
+`probes/tiers.mjs` was written to answer it and ran **the same six bases on both builds**:
+
+| | weighted | flat | lift | per-base |
+|---|---|---|---|---|
+| v3.242.0 | 16.3% | **12.6%** | 3.7 | 2.0 … 6.7, all six positive |
+| v3.243.0 | 16.4% | **15.4%** | 1.0 | −0.5 … 3.3 |
+
+**The weighted arm did not move.** The FLAT baseline rose, and key by key it is two events: `stash`
+193 → 272 and `poached` 147 → 200 across the six bases — 132 of the ~140 draws the flat rare tier
+gained, with the other thirteen keys level. Both are **roster-size** events (a veteran with savings;
+a rival who wants your man), and cheaper men on the block is a bigger roster. So the tier is reached
+*more*, not less: the pooled absolute went **18.4% → 19.2%**, and that absolute is what the arm's own
+sentence claims. What fell is a difference against a baseline that moves with how often the tier is
+ELIGIBLE — a fact about the house, not the die. The weighting itself is held directly and
+unconfounded by arms 2 and 3, both green. So the absolute floor stands at 12%, the sample goes to
+**six** bases (three read 0.4 where six read 1.0), and the lift bar becomes **+0.5** — enough to
+catch a die whose weighting has stopped working, which is what the arm is for.
+
+**Shipped:** `probes/mistress.mjs` (four arms), `checks/mistress.mjs` (five arms, 6s),
+`probes/tiers.mjs` (the lift instrument, any number of bases), `checks/die.mjs` arm 6 re-based, the
+tie in `src`. **#243 now stands at phase 1 shipped, phase 4 declined on v3.242.0's measurement**,
+with phases 2 and 3 — a life, and her own asks — still open.
+
 ### v3.242.0 — #243's verify-first: the widow phase 4 wanted cannot be made, because the lanista does not die
 
 **The item gates its fourth phase on one number and says so:** *"how many houses would have a
@@ -9162,8 +9247,14 @@ with a house tag, and let the numbers edict be the ceiling the design already wr
 
 ---
 
-**#243 — The Mistress of the House** *(overhaul · medium–large · 4 phases)* — **VERIFY-FIRST
-ANSWERED v3.242.0. PHASE 4 DECLINED; phases 1–3 stand.**
+**#243 — The Mistress of the House** *(overhaul · medium–large · 4 phases)* — **PHASE 1 SHIPPED
+v3.243.0. VERIFY-FIRST ANSWERED v3.242.0 AND PHASE 4 DECLINED; phases 2 and 3 stand.**
+*Phase 1 (v3.243.0):* `wife.from` is read now — the merchant is a standing seven points off
+`slaverPrice` with the clamp floor moved to match, plus `bargain` branching as her family's yearly
+call; the magistrate is `lawWeek`'s cool ×1.9 and the eye ×0.55 plus a patron who is family; and the
+rival's folded feud is a **hostage** that `meetRecord` unfolds the week one of her family's men dies
+on your sand. The card counts its own candidates now — it promised three families over two on 44 of
+53 cards. The rival's grudge bar stays at 30 because `nemCand` wants 45.
 
 `resolveMatch` writes `dmm.wife = { name, family, married, age, from }`. After that line **nothing reads
 `wife.from` or `wife.family`** except the card that prints them. The dowry is paid once, the favour
